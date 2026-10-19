@@ -56,7 +56,7 @@ end
 
 function H.new(screen, st, opts)
   local self = setmetatable({ screen = screen, st = st, opts = opts or {}, t = 0, view = "list",
-                              sel = 1, scoresOf = nil, earned = 0, runs = 0, axis = {} }, H)
+                              sel = 1, scoresOf = nil, earned = 0, runs = 0, stickDir = {} }, H)
   Rewards.state(st)
   return self
 end
@@ -156,14 +156,39 @@ function H:pad(button)
   return false
 end
 
+-- A CONTROLLER SDL CANNOT MAP arrives as raw joystick events only: axis 1 / 2
+-- are its stick, its hat its d-pad (the launcher reads them the same way).
+-- A mapped pad sends both kinds, and its gamepad events already counted.
+local function rawIgnored(joystick)
+  local okI, ignore = pcall(require("src.core.GamepadMap").ignoreRawForJoystick, joystick)
+  return okI and ignore
+end
+
+function H:rawAxis(joystick, axis, value)
+  if rawIgnored(joystick) then return end
+  if axis == 1 then self:axis("leftx", value) elseif axis == 2 then self:axis("lefty", value) end
+end
+
+H.HAT = { u = "dpup", d = "dpdown", l = "dpleft", r = "dpright", lu = "dpup", ru = "dpup",
+          ld = "dpdown", rd = "dpdown" }
+
+function H:rawHat(joystick, _, direction)
+  if rawIgnored(joystick) then return end
+  local dir = H.HAT[direction]
+  if dir and self.hatDir ~= dir then self:pad(dir) end
+  self.hatDir = dir
+end
+
 -- the left stick as a d-pad (one step per push)
 function H:axis(axis, value)
   local dir
   if axis == "leftx" then dir = value > 0.6 and "dpright" or value < -0.6 and "dpleft" or nil
   elseif axis == "lefty" then dir = value > 0.6 and "dpdown" or value < -0.6 and "dpup" or nil
   else return end
-  if dir and self.axis[axis] ~= dir then self:pad(dir) end
-  self.axis[axis] = dir
+  -- (the held direction lives in `stickDir`: a field named `axis` hid this
+  -- method, and the first stick push called a table and crashed the app)
+  if dir and self.stickDir[axis] ~= dir then self:pad(dir) end
+  self.stickDir[axis] = dir
 end
 
 -- ------------------------------------------------------------ drawing
@@ -341,7 +366,7 @@ end
 -- the methods covered while the hub is up
 H.HOOKS = { "draw", "update", "mousepressed", "mousereleased", "mousemoved", "wheelmoved", "keypressed",
             "keyreleased", "textinput", "gamepadpressed", "gamepadreleased", "gamepadaxis", "joystickpressed",
-            "joystickreleased", "touchpressed", "touchmoved", "touchreleased" }
+            "joystickreleased", "joystickaxis", "joystickhat", "touchpressed", "touchmoved", "touchreleased" }
 
 local NONE = {}
 
@@ -394,6 +419,8 @@ local function coverHost(host, hub)
     keypressed = function(_, key) hub:key(key) end,
     gamepadpressed = function(_, _, button) hub:pad(button) end,
     gamepadaxis = function(_, _, axis, value) hub:axis(axis, value) end,
+    joystickaxis = function(_, joystick, axis, value) hub:rawAxis(joystick, axis, value) end,
+    joystickhat = function(_, joystick, hat, direction) hub:rawHat(joystick, hat, direction) end,
     joystickpressed = function(_, joystick, button)
       local GM = require("src.core.GamepadMap")
       local okI, ignore = pcall(GM.ignoreRawForJoystick, joystick)
@@ -419,6 +446,9 @@ local function coverScreen(screen, hub)
     mousepressed = function(_, x, y) hub:pointer(x, y) return true end,
     keypressed = function(_, key) return hub:key(key) end,
     gamepadpressed = function(_, _, button) return hub:pad(button) end,
+    gamepadaxis = function(_, _, axis, value) hub:axis(axis, value) return true end,
+    joystickaxis = function(_, joystick, axis, value) hub:rawAxis(joystick, axis, value) return true end,
+    joystickhat = function(_, joystick, hat, direction) hub:rawHat(joystick, hat, direction) return true end,
   })
   return restore
 end

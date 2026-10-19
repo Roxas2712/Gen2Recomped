@@ -581,5 +581,25 @@ do
   check(rawget(host, 'update') == nil and rawget(host, 'draw') == nil and host.settingsOpen == false, 'close restores the launcher')
 end
 
+-- THE STICK: a field named `axis` once hid H:axis, so the first push of a
+-- controller's stick with the hub open called a table and crashed the app
+do
+  local st = newState(true)
+  local h = Hub.new(nil, st, { seed = 3 })
+  check(type(h.axis) == 'function', 'the hub\'s axis is still its method')
+  local ok = pcall(function()
+    h:axis('lefty', -1); h:axis('lefty', 0); h:axis('leftx', 1); h:axis('leftx', 0)
+    h:rawAxis({ isGamepad = function() return false end }, 2, 1)
+    h:rawHat({ isGamepad = function() return false end }, 1, 'u')
+  end)
+  check(ok, 'stick, raw stick and hat move the hub without error')
+  local s = h:play(3, true)
+  local got = {}
+  local act = s.action
+  s.action = function(self2, a, ...) got[#got + 1] = a; return act(self2, a, ...) end
+  h:axis('leftx', 1); h:axis('leftx', 0)
+  check(got[1] == 'right', 'the stick reaches a game in play')
+end
+
 print(('%d passed, %d failed'):format(PASS, FAIL))
 if FAIL > 0 then error('walker minigames check failed') end
