@@ -1267,7 +1267,14 @@ local function markerFor(version)
   -- (Gen5DynamicCity) and White's zone swap to White Forest
   -- gen5-battle-bag-v1: gen5_battle_bag (Gen5BattleBagArt, /a/0/9/9), the four-pocket
   -- battle bag; without it the battle opens the field bag instead
-  if version == "black" or version == "white" then revision = "gen5-starter-v6:gen5-moveanim-v2:gen5-facilities-v1:gen5-field-fx-v1:gen5-title-v1:gen5-naming-v1:gen5-maps-v1:gen5-battle-bag-v1:" end
+  -- gen5-town-map-v2: gen5_town_map carries the ROM's road layer, the arrow and cursor
+  -- sprites and the fly points' landings (Gen5TownMapArt)
+  -- gen5-xtransceiver-v1: gen5_xtransceiver (Gen5XtransceiverArt, /a/1/3/1) and script
+  -- 0x155 lowered to the call (it was a no-op: every story call was skipped)
+  -- gen5-shop-art-v1: gen4_shop_art from /a/0/5/4 (Gen5ShopArt), BW's own counter art
+  -- gen5-windows-v1: the font record's `frames` (the menu window, /a/0/0/5 tileset 9
+  -- palette 3) and the menu cursor glyph (`symbols`, src/import/Gen5Cursor.lua)
+  if version == "black" or version == "white" then revision = "gen5-starter-v6:gen5-moveanim-v2:gen5-facilities-v1:gen5-field-fx-v1:gen5-title-v1:gen5-naming-v1:gen5-maps-v1:gen5-battle-bag-v1:gen5-town-map-v2:gen5-xtransceiver-v1:gen5-shop-art-v1:gen5-windows-v1:" end
   -- emerald-trade-scene-v3 / firered-trade-scene-v1: the in-game trade
   -- sequence's art (extractTradeScene, gen3_trade_art) -- without it special
   -- 257 falls back to the bare swap, so both Gen 3 caches re-import once
