@@ -1222,11 +1222,19 @@ end
 --       the one gate that forces a re-import, and main's change alters what a
 --       FireRed cache CONTAINS -- so keeping v359 would let a FireRed cache
 --       built before the tutor fix pass as current. v360 invalidates both.
+-- v361: FireRed naming fidelity now extracts the cartridge's keypad icons and
+--       the cursor-pulse mask/base colour.  An older cache has none of those
+--       files/fields, so without a format bump an updated runtime would keep
+--       drawing the pre-fix handmade help icons and static selection cursor
+--       until the user happened to force a ROM re-import manually.
 -- v366: Gen 3 battle panels bake every user frame through gUserFrames' real
 --       tile/palette pointers, so FireRed battles follow Frame Type 1-10.
 --       (This was v339 on the FireRed branch before the merge with main's
 --       v338-v360 chain.)
-local CACHE_FORMAT = "rom-cache-v366:"
+-- v367: FireRed bag / Item PC / field-dialogue fidelity: the Male/Female
+--       dialogue faces and the OPTIONS frame art are baked from the
+--       cartridge, so a cache built before this lacks them.
+local CACHE_FORMAT = "rom-cache-v367:"
 -- The completion marker is written under each version's cache prefix
 -- (rom-cache.complete for Red, blue/rom-cache.complete for Blue).
 local MARKER_PATH = "rom-cache.complete"
