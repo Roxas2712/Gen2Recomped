@@ -115,6 +115,14 @@ function Gen4Battle.healthboxPos(battle, slot)
   return { x = p.x + shift, y = p.y }
 end
 
+-- A staged 3D fight (Terrarium / Colosseum / Stadium) publishes this the
+-- same way Emerald does: letterboxWhite == false means the world behind
+-- this screen IS the field. The DS backdrop, platforms and 2D sprites
+-- would paint over it.
+local function hideNativeScene(battle)
+  return battle and battle.letterboxWhite == false
+end
+
 -- ---------------------------------------------------------------------------
 -- The two enumerations, 0-based, from generated/battle_backgrounds.txt and
 -- generated/battle_terrains.txt. They are NOT the same list and do not line up
@@ -596,6 +604,7 @@ end
 -- of what a still frame needs, and the right half is there for the scroll this
 -- port does not do yet.
 function Gen4Battle.drawField(battle)
+  if hideNativeScene(battle) then return end
   local g = love.graphics
   -- BLACK AND WHITE'S FIELD IS 3D (src/render/Gen5BattleSceneView.lua)
   do local okV, V = pcall(require, "src.render.Gen5BattleSceneView") if okV and V.available(battle) and V.draw(battle) then return end end
@@ -764,6 +773,7 @@ end
 -- the trainer stands where the Pokemon it is about to send out will stand
 -- rather than at a second set of coordinates that could drift from it.
 function Gen4Battle.drawTrainerBack(battle)
+  if hideNativeScene(battle) then return false end
   if not (battle and battle.showPlayerBack and battle.playerBackPic) then
     return false
   end
@@ -832,6 +842,7 @@ function Gen4Battle.battlerRows(battle)
 end
 
 function Gen4Battle.drawBattlers(battle)
+  if hideNativeScene(battle) then return end
   local g = love.graphics
   g.setColor(1, 1, 1, 1)
   -- The foe first, so where the two overlap the player's Pokemon is in front --
@@ -1006,6 +1017,7 @@ end
 -- 105 OF THE 501 MOVES REACH THIS, over 8,502 frames of the corpus. It was a
 -- `hold` task until now -- the right number of frames, nothing drawn.
 function Gen4Battle.drawBackgroundFade(battle)
+  if hideNativeScene(battle) then return false end
   local player = battle and battle.gen4AnimPlaying and battle.gen4Anim
   if not (player and player.groupTint) then return false end
   local got, r, g, b, a = pcall(player.groupTint, player, "base")
@@ -1062,6 +1074,7 @@ end
 -- the cartridge that uses the type-2 fade -- 87, twice, toward white -- switches to
 -- background 19, which is one of the 35.
 function Gen4Battle.drawEffectBackground(battle)
+  if hideNativeScene(battle) then return false end
   local player = battle and battle.gen4AnimPlaying and battle.gen4Anim
   -- BLACK AND WHITE'S BG3 (src/battle/Gen5MoveAnimPlayer.lua)
   if player and player.drawEffectLayer then
@@ -1209,6 +1222,7 @@ function Gen4Battle.effectPosition(battle,name,attacker,x,y,absoluteX,absoluteY)
  return absoluteX or ox+(x or 0),absoluteY or oy+(y or 0),1,0
 end
 function Gen4Battle.drawCellActors(battle)
+  if hideNativeScene(battle) then return 0 end
   local player = battle and battle.gen4AnimPlaying and battle.gen4Anim
   if not player then return 0 end
   local got, list = pcall(player.cells, player)
@@ -1312,6 +1326,7 @@ end
 -- part of this can be right and produce an empty screen if the art did not
 -- import, and a number is what a diagnostic can look at.
 function Gen4Battle.drawParticles(battle)
+  if hideNativeScene(battle) then return 0 end
   local player = battle and battle.gen4AnimPlaying and battle.gen4Anim
   if not player then return 0 end
   -- BLACK AND WHITE'S particles are 3D, projected by their own player
@@ -1812,11 +1827,32 @@ function Gen4Battle.drawHealthboxIcons(battle, key, battler, boxX, boxY, side)
   return true
 end
 
+-- A mod that owns the battle HUD (Colosseum UI, realtime host) already
+-- answers `battle.status_hud_visible`.  Gen 1/2 HP rows go through
+-- BattleState:drawHUDs, which those mods wrap.  Sinnoh paints Platinum's
+-- healthboxes HERE instead, so that wrap never ran and the native bars
+-- stayed on screen over the Colosseum HUD.  Returning true (boxes "drawn")
+-- is what keeps Gen4Battle.draw from falling through to the Game Boy panels.
+local function statusHudVisible(battle)
+  if type(battle) == "table" and type(battle.statusHUDVisible) == "function" then
+    local ok, vis = pcall(battle.statusHUDVisible, battle)
+    if ok and vis == false then return false end
+  end
+  local okR, Runtime = pcall(require, "src.mods.Runtime")
+  if okR and Runtime and Runtime.wantsHook and Runtime.wantsHook("battle.status_hud_visible") then
+    local vis = Runtime.call("battle.status_hud_visible",
+                             function() return true end, battle)
+    if vis == false then return false end
+  end
+  return true
+end
+
 -- drawHealthboxes(battle) -> true when BOTH were drawn
 --
 -- All or nothing on purpose: one Platinum box beside one Game Boy panel is
 -- worse than two of either, and the caller's fallback is the whole stand-in.
 function Gen4Battle.drawHealthboxes(battle)
+  if not statusHudVisible(battle) then return true end
   -- BLACK AND WHITE'S boxes (src/battle/Gen5BattleHud.lua)
   do local okG5, G5 = pcall(require, "src.battle.Gen5BattleHud") if okG5 and G5.active(battle) then return G5.drawHealthboxes(battle) end end
   local g = love.graphics
@@ -3346,6 +3382,7 @@ end
 -- The timing and the cell come from `Gen4BallAnim`, which reads the
 -- cartridge's own NANR; this only puts the named cell where the anim says.
 function Gen4Battle.drawThrownBall(battle)
+  if hideNativeScene(battle) then return false end
   local anim = battle and battle.gen4Ball
   if not (anim and anim.visible) then return false end
   -- Black and White's capture effect draws itself (src/battle/Gen5BallAnim.lua)
@@ -4045,7 +4082,7 @@ function Gen4Battle.draw(battle)
   -- centring translate, pushed and popped around so nothing downstream inherits
   -- it.  A transform left on is the kind of thing that moves the NEXT screen
   -- instead of this one.
-  if not boxes then
+  if not boxes and statusHudVisible(battle) then
     g.push()
     g.translate(Gen4Battle.CLASSIC_DX, Gen4Battle.CLASSIC_DY)
     pcall(function() battle:drawHUDs(0) end)
