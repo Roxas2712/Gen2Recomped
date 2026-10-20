@@ -78,6 +78,34 @@ do
   check(groups.C > groups.B and groups.B > groups.A, 'wild picks: C common, A rare', groups.A .. '/' .. groups.B .. '/' .. groups.C)
 end
 
+-- Imported source rosters are complete, deterministic and ROM-specific.
+do
+ local Art=require('src.pokewalker.WalkerArt');local saved=Art.roster
+ local source={}
+ for i=1,60 do source[i]={dex=300+i,name='ROM '..i,level=5,group=i%3==0 and 'A' or 'C'} end
+ Art.roster=function(version)return version=='emerald' and source or {} end
+ local st=newState(true);st.walking.source={version='emerald'}
+ st.walking.species=301
+ local a,b=Context.build(st,10),Context.build(st,10)
+ check(#a.wild==60 and a.version=='emerald','minigames use full source roster')
+ local seen,same={},true
+ for i,e in ipairs(a.wild)do seen[e.dex]=true;same=same and e.dex==b.wild[i].dex end
+ check(seen[360] and not seen[25] and same,'only imported species, seeded order')
+ local other=Context.build(st,11);local different=false
+ for i,e in ipairs(a.wild)do if e.dex~=other.wild[i].dex then different=true end end
+ check(different,'new runs vary the available Pokemon')
+ a.hasArt=function()return true end
+ local board=Memory.new(a,{})
+ local legal=true;for _,c in ipairs(board.cards)do legal=legal and seen[c.dex] end
+ check(legal,'memory cards do not borrow out-of-ROM extras')
+ Art.roster=function()return {{dex=901,name='Hack species',level=5,group='C'}} end
+ local tiny=Context.build(newState(false),10,'prism');tiny.hasArt=function()return false end
+ board=Memory.new(tiny,{})
+ legal=true;for _,c in ipairs(board.cards)do legal=legal and c.dex==901 end
+ check(legal and #board.cards==16 and tiny.walker.dex==901,'tiny ROM roster never adds foreign filler')
+ Art.roster=saved
+end
+
 -- =============================================================== Rewards
 do
   Rewards._economy = false   -- no economy module: the fallbacks

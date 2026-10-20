@@ -2688,7 +2688,7 @@ local spriteShader, spriteMesh
 
 local function ensureSprite()
   if spriteShader == nil then
-    local ok, made = pcall(love.graphics.newShader, SPRITE_SHADER)
+    local ok, made = pcall(love.graphics.newShader, require("src.render.ClipSpaceCompat").shader(SPRITE_SHADER))
     spriteShader = (ok and made) or false
     if not spriteShader then
       Logger.error("gen4 ground: the sprite shader would not compile (%s) -- "

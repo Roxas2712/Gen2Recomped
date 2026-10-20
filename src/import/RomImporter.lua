@@ -6777,11 +6777,14 @@ local function armedDelete(a, kind, id, version)
     and (love.timer.getTime() - a.t) <= DELETE_CONFIRM_SECONDS
 end
 
-function RomImporter:touchpressed(id, x, y, dx, dy, pressure)
-  -- Android-specific touch handler to avoid mouse emulation issues
-  if self._rename then return end -- the rename modal swallows all clicks
-  -- Route to the same mousepressed logic but with touch handling
-  return self:mousepressed(x, y, 1)
+function RomImporter:touchpressed(id,x,y)
+  return require("src.import.LauncherTouch").pressed(self,id,x,y)
+end
+function RomImporter:touchmoved(id,x,y)
+  return require("src.import.LauncherTouch").moved(self,id,x,y)
+end
+function RomImporter:touchreleased(id,x,y)
+  return require("src.import.LauncherTouch").released(self,id,x,y)
 end
 
 function RomImporter:mousepressed(x, y, button)
@@ -6859,7 +6862,7 @@ function RomImporter:mousepressed(x, y, button)
   end
   -- Whether a press can be ARMED and resolved on release, which needs a
   -- pollable pointer: always on desktop, on Android only where love.touch is.
-  local armDrag = (not self.android) or self.touchPollable
+  local armDrag = self._touchResolving or (not self.android) or self.touchPollable
   -- right-click a save-slot row to rename it (#205); desktop only (touch
   -- has no secondary button)
   if button == 2 then
@@ -8516,6 +8519,7 @@ end
 -- call site keeps reading the same thing.  Only the tab bar wants x: it is the
 -- one strip on the page that scrolls sideways.
 function RomImporter:_pointerHold()
+  if self._touchResolving then return false,self._my,self._mx end
   if not self.android then return love.mouse.isDown(1), self._my, self._mx end
   if not self.touchPollable then return false, nil, nil end
   local ok, list = pcall(love.touch.getTouches)
@@ -9441,7 +9445,7 @@ function RomImporter:_selectTab(id)
 end
 
 function RomImporter:_updateSlotDrag()
-  if self.android and not self.touchPollable then return end
+  if self.android and not self.touchPollable and not self._touchResolving then return end
   local down, py, px = self:_pointerHold()
   py = py or self._my
   px = px or self._mx

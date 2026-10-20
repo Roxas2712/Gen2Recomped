@@ -16,6 +16,13 @@
 
 local editorMode = os.getenv("POKEPORT_EDITOR") == "1" or POKEPORT_EDITOR_MODE == true
 
+-- The pinned engine preview is a separate test channel. Stable self-update
+-- payloads must not replace its runtime compatibility changes underneath it.
+if love.filesystem.getInfo("love12_preview.lua", "file") then
+  _G.POKEPORT_LOVE12_PREVIEW = true
+  _G.POKEPORT_NOTIFY_ONLY_UPDATES = true
+end
+
 local Game, EditorApp, Importer, TouchEditor
 
 local autopilot -- optional scripted-input dev tool (tests/autopilot.lua)
@@ -883,18 +890,7 @@ function love.touchpressed(id, x, y, dx, dy, pressure)
     if love.system.getOS() == "iOS" then return end
     return TouchEditor.touchpressed(id, x, y)
   end
-  if Importer then
-    -- iOS: LÖVE already synthesizes a mousepressed for the primary touch,
-    -- and love.mousepressed below forwards that to the Importer, so
-    -- forwarding here too fires every launcher button twice per tap.  The
-    -- resulting double-present was fatal for the document picker: the
-    -- second sheet stole the first one's weakly-held delegate, so picking
-    -- a file silently did nothing.  Android keeps the forward for upstream
-    -- parity (its SAF picker is a separate activity and tolerates the
-    -- re-launch).
-    if love.system.getOS() == "iOS" then return end
-    return Importer:mousepressed(x, y, 1)
-  end
+  if Importer then return Importer:touchpressed(id,x,y,dx,dy,pressure) end
   if not Game then return end
   Game:touchpressed(id, x, y)
 end
@@ -908,7 +904,7 @@ function love.touchmoved(id, x, y, dx, dy, pressure)
     if love.system.getOS() == "iOS" then return end
     return TouchEditor.touchmoved(id, x, y)
   end
-  if Importer then return end
+  if Importer then return Importer:touchmoved(id,x,y,dx,dy,pressure) end
   if not Game then return end
   Game:touchmoved(id, x, y)
 end
@@ -922,7 +918,7 @@ function love.touchreleased(id, x, y, dx, dy, pressure)
     if love.system.getOS() == "iOS" then return end
     return TouchEditor.touchreleased(id, x, y)
   end
-  if Importer then return end
+  if Importer then return Importer:touchreleased(id,x,y,dx,dy,pressure) end
   if not Game then return end
   Game:touchreleased(id, x, y)
 end
@@ -947,21 +943,9 @@ function love.mousepressed(x, y, button, istouch)
     return TouchEditor.mousepressed(x, y, button)
   end
   if Importer then
-    -- The same double-fire TouchEditor guards against, which the launcher was
-    -- missing: love.touchpressed above forwards the primary touch to the
-    -- Importer on Android, and LÖVE ALSO synthesizes a mouse press for that
-    -- same touch, so one tap ran every launcher button twice.  On Import that
-    -- meant two choose() calls and two stacked SAF picker activities: the
-    -- player picked their ROM, the top picker closed, and the second was still
-    -- underneath asking for it again, which is the "import the file twice"
-    -- in #553.  Filtering on istouch keeps a real mouse (DeX, a Chromebook, a
-    -- USB mouse) working, which an Android-wide return would have broken.
-    --
-    -- ANDROID ONLY, and the OS test is load bearing: love.touchpressed above
-    -- returns early on iOS and never forwards, so there the synthesized mouse
-    -- press is the ONLY event the launcher gets.  Filtering istouch on both
-    -- killed every tap on iOS outright.
-    if istouch and love.system.getOS() == "Android" then return end
+    -- Native touch callbacks own the complete gesture on Android and iOS.
+    -- Keep real USB/Bluetooth mouse input working on either platform.
+    if istouch then return end
     return Importer:mousepressed(x, y, button)
   end
   if editorMode and EditorApp.mousepressed then

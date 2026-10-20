@@ -58,6 +58,9 @@ function H.new(screen, st, opts)
   local self = setmetatable({ screen = screen, st = st, opts = opts or {}, t = 0, view = "list",
                               sel = 1, scoresOf = nil, earned = 0, runs = 0, stickDir = {} }, H)
   Rewards.state(st)
+  local A=Gfx.art()
+  if A and A.forget then A.forget() end -- imports may have changed since last entry
+  pcall(self.context,self)
   return self
 end
 
@@ -66,22 +69,45 @@ end
 local seedBump = 0
 function H:context()
   seedBump = seedBump + 1
-  local ctx = Context.build(self.st, (self.opts.seed or os.time()) + seedBump * 7919)
+  local ctx = Context.build(self.st, (self.opts.seed or os.time()) + seedBump * 7919, self.opts.version)
   ctx.hasArt = function(dex)
     local A = Gfx.art()
     if not A then return true end
-    local ok, img = pcall(A.front, dex)
+    local ok, img = pcall(A.front, dex, false)
     return ok and img ~= nil
   end
+  self.sourceError=nil
+  self.artVersion=ctx.version
+  self.rosterCount=#ctx.wild
+  if not self.opts.version then self.opts.version=ctx.version end
   return ctx
+end
+
+function H:cycleSource()
+  if self.st.walking and self.st.walking.source then return end
+  local A=Gfx.art()
+  if not (A and A.roster) then return end
+  local versions={}
+  for _,v in ipairs({"red","blue","yellow","gold","silver","crystal","polishedcrystal","prism","emerald","firered","platinum","heartgold","soulsilver","black","white"})do
+    local ok,list=pcall(A.roster,v)
+    if ok and #list>0 then versions[#versions+1]=v end
+  end
+  for i,v in ipairs(versions)do
+    if v==self.artVersion then
+      self.opts.version=versions[i%#versions+1];self:context();return
+    end
+  end
+  if #versions>0 then self.opts.version=versions[1];self:context() end
 end
 
 function H:play(i, skipIntro)
   local mod = H.games()[i]
   if not mod then return end
   self.sel = i
+  local ok,ctx=pcall(self.context,self)
+  if not ok then self.sourceError=tostring(ctx);return end
   local session
-  session = Base.new(mod, self:context(), self.st, {
+  session = Base.new(mod, ctx, self.st, {
     onExit = function() self.session = nil; self.view = "list" end,
     onAgain = function() self:play(i, true) end,
     onFinish = function(_, result)
@@ -198,6 +224,7 @@ local function dateOf(t) return t and os.date("%b %d", t) or "" end
 function H:draw(x, y, w, h)
   local g = love.graphics
   Gfx.tick(self.t)
+  Gfx.version=self.artVersion
   if self.view == "game" and self.session then
     self.session:draw(x, y, w, h)
     return
@@ -233,6 +260,22 @@ function H:draw(x, y, w, h)
   Gfx.setc(Gfx.DIM)
   Gfx.fit(budget, x + pad, top, w - 2 * pad, f.small, "left")
   top = top + f.small:getHeight() + 10 * s
+
+  if self.artVersion then
+    local info=require("src.core.GameVersion").info(self.artVersion)
+    local fixed=self.st.walking and self.st.walking.source
+    local label=("Pokemon: %s (%d)  %s"):format(info and info.label or self.artVersion,self.rosterCount or 0,
+      fixed and "- walking Pokemon's ROM" or "- Change ROM")
+    local sh=f.small:getHeight()+20*s
+    Gfx.button(self.hits,x+pad,top,w-2*pad,sh,label,function()self:cycleSource()end,nil,f.small)
+    top=top+sh+10*s
+  end
+
+  if self.sourceError then
+    Gfx.setc(Gfx.RED)
+    Gfx.fit(self.sourceError,x+pad,top,w-2*pad,f.small,"left")
+    top=top+f.small:getHeight()+8*s
+  end
 
   -- the cards: as many columns as fit, each tall enough for its buttons
   local games = H.games()
