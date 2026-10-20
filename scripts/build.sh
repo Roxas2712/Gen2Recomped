@@ -287,7 +287,7 @@ patch_win_icon() {
   # Windows wants a numeric a.b.c.d; take the leading digits of the version,
   # so v1.4.2 -> 1.4.2.0 and a commit hash -> 0.0.0.0.
   local nums
-  nums="$(printf '%s' "$VERSION" | sed -E 's/^v//; s/[^0-9.].*$//' | awk -F. '{printf "%d.%d.%d.%d", $1, $2, $3, $4}')"
+  nums="$(printf '%s\n' "$VERSION" | sed -E 's/^v//; s/[^0-9.].*$//' | awk -F. '{printf "%d.%d.%d.%d", $1, $2, $3, $4}')"
   local dir="$WORK/winres"
   rm -rf "$dir"; mkdir -p "$dir"
   cp "$ico" "$dir/icon.ico"
