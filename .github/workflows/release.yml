@@ -523,10 +523,16 @@ jobs:
           name: rom-translate-win
           path: translation
 
+      # scripts/build.sh installs go-winres with Go to put our icon on the .exe
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: false
+
       - name: Build Windows (win64)
         run: |
           set -euo pipefail
-          bash scripts/build.sh win --version "${{ needs.version.outputs.version }}"
+          REQUIRE_ICON=1 bash scripts/build.sh win --version "${{ needs.version.outputs.version }}"
 
       # build.sh packs the helper only if it is there; a release must have it
       - name: Verify the offline translator is packed

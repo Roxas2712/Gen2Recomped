@@ -70,6 +70,13 @@ function love.conf(t)
     t.window.minwidth = 480
     t.window.minheight = 360
   end
+  -- The window and taskbar icon on desktop (the packaged app's own icon is
+  -- set per platform at build time; see tools/make_icons.py).  Checked first
+  -- because LÖVE errors at boot on a missing icon file.
+  local icon = "assets/logo/icon-window.png"
+  if love.filesystem.getInfo and love.filesystem.getInfo(icon) then
+    t.window.icon = icon
+  end
   -- The same source supports the stable 11.5 ports and the pinned 12 preview.
   -- Match the running major version so a 12 build has no compatibility prompt.
   local loveMajor = love.getVersion and love.getVersion() or 11
