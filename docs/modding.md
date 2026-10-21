@@ -230,6 +230,14 @@ The console understands these verbs (anything else is evaluated as Lua):
 - `trace PAT | trace off` — trace events/hooks matching a glob pattern.
 - `help` — list the verbs.
 
+## Public party, bag and dialogue actions
+
+`mod.ui:snapshot()` returns detached options for the current native screen;
+`mod.ui:submit(intent)` selects a row, goes back, changes bag pocket or advances
+ready text through its native flow. See [Public UI actions](ui-actions-api.md)
+for revision/ID requirements, per-generation menu behavior and supported screens.
+The existing `mod.ui` list-building helpers retain their original signatures.
+
 ## Tool input and title-menu hooks
 
 Tool mods that need to act once per game logic tick can wrap `input.step`.

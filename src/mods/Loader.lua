@@ -22,6 +22,7 @@ local Hooks = require("src.mods.Hooks")
 local ModStorage = require("src.mods.Storage")
 local Runtime = require("src.mods.Runtime")
 local BattleSnapshots = require("src.mods.BattleSnapshots")
+local UIActions = require("src.mods.UIActions")
 local ModGens = require("src.mods.ModGens")
 local ModSeams = require("src.mods.ModSeams")
 -- Module-name aliases for mods written against the Gold port's per-generation
@@ -918,9 +919,9 @@ function Loader:_api(mod)
     hooks = { wrap = function(_, name, callback, priority)
       return loader.hooks:wrap(name, callback, priority, modId)
     end },
-    -- the widget toolkit facade (12 4.5) is one shared surface, not
-    -- per-mod state; each widget inside it loads on first touch
-    ui = ModUI,
+    -- Per-mod action/revision state, with the existing lazy widget builders.
+    -- Reading the facade early must not construct Game or a native screen.
+    ui = UIActions.new(function() return loader:_game(true) end, loader, ModUI),
     -- namespaced per mod; M11 backs these with save.modData /
     -- options.modOptions, the shape mods compile against is already final
     save = {
@@ -1127,6 +1128,7 @@ function Loader:_api(mod)
   -- the same reason: a headless load must not drag the world stack in.
   -- Battle capability queries can also be installed before Game exists.
   BattleSnapshots.withCapabilities(api)
+  UIActions.withCapabilities(api)
   -- The Game the facade acts on is still being wired when the entry chunk
   -- runs.  mod.storage is the bulk counterpart to mod.save -- one sandboxed
   -- namespace per mod for payloads too large to belong in a save file.
