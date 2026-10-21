@@ -5,6 +5,7 @@ local T = require('tests.harness')
 local GameVersion = require('src.core.GameVersion')
 local Loader = require('src.mods.Loader')
 local Runtime = require('src.mods.Runtime')
+local WorldAPI = require('src.world.WorldAPI')
 local Schemas = require('src.mods.Schemas')
 local Catalog = require('tests.modkit.catalog')
 local originalEvents, originalHooks, originalErrors = Runtime.events, Runtime.hooks, Runtime.errors
@@ -72,7 +73,9 @@ for _, version in ipairs(GameVersion.ORDER) do
     registries = registries and yes(api, 'content', name)
   end
   T.check(registries, version .. ': all API-2 registration surfaces available')
-  T.check(no(api, 'world', 'flyTo') and no(api, 'hooks', 'core.logic_speed')
+  T.eq(yes(api, 'world', 'flyTo'), type(WorldAPI.flyTo) == 'function',
+    version .. ': additive native flight interface is reported when installed')
+  T.check(no(api, 'hooks', 'core.logic_speed')
       and no(api, 'hooks', 'item.use') and no(api, 'events', 'egg.hatched'),
     version .. ': absent Gen1Recomp API-3 features are not advertised')
   T.check(yes(api, 'events', 'mod.probe.ready') and yes(api, 'events', 'mod.other.ready'),
