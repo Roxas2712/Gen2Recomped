@@ -185,11 +185,11 @@ for _, version in ipairs(GameVersion.ORDER) do
   T.eq(resolves(), 0, label .. "entry can capture facade before Game exists")
   if api.supports then
     T.eq(api:supports("battle", "snapshot"), true, label .. "snapshot capability")
-    T.eq(api:supports("battle", "submit"), false, label .. "no input submission")
+    T.eq(api:supports("battle", "submit"), true, label .. "additive input submission")
     T.eq(resolves(), 0, label .. "probe does not resolve Game")
   end
   T.eq(api.battle, api.battle, label .. "stable facade")
-  T.eq(api.battle.submit, nil, label .. "no mutation method")
+  T.eq(type(api.battle.submit), "function", label .. "additive submit method")
   local no, reason = api.battle:snapshot()
   T.eq(no, nil, label .. "no battle")
   T.eq(reason, "no battle", label .. "no battle reason")

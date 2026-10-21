@@ -1,6 +1,19 @@
--- A data-only view of the shared Gen 1-5 battle. Never call battle/menu,
--- item-effect or preview helpers here: some of those consume RNG or write state.
+-- Detached Gen 1-5 snapshots and revision-bound native command admission.
+-- Snapshot building stays data-only; submit validates before native dispatch.
 local Ids = require("src.mods.UnifiedIds")
+local Intents = require("src.mods.BattleIntents")
+local Commands = require("src.battle.BattleCommands")
+local Runtime = require("src.mods.Runtime")
+-- Native work requested through a facade remains engine work. The buses keep
+-- their existing callback/error attribution; lazy requires must not be blamed
+-- on the requesting mod by the dev-mode permission shim.
+local function enginePcall(fn, ...)
+  local owner = Runtime.currentMod
+  Runtime.currentMod = nil
+  local ok, a, b = pcall(fn, ...)
+  Runtime.currentMod = owner
+  return ok, a, b
+end
 local Snapshots = {}
 
 local STATUS =
@@ -86,6 +99,13 @@ local function at(battle, pos)
 end
 
 local function activeSlot(battle)
+  if battle.phase == "mimicSelect" and battle.mimicCtx then
+    for _, pos in ipairs({ 0, 2 }) do
+      if at(battle, pos) == battle.mimicCtx.user then
+        return pos
+      end
+    end
+  end
   if not battle.double then
     return 0
   end
@@ -427,7 +447,8 @@ function Snapshots.new(gameProvider, loader)
   end
   local facade = {}
   local lastGame, lastBattle, previous, revision = nil, nil, nil, 0
-  function facade:snapshot()
+  local lastRefs, lastControl, lastEpoch, offeredRevision, lastIntentId = nil, nil, nil, nil, 0
+  local function refresh()
     local game = gameProvider()
     local states = game and game.stack and game.stack.states or {}
     local battle, index
@@ -438,17 +459,107 @@ function Snapshots.new(gameProvider, loader)
       end
     end
     if not battle then
-      lastGame, lastBattle, previous = nil, nil, nil
-      return nil, "no battle"
+      lastGame, lastBattle, previous, lastRefs, lastControl, offeredRevision = nil, nil, nil, nil, nil, nil
+      return nil, nil, nil, "no battle"
     end
+    local state = Intents.state(game)
     local out = copy(build(game, battle, index ~= #states, Ids.new(loader)))
-    if game ~= lastGame or battle ~= lastBattle or not equal(out, previous) then
+    local refs, control = Intents.context(game, battle, states[#states], at)
+    control = copy(control)
+    if
+      game ~= lastGame
+      or battle ~= lastBattle
+      or not equal(out, previous)
+      or not Intents.sameRefs(refs, lastRefs)
+      or not equal(control, lastControl)
+      or state.epoch ~= lastEpoch
+    then
       revision = revision + 1
     end
     lastGame, lastBattle, previous = game, battle, out
-    local result = copy(out)
+    lastRefs, lastControl, lastEpoch = refs, control, state.epoch
+    return game, battle, index, state
+  end
+  function facade:snapshot()
+    local game, battle, _, state = refresh()
+    if not battle then
+      return nil, "no battle"
+    end
+    local result = copy(previous)
     result.revision = revision
+    if state.busy then
+      result.prompt = "locked"
+    end
+    offeredRevision = revision
     return result
+  end
+  function facade:submit(raw)
+    local intent, reason = Intents.normalize(raw)
+    if not intent then
+      return nil, reason
+    end
+    if intent.id <= lastIntentId then
+      return nil, "replayed intent"
+    end
+    local game, battle, index, state = refresh()
+    if not battle then
+      return nil, "no battle"
+    end
+    if state.busy then
+      return nil, "battle action is already in progress"
+    end
+    if intent.revision ~= revision then
+      return nil, "stale battle context"
+    end
+    if offeredRevision ~= revision then
+      return nil, "fresh battle snapshot required"
+    end
+    if battle.game ~= game then
+      return nil, "battle does not belong to current Game"
+    end
+    if index ~= #game.stack.states then
+      return nil, "battle menu is covered"
+    end
+    -- The native admission helpers are read-only. Lock during validation too,
+    -- so a mod callback/overridden helper cannot recursively enter submission.
+    local refs, control = lastRefs, lastControl
+    state.busy = true
+    local checked, refusal = enginePcall(Commands.reason, battle, intent)
+    if not checked or refusal then
+      state.busy = false
+      return nil, checked and refusal or "battle validation failed"
+    end
+    local fresh, currentGame, currentBattle = pcall(refresh)
+    if not fresh then
+      state.busy = false
+      return nil, "battle validation failed"
+    end
+    if
+      game ~= currentGame
+      or battle ~= currentBattle
+      or revision ~= intent.revision
+      or not Intents.sameRefs(refs, lastRefs)
+      or not equal(control, lastControl)
+    then
+      state.busy = false
+      return nil, "stale battle context"
+    end
+    -- Consume BEFORE native code: a callback or partial native failure cannot
+    -- replay this ID. Both boundaries invalidate snapshots held by other mods,
+    -- including snapshots observed halfway through an accepted action.
+    lastIntentId, offeredRevision = intent.id, nil
+    state.epoch = state.epoch + 1
+    local ok, accepted, err = enginePcall(Commands.dispatch, battle, intent)
+    state.epoch = state.epoch + 1
+    state.busy = false
+    if not ok then
+      local printable, message = pcall(tostring, accepted)
+      return nil, "battle action failed; intent consumed" .. (printable and ": " .. message or "")
+    end
+    if not accepted then
+      return nil, err or "battle action did not complete; intent consumed"
+    end
+    return true
   end
   return facade
 end
@@ -459,7 +570,7 @@ function Snapshots.withCapabilities(api)
     local supports = api.supports
     function api:supports(surface, name)
       if surface == "battle" then
-        if name == "snapshot" then
+        if name == "snapshot" or name == "submit" then
           return true
         end
         return false, "unknown battle capability: " .. tostring(name)

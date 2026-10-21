@@ -18,7 +18,9 @@ bootstrapping Game. Outside battle it returns `nil, "no battle"`. A UI screen me
 
 If the capability-query extension is installed,
 `mod:supports("battle", "snapshot")` returns true without constructing Game.
-`submit` and other battle capabilities return false with a reason.
+When the [battle action extension](battle-actions-api.md) is installed,
+`mod:supports("battle", "submit")` also returns true. Other battle capabilities
+return false with a reason.
 
 ## Records
 
@@ -103,9 +105,14 @@ pre-advance delay. Party, bag and choice screens above battle stay locked;
 this API does not inspect or drive those screens. Link controllers remain locked.
 Visible messages decode the native revealed glyph buffer through the imported
 charmap and already-loaded Unicode glyph map; this never initializes a font. A prompt is descriptive,
-not an action-permission token. There is no battle input/submission API.
+not an action-permission token. The [battle action extension](battle-actions-api.md) supplies separately validated
+submission; the snapshot's descriptive prompt is not its permission check.
 
-Identical successive snapshot records retain their revision. A change to
+Identical successive snapshot records and action contexts retain their revision.
+The action extension also tracks native controller/selector identity and private
+control flags, so replacement objects can invalidate an otherwise identical
+record. Accepted public actions invalidate all facades on that Game, including
+snapshots observed during native callbacks. A change to
 any exposed data advances it once at the next read; animation clocks and
 interpolated HP alone do not. A different battle or Game also advances it,
 even with identical records. Observing `no battle` invalidates the previous

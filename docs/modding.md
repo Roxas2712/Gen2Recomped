@@ -158,7 +158,9 @@ frame"; the engine draws the vanilla world instead.
 including singles and doubles, or `nil, "no battle"`. It can be captured in
 an entry chunk before Game exists. See [Battle snapshot API](battle-snapshot-api.md)
 for records, revisions, prompt semantics and intentionally omitted previews.
-It reads state only; there is no `submit` method. When capability queries are
+The snapshot reads state only. The [Battle action API](battle-actions-api.md)
+adds validated `mod.battle:submit(intent)` for the native menu, move, target,
+back, Safari and Mimic paths. When capability queries are
 installed, `mod:supports("battle", "snapshot")` reports this interface.
 
 ## Battle sprite scaling
