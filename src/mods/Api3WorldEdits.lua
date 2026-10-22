@@ -130,6 +130,26 @@ local function replace(game, ow, api, gen, req, bx, by, block)
   Runtime.emit("world.block_replaced", { mapId = ow.map.id, bx = bx, by = by, block = block })
   return true
 end
+local function invalidate(game, ow, api, gen, req, mapId)
+  if not identifier(mapId) then
+    return nil, "unknown map"
+  end
+  local maps = game.data and game.data.maps
+  local id = mapId
+  if gen == 3 and maps and not maps[id] then
+    local prefix = ({ ruby = "RU_", sapphire = "SA_", emerald = "EM_" })[Version.get()] or "FR_"
+    if maps[prefix .. id] then
+      id = prefix .. id
+    end
+  end
+  if not (maps and maps[id]) then
+    return nil, "unknown map"
+  end
+  if type(ow.reloadMap) ~= "function" then
+    return nil, "map reload unavailable"
+  end
+  return api:invalidateMap(id)
+end
 -- Shared admission/commit guard for synchronous API-3 world mutations.
 function E.ready(game, ow)
   local ok, reason = Actions.ready(game, ow)
@@ -159,7 +179,7 @@ function E.call(game, api, generation, req, name, ...)
   if not ok then
     return nil, reason
   end
-  local operation = name == "toggleObject" and toggle or replace
+  local operation = name == "toggleObject" and toggle or name == "invalidateMap" and invalidate or replace
   return E.run(game, operation, game, ow, api, generation, req, ...)
 end
 return E
