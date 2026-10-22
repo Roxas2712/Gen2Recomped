@@ -12,11 +12,14 @@ assert(
       or mode == "scaffold"
       or mode == "warp"
       or mode == "world_edits"
+      or mode == "npcs"
     ),
   "invalid worker arguments"
 )
 local codeRoot = (arg[0]:gsub("\\", "/")):match("^(.*)/worker%.lua$")
-if mode == "world_edits" then
+if mode == "npcs" then
+  dofile(codeRoot .. "/npcs.lua").run(root, backend, version)
+elseif mode == "world_edits" then
   dofile(codeRoot .. "/world_edits.lua").run(root, backend, version)
 elseif mode == "warp" then
   dofile(codeRoot .. "/warp.lua").run(root, backend, version)

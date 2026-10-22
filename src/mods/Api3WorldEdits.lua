@@ -130,11 +130,8 @@ local function replace(game, ow, api, gen, req, bx, by, block)
   Runtime.emit("world.block_replaced", { mapId = ow.map.id, bx = bx, by = by, block = block })
   return true
 end
-function E.call(game, api, generation, req, name, ...)
-  local ow = api:overworld()
-  if not ow then
-    return nil, "no overworld"
-  end
+-- Shared admission/commit guard for synchronous API-3 world mutations.
+function E.ready(game, ow)
   local ok, reason = Actions.ready(game, ow)
   if not ok then
     return nil, reason
@@ -142,13 +139,27 @@ function E.call(game, api, generation, req, name, ...)
   if running[game] or ow.gen3Locked or #(ow.parallelRunners or {}) > 0 or #(ow.parallelQueue or {}) > 0 then
     return nil, "world is busy"
   end
+  return true
+end
+function E.run(game, operation, ...)
   running[game] = true
-  local operation = name == "toggleObject" and toggle or replace
-  local called, value, why = pcall(operation, game, ow, api, generation, req, ...)
+  local called, value, why = pcall(operation, ...)
   running[game] = nil
   if not called then
     error(value, 0)
   end
   return value, why
+end
+function E.call(game, api, generation, req, name, ...)
+  local ow = api:overworld()
+  if not ow then
+    return nil, "no overworld"
+  end
+  local ok, reason = E.ready(game, ow)
+  if not ok then
+    return nil, reason
+  end
+  local operation = name == "toggleObject" and toggle or replace
+  return E.run(game, operation, game, ow, api, generation, req, ...)
 end
 return E

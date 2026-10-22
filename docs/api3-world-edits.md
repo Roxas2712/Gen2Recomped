@@ -112,7 +112,7 @@ runs under both production loaders for Red, Blue, Yellow, Gold, Silver,
 Crystal, FireRed and Emerald. Engine-specific setup stays in the shared
 driver, never in the mod. Native-shaped map/render/object seams let the driver
 compare refusal reasons, visibility/flag effects, native block reads, geometry
-and event payloads. The full checker now runs 40 comparisons / 80 isolated
+and event payloads. The full checker now runs 48 comparisons / 96 isolated
 processes, including all previous entry, rollback, generated-starter and warp
 cases.
 
