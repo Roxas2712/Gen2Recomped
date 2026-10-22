@@ -1,9 +1,15 @@
 use std::path::PathBuf;
 fn run() -> gen2_slang_import::Result<()> {
     let mut args = std::env::args_os().skip(1);
-    let preset = PathBuf::from(args.next().ok_or(
-        "usage: gen2-slang-import PRESET.slangp DESTINATION --name NAME [--love EXECUTABLE]",
-    )?);
+    let first = args.next().ok_or("missing command or preset")?;
+    if first == "--request" {
+        let path = PathBuf::from(args.next().ok_or("missing request file")?);
+        if args.next().is_some() {
+            return Err("unexpected request argument".into());
+        }
+        return gen2_slang_import::browser::request(&path);
+    }
+    let preset = PathBuf::from(first);
     let destination = PathBuf::from(
         args.next()
             .ok_or("missing destination shader-presets directory")?,

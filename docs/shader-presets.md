@@ -76,7 +76,7 @@ Two optional uniforms are supplied when the shader uses them:
 Presets must use LÖVE's `effect()` convention and support the target's GLSL
 or GLSL ES dialect. The offline `.slangp` importer described below can generate
 compatible local presets. There is one selected preset; the game loads no
-native compiler or shader-pack downloader.
+in-process native compiler. An optional desktop helper supplies the browser below.
 
 ## Rendering and persistence
 
@@ -122,9 +122,8 @@ It uses synthetic pixels and the engine's fallback font, with no ROM or saves.
 The optional offline importer builds on this preset picker. It uses
 librashader 0.12 (preprocessing, SPIR-V compilation/reflection and GLSL
 emission), adapts both vertex and fragment stages to LÖVE, and writes a
-local preset. The game does not load Rust, invoke a compiler or download
-shader packs. Conversion is a command-line step; there is no `.slangp`
-file picker in the game in this PR.
+local preset. The game never loads a compiler library. The CLI works independently;
+the optional desktop browser runs the same converter as a separate worker process.
 
 Install Rust and LÖVE 11.5 on a desktop with a working graphics display,
 then run from the checkout:
@@ -245,3 +244,60 @@ per-pass sizes, live parameters, alpha, resize/DPI 1/2/2.75, state restoration
 and rejected-candidate rollback against an independent pixel equation.
 Pixels exactly on a nearest-sampling boundary are excluded from that equation
 because GPU floating-point rounding can legitimately choose either neighbor.
+
+### Desktop shader browser
+
+OPTIONS -> SHADER PRESET -> BROWSE SHADERS discovers the pinned handheld
+catalog from [libretro/slang-shaders](https://github.com/libretro/slang-shaders/tree/d21f8a5abaabc4ee061b6c81f6f1255e09aab32a/handheld).
+A downloads and prepares a preset. Once installed, A selects it; installation
+alone preserves the current choice. Unsupported presets show the converter's
+reason. The ordinary picker and built-ins work without network access or a
+converter. Mobile/console builds can use compatible presets converted on a
+desktop; they do not run the optional importer.
+
+Desktop builds look for `shader-tools/gen2-slang-import` (`.exe` on Windows)
+beside the game payload (inside macOS Contents/Resources). Missing helpers show
+an unavailable message. Development builds can copy the locked release binary
+there; no compiler library is loaded into LÖVE. HTTPS acquisition uses system
+curl with fixed URL origins, HTTPS-only redirects and per-file timeouts.
+
+Discovery is user initiated, with no network work at startup or while drawing.
+The catalog is fixed to commit `d21f8a5abaabc4ee061b6c81f6f1255e09aab32a`.
+Every fetched dependency is verified against its Git blob hash. Before invoking
+librashader, a bounded walker resolves preset references, shader includes and
+inherited LUT overrides within that repository tree. Symlinks, absolute/escaping
+paths, cycles, macro/optional includes and ambiguous preset syntax are refused.
+Limits: 128 files, 16 MiB total, 64 KiB per preset, 256 KiB per shader/include,
+8 MiB per PNG, depth 24 and 2 MiB expanded includes per shader. The JSON tree is
+limited to 8 MiB/50,000 entries; the browser lists at most 512 entries. The
+existing converter's graph, parameter, image and GPU limits also apply.
+
+A private `.shader-jobs/` directory holds intermediate files outside discovery.
+The converter emits a prepared graph and waits up to 45 seconds for the running
+application to validate both dialects and draw/read back on its current GPU.
+A fused application never launches itself as a validation child. Only after
+approval does the worker recheck the prepared bytes and publish the descriptor
+last with exclusive file creation. Identical complete imports are reused;
+modified or partial existing artifacts are refused. Existing files are never
+overwritten. Source originals, applicable repository/directory notices and a
+provenance manifest are retained under `shader-presets/sources/`.
+
+Back, native screen exit and application quit request cancellation. Network
+requests have a 15-second deadline; synchronous compiler work completes before
+its next cancellation check. No detached compiler keeps running after its
+worker exits. Cancellation before publication exposes no preset; cancellation
+during publication rolls back owned files. A completed descriptor is a committed
+install. Failures preserve the active effect and saved selection. A process
+interruption can leave private jobs or orphaned source/resources; no partial
+descriptor is intentionally published.
+
+```sh
+luajit tests/engine/shader_browser.lua
+# Optional real HTTPS + native worker + current GPU + repeat/cancel smoke test:
+SHADER_BROWSER_HELPER=/absolute/path/gen2-slang-import love tools/shader-browser-check
+```
+
+This test uses its own LÖVE identity and no cartridge data. Unit tests inject
+bounded transport responses and worker events; live network checks are separate
+from deterministic CI. Desktop conversion does not promise every catalog item
+is supported, nor equivalent execution on mobile hardware.

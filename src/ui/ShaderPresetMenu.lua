@@ -83,6 +83,82 @@ function Menu.new(game, presets)
       end,
     }
   end
+  self.rows[#self.rows + 1] = {
+    label = "BROWSE SHADERS",
+    activate = function()
+      game.stack:push(Menu.browser(game, presets))
+    end,
+  }
+  return self
+end
+function Menu.browser(game, presets, browser)
+  browser = browser or require("src.render.ShaderBrowser").new()
+  local self = setmetatable({
+    game = game,
+    presets = presets,
+    index = 1,
+    scroll = 0,
+    rows = {},
+    browserJob = browser,
+    isBrowser = true,
+  }, Menu)
+  local function listing()
+    self.rows = {}
+    for _, record in ipairs(browser.entries or {}) do
+      local entry = record
+      self.rows[#self.rows + 1] = {
+        label = short(entry.name, 17),
+        value = function()
+          if browser.busy and browser.path == entry.path then
+            return "..."
+          end
+          return browser.installed[entry.path] and "SELECT" or "DOWNLOAD"
+        end,
+        activate = function()
+          if browser.busy then
+            return
+          end
+          local id = browser.installed[entry.path]
+          if id then
+            presets:refresh()
+            local ok, why = presets:select(game.save.options, id)
+            if ok then
+              save(game)
+            else
+              game.stack:push(Menu.message(game, why))
+            end
+          else
+            local ok, why = browser:start("install", entry.path)
+            if not ok then
+              game.stack:push(Menu.message(game, why))
+            end
+          end
+        end,
+      }
+    end
+  end
+  local ok, why = browser:start("catalog")
+  if not ok then
+    return Menu.message(game, why)
+  end
+  self.rows = { {
+    label = "LOADING CATALOG",
+    value = function()
+      return "..."
+    end,
+  } }
+  function self:browserUpdate()
+    browser:poll()
+    if browser.result == "catalog" then
+      listing()
+      browser.result = nil
+    end
+    if browser.error then
+      local reason = browser.error
+      browser.error = nil
+      game.stack:push(Menu.message(game, reason))
+    end
+  end
   return self
 end
 function Menu.message(game, reason)
@@ -100,9 +176,15 @@ function Menu.message(game, reason)
   return self
 end
 function Menu:update()
+  if self.browserUpdate then
+    self:browserUpdate()
+  end
   local input = self.game.input
   local bottom = #self.rows + 1
   if input:wasPressed("b") or input:wasPressed("start") then
+    if self.browserJob then
+      self.browserJob:cancel()
+    end
     self.game.stack:pop()
     return
   end
@@ -121,6 +203,9 @@ function Menu:update()
     local row = self.rows[self.index]
     if not row then
       if input:wasPressed("a") then
+        if self.browserJob then
+          self.browserJob:cancel()
+        end
         self.game.stack:pop()
       end
     elseif row.step then
@@ -131,8 +216,14 @@ function Menu:update()
   end
   self.scroll = OptionRows.clampScroll(self.index, self.scroll, #self.rows, bottom)
 end
+function Menu:exit()
+  if self.browserJob then
+    self.browserJob:cancel()
+  end
+end
 function Menu:draw()
   local footer = self.isMessage and "BACK"
+    or (self.isBrowser and (self.browserJob.busy and "BACK / WORKING" or "BACK / A SELECT"))
     or (self.isParameters and "BACK / SEL RESET" or "BACK / SEL PARAMS")
   OptionRows.draw(self.game, self.rows, self.index, self.scroll, footer, #self.rows + 1)
 end

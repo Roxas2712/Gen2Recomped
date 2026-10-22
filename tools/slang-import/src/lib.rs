@@ -19,7 +19,7 @@ use sha2::{Digest, Sha256};
 use std::{
     error::Error,
     fs::{self, OpenOptions},
-    io::Write,
+    io::{Read, Write},
     path::{Path, PathBuf},
     process::Command,
 };
@@ -140,7 +140,7 @@ fn adapt(
                 return Err(format!("unknown uniform: {name}").into());
             };
             if binding != "transform_projection" {
-                declarations.push_str(&format!("uniform {ty} {binding};\n"));
+                declarations.push_str(&format!("uniform highp {ty} {binding};\n"));
             }
             s = replace_word(&s, &qualified, &binding);
         }
@@ -175,7 +175,7 @@ fn adapt(
     bindings.extend((0..textures).map(|i| format!("g2_Lut{i}")));
     for name in bindings {
         if rx(&format!(r"\b{name}\b")).is_match(&s) {
-            declarations.push_str(&format!("uniform Image {name};\n"));
+            declarations.push_str(&format!("uniform highp Image {name};\n"));
         }
     }
     if vertex {
@@ -344,7 +344,10 @@ pub fn convert(path: &Path, name: &str) -> Result<Converted> {
         if fs::metadata(&t.path)?.len() > 8 * 1024 * 1024 {
             return Err("LUT file too large".into());
         }
-        let bytes = fs::read(&t.path)?;
+        let mut bytes = Vec::new();
+        fs::File::open(&t.path)?
+            .take(8 * 1024 * 1024 + 1)
+            .read_to_end(&mut bytes)?;
         pixels += png_pixels(&bytes)?;
         if pixels > 8 * 1024 * 1024 {
             return Err("LUT pixel budget exceeded".into());
@@ -414,7 +417,7 @@ fn png_pixels(bytes: &[u8]) -> Result<u64> {
 
 /// Descriptor and all referenced resources, with a deterministic closed basename namespace.
 type Bundle = (Value, Vec<(String, Vec<u8>)>);
-fn bundle(c: &Converted, stem: &str, force_graph: bool) -> Result<Bundle> {
+pub(crate) fn bundle(c: &Converted, stem: &str, force_graph: bool) -> Result<Bundle> {
     let mut meta = c.metadata.clone();
     let mut files = Vec::new();
     let mut passes = Vec::new();
@@ -503,6 +506,10 @@ pub fn preflight(converted: &Converted, love: &Path) -> Result<()> {
 /// Content-addressed, create-new-only files, descriptor published last.
 /// An interrupted import cannot expose a descriptor with partial source files.
 pub fn publish(converted: &Converted, destination: &Path) -> Result<PathBuf> {
+    publish_checked(converted, destination, || Ok(()))
+}
+type Publication = (String, Vec<(String, Vec<u8>)>);
+fn publication(converted: &Converted) -> Result<Publication> {
     let mut hash = Sha256::new();
     hash.update(converted.metadata.to_string());
     for p in &converted.passes {
@@ -525,11 +532,33 @@ pub fn publish(converted: &Converted, destination: &Path) -> Result<PathBuf> {
         return Err("descriptor exceeds 16 KiB".into());
     }
     files.push((format!("{stem}.json"), descriptor));
+    Ok((stem.to_string(), files))
+}
+pub(crate) fn existing(converted: &Converted, destination: &Path) -> Option<PathBuf> {
+    let (stem, files) = publication(converted).ok()?;
+    for (name, bytes) in files {
+        let f = fs::File::open(destination.join(name)).ok()?;
+        let mut read = Vec::new();
+        f.take(bytes.len() as u64 + 1).read_to_end(&mut read).ok()?;
+        if bytes != read {
+            return None;
+        }
+    }
+    Some(destination.join(format!("{stem}.json")))
+}
+pub(crate) fn publish_checked<F: FnMut() -> Result<()>>(
+    converted: &Converted,
+    destination: &Path,
+    mut check: F,
+) -> Result<PathBuf> {
+    check()?;
+    let (stem, files) = publication(converted)?;
     fs::create_dir_all(destination)?;
     let path = destination.join(format!("{stem}.json"));
     let mut created = Vec::new();
     let result = (|| -> Result<PathBuf> {
         for (name, contents) in &files {
+            check()?;
             let p = destination.join(name);
             let mut f = OpenOptions::new().write(true).create_new(true).open(&p)?;
             created.push(p);
@@ -545,3 +574,5 @@ pub fn publish(converted: &Converted, destination: &Path) -> Result<PathBuf> {
     }
     result
 }
+
+pub mod browser;
