@@ -5,6 +5,7 @@ local Runtime = require("src.mods.Runtime")
 local Flags = require("src.mods.Api3Flags")
 local State = require("src.mods.ScriptState")
 local Gifts = require("src.mods.ScriptGifts")
+local Battles = require("src.mods.ScriptBattles")
 local Travel = require("src.mods.ScriptTravel")
 local Movement = require("src.mods.ScriptMovement")
 local WorldEdits = require("src.mods.ScriptWorldEdits")
@@ -191,6 +192,38 @@ local function facade(loader, modId, native)
   -- a new observer into a live hook chain could replay its current wrapper.
   observe(loader)
   local world, active = {}, nil
+  local nativeGame, nativeWorld
+  local function battleWorld(game)
+    if nativeGame ~= game then
+      nativeWorld = require("src.world.WorldAPI").new(game, modId)
+      nativeGame = game
+    end
+    return nativeWorld
+  end
+  local startWild = require("src.mods.Api3WildBattle").new(
+    loader,
+    modId,
+    function()
+      return current(loader)
+    end,
+    battleWorld,
+    licensed,
+    require,
+    function(game, ow)
+      if
+        active
+        and runs[game] == active
+        and not active.done
+        and active.world == ow
+        and ow.runner == active.runner
+        and game.stack:top() == ow
+        and active.valid()
+      then
+        return true
+      end
+      return nil, "portable script does not own this world"
+    end
+  )
   local function queue(rows, options)
     if not licensed() then
       return nil, "script facade is retired"
@@ -245,6 +278,10 @@ local function facade(loader, modId, native)
     local gift, giftReason = Gifts.prepare(loader, game, ow, program)
     if not gift then
       return nil, giftReason
+    end
+    local battleOK, battleReason = Battles.prepare(loader, game, ow, program, flag)
+    if not battleOK then
+      return nil, battleReason
     end
     local travel, travelReason = Travel.prepare(game, ow, modId, program)
     if not travel then
@@ -424,7 +461,7 @@ local function facade(loader, modId, native)
       return state
     end
     discover = function(before, step)
-      if token.done or token.step ~= step or token.travel then
+      if token.done or token.step ~= step or token.travel or token.battling then
         return
       end
       for _, state in ipairs(game.stack.states) do
@@ -552,6 +589,84 @@ local function facade(loader, modId, native)
       token.waitingUI = menu
       game.stack:push(menu)
       runner:yield()
+    end
+    local function battle(ctx, row)
+      local verb = row[1]
+      if verb == "check_battle_result" then
+        ctx.lastCheck = false
+        for i = 2, #row do
+          if row[i] == ctx.lastBattleResult then
+            ctx.lastCheck = true
+          end
+        end
+        return
+      end
+      local species, level = row[2], row[3]
+      if verb == "start_battle" then
+        species, level = row[3], row[4]
+      end
+      local step, complete, result = token.step, false, nil
+      token.battling = true
+      local ok, why = startWild(species, level, function(outcome, failure)
+        if complete or token.step ~= step or not check() then
+          return
+        end
+        if not Battles.outcomes[outcome] then
+          token.finish(false, failure or "invalid native battle result")
+          return
+        end
+        complete, result = true, outcome
+      end)
+      if not ok then
+        token.battling = nil
+        error(why, 0)
+      end
+      if not check() then
+        return
+      end
+      if not complete then
+        runner.waitingCheck = function()
+          return complete
+        end
+        runner:yield()
+      end
+      token.battling = nil
+      if not check() then
+        return
+      end
+      ctx.lastBattleResult, ctx.lastCheck = result, result == "win"
+      if verb == "static_battle" and result ~= "lose" then
+        if row[4] ~= nil then
+          local value, reason = flag(row[4], true, true)
+          if not value then
+            error(reason, 0)
+          end
+        end
+        if not check() then
+          return
+        end
+        local npc = movement.npc
+        local def = npc and npc.def
+        local ref = def and (def.name or def.localId or def.index or def.id)
+        if ref then
+          local value, reason = require("src.mods.ScriptWorldEdits").prepare(
+            game,
+            ow,
+            modId,
+            { { "hide_object", ow.map.id, ref } }
+          )
+          if not value then
+            error(reason, 0)
+          end
+          local accepted, detail = value({ "hide_object", ow.map.id, ref }, mutate)
+          if not check() then
+            return
+          end
+          if not accepted then
+            error(detail, 0)
+          end
+        end
+      end
     end
     local function warp(ctx, row)
       local plan, reason = travel(row)
@@ -842,7 +957,9 @@ local function facade(loader, modId, native)
         token.step = {}
         self.lastRow = verb .. " (portable row " .. pc .. ")"
         ctx.script, ctx.pc = compiled, pc
-        if Travel.ARITY[verb] then
+        if Battles.ARITY[verb] then
+          battle(ctx, row)
+        elseif Travel.ARITY[verb] then
           warp(ctx, row)
         elseif Movement.ARITY[verb] then
           move(ctx, row)

@@ -47,7 +47,7 @@ local function observe(loader)
     return unpack(result, 2, result.n)
   end, math.huge, "engine:api3_wild_battle")
 end
-function B.new(loader, owner, current, native, licensed, req)
+function B.new(loader, owner, current, native, licensed, req, ownedReady)
   local ids = Ids.new(loader)
   observe(loader)
   return function(species, level, callback)
@@ -62,7 +62,7 @@ function B.new(loader, owner, current, native, licensed, req)
     if not ow then
       return nil, "no overworld"
     end
-    local ok, reason = Edits.ready(game, ow)
+    local ok, reason = (ownedReady or Edits.ready)(game, ow)
     if not ok then
       return nil, reason
     end
@@ -138,6 +138,9 @@ function B.new(loader, owner, current, native, licensed, req)
       local called, err = pcall(ow.afterBattle, ow, (...), battle)
       if not called then
         Runtime.reportError(owner, "world battle cleanup failed: " .. text(err))
+        if ownedReady and valid and fn then
+          pcall(fn, nil, "native battle cleanup failed: " .. text(err))
+        end
         return
       end
       if valid and licensed() and live() and fn then
@@ -155,6 +158,9 @@ function B.new(loader, owner, current, native, licensed, req)
       battle = req("src.battle.BattleState").newWild(game, key, level)
       if not battle or battle.dead then
         return nil, "battle failed"
+      end
+      if not token.valid() or ownedReady and not ownedReady(game, ow) then
+        return nil, "battle session changed"
       end
       battle.onFinish = finish
       local value, detail = ow:pushBattle(battle)

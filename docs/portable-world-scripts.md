@@ -353,3 +353,33 @@ The transition belongs to the engine: unloading or timing out a portable
 script leaves the already admitted native warp free to finish and release
 its own locks. It suppresses the script continuation, rather than undoing
 committed native travel or removing the engine's transition screen.
+
+## Wild and static battles
+
+Gen1–3 accept `start_battle("wild", speciesId, level)`,
+`static_battle(speciesId, level, beatFlag?)` and
+`check_battle_result(result, ...)` (1–4 of `win`, `lose`, `run`, `caught`).
+Species IDs are canonical strings. Levels are whole numbers 1–100.
+All species references and optional beat flags are checked before any
+prefix runs. Healthy-party admission is checked at dispatch, so an earlier
+`heal_party` can repair the party before the encounter.
+
+The private script admission guard reuses the public wild-battle adapter,
+native constructors, entry transition and `afterBattle`. Ordinary public
+calls retain idle-world admission. A static encounter sets its optional
+beat flag and hides the talking NPC on win, catch or flee; loss skips both.
+Result checks set the condition used by `jump_if_true`/`jump_if_false`.
+The foreground continuation waits behind native post-battle and foreign UI.
+
+Cancelling/unloading suppresses the script continuation while preserving
+native battle screens and native cleanup for the same live game/save.
+Changed sessions suppress that old-session cleanup. Native constructor,
+admission and cleanup errors fail the script; late callbacks are one-shot.
+No rollback of already committed battle effects is implied.
+
+Private beat flags use this host's same namespaced flag service on every
+generation. The pinned Gen1 reference delegates Gen1 static encounters to
+its native command, which does not route private beat flags through that
+namespace. The shared Gen1 static cases therefore exercise a real native
+beat flag; host-specific private-flag behavior has separate coverage.
+Trainer encounters remain a separate follow-up to this wild/static slice.
