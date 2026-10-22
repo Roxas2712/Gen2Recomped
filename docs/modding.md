@@ -46,7 +46,8 @@ Additional read-only world summaries: [map overview and encounter queries](world
 The [API-3 entry and cross-engine contracts](api3-portability.md) describe
 using the same manifest and mod source on Gen1Recomp and Gen2Recomped.
 API 3 selects the unified adapters automatically; API 1/2 keep their defaults.
-See [API-3 world warps](api3-warp.md) for validated map transitions and callback lifetime.
+See [API-3 world warps](api3-warp.md) for validated map transitions and callback lifetime,
+and [API-3 object/block edits](api3-world-edits.md) for native visibility and terrain changes.
 
 ## Feature queries (`mod:supports`)
 

@@ -6,11 +6,19 @@ assert(
   root
     and backend
     and version
-    and (mode == "normal" or mode == "rollback" or mode == "scaffold" or mode == "warp"),
+    and (
+      mode == "normal"
+      or mode == "rollback"
+      or mode == "scaffold"
+      or mode == "warp"
+      or mode == "world_edits"
+    ),
   "invalid worker arguments"
 )
 local codeRoot = (arg[0]:gsub("\\", "/")):match("^(.*)/worker%.lua$")
-if mode == "warp" then
+if mode == "world_edits" then
+  dofile(codeRoot .. "/world_edits.lua").run(root, backend, version)
+elseif mode == "warp" then
   dofile(codeRoot .. "/warp.lua").run(root, backend, version)
 else
   dofile(codeRoot .. "/run.lua").run(root, backend, version, mode == "rollback", mode == "scaffold")
