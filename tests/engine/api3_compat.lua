@@ -134,6 +134,7 @@ do
   T.eq(type(world.party), "function", "early world method callable")
   T.eq(type(battle.snapshot), "function", "early battle method callable")
   for _, name in ipairs({
+    "startWildBattle",
     "spawnNpc",
     "removeNpc",
     "npc",
@@ -151,7 +152,6 @@ do
     T.eq(m:supports("world", name), true, "implemented world method " .. name)
   end
   for _, name in ipairs({
-    "startWildBattle",
     "invalidateMap",
   }) do
     local available, why = m:supports("world", name)

@@ -14,6 +14,7 @@ local ModUI = require("src.ui.ModUI")
 local PortableScripts = require("src.mods.PortableScripts")
 local Api3Warp = require("src.mods.Api3Warp")
 local Api3NPC = require("src.mods.Api3NPC")
+local Api3WildBattle = require("src.mods.Api3WildBattle")
 local AssetTransform = require("src.mods.AssetTransform")
 local Manifest = require("src.mods.Manifest")
 local Merge = require("src.mods.Merge")
@@ -1267,6 +1268,7 @@ end
 -- migration it took goes with them.  The journal only exists around an
 -- entry chunk; a later failure (script validation) purges every registry.
 function Loader:_rollback(modId)
+  Api3WildBattle.cancelAll(self, modId)
   Api3NPC.cancelAll(self, modId)
   Api3Warp.cancelAll(self, modId)
   PortableScripts.cancelAll(self, modId, "mod rolled back")
@@ -1384,6 +1386,7 @@ local function stampAudioOwners(data, name, registry)
 end
 
 function Loader:load(data)
+  Api3WildBattle.cancelAll()
   Api3NPC.cancelAll()
   Api3Warp.cancelAll()
   PortableScripts.cancelAll(nil, nil, "mods reloaded")
@@ -1730,6 +1733,7 @@ end
 -- boots) ran on a modded engine whose mod instance nothing drives any more,
 -- and the next Play loaded every mod on top of what the last one left.
 function Loader.teardown()
+  Api3WildBattle.cancelAll()
   Api3NPC.cancelAll()
   Api3Warp.cancelAll()
   PortableScripts.cancelAll(nil, nil, "mods unloaded")
