@@ -460,4 +460,30 @@ The reference Gen3 resolver can return an unknown string unchanged; this
 host requires a real definition before admission. Missing audio data is
 therefore a preflight failure; a muted/unavailable device keeps the native
 headless playback behavior. Already started audio remains engine-owned on
-script cancellation. Dialogue-bound cries/fanfares are a separate slice.
+script cancellation. Dialogue-bound cues are described below.
+
+
+### Deferred dialogue audio
+
+`play_cry(canonicalSpecies, waitForButton?)`, `text_sound(id)` and
+`engage_music(id)` arm the next `show_text` or `ask`, rather than playing
+while its text types. Species and native cue assets are checked before any
+row runs, at arm time, at box creation and again at playback. Native numeric
+cry identities are resolved through canonical species names. Unknown assets
+fail admission; muted devices retain native no-source behavior.
+
+The native TextBox waits for returned sources, with its 600-frame ceiling.
+An ordinary cry auto-closes after playback; `waitForButton=true` retains the
+button wait. Text sounds and engage-only music retain the button wait.
+Engage music starts once, after sound completion or the native ceiling.
+Questions always wait for audio before opening their native choice box.
+Gen3 sequence text cues use the native fanfare music duck controller.
+
+Retained callbacks cannot replay cues after the box closes, beneath a foreign
+overlay or after the script retires. Reentrant unload during playback aborts
+the native update before it can pop an unrelated UI state. Already started
+sources remain engine-owned. A combined cry and text sound plays both on this
+host; the reference Gen1 opts merge drops the text sound in that combination.
+Shared cases deliberately verify individual cues, not that reference defect.
+They drive real native dialogue controls with synthetic font/text data and
+a fake audio-device clock; they do not claim imported-ROM or PCM equivalence.

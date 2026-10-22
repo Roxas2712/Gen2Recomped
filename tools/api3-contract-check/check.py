@@ -50,7 +50,7 @@ def main():
                         for path in (scaffold_root / "mods/portable").iterdir()
                         if path.is_file()}
     for version in VERSIONS:
-        for mode in ("normal", "rollback", "scaffold", "warp", "world_edits", "npcs", "wild_battle", "invalidate", "flags", "script_flags", "script_state", "script_gifts", "script_world", "script_motion", "script_travel", "script_battles", "script_trainers", "script_shops", "script_audio"):
+        for mode in ("normal", "rollback", "scaffold", "warp", "world_edits", "npcs", "wild_battle", "invalidate", "flags", "script_flags", "script_state", "script_gifts", "script_world", "script_motion", "script_travel", "script_battles", "script_trainers", "script_shops", "script_audio", "script_dialogue_audio"):
             values = {}
             for backend, engine in (("gen1", gen1), ("gen2", gen2)):
                 source = scaffold_root if mode == "scaffold" else fixtures
