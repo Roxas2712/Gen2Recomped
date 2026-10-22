@@ -55,7 +55,7 @@ fn compiles_both_stages_and_dialects_with_includes_and_overrides() {
     assert_eq!(c.metadata["parameters"][1]["id"], "unused");
     assert_eq!(c.metadata["filter"], "nearest");
     assert_eq!(c.metadata["wrap"], "clamp");
-    for pair in c.sources.as_chunks::<2>().0 {
+    for pair in c.passes[0].sources.as_chunks::<2>().0 {
         assert!(pair[0].contains("vec4 effect("));
         assert!(pair[1].contains("vec4 position("));
         assert!(pair[0].contains("g2_p_gain"));
@@ -74,13 +74,13 @@ fn rejects_unsupported_pass_graph_formats_scaling_and_bad_metadata() {
     let t = Scratch::new();
     fs::write(t.0.join("probe.png"), "").unwrap();
     for (extra, error) in [
-        ("shaders=2", "single-pass"),
+        ("shaders=9", "eight"),
         ("textures=lut\nlut=probe.png", "LUT"),
         ("float_framebuffer0=true", "framebuffer"),
         ("srgb_framebuffer0=true", "framebuffer"),
         ("mipmap_input0=true", "mipmap"),
-        ("scale_type0=source\nscale0=2.0", "scaling"),
-        ("scale_type0=absolute\nscale0=64", "scaling"),
+        ("scale_type0=source\nscale0=9.0", "scaling"),
+        ("scale_type0=absolute\nscale0=9000", "scaling"),
         ("parameters=gain\ngain=2.0", "parameter range"),
     ] {
         assert!(
@@ -161,5 +161,91 @@ fn failed_cli_preflight_preserves_existing_destination() {
     assert_eq!(
         fs::read_to_string(destination.join("keep.json")).unwrap(),
         "existing preset"
+    );
+}
+
+#[test]
+fn graph_converts_source_original_earlier_pass_and_lut_in_both_dialects() {
+    let c = convert(&fixture("graph.slangp"), "GRAPH").unwrap();
+    assert_eq!(c.metadata["format"], 3);
+    assert_eq!(c.passes.len(), 3);
+    assert_eq!(c.textures.len(), 1);
+    for i in [0, 2] {
+        let s = &c.passes[2].sources[i];
+        for name in [
+            "g2_Source",
+            "g2_Original",
+            "g2_Pass0",
+            "g2_Lut0",
+            "g2_SourceSize",
+            "g2_OriginalSize",
+            "g2_Pass0Size",
+            "g2_OutputSize",
+            "g2_FinalViewportSize",
+        ] {
+            assert!(s.contains(name), "{name}");
+        }
+    }
+    assert_eq!(c.passes[1].metadata["scaleX"]["type"], "source");
+    assert_eq!(c.passes[1].metadata["scaleX"]["value"], 2.0);
+    let t = Scratch::new();
+    let path = publish(&c, &t.0).unwrap();
+    let meta: serde_json::Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    assert_eq!(fs::read_dir(&t.0).unwrap().count(), 14);
+    for p in meta["passes"].as_array().unwrap() {
+        for key in ["shader", "vertex", "esShader", "esVertex"] {
+            assert!(t.0.join(p[key].as_str().unwrap()).is_file());
+        }
+    }
+    assert_eq!(
+        fs::read(t.0.join(meta["textures"][0]["image"].as_str().unwrap())).unwrap(),
+        c.textures[0].bytes
+    );
+}
+#[test]
+fn bounded_scaling_and_unsupported_lut_and_parameter_conflicts() {
+    let t = Scratch::new();
+    for extra in [
+        "scale_type0=source\nscale0=2",
+        "scale_type0=original\nscale0=0.5",
+        "scale_type0=absolute\nscale0=64",
+    ] {
+        let c = convert(&t.preset(extra), "SCALE").unwrap();
+        assert_eq!(c.metadata["format"], 3);
+    }
+    let text = fs::read_to_string(fixture("graph.slangp")).unwrap();
+    for name in [
+        "graph-first.slang",
+        "graph-middle.slang",
+        "graph-last.slang",
+        "tint.png",
+    ] {
+        fs::copy(fixture(name), t.0.join(name)).unwrap();
+    }
+    for bad in [
+        text.replace("Tint_mipmap=false", "Tint_mipmap=true"),
+        text.replace("shader2=graph-last.slang", "shader2=bad.slang"),
+    ] {
+        let shader = fs::read_to_string(fixture("graph-last.slang"))
+            .unwrap()
+            .replace("PassOutput0", "PassOutput2");
+        fs::write(t.0.join("bad.slang"), shader).unwrap();
+        fs::write(t.0.join("bad.slangp"), bad).unwrap();
+        assert!(convert(&t.0.join("bad.slangp"), "BAD").is_err());
+    }
+    fs::write(
+        t.0.join("graph-middle.slang"),
+        fs::read_to_string(fixture("graph-first.slang"))
+            .unwrap()
+            .replace("0.5 0.0", "0.8 0.0"),
+    )
+    .unwrap();
+    fs::write(t.0.join("bad.slangp"), text).unwrap();
+    assert!(
+        convert(&t.0.join("bad.slangp"), "BAD")
+            .err()
+            .unwrap()
+            .to_string()
+            .contains("conflicting")
     );
 }

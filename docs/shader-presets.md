@@ -149,7 +149,7 @@ librashader. Before writing any preset files it validates both GL 1.20 and
 GLES 1.00 shader pairs with LÖVE, compiles the current GPU's pair, checks
 parameter/size/sampler uniforms and NPOT wrapping, and renders/reads back a
 small test target. A failed conversion or preflight leaves the destination
-untouched. Success writes four GLSL files and one JSON descriptor, with
+untouched. Success writes four GLSL files per pass, optional PNG LUTs and one JSON descriptor, with
 content-derived names and exclusive file creation. Existing files are never
 overwritten; a duplicate import reports an error. Sources are synced before
 the descriptor is written; a handled write failure removes only that import's
@@ -159,17 +159,17 @@ Keep the original shader pack and its licence notices; converted shaders
 remain subject to their original licences. No third-party shader pack is
 bundled here.
 
-This first importer intentionally supports a bounded subset:
+The importer supports a bounded subset:
 
-- One pass with default output scaling or explicit viewport scaling of 1x.
-- `Source`/`Original` samplers, `SourceSize`/`OriginalSize`, `OutputSize`,
+- One to eight ordered passes and up to eight PNG LUTs. Intermediate passes default to source 1x; the final pass defaults to viewport 1x. Explicit source, original, viewport (1/64x to 8x) and absolute (1 to 8192) scaling are supported per axis.
+- Separate `Source`/`Original`, strictly earlier `PassOutputN` and named LUT samplers and their size uniforms, `OutputSize`,
   `FinalViewportSize`, the vertex MVP and up to eight scalar parameters,
   including preset overrides. Optimized-out parameters remain editable but
   have no GPU uniform to send.
 - Nearest/linear sampling and clamp-to-border, clamp-to-edge, repeat or
   mirrored-repeat addressing when supported by the target GPU.
-- Normal RGBA8 output. LUTs, multipass graphs, history/feedback textures,
-  mipmaps, float/sRGB targets, other scaling, temporal/sensor/HDR uniforms,
+- Normal RGBA8 output. History/feedback textures,
+  mipmaps, float/sRGB targets, temporal/sensor/HDR uniforms,
   unsigned arithmetic and other unsupported GLSL interfaces are rejected.
 
 LCD3x and zfast LCD are examples of this subset. Import success is not a
@@ -208,3 +208,40 @@ source/output sizes, wrapping/filtering, alpha, resize/DPI 1/2/2.75 and failed
 selection rollback. If the directory also contains imports named `LCD3X` and
 `ZFAST LCD`, it compares their real output with independent CPU equations.
 `SLANG_IMPORT_CHECK_SHOT=/absolute/path.png` exports a comparison sheet.
+
+### Format-3 pass graphs
+
+Multipass, LUT or nonlegacy scaling imports use `format: 3` with `passes`
+and `textures` arrays. Each pass holds the four stage filenames, filter,
+wrap and `scaleX`/`scaleY` objects (`type`, `value`). LUT records hold `id`,
+`image`, `filter` and `wrap`. Filenames are closed basenames; no executable
+metadata is loaded. Shared parameters keep their existing IDs and save keys;
+conflicting definitions across passes are rejected.
+
+The runtime compiles both GL/GLES dialects and draws/reads back the complete
+graph before replacing a working effect. All canvases and LUT images are
+private. Pass sampling settings affect only private rendered inputs; LUTs
+retain their own filter/wrap. Original always means the reconstructed native
+primary view; Source is the previous pass. The final result is copied to the
+primary view's logical size/DPI. Borrowed inputs and the caller's graphics
+state are preserved. Resize, OFF, replacement and render failure release
+owned resources; render failure returns the unfiltered input.
+
+Before allocation, each frame checks GPU dimension limits and a 32-million
+aggregate pixel budget (RGBA8 targets plus LUT pixels). LUTs must be 8-bit
+PNG, at most 8 MiB compressed each, 2048 per axis and eight million pixels
+combined; header limits precede native decoding. These bounds refuse expensive
+presets rather than silently downscaling them. This is a spatial RGBA8 subset,
+not full RetroArch compatibility.
+
+```sh
+# Import graph.slangp as GRAPH, then:
+luajit tests/engine/shader_graph.lua
+SHADER_GRAPH_CHECK_DIR=/absolute/path/to/test-presets love tools/shader-graph-check
+```
+
+The graph GPU probe checks separate Original/Source/earlier-pass/LUT values,
+per-pass sizes, live parameters, alpha, resize/DPI 1/2/2.75, state restoration
+and rejected-candidate rollback against an independent pixel equation.
+Pixels exactly on a nearest-sampling boundary are excluded from that equation
+because GPU floating-point rounding can legitimately choose either neighbor.

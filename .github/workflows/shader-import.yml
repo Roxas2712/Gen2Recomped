@@ -6,6 +6,9 @@ on:
       - 'tools/slang-import/**'
       - 'tools/slang-import-check/**'
       - 'src/render/ShaderPresets.lua'
+      - 'src/render/ShaderGraph.lua'
+      - 'tools/shader-graph-check/**'
+      - 'tests/engine/shader_graph.lua'
       - 'tests/engine/slang_presets.lua'
   push:
     branches: [main, dev]
@@ -14,6 +17,9 @@ on:
       - 'tools/slang-import/**'
       - 'tools/slang-import-check/**'
       - 'src/render/ShaderPresets.lua'
+      - 'src/render/ShaderGraph.lua'
+      - 'tools/shader-graph-check/**'
+      - 'tests/engine/shader_graph.lua'
       - 'tests/engine/slang_presets.lua'
 permissions:
   contents: read
@@ -48,8 +54,9 @@ jobs:
         run: |
           destination="$RUNNER_TEMP/slang-presets"
           mkdir -p "$destination"
-          for name in probe wrap; do
+          for name in probe wrap graph; do
             xvfb-run -a tools/slang-import/target/release/gen2-slang-import \
               "tools/slang-import/fixtures/$name.slangp" "$destination" --name "${name^^}"
           done
           SLANG_IMPORT_CHECK_DIR="$destination" xvfb-run -a love tools/slang-import-check
+          SHADER_GRAPH_CHECK_DIR="$destination" xvfb-run -a love tools/shader-graph-check
