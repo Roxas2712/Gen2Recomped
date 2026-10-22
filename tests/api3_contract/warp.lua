@@ -8,7 +8,8 @@ local function read(path)
   f:close()
   return value
 end
-function M.fixture(root, backend, version)
+function M.fixture(root, backend, version, modId)
+  modId = modId or "warp"
   local Version = require("src.core.GameVersion")
   local Runtime = require("src.mods.Runtime")
   Version.set(version)
@@ -32,7 +33,7 @@ function M.fixture(root, backend, version)
   end
   local files = {}
   for _, name in ipairs({ "manifest.json", "main.lua" }) do
-    files["mods/warp/" .. name] = read(root .. "/mods/warp/" .. name)
+    files["mods/" .. modId .. "/" .. name] = read(root .. "/mods/" .. modId .. "/" .. name)
   end
   local fs = {
     read = function(path)
@@ -45,12 +46,12 @@ function M.fixture(root, backend, version)
       if files[path] then
         return { type = "file", size = #files[path] }
       end
-      if path == "mods" or path == "mods/warp" then
+      if path == "mods" or path == "mods/" .. modId then
         return { type = "directory" }
       end
     end,
     getDirectoryItems = function(path)
-      return path == "mods" and { "warp" } or {}
+      return path == "mods" and { modId } or {}
     end,
   }
   local loader = require("src.mods.Loader").new({ fs = fs, dev = false, generation = gen, version = version })
@@ -60,7 +61,7 @@ function M.fixture(root, backend, version)
     return f.live
   end
   assert(loader:load(data), table.concat(loader.errors, "; "))
-  f.exports = assert(loader.exports.warp)
+  f.exports = assert(loader.exports[modId])
   local save = { party = {}, flags = {}, modData = {} }
   local player = { cellX = 0, cellY = 0, facing = "left" }
   local ow = {

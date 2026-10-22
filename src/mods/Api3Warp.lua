@@ -96,7 +96,7 @@ function W.new(loader, owner, generation, current, native)
     return contexts[loader] == context and context.owners[owner] == lease
   end
   observe(loader)
-  return function(mapId, x, y, facing, options)
+  local function warp(mapId, x, y, facing, options)
     if not licensed() then
       return nil, "warp facade is retired"
     end
@@ -244,5 +244,7 @@ function W.new(loader, owner, generation, current, native)
     end
     return true
   end
+  -- Synchronous API-3 edits share this owner lease and loader lifecycle.
+  return warp, licensed
 end
 return W

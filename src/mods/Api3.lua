@@ -3,6 +3,7 @@
 local Records = require("src.mods.Api3Records")
 local Runtime = require("src.mods.Runtime")
 local Warp = require("src.mods.Api3Warp")
+local Edits = require("src.mods.Api3WorldEdits")
 local copy = require("src.mods.Merge").deepCopy
 local A = {}
 local WORLD = [[overworld current activeBlockAt party canReorderParty reorderParty
@@ -13,7 +14,7 @@ local SUPPORTED = {}
 for name in
   ([[overworld current activeBlockAt party canReorderParty reorderParty
  availableFieldActions useFieldAction canFly flyTo mapOverview effectiveEncounters
- setFlag getFlag liveMaps queueScript warpTo]]):gmatch("%S+")
+ setFlag getFlag liveMaps queueScript warpTo toggleObject replaceBlock]]):gmatch("%S+")
 do
   SUPPORTED[name] = true
 end
@@ -79,7 +80,10 @@ function A.install(api, loader, readContext, overviewContext, engineRequire)
     end
     return nativeWorld
   end
-  local warp = supportedGeneration and Warp.new(loader, api.id, gen, current, native)
+  local warp, licensed
+  if supportedGeneration then
+    warp, licensed = Warp.new(loader, api.id, gen, current, native)
+  end
   local function dispatch(name, ...)
     if not supportedGeneration or not SUPPORTED[name] then
       return nil, "unsupported: API 3 world method " .. name
@@ -87,9 +91,16 @@ function A.install(api, loader, readContext, overviewContext, engineRequire)
     if name == "warpTo" then
       return warp(...)
     end
+    local edit = name == "toggleObject" or name == "replaceBlock"
+    if edit and not licensed() then
+      return nil, "world facade is retired"
+    end
     local game = current()
     if not game then
       return nil, "no game"
+    end
+    if edit then
+      return Edits.call(game, native(game), gen, engineRequire, name, ...)
     end
     if name == "setFlag" or name == "getFlag" then
       if not game.save then

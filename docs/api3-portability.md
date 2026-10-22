@@ -77,11 +77,13 @@ The common world calls currently enabled for generations 1–3 are:
   `canFly`, `flyTo`;
 - `getFlag`/`setFlag` for private `mod:<key>` boolean flags;
 - `queueScript` for the existing bounded portable script language;
-- [`warpTo`](api3-warp.md) for validated native map transitions.
+- [`warpTo`](api3-warp.md) for validated native map transitions;
+- [`toggleObject` and `replaceBlock`](api3-world-edits.md) for validated native
+  visibility and active block/metatile edits.
 
 Check `mod:supports("world", name)` before relying on a call. The other
 Gen1 world method names remain callable but explicitly return
-`nil, "unsupported: ..."`: object/block mutations, runtime NPC operations,
+`nil, "unsupported: ..."`: runtime NPC operations,
 `startWildBattle` and `invalidateMap` have not yet been verified against the
 Gen1 API-3 contract. Their native/API-2 counterparts are unaffected. Native
 symbolic flag mappings and `mod.datasets:open` are also explicitly unavailable.
@@ -128,8 +130,9 @@ the mod fixtures contain no engine imports or engine-specific branches.
 The runner also generates an API-3 mod through the real scaffold CLI and
 loads those same generated files on both engines for each version. This adds
 eight comparisons to the sixteen normal/rollback cases. Eight additional warp
-cases use the same public mod on both engines and native-shaped timing seams:
-32 comparisons and 64 isolated loader runs. It compares JSON projections of public results and
+cases use the same public mod on both engines and native-shaped timing seams.
+Eight object/block cases extend this to 40 comparisons and 80 isolated loader
+runs. It compares JSON projections of public results and
 records hashes of both shared and generated fixture files. It refuses a different or modified reference.
 
 Coverage includes canonical content reads/writes/iteration and native merge
@@ -139,7 +142,9 @@ writeback, custom events, unsupported-name handling, frozen content and failed
 owner cleanup. Warp cases also compare validation errors, native dispatch
 arguments, destination events, boundary coordinates, arrival options, callback
 argument holes/replay, stale sessions/owners, synchronous completion and error
-attribution. Separate Gen2 tests check API-1/2 behavior, contradictory
+attribution. Object/block cases compare native reference routing, visibility/flag
+changes, block geometry/bounds, native reads and one event per successful edit.
+Separate Gen2 tests check API-1/2 behavior, contradictory
 manifest fields, honest availability and malformed flag stores. CI pins the
 same external commit and uploads the report.
 
