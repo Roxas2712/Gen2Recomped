@@ -1,4 +1,5 @@
 -- Destination preflight, including later world rows against destination data.
+local Shops = require("src.mods.ScriptShops")
 local Warp = require("src.mods.Api3Warp")
 local Movement = require("src.mods.ScriptMovement")
 local Edits = require("src.mods.ScriptWorldEdits")
@@ -52,7 +53,7 @@ local function future(game, world, plan, cache)
   }
   return proxy, view
 end
-function T.prepare(game, world, owner, rows)
+function T.prepare(game, world, owner, rows, loader)
   local gen = Version.generation()
   local model, modelGame = world, game
   local cache = {}
@@ -68,6 +69,11 @@ function T.prepare(game, world, owner, rows)
           return nil, "native warp unavailable"
         end
         modelGame, model = future(game, world, plan, cache)
+      end
+    elseif Shops.ARITY[verb] then
+      local stock, why = Shops.plan(loader, modelGame, model, row)
+      if not stock then
+        return nil, "row " .. i .. ": " .. why
       end
     elseif Edits.ARITY[verb] then
       local edit, why = Edits.prepare(modelGame, model, owner, { row })

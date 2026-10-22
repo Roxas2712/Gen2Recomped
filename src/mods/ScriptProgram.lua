@@ -2,6 +2,7 @@
 local Program = {}
 local State = require("src.mods.ScriptState")
 local Gifts = require("src.mods.ScriptGifts")
+local Shops = require("src.mods.ScriptShops")
 local Battles = require("src.mods.ScriptBattles")
 local Travel = require("src.mods.ScriptTravel")
 local Movement = require("src.mods.ScriptMovement")
@@ -40,14 +41,22 @@ end
 for verb, arity in pairs(Battles.ARITY) do
   ARITY[verb] = arity
 end
+for verb, arity in pairs(Shops.ARITY) do
+  ARITY[verb] = arity
+end
 local aliases = { text = "show_text", setflag = "set_flag", clearflag = "clear_flag" }
 function Program.supports(verb)
   if type(verb) ~= "string" then
     return false
   end
   if
-    (WorldEdits.ARITY[verb] or Movement.ARITY[verb] or Travel.ARITY[verb] or Battles.ARITY[verb])
-    and require("src.core.GameVersion").generation() > 3
+    (
+      WorldEdits.ARITY[verb]
+      or Movement.ARITY[verb]
+      or Travel.ARITY[verb]
+      or Battles.ARITY[verb]
+      or Shops.ARITY[verb]
+    ) and require("src.core.GameVersion").generation() > 3
   then
     return false
   end
@@ -133,12 +142,19 @@ function Program.compile(raw, context)
       and not Movement.ARITY[verb]
       and not Travel.ARITY[verb]
       and not Battles.ARITY[verb]
+      and not Shops.ARITY[verb]
       and (count > ARITY[verb] or count < ((verb == "choice" or verb == "wait_flag") and 2 or ARITY[verb]))
     then
       return fail(i, "invalid command arity")
     end
     local row = { verb, source[2] }
-    if Battles.ARITY[verb] then
+    if Shops.ARITY[verb] then
+      local value, reason = Shops.syntax(verb, source, context)
+      if not value then
+        return fail(i, reason)
+      end
+      row = value
+    elseif Battles.ARITY[verb] then
       local value, reason = Battles.syntax(verb, source, context)
       if not value then
         return fail(i, reason)

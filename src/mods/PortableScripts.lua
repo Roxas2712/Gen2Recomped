@@ -5,6 +5,7 @@ local Runtime = require("src.mods.Runtime")
 local Flags = require("src.mods.Api3Flags")
 local State = require("src.mods.ScriptState")
 local Gifts = require("src.mods.ScriptGifts")
+local Shops = require("src.mods.ScriptShops")
 local Battles = require("src.mods.ScriptBattles")
 local Travel = require("src.mods.ScriptTravel")
 local Movement = require("src.mods.ScriptMovement")
@@ -145,6 +146,8 @@ local function observe(loader)
         token.finish(false, ok and why or "script context failed")
       elseif token.waitingUI and not contains(token.stack, token.waitingUI) then
         token.finish(false, "script UI was removed")
+      elseif token.shop then
+        token.shop.refresh()
       elseif token.travel then
         token.travel.tick()
       end
@@ -295,7 +298,7 @@ local function facade(loader, modId, native)
     if not battleOK then
       return nil, battleReason
     end
-    local travel, travelReason = Travel.prepare(game, ow, modId, program)
+    local travel, travelReason = Travel.prepare(game, ow, modId, program, loader)
     if not travel then
       return nil, travelReason
     end
@@ -349,6 +352,7 @@ local function facade(loader, modId, native)
         or not token.travel and (ow.player.cellX ~= token.x or ow.player.cellY ~= token.y) and not (token.move and token.move.position())
         or not token.travel and not token.mutating and ow.runner ~= runner
         or token.move and not token.move.live()
+        or token.shop and not token.shop.valid()
         or GameVersion.get() ~= token.version
         or Runtime.hooks ~= loader.hooks
         or Runtime.events ~= loader.events
@@ -462,13 +466,24 @@ local function facade(loader, modId, native)
           return
         end
         local before = token.nativeStep == step and snapshot()
+        local previous, phase, priorBefore = token.executingUI, token.uiPhase, token.uiBefore
+        if token.shop and token.shop.step == step then
+          token.executingUI, token.uiPhase, token.uiBefore = self, self.asking, before
+        end
         local ok, err = engine(update, self, ...)
         if before then
           discover(before, step)
         end
+        if token.shop then
+          token.shop.refresh()
+        end
+        token.executingUI, token.uiPhase, token.uiBefore = previous, phase, priorBefore
         if not ok then
           token.finish(false, "native UI failed: " .. message(err))
         end
+      end
+      if token.shop then
+        token.shop.attach(state)
       end
       return state
     end
@@ -479,7 +494,7 @@ local function facade(loader, modId, native)
       for _, state in ipairs(game.stack.states) do
         if not before[state] then
           owned(state, step)
-          if token.nativeStep == step then
+          if token.nativeStep == step and not token.shop then
             token.waitingUI = state
           end
         end
@@ -601,6 +616,100 @@ local function facade(loader, modId, native)
       token.waitingUI = menu
       game.stack:push(menu)
       runner:yield()
+    end
+    local function shop(ctx, row)
+      local stock, validate = Shops.plan(loader, game, ow, row)
+      if not stock then
+        error(validate, 0)
+      end
+      local step, complete, root = token.step, false, nil
+      local service = { step = step }
+      function service.valid()
+        if not complete and root and not contains(token.stack, root) and token.executingUI ~= root then
+          return false
+        end
+        return validate()
+      end
+      local invoke
+      service.attach = require("src.mods.ScriptShopUI").new({
+        alive = function(state)
+          return not complete
+            and token.shop == service
+            and token.step == step
+            and check()
+            and (
+              game.stack:top() == state
+              or token.executingUI == state
+              or token.executingUI
+                and token.ownedUI[token.executingUI]
+                and (contains(token.stack, state) or token.uiBefore and token.uiBefore[state])
+            )
+        end,
+        phase = function(state)
+          return token.executingUI == state and token.uiPhase or nil
+        end,
+        invoke = function(state, fn, ...)
+          return invoke(state, fn, ...)
+        end,
+      })
+      function service.refresh()
+        if token.done then
+          return
+        end
+        if not token.executingUI then
+          for i = #token.ui, 1, -1 do
+            if not contains(token.stack, token.ui[i]) then
+              token.ownedUI[token.ui[i]] = nil
+              table.remove(token.ui, i)
+            end
+          end
+        end
+        for _, state in ipairs(token.ui) do
+          if contains(token.stack, state) then
+            service.attach(state)
+          end
+        end
+      end
+      invoke = function(state, fn, ...)
+        local previous, phase, priorBefore = token.executingUI, token.uiPhase, token.uiBefore
+        local before = snapshot()
+        token.executingUI, token.uiPhase, token.uiBefore = state, state.asking, before
+        local result = pack(engine(fn, ...))
+        discover(before, step)
+        service.refresh()
+        token.executingUI, token.uiPhase, token.uiBefore = previous, phase, priorBefore
+        if not result[1] then
+          token.finish(false, "native shop callback failed: " .. message(result[2]))
+          return
+        end
+        return unpack(result, 2, result.n)
+      end
+      token.shop, token.nativeStep = service, step
+      local function done()
+        if not root or complete or token.step ~= step or not check() or contains(token.stack, root) then
+          return
+        end
+        complete = true
+      end
+      local called, state = engine(require("src.ui.Screens").push, game, "ShopMenu", stock, done)
+      if not called then
+        token.shop, token.nativeStep = nil, nil
+        error(state, 0)
+      end
+      root = state
+      if token.done then
+        remove(token.stack, root)
+        return
+      end
+      owned(root, step)
+      if not check() then
+        return
+      end
+      runner.waitingCheck = function()
+        return complete
+      end
+      runner:yield()
+      token.shop, token.nativeStep = nil, nil
     end
     local function battle(ctx, row)
       local verb = row[1]
@@ -970,7 +1079,9 @@ local function facade(loader, modId, native)
         token.step = {}
         self.lastRow = verb .. " (portable row " .. pc .. ")"
         ctx.script, ctx.pc = compiled, pc
-        if Battles.ARITY[verb] then
+        if Shops.ARITY[verb] then
+          shop(ctx, row)
+        elseif Battles.ARITY[verb] then
           battle(ctx, row)
         elseif Travel.ARITY[verb] then
           warp(ctx, row)

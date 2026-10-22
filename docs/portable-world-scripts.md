@@ -408,3 +408,29 @@ victory flag and Match Call registration helpers; loss does not mark a win.
 Cleanup remains valid after the originating mod retires, provided the same
 native session still exists. Native battle mechanics and game-specific story
 rewards remain the responsibility of this host's battle/field code.
+
+## Native marts
+
+`open_mart(textConstant)` opens the native mart selected by the active map's
+`data:textEntry(map.label, textConstant).mart` entry. Entries hold 1–99 item
+IDs; canonical names and known native item IDs resolve through this boot's
+item registry. Every mart row, including a row after a warp, is validated
+before any prefix runs. Missing data is refused rather than guessed from
+unrelated ROM pointers. Live dispatch repeats content/store validation.
+
+The screen factory and native buy/sell/quantity/confirmation flows remain
+in charge of transactions. The script waits until the root counter closes.
+UI callbacks are bound to their exact active screen and phase: closed,
+cancelled, superseded or retired quantity/confirmation callbacks cannot
+replay a transaction. Foreign overlays block callbacks and continuation.
+Nested owned screens are removed on cancellation while foreign UI remains.
+A retired constructor cannot leave its late native root on the stack.
+
+Wallet/inventory shapes, counts and prices must be representable (whole
+non-negative amounts; prices at most 999,999, inventory at most 4,096
+entries). Checked sale totals must fit the exact integer range. Replaced
+inventories or changed item records/prices cancel an open shop before later
+callbacks run. Committed native transactions remain committed after
+cancellation. The same guard covers classic lists, FireRed's inline sale
+quantity and Emerald's native sell bag. Closed UI records are released
+between frames rather than accumulated for a long shopping session.
