@@ -119,7 +119,7 @@ and replaces only native transition timing seams. It compares validation
 reasons, dispatch arguments, public destination events and callback results.
 The mod has no engine imports or backend-specific branches. Together with the
 existing normal, rollback, generated-starter and object/block cases, CI now
-performs 40 comparisons / 80 isolated loader runs.
+performs 48 comparisons / 96 isolated loader runs.
 
 The local suite additionally drives Gen2Recomped's real native
 `startWarpTo` and `Transition` using synthetic map materialization, including

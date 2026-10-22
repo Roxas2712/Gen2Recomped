@@ -134,6 +134,9 @@ do
   T.eq(type(world.party), "function", "early world method callable")
   T.eq(type(battle.snapshot), "function", "early battle method callable")
   for _, name in ipairs({
+    "spawnNpc",
+    "removeNpc",
+    "npc",
     "warpTo",
     "toggleObject",
     "replaceBlock",
@@ -148,9 +151,6 @@ do
     T.eq(m:supports("world", name), true, "implemented world method " .. name)
   end
   for _, name in ipairs({
-    "spawnNpc",
-    "removeNpc",
-    "npc",
     "startWildBattle",
     "invalidateMap",
   }) do
@@ -217,6 +217,9 @@ end
 for _, version in ipairs({ "platinum", "black" }) do
   local m = boot(3, nil, false, version)
   T.eq(m:supports("world", "party"), false, "no shared Gen1 contract claimed for " .. version)
+  for _, name in ipairs({ "spawnNpc", "removeNpc", "npc" }) do
+    T.eq(m:supports("world", name), false, "no shared NPC API promised for " .. version)
+  end
   T.eq(m:supports("world", "warpTo"), false, "no shared warp promised for " .. version)
   T.eq(m:supports("world", "toggleObject"), false, "no shared object edits promised for " .. version)
   T.eq(m:supports("world", "replaceBlock"), false, "no shared block edits promised for " .. version)
