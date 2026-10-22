@@ -1,7 +1,7 @@
-//! Offline, single-pass slang -> LÖVE importer. No compiler is loaded by the game.
+//! Offline, bounded RGBA8 slang -> LÖVE importer. No compiler is loaded by the game.
 use librashader_common::{FilterMode, ImageFormat, WrapMode};
 use librashader_preprocess::ShaderSource;
-use librashader_presets::{ScaleFactor, ScaleType, ShaderFeatures, ShaderPreset};
+use librashader_presets::{ScaleFactor, ScaleType, Scaling, ShaderFeatures, ShaderPreset};
 use librashader_reflect::{
     back::{CompileShader, FromCompilation, glsl::GlslVersion, targets::GLSL},
     front::{Glslang, ShaderInputCompiler},
@@ -25,9 +25,37 @@ use std::{
 };
 pub type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
+pub struct ConvertedPass {
+    pub metadata: Value,
+    pub sources: [String; 4],
+}
+pub struct ConvertedTexture {
+    pub metadata: Value,
+    pub bytes: Vec<u8>,
+}
 pub struct Converted {
     pub metadata: Value,
-    pub sources: [String; 4], // desktop fragment/vertex, GLES fragment/vertex
+    pub passes: Vec<ConvertedPass>,
+    pub textures: Vec<ConvertedTexture>,
+}
+fn binding(
+    semantic: TextureSemantics,
+    index: usize,
+    pass: usize,
+    textures: usize,
+    legacy: bool,
+) -> Result<String> {
+    Ok(match (semantic, index) {
+        (TextureSemantics::Source, 0) => "g2_Source".into(),
+        (TextureSemantics::Original, 0) => if legacy { "g2_Source" } else { "g2_Original" }.into(),
+        (TextureSemantics::PassOutput, n) if n < pass => format!("g2_Pass{n}"),
+        (TextureSemantics::User, n) if n < textures => format!("g2_Lut{n}"),
+        _ => {
+            return Err(
+                "history, feedback, future or unknown texture binding is unsupported".into(),
+            );
+        }
+    })
 }
 fn rx(pattern: &str) -> Regex {
     Regex::new(pattern).expect("internal regex")
@@ -55,6 +83,9 @@ fn adapt(
     vertex: bool,
     semantics: &ShaderSemantics,
     params: &[Value],
+    pass: usize,
+    textures: usize,
+    legacy: bool,
 ) -> Result<String> {
     if input.contains("g2_") {
         return Err("reserved g2_ identifier in shader".into());
@@ -100,11 +131,11 @@ fn adapt(
                     _ => return Err(format!("unsupported uniform: {name}").into()),
                 }
             } else if let Some(v) = semantics.uniform_semantics.texture_semantic(name) {
-                match (v.semantics, v.index, *ty) {
-                    (TextureSemantics::Source, 0, "vec4") => "g2_SourceSize".into(),
-                    (TextureSemantics::Original, 0, "vec4") => "g2_OriginalSize".into(),
-                    _ => return Err(format!("unsupported texture-size uniform: {name}").into()),
+                if *ty != "vec4" {
+                    return Err("texture size must be vec4".into());
                 }
+                let name = binding(v.semantics, v.index, pass, textures, false)?;
+                format!("{name}Size")
             } else {
                 return Err(format!("unknown uniform: {name}").into());
             };
@@ -135,18 +166,17 @@ fn adapt(
             .texture_semantics
             .texture_semantic(logical)
             .ok_or("unknown sampler semantic")?;
-        if !matches!(
-            (semantic.semantics, semantic.index),
-            (TextureSemantics::Source | TextureSemantics::Original, 0)
-        ) {
-            return Err(format!("unsupported sampler: {logical}").into());
-        }
-        s = replace_word(&s, name, "g2_Source");
+        let target = binding(semantic.semantics, semantic.index, pass, textures, legacy)?;
+        s = replace_word(&s, name, &target);
     }
-    // Repeated Source/Original aliases refer to the same input in a single pass.
     s = samplers.replace_all(&s, "").into_owned();
-    if s.contains("g2_Source") {
-        declarations.push_str("uniform Image g2_Source;\n");
+    let mut bindings: Vec<String> = vec!["g2_Source".into(), "g2_Original".into()];
+    bindings.extend((0..pass).map(|i| format!("g2_Pass{i}")));
+    bindings.extend((0..textures).map(|i| format!("g2_Lut{i}")));
+    for name in bindings {
+        if rx(&format!(r"\b{name}\b")).is_match(&s) {
+            declarations.push_str(&format!("uniform Image {name};\n"));
+        }
     }
     if vertex {
         s = rx(r"attribute vec4 Position;\s*|attribute vec2 TexCoord;\s*")
@@ -190,27 +220,38 @@ pub fn convert(path: &Path, name: &str) -> Result<Converted> {
         return Err("expected a .slangp preset".into());
     }
     let p = ShaderPreset::try_parse(path, ShaderFeatures::empty())?;
-    if p.pass_count != 1 || p.passes.len() != 1 {
-        return Err("only single-pass presets are supported".into());
+    if p.passes.is_empty() || p.passes.len() > 8 || p.pass_count as usize != p.passes.len() {
+        return Err("one to eight shader passes are supported".into());
     }
-    if !p.textures.is_empty() {
-        return Err("LUT textures are not supported".into());
+    if p.textures.len() > 8 {
+        return Err("at most eight LUT textures are supported".into());
     }
-    let pass = &p.passes[0];
-    if pass.meta.srgb_framebuffer || pass.meta.float_framebuffer || pass.meta.mipmap_input {
-        return Err("special framebuffer/mipmap formats are not supported".into());
+    let legacy = p.passes.len()==1 && p.textures.is_empty() && (!p.passes[0].meta.scaling.valid || [&p.passes[0].meta.scaling.x,&p.passes[0].meta.scaling.y].iter().all(|s| matches!((&s.scale_type,&s.factor),(ScaleType::Viewport,ScaleFactor::Float(f)) if *f==1.0)));
+    let mut loaded = Vec::new();
+    let mut parameters: Vec<Value> = Vec::new();
+    for pass in &p.passes {
+        if pass.meta.srgb_framebuffer || pass.meta.float_framebuffer || pass.meta.mipmap_input {
+            return Err("special framebuffer/mipmap formats are not supported".into());
+        }
+        let source = ShaderSource::load(&pass.path, p.features)?;
+        if !matches!(
+            source.format,
+            ImageFormat::Unknown | ImageFormat::R8G8B8A8Unorm
+        ) {
+            return Err("shader requires an unsupported output format".into());
+        }
+        for v in source.parameters.values() {
+            let param = json!({"id":v.id.to_string(),"name":v.description,"default":v.initial,"min":v.minimum,"max":v.maximum,"step":v.step});
+            if let Some(old) = parameters.iter().find(|old| old["id"] == param["id"]) {
+                if *old != param {
+                    return Err("conflicting parameter definitions across passes".into());
+                }
+            } else {
+                parameters.push(param);
+            }
+        }
+        loaded.push(source);
     }
-    if pass.meta.scaling.valid && [&pass.meta.scaling.x, &pass.meta.scaling.y].iter().any(|s| !matches!((&s.scale_type, &s.factor), (ScaleType::Viewport, ScaleFactor::Float(f)) if *f == 1.0)) {
-        return Err("only default or viewport 1x output scaling is supported".into());
-    }
-    let source = ShaderSource::load(&pass.path, p.features)?;
-    if !matches!(
-        source.format,
-        ImageFormat::Unknown | ImageFormat::R8G8B8A8Unorm
-    ) {
-        return Err("shader requires an unsupported output format".into());
-    }
-    let mut parameters: Vec<Value> = source.parameters.values().map(|v| json!({"id":v.id.to_string(),"name":v.description,"default":v.initial,"min":v.minimum,"max":v.maximum,"step":v.step})).collect();
     parameters.sort_by_key(|v| v["id"].as_str().unwrap_or_default().to_string());
     if parameters.len() > 8 {
         return Err("at most eight parameters are supported".into());
@@ -244,29 +285,174 @@ pub fn convert(path: &Path, name: &str) -> Result<Converted> {
             return Err("invalid parameter range/default".into());
         }
     }
-    let semantics = ShaderSemantics::create_pass_semantics::<Box<dyn Error>>(&p, 0)?;
-    let mut sources: Vec<String> = Vec::new();
-    for version in [GlslVersion::Glsl120, GlslVersion::Glsl100Es] {
-        let compiled = Glslang::compile(&source)?;
-        let mut target = GLSL::from_compilation(compiled)?;
-        target.reflect(0, &semantics)?;
-        let out = target.compile(version)?;
-        sources.push(adapt(&out.fragment, false, &semantics, &parameters)?);
-        sources.push(adapt(&out.vertex, true, &semantics, &parameters)?);
+    let mut passes = Vec::new();
+    for (i, pass) in p.passes.iter().enumerate() {
+        let semantics = ShaderSemantics::create_pass_semantics::<Box<dyn Error>>(&p, i)?;
+        let mut sources = Vec::new();
+        for version in [GlslVersion::Glsl120, GlslVersion::Glsl100Es] {
+            let compiled = Glslang::compile(&loaded[i])?;
+            let mut target = GLSL::from_compilation(compiled)?;
+            target.reflect(i, &semantics)?;
+            let out = target.compile(version)?;
+            sources.push(adapt(
+                &out.fragment,
+                false,
+                &semantics,
+                &parameters,
+                i,
+                p.textures.len(),
+                legacy,
+            )?);
+            sources.push(adapt(
+                &out.vertex,
+                true,
+                &semantics,
+                &parameters,
+                i,
+                p.textures.len(),
+                legacy,
+            )?);
+        }
+        if sources.iter().any(|s| s.len() > 65536) {
+            return Err("converted shader exceeds 64 KiB".into());
+        }
+        let (x, y) = if pass.meta.scaling.valid {
+            (
+                scaling(&pass.meta.scaling.x)?,
+                scaling(&pass.meta.scaling.y)?,
+            )
+        } else {
+            let kind = if i + 1 == p.passes.len() {
+                "viewport"
+            } else {
+                "source"
+            };
+            (
+                json!({"type":kind,"value":1}),
+                json!({"type":kind,"value":1}),
+            )
+        };
+        passes.push(ConvertedPass {metadata:json!({"filter":filter(pass.meta.filter),"wrap":wrap(pass.meta.wrap_mode),"scaleX":x,"scaleY":y}),sources:sources.try_into().unwrap()});
     }
-    if sources.iter().any(|s| s.len() > 65536) {
-        return Err("converted shader exceeds 64 KiB".into());
+    let mut textures = Vec::new();
+    let mut pixels = 0u64;
+    for t in &p.textures {
+        if t.meta.mipmap || !identifier(t.meta.name.as_str()) {
+            return Err("unsupported LUT identifier/mipmap".into());
+        }
+        // Bound compressed data and decoded allocation before invoking the image decoder.
+        if fs::metadata(&t.path)?.len() > 8 * 1024 * 1024 {
+            return Err("LUT file too large".into());
+        }
+        let bytes = fs::read(&t.path)?;
+        pixels += png_pixels(&bytes)?;
+        if pixels > 8 * 1024 * 1024 {
+            return Err("LUT pixel budget exceeded".into());
+        }
+        textures.push(ConvertedTexture { metadata:json!({"id":t.meta.name.as_str(),"filter":filter(t.meta.filter_mode),"wrap":wrap(t.meta.wrap_mode)}),bytes});
     }
-    let wrap = match pass.meta.wrap_mode {
+    let mut metadata = json!({"format":if legacy {2}else{3},"name":name,"parameters":parameters});
+    if legacy {
+        for key in ["filter", "wrap"] {
+            metadata[key] = passes[0].metadata[key].clone();
+        }
+    }
+    Ok(Converted {
+        metadata,
+        passes,
+        textures,
+    })
+}
+fn filter(v: FilterMode) -> &'static str {
+    match v {
+        FilterMode::Linear => "linear",
+        FilterMode::Nearest => "nearest",
+    }
+}
+fn wrap(v: WrapMode) -> &'static str {
+    match v {
         WrapMode::ClampToBorder => "clampzero",
         WrapMode::ClampToEdge => "clamp",
         WrapMode::Repeat => "repeat",
         WrapMode::MirroredRepeat => "mirroredrepeat",
+    }
+}
+fn scaling(s: &Scaling) -> Result<Value> {
+    let value: f32 = s.factor.into();
+    let kind = match s.scale_type {
+        ScaleType::Input => "source",
+        ScaleType::Original => "original",
+        ScaleType::Viewport => "viewport",
+        ScaleType::Absolute => "absolute",
     };
-    Ok(Converted {
-        metadata: json!({"format":2,"name":name,"parameters":parameters,"filter": match pass.meta.filter { FilterMode::Linear => "linear", FilterMode::Nearest => "nearest" },"wrap":wrap}),
-        sources: sources.try_into().unwrap(),
-    })
+    if !value.is_finite()
+        || (kind == "absolute" && (value < 1.0 || value > 8192.0 || value.fract() != 0.0))
+        || (kind != "absolute" && !(1.0 / 64.0..=8.0).contains(&value))
+    {
+        return Err("unsupported scaling range".into());
+    }
+    Ok(json!({"type":kind,"value":value}))
+}
+fn png_pixels(bytes: &[u8]) -> Result<u64> {
+    if bytes.len() < 33
+        || bytes.len() > 8 * 1024 * 1024
+        || &bytes[..16] != b"\x89PNG\r\n\x1a\n\0\0\0\rIHDR"
+    {
+        return Err("LUT must be a bounded PNG".into());
+    }
+    let w = u32::from_be_bytes(bytes[16..20].try_into()?);
+    let h = u32::from_be_bytes(bytes[20..24].try_into()?);
+    if !(1..=2048).contains(&w)
+        || !(1..=2048).contains(&h)
+        || bytes[24] != 8
+        || ![0, 2, 3, 4, 6].contains(&bytes[25])
+    {
+        return Err("unsupported LUT dimensions/bit depth".into());
+    }
+    Ok(w as u64 * h as u64)
+}
+
+/// Descriptor and all referenced resources, with a deterministic closed basename namespace.
+type Bundle = (Value, Vec<(String, Vec<u8>)>);
+fn bundle(c: &Converted, stem: &str, force_graph: bool) -> Result<Bundle> {
+    let mut meta = c.metadata.clone();
+    let mut files = Vec::new();
+    let mut passes = Vec::new();
+    let mut textures = Vec::new();
+    for (i, p) in c.passes.iter().enumerate() {
+        let mut pass = p.metadata.clone();
+        for ((key, suffix), source) in ["shader", "vertex", "esShader", "esVertex"]
+            .iter()
+            .zip(["f", "v", "ef", "ev"])
+            .zip(&p.sources)
+        {
+            let name = if c.metadata["format"] == 2 && !force_graph {
+                format!("{stem}-{suffix}.glsl")
+            } else {
+                format!("{stem}-p{i}-{suffix}.glsl")
+            };
+            pass[*key] = json!(name);
+            files.push((name, source.as_bytes().to_vec()));
+        }
+        passes.push(pass);
+    }
+    for (i, t) in c.textures.iter().enumerate() {
+        let mut tex = t.metadata.clone();
+        let name = format!("{stem}-t{i}.png");
+        tex["image"] = json!(name);
+        files.push((name, t.bytes.clone()));
+        textures.push(tex);
+    }
+    if force_graph || c.metadata["format"] == 3 {
+        meta["format"] = json!(3);
+        meta["passes"] = json!(passes);
+        meta["textures"] = json!(textures);
+    } else {
+        for key in ["shader", "vertex", "esShader", "esVertex"] {
+            meta[key] = passes[0][key].clone();
+        }
+    }
+    Ok((meta, files))
 }
 
 /// Validate both dialects and compile the current GPU's pair BEFORE publication.
@@ -286,27 +472,19 @@ pub fn preflight(converted: &Converted, love: &Path) -> Result<()> {
             "function love.conf(t) t.identity='gen2-slang-preflight'; t.window.visible=false; t.window.width=32; t.window.height=32; t.modules.audio=false; t.modules.joystick=false end",
         )?;
         fs::write(dir.join("main.lua"), include_str!("validate.lua"))?;
-        for (i, source) in converted.sources.iter().enumerate() {
-            fs::write(dir.join(format!("{i}.glsl")), source)?;
+        fs::write(
+            dir.join("ShaderGraph.lua"),
+            include_str!("../../../src/render/ShaderGraph.lua"),
+        )?;
+        fs::write(
+            dir.join("Json.lua"),
+            include_str!("../../../src/link/Json.lua"),
+        )?;
+        let (meta, files) = bundle(converted, "probe", true)?;
+        for (name, bytes) in files {
+            fs::write(dir.join(name), bytes)?;
         }
-        fs::write(
-            dir.join("settings.txt"),
-            format!(
-                "{} {}",
-                converted.metadata["filter"].as_str().unwrap(),
-                converted.metadata["wrap"].as_str().unwrap()
-            ),
-        )?;
-        // JSON parameters never become executable Lua.
-        fs::write(
-            dir.join("params.txt"),
-            converted.metadata["parameters"]
-                .as_array()
-                .unwrap()
-                .iter()
-                .map(|p| format!("g2_p_{} {}\n", p["id"].as_str().unwrap(), p["default"]))
-                .collect::<String>(),
-        )?;
+        fs::write(dir.join("graph.json"), serde_json::to_vec(&meta)?)?;
         let output = Command::new(love).arg(&dir).output()?;
         if !output.status.success() {
             return Err(format!(
@@ -327,40 +505,35 @@ pub fn preflight(converted: &Converted, love: &Path) -> Result<()> {
 pub fn publish(converted: &Converted, destination: &Path) -> Result<PathBuf> {
     let mut hash = Sha256::new();
     hash.update(converted.metadata.to_string());
-    for s in &converted.sources {
-        hash.update((s.len() as u64).to_le_bytes());
-        hash.update(s);
+    for p in &converted.passes {
+        hash.update(p.metadata.to_string());
+        for source in &p.sources {
+            hash.update((source.len() as u64).to_le_bytes());
+            hash.update(source);
+        }
+    }
+    for t in &converted.textures {
+        hash.update(t.metadata.to_string());
+        hash.update((t.bytes.len() as u64).to_le_bytes());
+        hash.update(&t.bytes);
     }
     let stem = format!("slang-{:x}", hash.finalize());
     let stem = &stem[..38];
-    let names: Vec<_> = ["-f.glsl", "-v.glsl", "-ef.glsl", "-ev.glsl"]
-        .iter()
-        .map(|s| format!("{stem}{s}"))
-        .collect();
-    let mut meta = converted.metadata.clone();
-    for (key, name) in ["shader", "vertex", "esShader", "esVertex"]
-        .iter()
-        .zip(&names)
-    {
-        meta[*key] = json!(name);
-    }
-    let descriptor = serde_json::to_string_pretty(&meta)?;
+    let (meta, mut files) = bundle(converted, stem, false)?;
+    let descriptor = serde_json::to_vec_pretty(&meta)?;
     if descriptor.len() > 16384 {
         return Err("descriptor exceeds 16 KiB".into());
     }
+    files.push((format!("{stem}.json"), descriptor));
     fs::create_dir_all(destination)?;
     let path = destination.join(format!("{stem}.json"));
     let mut created = Vec::new();
     let result = (|| -> Result<PathBuf> {
-        for (name, contents) in names
-            .iter()
-            .zip(&converted.sources)
-            .chain(std::iter::once((&format!("{stem}.json"), &descriptor)))
-        {
+        for (name, contents) in &files {
             let p = destination.join(name);
             let mut f = OpenOptions::new().write(true).create_new(true).open(&p)?;
             created.push(p);
-            f.write_all(contents.as_bytes())?;
+            f.write_all(contents)?;
             f.sync_all()?;
         }
         Ok(path)

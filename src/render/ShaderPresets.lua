@@ -1,6 +1,7 @@
--- Optional single-pass LÖVE shaders over the completed primary game view.
+-- Optional bounded LÖVE shaders over the completed primary game view.
 -- Metadata is JSON, never executable Lua. OFF does no discovery or GPU work.
 local Json = require("src.link.Json")
+local Graph = require("src.render.ShaderGraph")
 local Logger = require("src.core.Logger")
 local Presets = {}
 Presets.__index = Presets
@@ -27,14 +28,24 @@ local function value(p, n)
   return math.max(p.min, math.min(p.max, p.min + steps * p.step))
 end
 local function validate(raw, id)
-  if type(raw) ~= "table" or (raw.format ~= 1 and raw.format ~= 2) or not label(raw.name) then
+  if
+    type(raw) ~= "table"
+    or (raw.format ~= 1 and raw.format ~= 2 and raw.format ~= 3)
+    or not label(raw.name)
+  then
     return nil, "invalid preset metadata"
   end
-  if not filename(raw.shader, "glsl") and not raw.builtinSource then
+  if raw.format ~= 3 and not filename(raw.shader, "glsl") and not raw.builtinSource then
     return nil, "invalid shader filename"
   end
   local out = { id = id, name = raw.name, shader = raw.shader, source = raw.builtinSource, parameters = {} }
-  if raw.format == 2 then
+  if raw.format == 3 then
+    local graph, why = Graph.validate(raw)
+    if not graph or raw.builtinSource then
+      return nil, why or "invalid graph"
+    end
+    out.graph, out.imported = graph, true
+  elseif raw.format == 2 then
     if
       raw.builtinSource
       or not filename(raw.vertex, "glsl")
@@ -122,7 +133,10 @@ vec4 effect(vec4 color, Image tex, vec2 uv, vec2 pixel) {
 }
 function Presets.new(opts)
   opts = opts or {}
-  return setmetatable({ fs = opts.fs, graphics = opts.graphics, entries = {}, byId = {} }, Presets)
+  return setmetatable(
+    { fs = opts.fs, graphics = opts.graphics, entries = {}, byId = {}, fileData = opts.fileData },
+    Presets
+  )
 end
 function Presets:_fs()
   return self.fs or (love and love.filesystem and require("src.import.CacheFs").dataFs())
@@ -194,6 +208,10 @@ function Presets:_fail(reason)
   return nil, self.error
 end
 function Presets:off()
+  if self.graph then
+    self.graph:release()
+    self.graph = nil
+  end
   release(self.shader)
   release(self.output)
   release(self.importInput)
@@ -202,7 +220,7 @@ function Presets:off()
   self.error = nil
 end
 function Presets:active()
-  return self.shader ~= nil
+  return self.shader ~= nil or self.graph ~= nil
 end
 function Presets:activate(id, params)
   if id == nil or id == "off" then
@@ -218,6 +236,24 @@ function Presets:activate(id, params)
     return self:_fail(entry.error)
   end
   local g = self:_graphics()
+  if entry.graph then
+    if not (g and g.newShader and g.newCanvas and g.validateShader) then
+      return self:_fail("shader graph graphics unavailable")
+    end
+    local values = {}
+    for _, p in ipairs(entry.parameters) do
+      values[p.id] = value(p, type(params) == "table" and params[p.id] or nil)
+    end
+    local graph, why = Graph.new(entry.graph, function(name, limit)
+      return read(self:_fs(), ROOT .. "/" .. name, limit)
+    end, g, values, self.fileData or (love and love.filesystem and love.filesystem.newFileData))
+    if not graph then
+      return self:_fail(why)
+    end
+    self:off()
+    self.graph, self.entry, self.values = graph, entry, values
+    return true
+  end
   local es = false
   if entry.imported and g and g.getRendererInfo then
     local name, version = g.getRendererInfo()
@@ -248,7 +284,7 @@ function Presets:activate(id, params)
       -- Check NPOT wrapping and standardized uniform types before retiring the old effect.
       importInput = g.newCanvas(3, 5, { dpiscale = 1 })
       importInput:setFilter(entry.filter, entry.filter)
-      assert(importInput:setWrap(entry.wrap, entry.wrap), "unsupported preset texture wrapping")
+      Graph.setWrap(importInput, entry.wrap)
       for _, name in ipairs({ "SourceSize", "OriginalSize", "OutputSize", "FinalViewportSize" }) do
         if shader:hasUniform("g2_" .. name) then
           shader:send("g2_" .. name, { 3, 5, 1 / 3, 1 / 5 })
@@ -317,6 +353,19 @@ function Presets:setParameter(opts, id, n)
   return nil, "unknown parameter"
 end
 function Presets:apply(input, pixelScale)
+  if self.graph then
+    if self.graph:owns(input) then
+      return input
+    end
+    local ok, output = pcall(self.graph.run, self.graph, input, pixelScale)
+    if ok then
+      return output
+    end
+    self:off()
+    self:_fail(output)
+    Logger.warn("shader graph disabled: %s", self.error)
+    return input
+  end
   if not self:active() or (input == self.output or input == self.importInput) then
     return input
   end
@@ -366,10 +415,7 @@ function Presets:apply(input, pixelScale)
         self.importInput = nil
         self.importInput = g.newCanvas(nw, nh, { dpiscale = 1 })
         self.importInput:setFilter(self.entry.filter, self.entry.filter)
-        assert(
-          self.importInput:setWrap(self.entry.wrap, self.entry.wrap),
-          "unsupported preset texture wrapping"
-        )
+        Graph.setWrap(self.importInput, self.entry.wrap)
       end
       -- Reconstruct the primary view's native-pixel grid in a private texture.
       -- Its filter/wrap never change a mod's or the renderer's input texture.
