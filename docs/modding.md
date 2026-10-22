@@ -176,6 +176,8 @@ behavior. See [portable commands, ownership and limits](portable-world-scripts.m
 
 ## Rendering pipelines
 
+Player-selectable local effects are described in [Optional shader presets](shader-presets.md).
+
 Most registries hand the engine *content*. `render_pipelines` hands it
 *drawing*: a pipeline is a display mode a mod owns, which may replace the
 overworld's world pass with geometry of its own and/or post-process the
