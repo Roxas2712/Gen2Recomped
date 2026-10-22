@@ -12,6 +12,7 @@ local Version = require("src.core.Version")
 local Assets = require("src.render.Assets")
 local ModUI = require("src.ui.ModUI")
 local PortableScripts = require("src.mods.PortableScripts")
+local Api3Warp = require("src.mods.Api3Warp")
 local AssetTransform = require("src.mods.AssetTransform")
 local Manifest = require("src.mods.Manifest")
 local Merge = require("src.mods.Merge")
@@ -1262,6 +1263,7 @@ end
 -- migration it took goes with them.  The journal only exists around an
 -- entry chunk; a later failure (script validation) purges every registry.
 function Loader:_rollback(modId)
+  Api3Warp.cancelAll(self, modId)
   PortableScripts.cancelAll(self, modId, "mod rolled back")
   for name in pairs(self.journal or self.content) do
     self.content[name]:rollback(modId)
@@ -1377,6 +1379,7 @@ local function stampAudioOwners(data, name, registry)
 end
 
 function Loader:load(data)
+  Api3Warp.cancelAll()
   PortableScripts.cancelAll(nil, nil, "mods reloaded")
   -- A SECOND LOAD IN ONE PROCESS STARTS FROM THE ENGINE, NOT FROM THE LAST
   -- LOAD'S MODS.  EXIT GAME -> launcher -> Play runs every mod's main.lua
@@ -1721,6 +1724,7 @@ end
 -- boots) ran on a modded engine whose mod instance nothing drives any more,
 -- and the next Play loaded every mod on top of what the last one left.
 function Loader.teardown()
+  Api3Warp.cancelAll()
   PortableScripts.cancelAll(nil, nil, "mods unloaded")
   local undone = select(1, ModSeams.unwindAll())
   pcall(function()

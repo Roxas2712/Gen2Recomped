@@ -253,4 +253,5 @@ function M.run(root, backend, version, failing, scaffold)
   print("API3_CONTRACT " .. Json.encode(result))
   return result
 end
+M.dataFor = dataFor
 return M

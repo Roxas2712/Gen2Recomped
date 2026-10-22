@@ -94,6 +94,8 @@ local function ready(game, ow)
   end
   return true
 end
+-- Shared admission guard for the API-3 warp adapter.
+A.ready = ready
 local function guardedCall(game, fn, ...)
   planning[game] = true
   local result = { pcall(fn, game, ...) }

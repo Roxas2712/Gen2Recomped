@@ -23,6 +23,7 @@ luajit tools/gen_registry_docs.lua ../gen1recomp.wiki
 The [API-3 entry and cross-engine contracts](api3-portability.md) describe
 using the same manifest and mod source on Gen1Recomp and Gen2Recomped.
 API 3 selects the unified adapters automatically; API 1/2 keep their defaults.
+See [API-3 world warps](api3-warp.md) for validated map transitions and callback lifetime.
 
 ## Feature queries (`mod:supports`)
 
