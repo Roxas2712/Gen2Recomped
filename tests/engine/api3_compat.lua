@@ -195,7 +195,7 @@ do
   )
   T.eq(next(save.flags), nil, "private flags never touch native flags")
   T.eq(world:setFlag("mod:bad", "yes"), nil, "non-boolean flag rejected")
-  T.eq(world:setFlag("NATIVE_FLAG", true), nil, "unverified native flag mapping refused")
+  T.eq(world:setFlag("NATIVE_FLAG", true), nil, "unknown native flag refused")
   T.eq(world:setFlag("mod:", true), nil, "empty private flag rejected")
   save.modData.probe.worldFlags = false
   T.eq(world:setFlag("mod:test", true), nil, "malformed store rejected")
