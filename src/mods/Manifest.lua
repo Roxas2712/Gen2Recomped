@@ -223,6 +223,10 @@ function Manifest.validate(raw, path)
   assert(api <= Version.modApi, ("requires mod API %d; this engine provides %d")
     :format(api, Version.modApi))
   local strict = api >= 2
+  assert(raw.content_format == nil or raw.content_format == "native"
+      or raw.content_format == "unified", "content_format must be native or unified")
+  assert(raw.content_format ~= "unified" or api >= 2,
+    "unified content requires mod API 2")
 
   local profile = raw.profile or "content"
   if not Manifest.PROFILES[profile] then
@@ -279,6 +283,10 @@ function Manifest.validate(raw, path)
     return value
   end
 
+  assert(raw.callback_format == nil or raw.callback_format == "native" or raw.callback_format == "unified",
+    "callback_format must be native or unified")
+  assert(raw.callback_format ~= "unified" or api >= 2, "callback_format unified requires mod API 2")
+
   local conflicts = mergeConflictLists(raw.conflicts, raw.incompatible)
 
   -- `support`: where to thank the mod's creator -- a Ko-fi, a Patreon, a
@@ -305,6 +313,7 @@ function Manifest.validate(raw, path)
     version = raw.version,
     entry = raw.entry,
     api = api,
+    content_format = raw.content_format or "native",
     priority = tonumber(raw.priority) or 0,
     dependencies = array(raw.dependencies),
     optional_dependencies = array(raw.optional_dependencies),
@@ -316,6 +325,7 @@ function Manifest.validate(raw, path)
     category = raw.category or "OTHER",
     game_version = raw.game_version,
     description = raw.description or "",
+    callback_format = raw.callback_format or "native",
     github = github,
     support = support,
     updateCheck = updateCheck,
