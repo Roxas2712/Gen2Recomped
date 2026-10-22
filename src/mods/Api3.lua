@@ -35,7 +35,7 @@ local function block(gen)
     kind = gen == 3 and "metatile" or "block",
   }
 end
-function A.install(api, loader, readContext, overviewContext, engineRequire)
+function A.install(api, loader, readContext, overviewContext, engineRequire, engineCall)
   local gen = api.generation
   local supportedGeneration = gen >= 1 and gen <= 3
   -- Passthrough registries keep native shapes but expose the same handle metadata.
@@ -171,11 +171,13 @@ function A.install(api, loader, readContext, overviewContext, engineRequire)
       return battle:submit(...)
     end,
   }
-  -- Version datasets have no native Gen2Recomped adapter yet. Keeping the
-  -- handle callable allows the same mod to fall back without engine imports.
   api.datasets = {
-    open = function()
-      return nil, "unsupported: version datasets"
+    open = function(_, version)
+      if not loader.datasetViews then
+        local Views = engineRequire("src.mods.DatasetViews")
+        loader.datasetViews = Views.new(loader.fs, engineRequire, engineCall)
+      end
+      return loader.datasetViews:open(version)
     end,
   }
   local supports = api.supports
