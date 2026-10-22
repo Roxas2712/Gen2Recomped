@@ -553,6 +553,13 @@ do
   T.eq(api:effectiveEncounters("A", "grass"), nil, "descending buckets refused")
   a.buckets = { 51, 102, 257 }
   T.eq(api:effectiveEncounters("A", "grass"), nil, "unreachable bucket refused")
+  a.buckets = "bad"
+  T.eq(api:effectiveEncounters("A", "grass"), nil, "invalid bucket type refused")
+  a.buckets = { 51, 102, 256 }
+  local originalSlots = a.slots
+  a.slots = "bad"
+  T.eq(api:effectiveEncounters("A", "grass"), nil, "invalid slot type refused")
+  a.slots = originalSlots
   a.buckets = { 51, 102, 256 }
   a.rate = 0
   T.same(api:effectiveEncounters("A", "grass"), { chance = 0, dist = {} }, "zero rate")
@@ -585,6 +592,11 @@ for _, apiVersion in ipairs({ 1, 2 }) do
       version = "1.0.0",
       api = apiVersion,
       entry = "main.lua",
+      content_format = os.getenv("WORLD_OVERVIEW_ALL_FORMATS") == "1" and apiVersion == 2 and "unified"
+        or nil,
+      callback_format = os.getenv("WORLD_OVERVIEW_ALL_FORMATS") == "1" and apiVersion == 2 and "unified"
+        or nil,
+      script_format = os.getenv("WORLD_OVERVIEW_ALL_FORMATS") == "1" and apiVersion == 2 and "unified" or nil,
     }),
     ["mods/probe/main.lua"] = "return function(mod) mod.exports.api=mod end",
   }
@@ -614,6 +626,11 @@ for _, apiVersion in ipairs({ 1, 2 }) do
   end
   T.check(loader:load(data), "real loader succeeds")
   local mod = loader.apis.probe
+  if os.getenv("WORLD_OVERVIEW_ALL_FORMATS") == "1" and apiVersion == 2 then
+    T.eq(mod.contentFormat, "unified", "unified content facade")
+    T.eq(mod.callbackFormat, "unified", "unified callback facade")
+    T.eq(mod.scriptFormat, "unified", "portable script facade")
+  end
   T.eq(resolves, 0, "entry and ID context stay lazy")
   if mod.supports then
     T.eq(mod:supports("world", "mapOverview"), true, "overview capability")

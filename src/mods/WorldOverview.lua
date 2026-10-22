@@ -124,6 +124,9 @@ function Overview.encounters(game, ow, context, mapId, terrain, opts)
   end
   local dist, prev = {}, 0
   local weights = slots.buckets or require("src.world.FieldDefaults").constant(data, "encounterBuckets")
+  if type(weights) ~= "table" or (slots.slots ~= nil and type(slots.slots) ~= "table") then
+    return nil, "invalid encounter buckets/slots"
+  end
   local ids = context and context() or dataIds(data)
   for i, threshold in ipairs(weights or {}) do
     if
