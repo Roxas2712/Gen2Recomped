@@ -44,7 +44,7 @@ format's availability; other capability surfaces retain their existing answers.
 | Handle | Unified fields | Supported versions |
 | --- | --- | --- |
 | `pokemon` | `id`, `name`, `dex`, `types`, `baseStats`, `catchRate`, `baseExp`, `growthRate`, `level1Moves`, `learnset`, `evolutions`, `tmhm`; optional breeding/art fields | Existing definitions, Gen 1–5 |
-| `moves` | `id`, `name`, `type`, `power`, `accuracy`, `pp`, `effect`, `category`, `priority`, `description` | Existing definitions, Gen 1–5 |
+| `moves` | `id`, `name`, `type`, `power`, `accuracy`, `pp`, `effect`, `secondaryChance`, `category`, `priority`, `description` | Existing definitions, Gen 1–5 |
 | `items` | `id`, `name`, `price`, `machine`, `effect`, `ball`, `tossable`, `needsTarget`, `description` | Existing definitions, Gen 1–5 |
 | `trainers` | `id`, `name`, `pic`, `baseMoney`, `battleTheme`, `partyNames`, `parties` | Existing definitions, Gen 1–5 |
 | `encounters` | `id`, `grass`, `water` | Gen 1–3 grass/water tables |
@@ -114,11 +114,34 @@ per-slot IVs, flags and AI metadata are retained. A DS trainer's single `party`
 and `parties[1]` aliases stay synchronized.
 
 Move accuracy is percent, as in the engine's existing normalized definitions.
-Native effect selectors and item behavior remain opaque: changing a move's
-effect on Gen 2–5, changing later item behavior, or changing a DS move type
-without a native type adapter returns `nil, reason`. This avoids changing a
-symbolic field while leaving an incompatible native selector behind. Power,
-accuracy, PP, category, price and other represented fields can be edited.
+Gen1–3 move effects use canonical IDs, resolved to the host's actual native
+battle handlers before an operation is journaled. For example
+`SPECIAL_UP1_EFFECT` selects `SP_ATK_UP1_EFFECT` on Gen2/3; the Gen1 Special
+stage does not leak into split Special Attack/Defense. `HIT` and `SLEEP` are
+accepted aliases. Registered custom native effects retain their own IDs.
+
+`secondaryChance` is an optional whole percentage (0–100) on Gen2/3. Explicit
+odds convert to the nearest native fraction out of 256; detached unmodified
+records retain their exact original byte. Explicit zero is distinguished from
+a legacy native zero byte whose controller uses a fallback. Changing a
+canonical effect applies its reference default chance unless the caller
+supplies odds. Authored aliases survive later odds edits.
+
+Unknown native selectors are opaque `native:generation:selector` tokens on
+Gen2/3. They roundtrip only with their original record; they cannot assign an
+unknown handler to another move. Gen4/5 retain the previous diagnostic-only
+numeric selector behavior and refuse effect/chance changes. Item behavior
+and changing a DS move type remain unavailable without their native adapters.
+
+The data-only binding catalog is reproduced from pinned Gen1Recomp contract
+maps plus the host importer's native names by
+`tools/move-effect-contract/generate.py --gen1 CLEAN_REFERENCE --lua LUAJIT
+--check`. It does not execute imported content. A binding still requires a
+real registered host handler: FOLLOW_ME, HELPING_HAND, MAGIC_COAT, SNATCH,
+IMPRISON, ASSIST, NATURE_POWER and SECRET_POWER are refused on the current
+host. Identity-dependent native Rest/SonicBoom variants are not assigned to
+an incompatible move. This adapter selects native behavior; it does not add
+missing battle mechanics or promise cross-engine RNG/pixel equivalence.
 
 ### Encounters
 

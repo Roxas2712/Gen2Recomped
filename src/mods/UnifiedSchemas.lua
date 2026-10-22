@@ -34,7 +34,7 @@ local U = {
   } },
   moves = { fields = {
     id = id, name = f.str, type = id, power = f.int(0, 255), accuracy = f.int(0, 100),
-    pp = f.int(0, 64), effect = f.opt(id),
+    pp = f.int(0, 64), effect = f.opt(id), secondaryChance = f.opt(f.int(0, 100)),
     category = f.opt(f.enum { "physical", "special", "status" }),
     priority = f.opt(f.int(-7, 7)), description = f.opt(f.str),
   } },
