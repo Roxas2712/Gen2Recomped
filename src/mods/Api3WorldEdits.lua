@@ -44,7 +44,9 @@ local function toggle(game, ow, api, gen, req, mapId, ref, visible)
   end
   if gen == 1 then
     -- Gen 1 permits off-map keys and resolves their visibility on map load.
-    return api:toggleObject(id, ref, visible)
+    return function()
+      return api:toggleObject(id, ref, visible)
+    end
   end
   if ow.map.id ~= id then
     return nil, "map is not active: " .. mapId
@@ -68,13 +70,12 @@ local function toggle(game, ow, api, gen, req, mapId, ref, visible)
     return nil, "object runtime unavailable"
   end
   local ctx = { game = game, save = save, overworld = ow, mapId = id }
+  local index = object.index
   if gen == 2 then
     if not store(save.g2ObjectToggles) then
       return nil, "invalid object toggle store"
     end
-    req("src.script.Gen2Commands").setObjectVisibility(ctx, object, id, visible)
   else
-    local index = object.index
     if not integer(index, 254) or index == 0 then
       return nil, "invalid object definition"
     end
@@ -85,13 +86,19 @@ local function toggle(game, ow, api, gen, req, mapId, ref, visible)
     then
       return nil, "invalid object toggle store"
     end
-    req("src.script.Gen3Commands")
-    local commands = req("src.script.Commands")
-    local command = visible and commands.g3_show_object or commands.g3_hide_object
-    command(ctx, index)
   end
-  Runtime.emit("world.object_toggled", { mapId = id, objName = ref, visible = visible })
-  return true
+  return function()
+    if gen == 2 then
+      req("src.script.Gen2Commands").setObjectVisibility(ctx, object, id, visible)
+    else
+      req("src.script.Gen3Commands")
+      local commands = req("src.script.Commands")
+      local command = visible and commands.g3_show_object or commands.g3_hide_object
+      command(ctx, index)
+    end
+    Runtime.emit("world.object_toggled", { mapId = id, objName = ref, visible = visible })
+    return true
+  end
 end
 local function replace(game, ow, api, gen, req, bx, by, block)
   if not integer(block, gen == 3 and 1023 or 255) then
@@ -113,22 +120,26 @@ local function replace(game, ow, api, gen, req, bx, by, block)
     return nil, "block renderer unavailable"
   end
   if gen ~= 3 then
-    return api:replaceBlock(bx, by, block)
+    return function()
+      return api:replaceBlock(bx, by, block)
+    end
   end
-  -- Like Gen1's Gen3 Field.setMetatile default, use the native non-impassable
-  -- metatile command; it replaces the old collision override as well.
-  req("src.script.Gen3Commands")
-  req("src.script.Commands").g3_set_metatile(
-    { game = game, save = game.save, overworld = ow },
-    bx,
-    by,
-    block,
-    0
-  )
-  renderer:rebuild()
-  ow.map.blocksDirty = nil
-  Runtime.emit("world.block_replaced", { mapId = ow.map.id, bx = bx, by = by, block = block })
-  return true
+  return function()
+    -- Like Gen1's Gen3 Field.setMetatile default, use the native non-impassable
+    -- metatile command; it replaces the old collision override as well.
+    req("src.script.Gen3Commands")
+    req("src.script.Commands").g3_set_metatile(
+      { game = game, save = game.save, overworld = ow },
+      bx,
+      by,
+      block,
+      0
+    )
+    renderer:rebuild()
+    ow.map.blocksDirty = nil
+    Runtime.emit("world.block_replaced", { mapId = ow.map.id, bx = bx, by = by, block = block })
+    return true
+  end
 end
 local function invalidate(game, ow, api, gen, req, mapId)
   if not identifier(mapId) then
@@ -148,7 +159,9 @@ local function invalidate(game, ow, api, gen, req, mapId)
   if type(ow.reloadMap) ~= "function" then
     return nil, "map reload unavailable"
   end
-  return api:invalidateMap(id)
+  return function()
+    return api:invalidateMap(id)
+  end
 end
 -- Shared admission/commit guard for synchronous API-3 world mutations.
 function E.ready(game, ow)
@@ -170,6 +183,15 @@ function E.run(game, operation, ...)
   end
   return value, why
 end
+-- Pure validation shared by public edits and an already owned script run.
+function E.plan(game, api, generation, req, name, ...)
+  local ow = api:overworld()
+  if not ow then
+    return nil, "no overworld"
+  end
+  local operation = name == "toggleObject" and toggle or name == "invalidateMap" and invalidate or replace
+  return operation(game, ow, api, generation, req, ...)
+end
 function E.call(game, api, generation, req, name, ...)
   local ow = api:overworld()
   if not ow then
@@ -179,7 +201,13 @@ function E.call(game, api, generation, req, name, ...)
   if not ok then
     return nil, reason
   end
-  local operation = name == "toggleObject" and toggle or name == "invalidateMap" and invalidate or replace
-  return E.run(game, operation, game, ow, api, generation, req, ...)
+  local function execute(...)
+    local operation, reason = E.plan(game, api, generation, req, name, ...)
+    if not operation then
+      return nil, reason
+    end
+    return operation()
+  end
+  return E.run(game, execute, ...)
 end
 return E

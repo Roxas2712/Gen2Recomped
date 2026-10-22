@@ -281,3 +281,22 @@ messages, YES/NO, naming, box deposits, callback replay and unload/session
 cancellation on synthetic data. Rendering/pixel equivalence and retail-ROM
 playthroughs are not claimed. Direct mutations of engine objects by other mods
 remain outside the portable runner's ownership guarantees.
+
+
+## Object and block scripts
+
+API 3 also accepts `show_object(mapId, objectRef)`,
+`hide_object(mapId, objectRef)` and `replace_block(bx, by, blockId)` on
+Gen 1–3. Object references must name an existing definition; Gen 2/3
+require the active map. Block coordinates use the same geometry and limits
+as `mod.world:replaceBlock`. Validation covers every row before any prefix
+runs, then repeats against current stores at dispatch.
+
+These rows run through the validated native edit plans under the script's
+existing foreground ownership. Ordinary public world actions retain their
+idle-world admission guard. Gen 1's seamless object refresh may replace
+both the map and its default runner: the script continues on that map and
+restores the new idle runner when finished. Foreign overlays pause the
+program; unloading, changed saves/maps and invalid live stores cancel it.
+Edits already committed before cancellation are retained, and public world
+events follow the native edit behavior.

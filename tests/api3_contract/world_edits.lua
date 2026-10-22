@@ -1,9 +1,9 @@
 -- Real loaders, adapters and host commands, with native-shaped map/render seams.
 local M = {}
 local unpack = table.unpack or unpack
-function M.fixture(root, backend, version)
+function M.fixture(root, backend, version, modId)
   local codeRoot = (debug.getinfo(1, "S").source:sub(2)):match("^(.*)/world_edits%.lua$")
-  local f = dofile(codeRoot .. "/warp.lua").fixture(root, backend, version, "edits")
+  local f = dofile(codeRoot .. "/warp.lua").fixture(root, backend, version, modId or "edits")
   local Runtime = require("src.mods.Runtime")
   local ow, game = f.ow, f.game
   local def = game.data.maps[f.home]
