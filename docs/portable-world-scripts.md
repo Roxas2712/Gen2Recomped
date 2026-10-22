@@ -487,3 +487,28 @@ host; the reference Gen1 opts merge drops the text sound in that combination.
 Shared cases deliberately verify individual cues, not that reference defect.
 They drive real native dialogue controls with synthetic font/text data and
 a fake audio-device clock; they do not claim imported-ROM or PCM equivalence.
+
+### Save fields and options
+
+`set_field(key, value?)` writes a native save-root field; `mod:key` writes
+only the current mod's `save.modData[modId][key]`. `set_option(key, value?)`
+writes the native `save.options[key]` dictionary. As in the reference,
+`set_option("mod:key", value)` retains that literal option key; it does not
+redirect to a private bucket. Omitting the value deletes the selected entry.
+Native root field and option names/meanings remain game-specific.
+
+Values must be finite numbers, strings, booleans or acyclic plain data tables
+with string/positive-integer keys. Functions, metatables and foreign mod
+names (`mod.other.key`, `other:key`) are refused. Replacing the root `modData`
+store is refused so `set_field` cannot bypass ownership. This is intentionally
+stricter than the reference's unrestricted root write. A value is limited to
+16 nested levels, 1,024 nodes and 32 KiB of strings; the complete program is
+limited to 8,192 nodes and 128 KiB of field strings.
+
+The compiler snapshots values; each execution copies again so neither the
+caller nor an earlier loop iteration can mutate compiled data. All target
+store shapes are checked before admission and again at dispatch. A linear
+preflight accounts for an earlier root `options` replacement before a later
+`set_option`. Conditional/loop behavior can still change native store validity
+at runtime; a failed runtime check stops further rows. Root writes do not
+translate game-specific semantics or persist the save file automatically.

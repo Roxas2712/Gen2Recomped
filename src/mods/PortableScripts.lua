@@ -6,6 +6,7 @@ local Flags = require("src.mods.Api3Flags")
 local State = require("src.mods.ScriptState")
 local Gifts = require("src.mods.ScriptGifts")
 local Audio = require("src.mods.ScriptAudio")
+local Fields = require("src.mods.ScriptFields")
 local DialogueAudio = require("src.mods.ScriptDialogueAudio")
 local Shops = require("src.mods.ScriptShops")
 local Battles = require("src.mods.ScriptBattles")
@@ -287,6 +288,10 @@ local function facade(loader, modId, native)
           return nil, "row " .. i .. ": " .. reason
         end
       end
+    end
+    local fields, fieldsReason = Fields.prepare(game, modId, program)
+    if not fields then
+      return nil, fieldsReason
     end
     local dialogueAudio, dialogueReason = DialogueAudio.prepare(loader, game, program)
     if not dialogueAudio then
@@ -1120,7 +1125,9 @@ local function facade(loader, modId, native)
         token.step = {}
         self.lastRow = verb .. " (portable row " .. pc .. ")"
         ctx.script, ctx.pc = compiled, pc
-        if DialogueAudio.ARITY[verb] then
+        if Fields.ARITY[verb] then
+          fields(ctx, row)
+        elseif DialogueAudio.ARITY[verb] then
           dialogueAudio.arm(ctx, row)
         elseif Audio.ARITY[verb] then
           audio(ctx, row, waitAudio, check)
