@@ -46,3 +46,6 @@ public mod with real GPU draws and screenshot readback: disabled direct path,
 false fallback, identity ownership, inversion with clean HUD state, callback
 failure, nonboolean predicate and owner removal. No ROM is required and the
 probe writes no game settings.
+
+With a [game viewport](game-viewport.md), output metrics refer to that game rectangle.
+Window composition and physical controls follow the output stage.
