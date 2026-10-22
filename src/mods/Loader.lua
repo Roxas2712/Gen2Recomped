@@ -1397,6 +1397,8 @@ local function stampAudioOwners(data, name, registry)
 end
 
 function Loader:load(data)
+  local viewport = package.loaded["src.render.GameViewport"]
+  if viewport then viewport.reset() end
   Api3WildBattle.cancelAll()
   Api3NPC.cancelAll()
   Api3Warp.cancelAll()
@@ -1744,6 +1746,8 @@ end
 -- boots) ran on a modded engine whose mod instance nothing drives any more,
 -- and the next Play loaded every mod on top of what the last one left.
 function Loader.teardown()
+  local viewport = package.loaded["src.render.GameViewport"]
+  if viewport then viewport.reset() end
   Api3WildBattle.cancelAll()
   Api3NPC.cancelAll()
   Api3Warp.cancelAll()

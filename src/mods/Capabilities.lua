@@ -18,7 +18,7 @@ add("hooks", "12345", [[
   battle.accuracy battle.catch_exp battle.crit battle.damage battle.enemy_action
   battle.exp_award battle.low_health_alarm battle.run battle.turn_order catch.rate
   encounter.fishing encounter.roll encounter.species evolution.check exp.gain
-  fieldmove.eligibility input.step link.fingerprint map.palette movement.collision
+  fieldmove.eligibility input.pointer input.step link.fingerprint map.palette movement.collision
   movement.speed music.select music.volume player.sprite pokemon.icon pokemon.sprite
   render.compose render.hud render.letterbox render.output render.output_enabled render.zones save.new_game save.write
   script.command trainer.party transition.style ui.list_menu ui.options.rows
@@ -29,7 +29,7 @@ add("hooks", "12345", [[
 -- OverworldController:openPC bypasses ui.pc.items on Gen 3/4 (and Gen 5 uses
 -- its own script PC). Gen4Battle paints its HUD through a separate seam and
 -- does not dispatch battle.overlay, unlike BattleState/Gen3Battle/WideBattle.
-add("hooks", "123", "battle.overlay ui.naming.grid ui.party.submenu ui.start_menu.items")
+add("hooks", "123", "render.viewport render.window battle.overlay ui.naming.grid ui.party.submenu ui.start_menu.items")
 add("hooks", "12", "ui.pc.items")
 add("hooks", "45", "battle.status_hud_visible")
 add("hooks", "12", "intro.oak_speech.build")

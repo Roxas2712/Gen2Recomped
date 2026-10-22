@@ -14,6 +14,7 @@ local PixelCanvas = require("src.render.PixelCanvas")
 local Runtime = require("src.mods.Runtime")
 local GbcColorCorrection = require("src.render.GbcColorCorrection")
 local Output = require("src.render.Output")
+local GameViewport = require("src.render.GameViewport")
 
 -- RESOLVED ONCE, NOT EVERY FRAME.  These three were `require`d from inside
 -- beginFrame and endFrame -- three string hashes into package.loaded on every
@@ -89,10 +90,10 @@ Renderer.UPRIGHT_MARGIN = 160
 -- Keep separate dpiX/dpiY so each GB pixel covers fitScale() physical pixels
 -- on BOTH axes (square).
 local function displayMetrics()
-  local ww, wh = love.graphics.getDimensions()
+  local ww, wh = GameViewport.dimensions()
   local pw, ph = ww, wh
   if love.graphics.getPixelDimensions then
-    pw, ph = love.graphics.getPixelDimensions()
+    pw, ph = GameViewport.pixelDimensions()
   end
   local dpiX, dpiY = 1, 1
   if ww > 0 and pw > 0 then dpiX = pw / ww end
@@ -113,6 +114,7 @@ local function displayMetrics()
 end
 
 function Renderer:init()
+  GameViewport.reset()
   -- 160x144 real pixels, never DPI-scaled: see src/render/PixelCanvas.lua
   -- (#208).  Every canvas below is sized in framebuffer pixels for the same
   -- reason -- worldViewSize() already works in drawable pixels.
@@ -831,7 +833,7 @@ end
 -- When GBC FX is active the composite is drawn into presentCanvas and
 -- presented through the GBC FX shader as a final pass.
 function Renderer:endFrame(zones, worldZones)
-  love.graphics.setCanvas()
+  GameViewport.setTarget()
   local ww, wh, pw, ph, dpiX, dpiY = displayMetrics()
   -- Sp = integer framebuffer pixels per GB pixel;
   -- Sx/Sy = LOVE-unit draw scales (may differ when dpiX ≠ dpiY).
@@ -949,6 +951,7 @@ function Renderer:endFrame(zones, worldZones)
       -- what remains here is the dpiX vs dpiY truncation gap (well under 1%,
       -- one seam across the window) that a single scalar dpiscale cannot
       -- express.
+      if self.presentCanvas and self.presentCanvas.release then self.presentCanvas:release() end
       self.presentCanvas = love.graphics.newCanvas(ww, wh)
       -- NEAREST, like every other surface in this pipeline.
       --
@@ -1399,7 +1402,7 @@ function Renderer:endFrame(zones, worldZones)
   end
 
   if present then
-    love.graphics.setCanvas()
+    GameViewport.setTarget()
     local corrected = GbcColorCorrection.apply(present)
     local composed = Pipelines.present(corrected,
       { width = ww, height = wh, scale = Sp, dpi = dpiY, dpiX = dpiX, dpiY = dpiY }) or corrected
