@@ -27,13 +27,27 @@ local function value(p, n)
   return math.max(p.min, math.min(p.max, p.min + steps * p.step))
 end
 local function validate(raw, id)
-  if type(raw) ~= "table" or raw.format ~= 1 or not label(raw.name) then
+  if type(raw) ~= "table" or (raw.format ~= 1 and raw.format ~= 2) or not label(raw.name) then
     return nil, "invalid preset metadata"
   end
   if not filename(raw.shader, "glsl") and not raw.builtinSource then
     return nil, "invalid shader filename"
   end
   local out = { id = id, name = raw.name, shader = raw.shader, source = raw.builtinSource, parameters = {} }
+  if raw.format == 2 then
+    if
+      raw.builtinSource
+      or not filename(raw.vertex, "glsl")
+      or not filename(raw.esShader, "glsl")
+      or not filename(raw.esVertex, "glsl")
+      or (raw.filter ~= "nearest" and raw.filter ~= "linear")
+      or not ({ clampzero = true, clamp = true, ["repeat"] = true, mirroredrepeat = true })[raw.wrap]
+    then
+      return nil, "invalid imported preset metadata"
+    end
+    out.imported, out.vertex, out.esShader, out.esVertex = true, raw.vertex, raw.esShader, raw.esVertex
+    out.filter, out.wrap = raw.filter, raw.wrap
+  end
   local params = raw.parameters or {}
   if type(params) ~= "table" or #params > 8 then
     return nil, "invalid parameter list"
@@ -52,6 +66,7 @@ local function validate(raw, id)
       or not p.id:match("^[%a_][%w_]*$")
       or seen[p.id]
       or p.id:match("^love_")
+      or (out.imported and p.id:match("^g2_"))
       or not label(p.name)
       or not finite(p.min)
       or not finite(p.max)
@@ -181,6 +196,8 @@ end
 function Presets:off()
   release(self.shader)
   release(self.output)
+  release(self.importInput)
+  self.importInput = nil
   self.shader, self.output, self.entry, self.values = nil, nil, nil, nil
   self.error = nil
 end
@@ -200,33 +217,65 @@ function Presets:activate(id, params)
   if entry.error then
     return self:_fail(entry.error)
   end
+  local g = self:_graphics()
+  local es = false
+  if entry.imported and g and g.getRendererInfo then
+    local name, version = g.getRendererInfo()
+    es = (tostring(name) .. tostring(version)):find("OpenGL ES", 1, true) ~= nil
+  end
   local source, why = entry.source
   if not source then
-    source, why = read(self:_fs(), ROOT .. "/" .. entry.shader, MAX_SOURCE)
+    source, why = read(self:_fs(), ROOT .. "/" .. (es and entry.esShader or entry.shader), MAX_SOURCE)
+  end
+  local vertex
+  if entry.imported then
+    vertex, why = read(self:_fs(), ROOT .. "/" .. (es and entry.esVertex or entry.vertex), MAX_SOURCE)
+    if not vertex then
+      return self:_fail(why)
+    end
   end
   if not source then
     return self:_fail(why)
   end
-  local g = self:_graphics()
   if not (g and g.newShader and g.newCanvas) then
     return self:_fail("shader graphics unavailable")
   end
-  local shader
+  local shader, importInput
   local values = {}
   local ok, err = pcall(function()
-    shader = g.newShader(source)
+    shader = vertex and g.newShader(source, vertex) or g.newShader(source)
+    if entry.imported then
+      -- Check NPOT wrapping and standardized uniform types before retiring the old effect.
+      importInput = g.newCanvas(3, 5, { dpiscale = 1 })
+      importInput:setFilter(entry.filter, entry.filter)
+      assert(importInput:setWrap(entry.wrap, entry.wrap), "unsupported preset texture wrapping")
+      for _, name in ipairs({ "SourceSize", "OriginalSize", "OutputSize", "FinalViewportSize" }) do
+        if shader:hasUniform("g2_" .. name) then
+          shader:send("g2_" .. name, { 3, 5, 1 / 3, 1 / 5 })
+        end
+      end
+      if shader:hasUniform("g2_Source") then
+        shader:send("g2_Source", importInput)
+      end
+    end
     for _, p in ipairs(entry.parameters) do
-      assert(shader:hasUniform(p.id), "missing parameter uniform: " .. p.id)
+      local uniform = entry.imported and ("g2_p_" .. p.id) or p.id
+      -- Slang declares parameters in both blocks even when optimized out.
+      assert(entry.imported or shader:hasUniform(uniform), "missing parameter uniform: " .. uniform)
       values[p.id] = value(p, type(params) == "table" and params[p.id] or nil)
-      shader:send(p.id, values[p.id])
+      if shader:hasUniform(uniform) then
+        shader:send(uniform, values[p.id])
+      end
     end
   end)
   if not ok then
     release(shader)
+    release(importInput)
     return self:_fail(err)
   end
   self:off()
   self.shader, self.entry, self.values = shader, entry, values
+  self.importInput = importInput
   return true
 end
 function Presets:applyOptions(opts)
@@ -268,7 +317,7 @@ function Presets:setParameter(opts, id, n)
   return nil, "unknown parameter"
 end
 function Presets:apply(input, pixelScale)
-  if not self:active() or input == self.output then
+  if not self:active() or (input == self.output or input == self.importInput) then
     return input
   end
   local g = self:_graphics()
@@ -307,8 +356,47 @@ function Presets:apply(input, pixelScale)
     g.setColorMask(true, true, true, true)
     g.setBlendMode("replace", "premultiplied")
     g.setColor(1, 1, 1, 1)
+    local sampled = input
+    if self.entry.imported then
+      local pw, ph = input:getPixelDimensions()
+      local scale = finite(pixelScale) and math.max(1, pixelScale) or 1
+      local nw, nh = math.max(1, math.floor(pw / scale + 0.5)), math.max(1, math.floor(ph / scale + 0.5))
+      if not self.importInput or self.importInput:getWidth() ~= nw or self.importInput:getHeight() ~= nh then
+        release(self.importInput)
+        self.importInput = nil
+        self.importInput = g.newCanvas(nw, nh, { dpiscale = 1 })
+        self.importInput:setFilter(self.entry.filter, self.entry.filter)
+        assert(
+          self.importInput:setWrap(self.entry.wrap, self.entry.wrap),
+          "unsupported preset texture wrapping"
+        )
+      end
+      -- Reconstruct the primary view's native-pixel grid in a private texture.
+      -- Its filter/wrap never change a mod's or the renderer's input texture.
+      g.setCanvas(self.importInput)
+      g.setShader()
+      local iw, ih = input:getDimensions()
+      g.draw(input, 0, 0, 0, nw / iw, nh / ih)
+      sampled = self.importInput
+      g.setCanvas(self.output)
+      local function send(id, v)
+        if self.shader:hasUniform(id) then
+          self.shader:send(id, v)
+        end
+      end
+      local ow, oh = input:getPixelDimensions()
+      local size = { nw, nh, 1 / nw, 1 / nh }
+      send("g2_Source", sampled)
+      send("g2_SourceSize", size)
+      send("g2_OriginalSize", size)
+      send("g2_OutputSize", { ow, oh, 1 / ow, 1 / oh })
+      send("g2_FinalViewportSize", { ow, oh, 1 / ow, 1 / oh })
+    end
     for id, n in pairs(self.values) do
-      self.shader:send(id, n)
+      local uniform = self.entry.imported and ("g2_p_" .. id) or id
+      if self.shader:hasUniform(uniform) then
+        self.shader:send(uniform, n)
+      end
     end
     if self.shader:hasUniform("sourceSize") then
       local w, h = input:getPixelDimensions()
@@ -318,7 +406,12 @@ function Presets:apply(input, pixelScale)
       self.shader:send("pixelScale", finite(pixelScale) and math.max(1, pixelScale) or 1)
     end
     g.setShader(self.shader)
-    g.draw(input, 0, 0)
+    if self.entry.imported then
+      local w, h = input:getDimensions()
+      g.draw(sampled, 0, 0, 0, w / sampled:getWidth(), h / sampled:getHeight())
+    else
+      g.draw(input, 0, 0)
+    end
   end)
   g.pop()
   if not ok then
