@@ -81,17 +81,8 @@ function F.resolve(generation, version, name)
   end
   return nil, "invalid or unknown flag"
 end
-function F.call(game, owner, gen, name, value, write, licensed, native)
-  if write and not licensed() then
-    return nil, "world facade is retired"
-  end
-  if write and type(value) ~= "boolean" then
-    return nil, "flag value must be boolean"
-  end
-  local save = game.save
-  if not save then
-    return nil, "no save"
-  end
+-- Resolve without a Game/save for whole-program script preflight.
+function F.address(owner, gen, version, name)
   local key
   if type(name) == "string" then
     if name:sub(1, 4) == "mod:" then
@@ -108,6 +99,31 @@ function F.call(game, owner, gen, name, value, write, licensed, native)
     if not identifier(key) then
       return nil, "invalid mod flag"
     end
+    return { kind = "mod", key = key }
+  end
+  local storage, public, number = F.resolve(gen, version, name)
+  if not storage then
+    return nil, public
+  end
+  return { kind = "native", key = storage, public = public, number = number }
+end
+function F.call(game, owner, gen, name, value, write, licensed, overworld)
+  if write and not licensed() then
+    return nil, "world facade is retired"
+  end
+  if write and type(value) ~= "boolean" then
+    return nil, "flag value must be boolean"
+  end
+  local save = game.save
+  if not save then
+    return nil, "no save"
+  end
+  local address, reason = F.address(owner, gen, Version.get(), name)
+  if not address then
+    return nil, reason
+  end
+  if address.kind == "mod" then
+    local key = address.key
     local store = save.modData
     if store ~= nil and type(store) ~= "table" then
       return nil, "invalid mod save store"
@@ -143,10 +159,7 @@ function F.call(game, owner, gen, name, value, write, licensed, native)
     end
     return true
   end
-  local storage, public, number = F.resolve(gen, Version.get(), name)
-  if not storage then
-    return nil, public
-  end
+  local storage, public, number = address.key, address.public, address.number
   if type(save.flags) ~= "table" then
     return nil, "invalid flag store"
   end
@@ -162,7 +175,7 @@ function F.call(game, owner, gen, name, value, write, licensed, native)
     -- Native clear keeps false: visibility distinguishes cleared from untouched.
     save.flags[storage] = value
     if gen == 3 then
-      local ow = native(game):overworld()
+      local ow = overworld(game)
       if ow and ow.syncObjectVisibility then
         for _, object in ipairs(ow.map and ow.map.def and ow.map.def.objects or {}) do
           if object.eventFlag == storage then

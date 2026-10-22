@@ -144,7 +144,7 @@ Unknown/unimplemented portable verbs return false. The existing native
 ## Scope and verification
 
 This first adapter covers dialogue/control flow across the 15 supported
-version selections (Gen 1–5). Flags, items/Pokémon, world movement/warps,
+version selections (Gen 1–5). Items/Pokémon, world movement/warps,
 battles, shops and other Gen1Recomp portable verbs need separately verified
 adapters; they refuse the complete list before the first effect here.
 
@@ -162,3 +162,46 @@ native failures. Fixture runs do not establish rendered retail-ROM coverage.
 When the unified content/callback PRs are also present, run
 `PORTABLE_SCRIPT_ALL_FORMATS=1 luajit tests/engine/portable_world_scripts.lua`
 to repeat the suite with all three format opt-ins enabled together.
+
+## Portable flag commands
+
+The validated language also supports:
+
+| Row | Meaning |
+| --- | --- |
+| `{ "set_flag", reference }` / `{ "setflag", reference }` | Set a private/native boolean flag. |
+| `{ "clear_flag", reference }` / `{ "clearflag", reference }` | Clear it. |
+| `{ "check_flag", reference }` | Set the conditional result to the flag's boolean value. |
+| `{ "wait_flag", reference, timeout? }` | Yield until true or until the optional timeout expires; set conditional result true/false. |
+
+References use [API-3 flag addressing](api3-flags.md): `mod:<key>` is private to
+the initiating mod, while native symbols/numbers retain their version-specific
+meaning. Crystal native references remain numeric-only; unknown hack mappings
+are declined. These rows are available through the unified script opt-in and
+API 3. Gen1's pinned reference does not offer the host's `scripts` capability
+query surface; portable API-3 mods can use the common world/queueScript query,
+while host-specific tools may inspect scripts/<verb>.
+
+Every reference, including unreachable rows, is validated and copied before
+admission. All referenced save stores are checked before the first effect;
+an invalid later row never permits an earlier set_flag to execute. Native and
+private writes share the public flag implementation, including private ownership,
+native storage, reentry protection and Gen3 visibility synchronization. Native
+flag handling uses the already resolved world and never asks the loader to boot
+Game.
+
+A timeout is a whole number from 0 to 36000 logic frames. Omission waits until
+signaled or cancelled. Even a zero timeout or already-set flag yields once;
+on the next condition poll a true flag wins over timeout expiry. Waiting pauses
+under a foreign covering screen, preserving its lifetime and timeout. Waits do
+not consume the script instruction budget on every frame. Existing cancellation,
+owner/session checks, one-shot completion and instruction/slice budgets apply.
+A flag store that becomes malformed after admission fails the run and restores
+the original runner; already executed native writes are not rolled back.
+
+The identical public-only shared mod verifies branching, both aliases, signal
+resume, timeout and complete-list refusal on both engines for eight versions.
+It extends the pinned suite to 80 comparisons /160 isolated loader runs.
+Local tests additionally verify detached rows, malformed stores/timeouts, paused
+foreign overlays, native flag conditions and stale-session/owner cancellation.
+The existing 5268-check dialogue suite remains unchanged and passing.

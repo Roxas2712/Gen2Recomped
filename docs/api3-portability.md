@@ -134,8 +134,8 @@ The runner also generates an API-3 mod through the real scaffold CLI and
 loads those same generated files on both engines for each version. This adds
 eight comparisons to the sixteen normal/rollback cases. Eight additional warp
 cases use the same public mod on both engines and native-shaped timing seams.
-Eight object/block cases and eight NPC cases extend this to 72 comparisons
-and 144 isolated loader runs (including wild-battle, map-invalidation and flag cases). It compares JSON projections of public results and
+Eight object/block cases and eight NPC cases extend this to 80 comparisons
+and 160 isolated loader runs (including wild-battle, map-invalidation, flag and script-flag cases). It compares JSON projections of public results and
 records hashes of both shared and generated fixture files. It refuses a different or modified reference.
 
 Coverage includes canonical content reads/writes/iteration and native merge

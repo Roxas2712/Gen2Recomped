@@ -2,6 +2,10 @@
 local Program = {}
 Program.MAX_ROWS, Program.MAX_STEPS, Program.SLICE = 1024, 65536, 128
 local ARITY = {
+  set_flag = 2,
+  clear_flag = 2,
+  check_flag = 2,
+  wait_flag = 3,
   show_text = 2,
   ask = 2,
   choice = 3,
@@ -12,8 +16,9 @@ local ARITY = {
   jump_if_false = 2,
   ["end"] = 1,
 }
+local aliases = { text = "show_text", setflag = "set_flag", clearflag = "clear_flag" }
 function Program.supports(verb)
-  return type(verb) == "string" and (ARITY[verb] ~= nil or verb == "text")
+  return type(verb) == "string" and (ARITY[aliases[verb] or verb] ~= nil)
 end
 local function integer(n, lo, hi)
   return type(n) == "number" and n == n and n % 1 == 0 and n >= lo and n <= hi
@@ -69,7 +74,8 @@ local function text(value, max)
   end
   return true
 end
-function Program.compile(raw)
+function Program.compile(raw, context)
+  context = context or {}
   local n = array(raw, Program.MAX_ROWS)
   if not n then
     return nil, "script must be a dense plain array of at most 1024 rows"
@@ -83,15 +89,32 @@ function Program.compile(raw)
     if not count or count == 0 then
       return fail(i, "expected a dense plain command row")
     end
-    local verb = source[1] == "text" and "show_text" or source[1]
+    local verb = aliases[source[1]] or source[1]
     if type(verb) ~= "string" or not ARITY[verb] then
       return fail(i, "unsupported portable command")
     end
-    if count > ARITY[verb] or count < (verb == "choice" and 2 or ARITY[verb]) then
+    if count > ARITY[verb] or count < ((verb == "choice" or verb == "wait_flag") and 2 or ARITY[verb]) then
       return fail(i, "invalid command arity")
     end
     local row = { verb, source[2] }
-    if verb == "show_text" or verb == "ask" then
+    if verb == "set_flag" or verb == "clear_flag" or verb == "check_flag" or verb == "wait_flag" then
+      local Version = require("src.core.GameVersion")
+      local address, reason = require("src.mods.Api3Flags").address(
+        context.owner or "",
+        context.generation or Version.generation(),
+        context.version or Version.get(),
+        source[2]
+      )
+      if not address then
+        return fail(i, reason)
+      end
+      if verb == "wait_flag" then
+        if source[3] ~= nil and not integer(source[3], 0, 36000) then
+          return fail(i, "invalid flag timeout")
+        end
+        row[3] = source[3]
+      end
+    elseif verb == "show_text" or verb == "ask" then
       if not text(source[2], 4096) then
         return fail(i, "text must be valid UTF-8 without NUL, at most 4096 bytes")
       end
