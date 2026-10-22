@@ -5,6 +5,7 @@ local Runtime = require("src.mods.Runtime")
 local Flags = require("src.mods.Api3Flags")
 local State = require("src.mods.ScriptState")
 local Gifts = require("src.mods.ScriptGifts")
+local WorldEdits = require("src.mods.ScriptWorldEdits")
 local GameVersion = require("src.core.GameVersion")
 local Scripts = {}
 local runs = setmetatable({}, { __mode = "k" })
@@ -241,6 +242,10 @@ local function facade(loader, modId, native)
     if not gift then
       return nil, giftReason
     end
+    local edit, editReason = WorldEdits.prepare(game, ow, modId, program)
+    if not edit then
+      return nil, editReason
+    end
     local Runner = require("src.script.ScriptRunner")
     local runner = Runner.new(game, ow)
     local token = {
@@ -277,12 +282,12 @@ local function facade(loader, modId, native)
         or game.stack.states ~= token.states
         or not contains(token.stack, ow)
         or game.overworld and game.overworld ~= ow
-        or ow.map ~= token.map
+        or not token.mutating and ow.map ~= token.map
         or ow.map.id ~= token.mapId
         or ow.player ~= token.player
         or ow.player.cellX ~= token.x
         or ow.player.cellY ~= token.y
-        or ow.runner ~= runner
+        or not token.mutating and ow.runner ~= runner
         or GameVersion.get() ~= token.version
         or Runtime.hooks ~= loader.hooks
         or Runtime.events ~= loader.events
@@ -330,6 +335,44 @@ local function facade(loader, modId, native)
         token.finish(false, reason)
       end
       return valid
+    end
+    local function mutate(operation)
+      if not check() then
+        return nil, "script session changed"
+      end
+      token.mutating = true
+      local called, value, reason = engine(operation)
+      if
+        not token.done
+        and current(loader) == game
+        and game.save == token.save
+        and game.data == token.data
+        and game.stack == token.stack
+        and ow.player == token.player
+      then
+        if
+          called
+          and value
+          and ow.map ~= token.map
+          and ow.map
+          and ow.map.id == token.mapId
+          and ow.runner ~= runner
+        then
+          token.original = ow.runner
+          ow.runner = runner
+        end
+        if called and value and ow.map and ow.map.id == token.mapId then
+          token.map = ow.map
+        end
+      end
+      token.mutating = nil
+      if not check() then
+        return nil, "script session changed"
+      end
+      if not called then
+        return nil, message(value)
+      end
+      return value, reason
     end
     local discover
     local function snapshot()
@@ -514,7 +557,15 @@ local function facade(loader, modId, native)
         token.step = {}
         self.lastRow = verb .. " (portable row " .. pc .. ")"
         ctx.script, ctx.pc = compiled, pc
-        if Gifts.ARITY[verb] then
+        if WorldEdits.ARITY[verb] then
+          local value, reason = edit(row, mutate)
+          if not check() then
+            return
+          end
+          if not value then
+            error(reason, 0)
+          end
+        elseif Gifts.ARITY[verb] then
           if nativeGift(ctx, row) == math.huge then
             return
           end
