@@ -301,3 +301,55 @@ This test uses its own LÖVE identity and no cartridge data. Unit tests inject
 bounded transport responses and worker events; live network checks are separate
 from deterministic CI. Desktop conversion does not promise every catalog item
 is supported, nor equivalent execution on mobile hardware.
+
+### Shipping the desktop converter
+
+`tools/slang-import/package.py` builds a separate `shader-tools/` bundle with
+Cargo.lock, architecture metadata, SHA-256 file inventory, dependency notices,
+pinned upstream license files and the original Cargo source archives. Each
+source archive is checked against Cargo.lock before copying. Bundles contain
+no ROM, save, downloaded shader pack or compiler cache. Source bundles and
+third-party notices travel with the helper; sources downloaded for a chosen
+preset remain separate under the player's shader-presets/sources directory.
+
+```sh
+# Rust 1.99.1 and a C++ compiler are required; normal CLI development is unchanged.
+python3 tools/slang-import/package.py build
+# macOS release bundle (arm64 + x86_64):
+rustup target add aarch64-apple-darwin x86_64-apple-darwin
+python3 tools/slang-import/package.py build --universal-macos
+python3 tools/slang-import/package.py verify --platform macos --arch universal
+```
+
+Choose a new output directory with `--output` when rebuilding; the packager
+refuses existing output/destination directories. Windows uses a static CRT.
+The macOS release requires both Mach-O slices, Windows win64 requires PE x86_64,
+and Linux AppImages require the corresponding ELF architecture. A mismatched,
+changed, incomplete, symlinked or unlisted bundle fails packaging. Optional
+source builds without a bundle keep their existing behavior and report the
+missing importer in the browser.
+
+The release workflow builds native Windows/Linux x86_64/Linux ARM64 artifacts
+and a universal macOS bundle. Desktop builders install them beside game.love
+(or inside macOS Contents/Resources), outside the shared game payload. The
+bare macOS helper is explicitly signed before the app is sealed; its manifest
+is a build-input receipt (signing can change executable bytes), while the app's
+code signature verifies the signed result. No helper is added to mobile,
+console or PortMaster payloads. Compatible converted presets remain usable
+without the desktop compiler. Linux helper builds use Ubuntu 22.04 for x86_64
+and Ubuntu 24.04 for ARM64; older host runtimes require their own compatible
+helper build or desktop-prepared presets. Windows/Linux release artifacts still
+need their native CI/runtime checks; a macOS smoke test is not that evidence.
+
+```sh
+python3 tools/slang-import/tests/package_test.py
+# Uses a new disposable app folder and its own save identity; no ROM required.
+python3 tools/slang-import/tests/fused_macos.py \
+  --love-app /path/to/love.app --bundle /path/to/shader-tools \
+  --output /tmp/ShaderProbe.app
+# Add --intel to exercise the Intel process under Rosetta.
+```
+
+The fused-app test verifies default helper discovery, real pinned HTTPS
+acquisition, live GPU approval, installation/rendering, duplicate reuse and
+cancellation. It never uses the fused app as a standalone LÖVE validator.
