@@ -5,6 +5,7 @@ local Runtime = require("src.mods.Runtime")
 local Flags = require("src.mods.Api3Flags")
 local State = require("src.mods.ScriptState")
 local Gifts = require("src.mods.ScriptGifts")
+local Movement = require("src.mods.ScriptMovement")
 local WorldEdits = require("src.mods.ScriptWorldEdits")
 local GameVersion = require("src.core.GameVersion")
 local Scripts = {}
@@ -246,6 +247,10 @@ local function facade(loader, modId, native)
     if not edit then
       return nil, editReason
     end
+    local movement, moveReason = Movement.prepare(ow, program)
+    if not movement then
+      return nil, moveReason
+    end
     local Runner = require("src.script.ScriptRunner")
     local runner = Runner.new(game, ow)
     local token = {
@@ -285,9 +290,9 @@ local function facade(loader, modId, native)
         or not token.mutating and ow.map ~= token.map
         or ow.map.id ~= token.mapId
         or ow.player ~= token.player
-        or ow.player.cellX ~= token.x
-        or ow.player.cellY ~= token.y
+        or (ow.player.cellX ~= token.x or ow.player.cellY ~= token.y) and not (token.move and token.move.position())
         or not token.mutating and ow.runner ~= runner
+        or token.move and not token.move.live()
         or GameVersion.get() ~= token.version
         or Runtime.hooks ~= loader.hooks
         or Runtime.events ~= loader.events
@@ -304,6 +309,9 @@ local function facade(loader, modId, native)
         return
       end
       token.done = true
+      if token.move then
+        token.move.cancel()
+      end
       runner.co, runner.waitingFrames, runner.waitingCheck = nil, nil, nil
       -- Remove only this run's exact native screens, preserving foreign
       -- overlays and a replacement world's runner/locks.
@@ -534,6 +542,161 @@ local function facade(loader, modId, native)
       game.stack:push(menu)
       runner:yield()
     end
+    local function move(ctx, row)
+      local actor = movement.target(row)
+      if not actor then
+        error("native movement target unavailable", 0)
+      end
+      local verb, dirs = row[1], {}
+      if verb == "move_player" or verb == "move_npc" then
+        local at = verb == "move_player" and 2 or 3
+        for i = 1, row[at + 1] or 1 do
+          dirs[i] = row[at]
+        end
+      elseif verb == "move_npc_to" then
+        local reason
+        dirs, reason = Movement.path(ow, actor, row[3], row[4])
+        if not dirs then
+          error(reason, 0)
+        end
+      elseif verb == "place_npc" then
+        if actor.def and actor.def.index then
+          require("src.script.Commands").place_npc(ctx, actor.def.index, row[3], row[4], row[5])
+          return
+        end
+        actor.cellX, actor.cellY, actor.px, actor.py = row[3], row[4], row[3] * 16, row[4] * 16
+        actor.moving, actor.marching, actor.progress = false, false, 0
+        actor.targetX, actor.targetY = nil, nil
+        if row[5] then
+          actor.facing = row[5]
+        end
+        return
+      else
+        local dir = verb == "face_object" and row[3] or row[2]
+        if verb == "face_npc" or verb == "face_player" then
+          local other = verb == "face_npc" and movement.npc or ow.player
+          local dx, dy = other.cellX - actor.cellX, other.cellY - actor.cellY
+          dir = math.abs(dx) > math.abs(dy) and (dx > 0 and "right" or "left") or (dy > 0 and "down" or "up")
+        end
+        if actor.scriptFace then
+          actor:scriptFace(dir)
+        else
+          actor.facing = dir
+        end
+        if verb == "face_object" and row[4] and row[4].hold then
+          actor.timer = row[4].hold
+        end
+        return
+      end
+      for _, dir in ipairs(dirs) do
+        if not check() then
+          return
+        end
+        if actor ~= ow.player and movement.target(row) ~= actor then
+          error("movement target changed", 0)
+        end
+        local step, completed, accepted, fired, pending = token.step, false, nil, false, false
+        local sx, sy = actor.cellX, actor.cellY
+        local delta = Movement.directions[dir]
+        local tx, ty = sx + delta[1], sy + delta[2]
+        local entries, before = {}, {}
+        for _, entry in ipairs(ow.scriptMoves or {}) do
+          before[entry] = true
+        end
+        local lease = {}
+        function lease.live()
+          return movement.target(row) == actor
+            and (actor.cellX == sx and actor.cellY == sy or actor.cellX == tx and actor.cellY == ty)
+        end
+        function lease.position()
+          if actor ~= ow.player then
+            return false
+          end
+          local x, y = actor.cellX, actor.cellY
+          return (x == sx and y == sy or x == tx and y == ty)
+        end
+        function lease.cancel()
+          local removed = false
+          for i = #(ow.scriptMoves or {}), 1, -1 do
+            if entries[ow.scriptMoves[i]] then
+              table.remove(ow.scriptMoves, i)
+              removed = true
+            end
+          end
+          local foreign = false
+          for _, entry in ipairs(ow.scriptMoves or {}) do
+            if entry.entity == actor then
+              foreign = true
+            end
+          end
+          if removed and not foreign then
+            actor.moving, actor.marching = false, false
+            actor.targetX, actor.targetY = nil, nil
+            actor.px, actor.py = actor.cellX * 16, actor.cellY * 16
+          end
+          if token.move == lease then
+            token.move = nil
+          end
+        end
+        local function done()
+          if fired then
+            return
+          end
+          if accepted == nil then
+            pending = true
+            return
+          end
+          fired = true
+          if not accepted or token.step ~= step or not check() then
+            return
+          end
+          if actor.cellX ~= tx or actor.cellY ~= ty then
+            token.finish(false, "native movement did not arrive")
+            return
+          end
+          completed = true
+          if actor == ow.player then
+            token.x, token.y = tx, ty
+          end
+          lease.cancel()
+          -- Poll completion on the next foreground logic frame. A callback
+          -- beneath a foreign overlay cannot resume later script effects.
+        end
+        token.move = lease
+        local called, value, reason = engine(ow.scriptMove, ow, actor, dir, 1, done)
+        for _, entry in ipairs(ow.scriptMoves or {}) do
+          if not before[entry] and entry.entity == actor then
+            entries[entry] = true
+          end
+        end
+        if token.done then
+          lease.cancel()
+          return
+        end
+        accepted = called and value ~= false and not (value == nil and reason ~= nil)
+        if not accepted then
+          lease.cancel()
+          error(called and (reason or "native movement refused") or message(value), 0)
+        end
+        if pending then
+          done()
+        end
+        if not check() then
+          return
+        end
+        if not completed then
+          local remaining = 3600
+          runner.waitingCheck = function()
+            remaining = remaining - 1
+            if remaining <= 0 then
+              token.finish(false, "native movement timed out")
+            end
+            return completed
+          end
+          runner:yield()
+        end
+      end
+    end
     function runner:exec(compiled, ctx)
       local pc, slice = 1, 0
       while pc <= #compiled do
@@ -557,7 +720,9 @@ local function facade(loader, modId, native)
         token.step = {}
         self.lastRow = verb .. " (portable row " .. pc .. ")"
         ctx.script, ctx.pc = compiled, pc
-        if WorldEdits.ARITY[verb] then
+        if Movement.ARITY[verb] then
+          move(ctx, row)
+        elseif WorldEdits.ARITY[verb] then
           local value, reason = edit(row, mutate)
           if not check() then
             return

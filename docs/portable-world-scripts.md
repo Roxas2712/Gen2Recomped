@@ -300,3 +300,29 @@ restores the new idle runner when finished. Foreign overlays pause the
 program; unloading, changed saves/maps and invalid live stores cancel it.
 Edits already committed before cancellation are retained, and public world
 events follow the native edit behavior.
+
+## Movement and facing
+
+On Gen1–3, API 3 accepts `move_player(dir, tiles?)`,
+`move_npc(ref, dir, tiles?)`, `move_npc_to(ref, x, y)`,
+`place_npc(ref, x, y, facing?)`, `face_object(ref, dir, {hold=frames}?)`,
+`face_player_dir(dir)`, `face(dir)`, `face_npc()` and `face_player()`.
+`face` turns the talking NPC; `face_npc` turns the player toward that NPC,
+and `face_player` turns that NPC toward the player. The last three require
+an existing talking-NPC context. Object references resolve existing native
+actors on the active map. Counts are 0–1024 cells (default 1).
+
+All target references and argument shapes are checked before any command
+runs. Paths are computed against the live walkable map at dispatch, using
+a bounded search; an unavailable path fails the admitted program. Steps
+use the native movement queue and walker updates. Each completion is tied
+to its exact run, step and actor. Movement only permits its own expected
+player position changes. Callbacks are one-shot, and continuation waits
+for a foreground logic frame, so foreign overlays pause later effects.
+
+Cancellation removes only the run's exact queued entries and leaves foreign
+tracks intact. Invalid sessions/actors, refused native steps and a stalled
+step (3,600 foreground logic frames) terminate the script. A native step
+which crosses into a different map ends this run; use explicit `warp` for
+portable cross-map scripts when supported. These limits are intentionally
+reported rather than silently claiming arbitrary native movement parity.
