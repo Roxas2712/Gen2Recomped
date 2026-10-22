@@ -205,3 +205,41 @@ It extends the pinned suite to 80 comparisons /160 isolated loader runs.
 Local tests additionally verify detached rows, malformed stores/timeouts, paused
 foreign overlays, native flag conditions and stale-session/owner cancellation.
 The existing 5268-check dialogue suite remains unchanged and passing.
+
+## Wallet, inventory and party state commands
+
+The bounded language also accepts these synchronous rows:
+
+| Row | Meaning |
+| --- | --- |
+| `{ "give_money", amount }` / `{ "take_money", amount }` | Add/subtract money; subtraction saturates at zero. |
+| `{ "check_money", amount }` | Set the conditional result to whether the current wallet covers the amount. |
+| `{ "take_coins", amount }` | Subtract coins, saturating at zero. |
+| `{ "check_item", itemId }` | Set the conditional result to whether the bag contains the item. |
+| `{ "take_item", itemId, count? }` | Remove up to count (default one), using native Bag.remove/order cleanup. |
+| `{ "check_dex_owned", amount? }` | Check the owned/caught species count, default threshold one. |
+| `{ "mark_seen", speciesId }` | Mark an existing species seen using the host's native storage key. |
+| `{ "heal_party" }` | Heal native party HP/status and restore PP from the current Game's move data. |
+
+Amounts are finite whole nonnegative numbers up to Lua's exact integer limit
+(2^53-1). Item count is 1–999. Item/species IDs are canonical strings, resolved
+through the existing loader index rather than assumed cartridge numbers.
+Missing/ambiguous content, malformed referenced wallets/inventory/dex/party
+stores or malformed arguments reject the complete list before any effect,
+including unreachable rows. Accepted rows are detached; live stores are checked
+again when dispatching after a wait. Native effects already executed before a
+later runtime failure are not rolled back.
+
+Wallet writes retain the verified Gen1 API's generation behavior: Gen2/3
+addition caps at 999999; Gen1 retains its native unbounded script wallet.
+Queries and item/coin removal do not create gifts or UI. Inventory and party
+structures retain this host's native layouts. The optional moves argument on
+Pokemon.heal lets this path use Game.data instead of an unrelated Data singleton;
+existing native callers keep their default behavior.
+
+The same public script compares branches and resulting money, coins, item
+quantity, HP/PP and seen state through both native backends on eight versions.
+The full pinned checker now runs 88 comparisons /176 isolated loader runs.
+Host tests add malformed/unreachable-row refusal with no prefix effects, wallet
+caps, saturation, actual Bag order removal, live-store failure and argument
+copying. These are ROM-free runtime/store checks, not a story playthrough.

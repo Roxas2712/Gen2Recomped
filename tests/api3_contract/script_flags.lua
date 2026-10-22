@@ -1,7 +1,7 @@
 local M = {}
-function M.fixture(root, backend, version)
+function M.fixture(root, backend, version, modId)
   local codeRoot = debug.getinfo(1, "S").source:sub(2):match("^(.*)/script_flags%.lua$")
-  local f = dofile(codeRoot .. "/warp.lua").fixture(root, backend, version, "script_flags")
+  local f = dofile(codeRoot .. "/warp.lua").fixture(root, backend, version, modId or "script_flags")
   f.loader.game = f.game
   f.ow.runner.update = function() end
   if f.field then

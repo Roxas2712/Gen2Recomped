@@ -1,5 +1,6 @@
 -- Pure preflight for the bounded portable dialogue/control-flow language.
 local Program = {}
+local State = require("src.mods.ScriptState")
 Program.MAX_ROWS, Program.MAX_STEPS, Program.SLICE = 1024, 65536, 128
 local ARITY = {
   set_flag = 2,
@@ -16,6 +17,9 @@ local ARITY = {
   jump_if_false = 2,
   ["end"] = 1,
 }
+for verb, arity in pairs(State.ARITY) do
+  ARITY[verb] = arity
+end
 local aliases = { text = "show_text", setflag = "set_flag", clearflag = "clear_flag" }
 function Program.supports(verb)
   return type(verb) == "string" and (ARITY[aliases[verb] or verb] ~= nil)
@@ -93,11 +97,20 @@ function Program.compile(raw, context)
     if type(verb) ~= "string" or not ARITY[verb] then
       return fail(i, "unsupported portable command")
     end
-    if count > ARITY[verb] or count < ((verb == "choice" or verb == "wait_flag") and 2 or ARITY[verb]) then
+    if
+      not State.ARITY[verb]
+      and (count > ARITY[verb] or count < ((verb == "choice" or verb == "wait_flag") and 2 or ARITY[verb]))
+    then
       return fail(i, "invalid command arity")
     end
     local row = { verb, source[2] }
-    if verb == "set_flag" or verb == "clear_flag" or verb == "check_flag" or verb == "wait_flag" then
+    if State.ARITY[verb] then
+      local value, reason = State.syntax(verb, source)
+      if not value then
+        return fail(i, reason)
+      end
+      row = value
+    elseif verb == "set_flag" or verb == "clear_flag" or verb == "check_flag" or verb == "wait_flag" then
       local Version = require("src.core.GameVersion")
       local address, reason = require("src.mods.Api3Flags").address(
         context.owner or "",
