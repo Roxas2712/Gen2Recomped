@@ -4,6 +4,7 @@ local Merge = require("src.mods.Merge")
 local Schemas = require("src.mods.Schemas")
 local Shapes = require("src.mods.UnifiedSchemas")
 local Ids = require("src.mods.UnifiedIds")
+local Effects = require("src.mods.UnifiedEffects")
 local U = {}
 local copy, DELETE = Merge.deepCopy, Merge.DELETE
 local function unsupported(reason) error({ unsupported = reason }, 0) end
@@ -160,7 +161,8 @@ readRecord = function(ctx, kind, id, raw)
   elseif kind == "moves" then
     out.type = typeRead(raw.type)
     out.category = raw.category or raw.class
-    if type(raw.effect) ~= "string" then out.effect = nil end
+    out.effect = Effects.read(raw.effect, ctx.gen, raw)
+    out.secondaryChance = Effects.chance(raw, ctx.gen)
   elseif kind == "items" then
     if type(raw.effect) ~= "string" then out.effect = nil end
     if raw.machine then out.machine.move = ctx.ids:read("moves", raw.machine.move) end
@@ -272,9 +274,30 @@ local function writeRecord(ctx, kind, id, value, old, mode)
       out.type = typeWrite(ctx, value.type)
       if old and old.typeId and out.type ~= old.type then unsupported("changing a DS type requires native type metadata") end
     end
+    local probability = value.secondaryChance
     if value.effect and value.effect ~= DELETE then
-      reference(ctx, "move_effects", value.effect)
-      if ctx.gen > 1 and (not old or value.effect ~= old.effect) then unsupported("changing move effects requires a native effect adapter") end
+      local plan, changed = Effects.write(value.effect, ctx.gen, old, function(effect)
+        return ctx.loader.content.move_effects:get(effect) ~= nil
+      end)
+      if not plan then unsupported(changed) end
+      out.effect = plan.effect
+      if changed then
+        out._api3EffectId = plan._api3EffectId
+        if ctx.gen == 3 then out.gen3Effect = plan.gen3Effect or DELETE end
+        if ctx.gen > 1 and probability == nil then probability = plan.probability or DELETE end
+      end
+    end
+    out.secondaryChance = nil
+    if probability ~= nil then
+      if ctx.gen == 1 or ctx.gen > 3 then unsupported("secondaryChance requires a Gen 2/3 native adapter") end
+      if old and probability ~= DELETE and probability == Effects.chance(old, ctx.gen)
+          and (probability ~= 0 or old._api3EffectChance or value.native ~= nil) then
+        -- Detached records preserve the exact original native chance byte.
+      else
+        out.effectChance = probability == DELETE and DELETE or math.floor(probability * 256 / 100 + 0.5)
+        out._api3EffectChance = probability == DELETE and DELETE or true
+        if ctx.gen == 3 then out.secondaryChance = probability end
+      end
     end
     if value.category ~= nil and old and old.class ~= nil then
       check(value.category ~= DELETE, "native move class cannot be deleted")

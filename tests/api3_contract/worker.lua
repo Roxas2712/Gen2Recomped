@@ -28,11 +28,14 @@ assert(
       or mode == "script_audio"
       or mode == "script_dialogue_audio"
       or mode == "script_fields"
+      or mode == "effects"
     ),
   "invalid worker arguments"
 )
 local codeRoot = (arg[0]:gsub("\\", "/")):match("^(.*)/worker%.lua$")
-if mode == "script_fields" then
+if mode == "effects" then
+  dofile(codeRoot .. "/effects.lua").run(root, backend, version)
+elseif mode == "script_fields" then
   dofile(codeRoot .. "/script_fields.lua").run(root, backend, version)
 elseif mode == "script_dialogue_audio" then
   dofile(codeRoot .. "/script_dialogue_audio.lua").run(root, backend, version)
