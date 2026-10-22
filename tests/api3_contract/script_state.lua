@@ -1,7 +1,7 @@
 local M = {}
-function M.fixture(root, backend, version)
+function M.fixture(root, backend, version, modId)
   local codeRoot = debug.getinfo(1, "S").source:sub(2):match("^(.*)/script_state%.lua$")
-  local f = dofile(codeRoot .. "/script_flags.lua").fixture(root, backend, version, "script_state")
+  local f = dofile(codeRoot .. "/script_flags.lua").fixture(root, backend, version, modId or "script_state")
   local save, data = f.game.save, f.game.data
   save.money, save.coins = 100, 50
   save.inventory, save.bagOrder = { POTION = 3 }, { "POTION" }

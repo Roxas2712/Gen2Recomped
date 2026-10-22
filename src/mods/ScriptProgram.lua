@@ -1,6 +1,7 @@
 -- Pure preflight for the bounded portable dialogue/control-flow language.
 local Program = {}
 local State = require("src.mods.ScriptState")
+local Gifts = require("src.mods.ScriptGifts")
 Program.MAX_ROWS, Program.MAX_STEPS, Program.SLICE = 1024, 65536, 128
 local ARITY = {
   set_flag = 2,
@@ -18,6 +19,9 @@ local ARITY = {
   ["end"] = 1,
 }
 for verb, arity in pairs(State.ARITY) do
+  ARITY[verb] = arity
+end
+for verb, arity in pairs(Gifts.ARITY) do
   ARITY[verb] = arity
 end
 local aliases = { text = "show_text", setflag = "set_flag", clearflag = "clear_flag" }
@@ -89,7 +93,7 @@ function Program.compile(raw, context)
     return nil, "row " .. i .. ": " .. message
   end
   for i = 1, n do
-    local source, count = raw[i], array(raw[i], 3)
+    local source, count = raw[i], array(raw[i], 5)
     if not count or count == 0 then
       return fail(i, "expected a dense plain command row")
     end
@@ -99,12 +103,27 @@ function Program.compile(raw, context)
     end
     if
       not State.ARITY[verb]
+      and not Gifts.ARITY[verb]
       and (count > ARITY[verb] or count < ((verb == "choice" or verb == "wait_flag") and 2 or ARITY[verb]))
     then
       return fail(i, "invalid command arity")
     end
     local row = { verb, source[2] }
-    if State.ARITY[verb] then
+    if Gifts.ARITY[verb] then
+      local value, reason = Gifts.syntax(verb, source)
+      if not value then
+        return fail(i, reason)
+      end
+      row = value
+      for _, index in ipairs({ 4, 5 }) do
+        if type(row[index]) == "string" then
+          if not text(row[index], 4096) then
+            return fail(i, "gift text must be valid UTF-8 without NUL")
+          end
+          bytes = bytes + #row[index]
+        end
+      end
+    elseif State.ARITY[verb] then
       local value, reason = State.syntax(verb, source)
       if not value then
         return fail(i, reason)

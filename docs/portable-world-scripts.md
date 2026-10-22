@@ -243,3 +243,41 @@ The full pinned checker now runs 88 comparisons /176 isolated loader runs.
 Host tests add malformed/unreachable-row refusal with no prefix effects, wallet
 caps, saturation, actual Bag order removal, live-store failure and argument
 copying. These are ROM-free runtime/store checks, not a story playthrough.
+
+## Item and Pokemon gifts
+
+- `{ "give_item", itemId, count?, gotText?, bagFullText? }`: use the native
+  bag gift command. Count defaults to one (1–999). Optional receipt/full-bag
+  text is literal UTF-8 up to 4096 bytes; `gotText=false` suppresses the receipt.
+  A full bag shows its native failure message and halts before later gift flags.
+- `{ "give_pokemon", speciesId, level, skipNickname?, gotText? }`: use native
+  creation, OT stamping, party/box placement and nickname flow. Level is 1–100;
+  the optional flags are actual booleans. `gotText=true` requests a receipt
+  before the nickname question. A full party sends the gift through native box
+  storage and waits for its sent-to-box text; completely full storage leaves
+  the native conditional result false for the script to branch on.
+
+The complete row list's content references, counts/options and referenced
+inventory/party/player/dex/box store shapes are checked before a prefix runs.
+IDs are canonical, but native bag capacities, native Pokemon fields and native
+storage layouts remain the host's. Already entered native effects are not a
+transaction. Scripts cannot pass executable callbacks or native options into
+these rows. Gifts do not introduce new species constructors or storage slots.
+
+The isolated runner adopts exact native screens created by the gift operation
+and screens subsequently created by those owned screens. Native receipt,
+YES/NO and naming callbacks receive per-operation, per-phase one-shot guards;
+an old receipt/question/naming callback cannot mutate a nickname twice, bypass
+a later screen or skip the next row's wait. Cancellation removes owned screens
+and retains a foreign overlay. A mod retired by its before-give hook cannot
+continue into native Pokemon construction. Native callers outside the portable
+context retain their existing callback/default behavior.
+
+The same public mod on both engines verifies item and Pokemon gifts with
+receipt/nickname suppressed, real native bag/party/dex effects and whole-list
+preflight refusal. This extends the pinned suite to 96 comparisons /192 isolated
+loader runs. Host tests additionally drive actual native receipts, bag-full
+messages, YES/NO, naming, box deposits, callback replay and unload/session
+cancellation on synthetic data. Rendering/pixel equivalence and retail-ROM
+playthroughs are not claimed. Direct mutations of engine objects by other mods
+remain outside the portable runner's ownership guarantees.

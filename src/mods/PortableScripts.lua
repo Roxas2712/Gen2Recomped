@@ -4,6 +4,7 @@ local Program = require("src.mods.ScriptProgram")
 local Runtime = require("src.mods.Runtime")
 local Flags = require("src.mods.Api3Flags")
 local State = require("src.mods.ScriptState")
+local Gifts = require("src.mods.ScriptGifts")
 local GameVersion = require("src.core.GameVersion")
 local Scripts = {}
 local runs = setmetatable({}, { __mode = "k" })
@@ -236,6 +237,10 @@ local function facade(loader, modId, native)
     if not state then
       return nil, reason
     end
+    local gift, giftReason = Gifts.prepare(loader, game, ow, program)
+    if not gift then
+      return nil, giftReason
+    end
     local Runner = require("src.script.ScriptRunner")
     local runner = Runner.new(game, ow)
     local token = {
@@ -256,6 +261,7 @@ local function facade(loader, modId, native)
       player = ow.player,
       version = GameVersion.get(),
       ui = {},
+      ownedUI = {},
       steps = 0,
     }
     function token.valid()
@@ -325,19 +331,81 @@ local function facade(loader, modId, native)
       end
       return valid
     end
+    local discover
+    local function snapshot()
+      local before = {}
+      for _, state in ipairs(game.stack.states) do
+        before[state] = true
+      end
+      return before
+    end
     local function owned(state, step)
+      if token.ownedUI[state] then
+        return state
+      end
+      token.ownedUI[state] = true
       token.ui[#token.ui + 1] = state
       local update = state.update
       function state:update(...)
         if not check() or token.step ~= step or game.stack:top() ~= self then
           return
         end
+        local before = token.nativeStep == step and snapshot()
         local ok, err = engine(update, self, ...)
+        if before then
+          discover(before, step)
+        end
         if not ok then
           token.finish(false, "native UI failed: " .. message(err))
         end
       end
       return state
+    end
+    discover = function(before, step)
+      if token.done or token.step ~= step then
+        return
+      end
+      for _, state in ipairs(game.stack.states) do
+        if not before[state] then
+          owned(state, step)
+          if token.nativeStep == step then
+            token.waitingUI = state
+          end
+        end
+      end
+    end
+    local function nativeGift(ctx, row)
+      local step = token.step
+      local bound = setmetatable({
+        resume = function(_, ...)
+          if token.step == step and check() then
+            runner:resume(...)
+          end
+        end,
+      }, { __index = runner, __newindex = runner })
+      local revision = 0
+      local proxy = setmetatable({
+        portableCallback = function(callback)
+          local expected, fired = revision, false
+          return function(...)
+            if fired or expected ~= revision or token.step ~= step or not check() then
+              return
+            end
+            fired = true
+            revision = revision + 1
+            return callback(...)
+          end
+        end,
+        runner = bound,
+        portableAlive = function()
+          return token.step == step and check()
+        end,
+      }, { __index = ctx, __newindex = ctx })
+      token.nativeStep = step
+      local result = gift(proxy, row)
+      token.nativeStep = nil
+      token.waitingUI = nil
+      return result
     end
     local function dialog(ctx, text, asking, step)
       local TextBox = require("src.render.TextBox")
@@ -446,7 +514,11 @@ local function facade(loader, modId, native)
         token.step = {}
         self.lastRow = verb .. " (portable row " .. pc .. ")"
         ctx.script, ctx.pc = compiled, pc
-        if State.ARITY[verb] then
+        if Gifts.ARITY[verb] then
+          if nativeGift(ctx, row) == math.huge then
+            return
+          end
+        elseif State.ARITY[verb] then
           state(ctx, row)
         elseif verb == "set_flag" or verb == "clear_flag" then
           local ok, reason = flag(row[2], verb == "set_flag", true)
@@ -505,7 +577,10 @@ local function facade(loader, modId, native)
       if not check() or not self.co or coroutine.status(self.co) == "running" then
         return
       end
+      local before, step = snapshot(), token.step
+      token.waitingUI = nil
       local ok, err = coroutine.resume(self.co, ...)
+      discover(before, token.step or step)
       if not ok then
         Runtime.reportError(modId, "portable script failed: " .. message(err))
         token.finish(false, "script failed: " .. message(err))
