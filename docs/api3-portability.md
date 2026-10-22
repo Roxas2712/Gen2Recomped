@@ -76,11 +76,12 @@ The common world calls currently enabled for generations 1–3 are:
 - `canReorderParty`, `reorderParty`, `availableFieldActions`, `useFieldAction`,
   `canFly`, `flyTo`;
 - `getFlag`/`setFlag` for private `mod:<key>` boolean flags;
-- `queueScript` for the existing bounded portable script language.
+- `queueScript` for the existing bounded portable script language;
+- [`warpTo`](api3-warp.md) for validated native map transitions.
 
 Check `mod:supports("world", name)` before relying on a call. The other
 Gen1 world method names remain callable but explicitly return
-`nil, "unsupported: ..."`: warp/object/block mutations, runtime NPC operations,
+`nil, "unsupported: ..."`: object/block mutations, runtime NPC operations,
 `startWildBattle` and `invalidateMap` have not yet been verified against the
 Gen1 API-3 contract. Their native/API-2 counterparts are unaffected. Native
 symbolic flag mappings and `mod.datasets:open` are also explicitly unavailable.
@@ -126,15 +127,19 @@ process. The shared harness constructs native-shaped synthetic datasets;
 the mod fixtures contain no engine imports or engine-specific branches.
 The runner also generates an API-3 mod through the real scaffold CLI and
 loads those same generated files on both engines for each version. This adds
-eight comparisons to the sixteen normal/rollback cases: 24 comparisons and
-48 isolated loader runs. It compares JSON projections of public results and
+eight comparisons to the sixteen normal/rollback cases. Eight additional warp
+cases use the same public mod on both engines and native-shaped timing seams:
+32 comparisons and 64 isolated loader runs. It compares JSON projections of public results and
 records hashes of both shared and generated fixture files. It refuses a different or modified reference.
 
 Coverage includes canonical content reads/writes/iteration and native merge
 results, detached core and passthrough reads, callable early handles, later
 Game replacement, party fields, private flags, Gen1 battle snapshot/invalid-intent boundaries, callback payloads and native
 writeback, custom events, unsupported-name handling, frozen content and failed
-owner cleanup. Separate Gen2 tests check API-1/2 behavior, contradictory
+owner cleanup. Warp cases also compare validation errors, native dispatch
+arguments, destination events, boundary coordinates, arrival options, callback
+argument holes/replay, stale sessions/owners, synchronous completion and error
+attribution. Separate Gen2 tests check API-1/2 behavior, contradictory
 manifest fields, honest availability and malformed flag stores. CI pins the
 same external commit and uploads the report.
 

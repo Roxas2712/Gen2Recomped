@@ -134,6 +134,7 @@ do
   T.eq(type(world.party), "function", "early world method callable")
   T.eq(type(battle.snapshot), "function", "early battle method callable")
   for _, name in ipairs({
+    "warpTo",
     "party",
     "current",
     "activeBlockAt",
@@ -145,7 +146,6 @@ do
     T.eq(m:supports("world", name), true, "implemented world method " .. name)
   end
   for _, name in ipairs({
-    "warpTo",
     "toggleObject",
     "replaceBlock",
     "spawnNpc",
@@ -217,6 +217,7 @@ end
 for _, version in ipairs({ "platinum", "black" }) do
   local m = boot(3, nil, false, version)
   T.eq(m:supports("world", "party"), false, "no shared Gen1 contract claimed for " .. version)
+  T.eq(m:supports("world", "warpTo"), false, "no shared warp promised for " .. version)
   local value, why = m.world:party()
   T.eq(value, nil, "unsupported generation call refuses")
   T.check(why:find("unsupported:", 1, true), "unsupported generation is explicit")
