@@ -68,6 +68,8 @@ Existing registration/subscription behavior remains unchanged. When adding a
 native callback or changing screen routing, update `src/mods/Capabilities.lua`
 and the capability tests in the same change.
 
+Additional read-only world summaries: [map overview and encounter queries](world-overview.md).
+
 ## Bulk storage (`mod.storage`)
 
 `mod.save` is the right home for a handful of per-playthrough values: it lives

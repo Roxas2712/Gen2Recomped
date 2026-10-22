@@ -29,6 +29,7 @@ local UIActions = require("src.mods.UIActions")
 local ModGens = require("src.mods.ModGens")
 local ModSeams = require("src.mods.ModSeams")
 local WorldActions = require("src.world.WorldActions")
+local WorldOverview = require("src.mods.WorldOverview")
 -- Module-name aliases for mods written against the Gold port's per-generation
 -- layout (src.world.gen2.Player and friends).  Installed here because this is
 -- the module that loads mods: the searcher has to be in place before the
@@ -1159,6 +1160,7 @@ function Loader:_api(mod)
     end
   end
   local world, storage
+  local overviewContext = WorldOverview.install(api, loader)
   local readContext = WorldReads.context(loader)
   -- Capability queries are optional on older API-2 hosts. When present,
   -- report the additive readers without constructing Game or the world.
@@ -1184,6 +1186,7 @@ function Loader:_api(mod)
     local module = game and engineRequire("src.world.WorldAPI")
     if not module then return nil end
     world = module.new(game, modId, readContext)
+    world.overviewContext = overviewContext
     return world
   end }, api, loader, mod.manifest))
   -- When capability queries are installed, report the selected content
