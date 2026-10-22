@@ -16,7 +16,7 @@ local SUPPORTED = {}
 for name in
   ([[overworld current activeBlockAt party canReorderParty reorderParty
  availableFieldActions useFieldAction canFly flyTo mapOverview effectiveEncounters
- setFlag getFlag liveMaps queueScript warpTo toggleObject replaceBlock spawnNpc removeNpc npc startWildBattle]]):gmatch(
+ setFlag getFlag liveMaps queueScript warpTo toggleObject replaceBlock spawnNpc removeNpc npc startWildBattle invalidateMap]]):gmatch(
     "%S+"
   )
 do
@@ -103,7 +103,7 @@ function A.install(api, loader, readContext, overviewContext, engineRequire)
     if name == "warpTo" then
       return warp(...)
     end
-    local edit = name == "toggleObject" or name == "replaceBlock"
+    local edit = name == "toggleObject" or name == "replaceBlock" or name == "invalidateMap"
     if edit and not licensed() then
       return nil, "world facade is retired"
     end

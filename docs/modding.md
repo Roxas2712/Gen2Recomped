@@ -49,7 +49,8 @@ API 3 selects the unified adapters automatically; API 1/2 keep their defaults.
 See [API-3 world warps](api3-warp.md) for validated map transitions and callback lifetime,
 [API-3 object/block edits](api3-world-edits.md) for native visibility and terrain changes,
 [API-3 NPC actions](api3-npc.md) for runtime actors and movement handles,
-and [API-3 wild encounters](api3-wild-battle.md) for native battle admission.
+[API-3 wild encounters](api3-wild-battle.md) for native battle admission,
+and [API-3 map invalidation](api3-invalidate-map.md) for native cache/reload.
 
 ## Feature queries (`mod:supports`)
 

@@ -134,6 +134,7 @@ do
   T.eq(type(world.party), "function", "early world method callable")
   T.eq(type(battle.snapshot), "function", "early battle method callable")
   for _, name in ipairs({
+    "invalidateMap",
     "startWildBattle",
     "spawnNpc",
     "removeNpc",
@@ -150,16 +151,6 @@ do
     "setFlag",
   }) do
     T.eq(m:supports("world", name), true, "implemented world method " .. name)
-  end
-  for _, name in ipairs({
-    "invalidateMap",
-  }) do
-    local available, why = m:supports("world", name)
-    T.eq(available, false, "no unverified native promise for " .. name)
-    T.check(type(why) == "string", "unavailable reason for " .. name)
-    local ok, reason = world[name](world, "bad")
-    T.eq(ok, nil, "unsupported method does not dispatch " .. name)
-    T.check(reason:find("unsupported:", 1, true), "explicit refusal for " .. name)
   end
   T.eq(probes(), 0, "capability and unsupported calls do not resolve Game")
   T.eq(world:party(), nil, "no-game party refuses safely")
@@ -217,7 +208,7 @@ end
 for _, version in ipairs({ "platinum", "black" }) do
   local m = boot(3, nil, false, version)
   T.eq(m:supports("world", "party"), false, "no shared Gen1 contract claimed for " .. version)
-  for _, name in ipairs({ "spawnNpc", "removeNpc", "npc" }) do
+  for _, name in ipairs({ "spawnNpc", "removeNpc", "npc", "startWildBattle", "invalidateMap" }) do
     T.eq(m:supports("world", name), false, "no shared NPC API promised for " .. version)
   end
   T.eq(m:supports("world", "warpTo"), false, "no shared warp promised for " .. version)

@@ -14,11 +14,14 @@ assert(
       or mode == "world_edits"
       or mode == "npcs"
       or mode == "wild_battle"
+      or mode == "invalidate"
     ),
   "invalid worker arguments"
 )
 local codeRoot = (arg[0]:gsub("\\", "/")):match("^(.*)/worker%.lua$")
-if mode == "wild_battle" then
+if mode == "invalidate" then
+  dofile(codeRoot .. "/invalidate.lua").run(root, backend, version)
+elseif mode == "wild_battle" then
   dofile(codeRoot .. "/wild_battle.lua").run(root, backend, version)
 elseif mode == "npcs" then
   dofile(codeRoot .. "/npcs.lua").run(root, backend, version)
