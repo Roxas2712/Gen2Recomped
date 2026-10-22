@@ -88,8 +88,7 @@ The common world calls currently enabled for generations 1–3 are:
 Check `mod:supports("world", name)` before relying on a call. All 24 world
 method names in the pinned Gen1 API-3 facade now have host adapters for Gen1–3.
 This describes API availability, not identical native internals or full
-cross-engine behavioral coverage. Native flags have version-specific validated mappings; `mod.datasets:open`
-remains unavailable. Gen4/5 do not claim this
+cross-engine behavioral coverage. Native flags have version-specific validated mappings; [`mod.datasets:open`](version-datasets.md) supplies read-only, validated views for imported Gen1–3 versions. Gen4/5 do not claim this
 shared world surface.
 
 Private flags use `save.modData[modId].worldFlags`, independently of native
@@ -134,8 +133,8 @@ The runner also generates an API-3 mod through the real scaffold CLI and
 loads those same generated files on both engines for each version. This adds
 eight comparisons to the sixteen normal/rollback cases. Eight additional warp
 cases use the same public mod on both engines and native-shaped timing seams.
-Eight object/block cases and eight NPC cases extend this to 176 comparisons
-and 352 isolated loader runs (including world-action, flag and portable-script action cases). It compares JSON projections of public results and
+Eight object/block cases and eight NPC cases extend this to 184 comparisons
+and 368 isolated loader runs (including world-action, flag and portable-script action cases). It compares JSON projections of public results and
 records hashes of both shared and generated fixture files. It refuses a different or modified reference.
 
 Coverage includes canonical content reads/writes/iteration and native merge
