@@ -117,7 +117,9 @@ function A.install(api, loader, readContext, overviewContext, engineRequire)
     end
     if name == "setFlag" or name == "getFlag" then
       local key, value = ...
-      return Flags.call(game, api.id, gen, key, value, name == "setFlag", licensed, native)
+      return Flags.call(game, api.id, gen, key, value, name == "setFlag", licensed, function(live)
+        return native(live):overworld()
+      end)
     end
     if name == "queueScript" then
       return scripts:queueScript(...)

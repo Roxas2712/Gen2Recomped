@@ -2,6 +2,7 @@
 -- foreground until completion, then returns the idle runner it borrowed.
 local Program = require("src.mods.ScriptProgram")
 local Runtime = require("src.mods.Runtime")
+local Flags = require("src.mods.Api3Flags")
 local GameVersion = require("src.core.GameVersion")
 local Scripts = {}
 local runs = setmetatable({}, { __mode = "k" })
@@ -187,7 +188,10 @@ local function facade(loader, modId, native)
     if not licensed() then
       return nil, "script facade is retired"
     end
-    local program, why = Program.compile(rows)
+    local program, why = Program.compile(
+      rows,
+      { owner = modId, generation = GameVersion.generation(), version = GameVersion.get() }
+    )
     if not program then
       return nil, why
     end
@@ -207,6 +211,25 @@ local function facade(loader, modId, native)
     ow, why = ready(game)
     if not ow then
       return nil, why
+    end
+    local function flag(name, value, write)
+      return Flags.call(game, modId, GameVersion.generation(), name, value, write, licensed, function()
+        return ow
+      end)
+    end
+    -- Check stores for every row, including unreachable branches, before a prefix runs.
+    for i, row in ipairs(program) do
+      if
+        row[1] == "set_flag"
+        or row[1] == "clear_flag"
+        or row[1] == "check_flag"
+        or row[1] == "wait_flag"
+      then
+        local value, reason = flag(row[2])
+        if value == nil then
+          return nil, "row " .. i .. ": " .. reason
+        end
+      end
     end
     local Runner = require("src.script.ScriptRunner")
     local runner = Runner.new(game, ow)
@@ -418,7 +441,40 @@ local function facade(loader, modId, native)
         token.step = {}
         self.lastRow = verb .. " (portable row " .. pc .. ")"
         ctx.script, ctx.pc = compiled, pc
-        if verb == "wait" then
+        if verb == "set_flag" or verb == "clear_flag" then
+          local ok, reason = flag(row[2], verb == "set_flag", true)
+          if not ok then
+            error(reason, 0)
+          end
+        elseif verb == "check_flag" then
+          local value, reason = flag(row[2])
+          if value == nil then
+            error(reason, 0)
+          end
+          ctx.lastCheck = value
+        elseif verb == "wait_flag" then
+          local left = row[3]
+          self.waitingCheck = function()
+            if not check() then
+              return false
+            end
+            local value, reason = flag(row[2])
+            if value == nil then
+              error(reason, 0)
+            end
+            if value then
+              return true, true
+            end
+            if left then
+              left = left - 1
+              if left <= 0 then
+                return true, false
+              end
+            end
+            return false
+          end
+          ctx.lastCheck = self:yield()
+        elseif verb == "wait" then
           self.waitingFrames = row[2]
           self:yield()
         elseif verb == "show_text" or verb == "ask" then
