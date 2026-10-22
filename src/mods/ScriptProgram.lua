@@ -3,6 +3,7 @@ local Program = {}
 local State = require("src.mods.ScriptState")
 local Gifts = require("src.mods.ScriptGifts")
 local Audio = require("src.mods.ScriptAudio")
+local Fields = require("src.mods.ScriptFields")
 local DialogueAudio = require("src.mods.ScriptDialogueAudio")
 local Shops = require("src.mods.ScriptShops")
 local Battles = require("src.mods.ScriptBattles")
@@ -52,6 +53,9 @@ end
 for verb, arity in pairs(DialogueAudio.ARITY) do
   ARITY[verb] = arity
 end
+for verb, arity in pairs(Fields.ARITY) do
+  ARITY[verb] = arity
+end
 local aliases = { text = "show_text", setflag = "set_flag", clearflag = "clear_flag" }
 function Program.supports(verb)
   if type(verb) ~= "string" then
@@ -66,6 +70,7 @@ function Program.supports(verb)
       or Shops.ARITY[verb]
       or Audio.ARITY[verb]
       or DialogueAudio.ARITY[verb]
+      or Fields.ARITY[verb]
     ) and require("src.core.GameVersion").generation() > 3
   then
     return false
@@ -155,12 +160,19 @@ function Program.compile(raw, context)
       and not Shops.ARITY[verb]
       and not Audio.ARITY[verb]
       and not DialogueAudio.ARITY[verb]
+      and not Fields.ARITY[verb]
       and (count > ARITY[verb] or count < ((verb == "choice" or verb == "wait_flag") and 2 or ARITY[verb]))
     then
       return fail(i, "invalid command arity")
     end
     local row = { verb, source[2] }
-    if DialogueAudio.ARITY[verb] then
+    if Fields.ARITY[verb] then
+      local value, reason = Fields.syntax(verb, source, context)
+      if not value then
+        return fail(i, reason)
+      end
+      row = value
+    elseif DialogueAudio.ARITY[verb] then
       local value, reason = DialogueAudio.syntax(verb, source, context)
       if not value then
         return fail(i, reason)
