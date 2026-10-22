@@ -2,6 +2,7 @@
 local Program = {}
 local State = require("src.mods.ScriptState")
 local Gifts = require("src.mods.ScriptGifts")
+local Movement = require("src.mods.ScriptMovement")
 local WorldEdits = require("src.mods.ScriptWorldEdits")
 Program.MAX_ROWS, Program.MAX_STEPS, Program.SLICE = 1024, 65536, 128
 local ARITY = {
@@ -28,12 +29,17 @@ end
 for verb, arity in pairs(WorldEdits.ARITY) do
   ARITY[verb] = arity
 end
+for verb, arity in pairs(Movement.ARITY) do
+  ARITY[verb] = arity
+end
 local aliases = { text = "show_text", setflag = "set_flag", clearflag = "clear_flag" }
 function Program.supports(verb)
   if type(verb) ~= "string" then
     return false
   end
-  if WorldEdits.ARITY[verb] and require("src.core.GameVersion").generation() > 3 then
+  if
+    (WorldEdits.ARITY[verb] or Movement.ARITY[verb]) and require("src.core.GameVersion").generation() > 3
+  then
     return false
   end
   return ARITY[aliases[verb] or verb] ~= nil
@@ -115,12 +121,19 @@ function Program.compile(raw, context)
       not State.ARITY[verb]
       and not Gifts.ARITY[verb]
       and not WorldEdits.ARITY[verb]
+      and not Movement.ARITY[verb]
       and (count > ARITY[verb] or count < ((verb == "choice" or verb == "wait_flag") and 2 or ARITY[verb]))
     then
       return fail(i, "invalid command arity")
     end
     local row = { verb, source[2] }
-    if WorldEdits.ARITY[verb] then
+    if Movement.ARITY[verb] then
+      local value, reason = Movement.syntax(verb, source, context)
+      if not value then
+        return fail(i, reason)
+      end
+      row = value
+    elseif WorldEdits.ARITY[verb] then
       local value, reason = WorldEdits.syntax(verb, source, context)
       if not value then
         return fail(i, reason)
