@@ -135,7 +135,7 @@ loads those same generated files on both engines for each version. This adds
 eight comparisons to the sixteen normal/rollback cases. Eight additional warp
 cases use the same public mod on both engines and native-shaped timing seams.
 Eight object/block cases and eight NPC cases extend this to 96 comparisons
-and 240 isolated loader runs (including world-action, flag and portable-script action cases). It compares JSON projections of public results and
+and 256 isolated loader runs (including world-action, flag and portable-script action cases). It compares JSON projections of public results and
 records hashes of both shared and generated fixture files. It refuses a different or modified reference.
 
 Coverage includes canonical content reads/writes/iteration and native merge
