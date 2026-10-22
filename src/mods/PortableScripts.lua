@@ -200,29 +200,41 @@ local function facade(loader, modId, native)
     end
     return nativeWorld
   end
+  local function ownedBattle(game, ow)
+    if
+      active
+      and runs[game] == active
+      and not active.done
+      and active.world == ow
+      and ow.runner == active.runner
+      and game.stack:top() == ow
+      and active.valid()
+    then
+      return true
+    end
+    return nil, "portable script does not own this world"
+  end
+  local function provider()
+    return current(loader)
+  end
   local startWild = require("src.mods.Api3WildBattle").new(
     loader,
     modId,
-    function()
-      return current(loader)
-    end,
+    provider,
     battleWorld,
     licensed,
     require,
-    function(game, ow)
-      if
-        active
-        and runs[game] == active
-        and not active.done
-        and active.world == ow
-        and ow.runner == active.runner
-        and game.stack:top() == ow
-        and active.valid()
-      then
-        return true
-      end
-      return nil, "portable script does not own this world"
-    end
+    ownedBattle
+  )
+  local startTrainer = require("src.mods.Api3WildBattle").new(
+    loader,
+    modId,
+    provider,
+    battleWorld,
+    licensed,
+    require,
+    ownedBattle,
+    Battles.nativeTrainer
   )
   local function queue(rows, options)
     if not licensed() then
@@ -607,7 +619,8 @@ local function facade(loader, modId, native)
       end
       local step, complete, result = token.step, false, nil
       token.battling = true
-      local ok, why = startWild(species, level, function(outcome, failure)
+      local start = verb == "start_battle" and row[2] == "trainer" and startTrainer or startWild
+      local ok, why = start(species, level, function(outcome, failure)
         if complete or token.step ~= step or not check() then
           return
         end

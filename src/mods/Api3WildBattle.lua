@@ -1,4 +1,5 @@
 -- API-3 encounter admission over native construction, transition and afterBattle.
+-- Portable scripts may supply a private owned guard and native trainer plan.
 local Runtime = require("src.mods.Runtime")
 local Version = require("src.core.GameVersion")
 local Edits = require("src.mods.Api3WorldEdits")
@@ -47,7 +48,7 @@ local function observe(loader)
     return unpack(result, 2, result.n)
   end, math.huge, "engine:api3_wild_battle")
 end
-function B.new(loader, owner, current, native, licensed, req, ownedReady)
+function B.new(loader, owner, current, native, licensed, req, ownedReady, ownedNative)
   local ids = Ids.new(loader)
   observe(loader)
   return function(species, level, callback)
@@ -74,22 +75,33 @@ function B.new(loader, owner, current, native, licensed, req, ownedReady)
         retire(token)
       end
     end
-    if type(species) ~= "string" or #species == 0 or #species > 256 or species:find("%c") then
-      return nil, "invalid species id"
-    end
-    if type(level) ~= "number" or level ~= level or level < 1 or level > 100 or level % 1 ~= 0 then
-      return nil, "level must be a whole number 1..100"
-    end
-    if callback ~= nil and type(callback) ~= "function" then
-      return nil, "invalid callback"
-    end
-    local group, why = ids:resolve("pokemon", species)
-    if not group then
-      return nil, why:find("^ambiguous") and why or "unknown species: " .. species
-    end
-    local key = group.key
-    if not (game.data.pokemon and game.data.pokemon[key]) then
-      return nil, "unknown species: " .. species
+    local key, why
+    if ownedNative then
+      key, why = ownedNative.resolve(game, species, level)
+      if not key then
+        return nil, why
+      end
+      if callback ~= nil and type(callback) ~= "function" then
+        return nil, "invalid callback"
+      end
+    else
+      if type(species) ~= "string" or #species == 0 or #species > 256 or species:find("%c") then
+        return nil, "invalid species id"
+      end
+      if type(level) ~= "number" or level ~= level or level < 1 or level > 100 or level % 1 ~= 0 then
+        return nil, "level must be a whole number 1..100"
+      end
+      if callback ~= nil and type(callback) ~= "function" then
+        return nil, "invalid callback"
+      end
+      local group, why = ids:resolve("pokemon", species)
+      if not group then
+        return nil, why:find("^ambiguous") and why or "unknown species: " .. species
+      end
+      key = group.key
+      if not (game.data.pokemon and game.data.pokemon[key]) then
+        return nil, "unknown species: " .. species
+      end
     end
     if not Party.firstHealthy(game.save.party or {}) then
       return nil, "no healthy party"
@@ -135,7 +147,13 @@ function B.new(loader, owner, current, native, licensed, req, ownedReady)
         return
       end
       -- Native cleanup still runs after the originating mod has been unloaded.
-      local called, err = pcall(ow.afterBattle, ow, (...), battle)
+      local outcome = (...)
+      local called, err = pcall(function()
+        if ownedNative and ownedNative.cleanup then
+          ownedNative.cleanup(game, ow, key, outcome, battle)
+        end
+        ow:afterBattle(outcome, battle)
+      end)
       if not called then
         Runtime.reportError(owner, "world battle cleanup failed: " .. text(err))
         if ownedReady and valid and fn then
@@ -155,7 +173,11 @@ function B.new(loader, owner, current, native, licensed, req, ownedReady)
     end
     pending[token] = true
     local called, accepted, err = pcall(Edits.run, game, function()
-      battle = req("src.battle.BattleState").newWild(game, key, level)
+      if ownedNative then
+        battle = ownedNative.construct(game, key)
+      else
+        battle = req("src.battle.BattleState").newWild(game, key, level)
+      end
       if not battle or battle.dead then
         return nil, "battle failed"
       end

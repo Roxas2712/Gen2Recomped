@@ -382,4 +382,29 @@ generation. The pinned Gen1 reference delegates Gen1 static encounters to
 its native command, which does not route private beat flags through that
 namespace. The shared Gen1 static cases therefore exercise a real native
 beat flag; host-specific private-flag behavior has separate coverage.
-Trainer encounters remain a separate follow-up to this wild/static slice.
+Trainer encounters are described below.
+
+
+## Trainer encounters
+
+`start_battle("trainer", trainerRef, partyIndex?)` uses this version's native
+trainer data and constructor. Gen1 normally selects a class key and numbered
+party; Gen2 accepts the native class number (resolved to the host's class
+record); Gen3 accepts a native trainer number through `trainerOrder`, with
+one party per trainer. Existing host keys are also accepted. These selectors
+are game-specific and are not universal trainer IDs. Use an explicit party
+index for shared Gen2 scripts: the pinned reference requires that argument.
+
+Preflight validates every referenced roster before a prefix runs and repeats
+that check at dispatch. Unknown species, invalid levels, empty/oversized
+parties, ambiguous class aliases and unavailable Gen3 flag metadata are
+refused. Native class aliases select the canonical class deterministically.
+Gen3 named reference constants are not guessed from display names: use the
+native trainer number for engine portability.
+
+Trainer battles share the same owned continuation, cancellation and native
+cleanup lifetime as wild encounters. Gen3 wins use the host's native trainer
+victory flag and Match Call registration helpers; loss does not mark a win.
+Cleanup remains valid after the originating mod retires, provided the same
+native session still exists. Native battle mechanics and game-specific story
+rewards remain the responsibility of this host's battle/field code.
