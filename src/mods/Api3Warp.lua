@@ -84,6 +84,44 @@ local function observe(loader)
     end, math.huge, "engine:api3_warp")
   end
 end
+-- Pure destination validation shared by public warps and portable scripts.
+function W.plan(game, ow, generation, mapId, x, y, facing)
+  if type(mapId) ~= "string" or #mapId == 0 or #mapId > 256 or mapId:find("%c") then
+    return nil, "invalid map id"
+  end
+  local maps = game.data and game.data.maps
+  local destination = mapId
+  if generation == 3 and maps and not maps[destination] then
+    local prefix = ({ ruby = "RU_", sapphire = "SA_", emerald = "EM_" })[Version.get()] or "FR_"
+    if maps[prefix .. destination] then
+      destination = prefix .. destination
+    end
+  end
+  local def = maps and maps[destination]
+  if not def then
+    return nil, "unknown map: " .. mapId
+  end
+  if not integer(x) or not integer(y) then
+    return nil, "invalid coordinates"
+  end
+  local scale = generation == 3 and 1 or 2
+  if not integer(def.width) or def.width == 0 or not integer(def.height) or def.height == 0 then
+    return nil, "invalid map dimensions"
+  end
+  if x >= def.width * scale or y >= def.height * scale then
+    return nil, "coordinates out of bounds"
+  end
+  if facing ~= nil and not dirs[facing] then
+    return nil, "invalid facing"
+  end
+  return {
+    mapId = destination,
+    x = x,
+    y = y,
+    facing = facing or (generation ~= 1 and ow.player.facing) or "down",
+    def = def,
+  }
+end
 function W.new(loader, owner, generation, current, native)
   local context = contexts[loader]
   if not context then
@@ -117,34 +155,11 @@ function W.new(loader, owner, generation, current, native)
     if pending[game] or ow.gen3Locked or #(ow.parallelRunners or {}) > 0 or #(ow.parallelQueue or {}) > 0 then
       return nil, "world is busy"
     end
-    if type(mapId) ~= "string" or #mapId == 0 or #mapId > 256 or mapId:find("%c") then
-      return nil, "invalid map id"
+    local plan, reason = W.plan(game, ow, generation, mapId, x, y, facing)
+    if not plan then
+      return nil, reason
     end
-    local maps = game.data and game.data.maps
-    local destination = mapId
-    if generation == 3 and maps and not maps[destination] then
-      local prefix = ({ ruby = "RU_", sapphire = "SA_", emerald = "EM_" })[Version.get()] or "FR_"
-      if maps[prefix .. destination] then
-        destination = prefix .. destination
-      end
-    end
-    local def = maps and maps[destination]
-    if not def then
-      return nil, "unknown map: " .. mapId
-    end
-    if not integer(x) or not integer(y) then
-      return nil, "invalid coordinates"
-    end
-    local scale = generation == 3 and 1 or 2
-    if not integer(def.width) or def.width == 0 or not integer(def.height) or def.height == 0 then
-      return nil, "invalid map dimensions"
-    end
-    if x >= def.width * scale or y >= def.height * scale then
-      return nil, "coordinates out of bounds"
-    end
-    if facing ~= nil and not dirs[facing] then
-      return nil, "invalid facing"
-    end
+    local destination = plan.mapId
     if options ~= nil and (type(options) ~= "table" or getmetatable(options) ~= nil) then
       return nil, "invalid options"
     end
@@ -170,7 +185,7 @@ function W.new(loader, owner, generation, current, native)
       end
       opts[key] = value
     end
-    facing = facing or (generation ~= 1 and ow.player.facing) or "down"
+    facing = plan.facing
     local hooks, events = Runtime.hooks, Runtime.events
     local token =
       { game = game, loader = loader, owner = owner, destination = destination, callback = opts.onDone }

@@ -94,7 +94,7 @@ function M.actor(world, reference)
     end
   end
 end
-function M.prepare(world, rows)
+function M.prepare(world, rows, prevalidated)
   local npc = world.talkNpc or world.runner and world.runner.ctx and world.runner.ctx.npc
   local function target(row)
     local verb = row[1]
@@ -107,7 +107,7 @@ function M.prepare(world, rows)
     return M.actor(world, row[2])
   end
   for i, row in ipairs(rows) do
-    if M.ARITY[row[1]] then
+    if not prevalidated and M.ARITY[row[1]] then
       local actor = target(row)
       if not actor then
         return nil, "row " .. i .. ": native movement target unavailable"
@@ -129,7 +129,13 @@ function M.prepare(world, rows)
       end
     end
   end
-  return { target = target, npc = npc }
+  return {
+    target = target,
+    npc = npc,
+    forgetNpc = function()
+      npc = nil
+    end,
+  }
 end
 function M.path(world, actor, tx, ty)
   -- The native Gen1 command routes around occupied cells; later generations

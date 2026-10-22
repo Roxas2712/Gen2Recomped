@@ -24,7 +24,7 @@ function W.syntax(verb, row, context)
   end
   return { row[1], row[2], row[3], row[4] }
 end
-function W.prepare(game, world, owner, rows)
+function W.prepare(game, world, owner, rows, prevalidated)
   local needed = false
   for _, row in ipairs(rows) do
     needed = needed or W.ARITY[row[1]] ~= nil
@@ -65,7 +65,7 @@ function W.prepare(game, world, owner, rows)
     return E.plan(game, api, gen, require, "toggleObject", mapId, row[3], row[1] == "show_object")
   end
   for i, row in ipairs(rows) do
-    if W.ARITY[row[1]] then
+    if not prevalidated and W.ARITY[row[1]] then
       local operation, reason = plan(row)
       if not operation then
         return nil, "row " .. i .. ": " .. reason
