@@ -1,4 +1,8 @@
 -- Actual Renderer, public API-3 mod, real GL draw/readback. No ROM or settings.
+function love.errorhandler(message)
+  io.stderr:write(tostring(message).."\n"..debug.traceback().."\n")
+  return function() love.event.quit(1) end
+end
 local root = love.filesystem.getSource():match("^(.*)/tools/render%-output%-check$")
   or love.filesystem.getWorkingDirectory()
 package.path = root .. "/?.lua;" .. root .. "/?/init.lua;" .. package.path

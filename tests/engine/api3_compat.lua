@@ -156,7 +156,7 @@ do
   T.eq(world:party(), nil, "no-game party refuses safely")
   T.eq(battle:snapshot(), nil, "no-game battle refuses safely")
   T.eq(m.datasets:open("gold"), nil, "unavailable dataset API callable")
-  T.eq(m:supports("hooks", "render.output"), false, "recognized output hook is not falsely available")
+  T.eq(m:supports("hooks", "render.output"), true, "implemented output hook is available")
   T.check(
     pcall(function()
       m.hooks:wrap("render.output", function(next, ctx)
