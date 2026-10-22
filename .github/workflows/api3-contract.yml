@@ -7,6 +7,7 @@ on:
       - 'tests/api3_contract/**'
       - 'tests/engine/api3_*.lua'
       - 'tools/api3-contract-check/**'
+      - 'tools/flag-catalog-check/**'
   push:
     branches: [main, dev]
     paths:
@@ -15,6 +16,7 @@ on:
       - 'tests/api3_contract/**'
       - 'tests/engine/api3_*.lua'
       - 'tools/api3-contract-check/**'
+      - 'tools/flag-catalog-check/**'
 permissions:
   contents: read
 concurrency:
@@ -32,6 +34,7 @@ jobs:
             data
             tests
             tools/api3-contract-check
+            tools/flag-catalog-check
       - uses: actions/checkout@v7
         with:
           repository: bryanthaboi/gen1recomp
@@ -44,6 +47,8 @@ jobs:
             assets/fonts
       - name: install LuaJIT
         run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: native flag catalog provenance
+        run: python3 gen2/tools/flag-catalog-check/generate.py --gen1 gen1-reference
       - name: identical mod contracts on both engines
         run: >-
           python3 gen2/tools/api3-contract-check/check.py

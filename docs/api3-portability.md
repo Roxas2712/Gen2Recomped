@@ -75,7 +75,7 @@ The common world calls currently enabled for generations 1–3 are:
   `effectiveEncounters`;
 - `canReorderParty`, `reorderParty`, `availableFieldActions`, `useFieldAction`,
   `canFly`, `flyTo`;
-- `getFlag`/`setFlag` for private `mod:<key>` boolean flags;
+- [`getFlag`/`setFlag`](api3-flags.md) for private and validated native flags;
 - `queueScript` for the existing bounded portable script language;
 - [`warpTo`](api3-warp.md) for validated native map transitions;
 - [`toggleObject` and `replaceBlock`](api3-world-edits.md) for validated native
@@ -88,8 +88,8 @@ The common world calls currently enabled for generations 1–3 are:
 Check `mod:supports("world", name)` before relying on a call. All 24 world
 method names in the pinned Gen1 API-3 facade now have host adapters for Gen1–3.
 This describes API availability, not identical native internals or full
-cross-engine behavioral coverage. Native flag mappings and `mod.datasets:open`
-remain unavailable; private mod flags are supported. Gen4/5 do not claim this
+cross-engine behavioral coverage. Native flags have version-specific validated mappings; `mod.datasets:open`
+remains unavailable. Gen4/5 do not claim this
 shared world surface.
 
 Private flags use `save.modData[modId].worldFlags`, independently of native
@@ -134,8 +134,8 @@ The runner also generates an API-3 mod through the real scaffold CLI and
 loads those same generated files on both engines for each version. This adds
 eight comparisons to the sixteen normal/rollback cases. Eight additional warp
 cases use the same public mod on both engines and native-shaped timing seams.
-Eight object/block cases and eight NPC cases extend this to 64 comparisons
-and 128 isolated loader runs (including eight wild-battle and eight map-invalidation cases). It compares JSON projections of public results and
+Eight object/block cases and eight NPC cases extend this to 72 comparisons
+and 144 isolated loader runs (including wild-battle, map-invalidation and flag cases). It compares JSON projections of public results and
 records hashes of both shared and generated fixture files. It refuses a different or modified reference.
 
 Coverage includes canonical content reads/writes/iteration and native merge

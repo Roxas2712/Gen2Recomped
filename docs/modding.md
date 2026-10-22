@@ -27,7 +27,8 @@ See [API-3 world warps](api3-warp.md) for validated map transitions and callback
 [API-3 object/block edits](api3-world-edits.md) for native visibility and terrain changes,
 [API-3 NPC actions](api3-npc.md) for runtime actors and movement handles,
 [API-3 wild encounters](api3-wild-battle.md) for native battle admission,
-and [API-3 map invalidation](api3-invalidate-map.md) for native cache/reload.
+[API-3 map invalidation](api3-invalidate-map.md) for native cache/reload,
+and [API-3 flags](api3-flags.md) for validated native references and private flags.
 
 ## Feature queries (`mod:supports`)
 

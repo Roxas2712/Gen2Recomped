@@ -6,6 +6,7 @@ local Warp = require("src.mods.Api3Warp")
 local Edits = require("src.mods.Api3WorldEdits")
 local NPC = require("src.mods.Api3NPC")
 local Wild = require("src.mods.Api3WildBattle")
+local Flags = require("src.mods.Api3Flags")
 local copy = require("src.mods.Merge").deepCopy
 local A = {}
 local WORLD = [[overworld current activeBlockAt party canReorderParty reorderParty
@@ -115,46 +116,8 @@ function A.install(api, loader, readContext, overviewContext, engineRequire)
       return Edits.call(game, native(game), gen, engineRequire, name, ...)
     end
     if name == "setFlag" or name == "getFlag" then
-      if not game.save then
-        return nil, "no save"
-      end
       local key, value = ...
-      if type(key) ~= "string" or key:sub(1, 4) ~= "mod:" then
-        return nil, "unsupported: API 3 native flag mapping"
-      end
-      if name == "setFlag" and type(value) ~= "boolean" then
-        return nil, "flag value must be boolean"
-      end
-      local id = key:sub(5)
-      if #id == 0 or #id > 256 or id:find("%c") then
-        return nil, "invalid mod flag"
-      end
-      local store = game.save.modData
-      if store ~= nil and type(store) ~= "table" then
-        return nil, "invalid mod save store"
-      end
-      local bucket = store and store[api.id]
-      if bucket ~= nil and type(bucket) ~= "table" then
-        return nil, "invalid mod save store"
-      end
-      local flags = bucket and bucket.worldFlags
-      if flags ~= nil and type(flags) ~= "table" then
-        return nil, "invalid mod flag store"
-      end
-      if name == "getFlag" then
-        return flags ~= nil and flags[id] == true
-      end
-      local before = flags ~= nil and flags[id] == true
-      game.save.modData = store or {}
-      bucket = bucket or {}
-      game.save.modData[api.id] = bucket
-      flags = flags or {}
-      bucket.worldFlags = flags
-      flags[id] = value or nil
-      if before ~= value then
-        Runtime.emit("flag.changed", { name = "mod." .. api.id .. "." .. id, value = value })
-      end
-      return true
+      return Flags.call(game, api.id, gen, key, value, name == "setFlag", licensed, native)
     end
     if name == "queueScript" then
       return scripts:queueScript(...)
