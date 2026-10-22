@@ -25,11 +25,14 @@ assert(
       or mode == "script_battles"
       or mode == "script_trainers"
       or mode == "script_shops"
+      or mode == "script_audio"
     ),
   "invalid worker arguments"
 )
 local codeRoot = (arg[0]:gsub("\\", "/")):match("^(.*)/worker%.lua$")
-if mode == "script_shops" then
+if mode == "script_audio" then
+  dofile(codeRoot .. "/script_audio.lua").run(root, backend, version)
+elseif mode == "script_shops" then
   dofile(codeRoot .. "/script_shops.lua").run(root, backend, version)
 elseif mode == "script_trainers" then
   dofile(codeRoot .. "/script_trainers.lua").run(root, backend, version)

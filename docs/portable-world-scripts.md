@@ -434,3 +434,30 @@ callbacks run. Committed native transactions remain committed after
 cancellation. The same guard covers classic lists, FireRed's inline sale
 quantity and Emerald's native sell bag. Closed UI records are released
 between frames rather than accumulated for a long shopping session.
+
+## Sound and music
+
+Gen1–3 accept `play_sound(id)`, `wait_sound()`,
+`play_music(id, {keep=boolean, reason=string}?)`, `stop_music()`,
+`fade_music(control?)`, `play_once(id)` and `play_default_music()`.
+The active game's native audio definitions must contain the cue. All rows
+are checked before a prefix runs and checked again at dispatch. Gen3
+numeric and extracted `musName`/`sfxName` aliases resolve to an unambiguous
+native sequence; unknown aliases are refused. Gen3 `play_music(0)` retains
+the native stop convention. `play_once("Get_Item1")` can resolve the native
+Gen3 obtain-item fanfare role.
+
+Playback uses the existing Sound/Music controllers. `wait_sound` waits for
+native SFX activity and its last returned source, with the reference's
+600-foreground-frame release ceiling. A one-shot waits on native restore
+state, releases if another song takes over, and fails after 3,600 foreground
+frames if it stalls. Foreign overlays pause continuation. Music `keep` is
+armed only while the script still owns the context. Fade control is a whole
+number 0–255 (default 10); timing follows this host's native fade controller.
+
+Names/numbers remain game-specific unless the mod supplies a shared cue.
+The reference Gen3 resolver can return an unknown string unchanged; this
+host requires a real definition before admission. Missing audio data is
+therefore a preflight failure; a muted/unavailable device keeps the native
+headless playback behavior. Already started audio remains engine-owned on
+script cancellation. Dialogue-bound cries/fanfares are a separate slice.
