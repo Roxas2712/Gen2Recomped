@@ -301,7 +301,11 @@ function love.draw()
       elseif phase == 6 then
         Version.set("red")
       end
+      Palette.setMode(phase == 5 and "gbc" or "dmg")
       Correction.setMode(phase == 5 and "accurate" or "off")
+      if phase == 5 then
+        check(Correction.active(), "colour correction and preset active together")
+      end
       Correction.apply = function(...)
         trace[#trace + 1] = "correction"
         return oldC(...)
