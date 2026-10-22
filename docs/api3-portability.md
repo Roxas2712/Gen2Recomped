@@ -133,8 +133,8 @@ The runner also generates an API-3 mod through the real scaffold CLI and
 loads those same generated files on both engines for each version. This adds
 eight comparisons to the sixteen normal/rollback cases. Eight additional warp
 cases use the same public mod on both engines and native-shaped timing seams.
-Eight object/block cases and eight NPC cases extend this to 184 comparisons
-and 368 isolated loader runs (including world-action, flag and portable-script action cases). It compares JSON projections of public results and
+Eight object/block cases and eight NPC cases extend this to 192 comparisons
+and 384 isolated loader runs (including world-action, flag and portable-script action cases). It compares JSON projections of public results and
 records hashes of both shared and generated fixture files. It refuses a different or modified reference.
 
 Coverage includes canonical content reads/writes/iteration and native merge
@@ -157,3 +157,5 @@ or a proof of every exposed native callback's payload. Native action details
 remain covered by the prerequisite PR suites. Extend these shared fixtures
 whenever another API-3 service becomes portable; do not make a failing
 comparison pass by changing only one engine's mod fixture.
+
+Final composed-frame ownership is documented in [render-output.md](render-output.md).

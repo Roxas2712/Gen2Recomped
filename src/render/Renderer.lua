@@ -13,6 +13,7 @@ local Pipelines = require("src.render.Pipelines")
 local PixelCanvas = require("src.render.PixelCanvas")
 local Runtime = require("src.mods.Runtime")
 local GbcColorCorrection = require("src.render.GbcColorCorrection")
+local Output = require("src.render.Output")
 
 -- RESOLVED ONCE, NOT EVERY FRAME.  These three were `require`d from inside
 -- beginFrame and endFrame -- three string hashes into package.loaded on every
@@ -932,9 +933,10 @@ function Renderer:endFrame(zones, worldZones)
                             and (self.battleWipe.style == "frlg_swirl"
                                  or self.battleWipe.needsSource)
                             and self.battleWipe.screenDraw
+  local hasOutputHook = Output.enabled()
   local needPresent = GBCFX.active() or GbcColorCorrection.active() or Pipelines.wantsPresent()
                       or (ShaderPresets:active() and not self.shaderPresetBypass)
-                      or battleNeedsSource
+                      or battleNeedsSource or hasOutputHook
   local present = nil
   if needPresent then
     if not self.presentCanvas or self.presentCanvas:getWidth() ~= ww
@@ -1398,23 +1400,23 @@ function Renderer:endFrame(zones, worldZones)
 
   if present then
     love.graphics.setCanvas()
-    -- Post-process pipelines run over the finished composite -- world, UI
-    -- and all -- and before GBC FX, so a blur or colour grade is what the
-    -- LCD grid is then drawn over rather than something that smears the
-    -- grid itself.  Each pass hands back a canvas; with none registered
-    -- this returns `present` unchanged and the frame is byte-identical.
     local corrected = GbcColorCorrection.apply(present)
     local composed = Pipelines.present(corrected,
       { width = ww, height = wh, scale = Sp, dpi = dpiY, dpiX = dpiX, dpiY = dpiY }) or corrected
-    if not self.shaderPresetBypass then composed = ShaderPresets:apply(composed, Sp) end
-    if GBCFX.active() then
-      -- shader grid/shadow math is in framebuffer pixels
-      GBCFX.present(composed, Sp)
-    else
-      -- the present canvas only existed for the post-process, so put the
-      -- result on the screen at the same 1:1 unit mapping it was built at
-      love.graphics.setColor(1, 1, 1, 1)
-      love.graphics.draw(composed, 0, 0)
+    local outputHandled = hasOutputHook and Output.draw({
+      canvas = composed, width = ww, height = wh,
+      gameX = ox, gameY = oy, gameWidth = vpw, gameHeight = vph,
+      scale = Sp, dpiX = dpiX, dpiY = dpiY,
+      generation = require("src.core.GameVersion").generation(),
+    })
+    if not outputHandled then
+      if not self.shaderPresetBypass then composed = ShaderPresets:apply(composed, Sp) end
+      if GBCFX.active() then
+        GBCFX.present(composed, Sp)
+      else
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(composed, 0, 0)
+      end
     end
   end
   self.worldActive = false
