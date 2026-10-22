@@ -55,12 +55,27 @@ jobs:
       - uses: actions/checkout@v7
       - name: install Rust
         run: rustup toolchain install 1.99.1 --profile minimal --component rustfmt --component clippy
+      - name: bundle architecture, integrity and installation tests
+        run: python tools/slang-import/tests/package_test.py
       - name: format
         run: cargo +1.99.1 fmt --manifest-path tools/slang-import/Cargo.toml --check
       - name: lint
         run: cargo +1.99.1 clippy --manifest-path tools/slang-import/Cargo.toml --locked --release --all-targets -- -D warnings
       - name: compiler, rejection and publication tests
         run: cargo +1.99.1 test --manifest-path tools/slang-import/Cargo.toml --locked --release
+      - name: build native converter bundle and notices
+        env:
+          RUSTUP_TOOLCHAIN: 1.99.1
+        run: python tools/slang-import/package.py build --output "${{ runner.temp }}/shader-tools"
+      - name: validate native bundle architecture
+        shell: bash
+        run: |
+          case "$RUNNER_OS" in
+            Windows) platform=windows; arch=x86_64 ;;
+            macOS) platform=macos; if [ "$(uname -m)" = arm64 ]; then arch=aarch64; else arch=x86_64; fi ;;
+            Linux) platform=linux; arch=x86_64 ;;
+          esac
+          python tools/slang-import/package.py verify --bundle "$RUNNER_TEMP/shader-tools" --platform "$platform" --arch "$arch"
       - name: install LÖVE and virtual display
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y love xvfb

@@ -4,7 +4,8 @@ function love.errorhandler(message)
     return 1
   end
 end
-local root = love.filesystem.getSource():match("^(.*)/tools/shader%-browser%-check$")
+local root = os.getenv("SHADER_BROWSER_REPO")
+  or love.filesystem.getSource():match("^(.*)/tools/shader%-browser%-check$")
   or love.filesystem.getWorkingDirectory()
 package.path = root .. "/?.lua;" .. root .. "/?/init.lua;" .. package.path
 local Browser = require("src.render.ShaderBrowser")
@@ -90,7 +91,7 @@ function love.load()
     b = Browser.new({
       root = love.filesystem.getSaveDirectory(),
       fs = love.filesystem,
-      helper = assert(os.getenv("SHADER_BROWSER_HELPER"), "SHADER_BROWSER_HELPER required"),
+      helper = os.getenv("SHADER_BROWSER_HELPER"),
       start = function(job)
         local channel = love.thread.getChannel("browser.probe." .. job.relative)
         channel:clear()
