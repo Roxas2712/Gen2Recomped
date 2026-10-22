@@ -6,6 +6,7 @@ local Flags = require("src.mods.Api3Flags")
 local State = require("src.mods.ScriptState")
 local Gifts = require("src.mods.ScriptGifts")
 local Audio = require("src.mods.ScriptAudio")
+local DialogueAudio = require("src.mods.ScriptDialogueAudio")
 local Shops = require("src.mods.ScriptShops")
 local Battles = require("src.mods.ScriptBattles")
 local Travel = require("src.mods.ScriptTravel")
@@ -287,6 +288,10 @@ local function facade(loader, modId, native)
         end
       end
     end
+    local dialogueAudio, dialogueReason = DialogueAudio.prepare(loader, game, program)
+    if not dialogueAudio then
+      return nil, dialogueReason
+    end
     local audio, audioReason = Audio.prepare(game, program)
     if not audio then
       return nil, audioReason
@@ -550,11 +555,19 @@ local function facade(loader, modId, native)
         ctx.lastCheck = value
         runner:resume()
       end
+      local opts = dialogueAudio.options(ctx, asking, function()
+        return not answered
+          and token.step == step
+          and check()
+          and box ~= nil
+          and contains(token.stack, box)
+          and token.stack:top() == box
+      end)
       box = TextBox.new(game, TextBox.fromProse(text), function()
         if not asking and not contains(token.stack, box) then
           answer(nil)
         end
-      end)
+      end, opts)
       if asking then
         local update, pushed, selected = box.update, false, nil
         box.choice = function(yes)
@@ -565,7 +578,7 @@ local function facade(loader, modId, native)
           answer(yes)
         end
         function box:update(dt)
-          if self.done and (self.holdFrames or 0) <= 0 and not pushed then
+          if self.done and (self.holdFrames or 0) <= 0 and not pushed and not self.auto then
             pushed, self.choicePushed = true, true
             local Choice = require("src.ui.ChoiceBox")
             local geometry = self.choiceBox or {}
@@ -1107,7 +1120,9 @@ local function facade(loader, modId, native)
         token.step = {}
         self.lastRow = verb .. " (portable row " .. pc .. ")"
         ctx.script, ctx.pc = compiled, pc
-        if Audio.ARITY[verb] then
+        if DialogueAudio.ARITY[verb] then
+          dialogueAudio.arm(ctx, row)
+        elseif Audio.ARITY[verb] then
           audio(ctx, row, waitAudio, check)
         elseif Shops.ARITY[verb] then
           shop(ctx, row)

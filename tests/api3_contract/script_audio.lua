@@ -1,8 +1,9 @@
 -- Real loaders/adapters; an explicit source/clock seam avoids audio-device timing.
 local M = {}
-function M.fixture(root, backend, version, modId)
+function M.fixture(root, backend, version, modId, base)
   local codeRoot = debug.getinfo(1, "S").source:sub(2):match("^(.*)/script_audio%.lua$")
-  local f = dofile(codeRoot .. "/script_flags.lua").fixture(root, backend, version, modId or "script_audio")
+  local f = base
+    or dofile(codeRoot .. "/script_flags.lua").fixture(root, backend, version, modId or "script_audio")
   f.game.data.audio = {
     songs = { TUNE = { file = "tune.wav" }, JINGLE = { file = "jingle.wav" } },
     sfx = { CHIME = { file = "chime.wav" } },
