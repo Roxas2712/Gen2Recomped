@@ -30,11 +30,14 @@ assert(
       or mode == "script_fields"
       or mode == "effects"
       or mode == "datasets"
+      or mode == "render_output"
     ),
   "invalid worker arguments"
 )
 local codeRoot = (arg[0]:gsub("\\", "/")):match("^(.*)/worker%.lua$")
-if mode == "datasets" then
+if mode == "render_output" then
+  dofile(codeRoot .. "/render_output.lua").run(root, backend, version)
+elseif mode == "datasets" then
   dofile(codeRoot .. "/datasets.lua").run(root, backend, version)
 elseif mode == "effects" then
   dofile(codeRoot .. "/effects.lua").run(root, backend, version)
