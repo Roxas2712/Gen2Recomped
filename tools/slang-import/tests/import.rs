@@ -60,6 +60,12 @@ fn compiles_both_stages_and_dialects_with_includes_and_overrides() {
         assert!(pair[1].contains("vec4 position("));
         assert!(pair[0].contains("g2_p_gain"));
         assert!(pair[1].contains("g2_SourceSize"));
+        for stage in pair {
+            assert!(
+                stage.contains("uniform highp vec4 g2_SourceSize;"),
+                "shared uniforms keep matching stage precision"
+            );
+        }
         assert!(!pair[0].contains("LIBRA_TEXTURE_"));
         assert!(!pair[1].contains("LIBRA_UBO_"));
     }
