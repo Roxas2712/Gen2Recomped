@@ -423,7 +423,7 @@ local function buildRows(game)
     { id = "shaderPreset", label = Strings("SHADER PRESET"),
       value = function(g)
         local presets = require("src.render.ShaderPresets")
-        return presets.entry and presets.entry.name:sub(1, 16) or "OFF"
+        return presets.entry and presets.entry.name:sub(1, 12) or "OFF"
       end,
       activate = function(g)
         g.stack:push(require("src.ui.ShaderPresetMenu").new(g))

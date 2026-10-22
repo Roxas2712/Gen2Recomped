@@ -82,6 +82,26 @@ local function inputCanvas(w, h, dpi)
   return canvas, pixels
 end
 local function run()
+  -- Exercise the actual mounted game-data filesystem, not only injected fs.
+  local dir = "shader-presets"
+  love.filesystem.createDirectory(dir)
+  local descriptor = dir .. "/qa_disk_roundtrip.json"
+  local fragment = dir .. "/qa_disk_roundtrip.glsl"
+  assert(
+    love.filesystem.write(
+      descriptor,
+      Json.encode({ format = 1, name = "DISK CHECK", shader = "qa_disk_roundtrip.glsl" })
+    )
+  )
+  assert(love.filesystem.write(fragment, identity))
+  local disk = Presets.new()
+  disk:refresh()
+  check(disk.byId["local:qa_disk_roundtrip"] ~= nil, "real filesystem discovery")
+  check(disk:activate("local:qa_disk_roundtrip"), "real filesystem source read and compile")
+  disk:off()
+  love.filesystem.remove(descriptor)
+  love.filesystem.remove(fragment)
+
   for _, entry in ipairs(Presets:refresh()) do
     if entry.source then
       for _, gles in ipairs({ false, true }) do

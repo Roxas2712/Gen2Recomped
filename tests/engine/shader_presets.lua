@@ -385,6 +385,9 @@ do
     end
   end
   T.check(row and row.activate, "shared shader options row")
+  Presets.entry = { name = string.rep("X", 48) }
+  T.check(128 + #row.value({}) * 8 <= 232, "preset value fits GBA value column with margin")
+  Presets.entry = nil
   T.eq(require("src.ui.OptionsMenu").shaderPresetBypass, true, "GB options bypass")
   T.eq(require("src.ui.Gen3Options").shaderPresetBypass, true, "GBA options bypass")
   T.eq(require("src.ui.Gen4Options").shaderPresetBypass, true, "DS options bypass")
