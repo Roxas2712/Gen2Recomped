@@ -9,6 +9,7 @@ local Json = require("src.link.Json")
 local Renderer = require("src.render.Renderer")
 local Pipelines = require("src.render.Pipelines")
 local GBCFX = require("src.render.GBCFX")
+local Correction = package.loaded["src.render.GbcColorCorrection"]
 local Menu = require("src.ui.ShaderPresetMenu")
 local Font = require("src.render.Font")
 local Palette = require("src.render.PaletteFX")
@@ -273,6 +274,19 @@ function love.draw()
     end
     drawScene()
     local oldP, oldS, oldF = Pipelines.present, Presets.apply, GBCFX.present
+    local oldC = Correction and Correction.apply
+    if Correction then
+      if phase == 5 then
+        Version.set("gold")
+      elseif phase == 6 then
+        Version.set("red")
+      end
+      Correction.setMode(phase == 5 and "accurate" or "off")
+      Correction.apply = function(...)
+        trace[#trace + 1] = "correction"
+        return oldC(...)
+      end
+    end
     Pipelines.present = function(...)
       trace[#trace + 1] = "pipeline"
       return oldP(...)
@@ -297,8 +311,14 @@ function love.draw()
     end
     Renderer:endFrame()
     Pipelines.present, Presets.apply, GBCFX.present = oldP, oldS, oldF
+    if Correction then
+      Correction.apply = oldC
+    end
     if phase == 5 then
-      check(table.concat(trace, ",") == "pipeline,preset,gbc", "final stage ordering")
+      check(
+        table.concat(trace, ",") == (Correction and "correction,pipeline,preset,gbc" or "pipeline,preset,gbc"),
+        "final stage ordering"
+      )
     end
     if phase == 6 then
       check(not table.concat(trace, ","):find("preset", 1, true), "shader controls bypass preset")

@@ -19,6 +19,13 @@ local function release(resource)
     pcall(resource.release, resource)
   end
 end
+local function value(p, n)
+  if not finite(n) then
+    return p.default
+  end
+  local steps = math.floor((math.max(p.min, math.min(p.max, n)) - p.min) / p.step + 0.5)
+  return math.max(p.min, math.min(p.max, p.min + steps * p.step))
+end
 local function validate(raw, id)
   if type(raw) ~= "table" or raw.format ~= 1 or not label(raw.name) then
     return nil, "invalid preset metadata"
@@ -62,16 +69,9 @@ local function validate(raw, id)
     end
     seen[p.id] = true
     out.parameters[#out.parameters + 1] =
-      { id = p.id, name = p.name, min = p.min, max = p.max, step = p.step, default = p.default }
+      { id = p.id, name = p.name, min = p.min, max = p.max, step = p.step, default = value(p, p.default) }
   end
   return out
-end
-local function value(p, n)
-  if not finite(n) then
-    return p.default
-  end
-  local steps = math.floor((math.max(p.min, math.min(p.max, n)) - p.min) / p.step + 0.5)
-  return math.max(p.min, math.min(p.max, p.min + steps * p.step))
 end
 local BUILTINS = {
   {

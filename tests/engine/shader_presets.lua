@@ -210,6 +210,21 @@ do
     T.check(p.byId["local:probe"].error, "invalid parameter definition")
   end
 end
+-- An off-grid metadata default is normalized once, so reset and first use
+-- agree instead of silently producing different uniform values.
+do
+  local p, files = fixture()
+  local raw = clone(metadata)
+  raw.parameters[1].default = 0.35
+  raw.parameters[1].step = 0.2
+  files["shader-presets/probe.json"] = Json.encode(raw)
+  p:activate("local:probe")
+  T.eq(p.values.amount, 0.4, "default snapped to step grid")
+  local menu = Menu.parameters({ save = { options = {} } }, p)
+  p:setParameter({}, "amount", 1)
+  menu.rows[1].reset()
+  T.eq(p.values.amount, 0.4, "reset agrees with normalized default")
+end
 -- Parameter normalization, saved identity, graphics state and target lifetime.
 do
   local p, files, fs, g, faults, count, texture, reads, state = fixture()

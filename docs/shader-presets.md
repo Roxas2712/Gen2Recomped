@@ -62,7 +62,8 @@ identifier `id`, display `name`, finite `min < max`, positive `step` no larger
 than the range, and an in-range `default`. A range may contain at most one
 million steps. The compiled shader must expose each declared parameter as a
 uniform. Saved values are clamped and snapped to steps; non-finite values use
-the default. Parameter changes send uniforms without recompiling the shader.
+the default. Defaults themselves are snapped to the same step grid, so reset
+and first use agree. Parameter changes send uniforms without recompiling the shader.
 `sourceSize`, `pixelScale` and names beginning with `love_` are reserved.
 
 Two optional uniforms are supplied when the shader uses them:
