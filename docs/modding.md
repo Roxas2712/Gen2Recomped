@@ -40,6 +40,13 @@ luajit tools/gen_registry_docs.lua ../gen1recomp.wiki
 ```
 
 Additional read-only world summaries: [map overview and encounter queries](world-overview.md).
+
+## Shared API 3 entry
+
+The [API-3 entry and cross-engine contracts](api3-portability.md) describe
+using the same manifest and mod source on Gen1Recomp and Gen2Recomped.
+API 3 selects the unified adapters automatically; API 1/2 keep their defaults.
+
 ## Feature queries (`mod:supports`)
 
 `mod:supports(surface, name)` returns `true` when the selected host exposes an
@@ -84,11 +91,12 @@ Oak-speech callbacks apply to Gen 1–2 except Prism; Birch-speech events apply
 to Emerald. Other versions use their own intros. An event still needs its
 trigger to occur; custom events also need another mod to emit them.
 
-This is additive to Mod API 2: it neither normalizes content records, IDs or
-callback payloads across generations nor provides Gen1Recomp's unified API 3.
-Existing registration/subscription behavior remains unchanged. When adding a
-native callback or changing screen routing, update `src/mods/Capabilities.lua`
-and the capability tests in the same change.
+For API 1/2, the query describes the existing interfaces and does not itself
+normalize records, IDs or callback payloads. API 3 selects the portable
+adapters described in [Shared API 3 entry](api3-portability.md), with explicit
+limits on availability. Existing API-1/2 registration/subscription behavior
+remains unchanged. When adding a native callback or changing screen routing,
+update `src/mods/Capabilities.lua` and the capability tests in the same change.
 
 ## Bulk storage (`mod.storage`)
 

@@ -841,7 +841,7 @@ function Loader:_api(mod)
   -- new game and a new load.
   local hostGen, hostId, hostInfo = 1, nil, nil
   do
-    local okV, GameVersion = pcall(require, "src.core.GameVersion")
+    local okV, GameVersion = pcall(engineRequire, "src.core.GameVersion")
     if okV and GameVersion then
       local okG, g = pcall(GameVersion.generation)
       if okG and tonumber(g) then hostGen = tonumber(g) end
@@ -855,7 +855,7 @@ function Loader:_api(mod)
   local battle = BattleSnapshots.new(function() return loader:_game(true) end, loader)
   local engineVersion
   do
-    local okE, V = pcall(require, "src.core.Version")
+    local okE, V = pcall(engineRequire, "src.core.Version")
     engineVersion = okE and V and V.engine or nil
   end
   local api = {
@@ -897,7 +897,7 @@ function Loader:_api(mod)
       label = hostInfo and hostInfo.label or hostId,
       engine = engineVersion,
       modApi = (function()
-        local okE, V = pcall(require, "src.core.Version")
+        local okE, V = pcall(engineRequire, "src.core.Version")
         return okE and V and V.modApi or nil
       end)(),
       developer = loader.dev == true,
@@ -1201,6 +1201,9 @@ function Loader:_api(mod)
       if surface == "content" and handle and handle.supports then return handle:supports() end
       return supports(self, surface, name)
     end
+  end
+  if (mod.manifest.api or 1) >= 3 then
+    engineRequire("src.mods.Api3").install(api, loader, readContext, overviewContext, engineRequire)
   end
   return api
 end

@@ -1,3 +1,4 @@
+local Api3Records = require("src.mods.Api3Records")
 -- A call-local transaction. Only known record roles cross this boundary;
 -- opaque engine handles (Game, battle, save, map, RNG, UI callbacks) stay native.
 local Ids = require("src.mods.UnifiedIds")
@@ -139,8 +140,22 @@ local function array(t, label, max)
   assert(count == n, label .. " must be dense")
 end
 
-function R.new(loader, name, generation)
+function R.new(loader, name, generation, api3)
   local ids = Ids.new(loader)
+  local portable = api3 and Api3Records or nil
+  local function readStatus(value)
+    if portable then
+      return portable.status(value)
+    end
+    return status[value] or value
+  end
+  local function writeStatus(value, old)
+    if portable then
+      return portable.nativeStatus(value, old)
+    end
+    assert(value == nil or value == false or short[value], "unknown status")
+    return short[value]
+  end
   local byRaw, byView, entries = {}, {}, {}
   local view, restore, commit, refresh
   local open = true
@@ -193,6 +208,9 @@ function R.new(loader, name, generation)
     end
     out.specialAttack = out.specialAttack or out.special
     out.specialDefense = out.specialDefense or out.special
+    if portable then
+      portable.stats(out, generation)
+    end
     return out
   end
   local function fields(raw, kind)
@@ -201,12 +219,14 @@ function R.new(loader, name, generation)
         species = read("pokemon", raw.species),
         item = read("items", raw.item),
         nickname = raw.nickname,
-        name = raw.name,
+        name = portable and raw.nickname and raw.nickname ~= "" and raw.nickname or raw.name,
         level = raw.level,
         hp = raw.hp,
         maxHp = raw.stats and raw.stats.hp,
-        status = status[raw.status] or raw.status,
+        status = readStatus(raw.status),
         isEgg = raw.isEgg == true,
+        dvs = portable and generation ~= 3 and type(raw.dvs) == "table" and copy(raw.dvs) or nil,
+        shiny = portable and portable.shiny(raw, generation),
         stats = statView(raw.stats),
         moves = moveViews(raw.moves),
         native = copy(raw),
@@ -284,7 +304,7 @@ function R.new(loader, name, generation)
         role = nil
       end
       if k == "status" then
-        out[k] = status[v] or v
+        out[k] = readStatus(v)
       elseif k == "move" and type(v) ~= "table" then
         out[k] = read("moves", v)
       elseif kind == "action" and k == "id" and not raw.special then
@@ -347,6 +367,43 @@ function R.new(loader, name, generation)
     assert(type(public) == "table", "stats must be a record")
     for k in pairs(public) do
       assert(stats[k], "unknown stat " .. tostring(k))
+    end
+    if portable then
+      local common = public.special ~= baseline.special and public.special or nil
+      if generation == 1 then
+        for _, k in ipairs({ "specialAttack", "specialDefense" }) do
+          if public[k] ~= baseline[k] then
+            assert(common == nil or common == public[k], "conflicting special stats")
+            common = public[k]
+          end
+        end
+      elseif common ~= nil then
+        for _, k in ipairs({ "specialAttack", "specialDefense" }) do
+          assert(public[k] == baseline[k] or public[k] == common, "conflicting special stats")
+        end
+      end
+      for k, n in pairs(stats) do
+        if k ~= "special" or generation == 1 then
+          local value = public[k]
+          if common ~= nil and (k == "special" or k == "specialAttack" or k == "specialDefense") then
+            value = common
+          end
+          if value ~= baseline[k] then
+            value = integer(value, 1, 65535, "stats." .. k)
+            if generation == 1 and (k == "specialAttack" or k == "specialDefense") then
+              n = "special"
+            end
+            local target = n
+            ops[#ops + 1] = function()
+              old[target] = value
+              if generation > 1 and target == "spatk" and old.special ~= nil then
+                old.special = value
+              end
+            end
+          end
+        end
+      end
+      return
     end
     local specialValue
     for _, k in ipairs({ "special", "specialAttack", "specialDefense" }) do
@@ -442,10 +499,16 @@ function R.new(loader, name, generation)
       end
     elseif kind == "mon" then
       for k in pairs(value) do
-        assert(monFields[k], "unknown Pokemon field " .. tostring(k))
+        assert(
+          monFields[k] or (portable and (k == "dvs" or k == "shiny")),
+          "unknown Pokemon field " .. tostring(k)
+        )
       end
       assert(equal(value.native, before.native), "native snapshot is read-only")
       assert(value.name == before.name, "name is read-only; set nickname")
+      if portable then
+        assert(equal(value.dvs, before.dvs) and value.shiny == before.shiny, "DVs and shiny are read-only")
+      end
       for _, key in ipairs({ "species", "item", "nickname", "level", "hp", "maxHp", "status", "isEgg" }) do
         local v = value[key]
         if not equal(v, before[key]) then
@@ -459,8 +522,7 @@ function R.new(loader, name, generation)
           elseif key == "maxHp" then
             v = integer(v, 1, 65535, key)
           elseif key == "status" then
-            assert(v == nil or v == false or short[v], "unknown status")
-            v = short[v]
+            v = writeStatus(v, raw.status)
           elseif key == "nickname" then
             assert(v == nil or type(v) == "string", "nickname must be a string")
           elseif key == "isEgg" then
@@ -590,8 +652,7 @@ function R.new(loader, name, generation)
         elseif kind == "action" and k == "id" and not value.special and v ~= before[k] then
           stage(raw, k, native("moves", v, old))
         elseif k == "status" and v ~= before[k] then
-          assert(v == nil or v == false or short[v], "unknown status")
-          stage(raw, k, short[v])
+          stage(raw, k, writeStatus(v, old))
         elseif idRoles[k] and v ~= before[k] then
           stage(raw, k, native(idRoles[k], v, old))
         elseif k == "applyShare" and name == "battle.exp_award" then

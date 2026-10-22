@@ -1,3 +1,4 @@
+local Api3Catalog = require("src.mods.Api3Catalog")
 local Records = require("src.mods.CallbackRecords")
 local Ids = require("src.mods.UnifiedIds")
 local C = {}
@@ -83,12 +84,19 @@ function C.install(loader, api, owner, generation)
   -- Capture pristine alias identities before Loader merges them into separate
   -- records. Each call still builds a fresh index, including later mods' IDs.
   local ids = Ids.new(loader)
+  local api3 = (api.manifest.api or 1) >= 3
+  local extra = api3 and Api3Catalog
   for _, kind in ipairs({ "pokemon", "moves", "items" }) do
     ids:entries(kind)
   end
   local function check(catalog, name)
     assert(
-      type(name) == "string" and (catalog[name] or (catalog == C.events and custom(name))),
+      type(name) == "string"
+        and (
+          catalog[name]
+          or (extra and (catalog == C.events and extra.events[name] or catalog == C.hooks and extra.hooks[name]))
+          or (catalog == C.events and custom(name))
+        ),
       "unknown unified callback: " .. tostring(name)
     )
   end
@@ -98,7 +106,7 @@ function C.install(loader, api, owner, generation)
     local wrapped = callback
     if not custom(name) and not nativeEvents[name] then
       wrapped = function(payload)
-        local boundary = Records.new(loader, name, generation)
+        local boundary = Records.new(loader, name, generation, api3)
         local public = boundary.view(payload, name == "pokemon.before_give" and "gift" or "context")
         local values = pack(callback(public))
         if name == "pokemon.before_give" then
@@ -130,7 +138,7 @@ function C.install(loader, api, owner, generation)
       check(C.hooks, name)
       assert(type(callback) == "function", "hook callback must be a function")
       return loader.hooks:wrap(name, function(nextFn, ...)
-        local boundary = Records.new(loader, name, generation)
+        local boundary = Records.new(loader, name, generation, api3)
         local roles = positions[name] or {}
         local function translate(args)
           local out = { n = args.n }

@@ -223,6 +223,12 @@ function Manifest.validate(raw, path)
   assert(api <= Version.modApi, ("requires mod API %d; this engine provides %d")
     :format(api, Version.modApi))
   local strict = api >= 2
+  -- API 3 is one portable contract, not three independent API-2 opt-ins.
+  for _, field in ipairs({ "content_format", "callback_format", "script_format" }) do
+    assert(api < 3 or raw[field] == nil or raw[field] == "unified",
+      "API 3 requires unified " .. field)
+  end
+  local defaultFormat = api >= 3 and "unified" or "native"
   assert(raw.content_format == nil or raw.content_format == "native"
       or raw.content_format == "unified", "content_format must be native or unified")
   assert(raw.content_format ~= "unified" or api >= 2,
@@ -244,7 +250,7 @@ function Manifest.validate(raw, path)
     end
   end
 
-  local scriptFormat = raw.script_format == nil and "native" or raw.script_format
+  local scriptFormat = raw.script_format == nil and defaultFormat or raw.script_format
   assert(scriptFormat == "native" or scriptFormat == "unified", "script_format must be native or unified")
   assert(scriptFormat ~= "unified" or api >= 2, "unified scripts require mod API 2")
 
@@ -317,7 +323,7 @@ function Manifest.validate(raw, path)
     version = raw.version,
     entry = raw.entry,
     api = api,
-    content_format = raw.content_format or "native",
+    content_format = raw.content_format or defaultFormat,
     priority = tonumber(raw.priority) or 0,
     dependencies = array(raw.dependencies),
     optional_dependencies = array(raw.optional_dependencies),
@@ -329,7 +335,7 @@ function Manifest.validate(raw, path)
     category = raw.category or "OTHER",
     game_version = raw.game_version,
     description = raw.description or "",
-    callback_format = raw.callback_format or "native",
+    callback_format = raw.callback_format or defaultFormat,
     github = github,
     support = support,
     updateCheck = updateCheck,
