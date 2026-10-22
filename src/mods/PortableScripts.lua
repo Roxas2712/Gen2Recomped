@@ -5,6 +5,7 @@ local Runtime = require("src.mods.Runtime")
 local Flags = require("src.mods.Api3Flags")
 local State = require("src.mods.ScriptState")
 local Gifts = require("src.mods.ScriptGifts")
+local Audio = require("src.mods.ScriptAudio")
 local Shops = require("src.mods.ScriptShops")
 local Battles = require("src.mods.ScriptBattles")
 local Travel = require("src.mods.ScriptTravel")
@@ -285,6 +286,10 @@ local function facade(loader, modId, native)
           return nil, "row " .. i .. ": " .. reason
         end
       end
+    end
+    local audio, audioReason = Audio.prepare(game, program)
+    if not audio then
+      return nil, audioReason
     end
     local state, reason = State.prepare(loader, game, ow, program)
     if not state then
@@ -1056,6 +1061,29 @@ local function facade(loader, modId, native)
         end
       end
     end
+    local function waitAudio(poll, ceiling, continueOnTimeout)
+      if poll() then
+        return
+      end
+      local remaining = ceiling
+      runner.waitingCheck = function()
+        if not check() then
+          return false
+        end
+        if poll() then
+          return true
+        end
+        remaining = remaining - 1
+        if remaining <= 0 then
+          if continueOnTimeout then
+            return true
+          end
+          token.finish(false, "native audio timed out")
+        end
+        return false
+      end
+      runner:yield()
+    end
     function runner:exec(compiled, ctx)
       local pc, slice = 1, 0
       while pc <= #compiled do
@@ -1079,7 +1107,9 @@ local function facade(loader, modId, native)
         token.step = {}
         self.lastRow = verb .. " (portable row " .. pc .. ")"
         ctx.script, ctx.pc = compiled, pc
-        if Shops.ARITY[verb] then
+        if Audio.ARITY[verb] then
+          audio(ctx, row, waitAudio, check)
+        elseif Shops.ARITY[verb] then
           shop(ctx, row)
         elseif Battles.ARITY[verb] then
           battle(ctx, row)
