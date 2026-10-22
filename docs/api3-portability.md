@@ -81,11 +81,12 @@ The common world calls currently enabled for generations 1–3 are:
 - [`toggleObject` and `replaceBlock`](api3-world-edits.md) for validated native
   visibility and active block/metatile edits;
 - [`spawnNpc`, `removeNpc` and `npc`](api3-npc.md) for runtime NPC creation,
-  ownership-aware removal and opaque live actor controls.
+  ownership-aware removal and opaque live actor controls;
+- [`startWildBattle`](api3-wild-battle.md) for validated native encounters.
 
 Check `mod:supports("world", name)` before relying on a call. The other
 Gen1 world method names remain callable but explicitly return
-`nil, "unsupported: ..."`: `startWildBattle` and `invalidateMap` have not yet been verified against the
+`nil, "unsupported: ..."`: `invalidateMap` has not yet been verified against the
 Gen1 API-3 contract. Their native/API-2 counterparts are unaffected. Native
 symbolic flag mappings and `mod.datasets:open` are also explicitly unavailable.
 Gen4/5 do not claim the shared world surface in this first entry PR.
@@ -132,8 +133,8 @@ The runner also generates an API-3 mod through the real scaffold CLI and
 loads those same generated files on both engines for each version. This adds
 eight comparisons to the sixteen normal/rollback cases. Eight additional warp
 cases use the same public mod on both engines and native-shaped timing seams.
-Eight object/block cases and eight NPC cases extend this to 48 comparisons
-and 96 isolated loader runs. It compares JSON projections of public results and
+Eight object/block cases and eight NPC cases extend this to 56 comparisons
+and 112 isolated loader runs (including eight wild-battle cases). It compares JSON projections of public results and
 records hashes of both shared and generated fixture files. It refuses a different or modified reference.
 
 Coverage includes canonical content reads/writes/iteration and native merge
