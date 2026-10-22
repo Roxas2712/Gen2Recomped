@@ -3,6 +3,7 @@
 local Program = require("src.mods.ScriptProgram")
 local Runtime = require("src.mods.Runtime")
 local Flags = require("src.mods.Api3Flags")
+local State = require("src.mods.ScriptState")
 local GameVersion = require("src.core.GameVersion")
 local Scripts = {}
 local runs = setmetatable({}, { __mode = "k" })
@@ -231,6 +232,10 @@ local function facade(loader, modId, native)
         end
       end
     end
+    local state, reason = State.prepare(loader, game, ow, program)
+    if not state then
+      return nil, reason
+    end
     local Runner = require("src.script.ScriptRunner")
     local runner = Runner.new(game, ow)
     local token = {
@@ -441,7 +446,9 @@ local function facade(loader, modId, native)
         token.step = {}
         self.lastRow = verb .. " (portable row " .. pc .. ")"
         ctx.script, ctx.pc = compiled, pc
-        if verb == "set_flag" or verb == "clear_flag" then
+        if State.ARITY[verb] then
+          state(ctx, row)
+        elseif verb == "set_flag" or verb == "clear_flag" then
           local ok, reason = flag(row[2], verb == "set_flag", true)
           if not ok then
             error(reason, 0)
