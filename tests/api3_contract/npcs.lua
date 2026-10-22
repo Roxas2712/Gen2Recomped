@@ -29,6 +29,7 @@ function M.fixture(root, backend, version, modId)
     blockCells = f.gen == 3 and 1 or 2,
     blockTiles = f.gen == 3 and 2 or 4,
   }
+  f.tiles = tiles
   for i = 1, 16 do
     tiles.blocks[2][i] = 0
   end

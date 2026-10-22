@@ -326,3 +326,30 @@ step (3,600 foreground logic frames) terminate the script. A native step
 which crosses into a different map ends this run; use explicit `warp` for
 portable cross-map scripts when supported. These limits are intentionally
 reported rather than silently claiming arbitrary native movement parity.
+
+## Explicit travel
+
+Gen1–3 accept `warp(mapId, x, y, facing?)` and
+`remember_outdoor(mapId, x, y)`. Destination names, 0-based cell coordinates,
+dimensions and facing use the public API-3 warp planner. `remember_outdoor`
+sets the native outdoor/escape destination without travelling.
+
+Preflight follows the linear row list's map context, just as the reference
+engine does. Object/block and movement rows after a warp are checked against
+the destination's definitions; path/block geometry requires the destination
+tileset to be available. These plans do not load a live map or run callbacks.
+All dispatches still validate their actual live targets. Branches and native
+entry scripts can change runtime conditions, so successful preflight is not
+a guarantee that an admitted asynchronous program will complete.
+
+A warp uses the native transition and arrival bookkeeping. Its continuation
+binds to the destination map and idle runner only after the native arrival
+callback; it never resumes beneath a foreign overlay. A busy destination
+runner is preserved and the portable run fails. Talking-NPC context is
+cleared at arrival. One-shot callbacks, session checks and a 3,600-frame
+native-transition/foreground deadline prevent late script effects.
+
+The transition belongs to the engine: unloading or timing out a portable
+script leaves the already admitted native warp free to finish and release
+its own locks. It suppresses the script continuation, rather than undoing
+committed native travel or removing the engine's transition screen.

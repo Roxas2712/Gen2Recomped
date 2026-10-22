@@ -5,6 +5,7 @@ local Runtime = require("src.mods.Runtime")
 local Flags = require("src.mods.Api3Flags")
 local State = require("src.mods.ScriptState")
 local Gifts = require("src.mods.ScriptGifts")
+local Travel = require("src.mods.ScriptTravel")
 local Movement = require("src.mods.ScriptMovement")
 local WorldEdits = require("src.mods.ScriptWorldEdits")
 local GameVersion = require("src.core.GameVersion")
@@ -143,6 +144,8 @@ local function observe(loader)
         token.finish(false, ok and why or "script context failed")
       elseif token.waitingUI and not contains(token.stack, token.waitingUI) then
         token.finish(false, "script UI was removed")
+      elseif token.travel then
+        token.travel.tick()
       end
     end
     return nextFn(game, dt)
@@ -243,11 +246,15 @@ local function facade(loader, modId, native)
     if not gift then
       return nil, giftReason
     end
-    local edit, editReason = WorldEdits.prepare(game, ow, modId, program)
+    local travel, travelReason = Travel.prepare(game, ow, modId, program)
+    if not travel then
+      return nil, travelReason
+    end
+    local edit, editReason = WorldEdits.prepare(game, ow, modId, program, true)
     if not edit then
       return nil, editReason
     end
-    local movement, moveReason = Movement.prepare(ow, program)
+    local movement, moveReason = Movement.prepare(ow, program, true)
     if not movement then
       return nil, moveReason
     end
@@ -287,18 +294,19 @@ local function facade(loader, modId, native)
         or game.stack.states ~= token.states
         or not contains(token.stack, ow)
         or game.overworld and game.overworld ~= ow
-        or not token.mutating and ow.map ~= token.map
-        or ow.map.id ~= token.mapId
+        or not token.travel and not token.mutating and ow.map ~= token.map
+        or not token.travel and ow.map.id ~= token.mapId
         or ow.player ~= token.player
-        or (ow.player.cellX ~= token.x or ow.player.cellY ~= token.y) and not (token.move and token.move.position())
-        or not token.mutating and ow.runner ~= runner
+        or not token.travel and (ow.player.cellX ~= token.x or ow.player.cellY ~= token.y) and not (token.move and token.move.position())
+        or not token.travel and not token.mutating and ow.runner ~= runner
         or token.move and not token.move.live()
         or GameVersion.get() ~= token.version
         or Runtime.hooks ~= loader.hooks
         or Runtime.events ~= loader.events
         or game.linkSession
         or game.linkNet and not game.linkNet.closed
-        or ow.transitioning
+        or not token.travel and ow.transitioning
+        or token.travel and not token.travel.valid()
       then
         return nil, "script session changed"
       end
@@ -309,6 +317,9 @@ local function facade(loader, modId, native)
         return
       end
       token.done = true
+      if token.travel then
+        token.travel.retired = true
+      end
       if token.move then
         token.move.cancel()
       end
@@ -413,7 +424,7 @@ local function facade(loader, modId, native)
       return state
     end
     discover = function(before, step)
-      if token.done or token.step ~= step then
+      if token.done or token.step ~= step or token.travel then
         return
       end
       for _, state in ipairs(game.stack.states) do
@@ -541,6 +552,117 @@ local function facade(loader, modId, native)
       token.waitingUI = menu
       game.stack:push(menu)
       runner:yield()
+    end
+    local function warp(ctx, row)
+      local plan, reason = travel(row)
+      if not plan then
+        error(reason, 0)
+      end
+      if row[1] == "remember_outdoor" then
+        token.save.lastOutdoor = { id = plan.mapId, x = plan.x, y = plan.y }
+        if GameVersion.generation() == 3 then
+          token.save.escapeWarp = { map = plan.mapId, warpId = 255, x = plan.x, y = plan.y }
+        elseif ow.rememberOutdoor then
+          ow:rememberOutdoor(plan.mapId, plan.x, plan.y)
+        else
+          ow.lastOutdoor = token.save.lastOutdoor
+        end
+        return
+      end
+      local origin, step = ow.map, token.step
+      local accepted, pending, fired, complete = nil, false, false, false
+      local lease = { ui = {} }
+      local remaining = 3600
+      function lease.tick()
+        local top = token.stack:top()
+        if top == ow or lease.ui[top] then
+          remaining = remaining - 1
+          if remaining <= 0 then
+            token.finish(false, "native warp timed out")
+          end
+        end
+      end
+      function lease.valid()
+        if lease.retired then
+          return false
+        end
+        if
+          ow.map == origin
+          and ow.player.cellX == token.x
+          and ow.player.cellY == token.y
+          and ow.runner == runner
+        then
+          return true
+        end
+        return ow.map and ow.map.id == plan.mapId and ow.player.cellX == plan.x and ow.player.cellY == plan.y
+      end
+      local function done()
+        if fired or lease.retired then
+          return
+        end
+        if accepted == nil then
+          pending = true
+          return
+        end
+        fired = true
+        if not accepted or token.step ~= step or not check() then
+          return
+        end
+        if
+          not ow.map
+          or ow.map.id ~= plan.mapId
+          or ow.player.cellX ~= plan.x
+          or ow.player.cellY ~= plan.y
+          or ow.transitioning
+        then
+          token.finish(false, "native warp did not arrive")
+          return
+        end
+        if ow.runner ~= runner then
+          if not ow.runner or ow.runner:isRunning() then
+            token.finish(false, "destination script is busy")
+            return
+          end
+          token.original = ow.runner
+          ow.runner = runner
+        end
+        token.map, token.mapId, token.x, token.y = ow.map, plan.mapId, plan.x, plan.y
+        ctx.mapId, ctx.npc = plan.mapId, nil
+        movement.forgetNpc()
+        movement.npc = nil
+        complete = true
+      end
+      token.travel = lease
+      local statesBefore = snapshot()
+      local called, value, why =
+        engine(ow.startWarpTo, ow, plan.mapId, plan.x, plan.y, plan.facing, done, { via = "warp" })
+      for _, state in ipairs(game.stack.states) do
+        if not statesBefore[state] then
+          lease.ui[state] = true
+        end
+      end
+      accepted = called and value ~= false and not (value == nil and why ~= nil)
+      if not accepted then
+        lease.retired = true
+        token.travel = nil
+        error(called and (why or "native warp refused") or message(value), 0)
+      end
+      if pending then
+        done()
+      end
+      if not check() then
+        return
+      end
+      if not complete then
+        runner.waitingCheck = function()
+          return complete
+        end
+        runner:yield()
+      end
+      lease.retired = true
+      if token.travel == lease then
+        token.travel = nil
+      end
     end
     local function move(ctx, row)
       local actor = movement.target(row)
@@ -720,7 +842,9 @@ local function facade(loader, modId, native)
         token.step = {}
         self.lastRow = verb .. " (portable row " .. pc .. ")"
         ctx.script, ctx.pc = compiled, pc
-        if Movement.ARITY[verb] then
+        if Travel.ARITY[verb] then
+          warp(ctx, row)
+        elseif Movement.ARITY[verb] then
           move(ctx, row)
         elseif WorldEdits.ARITY[verb] then
           local value, reason = edit(row, mutate)

@@ -824,7 +824,8 @@ for _, version in ipairs(GameVersion.ORDER) do
     }) do
       T.eq(api:supports("scripts", verb), true, "bounded verb capability")
     end
-    T.eq(api:supports("scripts", "warp"), false, "unsupported verb declined")
+    T.eq(api:supports("scripts", "engine_private_command"), false, "unsupported verb declined")
+    T.eq(api:supports("scripts", "warp"), GameVersion.generation(version) <= 3, "travel capability matches generation")
     T.eq(loader.apis.legacy:supports("world", "cancelScript"), false, "legacy has no portable cancellation")
     T.eq(loader.apis.legacy:supports("scripts", "wait"), false, "native format does not claim portable verbs")
   end
