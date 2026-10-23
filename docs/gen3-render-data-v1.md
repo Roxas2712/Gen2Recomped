@@ -1,5 +1,9 @@
 # Gen3 render data, version 1
 
+The native-foundation branch also provides an optional
+[surface observation](gen3-surface-render-data-v1.md) with live elevation,
+collision and behavior codes. The original `snapshot` shape is unchanged.
+
 `mod.renderData` is an additive, read-only handle for portable terrain renderers.
 It has its own schema version: existing API-2 mods can use it, and the same
 handle works alongside the separately proposed API-3 facade. This change does

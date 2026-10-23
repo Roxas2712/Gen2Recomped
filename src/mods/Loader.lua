@@ -1175,7 +1175,12 @@ function Loader:_loadMod(mod)
         mod.manifest.id, tostring(row.entry.name), tostring(row.entry.file))
     end
   end
-  local api = ActorRenderData.install(self:_api(mod), self)
+  local api = self:_api(mod)
+  -- Each observation family extends the same public handle. Compose them
+  -- before publishing it or running the entry chunk; none replaces terrain.
+  ActorRenderData.install(api, self)
+  FieldEffectRenderData.install(api, self)
+  SurfMountRenderData.install(api, self)
   -- KEEP THE API OBJECT, not only its exports.
   --
   -- `self.exports[id]` has always been the mod's published surface, and that is
@@ -1185,10 +1190,8 @@ function Loader:_loadMod(mod)
   -- check says it is there.  Asking a freshly built api the same question
   -- cannot answer that, because the whole question is whether the object the
   -- mod is holding differs from the one the engine would build.
-  SurfMountRenderData.install(api, self)
   self.apis = self.apis or {}
   self.apis[mod.manifest.id] = api
-  FieldEffectRenderData.install(api, self)
   local result = chunk(api)
   if type(result) == "function" then result(api) end
   -- a mod that replaced the table wholesale (mod.exports = {...}) still

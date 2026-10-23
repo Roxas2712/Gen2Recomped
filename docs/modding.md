@@ -89,6 +89,11 @@ fields that moved; a new map becomes a `:register`. See
 
 ## Rendering pipelines
 
+The fork's [native renderer foundation](native-origami-foundation.md) composes
+the versioned terrain, surface, actor, field-effect and surf-mount observations
+with an opt-in portable world callback. It records the current validation and
+remaining native-engine work; it does not require a full Origami port.
+
 Most registries hand the engine *content*. `render_pipelines` hands it
 *drawing*: a pipeline is a display mode a mod owns, which may replace the
 overworld's world pass with geometry of its own and/or post-process the

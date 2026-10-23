@@ -1,0 +1,43 @@
+name: native Gen3 render foundation
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-foundation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  combined-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install LuaJIT
+        run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: Public loader, surfaces and no-mod parity
+        run: |
+          luajit tests/engine/gen3_surface_data.lua
+          luajit tests/engine/native_foundation.lua
+      - name: Existing contracts on the combined engine
+        run: |
+          luajit tests/engine/gen3_render_data.lua
+          luajit tests/engine/gen3_render_data_sources.lua
+          luajit tests/engine/portable_world_context.lua
+          luajit tests/engine/portable_oasc_adapter.lua
+          luajit tests/engine/actor_render_data.lua
+          luajit tests/engine/actor_billboard_resources.lua
+          luajit tests/engine/field_effect_render_data.lua
+          luajit tests/engine/field_effect_resources.lua
+          luajit tests/engine/surf_mount_clock.lua
+          luajit tests/engine/surf_mount_render_data.lua
+          luajit tests/engine/surf_mount_resources.lua
+      - name: Generate combined registry reference
+        run: |
+          mkdir -p /tmp/native-foundation-docs
+          luajit tools/gen_registry_docs.lua /tmp/native-foundation-docs
+      - uses: actions/upload-artifact@v7
+        with:
+          name: native-foundation-registry-reference
+          path: /tmp/native-foundation-docs/Reference-Registries.md
+          if-no-files-found: error

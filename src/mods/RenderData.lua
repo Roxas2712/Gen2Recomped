@@ -85,6 +85,12 @@ function RenderData.new(getGame, generation)
     tileset = function(_, ...)
       return context:tileset(...)
     end,
+    supportsSurface = function(_, version)
+      return context:supports(version)
+    end,
+    surface = function(_, ...)
+      return context:surface(...)
+    end,
   }
 end
 
@@ -289,6 +295,68 @@ function Handle:snapshot(version, mapId, query)
     return a.mapId < b.mapId
   end)
   return out
+end
+
+-- Keep the raw Gen3 cell codes: elevation 15 is an under-bridge marker,
+-- not a height, and collision bits are not a complete walkability answer.
+-- Reuse the terrain query's bounds, resident-map guard and detached grid.
+function Handle:surface(version, mapId, query)
+  local grid, err = self:snapshot(version, mapId, query)
+  if not grid then
+    return nil, err
+  end
+  local ctx, why = active(self, version, mapId)
+  if not ctx then
+    return nil, why
+  end
+  local map, reason = resident(ctx, grid.mapId)
+  if not map then
+    return nil, reason
+  end
+  local def, ts = map.def, map.tileset
+  if type(def.elevationCells) ~= "table" or type(ts.collision) ~= "table" or ts.behaviourBytes ~= true then
+    return nil, "surface data unavailable"
+  end
+  for _, cells in ipairs({ "collisionCells", "elevationCells" }) do
+    if def[cells] ~= nil and type(def[cells]) ~= "table" then
+      return nil, "surface data unavailable"
+    end
+  end
+  for _, key in ipairs({ "collisionPatch", "elevationPatch" }) do
+    if map[key] ~= nil and type(map[key]) ~= "table" then
+      return nil, "surface data unavailable"
+    end
+  end
+  grid.elevations, grid.collisions, grid.behaviors = {}, {}, {}
+  local r, n = grid.region, 0
+  for y = r.y, r.y + r.height - 1 do
+    for x = r.x, r.x + r.width - 1 do
+      n = n + 1
+      local i = y * grid.width + x + 1
+      local elevation = map.elevationPatch and map.elevationPatch[i]
+      if elevation == nil then
+        elevation = def.elevationCells[i]
+      end
+      if elevation == nil then
+        elevation = 0
+      end
+      local collision = map.collisionPatch and map.collisionPatch[i]
+      if collision == nil then
+        if def.collisionCells then
+          collision = def.collisionCells[i]
+        end
+      end
+      if collision == nil then
+        collision = 0
+      end
+      local behavior = ts.collision[grid.metatiles[n] + 1]
+      if not (integer(elevation, 0, 15) and integer(collision, 0, 3) and integer(behavior, 0, 255)) then
+        return nil, "surface cell unavailable"
+      end
+      grid.elevations[n], grid.collisions[n], grid.behaviors[n] = elevation, collision, behavior
+    end
+  end
+  return grid
 end
 
 local function bank(record)
