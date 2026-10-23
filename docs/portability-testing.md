@@ -10,6 +10,9 @@ Its ROM-free run passed 157/157 engine suites, 3/3 SDK suites and the Dramatic
 Shape B30 profile. Shared contract checks use clean pinned Gen1 references;
 see each `tools/*-contract-check/` tool for its required reference and flags.
 Those checks do not prove full cartridge playthroughs or universal mod support.
+The isolated-launcher addition passes 158/158 engine suites. A native LÖVE
+11.5 Red smoke test also reached the cartridge intro, title screen, and New
+Game world/introduction using an isolated copy of an existing imported cache.
 
 ## Start a test installation
 
@@ -60,3 +63,18 @@ Shader imports intentionally support a bounded subset, not all RetroArch presets
 
 Feature changes continue as separately tested PRs. This testing branch will be
 updated with tested combinations; it is not a replacement for reviewing them.
+
+## Native boot smoke test
+
+After importing a cartridge into the separate test installation:
+
+```sh
+POKEPORT_VERSION=red POKEPORT_DRIVER=tests/portability_boot_driver.lua \
+  bash scripts/run-portability-test.sh
+```
+
+The driver advances the native intro, invokes the title's New Game action,
+checks the world below the introduction, and exits. It does not import or
+copy a ROM itself. `POKEPORT_PORTABILITY_SHOT=/absolute/path/frame.png` can
+request a captured frame. Use an isolated test installation; this driver
+starts a new game and is not intended for your normal playthrough identity.
