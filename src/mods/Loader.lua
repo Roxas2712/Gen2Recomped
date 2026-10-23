@@ -24,6 +24,7 @@ local Hooks = require("src.mods.Hooks")
 local ModStorage = require("src.mods.Storage")
 local WorldReads = require("src.mods.WorldReads")
 local Runtime = require("src.mods.Runtime")
+local InputControl = require("src.mods.InputControl")
 local BattleSnapshots = require("src.mods.BattleSnapshots")
 local UIActions = require("src.mods.UIActions")
 local ModGens = require("src.mods.ModGens")
@@ -158,6 +159,7 @@ function Loader.new(opts)
     mods = {}, loaded = {}, errors = {}, initialized = false,
     events = Events.new(), hooks = Hooks.new(), content = {}, assets = {},
     exports = {}, apis = {}, migrations = {}, order = {},
+    inputControl = InputControl.new(),
     modSave = {}, modOptions = {}, optionSchemas = {},
     optionStatus = {}, imageCache = {},
     fs = (opts and opts.fs) or (love and love.filesystem),
@@ -810,6 +812,16 @@ function Loader.freshness(fs, root)
   return (" (newest file %s, %s)"):format(tostring(newestName), when)
 end
 
+-- Recovery releases holds while keeping the current API usable. Retirement
+-- (rollback/reload/teardown) additionally disables the old API's presses.
+function Loader:releaseModInput(owner)
+  self.inputControl:release(owner)
+end
+
+function Loader:_closeModInput()
+  self.inputControl:close()
+end
+
 function Loader:_api(mod)
   local loader = self
   local modId = mod.manifest.id
@@ -922,6 +934,7 @@ function Loader:_api(mod)
         return loader.events:emit(name, payload)
       end,
     },
+    input = loader.inputControl:api(modId),
     hooks = { wrap = function(_, name, callback, priority)
       return loader.hooks:wrap(name, callback, priority, modId)
     end },
@@ -1262,6 +1275,7 @@ end
 -- migration it took goes with them.  The journal only exists around an
 -- entry chunk; a later failure (script validation) purges every registry.
 function Loader:_rollback(modId)
+  self.inputControl:retire(modId)
   PortableScripts.cancelAll(self, modId, "mod rolled back")
   for name in pairs(self.journal or self.content) do
     self.content[name]:rollback(modId)
@@ -1377,6 +1391,8 @@ local function stampAudioOwners(data, name, registry)
 end
 
 function Loader:load(data)
+  InputControl.closeAll()
+  self.inputControl = InputControl.new()
   PortableScripts.cancelAll(nil, nil, "mods reloaded")
   -- A SECOND LOAD IN ONE PROCESS STARTS FROM THE ENGINE, NOT FROM THE LAST
   -- LOAD'S MODS.  EXIT GAME -> launcher -> Play runs every mod's main.lua
@@ -1721,6 +1737,7 @@ end
 -- boots) ran on a modded engine whose mod instance nothing drives any more,
 -- and the next Play loaded every mod on top of what the last one left.
 function Loader.teardown()
+  InputControl.closeAll()
   PortableScripts.cancelAll(nil, nil, "mods unloaded")
   local undone = select(1, ModSeams.unwindAll())
   pcall(function()
