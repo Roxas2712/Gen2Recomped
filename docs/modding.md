@@ -103,6 +103,12 @@ limits on availability. Existing API-1/2 registration/subscription behavior
 remains unchanged. When adding a native callback or changing screen routing,
 update `src/mods/Capabilities.lua` and the capability tests in the same change.
 
+## Battle bottom UI visibility
+
+The [portable battle bottom UI contract](portable-battle-bottom-ui.md) documents
+`battle.bottom_ui_visible(next, state)` for battle text/menu drawing and
+inherited text/YES-NO overlays, without changing native input/update ownership.
+
 ## Per-state main-screen visibility
 
 The [portable screen visibility contract](portable-screen-visibility.md)
