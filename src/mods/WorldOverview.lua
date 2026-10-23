@@ -1,8 +1,21 @@
--- Read-only world summaries. Do not call timeOfDay(), rollTable(), map loading,
--- or object visibility refreshes here: each can change the live simulation.
+-- Observational world summaries. The encounter.table preview callback is the
+-- sole mod-dispatch seam here; do not roll, load maps or refresh visibility.
 local Ids = require("src.mods.UnifiedIds")
 local GameVersion = require("src.core.GameVersion")
+local Runtime = require("src.mods.Runtime")
 local Overview = {}
+
+local function finish(chance, dist, mapId, terrain, opts)
+  -- The reference seam belongs to the explicit-map preview, not live rolls.
+  -- DS has no reference producer; retain its existing native preview.
+  if GameVersion.generation() <= 3 and Runtime.wantsHook("encounter.table") then
+    local ctx = { mapId = mapId, terrain = terrain, preview = true }
+    if GameVersion.isGen3() then ctx.opts = opts end
+    local transformed = Runtime.call("encounter.table", function(d) return d end, dist, ctx)
+    if type(transformed) == "table" then dist = transformed end
+  end
+  return { chance = chance, dist = dist }
+end
 
 function Overview.context(loader)
   Ids.new(loader):entries("pokemon")
@@ -41,7 +54,7 @@ local function dataIds(data)
   })
 end
 
-local periods = { MORN = "MORNING", MORNING = "MORNING", DAY = "DAY", NITE = "NITE", NIGHT = "NITE" }
+local periods = { MORN = "MORNING", MORNING = "MORNING", DAY = "DAY", NITE = "NITE", NIGHT = "NITE", DARK = "NITE" }
 local hours = { MORNING = 6, DAY = 12, NITE = 22 }
 
 function Overview.encounters(game, ow, context, mapId, terrain, opts)
@@ -104,7 +117,7 @@ function Overview.encounters(game, ow, context, mapId, terrain, opts)
     slots = Encounter.atTime(slots, daytime)
   end
   if not slots then
-    return { chance = 0, dist = {} }
+    return finish(0, {}, mapId, terrain, opts)
   end
   local maximum = tonumber(slots.rateMax) or 256
   local rate = tonumber(slots.rate) or 0
@@ -138,7 +151,7 @@ function Overview.encounters(game, ow, context, mapId, terrain, opts)
       return nil, "invalid encounter buckets"
     end
     local slot = slots.slots and slots.slots[i]
-    if rate > 0 and slot and slot.species and threshold > prev then
+    if (rate > 0 or GameVersion.isGen3()) and slot and slot.species and threshold > prev then
       local id = ids:read("pokemon", slot.species)
       if id then
         dist[id] = (dist[id] or 0) + threshold - prev
@@ -147,7 +160,7 @@ function Overview.encounters(game, ow, context, mapId, terrain, opts)
     prev = threshold
   end
   -- Same independent integer rate gate as rollTable, without drawing a slot.
-  return { chance = math.max(0, math.min(maximum, math.ceil(rate))) / maximum, dist = dist }
+  return finish(math.max(0, math.min(maximum, math.ceil(rate))) / maximum, dist, mapId, terrain, opts)
 end
 
 return Overview

@@ -466,3 +466,6 @@ See [portable follower predicate](portable-follower.md) for the native
 [Portable GB item dispatch](portable-item-use.md) documents the `item.use`
 producer; [GBA field results](portable-gba-item-use.md) document the distinct
 GBA contract and the remaining Gold/DS boundaries.
+
+[Portable encounter previews](portable-encounter-table.md) document
+`encounter.table` and its preview-only scope, SDK modes and native boundaries.

@@ -2,7 +2,9 @@
 
 These additive API-1/API-2 readers use the Gen1Recomp `mapOverview` and
 `effectiveEncounters` result shapes. They return detached tables and do not
-load maps, consume RNG, run mod callbacks, refresh objects, or change the save.
+load maps, consume RNG, refresh objects, or change the save. On Gen1–3,
+`effectiveEncounters` now composes installed `encounter.table` callbacks; those
+callbacks can have their own side effects.
 They are available through the normal lazy `mod.world` facade. Hosts with
 `mod:supports` report both names on the `world` surface before Game exists.
 This does not opt a mod into API 3 or change existing actions/encounter rolls.
@@ -75,8 +77,8 @@ denominator (256 by default, 100 on DS adapter tables). It is **not** the final
 probability of a battle on the player's next step. `dist` aggregates consecutive
 cumulative bucket differences for duplicate species. Weights are not percentages:
 use their sum when computing conditional shares. Missing slots/uncovered bucket
-space remain empty outcomes, just as in the native chooser. Zero-rate tables
-return an empty distribution. Species IDs use the same dataset-derived public
+space remain empty outcomes, just as in the native chooser. Zero-rate GB/Gold tables
+return an empty distribution; GBA retains its native slot weights at zero chance. Species IDs use the same dataset-derived public
 names as the other portable readers, including numeric DS species and aliases.
 Loader identity metadata is captured before presentation-name patches.
 
@@ -91,10 +93,11 @@ Water uses its own table.
 This is a **table preview**: it excludes per-step ability/radio/held-item rate
 changes, movement/grace gates, Repel, roamers, lead-based slot filtering,
 fishing, Radar, phenomena and dark-grass overrides. It never samples or executes
-`encounter.roll`, `encounter.species`, or `world.tod`. Gen2Recomped has no native
-`encounter.table` hook; this PR does not introduce one or pretend to preview
-arbitrary mod callbacks. A future shared table-transform seam can extend both
-the native roll and preview together.
+`encounter.roll`, `encounter.species`, or `world.tod`. On Gen1–3 it now runs
+[the public `encounter.table` preview transform](portable-encounter-table.md),
+matching Gen1Recomp's preview-only producer. This hook does not transform live
+rolls; adding a shared live producer remains separate work. API 3 uses the
+reference's stricter option and indoor-alias rules described there.
 
 HGSS's position-dependent Safari Zone returns
 `nil, "position-dependent Safari encounters unavailable"`; its native resolver
