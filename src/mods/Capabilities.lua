@@ -22,7 +22,7 @@ add("hooks", "12345", [[
   movement.speed music.select music.volume player.sprite pokemon.icon pokemon.sprite
   render.compose render.hud render.letterbox render.zones save.new_game save.write screen.render_visible
   script.command trainer.party transition.style ui.list_menu ui.options.rows
-  ui.title_menu.items warp.destination world.tod zoom.range
+  ui.title_menu.items warp.destination world.talk world.tod zoom.range
 ]])
 -- Screens have distinct implementations: Screens.lua aliases the DS party,
 -- naming and start menus; those implementations do not call the GB/GBA hooks.
