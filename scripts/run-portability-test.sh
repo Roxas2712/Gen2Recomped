@@ -2,6 +2,7 @@
 # Launch the combined portability branch with its own LÖVE save identity.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+export POKEPORT_SKIP_LEGACY_MIGRATION=1
 export POKEPORT_IDENTITY="${POKEPORT_IDENTITY:-Gen2RecompPortabilityTesting}"
 printf 'Portability test identity: %s\n' "$POKEPORT_IDENTITY"
 if [ -n "${POKEPORT_LOVE:-}" ]; then

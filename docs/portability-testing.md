@@ -28,7 +28,8 @@ POKEPORT_LOVE=/path/to/love bash scripts/run-portability-test.sh
 ```
 
 The wrapper defaults to the separate LÖVE identity
-`Gen2RecompPortabilityTesting`. Import your own supported ROM through the
+`Gen2RecompPortabilityTesting` and disables automatic legacy save/settings
+migration with `POKEPORT_SKIP_LEGACY_MIGRATION=1`. Import your own supported ROM through the
 launcher, then install the mod under test in this test installation. No ROM,
 generated cartridge cache, save or private mod is distributed by this branch.
 The source checkout must be complete; sparse developer checkouts can omit
