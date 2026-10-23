@@ -21,6 +21,7 @@ local HeldItems = require("src.battle.HeldItems")
 local Font = require("src.render.Font")
 local LevelDisplay = require("src.ui.LevelDisplay")
 local MenuAuxiliary = require("src.battle.MenuAuxiliary")
+local MoveNavigation = require("src.battle.MoveNavigation")
 local Logger = require("src.core.Logger")
 local MoveEffects = require("src.battle.MoveEffects")
 local Party = require("src.pokemon.Party")
@@ -365,12 +366,12 @@ end
 -- its RIGHT.  Left and right then did nothing at all, because a vertical list
 -- has no use for them.  The fix is one clause, not new maths: the grid this
 -- layout already draws is the grid it should navigate.
+function BattleState:moveGridNavigation()
+  return MoveNavigation.grid(self)
+end
+
 function BattleState:moveGridNavigate(index, count, input)
-  if not (self:isWideBattleLayout() or self:gen3Layout()
-          or self:gen4Layout()) then
-    return nil
-  end
-  return WideBattle.navigate(index, count, input)
+  return MoveNavigation.navigate(self, index, count, input)
 end
 
 -- The four actions, in the order this layout's grid reads them.  Gen 1 goes

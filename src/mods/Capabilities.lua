@@ -16,7 +16,7 @@ end
 -- need not fire on every action (e.g. an always-hit move skips accuracy).
 add("hooks", "12345", [[
   battle.accuracy battle.bottom_ui_visible battle.catch_exp battle.crit battle.damage battle.enemy_action
-  battle.exp_award battle.low_health_alarm battle.menu_auxiliary battle.run battle.turn_order catch.rate core.logic_speed core.update
+  battle.exp_award battle.low_health_alarm battle.menu_auxiliary battle.move_grid_navigation battle.run battle.turn_order catch.rate core.logic_speed core.update
   encounter.fishing encounter.roll encounter.species evolution.check exp.gain
   fieldmove.eligibility input.key input.gamepad input.wheel input.step link.fingerprint map.palette movement.collision
   movement.speed music.select music.volume player.sprite pokemon.icon pokemon.sprite
