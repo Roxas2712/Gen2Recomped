@@ -24,6 +24,7 @@ local MoveEffects = require("src.battle.MoveEffects")
 local Party = require("src.pokemon.Party")
 local Pokemon = require("src.pokemon.Pokemon")
 local Runtime = require("src.mods.Runtime")
+local UIVisibility = require("src.battle.UIVisibility")
 local Screens = require("src.ui.Screens")
 local Status = require("src.battle.Status")
 local StatusRegistry = require("src.battle.StatusRegistry")
@@ -575,6 +576,10 @@ function BattleState:uiSize()
     return self:gen4SurfaceWidth(), Gen4Battle.HEIGHT
   end
   return 160, 144
+end
+
+function BattleState:bottomUIVisible()
+  return UIVisibility.bottomVisible(self, true)
 end
 
 -- Battle colors itself per-pixel (species pics + HP bar tints), so the
@@ -11927,7 +11932,7 @@ function BattleState:drawPicsLayer(slide, sx, sy, onlySide, skipMenuClip)
   -- .mimicmenu) wipes rows 7+.  The port draws pics above the menu
   -- layer in the colorized pipeline, so clip them to the visible rows.
   local g = love.graphics
-  local clipY = not skipMenuClip
+  local clipY = not skipMenuClip and self:bottomUIVisible()
                 and (self.phase == "mimicSelect" and 56
                      or self.phase == "moveSelect" and 64)
                 or nil
@@ -12376,6 +12381,7 @@ function BattleState:drawHUDs(slide)
 end
 
 function BattleState:drawTextArea()
+  if not self:bottomUIVisible() then return end
   -- EMERALD'S OWN, and reached through this method rather than around it.
   -- Gen3Battle.draw used to call its layer functions directly, which meant a
   -- mod wrapping this name never saw a Gen 3 battle at all.
