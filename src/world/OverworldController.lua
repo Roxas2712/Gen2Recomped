@@ -20,6 +20,7 @@ local Logger = require("src.core.Logger")
 local Probe = require("src.core.Probe")
 local Map = require("src.world.Map")
 local MapLoader = require("src.world.MapLoader")
+local LiveMaps = require("src.world.LiveMaps")
 local NPC = require("src.world.NPC")
 local PaletteFX = require("src.render.PaletteFX")
 local Pipelines = require("src.render.Pipelines")
@@ -2036,6 +2037,10 @@ function OverworldState:neighborReach()
   return rw, rh, vw, vh
 end
 
+function OverworldState:liveMaps()
+  return LiveMaps.snapshot(self)
+end
+
 function OverworldState:rebuildNeighbors()
   local mapId = self.map.id
   self.neighbors = {}
@@ -2052,11 +2057,13 @@ function OverworldState:rebuildNeighbors()
                                                      hops, reachW, reachH)) do
     keep[n.id] = true
     local m = MapLoader.load(Game.data, n.id)
-    table.insert(self.neighbors, { map = m, ox = n.ox, oy = n.oy })
+    table.insert(self.neighbors, { map = m, ox = n.ox, oy = n.oy, cx = n.ox / 16, cy = n.oy / 16 })
   end
   -- bound resident memory: drop maps behind us that are neither current nor
   -- a drawn neighbor, releasing their window batch / border image / atlas
   MapLoader.trim(keep)
+  LiveMaps.preparing(self)
+
 
   -- visual-only NPCs on connected maps (survey zoom): same spawn filter
   -- as a real map entry, but they never join self.entities -- no sight
@@ -2086,7 +2093,6 @@ function OverworldState:rebuildNeighbors()
     -- the seam offset in CELLS.  Everything in this engine steps on a 16px
     -- grid whatever the dataset's block size, and a connection offset is a
     -- whole number of blocks, so this is always exact.
-    nb.cx, nb.cy = nb.ox / 16, nb.oy / 16
     for _, obj in ipairs(nb.map.def.objects or {}) do
       if objectVisible(Game.save, nb.map.id, obj) and not offMap(nb.map.def, obj) then
         local npc = pooledNPC(self.npcPool, Game.data, nb.map.id, obj)
@@ -2098,6 +2104,7 @@ function OverworldState:rebuildNeighbors()
     end
   end
   self.cast = nil
+  LiveMaps.updated(self)
 end
 
 -- ONE CAST, IN EVERY LOADED MAP'S OWN CELLS.
