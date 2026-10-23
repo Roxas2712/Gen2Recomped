@@ -108,7 +108,10 @@ a public collision/elevation encoding**. Use the existing terrain/elevation
 services for those questions. A DS map must carry the runtime grid; this
 method does not generate one from meshes or lazily load shared layouts.
 
-## Loaded map snapshots
+## Loaded map snapshots (API 1/2)
+
+API 3 uses the portable pixel-placement contract in `api3-live-maps.md`.
+The enriched records below remain the API-1/2 contract.
 
 `liveMaps()` returns only maps already held by the active overworld, with the
 active map first and neighbors in native order. It never enumerates all ROM

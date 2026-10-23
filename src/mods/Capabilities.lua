@@ -36,6 +36,7 @@ add("hooks", "123", "pokemon.level_visible ui.party.grid_navigation")
 add("hooks", "12", "intro.oak_speech.build")
 
 add("events", "12345", [[
+  world.live_maps_preparing world.live_maps_updated
   assets.transformed battle.ball_thrown battle.battler_switched battle.damage_dealt
   battle.ended battle.exp_gained battle.fainted battle.move_used battle.started
   battle.status_inflicted battle.turn_ended battle.turn_started discord.join_requested

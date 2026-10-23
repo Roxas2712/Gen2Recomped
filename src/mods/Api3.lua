@@ -98,7 +98,7 @@ function A.install(api, loader, readContext, overviewContext, engineRequire, eng
     wild = Wild.new(loader, api.id, current, native, licensed, engineRequire)
   end
   local function dispatch(name, ...)
-    if not supportedGeneration or not SUPPORTED[name] then
+    if (not supportedGeneration and not (name == "liveMaps" and gen >= 1 and gen <= 5)) or not SUPPORTED[name] then
       return nil, "unsupported: API 3 world method " .. name
     end
     if name == "spawnNpc" or name == "removeNpc" or name == "npc" then
@@ -129,6 +129,11 @@ function A.install(api, loader, readContext, overviewContext, engineRequire, eng
     end
     if name == "queueScript" then
       return scripts:queueScript(...)
+    end
+    if name == "liveMaps" then
+      local ow = native(game):overworld()
+      if not (ow and ow.map) then return nil, "no overworld" end
+      return require("src.world.LiveMaps").snapshot(ow)
     end
     local raw = native(game)
     local result = pack(raw[name](raw, ...))
@@ -189,6 +194,7 @@ function A.install(api, loader, readContext, overviewContext, engineRequire, eng
   local supports = api.supports
   function api:supports(surface, name)
     if surface == "world" then
+      if name == "liveMaps" and gen >= 1 and gen <= 5 then return true end
       if supportedGeneration and SUPPORTED[name] then
         return true
       end
