@@ -143,3 +143,7 @@ or a proof of every exposed native callback's payload. Native action details
 remain covered by the prerequisite PR suites. Extend these shared fixtures
 whenever another API-3 service becomes portable; do not make a failing
 comparison pass by changing only one engine's mod fixture.
+
+The [portable follower predicate](portable-follower.md) controls native companion
+existence on Gen1–3 without replacing a private controller. Artwork remains a
+separate concern; check `mod:supports("hooks", "world.follower.spawn")`.

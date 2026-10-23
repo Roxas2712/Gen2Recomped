@@ -429,3 +429,6 @@ API-2 mods can select `"content_format": "unified"` to read and edit common
 Pokémon, move, item, trainer and encounter definition shapes. Existing mods
 keep native formats. See [the format, supported operations and limitations](unified-mod-content.md)
 for the manifest guard, generation coverage, symbolic IDs and failure behavior.
+
+See [portable follower predicate](portable-follower.md) for the native
+`world.follower.spawn` lifecycle hook and its generation/artwork boundaries.
