@@ -167,4 +167,5 @@ existence on Gen1–3 without replacing a private controller. Artwork remains a
 separate concern; check `mod:supports("hooks", "world.follower.spawn")`.
 
 [Portable GB item dispatch](portable-item-use.md) documents the `item.use`
-producer and the separate Gold/GBA/DS boundaries.
+producer; [GBA field results](portable-gba-item-use.md) document the distinct
+GBA contract and the remaining Gold/DS boundaries.

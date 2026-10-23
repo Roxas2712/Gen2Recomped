@@ -88,7 +88,8 @@ them. Availability does not imply the current game state permits the action:
 return `nil, "map carries no elevation"`.
 
 Callback availability follows Gen2Recomped's actual implementation, rather
-than Gen1Recomp's newer catalog. For example, `item.use` and `egg.hatched` have no native call sites here; the hatch event here is
+than Gen1Recomp's newer catalog. For example, `item.use` has native producers on GB and GBA with distinct
+contracts; `egg.hatched` has no native producer here. The hatch event here is
 `pokemon.egg_hatched` (Gen 2–5). `battle.status_hud_visible` is available on
 Gen 1–5, `battle.overlay` on Gen 1–3, and the normal start-menu, party-submenu
 and naming-grid hooks on Gen 1–3. `ui.pc.items` is available on Gen 1–2.
@@ -463,4 +464,5 @@ See [portable follower predicate](portable-follower.md) for the native
 `world.follower.spawn` lifecycle hook and its generation/artwork boundaries.
 
 [Portable GB item dispatch](portable-item-use.md) documents the `item.use`
-producer and the separate Gold/GBA/DS boundaries.
+producer; [GBA field results](portable-gba-item-use.md) document the distinct
+GBA contract and the remaining Gold/DS boundaries.

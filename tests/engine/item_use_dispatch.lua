@@ -8,12 +8,23 @@ for _, version in ipairs(Version.ORDER) do
   for _, mode in ipairs({ { 1, "native" }, { 2, "native" }, { 2, "unified" }, { 3, "unified" } }) do
     local f = Fixture.new(".", "gen2", version, mode[1], mode[2])
     local gen, api = Version.generation(), f.e.api
-    T.eq(api:supports("hooks", "item.use"), gen == 1, "GB producer availability is honest")
+    T.eq(api:supports("hooks", "item.use"), gen == 1 or gen == 3, "native item producer availability is honest")
     if gen == 1 then
       Cases.run(f)
+    elseif gen == 3 then
+      local calls = 0
+      local off = api.hooks:wrap("item.use", function(next, ...)
+        calls = calls + 1
+        T.eq(select("#", ...), 5, "GBA producer uses field signature")
+        return next(...)
+      end, 100)
+      f.begin("REPEL", false)
+      T.eq(calls, 1, "GBA field use reaches native producer")
+      T.eq(f.count("REPEL"), 2, "GBA field use retains one native consumption")
+      off()
     else
       -- Registration is legal in API 3, but the GB-shaped producer must
-      -- never run on GBA's different field tuple contract or DS screens.
+      -- never run on Gold or DS screens.
       local calls = 0
       local off = api.hooks:wrap("item.use", function()
         calls = calls + 1

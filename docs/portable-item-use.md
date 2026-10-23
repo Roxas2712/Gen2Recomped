@@ -51,13 +51,11 @@ The pinned Gen1 source has three different situations:
 - GBA wraps a field-use function with `(game, nil, itemId, partySlot, bag)` and
   an `(ok, kind, text)` result tuple; its battle-item path is separate.
 
-Gen2Recomped therefore advertises this first producer for **GB only**. GBA's
-field tuple needs its own native adapter and shared tests in the next PR.
-Recognizing/accepting the API-3 name does not make that producer available.
-Gold, GBA and DS keep their existing item flows and report unavailable here.
-This boundary avoids routing a GB UI signature into a mod expecting GBA field
-results. It is an intermediate step toward shared item APIs, not complete
-cross-generation item-hook coverage.
+Gen2Recomped exposes both native contracts: GB's UI dispatcher above and
+[GBA's field-result adapter](portable-gba-item-use.md). Check the host generation
+before interpreting the callback arguments. Gold and DS report unavailable;
+GBA battle items keep their separate native path. Recognizing the API-3 name
+alone does not make a producer available.
 
 ## Validation
 

@@ -1450,6 +1450,8 @@ function Loader:load(data)
   -- vanilla content is registrations too, and they land before discovery so
   -- a mod's register collides with the engine's and has to say override
   require("src.mods.Builtins").install(self.content, data)
+  -- Native GBA field semantics must survive presentation-name patches too.
+  if self:_generation() == 3 then require("src.mods.UnifiedIds").new(self):entries("items") end
   self:_loadState()
   self:_discover()
   -- A RENAMED MOD COLLECTS ITS OLD STATE, now and not before: adoption needs
