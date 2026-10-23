@@ -1,7 +1,7 @@
 -- Reuse native backend construction from trainer admission; use a different
 -- unchanged consumer and no trainer hook, then settle the actual native menu.
 local M = {}
-function M.new(root, backend, version, api, format)
+function M.new(root, backend, version, api, format, consumer)
   local f = dofile(root .. "/tests/trainer_preparation/fixture.lua").new(
     root,
     backend,
@@ -10,7 +10,7 @@ function M.new(root, backend, version, api, format)
     format,
     false,
     false,
-    "portable_battle_auxiliary"
+    consumer or "portable_battle_auxiliary"
   )
   f.start()
   local battle, game = assert(f.battle()), f.game
