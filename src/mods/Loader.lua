@@ -17,6 +17,7 @@ local Api3Warp = require("src.mods.Api3Warp")
 local Api3NPC = require("src.mods.Api3NPC")
 local Api3WildBattle = require("src.mods.Api3WildBattle")
 local AssetTransform = require("src.mods.AssetTransform")
+local FieldEffectRenderData = require("src.mods.FieldEffectRenderData")
 local Manifest = require("src.mods.Manifest")
 local Merge = require("src.mods.Merge")
 local Registry = require("src.mods.Registry")
@@ -1268,6 +1269,7 @@ function Loader:_loadMod(mod)
   -- mod is holding differs from the one the engine would build.
   self.apis = self.apis or {}
   self.apis[mod.manifest.id] = api
+  FieldEffectRenderData.install(api, self)
   local result = chunk(api)
   if type(result) == "function" then result(api) end
   -- a mod that replaced the table wholesale (mod.exports = {...}) still
