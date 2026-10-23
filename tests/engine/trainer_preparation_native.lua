@@ -222,9 +222,20 @@ local box = f.game.stack:top()
 box.done = true
 box:advance()
 f.result.loader.hooks:removeOwner("portable_trainer_preparation")
-require("src.mods.Runtime").call("core.update", function()
+local peerCalls = 0
+local peer = f.result.loader.hooks:wrap("core.update", function(next, ...)
+  peerCalls = peerCalls + 1
+  return next(...)
+end, 10, "other_core_owner")
+local value, extra = require("src.mods.Runtime").call("core.update", function()
   return "native", 7
 end)
+T.eq(value, "native", "watcher preserves native update result")
+T.eq(extra, 7, "watcher preserves native update tuple")
+T.eq(peerCalls, 1, "watcher preserves another mod's callback")
+require("src.mods.Runtime").call("core.update", function() end)
+T.eq(peerCalls, 2, "other callback survives watcher removal")
+peer()
 T.eq(Preparation.active(f.game), false, "native update retires removed owner without resume")
 T.eq(f.world.engaging, false, "native update releases removed owner's field guard")
 T.eq(f.exports.continue(), false, "removed owner's continuation remains retired")
