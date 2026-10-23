@@ -70,6 +70,9 @@ function M.new(root, backend, version, api, format, noMod, failing)
     files["mods/portable_gba_item_use/main.lua"] = files["mods/portable_gba_item_use/main.lua"]
       .. '\nerror("intentional GBA item entry failure")'
   end
+  if noMod then
+    files["mods/portable_gba_item_use/manifest.json"], files["mods/portable_gba_item_use/main.lua"] = nil, nil
+  end
   local result = T.sdk.loadMods(
     noMod and {} or { "mods/portable_gba_item_use" },
     { data = data, fs = T.sdk.memfs(files), dev = false, generation = 3 }
