@@ -122,6 +122,52 @@ return function(game)
   U.wait(3)
   assert(e.state.calls == calls, "unsubscribe retained callback")
   assert(mon.hp == mon.stats.hp and game.save.inventory[potion] == count - 1, "unsubscribe lost native use")
+  -- Native key-item use plus actual map lifecycle for the new flute state.
+  game.stack.states = { world }
+  local flute
+  for id, def in pairs(game.data.items) do
+    if def.key == "WHITE_FLUTE" or (def.translationSourceName or def.name):upper() == "WHITE FLUTE" then
+      flute = id
+      break
+    end
+  end
+  assert(flute, "native white flute missing")
+  assert(require("src.inventory.Bag").add(game.save, flute, 1, game.data), "native flute add")
+  local bag = require("src.ui.Gen3BagMenu").new(game, {})
+  game.stack:push(bag)
+  local found
+  for pocket = 1, #bag.pockets do
+    bag.pocket = pocket
+    bag:rebuild()
+    for i, row in ipairs(bag.rows) do
+      if row.id == flute then
+        bag.index, found = i, true
+        break
+      end
+    end
+    if found then
+      break
+    end
+  end
+  assert(found, "native flute row missing")
+  for _ = 1, 120 do
+    if game.save.gen3Flute == "white" then
+      break
+    end
+    U.tap(game, "a")
+    U.wait(2)
+  end
+  assert(game.save.gen3Flute == "white" and game.save.inventory[flute] == 1, "native flute effect/reuse")
+  local rate = require("src.world.Encounter").leadRateMod(game.data, game.save)
+  assert(rate and rate[1] == 3 and rate[2] == 2, "native white flute encounter modifier")
+  game.stack.states = { world }
+  local current = world.map.id
+  world:setMap(current, world.player.cellX, world.player.cellY, "down", { via = "reload", keepMusic = true })
+  assert(game.save.gen3Flute == "white", "same-map rebuild cleared flute")
+  local town = Version.get() == "firered" and "MAP_G03_N00" or "MAP_G00_N09"
+  assert(game.data.maps[town] and town ~= current, "native map change fixture missing")
+  world:setMap(town, 2, 2, "down", { via = "reload", keepMusic = true })
+  assert(game.save.gen3Flute == nil, "native map change retained flute")
   print("PORTABILITY_GBA_ITEM_USE_PASS " .. Version.get())
   love.event.quit(0)
 end
