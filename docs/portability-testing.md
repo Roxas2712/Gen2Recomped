@@ -1,15 +1,15 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–152
+hook, rendering, shader and baseline test fixes prepared in PRs #88–153
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`bc9a07e3e3135f47b289dc7a9aefe76ab63a0c35`. Its ROM-free run passed
-159/159 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
-The same auxiliary battle consumer passed native command-menu contracts on
-both engines. See `portability-testing-status.json` for the tested refs.
+`c24e3a2f9987e1f420ed81a79c7f1e7caf61df72`. Its ROM-free run passed
+160/160 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+The same battle-grid consumer passed native move-menu contracts on both
+engines, including GBA doubles edge behavior. See `portability-testing-status.json` for the tested refs.
 
 Native LÖVE 11.5 smoke tests reached the intro, title and New Game
 world/introduction for Red, Gold, FireRed and Emerald using isolated copies
@@ -58,7 +58,7 @@ features. Keep generation-specific mechanics behind explicit capability
 checks. See `api3-portability.md` and the `portable_*` examples.
 
 The published PRs remove many adapter patches; they do not make arbitrary
-engine-module imports portable. Remaining work includes battle/party grid-navigation
+engine-module imports portable. Remaining work includes party grid-navigation
 hooks, follower/live-map hooks, checkpoints, storage scope alignment, further
 item/encounter hooks, and optional SDK services. Gen1's newer import verification
 options also need a matching contract. DS native screens have additional gaps.
