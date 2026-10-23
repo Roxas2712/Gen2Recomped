@@ -32,6 +32,7 @@ add("hooks", "12345", [[
 add("hooks", "123", "battle.overlay ui.naming.grid ui.party.submenu ui.start_menu.items")
 add("hooks", "12", "ui.pc.items")
 add("hooks", "12345", "battle.status_hud_visible")
+add("hooks", "123", "pokemon.level_visible")
 add("hooks", "12", "intro.oak_speech.build")
 
 add("events", "12345", [[

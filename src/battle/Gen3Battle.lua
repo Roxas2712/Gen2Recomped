@@ -39,6 +39,7 @@ local Assets = require("src.render.Assets")
 local Logger = require("src.core.Logger")
 local Theme = require("src.ui.Theme")
 local Font = require("src.render.Font")
+local LevelDisplay = require("src.ui.LevelDisplay")
 local HudTiles = require("src.render.HudTiles")
 local PaletteFX = require("src.render.PaletteFX")
 local Runtime = require("src.mods.Runtime")
@@ -891,7 +892,11 @@ end
 local HUD_TEXT_STYLE = { text = { 0.16, 0.16, 0.16, 1 } }
 Gen3Battle.HUD_TEXT_STYLE = HUD_TEXT_STYLE
 
-local function levelAt(battle, battler, x, y, text)
+local function levelAt(battle, battler, x, y, text, isStatus)
+  if not (isStatus or (not text and battler.shownStatus))
+      and not LevelDisplay.visible(battler.mon,
+        (battler.isPlayer == true or battler == battle.player) and "battle.player" or "battle.enemy",
+        battle.game) then return end
   if text then
     Font.draw(text, x, y)
   elseif battler.shownStatus then
@@ -1127,7 +1132,8 @@ local function drawStatusPanel(battle, battler, x, y, player)
     Font.draw(symbol, ix + 1 + Font.width(shown), nameY)
     Font.popStyle()
   end
-  levelAt(battle, battler, ix + inner.w - levelW - 1, nameY, level)
+  levelAt(battle, battler, ix + inner.w - levelW - 1, nameY, level,
+          not badge and battler.shownStatus)
 
   -- the foe's exact HP is never shown, as on every cartridge
   if player then

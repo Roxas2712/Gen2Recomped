@@ -50,6 +50,7 @@
 
 local Assets = require("src.render.Assets")
 local Font = require("src.render.Font")
+local LevelDisplay = require("src.ui.LevelDisplay")
 local Logger = require("src.core.Logger")
 local Screens = require("src.ui.Screens")
 local Strings = require("src.core.Strings")
@@ -1464,7 +1465,9 @@ function Gen3PartyMenu:drawMember(mon, panel, selected, inset)
   Font.draw(Font.fit(name, rects.name.width + 16), nx, ny)
 
   local lx, ly = at("level")
-  Font.draw(Strings("Lv%d", mon.level or 1), lx, ly)
+  if LevelDisplay.visible(mon, "party", self.game) then
+    Font.draw(Strings("Lv%d", mon.level or 1), lx, ly)
+  end
 
   -- Gen 3 derives gender from species ratio + personality when the save does
   -- not carry an explicit field. Use the engine's common derivation instead of
