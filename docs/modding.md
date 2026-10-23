@@ -103,6 +103,12 @@ limits on availability. Existing API-1/2 registration/subscription behavior
 remains unchanged. When adding a native callback or changing screen routing,
 update `src/mods/Capabilities.lua` and the capability tests in the same change.
 
+## Trainer battle preparation
+
+The [portable trainer preparation contract](portable-trainer-preparation.md)
+documents `trainer.before_battle(next, game, context, continueBattle)`, deferred
+native admission, cancellation and battle-local player-party selection.
+
 ## NPC conversation hook
 
 The [portable NPC talk contract](portable-world-talk.md) documents
