@@ -21,8 +21,8 @@ several times per frame and should be deterministic and free of side effects.
 Unsubscribing or unloading the mod restores the native display.
 
 `context.where` is one of `battle.enemy`, `battle.player`, `party`, or `summary`.
-The native callback receives the actual Pokémon and `{where, game}`. Unified
-API 2 and API 3 use their existing Pokémon/context record adapters, including
+The native callback receives the actual Pokémon and `{where, game}`. Gen2's unified
+API 2 and the common API 3 use their existing Pokémon/context record adapters, including
 normal ID conversion, `next` forwarding, validation and failure recovery. API 3
 is recommended for portable consumers. The Game value is an engine handle;
 Gen1's unified context can expose a forwarding view while Gen2 retains the
@@ -45,7 +45,10 @@ Gen4/5; accepting the API-3 hook name alone is not a support claim.
 The unchanged example in `examples/portable_level_visible` is loaded by both
 engines' actual SDKs. The checker pins a clean Gen1 reference at
 `79ea62f45fb2ea8f65d081a109431e4eb1bbdb36` and compares Red, Yellow, Gold,
-FireRed and Emerald in native API 1/2, unified API 2, and API 3. Workers compare
+FireRed and Emerald in native API 1/2 and API 3. Gen2's additional unified API 2
+mode is compared against Gen1's native API 2: Gen1 does not implement the
+`callback_format` manifest extension. API 3 is the common unified contract.
+Workers compare
 native battle level omission/restoration and all four predicate contexts. The
 Gen1 GBA worker uses Healthbox's intact private level producer with a native
 session context; GB and Gen2 GBA workers invoke native HUD methods. Only

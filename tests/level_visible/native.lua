@@ -158,16 +158,31 @@ function M.run(f)
       end
     end
   end
+  local seen = {}
+  local off = f.result.loader.hooks:wrap("pokemon.level_visible", function(next, m, ctx)
+    T.eq(m, mon, "native battle supplies actual Pokemon")
+    T.eq(ctx.game, game, "native battle supplies current Game")
+    seen[ctx.where] = true
+    return next(m, ctx)
+  end, 1000)
   local rows = {}
-  for _, hidden in ipairs({ false, true, false }) do
-    e.hide("battle.enemy", hidden)
-    e.hide("battle.player", hidden)
-    levels, labels = 0, 0
+  for _, phase in ipairs({
+    { enemy = false, player = false, count = 2 },
+    { enemy = true, player = false, count = 1 },
+    { enemy = false, player = true, count = 1 },
+    { enemy = true, player = true, count = 0 },
+    { enemy = false, player = false, count = 2 },
+  }) do
+    e.hide("battle.enemy", phase.enemy)
+    e.hide("battle.player", phase.player)
+    levels, labels, seen = 0, 0, {}
     draw()
-    T.eq(levels, hidden and 0 or 2, "native battle level digits")
-    T.eq(labels, hidden and 0 or 2, "native battle level labels")
-    rows[#rows + 1] = { hidden = hidden, levels = levels, labels = labels }
+    T.eq(levels, phase.count, "native battle level digits")
+    T.eq(labels, phase.count, "native battle level labels")
+    T.check(seen["battle.enemy"] and seen["battle.player"], "native battle surfaces")
+    rows[#rows + 1] = { enemy = phase.enemy, player = phase.player, levels = levels, labels = labels }
   end
+  off()
   if restoreLeaf then
     restoreLeaf()
   end

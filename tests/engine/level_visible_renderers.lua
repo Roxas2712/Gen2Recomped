@@ -193,6 +193,19 @@ for _, version in ipairs(Version.ORDER) do
         cycle("GBA no-art battle", { "battle.player", "battle.enemy" }, function()
           G3.drawHUDs(b, 0)
         end, 2)
+        e.hide("battle.player", true)
+        e.hide("battle.enemy", true)
+        b.player.shownStatus, b.enemy.shownStatus = "PSN", "PSN"
+        T.check(
+          has(
+            capture(function()
+              G3.drawHUDs(b, 0)
+            end),
+            "PSN"
+          ),
+          "GBA fallback preserves status text"
+        )
+        b.player.shownStatus, b.enemy.shownStatus = nil, nil
         local image = love.graphics.newCanvas(128, 64)
         f.patch(require("src.render.Assets"), "image", function()
           return image

@@ -42,6 +42,8 @@ def main():
             observations.append(rows)
             results.append({"backend": backend, "version": version,
                             "observations": rows,
+                            "callback_format": "unified" if a.api >= 3 else
+                                ("native" if backend == "gen1" else a.format),
                             "checks": run.stdout.splitlines()[-1]})
         assert observations[0] == observations[1], f"level visibility mismatch: {version}"
         print(f"PASS {version}: matching native level display predicates across {len(observations[0]['native']) + len(observations[0]['predicate'])} observations")

@@ -2,7 +2,9 @@ local M = {}
 function M.run(f)
   local T, e, mon = f.T, f.exports, f.mon
   local api, rows = e.api, {}
-  T.eq(api:supports("hooks", "pokemon.level_visible"), true, "native capability")
+  if api.supports then
+    T.eq(api:supports("hooks", "pokemon.level_visible"), true, "native capability")
+  end
   for _, where in ipairs({ "battle.enemy", "battle.player", "party", "summary" }) do
     local function observe(label, value)
       T.eq(f.visible(where), value, where .. " " .. label)

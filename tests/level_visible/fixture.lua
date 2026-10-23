@@ -9,8 +9,9 @@ function M.new(root, backend, version, api, format, noMod)
     files["mods/portable_level_visible/" .. name] = file:read("*a")
     file:close()
   end
+  local actualFormat = api >= 3 and "unified" or (backend == "gen1" and "native" or format)
   local manifest = Json.decode(files["mods/portable_level_visible/manifest.json"])
-  manifest.api, manifest.callback_format = api, format
+  manifest.api, manifest.callback_format = api, backend == "gen2" and format or nil
   files["mods/portable_level_visible/manifest.json"] = Json.encode(manifest)
   local data = T.fixtures.fresh()
   local result = T.sdk.loadMods(noMod and {} or { "mods/portable_level_visible" }, {
@@ -39,7 +40,7 @@ function M.new(root, backend, version, api, format, noMod)
     result = result,
     exports = e,
     api = api,
-    format = format,
+    format = actualFormat,
     backend = backend,
     patch = patch,
     visible = function(where, value)
