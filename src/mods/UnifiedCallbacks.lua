@@ -24,7 +24,7 @@ C.hooks = names([[
  music.select music.volume player.sprite pokemon.icon pokemon.level_visible pokemon.sprite render.compose render.hud
  render.letterbox render.output render.output_enabled render.viewport render.window render.zones save.new_game save.write screen.render_visible script.command trainer.before_battle trainer.party transition.style
  ui.list_menu ui.naming.grid ui.options.rows ui.party.submenu ui.pc.items ui.start_menu.items
- ui.title_menu.items warp.destination world.talk world.tod zoom.range
+ ui.title_menu.items warp.destination world.follower.spawn world.talk world.tod zoom.range
 ]])
 C.events = names([[
  world.live_maps_preparing world.live_maps_updated
@@ -41,6 +41,7 @@ C.events = names([[
  world.object_toggled world.stepped world.tick world.tod_changed world.trainer_engaged
 ]])
 local positions = {
+  ["world.follower.spawn"] = { false, false },
   ["ui.party.grid_navigation"] = { false },
   ["battle.move_grid_navigation"] = { false },
   ["battle.menu_auxiliary"] = { false, "context" },

@@ -161,3 +161,7 @@ comparison pass by changing only one engine's mod fixture.
 Final composed-frame ownership is documented in [render-output.md](render-output.md).
 
 Viewport reservation, window composition and pointer coordinates are documented in [game-viewport.md](game-viewport.md).
+
+The [portable follower predicate](portable-follower.md) controls native companion
+existence on Gen1–3 without replacing a private controller. Artwork remains a
+separate concern; check `mod:supports("hooks", "world.follower.spawn")`.
