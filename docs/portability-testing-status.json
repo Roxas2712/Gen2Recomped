@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "1bd0b150ec802a86bb35c79d467303bf5bb2d6c1",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/155",
-  "feature_ref": "aef565014e18051acc979aabac6641978b5e822d",
+  "runtime_ref": "c9ae378d3927112658035ed1f3a5faa9b22301a7",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/156",
+  "feature_ref": "d7581ba7202773cd58945c00fb030fc1a35e6bb5",
   "gen1_contract_ref": "79ea62f45fb2ea8f65d081a109431e4eb1bbdb36",
-  "engine_suites_passed": 163,
-  "engine_suites_total": 163,
+  "engine_suites_passed": 164,
+  "engine_suites_total": 164,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 32,
-  "cross_engine_paired_observations": 944,
+  "cross_engine_worker_runs": 104,
+  "cross_engine_paired_observations": 112,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -44,5 +44,14 @@
   ],
   "native_storage_scope": "Same installed API-3 consumer; separate process restart, native normal SAVE/title-selected storage/Continue/records/bytes/deletion; no full playthrough claim",
   "foreign_save_discovery": "disabled by isolated test wrapper",
-  "native_party_runtime_ref": "a4be525d75c46b7f17142f0cba6df018e4e608ab"
+  "native_party_runtime_ref": "a4be525d75c46b7f17142f0cba6df018e4e608ab",
+  "live_maps_native_checks_passed": 2431,
+  "native_live_maps_smoke_games": [
+    "red",
+    "gold",
+    "firered",
+    "emerald"
+  ],
+  "native_live_maps_runtime_ref": "1efce229c7ed8c5177ad6fde8cfea32fb2345285",
+  "native_live_maps_scope": "Same installed API-3 consumer; native connected map load, preparing/updated order, query/event pixel agreement, repeat rebuild; no full playthrough claim"
 }

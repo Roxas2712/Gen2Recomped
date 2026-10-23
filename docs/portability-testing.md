@@ -1,16 +1,16 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–155
+hook, rendering, shader and baseline test fixes prepared in PRs #88–156
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`1bd0b150ec802a86bb35c79d467303bf5bb2d6c1`. Its ROM-free run passed
-163/163 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
-The unchanged storage consumer passed transactions and native New Game/save/
-load contracts on both engines. Battle-grid and party-grid checks remain in the
-combined suite. See `portability-testing-status.json` for the tested refs.
+`c9ae378d3927112658035ed1f3a5faa9b22301a7`. Its ROM-free run passed
+164/164 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+The unchanged live-map consumer passed native lifecycle and API-3 pixel-reader
+contracts on both engines where the native producers exist. Storage, battle
+and party checks remain in the combined suite. See `portability-testing-status.json` for the tested refs.
 
 Native LÖVE 11.5 smoke tests reached the intro, title and New Game
 world/introduction for Red, Gold, FireRed and Emerald using isolated copies
@@ -60,7 +60,7 @@ features. Keep generation-specific mechanics behind explicit capability
 checks. See `api3-portability.md` and the `portable_*` examples.
 
 The published PRs remove many adapter patches; they do not make arbitrary
-engine-module imports portable. Remaining work includes DS party navigation, follower/live-map hooks, checkpoints, further
+engine-module imports portable. Remaining work includes DS party navigation, follower hooks, checkpoints, further
 item/encounter hooks, and optional SDK services. Gen1's newer import verification
 options also need a matching contract. DS native screens have additional gaps.
 Shader imports intentionally support a bounded subset, not all RetroArch presets.
@@ -122,5 +122,24 @@ roundtrip, then deletes only the smoke keys. The ordinary test save remains.
 Red, Gold, FireRed and Emerald passed both phases with the same installed
 API-3 consumer. No generated cartridge data is distributed by this branch.
 
-The recorded full-suite runtime predates only this status/documentation update;
-production source, scripts, tests and examples have the same tree hashes.
+The recorded full-suite runtime predates the standalone live-map smoke driver
+and status updates. Production source, scripts, examples and existing suite
+trees match; the native smoke ref is recorded separately.
+
+## Native connected-map lifecycle test
+
+Install and enable `examples/portable_live_maps` in the isolated test
+installation, then run:
+
+```sh
+POKEPORT_VERSION=firered POKEPORT_DRIVER=tests/portability_live_maps_driver.lua \
+  bash scripts/run-portability-test.sh
+```
+
+The driver starts New Game in memory, selects a bounded connected-town fixture
+for Red/Gold/FireRed/Emerald, and uses the native map-loading and neighbor-rebuild
+paths. It checks the same public consumer's preparing/updated delivery and API-3
+pixel placements, including a repeated rebuild. It does not write a normal save
+or distribute any cartridge data. Use the separate test identity; this is a
+bounded lifecycle test, not a full cartridge playthrough or pixel-parity proof.
+The consumer itself has no generation-specific map IDs or engine imports.
