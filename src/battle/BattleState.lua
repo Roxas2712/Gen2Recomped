@@ -20,6 +20,7 @@ local Experience = require("src.battle.Experience")
 local HeldItems = require("src.battle.HeldItems")
 local Font = require("src.render.Font")
 local LevelDisplay = require("src.ui.LevelDisplay")
+local MenuAuxiliary = require("src.battle.MenuAuxiliary")
 local Logger = require("src.core.Logger")
 local MoveEffects = require("src.battle.MoveEffects")
 local Party = require("src.pokemon.Party")
@@ -4275,6 +4276,7 @@ function BattleState:touchpressed(_, px, py)
   return true
 end
 function BattleState:update(dt)
+  local auxiliary = MenuAuxiliary.request(self)
   self:tickFx()
   -- one sample a second into the fight, while it is still on screen
   self._stadiumReportTicks = (self._stadiumReportTicks or 0) + 1
@@ -4493,6 +4495,9 @@ function BattleState:update(dt)
       self:resolveTurn(locked)
       return
     end
+    -- Capture eligibility before presentation catch-up can hide an unfinished
+    -- HP/status drain. Dispatch only at the ordinary player-decision boundary.
+    if auxiliary and MenuAuxiliary.dispatch(self, auxiliary) then return end
     -- PLATINUM'S ACTION MENU IS NOT A 2x2, and walking it as one is what a
     -- player feels as the cursor jumping about.
     --
