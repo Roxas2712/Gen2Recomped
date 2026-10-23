@@ -170,8 +170,8 @@ T.check(result == nil and reason == 'no overworld' and yes(api, 'world', 'warpTo
 for _, version in ipairs(GameVersion.ORDER) do
   local mod = probe(version)
   local gen = GameVersion.generation(version)
-  T.eq(mod:supports('hooks', 'battle.status_hud_visible'), gen >= 4,
-    version .. ': DS-only HUD seam')
+  T.eq(mod:supports('hooks', 'battle.status_hud_visible'), true,
+    version .. ': native GB/GBA/DS HUD seam')
   T.eq(mod:supports('hooks', 'battle.overlay'), gen <= 3,
     version .. ': GB/GBA-only overlay seam')
   T.eq(mod:supports('hooks', 'ui.party.submenu'), gen <= 3,
