@@ -461,3 +461,6 @@ for the manifest guard, generation coverage, symbolic IDs and failure behavior.
 
 See [portable follower predicate](portable-follower.md) for the native
 `world.follower.spawn` lifecycle hook and its generation/artwork boundaries.
+
+[Portable GB item dispatch](portable-item-use.md) documents the `item.use`
+producer and the separate Gold/GBA/DS boundaries.

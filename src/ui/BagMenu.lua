@@ -11,6 +11,7 @@ local BagMenu = {}
 
 local Bag = require("src.inventory.Bag")
 local Strings = require("src.core.Strings")
+local Runtime = require("src.mods.Runtime")
 
 -- The money line under the bag, with the cartridge's own sign -- Kanto's
 -- U+00A5 is the JAPANESE YEN KANJI in Platinum's font.  See
@@ -172,7 +173,7 @@ BagMenu.refreshCount = refreshCount
 -- the stack, so every exit that prints has to close it afterwards.  For
 -- every other item the picker popped itself first and closePicker's identity
 -- check makes it a no-op (#252).
-local function useOn(game, battle, id, target, list, moveIndex, picker)
+local function vanillaUseOn(game, battle, id, target, list, moveIndex, picker)
   -- HGSS: the party screen's own msg_0300 line for the item (src/ui/Gen4PartyText.lua)
   local PartyText = require("src.ui.Gen4PartyText")
   local g4Before = (not battle and target) and PartyText.snapshot(game, target) or nil
@@ -743,6 +744,16 @@ local function useOn(game, battle, id, target, list, moveIndex, picker)
   -- .healingItemNoEffect prints over the still-drawn party menu too, so the
   -- refusal closes the picker the same way (#252)
   showMessages(game, payload, closePicker) -- failed
+end
+
+local function useOn(game, battle, id, target, list, moveIndex, picker)
+  -- Gen1's GB seam owns the entire effect/UI dispatch after target selection.
+  -- Its GBA field producer has a different tuple contract; do not advertise
+  -- this UI-shaped call as a producer for that generation.
+  if require("src.core.GameVersion").generation() == 1 then
+    return Runtime.call("item.use", vanillaUseOn, game, battle, id, target, list, moveIndex, picker)
+  end
+  return vanillaUseOn(game, battle, id, target, list, moveIndex, picker)
 end
 
 local function pickTargetAndUse(game, battle, id, list)
