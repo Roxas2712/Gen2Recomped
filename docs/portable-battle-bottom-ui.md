@@ -48,9 +48,8 @@ A battle above an overlay is not its owner.
 The predicate does not remove states, consume input or pause logic. Typewriter
 updates and delayed YES/NO confirmation remain native. It does not modify
 existing rendering-driven presentation counters or their timing when a drawer
-is skipped. `battle.status_hud_visible` remains a separate surface with its
-existing generation coverage; this change does not add missing GB/GBA HUD
-producers. `screen.render_visible` may independently hide an entire state.
+is skipped. `battle.status_hud_visible` is a [separate status-panel surface](portable-status-hud.md)
+with GB/GBA and DS producers. `screen.render_visible` may independently hide an entire state.
 
 `mod:supports("hooks", "battle.bottom_ui_visible")` reports the native producer
 before Game creation. With no subscriber the helper returns true directly;

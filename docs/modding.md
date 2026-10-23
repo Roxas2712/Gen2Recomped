@@ -90,7 +90,7 @@ return `nil, "map carries no elevation"`.
 Callback availability follows Gen2Recomped's actual implementation, rather
 than Gen1Recomp's newer catalog. For example, `item.use` and `egg.hatched` have no native call sites here; the hatch event here is
 `pokemon.egg_hatched` (Gen 2–5). `battle.status_hud_visible` is available on
-Gen 4–5, `battle.overlay` on Gen 1–3, and the normal start-menu, party-submenu
+Gen 1–5, `battle.overlay` on Gen 1–3, and the normal start-menu, party-submenu
 and naming-grid hooks on Gen 1–3. `ui.pc.items` is available on Gen 1–2.
 Oak-speech callbacks apply to Gen 1–2 except Prism; Birch-speech events apply
 to Emerald. Other versions use their own intros. An event still needs its
@@ -102,6 +102,12 @@ adapters described in [Shared API 3 entry](api3-portability.md), with explicit
 limits on availability. Existing API-1/2 registration/subscription behavior
 remains unchanged. When adding a native callback or changing screen routing,
 update `src/mods/Capabilities.lua` and the capability tests in the same change.
+
+## Battle status HUD visibility
+
+The [portable battle status HUD contract](portable-status-hud.md) documents
+`battle.status_hud_visible(next, state)` for GB/GBA status panels and DS
+healthboxes, independently of battle text/menu drawing and native logic.
 
 ## Battle bottom UI visibility
 
