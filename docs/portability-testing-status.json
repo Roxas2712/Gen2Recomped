@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/157",
-  "feature_ref": "5481fa2a463a24cf314c6ad60c8fb7df886fa495",
+  "runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/158",
+  "feature_ref": "0520e65b0a53e12c078891679b69721be63f73b6",
   "gen1_contract_ref": "79ea62f45fb2ea8f65d081a109431e4eb1bbdb36",
-  "engine_suites_passed": 165,
-  "engine_suites_total": 165,
+  "engine_suites_passed": 166,
+  "engine_suites_total": 166,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 64,
-  "cross_engine_paired_observations": 1000,
+  "cross_engine_worker_runs": 24,
+  "cross_engine_paired_observations": 339,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -64,5 +64,14 @@
     "emerald"
   ],
   "native_follower_runtime_ref": "0482e8473228da203f156e3d4c62e662393cdee0",
-  "native_follower_scope": "Same installed API-3 consumer; native town map-entry predicate, original handles, ordinary world-loop dispatch, directional input and native NPC movement, removal/respawn/unsubscribe; no normal save writes, no full-playthrough or artwork-parity claim"
+  "native_follower_scope": "Same installed API-3 consumer; native town map-entry predicate, original handles, ordinary world-loop dispatch, directional input and native NPC movement, removal/respawn/unsubscribe; no normal save writes, no full-playthrough or artwork-parity claim",
+  "follower_cross_engine_worker_runs": 64,
+  "follower_cross_engine_paired_observations": 1000,
+  "item_use_native_checks_passed": 1547,
+  "native_item_use_smoke_games": [
+    "red"
+  ],
+  "native_item_use_runtime_ref": "3982554dc466ed3306b7a1256cac6c2f44a38cd1",
+  "native_item_use_scope": "Same installed API-3 consumer; actual bag/party input, block without effects, delegate Potion through native HP animation/text back to bag, unsubscribe and native reuse; no normal SAVE action, no full-playthrough or UI-pixel parity claim",
+  "item_use_generation_boundary": "Native GB UI dispatch only; Gold has no matching reference producer, GBA field tuple adapter is next, DS unavailable"
 }

@@ -1,16 +1,16 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–157
+hook, rendering, shader and baseline test fixes prepared in PRs #88–158
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`318a1bae110afd5a5ee892674b2e61dda9def98d`. Its ROM-free run passed
-165/165 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
-The unchanged follower consumer passed native lifecycle and movement contracts
-on both engines in four SDK modes (64 worker runs / 1,000 paired observations).
-Live-map, storage, battle and party checks remain in the combined suite. See `portability-testing-status.json` for the tested refs.
+`6775eabe22d77d89abd09d8ed4101c16b90a96b1`. Its ROM-free run passed
+166/166 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+The unchanged GB item consumer passed native bag/party/move dispatch contracts
+on both engines in four SDK modes (24 worker runs / 339 paired observations).
+Follower, live-map, storage, battle and party checks remain in the combined suite. See `portability-testing-status.json` for the tested refs.
 
 Native LÖVE 11.5 smoke tests reached the intro, title and New Game
 world/introduction for Red, Gold, FireRed and Emerald using isolated copies
@@ -61,7 +61,7 @@ checks. See `api3-portability.md` and the `portable_*` examples.
 
 The published PRs remove many adapter patches; they do not make arbitrary
 engine-module imports portable. Remaining work includes DS party navigation, a shared follower-art contract, checkpoints, further
-item/encounter hooks, and optional SDK services. Gen1's newer import verification
+item/encounter hooks (including the separate GBA field-item tuple), and optional SDK services. Gen1's newer import verification
 options also need a matching contract. DS native screens have additional gaps.
 Shader imports intentionally support a bounded subset, not all RetroArch presets.
 
@@ -122,7 +122,7 @@ roundtrip, then deletes only the smoke keys. The ordinary test save remains.
 Red, Gold, FireRed and Emerald passed both phases with the same installed
 API-3 consumer. No generated cartridge data is distributed by this branch.
 
-The recorded full-suite runtime predates the standalone follower smoke driver
+The recorded full-suite runtime predates the standalone GB item smoke driver
 and current status updates. Production source, scripts, examples and existing
 suite trees match; the native smoke refs are recorded separately.
 
@@ -163,3 +163,23 @@ a normal save. Native smoke ref `0482e8473228da203f156e3d4c62e662393cdee0`
 adds only this standalone driver over the full-suite runtime. DS follower
 coverage and a shared follower-art API remain separate work; this is not a
 full-playthrough or identical-artwork claim.
+
+## Native GB item UI lifecycle test
+
+Install and enable `examples/portable_item_use` in the isolated test installation:
+
+```sh
+POKEPORT_VERSION=red POKEPORT_DRIVER=tests/portability_item_use_driver.lua \
+  bash scripts/run-portability-test.sh
+```
+
+Red passed with imported native data and the unchanged public API-3 consumer.
+The driver starts New Game in memory, opens the actual bag and party picker
+with native input, blocks a Potion without HP/inventory/result-UI changes,
+then delegates through healing, the HP animation and text back to the bag.
+It also checks unsubscribe and native reuse. It does not issue normal SAVE.
+Native smoke ref `3982554dc466ed3306b7a1256cac6c2f44a38cd1` adds only the
+standalone driver over the full-suite runtime. The ROM-free shared tests cover
+Red/Blue/Yellow in four SDK modes. GBA's distinct field-result contract remains
+next; this GB producer is not advertised for Gold/GBA/DS. These are bounded
+native checks, not full-playthrough or pixel-parity evidence.
