@@ -15,7 +15,16 @@ return function(game)
     U.tap(game, "start")
     U.wait(5)
   end
-  assert(title and not game.overworld, "preview must run at native title without overworld")
+  local function activeWorld()
+    for _, screen in ipairs(game.stack.states) do
+      if screen.isOverworld then
+        return true
+      end
+    end
+    return false
+  end
+  assert(title and not activeWorld(), "preview must run at native title without active overworld")
+  local worldBefore = game.overworld
   local e = assert(game.mods.exports.portable_encounter_table, "install portable preview example")
   local mapId
   local keys = {}
@@ -65,7 +74,7 @@ return function(game)
   assert(e.state.calls == calls, "unsubscribe retained callback")
   assert(Json.encode(game.data.encounters) == tablesBefore, "preview mutated imported tables")
   assert(Json.encode(game.save or {}) == saveBefore, "pure consumer mutated native save")
-  assert(not game.overworld, "query created an overworld")
+  assert(not activeWorld() and game.overworld == worldBefore, "query changed native world lifecycle")
   print("PORTABILITY_ENCOUNTER_TABLE_PASS " .. V.get() .. " " .. mapId)
   love.event.quit(0)
 end
