@@ -48,6 +48,7 @@
 -- bounce below is this port's, since the cartridge's is a sprite-callback
 -- rather than data.
 
+local PartyNavigation = require("src.ui.PartyNavigation")
 local Assets = require("src.render.Assets")
 local Font = require("src.render.Font")
 local LevelDisplay = require("src.ui.LevelDisplay")
@@ -1050,6 +1051,10 @@ function Gen3PartyMenu:cancel()
   self:close()
 end
 
+function Gen3PartyMenu:gridNavigation()
+  return PartyNavigation.enabled(self)
+end
+
 function Gen3PartyMenu:update(dt)
   -- RECONSTRUCTED: every icon bounces, all the time, on the same beat.  On
   -- the cartridge each one is an OBJ with its own callback; here it is one
@@ -1094,6 +1099,15 @@ function Gen3PartyMenu:update(dt)
     return
   end
 
+  local grid = not (self.switchFrom or self.hpTransferFrom)
+    and self:gridNavigation() and PartyNavigation.spatial(self, input)
+  if grid then
+    self.index = grid
+    -- GBA handles confirm/cancel after navigation, including combined input.
+    if input:wasPressed("a") then self:confirm()
+    elseif input:wasPressed("b") then self:cancel() end
+    return
+  end
   local n = self:slots()
   if input:wasPressed("down") then self.index = self.index % n + 1
   elseif input:wasPressed("up") then self.index = (self.index - 2) % n + 1
