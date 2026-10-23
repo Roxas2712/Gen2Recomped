@@ -86,6 +86,7 @@ for _, version in ipairs(Version.ORDER) do
         T.eq(done, 1, "cancel releases encounter caller")
         T.eq(f.game.save.flags.TRAINER_WON, nil, "cancel sets no defeat flag")
         T.eq(f.world.spotHush.cellX, 4, "cancel suppresses same-tile sight retrigger")
+        T.eq(f.world.spotHush[f.npc], true, "sight scan suppresses this cancelled trainer")
       else
         local b = f.battles[1]
         T.eq(b.player.mon, f.game.save.party[3], "native lead uses scoped party")

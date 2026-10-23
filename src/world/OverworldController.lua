@@ -11579,7 +11579,7 @@ function OverworldState:engageTrainer(npc, onDone)
       startBattle(options)
     end, function()
       self.engaging = wasEngaging
-      self.spotHush = { cellX = self.player.cellX, cellY = self.player.cellY }
+      self.spotHush = { cellX = self.player.cellX, cellY = self.player.cellY, [npc] = true }
       if onDone then onDone() end
     end, function()
       if Game ~= liveGame or self.map ~= map or npc.id ~= npcId or npc.def ~= def
