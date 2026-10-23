@@ -1,15 +1,16 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–153
+hook, rendering, shader and baseline test fixes prepared in PRs #88–154
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`c24e3a2f9987e1f420ed81a79c7f1e7caf61df72`. Its ROM-free run passed
-160/160 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
-The same battle-grid consumer passed native move-menu contracts on both
-engines, including GBA doubles edge behavior. See `portability-testing-status.json` for the tested refs.
+`1d1f202b28dabdc8d89361be7103e35c1d214de1`. Its ROM-free run passed
+161/161 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+The unchanged battle-grid and party-grid consumers passed native controller
+contracts on both engines, including GBA doubles move-menu edges and party
+Cancel navigation. See `portability-testing-status.json` for the tested refs.
 
 Native LÖVE 11.5 smoke tests reached the intro, title and New Game
 world/introduction for Red, Gold, FireRed and Emerald using isolated copies
@@ -58,8 +59,7 @@ features. Keep generation-specific mechanics behind explicit capability
 checks. See `api3-portability.md` and the `portable_*` examples.
 
 The published PRs remove many adapter patches; they do not make arbitrary
-engine-module imports portable. Remaining work includes party grid-navigation
-hooks, follower/live-map hooks, checkpoints, storage scope alignment, further
+engine-module imports portable. Remaining work includes DS party navigation, follower/live-map hooks, checkpoints, storage scope alignment, further
 item/encounter hooks, and optional SDK services. Gen1's newer import verification
 options also need a matching contract. DS native screens have additional gaps.
 Shader imports intentionally support a bounded subset, not all RetroArch presets.
@@ -81,3 +81,24 @@ checks the world below the introduction, and exits. It does not import or
 copy a ROM itself. `POKEPORT_PORTABILITY_SHOT=/absolute/path/frame.png` can
 request a captured frame. Use an isolated test installation; this driver
 starts a new game and is not intended for your normal playthrough identity.
+
+## Native battle-party smoke test
+
+The fork also includes a bounded native menu test after cartridge import:
+
+```sh
+POKEPORT_VERSION=firered POKEPORT_DRIVER=tests/portability_party_driver.lua \
+  bash scripts/run-portability-test.sh
+```
+
+Use the isolated identity and a disposable test installation. The driver starts
+New Game, constructs six native Pokemon and a battle in memory, opens the real
+party screen, enables the public navigation predicate, and checks direction,
+submenu confirm/cancel and party cancel. It then exits. Red, Gold, FireRed and
+Emerald passed with existing imported caches. Optional frame capture uses
+`POKEPORT_PORTABILITY_SHOT=/absolute/path/party.png`. This smoke test does not
+prove a full playthrough, native pixel parity or DS party-hook support.
+
+The recorded full-suite runtime ref above predates only the addition of this
+standalone smoke driver and the status documentation. Production source,
+scripts, existing tests and examples are unchanged by that follow-up.

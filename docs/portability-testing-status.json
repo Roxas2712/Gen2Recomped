@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "c24e3a2f9987e1f420ed81a79c7f1e7caf61df72",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/153",
-  "feature_ref": "3800b634d9f362bde275b63985f82ac49a9c759b",
+  "runtime_ref": "1d1f202b28dabdc8d89361be7103e35c1d214de1",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/154",
+  "feature_ref": "5ed6353372be5f70fb7812780bfcea338c1815b9",
   "gen1_contract_ref": "79ea62f45fb2ea8f65d081a109431e4eb1bbdb36",
-  "engine_suites_passed": 160,
-  "engine_suites_total": 160,
+  "engine_suites_passed": 161,
+  "engine_suites_total": 161,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
   "cross_engine_worker_runs": 80,
-  "cross_engine_paired_observations": 3840,
+  "cross_engine_paired_observations": 3744,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -20,5 +20,13 @@
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
   "hosted_ci": "Fork PR workflows await maintainer approval; local results above are separate",
-  "battle_grid_native_checks_passed": 6426
+  "battle_grid_native_checks_passed": 6426,
+  "party_grid_native_checks_passed": 4849,
+  "native_party_smoke_games": [
+    "red",
+    "gold",
+    "firered",
+    "emerald"
+  ],
+  "native_party_scope": "Native imported data and battle-party screen; public predicate dispatch, direction input, submenu confirm/cancel, party cancel; no full playthrough claim"
 }
