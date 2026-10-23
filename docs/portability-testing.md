@@ -1,16 +1,16 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–154
+hook, rendering, shader and baseline test fixes prepared in PRs #88–155
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`1d1f202b28dabdc8d89361be7103e35c1d214de1`. Its ROM-free run passed
-161/161 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
-The unchanged battle-grid and party-grid consumers passed native controller
-contracts on both engines, including GBA doubles move-menu edges and party
-Cancel navigation. See `portability-testing-status.json` for the tested refs.
+`1bd0b150ec802a86bb35c79d467303bf5bb2d6c1`. Its ROM-free run passed
+163/163 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+The unchanged storage consumer passed transactions and native New Game/save/
+load contracts on both engines. Battle-grid and party-grid checks remain in the
+combined suite. See `portability-testing-status.json` for the tested refs.
 
 Native LÖVE 11.5 smoke tests reached the intro, title and New Game
 world/introduction for Red, Gold, FireRed and Emerald using isolated copies
@@ -36,7 +36,8 @@ POKEPORT_LOVE=/path/to/love bash scripts/run-portability-test.sh
 
 The wrapper defaults to the separate LÖVE identity
 `Gen2RecompPortabilityTesting` and disables automatic legacy save/settings
-migration with `POKEPORT_SKIP_LEGACY_MIGRATION=1`. Import your own supported ROM through the
+migration with `POKEPORT_SKIP_LEGACY_MIGRATION=1` and foreign save discovery
+with `POKEPORT_ISOLATED_TESTING=1`. Import your own supported ROM through the
 launcher, then install the mod under test in this test installation. No ROM,
 generated cartridge cache, save or private mod is distributed by this branch.
 The source checkout must be complete; sparse developer checkouts can omit
@@ -59,7 +60,7 @@ features. Keep generation-specific mechanics behind explicit capability
 checks. See `api3-portability.md` and the `portable_*` examples.
 
 The published PRs remove many adapter patches; they do not make arbitrary
-engine-module imports portable. Remaining work includes DS party navigation, follower/live-map hooks, checkpoints, storage scope alignment, further
+engine-module imports portable. Remaining work includes DS party navigation, follower/live-map hooks, checkpoints, further
 item/encounter hooks, and optional SDK services. Gen1's newer import verification
 options also need a matching contract. DS native screens have additional gaps.
 Shader imports intentionally support a bounded subset, not all RetroArch presets.
@@ -99,6 +100,27 @@ Emerald passed with existing imported caches. Optional frame capture uses
 `POKEPORT_PORTABILITY_SHOT=/absolute/path/party.png`. This smoke test does not
 prove a full playthrough, native pixel parity or DS party-hook support.
 
-The recorded full-suite runtime ref above predates only the addition of this
-standalone smoke driver and the status documentation. Production source,
-scripts, existing tests and examples are unchanged by that follow-up.
+The party-menu native smoke snapshot is recorded separately in the status
+file. The current storage restart smoke covers the runtime ref above.
+
+## Native storage restart test
+
+Install the public `examples/portable_storage` folder as a mod in the isolated
+test installation and enable it. With an imported cartridge, run two processes:
+
+```sh
+POKEPORT_VERSION=firered POKEPORT_STORAGE_PHASE=prepare \
+  POKEPORT_DRIVER=tests/portability_storage_driver.lua bash scripts/run-portability-test.sh
+POKEPORT_VERSION=firered POKEPORT_STORAGE_PHASE=verify \
+  POKEPORT_DRIVER=tests/portability_storage_driver.lua bash scripts/run-portability-test.sh
+```
+
+Use a disposable test installation: `prepare` starts New Game and writes an
+ordinary save plus mod records/bytes. `verify` resolves the selected storage at
+the native title after a fresh launch, checks Continue and the binary/record
+roundtrip, then deletes only the smoke keys. The ordinary test save remains.
+Red, Gold, FireRed and Emerald passed both phases with the same installed
+API-3 consumer. No generated cartridge data is distributed by this branch.
+
+The recorded full-suite runtime predates only this status/documentation update;
+production source, scripts, tests and examples have the same tree hashes.

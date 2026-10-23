@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "1d1f202b28dabdc8d89361be7103e35c1d214de1",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/154",
-  "feature_ref": "5ed6353372be5f70fb7812780bfcea338c1815b9",
+  "runtime_ref": "1bd0b150ec802a86bb35c79d467303bf5bb2d6c1",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/155",
+  "feature_ref": "aef565014e18051acc979aabac6641978b5e822d",
   "gen1_contract_ref": "79ea62f45fb2ea8f65d081a109431e4eb1bbdb36",
-  "engine_suites_passed": 161,
-  "engine_suites_total": 161,
+  "engine_suites_passed": 163,
+  "engine_suites_total": 163,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 80,
-  "cross_engine_paired_observations": 3744,
+  "cross_engine_worker_runs": 32,
+  "cross_engine_paired_observations": 944,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -28,5 +28,21 @@
     "firered",
     "emerald"
   ],
-  "native_party_scope": "Native imported data and battle-party screen; public predicate dispatch, direction input, submenu confirm/cancel, party cancel; no full playthrough claim"
+  "native_party_scope": "Native imported data and battle-party screen; public predicate dispatch, direction input, submenu confirm/cancel, party cancel; no full playthrough claim",
+  "storage_lifecycle_checks_passed": 1013,
+  "storage_transaction_checks_passed": 54,
+  "native_storage_smoke_games": [
+    "red",
+    "gold",
+    "firered",
+    "emerald"
+  ],
+  "native_storage_runtime_ref": "1bd0b150ec802a86bb35c79d467303bf5bb2d6c1",
+  "native_storage_phases": [
+    "prepare",
+    "verify"
+  ],
+  "native_storage_scope": "Same installed API-3 consumer; separate process restart, native normal SAVE/title-selected storage/Continue/records/bytes/deletion; no full playthrough claim",
+  "foreign_save_discovery": "disabled by isolated test wrapper",
+  "native_party_runtime_ref": "a4be525d75c46b7f17142f0cba6df018e4e608ab"
 }
