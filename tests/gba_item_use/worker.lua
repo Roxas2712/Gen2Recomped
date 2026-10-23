@@ -13,6 +13,9 @@ for _, failing in ipairs({ false, true }) do
     not failing,
     failing
   )
+  if not failing then
+    native.T.eq(native.result.loader.exports.portable_gba_item_use, nil, "no-mod filesystem excludes consumer")
+  end
   if failing then
     native.T.check(#native.result.errors > 0, "entry rollback is recorded")
   end
