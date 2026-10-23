@@ -100,8 +100,8 @@ Emerald passed with existing imported caches. Optional frame capture uses
 `POKEPORT_PORTABILITY_SHOT=/absolute/path/party.png`. This smoke test does not
 prove a full playthrough, native pixel parity or DS party-hook support.
 
-The party-menu native smoke snapshot is recorded separately in the status
-file. The current storage restart smoke covers the runtime ref above.
+The status file records a separate tested runtime ref for each native smoke
+family, including the party-menu and storage-restart snapshots.
 
 ## Native storage restart test
 
