@@ -1,20 +1,21 @@
 local M = {}
-function M.new(root, backend, version, api, format, noMod, failing)
+function M.new(root, backend, version, api, format, noMod, failing, consumer)
+  consumer = consumer or "portable_trainer_preparation"
   local T = require("tests.modkit")
   local Version = require("src.core.GameVersion")
   Version.set(version)
   local gen = Version.generation()
   local Json, files = require("src.link.Json"), {}
   for _, name in ipairs({ "main.lua", "manifest.json" }) do
-    local file = assert(io.open(root .. "/examples/portable_trainer_preparation/" .. name, "rb"))
-    files["mods/portable_trainer_preparation/" .. name] = file:read("*a")
+    local file = assert(io.open(root .. "/examples/" .. consumer .. "/" .. name, "rb"))
+    files["mods/" .. consumer .. "/" .. name] = file:read("*a")
     file:close()
   end
-  local manifest = Json.decode(files["mods/portable_trainer_preparation/manifest.json"])
+  local manifest = Json.decode(files["mods/" .. consumer .. "/manifest.json"])
   manifest.api, manifest.callback_format = api, format
-  files["mods/portable_trainer_preparation/manifest.json"] = Json.encode(manifest)
+  files["mods/" .. consumer .. "/manifest.json"] = Json.encode(manifest)
   if failing then
-    files["mods/portable_trainer_preparation/main.lua"] = files["mods/portable_trainer_preparation/main.lua"]
+    files["mods/" .. consumer .. "/main.lua"] = files["mods/" .. consumer .. "/main.lua"]
       .. '\nerror("intentional entry failure")'
   end
   local data = backend == "gen1" and gen == 3 and T.sdk.gen3Data() or T.fixtures.fresh()
@@ -68,7 +69,7 @@ function M.new(root, backend, version, api, format, noMod, failing)
       items = {},
     }
   end
-  local result = T.sdk.loadMods(noMod and {} or { "mods/portable_trainer_preparation" }, {
+  local result = T.sdk.loadMods(noMod and {} or { "mods/" .. consumer }, {
     data = data,
     generation = gen,
     fs = T.sdk.memfs(noMod and {} or files),
@@ -290,7 +291,7 @@ function M.new(root, backend, version, api, format, noMod, failing)
     generation = gen,
     result = result,
     game = game,
-    exports = result.loader.exports.portable_trainer_preparation,
+    exports = result.loader.exports[consumer],
     patch = patch,
     start = start,
     starts = function()
