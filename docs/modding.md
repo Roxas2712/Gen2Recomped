@@ -76,6 +76,12 @@ update `src/mods/Capabilities.lua` and the capability tests in the same change.
 
 Additional read-only world summaries: [map overview and encounter queries](world-overview.md).
 
+## Per-state main-screen visibility
+
+The [portable screen visibility contract](portable-screen-visibility.md)
+describes `screen.render_visible(next, state)`: hide a native state's main
+render, opacity and palette ownership while keeping its update/input owner.
+
 ## Logic speed hook
 
 The [portable logic speed contract](portable-logic-speed.md) documents

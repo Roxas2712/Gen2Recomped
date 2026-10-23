@@ -20,7 +20,7 @@ add("hooks", "12345", [[
   encounter.fishing encounter.roll encounter.species evolution.check exp.gain
   fieldmove.eligibility input.key input.gamepad input.wheel input.step link.fingerprint map.palette movement.collision
   movement.speed music.select music.volume player.sprite pokemon.icon pokemon.sprite
-  render.compose render.hud render.letterbox render.zones save.new_game save.write
+  render.compose render.hud render.letterbox render.zones save.new_game save.write screen.render_visible
   script.command trainer.party transition.style ui.list_menu ui.options.rows
   ui.title_menu.items warp.destination world.tod zoom.range
 ]])
