@@ -18,6 +18,11 @@ local Screens = require("src.ui.Screens")
 
 local Game = {}
 
+-- The default must follow an explicit next(otherGame), not capture the caller.
+local function resolveLogicSpeedVanilla(game)
+  return game:_resolveLogicSpeed()
+end
+
 -- dev-mode gate for the F5/backtick hotkeys; false keeps every src/dev
 -- module unloaded, so a player boot never touches a byte of dev code
 local devMode = os.getenv("POKEPORT_DEV") == "1" or _G.POKEPORT_DEV_MODE == true
@@ -109,7 +114,10 @@ function Game:load()
   -- apply the persisted audio + display options before anything plays
   self:applyOptions(self.save.options)
 
-  FixedStep:init(function(step) self:step(step) end)
+  FixedStep:init(function(step)
+    self:step(step)
+    self:_speedLockEdge()
+  end)
   self.fixedStep = FixedStep
 
   local OverworldState = require("src.world.OverworldController")
@@ -379,24 +387,46 @@ function Game:_step(dt)
   -- it on its own real-time 60Hz accumulator instead.
 end
 
--- The logic multiplier for this frame. Read live rather than cached so the
--- Options row takes effect immediately; speedOverride is the --speed /
--- POKEPORT_SPEED run argument, which wins over the saved option so a bot
--- or screenshot run does not depend on whatever the player last chose.
-function Game:logicSpeed()
+-- Keep the native global option; the portable hook wraps resolution, not
+-- engine-specific category settings or the speed ladder.
+function Game:_resolveLogicSpeed()
   local GameSpeed = require("src.core.GameSpeed")
-  -- Link play is always 1X on both machines, and this wins over every other
-  -- source including POKEPORT_SPEED.  Fast-forward multiplies the logic
-  -- clock, so a peer at 10X burned a tournament shot clock ten times faster
-  -- than the opponent it is racing, and drove its own animation/message
-  -- queue at a different rate than the peer it is locked to.  Nothing about
-  -- a match should depend on what either player set this to.
-  if self.linkSession or (self.linkNet and not self.linkNet.closed) then
-    return 1
-  end
-  if self.speedOverride then return GameSpeed.clamp(self.speedOverride) end
   local opts = self.save and self.save.options
   return GameSpeed.clamp(opts and opts.speed or GameSpeed.DEFAULT)
+end
+
+function Game:speedLocked()
+  if self.linkSession or (self.linkNet and not self.linkNet.closed) then
+    return true, "link"
+  end
+  -- A menu on top must not hide a fixed-speed state underneath it.
+  local states = self.stack and self.stack.states or {}
+  for i = #states, 1, -1 do
+    local state = states[i]
+    if state and (state.isFixedSpeed or state.isMinigame) then
+      return true, "minigame"
+    end
+  end
+  return false
+end
+
+-- A link/fixed-speed state may start inside an accelerated logic step. Drop
+-- the remaining budget now instead of running that state at the old speed.
+function Game:_speedLockEdge()
+  if (self._frameSpeed or 1) > 1 and self:speedLocked() then
+    FixedStep:endFrame()
+  end
+end
+
+-- Read live on every resolution. Hard locks win over --speed/POKEPORT_SPEED,
+-- and those explicit overrides win over mods. Clamp the final hook result as
+-- well as the native default so invalid output cannot poison the accumulator.
+function Game:logicSpeed()
+  if self:speedLocked() then return 1 end
+  local GameSpeed = require("src.core.GameSpeed")
+  if self.speedOverride then return GameSpeed.clamp(self.speedOverride) end
+  if not ModRuntime.wantsHook("core.logic_speed") then return self:_resolveLogicSpeed() end
+  return GameSpeed.clamp(ModRuntime.call("core.logic_speed", resolveLogicSpeedVanilla, self))
 end
 
 -- THE FREE CAMERA, when one owns the frame -- otherwise nil.
@@ -599,6 +629,7 @@ function Game:update(dt)
   -- or the anti-spiral clamp quietly caps every level above ~15X.
   self:updateCameraStick(dt)
   local speed = self:logicSpeed()
+  self._frameSpeed = speed
   FixedStep.maxAccum = math.max(0.25, speed * FixedStep.STEP * 1.5)
   do
     local close = FrameProfile.section("  update: fixed steps")

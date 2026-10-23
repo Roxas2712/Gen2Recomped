@@ -17,7 +17,7 @@ end
 -- every seam. The source-catalog test requires a decision for each new seam.
 C.hooks = names([[
  battle.accuracy battle.catch_exp battle.crit battle.damage battle.enemy_action battle.exp_award
- battle.low_health_alarm battle.overlay battle.run battle.status_hud_visible battle.turn_order catch.rate core.update
+ battle.low_health_alarm battle.overlay battle.run battle.status_hud_visible battle.turn_order catch.rate core.logic_speed core.update
  encounter.fishing encounter.roll encounter.species evolution.check exp.gain fieldmove.eligibility
  input.pointer input.key input.gamepad input.wheel input.step intro.oak_speech.build link.fingerprint map.palette movement.collision movement.speed
  music.select music.volume player.sprite pokemon.icon pokemon.sprite render.compose render.hud

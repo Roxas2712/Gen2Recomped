@@ -88,8 +88,7 @@ them. Availability does not imply the current game state permits the action:
 return `nil, "map carries no elevation"`.
 
 Callback availability follows Gen2Recomped's actual implementation, rather
-than Gen1Recomp's newer catalog. For example, `core.logic_speed`, `item.use`
-and `egg.hatched` have no native call sites here; the hatch event here is
+than Gen1Recomp's newer catalog. For example, `item.use` and `egg.hatched` have no native call sites here; the hatch event here is
 `pokemon.egg_hatched` (Gen 2–5). `battle.status_hud_visible` is available on
 Gen 4–5, `battle.overlay` on Gen 1–3, and the normal start-menu, party-submenu
 and naming-grid hooks on Gen 1–3. `ui.pc.items` is available on Gen 1–2.
@@ -103,6 +102,12 @@ adapters described in [Shared API 3 entry](api3-portability.md), with explicit
 limits on availability. Existing API-1/2 registration/subscription behavior
 remains unchanged. When adding a native callback or changing screen routing,
 update `src/mods/Capabilities.lua` and the capability tests in the same change.
+
+## Logic speed hook
+
+The [portable logic speed contract](portable-logic-speed.md) documents
+`core.logic_speed(next, game)`, its native speed resolution, hard locks and
+explicit-override precedence for native API 1/2, unified API 2 and API 3.
 
 ## Bulk storage (`mod.storage`)
 
