@@ -43,6 +43,7 @@ local GameVersion = require("src.core.GameVersion")
 -- the module that loads mods: the searcher has to be in place before the
 -- first mod's main.lua runs, and nothing else needs it at all.
 require("src.core.ModCompat").install()
+local SurfMountRenderData = require("src.mods.SurfMountRenderData")
 
 local Loader = {}
 Loader.__index = Loader
@@ -1267,6 +1268,7 @@ function Loader:_loadMod(mod)
   -- check says it is there.  Asking a freshly built api the same question
   -- cannot answer that, because the whole question is whether the object the
   -- mod is holding differs from the one the engine would build.
+  SurfMountRenderData.install(api, self)
   self.apis = self.apis or {}
   self.apis[mod.manifest.id] = api
   FieldEffectRenderData.install(api, self)
