@@ -1511,6 +1511,7 @@ end
 -- current save directory.
 local otherLocCache
 function SaveData.otherLocations()
+  if os.getenv("POKEPORT_ISOLATED_TESTING") == "1" then return {} end
   if otherLocCache then return otherLocCache end
   local roots, seen = {}, {}
   local function norm(p) return (p:gsub("\\", "/"):gsub("/+$", ""):lower()) end
