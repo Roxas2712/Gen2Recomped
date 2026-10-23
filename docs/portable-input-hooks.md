@@ -50,8 +50,8 @@ and the free camera keeps its existing wheel behavior (including zero delta).
 Gen1-specific gamepad polling/watchdog bookkeeping is still owned by Gen1;
 this contract does not promise identical internal input algorithms.
 
-No-subscriber calls bypass the hook bus and allocate no hook payload or
-continuation closure. Existing bus priority, error handling, unsubscribe and
+When no hook chain is installed, calls bypass the hook bus and allocate no
+hook payload or continuation closure. Existing bus priority, error handling, unsubscribe and
 owner cleanup apply. Wrappers that fail before `next` are skipped; a failure
 after forwarding does not replay native side effects; native errors propagate.
 
