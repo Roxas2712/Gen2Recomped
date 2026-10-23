@@ -88,6 +88,22 @@ function A.install(api, loader, readContext, overviewContext, engineRequire)
     if (not supportedGeneration and not (name == "liveMaps" and gen >= 1 and gen <= 5)) or not SUPPORTED[name] then
       return nil, "unsupported: API 3 world method " .. name
     end
+    if name == "effectiveEncounters" then
+      local mapId, terrain, opts = ...
+      if type(mapId) ~= "string" or #mapId == 0 or #mapId > 256 or mapId:find("%c") then return nil, "invalid map id" end
+      if terrain ~= "grass" and terrain ~= "water" and terrain ~= "indoor" then return nil, "invalid terrain" end
+      if opts ~= nil and type(opts) ~= "table" then return nil, "invalid encounter options" end
+      for key, value in pairs(opts or {}) do
+        if key ~= "daytime" or (value ~= "MORN" and value ~= "DAY" and value ~= "NITE" and value ~= "DARK") then
+          return nil, "invalid encounter option"
+        end
+        if gen ~= 2 then return nil, "unsupported encounter daytime" end
+      end
+      local game = current()
+      if not game then return nil, "no game" end
+      -- API 3 aliases indoor before native dispatch, as the reference facade does.
+      return native(game):effectiveEncounters(mapId, terrain == "indoor" and "grass" or terrain, opts)
+    end
     local game = current()
     if not game then
       return nil, "no game"

@@ -35,6 +35,7 @@ add("hooks", "12345", "battle.status_hud_visible")
 add("hooks", "123", "pokemon.level_visible ui.party.grid_navigation")
 add("hooks", "123", "world.follower.spawn")
 add("hooks", "13", "item.use")
+add("hooks", "123", "encounter.table")
 add("hooks", "12", "intro.oak_speech.build")
 
 add("events", "12345", [[

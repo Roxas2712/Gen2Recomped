@@ -151,7 +151,7 @@ math.random = function()
 end
 Runtime.hooks = Hooks.new()
 local callbacks = 0
-for _, name in ipairs({ "encounter.roll", "encounter.species", "encounter.table" }) do
+for _, name in ipairs({ "encounter.roll", "encounter.species" }) do
   Runtime.hooks:wrap(name, function()
     callbacks = callbacks + 1
     error("query executed encounter hook")
