@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/158",
-  "feature_ref": "0520e65b0a53e12c078891679b69721be63f73b6",
+  "runtime_ref": "2551b7ef641ad138dc78e03b6212e1e18da85702",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/159",
+  "feature_ref": "d2c31afd7204bace559a78e7dcf37710439d5cd7",
   "gen1_contract_ref": "79ea62f45fb2ea8f65d081a109431e4eb1bbdb36",
-  "engine_suites_passed": 166,
-  "engine_suites_total": 166,
+  "engine_suites_passed": 167,
+  "engine_suites_total": 167,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 24,
-  "cross_engine_paired_observations": 339,
+  "cross_engine_worker_runs": 16,
+  "cross_engine_paired_observations": 250,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -73,6 +73,19 @@
   ],
   "native_item_use_runtime_ref": "3982554dc466ed3306b7a1256cac6c2f44a38cd1",
   "native_item_use_scope": "Same installed API-3 consumer; actual bag/party input, block without effects, delegate Potion through native HP animation/text back to bag, unsubscribe and native reuse; no normal SAVE action, no full-playthrough or UI-pixel parity claim",
-  "item_use_generation_boundary": "Native GB UI dispatch only; Gold has no matching reference producer, GBA field tuple adapter is next, DS unavailable",
-  "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d"
+  "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
+  "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
+  "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
+  "cross_engine_scope": "Latest GBA field item consumer; older family results recorded separately",
+  "gba_item_use_native_checks_passed": 1286,
+  "native_gba_item_use_smoke_games": [
+    "firered",
+    "emerald"
+  ],
+  "native_gba_item_use_runtime_ref": "2551b7ef641ad138dc78e03b6212e1e18da85702",
+  "native_gba_item_use_scope": "Same installed API-3 consumer; actual bag/party input, block/delegate/message/silent/unsubscribe, reusable white flute, encounter modifier, same-map preservation and actual map-change reset; no normal SAVE, no full-playthrough or UI-pixel parity claim",
+  "gba_item_use_cross_engine_worker_runs": 16,
+  "gba_item_use_cross_engine_paired_observations": 250,
+  "item_use_cross_engine_worker_runs": 24,
+  "item_use_cross_engine_paired_observations": 339
 }
