@@ -1,16 +1,16 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–156
+hook, rendering, shader and baseline test fixes prepared in PRs #88–157
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`c9ae378d3927112658035ed1f3a5faa9b22301a7`. Its ROM-free run passed
-164/164 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
-The unchanged live-map consumer passed native lifecycle and API-3 pixel-reader
-contracts on both engines where the native producers exist. Storage, battle
-and party checks remain in the combined suite. See `portability-testing-status.json` for the tested refs.
+`318a1bae110afd5a5ee892674b2e61dda9def98d`. Its ROM-free run passed
+165/165 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+The unchanged follower consumer passed native lifecycle and movement contracts
+on both engines in four SDK modes (64 worker runs / 1,000 paired observations).
+Live-map, storage, battle and party checks remain in the combined suite. See `portability-testing-status.json` for the tested refs.
 
 Native LÖVE 11.5 smoke tests reached the intro, title and New Game
 world/introduction for Red, Gold, FireRed and Emerald using isolated copies
@@ -60,7 +60,7 @@ features. Keep generation-specific mechanics behind explicit capability
 checks. See `api3-portability.md` and the `portable_*` examples.
 
 The published PRs remove many adapter patches; they do not make arbitrary
-engine-module imports portable. Remaining work includes DS party navigation, follower hooks, checkpoints, further
+engine-module imports portable. Remaining work includes DS party navigation, a shared follower-art contract, checkpoints, further
 item/encounter hooks, and optional SDK services. Gen1's newer import verification
 options also need a matching contract. DS native screens have additional gaps.
 Shader imports intentionally support a bounded subset, not all RetroArch presets.
@@ -122,9 +122,9 @@ roundtrip, then deletes only the smoke keys. The ordinary test save remains.
 Red, Gold, FireRed and Emerald passed both phases with the same installed
 API-3 consumer. No generated cartridge data is distributed by this branch.
 
-The recorded full-suite runtime predates the standalone live-map smoke driver
-and status updates. Production source, scripts, examples and existing suite
-trees match; the native smoke ref is recorded separately.
+The recorded full-suite runtime predates the standalone follower smoke driver
+and current status updates. Production source, scripts, examples and existing
+suite trees match; the native smoke refs are recorded separately.
 
 ## Native connected-map lifecycle test
 
@@ -143,3 +143,23 @@ pixel placements, including a repeated rebuild. It does not write a normal save
 or distribute any cartridge data. Use the separate test identity; this is a
 bounded lifecycle test, not a full cartridge playthrough or pixel-parity proof.
 The consumer itself has no generation-specific map IDs or engine imports.
+
+## Native follower lifecycle and movement test
+
+Install and enable `examples/portable_follower` in the isolated test installation:
+
+```sh
+POKEPORT_VERSION=firered POKEPORT_DRIVER=tests/portability_follower_driver.lua \
+  bash scripts/run-portability-test.sh
+```
+
+Red, Gold, FireRed and Emerald passed using the same installed public consumer.
+The driver starts New Game in memory, selects a real town, verifies map-entry
+allow/deny and original native handles, then sends native directional input.
+It checks companion movement through the ordinary NPC/world update loop,
+removal, respawn and unsubscribe. Map-load companions begin under the player,
+so the fixture takes two steps to verify movement. The driver does not write
+a normal save. Native smoke ref `0482e8473228da203f156e3d4c62e662393cdee0`
+adds only this standalone driver over the full-suite runtime. DS follower
+coverage and a shared follower-art API remain separate work; this is not a
+full-playthrough or identical-artwork claim.

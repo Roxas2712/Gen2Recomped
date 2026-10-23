@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "c9ae378d3927112658035ed1f3a5faa9b22301a7",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/156",
-  "feature_ref": "d7581ba7202773cd58945c00fb030fc1a35e6bb5",
+  "runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/157",
+  "feature_ref": "5481fa2a463a24cf314c6ad60c8fb7df886fa495",
   "gen1_contract_ref": "79ea62f45fb2ea8f65d081a109431e4eb1bbdb36",
-  "engine_suites_passed": 164,
-  "engine_suites_total": 164,
+  "engine_suites_passed": 165,
+  "engine_suites_total": 165,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 104,
-  "cross_engine_paired_observations": 112,
+  "cross_engine_worker_runs": 64,
+  "cross_engine_paired_observations": 1000,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -53,5 +53,16 @@
     "emerald"
   ],
   "native_live_maps_runtime_ref": "1efce229c7ed8c5177ad6fde8cfea32fb2345285",
-  "native_live_maps_scope": "Same installed API-3 consumer; native connected map load, preparing/updated order, query/event pixel agreement, repeat rebuild; no full playthrough claim"
+  "native_live_maps_scope": "Same installed API-3 consumer; native connected map load, preparing/updated order, query/event pixel agreement, repeat rebuild; no full playthrough claim",
+  "live_maps_cross_engine_worker_runs": 104,
+  "live_maps_cross_engine_paired_observations": 112,
+  "follower_native_checks_passed": 2494,
+  "native_follower_smoke_games": [
+    "red",
+    "gold",
+    "firered",
+    "emerald"
+  ],
+  "native_follower_runtime_ref": "0482e8473228da203f156e3d4c62e662393cdee0",
+  "native_follower_scope": "Same installed API-3 consumer; native town map-entry predicate, original handles, ordinary world-loop dispatch, directional input and native NPC movement, removal/respawn/unsubscribe; no normal save writes, no full-playthrough or artwork-parity claim"
 }
