@@ -103,6 +103,12 @@ limits on availability. Existing API-1/2 registration/subscription behavior
 remains unchanged. When adding a native callback or changing screen routing,
 update `src/mods/Capabilities.lua` and the capability tests in the same change.
 
+## NPC conversation hook
+
+The [portable NPC talk contract](portable-world-talk.md) documents
+`world.talk(next, owner, target)`: claim a native NPC conversation or forward
+to the engine, with explicit handle and Gen1 Gold producer boundaries.
+
 ## Battle status HUD visibility
 
 The [portable battle status HUD contract](portable-status-hud.md) documents
