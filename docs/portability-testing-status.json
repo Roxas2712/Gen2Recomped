@@ -73,5 +73,6 @@
   ],
   "native_item_use_runtime_ref": "3982554dc466ed3306b7a1256cac6c2f44a38cd1",
   "native_item_use_scope": "Same installed API-3 consumer; actual bag/party input, block without effects, delegate Potion through native HP animation/text back to bag, unsubscribe and native reuse; no normal SAVE action, no full-playthrough or UI-pixel parity claim",
-  "item_use_generation_boundary": "Native GB UI dispatch only; Gold has no matching reference producer, GBA field tuple adapter is next, DS unavailable"
+  "item_use_generation_boundary": "Native GB UI dispatch only; Gold has no matching reference producer, GBA field tuple adapter is next, DS unavailable",
+  "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d"
 }

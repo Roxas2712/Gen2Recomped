@@ -160,7 +160,8 @@ It checks companion movement through the ordinary NPC/world update loop,
 removal, respawn and unsubscribe. Map-load companions begin under the player,
 so the fixture takes two steps to verify movement. The driver does not write
 a normal save. Native smoke ref `0482e8473228da203f156e3d4c62e662393cdee0`
-adds only this standalone driver over the full-suite runtime. DS follower
+adds only this standalone driver over the follower full-suite runtime
+`318a1bae110afd5a5ee892674b2e61dda9def98d`. DS follower
 coverage and a shared follower-art API remain separate work; this is not a
 full-playthrough or identical-artwork claim.
 
