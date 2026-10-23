@@ -18,6 +18,11 @@ local Screens = require("src.ui.Screens")
 
 local Game = {}
 
+-- Legacy/tool stack doubles may not expose the optional visibility method.
+local function renderVisible(stack, state)
+  return state ~= nil and (not stack.renderVisible or stack:renderVisible(state))
+end
+
 -- The default must follow an explicit next(otherGame), not capture the caller.
 local function resolveLogicSpeedVanilla(game)
   return game:_resolveLogicSpeed()
@@ -858,11 +863,11 @@ function Game.drawBaseInStack(stack, visibleBase)
   local states = stack and stack.states or {}
   for i = visibleBase - 1, 1, -1 do
     local state = states[i]
-    if state and state.bgMode and state:bgMode() == "world" then
+    if renderVisible(stack, state) and state.bgMode and state:bgMode() == "world" then
       -- restart the search from under the battle: the highest opaque state at
       -- or below it (the overworld), not the menu sitting over it
       for j = i, 1, -1 do
-        if states[j].isOpaque then return j end
+        if renderVisible(stack, states[j]) and states[j].isOpaque then return j end
       end
       return 1
     end
@@ -1046,10 +1051,12 @@ function Game:_draw()
   -- white clear
   local base = self.stack:visibleBase()
   local worldBelow = self.stack.states[base] == self.overworld
+    and renderVisible(self.stack, self.overworld)
   -- a world-bg battle keeps the map drawing under whatever it opened, so the
   -- world pass can run for a frame whose CLEAR is still an opaque menu's
   local drawFrom = Game.drawBaseInStack(self.stack, base)
   local worldDrawn = self.stack.states[drawFrom] == self.overworld
+    and renderVisible(self.stack, self.overworld)
   -- A wide battle holds its 304px surface through every menu or prompt it
   -- opens. States that do not draw the wide battle composition are centred
   -- in that surface below, so their classic coordinates and hit testing stay
@@ -1125,7 +1132,7 @@ function Game:_draw()
     local ownsSurface = wideState
       or (native ~= nil and state == native)
       or Game.wantsThisSurface(state)
-    if state and state.draw then
+    if renderVisible(self.stack, state) and state.draw then
       -- ...and it is centred by ITS OWN size, not by the Game Boy's (see
       -- Game.homeOffset).  classicOffset still gates it: a surface that is
       -- the Game Boy's centres nothing, which is every frame outside a wide
@@ -1150,7 +1157,7 @@ function Game:_draw()
   local zones, worldZones, zoneOwner
   for i = #self.stack.states, 1, -1 do
     local s = self.stack.states[i]
-    if s.sgbPalettes then
+    if renderVisible(self.stack, s) and s.sgbPalettes then
       zones = s:sgbPalettes(self)
       zoneOwner = s
       break
