@@ -35,6 +35,13 @@ for _, version in ipairs({ "red", "gold", "firered", "platinum" }) do
     T.eq(files[path], bytes, "legacy allocation never rewrites progress")
   end
   T.check(e.write(first, "progress/value", { n = 12 }), "legacy mod state writes")
+  T.check(S.saveOptions(S.defaultOptions(), fs), "stale options snapshot writes")
+  local persisted = S.loadOptions(fs).playthroughIds
+  T.eq(
+    persisted and persisted[version] and persisted[version].legacy,
+    id,
+    "stale option writers cannot erase a requested storage identity"
+  )
   S.resetSlotState()
   local resumed = { save = assert(S.load(version)) }
   T.eq(e.context(resumed).playthroughId, id, "legacy promotion/restart retains identity")
@@ -72,6 +79,17 @@ for _, version in ipairs({ "red", "gold", "firered", "platinum" }) do
     imported.save.meta.playthroughId,
     "mod-set stamp retains identity"
   )
+  local external = S.loadOptions(fs)
+  external.saveSlots[version].active = sourceSlot
+  S.saveOptions(external, fs)
+  local localTitle = new()
+  localTitle.stack = boot.stack
+  T.eq(
+    e.selected(localTitle):context().playthroughId,
+    imported.save.meta.playthroughId,
+    "another launcher's selection cannot reroute this process's native slot"
+  )
+  S.setActiveSlot(version, copySlot)
   T.check(S.deleteSlot(version, copySlot), "identified slot deletes")
   local opts = S.loadOptions(fs)
   T.eq(opts.playthroughIds[version][copySlot], nil, "deleted slot loses routing binding")

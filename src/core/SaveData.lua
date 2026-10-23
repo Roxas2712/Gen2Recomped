@@ -603,6 +603,12 @@ function SaveData.saveOptions(opts, fs, gen)
   -- write cannot clobber another mod's persisted keys.  Every other
   -- option stays on the shallow path.
   local onDisk = readTable(fs, OPTIONS_FILENAME)
+  -- A pre-storage UI/settings snapshot has no identity map. Saving it must
+  -- not erase tool state allocated since that snapshot was taken. Engine
+  -- routing changes supply a table explicitly (including an empty table).
+  if onDisk and opts.playthroughIds == nil and type(onDisk.playthroughIds) == "table" then
+    opts.playthroughIds = onDisk.playthroughIds
+  end
   if onDisk and type(onDisk.modOptions) == "table" then
     local merged = {}
     for modId, bucket in pairs(onDisk.modOptions) do
