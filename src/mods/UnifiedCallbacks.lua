@@ -21,7 +21,7 @@ C.hooks = names([[
  encounter.fishing encounter.roll encounter.species evolution.check exp.gain fieldmove.eligibility
  input.key input.gamepad input.wheel input.step intro.oak_speech.build link.fingerprint map.palette movement.collision movement.speed
  music.select music.volume player.sprite pokemon.icon pokemon.sprite render.compose render.hud
- render.letterbox render.zones save.new_game save.write screen.render_visible script.command trainer.party transition.style
+ render.letterbox render.zones save.new_game save.write screen.render_visible script.command trainer.before_battle trainer.party transition.style
  ui.list_menu ui.naming.grid ui.options.rows ui.party.submenu ui.pc.items ui.start_menu.items
  ui.title_menu.items warp.destination world.talk world.tod zoom.range
 ]])
@@ -39,6 +39,7 @@ C.events = names([[
  world.object_toggled world.stepped world.tick world.tod_changed world.trainer_engaged
 ]])
 local positions = {
+  ["trainer.before_battle"] = { false, "context", false },
   ["battle.accuracy"] = { "context" },
   ["battle.damage"] = { "context" },
   ["battle.crit"] = { "context" },

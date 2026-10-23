@@ -170,6 +170,7 @@ T.check(result == nil and reason == 'no overworld' and yes(api, 'world', 'warpTo
 for _, version in ipairs(GameVersion.ORDER) do
   local mod = probe(version)
   local gen = GameVersion.generation(version)
+  T.eq(mod:supports('hooks', 'trainer.before_battle'), true, version .. ': native trainer preparation seam')
   T.eq(mod:supports('hooks', 'world.talk'), true, version .. ': native NPC talk seam')
   T.eq(mod:supports('hooks', 'battle.status_hud_visible'), true,
     version .. ': native GB/GBA/DS HUD seam')

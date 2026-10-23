@@ -76,6 +76,12 @@ update `src/mods/Capabilities.lua` and the capability tests in the same change.
 
 Additional read-only world summaries: [map overview and encounter queries](world-overview.md).
 
+## Trainer battle preparation
+
+The [portable trainer preparation contract](portable-trainer-preparation.md)
+documents `trainer.before_battle(next, game, context, continueBattle)`, deferred
+native admission, cancellation and battle-local player-party selection.
+
 ## NPC conversation hook
 
 The [portable NPC talk contract](portable-world-talk.md) documents

@@ -21,7 +21,7 @@ add("hooks", "12345", [[
   fieldmove.eligibility input.key input.gamepad input.wheel input.step link.fingerprint map.palette movement.collision
   movement.speed music.select music.volume player.sprite pokemon.icon pokemon.sprite
   render.compose render.hud render.letterbox render.zones save.new_game save.write screen.render_visible
-  script.command trainer.party transition.style ui.list_menu ui.options.rows
+  script.command trainer.before_battle trainer.party transition.style ui.list_menu ui.options.rows
   ui.title_menu.items warp.destination world.talk world.tod zoom.range
 ]])
 -- Screens have distinct implementations: Screens.lua aliases the DS party,
