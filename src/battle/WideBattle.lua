@@ -12,6 +12,7 @@
 -- prompt/command window, and a 2x2 move menu with an attached PP/type panel.
 
 local Font = require("src.render.Font")
+local LevelDisplay = require("src.ui.LevelDisplay")
 local HudTiles = require("src.render.HudTiles")
 local PaletteFX = require("src.render.PaletteFX")
 local Runtime = require("src.mods.Runtime")
@@ -88,7 +89,9 @@ end
 local function levelAt(battle, battler, x, y)
   if battler.shownStatus then
     Font.draw(battle:statusLabel({ status = battler.shownStatus }), x, y)
-  else
+  elseif LevelDisplay.visible(battler.mon,
+      (battler.isPlayer == true or battler == battle.player) and "battle.player" or "battle.enemy",
+      battle.game) then
     HudTiles.tile(0x6E, x, y) -- '<LV>'
     Font.draw(tostring(battler.mon.level), x + 8, y)
   end
