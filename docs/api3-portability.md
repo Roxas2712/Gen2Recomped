@@ -147,3 +147,6 @@ comparison pass by changing only one engine's mod fixture.
 The [portable follower predicate](portable-follower.md) controls native companion
 existence on Gen1–3 without replacing a private controller. Artwork remains a
 separate concern; check `mod:supports("hooks", "world.follower.spawn")`.
+
+[Portable GB item dispatch](portable-item-use.md) documents the `item.use`
+producer and the separate Gold/GBA/DS boundaries.

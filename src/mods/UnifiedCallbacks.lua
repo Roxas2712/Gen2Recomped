@@ -20,7 +20,7 @@ C.hooks = names([[
  battle.accuracy battle.bottom_ui_visible battle.catch_exp battle.crit battle.damage battle.enemy_action battle.exp_award
  battle.low_health_alarm battle.overlay battle.run battle.status_hud_visible battle.turn_order catch.rate core.logic_speed core.update
  encounter.fishing encounter.roll encounter.species evolution.check exp.gain fieldmove.eligibility
- input.key input.gamepad input.wheel input.step intro.oak_speech.build link.fingerprint map.palette movement.collision movement.speed
+ input.key input.gamepad input.wheel input.step intro.oak_speech.build item.use link.fingerprint map.palette movement.collision movement.speed
  music.select music.volume player.sprite pokemon.icon pokemon.level_visible pokemon.sprite render.compose render.hud
  render.letterbox render.zones save.new_game save.write screen.render_visible script.command trainer.before_battle trainer.party transition.style
  ui.list_menu ui.naming.grid ui.options.rows ui.party.submenu ui.pc.items ui.start_menu.items
@@ -41,6 +41,7 @@ C.events = names([[
  world.object_toggled world.stepped world.tick world.tod_changed world.trainer_engaged
 ]])
 local positions = {
+  ["item.use"] = { false, false, "itemId", false, "context", false, "context" },
   ["world.follower.spawn"] = { false, false },
   ["ui.party.grid_navigation"] = { false },
   ["battle.move_grid_navigation"] = { false },
@@ -153,8 +154,8 @@ function C.install(loader, api, owner, generation)
           for i = 1, args.n do
             local role = roles[i]
             local v = args[i]
-            if role == "items" or role == "moves" then
-              v = boundary.read(role, v)
+            if role == "items" or role == "moves" or role == "itemId" then
+              v = boundary.read(role == "itemId" and "items" or role, v)
             elseif role then
               v = boundary.view(v, role)
             end
@@ -167,8 +168,8 @@ function C.install(loader, api, owner, generation)
           local out = { n = args.n }
           for i = 1, args.n do
             local role, v = roles[i], args[i]
-            if role == "items" or role == "moves" then
-              v = boundary.native(role, v, original[i])
+            if role == "items" or role == "moves" or role == "itemId" then
+              v = boundary.native(role == "itemId" and "items" or role, v, original[i])
             elseif role then
               v = boundary.restore(v, role)
             end
