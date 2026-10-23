@@ -18,6 +18,7 @@ function M.new(root, backend, version, api, format, noMod, failing)
     { 43, "WHITE_FLUTE", "black_white_flute", nil, nil },
     { 42, "BLACK_FLUTE", "black_white_flute", nil, nil },
     { 289, "TM_01", "tm", nil, nil },
+    { 195, "EVERSTONE", "none", nil, nil },
     { 999, "UNKNOWN", "none", nil, nil },
   }
   local data = backend == "gen1" and T.sdk.gen3Data() or T.fixtures.fresh()
