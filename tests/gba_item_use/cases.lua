@@ -88,7 +88,7 @@ function M.run(f)
   T.eq(f.count("SUPER_POTION"), 2, "redirect consumes replacement item")
   T.eq(mon.hp, 40, "redirect runs replacement native medicine")
   e.state.mode = "native"
-  for _, key in ipairs({ "OLD_ROD", "ESCAPE_ROPE", "UNKNOWN" }) do
+  for _, key in ipairs({ "OLD_ROD", "ESCAPE_ROPE", "EVERSTONE", "UNKNOWN" }) do
     ok = observe("native refusal:" .. key, key)
     T.eq(ok, false, "native field preflight rejects unavailable action")
     T.eq(f.count(key), 3, "native field refusal does not consume")

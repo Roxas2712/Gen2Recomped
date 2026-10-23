@@ -38,7 +38,7 @@ function F.kind(data, id, stable)
   if effect.levelUp or key == "RARE_CANDY" then
     return "level"
   end
-  if effect.evolve or key:find("STONE", 1, true) then
+  if effect.evolve or Effects.isStone(key) then
     return "evo"
   end
   if effect.ev then
