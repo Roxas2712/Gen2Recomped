@@ -19,7 +19,7 @@ C.hooks = names([[
  battle.accuracy battle.catch_exp battle.crit battle.damage battle.enemy_action battle.exp_award
  battle.low_health_alarm battle.overlay battle.run battle.status_hud_visible battle.turn_order catch.rate
  encounter.fishing encounter.roll encounter.species evolution.check exp.gain fieldmove.eligibility
- input.pointer input.step intro.oak_speech.build link.fingerprint map.palette movement.collision movement.speed
+ input.pointer input.key input.gamepad input.wheel input.step intro.oak_speech.build link.fingerprint map.palette movement.collision movement.speed
  music.select music.volume player.sprite pokemon.icon pokemon.sprite render.compose render.hud
  render.letterbox render.output render.output_enabled render.viewport render.window render.zones save.new_game save.write script.command trainer.party transition.style
  ui.list_menu ui.naming.grid ui.options.rows ui.party.submenu ui.pc.items ui.start_menu.items
