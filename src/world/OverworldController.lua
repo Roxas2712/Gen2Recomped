@@ -1165,6 +1165,7 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   end
   self.map = MapLoader.load(Game.data, mapId)
   if GameVersion.isGen3() then
+    if fromMapId and fromMapId ~= mapId then Game.save.gen3Flute = nil end
     require("src.world.Gen3SecretBase").restoreEntrance(Game.data, Game.save, self.map)
   end
   -- inside the Battle Pyramid the bag is the Pyramid's own
