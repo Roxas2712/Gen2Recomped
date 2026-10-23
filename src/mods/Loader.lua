@@ -34,6 +34,8 @@ local ModSeams = require("src.mods.ModSeams")
 local WorldOverview = require("src.mods.WorldOverview")
 local LoadOrder = require("src.mods.LoadOrder")
 local WorldActions = require("src.world.WorldActions")
+local RenderData = require("src.mods.RenderData")
+local GameVersion = require("src.core.GameVersion")
 -- Module-name aliases for mods written against the Gold port's per-generation
 -- layout (src.world.gen2.Player and friends).  Installed here because this is
 -- the module that loads mods: the searcher has to be in place before the
@@ -1219,6 +1221,11 @@ function Loader:_api(mod)
   if (mod.manifest.api or 1) >= 3 then
     engineRequire("src.mods.Api3").install(api, loader, readContext, overviewContext, engineRequire, engineCall)
   end
+  -- A separately versioned observational handle also survives the API-3
+  -- world facade. Never bootstrap Game while a title/headless mod reads it.
+  api.renderData = RenderData.new(function()
+    return loader.game or package.loaded["src.core.Game"]
+  end, GameVersion.generation())
   return api
 end
 
