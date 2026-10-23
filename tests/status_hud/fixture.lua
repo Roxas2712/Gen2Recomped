@@ -87,22 +87,19 @@ function M.new(root, backend, version, api, format, noMod)
         shownHP = 60,
       }
     end
-    b = setmetatable(
-      {
-        game = game,
-        data = data,
-        phase = "contract",
-        frame = 0,
-        shown = {},
-        fx = {},
-        player = side(),
-        enemy = side(),
-        ballRows = {},
-        showEnemyHud = true,
-        showPlayerHud = true,
-      },
-      { __index = class }
-    )
+    b = setmetatable({
+      game = game,
+      data = data,
+      phase = "contract",
+      frame = 0,
+      shown = {},
+      fx = {},
+      player = side(),
+      enemy = side(),
+      ballRows = {},
+      showEnemyHud = true,
+      showPlayerHud = true,
+    }, { __index = class })
     local Font = require("src.render.Font")
     for _, name in ipairs({ "draw", "drawCode", "drawBox" }) do
       patch(Font, name, ink)
