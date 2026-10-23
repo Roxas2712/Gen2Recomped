@@ -9,6 +9,7 @@
 --   opts.onCancel: fired when the menu closes without a pick (B)
 -- Pops itself on B.
 
+local PartyNavigation = require("src.ui.PartyNavigation")
 local Assets = require("src.render.Assets")
 local Badges = require("src.inventory.Badges")
 local Font = require("src.render.Font")
@@ -866,6 +867,10 @@ function PartyMenu:cancel()
   if self.onCancel then self.onCancel() end
 end
 
+function PartyMenu:gridNavigation()
+  return PartyNavigation.enabled(self)
+end
+
 function PartyMenu:update(dt)
   -- icon animation counter; 320 = a whole cycle at every HP speed
   self.blink = ((self.blink or 0) + 1) % 320
@@ -906,7 +911,11 @@ function PartyMenu:update(dt)
     return
   end
 
-  if input:wasPressed("up") then
+  local grid = not (self.swapFrom or self.softboiledFrom)
+    and self:gridNavigation() and PartyNavigation.rows(self.index, #party, input)
+  if grid then
+    self.index = grid
+  elseif input:wasPressed("up") then
     self.index = self.index > 1 and self.index - 1 or math.max(1, #party)
   elseif input:wasPressed("down") then
     self.index = self.index < #party and self.index + 1 or 1
