@@ -52,6 +52,13 @@ return function(game)
       break
     end
   end
+  -- Imported GBA headers can carry bank/number IDs without town labels.
+  -- These select only this bounded cartridge fixture; the mod consumer never
+  -- assumes a particular map ID or generation-specific representation.
+  local nativeTown = { firered = "MAP_G03_N00", emerald = "MAP_G00_N09" }
+  if not target and game.data.maps[nativeTown[Version.get()]] then
+    target = nativeTown[Version.get()]
+  end
   assert(target, "native connected town not found")
   game.stack.states = { world }
   local before = #e.events
