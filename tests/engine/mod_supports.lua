@@ -75,8 +75,9 @@ for _, version in ipairs(GameVersion.ORDER) do
   T.check(registries, version .. ': all API-2 registration surfaces available')
   T.eq(yes(api, 'world', 'flyTo'), type(WorldAPI.flyTo) == 'function',
     version .. ': additive native flight interface is reported when installed')
-  T.check(no(api, 'hooks', 'core.logic_speed')
-      and no(api, 'hooks', 'item.use') and no(api, 'events', 'egg.hatched'),
+  T.check(yes(api, 'hooks', 'core.logic_speed'),
+    version .. ': native speed hook is advertised')
+  T.check(no(api, 'hooks', 'item.use') and no(api, 'events', 'egg.hatched'),
     version .. ': absent Gen1Recomp API-3 features are not advertised')
   T.check(yes(api, 'events', 'mod.probe.ready') and yes(api, 'events', 'mod.other.ready'),
     version .. ': namespaced user events do not need a producer installed')
