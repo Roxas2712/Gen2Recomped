@@ -2,8 +2,9 @@
 
 On Gen 3, `item.use(next, game, nil, itemId, partySlot, bag)` wraps native
 field use after the bag's target/move selection. `next` returns exactly
-`ok, kind, text`, including a trailing nil text. FireRed/LeafGreen and
-Ruby/Sapphire/Emerald use this producer. It is distinct from the
+`ok, kind, text`, including a trailing nil text. FireRed and Emerald use this producer in Gen2Recomped. Gen1Recomp also
+registers LeafGreen, Ruby and Sapphire; those ROM profiles are not registered
+in Gen2Recomped and are not covered by this adapter. It is distinct from the
 [GB UI dispatcher](portable-item-use.md); Gold and DS report unavailable.
 
 ```lua
