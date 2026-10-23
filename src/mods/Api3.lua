@@ -29,6 +29,12 @@ local function block(gen)
   }
 end
 function A.install(api, loader, readContext, overviewContext, engineRequire)
+  local storage = require("src.mods.PlaythroughStorage").new(api.id, loader.fs)
+  api.storage = {}
+  for _, method in ipairs({ "context", "selected", "read", "write", "readBytes", "writeBytes", "list", "delete" }) do
+    local name = method
+    api.storage[name] = function(_, ...) return storage[name](storage, ...) end
+  end
   local gen = api.generation
   local supportedGeneration = gen >= 1 and gen <= 3
   -- Passthrough registries keep native shapes but expose the same handle metadata.
