@@ -776,3 +776,50 @@ party macro remains unsupported. Reachability is not a proof that every
 stock-program/controller path matches. Order prediction and attacking-move
 queries are the next native prerequisites, alongside the controller gaps
 already recorded above.
+
+## Native attacking-move predicates and public scorer milestone
+
+[Gen2 PR #185](https://github.com/UNDERdecoded/Gen2Recomped/pull/185) publishes
+both native attacking-move predicates. Four current physical move slots are
+read independently of PP, Disable, Taunt and considered-move usability. The
+independent matrix passes **21,264 host** checks and **8,528 checks per source
+worker**, with **4 workers / 4,272 paired observations**. It pins clean upstream
+Gen1 dev `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`; no source production
+fix is required for these predicates. Empty/all-zero-PP contexts exercise
+actual opcode dispatch, while ordinary contexts execute actual VM programs.
+The regular PR is published and unmerged; hosted workflows await maintainer
+approval, with zero jobs in the dedicated workflow.
+
+Development runtime `a19dc7fcff4c27fb95f88dae0e4455bd92cd5afa` adds six public
+scorer cases per GBA profile. Both predicate directions run with attacking
+moves, only status moves and an attacking move whose PP are exhausted while
+another status move remains usable. The same unmodified public scoring
+consumer must see the expected native scores. The spent attack still counts
+for the query, while only the real usable candidate reaches the scorer.
+Equivalent declared metadata is supplied to each engine; production readers
+and decision/scoring functions are not replaced.
+
+Focused checks pass **4,648/4,648**. Clean API 3 and API 2/unified each match
+in **12 workers / 1,099 paired observations**, with zero differences. The full
+development run passes **149/159** engine suites, SDK **3/3** and B30. All
+**26 FAIL lines in ten inherited suites** match the prior party-status runtime
+exactly. The independent feature retains main's 27 FAIL lines; the fully
+composed testing branch includes the baseline repairs and passes **205/205**
+engine suites. It still excludes this unfinished public hook.
+
+Reports are `contracts-attacking-moves-clean.json`,
+`contracts-attacking-moves-clean-api2.json`, `targeted-attacking-moves.log`,
+`full-attacking-moves.log` and `audit-emerald-ai-attacking-moves.log` in ignored
+`tmp/enemy-switch-item-qa/`. The public checker retains its explicit combined
+source pin `fb7b0366efcb85e703e9e6d5a8a24d01456a109b`, including the prior
+source fixes. Historical tools/evidence retain their own pins.
+
+A fresh read-only Emerald AI-stage audit now reports only `if_user_goes`
+missing from flag 2; flags 0, 1 and 3–9 remain runnable. Native order predicates
+are the next prerequisite. FireRed's original GetWhoStrikesFirst comparison
+ignores chosen move priority, applies native speed modifiers and can return
+**2** on an odd tie roll; it consumes native RNG for ties. The current source
+predicate is an approximation and needs a paired correction rather than
+being used as an unquestioned oracle. Full native controller and earlier
+switch/item gaps remain; opcode reachability does not prove their parity.
+No new graphical or full-gameplay claim is made.
