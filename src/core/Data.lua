@@ -700,6 +700,11 @@ function Data:publishGen2MapMetadata()
   return true
 end
 
+function Data:publishGen2TilesetNames()
+  if not require("src.core.GameVersion").isGen2() then return false end
+  return require("src.core.Gen2TilesetNames").publish(self)
+end
+
 function Data:publishGen2Palettes()
   local tilesets = self.tilesets
   if type(tilesets) ~= "table" then return false end
@@ -1902,6 +1907,7 @@ function Data:seedDefaults()
         or self.tilesets.TilesetPlayersHouse
     end
     seedMissingGen2Tilesets(self)
+    self:publishGen2TilesetNames()
     self:publishGen2Palettes()
     self:publishGen2MapMetadata()
     ensureGen2WarpFallbacks(self)
