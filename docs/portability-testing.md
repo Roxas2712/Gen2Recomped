@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191 and #194 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191 and #194–195 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,38 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`679b54967922bd8c14907c8c0bc152a2e2e615bc`. Its ROM-free run passed
-**210/210 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`916661d14a9f45511924f719d4b5524369182672`. Its ROM-free run passed
+**211/211 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #195](https://github.com/UNDERdecoded/Gen2Recomped/pull/195) honors a mod's
+positional GBA action target at native execution time. Replaced/absent targets
+resolve through the current slot, explicit choices override stale UI choices,
+and selected self/spread/field policies and active Lightning Rod redirection
+retain the reference's covered local-battle semantics and target order.
+Pressure counts every relevant holder and spends PP once; GBA spread actions
+emit one `battle.move_used`, while actual hits use `battle.damage_dealt`.
+The zero-power default path no longer publishes a spurious zero-damage hit.
+
+The **434/434** new target checks pass, including actual Gen2 double-turn
+queues, event targets/order/cardinality, PP, cached/replaced/absent targets,
+Lightning Rod priority, legacy handles, malformed hints and unchanged random
+selection/RNG against an identical-stats control. All prior move-choice,
+selector and record checks pass. The same consumer matches unchanged read-only
+Gen1 `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91` in **20 isolated engine workers /
+312 paired observations**, on both the feature and combined runtime.
+
+The feature is stacked on #194. Its full quick run retains exactly the same
+**27 FAIL lines across ten inherited suites**, with no new failures; this
+combined branch includes those repairs. All three hosted workflows await
+maintainer approval; the [dedicated workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40136548705)
+has zero jobs. Local acceptance is separate. Follow Me/unported effect
+producers, automatic AI target scoring, full random/native RNG parity, called
+moves, link ordering, damage amounts and item/switch/watch actions remain
+separate work. See [selected target contract](portable-enemy-targets.md).
+
+Prior #194 results retain runtime
+`679b54967922bd8c14907c8c0bc152a2e2e615bc` and its 210/210 engine result:
 
 [PR #194](https://github.com/UNDERdecoded/Gen2Recomped/pull/194) exposes the
 common native GBA move record fields for API 3 inside `battle.enemy_action`
