@@ -33,15 +33,15 @@ def main():
                                  for p in paths}, "runs": [], "comparisons": []}
     failed = False
     for version in ("firered", "emerald"):
-        for api in (2, 3):
+        for api, mode in ((2, "choices"), (3, "choices"), (3, "arguments")):
             values = {}
             for backend, root in (("gen1", source), ("gen2", host)):
                 cmd = [args.lua, str(host / "tools/enemy-action-contract-check/worker.lua"),
-                       str(host), backend, version, str(api)]
+                       str(host), backend, version, str(api), mode]
                 run = subprocess.run(cmd, cwd=root, text=True, capture_output=True, timeout=60)
                 rows = [json.loads(line.removeprefix("ENEMY_ACTION_OBSERVATIONS "))
                         for line in run.stdout.splitlines() if line.startswith("ENEMY_ACTION_OBSERVATIONS ")]
-                report["runs"].append({"backend": backend, "version": version, "api": api,
+                report["runs"].append({"backend": backend, "version": version, "api": api, "mode": mode,
                                        "exit": run.returncode, "stdout": run.stdout, "stderr": run.stderr})
                 if run.returncode or len(rows) != 1:
                     failed = True
@@ -49,9 +49,9 @@ def main():
                     values[backend] = rows[0]
             equal = len(values) == 2 and values["gen1"] == values["gen2"]
             failed |= not equal
-            report["comparisons"].append({"version": version, "api": api, "equal": equal,
+            report["comparisons"].append({"version": version, "api": api, "mode": mode, "equal": equal,
                                            "observations": values})
-            print(f"{'PASS' if equal else 'FAIL'} {version}/API {api}: identical public move selections and execution")
+            print(f"{'PASS' if equal else 'FAIL'} {version}/API {api}/{mode}: identical public move selections and execution")
     report["passed"] = not failed
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, indent=2) + "\n")

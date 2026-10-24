@@ -51,8 +51,9 @@ continuation outcomes. Reports retain both processes' output, exit status,
 fixture hashes, and host cleanliness. It does not compare damage amounts,
 RNG traces, native AI scoring, or entire battles.
 
-This is a move-result contract. The engines still differ in the hook's second
-argument and native action record fields. Portable consumers should forward
+This is a move-result contract. API-3 GBA input selectors are covered by the
+follow-up [enemy-action argument contract](portable-enemy-action-arguments.md).
+Native action record fields still differ. Portable consumers should forward
 arguments with `...` and return a fresh choice record. Public item/switch/watch
 records and explicit double-battle target conversion remain separate work.
 No Gen1 changes or publications are needed.

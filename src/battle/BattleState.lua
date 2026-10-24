@@ -45,6 +45,7 @@ local Gen4Battle = require("src.battle.Gen4Battle")
 local GameVersion = require("src.core.GameVersion")
 local BattleCommands = require("src.battle.BattleCommands")
 local EnemyMoveChoice = require("src.battle.EnemyMoveChoice")
+local EnemyActionContext = require("src.battle.EnemyActionContext")
 
 -- FORWARD-DECLARED, because they are defined next to the other doubles
 -- helpers two thousand lines down but read from `stepHPDrain` up here.  A
@@ -5410,6 +5411,7 @@ end
 -- "menuLockedAction: attempt to index local 'battler' (a nil value)" after
 -- killing their first Pokemon.  A slot with nobody in it has no action.
 function BattleState:enemyAction(battler)
+  local requestedBattler = battler
   if GameVersion.isGen3() then
     local who = battler or self.enemy
     if who and who.mon and (who.mon.hp or 0) > 0 then
@@ -5427,13 +5429,16 @@ function BattleState:enemyAction(battler)
   end
   if Runtime.wantsHook("battle.enemy_action") then
     if GameVersion.generation() == 3 then
-      local delegated, captured
-      local result = Runtime.call("battle.enemy_action", function(battle, who)
-        delegated, captured = EnemyMoveChoice.delegate(who or battle.enemy, battle:vanillaEnemyAction(who))
-        return delegated
-      end, self, battler)
-      return EnemyMoveChoice.normalize(self.data, battler, result, delegated, captured)
-        or (captured and captured.raw) or delegated or self:vanillaEnemyAction(battler)
+      return EnemyActionContext.call(self, requestedBattler, function()
+        local delegated, captured
+        local result = Runtime.call("battle.enemy_action", function(battle, who)
+          delegated, captured = EnemyMoveChoice.delegate(who or battle.enemy, battle:vanillaEnemyAction(who))
+          return delegated
+        end, self, battler)
+        return EnemyMoveChoice.normalize(self.data, battler, result, delegated, captured)
+          or EnemyMoveChoice.normalize(self.data, battler, delegated, delegated, captured)
+          or self:vanillaEnemyAction(battler)
+      end)
     end
     return Runtime.call("battle.enemy_action", function(battle, who)
       return battle:vanillaEnemyAction(who)
@@ -5532,7 +5537,7 @@ function BattleState:resolveTurn(playerAction)
   end
   -- nil in a double battle whose left-hand foe has fainted with nothing on
   -- the bench to replace it; `actionFor` asks each surviving slot for its own
-  local enemyAction = self:enemyAction(self.enemy)
+  local enemyAction = self:enemyAction(self:isDouble() and self.enemy or nil)
   local enemyActions
   if GameVersion.isGen3() and self:isDouble() then
     enemyActions = { [1] = enemyAction }
