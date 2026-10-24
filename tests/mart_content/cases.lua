@@ -33,6 +33,8 @@ function C.run(root, backend, version, api, format)
     local row = { mode = mode, failed = #f.result.errors > 0 }
     local m = f.e and f.e.api.content.marts
     if m then
+      f.T.eq(m:get("34"), nil, "unknown string ID reads as absent")
+      f.T.eq(m:has("generation"), false, "metadata is not a shelf")
       row.stock = m:get("0")
       row.bargain = m:get("bargain")
       row.last = m:get("33")

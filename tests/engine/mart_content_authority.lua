@@ -10,6 +10,7 @@ for _, mode in ipairs({ { 1, "native" }, { 2, "native" }, { 2, "unified" }, { 3,
   local api, format = unpack(mode)
   local f = F.new(".", "gen2", "gold", api, format, "replace")
   local m = f.e.api.content.marts
+  T.eq(f.e.api:supports("content", "marts"), true, "public capability names the native registry")
   local pool = f.data.map_scripts.marts
   T.same(pool[0], { f.key("ULTRA_BALL") }, "public item ID reaches native pool key")
   T.eq(f.data.gen2Marts, nil, "virtual registry creates no foreign namespace")
@@ -99,6 +100,21 @@ for _, mode in ipairs({ { 1, "native" }, { 2, "native" }, { 2, "unified" }, { 3,
   T.same(forward.shelf("0"), { "ITEM_240" }, "forward reference reaches actual imported key")
   T.same(forward.e.api.content.marts:get("0"), { "CUSTOM_MART" }, "forward public read uses common name")
   forward.close()
+end
+-- An unrelated in-place edit after the merge is not owned by retirement.
+do
+  local f = F.new(".", "gen2", "gold", 3, "unified", "replace")
+  local pool = f.data.map_scripts.marts
+  pool[0][1] = f.key("ANTIDOTE")
+  f.close()
+  for root in pairs(require("src.mods.Builtins").namespaceRoots()) do
+    if root ~= "items" and root ~= "map_scripts" then
+      f.data[root] = nil
+    end
+  end
+  local r = T.sdk.loadNone({ data = f.data })
+  T.same(pool[0], { f.key("ANTIDOTE") }, "reload preserves unrelated in-place shelf edit")
+  r.release()
 end
 -- Native script dispatch and ordinary UI input, including close/resume.
 do
