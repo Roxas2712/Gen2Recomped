@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "f9531b9053b8e7cf226e9d7ad494406a5e5fab65",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/181",
-  "feature_ref": "5e1b4c4e4e924e94f46efc2247e5588248c2e857",
-  "gen1_contract_ref": "10613015fc68d924915570bd1abee34b70d5bd01",
-  "engine_suites_passed": 202,
-  "engine_suites_total": 202,
+  "runtime_ref": "611e97230e1fea0c14b008c69a0fdfede4573f8b",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/182",
+  "feature_ref": "ae64d9f378f879f937dac906f607c3fe4c17518b",
+  "gen1_contract_ref": "12c9e5b5a2325470d6bb266c9a1f37b7954b698e",
+  "engine_suites_passed": 203,
+  "engine_suites_total": 203,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
   "cross_engine_worker_runs": 4,
-  "cross_engine_paired_observations": 96,
+  "cross_engine_paired_observations": 364,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "Both #181 workflows and Gen1 #3052 CI await maintainer approval (action_required); dedicated Taunt workflow has zero executed jobs; local acceptance is separate",
+  "hosted_ci": "Both #182 workflows and Gen1 #3053 CI await maintainer approval (action_required); dedicated item workflow and source CI have zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Actual GBA AI interpreters with typed move and active-battler records; role-specific queries, error boundaries and RNG non-consumption; not whole AI/controller or new graphical gameplay parity",
+  "cross_engine_scope": "Actual native GBA AI item queries and damage/effect observation producers; no new graphical or complete AI/controller parity claim",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -163,7 +163,7 @@
     "jobs": 0
   },
   "enemy_pp_full_suite_runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
-  "feature_tested_ref": "2ef7341810df813e09f0cc30f648cee1c57f5074",
+  "feature_tested_ref": "ae64d9f378f879f937dac906f607c3fe4c17518b",
   "caught_marker_native_checks_passed": 2078,
   "caught_marker_renderer_checks_passed": 840,
   "caught_marker_import_checks_passed": 216,
@@ -1118,5 +1118,63 @@
       "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40113016261",
       "jobs": 0
     }
+  },
+  "gen3_ai_item_knowledge": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/182",
+    "feature_ref": "ae64d9f378f879f937dac906f607c3fe4c17518b",
+    "independent_pr": true,
+    "upstream_base": "13af468b97dc37015d14ad5c71d7f067c3ee810d",
+    "combined_runtime_ref": "611e97230e1fea0c14b008c69a0fdfede4573f8b",
+    "source_repository": "Roxas2712/gen1recomp-Mac-fix",
+    "source_ref": "12c9e5b5a2325470d6bb266c9a1f37b7954b698e",
+    "source_pr": "https://github.com/bryanthaboi/gen1recomp/pull/3053",
+    "source_combined_ref": "a0c74c9570f0482a85886ecd8a2328de79ba7e09",
+    "host_checks_passed": 1491,
+    "source_checks_passed": 1240,
+    "cross_engine_worker_runs": 4,
+    "cross_engine_paired_observations": 364,
+    "combined_engine_suites_passed": 203,
+    "combined_engine_suites_total": 203,
+    "sdk_suites_passed": 3,
+    "b30_profile": "passed",
+    "feature_baseline": {
+      "engine_suites_passed": 65,
+      "engine_suites_total": 75,
+      "upstream_engine_suites_passed": 64,
+      "upstream_engine_suites_total": 74,
+      "known_failing_suites": 10,
+      "failure_lines": 27,
+      "all_failure_lines_match_upstream": true,
+      "new_failures": 0
+    },
+    "negative_control": {
+      "source_failed_checks": [
+        116,
+        113
+      ],
+      "source_differing_observations": [
+        117,
+        127
+      ],
+      "host_failed_checks": [
+        310,
+        320
+      ],
+      "host_differing_observations": [
+        157,
+        161
+      ],
+      "profile_order": [
+        "firered",
+        "emerald"
+      ]
+    },
+    "hosted_ci": {
+      "workflow_count": 2,
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40119262288",
+      "jobs": 0
+    },
+    "scope": "Native AI reads and actual direct-hit/confusion/OHKO producers; explicit paired source fix; no new graphical or full-controller claim; unfinished enemy hook remains separate"
   }
 }

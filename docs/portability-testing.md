@@ -1,15 +1,49 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–181
+hook, rendering, shader and baseline test fixes prepared in PRs #88–182
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`f9531b9053b8e7cf226e9d7ad494406a5e5fab65`. Its ROM-free run passed
-**202/202 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
-Subsequent commits pin the source validation document and record status;
-production code is unchanged.
+`611e97230e1fea0c14b008c69a0fdfede4573f8b`. Its ROM-free run passed
+**203/203 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+Subsequent status-only commits do not change production code.
+
+[PR #182](https://github.com/UNDERdecoded/Gen2Recomped/pull/182) implements
+native GBA AI held-effect and item-membership queries with actual Focus Band
+and Leftovers observation producers. Native side/slot history, Emerald's
+second metadata lookup and the retail byte-OR operand are preserved. GBA
+Focus Band adjustment, confusion self-hits and the default OHKO policy now
+produce matching history and RNG traces. Custom OHKO policies and other
+generations retain their behavior.
+
+The shared comparison passes **4 workers / 364 paired observations** on the
+clean combined runtime, with **1,491** host checks and **1,240** source checks.
+The explicit counterpart [Gen1 #3053](https://github.com/bryanthaboi/gen1recomp/pull/3053)
+is pinned at `Roxas2712/gen1recomp-Mac-fix@12c9e5b5a2325470d6bb266c9a1f37b7954b698e`.
+Gen1's old getter and metadata precedence also needed fixes; this is not a
+claim of agreement with the old placeholders or a completed upstream merge.
+The source fork's `codex/portability-testing` at
+`a0c74c9570f0482a85886ecd8a2328de79ba7e09` combines both source PRs #3052/3053
+and passes their **372** Taunt and **1,240** item-knowledge checks.
+
+Unchanged Gen1 dev fails 116/113 checks and differs in 117/127 observations;
+Gen2 main fails 310/320 and differs in 157/161 (FireRed/Emerald). The independent
+Gen2 feature retains exactly **27 FAIL lines across ten baseline suites**;
+their repairs are included in this combined branch. See
+[native GBA item knowledge](gen3-ai-item-knowledge.md).
+
+Both hosted #182 workflows and source #3053 CI await maintainer approval
+(`action_required`); the [item-knowledge workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40119262288)
+and source CI have zero executed jobs. Local acceptance is separate. These
+are bounded CPU VM/effect/damage checks; no new graphical or full-gameplay
+parity is claimed. The unfinished enemy switch/item hook remains outside
+this branch. Remaining native AI predicates and complete stock-controller
+contracts still need work.
+
+Prior #181 results retain runtime
+`f9531b9053b8e7cf226e9d7ad494406a5e5fab65` and its 202/202 engine result:
 
 [PR #181](https://github.com/UNDERdecoded/Gen2Recomped/pull/181) implements
 both native AI Taunt predicates against the live target, corrects GBA's
