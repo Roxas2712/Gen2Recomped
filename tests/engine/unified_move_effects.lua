@@ -52,7 +52,6 @@ for gen = 1, 3 do
   )
 end
 for _, id in ipairs({
-  "FOLLOW_ME",
   "HELPING_HAND",
   "MAGIC_COAT",
   "SNATCH",
@@ -63,6 +62,9 @@ for _, id in ipairs({
 }) do
   T.eq(E.write(id, 3, nil, registered), nil, "missing native Gen3 handler refused " .. id)
 end
+local followMe = assert(E.write("FOLLOW_ME", 3, nil, registered))
+T.eq(followMe.effect, "FOLLOW_ME_EFFECT", "canonical Follow Me selects newly implemented native handler")
+T.eq(followMe.gen3Effect, 172, "canonical Follow Me keeps native effect number")
 for _, v in ipairs({ "gold", "firered" }) do
   Version.set(v)
   local gen = Version.generation()

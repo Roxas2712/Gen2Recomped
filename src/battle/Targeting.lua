@@ -180,6 +180,10 @@ end
 function Targeting.resolve(battle, user, move, chosen)
   if type(chosen) ~= "table" then chosen = nil end
   local k = kindOf(move)
+  if k == Targeting.SELECTED then
+    local center = require("src.battle.Gen3FollowMe").center(battle, user)
+    if center then return { center } end
+  end
 
   -- BLACK AND WHITE: FOLLOW ME / RAGE POWDER draw every single-target move
   -- from the other side to themselves this turn (src/battle/Gen5MoveRules.lua)
@@ -309,11 +313,13 @@ end
 function Targeting.actionTargets(battle, user, move, chosen)
   local kind = kindOf(move)
   local abilities = require("src.battle.Abilities")
+  local _, followMeActive = require("src.battle.Gen3FollowMe").center(battle, user)
   -- Gen 3 Lightning Rod redirects Electric selected attacks; it does not
   -- grant the later-generation immunity or Special Attack boost.
   if
     (kind == Targeting.SELECTED or kind == Targeting.DEPENDS or kind == Targeting.USER_OR_SELECTED)
     and move.type == "ELECTRIC"
+    and not followMeActive
     and abilities.of(chosen) ~= "LIGHTNING_ROD"
   then
     local rank = {}

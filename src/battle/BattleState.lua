@@ -5548,6 +5548,7 @@ function BattleState:resolveTurn(playerAction)
   end
   self._nativeOrderSelectionTurn = nil
   self.turnCount = (self.turnCount or 0) + 1
+  if GameVersion.isGen3() then require("src.battle.Gen3FollowMe").clear(self) end
   -- BATTLE ARENA: arenaTurnCounter
   if self.arena then require("src.battle.Gen3Arena").turnStarted(self) end
   -- TURN-SCOPED FLAGS, cleared before anybody moves.  REVENGE reads
