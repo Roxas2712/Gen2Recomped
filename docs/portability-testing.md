@@ -1,28 +1,37 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–169
+hook, rendering, shader and baseline test fixes prepared in PRs #88–170
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`19513a930c6befae0b0ee336d0c9f4984d7ae929`. Its ROM-free run passed
-184/184 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
-PR #169 adds native Gen-2/3 shiny/gender roll hooks, with 4,976 public/native
-checks and 142 authority checks. The unchanged consumer passes through both
-SDKs in four configurations (48 isolated workers / 816 paired observations),
-pinned to Gen1 `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`. All exact outcomes
-of the 65,536-case Gen-2 ratio/DV matrix match per configuration. Reference
-API 2 remains native. GB/DS honestly report these hooks unavailable.
+`a7a4091be9f4b631d54cd6f57ce1d33c5d8bed46`. Its ROM-free run passed
+186/186 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+[PR #170](https://github.com/UNDERdecoded/Gen2Recomped/pull/170) adds shared
+script-text sources and native Gen-2 address-ID routing: **3,700** source/native
+checks and **234** ownership/legacy/retirement checks. Both real SDKs pass the
+same unchanged consumer and corpus across eight GB/Gen-2/GBA games:
+**32 isolated workers / 3,148 paired observations**, pinned to Gen1
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`. Host API 2/unified is compared
+with reference API 3; reference API 2 remains native.
 
-Native LÖVE 11.5 imported Gold, FireRed and Emerald pass at this runtime:
-actual construction, native summaries and close input, Gen-2 refresh, GBA
-cached/live identity, common imported IDs, genetic/stat preservation under
-plain overrides, real forced-wild construction/bypass and retirement. See
-[portable Pokemon identity hooks](portable-pokemon-rolls.md). Unhooked GBA
-split/aliased trainer-ID reads and Gen-2 threshold boundaries also match the
-reference. All 29 hosted #169 workflows await maintainer approval; local
-results are separate.
+Native LÖVE 11.5 / imported Gold, FireRed and Emerald pass at this runtime:
+actual imported Gold text ID, lowered writetext/GBA commands, player/string
+buffers, real native textbox rendering, paragraph pages, A-close/script resume
+and frozen late writes. This is an isolated, in-memory dialogue smoke, with no
+normal SAVE, full playthrough, fresh full-ROM reimport or pixel-equivalence
+claim. The owned example was removed with hash guards. See
+[portable script-text sources](api3-text-sources.md). Named GBA cartridge labels
+and engine/battle/menu prose still need the separate `rom_text` adapter.
+
+All **30** hosted #170 workflows await maintainer approval (`action_required`);
+the [script-text workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40069329686)
+has no executed jobs. Local results are separate.
+
+Prior #169 identity-hook native smoke and matrix results retain their own
+runtime `19513a930c6befae0b0ee336d0c9f4984d7ae929` in the status JSON; they are
+not relabeled as new native UI runs. See [Pokemon identity hooks](portable-pokemon-rolls.md).
 
 Prior #168 mart, #167 held-definition and #166 scheduling evidence retains
 its own historical refs in the status JSON. These establish their tested
