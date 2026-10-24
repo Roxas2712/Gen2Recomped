@@ -111,13 +111,25 @@ end
 -- rather than merely moved.  Applied after the address map, restored with it.
 function RomExtractorGen3.applyStageOverrides(overrides)
   if type(overrides) ~= "table" then return 0 end
+  -- JSON objects preserve mixed Lua records (numeric pose entries plus a
+  -- named species field), but their numeric keys arrive as strings.
+  local function decoded(value)
+    if type(value) ~= "table" then return value end
+    local out = {}
+    for k, v in pairs(value) do
+      local key = type(k) == "string" and k:match("^%d+$") and tonumber(k) or k
+      out[key] = decoded(v)
+    end
+    return out
+  end
   local n = 0
   for tableName, fields in pairs(overrides) do
     local t = RomExtractorGen3[tableName]
     if type(t) == "table" and type(fields) == "table" then
       for k, v in pairs(fields) do
+        k = type(k) == "string" and k:match("^%d+$") and tonumber(k) or k
         RomExtractorGen3._pristine[#RomExtractorGen3._pristine + 1] = { t, k, t[k] }
-        t[k] = v
+        t[k] = decoded(v)
         n = n + 1
       end
     end
@@ -55344,15 +55356,17 @@ function RomExtractorGen3:slotPaylines()
   }
 end
 
-function RomExtractorGen3:extractFireRedSlotMachine()
-  local S = {
+RomExtractorGen3.FRLG_SLOTS = {
     REELS = 0x464926, PAYOUTS = 0x464966,
     REEL_PAL = 0x464974, REEL_TILES = 0x464A14,
     REEL_PAL_TAGS = 0x465608,
     DIGIT_PAL = 0x465524, DIGIT_TILES = 0x465544,
     BG_PAL = 0x465930, BG_TILES = 0x4659D0, BG_MAP = 0x4661D4,
     COUNT = 3, TAGS = 21, SYMBOLS = 7,
-  }
+}
+
+function RomExtractorGen3:extractFireRedSlotMachine()
+  local S = RomExtractorGen3.FRLG_SLOTS
   local reels = {}
   for reel = 0, S.COUNT - 1 do
     local row, seen = {}, {}

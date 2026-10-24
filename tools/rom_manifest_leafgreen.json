@@ -1065,121 +1065,618 @@
       "MONITOR_BYTES": 256,
       "MONITOR_FRAMES": 4
     },
-    "FRLG_STORAGE": {
-      "MENU_GFX": 15320248,
-      "MENU_MAP": 3990584,
-      "SCROLL_GFX": 3990132,
-      "SCROLL_MAP": 3990284,
-      "PKMN_DATA": 3990836,
-      "CLOSE_BOX": 3990964,
-      "PARTY_MAP": 15321964,
-      "SLOT_FILLED": 3991036,
-      "SLOT_EMPTY": 3991060,
-      "HAND": 4008488,
-      "HAND_SHADOW": 4010536,
-      "HAND_PAL": 4008456,
-      "PAL": [
-        15320152,
-        15320216,
-        3990900
-      ]
-    },
-    "FRLG_POCKET_ART": {
-      "HM": 15307160,
-      "TM_GFX": 15222360,
-      "TM_MENU_MAP": 15223460,
-      "TM_CASE_MAP": 15223792,
-      "TM_PAL": {
-        "female": 15224224,
-        "male": 15224112
+    "FRLG_MART_TEXT": {
+      "3": {
+        "key": "anythingElse",
+        "find": "anything else I can do"
       },
-      "DISC": 15224336,
-      "DISC_PAL1": 15224736,
-      "DISC_PAL2": 15225064,
-      "DISC_OFFSETS": 4598872,
-      "STD_PAL": 4321860,
-      "POUCH": 15226508,
-      "POUCH_PAL": 15228060,
-      "TYPES": [
-        "NORMAL",
-        "FIGHTING",
-        "FLYING",
-        "POISON",
-        "GROUND",
-        "ROCK",
-        "BUG",
-        "GHOST",
-        "STEEL",
-        "MYSTERY",
-        "FIRE",
-        "WATER",
-        "GRASS",
-        "ELECTRIC",
-        "PSYCHIC",
-        "ICE",
-        "DRAGON",
-        "DARK"
-      ]
+      "1": {
+        "key": "buyTotal",
+        "find": "and you want"
+      },
+      "2": {
+        "key": "boughtBag",
+        "find": "Here you are!"
+      }
     },
-    "FRLG_HOF": {
-      "GFX": 4243960,
+    "FRLG_SLOTS": {
+      "REEL_PAL": 4604820,
+      "REEL_TILES": 4604980,
+      "REEL_PAL_TAGS": 4607892,
+      "DIGIT_PAL": 4607664,
+      "BG_PAL": 4608700,
+      "BG_TILES": 4608860,
+      "TAGS": 21,
+      "SYMBOLS": 7,
+      "PAYOUTS": 4604806,
+      "BG_MAP": 4610744,
+      "DIGIT_TILES": 4607696,
+      "REELS": 4604742,
+      "COUNT": 3
+    },
+    "BAG_SCREEN_FRLG": {
+      "COLS": 32,
+      "TILEMAP": 15217472,
+      "CURSOR_X": 1,
+      "UP_TEXT_Y": 2,
+      "ROW_HEIGHT": 16,
+      "ITEM_X": 9,
+      "DESC_X": 0,
+      "DESC_Y": 3,
+      "BAG_CENTRE": {
+        "x": 40,
+        "y": 68
+      },
+      "BAG_SIZE": 64,
+      "ITEM_ICON": {
+        "x": 8,
+        "y": 124,
+        "size": 24
+      },
+      "PALETTE": 15218228,
+      "TERMINATOR": 255,
+      "ITEM_PC_TILEMAP": 15217860,
+      "PALETTE_BANKS": 3,
+      "FEMALE_BANK0": 15218308,
+      "QUANTITY_X": 110,
+      "DESC_LINE": 14,
+      "ROWS": 20,
+      "WINDOWS": 4532964,
+      "WINDOW_STRIDE": 8,
+      "GFX": 15216972,
+      "WINDOW_KEYS": {
+        "3": "pocketName",
+        "1": "list",
+        "2": "description"
+      },
+      "TILES": 55
+    },
+    "FRLG_SUMMARY": {
+      "PAGES": {
+        "info": 15316504,
+        "moves": 15317456,
+        "movesInfo": 15317788,
+        "egg": 15318092,
+        "skills": 15316944
+      },
+      "PROGRESS_BASE": 345,
+      "MENU_INFO": 15294044,
+      "MENU_INFO_TYPES_PAL": 15294012,
+      "HP_BAR": 15316280,
+      "EXP_BAR": 15316080,
+      "BAR_PAL": 15316472,
+      "HP_YELLOW": 4601036,
+      "HP_RED": 4601068,
+      "CURSOR_LEFT": 4600160,
+      "PROGRESS": {
+        "info": {
+          "9": {
+            "3": 0,
+            "1": 18,
+            "2": 17
+          },
+          "11": {
+            "3": 0,
+            "1": 21,
+            "2": 18
+          },
+          "1": {
+            "3": 0,
+            "1": 17,
+            "2": 13
+          },
+          "3": {
+            "3": 0,
+            "1": 16,
+            "2": 14
+          },
+          "12": {
+            "3": 1,
+            "1": 37,
+            "2": 18
+          },
+          "4": {
+            "3": 1,
+            "1": 32,
+            "2": 14
+          },
+          "10": {
+            "3": 1,
+            "1": 34,
+            "2": 17
+          },
+          "2": {
+            "3": 1,
+            "1": 33,
+            "2": 13
+          },
+          "5": {
+            "3": 0,
+            "1": 18,
+            "2": 15
+          },
+          "6": {
+            "3": 1,
+            "1": 34,
+            "2": 15
+          },
+          "7": {
+            "3": 0,
+            "1": 20,
+            "2": 16
+          },
+          "8": {
+            "3": 1,
+            "1": 36,
+            "2": 16
+          }
+        },
+        "movesInfo": {
+          "9": {
+            "3": 0,
+            "1": 50,
+            "2": 17
+          },
+          "11": {
+            "3": 0,
+            "1": 48,
+            "2": 18
+          },
+          "1": {
+            "3": 0,
+            "1": 49,
+            "2": 13
+          },
+          "3": {
+            "3": 0,
+            "1": 1,
+            "2": 14
+          },
+          "12": {
+            "3": 1,
+            "1": 64,
+            "2": 18
+          },
+          "4": {
+            "3": 1,
+            "1": 19,
+            "2": 14
+          },
+          "10": {
+            "3": 1,
+            "1": 66,
+            "2": 17
+          },
+          "2": {
+            "3": 1,
+            "1": 65,
+            "2": 13
+          },
+          "5": {
+            "3": 0,
+            "1": 49,
+            "2": 15
+          },
+          "6": {
+            "3": 1,
+            "1": 65,
+            "2": 15
+          },
+          "7": {
+            "3": 0,
+            "1": 1,
+            "2": 16
+          },
+          "8": {
+            "3": 1,
+            "1": 19,
+            "2": 16
+          }
+        },
+        "skills": {
+          "9": {
+            "3": 0,
+            "1": 18,
+            "2": 17
+          },
+          "11": {
+            "3": 0,
+            "1": 21,
+            "2": 18
+          },
+          "1": {
+            "3": 0,
+            "1": 49,
+            "2": 13
+          },
+          "3": {
+            "3": 0,
+            "1": 1,
+            "2": 14
+          },
+          "12": {
+            "3": 1,
+            "1": 37,
+            "2": 18
+          },
+          "4": {
+            "3": 1,
+            "1": 19,
+            "2": 14
+          },
+          "10": {
+            "3": 1,
+            "1": 34,
+            "2": 17
+          },
+          "2": {
+            "3": 1,
+            "1": 65,
+            "2": 13
+          },
+          "5": {
+            "3": 0,
+            "1": 17,
+            "2": 15
+          },
+          "6": {
+            "3": 1,
+            "1": 33,
+            "2": 15
+          },
+          "7": {
+            "3": 0,
+            "1": 16,
+            "2": 16
+          },
+          "8": {
+            "3": 1,
+            "1": 32,
+            "2": 16
+          }
+        },
+        "moves": {
+          "9": {
+            "3": 0,
+            "1": 17,
+            "2": 17
+          },
+          "11": {
+            "3": 0,
+            "1": 48,
+            "2": 18
+          },
+          "1": {
+            "3": 0,
+            "1": 49,
+            "2": 13
+          },
+          "3": {
+            "3": 0,
+            "1": 1,
+            "2": 14
+          },
+          "12": {
+            "3": 1,
+            "1": 64,
+            "2": 18
+          },
+          "4": {
+            "3": 1,
+            "1": 19,
+            "2": 14
+          },
+          "10": {
+            "3": 1,
+            "1": 33,
+            "2": 17
+          },
+          "2": {
+            "3": 1,
+            "1": 65,
+            "2": 13
+          },
+          "5": {
+            "3": 0,
+            "1": 49,
+            "2": 15
+          },
+          "6": {
+            "3": 1,
+            "1": 65,
+            "2": 15
+          },
+          "7": {
+            "3": 0,
+            "1": 1,
+            "2": 16
+          },
+          "8": {
+            "3": 1,
+            "1": 19,
+            "2": 16
+          }
+        }
+      },
+      "CURSOR_PAL": 4600128,
+      "TEXT_HEADER_PAL": 4600032,
+      "TILES": 15312096,
+      "PAL": 15315856,
+      "BASE": {
+        "movesInfo": 4601256,
+        "moves": 4601504
+      },
+      "TEXT_MOVES_PAL": 4600096,
       "TEXT": {
-        "number": 4284144,
-        "champion": 4284164,
-        "saving": 4300176,
-        "dexNo": 4284200,
-        "idNo": 4284224,
-        "welcome": 4283972,
-        "level": 4284208,
-        "name": 4284216,
-        "time": 4283172
+        "pageSkills": 4299366,
+        "pageInfo": 4299352,
+        "pageMoves": 4299380,
+        "expPoints": 4299400,
+        "nextLv": 4299412,
+        "itemNone": 4284458,
+        "lv": 4284510,
+        "pp": 4284532
       },
-      "PAL": 4243928
+      "CURSOR_RIGHT": 4600460
     },
-    "FRLG_REGION_MAP": {
-      "TOPBAR_PAL": 4124792,
-      "EDGE_GFX": 4129132,
-      "EDGE_MAP": 4131912,
-      "MAPS": {
-        "kanto": 4130520,
-        "sevii45": 4131400,
-        "sevii67": 4131628,
-        "sevii123": 4131128
+    "FRLG_BACK": {
+      "POKEDUDE": 4,
+      "OLD_MAN": 5,
+      "COUNT": 6,
+      "PALETTES": 2334640,
+      "TABLE": 2334592,
+      "RED": 0,
+      "LEAF": 1
+    },
+    "FRLG_SS_ANNE": {
+      "PAL": 3758792,
+      "WAKE": 4690196,
+      "SMOKE": 4690708
+    },
+    "TM_CASE_SCREEN": {
+      "COLS": 32,
+      "TILEMAP": 15223792,
+      "CURSOR_X": 0,
+      "UP_TEXT_Y": 2,
+      "ROW_HEIGHT": 16,
+      "FEMALE_PALETTE": 15224224,
+      "DESC_X": 2,
+      "DESC_Y": 3,
+      "TILES": 91,
+      "PALETTE_BANKS": 4,
+      "ITEM_X": 8,
+      "QUANTITY_X": 126,
+      "DESC_LINE": 14,
+      "ROWS": 20,
+      "WINDOWS": 4598704,
+      "WINDOW_STRIDE": 8,
+      "GFX": 15222360,
+      "WINDOW_KEYS": {
+        "9": "money",
+        "1": "list",
+        "4": "title",
+        "3": "selectedMsg",
+        "2": "description",
+        "5": "moveInfoLabels",
+        "6": "moveInfo",
+        "7": "message",
+        "8": "sellQuantity"
       },
-      "SECTIONS": {
-        "kanto": 4137676,
-        "sevii45": 4138996,
-        "sevii67": 4139656,
-        "sevii123": 4138336
+      "PALETTE": 15224112
+    },
+    "BERRY_POUCH_SCREEN": {
+      "COLS": 32,
+      "TILEMAP": 15228100,
+      "CURSOR_X": 0,
+      "UP_TEXT_Y": 2,
+      "ROW_HEIGHT": 16,
+      "DESC_X": 2,
+      "DESC_Y": 3,
+      "TILES": 52,
+      "GFX": 15227472,
+      "PALETTE_BANKS": 3,
+      "FEMALE_BANK0": 15228020,
+      "PALETTE": 15227940,
+      "DESC_LINE": 14,
+      "ROWS": 20,
+      "WINDOWS": 4603352,
+      "WINDOW_STRIDE": 8,
+      "ITEM_X": 8,
+      "WINDOW_KEYS": {
+        "3": "title",
+        "1": "list",
+        "2": "description"
       },
-      "NAME_COUNT": 109,
-      "ICON_RED": 4125536,
-      "MAPSEC_START": 88,
-      "ICON_LEAF": 4125656,
-      "ICON_LEAF_PAL": 4124888,
-      "TILES": 4125784,
-      "PAL": 4124952,
-      "TEXT": {
-        "aSwitch": 4295906,
-        "aOk": 4295916,
-        "dpadMove": 4295920,
-        "aGuide": 4295880,
-        "aCancel": 4295888
+      "QUANTITY_X": 126
+    },
+    "TEACHY_TV_SCREEN": {
+      "COLS": 32,
+      "MESSAGE": {
+        "x": 16,
+        "y": 120,
+        "width": 208,
+        "height": 32
       },
-      "CURSOR_PAL": 4124824,
-      "NAMES": 4135656,
-      "ICON_RED_PAL": 4124856,
-      "CURSOR": 4125468
+      "END_TILES": {
+        "9": 225,
+        "11": 227,
+        "16": 232,
+        "15": 231,
+        "14": 230,
+        "4": 212,
+        "1": 209,
+        "3": 211,
+        "12": 228,
+        "13": 229,
+        "10": 226,
+        "2": 210,
+        "5": 213,
+        "6": 214,
+        "7": 215,
+        "8": 216
+      },
+      "TEXTS": {
+        "catchAfter": {
+          "1": 4309440,
+          "2": 213
+        },
+        "tmsBefore": {
+          "1": 4309652,
+          "2": 302
+        },
+        "tmTypes": {
+          "1": 4309954,
+          "2": 268
+        },
+        "tmDescription": {
+          "1": 4310222,
+          "2": 289
+        },
+        "tmsAfter": {
+          "1": 4310512,
+          "2": 118
+        },
+        "registerBefore": {
+          "1": 4310630,
+          "2": 362
+        },
+        "registerAfter": {
+          "1": 4310992,
+          "2": 424
+        },
+        "hello": {
+          "1": 4306552,
+          "2": 130
+        },
+        "battleBefore": {
+          "1": 4306682,
+          "2": 386
+        },
+        "battleAfter": {
+          "1": 4307068,
+          "2": 255
+        },
+        "statusBefore": {
+          "1": 4307324,
+          "2": 464
+        },
+        "statusAfter": {
+          "1": 4307788,
+          "2": 358
+        },
+        "matchupsBefore": {
+          "1": 4308146,
+          "2": 569
+        },
+        "matchupsAfter": {
+          "1": 4308714,
+          "2": 396
+        },
+        "catchBefore": {
+          "1": 4309110,
+          "2": 329
+        }
+      },
+      "TITLE": 15232492,
+      "TILES": 233,
+      "LIST": {
+        "arrowUpY": 12,
+        "arrowDownY": 100,
+        "noCaseUpTextY": 14,
+        "itemX": 8,
+        "noCaseMaxShowed": 5,
+        "arrowX": 120,
+        "upTextY": 6,
+        "maxShowed": 6,
+        "width": 176,
+        "height": 96,
+        "x": 32,
+        "y": 8,
+        "rowHeight": 16,
+        "cursorX": 0
+      },
+      "PALETTE_BANKS": 4,
+      "VOICEOVERS": {
+        "catch": {
+          "6": 1861704,
+          "4": 1861474,
+          "5": 1861670,
+          "3": 1861290,
+          "1": 1861152,
+          "2": 1861152
+        },
+        "status": {
+          "4": 1859954,
+          "5": 1860038,
+          "3": 1859894,
+          "1": 1859798,
+          "2": 1859798
+        },
+        "matchups": {
+          "7": 1861138,
+          "6": 1860950,
+          "4": 1860564,
+          "5": 1860642,
+          "3": 1860484,
+          "1": 1860062,
+          "2": 1860316
+        },
+        "battle": {
+          "4": 1859576,
+          "3": 1859512,
+          "1": 1859396,
+          "2": 1859458
+        }
+      },
+      "PALETTE": 15233048,
+      "LABELS": {
+        "status": {
+          "1": 4306424,
+          "2": 26
+        },
+        "cancel": {
+          "1": 4306546,
+          "2": 7
+        },
+        "battle": {
+          "1": 4306400,
+          "2": 24
+        },
+        "register": {
+          "1": 4306518,
+          "2": 27
+        },
+        "catch": {
+          "1": 4306474,
+          "2": 25
+        },
+        "tms": {
+          "1": 4306498,
+          "2": 20
+        },
+        "matchups": {
+          "1": 4306450,
+          "2": 24
+        }
+      },
+      "ROWS": 20,
+      "PAL_BYTES": 128,
+      "SCREEN": 15232104,
+      "GFX": 15229632,
+      "GFX_BYTES": 7456,
+      "MAP_BYTES": 2048
     },
     "FRLG_TRAINER_CARD": {
-      "STAR_TILE": 143,
+      "BADGE_PAL": 3985692,
+      "STAR_PAL": 3985724,
       "TILES": 15307384,
+      "STAR_TILE": 143,
       "LABELS": {
-        "yen": 4299560,
-        "pokedex": 4299562,
-        "name": 4299542,
         "time": 4299576,
+        "yen": 4299560,
         "id": 4299548,
+        "name": 4299542,
+        "pokedex": 4299562,
         "money": 4299554
       },
       "PAL_TABLE": 3987208,
@@ -1187,495 +1684,531 @@
       "BG_MAP": 3984644,
       "FRONT_MAP": 3982636,
       "BACK_MAP": 3983296,
-      "BADGES": 3986468,
-      "BADGE_PAL": 3985692,
-      "STAR_PAL": 3985724
-    },
-    "FRLG_OAK_SPEECH": {
-      "PIKACHU_PAGES": 4598032,
-      "MALE_NAMES": [
-        4598444,
-        19
-      ],
-      "FEMALE_NAMES": [
-        4598520,
-        19
-      ],
-      "TEXT_WINDOW_PALS": 4658888,
-      "BG_PALS": 4587400,
-      "GUIDE_TILES": 4587528,
-      "PIKACHU_MAP": 4589000,
-      "OAK_TILES": 4589252,
-      "OAK_MAP": 4589320,
-      "GUIDE_PAGE2": 4589492,
-      "GUIDE_PAGE3": 4589652,
-      "TEXT_CURSOR_GFX": 2008360,
-      "TEXT_CURSOR_PAL": 4321860,
-      "DIALOGUE_ARROW_GFX": 2007336,
-      "PICS": {
-        "oak": [
-          4593396,
-          4593460,
-          6
-        ],
-        "rival": [
-          4595148,
-          4595212,
-          6
-        ],
-        "red": [
-          4591644,
-          4591708,
-          4
-        ],
-        "leaf": [
-          4589812,
-          4589876,
-          4
-        ]
-      },
-      "PLATFORM": {
-        "GFX": 4596784,
-        "PALSIZE": 32,
-        "ROWS": 4,
-        "COLS": 4,
-        "PAL": 4596720
-      },
-      "PIKACHU_BODY": {
-        "GFX": 4597140,
-        "PALSIZE": 32,
-        "ROWS": 4,
-        "COLS": 4,
-        "PAL": 4596752
-      },
-      "PIKACHU_EARS": {
-        "GFX": 4597588,
-        "PALSIZE": 32,
-        "ROWS": 2,
-        "COLS": 4,
-        "PAL": 4596752
-      },
-      "PIKACHU_EYES": {
-        "GFX": 4597816,
-        "PALSIZE": 32,
-        "ROWS": 1,
-        "COLS": 2,
-        "PAL": 4596752
-      },
-      "TEXT": {
-        "newName": 1857322,
-        "girl": 4283346,
-        "boy": 4283342,
-        "welcome": 1858644,
-        "thisWorld": 1858786,
-        "inhabited": 1858798,
-        "iStudy": 1858854,
-        "tellMe": 1858968,
-        "askGender": 1857968,
-        "yourName": 1859014,
-        "soYourName": 1859054,
-        "whatWasHisName": 1859082,
-        "rivalNameAgain": 1859180,
-        "confirmRival": 1859216,
-        "rememberRival": 1859232,
-        "letsGo": 1859280,
-        "guideIntro": 1857544,
-        "guideDPad": 1857616,
-        "guideA": 1857686,
-        "guideB": 1857748,
-        "guideStart": 1857798,
-        "guideSelect": 1857834,
-        "guideLR": 1857884,
-        "controls": 4283240,
-        "aNext": 4283268,
-        "aNextBBack": 4283276
-      },
-      "KEYPAD_GFX": 2008796,
-      "RIVAL_NAMES": [
-        4598596,
-        4
-      ]
-    },
-    "FRLG_CALLBACK_EXACT_RUNTIME": {
-      "bonemerang": true,
-      "coin_throw": true,
-      "confuse_bounce": true,
-      "confuse_spiral": true,
-      "dirt_plume": true,
-      "falling_rock": true,
-      "fire_spiral_in": true,
-      "fire_spiral_out": true,
-      "guard_ring": true,
-      "gust_to_target": true,
-      "hyper_voice": true,
-      "ice_punch_swirl": true,
-      "leech_life": true,
-      "megahorn": true,
-      "beyond_target": true,
-      "twister_particle": true,
-      "orbit_scatter": true,
-      "overheat_flame": true,
-      "rock_blast": true,
-      "spikes": true,
-      "swirling_snowball": true,
-      "tear_drop": true,
-      "web_thread": true,
-      "vice_grip": true,
-      "weather_ball_down": true,
-      "zap_cannon_spark": true,
-      "swirling_fog": true,
-      "recycle": true,
-      "ice_ball": true,
-      "leech_seed": true,
-      "sludge_projectile": true,
-      "air_wave": true,
-      "acid_poison": true
+      "BADGES": 3986468
     },
     "FRLG_FIELD_SHADOW": {
       "PAL": 3772296,
       "PIC": 3768392
     },
-    "FRLG_CREDITS": {
-      "TEXTS": 4277240,
-      "SCRIPT": 4262704,
-      "SCRIPT_COUNT": 66,
-      "TEXT_STRIDE": 12,
-      "TITLE": 4313044
-    },
-    "FRLG_TITLE": {
-      "FLAME_X": false,
-      "LOGO": {
-        "PALSIZE": 512,
-        "BPP": 8,
-        "TILES": 15382852,
-        "MAP": 15389960,
-        "PAL": 15382340
-      },
-      "MON": {
-        "TILES": 15390600,
-        "MAP": 15393260,
-        "PAL": 15390568
-      },
-      "COPYRIGHT": {
-        "TILES": 15393704,
-        "MAP": 15394408,
-        "PAL": 15393672
-      },
-      "BORDER": {
-        "TILES": 3929452,
-        "MAP": 3929480,
-        "PAL": 15393672
-      },
-      "FLAMES": {
-        "GFX": 3929988,
-        "COLS": 2,
-        "ROWS": 2,
-        "PAL": 3929956
-      },
-      "EFFECT": "leaves",
-      "CRY": "VENUSAUR",
-      "STREAK": {
-        "GFX": 3930268,
-        "PAL": 3929956,
-        "COLS": 4,
-        "ROWS": 2
-      },
-      "STREAK_Y": 3930640
-    },
     "FRLG_NAMING": {
-      "GFX": 15303012,
+      "KB_MAPS": {
+        "upper": 15303704,
+        "lower": 15303896,
+        "symbols": 15304088
+      },
       "MENU_PAL": 15302820,
       "KB_PAL": 15302756,
       "KEYPAD_GFX": 2008796,
-      "TEXT_WINDOW_PALS": 4658888,
+      "GFX": 15303012,
       "RIVAL_GFX": 4069308,
       "RIVAL_PAL": 15302788,
       "SPRITES": {
-        "frame": [
-          15304280,
-          40,
-          32,
-          4
-        ],
-        "cursor": [
-          15306360,
-          16,
-          16,
-          5
-        ],
-        "underscore": [
-          15307128,
-          8,
-          8,
-          3
-        ],
-        "swap_lower": [
-          15306840,
-          32,
-          16,
-          2
-        ],
-        "ok": [
-          15305400,
-          40,
-          24,
-          4
-        ],
-        "swap_upper": [
-          15306840,
-          32,
-          16,
-          1
-        ],
-        "back": [
-          15304920,
-          40,
-          24,
-          4
-        ],
-        "swap_others": [
-          15306840,
-          32,
-          16,
-          3
-        ],
-        "label_upper": [
-          15305880,
-          24,
-          8,
-          4
-        ],
-        "label_lower": [
-          15306040,
-          24,
-          8,
-          4
-        ],
-        "label_others": [
-          15306200,
-          24,
-          8,
-          4
-        ],
-        "cursor_filled": [
-          15306680,
-          16,
-          16,
-          5
-        ],
-        "arrow": [
-          15307096,
-          8,
-          8,
-          3
-        ]
+        "back": {
+          "4": 4,
+          "3": 24,
+          "1": 15304920,
+          "2": 40
+        },
+        "label_others": {
+          "4": 4,
+          "3": 8,
+          "1": 15306200,
+          "2": 24
+        },
+        "cursor_filled": {
+          "4": 5,
+          "3": 16,
+          "1": 15306680,
+          "2": 16
+        },
+        "arrow": {
+          "4": 3,
+          "3": 8,
+          "1": 15307096,
+          "2": 8
+        },
+        "underscore": {
+          "4": 3,
+          "3": 8,
+          "1": 15307128,
+          "2": 8
+        },
+        "ok": {
+          "4": 4,
+          "3": 24,
+          "1": 15305400,
+          "2": 40
+        },
+        "cursor": {
+          "4": 5,
+          "3": 16,
+          "1": 15306360,
+          "2": 16
+        },
+        "frame": {
+          "4": 4,
+          "3": 32,
+          "1": 15304280,
+          "2": 40
+        },
+        "label_lower": {
+          "4": 4,
+          "3": 8,
+          "1": 15306040,
+          "2": 24
+        },
+        "swap_upper": {
+          "4": 1,
+          "3": 16,
+          "1": 15306840,
+          "2": 32
+        },
+        "swap_lower": {
+          "4": 2,
+          "3": 16,
+          "1": 15306840,
+          "2": 32
+        },
+        "swap_others": {
+          "4": 3,
+          "3": 16,
+          "1": 15306840,
+          "2": 32
+        },
+        "label_upper": {
+          "4": 4,
+          "3": 8,
+          "1": 15305880,
+          "2": 24
+        }
       },
       "BG_MAP": 15303484,
-      "KB_MAPS": {
-        "upper": 15303704,
-        "symbols": 15304088,
-        "lower": 15303896
-      }
+      "TEXT_WINDOW_PALS": 4658888
+    },
+    "FRLG_REGION_MAP": {
+      "ICON_LEAF_PAL": 4124888,
+      "TEXT": {
+        "dpadMove": 4295920,
+        "aGuide": 4295880,
+        "aCancel": 4295888,
+        "aSwitch": 4295906,
+        "aOk": 4295916
+      },
+      "NAME_COUNT": 109,
+      "NAMES": 4135656,
+      "CURSOR_PAL": 4124824,
+      "TILES": 4125784,
+      "TOPBAR_PAL": 4124792,
+      "EDGE_GFX": 4129132,
+      "EDGE_MAP": 4131912,
+      "MAPS": {
+        "sevii123": 4131128,
+        "kanto": 4130520,
+        "sevii67": 4131628,
+        "sevii45": 4131400
+      },
+      "MAPSEC_START": 88,
+      "PAL": 4124952,
+      "SECTIONS": {
+        "sevii123": 4138336,
+        "kanto": 4137676,
+        "sevii67": 4139656,
+        "sevii45": 4138996
+      },
+      "CURSOR": 4125468,
+      "ICON_RED": 4125536,
+      "ICON_RED_PAL": 4124856,
+      "ICON_LEAF": 4125656
     },
     "FRLG_INTRO": {
+      "PRESENTS": {
+        "GFX": 4205328,
+        "ROWS": 1,
+        "PAL": 4203848,
+        "COLS": 4,
+        "PALSIZE": 32
+      },
+      "SCENE2_GENGAR": {
+        "GFX": 4231336,
+        "ROWS": 8,
+        "PAL": 4217824,
+        "COLS": 8,
+        "PALSIZE": 32
+      },
+      "SCENE2_NIDORINO": {
+        "GFX": 4232456,
+        "ROWS": 8,
+        "PAL": 4232424,
+        "COLS": 8,
+        "PALSIZE": 32
+      },
+      "SCENE3_GRASS": {
+        "GFX": 4233336,
+        "ROWS": 4,
+        "PAL": 4233304,
+        "COLS": 8,
+        "PALSIZE": 32
+      },
+      "SCENE3_SWIPE": {
+        "GFX": 4241072,
+        "ROWS": 8,
+        "PAL": 4241008,
+        "COLS": 4,
+        "PALSIZE": 32
+      },
+      "SCENE3_DUST": {
+        "GFX": 4241692,
+        "ROWS": 2,
+        "PAL": 4241040,
+        "COLS": 2,
+        "PALSIZE": 32
+      },
       "SCENE3_GENGAR_PIECES": {
         "GFX": 4234076,
         "PALSIZE": 32,
+        "PAL": 4217824,
         "PIECES": {
-          "bl": [
-            96,
-            8,
-            8
-          ],
-          "br": [
-            160,
-            4,
-            8
-          ],
-          "tl": [
-            0,
-            8,
-            8
-          ],
-          "tr": [
-            64,
-            4,
-            8
-          ]
-        },
-        "PAL": 4217824
+          "tl": {
+            "3": 8,
+            "1": 0,
+            "2": 8
+          },
+          "tr": {
+            "3": 8,
+            "1": 64,
+            "2": 4
+          },
+          "bl": {
+            "3": 8,
+            "1": 96,
+            "2": 8
+          },
+          "br": {
+            "3": 8,
+            "1": 160,
+            "2": 4
+          }
+        }
       },
       "SCENE3_SWIPE_BOTTOM": {
         "GFX": 4241072,
         "PALSIZE": 32,
+        "PAL": 4241008,
         "PIECES": {
-          "a": [
-            64,
-            4,
-            2
-          ],
-          "b": [
-            72,
-            4,
-            2
-          ]
-        },
-        "PAL": 4241008
+          "a": {
+            "3": 2,
+            "1": 64,
+            "2": 4
+          },
+          "b": {
+            "3": 2,
+            "1": 72,
+            "2": 4
+          }
+        }
       },
       "GF_BG": {
         "GFX": 4203660,
-        "PALSIZE": 32,
-        "BANK": 0,
         "MAP": 4203684,
-        "PAL": 4203628
+        "PAL": 4203628,
+        "BANK": 0,
+        "PALSIZE": 32
       },
       "GF_ART": {
         "GFX": 4204340,
-        "PALSIZE": 32,
         "ROWS": 8,
+        "PAL": 4203848,
         "COLS": 4,
-        "PAL": 4203848
+        "PALSIZE": 32
       },
       "GF_TEXT": {
         "GFX": 4203880,
-        "PALSIZE": 32,
         "ROWS": 2,
+        "PAL": 4203848,
         "COLS": 18,
-        "PAL": 4203848
+        "PALSIZE": 32
       },
       "SCENE1_GRASS": {
         "GFX": 4205456,
-        "PALSIZE": 32,
-        "BANK": 1,
         "MAP": 4210212,
-        "PAL": 4205424
+        "PAL": 4205424,
+        "BANK": 1,
+        "PALSIZE": 32
       },
       "SCENE1_BG": {
         "GFX": 4212520,
-        "PALSIZE": 32,
-        "BANK": 2,
         "MAP": 4214200,
-        "PAL": 4212488
+        "PAL": 4212488,
+        "BANK": 2,
+        "PALSIZE": 32
       },
       "SCENE2_BG": {
         "GFX": 4215376,
-        "PALSIZE": 96,
-        "BANK": 1,
         "MAP": 4216524,
-        "PAL": 4215280
+        "PAL": 4215280,
+        "BANK": 1,
+        "PALSIZE": 96
       },
       "SCENE2_PLANTS": {
         "GFX": 4217188,
-        "PALSIZE": 96,
-        "BANK": 1,
         "MAP": 4217624,
-        "PAL": 4215280
+        "PAL": 4215280,
+        "BANK": 1,
+        "PALSIZE": 96
       },
       "SCENE2_GENGAR_CLOSE": {
         "GFX": 4217856,
-        "PALSIZE": 32,
-        "BANK": 5,
         "MAP": 4219528,
-        "PAL": 4217824
+        "PAL": 4217824,
+        "BANK": 5,
+        "PALSIZE": 32
       },
       "SCENE2_NIDORINO_CLOSE": {
         "GFX": 4220048,
-        "PALSIZE": 32,
-        "BANK": 6,
         "MAP": 4222988,
-        "PAL": 4220016
+        "PAL": 4220016,
+        "BANK": 6,
+        "PALSIZE": 32
       },
       "SCENE3_BG": {
         "GFX": 4223660,
-        "PALSIZE": 64,
-        "BANK": 1,
         "MAP": 4225164,
-        "PAL": 4223596
+        "PAL": 4223596,
+        "BANK": 1,
+        "PALSIZE": 64
       },
       "SCENE3_GENGAR_BOUNCE": {
         "GFX": 4225496,
-        "PALSIZE": 32,
-        "BANK": 5,
         "MAP": 4230100,
-        "PAL": 4217824
+        "PAL": 4217824,
+        "BANK": 5,
+        "PALSIZE": 32
       },
       "SCENE3_GENGAR_BACK": {
         "GFX": 4234076,
-        "PALSIZE": 32,
         "ROWS": 8,
+        "PAL": 4217824,
         "COLS": 8,
-        "PAL": 4217824
+        "PALSIZE": 32
       },
       "SCENE3_NIDORINO": {
         "GFX": 4235808,
-        "PALSIZE": 32,
         "ROWS": 8,
+        "PAL": 4232424,
         "COLS": 8,
-        "PAL": 4232424
+        "PALSIZE": 32
       },
       "STAR": {
         "GFX": 4204704,
-        "PALSIZE": 32,
         "ROWS": 2,
+        "PAL": 4204672,
         "COLS": 2,
-        "PAL": 4204672
+        "PALSIZE": 32
       },
       "SPARKLE_SMALL": {
         "GFX": 4204824,
-        "PALSIZE": 32,
         "ROWS": 1,
+        "PAL": 4204792,
         "COLS": 1,
-        "PAL": 4204792
+        "PALSIZE": 32
       },
       "SPARKLE_BIG": {
         "GFX": 4204904,
-        "PALSIZE": 32,
         "ROWS": 4,
+        "PAL": 4204792,
         "COLS": 4,
-        "PAL": 4204792
-      },
-      "PRESENTS": {
-        "GFX": 4205328,
-        "PALSIZE": 32,
-        "ROWS": 1,
-        "COLS": 4,
-        "PAL": 4203848
-      },
-      "SCENE2_GENGAR": {
-        "GFX": 4231336,
-        "PALSIZE": 32,
-        "ROWS": 8,
-        "COLS": 8,
-        "PAL": 4217824
-      },
-      "SCENE2_NIDORINO": {
-        "GFX": 4232456,
-        "PALSIZE": 32,
-        "ROWS": 8,
-        "COLS": 8,
-        "PAL": 4232424
-      },
-      "SCENE3_GRASS": {
-        "GFX": 4233336,
-        "PALSIZE": 32,
-        "ROWS": 4,
-        "COLS": 8,
-        "PAL": 4233304
-      },
-      "SCENE3_SWIPE": {
-        "GFX": 4241072,
-        "PALSIZE": 32,
-        "ROWS": 8,
-        "COLS": 4,
-        "PAL": 4241008
-      },
-      "SCENE3_DUST": {
-        "GFX": 4241692,
-        "PALSIZE": 32,
-        "ROWS": 2,
-        "COLS": 2,
-        "PAL": 4241040
+        "PALSIZE": 32
       }
+    },
+    "FRLG_ART": {
+      "FOSSILS": {
+        "aerodactyl": {
+          "TILES": 4064700,
+          "PAL": 4066748
+        },
+        "kabutops": {
+          "TILES": 4066780,
+          "PAL": 4068828
+        }
+      },
+      "DIPLOMA": {
+        "GFX": 4277756,
+        "MAP": 4281124,
+        "PAL": 4282256,
+        "PALSIZE": 64,
+        "TEXT": {
+          "player": 4305994,
+          "document": 4306004,
+          "gameFreak": 4306112,
+          "national": 4306122,
+          "kanto": 4306132
+        }
+      },
+      "CONFETTI": {
+        "SHEET": 13817340,
+        "PAL": 13817628
+      },
+      "SEAGALLOP": {
+        "WATER_PAL": 4622996,
+        "MAP_WB": 4623028,
+        "MAP_EB": 4625076,
+        "FERRY": 4627124,
+        "FERRY_TILES": 40,
+        "FERRY_PAL": 4628404,
+        "WAKE": 4628436,
+        "MATRIX": 4630532,
+        "WATER": 4621684,
+        "WATER_TILES": 41
+      },
+      "CREDITS": {
+        "GROUND_DIRT": {
+          "TILES": 4273840,
+          "PAL": 4273808
+        },
+        "GROUND_CITY": {
+          "TILES": 4275188,
+          "PAL": 4275156
+        },
+        "SPRITE_PARAMS": 4276568,
+        "MONS": {
+          "4": {
+            "species": 25,
+            "1": {
+              "W": 10,
+              "H": 10,
+              "Y": 40,
+              "TILES": 4259796,
+              "X": 80
+            },
+            "2": {
+              "W": 12,
+              "H": 12,
+              "Y": 32,
+              "TILES": 4260848,
+              "X": 72
+            }
+          },
+          "3": {
+            "species": 9,
+            "1": {
+              "W": 10,
+              "H": 10,
+              "Y": 40,
+              "TILES": 4255868,
+              "X": 80
+            },
+            "2": {
+              "W": 10,
+              "H": 12,
+              "Y": 32,
+              "TILES": 4257664,
+              "X": 80
+            }
+          },
+          "1": {
+            "species": 6,
+            "1": {
+              "W": 10,
+              "H": 10,
+              "Y": 40,
+              "TILES": 4245960,
+              "X": 80
+            },
+            "2": {
+              "W": 12,
+              "H": 13,
+              "Y": 24,
+              "TILES": 4247652,
+              "X": 72
+            }
+          },
+          "2": {
+            "species": 3,
+            "1": {
+              "W": 10,
+              "H": 10,
+              "Y": 40,
+              "TILES": 4251540,
+              "X": 80
+            },
+            "2": {
+              "W": 12,
+              "H": 10,
+              "Y": 40,
+              "TILES": 4253504,
+              "X": 72
+            }
+          }
+        },
+        "COPYRIGHT": {
+          "PAL": 15394844,
+          "TILES": 15394876,
+          "MAP": 15395828
+        },
+        "THE_END": {
+          "PAL": 4262204,
+          "TILES": 4262236,
+          "MAP": 4262352
+        },
+        "POKEBALL": {
+          "MAP": 15381388,
+          "TILES": 15379480,
+          "PALS": 15379352
+        },
+        "PLAYER_MALE": {
+          "TILES": 4263020,
+          "PAL": 4262988
+        },
+        "PLAYER_FEMALE": {
+          "TILES": 4266580,
+          "PAL": 4266548
+        },
+        "RIVAL": {
+          "TILES": 4270076,
+          "PAL": 4270044
+        },
+        "GROUND_GRASS": {
+          "TILES": 4272500,
+          "PAL": 4272468
+        }
+      }
+    },
+    "FRLG_POCKET_ART": {
+      "POUCH": 15226508,
+      "POUCH_PAL": 15228060,
+      "HM": 15307160,
+      "TYPES": {
+        "9": "STEEL",
+        "11": "FIRE",
+        "16": "ICE",
+        "18": "DARK",
+        "1": "NORMAL",
+        "12": "WATER",
+        "14": "ELECTRIC",
+        "15": "PSYCHIC",
+        "17": "DRAGON",
+        "2": "FIGHTING",
+        "6": "ROCK",
+        "13": "GRASS",
+        "10": "MYSTERY",
+        "4": "POISON",
+        "5": "GROUND",
+        "3": "FLYING",
+        "7": "BUG",
+        "8": "GHOST"
+      },
+      "TM_GFX": 15222360,
+      "TM_MENU_MAP": 15223460,
+      "TM_CASE_MAP": 15223792,
+      "TM_PAL": {
+        "male": 15224112,
+        "female": 15224224
+      },
+      "DISC": 15224336,
+      "DISC_PAL1": 15224736,
+      "DISC_PAL2": 15225064,
+      "DISC_OFFSETS": 4598872,
+      "STD_PAL": 4321860
     },
     "FRLG_TRAINER_TOWER": {
       "NUM_CLASSES": 150,
@@ -1699,167 +2232,522 @@
       "CLASS_TO_TRAINER": 2439450,
       "CLASS_TO_PIC": 2439300
     },
-    "FRLG_MART_TEXT": [
-      {
-        "key": "buyTotal",
-        "find": "and you want"
+    "FRLG_STORAGE": {
+      "HAND_PAL": 4008456,
+      "PAL": {
+        "2": 15320216,
+        "15": 3991628,
+        "3": 3990900,
+        "1": 15320152,
+        "0": 15320184
       },
-      {
-        "key": "boughtBag",
-        "find": "Here you are!"
-      },
-      {
-        "key": "anythingElse",
-        "find": "anything else I can do"
-      }
-    ],
-    "ITEM_PC_FRLG": {
-      "GFX": 15225104,
-      "DESC_LINE": 14,
-      "WINDOWS": 4536760,
-      "WINDOW_STRIDE": 8,
-      "WINDOW_KEYS": [
-        "list",
-        "description",
-        "label",
-        "quantity",
-        "submenu",
-        "message"
-      ],
-      "COLS": 32,
-      "ITEM_X": 9,
-      "UP_TEXT_Y": 2,
-      "ROW_HEIGHT": 16,
-      "DESC_X": 0,
-      "DESC_Y": 3,
-      "PALETTE": 15225992,
-      "TILEMAP": 15226072,
-      "ITEM_ICON": {
-        "y": 124,
-        "size": 24,
-        "x": 8
-      },
-      "CURSOR_X": 1,
-      "PALETTE_BANKS": 3,
-      "ROWS": 20,
-      "SUBWINDOWS": {
-        "quantityPrompt": {
-          "y": 120,
-          "height": 32,
-          "width": 128,
-          "x": 48
-        },
-        "result": {
-          "y": 120,
-          "height": 32,
-          "width": 184,
-          "x": 48
-        },
-        "selected": {
-          "y": 120,
-          "height": 32,
-          "width": 112,
-          "x": 48
-        }
-      },
-      "QUANTITY_X": 110
+      "MENU_GFX": 15320248,
+      "MENU_MAP": 3990584,
+      "SCROLL_GFX": 3990132,
+      "SCROLL_MAP": 3990284,
+      "PKMN_DATA": 3990836,
+      "CLOSE_BOX": 3990964,
+      "PARTY_MAP": 15321964,
+      "SLOT_FILLED": 3991036,
+      "SLOT_EMPTY": 3991060,
+      "HAND": 4008488,
+      "HAND_SHADOW": 4010536
     },
-    "FRLG_SPECIAL_TEXTS": {
-      "rating": [
-        1731826,
-        1731912,
-        1732026,
-        1732114,
-        1732224,
-        1732326,
-        1732428,
-        1732486,
-        1732556,
-        1732620,
-        1732670,
-        1732736,
-        1732788,
-        1732836,
-        1732882,
-        1732944
-      ],
-      "exit": 4284420,
-      "badges": [
-        4292116,
-        4292130,
-        4292142,
-        4292156,
-        4292168,
-        4292178,
-        4292190,
-        4292202
-      ],
-      "floors": [
-        4292260,
-        4292256,
-        4292252,
-        4292248,
-        4292214,
-        4292216,
-        4292220,
-        4292222,
-        4292226,
-        4292228,
-        4292232,
-        4292234,
-        4292238,
-        4292240,
-        4292244,
-        4292264
-      ],
-      "nowOn": 4292272,
-      "pcMenu": [
-        4291034,
-        4291048,
-        4291058,
-        4291086,
-        4291066,
-        4291078
-      ],
-      "seagallop": [
-        4291714,
-        4291630,
-        4291642,
-        4291652,
-        4291666,
-        4291678,
-        4291690,
-        4291700
-      ],
-      "other": 4291624
+    "FRLG_TITLE": {
+      "LOGO": {
+        "TILES": 15382852,
+        "MAP": 15389960,
+        "PAL": 15382340,
+        "BPP": 8,
+        "PALSIZE": 512
+      },
+      "MON": {
+        "PAL": 15390568,
+        "TILES": 15390600,
+        "MAP": 15393260
+      },
+      "COPYRIGHT": {
+        "PAL": 15393672,
+        "TILES": 15393704,
+        "MAP": 15394408
+      },
+      "BORDER": {
+        "PAL": 15393672,
+        "TILES": 3929452,
+        "MAP": 3929480
+      },
+      "FLAMES": {
+        "GFX": 3929988,
+        "PAL": 3929956,
+        "ROWS": 2,
+        "COLS": 2
+      },
+      "FLAME_X": false,
+      "EFFECT": "leaves",
+      "CRY": "VENUSAUR",
+      "STREAK": {
+        "GFX": 3930268,
+        "PAL": 3929956,
+        "COLS": 4,
+        "ROWS": 2
+      },
+      "STREAK_Y": 3930640
+    },
+    "FRLG_CREDITS": {
+      "TITLE": 4313044,
+      "SCRIPT_COUNT": 66,
+      "SCRIPT": 4262704,
+      "TEXT_STRIDE": 12,
+      "TEXTS": 4277240
     },
     "FRLG_FLY_BIRD": {
       "PAL": 3520840,
       "PIC": 3789736
     },
+    "ITEM_PC_FRLG": {
+      "COLS": 32,
+      "TILEMAP": 15226072,
+      "CURSOR_X": 1,
+      "UP_TEXT_Y": 2,
+      "ROW_HEIGHT": 16,
+      "DESC_X": 0,
+      "DESC_Y": 3,
+      "ITEM_ICON": {
+        "x": 8,
+        "y": 124,
+        "size": 24
+      },
+      "GFX": 15225104,
+      "PALETTE_BANKS": 3,
+      "SUBWINDOWS": {
+        "selected": {
+          "x": 48,
+          "y": 120,
+          "width": 112,
+          "height": 32
+        },
+        "quantityPrompt": {
+          "x": 48,
+          "y": 120,
+          "width": 128,
+          "height": 32
+        },
+        "result": {
+          "x": 48,
+          "y": 120,
+          "width": 184,
+          "height": 32
+        }
+      },
+      "PALETTE": 15225992,
+      "DESC_LINE": 14,
+      "ROWS": 20,
+      "WINDOWS": 4536760,
+      "WINDOW_STRIDE": 8,
+      "ITEM_X": 9,
+      "WINDOW_KEYS": {
+        "6": "message",
+        "4": "quantity",
+        "5": "submenu",
+        "3": "label",
+        "1": "list",
+        "2": "description"
+      },
+      "QUANTITY_X": 110
+    },
+    "FRLG_POKEDEX": {
+      "AREA_MARKERS": 4599712,
+      "AREA_MARKER_COUNT": 80,
+      "MODE_LIST_KANTO": 4528524,
+      "MODE_LIST_KANTO_ROWS": 19,
+      "MODE_LIST_NATIONAL": 4528700,
+      "MODE_LIST_NATIONAL_ROWS": 20,
+      "CATEGORY_COUNT": 9,
+      "CATEGORY_TOTAL": 386,
+      "DEX_AREAS_KANTO": 4602728,
+      "DEX_AREAS_KANTO_COUNT": 55,
+      "DEX_AREAS_SEVII": 4603100,
+      "DEX_AREAS_SEVII_COUNT": 7,
+      "SILHOUETTE_PAL": 4529544,
+      "MARKER_SHAPES": {
+        "6": {
+          "3": 29,
+          "1": 16,
+          "2": 32
+        },
+        "4": {
+          "3": 13,
+          "1": 16,
+          "2": 32
+        },
+        "2": {
+          "3": 3,
+          "1": 8,
+          "2": 16
+        },
+        "5": {
+          "3": 21,
+          "1": 32,
+          "2": 16
+        },
+        "3": {
+          "3": 5,
+          "1": 32,
+          "2": 16
+        },
+        "1": {
+          "3": 1,
+          "1": 16,
+          "2": 8
+        },
+        "0": {
+          "3": 0,
+          "1": 8,
+          "2": 8
+        }
+      },
+      "TEXT": {
+        "pickOkExit": 4283789,
+        "pickFlipPage": 4283816,
+        "ht": 4283860,
+        "wt": 4283863,
+        "pokemon": 4283851,
+        "cry": 4283881,
+        "cancelPrevious": 4283915,
+        "areaUnknown": 4283950,
+        "page": 4283966,
+        "area": 4283940,
+        "lbs": 4283868,
+        "next": 4283908,
+        "size": 4283945,
+        "nextDataCancel": 4283887,
+        "listTitle": 4283769,
+        "search": 4283782
+      },
+      "CAUGHT": 4469820,
+      "NAT_PAL": 4457756,
+      "FOOTPRINTS": 4454636,
+      "KANTO_TILES": 4456624,
+      "NAT_TILES": 4456936,
+      "KANTO_PAL": 4457220,
+      "CATEGORIES": 4531820,
+      "FOOTPRINT_COUNT": 413,
+      "AREA_MAP": 4469852,
+      "AREA_SEVII": {
+        "7": {
+          "4": 4,
+          "5": 4,
+          "3": 13,
+          "1": 4471440,
+          "2": 25
+        },
+        "6": {
+          "4": 4,
+          "5": 4,
+          "3": 13,
+          "1": 4471276,
+          "2": 21
+        },
+        "4": {
+          "4": 4,
+          "5": 4,
+          "3": 13,
+          "1": 4470964,
+          "2": 13
+        },
+        "5": {
+          "4": 4,
+          "5": 4,
+          "3": 13,
+          "1": 4471092,
+          "2": 17
+        },
+        "3": {
+          "4": 4,
+          "5": 3,
+          "3": 10,
+          "1": 4470840,
+          "2": 13
+        },
+        "1": {
+          "4": 4,
+          "5": 3,
+          "3": 4,
+          "1": 4470604,
+          "2": 13
+        },
+        "2": {
+          "4": 4,
+          "5": 3,
+          "3": 7,
+          "1": 4470724,
+          "2": 13
+        }
+      },
+      "AREA_MARKER_TILES": 4599388,
+      "AREA_MARKER_PAL": 4599356
+    },
+    "FRLG_METATILE_SCRIPTS": {
+      "9": {
+        "at": 1816706,
+        "name": "CableClub_EventScript_ShowBattleRecords",
+        "beh": 173,
+        "north": true
+      },
+      "11": {
+        "at": 1734348,
+        "name": "EventScript_Indigo_UltimateGoal",
+        "beh": 175
+      },
+      "16": {
+        "at": 1734248,
+        "name": "EventScript_Telephone",
+        "beh": 204
+      },
+      "18": {
+        "at": 1734258,
+        "name": "EventScript_AdvertisingPoster",
+        "beh": 206
+      },
+      "19": {
+        "at": 1734266,
+        "name": "EventScript_TastyFood",
+        "beh": 207
+      },
+      "1": {
+        "at": 1734114,
+        "name": "EventScript_Bookshelf",
+        "beh": 164
+      },
+      "21": {
+        "at": 1734284,
+        "name": "EventScript_Cup",
+        "beh": 216
+      },
+      "12": {
+        "at": 1734356,
+        "name": "EventScript_Indigo_HighestAuthority",
+        "beh": 200
+      },
+      "23": {
+        "at": 1734320,
+        "name": "EventScript_NeatlyLinedUpTools",
+        "beh": 220
+      },
+      "14": {
+        "at": 1734230,
+        "name": "EventScript_Painting",
+        "beh": 202
+      },
+      "26": {
+        "at": 1734176,
+        "name": "EventScript_Burglary",
+        "beh": 223
+      },
+      "27": {
+        "at": 1856632,
+        "name": "TrainerTower_EventScript_ShowTime",
+        "beh": 235
+      },
+      "15": {
+        "at": 1734240,
+        "name": "EventScript_PowerPlantMachine",
+        "beh": 203
+      },
+      "29": {
+        "at": 1731598,
+        "name": "EventScript_WallTownMap",
+        "beh": 133
+      },
+      "30": {
+        "at": 1730864,
+        "name": "EventScript_PC",
+        "beh": 131
+      },
+      "31": {
+        "at": 1731304,
+        "name": "EventScript_CurrentTooFast",
+        "water": true,
+        "beh": 91
+      },
+      "17": {
+        "at": 1734150,
+        "name": "EventScript_Computer",
+        "beh": 205
+      },
+      "28": {
+        "at": 1734186,
+        "name": "EventScript_PlayerFacingTVScreen",
+        "beh": 134,
+        "north": true
+      },
+      "25": {
+        "at": 1734140,
+        "name": "EventScript_VideoGame",
+        "beh": 222
+      },
+      "22": {
+        "at": 1734312,
+        "name": "EventScript_BlinkingLights",
+        "beh": 219
+      },
+      "24": {
+        "at": 1734158,
+        "name": "EventScript_ImpressiveMachine",
+        "beh": 221
+      },
+      "20": {
+        "at": 1734276,
+        "name": "EventScript_TrashBin",
+        "beh": 215
+      },
+      "2": {
+        "at": 1734122,
+        "name": "EventScript_PokeMartShelf",
+        "beh": 165
+      },
+      "6": {
+        "at": 1734204,
+        "name": "EventScript_Kitchen",
+        "beh": 169
+      },
+      "13": {
+        "at": 1734168,
+        "name": "EventScript_Blueprints",
+        "beh": 201
+      },
+      "10": {
+        "at": 1734132,
+        "name": "EventScript_Food",
+        "beh": 174
+      },
+      "4": {
+        "at": 1734330,
+        "name": "EventScript_PokemartSign",
+        "beh": 167,
+        "north": true
+      },
+      "5": {
+        "at": 1734194,
+        "name": "EventScript_Cabinet",
+        "beh": 168
+      },
+      "3": {
+        "at": 1734338,
+        "name": "EventScript_PokecenterSign",
+        "beh": 166,
+        "north": true
+      },
+      "7": {
+        "at": 1734212,
+        "name": "EventScript_Dresser",
+        "beh": 170
+      },
+      "8": {
+        "at": 1734222,
+        "name": "EventScript_Snacks",
+        "beh": 171
+      }
+    },
+    "FRLG_START_MENU": {
+      "LABELS": {
+        "2": 4282530,
+        "7": 4284626,
+        "6": 4284620,
+        "4": false,
+        "5": 4284618,
+        "3": 4284608,
+        "1": 4284600,
+        "8": 4284632
+      },
+      "DESCS": {
+        "2": 4300278,
+        "7": 4300530,
+        "6": 4300458,
+        "4": false,
+        "5": 4300420,
+        "3": 4300348,
+        "1": 4300210,
+        "8": 4300596
+      },
+      "HELP_GFX": 4546760,
+      "HELP_PAL": 4658952,
+      "HELP_TILES": {
+        "3": 14,
+        "1": 0,
+        "2": 5
+      }
+    },
+    "FRLG_SPECIAL_TEXTS": {
+      "exit": 4284420,
+      "badges": {
+        "2": 4292130,
+        "7": 4292190,
+        "6": 4292178,
+        "4": 4292156,
+        "5": 4292168,
+        "3": 4292142,
+        "1": 4292116,
+        "8": 4292202
+      },
+      "other": 4291624,
+      "floors": {
+        "9": 4292226,
+        "11": 4292232,
+        "16": 4292264,
+        "15": 4292244,
+        "14": 4292240,
+        "4": 4292248,
+        "1": 4292260,
+        "3": 4292252,
+        "12": 4292234,
+        "13": 4292238,
+        "10": 4292228,
+        "2": 4292256,
+        "5": 4292214,
+        "6": 4292216,
+        "7": 4292220,
+        "8": 4292222
+      },
+      "nowOn": 4292272,
+      "pcMenu": {
+        "6": 4291078,
+        "4": 4291086,
+        "5": 4291066,
+        "3": 4291058,
+        "1": 4291034,
+        "2": 4291048
+      },
+      "seagallop": {
+        "2": 4291630,
+        "7": 4291690,
+        "6": 4291678,
+        "4": 4291652,
+        "5": 4291666,
+        "3": 4291642,
+        "1": 4291714,
+        "8": 4291700
+      },
+      "rating": {
+        "9": 1732556,
+        "11": 1732670,
+        "16": 1732944,
+        "15": 1732882,
+        "14": 1732836,
+        "4": 1732114,
+        "1": 1731826,
+        "3": 1732026,
+        "12": 1732736,
+        "13": 1732788,
+        "10": 1732620,
+        "2": 1731912,
+        "5": 1732224,
+        "6": 1732326,
+        "7": 1732428,
+        "8": 1732486
+      }
+    },
     "FRLG_BEHAVIOUR_OVERRIDES": {
-      "135": 166,
-      "151": 205,
-      "150": 204,
-      "149": 203,
-      "209": 90,
-      "147": 201,
-      "146": 200,
-      "145": 175,
-      "144": 174,
-      "159": 220,
-      "158": 219,
-      "88": 88,
-      "155": 216,
-      "154": 215,
-      "153": 207,
-      "10": 10,
-      "152": 206,
-      "136": 167,
-      "111": 239,
-      "137": 168,
-      "110": 238,
-      "138": 169,
       "85": 85,
       "139": 170,
       "163": 235,
@@ -1872,347 +2760,37 @@
       "160": 221,
       "109": 237,
       "108": 236,
-      "86": 86,
+      "145": 175,
       "129": 164,
       "162": 223,
       "130": 165,
       "208": 89,
       "17": 91,
-      "148": 202
-    },
-    "FRLG_START_MENU": {
-      "LABELS": [
-        4284600,
-        4282530,
-        4284608,
-        false,
-        4284618,
-        4284620,
-        4284626,
-        4284632
-      ],
-      "HELP_PAL": 4658952,
-      "HELP_TILES": [
-        0,
-        5,
-        14
-      ],
-      "HELP_GFX": 4546760,
-      "DESCS": [
-        4300210,
-        4300278,
-        4300348,
-        false,
-        4300420,
-        4300458,
-        4300530,
-        4300596
-      ]
-    },
-    "FRLG_SUMMARY": {
-      "PAGES": {
-        "movesInfo": 15317788,
-        "egg": 15318092,
-        "skills": 15316944,
-        "moves": 15317456,
-        "info": 15316504
-      },
-      "PROGRESS_BASE": 345,
-      "MENU_INFO": 15294044,
-      "MENU_INFO_TYPES_PAL": 15294012,
-      "HP_BAR": 15316280,
-      "EXP_BAR": 15316080,
-      "BAR_PAL": 15316472,
-      "HP_YELLOW": 4601036,
-      "HP_RED": 4601068,
-      "CURSOR_LEFT": 4600160,
-      "CURSOR_RIGHT": 4600460,
-      "TILES": 15312096,
-      "TEXT_HEADER_PAL": 4600032,
-      "PAL": 15315856,
-      "TEXT": {
-        "pageMoves": 4299380,
-        "pageInfo": 4299352,
-        "pageSkills": 4299366,
-        "lv": 4284510,
-        "itemNone": 4284458,
-        "expPoints": 4299400,
-        "pp": 4284532,
-        "nextLv": 4299412
-      },
-      "PROGRESS": {
-        "movesInfo": [
-          [
-            49,
-            13,
-            0
-          ],
-          [
-            65,
-            13,
-            1
-          ],
-          [
-            1,
-            14,
-            0
-          ],
-          [
-            19,
-            14,
-            1
-          ],
-          [
-            49,
-            15,
-            0
-          ],
-          [
-            65,
-            15,
-            1
-          ],
-          [
-            1,
-            16,
-            0
-          ],
-          [
-            19,
-            16,
-            1
-          ],
-          [
-            50,
-            17,
-            0
-          ],
-          [
-            66,
-            17,
-            1
-          ],
-          [
-            48,
-            18,
-            0
-          ],
-          [
-            64,
-            18,
-            1
-          ]
-        ],
-        "moves": [
-          [
-            49,
-            13,
-            0
-          ],
-          [
-            65,
-            13,
-            1
-          ],
-          [
-            1,
-            14,
-            0
-          ],
-          [
-            19,
-            14,
-            1
-          ],
-          [
-            49,
-            15,
-            0
-          ],
-          [
-            65,
-            15,
-            1
-          ],
-          [
-            1,
-            16,
-            0
-          ],
-          [
-            19,
-            16,
-            1
-          ],
-          [
-            17,
-            17,
-            0
-          ],
-          [
-            33,
-            17,
-            1
-          ],
-          [
-            48,
-            18,
-            0
-          ],
-          [
-            64,
-            18,
-            1
-          ]
-        ],
-        "info": [
-          [
-            17,
-            13,
-            0
-          ],
-          [
-            33,
-            13,
-            1
-          ],
-          [
-            16,
-            14,
-            0
-          ],
-          [
-            32,
-            14,
-            1
-          ],
-          [
-            18,
-            15,
-            0
-          ],
-          [
-            34,
-            15,
-            1
-          ],
-          [
-            20,
-            16,
-            0
-          ],
-          [
-            36,
-            16,
-            1
-          ],
-          [
-            18,
-            17,
-            0
-          ],
-          [
-            34,
-            17,
-            1
-          ],
-          [
-            21,
-            18,
-            0
-          ],
-          [
-            37,
-            18,
-            1
-          ]
-        ],
-        "skills": [
-          [
-            49,
-            13,
-            0
-          ],
-          [
-            65,
-            13,
-            1
-          ],
-          [
-            1,
-            14,
-            0
-          ],
-          [
-            19,
-            14,
-            1
-          ],
-          [
-            17,
-            15,
-            0
-          ],
-          [
-            33,
-            15,
-            1
-          ],
-          [
-            16,
-            16,
-            0
-          ],
-          [
-            32,
-            16,
-            1
-          ],
-          [
-            18,
-            17,
-            0
-          ],
-          [
-            34,
-            17,
-            1
-          ],
-          [
-            21,
-            18,
-            0
-          ],
-          [
-            37,
-            18,
-            1
-          ]
-        ]
-      },
-      "BASE": {
-        "moves": 4601504,
-        "movesInfo": 4601256
-      },
-      "TEXT_MOVES_PAL": 4600096,
-      "CURSOR_PAL": 4600128
+      "148": 202,
+      "135": 166,
+      "86": 86,
+      "151": 205,
+      "136": 167,
+      "150": 204,
+      "149": 203,
+      "209": 90,
+      "147": 201,
+      "146": 200,
+      "144": 174,
+      "159": 220,
+      "158": 219,
+      "88": 88,
+      "155": 216,
+      "154": 215,
+      "153": 207,
+      "10": 10,
+      "152": 206,
+      "111": 239,
+      "137": 168,
+      "110": 238,
+      "138": 169
     },
     "FRLG_EXACT_CALLBACK": {
-      "bonemerang": true,
-      "coin_throw": true,
-      "confuse_bounce": true,
-      "confuse_spiral": true,
-      "dirt_plume": true,
-      "falling_rock": true,
-      "fire_spiral_in": true,
-      "fire_spiral_out": true,
-      "fly_ball_attack": true,
-      "guard_ring": true,
-      "guillotine": true,
-      "gust_to_target": true,
-      "hyper_voice": true,
-      "ice_punch_swirl": true,
-      "leech_life": true,
       "lock_on": true,
       "megahorn": true,
       "beyond_target": true,
@@ -2239,501 +2817,182 @@
       "leech_seed": true,
       "sludge_projectile": true,
       "air_wave": true,
-      "acid_poison": true
+      "acid_poison": true,
+      "bonemerang": true,
+      "coin_throw": true,
+      "confuse_bounce": true,
+      "confuse_spiral": true,
+      "dirt_plume": true,
+      "falling_rock": true,
+      "fire_spiral_in": true,
+      "fire_spiral_out": true,
+      "fly_ball_attack": true,
+      "guard_ring": true,
+      "guillotine": true,
+      "gust_to_target": true,
+      "hyper_voice": true,
+      "ice_punch_swirl": true,
+      "leech_life": true
     },
-    "FRLG_METATILE_SCRIPTS": [
-      {
-        "at": 1734114,
-        "beh": 164,
-        "name": "EventScript_Bookshelf"
+    "FRLG_OAK_SPEECH": {
+      "RIVAL_NAMES": {
+        "1": 4598596,
+        "2": 4
       },
-      {
-        "at": 1734122,
-        "beh": 165,
-        "name": "EventScript_PokeMartShelf"
-      },
-      {
-        "at": 1734338,
-        "north": true,
-        "beh": 166,
-        "name": "EventScript_PokecenterSign"
-      },
-      {
-        "at": 1734330,
-        "north": true,
-        "beh": 167,
-        "name": "EventScript_PokemartSign"
-      },
-      {
-        "at": 1734194,
-        "beh": 168,
-        "name": "EventScript_Cabinet"
-      },
-      {
-        "at": 1734204,
-        "beh": 169,
-        "name": "EventScript_Kitchen"
-      },
-      {
-        "at": 1734212,
-        "beh": 170,
-        "name": "EventScript_Dresser"
-      },
-      {
-        "at": 1734222,
-        "beh": 171,
-        "name": "EventScript_Snacks"
-      },
-      {
-        "at": 1816706,
-        "north": true,
-        "beh": 173,
-        "name": "CableClub_EventScript_ShowBattleRecords"
-      },
-      {
-        "at": 1734132,
-        "beh": 174,
-        "name": "EventScript_Food"
-      },
-      {
-        "at": 1734348,
-        "beh": 175,
-        "name": "EventScript_Indigo_UltimateGoal"
-      },
-      {
-        "at": 1734356,
-        "beh": 200,
-        "name": "EventScript_Indigo_HighestAuthority"
-      },
-      {
-        "at": 1734168,
-        "beh": 201,
-        "name": "EventScript_Blueprints"
-      },
-      {
-        "at": 1734230,
-        "beh": 202,
-        "name": "EventScript_Painting"
-      },
-      {
-        "at": 1734240,
-        "beh": 203,
-        "name": "EventScript_PowerPlantMachine"
-      },
-      {
-        "at": 1734248,
-        "beh": 204,
-        "name": "EventScript_Telephone"
-      },
-      {
-        "at": 1734150,
-        "beh": 205,
-        "name": "EventScript_Computer"
-      },
-      {
-        "at": 1734258,
-        "beh": 206,
-        "name": "EventScript_AdvertisingPoster"
-      },
-      {
-        "at": 1734266,
-        "beh": 207,
-        "name": "EventScript_TastyFood"
-      },
-      {
-        "at": 1734276,
-        "beh": 215,
-        "name": "EventScript_TrashBin"
-      },
-      {
-        "at": 1734284,
-        "beh": 216,
-        "name": "EventScript_Cup"
-      },
-      {
-        "at": 1734312,
-        "beh": 219,
-        "name": "EventScript_BlinkingLights"
-      },
-      {
-        "at": 1734320,
-        "beh": 220,
-        "name": "EventScript_NeatlyLinedUpTools"
-      },
-      {
-        "at": 1734158,
-        "beh": 221,
-        "name": "EventScript_ImpressiveMachine"
-      },
-      {
-        "at": 1734140,
-        "beh": 222,
-        "name": "EventScript_VideoGame"
-      },
-      {
-        "at": 1734176,
-        "beh": 223,
-        "name": "EventScript_Burglary"
-      },
-      {
-        "at": 1856632,
-        "beh": 235,
-        "name": "TrainerTower_EventScript_ShowTime"
-      },
-      {
-        "at": 1734186,
-        "north": true,
-        "beh": 134,
-        "name": "EventScript_PlayerFacingTVScreen"
-      },
-      {
-        "at": 1731598,
-        "beh": 133,
-        "name": "EventScript_WallTownMap"
-      },
-      {
-        "at": 1730864,
-        "beh": 131,
-        "name": "EventScript_PC"
-      },
-      {
-        "water": true,
-        "at": 1731304,
-        "beh": 91,
-        "name": "EventScript_CurrentTooFast"
-      }
-    ],
-    "FRLG_BACK": {
-      "RED": 0,
-      "TABLE": 2334592,
-      "PALETTES": 2334640,
-      "COUNT": 6,
-      "LEAF": 1,
-      "POKEDUDE": 4,
-      "OLD_MAN": 5
-    },
-    "FRLG_POKEDEX": {
+      "BG_PALS": 4587400,
+      "GUIDE_TILES": 4587528,
+      "PIKACHU_MAP": 4589000,
+      "OAK_TILES": 4589252,
+      "OAK_MAP": 4589320,
+      "GUIDE_PAGE2": 4589492,
       "TEXT": {
-        "listTitle": 4283769,
-        "search": 4283782,
-        "pickOkExit": 4283789,
-        "pickFlipPage": 4283816,
-        "ht": 4283860,
-        "wt": 4283863,
-        "lbs": 4283868,
-        "cry": 4283881,
-        "nextDataCancel": 4283887,
-        "cancelPrevious": 4283915,
-        "areaUnknown": 4283950,
-        "size": 4283945,
-        "page": 4283966,
-        "area": 4283940,
-        "pokemon": 4283851,
-        "next": 4283908
+        "guideA": 1857686,
+        "guideDPad": 1857616,
+        "guideIntro": 1857544,
+        "rivalNameAgain": 1859180,
+        "confirmRival": 1859216,
+        "rememberRival": 1859232,
+        "boy": 4283342,
+        "girl": 4283346,
+        "welcome": 1858644,
+        "thisWorld": 1858786,
+        "inhabited": 1858798,
+        "letsGo": 1859280,
+        "tellMe": 1858968,
+        "askGender": 1857968,
+        "yourName": 1859014,
+        "guideB": 1857748,
+        "guideStart": 1857798,
+        "guideSelect": 1857834,
+        "guideLR": 1857884,
+        "controls": 4283240,
+        "aNext": 4283268,
+        "aNextBBack": 4283276,
+        "newName": 1857322,
+        "whatWasHisName": 1859082,
+        "iStudy": 1858854,
+        "soYourName": 1859054
       },
-      "AREA_MARKERS": 4599712,
-      "CAUGHT": 4469820,
-      "CATEGORIES": 4531820,
-      "KANTO_TILES": 4456624,
-      "NAT_TILES": 4456936,
-      "KANTO_PAL": 4457220,
-      "NAT_PAL": 4457756,
-      "FOOTPRINT_COUNT": 413,
-      "AREA_MAP": 4469852,
-      "AREA_SEVII": [
-        [
-          4470604,
-          13,
-          4,
-          4,
-          3
-        ],
-        [
-          4470724,
-          13,
-          7,
-          4,
-          3
-        ],
-        [
-          4470840,
-          13,
-          10,
-          4,
-          3
-        ],
-        [
-          4470964,
-          13,
-          13,
-          4,
-          4
-        ],
-        [
-          4471092,
-          17,
-          13,
-          4,
-          4
-        ],
-        [
-          4471276,
-          21,
-          13,
-          4,
-          4
-        ],
-        [
-          4471440,
-          25,
-          13,
-          4,
-          4
-        ]
-      ],
-      "AREA_MARKER_TILES": 4599388,
-      "AREA_MARKER_PAL": 4599356,
-      "FOOTPRINTS": 4454636,
-      "AREA_MARKER_COUNT": 80,
-      "MODE_LIST_KANTO": 4528524,
-      "MODE_LIST_KANTO_ROWS": 19,
-      "MODE_LIST_NATIONAL": 4528700,
-      "MODE_LIST_NATIONAL_ROWS": 20,
-      "CATEGORY_COUNT": 9,
-      "CATEGORY_TOTAL": 386,
-      "DEX_AREAS_KANTO": 4602728,
-      "DEX_AREAS_KANTO_COUNT": 55,
-      "DEX_AREAS_SEVII": 4603100,
-      "DEX_AREAS_SEVII_COUNT": 7,
-      "SILHOUETTE_PAL": 4529544,
-      "MARKER_SHAPES": [
-        [
-          16,
-          8,
-          1
-        ],
-        [
-          8,
-          16,
-          3
-        ],
-        [
-          32,
-          16,
-          5
-        ],
-        [
-          16,
-          32,
-          13
-        ],
-        [
-          32,
-          16,
-          21
-        ],
-        [
-          16,
-          32,
-          29
-        ]
-      ]
-    },
-    "BAG_SCREEN_FRLG": {
-      "GFX": 15216972,
-      "DESC_LINE": 14,
-      "WINDOWS": 4532964,
-      "WINDOW_STRIDE": 8,
-      "WINDOW_KEYS": [
-        "list",
-        "description",
-        "pocketName"
-      ],
-      "ITEM_PC_TILEMAP": 15217860,
-      "BAG_SIZE": 64,
-      "BAG_CENTRE": {
-        "y": 68,
-        "x": 40
-      },
-      "QUANTITY_X": 110,
-      "COLS": 32,
-      "ITEM_X": 9,
-      "UP_TEXT_Y": 2,
-      "ROW_HEIGHT": 16,
-      "TILES": 55,
-      "DESC_X": 0,
-      "DESC_Y": 3,
-      "PALETTE": 15218228,
-      "TERMINATOR": 255,
-      "ITEM_ICON": {
-        "y": 124,
-        "size": 24,
-        "x": 8
-      },
-      "CURSOR_X": 1,
-      "PALETTE_BANKS": 3,
-      "ROWS": 20,
-      "TILEMAP": 15217472,
-      "FEMALE_BANK0": 15218308
-    },
-    "FRLG_ART": {
-      "FOSSILS": {
-        "aerodactyl": {
-          "PAL": 4066748,
-          "TILES": 4064700
+      "TEXT_CURSOR_GFX": 2008360,
+      "TEXT_CURSOR_PAL": 4321860,
+      "DIALOGUE_ARROW_GFX": 2007336,
+      "PICS": {
+        "leaf": {
+          "3": 4,
+          "1": 4589812,
+          "2": 4589876
         },
-        "kabutops": {
-          "PAL": 4068828,
-          "TILES": 4066780
+        "red": {
+          "3": 4,
+          "1": 4591644,
+          "2": 4591708
+        },
+        "oak": {
+          "3": 6,
+          "1": 4593396,
+          "2": 4593460
+        },
+        "rival": {
+          "3": 6,
+          "1": 4595148,
+          "2": 4595212
         }
       },
-      "CREDITS": {
-        "GROUND_DIRT": {
-          "PAL": 4273808,
-          "TILES": 4273840
-        },
-        "GROUND_CITY": {
-          "PAL": 4275156,
-          "TILES": 4275188
-        },
-        "SPRITE_PARAMS": 4276568,
-        "MONS": [
-          [
-            {
-              "X": 80,
-              "Y": 40,
-              "TILES": 4245960,
-              "H": 10,
-              "W": 10
-            },
-            {
-              "X": 72,
-              "Y": 24,
-              "TILES": 4247652,
-              "H": 13,
-              "W": 12
-            }
-          ],
-          [
-            {
-              "X": 80,
-              "Y": 40,
-              "TILES": 4251540,
-              "H": 10,
-              "W": 10
-            },
-            {
-              "X": 72,
-              "Y": 40,
-              "TILES": 4253504,
-              "H": 10,
-              "W": 12
-            }
-          ],
-          [
-            {
-              "X": 80,
-              "Y": 40,
-              "TILES": 4255868,
-              "H": 10,
-              "W": 10
-            },
-            {
-              "X": 80,
-              "Y": 32,
-              "TILES": 4257664,
-              "H": 12,
-              "W": 10
-            }
-          ],
-          [
-            {
-              "X": 80,
-              "Y": 40,
-              "TILES": 4259796,
-              "H": 10,
-              "W": 10
-            },
-            {
-              "X": 72,
-              "Y": 32,
-              "TILES": 4260848,
-              "H": 12,
-              "W": 12
-            }
-          ]
-        ],
-        "THE_END": {
-          "TILES": 4262236,
-          "MAP": 4262352,
-          "PAL": 4262204
-        },
-        "POKEBALL": {
-          "TILES": 15379480,
-          "MAP": 15381388,
-          "PALS": 15379352
-        },
-        "COPYRIGHT": {
-          "TILES": 15394876,
-          "MAP": 15395828,
-          "PAL": 15394844
-        },
-        "PLAYER_MALE": {
-          "PAL": 4262988,
-          "TILES": 4263020
-        },
-        "PLAYER_FEMALE": {
-          "PAL": 4266548,
-          "TILES": 4266580
-        },
-        "RIVAL": {
-          "PAL": 4270044,
-          "TILES": 4270076
-        },
-        "GROUND_GRASS": {
-          "PAL": 4272468,
-          "TILES": 4272500
-        }
+      "PLATFORM": {
+        "GFX": 4596784,
+        "ROWS": 4,
+        "PAL": 4596720,
+        "COLS": 4,
+        "PALSIZE": 32
       },
-      "DIPLOMA": {
-        "GFX": 4277756,
-        "PALSIZE": 64,
-        "TEXT": {
-          "player": 4305994,
-          "document": 4306004,
-          "gameFreak": 4306112,
-          "kanto": 4306132,
-          "national": 4306122
-        },
-        "MAP": 4281124,
-        "PAL": 4282256
+      "PIKACHU_BODY": {
+        "GFX": 4597140,
+        "ROWS": 4,
+        "PAL": 4596752,
+        "COLS": 4,
+        "PALSIZE": 32
       },
-      "SEAGALLOP": {
-        "WATER_PAL": 4622996,
-        "MAP_WB": 4623028,
-        "MAP_EB": 4625076,
-        "FERRY": 4627124,
-        "FERRY_TILES": 40,
-        "FERRY_PAL": 4628404,
-        "WAKE": 4628436,
-        "MATRIX": 4630532,
-        "WATER": 4621684,
-        "WATER_TILES": 41
+      "KEYPAD_GFX": 2008796,
+      "TEXT_WINDOW_PALS": 4658888,
+      "GUIDE_PAGE3": 4589652,
+      "PIKACHU_EARS": {
+        "GFX": 4597588,
+        "ROWS": 2,
+        "PAL": 4596752,
+        "COLS": 4,
+        "PALSIZE": 32
       },
-      "CONFETTI": {
-        "SHEET": 13817340,
-        "PAL": 13817628
+      "PIKACHU_EYES": {
+        "GFX": 4597816,
+        "ROWS": 1,
+        "PAL": 4596752,
+        "COLS": 2,
+        "PALSIZE": 32
+      },
+      "PIKACHU_PAGES": 4598032,
+      "MALE_NAMES": {
+        "1": 4598444,
+        "2": 19
+      },
+      "FEMALE_NAMES": {
+        "1": 4598520,
+        "2": 19
       }
     },
-    "FRLG_SS_ANNE": {
-      "PAL": 3758792,
-      "WAKE": 4690196,
-      "SMOKE": 4690708
+    "FRLG_HOF": {
+      "PAL": 4243928,
+      "GFX": 4243960,
+      "TEXT": {
+        "saving": 4300176,
+        "dexNo": 4284200,
+        "champion": 4284164,
+        "number": 4284144,
+        "idNo": 4284224,
+        "name": 4284216,
+        "level": 4284208,
+        "welcome": 4283972,
+        "time": 4283172
+      }
+    },
+    "FRLG_CALLBACK_EXACT_RUNTIME": {
+      "megahorn": true,
+      "beyond_target": true,
+      "twister_particle": true,
+      "orbit_scatter": true,
+      "overheat_flame": true,
+      "rock_blast": true,
+      "spikes": true,
+      "swirling_snowball": true,
+      "tear_drop": true,
+      "web_thread": true,
+      "vice_grip": true,
+      "weather_ball_down": true,
+      "zap_cannon_spark": true,
+      "swirling_fog": true,
+      "recycle": true,
+      "ice_ball": true,
+      "leech_seed": true,
+      "sludge_projectile": true,
+      "air_wave": true,
+      "acid_poison": true,
+      "bonemerang": true,
+      "coin_throw": true,
+      "confuse_bounce": true,
+      "confuse_spiral": true,
+      "dirt_plume": true,
+      "falling_rock": true,
+      "fire_spiral_in": true,
+      "fire_spiral_out": true,
+      "guard_ring": true,
+      "gust_to_target": true,
+      "hyper_voice": true,
+      "ice_punch_swirl": true,
+      "leech_life": true
     },
     "FRLG_MAP_PREVIEWS": {
-      "COUNT": 28,
+      "PAL_BANK": 13,
       "TABLE": 4450340,
-      "PAL_BANK": 13
+      "COUNT": 28
     }
   },
   "pocketEnum": [
@@ -4935,6 +5194,166 @@
         "displacement": 0
       },
       {
+        "source": 1859432,
+        "target": 1859396,
+        "symbol": "Pokedude_Text_SpeedierBattlerGoesFirst",
+        "targetSymbol": "Pokedude_Text_SpeedierBattlerGoesFirst",
+        "sourceFile": "graphics.o",
+        "displacement": -1
+      },
+      {
+        "source": 1859494,
+        "target": 1859458,
+        "symbol": "Pokedude_Text_MyRattataFasterThanPidgey",
+        "targetSymbol": "Pokedude_Text_MyRattataFasterThanPidgey",
+        "sourceFile": "graphics.o",
+        "displacement": -1
+      },
+      {
+        "source": 1859548,
+        "target": 1859512,
+        "symbol": "Pokedude_Text_BattlersTakeTurnsAttacking",
+        "targetSymbol": "Pokedude_Text_BattlersTakeTurnsAttacking",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 1859612,
+        "target": 1859576,
+        "symbol": "Pokedude_Text_MyRattataWonGetsEXP",
+        "targetSymbol": "Pokedude_Text_MyRattataWonGetsEXP",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 1859834,
+        "target": 1859798,
+        "symbol": "Pokedude_Text_UhOhRattataPoisoned",
+        "targetSymbol": "Pokedude_Text_UhOhRattataPoisoned",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 1859930,
+        "target": 1859894,
+        "symbol": "Pokedude_Text_HealStatusRightAway",
+        "targetSymbol": "Pokedude_Text_HealStatusRightAway",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 1859990,
+        "target": 1859954,
+        "symbol": "Pokedude_Text_UsingItemTakesTurn",
+        "targetSymbol": "Pokedude_Text_UsingItemTakesTurn",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 1860074,
+        "target": 1860038,
+        "symbol": "Pokedude_Text_YayWeManagedToWin",
+        "targetSymbol": "Pokedude_Text_YayWeManagedToWin",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 1860098,
+        "target": 1860062,
+        "symbol": "Pokedude_Text_WaterNotVeryEffectiveAgainstGrass",
+        "targetSymbol": "Pokedude_Text_WaterNotVeryEffectiveAgainstGrass",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 1860352,
+        "target": 1860316,
+        "symbol": "Pokedude_Text_GrassEffectiveAgainstWater",
+        "targetSymbol": "Pokedude_Text_GrassEffectiveAgainstWater",
+        "sourceFile": "graphics.o",
+        "displacement": -1
+      },
+      {
+        "source": 1860520,
+        "target": 1860484,
+        "symbol": "Pokedude_Text_LetsTryShiftingMons",
+        "targetSymbol": "Pokedude_Text_LetsTryShiftingMons",
+        "sourceFile": "graphics.o",
+        "displacement": -1
+      },
+      {
+        "source": 1860600,
+        "target": 1860564,
+        "symbol": "Pokedude_Text_ShiftingUsesTurn",
+        "targetSymbol": "Pokedude_Text_ShiftingUsesTurn",
+        "sourceFile": "graphics.o",
+        "displacement": -1
+      },
+      {
+        "source": 1860678,
+        "target": 1860642,
+        "symbol": "Pokedude_Text_ButterfreeDoubleResistsGrass",
+        "targetSymbol": "Pokedude_Text_ButterfreeDoubleResistsGrass",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 1860986,
+        "target": 1860950,
+        "symbol": "Pokedude_Text_ButterfreeGoodAgainstOddish",
+        "targetSymbol": "Pokedude_Text_ButterfreeGoodAgainstOddish",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 1861174,
+        "target": 1861138,
+        "symbol": "Pokedude_Text_YeahWeWon",
+        "targetSymbol": "Pokedude_Text_YeahWeWon",
+        "sourceFile": "graphics.o",
+        "displacement": -1
+      },
+      {
+        "source": 1861188,
+        "target": 1861152,
+        "symbol": "Pokedude_Text_WeakenMonBeforeCatching",
+        "targetSymbol": "Pokedude_Text_WeakenMonBeforeCatching",
+        "sourceFile": "graphics.o",
+        "displacement": -1
+      },
+      {
+        "source": 1861326,
+        "target": 1861290,
+        "symbol": "Pokedude_Text_BestIfTargetStatused",
+        "targetSymbol": "Pokedude_Text_BestIfTargetStatused",
+        "sourceFile": "graphics.o",
+        "displacement": -1
+      },
+      {
+        "source": 1861510,
+        "target": 1861474,
+        "symbol": "Pokedude_Text_CantDoubleUpOnStatus",
+        "targetSymbol": "Pokedude_Text_CantDoubleUpOnStatus",
+        "sourceFile": "graphics.o",
+        "displacement": -1
+      },
+      {
+        "source": 1861706,
+        "target": 1861670,
+        "symbol": "Pokedude_Text_LetMeThrowBall",
+        "targetSymbol": "Pokedude_Text_LetMeThrowBall",
+        "sourceFile": "graphics.o",
+        "displacement": -1
+      },
+      {
+        "source": 1861740,
+        "target": 1861704,
+        "symbol": "Pokedude_Text_PickBestKindOfBall",
+        "targetSymbol": "Pokedude_Text_PickBestKindOfBall",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
         "source": 1939116,
         "target": 1939080,
         "symbol": "gFieldEffectScriptPointers",
@@ -5851,6 +6270,14 @@
         "target": 3991060,
         "symbol": "sPartySlotEmpty_Tilemap",
         "targetSymbol": "sPartySlotEmpty_Tilemap",
+        "sourceFile": "pokemon_storage_system_tasks.o",
+        "displacement": 0
+      },
+      {
+        "source": 3992080,
+        "target": 3991628,
+        "symbol": "sItemInfoFrame_Pal",
+        "targetSymbol": "sItemInfoFrame_Pal",
         "sourceFile": "pokemon_storage_system_tasks.o",
         "displacement": 0
       },
@@ -7839,6 +8266,182 @@
         "displacement": 0
       },
       {
+        "source": 4306852,
+        "target": 4306400,
+        "symbol": "gTeachyTvString_TeachBattle",
+        "targetSymbol": "gTeachyTvString_TeachBattle",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 4306876,
+        "target": 4306424,
+        "symbol": "gTeachyTvString_StatusProblems",
+        "targetSymbol": "gTeachyTvString_StatusProblems",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 4306902,
+        "target": 4306450,
+        "symbol": "gTeachyTvString_TypeMatchups",
+        "targetSymbol": "gTeachyTvString_TypeMatchups",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 4306926,
+        "target": 4306474,
+        "symbol": "gTeachyTvString_CatchPkmn",
+        "targetSymbol": "gTeachyTvString_CatchPkmn",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 4306950,
+        "target": 4306498,
+        "symbol": "gTeachyTvString_CatchPkmn",
+        "targetSymbol": "gTeachyTvString_CatchPkmn",
+        "sourceFile": "graphics.o",
+        "displacement": 24
+      },
+      {
+        "source": 4306970,
+        "target": 4306518,
+        "symbol": "gTeachyTvString_AboutTMs",
+        "targetSymbol": "gTeachyTvString_AboutTMs",
+        "sourceFile": "graphics.o",
+        "displacement": 19
+      },
+      {
+        "source": 4306998,
+        "target": 4306546,
+        "symbol": "gTeachyTvString_Cancel",
+        "targetSymbol": "gTeachyTvString_Cancel",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 4307004,
+        "target": 4306552,
+        "symbol": "gTeachyTvText_PokedudeSaysHello",
+        "targetSymbol": "gTeachyTvText_PokedudeSaysHello",
+        "sourceFile": "graphics.o",
+        "displacement": -1
+      },
+      {
+        "source": 4307134,
+        "target": 4306682,
+        "symbol": "gTeachyTvText_BattleScript1",
+        "targetSymbol": "gTeachyTvText_BattleScript1",
+        "sourceFile": "graphics.o",
+        "displacement": -1
+      },
+      {
+        "source": 4307520,
+        "target": 4307068,
+        "symbol": "gTeachyTvText_BattleScript2",
+        "targetSymbol": "gTeachyTvText_BattleScript2",
+        "sourceFile": "graphics.o",
+        "displacement": -1
+      },
+      {
+        "source": 4307776,
+        "target": 4307324,
+        "symbol": "gTeachyTvText_StatusScript1",
+        "targetSymbol": "gTeachyTvText_StatusScript1",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 4308240,
+        "target": 4307788,
+        "symbol": "gTeachyTvText_StatusScript2",
+        "targetSymbol": "gTeachyTvText_StatusScript2",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 4308598,
+        "target": 4308146,
+        "symbol": "gTeachyTvText_MatchupsScript1",
+        "targetSymbol": "gTeachyTvText_MatchupsScript1",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 4309166,
+        "target": 4308714,
+        "symbol": "gTeachyTvText_MatchupsScript2",
+        "targetSymbol": "gTeachyTvText_MatchupsScript2",
+        "sourceFile": "graphics.o",
+        "displacement": -1
+      },
+      {
+        "source": 4309562,
+        "target": 4309110,
+        "symbol": "gTeachyTvText_CatchingScript1",
+        "targetSymbol": "gTeachyTvText_CatchingScript1",
+        "sourceFile": "graphics.o",
+        "displacement": -1
+      },
+      {
+        "source": 4309892,
+        "target": 4309440,
+        "symbol": "gTeachyTvText_CatchingScript2",
+        "targetSymbol": "gTeachyTvText_CatchingScript2",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 4310104,
+        "target": 4309652,
+        "symbol": "gTeachyTvText_TMsScript1",
+        "targetSymbol": "gTeachyTvText_TMsScript1",
+        "sourceFile": "graphics.o",
+        "displacement": -1
+      },
+      {
+        "source": 4310406,
+        "target": 4309954,
+        "symbol": "gPokedudeText_TMTypes",
+        "targetSymbol": "gPokedudeText_TMTypes",
+        "sourceFile": "graphics.o",
+        "displacement": -1
+      },
+      {
+        "source": 4310674,
+        "target": 4310222,
+        "symbol": "gPokedudeText_ReadTMDescription",
+        "targetSymbol": "gPokedudeText_ReadTMDescription",
+        "sourceFile": "graphics.o",
+        "displacement": -1
+      },
+      {
+        "source": 4310964,
+        "target": 4310512,
+        "symbol": "gTeachyTvText_TMsScript2",
+        "targetSymbol": "gTeachyTvText_TMsScript2",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 4311082,
+        "target": 4310630,
+        "symbol": "gTeachyTvText_RegisterScript1",
+        "targetSymbol": "gTeachyTvText_RegisterScript1",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 4311444,
+        "target": 4310992,
+        "symbol": "gTeachyTvText_RegisterScript2",
+        "targetSymbol": "gTeachyTvText_RegisterScript2",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
         "source": 4313496,
         "target": 4313044,
         "symbol": "gString_PokemonFireRed_Staff",
@@ -8447,6 +9050,14 @@
         "displacement": 0
       },
       {
+        "source": 4600208,
+        "target": 4598704,
+        "symbol": "sWindowTemplates",
+        "targetSymbol": "sWindowTemplates",
+        "sourceFile": "tm_case.o",
+        "displacement": 0
+      },
+      {
         "source": 4600376,
         "target": 4598872,
         "symbol": "sTMSpritePaletteOffsetByType",
@@ -8575,11 +9186,99 @@
         "displacement": 0
       },
       {
+        "source": 4604856,
+        "target": 4603352,
+        "symbol": "sWindowTemplates_Main",
+        "targetSymbol": "sWindowTemplates_Main",
+        "sourceFile": "berry_pouch.o",
+        "displacement": 0
+      },
+      {
         "source": 4605956,
         "target": 4604452,
         "symbol": "sShopBuyMenuWindowTemplatesNormal",
         "targetSymbol": "sShopBuyMenuWindowTemplatesNormal",
         "sourceFile": "buy_menu_helpers.o",
+        "displacement": 0
+      },
+      {
+        "source": 4606246,
+        "target": 4604742,
+        "symbol": "sReelIconAnimByReelAndPos",
+        "targetSymbol": "sReelIconAnimByReelAndPos",
+        "sourceFile": "slot_machine.o",
+        "displacement": 0
+      },
+      {
+        "source": 4606310,
+        "target": 4604806,
+        "symbol": "sPayoutTable",
+        "targetSymbol": "sPayoutTable",
+        "sourceFile": "slot_machine.o",
+        "displacement": 0
+      },
+      {
+        "source": 4606324,
+        "target": 4604820,
+        "symbol": "sReelIcons_Pal",
+        "targetSymbol": "sReelIcons_Pal",
+        "sourceFile": "slot_machine.o",
+        "displacement": 0
+      },
+      {
+        "source": 4606484,
+        "target": 4604980,
+        "symbol": "sReelIcons_Tiles",
+        "targetSymbol": "sReelIcons_Tiles",
+        "sourceFile": "slot_machine.o",
+        "displacement": 0
+      },
+      {
+        "source": 4609316,
+        "target": 4607664,
+        "symbol": "sDigits_Pal",
+        "targetSymbol": "sDigits_Pal",
+        "sourceFile": "slot_machine.o",
+        "displacement": 0
+      },
+      {
+        "source": 4609348,
+        "target": 4607696,
+        "symbol": "sDigits_Tiles",
+        "targetSymbol": "sDigits_Tiles",
+        "sourceFile": "slot_machine.o",
+        "displacement": 0
+      },
+      {
+        "source": 4609544,
+        "target": 4607892,
+        "symbol": "sReelIconPaletteTags",
+        "targetSymbol": "sReelIconPaletteTags",
+        "sourceFile": "slot_machine.o",
+        "displacement": 0
+      },
+      {
+        "source": 4610352,
+        "target": 4608700,
+        "symbol": "sBg_Pal",
+        "targetSymbol": "sBg_Pal",
+        "sourceFile": "slot_machine.o",
+        "displacement": 0
+      },
+      {
+        "source": 4610512,
+        "target": 4608860,
+        "symbol": "sBg_Tiles",
+        "targetSymbol": "sBg_Tiles",
+        "sourceFile": "slot_machine.o",
+        "displacement": 0
+      },
+      {
+        "source": 4612564,
+        "target": 4610744,
+        "symbol": "sBg_Tilemap",
+        "targetSymbol": "sBg_Tilemap",
+        "sourceFile": "slot_machine.o",
         "displacement": 0
       },
       {
@@ -9119,10 +9818,42 @@
         "displacement": 0
       },
       {
+        "source": 15227344,
+        "target": 15227472,
+        "symbol": "gBerryPouchBgGfx",
+        "targetSymbol": "gBerryPouchBgGfx",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 15227812,
+        "target": 15227940,
+        "symbol": "gBerryPouchBgPals",
+        "targetSymbol": "gBerryPouchBgPals",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 15227892,
+        "target": 15228020,
+        "symbol": "gBerryPouchBgPal0FemaleOverride",
+        "targetSymbol": "gBerryPouchBgPal0FemaleOverride",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
         "source": 15227932,
         "target": 15228060,
         "symbol": "gBerryPouchSpritePalette",
         "targetSymbol": "gBerryPouchSpritePalette",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 15227972,
+        "target": 15228100,
+        "symbol": "gBerryPouchBg1Tilemap",
+        "targetSymbol": "gBerryPouchBg1Tilemap",
         "sourceFile": "graphics.o",
         "displacement": 0
       },
@@ -9147,6 +9878,38 @@
         "target": 15229424,
         "symbol": "gBuyMenuFrame_Pal",
         "targetSymbol": "gBuyMenuFrame_Pal",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 15229504,
+        "target": 15229632,
+        "symbol": "gTeachyTv_Gfx",
+        "targetSymbol": "gTeachyTv_Gfx",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 15231976,
+        "target": 15232104,
+        "symbol": "gTeachyTvScreen_Tilemap",
+        "targetSymbol": "gTeachyTvScreen_Tilemap",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 15232364,
+        "target": 15232492,
+        "symbol": "gTeachyTvTitle_Tilemap",
+        "targetSymbol": "gTeachyTvTitle_Tilemap",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 15232920,
+        "target": 15233048,
+        "symbol": "gTeachyTv_Pal",
+        "targetSymbol": "gTeachyTv_Pal",
         "sourceFile": "graphics.o",
         "displacement": 0
       },
@@ -9419,6 +10182,14 @@
         "target": 15320152,
         "symbol": "gPokeStoragePartyMenu_Pal",
         "targetSymbol": "gPokeStoragePartyMenu_Pal",
+        "sourceFile": "graphics.o",
+        "displacement": 0
+      },
+      {
+        "source": 15320056,
+        "target": 15320184,
+        "symbol": "gPokeStorageInterface_Pal",
+        "targetSymbol": "gPokeStorageInterface_Pal",
         "sourceFile": "graphics.o",
         "displacement": 0
       },
