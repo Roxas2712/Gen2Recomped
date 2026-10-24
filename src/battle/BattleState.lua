@@ -87,37 +87,7 @@ for name, method in pairs(BattleCommands.methods) do BattleState[name] = method 
 -- _EnemysWeakText extracts as "The enemy's weak!\nGet'm! " with nowhere
 -- to put the name -- so the engine's own wording stands in rather than
 -- printing a sentence with a hole in it.
-local function fromRom(data, label, fallback, ...)
-  local text = data and data.text and data.text[label]
-  if not text then return Strings(fallback, ...) end
-  local args = { ... }
-  if #args == 0 then return text end
-
-  local slots, named = 0, 0
-  for token in text:gmatch("%b{}") do
-    slots = slots + 1
-    if token == "{PLAYER}" or token == "{RIVAL}" then named = named + 1 end
-  end
-  local fillNamed
-  if #args == slots then
-    fillNamed = true
-  elseif #args == slots - named then
-    fillNamed = false
-  else
-    return Strings(fallback, ...)
-  end
-
-  local index = 0
-  return (text:gsub("%b{}", function(token)
-    if not fillNamed and (token == "{PLAYER}" or token == "{RIVAL}") then
-      return token
-    end
-    index = index + 1
-    local value = args[index]
-    if value == nil then return token end
-    return tostring(value)
-  end))
-end
+local fromRom = require("src.core.RomText")
 
 function BattleState:romText(label, fallback, ...)
   return fromRom(self.data, label, fallback, ...)
