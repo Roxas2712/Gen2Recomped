@@ -238,6 +238,13 @@ function R.new(loader, name, generation, api3)
         side = raw.isPlayer == true and "player" or raw.isPlayer == false and "enemy" or nil,
         native = copy({ name = raw.name, species = raw.species, stages = raw.stages }),
       }
+    elseif kind == "heldItem" then
+      local out = { native = copy(raw) }
+      for k, v in pairs(raw) do
+        if type(v) ~= "table" and type(v) ~= "function" then out[k] = v end
+      end
+      out.id = read("items", raw.id)
+      return out
     elseif kind == "move" or kind == "species" or kind == "item" then
       local out = { native = copy(raw), name = raw.name }
       local registryKind = kind == "species" and "pokemon" or kind == "move" and "moves" or "items"
@@ -294,6 +301,7 @@ function R.new(loader, name, generation, api3)
     local out = shallow(raw)
     for k, v in pairs(raw) do
       local role = recordRoles[k]
+      if name == "held_item.trigger" and k == "def" then role = "heldItem" end
       if name == "world.interacted" and k == "target" then
         role = nil
       end
@@ -483,7 +491,20 @@ function R.new(loader, name, generation, api3)
     visiting[e] = true
     local raw, before = e.raw, e.before
     kind = e.kind
-    if kind == "move" or kind == "species" or kind == "item" or kind == "battler" then
+    if kind == "heldItem" then
+      local keys = shallow(before)
+      for k in pairs(value) do keys[k] = true end
+      for key in pairs(keys) do
+        if key ~= "native" and not equal(value[key], before[key]) then
+          local v = value[key]
+          assert(type(v) ~= "table" and type(v) ~= "function", "held definition field must be scalar")
+          if key == "id" then v = native("items", v, raw.id) end
+          pending[#pending + 1] = function()
+            require("src.battle.HeldItemRead").writeDefinition(raw, key, v)
+          end
+        end
+      end
+    elseif kind == "move" or kind == "species" or kind == "item" or kind == "battler" then
       if kind == "battler" then
         assert(
           value.id == before.id and value.side == before.side and equal(value.native, before.native),
