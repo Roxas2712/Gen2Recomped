@@ -913,7 +913,7 @@ local function drawCaughtMarker(battle, battler, x, y)
   if not require("src.battle.CaughtMarker").gbaVisible(battle, battler) then return end
   local record = hudRecord(battle)
   local path = record and record.images and record.images.caught
-  local function exists(p) return p and Assets.exists(Assets.resolve(p)) end
+  local function exists(p) return type(p) == "string" and p ~= "" and Assets.exists(Assets.resolve(p)) end
   if not exists(path) then
     path = require("src.core.GameVersion").get() == "firered"
       and "assets/generated/pokedex_frlg/caught.png" or "assets/generated/ui/pokedex/caught_ball.png"

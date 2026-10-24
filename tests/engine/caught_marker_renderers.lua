@@ -165,6 +165,7 @@ for _, version in ipairs(V.ORDER) do
           or "assets/generated/ui/pokedex/caught_ball.png"
         f.data.constants.gen3BattleHud.images.caught = nil
         patch(Assets, "exists", function(candidate)
+          assert(type(candidate) == "string", "asset lookup requires a path string")
           return candidate == path
         end)
         local panel = love.graphics.newCanvas(128, 40)
@@ -185,6 +186,8 @@ for _, version in ipairs(V.ORDER) do
         draw("show", true, 1, 1)
         T.check(quadArgs ~= nil, "legacy tall marker uses a cropped native tile")
         T.same(quadArgs, { 0, 4, 8, 8, 8, 16 }, "legacy cell crops to central 8x8 without stretching")
+        f.data.constants.gen3BattleHud.images.caught = { invalid = true }
+        draw("show", true, 1, 1)
         patch(Assets, "exists", function()
           return false
         end)
