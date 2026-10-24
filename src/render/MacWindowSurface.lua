@@ -16,6 +16,8 @@ local function api()
     unsigned int glCheckFramebufferStatus(unsigned int);
     const void *CFDataCreate(const void*,const unsigned char*,long);
     void CFRelease(const void*);
+    const unsigned char *CFDataGetBytePtr(const void*);
+    int memcmp(const void*,const void*,unsigned long);
     void *CGColorSpaceCreateDeviceRGB(void); void CGColorSpaceRelease(void*);
     void *CGDataProviderCreateWithCFData(const void*); void CGDataProviderRelease(void*);
     void *CGImageCreate(unsigned long,unsigned long,unsigned long,unsigned long,
@@ -45,7 +47,7 @@ local function api()
       objc.sel_registerName("setFrame:"),ffi.new("G2SurfaceRect",{{0,0},{w,h}}))
   end
   native={accelerate=ffi.load("/System/Library/Frameworks/Accelerate.framework/Accelerate"),
-    permutation=ffi.new("unsigned char[4]",{2,1,0,3}),ffi=ffi,objc=objc,msg=msg,arg=arg,rect=rect,sendBool=sendBool,
+    memcmp=ffi.C.memcmp,permutation=ffi.new("unsigned char[4]",{2,1,0,3}),ffi=ffi,objc=objc,msg=msg,arg=arg,rect=rect,sendBool=sendBool,
     number=number,at=at,string=string,
     cg=ffi.load("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics"),
     cf=ffi.load("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation"),
@@ -85,6 +87,8 @@ function M.createIfUndefined()
   if binding[0]~=0 or a.gl.glCheckFramebufferStatus(0x8D40)~=0x8219 then return nil end
   local self={reason="GL_FRAMEBUFFER_UNDEFINED",layer=nil,view=nil}
   function self:close()
+    if self.lastData then a.cf.CFRelease(self.lastData);self.lastData=nil end
+    self.frameWidth,self.frameHeight,self.windowWidth,self.windowHeight=nil,nil,nil,nil
     if self.pixels then self.pixels:release();self.pixels=nil end
     if self.layer~=nil then
       a.msg(self.layer,"removeFromSuperlayer");a.msg(self.layer,"release")
@@ -124,6 +128,11 @@ function M.createIfUndefined()
     -- kvImageDoNotTile: avoid worker scheduling for this memory-only shuffle.
     assert(a.accelerate.vImagePermuteChannels_ARGB8888(input,output,a.permutation,16)==0,
       "OpenGL recovery could not convert frame to BGRA")
+    -- The complete readback and conversion still run. Only byte-identical
+    -- images with unchanged geometry may reuse the already displayed image.
+    if self.lastData and self.frameWidth==width and self.frameHeight==height
+      and self.windowWidth==ww and self.windowHeight==wh
+      and a.memcmp(output.data,a.cf.CFDataGetBytePtr(self.lastData),size)==0 then return end
     local cfdata=a.cf.CFDataCreate(nil,output.data,size)
     assert(cfdata~=nil,"OpenGL recovery could not allocate frame data")
     local provider=a.cg.CGDataProviderCreateWithCFData(cfdata)
@@ -139,10 +148,13 @@ function M.createIfUndefined()
       a.arg(self.layer,"setContents:",image)
       a.msg(transaction,"commit");a.msg(transaction,"flush")
       a.cg.CGImageRelease(image)
+      if self.lastData then a.cf.CFRelease(self.lastData) end
+      self.lastData=cfdata
+      self.frameWidth,self.frameHeight,self.windowWidth,self.windowHeight=width,height,ww,wh
     end
     if space~=nil then a.cg.CGColorSpaceRelease(space) end
     if provider~=nil then a.cg.CGDataProviderRelease(provider) end
-    a.cf.CFRelease(cfdata)
+    if image==nil then a.cf.CFRelease(cfdata) end
     assert(image~=nil,"OpenGL recovery could not create the window image")
   end
   return self

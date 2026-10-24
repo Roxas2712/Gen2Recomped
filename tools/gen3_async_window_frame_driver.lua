@@ -11,13 +11,16 @@ local create=Surface.createIfUndefined
 local version=assert(os.getenv("POKEPORT_VERSION"))
 local out=assert(os.getenv("PALETTE_GPU_OUT"))
 local identity=assert(os.getenv("POKEPORT_IDENTITY"))
+local stampPeriod=tonumber(os.getenv("POKEPORT_TEST_STAMP_PERIOD")) or 1
+assert(stampPeriod==1 or stampPeriod==4,"unsupported test stamp period")
+local function stamp(frame)return math.floor(frame/stampPeriod)end
 assert(identity:match("^gen2%-palette%-gpu%-"))
 assert(love.filesystem.getIdentity()==identity)
 local renderer,api,vendor,device=love.graphics.getRendererInfo()
 local major,minor,revision=love.getVersion()
 local report={game=version,gpu={renderer=renderer,version=api,vendor=vendor,device=device},
   runtime={major=major,minor=minor,revision=revision},checks=0,phases={},screenshots={},
-  framesChecked=0,blankFrames=0,staleFrames=0,retries=0}
+  framesChecked=0,blankFrames=0,staleFrames=0,retries=0,stampPeriod=stampPeriod,imageReuses=0}
 local function write(path,value)
   local f=assert(io.open(path,"w"));f:write(Json.encode(value));f:close()
 end
@@ -35,7 +38,7 @@ love.draw=function()
   g.push("all");g.setCanvas();g.origin();g.setShader();g.setScissor()
   g.setBlendMode("replace","premultiplied")
   for bit=0,31 do
-    local one=math.floor(count/2^bit)%2==1
+    local one=math.floor(stamp(count)/2^bit)%2==1
     g.setColor(one and 1 or 0,one and 0 or 1,0,1)
     g.rectangle("fill",bit*2,0,2,3)
   end
@@ -58,7 +61,7 @@ local function inspect(data,info)
   end
   local latency=info.latencyFrames or 0
   check(latency==0 or latency==1,"presentation latency bounded to one frame")
-  local expected=count-latency
+  local expected=stamp(count-latency)
   if decoded~=expected then report.staleFrames=report.staleFrames+1 end
   check(decoded==expected,"presented image belongs to expected stream frame")
   report.deferredFrames=(report.deferredFrames or 0)+(latency==1 and 1 or 0)
@@ -84,7 +87,9 @@ Surface.createIfUndefined=function(...)
   local present=bridge.present
   bridge.present=function(self,data,...)
     inspect(data,Frame.info())
-    return present(self,data,...)
+    local previous=self.lastData
+    present(self,data,...)
+    if phase and previous and self.lastData==previous then report.imageReuses=report.imageReuses+1 end
   end
   return bridge
 end
@@ -103,7 +108,7 @@ local function observe(tag,frames)
   report.screenshots[#report.screenshots+1]=name
   if os.getenv("POKEPORT_OS_WINDOW_PROOF")=="1" then
     local ffi=require("ffi");ffi.cdef[[int getpid(void);]]
-    local threshold=count
+    local threshold=stamp(count)
     U.wait(5) -- let Core Animation commit; never replace a rejected capture
     local ww,wh=love.graphics.getDimensions()
     local window=assert(require("src.render.MacWindowSurface").windowNumber())
@@ -146,6 +151,7 @@ check(report.blankFrames==0 and report.staleFrames==0,"frame stability failed")
 check(report.deferredFrames>=600,"ordinary frames must exercise async pipeline")
 check(report.currentFrames>=4,"captures must exercise current-frame synchronization")
 check(Frame.info().pendingReadbacks<=1,"only one request may remain pending")
+if stampPeriod>1 then check(report.imageReuses>=10,"unchanged real game frames must reuse immutable image")end
 Frame.shutdown();Surface.createIfUndefined=create
 love.draw=originalDraw
 report.mapReturn=true;report.pass=true

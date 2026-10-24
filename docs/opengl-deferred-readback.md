@@ -1,5 +1,9 @@
 # Deferred macOS OpenGL recovery readback
 
+Follow-up: [verified identical-image reuse](firered-opengl-frame-reuse.md)
+reduces the small-window FireRed CPU cost while retaining this pipeline.
+The measurements below are the historical `e95748e` comparison.
+
 The detected Cocoa recovery path now starts LÖVE 12's asynchronous texture
 readback after presenting the previous completed image. That transfer can run
 between frames, instead of making every draw wait immediately for its own

@@ -204,6 +204,8 @@ def main():
     parser.add_argument("--backend", choices=("opengl", "metal"))
     parser.add_argument("--engine-ref", default="HEAD",
                         help="Engine commit/ref to export; acceptance driver stays in this checkout")
+    parser.add_argument("--repeat-window-stamps", action="store_true",
+                        help="With --async-window-frames, exercise verified identical-image reuse")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--window-frames", action="store_true",
                         help="Continuous frame/movement/resize tests; macOS OS proofs require Pillow")
@@ -213,6 +215,8 @@ def main():
                      help="Uncapped native frame timings at two sizes, no timed observers/captures")
     args = parser.parse_args()
     window_mode = args.window_frames or args.async_window_frames or args.window_performance
+    if args.repeat_window_stamps and not args.async_window_frames:
+        parser.error("--repeat-window-stamps requires --async-window-frames")
     if args.async_window_frames and (sys.platform != "darwin" or args.backend != "opengl"):
         parser.error("--async-window-frames requires macOS --backend opengl")
     if window_mode and sys.platform == "darwin":
@@ -266,6 +270,8 @@ def main():
                   else ROOT / "tools/gen3_window_frame_driver.lua" if args.window_frames else DRIVER)
         env.update(POKEPORT_DRIVER=str(driver), PALETTE_GPU_ROM=str(roms[version]),
                    PALETTE_GPU_MAP=map_id, PALETTE_GPU_X=str(x), PALETTE_GPU_Y=str(y))
+        if args.repeat_window_stamps:
+            env["POKEPORT_TEST_STAMP_PERIOD"] = "4"
         print(f"{version}: real Game/Overworld GPU test", flush=True)
         tick, proofs = None, {}
         if window_mode and sys.platform == "darwin":

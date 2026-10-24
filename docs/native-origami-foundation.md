@@ -179,6 +179,15 @@ gameplay/context-loss/long-duration acceptance remains open. The published
 
 ## Remaining engine work
 
+The [verified image-reuse CPU follow-up](firered-opengl-frame-reuse.md) avoids
+repeated Cocoa copies/commits only after comparing every current BGRA byte
+and geometry with an owned immutable snapshot. FireRed small-window process
+CPU drops about 29% in the scoped comparison; Emerald pair means also improve.
+Every complete GPU readback still runs. Small FireRed tail timings are mixed
+and its mean scene P99 rises about 10.5%; the report retains all regressions.
+View/size changes, current-frame captures, failures and snapshot lifetime are
+checked separately. This does not resume the Origami port.
+
 | Area | Remaining acceptance/work |
 | --- | --- |
 | Terrain graphics over time | audited Emerald/FireRed palette import and scoped native flat-world OpenGL/Metal GPU/window tests pass; additional ROM profiles, cartridge fade/task/reset-phase semantics, general GPU invalidation and performance acceptance remain |

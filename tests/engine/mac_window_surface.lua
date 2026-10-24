@@ -4,9 +4,9 @@ package.path="./?.lua;./?/init.lua;"..package.path
 local T=require("tests.harness")
 local eq,check=T.eq,T.check
 local imageWidth,imageHeight=1,1
-local failAllocation=false
+local failAllocation,failData,failImage=false,false,false
 local view,context={layer={}},{ }
-local counts={data=0,provider=0,space=0,image=0,layer=0,ptr=0,scratch=0,permutations=0}
+local counts={data=0,provider=0,space=0,image=0,layer=0,ptr=0,scratch=0,permutations=0,copies=0,commits=0,compares=0}
 local classes={}
 local objc={}
 function objc.objc_getClass(name)classes[name]=classes[name] or {class=name};return classes[name]end
@@ -21,16 +21,25 @@ function objc.objc_msgSend(object,selector,value)
   if selector=="retain" then counts.layer=counts.layer+1;return object end
   if selector=="release" then counts.layer=counts.layer-1 end
   if selector=="addSublayer:" then object.child=value end
-  if selector=="setContents:" then object.image=value end
+  if selector=="setContents:" then object.image=value;counts.commits=counts.commits+1 end
   if selector=="stringWithUTF8String:" then return value end
 end
 local cf={}
 function cf.CFDataCreate(_,pointer,size)
   eq(size,imageWidth*imageHeight*4,"copy extent matches RGBA storage")
+  if failData then return nil end
+  counts.copies=counts.copies+1
   counts.data=counts.data+1
   return {bytes={unpack(pointer)}}
 end
-function cf.CFRelease()counts.data=counts.data-1 end
+function cf.CFRelease(data)
+  check(not data.released,"CF snapshot released only once")
+  data.released=true;counts.data=counts.data-1
+end
+function cf.CFDataGetBytePtr(data)
+  check(not data.released,"comparison snapshot remains alive")
+  return data.bytes
+end
 local cg={}
 function cg.CGColorSpaceCreateDeviceRGB()counts.space=counts.space+1;return {}end
 function cg.CGColorSpaceRelease()counts.space=counts.space-1 end
@@ -39,10 +48,15 @@ function cg.CGDataProviderRelease()counts.provider=counts.provider-1 end
 function cg.CGImageCreate(w,h,bits,pixelBits,stride,space,alpha,provider)
   eq(w,imageWidth,"image width");eq(h,imageHeight,"image height");eq(stride,imageWidth*4,"row stride")
   eq(alpha,0x2002,"CGImage describes little-endian premultiplied BGRA")
+  if failImage then return nil end
   counts.image=counts.image+1;return {bytes=provider.bytes}
 end
 function cg.CGImageRelease()counts.image=counts.image-1 end
-local ffi={cdef=function()end,cast=function(_,fn)return fn end}
+local ffi={cdef=function()end,cast=function(_,fn)return fn end,C={memcmp=function(a,b,size)
+  counts.compares=counts.compares+1
+  for i=1,size do if a[i]~=b[i] then return 1 end end
+  return 0
+end}}
 function ffi.new(name,value)
   if name=="int[1]" then return {[0]=0} end
   if name=="G2SurfaceImageBuffer" then return {data=value[1],height=value[2],width=value[3],rowBytes=value[4]} end
@@ -91,7 +105,8 @@ for i=1,40 do
   eq(pixels[1],i,"original RGBA data remains unchanged for observers")
   pixels[1]=255
   eq(view.layer.child.image.bytes[3],i,"Core Animation does not borrow mutable readback storage")
-  eq(counts.data+counts.provider+counts.space+counts.image,0,"temporary native objects released")
+  eq(counts.data,1,"one immutable comparison snapshot retained")
+  eq(counts.provider+counts.space+counts.image,0,"temporary native objects released")
 end
 local oldImage=view.layer.child.image
 imageWidth,imageHeight=2,1
@@ -124,8 +139,39 @@ eq(counts.permutations,43,"every presented frame converted once")
 data.getFormat=function()return "rgba8" end
 conversionError=-1
 check(not pcall(bridge.present,bridge,data,100,100),"failed conversion cannot present a partial/stale frame")
-eq(counts.data+counts.provider+counts.space+counts.image,0,"failed conversion owns no temporary CF objects")
+eq(counts.data,1,"failed conversion preserves previous successful snapshot")
+eq(counts.provider+counts.space+counts.image,0,"failed conversion owns no temporary CF objects")
+conversionError=0
+local copies,commits=counts.copies,counts.commits
+for i=1,60 do bridge:present(data,100,100) end
+eq(counts.copies,copies,"identical complete bytes need no new CF copy")
+eq(counts.commits,commits,"identical complete bytes need no new image commit")
+check(counts.compares>=60,"repeat detection compares bytes, not buffer identity")
+pixels[8]=127
+bridge:present(data,100,100)
+eq(counts.copies,copies+1,"last-byte change creates a complete new image")
+eq(view.layer.child.image.bytes[8],127,"last-byte change is presented")
+bridge:present(data,101,100)
+eq(counts.copies,copies+2,"point-size change cannot skip presentation")
+local snapshot=bridge.lastData
+pixels[8]=126;failData=true
+check(not pcall(bridge.present,bridge,data,101,100),"failed snapshot creation propagates")
+eq(bridge.lastData,snapshot,"failed copy cannot replace successful snapshot")
+failData=false;failImage=true
+check(not pcall(bridge.present,bridge,data,101,100),"failed native image creation propagates")
+eq(bridge.lastData,snapshot,"failed image cannot become comparison reference")
+eq(counts.data,1,"failed image frees its new CFData")
+failImage=false
+bridge:present(data,101,100)
+eq(view.layer.child.image.bytes[8],126,"same input is retried after failed creation")
+local oldView=view
+view={layer={}}
+bridge:present(data,101,100)
+check(view.layer.child~=oldView.layer.child,"view replacement installs a new owned layer")
+eq(view.layer.child.image.bytes[8],126,"identical bytes still reach replacement view")
+eq(counts.data,1,"view replacement retires old comparison reference")
 bridge:close();eq(counts.scratch,0,"scratch buffer released at shutdown")
 bridge:close();eq(counts.scratch,0,"closing twice cannot release scratch twice")
 eq(counts.layer,0,"owned layer released at shutdown")
+eq(counts.data,0,"comparison snapshot released at shutdown")
 T.finish()
