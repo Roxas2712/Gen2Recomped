@@ -277,6 +277,49 @@ engine/fixture/driver hashes and process results are in
 `native-brain-status.json` and `native-brain-*.log`. No normal SAVE or full
 playthrough is claimed. The owned consumer was removed with hash guards.
 
+## Delegated native controller fields
+
+Thirty-nine additional controller cases per GBA version now cover `meta`,
+`done`, `finished`, watch rows carrying moves, run/forfeit, claim-after-next,
+SLP/FRZ, explicit escape prevention and Shadow Tag/Arena Trap/Magnet Pull.
+They retain native single/double differences: single move rows lose `meta`,
+single non-move rows retain it; doubles ignore `meta` and skip done/finished
+rows. Single watch rows can execute their retained move and target, while
+double watch rows spend the action. Single enemy run uses the sleep/freeze,
+trap and native ability gates; double trainer run fails unless forfeiting.
+
+The matrix exposed critical/type rounding independently of the decision hook:
+base damage 11, critical x2, Steel resistance and random 85 must deal 9 HP,
+not 8. The Gen-3 ruleset now puts its critical multiplier before STAB/type
+rounding, with an explicit profile flag. Other profiles retain their ordering.
+Fifteen focused arithmetic checks cover this and surrounding boundaries. The
+escape fixtures also mount the same Normal/Ghost/Steel type rows as the
+native reference; their original neutral-only host chart was not equivalent.
+The rounding fix is being isolated for separate publication.
+
+Both host API modes pass **12 workers / 577 paired observations**, with no
+differences, and host hook checks pass **1,812/1,812**. The complete development
+run passes **140/150** engine suites, **3/3** SDK suites and B30. All **26** FAIL
+lines exactly match the earlier ten baseline suites. A first run caught an
+inline Strings import the coverage gate could not recognize; it is now a
+normal local import and the failed log remains separately recorded.
+
+The same current cases on clean `f805ee6` produce **15 differing observations
+and 8 assertion failures per GBA version**. The temporary parent worktree was
+verified clean and removed. Reports: `contracts-controls.json`,
+`contracts-controls-api2.json`, `targeted-controls.log`, `full-controls.log`,
+`controls-parent-differences.json` and the two parent logs.
+
+Four native LÖVE runs pass: Gold, FireRed and Emerald old-cache regression,
+plus FireRed's in-memory item-effects import. New GBA cases use actual FIGHT,
+move/target input and single/double queues; they check watch damage, meta/done
+fields, blocked run, fled/forfeited finish, original stock reservations and
+party PP. Actual imported Steel damage is 9 in both GBA games. These are
+constructed in-memory battles with the same public consumer, not a complete
+playthrough or normal SAVE test. Runtime is `f805ee6` plus the recorded changes;
+exact hashes/results are in `native-controls-status.json` and associated logs.
+The owned example was removed after hash verification.
+
 Required before publication:
 
 - Exercise actual imported Gen-2 attributes and stock through ordinary turns.
@@ -284,9 +327,11 @@ Required before publication:
   native policy with freshly imported class attributes still needs gameplay proof.
 - Extend the FireRed raw-effects smoke to Emerald, both native double slots,
   further trap/status construction and imported stock boundaries.
-- Extend delegated-action coverage to additional native control fields,
-  run/watch behavior and malformed slot/move payloads. The ordinary item,
-  switch, move and actor-ID mutation paths above are covered.
+- Extend delegated-action coverage to malformed slot/move payloads and unsafe
+  watch targets. Keeping the original numeric item target on a single watch
+  action crashes the current reference controller; the valid-target cases
+  above do not establish a portable malformed-action contract. Ordinary item,
+  switch, move, actor-ID and controller-flag paths above are covered.
 - Extend native bytecode/scored-layer fallback coverage beyond the tested
   brain choice and unscored-class paths. Existing Imprison/Choice-lock flags
   have validated read semantics; their complete native producers/rules remain

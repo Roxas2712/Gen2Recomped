@@ -7639,10 +7639,16 @@ function BattleState:executeAction(user, target, action)
   if GameVersion.isGen3() and action and action.decisionPosition ~= nil then
     user = self:battlerAt(action.decisionPosition)
   end
+  if GameVersion.isGen3() and action and action.decisionWatch then
+    target = self:battlerAt(action.decisionTarget)
+  end
   if not (user and user.mon) then return end
   local trainerItem = GameVersion.isGen3() and action and action.special == "aiItem"
   if user.mon.hp <= 0 and not trainerItem then return end
   if not action then return end
+  if GameVersion.isGen3() and require("src.battle.EnemyDecision").executeControl(self, user, action) then
+    return
+  end
   if action.special == "aiDecisionSpent" then return end
   -- A SWITCH NEEDS NO TARGET.  Everything else does, and with four on the
   -- field the one it was aimed at can already be off it -- the entry's
@@ -9755,6 +9761,19 @@ function BattleState:safariEnemyTurn()
       self.afterQueue = "finish"
     end
   end)
+end
+
+-- The GBA single opponent controller owns this escape, including a modded
+-- trainer action. Doubles use their separate RUN/forfeit handler.
+function BattleState:enemyDecisionFlees(enemy)
+  self:sayNext(self:romText("_WildFledText", "Wild %s\nfled!", enemy.name))
+  self:actNext(function()
+    require("src.core.Sound").play(self.data, "Run")
+    startPicKind(self, self:picFxFor(enemy), "slideOff")
+  end)
+  self.nextInsert = (self.nextInsert or 0) + 1
+  table.insert(self.queue, self.nextInsert, { wait = 24 })
+  self.result, self.endReason, self.afterQueue = "fled", "enemy_fled", "finish"
 end
 
 -- A roaming beast gives you exactly one turn and then it is gone.

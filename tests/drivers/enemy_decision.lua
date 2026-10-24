@@ -66,14 +66,22 @@ return function(game)
     p.moves = { { id = tackle, pp = 10 } }
     return p
   end
-  local function fresh(mode, stock)
+  local function fresh(mode, stock, double)
     game.save.party = { mon("PLAYER") }
+    if double then
+      game.save.party[2] = mon("ALLY")
+    end
     local enemy = mon("ENEMY")
     enemy.hp = 200
+    local bench = mon("BENCH")
+    if double then
+      bench.hp = 200
+    end
     local definition = {
       name = "PORTABLE",
       items = stock or { potion },
-      parties = { { { prebuilt = enemy }, { prebuilt = mon("BENCH") } } },
+      parties = { { { prebuilt = enemy }, { prebuilt = bench } } },
+      doubleBattle = double,
     }
     local old = game.data.trainers.PORTABLE_NATIVE_DECISION
     game.data.trainers.PORTABLE_NATIVE_DECISION = definition
@@ -92,12 +100,15 @@ return function(game)
     e.state.changes, e.state.clear = nil, nil
     return b, definition
   end
-  local function turn(b)
+  local function turn(b, terminal)
     U.tap(game, "a")
     assert(b.phase == "moveSelect", "native FIGHT did not open move selection")
     U.tap(game, "a")
     for _ = 1, 4000 do
-      if b.phase == "menu" then
+      if terminal and b.result and game.stack:top() ~= b then
+        return
+      end
+      if b.phase == "menu" and not (b.pendingActions and next(b.pendingActions)) then
         return
       end
       U.tap(game, "a")
@@ -161,6 +172,77 @@ return function(game)
       assert(b.gen3ItemsUsed[1], "native move/fallback preserves original consumed stock")
       print("PORTABILITY_ENEMY_CASE " .. V.get() .. " mutate-item-to-" .. kind)
     end
+    for _, spec in ipairs({
+      { name = "meta-item", changes = { meta = true }, enemyPP = 10 },
+      {
+        name = "watch-move",
+        changes = {
+          kind = "watch",
+          move = game.data.moves[tackle].index,
+          slot = 1,
+          target = "player",
+        },
+        enemyPP = 9,
+        enemyHits = true,
+      },
+      {
+        name = "meta-watch",
+        changes = {
+          kind = "watch",
+          move = game.data.moves[tackle].index,
+          slot = 1,
+          target = "player",
+          meta = true,
+        },
+        enemyPP = 10,
+      },
+      { name = "sleep-blocks-run", changes = { kind = "run" }, sleep = true, enemyPP = 10 },
+      { name = "trap-blocks-run", changes = { kind = "run" }, trapped = true, enemyPP = 10 },
+      { name = "run", changes = { kind = "run" }, enemyPP = 10, result = "fled" },
+      { name = "double-done-items", double = true, changes = { done = true }, enemyPP = 10 },
+      {
+        name = "double-meta-items-still-heal",
+        double = true,
+        changes = { meta = true },
+        enemyPP = 10,
+        heals = true,
+      },
+      { name = "double-run-blocked", double = true, changes = { kind = "run" }, enemyPP = 10 },
+      {
+        name = "double-forfeit",
+        double = true,
+        changes = { kind = "run", forfeit = true },
+        enemyPP = 10,
+        result = "forfeited",
+      },
+    }) do
+      b = fresh("mutate-fields", spec.double and { potion, potion } or nil, spec.double)
+      e.state.changes = spec.changes
+      if spec.sleep then
+        b.enemy.mon.status = "SLP"
+      end
+      if spec.trapped then
+        b.enemy.trapped = true
+      end
+      damage, beforeHit = 0, nil
+      turn(b, spec.result ~= nil)
+      assert(b.result == spec.result, "native control terminal result " .. spec.name)
+      assert(b.enemy.curMoves[1].pp == spec.enemyPP, "native control selected-slot PP " .. spec.name)
+      assert(b.enemy.mon.hp == 200 - damage + (spec.heals and 20 or 0), "native control HP " .. spec.name)
+      assert((b.player.mon.hp < 500) == not not spec.enemyHits, "native control incoming hit " .. spec.name)
+      assert(b.gen3ItemsUsed[1], "native control keeps original stock reservation " .. spec.name)
+      if spec.double then
+        assert(b.gen3ItemsUsed[2], "both double controllers reserve original stock")
+        assert(b:battlerAt(3).mon.hp == (spec.heals and 220 or 200), "right control item outcome")
+      end
+      print("PORTABILITY_ENEMY_CASE " .. V.get() .. " control-" .. spec.name)
+    end
+    b = fresh("suppress")
+    b.player.curTypes, b.enemy.curTypes = { "FIRE" }, { "STEEL" }
+    damage, beforeHit = 0, nil
+    turn(b)
+    assert(damage == 9 and b.enemy.mon.hp == 191, "native critical multiplier precedes Steel rounding")
+    print("PORTABILITY_ENEMY_CASE " .. V.get() .. " critical-before-type")
     b = fresh("suppress")
     game.data.ai_classes = game.data.ai_classes or {}
     local oldClass = game.data.ai_classes.PORTABLE_SMOKE_CLASS

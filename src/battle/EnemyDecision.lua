@@ -1,6 +1,7 @@
 -- The shared hook has two native contracts: Gen 2 executes inside the
 -- query and returns a boolean; GBA reserves stock and returns an action.
 local Runtime = require("src.mods.Runtime")
+local Strings = require("src.core.Strings")
 local TrainerAI = require("src.battle.TrainerAI")
 local M = {}
 
@@ -414,7 +415,7 @@ local function delegatedAction(battle, battler, native, original, controller)
         end
       end
     end
-  elseif native.kind == "move" then
+  elseif native.kind == "move" or native.kind == "watch" and not battle:isDouble() then
     result.id = M.itemKey({ items = battle.data.moves }, native.move)
     local source = (battler.curMoves or {})[native.slot]
     -- A changed move still spends PP from the selected native slot. The
@@ -438,11 +439,81 @@ local function delegatedAction(battle, battler, native, original, controller)
     end
     if battle:isDouble() then
       result.decisionTarget = native.target
+    elseif native.kind == "watch" then
+      -- The single controller retains watch rows and dispatches their move
+      -- through the ordinary handler. Its planner fixes the actor to enemy;
+      -- unlike move rows, the target survives from the delegated record.
+      local target = native.target == "player" and battle.player
+        or native.target == "enemy" and battle.enemy
+        or (native.target == battle.player or native.target == battle.enemy) and native.target
+      if target then
+        result.decisionWatch, result.decisionTarget = true, target.position
+      else
+        result.special = "aiDecisionSpent"
+      end
     end
   else
     result.special = "aiDecisionSpent"
   end
   return result
+end
+
+-- These are controller fields of a delegated native action, not additional
+-- explicit switch/item intents accepted by the public hook.
+function M.executeControl(battle, user, action)
+  local native = action and action.nativeDecision
+  if not native then
+    return false
+  end
+  if battle:isDouble() then
+    if native.finished or native.done then
+      return true
+    end
+    if native.kind == "run" then
+      if native.forfeit then
+        battle:sayNext(Strings("The match was forfeited!"))
+        battle.result, battle.endReason, battle.afterQueue = "forfeited", "forfeit", "finish"
+      else
+        -- The double controller's normal RUN handler cannot leave a trainer
+        -- battle. A single enemy's RUN uses the separate wild-flee handler.
+        battle:sayNext(Strings("No! There's no running\nfrom a TRAINER battle!"))
+      end
+      return true
+    end
+  elseif native.kind == "run" then
+    local status = user.mon.status or user.status or user.modStatus
+    if status == "SLP" or status == "FRZ" then
+      return true
+    end
+    local blocked = user.trapped
+      or user.escapePrevention
+      or (tonumber(user.boundTurns) or 0) > 0
+      or user.ingrained
+    local foe, Abilities = battle.player, require("src.battle.Abilities")
+    if foe and foe.mon and foe.mon.hp > 0 then
+      local ability = Abilities.of(foe)
+      local flying, steel = false, false
+      for _, kind in ipairs(user.curTypes or {}) do
+        kind = Abilities.normalizeType(kind)
+        flying, steel = flying or kind == "FLYING", steel or kind == "STEEL"
+      end
+      blocked = blocked
+        or ability == "SHADOW_TAG"
+        or ability == "ARENA_TRAP" and not flying and Abilities.of(user) ~= "LEVITATE"
+        or ability == "MAGNET_PULL" and steel
+    end
+    if blocked then
+      battle:sayNext(Strings("%s can't escape!", user.name))
+    else
+      battle:enemyDecisionFlees(user)
+    end
+    return true
+  elseif native.kind ~= "move" and native.meta then
+    -- The single planner rebuilds move rows without this flag. Other rows
+    -- retain it, and are skipped after the special RUN check.
+    return true
+  end
+  return false
 end
 
 function M.gba(battle, battler, controller)
