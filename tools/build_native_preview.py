@@ -79,6 +79,6 @@ def main():
    for backend in ('OpenGL','Metal'):
     cmd=stage/(backend+'-Test.command');cmd.write_text('#!/bin/sh\ncd "$(dirname "$0")"\nexport POKEPORT_GRAPHICS_BACKEND='+backend.lower()+'\nexec "./Gen2Recomped-NativePreview.app/Contents/MacOS/love" "$@"\n');cmd.chmod(0o755)
    target=out/f'Gen2Recomped-NativePreview-{a.release_id}-macos.zip';subprocess.run(['ditto','-c','-k','--keepParent',str(stage),str(target)],check=True)
-  metadata=dict(sourceCommit=ref,runtimeCommit=RUNTIME_COMMIT,runtimeArtifact=runtime['id'],runtimeSha256=runtime['sha256'],platform=a.platform,previewIdentity=identity,payloadSha256=sha(payload),archiveSha256=sha(target),modsIncluded=False,legacyMigration=False,automaticInstallation=False)
+  metadata=dict(sourceCommit=ref,runtimeCommit=RUNTIME_COMMIT,runtimeArtifact=runtime['id'],runtimeSha256=runtime['sha256'],platform=a.platform,previewIdentity=identity,payloadSha256=sha(payload),archiveSha256=sha(target),modsIncluded=False,modsEnabled=True,legacyMigration=False,automaticInstallation=False)
   (out/'build.json').write_text(json.dumps(metadata,indent=2)+'\n');print(json.dumps(metadata))
 if __name__=='__main__':main()

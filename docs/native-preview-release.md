@@ -21,7 +21,11 @@ using a stable LÖVE 11.5 installation is not this preview configuration.
 Import your own supported Emerald/FireRed ROM through the launcher. ROMs,
 extracted graphics and save files are not supplied. The preview starts in its
 own `Gen2Recomp-NativePreview-<release-id>` profile. It does not migrate Gen1
-or normal Gen2 saves, load external mods, or install automatic updates. Keep
+or normal Gen2 saves or install automatic updates. Mods can now be installed
+and enabled through the existing launcher in this dedicated profile; none
+are bundled. The engine reports version **0.7.6 / mod API 2**, and mod manifest
+requirements still apply. Enabling the loader alone does not establish VASC2
+compatibility. Keep
 the default preview data location; portable/external-data roots are rejected.
 Normal source builds do not activate the preview profile.
 

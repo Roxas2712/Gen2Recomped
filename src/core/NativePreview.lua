@@ -6,7 +6,7 @@ function M.activate(identity)
   if M.identity then return end
   M.identity=identity
   local getenv=os.getenv
-  local flags={POKEPORT_NO_MODS="1",POKEPORT_NO_DISCORD="1",POKEPORT_NO_BOOT_REPORT="1",
+  local flags={POKEPORT_NO_MODS="0",POKEPORT_NO_DISCORD="1",POKEPORT_NO_BOOT_REPORT="1",
     POKEPORT_NOTIFY_ONLY_UPDATES="1",POKEPORT_IDENTITY=identity}
   os.getenv=function(key)if flags[key]then return flags[key]end;return getenv(key)end
   _G.POKEPORT_NOTIFY_ONLY_UPDATES=true
