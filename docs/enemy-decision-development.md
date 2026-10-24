@@ -436,6 +436,43 @@ This milestone is CPU/native-controller selection evidence, not a new LÖVE
 smoke or full playthrough. The unfinished hook remains outside the combined
 testing branch and is not yet published as a PR.
 
+## Native GBA random-branch milestone
+
+All four bytecode random comparisons now consume a native u16 draw and
+compare its low byte. Previously the host drew only 0–255 for less/greater
+and refused entire reachable scripts containing equal/not-equal. This
+independent correction is published in
+[PR #177](https://github.com/UNDERdecoded/Gen2Recomped/pull/177), based directly
+on upstream `main`; it does not publish this development hook.
+
+The unchanged public scorer now includes 32 additional native random-program
+cases per GBA version. Both API modes pass **12 workers / 753 paired
+observations**, with zero differences. Focused host checks pass
+**3,094/3,094**, and the separate native-VM suite passes **1,920/1,920**.
+The complete development run passes **142/152** engine suites, **3/3** SDK
+suites and B30; all **26 FAIL lines** exactly match its preceding ten-suite
+baseline. Runtime is `3280941` plus the recorded random-branch changes.
+Reports: `contracts-ai-random.json`, `contracts-ai-random-api2.json`,
+`targeted-ai-random.log`, `ai-random-contracts.json` and `full-ai-random.log`.
+
+The PR adds a reproducible optional read-only Emerald ROM check alongside
+its ROM-free 240-pair matrix. Each native importer independently decodes the
+same actual cartridge into memory. The actual interpreters match on **39
+common RNG-only subroutines / 390 observations**. The report exposes 42
+additional host entry boundaries as unpaired, and fails if any eligible
+reference entry is missing. Clean upstream differs in all 390 traces and
+41 resulting scores; it fails 631 synthetic assertions per GBA version.
+These are bounded real-import/VM checks, not complete trainer decisions or
+new LÖVE gameplay runs. The isolated feature's own complete run matches all
+27 upstream baseline failure lines exactly (65/75 versus upstream 64/74).
+
+The fresh Emerald AI stage contains 1,745 instructions and 142 less-than
+random comparisons. The new equality operators are not present in that
+cartridge's imported instruction set; the broader operator checks are
+synthetic native programs, not a claim to unlock more of Emerald's stock
+scripts. Whole-script support still lacks native query opcodes, and existing
+damage-estimation simulation/rules require further parity work.
+
 Required before publication:
 
 - Extend real imported Gen-2 coverage beyond Gold's actual attributes, stock

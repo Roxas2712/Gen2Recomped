@@ -11,7 +11,7 @@ return function(f, backend)
     f.game.mods = f.result.loader
   end
   local scoring, brain = f.e.scoring, f.e.brain
-  for _, spec in ipairs({
+  local specs = {
     { name = "class-only", class = "PORTABLE_SCORE_A", count = 2, slot = 2 },
     { name = "mods-only", mods = { "PORTABLE_SCORE_A", "PORTABLE_SCORE_B" }, count = 4, slot = 2 },
     {
@@ -112,7 +112,26 @@ return function(f, backend)
     { name = "program-disabled-first", flags = 1, program = true, disabled = 1, count = 1, slot = 2 },
     { name = "program-zero-pp-first", flags = 1, program = true, zeroPP = 1, count = 1, slot = 2 },
     { name = "program-sparse-slots", flags = 1, program = true, sparse = true, count = 2, slot = 3 },
+  }
+  for _, opcode in ipairs({
+    "if_random_less_than",
+    "if_random_greater_than",
+    "if_random_equal",
+    "if_random_not_equal",
   }) do
+    for _, raw in ipairs({ 0, 127, 128, 129, 255, 256, 384, 65535 }) do
+      specs[#specs + 1] = {
+        name = opcode .. "-" .. raw,
+        flags = 1,
+        program = true,
+        randomOpcode = opcode,
+        randomDraw = raw,
+        count = 2,
+        slot = 2,
+      }
+    end
+  end
+  for _, spec in ipairs(specs) do
     local b = f.freshDecision({}, spec.double)
     local id = spec.id or 1
     local who = native and require("src.core.game3.battle.state").battler(b, id) or b:battlerAt(id)
@@ -182,10 +201,31 @@ return function(f, backend)
           }
         or nil
     end
+    if spec.randomOpcode then
+      if native then
+        ai._pack = {
+          table = { "main" },
+          scripts = {
+            main = { { op = spec.randomOpcode, value = 128, target = "bonus" }, { op = "end" } },
+            bonus = { { op = "score", delta = 5 }, { op = "end" } },
+          },
+        }
+      else
+        f.data.constants.gen3BattleAI = {
+          entries = { [0] = 1 },
+          code = {
+            { name = spec.randomOpcode, args = { 128, 3 }, next = 2 },
+            { name = "end", args = {} },
+            { name = "score", args = { 5 }, next = 4 },
+            { name = "end", args = {} },
+          },
+        }
+      end
+    end
     local draws = {}
     b.rng = function(lo, hi)
       draws[#draws + 1] = { lo, hi }
-      return hi == 65535 and (spec.targetDraw or 0) or lo or 0
+      return hi == 65535 and (spec.randomDraw or spec.targetDraw or 0) or lo or 0
     end
     scoring.calls, scoring.lastView, scoring.mode = {}, nil, spec.mode or "prefer-second"
     brain.calls, brain.seen, brain.mode, brain.pick =
