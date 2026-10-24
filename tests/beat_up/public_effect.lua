@@ -4,7 +4,7 @@ local T = require("tests.modkit")
 require("src.mods.UnifiedEffects")
 for _, version in ipairs({ "firered", "emerald" }) do
   local entry = [[return function(mod)
-    assert(mod.content.moves:patch("TACKLE",{effect="BEAT_UP",power=10}))
+    assert(mod.content.moves:patch("TACKLE",{effect="EFFECT_BEAT_UP",power=10}))
     assert(mod.content.pokemon:patch("CHARMANDER",{baseStats={attack=133,defense=40}}))
     mod.exports.effect=assert(mod.content.moves:get("TACKLE")).effect
     mod.exports.attack=assert(mod.content.pokemon:get("CHARMANDER")).baseStats.attack
@@ -23,7 +23,7 @@ for _, version in ipairs({ "firered", "emerald" }) do
   end
   local f = require("tests.enemy_actions.fixture").new(".", "gen2", version, 3, "unified", configure, entry)
   local b = f.fresh("TACKLE", { enemy = true }).battle
-  T.eq(f.e.effect, "BEAT_UP", "canonical effect roundtrips through the real loader")
+  T.eq(f.e.effect, "EFFECT_BEAT_UP", "canonical effect roundtrips through the real loader")
   T.eq(f.e.attack, 133, "public species base patch loads")
   T.eq(f.data.moves[f.ids.TACKLE].gen3Effect, 154, "canonical effect selects native semantic 154")
   local second = require("src.mods.Merge").deepCopy(b.enemy.mon)
