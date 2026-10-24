@@ -1,14 +1,51 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–182
-(excluding unrelated #138). It is for testing the combined changes before
+hook, rendering, shader and baseline test fixes prepared in PRs #88–182 and
+#184 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
+LeafGreen cartridge-support PR #183 is separate from this composed snapshot.
 
 The combined runtime tested for this snapshot is
-`611e97230e1fea0c14b008c69a0fdfede4573f8b`. Its ROM-free run passed
-**203/203 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`335000f18e7002f9be487a49e5164466ff602439`. Its ROM-free run passed
+**204/204 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status-only commits do not change production code.
+
+[PR #184](https://github.com/UNDERdecoded/Gen2Recomped/pull/184) implements
+native `if_status_in_party`: full 32-bit equality, six stored slots, native
+HP/species eligibility and FireRed/Emerald party selectors. Ordinary egg
+flags preserve the underlying species. Actual sleep producers now maintain
+the stored party count, including native GBA RNG, Early Bird and waking-turn
+behavior. Other generations keep their existing policies.
+
+The clean combined runtime matches in **4 workers / 2,500 paired observations**,
+with **10,006** host and **7,496** source focused checks. The workflow pins
+[Gen1 #3054](https://github.com/bryanthaboi/gen1recomp/pull/3054) at
+`Roxas2712/gen1recomp-Mac-fix@9e372ef7f18a8069289b3c2b367fa45490f98ab0`.
+That source also needed its previous approximation corrected; neither PR is
+claimed merged upstream. See [native party status](gen3-ai-party-status.md).
+
+The Gen1 fork's `codex/portability-testing` now composes source PRs #3052–3054
+at `fb7b0366efcb85e703e9e6d5a8a24d01456a109b`. Its focused checks pass
+**372** Taunt, **1,240** item-knowledge and **7,496** party-status checks.
+The independent party-status source standard run passes all selected tiers,
+including engine **1,116/1,116** and SDK **79/79**; cartridge-cache cases skip.
+
+Negative controls reject unchanged source dev (352 failed checks / 352
+different observations per profile) and host main (2,494 / 1,246). The
+independent Gen2 feature retains exactly **27 FAIL lines across ten baseline
+suites**; their repairs are included here.
+
+Both hosted #184 workflows and source #3054 CI await maintainer approval
+(`action_required`); the [party-status workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40121125880)
+and source CI have zero executed jobs. Local acceptance is separate. These
+are bounded CPU VM/status checks, without a new graphical/full-controller
+or full-gameplay claim. The unused broken inverse remains unsupported;
+remaining native AI order/attacking-move predicates still need contracts.
+The unfinished enemy switch/item hook remains outside this branch.
+
+Prior #182 results retain runtime
+`611e97230e1fea0c14b008c69a0fdfede4573f8b` and its 203/203 engine result:
 
 [PR #182](https://github.com/UNDERdecoded/Gen2Recomped/pull/182) implements
 native GBA AI held-effect and item-membership queries with actual Focus Band
