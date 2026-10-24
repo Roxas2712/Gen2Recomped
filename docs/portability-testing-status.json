@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "eaf9882ddd54fd2139d99e51bddaaf5ecfe941e8",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/168",
-  "feature_ref": "fbb21ba43e64e35562a30d9f1f1aff8ba22d6aa6",
+  "runtime_ref": "19513a930c6befae0b0ee336d0c9f4984d7ae929",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/169",
+  "feature_ref": "049217dbe3a1096bc6fd0544dbd4febb101194f1",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 182,
-  "engine_suites_total": 182,
+  "engine_suites_passed": 184,
+  "engine_suites_total": 184,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
   "cross_engine_worker_runs": 48,
-  "cross_engine_paired_observations": 168,
+  "cross_engine_paired_observations": 816,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All 28 #168 PR workflows report action_required pending maintainer approval; local results are separate",
+  "hosted_ci": "All 29 #169 PR workflows report action_required pending maintainer approval; local results are separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Latest Gen-2 mart-content records and actual native purchases through both SDKs in four configurations; reference API 2 remains native; unavailable GB/GBA boundaries are separate",
+  "cross_engine_scope": "Latest Gen-2/3 shiny/gender native identity contracts in four SDK configurations; exact Gen-2 DV/ratio matrix; reference API 2 remains native; cached and query lifecycle scopes are separate",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -156,14 +156,14 @@
   },
   "enemy_pp_negative_controls": "Strict raw-policy checker and public/native observer both reject the unchanged #161 host for Gold PP discrepancy",
   "charge_required_original_full_suite_runtime_ref": "6a1238a7c42b09fbd9694149b35146d17bb9b720",
-  "hosted_ci_workflow_count": 28,
+  "hosted_ci_workflow_count": 29,
   "enemy_pp_hosted_ci": {
     "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40046010257",
     "conclusion": "action_required",
     "jobs": 0
   },
   "enemy_pp_full_suite_runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
-  "feature_tested_ref": "fbb21ba43e64e35562a30d9f1f1aff8ba22d6aa6",
+  "feature_tested_ref": "049217dbe3a1096bc6fd0544dbd4febb101194f1",
   "caught_marker_native_checks_passed": 2078,
   "caught_marker_renderer_checks_passed": 840,
   "caught_marker_import_checks_passed": 216,
@@ -444,6 +444,62 @@
       "workflow_count": 28,
       "conclusion": "action_required",
       "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40062963241",
+      "jobs": 0
+    }
+  },
+  "pokemon_identity_rolls": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/169",
+    "feature_ref": "049217dbe3a1096bc6fd0544dbd4febb101194f1",
+    "runtime_ref": "19513a930c6befae0b0ee336d0c9f4984d7ae929",
+    "reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "native_checks_passed": 4976,
+    "authority_checks_passed": 142,
+    "cross_engine_worker_runs": 48,
+    "cross_engine_paired_observations": 816,
+    "generation_boundary": "Gen-2/3 only; GB/DS honestly report shiny.roll and gender.roll unavailable",
+    "scope": "Actual construction/refresh/breeding/query producers, API-3 common species/definition/DV/IV records, definition mutation scope, replacement identity, forced precedence, cached/live semantics, result/fallback timing, rollback/retirement and query RNG/genetics preservation",
+    "gen2_native_matrix": {
+      "cases_per_engine_per_configuration": 65536,
+      "sdk_configurations": 4,
+      "comparison": "All exact ordered outcomes compared; not checksum-only",
+      "input_domain": "All byte ratios 0..255 and attack/speed DVs 0..15"
+    },
+    "native_reader_repairs": [
+      "Gen-2 composite DV inclusive threshold",
+      "Unhooked GBA separate secret IDs and trainerId alias"
+    ],
+    "feature_baseline": {
+      "engine_suites_passed": 129,
+      "engine_suites_total": 139,
+      "existing_failure_suites": 10,
+      "new_failures": 0,
+      "all_26_fail_lines_match_parent": true,
+      "repair_prs": "#128\u2013134",
+      "sdk_suites_passed": 3,
+      "b30_profile": "passed"
+    },
+    "combined_engine_suites_passed": 184,
+    "combined_engine_suites_total": 184,
+    "native_smoke_games": [
+      "gold",
+      "firered",
+      "emerald"
+    ],
+    "native_runtime_ref": "19513a930c6befae0b0ee336d0c9f4984d7ae929",
+    "native_scope": "L\u00d6VE 11.5, isolated imported title/New Game; real constructors, native summary creation/draw/B-close, Gen-2 refresh, GBA cached/live distinction, common imported IDs, preserved genetics/stats for plain overrides, actual forced-wild constructor and shiny callback bypass, retirement; no normal SAVE, complete battle/playthrough or pixel-equivalence claim",
+    "negative_control": "Unchanged #168 has unavailable hooks, false/male instead of requested true/female, coarse Gen-2 DV boundary and ignored split SID",
+    "imported_red_regressions": {
+      "battle": 468,
+      "save_conversion": 95,
+      "parity_J": 73,
+      "parity_K": 22,
+      "external_binary_save_fixture": "not supplied"
+    },
+    "remaining_scope": "Reference-native cached display values and live predicates have distinct lifecycle; not universal UI recomputation timing, raw save-format or whole battle parity",
+    "hosted_ci": {
+      "workflow_count": 29,
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40066487097",
       "jobs": 0
     }
   }

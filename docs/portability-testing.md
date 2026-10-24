@@ -1,33 +1,34 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–168
+hook, rendering, shader and baseline test fixes prepared in PRs #88–169
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`eaf9882ddd54fd2139d99e51bddaaf5ecfe941e8`. Its ROM-free run passed
-182/182 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
-PR #168 adds the public Gen-2 mart-definition registry, with 1,485 public/native
-checks and 234 authority/import/VM checks. The unchanged consumer passes
-through both SDKs in four configurations (48 isolated workers / 168 paired
-observations), pinned to Gen1 `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`.
-The reference's API 2 remains native. GB/GBA/DS honestly report this registry
-unavailable, matching its reference generation boundary.
+`19513a930c6befae0b0ee336d0c9f4984d7ae929`. Its ROM-free run passed
+184/184 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+PR #169 adds native Gen-2/3 shiny/gender roll hooks, with 4,976 public/native
+checks and 142 authority checks. The unchanged consumer passes through both
+SDKs in four configurations (48 isolated workers / 816 paired observations),
+pinned to Gen1 `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`. All exact outcomes
+of the 65,536-case Gen-2 ratio/DV matrix match per configuration. Reference
+API 2 remains native. GB/DS honestly report these hooks unavailable.
 
-Native LÖVE 11.5 imported Gold passes actual lowered script coroutines and
-UI input: ordinary purchase/item prices, independent bargain prices and
-one-item limit, sold-out/reopen protection and close/resume. Its runtime was
-`89fc602240a607a9cee3b2c575828c17970842ee`; production, example and driver are
-unchanged in the final ref (only a shared test metadata probe changed).
-See [portable mart definitions](portable-mart-content.md). All 28 hosted
-#168 workflows await maintainer approval; local results are separate.
+Native LÖVE 11.5 imported Gold, FireRed and Emerald pass at this runtime:
+actual construction, native summaries and close input, Gen-2 refresh, GBA
+cached/live identity, common imported IDs, genetic/stat preservation under
+plain overrides, real forced-wild construction/bypass and retirement. See
+[portable Pokemon identity hooks](portable-pokemon-rolls.md). Unhooked GBA
+split/aliased trainer-ID reads and Gen-2 threshold boundaries also match the
+reference. All 29 hosted #169 workflows await maintainer approval; local
+results are separate.
 
-Prior #167 held-definition and #166 GBA scheduling evidence retains its own
-historical refs and reference pins in the status JSON. These establish the
-tested held-definition, read and scheduling contracts, not complete battle-rule
-parity; Choice Band locking, further deferred abilities, Quick Claw turn-RNG
-ordering and volatile rules remain separate work.
+Prior #168 mart, #167 held-definition and #166 scheduling evidence retains
+its own historical refs in the status JSON. These establish their tested
+contracts, not complete battle-rule parity; Choice Band locking, further
+deferred abilities, Quick Claw turn-RNG ordering and volatile rules remain
+separate work.
 
 Prior held-read, field-residual, caught-marker, charge, PP, item, follower,
 map and storage families retain their historical refs in
@@ -525,3 +526,21 @@ without a normal SAVE action. It does not claim a full playthrough, fresh full
 ROM reimport, daily stock reset or special-shop pixel equivalence. Old imported
 marker-only fallbacks need reimport for the new mart-ID annotations; the
 normal ROM-script path uses the live pool directly.
+
+## Native Pokemon identity-hook test
+
+Install and enable `examples/portable_pokemon_rolls` in the isolated identity:
+
+```sh
+POKEPORT_VERSION=gold POKEPORT_DRIVER=tests/drivers/pokemon_rolls.lua \
+  bash scripts/run-portability-test.sh
+```
+
+Gold, FireRed and Emerald pass. The driver starts an in-memory New Game and
+uses imported species metadata, real constructors, native summary creation/
+drawing and B-close input. It checks common API-3 IDs, Gen-2 refresh, GBA
+cached display/live query distinction, unchanged genes/stats under plain
+overrides, the native forced-wild constructor and callback bypass, then
+retires the callbacks. It does not perform a normal SAVE action or claim a
+complete battle/playthrough, raw save-format or pixel equivalence. Deliberate
+Gen-2 DV edits are a separate mutation case in the shared contracts.
