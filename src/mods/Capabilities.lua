@@ -33,6 +33,7 @@ add("hooks", "123", "battle.overlay ui.naming.grid ui.party.submenu ui.start_men
 add("hooks", "12", "ui.pc.items")
 add("hooks", "45", "battle.status_hud_visible")
 add("hooks", "23", "shiny.roll gender.roll")
+add("hooks", "23", "held_item.trigger")
 add("hooks", "12", "intro.oak_speech.build")
 
 add("events", "12345", [[

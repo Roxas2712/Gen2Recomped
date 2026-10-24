@@ -17,6 +17,7 @@ end
 -- This is an audited boundary catalog, not a claim that every game executes
 -- every seam. The source-catalog test requires a decision for each new seam.
 C.hooks = names([[
+ held_item.trigger
  shiny.roll gender.roll
  battle.accuracy battle.catch_exp battle.crit battle.damage battle.enemy_action battle.exp_award
  battle.low_health_alarm battle.overlay battle.run battle.status_hud_visible battle.turn_order catch.rate
@@ -43,6 +44,7 @@ C.events = names([[
 local positions = {
   ["shiny.roll"] = { "context" },
   ["gender.roll"] = { "context" },
+  ["held_item.trigger"] = { "context" },
   ["battle.accuracy"] = { "context" },
   ["battle.damage"] = { "context" },
   ["battle.crit"] = { "context" },
