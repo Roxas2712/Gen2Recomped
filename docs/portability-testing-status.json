@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "2551b7ef641ad138dc78e03b6212e1e18da85702",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/159",
-  "feature_ref": "d2c31afd7204bace559a78e7dcf37710439d5cd7",
+  "runtime_ref": "c5efc14503ca6c25afa32d97536dde2f6ab6dbbd",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/160",
+  "feature_ref": "61616f61e2c5b4dd698ed9413d487ed5983e7c2c",
   "gen1_contract_ref": "79ea62f45fb2ea8f65d081a109431e4eb1bbdb36",
-  "engine_suites_passed": 167,
-  "engine_suites_total": 167,
+  "engine_suites_passed": 168,
+  "engine_suites_total": 168,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 16,
-  "cross_engine_paired_observations": 250,
+  "cross_engine_worker_runs": 64,
+  "cross_engine_paired_observations": 631,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Latest GBA field item consumer; older family results recorded separately",
+  "cross_engine_scope": "Latest encounter.table preview consumer; older family results recorded separately",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -87,5 +87,24 @@
   "gba_item_use_cross_engine_worker_runs": 16,
   "gba_item_use_cross_engine_paired_observations": 250,
   "item_use_cross_engine_worker_runs": 24,
-  "item_use_cross_engine_paired_observations": 339
+  "item_use_cross_engine_paired_observations": 339,
+  "gba_item_use_full_suite_runtime_ref": "2551b7ef641ad138dc78e03b6212e1e18da85702",
+  "encounter_table_native_checks_passed": 2783,
+  "encounter_table_cross_engine_worker_runs": 64,
+  "encounter_table_cross_engine_paired_observations": 631,
+  "encounter_table_cross_engine_runtime_ref": "7b4e51dd479725a5c2797f0a1e46d9721e0189f9",
+  "native_encounter_table_smoke_games": [
+    "red",
+    "gold",
+    "firered",
+    "emerald"
+  ],
+  "native_encounter_table_runtime_ref": "292c4beb6445ac09ee1541a68562a8fa9038f22f",
+  "native_encounter_table_scope": "Same installed API-3 consumer at native title; imported native map tables, replacement/empty/nil/unsubscribe, guarded RNG, preserved tables/save/preallocated world identity and no active overworld; no normal SAVE, no full-playthrough or live-table-transform claim",
+  "gba_item_use_no_mod_audit_feature_ref": "1c35b4a5174680104ee85d9b3bc5d40bab33fd38",
+  "unregistered_reference_profiles": [
+    "leafgreen",
+    "ruby",
+    "sapphire"
+  ]
 }
