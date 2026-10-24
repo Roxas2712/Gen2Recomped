@@ -37,6 +37,15 @@ function F.new(root, backend, version, api, format, noMod)
               heal = row[3] and true or nil,
               amount = row[3] or nil,
               cureAll = row[1] ~= "POTION" and true or nil,
+              bytes = {
+                0,
+                0,
+                0,
+                row[1] ~= "POTION" and 63 or 0,
+                row[3] and 4 or 0,
+                0,
+                row[3] == "all" and 255 or row[3] or 0,
+              },
             }
           end
         end
@@ -82,7 +91,12 @@ function F.new(root, backend, version, api, format, noMod)
       b = require("src.battle.gen2.Battle").new({
         data = f.data,
         party = { p },
-        trainer = { name = "FOE", party = { e, bench }, items = stock or {}, attributes = { 0, 0, 0, 0, 0, 0, 0 } },
+        trainer = {
+          name = "FOE",
+          party = { e, bench },
+          items = stock or {},
+          attributes = { 0, 0, 0, 0, 0, 0, 0 },
+        },
         random = function()
           return 0
         end,

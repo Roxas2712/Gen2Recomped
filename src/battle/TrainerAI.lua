@@ -207,8 +207,12 @@ function TrainerAI.switchAction(battle)
 end
 
 -- Apply an aiItem action to the enemy battler; returns messages.
-function TrainerAI.useItem(battle, item, battler)
+function TrainerAI.useItem(battle, item, battler, aiItemType, aiItemFlags)
   local enemy = battler or battle.enemy
+  if require("src.core.GameVersion").isGen3() then
+    local raw = require("src.battle.EnemyItems").use(battle, enemy, item, aiItemType, aiItemFlags)
+    if raw then return raw end
+  end
   local trainerName = battle.trainer.name
   local itemName = battle.data.items[item] and battle.data.items[item].name or item
   local msgs = { Strings("%s\nused %s!", trainerName, itemName) }

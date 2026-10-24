@@ -39,8 +39,10 @@ local STAT_LABEL = {
 -- ---------------------------------------------------------------------
 
 local function changeStage(battle, who, stat, delta, fromEnemy)
-  if fromEnemy and (who.substituteHP or who.mist) then
-    if who.mist then
+  local mist = who.mist or (delta < 0 and require("src.core.GameVersion").isGen3()
+    and require("src.battle.EnemyItems").mistActive(battle, who))
+  if fromEnemy and (who.substituteHP or mist) then
+    if mist then
       return { Strings("%s is\nprotected by MIST!", displayName(who)) }
     end
     return { Strings("But, it failed!") }
@@ -302,8 +304,14 @@ MoveEffects.primary = {
   end,
 
   MIST_EFFECT = function(battle, user)
-    if user.mist then return { Strings("But, it failed!") } end
-    user.mist = true
+    if require("src.core.GameVersion").isGen3() then
+      local side = battle:sideOf(user)
+      if (side.mistTurns or 0) > 0 then return { Strings("But, it failed!") } end
+      side.mistTurns = 5
+    else
+      if user.mist then return { Strings("But, it failed!") } end
+      user.mist = true
+    end
     -- _ShroudedInMistText (lowercase "mist")
     return { Strings("%s's\nshrouded in mist!", displayName(user)) }
   end,

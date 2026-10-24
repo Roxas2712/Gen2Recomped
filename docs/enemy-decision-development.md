@@ -21,14 +21,14 @@ ranking/fallback. Decisions preserve the reference's RNG ranges, call order and
 double-slot reservations. Execution can consume its own reservation; a new
 explicit selection cannot select an already reserved slot.
 
-The strict matrix passes **12 workers / 219 paired observations** in each of
+The switch-policy milestone passed **12 workers / 219 paired observations** in each of
 API 3 and host API 2/unified. Each GBA version includes **39** named automatic
 policy cases, a two-query double reservation and four actual native damaging
 move/history cases. Real hits record landed move/attacker state; a Substitute
 records the landed move without overwriting attacker state. Semi-invulnerability
 and type immunity cannot invent hit history. A real Surf then drives the
 ordinary resistance/counter decision, rather than supplying a fake hit record.
-The host suite passes **317/317** focused checks. This remains bounded query,
+That milestone passed **317/317** focused checks. This remains bounded query,
 effect and execution evidence, not complete native battle/controller parity.
 The complete development run passes **139/149** engine suites, **3/3** SDK
 suites and B30. Its **26** failure lines across ten baseline suites exactly
@@ -36,6 +36,43 @@ match the earlier development baseline; no new failure lines were introduced.
 Logs/reports are retained under `tmp/enemy-switch-item-qa/` as
 `full-switch-policy.log`, `targeted-switch-history.log`,
 `contracts-switch-history.json` and `contracts-switch-history-api2.json`.
+
+## Raw GBA trainer item milestone
+
+`EnemyItems` now selects and applies #173's actual imported effect bytes. Its
+stock compacts only the first four native slots, preserves duplicate slots,
+keeps the initial stock count and reserves a slot during selection. It applies
+raw HP sentinels, selective status/confusion/infatuation cures, Focus Energy,
+all native X-stat nibbles and side-owned five-turn Mist to the chosen enemy,
+including the right double slot. Native Mist moves share that side timer and
+prevent wasting Guard Spec. A fainted explicit revive remains executable;
+ordinary moves retain their live-user/target gates.
+
+The cartridge's `GetItemEffectParamOffset` returns the first argument for a
+HEAL_HP request even when EV bits precede the heal bit. Trainer selection and
+application preserve this behavior rather than using the parsed field-medicine
+amount. See the [native FireRed implementation](https://github.com/pret/pokefirered/blob/master/src/pokemon.c#L4641).
+Tests cover both refusal at the native raw threshold and actual healing with
+that first argument. A changed item display name cannot change its native type;
+an unchanged delegated item retains its physical key even when aliases exist.
+
+The current matrix passes **12 workers / 333 paired observations** in each of
+API 3 and host API 2/unified. Each GBA version adds **45** raw-item cases, alias
+resolution, duplicate/egg/initial-stock boundaries, shared double stock, native
+Mist move/item interaction and six native Mist lifetime/partner-stat-drop
+observations. Host checks pass **907/907**, including old parsed-medicine
+caches, refusal of missing battle-only bytes and truncated healing parameters.
+Old caches must be reimported for the additional raw battle effects; missing
+bits are not inferred from item names. These remain native query/effect/residual
+tests with importer-shaped records, not a fresh full-ROM import or complete
+ordinary controller/gameplay validation.
+
+Current reports: `contracts-raw-items.json`, `contracts-raw-items-api2.json`,
+`targeted-raw-items.log`, and `full-raw-items.log` in the same QA directory.
+The complete raw-item run passes **139/149** engine suites, **3/3** SDK suites
+and B30. Its **26** failure lines are exactly unchanged from the switch-policy
+milestone's ten baseline suites. The combined testing branch remains separate
+and does not include this unfinished hook implementation.
 
 The implementation preserves Gen 2's imperative boolean query and GBA's
 deferred action/stock-consumption contract. The public callback receives the
@@ -48,9 +85,8 @@ Required before publication:
 - Wire and test #173's imported Gen-2 attributes/stock through the ordinary
   battle constructors, including old caches that lack these fields. The seven
   bytes are now imported; missing flags must not be fabricated.
-- Use #173's raw GBA effect bytes for custom trainer items and battle-only
-  effects, with explicit old-cache behavior. The parsed medicine view alone
-  still omits individual X-item bits.
+- Exercise the raw GBA effects through imported-data gameplay and ordinary
+  controller queues. Audit first-turn timing for both enemy double slots.
 - Extend native trap/status construction, stock-boundary and imported-data
   cases beyond the bounded automatic-policy fixtures. Audit native action
   mutations and both GBA double slots beyond Potion.

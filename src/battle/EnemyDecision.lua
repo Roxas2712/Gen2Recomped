@@ -40,6 +40,23 @@ local function itemNumber(battle, key)
   return tonumber(def and def.index) or tonumber(key)
 end
 
+local function effectItemKey(battle, ref)
+  local key = M.itemKey(battle.data, ref)
+  local effects = battle.data.constants and battle.data.constants.gen3ItemEffects or {}
+  if key and effects[key] then
+    return key
+  end
+  local number = key and itemNumber(battle, key)
+  if number then
+    for candidate in pairs(effects) do
+      if itemNumber(battle, candidate) == number then
+        return candidate
+      end
+    end
+  end
+  return key or ref
+end
+
 function M.validSwitch(battle, battler, value, gba, executing)
   local index = tonumber(value)
   if not index or index ~= index then
@@ -241,20 +258,7 @@ local function reserveSwitch(battle, battler, index)
 end
 
 local function reserveItem(battle, battler, key)
-  if not key then
-    return nil
-  end
-  local record = require("src.inventory.ItemEffects").gen3RecordFor(key, battle.data)
-  if not record then
-    return nil
-  end
-  battle.gen3ItemsUsed = battle.gen3ItemsUsed or {}
-  for slot, item in ipairs(battle.trainer and battle.trainer.items or {}) do
-    if not battle.gen3ItemsUsed[slot] and M.itemKey(battle.data, item) == key then
-      battle.gen3ItemsUsed[slot] = true
-      return { special = "aiItem", item = key, slot = slot, decisionBattler = battler }
-    end
-  end
+  return require("src.battle.EnemyItems").reserve(battle, battler, key)
 end
 
 local function sourceAction(battle, battler, action)
@@ -289,7 +293,8 @@ function M.gba(battle, battler)
   local native, action
   local function base()
     local index = require("src.battle.EnemySwitch").choose(battle, battler, M.validSwitch)
-    action = index and { special = "aiSwitch", index = index } or TrainerAI.classAction(battle, battler)
+    action = index and { special = "aiSwitch", index = index }
+      or require("src.battle.EnemyItems").choose(battle, battler)
     if action then
       action.decisionBattler = battler
     end
@@ -306,7 +311,9 @@ function M.gba(battle, battler)
     -- The reference returns this same native action after next(). A mod can
     -- edit its item without consuming another stock slot.
     if native and native.kind == "item" and action then
-      action.item = M.itemKey(battle.data, native.item) or native.item
+      if native.item ~= itemNumber(battle, action.item) then
+        action.item = effectItemKey(battle, native.item)
+      end
       action.aiItemType, action.aiItemFlags = native.aiItemType, native.aiItemFlags
     end
     return action

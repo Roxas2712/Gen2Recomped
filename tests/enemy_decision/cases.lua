@@ -164,6 +164,9 @@ function C.run(root, backend, version, api, format, inspect)
     end
   end
   if f.gen == 3 then
+    for _, row in ipairs(dofile(root .. "/tests/enemy_decision/item_cases.lua")(f, root, backend)) do
+      rows[#rows + 1] = row
+    end
     for _, row in ipairs(dofile(root .. "/tests/enemy_decision/switch_cases.lua")(f, root, backend)) do
       rows[#rows + 1] = row
     end

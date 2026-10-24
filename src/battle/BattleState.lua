@@ -7581,7 +7581,8 @@ function BattleState:executeAction(user, target, action)
   -- faint cases are already covered by the HP guard below (#441)
   if self.result then return end
   if not (user and user.mon) then return end
-  if user.mon.hp <= 0 then return end
+  local trainerItem = GameVersion.isGen3() and action and action.special == "aiItem"
+  if user.mon.hp <= 0 and not trainerItem then return end
   if not action then return end
   if action.special == "aiDecisionSpent" then return end
   -- A SWITCH NEEDS NO TARGET.  Everything else does, and with four on the
@@ -7590,7 +7591,7 @@ function BattleState:executeAction(user, target, action)
   -- resolve it to.
   local isSwitch = action.special == "playerSwitch"
                    or action.special == "aiSwitch"
-  if not isSwitch and not (target and target.mon and target.mon.hp > 0) then
+  if not isSwitch and not trainerItem and not (target and target.mon and target.mon.hp > 0) then
     return
   end
   -- BATTLE ARENA: BattleArena_AddMindPoints in HandleAction_UseMove -- the
@@ -7636,7 +7637,8 @@ function BattleState:executeAction(user, target, action)
         self.gen3ItemsUsed = self.gen3ItemsUsed or {}
         self.gen3ItemsUsed[action.slot] = true
       end
-      for _, m in ipairs(TrainerAI.useItem(self, action.item, action.decisionBattler)) do
+      for _, m in ipairs(TrainerAI.useItem(self, action.item, action.decisionBattler,
+                                         action.aiItemType, action.aiItemFlags)) do
         self:sayNext(prefixEnemy(m, action.decisionBattler or self.enemy))
       end
       self:drainNext(action.decisionBattler)
