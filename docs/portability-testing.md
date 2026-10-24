@@ -1,30 +1,31 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–166
+hook, rendering, shader and baseline test fixes prepared in PRs #88–167
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`d812e1b144aabd1e4be1ba79c9c31528bd750a74`. Its ROM-free run passed
-178/178 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
-The held-item consumer passed on both engines in four SDK configurations
-(40 isolated workers / 1,914 paired observations), with 5,511 host public
-contract checks, 290 ownership/metadata checks and 432 GBA scheduling checks.
-Existing Gen2 held-item regressions passed 51/51. Native LÖVE 11.5 held-item
-smoke on imported Gold/FireRed/Emerald passed again at this runtime.
+`5d49906947262af38d25ad01f1886473e3f40910`. Its ROM-free run passed
+180/180 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+PR #167 adds the public Gen-2 held-definition registry, with 2,916 native
+contract checks and 153 authority checks. The unchanged consumer passes
+through both SDKs in four configurations (48 isolated workers / 192 paired
+observations); the reference's API 2 remains native. GB/GBA/DS honestly report
+this registry unavailable, matching its reference generation boundary.
 
-PR #166 aligns the tested GBA move-end/after-action/residual item phases.
-The previously recorded unrestricted 7-HP Berry discrepancy is resolved:
-both engines now heal 35 HP with six residual reads. Strict native-policy
-comparison is required in CI. Native FireRed/Emerald scheduling smoke also
-passes actual FIGHT/move input and result queues, 13 activations over a full
-turn, cure before lethal poison and unsubscribe. The example still defaults
-to requiring an actual item. See [portable held items](portable-held-items.md).
-This does not establish complete battle-rule parity; Choice Band locking,
-further deferred abilities, Quick Claw turn-RNG ordering and volatile rules
-remain separate work. All 26 hosted #166 workflows await maintainer approval;
-the local results above are separate.
+Native LÖVE 11.5 imported Gold passes actual FIGHT/move input, imported item
+ID mapping, exact 7-HP healing and item consumption, detached reads and frozen
+writes at this runtime. The existing stock Gold held-item driver also passes
+after removing the new example. See [portable held definitions](portable-held-content.md).
+All 27 hosted #167 workflows await maintainer approval; local results above
+are separate from hosted CI.
+
+PR #166's historical GBA scheduling snapshot and its 40 workers / 1,914
+paired observations are preserved below and in the status JSON. It resolves
+the tested unrestricted Berry 7-vs-35 HP discrepancy. This does not establish
+complete battle-rule parity; Choice Band locking, further deferred abilities,
+Quick Claw turn-RNG ordering and volatile rules remain separate work.
 
 Prior held-read, field-residual, caught-marker, charge, PP, item, follower,
 map and storage families retain their historical refs in
@@ -488,3 +489,19 @@ and a move through native input, and drains the normal result queue. It checks
 bounded empty-hand grants across a full turn, poison cure before lethal chip,
 consumption and unsubscribe. It does not write a normal save or prove a full
 playthrough. Gold uses the existing `tests/drivers/held_item.lua` smoke.
+
+## Native held-definition test
+
+Install and enable `examples/portable_held_content` in the isolated identity:
+
+```sh
+POKEPORT_VERSION=gold POKEPORT_DRIVER=tests/drivers/held_content.lua \
+  bash scripts/run-portability-test.sh
+```
+
+The driver uses an in-memory New Game and constructed native battle, actual
+FIGHT/move input and result queues. It checks imported public item IDs,
+7-HP healing and consumption, detached reads and frozen writes, then stops
+before finish/afterBattle/SAVE. This is not a full-playthrough or pixel test.
+Keep this example separate from the older `portable_held_item` example when
+checking unmodified native behavior.
