@@ -1,13 +1,34 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–172
+hook, rendering, shader and baseline test fixes prepared in PRs #88–173
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`7a12243293dcb7a6ff2a00dc64490f3c6bb5aa32`. Its ROM-free run passed
-192/192 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+`ddac8aaf1d6b042ddd3defe57fe3e8de1b8b2039`. Its ROM-free run passed
+193/193 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+[PR #173](https://github.com/UNDERdecoded/Gen2Recomped/pull/173) preserves
+native trainer AI import inputs: exact Gen-2 seven-byte attributes and ordered
+stock, plus raw GBA item-effect bytes alongside parsed medicine. **32** focused
+checks pass. The actual native importers match in **6 workers / 1,168 metadata
+records**, including 583 effect-mask cases for each of FireRed and Emerald.
+These use synthetic cartridge bytes, not a complete fresh-ROM reimport or
+native gameplay test. Existing caches need reimport to acquire the new fields.
+See [native trainer AI metadata](native-trainer-ai-metadata.md).
+
+This prepares `battle.enemy_switch_or_item`; it does not enable the hook.
+The separate development branch still has an audited native GBA automatic
+Perish-switch difference and is not part of this testing branch. Metadata and
+hook/gameplay validation must remain separate.
+
+All **33** hosted #173 workflows await maintainer approval (`action_required`);
+the [metadata workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40079359698)
+has zero executed jobs. Local validation is separate.
+
+Prior #172 gameplay evidence below retains runtime
+`7a12243293dcb7a6ff2a00dc64490f3c6bb5aa32`; it is not a new native #173 run.
+
 [PR #172](https://github.com/UNDERdecoded/Gen2Recomped/pull/172) binds native
 FireRed/Emerald party action text and separate cancel buttons, plus FireRed's
 Item-PC withdrawal title, cancel row and submenu. Shared native reader checks
@@ -17,7 +38,7 @@ values**, against clean Gen1 `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`.
 Both API 3 and host API 2/unified pass, including wrong-profile isolation,
 separate TAKE/CANCEL labels, control characters and existing-menu retirement.
 
-Native LÖVE 11.5 / imported FireRed and Emerald pass at this runtime: actual
+At the recorded #172 runtime, native LÖVE 11.5 / imported FireRed and Emerald passed: actual
 party/footer/submenu drawing, SUMMARY open/B-return, ITEM submenu/B-close,
 party close; FireRed's real Player-PC → Item Storage → withdrawal title/list/
 submenu and translated CANCEL without inventory changes. Isolated in-memory
@@ -25,7 +46,7 @@ New Game; no normal SAVE, full playthrough, fresh full-ROM import or pixel
 identity claim. The owned example was removed with hash guards.
 See [GBA menu prose](portable-gba-menu-prose.md).
 
-All **32** hosted #172 workflows await maintainer approval (`action_required`);
+At #172 publication, all **32** hosted workflows awaited maintainer approval (`action_required`);
 the [GBA menu workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40076430839)
 has zero executed jobs. Local validation is separate.
 
