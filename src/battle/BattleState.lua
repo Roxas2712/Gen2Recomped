@@ -5559,6 +5559,7 @@ function BattleState:resolveTurn(playerAction)
       b.hurtThisTurn = nil
       b.specialDamageTaken, b.physicalDamageTaken = nil, nil
       b.protecting, b.enduring = nil, nil
+      if GameVersion.isGen3() then b._gen3HelpingHand = nil end
       b.turnsOut = (b.turnsOut or 0) + 1
     end
   end

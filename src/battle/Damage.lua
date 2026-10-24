@@ -492,6 +492,11 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
     d = math.floor(d * ruleset.critMultiplier)
   end
 
+  -- Native Helping Hand scales the calculated base after the critical
+  -- multiplier, before STAB/type rounding. Fixed damage and confusion's
+  -- typeless base path do not pass through this modifier.
+  if not opts.typeless then d = require("src.battle.Gen3HelpingHand").damage(attacker, d) end
+
   local mult = 10
   if not opts.typeless then
     -- STAB

@@ -26,8 +26,6 @@
 --
 -- Remaining effects need separate native producers:
 --
---   HELPING HAND needs its own double-battle ally action modifier.
---
 --   MAGIC COAT, SNATCH and IMPRISON all reach INTO another battler's move
 --   as it is being resolved -- bouncing it back, stealing it, forbidding it
 --   -- which needs a resolution step performMove does not have.
@@ -38,7 +36,7 @@
 --   in the world layer, not the battle one.
 --
 -- Unimplemented effects still warn once and fall through to plain damage.
--- FOLLOW ME is registered below with round-scoped native GBA targeting.
+-- FOLLOW ME and HELPING HAND are registered below with native GBA turn state.
 
 local Status = require("src.battle.Status")
 local StatusRegistry = require("src.battle.StatusRegistry")
@@ -120,6 +118,10 @@ end
 -- ordinary record so native imports and the public effect adapter agree.
 P.FOLLOW_ME_EFFECT = function(battle, user)
   return require("src.battle.Gen3FollowMe").apply(battle, user)
+end
+
+P.HELPING_HAND_EFFECT = function(battle, user)
+  return require("src.battle.Gen3HelpingHand").apply(battle, user)
 end
 
 -- ---------------------------------------------------------------------
