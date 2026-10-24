@@ -58,6 +58,11 @@ for _, mode in ipairs({ { 1, "native" }, { 2, "native" }, { 2, "unified" }, { 3,
   T.eq(d.items.LEFTOVERS.heldParam, 7, "native parameter written")
   T.eq(d.items.LEFTOVERS.price, 100, "other attributes preserved")
   local h = r.loader.exports.probe.api.content.held_items
+  T.eq(
+    require("src.mods.HeldItemContent").record({ heldEffect = 999, heldParam = 0 }),
+    nil,
+    "unknown native enum cannot leak a number into the named definition contract"
+  )
   T.raises(function()
     h:patch("LEFTOVERS", { heldParameter = 8 })
   end, "frozen", "late writes cannot alter frozen content")
@@ -153,6 +158,29 @@ for _, mode in ipairs({ { 1, "native" }, { 2, "native" }, { 2, "unified" }, { 3,
       failed.release()
     end
   end
+end
+-- Reading a GBA index above the Gen-2 byte range must still permit an
+-- unchanged read/modify/write round trip; only explicit index edits are gated.
+V.set("firered")
+do
+  local d = T.fixtures.fresh()
+  d.items.ITEM_321 = { id = "ITEM_321", index = 321, name = "PORTABLE TRINKET", price = 100 }
+  local files = {
+    ["mods/gba/manifest.json"] = Json.encode({
+      id = "gba",
+      name = "gba",
+      version = "1",
+      api = 3,
+      entry = "main.lua",
+      games = { "gen3" },
+    }),
+    ["mods/gba/main.lua"] = 'local mod=...; local row=assert(mod.content.items:get("PORTABLE_TRINKET")); assert(row.index==321); row.price=123; assert(mod.content.items:override("PORTABLE_TRINKET",row))',
+  }
+  local r = T.sdk.loadMods({ "mods/gba" }, { data = d, fs = T.sdk.memfs(files), dev = false })
+  T.eq(#r.errors, 0, "large GBA native index survives unchanged unified round trip")
+  T.eq(d.items.ITEM_321.index, 321, "GBA index preserved")
+  T.eq(d.items.ITEM_321.price, 123, "GBA unrelated metadata remains writable")
+  r.release()
 end
 V.set(old)
 T.finish("held_items authority, reload, freeze and transactional rollback")

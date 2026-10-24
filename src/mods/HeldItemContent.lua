@@ -30,7 +30,11 @@ function M.record(def)
   if type(def) ~= "table" or def.heldEffect == nil then
     return nil
   end
-  return { heldEffect = Names.goldPublic(def.heldEffect), heldParameter = def.heldParam or 0 }
+  local name = Names.goldPublic(def.heldEffect)
+  if type(name) ~= "string" then
+    return nil
+  end
+  return { heldEffect = name, heldParameter = def.heldParam or 0 }
 end
 
 function M.changed(def)
