@@ -3800,8 +3800,13 @@ function RomExtractorGen2:gen2TrainerAttributes(group)
   if type(group) ~= "number" or group % 1 ~= 0 or group < 1 or group > 255 then return nil end
   local sym = self:symbol("TrainerClassAttributes")
   if not (sym and self.rom) then return nil end
+  if type(sym.bank) ~= "number" or sym.bank % 1 ~= 0 or sym.bank < 0
+    or type(sym.address) ~= "number" or sym.address % 1 ~= 0 then return nil end
+  local at = sym.address + (group - 1) * GEN2_CLASS_ATTRIBUTE_BYTES
+  local first, limit = sym.bank == 0 and 0 or 0x4000, sym.bank == 0 and 0x4000 or 0x8000
+  if at < first or at + GEN2_CLASS_ATTRIBUTE_BYTES > limit then return nil end
   local ok, row = pcall(self.rom.bytes, self.rom, sym.bank,
-    sym.address + (group - 1) * GEN2_CLASS_ATTRIBUTE_BYTES, GEN2_CLASS_ATTRIBUTE_BYTES)
+    at, GEN2_CLASS_ATTRIBUTE_BYTES)
   if not ok or type(row) ~= "table" or #row ~= GEN2_CLASS_ATTRIBUTE_BYTES then return nil end
   for i = 1, GEN2_CLASS_ATTRIBUTE_BYTES do
     if type(row[i]) ~= "number" or row[i] % 1 ~= 0 or row[i] < 0 or row[i] > 255 then return nil end

@@ -40518,6 +40518,7 @@ end
 -- view. Battle AI reads individual X-item bits and raw sentinel amounts.
 -- Multiple EV arguments each consume a byte; the two PP bits share one.
 function RomExtractorGen3.itemEffectBytes(rom, at)
+  assert(type(at) == "number" and at % 1 == 0 and at >= 0, "invalid item effect offset")
   local bytes = {}
   for i = 0, 5 do
     local value = rom:u8(at + i)
