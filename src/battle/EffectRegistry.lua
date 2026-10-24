@@ -280,6 +280,11 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   local landed, brokeSub = 0, false
   for h = 1, hits do
     if target.mon.hp <= 0 then break end
+    if record and record.perHitDamage then
+      local nextDamage, nextInfo = record.perHitDamage(ctx, h, dmg, info)
+      if nextDamage == nil then break end
+      dmg, info = nextDamage, nextInfo or info
+    end
     local hitRow
     if h == 1 then
       hitRow = battle.moveAnimRow
@@ -321,12 +326,16 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     -- on someone
     local substituteBefore = target.substituteHP
     local dealt = battle:applyDamage(target, hitDamage, true, info.damageAdjustment)
-    if info.gbaSetDamage and substituteBefore then dealt = math.min(dealt, substituteBefore) end
+    if (info.gbaSetDamage or info.gbaBeatUp) and substituteBefore then dealt = math.min(dealt, substituteBefore) end
     totalDealt = totalDealt + dealt
     -- MIRROR COAT is COUNTER's special twin and needs the SPECIAL half of
     -- the damage kept separately; battle.lastDamage is shared by both and
     -- cannot answer for it.  Cleared at the head of every turn.
-    if dealt > 0 and not (hadSub and require("src.core.GameVersion").isGen3()) then
+    if info.gbaBeatUp then
+      -- Scripted Beat Up records each strike, including Endure's zero HP
+      -- loss; Substitute strikes leave the previous counter memory alone.
+      if not hadSub then target.specialDamageTaken = dealt end
+    elseif dealt > 0 and not (hadSub and require("src.core.GameVersion").isGen3()) then
       if require("src.battle.Damage").isSpecial(move.type) then
         target.specialDamageTaken = (target.specialDamageTaken or 0) + dealt
       else
@@ -357,20 +366,23 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     -- Keep explicit custom/fixed damage and the earlier generations' events.
     if Runtime.wants("battle.damage_dealt") and (dealt > 0 or move.power ~= 0
         or (record and record.chooseDamage) or not require("src.core.GameVersion").isGen3()) then
+      local eventCritical = info.crit
+      if info.gbaBeatUp then eventCritical = false end
       Runtime.emit("battle.damage_dealt", {
         battle = battle, user = user, target = target, move = move,
-        damage = dealt, crit = info.crit, typeMult = info.eventTypeMult or info.typeMult,
-        substitute = info.gbaSetDamage and hadSub or nil,
+        damage = dealt, crit = eventCritical, typeMult = info.eventTypeMult or info.typeMult,
+        substitute = (info.gbaSetDamage or info.gbaBeatUp) and hadSub or nil,
+        kind = info.gbaBeatUp and "special" or nil,
       })
     end
-    if hadSub and not target.substituteHP then
+    if hadSub and not target.substituteHP and not info.gbaBeatUp then
       -- AttackSubstitute: breaking the substitute ends a multi-hit move
       brokeSub = true
       break
     end
   end
   hits = landed > 0 and landed or hits
-  if hits > 1 then
+  if hits > 1 and not info.gbaBeatUp then
     -- player: _MultiHitText; enemy: _HitXTimesText (always plural)
     if user.isPlayer then
       battle:sayNext(Strings("Hit the enemy\n%d times!", hits))
