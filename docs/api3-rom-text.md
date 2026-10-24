@@ -81,5 +81,40 @@ reference API-2/unified. The public consumer has no engine imports. Source
 formatting, namespace isolation and native reader observations are separate
 from imported-data/UI smoke tests. No ROM, imported cache or save is included.
 The LÖVE driver is `tests/drivers/rom_text.lua`; use the isolated testfork
-launcher. Validation of the complete combined runtime remains required before
-publishing this working branch as a PR.
+launcher. Native smoke and full-suite results are recorded below.
+
+## Validated runtime
+
+Feature `52541d1b0160de2361a2bffe15fd4fad4eb9a20c`; combined
+`62f8902617255195b4a12b176f171925c49209ec`. Later documentation changes do not
+change the tested runtime.
+
+- **175/175** public/native registry checks, **510/510** ownership/isolation/
+  retirement checks, **57/57** native formatting checks, **52/52** provenance
+  checks. Existing script-text contracts **3,700/3,700** and **234/234** pass.
+- **24 isolated SDK workers / 94 paired native observations** at both runtime
+  snapshots, using the same public consumer. Red gates availability; Gold,
+  Silver, Crystal, FireRed and Emerald compare supported behavior. Host API
+  2/unified compares with reference API 3; reference API 2 remains native.
+- Separate real-formatter comparison: **8 native engine workers / 96 paired
+  observations**, Red/Gold/Silver/Crystal, against the clean pinned reference.
+- The source-derived prose membership and ten GBA storage bindings regenerate
+  exactly from pinned public import metadata. No cartridge prose is copied.
+- Feature **135/145 engine suites**, SDK **3/3**, B30 pass: exactly the same
+  **26 FAIL lines / ten baseline suites** as #170. Independent baseline
+  repairs remain #128–134. Combined **190/190**, SDK **3/3**, B30 pass.
+- Imported-data **LÖVE 11.5 / Gold, FireRed, Emerald** at the combined runtime:
+  unchanged consumer, real title/New Game; Gold's native battle-prose helper
+  and textbox/end-marker handling, separate same-label native script display,
+  A-close/script resume; GBA real storage menu with all five action labels and
+  descriptions, B-close/reopen; frozen late writes. This does not execute a
+  complete battle/wakeup turn. Isolated identity, in-memory New Game, no
+  normal SAVE, full playthrough, fresh full-ROM reimport or pixel-equivalence
+  claim. Owned temporary example removed with hash guards.
+- Unchanged #170 rejects the example because it has no registry; its actual
+  native Gold prose and GBA storage reader retain their original values.
+- Imported Red regressions: battle **468/468**, save conversion **95/95**,
+  parity J **73/73**, K **22/22**. No external binary save fixture supplied.
+- New Lua formatting, workflow actionlint, Python compile, deterministic
+  generation and diff whitespace checks pass. Hosted CI status is reported
+  separately in the PR and does not inherit these local results.

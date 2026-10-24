@@ -202,3 +202,6 @@ See [portable Pokemon identity hooks](portable-pokemon-rolls.md) for
 For shared script-text source strings, GBA placeholder names and native Gen-2
 bank/address IDs, see [portable text sources](api3-text-sources.md). Cartridge
 prose and named GBA label bindings remain separate follow-up work.
+
+For separate label-keyed engine prose, native consumer coverage and remaining
+GBA bindings, see [portable ROM prose](api3-rom-text.md).
