@@ -57,17 +57,20 @@ for _, sym in ipairs({
   { bank = 1, address = false },
   { bank = -1, address = 0x4000 },
 }) do
+  local reads = 0
   local invalid = setmetatable({
     symbol = function()
       return sym
     end,
     rom = {
       bytes = function()
-        error("invalid symbol reached ROM reader")
+        reads = reads + 1
+        return { 0, 0, 0, 0, 0, 0, 0 }
       end,
     },
   }, { __index = require("src.import.RomExtractorGen2") })
   T.eq(invalid:gen2TrainerAttributes(1), nil, "invalid or bank-crossing optional attribute symbols refused")
+  T.eq(reads, 0, "invalid optional symbol is refused before reading cartridge bytes")
 end
 local R = require("src.import.RomGba")
 local r = R.new(string.char(1, 2, 3, 4, 4, 0, 255))
