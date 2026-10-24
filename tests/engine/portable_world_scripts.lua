@@ -852,5 +852,17 @@ do
   world:cancelScript()
   stop()
 end
+do
+  local world, game, ow=boot("crystal")
+  game.stack.states={};game.stack.worldState=ow
+  function game.stack:active()return self:top()or self.worldState end
+  local calls,result=0,nil
+  T.check(world:queueScript({{"wait",2}}, {onDone=function(ok)calls=calls+1;result=ok end}),"persistent Gen2 world admits script")
+  Runtime.call("input.step",function()end,game,1/60)
+  for _=1,4 do ow:update()end
+  T.eq(result,true,"persistent native runner completes script")
+  T.eq(calls,1,"persistent script completes once")
+  T.eq(game.stack:top(),nil,"completion preserves empty overlay stack")
+end
 GameVersion.set(originalVersion)
 T.finish("portable world scripts")
