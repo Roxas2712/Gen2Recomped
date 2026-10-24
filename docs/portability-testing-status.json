@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "8284917e91317fe688dac54ffba0b4cba1d9e017",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/179",
-  "feature_ref": "3c399f61be001df18d0b412ff30ffc536a960391",
+  "runtime_ref": "e0a22d3811064761b43f295656737634304858ac",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/180",
+  "feature_ref": "d11d50a95878faffb0c2e87e82c5d4046f84e98b",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 200,
-  "engine_suites_total": 200,
+  "engine_suites_passed": 201,
+  "engine_suites_total": 201,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
   "cross_engine_worker_runs": 4,
-  "cross_engine_paired_observations": 472,
+  "cross_engine_paired_observations": 2688,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "Both #179 workflows await maintainer approval (action_required); AI-query workflow has zero executed jobs; local acceptance is separate",
+  "hosted_ci": "Both #180 workflows await maintainer approval (action_required); move-knowledge workflow has zero executed jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -1031,5 +1031,10 @@
       "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40109041486",
       "jobs": 0
     }
-  }
+  },
+  "ai_move_knowledge_checks_passed": 16812,
+  "ai_move_knowledge_worker_runs": 4,
+  "ai_move_knowledge_paired_observations": 2688,
+  "ai_move_knowledge_runtime_ref": "e0a22d3811064761b43f295656737634304858ac",
+  "ai_move_knowledge_scope": "Actual FireRed/Emerald AI interpreter and host decision entry-point contracts; no new graphical gameplay or full AI parity claim"
 }

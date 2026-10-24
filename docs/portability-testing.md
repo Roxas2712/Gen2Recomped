@@ -1,14 +1,37 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–179
+hook, rendering, shader and baseline test fixes prepared in PRs #88–180
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`8284917e91317fe688dac54ffba0b4cba1d9e017`. Its ROM-free run passed
-**200/200 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`e0a22d3811064761b43f295656737634304858ac`. Its ROM-free run passed
+**201/201 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent commits record validation documentation/status.
+
+[PR #180](https://github.com/UNDERdecoded/Gen2Recomped/pull/180) adds the four
+native GBA move/effect membership commands and Emerald's observed-move
+history. Native decision entry points learn before scoring; a changed party
+object invalidates the old occupant's knowledge. FireRed's actual-move reads,
+Emerald's partner asymmetry and effect-slot gate are preserved.
+
+**16,812** feature checks and **4 workers / 2,688 paired interpreter observations**
+pass for FireRed/Emerald. The same interpreter matrix also passes on this
+combined runtime, with zero differences. Clean upstream differs in all 1,344
+observations per profile. See [native AI move knowledge](gen3-ai-move-knowledge.md).
+
+The independent feature passes **65/75** engine suites versus upstream
+**64/74**; its exact 27 failure lines across ten baseline suites are unchanged.
+Their repairs are included here. Both hosted #180 workflows await maintainer
+approval (`action_required`); the
+[move-knowledge workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40110718423)
+has zero executed jobs. These are CPU interpreter/decision checks, with no new
+graphical gameplay or complete AI parity claim. The unfinished enemy
+switch/item hook remains outside this combined branch.
+
+Prior #179 results retain runtime
+`8284917e91317fe688dac54ffba0b4cba1d9e017` and its 200/200 engine result:
 
 [PR #179](https://github.com/UNDERdecoded/Gen2Recomped/pull/179) supplies seven
 native GBA AI query families: last-used move, move type/power/effect from the
