@@ -1,14 +1,44 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–175
+hook, rendering, shader and baseline test fixes prepared in PRs #88–176
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`d9be4e9cfc8f05e2284ada5dacf8daed7382c4a5`. Its ROM-free run passed
-**196/196 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`6ba0ca1569a27faba67f0481e602df777fa5dc39`. Its ROM-free run passed
+**197/197 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Later commits only record validation documentation.
+
+[PR #176](https://github.com/UNDERdecoded/Gen2Recomped/pull/176) selects Gen-2's
+native critical-base step instead of doubling the level. At level 29, power35
+and equal Attack/Defense, a non-STAB critical with random217 now deals **17HP**,
+not16; with STAB it deals **25**, not23. Native generation metadata selects the
+step; the Gen-1 and explicit-multiplier paths retain their own rules. Seven
+arithmetic regressions and **1,950** loader checks pass. Both host API modes
+match Gen1 API3 in **20 workers / 960 paired observations**, covering
+Gold/Silver/Crystal plus the existing FireRed/Emerald matrix. Unchanged #175
+differs in 32 damage cases and fails two assertions per Gen-2 version.
+See [native Gen-2 critical base](gen2-critical-base.md).
+
+Native LÖVE11.5 results retain the clean feature runtime
+`397d7d6fb48bcf8f539c152397bb3e5ad220d23d`: imported Gold, FireRed and Emerald,
+six constructed battles each, **18 battles / 36 public critical decisions**.
+The same public consumer, actual FIGHT/move input and native queues pass HP,
+PP and callback-count checks. Critical implementation/consumer/driver files
+are byte-identical in this combined tree. This is feature-runtime native
+acceptance, not a newly relabeled composed GUI run. The owned example was
+removed with hash guards. Drivers stop before battle finish/afterBattle/SAVE;
+no native Silver/Crystal GUI, full playthrough or fresh-ROM import is claimed.
+
+All **35** hosted #176 workflows await maintainer approval (`action_required`);
+the [critical workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40098076236)
+has zero executed jobs. The isolated feature passes 142/152 engine suites with
+exactly the prior ten baseline failure suites. Their separate repairs are in
+this combined branch. The unfinished enemy switch/item hook remains separate.
+
+Prior #175 results retain runtime
+`d9be4e9cfc8f05e2284ada5dacf8daed7382c4a5`; they are not new Gen-3 native runs:
 
 [PR #175](https://github.com/UNDERdecoded/Gen2Recomped/pull/175) corrects the
 Gen-3 critical multiplier's placement before STAB/per-type rounding. Base 11,
@@ -21,7 +51,7 @@ neutral/half/quarter/immune targets, rolls 85/92/100, HP, PP and hook counts.
 Unchanged #174 differs in 18 cases and fails two regression assertions per GBA
 profile. See [Gen-3 critical/type rounding](gen3-critical-order.md).
 
-At this combined runtime, native LÖVE 11.5 / imported FireRed and Emerald each
+At the recorded #175 runtime, native LÖVE 11.5 / imported FireRed and Emerald each
 pass six constructed battles with the same public critical-hit consumer,
 actual FIGHT/move input and full native turn queues. HP, PP and all 24 public
 critical decisions pass. The owned example was removed with hash guards.
@@ -29,7 +59,7 @@ The driver stops before battle finish/afterBattle/normal SAVE. This is not a
 complete playthrough, fresh full-ROM import or universal damage-rule proof.
 The unfinished enemy switch/item controller remains on a separate branch.
 
-All **35** hosted #175 workflows await maintainer approval (`action_required`);
+At #175 publication, all **35** hosted workflows awaited maintainer approval (`action_required`);
 the [critical-order workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40093193249)
 has zero executed jobs. Local validation is separate. The isolated feature
 passes 141/151 engine suites with exactly the prior ten baseline failure

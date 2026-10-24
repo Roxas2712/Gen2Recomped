@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "d9be4e9cfc8f05e2284ada5dacf8daed7382c4a5",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/175",
-  "feature_ref": "19997e91ef462833c570d2b61484af811fa676a4",
+  "runtime_ref": "6ba0ca1569a27faba67f0481e602df777fa5dc39",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/176",
+  "feature_ref": "127ff4cb2be7d465b3bc7c86727f34112b349ba2",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 196,
-  "engine_suites_total": 196,
+  "engine_suites_passed": 197,
+  "engine_suites_total": 197,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 8,
-  "cross_engine_paired_observations": 384,
+  "cross_engine_worker_runs": 20,
+  "cross_engine_paired_observations": 960,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All 35 #175 workflows report action_required pending maintainer approval; critical-order workflow has zero executed jobs; local validation is separate",
+  "hosted_ci": "All 35 #176 workflows report action_required pending maintainer approval; critical-order workflow has zero executed jobs; local validation is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -824,6 +824,73 @@
     },
     "post_runtime_changes": [
       "Combined validation documentation/status"
+    ]
+  },
+  "gen2_critical_base": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/176",
+    "feature_ref": "127ff4cb2be7d465b3bc7c86727f34112b349ba2",
+    "feature_tested_ref": "397d7d6fb48bcf8f539c152397bb3e5ad220d23d",
+    "runtime_ref": "6ba0ca1569a27faba67f0481e602df777fa5dc39",
+    "reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "arithmetic_checks_passed": 7,
+    "loader_checks_passed": 1950,
+    "cross_engine_worker_runs": 20,
+    "cross_engine_paired_observations": 960,
+    "cross_engine_per_host_mode": {
+      "workers": 10,
+      "pairs": 480
+    },
+    "reference_api": 3,
+    "host_api_modes": [
+      "3/unified",
+      "2/unified"
+    ],
+    "scope": "Native generation-2 truncated critical base before cap/+2, Gen-1 level rule retained; actual Gen-2 move pipelines compare both attackers/levels1,3,29,30,99,100/critical/STAB/roll217,255/HP/PP/public crit calls; existing GBA contracts retained; not universal stage/badge/modifier parity",
+    "feature_baseline": {
+      "engine_suites_passed": 142,
+      "engine_suites_total": 152,
+      "existing_failure_suites": 10,
+      "new_failures": 0,
+      "all_26_fail_lines_match_parent": true,
+      "sdk_suites_passed": 3,
+      "b30_profile": "passed",
+      "repair_prs": "#128\u2013134"
+    },
+    "combined_engine_suites_passed": 197,
+    "combined_engine_suites_total": 197,
+    "native_smoke_games": [
+      "gold",
+      "firered",
+      "emerald"
+    ],
+    "native_battles_per_game": 6,
+    "native_public_critical_decisions": 36,
+    "native_runtime_ref": "397d7d6fb48bcf8f539c152397bb3e5ad220d23d",
+    "native_runtime_kind": "clean feature branch; no fresh composed native GUI run",
+    "native_files_byte_identical_with_combined": true,
+    "native_files_sha256": {
+      "src/battle/Damage.lua": "5080a59dca09d380bd8420d3e7bf90d7da7b2e6121746b6c5662d7fe6d9eee9f",
+      "src/battle/rulesets/gen3_emerald.lua": "d3e9bb200fe98bd96ac0ae43291405199d1256ca30932e996388f5ea486abb9d",
+      "tests/drivers/gen2_critical_base.lua": "a15ba0d79b96931459db5a48510ba290b4cf02d194dbce8e062bbe7fffaae8b9",
+      "tests/drivers/critical_order.lua": "9fcabb08fc7060b963510fa016f81eb8a4496691ad4f6a90d8934318bbe94e5c",
+      "examples/portable_critical_order/main.lua": "0a07a508769b93c8ad059617ac61b960dd5033bd7bbc91e71d952bf3f9452151",
+      "examples/portable_critical_order/manifest.json": "38623c92e5b52918c8fa653f5b9b80eecad9c9ddc148fedb57e1ec66bd1d2b6d"
+    },
+    "native_scope": "Same installed public critical consumer; imported title/New Game; six constructed native battles per game; Gold level1/3/29/30/critical/STAB base regression plus existing FR/EM type-rounding regressions; actual FIGHT/move input, native queues, HP/PP/two hook calls per turn; stops before battle finish/afterBattle/SAVE; no Silver/Crystal native UI or complete-playthrough claim",
+    "owned_example_removed_with_hash_guards": true,
+    "negative_control": {
+      "parent_ref": "19997e91ef462833c570d2b61484af811fa676a4",
+      "differing_damage_observations_per_gen2_version": 32,
+      "regression_assertion_failures_per_gen2_version": 2
+    },
+    "hosted_ci": {
+      "workflow_count": 35,
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40098076236",
+      "jobs": 0
+    },
+    "post_runtime_changes": [
+      "Validation documentation/status"
     ]
   }
 }
