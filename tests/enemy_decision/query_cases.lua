@@ -41,6 +41,44 @@ return function(f, backend)
     { name = "produced-flash-fire", query = "if_flash_fired", which = 1, produce = "flash" },
     { name = "produced-protection", query = "get_protect_count", which = 1, value = 1, produce = "protect" },
   }
+  for _, spec in ipairs({
+    { name = "has-observed-move", query = "if_has_move", member = 76 },
+    { name = "has-unobserved-move", query = "if_has_move", member = 76, noHistory = true },
+    { name = "lacks-unobserved-move", query = "if_doesnt_have_move", member = 76, noHistory = true },
+    { name = "user-has-move", query = "if_has_move", which = 1, member = 33 },
+    { name = "user-has-zero-pp-move", query = "if_has_move", which = 1, member = 76, zeroPP = true },
+    { name = "has-observed-effect", query = "if_has_move_with_effect", member = 151 },
+    { name = "has-unobserved-effect", query = "if_has_move_with_effect", member = 151, noHistory = true },
+    { name = "has-zero-effect-unobserved", query = "if_has_move_with_effect", member = 0, noHistory = true },
+    {
+      name = "lacks-unobserved-effect",
+      query = "if_doesnt_have_move_with_effect",
+      member = 151,
+      noHistory = true,
+    },
+    { name = "partner-positive-move", query = "if_has_move", which = 3, member = 19, double = true },
+    { name = "partner-negative-move", query = "if_doesnt_have_move", which = 3, member = 19, double = true },
+    {
+      name = "partner-effect-uses-user",
+      query = "if_has_move_with_effect",
+      which = 3,
+      member = 155,
+      double = true,
+    },
+    { name = "absent-partner-move", query = "if_has_move", which = 3, member = 19 },
+    {
+      name = "fainted-partner-move",
+      query = "if_has_move",
+      which = 3,
+      member = 19,
+      double = true,
+      fainted = true,
+    },
+    { name = "produced-observed-move", query = "if_has_move", member = 33, produce = "hit" },
+    { name = "produced-observed-effect", query = "if_has_move_with_effect", member = 0, produce = "hit" },
+  }) do
+    specs[#specs + 1] = spec
+  end
   for _, spec in ipairs(specs) do
     local b = f.freshDecision({}, spec.double)
     local function at(id)
@@ -73,6 +111,27 @@ return function(f, backend)
         end
         who.protectRun = spec.count or 0
         who.flashFire = spec.flash
+      end
+    end
+    if spec.member ~= nil then
+      if spec.zeroPP then
+        if native then
+          user.mon.pp[2] = 0
+        else
+          user.curMoves[2].pp = 0
+        end
+      end
+      if spec.double then
+        local partner = at(3)
+        if native then
+          partner.mon.moves, partner.mon.pp = { 19 }, { 10 }
+        else
+          partner.curMoves = { { id = f.ids.FLY, pp = 10 } }
+          partner.mon.moves = partner.curMoves
+        end
+        if spec.fainted then
+          partner.mon.hp = 0
+        end
       end
     end
     local restore = function() end
@@ -181,7 +240,7 @@ return function(f, backend)
         )
       end
     end
-    local branch = spec.query == "if_flash_fired"
+    local branch = spec.query == "if_flash_fired" or spec.member ~= nil
     if native then
       b.aiClass, b.aiFlags = "PORTABLE_SCORE_A", 1
       local ops = {}
@@ -189,8 +248,14 @@ return function(f, backend)
         ops[#ops + 1] = spec.considered and { op = "get_considered_move" }
           or { op = "get_last_used_move", battler = spec.which or 0 }
       end
-      ops[#ops + 1] =
-        { op = spec.query, battler = spec.which or 0, type = spec.typ, target = branch and "bonus" or nil }
+      ops[#ops + 1] = {
+        op = spec.query,
+        battler = spec.which or 0,
+        type = spec.typ,
+        move = not spec.query:find("with_effect") and spec.member or nil,
+        effect = spec.query:find("with_effect") and spec.member or nil,
+        target = branch and "bonus" or nil,
+      }
       if not branch then
         ops[#ops + 1] = { op = "if_equal", value = spec.value, target = "bonus" }
       end
@@ -210,9 +275,10 @@ return function(f, backend)
       end
       ops[#ops + 1] = {
         name = spec.query,
-        args = branch and { spec.which or 0, 10 }
-          or spec.query == "is_of_type" and { spec.which or 0, spec.typ }
-          or { spec.which or 0 },
+        args = spec.member ~= nil and { spec.which or 0, spec.member, 10 } or branch and {
+          spec.which or 0,
+          10,
+        } or spec.query == "is_of_type" and { spec.which or 0, spec.typ } or { spec.which or 0 },
       }
       if not branch then
         ops[#ops + 1] = { name = "if_equal", args = { spec.value, 10 } }

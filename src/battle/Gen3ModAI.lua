@@ -204,6 +204,9 @@ local function chooseDouble(battle, user, bad, flags)
         simulated[i] = 100 - battle.rng(0, 15)
       end
       battle.rng(0, 65535)
+      if targetId % 2 ~= id % 2 then
+        require("src.battle.Gen3AIMoveKnowledge").observe(battle, target)
+      end
       local scores = scoresFor(battle, user, target, bad, flags, simulated)
       local slot, best = pick(battle, user, scores, bad)
       slots[targetId], points[targetId] = slot, best
@@ -266,13 +269,17 @@ local function choose(battle, user, class, layers)
       targetId = 2 - targetId
     end
   end
+  local emeraldDouble = battle:isDouble() and require("src.core.GameVersion").get() == "emerald"
+  local doubleProgram = not slot and emeraldDouble and require("src.battle.Gen3AI").program(battle)
+  if not doubleProgram then
+    require("src.battle.Gen3AIMoveKnowledge").observe(battle, battle:battlerAt(targetId))
+  end
   if not slot then
     local flags = tonumber(battle.trainer.aiFlags) or 0
-    local emeraldDouble = battle:isDouble() and require("src.core.GameVersion").get() == "emerald"
     if emeraldDouble and math.floor(flags / 128) % 2 == 0 then
       flags = flags + 128
     end
-    if emeraldDouble and require("src.battle.Gen3AI").program(battle) then
+    if doubleProgram then
       -- The reference's loaded Emerald per-target program branch bypasses
       -- mod layers. A missing pack still follows the ordinary layer path.
       slot, targetId = chooseDouble(battle, user, bad, flags)
