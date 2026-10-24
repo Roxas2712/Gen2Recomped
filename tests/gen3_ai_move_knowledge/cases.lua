@@ -50,6 +50,8 @@ function C.run(backend, version)
   end
   local scenarios = {
     { name = "unobserved", history = {} },
+    { name = "empty-name-slots", history = {}, emptyName = true },
+    { name = "unknown-name-slots", history = {}, unknownName = true },
     { name = "invalid-definition", history = { 999 }, invalid = true },
     { name = "named-moves", history = { 33, 76 }, named = true },
     { name = "one-observed", history = { 33 } },
@@ -87,7 +89,7 @@ function C.run(backend, version)
               local n = list[i]
               if n ~= nil then
                 moves[i] = source and (scenario.named and names[n] or n)
-                  or { id = (n == 0 or n == 999) and n or "MOVE_" .. n, pp = 0 }
+                  or { id = type(n) == "string" and n or (n == 0 or n == 999) and n or "MOVE_" .. n, pp = 0 }
               end
             end
             b.mon.moves, b.mon.pp = moves, { 0, 0, 0, 0 }
@@ -108,7 +110,9 @@ function C.run(backend, version)
             setMoves(
               b,
               id == userId and (scenario.empty and { 19 } or scenario.sparse and { 19, 0, 76 } or { 19, 76 })
-                or id == targetId and (scenario.invalid and { 999 } or { 33, 76 })
+                or id == targetId and (scenario.emptyName and { "", 33 } or scenario.unknownName and {
+                  "NO_SUCH_MOVE",
+                } or scenario.invalid and { 999 } or { 33, 76 })
                 or id % 2 == 1 and { 182 }
                 or { 45 }
             )
@@ -221,7 +225,7 @@ function C.run(backend, version)
               scores = result
             end
           end
-          local expectedError = scenario.invalid
+          local expectedError = (scenario.invalid or scenario.unknownName and version == "firered")
             and isEffect
             and (version == "firered" and which ~= 1 or version == "emerald" and (which == 0 or which == 2))
           T.eq(ok, not expectedError, name .. " error boundary")
