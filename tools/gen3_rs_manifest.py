@@ -24,6 +24,9 @@ def main():
     p.add_argument('--emerald-rom',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True)
     args=p.parse_args()
+    pret_commit=subprocess.check_output(['git','-C',str(args.pret),'rev-parse','HEAD'],text=True).strip()
+    assert pret_commit=='5784633ce4ef7ade1a7f2d2d0c288e3d5e6cdd7f', 'Use the pinned matching RS source'
+    assert not subprocess.check_output(['git','-C',str(args.pret),'status','--porcelain','--untracked-files=no']).strip(), 'Matching source has tracked changes'
     rom=args.rom.read_bytes()
     code=rom[0xac:0xb0].decode()
     edition={'AXVE':'ruby','AXPE':'sapphire'}[code]
@@ -81,6 +84,27 @@ def main():
     assert target.by_name['sFontType3Map'][0]['size']==256
     result['braille']=dict(bits=1,glyphMap=at('sFontType3Map'),halfCodeOffset=64,
         frameFromHeader=True,lineHeight=32)
+    coords=at('sMauvilleGymSwitchCoords')
+    events=json.loads((args.pret/'data/maps/MauvilleCity_Gym/map.json').read_text())['coord_events']
+    count=len(events)
+    assert target.by_name['sMauvilleGymSwitchCoords'][0]['size']==count*4
+    assert all(rom[coords+i*4+2:coords+i*4+4]==b'\0\0' for i in range(count))
+    switches=[[rom[coords+i*4]-7,rom[coords+i*4+1]-7] for i in range(count)]
+    assert count==3 and switches==[[e['x'],e['y']] for e in events]
+    result['mauvilleGym']=dict(SWITCHES=switches,X0=0,X1=8,Y0=5,Y1=16,
+        RAISED_SWITCH=0x205,PRESSED_SWITCH=0x206,FLOOR=0x21A,
+        GREEN_V1=0x240,GREEN_V2=0x248,RED_V2=0x249)
+    # The existing native beam recipes and Norman door frames are shared;
+    # the switch positions are not. Check their actual metatile identities.
+    labels=(args.pret/'include/constants/metatile_labels.h').read_text()
+    for name,value in dict(RaisedSwitch=0x205,PressedSwitch=0x206,FloorTile=0x21A,
+        GreenBeamV1_On=0x240,GreenBeamV2_On=0x248,RedBeamV2_On=0x249).items():
+        match=re.search(r'#define METATILE_MauvilleGym_'+name+r'\s+(0x[0-9A-Fa-f]+)',labels)
+        assert match and int(match[1],16)==value,name
+    frames=at('gPetalburgGymSlidingDoorMetatiles')
+    assert struct.unpack_from('<5H',rom,frames)==tuple(range(0x218,0x21D))
+    delays=at('gUnknown_083F8370')
+    assert rom[delays:delays+5]==bytes([0,1,1,1,1])
     result['pocketEnum']={'1':'ITEM','2':'BALL','3':'TM_HM','4':'BERRY','5':'KEY_ITEM'}
     result['typeIds']=['NORMAL','FIGHTING','FLYING','POISON','GROUND','ROCK','BUG','GHOST','STEEL','TYPE_09','FIRE','WATER','GRASS','ELECTRIC','PSYCHIC','ICE','DRAGON','DARK']
     # RS stores direct RAM save blocks and has no bag/money encryption key.
@@ -145,7 +169,12 @@ def main():
     for i in range(em_specials['count']):
         address=struct.unpack_from('<I',emrom,em_specials['at']+i*4)[0]-0x08000001
         for row in emerald.by_address.get(address,[]):em_names.setdefault(row['name'],i)
-    names={'ScrSpecial_HealPlayerParty':'HealPlayerParty','Overworld_SetWarpDestination':'SetWarpDestination'}
+    names={'ScrSpecial_HealPlayerParty':'HealPlayerParty','Overworld_SetWarpDestination':'SetWarpDestination',
+        'MauvilleGymSpecial1':'MauvilleGymPressSwitch',
+        'MauvilleGymSpecial2':'MauvilleGymSetDefaultBarriers',
+        'MauvilleGymSpecial3':'MauvilleGymDeactivatePuzzle',
+        'PetalburgGymSlideOpenDoors':'PetalburgGymSlideOpenRoomDoors',
+        'PetalburgGymOpenDoorsInstantly':'PetalburgGymUnlockRoomDoors'}
     def canonical_special(name):
         root=name.removeprefix('ScrSpecial_')
         candidates={em_names[n] for n in (names.get(name,name),root,'Special_'+root,'Script_'+root) if n in em_names}
@@ -184,7 +213,7 @@ def main():
     assert rom[reset+5]==2
     result['newGame']=dict(spawn=spawn,hideFlags=hide)
     result['symbolSource']='Structural discovery plus matching pret ELF symbols, allocated ROM sections byte-verified against supplied cartridge; tools/gen3_rs_manifest.py'
-    result['provenance']=dict(elfSHA256=hashlib.sha256(args.elf.read_bytes()).hexdigest(),verifiedROMBytes=target.checked_bytes,
+    result['provenance']=dict(pretCommit=pret_commit,elfSHA256=hashlib.sha256(args.elf.read_bytes()).hexdigest(),verifiedROMBytes=target.checked_bytes,
                               symbolIdentities=records,structuralWarnings=f.fail)
     args.output.write_text(json.dumps(result,indent=2)+'\n')
     print('VERIFIED_RS_MANIFEST',edition,len(result['symbols']),'symbols',len(specials),'specials')

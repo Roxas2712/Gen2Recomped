@@ -3902,6 +3902,7 @@ function RomExtractorGen3:extractConstants()
     self:layoutValue("abilityNameLength", 13), numAbilities, "constants")
 
   local constants = { source = "ROM:Emerald" }
+  constants.gen3MauvilleGym = self.manifest.mauvilleGym
 
   -- WHERE A NEW GAME STARTS, and it is not a constant anywhere on the
   -- cartridge -- it is the argument list of WarpToTruck, the only call to
