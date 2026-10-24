@@ -79,6 +79,13 @@ return function(f, backend)
   }) do
     specs[#specs + 1] = spec
   end
+  for _, query in ipairs({ "if_target_taunted", "if_target_not_taunted" }) do
+    for _, timer in ipairs({ 0, 1, 2 }) do
+      specs[#specs + 1] = { name = query .. "-timer-" .. timer, query = query, taunt = timer }
+    end
+    specs[#specs + 1] = { name = query .. "-double", query = query, taunt = 2, double = true }
+    specs[#specs + 1] = { name = query .. "-produced", query = query, produce = "taunt" }
+  end
   for _, spec in ipairs(specs) do
     local b = f.freshDecision({}, spec.double)
     local function at(id)
@@ -134,26 +141,34 @@ return function(f, backend)
         end
       end
     end
+    if spec.taunt ~= nil then
+      if native then
+        target.expTauntedTurns = spec.taunt
+      else
+        target.tauntTurns = spec.taunt
+      end
+    end
     local restore = function() end
     if spec.produce then
       local name, number =
-        spec.produce == "protect" and "PROTECT" or "TACKLE", spec.produce == "protect" and 182 or 33
+        spec.produce == "taunt" and "TAUNT" or spec.produce == "protect" and "PROTECT" or "TACKLE",
+        spec.produce == "taunt" and 269 or spec.produce == "protect" and 182 or 33
       local raw, key =
         native and require("src.core.game3.battle.moves")._rom or f.data.moves,
-        spec.produce == "protect" and "MOVE_182" or f.ids.TACKLE
+        spec.produce == "taunt" and "MOVE_269" or spec.produce == "protect" and "MOVE_182" or f.ids.TACKLE
       local old = native and raw[number] or raw[key]
       local names = native and require("src.core.game3.battle.moves").BY_NUM
       local oldName = names and names[number]
       if native then
-        raw[number] = spec.produce == "protect"
+        raw[number] = (spec.produce == "protect" or spec.produce == "taunt")
             and {
-              effect = 111,
+              effect = spec.produce == "taunt" and 175 or 111,
               power = 0,
               type = 0,
-              accuracy = 0,
+              accuracy = spec.produce == "taunt" and 100 or 0,
               pp = 10,
-              target = 16,
-              priority = 3,
+              target = spec.produce == "taunt" and 0 or 16,
+              priority = spec.produce == "taunt" and 0 or 3,
               flags = 0,
             }
           or copy(old)
@@ -162,22 +177,25 @@ return function(f, backend)
         end
         names[number] = name
       else
-        raw[key] = spec.produce == "protect"
+        raw[key] = (spec.produce == "protect" or spec.produce == "taunt")
             and {
               id = key,
-              index = 182,
-              name = "PROTECT",
-              effect = "PROTECT_EFFECT",
-              gen3Effect = 111,
+              index = number,
+              name = name,
+              effect = spec.produce == "taunt" and "TAUNT_EFFECT" or "PROTECT_EFFECT",
+              gen3Effect = spec.produce == "taunt" and 175 or 111,
               power = 0,
               type = "NORMAL",
               pp = 10,
-              target = 16,
-              priority = 3,
+              target = spec.produce == "taunt" and 0 or 16,
+              priority = spec.produce == "taunt" and 0 or 3,
             }
           or copy(old)
         if spec.produce == "flash" then
           raw[key].type = "FIRE"
+        end
+        if spec.produce == "taunt" then
+          raw[key].accuracy = 100
         end
       end
       restore = function()
@@ -201,12 +219,18 @@ return function(f, backend)
         end
       end
       local actor, victim =
-        spec.produce == "protect" and user or target, spec.produce == "protect" and user or user
+        (spec.produce == "protect" or spec.produce == "taunt") and user or target,
+        spec.produce == "taunt" and target or user
       if spec.produce == "flash" then
         if native then
           user.ability, user.mon.ability = 18, 18
         else
           user.abilityOverride = "FLASH_FIRE"
+        end
+      end
+      if spec.produce == "taunt" then
+        b.rng = function(lo)
+          return lo
         end
       end
       if native then
@@ -226,6 +250,13 @@ return function(f, backend)
         actor.mon.moves = actor.curMoves
         b:performMove(actor, victim, actor.curMoves[1])
       end
+      if spec.produce == "taunt" then
+        T.eq(
+          native and target.expTauntedTurns or target.tauntTurns,
+          2,
+          "actual Taunt move produces two-tick timer"
+        )
+      end
       if spec.produce == "protect" then
         T.eq(native and user.expProtectStreak or user.protectRun, 1, "actual native Protect produces counter")
       end
@@ -240,7 +271,8 @@ return function(f, backend)
         )
       end
     end
-    local branch = spec.query == "if_flash_fired" or spec.member ~= nil
+    local taunt = spec.query == "if_target_taunted" or spec.query == "if_target_not_taunted"
+    local branch = spec.query == "if_flash_fired" or spec.member ~= nil or taunt
     if native then
       b.aiClass, b.aiFlags = "PORTABLE_SCORE_A", 1
       local ops = {}
@@ -275,10 +307,14 @@ return function(f, backend)
       end
       ops[#ops + 1] = {
         name = spec.query,
-        args = spec.member ~= nil and { spec.which or 0, spec.member, 10 } or branch and {
-          spec.which or 0,
-          10,
-        } or spec.query == "is_of_type" and { spec.which or 0, spec.typ } or { spec.which or 0 },
+        args = taunt and { 10 }
+          or spec.member ~= nil and { spec.which or 0, spec.member, 10 }
+          or branch and {
+            spec.which or 0,
+            10,
+          }
+          or spec.query == "is_of_type" and { spec.which or 0, spec.typ }
+          or { spec.which or 0 },
       }
       if not branch then
         ops[#ops + 1] = { name = "if_equal", args = { spec.value, 10 } }

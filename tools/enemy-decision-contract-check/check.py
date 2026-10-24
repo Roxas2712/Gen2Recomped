@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 
-REFERENCE = "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91"
+REFERENCE = "10613015fc68d924915570bd1abee34b70d5bd01"
 
 
 def git(root, *args):
@@ -33,7 +33,8 @@ def main():
                                  capture_output=True, text=True, timeout=45)
             lines = [l.removeprefix("ENEMY_DECISION ") for l in run.stdout.splitlines() if l.startswith("ENEMY_DECISION ")]
             if run.returncode or len(lines) != 1:
-                raise RuntimeError(f"{backend}/{version}: {run.stdout}{run.stderr}")
+                detail = "\n".join(x for x in run.stdout.splitlines() if not x.startswith("ENEMY_DECISION "))
+                raise RuntimeError(f"{backend}/{version}: {detail[:3000]}{run.stderr[:3000]}")
             value = json.loads(lines[0]); observations.append(value)
             runs.append({"backend": backend, "version": version, "api": api, "observations": value})
         if len(observations[0]) != len(observations[1]):
