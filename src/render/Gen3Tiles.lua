@@ -119,9 +119,24 @@ function Gen3Tiles:tilePixels(index)
 end
 
 function Gen3Tiles:palette(index)
+  if self.paletteState then
+    local name = index < self.palettesInPrimary and "primary" or "secondary"
+    return self.paletteState[name][index + 1]
+  end
   local record = self:paletteBank(index)
   local pals = record and record.palettes
   return pals and pals[index + 1] or nil
+end
+
+-- Independent palette cadence; does not alter the tile animation picture.
+-- Missing legacy metadata retains the original base-palette rendering.
+function Gen3Tiles:setPaletteTicks(ticks)
+  local state, reason = require("src.render.Gen3PaletteCycles").sample(
+    { primary = self.primary, secondary = self.secondary },
+    { palettesInPrimary = self.palettesInPrimary }, ticks)
+  local changed = (state and state.contentKey) ~= (self.paletteState and self.paletteState.contentKey)
+  self.paletteState = state
+  return changed, reason
 end
 
 -- The colour the backdrop shows where nothing is drawn: palette 0, colour 0.

@@ -50,6 +50,10 @@ color grading, darkness, full-screen fades, or their audio/state contracts.
 A cached native GPU atlas can require its own existing invalidation after a
 source edit; this observer does not rebuild it.
 
+The separately negotiated [colour contract](gen3-color-data-v1.md) adds
+declared palette cycles and native weather-colour observations. It does not
+change this method's original palette semantics or content-token format.
+
 ## Native timing and bank semantics
 
 The host already advances `TileRenderer`'s shared terrain clock before world

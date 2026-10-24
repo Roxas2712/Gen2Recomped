@@ -7,7 +7,7 @@ function F.bytes(seed, count)
   end
   return table.concat(b)
 end
-function F.new(version, api)
+function F.new(version, api, color)
   local T = require("tests.modkit")
   require("src.core.GameVersion").set(version)
   local state = require("tests.render_contract.fixture").new("gen2", version, ".")
@@ -33,6 +33,11 @@ function F.new(version, api)
   local file = assert(io.open("tests/terrain_animation/consumer.lua", "rb"))
   local entry = file:read("*a")
   file:close()
+  if color then
+    file = assert(io.open("tests/terrain_animation/color_consumer.lua", "rb"))
+    entry = entry .. "\n" .. file:read("*a")
+    file:close()
+  end
   local Json = require("src.link.Json")
   local run = T.sdk.loadMods({ "mods/terrain_animation" }, { data = T.fixtures.fresh(), fs = T.sdk.memfs({
     ["mods/terrain_animation/manifest.json"] = Json.encode({ id = "terrain_animation", name = "Terrain animation probe",

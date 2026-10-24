@@ -23,6 +23,12 @@ jobs:
         run: |
           luajit tests/engine/gen3_animated_terrain.lua
           luajit tests/engine/gen3_animated_terrain_failures.lua
+      - name: Palette cycles, native texture refresh and weather colour parity
+        run: |
+          luajit tests/engine/gen3_color_data.lua
+          luajit tests/engine/gen3_color_failures.lua
+          luajit tests/engine/gen3_palette_renderer.lua
+          luajit tests/engine/gen3_weather_color.lua
       - name: Cache-reference policy regressions
         run: python3 -m unittest discover -s tests -p test_modkit_cache_comments.py
       - name: Existing contracts on the combined engine

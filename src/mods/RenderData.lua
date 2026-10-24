@@ -2,6 +2,8 @@
 -- map loading, filesystem access or engine cache mutation.
 local RenderData = {}
 local AnimatedTerrain = require("src.mods.AnimatedTerrain")
+local PaletteCycles = require("src.render.Gen3PaletteCycles")
+local Weather = require("src.world.Gen3Weather")
 local Handle = {}
 Handle.__index = Handle
 
@@ -97,6 +99,15 @@ function RenderData.new(getGame, generation)
     end,
     animatedTileset = function(_, ...)
       return context:animatedTileset(...)
+    end,
+    supportsColor = function(_, version)
+      return context:supports(version)
+    end,
+    colorTileset = function(_, ...)
+      return context:colorTileset(...)
+    end,
+    weatherColor = function(_, ...)
+      return context:weatherColor(...)
     end,
   }
 end
@@ -493,6 +504,52 @@ function Handle:animatedTileset(version, mapId, targetMapId)
   local sources, sourceError = pair(ctx.game, map)
   if not sources then return nil, sourceError end
   return AnimatedTerrain.materialize(out, sources, renderer.animFrame())
+end
+
+function Handle:colorTileset(version, mapId, targetMapId)
+  local ctx, err = active(self, version, mapId)
+  if not ctx then return nil, err end
+  local map, reason = resident(ctx, targetMapId)
+  if not map then return nil, reason end
+  local out, why = tilesetFor(ctx, map)
+  if not out then return nil, why end
+  local renderer = package.loaded["src.render.TileRenderer"]
+  if type(renderer) ~= "table" or type(renderer.animFrame) ~= "function" then
+    return nil, "terrain clock unavailable"
+  end
+  local sources, sourceError = pair(ctx.game, map)
+  if not sources then return nil, sourceError end
+  local ticks = renderer.animFrame()
+  local colors, colorError = PaletteCycles.sample(sources, out.layout, ticks)
+  if not colors then return nil, colorError end
+  out, why = AnimatedTerrain.materialize(out, sources, ticks)
+  if not out then return nil, why end
+  for _, name in ipairs({ "primary", "secondary" }) do
+    out[name].palettes = colors[name]
+    out[name].paletteRGB8 = colors[name .. "RGB8"]
+  end
+  out.graphicsState = "color-source"
+  out.paletteAnimation = { ticks = ticks, complete = true,
+    primaryFrames = colors.primaryFrames, secondaryFrames = colors.secondaryFrames }
+  AnimatedTerrain.rekey(out, "gen3-color-source-v1")
+  return out
+end
+
+function Handle:weatherColor(version, mapId)
+  local ctx, err = active(self, version, mapId)
+  if not ctx then return nil, err end
+  local save = ctx.game.save
+  local constants = ctx.game.data and ctx.game.data.constants
+  local names = constants and constants.gen3WeatherNames
+  local weather = type(save) == "table" and save.gen3WeatherActive
+  if not integer(weather, 0, 255) or type(names) ~= "table" then return nil, "weather color unavailable" end
+  local frame = ctx.world.weatherFrame or 0
+  local stage = save.gen3WeatherStage or 0
+  local result = Weather.colorFilter(names[weather], frame, stage)
+  if not result then return nil, "weather color unavailable" end
+  result.version, result.generation, result.mapId = 1, 3, mapId
+  result.weatherId = weather
+  return result
 end
 
 return RenderData

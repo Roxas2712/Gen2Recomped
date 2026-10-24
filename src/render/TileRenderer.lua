@@ -1120,7 +1120,7 @@ local function buildReflectionCover(record, tiles, statics, frames)
   local w = cols * 16
   local h = math.ceil(#ids * frames / cols) * 16
   local plot, finish = pixelCanvas(w, h)
-  local quads = {}
+  local quads = record.coverQuads or {}
   for f = 0, frames - 1 do
     tiles:setAnimFrame(f)
     for i, id in ipairs(ids) do
@@ -1128,12 +1128,16 @@ local function buildReflectionCover(record, tiles, statics, frames)
       local ox, oy = (slot % cols) * 16, math.floor(slot / cols) * 16
       tiles:drawLayer(id, 2, ox, oy, plot)
       quads[id] = quads[id] or {}
-      quads[id][f + 1] = love.graphics.newQuad(ox, oy, 16, 16, w, h)
+      if not quads[id][f + 1] then
+        quads[id][f + 1] = love.graphics.newQuad(ox, oy, 16, 16, w, h)
+      end
     end
   end
   tiles:setAnimFrame(0)
-  record.cover = love.graphics.newImage(finish())
-  record.coverQuads = quads
+  local surface = finish()
+  if record.cover then record.cover:replacePixels(surface)
+  else record.cover = love.graphics.newImage(surface) end
+  record.coverQuads = record.coverQuads or quads
   record.coverFrames = frames
 end
 
@@ -1160,6 +1164,10 @@ function TileRenderer.gen3SheetsFor(tilesetDef, data, layout)
     primary = primary,
     secondary = tilesetDef.secondaryKey and store[tilesetDef.secondaryKey] or nil,
   }, layout)
+  -- Legacy records have no paletteCycles: their original bake stays intact.
+  if primary.paletteCycles ~= nil or (tiles.secondary and tiles.secondary.paletteCycles ~= nil) then
+    tiles:setPaletteTicks(animFrame)
+  end
 
   -- ---- WHAT MOVES, AND WHERE ITS OTHER PICTURES GO ------------------------
   --
@@ -1217,6 +1225,27 @@ function TileRenderer.gen3SheetsFor(tilesetDef, data, layout)
                    animSlots = (frames > 1) and slotOf or nil,
                    animFrames = frames, animStep = tiles:animStep() }
   buildReflectionCover(record, tiles, statics, frames)
+  -- Update the existing textures, including every tile-animation variant and
+  -- reflection cover, only when palette pixels change. Batches/quads retain
+  -- their image identity; independent cycles never multiply the baked atlas.
+  record.recolor = function()
+    local oldFrame = tiles.animFrame or 0
+    for layer, image in ipairs({ record.bottom, record.top }) do
+      local plot, finish = pixelCanvas(w, h)
+      tiles:setAnimFrame(0)
+      tiles:bakeLayer(layer, plot)
+      for f = 2, frames do
+        tiles:setAnimFrame(f - 1)
+        for _, id in ipairs(movers) do
+          tiles:bakeMetatileInto(id, layer, slotOf[id][f], plot)
+        end
+      end
+      image:replacePixels(finish())
+    end
+    buildReflectionCover(record, tiles, statics, frames)
+    tiles:setAnimFrame(oldFrame)
+  end
+  record.paletteTicks = animFrame
   gen3Sheets[key] = record
   gen3Evict()
   Probe.say("tilebake", "%s: movers=%d frames=%d step=%s primaryAnims=%s "
@@ -1256,6 +1285,21 @@ function TileRenderer.gen3SheetsFor(tilesetDef, data, layout)
     end
   end
   return record
+end
+
+function TileRenderer:syncGen3Palettes()
+  local record = self.gen3
+  if not record or record.paletteTicks == animFrame then return end
+  record.paletteTicks = animFrame
+  local tiles = record.tiles
+  if not tiles or (tiles.primary.paletteCycles == nil
+    and (not tiles.secondary or tiles.secondary.paletteCycles == nil)
+    and not tiles.paletteState) then return end
+  local changed = tiles:setPaletteTicks(animFrame)
+  if changed and record.recolor then
+    record.recolor()
+    record.paletteRevision = (record.paletteRevision or 0) + 1
+  end
 end
 
 -- a re-import replaces the data the sheets were baked from
@@ -1537,7 +1581,8 @@ local function bakeGen3BorderFill(self)
   if not (self.gen3 and self.gen3Quads) then return end
   local border = self.map.def and self.map.def.border
   if type(border) ~= "string" or #border < 8 then return end
-  local canvas = require("src.render.PixelCanvas").new(32, 32)
+  local canvas = self.gen3BorderCanvas or require("src.render.PixelCanvas").new(32, 32)
+  self.gen3BorderCanvas = canvas
   love.graphics.push("all")
   love.graphics.setCanvas(canvas)
   -- black, not white: a patch with a transparent metatile in it is a hole
@@ -1556,7 +1601,9 @@ local function bakeGen3BorderFill(self)
   end
   love.graphics.setCanvas()
   love.graphics.pop()
-  local img = love.graphics.newImage(canvas:newImageData())
+  local img = self.borderFill
+  if img then img:replacePixels(canvas:newImageData())
+  else img = love.graphics.newImage(canvas:newImageData()) end
   img:setWrap("repeat", "repeat")
   img:setFilter("nearest", "nearest")
   self.borderFill = img
@@ -1591,6 +1638,7 @@ end
 -- choice changes.  OVERWORLD "black" leaves borderFill nil and draws a
 -- solid clear; "water" keeps the live hshift textures instead of a bake.
 function TileRenderer:ensureBorderFill()
+  self:syncGen3Palettes()
   local block = borderBlockFor(self.map)
   -- a Gen 3 map paints its void from its OWN border patch, so it is always
   -- "map" -- the VOID FILL option picks between three Gen 1 tileset blocks
@@ -1603,7 +1651,13 @@ function TileRenderer:ensureBorderFill()
   local ready = (mode == "black")
                 or (mode == "water" and self.borderWaterTextures)
                 or (mode ~= "water" and mode ~= "black" and self.borderFill)
-  if self.borderFillMode == mode and ready then return end
+  if self.borderFillMode == mode and ready then
+    if self.gen3 and self.borderPaletteRevision ~= (self.gen3.paletteRevision or 0) then
+      local ok = pcall(bakeGen3BorderFill, self)
+      if ok then self.borderPaletteRevision = self.gen3.paletteRevision or 0 end
+    end
+    return
+  end
   if self.borderFill and self.borderFill.release then
     pcall(self.borderFill.release, self.borderFill)
   end
@@ -1620,6 +1674,7 @@ function TileRenderer:ensureBorderFill()
   end
   if self.gen3 then
     pcall(bakeGen3BorderFill, self)
+    self.borderPaletteRevision = self.gen3.paletteRevision or 0
     return
   end
   pcall(bakeBorderFill, self, block)
@@ -1793,6 +1848,7 @@ function TileRenderer:setWin(tx0, ty0, tx1, ty1)
 end
 
 function TileRenderer:ensureWindow(camX, camY, vw, vh)
+  self:syncGen3Palettes()
   local W, H = self.bodyTilesW, self.bodyTilesH
   vw = vw or W * 8 -- a nil view (headless draw) means the whole body
   vh = vh or H * 8
@@ -2069,6 +2125,7 @@ function TileRenderer:reflectionCoverInfo(cx, cy)
 end
 
 function TileRenderer:drawReflectionCover(cx, cy, camX, camY)
+  self:syncGen3Palettes()
   local record = self.gen3
   if not (record and record.tiles and self.map and self.map.blockAt) then return end
   local id = self.map:blockAt(cx, cy)

@@ -372,13 +372,39 @@ end
 -- Screen space, over the field and under the text box -- which is where the
 -- overworld's other full-screen effects (the poison flicker) already go.
 -- ---------------------------------------------------------------------------
+-- The colour-only part of the native world presentation. Particles remain
+-- between the veil and lightning. The affine form is for opaque world pixels
+-- without particles, in the renderer's numeric colour space (not GBA gamma).
+function Gen3Weather.colorFilter(name, frame, stage)
+  local function integer(n, hi)
+    return type(n) == "number" and n == math.floor(n) and n >= 0 and n <= hi
+  end
+  if type(name) ~= "string" or not integer(frame, 9007199254740991)
+    or not integer(stage, 255) then return nil end
+  local look, resolved = Gen3Weather.look(name, frame, stage)
+  if LOOKS[resolved] == nil then return nil end
+  local src = look and look.veil
+  local veil = { 0, 0, 0, 0 }
+  for i = 1, 4 do veil[i] = src and src[i] or 0 end
+  local flash = Gen3Weather.flash(name, frame, stage)
+  local scale = (1 - veil[4]) * (1 - flash)
+  local bias = {}
+  for i = 1, 3 do bias[i] = veil[i] * veil[4] * (1 - flash) + flash end
+  return { kind = "screen-overlays", name = name, resolved = resolved,
+    ticks = frame, cycleStage = stage, veil = veil, flash = flash,
+    scale = { scale, scale, scale }, bias = bias,
+    contentKey = "gen3-weather-color-v1:" .. string.format("%.17g:%.17g:%.17g:%.17g:%.17g",
+      veil[1], veil[2], veil[3], veil[4], flash) }
+end
+
 function Gen3Weather.draw(name, frame, w, h, stage)
   local look, resolved = Gen3Weather.look(name, frame, stage)
   if not look then return false end
   w, h = w or 240, h or 160
 
-  local veil = look.veil
-  if veil then
+  local filter = Gen3Weather.colorFilter(name, frame or 0, stage or 0)
+  local veil = filter and filter.veil or look.veil
+  if veil and veil[4] > 0 then
     love.graphics.setColor(veil[1], veil[2], veil[3], veil[4])
     love.graphics.rectangle("fill", 0, 0, w, h)
   end
@@ -392,7 +418,7 @@ function Gen3Weather.draw(name, frame, w, h, stage)
     end
   end
 
-  local bolt = Gen3Weather.flash(name, frame, stage)
+  local bolt = filter and filter.flash or Gen3Weather.flash(name, frame, stage)
   if bolt > 0 then
     love.graphics.setColor(1, 1, 1, bolt)
     love.graphics.rectangle("fill", 0, 0, w, h)

@@ -19,6 +19,7 @@ Development branch: `codex/native-origami-foundation`. This is not a release.
 | Surf mounts | `codex/portable-surf-mount-render-data` / `90b5446` | native mount/rider observations; Gen3 update-owned bob |
 | Cell surfaces | this branch / [RFC 0002](rfcs/0002-native-render-foundation.md) | live raw elevation, collision and behavior, including resident neighbor crops |
 | Animated terrain sources | this branch / [RFC 0003](rfcs/0003-animated-terrain-sources.md) | selected native animation picture, fresh source palettes and exact content-change token |
+| Palette cycles and weather colours | this branch / [RFC 0004](rfcs/0004-palette-cycles-weather-colors.md) | independent declared colour cycles, native sheet/border/cover refresh, public native veil/flash observations; stock palette-program extraction remains open |
 
 The loader composes every family on one handle before executing a consumer.
 The new surface contract preserves elevation 15's bridge semantics and reads
@@ -59,15 +60,25 @@ The local default runner now passes 92/92 engine suites, 3/3 mod-SDK suites
 and Dramatic Shape B30. Hosted validation is recorded on the PR's exact head;
 this remains source/data acceptance, not full Origami or GPU gameplay acceptance.
 
+The subsequent palette/weather-colour follow-up adds four suites with 44,284
+checks. The local ROM-free runner passes 96/96 engine suites, 3/3 mod-SDK
+suites and Dramatic Shape B30; Python cache-policy tests, unchanged mod lint,
+Lua parsing and generated registry reference also pass. The suites exercise
+the public API for both games/APIs and native texture refresh with synthetic
+data and pixel-bearing graphics stand-ins. Existing stock caches still lack
+palette-cycle declarations: automatic cartridge-program extraction and real
+GPU/gameplay acceptance are not claimed. See the
+[colour contract](gen3-color-data-v1.md) for the exact boundary.
+
 ## Remaining engine work
 
 | Area | Remaining acceptance/work |
 | --- | --- |
-| Terrain graphics over time | animated source observations and cache-change token implemented; palette-cycling callbacks, weather grading, GPU invalidation and performance acceptance remain |
+| Terrain graphics over time | animated sources, independent declared palette cycles and native recolouring implemented; automatic stock palette-program extraction, cartridge fade/task semantics, general GPU invalidation and performance acceptance remain |
 | Neighbor streaming | public readiness/preparation lifecycle beyond already resident maps |
 | Buildings, trees, bridges, interiors | native object/geometry metadata and lifecycle; surface codes alone do not provide meshes |
 | Camera and controls | native public camera/input ownership suitable for First/Third Person |
-| Weather and sky | native state, clock and audio contracts; clouds/weather renderer acceptance |
+| Weather and sky | native colour-only veil/flash observations implemented; weather takeover, full state/audio contracts, cartridge colour tables and clouds/weather renderer acceptance remain |
 | Map battles | public battle state/action/presentation lifecycle and field transitions |
 | Resource lifetime | real GPU/context loss, resize, reload, warp and memory acceptance |
 | Runtime integration | a native consumer using these contracts, followed by Emerald/FireRed gameplay acceptance |

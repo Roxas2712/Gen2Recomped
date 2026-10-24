@@ -76,9 +76,13 @@ function M.materialize(out, pair, ticks)
   end
   out.graphicsState = "animated-source"
   out.animation = { ticks = ticks, frame = frame, frames = frames, step = step }
+  M.rekey(out)
+  return out
+end
+function M.rekey(out, prefix)
   -- A bounded, exact content token, not a hash/revision or engine resource.
   -- Ignore ticks: a stable picture must not invalidate on every clock tick.
-  local key = { "gen3-animated-source-v1" }
+  local key = { prefix or "gen3-animated-source-v1" }
   local function append(s) key[#key + 1] = #s .. ":" .. s end
   append(out.id)
   for _, field in ipairs({ "tilesInPrimary", "metatilesInPrimary", "palettesInPrimary", "metatileLayers" }) do
@@ -91,6 +95,5 @@ function M.materialize(out, pair, ticks)
     end
   end
   out.contentKey = table.concat(key)
-  return out
 end
 return M
