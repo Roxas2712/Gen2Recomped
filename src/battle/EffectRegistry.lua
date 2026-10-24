@@ -120,7 +120,8 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   -- cartridge marks PROTECT-affected is stopped, which is the second use the
   -- extracted flags byte is put to; a move with no flags recorded (every Gen
   -- 1 and Gen 2 one) is treated as affected, which is that generation's rule.
-  if target.protecting and move.protectAffected ~= false then
+  local lockedOHKO = record and record.gbaOHKO and user.lockedOn == target
+  if target.protecting and move.protectAffected ~= false and not lockedOHKO then
     battle:cancelMoveAnim()
     if record and record.onProtect and record.onProtect(ctx) then return end
     battle:sayNext(Strings("%s\nprotected itself!", displayName(target)))
@@ -132,7 +133,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   -- which reaches a target in the middle of FLY without being a never-miss
   -- move in any other respect -- hence the second, narrower field.
   if target.invulnerable and not neverMiss
-     and not (record and record.neverMissInvulnerable) then
+     and not (record and record.neverMissInvulnerable) and not lockedOHKO then
     -- Explosion/Selfdestruct still animate on a miss (HandleIfPlayerMoveMissed)
     if not (record and record.explode) then battle:cancelMoveAnim() end
     missBeat(battle, record)
@@ -152,6 +153,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     if not ok then
       battle:cancelMoveAnim()
       if failMsg then battle:sayNext(failMsg) end
+      if ctx.gbaOHKOMiss and record.onMiss then record.onMiss(ctx, "accuracy") end
       return
     end
   end
@@ -249,9 +251,9 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     if record and record.onMiss then record.onMiss(ctx, "floored") end
     return
   end
-  -- Focus Band belongs to the direct-damage seam below.  It is evaluated per
-  -- damaging strike so a later hit of a multi-hit move can save a battler once
-  -- that particular strike becomes lethal; Substitute never consumes its RNG.
+  -- Focus Band belongs to the damage-adjustment seam below. GBA rolls on
+  -- every direct strike, including nonlethal/Substitute hits; older rules
+  -- keep their own eligibility. OHKO supplies its already evaluated result.
   battle.lastDamage = dmg -- wDamage (shared by both sides, read by Counter)
 
   -- the hit blink + damage sound ride each animation row, placed BEFORE
@@ -323,7 +325,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     -- ...and the one applyDamage a Gen 3 FOCUS BAND answers: a move landing
     -- on someone
     local substituteBefore = target.substituteHP
-    local dealt = battle:applyDamage(target, hitDamage, true)
+    local dealt = battle:applyDamage(target, hitDamage, true, info.damageAdjustment)
     if (info.gbaSetDamage or info.gbaBeatUp) and substituteBefore then dealt = math.min(dealt, substituteBefore) end
     totalDealt = totalDealt + dealt
     -- MIRROR COAT is COUNTER's special twin and needs the SPECIAL half of
@@ -333,7 +335,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
       -- Scripted Beat Up records each strike, including Endure's zero HP
       -- loss; Substitute strikes leave the previous counter memory alone.
       if not hadSub then target.specialDamageTaken = dealt end
-    elseif dealt > 0 then
+    elseif dealt > 0 and not (hadSub and require("src.core.GameVersion").isGen3()) then
       if require("src.battle.Damage").isSpecial(move.type) then
         target.specialDamageTaken = (target.specialDamageTaken or 0) + dealt
       else
