@@ -11053,7 +11053,8 @@ function OverworldState:talkTo(npc)
     if entry.mart then
       npc:facePlayer(self.player)
       Game.stack:push(TextBox.new(Game, Strings("Hi there!\nMay I help you?"), function()
-        Screens.push(Game, "ShopMenu", entry.mart)
+        local stock, opts = require("src.inventory.Gen2MartStock").entry(Game.data, entry)
+        Screens.push(Game, "ShopMenu", stock, nil, opts)
         unfreeze()
       end))
       return

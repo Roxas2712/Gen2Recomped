@@ -762,6 +762,9 @@ function Loader:_contentApi(mod, registry, deprecation)
   if registry.name == "held_items" then
     return require("src.mods.HeldItemContent").api(loader, mod, api, loader:_generation(), false)
   end
+  if registry.name == "marts" then
+    return require("src.mods.MartContent").api(loader, mod, api, loader:_generation(), false)
+  end
   if registry.name == "items" then
     return require("src.mods.HeldItemContent").itemApi(loader, api, loader:_generation())
   end
@@ -1418,6 +1421,7 @@ function Loader:load(data)
     end
   end
   require("src.mods.HeldItemContent").prepare(self, data)
+  require("src.mods.MartContent").prepare(self, data)
   -- vanilla content is registrations too, and they land before discovery so
   -- a mod's register collides with the engine's and has to say override
   require("src.mods.Builtins").install(self.content, data)
@@ -1646,6 +1650,7 @@ function Loader:load(data)
     end
   end
   require("src.mods.HeldItemContent").apply(self, data)
+  require("src.mods.MartContent").apply(self, data)
   -- dangling f.id references are attributed to the id's last writer;
   -- api 1 mods keep the warning-only compat path
   if data then

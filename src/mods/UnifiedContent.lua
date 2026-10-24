@@ -406,6 +406,9 @@ function U.new(loader, mod, native, gen)
   if native.held_items then
     out.held_items = require("src.mods.HeldItemContent").api(loader, mod, native.held_items, gen, true)
   end
+  if native.marts then
+    out.marts = require("src.mods.MartContent").api(loader, mod, native.marts, gen, true)
+  end
   for kind, shape in pairs(Shapes) do
     local registry = loader.content[kind]
     if gen >= 4 and kind ~= "encounters" then registry.numericIds = true end

@@ -496,6 +496,13 @@ R.held_items = {
   example = 'mod.content.held_items:override("LEFTOVERS", { heldEffect = "HELD_BERRY", heldParameter = 7 })',
 }
 
+local martKeys = { bargain = f.list(f.rec { item = f.id("items"), price = f.int(0, 65535) }) }
+for index = 0, 33 do martKeys[tostring(index)] = f.list(f.id("items")) end
+R.marts = {
+  semantics = "record", generations = "2", keys = martKeys, keysClosed = true,
+  example = 'mod.content.marts:patch("0", { "ULTRA_BALL" })',
+}
+
 R.maps = {
   semantics = "record", target = "maps",
   fields = {

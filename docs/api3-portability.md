@@ -173,3 +173,6 @@ names, byte odds, native consumers and the tested GBA item scheduling phases.
 
 See [portable held-item definitions](portable-held-content.md) for the shared
 Gen-2 `mod.content.held_items` registry, native write-back and generation bounds.
+
+See [portable mart definitions](portable-mart-content.md) for Gen-2 ordinary
+and bargain shelves, common item IDs, native purchases and shared contracts.
