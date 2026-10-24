@@ -41,7 +41,7 @@ Registry/native checks **175**, ownership **510**, formatting **57**, provenance
 comparison adds **8 engine workers / 96 paired observations**. All use the clean
 Gen1 pin `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`.
 
-Native LÖVE 11.5 / imported Gold, FireRed and Emerald pass at this runtime:
+At the recorded #171 runtime, native LÖVE 11.5 / imported Gold, FireRed and Emerald passed:
 Gold native battle-prose helper, real textbox/end-marker handling and separate
 same-label native script/A-close/resume; GBA actual storage menu/all five
 labels/descriptions/B-close/reopen; frozen writes. This does not execute a
@@ -50,11 +50,12 @@ full playthrough, fresh full-ROM reimport or pixel-equivalence claim. The owned
 temporary example was removed with hash guards. See [portable ROM prose](api3-rom-text.md).
 
 **Remaining prose work:** further party prompts, field-move names, mail/trade,
-Item-PC quantity/results, Emerald Item-PC and other field/battle readers need explicit bindings. A Gen-2 screen that still prints a hardcoded fallback
+Item-PC quantity/results, Emerald Item-PC and other field/battle readers need
+explicit bindings. A Gen-2 screen that still prints a hardcoded fallback
 instead of reading its label also needs a native reader change. Availability
 of `rom_text` does not mean every native printer or label consumer is covered.
 
-At #171 publication, all **31** hosted workflows await maintainer approval (`action_required`);
+At #171 publication, all **31** hosted workflows awaited maintainer approval (`action_required`);
 the [ROM-prose workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40074003980)
 has no executed jobs. Local validation is separate.
 

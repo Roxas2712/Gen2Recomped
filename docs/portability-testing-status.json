@@ -656,7 +656,7 @@
     "native_scope": "L\u00d6VE 11.5, isolated imported title/New Game; same installed public example; real party/footer/action rendering, SUMMARY open/B-return, ITEM submenu/B-close and party close; FireRed Player-PC -> Item Storage -> withdrawal title/list/submenu and translated CANCEL with unchanged inventory; no normal SAVE, full playthrough, fresh full-ROM import or pixel equality",
     "owned_example_removed_with_hash_guards": true,
     "negative_control": "Unchanged #171 actual party reader retains BASE_SUMMARY after same public MOD_SUMMARY override",
-    "imported_red_runtime_ref": "431fe8c78d3c6815a6df118b96cad3bd4c504f30",
+    "imported_red_runtime_ref": "236591a1fa50266311837f2d8569d7395c365b46",
     "imported_red_regressions": {
       "battle": 468,
       "save_conversion": 95,
