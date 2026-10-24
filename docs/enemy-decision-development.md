@@ -1,8 +1,8 @@
 # Enemy switch/item contract development
 
 This branch is an in-progress implementation, not a published or fully validated
-portability PR. It follows published #172 without changing the combined testing
-branch until the native decision work is ready.
+portability PR. It is based on published metadata prerequisite #173. The hook work itself
+is not included in the combined testing branch until native decisions are ready.
 
 Current source: clean Gen1Recomp `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`.
 `tools/enemy-decision-contract-check/check.py` runs the unchanged public consumer
@@ -28,11 +28,12 @@ claim of full AI or battle parity.
 
 Required before publication:
 
-- Add the missing Gen-2 imported trainer item/attribute metadata. The importer
-  currently reads only the class reward byte. Native item/switch policy needs
-  all seven bytes and the two stocked item references, not fabricated flags.
-- Preserve GBA raw item-effect metadata needed by custom trainer items and
-  battle-only effects. Existing parsed records omit individual X-item bits.
+- Wire and test #173's imported Gen-2 attributes/stock through the ordinary
+  battle constructors, including old caches that lack these fields. The seven
+  bytes are now imported; missing flags must not be fabricated.
+- Use #173's raw GBA effect bytes for custom trainer items and battle-only
+  effects, with explicit old-cache behavior. The parsed medicine view alone
+  still omits individual X-item bits.
 - Expand strict automatic-switch, trap/Perish/type/RNG and stock-boundary cases.
   Audit native action mutations and both GBA double slots beyond Potion.
 - Exercise the ordinary turn/controller paths, forced/locked/tutorial/wild
