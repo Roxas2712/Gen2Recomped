@@ -55,14 +55,15 @@ and failed-entry rollback. Native tests cover every registered host, SDK mode,
 DS exclusion and the GBA release animation branch.
 
 This proves the tested public decision contract, not identical damage amounts,
-text, all move side effects or every underlying battle rule. In particular,
-Gen2Recomped currently leaves Gold's default battles on its Gen-1 ruleset:
-enemy moves spend zero PP, while the reference Gold engine spends one. The
-checker records each engine's `native_policy` costs separately and compares
-whether charge/bypass preserve that cost. Enemy PP numbers are not counted
-as equal observations. That existing rule difference needs a separate fix;
-the new hook must not silently change native PP policy. Native secondary move
-effects also remain host-owned, including Skull Bash's defense increase.
+text, all move side effects or every underlying battle rule. With the automatic
+ruleset selection, Gold/Silver/Crystal now use `gen2_finite_pp`: ordinary enemy
+moves spend one PP, as in the reference. Explicit saved `gen1_faithful` still
+keeps unlimited enemy PP. The checker records raw `native_policy` costs and
+`--require-native-policy-parity` compares them exactly; the enemy-PP workflow
+requires that stricter mode in all four SDK configurations. Secondary move
+effects remain host-owned, including Skull Bash's defense increase. See
+[automatic rulesets and enemy PP](native-ruleset-defaults.md) for the bounded
+correction and existing-settings behavior.
 
 ```sh
 luajit tests/engine/charge_required_contract.lua

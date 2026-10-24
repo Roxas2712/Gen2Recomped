@@ -157,3 +157,7 @@ GBA contract and the remaining Gold/DS boundaries.
 
 [Portable charge decisions](portable-charge-required.md) document
 `battle.charge_required`, native first-turn/release rules and remaining PP-policy differences.
+
+[Automatic native rulesets](native-ruleset-defaults.md) document enemy PP
+accounting and the existing-settings boundary. The read-only
+`examples/portable_enemy_pp` consumer runs unchanged on both engines.

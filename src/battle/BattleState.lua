@@ -609,7 +609,10 @@ end
 
 local Rulesets = {
   gen1_faithful = require("src.battle.rulesets.gen1_faithful"),
+  gen2_finite_pp = require("src.battle.rulesets.gen2_finite_pp"),
   modern_clean = require("src.battle.rulesets.modern_clean"),
+  gen3_emerald = require("src.battle.rulesets.gen3_emerald"),
+  gen4_platinum = require("src.battle.rulesets.gen4_platinum"),
 }
 
 -- the Poké Ball toss chain (TossBallAnimation) plays even with battle
@@ -1192,22 +1195,16 @@ local function newBattle(game)
   -- records on a mod-free boot); an unknown save value falls back to the
   -- default with a notice instead of silently switching behavior
   local rulesets = game.data.rulesets or Rulesets
-  local selected = game.save.options and game.save.options.ruleset
-  -- THE FALLBACK IS THE CARTRIDGE'S, not Kanto's.  It used to read
-  -- `constants.defaultRuleset or "gen1_faithful"`, and nothing has ever
-  -- written that constant -- so Hoenn fought under Generation One's rules on
-  -- every fresh save while `gen3_emerald.lua` sat beside it, registered and
-  -- unreferenced.  See `src/battle/RulesetDefaults.lua` for the measurement
-  -- and for why Gen 2 is deliberately left where it was.
-  local fallback = require("src.battle.RulesetDefaults").defaultFor(game)
+  local Defaults = require("src.battle.RulesetDefaults")
+  local selected = Defaults.selection(game)
+  local fallback = Defaults.defaultFor(game)
   local ruleset = selected and rulesets[selected]
   if selected and not ruleset then
     Logger.warn("unknown ruleset %s; using %s", tostring(selected), fallback)
   end
   self.ruleset = ruleset or rulesets[fallback] or Rulesets.gen1_faithful
-  -- BLACK AND WHITE: a new save's options carry "gen1_faithful" as a default,
-  -- not as anybody's choice, and Kanto's rules on a BW cartridge freeze for
-  -- good and sleep for seven turns -- the cartridge's own rules instead
+  -- Preserve the existing BW compatibility override for legacy Gen-1 values.
+  -- BW installs its own ruleset at attach time.
   if self.bw and self.ruleset and self.ruleset.name == "gen1_faithful"
      and rulesets.gen5_bw then
     self.ruleset = rulesets.gen5_bw
