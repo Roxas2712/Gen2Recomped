@@ -1,14 +1,42 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–180
+hook, rendering, shader and baseline test fixes prepared in PRs #88–181
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`df1566375b3776fce349c04f9c05eaa9bd1525e5`. Its ROM-free run passed
-**201/201 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
-Subsequent commits record validation documentation/status.
+`f9531b9053b8e7cf226e9d7ad494406a5e5fab65`. Its ROM-free run passed
+**202/202 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+Subsequent commits pin the source validation document and record status;
+production code is unchanged.
+
+[PR #181](https://github.com/UNDERdecoded/Gen2Recomped/pull/181) implements
+both native AI Taunt predicates against the live target, corrects GBA's
+owned effect to two residual ticks and accepts an explicitly cleared zero
+counter. Other generations retain their existing duration. Both directions,
+multiple target slots, repeat refusal, expiration and reapplication are tested.
+
+The shared interpreter/effect/residual matrix passes **4 workers / 96 paired
+observations**, with **567** host checks and **372** source checks. The final
+combined comparison is clean at `d8fed51a5ee3105d27d5f78b13ea4470dc529d15`.
+Gen1's previous unconditional false/true predicates require the paired
+[Gen1 PR #3052](https://github.com/bryanthaboi/gen1recomp/pull/3052). The checker
+explicitly pins that source fork at `10613015fc68d924915570bd1abee34b70d5bd01`;
+this is not an upstream merge claim. The base Gen1 source fails 56 assertions
+and differs in 28 observations per profile; Gen2 main fails 196 and differs
+in all 48 observations. See [native AI Taunt](gen3-ai-taunt.md).
+
+The independent Gen2 feature retains the exact 27 failure lines across ten
+upstream baseline suites. Both hosted #181 workflows and source #3052 CI
+await maintainer approval (`action_required`); the
+[Taunt workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40113016261)
+has zero executed jobs. Local acceptance is separate. These are bounded CPU
+AI/effect/residual checks, with no new graphical gameplay or complete AI
+parity claim. The unfinished enemy switch/item hook remains outside this branch.
+
+Prior #180 results retain runtime
+`df1566375b3776fce349c04f9c05eaa9bd1525e5` and its 201/201 engine result:
 
 [PR #180](https://github.com/UNDERdecoded/Gen2Recomped/pull/180) adds the four
 native GBA move/effect membership commands and Emerald's observed-move

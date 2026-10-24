@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "df1566375b3776fce349c04f9c05eaa9bd1525e5",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/180",
-  "feature_ref": "cf761ca9b1be9da528ccecec5e826f23ce4a7bed",
-  "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 201,
-  "engine_suites_total": 201,
+  "runtime_ref": "f9531b9053b8e7cf226e9d7ad494406a5e5fab65",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/181",
+  "feature_ref": "5e1b4c4e4e924e94f46efc2247e5588248c2e857",
+  "gen1_contract_ref": "10613015fc68d924915570bd1abee34b70d5bd01",
+  "engine_suites_passed": 202,
+  "engine_suites_total": 202,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
   "cross_engine_worker_runs": 4,
-  "cross_engine_paired_observations": 3072,
+  "cross_engine_paired_observations": 96,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "Both #180 workflows await maintainer approval (action_required); move-knowledge workflow has zero executed jobs; local acceptance is separate",
+  "hosted_ci": "Both #181 workflows and Gen1 #3052 CI await maintainer approval (action_required); dedicated Taunt workflow has zero executed jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -1070,6 +1070,52 @@
       "workflow_count": 2,
       "conclusion": "action_required",
       "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40111054659",
+      "jobs": 0
+    }
+  },
+  "gen1_contract_repository": "Roxas2712/gen1recomp-Mac-fix",
+  "gen3_ai_taunt": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/181",
+    "feature_ref": "5e1b4c4e4e924e94f46efc2247e5588248c2e857",
+    "feature_runtime_ref": "58a8f548a155973aae8de0307e6ad259f3ebf03c",
+    "independent_pr": true,
+    "upstream_base": "13af468b97dc37015d14ad5c71d7f067c3ee810d",
+    "combined_runtime_ref": "f9531b9053b8e7cf226e9d7ad494406a5e5fab65",
+    "combined_contract_ref": "d8fed51a5ee3105d27d5f78b13ea4470dc529d15",
+    "source_repository": "Roxas2712/gen1recomp-Mac-fix",
+    "source_ref": "10613015fc68d924915570bd1abee34b70d5bd01",
+    "source_pr": "https://github.com/bryanthaboi/gen1recomp/pull/3052",
+    "source_runtime_ref": "cdd4ad167373e2b5f08c96f95ee87041f59e0e17",
+    "host_checks_passed": 567,
+    "source_checks_passed": 372,
+    "cross_engine_worker_runs": 4,
+    "cross_engine_paired_observations": 96,
+    "combined_engine_suites_passed": 202,
+    "combined_engine_suites_total": 202,
+    "sdk_suites_passed": 3,
+    "b30_profile": "passed",
+    "negative_control": {
+      "gen1_base": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+      "source_failures_per_profile": 56,
+      "source_differing_observations_per_profile": 28,
+      "host_failures_per_profile": 196,
+      "host_differing_observations_per_profile": 48
+    },
+    "feature_baseline": {
+      "engine_suites_passed": 65,
+      "engine_suites_total": 75,
+      "upstream_engine_suites_passed": 64,
+      "upstream_engine_suites_total": 74,
+      "known_failing_suites": 10,
+      "failure_lines": 27,
+      "all_failure_lines_match_upstream": true,
+      "new_failures": 0
+    },
+    "scope": "Actual AI predicates and owned effect/residual lifetime; explicit paired source fix; no new graphics or complete move/AI parity claim; unfinished enemy hook remains separate",
+    "hosted_ci": {
+      "workflow_count": 2,
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40113016261",
       "jobs": 0
     }
   }
