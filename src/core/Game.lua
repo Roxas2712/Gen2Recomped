@@ -18,6 +18,13 @@ local Screens = require("src.ui.Screens")
 
 local Game = {}
 
+-- Native input sees the live world beneath an empty Gen2 overlay stack.
+local function activeTop(stack)
+  if not stack then return nil end
+  return stack.active and stack:active() or stack:top()
+end
+
+
 -- Legacy/tool stack doubles may not expose the optional visibility method.
 local function renderVisible(stack, state)
   return state ~= nil and (not stack.renderVisible or stack:renderVisible(state))
@@ -110,6 +117,7 @@ function Game:load()
 
   self.stack = StateStack
   StateStack:init()
+  if require("src.core.GameVersion").isGen2() then StateStack:setWorldOwner(self) end
 
   self.save = SaveData.newGame(self:bootConfig())
   -- seed=true keeps what entry chunks wrote through mod.save before any
@@ -252,6 +260,7 @@ end
 function Game:newGame()
   local OverworldState = require("src.world.OverworldController")
   while self.stack:top() do self.stack:pop() end
+  if self.stack.clearWorld then self.stack:clearWorld() end
   if self.overworld then self.overworld.fadeOverlay = nil end
   -- New Game keeps the standalone options.lua preferences
   self.save = SaveData.newGame(self:bootConfig())
@@ -324,6 +333,7 @@ end
 function Game:returnToTitle()
   require("src.core.Music").stop()
   while self.stack:top() do self.stack:pop() end
+  if self.stack.clearWorld then self.stack:clearWorld() end
   -- THE OVERWORLD OUTLIVES THE STACK, and a fade it had up is popped with
   -- everything else while `fadeOverlay` still names it. The next script fade
   -- then found an overlay, did not push it, and waited on a screen that never
@@ -501,7 +511,7 @@ local function lookPointerWanted(self)
   -- player's camera was set to first or third person
   if self.launcherPreview then return false end
   if not self:freeView() then return false end
-  if (self.stack and self.stack:top()) ~= self.overworld then return false end
+  if (self.stack and activeTop(self.stack)) ~= self.overworld then return false end
   if love.window and love.window.hasFocus then
     local ok, focused = pcall(love.window.hasFocus)
     return ok and focused or false
@@ -635,7 +645,7 @@ end
 function Game:update(dt)
   require('src.pokemon.Gen4PoketchState').tick(self, dt)
   local panel=self.secondScreenPointerOwner
-  local top=self.stack and self.stack.top and self.stack:top()
+  local top=self.stack and self.stack.top and activeTop(self.stack)
   if panel and panel~=top and panel.updatePresentation then
     panel:updatePresentation(dt)
   end
@@ -1056,16 +1066,17 @@ function Game:toggleFrameProfile()
 end
 
 function Game:_draw()
+  local scene = self.stack.sceneStack and self.stack:sceneStack() or self.stack
   -- the UI canvas clears transparent when the overworld's world pass
   -- shows through beneath it; opaque full-screen states get the classic
   -- white clear
-  local base = self.stack:visibleBase()
-  local worldBelow = self.stack.states[base] == self.overworld
+  local base = scene:visibleBase()
+  local worldBelow = scene.states[base] == self.overworld
     and renderVisible(self.stack, self.overworld)
   -- a world-bg battle keeps the map drawing under whatever it opened, so the
   -- world pass can run for a frame whose CLEAR is still an opaque menu's
-  local drawFrom = Game.drawBaseInStack(self.stack, base)
-  local worldDrawn = self.stack.states[drawFrom] == self.overworld
+  local drawFrom = Game.drawBaseInStack(scene, base)
+  local worldDrawn = scene.states[drawFrom] == self.overworld
     and renderVisible(self.stack, self.overworld)
   -- A wide battle holds its 304px surface through every menu or prompt it
   -- opens. States that do not draw the wide battle composition are centred
@@ -1122,8 +1133,8 @@ function Game:_draw()
   Renderer.uiCentered = not Game.dynamicUI(self.save)
   Renderer.uiAnchorHold = Game.uiAnchorsHeldInStack(self.stack)
   Renderer:beginFrame(worldBelow)
-  for i = drawFrom, #self.stack.states do
-    local state = self.stack.states[i]
+  for i = drawFrom, #scene.states do
+    local state = scene.states[i]
     local wideState = state and state.isWideBattleLayout
       and state:isWideBattleLayout()
     -- A STATE THAT ASKED FOR THIS SURFACE DRAWS IN IT DIRECTLY; everything
@@ -1165,8 +1176,8 @@ function Game:_draw()
   -- screen (overlays like text boxes inherit from what's beneath them);
   -- the overworld's world pass colors each visible map area separately
   local zones, worldZones, zoneOwner
-  for i = #self.stack.states, 1, -1 do
-    local s = self.stack.states[i]
+  for i = #scene.states, 1, -1 do
+    local s = scene.states[i]
     if renderVisible(self.stack, s) and s.sgbPalettes then
       zones = s:sgbPalettes(self)
       zoneOwner = s
@@ -1222,7 +1233,7 @@ function Game:_draw()
     worldZones = self.overworld:sgbWorldZones()
   end
   -- Keep shader controls readable even when a local shader paints black.
-  local top = self.stack:top()
+  local top = activeTop(self.stack)
   Renderer.shaderPresetBypass = top and top.shaderPresetBypass or false
   local viewport = Renderer:endFrame(zones, worldZones)
   -- Persistent tool status is screen-space UI: draw it over the completed
@@ -1238,9 +1249,9 @@ end
 -- overworld survey zoom: wheel up / '=' zooms in, wheel down / '-' out
 function Game:zoomStep(delta)
   local view=self:zoomView()
-  if view and self.stack:top()==self.overworld then view:zoomBy(-delta);return end
+  if view and activeTop(self.stack)==self.overworld then view:zoomBy(-delta);return end
   local Zoom = require("src.render.Zoom")
-  if not Zoom.gateOK(self.stack:top(), self.overworld) then return end
+  if not Zoom.gateOK(activeTop(self.stack), self.overworld) then return end
   local offset = Zoom.step(delta, Renderer:fitScale())
   if self.save and self.save.options then
     self.save.options.zoom = offset
@@ -1308,7 +1319,8 @@ end
 function Game:ensureStack()
   local stack = self.stack
   if not (stack and stack.states) or stack.states[1] ~= nil then return false end
-  local world = self.overworld
+  if stack.worldState and stack.worldState.map then return false end
+  local world = not stack.worldOwner and self.overworld
   if world and world.map then
     Logger.warn("the state stack was emptied and nothing pushed anything back "
       .. "-- with no state there is nothing to update and nothing to draw, "
@@ -1330,7 +1342,7 @@ end
 -- stacking another.  This is the route to turning a misbehaving mod OFF, which
 -- is why it must not be swallowable.
 function Game:toggleModManager()
-  local top = self.stack and self.stack:top()
+  local top = self.stack and activeTop(self.stack)
   if top and top.screenId == "ManagerState" then
     self.stack:pop()
   else
@@ -1357,7 +1369,7 @@ function Game:unstick()
   local stack = self.stack
   if not (stack and stack.states) then return end
   Logger.warn("unstick (F9): %s", stack:describeAll())
-  local top = stack:top()
+  local top = activeTop(stack)
   if not top then
     Logger.warn("unstick: the stack is empty; nothing to pop")
     Logger.flush()
@@ -1424,8 +1436,8 @@ local function keypressedBody(self, key)
   if key == "f9" then return self:unstick() end
   if key == "f11" then return self:toggleFrameProfile() end
   if key == "f10" then return self:toggleModManager() end
-  if self.stack and self.stack:top() and self.stack:top().onKeyPressed then
-    self.stack:top():onKeyPressed(key)
+  if self.stack and activeTop(self.stack) and activeTop(self.stack).onKeyPressed then
+    activeTop(self.stack):onKeyPressed(key)
     return
   end
   if devMode and key == "f5" then
@@ -1440,7 +1452,7 @@ local function keypressedBody(self, key)
     -- QUICK SAVE ONLY FROM FREE ROAM.  Mid-battle (or under any menu or
     -- cutscene) the save table is half way through a change, and a frozen
     -- battle is exactly when a player mashes keys.
-    if self.overworld and self.stack:top() == self.overworld then
+    if self.overworld and activeTop(self.stack) == self.overworld then
       self:writeSave()
     end
     return
@@ -1460,7 +1472,7 @@ local function keypressedBody(self, key)
     -- hold it while a warp/transition or an on-screen scripted cutscene is
     -- driving the overworld rather than tear the escort's NPCs out mid-move
     local ow = self.overworld
-    local top = self.stack:top()
+    local top = activeTop(self.stack)
     local busy = ow and (ow.transitioning
       or (top == ow and (
            (ow.runner and ow.runner.isRunning and ow.runner:isRunning())
@@ -1475,7 +1487,7 @@ local function keypressedBody(self, key)
   elseif key == "3" then
     -- cycle TILT OFF → 15 → 35 → 50 → OFF (mnemonic: 3D), free-roam only
     local Tilt = require("src.render.Tilt")
-    if Tilt.gateOK(self.stack:top(), self.overworld) then
+    if Tilt.gateOK(activeTop(self.stack), self.overworld) then
       -- ON A SINNOH MAP THIS KEY MOVES THE GEN 4 CAMERA INSTEAD.
       --
       -- There are two tilts in this engine and they are not alternatives: the
@@ -1524,7 +1536,7 @@ local function keypressedBody(self, key)
   elseif key == "4" then
     -- cycle ZOOM through every integer level (survey → FIT → close-up → wrap)
     local Zoom = require("src.render.Zoom")
-    if Zoom.gateOK(self.stack:top(), self.overworld) then
+    if Zoom.gateOK(activeTop(self.stack), self.overworld) then
       self.save.options.zoom = Zoom.cycle(Renderer:fitScale())
       self:writeOptions()
     end
@@ -1543,7 +1555,7 @@ local function keypressedBody(self, key)
   -- pipelines).  syncOptions writes the whole ladder back, including the
   -- tilt exclusion a world pipeline forces.
   local Pipelines = require("src.render.Pipelines")
-  if Pipelines.hotkey(key, self.stack:top(), self.overworld) then
+  if Pipelines.hotkey(key, activeTop(self.stack), self.overworld) then
     Pipelines.syncOptions(self.save.options)
     require("src.render.Tilt").setLevel(self.save.options.tilt or 0)
     self:writeOptions()
@@ -1564,7 +1576,7 @@ function Game:keypressed(key)
 end
 
 function Game:textinput(text)
-  local top = self.stack and self.stack:top()
+  local top = self.stack and activeTop(self.stack)
   if top and top.onTextInput then
     top:onTextInput(text)
   end
@@ -1599,7 +1611,7 @@ end
 -- commit a capture on the key-up (#589).
 local function keyreleasedBody(self, key)
   Input:keyreleased(key)
-  local top = self.stack and self.stack:top()
+  local top = self.stack and activeTop(self.stack)
   if top and top.onKeyReleased then top:onKeyReleased(key) end
 end
 
@@ -1619,7 +1631,7 @@ local function gamepadpressedBody(self, joystick, button)
   -- next screen touch (mobile only; a no-op elsewhere)
   TouchControls:noteGamepad()
   -- BindingsMenu's pad capture rides the same top-state routing as keys
-  local top = self.stack and self.stack:top()
+  local top = self.stack and activeTop(self.stack)
   if top and top.onGamepadPressed then
     top:onGamepadPressed(button)
     return
@@ -1641,7 +1653,7 @@ end
 local function gamepadreleasedBody(self, joystick, button)
   -- same observe-after-Input contract as Game:keyreleased (#589)
   Input:gamepadreleased(joystick, button)
-  local top = self.stack and self.stack:top()
+  local top = self.stack and activeTop(self.stack)
   if top and top.onGamepadReleased then top:onGamepadReleased(button) end
 end
 
@@ -1662,7 +1674,7 @@ local function gamepadaxisBody(self, joystick, axis, value)
   -- the triggers and the right stick as bindable pseudo-buttons (Input
   -- AXIS_BUTTONS): a press goes to BindingsMenu's capture when one is armed,
   -- the same routing as a real pad button
-  local top = self.stack and self.stack:top()
+  local top = self.stack and activeTop(self.stack)
   for _, t in ipairs(Input:axisTransitions(axis, value)) do
     local name, down = t[1], t[2]
     if down then
@@ -1715,7 +1727,7 @@ end
 function Game:joystickpressed(joystick, button)
   if isAccelerometer(joystick) then return end
   TouchControls:noteGamepad()
-  local top = self.stack and self.stack:top()
+  local top = self.stack and activeTop(self.stack)
   if isRawStick(joystick) and top and top.onJoystickPressed then
     top:onJoystickPressed(button)
     return
@@ -1729,7 +1741,7 @@ function Game:joystickreleased(joystick, button)
   -- capture watches the release, it never owns it, so a held-state flag
   -- Input saw go down before the capture armed cannot be stranded
   Input:joystickreleased(joystick, button)
-  local top = self.stack and self.stack:top()
+  local top = self.stack and activeTop(self.stack)
   if isRawStick(joystick) and top and top.onJoystickReleased then
     top:onJoystickReleased(button)
   end
@@ -1861,7 +1873,7 @@ local function offerPointer(self, method, id, x, y)
     if method=='touchreleased' then self.pointerOwners[id]=nil end
     return true
   end
-  local top = self.stack and self.stack.top and self.stack:top()
+  local top = self.stack and self.stack.top and activeTop(self.stack)
   if (inside or self.secondScreenInjecting) and offer(top) then return true end
   -- The always-present Android lower-panel watch is drawn outside the stack.
   -- Its coordinate mapper rejects main-window input in display mode.
@@ -1916,7 +1928,7 @@ function Game:hasPointerScreen()
   -- (e.g., Poketch visible but not actively interacting with UI)
   if self:freeView() then return false end
   if self.pointerOwners and self.pointerOwners.mouse then return true end
-  local top=self.stack and self.stack.top and self.stack:top()
+  local top=self.stack and self.stack.top and activeTop(self.stack)
   return top and type(top.touchpressed)=='function' or false
 end
 
@@ -2149,6 +2161,7 @@ function Game:restoreSave(loaded, recovered)
   -- rebuild the state stack from the save (and drop a fade the overworld
   -- still names from before -- see returnToTitle)
   while self.stack:top() do self.stack:pop() end
+  if self.stack.clearWorld then self.stack:clearWorld() end
   if self.overworld then self.overworld.fadeOverlay = nil end
   self.stack:push(self.overworld, loaded.player.map,
                   loaded.player.x, loaded.player.y, loaded.player.facing)

@@ -11756,7 +11756,7 @@ end
 
 function OverworldState:checkTrainerSight()
   if self.player.moving or self.engaging then return end
-  if Game.stack:top() ~= self then return end
+  if (Game.stack.active and Game.stack:active() or Game.stack:top()) ~= self then return end
   local p = self.player
   -- A TRAINER WHOSE APPROACH ENDED WITHOUT A BATTLE MUST NOT RE-APPROACH
   -- FROM THE SAME TILE.
@@ -16139,6 +16139,12 @@ end
 --
 -- Zoom is folded in, so this tracks the survey/diorama ladder rather than the
 -- fixed fit scale.  Returns nil before the renderer exists (headless, boot).
+-- Screen units per native UI pixel, matching the renderer's DPI conversion.
+function OverworldState:fitScale()
+  if not (Game and Game.renderer and Game.renderer.drawScale) then return nil end
+  return Game.renderer:drawScale()
+end
+
 function OverworldState:zoomScale()
   if not (Game and Game.renderer and Game.renderer.fitScale) then return nil end
   local ok, fit = pcall(Game.renderer.fitScale, Game.renderer)
