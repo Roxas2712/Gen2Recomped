@@ -421,6 +421,12 @@ function Pokemon.isShiny(mon)
     if require("src.mods.Runtime").wantsHook("shiny.roll") then
       return require("src.pokemon.IdentityRolls").gen3Shiny(mon)
     end
+    -- Split trainer IDs and the reference's trainerId alias are explicit
+    -- identity data too; a delegating hook must not be their only reader.
+    if mon.otSecretId ~= nil or (mon.otId == nil and mon.trainerId ~= nil) then
+      return require("src.pokemon.IdentityRolls").nativeGen3Shiny(
+        mon.personality, mon.otId or mon.trainerId, mon.otSecretId) or mon.shiny == true
+    end
   end
   -- PERSONALITY FIRST, and this order is the whole correctness of it:
   -- Pokemon.new rolls DVs for every Pokemon including Hoenn's, so a Gen 3 mon

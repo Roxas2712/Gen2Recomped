@@ -152,6 +152,29 @@ function C.run(root, backend, version, api, format)
       { mode = "forced", forced = forced, shiny = value, shinyCalls = f.e.calls["shiny.roll"] or 0 }
     f.close()
   end
+  if gen == 3 then
+    local edges = {
+      { pid = 0, ot = 0, yes = true },
+      { pid = 7, ot = 0, yes = true },
+      { pid = 8, ot = 0, yes = false },
+      { pid = 65536, ot = 65536, yes = true },
+      { pid = 65536, ot = 0, sid = 1, yes = true },
+      { pid = 0, ot = 0, sid = 65535, yes = false },
+      { pid = 0, trainer = 7, yes = true },
+      { pid = 4294967295, ot = 0, yes = true },
+    }
+    for _, mode in ipairs({ "no-mod", "delegate" }) do
+      for index, edge in ipairs(edges) do
+        local f = Fixture.new(root, backend, version, api, format, mode)
+        local mon = f.make(false)
+        mon.personality, mon.otId, mon.otSecretId, mon.trainerId = edge.pid, edge.ot, edge.sid, edge.trainer
+        local value = f.shiny(mon)
+        f.T.eq(value, edge.yes, "native GBA shiny XOR threshold and trainer-ID layouts")
+        rows[#rows + 1] = { mode = "gba_trainer_identity", policy = mode, case = index, shiny = value }
+        f.close()
+      end
+    end
+  end
   if version == "gold" then
     local f = Fixture.new(root, backend, version, api, format, "no-mod")
     local def = f.data.pokemon[backend == "gen1" and "CHARMANDER" or "SPECIES_004"]

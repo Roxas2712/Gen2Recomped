@@ -19,7 +19,9 @@ Both contexts carry `species` and `def`. Gen 2 carries the native `dvs`
 (`attack`, `defense`, `speed`, `special`, derived `hp`) and construction/
 refresh `level`. Its bare breeding gender query has no level. Gen 3 carries
 `personality`; shiny queries also carry `level`, `ivs`, `otId` (or the native
-trainer-ID fallback) and optional `otSecretId`. Unified GBA IV keys follow
+trainer-ID fallback) and optional `otSecretId`. The native unhooked GBA
+reader also handles split secret IDs and the `trainerId` alias; installing a
+delegating hook is not required for those explicit identity layouts. Unified GBA IV keys follow
 the reference: `hp`, `atk`, `def`, `spe`, `spa`, `spd`. IVs are a detached
 query copy, so editing them does not edit the Pokemon.
 
