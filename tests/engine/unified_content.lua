@@ -466,5 +466,57 @@ end, "unified", nil, seasonal)
 T.check(table.concat(seasonalLoader.errors, "\n"):find("seasons.winter.grass", 1, true) ~= nil,
   "DS seasonal encounter target is included in removal diagnostics")
 
+-- Class item references use the same canonical boundary as party item refs.
+for gen = 1, 3 do
+  local input, keys = fixture(gen)
+  if gen == 3 then
+    input.items.ITEM_013, input.items.POTION = input.items.POTION, nil
+    input.items.ITEM_013.id = "ITEM_013"
+    input.trainers[keys.trainer].parties[1][1].item = "ITEM_013"
+    keys.item = "ITEM_013"
+  end
+  local api, loader, data = run(gen, function(mod, loading)
+    local handle = mod.content.ai_classes
+    local row = handle:register("AI_PORTABLE", { kind = "class", uses = 1, item = "POTION" })
+    T.eq(row.item, "POTION", "class register result uses canonical item")
+    row.uses = 99
+    T.eq(handle:get("AI_PORTABLE").uses, 1, "class register result is detached")
+    local before = ops(loading.content.ai_classes)
+    local value, reason = handle:patch("AI_PORTABLE", { item = "UNKNOWN_ITEM" })
+    T.eq(value, nil, "unknown class item is refused before a write")
+    T.check(reason:find("unknown items ID", 1, true) ~= nil, "unknown class item explains refusal")
+    T.eq(ops(loading.content.ai_classes), before, "unknown class item records no operation")
+    raises(function() handle:patch("AI_PORTABLE", { uses = math.huge }) end, "non-finite")
+    local cyclic = {}; cyclic.item = cyclic
+    raises(function() handle:patch("AI_PORTABLE", cyclic) end, "cyclic record")
+    handle:patch("AI_PORTABLE", { item = DELETE })
+    T.eq(handle:get("AI_PORTABLE").item, nil, "class optional item can be deleted")
+    handle:override("AI_PORTABLE", { kind = "class", uses = 2, item = "POTION" })
+    for id, iterated in handle:each() do
+      if id == "AI_PORTABLE" then iterated.item = "UNKNOWN_ITEM" end
+    end
+    T.eq(handle:get("AI_PORTABLE").item, "POTION", "class iteration is detached")
+  end, "unified", nil, Merge.deepCopy(input))
+  T.eq(#loader.errors, 0, "canonical class reference passes native validation")
+  T.eq(data.ai_classes.AI_PORTABLE.item, keys.item, "native class consumer receives physical item key")
+  raises(function() api.content.ai_classes:patch("AI_PORTABLE", { item = "POTION" }) end, "frozen")
+  local _, failed, rolledBack = run(gen, function(mod)
+    mod.content.ai_classes:register("AI_ROLLBACK", { uses = 1, item = "POTION" })
+    error("intentional class entry failure")
+  end, "unified", nil, Merge.deepCopy(input))
+  T.eq(failed.mods.probe.state, "failed", "class entry failure attributed")
+  T.eq(rolledBack.ai_classes.AI_ROLLBACK, nil, "class registration rolls back with failed owner")
+  local _, removed = run(gen, function(mod)
+    mod.content.ai_classes:register("AI_DANGLING", { uses = 1, item = "POTION" })
+    mod.content.items:remove("POTION")
+  end, "unified", nil, Merge.deepCopy(input))
+  T.check(#removed.errors > 0, "class item retains native dangling-reference diagnostics")
+  local _, legacy, legacyData = run(gen, function(mod)
+    mod.content.ai_classes:register("AI_NATIVE", { uses = 1, item = keys.item })
+  end, "native", nil, Merge.deepCopy(input))
+  T.eq(#legacy.errors, 0, "legacy native class references still load")
+  T.eq(legacyData.ai_classes.AI_NATIVE.item, keys.item, "legacy class item key is unchanged")
+end
+
 Version.set(original)
 T.finish("unified content")

@@ -415,6 +415,39 @@ function U.new(loader, mod, native, gen)
   if native.marts then
     out.marts = require("src.mods.MartContent").api(loader, mod, native.marts, gen, true)
   end
+  if native.ai_classes and gen <= 3 then
+    local source, handle = native.ai_classes, {}
+    for key, value in pairs(source) do handle[key] = value end
+    local function project(value)
+      value = copy(value)
+      if type(value) == "table" and value.item ~= nil then
+        value.item = Ids.new(loader):read("items", value.item)
+      end
+      return value
+    end
+    handle.get = function(_, id) return project(source:get(id)) end
+    handle.each = function()
+      local nextRow = source:each()
+      return function()
+        local id, value = nextRow()
+        if id ~= nil then return id, project(value) end
+      end
+    end
+    for _, verb in ipairs({ "register", "override", "patch" }) do
+      handle[verb] = function(_, id, value)
+        return protect(function()
+          finite(value)
+          value = copy(value)
+          if type(value) == "table" and value.item ~= nil and value.item ~= DELETE then
+            value.item = resolved({ ids = Ids.new(loader) }, "items", value.item)
+          end
+          source[verb](source, id, value)
+          return handle:get(id)
+        end)
+      end
+    end
+    out.ai_classes = handle
+  end
   for kind, shape in pairs(Shapes) do
     local registry = loader.content[kind]
     if gen >= 4 and kind ~= "encounters" then registry.numericIds = true end
