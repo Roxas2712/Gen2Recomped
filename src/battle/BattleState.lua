@@ -6315,6 +6315,8 @@ function BattleState:holdItemTrigger(battler, when)
   return true
 end
 
+BattleState.applyFieldResiduals = require("src.battle.FieldResiduals").apply
+
 function BattleState:endOfTurn()
   -- the same ret: a decided battle never reaches HandlePoisonBurnLeechSeed
   -- or CheckNumAttacksLeft (core.asm:417-421, 456-460), so the residual
@@ -6415,6 +6417,7 @@ function BattleState:endOfTurn()
     self:holdItemTrigger(self.enemy, "turn")
   end
   self:gen3CountersTick()
+  self:applyFieldResiduals()
   self:tickTokens()
   self:roamerFlees()
   -- BATTLE ARENA: the third turn is over and both are standing -- judgment
@@ -8341,7 +8344,7 @@ function BattleState:killerOf(battler)
   return foes[1]
 end
 
-function BattleState:onFaint(battler)
+function BattleState:onFaint(battler, fieldTerminal)
   if battler.faintQueued then return end
   battler.faintQueued = true
   -- GRUDGE: the move that did it loses every PP it had.  Asked before
@@ -8406,7 +8409,7 @@ function BattleState:onFaint(battler)
   end)
   self.nextInsert = (self.nextInsert or 0) + 1
   table.insert(self.queue, self.nextInsert, { wait = Timing.FAINT_SLIDE })
-  if not battler.isPlayer and self.kind == "wild" then
+  if not fieldTerminal and not battler.isPlayer and self.kind == "wild" then
     -- FaintEnemyPokemon .wild_win (core.asm:792-795): beating a wild
     -- mon calls EndLowHealthAlarm and starts MUSIC_DEFEATED_WILD_MON
     -- as the slide lands, BEFORE EnemyMonFaintedText and the exp text;
@@ -8417,6 +8420,9 @@ function BattleState:onFaint(battler)
   end
   -- _EnemyMonFaintedText "Enemy X fainted!" / _PlayerMonFaintedText
   self:sayNext(Strings("%s\nfainted!", displayName(battler)))
+  -- Gold announces both faints in a terminal field batch, while the player's
+  -- loss alone owns resolution. Do not enqueue enemy EXP, victory or replacement.
+  if fieldTerminal then return end
   -- A FAINT IN A DOUBLE BATTLE ENDS NOTHING.
   --
   -- The two functions below are the SINGLE-battle flow, and they are shaped

@@ -17,7 +17,7 @@ end
 -- every seam. The source-catalog test requires a decision for each new seam.
 C.hooks = names([[
  battle.menu_auxiliary battle.move_grid_navigation ui.party.grid_navigation
- battle.caught_marker_visible battle.charge_required battle.accuracy battle.bottom_ui_visible battle.catch_exp battle.crit battle.damage battle.enemy_action battle.exp_award
+ battle.field_residual battle.caught_marker_visible battle.charge_required battle.accuracy battle.bottom_ui_visible battle.catch_exp battle.crit battle.damage battle.enemy_action battle.exp_award
  battle.low_health_alarm battle.overlay battle.run battle.status_hud_visible battle.turn_order catch.rate core.logic_speed core.update
  encounter.table encounter.fishing encounter.roll encounter.species evolution.check exp.gain fieldmove.eligibility
  input.pointer input.key input.gamepad input.wheel input.step intro.oak_speech.build item.use link.fingerprint map.palette movement.collision movement.speed
@@ -41,6 +41,7 @@ C.events = names([[
  world.object_toggled world.stepped world.tick world.tod_changed world.trainer_engaged
 ]])
 local positions = {
+  ["battle.field_residual"] = { "context" },
   ["battle.caught_marker_visible"] = { "context" },
   ["battle.charge_required"] = { "context" },
   ["encounter.table"] = { "context", "context" },

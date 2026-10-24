@@ -182,3 +182,6 @@ accounting and the existing-settings boundary. The read-only
 
 [Portable caught markers](portable-caught-marker.md) document strict visibility,
 native ownership gates, API-3 contexts and GBA presentation caching.
+
+[Portable field residuals](portable-field-residuals.md) document detached
+end-of-turn views, validated damage batches and native faint/EXP authority.
