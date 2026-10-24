@@ -171,6 +171,19 @@ return function(f, backend)
   }) do
     specs[#specs + 1] = spec
   end
+  for _, spec in ipairs({
+    { name = "party-user-burn", which = 1, partyWord = 16, partyWanted = 16 },
+    { name = "party-target-paralysis", which = 0, partyWord = 64, partyWanted = 64 },
+    { name = "party-exact-not-subset", which = 1, partyWord = 24, partyWanted = 8, miss = true },
+    { name = "party-fainted-refused", which = 1, partyWord = 16, partyWanted = 16, partyHp = 0, miss = true },
+    { name = "party-sixth-reserve", which = 1, partyWord = 16, partyWanted = 16, partySlot = 6 },
+    { name = "party-ordinary-egg-species", which = 1, partyWord = 16, partyWanted = 16, partyEgg = true },
+    { name = "party-produced-sleep", which = 1, partyWord = "SLP", partyWanted = 2, produceParty = true },
+    { name = "party-produced-toxic", which = 1, partyWord = "TOX", partyWanted = 128, produceParty = true },
+  }) do
+    spec.query = "if_status_in_party"
+    specs[#specs + 1] = spec
+  end
   for _, spec in ipairs(specs) do
     local b = f.freshDecision({}, spec.double)
     local function at(id)
@@ -310,6 +323,47 @@ return function(f, backend)
         end
       end
     end
+    local partySnapshot
+    if spec.partyWord ~= nil then
+      local party = spec.which == 1 and (native and b.foeParty or b.enemyParty)
+        or (b.playerParty or b.game and b.game.save and b.game.save.party)
+      local holder = at(spec.which == 1 and 1 or 0)
+      local index = spec.partySlot or 1
+      if index ~= 1 then
+        party[index] = copy(holder.mon)
+      end
+      local member = party[index]
+      member.isEgg = spec.partyEgg
+      if spec.partyHp ~= nil then
+        member.hp = spec.partyHp
+      end
+      if spec.produceParty then
+        member.status = nil
+        b.rng = function(lo, hi)
+          observationDraws[#observationDraws + 1] = { lo, hi }
+          return lo
+        end
+        if native then
+          require("src.core.game3.battle.adapter").new(b):applyStatus(holder, spec.partyWord, at(0))
+        else
+          b.ruleset = require("src.battle.rulesets.gen3_emerald")
+          require("src.battle.StatusRegistry").inflict(
+            b,
+            holder,
+            spec.partyWord == "TOX" and "PSN" or spec.partyWord,
+            { toxic = spec.partyWord == "TOX" }
+          )
+        end
+      else
+        member.status = spec.partyWord
+      end
+      partySnapshot = copy(party)
+      T.same(
+        observationDraws,
+        spec.partyWord == "SLP" and { { 0, 3 } } or {},
+        spec.name .. " producer RNG ABI"
+      )
+    end
     if spec.produce then
       local name, number =
         spec.produce == "taunt" and "TAUNT" or spec.produce == "protect" and "PROTECT" or "TACKLE",
@@ -433,7 +487,11 @@ return function(f, backend)
       end
     end
     local taunt = spec.query == "if_target_taunted" or spec.query == "if_target_not_taunted"
-    local branch = spec.query == "if_flash_fired" or spec.member ~= nil or spec.heldOperand ~= nil or taunt
+    local branch = spec.query == "if_flash_fired"
+      or spec.member ~= nil
+      or spec.heldOperand ~= nil
+      or spec.partyWord ~= nil
+      or taunt
     if native then
       b.aiClass, b.aiFlags = "PORTABLE_SCORE_A", 1
       local ops = {}
@@ -448,6 +506,7 @@ return function(f, backend)
         move = not spec.query:find("with_effect") and spec.member or nil,
         effect = spec.query:find("with_effect") and spec.member or nil,
         item = spec.heldOperand,
+        status = spec.partyWanted,
         target = branch and "bonus" or nil,
       }
       if not branch then
@@ -470,6 +529,7 @@ return function(f, backend)
       ops[#ops + 1] = {
         name = spec.query,
         args = taunt and { 10 }
+          or spec.partyWord ~= nil and { spec.which or 0, spec.partyWanted, 10 }
           or spec.heldOperand ~= nil and { spec.which or 0, spec.heldOperand, 10 }
           or spec.member ~= nil and { spec.which or 0, spec.member, 10 }
           or branch and {
@@ -521,6 +581,15 @@ return function(f, backend)
         itemHistory,
         spec.name .. " scoring does not mutate item history"
       )
+    end
+    if spec.partyWord ~= nil then
+      T.eq(#f.e.scoring.calls, 2, spec.name .. " both native moves reach public scoring")
+      for _, call in ipairs(f.e.scoring.calls) do
+        T.eq(call.before, spec.miss and 100 or 105, spec.name .. " public scorer sees native party query")
+      end
+      local party = spec.which == 1 and (native and b.foeParty or b.enemyParty)
+        or (b.playerParty or b.game and b.game.save and b.game.save.party)
+      T.same(party, partySnapshot, spec.name .. " native scoring preserves stored party")
     end
     local slot, targetId
     if native then
