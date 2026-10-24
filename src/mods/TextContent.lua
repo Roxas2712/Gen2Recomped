@@ -49,7 +49,7 @@ local function identifier(id)
   assert(type(id) == "string" and id ~= "", "text: registry id is required")
 end
 
-function Text.source(value, generation, version, native)
+local function convert(value, generation, version, native, writing)
   assert(type(value) == "string", "invalid unified content: text must be a source string")
   if value:find("[\r\252]") then
     refuse("unrepresentable text control")
@@ -59,9 +59,6 @@ function Text.source(value, generation, version, native)
   end
   -- The host's imported FD 02..04 uses VARn. Authored unified text uses the
   -- reference's STR_VAR_n, while native overrides retain the old spelling.
-  if native then
-    value = value:gsub("{VAR([123])}", "{STR_VAR_%1}")
-  end
   local out, i = {}, 1
   while i <= #value do
     local c = value:sub(i, i)
@@ -72,8 +69,14 @@ function Text.source(value, generation, version, native)
     elseif c == "{" and value:find("}", i, true) then
       local stop = value:find("}", i, true)
       local name = value:sub(i + 1, stop - 1)
+      if native then
+        name = name:gsub("^VAR([123])$", "STR_VAR_%1")
+      end
       if not (PH[name] or TAG[name] or BATTLE[name] or version == "emerald" and EMERALD[name]) then
         refuse("unknown text placeholder or printer control: " .. name)
+      end
+      if writing then
+        name = name:gsub("^STR_VAR_([123])$", "VAR%1")
       end
       out[#out + 1] = "{" .. name .. "}"
       i = stop + 1
@@ -85,15 +88,14 @@ function Text.source(value, generation, version, native)
   return table.concat(out)
 end
 
+function Text.source(value, generation, version, native)
+  return convert(value, generation, version, native, false)
+end
 function Text.write(value, generation, version)
   if value == Merge.DELETE then
     return value
   end
-  local source = Text.source(value, generation, version, false)
-  if generation == 3 then
-    return (source:gsub("{STR_VAR_([123])}", "{VAR%1}"))
-  end
-  return source
+  return convert(value, generation, version, false, true)
 end
 
 local function addresses(id)
@@ -105,11 +107,17 @@ local function addresses(id)
     return id, id
   end
   bank, addr = tonumber(bank, 16), tonumber(addr, 16)
-  return ("%02x:%04x"):format(bank, addr), ("TEXT_S%02X_%04X"):format(bank, addr)
+  local canonical, physical = ("%02x:%04x"):format(bank, addr), ("TEXT_S%02X_%04X"):format(bank, addr)
+  -- Only these two exact spellings are the imported/native address pair.
+  -- A differently-cased authored label is a distinct ID in the reference.
+  if id ~= canonical and id ~= physical then
+    return id, id
+  end
+  return canonical, physical
 end
 function Text.api(loader, mod, native, generation)
   local registry = loader.content.text
-  local version = loader.version or require("src.core.GameVersion").get()
+  local version = require("src.core.GameVersion").get()
   local function keys(id)
     identifier(id)
     if generation ~= 2 then

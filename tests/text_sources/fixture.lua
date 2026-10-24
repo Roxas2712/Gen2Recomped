@@ -68,7 +68,7 @@ function F.new(root, backend, version, api, format, mode, id, source, body, prep
     end
     if gen == 2 then
       local b, a = key:match("^(%x%x):(%x%x%x%x)$")
-      if b then
+      if b and key == key:lower() then
         key = ("TEXT_S%02X_%04X"):format(tonumber(b, 16), tonumber(a, 16))
       end
     end
@@ -104,7 +104,23 @@ function F.new(root, backend, version, api, format, mode, id, source, body, prep
       return table.concat(parts)
     end
     if gen == 3 and value then
-      return value:gsub("{VAR([123])}", "{STR_VAR_%1}")
+      local parts, i = {}, 1
+      while i <= #value do
+        if value:sub(i, i) == "\\" and i < #value then
+          parts[#parts + 1] = value:sub(i, i + 1)
+          i = i + 2
+        else
+          local slot = value:sub(i):match("^{VAR([123])}")
+          if slot then
+            parts[#parts + 1] = "{STR_VAR_" .. slot .. "}"
+            i = i + 6
+          else
+            parts[#parts + 1] = value:sub(i, i)
+            i = i + 1
+          end
+        end
+      end
+      return table.concat(parts)
     end
     return value
   end
@@ -140,7 +156,7 @@ function F.new(root, backend, version, api, format, mode, id, source, body, prep
     local runner = require("src.script.ScriptRunner").new(game)
     if gen == 2 then
       local b, a = key:match("^(%x%x):(%x%x%x%x)$")
-      if b then
+      if b and key == key:lower() then
         key = ("TEXT_S%02X_%04X"):format(tonumber(b, 16), tonumber(a, 16))
       end
     end

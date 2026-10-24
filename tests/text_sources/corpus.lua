@@ -39,6 +39,9 @@ local values = {
   "{A_BUTTON}",
   "{PKMN}",
 }
+values[#values + 1] = "\\{VAR1}"
+values[#values + 1] = "\\{STR_VAR_1}"
+values[#values + 1] = "\\\\{VAR1}"
 local words = [[
 UNKNOWN KUN VERSION MAGMA AQUA MAXIE ARCHIE GROUDON KYOGRE EVIL_TEAM GOOD_TEAM
 EVIL_LEADER GOOD_LEADER EVIL_LEGENDARY GOOD_LEGENDARY

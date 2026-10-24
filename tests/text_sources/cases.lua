@@ -46,6 +46,11 @@ function C.run(root, backend, version, api, format)
     rows[#rows + 1] =
       { mode = "bank-address", before = f.e.before, after = f.e.after, native = f.source("55:4067") }
     f.close()
+    local authored = F.new(root, backend, version, api, format, "register", "55:ABCD", "AUTHORED")
+    authored.T.eq(authored.source("55:ABCD"), "AUTHORED", "authored ID case is preserved")
+    authored.T.eq(authored.dialogue("55:ABCD"), "AUTHORED", "native script reads exact authored label")
+    rows[#rows + 1] = { mode = "authored-case", after = authored.e.after, ids = authored.e.ids }
+    authored.close()
   end
   local corpus = F.new(root, backend, version, api, format, "corpus", "PORTABLE_TEXT", "unused")
   corpus.T.eq(#corpus.result.errors, 0, "source corpus loads atomically")
