@@ -17,7 +17,7 @@ T.eq(m.typeIds[2],'FIGHTING','short cartridge FIGHT name retains canonical battl
 T.eq(m.typeIds[14],'ELECTRIC','short cartridge ELECTR name retains canonical battle type')
 local raw={}
 raw[m.symbols.gSpecials+156*4]=0x08082169
-local x=setmetatable({manifest=m,rom={u32=function(_,a) return raw[a] or 0 end}},X)
+local x=setmetatable({manifest=m,symbols=m.symbols,rom={u32=function(_,a) return raw[a] or 0 end}},X)
 T.eq(x:specialAddress(159),0x82168,'extractor reads the same native special that scripts call')
 T.eq(x:specialAddress(529),nil,'unmapped special never reads a different native slot')
 T.finish('Ruby registration, type ids and special address spaces')
