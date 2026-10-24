@@ -295,7 +295,10 @@ rounding, with an explicit profile flag. Other profiles retain their ordering.
 Fifteen focused arithmetic checks cover this and surrounding boundaries. The
 escape fixtures also mount the same Normal/Ghost/Steel type rows as the
 native reference; their original neutral-only host chart was not equivalent.
-The rounding fix is being isolated for separate publication.
+The rounding fix is isolated and published in
+[PR #175](https://github.com/UNDERdecoded/Gen2Recomped/pull/175), with its own
+unchanged critical-hit consumer and imported-data driver. It does not publish
+this branch's enemy hook or require the unfinished controller implementation.
 
 Both host API modes pass **12 workers / 577 paired observations**, with no
 differences, and host hook checks pass **1,812/1,812**. The complete development
