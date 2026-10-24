@@ -63,7 +63,7 @@ def main():
    (bundle/'OpenGL-Test.cmd').write_bytes(b'@echo off\r\nset "POKEPORT_GRAPHICS_BACKEND=opengl"\r\n"%~dp0Gen2Recomped-NativePreview.exe" %*\r\n')
    target=out/f'Gen2Recomped-NativePreview-{a.release_id}-windows.zip';shutil.make_archive(str(target.with_suffix('')),'zip',bundle.parent,bundle.name)
   else:
-   subprocess.run(['ditto','-x','-k',str(inner),str(runtime_dir/'unpacked')],check=True)
+   subprocess.run(['unzip','-q',str(inner),'-d',str(runtime_dir/'unpacked')],check=True)
    apps=list((runtime_dir/'unpacked').rglob('love.app'));assert len(apps)==1
    bundle=work/'Gen2Recomped-NativePreview.app';shutil.copytree(apps[0],bundle,symlinks=True)
    shutil.copy2(payload,bundle/'Contents/Resources/game.love');info=bundle/'Contents/Info.plist'
