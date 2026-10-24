@@ -7666,12 +7666,21 @@ function RomExtractorGen3:extractFont()
       local across = math.floor(tonumber(face.tilesAcross) or 2)
       local stride = math.floor(tonumber(face.glyphBytes) or 0x40)
       for code = 0, count - 1 do
-        local base = face.glyphs + code * stride
+        local glyphCode = face.glyphMap and self.rom:u8(face.glyphMap
+          + code * (face.glyphMapStride or 1) + (face.glyphMapOffset or 0)) or code
+        local base = face.glyphs + glyphCode * stride
         local cell = {}
         for row = 0, fh - 1 do
           local srcRow = ftop + row
           local half = srcRow < 8 and 0 or across
           local line = {}
+          if face.bits == 4 then
+            local word = self.rom:u32(base + srcRow * 4)
+            for px = 0, fw - 1 do
+              local nibble = math.floor(word / 2 ^ (px * 4)) % 16
+              line[px + 1] = nibble == 15 and 1 or (nibble == 14 and 2 or 0)
+            end
+          else
           for tile = 0, across - 1 do
             local word = self.rom:u16(base + (half + tile) * 16
                                       + (srcRow % 8) * 2)
@@ -7682,10 +7691,11 @@ function RomExtractorGen3:extractFont()
               end
             end
           end
+          end
           cell[row + 1] = line
         end
         cells[code + 1] = cell
-        fadv[code + 1] = self.rom:u8(face.widths + code)
+        fadv[code + 1] = self.rom:u8(face.widths + glyphCode)
       end
       local okFace = pcall(function()
         local image = paintPage(cells, fw, fh)

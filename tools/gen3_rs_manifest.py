@@ -70,6 +70,9 @@ def main():
                         count=count,inkTop=0,inkBottom=15,inkRight=7,
                         glyphs=glyphs,widths=widths,role='normal',fontId=3,
                         roles={'none':0,'text':15,'shadow':14})
+    result['font']['faces']=[dict(role='small',fontId=4,bits=4,glyphBytes=32,
+        cellWidth=8,cellHeight=8,glyphs=at('gFont4LatinGlyphs'),widths=at('sFont4Widths'),
+        glyphMap=at('sFontType1Map'),glyphMapStride=2,glyphMapOffset=1)]
     result['pocketEnum']={'1':'ITEM','2':'BALL','3':'TM_HM','4':'BERRY','5':'KEY_ITEM'}
     result['typeIds']=['NORMAL','FIGHTING','FLYING','POISON','GROUND','ROCK','BUG','GHOST','STEEL','TYPE_09','FIRE','WATER','GRASS','ELECTRIC','PSYCHIC','ICE','DRAGON','DARK']
     # RS stores direct RAM save blocks and has no bag/money encryption key.

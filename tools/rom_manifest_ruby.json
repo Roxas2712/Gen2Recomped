@@ -891,7 +891,22 @@
       "none": 0,
       "text": 15,
       "shadow": 14
-    }
+    },
+    "faces": [
+      {
+        "role": "small",
+        "fontId": 4,
+        "bits": 4,
+        "glyphBytes": 32,
+        "cellWidth": 8,
+        "cellHeight": 8,
+        "glyphs": 15363012,
+        "widths": 1991610,
+        "glyphMap": 1990640,
+        "glyphMapStride": 2,
+        "glyphMapOffset": 1
+      }
+    ]
   },
   "pocketEnum": {
     "1": "ITEM",
@@ -1705,6 +1720,9 @@
       "sWeatherCycleRoute119": 3779796,
       "sWeatherCycleRoute123": 3779800,
       "sTextWindowFrameGraphics": 3629552,
+      "gFont4LatinGlyphs": 15363012,
+      "sFont4Widths": 1991610,
+      "sFontType1Map": 1990640,
       "sSaveBlockChunks": 4201892,
       "ScrSpecial_HealPlayerParty": 807600,
       "SetCableClubWarp": 430060,
