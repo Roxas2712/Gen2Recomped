@@ -5697,7 +5697,7 @@ end
 function BattleState:performEnemySwitch(user, index)
   local Decision = require("src.battle.EnemyDecision")
   local gba = GameVersion.isGen3()
-  index = user and Decision.validSwitch(self, user, index, gba)
+  index = user and Decision.validSwitch(self, user, index, gba, true)
   if not index then return false end
   local position = user.position or BattleState.POS.OPPONENT_LEFT
   local mon = self:benchFor(false, position)[index]

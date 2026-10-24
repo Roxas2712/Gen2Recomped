@@ -163,6 +163,11 @@ function C.run(root, backend, version, api, format, inspect)
       rows[#rows + 1] = { mode = mode, spent = action, hp = f.mon().hp, stock = f.used() }
     end
   end
+  if f.gen == 3 then
+    for _, row in ipairs(dofile(root .. "/tests/enemy_decision/switch_cases.lua")(f, root, backend)) do
+      rows[#rows + 1] = row
+    end
+  end
   out.stop()
   f.close()
   return rows

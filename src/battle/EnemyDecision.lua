@@ -40,7 +40,7 @@ local function itemNumber(battle, key)
   return tonumber(def and def.index) or tonumber(key)
 end
 
-function M.validSwitch(battle, battler, value, gba)
+function M.validSwitch(battle, battler, value, gba, executing)
   local index = tonumber(value)
   if not index or index ~= index then
     return nil
@@ -56,6 +56,9 @@ function M.validSwitch(battle, battler, value, gba)
   if gba and (index < 1 or index > 6 or require("src.pokemon.Party").isEgg(mon)) then
     return nil
   end
+  if gba and (mon.species == nil or mon.species == 0) then
+    return nil
+  end
   for _, active in pairs(battle.sides[2].battlers) do
     if active and active.mon == mon then
       return nil
@@ -63,7 +66,7 @@ function M.validSwitch(battle, battler, value, gba)
   end
   if gba then
     for who, reserved in pairs(battle._enemySwitchReservations or {}) do
-      if who ~= battler and reserved == mon then
+      if reserved == mon and not (executing and who == battler) then
         return nil
       end
     end
@@ -285,7 +288,8 @@ function M.gba(battle, battler)
   end
   local native, action
   local function base()
-    action = TrainerAI.classAction(battle, battler)
+    local index = require("src.battle.EnemySwitch").choose(battle, battler, M.validSwitch)
+    action = index and { special = "aiSwitch", index = index } or TrainerAI.classAction(battle, battler)
     if action then
       action.decisionBattler = battler
     end

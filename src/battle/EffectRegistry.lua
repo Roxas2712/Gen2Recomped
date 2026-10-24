@@ -317,6 +317,9 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     -- ...and the one applyDamage a Gen 3 FOCUS BAND answers: a move landing
     -- on someone
     local dealt = battle:applyDamage(target, hitDamage, true)
+    if require("src.core.GameVersion").isGen3() and target ~= user and not hadSub then
+      target._gbaLastHitById = user.position
+    end
     totalDealt = totalDealt + dealt
     -- MIRROR COAT is COUNTER's special twin and needs the SPECIAL half of
     -- the damage kept separately; battle.lastDamage is shared by both and
@@ -429,6 +432,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   -- SITRUS BERRY the hit dropped below half goes off immediately rather
   -- than waiting for the end of the turn.
   local gba = require("src.core.GameVersion").isGen3()
+  if gba and target ~= user and landed > 0 then target._gbaLastLandedMove = move.id end
   if gba then require("src.battle.GbaItemSchedule").moveEnd(battle) end
   if totalDealt > 0 and battle.shellBellDrain then
     local flinch = HoldItems.flinchChance(user, move)
