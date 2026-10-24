@@ -184,6 +184,11 @@ return function(f, backend)
     spec.query = "if_status_in_party"
     specs[#specs + 1] = spec
   end
+  for _, opcode in ipairs({ "if_user_has_attacking_move", "if_user_has_no_attacking_moves" }) do
+    for _, mode in ipairs({ "all", "status", "spent" }) do
+      specs[#specs + 1] = { name = opcode .. "-" .. mode, query = opcode, attackMode = mode }
+    end
+  end
   for _, spec in ipairs(specs) do
     local b = f.freshDecision({}, spec.double)
     local function at(id)
@@ -364,6 +369,30 @@ return function(f, backend)
         spec.name .. " producer RNG ABI"
       )
     end
+    if spec.attackMode then
+      local definitions = native and require("src.core.game3.battle.moves")._rom or f.data.moves
+      local previous = {}
+      for _, value in ipairs({ { 33, f.ids.TACKLE }, { 76, f.ids.SOLARBEAM } }) do
+        local key = native and value[1] or value[2]
+        previous[#previous + 1] = { key = key, record = definitions[key] }
+        definitions[key] = copy(definitions[key])
+        if spec.attackMode == "status" or spec.attackMode == "spent" and value[1] == 33 then
+          definitions[key].power = 0
+        end
+      end
+      if spec.attackMode == "spent" then
+        if native then
+          user.mon.pp[2] = 0
+        else
+          user.curMoves[2].pp = 0
+        end
+      end
+      restore = function()
+        for _, record in ipairs(previous) do
+          definitions[record.key] = record.record
+        end
+      end
+    end
     if spec.produce then
       local name, number =
         spec.produce == "taunt" and "TAUNT" or spec.produce == "protect" and "PROTECT" or "TACKLE",
@@ -487,10 +516,12 @@ return function(f, backend)
       end
     end
     local taunt = spec.query == "if_target_taunted" or spec.query == "if_target_not_taunted"
+    local attacking = spec.attackMode ~= nil
     local branch = spec.query == "if_flash_fired"
       or spec.member ~= nil
       or spec.heldOperand ~= nil
       or spec.partyWord ~= nil
+      or attacking
       or taunt
     if native then
       b.aiClass, b.aiFlags = "PORTABLE_SCORE_A", 1
@@ -528,7 +559,7 @@ return function(f, backend)
       end
       ops[#ops + 1] = {
         name = spec.query,
-        args = taunt and { 10 }
+        args = (taunt or attacking) and { 10 }
           or spec.partyWord ~= nil and { spec.which or 0, spec.partyWanted, 10 }
           or spec.heldOperand ~= nil and { spec.which or 0, spec.heldOperand, 10 }
           or spec.member ~= nil and { spec.which or 0, spec.member, 10 }
@@ -590,6 +621,20 @@ return function(f, backend)
       local party = spec.which == 1 and (native and b.foeParty or b.enemyParty)
         or (b.playerParty or b.game and b.game.save and b.game.save.party)
       T.same(party, partySnapshot, spec.name .. " native scoring preserves stored party")
+    end
+    if attacking then
+      local expectedCalls = spec.attackMode == "spent" and 1 or 2
+      local present = spec.attackMode ~= "status"
+      local branchHit = spec.query == "if_user_has_attacking_move" and present
+        or spec.query == "if_user_has_no_attacking_moves" and not present
+      T.eq(#f.e.scoring.calls, expectedCalls, spec.name .. " native usable candidates reach public scoring")
+      for _, call in ipairs(f.e.scoring.calls) do
+        T.eq(
+          call.before,
+          branchHit and 105 or 100,
+          spec.name .. " public score follows all physical move slots"
+        )
+      end
     end
     local slot, targetId
     if native then
