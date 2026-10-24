@@ -42,6 +42,7 @@ for _, version in ipairs({ "firered", "emerald" }) do
     "OTHER CANCEL",
     "unmapped role does not borrow first cancel"
   )
+  T.same(f.data.constants, base, "native readers preserve imported constants")
   f.data.constants.gen3PartyActions = nil
   p.words = nil
   T.eq(p:actionWord("summary", nil, "SUMMARY"), "MOD_SUMMARY", "older cache without action tables")
@@ -82,12 +83,23 @@ for _, version in ipairs({ "firered", "emerald" }) do
   local routed =
     require("src.ui.Gen3ItemPcFRLG").new(f.game, { title = "LOCALIZED BASE", nativeProse = true })
   T.eq(
-    routed.title,
+    routed:titleText(),
     version == "firered" and "MOD_PC_TITLE" or "LOCALIZED BASE",
     "explicit native withdrawal title"
   )
-  -- Registry reads do not mutate importer-owned action tables.
-  T.same(f.data.constants, base, "imported constants preserved")
   f.close()
+  -- Match the existing registry-retirement fixture: discard unrelated builtin
+  -- namespaces whose duplicate registration is a known baseline issue.
+  for root in pairs(require("src.mods.Builtins").namespaceRoots()) do
+    if root ~= "text" and root ~= "constants" then
+      f.data[root] = nil
+    end
+  end
+  local retired = T.sdk.loadMods({}, { data = f.data, generation = 3, fs = T.sdk.memfs({}), dev = false })
+  T.eq(#retired.errors, 0, "empty reload succeeds")
+  T.eq(routed:titleText(), "LOCALIZED BASE", "existing title reader retires removed owner")
+  T.eq(sub:entries()[1].label, "WITHDRAW", "existing submenu reader retires removed owner")
+  T.eq(p:actionWord("summary", nil, "SUMMARY"), "BASE_SUMMARY", "existing party reader retires removed owner")
+  retired.release()
 end
 T.finish("native menu action and render integration")

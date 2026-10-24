@@ -216,7 +216,7 @@ function F.new(root, backend, version, mode, api, format)
       local ok, err = pcall(pc.drawRows, pc)
       Font.draw = draw
       assert(ok, err)
-      return { pc.title, entries[1].label, entries[2].label, entries[3].label, captured[2] }
+      return { pc:titleText(), entries[1].label, entries[2].label, entries[3].label, captured[2] }
     end
   end
   function f.close()

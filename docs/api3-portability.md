@@ -205,3 +205,6 @@ prose and named GBA label bindings remain separate follow-up work.
 
 For separate label-keyed engine prose, native consumer coverage and remaining
 GBA bindings, see [portable ROM prose](api3-rom-text.md).
+
+For native FireRed/Emerald party action labels, separate cancel buttons and
+FireRed Item-PC withdrawal labels, see [GBA menu prose](portable-gba-menu-prose.md).

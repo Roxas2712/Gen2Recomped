@@ -39,8 +39,12 @@ a brace slot: an incompatible call retains the native fallback policy.
   unchanged. All five actions/descriptions are tested through both engines'
   actual native menu readers; this does not invent a generic word matcher.
 
+The [GBA menu-prose extension](portable-gba-menu-prose.md) also binds the
+FireRed/Emerald party actions and separate cancel buttons, plus FireRed's
+Item-PC withdrawal title, cancel row and submenu.
+
 **Registry availability does not mean every native GBA UI/battle reader has
-been bound.** Party, item-PC, other field menus and GBA battle-message contexts
+been bound.** Further party prompts, Item-PC quantity/results, other field menus and GBA battle-message contexts
 need further explicit adapters. Likewise, a Gen-2 screen that still prints a
 hardcoded fallback rather than reading its ROM label needs a native reader
 change. This PR is a shared registry and its first verified native consumers,
