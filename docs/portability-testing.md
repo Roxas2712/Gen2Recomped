@@ -1,31 +1,33 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–167
+hook, rendering, shader and baseline test fixes prepared in PRs #88–168
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`5d49906947262af38d25ad01f1886473e3f40910`. Its ROM-free run passed
-180/180 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
-PR #167 adds the public Gen-2 held-definition registry, with 2,916 native
-contract checks and 153 authority checks. The unchanged consumer passes
-through both SDKs in four configurations (48 isolated workers / 192 paired
-observations); the reference's API 2 remains native. GB/GBA/DS honestly report
-this registry unavailable, matching its reference generation boundary.
+`eaf9882ddd54fd2139d99e51bddaaf5ecfe941e8`. Its ROM-free run passed
+182/182 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+PR #168 adds the public Gen-2 mart-definition registry, with 1,485 public/native
+checks and 234 authority/import/VM checks. The unchanged consumer passes
+through both SDKs in four configurations (48 isolated workers / 168 paired
+observations), pinned to Gen1 `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`.
+The reference's API 2 remains native. GB/GBA/DS honestly report this registry
+unavailable, matching its reference generation boundary.
 
-Native LÖVE 11.5 imported Gold passes actual FIGHT/move input, imported item
-ID mapping, exact 7-HP healing and item consumption, detached reads and frozen
-writes at this runtime. The existing stock Gold held-item driver also passes
-after removing the new example. See [portable held definitions](portable-held-content.md).
-All 27 hosted #167 workflows await maintainer approval; local results above
-are separate from hosted CI.
+Native LÖVE 11.5 imported Gold passes actual lowered script coroutines and
+UI input: ordinary purchase/item prices, independent bargain prices and
+one-item limit, sold-out/reopen protection and close/resume. Its runtime was
+`89fc602240a607a9cee3b2c575828c17970842ee`; production, example and driver are
+unchanged in the final ref (only a shared test metadata probe changed).
+See [portable mart definitions](portable-mart-content.md). All 28 hosted
+#168 workflows await maintainer approval; local results are separate.
 
-PR #166's historical GBA scheduling snapshot and its 40 workers / 1,914
-paired observations are preserved below and in the status JSON. It resolves
-the tested unrestricted Berry 7-vs-35 HP discrepancy. This does not establish
-complete battle-rule parity; Choice Band locking, further deferred abilities,
-Quick Claw turn-RNG ordering and volatile rules remain separate work.
+Prior #167 held-definition and #166 GBA scheduling evidence retains its own
+historical refs and reference pins in the status JSON. These establish the
+tested held-definition, read and scheduling contracts, not complete battle-rule
+parity; Choice Band locking, further deferred abilities, Quick Claw turn-RNG
+ordering and volatile rules remain separate work.
 
 Prior held-read, field-residual, caught-marker, charge, PP, item, follower,
 map and storage families retain their historical refs in
@@ -505,3 +507,21 @@ FIGHT/move input and result queues. It checks imported public item IDs,
 before finish/afterBattle/SAVE. This is not a full-playthrough or pixel test.
 Keep this example separate from the older `portable_held_item` example when
 checking unmodified native behavior.
+
+## Native mart-definition test
+
+Install and enable `examples/portable_mart_content` in the isolated identity:
+
+```sh
+POKEPORT_VERSION=gold POKEPORT_DRIVER=tests/drivers/mart_content.lua \
+  bash scripts/run-portability-test.sh
+```
+
+The driver starts an in-memory New Game, compiles bounded native shop IR,
+runs real script coroutines and uses actual menu input. It verifies imported
+public IDs, ordinary and bargain prices, money/inventory, sold-out and reopen
+protection, runner close/resume and detached/frozen public records. It exits
+without a normal SAVE action. It does not claim a full playthrough, fresh full
+ROM reimport, daily stock reset or special-shop pixel equivalence. Old imported
+marker-only fallbacks need reimport for the new mart-ID annotations; the
+normal ROM-script path uses the live pool directly.
