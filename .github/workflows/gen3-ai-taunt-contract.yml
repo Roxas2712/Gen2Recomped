@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: Roxas2712/gen1recomp-Mac-fix
-          ref: cdd4ad167373e2b5f08c96f95ee87041f59e0e17
+          ref: 10613015fc68d924915570bd1abee34b70d5bd01
           path: .contract-reference/gen1
       - name: Install runtime
         run: sudo apt-get update && sudo apt-get install -y luajit
