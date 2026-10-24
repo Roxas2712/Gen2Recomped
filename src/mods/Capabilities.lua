@@ -36,6 +36,7 @@ add("hooks", "123", "pokemon.level_visible ui.party.grid_navigation")
 add("hooks", "123", "world.follower.spawn")
 add("hooks", "13", "item.use")
 add("hooks", "23", "held_item.trigger")
+add("hooks", "23", "shiny.roll gender.roll")
 add("hooks", "123", "encounter.table battle.charge_required battle.caught_marker_visible battle.field_residual")
 add("hooks", "12", "intro.oak_speech.build")
 

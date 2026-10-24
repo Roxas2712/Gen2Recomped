@@ -1585,6 +1585,9 @@ function Loader:load(data)
   end)
   -- engine call sites reach these buses -- and this error feed, for failures
   -- that only surface at play time -- through Runtime from here on
+  -- Scope native query context to this bus; SDK/runtime restoration swaps
+  -- the whole bus, so no process-global dataset outlives its loader.
+  self.hooks.data = data
   Runtime.install(self.events, self.hooks, self.errors)
   self:_validate()
   local ordered = self:_resolve()
