@@ -900,6 +900,303 @@
     "4": "BERRY",
     "5": "KEY_ITEM"
   },
+  "typeIds": [
+    "NORMAL",
+    "FIGHTING",
+    "FLYING",
+    "POISON",
+    "GROUND",
+    "ROCK",
+    "BUG",
+    "GHOST",
+    "STEEL",
+    "TYPE_09",
+    "FIRE",
+    "WATER",
+    "GRASS",
+    "ELECTRIC",
+    "PSYCHIC",
+    "ICE",
+    "DRAGON",
+    "DARK"
+  ],
+  "save": {
+    "chunkStride": 3968,
+    "sectorSize": 4096,
+    "sectorsPerSlot": 14,
+    "sectors": [
+      {
+        "offset": 0,
+        "size": 2192
+      },
+      {
+        "offset": 0,
+        "size": 3968
+      },
+      {
+        "offset": 3968,
+        "size": 3968
+      },
+      {
+        "offset": 7936,
+        "size": 3968
+      },
+      {
+        "offset": 11904,
+        "size": 3136
+      },
+      {
+        "offset": 0,
+        "size": 3968
+      },
+      {
+        "offset": 3968,
+        "size": 3968
+      },
+      {
+        "offset": 7936,
+        "size": 3968
+      },
+      {
+        "offset": 11904,
+        "size": 3968
+      },
+      {
+        "offset": 15872,
+        "size": 3968
+      },
+      {
+        "offset": 19840,
+        "size": 3968
+      },
+      {
+        "offset": 23808,
+        "size": 3968
+      },
+      {
+        "offset": 27776,
+        "size": 3968
+      },
+      {
+        "offset": 31744,
+        "size": 2000
+      }
+    ],
+    "saveBlock2Size": 2192,
+    "saveBlock1Size": 15040,
+    "pokemonStorageSize": 33744,
+    "security": 134291493
+  },
+  "substructOrders": [
+    [
+      0,
+      1,
+      2,
+      3
+    ],
+    [
+      0,
+      1,
+      3,
+      2
+    ],
+    [
+      0,
+      2,
+      1,
+      3
+    ],
+    [
+      0,
+      3,
+      1,
+      2
+    ],
+    [
+      0,
+      2,
+      3,
+      1
+    ],
+    [
+      0,
+      3,
+      2,
+      1
+    ],
+    [
+      1,
+      0,
+      2,
+      3
+    ],
+    [
+      1,
+      0,
+      3,
+      2
+    ],
+    [
+      2,
+      0,
+      1,
+      3
+    ],
+    [
+      3,
+      0,
+      1,
+      2
+    ],
+    [
+      2,
+      0,
+      3,
+      1
+    ],
+    [
+      3,
+      0,
+      2,
+      1
+    ],
+    [
+      1,
+      2,
+      0,
+      3
+    ],
+    [
+      1,
+      3,
+      0,
+      2
+    ],
+    [
+      2,
+      1,
+      0,
+      3
+    ],
+    [
+      3,
+      1,
+      0,
+      2
+    ],
+    [
+      2,
+      3,
+      0,
+      1
+    ],
+    [
+      3,
+      2,
+      0,
+      1
+    ],
+    [
+      1,
+      2,
+      3,
+      0
+    ],
+    [
+      1,
+      3,
+      2,
+      0
+    ],
+    [
+      2,
+      1,
+      3,
+      0
+    ],
+    [
+      3,
+      1,
+      2,
+      0
+    ],
+    [
+      2,
+      3,
+      1,
+      0
+    ],
+    [
+      3,
+      2,
+      1,
+      0
+    ]
+  ],
+  "saveFields": {
+    "saveBlock1": {
+      "location": 4,
+      "money": 1168,
+      "coins": 1172,
+      "registeredItem": 1174,
+      "flags": 4640,
+      "vars": 4928,
+      "gameStats": 5440,
+      "pcItems": 1176,
+      "playerParty": 568,
+      "playerPartyCount": 564,
+      "posX": 0,
+      "posY": 2
+    },
+    "saveBlock2": {
+      "playerName": 0,
+      "playerGender": 8,
+      "playerTrainerId": 10,
+      "playTimeHours": 14,
+      "playTimeMinutes": 16,
+      "playTimeSeconds": 17,
+      "playTimeVBlanks": 18,
+      "encryptionKey": false
+    },
+    "flagBytes": 288,
+    "varCount": 256,
+    "varsStartId": 16384,
+    "party": {
+      "count": 564,
+      "start": 568,
+      "size": 6,
+      "monSize": 100
+    },
+    "bag": {
+      "capacities": [
+        20,
+        20,
+        16,
+        64,
+        46
+      ],
+      "pockets": [
+        1376,
+        1456,
+        1536,
+        1600,
+        1856
+      ],
+      "itemSlotSize": 4,
+      "pcItems": 1176,
+      "pcItemCount": 50
+    },
+    "storage": {
+      "currentBox": 0,
+      "boxes": 4,
+      "boxCount": 14,
+      "boxCapacity": 30,
+      "boxMonSize": 80,
+      "boxNames": 33604,
+      "boxNameLength": 9,
+      "boxWallpapers": 33730
+    }
+  },
   "specialRemap": [
     0,
     1,
@@ -1408,6 +1705,7 @@
       "sWeatherCycleRoute119": 3779796,
       "sWeatherCycleRoute123": 3779800,
       "sTextWindowFrameGraphics": 3629552,
+      "sSaveBlockChunks": 4201892,
       "ScrSpecial_HealPlayerParty": 807600,
       "SetCableClubWarp": 430060,
       "DoCableClubWarp": 528428,

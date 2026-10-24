@@ -65,6 +65,12 @@ def main():
             assert re.fullmatch(r'gen2recomp-qa-' + args.edition + r'-[0-9]+', args.cache_identity)
             cache = save_root / args.cache_identity / args.edition
             assert (cache / 'data/generated/pokemon.lua').is_file()
+            previous = ROOT / '.local/qa' / args.cache_identity / 'engine'
+            inputs = [engine / f'tools/rom_manifest_{args.edition}.json']
+            inputs.extend((engine / 'src/import').rglob('*.lua'))
+            for file in inputs:
+                old = previous / file.relative_to(engine)
+                assert old.is_file() and old.read_bytes() == file.read_bytes(), 'Cache extraction inputs changed; use a fresh import: ' + str(file.relative_to(engine))
             shutil.copytree(cache, save / args.edition)
         env = dict(os.environ, POKEPORT_IDENTITY=identity, POKEPORT_VERSION=args.edition,
                    POKEPORT_IMPORT_ROM=str(args.rom.resolve()), POKEPORT_DRIVER=str(driver),

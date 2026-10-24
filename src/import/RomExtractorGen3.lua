@@ -5829,7 +5829,7 @@ function RomExtractorGen3:extractConstants()
     constants.types = {}
     constants.typeOrder = {}
     for i = 0, numTypes - 1 do
-      local id = slug(typeNames[i])
+      local id = (self.manifest.typeIds or {})[i + 1] or slug(typeNames[i])
       if id == "" then id = ("TYPE_%02d"):format(i) end
       -- ONE-BASED, unlike speciesOrder / moveOrder / itemOrder, which are
       -- keyed by the cartridge's own number.  It is not an accident and it

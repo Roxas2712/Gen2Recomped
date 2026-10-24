@@ -71,6 +71,50 @@ def main():
                         glyphs=glyphs,widths=widths,role='normal',fontId=3,
                         roles={'none':0,'text':15,'shadow':14})
     result['pocketEnum']={'1':'ITEM','2':'BALL','3':'TM_HM','4':'BERRY','5':'KEY_ITEM'}
+    result['typeIds']=['NORMAL','FIGHTING','FLYING','POISON','GROUND','ROCK','BUG','GHOST','STEEL','TYPE_09','FIRE','WATER','GRASS','ELECTRIC','PSYCHIC','ICE','DRAGON','DARK']
+    # RS stores direct RAM save blocks and has no bag/money encryption key.
+    # Its ROM table is {RAM pointer,u16 size,padding}, not Emerald's
+    # {u16 block offset,u16 size}; decode the actual fourteen records.
+    chunks=at('sSaveBlockChunks')
+    sectors=[]
+    bases={}
+    for i in range(14):
+        ptr,size,padding=struct.unpack_from('<IHH',rom,chunks+i*8)
+        group=0 if i==0 else (1 if i<5 else 2)
+        bases.setdefault(group,ptr)
+        offset=ptr-bases[group]
+        assert 0<size<=3968 and padding==0
+        expected_offset=0 if group==0 else (i-(1 if group==1 else 5))*3968
+        assert offset==expected_offset
+        sectors.append(dict(offset=offset,size=size))
+    sizes=[sum(r['size'] for r in sectors[a:b]) for a,b in ((0,1),(1,5),(5,14))]
+    result['save']=dict(chunkStride=3968,sectorSize=4096,sectorsPerSlot=14,sectors=sectors,
+                        saveBlock2Size=sizes[0],saveBlock1Size=sizes[1],pokemonStorageSize=sizes[2],security=0x08012025)
+    source=(args.pret/'src/pokemon_2.c').read_text()
+    cases=re.findall(r'SUBSTRUCT_CASE\(\s*(\d+)\s*,\s*(\d)\s*,\s*(\d)\s*,\s*(\d)\s*,\s*(\d)\s*\)',source)
+    assert len(cases)==24 and [int(z[0]) for z in cases]==list(range(24))
+    orders=[[int(z) for z in row[1:]] for row in cases]
+    assert all(sorted(z)==[0,1,2,3] for z in orders)
+    result['substructOrders']=orders
+    header=(args.pret/'include/global.h').read_text()
+    def offsets(block,names):
+        text=header.split('struct '+block,1)[1].split('\n};',1)[0]
+        out={}
+        for name in names:
+            match=re.search(r'/\*0x([0-9A-Fa-f]+)\*/[^\n]*\b'+name+r'\b',text)
+            assert match,(block,name)
+            out[name]=int(match[1],16)
+        return out
+    b1=offsets('SaveBlock1',['location','money','coins','registeredItem','flags','vars','gameStats','pcItems','playerParty','playerPartyCount','bagPocket_Items','bagPocket_KeyItems','bagPocket_PokeBalls','bagPocket_TMHM','bagPocket_Berries'])
+    b2=offsets('SaveBlock2',['playerName','playerGender','playerTrainerId','playTimeHours','playTimeMinutes','playTimeSeconds','playTimeVBlanks'])
+    b1.update(posX=0,posY=2);b2['encryptionKey']=False
+    pockets=[b1.pop(n) for n in ('bagPocket_Items','bagPocket_KeyItems','bagPocket_PokeBalls','bagPocket_TMHM','bagPocket_Berries')]
+    capacities=[(pockets[i+1]-pockets[i])//4 for i in range(4)]+[46]
+    assert capacities==[20,20,16,64,46]
+    result['saveFields']=dict(saveBlock1=b1,saveBlock2=b2,flagBytes=288,varCount=256,varsStartId=0x4000,
+        party=dict(count=b1['playerPartyCount'],start=b1['playerParty'],size=6,monSize=100),
+        bag=dict(capacities=capacities,pockets=pockets,itemSlotSize=4,pcItems=b1['pcItems'],pcItemCount=50),
+        storage=dict(currentBox=0,boxes=4,boxCount=14,boxCapacity=30,boxMonSize=80,boxNames=33604,boxNameLength=9,boxWallpapers=33730))
     # Resolve specials by native function identity, never by sibling slot.
     # Read the assembler's actual conditional-build ids (the German-only
     # special at the end is absent from the English retail table).
