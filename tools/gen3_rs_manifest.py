@@ -44,7 +44,7 @@ def main():
     result.update(version=edition,romSha1=expected[edition],romHeader=dict(title=rom[0xa0:0xac].decode(),gameCode=code,makerCode=rom[0xb0:0xb2].decode(),revision=rom[0xbc]))
     result['symbols']=dict(f.found)
     aliases={'gNatureNamePointers':'gNatureNames','gFontNormalLatinGlyphs':'gFont3LatinGlyphs',
-             'gFontNormalLatinGlyphWidths':'sFont3Widths','gFontBrailleLatinGlyphs':'sFont0LatinGlyphs',
+             'gFontNormalLatinGlyphWidths':'sFont3Widths','gFontBrailleLatinGlyphs':'sBrailleGlyphs',
              'sElevationToSubspriteTable':'sElevationToSubspriteTableNum','sStarterMon':'sStarterMons',
              'sWindowFrames':'sTextWindowFrameGraphics'}
     for name in base['symbols']:
@@ -74,6 +74,13 @@ def main():
         cellWidth=8,cellHeight=8,glyphs=at('gFont4LatinGlyphs'),widths=at('sFont4Widths'),
         glyphMap=at('sFontType1Map'),glyphMapStride=2,glyphMapOffset=1)]
     result['trainerBack']=dict(table=at('gTrainerBackPicTable'),palettes=at('gTrainerBackPicPaletteTable'),count=3,compressed=True)
+    # StringBraille emits c and c+0x40. Each half uses two tiles selected
+    # by sFontType3Map; the field's proportional 1bpp blitter is MSB-first.
+    # ScrCmd_braillemessage consumes all six format bytes in RS, unlike EM.
+    assert target.by_name['sBrailleGlyphs'][0]['size']==1536
+    assert target.by_name['sFontType3Map'][0]['size']==256
+    result['braille']=dict(bits=1,glyphMap=at('sFontType3Map'),halfCodeOffset=64,
+        frameFromHeader=True,lineHeight=32)
     result['pocketEnum']={'1':'ITEM','2':'BALL','3':'TM_HM','4':'BERRY','5':'KEY_ITEM'}
     result['typeIds']=['NORMAL','FIGHTING','FLYING','POISON','GROUND','ROCK','BUG','GHOST','STEEL','TYPE_09','FIRE','WATER','GRASS','ELECTRIC','PSYCHIC','ICE','DRAGON','DARK']
     # RS stores direct RAM save blocks and has no bag/money encryption key.

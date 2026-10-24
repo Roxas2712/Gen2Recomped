@@ -268,7 +268,7 @@
     "CalculateChecksum": 1203216,
     "EventScript_ResetAllMapFlags": 1702529,
     "GetSubstruct": 247352,
-    "gFontBrailleLatinGlyphs": 1976816,
+    "gFontBrailleLatinGlyphs": 1988848,
     "gFontNormalLatinGlyphWidths": 1992084,
     "gFontNormalLatinGlyphs": 15346756,
     "gMPlayJumpTableTemplate": 4389220,
@@ -913,6 +913,13 @@
     "palettes": 2018044,
     "count": 3,
     "compressed": true
+  },
+  "braille": {
+    "bits": 1,
+    "glyphMap": 1991134,
+    "halfCodeOffset": 64,
+    "frameFromHeader": true,
+    "lineHeight": 32
   },
   "pocketEnum": {
     "1": "ITEM",
@@ -1908,7 +1915,7 @@
       "CalculateChecksum": 1203216,
       "EventScript_ResetAllMapFlags": 1702529,
       "GetSubstruct": 247352,
-      "sFont0LatinGlyphs": 1976816,
+      "sBrailleGlyphs": 1988848,
       "sFont3Widths": 1992084,
       "gFont3LatinGlyphs": 15346756,
       "gMPlayJumpTableTemplate": 4389220,
@@ -1925,6 +1932,7 @@
       "sFontType1Map": 1990640,
       "gTrainerBackPicTable": 2018020,
       "gTrainerBackPicPaletteTable": 2018044,
+      "sFontType3Map": 1991134,
       "sSaveBlockChunks": 4201892,
       "ScrSpecial_HealPlayerParty": 807600,
       "SetCableClubWarp": 430060,
