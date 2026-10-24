@@ -15,6 +15,13 @@ class Payload(unittest.TestCase):
  def test_traversal_rejected(self):
   for f in ('../out','/absolute'):
    with self.assertRaises(ValueError):module.verify_payload(self.archive((f,)))
+ def test_payload_release_version_is_verified(self):
+  p=self.archive()
+  with zipfile.ZipFile(p,'a')as z:z.writestr('src/core/Version.lua','return { engine = "0.8.45", modApi = 3 }')
+  module.verify_payload(p,'0.8.45')
+  with self.assertRaises(ValueError):module.verify_payload(p,'0.7.6')
+ def test_release_version_cannot_be_silently_absent(self):
+  with self.assertRaises(KeyError):module.verify_payload(self.archive(),'0.8.45')
  def test_pinned_platforms_same_runtime(self):
   self.assertEqual(set(module.RUNTIMES),{'windows','macos'})
   for runtime in module.RUNTIMES.values():self.assertEqual(len(runtime['sha256']),64)
