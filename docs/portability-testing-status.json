@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "bf67876e473c7881fe2d08935c504fc7a922291c",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/198",
-  "feature_ref": "f09b570eaaef1fb8bb48b58fe20f501869a5edd8",
+  "runtime_ref": "ba2d7d11dccc64994e0367158d79f4b0d9f68ef8",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/203",
+  "feature_ref": "8c7df4d7dff206b8a88ba9a9a819c6128b311a91",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 213,
-  "engine_suites_total": 213,
+  "engine_suites_passed": 214,
+  "engine_suites_total": 214,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 28,
-  "cross_engine_paired_observations": 1916,
+  "cross_engine_worker_runs": 32,
+  "cross_engine_paired_observations": 3974,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All five #198 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
+  "hosted_ci": "All five #203 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Current public GBA enemy choices, selectors, records, selected action targets, native Follow Me and native Helping Hand shared-damage path against unchanged read-only Gen1; no full special-executor, AI, RNG, held-item/ability-order or gameplay parity claim",
+  "cross_engine_scope": "Current public GBA enemy choices, selectors, records, selected targets, Follow Me, Helping Hand shared damage and native Spit Up set damage against unchanged read-only Gen1 on pinned maintained JIT-enabled VM; no full gameplay/animation/RNG/ability/item/badge parity claim",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -163,7 +163,7 @@
     "jobs": 0
   },
   "enemy_pp_full_suite_runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
-  "feature_tested_ref": "f09b570eaaef1fb8bb48b58fe20f501869a5edd8",
+  "feature_tested_ref": "8c7df4d7dff206b8a88ba9a9a819c6128b311a91",
   "caught_marker_native_checks_passed": 2078,
   "caught_marker_renderer_checks_passed": 840,
   "caught_marker_import_checks_passed": 216,
@@ -1648,5 +1648,63 @@
     },
     "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
     "scope": "Native GBA producer and shared ordinary damage path, actual public choices/events and numeric damage, rounding/critical/type/spread, fixed/confusion exclusions, gates, lifetime, replacement, real priority queues and PP; dedicated set-damage/delayed executors and full gameplay/RNG/held-item/ability parity remain separate"
+  },
+  "native_gba_spit_up": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/203",
+    "feature_ref": "8c7df4d7dff206b8a88ba9a9a819c6128b311a91",
+    "prerequisite_pr": 198,
+    "prerequisite_ref": "f09b570eaaef1fb8bb48b58fe20f501869a5edd8",
+    "canonical_effect_composition_pr": 121,
+    "combined_runtime_ref": "ba2d7d11dccc64994e0367158d79f4b0d9f68ef8",
+    "focused_checks_passed": 8292,
+    "public_effect_composition_checks_passed": 14,
+    "source_reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_modified": false,
+    "games": [
+      "firered",
+      "emerald"
+    ],
+    "cross_engine_worker_runs": 32,
+    "cross_engine_paired_observations": 3974,
+    "paired_result": "passed",
+    "combined_engine_suites_passed": 214,
+    "combined_engine_suites_total": 214,
+    "prerequisite_negative_control_failed_assertions": 770,
+    "feature_baseline": {
+      "engine_suites_passed": 87,
+      "engine_suites_total": 96,
+      "prerequisite_engine_suites_passed": 86,
+      "prerequisite_engine_suites_total": 95,
+      "failure_lines": 25,
+      "exact_failure_counter_matches_prerequisite": true,
+      "new_failure_lines": 0,
+      "existing_failure_suites": 9
+    },
+    "vm": {
+      "official_luajit_ref": "a4c064539ea931274d407e1249b4bb575424a0f4",
+      "version": "2.1.1792588164",
+      "jit_enabled": true,
+      "older_local_arm64_vm": "2.1.1700008891",
+      "older_reference_result": "JIT-dependent Thick Fat divergence; failing report preserved separately, no reference patch or observation filter",
+      "older_host_against_pinned_reference": "All new Spit Up observations match for FireRed/Emerald"
+    },
+    "fingerprint": {
+      "before": "032184f68094e9ca",
+      "after": "397df21576af62f1",
+      "changed_record": "SPIT_UP_EFFECT.rev = 1",
+      "changed_section": "move_effects",
+      "section_before": "52cc8398513ed12c",
+      "section_after": "c62807cde682a669",
+      "other_six_populated_sections": "unchanged",
+      "single_revision_removal_restores_prerequisite": true
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "workflow_count": 5,
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40141841786",
+      "jobs": 0
+    },
+    "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
+    "scope": "Native Stockpile/Spit Up set-damage path, real selected actions/events/numbers/operative counters/PP/callbacks; synthetic imported-shaped sessions, raw stale reference alias equality and full ability/item/badge/animation/gameplay/RNG parity not claimed"
   }
 }

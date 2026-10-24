@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196 and #198 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198 and #203 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,51 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`bf67876e473c7881fe2d08935c504fc7a922291c`. Its ROM-free run passed
-**213/213 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`ba2d7d11dccc64994e0367158d79f4b0d9f68ef8`. Its ROM-free run passed
+**214/214 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #203](https://github.com/UNDERdecoded/Gen2Recomped/pull/203) executes
+native GBA Spit Up through its set-damage path: multiply the calculated base
+including +2, then Helping Hand/STAB/type rounding, without ordinary damage
+or critical callbacks or a variation roll. It corrects consumption on Protect
+and immunity, preserves stock on miss/interruption/absorption, clips Substitute
+hits and retains native set-damage event metadata. Stockpile cap/reuse and
+Swallow interaction are checked through actual actions.
+
+The focused suite passes **8,292/8,292** checks. The same API-3 consumer and
+fixture match unchanged read-only Gen1
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91` in **32 isolated engine workers /
+3,974 paired observations** on clean feature and combined runtimes. Coverage
+includes all four users, counts 0–3, low/wide stats, physical/authored special
+types, STAB/resistance/immunity/Foresight, Helping Hand, interruption and
+selected ability/item/stage/weather/screen combinations. A canonical public
+`SPIT_UP` patch with #121 passes **14/14** real-mod composition checks.
+
+Both sides and the dedicated workflow use JIT-enabled LuaJIT v2.1
+`a4c064539ea931274d407e1249b4bb575424a0f4` (`2.1.1792588164`). The old local
+ARM64 `2.1.1700008891` VM has a JIT-dependent Thick Fat discrepancy in unchanged
+reference code; its original failed report is retained, not filtered or
+claimed green. The Gen2 host's new Spit Up cases also match the pinned
+reference under that older VM. See [runtime and scope](native-gba-spit-up.md).
+
+Feature quick acceptance is **87/96** engine suites versus **86/95** on clean
+#198; exact Counters of all **25 inherited FAIL lines across nine suites**
+match, with no additions. The prerequisite fails 770 new FireRed assertions.
+SDK 3/3 and B30 pass. This combined checkout includes the baseline repairs
+and the audited native record revision; its full run passes **214/214**.
+Only the `move_effects` fingerprint section changes for `SPIT_UP_EFFECT.rev=1`.
+The existing damage-adjustment argument is preserved during integration.
+
+All five hosted workflows await maintainer approval; the
+[dedicated workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40141841786)
+has zero jobs. Local acceptance is separate. The chat attachment limit prevents
+a new PR card; the published PR remains linked here. Full item/ability/badge
+coverage, raw legacy aliases, other set/delayed executors, wider RNG traces,
+called/link controllers, animations and complete gameplay remain separate.
+
+Prior #198 results retain runtime
+`bf67876e473c7881fe2d08935c504fc7a922291c` and its 213/213 engine result:
 
 [PR #198](https://github.com/UNDERdecoded/Gen2Recomped/pull/198) implements
 native GBA Helping Hand (effect 176) and its shared ordinary-damage modifier.
