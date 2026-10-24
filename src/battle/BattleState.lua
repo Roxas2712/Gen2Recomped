@@ -5416,6 +5416,12 @@ end
 -- "menuLockedAction: attempt to index local 'battler' (a nil value)" after
 -- killing their first Pokemon.  A slot with nobody in it has no action.
 function BattleState:enemyAction(battler)
+  if GameVersion.isGen3() then
+    local who = battler or self.enemy
+    if who and who.mon and (who.mon.hp or 0) > 0 then
+      require("src.battle.Gen3AIOrder").prepare(self, self._nativeOrderSelectionTurn or self.turnCount or 0)
+    end
+  end
   battler = battler or self.enemy
   if not battler then return nil end
   -- The POKé DUDE opponent does not run the AI at all.  Its controller feeds
@@ -5539,16 +5545,22 @@ end
 
 function BattleState:resolveTurn(playerAction)
   self._enemySwitchReservations = nil
+  if GameVersion.isGen3() then
+    self._nativeOrderSelectionTurn = (self.turnCount or 0) + 1
+    require("src.battle.Gen3AIOrder").prepare(self, self._nativeOrderSelectionTurn)
+  end
   -- nil in a double battle whose left-hand foe has fainted with nothing on
   -- the bench to replace it; `actionFor` asks each surviving slot for its own
   local enemyAction = self:enemyAction(self.enemy)
-  local enemyRightAction
+  local enemyActions
   if GameVersion.isGen3() and self:isDouble() then
-    -- Both native controllers choose before the turn flags advance. In
-    -- particular, X-item eligibility must see the same age on both flanks.
-    local right = self:battlerAt(BattleState.POS.OPPONENT_RIGHT)
-    if right then enemyRightAction = self:enemyAction(right) end
+    enemyActions = { [1] = enemyAction }
+    local right = self:battlerAt(3)
+    if right and right.mon and (right.mon.hp or 0) > 0 then
+      enemyActions[3] = self:enemyAction(right)
+    end
   end
+  self._nativeOrderSelectionTurn = nil
   self.turnCount = (self.turnCount or 0) + 1
   -- BATTLE ARENA: arenaTurnCounter
   if self.arena then require("src.battle.Gen3Arena").turnStarted(self) end
@@ -5569,19 +5581,15 @@ function BattleState:resolveTurn(playerAction)
   })
   local pMove = orderMove(playerAction, self.data)
   local eMove = orderMove(enemyAction, self.data)
-  -- QUICK CLAW, before the speed comparison and before priority is even
-  -- read: AI_TryToFaint's caller rolls Random() % 100 against the item's own
-  -- parameter for each side and a winner simply goes first.  Both sides
-  -- rolling it is not a draw -- the cartridge checks the player's first, so
-  -- a double claw is the player's turn.
+  -- GBA Quick Claw uses the shared turn word through the native comparator;
+  -- the earlier-generation path retains its separate activation rolls.
   local function gbaMeta(action)
     local special = action and action.special
-    return GameVersion.isGen3()
-      and (special == "aiItem" or special == "aiSwitch" or special == "playerSwitch")
+    return GameVersion.isGen3() and (special == "aiItem" or special == "aiSwitch" or special == "playerSwitch")
   end
-  local singleMeta = not self:isDouble() and (gbaMeta(enemyAction) or gbaMeta(playerAction))
-  local pClaw = not singleMeta and self:quickClawWins(self.player)
-  local eClaw = not singleMeta and not pClaw and self:quickClawWins(self.enemy)
+  local singleMeta = not self:isDouble() and (gbaMeta(playerAction) or gbaMeta(enemyAction))
+  local pClaw = not GameVersion.isGen3() and self:quickClawWins(self.player)
+  local eClaw = not GameVersion.isGen3() and not pClaw and self:quickClawWins(self.enemy)
   local pFirst
   -- EITHER LEFT SLOT CAN BE EMPTY IN A DOUBLE.  A fainted battler is lifted
   -- off the field at once and only replaced when the turn ends, so between
@@ -5589,7 +5597,9 @@ function BattleState:resolveTurn(playerAction)
   -- flank fights on.  The pairwise comparison below is the SINGLE battle's
   -- ordering and has nothing to compare; the double branch sorts all four
   -- entries with the same comparator a few lines down and does not read it.
-  if singleMeta then
+  if GameVersion.isGen3() and self:isDouble() then
+    pFirst = true -- native double planning compares only the real pairs below
+  elseif singleMeta then
     pFirst = gbaMeta(playerAction)
   elseif not (self.player and self.enemy) then
     pFirst = true
@@ -5615,19 +5625,16 @@ function BattleState:resolveTurn(playerAction)
   if self:isDouble() then
     -- FOUR ENTRIES, SORTED WITH THE SAME COMPARATOR.
     --
-    -- SetActionsAndBattlersTurnOrder builds the list in position order and
-    -- bubbles it with GetWhoStrikesFirst, which is firstMover -- so this is
-    -- the same rule applied to four rather than a second rule for doubles.
-    -- Built in position order 0,1,2,3 because that is the order the
-    -- cartridge fills its own array in, and a bubble is stable, so
-    -- equal-speed entries fall out the same way it does.
+    -- GBA SetActionsAndBattlersTurnOrder starts in position order, keeps
+    -- item/switch choices in that order, and compares every remaining i,j
+    -- pair. Equal-speed comparisons consume one tie draw each.
     local entries = {}
     for pos = 0, 3 do
       local b = self:battlerAt(pos)
       if b and b.mon and (b.mon.hp or 0) > 0 then
         local action
-        if GameVersion.isGen3() and pos == BattleState.POS.OPPONENT_RIGHT then
-          action = enemyRightAction
+        if enemyActions and not b.isPlayer and not b.ally then
+          action = enemyActions[pos]
         else
           action = self:actionFor(b, playerAction, enemyAction)
         end
@@ -5639,8 +5646,7 @@ function BattleState:resolveTurn(playerAction)
     if GameVersion.isGen3() then
       local moves = {}
       for _, e in ipairs(entries) do
-        if gbaMeta(e.action) then metadata[#metadata + 1] = e
-        else moves[#moves + 1] = e end
+        if gbaMeta(e.action) then metadata[#metadata + 1] = e else moves[#moves + 1] = e end
       end
       entries = moves
     end
@@ -5655,6 +5661,12 @@ function BattleState:resolveTurn(playerAction)
           break
         end
       end
+    end
+    if #metadata > 0 then
+      local merged = {}
+      for _, e in ipairs(metadata) do merged[#merged + 1] = e end
+      for _, e in ipairs(entries) do merged[#merged + 1] = e end
+      entries = merged
     end
     -- ...AND EVERY SWITCH HAPPENS BEFORE EVERY MOVE.
     --
@@ -5671,13 +5683,9 @@ function BattleState:resolveTurn(playerAction)
         moves[#moves + 1] = e
       end
     end
-    if #switches > 0 then
+    if not GameVersion.isGen3() and #switches > 0 then
       entries = switches
       for _, e in ipairs(moves) do entries[#entries + 1] = e end
-    end
-    if #metadata > 0 then
-      for _, e in ipairs(entries) do metadata[#metadata + 1] = e end
-      entries = metadata
     end
     order = {}
     for _, e in ipairs(entries) do
@@ -5695,6 +5703,7 @@ function BattleState:resolveTurn(playerAction)
 
   -- BLACK AND WHITE: who chose what, Quick Claw / Custap, Pursuit before a
   -- switch (src/battle/Gen5MoveRules.lua)
+  if GameVersion.isGen3() then require("src.battle.Gen3AIOrder").release(self) end
   if self.bw then order = require("src.battle.Gen5MoveRules").arrange(self, order) end
 
   if GameVersion.isGen3() and self:isDouble() then
@@ -6427,6 +6436,7 @@ end
 BattleState.applyFieldResiduals = require("src.battle.FieldResiduals").apply
 
 function BattleState:endOfTurn()
+  if GameVersion.isGen3() then require("src.battle.Gen3AIOrder").release(self) end
   -- the same ret: a decided battle never reaches HandlePoisonBurnLeechSeed
   -- or CheckNumAttacksLeft (core.asm:417-421, 456-460), so the residual
   -- sweep and the trapping-counter release are skipped on the turn a
