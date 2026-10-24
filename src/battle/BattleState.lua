@@ -5632,6 +5632,10 @@ function BattleState:resolveTurn(playerAction)
 
   self.phase = "messages"
   self.afterQueue = "menu"
+  if GameVersion.generation() == 3 then
+    self._actionTargetOrder = {}
+    for _, entry in ipairs(order) do self._actionTargetOrder[#self._actionTargetOrder + 1] = entry[1].position end
+  end
 
   for _, entry in ipairs(order) do
     self:act(function()
@@ -5661,7 +5665,7 @@ function BattleState:resolveTurn(playerAction)
   end
   self:act(function()
     -- the collected choices belong to the turn that just ran, not the next
-    self.pendingActions, self.chosenTargets = nil, nil
+    self.pendingActions, self.chosenTargets, self._actionTargetOrder = nil, nil, nil
     self:endOfTurn()
   end)
 end
@@ -7492,6 +7496,14 @@ function BattleState:executeAction(user, target, action)
   if not (user and user.mon) then return end
   if user.mon.hp <= 0 then return end
   if not action then return end
+  local explicitTarget = false
+  if GameVersion.generation() == 3 and self:isDouble() and not action.special then
+    local selected
+    selected, explicitTarget = Targeting.fromAction(self, action)
+    if explicitTarget then
+      target = Targeting.redirect(self, user, nil, selected)[1] or self:defaultTargetFor(user)
+    end
+  end
   -- A SWITCH NEEDS NO TARGET.  Everything else does, and with four on the
   -- field the one it was aimed at can already be off it -- the entry's
   -- target is resolved as the entry runs, and there may be nobody left to
@@ -7648,8 +7660,9 @@ function BattleState:executeAction(user, target, action)
         local targetKind = tonumber(def.target)
         spreadAnimation = targetKind == Targeting.BOTH
                           or targetKind == Targeting.FOES_AND_ALLY
-        local chosen = (self.chosenTargets or {})[user.position] or target
-        local got = Targeting.resolve(self, user, def, chosen)
+        local chosen = explicitTarget and target or (self.chosenTargets or {})[user.position] or target
+        local got = explicitTarget and Targeting.actionTargets(self, user, def, chosen)
+          or Targeting.resolve(self, user, def, chosen)
         if #got > 0 then list = got end
       end
     end
@@ -7658,7 +7671,7 @@ function BattleState:executeAction(user, target, action)
       if one and one.mon and (one.mon.hp or 0) > 0 then
         -- only the first announces; the rest are the same move landing again
         self:performMove(user, one, action, i > 1,
-                         spreadAnimation and animationPlayed)
+                         spreadAnimation and animationPlayed, GameVersion.generation() == 3 and i > 1)
         -- FireRed's Cmd_attackanimation increments animTargetsHit only when an
         -- animation actually survives the no-effect/failure path.  If the
         -- first target cancels it, a later spread target is still allowed to
@@ -7940,7 +7953,7 @@ local WEATHER_BALL_ANIM = {
   SUN = 1, RAIN = 2, SANDSTORM = 3, HAIL = 4,
 }
 
-function BattleState:performMove(user, target, moveInst, isCalled, suppressAnimation)
+function BattleState:performMove(user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
   local move = self:moveDef(moveInst)
   if not move then
     Logger.warn("unknown move instance %s", tostring(moveInst.id))
@@ -8018,7 +8031,8 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
     -- PRESSURE costs the ATTACKER an extra point for every move aimed at its
     -- holder.  Two per use, not double the total -- which is why it is
     -- subtracted here rather than multiplying the cost.
-    local cost = 1 + Abilities.extraPP(target)
+    local cost = GameVersion.generation() == 3 and Targeting.gen3PPCost(self, user, target, move)
+      or 1 + Abilities.extraPP(target)
     moveInst.pp = math.max(0, moveInst.pp - cost)
   end
 
@@ -8039,10 +8053,12 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
       table.insert(self.queue, self.nextInsert, self.moveAnimRow)
     end
   end
-  Runtime.emit("battle.move_used", {
-    battle = self, user = user, target = target, move = move,
-    isCalled = isCalled or false,
-  })
+  if not spreadContinuation then
+    Runtime.emit("battle.move_used", {
+      battle = self, user = user, target = target, move = move,
+      isCalled = isCalled or false,
+    })
+  end
 
   -- PROTECT stops a status move too, and it is the only check that has to
   -- happen before the effect record is consulted at all.

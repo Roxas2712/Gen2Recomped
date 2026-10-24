@@ -57,7 +57,8 @@ native-edited references, charge continuations, and the real Struggle fallback.
 The existing move-result and selector contract cases remain in the checker.
 
 This is the native **move** record contract, not complete action/AI parity.
-Scores, selected double-battle targets, item/switch/watch records, other native
+Mod-selected double-battle targets are covered by the follow-up
+[target contract](portable-enemy-targets.md). Scores, item/switch/watch records, other native
 engine fields, damage amounts, RNG traces and full gameplay remain separate.
 No score or target-selection result is fabricated. No Gen1 source change or
 publication is required. The feature is stacked on #191.
