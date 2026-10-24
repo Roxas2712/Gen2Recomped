@@ -3980,7 +3980,7 @@ end
 
 -- After FIGHT: skip MoveSelectionMenu (core.asm:320-329).  Own
 -- trapping/Bide continues; foe trapping forces CANNOT_MOVE ($ff).
-function BattleState:fightLockedAction(battler)
+function BattleState:fightLockedAction(battler, ignoreEncore)
   if not battler then return nil end
   if battler.trappingTurns and battler.trappingTurns > 0 then
     return { special = "trapping" }
@@ -4005,10 +4005,10 @@ function BattleState:fightLockedAction(battler)
   end
   -- ENCORE: the same move again, whether the Pokemon wants to or not.  Only
   -- if it still has the move -- an ENCOREd move that ran out of PP frees it.
-  if battler.encoreTurns and battler.encoreMove then
+  if not ignoreEncore and battler.encoreTurns and battler.encoreMove then
     for _, m in ipairs(battler.curMoves or battler.mon.moves or {}) do
       if m.id == battler.encoreMove and (m.pp or 0) > 0 then
-        return { move = m }
+        return GameVersion.isGen3() and m or { move = m }
       end
     end
     battler.encoreTurns, battler.encoreMove = nil, nil
@@ -4031,8 +4031,8 @@ function BattleState:tormentBlocks(battler, move)
 end
 
 -- Full lock for AI / callers that need any forced action.
-function BattleState:lockedAction(battler)
-  return self:menuLockedAction(battler) or self:fightLockedAction(battler)
+function BattleState:lockedAction(battler, ignoreEncore)
+  return self:menuLockedAction(battler) or self:fightLockedAction(battler, ignoreEncore)
 end
 
 -- THE POKEMON THE MENU IS STANDING IN FRONT OF.
@@ -5447,14 +5447,14 @@ function BattleState:vanillaEnemyAction(battler)
     -- occupant to choose a move, just as the reference's Gen-2 producer does.
     battler = self.enemy
   end
-  local locked = self:lockedAction(battler)
+  local locked = self:lockedAction(battler, GameVersion.isGen3())
   if locked then return locked end
   if self.palace then return require("src.battle.Gen3Palace").choose(self, battler) end
-  -- an ai_classes brain (or one on the trainer record) supersedes the
-  -- class action and move scoring entirely
+  -- Legacy trainer brains choose whole actions. GBA class brains select a
+  -- move slot after the native item/switch decision below.
   if self.kind == "trainer" and self.trainer then
     local class = TrainerAI.classFor(self)
-    local brain = self.trainer.brain or (class and class.brain)
+    local brain = self.trainer.brain or (not GameVersion.isGen3() and class and class.brain)
     if brain then return brain(self, battler) end
   end
   -- GBA queries each opponent controller against shared reserved stock and
@@ -5466,6 +5466,12 @@ function BattleState:vanillaEnemyAction(battler)
                  or self:enemySwitchOrItem(battler, true)
     else classAct = TrainerAI.classAction(self) end
     if classAct then return classAct end
+  end
+  if GameVersion.isGen3() then
+    local move, handled = require("src.battle.Gen3ModAI").choose(self, battler)
+    if handled then return move end
+    local encore = self:fightLockedAction(battler)
+    if encore then return encore end
   end
   return TrainerAI.chooseMove(battler, self.rng, self)
 end
@@ -5726,6 +5732,7 @@ function BattleState:resolveTurn(playerAction)
         -- what the player aimed at, if they were asked; otherwise whoever
         -- is standing on the other side
         local chosen = entry[3] and entry[3].decisionTarget
+        if type(chosen) == "number" then chosen = self:battlerAt(chosen) end
         if chosen == nil then chosen = (self.chosenTargets or {})[actor.position] end
         target = Targeting.redirect(self, actor, nil, chosen)[1]
                  or self:defaultTargetFor(actor)

@@ -218,6 +218,58 @@ changes; exact driver hash and four process results are retained in
 sessions rather than complete playthroughs; the owned consumer was removed
 with hash guards after all four processes exited.
 
+## GBA mod-brain milestone
+
+Mod-defined GBA brains now receive the reference's move-selector view after
+class/item/switch decisions: the exact native battle, user, opposite target,
+current data and RNG function, plus detached `{slot, move, usable}` candidates.
+Move definitions preserve canonical names and numeric GBA effect/type metadata.
+Numeric, string and `{slot=...}` choices are validated; invalid choices retain
+the native fallback and a callback failure falls back through the opponent
+controller. With no usable move, the brain is not invoked. GB class brains and
+legacy direct trainer brains retain their existing action contracts.
+
+Twenty-five shared query cases compare complete candidate definitions, native
+handle identity, invocation order, choices and all RNG call ranges/order.
+They cover PP, Disable, Taunt, Torment, Encore, Imprison and an existing Choice
+lock, errors, unavailable slots, right-hand opponents and class/layer selection.
+The FireRed versus Emerald tie-list difference is retained. Native bytecode
+and scored-layer fallbacks still use the existing host AI; full program parity
+is not established here. Synthetic Imprison/Choice-lock inputs prove the read
+boundary, not missing native producers or complete Choice Band locking.
+
+Five additional ordinary brain turns compare single/double second-slot choices,
+item precedence, zero PP and error fallback. Full party PP arrays, HP, stock,
+move/switch events and brain views remain in the observations. A native Encore
+controller case proves that trainer items execute before its forced move;
+Encore no longer bypasses the native item/switch decision on GBA. A further
+mutated double-move case verifies the chosen opposite slot. Native slot IDs
+are converted to host target objects before target resolution.
+
+Both API 3 and host API 2/unified pass **12 workers / 499 paired observations**
+with zero differences. Focused host checks pass **1,530/1,530**. The complete
+feature run remains **139/149** engine suites, **3/3** SDK suites and B30;
+all **26** failure lines exactly match the ten baseline suites.
+Reports: `contracts-brain.json`, `contracts-brain-api2.json`,
+`targeted-brain.log` and `full-brain.log`.
+
+The same current query tests run on clean parent `b7fb4c1` produce **51 actual
+assertion failures and 24 differing cases per GBA version**, rather than a
+missing-module failure. Reports are `brain-parent-firered.log`,
+`brain-parent-emerald.log` and `brain-parent-differences.json`. The temporary
+parent checkout was verified clean and removed after the negative controls.
+
+Four native LÖVE 11.5 runs pass: Gold/FireRed/Emerald old-cache regression and
+FireRed's in-memory item-effects import. GBA tests use actual FIGHT/move input
+and result queues to select the second slot, preserve the other slot's PP,
+inspect imported candidate metadata, contain an intentional brain error and
+execute a trainer item before Encore/brain. These bounded sessions supply
+in-memory class functions; shared SDK tests separately prove unchanged public
+class registration. Runtime is `b7fb4c1` plus the recorded changes. Exact
+engine/fixture/driver hashes and process results are in
+`native-brain-status.json` and `native-brain-*.log`. No normal SAVE or full
+playthrough is claimed. The owned consumer was removed with hash guards.
+
 Required before publication:
 
 - Exercise actual imported Gen-2 attributes and stock through ordinary turns.
@@ -228,8 +280,10 @@ Required before publication:
 - Extend delegated-action coverage to additional native control fields,
   run/watch behavior and malformed slot/move payloads. The ordinary item,
   switch, move and actor-ID mutation paths above are covered.
-- Audit GBA brain callback/selection precedence. Class item/switch precedence
-  is covered; a brain is a distinct native move-selection contract.
+- Extend native bytecode/scored-layer fallback coverage beyond the tested
+  brain choice and unscored-class paths. Existing Imprison/Choice-lock flags
+  have validated read semantics; their complete native producers/rules remain
+  separate battle work.
 - Review participants, Pursuit, hazards/abilities and stale queued actors after
   forced switches. Keep native battle-rule gaps explicit rather than counting
   them as equal contract observations.

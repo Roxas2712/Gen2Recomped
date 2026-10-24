@@ -15,6 +15,14 @@ function F.new(root, backend, version, api, format, noMod)
         data.constants.gen3ItemEffects = {}
         if backend == "gen2" then
           data.pokemon.CHARMANDER.types = { "FIRE" }
+          data.constants.typeOrder = { "NORMAL", "FIGHTING", "FLYING", "POISON", "GROUND", "ROCK", "BUG",
+            "GHOST", "STEEL", "CURSE_TYPE", "FIRE", "WATER", "GRASS", "ELECTRIC", "PSYCHIC_TYPE", "ICE", "DRAGON", "DARK" }
+          local effects = { [33] = 0, [76] = 151, [19] = 155, [91] = 155, [13] = 39, [130] = 145, [143] = 75 }
+          for _, move in pairs(data.moves) do
+            move.gen3Effect = effects[move.index]
+            move.secondaryChance = move.effectChance or 0
+            move.target, move.priority = move.target or 0, move.priority or 0
+          end
         end
       end
       for _, row in ipairs({ { "POTION", 13, 20 }, { "FULL_RESTORE", 19, "all" }, { "FULL_HEAL", 23, false } }) do

@@ -141,6 +141,17 @@ local function run(f, root, backend)
         for _, move in ipairs(mon.moves or {}) do move.pp = 10 end
       end
     end
+    if spec.brain then
+      if B then b.aiClass = "PORTABLE_NATIVE_BRAIN"
+      else b.trainer.aiClass = "PORTABLE_NATIVE_BRAIN" end
+      for _, id in ipairs(spec.double and { 1, 3 } or { 1 }) do
+        local who = battler(b, id)
+        if B then who.mon.moves[2] = 33
+        else who.curMoves[2] = { id = f.ids.TACKLE, pp = 10 } end
+      end
+      f.e.brain.calls, f.e.brain.seen = 0, {}
+      f.e.brain.mode, f.e.brain.pick = spec.brainMode or "pick", 2
+    end
     for _, mon in ipairs(B and b.foeParty or b.enemyParty) do
       commonStats(mon)
     end
@@ -194,6 +205,14 @@ local function run(f, root, backend)
         left.perishTurns = 0
       end
     end
+    if spec.brainZeroSecond then
+      if B then left.mon.pp[2] = 0 else left.curMoves[2].pp = 0 end
+      f.e.brain.mode = "first-usable"
+    end
+    if spec.encore then
+      if B then left.expEncoreTurns, left.expEncoreMove = 2, 33
+      else left.encoreTurns, left.encoreMove = 2, f.ids.TACKLE end
+    end
     if spec.mutateStock then
       (B and b.trainerItems or b.trainer.items)[1] = item(300)
     end
@@ -228,6 +247,14 @@ local function run(f, root, backend)
     T.eq(ended, before + 1, "one complete native controller turn")
   end
   local specs = {
+    { name = "delegated-move-double-selected-target", mode = "mutate-fields", double = true,
+      stock = { item(13), item(13) }, changes = { kind = "move", move = 33, slot = 1, target = 2 } },
+    { name = "brain-second-slot-controller", brain = true, stock = {}, mode = "suppress" },
+    { name = "brain-second-slots-double-controller", brain = true, stock = {}, mode = "suppress", double = true },
+    { name = "brain-item-precedence-controller", brain = true, brainItem = true },
+    { name = "native-item-precedes-encore-controller", encore = true },
+    { name = "brain-zero-pp-controller", brain = true, brainZeroSecond = true, stock = {}, mode = "suppress" },
+    { name = "brain-error-controller", brain = true, brainMode = "error", stock = {}, mode = "suppress" },
     { name = "delegated-item-to-switch", mode = "mutate-fields", changes = { kind = "switch", slot = 2 } },
     { name = "delegated-item-to-switch-claimed", mode = "mutate-claim", changes = { kind = "switch", slot = 2 } },
     { name = "delegated-switch-slot", mode = "mutate-fields", perish = true, switchName = "THIRD",
@@ -275,6 +302,9 @@ local function run(f, root, backend)
     local b = fresh(spec)
     turn(b)
     T.eq(f.e.state.calls, spec.class and 0 or spec.double and 2 or 1, spec.name .. " public query count")
+    if spec.brain then
+      T.eq(f.e.brain.calls, spec.brainItem and 0 or spec.double and 2 or 1, spec.name .. " native brain count")
+    end
     if spec.fast or spec.mutateStock then
       local firstMove
       for _, event in ipairs(events) do
@@ -305,12 +335,16 @@ local function run(f, root, backend)
       events = copy(events),
       stock = f.remainingStock(),
       party = {},
+      brainCalls = spec.brain and f.e.brain.calls or nil,
+      brainViews = spec.brain and copy(f.e.brain.seen) or nil,
     }
     for id = 0, spec.double and 3 or 1 do
       local who = battler(b, id)
+      local pp = {}
+      for i in ipairs(who.mon.moves) do pp[i] = B and who.mon.pp[i] or who.curMoves[i].pp end
       out.party[#out.party + 1] =
         { name = who.mon.nickname, hp = who.mon.hp, attack = who.stages.attack or 0,
-          pp = B and who.mon.pp[1] or who.curMoves[1].pp }
+          pp = B and who.mon.pp[1] or who.curMoves[1].pp, allPP = pp }
     end
     rows[#rows + 1] = out
     if B then

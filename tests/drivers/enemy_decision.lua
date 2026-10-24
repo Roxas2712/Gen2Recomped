@@ -176,6 +176,53 @@ return function(game)
     assert(e.state.calls == 1 and b.enemy.mon.hp == previous - damage, "spent native class reaches hook")
     game.data.ai_classes.PORTABLE_SMOKE_CLASS = oldClass
     print("PORTABILITY_ENEMY_CASE " .. V.get() .. " class-before-hook-and-spent")
+    local oldBrain = game.data.ai_classes.PORTABLE_SMOKE_BRAIN
+    local brainCalls, brainMode = 0, "pick"
+    game.data.ai_classes.PORTABLE_SMOKE_BRAIN = {
+      kind = "brain",
+      brain = function(view)
+        brainCalls = brainCalls + 1
+        assert(
+          view.battle == b and view.user == b.enemy and view.target == b.player,
+          "native brain opaque handles"
+        )
+        assert(view.data == game.data and view.rng == b.rng, "native brain data and RNG")
+        assert(e.state.calls == 1, "native item/switch hook precedes brain")
+        assert(
+          #view.moves == 2 and view.moves[2].slot == 2 and view.moves[2].usable,
+          "native brain candidate slots"
+        )
+        local move = view.moves[2].move
+        assert(move.id == "TACKLE" and move.index == 33 and move.effect == 0, "portable imported brain move")
+        assert(move.gen3Type == 0 and move.category == "physical", "native brain move type/category")
+        if brainMode == "error" then
+          error("intentional native smoke brain failure")
+        end
+        return { slot = 2 }
+      end,
+    }
+    for _, mode in ipairs({ "pick", "error" }) do
+      b = fresh("suppress", {})
+      b.trainer.aiClass = "PORTABLE_SMOKE_BRAIN"
+      b.enemy.curMoves[2] = { id = tackle, pp = 10 }
+      brainCalls, brainMode, damage, beforeHit = 0, mode, 0, nil
+      turn(b)
+      assert(brainCalls == 1, "one native brain decision")
+      assert(
+        b.enemy.curMoves[mode == "pick" and 2 or 1].pp == 9,
+        "native brain/fallback spends selected slot"
+      )
+      assert(b.enemy.curMoves[mode == "pick" and 1 or 2].pp == 10, "native brain preserves unselected slot")
+      print("PORTABILITY_ENEMY_CASE " .. V.get() .. " brain-" .. mode)
+    end
+    b = fresh("delegate")
+    b.trainer.aiClass = "PORTABLE_SMOKE_BRAIN"
+    b.enemy.encoreTurns, b.enemy.encoreMove = 2, tackle
+    brainCalls, damage, beforeHit = 0, 0, nil
+    turn(b)
+    assert(brainCalls == 0 and beforeHit == 220, "native item precedes Encore and brain")
+    game.data.ai_classes.PORTABLE_SMOKE_BRAIN = oldBrain
+    print("PORTABILITY_ENEMY_CASE " .. V.get() .. " encore-item-before-brain")
   end
   if itemRom then
     b = fresh("delegate", { named(game.data.items, "X ATTACK") })

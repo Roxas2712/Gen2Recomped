@@ -19,3 +19,36 @@ for id, value in mod.content.ai_classes:each() do
     mod.exports.iteratedClassItem = value.item
   end
 end
+local brain = { calls = 0, mode = "pick", pick = 2, seen = {} }
+mod.exports.brain = brain
+local function choose(view)
+  brain.calls = brain.calls + 1
+  brain.lastView = view
+  local moves = {}
+  for _, row in ipairs(view.moves or {}) do
+    local move = {}
+    for key, value in pairs(row.move or {}) do
+      move[key] = value
+    end
+    moves[#moves + 1] = { slot = row.slot, usable = row.usable, move = move }
+  end
+  brain.seen[#brain.seen + 1] = {
+    moves = moves,
+    hookCalls = out.calls,
+    target = view.target and view.target.mon and view.target.mon.nickname,
+  }
+  if brain.mode == "error" then
+    error("intentional native brain failure")
+  end
+  if brain.mode == "first-usable" then
+    for _, row in ipairs(view.moves or {}) do
+      if row.usable then
+        return row.slot
+      end
+    end
+    return nil
+  end
+  return brain.pick
+end
+mod.content.ai_classes:register("PORTABLE_NATIVE_BRAIN", { kind = "brain", brain = choose })
+mod.content.ai_classes:register("PORTABLE_LAYER_WITH_BRAIN", { kind = "layer", brain = choose })
