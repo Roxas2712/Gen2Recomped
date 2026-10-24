@@ -20,7 +20,8 @@ return `nil, "unsupported: ..."` on writes. Invalid value types throw.
 GBA source uses `{PLAYER}`, `{RIVAL}` and `{STR_VAR_1}` through `{STR_VAR_3}`.
 The adapter writes the latter to the host's native `{VAR1}` through `{VAR3}`,
 so the existing script buffer commands and textbox token handlers consume them.
-Reads reverse those aliases. Other public GBA cartridge placeholder and symbol
+Reads reverse those aliases. Escaped literal braces retain their source spelling;
+placeholder conversion applies only to actual source tokens. Other public GBA cartridge placeholder and symbol
 names round-trip with the version's grammar. Unknown placeholders and printer
 style commands are refused, rather than accidentally installing a missing token.
 The source contract does not promise matching glyph artwork or pixel layout.
@@ -32,7 +33,8 @@ Gen-2 text IDs use the reference's lowercase hexadecimal `bank:address` form,
 for example `55:4067`. The host VM stores that same script text as
 `TEXT_S55_4067`. Unified reads, writes, removes and enumeration map to that
 physical record. They do not create an unused `data.text["55:4067"]` shadow.
-Existing host native IDs are still accepted. Two distinct records occupying
+Existing host native IDs are still accepted. Differently-cased authored labels
+remain distinct IDs; they are not silently normalized into cartridge addresses. Two distinct records occupying
 both spellings are an ambiguity, even if their current contents match; the
 adapter refuses to guess which one a mod meant.
 
