@@ -1,5 +1,10 @@
 # Remaining OpenGL spikes and the native preview
 
+Follow-up: [deferred recovery readback](opengl-deferred-readback.md) reduces
+mean scene tail times with a one-frame presentation delay and mixed CPU
+tradeoffs. This report records the earlier investigation and the unchanged
+renderer shipped in `native-preview-20261024.1`.
+
 The long FireRed replay still shows spikes dominated by **synchronous GPU
 readback**, rather than Lua collection. At 1280×960 the worst sampled frames
 spend roughly 10–14 ms in readback; at 1920×1440 one bedroom frame spends about

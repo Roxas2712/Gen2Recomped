@@ -167,6 +167,16 @@ notably the latter regresses Emerald in the complete comparison. The isolated
 Windows/macOS preview retains the verified renderer and exposes these remaining
 limits for external hardware tests. It does not resume the Origami port.
 
+The [deferred OpenGL readback follow-up](opengl-deferred-readback.md) overlaps
+one recovery readback between frames on LÖVE 12. Mean scene render P99 improves
+about 19–21% in FireRed and 9–30% in Emerald in the repeated scoped comparison,
+with **one frame of additional presentation latency**, mixed individual tails
+and about 8.5% more small-window FireRed CPU. Captures stay current and failures
+return to synchronous frames. Both games pass separate deferred-stream,
+current-frame GPU and Metal regressions. GPU waits remain possible; full
+gameplay/context-loss/long-duration acceptance remains open. The published
+`native-preview-20261024.1` is still the earlier immutable source.
+
 ## Remaining engine work
 
 | Area | Remaining acceptance/work |

@@ -207,10 +207,15 @@ def main():
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--window-frames", action="store_true",
                         help="Continuous frame/movement/resize tests; macOS OS proofs require Pillow")
+    mode.add_argument("--async-window-frames", action="store_true",
+                     help="Test actual deferred Cocoa frames, requires macOS --backend opengl and Pillow")
     mode.add_argument("--window-performance", action="store_true",
                      help="Uncapped native frame timings at two sizes, no timed observers/captures")
     args = parser.parse_args()
-    if (args.window_frames or args.window_performance) and sys.platform == "darwin":
+    window_mode = args.window_frames or args.async_window_frames or args.window_performance
+    if args.async_window_frames and (sys.platform != "darwin" or args.backend != "opengl"):
+        parser.error("--async-window-frames requires macOS --backend opengl")
+    if window_mode and sys.platform == "darwin":
         try:
             import PIL.Image
         except ImportError:
@@ -257,16 +262,17 @@ def main():
         child(love, source, env, out / "import.log", 900)
         env.pop("POKEPORT_IMPORT_ROM"); env.pop("POKEPORT_IMPORT_ONLY")
         driver = (ROOT / "tools/window_frame_performance_driver.lua" if args.window_performance
+                  else ROOT / "tools/gen3_async_window_frame_driver.lua" if args.async_window_frames
                   else ROOT / "tools/gen3_window_frame_driver.lua" if args.window_frames else DRIVER)
         env.update(POKEPORT_DRIVER=str(driver), PALETTE_GPU_ROM=str(roms[version]),
                    PALETTE_GPU_MAP=map_id, PALETTE_GPU_X=str(x), PALETTE_GPU_Y=str(y))
         print(f"{version}: real Game/Overworld GPU test", flush=True)
         tick, proofs = None, {}
-        if (args.window_frames or args.window_performance) and sys.platform == "darwin":
+        if window_mode and sys.platform == "darwin":
             tick, proofs = os_window_proof(out)
             env["POKEPORT_OS_WINDOW_PROOF"] = "1"
         child(love, source, env, out / "game.log",
-              600 if (args.window_frames or args.window_performance) else 180, tick)
+              600 if window_mode else 180, tick)
         report = json.loads((out / "gpu.json").read_text())
         if not report.get("pass"):
             raise RuntimeError(f"{version}: acceptance report did not pass")

@@ -20,6 +20,7 @@ return function(game)
     runtime={major=major,minor=minor,revision=revision},phases={},
     simulationHz=60,vsync=0,mainLoopSleepSeconds=.001,
     measuredPixelReadbackObservers=false,measuredScreenshots=false,
+    readbackMetric="synchronous call or asynchronous submission; completion wait is in transfer, runtime completion copy may be in present",
     readbackTimingAvailable=g.readbackTexture~=nil,mainThreadCpuAvailable=threadClock~=nil}
   local function stats(values)
     local sorted,total={},0
@@ -71,7 +72,7 @@ return function(game)
     end
     g.pop()
   end
-  local draw,present,readback=Frame.draw,g.present,g.readbackTexture
+  local draw,present,readback,readbackAsync=Frame.draw,g.present,g.readbackTexture,g.readbackTextureAsync
   Frame.draw=function(body,capture)
     if not phase then return draw(body,capture) end
     assert(not capture,"capture requested during performance measurement")
@@ -99,6 +100,16 @@ return function(game)
         pending.readbacks=pending.readbacks+1
       end
       return data
+    end
+  end
+  if readbackAsync then
+    g.readbackTextureAsync=function(...)
+      local at=timer.getTime();local request=readbackAsync(...)
+      if phase and pending and not insideBody then
+        pending.readback=pending.readback+timer.getTime()-at
+        pending.readbacks=pending.readbacks+1
+      end
+      return request
     end
   end
   g.present=function(...)
@@ -184,6 +195,7 @@ return function(game)
       local measured=phase;phase=nil;pending=nil
       local entry={map=map[1],logicalWidth=w,logicalHeight=h,pixelWidth=pw,pixelHeight=ph,
         mode=Frame.info().mode,measuredFrames=#measured.frame,readbackCalls=measured.readbackCalls,
+        latencyFrames=Frame.info().latencyFrames or 0,pendingReadbacks=Frame.info().pendingReadbacks or 0,
         elapsedSeconds=elapsed,cpuMsPerFrame=cpuElapsed/#measured.frame*1000,metrics={},
         randomSeed=seed,npcWorkloadBefore=beforeNPC,npcWorkloadAfter=npcWorkload(world),
         stackBefore=stackBefore,stackAfter=require("src.core.StateStack").describe(game.stack:top()),
@@ -197,13 +209,13 @@ return function(game)
       end
       assert(renderer~="Metal" or measured.readbackCalls==0,"benchmark changed Metal readback cost")
       assert(renderer~="OpenGL" or not readback or measured.readbackCalls==600,
-        "each OpenGL recovery frame must use a current readback")
+        "each OpenGL recovery frame must submit one readback")
       report.phases[#report.phases+1]=entry
       print(string.format("[window-perf] %s %dx%d: render %.3f ms, interval %.3f ms, CPU %.3f ms",
         map[1],pw,ph,entry.metrics.render.meanMs,entry.metrics.intervals.meanMs,entry.cpuMsPerFrame))
       if os.getenv("POKEPORT_OS_WINDOW_PROOF")=="1" then
         -- Outside every timed interval. No Frame.observe/capture: GL must
-        -- present the ordinary reusable buffer, including the changing stamp.
+        -- present its ordinary frame stream, including the changing stamp.
         proofActive=true
         local threshold=drawCount
         U.wait(10)
@@ -238,7 +250,7 @@ return function(game)
       static=#probe.paletteState.primaryFrames==0 and #probe.paletteState.secondaryFrames==0}
     collectgarbage("restart");collectgarbage("collect")
   end
-  Frame.draw=draw;g.present=present;g.readbackTexture=readback;love.draw=originalDraw
+  Frame.draw=draw;g.present=present;g.readbackTexture=readback;g.readbackTextureAsync=readbackAsync;love.draw=originalDraw
   game.update=update;collectgarbage=gc;Tiles.setPaletteTicks=paletteTicks
   Cycles.sample=fullSample
   Overworld.computeNeighbors=computeNeighbors

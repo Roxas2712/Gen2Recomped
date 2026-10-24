@@ -1,0 +1,5093 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-24",
+  "baselineCommit": "e6a5255697fdd5d93fece4f16bd6b5e47c22a545",
+  "candidateSourceSha256": {
+    "src/render/WindowFrame.lua": "bab2736295af008f0e6b841da1241ed3c8179d49ef822b4165171718458f7127"
+  },
+  "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+  "method": {
+    "primaryTrials": 8,
+    "timedFrames": 19200,
+    "ownWindowProofs": 32,
+    "pairs": "AB/BA per game",
+    "warmupFrames": 600,
+    "measuredFramesPerPhase": 600,
+    "sceneP99Summary": "arithmetic mean of four per-scene P99 values, NOT a pooled percentile",
+    "canonicalNPCAndStackMatched": true,
+    "mods": false,
+    "scope": "Apple M3 macOS15.8.2; uncapped rendering with 1ms loop sleep, deterministic 60Hz simulation; two maps at actual 1280x960 and 1920x1440 pixels; no timed observers/captures/pixel scans",
+    "readbackMetric": "Sync call or async submission only. Async wait remains inside transfer; runtime destination copying may run inside present. Render/interval/CPU totals include those stages."
+  },
+  "summary": [
+    {
+      "game": "firered",
+      "pixelWidth": 1280,
+      "baseline": {
+        "meanCPU": 2.878401666666667,
+        "meanSceneRenderP99": 10.241635416665673,
+        "meanSceneIntervalP99": 11.765208333332389,
+        "meanRenderMs": 4.31347140625008
+      },
+      "candidate": {
+        "meanCPU": 3.1222216666666665,
+        "meanSceneRenderP99": 8.27515624999997,
+        "meanSceneIntervalP99": 10.213312500000571,
+        "meanRenderMs": 2.782238229166665
+      },
+      "percentChange": {
+        "meanCPU": 8.470673249795446,
+        "meanSceneRenderP99": -19.200831572912225,
+        "meanSceneIntervalP99": -13.190551236862436,
+        "meanRenderMs": -35.498860033352884
+      }
+    },
+    {
+      "game": "firered",
+      "pixelWidth": 1920,
+      "baseline": {
+        "meanCPU": 4.703827083333332,
+        "meanSceneRenderP99": 12.469124999999082,
+        "meanSceneIntervalP99": 14.057093749998195,
+        "meanRenderMs": 7.402263489583408
+      },
+      "candidate": {
+        "meanCPU": 4.106146666666666,
+        "meanSceneRenderP99": 9.831697916665494,
+        "meanSceneIntervalP99": 11.595697916665593,
+        "meanRenderMs": 3.7964131944444492
+      },
+      "percentChange": {
+        "meanCPU": -12.70625824627729,
+        "meanSceneRenderP99": -21.15166127000717,
+        "meanSceneIntervalP99": -17.509990877971614,
+        "meanRenderMs": -48.712806565359
+      }
+    },
+    {
+      "game": "emerald",
+      "pixelWidth": 1280,
+      "baseline": {
+        "meanCPU": 2.99218375,
+        "meanSceneRenderP99": 10.823250000000062,
+        "meanSceneIntervalP99": 12.085812499999182,
+        "meanRenderMs": 4.6179309895833445
+      },
+      "candidate": {
+        "meanCPU": 2.40235125,
+        "meanSceneRenderP99": 7.614531250000001,
+        "meanSceneIntervalP99": 8.942374999999835,
+        "meanRenderMs": 2.2721205555555484
+      },
+      "percentChange": {
+        "meanCPU": -19.71244245945791,
+        "meanSceneRenderP99": -29.646536391564847,
+        "meanSceneIntervalP99": -26.009318777695423,
+        "meanRenderMs": -50.797866822159854
+      }
+    },
+    {
+      "game": "emerald",
+      "pixelWidth": 1920,
+      "baseline": {
+        "meanCPU": 4.874485833333333,
+        "meanSceneRenderP99": 13.544947916667383,
+        "meanSceneIntervalP99": 14.956562499999215,
+        "meanRenderMs": 7.574227517360998
+      },
+      "candidate": {
+        "meanCPU": 4.714425833333332,
+        "meanSceneRenderP99": 12.389843750003404,
+        "meanSceneIntervalP99": 13.932916666665296,
+        "meanRenderMs": 4.862620555555551
+      },
+      "percentChange": {
+        "meanCPU": -3.2836283758475138,
+        "meanSceneRenderP99": -8.527933616065031,
+        "meanSceneIntervalP99": -6.844125000874857,
+        "meanRenderMs": -35.800442429147175
+      }
+    }
+  ],
+  "allPositiveMetricDeltas": [
+    {
+      "game": "firered",
+      "repeat": 1,
+      "map": "MAP_G03_N00",
+      "pixelWidth": 1280,
+      "percentChange": {
+        "render": -25.758949507585662,
+        "intervals": -21.90266841794457,
+        "cpu": 30.54558274647374
+      }
+    },
+    {
+      "game": "firered",
+      "repeat": 1,
+      "map": "MAP_G04_N01",
+      "pixelWidth": 1280,
+      "percentChange": {
+        "render": -4.922346137964507,
+        "intervals": 14.975770981690095,
+        "cpu": 8.165355029210808
+      }
+    },
+    {
+      "game": "firered",
+      "repeat": 2,
+      "map": "MAP_G04_N01",
+      "pixelWidth": 1280,
+      "percentChange": {
+        "render": -22.74681403315999,
+        "intervals": -21.371621573753973,
+        "cpu": 3.239475948258974
+      }
+    },
+    {
+      "game": "firered",
+      "repeat": 2,
+      "map": "MAP_G04_N01",
+      "pixelWidth": 1920,
+      "percentChange": {
+        "render": 6.274532893645413,
+        "intervals": 6.650845464103483,
+        "cpu": -8.83133736221392
+      }
+    },
+    {
+      "game": "emerald",
+      "repeat": 1,
+      "map": "MAP_G26_N18",
+      "pixelWidth": 1920,
+      "percentChange": {
+        "render": 6.342108038310901,
+        "intervals": 8.204618556962684,
+        "cpu": -7.799806110768914
+      }
+    },
+    {
+      "game": "emerald",
+      "repeat": 2,
+      "map": "MAP_G26_N21",
+      "pixelWidth": 1920,
+      "percentChange": {
+        "render": 8.937082134697484,
+        "intervals": 6.63439144605511,
+        "cpu": 8.295676353582039
+      }
+    }
+  ],
+  "trials": [
+    {
+      "game": "firered",
+      "repeat": 1,
+      "variant": "baseline",
+      "data": {
+        "phases": [
+          {
+            "pixelWidth": 1280,
+            "pixelHeight": 960,
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "logicalWidth": 640,
+            "logicalHeight": 480,
+            "paletteAllocationProbe": {
+              "luaKiBPerSample": 0.026204427083333332,
+              "warmupTicks": 128,
+              "samples": 120,
+              "static": true
+            },
+            "measuredFrames": 600,
+            "latencyFrames": 0,
+            "pendingReadbacks": 0,
+            "elapsedSeconds": 3.407841583333335,
+            "cpuMsPerFrame": 2.860091666666667,
+            "metrics": {
+              "frame": {
+                "maxMs": 13.401999999999248,
+                "p95Ms": 8.519333333332213,
+                "meanMs": 4.085229305555574,
+                "p50Ms": 3.285958333334449,
+                "samples": 600,
+                "p99Ms": 10.433333333334183
+              },
+              "present": {
+                "maxMs": 1.1899166666662353,
+                "p95Ms": 0.2633750000002877,
+                "meanMs": 0.21679055555556825,
+                "p50Ms": 0.20691666666827757,
+                "samples": 600,
+                "p99Ms": 0.3915416666657734
+              },
+              "transfer": {
+                "maxMs": 5.394499999999525,
+                "p95Ms": 1.5054999999986052,
+                "meanMs": 1.1737427777778626,
+                "p50Ms": 1.1217916666659278,
+                "samples": 600,
+                "p99Ms": 1.8869999999990839
+              },
+              "paletteSync": {
+                "maxMs": 1.1769166666661945,
+                "p95Ms": 0.07079166666557057,
+                "meanMs": 0.0211043749999984,
+                "p50Ms": 0,
+                "samples": 600,
+                "p99Ms": 0.12320833333223646
+              },
+              "body": {
+                "maxMs": 4.801958333334078,
+                "p95Ms": 0.5346249999993447,
+                "meanMs": 0.32273881944440735,
+                "p50Ms": 0.28608333333224323,
+                "samples": 600,
+                "p99Ms": 0.82662500000108
+              },
+              "gcStep": {
+                "maxMs": 0.0779583333327949,
+                "p95Ms": 0.007916666667995287,
+                "meanMs": 0.0032054861110738147,
+                "p50Ms": 0.0022083333321987197,
+                "samples": 600,
+                "p99Ms": 0.022166666665768275
+              },
+              "readback": {
+                "maxMs": 9.349999999997749,
+                "p95Ms": 6.838458333332298,
+                "meanMs": 2.588747708333304,
+                "p50Ms": 1.7031666666671441,
+                "samples": 600,
+                "p99Ms": 8.651958333333987
+              },
+              "update": {
+                "maxMs": 0.828000000000273,
+                "p95Ms": 0.3790416666662466,
+                "meanMs": 0.17568569444442367,
+                "p50Ms": 0.14908333333352175,
+                "samples": 600,
+                "p99Ms": 0.5505833333332433
+              },
+              "render": {
+                "maxMs": 13.673541666666011,
+                "p95Ms": 8.733125000000008,
+                "meanMs": 4.302019861111142,
+                "p50Ms": 3.5068750000011306,
+                "samples": 600,
+                "p99Ms": 10.661666666667458
+              },
+              "intervals": {
+                "maxMs": 21.435374999999368,
+                "p95Ms": 10.228750000001341,
+                "meanMs": 5.680847106288262,
+                "p50Ms": 4.887958333333664,
+                "samples": 599,
+                "p99Ms": 12.245083333333184
+              }
+            },
+            "randomSeed": 27122026,
+            "readbackCalls": 600,
+            "mainThreadCpuMsPerFrame": 2.6471637500000007,
+            "map": "MAP_G03_N00",
+            "paletteCache": {
+              "after": {
+                "budget": 33554432,
+                "perOwner": 4,
+                "hits": 0,
+                "entries": 0,
+                "misses": 0,
+                "bytes": 0
+              },
+              "before": {
+                "budget": 33554432,
+                "perOwner": 4,
+                "hits": 0,
+                "entries": 0,
+                "misses": 0,
+                "bytes": 0
+              }
+            },
+            "fullPaletteSamples": 0,
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mode": "opengl-cocoa-frame",
+            "npcWorkloadBeforeSha256": "7064bef7088d5b5c25bed8dcd8a257008eee5c348c680548b3bd82079d4c7c77",
+            "npcWorkloadAfterSha256": "224d5d544a4dadd8859b3a4b742433b06412393d6f0f9643249db2f4011fee7f"
+          },
+          {
+            "pixelWidth": 1280,
+            "pixelHeight": 960,
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "logicalWidth": 640,
+            "logicalHeight": 480,
+            "paletteAllocationProbe": {
+              "luaKiBPerSample": 0.0013020833333333333,
+              "warmupTicks": 128,
+              "samples": 120,
+              "static": true
+            },
+            "measuredFrames": 600,
+            "latencyFrames": 0,
+            "pendingReadbacks": 0,
+            "elapsedSeconds": 3.5163429583333325,
+            "cpuMsPerFrame": 2.630300000000001,
+            "metrics": {
+              "frame": {
+                "maxMs": 10.81737500000024,
+                "p95Ms": 9.01545833333195,
+                "meanMs": 4.435084375000065,
+                "p50Ms": 3.5432499999998868,
+                "samples": 600,
+                "p99Ms": 9.864000000000317
+              },
+              "present": {
+                "maxMs": 0.33170833333429073,
+                "p95Ms": 0.24587499999917384,
+                "meanMs": 0.20272888888898777,
+                "p50Ms": 0.2010000000023382,
+                "samples": 600,
+                "p99Ms": 0.28662500000109503
+              },
+              "transfer": {
+                "maxMs": 1.9754583333320141,
+                "p95Ms": 1.5382500000011845,
+                "meanMs": 1.214003124999919,
+                "p50Ms": 1.2039999999995388,
+                "samples": 600,
+                "p99Ms": 1.7092499999993294
+              },
+              "paletteSync": {
+                "maxMs": 0.08016666666499361,
+                "p95Ms": 0.02337500000137993,
+                "meanMs": 0.007795902777833302,
+                "p50Ms": 0,
+                "samples": 600,
+                "p99Ms": 0.03383333333317751
+              },
+              "body": {
+                "maxMs": 0.3394166666677023,
+                "p95Ms": 0.2294166666700903,
+                "meanMs": 0.13618770833343655,
+                "p50Ms": 0.12766666666763626,
+                "samples": 600,
+                "p99Ms": 0.29658333333237863
+              },
+              "gcStep": {
+                "maxMs": 0.032708333332465145,
+                "p95Ms": 0.004958333331472886,
+                "meanMs": 0.0027497222221217754,
+                "p50Ms": 0.0024166666658942404,
+                "samples": 600,
+                "p99Ms": 0.010333333333889527
+              },
+              "readback": {
+                "maxMs": 9.294958333331493,
+                "p95Ms": 7.253750000000281,
+                "meanMs": 3.084893541666709,
+                "p50Ms": 2.1268333333352984,
+                "samples": 600,
+                "p99Ms": 8.644125000000003
+              },
+              "update": {
+                "maxMs": 0.2324166666642924,
+                "p95Ms": 0.09762499999865781,
+                "meanMs": 0.0572479861111456,
+                "p50Ms": 0.051500000001425406,
+                "samples": 600,
+                "p99Ms": 0.1428750000016521
+              },
+              "render": {
+                "maxMs": 11.032499999997114,
+                "p95Ms": 9.226291666665887,
+                "meanMs": 4.637813263889052,
+                "p50Ms": 3.778958333331417,
+                "samples": 600,
+                "p99Ms": 10.087499999999139
+              },
+              "intervals": {
+                "maxMs": 12.273416666666037,
+                "p95Ms": 10.524750000000083,
+                "meanMs": 5.861590358931549,
+                "p50Ms": 5.001416666665648,
+                "samples": 599,
+                "p99Ms": 11.358624999999734
+              }
+            },
+            "randomSeed": 27122027,
+            "readbackCalls": 600,
+            "mainThreadCpuMsPerFrame": 2.429857986666667,
+            "map": "MAP_G04_N01",
+            "paletteCache": {
+              "after": {
+                "budget": 33554432,
+                "perOwner": 4,
+                "hits": 0,
+                "entries": 0,
+                "misses": 0,
+                "bytes": 0
+              },
+              "before": {
+                "budget": 33554432,
+                "perOwner": 4,
+                "hits": 0,
+                "entries": 0,
+                "misses": 0,
+                "bytes": 0
+              }
+            },
+            "fullPaletteSamples": 0,
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mode": "opengl-cocoa-frame",
+            "npcWorkloadBeforeSha256": "cd056d710af2f9fa2dfed7c55626e53ef08f2cce7afe5ef6a52b244d2faea328",
+            "npcWorkloadAfterSha256": "cd056d710af2f9fa2dfed7c55626e53ef08f2cce7afe5ef6a52b244d2faea328"
+          },
+          {
+            "pixelWidth": 1920,
+            "pixelHeight": 1440,
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "logicalWidth": 960,
+            "logicalHeight": 720,
+            "paletteAllocationProbe": {
+              "luaKiBPerSample": 0.0013020833333333333,
+              "warmupTicks": 128,
+              "samples": 120,
+              "static": true
+            },
+            "measuredFrames": 600,
+            "latencyFrames": 0,
+            "pendingReadbacks": 0,
+            "elapsedSeconds": 4.9347700833333334,
+            "cpuMsPerFrame": 4.670894999999999,
+            "metrics": {
+              "frame": {
+                "maxMs": 11.830749999997892,
+                "p95Ms": 9.64137499999751,
+                "meanMs": 6.420262013889093,
+                "p50Ms": 5.891124999994446,
+                "samples": 600,
+                "p99Ms": 11.340249999996388
+              },
+              "present": {
+                "maxMs": 0.07266666666438937,
+                "p95Ms": 0.04270833333208657,
+                "meanMs": 0.0312014583334926,
+                "p50Ms": 0.030041666665425737,
+                "samples": 600,
+                "p99Ms": 0.05525000000261571
+              },
+              "transfer": {
+                "maxMs": 2.577833333337054,
+                "p95Ms": 1.9916666666688343,
+                "meanMs": 1.6715304861113605,
+                "p50Ms": 1.6253333333366982,
+                "samples": 600,
+                "p99Ms": 2.2238333333426397
+              },
+              "paletteSync": {
+                "maxMs": 0.25662499999512534,
+                "p95Ms": 0.16887499999285183,
+                "meanMs": 0.056343472222402845,
+                "p50Ms": 0,
+                "samples": 600,
+                "p99Ms": 0.20774999999773058
+              },
+              "body": {
+                "maxMs": 2.736208333338652,
+                "p95Ms": 0.866999999999507,
+                "meanMs": 0.5532049305556205,
+                "p50Ms": 0.5228333333278101,
+                "samples": 600,
+                "p99Ms": 1.1259166666661713
+              },
+              "gcStep": {
+                "maxMs": 0.495499999999538,
+                "p95Ms": 0.06454166666713945,
+                "meanMs": 0.020761111111008052,
+                "p50Ms": 0.011625000006176833,
+                "samples": 600,
+                "p99Ms": 0.16029166666342576
+              },
+              "readback": {
+                "maxMs": 9.775416666670367,
+                "p95Ms": 7.450874999999968,
+                "meanMs": 4.195526597222112,
+                "p50Ms": 3.675416666663267,
+                "samples": 600,
+                "p99Ms": 8.908541666670544
+              },
+              "update": {
+                "maxMs": 1.5634583333294927,
+                "p95Ms": 1.0249166666653764,
+                "meanMs": 0.5829536805557881,
+                "p50Ms": 0.5350416666658475,
+                "samples": 600,
+                "p99Ms": 1.253958333329308
+              },
+              "render": {
+                "maxMs": 11.863416666663795,
+                "p95Ms": 9.668416666659851,
+                "meanMs": 6.451463472222585,
+                "p50Ms": 5.924499999995447,
+                "samples": 600,
+                "p99Ms": 11.370374999994937
+              },
+              "intervals": {
+                "maxMs": 14.05183333332971,
+                "p95Ms": 11.561708333331921,
+                "meanMs": 8.224759042849195,
+                "p50Ms": 7.744333333334907,
+                "samples": 599,
+                "p99Ms": 13.236166666668936
+              }
+            },
+            "randomSeed": 27122028,
+            "readbackCalls": 600,
+            "mainThreadCpuMsPerFrame": 4.404959721666666,
+            "map": "MAP_G03_N00",
+            "paletteCache": {
+              "after": {
+                "budget": 33554432,
+                "perOwner": 4,
+                "hits": 0,
+                "entries": 0,
+                "misses": 0,
+                "bytes": 0
+              },
+              "before": {
+                "budget": 33554432,
+                "perOwner": 4,
+                "hits": 0,
+                "entries": 0,
+                "misses": 0,
+                "bytes": 0
+              }
+            },
+            "fullPaletteSamples": 0,
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mode": "opengl-cocoa-frame",
+            "npcWorkloadBeforeSha256": "2941dc2f9650a49a9266de0ca7ebdd08cd14c45099ccfd29e6e0906a7122f8bf",
+            "npcWorkloadAfterSha256": "f38c2df80d80d99378ff89430d6e987462060a0359bcfa0df831ff415aea0bd0"
+          },
+          {
+            "pixelWidth": 1920,
+            "pixelHeight": 1440,
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "logicalWidth": 960,
+            "logicalHeight": 720,
+            "paletteAllocationProbe": {
+              "luaKiBPerSample": 0.0013020833333333333,
+              "warmupTicks": 128,
+              "samples": 120,
+              "static": true
+            },
+            "measuredFrames": 600,
+            "latencyFrames": 0,
+            "pendingReadbacks": 0,
+            "elapsedSeconds": 5.545272166666667,
+            "cpuMsPerFrame": 4.5449966666666635,
+            "metrics": {
+              "frame": {
+                "maxMs": 13.282041666663247,
+                "p95Ms": 11.914375000003474,
+                "meanMs": 7.868881111111054,
+                "p50Ms": 7.086208333333843,
+                "samples": 600,
+                "p99Ms": 12.710541666663744
+              },
+              "present": {
+                "maxMs": 0.09462499999557394,
+                "p95Ms": 0.05079166666632773,
+                "meanMs": 0.03395194444427337,
+                "p50Ms": 0.031333333325278545,
+                "samples": 600,
+                "p99Ms": 0.07987499999728698
+              },
+              "transfer": {
+                "maxMs": 2.7736666666626775,
+                "p95Ms": 2.4060416666706885,
+                "meanMs": 1.9432072222220853,
+                "p50Ms": 1.9919166666539923,
+                "samples": 600,
+                "p99Ms": 2.580000000001803
+              },
+              "paletteSync": {
+                "maxMs": 0.15916666666981882,
+                "p95Ms": 0.0565833333325827,
+                "meanMs": 0.01603027777744496,
+                "p50Ms": 0.018666666669275855,
+                "samples": 600,
+                "p99Ms": 0.08912499999524925
+              },
+              "body": {
+                "maxMs": 0.6370416666641177,
+                "p95Ms": 0.41220833332999973,
+                "meanMs": 0.26175173611127533,
+                "p50Ms": 0.24379166666221863,
+                "samples": 600,
+                "p99Ms": 0.5137500000031991
+              },
+              "gcStep": {
+                "maxMs": 0.144875000003708,
+                "p95Ms": 0.0058333333399218645,
+                "meanMs": 0.003224305555556602,
+                "p50Ms": 0.0024999999936881068,
+                "samples": 600,
+                "p99Ms": 0.011041666667210848
+              },
+              "readback": {
+                "maxMs": 11.273333333335245,
+                "p95Ms": 9.879666666662956,
+                "meanMs": 5.663922152777694,
+                "p50Ms": 4.681000000005042,
+                "samples": 600,
+                "p99Ms": 10.637375000001725
+              },
+              "update": {
+                "maxMs": 0.3951250000007178,
+                "p95Ms": 0.2511250000054588,
+                "meanMs": 0.14069222222229172,
+                "p50Ms": 0.1266666666630556,
+                "samples": 600,
+                "p99Ms": 0.34662499999882357
+              },
+              "render": {
+                "maxMs": 13.319041666662201,
+                "p95Ms": 11.943791666666925,
+                "meanMs": 7.902833055555328,
+                "p50Ms": 7.118249999997772,
+                "samples": 600,
+                "p99Ms": 12.745833333326573
+              },
+              "intervals": {
+                "maxMs": 14.633666666661327,
+                "p95Ms": 13.419958333329873,
+                "meanMs": 9.234300431274338,
+                "p50Ms": 8.450374999995347,
+                "samples": 599,
+                "p99Ms": 14.165416666664044
+              }
+            },
+            "randomSeed": 27122029,
+            "readbackCalls": 600,
+            "mainThreadCpuMsPerFrame": 4.229088194999999,
+            "map": "MAP_G04_N01",
+            "paletteCache": {
+              "after": {
+                "budget": 33554432,
+                "perOwner": 4,
+                "hits": 0,
+                "entries": 0,
+                "misses": 0,
+                "bytes": 0
+              },
+              "before": {
+                "budget": 33554432,
+                "perOwner": 4,
+                "hits": 0,
+                "entries": 0,
+                "misses": 0,
+                "bytes": 0
+              }
+            },
+            "fullPaletteSamples": 0,
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mode": "opengl-cocoa-frame",
+            "npcWorkloadBeforeSha256": "cd056d710af2f9fa2dfed7c55626e53ef08f2cce7afe5ef6a52b244d2faea328",
+            "npcWorkloadAfterSha256": "cd056d710af2f9fa2dfed7c55626e53ef08f2cce7afe5ef6a52b244d2faea328"
+          }
+        ],
+        "runtime": {
+          "major": 12,
+          "minor": 0,
+          "revision": 0
+        },
+        "mainLoopSleepSeconds": 0.001,
+        "measuredPixelReadbackObservers": false,
+        "measuredScreenshots": false,
+        "readbackMetric": "synchronous call or asynchronous submission; completion wait is in transfer, runtime completion copy may be in present",
+        "readbackTimingAvailable": true,
+        "mainThreadCpuAvailable": true,
+        "pass": true,
+        "npcConstruction": "seeded-sorted-neighbors-fresh-pool",
+        "vsync": 0,
+        "gpu": {
+          "version": "4.1 Metal - 89.4",
+          "device": "Apple M3",
+          "renderer": "OpenGL",
+          "vendor": "Apple"
+        },
+        "game": "firered",
+        "simulationHz": 60,
+        "osWindowProof": {
+          "initial-map": {
+            "freshFrameStamp": 1228,
+            "minimumFrameStamp": 1205,
+            "centralColours": 50,
+            "attempts": 1
+          },
+          "second-map": {
+            "freshFrameStamp": 2461,
+            "minimumFrameStamp": 2440,
+            "centralColours": 35,
+            "attempts": 1
+          },
+          "resized": {
+            "freshFrameStamp": 3692,
+            "minimumFrameStamp": 3671,
+            "centralColours": 50,
+            "attempts": 1
+          },
+          "map-return": {
+            "freshFrameStamp": 4922,
+            "minimumFrameStamp": 4903,
+            "centralColours": 35,
+            "attempts": 1
+          }
+        }
+      }
+    },
+    {
+      "game": "firered",
+      "repeat": 1,
+      "variant": "candidate",
+      "data": {
+        "gpu": {
+          "device": "Apple M3",
+          "vendor": "Apple",
+          "version": "4.1 Metal - 89.4",
+          "renderer": "OpenGL"
+        },
+        "phases": [
+          {
+            "elapsedSeconds": 2.8689119166666663,
+            "cpuMsPerFrame": 3.7337233333333337,
+            "metrics": {
+              "body": {
+                "p99Ms": 0.9544999999997472,
+                "samples": 600,
+                "maxMs": 2.960124999999536,
+                "meanMs": 0.48783548611113153,
+                "p50Ms": 0.4597916666675417,
+                "p95Ms": 0.746291666667176
+              },
+              "gcStep": {
+                "p99Ms": 0.23675000000089597,
+                "samples": 600,
+                "maxMs": 0.44799999999955986,
+                "meanMs": 0.016362638888876752,
+                "p50Ms": 0.0069166666669673305,
+                "p95Ms": 0.04441666666732402
+              },
+              "intervals": {
+                "p99Ms": 9.563083333332223,
+                "samples": 599,
+                "maxMs": 18.2779583333339,
+                "meanMs": 4.780124026154705,
+                "p50Ms": 3.836374999999226,
+                "p95Ms": 8.852166666666328
+              },
+              "transfer": {
+                "p99Ms": 7.19716666666681,
+                "samples": 600,
+                "maxMs": 15.613875000000998,
+                "meanMs": 2.369575347222236,
+                "p50Ms": 1.2935833333327373,
+                "p95Ms": 6.4055416666670695
+              },
+              "paletteSync": {
+                "p99Ms": 0.24866666666589765,
+                "samples": 600,
+                "maxMs": 0.44762499999961847,
+                "meanMs": 0.041383194444438345,
+                "p50Ms": 0,
+                "p95Ms": 0.17570833333380165
+              },
+              "update": {
+                "p99Ms": 1.1043749999997132,
+                "samples": 600,
+                "maxMs": 1.5596666666661818,
+                "meanMs": 0.4630372916666496,
+                "p50Ms": 0.4112083333325245,
+                "p95Ms": 0.8636250000000345
+              },
+              "frame": {
+                "p99Ms": 7.720166666666639,
+                "samples": 600,
+                "maxMs": 16.075958333333418,
+                "meanMs": 2.959432708333372,
+                "p50Ms": 1.9479583333334993,
+                "p95Ms": 6.947458333332435
+              },
+              "readback": {
+                "p99Ms": 0.174541666667416,
+                "samples": 600,
+                "maxMs": 0.20166666666598942,
+                "meanMs": 0.10202187500000459,
+                "p50Ms": 0.09762499999954599,
+                "p95Ms": 0.14883333333326476
+              },
+              "present": {
+                "p99Ms": 0.23491666666686228,
+                "samples": 600,
+                "maxMs": 0.24762500000008458,
+                "meanMs": 0.19024569444450562,
+                "p50Ms": 0.18795833333395962,
+                "p95Ms": 0.2158333333337481
+              },
+              "render": {
+                "p99Ms": 7.915333333333496,
+                "samples": 600,
+                "maxMs": 16.277458333333605,
+                "meanMs": 3.149678402777878,
+                "p50Ms": 2.143333333333608,
+                "p95Ms": 7.132624999998782
+              }
+            },
+            "randomSeed": 27122026,
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mainThreadCpuMsPerFrame": 3.557277083333333,
+            "readbackCalls": 600,
+            "paletteCache": {
+              "after": {
+                "entries": 0,
+                "hits": 0,
+                "bytes": 0,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 0
+              },
+              "before": {
+                "entries": 0,
+                "hits": 0,
+                "bytes": 0,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 0
+              }
+            },
+            "mode": "opengl-cocoa-frame",
+            "latencyFrames": 1,
+            "pixelWidth": 1280,
+            "pixelHeight": 960,
+            "paletteAllocationProbe": {
+              "warmupTicks": 128,
+              "samples": 120,
+              "static": true,
+              "luaKiBPerSample": 0.00498046875
+            },
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "logicalWidth": 640,
+            "logicalHeight": 480,
+            "map": "MAP_G03_N00",
+            "fullPaletteSamples": 0,
+            "pendingReadbacks": 1,
+            "measuredFrames": 600,
+            "npcWorkloadBeforeSha256": "7064bef7088d5b5c25bed8dcd8a257008eee5c348c680548b3bd82079d4c7c77",
+            "npcWorkloadAfterSha256": "224d5d544a4dadd8859b3a4b742433b06412393d6f0f9643249db2f4011fee7f"
+          },
+          {
+            "elapsedSeconds": 2.4102999166666645,
+            "cpuMsPerFrame": 2.8450733333333327,
+            "metrics": {
+              "body": {
+                "p99Ms": 0.45716666666706374,
+                "samples": 600,
+                "maxMs": 1.8654583333326258,
+                "meanMs": 0.18278819444442837,
+                "p50Ms": 0.16237500000038096,
+                "p95Ms": 0.31641666666715196
+              },
+              "gcStep": {
+                "p99Ms": 0.008666666666101719,
+                "samples": 600,
+                "maxMs": 0.025708333332374878,
+                "meanMs": 0.002231527777783645,
+                "p50Ms": 0.0018333333322573253,
+                "p95Ms": 0.0046249999989811386
+              },
+              "intervals": {
+                "p99Ms": 13.05966666666869,
+                "samples": 599,
+                "maxMs": 21.33179166666821,
+                "meanMs": 4.019285475792989,
+                "p50Ms": 3.1678750000008193,
+                "p95Ms": 8.736999999999995
+              },
+              "transfer": {
+                "p99Ms": 9.095166666666543,
+                "samples": 600,
+                "maxMs": 19.335333333332372,
+                "meanMs": 2.2517172222222794,
+                "p50Ms": 1.3785416666696193,
+                "p95Ms": 7.03112499999925
+              },
+              "paletteSync": {
+                "p99Ms": 0.0917083333344948,
+                "samples": 600,
+                "maxMs": 0.17133333333241296,
+                "meanMs": 0.008284861111128214,
+                "p50Ms": 0,
+                "p95Ms": 0.049958333333322
+              },
+              "update": {
+                "p99Ms": 0.2658749999984167,
+                "samples": 600,
+                "maxMs": 0.6780416666654077,
+                "meanMs": 0.09380062500008299,
+                "p50Ms": 0.08116666666602157,
+                "p95Ms": 0.19083333333469454
+              },
+              "frame": {
+                "p99Ms": 9.372541666666123,
+                "samples": 600,
+                "maxMs": 19.91012500000089,
+                "meanMs": 2.542416041666664,
+                "p50Ms": 1.6957083333331013,
+                "p95Ms": 7.25266666666613
+              },
+              "readback": {
+                "p99Ms": 0.2215833333334416,
+                "samples": 600,
+                "maxMs": 0.8497500000004266,
+                "meanMs": 0.10791062499995618,
+                "p50Ms": 0.0987083333328087,
+                "p95Ms": 0.16649999999884812
+              },
+              "present": {
+                "p99Ms": 0.26633333333414555,
+                "samples": 600,
+                "maxMs": 0.47416666666499907,
+                "meanMs": 0.19273312499995754,
+                "p50Ms": 0.18683333333413543,
+                "p95Ms": 0.23541666666737626
+              },
+              "render": {
+                "p99Ms": 9.590958333332011,
+                "samples": 600,
+                "maxMs": 20.17433333333507,
+                "meanMs": 2.7351491666666217,
+                "p50Ms": 1.8981666666597619,
+                "p95Ms": 7.44641666666368
+              }
+            },
+            "randomSeed": 27122027,
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mainThreadCpuMsPerFrame": 2.666731388333332,
+            "readbackCalls": 600,
+            "paletteCache": {
+              "after": {
+                "entries": 0,
+                "hits": 0,
+                "bytes": 0,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 0
+              },
+              "before": {
+                "entries": 0,
+                "hits": 0,
+                "bytes": 0,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 0
+              }
+            },
+            "mode": "opengl-cocoa-frame",
+            "latencyFrames": 1,
+            "pixelWidth": 1280,
+            "pixelHeight": 960,
+            "paletteAllocationProbe": {
+              "warmupTicks": 128,
+              "samples": 120,
+              "static": true,
+              "luaKiBPerSample": 0.0013020833333333333
+            },
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "logicalWidth": 640,
+            "logicalHeight": 480,
+            "map": "MAP_G04_N01",
+            "fullPaletteSamples": 0,
+            "pendingReadbacks": 1,
+            "measuredFrames": 600,
+            "npcWorkloadBeforeSha256": "cd056d710af2f9fa2dfed7c55626e53ef08f2cce7afe5ef6a52b244d2faea328",
+            "npcWorkloadAfterSha256": "cd056d710af2f9fa2dfed7c55626e53ef08f2cce7afe5ef6a52b244d2faea328"
+          },
+          {
+            "elapsedSeconds": 2.96660045833333,
+            "cpuMsPerFrame": 3.8879549999999994,
+            "metrics": {
+              "body": {
+                "p99Ms": 0.983708333331279,
+                "samples": 600,
+                "maxMs": 1.0918750000001864,
+                "meanMs": 0.48323951388896447,
+                "p50Ms": 0.46516666666818196,
+                "p95Ms": 0.7333333333328085
+              },
+              "gcStep": {
+                "p99Ms": 0.060958333332195025,
+                "samples": 600,
+                "maxMs": 0.13754166666757328,
+                "meanMs": 0.010257986110975281,
+                "p50Ms": 0.00666666666759852,
+                "p95Ms": 0.03162500000009061
+              },
+              "intervals": {
+                "p99Ms": 9.448458333334742,
+                "samples": 599,
+                "maxMs": 16.985291666665958,
+                "meanMs": 4.944918614357268,
+                "p50Ms": 4.611249999999956,
+                "p95Ms": 7.016083333333256
+              },
+              "transfer": {
+                "p99Ms": 6.46087500000192,
+                "samples": 600,
+                "maxMs": 14.620916666665096,
+                "meanMs": 2.497291111111203,
+                "p50Ms": 2.0967083333367498,
+                "p95Ms": 4.726583333336976
+              },
+              "paletteSync": {
+                "p99Ms": 0.21870833333714756,
+                "samples": 600,
+                "maxMs": 0.24204166666663696,
+                "meanMs": 0.04077708333343644,
+                "p50Ms": 0,
+                "p95Ms": 0.1791249999989475
+              },
+              "update": {
+                "p99Ms": 1.0642499999988786,
+                "samples": 600,
+                "maxMs": 1.2519583333343576,
+                "meanMs": 0.46249312499994905,
+                "p50Ms": 0.41687499999909505,
+                "p95Ms": 0.8791250000008688
+              },
+              "frame": {
+                "p99Ms": 6.987708333333842,
+                "samples": 600,
+                "maxMs": 15.192208333333568,
+                "meanMs": 3.095145416666704,
+                "p50Ms": 2.7574166666681776,
+                "p95Ms": 5.231708333333529
+              },
+              "readback": {
+                "p99Ms": 0.1930833333343429,
+                "samples": 600,
+                "maxMs": 0.21787499999881277,
+                "meanMs": 0.11461479166653632,
+                "p50Ms": 0.10945833333408928,
+                "p95Ms": 0.15679166666693334
+              },
+              "present": {
+                "p99Ms": 0.25791666666208357,
+                "samples": 600,
+                "maxMs": 0.3099583333323608,
+                "meanMs": 0.1985500694444268,
+                "p50Ms": 0.19362500000141836,
+                "p95Ms": 0.22945833333309906
+              },
+              "render": {
+                "p99Ms": 7.1797083333322576,
+                "samples": 600,
+                "maxMs": 15.385958333336447,
+                "meanMs": 3.2936954861111305,
+                "p50Ms": 2.9516250000014566,
+                "p95Ms": 5.429291666670721
+              }
+            },
+            "randomSeed": 27122028,
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mainThreadCpuMsPerFrame": 3.6963704166666687,
+            "readbackCalls": 600,
+            "paletteCache": {
+              "after": {
+                "entries": 0,
+                "hits": 0,
+                "bytes": 0,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 0
+              },
+              "before": {
+                "entries": 0,
+                "hits": 0,
+                "bytes": 0,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 0
+              }
+            },
+            "mode": "opengl-cocoa-frame",
+            "latencyFrames": 1,
+            "pixelWidth": 1920,
+            "pixelHeight": 1440,
+            "paletteAllocationProbe": {
+              "warmupTicks": 128,
+              "samples": 120,
+              "static": true,
+              "luaKiBPerSample": 0.0013020833333333333
+            },
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "logicalWidth": 960,
+            "logicalHeight": 720,
+            "map": "MAP_G03_N00",
+            "fullPaletteSamples": 0,
+            "pendingReadbacks": 1,
+            "measuredFrames": 600,
+            "npcWorkloadBeforeSha256": "2941dc2f9650a49a9266de0ca7ebdd08cd14c45099ccfd29e6e0906a7122f8bf",
+            "npcWorkloadAfterSha256": "f38c2df80d80d99378ff89430d6e987462060a0359bcfa0df831ff415aea0bd0"
+          },
+          {
+            "elapsedSeconds": 2.7559623749999993,
+            "cpuMsPerFrame": 3.5167516666666674,
+            "metrics": {
+              "body": {
+                "p99Ms": 0.4215416666681904,
+                "samples": 600,
+                "maxMs": 0.44833333333471614,
+                "meanMs": 0.19331715277781808,
+                "p50Ms": 0.178458333333964,
+                "p95Ms": 0.3313333333352375
+              },
+              "gcStep": {
+                "p99Ms": 0.010833333330850792,
+                "samples": 600,
+                "maxMs": 0.016833333333465816,
+                "meanMs": 0.0026110416667120737,
+                "p50Ms": 0.0020833333280734223,
+                "p95Ms": 0.005874999999377906
+              },
+              "intervals": {
+                "p99Ms": 9.674749999998511,
+                "samples": 599,
+                "maxMs": 10.726166666668036,
+                "meanMs": 4.595008069003892,
+                "p50Ms": 4.073249999997586,
+                "p95Ms": 7.400666666661948
+              },
+              "transfer": {
+                "p99Ms": 7.867416666659466,
+                "samples": 600,
+                "maxMs": 9.223416666664264,
+                "meanMs": 2.954042638888552,
+                "p50Ms": 2.382583333332633,
+                "p95Ms": 5.793999999994526
+              },
+              "paletteSync": {
+                "p99Ms": 0.0797083333310411,
+                "samples": 600,
+                "maxMs": 0.1713750000043035,
+                "meanMs": 0.009281944444386644,
+                "p50Ms": 0,
+                "p95Ms": 0.05008333333123005
+              },
+              "update": {
+                "p99Ms": 0.2833333333356336,
+                "samples": 600,
+                "maxMs": 0.49020833333202063,
+                "meanMs": 0.10933729166665647,
+                "p50Ms": 0.09895833333573023,
+                "p95Ms": 0.2066666666671324
+              },
+              "frame": {
+                "p99Ms": 8.21562499999473,
+                "samples": 600,
+                "maxMs": 9.42483333333044,
+                "meanMs": 3.254646805555428,
+                "p50Ms": 2.7206250000020304,
+                "p95Ms": 6.073500000006504
+              },
+              "readback": {
+                "p99Ms": 0.20895833333156588,
+                "samples": 600,
+                "maxMs": 0.24212500000686532,
+                "meanMs": 0.10728701388905766,
+                "p50Ms": 0.10075000000142609,
+                "p95Ms": 0.15633333332942811
+              },
+              "present": {
+                "p99Ms": 0.23041666666401284,
+                "samples": 600,
+                "maxMs": 0.2747499999991021,
+                "meanMs": 0.0458663194445208,
+                "p50Ms": 0.014375000002786464,
+                "p95Ms": 0.20137500000316777
+              },
+              "render": {
+                "p99Ms": 8.232666666661004,
+                "samples": 600,
+                "maxMs": 9.43900000000042,
+                "meanMs": 3.3005131249999486,
+                "p50Ms": 2.789916666671388,
+                "p95Ms": 6.087041666674509
+              }
+            },
+            "randomSeed": 27122029,
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mainThreadCpuMsPerFrame": 3.3444464583333358,
+            "readbackCalls": 600,
+            "paletteCache": {
+              "after": {
+                "entries": 0,
+                "hits": 0,
+                "bytes": 0,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 0
+              },
+              "before": {
+                "entries": 0,
+                "hits": 0,
+                "bytes": 0,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 0
+              }
+            },
+            "mode": "opengl-cocoa-frame",
+            "latencyFrames": 1,
+            "pixelWidth": 1920,
+            "pixelHeight": 1440,
+            "paletteAllocationProbe": {
+              "warmupTicks": 128,
+              "samples": 120,
+              "static": true,
+              "luaKiBPerSample": 0.0013020833333333333
+            },
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "logicalWidth": 960,
+            "logicalHeight": 720,
+            "map": "MAP_G04_N01",
+            "fullPaletteSamples": 0,
+            "pendingReadbacks": 1,
+            "measuredFrames": 600,
+            "npcWorkloadBeforeSha256": "cd056d710af2f9fa2dfed7c55626e53ef08f2cce7afe5ef6a52b244d2faea328",
+            "npcWorkloadAfterSha256": "cd056d710af2f9fa2dfed7c55626e53ef08f2cce7afe5ef6a52b244d2faea328"
+          }
+        ],
+        "simulationHz": 60,
+        "mainLoopSleepSeconds": 0.001,
+        "measuredPixelReadbackObservers": false,
+        "measuredScreenshots": false,
+        "readbackMetric": "synchronous call or asynchronous submission; completion wait is in transfer, runtime completion copy may be in present",
+        "vsync": 0,
+        "readbackTimingAvailable": true,
+        "mainThreadCpuAvailable": true,
+        "runtime": {
+          "major": 12,
+          "minor": 0,
+          "revision": 0
+        },
+        "npcConstruction": "seeded-sorted-neighbors-fresh-pool",
+        "pass": true,
+        "game": "firered",
+        "osWindowProof": {
+          "initial-map": {
+            "freshFrameStamp": 1232,
+            "minimumFrameStamp": 1205,
+            "centralColours": 50,
+            "attempts": 1
+          },
+          "second-map": {
+            "freshFrameStamp": 2480,
+            "minimumFrameStamp": 2444,
+            "centralColours": 35,
+            "attempts": 1
+          },
+          "resized": {
+            "freshFrameStamp": 3715,
+            "minimumFrameStamp": 3694,
+            "centralColours": 50,
+            "attempts": 1
+          },
+          "map-return": {
+            "freshFrameStamp": 4953,
+            "minimumFrameStamp": 4930,
+            "centralColours": 35,
+            "attempts": 1
+          }
+        }
+      }
+    },
+    {
+      "game": "firered",
+      "repeat": 2,
+      "variant": "candidate",
+      "data": {
+        "npcConstruction": "seeded-sorted-neighbors-fresh-pool",
+        "runtime": {
+          "minor": 0,
+          "revision": 0,
+          "major": 12
+        },
+        "pass": true,
+        "game": "firered",
+        "gpu": {
+          "renderer": "OpenGL",
+          "vendor": "Apple",
+          "version": "4.1 Metal - 89.4",
+          "device": "Apple M3"
+        },
+        "phases": [
+          {
+            "logicalHeight": 480,
+            "pixelHeight": 960,
+            "latencyFrames": 1,
+            "measuredFrames": 600,
+            "elapsedSeconds": 2.501482208333333,
+            "cpuMsPerFrame": 3.1741199999999994,
+            "metrics": {
+              "render": {
+                "meanMs": 2.7239946527777947,
+                "p50Ms": 1.752000000000642,
+                "samples": 600,
+                "p99Ms": 7.620291666667001,
+                "maxMs": 7.850249999998837,
+                "p95Ms": 6.99262500000053
+              },
+              "readback": {
+                "meanMs": 0.08037416666665984,
+                "p50Ms": 0.07662500000016337,
+                "samples": 600,
+                "p99Ms": 0.13412499999887473,
+                "maxMs": 0.15970833333422974,
+                "p95Ms": 0.11054166666646381
+              },
+              "frame": {
+                "meanMs": 2.551628541666687,
+                "p50Ms": 1.577375000000103,
+                "samples": 600,
+                "p99Ms": 7.451416666667043,
+                "maxMs": 7.682541666666154,
+                "p95Ms": 6.825833333333975
+              },
+              "gcStep": {
+                "meanMs": 0.004636805555531254,
+                "p50Ms": 0.0021249999999639613,
+                "samples": 600,
+                "p99Ms": 0.03170833333232537,
+                "maxMs": 0.05220833333341446,
+                "p95Ms": 0.01679166666601617
+              },
+              "body": {
+                "meanMs": 0.3405593749999928,
+                "p50Ms": 0.3122083333337855,
+                "samples": 600,
+                "p99Ms": 0.8101250000001059,
+                "maxMs": 0.9879583333347597,
+                "p95Ms": 0.5892916666674353
+              },
+              "intervals": {
+                "meanMs": 4.171117904841402,
+                "p50Ms": 3.256541666666113,
+                "samples": 599,
+                "p99Ms": 8.976791666666983,
+                "maxMs": 9.247333333332719,
+                "p95Ms": 8.527083333333074
+              },
+              "transfer": {
+                "meanMs": 2.1306950000000344,
+                "p50Ms": 1.1172916666675192,
+                "samples": 600,
+                "p99Ms": 7.065499999999503,
+                "maxMs": 7.266041666668777,
+                "p95Ms": 6.405333333334262
+              },
+              "paletteSync": {
+                "meanMs": 0.023102569444461984,
+                "p50Ms": 0,
+                "samples": 600,
+                "p99Ms": 0.17083333333278716,
+                "maxMs": 0.2151666666687646,
+                "p95Ms": 0.12154166666711319
+              },
+              "present": {
+                "meanMs": 0.1723661111111078,
+                "p50Ms": 0.16920833333333718,
+                "samples": 600,
+                "p99Ms": 0.20845833333371644,
+                "maxMs": 0.22300000000097242,
+                "p95Ms": 0.19295833333288215
+              },
+              "update": {
+                "meanMs": 0.27628513888884987,
+                "p50Ms": 0.22683333333262112,
+                "samples": 600,
+                "p99Ms": 0.8418333333333194,
+                "maxMs": 1.0227916666671888,
+                "p95Ms": 0.6442916666653531
+              }
+            },
+            "randomSeed": 27122026,
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mainThreadCpuMsPerFrame": 2.99188139,
+            "readbackCalls": 600,
+            "paletteCache": {
+              "after": {
+                "bytes": 0,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 0,
+                "entries": 0,
+                "hits": 0
+              },
+              "before": {
+                "bytes": 0,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 0,
+                "entries": 0,
+                "hits": 0
+              }
+            },
+            "pendingReadbacks": 1,
+            "mode": "opengl-cocoa-frame",
+            "paletteAllocationProbe": {
+              "samples": 120,
+              "warmupTicks": 128,
+              "luaKiBPerSample": 0.00498046875,
+              "static": true
+            },
+            "fullPaletteSamples": 0,
+            "pixelWidth": 1280,
+            "logicalWidth": 640,
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "map": "MAP_G03_N00",
+            "npcWorkloadBeforeSha256": "7064bef7088d5b5c25bed8dcd8a257008eee5c348c680548b3bd82079d4c7c77",
+            "npcWorkloadAfterSha256": "224d5d544a4dadd8859b3a4b742433b06412393d6f0f9643249db2f4011fee7f"
+          },
+          {
+            "logicalHeight": 480,
+            "pixelHeight": 960,
+            "latencyFrames": 1,
+            "measuredFrames": 600,
+            "elapsedSeconds": 2.249148166666668,
+            "cpuMsPerFrame": 2.735970000000001,
+            "metrics": {
+              "render": {
+                "meanMs": 2.520130694444367,
+                "p50Ms": 1.530041666667259,
+                "samples": 600,
+                "p99Ms": 7.974041666667375,
+                "maxMs": 8.977250000002712,
+                "p95Ms": 7.448458333332297
+              },
+              "readback": {
+                "meanMs": 0.07383819444444366,
+                "p50Ms": 0.06795833333406165,
+                "samples": 600,
+                "p99Ms": 0.13283333333369285,
+                "maxMs": 0.1997083333336036,
+                "p95Ms": 0.10866666666586866
+              },
+              "frame": {
+                "meanMs": 2.3472846527777858,
+                "p50Ms": 1.3570833333318433,
+                "samples": 600,
+                "p99Ms": 7.803458333333069,
+                "maxMs": 8.807791666667342,
+                "p95Ms": 7.277625000000398
+              },
+              "gcStep": {
+                "meanMs": 0.0022177777777354635,
+                "p50Ms": 0.0019166666653802622,
+                "samples": 600,
+                "p99Ms": 0.008499999998079488,
+                "maxMs": 0.01558333333306905,
+                "p95Ms": 0.004791666665227012
+              },
+              "body": {
+                "meanMs": 0.1332781944443795,
+                "p50Ms": 0.1246666666645524,
+                "samples": 600,
+                "p99Ms": 0.29633333333123346,
+                "maxMs": 0.39220833333253324,
+                "p95Ms": 0.24599999999885824
+              },
+              "intervals": {
+                "meanMs": 3.7503522537562666,
+                "p50Ms": 2.776000000000778,
+                "samples": 599,
+                "p99Ms": 9.253708333334387,
+                "maxMs": 10.262958333333572,
+                "p95Ms": 8.700083333332387
+              },
+              "transfer": {
+                "meanMs": 2.1401682638889628,
+                "p50Ms": 1.137708333333265,
+                "samples": 600,
+                "p99Ms": 7.623416666666216,
+                "maxMs": 8.424249999999134,
+                "p95Ms": 7.095666666666389
+              },
+              "paletteSync": {
+                "meanMs": 0.007147916666670658,
+                "p50Ms": 0,
+                "samples": 600,
+                "p99Ms": 0.061208333331563836,
+                "maxMs": 0.23733333333275652,
+                "p95Ms": 0.04516666666631863
+              },
+              "present": {
+                "meanMs": 0.17284604166658113,
+                "p50Ms": 0.1693333333321334,
+                "samples": 600,
+                "p99Ms": 0.22008333333367602,
+                "maxMs": 0.2319583333338926,
+                "p95Ms": 0.19820833333383803
+              },
+              "update": {
+                "meanMs": 0.0680970138888289,
+                "p50Ms": 0.05891666666713036,
+                "samples": 600,
+                "p99Ms": 0.20433333333258474,
+                "maxMs": 0.2524583333336494,
+                "p95Ms": 0.14908333333352175
+              }
+            },
+            "randomSeed": 27122027,
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mainThreadCpuMsPerFrame": 2.5726218750000003,
+            "readbackCalls": 600,
+            "paletteCache": {
+              "after": {
+                "bytes": 0,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 0,
+                "entries": 0,
+                "hits": 0
+              },
+              "before": {
+                "bytes": 0,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 0,
+                "entries": 0,
+                "hits": 0
+              }
+            },
+            "pendingReadbacks": 1,
+            "mode": "opengl-cocoa-frame",
+            "paletteAllocationProbe": {
+              "samples": 120,
+              "warmupTicks": 128,
+              "luaKiBPerSample": 0.0013020833333333333,
+              "static": true
+            },
+            "fullPaletteSamples": 0,
+            "pixelWidth": 1280,
+            "logicalWidth": 640,
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "map": "MAP_G04_N01",
+            "npcWorkloadBeforeSha256": "cd056d710af2f9fa2dfed7c55626e53ef08f2cce7afe5ef6a52b244d2faea328",
+            "npcWorkloadAfterSha256": "cd056d710af2f9fa2dfed7c55626e53ef08f2cce7afe5ef6a52b244d2faea328"
+          },
+          {
+            "logicalHeight": 720,
+            "pixelHeight": 1440,
+            "latencyFrames": 1,
+            "measuredFrames": 600,
+            "elapsedSeconds": 3.6170767916666673,
+            "cpuMsPerFrame": 4.947453333333334,
+            "metrics": {
+              "render": {
+                "meanMs": 4.4434961805556155,
+                "p50Ms": 3.127750000000873,
+                "samples": 600,
+                "p99Ms": 10.37716666666988,
+                "maxMs": 16.082250000000187,
+                "p95Ms": 9.115208333334124
+              },
+              "readback": {
+                "meanMs": 0.11600736111105607,
+                "p50Ms": 0.1109166666708461,
+                "samples": 600,
+                "p99Ms": 0.20874999999875854,
+                "maxMs": 0.2513750000048276,
+                "p95Ms": 0.16716666666383162
+              },
+              "frame": {
+                "meanMs": 4.247693124999969,
+                "p50Ms": 2.924166666662842,
+                "samples": 600,
+                "p99Ms": 10.19566666666627,
+                "maxMs": 15.880874999997019,
+                "p95Ms": 8.921916666666974
+              },
+              "gcStep": {
+                "meanMs": 0.005597361111030115,
+                "p50Ms": 0.0027083333336008764,
+                "samples": 600,
+                "p99Ms": 0.03566666666721119,
+                "maxMs": 0.06091666666740991,
+                "p95Ms": 0.01904166666832907
+              },
+              "body": {
+                "meanMs": 0.4219513888889311,
+                "p50Ms": 0.391416666666089,
+                "samples": 600,
+                "p99Ms": 0.9157916666655552,
+                "maxMs": 0.9770000000006718,
+                "p95Ms": 0.7041666666651736
+              },
+              "intervals": {
+                "meanMs": 6.030840984974954,
+                "p50Ms": 4.736999999998659,
+                "samples": 599,
+                "p99Ms": 12.29829166666363,
+                "maxMs": 17.690708333333305,
+                "p95Ms": 10.890458333333797
+              },
+              "transfer": {
+                "meanMs": 3.7097343749999823,
+                "p50Ms": 2.3465833333347064,
+                "samples": 600,
+                "p99Ms": 9.494291666662491,
+                "maxMs": 14.79112499999502,
+                "p95Ms": 8.375166666663603
+              },
+              "paletteSync": {
+                "meanMs": 0.034326805555412086,
+                "p50Ms": 0,
+                "samples": 600,
+                "p99Ms": 0.20016666666577976,
+                "maxMs": 0.26087499999860597,
+                "p95Ms": 0.14479166665992693
+              },
+              "present": {
+                "meanMs": 0.19580305555564634,
+                "p50Ms": 0.19124999999675651,
+                "samples": 600,
+                "p99Ms": 0.2554583333314042,
+                "maxMs": 0.28979166666331935,
+                "p95Ms": 0.22945833333309906
+              },
+              "update": {
+                "meanMs": 0.39521395833339135,
+                "p50Ms": 0.34225000000276395,
+                "samples": 600,
+                "p99Ms": 1.0340000000006455,
+                "maxMs": 1.2202499999993677,
+                "p95Ms": 0.7899166666653912
+              }
+            },
+            "randomSeed": 27122028,
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mainThreadCpuMsPerFrame": 4.726847846666666,
+            "readbackCalls": 600,
+            "paletteCache": {
+              "after": {
+                "bytes": 0,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 0,
+                "entries": 0,
+                "hits": 0
+              },
+              "before": {
+                "bytes": 0,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 0,
+                "entries": 0,
+                "hits": 0
+              }
+            },
+            "pendingReadbacks": 1,
+            "mode": "opengl-cocoa-frame",
+            "paletteAllocationProbe": {
+              "samples": 120,
+              "warmupTicks": 128,
+              "luaKiBPerSample": 0.0013020833333333333,
+              "static": true
+            },
+            "fullPaletteSamples": 0,
+            "pixelWidth": 1920,
+            "logicalWidth": 960,
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "map": "MAP_G03_N00",
+            "npcWorkloadBeforeSha256": "2941dc2f9650a49a9266de0ca7ebdd08cd14c45099ccfd29e6e0906a7122f8bf",
+            "npcWorkloadAfterSha256": "f38c2df80d80d99378ff89430d6e987462060a0359bcfa0df831ff415aea0bd0"
+          },
+          {
+            "logicalHeight": 720,
+            "pixelHeight": 1440,
+            "latencyFrames": 1,
+            "measuredFrames": 600,
+            "elapsedSeconds": 3.2354722916666674,
+            "cpuMsPerFrame": 4.072426666666662,
+            "metrics": {
+              "render": {
+                "meanMs": 4.147947986111102,
+                "p50Ms": 3.0347916666713104,
+                "samples": 600,
+                "p99Ms": 13.537249999998835,
+                "maxMs": 20.569333333330775,
+                "p95Ms": 9.425124999999923
+              },
+              "readback": {
+                "meanMs": 0.11296937500016331,
+                "p50Ms": 0.10620833333874202,
+                "samples": 600,
+                "p99Ms": 0.19258333333027622,
+                "maxMs": 0.22120833333616474,
+                "p95Ms": 0.16800000000216642
+              },
+              "frame": {
+                "meanMs": 4.132158611111283,
+                "p50Ms": 3.0220000000014124,
+                "samples": 600,
+                "p99Ms": 13.506291666669057,
+                "maxMs": 20.549333333335085,
+                "p95Ms": 9.410083333332153
+              },
+              "gcStep": {
+                "meanMs": 0.0025865277777844162,
+                "p50Ms": 0.0021249999981876044,
+                "samples": 600,
+                "p99Ms": 0.009833333333375549,
+                "maxMs": 0.015708333332753455,
+                "p95Ms": 0.005916666669492088
+              },
+              "body": {
+                "meanMs": 0.16136784722211436,
+                "p50Ms": 0.1424583333360374,
+                "samples": 600,
+                "p99Ms": 0.3630416666666747,
+                "maxMs": 0.41437500000185423,
+                "p95Ms": 0.2874583333358771
+              },
+              "intervals": {
+                "meanMs": 5.39525347801893,
+                "p50Ms": 4.274416666667946,
+                "samples": 599,
+                "p99Ms": 14.961291666665488,
+                "maxMs": 21.812041666670723,
+                "p95Ms": 10.693166666662535
+              },
+              "transfer": {
+                "meanMs": 3.8578213888890054,
+                "p50Ms": 2.744791666660973,
+                "samples": 600,
+                "p99Ms": 13.111999999999568,
+                "maxMs": 20.241041666665183,
+                "p95Ms": 9.149083333333863
+              },
+              "paletteSync": {
+                "meanMs": 0.005941597222272795,
+                "p50Ms": 0,
+                "samples": 600,
+                "p99Ms": 0.026083333334980807,
+                "maxMs": 0.05354166667004279,
+                "p95Ms": 0.020083333332365783
+              },
+              "present": {
+                "meanMs": 0.015789374999819472,
+                "p50Ms": 0.014999999997655777,
+                "samples": 600,
+                "p99Ms": 0.030333333338461443,
+                "maxMs": 0.03754166666780634,
+                "p95Ms": 0.024083333332924894
+              },
+              "update": {
+                "meanMs": 0.07069937499988892,
+                "p50Ms": 0.06429166667132336,
+                "samples": 600,
+                "p99Ms": 0.15012499999755846,
+                "maxMs": 0.2078750000009677,
+                "p95Ms": 0.11866666667259551
+              }
+            },
+            "randomSeed": 27122029,
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mainThreadCpuMsPerFrame": 3.8716263883333353,
+            "readbackCalls": 600,
+            "paletteCache": {
+              "after": {
+                "bytes": 0,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 0,
+                "entries": 0,
+                "hits": 0
+              },
+              "before": {
+                "bytes": 0,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 0,
+                "entries": 0,
+                "hits": 0
+              }
+            },
+            "pendingReadbacks": 1,
+            "mode": "opengl-cocoa-frame",
+            "paletteAllocationProbe": {
+              "samples": 120,
+              "warmupTicks": 128,
+              "luaKiBPerSample": 0.0013020833333333333,
+              "static": true
+            },
+            "fullPaletteSamples": 0,
+            "pixelWidth": 1920,
+            "logicalWidth": 960,
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "map": "MAP_G04_N01",
+            "npcWorkloadBeforeSha256": "cd056d710af2f9fa2dfed7c55626e53ef08f2cce7afe5ef6a52b244d2faea328",
+            "npcWorkloadAfterSha256": "cd056d710af2f9fa2dfed7c55626e53ef08f2cce7afe5ef6a52b244d2faea328"
+          }
+        ],
+        "simulationHz": 60,
+        "mainLoopSleepSeconds": 0.001,
+        "measuredPixelReadbackObservers": false,
+        "measuredScreenshots": false,
+        "readbackMetric": "synchronous call or asynchronous submission; completion wait is in transfer, runtime completion copy may be in present",
+        "readbackTimingAvailable": true,
+        "vsync": 0,
+        "mainThreadCpuAvailable": true,
+        "osWindowProof": {
+          "initial-map": {
+            "freshFrameStamp": 1233,
+            "minimumFrameStamp": 1205,
+            "centralColours": 50,
+            "attempts": 1
+          },
+          "second-map": {
+            "freshFrameStamp": 2471,
+            "minimumFrameStamp": 2445,
+            "centralColours": 35,
+            "attempts": 1
+          },
+          "resized": {
+            "freshFrameStamp": 3709,
+            "minimumFrameStamp": 3684,
+            "centralColours": 50,
+            "attempts": 1
+          },
+          "map-return": {
+            "freshFrameStamp": 4943,
+            "minimumFrameStamp": 4923,
+            "centralColours": 35,
+            "attempts": 1
+          }
+        }
+      }
+    },
+    {
+      "game": "firered",
+      "repeat": 2,
+      "variant": "baseline",
+      "data": {
+        "npcConstruction": "seeded-sorted-neighbors-fresh-pool",
+        "pass": true,
+        "vsync": 0,
+        "mainLoopSleepSeconds": 0.001,
+        "runtime": {
+          "minor": 0,
+          "revision": 0,
+          "major": 12
+        },
+        "phases": [
+          {
+            "paletteCache": {
+              "before": {
+                "perOwner": 4,
+                "misses": 0,
+                "bytes": 0,
+                "entries": 0,
+                "hits": 0,
+                "budget": 33554432
+              },
+              "after": {
+                "perOwner": 4,
+                "misses": 0,
+                "bytes": 0,
+                "entries": 0,
+                "hits": 0,
+                "budget": 33554432
+              }
+            },
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "pixelHeight": 960,
+            "fullPaletteSamples": 0,
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "logicalWidth": 640,
+            "logicalHeight": 480,
+            "map": "MAP_G03_N00",
+            "paletteAllocationProbe": {
+              "luaKiBPerSample": 0.00498046875,
+              "static": true,
+              "samples": 120,
+              "warmupTicks": 128
+            },
+            "mode": "opengl-cocoa-frame",
+            "pixelWidth": 1280,
+            "latencyFrames": 0,
+            "pendingReadbacks": 0,
+            "elapsedSeconds": 3.718859375,
+            "cpuMsPerFrame": 3.373095,
+            "metrics": {
+              "readback": {
+                "meanMs": 2.646979861111147,
+                "p50Ms": 1.8669583333341677,
+                "p95Ms": 6.957416666666383,
+                "p99Ms": 7.985458333333639,
+                "maxMs": 8.509166666667234,
+                "samples": 600
+              },
+              "body": {
+                "meanMs": 0.5094914583333459,
+                "p50Ms": 0.4937083333338421,
+                "p95Ms": 0.8072916666668206,
+                "p99Ms": 0.9872916666653353,
+                "maxMs": 1.1975833333330854,
+                "samples": 600
+              },
+              "update": {
+                "meanMs": 0.5578894444444386,
+                "p50Ms": 0.5054583333325979,
+                "p95Ms": 0.9962500000000318,
+                "p99Ms": 1.2627083333320854,
+                "maxMs": 2.053291666666013,
+                "samples": 600
+              },
+              "intervals": {
+                "meanMs": 6.199736505286591,
+                "p50Ms": 5.563416666666932,
+                "p95Ms": 10.729000000000433,
+                "p99Ms": 11.688208333332284,
+                "maxMs": 11.931875000001924,
+                "samples": 599
+              },
+              "frame": {
+                "meanMs": 4.262010833333323,
+                "p50Ms": 3.5804999999990983,
+                "p95Ms": 8.615124999999502,
+                "p99Ms": 9.690499999998714,
+                "maxMs": 9.965041666665897,
+                "samples": 600
+              },
+              "transfer": {
+                "meanMs": 1.1055395138888313,
+                "p50Ms": 1.0838333333342831,
+                "p95Ms": 1.3743750000001498,
+                "p99Ms": 1.5026666666679844,
+                "maxMs": 1.6595833333310495,
+                "samples": 600
+              },
+              "paletteSync": {
+                "meanMs": 0.05100923611106071,
+                "p50Ms": 0,
+                "p95Ms": 0.17891666666614015,
+                "p99Ms": 0.223125000001545,
+                "maxMs": 0.3636250000003116,
+                "samples": 600
+              },
+              "present": {
+                "meanMs": 0.1995513888888345,
+                "p50Ms": 0.19362499999875382,
+                "p95Ms": 0.24354166666640253,
+                "p99Ms": 0.2596666666674352,
+                "maxMs": 0.2731249999996521,
+                "samples": 600
+              },
+              "render": {
+                "meanMs": 4.461562222222158,
+                "p50Ms": 3.775916666667989,
+                "p95Ms": 8.819249999999279,
+                "p99Ms": 9.895416666665824,
+                "maxMs": 10.148208333333741,
+                "samples": 600
+              },
+              "gcStep": {
+                "meanMs": 0.027215486111136222,
+                "p50Ms": 0.010416666667900643,
+                "p95Ms": 0.09645833333404852,
+                "p99Ms": 0.2949166666663672,
+                "maxMs": 1.7921249999979239,
+                "samples": 600
+              }
+            },
+            "randomSeed": 27122026,
+            "readbackCalls": 600,
+            "mainThreadCpuMsPerFrame": 3.1343853466666665,
+            "measuredFrames": 600,
+            "npcWorkloadBeforeSha256": "7064bef7088d5b5c25bed8dcd8a257008eee5c348c680548b3bd82079d4c7c77",
+            "npcWorkloadAfterSha256": "224d5d544a4dadd8859b3a4b742433b06412393d6f0f9643249db2f4011fee7f"
+          },
+          {
+            "paletteCache": {
+              "before": {
+                "perOwner": 4,
+                "misses": 0,
+                "bytes": 0,
+                "entries": 0,
+                "hits": 0,
+                "budget": 33554432
+              },
+              "after": {
+                "perOwner": 4,
+                "misses": 0,
+                "bytes": 0,
+                "entries": 0,
+                "hits": 0,
+                "budget": 33554432
+              }
+            },
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "pixelHeight": 960,
+            "fullPaletteSamples": 0,
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "logicalWidth": 640,
+            "logicalHeight": 480,
+            "map": "MAP_G04_N01",
+            "paletteAllocationProbe": {
+              "luaKiBPerSample": 0.0013020833333333333,
+              "static": true,
+              "samples": 120,
+              "warmupTicks": 128
+            },
+            "mode": "opengl-cocoa-frame",
+            "pixelWidth": 1280,
+            "latencyFrames": 0,
+            "pendingReadbacks": 0,
+            "elapsedSeconds": 3.082831583333336,
+            "cpuMsPerFrame": 2.6501200000000003,
+            "metrics": {
+              "readback": {
+                "meanMs": 2.286070416666721,
+                "p50Ms": 1.6295416666682883,
+                "p95Ms": 5.829124999998214,
+                "p99Ms": 8.437458333336423,
+                "maxMs": 11.38287500000068,
+                "samples": 600
+              },
+              "body": {
+                "meanMs": 0.2025086111111385,
+                "p50Ms": 0.19216666666466153,
+                "p95Ms": 0.33041666666555614,
+                "p99Ms": 0.41837500000241334,
+                "maxMs": 0.565291666665857,
+                "samples": 600
+              },
+              "update": {
+                "meanMs": 0.10955326388893442,
+                "p50Ms": 0.09612499999889224,
+                "p95Ms": 0.21416666666418394,
+                "p99Ms": 0.2947916666666828,
+                "maxMs": 0.5866250000003959,
+                "samples": 600
+              },
+              "intervals": {
+                "meanMs": 5.137677031163046,
+                "p50Ms": 4.483541666667534,
+                "p95Ms": 8.954875000000584,
+                "p99Ms": 11.768916666664353,
+                "maxMs": 14.709666666668397,
+                "samples": 599
+              },
+              "frame": {
+                "meanMs": 3.649449236111219,
+                "p50Ms": 3.0009166666662423,
+                "p95Ms": 7.423166666665537,
+                "p99Ms": 10.08054166666561,
+                "maxMs": 13.051583333334449,
+                "samples": 600
+              },
+              "transfer": {
+                "meanMs": 1.1608702083333593,
+                "p50Ms": 1.1319166666652336,
+                "p95Ms": 1.4764583333288783,
+                "p99Ms": 1.6205833333327035,
+                "maxMs": 1.9363750000014335,
+                "samples": 600
+              },
+              "paletteSync": {
+                "meanMs": 0.010422013888880716,
+                "p50Ms": 0,
+                "p95Ms": 0.05254166666901483,
+                "p99Ms": 0.08537500000116438,
+                "maxMs": 0.1084166666647235,
+                "samples": 600
+              },
+              "present": {
+                "meanMs": 0.2030410416667472,
+                "p50Ms": 0.19954166666380502,
+                "p95Ms": 0.24295833333276562,
+                "p99Ms": 0.2662916666675841,
+                "maxMs": 0.31058333333255916,
+                "samples": 600
+              },
+              "render": {
+                "meanMs": 3.852490277777966,
+                "p50Ms": 3.209166666664487,
+                "p95Ms": 7.62045833333147,
+                "p99Ms": 10.321958333330272,
+                "maxMs": 13.311041666669965,
+                "samples": 600
+              },
+              "gcStep": {
+                "meanMs": 0.0024802083333922793,
+                "p50Ms": 0.0020416666668410244,
+                "p95Ms": 0.00550000000032469,
+                "p99Ms": 0.009208333331400809,
+                "maxMs": 0.020041666665804314,
+                "samples": 600
+              }
+            },
+            "randomSeed": 27122027,
+            "readbackCalls": 600,
+            "mainThreadCpuMsPerFrame": 2.4761156249999994,
+            "measuredFrames": 600,
+            "npcWorkloadBeforeSha256": "cd056d710af2f9fa2dfed7c55626e53ef08f2cce7afe5ef6a52b244d2faea328",
+            "npcWorkloadAfterSha256": "cd056d710af2f9fa2dfed7c55626e53ef08f2cce7afe5ef6a52b244d2faea328"
+          },
+          {
+            "paletteCache": {
+              "before": {
+                "perOwner": 4,
+                "misses": 0,
+                "bytes": 0,
+                "entries": 0,
+                "hits": 0,
+                "budget": 33554432
+              },
+              "after": {
+                "perOwner": 4,
+                "misses": 0,
+                "bytes": 0,
+                "entries": 0,
+                "hits": 0,
+                "budget": 33554432
+              }
+            },
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "pixelHeight": 1440,
+            "fullPaletteSamples": 0,
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "logicalWidth": 960,
+            "logicalHeight": 720,
+            "map": "MAP_G03_N00",
+            "paletteAllocationProbe": {
+              "luaKiBPerSample": 0.0013020833333333333,
+              "static": true,
+              "samples": 120,
+              "warmupTicks": 128
+            },
+            "mode": "opengl-cocoa-frame",
+            "pixelWidth": 1920,
+            "latencyFrames": 0,
+            "pendingReadbacks": 0,
+            "elapsedSeconds": 5.606219791666668,
+            "cpuMsPerFrame": 5.1325016666666645,
+            "metrics": {
+              "readback": {
+                "meanMs": 5.111136319444292,
+                "p50Ms": 4.249749999999608,
+                "p95Ms": 9.927166666667375,
+                "p99Ms": 10.623541666664238,
+                "maxMs": 10.783375000006146,
+                "samples": 600
+              },
+              "body": {
+                "meanMs": 0.5765083333334431,
+                "p50Ms": 0.5443333333303713,
+                "p95Ms": 0.9220416666657627,
+                "p99Ms": 1.0705000000044151,
+                "maxMs": 1.3225000000076648,
+                "samples": 600
+              },
+              "update": {
+                "meanMs": 0.5334511805556967,
+                "p50Ms": 0.47854166666638775,
+                "p95Ms": 1.0309166666679914,
+                "p99Ms": 1.413166666669241,
+                "maxMs": 1.6546250000004648,
+                "samples": 600
+              },
+              "intervals": {
+                "meanMs": 9.336780884808011,
+                "p50Ms": 8.821250000004,
+                "p95Ms": 14.107874999996994,
+                "p99Ms": 14.798499999997716,
+                "maxMs": 15.531750000004507,
+                "samples": 599
+              },
+              "frame": {
+                "meanMs": 7.571594374999892,
+                "p50Ms": 6.956291666668335,
+                "p95Ms": 12.249166666663314,
+                "p99Ms": 12.982208333330192,
+                "maxMs": 13.316416666668829,
+                "samples": 600
+              },
+              "transfer": {
+                "meanMs": 1.8839497222221564,
+                "p50Ms": 1.884666666668977,
+                "p95Ms": 2.31595833333742,
+                "p99Ms": 2.5618749999978263,
+                "maxMs": 2.656166666664461,
+                "samples": 600
+              },
+              "paletteSync": {
+                "meanMs": 0.05297659722239464,
+                "p50Ms": 0.053458333333367136,
+                "p95Ms": 0.16037500000365412,
+                "p99Ms": 0.2144166666653291,
+                "maxMs": 0.25925000000981413,
+                "samples": 600
+              },
+              "present": {
+                "meanMs": 0.03180381944430859,
+                "p50Ms": 0.02983333333617111,
+                "p95Ms": 0.04708333333525161,
+                "p99Ms": 0.06833333333133851,
+                "maxMs": 0.09087500000148907,
+                "samples": 600
+              },
+              "render": {
+                "meanMs": 7.6033981944442,
+                "p50Ms": 7.009708333331588,
+                "p95Ms": 12.277041666660438,
+                "p99Ms": 13.022291666668906,
+                "maxMs": 13.34433333333962,
+                "samples": 600
+              },
+              "gcStep": {
+                "meanMs": 0.010365277777649359,
+                "p50Ms": 0.005875000002930619,
+                "p95Ms": 0.03508333333002156,
+                "p99Ms": 0.05741666667091749,
+                "maxMs": 0.13516666667001687,
+                "samples": 600
+              }
+            },
+            "randomSeed": 27122028,
+            "readbackCalls": 600,
+            "mainThreadCpuMsPerFrame": 4.803011250000002,
+            "measuredFrames": 600,
+            "npcWorkloadBeforeSha256": "2941dc2f9650a49a9266de0ca7ebdd08cd14c45099ccfd29e6e0906a7122f8bf",
+            "npcWorkloadAfterSha256": "f38c2df80d80d99378ff89430d6e987462060a0359bcfa0df831ff415aea0bd0"
+          },
+          {
+            "paletteCache": {
+              "before": {
+                "perOwner": 4,
+                "misses": 0,
+                "bytes": 0,
+                "entries": 0,
+                "hits": 0,
+                "budget": 33554432
+              },
+              "after": {
+                "perOwner": 4,
+                "misses": 0,
+                "bytes": 0,
+                "entries": 0,
+                "hits": 0,
+                "budget": 33554432
+              }
+            },
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "pixelHeight": 1440,
+            "fullPaletteSamples": 0,
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "logicalWidth": 960,
+            "logicalHeight": 720,
+            "map": "MAP_G04_N01",
+            "paletteAllocationProbe": {
+              "luaKiBPerSample": 0.0013020833333333333,
+              "static": true,
+              "samples": 120,
+              "warmupTicks": 128
+            },
+            "mode": "opengl-cocoa-frame",
+            "pixelWidth": 1920,
+            "latencyFrames": 0,
+            "pendingReadbacks": 0,
+            "elapsedSeconds": 5.36239066666667,
+            "cpuMsPerFrame": 4.466915,
+            "metrics": {
+              "readback": {
+                "meanMs": 5.488065486111158,
+                "p50Ms": 4.702250000001129,
+                "p95Ms": 9.715749999998025,
+                "p99Ms": 10.671208333342008,
+                "maxMs": 11.015125000000126,
+                "samples": 600
+              },
+              "body": {
+                "meanMs": 0.20163750000030234,
+                "p50Ms": 0.19012499999604415,
+                "p95Ms": 0.29566666665914454,
+                "p99Ms": 0.3890833333315413,
+                "maxMs": 0.45437500000389264,
+                "samples": 600
+              },
+              "update": {
+                "meanMs": 0.09445347222251617,
+                "p50Ms": 0.08824999999745842,
+                "p95Ms": 0.14720833333825567,
+                "p99Ms": 0.18908333333200744,
+                "maxMs": 0.23550000000227556,
+                "samples": 600
+              },
+              "intervals": {
+                "meanMs": 8.940840428491923,
+                "p50Ms": 8.213083333330928,
+                "p95Ms": 13.239666666670757,
+                "p99Ms": 14.028291666662085,
+                "maxMs": 14.718583333333868,
+                "samples": 599
+              },
+              "frame": {
+                "meanMs": 7.620072013888842,
+                "p50Ms": 6.907791666662888,
+                "p95Ms": 11.688166666665722,
+                "p99Ms": 12.70774999999702,
+                "maxMs": 13.414916666661725,
+                "samples": 600
+              },
+              "transfer": {
+                "meanMs": 1.930369027777381,
+                "p50Ms": 1.963833333334719,
+                "p95Ms": 2.359333333338043,
+                "p99Ms": 2.590666666677066,
+                "maxMs": 2.686374999996133,
+                "samples": 600
+              },
+              "paletteSync": {
+                "meanMs": 0.010883680555598593,
+                "p50Ms": 0.0172499999990805,
+                "p95Ms": 0.0222083333341061,
+                "p99Ms": 0.032624999995789494,
+                "maxMs": 0.07837500000107411,
+                "samples": 600
+              },
+              "present": {
+                "meanMs": 0.0312872222226801,
+                "p50Ms": 0.02933333333032806,
+                "p95Ms": 0.04529166666600304,
+                "p99Ms": 0.06770833333291648,
+                "maxMs": 0.11520833333378278,
+                "samples": 600
+              },
+              "render": {
+                "meanMs": 7.651359236111522,
+                "p50Ms": 6.932416666657559,
+                "p95Ms": 11.712333333335323,
+                "p99Ms": 12.738000000005911,
+                "maxMs": 13.449708333332921,
+                "samples": 600
+              },
+              "gcStep": {
+                "meanMs": 0.002810347222172993,
+                "p50Ms": 0.0023749999940037014,
+                "p95Ms": 0.006875000003958576,
+                "p99Ms": 0.013125000009495125,
+                "maxMs": 0.026916666662657462,
+                "samples": 600
+              }
+            },
+            "randomSeed": 27122029,
+            "readbackCalls": 600,
+            "mainThreadCpuMsPerFrame": 4.088855416666668,
+            "measuredFrames": 600,
+            "npcWorkloadBeforeSha256": "cd056d710af2f9fa2dfed7c55626e53ef08f2cce7afe5ef6a52b244d2faea328",
+            "npcWorkloadAfterSha256": "cd056d710af2f9fa2dfed7c55626e53ef08f2cce7afe5ef6a52b244d2faea328"
+          }
+        ],
+        "simulationHz": 60,
+        "gpu": {
+          "renderer": "OpenGL",
+          "device": "Apple M3",
+          "version": "4.1 Metal - 89.4",
+          "vendor": "Apple"
+        },
+        "measuredPixelReadbackObservers": false,
+        "game": "firered",
+        "readbackMetric": "synchronous call or asynchronous submission; completion wait is in transfer, runtime completion copy may be in present",
+        "measuredScreenshots": false,
+        "readbackTimingAvailable": true,
+        "mainThreadCpuAvailable": true,
+        "osWindowProof": {
+          "initial-map": {
+            "freshFrameStamp": 1230,
+            "minimumFrameStamp": 1205,
+            "centralColours": 50,
+            "attempts": 1
+          },
+          "second-map": {
+            "freshFrameStamp": 2464,
+            "minimumFrameStamp": 2440,
+            "centralColours": 35,
+            "attempts": 1
+          },
+          "resized": {
+            "freshFrameStamp": 3692,
+            "minimumFrameStamp": 3674,
+            "centralColours": 50,
+            "attempts": 1
+          },
+          "map-return": {
+            "freshFrameStamp": 4919,
+            "minimumFrameStamp": 4901,
+            "centralColours": 35,
+            "attempts": 1
+          }
+        }
+      }
+    },
+    {
+      "game": "emerald",
+      "repeat": 1,
+      "variant": "baseline",
+      "data": {
+        "measuredScreenshots": false,
+        "readbackMetric": "synchronous call or asynchronous submission; completion wait is in transfer, runtime completion copy may be in present",
+        "readbackTimingAvailable": true,
+        "mainThreadCpuAvailable": true,
+        "npcConstruction": "seeded-sorted-neighbors-fresh-pool",
+        "pass": true,
+        "gpu": {
+          "device": "Apple M3",
+          "vendor": "Apple",
+          "renderer": "OpenGL",
+          "version": "4.1 Metal - 89.4"
+        },
+        "game": "emerald",
+        "vsync": 0,
+        "runtime": {
+          "major": 12,
+          "minor": 0,
+          "revision": 0
+        },
+        "phases": [
+          {
+            "stackAfter": "src/render/TextBox.lua:423",
+            "mainThreadCpuMsPerFrame": 2.61464882,
+            "readbackCalls": 600,
+            "paletteCache": {
+              "after": {
+                "hits": 96,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 3,
+                "entries": 4,
+                "bytes": 8454144
+              },
+              "before": {
+                "hits": 46,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 3,
+                "entries": 4,
+                "bytes": 8454144
+              }
+            },
+            "map": "MAP_G26_N21",
+            "mode": "opengl-cocoa-frame",
+            "paletteSamples": {
+              "after": {
+                "hits": 388,
+                "invalidations": 0,
+                "misses": 4,
+                "entries": 4,
+                "limit": 4
+              },
+              "before": {
+                "hits": 190,
+                "invalidations": 0,
+                "misses": 4,
+                "entries": 4,
+                "limit": 4
+              }
+            },
+            "fullPaletteSamples": 0,
+            "stackBefore": "src/render/TextBox.lua:423",
+            "logicalWidth": 640,
+            "logicalHeight": 480,
+            "pixelHeight": 960,
+            "paletteAllocationProbe": {
+              "luaKiBPerSample": 0.009049479166666667,
+              "static": false,
+              "samples": 120,
+              "warmupTicks": 128
+            },
+            "pixelWidth": 1280,
+            "measuredFrames": 600,
+            "latencyFrames": 0,
+            "pendingReadbacks": 0,
+            "elapsedSeconds": 3.290201791666666,
+            "cpuMsPerFrame": 2.877736666666666,
+            "metrics": {
+              "present": {
+                "meanMs": 0.2234970138889114,
+                "p50Ms": 0.21275000000020583,
+                "p95Ms": 0.28354166666755276,
+                "p99Ms": 0.30095833333287914,
+                "maxMs": 0.33145833333403374,
+                "samples": 600
+              },
+              "transfer": {
+                "meanMs": 1.217109236111075,
+                "p50Ms": 1.1816249999982986,
+                "p95Ms": 1.6273750000008746,
+                "p99Ms": 1.7604166666664867,
+                "maxMs": 1.893000000002587,
+                "samples": 600
+              },
+              "paletteSync": {
+                "meanMs": 0.012320138888868293,
+                "p50Ms": 0,
+                "p95Ms": 0.04350000000030718,
+                "p99Ms": 0.067916666666612,
+                "maxMs": 0.09062499999945572,
+                "samples": 600
+              },
+              "body": {
+                "meanMs": 0.38842118055557595,
+                "p50Ms": 0.21470833333303574,
+                "p95Ms": 1.3920833333322946,
+                "p99Ms": 4.472458333333762,
+                "maxMs": 7.0612083333339015,
+                "samples": 600
+              },
+              "frame": {
+                "meanMs": 4.066624236111114,
+                "p50Ms": 3.365916666666635,
+                "p95Ms": 9.070208333332275,
+                "p99Ms": 10.297666666666316,
+                "maxMs": 10.575749999999218,
+                "samples": 600
+              },
+              "readback": {
+                "meanMs": 2.461093819444463,
+                "p50Ms": 1.7414166666664954,
+                "p95Ms": 7.146750000000424,
+                "p99Ms": 8.405541666667737,
+                "maxMs": 9.082958333333835,
+                "samples": 600
+              },
+              "render": {
+                "meanMs": 4.290121250000025,
+                "p50Ms": 3.5755000000001758,
+                "p95Ms": 9.365499999998583,
+                "p99Ms": 10.523791666666504,
+                "maxMs": 10.801166666665196,
+                "samples": 600
+              },
+              "gcStep": {
+                "meanMs": 0.0027731250000521497,
+                "p50Ms": 0.002166666667413608,
+                "p95Ms": 0.00570833333402021,
+                "p99Ms": 0.014291666666110814,
+                "maxMs": 0.038125000000555076,
+                "samples": 600
+              },
+              "update": {
+                "meanMs": 0.025166319444436997,
+                "p50Ms": 0.023083333332785116,
+                "p95Ms": 0.048458333332668246,
+                "p99Ms": 0.0738750000008892,
+                "maxMs": 0.11220833333336344,
+                "samples": 600
+              },
+              "intervals": {
+                "meanMs": 5.481746591541458,
+                "p50Ms": 4.776833333332675,
+                "p95Ms": 10.585333333332336,
+                "p99Ms": 11.752708333332862,
+                "maxMs": 12.001416666665321,
+                "samples": 599
+              }
+            },
+            "randomSeed": 27122026,
+            "npcWorkloadBeforeSha256": "97cc742ce68dddc4159985848dfc2f8bab0e35daa85188f079ee598838f7c8d7",
+            "npcWorkloadAfterSha256": "97cc742ce68dddc4159985848dfc2f8bab0e35daa85188f079ee598838f7c8d7"
+          },
+          {
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mainThreadCpuMsPerFrame": 2.993386041666667,
+            "readbackCalls": 600,
+            "paletteCache": {
+              "after": {
+                "hits": 218,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 3,
+                "entries": 4,
+                "bytes": 8454144
+              },
+              "before": {
+                "hits": 157,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 3,
+                "entries": 4,
+                "bytes": 8454144
+              }
+            },
+            "map": "MAP_G26_N18",
+            "mode": "opengl-cocoa-frame",
+            "paletteSamples": {
+              "after": {
+                "hits": 874,
+                "invalidations": 0,
+                "misses": 4,
+                "entries": 4,
+                "limit": 4
+              },
+              "before": {
+                "hits": 633,
+                "invalidations": 0,
+                "misses": 4,
+                "entries": 4,
+                "limit": 4
+              }
+            },
+            "fullPaletteSamples": 0,
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "logicalWidth": 640,
+            "logicalHeight": 480,
+            "pixelHeight": 960,
+            "paletteAllocationProbe": {
+              "luaKiBPerSample": 0.009049479166666667,
+              "static": false,
+              "samples": 120,
+              "warmupTicks": 128
+            },
+            "pixelWidth": 1280,
+            "measuredFrames": 600,
+            "latencyFrames": 0,
+            "pendingReadbacks": 0,
+            "elapsedSeconds": 4.012092375000002,
+            "cpuMsPerFrame": 3.198610000000001,
+            "metrics": {
+              "present": {
+                "meanMs": 0.2500611111112031,
+                "p50Ms": 0.24966666666870196,
+                "p95Ms": 0.3019166666682338,
+                "p99Ms": 0.3180416666683783,
+                "maxMs": 0.3404583333335154,
+                "samples": 600
+              },
+              "transfer": {
+                "meanMs": 1.3687148611111126,
+                "p50Ms": 1.3493333333336466,
+                "p95Ms": 1.7353750000008716,
+                "p99Ms": 1.912749999997132,
+                "maxMs": 2.2782916666663766,
+                "samples": 600
+              },
+              "paletteSync": {
+                "meanMs": 0.020564513888879553,
+                "p50Ms": 0,
+                "p95Ms": 0.07154166666722972,
+                "p99Ms": 0.10050000000028092,
+                "maxMs": 0.2652499999982183,
+                "samples": 600
+              },
+              "body": {
+                "meanMs": 0.512040763888848,
+                "p50Ms": 0.1980416666658158,
+                "p95Ms": 2.253791666667837,
+                "p99Ms": 6.4094583333336175,
+                "maxMs": 6.965041666664007,
+                "samples": 600
+              },
+              "frame": {
+                "meanMs": 5.1816962500000265,
+                "p50Ms": 4.367666666663439,
+                "p95Ms": 9.669208333329848,
+                "p99Ms": 10.545750000000353,
+                "maxMs": 11.585208333334762,
+                "samples": 600
+              },
+              "readback": {
+                "meanMs": 3.3009406250000652,
+                "p50Ms": 2.573916666666065,
+                "p95Ms": 7.788416666667075,
+                "p99Ms": 8.917583333333923,
+                "maxMs": 9.852208333335,
+                "samples": 600
+              },
+              "render": {
+                "meanMs": 5.431757361111229,
+                "p50Ms": 4.626666666666779,
+                "p95Ms": 9.9512500000003,
+                "p99Ms": 10.823500000000763,
+                "maxMs": 11.85554166666769,
+                "samples": 600
+              },
+              "gcStep": {
+                "meanMs": 0.003561597222141444,
+                "p50Ms": 0.0028333333332852817,
+                "p95Ms": 0.007333333336134729,
+                "p99Ms": 0.013999999998404178,
+                "maxMs": 0.02962500000158741,
+                "samples": 600
+              },
+              "update": {
+                "meanMs": 0.08076694444448584,
+                "p50Ms": 0.06912499999778277,
+                "p95Ms": 0.15245833333210612,
+                "p99Ms": 0.25645833333420853,
+                "maxMs": 0.4354583333299189,
+                "samples": 600
+              },
+              "intervals": {
+                "meanMs": 6.6880132860322785,
+                "p50Ms": 5.870583333333457,
+                "p95Ms": 11.277416666668927,
+                "p99Ms": 12.094958333332073,
+                "maxMs": 13.147874999999587,
+                "samples": 599
+              }
+            },
+            "randomSeed": 27122027,
+            "npcWorkloadBeforeSha256": "9c1a939e282a4d308b557ecbb79cc7c324b47782f096ed0d46a2d7784d5a72d0",
+            "npcWorkloadAfterSha256": "863e609bc4aa6156240bf9ca2085921fe31daeb3e043281a78e3065c9575bfbf"
+          },
+          {
+            "stackAfter": "src/render/TextBox.lua:423",
+            "mainThreadCpuMsPerFrame": 4.599349651666665,
+            "readbackCalls": 600,
+            "paletteCache": {
+              "after": {
+                "hits": 391,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 3,
+                "entries": 4,
+                "bytes": 8454144
+              },
+              "before": {
+                "hits": 306,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 3,
+                "entries": 4,
+                "bytes": 8454144
+              }
+            },
+            "map": "MAP_G26_N21",
+            "mode": "opengl-cocoa-frame",
+            "paletteSamples": {
+              "after": {
+                "hits": 1562,
+                "invalidations": 0,
+                "misses": 4,
+                "entries": 4,
+                "limit": 4
+              },
+              "before": {
+                "hits": 1226,
+                "invalidations": 0,
+                "misses": 4,
+                "entries": 4,
+                "limit": 4
+              }
+            },
+            "fullPaletteSamples": 0,
+            "stackBefore": "src/render/TextBox.lua:423",
+            "logicalWidth": 960,
+            "logicalHeight": 720,
+            "pixelHeight": 1440,
+            "paletteAllocationProbe": {
+              "luaKiBPerSample": 0.0013020833333333333,
+              "static": false,
+              "samples": 120,
+              "warmupTicks": 128
+            },
+            "pixelWidth": 1920,
+            "measuredFrames": 600,
+            "latencyFrames": 0,
+            "pendingReadbacks": 0,
+            "elapsedSeconds": 5.600470958333332,
+            "cpuMsPerFrame": 5.058473333333332,
+            "metrics": {
+              "present": {
+                "meanMs": 0.03509402777763052,
+                "p50Ms": 0.03291666666171977,
+                "p95Ms": 0.05604166666728361,
+                "p99Ms": 0.08595833333657765,
+                "maxMs": 0.10379166666041328,
+                "samples": 600
+              },
+              "transfer": {
+                "meanMs": 2.4003759027778138,
+                "p50Ms": 2.3769583333397293,
+                "p95Ms": 2.9915000000038106,
+                "p99Ms": 3.1529583333309574,
+                "maxMs": 3.9139166666650738,
+                "samples": 600
+              },
+              "paletteSync": {
+                "meanMs": 0.021122569444441318,
+                "p50Ms": 0.027041666669447295,
+                "p95Ms": 0.049083333330202095,
+                "p99Ms": 0.09745833333241194,
+                "maxMs": 0.14691666666521996,
+                "samples": 600
+              },
+              "body": {
+                "meanMs": 0.6905890972224011,
+                "p50Ms": 0.29274999999984175,
+                "p95Ms": 4.101166666661271,
+                "p99Ms": 5.17283333333296,
+                "maxMs": 7.413833333338005,
+                "samples": 600
+              },
+              "frame": {
+                "meanMs": 8.073799444444495,
+                "p50Ms": 7.58145833333046,
+                "p95Ms": 12.372791666667382,
+                "p99Ms": 13.422000000002043,
+                "maxMs": 15.339458333336609,
+                "samples": 600
+              },
+              "readback": {
+                "meanMs": 4.98283444444428,
+                "p50Ms": 4.186541666669541,
+                "p95Ms": 9.565208333331299,
+                "p99Ms": 10.697208333329655,
+                "maxMs": 11.643416666668571,
+                "samples": 600
+              },
+              "render": {
+                "meanMs": 8.108893472222126,
+                "p50Ms": 7.627916666660184,
+                "p95Ms": 12.400000000003075,
+                "p99Ms": 13.463208333334364,
+                "maxMs": 15.385916666673438,
+                "samples": 600
+              },
+              "gcStep": {
+                "meanMs": 0.002534861111082402,
+                "p50Ms": 0.0021249999981876044,
+                "p95Ms": 0.004791666668779726,
+                "p99Ms": 0.010041666666182891,
+                "maxMs": 0.019624999996636916,
+                "samples": 600
+              },
+              "update": {
+                "meanMs": 0.0373541666667343,
+                "p50Ms": 0.03375000000005457,
+                "p95Ms": 0.06470833332983261,
+                "p99Ms": 0.09825000000063255,
+                "maxMs": 0.16795833333205223,
+                "samples": 600
+              },
+              "intervals": {
+                "meanMs": 9.331814621591533,
+                "p50Ms": 8.845999999994802,
+                "p95Ms": 13.64545833333608,
+                "p99Ms": 14.702291666669254,
+                "maxMs": 16.631750000001944,
+                "samples": 599
+              }
+            },
+            "randomSeed": 27122028,
+            "npcWorkloadBeforeSha256": "85ad5cca66497f68bba9c0007554d136af83aefd30081d9d4ec7360899475eaa",
+            "npcWorkloadAfterSha256": "85ad5cca66497f68bba9c0007554d136af83aefd30081d9d4ec7360899475eaa"
+          },
+          {
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mainThreadCpuMsPerFrame": 4.345933055,
+            "readbackCalls": 600,
+            "paletteCache": {
+              "after": {
+                "hits": 562,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 3,
+                "entries": 4,
+                "bytes": 8454144
+              },
+              "before": {
+                "hits": 487,
+                "budget": 33554432,
+                "perOwner": 4,
+                "misses": 3,
+                "entries": 4,
+                "bytes": 8454144
+              }
+            },
+            "map": "MAP_G26_N18",
+            "mode": "opengl-cocoa-frame",
+            "paletteSamples": {
+              "after": {
+                "hits": 2241,
+                "invalidations": 0,
+                "misses": 4,
+                "entries": 4,
+                "limit": 4
+              },
+              "before": {
+                "hits": 1945,
+                "invalidations": 0,
+                "misses": 4,
+                "entries": 4,
+                "limit": 4
+              }
+            },
+            "fullPaletteSamples": 0,
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "logicalWidth": 960,
+            "logicalHeight": 720,
+            "pixelHeight": 1440,
+            "paletteAllocationProbe": {
+              "luaKiBPerSample": 0.0013020833333333333,
+              "static": false,
+              "samples": 120,
+              "warmupTicks": 128
+            },
+            "pixelWidth": 1920,
+            "measuredFrames": 600,
+            "latencyFrames": 0,
+            "pendingReadbacks": 0,
+            "elapsedSeconds": 4.921850333333332,
+            "cpuMsPerFrame": 4.604003333333337,
+            "metrics": {
+              "present": {
+                "meanMs": 0.03249249999980701,
+                "p50Ms": 0.02987499999562715,
+                "p95Ms": 0.05054166665985349,
+                "p99Ms": 0.06833333333133851,
+                "maxMs": 0.10037499999526744,
+                "samples": 600
+              },
+              "transfer": {
+                "meanMs": 2.250703333333206,
+                "p50Ms": 2.2101249999835204,
+                "p95Ms": 2.7948333333256414,
+                "p99Ms": 2.967708333351027,
+                "maxMs": 3.149666666665496,
+                "samples": 600
+              },
+              "paletteSync": {
+                "meanMs": 0.02256638888893529,
+                "p50Ms": 0,
+                "p95Ms": 0.08433333333357496,
+                "p99Ms": 0.12441666667228901,
+                "maxMs": 0.15824999999125566,
+                "samples": 600
+              },
+              "body": {
+                "meanMs": 0.584588402777726,
+                "p50Ms": 0.2577500000029431,
+                "p95Ms": 2.553499999997655,
+                "p99Ms": 5.056083333329298,
+                "maxMs": 8.930250000005913,
+                "samples": 600
+              },
+              "frame": {
+                "meanMs": 6.840571111110934,
+                "p50Ms": 6.173875000001772,
+                "p95Ms": 10.688458333326878,
+                "p99Ms": 12.585083333334524,
+                "maxMs": 15.13945833332997,
+                "samples": 600
+              },
+              "readback": {
+                "meanMs": 4.005279375000003,
+                "p50Ms": 3.2999166666698443,
+                "p95Ms": 7.772000000002777,
+                "p99Ms": 9.959208333341962,
+                "maxMs": 12.246750000002748,
+                "samples": 600
+              },
+              "render": {
+                "meanMs": 6.873063611110743,
+                "p50Ms": 6.2137083333340115,
+                "p95Ms": 10.72466666666827,
+                "p99Ms": 12.643666666669162,
+                "maxMs": 15.201874999988263,
+                "samples": 600
+              },
+              "gcStep": {
+                "meanMs": 0.002533333333521644,
+                "p50Ms": 0.0020416666686173812,
+                "p95Ms": 0.005250000000955879,
+                "p99Ms": 0.011208333333456721,
+                "maxMs": 0.02741666666850051,
+                "samples": 600
+              },
+              "update": {
+                "meanMs": 0.13105652777779161,
+                "p50Ms": 0.11295833333235805,
+                "p95Ms": 0.2683750000045393,
+                "p99Ms": 0.36220833333544533,
+                "maxMs": 0.4331666666672618,
+                "samples": 600
+              },
+              "intervals": {
+                "meanMs": 8.205326446855874,
+                "p50Ms": 7.558833333334292,
+                "p95Ms": 12.067166666668072,
+                "p99Ms": 14.003291666661255,
+                "maxMs": 16.5821666666659,
+                "samples": 599
+              }
+            },
+            "randomSeed": 27122029,
+            "npcWorkloadBeforeSha256": "cfa598dd5130670fe6a4010a1f0c16531bebea7583235d1909d93e66209c3e3e",
+            "npcWorkloadAfterSha256": "4b621b8b26ca9dc3af2b5b3682dc5fe2fbbf053e765568fbb03d954fa80fd909"
+          }
+        ],
+        "simulationHz": 60,
+        "mainLoopSleepSeconds": 0.001,
+        "measuredPixelReadbackObservers": false,
+        "osWindowProof": {
+          "initial-map": {
+            "freshFrameStamp": 1226,
+            "minimumFrameStamp": 1205,
+            "centralColours": 46,
+            "attempts": 1
+          },
+          "second-map": {
+            "freshFrameStamp": 2457,
+            "minimumFrameStamp": 2434,
+            "centralColours": 37,
+            "attempts": 1
+          },
+          "resized": {
+            "freshFrameStamp": 3683,
+            "minimumFrameStamp": 3665,
+            "centralColours": 43,
+            "attempts": 1
+          },
+          "map-return": {
+            "freshFrameStamp": 4911,
+            "minimumFrameStamp": 4893,
+            "centralColours": 34,
+            "attempts": 1
+          }
+        }
+      }
+    },
+    {
+      "game": "emerald",
+      "repeat": 1,
+      "variant": "candidate",
+      "data": {
+        "pass": true,
+        "vsync": 0,
+        "gpu": {
+          "vendor": "Apple",
+          "version": "4.1 Metal - 89.4",
+          "device": "Apple M3",
+          "renderer": "OpenGL"
+        },
+        "phases": [
+          {
+            "measuredFrames": 600,
+            "pendingReadbacks": 1,
+            "cpuMsPerFrame": 2.3076333333333334,
+            "metrics": {
+              "readback": {
+                "meanMs": 0.08589048611110872,
+                "p50Ms": 0.07604166666652645,
+                "p95Ms": 0.1264166666672395,
+                "p99Ms": 0.1738333333332065,
+                "samples": 600,
+                "maxMs": 2.2697499999999593
+              },
+              "present": {
+                "meanMs": 0.17683583333332717,
+                "p50Ms": 0.17445833333340488,
+                "p95Ms": 0.19975000000016507,
+                "p99Ms": 0.2198749999999805,
+                "samples": 600,
+                "maxMs": 0.23704166666682625
+              },
+              "frame": {
+                "meanMs": 1.9642322916666737,
+                "p50Ms": 1.4613333333333145,
+                "p95Ms": 5.260874999999832,
+                "p99Ms": 7.737624999999859,
+                "samples": 600,
+                "maxMs": 10.46779166666667
+              },
+              "render": {
+                "meanMs": 2.1410681250000008,
+                "p50Ms": 1.637125000000239,
+                "p95Ms": 5.438916666667293,
+                "p99Ms": 7.908416666666973,
+                "samples": 600,
+                "maxMs": 10.648916666666786
+              },
+              "transfer": {
+                "meanMs": 1.5513512500000097,
+                "p50Ms": 1.0707083333336698,
+                "p95Ms": 4.872374999999263,
+                "p99Ms": 7.415374999999891,
+                "samples": 600,
+                "maxMs": 10.172208333333543
+              },
+              "paletteSync": {
+                "meanMs": 0.011753541666664386,
+                "p50Ms": 0,
+                "p95Ms": 0.06970833333230786,
+                "p99Ms": 0.11437499999988887,
+                "samples": 600,
+                "maxMs": 0.22737500000058475
+              },
+              "gcStep": {
+                "meanMs": 0.0024072916666758224,
+                "p50Ms": 0.0019583333332739983,
+                "p95Ms": 0.005416666666313574,
+                "p99Ms": 0.008083333333797071,
+                "samples": 600,
+                "maxMs": 0.03345833333323611
+              },
+              "body": {
+                "meanMs": 0.32699055555555523,
+                "p50Ms": 0.24104166666649718,
+                "p95Ms": 0.9515000000002161,
+                "p99Ms": 1.5780416666668629,
+                "samples": 600,
+                "maxMs": 3.780124999999579
+              },
+              "update": {
+                "meanMs": 0.0340874999999959,
+                "p50Ms": 0.02995833333319098,
+                "p95Ms": 0.0749999999998252,
+                "p99Ms": 0.09229166666679944,
+                "samples": 600,
+                "maxMs": 0.11962499999995657
+              },
+              "intervals": {
+                "meanMs": 3.3372503478018922,
+                "p50Ms": 2.8289166666666254,
+                "p95Ms": 6.909750000000159,
+                "p99Ms": 9.174833333333243,
+                "samples": 599,
+                "maxMs": 11.87024999999986
+              }
+            },
+            "mode": "opengl-cocoa-frame",
+            "stackAfter": "src/render/TextBox.lua:423",
+            "mainThreadCpuMsPerFrame": 2.128462778333333,
+            "paletteSamples": {
+              "before": {
+                "invalidations": 0,
+                "limit": 4,
+                "entries": 4,
+                "hits": 134,
+                "misses": 4
+              },
+              "after": {
+                "invalidations": 0,
+                "limit": 4,
+                "entries": 4,
+                "hits": 255,
+                "misses": 4
+              }
+            },
+            "paletteCache": {
+              "before": {
+                "perOwner": 4,
+                "hits": 32,
+                "budget": 33554432,
+                "entries": 4,
+                "misses": 3,
+                "bytes": 8454144
+              },
+              "after": {
+                "perOwner": 4,
+                "hits": 63,
+                "budget": 33554432,
+                "entries": 4,
+                "misses": 3,
+                "bytes": 8454144
+              }
+            },
+            "readbackCalls": 600,
+            "latencyFrames": 1,
+            "paletteAllocationProbe": {
+              "samples": 120,
+              "warmupTicks": 128,
+              "luaKiBPerSample": 0.04488932291666667,
+              "static": false
+            },
+            "fullPaletteSamples": 0,
+            "pixelWidth": 1280,
+            "map": "MAP_G26_N21",
+            "stackBefore": "src/render/TextBox.lua:423",
+            "logicalWidth": 640,
+            "logicalHeight": 480,
+            "pixelHeight": 960,
+            "elapsedSeconds": 2.0015492083333335,
+            "randomSeed": 27122026,
+            "npcWorkloadBeforeSha256": "97cc742ce68dddc4159985848dfc2f8bab0e35daa85188f079ee598838f7c8d7",
+            "npcWorkloadAfterSha256": "97cc742ce68dddc4159985848dfc2f8bab0e35daa85188f079ee598838f7c8d7"
+          },
+          {
+            "measuredFrames": 600,
+            "pendingReadbacks": 1,
+            "cpuMsPerFrame": 2.590783333333334,
+            "metrics": {
+              "readback": {
+                "meanMs": 0.07604534722225331,
+                "p50Ms": 0.06954166666695016,
+                "p95Ms": 0.11620833333303437,
+                "p99Ms": 0.1595833333318808,
+                "samples": 600,
+                "maxMs": 0.3177499999988953
+              },
+              "present": {
+                "meanMs": 0.17294326388891315,
+                "p50Ms": 0.16824999999975887,
+                "p95Ms": 0.1983750000000839,
+                "p99Ms": 0.22099999999980469,
+                "samples": 600,
+                "maxMs": 0.5316666666672631
+              },
+              "frame": {
+                "meanMs": 2.2889424305555592,
+                "p50Ms": 1.3873750000001905,
+                "p95Ms": 7.212458333331284,
+                "p99Ms": 7.633416666667614,
+                "samples": 600,
+                "maxMs": 7.832916666666634
+              },
+              "render": {
+                "meanMs": 2.4618856944444723,
+                "p50Ms": 1.5681250000021407,
+                "p95Ms": 7.378999999996694,
+                "p99Ms": 7.841374999999928,
+                "samples": 600,
+                "maxMs": 8.016249999998948
+              },
+              "transfer": {
+                "meanMs": 2.032469513888808,
+                "p50Ms": 1.1521249999990602,
+                "p95Ms": 7.043791666664134,
+                "p99Ms": 7.435333333329908,
+                "samples": 600,
+                "maxMs": 7.673125000000169
+              },
+              "paletteSync": {
+                "meanMs": 0.007678680555569529,
+                "p50Ms": 0,
+                "p95Ms": 0.03554166666575043,
+                "p99Ms": 0.07154166666722972,
+                "samples": 600,
+                "maxMs": 0.10629166666653589
+              },
+              "gcStep": {
+                "meanMs": 0.0024236805556491583,
+                "p50Ms": 0.0021249999999639613,
+                "p95Ms": 0.00504166666637218,
+                "p99Ms": 0.009208333334953522,
+                "samples": 600,
+                "maxMs": 0.021625000000469186
+              },
+              "body": {
+                "meanMs": 0.18042756944449828,
+                "p50Ms": 0.11208333333456721,
+                "p95Ms": 0.8526250000002733,
+                "p99Ms": 1.1764166666665687,
+                "samples": 600,
+                "maxMs": 3.6102916666660434
+              },
+              "update": {
+                "meanMs": 0.051358541666706906,
+                "p50Ms": 0.04137500000211958,
+                "p95Ms": 0.11012500000084913,
+                "p99Ms": 0.2026666666665733,
+                "samples": 600,
+                "maxMs": 0.2674166666665201
+              },
+              "intervals": {
+                "meanMs": 3.671515442404008,
+                "p50Ms": 2.791874999999777,
+                "p95Ms": 8.696958333333171,
+                "p99Ms": 9.054000000000784,
+                "samples": 599,
+                "maxMs": 9.345499999998452
+              }
+            },
+            "mode": "opengl-cocoa-frame",
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mainThreadCpuMsPerFrame": 2.4520756249999995,
+            "paletteSamples": {
+              "before": {
+                "invalidations": 0,
+                "limit": 4,
+                "entries": 4,
+                "hits": 406,
+                "misses": 4
+              },
+              "after": {
+                "invalidations": 0,
+                "limit": 4,
+                "entries": 4,
+                "hits": 539,
+                "misses": 4
+              }
+            },
+            "paletteCache": {
+              "before": {
+                "perOwner": 4,
+                "hits": 101,
+                "budget": 33554432,
+                "entries": 4,
+                "misses": 3,
+                "bytes": 8454144
+              },
+              "after": {
+                "perOwner": 4,
+                "hits": 135,
+                "budget": 33554432,
+                "entries": 4,
+                "misses": 3,
+                "bytes": 8454144
+              }
+            },
+            "readbackCalls": 600,
+            "latencyFrames": 1,
+            "paletteAllocationProbe": {
+              "samples": 120,
+              "warmupTicks": 128,
+              "luaKiBPerSample": 0.0013020833333333333,
+              "static": false
+            },
+            "fullPaletteSamples": 0,
+            "pixelWidth": 1280,
+            "map": "MAP_G26_N18",
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "logicalWidth": 640,
+            "logicalHeight": 480,
+            "pixelHeight": 960,
+            "elapsedSeconds": 2.2023751250000005,
+            "randomSeed": 27122027,
+            "npcWorkloadBeforeSha256": "9c1a939e282a4d308b557ecbb79cc7c324b47782f096ed0d46a2d7784d5a72d0",
+            "npcWorkloadAfterSha256": "863e609bc4aa6156240bf9ca2085921fe31daeb3e043281a78e3065c9575bfbf"
+          },
+          {
+            "measuredFrames": 600,
+            "pendingReadbacks": 1,
+            "cpuMsPerFrame": 4.8404549999999995,
+            "metrics": {
+              "readback": {
+                "meanMs": 0.11033055555565478,
+                "p50Ms": 0.0993749999977922,
+                "p95Ms": 0.14808333333071744,
+                "p99Ms": 0.19920833333131327,
+                "samples": 600,
+                "maxMs": 1.8012916666627632
+              },
+              "present": {
+                "meanMs": 0.18641750000011412,
+                "p50Ms": 0.1828333333300236,
+                "p95Ms": 0.21591666666687104,
+                "p99Ms": 0.2498750000015093,
+                "samples": 600,
+                "maxMs": 0.2859166666677737
+              },
+              "frame": {
+                "meanMs": 4.614720902777772,
+                "p50Ms": 3.5652500000011855,
+                "p95Ms": 9.403916666666845,
+                "p99Ms": 10.82749999999777,
+                "samples": 600,
+                "maxMs": 11.395041666666827
+              },
+              "render": {
+                "meanMs": 4.8011384027778865,
+                "p50Ms": 3.7545833333361145,
+                "p95Ms": 9.576875000000484,
+                "p99Ms": 11.011875000001226,
+                "samples": 600,
+                "maxMs": 11.579208333332147
+              },
+              "transfer": {
+                "meanMs": 4.136144583333241,
+                "p50Ms": 2.9425000000014023,
+                "p95Ms": 9.114416666665903,
+                "p99Ms": 10.524041666663209,
+                "samples": 600,
+                "maxMs": 11.056999999999206
+              },
+              "paletteSync": {
+                "meanMs": 0.017410277777806606,
+                "p50Ms": 0,
+                "p95Ms": 0.08674999999769284,
+                "p99Ms": 0.10412500000001046,
+                "samples": 600,
+                "maxMs": 0.20170833333388316
+              },
+              "gcStep": {
+                "meanMs": 0.0028984027779740034,
+                "p50Ms": 0.0018750000005951506,
+                "p95Ms": 0.006249999998431122,
+                "p99Ms": 0.009833333329822835,
+                "samples": 600,
+                "maxMs": 0.2885000000016902
+              },
+              "body": {
+                "meanMs": 0.36824576388887625,
+                "p50Ms": 0.2216666666683409,
+                "p95Ms": 1.3438333333333219,
+                "p99Ms": 2.378791666668434,
+                "samples": 600,
+                "maxMs": 5.07437499999952
+              },
+              "update": {
+                "meanMs": 0.03164798611117625,
+                "p50Ms": 0.02729166666703975,
+                "p95Ms": 0.059749999998359726,
+                "p99Ms": 0.09275000000030786,
+                "samples": 600,
+                "maxMs": 0.3353333333357966
+              },
+              "intervals": {
+                "meanMs": 6.01700639955481,
+                "p50Ms": 4.972541666663943,
+                "p95Ms": 10.81608333333861,
+                "p99Ms": 12.29341666666528,
+                "samples": 599,
+                "maxMs": 12.818750000000989
+              }
+            },
+            "mode": "opengl-cocoa-frame",
+            "stackAfter": "src/render/TextBox.lua:423",
+            "mainThreadCpuMsPerFrame": 4.607154305,
+            "paletteSamples": {
+              "before": {
+                "invalidations": 0,
+                "limit": 4,
+                "entries": 4,
+                "hits": 752,
+                "misses": 4
+              },
+              "after": {
+                "invalidations": 0,
+                "limit": 4,
+                "entries": 4,
+                "hits": 969,
+                "misses": 4
+              }
+            },
+            "paletteCache": {
+              "before": {
+                "perOwner": 4,
+                "hits": 189,
+                "budget": 33554432,
+                "entries": 4,
+                "misses": 3,
+                "bytes": 8454144
+              },
+              "after": {
+                "perOwner": 4,
+                "hits": 243,
+                "budget": 33554432,
+                "entries": 4,
+                "misses": 3,
+                "bytes": 8454144
+              }
+            },
+            "readbackCalls": 600,
+            "latencyFrames": 1,
+            "paletteAllocationProbe": {
+              "samples": 120,
+              "warmupTicks": 128,
+              "luaKiBPerSample": 0.0013020833333333333,
+              "static": false
+            },
+            "fullPaletteSamples": 0,
+            "pixelWidth": 1920,
+            "map": "MAP_G26_N21",
+            "stackBefore": "src/render/TextBox.lua:423",
+            "logicalWidth": 960,
+            "logicalHeight": 720,
+            "pixelHeight": 1440,
+            "elapsedSeconds": 3.6085924583333338,
+            "randomSeed": 27122028,
+            "npcWorkloadBeforeSha256": "85ad5cca66497f68bba9c0007554d136af83aefd30081d9d4ec7360899475eaa",
+            "npcWorkloadAfterSha256": "85ad5cca66497f68bba9c0007554d136af83aefd30081d9d4ec7360899475eaa"
+          },
+          {
+            "measuredFrames": 600,
+            "pendingReadbacks": 1,
+            "cpuMsPerFrame": 4.244899999999999,
+            "metrics": {
+              "readback": {
+                "meanMs": 0.10242270833344354,
+                "p50Ms": 0.09108333333784913,
+                "p95Ms": 0.17733333334035706,
+                "p99Ms": 0.2959166666727242,
+                "samples": 600,
+                "maxMs": 0.453999999997734
+              },
+              "present": {
+                "meanMs": 0.0155988194444312,
+                "p50Ms": 0.010708333331166386,
+                "p95Ms": 0.025916666661629506,
+                "p99Ms": 0.17608333333285486,
+                "samples": 600,
+                "maxMs": 0.206249999997965
+              },
+              "frame": {
+                "meanMs": 4.226589513888808,
+                "p50Ms": 3.3312500000022283,
+                "p95Ms": 8.901833333336384,
+                "p99Ms": 13.422875000003387,
+                "samples": 600,
+                "maxMs": 16.714833333335122
+              },
+              "render": {
+                "meanMs": 4.242188333333239,
+                "p50Ms": 3.3401250000011373,
+                "p95Ms": 8.911000000004776,
+                "p99Ms": 13.445541666673222,
+                "samples": 600,
+                "maxMs": 16.737750000000773
+              },
+              "transfer": {
+                "meanMs": 3.8115943749997783,
+                "p50Ms": 2.8736666666624444,
+                "p95Ms": 8.658166666659639,
+                "p99Ms": 12.988208333329254,
+                "samples": 600,
+                "maxMs": 16.30125000000504
+              },
+              "paletteSync": {
+                "meanMs": 0.013089583333355156,
+                "p50Ms": 0,
+                "p95Ms": 0.05924999999606939,
+                "p99Ms": 0.08874999999974875,
+                "samples": 600,
+                "maxMs": 0.23591666667499567
+              },
+              "gcStep": {
+                "meanMs": 0.0030211111110804247,
+                "p50Ms": 0.0024166666641178836,
+                "p95Ms": 0.0070416666702044495,
+                "p99Ms": 0.010833333334403505,
+                "samples": 600,
+                "maxMs": 0.01987499999955844
+              },
+              "body": {
+                "meanMs": 0.31257243055558587,
+                "p50Ms": 0.15258333333534324,
+                "p95Ms": 1.2764999999994586,
+                "p99Ms": 3.3112499999994327,
+                "samples": 600,
+                "maxMs": 5.539208333331658
+              },
+              "update": {
+                "meanMs": 0.07740305555563746,
+                "p50Ms": 0.06558333333472888,
+                "p95Ms": 0.14037500000085856,
+                "p99Ms": 0.199833333333288,
+                "samples": 600,
+                "maxMs": 0.2670000000044581
+              },
+              "intervals": {
+                "meanMs": 5.535092237061767,
+                "p50Ms": 4.599333333331401,
+                "p95Ms": 10.262291666663259,
+                "p99Ms": 15.152208333329753,
+                "samples": 599,
+                "maxMs": 18.186958333334502
+              }
+            },
+            "mode": "opengl-cocoa-frame",
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mainThreadCpuMsPerFrame": 3.9382046533333317,
+            "paletteSamples": {
+              "before": {
+                "invalidations": 0,
+                "limit": 4,
+                "entries": 4,
+                "hits": 1179,
+                "misses": 4
+              },
+              "after": {
+                "invalidations": 0,
+                "limit": 4,
+                "entries": 4,
+                "hits": 1379,
+                "misses": 4
+              }
+            },
+            "paletteCache": {
+              "before": {
+                "perOwner": 4,
+                "hits": 296,
+                "budget": 33554432,
+                "entries": 4,
+                "misses": 3,
+                "bytes": 8454144
+              },
+              "after": {
+                "perOwner": 4,
+                "hits": 346,
+                "budget": 33554432,
+                "entries": 4,
+                "misses": 3,
+                "bytes": 8454144
+              }
+            },
+            "readbackCalls": 600,
+            "latencyFrames": 1,
+            "paletteAllocationProbe": {
+              "samples": 120,
+              "warmupTicks": 128,
+              "luaKiBPerSample": 0.0013020833333333333,
+              "static": false
+            },
+            "fullPaletteSamples": 0,
+            "pixelWidth": 1920,
+            "map": "MAP_G26_N18",
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "logicalWidth": 960,
+            "logicalHeight": 720,
+            "pixelHeight": 1440,
+            "elapsedSeconds": 3.3298556250000004,
+            "randomSeed": 27122029,
+            "npcWorkloadBeforeSha256": "cfa598dd5130670fe6a4010a1f0c16531bebea7583235d1909d93e66209c3e3e",
+            "npcWorkloadAfterSha256": "4b621b8b26ca9dc3af2b5b3682dc5fe2fbbf053e765568fbb03d954fa80fd909"
+          }
+        ],
+        "simulationHz": 60,
+        "mainLoopSleepSeconds": 0.001,
+        "measuredPixelReadbackObservers": false,
+        "measuredScreenshots": false,
+        "runtime": {
+          "revision": 0,
+          "major": 12,
+          "minor": 0
+        },
+        "npcConstruction": "seeded-sorted-neighbors-fresh-pool",
+        "readbackTimingAvailable": true,
+        "mainThreadCpuAvailable": true,
+        "readbackMetric": "synchronous call or asynchronous submission; completion wait is in transfer, runtime completion copy may be in present",
+        "game": "emerald",
+        "osWindowProof": {
+          "initial-map": {
+            "freshFrameStamp": 1231,
+            "minimumFrameStamp": 1205,
+            "centralColours": 46,
+            "attempts": 1
+          },
+          "second-map": {
+            "freshFrameStamp": 2471,
+            "minimumFrameStamp": 2445,
+            "centralColours": 37,
+            "attempts": 1
+          },
+          "resized": {
+            "freshFrameStamp": 3707,
+            "minimumFrameStamp": 3683,
+            "centralColours": 43,
+            "attempts": 1
+          },
+          "map-return": {
+            "freshFrameStamp": 4946,
+            "minimumFrameStamp": 4920,
+            "centralColours": 34,
+            "attempts": 1
+          }
+        }
+      }
+    },
+    {
+      "game": "emerald",
+      "repeat": 2,
+      "variant": "candidate",
+      "data": {
+        "gpu": {
+          "renderer": "OpenGL",
+          "device": "Apple M3",
+          "vendor": "Apple",
+          "version": "4.1 Metal - 89.4"
+        },
+        "vsync": 0,
+        "pass": true,
+        "npcConstruction": "seeded-sorted-neighbors-fresh-pool",
+        "measuredPixelReadbackObservers": false,
+        "phases": [
+          {
+            "measuredFrames": 600,
+            "elapsedSeconds": 2.112611416666667,
+            "cpuMsPerFrame": 2.4907899999999996,
+            "pixelWidth": 1280,
+            "pixelHeight": 960,
+            "stackAfter": "src/render/TextBox.lua:423",
+            "mainThreadCpuMsPerFrame": 2.2486655550000005,
+            "paletteSamples": {
+              "after": {
+                "misses": 4,
+                "limit": 4,
+                "hits": 245,
+                "invalidations": 0,
+                "entries": 4
+              },
+              "before": {
+                "misses": 4,
+                "limit": 4,
+                "hits": 118,
+                "invalidations": 0,
+                "entries": 4
+              }
+            },
+            "paletteCache": {
+              "after": {
+                "misses": 3,
+                "hits": 60,
+                "perOwner": 4,
+                "entries": 4,
+                "budget": 33554432,
+                "bytes": 8454144
+              },
+              "before": {
+                "misses": 3,
+                "hits": 28,
+                "perOwner": 4,
+                "entries": 4,
+                "budget": 33554432,
+                "bytes": 8454144
+              }
+            },
+            "map": "MAP_G26_N21",
+            "readbackCalls": 600,
+            "paletteAllocationProbe": {
+              "warmupTicks": 128,
+              "static": false,
+              "samples": 120,
+              "luaKiBPerSample": 0.06041666666666667
+            },
+            "mode": "opengl-cocoa-frame",
+            "metrics": {
+              "readback": {
+                "meanMs": 0.08513222222221876,
+                "p50Ms": 0.07479166666701786,
+                "p95Ms": 0.14875000000014182,
+                "p99Ms": 0.18233333333306234,
+                "samples": 600,
+                "maxMs": 0.3046666666666198
+              },
+              "frame": {
+                "meanMs": 2.1673195833333136,
+                "p50Ms": 1.6332500000002526,
+                "p95Ms": 5.029749999999833,
+                "p99Ms": 7.37479166666688,
+                "samples": 600,
+                "maxMs": 8.028374999999421
+              },
+              "update": {
+                "meanMs": 0.02066173611110056,
+                "p50Ms": 0.014291666666554903,
+                "p95Ms": 0.04241666666704447,
+                "p99Ms": 0.06008333333351601,
+                "samples": 600,
+                "maxMs": 0.07954166666701568
+              },
+              "intervals": {
+                "meanMs": 3.519537910406233,
+                "p50Ms": 2.9866250000001315,
+                "p95Ms": 6.451416666666709,
+                "p99Ms": 8.805291666666548,
+                "samples": 599,
+                "maxMs": 9.353374999999886
+              },
+              "gcStep": {
+                "meanMs": 0.0028165277777832585,
+                "p50Ms": 0.002333333333659482,
+                "p95Ms": 0.005916666665939374,
+                "p99Ms": 0.010166666666755475,
+                "samples": 600,
+                "maxMs": 0.03179166666722466
+              },
+              "body": {
+                "meanMs": 0.2458480555555568,
+                "p50Ms": 0.15583333333335503,
+                "p95Ms": 0.8741666666671755,
+                "p99Ms": 2.252458333333429,
+                "samples": 600,
+                "maxMs": 4.942833333333674
+              },
+              "paletteSync": {
+                "meanMs": 0.0060900694444584085,
+                "p50Ms": 0,
+                "p95Ms": 0.029500000000126647,
+                "p99Ms": 0.051750000000794216,
+                "samples": 600,
+                "maxMs": 0.06883333333362884
+              },
+              "render": {
+                "meanMs": 2.3425758333333087,
+                "p50Ms": 1.8112500000011522,
+                "p95Ms": 5.195583333332809,
+                "p99Ms": 7.5411250000003704,
+                "samples": 600,
+                "maxMs": 8.192791666665755
+              },
+              "present": {
+                "meanMs": 0.1752562499999947,
+                "p50Ms": 0.1691666666672198,
+                "p95Ms": 0.20904166666646518,
+                "p99Ms": 0.23987500000011153,
+                "samples": 600,
+                "maxMs": 0.48049999999921766
+              },
+              "transfer": {
+                "meanMs": 1.8363393055555381,
+                "p50Ms": 1.2682916666673094,
+                "p95Ms": 4.71770833333407,
+                "p99Ms": 7.1606250000000315,
+                "samples": 600,
+                "maxMs": 7.795583333332079
+              }
+            },
+            "latencyFrames": 1,
+            "pendingReadbacks": 1,
+            "stackBefore": "src/render/TextBox.lua:423",
+            "logicalWidth": 640,
+            "logicalHeight": 480,
+            "fullPaletteSamples": 0,
+            "randomSeed": 27122026,
+            "npcWorkloadBeforeSha256": "97cc742ce68dddc4159985848dfc2f8bab0e35daa85188f079ee598838f7c8d7",
+            "npcWorkloadAfterSha256": "97cc742ce68dddc4159985848dfc2f8bab0e35daa85188f079ee598838f7c8d7"
+          },
+          {
+            "measuredFrames": 600,
+            "elapsedSeconds": 2.0198042916666674,
+            "cpuMsPerFrame": 2.220198333333334,
+            "pixelWidth": 1280,
+            "pixelHeight": 960,
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mainThreadCpuMsPerFrame": 2.115510903333333,
+            "paletteSamples": {
+              "after": {
+                "misses": 4,
+                "limit": 4,
+                "hits": 498,
+                "invalidations": 0,
+                "entries": 4
+              },
+              "before": {
+                "misses": 4,
+                "limit": 4,
+                "hits": 376,
+                "invalidations": 0,
+                "entries": 4
+              }
+            },
+            "paletteCache": {
+              "after": {
+                "misses": 3,
+                "hits": 124,
+                "perOwner": 4,
+                "entries": 4,
+                "budget": 33554432,
+                "bytes": 8454144
+              },
+              "before": {
+                "misses": 3,
+                "hits": 93,
+                "perOwner": 4,
+                "entries": 4,
+                "budget": 33554432,
+                "bytes": 8454144
+              }
+            },
+            "map": "MAP_G26_N18",
+            "readbackCalls": 600,
+            "paletteAllocationProbe": {
+              "warmupTicks": 128,
+              "static": false,
+              "samples": 120,
+              "luaKiBPerSample": 0.0013020833333333333
+            },
+            "mode": "opengl-cocoa-frame",
+            "metrics": {
+              "readback": {
+                "meanMs": 0.0791779861110727,
+                "p50Ms": 0.07212499999997846,
+                "p95Ms": 0.1253333333330886,
+                "p99Ms": 0.19583333333450526,
+                "samples": 600,
+                "maxMs": 0.3253750000009603
+              },
+              "frame": {
+                "meanMs": 1.9630192361111092,
+                "p50Ms": 1.4773333333337746,
+                "p95Ms": 4.615708333332691,
+                "p99Ms": 6.993416666666974,
+                "samples": 600,
+                "maxMs": 13.2075416666666
+              },
+              "update": {
+                "meanMs": 0.061225763888903544,
+                "p50Ms": 0.047999999999603915,
+                "p95Ms": 0.13520833333124926,
+                "p99Ms": 0.2288749999976858,
+                "samples": 600,
+                "maxMs": 0.5586250000000348
+              },
+              "intervals": {
+                "meanMs": 3.3631447551474674,
+                "p50Ms": 2.889291666667404,
+                "p95Ms": 6.0373750000000115,
+                "p99Ms": 8.735374999998768,
+                "samples": 599,
+                "maxMs": 14.767291666666793
+              },
+              "gcStep": {
+                "meanMs": 0.0025626388888833063,
+                "p50Ms": 0.002000000000279556,
+                "p95Ms": 0.005583333335223983,
+                "p99Ms": 0.008916666667246886,
+                "samples": 600,
+                "maxMs": 0.08129166666748233
+              },
+              "body": {
+                "meanMs": 0.21993020833324256,
+                "p50Ms": 0.12758333333273697,
+                "p95Ms": 0.8822916666666458,
+                "p99Ms": 1.2257499999996924,
+                "samples": 600,
+                "maxMs": 11.693916666667192
+              },
+              "paletteSync": {
+                "meanMs": 0.007686666666664917,
+                "p50Ms": 0,
+                "p95Ms": 0.03829166666768913,
+                "p99Ms": 0.08408333333242979,
+                "samples": 600,
+                "maxMs": 0.13012500000009197
+              },
+              "render": {
+                "meanMs": 2.142952569444412,
+                "p50Ms": 1.6625833333332452,
+                "p95Ms": 4.804166666666276,
+                "p99Ms": 7.167208333332731,
+                "samples": 600,
+                "maxMs": 13.40108333333312
+              },
+              "present": {
+                "meanMs": 0.1799333333333027,
+                "p50Ms": 0.1754583333317683,
+                "p95Ms": 0.2077916666660684,
+                "p99Ms": 0.23675000000089597,
+                "samples": 600,
+                "maxMs": 0.48387500000046657
+              },
+              "transfer": {
+                "meanMs": 1.663911041666794,
+                "p50Ms": 1.20354166666381,
+                "p95Ms": 4.289625000001962,
+                "p99Ms": 6.631833333333503,
+                "samples": 600,
+                "maxMs": 11.90312500000168
+              }
+            },
+            "latencyFrames": 1,
+            "pendingReadbacks": 1,
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "logicalWidth": 640,
+            "logicalHeight": 480,
+            "fullPaletteSamples": 0,
+            "randomSeed": 27122027,
+            "npcWorkloadBeforeSha256": "9c1a939e282a4d308b557ecbb79cc7c324b47782f096ed0d46a2d7784d5a72d0",
+            "npcWorkloadAfterSha256": "863e609bc4aa6156240bf9ca2085921fe31daeb3e043281a78e3065c9575bfbf"
+          },
+          {
+            "measuredFrames": 600,
+            "elapsedSeconds": 4.186904208333333,
+            "cpuMsPerFrame": 5.1681349999999995,
+            "pixelWidth": 1920,
+            "pixelHeight": 1440,
+            "stackAfter": "src/render/TextBox.lua:423",
+            "mainThreadCpuMsPerFrame": 4.812032221666668,
+            "paletteSamples": {
+              "after": {
+                "misses": 4,
+                "limit": 4,
+                "hits": 1017,
+                "invalidations": 0,
+                "entries": 4
+              },
+              "before": {
+                "misses": 4,
+                "limit": 4,
+                "hits": 765,
+                "invalidations": 0,
+                "entries": 4
+              }
+            },
+            "paletteCache": {
+              "after": {
+                "misses": 3,
+                "hits": 255,
+                "perOwner": 4,
+                "entries": 4,
+                "budget": 33554432,
+                "bytes": 8454144
+              },
+              "before": {
+                "misses": 3,
+                "hits": 192,
+                "perOwner": 4,
+                "entries": 4,
+                "budget": 33554432,
+                "bytes": 8454144
+              }
+            },
+            "map": "MAP_G26_N21",
+            "readbackCalls": 600,
+            "paletteAllocationProbe": {
+              "warmupTicks": 128,
+              "static": false,
+              "samples": 120,
+              "luaKiBPerSample": 0.0013020833333333333
+            },
+            "mode": "opengl-cocoa-frame",
+            "metrics": {
+              "readback": {
+                "meanMs": 0.12744166666664408,
+                "p50Ms": 0.11804166666351534,
+                "p95Ms": 0.19508333333106975,
+                "p99Ms": 0.21787499999881277,
+                "samples": 600,
+                "maxMs": 0.4120833333320917
+              },
+              "frame": {
+                "meanMs": 5.515072291666682,
+                "p50Ms": 5.058833333334789,
+                "p95Ms": 8.773874999999265,
+                "p99Ms": 14.606125000000247,
+                "samples": 600,
+                "maxMs": 18.395291666667646
+              },
+              "update": {
+                "meanMs": 0.06338708333332241,
+                "p50Ms": 0.05745833333392625,
+                "p95Ms": 0.13158333333329608,
+                "p99Ms": 0.15499999999946112,
+                "samples": 600,
+                "maxMs": 0.26579166666884646
+              },
+              "intervals": {
+                "meanMs": 6.983051822481917,
+                "p50Ms": 6.536416666669709,
+                "p95Ms": 10.40025,
+                "p99Ms": 16.23504166666656,
+                "samples": 599,
+                "maxMs": 19.79870833333308
+              },
+              "gcStep": {
+                "meanMs": 0.003372708333303128,
+                "p50Ms": 0.002666666667039408,
+                "p95Ms": 0.007958333331004042,
+                "p99Ms": 0.012874999999468173,
+                "samples": 600,
+                "maxMs": 0.046916666669005735
+              },
+              "body": {
+                "meanMs": 0.7538725694443974,
+                "p50Ms": 0.39108333333359724,
+                "p95Ms": 4.352208333335383,
+                "p99Ms": 5.849666666668085,
+                "samples": 600,
+                "maxMs": 8.358666666667958
+              },
+              "paletteSync": {
+                "meanMs": 0.029661875000031774,
+                "p50Ms": 0,
+                "p95Ms": 0.11304166666725735,
+                "p99Ms": 0.1492916666663291,
+                "samples": 600,
+                "maxMs": 0.26062499999923716
+              },
+              "render": {
+                "meanMs": 5.718338888888903,
+                "p50Ms": 5.234958333337758,
+                "p95Ms": 8.981750000002009,
+                "p99Ms": 14.847624999999809,
+                "samples": 600,
+                "maxMs": 18.625750000001773
+              },
+              "present": {
+                "meanMs": 0.2032665972222218,
+                "p50Ms": 0.19537499999700003,
+                "p95Ms": 0.2480833333340371,
+                "p99Ms": 0.28983333333343353,
+                "samples": 600,
+                "maxMs": 0.5448750000009994
+              },
+              "transfer": {
+                "meanMs": 4.63375805555564,
+                "p50Ms": 4.221499999999878,
+                "p95Ms": 7.702124999996229,
+                "p99Ms": 13.803375000000173,
+                "samples": 600,
+                "maxMs": 17.499958333331733
+              }
+            },
+            "latencyFrames": 1,
+            "pendingReadbacks": 1,
+            "stackBefore": "src/render/TextBox.lua:423",
+            "logicalWidth": 960,
+            "logicalHeight": 720,
+            "fullPaletteSamples": 0,
+            "randomSeed": 27122028,
+            "npcWorkloadBeforeSha256": "85ad5cca66497f68bba9c0007554d136af83aefd30081d9d4ec7360899475eaa",
+            "npcWorkloadAfterSha256": "85ad5cca66497f68bba9c0007554d136af83aefd30081d9d4ec7360899475eaa"
+          },
+          {
+            "measuredFrames": 600,
+            "elapsedSeconds": 3.6561473749999998,
+            "cpuMsPerFrame": 4.604213333333332,
+            "pixelWidth": 1920,
+            "pixelHeight": 1440,
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mainThreadCpuMsPerFrame": 4.423306528333329,
+            "paletteSamples": {
+              "after": {
+                "misses": 4,
+                "limit": 4,
+                "hits": 1468,
+                "invalidations": 0,
+                "entries": 4
+              },
+              "before": {
+                "misses": 4,
+                "limit": 4,
+                "hits": 1248,
+                "invalidations": 0,
+                "entries": 4
+              }
+            },
+            "paletteCache": {
+              "after": {
+                "misses": 3,
+                "hits": 368,
+                "perOwner": 4,
+                "entries": 4,
+                "budget": 33554432,
+                "bytes": 8454144
+              },
+              "before": {
+                "misses": 3,
+                "hits": 313,
+                "perOwner": 4,
+                "entries": 4,
+                "budget": 33554432,
+                "bytes": 8454144
+              }
+            },
+            "map": "MAP_G26_N18",
+            "readbackCalls": 600,
+            "paletteAllocationProbe": {
+              "warmupTicks": 128,
+              "static": false,
+              "samples": 120,
+              "luaKiBPerSample": 0.0013020833333333333
+            },
+            "mode": "opengl-cocoa-frame",
+            "metrics": {
+              "readback": {
+                "meanMs": 0.11612229166644876,
+                "p50Ms": 0.10579166666957462,
+                "p95Ms": 0.1760416666662934,
+                "p99Ms": 0.2427916666682961,
+                "samples": 600,
+                "maxMs": 1.055333333333408
+              },
+              "frame": {
+                "meanMs": 4.674169722222163,
+                "p50Ms": 3.894208333335314,
+                "p95Ms": 8.473416666667788,
+                "p99Ms": 10.240666666668119,
+                "samples": 600,
+                "maxMs": 20.84616666666861
+              },
+              "update": {
+                "meanMs": 0.18540430555558984,
+                "p50Ms": 0.16937499999869488,
+                "p95Ms": 0.3230416666646363,
+                "p99Ms": 0.4322083333327953,
+                "samples": 600,
+                "maxMs": 0.49245833333344535
+              },
+              "intervals": {
+                "meanMs": 6.0966912214802536,
+                "p50Ms": 5.337916666665166,
+                "p95Ms": 9.954458333336191,
+                "p99Ms": 12.05099999999959,
+                "samples": 599,
+                "maxMs": 22.39229166666945
+              },
+              "gcStep": {
+                "meanMs": 0.0028043750000961154,
+                "p50Ms": 0.0021249999981876044,
+                "p95Ms": 0.00683333333029168,
+                "p99Ms": 0.012999999995599865,
+                "samples": 600,
+                "maxMs": 0.02720833332858774
+              },
+              "body": {
+                "meanMs": 0.5990665972224345,
+                "p50Ms": 0.32737499999768715,
+                "p95Ms": 1.6427500000020245,
+                "p99Ms": 5.730958333330705,
+                "samples": 600,
+                "maxMs": 7.432708333332982
+              },
+              "paletteSync": {
+                "meanMs": 0.027912569444481505,
+                "p50Ms": 0,
+                "p95Ms": 0.11979166666264973,
+                "p99Ms": 0.19295833333288215,
+                "samples": 600,
+                "maxMs": 0.2159166666686474
+              },
+              "render": {
+                "meanMs": 4.688816597222173,
+                "p50Ms": 3.9057916666713766,
+                "p95Ms": 8.486624999999748,
+                "p99Ms": 10.25433333333936,
+                "samples": 600,
+                "maxMs": 20.873500000003986
+              },
+              "present": {
+                "meanMs": 0.014646875000009867,
+                "p50Ms": 0.013166666661845738,
+                "p95Ms": 0.0237916666634419,
+                "p99Ms": 0.0384999999951674,
+                "samples": 600,
+                "maxMs": 0.0565833333325827
+              },
+              "transfer": {
+                "meanMs": 3.958980833333279,
+                "p50Ms": 2.9781666666686135,
+                "p95Ms": 7.703041666662358,
+                "p99Ms": 9.522749999998581,
+                "samples": 600,
+                "maxMs": 20.333250000003744
+              }
+            },
+            "latencyFrames": 1,
+            "pendingReadbacks": 1,
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "logicalWidth": 960,
+            "logicalHeight": 720,
+            "fullPaletteSamples": 0,
+            "randomSeed": 27122029,
+            "npcWorkloadBeforeSha256": "cfa598dd5130670fe6a4010a1f0c16531bebea7583235d1909d93e66209c3e3e",
+            "npcWorkloadAfterSha256": "4b621b8b26ca9dc3af2b5b3682dc5fe2fbbf053e765568fbb03d954fa80fd909"
+          }
+        ],
+        "simulationHz": 60,
+        "mainLoopSleepSeconds": 0.001,
+        "runtime": {
+          "minor": 0,
+          "revision": 0,
+          "major": 12
+        },
+        "measuredScreenshots": false,
+        "game": "emerald",
+        "readbackMetric": "synchronous call or asynchronous submission; completion wait is in transfer, runtime completion copy may be in present",
+        "readbackTimingAvailable": true,
+        "mainThreadCpuAvailable": true,
+        "osWindowProof": {
+          "initial-map": {
+            "freshFrameStamp": 1237,
+            "minimumFrameStamp": 1205,
+            "centralColours": 46,
+            "attempts": 1
+          },
+          "second-map": {
+            "freshFrameStamp": 2529,
+            "minimumFrameStamp": 2451,
+            "centralColours": 37,
+            "attempts": 1
+          },
+          "resized": {
+            "freshFrameStamp": 3767,
+            "minimumFrameStamp": 3744,
+            "centralColours": 43,
+            "attempts": 1
+          },
+          "map-return": {
+            "freshFrameStamp": 5006,
+            "minimumFrameStamp": 4980,
+            "centralColours": 34,
+            "attempts": 1
+          }
+        }
+      }
+    },
+    {
+      "game": "emerald",
+      "repeat": 2,
+      "variant": "baseline",
+      "data": {
+        "pass": true,
+        "phases": [
+          {
+            "pendingReadbacks": 0,
+            "elapsedSeconds": 3.430342333333334,
+            "cpuMsPerFrame": 2.9539133333333334,
+            "metrics": {
+              "gcStep": {
+                "p95Ms": 0.005791666666254969,
+                "p99Ms": 0.012749999999783768,
+                "samples": 600,
+                "maxMs": 0.03925000000037926,
+                "meanMs": 0.002875486111126868,
+                "p50Ms": 0.002250000000536545
+              },
+              "update": {
+                "p95Ms": 0.04737499999940553,
+                "p99Ms": 0.07812499999992895,
+                "samples": 600,
+                "maxMs": 0.09816666666662144,
+                "meanMs": 0.023289930555563387,
+                "p50Ms": 0.019208333333686767
+              },
+              "transfer": {
+                "p95Ms": 1.6119999999988366,
+                "p99Ms": 1.7580833333328272,
+                "samples": 600,
+                "maxMs": 1.9310833333321398,
+                "meanMs": 1.2399026388889982,
+                "p50Ms": 1.2138749999976994
+              },
+              "frame": {
+                "p95Ms": 8.647916666667754,
+                "p99Ms": 11.010916666667647,
+                "samples": 600,
+                "maxMs": 11.385291666665687,
+                "meanMs": 4.298770138888897,
+                "p50Ms": 3.5606666666669895
+              },
+              "body": {
+                "p95Ms": 2.3461666666673153,
+                "p99Ms": 6.151458333332194,
+                "samples": 600,
+                "maxMs": 7.857000000000447,
+                "meanMs": 0.4758239583333153,
+                "p50Ms": 0.2197500000002961
+              },
+              "present": {
+                "p95Ms": 0.2798750000003736,
+                "p99Ms": 0.30204166666614185,
+                "samples": 600,
+                "maxMs": 0.3374166666665346,
+                "meanMs": 0.22460034722219913,
+                "p50Ms": 0.2209166666684581
+              },
+              "paletteSync": {
+                "p95Ms": 0.07212499999997846,
+                "p99Ms": 0.09991666666753218,
+                "samples": 600,
+                "maxMs": 0.12133333333252949,
+                "meanMs": 0.015184444444455991,
+                "p50Ms": 0
+              },
+              "intervals": {
+                "p95Ms": 10.252624999998794,
+                "p99Ms": 12.486749999998992,
+                "samples": 599,
+                "maxMs": 12.809708333332281,
+                "meanMs": 5.718972454090152,
+                "p50Ms": 5.0017083333333545
+              },
+              "readback": {
+                "p95Ms": 6.4011250000000075,
+                "p99Ms": 8.14279166666676,
+                "samples": 600,
+                "maxMs": 9.626458333332977,
+                "meanMs": 2.5830435416665836,
+                "p50Ms": 1.9082499999996116
+              },
+              "render": {
+                "p95Ms": 8.915583333334531,
+                "p99Ms": 11.239666666667425,
+                "samples": 600,
+                "maxMs": 11.6092083333319,
+                "meanMs": 4.523370486111096,
+                "p50Ms": 3.8022916666662354
+              }
+            },
+            "randomSeed": 27122026,
+            "stackAfter": "src/render/TextBox.lua:423",
+            "mainThreadCpuMsPerFrame": 2.6812182633333337,
+            "readbackCalls": 600,
+            "paletteCache": {
+              "before": {
+                "budget": 33554432,
+                "entries": 4,
+                "misses": 3,
+                "perOwner": 4,
+                "bytes": 8454144,
+                "hits": 51
+              },
+              "after": {
+                "budget": 33554432,
+                "entries": 4,
+                "misses": 3,
+                "perOwner": 4,
+                "bytes": 8454144,
+                "hits": 103
+              }
+            },
+            "map": "MAP_G26_N21",
+            "pixelWidth": 1280,
+            "pixelHeight": 960,
+            "fullPaletteSamples": 0,
+            "mode": "opengl-cocoa-frame",
+            "logicalWidth": 640,
+            "logicalHeight": 480,
+            "paletteSamples": {
+              "before": {
+                "invalidations": 0,
+                "entries": 4,
+                "misses": 4,
+                "limit": 4,
+                "hits": 206
+              },
+              "after": {
+                "invalidations": 0,
+                "entries": 4,
+                "misses": 4,
+                "limit": 4,
+                "hits": 413
+              }
+            },
+            "paletteAllocationProbe": {
+              "static": false,
+              "warmupTicks": 128,
+              "samples": 120,
+              "luaKiBPerSample": 0.04791666666666667
+            },
+            "stackBefore": "src/render/TextBox.lua:423",
+            "measuredFrames": 600,
+            "latencyFrames": 0,
+            "npcWorkloadBeforeSha256": "97cc742ce68dddc4159985848dfc2f8bab0e35daa85188f079ee598838f7c8d7",
+            "npcWorkloadAfterSha256": "97cc742ce68dddc4159985848dfc2f8bab0e35daa85188f079ee598838f7c8d7"
+          },
+          {
+            "pendingReadbacks": 0,
+            "elapsedSeconds": 3.3134615000000007,
+            "cpuMsPerFrame": 2.9384750000000004,
+            "metrics": {
+              "gcStep": {
+                "p95Ms": 0.006458333333014821,
+                "p99Ms": 0.009333333334637928,
+                "samples": 600,
+                "maxMs": 0.025833333332059283,
+                "meanMs": 0.0030027083332898976,
+                "p50Ms": 0.0025416666673550026
+              },
+              "update": {
+                "p95Ms": 0.29487500000158207,
+                "p99Ms": 0.3887916666673874,
+                "samples": 600,
+                "maxMs": 0.473416666668669,
+                "meanMs": 0.11798166666669552,
+                "p50Ms": 0.09420833333528833
+              },
+              "transfer": {
+                "p95Ms": 1.5828749999986513,
+                "p99Ms": 1.7742916666669828,
+                "samples": 600,
+                "maxMs": 1.9216249999978174,
+                "meanMs": 1.2165940277777043,
+                "p50Ms": 1.1851666666657934
+              },
+              "frame": {
+                "p95Ms": 7.536708333329756,
+                "p99Ms": 10.449041666667824,
+                "samples": 600,
+                "maxMs": 20.53012500000051,
+                "meanMs": 4.00821236111101,
+                "p50Ms": 3.3700833333316638
+              },
+              "body": {
+                "p95Ms": 1.6383333333340744,
+                "p99Ms": 3.452291666667051,
+                "samples": 600,
+                "maxMs": 8.75729166666872,
+                "meanMs": 0.43501513888887305,
+                "p50Ms": 0.23504166666832305
+              },
+              "present": {
+                "p95Ms": 0.2708750000017801,
+                "p99Ms": 0.286833333332126,
+                "samples": 600,
+                "maxMs": 0.3040833333329829,
+                "meanMs": 0.21826250000001934,
+                "p50Ms": 0.21358333333409973
+              },
+              "paletteSync": {
+                "p95Ms": 0.10554166666487674,
+                "p99Ms": 0.17275000000260832,
+                "samples": 600,
+                "maxMs": 0.27687499999906606,
+                "meanMs": 0.022026180555538843,
+                "p50Ms": 0
+              },
+              "intervals": {
+                "p95Ms": 9.118666666665831,
+                "p99Ms": 12.008833333332802,
+                "samples": 599,
+                "maxMs": 22.001125000000954,
+                "meanMs": 5.523798135781858,
+                "p50Ms": 4.9054583333330015
+              },
+              "readback": {
+                "p95Ms": 5.619041666665936,
+                "p99Ms": 7.881958333333827,
+                "samples": 600,
+                "maxMs": 18.809083333334087,
+                "meanMs": 2.3566031944444323,
+                "p50Ms": 1.7892916666681913
+              },
+              "render": {
+                "p95Ms": 7.769124999994048,
+                "p99Ms": 10.706041666665556,
+                "samples": 600,
+                "maxMs": 20.78325000000092,
+                "meanMs": 4.226474861111029,
+                "p50Ms": 3.592416666668541
+              }
+            },
+            "randomSeed": 27122027,
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mainThreadCpuMsPerFrame": 2.736063611666668,
+            "readbackCalls": 600,
+            "paletteCache": {
+              "before": {
+                "budget": 33554432,
+                "entries": 4,
+                "misses": 3,
+                "perOwner": 4,
+                "bytes": 8454144,
+                "hits": 157
+              },
+              "after": {
+                "budget": 33554432,
+                "entries": 4,
+                "misses": 3,
+                "perOwner": 4,
+                "bytes": 8454144,
+                "hits": 208
+              }
+            },
+            "map": "MAP_G26_N18",
+            "pixelWidth": 1280,
+            "pixelHeight": 960,
+            "fullPaletteSamples": 0,
+            "mode": "opengl-cocoa-frame",
+            "logicalWidth": 640,
+            "logicalHeight": 480,
+            "paletteSamples": {
+              "before": {
+                "invalidations": 0,
+                "entries": 4,
+                "misses": 4,
+                "limit": 4,
+                "hits": 631
+              },
+              "after": {
+                "invalidations": 0,
+                "entries": 4,
+                "misses": 4,
+                "limit": 4,
+                "hits": 831
+              }
+            },
+            "paletteAllocationProbe": {
+              "static": false,
+              "warmupTicks": 128,
+              "samples": 120,
+              "luaKiBPerSample": 0.0013020833333333333
+            },
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "measuredFrames": 600,
+            "latencyFrames": 0,
+            "npcWorkloadBeforeSha256": "9c1a939e282a4d308b557ecbb79cc7c324b47782f096ed0d46a2d7784d5a72d0",
+            "npcWorkloadAfterSha256": "863e609bc4aa6156240bf9ca2085921fe31daeb3e043281a78e3065c9575bfbf"
+          },
+          {
+            "pendingReadbacks": 0,
+            "elapsedSeconds": 4.9101413333333355,
+            "cpuMsPerFrame": 4.772244999999999,
+            "metrics": {
+              "gcStep": {
+                "p95Ms": 0.0068333333338443936,
+                "p99Ms": 0.012624999996546649,
+                "samples": 600,
+                "maxMs": 0.029374999996889528,
+                "meanMs": 0.003300972222112601,
+                "p50Ms": 0.002749999996609631
+              },
+              "update": {
+                "p95Ms": 0.06566666666074639,
+                "p99Ms": 0.09408333333382757,
+                "samples": 600,
+                "maxMs": 0.16074999999915462,
+                "meanMs": 0.03646187499979211,
+                "p50Ms": 0.03266666666945639
+              },
+              "transfer": {
+                "p95Ms": 2.9907083333391427,
+                "p99Ms": 3.2444583333308685,
+                "samples": 600,
+                "maxMs": 6.973166666661257,
+                "meanMs": 2.3479000694440977,
+                "p50Ms": 2.2874999999942247
+              },
+              "frame": {
+                "p95Ms": 11.663958333336666,
+                "p99Ms": 13.597499999999485,
+                "samples": 600,
+                "maxMs": 15.768291666663714,
+                "meanMs": 6.885338888888922,
+                "p50Ms": 6.175333333334976
+              },
+              "body": {
+                "p95Ms": 2.569583333336567,
+                "p99Ms": 6.507083333335828,
+                "samples": 600,
+                "maxMs": 8.85279166666919,
+                "meanMs": 0.6188446527780656,
+                "p50Ms": 0.25741666666689866
+              },
+              "present": {
+                "p95Ms": 0.20966666666666356,
+                "p99Ms": 0.2407916666697929,
+                "samples": 600,
+                "maxMs": 0.27720833333333417,
+                "meanMs": 0.05632347222210399,
+                "p50Ms": 0.031208333329146853
+              },
+              "paletteSync": {
+                "p95Ms": 0.057208333331004724,
+                "p99Ms": 0.07758333333640621,
+                "samples": 600,
+                "maxMs": 0.10295833333273663,
+                "meanMs": 0.01748604166655454,
+                "p50Ms": 0
+              },
+              "intervals": {
+                "p95Ms": 13.092749999998432,
+                "p99Ms": 15.22495833333437,
+                "samples": 599,
+                "maxMs": 17.220500000000527,
+                "meanMs": 8.182739983305504,
+                "p50Ms": 7.4367083333335415
+              },
+              "readback": {
+                "p95Ms": 7.76587500000403,
+                "p99Ms": 10.296416666662367,
+                "samples": 600,
+                "maxMs": 11.361000000004395,
+                "meanMs": 3.9185941666667587,
+                "p50Ms": 3.1839166666607355
+              },
+              "render": {
+                "p95Ms": 11.792249999999171,
+                "p99Ms": 13.629541666666967,
+                "samples": 600,
+                "maxMs": 15.812083333329952,
+                "meanMs": 6.941662361111026,
+                "p50Ms": 6.217833333334255
+              }
+            },
+            "randomSeed": 27122028,
+            "stackAfter": "src/render/TextBox.lua:423",
+            "mainThreadCpuMsPerFrame": 4.377863056666668,
+            "readbackCalls": 600,
+            "paletteCache": {
+              "before": {
+                "budget": 33554432,
+                "entries": 4,
+                "misses": 3,
+                "perOwner": 4,
+                "bytes": 8454144,
+                "hits": 287
+              },
+              "after": {
+                "budget": 33554432,
+                "entries": 4,
+                "misses": 3,
+                "perOwner": 4,
+                "bytes": 8454144,
+                "hits": 362
+              }
+            },
+            "map": "MAP_G26_N21",
+            "pixelWidth": 1920,
+            "pixelHeight": 1440,
+            "fullPaletteSamples": 0,
+            "mode": "opengl-cocoa-frame",
+            "logicalWidth": 960,
+            "logicalHeight": 720,
+            "paletteSamples": {
+              "before": {
+                "invalidations": 0,
+                "entries": 4,
+                "misses": 4,
+                "limit": 4,
+                "hits": 1142
+              },
+              "after": {
+                "invalidations": 0,
+                "entries": 4,
+                "misses": 4,
+                "limit": 4,
+                "hits": 1437
+              }
+            },
+            "paletteAllocationProbe": {
+              "static": false,
+              "warmupTicks": 128,
+              "samples": 120,
+              "luaKiBPerSample": 0.0013020833333333333
+            },
+            "stackBefore": "src/render/TextBox.lua:423",
+            "measuredFrames": 600,
+            "latencyFrames": 0,
+            "npcWorkloadBeforeSha256": "85ad5cca66497f68bba9c0007554d136af83aefd30081d9d4ec7360899475eaa",
+            "npcWorkloadAfterSha256": "85ad5cca66497f68bba9c0007554d136af83aefd30081d9d4ec7360899475eaa"
+          },
+          {
+            "pendingReadbacks": 0,
+            "elapsedSeconds": 5.807352083333331,
+            "cpuMsPerFrame": 5.063221666666665,
+            "metrics": {
+              "gcStep": {
+                "p95Ms": 0.00683333333029168,
+                "p99Ms": 0.009666666670682389,
+                "samples": 600,
+                "maxMs": 0.021750000001929948,
+                "meanMs": 0.0031406249999873146,
+                "p50Ms": 0.002625000007583367
+              },
+              "update": {
+                "p95Ms": 0.19937500000111186,
+                "p99Ms": 0.29062500000165414,
+                "samples": 600,
+                "maxMs": 0.3931249999986619,
+                "meanMs": 0.10972388888880857,
+                "p50Ms": 0.0960416666657693
+              },
+              "transfer": {
+                "p95Ms": 2.8843333333270493,
+                "p99Ms": 3.0540000000058853,
+                "samples": 600,
+                "maxMs": 3.1180833333408486,
+                "meanMs": 2.3795755555552014,
+                "p50Ms": 2.368333333329531
+              },
+              "frame": {
+                "p95Ms": 13.243666666660658,
+                "p99Ms": 14.406791666665697,
+                "samples": 600,
+                "maxMs": 15.240250000005062,
+                "meanMs": 8.340479305555526,
+                "p50Ms": 7.557458333337763
+              },
+              "body": {
+                "p95Ms": 4.022249999998451,
+                "p99Ms": 8.263041666666027,
+                "samples": 600,
+                "maxMs": 9.013208333328748,
+                "meanMs": 0.7555311111113264,
+                "p50Ms": 0.23683333333224255
+              },
+              "present": {
+                "p95Ms": 0.04758333333398923,
+                "p99Ms": 0.06424999999410375,
+                "samples": 600,
+                "maxMs": 0.09949999999037118,
+                "meanMs": 0.03281131944457153,
+                "p50Ms": 0.03162499999831425
+              },
+              "paletteSync": {
+                "p95Ms": 0.07179166666304582,
+                "p99Ms": 0.10566666666278479,
+                "samples": 600,
+                "maxMs": 0.14050000000054297,
+                "meanMs": 0.02392430555564336,
+                "p50Ms": 0.02529166667386562
+              },
+              "intervals": {
+                "p95Ms": 14.57824999999957,
+                "p99Ms": 15.895708333331982,
+                "samples": 599,
+                "maxMs": 16.576583333339556,
+                "meanMs": 9.67316889259877,
+                "p50Ms": 8.861041666669678
+              },
+              "readback": {
+                "p95Ms": 9.622749999998348,
+                "p99Ms": 10.558083333336299,
+                "samples": 600,
+                "maxMs": 11.519416666669002,
+                "meanMs": 5.205372638888998,
+                "p50Ms": 4.3552083333295855
+              },
+              "render": {
+                "p95Ms": 13.279291666663084,
+                "p99Ms": 14.443374999999037,
+                "samples": 600,
+                "maxMs": 15.273083333333659,
+                "meanMs": 8.373290625000097,
+                "p50Ms": 7.596541666664791
+              }
+            },
+            "randomSeed": 27122029,
+            "stackAfter": "src/world/OverworldController.lua:3314",
+            "mainThreadCpuMsPerFrame": 4.619037500000003,
+            "readbackCalls": 600,
+            "paletteCache": {
+              "before": {
+                "budget": 33554432,
+                "entries": 4,
+                "misses": 3,
+                "perOwner": 4,
+                "bytes": 8454144,
+                "hits": 453
+              },
+              "after": {
+                "budget": 33554432,
+                "entries": 4,
+                "misses": 3,
+                "perOwner": 4,
+                "bytes": 8454144,
+                "hits": 540
+              }
+            },
+            "map": "MAP_G26_N18",
+            "pixelWidth": 1920,
+            "pixelHeight": 1440,
+            "fullPaletteSamples": 0,
+            "mode": "opengl-cocoa-frame",
+            "logicalWidth": 960,
+            "logicalHeight": 720,
+            "paletteSamples": {
+              "before": {
+                "invalidations": 0,
+                "entries": 4,
+                "misses": 4,
+                "limit": 4,
+                "hits": 1801
+              },
+              "after": {
+                "invalidations": 0,
+                "entries": 4,
+                "misses": 4,
+                "limit": 4,
+                "hits": 2150
+              }
+            },
+            "paletteAllocationProbe": {
+              "static": false,
+              "warmupTicks": 128,
+              "samples": 120,
+              "luaKiBPerSample": 0.0013020833333333333
+            },
+            "stackBefore": "src/world/OverworldController.lua:3314",
+            "measuredFrames": 600,
+            "latencyFrames": 0,
+            "npcWorkloadBeforeSha256": "cfa598dd5130670fe6a4010a1f0c16531bebea7583235d1909d93e66209c3e3e",
+            "npcWorkloadAfterSha256": "4b621b8b26ca9dc3af2b5b3682dc5fe2fbbf053e765568fbb03d954fa80fd909"
+          }
+        ],
+        "game": "emerald",
+        "mainLoopSleepSeconds": 0.001,
+        "measuredPixelReadbackObservers": false,
+        "measuredScreenshots": false,
+        "gpu": {
+          "vendor": "Apple",
+          "device": "Apple M3",
+          "version": "4.1 Metal - 89.4",
+          "renderer": "OpenGL"
+        },
+        "npcConstruction": "seeded-sorted-neighbors-fresh-pool",
+        "readbackTimingAvailable": true,
+        "mainThreadCpuAvailable": true,
+        "readbackMetric": "synchronous call or asynchronous submission; completion wait is in transfer, runtime completion copy may be in present",
+        "vsync": 0,
+        "runtime": {
+          "major": 12,
+          "minor": 0,
+          "revision": 0
+        },
+        "simulationHz": 60,
+        "osWindowProof": {
+          "initial-map": {
+            "freshFrameStamp": 1231,
+            "minimumFrameStamp": 1205,
+            "centralColours": 46,
+            "attempts": 1
+          },
+          "second-map": {
+            "freshFrameStamp": 2466,
+            "minimumFrameStamp": 2441,
+            "centralColours": 37,
+            "attempts": 1
+          },
+          "resized": {
+            "freshFrameStamp": 3696,
+            "minimumFrameStamp": 3676,
+            "centralColours": 43,
+            "attempts": 1
+          },
+          "map-return": {
+            "freshFrameStamp": 4925,
+            "minimumFrameStamp": 4907,
+            "centralColours": 34,
+            "attempts": 1
+          }
+        }
+      }
+    }
+  ],
+  "behavior": {
+    "scope": "only detected macOS OpenGL Cocoa recovery on an async-capable runtime",
+    "onePendingReadback": true,
+    "steadyPresentationLatencyFrames": 1,
+    "bootstrap": "first complete current image is repeated once while starting the stream",
+    "capturesAndObservers": "drain pending work and show independent current frame; restart bootstraps again",
+    "resizeAndShutdown": "drain request before destination/texture release",
+    "failure": "repair with synchronous current frame and disable async until resource replacement",
+    "metalAndHealthyOpenGL": "retain original presentation path"
+  },
+  "isolation": {
+    "gen1Untouched": true,
+    "playerUntouched": true,
+    "portPaused": true,
+    "onlyOwnedUUIDInstances": true,
+    "onlyOwnedChildWindows": true
+  },
+  "limits": [
+    "One-frame presentation latency and one staging buffer are additional costs.",
+    "Small FireRed mean CPU increases about 8.5%; not every scene percentile improves.",
+    "Synchronous startup/capture/fallback and async completion can still wait; GPU stalls are mitigated, not eliminated.",
+    "External GPU/compositor load uncontrolled on one host; not displayed FPS or GPU timestamps.",
+    "No Windows hardware execution or full-gameplay/fullscreen/context-loss/long-duration guarantee.",
+    "Previously published native-preview-20261024.1 remains at its original source."
+  ],
+  "functional": [
+    {
+      "backend": "gl12",
+      "game": "emerald",
+      "mode": "async-window",
+      "passResult": true,
+      "frames": 656,
+      "ownWindowProofs": 4,
+      "blank": 0,
+      "stale": 0,
+      "deferredFrames": 648,
+      "currentFrames": 8
+    },
+    {
+      "backend": "gl12",
+      "game": "emerald",
+      "mode": "gpu",
+      "passResult": true,
+      "checks": 2097,
+      "rgbaPixels": 523520,
+      "firstAttemptCaptures": true
+    },
+    {
+      "backend": "gl12",
+      "game": "emerald",
+      "mode": "window",
+      "passResult": true,
+      "frames": 647,
+      "ownWindowProofs": 4,
+      "blank": 0,
+      "stale": 0,
+      "deferredFrames": 0,
+      "currentFrames": 0
+    },
+    {
+      "backend": "gl12",
+      "game": "firered",
+      "mode": "async-window",
+      "passResult": true,
+      "frames": 652,
+      "ownWindowProofs": 4,
+      "blank": 0,
+      "stale": 0,
+      "deferredFrames": 644,
+      "currentFrames": 8
+    },
+    {
+      "backend": "gl12",
+      "game": "firered",
+      "mode": "gpu",
+      "passResult": true,
+      "checks": 16582,
+      "rgbaPixels": 4237824,
+      "firstAttemptCaptures": true
+    },
+    {
+      "backend": "gl12",
+      "game": "firered",
+      "mode": "window",
+      "passResult": true,
+      "frames": 650,
+      "ownWindowProofs": 4,
+      "blank": 0,
+      "stale": 0,
+      "deferredFrames": 0,
+      "currentFrames": 0
+    },
+    {
+      "backend": "metal12",
+      "game": "emerald",
+      "mode": "gpu",
+      "passResult": true,
+      "checks": 2097,
+      "rgbaPixels": 523520,
+      "firstAttemptCaptures": true
+    },
+    {
+      "backend": "metal12",
+      "game": "emerald",
+      "mode": "window",
+      "passResult": true,
+      "frames": 659,
+      "ownWindowProofs": 4,
+      "blank": 0,
+      "stale": 0,
+      "deferredFrames": 0,
+      "currentFrames": 0
+    },
+    {
+      "backend": "metal12",
+      "game": "firered",
+      "mode": "gpu",
+      "passResult": true,
+      "checks": 16582,
+      "rgbaPixels": 4237824,
+      "firstAttemptCaptures": true
+    },
+    {
+      "backend": "metal12",
+      "game": "firered",
+      "mode": "window",
+      "passResult": true,
+      "frames": 662,
+      "ownWindowProofs": 4,
+      "blank": 0,
+      "stale": 0,
+      "deferredFrames": 0,
+      "currentFrames": 0
+    }
+  ]
+}

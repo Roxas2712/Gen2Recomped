@@ -4,10 +4,42 @@
 -- framebuffers use the same target and an explicitly detected Cocoa recovery.
 local M = {}
 local canvas,bridge,observer,readbackBuffer
+local pendingReadback,asyncDisabled
+local latencyFrames=0
 local mode="direct"
 local frames=0
+local function waitPending()
+  if not pendingReadback then return true end
+  local request=pendingReadback
+  local ok,complete=pcall(function()
+    request:wait()
+    return not request:hasError()
+  end)
+  return ok and complete
+end
+local function discardPending()
+  local ok=waitPending()
+  if pendingReadback then pendingReadback:release();pendingReadback=nil end
+  return ok
+end
 local function releaseReadback()
+  discardPending()
   if readbackBuffer then readbackBuffer:release();readbackBuffer=nil end
+  asyncDisabled=nil;latencyFrames=0
+end
+local function disableAsync()
+  discardPending()
+  if not asyncDisabled then
+    require("src.core.Logger").warn("OpenGL asynchronous readback failed; using synchronous frames")
+  end
+  asyncDisabled=true;latencyFrames=0
+end
+local function queueReadback(target)
+  local ok,request=pcall(love.graphics.readbackTextureAsync,
+    target,nil,1,nil,nil,nil,nil,readbackBuffer)
+  if not ok or not request then disableAsync();return false end
+  pendingReadback=request
+  return true
 end
 local function readback(target,reuse)
   if love.graphics.readbackTexture then
@@ -26,7 +58,10 @@ local function readback(target,reuse)
   return target:newImageData()
 end
 function M.observe(callback) observer=callback end
-function M.info() return {mode=mode,frames=frames} end
+function M.info()
+  return {mode=mode,frames=frames,latencyFrames=latencyFrames,
+    pendingReadbacks=pendingReadback and 1 or 0}
+end
 function M.shutdown()
   if bridge then bridge:close();bridge=nil end
   releaseReadback()
@@ -82,10 +117,35 @@ function M.draw(body,capture)
   if not ok then error(err,0) end
   frames=frames+1
   local data
-  if bridge or capture or observer then data=readback(canvas,bridge and not capture and not observer) end
+  local queueAfter=false
+  local deferred=bridge and g.readbackTextureAsync and not asyncDisabled and not capture and not observer
+  latencyFrames=0
+  if deferred then
+    if pendingReadback then
+      if waitPending() then
+        pendingReadback:release();pendingReadback=nil
+        data=readbackBuffer;queueAfter=true;latencyFrames=1
+      end
+    elseif queueReadback(canvas) and waitPending() then
+      -- Bootstrap displays a complete current image. Keep its completed
+      -- request for the first pipelined frame; only that startup image repeats.
+      readbackBuffer=pendingReadback:getImageData();data=readbackBuffer
+    end
+    if not data then disableAsync();data=readback(canvas,true) end
+  else
+    -- Captures/observers always see the current frame, independently owned.
+    -- Drain before touching the shared destination or retiring its texture.
+    discardPending()
+    if bridge or capture or observer then data=readback(canvas,bridge and not capture and not observer) end
+  end
   local success,reason=xpcall(function()
     if bridge then
       bridge:present(data,ww,wh)
+      if queueAfter and not queueReadback(canvas) then
+        -- Submission failed after displaying the previous image. Repair this
+        -- frame too, then keep synchronous presentation until resize/shutdown.
+        data=readback(canvas,true);bridge:present(data,ww,wh)
+      end
     else
       g.push("all")
       g.origin();g.setShader();g.setScissor();g.setColor(1,1,1,1)
@@ -101,6 +161,6 @@ function M.draw(body,capture)
     end
   end,debug.traceback)
   if data and data~=readbackBuffer then data:release() end
-  if not success then error(reason,0) end
+  if not success then discardPending();error(reason,0) end
 end
 return M
