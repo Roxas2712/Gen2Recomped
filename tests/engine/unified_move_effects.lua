@@ -52,7 +52,6 @@ for gen = 1, 3 do
   )
 end
 for _, id in ipairs({
-  "HELPING_HAND",
   "MAGIC_COAT",
   "SNATCH",
   "IMPRISON",
@@ -62,6 +61,9 @@ for _, id in ipairs({
 }) do
   T.eq(E.write(id, 3, nil, registered), nil, "missing native Gen3 handler refused " .. id)
 end
+local helpingHand = assert(E.write("HELPING_HAND", 3, nil, registered))
+T.eq(helpingHand.effect, "HELPING_HAND_EFFECT", "canonical Helping Hand selects the native handler")
+T.eq(helpingHand.gen3Effect, 176, "canonical Helping Hand keeps native semantic number")
 local followMe = assert(E.write("FOLLOW_ME", 3, nil, registered))
 T.eq(followMe.effect, "FOLLOW_ME_EFFECT", "canonical Follow Me selects newly implemented native handler")
 T.eq(followMe.gen3Effect, 172, "canonical Follow Me keeps native effect number")

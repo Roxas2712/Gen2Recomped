@@ -43,3 +43,11 @@ entry. With it the full fixture digest is `128fc071ae7249cd` and the
 restores full digest `41e69caf4afa35ab` and section `3bef37494ca4a845`.
 All six other populated section digests stay identical. Only these two pins
 change for this integration; mutation/determinism checks remain enabled.
+
+## Native GBA Helping Hand
+
+The intentional `HELPING_HAND_EFFECT` primary record adds one native registry
+entry. The full digest becomes `032184f68094e9ca`; the `move_effects` section
+changes from `7cd0ac0f527968fb` to `52cc8398513ed12c`. Removing only that entry restores
+the former full digest `128fc071ae7249cd` and effect section. All six other
+populated sections stay identical. Mutation and determinism checks remain enabled.
