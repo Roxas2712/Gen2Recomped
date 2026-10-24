@@ -32,6 +32,7 @@ local Runtime = require("src.mods.Runtime")
 local InputControl = require("src.mods.InputControl")
 local BattleSnapshots = require("src.mods.BattleSnapshots")
 local UIActions = require("src.mods.UIActions")
+local Net = require("src.mods.Net")
 local ModGens = require("src.mods.ModGens")
 local ModSeams = require("src.mods.ModSeams")
 local WorldOverview = require("src.mods.WorldOverview")
@@ -975,6 +976,7 @@ function Loader:_api(mod)
     end },
     -- Per-mod action/revision state, with the existing lazy widget builders.
     -- Reading the facade early must not construct Game or a native screen.
+    fetch = Net.forMod(loader, mod),
     ui = UIActions.new(function() return loader:_game(true) end, loader, ModUI),
     -- namespaced per mod; M11 backs these with save.modData /
     -- options.modOptions, the shape mods compile against is already final
@@ -1320,6 +1322,7 @@ end
 -- migration it took goes with them.  The journal only exists around an
 -- entry chunk; a later failure (script validation) purges every registry.
 function Loader:_rollback(modId)
+  Net.releaseAll(self, modId)
   self.inputControl:retire(modId)
   Api3WildBattle.cancelAll(self, modId)
   Api3NPC.cancelAll(self, modId)
@@ -1803,6 +1806,7 @@ end
 -- boots) ran on a modded engine whose mod instance nothing drives any more,
 -- and the next Play loaded every mod on top of what the last one left.
 function Loader.teardown()
+  Net.unloadAll()
   InputControl.closeAll()
   local viewport = package.loaded["src.render.GameViewport"]
   if viewport then viewport.reset() end
