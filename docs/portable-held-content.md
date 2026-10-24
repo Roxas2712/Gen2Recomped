@@ -44,8 +44,7 @@ or `patch`. Removing it clears the native held attributes, without removing
 the item itself. `register` supplies a definition, not an item: add the item
 through `mod.content.items` as well. A definition for an absent item does not
 create native inventory content. New Gen-2 unified items can carry their
-native byte `index`; occupied indices and new items using index zero are
-refused. Changing indices in other generations remains outside
+native byte `index`; occupied indices and reassigning NONE's zero index are refused. Changing indices in other generations remains outside
 this adapter.
 
 The loader snapshots the native held attributes before mod entry, folds
