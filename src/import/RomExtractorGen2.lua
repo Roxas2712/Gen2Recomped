@@ -3796,6 +3796,24 @@ local GEN2_CLASS_POKEMON_PROF = 10
 local GEN2_CLASS_ATTRIBUTE_BYTES = 7
 local GEN2_CLASS_ATTRIBUTE_REWARD = 2
 
+function RomExtractorGen2:gen2TrainerAttributes(group)
+  if type(group) ~= "number" or group % 1 ~= 0 or group < 1 or group > 255 then return nil end
+  local sym = self:symbol("TrainerClassAttributes")
+  if not (sym and self.rom) then return nil end
+  local ok, row = pcall(self.rom.bytes, self.rom, sym.bank,
+    sym.address + (group - 1) * GEN2_CLASS_ATTRIBUTE_BYTES, GEN2_CLASS_ATTRIBUTE_BYTES)
+  if not ok or type(row) ~= "table" or #row ~= GEN2_CLASS_ATTRIBUTE_BYTES then return nil end
+  for i = 1, GEN2_CLASS_ATTRIBUTE_BYTES do
+    if type(row[i]) ~= "number" or row[i] % 1 ~= 0 or row[i] < 0 or row[i] > 255 then return nil end
+  end
+  local attributes, items = {}, {}
+  for i = 1, GEN2_CLASS_ATTRIBUTE_BYTES do attributes[i] = row[i] end
+  for slot = 1, 2 do
+    if row[slot] ~= 0 then items[#items + 1] = string.format("ITEM_%03d", row[slot]) end
+  end
+  return attributes, items
+end
+
 function RomExtractorGen2:gen2TrainerBaseMoney(group)
   local sym = self:symbol("TrainerClassAttributes")
   if not (sym and self.rom) then return 0 end
@@ -3908,12 +3926,15 @@ function RomExtractorGen2:gen2Trainers()
         if used[label] then label = label .. "_" .. tostring(group) end
         used[label] = true
         local id = "OPP_" .. label
+        local attributes, items = self:gen2TrainerAttributes(group)
         byClass[id] = {
           id = id,
           index = group,
           name = className or label,
           source = "ROM:TrainerGroups",
           baseMoney = self:gen2TrainerBaseMoney(group),
+          attributes = attributes,
+          items = items,
           parties = parties,
           partyNames = names,
         }
