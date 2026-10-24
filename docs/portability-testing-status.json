@@ -1,7 +1,7 @@
 {
-  "runtime_ref": "e0a22d3811064761b43f295656737634304858ac",
+  "runtime_ref": "df1566375b3776fce349c04f9c05eaa9bd1525e5",
   "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/180",
-  "feature_ref": "d11d50a95878faffb0c2e87e82c5d4046f84e98b",
+  "feature_ref": "cf761ca9b1be9da528ccecec5e826f23ce4a7bed",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
   "engine_suites_passed": 201,
   "engine_suites_total": 201,
@@ -9,7 +9,7 @@
   "sdk_suites_total": 3,
   "b30_profile": "passed",
   "cross_engine_worker_runs": 4,
-  "cross_engine_paired_observations": 2688,
+  "cross_engine_paired_observations": 3072,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -1032,9 +1032,45 @@
       "jobs": 0
     }
   },
-  "ai_move_knowledge_checks_passed": 16812,
-  "ai_move_knowledge_worker_runs": 4,
-  "ai_move_knowledge_paired_observations": 2688,
-  "ai_move_knowledge_runtime_ref": "e0a22d3811064761b43f295656737634304858ac",
-  "ai_move_knowledge_scope": "Actual FireRed/Emerald AI interpreter and host decision entry-point contracts; no new graphical gameplay or full AI parity claim"
+  "gen3_ai_move_knowledge": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/180",
+    "feature_ref": "cf761ca9b1be9da528ccecec5e826f23ce4a7bed",
+    "feature_runtime_ref": "d871fe0b49f7f2283194e85a73f86865bba0205e",
+    "independent_pr": true,
+    "upstream_base": "13af468b97dc37015d14ad5c71d7f067c3ee810d",
+    "combined_runtime_ref": "df1566375b3776fce349c04f9c05eaa9bd1525e5",
+    "host_checks_passed": 19116,
+    "cross_engine_worker_runs": 4,
+    "cross_engine_paired_observations": 3072,
+    "query_commands": 4,
+    "combined_engine_suites_passed": 201,
+    "combined_engine_suites_total": 201,
+    "sdk_suites_passed": 3,
+    "b30_profile": "passed",
+    "negative_control": {
+      "parent_ref": "13af468b97dc37015d14ad5c71d7f067c3ee810d",
+      "firered_failed_assertions": 3145,
+      "emerald_failed_assertions": 3577,
+      "differing_observations_per_gba_profile": 1536
+    },
+    "feature_baseline": {
+      "engine_suites_passed": 65,
+      "engine_suites_total": 75,
+      "upstream_engine_suites_passed": 64,
+      "upstream_engine_suites_total": 74,
+      "known_failing_suites": 10,
+      "failure_lines": 27,
+      "all_failure_lines_match_upstream": true,
+      "new_failures": 0
+    },
+    "knowledge_module_sha256": "b50b5991014801f4d6b82dfab0291dd415a30038fd798d5dce22f2b827431220",
+    "knowledge_module_byte_identical_to_feature": true,
+    "scope": "Actual FireRed/Emerald AI interpreter and host decision entry-point contracts; no new graphical gameplay or full AI parity claim; unfinished public hook remains separate",
+    "hosted_ci": {
+      "workflow_count": 2,
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40111054659",
+      "jobs": 0
+    }
+  }
 }
