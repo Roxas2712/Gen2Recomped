@@ -41,3 +41,27 @@ hits, critical level boundaries and STAB through the public consumer. It stops
 before battle finish, afterBattle or normal SAVE. This is not a complete
 playthrough or fresh full-ROM import; native Silver/Crystal GUI runs are not
 implied by the headless matrix.
+
+## Validation
+
+**7/7** focused arithmetic regressions and **1,950/1,950** loader checks pass.
+Each host API mode passes **10 workers / 480 paired observations** against
+clean Gen1 `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`. The unchanged #175 parent
+differs in **32 damage observations** and fails **two level-29 regression
+assertions per Gen-2 version** with the same current fixtures.
+
+Native LÖVE 11.5 passes six constructed battles each on imported Gold,
+FireRed and Emerald: **18 battles and 36 public critical decisions**, at clean
+feature runtime `397d7d6fb48bcf8f539c152397bb3e5ad220d23d`. Gold checks the new
+level boundaries; the GBA runs retain the earlier type-rounding regressions.
+The temporary installed example was removed with hash guards. Native
+Silver/Crystal GUI runs are not claimed. Later changes record validation only.
+
+The complete feature passes **142/152** engine suites, **3/3** SDK suites and
+B30. All **26 FAIL lines** exactly match the parent's ten known baseline
+failure suites; their separate #128–134 repairs are outside this feature.
+The combined testing runtime `6ba0ca1569a27faba67f0481e602df777fa5dc39`, with
+those repairs, passes **197/197** engine suites, **3/3** SDK suites, B30 and both
+shared contract modes. Critical implementation/consumer/driver files are byte
+identical between feature and combined trees; the native results above retain
+their feature runtime and are not relabeled as a new composed native run.
