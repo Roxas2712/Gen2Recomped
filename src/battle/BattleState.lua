@@ -1016,7 +1016,7 @@ end
 -- construction
 -- ---------------------------------------------------------------------
 
-local function makeBattler(data, mon, isPlayer, save)
+local function makeBattler(data, mon, isPlayer, save, battle)
   local def = require('src.pokemon.Gen4Forms').definition(data,mon)
   local badgeBoosts = data.constants and data.constants.badgeBoosts
   local badges = nil
@@ -1028,7 +1028,7 @@ local function makeBattler(data, mon, isPlayer, save)
       if save.inventory[row.badge] then badges[row.badge] = true end
     end
   end
-  return {
+  local battler = {
     mon = mon,
     def = def,
     name = mon.nickname or def.name,
@@ -1085,6 +1085,7 @@ local function makeBattler(data, mon, isPlayer, save)
     monAnim = (not isPlayer)
       and require("src.pokemon.MonAnim").new(data, mon.species) or nil,
   }
+  return require("src.battle.HeldItemRead").bind(battler, battle)
 end
 
 -- LinkBattle builds clamped copies with save=nil (no badge boosts); wild
@@ -1400,7 +1401,7 @@ function BattleState.newWild(game, species, level, opts)
     Logger.warn("wild battle with no healthy party; skipping")
     self.dead = true
   else
-    self.player = makeBattler(game.data, playerMon, true, game.save)
+    self.player = makeBattler(game.data, playerMon, true, game.save, self)
   end
   local form=opts and opts.form
   if form==nil and (game.data.constants or {}).gen==4 then
@@ -1457,7 +1458,7 @@ function BattleState.newWild(game, species, level, opts)
   if opts and opts.roamerSeed then
     Pokemon.applySeed(game.data, wild, opts.roamerSeed)
   end
-  self.enemy = makeBattler(game.data, wild, false)
+  self.enemy = makeBattler(game.data, wild, false, nil, self)
   self.caughtMark = require("src.battle.CaughtMarker").caught(game, wild.species)
   require("src.battle.Gen2Wild").initialize(self, opts)
   if self.roamer then
@@ -1582,9 +1583,9 @@ function BattleState.newPokedudeDemo(game, lesson)
   local self = newBattle(game)
   self.kind = "wild"
   self.noRun = true
-  self.player = makeBattler(game.data, party[1], true, game.save)
+  self.player = makeBattler(game.data, party[1], true, game.save, self)
   self.enemyParty = { pokedudeMon(game, def.enemy) }
-  self.enemy = makeBattler(game.data, self.enemyParty[1], false)
+  self.enemy = makeBattler(game.data, self.enemyParty[1], false, nil, self)
   self.introText = self:romText("_WildMonAppearedText", "Wild %s\nappeared!",
                                 self.enemy.name)
   self.demoName = "POKé DUDE"
@@ -1774,9 +1775,9 @@ function BattleState.newTrainer(game, oppClass, partyIndex, opts)
     Logger.warn("trainer battle with no healthy party; skipping")
     self.dead = true
   else
-    self.player = makeBattler(game.data, playerMon, true, game.save)
+    self.player = makeBattler(game.data, playerMon, true, game.save, self)
   end
-  self.enemy = makeBattler(game.data, self.enemyParty[1], false)
+  self.enemy = makeBattler(game.data, self.enemyParty[1], false, nil, self)
   self.aiUses = self:aiUsesFor() -- wAICount, reset per enemy mon
   markSeen(game, self.enemyParty[1].species, self.enemyParty[1])
 
@@ -1868,7 +1869,7 @@ function BattleState:sendOutSecondPair()
   if self:battlerAt(BattleState.POS.PLAYER_RIGHT) == nil and self.ally then
     local first = Party.firstHealthy(self.ally.party or {})
     if first then
-      local b = makeBattler(game.data, first, true, nil)
+      local b = makeBattler(game.data, first, true, nil, self)
       b.ally = true
       self:placeBattler(BattleState.POS.PLAYER_RIGHT, b)
     end
@@ -1879,7 +1880,7 @@ function BattleState:sendOutSecondPair()
     local second = Party.firstHealthy(self:playerPartyView(), lead)
     if second then
       self:placeBattler(BattleState.POS.PLAYER_RIGHT,
-                        makeBattler(game.data, second, true, game.save))
+                        makeBattler(game.data, second, true, game.save, self))
     else
       -- one usable mon and a double battle is a state the cartridge refuses
       -- to enter (special 64 answers non-zero and the approach is called
@@ -1895,7 +1896,7 @@ function BattleState:sendOutSecondPair()
     if party and party[2] then
       self.enemyIndexRight = 2
       self:placeBattler(BattleState.POS.OPPONENT_RIGHT,
-                        makeBattler(game.data, party[2], false))
+                        makeBattler(game.data, party[2], false, nil, self))
       markSeen(game, party[2].species, party[2])
     else
       -- a "double" trainer with one Pokemon fights alone on their side,
@@ -1953,7 +1954,7 @@ function BattleState:addOpponentTrainer(oppClass)
     -- the right-hand opponent is the SECOND trainer's lead, replacing
     -- whatever the first trainer's second Pokemon had been put there
     self:placeBattler(BattleState.POS.OPPONENT_RIGHT,
-                      makeBattler(self.game.data, self.enemyPartyB[1], false))
+                      makeBattler(self.game.data, self.enemyPartyB[1], false, nil, self))
     markSeen(self.game, self.enemyPartyB[1].species, self.enemyPartyB[1])
   end
   return true
@@ -2188,7 +2189,7 @@ function BattleState:makeOldManDemo(name)
   if not self.player then
     self.dead = false
     self.player = makeBattler(self.game.data,
-      Pokemon.new(self.game.data, self.enemy.mon.species, 5), true)
+      Pokemon.new(self.game.data, self.enemy.mon.species, 5), true, nil, self)
   end
 end
 
@@ -3453,7 +3454,10 @@ end
 function BattleState:placeBattler(pos, battler)
   local side, flank = slotOf(pos)
   self.sides[side].battlers[flank] = battler
-  if battler then battler.position = pos end
+  if battler then
+    battler.position = pos
+    require("src.battle.HeldItemRead").bind(battler, self)
+  end
   if flank == 1 then
     if side == 1 then self.player = battler else self.enemy = battler end
   end
@@ -3572,6 +3576,9 @@ function BattleState:syncSides()
     local orr = self.sides[2].battlers[2]
     if pr then pr.position = BattleState.POS.PLAYER_RIGHT end
     if orr then orr.position = BattleState.POS.OPPONENT_RIGHT end
+  end
+  for _, battler in activeBattlers(self) do
+    require("src.battle.HeldItemRead").bind(battler, self)
   end
 end
 
@@ -5768,7 +5775,7 @@ function BattleState:switchPlayerInto(pos, newMon)
   end
   local previous = self:battlerAt(pos)
   self:restoreMimicked(previous)      -- the battle copy leaves with it
-  local incoming = makeBattler(self.data, newMon, true, self.game.save)
+  local incoming = makeBattler(self.data, newMon, true, self.game.save, self)
   self:placeBattler(pos, incoming)
   -- BATON PASS: the stat stages and the volatiles go with the switch, which
   -- is the whole move.  Nothing else survives a switch, so a pass that was
@@ -6178,6 +6185,9 @@ end
 -- true when the band held and the Pokemon is standing on one HP.
 function BattleState:focusBandHolds(battler, incoming)
   if not (battler and battler.mon) then return false end
+  if GameVersion.isGen2() then
+    return HeldItems.limitDirectDamage(self.data, battler, incoming, self.rng) < incoming
+  end
   -- BLACK AND WHITE: Focus Sash / Focus Band (src/battle/Gen5HoldItems.lua)
   if self.bw and require("src.battle.Gen5HoldItems").owns(battler) then
     if battler.mon.hp <= 0 or incoming < battler.mon.hp then return false end
@@ -6241,7 +6251,10 @@ function BattleState:holdItemTrigger(battler, when)
   local label = (def and def.name) or "the item"
   local rng = self.rng or love.math.random
 
-  if act.kind == "heal" then
+  if act.kind == "prize" then
+    if GameVersion.get() ~= "emerald" or battler.isPlayer then self.amuletCoin = true end
+
+  elseif act.kind == "heal" then
     local max = (battler.mon.stats and battler.mon.stats.hp) or battler.mon.hp
     battler.mon.hp = math.min(max, battler.mon.hp + act.amount)
     self:drainNext(battler, battler.mon.hp)
@@ -7589,7 +7602,7 @@ function BattleState:executeAction(user, target, action)
       local previous = self.enemy
       local oldName = self.enemy.name
       self.enemyIndex = action.index
-      self.enemy = makeBattler(self.data, self.enemyParty[action.index], false)
+      self.enemy = makeBattler(self.data, self.enemyParty[action.index], false, nil, self)
       -- EnemySendOutFirstMon (core.asm:1314-1315): clears player's trap
       clearTrapping(self.player)
       self:syncSides()
@@ -8586,7 +8599,7 @@ function BattleState:fillEmptySlots()
       if pick then
         local allySlot = isPlayer and self.ally and pos == BattleState.POS.PLAYER_RIGHT
         self:placeBattler(pos, makeBattler(self.data, pick, isPlayer,
-                                           (isPlayer and not allySlot) and self.game.save or nil))
+                                           (isPlayer and not allySlot) and self.game.save or nil, self))
         self:syncSides()
         if not isPlayer then markSeen(self.game, pick.species, pick) end
         local who = self:battlerAt(pos)
@@ -8628,7 +8641,7 @@ function BattleState:promptDoubleReplacement(pos, rest)
       end
     end
     done = true
-    self:placeBattler(pos, makeBattler(self.data, mon, true, game.save))
+    self:placeBattler(pos, makeBattler(self.data, mon, true, game.save, self))
     self:syncSides()
     local who = self:battlerAt(pos)
     self.nextInsert = 0
@@ -8925,7 +8938,7 @@ function BattleState:enemyMonFainted()
       end
       self:act(function()
         local previous = self.enemy
-        self.enemy = makeBattler(self.data, self.enemyParty[self.enemyIndex], false)
+        self.enemy = makeBattler(self.data, self.enemyParty[self.enemyIndex], false, nil, self)
         -- EnemySendOutFirstMon (core.asm:1314-1315): clears player's trap
         clearTrapping(self.player)
         self:syncSides()
@@ -8963,7 +8976,7 @@ function BattleState:enemyMonFainted()
         local mon = shiftSwitchMon
         if not mon then return end
         local previous = self.player
-        self.player = makeBattler(self.data, mon, true, self.game.save)
+        self.player = makeBattler(self.data, mon, true, self.game.save, self)
         clearTrapping(self.enemy)
         self:syncSides()
         Runtime.emit("battle.battler_switched", {
@@ -9336,7 +9349,7 @@ function BattleState:openReplacementMenu()
     end
     self:restoreMimicked(self.player)
     local previous = self.player
-    self.player = makeBattler(self.data, mon, true, game.save)
+    self.player = makeBattler(self.data, mon, true, game.save, self)
     clearTrapping(self.enemy) -- SendOutMon clears foe trap
     self:syncSides()
     Runtime.emit("battle.battler_switched", {

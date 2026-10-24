@@ -1,5 +1,5 @@
 local M = {}
-function M.new(root, backend, version, api, format, noMod, failing, consumer)
+function M.new(root, backend, version, api, format, noMod, failing, consumer, prepare)
   consumer = consumer or "portable_charge_required"
   local T = require("tests.modkit")
   local V = require("src.core.GameVersion")
@@ -101,6 +101,7 @@ function M.new(root, backend, version, api, format, noMod, failing, consumer)
       }
     end
   end
+  if prepare then prepare(data, gen, backend) end
   local files, Json = {}, require("src.link.Json")
   for _, name in ipairs({ "main.lua", "manifest.json" }) do
     local f = assert(io.open(root .. "/examples/" .. consumer .. "/" .. name, "rb"))
