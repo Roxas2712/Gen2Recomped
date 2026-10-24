@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–190 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,37 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`fbd10fa1288ee9c09ec7823a8e606765278d88e8`. Its ROM-free run passed
-**208/208 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`6bb17f00c9baedc665448254da99641dfe9db64a`. Its ROM-free run passed
+**209/209 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #191](https://github.com/UNDERdecoded/Gen2Recomped/pull/191) aligns API-3
+GBA `battle.enemy_action` input selectors with unchanged Gen1. The single
+controller supplies nil; the double controller supplies positional IDs 1/3.
+Nested forwarding and reentrant queries restore each call's selector. Native
+Gen2 callbacks, API 1/2 native and API 2 unified retain their actor contracts.
+A query of the other flank keeps execution/PP ownership with its caller.
+
+The **438/438** focused argument checks and all prior **1,252/1,252** move
+checks pass. Coverage includes actual single/double turn queues, mixed public
+and native hooks, legacy identity, forwarded native choices, and cleanup after
+a fatal native AI error. The public priority integration still passes **32/32**.
+The same consumer matches read-only unchanged Gen1
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91` in **12 isolated engine workers /
+162 paired observations** on both the feature and combined runtime.
+
+The feature is stacked on #190. Its full quick run has exactly the same
+**27 inherited FAIL lines across ten suites** as the clean prerequisite,
+with no new failures; this combined branch includes the baseline repairs.
+All three hosted workflows await maintainer approval; the
+[dedicated workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40132593110)
+has zero jobs. Local acceptance is separate. Native action result fields,
+public item/switch/watch actions, explicit double-target conversion, damage
+amounts, RNG traces and full gameplay remain separate contracts.
+See [API-3 enemy-action arguments](portable-enemy-action-arguments.md).
+
+Prior #190 results retain runtime
+`fbd10fa1288ee9c09ec7823a8e606765278d88e8` and its 208/208 engine result:
 
 [PR #190](https://github.com/UNDERdecoded/Gen2Recomped/pull/190) normalizes public
 GBA `battle.enemy_action` move choices and binds execution PP to the native

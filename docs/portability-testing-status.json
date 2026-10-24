@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "fbd10fa1288ee9c09ec7823a8e606765278d88e8",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/190",
-  "feature_ref": "64068911a5b48a9332b69428b4b12f159036649a",
+  "runtime_ref": "6bb17f00c9baedc665448254da99641dfe9db64a",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/191",
+  "feature_ref": "206052fb3b901d343017dac6212ef818ec13b05f",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 208,
-  "engine_suites_total": 208,
+  "engine_suites_passed": 209,
+  "engine_suites_total": 209,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 8,
-  "cross_engine_paired_observations": 100,
+  "cross_engine_worker_runs": 12,
+  "cross_engine_paired_observations": 162,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All three #190 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
+  "hosted_ci": "All three #191 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Current public GBA enemy move-result normalization against unchanged read-only Gen1; no damage-amount, RNG-trace or whole-battle parity claim",
+  "cross_engine_scope": "Current public GBA enemy move results and API-3 selectors against unchanged read-only Gen1; no damage-amount, RNG-trace or whole-battle parity claim",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -1432,5 +1432,42 @@
       "jobs": 0
     },
     "scope": "Public GBA move choices and native execution/PP ownership; hook argument parity, public item/switch/watch records, explicit double-target conversion, damage amounts and RNG traces remain separate"
+  },
+  "enemy_action_arguments": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/191",
+    "feature_ref": "206052fb3b901d343017dac6212ef818ec13b05f",
+    "prerequisite_pr": 190,
+    "combined_runtime_ref": "6bb17f00c9baedc665448254da99641dfe9db64a",
+    "focused_checks_passed": 438,
+    "existing_move_checks_passed": 1252,
+    "public_priority_checks_passed": 32,
+    "combined_engine_suites_passed": 209,
+    "combined_engine_suites_total": 209,
+    "source_reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_modified": false,
+    "games": [
+      "firered",
+      "emerald"
+    ],
+    "cross_engine_worker_runs": 12,
+    "cross_engine_paired_observations": 162,
+    "paired_result": "passed",
+    "feature_baseline": {
+      "prerequisite_ref": "64068911a5b48a9332b69428b4b12f159036649a",
+      "engine_suites_passed": 78,
+      "engine_suites_total": 88,
+      "prerequisite_engine_suites_passed": 77,
+      "prerequisite_engine_suites_total": 87,
+      "failure_lines": 27,
+      "exact_failure_counter_matches_prerequisite": true,
+      "new_failures": 0
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40132593110",
+      "jobs": 0
+    },
+    "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
+    "scope": "API-3 GBA positional/default selectors, real controller queues, native/legacy argument identity, nested/reentrant/error context and caller PP ownership; native output fields and public item/switch/watch/target conversion remain separate"
   }
 }
