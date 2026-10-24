@@ -143,3 +143,6 @@ or a proof of every exposed native callback's payload. Native action details
 remain covered by the prerequisite PR suites. Extend these shared fixtures
 whenever another API-3 service becomes portable; do not make a failing
 comparison pass by changing only one engine's mod fixture.
+
+For the native damage-order correction used by portable `battle.crit` mods,
+see [Gen-3 critical/type rounding](gen3-critical-order.md).
