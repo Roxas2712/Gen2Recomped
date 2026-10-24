@@ -121,6 +121,59 @@ for _, api in ipairs({ 2, 3 }) do
   T.eq(conflict.data.text["55:4067"], "AMBIGUOUS", "ambiguous alias does not mutate custom record")
   conflict.close()
 end
+-- Mixed native/unified owners share one physical record and the existing
+-- dependency order. Failed unified owners must not acquire retirement of a
+-- surviving native owner's value.
+for _, order in ipairs({ "native-first", "unified-first", "failed-unified" }) do
+  local f = F.new(
+    ".",
+    "gen2",
+    "gold",
+    3,
+    "unified",
+    order == "failed-unified" and "rollback" or "override",
+    "55:4067",
+    "UNIFIED",
+    nil,
+    nil,
+    function(files, name, J)
+      local path = "mods/native_text_overlay/"
+      local m = {
+        id = "native_text_overlay",
+        name = "Native text overlay",
+        version = "1.0.0",
+        api = 2,
+        games = { "gold" },
+        gen2compat = true,
+        entry = "main.lua",
+      }
+      if order == "unified-first" then
+        m.dependencies = { name }
+      else
+        local current = J.decode(files["mods/" .. name .. "/manifest.json"])
+        current.dependencies = { m.id }
+        files["mods/" .. name .. "/manifest.json"] = J.encode(current)
+      end
+      files[path .. "manifest.json"] = J.encode(m)
+      files[path .. "main.lua"] = 'local mod=...; mod.content.text:override("TEXT_S55_4067", "NATIVE")'
+    end
+  )
+  T.eq(#f.result.errors > 0, order == "failed-unified", "mixed owner load outcome")
+  T.eq(
+    f.data.text.TEXT_S55_4067,
+    order == "native-first" and "UNIFIED" or "NATIVE",
+    "declared dependency order reaches physical VM key"
+  )
+  T.eq(f.data.text["55:4067"], nil, "mixed owners do not create shadow key")
+  f.close()
+  local r = reload(f.data)
+  T.eq(
+    f.data.text.TEXT_S55_4067,
+    order == "failed-unified" and "NATIVE" or "SCRIPT BASE",
+    "failed adapter cannot claim a surviving native owner's retirement"
+  )
+  r.release()
+end
 -- DS keeps its existing native text handles. This change does not invent a
 -- common DS printer or claim GBA source controls work on those screens.
 for _, version in ipairs({ "platinum", "black" }) do

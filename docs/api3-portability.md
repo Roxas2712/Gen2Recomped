@@ -197,3 +197,7 @@ and bargain shelves, common item IDs, native purchases and shared contracts.
 
 See [portable Pokemon identity hooks](portable-pokemon-rolls.md) for
 `shiny.roll`, `gender.roll`, native DV/PID semantics and shared contracts.
+
+For shared script-text source strings, GBA placeholder names and native Gen-2
+bank/address IDs, see [portable text sources](api3-text-sources.md). Cartridge
+prose and named GBA label bindings remain separate follow-up work.

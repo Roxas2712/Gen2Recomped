@@ -31,8 +31,10 @@ else
 end
 mod.exports.after = text:get(id)
 mod.exports.ids = {}
-for key in text:each() do
-  mod.exports.ids[#mod.exports.ids + 1] = key
+if mod:read("enumerate.txt") == "yes" then
+  for key in text:each() do
+    mod.exports.ids[#mod.exports.ids + 1] = key
+  end
 end
 if mode == "rollback" then
   error("intentional portable text rollback")
