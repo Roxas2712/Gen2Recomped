@@ -1,22 +1,22 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–163
+hook, rendering, shader and baseline test fixes prepared in PRs #88–164
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`650467e7bea28eee1dd6e2dc967b566dc3429ce6`. Its ROM-free run passed
-173/173 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
-The caught-marker consumer passed on both engines in four SDK configurations
-(64 isolated workers / 492 paired native predicate observations).
-Its native suites passed 2,078 SDK/predicate checks, 840 compositor checks and
-216 real-ROM-reader/4bpp import checks. The public entry runs unchanged through
-the actual reference GB/Gold/GBA predicates and the host producer. Native LÖVE
-HUD/GPU smoke on Red/Gold/FireRed/Emerald retains its separate runtime ref
-`40e3e1219e05dd3f675fddcc01c7b1b0f92593ab` below. Prior charge, PP,
-item, follower, map and storage families retain their historical refs in
-`portability-testing-status.json`; those results are not relabeled as new runs.
+`8e0d34aeee4328465155bb2ea884145e2dcc40ec`. Its ROM-free run passed
+175/175 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+The field-residual consumer passed on both engines in four SDK configurations
+(64 isolated workers / 568 paired native observations). Its host suites passed
+4,604 public contract checks and 1,864 admission/real queued faint, EXP and
+replacement checks. Native LÖVE 11.5 on imported Red/Gold/FireRed/Emerald also
+passed at this runtime, including actual FIGHT/move input and result queues,
+terminal KOs and GBA flank replacement. These are bounded battle tests.
+Prior caught-marker, charge, PP, item, follower, map and storage families
+retain their historical refs in `portability-testing-status.json`; those
+results are not relabeled as new runs.
 
 Native LÖVE 11.5 smoke tests reached the intro, title and New Game
 world/introduction for Red, Gold, FireRed and Emerald using isolated copies
@@ -354,3 +354,52 @@ the native contract suite was rerun afterward.
 All 24 hosted #163 PR workflows currently report `action_required` pending
 maintainer approval; the [new caught-marker workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40048498745)
 has zero jobs and has not executed. Local test results above are independent.
+
+
+## Native field-residual input and faint/replacement test
+
+PR #164 adds `battle.field_residual` on GB/Gold/GBA. Mods read detached field
+and battler data and return validated damage descriptors; native code owns
+HP, messages, animation, faint events, EXP and replacement. GBA supplies slot
+IDs 0–3, once-per-turn dispatch and stale-batch refusal. DS reports unavailable.
+See [portable field residuals](portable-field-residuals.md).
+
+Install and enable `examples/portable_field_residual` in the isolated identity:
+
+```sh
+POKEPORT_VERSION=gold POKEPORT_DRIVER=tests/drivers/field_residual.lua \
+  bash scripts/run-portability-test.sh
+```
+
+Imported Red, Gold, FireRed and Emerald passed on LÖVE 11.5 at runtime
+`8e0d34aeee4328465155bb2ea884145e2dcc40ec`. The driver starts New Game,
+constructs native battles and drives actual FIGHT/move input through the
+normal result queues. It then verifies detached edits, both orders of
+simultaneous final KOs and unsubscribe. GBA additionally checks a right-flank
+KO through native EXP and replacement, and simultaneous terminal doubles.
+Gold retains both terminal faint announcements; GB/GBA suppress the enemy's
+faint/EXP path. The driver stops at the in-battle loss before finish/blackout
+or SAVE processing. This is not a full playthrough or whole-rule/pixel parity
+claim; sendout intros are skipped and animations disabled in memory.
+
+The unchanged consumer passes the actual reference GB/Gold/GBA producers and
+the host in API 1 native, API 2 native, API 2 unified and API 3 unified modes:
+64 isolated workers and 568 paired observations. Tests cover native weather
+upkeep, batches/clamping, failures/replay, detached views, GBA Psychic type
+pairs/flanks/once-per-turn/stale state, allied own-party authority, terminal
+single/double KOs, unsubscribe, no-mod and entry rollback. The reference GBA
+collector records residual steps; these comparisons do not run its complete
+presentation/award controller. The host authority suite separately drains
+real native EXP/faint/replacement queues.
+
+Feature ref `124da70a77a09737d6a99aef2933ab722b3d5133` passed
+120/130 engine suites, SDK 3/3 and B30, with exactly the ten prior baseline
+failures covered by #128–134: all 26 FAIL lines match the previous #163 run.
+Imported Red battle/save-conversion/parity J/K checks passed
+468/468, 95/95, 73/73 and 22/22 respectively; external binary save fixtures
+were not supplied. The combined runtime includes the baseline repairs and
+passes 175/175 engine suites. Later testfork edits only record this evidence.
+
+All 25 hosted #164 PR workflows report `action_required` pending maintainer
+approval. The [new field-residual workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40050804974)
+has zero jobs and has not executed. Local validation above is separate.

@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "650467e7bea28eee1dd6e2dc967b566dc3429ce6",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/163",
-  "feature_ref": "b1c8e7e76b3e23a591e0f26635ca2867ec6d5f89",
+  "runtime_ref": "8e0d34aeee4328465155bb2ea884145e2dcc40ec",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/164",
+  "feature_ref": "124da70a77a09737d6a99aef2933ab722b3d5133",
   "gen1_contract_ref": "79ea62f45fb2ea8f65d081a109431e4eb1bbdb36",
-  "engine_suites_passed": 173,
-  "engine_suites_total": 173,
+  "engine_suites_passed": 175,
+  "engine_suites_total": 175,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
   "cross_engine_worker_runs": 64,
-  "cross_engine_paired_observations": 492,
+  "cross_engine_paired_observations": 568,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All 24 #163 PR workflows report action_required pending maintainer approval; local results are separate",
+  "hosted_ci": "All 25 #164 PR workflows report action_required pending maintainer approval; local results are separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -156,14 +156,14 @@
   },
   "enemy_pp_negative_controls": "Strict raw-policy checker and public/native observer both reject the unchanged #161 host for Gold PP discrepancy",
   "charge_required_original_full_suite_runtime_ref": "6a1238a7c42b09fbd9694149b35146d17bb9b720",
-  "hosted_ci_workflow_count": 24,
+  "hosted_ci_workflow_count": 25,
   "enemy_pp_hosted_ci": {
     "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40046010257",
     "conclusion": "action_required",
     "jobs": 0
   },
   "enemy_pp_full_suite_runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
-  "feature_tested_ref": "bd182e0f4c39df69f86bcc76ceb15a51e1330579",
+  "feature_tested_ref": "124da70a77a09737d6a99aef2933ab722b3d5133",
   "caught_marker_native_checks_passed": 2078,
   "caught_marker_renderer_checks_passed": 840,
   "caught_marker_import_checks_passed": 216,
@@ -189,11 +189,51 @@
     "b30_profile": "passed"
   },
   "post_runtime_changes": [
-    "Bytecode-equivalent test-fixture formatting",
     "Validation documentation/status"
   ],
   "caught_marker_hosted_ci": {
     "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40048498745",
+    "conclusion": "action_required",
+    "jobs": 0
+  },
+  "caught_marker_feature_tested_ref": "bd182e0f4c39df69f86bcc76ceb15a51e1330579",
+  "caught_marker_post_runtime_changes": [
+    "Bytecode-equivalent test-fixture formatting",
+    "Validation documentation/status"
+  ],
+  "field_residual_native_checks_passed": 4604,
+  "field_residual_authority_checks_passed": 1864,
+  "field_residual_cross_engine_worker_runs": 64,
+  "field_residual_cross_engine_paired_observations": 568,
+  "field_residual_cross_engine_runtime_ref": "8e0d34aeee4328465155bb2ea884145e2dcc40ec",
+  "native_field_residual_smoke_games": [
+    "red",
+    "gold",
+    "firered",
+    "emerald"
+  ],
+  "native_field_residual_runtime_ref": "8e0d34aeee4328465155bb2ea884145e2dcc40ec",
+  "native_field_residual_scope": "Same installed API-3 consumer; imported title/New Game and constructed native battles; actual FIGHT/move input and result queues, detached context/token edits, terminal KOs in both descriptor orders, GBA right-flank faint/EXP/replacement and terminal doubles, unsubscribe; sendout intro skipped and animations disabled in memory; stops at in-battle loss before finish/blackout/SAVE; no full-playthrough/whole-rule/pixel-equivalence claim",
+  "field_residual_feature_baseline": {
+    "engine_suites_passed": 120,
+    "engine_suites_total": 130,
+    "existing_failure_suites": 10,
+    "new_failures": 0,
+    "all_fail_lines_match_previous": true,
+    "repair_prs": "#128\u2013134",
+    "sdk_suites_passed": 3,
+    "b30_profile": "passed"
+  },
+  "field_residual_imported_red_regressions": {
+    "battle_checks_passed": 468,
+    "save_conversion_checks_passed": 95,
+    "parity_J_checks_passed": 73,
+    "parity_K_checks_passed": 22,
+    "external_binary_save_fixture": "not supplied"
+  },
+  "field_residual_reference_scope": "Actual GB endOfTurn, Gold takeTurn and registered GBA residual scheduler; GBA collected steps are not the full presentation/award controller",
+  "field_residual_hosted_ci": {
+    "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40050804974",
     "conclusion": "action_required",
     "jobs": 0
   }
