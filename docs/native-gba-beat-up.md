@@ -44,15 +44,19 @@ six mixed party members. Cases include filtering, empty/blocked parties,
 per-member base/level rounding, independent critical rolls, low variation,
 Helping Hand, type/battle-stat independence, Protect, sleep, hidden targets,
 misses, Substitute, K. o., Endure and changes inside public callbacks.
+The active target species is read separately from its retained party species,
+while an attacker's transformed species does not replace the party-member
+Attack operand. These cases seed the native battler fields; they do not claim
+the entire Transform animation/controller path.
 A second shared entry patches MEW's base Attack through the public content
 API and verifies that the actual native executor consumes that patch.
 
-The focused suite passes **1,234 checks**. The full shared comparison passes
-**40 isolated workers / 4,454 paired observations**, including the existing
+The focused suite passes **1,330 checks**. The full shared comparison passes
+**40 isolated workers / 4,486 paired observations**, including the existing
 action, target, Follow Me, Helping Hand and Spit Up contracts.
 The full local quick run passes **88/97 engine suites** versus **87/96** on
 clean #203; exact Counters of all **25 inherited FAIL lines across nine
-suites** match with no additions. SDK 3/3 and B30 pass. The unchanged #203 host fails 152
+suites** match with no additions. SDK 3/3 and B30 pass. The unchanged #203 host fails 168
 assertions in the new FireRed cases. Both sides use JIT-enabled LuaJIT v2.1
 commit `a4c064539ea931274d407e1249b4bb575424a0f4`, as pinned in the contract
 workflow. RNG observations normalize native critical/variation operands;
