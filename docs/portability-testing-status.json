@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "a7a4091be9f4b631d54cd6f57ce1d33c5d8bed46",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/170",
-  "feature_ref": "cedba8db00e3639bd00a8f996ad949bf45fd320d",
+  "runtime_ref": "62f8902617255195b4a12b176f171925c49209ec",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/171",
+  "feature_ref": "901ea77f7f0bfb15b5f125ee0b3e6e3797da3b21",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 186,
-  "engine_suites_total": 186,
+  "engine_suites_passed": 190,
+  "engine_suites_total": 190,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 32,
-  "cross_engine_paired_observations": 3148,
+  "cross_engine_worker_runs": 24,
+  "cross_engine_paired_observations": 94,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All 30 #170 PR workflows report action_required pending maintainer approval; local results are separate",
+  "hosted_ci": "All 31 #171 PR workflows report action_required pending maintainer approval; local results are separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -156,14 +156,14 @@
   },
   "enemy_pp_negative_controls": "Strict raw-policy checker and public/native observer both reject the unchanged #161 host for Gold PP discrepancy",
   "charge_required_original_full_suite_runtime_ref": "6a1238a7c42b09fbd9694149b35146d17bb9b720",
-  "hosted_ci_workflow_count": 30,
+  "hosted_ci_workflow_count": 31,
   "enemy_pp_hosted_ci": {
     "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40046010257",
     "conclusion": "action_required",
     "jobs": 0
   },
   "enemy_pp_full_suite_runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
-  "feature_tested_ref": "13598190777c0de6fac79cbe0f2663b8f8c56725",
+  "feature_tested_ref": "52541d1b0160de2361a2bffe15fd4fad4eb9a20c",
   "caught_marker_native_checks_passed": 2078,
   "caught_marker_renderer_checks_passed": 840,
   "caught_marker_import_checks_passed": 216,
@@ -562,6 +562,62 @@
       "workflow_count": 30,
       "conclusion": "action_required",
       "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40069329686",
+      "jobs": 0
+    }
+  },
+  "rom_text": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/171",
+    "feature_ref": "901ea77f7f0bfb15b5f125ee0b3e6e3797da3b21",
+    "feature_tested_ref": "52541d1b0160de2361a2bffe15fd4fad4eb9a20c",
+    "runtime_ref": "62f8902617255195b4a12b176f171925c49209ec",
+    "reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "native_checks_passed": 175,
+    "authority_checks_passed": 510,
+    "formatter_checks_passed": 57,
+    "provenance_checks_passed": 52,
+    "cross_engine_worker_runs": 24,
+    "cross_engine_paired_observations": 94,
+    "formatter_worker_runs": 8,
+    "formatter_paired_observations": 96,
+    "generation_boundary": "Gen-2 and registered GBA games; GB/DS registry honestly unavailable; host native API 1/2 strings are not claimed as portable reference GBA IR",
+    "scope": "Separate label-prose registry; source-derived Gen-2 native label projections, named/ordinal formatting and ending metadata; private same-spelling scripts, prefix escaping, empty/tombstoned text and VM routing; ten detached GBA storage-action/description bindings, including older-cache fallback; rollback/freeze and guarded retirement",
+    "feature_baseline": {
+      "engine_suites_passed": 135,
+      "engine_suites_total": 145,
+      "existing_failure_suites": 10,
+      "new_failures": 0,
+      "all_26_fail_lines_match_parent": true,
+      "repair_prs": "#128\u2013134",
+      "sdk_suites_passed": 3,
+      "b30_profile": "passed"
+    },
+    "combined_engine_suites_passed": 190,
+    "combined_engine_suites_total": 190,
+    "native_smoke_games": [
+      "gold",
+      "firered",
+      "emerald"
+    ],
+    "native_runtime_ref": "62f8902617255195b4a12b176f171925c49209ec",
+    "native_scope": "L\u00d6VE 11.5, isolated imported title/New Game; unchanged public consumer; Gold native battle-prose helper/textbox/ending display and independent same-label ScriptRunner text/A-close/resume; real GBA storage-menu five action labels/descriptions/B-close/reopen, frozen late writes; does not execute full battle/wakeup turn; no normal SAVE, full playthrough, fresh full-ROM reimport or pixel-equivalence claim",
+    "owned_example_removed_with_hash_guards": true,
+    "negative_control": "Unchanged #170 rejects absent registry; actual native Gold prose and GBA storage readers retain original values",
+    "imported_red_runtime_ref": "52541d1b0160de2361a2bffe15fd4fad4eb9a20c",
+    "imported_red_regressions": {
+      "battle": 468,
+      "save_conversion": 95,
+      "parity_J": 73,
+      "parity_K": 22,
+      "external_binary_save_fixture": "not supplied"
+    },
+    "remaining_scope": "Other GBA party/item-PC/field-menu and battle-message readers need explicit bindings; Gen-2 hardcoded fallbacks need native label readers; not universal printer/glyph/text-flow equivalence",
+    "post_runtime_changes": [
+      "API documentation and validation status"
+    ],
+    "hosted_ci": {
+      "workflow_count": 31,
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40074003980",
       "jobs": 0
     }
   }

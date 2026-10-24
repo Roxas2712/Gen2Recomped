@@ -1,33 +1,43 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–170
+hook, rendering, shader and baseline test fixes prepared in PRs #88–171
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`a7a4091be9f4b631d54cd6f57ce1d33c5d8bed46`. Its ROM-free run passed
-186/186 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
-[PR #170](https://github.com/UNDERdecoded/Gen2Recomped/pull/170) adds shared
-script-text sources and native Gen-2 address-ID routing: **3,700** source/native
-checks and **234** ownership/legacy/retirement checks. Both real SDKs pass the
-same unchanged consumer and corpus across eight GB/Gen-2/GBA games:
-**32 isolated workers / 3,148 paired observations**, pinned to Gen1
-`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`. Host API 2/unified is compared
-with reference API 3; reference API 2 remains native.
+`62f8902617255195b4a12b176f171925c49209ec`. Its ROM-free run passed
+190/190 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+[PR #171](https://github.com/UNDERdecoded/Gen2Recomped/pull/171) adds a separate
+engine-prose registry, native Gen-2 label projection/formatting, same-spelling
+script isolation and ten native GBA Pokemon-storage action/description bindings.
+Registry/native checks **175**, ownership **510**, formatting **57**, provenance
+**52** pass. The unchanged consumer compares through both real SDKs:
+**24 workers / 94 paired native observations**. The separate native formatter
+comparison adds **8 engine workers / 96 paired observations**. All use the clean
+Gen1 pin `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`.
 
 Native LÖVE 11.5 / imported Gold, FireRed and Emerald pass at this runtime:
-actual imported Gold text ID, lowered writetext/GBA commands, player/string
-buffers, real native textbox rendering, paragraph pages, A-close/script resume
-and frozen late writes. This is an isolated, in-memory dialogue smoke, with no
-normal SAVE, full playthrough, fresh full-ROM reimport or pixel-equivalence
-claim. The owned example was removed with hash guards. See
-[portable script-text sources](api3-text-sources.md). Named GBA cartridge labels
-and engine/battle/menu prose still need the separate `rom_text` adapter.
+Gold native battle-prose helper, real textbox/end-marker handling and separate
+same-label native script/A-close/resume; GBA actual storage menu/all five
+labels/descriptions/B-close/reopen; frozen writes. This does not execute a
+complete battle/wakeup turn. Isolated in-memory New Game, no normal SAVE,
+full playthrough, fresh full-ROM reimport or pixel-equivalence claim. The owned
+temporary example was removed with hash guards. See [portable ROM prose](api3-rom-text.md).
 
-All **30** hosted #170 workflows await maintainer approval (`action_required`);
-the [script-text workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40069329686)
-has no executed jobs. Local results are separate.
+**Remaining prose work:** other GBA party/item-PC/field-menu and battle readers
+need explicit bindings. A Gen-2 screen that still prints a hardcoded fallback
+instead of reading its label also needs a native reader change. Availability
+of `rom_text` does not mean every native printer or label consumer is covered.
+
+All **31** hosted #171 workflows await maintainer approval (`action_required`);
+the [ROM-prose workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40074003980)
+has no executed jobs. Local validation is separate.
+
+Prior #170 script-text runtime `a7a4091be9f4b631d54cd6f57ce1d33c5d8bed46`
+and its native dialogue/grammar results retain their own status JSON fields;
+they are not relabeled as new native script-text smoke runs. The existing
+script-text unit contracts also pass in the current complete suite.
 
 Prior #169 identity-hook native smoke and matrix results retain their own
 runtime `19513a930c6befae0b0ee336d0c9f4984d7ae929` in the status JSON; they are
