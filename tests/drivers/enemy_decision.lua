@@ -89,6 +89,7 @@ return function(game)
     game.stack.states = { world, b }
     e.state.mode, e.state.calls, e.state.contexts = mode, 0, {}
     e.state.decision = { kind = "item", item = "POTION" }
+    e.state.changes, e.state.clear = nil, nil
     return b, definition
   end
   local function turn(b)
@@ -142,6 +143,24 @@ return function(game)
   assert(b.enemyParty[1].hp == 200, "native outgoing occupant is preserved")
   print("PORTABILITY_ENEMY_CASE " .. V.get() .. " switch")
   if V.generation() == 3 then
+    b = fresh("mutate-fields")
+    e.state.changes = { kind = "switch", slot = 2 }
+    damage, beforeHit = 0, nil
+    turn(b)
+    assert(b.enemy.mon.nickname == "BENCH" and b.enemy.mon.hp < 500, "native delegated item becomes switch")
+    assert(b.gen3ItemsUsed[1], "mutated native action retains its original stock reservation")
+    print("PORTABILITY_ENEMY_CASE " .. V.get() .. " mutate-item-to-switch")
+    for _, kind in ipairs({ "move", "other" }) do
+      b = fresh("mutate-fields")
+      e.state.changes = { kind = kind, move = game.data.moves[tackle].index, slot = 1, target = 0 }
+      damage, beforeHit = 0, nil
+      turn(b)
+      assert(beforeHit == 200 and b.enemy.mon.hp == 200 - damage, "mutated native decision does not heal")
+      assert(b.enemy.mon.moves[1].pp == 9, "native move/fallback spends the selected party slot PP")
+      assert(b.enemy.mon.moves[1].id == tackle, "native mutation preserves party move ID")
+      assert(b.gen3ItemsUsed[1], "native move/fallback preserves original consumed stock")
+      print("PORTABILITY_ENEMY_CASE " .. V.get() .. " mutate-item-to-" .. kind)
+    end
     b = fresh("suppress")
     game.data.ai_classes = game.data.ai_classes or {}
     local oldClass = game.data.ai_classes.PORTABLE_SMOKE_CLASS

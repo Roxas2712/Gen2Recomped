@@ -366,7 +366,86 @@ local function sourceAction(battle, battler, action)
   end
 end
 
-function M.gba(battle, battler)
+local function firstUsable(battler)
+  for _, move in ipairs(battler.curMoves or {}) do
+    if move.id and (move.pp == nil or move.pp > 0) then
+      return move
+    end
+  end
+  return { id = "STRUGGLE", pp = 1, struggle = true }
+end
+
+local function delegatedAction(battle, battler, native, original, controller)
+  if controller then
+    local id = battler.position or 1
+    if battle:isDouble() then
+      if not native.kind or native.battler ~= id and not (native.battler == nil and id == 1) then
+        return firstUsable(battler)
+      end
+    elseif
+      native.kind ~= "move"
+      and native.kind ~= "switch"
+      and native.kind ~= "item"
+      and native.kind ~= "run"
+      and native.kind ~= "watch"
+    then
+      return firstUsable(battler)
+    end
+  end
+  local position = controller and battler.position or native.battler or 1
+  local result =
+    { kind = native.kind, nativeDecision = native, decisionPosition = position, decisionBattler = battler }
+  if native.kind == "item" then
+    result.special = "aiItem"
+    result.item = original.special == "aiItem"
+        and native.item == itemNumber(battle, original.item)
+        and original.item
+      or effectItemKey(battle, native.item)
+    result.slot = original.special == "aiItem" and original.slot or nil
+    result.aiItemType, result.aiItemFlags = native.aiItemType, native.aiItemFlags
+  elseif native.kind == "switch" then
+    result.special, result.index = "aiSwitch", native.slot
+    if controller and result.index == nil then
+      local reserved = (battle._enemySwitchReservations or {})[battler]
+      for index, mon in ipairs(battle:benchFor(false, battler.position) or {}) do
+        if mon == reserved then
+          result.index = index
+          break
+        end
+      end
+    end
+  elseif native.kind == "move" then
+    result.id = M.itemKey({ items = battle.data.moves }, native.move)
+    local source = (battler.curMoves or {})[native.slot]
+    -- A changed move still spends PP from the selected native slot. The
+    -- underlying move ID must not be rewritten in the party's move list.
+    setmetatable(result, {
+      __index = function(_, key)
+        if key == "pp" then
+          return source and source.pp or 1
+        end
+      end,
+      __newindex = function(row, key, value)
+        if key == "pp" and source then
+          source.pp = value
+        else
+          rawset(row, key, value)
+        end
+      end,
+    })
+    if not result.id then
+      result.special = "aiDecisionSpent"
+    end
+    if battle:isDouble() then
+      result.decisionTarget = native.target
+    end
+  else
+    result.special = "aiDecisionSpent"
+  end
+  return result
+end
+
+function M.gba(battle, battler, controller)
   if not gbaAllowed(battle) then
     return nil
   end
@@ -388,15 +467,9 @@ function M.gba(battle, battler)
     chosen = base()
   end
   if chosen == true or native and chosen == native then
-    -- The reference returns this same native action after next(). A mod can
-    -- edit its item without consuming another stock slot.
-    if native and native.kind == "item" and action then
-      if native.item ~= itemNumber(battle, action.item) then
-        action.item = effectItemKey(battle, native.item)
-      end
-      action.aiItemType, action.aiItemFlags = native.aiItemType, native.aiItemFlags
-    end
-    return action
+    -- Native delegation returns the same mutable action. Translate its final
+    -- shape without reserving another item or replacing its consumed stock.
+    return native and delegatedAction(battle, battler, native, action, controller) or nil
   end
   if type(chosen) ~= "table" then
     return nil

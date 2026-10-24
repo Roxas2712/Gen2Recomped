@@ -180,6 +180,44 @@ contracts, not claimed as a new full-ROM class import. The source runtime is
 in `native-class-status.json` and `native-class-*.log`. The owned consumer was
 removed with hash guards after all four processes exited.
 
+## Delegated action mutation milestone
+
+The GBA bridge now translates the final mutable native action returned by
+`next`, including an item changed into a switch/move, a changed switch slot and
+claiming that edited result with `true`. Original native item consumption and
+switch reservations remain committed; converting an action does not reserve a
+second item. Item target edits do not redirect trainer healing. Ordinary
+single controllers normalize the actor ID, while doubles reject mismatched or
+missing right-slot actor IDs and use the reference's first usable move fallback.
+Unknown native action kinds retain the reference's distinct single/double paths.
+
+A delegated move spends PP from its selected party slot without rewriting that
+slot's move ID. The controller comparisons now retain full HP, stage, PP,
+remaining trainer-stock and move/switch event observations. Eleven additional
+ordinary-turn cases per FireRed/Emerald exercise these boundaries. The identical
+current tests run against a clean `840e11d` checkout expose **eight differing
+observations per GBA version**, including the concrete switch-slot assertion
+failure. Reports are `mutations-parent-firered.log`,
+`mutations-parent-emerald.log` and `mutations-parent-differences.json`.
+The temporary parent checkout was clean and removed after the negative controls.
+
+Both API 3 and host API 2/unified pass **12 workers / 435 paired observations**
+with zero differences. Focused host checks pass **1,192/1,192**. The complete
+feature run remains **139/149** engine suites, **3/3** SDK suites and B30, with
+exactly the same **26** failure lines across ten baseline suites.
+Evidence: `contracts-mutations.json`, `contracts-mutations-api2.json`,
+`targeted-mutations.log` and `full-mutations.log`.
+
+Native imported-data runs pass on Gold, FireRed and Emerald, plus the separate
+FireRed in-memory item-effects import. The GBA runs use actual FIGHT/move input
+and presentation queues to verify item-to-switch, item-to-move and unknown-kind
+fallbacks, their original stock reservation and selected-slot PP consumption.
+The normal party move ID is preserved. Runtime is `840e11d` plus the recorded
+changes; exact driver hash and four process results are retained in
+`native-mutations-status.json` and `native-mutations-*.log`. These are bounded
+sessions rather than complete playthroughs; the owned consumer was removed
+with hash guards after all four processes exited.
+
 Required before publication:
 
 - Exercise actual imported Gen-2 attributes and stock through ordinary turns.
@@ -187,9 +225,11 @@ Required before publication:
   native policy with freshly imported class attributes still needs gameplay proof.
 - Extend the FireRed raw-effects smoke to Emerald, both native double slots,
   further trap/status construction and imported stock boundaries.
-- Audit mutations of delegated native actions (kind, slot and battler as well
-  as item/type/flags), and GBA brain callback/selection precedence. Class
-  item/switch precedence is now covered.
+- Extend delegated-action coverage to additional native control fields,
+  run/watch behavior and malformed slot/move payloads. The ordinary item,
+  switch, move and actor-ID mutation paths above are covered.
+- Audit GBA brain callback/selection precedence. Class item/switch precedence
+  is covered; a brain is a distinct native move-selection contract.
 - Review participants, Pursuit, hazards/abilities and stale queued actors after
   forced switches. Keep native battle-rule gaps explicit rather than counting
   them as equal contract observations.

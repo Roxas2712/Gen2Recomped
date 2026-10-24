@@ -134,8 +134,11 @@ local function run(f, root, backend)
     local function commonStats(mon)
       if B then
         mon.maxHp, mon.attack, mon.defense, mon.speed, mon.spAtk, mon.spDef = 400, 50, 50, 50, 50, 50
+        mon.pp = {}
+        for i in ipairs(mon.moves or {}) do mon.pp[i] = 10 end
       else
         mon.stats = { hp = 400, attack = 50, defense = 50, speed = 50, special = 50, spatk = 50, spdef = 50 }
+        for _, move in ipairs(mon.moves or {}) do move.pp = 10 end
       end
     end
     for _, mon in ipairs(B and b.foeParty or b.enemyParty) do
@@ -180,7 +183,7 @@ local function run(f, root, backend)
           right.turnsOut = 2 - spec.age
         end
       end
-      if spec.x then
+      if spec.x or spec.changes or spec.clear then
         (B and b.foeParty or b.enemyParty)[3].hp = 0
       end
     end
@@ -198,6 +201,7 @@ local function run(f, root, backend)
     f.e.state.calls, f.e.state.contexts = 0, {}
     f.e.state.mode = spec.mode or "delegate"
     f.e.state.decision = spec.decision
+    f.e.state.changes, f.e.state.clear = spec.changes, spec.clear
     return b
   end
   local function turn(b)
@@ -224,6 +228,23 @@ local function run(f, root, backend)
     T.eq(ended, before + 1, "one complete native controller turn")
   end
   local specs = {
+    { name = "delegated-item-to-switch", mode = "mutate-fields", changes = { kind = "switch", slot = 2 } },
+    { name = "delegated-item-to-switch-claimed", mode = "mutate-claim", changes = { kind = "switch", slot = 2 } },
+    { name = "delegated-switch-slot", mode = "mutate-fields", perish = true, switchName = "THIRD",
+      changes = { slot = 3 } },
+    { name = "delegated-item-to-move", mode = "mutate-fields",
+      changes = { kind = "move", move = 33, slot = 1, target = 0 } },
+    { name = "delegated-unknown-single", mode = "mutate-fields", changes = { kind = "other" } },
+    { name = "delegated-unknown-double", mode = "mutate-fields", double = true,
+      stock = { item(13), item(13) }, changes = { kind = "other" } },
+    { name = "delegated-battler-single", mode = "mutate-fields", changes = { battler = 3 } },
+    { name = "delegated-battler-double", mode = "mutate-fields", double = true,
+      stock = { item(13), item(13) }, changes = { battler = 3 } },
+    { name = "delegated-missing-battler-double", mode = "mutate-fields", double = true,
+      stock = { item(13), item(13) }, clear = { "battler" } },
+    { name = "delegated-item-target-single", mode = "mutate-fields", changes = { target = 0 } },
+    { name = "delegated-item-target-double", mode = "mutate-fields", double = true,
+      stock = { item(13), item(13) }, changes = { target = 0 } },
     { name = "class-item-precedes-hook", class = true, mode = "suppress", fast = true },
     { name = "double-class-items-precede-hook", class = true, mode = "suppress", double = true,
       stock = { item(13), item(13) } },
@@ -269,7 +290,7 @@ local function run(f, root, backend)
       T.eq(battler(b, 1).mon.hp, 3, "native healing prevents the lethal hit")
     end
     if spec.perish or spec.decision and spec.decision.kind == "switch" then
-      T.eq(battler(b, 1).mon.nickname, "BENCH", "native switch changes the field occupant")
+      T.eq(battler(b, 1).mon.nickname, spec.switchName or "BENCH", "native switch changes the field occupant")
       T.eq(battler(b, 1).mon.hp, 382, "queued player move damages the incoming occupant")
     end
     if spec.x then
@@ -282,12 +303,14 @@ local function run(f, root, backend)
       name = spec.name,
       calls = f.e.state.calls,
       events = copy(events),
+      stock = f.remainingStock(),
       party = {},
     }
     for id = 0, spec.double and 3 or 1 do
       local who = battler(b, id)
       out.party[#out.party + 1] =
-        { name = who.mon.nickname, hp = who.mon.hp, attack = who.stages.attack or 0 }
+        { name = who.mon.nickname, hp = who.mon.hp, attack = who.stages.attack or 0,
+          pp = B and who.mon.pp[1] or who.curMoves[1].pp }
     end
     rows[#rows + 1] = out
     if B then

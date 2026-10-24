@@ -35,13 +35,21 @@ out.stop = mod.hooks:wrap("battle.enemy_switch_or_item", function(next, battle)
   if out.mode == "mutate" and type(value) == "table" then
     value.item = 19
   end
+  if (out.mode == "mutate-fields" or out.mode == "mutate-claim") and type(value) == "table" then
+    for key, replacement in pairs(out.changes or {}) do
+      value[key] = replacement
+    end
+    for _, key in ipairs(out.clear or {}) do
+      value[key] = nil
+    end
+  end
   if out.mode == "repeat" then
     out.repeated = next(battle)
   end
   if out.mode == "fail-after" then
     error("intentional enemy-decision failure after next")
   end
-  if out.mode == "claim" then
+  if out.mode == "claim" or out.mode == "mutate-claim" then
     return true
   end
   return value

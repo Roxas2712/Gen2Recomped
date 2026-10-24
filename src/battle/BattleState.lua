@@ -5434,8 +5434,8 @@ function BattleState:enemyTrySwitchOrItem()
   return require("src.battle.EnemyDecision").gen2(self)
 end
 
-function BattleState:enemySwitchOrItem(battler)
-  return require("src.battle.EnemyDecision").gba(self, battler or self.enemy)
+function BattleState:enemySwitchOrItem(battler, controller)
+  return require("src.battle.EnemyDecision").gba(self, battler or self.enemy, controller)
 end
 
 function BattleState:vanillaEnemyAction(battler)
@@ -5463,7 +5463,7 @@ function BattleState:vanillaEnemyAction(battler)
     local classAct
     if GameVersion.isGen3() then
       classAct = require("src.battle.EnemyDecision").gbaClass(self, battler)
-                 or self:enemySwitchOrItem(battler)
+                 or self:enemySwitchOrItem(battler, true)
     else classAct = TrainerAI.classAction(self) end
     if classAct then return classAct end
   end
@@ -5725,7 +5725,8 @@ function BattleState:resolveTurn(playerAction)
       if target == nil then
         -- what the player aimed at, if they were asked; otherwise whoever
         -- is standing on the other side
-        local chosen = (self.chosenTargets or {})[actor.position]
+        local chosen = entry[3] and entry[3].decisionTarget
+        if chosen == nil then chosen = (self.chosenTargets or {})[actor.position] end
         target = Targeting.redirect(self, actor, nil, chosen)[1]
                  or self:defaultTargetFor(actor)
       end
@@ -5741,11 +5742,12 @@ end
 
 -- Place the requested opponent, including the right-hand GBA double slot.
 -- The Gen-2 query calls this immediately; a GBA action calls it on execution.
-function BattleState:performEnemySwitch(user, index)
+function BattleState:performEnemySwitch(user, index, native)
   local Decision = require("src.battle.EnemyDecision")
   local gba = GameVersion.isGen3()
-  index = user and Decision.validSwitch(self, user, index, gba, true)
+  if not (gba and native) then index = user and Decision.validSwitch(self, user, index, gba, true) end
   if not index then return false end
+  if not user or not (self:benchFor(false, user.position) or {})[index] then return false end
   local position = user.position or BattleState.POS.OPPONENT_LEFT
   local mon = self:benchFor(false, position)[index]
   local oldName = user.name
@@ -7627,6 +7629,9 @@ function BattleState:executeAction(user, target, action)
   -- is only ever set once the battle is over (run/win/lose/caught), and the
   -- faint cases are already covered by the HP guard below (#441)
   if self.result then return end
+  if GameVersion.isGen3() and action and action.decisionPosition ~= nil then
+    user = self:battlerAt(action.decisionPosition)
+  end
   if not (user and user.mon) then return end
   local trainerItem = GameVersion.isGen3() and action and action.special == "aiItem"
   if user.mon.hp <= 0 and not trainerItem then return end
@@ -7676,6 +7681,7 @@ function BattleState:executeAction(user, target, action)
 
     -- trainer class AI actions (engine/battle/trainer_ai.asm)
     if action.special == "aiItem" then
+      if not action.item then return end
       local recipient = trainerItem and user or action.decisionBattler
       self.aiUses = (self.aiUses or 1) - 1
       -- a Gen 3 trainer spends a SLOT, not a per-Pokemon allowance: the
@@ -7693,14 +7699,14 @@ function BattleState:executeAction(user, target, action)
       -- the Gen 3 arm of useItem runs the item through ItemEffects, which
       -- plays the cartridge's own fanfare for it; playing this one too would
       -- put two heal sounds on the same frame
-      if not action.slot then
+      if not action.slot and not GameVersion.isGen3() then
         require("src.core.Sound").play(self.data, "Heal_Ailment")
       end
       return
     end
     if action.special == "aiSwitch" then
       if action.decisionBattler then
-        self:performEnemySwitch(user, action.index)
+        self:performEnemySwitch(user, action.index, action.nativeDecision ~= nil)
         return
       end
       self.aiUses = (self.aiUses or 1) - 1
