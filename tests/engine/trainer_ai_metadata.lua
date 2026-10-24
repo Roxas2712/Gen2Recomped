@@ -23,16 +23,21 @@ e.symbol = function()
   return nil
 end
 T.eq(e:gen2TrainerAttributes(1), nil, "missing attributes do not fabricate native flags")
-for _, row in ipairs({ { 1, 2, 3, 4, 5, 6 }, { 1, 2, 3, 4, 5, 6, -1 }, { 1, 2, 3, 4, 5, 6, 256 }, {
-  1,
-  2,
-  3,
-  4,
-  5,
-  6,
-  7,
-  8,
-} }) do
+for _, row in ipairs({
+  { 1, 2, 3, 4, 5, 6 },
+  { 1, 2, 3, 4, 5, 6, -1 },
+  { 1, 2, 3, 4, 5, 6, 256 },
+  {
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+  },
+}) do
   local invalid = setmetatable({
     symbol = function()
       return { bank = 1, address = 0x4000 }
@@ -46,9 +51,33 @@ for _, row in ipairs({ { 1, 2, 3, 4, 5, 6 }, { 1, 2, 3, 4, 5, 6, -1 }, { 1, 2, 3
   T.eq(invalid:gen2TrainerAttributes(1), nil, "incomplete or invalid attribute row refused")
 end
 local G = require("src.import.RomExtractorGen3")
+for _, sym in ipairs({
+  { bank = 1, address = 0x7FFF },
+  { bank = 0, address = 0x3FFF },
+  { bank = 1, address = false },
+  { bank = -1, address = 0x4000 },
+}) do
+  local invalid = setmetatable({
+    symbol = function()
+      return sym
+    end,
+    rom = {
+      bytes = function()
+        error("invalid symbol reached ROM reader")
+      end,
+    },
+  }, { __index = require("src.import.RomExtractorGen2") })
+  T.eq(invalid:gen2TrainerAttributes(1), nil, "invalid or bank-crossing optional attribute symbols refused")
+end
 local R = require("src.import.RomGba")
 local r = R.new(string.char(1, 2, 3, 4, 4, 0, 255))
 T.same(G.itemEffectBytes(r, 0), { 1, 2, 3, 4, 4, 0, 255 }, "raw heal sentinel and battle bits survive")
+T.raises(function()
+  G.itemEffectBytes(r, -1)
+end, "invalid item effect offset", "negative effect offset refused")
+T.raises(function()
+  G.itemEffectBytes(r, 0.5)
+end, "invalid item effect offset", "fractional effect offset refused")
 T.raises(function()
   G.itemEffectBytes(R.new(string.char(0, 0, 0, 0, 4, 0)), 0)
 end, "past the end", "truncated argument refused")
