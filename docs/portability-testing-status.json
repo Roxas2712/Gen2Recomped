@@ -1,10 +1,10 @@
 {
-  "runtime_ref": "b74f59f6f05eb4624e71edaa2c64c2ae26d08c88",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/185",
-  "feature_ref": "ae3c8925dc364447120ae9167cd2bb107fb6d8a3",
+  "runtime_ref": "aed508c2918a369f1d19e2250eb11635c17bd78f",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/188",
+  "feature_ref": "6178ae1f3329fc53a66d7ba08cd8fa2deb43bff9",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 205,
-  "engine_suites_total": 205,
+  "engine_suites_passed": 206,
+  "engine_suites_total": 206,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "Both #185 workflows await maintainer approval (action_required); dedicated attacking-move workflow has zero jobs; local acceptance is separate",
+  "hosted_ci": "Both #188 workflows await maintainer approval (action_required); dedicated workflow has zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Actual native GBA attacking-move VMs and literal opcode dispatch for zero-usable contexts; no new graphical or complete native-controller parity claim",
+  "cross_engine_scope": "Historical native GBA attacking-move comparison; current order validation uses original pinned native C, not a modified Gen1 reference",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -1084,7 +1084,6 @@
     "combined_contract_ref": "d8fed51a5ee3105d27d5f78b13ea4470dc529d15",
     "source_repository": "Roxas2712/gen1recomp-Mac-fix",
     "source_ref": "10613015fc68d924915570bd1abee34b70d5bd01",
-    "source_pr": "https://github.com/bryanthaboi/gen1recomp/pull/3052",
     "source_runtime_ref": "cdd4ad167373e2b5f08c96f95ee87041f59e0e17",
     "host_checks_passed": 567,
     "source_checks_passed": 372,
@@ -1117,7 +1116,8 @@
       "conclusion": "action_required",
       "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40113016261",
       "jobs": 0
-    }
+    },
+    "source_reference_scope": "Historical modified-fork fixture only; no upstream Gen1 publication or merge is required"
   },
   "gen3_ai_item_knowledge": {
     "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/182",
@@ -1127,7 +1127,6 @@
     "combined_runtime_ref": "611e97230e1fea0c14b008c69a0fdfede4573f8b",
     "source_repository": "Roxas2712/gen1recomp-Mac-fix",
     "source_ref": "12c9e5b5a2325470d6bb266c9a1f37b7954b698e",
-    "source_pr": "https://github.com/bryanthaboi/gen1recomp/pull/3053",
     "source_combined_ref": "a0c74c9570f0482a85886ecd8a2328de79ba7e09",
     "host_checks_passed": 1491,
     "source_checks_passed": 1240,
@@ -1175,7 +1174,8 @@
       "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40119262288",
       "jobs": 0
     },
-    "scope": "Native AI reads and actual direct-hit/confusion/OHKO producers; explicit paired source fix; no new graphical or full-controller claim; unfinished enemy hook remains separate"
+    "scope": "Native AI reads and actual direct-hit/confusion/OHKO producers; explicit paired source fix; no new graphical or full-controller claim; unfinished enemy hook remains separate",
+    "source_reference_scope": "Historical modified-fork fixture only; no upstream Gen1 publication or merge is required"
   },
   "gen3_ai_party_status": {
     "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/184",
@@ -1186,7 +1186,6 @@
     "source_repository": "Roxas2712/gen1recomp-Mac-fix",
     "source_ref": "9e372ef7f18a8069289b3c2b367fa45490f98ab0",
     "source_runtime_ref": "ae7acd21767809963404945b895c6ae68784458a",
-    "source_pr": "https://github.com/bryanthaboi/gen1recomp/pull/3054",
     "source_combined_ref": "fb7b0366efcb85e703e9e6d5a8a24d01456a109b",
     "host_checks_passed": 10006,
     "source_checks_passed": 7496,
@@ -1218,7 +1217,8 @@
       "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40121125880",
       "jobs": 0
     },
-    "scope": "Actual party-status equality and owned status/canceller producers; no new graphics or complete battle parity; unused inverse unsupported and unfinished enemy hook remains separate"
+    "scope": "Actual party-status equality and owned status/canceller producers; no new graphics or complete battle parity; unused inverse unsupported and unfinished enemy hook remains separate",
+    "source_reference_scope": "Historical modified-fork fixture only; no upstream Gen1 publication or merge is required"
   },
   "gen3_ai_attacking_moves": {
     "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/185",
@@ -1258,5 +1258,42 @@
       "jobs": 0
     },
     "scope": "Actual attacking-move predicates and literal opcode cases; no new graphics/full-controller claim; unfinished enemy hook remains separate"
+  },
+  "publication_scope": "Gen2Recomped only; Gen1 is a read-only reference. Historical modified-fork results are not unchanged-upstream parity.",
+  "gen3_ai_order": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/188",
+    "feature_ref": "6178ae1f3329fc53a66d7ba08cd8fa2deb43bff9",
+    "combined_runtime_ref": "aed508c2918a369f1d19e2250eb11635c17bd78f",
+    "focused_checks_passed": 16680,
+    "native_profiles": [
+      "firered",
+      "emerald"
+    ],
+    "native_cases_per_profile": 262,
+    "native_vm_queries": 5240,
+    "native_pair_comparisons": 524,
+    "native_sorts": 524,
+    "native_differences": 0,
+    "public_priority_integration_checks_passed": 32,
+    "combined_engine_suites_passed": 206,
+    "combined_engine_suites_total": 206,
+    "sdk_suites_passed": 3,
+    "b30_profile": "passed",
+    "gen1_production_changes_required": false,
+    "feature_baseline": {
+      "engine_suites_passed": 65,
+      "engine_suites_total": 75,
+      "known_failing_suites": 10,
+      "failure_lines": 27,
+      "all_failure_lines_match_upstream": true,
+      "new_failures": 0
+    },
+    "hosted_ci": {
+      "workflow_count": 2,
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40127906217",
+      "jobs": 0
+    },
+    "scope": "Actual native VMs/comparators/sorts, owned choice/ordinary move queues/EOT; metadata checks inspect actual plans; no new graphical or complete stock-controller parity claim; unfinished enemy hook remains separate"
   }
 }

@@ -1,15 +1,45 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–182 and
-#184–185 (excluding unrelated #138). It is for testing the combined changes
-before upstream reviews and merges the individual PRs. Upstream `main` is
-separate. LeafGreen cartridge-support PR #183 is separate from this snapshot.
+hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
+#88–182, #184–185 and #188 (excluding unrelated #138). It is for testing the
+combined changes before upstream reviews and merges individual PRs. Upstream
+`main` is separate; cartridge-support PRs from other work remain separate.
+
+**Publication scope: Gen2Recomped only.** Gen1Recomp is a read-only portability
+reference. Historical results below that use a modified Gen1 reference fork
+are not proof of parity with unchanged upstream Gen1. They do not require or
+authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`b74f59f6f05eb4624e71edaa2c64c2ae26d08c88`. Its ROM-free run passed
-**205/205 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
-Subsequent status-only commits do not change production code.
+`aed508c2918a369f1d19e2250eb11635c17bd78f`. Its ROM-free run passed
+**206/206 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+Subsequent status/integration-fixture commits do not change production code.
+
+[PR #188](https://github.com/UNDERdecoded/Gen2Recomped/pull/188) implements
+native GBA AI order prediction and actual turn planning with one shared
+Quick Claw word, native speed arithmetic, priority and double comparisons.
+Its **16,680** focused checks pass here. The original pinned FireRed/Emerald
+C functions match **5,240 VM queries, 524 pair comparisons and 524 sorts**,
+with zero differences. This uses read-only pret references and no Gen1 patch.
+See [native order validation](gen3-ai-order.md).
+
+The same public held-item consumer also passes **32/32** integration checks
+across both profiles and API 1 native, API 2 native/unified and API 3 unified.
+Run `luajit tests/gen3_ai_order/public_priority.lua` on this combined branch.
+The actual comparator honors virtual Quick Claw, greater move priority and
+the native strict threshold; AI prediction reads physical metadata.
+
+The independent feature retains exactly the **27 FAIL lines across ten
+upstream baseline suites**; their fixes are already included here. Both
+hosted #188 workflows await maintainer approval (`action_required`); the
+[dedicated workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40127906217)
+has zero executed jobs. Local acceptance is separate. These are CPU checks,
+without a new graphical or full-controller/gameplay parity claim. The
+unfinished enemy switch/item hook remains outside this combined branch.
+
+Prior #185 results retain runtime
+`b74f59f6f05eb4624e71edaa2c64c2ae26d08c88` and its 205/205 engine result:
 
 [PR #185](https://github.com/UNDERdecoded/Gen2Recomped/pull/185) implements
 both native attacking-move predicates. They inspect exactly four current
@@ -23,7 +53,7 @@ The checker pins clean upstream Gen1 dev
 `bryanthaboi/gen1recomp@535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`; those source
 predicates already implement the native rule, so this milestone needs no new
 source production patch. The source fork's composed testing branch retains
-its prior #3052–3054 fixes at `fb7b0366efcb85e703e9e6d5a8a24d01456a109b`.
+its historical reference-only fixes at `fb7b0366efcb85e703e9e6d5a8a24d01456a109b`.
 See [native attacking-move predicates](gen3-ai-attacking-moves.md).
 
 Unchanged host main fails **4,256** assertions and differs in all **2,136**
@@ -51,12 +81,12 @@ behavior. Other generations keep their existing policies.
 
 The clean combined runtime matches in **4 workers / 2,500 paired observations**,
 with **10,006** host and **7,496** source focused checks. The workflow pins
-[Gen1 #3054](https://github.com/bryanthaboi/gen1recomp/pull/3054) at
+the modified Gen1 reference fixture at
 `Roxas2712/gen1recomp-Mac-fix@9e372ef7f18a8069289b3c2b367fa45490f98ab0`.
 That source also needed its previous approximation corrected; neither PR is
 claimed merged upstream. See [native party status](gen3-ai-party-status.md).
 
-The Gen1 fork's `codex/portability-testing` now composes source PRs #3052–3054
+The Gen1 fork's `codex/portability-testing` historically composed three reference fixes
 at `fb7b0366efcb85e703e9e6d5a8a24d01456a109b`. Its focused checks pass
 **372** Taunt, **1,240** item-knowledge and **7,496** party-status checks.
 The independent party-status source standard run passes all selected tiers,
@@ -67,7 +97,7 @@ different observations per profile) and host main (2,494 / 1,246). The
 independent Gen2 feature retains exactly **27 FAIL lines across ten baseline
 suites**; their repairs are included here.
 
-Both hosted #184 workflows and source #3054 CI await maintainer approval
+The recorded hosted #184 workflows and historical source CI require approval
 (`action_required`); the [party-status workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40121125880)
 and source CI have zero executed jobs. Local acceptance is separate. These
 are bounded CPU VM/status checks, without a new graphical/full-controller
@@ -88,12 +118,12 @@ generations retain their behavior.
 
 The shared comparison passes **4 workers / 364 paired observations** on the
 clean combined runtime, with **1,491** host checks and **1,240** source checks.
-The explicit counterpart [Gen1 #3053](https://github.com/bryanthaboi/gen1recomp/pull/3053)
+The modified Gen1 reference fixture
 is pinned at `Roxas2712/gen1recomp-Mac-fix@12c9e5b5a2325470d6bb266c9a1f37b7954b698e`.
 Gen1's old getter and metadata precedence also needed fixes; this is not a
 claim of agreement with the old placeholders or a completed upstream merge.
 The source fork's `codex/portability-testing` at
-`a0c74c9570f0482a85886ecd8a2328de79ba7e09` combines both source PRs #3052/3053
+`a0c74c9570f0482a85886ecd8a2328de79ba7e09` combines the historical Taunt/item reference fixes
 and passes their **372** Taunt and **1,240** item-knowledge checks.
 
 Unchanged Gen1 dev fails 116/113 checks and differs in 117/127 observations;
@@ -102,7 +132,7 @@ Gen2 feature retains exactly **27 FAIL lines across ten baseline suites**;
 their repairs are included in this combined branch. See
 [native GBA item knowledge](gen3-ai-item-knowledge.md).
 
-Both hosted #182 workflows and source #3053 CI await maintainer approval
+The recorded hosted #182 workflows and historical source CI require approval
 (`action_required`); the [item-knowledge workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40119262288)
 and source CI have zero executed jobs. Local acceptance is separate. These
 are bounded CPU VM/effect/damage checks; no new graphical or full-gameplay
@@ -122,16 +152,16 @@ multiple target slots, repeat refusal, expiration and reapplication are tested.
 The shared interpreter/effect/residual matrix passes **4 workers / 96 paired
 observations**, with **567** host checks and **372** source checks. The final
 combined comparison is clean at `d8fed51a5ee3105d27d5f78b13ea4470dc529d15`.
-Gen1's previous unconditional false/true predicates require the paired
-[Gen1 PR #3052](https://github.com/bryanthaboi/gen1recomp/pull/3052). The checker
+Gen1's previous unconditional false/true predicates differ from this modified
+reference fixture. The historical checker
 explicitly pins that source fork at `10613015fc68d924915570bd1abee34b70d5bd01`;
 this is not an upstream merge claim. The base Gen1 source fails 56 assertions
 and differs in 28 observations per profile; Gen2 main fails 196 and differs
 in all 48 observations. See [native AI Taunt](gen3-ai-taunt.md).
 
 The independent Gen2 feature retains the exact 27 failure lines across ten
-upstream baseline suites. Both hosted #181 workflows and source #3052 CI
-await maintainer approval (`action_required`); the
+upstream baseline suites. The recorded hosted #181 workflows and historical source CI
+require approval (`action_required`); the
 [Taunt workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40113016261)
 has zero executed jobs. Local acceptance is separate. These are bounded CPU
 AI/effect/residual checks, with no new graphical gameplay or complete AI
