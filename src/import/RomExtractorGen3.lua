@@ -7368,6 +7368,17 @@ function RomExtractorGen3:extractFont()
       local srcRow = top + row
       local half = srcRow < 8 and 0 or 2       -- the top pair of tiles, or the bottom
       local line = {}
+      if font.bits == 4 then
+        -- RS's shadowed 8x16 Latin font is two raw 4bpp tiles. Its
+        -- ApplyColors_ShadowedFont maps nibble F to ink and E to shadow.
+        local word = self.rom:u32(base + srcRow * 4)
+        for px = 0, cellW - 1 do
+          local nibble = math.floor(word / 2 ^ (px * 4)) % 16
+          local role = nibble == 15 and 1 or (nibble == 14 and 2 or 0)
+          line[px + 1] = role
+          if role ~= 0 then any = true end
+        end
+      else
       for tile = 0, 1 do
         local word = self.rom:u16(base + (half + tile) * 16 + (srcRow % 8) * 2)
         for x = 0, 7 do
@@ -7379,6 +7390,7 @@ function RomExtractorGen3:extractFont()
             if role == 1 or role == 2 then any = true end
           end
         end
+      end
       end
       cell[row + 1] = line
     end

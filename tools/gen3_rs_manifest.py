@@ -1,0 +1,125 @@
+#!/usr/bin/env python3
+"""Build native Ruby/Sapphire metadata from a verified matching pret build.
+
+Only addresses, layouts and hashes are emitted; supply your own cartridge.
+"""
+import argparse
+import copy
+import hashlib
+import json
+from pathlib import Path
+import re
+import struct
+import subprocess
+from gen3_sibling_manifest import Symbols
+import gen3_discover as discover
+
+
+def main():
+    p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--rom',type=Path,required=True)
+    p.add_argument('--elf',type=Path,required=True)
+    p.add_argument('--pret',type=Path,required=True)
+    p.add_argument('--emerald-elf',type=Path,required=True)
+    p.add_argument('--emerald-rom',type=Path,required=True)
+    p.add_argument('--output',type=Path,required=True)
+    args=p.parse_args()
+    rom=args.rom.read_bytes()
+    code=rom[0xac:0xb0].decode()
+    edition={'AXVE':'ruby','AXPE':'sapphire'}[code]
+    expected={'ruby':'f28b6ffc97847e94a6c21a63cacf633ee5c8df1e','sapphire':'3ccbbd45f8553c36463f13b938e833f652b793e4'}
+    assert hashlib.sha1(rom).hexdigest()==expected[edition]
+    target=Symbols(args.elf,rom)
+    emrom=args.emerald_rom.read_bytes()
+    emerald=Symbols(args.emerald_elf,emrom)
+    records={}
+    def at(name):
+        rows=target.by_name.get(name,[])
+        offsets={r['at'] for r in rows}
+        assert len(offsets)==1,(name,rows)
+        value=offsets.pop();records[name]=value;return value
+    f=discover.discover(discover.Rom(rom))
+    base=json.loads((Path(__file__).parent/'rom_manifest_emerald.json').read_text())
+    result={k:copy.deepcopy(base[k]) for k in ('format','generation','romBase','charmap','layout')}
+    result.update(version=edition,romSha1=expected[edition],romHeader=dict(title=rom[0xa0:0xac].decode(),gameCode=code,makerCode=rom[0xb0:0xb2].decode(),revision=rom[0xbc]))
+    result['symbols']=dict(f.found)
+    aliases={'gNatureNamePointers':'gNatureNames','gFontNormalLatinGlyphs':'gFont3LatinGlyphs',
+             'gFontNormalLatinGlyphWidths':'sFont3Widths','gFontBrailleLatinGlyphs':'sFont0LatinGlyphs',
+             'sElevationToSubspriteTable':'sElevationToSubspriteTableNum','sStarterMon':'sStarterMons',
+             'sWindowFrames':'sTextWindowFrameGraphics'}
+    for name in base['symbols']:
+        target_name=aliases.get(name,name)
+        if name not in result['symbols'] and target_name in target.by_name:
+            result['symbols'][name]=at(target_name)
+    result['symbols']['gScriptCmdTable']=at('gScriptCmdTable')
+    result['symbols']['gStdScripts']=at('gStdScripts')
+    for name in ('scenes','sceneRoles','sceneOverlays','screenText','bagSprite','wallClock','introCast','introShots','messageWindow','specials','starters','playerTitles','movementActions','playerSprites','m4aWidths','introSprites'):
+        result[name]=copy.deepcopy(getattr(f,name,None))
+    # Speech contents are recovered from the cartridge by the native importer.
+    for row in ((result.get('introSprites') or {}).get('birch') or {}).get('speech',[]):
+        row.pop('text',None)
+    layout=result['layout']
+    layout.update(f.counts)
+    layout.update(numSongs=f.counts['songCount'],numItems=349,numTrainers=694,
+                  flagBytes=288,windowFrameCount=20,numSpecialVars=20,scriptCmdCount=198)
+    # Both retail RS builds use the same 4bpp shadowed font contract.
+    glyphs,widths=at('gFont3LatinGlyphs'),at('sFont3Widths')
+    count=target.by_name['sFont3Widths'][0]['size']
+    assert count==254 and all(0<z<=8 for z in rom[widths:widths+count])
+    result['font']=dict(bits=4,glyphBytes=64,cell=16,cellWidth=8,cellHeight=16,
+                        count=count,inkTop=0,inkBottom=15,inkRight=7,
+                        glyphs=glyphs,widths=widths,role='normal',fontId=3,
+                        roles={'none':0,'text':15,'shadow':14})
+    result['pocketEnum']={'1':'ITEM','2':'BALL','3':'TM_HM','4':'BERRY','5':'KEY_ITEM'}
+    # Resolve specials by native function identity, never by sibling slot.
+    # Read the assembler's actual conditional-build ids (the German-only
+    # special at the end is absent from the English retail table).
+    symbol_lines=subprocess.check_output(['arm-none-eabi-nm','-P','--defined-only',str(args.elf)],text=True)
+    special_ids={}
+    for line in symbol_lines.splitlines():
+        fields=line.split()
+        if len(fields)>=3 and fields[0].startswith('SPECIAL_') and fields[1].upper()=='A':
+            special_ids[int(fields[2],16)]=fields[0][8:]
+    assert set(special_ids)==set(range(len(special_ids)))
+    specials=[special_ids[i] for i in range(len(special_ids))]
+    special_at=at('gSpecials')
+    result['specials']=dict(at=special_at,count=len(specials))
+    layout['numSpecials']=len(specials)
+    em_specials=base['specials']
+    em_names={}
+    for i in range(em_specials['count']):
+        address=struct.unpack_from('<I',emrom,em_specials['at']+i*4)[0]-0x08000001
+        for row in emerald.by_address.get(address,[]):em_names.setdefault(row['name'],i)
+    names={'ScrSpecial_HealPlayerParty':'HealPlayerParty','Overworld_SetWarpDestination':'SetWarpDestination'}
+    result['specialRemap']=[em_names.get(names.get(n,n),em_names.get(n.removeprefix('ScrSpecial_'),-1)) for n in specials]
+    for i,n in enumerate(specials):
+        assert (struct.unpack_from('<I',rom,special_at+i*4)[0]&~1)-0x08000000==at(n)
+    # WarpToTruck's map is also declared in the source's canonical map group
+    # list. Confirm the truck layout and dimensions from its actual ROM header.
+    groups=json.loads((args.pret/'data/maps/map_groups.json').read_text())
+    spawn=None
+    for group,label in enumerate(groups['group_order']):
+        for number,name in enumerate(groups[label]):
+            if name=='InsideOfTruck':
+                group_ptr=struct.unpack_from('<I',rom,at('gMapGroups')+group*4)[0]-0x08000000
+                header=struct.unpack_from('<I',rom,group_ptr+number*4)[0]-0x08000000
+                map_layout=struct.unpack_from('<I',rom,header)[0]-0x08000000
+                w,h=struct.unpack_from('<II',rom,map_layout)
+                spawn=dict(group=group,number=number,x=w//2,y=h//2,width=w,height=h)
+    assert spawn and spawn['width']==5 and spawn['height']==5
+    reset=at('EventScript_ResetAllMapFlags')
+    hide=[]
+    while rom[reset]==0x29:
+        hide.append(struct.unpack_from('<H',rom,reset+1)[0]);reset+=3
+    assert len(hide)>50 and rom[reset]==4
+    assert struct.unpack_from('<I',rom,reset+1)[0]-0x08000000==at('EventScript_ResetAllBerryTrees')
+    assert rom[reset+5]==2
+    result['newGame']=dict(spawn=spawn,hideFlags=hide)
+    result['symbolSource']='Structural discovery plus matching pret ELF symbols, allocated ROM sections byte-verified against supplied cartridge; tools/gen3_rs_manifest.py'
+    result['provenance']=dict(elfSHA256=hashlib.sha256(args.elf.read_bytes()).hexdigest(),verifiedROMBytes=target.checked_bytes,
+                              symbolIdentities=records,structuralWarnings=f.fail)
+    args.output.write_text(json.dumps(result,indent=2)+'\n')
+    print('VERIFIED_RS_MANIFEST',edition,len(result['symbols']),'symbols',len(specials),'specials')
+
+
+if __name__=='__main__':main()
