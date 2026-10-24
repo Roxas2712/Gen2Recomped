@@ -1,5 +1,6 @@
 local M = {}
-function M.new(root, backend, version, api, format, noMod, failing)
+function M.new(root, backend, version, api, format, noMod, failing, consumer)
+  consumer = consumer or "portable_charge_required"
   local T = require("tests.modkit")
   local V = require("src.core.GameVersion")
   assert(V.VERSIONS[version], "unregistered version")
@@ -102,22 +103,22 @@ function M.new(root, backend, version, api, format, noMod, failing)
   end
   local files, Json = {}, require("src.link.Json")
   for _, name in ipairs({ "main.lua", "manifest.json" }) do
-    local f = assert(io.open(root .. "/examples/portable_charge_required/" .. name, "rb"))
-    files["mods/portable_charge_required/" .. name] = f:read("*a")
+    local f = assert(io.open(root .. "/examples/" .. consumer .. "/" .. name, "rb"))
+    files["mods/" .. consumer .. "/" .. name] = f:read("*a")
     f:close()
   end
-  local manifest = Json.decode(files["mods/portable_charge_required/manifest.json"])
+  local manifest = Json.decode(files["mods/" .. consumer .. "/manifest.json"])
   manifest.api, manifest.callback_format, manifest.gen2compat = api, format, api < 3 and true or nil
-  files["mods/portable_charge_required/manifest.json"] = Json.encode(manifest)
+  files["mods/" .. consumer .. "/manifest.json"] = Json.encode(manifest)
   if failing then
-    files["mods/portable_charge_required/main.lua"] = files["mods/portable_charge_required/main.lua"]
+    files["mods/" .. consumer .. "/main.lua"] = files["mods/" .. consumer .. "/main.lua"]
       .. '\nerror("intentional charge entry failure")'
   end
   if noMod then
     files = {}
   end
   local result = T.sdk.loadMods(
-    noMod and {} or { "mods/portable_charge_required" },
+    noMod and {} or { "mods/" .. consumer },
     { data = data, fs = T.sdk.memfs(files), generation = gen, dev = false }
   )
   if not failing then
@@ -340,7 +341,7 @@ function M.new(root, backend, version, api, format, noMod, failing)
   end
   return {
     T = T,
-    e = result.loader.exports.portable_charge_required,
+    e = result.loader.exports[consumer],
     result = result,
     data = data,
     game = game,

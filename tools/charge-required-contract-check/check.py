@@ -22,6 +22,8 @@ def main():
     p.add_argument("--api", type=int, choices=[1, 2, 3], default=3)
     p.add_argument("--format", choices=["native", "unified"], default="unified")
     p.add_argument("--report", type=Path)
+    p.add_argument("--require-native-policy-parity", action="store_true",
+                   help="also compare raw native enemy PP costs, not just preservation")
     a = p.parse_args()
     gen1, gen2 = a.gen1.resolve(), a.gen2.resolve()
     if git(gen1, "rev-parse", "HEAD") != GEN1 or git(gen1, "status", "--porcelain"):
@@ -46,11 +48,14 @@ def main():
                                 line[len("CHARGE_NATIVE_POLICY "):] for line in run.stdout.splitlines()
                                 if line.startswith("CHARGE_NATIVE_POLICY "))),
                             "checks": run.stdout.splitlines()[-1]})
+        if a.require_native_policy_parity:
+            assert results[-2]["native_policy"] == results[-1]["native_policy"], (
+                f"native enemy PP policy mismatch: {version}")
         assert observations[0] == observations[1], f"charge decision mismatch: {version}"
         print(f"PASS {version}: {len(observations[0])} matching native charge observations")
     assert not git(gen1, "status", "--porcelain"), "reference changed"
     report = {"gen1_ref": GEN1, "gen2_ref": git(gen2, "rev-parse", "HEAD"), "api": a.api,
-              "format": a.format, "results": results,
+              "format": a.format, "require_native_policy_parity": a.require_native_policy_parity, "results": results,
               "consumer_sha256": hashlib.sha256(
                   (gen2/"examples/portable_charge_required/main.lua").read_bytes()).hexdigest()}
     if a.report:

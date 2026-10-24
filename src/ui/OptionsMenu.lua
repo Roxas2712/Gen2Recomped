@@ -44,10 +44,13 @@ end
 
 -- TextSpeedOptionData frame delays with the original labels
 local SPEEDS = { { 1, "FAST" }, { 3, "MEDIUM" }, { 5, "SLOW" } }
--- no-loader fallback for the ruleset row, same pair BattleState keeps
+-- no-loader fallback for the ruleset row, same records BattleState keeps
 local Rulesets = {
   gen1_faithful = require("src.battle.rulesets.gen1_faithful"),
+  gen2_finite_pp = require("src.battle.rulesets.gen2_finite_pp"),
   modern_clean = require("src.battle.rulesets.modern_clean"),
+  gen3_emerald = require("src.battle.rulesets.gen3_emerald"),
+  gen4_platinum = require("src.battle.rulesets.gen4_platinum"),
 }
 local FILTERS = { "OFF", "1X", "2X", "3X" }
 
@@ -67,18 +70,15 @@ local function rulesetIds(game)
   local rulesets = game.data and game.data.rulesets or Rulesets
   local ids = {}
   for id, record in pairs(rulesets) do
-    if not record.hidden then ids[#ids + 1] = id end
+    if not record.hidden and id ~= "auto" then ids[#ids + 1] = id end
   end
   table.sort(ids)
+  table.insert(ids, 1, "auto")
   return ids
 end
 
 local function rulesetIndex(game, ids)
-  -- The same fallback the battle uses, from the same place.  When these two
-  -- disagreed the row showed GEN 1 FAITHFUL on a cartridge that was about to
-  -- fight under it -- which was true, and was the bug rather than the display.
-  local cur = game.save.options.ruleset
-              or require("src.battle.RulesetDefaults").defaultFor(game)
+  local cur = require("src.battle.RulesetDefaults").selection(game) or "auto"
   for i, id in ipairs(ids) do
     if id == cur then return i end
   end
@@ -89,6 +89,7 @@ local function rulesetName(game)
   local rulesets = game.data and game.data.rulesets or Rulesets
   local ids = rulesetIds(game)
   local id = ids[rulesetIndex(game, ids)] or game.save.options.ruleset
+  if id == "auto" then return Strings("AUTO") end
   local record = id and rulesets[id]
   return Strings(record and record.name or id or "----")
 end

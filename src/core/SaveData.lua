@@ -445,7 +445,9 @@ function SaveData.defaultOptions()
     -- moves the screen furniture, so it is opt-in.
     -- See Game.dynamicUI, Renderer:setUIAnchor and Renderer:uiScale.
     uiLayout = "centered",
-    ruleset = "gen1_faithful",
+    -- AUTO follows the game's default; explicit persisted ids stay selected.
+    -- This must be a value so per-generation overrides can return to AUTO.
+    ruleset = "auto",
     -- 0-7 like the GB's NR50 master volume
     musicVol = 7,
     sfxVol = 7,
