@@ -1,20 +1,22 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–161
+hook, rendering, shader and baseline test fixes prepared in PRs #88–162
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`6a1238a7c42b09fbd9694149b35146d17bb9b720`. Its ROM-free run passed
-169/169 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
-The unchanged charge-turn consumer passed the native battle paths on both
-engines in four SDK modes (64 workers / 1,020 paired contract observations).
-Its native suite passed 7,070 checks. Enemy PP is compared as preservation of
-each engine's baseline; the reports separately record the existing Gold
-reference/host discrepancy (one enemy PP versus zero). Prior preview, GBA/GB
-item, follower, live-map, storage, battle and party families retain their own
-historical refs in `portability-testing-status.json`.
+`3a944cc7c0e455c094596aa83315150b249f8bbd`. Its ROM-free run passed
+170/170 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+The charge-turn and enemy-PP checks passed on both engines (70 isolated workers /
+1,044 paired contract observations). Raw native enemy PP costs now compare
+exactly in all four SDK modes, including the former Gold-family discrepancy.
+The charge suite passed 7,070 checks and the native default/PP suite 926 checks.
+The same public API-3 PP observer additionally passed Gold/Silver/Crystal native
+move depletion, real AI/Struggle execution, last-PP charge release and snapshot
+reads. The unit suite also covers explicit settings, option cycling,
+per-generation persistence and save-import defaults. Prior families retain
+their historical refs in `portability-testing-status.json`.
 
 Native LÖVE 11.5 smoke tests reached the intro, title and New Game
 world/introduction for Red, Gold, FireRed and Emerald using isolated copies
@@ -128,11 +130,10 @@ roundtrip, then deletes only the smoke keys. The ordinary test save remains.
 Red, Gold, FireRed and Emerald passed both phases with the same installed
 API-3 consumer. No generated cartridge data is distributed by this branch.
 
-The recorded full-suite runtime includes the older GBA and encounter-preview
-smoke drivers. Later commits add only the standalone charge-turn smoke driver
-and record validation/documentation. Older native smoke
-families retain their own historical runtime refs; they are not relabeled as
-new executions on this runtime.
+The current full-suite runtime includes the enemy-PP input/queue driver.
+Later commits record validation/documentation only. Older native smoke families
+retain their historical runtime refs; they are not relabeled as new executions
+on this runtime.
 
 ## Native connected-map lifecycle test
 
@@ -275,3 +276,35 @@ over the full-suite runtime. Native enemy PP costs are recorded separately:
 Gold's reference spends one while this host's current Gen-1-default rules
 spend zero. The new hook preserves that native policy; correcting the existing
 rule difference remains work. See `portable-charge-required.md`.
+
+
+## Automatic native rulesets and enemy PP
+
+PR #162 fixes the measured Gold-family enemy PP difference for automatic
+selection. New settings and cartridge-save import skeletons use RULESET -> AUTO
+(`options.ruleset = false`). Explicit saved ids remain explicit; old literal
+`gen1_faithful` settings cannot reveal whether the earlier default was intended.
+Select AUTO to opt an existing test installation in. Gen 2 selects the bounded
+`gen2_finite_pp` compatibility ruleset; this changes only enemy PP, not every
+Gen-2 battle mechanic. See [native ruleset defaults](native-ruleset-defaults.md).
+
+Install and enable `examples/portable_enemy_pp` in the isolated test installation:
+
+```sh
+POKEPORT_VERSION=gold POKEPORT_DRIVER=tests/drivers/enemy_pp_defaults.lua \
+  bash scripts/run-portability-test.sh
+```
+
+Red, Gold, FireRed and Emerald passed on LÖVE 11.5 at the runtime above. The
+driver starts New Game, preserves the existing preference check, selects AUTO
+only in memory, and constructs a native wild battle with imported data. Real
+FIGHT/move input drives three complete turn/result queues. The same public
+observer checks PP; finite-PP games reach the native AI's Struggle fallback,
+while Red retains unlimited enemy PP. An explicit Gen-1 choice is checked on a
+new battle afterward. Sendout intro is skipped and animations are disabled for
+this bounded queue check. No normal SAVE is issued; this is not a full-playthrough,
+whole-battle or pixel-parity claim.
+
+The standalone feature retains exactly the ten old baseline suite failures
+covered by PRs #128–134 (115/125, SDK 3/3 and B30); this combined runtime includes
+those repairs and passes all 170 suites. Hosted CI results are recorded separately.

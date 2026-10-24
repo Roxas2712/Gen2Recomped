@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "6a1238a7c42b09fbd9694149b35146d17bb9b720",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/161",
-  "feature_ref": "44e746d68e76dd2a37d56079e485f7144efede2e",
+  "runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/162",
+  "feature_ref": "72ad168fabb613d371eddf73ab0616d264abac03",
   "gen1_contract_ref": "79ea62f45fb2ea8f65d081a109431e4eb1bbdb36",
-  "engine_suites_passed": 169,
-  "engine_suites_total": 169,
+  "engine_suites_passed": 170,
+  "engine_suites_total": 170,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 64,
-  "cross_engine_paired_observations": 1020,
+  "cross_engine_worker_runs": 70,
+  "cross_engine_paired_observations": 1044,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Latest charge-required consumer; equal observations compare preservation of native enemy PP policy, not unequal Gold enemy PP counts",
+  "cross_engine_scope": "Charge decisions with exact raw native enemy PP policy in four SDK modes plus API-3 Gold-family enemy PP observer, native depletion/AI/Struggle and last-PP release",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -111,7 +111,7 @@
   "charge_required_native_checks_passed": 7070,
   "charge_required_cross_engine_worker_runs": 64,
   "charge_required_cross_engine_paired_observations": 1020,
-  "charge_required_cross_engine_runtime_ref": "b5bc959d19b3d9e5ebc4528c9f47323bd35a0fbb",
+  "charge_required_cross_engine_runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
   "native_charge_required_smoke_games": [
     "red",
     "gold",
@@ -120,9 +120,40 @@
   ],
   "native_charge_required_runtime_ref": "e47c4ec558034c0b83b5f6ff5158510a79c3a459",
   "native_charge_required_scope": "Same installed API-3 consumer; imported SolarBeam/Fly, constructed native battles, charge/bypass/release/PP/GBA animation metadata, ordinary text/result queue with sendout intro skipped and animations disabled; no normal SAVE, no full-playthrough/whole-battle/GPU/pixel parity claim",
-  "known_gen2_enemy_pp_difference": {
+  "historical_gen2_enemy_pp_difference": {
     "reference_cost": 1,
     "host_cost": 0,
-    "scope": "Default native enemy move PP; recorded separately, charge/bypass preserve each native policy; not counted as equal PP observations"
-  }
+    "scope": "Default native enemy move PP; recorded separately, charge/bypass preserve each native policy; not counted as equal PP observations",
+    "recorded_runtime_ref": "6a1238a7c42b09fbd9694149b35146d17bb9b720",
+    "status": "Historical pre-fix observation; resolved for AUTO at 3a944cc7c0e455c094596aa83315150b249f8bbd"
+  },
+  "charge_required_full_suite_runtime_ref": "6a1238a7c42b09fbd9694149b35146d17bb9b720",
+  "enemy_pp_native_checks_passed": 926,
+  "enemy_pp_cross_engine_worker_runs": 6,
+  "enemy_pp_cross_engine_paired_observations": 24,
+  "enemy_pp_cross_engine_runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
+  "native_enemy_pp_smoke_games": [
+    "red",
+    "gold",
+    "firered",
+    "emerald"
+  ],
+  "native_enemy_pp_runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
+  "native_enemy_pp_scope": "Same installed API-3 consumer; native title/New Game with imported data, in-memory AUTO selection, constructed native battles, real FIGHT/move input and three turn/result queues, PP snapshots/depletion/AI fallback, explicit legacy choice; sendout intro skipped, animations disabled; no normal SAVE, no full-playthrough/whole-battle/pixel-parity claim",
+  "gen2_enemy_pp_policy": {
+    "reference_cost": 1,
+    "automatic_host_cost": 1,
+    "explicit_legacy_selection": "Preserved: gen1_faithful still has unlimited enemy PP; existing installations opt in via RULESET -> AUTO",
+    "scope": "Gold/Silver/Crystal default ordinary, charge and bypass PP costs compare exactly; other battle-rule differences remain"
+  },
+  "enemy_pp_feature_baseline": {
+    "engine_suites_passed": 115,
+    "engine_suites_total": 125,
+    "new_failures": 0,
+    "existing_failure_suites": 10,
+    "repair_prs": "#128\u2013134",
+    "sdk_suites_passed": 3,
+    "b30_profile": "passed"
+  },
+  "enemy_pp_negative_controls": "Strict raw-policy checker and public/native observer both reject the unchanged #161 host for Gold PP discrepancy"
 }
