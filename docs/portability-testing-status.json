@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "8e0d34aeee4328465155bb2ea884145e2dcc40ec",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/164",
-  "feature_ref": "124da70a77a09737d6a99aef2933ab722b3d5133",
+  "runtime_ref": "3d6bfceeaf25b97d7a7ce708ada8fe3306e0357d",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/165",
+  "feature_ref": "1ce83faf4b980584be9d747eee82efc530ede09f",
   "gen1_contract_ref": "79ea62f45fb2ea8f65d081a109431e4eb1bbdb36",
-  "engine_suites_passed": 175,
-  "engine_suites_total": 175,
+  "engine_suites_passed": 177,
+  "engine_suites_total": 177,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 64,
-  "cross_engine_paired_observations": 568,
+  "cross_engine_worker_runs": 40,
+  "cross_engine_paired_observations": 1706,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All 25 #164 PR workflows report action_required pending maintainer approval; local results are separate",
+  "hosted_ci": "All 26 #165 PR workflows report action_required pending maintainer approval; local results are separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -156,14 +156,14 @@
   },
   "enemy_pp_negative_controls": "Strict raw-policy checker and public/native observer both reject the unchanged #161 host for Gold PP discrepancy",
   "charge_required_original_full_suite_runtime_ref": "6a1238a7c42b09fbd9694149b35146d17bb9b720",
-  "hosted_ci_workflow_count": 25,
+  "hosted_ci_workflow_count": 26,
   "enemy_pp_hosted_ci": {
     "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40046010257",
     "conclusion": "action_required",
     "jobs": 0
   },
   "enemy_pp_full_suite_runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
-  "feature_tested_ref": "124da70a77a09737d6a99aef2933ab722b3d5133",
+  "feature_tested_ref": "1ce83faf4b980584be9d747eee82efc530ede09f",
   "caught_marker_native_checks_passed": 2078,
   "caught_marker_renderer_checks_passed": 840,
   "caught_marker_import_checks_passed": 216,
@@ -234,6 +234,70 @@
   "field_residual_reference_scope": "Actual GB endOfTurn, Gold takeTurn and registered GBA residual scheduler; GBA collected steps are not the full presentation/award controller",
   "field_residual_hosted_ci": {
     "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40050804974",
+    "conclusion": "action_required",
+    "jobs": 0
+  },
+  "field_residual_feature_tested_ref": "124da70a77a09737d6a99aef2933ab722b3d5133",
+  "field_residual_post_runtime_changes": [
+    "Validation documentation/status"
+  ],
+  "native_boot_runtime_ref": "8e0d34aeee4328465155bb2ea884145e2dcc40ec",
+  "held_item_native_checks_passed": 5511,
+  "held_item_authority_checks_passed": 290,
+  "held_item_existing_regression_checks_passed": 51,
+  "held_item_cross_engine_worker_runs": 40,
+  "held_item_cross_engine_paired_observations": 1706,
+  "held_item_cross_engine_runtime_ref": "3d6bfceeaf25b97d7a7ce708ada8fe3306e0357d",
+  "held_item_native_gba_enums_tested": 66,
+  "native_held_item_smoke_games": [
+    "gold",
+    "firered",
+    "emerald"
+  ],
+  "native_held_item_runtime_ref": "3d6bfceeaf25b97d7a7ce708ada8fe3306e0357d",
+  "native_held_item_scope": "Same installed API-3 consumer; imported title/New Game and constructed native battles; actual FIGHT/move input and result queues, imported public IDs, held suppression/substitution, HP/consumption, delegated Leftovers, one-HP endurance, GBA entry White Herb/RUN menu, unsubscribe; sendout intro skipped and animations disabled in memory; stops before finish/afterBattle/SAVE; no full-playthrough/whole-rule/pixel-equivalence claim",
+  "held_item_feature_baseline": {
+    "engine_suites_passed": 122,
+    "engine_suites_total": 132,
+    "existing_failure_suites": 10,
+    "new_failures": 0,
+    "all_fail_lines_match_previous": true,
+    "repair_prs": "#128\u2013134",
+    "sdk_suites_passed": 3,
+    "b30_profile": "passed"
+  },
+  "held_item_imported_red_regressions": {
+    "battle_checks_passed": 468,
+    "save_conversion_checks_passed": 95,
+    "parity_J_checks_passed": 73,
+    "parity_K_checks_passed": 22,
+    "external_binary_save_fixture": "not supplied"
+  },
+  "held_item_native_schedule_gap": {
+    "runtime_ref": "3d6bfceeaf25b97d7a7ce708ada8fe3306e0357d",
+    "versions": [
+      "firered",
+      "emerald"
+    ],
+    "unrestricted_empty_hand_berry_amount": 7,
+    "reference_heal": 35,
+    "host_heal": 7,
+    "reference_residual_reads": 6,
+    "host_residual_reads": 2,
+    "included_in_equal_observations": false,
+    "strict_negative_control": "--require-native-schedule-parity rejects actual FireRed gap",
+    "scope": "Read/effect steering and item-scoped consumer pass; full native GBA after-action scheduling remains work"
+  },
+  "held_item_pre_hook_negative_control": {
+    "runtime_ref": "124da70a77a09737d6a99aef2933ab722b3d5133",
+    "version": "gold",
+    "capability": false,
+    "callbacks": 0,
+    "hp_after_suppression_request": 125,
+    "expected_if_supported": 100
+  },
+  "held_item_hosted_ci": {
+    "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40054092842",
     "conclusion": "action_required",
     "jobs": 0
   }

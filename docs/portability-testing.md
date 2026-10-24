@@ -1,22 +1,28 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–164
+hook, rendering, shader and baseline test fixes prepared in PRs #88–165
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`8e0d34aeee4328465155bb2ea884145e2dcc40ec`. Its ROM-free run passed
-175/175 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
-The field-residual consumer passed on both engines in four SDK configurations
-(64 isolated workers / 568 paired native observations). Its host suites passed
-4,604 public contract checks and 1,864 admission/real queued faint, EXP and
-replacement checks. Native LÖVE 11.5 on imported Red/Gold/FireRed/Emerald also
-passed at this runtime, including actual FIGHT/move input and result queues,
-terminal KOs and GBA flank replacement. These are bounded battle tests.
-Prior caught-marker, charge, PP, item, follower, map and storage families
-retain their historical refs in `portability-testing-status.json`; those
-results are not relabeled as new runs.
+`3d6bfceeaf25b97d7a7ce708ada8fe3306e0357d`. Its ROM-free run passed
+177/177 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+The held-item consumer passed on both engines in four SDK configurations
+(40 isolated workers / 1,706 paired observations), with 5,511 host public
+contract checks and 290 ownership/metadata checks. Existing Gen2 held-item
+regressions passed 51/51. Native LÖVE 11.5 on imported Gold/FireRed/Emerald
+passed at this runtime, including FIGHT/move input and normal result queues,
+HP/consumption, endurance and GBA entry/RUN paths.
+
+A separately recorded native GBA scheduling gap remains: unrestricted Berry
+grants to empty hands heal 35 HP in the reference versus 7 in the host.
+The strict schedule checker rejects this gap; it is not counted as equal
+contract behavior. The normal example requires an actual item and stops its
+override when consumed. See [portable held items](portable-held-items.md).
+Prior field-residual, caught-marker, charge, PP, item, follower, map and storage
+families retain their historical refs in `portability-testing-status.json`;
+those results are not relabeled as new runs.
 
 Native LÖVE 11.5 smoke tests reached the intro, title and New Game
 world/introduction for Red, Gold, FireRed and Emerald using isolated copies
@@ -402,4 +408,61 @@ passes 175/175 engine suites. Later testfork edits only record this evidence.
 
 All 25 hosted #164 PR workflows report `action_required` pending maintainer
 approval. The [new field-residual workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40050804974)
+has zero jobs and has not executed. Local validation above is separate.
+
+
+## Native held-item input, consumption and entry/escape test
+
+PR #165 adds `held_item.trigger` on Gen2/3 hosts. It steers actual native
+held-effect reads with common `HELD_*` names, two-result forwarding and byte
+probability parameters. API 3 exposes common item/Pokemon identities and
+scalar definition transactions; Gold metadata edits persist and GBA's remain
+per-read copies. GB/DS report unavailable. See
+[portable held-item reads](portable-held-items.md).
+
+Install and enable `examples/portable_held_item` in the isolated identity:
+
+```sh
+POKEPORT_VERSION=gold POKEPORT_DRIVER=tests/drivers/held_item.lua \
+  bash scripts/run-portability-test.sh
+```
+
+Imported Gold, FireRed and Emerald passed on LÖVE 11.5 at runtime
+`3d6bfceeaf25b97d7a7ce708ada8fe3306e0357d`. The driver starts New Game,
+constructs native battles and drives actual FIGHT/move input and result
+queues, checking public imported IDs, suppression/substitution, HP and held
+consumption. It verifies native delegated Leftovers, one-HP endurance and
+unsubscribe; GBA also exercises entry White Herb and the actual RUN menu.
+The in-memory setup skips sendout intros and disables animations. It stops
+before battle finish/afterBattle/SAVE processing. This is bounded native
+verification, not a full playthrough or cross-engine pixel proof.
+
+The unchanged consumer passes both real SDKs on Gold/Silver/Crystal and
+FireRed/Emerald in API 1 native, API 2 native, API 2 unified and API 3 unified:
+40 isolated workers and 1,706 paired observations. Tests exercise native
+readers and actual moves/order/entry/escape/residual handlers, all 66 GBA
+enums through the real item-data fallback reader, errors/replay, metadata,
+no-mod and rollback. Native HP formulas are checked for the requested effect,
+not asserted identical. The source GBA residual collector is not its complete
+presentation/award controller.
+
+The worker separately records unrestricted empty-hand grants under
+`native_policy`: reference GBA reads six times and heals 35 HP for a 7-HP Berry
+override, versus two reads and 7 HP in the host. This known scheduling gap is
+printed and excluded from equal observations. `--require-native-schedule-parity`
+rejects FireRed as a strict negative control. The unchanged pre-hook #164
+engine also reports unavailable, dispatches zero callbacks and cannot suppress
+native Leftovers. These are real negative controls, not passing parity claims.
+Full Choice Band locking and other native battle rules remain additional work.
+
+Feature ref `1ce83faf4b980584be9d747eee82efc530ede09f` passed
+122/132 engine suites, SDK 3/3 and B30, with exactly the prior ten baseline
+failures repaired by #128–134; all 26 FAIL lines match #164. Imported Red
+battle/save-conversion/parity J/K regressions passed 468/468, 95/95, 73/73 and
+22/22; no external binary save fixture was supplied. The combined runtime
+includes those baseline repairs and passes 177/177 engine suites. Later
+changes only record this validation.
+
+All 26 hosted #165 PR workflows report `action_required` pending maintainer
+approval. The [new held-item workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40054092842)
 has zero jobs and has not executed. Local validation above is separate.
