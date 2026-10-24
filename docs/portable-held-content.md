@@ -29,7 +29,9 @@ Parameter meanings follow the effect; Gen-2 probabilities use byte odds.
 Common item IDs are resolved to native import keys (for example `LEFTOVERS`
 to `ITEM_146`). The new held registry accepts either spelling. Native Gen-2
 `items` operations also accept common aliases while retaining native record
-shapes; unrelated generations keep their existing native item accessors.
+shapes. Exact native keys remain usable even when display names collide;
+ambiguous common names are refused. Unrelated generations keep their existing
+native item accessors.
 Unknown effect names can be interpreted through `held_item.trigger`.
 API 2/3 reject invalid known fields; API 1 retains its warning-based legacy
 validation behavior. This does not make arbitrary metadata gameplay fields.

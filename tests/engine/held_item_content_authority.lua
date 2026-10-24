@@ -112,6 +112,21 @@ for _, mode in ipairs({ { 1, "native" }, { 2, "native" }, { 2, "unified" }, { 3,
     rejected.release()
     d.items.BERRY.index = nil
   end
+  if format == "native" then
+    d.items.ITEM_001 = { id = "ITEM_001", name = "AMBIGUOUS", price = 1, heldEffect = 0, heldParam = 0 }
+    d.items.ITEM_002 = { id = "ITEM_002", name = "AMBIGUOUS", price = 2, heldEffect = 0, heldParam = 0 }
+    local raw = load(
+      d,
+      'assert(mod.content.items:get("ITEM_001").price==1); mod.content.items:patch("ITEM_001", {price=7}); assert(not pcall(function() mod.content.held_items:get("AMBIGUOUS") end))',
+      api,
+      format
+    )
+    T.eq(#raw.errors, 0, "native IDs remain addressable when presentation names are ambiguous")
+    T.eq(d.items.ITEM_001.price, 7, "raw native key patched")
+    T.eq(d.items.ITEM_002.price, 2, "distinct same-name item preserved")
+    raw.release()
+    d.items.ITEM_001, d.items.ITEM_002 = nil, nil
+  end
   if api >= 2 then
     for _, bad in ipairs({
       "heldParameter=-1",
