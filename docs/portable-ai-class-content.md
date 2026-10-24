@@ -55,3 +55,18 @@ The driver checks mod load, common/native item resolution, detached records
 and frozen writes at the title and after an in-memory New Game. It supports
 Red, Gold, FireRed and Emerald. It does not execute a normal SAVE action,
 battle decision, complete playthrough or fresh full-ROM import.
+
+## Validation
+
+The isolated feature passes **442/442** unified-content checks and **670/670**
+loader checks. Each SDK comparison mode passes **16 workers / 56 paired
+observations** against the clean reference above. The unchanged #173 parent
+fails the same public consumer in Gold and FireRed with an unresolved item
+reference, providing a negative control.
+
+The complete feature run passes **139/149** engine suites, **3/3** SDK suites
+and B30. Its 26 FAIL lines exactly match the predecessor's ten baseline
+failure suites; the separate repair PRs #128–134 are not part of this feature
+branch. Native LÖVE 11.5 checks pass for imported Red, Gold, FireRed and
+Emerald at title and in-memory New Game, within the metadata scope above.
+The installed temporary example was removed after verifying its file hashes.
