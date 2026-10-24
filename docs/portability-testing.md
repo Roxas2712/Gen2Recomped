@@ -1,14 +1,43 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–178
+hook, rendering, shader and baseline test fixes prepared in PRs #88–179
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`735c7ec0bba6e73075be708cf1e88a89872b3bd3`. Its ROM-free run passed
-**199/199 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`8284917e91317fe688dac54ffba0b4cba1d9e017`. Its ROM-free run passed
+**200/200 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent commits record validation documentation/status.
+
+[PR #179](https://github.com/UNDERdecoded/Gen2Recomped/pull/179) supplies seven
+native GBA AI query families: last-used move, move type/power/effect from the
+result register, protection count, active types and Flash Fire state. It
+preserves the importer's last-move alias, native type numbers, error behavior
+for missing definitions and role-specific partner rules. The queries consume
+no RNG. It is independent and based directly on upstream `main`.
+
+**2,339** host checks and **4 workers / 472 paired interpreter observations**
+pass on FireRed/Emerald, including all native type numbers, aliases, declared
+custom type indices, unknown move definitions, counters and absent partners.
+Clean upstream fails 702 assertions and differs in 236 observations per GBA
+profile. See [native AI move and battler queries](gen3-ai-queries.md).
+
+The isolated feature passes **65/75** engine suites versus upstream
+**64/74**; all **27 FAIL lines across ten baseline suites** match exactly.
+Their repairs are included in this combined branch. Both hosted #179
+workflows await maintainer approval (`action_required`); the
+[AI-query workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40109041486)
+has zero executed jobs. Local acceptance is separate.
+
+This is CPU/native-interpreter evidence. The unfinished enemy switch/item
+hook and its extended AI/controller wiring remain on the development branch.
+Other unsupported commands stay gated; reference held-effect/taunt placeholders
+and further native AI semantics still need functional common contracts.
+No new composed graphical gameplay or complete AI parity is claimed.
+
+Prior #178 results retain runtime
+`735c7ec0bba6e73075be708cf1e88a89872b3bd3` and its 199/199 engine result:
 
 [PR #178](https://github.com/UNDERdecoded/Gen2Recomped/pull/178) selects native
 GBA base-damage arithmetic: wide stats, burn/screens/spread/weather before

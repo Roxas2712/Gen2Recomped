@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "735c7ec0bba6e73075be708cf1e88a89872b3bd3",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/178",
-  "feature_ref": "a7944332a5136d7814279b6fe31c6e14020480c1",
+  "runtime_ref": "8284917e91317fe688dac54ffba0b4cba1d9e017",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/179",
+  "feature_ref": "3c399f61be001df18d0b412ff30ffc536a960391",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 199,
-  "engine_suites_total": 199,
+  "engine_suites_passed": 200,
+  "engine_suites_total": 200,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
   "cross_engine_worker_runs": 4,
-  "cross_engine_paired_observations": 6912,
+  "cross_engine_paired_observations": 472,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "Both #178 workflows await maintainer approval (action_required); base-damage workflow has zero executed jobs; local acceptance is separate",
+  "hosted_ci": "Both #179 workflows await maintainer approval (action_required); AI-query workflow has zero executed jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Actual ordinary noncritical GBA damage calculators with equal typed session inputs; separate unchanged public critical consumer passes both host API modes on G2/GBA; no new graphical/native whole-playthrough claim",
+  "cross_engine_scope": "Actual GBA AI interpreters with typed move and active-battler records; role-specific queries, error boundaries and RNG non-consumption; not whole AI/controller or new graphical gameplay parity",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -984,6 +984,51 @@
       "workflow_count": 2,
       "conclusion": "action_required",
       "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40103939356",
+      "jobs": 0
+    }
+  },
+  "gen3_ai_queries": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/179",
+    "feature_ref": "3c399f61be001df18d0b412ff30ffc536a960391",
+    "feature_runtime_ref": "5e7823d63346816b333eaae34d600a0ff84b12f2",
+    "independent_pr": true,
+    "upstream_base": "13af468b97dc37015d14ad5c71d7f067c3ee810d",
+    "combined_runtime_ref": "8284917e91317fe688dac54ffba0b4cba1d9e017",
+    "host_checks_passed": 2339,
+    "cross_engine_worker_runs": 4,
+    "cross_engine_paired_observations": 472,
+    "query_families": 7,
+    "combined_engine_suites_passed": 200,
+    "combined_engine_suites_total": 200,
+    "sdk_suites_passed": 3,
+    "b30_profile": "passed",
+    "negative_control": {
+      "parent_ref": "13af468b97dc37015d14ad5c71d7f067c3ee810d",
+      "failed_assertions_per_gba_profile": 702,
+      "differing_observations_per_gba_profile": 236
+    },
+    "feature_baseline": {
+      "engine_suites_passed": 65,
+      "engine_suites_total": 75,
+      "upstream_engine_suites_passed": 64,
+      "upstream_engine_suites_total": 74,
+      "known_failing_suites": 10,
+      "failure_lines": 27,
+      "all_failure_lines_match_upstream": true,
+      "new_failures": 0
+    },
+    "query_module_sha256": "4ac09292f426033ffcbe24e52f3ba4d7d655cfc2030a20d766e57ebcc4b39a23",
+    "query_module_byte_identical_to_feature": true,
+    "scope": "Read-only native move/battler VM queries with explicit typed session records, including missing definitions and partners; no whole stock script or graphical gameplay claim; unfinished public hook remains separate",
+    "reference_placeholders_pending": [
+      "get_hold_effect",
+      "if_target_taunted",
+      "if_target_not_taunted"
+    ],
+    "hosted_ci": {
+      "workflow_count": 2,
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40109041486",
       "jobs": 0
     }
   }
