@@ -458,6 +458,12 @@ function R.new(loader, name, generation, api3)
     return out
   end
   restore = function(value, kind)
+    -- GBA enemy-action normalization accepts scalar move choices and false
+    -- fallback. Other record boundaries keep their existing validation.
+    if name == "battle.enemy_action" and generation == 3 and kind == "action"
+        and (type(value) == "string" or type(value) == "number" or value == false) then
+      return value
+    end
     if type(value) ~= "table" then
       assert(
         value == nil or (kind == "encounter" and value == false),
@@ -647,6 +653,13 @@ function R.new(loader, name, generation, api3)
           if v ~= before[k] then
             stage(raw, k, restored)
           end
+        elseif kind == "action" and name == "battle.enemy_action" and generation == 3
+            and not value.special and (k == "move" or k == "id") and v ~= before[k]
+            and (type(v) == "number" or type(v) == "string") then
+          local known = type(v) == "string" and ids:resolve("moves", v)
+          -- Keep canonical IDs native inside nested callbacks. Numeric and
+          -- alternate name spellings are resolved by the actual producer.
+          stage(raw, k, known and native("moves", v, old) or v)
         elseif k == "move" and type(v) ~= "table" and v ~= before[k] then
           stage(raw, k, native("moves", v, old))
         elseif kind == "action" and k == "id" and not value.special and v ~= before[k] then
