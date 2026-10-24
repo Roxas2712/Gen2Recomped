@@ -404,7 +404,9 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
   -- formula; Gen 3 leaves the level alone and doubles the finished damage
   -- instead.  Those are not the same number -- doubling the level also
   -- doubles the +2 constant and re-floors -- so the two cannot share a path.
-  if crit and not ruleset.critMultiplier then level = level * 2 end
+  local gen2Crit = crit and not ruleset.critMultiplier
+    and opts.data and opts.data.constants and opts.data.constants.generation == 2
+  if crit and not ruleset.critMultiplier and not gen2Crit then level = level * 2 end
 
   local d = math.floor(math.floor(2 * level / 5) + 2)
   -- THE MOVE'S POWER, AS THIS TURN FINDS IT.  Most moves use the byte off
@@ -432,6 +434,9 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
     d = math.floor(d * ruleset.spreadNum / ruleset.spreadDen)
   end
 
+  -- Gen 2 doubles DamageCalc's truncated base, before its cap and +2.
+  -- Doubling the level uses a different floor at levels such as 29.
+  if gen2Crit then d = d * 2 end
   d = math.min(d, 997) + 2
 
   -- Held type boosters live inside BattleCommand_DamageCalc, before weather,
