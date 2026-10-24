@@ -260,6 +260,7 @@ return function(f, backend)
         holder.items = records
       end
       holder.mon.hp, holder.mon.maxHp = spec.full and 100 or 90, 100
+      holder.mon.stats = holder.mon.stats or {}
       holder.mon.stats.hp = 100
       b.rng = function(lo, hi)
         observationDraws[#observationDraws + 1] = { lo, hi }
