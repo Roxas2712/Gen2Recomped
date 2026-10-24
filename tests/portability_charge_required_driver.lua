@@ -61,7 +61,6 @@ return function(game)
         return
       end
       U.tap(game, "a")
-      U.wait(2)
     end
     error("native charge result queue did not return to battle menu")
   end
