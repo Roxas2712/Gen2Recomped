@@ -60,11 +60,17 @@ function M.itemApi(loader, native, generation)
     out[key] = value
   end
   out.get = function(_, id)
+    if type(id) == "string" and loader.content.items:get(id) ~= nil then
+      return native:get(id)
+    end
     local group = resolve(loader, id)
     return native:get(group and group.key or id)
   end
   for _, verb in ipairs({ "register", "override", "patch", "remove" }) do
     out[verb] = function(_, id, value)
+      if type(id) == "string" and loader.content.items:get(id) ~= nil then
+        return native[verb](native, id, value)
+      end
       local group, result = resolve(loader, id)
       if not group then
         return native[verb](native, id, value)
