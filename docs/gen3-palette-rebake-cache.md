@@ -7,6 +7,11 @@ returns. Rendering still uploads the selected pixels into the existing GPU
 textures; batches, quads, layer ordering and texture identity remain intact.
 No shader, public mod API, source palette, animation clock or save format changes.
 
+Follow-up: [FireRed frame-time investigation](firered-frame-jitter.md) covers
+static sampler allocation/collection spikes that remain even with zero atlas
+cache entries. Its later measurements and validation are separate from the
+historical comparison below.
+
 ## Cache and lifetime
 
 `Gen3PaletteFrameCache` is a CPU-only LRU with at most four colour pictures

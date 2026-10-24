@@ -132,6 +132,16 @@ FireRed's noisy high-resolution timing control and targeted follow-up are
 reported explicitly rather than claiming general performance parity.
 The ROM-free runner now passes 102/102 engine suites, 3/3 SDK suites and B30.
 
+The [FireRed frame-time investigation](firered-frame-jitter.md) additionally
+removes repeated static-palette copies that produced allocation/collection
+spikes despite the zero-picture FireRed atlas cache. Native rendering reuses
+an owned static sample after checking every current source RGB byte and
+structure; same-table edits, invalid data and programme changes remain visible.
+Animated banks decline before any RGB scan. The public snapshot sampler stays
+detached. Separate OpenGL/Metal trials and Emerald GPU regressions are recorded
+with complete metadata; native window waits remain a separate measured cost.
+The ROM-free runner passes 103/103 engine suites, 3/3 SDK suites and B30.
+
 ## Remaining engine work
 
 | Area | Remaining acceptance/work |

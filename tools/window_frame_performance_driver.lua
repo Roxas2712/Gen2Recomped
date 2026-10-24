@@ -24,6 +24,27 @@ return function(game)
       p95Ms=percentile(.95),p99Ms=percentile(.99),maxMs=sorted[#sorted]*1000}
   end
   local phase,insideBody,pending
+  local updateCost,gcCost,paletteCost=0,0,0
+  local update,gc=game.update,collectgarbage
+  local Tiles=require("src.render.Gen3Tiles")
+  local paletteTicks=Tiles.setPaletteTicks
+  game.update=function(self,...)
+    if not phase then return update(self,...) end
+    gcCost=0
+    local at=timer.getTime();update(self,...);updateCost=timer.getTime()-at
+  end
+  collectgarbage=function(action,...)
+    if not phase or action~="step" then return gc(action,...) end
+    local at=timer.getTime();local result=gc(action,...)
+    gcCost=gcCost+timer.getTime()-at
+    return result
+  end
+  Tiles.setPaletteTicks=function(self,...)
+    if not phase then return paletteTicks(self,...) end
+    local at=timer.getTime();local changed,reason=paletteTicks(self,...)
+    paletteCost=paletteCost+timer.getTime()-at
+    return changed,reason
+  end
   local proofActive,drawCount=false,0
   local originalDraw=love.draw
   love.draw=function()
@@ -43,7 +64,8 @@ return function(game)
     if not phase then return draw(body,capture) end
     assert(not capture,"capture requested during performance measurement")
     local at=timer.getTime()
-    pending={start=at,readback=0,readbacks=0}
+    pending={start=at,readback=0,readbacks=0,update=updateCost,gcStep=gcCost}
+    paletteCost=0
     if phase.previousStart then
       phase.intervals[#phase.intervals+1]=at-phase.previousStart
     end
@@ -55,6 +77,7 @@ return function(game)
     end)
     pending.frame=timer.getTime()-at
     pending.transfer=pending.frame-pending.body-pending.readback
+    pending.paletteSync=paletteCost
   end
   if readback then
     g.readbackTexture=function(...)
@@ -71,7 +94,7 @@ return function(game)
     if phase and pending then
       pending.present=timer.getTime()-at
       pending.render=pending.frame+pending.present
-      for _,key in ipairs({"body","frame","readback","transfer","present","render"}) do
+      for _,key in ipairs({"body","frame","readback","transfer","present","render","update","gcStep","paletteSync"}) do
         local list=phase[key];list[#list+1]=pending[key]
       end
       phase.readbackCalls=phase.readbackCalls+pending.readbacks
@@ -81,6 +104,37 @@ return function(game)
   local emerald=version=="emerald"
   local maps=emerald and {{"MAP_G26_N21",10,5},{"MAP_G26_N18",11,10}}
     or {{"MAP_G03_N00",11,11},{"MAP_G04_N01",6,6}}
+  local Overworld=require("src.world.OverworldController")
+  local computeNeighbors=Overworld.computeNeighbors
+  if not emerald then
+    -- Benchmark-only construction order. pairs(connections) otherwise assigns
+    -- seeded constructor RNG draws to different neighbouring NPCs. Keep the
+    -- returned maps/placements intact and sort before NPC construction.
+    Overworld.computeNeighbors=function(...)
+      local list=computeNeighbors(...)
+      table.sort(list,function(a,b)
+        if a.id~=b.id then return a.id<b.id end
+        if a.ox~=b.ox then return a.ox<b.ox end
+        return a.oy<b.oy
+      end)
+      return list
+    end
+  end
+  report.npcConstruction=emerald and "seeded" or "seeded-sorted-neighbors-fresh-pool"
+  local probes={}
+  local function npcWorkload(world)
+    local values={}
+    local function add(npc)
+      for _,key in ipairs({"cellX","cellY","targetX","targetY","facing","moving","timer"}) do
+        values[#values+1]=tostring(npc[key])
+      end
+    end
+    values[#values+1]="home:"..#world.npcs
+    for _,npc in ipairs(world.npcs) do add(npc) end
+    values[#values+1]="ghosts:"..#world.ghosts
+    for _,ghost in ipairs(world.ghosts) do add(ghost.npc) end
+    return table.concat(values,"|")
+  end
   for _,size in ipairs({{640,480},{960,720}}) do
     local _,_,flags=love.window.getMode()
     flags.vsync=0;flags.highdpi=true
@@ -90,23 +144,31 @@ return function(game)
     local w,h=g.getDimensions();local pw,ph=g.getPixelDimensions()
     assert(w==size[1] and h==size[2],"requested dimensions differ")
     for _,map in ipairs(maps) do
+      local seed=27122026+#report.phases
+      math.randomseed(seed);love.math.setRandomSeed(seed)
+      if not emerald then Overworld.npcPool=nil end
       U.teleport(game,map[1],map[2],map[3],"down")
       U.wait(120) -- shader/font/upload/fade warmup, not part of measurement
-      collectgarbage("collect")
       local TR=require("src.render.TileRenderer")
       local cacheBefore=TR.gen3PaletteCacheStats and TR.gen3PaletteCacheStats()
+      local world=game.overworld
+      probes[#probes+1]=assert(world.map.renderer.gen3).tiles
+      local beforeNPC=npcWorkload(world)
+      collectgarbage("collect")
       phase={map=map[1],logicalWidth=w,logicalHeight=h,pixelWidth=pw,pixelHeight=ph,
-        body={},frame={},readback={},transfer={},present={},render={},intervals={},readbackCalls=0}
+        body={},frame={},readback={},transfer={},present={},render={},intervals={},
+        update={},gcStep={},paletteSync={},readbackCalls=0}
       local cpu,wall=os.clock(),timer.getTime()
       U.wait(300)
       local elapsed,cpuElapsed=timer.getTime()-wall,os.clock()-cpu
       local measured=phase;phase=nil;pending=nil
       local entry={map=map[1],logicalWidth=w,logicalHeight=h,pixelWidth=pw,pixelHeight=ph,
         mode=Frame.info().mode,measuredFrames=#measured.frame,readbackCalls=measured.readbackCalls,
-        elapsedSeconds=elapsed,cpuMsPerFrame=cpuElapsed/#measured.frame*1000,metrics={}}
+        elapsedSeconds=elapsed,cpuMsPerFrame=cpuElapsed/#measured.frame*1000,metrics={},
+        randomSeed=seed,npcWorkloadBefore=beforeNPC,npcWorkloadAfter=npcWorkload(world)}
       if cacheBefore then entry.paletteCache={before=cacheBefore,after=TR.gen3PaletteCacheStats()} end
       assert(entry.measuredFrames==300,"missing measured frames")
-      for _,key in ipairs({"body","frame","readback","transfer","present","render","intervals"}) do
+      for _,key in ipairs({"body","frame","readback","transfer","present","render","intervals","update","gcStep","paletteSync"}) do
         entry.metrics[key]=stats(measured[key])
       end
       assert(renderer~="Metal" or measured.readbackCalls==0,"benchmark changed Metal readback cost")
@@ -137,7 +199,23 @@ return function(game)
       end
     end
   end
+  -- Run allocation probes only AFTER every timed phase and window proof.
+  -- A tight sampler loop can change JIT/collector state even if its garbage
+  -- is collected; it must not precede the workload being compared.
+  for i,source in ipairs(probes) do
+    local probe=Tiles.new({primary=source.primary,secondary=source.secondary},source)
+    paletteTicks(probe,0)
+    collectgarbage("collect");collectgarbage("stop")
+    local before=collectgarbage("count")
+    for tick=1,120 do paletteTicks(probe,tick) end
+    report.phases[i].paletteAllocationProbe={samples=120,
+      luaKiBPerSample=(collectgarbage("count")-before)/120,
+      static=#probe.paletteState.primaryFrames==0 and #probe.paletteState.secondaryFrames==0}
+    collectgarbage("restart");collectgarbage("collect")
+  end
   Frame.draw=draw;g.present=present;g.readbackTexture=readback;love.draw=originalDraw
+  game.update=update;collectgarbage=gc;Tiles.setPaletteTicks=paletteTicks
+  Overworld.computeNeighbors=computeNeighbors
   report.pass=true
   local file=assert(io.open(out.."/gpu.json","w"));file:write(Json.encode(report));file:close()
 end

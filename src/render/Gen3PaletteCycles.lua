@@ -16,6 +16,44 @@ local function dense(t, max)
   return n == #t
 end
 
+-- The native renderer owns its last sample. Static banks need no new colour
+-- tables or packed strings every terrain tick, but source tables are mutable:
+-- compare their complete shape and RGB bytes before reusing that sample.
+-- In particular, empty metadata is static; missing metadata is still unknown.
+function M.staticUnchanged(pair, layout, ticks, previous)
+  if not previous or not previous.complete
+    or not integer(ticks, 0, 9007199254740991)
+    or not integer(layout.palettesInPrimary, 1, 15) then return false end
+  for _, name in ipairs(names) do
+    local bank = pair[name]
+    local selected = previous[name .. "Frames"]
+    if type(bank) ~= "table" or getmetatable(bank) ~= nil
+      or not dense(bank.paletteCycles, 0)
+      or type(selected) ~= "table" or #selected ~= 0 then return false end
+  end
+  -- Reject either animated bank before scanning any colours. Emerald often
+  -- combines a static primary with an animated secondary.
+  for _, name in ipairs(names) do
+    local bank = pair[name]
+    local packed = previous[name .. "RGB8"]
+    if type(packed) ~= "string" or #packed ~= 768
+      or not dense(bank.palettes, 16) or #bank.palettes ~= 16 then return false end
+    local at = 1
+    for p = 1, 16 do
+      local palette = bank.palettes[p]
+      if not dense(palette, 16) or #palette ~= 16 then return false end
+      for c = 1, 16 do
+        local rgb = palette[c]
+        if not dense(rgb, 3) or #rgb ~= 3 then return false end
+        local r, g, b = packed:byte(at, at + 2)
+        if rgb[1] ~= r or rgb[2] ~= g or rgb[3] ~= b then return false end
+        at = at + 3
+      end
+    end
+  end
+  return true
+end
+
 -- Missing metadata is unknown, not evidence that an old cache is static.
 function M.sample(pair, layout, ticks)
   if not integer(ticks, 0, 9007199254740991) then return nil, "terrain clock unavailable" end

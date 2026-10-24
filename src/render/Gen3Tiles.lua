@@ -131,7 +131,12 @@ end
 -- Independent palette cadence; does not alter the tile animation picture.
 -- Missing legacy metadata retains the original base-palette rendering.
 function Gen3Tiles:setPaletteTicks(ticks)
-  local state, reason = require("src.render.Gen3PaletteCycles").sample(
+  local cycles = require("src.render.Gen3PaletteCycles")
+  if cycles.staticUnchanged(self, self, ticks, self.paletteState) then
+    self.paletteState.ticks = ticks
+    return false
+  end
+  local state, reason = cycles.sample(
     { primary = self.primary, secondary = self.secondary },
     { palettesInPrimary = self.palettesInPrimary }, ticks)
   local changed = (state and state.contentKey) ~= (self.paletteState and self.paletteState.contentKey)
