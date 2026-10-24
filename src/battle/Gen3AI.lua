@@ -692,6 +692,7 @@ end
 OPS.if_target_not_taunted = function(vm, args)
   if (tonumber(vm.target and vm.target.tauntTurns) or 0) <= 0 then return args[#args] end
 end
+require("src.battle.Gen3AIItemKnowledge").install(Gen3AI)
 
 -- Every opcode a script can reach, followed through its branches.  Memoised
 -- on the program table: the answer depends only on the cartridge.
