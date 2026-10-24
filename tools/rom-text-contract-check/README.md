@@ -1,8 +1,9 @@
 # ROM-text portability work
 
 This branch is preparing the separate `mod.content.rom_text` registry. The
-formatter and provenance facts below are prerequisites; they do not advertise
-the registry or complete native UI/battle label coverage yet.
+registry now covers Gen-2 native battle prose and GBA Pokemon-storage actions.
+Other GBA engine/UI readers still need explicit bindings; this is not blanket
+coverage of every cartridge label.
 
 `check-format.py --gen1 /clean/gen1 --lua luajit` compares actual native
 GB/Gen-2 prose formatting against the clean reference at
@@ -15,10 +16,10 @@ Printf-shaped strings do not invent dynamic slots in this native contract.
 facts from the reference's public import metadata. `--check` verifies all
 committed bytes without rewriting either checkout. No cartridge prose, ROM,
 importer implementation or source scripts are copied. Gen-2 manifests supply
-prose-label membership; GBA profiles resolve their exact ordinary/battle text
-addresses through their native symbol tables. Text and battle-code dialects
-remain distinct. A lazy host accessor avoids loading unneeded profile tables
-and refuses to guess addresses for absent profiles.
+runtime prose-label membership. The GBA fixtures retain exact provenance for
+the ten storage action/description labels that this change binds. The full
+GBA catalog is not shipped as unused runtime data. A lazy host accessor avoids
+loading unneeded Gen-2 profile tables.
 
 These facts establish provenance. They do not, by themselves, prove that a
 host menu reads a label dynamically: pre-extracted UI constants need explicit

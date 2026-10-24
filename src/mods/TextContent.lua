@@ -124,6 +124,19 @@ function Text.api(loader, mod, native, generation)
       return id, id
     end
     local canonical, physical = addresses(id)
+    if
+      canonical == physical
+      and loader._romTextLabels
+      and (
+        loader._romTextLabels[id]
+        or id:sub(1, #loader._privateScriptTextPrefix) == loader._privateScriptTextPrefix
+      )
+    then
+      local physical = loader._privateScriptTextPrefix .. id
+      loader._privateScriptTextIds = loader._privateScriptTextIds or {}
+      loader._privateScriptTextIds[physical] = id
+      return id, physical
+    end
     if canonical ~= physical and registry:get(canonical) ~= nil then
       if registry:get(physical) ~= nil then
         refuse("ambiguous script text ID: " .. canonical)
@@ -155,8 +168,12 @@ function Text.api(loader, mod, native, generation)
   function api:each()
     local ids, seen = {}, {}
     for physical in native:each() do
-      local canonical = generation == 2 and addresses(physical) or physical
-      if not seen[canonical] then
+      local private = loader._privateScriptTextIds and loader._privateScriptTextIds[physical]
+      local canonical = private or (generation == 2 and addresses(physical) or physical)
+      if generation == 2 and loader._romTextLabels[physical] and not private then
+        canonical = nil
+      end
+      if canonical and not seen[canonical] then
         seen[canonical] = true
         ids[#ids + 1] = canonical
       end
@@ -202,7 +219,11 @@ end
 function Text.prepare(loader, data)
   local undo = data and previous[data]
   for _, row in ipairs(undo or {}) do
-    if data.text == row.target and row.target[row.key] == row.after then
+    if
+      data[row.namespace or "text"] == row.target
+      and row.target[row.key] == row.after
+      and (not row.private or row.after.value == row.snapshot)
+    then
       row.target[row.key] = row.before
     end
   end
@@ -210,6 +231,7 @@ function Text.prepare(loader, data)
     previous[data] = nil
   end
   loader._unifiedTextKeys = nil
+  loader._privateScriptTextIds, loader._privateScriptTextRows = nil, nil
 end
 function Text.capture(loader, data)
   if not data or not loader._unifiedTextKeys then
@@ -225,8 +247,26 @@ function Text.capture(loader, data)
       end
     end
     if active then
-      data.text = data.text or {}
-      undo[#undo + 1] = { target = data.text, key = key, before = data.text[key], after = registry:get(key) }
+      local logical = loader._privateScriptTextIds and loader._privateScriptTextIds[key]
+      if logical then
+        data._portableScriptText = data._portableScriptText or {}
+        loader._privateScriptTextRows = loader._privateScriptTextRows or {}
+        local row = { value = registry:get(key) }
+        loader._privateScriptTextRows[key] = row
+        undo[#undo + 1] = {
+          target = data._portableScriptText,
+          key = logical,
+          before = data._portableScriptText[logical],
+          after = row,
+          private = true,
+          namespace = "_portableScriptText",
+          snapshot = row.value,
+        }
+      else
+        data.text = data.text or {}
+        undo[#undo + 1] =
+          { target = data.text, key = key, before = data.text[key], after = registry:get(key) }
+      end
     end
   end
   previous[data] = undo

@@ -236,9 +236,10 @@ function Commands.show_text(ctx, textId, subs, extraOpts)
   -- id shown lets those prompts reproduce it when the writetext that printed
   -- it lived inside a `scall` and so could not be folded at compile time.
   if textId ~= nil then ctx.g2LastText = textId end
-  local text = textId ~= nil and ctx.game.data.text[textId] or nil
+  local text, private = require("src.script.ScriptText").get(ctx.game.data, textId)
+  if private and (text == nil or text == "") then text = "..." end
   local literal=false
-  if not text and ctx.overworld then
+  if not text and not private and ctx.overworld then
     text = ctx.game.data:resolveText(ctx.overworld.map.def.label, textId)
   end
   if not text and type(textId) == "string" and textId:match("^TEXT_B%d+_%d+$") then

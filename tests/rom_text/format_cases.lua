@@ -5,6 +5,7 @@ function C.run()
   local cases = {
     { "plain", "Native", "fallback", {} },
     { "no-fallback", "Native", nil, {} },
+    { "false-prose", false, "fallback", {} },
     { "missing", nil, "fallback %s", { "VALUE" } },
     { "one-slot", "{USER} wakes!", "%s fallback", { "GOLD" } },
     { "two-slots", "{USER} used {MOVE}!", "%s/%s fallback", { "GOLD", "TACKLE" } },

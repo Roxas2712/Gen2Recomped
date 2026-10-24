@@ -426,6 +426,9 @@ local function protect(fn)
 end
 function U.new(loader, mod, native, gen)
   local out = {}; for name, handle in pairs(native) do out[name] = handle end
+  if native.rom_text then
+    out.rom_text = require("src.mods.RomTextContent").api(loader, mod, native.rom_text, gen, true)
+  end
   if native.text and gen <= 3 then
     out.text = require("src.mods.TextContent").api(loader, mod, native.text, gen)
   end
