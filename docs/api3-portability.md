@@ -190,3 +190,6 @@ GBA bindings, see [portable ROM prose](api3-rom-text.md).
 
 For native FireRed/Emerald party action labels, separate cancel buttons and
 FireRed Item-PC withdrawal labels, see [GBA menu prose](portable-gba-menu-prose.md).
+
+For common AI-class item IDs, detached definition records and the API-2/unified
+boundary, see [portable AI-class content](portable-ai-class-content.md).
