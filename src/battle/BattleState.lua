@@ -44,6 +44,7 @@ local Gen3Battle = require("src.battle.Gen3Battle")
 local Gen4Battle = require("src.battle.Gen4Battle")
 local GameVersion = require("src.core.GameVersion")
 local BattleCommands = require("src.battle.BattleCommands")
+local EnemyMoveChoice = require("src.battle.EnemyMoveChoice")
 
 -- FORWARD-DECLARED, because they are defined next to the other doubles
 -- helpers two thousand lines down but read from `stepHPDrain` up here.  A
@@ -4675,7 +4676,7 @@ function BattleState:applyMimic(user, target, moveInst, slot)
   if not (src and src.id) then return end
   local mySlot
   for i, m in ipairs(user.curMoves) do
-    if m == moveInst then mySlot = i break end
+    if m == EnemyMoveChoice.slot(moveInst) then mySlot = i break end
   end
   if not mySlot then
     -- a called Mimic (Metronome) isn't in the list.  For the player,
@@ -5425,6 +5426,15 @@ function BattleState:enemyAction(battler)
     if move then return move end
   end
   if Runtime.wantsHook("battle.enemy_action") then
+    if GameVersion.generation() == 3 then
+      local delegated, captured
+      local result = Runtime.call("battle.enemy_action", function(battle, who)
+        delegated, captured = EnemyMoveChoice.delegate(who or battle.enemy, battle:vanillaEnemyAction(who))
+        return delegated
+      end, self, battler)
+      return EnemyMoveChoice.normalize(self.data, battler, result, delegated, captured)
+        or (captured and captured.raw) or delegated or self:vanillaEnemyAction(battler)
+    end
     return Runtime.call("battle.enemy_action", function(battle, who)
       return battle:vanillaEnemyAction(who)
     end, self, battler)
@@ -8121,6 +8131,11 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
       or moveInst == user.rageMove
   local enemyUnlimited = not user.isPlayer and self.kind ~= "link"
       and self.ruleset and self.ruleset.enemyUnlimitedPP
+  if not isContinuation and not moveInst.struggle and not isCalled
+      and not enemyUnlimited and EnemyMoveChoice.exhausted(moveInst) then
+    self:sayNext(self:romText("_MoveNoPPText", "No PP left for\nthis move!"))
+    return
+  end
   if not isContinuation and not moveInst.struggle and not isCalled
       and not enemyUnlimited then
     -- PRESSURE costs the ATTACKER an extra point for every move aimed at its
