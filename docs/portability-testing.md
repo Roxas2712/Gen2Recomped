@@ -1,14 +1,42 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–174
+hook, rendering, shader and baseline test fixes prepared in PRs #88–175
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`4975ca8337faa27dde511fa5c6cb93c6210c7bab`. Its ROM-free run passed
-**194/194 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
-Later commits change validation documentation only.
+`d9be4e9cfc8f05e2284ada5dacf8daed7382c4a5`. Its ROM-free run passed
+**196/196 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+Later commits only record validation documentation.
+
+[PR #175](https://github.com/UNDERdecoded/Gen2Recomped/pull/175) corrects the
+Gen-3 critical multiplier's placement before STAB/per-type rounding. Base 11,
+critical x2, Steel resistance and random 85 now gives **9 HP**, matching native
+Gen1 GBA, rather than 8. Profiles without the new ordering flag retain their
+existing order. **15** arithmetic regressions and **780** loader checks pass.
+Both host API modes match the clean Gen1 API-3 reference in **8 workers / 384
+paired observations**: both attackers, critical/noncritical, STAB,
+neutral/half/quarter/immune targets, rolls 85/92/100, HP, PP and hook counts.
+Unchanged #174 differs in 18 cases and fails two regression assertions per GBA
+profile. See [Gen-3 critical/type rounding](gen3-critical-order.md).
+
+At this combined runtime, native LÖVE 11.5 / imported FireRed and Emerald each
+pass six constructed battles with the same public critical-hit consumer,
+actual FIGHT/move input and full native turn queues. HP, PP and all 24 public
+critical decisions pass. The owned example was removed with hash guards.
+The driver stops before battle finish/afterBattle/normal SAVE. This is not a
+complete playthrough, fresh full-ROM import or universal damage-rule proof.
+The unfinished enemy switch/item controller remains on a separate branch.
+
+All **35** hosted #175 workflows await maintainer approval (`action_required`);
+the [critical-order workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40093193249)
+has zero executed jobs. Local validation is separate. The isolated feature
+passes 141/151 engine suites with exactly the prior ten baseline failure
+suites; their separate repairs are included in this combined branch.
+
+Prior #174 metadata evidence retains runtime
+`4975ca8337faa27dde511fa5c6cb93c6210c7bab`; it is not a new AI-class native run:
 
 [PR #174](https://github.com/UNDERdecoded/Gen2Recomped/pull/174) aligns AI-class
 content: common item names such as `POTION` resolve to mounted native item keys,
@@ -21,14 +49,14 @@ Gen1 API-2 live-record aliasing is explicitly outside the common contract.
 Unchanged #173 fails the Gold and FireRed fixtures with unresolved item refs.
 See [portable AI-class content](portable-ai-class-content.md).
 
-At this combined runtime, native LÖVE 11.5 checks pass on imported Red, Gold,
+At the recorded #174 runtime, native LÖVE 11.5 checks pass on imported Red, Gold,
 FireRed and Emerald: actual public mod load, common/native item resolution,
 detached records and frozen writes at title and in-memory New Game. The owned
 example was removed with hash guards. No normal SAVE, battle decision,
 complete playthrough or fresh full-ROM import is claimed. This does not enable
 the unfinished `battle.enemy_switch_or_item` hook.
 
-All **34** hosted #174 workflows await maintainer approval (`action_required`);
+At #174 publication, all **34** hosted workflows awaited maintainer approval (`action_required`);
 the [AI-class workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40090696993)
 has zero executed jobs. Local validation is separate. The isolated feature
 passes 139/149 engine suites with precisely the prior ten baseline failure
