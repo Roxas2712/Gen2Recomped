@@ -53,7 +53,8 @@ RNG traces, native AI scoring, or entire battles.
 
 This is a move-result contract. API-3 GBA input selectors are covered by the
 follow-up [enemy-action argument contract](portable-enemy-action-arguments.md).
-Native action record fields still differ. Portable consumers should forward
+Native move result fields are covered by the follow-up
+[move record contract](portable-enemy-move-records.md); other action records still differ. Portable consumers should forward
 arguments with `...` and return a fresh choice record. Public item/switch/watch
 records and explicit double-battle target conversion remain separate work.
 No Gen1 changes or publications are needed.

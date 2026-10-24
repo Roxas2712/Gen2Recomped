@@ -5432,7 +5432,7 @@ function BattleState:enemyAction(battler)
       return EnemyActionContext.call(self, requestedBattler, function()
         local delegated, captured
         local result = Runtime.call("battle.enemy_action", function(battle, who)
-          delegated, captured = EnemyMoveChoice.delegate(who or battle.enemy, battle:vanillaEnemyAction(who))
+          delegated, captured = EnemyMoveChoice.delegate(battle, who or battle.enemy, battle:vanillaEnemyAction(who))
           return delegated
         end, self, battler)
         return EnemyMoveChoice.normalize(self.data, battler, result, delegated, captured)
