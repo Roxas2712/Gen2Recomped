@@ -447,7 +447,7 @@ function SaveData.defaultOptions()
     uiLayout = "centered",
     -- AUTO follows the game's default; explicit persisted ids stay selected.
     -- This must be a value so per-generation overrides can return to AUTO.
-    ruleset = "auto",
+    ruleset = false,
     -- 0-7 like the GB's NR50 master volume
     musicVol = 7,
     sfxVol = 7,

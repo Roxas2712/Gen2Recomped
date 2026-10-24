@@ -70,15 +70,15 @@ local function rulesetIds(game)
   local rulesets = game.data and game.data.rulesets or Rulesets
   local ids = {}
   for id, record in pairs(rulesets) do
-    if not record.hidden and id ~= "auto" then ids[#ids + 1] = id end
+    if not record.hidden then ids[#ids + 1] = id end
   end
   table.sort(ids)
-  table.insert(ids, 1, "auto")
+  table.insert(ids, 1, false)
   return ids
 end
 
 local function rulesetIndex(game, ids)
-  local cur = require("src.battle.RulesetDefaults").selection(game) or "auto"
+  local cur = require("src.battle.RulesetDefaults").selection(game) or false
   for i, id in ipairs(ids) do
     if id == cur then return i end
   end
@@ -88,8 +88,8 @@ end
 local function rulesetName(game)
   local rulesets = game.data and game.data.rulesets or Rulesets
   local ids = rulesetIds(game)
-  local id = ids[rulesetIndex(game, ids)] or game.save.options.ruleset
-  if id == "auto" then return Strings("AUTO") end
+  local id = ids[rulesetIndex(game, ids)]
+  if id == false then return Strings("AUTO") end
   local record = id and rulesets[id]
   return Strings(record and record.name or id or "----")
 end
