@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191 and #194 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,37 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`6bb17f00c9baedc665448254da99641dfe9db64a`. Its ROM-free run passed
-**209/209 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`679b54967922bd8c14907c8c0bc152a2e2e615bc`. Its ROM-free run passed
+**210/210 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #194](https://github.com/UNDERdecoded/Gen2Recomped/pull/194) exposes the
+common native GBA move record fields for API 3 inside `battle.enemy_action`
+`next()`: kind, native move reference, slot, user, battler and double targetType.
+The native exhausted fallback retains symbolic `STRUGGLE`. Native and public
+hooks keep their own move-reference representations, including native rewrites;
+legacy API-1/2 views, canonical id edits and detached native actor queries remain
+supported. Metadata stays in weak side tables, without rewriting learned moves.
+
+The **254/254** new record checks, prior **1,252/1,252** move-choice checks and
+**438/438** selector checks pass. Actual `battle.move_used` events prove the
+selected move executes; HP/PP checks verify mutation versus replacement,
+nested references, charge continuation, Struggle and mixed native/public hooks.
+The same consumer matches unchanged read-only Gen1
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91` in **16 isolated engine workers /
+220 paired observations**, on both the feature and combined runtime.
+
+The feature is stacked on #191 and retains the exact **27 FAIL lines across
+ten inherited prerequisite suites**, with no new failures. Their repairs are
+included in this combined branch. All three hosted workflows await maintainer
+approval; the [dedicated workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40134177111)
+has zero jobs. Local acceptance is separate. Scores and selected targets are
+not fabricated; item/switch/watch records, other native fields, damage amounts,
+RNG traces and full gameplay remain separate work. See
+[native move records](portable-enemy-move-records.md).
+
+Prior #191 results retain runtime
+`6bb17f00c9baedc665448254da99641dfe9db64a` and its 209/209 engine result:
 
 [PR #191](https://github.com/UNDERdecoded/Gen2Recomped/pull/191) aligns API-3
 GBA `battle.enemy_action` input selectors with unchanged Gen1. The single
