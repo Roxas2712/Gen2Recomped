@@ -1,5 +1,5 @@
 local F = {}
-function F.new(root, backend, version, api, format, mode, id, source, body, prepare)
+function F.new(root, backend, version, api, format, mode, id, source, body, prepare, configure)
   local T, V = require("tests.modkit"), require("src.core.GameVersion")
   V.set(version)
   local gen, J = V.generation(), require("src.link.Json")
@@ -41,6 +41,10 @@ function F.new(root, backend, version, api, format, mode, id, source, body, prep
   files["mods/" .. name .. "/source.txt"] = source
   if body then
     files["mods/" .. name .. "/main.lua"] = "local mod=...; mod.exports.api=mod; " .. body
+  end
+  files["mods/" .. name .. "/enumerate.txt"] = "yes"
+  if configure then
+    configure(files, name, J)
   end
   if mode == "corpus" then
     for i, value in ipairs(dofile(root .. "/tests/text_sources/corpus.lua")) do
