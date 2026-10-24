@@ -1,13 +1,42 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–173
+hook, rendering, shader and baseline test fixes prepared in PRs #88–174
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`ddac8aaf1d6b042ddd3defe57fe3e8de1b8b2039`. Its ROM-free run passed
-193/193 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+`4975ca8337faa27dde511fa5c6cb93c6210c7bab`. Its ROM-free run passed
+**194/194 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+Later commits change validation documentation only.
+
+[PR #174](https://github.com/UNDERdecoded/Gen2Recomped/pull/174) aligns AI-class
+content: common item names such as `POTION` resolve to mounted native item keys,
+and public reads, iteration and write results are detached. **442** content
+checks and **670** loader checks pass. The same public consumer passes both
+SDKs on eight versions in **32 workers / 112 paired observations** across host
+API 3 and API 2/unified, against clean Gen1
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`. The reference uses API 3;
+Gen1 API-2 live-record aliasing is explicitly outside the common contract.
+Unchanged #173 fails the Gold and FireRed fixtures with unresolved item refs.
+See [portable AI-class content](portable-ai-class-content.md).
+
+At this combined runtime, native LÖVE 11.5 checks pass on imported Red, Gold,
+FireRed and Emerald: actual public mod load, common/native item resolution,
+detached records and frozen writes at title and in-memory New Game. The owned
+example was removed with hash guards. No normal SAVE, battle decision,
+complete playthrough or fresh full-ROM import is claimed. This does not enable
+the unfinished `battle.enemy_switch_or_item` hook.
+
+All **34** hosted #174 workflows await maintainer approval (`action_required`);
+the [AI-class workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40090696993)
+has zero executed jobs. Local validation is separate. The isolated feature
+passes 139/149 engine suites with precisely the prior ten baseline failure
+suites; their separate repairs are included in this combined branch.
+
+Prior #173 import results retain runtime
+`ddac8aaf1d6b042ddd3defe57fe3e8de1b8b2039` and are not a new importer run:
+
 [PR #173](https://github.com/UNDERdecoded/Gen2Recomped/pull/173) preserves
 native trainer AI import inputs: exact Gen-2 seven-byte attributes and ordered
 stock, plus raw GBA item-effect bytes alongside parsed medicine. **32** focused
@@ -18,11 +47,11 @@ native gameplay test. Existing caches need reimport to acquire the new fields.
 See [native trainer AI metadata](native-trainer-ai-metadata.md).
 
 This prepares `battle.enemy_switch_or_item`; it does not enable the hook.
-The separate development branch still has an audited native GBA automatic
-Perish-switch difference and is not part of this testing branch. Metadata and
-hook/gameplay validation must remain separate.
+The separate development branch has further native policy/controller
+validation gates and is not part of this testing branch. Metadata and
+hook/gameplay validation remain separate.
 
-All **33** hosted #173 workflows await maintainer approval (`action_required`);
+At #173 publication, all **33** hosted workflows awaited maintainer approval (`action_required`);
 the [metadata workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40079359698)
 has zero executed jobs. Local validation is separate.
 
