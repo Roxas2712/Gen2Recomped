@@ -93,6 +93,8 @@ return function(game)
       U.teleport(game,map[1],map[2],map[3],"down")
       U.wait(120) -- shader/font/upload/fade warmup, not part of measurement
       collectgarbage("collect")
+      local TR=require("src.render.TileRenderer")
+      local cacheBefore=TR.gen3PaletteCacheStats and TR.gen3PaletteCacheStats()
       phase={map=map[1],logicalWidth=w,logicalHeight=h,pixelWidth=pw,pixelHeight=ph,
         body={},frame={},readback={},transfer={},present={},render={},intervals={},readbackCalls=0}
       local cpu,wall=os.clock(),timer.getTime()
@@ -102,6 +104,7 @@ return function(game)
       local entry={map=map[1],logicalWidth=w,logicalHeight=h,pixelWidth=pw,pixelHeight=ph,
         mode=Frame.info().mode,measuredFrames=#measured.frame,readbackCalls=measured.readbackCalls,
         elapsedSeconds=elapsed,cpuMsPerFrame=cpuElapsed/#measured.frame*1000,metrics={}}
+      if cacheBefore then entry.paletteCache={before=cacheBefore,after=TR.gen3PaletteCacheStats()} end
       assert(entry.measuredFrames==300,"missing measured frames")
       for _,key in ipairs({"body","frame","readback","transfer","present","render","intervals"}) do
         entry.metrics[key]=stats(measured[key])

@@ -995,6 +995,16 @@ end
 -- pair is dropped. Twelve is comfortably more than a town, its interiors and
 -- the routes either side of it, which is the working set walking produces.
 TileRenderer.GEN3_SHEET_CACHE = 12
+local PaletteFrameCache = require("src.render.Gen3PaletteFrameCache")
+local paletteFrames = PaletteFrameCache.new(32*1024*1024,4)
+function TileRenderer.gen3PaletteCacheStats() return paletteFrames:stats() end
+
+local function palettePictureKey(tiles)
+  local state=tiles.paletteState
+  if state and (#state.primaryFrames>0 or #state.secondaryFrames>0) then
+    return state.contentKey
+  end
+end
 
 local function gen3Evict()
   local count = 0
@@ -1015,7 +1025,8 @@ local function gen3Evict()
     end
     if not oldest then return end
     local record = gen3Sheets[oldest]
-    for _, image in ipairs({ record.bottom, record.top }) do
+    paletteFrames:drop(record)
+    for _, image in ipairs({ record.bottom, record.top, record.cover }) do
       if image and image.release then pcall(image.release, image) end
     end
     gen3Sheets[oldest] = nil
@@ -1103,7 +1114,7 @@ local function pixelCanvas(w, h)
   return plot, finish
 end
 
-local function buildReflectionCover(record, tiles, statics, frames)
+local function bakeReflectionCover(record, tiles, statics, frames)
   if not (love.image and love.image.newImageData) then return end
   frames = math.max(1, frames or 1)
   local ids = {}
@@ -1135,10 +1146,9 @@ local function buildReflectionCover(record, tiles, statics, frames)
   end
   tiles:setAnimFrame(0)
   local surface = finish()
-  if record.cover then record.cover:replacePixels(surface)
-  else record.cover = love.graphics.newImage(surface) end
   record.coverQuads = record.coverQuads or quads
   record.coverFrames = frames
+  return surface,w*h*4
 end
 
 function TileRenderer.gen3SheetsFor(tilesetDef, data, layout)
@@ -1202,7 +1212,7 @@ function TileRenderer.gen3SheetsFor(tilesetDef, data, layout)
     end
   end
 
-  local built = {}
+  local built,initialSurfaces = {},{}
   for layer = 1, 2 do
     local plot, finish = pixelCanvas(w, h)
     -- the static sheet holds FRAME ZERO, not the tileset's shipped bytes: the
@@ -1216,7 +1226,8 @@ function TileRenderer.gen3SheetsFor(tilesetDef, data, layout)
         tiles:bakeMetatileInto(id, layer, slotOf[id][f], plot)
       end
     end
-    built[layer] = love.graphics.newImage(finish())
+    initialSurfaces[layer]=finish()
+    built[layer] = love.graphics.newImage(initialSurfaces[layer])
   end
   tiles:setAnimFrame(0)
 
@@ -1224,26 +1235,52 @@ function TileRenderer.gen3SheetsFor(tilesetDef, data, layout)
                    tiles = tiles, metatiles = statics, slots = slots,
                    animSlots = (frames > 1) and slotOf or nil,
                    animFrames = frames, animStep = tiles:animStep() }
-  buildReflectionCover(record, tiles, statics, frames)
+  local coverData,coverBytes=bakeReflectionCover(record, tiles, statics, frames)
+  if coverData then record.cover=love.graphics.newImage(coverData) end
+  initialSurfaces[3]=coverData
+  local pictureBytes=w*h*8+(coverBytes or 0)
+  local initialKey=palettePictureKey(tiles)
+  if not initialKey or not paletteFrames:put(record,initialKey,initialSurfaces,pictureBytes) then
+    PaletteFrameCache.release(initialSurfaces)
+  end
   -- Update the existing textures, including every tile-animation variant and
   -- reflection cover, only when palette pixels change. Batches/quads retain
   -- their image identity; independent cycles never multiply the baked atlas.
   record.recolor = function()
     local oldFrame = tiles.animFrame or 0
-    for layer, image in ipairs({ record.bottom, record.top }) do
-      local plot, finish = pixelCanvas(w, h)
-      tiles:setAnimFrame(0)
-      tiles:bakeLayer(layer, plot)
-      for f = 2, frames do
-        tiles:setAnimFrame(f - 1)
-        for _, id in ipairs(movers) do
-          tiles:bakeMetatileInto(id, layer, slotOf[id][f], plot)
-        end
-      end
-      image:replacePixels(finish())
+    local pictureKey=palettePictureKey(tiles)
+    if not pictureKey then paletteFrames:drop(record) end
+    local hit=pictureKey and paletteFrames:get(record,pictureKey)
+    if hit then
+      record.bottom:replacePixels(hit[1]);record.top:replacePixels(hit[2])
+      if hit[3] then record.cover:replacePixels(hit[3]) end
+      return
     end
-    buildReflectionCover(record, tiles, statics, frames)
+    local surfaces,retained={},false
+    local ok,err=xpcall(function()
+      for layer, image in ipairs({ record.bottom, record.top }) do
+        local plot, finish = pixelCanvas(w, h)
+        tiles:setAnimFrame(0)
+        tiles:bakeLayer(layer, plot)
+        for f = 2, frames do
+          tiles:setAnimFrame(f - 1)
+          for _, id in ipairs(movers) do
+            tiles:bakeMetatileInto(id, layer, slotOf[id][f], plot)
+          end
+        end
+        surfaces[layer]=finish()
+        image:replacePixels(surfaces[layer])
+      end
+      local coverSurface,size=bakeReflectionCover(record, tiles, statics, frames)
+      surfaces[3]=coverSurface
+      if coverSurface then record.cover:replacePixels(coverSurface) end
+      if pictureKey then
+        retained=paletteFrames:put(record,pictureKey,surfaces,w*h*8+(size or 0))
+      end
+    end,debug.traceback)
     tiles:setAnimFrame(oldFrame)
+    if not retained then PaletteFrameCache.release(surfaces) end
+    if not ok then error(err,0) end
   end
   record.paletteTicks = animFrame
   gen3Sheets[key] = record
@@ -1304,6 +1341,7 @@ end
 
 -- a re-import replaces the data the sheets were baked from
 function TileRenderer.releaseGen3Sheets()
+  paletteFrames:clear()
   gen3Sheets = {}
   gen3Used, gen3Clock = {}, 0
 end
@@ -2331,6 +2369,7 @@ end
 -- instances keep the batches they already built; MapLoader.invalidateAll
 -- is what drops those (14 §cache-invalidation contract).
 function TileRenderer.invalidate()
+  paletteFrames:clear()
   imageCache = {}
   shiftVariants = {}
   frameImages = {}

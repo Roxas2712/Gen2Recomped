@@ -28,6 +28,7 @@ jobs:
           luajit tests/engine/gen3_color_data.lua
           luajit tests/engine/gen3_color_failures.lua
           luajit tests/engine/gen3_palette_renderer.lua
+          luajit tests/engine/gen3_palette_frame_cache.lua
           luajit tests/engine/gen3_weather_color.lua
       - name: Automatic ROM palette program import, bounds and public consumers
         run: |

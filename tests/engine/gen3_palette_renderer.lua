@@ -8,14 +8,21 @@ local Tiles = require("src.render.Gen3Tiles")
 -- cached batch and border paths without a window, GPU, cartridge or save.
 local original={image=love.image,newImage=love.graphics.newImage,newCanvas=love.graphics.newCanvas,
   draw=love.graphics.draw,clear=love.graphics.clear}
-local allocations,updates,canvases=0,0,0
+local allocations,updates,canvases,surfaceReleases=0,0,0,0
 local function surface(w,h,format,bytes)
-  return {w=w,h=h,bytes=bytes or string.rep("\0",w*h*4)}
+  local data={w=w,h=h,bytes=bytes or string.rep("\0",w*h*4)}
+  function data:release()
+    T.check(not self.released,"CPU atlas released once")
+    self.released=true;self.bytes=nil;surfaceReleases=surfaceReleases+1
+  end
+  return data
 end
 local function image(data)
+  T.check(not data.released,"image upload receives live CPU pixels")
   allocations=allocations+1
   local out={w=data.w,h=data.h,bytes=data.bytes,updates=0}
   function out:replacePixels(next)
+    T.check(not next.released,"palette upload never uses evicted CPU pixels")
     T.eq(next.w,self.w,"palette refresh preserves image width")
     T.eq(next.h,self.h,"palette refresh preserves image height")
     self.bytes=next.bytes;self.updates=self.updates+1;updates=updates+1
@@ -174,6 +181,74 @@ local before=updates
 for _=1,20 do TR.tick(1/60);r:syncGen3Palettes() end
 T.eq(updates,before,"legacy metadata-free native rendering has no palette uploads")
 T.eq(rec.tiles.paletteState,nil,"legacy decoder retains original palettes")
+f.run.release()
+
+-- The repeating four-picture program must stop baking after warmup, while
+-- every restored atlas/animation/cover remains pixel-identical to decoding.
+TR.releaseGen3Sheets()
+f=F.new("emerald",2)
+local frames={}
+for i=1,4 do frames[i]=string.rep(string.char(i*29,i*43,i*53),4) end
+f.records.P.paletteCycles={{kind="frames",first=17,count=4,step=1,frames=frames}}
+f.records.S.paletteCycles={}
+rec=assert(TR.gen3SheetsFor(f.state.map.tileset,f.state.game.data,f.state.game.data.constants.gen3Layout))
+r=setmetatable({gen3=rec},{__index=TR})
+local bakes=0
+local bake=rec.tiles.bakeLayer
+rec.tiles.bakeLayer=function(self,... )bakes=bakes+1;return bake(self,...)end
+local originalBottom,originalTop,originalCover=rec.bottom,rec.top,rec.cover
+for n=1,40 do
+  TR.tick(1/60);r:syncGen3Palettes()
+  local expected=Tiles.new({primary=f.records.P,secondary=f.records.S},f.state.game.data.constants.gen3Layout)
+  expected:setPaletteTicks(TR.animFrame())
+  T.eq(rec.bottom.bytes,expectedSheet(expected,rec,1),"cached bottom equals independent current decode")
+  T.eq(rec.top.bytes,expectedSheet(expected,rec,2),"cached top/animation slots equal current decode")
+  if rec.cover then
+    for mid,quads in pairs(rec.coverQuads) do
+      for frame,quad in ipairs(quads) do
+        expected:setAnimFrame(frame-1)
+        local pixels={};for i=1,256 do pixels[i]="\0\0\0\0" end
+        expected:drawLayer(mid,2,0,0,function(x,y,rr,gg,bb)pixels[y*16+x+1]=string.char(rr,gg,bb,255)end)
+        local got={}
+        for y=0,15 do local at=((quad.y+y)*rec.cover.w+quad.x)*4+1;got[#got+1]=rec.cover.bytes:sub(at,at+63)end
+        T.eq(table.concat(got),table.concat(pixels),"cached reflection cover equals independent decode")
+      end
+    end
+  end
+  T.eq(rec.bottom,originalBottom,"cache hit preserves bottom GPU identity")
+  T.eq(rec.top,originalTop,"cache hit preserves top GPU identity")
+  T.eq(rec.cover,originalCover,"cache hit preserves reflection GPU identity")
+end
+T.eq(bakes,6,"four-picture cycle bakes only three missing two-layer pictures")
+T.eq(TR.gen3PaletteCacheStats().entries,4,"four-picture cycle retains four pictures")
+local warmed=bakes
+for _=1,100 do TR.tick(1/60);r:syncGen3Palettes() end
+T.eq(bakes,warmed,"many repeated palette cycles perform no full atlas bake")
+-- A new colour picture fails its upload: no partial picture enters the cache,
+-- temporary CPU pixels are released and the tile-animation selection survives.
+local savedUpload=rec.bottom.replacePixels
+rec.bottom.replacePixels=function()error("intentional atlas upload failure")end
+for i=1,4 do frames[i]=string.rep(string.char(250-i,240-i,230-i),4) end
+local releasedBefore=surfaceReleases
+local frameBefore=rec.tiles.animFrame
+TR.tick(1/60)
+T.check(not pcall(r.syncGen3Palettes,r),"upload failure propagates")
+T.eq(surfaceReleases,releasedBefore+1,"failed upload releases its temporary surface")
+T.eq(rec.tiles.animFrame,frameBefore,"failed bake restores animation selection")
+T.eq(TR.gen3PaletteCacheStats().entries,4,"failed picture is never cached")
+rec.bottom.replacePixels=savedUpload
+releasedBefore=surfaceReleases
+TR.releaseGen3Sheets()
+T.eq(TR.gen3PaletteCacheStats().bytes,0,"source/cache reset releases all CPU atlas bytes")
+T.eq(TR.gen3PaletteCacheStats().entries,0,"source/cache reset drops prior colour pictures")
+T.eq(surfaceReleases-releasedBefore,4*(rec.cover and 3 or 2),"reset releases every cached layer once")
+local fresh=assert(TR.gen3SheetsFor(f.state.map.tileset,f.state.game.data,f.state.game.data.constants.gen3Layout))
+T.check(fresh~=rec,"source reset creates a new owner even with the same tileset id")
+T.eq(TR.gen3PaletteCacheStats().entries,1,"source rebuild primes only its own current picture")
+TR.invalidate()
+T.eq(TR.gen3PaletteCacheStats().bytes,0,"asset invalidation also releases CPU picture storage")
+T.eq(TR.gen3PaletteCacheStats().entries,0,"asset invalidation cannot retain source pictures")
+T.check(fresh.bottom.bytes~=nil,"asset invalidation preserves live GPU resources")
 f.run.release()
 love.image=original.image
 for _,name in ipairs({"newImage","newCanvas","draw","clear"}) do love.graphics[name]=original[name] end

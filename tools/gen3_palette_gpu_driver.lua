@@ -130,6 +130,25 @@ local function sample(world, tag)
       end
     end
   end
+  local coverPixels=0
+  if record.cover then
+    local bytes,width=readTexture(record.cover)
+    for mid,quads in pairs(record.coverQuads) do
+      for frame,quad in ipairs(quads) do
+        expected:setAnimFrame(frame-1)
+        local want={};for i=1,256 do want[i]="\0\0\0\0" end
+        expected:drawLayer(mid,2,0,0,function(x,y,rr,gg,bb)
+          want[y*16+x+1]=string.char(rr,gg,bb,255)
+        end)
+        local x,y=quad:getViewport()
+        local slot=y/16*Tiles.SHEET_COLS+x/16
+        check(pixelsEqual(readSlot(bytes,width,slot),table.concat(want)),
+          "GPU/reflection-cover mismatch "..mid.." frame "..frame)
+        coverPixels=coverPixels+256
+      end
+    end
+    count=count+coverPixels
+  end
   local pixels=table.concat(packed)
   local paletteCells=0
   local blocks=world.map.def.blocks
@@ -143,7 +162,8 @@ local function sample(world, tag)
   local item={tag=tag,map=world.map.id,tileset=world.map.tileset.id,ticks=ticks,
     palettePhase=version=="emerald" and math.floor(ticks/4)%4 or 0,
     tileFrame=r:gen3AnimFrame(),paletteRevision=record.paletteRevision or 0,
-    paletteMetatiles=paletteMetatiles,paletteCells=paletteCells,rgbaPixels=count,baseHash=hash}
+    paletteMetatiles=paletteMetatiles,paletteCells=paletteCells,rgbaPixels=count,
+    coverRgbaPixels=coverPixels,baseHash=hash}
   if version=="emerald" then check(paletteCells>0,"test map does not display the imported palette cycle") end
   if version=="emerald" then
     -- A clear retail floor cell, beyond the player/NPC sprites. Checking the
@@ -315,6 +335,12 @@ check(world.map.renderer.gen3==record,"return failed to retain the shared GPU sh
 sample(world,"after-map-return")
 shot("map-return")
 report.mapReturn=true
+if TR.gen3PaletteCacheStats then
+  report.paletteCache=TR.gen3PaletteCacheStats()
+  check(report.paletteCache.bytes<=report.paletteCache.budget,"palette cache exceeded CPU byte budget")
+  check(report.paletteCache.entries==(version=="emerald" and 4 or 0),
+    "unexpected native palette picture population")
+end
 report.pass=true
 writeReport()
 print("[palette-gpu] PASS "..version.." "..report.checks.." checks")

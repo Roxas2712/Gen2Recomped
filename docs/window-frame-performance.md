@@ -7,6 +7,10 @@ Apple M3 / macOS 15.8.2. This lowers measured CPU cost in the sampled scenes;
 it does **not** establish a general FPS improvement or eliminate GPU readback.
 Metal remains the lower-CPU option in this comparison.
 
+The subsequent [native palette picture cache](gen3-palette-rebake-cache.md)
+addresses the full-atlas rebake bottleneck identified by this checkpoint.
+The measurements below describe the earlier window-copy optimization.
+
 ## Measured results, 2026-10-24
 
 All primary comparisons use the same official LÖVE 12 development build

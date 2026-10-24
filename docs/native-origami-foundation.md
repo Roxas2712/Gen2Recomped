@@ -120,6 +120,18 @@ timed frames and 96 actual-window proofs. Median OpenGL CPU cost falls
 no reliable wall-time gain. Metal remains lower-CPU. This is scoped evidence,
 not general FPS/performance acceptance; full trial distributions are retained.
 
+The next [native palette-picture cache](gen3-palette-rebake-cache.md) addresses
+the full-atlas rebake bottleneck found in Emerald. Its four warmed colour
+pictures reuse 8.0625 MiB of CPU RGBA data with zero timed rebuilds, bounded
+by a 32 MiB global LRU and four pictures per owner. On the tested host, median
+Emerald CPU cost falls 63–68% under OpenGL and 81–90% under Metal. Source/asset
+invalidation and eviction release CPU pictures; GPU identities, quads and
+borders remain stable. Initially static FireRed retains no colour pictures.
+GPU reflection/atlas/floor checks pass on OpenGL 11.5/OpenGL 12/Metal;
+FireRed's noisy high-resolution timing control and targeted follow-up are
+reported explicitly rather than claiming general performance parity.
+The ROM-free runner now passes 102/102 engine suites, 3/3 SDK suites and B30.
+
 ## Remaining engine work
 
 | Area | Remaining acceptance/work |
