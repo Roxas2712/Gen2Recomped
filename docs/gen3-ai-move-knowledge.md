@@ -45,3 +45,23 @@ This change is a bounded AI interpreter/history prerequisite for portable
 battle mods. It does not publish the unfinished enemy switch/item hook or
 establish complete AI, controller or gameplay parity. Held-item knowledge,
 party/status queries and source-side placeholder commands remain separate work.
+
+## Validation record
+
+At clean feature runtime `1e01a176aafce904eb6aa1e6d2c1c70f57446a78`:
+
+- **16,812/16,812** host checks pass.
+- Both actual interpreters match in **4 workers / 2,688 paired observations**,
+  with zero differences against the clean pinned reference.
+- Clean upstream `13af468b97dc37015d14ad5c71d7f067c3ee810d` fails **2,725**
+  assertions for FireRed and **3,193** for Emerald; all **1,344 observations**
+  per profile differ. The baseline worker reports the missing module/commands
+  explicitly rather than substituting an implementation.
+- The complete feature run passes **65/75** engine suites, SDK **3/3** and
+  B30. Upstream passes **64/74**; all **27 FAIL lines across ten baseline
+  suites** match exactly. Workflow lint and new-file formatting pass.
+
+Local evidence is in ignored `tmp/ai-move-knowledge-qa/`: `targeted.log`,
+`contracts-clean.json`, `full.log`, `baseline-comparison.json` and
+`main-negative.json`. Hosted CI is separate from these local results.
+No new graphical gameplay or full playthrough result is claimed.
