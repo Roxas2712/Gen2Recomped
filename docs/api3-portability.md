@@ -172,3 +172,6 @@ GBA contract and the remaining Gold/DS boundaries.
 
 [Portable encounter previews](portable-encounter-table.md) document
 `encounter.table` and its preview-only scope, SDK modes and native boundaries.
+
+[Portable charge decisions](portable-charge-required.md) document
+`battle.charge_required`, native first-turn/release rules and remaining PP-policy differences.

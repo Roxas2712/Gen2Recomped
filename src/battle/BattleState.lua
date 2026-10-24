@@ -8090,7 +8090,16 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   -- BattleCommand_SkipSunCharge (effect_commands.asm:6535): Solar Beam jumps
   -- straight past `charge` while the sun is up and fires on the turn it was
   -- selected.  Every other charge move ignores the weather.
-  if record and record.charge and not releasing and not skipCharge then
+  local chargeRequired = record and record.charge ~= nil and not releasing and not skipCharge
+  if chargeRequired and GameVersion.generation() <= 3 and Runtime.wantsHook("battle.charge_required") then
+    local required = Runtime.call("battle.charge_required", function(c) return c.charge end, {
+      battle = self, user = user, target = target, move = move,
+      charge = true, isCalled = isCalled or false,
+    })
+    chargeRequired = required ~= false
+    if not chargeRequired then animContext.moveTurn = 1 end
+  end
+  if chargeRequired then
     local branchAware = GameVersion.get() == "firered"
                         and hasMoveTurnVariant(move.anim)
     if not branchAware then self:cancelMoveAnim() end
