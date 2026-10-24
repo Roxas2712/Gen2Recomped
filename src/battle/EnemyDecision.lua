@@ -261,6 +261,86 @@ local function reserveItem(battle, battler, key)
   return require("src.battle.EnemyItems").reserve(battle, battler, key)
 end
 
+local function gbaAllowed(battle)
+  return battle.kind == "trainer" and not battle.pokedudeDemo and not (battle.demo and not battle.dudeDemo)
+end
+
+-- Explicit mod classes precede the native switch/item hook. Their allowance
+-- belongs to each party Pokemon; their item actions share native trainer stock.
+function M.gbaClass(battle, battler)
+  if not gbaAllowed(battle) or not battle.trainer or not battle.trainer.aiClass then
+    return nil
+  end
+  local class = TrainerAI.classFor(battle)
+  if not class or class.kind ~= nil and class.kind ~= "class" then
+    return nil
+  end
+  if not battler or not battler.mon or (battler.position or 1) % 2 ~= 1 then
+    return nil
+  end
+  battle._gbaClassUses = battle._gbaClassUses or {}
+  local mon = battler.mon
+  local left = battle._gbaClassUses[mon]
+  if left == nil then
+    left = tonumber(class.uses) or 0
+  end
+  if left <= 0 then
+    return nil
+  end
+  local roll = battle.rng(0, 255)
+  local function switch()
+    for index, candidate in ipairs(battle:benchFor(false, battler.position) or {}) do
+      local active = false
+      for _, other in pairs(battle.sides[2].battlers) do
+        if other.mon == candidate then
+          active = true
+          break
+        end
+      end
+      if
+        not active
+        and (tonumber(candidate.hp) or 0) > 0
+        and not require("src.pokemon.Party").isEgg(candidate)
+      then
+        reserveSwitch(battle, battler, index)
+        return { special = "aiSwitch", index = index, decisionBattler = battler }
+      end
+    end
+  end
+  local function item()
+    if class.item then
+      return reserveItem(battle, battler, M.itemKey(battle.data, class.item))
+    end
+  end
+  local action
+  if class.switchChance and roll < class.switchChance then
+    action = switch()
+  elseif class.onStatus then
+    if mon.status or battler.status or battler.modStatus then
+      action = item()
+    end
+  elseif class.chance and roll >= class.chance then
+    action = nil
+  elseif class.switch then
+    action = switch()
+  elseif class.hpBelow then
+    local hp, maxHp = tonumber(mon.hp) or 0, tonumber(mon.stats and mon.stats.hp) or 1
+    if hp >= math.floor(maxHp / class.hpBelow) then
+      if class.switchBelow and hp < math.floor(maxHp / class.switchBelow) then
+        action = switch()
+      end
+    else
+      action = item()
+    end
+  else
+    action = item()
+  end
+  if action then
+    battle._gbaClassUses[mon] = left - 1
+  end
+  return action
+end
+
 local function sourceAction(battle, battler, action)
   if not action then
     return nil
@@ -287,7 +367,7 @@ local function sourceAction(battle, battler, action)
 end
 
 function M.gba(battle, battler)
-  if battle.kind ~= "trainer" or battle.pokedudeDemo or battle.demo and not battle.dudeDemo then
+  if not gbaAllowed(battle) then
     return nil
   end
   local native, action

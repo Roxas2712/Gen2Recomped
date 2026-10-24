@@ -5461,7 +5461,9 @@ function BattleState:vanillaEnemyAction(battler)
   -- bench slots. The older class AI remains a left-opponent-only query.
   if not GameVersion.isGen2() and (GameVersion.isGen3() or battler == self.enemy) then
     local classAct
-    if GameVersion.isGen3() then classAct = self:enemySwitchOrItem(battler)
+    if GameVersion.isGen3() then
+      classAct = require("src.battle.EnemyDecision").gbaClass(self, battler)
+                 or self:enemySwitchOrItem(battler)
     else classAct = TrainerAI.classAction(self) end
     if classAct then return classAct end
   end

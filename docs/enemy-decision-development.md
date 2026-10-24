@@ -141,6 +141,45 @@ with `POKEPORT_DRIVER=tests/drivers/enemy_decision.lua` in an isolated identity.
 The optional `POKEPORT_ITEM_EFFECT_ROM` selects a local FireRed cartridge for
 the in-memory item-effects stage; it is never needed for the old-cache cases.
 
+## Mod-defined GBA class milestone
+
+Explicit `ai_classes` class records now run before the public native switch/item
+hook. Their allowance follows the party Pokemon across switches, while their
+item actions reserve the same native stock as automatic decisions. Tested
+branches include chance/status/HP gates, class switches, empty stock, class/layer
+selection, the right double slot and returning Pokemon with exhausted uses.
+The previous engine produces sixteen concrete class-action/precedence failures
+in `class-host-negative.log`; the native reference passes those cases.
+
+An unchanged public entry also registers, reads, patches, overrides and iterates
+an AI class with canonical `POTION` / `FULL_RESTORE` item IDs. This exposed a
+real host reference-resolution gap: Gen-3 physical `ITEM_nnn` keys previously
+made the same class fail to load. The unified-content boundary now resolves
+only this item reference and returns detached canonical records, including
+write results. Legacy/native format is unchanged. API-2 contract fixtures
+explicitly opt into unified content as well as callbacks. Separate Gen-1–3
+loader checks cover missing items without recorded operations, finite/cyclic
+validation, optional deletion, frozen writes, owner rollback, dangling native
+references and legacy keys; the full unified-content suite passes **442/442**.
+
+The decision matrix passes **12 workers / 413 paired observations** in each
+of API 3 and host API 2/unified. It includes real single/double controller turns
+with class items executing before a suppressed public hook. Focused host checks
+pass **1,144/1,144**. The complete feature run remains **139/149** engine suites,
+**3/3** SDK suites and B30; its **26** failure lines exactly match the ten prior
+baseline suites. Reports are `contracts-class.json`, `contracts-class-api2.json`,
+`targeted-class.log`, `unified-class-content.log` and `full-class.log`.
+
+Native LÖVE 11.5 runs pass on Gold/FireRed/Emerald existing caches and a separate
+FireRed in-memory item-effects import. FireRed/Emerald drive actual FIGHT/move
+inputs through a class item before the hook and a second turn after its use
+is exhausted. These native sessions supply bounded in-memory class/party/stock
+records; public class registration is covered by the separate shared SDK
+contracts, not claimed as a new full-ROM class import. The source runtime is
+`cfcf3c4` plus the recorded development changes. Evidence and driver hash are
+in `native-class-status.json` and `native-class-*.log`. The owned consumer was
+removed with hash guards after all four processes exited.
+
 Required before publication:
 
 - Exercise actual imported Gen-2 attributes and stock through ordinary turns.
@@ -149,7 +188,8 @@ Required before publication:
 - Extend the FireRed raw-effects smoke to Emerald, both native double slots,
   further trap/status construction and imported stock boundaries.
 - Audit mutations of delegated native actions (kind, slot and battler as well
-  as item/type/flags), and custom GBA class/brain precedence before the hook.
+  as item/type/flags), and GBA brain callback/selection precedence. Class
+  item/switch precedence is now covered.
 - Review participants, Pursuit, hazards/abilities and stale queued actors after
   forced switches. Keep native battle-rule gaps explicit rather than counting
   them as equal contract observations.

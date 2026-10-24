@@ -141,6 +141,23 @@ return function(game)
   assert(b.enemy.mon.nickname == "BENCH" and b.enemy.mon.hp < 500, "native incoming switch target takes hit")
   assert(b.enemyParty[1].hp == 200, "native outgoing occupant is preserved")
   print("PORTABILITY_ENEMY_CASE " .. V.get() .. " switch")
+  if V.generation() == 3 then
+    b = fresh("suppress")
+    game.data.ai_classes = game.data.ai_classes or {}
+    local oldClass = game.data.ai_classes.PORTABLE_SMOKE_CLASS
+    game.data.ai_classes.PORTABLE_SMOKE_CLASS = { kind = "class", uses = 1, item = potion }
+    b.trainer.aiClass = "PORTABLE_SMOKE_CLASS"
+    damage, beforeHit = 0, nil
+    turn(b)
+    assert(e.state.calls == 0 and beforeHit == 220, "native mod class item precedes suppressed hook")
+    assert(b.enemy.mon.hp == 220 - damage, "native class item and incoming hit execute")
+    local previous = b.enemy.mon.hp
+    damage, beforeHit = 0, nil
+    turn(b)
+    assert(e.state.calls == 1 and b.enemy.mon.hp == previous - damage, "spent native class reaches hook")
+    game.data.ai_classes.PORTABLE_SMOKE_CLASS = oldClass
+    print("PORTABILITY_ENEMY_CASE " .. V.get() .. " class-before-hook-and-spent")
+  end
   if itemRom then
     b = fresh("delegate", { named(game.data.items, "X ATTACK") })
     damage, beforeHit = 0, nil

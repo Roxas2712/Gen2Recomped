@@ -6,6 +6,7 @@ local function run(f, root, backend)
   local B, trainers, oldTrainers
   if backend == "gen1" then
     B = require("src.core.game3.battle")
+    require("src.core.game3.battle.mod_registries").bind(f.data)
     trainers = require("src.core.game3.scripting.trainers")
     oldTrainers = trainers._pack
   end
@@ -124,6 +125,10 @@ local function run(f, root, backend)
       end
     end
     f.battle = b
+    if spec.class then
+      if B then b.aiClass = "PORTABLE_NATIVE_CLASS"
+      else b.trainer.aiClass = "PORTABLE_NATIVE_CLASS" end
+    end
     -- These are explicit session stats, equal on both engines. The small
     -- SDK fixtures otherwise seed different species base-stat templates.
     local function commonStats(mon)
@@ -219,6 +224,9 @@ local function run(f, root, backend)
     T.eq(ended, before + 1, "one complete native controller turn")
   end
   local specs = {
+    { name = "class-item-precedes-hook", class = true, mode = "suppress", fast = true },
+    { name = "double-class-items-precede-hook", class = true, mode = "suppress", double = true,
+      stock = { item(13), item(13) } },
     { name = "native-item-before-faster-player", fast = true },
     { name = "constructor-freezes-native-stock", mutateStock = true },
     { name = "native-heal-prevents-faint", hp = 1 },
@@ -245,7 +253,7 @@ local function run(f, root, backend)
   for _, spec in ipairs(specs) do
     local b = fresh(spec)
     turn(b)
-    T.eq(f.e.state.calls, spec.double and 2 or 1, spec.name .. " public query count")
+    T.eq(f.e.state.calls, spec.class and 0 or spec.double and 2 or 1, spec.name .. " public query count")
     if spec.fast or spec.mutateStock then
       local firstMove
       for _, event in ipairs(events) do
@@ -338,6 +346,7 @@ local function run(f, root, backend)
   end
   if trainers then
     trainers._pack = oldTrainers
+    require("src.core.game3.battle.mod_registries").bind(nil)
   end
   return rows
 end

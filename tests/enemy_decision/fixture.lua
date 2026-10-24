@@ -53,6 +53,21 @@ function F.new(root, backend, version, api, format, noMod)
           end
         end
       end
+    end,
+    function(files, _, gen)
+      if gen == 3 then
+        if api < 3 and format == "unified" then
+          local Json = require("src.link.Json")
+          local path = "mods/portable_enemy_decision/manifest.json"
+          local manifest = Json.decode(files[path])
+          manifest.content_format = "unified"
+          files[path] = Json.encode(manifest)
+        end
+        local file = assert(io.open(root .. "/tests/enemy_decision/class_mod.lua", "rb"))
+        local entry = "mods/portable_enemy_decision/main.lua"
+        files[entry] = files[entry] .. "\n" .. file:read("*a")
+        file:close()
+      end
     end
   )
   local copy = require("src.mods.Merge").deepCopy
@@ -210,6 +225,19 @@ function F.new(root, backend, version, api, format, noMod)
       return false
     end
     return action.kind or ({ aiSwitch = "switch", aiItem = "item" })[action.special]
+  end
+  function f.remainingStock()
+    local b, count = f.battle, 0
+    if backend == "gen1" then
+      for _, id in ipairs(require("src.core.game3.battle.ai_items").history(b).items) do
+        if id ~= 0 then count = count + 1 end
+      end
+    else
+      for _, row in ipairs(require("src.battle.EnemyItems").history(b).items) do
+        if not (b.gen3ItemsUsed or {})[row.slot] then count = count + 1 end
+      end
+    end
+    return count
   end
   return f
 end
