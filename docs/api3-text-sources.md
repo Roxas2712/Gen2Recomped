@@ -75,3 +75,38 @@ Use the isolated combined-fork launcher and temporarily install the example;
 for Gold, supply `id.txt` containing an existing cartridge `bank:address` ID.
 The driver opens, renders and closes real native dialogue, using an in-memory
 New Game. It performs no normal SAVE and makes no full-playthrough claim.
+
+## Validated snapshot
+
+Feature runtime `13598190777c0de6fac79cbe0f2663b8f8c56725`; combined runtime
+`a7a4091be9f4b631d54cd6f57ce1d33c5d8bed46`:
+
+- Source/native contracts **3,700/3,700**; ownership/legacy/retirement contracts
+  **234/234**. Both host opt-in modes are covered, native API-1/2 bytes retain
+  their old behavior, and DS keeps its native text handles.
+- **32 isolated SDK workers / 3,148 paired observations** per feature/combined
+  snapshot. Eight versions, reference API 3 versus host API 3 and API 2/unified.
+  The unchanged consumer covers 196 observations per GB/GBA game and 198 per
+  Gen-2 game. The corpus includes all public GBA placeholder/symbol names,
+  dialect-specific battle names, near misses, escaped literals and raw controls.
+- Feature **131/141 engine suites**, SDK **3/3**, B30 pass. The same ten baseline
+  suites produce exactly the same **26 FAIL lines** as #169; independent
+  baseline repairs are in #128–134. Combined **186/186**, SDK **3/3**, B30 pass.
+- Native LÖVE 11.5, existing imported **Gold, FireRed, Emerald**: unchanged
+  installed consumer, real title/New Game, actual imported Gold text at
+  `TEXT_S55_4067`, native lowered writetext/GBA script commands, player/string
+  buffer expansion, real textbox rendering, paragraph pages, A-close and script
+  resume, frozen late writes. The owned example was removed with hash guards.
+  This is an in-memory dialogue smoke, with no normal SAVE, full playthrough,
+  fresh full-ROM reimport or pixel-equivalence claim.
+- The unchanged #169 negative control writes a shadow `55:4067` while the native
+  VM still prints its old physical text; a common GBA string variable remains
+  literal. Both discrepancies are observed through real readers.
+- Imported Red regressions: battle **468/468**, save conversion **95/95**, parity
+  J **73/73**, K **22/22**. No external binary save fixture supplied.
+- New Lua formatting, workflow actionlint, Python compile and diff checks pass.
+  No ROM, imported cache, save or private mod is included.
+
+Later documentation-only commits do not change the runtime tested above.
+Hosted CI status is reported separately in the PR; local passing runs do not
+imply GitHub Actions executed or passed.
