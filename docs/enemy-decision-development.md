@@ -4,6 +4,13 @@ This branch is an in-progress implementation, not a published or fully validated
 portability PR. It is based on published metadata prerequisite #173. The hook work itself
 is not included in the combined testing branch until native decisions are ready.
 
+The definition-record adapter originally developed on this branch is isolated
+in [PR #174](https://github.com/UNDERdecoded/Gen2Recomped/pull/174): common
+AI-class item names and detached API-3 content records, plus unchanged public
+SDK consumers. It has independent metadata validation and does not publish
+this branch's battle hook. Gen1 API-2 live-record aliasing is explicitly outside
+that common API-3 contract.
+
 Current source: clean Gen1Recomp `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`.
 `tools/enemy-decision-contract-check/check.py` runs the unchanged public consumer
 through both real SDKs in separate workers. The current matrix covers Red's
