@@ -308,9 +308,9 @@ whole-battle or pixel-parity claim.
 
 The standalone feature retains exactly the ten old baseline suite failures
 covered by PRs #128–134 (115/125, SDK 3/3 and B30); this combined runtime includes
-those repairs and passes all 170 suites. All 23 hosted PR workflows currently report `action_required` pending maintainer
-approval; the [new PP workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40046010257)
-has zero jobs. These have not executed and are separate from the local results.
+those repairs and passes all 170 suites. At #162 publication, all 23 hosted PR workflows reported `action_required` pending maintainer
+approval; the [PP workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40046010257)
+had zero jobs. Those recorded results are separate from local validation.
 
 
 ## Native caught-marker HUD/GPU test
@@ -349,3 +349,8 @@ Feature full-suite ref `bd182e0f4c39df69f86bcc76ceb15a51e1330579` passed
 #128–134, SDK 3/3 and B30. The combined runtime includes those repairs and passes
 173/173. The feature head's later change is bytecode-equivalent fixture formatting;
 the native contract suite was rerun afterward.
+
+
+All 24 hosted #163 PR workflows currently report `action_required` pending
+maintainer approval; the [new caught-marker workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40048498745)
+has zero jobs and has not executed. Local test results above are independent.
