@@ -93,11 +93,11 @@ function F.new(root, backend, version, api, format, mode)
     local id = require("src.mods.UnifiedIds").new(f.result.loader):resolve("items", item)
     return id and id.key or item
   end
-  function f.run(item)
+  function f.run(item, hp)
     local step = f.fresh("TACKLE")
     f.battle = step.battle
     local p = backend == "gen1" and f.gen == 2 and f.battle.player or f.battle.player.mon
-    p.hp, p.stats.hp, p.maxHp, p.item = 100, 400, 400, f.nativeItem(item or "LEFTOVERS")
+    p.hp, p.stats.hp, p.maxHp, p.item = hp or 100, 400, 400, f.nativeItem(item or "LEFTOVERS")
     f.battle.queue, f.battle.nextInsert = {}, 0
     if backend == "gen1" and f.gen == 2 then
       f.battle:betweenTurnEffects()

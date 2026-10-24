@@ -35,6 +35,8 @@ elseif mode == "custom" then
 elseif mode == "price" then
   mod.content.items:patch("LEFTOVERS", { price = 999 })
   held:override("LEFTOVERS", { heldEffect = "HELD_BERRY", heldParameter = 17 })
+elseif mode == "noop_modern" then
+  held:patch("BERRY", {})
 elseif mode == "modern" then
   held:override("BERRY", { heldEffect = "HELD_BERRY", heldParameter = 7 })
 elseif mode == "dragon" then
