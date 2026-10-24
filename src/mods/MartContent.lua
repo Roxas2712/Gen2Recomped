@@ -157,7 +157,7 @@ function M.api(loader, mod, native, generation, unified)
       return nil, reason
     end
     if unified then
-      identifier(id)
+      assert(type(id) == "string" and id ~= "", "invalid content: registry id is required")
     end
     return convert(loader, id, native:get(id), false)
   end
