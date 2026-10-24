@@ -1,5 +1,6 @@
 local M = {}
-function M.run(root, backend, version, patchStats)
+function M.run(root, backend, version, patchStats, options)
+  options = options or {}
   local native = backend == "gen1"
   local species = {
     { "CHARMANDER", 4, 60, 40 },
@@ -63,6 +64,20 @@ function M.run(root, backend, version, patchStats)
       end
     end
     if engine == "gen2" then
+      data.items.FOCUS_BAND = {
+        index = 1196,
+        name = "FOCUS BAND",
+        holdEffect = "FOCUS_BAND",
+        gen3HoldEffect = 39,
+        holdEffectParam = 10,
+      }
+      data.items.NATIVE_FOCUS_BAND = {
+        index = 196,
+        name = "FOCUS BAND",
+        holdEffect = "FOCUS_BAND",
+        gen3HoldEffect = 39,
+        holdEffectParam = 10,
+      }
       data.type_chart.types = {
         NORMAL = { id = "NORMAL", index = 0, category = "physical" },
         DARK = { id = "DARK", index = 17, category = "special" },
@@ -102,6 +117,14 @@ function M.run(root, backend, version, patchStats)
   local T, rows, moves, hits, calls, trace = f.T, {}, {}, {}, { crit = 0, damage = 0 }, {}
   if patchStats then
     T.eq(f.e.baseAttack, 133, "the identical API-3 species patch loads through both real SDKs")
+  end
+  local sourceItems, restoreItems
+  local bandDef = { name = "FOCUS BAND", pocket = "ITEMS", holdEffect = 39, holdEffectParam = 10 }
+  if native and options.adjustment then
+    sourceItems = require("src.core.game3.items_data")
+    restoreItems = { sourceItems._byId, sourceItems._byName, sourceItems._pack }
+    sourceItems._byId, sourceItems._byName, sourceItems._pack =
+      { [1196] = bandDef }, {}, { items = { [1196] = bandDef } }
   end
   local mutate
   local stopCrit = f.e.api.hooks:wrap("battle.crit", function()
@@ -311,6 +334,19 @@ function M.run(root, backend, version, patchStats)
     if spec.substitute then
       target.substituteHP = spec.substitute
     end
+    if options.adjustment then
+      bandDef.holdEffectParam = spec.chance or 10
+      if native then
+        target.item, target.mon.item =
+          spec.noItem and 0 or spec.item or 1196, spec.noItem and 0 or spec.item or 1196
+      else
+        f.data.items.FOCUS_BAND.holdEffectParam = spec.chance or 10
+        target.items, target.mon.item = f.data.items, spec.item == 196 and "NATIVE_FOCUS_BAND" or "FOCUS_BAND"
+        if spec.noItem then
+          target.mon.item = nil
+        end
+      end
+    end
     if spec.endure then
       target.mon.hp = 4
       if native then
@@ -322,8 +358,15 @@ function M.run(root, backend, version, patchStats)
     if spec.lowHP then
       target.mon.hp = spec.lowHP
     end
-    local phase, number = "critical", 0
+    local phase, number, bandNumber = "critical", 0, 0
     b.rng = function(lo, hi)
+      if lo == 0 and hi == 99 then
+        bandNumber = bandNumber + 1
+        local values = spec.bands or { 99 }
+        local value = values[math.min(bandNumber, #values)]
+        trace[#trace + 1] = { kind = "focusBand", value = value }
+        return value
+      end
       if lo == 1 and hi == 100 then
         return spec.miss and 100 or 1
       end
@@ -416,6 +459,33 @@ function M.run(root, backend, version, patchStats)
     { name = "callback-user-hp", dynamic = "userHP" },
     { name = "accuracy-wake", allBlocked = true, dynamic = "accuracy" },
   }
+  if options.adjustment then
+    specs = {
+      { name = "no-band", noItem = true, lowHP = 4 },
+      { name = "native-band-nonlethal", item = 196, bands = { 0, 99 }, lowHP = 4, firstProc = true },
+      { name = "native-band-lethal", item = 196, bands = { 0 }, lowHP = 1 },
+      { name = "nonlethal-proc", bands = { 0, 99 }, lowHP = 1000 },
+      { name = "failed-procs", bands = { 99 }, lowHP = 4 },
+      { name = "always-proc", bands = { 0 }, lowHP = 1 },
+      { name = "nonlethal-proc-does-not-stick", bands = { 0, 99 }, lowHP = 4, firstProc = true },
+      {
+        name = "substitute-proc-does-not-stick",
+        bands = { 0, 99 },
+        lowHP = 4,
+        substitute = 1,
+        firstProc = true,
+      },
+      { name = "substitute-survives", bands = { 0, 99 }, lowHP = 4, substitute = 1000 },
+      { name = "endure-with-band", bands = { 0, 99 }, lowHP = 4, endure = true },
+      { name = "zero-chance", chance = 0, bands = { 0 }, lowHP = 4 },
+      { name = "chance-boundary-win", bands = { 9, 10 }, lowHP = 4, firstProc = true },
+      { name = "chance-boundary-loss", bands = { 10 }, lowHP = 4 },
+      { name = "late-proc", bands = { 99, 0, 99 }, lowHP = 4, firstProc = true, late = true },
+      { name = "remove-after-proc", bands = { 0, 99 }, lowHP = 4, firstProc = true, remove = true },
+      { name = "equip-after-hit", noItem = true, bands = { 0 }, lowHP = 4, equip = true },
+      { name = "next-move-resets", bands = { 0 }, lowHP = 1, repeatMove = true },
+    }
+  end
   for id = 0, 3 do
     for _, spec in ipairs(specs) do
       local b, user, target, party = fresh(spec, id)
@@ -458,6 +528,20 @@ function M.run(root, backend, version, patchStats)
           end
         end
       end
+      if spec.remove or spec.equip then
+        mutate = function(number)
+          if number ~= 1 then
+            return
+          end
+          if native then
+            target.item, target.mon.item = spec.remove and 0 or 1196, spec.remove and 0 or 1196
+          elseif spec.remove then
+            target.mon.item = nil
+          else
+            target.mon.item = "FOCUS_BAND"
+          end
+        end
+      end
       local stopAccuracy
       if spec.dynamic == "accuracy" then
         stopAccuracy = f.e.api.hooks:wrap("battle.accuracy", function(nextAccuracy, ...)
@@ -467,10 +551,22 @@ function M.run(root, backend, version, patchStats)
       end
       local before = target.mon.hp
       use(b, id)
+      if spec.repeatMove then
+        T.eq(#hits, 6, "the first move completes six held-item saves")
+        bandDef.holdEffectParam = 0
+        if not native then
+          f.data.items.FOCUS_BAND.holdEffectParam = 0
+        end
+        use(b, id)
+      end
       if stopAccuracy then
         stopAccuracy()
       end
-      T.eq(pp(user), spec.sleep and 20 or 19, "native Beat Up spends PP once, not per participant")
+      T.eq(
+        pp(user),
+        spec.repeatMove and 18 or spec.sleep and 20 or 19,
+        "native Beat Up spends PP once, not per participant"
+      )
       T.same(
         calls,
         { crit = 0, damage = 0 },
@@ -517,6 +613,44 @@ function M.run(root, backend, version, patchStats)
       if spec.name == "ko-stop" then
         T.eq(#hits, 1, "remaining strikes stop when the target faints")
       end
+      if options.adjustment then
+        local expectedHits, expectedHP = 6, 1
+        if
+          spec.noItem and not spec.equip
+          or spec.name == "failed-procs"
+          or spec.chance == 0
+          or spec.name == "chance-boundary-loss"
+        then
+          expectedHits, expectedHP = 2, 0
+        elseif spec.firstProc then
+          expectedHits, expectedHP = spec.late and 3 or 2, 0
+        elseif spec.name == "nonlethal-proc" then
+          expectedHP = 966
+        elseif spec.name == "substitute-survives" then
+          expectedHP = 4
+        elseif spec.repeatMove then
+          expectedHits, expectedHP = 7, 0
+        end
+        T.eq(#hits, expectedHits, spec.name .. " native strike count")
+        T.eq(target.mon.hp, expectedHP, spec.name .. " native target HP")
+        local bands = 0
+        for _, draw in ipairs(trace) do
+          if draw.kind == "focusBand" then
+            bands = bands + 1
+          end
+        end
+        local expectedBands = spec.remove and 1
+          or spec.equip and expectedHits - 1
+          or spec.noItem and 0
+          or expectedHits
+        T.eq(bands, expectedBands, "every reached strike adjusts exactly once, including Substitute/Endure")
+        for k = 1, #trace do
+          if trace[k].kind == "focusBand" then
+            T.eq(trace[k - 1] and trace[k - 1].kind, "variation", "Focus Band follows that strike's variance")
+            T.eq(trace[k - 2] and trace[k - 2].kind, "critical", "critical precedes that strike's adjustment")
+          end
+        end
+      end
       local memory = native and (target.lastSpecialDamageTaken or 0) or (target.specialDamageTaken or 0)
       if spec.endure then
         T.eq(target.mon.hp, 1, "Endure retains one HP through the remaining strikes")
@@ -544,6 +678,9 @@ function M.run(root, backend, version, patchStats)
   stopMove()
   stopDamage()
   stopCrit()
+  if sourceItems then
+    sourceItems._byId, sourceItems._byName, sourceItems._pack = unpack(restoreItems, 1, 3)
+  end
   f.close()
   return rows
 end
