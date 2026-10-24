@@ -138,7 +138,20 @@ def main():
         address=struct.unpack_from('<I',emrom,em_specials['at']+i*4)[0]-0x08000001
         for row in emerald.by_address.get(address,[]):em_names.setdefault(row['name'],i)
     names={'ScrSpecial_HealPlayerParty':'HealPlayerParty','Overworld_SetWarpDestination':'SetWarpDestination'}
-    result['specialRemap']=[em_names.get(names.get(n,n),em_names.get(n.removeprefix('ScrSpecial_'),-1)) for n in specials]
+    def canonical_special(name):
+        root=name.removeprefix('ScrSpecial_')
+        candidates={em_names[n] for n in (names.get(name,name),root,'Special_'+root,'Script_'+root) if n in em_names}
+        assert len(candidates)<=1,(name,candidates)
+        return next(iter(candidates),-1)
+    result['specialRemap']=[canonical_special(n) for n in specials]
+    result['specialIndexMap']={}
+    for native,canonical in enumerate(result['specialRemap']):
+        if canonical<0:continue
+        key=str(canonical)
+        if key in result['specialIndexMap']:
+            previous=result['specialIndexMap'][key]
+            assert at(specials[native])==at(specials[previous]),(canonical,native,previous)
+        else:result['specialIndexMap'][key]=native
     for i,n in enumerate(specials):
         assert (struct.unpack_from('<I',rom,special_at+i*4)[0]&~1)-0x08000000==at(n)
     # WarpToTruck's map is also declared in the source's canonical map group

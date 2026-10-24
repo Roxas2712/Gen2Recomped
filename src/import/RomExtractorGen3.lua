@@ -13819,6 +13819,14 @@ RomExtractorGen3.FIELD_CALLS = {
 -- is what lets a stage read what a special DOES rather than take its name on
 -- trust.
 function RomExtractorGen3:specialAddress(index)
+  -- Stage readers name engine/Emerald specials; the RS cartridge numbers
+  -- the same functions differently. Unknown identities must not probe an
+  -- unrelated native function at the engine's numeric slot.
+  local indices = self.manifest.specialIndexMap
+  if indices then
+    index = indices[tostring(index)]
+    if index == nil then return nil end
+  end
   local base = self:symbol("gSpecials")
   if not base then return nil end
   local ptr = self.rom:u32(base + (tonumber(index) or 0) * 4)
