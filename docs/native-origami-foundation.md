@@ -112,6 +112,14 @@ OpenGL recovery incurs per-frame GPU readback/image transfer; performance,
 context loss and broader platform acceptance remain open. See the
 [metadata report](qa/native-foundation/window-frame-recovery.json) for scope.
 
+The [presentation performance follow-up](window-frame-performance.md) removes
+an OpenGL full-frame Lua copy and reuses ordinary LÖVE 12 readback buffers.
+The same-runtime, same-pixel-size comparison against Metal covers 28,800
+timed frames and 96 actual-window proofs. Median OpenGL CPU cost falls
+19–25% in three sampled game/size cases; larger Emerald remains noisy with
+no reliable wall-time gain. Metal remains lower-CPU. This is scoped evidence,
+not general FPS/performance acceptance; full trial distributions are retained.
+
 ## Remaining engine work
 
 | Area | Remaining acceptance/work |

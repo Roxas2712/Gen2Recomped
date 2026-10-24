@@ -92,9 +92,12 @@ function M.createIfUndefined()
       a.arg(a.msg(view,"layer"),"addSublayer:",self.layer)
     end
     local width,height=data:getDimensions()
-    local bytes=data:getString()
-    assert(#bytes==width*height*4,"OpenGL recovery requires RGBA8")
-    local cfdata=a.cf.CFDataCreate(nil,bytes,#bytes)
+    local size=data:getSize()
+    assert(data:getFormat()=="rgba8" and size==width*height*4,"OpenGL recovery requires RGBA8")
+    -- CFData owns a copy before this call returns. Reading ImageData directly
+    -- avoids an additional full-frame Lua string copy/hash/GC allocation,
+    -- without lending mutable/released LÖVE memory to asynchronous Core Animation.
+    local cfdata=a.cf.CFDataCreate(nil,data:getFFIPointer(),size)
     assert(cfdata~=nil,"OpenGL recovery could not allocate frame data")
     local provider=a.cg.CGDataProviderCreateWithCFData(cfdata)
     local space=a.cg.CGColorSpaceCreateDeviceRGB()

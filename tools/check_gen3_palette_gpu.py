@@ -202,10 +202,15 @@ def main():
     parser.add_argument("--firered", required=True, type=Path)
     parser.add_argument("--out", type=Path, help="New, non-existing output folder")
     parser.add_argument("--backend", choices=("opengl", "metal"))
-    parser.add_argument("--window-frames", action="store_true",
+    parser.add_argument("--engine-ref", default="HEAD",
+                        help="Engine commit/ref to export; acceptance driver stays in this checkout")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--window-frames", action="store_true",
                         help="Continuous frame/movement/resize tests; macOS OS proofs require Pillow")
+    mode.add_argument("--window-performance", action="store_true",
+                     help="Uncapped native frame timings at two sizes, no timed observers/captures")
     args = parser.parse_args()
-    if args.window_frames and sys.platform == "darwin":
+    if (args.window_frames or args.window_performance) and sys.platform == "darwin":
         try:
             import PIL.Image
         except ImportError:
@@ -218,6 +223,8 @@ def main():
         hashes[version] = hashlib.sha1(rom.read_bytes()).hexdigest()
         if hashes[version] != manifest["romSha1"]:
             parser.error(f"Unsupported {version} ROM revision")
+    head = subprocess.check_output(["git", "rev-parse", "--verify", "--end-of-options",
+                                    args.engine_ref + "^{commit}"], cwd=ROOT, text=True).strip()
     token = uuid.uuid4().hex
     run = (args.out or ROOT / ".local/palette-gpu" / ("run-" + token)).resolve()
     run.mkdir(parents=True, exist_ok=False)
@@ -227,7 +234,6 @@ def main():
     print(f"Visible hardware GPU: {gpu['renderer']} / {gpu['device']}", flush=True)
     source = run / "source"
     source.mkdir()
-    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     archive = subprocess.check_output(["git", "archive", head, "main.lua", "conf.lua",
                                        "src", "assets", "data", "tests", "tools"], cwd=ROOT)
     with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
@@ -250,15 +256,17 @@ def main():
         print(f"{version}: full fresh import", flush=True)
         child(love, source, env, out / "import.log", 900)
         env.pop("POKEPORT_IMPORT_ROM"); env.pop("POKEPORT_IMPORT_ONLY")
-        driver = ROOT / "tools/gen3_window_frame_driver.lua" if args.window_frames else DRIVER
+        driver = (ROOT / "tools/window_frame_performance_driver.lua" if args.window_performance
+                  else ROOT / "tools/gen3_window_frame_driver.lua" if args.window_frames else DRIVER)
         env.update(POKEPORT_DRIVER=str(driver), PALETTE_GPU_ROM=str(roms[version]),
                    PALETTE_GPU_MAP=map_id, PALETTE_GPU_X=str(x), PALETTE_GPU_Y=str(y))
         print(f"{version}: real Game/Overworld GPU test", flush=True)
         tick, proofs = None, {}
-        if args.window_frames and sys.platform == "darwin":
+        if (args.window_frames or args.window_performance) and sys.platform == "darwin":
             tick, proofs = os_window_proof(out)
             env["POKEPORT_OS_WINDOW_PROOF"] = "1"
-        child(love, source, env, out / "game.log", 600 if args.window_frames else 180, tick)
+        child(love, source, env, out / "game.log",
+              600 if (args.window_frames or args.window_performance) else 180, tick)
         report = json.loads((out / "gpu.json").read_text())
         if not report.get("pass"):
             raise RuntimeError(f"{version}: acceptance report did not pass")
@@ -269,7 +277,9 @@ def main():
         if hashlib.sha1(roms[version].read_bytes()).hexdigest() != hashes[version]:
             raise RuntimeError(f"{version}: source ROM changed during test")
         result["games"][version] = report
-        print(f"{version}: PASS ({report['checks']} checks)", flush=True)
+        summary = (f"{sum(p['measuredFrames'] for p in report['phases'])} measured frames"
+                   if args.window_performance else f"{report['checks']} checks")
+        print(f"{version}: PASS ({summary})", flush=True)
     (run / "private-run.json").write_text(json.dumps(private, indent=2) + "\n")
     (run / "result.json").write_text(json.dumps(result, indent=2) + "\n")
     print(f"PASS: {run / 'result.json'}", flush=True)

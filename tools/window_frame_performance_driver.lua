@@ -1,0 +1,140 @@
+-- Real native games, deterministic 60 Hz simulation, uncapped rendering.
+-- No observers, screenshots or pixel scans run inside the measured intervals.
+return function(game)
+  local U=require("tests.drivers.util")
+  local Json=require("src.link.Json")
+  local Frame=require("src.render.WindowFrame")
+  local g,timer=love.graphics,love.timer
+  local out=assert(os.getenv("PALETTE_GPU_OUT"))
+  local version=assert(os.getenv("POKEPORT_VERSION"))
+  assert(love.filesystem.getIdentity():match("^gen2%-palette%-gpu%-"))
+  local renderer,api,vendor,device=g.getRendererInfo()
+  local major,minor,revision=love.getVersion()
+  local report={game=version,gpu={renderer=renderer,version=api,vendor=vendor,device=device},
+    runtime={major=major,minor=minor,revision=revision},phases={},
+    simulationHz=60,vsync=0,mainLoopSleepSeconds=.001,
+    measuredPixelReadbackObservers=false,measuredScreenshots=false,
+    readbackTimingAvailable=g.readbackTexture~=nil}
+  local function stats(values)
+    local sorted,total={},0
+    for i,v in ipairs(values) do sorted[i]=v;total=total+v end
+    table.sort(sorted)
+    local function percentile(p)return sorted[math.max(1,math.ceil(#sorted*p))]*1000 end
+    return {samples=#values,meanMs=total/#values*1000,p50Ms=percentile(.5),
+      p95Ms=percentile(.95),p99Ms=percentile(.99),maxMs=sorted[#sorted]*1000}
+  end
+  local phase,insideBody,pending
+  local proofActive,drawCount=false,0
+  local originalDraw=love.draw
+  love.draw=function()
+    originalDraw();drawCount=drawCount+1
+    if not proofActive then return end
+    g.push("all");g.setCanvas();g.origin();g.setShader();g.setScissor()
+    g.setBlendMode("replace","premultiplied")
+    for bit=0,31 do
+      local one=math.floor(drawCount/2^bit)%2==1
+      g.setColor(one and 1 or 0,one and 0 or 1,0,1)
+      g.rectangle("fill",bit*2,0,2,3)
+    end
+    g.pop()
+  end
+  local draw,present,readback=Frame.draw,g.present,g.readbackTexture
+  Frame.draw=function(body,capture)
+    if not phase then return draw(body,capture) end
+    assert(not capture,"capture requested during performance measurement")
+    local at=timer.getTime()
+    pending={start=at,readback=0,readbacks=0}
+    if phase.previousStart then
+      phase.intervals[#phase.intervals+1]=at-phase.previousStart
+    end
+    phase.previousStart=at
+    draw(function()
+      insideBody=true
+      local bodyStart=timer.getTime();body()
+      pending.body=timer.getTime()-bodyStart;insideBody=false
+    end)
+    pending.frame=timer.getTime()-at
+    pending.transfer=pending.frame-pending.body-pending.readback
+  end
+  if readback then
+    g.readbackTexture=function(...)
+      local at=timer.getTime();local data=readback(...)
+      if phase and pending and not insideBody then
+        pending.readback=pending.readback+timer.getTime()-at
+        pending.readbacks=pending.readbacks+1
+      end
+      return data
+    end
+  end
+  g.present=function(...)
+    local at=timer.getTime();present(...)
+    if phase and pending then
+      pending.present=timer.getTime()-at
+      pending.render=pending.frame+pending.present
+      for _,key in ipairs({"body","frame","readback","transfer","present","render"}) do
+        local list=phase[key];list[#list+1]=pending[key]
+      end
+      phase.readbackCalls=phase.readbackCalls+pending.readbacks
+      pending=nil
+    end
+  end
+  local emerald=version=="emerald"
+  local maps=emerald and {{"MAP_G26_N21",10,5},{"MAP_G26_N18",11,10}}
+    or {{"MAP_G03_N00",11,11},{"MAP_G04_N01",6,6}}
+  for _,size in ipairs({{640,480},{960,720}}) do
+    local _,_,flags=love.window.getMode()
+    flags.vsync=0;flags.highdpi=true
+    assert(love.window.setMode(size[1],size[2],flags))
+    local _,_,actualFlags=love.window.getMode()
+    assert(actualFlags.vsync==0,"uncapped benchmark requires vsync disabled")
+    local w,h=g.getDimensions();local pw,ph=g.getPixelDimensions()
+    assert(w==size[1] and h==size[2],"requested dimensions differ")
+    for _,map in ipairs(maps) do
+      U.teleport(game,map[1],map[2],map[3],"down")
+      U.wait(120) -- shader/font/upload/fade warmup, not part of measurement
+      collectgarbage("collect")
+      phase={map=map[1],logicalWidth=w,logicalHeight=h,pixelWidth=pw,pixelHeight=ph,
+        body={},frame={},readback={},transfer={},present={},render={},intervals={},readbackCalls=0}
+      local cpu,wall=os.clock(),timer.getTime()
+      U.wait(300)
+      local elapsed,cpuElapsed=timer.getTime()-wall,os.clock()-cpu
+      local measured=phase;phase=nil;pending=nil
+      local entry={map=map[1],logicalWidth=w,logicalHeight=h,pixelWidth=pw,pixelHeight=ph,
+        mode=Frame.info().mode,measuredFrames=#measured.frame,readbackCalls=measured.readbackCalls,
+        elapsedSeconds=elapsed,cpuMsPerFrame=cpuElapsed/#measured.frame*1000,metrics={}}
+      assert(entry.measuredFrames==300,"missing measured frames")
+      for _,key in ipairs({"body","frame","readback","transfer","present","render","intervals"}) do
+        entry.metrics[key]=stats(measured[key])
+      end
+      assert(renderer~="Metal" or measured.readbackCalls==0,"benchmark changed Metal readback cost")
+      assert(renderer~="OpenGL" or not readback or measured.readbackCalls==300,
+        "each OpenGL recovery frame must use a current readback")
+      report.phases[#report.phases+1]=entry
+      print(string.format("[window-perf] %s %dx%d: render %.3f ms, interval %.3f ms, CPU %.3f ms",
+        map[1],pw,ph,entry.metrics.render.meanMs,entry.metrics.intervals.meanMs,entry.cpuMsPerFrame))
+      if os.getenv("POKEPORT_OS_WINDOW_PROOF")=="1" then
+        -- Outside every timed interval. No Frame.observe/capture: GL must
+        -- present the ordinary reusable buffer, including the changing stamp.
+        proofActive=true
+        local threshold=drawCount
+        U.wait(10)
+        local tag=({"initial-map","second-map","resized","map-return"})[#report.phases]
+        local ffi=require("ffi");ffi.cdef[[int getpid(void);]]
+        local request=assert(io.open(out.."/window-request.json","w"))
+        request:write(Json.encode({phase=tag,pid=tonumber(ffi.C.getpid()),
+          window=assert(require("src.render.MacWindowSurface").windowNumber()),
+          logicalWidth=w,logicalHeight=h,minimumStamp=threshold}));request:close()
+        local deadline=timer.getTime()+30
+        while true do
+          local ack=io.open(out.."/window-"..tag..".ok","r")
+          if ack then ack:close();break end
+          assert(timer.getTime()<deadline,"own-window proof timeout");U.wait(1)
+        end
+        proofActive=false
+      end
+    end
+  end
+  Frame.draw=draw;g.present=present;g.readbackTexture=readback;love.draw=originalDraw
+  report.pass=true
+  local file=assert(io.open(out.."/gpu.json","w"));file:write(Json.encode(report));file:close()
+end

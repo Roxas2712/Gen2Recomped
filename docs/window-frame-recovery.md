@@ -15,6 +15,11 @@ default framebuffer**. Recovery requires GPU readback and an additional image
 copy each frame. Performance acceptance remains open. Healthy OpenGL and
 other platforms retain their direct presentation path.
 
+The subsequent [performance follow-up](window-frame-performance.md) removes
+the Lua frame-string copy and reuses ordinary LÖVE 12 readback destinations.
+It records scoped CPU/frame measurements against Metal, including variance
+and the larger Emerald case without a reliable wall-time gain.
+
 `WindowFrame` redirects the logical screen only while drawing a frame;
 explicit offscreen canvases retain their existing behavior. It restores the
 graphics function and physical target after drawing failures, resizes/releases

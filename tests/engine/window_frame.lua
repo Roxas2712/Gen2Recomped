@@ -119,4 +119,49 @@ eq(g.setCanvas,setCanvas,"native failure leaves graphics function restored")
 eq(target,nil,"native failure leaves physical target restored")
 Frame.shutdown();eq(closes,1,"shutdown removes only owned Cocoa layer")
 eq(reads,dataReleases,"no retained readback images after failures/shutdown")
+
+-- LÖVE 12 can fill an existing destination. Ordinary GL frames reuse exactly
+-- one CPU buffer; externally observed/captured images remain independent.
+failPresent=false
+local allocated,reused=0,0
+g.readbackTexture=function(c,...)
+  reads=reads+1
+  local args={...};local dest=args[7]
+  if dest then
+    reused=reused+1;dest.pixels=c.pixels;return dest
+  end
+  allocated=allocated+1
+  local d={pixels=c.pixels}
+  function d:release()dataReleases=dataReleases+1 end
+  return d
+end
+local startReleases=dataReleases
+for i=1,60 do Frame.draw(function()g.clear("reused-"..i)end) end
+eq(allocated,1,"ordinary GL allocates one readback destination")
+eq(reused,59,"later GL frames fill existing destination")
+eq(window,"reused-60","buffer reuse presents current pixels")
+eq(dataReleases,startReleases,"retained readback remains valid between frames")
+Frame.draw(function()g.clear("independent-capture")end,function(d)
+  eq(d.pixels,"independent-capture","capture gets current independent pixels")
+end)
+eq(allocated,2,"capture does not expose mutable shared buffer")
+eq(dataReleases,startReleases+1,"independent capture released immediately")
+Frame.observe(function(d)eq(d.pixels,"observer","observer has current pixels")end)
+Frame.draw(function()g.clear("observer")end)
+Frame.observe(nil)
+eq(allocated,3,"observer does not expose shared buffer")
+w=w+1
+Frame.draw(function()g.clear("resized-buffer")end)
+eq(allocated,4,"resize allocates compatible readback destination")
+eq(dataReleases,startReleases+3,"resize releases previous readback")
+failPresent=true
+ok=pcall(Frame.draw,function()g.clear("reuse-error")end)
+check(not ok,"reused readback presentation error propagates")
+Frame.shutdown()
+eq(dataReleases,startReleases+4,"shutdown releases retained buffer after native failure")
+local beforeMetal=allocated
+backend="Metal"
+Frame.draw(function()g.clear("metal-no-readback")end)
+eq(allocated,beforeMetal,"Metal does not allocate readback buffers")
+Frame.shutdown()
 T.finish()

@@ -3,17 +3,33 @@
 -- never a late-acquired framebufferOnly drawable. Broken macOS OpenGL system
 -- framebuffers use the same target and an explicitly detected Cocoa recovery.
 local M = {}
-local canvas,bridge,observer
+local canvas,bridge,observer,readbackBuffer
 local mode="direct"
 local frames=0
-local function readback(target)
-  if love.graphics.readbackTexture then return love.graphics.readbackTexture(target) end
+local function releaseReadback()
+  if readbackBuffer then readbackBuffer:release();readbackBuffer=nil end
+end
+local function readback(target,reuse)
+  if love.graphics.readbackTexture then
+    if reuse then
+      if not readbackBuffer then
+        readbackBuffer=love.graphics.readbackTexture(target)
+      else
+        -- LÖVE 12's synchronous readback destination (argument 8). The Cocoa
+        -- presenter copies it before the next frame may overwrite the bytes.
+        love.graphics.readbackTexture(target,nil,1,nil,nil,nil,nil,readbackBuffer)
+      end
+      return readbackBuffer
+    end
+    return love.graphics.readbackTexture(target)
+  end
   return target:newImageData()
 end
 function M.observe(callback) observer=callback end
 function M.info() return {mode=mode,frames=frames} end
 function M.shutdown()
   if bridge then bridge:close();bridge=nil end
+  releaseReadback()
   if canvas then canvas:release();canvas=nil end
   observer=nil;mode="direct"
 end
@@ -47,6 +63,7 @@ function M.draw(body,capture)
   if g.getPixelDimensions then pw,ph=g.getPixelDimensions() end
   local dpi=ph/wh
   if not canvas or canvas:getPixelWidth()~=pw or canvas:getPixelHeight()~=ph then
+    releaseReadback()
     if canvas then canvas:release() end
     canvas=g.newCanvas(ww,wh,{format="normal",dpiscale=dpi,msaa=0})
     canvas:setFilter("nearest","nearest")
@@ -65,7 +82,7 @@ function M.draw(body,capture)
   if not ok then error(err,0) end
   frames=frames+1
   local data
-  if bridge or capture or observer then data=readback(canvas) end
+  if bridge or capture or observer then data=readback(canvas,bridge and not capture and not observer) end
   local success,reason=xpcall(function()
     if bridge then
       bridge:present(data,ww,wh)
@@ -83,7 +100,7 @@ function M.draw(body,capture)
       if observer then observer(data,M.info()) end
     end
   end,debug.traceback)
-  if data then data:release() end
+  if data and data~=readbackBuffer then data:release() end
   if not success then error(reason,0) end
 end
 return M
