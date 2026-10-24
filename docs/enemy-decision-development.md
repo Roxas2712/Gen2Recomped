@@ -13,6 +13,13 @@ repeat/claim/failing `next`, stock reservation, modifying a delegated item,
 native HP thresholds/status cures and right-hand GBA double slots. This is not
 yet proof of complete native battle/controller behavior.
 
+The expanded strict matrix currently **rejects FireRed and Emerald** for a
+real automatic Perish Song switch difference: the reference switches to BENCH
+through the delegate, while this host still keeps ENEMY. The same new native
+Gen-2 Perish case matches Gold/Silver/Crystal. This unresolved automatic-policy
+gap is a publication gate, not a passing or waived observation. Earlier Potion
+and explicit-action comparisons must not be presented as full decision parity.
+
 The implementation preserves Gen 2's imperative boolean query and GBA's
 deferred action/stock-consumption contract. The public callback receives the
 original battle handle, as in the reference. Native automatic selection and

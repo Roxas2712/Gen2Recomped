@@ -124,6 +124,31 @@ function C.run(root, backend, version, api, format, inspect)
     rows[#rows + 1] =
       { mode = mode, spent = f.gen == 2 and action or f.kind(action), hp = f.mon().hp, stock = f.used() }
   end
+  do
+    local b = f.freshDecision({})
+    out.mode = "delegate"
+    if f.gen == 2 then
+      b.trainer.attributes[6] = 1
+      if backend == "gen1" then
+        b:volatile(b.enemy).perish = 1
+      else
+        b.enemy.perishTurns = 1
+      end
+    elseif backend == "gen1" then
+      b.enemy.perishSong, b.enemy.expPerishTurns = true, 0
+    else
+      b.enemy.perishTurns = 0
+    end
+    local action = f.query()
+    if f.gen == 3 then
+      f.execute(action)
+    end
+    rows[#rows + 1] = {
+      mode = "native-perish-switch",
+      spent = f.gen == 2 and action or f.kind(action),
+      after = f.mon().nickname,
+    }
+  end
   if f.gen == 2 then
     for _, mode in ipairs({ "no-attributes", "higher-bench" }) do
       local b = f.freshDecision({ f.item("POTION") })
