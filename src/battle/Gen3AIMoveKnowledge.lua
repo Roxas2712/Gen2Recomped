@@ -3,19 +3,22 @@ local K = {}
 function K.isEmerald()
   return require("src.core.GameVersion").get() == "emerald"
 end
-local function number(battle, value)
+local function resolve(battle, value)
   if type(value) == "table" then
     value = value.id
   end
   if value == nil or value == "" then
-    return 0
+    return nil
   end
   local n = tonumber(value)
   if n then
     return n
   end
   local def = battle.data and battle.data.moves and battle.data.moves[value]
-  return def and tonumber(def.index) or 0
+  return def and tonumber(def.index) or nil
+end
+local function number(battle, value)
+  return resolve(battle, value) or 0
 end
 local function own(battle, battler)
   local moves = battler and (battler.curMoves or battler.mon and battler.mon.moves) or {}
@@ -96,7 +99,7 @@ local function hasMove(vm, args, negate)
     local moves = b and (b.curMoves or b.mon and b.mon.moves) or {}
     local found = false
     for i = 1, 4 do
-      if moves[i] ~= nil and number(vm.battle, moves[i]) == want then
+      if moves[i] ~= nil and resolve(vm.battle, moves[i]) == want then
         found = true
       end
     end
@@ -129,9 +132,21 @@ local function hasEffect(vm, args, negate)
     end
   else
     local b = (which == 1 or K.isEmerald() and which == 3) and vm.user or vm.target
-    for _, move in ipairs(own(vm.battle, b)) do
-      if move ~= 0 and effect(vm, move) == want then
-        found = true
+    local list = own(vm.battle, b)
+    if not K.isEmerald() then
+      -- FireRed resolves actual records, retaining missing-name errors rather
+      -- than confusing an absent definition with the native MOVE_NONE row.
+      list = b and (b.curMoves or b.mon and b.mon.moves) or {}
+    end
+    for i = 1, 4 do
+      local move = list[i]
+      if type(move) == "table" then
+        move = move.id
+      end
+      if move ~= nil and move ~= 0 and move ~= "" then
+        if effect(vm, resolve(vm.battle, move) or move) == want then
+          found = true
+        end
       end
     end
   end
