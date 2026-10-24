@@ -142,6 +142,16 @@ detached. Separate OpenGL/Metal trials and Emerald GPU regressions are recorded
 with complete metadata; native window waits remain a separate measured cost.
 The ROM-free runner passes 103/103 engine suites, 3/3 SDK suites and B30.
 
+The [animated-palette CPU follow-up](emerald-metal-cpu.md) removes repeated
+Emerald RGB-bank copying with a native four-state sample LRU. Complete current
+source validation precedes reuse; public samples remain detached. Repeated
+Metal trials lower sampled main-thread CPU by 30–50%, with complete CPU and
+negative FireRed controls reported separately. Longer OpenGL checks also expose
+and repair inherited LuaJIT CType exhaustion in the macOS presenter by binding
+Objective-C function-pointer ABIs once. The ROM-free runner passes 105/105
+engine suites, 3/3 SDK suites and B30. This remains scoped native flat-world
+acceptance, with the Origami port paused.
+
 ## Remaining engine work
 
 | Area | Remaining acceptance/work |

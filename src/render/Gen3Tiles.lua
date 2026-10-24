@@ -136,9 +136,15 @@ function Gen3Tiles:setPaletteTicks(ticks)
     self.paletteState.ticks = ticks
     return false
   end
-  local state, reason = cycles.sample(
-    { primary = self.primary, secondary = self.secondary },
-    { palettesInPrimary = self.palettesInPrimary }, ticks)
+  local state, reason
+  if self.paletteSampler then
+    state, reason = self.paletteSampler:sample(self, self, ticks)
+  else
+    state, reason = cycles.sample(self, self, ticks)
+    if state and (#state.primaryFrames > 0 or #state.secondaryFrames > 0) then
+      self.paletteSampler = require("src.render.Gen3PaletteSamples").new(self, self, state)
+    end
+  end
   local changed = (state and state.contentKey) ~= (self.paletteState and self.paletteState.contentKey)
   self.paletteState = state
   return changed, reason

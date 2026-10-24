@@ -23,16 +23,26 @@ local function api()
     void CGImageRelease(void*);
   ]]
   local objc=ffi.load("/usr/lib/libobjc.A.dylib")
+  -- Anonymous function-pointer declarations create fresh LuaJIT CTypes on
+  -- every cast. These types are never collected: casting in present() would
+  -- exhaust the type table during a long OpenGL session. Bind each ABI once.
   local send=ffi.cast("void*(*)(void*,void*)",objc.objc_msgSend)
+  local sendArg=ffi.cast("void(*)(void*,void*,void*)",objc.objc_msgSend)
+  local sendRect=ffi.cast("void(*)(void*,void*,G2SurfaceRect)",objc.objc_msgSend)
+  local sendBool=ffi.cast("void(*)(void*,void*,bool)",objc.objc_msgSend)
+  local number=ffi.cast("long(*)(void*,void*)",objc.objc_msgSend)
+  local at=ffi.cast("void*(*)(void*,void*,unsigned long)",objc.objc_msgSend)
+  local string=ffi.cast("void*(*)(void*,void*,const char*)",objc.objc_msgSend)
   local function msg(object,selector) return send(object,objc.sel_registerName(selector)) end
   local function arg(object,selector,value)
-    ffi.cast("void(*)(void*,void*,void*)",objc.objc_msgSend)(object,objc.sel_registerName(selector),value)
+    sendArg(object,objc.sel_registerName(selector),value)
   end
   local function rect(object,w,h)
-    ffi.cast("void(*)(void*,void*,G2SurfaceRect)",objc.objc_msgSend)(object,
+    sendRect(object,
       objc.sel_registerName("setFrame:"),ffi.new("G2SurfaceRect",{{0,0},{w,h}}))
   end
-  native={ffi=ffi,objc=objc,msg=msg,arg=arg,rect=rect,
+  native={ffi=ffi,objc=objc,msg=msg,arg=arg,rect=rect,sendBool=sendBool,
+    number=number,at=at,string=string,
     cg=ffi.load("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics"),
     cf=ffi.load("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation"),
     quartz=ffi.load("/System/Library/Frameworks/QuartzCore.framework/QuartzCore"),
@@ -51,16 +61,16 @@ function M.windowNumber()
     -- NSApplication.windows contains this process's windows only. SDL need
     -- not designate a main/key window when the test runs in the background.
     local windows=a.msg(app,"windows")
-    local number=a.ffi.cast("long(*)(void*,void*)",a.objc.objc_msgSend)
+    local number=a.number
     local count=tonumber(number(windows,a.objc.sel_registerName("count")))
-    local at=a.ffi.cast("void*(*)(void*,void*,unsigned long)",a.objc.objc_msgSend)
+    local at=a.at
     for i=0,count-1 do
       local candidate=at(windows,a.objc.sel_registerName("objectAtIndex:"),i)
       if number(candidate,a.objc.sel_registerName("isVisible"))~=0 then window=candidate;break end
     end
   end
   if window==nil then return nil end
-  return tonumber(a.ffi.cast("long(*)(void*,void*)",a.objc.objc_msgSend)(window,
+  return tonumber(a.number(window,
     a.objc.sel_registerName("windowNumber")))
 end
 
@@ -84,7 +94,7 @@ function M.createIfUndefined()
       self:close()
       self.view=view
       self.layer=a.msg(a.msg(a.objc.objc_getClass("CALayer"),"layer"),"retain")
-      local string=a.ffi.cast("void*(*)(void*,void*,const char*)",a.objc.objc_msgSend)
+      local string=a.string
       local nearest=string(a.objc.objc_getClass("NSString"),
         a.objc.sel_registerName("stringWithUTF8String:"),"nearest")
       a.arg(self.layer,"setMagnificationFilter:",nearest)
@@ -106,7 +116,7 @@ function M.createIfUndefined()
     if image~=nil then
       local transaction=a.objc.objc_getClass("CATransaction")
       a.msg(transaction,"begin")
-      a.ffi.cast("void(*)(void*,void*,bool)",a.objc.objc_msgSend)(transaction,
+      a.sendBool(transaction,
         a.objc.sel_registerName("setDisableActions:"),true)
       a.rect(self.layer,ww,wh)
       a.arg(self.layer,"setContents:",image)

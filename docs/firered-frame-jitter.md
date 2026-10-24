@@ -146,3 +146,10 @@ Reproduce with `tools/check_gen3_palette_gpu.py --window-performance` and the
 same private supported ROMs and separate LÖVE runtime, once for `--backend
 opengl` and once for `--backend metal`. Add `--engine-ref f3fe09f` for the baseline.
 The launcher performs fresh imports rather than loading a player cache.
+
+The subsequent [Emerald Metal CPU investigation](emerald-metal-cpu.md) addresses
+animated sample copying, adds separate main-thread CPU measurements and longer
+matched workload trials, and fixes inherited macOS presenter CType exhaustion
+found during FireRed regression checks. Its current results and negative timing
+controls supersede performance inferences from this earlier short comparison;
+the historical measurements above remain unchanged.

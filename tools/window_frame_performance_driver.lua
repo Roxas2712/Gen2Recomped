@@ -5,6 +5,12 @@ return function(game)
   local Json=require("src.link.Json")
   local Frame=require("src.render.WindowFrame")
   local g,timer=love.graphics,love.timer
+  local threadClock
+  if love.system.getOS()=="OS X" then
+    local ffi=require("ffi")
+    ffi.cdef[[unsigned long long clock_gettime_nsec_np(int);]]
+    threadClock=function()return tonumber(ffi.C.clock_gettime_nsec_np(16))/1e9 end
+  end
   local out=assert(os.getenv("PALETTE_GPU_OUT"))
   local version=assert(os.getenv("POKEPORT_VERSION"))
   assert(love.filesystem.getIdentity():match("^gen2%-palette%-gpu%-"))
@@ -14,7 +20,7 @@ return function(game)
     runtime={major=major,minor=minor,revision=revision},phases={},
     simulationHz=60,vsync=0,mainLoopSleepSeconds=.001,
     measuredPixelReadbackObservers=false,measuredScreenshots=false,
-    readbackTimingAvailable=g.readbackTexture~=nil}
+    readbackTimingAvailable=g.readbackTexture~=nil,mainThreadCpuAvailable=threadClock~=nil}
   local function stats(values)
     local sorted,total={},0
     for i,v in ipairs(values) do sorted[i]=v;total=total+v end
@@ -28,6 +34,12 @@ return function(game)
   local update,gc=game.update,collectgarbage
   local Tiles=require("src.render.Gen3Tiles")
   local paletteTicks=Tiles.setPaletteTicks
+  local Cycles=require("src.render.Gen3PaletteCycles")
+  local fullSample=Cycles.sample
+  Cycles.sample=function(...)
+    if phase then phase.fullPaletteSamples=phase.fullPaletteSamples+1 end
+    return fullSample(...)
+  end
   game.update=function(self,...)
     if not phase then return update(self,...) end
     gcCost=0
@@ -106,7 +118,7 @@ return function(game)
     or {{"MAP_G03_N00",11,11},{"MAP_G04_N01",6,6}}
   local Overworld=require("src.world.OverworldController")
   local computeNeighbors=Overworld.computeNeighbors
-  if not emerald then
+  do
     -- Benchmark-only construction order. pairs(connections) otherwise assigns
     -- seeded constructor RNG draws to different neighbouring NPCs. Keep the
     -- returned maps/placements intact and sort before NPC construction.
@@ -120,20 +132,24 @@ return function(game)
       return list
     end
   end
-  report.npcConstruction=emerald and "seeded" or "seeded-sorted-neighbors-fresh-pool"
+  report.npcConstruction="seeded-sorted-neighbors-fresh-pool"
   local probes={}
   local function npcWorkload(world)
-    local values={}
-    local function add(npc)
+    local function row(npc,ox,oy)
+      local values={tostring(npc.id),tostring(npc.def and npc.def.sprite),tostring(ox),tostring(oy)}
       for _,key in ipairs({"cellX","cellY","targetX","targetY","facing","moving","timer"}) do
         values[#values+1]=tostring(npc[key])
       end
+      return table.concat(values,"|")
     end
-    values[#values+1]="home:"..#world.npcs
-    for _,npc in ipairs(world.npcs) do add(npc) end
-    values[#values+1]="ghosts:"..#world.ghosts
-    for _,ghost in ipairs(world.ghosts) do add(ghost.npc) end
-    return table.concat(values,"|")
+    local home,ghosts={},{}
+    for _,npc in ipairs(world.npcs) do home[#home+1]=row(npc,0,0) end
+    for _,ghost in ipairs(world.ghosts) do ghosts[#ghosts+1]=row(ghost.npc,ghost.ox,ghost.oy) end
+    -- Dynamic entry scripts can append equivalent actors in a different list
+    -- order. Compare identities, sprites, placements and state canonically;
+    -- do not change native update/draw methods or their actor lists.
+    table.sort(home);table.sort(ghosts)
+    return "home:"..#home.."\n"..table.concat(home,"\n").."\nghosts:"..#ghosts.."\n"..table.concat(ghosts,"\n")
   end
   for _,size in ipairs({{640,480},{960,720}}) do
     local _,_,flags=love.window.getMode()
@@ -146,33 +162,41 @@ return function(game)
     for _,map in ipairs(maps) do
       local seed=27122026+#report.phases
       math.randomseed(seed);love.math.setRandomSeed(seed)
-      if not emerald then Overworld.npcPool=nil end
+      Overworld.npcPool=nil
       U.teleport(game,map[1],map[2],map[3],"down")
-      U.wait(120) -- shader/font/upload/fade warmup, not part of measurement
+      U.wait(600) -- shader/JIT/upload/fade warmup, not part of measurement
       local TR=require("src.render.TileRenderer")
       local cacheBefore=TR.gen3PaletteCacheStats and TR.gen3PaletteCacheStats()
       local world=game.overworld
       probes[#probes+1]=assert(world.map.renderer.gen3).tiles
       local beforeNPC=npcWorkload(world)
+      local sampler=world.map.renderer.gen3.tiles.paletteSampler
+      local samplerBefore=sampler and sampler:stats()
+      local stackBefore=require("src.core.StateStack").describe(game.stack:top())
       collectgarbage("collect")
       phase={map=map[1],logicalWidth=w,logicalHeight=h,pixelWidth=pw,pixelHeight=ph,
         body={},frame={},readback={},transfer={},present={},render={},intervals={},
-        update={},gcStep={},paletteSync={},readbackCalls=0}
-      local cpu,wall=os.clock(),timer.getTime()
-      U.wait(300)
+        update={},gcStep={},paletteSync={},readbackCalls=0,fullPaletteSamples=0}
+      local cpu,wall,thread=os.clock(),timer.getTime(),threadClock and threadClock()
+      U.wait(600)
       local elapsed,cpuElapsed=timer.getTime()-wall,os.clock()-cpu
+      local threadElapsed=thread and threadClock()-thread
       local measured=phase;phase=nil;pending=nil
       local entry={map=map[1],logicalWidth=w,logicalHeight=h,pixelWidth=pw,pixelHeight=ph,
         mode=Frame.info().mode,measuredFrames=#measured.frame,readbackCalls=measured.readbackCalls,
         elapsedSeconds=elapsed,cpuMsPerFrame=cpuElapsed/#measured.frame*1000,metrics={},
-        randomSeed=seed,npcWorkloadBefore=beforeNPC,npcWorkloadAfter=npcWorkload(world)}
+        randomSeed=seed,npcWorkloadBefore=beforeNPC,npcWorkloadAfter=npcWorkload(world),
+        stackBefore=stackBefore,stackAfter=require("src.core.StateStack").describe(game.stack:top()),
+        fullPaletteSamples=measured.fullPaletteSamples,
+        mainThreadCpuMsPerFrame=threadElapsed and threadElapsed/#measured.frame*1000}
+      if samplerBefore then entry.paletteSamples={before=samplerBefore,after=sampler:stats()} end
       if cacheBefore then entry.paletteCache={before=cacheBefore,after=TR.gen3PaletteCacheStats()} end
-      assert(entry.measuredFrames==300,"missing measured frames")
+      assert(entry.measuredFrames==600,"missing measured frames")
       for _,key in ipairs({"body","frame","readback","transfer","present","render","intervals","update","gcStep","paletteSync"}) do
         entry.metrics[key]=stats(measured[key])
       end
       assert(renderer~="Metal" or measured.readbackCalls==0,"benchmark changed Metal readback cost")
-      assert(renderer~="OpenGL" or not readback or measured.readbackCalls==300,
+      assert(renderer~="OpenGL" or not readback or measured.readbackCalls==600,
         "each OpenGL recovery frame must use a current readback")
       report.phases[#report.phases+1]=entry
       print(string.format("[window-perf] %s %dx%d: render %.3f ms, interval %.3f ms, CPU %.3f ms",
@@ -205,16 +229,18 @@ return function(game)
   for i,source in ipairs(probes) do
     local probe=Tiles.new({primary=source.primary,secondary=source.secondary},source)
     paletteTicks(probe,0)
+    for tick=1,128 do paletteTicks(probe,tick) end
     collectgarbage("collect");collectgarbage("stop")
     local before=collectgarbage("count")
-    for tick=1,120 do paletteTicks(probe,tick) end
-    report.phases[i].paletteAllocationProbe={samples=120,
+    for tick=129,248 do paletteTicks(probe,tick) end
+    report.phases[i].paletteAllocationProbe={samples=120,warmupTicks=128,
       luaKiBPerSample=(collectgarbage("count")-before)/120,
       static=#probe.paletteState.primaryFrames==0 and #probe.paletteState.secondaryFrames==0}
     collectgarbage("restart");collectgarbage("collect")
   end
   Frame.draw=draw;g.present=present;g.readbackTexture=readback;love.draw=originalDraw
   game.update=update;collectgarbage=gc;Tiles.setPaletteTicks=paletteTicks
+  Cycles.sample=fullSample
   Overworld.computeNeighbors=computeNeighbors
   report.pass=true
   local file=assert(io.open(out.."/gpu.json","w"));file:write(Json.encode(report));file:close()
