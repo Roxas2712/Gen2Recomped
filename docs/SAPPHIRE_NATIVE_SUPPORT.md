@@ -19,6 +19,10 @@ slots, 138 movement actions, its own pocket numbering and canonical type ids
 for the cartridge's abbreviated type names. RS's raw 4bpp normal font and
 mapped small healthbox font are decoded separately. Its three compressed
 trainer back sheets are validated, decompressed and matched to their owners.
+The 1bpp braille face uses the cartridge's own tile map, paired character
+halves and MSB-first field blitter. All 64 patterns must match six independent
+raised-dot masks. The six RS window/text header bytes and 32-pixel line pitch
+are preserved; Emerald keeps its existing centered window contract.
 
 Native script special ids are mapped to the engine's existing handlers by
 function identity. Extractor readers use the inverse map: a missing identity
@@ -35,7 +39,7 @@ committed; no cartridge, extracted image, map, audio or speech files are.
 
 ## Validation and reproduction
 
-Candidate `b3beeaf` passed the native rendered driver with all mods off:
+Candidate `d11d8cd` passed the native rendered driver with all mods off:
 
 - Fresh import and Birch speech/naming reach the actual moving truck.
 - Real directional input takes the dynamic truck warp; the normal Mom script
@@ -48,6 +52,9 @@ Candidate `b3beeaf` passed the native rendered driver with all mods off:
 - Roxanne's real map interaction and native battle return to the field with
   the Stone Badge and TM39. A level 100 Mewtwo is an intentional party fixture
   for this separate arena test, not evidence of a full story playthrough.
+- All 22 braille walls decode without unknown cells. The actual Sealed
+  Chamber sign opens the ABC wall at its cartridge text coordinates; B closes
+  the wall and resumes the native runner. Its rendered view was inspected.
 - The captured field/first-battle/healthbox/reward views were inspected locally.
 
 The run used macOS LÖVE 12/Metal with a QA-only renderer configuration, a fresh
@@ -57,8 +64,10 @@ iPhone/iPad, link play and full story/post-game have not been certified.
 `tests/engine/sapphire_registration.lua` verifies edition identity, type ids
 and native/canonical special address spaces. `sapphire_save_layout.lua`
 roundtrips patterned nonzero save blocks through multiple sector rotations and
-checks plain RS inventory encryption and game-of-origin. Both pass. The engine
-suite is 66/76 passing; the same ten failures reproduce on the unmodified
+checks plain RS inventory encryption and game-of-origin. `rs_braille.lua`
+checks mapped 1bpp tiles, dot identities, header geometry and rejection of a
+corrupted font (13/13). All three suites pass. The engine
+suite is 67/77 passing; the same ten failures reproduce on the unmodified
 baseline (64/74).
 
 Reproduce using `tools/run_gen3_native_smoke.py sapphire --rom YOUR_ROM
