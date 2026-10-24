@@ -86,11 +86,25 @@ programs, and 42,496 successful real-source RGBA comparisons through APIs 1/2.
 Both input dumps remained unchanged; no installed caches, saves or player
 sessions were used. These are import/CPU pixel results, not GPU/gameplay acceptance.
 
+The separate live-game follow-up now tests the complete fresh imports and
+native flat-world renderer on Apple M3 / Metal (LÖVE 12 build `937eb3b`).
+Emerald's four Battle Dome palette phases match actual GPU atlas/readback
+pixels and a fixed visible floor cell; FireRed's static palettes coexist with
+all 16 native tile-animation frames. Real second-map entry/return and FireRed
+indoor movement are included. Independent test identities bypass legacy-save
+migration before main loads; no installed player cache, save or mod is used.
+See the [GPU evidence and limitations](gen3-palette-program-import.md#native-live-game-gpu-acceptance-2026-10-24)
+and [metadata report](qa/native-foundation/palette-program-gpu.json).
+LÖVE 11.5/OpenGL black window captures reproduced without game code, so that
+backend has no window acceptance here. This targeted native palette test does
+not accept general gameplay, performance, context loss, Battle Dome scripting
+or a future Origami/First/Third Person consumer.
+
 ## Remaining engine work
 
 | Area | Remaining acceptance/work |
 | --- | --- |
-| Terrain graphics over time | animated sources, independent palette cycles, audited Emerald/FireRed palette-program import and native recolouring implemented; additional ROM profiles, cartridge fade/task/reset-phase semantics, general GPU invalidation and performance acceptance remain |
+| Terrain graphics over time | audited Emerald/FireRed palette import and native flat-world Metal GPU tests pass; additional ROM profiles, cartridge fade/task/reset-phase semantics, OpenGL window capture, general GPU invalidation and performance acceptance remain |
 | Neighbor streaming | public readiness/preparation lifecycle beyond already resident maps |
 | Buildings, trees, bridges, interiors | native object/geometry metadata and lifecycle; surface codes alone do not provide meshes |
 | Camera and controls | native public camera/input ownership suitable for First/Third Person |

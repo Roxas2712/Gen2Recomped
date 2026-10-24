@@ -155,3 +155,75 @@ palette bytes and program classification use the real stages. Pixel tests
 use fixture world identity and controlled terrain ticks 0–31, not a running
 retail map/session. These are real-ROM import and CPU pixel tests; they are
 still not GPU, full-game, performance or camera-mode acceptance.
+
+## Native live-game GPU acceptance, 2026-10-24
+
+The separate GPU follow-up runs the normal, complete importer and then the
+real `main.lua` → `Game` → `OverworldController` → `TileRenderer` path for both
+retail dumps. It uses an exported engine source snapshot, a separately
+downloaded runtime, fresh per-game LÖVE identities, new caches and new test
+game state. No mods or installed player data are loaded. The earlier CPU-only
+boundary above describes that earlier test, not this follow-up.
+
+The tested GPU is **Apple M3, Metal 2.1**, with official LÖVE 12 development
+build `937eb3b21f973607ab080aa26b7ef2a6b3b2b663`. Engine source is `0046df3`;
+this follow-up adds acceptance tooling/documentation, without changing the
+importer or renderer. The metadata-only
+[GPU report](qa/native-foundation/palette-program-gpu.json) records exact
+runtime, ROM identities, native ticks, texture revisions and pixel counts.
+ROM-derived screenshots and caches remain local and are not committed.
+
+| Game | Real maps | Acceptance |
+| --- | --- | --- |
+| Emerald | Battle Dome battle room `MAP_G26_N21`, lobby `MAP_G26_N18`, return | all four source palette phases match both GPU atlas layers and their tile-animation variants; a fixed visible floor cell matches colours independently decoded from ROM and changes in all four phases; retained textures continue correctly after returning |
+| FireRed | Pallet Town `MAP_G03_N00`, player's room `MAP_G04_N01`, return | static source colours match both GPU layers and animation variants; all 16 native tile-animation frames continue without spurious palette uploads; indoor movement and map return pass |
+
+Emerald checks every one of the 95 metatiles referencing palette 8; the real
+battle-room map contains 200 cells using those metatiles. The lobby shares
+the same tileset pair but displays none of the animated palette cells, so a
+lobby-only screenshot would have been insufficient. The battle room's normal
+entry script opens a text box; the world and its native draw clock continue
+under it. This is palette/rendering acceptance, **not acceptance of the
+incomplete Battle Dome tournament scripting**. Those existing unimplemented
+specials are still reported by the game.
+
+The GPU atlas oracle respects the renderer's covered/split-layer compositing,
+compares complete RGBA pixels, and independently reads Emerald's BGR555 frame
+table from the authenticated ROM. Readback canvases explicitly use DPI scale
+1, including on Retina. Native texture/batch updates and the native terrain
+clock are not replaced or advanced by the driver. Screenshots also must
+contain diverse colours in the central game area, excluding letterboxes and
+runtime warning text; a successful offscreen texture check alone cannot pass
+this test. The final run passes **3,003 assertions / 749,312 complete RGBA pixel
+comparisons**. All final captures passed on the first attempt. An initial
+Metal capture had shown only black plus runtime warnings, which prompted
+this stronger check and a repeat against only the newly created test caches.
+The rerun passes; absence of intermittent blank frames is not established.
+
+**Observed platform limitation:** LÖVE 11.5/OpenGL returned black window
+captures on this machine, including a standalone red/green drawing without
+any game code. Its offscreen texture comparisons passed, but window
+acceptance is not claimed for that configuration. LÖVE 12/Metal passes the
+standalone window probe and both actual games. This does not establish an
+OpenGL fix or general platform coverage. Performance, context loss, resize,
+cartridge fades/task state/reset phase and First/Third Person remain outside
+this targeted acceptance.
+
+Reproduce from the fork, using supported private dumps and a GPU-enabled
+desktop LÖVE binary:
+
+```sh
+python3 tools/check_gen3_palette_gpu.py --love /path/to/love --emerald /path/to/emerald.gba --firered /path/to/firered.gba
+```
+
+The launcher refuses unsupported ROM hashes and creates a new output folder
+under `.local/palette-gpu/` (or a non-existing `--out` folder). A standalone
+window/GPU preflight must pass before imports begin. Each game gets a fresh
+`gen2-palette-gpu-<UUID>-<game>` save identity. Before loading engine main, the
+bootstrap writes the legacy-migration marker in that **new** identity and
+rejects any identity switch or portable/custom cache root. This is necessary:
+a different identity alone would still trigger the normal migration from
+`pokemon-love2d`. The launcher never selects or controls an existing process;
+timeout cleanup applies only to its own child. Inputs are checked unchanged
+afterward. Keep the resulting caches, screenshots and private run manifest
+local; only the metadata report belongs in source control.
