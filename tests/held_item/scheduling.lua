@@ -270,6 +270,12 @@ function M.run(f)
   T.eq(f.actor(2).mon.hp, 107, "ally receives normal item phase")
   T.eq(f.actor(3).mon.hp, 107, "second foe receives normal item phase")
 
+  if f.backend == "gen2" then
+    reset()
+    T.eq(f.battle.player.position, nil, "native single constructor has no slot ID")
+    f.battle:resolveTurn(f.battle.player.curMoves[1])
+    T.check(#f.battle.queue > 0, "native single round start builds action queue without slot IDs")
+  end
   off()
   f.e.state.requiresItem = true
   return rows
