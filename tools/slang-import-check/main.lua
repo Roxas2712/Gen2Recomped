@@ -203,10 +203,16 @@ local function run()
 end
 function love.load()
   local ok, why = pcall(function()
-    check(
-      CacheFs.withMounted(assert(os.getenv("SLANG_IMPORT_CHECK_DIR")), "imports", run),
-      "fixture directory mounted"
-    )
+    local directory = assert(os.getenv("SLANG_IMPORT_CHECK_DIR"))
+    if directory == "imports" then
+      -- Distribution LÖVE builds need not export the PhysFS FFI symbols.
+      -- CI stages these generated fixtures in this test source, so the real
+      -- virtual filesystem can read them without an external-directory mount.
+      check(love.filesystem.getInfo("imports", "directory"), "staged fixtures present")
+      check(run(), "staged fixture checks completed")
+    else
+      check(CacheFs.withMounted(directory, "imports", run), "fixture directory mounted")
+    end
   end)
   if not ok then
     io.stderr:write(tostring(why) .. "\n")

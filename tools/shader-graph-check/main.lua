@@ -163,17 +163,19 @@ local function run()
 end
 function love.load()
   local ok, why = pcall(function()
-    assert(
-      require("src.import.CacheFs").withMounted(
-        assert(os.getenv("SHADER_GRAPH_CHECK_DIR")),
-        "imports",
-        function()
+    local directory = assert(os.getenv("SHADER_GRAPH_CHECK_DIR"))
+    if directory == "imports" then
+      assert(love.filesystem.getInfo("imports", "directory"), "staged fixtures present")
+      run()
+    else
+      assert(
+        require("src.import.CacheFs").withMounted(directory, "imports", function()
           run()
           return true
-        end
-      ),
-      "mount unavailable"
-    )
+        end),
+        "mount unavailable"
+      )
+    end
   end)
   if not ok then
     io.stderr:write(tostring(why) .. "\n")

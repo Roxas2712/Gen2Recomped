@@ -91,8 +91,12 @@ jobs:
             xvfb-run -a tools/slang-import/target/release/gen2-slang-import \
               "tools/slang-import/fixtures/$name.slangp" "$destination" --name "${name^^}"
           done
-          SLANG_IMPORT_CHECK_DIR="$destination" xvfb-run -a love tools/slang-import-check
-          SHADER_GRAPH_CHECK_DIR="$destination" xvfb-run -a love tools/shader-graph-check
+          # Test against actual generated files through LÖVE's source filesystem.
+          # Distro LÖVE 11 may not expose the private PhysFS mount symbols.
+          cp -R "$destination" tools/slang-import-check/imports
+          cp -R "$destination" tools/shader-graph-check/imports
+          SLANG_IMPORT_CHECK_DIR=imports xvfb-run -a love tools/slang-import-check
+          SHADER_GRAPH_CHECK_DIR=imports xvfb-run -a love tools/shader-graph-check
       - name: optional native HTTPS browser smoke test
         if: runner.os == 'Linux' && github.event_name == 'workflow_dispatch' && inputs.network_browser
         env:
