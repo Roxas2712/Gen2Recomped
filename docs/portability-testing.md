@@ -307,4 +307,6 @@ whole-battle or pixel-parity claim.
 
 The standalone feature retains exactly the ten old baseline suite failures
 covered by PRs #128–134 (115/125, SDK 3/3 and B30); this combined runtime includes
-those repairs and passes all 170 suites. Hosted CI results are recorded separately.
+those repairs and passes all 170 suites. All 23 hosted PR workflows currently report `action_required` pending maintainer
+approval; the [new PP workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40046010257)
+has zero jobs. These have not executed and are separate from the local results.

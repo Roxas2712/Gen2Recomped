@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "Fork PR workflows await maintainer approval; local results above are separate",
+  "hosted_ci": "All 23 PR workflows report action_required pending maintainer approval; local results are separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -127,7 +127,6 @@
     "recorded_runtime_ref": "6a1238a7c42b09fbd9694149b35146d17bb9b720",
     "status": "Historical pre-fix observation; resolved for AUTO at 3a944cc7c0e455c094596aa83315150b249f8bbd"
   },
-  "charge_required_full_suite_runtime_ref": "6a1238a7c42b09fbd9694149b35146d17bb9b720",
   "enemy_pp_native_checks_passed": 926,
   "enemy_pp_cross_engine_worker_runs": 6,
   "enemy_pp_cross_engine_paired_observations": 24,
@@ -155,5 +154,12 @@
     "sdk_suites_passed": 3,
     "b30_profile": "passed"
   },
-  "enemy_pp_negative_controls": "Strict raw-policy checker and public/native observer both reject the unchanged #161 host for Gold PP discrepancy"
+  "enemy_pp_negative_controls": "Strict raw-policy checker and public/native observer both reject the unchanged #161 host for Gold PP discrepancy",
+  "charge_required_original_full_suite_runtime_ref": "6a1238a7c42b09fbd9694149b35146d17bb9b720",
+  "hosted_ci_workflow_count": 23,
+  "enemy_pp_hosted_ci": {
+    "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40046010257",
+    "conclusion": "action_required",
+    "jobs": 0
+  }
 }
