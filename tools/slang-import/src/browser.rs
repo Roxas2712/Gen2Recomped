@@ -577,16 +577,19 @@ pub fn request(path: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    static NEXT_TEMP: AtomicUsize = AtomicUsize::new(0);
     struct Temp(PathBuf);
     impl Temp {
         fn new() -> Self {
             let p = std::env::temp_dir().join(format!(
-                "shader-job-test-{}-{}",
+                "shader-job-test-{}-{}-{}",
                 std::process::id(),
                 std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .unwrap()
-                    .as_nanos()
+                    .as_nanos(),
+                NEXT_TEMP.fetch_add(1, Ordering::Relaxed)
             ));
             fs::create_dir(&p).unwrap();
             Self(p)
