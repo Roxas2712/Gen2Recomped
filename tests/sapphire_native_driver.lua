@@ -71,8 +71,25 @@ return function(game)
   end
   assert(complete,'Roxanne battle/reward did not finish')
   love.graphics.captureScreenshot('sapphire-roxanne-reward.png');U.wait(12)
+  local braille=assert(game.data.constants.gen3Braille,'RS braille was not extracted')
+  local walls=0
+  for _,wall in pairs(braille.messages) do
+    walls=walls+1
+    assert(not wall.text:find('{',1,true),'unreadable cartridge braille cell')
+  end
+  assert(walls>=20 and braille.lineHeight==32,'incomplete RS braille profile')
+  U.teleport(game,'MAP_G24_N71',5,7,'up');U.wait(30)
+  U.tap(game,'a');U.wait(20)
+  local wall=assert(game.overworld.brailleBox,'real sign did not open braille')
+  assert(wall.wall.text=='ABC','wrong cartridge wall was opened')
+  assert(wall.wall.textX==96 and wall.wall.textY==72,'RS text origin was ignored')
+  love.graphics.captureScreenshot('sapphire-braille-wall.png');U.wait(12)
+  U.tap(game,'b');U.wait(20)
+  assert(not game.overworld.brailleBox and not game.overworld.runner:isRunning(),
+    'closing braille did not return control')
+  print('[driver] PASS cartridge braille, real sign and close/resume')
   love.filesystem.write('edition-result.json',require('src.link.Json').encode({status='pass',edition='sapphire',newGame=true,
-    truckExitAndMom=true,saveReload=true,starterAndFirstBattle=true,roxanneBattleAndReward=true,
+    truckExitAndMom=true,saveReload=true,starterAndFirstBattle=true,roxanneBattleAndReward=true,brailleWall=true,
     allModsDisabled=true,fullStoryTested=false}))
   print('[driver] PASS Sapphire native new game')
   love.event.quit(0)

@@ -7890,6 +7890,30 @@ RomExtractorGen3.BRAILLE_ALPHABET = {
 -- One 16x16 cell out of the sheet, as roles: 1 raised, 2 unraised, 3 paper.
 function RomExtractorGen3:brailleGlyph(base, value)
   local B = RomExtractorGen3.BRAILLE
+  local profile = self.manifest and self.manifest.braille
+  if profile and profile.bits == 1 then
+    local cell = {}
+    for row = 0, B.CELL - 1 do
+      local line = {}
+      for half = 0, 1 do
+        local code = value + half * profile.halfCodeOffset
+        local tile = self.rom:u8(profile.glyphMap + code * 2 + math.floor(row / 8))
+        local blank = self.rom:u8(profile.glyphMap
+          + half * profile.halfCodeOffset * 2 + math.floor(row / 8))
+        local word = self.rom:u8(base + tile * 8 + row % 8)
+        local paper = self.rom:u8(base + blank * 8 + row % 8)
+        for x = 0, 7 do
+          local ink = math.floor(word / 2 ^ (7 - x)) % 2 == 1
+          local unraised = math.floor(paper / 2 ^ (7 - x)) % 2 == 1
+          -- RS draws small dots even in the blank cell. Keep those as a
+          -- separate role so the six raised-dot masks can still be proved.
+          line[half * 8 + x + 1] = ink and (unraised and 2 or 1) or 3
+        end
+      end
+      cell[row + 1] = line
+    end
+    return cell
+  end
   local at = base + math.floor(value / B.PER_ROW) * B.ROW
               + (value % B.PER_ROW) * B.STRIDE
   local cell = {}
@@ -7943,6 +7967,7 @@ end
 function RomExtractorGen3:extractBraille()
   self:beginStage("Gen3 braille")
   local B = RomExtractorGen3.BRAILLE
+  local profile = self.manifest and self.manifest.braille
   local base = self:symbol("gFontBrailleLatinGlyphs")
   local pool = self._scriptPool
   if not base then
@@ -8043,7 +8068,7 @@ function RomExtractorGen3:extractBraille()
     local height = math.min(B.WINDOW.maxHeight,
                             B.WINDOW.baseHeight
                               + B.WINDOW.perLine * (#lines - 1))
-    return {
+    local wall = {
       at = at,
       format = format,
       lines = lines,
@@ -8053,6 +8078,15 @@ function RomExtractorGen3:extractBraille()
       x = math.floor((B.WINDOW.screenWidth - width) / 2),
       y = math.floor((B.WINDOW.screenHeight - height) / 2),
     }
+    if profile and profile.frameFromHeader then
+      -- RS's frame coordinates include the border, and its text origin is
+      -- independent of that frame. Preserve both from ScrCmd_braillemessage.
+      wall.x, wall.y = format[1] + 1, format[2] + 1
+      wall.width, wall.height = format[3] - format[1] - 1,
+                               format[4] - format[2] - 1
+      wall.textX, wall.textY = format[5] * 8, format[6] * 8
+    end
+    return wall
   end
 
   local messages, count, unreadable = {}, 0, 0
@@ -8086,7 +8120,7 @@ function RomExtractorGen3:extractBraille()
     perRow = B.PER_ROW,
     count = B.COUNT,
     advance = B.CELL,
-    lineHeight = B.CELL + B.LINE_SPACING,
+    lineHeight = profile and profile.lineHeight or (B.CELL + B.LINE_SPACING),
     window = B.WINDOW,
     messages = messages,
     source = ("ROM:gFontBrailleLatinGlyphs %07X (%d cells, %dx%d, %d per "
@@ -8096,7 +8130,8 @@ function RomExtractorGen3:extractBraille()
   }
 
   local okPage, pageErr = pcall(function()
-    local paint = { [1] = FONT_TEXT, [2] = FONT_SHADOW }
+    local paint = { [1] = FONT_TEXT,
+      [2] = profile and profile.bits == 1 and FONT_TEXT or FONT_SHADOW }
     local rows = math.ceil(B.COUNT / B.PER_ROW)
     local image = self:fontSheet(B.PER_ROW * B.CELL, rows * B.CELL)
     if not image then return end
