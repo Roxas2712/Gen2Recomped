@@ -1,0 +1,211 @@
+{
+  "schema": 1,
+  "game": "crystal",
+  "romRevision": 0,
+  "sourceCommit": "c833eb8887decc2d9d0e8ac135f31c098b5be988",
+  "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+  "engineVersion": "0.8.45",
+  "modVersion": "3.1.2-omega.1.7",
+  "manifestSha256": "080b39b6bc1b6e1c557432eb911f46aeeeaaf52c829a4688b5bce9928aaf5374",
+  "cases": [
+    {
+      "backend": "opengl",
+      "exitCode": 0,
+      "actualVandF6KeysPassed": true,
+      "ownedWindowProofs": 4,
+      "modFilesUnmodified": 27329,
+      "modFolderRemoved": true,
+      "phases": [
+        {
+          "label": "first-outdoors",
+          "map": "NEW_BARK_TOWN",
+          "camera": "first",
+          "overlayDepth": 0,
+          "nativeGridMoved": true,
+          "voxelFrames": 337,
+          "voxelFailures": 1,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": null
+        },
+        {
+          "label": "third-outdoors",
+          "map": "NEW_BARK_TOWN",
+          "camera": "third",
+          "overlayDepth": 0,
+          "nativeGridMoved": true,
+          "voxelFrames": 500,
+          "voxelFailures": 1,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": null
+        },
+        {
+          "label": "third-native-menu",
+          "map": "NEW_BARK_TOWN",
+          "camera": "third",
+          "overlayDepth": 1,
+          "nativeGridMoved": null,
+          "voxelFrames": 538,
+          "voxelFailures": 1,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": null
+        },
+        {
+          "label": "first-interior",
+          "map": "PLAYERS_HOUSE1_F",
+          "camera": "first",
+          "overlayDepth": 0,
+          "nativeGridMoved": null,
+          "voxelFrames": 864,
+          "voxelFailures": 1,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": false
+        },
+        {
+          "label": "third-interior",
+          "map": "PLAYERS_HOUSE1_F",
+          "camera": "third",
+          "overlayDepth": 0,
+          "nativeGridMoved": null,
+          "voxelFrames": 934,
+          "voxelFailures": 1,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": false
+        }
+      ]
+    },
+    {
+      "backend": "metal",
+      "exitCode": 0,
+      "actualVandF6KeysPassed": true,
+      "ownedWindowProofs": 4,
+      "modFilesUnmodified": 27329,
+      "modFolderRemoved": true,
+      "phases": [
+        {
+          "label": "first-outdoors",
+          "map": "NEW_BARK_TOWN",
+          "camera": "first",
+          "overlayDepth": 0,
+          "nativeGridMoved": true,
+          "voxelFrames": 330,
+          "voxelFailures": 0,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": null
+        },
+        {
+          "label": "third-outdoors",
+          "map": "NEW_BARK_TOWN",
+          "camera": "third",
+          "overlayDepth": 0,
+          "nativeGridMoved": true,
+          "voxelFrames": 506,
+          "voxelFailures": 0,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": null
+        },
+        {
+          "label": "third-native-menu",
+          "map": "NEW_BARK_TOWN",
+          "camera": "third",
+          "overlayDepth": 1,
+          "nativeGridMoved": null,
+          "voxelFrames": 555,
+          "voxelFailures": 0,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": null
+        },
+        {
+          "label": "first-interior",
+          "map": "PLAYERS_HOUSE1_F",
+          "camera": "first",
+          "overlayDepth": 0,
+          "nativeGridMoved": null,
+          "voxelFrames": 889,
+          "voxelFailures": 0,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": false
+        },
+        {
+          "label": "third-interior",
+          "map": "PLAYERS_HOUSE1_F",
+          "camera": "third",
+          "overlayDepth": 0,
+          "nativeGridMoved": null,
+          "voxelFrames": 965,
+          "voxelFailures": 0,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": false
+        }
+      ]
+    }
+  ],
+  "scope": "short macOS tests, teleported scene setup; native grid walking rather than continuous camera-relative movement",
+  "open": [
+    "First Person interior image needs investigation",
+    "continuous movement interfaces unavailable",
+    "generated mod renderer patch exceeds 60 Lua upvalues",
+    "initial actor bounds failure remains recorded",
+    "PC/mail/box/follower/battle interfaces not fully accepted",
+    "full story, all doors/maps and Windows GPU acceptance pending"
+  ],
+  "nativeNoModChecks": [
+    {
+      "backend": "opengl",
+      "exitCode": 0,
+      "newGame": true,
+      "modCount": 0,
+      "normalWarps": [
+        {
+          "to": "PLAYERS_HOUSE1_F",
+          "from": "PLAYERS_HOUSE2_F",
+          "normalMovement": true
+        },
+        {
+          "to": "NEW_BARK_TOWN",
+          "from": "PLAYERS_HOUSE1_F",
+          "normalMovement": true
+        }
+      ],
+      "finalMap": "NEW_BARK_TOWN",
+      "overlayDepth": 0,
+      "windowFreshFrameStamp": 11,
+      "windowColourProfile": "gbc",
+      "centralColours": 15,
+      "minimumColours": 4
+    },
+    {
+      "backend": "metal",
+      "exitCode": 0,
+      "newGame": true,
+      "modCount": 0,
+      "normalWarps": [
+        {
+          "to": "PLAYERS_HOUSE1_F",
+          "normalMovement": true,
+          "from": "PLAYERS_HOUSE2_F"
+        },
+        {
+          "to": "NEW_BARK_TOWN",
+          "normalMovement": true,
+          "from": "PLAYERS_HOUSE1_F"
+        }
+      ],
+      "finalMap": "NEW_BARK_TOWN",
+      "overlayDepth": 0,
+      "windowFreshFrameStamp": 8,
+      "windowColourProfile": "gbc",
+      "centralColours": 15,
+      "minimumColours": 4
+    }
+  ]
+}

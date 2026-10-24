@@ -90,7 +90,12 @@ def child(love, source, env, log, timeout, tick=None):
         raise RuntimeError(f"Test exited {code}; see {log}")
 
 
-def os_window_proof(out):
+def os_window_proof(out, colour_profile="gba"):
+    # A valid GBC scene can have fewer than 16 colors in the central crop.
+    # Keep the GBA/voxel guard unchanged; native GB tests select their profile.
+    if colour_profile not in ("gba", "gbc"):
+        raise ValueError("Unknown window colour profile")
+    minimum_colours = 4 if colour_profile == "gbc" else 16
     """Only the window ID reported by our own child; one capture, no retries."""
     from PIL import Image
     proofs = {}
@@ -132,10 +137,11 @@ def os_window_proof(out):
         region = image.crop((int(image.width * .2), top + int(row["logicalHeight"] * dpi * .2),
                              int(image.width * .8), top + int(row["logicalHeight"] * dpi * .7)))
         colours = len(region.getcolors(region.width * region.height) or [])
-        if colours < 16:
+        if colours < minimum_colours:
             raise RuntimeError("OS window game area is blank")
         proofs[tag] = dict(freshFrameStamp=stamp, minimumFrameStamp=row["minimumStamp"],
-                           centralColours=colours, screenshot=path.name, attempts=1)
+                           centralColours=colours, colourProfile=colour_profile,
+                           minimumColours=minimum_colours, screenshot=path.name, attempts=1)
         (out / f"window-{tag}.ok").write_text("PASS\n")
         print(f"Own OS window {tag}: PASS", flush=True)
     return tick, proofs
