@@ -38,7 +38,8 @@ local function present(version, pipeline, mirrored)
   T.eq(Renderer.worldOverrideMirrored, nil, "completed orientation is cleared")
 end
 for _, version in ipairs({ "red", "gold", "firered", "emerald" }) do
-  present(version, nil, true)
+  present(version, nil, false)
+  present(version, { worldOrientation = "legacy" }, true)
   present(version, { worldOrientation = "native" }, false)
 end
 present("emerald", { worldFormat = "renderData.v1" }, false)
@@ -73,21 +74,21 @@ g.translate = function(x, y) calls[#calls + 1] = { "translate", x, y } end
 g.scale = function(x, y) calls[#calls + 1] = { "scale", x, y } end
 local function fx() calls[#calls + 1] = "draw"; return "result" end
 g.setCanvas(world)
-Overworld.withOverrideMirror(fx)
+Overworld.withOverrideMirror(fx, {worldOrientation = "legacy"})
 T.same(calls, { "push", { "translate", 0, 240 }, { "scale", 1, -1 }, "draw", "pop" },
   "native FX counter-mirror uses bound image height")
 for _, target in ipairs({ {world}, { {canvas = world} }, {canvas = world} }) do
   g.setCanvas(target); calls = {}
-  Overworld.withOverrideMirror(fx)
+  Overworld.withOverrideMirror(fx, {worldOrientation = "legacy"})
   T.eq(#calls, 5, "MRT attachment forms use same height")
 end
-for _, pipeline in ipairs({ {worldOrientation = "native"}, {worldFormat = "renderData.v1"} }) do
+for _, pipeline in ipairs({ {}, {worldOrientation = "native"}, {worldFormat = "renderData.v1"} }) do
   calls = {}
   T.eq(Overworld.withOverrideMirror(fx, pipeline), "result", "native effect return preserved")
   T.same(calls, { "draw" }, "native effects need no inverse transform")
 end
 g.setCanvas(); calls = {}
-Overworld.withOverrideMirror(fx)
+Overworld.withOverrideMirror(fx, {worldOrientation = "legacy"})
 T.same(calls, { "draw" }, "absent target does not transform screen")
 g.draw, g.push, g.pop, g.translate, g.scale = draw, push, pop, translate, scale
 T.finish("world override orientation")
