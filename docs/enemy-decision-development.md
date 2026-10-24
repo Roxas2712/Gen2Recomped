@@ -343,6 +343,11 @@ generation metadata now selects that base step; Gen-1's existing level rule
 and the Gen-3 profile remain separate. Other Gen-2 modifiers/rules are not
 claimed universally equivalent by these regressions.
 
+The critical-base correction is isolated and published in
+[PR #176](https://github.com/UNDERdecoded/Gen2Recomped/pull/176), with the same
+public critical-hit consumer on five Gen-2/GBA profiles and a separate native
+Gold driver. It does not publish the unfinished enemy switch/item hook.
+
 The unchanged `784c8ec` parent fails **4 critical-base assertions** and the
 alias-stock constructor assertion, with **one differing ordinary-turn HP
 observation** on Gold. The temporary checkout was verified clean and removed.
