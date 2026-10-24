@@ -18,6 +18,7 @@ Development branch: `codex/native-origami-foundation`. This is not a release.
 | Field effects | `codex/portable-field-effect-render-data` / `ffebd37` | grass, ripples, sparkles and their sources |
 | Surf mounts | `codex/portable-surf-mount-render-data` / `90b5446` | native mount/rider observations; Gen3 update-owned bob |
 | Cell surfaces | this branch / [RFC 0002](rfcs/0002-native-render-foundation.md) | live raw elevation, collision and behavior, including resident neighbor crops |
+| Animated terrain sources | this branch / [RFC 0003](rfcs/0003-animated-terrain-sources.md) | selected native animation picture, fresh source palettes and exact content-change token |
 
 The loader composes every family on one handle before executing a consumer.
 The new surface contract preserves elevation 15's bridge semantics and reads
@@ -52,11 +53,17 @@ a release; the headless tests do not establish full visual parity.
 `native-foundation.yml` adds dedicated CI for the combined contracts; results
 above are local results, not a claim that hosted CI has completed.
 
+The 2026-10-24 animated-source follow-up adds two public-loader suites with
+3,132 checks for native pixels/clock behavior, source changes and invalid data.
+The local default runner now passes 92/92 engine suites, 3/3 mod-SDK suites
+and Dramatic Shape B30. Hosted validation is recorded on the PR's exact head;
+this remains source/data acceptance, not full Origami or GPU gameplay acceptance.
+
 ## Remaining engine work
 
 | Area | Remaining acceptance/work |
 | --- | --- |
-| Terrain graphics over time | public live palette/animated tile observations and invalidation |
+| Terrain graphics over time | animated source observations and cache-change token implemented; palette-cycling callbacks, weather grading, GPU invalidation and performance acceptance remain |
 | Neighbor streaming | public readiness/preparation lifecycle beyond already resident maps |
 | Buildings, trees, bridges, interiors | native object/geometry metadata and lifecycle; surface codes alone do not provide meshes |
 | Camera and controls | native public camera/input ownership suitable for First/Third Person |

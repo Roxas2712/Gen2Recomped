@@ -3,6 +3,9 @@
 The native-foundation branch also provides an optional
 [surface observation](gen3-surface-render-data-v1.md) with live elevation,
 collision and behavior codes. The original `snapshot` shape is unchanged.
+The optional [animated source observation](gen3-animated-terrain-v1.md) supplies
+selected animation tile bytes and exact content-change detection; `tileset()`
+continues to return base source graphics.
 
 `mod.renderData` is an additive, read-only handle for portable terrain renderers.
 It has its own schema version: existing API-2 mods can use it, and the same

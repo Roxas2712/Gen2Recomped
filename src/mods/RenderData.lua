@@ -1,6 +1,7 @@
--- Versioned observations of loaded Gen3 terrain. No renderer, map loader,
--- filesystem or runtime cache is invoked by this module.
+-- Versioned observations of loaded Gen3 terrain. No renderer construction,
+-- map loading, filesystem access or engine cache mutation.
 local RenderData = {}
+local AnimatedTerrain = require("src.mods.AnimatedTerrain")
 local Handle = {}
 Handle.__index = Handle
 
@@ -90,6 +91,12 @@ function RenderData.new(getGame, generation)
     end,
     surface = function(_, ...)
       return context:surface(...)
+    end,
+    supportsAnimation = function(_, version)
+      return context:supports(version)
+    end,
+    animatedTileset = function(_, ...)
+      return context:animatedTileset(...)
     end,
   }
 end
@@ -417,15 +424,7 @@ local function bank(record)
   }
 end
 
-function Handle:tileset(version, mapId, targetMapId)
-  local ctx, err = active(self, version, mapId)
-  if not ctx then
-    return nil, err
-  end
-  local map, reason = resident(ctx, targetMapId)
-  if not map then
-    return nil, reason
-  end
+local function tilesetFor(ctx, map)
   local w, why = dimensions(map)
   if not w then
     return nil, why
@@ -468,6 +467,32 @@ function Handle:tileset(version, mapId, targetMapId)
     primary = a,
     secondary = b,
   }
+end
+
+function Handle:tileset(version, mapId, targetMapId)
+  local ctx, err = active(self, version, mapId)
+  if not ctx then return nil, err end
+  local map, reason = resident(ctx, targetMapId)
+  if not map then return nil, reason end
+  return tilesetFor(ctx, map)
+end
+
+function Handle:animatedTileset(version, mapId, targetMapId)
+  local ctx, err = active(self, version, mapId)
+  if not ctx then return nil, err end
+  local map, reason = resident(ctx, targetMapId)
+  if not map then return nil, reason end
+  local out, why = tilesetFor(ctx, map)
+  if not out then return nil, why end
+  -- Observe a clock the host already loaded. Never bootstrap a renderer
+  -- merely because a mod asks about an unavailable title/headless world.
+  local renderer = package.loaded["src.render.TileRenderer"]
+  if type(renderer) ~= "table" or type(renderer.animFrame) ~= "function" then
+    return nil, "terrain clock unavailable"
+  end
+  local sources, sourceError = pair(ctx.game, map)
+  if not sources then return nil, sourceError end
+  return AnimatedTerrain.materialize(out, sources, renderer.animFrame())
 end
 
 return RenderData
