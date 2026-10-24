@@ -78,6 +78,7 @@ local function nativeShiny(personality, otId, otSecretId)
   local sid = (tonumber(otSecretId) or math.floor(full / 65536)) % 65536
   return bit.bxor(tid, sid, math.floor(p / 65536), p % 65536) < 8
 end
+R.nativeGen3Shiny = nativeShiny
 
 function R.gen3Shiny(mon, data)
   data = R.data(data)
