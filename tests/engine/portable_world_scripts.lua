@@ -853,5 +853,17 @@ do
   world:cancelScript()
   stop()
 end
+do
+  local world, game, ow = boot("crystal")
+  game.stack.states={};game.stack:setWorldOwner(game);game.stack:restore(ow)
+  local calls,result=0,nil
+  T.check(world:queueScript({{"wait",2},{"text","Persistent Gen2"},{"end"}}, {onDone=function(ok)calls=calls+1;result=ok end}),"Gen2 portable script admits persistent world")
+  tick(game);tick(game)
+  T.check(game.stack:top()~=nil,"portable text owns actual overlay stack")
+  finishText(game)
+  T.eq(result,true,"Gen2 portable script completes")
+  T.eq(calls,1,"Gen2 portable completion exactly once")
+  T.eq(game.stack:top(),nil,"completion restores Gen2 free roam")
+end
 GameVersion.set(originalVersion)
 T.finish("portable world scripts")

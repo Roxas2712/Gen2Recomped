@@ -15,6 +15,11 @@ local Movement = require("src.mods.ScriptMovement")
 local WorldEdits = require("src.mods.ScriptWorldEdits")
 local GameVersion = require("src.core.GameVersion")
 local Scripts = {}
+
+local function activeTop(stack)
+  return stack.active and stack:active() or stack:top()
+end
+
 local runs = setmetatable({}, { __mode = "k" })
 local observers = setmetatable({}, { __mode = "k" })
 local contexts = setmetatable({}, { __mode = "k" })
@@ -90,7 +95,7 @@ local function ready(game)
   if not (stack and type(stack.states) == "table" and type(stack.top) == "function") then
     return nil, "no overworld"
   end
-  local ow = stack:top()
+  local ow = activeTop(stack)
   if not (ow and ow.isOverworld and ow.map and ow.player and ow.runner) then
     return nil, "world is busy"
   end
@@ -213,7 +218,7 @@ local function facade(loader, modId, native)
       and not active.done
       and active.world == ow
       and ow.runner == active.runner
-      and game.stack:top() == ow
+      and activeTop(game.stack) == ow
       and active.valid()
     then
       return true
@@ -359,7 +364,7 @@ local function facade(loader, modId, native)
         or game.data ~= token.data
         or game.stack ~= token.stack
         or game.stack.states ~= token.states
-        or not contains(token.stack, ow)
+        or not (contains(token.stack, ow) or token.stack.worldState == ow)
         or game.overworld and game.overworld ~= ow
         or not token.travel and not token.mutating and ow.map ~= token.map
         or not token.travel and ow.map.id ~= token.mapId
@@ -834,7 +839,7 @@ local function facade(loader, modId, native)
       local lease = { ui = {} }
       local remaining = 3600
       function lease.tick()
-        local top = token.stack:top()
+        local top = activeTop(token.stack)
         if top == ow or lease.ui[top] then
           remaining = remaining - 1
           if remaining <= 0 then
@@ -1222,7 +1227,7 @@ local function facade(loader, modId, native)
       end
     end
     function runner:update(...)
-      if not check() or game.stack:top() ~= ow then
+      if not check() or activeTop(game.stack) ~= ow then
         return
       end
       local ok, err = engine(update, self, ...)

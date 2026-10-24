@@ -575,6 +575,19 @@ for _, name in ipairs({
   T.check(Actions.supports(name), "action capability " .. name)
 end
 T.eq(Actions.supports("party"), false, "reader capability remains separate")
+-- Gen2's real persistent world is active without occupying an overlay slot.
+do
+  local api, game, ow = boot("crystal")
+  local Stack = require("src.core.StateStack")
+  local stack = setmetatable({}, {__index=Stack});stack:init();stack:setWorldOwner(game);stack:restore(ow);game.stack=stack
+  T.eq(stack:top(),nil,"Gen2 free roam has no screen")
+  T.eq(api.world:canReorderParty(),true,"Gen2 world actions admit persistent world")
+  T.eq(api.world:reorderParty(1,2),true,"actual native party mutation in persistent world")
+  stack:push({})
+  T.eq(api.world:canReorderParty(),false,"overlay blocks Gen2 mutation")
+  stack:pop();T.eq(api.world:canReorderParty(),true,"overlay close releases Gen2 mutation")
+  stack:clearWorld();T.eq(api.world:canReorderParty(),false,"stale native world cannot mutate at title")
+end
 GameVersion.set(saved[1])
 Runtime.install(saved[2], saved[3], saved[4])
 love = saved[5]

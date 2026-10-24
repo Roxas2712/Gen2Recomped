@@ -5,6 +5,11 @@ local Map = require("src.world.Map")
 local FieldDefaults = require("src.world.FieldDefaults")
 local Party = require("src.pokemon.Party")
 local A = {}
+
+local function activeTop(stack)
+  return stack.active and stack:active() or stack:top()
+end
+
 local METHODS = {
   canReorderParty = true,
   reorderParty = true,
@@ -65,7 +70,7 @@ local function ready(game, ow)
       pending[game] = nil
     end
   end
-  if not (game.stack and game.stack.top and game.stack:top() == ow) then
+  if not (game.stack and game.stack.top and activeTop(game.stack) == ow) then
     return nil, "world is busy"
   end
   if
@@ -149,7 +154,7 @@ local function same(game, ow, c)
 end
 local function currentWorld(game, ow)
   -- A state replaced while a cut-in was active must not receive its effect.
-  return game.stack and game.stack.top and game.stack:top() == ow
+  return game.stack and game.stack.top and activeTop(game.stack) == ow
 end
 local function present(game, ow, mon, check, run)
   local c = context(game, ow)
