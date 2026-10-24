@@ -38,6 +38,13 @@ has zero executed jobs. Local acceptance is separate. These are CPU checks,
 without a new graphical or full-controller/gameplay parity claim. The
 unfinished enemy switch/item hook remains outside this combined branch.
 
+A read-only audit of the local Emerald cartridge program now finds handlers
+for every reachable opcode in scoring stages 0–9 (1,745 instructions across
+32 script slots, 67 distinct opcodes). Stage 2 previously lacked the order
+predicate. This verifies handler availability only; complete predicate,
+stock-scoring and native controller semantics still need validation before
+publishing the unfinished enemy switch/item hook.
+
 Prior #185 results retain runtime
 `b74f59f6f05eb4624e71edaa2c64c2ae26d08c88` and its 205/205 engine result:
 

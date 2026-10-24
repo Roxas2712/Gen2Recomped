@@ -1294,6 +1294,65 @@
       "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40127906217",
       "jobs": 0
     },
-    "scope": "Actual native VMs/comparators/sorts, owned choice/ordinary move queues/EOT; metadata checks inspect actual plans; no new graphical or complete stock-controller parity claim; unfinished enemy hook remains separate"
+    "scope": "Actual native VMs/comparators/sorts, owned choice/ordinary move queues/EOT; metadata checks inspect actual plans; no new graphical or complete stock-controller parity claim; unfinished enemy hook remains separate",
+    "emerald_stock_opcode_audit": {
+      "runtime_ref": "aed508c2918a369f1d19e2250eb11635c17bd78f",
+      "rom_instructions": 1745,
+      "rom_script_slots": 32,
+      "distinct_opcodes": 67,
+      "stages": [
+        {
+          "runs": true,
+          "bit": 0,
+          "missing": []
+        },
+        {
+          "runs": true,
+          "bit": 1,
+          "missing": []
+        },
+        {
+          "runs": true,
+          "bit": 2,
+          "missing": []
+        },
+        {
+          "runs": true,
+          "bit": 3,
+          "missing": []
+        },
+        {
+          "runs": true,
+          "bit": 4,
+          "missing": []
+        },
+        {
+          "runs": true,
+          "bit": 5,
+          "missing": []
+        },
+        {
+          "runs": true,
+          "bit": 6,
+          "missing": []
+        },
+        {
+          "runs": true,
+          "bit": 7,
+          "missing": []
+        },
+        {
+          "runs": true,
+          "bit": 8,
+          "missing": []
+        },
+        {
+          "runs": true,
+          "bit": 9,
+          "missing": []
+        }
+      ],
+      "scope": "Reachability/handler availability from read-only extraction only, not proof of every predicate, complete native scoring or controller semantics; no generated cartridge assets committed"
+    }
   }
 }
