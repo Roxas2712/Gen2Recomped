@@ -40,6 +40,7 @@ local U = {
   } },
   items = { fields = {
     id = id, name = f.str, price = f.int(0),
+    index = f.opt(f.int(0, 255)),
     machine = f.opt(f.rec { kind = f.str, move = id, number = f.int(0) }),
     effect = f.opt(id), ball = f.opt(id), tossable = f.opt(f.bool),
     needsTarget = f.opt(f.bool), description = f.opt(f.str),

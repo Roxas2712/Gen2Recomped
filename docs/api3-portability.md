@@ -188,3 +188,6 @@ end-of-turn views, validated damage batches and native faint/EXP authority.
 
 [Portable held-item reads](portable-held-items.md) document shared `HELD_*`
 names, byte odds, native consumers and the tested GBA item scheduling phases.
+
+See [portable held-item definitions](portable-held-content.md) for the shared
+Gen-2 `mod.content.held_items` registry, native write-back and generation bounds.

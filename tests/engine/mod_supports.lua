@@ -70,9 +70,11 @@ for _, version in ipairs(GameVersion.ORDER) do
     version .. ': shared simulation/world call sites available')
   local registries = true
   for name in pairs(Schemas.REGISTRIES) do
-    registries = registries and yes(api, 'content', name)
+    local expected = name ~= 'held_items' or GameVersion.generation(version) == 2
+    registries = registries and (expected and yes(api, 'content', name)
+      or not expected and no(api, 'content', name))
   end
-  T.check(registries, version .. ': all API-2 registration surfaces available')
+  T.check(registries, version .. ': registration availability follows native generation')
   T.eq(yes(api, 'world', 'flyTo'), type(WorldAPI.flyTo) == 'function',
     version .. ': additive native flight interface is reported when installed')
   T.check(yes(api, 'hooks', 'core.logic_speed'),

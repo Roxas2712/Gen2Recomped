@@ -92,7 +92,13 @@ function Capabilities.supports(surface, name, version)
   if surface == "content" then
     -- Every loader builds the same API-2 registries from Schemas. This says
     -- the registration API exists, not that record shapes/IDs are portable.
-    if Schemas.REGISTRIES[name] then return true end
+    local spec = Schemas.REGISTRIES[name]
+    if spec then
+      if spec.generations and not spec.generations:find(tostring(info.generation), 1, true) then
+        return false, "content capability " .. name .. " has no native target in " .. version
+      end
+      return true
+    end
   elseif surface == "world" then
     if world[name] then return true end
   else

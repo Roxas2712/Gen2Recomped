@@ -107,21 +107,25 @@ end
 local function nativeEffect(data, holder)
   local def, id = itemDef(data, holder)
   if type(def) ~= "table" then return HeldItems.EFFECT.NONE, 0 end
-  -- Modern Polished berries are handled by HoldItems; their enum values
-  -- otherwise collide with GSC Leftovers/PP/status effects here.
-  if require('src.inventory.PolishedBerries').held(def,monOf(holder)) then
-    return HeldItems.EFFECT.NONE,0
-  end
+  -- An explicit public held definition takes precedence over the host's
+  -- cartridge-name special cases. Unmodified items retain those policies.
+  if not require("src.mods.HeldItemContent").changed(def) then
+    -- Modern Polished berries are handled by HoldItems; their enum values
+    -- otherwise collide with GSC Leftovers/PP/status effects here.
+    if require('src.inventory.PolishedBerries').held(def,monOf(holder)) then
+      return HeldItems.EFFECT.NONE,0
+    end
 
-  -- Intentional Gen II cleanup approved for the recomp ruleset: retail
-  -- Crystal accidentally assigns HELD_DRAGON_BOOST to Dragon Scale and leaves
-  -- Dragon Fang with HELD_NONE.  Treat Dragon Fang as the Dragon-type booster
-  -- and Dragon Scale as a normal held item instead of reproducing that bug.
-  local key = norm(ItemEffects.alias(id, def) or def.key or def.name or id)
-  if key == "DRAGON_FANG" then
-    return HeldItems.EFFECT.DRAGON_BOOST, 10
-  elseif key == "DRAGON_SCALE" then
-    return HeldItems.EFFECT.NONE, 0
+    -- Intentional Gen II cleanup approved for the recomp ruleset: retail
+    -- Crystal accidentally assigns HELD_DRAGON_BOOST to Dragon Scale and leaves
+    -- Dragon Fang with HELD_NONE.  Treat Dragon Fang as the Dragon-type booster
+    -- and Dragon Scale as a normal held item instead of reproducing that bug.
+    local key = norm(ItemEffects.alias(id, def) or def.key or def.name or id)
+    if key == "DRAGON_FANG" then
+      return HeldItems.EFFECT.DRAGON_BOOST, 10
+    elseif key == "DRAGON_SCALE" then
+      return HeldItems.EFFECT.NONE, 0
+    end
   end
 
   return tonumber(def.heldEffect) or require("src.battle.HeldItemRead").goldNative(def.heldEffect) or HeldItems.EFFECT.NONE,

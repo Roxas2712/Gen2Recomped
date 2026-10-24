@@ -61,6 +61,9 @@ end
 function M.goldNative(name)
   return goldIds[name] or name
 end
+function M.goldPublic(effect)
+  return gold[effect] or effect
+end
 function M.writeDefinition(view, key, value)
   view[key] = value
   local def = definitions[view]

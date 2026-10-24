@@ -305,6 +305,17 @@ local function writeRecord(ctx, kind, id, value, old, mode)
       if old.classId ~= nil then out.classId = ({ physical = 0, special = 1, status = 2 })[value.category] end
     end
   elseif kind == "items" then
+    if value.index ~= nil and ctx.gen ~= 2 then
+      unsupported("explicit item indices require a native generation-specific adapter")
+    end
+    if value.index ~= nil and value.index ~= DELETE then
+      if value.index == 0 and not old then unsupported("item index zero is reserved") end
+      for key, row in ctx.loader.content.items:each() do
+        if row.index == value.index and ctx.ids:read("items", key) ~= id then
+          unsupported("item index is already assigned: " .. tostring(value.index))
+        end
+      end
+    end
     if value.machine and value.machine ~= DELETE then
       out.machine.move = resolved(ctx, "moves", value.machine.move)
     end
@@ -414,6 +425,9 @@ local function protect(fn)
 end
 function U.new(loader, mod, native, gen)
   local out = {}; for name, handle in pairs(native) do out[name] = handle end
+  if native.held_items then
+    out.held_items = require("src.mods.HeldItemContent").api(loader, mod, native.held_items, gen, true)
+  end
   for kind, shape in pairs(Shapes) do
     local registry = loader.content[kind]
     if gen >= 4 and kind ~= "encounters" then registry.numericIds = true end

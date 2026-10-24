@@ -51,6 +51,9 @@ end
 local function nativeEffect(battler)
   local def = HoldItems.defOf(battler)
   if not def then return nil end
+  -- A Gen-2 held_items definition owns this item's GSC behavior; do not also
+  -- dispatch Polished's name-based modern berry in the second item engine.
+  if require("src.mods.HeldItemContent").changed(def) then return nil end
   local effect,param=require('src.inventory.PolishedBerries').held(def,battler.mon)
   if effect then return effect,param,def end
   local effect = def.holdEffect
