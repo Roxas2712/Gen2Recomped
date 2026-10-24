@@ -26,8 +26,14 @@ are preserved; Emerald keeps its existing centered window contract.
 
 Native script special ids are mapped to the engine's existing handlers by
 function identity. Extractor readers use the inverse map: a missing identity
-returns no function rather than probing an unrelated native slot. 192 of the
+returns no function rather than probing an unrelated native slot. 197 of the
 342 specials are mapped; this is not a claim that every story feature works.
+
+Mauville's three RS switches are read from the verified ROM coordinate table
+and checked against its map events. The shared beam rules retain RS's own
+positions; five renamed Mauville/Petalburg specials map by verified function
+identity. Petalburg's door frames/delays are checked against its own ROM.
+The generator requires the pinned clean matching source for C-layout metadata.
 
 The save layout is read from the cartridge's fourteen `sSaveBlockChunks`
 records, which use RAM pointers and sizes. RS's 15040-byte SaveBlock1 and
@@ -57,6 +63,15 @@ Candidate `6d74f51` passed the native rendered driver with all mods off:
   the wall and resumes the native runner. Its rendered view was inspected.
 - The captured field/first-battle/healthbox/reward views were inspected locally.
 
+Candidate `c5675e4` additionally passes `rs_gyms_native_driver.lua`: real
+walking activates an RS floor switch, its beam picture/passability and saved
+re-entry state agree, and Wattson's actual battle awards the Dynamo Badge and
+TM34 before disabling all three switches. With a deliberate strong party and
+story-state fixture, Randall's actual battle runs every one of the five door
+frames in Petalburg and resumes the native script. Both views were inspected.
+`rs_gym_puzzles.lua` adds 23 checks for the five aliases, RS switch coordinates,
+beam collision, Emerald fallback and Petalburg door writes.
+
 The run used macOS LÖVE 12/Metal with a QA-only renderer configuration, a fresh
 own save identity and a migration marker created before boot. Physical
 iPhone/iPad, link play and full story/post-game have not been certified.
@@ -66,8 +81,8 @@ and native/canonical special address spaces. `ruby_save_layout.lua`
 roundtrips patterned nonzero save blocks through multiple sector rotations and
 checks plain RS inventory encryption and game-of-origin. `rs_braille.lua`
 checks mapped 1bpp tiles, dot identities, header geometry and rejection of a
-corrupted font (13/13). All three suites pass. The engine
-suite is 67/77 passing; the same ten failures reproduce on the unmodified
+corrupted font (13/13). All four suites pass. The engine
+suite is 68/78 passing; the same ten failures reproduce on the unmodified
 baseline (64/74).
 
 Reproduce using `tools/run_gen3_native_smoke.py ruby --rom YOUR_ROM
