@@ -133,6 +133,15 @@ for _, mode in ipairs({ { 1, "native" }, { 2, "native" }, { 2, "unified" }, { 3,
     d.items.ITEM_001, d.items.ITEM_002 = nil, nil
   end
   if api >= 2 then
+    local badIndex = load(
+      d,
+      'mod.content.items:register("OUTSIDE", {id="OUTSIDE", name="OUTSIDE", price=1, index=256})',
+      api,
+      format
+    )
+    T.check(#badIndex.errors > 0, "Gen-2 native item index remains byte bounded")
+    T.eq(d.items.OUTSIDE, nil, "out-of-range index cannot create an item")
+    badIndex.release()
     for _, bad in ipairs({
       "heldParameter=-1",
       "heldParameter=256",
