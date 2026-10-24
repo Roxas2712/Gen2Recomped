@@ -131,6 +131,16 @@ function M.apply(loader, data)
             and (not was or row.heldEffect ~= was.heldEffect or row.heldParameter ~= was.heldParameter)
           or not row and was ~= nil
         local effect, parameter = def.heldEffect, def.heldParam
+        local declared = false
+        for _, op in ipairs(registry.ops[id]) do
+          local value = op.value
+          if
+            op.op ~= "patch"
+            or (type(value) == "table" and (value.heldEffect ~= nil or value.heldParameter ~= nil))
+          then
+            declared = true
+          end
+        end
         if changed then
           effect = row and Names.goldNative(row.heldEffect) or nil
           parameter = row and (row.heldParameter or 0) or nil
@@ -142,8 +152,10 @@ function M.apply(loader, data)
           effect = effect,
           parameter = parameter,
         }
-        def.heldEffect, def.heldParam = effect, parameter
-        explicit[def] = true
+        if changed and declared then
+          def.heldEffect, def.heldParam = effect, parameter
+        end
+        explicit[def] = declared or nil
       end
     end
   end

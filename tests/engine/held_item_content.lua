@@ -20,5 +20,11 @@ for _, version in ipairs(V.ORDER) do
     end
   end
 end
+do
+  local f = Fixture.new(".", "gen2", "polishedcrystal", 3, "unified", "noop_modern")
+  local hp = f.run("BERRY", 200)
+  T.eq(hp, 210, "empty held patch retains native modern berry threshold at half HP")
+  f.close()
+end
 V.set(old)
 T.finish("held_items public definitions and native generation boundaries")
