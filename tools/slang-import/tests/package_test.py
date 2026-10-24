@@ -2,6 +2,8 @@ import importlib.util
 import json
 from pathlib import Path
 import struct
+import subprocess
+import hashlib
 import tempfile
 import unittest
 
@@ -65,6 +67,30 @@ class Packaging(unittest.TestCase):
         pkg.verify(dest,'linux','x86_64');before=(dest/pkg.NAME).read_bytes()
         with self.assertRaises(ValueError): pkg.install(root,dest,'linux','x86_64')
         self.assertEqual((dest/pkg.NAME).read_bytes(),before)
+    def test_pinned_notices_survive_windows_git_checkout(self):
+        # Exercise Git's real checkout filters, rather than assuming that an
+        # LF file read on this host has Windows' worktree representation.
+        provenance=json.loads((pkg.TOOL/'licenses/provenance.json').read_text())
+        attributes=(pkg.ROOT/'.gitattributes').read_bytes()
+        def checkout(name, attrs):
+            repo=self.root/name;repo.mkdir()
+            subprocess.run(['git','init','-q',str(repo)],check=True)
+            files={'.gitattributes':attrs}
+            for entry in provenance:
+                rel='tools/slang-import/licenses/'+entry['file']
+                files[rel]=(pkg.TOOL/'licenses'/entry['file']).read_bytes()
+            for rel, data in files.items():
+                blob=subprocess.check_output(['git','-C',str(repo),'hash-object','-w','--stdin'],input=data).decode().strip()
+                subprocess.run(['git','-C',str(repo),'update-index','--add','--cacheinfo','100644',blob,rel],check=True)
+            dest=self.root/(name+'-checkout');dest.mkdir()
+            subprocess.run(['git','-C',str(repo),'-c','core.autocrlf=true','-c','core.attributesFile='+str(self.root/'no-global-attributes'),
+                'checkout-index','--all','--force','--prefix='+dest.as_posix()+'/'],check=True)
+            return [hashlib.sha256((dest/'tools/slang-import/licenses'/e['file']).read_bytes()).hexdigest()for e in provenance]
+        expected=[e['sha256']for e in provenance]
+        self.assertEqual(checkout('fixed',attributes),expected)
+        previous=attributes.replace(b'tools/slang-import/licenses/** -text',b'')
+        self.assertNotEqual(checkout('without-pinned-rule',previous),expected)
+
     def test_optional_missing_bundle_leaves_destination_absent(self):
         dest=self.root/'dest';self.assertFalse(pkg.install(self.root/'absent',dest,'linux','x86_64',True));self.assertFalse(dest.exists())
 
