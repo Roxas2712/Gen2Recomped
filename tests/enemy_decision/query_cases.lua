@@ -504,6 +504,7 @@ return function(f, backend)
     end)
     T.eq(ok, true, spec.name .. " actual native opponent query completes")
     if spec.held then
+      T.eq(#f.e.scoring.calls, 2, spec.name .. " both native moves reach public scoring")
       for _, call in ipairs(f.e.scoring.calls) do
         T.eq(
           call.before,
