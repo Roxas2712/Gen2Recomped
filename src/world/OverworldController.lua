@@ -5056,6 +5056,25 @@ function OverworldState:gen3DecorateInput()
   return true
 end
 
+-- Public Gen2 menu predicates use the native script/transition owners. They
+-- do not infer readiness merely from a visible map or an empty overlay stack.
+function OverworldState:scriptRunning()
+  return (self.runner and self.runner:isRunning()) and true or false
+end
+
+function OverworldState:busy()
+  return (self:scriptRunning() or (self.scriptMoves and #self.scriptMoves > 0)
+    or self.engaging or self.emote or self.teleportOut or self.whirlSpin
+    or self.gen4Waterfall or self.transitioning or self.flyAnim or self.fishing
+    or (self.player and (self.player.stairExit or self.player.inputLocked))
+    or (self.pendingScripts and self.pendingScripts[1])) and true or false
+end
+
+function OverworldState:acceptsMenuInput()
+  return not self.battleActive and not self:busy()
+    and not (self.player and self.player.moving) and not self.iceSlide
+end
+
 function OverworldState:handleInput()
   local input = Game.input
   if self.gen3Decorate then return self:gen3DecorateInput() end
