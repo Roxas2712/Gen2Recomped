@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191 and #194–195 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191 and #194–196 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,43 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`916661d14a9f45511924f719d4b5524369182672`. Its ROM-free run passed
-**211/211 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`218cf2c9879bf8dd7687491429ca2a427d5eee83`. Its ROM-free run passed
+**212/212 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #196](https://github.com/UNDERdecoded/Gen2Recomped/pull/196) implements
+native GBA Follow Me (effect 172) through the ordinary registry, selected
+mod-action targets and actual priority queues. Both sides, successive casters,
+fainting/replacement and Lightning Rod precedence follow the covered native
+reference. State expires at next-turn planning; residual collection keeps it.
+Self/spread policies, imported protection flags and status interruption remain
+authoritative. The focused suite passes **180/180** checks.
+
+The same API-3 consumer matches unchanged read-only Gen1
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91` in **24 engine workers / 354 paired
+observations**, on both feature and combined runtimes. Unchanged #195 fails
+29 new FireRed assertions. An additional real-mod proof of canonical
+`effect = "FOLLOW_ME"` writes with #121 passes **14/14** checks, including
+actual redirected damage and owned PP. No generated contract change is needed.
+
+Feature quick acceptance is **82/91** engine suites versus **80/90** on clean
+#195, with SDK 3/3 and B30 passing. Exact FAIL-line Counters add nothing and
+remove only the two old fingerprint failures; the remaining 25 lines across
+nine inherited suites match. The new handler intentionally changes only the
+`move_effects` fingerprint section. This combined checkout updates that
+section pin and the former missing-handler assertion, retaining all other
+fingerprint sections and mutation checks. Its full run passes **212/212**.
+
+All three hosted workflows await maintainer approval; the
+[dedicated workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40138746937)
+has zero jobs. Local acceptance is separate. The chat's 100-attachment limit
+prevented adding a new PR card; the published PR remains linked here.
+Remaining effect producers, AI scoring, random-target/full RNG parity,
+link/called moves, damage amounts and item/switch/watch actions remain
+separate work. See [native GBA Follow Me](native-gba-follow-me.md).
+
+Prior #195 results retain runtime
+`916661d14a9f45511924f719d4b5524369182672` and its 211/211 engine result:
 
 [PR #195](https://github.com/UNDERdecoded/Gen2Recomped/pull/195) honors a mod's
 positional GBA action target at native execution time. Replaced/absent targets
