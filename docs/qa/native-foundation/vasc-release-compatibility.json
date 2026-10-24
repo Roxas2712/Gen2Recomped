@@ -1,0 +1,125 @@
+{
+  "releaseCommit": "9939365655d0052ab812b859fe4301fc2e67cda6",
+  "releasePayloadSha256": "ec5a636cf47d9edb83e93ea0e69c8610ade3ac6c0c7104263ff4243564b1e81c",
+  "modRepository": "Ascedent-Omega/Voxel-Omega-Ascendant-----Gen2Recomp",
+  "modTag": "v3.0.65-rc.4",
+  "modArchiveSha256": "d213aa64fe1f1453f8c0ac99af46629edc91558aaad5c32f5c2ff404c73f4d83",
+  "actualFusedMacRelease": true,
+  "windowsHardwareExecuted": false,
+  "manifestModified": false,
+  "versionGateBypassed": false,
+  "generationGateBypassed": false,
+  "modEntries": 26919,
+  "modUncompressedBytes": 888878455,
+  "manifestSha256": "fc70198385e5c1f5097f98061662a978ecf0fab1caf007f115a5d3dcd93d677c",
+  "entrySha256": "cf9702d5c505d931aa2cc914813b17d7b6973ad6edb05aeb1141512da4a555be",
+  "ownModInstallationRemoved": true,
+  "testedOn": "2026-10-24",
+  "releaseTag": "native-preview-20261024.1",
+  "host": "Apple M3 / macOS 15.8.2",
+  "scope": "Unmodified current Team Omega Gen2Recomp VASC release; no separately supplied VASC2 archive",
+  "interpretation": "Compatibility rejection reproduced; VASC gameplay and rendering did not execute. Native scenes remain visible.",
+  "protectedInstancesUntouched": true,
+  "origamiPortPaused": true,
+  "releaseAssetsChanged": false,
+  "results": [
+    {
+      "testPassed": true,
+      "vascPlayable": false,
+      "backend": "OpenGL",
+      "actualFusedRelease": true,
+      "modsEnabled": true,
+      "manifestVersion": "3.0.65-rc.4",
+      "hostGeneration": 3,
+      "entryExecuted": false,
+      "loadedModCount": 0,
+      "loaderErrors": 0,
+      "apiCompatible": true,
+      "modId": "VOXEL_ASCENDANT",
+      "engine": "0.7.6",
+      "compatibilityWarnings": [
+        {
+          "level": "warn",
+          "text": "Needs engine >=0.3.96 <0.4.0 || >=0.8.45 <0.9.0 (have 0.7.6)"
+        },
+        {
+          "level": "warn",
+          "text": "Requests permission: network"
+        },
+        {
+          "level": "warn",
+          "text": "Requests permission: engine_internals"
+        },
+        {
+          "level": "warn",
+          "text": "Requests permission: filesystem"
+        }
+      ],
+      "modApi": 2,
+      "unsupportedGeneration": 3,
+      "api": 2,
+      "game": "emerald",
+      "requiredEngine": ">=0.3.96 <0.4.0 || >=0.8.45 <0.9.0",
+      "engineCompatible": false,
+      "nativeSceneFrames": 44,
+      "nativeSceneVisible": true,
+      "loaderState": "disabled",
+      "ownWindowProof": {
+        "freshFrameStamp": 106,
+        "minimumFrameStamp": 95,
+        "centralColours": 46,
+        "attempts": 1
+      },
+      "logMessage": "VOXEL_ASCENDANT is for generation 1; this is generation 3, so it is not loaded"
+    },
+    {
+      "modId": "VOXEL_ASCENDANT",
+      "unsupportedGeneration": 3,
+      "testPassed": true,
+      "vascPlayable": false,
+      "api": 2,
+      "nativeSceneFrames": 41,
+      "nativeSceneVisible": true,
+      "compatibilityWarnings": [
+        {
+          "text": "Needs engine >=0.3.96 <0.4.0 || >=0.8.45 <0.9.0 (have 0.7.6)",
+          "level": "warn"
+        },
+        {
+          "text": "Requests permission: network",
+          "level": "warn"
+        },
+        {
+          "text": "Requests permission: engine_internals",
+          "level": "warn"
+        },
+        {
+          "text": "Requests permission: filesystem",
+          "level": "warn"
+        }
+      ],
+      "engine": "0.7.6",
+      "game": "firered",
+      "modApi": 2,
+      "backend": "Metal",
+      "actualFusedRelease": true,
+      "modsEnabled": true,
+      "manifestVersion": "3.0.65-rc.4",
+      "loaderState": "disabled",
+      "hostGeneration": 3,
+      "entryExecuted": false,
+      "loadedModCount": 0,
+      "loaderErrors": 0,
+      "apiCompatible": true,
+      "requiredEngine": ">=0.3.96 <0.4.0 || >=0.8.45 <0.9.0",
+      "engineCompatible": false,
+      "ownWindowProof": {
+        "freshFrameStamp": 103,
+        "minimumFrameStamp": 95,
+        "centralColours": 51,
+        "attempts": 1
+      },
+      "logMessage": "VOXEL_ASCENDANT is for generation 1; this is generation 3, so it is not loaded"
+    }
+  ]
+}

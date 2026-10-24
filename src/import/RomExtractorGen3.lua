@@ -22,6 +22,8 @@
 -- Nothing here hardcodes an address; if the manifest lacks a symbol, the
 -- stage that needs it says so and is skipped rather than reading whatever
 -- happens to be at offset zero.
+-- Terrain palette callback classifications are a separately identified,
+-- source-pinned manifest profile, gated again on the actual full ROM digest.
 --
 -- The CONTRACT is the same as Gen 2's, because the runtime's is: `new` takes
 -- (romData, version, manifest, progress), `run` walks DATA_STAGES then
@@ -53,7 +55,7 @@ RomExtractorGen3.__index = RomExtractorGen3
 -- The progress denominator.  Kept honest with the two stage lists below: a
 -- mismatch does not break anything, it just makes the bar lie, which is the
 -- kind of small wrongness that survives for months.
-local STAGE_COUNT = 94
+local STAGE_COUNT = 95
 
 -- ---------------------------------------------------------------------------
 -- The stage tables below are keyed to Emerald's ROM.  A sibling cartridge
@@ -40514,6 +40516,35 @@ function RomExtractorGen3.signedByte(v)
   return v > 127 and (v - 256) or v
 end
 
+-- Retain the native effect bytes as well as the existing parsed medicine
+-- view. Battle AI reads individual X-item bits and raw sentinel amounts.
+-- Multiple EV arguments each consume a byte; the two PP bits share one.
+function RomExtractorGen3.itemEffectBytes(rom, at)
+  assert(type(at) == "number" and at % 1 == 0 and at >= 0, "invalid item effect offset")
+  local bytes = {}
+  for i = 0, 5 do
+    local value = rom:u8(at + i)
+    assert(type(value) == "number" and value % 1 == 0 and value >= 0 and value <= 255,
+      "truncated item effect header")
+    bytes[i + 1] = value
+  end
+  local function bits(value)
+    local count = 0
+    while value > 0 do count, value = count + value % 2, math.floor(value / 2) end
+    return count
+  end
+  local e4, e5 = bytes[5], bytes[6]
+  local count = bits(e4 % 8) + (math.floor(e4 / 8) % 4 ~= 0 and 1 or 0)
+    + bits(e5 % 16) + bits(math.floor(e5 / 32))
+  for i = 1, count do
+    local value = rom:u8(at + 5 + i)
+    assert(type(value) == "number" and value % 1 == 0 and value >= 0 and value <= 255,
+      "truncated item effect arguments")
+    bytes[#bytes + 1] = value
+  end
+  return bytes
+end
+
 function RomExtractorGen3:extractItemEffects()
   self:beginStage("Gen3 item effects")
   local E = RomExtractorGen3.ITEM_EFFECTS
@@ -40535,7 +40566,8 @@ function RomExtractorGen3:extractItemEffects()
       local b = {}
       for i = 0, 5 do b[i] = rom:u8(at + i) end
       local effect, arg, ok = { source = ("ROM:gItemEffectTable[%d] %08X")
-                                         :format(k, at + 0x08000000) }, E.ARGS_AT, true
+                                         :format(k, at + 0x08000000),
+                               bytes = RomExtractorGen3.itemEffectBytes(rom, at) }, E.ARGS_AT, true
 
       -- ---- the battle-only three, recorded and not run ------------------
       if b[0] % 0x40 ~= 0 or b[1] ~= 0 or b[2] ~= 0 then
@@ -40984,7 +41016,7 @@ RomExtractorGen3.DATA_STAGES = {
   "extractMoveAnimations",
   "extractStarterSelect",
   "extractNamingKeyboard", "extractBattleMenu", "extractSummaryText",
-  "extractHoennDex", "extractTilesetAnimations", "extractSafari",
+  "extractHoennDex", "extractTilesetAnimations", "extractTilesetPalettePrograms", "extractSafari",
   "extractTrainerMemo", "extractAbilityDescriptions",
   "extractMonAnims", "extractCries", "extractReflections", "extractElevation",
   "extractBattleWindows",
@@ -42519,6 +42551,29 @@ function RomExtractorGen3:thumbLength(fn, limit)
   return nil
 end
 
+function RomExtractorGen3:extractTilesetPalettePrograms()
+  self:beginStage("Gen3 tileset palette programs")
+  if type(self._tilesets)~="table" then
+    Logger.warn("gen3 palette programs: no tilesets -- run extractTilesets first")
+    return
+  end
+  -- Authenticate the actual bytes, not just the manifest/selected game label.
+  -- The application has verified these too, but a standalone stage must not
+  -- reinterpret another revision through a known program-address catalog.
+  local ok,digest=pcall(require("src.import.RomVerification").sha1,self.rom.data)
+  local report=require("src.import.Gen3PalettePrograms").extract(
+    self.rom,self._tilesets,self.manifest,ok and digest or nil)
+  self._tilesets._romInfo=self._tilesets._romInfo or {}
+  self._tilesets._romInfo.palettePrograms=report
+  self:write("map_tilesets",self._tilesets)
+  Logger.info("Gen3 palette programs: %d static, %d animated, %d unavailable",
+    report.static,report.animated,report.unavailable)
+  if report.unavailable>0 then
+    Logger.warn("gen3 palette programs: incomplete sources retain native base palettes; "
+      .. "check map_tilesets.paletteProgram diagnostics and the ROM revision")
+  end
+end
+
 function RomExtractorGen3:extractTilesetAnimations()
   self:beginStage("Gen3 tileset animations")
   local A = RomExtractorGen3.ANIM
@@ -43946,6 +44001,19 @@ function RomExtractorGen3:hudImage(raw, from, cols, rows, colors)
     end
   end
   return image
+end
+
+-- The dedicated 8x8 caught indicator from the validated healthbox sheet.
+function RomExtractorGen3:battleCaughtMarker(elementsAt, colors)
+  local rom = self.rom
+  if type(elementsAt) ~= "number" or elementsAt < 0 or not rom
+      or elementsAt + 71 * 32 > rom.size then return nil end
+  -- The bar/status scan intentionally ends after tile 65. Read tile 70
+  -- separately; extending that scan would change its end-of-sheet checks.
+  local raw = rom:bytes(elementsAt + 70 * 32, 32)
+  local path = "battle/hud/caught.png"
+  self:saveImage(self:hudImage(raw, 1, 1, 1, colors), path)
+  return "assets/generated/" .. path
 end
 
 -- The two OAM halves side by side, which is the panel as the player sees it.
@@ -49922,6 +49990,9 @@ function RomExtractorGen3:extractBattleHud()
     bars.label = "assets/generated/battle/hud/hp_label.png"
   end)
   local _ = okBars
+
+  -- B_INTERFACE_GFX_CAUGHT_BALL (tile 70) uses the healthbox palette.
+  images.caught = self:battleCaughtMarker(elementsAt, boxColors)
 
   -- WHERE INSIDE ITS OWN TILE THE EXP BAR ACTUALLY IS.
   --

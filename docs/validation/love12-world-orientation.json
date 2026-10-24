@@ -1,0 +1,352 @@
+{
+  "sourceCommit": "ddb20a6989c7281bbfb5314c93d56de280c498a6",
+  "engineVersion": "0.8.45",
+  "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+  "modFilesModified": false,
+  "playerProfilesUsed": false,
+  "cases": [
+    {
+      "backend": "opengl",
+      "worldTextures": 590,
+      "worldAttempts": 590,
+      "vSwitch": true,
+      "phases": [
+        {
+          "name": "First Person outdoors",
+          "map": "PALLET_TOWN",
+          "camera": "1ST",
+          "orientation": "upright (visual inspection of owned OS-window capture)"
+        },
+        {
+          "name": "Third Person after V",
+          "map": "PALLET_TOWN",
+          "camera": "3RD",
+          "orientation": "upright (visual inspection of owned OS-window capture)"
+        },
+        {
+          "name": "Third Person interior",
+          "map": "REDS_HOUSE_1F",
+          "camera": "3RD",
+          "orientation": "upright (visual inspection of owned OS-window capture)"
+        },
+        {
+          "name": "First Person interior",
+          "map": "REDS_HOUSE_1F",
+          "camera": "1ST",
+          "orientation": "upright (visual inspection of owned OS-window capture)"
+        }
+      ],
+      "screenshots": {
+        "os-window-resized.png": "d6584016f78717c5ac8444a02abfa006e3dc28daae9d487e51e23429673a0fa0",
+        "os-window-initial-map.png": "f137ff9ee41ba573b531645d1267efe081047afd456a3b9019a406ec5f273bc6",
+        "os-window-second-map.png": "5d2b9577bdca4561d599113bf869bc628da9a576c8dc253f5533846dfbd93944",
+        "os-window-map-return.png": "d0cb2f794469f9ad9eb51a2e26c72ec26ec0c2af9fe92b4c272346bea0b4fb2f"
+      }
+    },
+    {
+      "backend": "metal",
+      "worldTextures": 626,
+      "worldAttempts": 626,
+      "vSwitch": true,
+      "phases": [
+        {
+          "name": "First Person outdoors",
+          "map": "PALLET_TOWN",
+          "camera": "1ST",
+          "orientation": "upright (visual inspection of owned OS-window capture)"
+        },
+        {
+          "name": "Third Person after V",
+          "map": "PALLET_TOWN",
+          "camera": "3RD",
+          "orientation": "upright (visual inspection of owned OS-window capture)"
+        },
+        {
+          "name": "Third Person interior",
+          "map": "REDS_HOUSE_1F",
+          "camera": "3RD",
+          "orientation": "upright (visual inspection of owned OS-window capture)"
+        },
+        {
+          "name": "First Person interior",
+          "map": "REDS_HOUSE_1F",
+          "camera": "1ST",
+          "orientation": "upright (visual inspection of owned OS-window capture)"
+        }
+      ],
+      "screenshots": {
+        "os-window-resized.png": "52b668c5acc61e8cf5edc406279cf3cc99a2a82ef7ac2fd53d2599519442b386",
+        "os-window-initial-map.png": "b03cd468b5d619d0a0a7083f53a4cb51effe3a55627141f7e9ee45244b134e5e",
+        "os-window-second-map.png": "c83151ce959237a39aac1b49b1dba58109aeba784e5cccae51373ad573fe66b7",
+        "os-window-map-return.png": "5d5cadaa02784027c425ae1cff0c56a2f2d7c7fda8b6275312119747821f27f6"
+      }
+    }
+  ],
+  "pixelOracles": {
+    "opengl": {
+      "backend": "OpenGL",
+      "cases": [
+        {
+          "pixels": {
+            "worldBottom": [
+              0,
+              1,
+              0
+            ],
+            "fxTop": [
+              1,
+              1,
+              0
+            ],
+            "fxStem": [
+              1,
+              0,
+              1
+            ],
+            "worldTop": [
+              1,
+              0,
+              0
+            ],
+            "uiTop": [
+              0,
+              0,
+              1
+            ]
+          },
+          "name": "legacy-3d",
+          "passed": true
+        },
+        {
+          "pixels": {
+            "worldBottom": [
+              0,
+              1,
+              0
+            ],
+            "fxTop": [
+              1,
+              1,
+              0
+            ],
+            "fxStem": [
+              1,
+              0,
+              1
+            ],
+            "worldTop": [
+              1,
+              0,
+              0
+            ],
+            "uiTop": [
+              0,
+              0,
+              1
+            ]
+          },
+          "name": "native-2d",
+          "passed": true
+        },
+        {
+          "pixels": {
+            "worldBottom": [
+              0,
+              1,
+              0
+            ],
+            "fxTop": [
+              1,
+              1,
+              0
+            ],
+            "fxStem": [
+              1,
+              0,
+              1
+            ],
+            "worldTop": [
+              1,
+              0,
+              0
+            ],
+            "uiTop": [
+              0,
+              0,
+              1
+            ]
+          },
+          "name": "portable-gen3",
+          "passed": true
+        },
+        {
+          "pixels": {
+            "worldBottom": [
+              0,
+              1,
+              0
+            ],
+            "fxTop": [
+              1,
+              1,
+              0
+            ],
+            "fxStem": [
+              1,
+              0,
+              1
+            ],
+            "worldTop": [
+              1,
+              0,
+              0
+            ],
+            "uiTop": [
+              0,
+              0,
+              1
+            ]
+          },
+          "name": "native-gen4",
+          "passed": true
+        }
+      ],
+      "passed": true
+    },
+    "metal": {
+      "backend": "Metal",
+      "cases": [
+        {
+          "pixels": {
+            "fxTop": [
+              1,
+              1,
+              0
+            ],
+            "fxStem": [
+              1,
+              0,
+              1
+            ],
+            "worldTop": [
+              1,
+              0,
+              0
+            ],
+            "uiTop": [
+              0,
+              0,
+              1
+            ],
+            "worldBottom": [
+              0,
+              1,
+              0
+            ]
+          },
+          "name": "legacy-3d",
+          "passed": true
+        },
+        {
+          "pixels": {
+            "fxTop": [
+              1,
+              1,
+              0
+            ],
+            "fxStem": [
+              1,
+              0,
+              1
+            ],
+            "worldTop": [
+              1,
+              0,
+              0
+            ],
+            "uiTop": [
+              0,
+              0,
+              1
+            ],
+            "worldBottom": [
+              0,
+              1,
+              0
+            ]
+          },
+          "name": "native-2d",
+          "passed": true
+        },
+        {
+          "pixels": {
+            "fxTop": [
+              1,
+              1,
+              0
+            ],
+            "fxStem": [
+              1,
+              0,
+              1
+            ],
+            "worldTop": [
+              1,
+              0,
+              0
+            ],
+            "uiTop": [
+              0,
+              0,
+              1
+            ],
+            "worldBottom": [
+              0,
+              1,
+              0
+            ]
+          },
+          "name": "portable-gen3",
+          "passed": true
+        },
+        {
+          "pixels": {
+            "fxTop": [
+              1,
+              1,
+              0
+            ],
+            "fxStem": [
+              1,
+              0,
+              1
+            ],
+            "worldTop": [
+              1,
+              0,
+              0
+            ],
+            "uiTop": [
+              0,
+              0,
+              1
+            ],
+            "worldBottom": [
+              0,
+              1,
+              0
+            ]
+          },
+          "name": "native-gen4",
+          "passed": true
+        }
+      ],
+      "passed": true
+    }
+  },
+  "negativeControl": {
+    "expectedFailure": true,
+    "error": "red top legacy-3d channel 1: 0",
+    "correctionDisabledOnlyInIsolatedTestDriver": true
+  }
+}

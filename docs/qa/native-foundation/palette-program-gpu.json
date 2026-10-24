@@ -1,0 +1,275 @@
+{
+  "engineCommit": "0046df395acf1c7e61cabfe406a8dd86cd5bef69",
+  "gpu": {
+    "visible": true,
+    "renderer": "Metal",
+    "version": "2.1",
+    "vendor": "",
+    "device": "Apple M3"
+  },
+  "games": {
+    "emerald": {
+      "gpu": {
+        "device": "Apple M3",
+        "renderer": "Metal",
+        "version": "2.1",
+        "vendor": ""
+      },
+      "game": "emerald",
+      "tileFramesObserved": 2,
+      "nativeTicksElapsed": 120,
+      "samples": [
+        {
+          "tileset": "TILESET_03DF884_03DFCC4",
+          "paletteMetatiles": 95,
+          "scenePixels": 256,
+          "sceneHash": "7991034ebdfbaaa963dac599c457421e29c3b1380f03b4c2b99c9993b0489061",
+          "baseHash": "0f80efcf0130fe99f0f86bbe3d04118034d046fd3672ef80806cdaacd1a16d51",
+          "tileFrame": 1,
+          "ticks": 30,
+          "paletteCells": 200,
+          "paletteRevision": 5,
+          "map": "MAP_G26_N21",
+          "rgbaPixels": 61440,
+          "tag": "phase-3",
+          "palettePhase": 3
+        },
+        {
+          "tileset": "TILESET_03DF884_03DFCC4",
+          "paletteMetatiles": 95,
+          "scenePixels": 256,
+          "sceneHash": "098fa5b643145d2b84e5fb182e6059dbcc94fa27d2fbaf962955c876872a476a",
+          "baseHash": "d1eddf79afb9c52be71e2b2ec166a40a86091a15f604db7c007e734ad469ebd1",
+          "tileFrame": 0,
+          "ticks": 39,
+          "paletteCells": 200,
+          "paletteRevision": 6,
+          "map": "MAP_G26_N21",
+          "rgbaPixels": 61440,
+          "tag": "phase-1",
+          "palettePhase": 1
+        },
+        {
+          "tileset": "TILESET_03DF884_03DFCC4",
+          "paletteMetatiles": 95,
+          "scenePixels": 256,
+          "sceneHash": "820ac5d3e72f7bce0ac90f3bc35ecfdd43b291028e64413fa57c8b5827153847",
+          "baseHash": "f4232b4a234a15a9634e38fbe7b4f2103cfcf40f3d57a8c12cebe29f88e07629",
+          "tileFrame": 1,
+          "ticks": 49,
+          "paletteCells": 200,
+          "paletteRevision": 9,
+          "map": "MAP_G26_N21",
+          "rgbaPixels": 61440,
+          "tag": "phase-0",
+          "palettePhase": 0
+        },
+        {
+          "tileset": "TILESET_03DF884_03DFCC4",
+          "paletteMetatiles": 95,
+          "scenePixels": 256,
+          "sceneHash": "c097313317a97d6134cbeb95bf028fe8f5414b173fb496ecbe9f6c7e627fe4c8",
+          "baseHash": "9b54bbc087e63792f87f841f489cd4ba378923046c27891629d41a470d8fb4c8",
+          "tileFrame": 1,
+          "ticks": 57,
+          "paletteCells": 200,
+          "paletteRevision": 11,
+          "map": "MAP_G26_N21",
+          "rgbaPixels": 61440,
+          "tag": "phase-2",
+          "palettePhase": 2
+        },
+        {
+          "tileset": "TILESET_03DF884_03DFCC4",
+          "paletteMetatiles": 95,
+          "scenePixels": 256,
+          "sceneHash": "c097313317a97d6134cbeb95bf028fe8f5414b173fb496ecbe9f6c7e627fe4c8",
+          "baseHash": "9b54bbc087e63792f87f841f489cd4ba378923046c27891629d41a470d8fb4c8",
+          "tileFrame": 0,
+          "ticks": 200,
+          "paletteCells": 200,
+          "paletteRevision": 47,
+          "map": "MAP_G26_N21",
+          "rgbaPixels": 61440,
+          "tag": "after-map-return",
+          "palettePhase": 2
+        }
+      ],
+      "pass": true,
+      "mapReturn": true,
+      "sceneProbe": {
+        "y": 5,
+        "mid": 746,
+        "x": 3
+      },
+      "entryOverlay": "src/render/TextBox.lua:423",
+      "sha1": "f3ae088181bf583e55daf962a92bb46f4f1d07b7",
+      "import": {
+        "animated": 1,
+        "unavailable": 0,
+        "static": 72,
+        "version": 1
+      },
+      "clock": "unmodified native draw clock",
+      "candidates": [
+        "MAP_G26_N18",
+        "MAP_G26_N19",
+        "MAP_G26_N20",
+        "MAP_G26_N21",
+        "MAP_G_26_N_18",
+        "MAP_G_26_N_19",
+        "MAP_G_26_N_20",
+        "MAP_G_26_N_21"
+      ],
+      "screenshots": [
+        "emerald-phase-3.png",
+        "emerald-phase-1.png",
+        "emerald-phase-0.png",
+        "emerald-phase-2.png",
+        "emerald-second-map.png",
+        "emerald-map-return.png"
+      ],
+      "isolation": {
+        "mods": false,
+        "freshIdentity": true,
+        "legacyMigrationBypassed": true,
+        "externalCache": false
+      },
+      "checks": 1255,
+      "runtime": {
+        "major": 12,
+        "minor": 0,
+        "codename": "Bestest Friend",
+        "revision": 0
+      },
+      "captureAttempts": {
+        "emerald-phase-3.png": 1,
+        "emerald-phase-2.png": 1,
+        "emerald-phase-1.png": 1,
+        "emerald-map-return.png": 1,
+        "emerald-phase-0.png": 1,
+        "emerald-second-map.png": 1
+      }
+    },
+    "firered": {
+      "candidates": [
+        "MAP_G03_N00",
+        "MAP_G03_N19",
+        "MAP_G03_N39",
+        "MAP_G_03_N_00",
+        "MAP_G_03_N_19",
+        "MAP_G_03_N_39"
+      ],
+      "pass": true,
+      "sha1": "41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc",
+      "mapReturn": true,
+      "entryOverlay": false,
+      "runtime": {
+        "minor": 0,
+        "revision": 0,
+        "codename": "Bestest Friend",
+        "major": 12
+      },
+      "game": "firered",
+      "clock": "unmodified native draw clock",
+      "import": {
+        "version": 1,
+        "animated": 0,
+        "unavailable": 0,
+        "static": 63
+      },
+      "indoorMovement": true,
+      "samples": [
+        {
+          "tileset": "TILESET_02D4A94_02D4AAC",
+          "paletteCells": 0,
+          "palettePhase": 0,
+          "tileFrame": 4,
+          "tag": "phase-0",
+          "paletteRevision": 0,
+          "baseHash": "fcae9cf7f83a44105e055e1a6f068a19ac7020a6c4401d4b73752b656f86c65d",
+          "map": "MAP_G03_N00",
+          "rgbaPixels": 146944,
+          "paletteMetatiles": 0,
+          "ticks": 33
+        },
+        {
+          "tileset": "TILESET_02D4A94_02D4AAC",
+          "paletteCells": 0,
+          "palettePhase": 0,
+          "tileFrame": 3,
+          "tag": "static-after-animation",
+          "paletteRevision": 0,
+          "baseHash": "fcae9cf7f83a44105e055e1a6f068a19ac7020a6c4401d4b73752b656f86c65d",
+          "map": "MAP_G03_N00",
+          "rgbaPixels": 146944,
+          "paletteMetatiles": 0,
+          "ticks": 152
+        },
+        {
+          "tileset": "TILESET_02D4A94_02D4AAC",
+          "paletteCells": 0,
+          "palettePhase": 0,
+          "tileFrame": 14,
+          "tag": "after-map-return",
+          "paletteRevision": 0,
+          "baseHash": "fcae9cf7f83a44105e055e1a6f068a19ac7020a6c4401d4b73752b656f86c65d",
+          "map": "MAP_G03_N00",
+          "rgbaPixels": 146944,
+          "paletteMetatiles": 0,
+          "ticks": 246
+        }
+      ],
+      "gpu": {
+        "renderer": "Metal",
+        "version": "2.1",
+        "vendor": "",
+        "device": "Apple M3"
+      },
+      "tileFramesObserved": 16,
+      "nativeTicksElapsed": 134,
+      "captureAttempts": {
+        "firered-second-map.png": 1,
+        "firered-outdoor.png": 1,
+        "firered-map-return.png": 1
+      },
+      "checks": 1748,
+      "screenshots": [
+        "firered-outdoor.png",
+        "firered-second-map.png",
+        "firered-map-return.png"
+      ],
+      "isolation": {
+        "freshIdentity": true,
+        "legacyMigrationBypassed": true,
+        "externalCache": false,
+        "mods": false
+      }
+    }
+  },
+  "date": "2026-10-24",
+  "runtimeSource": {
+    "repository": "https://github.com/love2d/love",
+    "commit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+    "artifact": "love-macos",
+    "archiveSha256": "3ad22b7a4083ab88aff33a1472c0fe5c8114214ce6d8d7449d16f00552bb66cc"
+  },
+  "driverSha256": "7ea2d7b08dddb89e37242a6e55d53b835f8498f2f54065396bd61548948c8d55",
+  "totalChecks": 3003,
+  "rgbaPixels": 749312,
+  "limits": [
+    "Native flat world only; no Origami/First/Third Person consumer.",
+    "No performance, resize or context-loss acceptance.",
+    "Existing incomplete Battle Dome specials remain; actual native text box is present during floor testing.",
+    "Cartridge fade buffers, battle-transition tasks and map-local phase resets remain open."
+  ],
+  "opengl11_5": {
+    "fullWindowAcceptance": false,
+    "offscreenTextureComparisonsPassed": true,
+    "standaloneWindowProbe": "black capture even without game code",
+    "engineFailureAttribution": false
+  },
+  "captureCheck": "Central game-area colour diversity excludes warning text and letterboxes; all final captures passed on first attempt.",
+  "verification": "Normal full fresh imports; hardened live/capture check repeated using only those newly created test caches and new in-memory game states.",
+  "captureObservation": "One initial Metal capture was black apart from runtime warnings. The hardened rerun passed; no claim about all-frame stability."
+}

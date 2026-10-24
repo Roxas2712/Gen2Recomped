@@ -23,7 +23,8 @@ local function write(path, value)
   end
   handle:write(value, "\n")
   handle:close()
-  print(("blessed %s -> %s"):format(path, value))
+  local summary = #value <= 128 and value or ("<%d bytes>"):format(#value)
+  print(("blessed %s -> %s"):format(path, summary))
 end
 
 os.execute("mkdir -p tests/goldens")
@@ -33,6 +34,7 @@ do
   local data = T.fixtures.fresh()
   local run = T.sdk.loadNone({ data = data })
   write("tests/goldens/fixture_fingerprint.txt", Fingerprint.compute(data, {}))
+  write("tests/goldens/fixture_fingerprint_surface.txt", Fingerprint.surface(data, {}))
   run.release()
 end
 

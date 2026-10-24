@@ -20,6 +20,7 @@ local Logger = require("src.core.Logger")
 local Probe = require("src.core.Probe")
 local Map = require("src.world.Map")
 local MapLoader = require("src.world.MapLoader")
+local LiveMaps = require("src.world.LiveMaps")
 local NPC = require("src.world.NPC")
 local PaletteFX = require("src.render.PaletteFX")
 local Pipelines = require("src.render.Pipelines")
@@ -65,6 +66,23 @@ local function gen3Weather()
 end
 
 local OverworldState = { isOpaque = true, isOverworld = true }
+
+-- The legacy 3D image is mirrored at presentation on LÖVE 12. Its native
+-- 2D field effects need the inverse transform inside that image so their
+-- artwork and projected anchors remain upright after the final composite.
+function OverworldState.withOverrideMirror(draw, pipeline)
+  local g = love.graphics
+  if not require("src.render.Renderer").mirrorsWorldOverride(pipeline) then return draw() end
+  local target = g.getCanvas()
+  if target and not target.getHeight then target = target[1] or target.canvas end
+  if target and not target.getHeight then target = target.canvas end
+  if not (target and target.getHeight) then return draw() end
+  g.push()
+  g.translate(0, target:getHeight())
+  g.scale(1, -1)
+  draw()
+  g.pop()
+end
 
 local Game -- set on enter (avoids circular require at load time)
 
@@ -1164,6 +1182,7 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   end
   self.map = MapLoader.load(Game.data, mapId)
   if GameVersion.isGen3() then
+    if fromMapId and fromMapId ~= mapId then Game.save.gen3Flute = nil end
     require("src.world.Gen3SecretBase").restoreEntrance(Game.data, Game.save, self.map)
   end
   -- inside the Battle Pyramid the bag is the Pyramid's own
@@ -2036,6 +2055,10 @@ function OverworldState:neighborReach()
   return rw, rh, vw, vh
 end
 
+function OverworldState:liveMaps()
+  return LiveMaps.snapshot(self)
+end
+
 function OverworldState:rebuildNeighbors()
   local mapId = self.map.id
   self.neighbors = {}
@@ -2052,11 +2075,13 @@ function OverworldState:rebuildNeighbors()
                                                      hops, reachW, reachH)) do
     keep[n.id] = true
     local m = MapLoader.load(Game.data, n.id)
-    table.insert(self.neighbors, { map = m, ox = n.ox, oy = n.oy })
+    table.insert(self.neighbors, { map = m, ox = n.ox, oy = n.oy, cx = n.ox / 16, cy = n.oy / 16 })
   end
   -- bound resident memory: drop maps behind us that are neither current nor
   -- a drawn neighbor, releasing their window batch / border image / atlas
   MapLoader.trim(keep)
+  LiveMaps.preparing(self)
+
 
   -- visual-only NPCs on connected maps (survey zoom): same spawn filter
   -- as a real map entry, but they never join self.entities -- no sight
@@ -2086,7 +2111,6 @@ function OverworldState:rebuildNeighbors()
     -- the seam offset in CELLS.  Everything in this engine steps on a 16px
     -- grid whatever the dataset's block size, and a connection offset is a
     -- whole number of blocks, so this is always exact.
-    nb.cx, nb.cy = nb.ox / 16, nb.oy / 16
     for _, obj in ipairs(nb.map.def.objects or {}) do
       if objectVisible(Game.save, nb.map.id, obj) and not offMap(nb.map.def, obj) then
         local npc = pooledNPC(self.npcPool, Game.data, nb.map.id, obj)
@@ -2098,6 +2122,7 @@ function OverworldState:rebuildNeighbors()
     end
   end
   self.cast = nil
+  LiveMaps.updated(self)
 end
 
 -- ONE CAST, IN EVERY LOADED MAP'S OWN CELLS.
@@ -7007,6 +7032,12 @@ function OverworldState:npcAtCell(cx, cy)
   return nil
 end
 
+-- The continuation receives the original opaque world and NPC handles.
+-- Keep it outside interact so an unhooked A press allocates no closure.
+local function vanillaTalk(world, target)
+  world:talkTo(target)
+end
+
 -- what the A press resolved to, for world.interacted's listeners
 -- A LINE THE CARTRIDGE ITSELF PRINTS, named by the import rather than typed
 -- here.  `constants.gen3<name>` holds a TEXT_ key and the text pool holds the
@@ -7197,7 +7228,7 @@ function OverworldState:interact()
       -- rules, answered mid-step like the Pikachu above
       if not npc.hidden then require("src.world.HgssFollowMon").talk(Game, self, npc) end
     elseif not npc.moving then
-      self:talkTo(npc)
+      Runtime.call("world.talk", vanillaTalk, self, npc)
     end
     interacted(self, fx, fy, "npc", npc)
     return
@@ -11039,7 +11070,8 @@ function OverworldState:talkTo(npc)
     if entry.mart then
       npc:facePlayer(self.player)
       Game.stack:push(TextBox.new(Game, Strings("Hi there!\nMay I help you?"), function()
-        Screens.push(Game, "ShopMenu", entry.mart)
+        local stock, opts = require("src.inventory.Gen2MartStock").entry(Game.data, entry)
+        Screens.push(Game, "ShopMenu", stock, nil, opts)
         unfreeze()
       end))
       return
@@ -11500,6 +11532,8 @@ function OverworldState:trainerDefeated(npc)
   return false
 end
 
+OverworldState.prepareTrainerBattle = require("src.battle.TrainerPreparation").prepare
+
 -- Run the pre-battle text -> battle -> won text -> flags sequence.
 function OverworldState:engageTrainer(npc, onDone)
   local d = npc.def
@@ -11514,7 +11548,7 @@ function OverworldState:engageTrainer(npc, onDone)
   local wonText = header and header.won and Game.data.text[header.won]
 
   local BattleState = require("src.battle.BattleState")
-  Game.stack:push(TextBox.new(Game, battleText, function()
+  local function startBattle(options)
     -- A TEAM THE AUTHOR BUILT WINS OVER AN INDEX INTO SOMEBODY ELSE'S.
     --
     -- `trainerParty` selects one of the parties the cartridge shipped for
@@ -11525,10 +11559,10 @@ function OverworldState:engageTrainer(npc, onDone)
     local battle
     if type(d.trainerTeam) == "table" and #d.trainerTeam > 0 then
       battle = BattleState.newEditorTrainer(Game, d.trainerTeam,
-                                            d.trainerClass, d.trainerName)
+                                            d.trainerClass, d.trainerName, options)
     end
     battle = battle or BattleState.newTrainer(Game, d.trainerClass,
-                                              d.trainerParty)
+                                              d.trainerParty, options)
     -- PrintEndBattleText (home/trainers.asm:341) is called from
     -- TrainerBattleVictory (engine/battle/core.asm:942), i.e. ON the battle
     -- screen once ScrollTrainerPicAfterBattle has brought the beaten trainer
@@ -11557,6 +11591,34 @@ function OverworldState:engageTrainer(npc, onDone)
       end
     end
     self:pushBattle(battle)
+  end
+  Game.stack:push(TextBox.new(Game, battleText, function()
+    local liveGame, liveSave, liveData, liveStack, liveSession = Game, Game.save, Game.data, Game.stack, Game.sessionStartedAt
+    local map, def = self.map, npc.def
+    local class, party, npcId, team = d.trainerClass, d.trainerParty, npc.id, d.trainerTeam
+    local wasEngaging = self.engaging
+    self.engaging = true
+    OverworldState.prepareTrainerBattle(Game, {
+      trainerClass = class, partyIndex = party or 1, mapId = map.id, npcId = npc.id,
+    }, function(options)
+      self.engaging = wasEngaging
+      startBattle(options)
+    end, function()
+      self.engaging = wasEngaging
+      self.spotHush = { cellX = self.player.cellX, cellY = self.player.cellY, [npc] = true }
+      if onDone then onDone() end
+    end, function()
+      if Game ~= liveGame or self.map ~= map or npc.id ~= npcId or npc.def ~= def
+        or d.trainerTeam ~= team or def.trainerClass ~= class
+        or def.trainerParty ~= party then return false end
+      for _, actor in ipairs(self.npcs or {}) do if actor == npc then return true end end
+      return false
+    end, function()
+      if Game == liveGame and Game.save == liveSave and Game.data == liveData
+        and Game.stack == liveStack and Game.sessionStartedAt == liveSession and self.map == map then
+        self.engaging, npc.frozen = false, false
+      end
+    end)
   end))
 end
 
@@ -14777,7 +14839,7 @@ function OverworldState:startWarpTo(mapId, x, y, facing, onDone, opts)
   self.arriveWarp = nil
   local fromId = self.map.id
   local fromSection = self.map.def and self.map.def.regionMapSection
-  Game.stack:push(Transition.new(Game, function()
+  local transition = Transition.new(Game, function()
     self:setMap(mapId, x, y, facing or "down", opts)
     self:noteGen2Spawn(fromId)
     -- FIRERED'S SIDE STAIRS (ExitStairsMovement): you land ON the stair tile
@@ -14967,7 +15029,15 @@ function OverworldState:startWarpTo(mapId, x, y, facing, onDone, opts)
     -- side, which is what the scripts already do.
     if self.player then self.player.inputLocked = false end
     if onDone then onDone() end
-  end))
+  end)
+  -- API 3 exposes the Gen 3 no-fade option. Reuse the exact native midpoint
+  -- and completion path; ordinary/native callers keep their existing fade.
+  if opts and opts.fade == false then
+    transition.onMidpoint()
+    transition.onDone()
+  else
+    Game.stack:push(transition)
+  end
 end
 
 -- Re-read a map record after its data changed (WorldAPI:invalidateMap,
@@ -16672,7 +16742,7 @@ function OverworldState:drawWorld()
   -- wins over it.  It falls back to the tilt/flat path whenever it cannot
   -- run this frame -- headless, a driver with no depth canvas, or a mod
   -- that threw -- so no caller ever sees a blank frame.
-  local pipelineId = Pipelines.worldPipeline()
+  local pipelineId, pipelineDef = Pipelines.worldPipeline()
   local tilt = (not pipelineId) and Tilt.active()
   -- the pipeline's finished world image, once it has run; nil keeps every
   -- path below on the vanilla flat/tilt draw
@@ -17422,55 +17492,57 @@ function OverworldState:drawWorld()
         love.graphics.pop()
         if shader then love.graphics.setShader() end
       end
-      -- ground-hugging effects sit on the cell they belong to
-      if self.dustAnim then
-        at(fxDust, self.dustAnim.x * 16 + 8, self.dustAnim.y * 16 + 8)
-      end
-      if self.cutAnim then
-        at(fxCutTree, self.cutAnim.x * 16 + 8, self.cutAnim.y * 16 + 16)
-      end
-      if self.waterAnim then
-        at(fxWater, self.waterAnim.x * 16 + 8, self.waterAnim.y * 16 + 16)
-      end
-      if self.healAnim then
-        at(fxHeal, self.healAnim.px + 8, self.healAnim.py + 16)
-      end
-      -- THE WATER RIPPLES ARE NOT HERE, AND MUST NOT BE.
-      --
-      -- They are the one field effect that is not a picture pasted over the
-      -- scene: a ring LIES ON THE WATER, so it has to be drawn with the
-      -- water, under whoever is standing in it.  This seam composites over
-      -- the FINISHED scene -- terrain, water and every character already
-      -- down -- which is exactly the report it produced when the rings were
-      -- offered here: "the ripples are appearing over the player character".
-      -- A pipeline that wants them draws them itself, as ground geometry, in
-      -- its own pass ordering (DRAMATIC_SHAPE: VoxelScene.drawRipples, drawn
-      -- between the water pass and the character pass).  The FLAT path is
-      -- unaffected and still draws them through OverworldState:drawRipples.
-      -- standing effects anchor at the foot of whoever they belong to
-      self:eachEmote(function(e)
-        if e.npc then at(fxEmote, e.npc.px + 8, e.npc.py + 16) end
-      end)
-      if self.flyAnim then
-        at(fxBird, self.player.px + 8, self.player.py + 16)
-      end
-      if self.fishing then
-        at(fxRod, self.player.px + 8, self.player.py + 16)
-      end
-      -- The S.S. Anne effects are authored in screen OAM coordinates for this
-      -- fixed-camera cutscene.  Keep them as an upright overlay for a custom
-      -- world pipeline; the flat/tilt paths place the wake behind the ship.
-      fxSSAnneWake()
-      fxSSAnneSmoke()
-      for _, sp in ipairs(self.sparkles or {}) do
-        sparkleOne = sp
-        at(fxSparkleOne, sp.px + 8, sp.py + 16)
-      end
-      sparkleOne = nil
-      for _, pt in ipairs((self.gen4Radar and self.gen4Radar.active and self.gen4Radar.patches) or {}) do
-        if pt.active then radarOne = pt; at(fxRadarOne, pt.x * 16 + 8, pt.y * 16 + 16) end
-      end
-      radarOne = nil
+      OverworldState.withOverrideMirror(function()
+        -- ground-hugging effects sit on the cell they belong to
+        if self.dustAnim then
+          at(fxDust, self.dustAnim.x * 16 + 8, self.dustAnim.y * 16 + 8)
+        end
+        if self.cutAnim then
+          at(fxCutTree, self.cutAnim.x * 16 + 8, self.cutAnim.y * 16 + 16)
+        end
+        if self.waterAnim then
+          at(fxWater, self.waterAnim.x * 16 + 8, self.waterAnim.y * 16 + 16)
+        end
+        if self.healAnim then
+          at(fxHeal, self.healAnim.px + 8, self.healAnim.py + 16)
+        end
+        -- THE WATER RIPPLES ARE NOT HERE, AND MUST NOT BE.
+        --
+        -- They are the one field effect that is not a picture pasted over the
+        -- scene: a ring LIES ON THE WATER, so it has to be drawn with the
+        -- water, under whoever is standing in it.  This seam composites over
+        -- the FINISHED scene -- terrain, water and every character already
+        -- down -- which is exactly the report it produced when the rings were
+        -- offered here: "the ripples are appearing over the player character".
+        -- A pipeline that wants them draws them itself, as ground geometry, in
+        -- its own pass ordering (DRAMATIC_SHAPE: VoxelScene.drawRipples, drawn
+        -- between the water pass and the character pass).  The FLAT path is
+        -- unaffected and still draws them through OverworldState:drawRipples.
+        -- standing effects anchor at the foot of whoever they belong to
+        self:eachEmote(function(e)
+          if e.npc then at(fxEmote, e.npc.px + 8, e.npc.py + 16) end
+        end)
+        if self.flyAnim then
+          at(fxBird, self.player.px + 8, self.player.py + 16)
+        end
+        if self.fishing then
+          at(fxRod, self.player.px + 8, self.player.py + 16)
+        end
+        -- The S.S. Anne effects are authored in screen OAM coordinates for this
+        -- fixed-camera cutscene.  Keep them as an upright overlay for a custom
+        -- world pipeline; the flat/tilt paths place the wake behind the ship.
+        fxSSAnneWake()
+        fxSSAnneSmoke()
+        for _, sp in ipairs(self.sparkles or {}) do
+          sparkleOne = sp
+          at(fxSparkleOne, sp.px + 8, sp.py + 16)
+        end
+        sparkleOne = nil
+        for _, pt in ipairs((self.gen4Radar and self.gen4Radar.active and self.gen4Radar.patches) or {}) do
+          if pt.active then radarOne = pt; at(fxRadarOne, pt.x * 16 + 8, pt.y * 16 + 16) end
+        end
+        radarOne = nil
+      end, pipelineDef)
     end
     override = Pipelines.drawWorld(pipelineId, ctx)
     -- world post-processes (a miniature-diorama blur, a colour grade) fold
@@ -17478,7 +17550,7 @@ function OverworldState:drawWorld()
     if override then
       override = Pipelines.worldPresent(override, ctx)
     end
-    Game.renderer:setWorldOverride(override)
+    Game.renderer:setWorldOverride(override, pipelineDef)
     if not override then
       -- The pipeline declined this frame (nothing to draw, or it threw and
       -- was retired).  The ground pass was skipped on its behalf above, so

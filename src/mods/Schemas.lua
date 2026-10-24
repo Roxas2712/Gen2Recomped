@@ -268,13 +268,14 @@ end
 
 -- ------- cross-reference pass
 
+local NUMERIC_REFS = { pokemon = true, moves = true, items = true, trainers = true }
 local collectRefs
 collectRefs = function(t, value, path, out)
   if value == nil or value == Merge.DELETE then return end
   local kind = t.kind
   if kind == "opt" then return collectRefs(t.inner, value, path, out) end
   if kind == "id" then
-    if type(value) == "string" then
+    if type(value) == "string" or NUMERIC_REFS[t.registry] and type(value) == "number" and value > 0 then
       out[#out + 1] = { registry = t.registry, ref = value, path = path }
     end
     return
@@ -353,7 +354,7 @@ function Schemas.crossValidate(loader, data)
     end
   end
   for name, registry in pairs(loader.content) do
-    local spec = registry.spec
+    local spec = registry.referenceSpec or registry.spec
     for id in pairs(registry.ops) do
       local value = registry:get(id)
       if value ~= nil and registry.owners[id] ~= Schemas.ENGINE then
@@ -484,6 +485,24 @@ R.items = {
   example = 'mod.content.items:patch("POTION", { price = 100 })',
 }
 
+-- Virtual native projection. HeldItemContent seeds its base before mod entry
+-- and writes only these attributes back after the normal items merge.
+R.held_items = {
+  semantics = "record", generations = "2",
+  fields = {
+    heldEffect = f.str,
+    heldParameter = f.opt(f.int(0, 255)),
+  },
+  example = 'mod.content.held_items:override("LEFTOVERS", { heldEffect = "HELD_BERRY", heldParameter = 7 })',
+}
+
+local martKeys = { bargain = f.list(f.rec { item = f.id("items"), price = f.int(0, 65535) }) }
+for index = 0, 33 do martKeys[tostring(index)] = f.list(f.id("items")) end
+R.marts = {
+  semantics = "record", generations = "2", keys = martKeys, keysClosed = true,
+  example = 'mod.content.marts:patch("0", { "ULTRA_BALL" })',
+}
+
 R.maps = {
   semantics = "record", target = "maps",
   fields = {
@@ -592,6 +611,11 @@ R.sprites = {
     paletteSource = f.opt(f.str),
   },
   example = 'mod.content.sprites:register("SPRITE_HERO", { image = "...", frames = 6 })',
+}
+
+R.rom_text = {
+  semantics = "record", generations = "23", value = f.str,
+  example = 'mod.content.rom_text:override("_WokeUpText", "{USER} woke up!")',
 }
 
 R.text = {
@@ -894,6 +918,12 @@ R.render_pipelines = {
     -- you hand back to the window, so a supersampled or low-res canvas is
     -- fine too -- but matching the pixel size is the one that is exact.
     drawWorld = f.opt(f.fn),
+    -- Explicit opt-in: detached Gen3 frame metrics instead of native state,
+    -- camera objects and FX closures. Existing pipelines retain their ctx.
+    worldFormat = f.opt(f.enum { "renderData.v1" }),
+    -- Legacy custom 3D shaders use LÖVE 11's canvas clip convention.
+    -- A producer using ordinary 2D drawing/current clip space can opt out.
+    worldOrientation = f.opt(f.enum { "legacy", "native" }),
     -- (canvas, ctx) -> canvas: post-process the WORLD image, before the UI
     -- composites over it -- a depth-of-field or colour grade that must not
     -- touch the dialog boxes and menus sitting on top.  Only runs when some
