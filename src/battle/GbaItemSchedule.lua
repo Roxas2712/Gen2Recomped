@@ -73,7 +73,7 @@ end
 function Schedule.residuals(battle)
   local order = Schedule.residualOrder(battle)
   -- Wish is a field phase, before weather; Ingrain belongs to each holder.
-  for _, b in ipairs(order) do
+  for _, b in ipairs(battle:isDouble() and order or Schedule.battlers(battle)) do
     battle:gen3WishTick(b)
   end
   require("src.battle.Weather").upkeep(battle, order)
