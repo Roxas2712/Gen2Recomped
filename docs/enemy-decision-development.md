@@ -473,6 +473,54 @@ synthetic native programs, not a claim to unlock more of Emerald's stock
 scripts. Whole-script support still lacks native query opcodes, and existing
 damage-estimation simulation/rules require further parity work.
 
+## Native damage-query and simulation milestone
+
+GBA trainer move selection now captures the four native setup rolls once,
+keeps them tied to physical slots (including holes/zero PP), and supplies the
+same values to every native program pass. Emerald's per-target path gets its
+own four values for each considered target. `Gen3AI.estimate` no longer
+spends a separate lazy 0–9 roll. The VM's missing setup input defaults to 100,
+as in the reference VM; ordinary trainer controllers provide the setup table.
+The GBA bridge also handles trainers without a custom class or mod layers,
+including zero native flags, using the reference's base/tie selection.
+
+The unchanged public scorer is composed with actual native KO and power
+query programs. Ninety-nine cases per GBA version cover HP boundaries,
+flipped/equal rolls, fourth-slot holes, PP/Disable, multiple scripts,
+power-0/1 guards, default trainers, STAB, immunity/resistance, burn/stages,
+weather, wide stats and doubles. Each case compares actual selected slots,
+callback input scores, complete controller RNG order and numerical estimates
+from the real calculator seams. Explicit assertions verify equal session
+Attack/Defense inputs. No copied AI or damage formula supplies the result.
+
+These checks also exposed the VM's unbounded bytecode score addition and
+inverted status-move `if_cant_faint` behavior. Bytecode scores now match the
+reference's 0–127 clamp, while mod-defined layer returns retain their existing
+semantics. Both KO operators ignore power below two. Estimation carries the
+native weather input and suppresses defender-screen inference, matching the
+reference AI damage query's options rather than adding a different model.
+
+The numeric comparisons exposed older-generation base steps in shared GBA
+damage. Their independent correction is published in
+[PR #178](https://github.com/UNDERdecoded/Gen2Recomped/pull/178): wide stats,
+base limits/minimum, burn/screens/spread/weather before +2, and Solar Beam's
+bad-weather step. Both actual ordinary calculators match in **4 workers /
+6,912 paired observations**, with **20,742** host/older-profile checks.
+That PR does not publish this hook or its AI wiring.
+
+The development decision matrix passes **12 workers / 951 paired
+observations** in each of host API 3 and API 2/unified, with zero differences.
+Host hook checks pass **4,084/4,084**. The complete development run passes
+**143/153** engine suites, **3/3** SDK suites and B30; all **26 FAIL lines**
+exactly match the preceding ten-suite baseline. Runtime is `0e3baf8` plus the
+recorded changes. Reports are `contracts-damage-ai-final.json`,
+`contracts-damage-ai-final-api2.json`, `full-damage-ai-final.log` and
+`gba-base-contracts.json` in the ignored QA directory. These remain bounded
+native-controller selection/calculator checks with explicit synthetic session
+inputs, not actual imported trainer-program coverage, a new LÖVE run or
+complete native battle parity. The unfinished hook remains outside the
+combined testing branch.
+
 Required before publication:
 
 - Extend real imported Gen-2 coverage beyond Gold's actual attributes, stock
@@ -486,10 +534,12 @@ Required before publication:
   action crashes the current reference controller; the valid-target cases
   above do not establish a portable malformed-action contract. Ordinary item,
   switch, move, actor-ID and controller-flag paths above are covered.
-- Extend native bytecode coverage beyond the conditional/score/end programs
-  above, including damage simulation RNG, action controls and real imported
-  trainer programs. The public brain/scored-layer paths and Emerald loaded-
-  program bypass now have shared contracts. Existing Imprison/Choice-lock flags
+- Extend native bytecode coverage beyond the tested random/score/KO/power
+  programs, including remaining query opcodes, variable-power move effects,
+  ability/held-item contexts, action controls and actual imported trainer
+  programs. Setup RNG and ordinary numeric damage queries now have shared
+  contracts; that does not prove all native damage/AI rules. The public
+  brain/scored-layer paths and Emerald loaded-program bypass are covered. Existing Imprison/Choice-lock flags
   have validated read semantics; their complete native producers/rules remain
   separate battle work.
 - Review participants, Pursuit, hazards/abilities and stale queued actors after

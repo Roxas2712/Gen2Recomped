@@ -83,7 +83,7 @@ OPS["score"] = function(vm, args)
   local at = vm.moveIndex
   vm.score[at] = (vm.score[at] or Gen3AI.START_SCORE) + by
   -- BattleAICmd_score clamps at zero rather than letting it run negative
-  if vm.score[at] < 0 then vm.score[at] = 0 end
+  vm.score[at] = math.max(0, math.min(127, vm.score[at]))
 end
 
 -- ------- the comparisons, which all read funcResult
@@ -188,8 +188,8 @@ end
 --
 -- AI_CalcDmg is the ordinary damage formula with the random factor left OFF
 -- and the critical multiplier at one; the AI then multiplies by its own roll,
--- simulatedRNG, which is `100 - Random() % 10` -- ninety-one to a hundred
--- percent, drawn ONCE per move when the thinking struct is set up and reused
+-- simulatedRNG, which is `100 - Random() % 16` -- eighty-five to a hundred
+-- percent, drawn ONCE per physical slot by the controller setup and reused
 -- by every script that asks.  So it is a slightly pessimistic estimate that
 -- stays the same all the way through the scoring, and that is why a foe does
 -- not change its mind about whether a move kills between two passes.
@@ -213,15 +213,15 @@ local function estimate(vm, index)
     if ok and Damage and Damage.compute then
       local okDmg, dmg = pcall(Damage.compute, vm.battle.ruleset, vm.user,
         vm.target, def, { rng = function(_, hi) return hi end,
-                          forceCrit = false, data = vm.battle.data })
+                          forceCrit = false, data = vm.battle.data,
+                          weather = vm.battle.weather or (vm.battle.field and vm.battle.field.weather),
+                          screens = false })
       if okDmg then out = tonumber(dmg) or 0 end
     end
-    -- the AI's own roll, one per move, held for the whole pass
-    vm.roll = vm.roll or {}
-    if not vm.roll[index] then
-      vm.roll[index] = 100 - (vm.rng(0, 9))
-    end
-    out = math.floor(out * vm.roll[index] / 100)
+    -- The controller owns the four setup draws. Native VM calls without a
+    -- supplied setup table use 100, as the reference AiVm does.
+    local simulated = vm.simulatedRNG and vm.simulatedRNG[index] or 100
+    out = math.floor(out * simulated / 100)
     if out == 0 then out = 1 end
   end
   vm.damage[index] = out
@@ -240,7 +240,7 @@ local function canFaint(vm)
   local move = vm.moves and vm.moves[vm.moveIndex]
   local def = move and vm.battle.data and vm.battle.data.moves
                and vm.battle.data.moves[move.id]
-  if not def or (tonumber(def.power) or 0) <= 1 then return false end
+  if not def or (tonumber(def.power) or 0) <= 1 then return nil end
   local hp = vm.target and vm.target.mon and tonumber(vm.target.mon.hp) or 0
   return Gen3AI.estimate(vm, vm.moveIndex) >= hp
 end
@@ -250,7 +250,7 @@ OPS["if_can_faint"] = function(vm, args)
 end
 
 OPS["if_cant_faint"] = function(vm, args)
-  if not canFaint(vm) then return args[#args] end
+  if canFaint(vm) == false then return args[#args] end
 end
 
 -- MOVE_POWER_OTHER(0) for a move with no power worth counting or one of the
@@ -797,6 +797,7 @@ function Gen3AI.scoreMoves(battle, user, target, moves, opts)
   local vm = {
     battle = battle, user = user, target = target, program = program,
     score = score, stack = {}, moves = moves,
+    simulatedRNG = opts.simulatedRNG,
     rng = battle.rng or function(a, b) return a end,
   }
 

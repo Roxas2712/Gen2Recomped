@@ -126,17 +126,23 @@ local function layersFor(battle)
   add(battle.trainer.aiClass)
   return layers
 end
-local function scoresFor(battle, user, target, bad, flags)
-  local scores, moves, slots, initial = {}, {}, {}, {}
+local function scoresFor(battle, user, target, bad, flags, simulatedRNG)
+  local scores, moves, slots, initial, simulated = {}, {}, {}, {}, {}
   for i = 1, 4 do
     scores[i] = bad[i] and 0 or 100
     local move = (user.curMoves or {})[i]
     if present(move) then
       moves[#moves + 1], slots[#slots + 1], initial[#initial + 1] = move, i, scores[i]
+      simulated[#simulated + 1] = simulatedRNG[i]
     end
   end
-  local native =
-    require("src.battle.Gen3AI").scoreMoves(battle, user, target, moves, { scores = initial, flags = flags })
+  local native = require("src.battle.Gen3AI").scoreMoves(
+    battle,
+    user,
+    target,
+    moves,
+    { scores = initial, flags = flags, simulatedRNG = simulated }
+  )
   if native then
     for i, slot in ipairs(slots) do
       scores[slot] = native[i]
@@ -193,11 +199,12 @@ local function chooseDouble(battle, user, bad, flags)
     local target = battle:battlerAt(targetId)
     points[targetId] = -1
     if targetId ~= id and target and (target.mon.hp or 0) > 0 then
-      for _ = 1, 4 do
-        battle.rng(0, 15)
+      local simulated = {}
+      for i = 1, 4 do
+        simulated[i] = 100 - battle.rng(0, 15)
       end
       battle.rng(0, 65535)
-      local scores = scoresFor(battle, user, target, bad, flags)
+      local scores = scoresFor(battle, user, target, bad, flags, simulated)
       local slot, best = pick(battle, user, scores, bad)
       slots[targetId], points[targetId] = slot, best
       if targetId % 2 == id % 2 and best < 100 then
@@ -248,8 +255,9 @@ local function choose(battle, user, class, layers)
     end
   end
   -- Native AI setup consumes four simulation draws even for a valid brain.
-  for _ = 1, 4 do
-    battle.rng(0, 15)
+  local simulated = {}
+  for i = 1, 4 do
+    simulated[i] = 100 - battle.rng(0, 15)
   end
   local targetId = id % 2 == 1 and id - 1 or id + 1
   if battle:isDouble() then
@@ -259,11 +267,6 @@ local function choose(battle, user, class, layers)
     end
   end
   if not slot then
-    -- Unscored native programs retain their existing path while VM coverage
-    -- is expanded separately from the portable mod callback contract.
-    if #layers == 0 and (tonumber(battle.trainer.aiFlags) or 0) ~= 0 then
-      return nil, false
-    end
     local flags = tonumber(battle.trainer.aiFlags) or 0
     local emeraldDouble = battle:isDouble() and require("src.core.GameVersion").get() == "emerald"
     if emeraldDouble and math.floor(flags / 128) % 2 == 0 then
@@ -274,7 +277,7 @@ local function choose(battle, user, class, layers)
       -- mod layers. A missing pack still follows the ordinary layer path.
       slot, targetId = chooseDouble(battle, user, bad, flags)
     else
-      local scores = scoresFor(battle, user, battle:battlerAt(targetId), bad, flags)
+      local scores = scoresFor(battle, user, battle:battlerAt(targetId), bad, flags, simulated)
       applyLayers(battle, user, battle:battlerAt(targetId), scores, bad, layers)
       slot = pick(battle, user, scores, bad)
     end
@@ -305,9 +308,6 @@ function M.choose(battle, user)
   end
   local class = battle.trainer.aiClass and TrainerAI.classFor(battle)
   local layers = layersFor(battle)
-  if not class and #layers == 0 then
-    return nil, false
-  end
   local ok, action, handled = pcall(choose, battle, user, class, layers)
   if not ok then
     return fallback(battle, user), true
