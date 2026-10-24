@@ -1,7 +1,10 @@
 local C = {}
-function C.run(root, backend, version, api, format)
+function C.run(root, backend, version, api, format, inspect)
   local f = dofile(root .. "/tests/enemy_decision/fixture.lua").new(root, backend, version, api, format)
   local T, rows = f.T, {}
+  if inspect then
+    inspect(f)
+  end
   if f.gen ~= 2 and f.gen ~= 3 then
     T.eq(f.e.available, false, "no invented GB producer")
     f.close()

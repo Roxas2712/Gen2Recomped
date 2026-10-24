@@ -1,4 +1,5 @@
 local mod = ...
+mod.exports.api = mod
 local out = { mode = "delegate", calls = 0, contexts = {} }
 mod.exports.state = out
 mod.exports.available = mod:supports("hooks", "battle.enemy_switch_or_item")
