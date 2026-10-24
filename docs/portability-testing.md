@@ -1,13 +1,37 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–171
+hook, rendering, shader and baseline test fixes prepared in PRs #88–172
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`62f8902617255195b4a12b176f171925c49209ec`. Its ROM-free run passed
-190/190 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+`7a12243293dcb7a6ff2a00dc64490f3c6bb5aa32`. Its ROM-free run passed
+192/192 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+[PR #172](https://github.com/UNDERdecoded/Gen2Recomped/pull/172) binds native
+FireRed/Emerald party action text and separate cancel buttons, plus FireRed's
+Item-PC withdrawal title, cancel row and submenu. Shared native reader checks
+**257** and action/render/retirement checks **62** pass. The unchanged public
+consumer compares through both real SDKs: **8 workers / 522 paired native text
+values**, against clean Gen1 `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`.
+Both API 3 and host API 2/unified pass, including wrong-profile isolation,
+separate TAKE/CANCEL labels, control characters and existing-menu retirement.
+
+Native LÖVE 11.5 / imported FireRed and Emerald pass at this runtime: actual
+party/footer/submenu drawing, SUMMARY open/B-return, ITEM submenu/B-close,
+party close; FireRed's real Player-PC → Item Storage → withdrawal title/list/
+submenu and translated CANCEL without inventory changes. Isolated in-memory
+New Game; no normal SAVE, full playthrough, fresh full-ROM import or pixel
+identity claim. The owned example was removed with hash guards.
+See [GBA menu prose](portable-gba-menu-prose.md).
+
+All **32** hosted #172 workflows await maintainer approval (`action_required`);
+the [GBA menu workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40076430839)
+has zero executed jobs. Local validation is separate.
+
+Prior #171 registry evidence below retains runtime
+`62f8902617255195b4a12b176f171925c49209ec`; it is not relabeled as a new native run.
+
 [PR #171](https://github.com/UNDERdecoded/Gen2Recomped/pull/171) adds a separate
 engine-prose registry, native Gen-2 label projection/formatting, same-spelling
 script isolation and ten native GBA Pokemon-storage action/description bindings.
@@ -25,12 +49,12 @@ complete battle/wakeup turn. Isolated in-memory New Game, no normal SAVE,
 full playthrough, fresh full-ROM reimport or pixel-equivalence claim. The owned
 temporary example was removed with hash guards. See [portable ROM prose](api3-rom-text.md).
 
-**Remaining prose work:** other GBA party/item-PC/field-menu and battle readers
-need explicit bindings. A Gen-2 screen that still prints a hardcoded fallback
+**Remaining prose work:** further party prompts, field-move names, mail/trade,
+Item-PC quantity/results, Emerald Item-PC and other field/battle readers need explicit bindings. A Gen-2 screen that still prints a hardcoded fallback
 instead of reading its label also needs a native reader change. Availability
 of `rom_text` does not mean every native printer or label consumer is covered.
 
-All **31** hosted #171 workflows await maintainer approval (`action_required`);
+At #171 publication, all **31** hosted workflows await maintainer approval (`action_required`);
 the [ROM-prose workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40074003980)
 has no executed jobs. Local validation is separate.
 

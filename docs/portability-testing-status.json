@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "62f8902617255195b4a12b176f171925c49209ec",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/171",
-  "feature_ref": "901ea77f7f0bfb15b5f125ee0b3e6e3797da3b21",
+  "runtime_ref": "7a12243293dcb7a6ff2a00dc64490f3c6bb5aa32",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/172",
+  "feature_ref": "236591a1fa50266311837f2d8569d7395c365b46",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 190,
-  "engine_suites_total": 190,
+  "engine_suites_passed": 192,
+  "engine_suites_total": 192,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 24,
-  "cross_engine_paired_observations": 94,
+  "cross_engine_worker_runs": 8,
+  "cross_engine_paired_observations": 522,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All 31 #171 PR workflows report action_required pending maintainer approval; local results are separate",
+  "hosted_ci": "All 32 #172 workflows report action_required pending maintainer approval; GBA menu workflow has zero executed jobs; local validation is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Latest Gen-2/3 shiny/gender native identity contracts in four SDK configurations; exact Gen-2 DV/ratio matrix; reference API 2 remains native; cached and query lifecycle scopes are separate",
+  "cross_engine_scope": "Native GBA party action readers, separate footer and FireRed Item-PC font output; unchanged public consumer in reference API 3 and host API 3/API 2-unified",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -156,14 +156,14 @@
   },
   "enemy_pp_negative_controls": "Strict raw-policy checker and public/native observer both reject the unchanged #161 host for Gold PP discrepancy",
   "charge_required_original_full_suite_runtime_ref": "6a1238a7c42b09fbd9694149b35146d17bb9b720",
-  "hosted_ci_workflow_count": 31,
+  "hosted_ci_workflow_count": 32,
   "enemy_pp_hosted_ci": {
     "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40046010257",
     "conclusion": "action_required",
     "jobs": 0
   },
   "enemy_pp_full_suite_runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
-  "feature_tested_ref": "52541d1b0160de2361a2bffe15fd4fad4eb9a20c",
+  "feature_tested_ref": "431fe8c78d3c6815a6df118b96cad3bd4c504f30",
   "caught_marker_native_checks_passed": 2078,
   "caught_marker_renderer_checks_passed": 840,
   "caught_marker_import_checks_passed": 216,
@@ -620,5 +620,59 @@
       "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40074003980",
       "jobs": 0
     }
+  },
+  "gba_menu_prose": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/172",
+    "feature_ref": "236591a1fa50266311837f2d8569d7395c365b46",
+    "feature_tested_ref": "431fe8c78d3c6815a6df118b96cad3bd4c504f30",
+    "runtime_ref": "7a12243293dcb7a6ff2a00dc64490f3c6bb5aa32",
+    "reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "native_reader_checks_passed": 257,
+    "native_action_render_retirement_checks_passed": 62,
+    "cross_engine_worker_runs": 8,
+    "cross_engine_paired_text_values": 522,
+    "cross_engine_versions": [
+      "firered",
+      "emerald"
+    ],
+    "scope": "Reference FireRed table-key and Emerald manifest/named-label action producers; actual reference footer/FireRed Item-PC draw text, host native battle/order/item action constructors/submenu rendering; defaults, wrong-profile isolation, TAKE/CANCEL separation, empty/control/removal/rollback/freeze; existing title/submenu/party readers retire removed owners",
+    "feature_baseline": {
+      "engine_suites_passed": 137,
+      "engine_suites_total": 147,
+      "existing_failure_suites": 10,
+      "new_failures": 0,
+      "all_26_fail_lines_match_parent": true,
+      "repair_prs": "#128\u2013134",
+      "sdk_suites_passed": 3,
+      "b30_profile": "passed"
+    },
+    "combined_engine_suites_passed": 192,
+    "combined_engine_suites_total": 192,
+    "native_smoke_games": [
+      "firered",
+      "emerald"
+    ],
+    "native_runtime_ref": "7a12243293dcb7a6ff2a00dc64490f3c6bb5aa32",
+    "native_scope": "L\u00d6VE 11.5, isolated imported title/New Game; same installed public example; real party/footer/action rendering, SUMMARY open/B-return, ITEM submenu/B-close and party close; FireRed Player-PC -> Item Storage -> withdrawal title/list/submenu and translated CANCEL with unchanged inventory; no normal SAVE, full playthrough, fresh full-ROM import or pixel equality",
+    "owned_example_removed_with_hash_guards": true,
+    "negative_control": "Unchanged #171 actual party reader retains BASE_SUMMARY after same public MOD_SUMMARY override",
+    "imported_red_runtime_ref": "431fe8c78d3c6815a6df118b96cad3bd4c504f30",
+    "imported_red_regressions": {
+      "battle": 468,
+      "save_conversion": 95,
+      "parity_J": 73,
+      "parity_K": 22,
+      "external_binary_save_fixture": "not supplied"
+    },
+    "remaining_scope": "Further party prompts, field-move names, mail/trade, Item-PC quantity/results, Emerald Item PC, further field/battle prose and universal glyph/printer/layout equivalence remain work",
+    "hosted_ci": {
+      "workflow_count": 32,
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40076430839",
+      "jobs": 0
+    },
+    "post_runtime_changes": [
+      "Validation documentation/status"
+    ]
   }
 }
