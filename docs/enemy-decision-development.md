@@ -603,3 +603,40 @@ LUA=/path/to/luajit bash scripts/test.sh --quick
 python3 tools/enemy-decision-contract-check/check.py --gen1 /path/to/gen1 --lua /path/to/luajit
 python3 tools/enemy-decision-contract-check/check.py --gen1 /path/to/gen1 --lua /path/to/luajit --host-api 2
 ```
+
+## Native GBA move-knowledge milestone
+
+[PR #180](https://github.com/UNDERdecoded/Gen2Recomped/pull/180) independently
+publishes the four native move/effect membership commands and Emerald's
+per-battler observed-move history. The independent feature passes 19,116 checks
+and 4 workers / 3,072 paired actual-interpreter observations. FireRed retains
+actual-move reads, including empty/unknown-name boundaries. Unsupported
+commands still reject complete scripts.
+
+Development runtime `cf21d7ce5982e861557e5d056bd9c1449d5402a4` additionally
+wires learning into the ordinary public scorer/controller path: once after
+single-target setup, including a valid mod brain, or per opposing target in
+the loaded Emerald double-program path. Learning preserves unrelated history,
+order, duplicate suppression and the four-move cap. Switching party identity
+invalidates the previous occupant's knowledge. It does not reveal unobserved
+moves or consume RNG.
+
+Sixteen additional cases per GBA profile pass through the unchanged public
+scoring consumer and actual native opponent entry points. They cover positive
+and negative membership, unseen effects, zero PP, live/absent/fainted partners,
+Emerald's asymmetric partner selectors and actual move-produced history.
+Focused checks pass **4,246/4,246**. Both host API 3 and API 2/unified match
+the pinned source in **12 workers / 1,027 paired observations** each.
+
+The complete development run passes **145/155** engine suites, SDK **3/3**
+and B30. All **26 FAIL lines across ten inherited suites** match the previous
+query milestone exactly. Reports are `contracts-knowledge-final-clean.json`,
+`contracts-knowledge-final-clean-api2.json`, `targeted-knowledge.log` and
+`full-knowledge-final.log` under ignored `tmp/enemy-switch-item-qa/`.
+
+A read-only fresh English Emerald AI-stage import now reports flag 6 as
+runnable. Flags 7–9 still require `if_holds_item`; flag 2 still requires held
+effects, party status, taunt, move-order and attacking-move queries. This is
+reachability evidence, not proof of full stock-program/controller parity.
+No graphical run is added. The unfinished enemy switch/item hook and its
+extended controller wiring remain outside the combined testing branch.
