@@ -2,14 +2,45 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in PRs #88–182 and
-#184 (excluding unrelated #138). It is for testing the combined changes before
-upstream reviews and merges the individual PRs. Upstream `main` is separate.
-LeafGreen cartridge-support PR #183 is separate from this composed snapshot.
+#184–185 (excluding unrelated #138). It is for testing the combined changes
+before upstream reviews and merges the individual PRs. Upstream `main` is
+separate. LeafGreen cartridge-support PR #183 is separate from this snapshot.
 
 The combined runtime tested for this snapshot is
-`335000f18e7002f9be487a49e5164466ff602439`. Its ROM-free run passed
-**204/204 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`b74f59f6f05eb4624e71edaa2c64c2ae26d08c88`. Its ROM-free run passed
+**205/205 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status-only commits do not change production code.
+
+[PR #185](https://github.com/UNDERdecoded/Gen2Recomped/pull/185) implements
+both native attacking-move predicates. They inspect exactly four current
+user slots for a non-NONE move with nonzero declared power, regardless of
+PP, Disable, Taunt, considered move or category. Current battle moves override
+the learned list; missing definitions preserve the source error boundary.
+
+The clean combined runtime matches in **4 workers / 4,272 paired observations**,
+with **21,264** focused host checks. Source workers pass **8,528** checks each.
+The checker pins clean upstream Gen1 dev
+`bryanthaboi/gen1recomp@535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`; those source
+predicates already implement the native rule, so this milestone needs no new
+source production patch. The source fork's composed testing branch retains
+its prior #3052–3054 fixes at `fb7b0366efcb85e703e9e6d5a8a24d01456a109b`.
+See [native attacking-move predicates](gen3-ai-attacking-moves.md).
+
+Unchanged host main fails **4,256** assertions and differs in all **2,136**
+observations per profile. The independent Gen2 feature retains exactly the
+**27 FAIL lines across ten baseline suites**; their repairs are included here.
+Both hosted #185 workflows await maintainer approval (`action_required`);
+the [dedicated workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40122406817)
+has zero executed jobs. Local acceptance is separate.
+
+Ordinary usable contexts run through actual VMs; empty/all-zero-PP contexts
+exercise actual opcode dispatch because there is no native considered move.
+These are bounded CPU contracts, without new graphical or full-controller/
+full-gameplay parity claims. The unfinished enemy switch/item hook remains
+outside this branch. Native order prediction is still a prerequisite.
+
+Prior #184 results retain runtime
+`335000f18e7002f9be487a49e5164466ff602439` and its 204/204 engine result:
 
 [PR #184](https://github.com/UNDERdecoded/Gen2Recomped/pull/184) implements
 native `if_status_in_party`: full 32-bit equality, six stored slots, native
