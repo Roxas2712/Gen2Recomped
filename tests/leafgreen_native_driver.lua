@@ -27,15 +27,15 @@ return function()
   end
   assert(G.overworld and G.stack:top()==G.overworld,'Oak speech/naming did not reach field')
   love.graphics.captureScreenshot('leafgreen-new-game.png');frames(3)
-  local beforeX,beforeY=G.overworld.player.x,G.overworld.player.y
+  local beforeX,beforeY=G.overworld.player.cellX,G.overworld.player.cellY
   U.hold(G,'down',30);frames(20)
-  assert(beforeX~=G.overworld.player.x or beforeY~=G.overworld.player.y,'field movement did not advance')
+  assert(beforeX~=G.overworld.player.cellX or beforeY~=G.overworld.player.cellY,'field movement did not advance')
   local S=require('src.core.SaveData')
-  S.save(G.save,G.mods)
+  assert(S.save(G.save,G.mods))
   assert(S.saveFileExists('leafgreen'))
   assert(not S.saveFileExists('firered'),'LeafGreen wrote another edition save')
   local loaded=assert(S.load('leafgreen'))
-  assert(loaded.playerName==G.save.playerName)
+  assert(loaded.player.name==G.save.player.name and loaded.version=='leafgreen')
   print('[driver] PASS new game, Oak speech, naming, movement, isolated save/reload')
   -- A real map-script interaction and native battle/reward chain. The party
   -- is a deliberate QA fixture so the test does not need hours of grinding.
