@@ -16,6 +16,8 @@ profile, hiding the generation fallback even when the correct later-generation
 ruleset was registered. AUTO fixes new profiles and can be stored as a
 generation override even when the shared preference names an explicit ruleset.
 Options save/reload preserves that override and the other generations' choices.
+The cartridge save-import skeleton uses AUTO too, so importing a save does not
+reintroduce the fixed Gen-1 preference.
 
 ## Existing settings and mods
 

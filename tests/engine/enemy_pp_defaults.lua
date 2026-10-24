@@ -27,6 +27,17 @@ T.check(Save.saveOptions(live, fs, 2), "return to automatic saves")
 T.eq(Save.optionsFor("gold", fs).ruleset, "auto", "automatic survives reloading")
 T.eq(Save.optionsFor("red", fs).ruleset, "gen1_faithful", "roundtrip preserves shared explicit choice")
 
+local Convert = require("src.save_convert.SaveConvert")
+for generation = 1, 5 do
+  local imported = Convert.mergeDefaults({ player = { map = "TEST", x = 1, y = 2 } }, nil, generation)
+  T.eq(imported.options.ruleset, "auto", "cartridge import skeleton follows native default")
+  local explicit = Convert.mergeDefaults({
+    player = { map = "TEST", x = 1, y = 2 },
+    options = { ruleset = "custom_rules" },
+  }, nil, generation)
+  T.eq(explicit.options.ruleset, "custom_rules", "import merge keeps explicit decoded settings")
+end
+
 local faithful = require("src.battle.rulesets.gen1_faithful")
 local finite = require("src.battle.rulesets.gen2_finite_pp")
 T.eq(faithful.enemyUnlimitedPP, true, "Gen-1 source table keeps unlimited enemy PP")
