@@ -5662,7 +5662,7 @@ function BattleState:resolveTurn(playerAction)
   -- switch (src/battle/Gen5MoveRules.lua)
   if self.bw then order = require("src.battle.Gen5MoveRules").arrange(self, order) end
 
-  if GameVersion.isGen3() then
+  if GameVersion.isGen3() and self:isDouble() then
     self._gbaResidualPriority = {}
     for _, entry in ipairs(order) do
       local move = entry[3] and not entry[3].special and self:moveDef(entry[3])
