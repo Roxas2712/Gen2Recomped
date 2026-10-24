@@ -86,6 +86,91 @@ return function(f, backend)
     specs[#specs + 1] = { name = query .. "-double", query = query, taunt = 2, double = true }
     specs[#specs + 1] = { name = query .. "-produced", query = query, produce = "taunt" }
   end
+  local em = require("src.core.GameVersion").get() == "emerald"
+  for _, spec in ipairs({
+    { name = "held-own-metadata", query = "get_hold_effect", which = 1, held = 196, holder = 1, value = 39 },
+    { name = "held-hidden-target", query = "get_hold_effect", held = 196, value = 0 },
+    {
+      name = "held-band-observed",
+      query = "get_hold_effect",
+      held = 196,
+      observe = "band",
+      value = em and 22 or 39,
+    },
+    {
+      name = "held-band-failed",
+      query = "get_hold_effect",
+      held = 196,
+      observe = "band",
+      roll = 99,
+      value = 0,
+    },
+    {
+      name = "held-leftovers-observed",
+      query = "get_hold_effect",
+      held = 200,
+      observe = "heal",
+      value = em and 0 or 43,
+    },
+    {
+      name = "held-leftovers-full",
+      query = "get_hold_effect",
+      held = 200,
+      observe = "heal",
+      full = true,
+      value = 0,
+    },
+    {
+      name = "held-target-effect-byte",
+      query = "if_holds_item",
+      held = 196,
+      observe = "band",
+      heldOperand = 39,
+    },
+    {
+      name = "held-target-not-inventory",
+      query = "if_holds_item",
+      held = 196,
+      observe = "band",
+      heldOperand = 196,
+      miss = true,
+    },
+    {
+      name = "held-target-byte-or",
+      query = "if_holds_item",
+      held = 196,
+      observe = "band",
+      heldOperand = 0x0126,
+    },
+    {
+      name = "held-own-physical-id",
+      query = "if_holds_item",
+      which = 1,
+      holder = 1,
+      held = 196,
+      heldOperand = 196,
+    },
+    {
+      name = "held-own-retail-or",
+      query = "if_holds_item",
+      which = 1,
+      holder = 1,
+      held = 0x1234,
+      heldOperand = 0x1234,
+      miss = true,
+    },
+    {
+      name = "held-partner-physical-id",
+      query = "if_holds_item",
+      which = 3,
+      holder = 3,
+      held = 196,
+      heldOperand = 196,
+      double = true,
+    },
+  }) do
+    specs[#specs + 1] = spec
+  end
   for _, spec in ipairs(specs) do
     local b = f.freshDecision({}, spec.double)
     local function at(id)
@@ -149,6 +234,81 @@ return function(f, backend)
       end
     end
     local restore = function() end
+    local observationDraws, itemHistory = {}, false
+    if spec.held then
+      local records = native and f.data.gen3Items._byId or f.data.items
+      local changes = {}
+      for _, row in ipairs({ { 39, 22 }, { 43, 0 }, { spec.held, spec.held == 200 and 43 or 39 } }) do
+        local id, effect = row[1], row[2]
+        local key = native and id or "ITEM_" .. id
+        changes[#changes + 1] = { key = key, old = records[key] }
+        records[key] = {
+          index = id,
+          name = "TEST HELD ITEM",
+          pocket = "ITEMS",
+          gen3HoldEffect = effect,
+          holdEffect = native and effect
+            or ({ [0] = "NONE", [22] = "EVASION_UP", [39] = "FOCUS_BAND", [43] = "LEFTOVERS" })[effect],
+          holdEffectParam = 10,
+        }
+      end
+      local holder = at(spec.holder or 0)
+      holder.mon.item = native and spec.held or "ITEM_" .. spec.held
+      if native then
+        holder.item = spec.held
+      else
+        holder.items = records
+      end
+      holder.mon.hp, holder.mon.maxHp = spec.full and 100 or 90, 100
+      holder.mon.stats.hp = 100
+      b.rng = function(lo, hi)
+        observationDraws[#observationDraws + 1] = { lo, hi }
+        return spec.roll or lo or 0
+      end
+      if spec.observe == "heal" then
+        if native then
+          require("src.core.game3.battle.held_items").normal(
+            require("src.core.game3.battle.adapter").new(b),
+            holder
+          )
+        else
+          b:holdItemTrigger(holder, "turn")
+        end
+      elseif spec.observe == "band" then
+        if native then
+          local Adapter = require("src.core.game3.battle.adapter")
+          local M = require("src.core.game3.battle.engine").newContext(
+            at(1),
+            holder,
+            33,
+            1,
+            Adapter.new(b),
+            b,
+            {},
+            { hits = {} },
+            {}
+          )
+          require("src.core.game3.battle.effects.hit").applySetDamage(M, 5)
+        else
+          b:applyDamage(holder, 5, true)
+        end
+      end
+      itemHistory = copy(b._aiHistory and b._aiHistory.itemEffects or {})
+      local expected = spec.observe == "band" and not spec.roll and 39
+        or spec.observe == "heal" and not spec.full and 43
+        or 0
+      T.eq(itemHistory[0] or 0, expected, spec.name .. " actual producer records native byte")
+      T.same(
+        observationDraws,
+        spec.observe == "band" and { { 0, 99 } } or {},
+        spec.name .. " producer RNG ABI"
+      )
+      restore = function()
+        for i = #changes, 1, -1 do
+          records[changes[i].key] = changes[i].old
+        end
+      end
+    end
     if spec.produce then
       local name, number =
         spec.produce == "taunt" and "TAUNT" or spec.produce == "protect" and "PROTECT" or "TACKLE",
@@ -272,7 +432,7 @@ return function(f, backend)
       end
     end
     local taunt = spec.query == "if_target_taunted" or spec.query == "if_target_not_taunted"
-    local branch = spec.query == "if_flash_fired" or spec.member ~= nil or taunt
+    local branch = spec.query == "if_flash_fired" or spec.member ~= nil or spec.heldOperand ~= nil or taunt
     if native then
       b.aiClass, b.aiFlags = "PORTABLE_SCORE_A", 1
       local ops = {}
@@ -286,6 +446,7 @@ return function(f, backend)
         type = spec.typ,
         move = not spec.query:find("with_effect") and spec.member or nil,
         effect = spec.query:find("with_effect") and spec.member or nil,
+        item = spec.heldOperand,
         target = branch and "bonus" or nil,
       }
       if not branch then
@@ -308,6 +469,7 @@ return function(f, backend)
       ops[#ops + 1] = {
         name = spec.query,
         args = taunt and { 10 }
+          or spec.heldOperand ~= nil and { spec.which or 0, spec.heldOperand, 10 }
           or spec.member ~= nil and { spec.which or 0, spec.member, 10 }
           or branch and {
             spec.which or 0,
@@ -340,6 +502,20 @@ return function(f, backend)
       return b:enemyAction(user)
     end)
     T.eq(ok, true, spec.name .. " actual native opponent query completes")
+    if spec.held then
+      for _, call in ipairs(f.e.scoring.calls) do
+        T.eq(
+          call.before,
+          spec.miss and 100 or 105,
+          spec.name .. " public scorer receives native query result"
+        )
+      end
+      T.same(
+        b._aiHistory and b._aiHistory.itemEffects or {},
+        itemHistory,
+        spec.name .. " scoring does not mutate item history"
+      )
+    end
     local slot, targetId
     if native then
       slot, targetId = action and action.slot, action and action.target
@@ -366,6 +542,8 @@ return function(f, backend)
       calls = f.e.scoring.calls,
       rng = draws,
       producedHp = spec.produce and user.mon.hp or false,
+      itemHistory = itemHistory,
+      observationRng = observationDraws,
     }
     restore()
     f.data.constants.gen3BattleAI = oldProgram

@@ -12,8 +12,11 @@ this branch's battle hook. Gen1 API-2 live-record aliasing is explicitly outside
 that common API-3 contract.
 
 Current source: clean `Roxas2712/gen1recomp-Mac-fix` at
-`10613015fc68d924915570bd1abee34b70d5bd01`, the paired Taunt predicate fix in
-[Gen1 PR #3052](https://github.com/bryanthaboi/gen1recomp/pull/3052).
+`a0c74c9570f0482a85886ecd8a2328de79ba7e09` on `codex/portability-testing`,
+composing [Gen1 PR #3052](https://github.com/bryanthaboi/gen1recomp/pull/3052)
+and [Gen1 PR #3053](https://github.com/bryanthaboi/gen1recomp/pull/3053).
+This explicit fork reference includes both Taunt and item-knowledge fixes;
+neither counterpart is claimed merged upstream.
 Earlier milestones retain their recorded upstream `535a5ec` source evidence.
 `tools/enemy-decision-contract-check/check.py` runs the unchanged public consumer
 through both real SDKs in separate workers. The current matrix covers Red's
