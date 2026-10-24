@@ -51,3 +51,11 @@ entry. The full digest becomes `032184f68094e9ca`; the `move_effects` section
 changes from `7cd0ac0f527968fb` to `52cc8398513ed12c`. Removing only that entry restores
 the former full digest `128fc071ae7249cd` and effect section. All six other
 populated sections stay identical. Mutation and determinism checks remain enabled.
+
+## Native GBA Spit Up revision
+
+`SPIT_UP_EFFECT.rev = 1` marks its corrected set-damage behavior. The full
+digest becomes `397df21576af62f1`; `move_effects` changes from
+`52cc8398513ed12c` to `c62807cde682a669`. Removing only that record revision
+restores full digest `032184f68094e9ca` and the former effect section. All six
+other populated sections stay identical; no other golden or algorithm changes.
