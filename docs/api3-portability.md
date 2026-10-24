@@ -152,3 +152,6 @@ See [portable Pokemon identity hooks](portable-pokemon-rolls.md) for
 `shiny.roll`, `gender.roll`, native DV/PID semantics and shared contracts.
 
 [Portable held-item reads](portable-held-items.md) documents shared names and native consumers and GBA scheduling phases.
+
+[Portable charge decisions](portable-charge-required.md) document
+`battle.charge_required`, native first-turn/release rules and remaining PP-policy differences.
