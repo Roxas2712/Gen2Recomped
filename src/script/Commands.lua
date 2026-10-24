@@ -1508,14 +1508,15 @@ end
 function Commands.open_mart(ctx, textConst)
   local ow = ctx.overworld
   local entry = ctx.game.data:textEntry(ow.map.def.label, textConst)
-  if not entry or not entry.mart then
+  local stock, opts = require("src.inventory.Gen2MartStock").entry(ctx.game.data, entry)
+  if not stock then
     Logger.warn("open_mart: no mart on %s/%s", ow.map.def.label, tostring(textConst))
     return
   end
   local runner = ctx.runner
-  Screens.push(ctx.game, "ShopMenu", entry.mart, function()
+  Screens.push(ctx.game, "ShopMenu", stock, function()
     runner:resume()
-  end)
+  end, opts)
   runner:yield()
 end
 
