@@ -35,3 +35,12 @@ records across the Gen-2 reader and FireRed/Emerald effect-byte matrices.
 See `tools/trainer-ai-metadata-contract-check/README.md` for reproduction.
 No copyrighted ROM assets or text are included. This is not a full-ROM reimport,
 native gameplay, AI-policy, save or pixel-equivalence claim.
+
+The feature runtime `2ef7341810df813e09f0cc30f648cee1c57f5074` passes 32 focused
+checks. Its complete ROM-free run is 138/148 engine suites, with exactly the
+same 26 failure lines across ten baseline suites as parent #172; SDK 3/3 and
+Dramatic Shape B30 pass. The combined runtime
+`ddac8aaf1d6b042ddd3defe57fe3e8de1b8b2039`, including repairs #128–134, passes
+193/193 engine suites, SDK 3/3 and B30. Formatting of the new Lua tests,
+actionlint, Python compilation and diff checks also pass. Hosted CI remains
+separate from these local results.
