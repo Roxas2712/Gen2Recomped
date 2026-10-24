@@ -19,6 +19,8 @@ jobs:
         run: |
           luajit tests/engine/gen3_surface_data.lua
           luajit tests/engine/native_foundation.lua
+      - name: Cache-reference policy regressions
+        run: python3 -m unittest discover -s tests -p test_modkit_cache_comments.py
       - name: Existing contracts on the combined engine
         run: |
           luajit tests/engine/gen3_render_data.lua

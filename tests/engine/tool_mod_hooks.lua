@@ -34,7 +34,9 @@ do
     return nextFn(game, dt)
   end, 0, "tool_fixture")
 
-  require("src.core.Game").step(fake, 1 / 60)
+  local Game = require("src.core.Game")
+  setmetatable(fake, { __index = Game })
+  Game.step(fake, 1 / 60)
   T.eq(table.concat(order, ","), "hook,input,world",
     "input.step runs before input edges are promoted and before gameplay")
   hooks:removeOwner("tool_fixture")
@@ -133,7 +135,9 @@ do
     return nextFn(game, viewport)
   end, 0, "tool_fixture")
 
-  require("src.core.Game").draw(fake)
+  local Game = require("src.core.Game")
+  setmetatable(fake, { __index = Game })
+  Game.draw(fake)
   T.eq(table.concat(order, ","), "states,present,hud,touch",
     "render.hud draws after frame composition and before touch controls")
   hooks:removeOwner("tool_fixture")

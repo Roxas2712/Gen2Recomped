@@ -192,16 +192,46 @@ check(quitHook:find('package.loaded["src.update.Check"].shutdown', 1, true) ~= n
 -- so the quit event exits the process outright.  It has to sit after the
 -- love.quit() veto test, or the editor's abort-quit path would die on a quit
 -- it refused.
-local quitBranch = mainSrc:match('if name == "quit" then(.-)\n%s*end\n')
-check(quitBranch ~= nil, "love.run still handles the quit event")
-quitBranch = quitBranch or ""
-local vetoAt = quitBranch:find("not love%.quit()")
-local osAt = quitBranch:find("os%.exit")
-local androidAt = quitBranch:find('getOS() == "Android"', 1, true)
-check(vetoAt ~= nil and osAt ~= nil and vetoAt < osAt,
-      "the process exit runs only after love.quit declined to veto")
-check(androidAt ~= nil and androidAt < osAt,
-      "the process exit is gated on Android")
+-- main.lua also has an import-only event loop. Scope the check to the real
+-- gameplay loop, then execute its event dispatch with an isolated love table.
+local runHook = assert(mainSrc:match("\nfunction love%.run%(%)(.-)\nend"))
+local dispatch = assert(runHook:match("%-%- process events(.-)%-%- update dt"))
+local function quitEvent(platform, veto)
+  local order, exits, sent = {}, {}, false
+  local env = {
+    love = {
+      system = { getOS = function() return platform end },
+      event = {
+        pump = function() end,
+        poll = function()
+          return function()
+            if not sent then sent = true; return "quit", 7 end
+          end
+        end,
+      },
+      quit = function() order[#order + 1] = "veto"; return veto end,
+      handlers = { quit = function() end },
+    },
+    os = { exit = function(code)
+      order[#order + 1] = "exit"
+      exits[#exits + 1] = code
+    end },
+  }
+  local chunk = assert(loadstring('return function() ' .. dispatch .. '\nreturn "continued" end'))
+  setfenv(chunk, env)
+  local result = chunk()()
+  return result, exits, table.concat(order, ",")
+end
+local result, exitCodes, order = quitEvent("Android", false)
+eq(result, 7, "Android quit returns the requested exit code")
+eq(exitCodes[1], 7, "Android exits the process with the requested code")
+eq(order, "veto,exit", "the process exit follows the declined quit veto")
+local continued, vetoExits = quitEvent("Android", true)
+eq(continued, "continued", "a veto keeps the Android event loop alive")
+eq(#vetoExits, 0, "a veto never exits the Android process")
+local desktop, desktopExits = quitEvent("OS X", false)
+eq(desktop, 7, "desktop returns through normal LOVE teardown")
+eq(#desktopExits, 0, "desktop never invokes the Android process exit")
 local exits = 0
 for _ in mainSrc:gmatch("os%.exit") do exits = exits + 1 end
 eq(exits, 1, "os.exit appears once, at the quit event")

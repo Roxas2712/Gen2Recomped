@@ -55,7 +55,14 @@ local function settleChoice(state)
 end
 
 -- rows are BindingsMenu's BUTTONS order
-local ROW_A, ROW_B, ROW_SELECT = 5, 6, 8
+local ROW_A, ROW_B, ROW_SELECT
+-- Locate actions by identity: X/Y and L/R are now shown for every game.
+for i, item in ipairs(BindingsMenu.new(newGame()).items) do
+  if item.button.id == "a" then ROW_A = i end
+  if item.button.id == "b" then ROW_B = i end
+  if item.button.id == "select" then ROW_SELECT = i end
+end
+assert(ROW_A and ROW_B and ROW_SELECT, "required action rows exist")
 
 -- ---- (a) pad capture swaps with the row that owns the button --------------
 
@@ -89,7 +96,10 @@ for button, action in pairs(Input.padBindings) do
   seen[action] = button
   actions[#actions + 1] = action
 end
-eq(#actions, 8, "all eight actions still have exactly one pad button")
+eq(#actions, 12, "all twelve GB/GBA/DS actions still have exactly one pad button")
+for _, action in ipairs({ "up", "down", "left", "right", "a", "b", "x", "y", "start", "select", "l", "r" }) do
+  check(seen[action] ~= nil, "the swap retains action " .. action)
+end
 Input:init()
 
 -- ---- (b) a second input while the first is held cancels -------------------

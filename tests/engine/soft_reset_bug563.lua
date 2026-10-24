@@ -112,7 +112,7 @@ local function fakeGame()
     update = function(self) self.updates = self.updates + 1 end,
   }
   function game:returnToTitle() self.returned = self.returned + 1 end
-  return game
+  return setmetatable(game, { __index = Game })
 end
 
 local game = fakeGame()
@@ -134,13 +134,12 @@ eq(bare.returned, 0, "an input with no chord bookkeeping never resets")
 
 -- ---- the on-screen overlay ---------------------------------------------
 
--- Force the overlay live the way a phone would have it.  img is only ever
--- tested for truthiness on the input path (drawing is what reads it), so a
--- placeholder keeps this suite off love.graphics.newImage.
+-- Force the overlay live the way a phone would have it. Input checks each
+-- required button image's presence; placeholders keep this off GPU loads.
 Input:init()
 TouchControls:init()
 TouchControls.active, TouchControls.enabled = true, true
-TouchControls.img = { stub = true }
+TouchControls.img = { a = {}, b = {}, start = {}, select = {}, dpad = {} }
 local L = TouchControls:layout()
 
 -- One finger, one control: touchpressed returns on its first hit, so no

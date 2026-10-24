@@ -38,13 +38,20 @@ T.eq(WideBattle.navigate(1, 4, pressing("right")), 2,
 T.eq(WideBattle.navigate(1, 4, pressing("a")), nil,
   "navigate leaves A / B / SELECT to the battle engine")
 
--- animation frames shift as one rigid group toward the side they play on
-local px, py = WideBattle.animationOffset({ { x = 24 }, { x = 64 } })
+-- OAM x marks the right edge of an 8px tile; centers 26 and 124 are
+-- the classic picture anchors. The offset interpolates between those anchors.
+local px, py = WideBattle.animationOffset({ { x = 30 } })
 T.eq(px, 20, "a player-side frame lands on the player anchor")
 T.eq(py, 8, "a player-side frame lands on the player baseline")
-local ex, ey = WideBattle.animationOffset({ { x = 104 }, { x = 144 } })
+local ex, ey = WideBattle.animationOffset({ { x = 128 } })
 T.eq(ex, 136, "an enemy-side frame lands on the enemy anchor")
 T.eq(ey, 0, "an enemy-side frame lands on the enemy baseline")
+
+local mx, my = WideBattle.animationOffset({ { x = 79 } })
+T.eq(mx, 78, "a crossing frame interpolates halfway between picture anchors")
+T.eq(my, 4, "the crossing baseline interpolates with the same fraction")
+local ox = WideBattle.animationOffset({ { x = 20 } })
+T.check(ox < 20, "motion can overshoot the player anchor without the old 40px clamp")
 
 -- the surface: a request outside the bounds falls back to the GB screen,
 -- and the canvas is only reallocated when the size actually changes

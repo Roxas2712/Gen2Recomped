@@ -122,7 +122,7 @@ press(padBm, "a")
 padBm:onGamepadPressed("y")
 padBm:onGamepadReleased("y")
 eq(padGame.save.options.bindings.b.pad, "y", "a pad capture stores")
-eq(Input.padBindings["y"], nil, "and stays out of the live pad map until close")
+eq(Input.padBindings["y"], "x", "the live pad retains its default DS X action until close")
 
 -- a second input going down while the first is held backs the capture out
 -- with no keyboard in reach, the pad's Escape (#589)

@@ -42,9 +42,10 @@ a release; the headless tests do not establish full visual parity.
   source requests are also tested on that same public handle.
 - Registry documentation generates successfully from the combined schema.
 - T4 mod-SDK and Dramatic Shape B30 pass in the broad runner.
-- T1/T2 still fails the **same ten suites** on both this branch and an isolated
-  export of unchanged main. No new failed suite appears. The broad runner is
-  therefore **not green**. See [the report](qa/native-foundation/contracts.json).
+- At the original 2026-10-23 checkpoint, T1/T2 failed the **same ten suites**
+  as an isolated export of unchanged main. That historical baseline is in
+  [the report](qa/native-foundation/contracts.json). The 2026-10-24 follow-up
+  fixes those failures; see [CI health](ci-health-repair.md) for current evidence.
 - Imported-content/link and gameplay/visual tests were not run. No First/Third
   Person or full Origami acceptance is claimed. No screenshot golden changed.
 
@@ -63,7 +64,7 @@ above are local results, not a claim that hosted CI has completed.
 | Map battles | public battle state/action/presentation lifecycle and field transitions |
 | Resource lifetime | real GPU/context loss, resize, reload, warp and memory acceptance |
 | Runtime integration | a native consumer using these contracts, followed by Emerald/FireRed gameplay acceptance |
-| Fork health | resolve inherited baseline failures before promoting a release |
+| Fork health | inherited CI failures repaired in the 2026-10-24 follow-up; keep CI and native gameplay acceptance as separate release gates |
 
 These items are a work ledger, not an overall completion percentage. Existing
 separate proposal branches may supply parts of them; they must be reviewed,

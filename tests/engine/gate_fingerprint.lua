@@ -18,6 +18,7 @@ local T = require("tests.modkit")
 local Fingerprint = require("src.link.Fingerprint")
 
 local GOLDEN = "tests/goldens/fixture_fingerprint.txt"
+local SURFACE_GOLDEN = "tests/goldens/fixture_fingerprint_surface.txt"
 
 local function readGolden(path)
   local handle = io.open(path, "r")
@@ -36,6 +37,14 @@ local golden = readGolden(GOLDEN)
 
 T.check(golden ~= nil, "the committed fixture fingerprint golden exists: " .. GOLDEN)
 T.eq(actual, golden, "fixture fingerprint matches the committed golden")
+-- Pin the complete reviewed input as well as its opaque digest. A future
+-- re-pin must show which battle records changed instead of replacing one hash.
+local surfaceFile = assert(io.open(SURFACE_GOLDEN, "rb"))
+local surfaceGolden = surfaceFile:read("*a")
+surfaceFile:close()
+local surface = Fingerprint.surface(data, {})
+T.eq(surface .. "\n", surfaceGolden, "fixture link surface matches its reviewed input")
+T.eq(actual, Fingerprint.digest(surface), "cached fingerprint agrees with its full current input")
 
 -- determinism: same data, same digest.  A fingerprint that folded a table
 -- address or a pairs() order would pass once and fail in CI.
@@ -97,6 +106,14 @@ local mutations = {
   {
     name = "a link-surface constant",
     apply = function(d) d.constants.levelCap = d.constants.levelCap - 1 end,
+  },
+  {
+    name = "a Gen2 effect revision",
+    apply = function(d) d.move_effects.RETURN_EFFECT.rev = 1 end,
+  },
+  {
+    name = "a Gen3 effect revision",
+    apply = function(d) d.move_effects.WISH_EFFECT.rev = 1 end,
   },
 }
 

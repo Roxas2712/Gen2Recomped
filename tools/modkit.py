@@ -919,7 +919,8 @@ class CacheIndex:
             for name in files:
                 path = os.path.join(base, name)
                 rel = os.path.relpath(path, repo).replace(os.sep, "/")
-                body = open(path, "rb").read()
+                with open(path, "rb") as handle:
+                    body = handle.read()
                 self.sha[hashlib.sha256(body).hexdigest()] = rel
                 if Image and os.path.splitext(name)[1].lower() in IMAGE_EXTS:
                     try:
@@ -952,7 +953,13 @@ def lint_dir(repo, mod_dir, manifest):
                 "path shadows the player's ROM-derived cache", rel))
             continue
         if ext in (".lua", ".json") and rel != transforms_rel:
-            body = open(path, encoding="utf-8", errors="replace").read()
+            with open(path, encoding="utf-8", errors="replace") as handle:
+                body = handle.read()
+            # Use the same Lua lexer as the require scanner. Documentation
+            # comments may name a cache file without the mod accessing it;
+            # executable string literals (including long strings) stay visible.
+            if ext == ".lua":
+                body = strip_lua(body)
             if "assets/generated/" in body or "data/generated/" in body:
                 findings.append(Finding(
                     "MK301", "error",
