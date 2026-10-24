@@ -50,7 +50,11 @@ function Gen3ItemPcFRLG.new(game, opts)
   local self = setmetatable({}, Gen3ItemPcFRLG)
   self.game = game
   self.rows = opts.rows or {}
+  self.nativeProse = opts.nativeProse == true or opts.title == nil
   self.title = opts.title or Strings("WITHDRAW ITEM")
+  if self.nativeProse then
+    self.title = require("src.ui.GbaProse").itemPc(game, "title", self.title)
+  end
   self.onPick = opts.onPick
   self.onCancel = opts.onCancel
   self.onReorder = opts.onReorder
@@ -261,7 +265,11 @@ function Gen3ItemPcFRLG:drawRows()
     local row = self.rows[self.top + i]
     if not row then break end
     local y = y0 + i * pitch
-    Font.draw(row.label or "", itemX, y)
+    local label = row.label or ""
+    if self.nativeProse and row.close then
+      label = require("src.ui.GbaProse").itemPc(self.game, "cancel", label)
+    end
+    Font.draw(label, itemX, y)
     if row.qty and not row.close then
       local faced = Font.hasFace and Font.hasFace("small") and Font.pushFace("small")
       Font.draw(Strings("×%3d", row.qty), quantityX, y)
