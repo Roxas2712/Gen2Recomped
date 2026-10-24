@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198 and #203 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203 and #206 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,47 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`ba2d7d11dccc64994e0367158d79f4b0d9f68ef8`. Its ROM-free run passed
-**214/214 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`f6f3bfe95dc70256bea403afc9423bf35c73162b`. Its ROM-free run passed
+**215/215 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #206](https://github.com/UNDERdecoded/Gen2Recomped/pull/206) executes
+native GBA Beat Up with each healthy party member's level/species base
+Attack and the active target species' base Defense. It rechecks party
+eligibility during mod callbacks, rolls critical/variation independently,
+applies Helping Hand, continues after breaking Substitute and records the
+last direct strike for special counter memory, including zero under Endure.
+Native event metadata and the absence of ordinary damage/critical callbacks
+are verified. The active/retained species cases seed the native battler
+fields; the full Transform controller is outside this proof.
+
+The focused suite passes **1,330/1,330 checks**. The same API-3 consumer and
+fixture match unchanged read-only Gen1 in **40 isolated workers / 4,486
+paired observations** on the clean combined runtime. The public species
+patch changes actual native strikes. A real canonical `EFFECT_BEAT_UP` patch
+with #121 passes **14/14** composition checks. The clean #203 prerequisite
+fails **168 assertions** in the new FireRed cases; the Endure and active
+species regressions each failed 16 assertions before their fixes.
+
+The final feature quick run passes **88/97** engine suites against **87/96**
+on clean #203. Exact Counters of the **25 inherited FAIL lines across nine
+suites** match, with no additions. SDK 3/3 and B30 pass. This combined branch
+includes the existing repairs and passes **215/215**, SDK 3/3 and B30 with
+zero FAIL lines. Integration preserves the existing damage-adjustment
+argument, GBA Substitute counter guard and battle-scoped party fallback.
+Only the audited effect fingerprint section changes; see
+[the contract and limits](native-gba-beat-up.md).
+
+Both sides use the maintained pinned LuaJIT with JIT enabled. All five
+hosted #206 workflows await maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40144144197)
+has zero executed jobs. The app's 100-artifact cap prevents another PR card;
+the regular published PR is linked here. Focus Band's native adjustment
+schedule, joined multi-trainer/link parties, intro/tutorial controllers,
+animation fidelity and full gameplay remain open acceptance surfaces.
+
+Prior #203 results retain runtime
+`ba2d7d11dccc64994e0367158d79f4b0d9f68ef8` and its 214/214 engine result:
 
 [PR #203](https://github.com/UNDERdecoded/Gen2Recomped/pull/203) executes
 native GBA Spit Up through its set-damage path: multiply the calculated base
