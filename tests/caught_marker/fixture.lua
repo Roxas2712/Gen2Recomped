@@ -95,19 +95,16 @@ function M.new(root, backend, version, api, format, noMod, failing)
       battler = mon
     else
       battler = { mon = mon, name = "FOE", isPlayer = opts.player or false, shownStatus = opts.status }
-      b = setmetatable(
-        {
-          game = game,
-          data = data,
-          kind = opts.trainer and "trainer" or "wild",
-          enemy = battler,
-          caughtMark = opts.latched ~= false,
-          demo = opts.tutorial,
-          firstBattle = opts.tutorial,
-          ghost = opts.ghost,
-        },
-        { __index = require("src.battle.BattleState") }
-      )
+      b = setmetatable({
+        game = game,
+        data = data,
+        kind = opts.trainer and "trainer" or "wild",
+        enemy = battler,
+        caughtMark = opts.latched ~= false,
+        demo = opts.tutorial,
+        firstBattle = opts.tutorial,
+        ghost = opts.ghost,
+      }, { __index = require("src.battle.BattleState") })
     end
     b.publicTag = "caught_context"
     f.battle, f.battler, f.mon = b, battler, mon
