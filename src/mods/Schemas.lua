@@ -921,6 +921,9 @@ R.render_pipelines = {
     -- Explicit opt-in: detached Gen3 frame metrics instead of native state,
     -- camera objects and FX closures. Existing pipelines retain their ctx.
     worldFormat = f.opt(f.enum { "renderData.v1" }),
+    -- Legacy custom 3D shaders use LÖVE 11's canvas clip convention.
+    -- A producer using ordinary 2D drawing/current clip space can opt out.
+    worldOrientation = f.opt(f.enum { "legacy", "native" }),
     -- (canvas, ctx) -> canvas: post-process the WORLD image, before the UI
     -- composites over it -- a depth-of-field or colour grade that must not
     -- touch the dialog boxes and menus sitting on top.  Only runs when some
