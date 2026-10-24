@@ -2,6 +2,7 @@
 -- Keep their fold separate from items, then apply it after all item writes.
 local Merge = require("src.mods.Merge")
 local Names = require("src.battle.HeldItemRead")
+local Ids = require("src.mods.UnifiedIds")
 local M = {}
 local previous = setmetatable({}, { __mode = "k" })
 local explicit = setmetatable({}, { __mode = "k" })
@@ -36,6 +37,47 @@ function M.changed(def)
   return explicit[def] == true
 end
 
+local function resolve(loader, id)
+  if type(id) ~= "string" then
+    return nil
+  end
+  local ids = Ids.new(loader)
+  local public = ids:entries("items")
+  local canonical = public[id] ~= nil and id or ids:read("items", id)
+  local group = public[canonical]
+  assert(group ~= false, "ambiguous item ID: " .. tostring(id))
+  return group
+end
+
+-- A Gen-2 native item key may be ITEM_146 while a portable mod says
+-- LEFTOVERS. Keep raw record shapes, but accept either key for operations.
+function M.itemApi(loader, native, generation)
+  if generation ~= 2 then
+    return native
+  end
+  local out = {}
+  for key, value in pairs(native) do
+    out[key] = value
+  end
+  out.get = function(_, id)
+    local group = resolve(loader, id)
+    return native:get(group and group.key or id)
+  end
+  for _, verb in ipairs({ "register", "override", "patch", "remove" }) do
+    out[verb] = function(_, id, value)
+      local group, result = resolve(loader, id)
+      if not group then
+        return native[verb](native, id, value)
+      end
+      for _, key in ipairs(group.keys) do
+        result = native[verb](native, key, value)
+      end
+      return result
+    end
+  end
+  return out
+end
+
 function M.prepare(loader, data)
   local undo = previous[data] or {}
   for i = #undo, 1, -1 do
@@ -51,8 +93,10 @@ function M.prepare(loader, data)
   end
   local base = {}
   if loader:_generation() == 2 then
-    for id, def in pairs(data and data.items or {}) do
-      base[id] = M.record(def)
+    for id, group in pairs(Ids.new(loader):entries("items")) do
+      if group then
+        base[id] = M.record(loader.content.items:get(group.key))
+      end
     end
   end
   loader._heldItemBase = base
@@ -67,20 +111,30 @@ function M.apply(loader, data)
   end
   local registry, undo = loader.content.held_items, {}
   for _, id in ipairs(registry.order) do
-    local def = data.items and data.items[id]
-    if registry.ops[id] and type(def) == "table" then
-      local row = registry:get(id)
-      local effect = row and Names.goldNative(row.heldEffect) or nil
-      local parameter = row and (row.heldParameter or 0) or nil
-      undo[#undo + 1] = {
-        def = def,
-        beforeEffect = def.heldEffect,
-        beforeParameter = def.heldParam,
-        effect = effect,
-        parameter = parameter,
-      }
-      def.heldEffect, def.heldParam = effect, parameter
-      explicit[def] = true
+    local group = resolve(loader, id)
+    for _, key in ipairs(group and group.keys or { id }) do
+      local def = data.items and data.items[key]
+      if registry.ops[id] and type(def) == "table" then
+        local row = registry:get(id)
+        local was = loader._heldItemBase[id]
+        local changed = row
+            and (not was or row.heldEffect ~= was.heldEffect or row.heldParameter ~= was.heldParameter)
+          or not row and was ~= nil
+        local effect, parameter = def.heldEffect, def.heldParam
+        if changed then
+          effect = row and Names.goldNative(row.heldEffect) or nil
+          parameter = row and (row.heldParameter or 0) or nil
+        end
+        undo[#undo + 1] = {
+          def = def,
+          beforeEffect = def.heldEffect,
+          beforeParameter = def.heldParam,
+          effect = effect,
+          parameter = parameter,
+        }
+        def.heldEffect, def.heldParam = effect, parameter
+        explicit[def] = true
+      end
     end
   end
   previous[data] = undo
@@ -105,6 +159,8 @@ function M.api(loader, mod, native, generation, unified)
     if unified then
       identifier(id)
     end
+    local group = resolve(loader, id)
+    id = group and group.id or id
     local value = native:get(id)
     return unified and Merge.deepCopy(value) or value
   end
@@ -140,6 +196,8 @@ function M.api(loader, mod, native, generation, unified)
         finite(value)
         value = Merge.deepCopy(value)
       end
+      local group = resolve(loader, id)
+      id = group and group.id or id
       local result = native[verb](native, id, value)
       return unified and out:get(id) or result
     end

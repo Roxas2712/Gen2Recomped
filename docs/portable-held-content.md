@@ -26,6 +26,10 @@ Definitions use `heldEffect` (a string such as `HELD_LEFTOVERS`, `HELD_BERRY`,
 `HELD_QUICK_CLAW`, `HELD_NONE` or a mod-defined name) and optional
 `heldParameter` (an integer from 0 through 255, omitted means native zero).
 Parameter meanings follow the effect; Gen-2 probabilities use byte odds.
+Common item IDs are resolved to native import keys (for example `LEFTOVERS`
+to `ITEM_146`). The new held registry accepts either spelling. Native Gen-2
+`items` operations also accept common aliases while retaining native record
+shapes; unrelated generations keep their existing native item accessors.
 Unknown effect names can be interpreted through `held_item.trigger`.
 API 2/3 reject invalid known fields; API 1 retains its warning-based legacy
 validation behavior. This does not make arbitrary metadata gameplay fields.

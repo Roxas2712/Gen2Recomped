@@ -25,16 +25,28 @@ function F.new(root, backend, version, api, format, mode)
         DRAGON_SCALE = 64,
       }) do
         local native = backend == "gen1" and gen == 2
-        data.items[id] = {
-          id = id,
+        local key = backend == "gen2"
+            and gen == 2
+            and ({
+              LEFTOVERS = "ITEM_146",
+              BERRY = "ITEM_173",
+              QUICK_CLAW = "ITEM_073",
+              BRIGHTPOWDER = "ITEM_003",
+              FOCUS_BAND = "ITEM_112",
+              DRAGON_FANG = "ITEM_144",
+              DRAGON_SCALE = "ITEM_151",
+            })[id]
+          or id
+        data.items[key] = {
+          id = key,
           name = id:gsub("_", " "),
           price = 100,
           heldEffect = native and dofile(root .. "/tests/held_content/names.lua")[effect] or effect,
         }
         if id == "BERRY" then
-          data.items[id].key = "ORAN_BERRY"
+          data.items[key].key = "ORAN_BERRY"
         end
-        data.items[id][native and "heldParameter" or "heldParam"] = id == "BERRY" and 10 or 0
+        data.items[key][native and "heldParameter" or "heldParam"] = id == "BERRY" and 10 or 0
       end
       if backend == "gen1" and gen == 2 then
         local Items = require("src.core.gen2.ItemEffects")
@@ -74,11 +86,18 @@ function F.new(root, backend, version, api, format, mode)
     -- The production Game2 load bridge runs after the real registry merge.
     require("src.core.gen2.ItemEffects").applyHeldItems(f.data, snapshot)
   end
+  function f.nativeItem(item)
+    if backend ~= "gen2" or f.gen ~= 2 then
+      return item
+    end
+    local id = require("src.mods.UnifiedIds").new(f.result.loader):resolve("items", item)
+    return id and id.key or item
+  end
   function f.run(item)
     local step = f.fresh("TACKLE")
     f.battle = step.battle
     local p = backend == "gen1" and f.gen == 2 and f.battle.player or f.battle.player.mon
-    p.hp, p.stats.hp, p.maxHp, p.item = 100, 400, 400, item or "LEFTOVERS"
+    p.hp, p.stats.hp, p.maxHp, p.item = 100, 400, 400, f.nativeItem(item or "LEFTOVERS")
     f.battle.queue, f.battle.nextInsert = {}, 0
     if backend == "gen1" and f.gen == 2 then
       f.battle:betweenTurnEffects()
@@ -93,7 +112,7 @@ function F.new(root, backend, version, api, format, mode)
       step.battle.player.item = item
       return step.battle:heldEffect(step.battle.player)
     end
-    step.battle.player.mon.item = item
+    step.battle.player.mon.item = f.nativeItem(item)
     local effect, amount = require("src.battle.HeldItems").effect(f.data, step.battle.player)
     return require("src.battle.HeldItemRead").goldPublic(effect), amount
   end
