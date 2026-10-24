@@ -1,28 +1,34 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–165
+hook, rendering, shader and baseline test fixes prepared in PRs #88–166
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`3d6bfceeaf25b97d7a7ce708ada8fe3306e0357d`. Its ROM-free run passed
-177/177 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+`d812e1b144aabd1e4be1ba79c9c31528bd750a74`. Its ROM-free run passed
+178/178 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
 The held-item consumer passed on both engines in four SDK configurations
-(40 isolated workers / 1,706 paired observations), with 5,511 host public
-contract checks and 290 ownership/metadata checks. Existing Gen2 held-item
-regressions passed 51/51. Native LÖVE 11.5 on imported Gold/FireRed/Emerald
-passed at this runtime, including FIGHT/move input and normal result queues,
-HP/consumption, endurance and GBA entry/RUN paths.
+(40 isolated workers / 1,914 paired observations), with 5,511 host public
+contract checks, 290 ownership/metadata checks and 432 GBA scheduling checks.
+Existing Gen2 held-item regressions passed 51/51. Native LÖVE 11.5 held-item
+smoke on imported Gold/FireRed/Emerald passed again at this runtime.
 
-A separately recorded native GBA scheduling gap remains: unrestricted Berry
-grants to empty hands heal 35 HP in the reference versus 7 in the host.
-The strict schedule checker rejects this gap; it is not counted as equal
-contract behavior. The normal example requires an actual item and stops its
-override when consumed. See [portable held items](portable-held-items.md).
-Prior field-residual, caught-marker, charge, PP, item, follower, map and storage
-families retain their historical refs in `portability-testing-status.json`;
-those results are not relabeled as new runs.
+PR #166 aligns the tested GBA move-end/after-action/residual item phases.
+The previously recorded unrestricted 7-HP Berry discrepancy is resolved:
+both engines now heal 35 HP with six residual reads. Strict native-policy
+comparison is required in CI. Native FireRed/Emerald scheduling smoke also
+passes actual FIGHT/move input and result queues, 13 activations over a full
+turn, cure before lethal poison and unsubscribe. The example still defaults
+to requiring an actual item. See [portable held items](portable-held-items.md).
+This does not establish complete battle-rule parity; Choice Band locking,
+further deferred abilities, Quick Claw turn-RNG ordering and volatile rules
+remain separate work. All 26 hosted #166 workflows await maintainer approval;
+the local results above are separate.
+
+Prior held-read, field-residual, caught-marker, charge, PP, item, follower,
+map and storage families retain their historical refs in
+`portability-testing-status.json`; those results are not relabeled as new runs.
 
 Native LÖVE 11.5 smoke tests reached the intro, title and New Game
 world/introduction for Red, Gold, FireRed and Emerald using isolated copies
@@ -446,14 +452,14 @@ no-mod and rollback. Native HP formulas are checked for the requested effect,
 not asserted identical. The source GBA residual collector is not its complete
 presentation/award controller.
 
-The worker separately records unrestricted empty-hand grants under
-`native_policy`: reference GBA reads six times and heals 35 HP for a 7-HP Berry
-override, versus two reads and 7 HP in the host. This known scheduling gap is
-printed and excluded from equal observations. `--require-native-schedule-parity`
-rejects FireRed as a strict negative control. The unchanged pre-hook #164
-engine also reports unavailable, dispatches zero callbacks and cannot suppress
-native Leftovers. These are real negative controls, not passing parity claims.
-Full Choice Band locking and other native battle rules remain additional work.
+At the #165 runtime, the worker separately recorded unrestricted empty-hand
+grants under `native_policy`: reference GBA read six times and healed 35 HP
+for a 7-HP Berry override, versus two reads and 7 HP in the host. That gap
+was excluded from equal observations and rejected by the strict checker.
+PR #166 resolves this historical discrepancy; unchanged #165 remains a
+negative control. The unchanged pre-hook #164 engine also reports unavailable,
+dispatches zero callbacks and cannot suppress native Leftovers. Full Choice
+Band locking and other native battle rules remain additional work.
 
 Feature ref `1ce83faf4b980584be9d747eee82efc530ede09f` passed
 122/132 engine suites, SDK 3/3 and B30, with exactly the prior ten baseline
@@ -466,3 +472,19 @@ changes only record this validation.
 All 26 hosted #165 PR workflows report `action_required` pending maintainer
 approval. The [new held-item workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40054092842)
 has zero jobs and has not executed. Local validation above is separate.
+
+## Native GBA item-scheduling test
+
+Install and enable the unchanged public `examples/portable_held_item` mod,
+then use the isolated installation with an imported FireRed or Emerald:
+
+```sh
+POKEPORT_VERSION=firered POKEPORT_DRIVER=tests/drivers/held_item_scheduling.lua \
+  bash scripts/run-portability-test.sh
+```
+
+The driver starts New Game in memory, builds a native battle, chooses FIGHT
+and a move through native input, and drains the normal result queue. It checks
+bounded empty-hand grants across a full turn, poison cure before lethal chip,
+consumption and unsubscribe. It does not write a normal save or prove a full
+playthrough. Gold uses the existing `tests/drivers/held_item.lua` smoke.
