@@ -158,6 +158,12 @@ still not GPU, full-game, performance or camera-mode acceptance.
 
 ## Native live-game GPU acceptance, 2026-10-24
 
+The results and OpenGL limitation below describe the initial GPU checkpoint.
+The subsequent [window-frame recovery](window-frame-recovery.md) implements
+scoped OpenGL presentation recovery and completed-frame Metal capture, with
+both games passing continuous frame and actual OS-window checks on both
+backends, plus the independent palette-pixel oracle.
+
 The separate GPU follow-up runs the normal, complete importer and then the
 real `main.lua` → `Game` → `OverworldController` → `TileRenderer` path for both
 retail dumps. It uses an exported engine source snapshot, a separately

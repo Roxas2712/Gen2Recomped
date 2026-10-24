@@ -1,0 +1,122 @@
+-- Complete-frame ordering, transparent screen routing, failure cleanup and
+-- resource lifetime. Real OpenGL/Metal/window pixels are checked separately.
+package.path="./?.lua;./?/init.lua;"..package.path
+local T=require("tests.harness")
+local check,eq=T.check,T.eq
+local osName,backend="Linux","OpenGL"
+local w,h,dpi=320,240,1
+local target,window,pending
+local allocations,releases,reads,dataReleases=0,0,0,0
+local calls={}
+local g={}
+local function setCanvas(c) target=type(c)=="table" and c[1] or c end
+g.setCanvas=setCanvas
+g.getDimensions=function()return w,h end
+g.getPixelDimensions=function()return w*dpi,h*dpi end
+g.getRendererInfo=function()return backend end
+g.newCanvas=function(cw,ch,settings)
+  allocations=allocations+1
+  local c={w=cw*settings.dpiscale,h=ch*settings.dpiscale}
+  function c:getPixelWidth()return self.w end
+  function c:getPixelHeight()return self.h end
+  function c:release()releases=releases+1 end
+  function c:setFilter()end
+  function c:newImageData()
+    reads=reads+1
+    local d={pixels=self.pixels}
+    function d:release()dataReleases=dataReleases+1 end
+    return d
+  end
+  return c
+end
+g.clear=function(value)
+  if target then target.pixels=value else window=value end
+end
+g.draw=function(image) window=image.pixels end
+g.captureScreenshot=function(callback) calls[#calls+1]="request";pending=callback end
+g.getBackgroundColor=function()return "background" end
+for _,name in ipairs({"push","pop","origin","setShader","setScissor","setColor",
+  "setColorMask","setStencilTest","setDepthMode","setBlendMode"}) do g[name]=function()end end
+love={graphics=g,system={getOS=function()return osName end}}
+local discoveries,presents,closes=0,0,0
+local broken,failPresent=false,false
+package.loaded["src.render.MacWindowSurface"]={createIfUndefined=function()
+  discoveries=discoveries+1
+  if not broken then return nil end
+  return {present=function(_,data,ww,wh)
+    if failPresent then error("native presentation failed") end
+    presents=presents+1;window=data.pixels
+    eq(ww,w,"Cocoa frame width in points");eq(wh,h,"Cocoa frame height in points")
+  end,close=function()closes=closes+1 end}
+end}
+package.loaded["src.core.Logger"]={warn=function()end}
+local Frame=require("src.render.WindowFrame")
+
+Frame.draw(function()calls[#calls+1]="draw";g.clear("first")end,function(data)
+  eq(data.pixels,"first","direct capture belongs to current frame")
+end)
+eq(calls[1],"request","native capture scheduled before any drawing")
+eq(calls[2],"draw","drawing follows capture scheduling")
+pending({pixels=window});pending=nil
+eq(allocations,0,"healthy direct backend allocates no final texture")
+eq(discoveries,0,"non-macOS never loads Cocoa bridge")
+
+osName,backend,dpi="OS X","Metal",2
+for frame=1,120 do
+  local want="metal-frame-"..frame
+  Frame.draw(function()
+    g.setCanvas();check(target~=nil,"logical screen routes to owned final target")
+    g.clear(want)
+    local nested={pixels="nested"}
+    g.setCanvas(nested);eq(target,nested,"explicit offscreen target preserved")
+    g.setCanvas();g.clear(want)
+  end,function(data)eq(data.pixels,want,"current complete frame captured")end)
+  eq(window,want,"same complete frame reaches physical window")
+  eq(g.setCanvas,setCanvas,"graphics function restored after each frame")
+  eq(target,nil,"physical target restored before native present")
+end
+eq(allocations,1,"steady-state final target reused")
+eq(discoveries,0,"Metal never attempts OpenGL recovery")
+eq(reads,dataReleases,"every capture image released")
+eq(Frame.info().mode,"metal-frame","Metal uses owned complete frames")
+w,h=400,300
+local beforeResizeReads=reads
+Frame.draw(function()g.clear("resize")end)
+eq(reads,beforeResizeReads,"ordinary Metal frames require no CPU readback")
+eq(allocations,2,"resize allocates one replacement")
+eq(releases,1,"resize releases previous target")
+eq(window,"resize","Retina resize presents current image")
+local ok=pcall(Frame.draw,function()error("draw failed")end)
+check(not ok,"draw failure propagated")
+eq(g.setCanvas,setCanvas,"draw error restores function")
+eq(target,nil,"draw error restores physical target")
+local before=dataReleases
+ok=pcall(Frame.draw,function()g.clear("callback-error")end,function()error("callback failed")end)
+check(not ok,"capture failure propagated")
+eq(dataReleases,before+1,"capture failure releases image")
+Frame.shutdown();eq(releases,2,"shutdown releases retained final target")
+
+backend,broken="OpenGL",false
+Frame.draw(function()g.clear("healthy-gl")end)
+eq(Frame.info().mode,"direct","valid macOS OpenGL keeps native path")
+eq(discoveries,1,"macOS OpenGL probes its own framebuffer")
+broken=true
+for frame=1,60 do
+  local want="gl-frame-"..frame
+  Frame.draw(function()g.setCanvas();g.clear(want)end,function(data)
+    eq(data.pixels,want,"OpenGL capture contains current frame")
+  end)
+  eq(window,want,"Cocoa presentation contains same OpenGL frame")
+end
+eq(Frame.info().mode,"opengl-cocoa-frame","undefined framebuffer enables recovery")
+eq(discoveries,2,"bridge retained without repeated probing")
+eq(presents,60,"all frames delivered, no stale-frame fallback")
+before=dataReleases;failPresent=true
+ok=pcall(Frame.draw,function()g.clear("native-error")end)
+check(not ok,"native failure propagated instead of reporting a successful frame")
+eq(dataReleases,before+1,"native failure releases readback")
+eq(g.setCanvas,setCanvas,"native failure leaves graphics function restored")
+eq(target,nil,"native failure leaves physical target restored")
+Frame.shutdown();eq(closes,1,"shutdown removes only owned Cocoa layer")
+eq(reads,dataReleases,"no retained readback images after failures/shutdown")
+T.finish()

@@ -35,6 +35,7 @@ jobs:
           luajit tests/engine/gen3_palette_program_failures.lua
           luajit tests/engine/gen3_palette_program_public.lua
           python3 -m unittest discover -s tests -p test_gen3_palette_profiles.py
+          python3 -m unittest discover -s tests -p test_window_frame_tools.py
       - name: Cache-reference policy regressions
         run: python3 -m unittest discover -s tests -p test_modkit_cache_comments.py
       - name: Existing contracts on the combined engine

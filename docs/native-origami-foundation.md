@@ -96,21 +96,33 @@ migration before main loads; no installed player cache, save or mod is used.
 See the [GPU evidence and limitations](gen3-palette-program-import.md#native-live-game-gpu-acceptance-2026-10-24)
 and [metadata report](qa/native-foundation/palette-program-gpu.json).
 LÖVE 11.5/OpenGL black window captures reproduced without game code, so that
-backend has no window acceptance here. This targeted native palette test does
+backend had no window acceptance at that checkpoint. This targeted native palette test does
 not accept general gameplay, performance, context loss, Battle Dome scripting
 or a future Origami/First/Third Person consumer.
+
+The [macOS window-frame follow-up](window-frame-recovery.md) now restores
+visible output when OpenGL's system framebuffer is undefined and routes
+Metal captures through a completed GPU target. Separate Emerald/FireRed
+instances pass 3,964 continuous steady-state frame checks and 24 actual OS
+window captures across LÖVE 11.5/OpenGL and LÖVE 12/Metal/OpenGL, with zero
+blank/stale frames. Movement, map entry/return and window resize pass.
+The independent ROM-palette GPU oracle passes all six combinations too.
+The local runner passes 100/100 engine suites, 3/3 SDK suites and B30.
+OpenGL recovery incurs per-frame GPU readback/image transfer; performance,
+context loss and broader platform acceptance remain open. See the
+[metadata report](qa/native-foundation/window-frame-recovery.json) for scope.
 
 ## Remaining engine work
 
 | Area | Remaining acceptance/work |
 | --- | --- |
-| Terrain graphics over time | audited Emerald/FireRed palette import and native flat-world Metal GPU tests pass; additional ROM profiles, cartridge fade/task/reset-phase semantics, OpenGL window capture, general GPU invalidation and performance acceptance remain |
+| Terrain graphics over time | audited Emerald/FireRed palette import and scoped native flat-world OpenGL/Metal GPU/window tests pass; additional ROM profiles, cartridge fade/task/reset-phase semantics, general GPU invalidation and performance acceptance remain |
 | Neighbor streaming | public readiness/preparation lifecycle beyond already resident maps |
 | Buildings, trees, bridges, interiors | native object/geometry metadata and lifecycle; surface codes alone do not provide meshes |
 | Camera and controls | native public camera/input ownership suitable for First/Third Person |
 | Weather and sky | native colour-only veil/flash observations implemented; weather takeover, full state/audio contracts, cartridge colour tables and clouds/weather renderer acceptance remain |
 | Map battles | public battle state/action/presentation lifecycle and field transitions |
-| Resource lifetime | real GPU/context loss, resize, reload, warp and memory acceptance |
+| Resource lifetime | scoped macOS window resize and map return pass; general GPU/context loss, reload, warp, long-duration and memory acceptance remain |
 | Runtime integration | a native consumer using these contracts, followed by Emerald/FireRed gameplay acceptance |
 | Fork health | inherited CI failures repaired in the 2026-10-24 follow-up; keep CI and native gameplay acceptance as separate release gates |
 
