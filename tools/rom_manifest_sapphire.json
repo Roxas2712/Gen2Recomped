@@ -921,6 +921,32 @@
     "frameFromHeader": true,
     "lineHeight": 32
   },
+  "mauvilleGym": {
+    "SWITCHES": [
+      [
+        0,
+        9
+      ],
+      [
+        8,
+        11
+      ],
+      [
+        4,
+        15
+      ]
+    ],
+    "X0": 0,
+    "X1": 8,
+    "Y0": 5,
+    "Y1": 16,
+    "RAISED_SWITCH": 517,
+    "PRESSED_SWITCH": 518,
+    "FLOOR": 538,
+    "GREEN_V1": 576,
+    "GREEN_V2": 584,
+    "RED_V2": 585
+  },
   "pocketEnum": {
     "1": "ITEM",
     "2": "BALL",
@@ -1365,14 +1391,14 @@
     139,
     140,
     -1,
-    -1,
-    -1,
+    142,
+    143,
     144,
     145,
     146,
-    -1,
-    -1,
-    -1,
+    147,
+    148,
+    149,
     150,
     151,
     152,
@@ -1641,9 +1667,14 @@
     "138": 135,
     "139": 136,
     "140": 137,
+    "142": 139,
+    "143": 140,
     "144": 141,
     "145": 142,
     "146": 143,
+    "147": 144,
+    "148": 145,
+    "149": 146,
     "150": 147,
     "151": 148,
     "152": 149,
@@ -1909,6 +1940,7 @@
   },
   "symbolSource": "Structural discovery plus matching pret ELF symbols, allocated ROM sections byte-verified against supplied cartridge; tools/gen3_rs_manifest.py",
   "provenance": {
+    "pretCommit": "5784633ce4ef7ade1a7f2d2d0c288e3d5e6cdd7f",
     "elfSHA256": "053c21460f4629394d38b5967972010f0812402c1219bc4f6aa4517e285d9260",
     "verifiedROMBytes": 8777284,
     "symbolIdentities": {
@@ -1933,6 +1965,9 @@
       "gTrainerBackPicTable": 2017908,
       "gTrainerBackPicPaletteTable": 2017932,
       "sFontType3Map": 1991022,
+      "sMauvilleGymSwitchCoords": 4162492,
+      "gPetalburgGymSlidingDoorMetatiles": 4162510,
+      "gUnknown_083F8370": 4162504,
       "sSaveBlockChunks": 4201980,
       "ScrSpecial_HealPlayerParty": 807600,
       "SetCableClubWarp": 430064,
