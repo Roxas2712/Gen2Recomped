@@ -1410,6 +1410,7 @@ function Loader:load(data)
   -- wraps and flags the previous load put on engine tables come off first.
   ModSeams.unwindAll()
   self.baseData = data
+  require("src.mods.TextContent").prepare(self, data)
   -- every registry folds against the pristine view of its Data target;
   -- resolution is lazy so optional namespaces may appear later
   for _, registry in pairs(self.content) do
@@ -1595,6 +1596,7 @@ function Loader:load(data)
   -- home, creating the Data namespace when the base modules never shipped
   -- one.  A registry nobody wrote to -- engine included -- is skipped, so
   -- the namespaces that appear are exactly the ones with content behind them.
+  require("src.mods.TextContent").capture(self, data)
   for _, name in ipairs(self:_mergeOrder()) do
     local registry = self.content[name]
     local spec = registry.spec
