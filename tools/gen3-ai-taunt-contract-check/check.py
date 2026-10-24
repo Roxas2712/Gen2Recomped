@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 
-REFERENCE = "cdd4ad167373e2b5f08c96f95ee87041f59e0e17"
+REFERENCE = "10613015fc68d924915570bd1abee34b70d5bd01"
 
 
 def git(root, *args):
