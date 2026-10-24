@@ -27,6 +27,27 @@ return function(game)
   print('[driver] PASS actual truck exit, Mom scene, own save/reload')
   local C=require('src.script.Gen3Commands')
   local Pokemon=require('src.pokemon.Pokemon')
+  assert(game.data.constants.gen3Starters.var==0x4023,'starter choice variable was not read from Ruby')
+  U.teleport(game,'MAP_G00_N16',7,15,'up');U.wait(30)
+  local firstBattle=false
+  for frame=1,14000 do
+    if frame%8==1 then U.tap(game,'a') else U.wait(1) end
+    local top=game.stack:top()
+    if top and top.enemy and top.enemy.mon and top.enemy.mon.species=='POOCHYENA' then
+      if not firstBattle then
+        firstBattle=true
+        love.graphics.captureScreenshot('ruby-first-battle.png');U.wait(12)
+      end
+    end
+    if firstBattle and game.overworld.map.id=='MAP_G01_N04' and top==game.overworld
+       and not game.overworld.runner:isRunning() then break end
+  end
+  assert(firstBattle,'real bag interaction did not start the first Poochyena battle')
+  assert(game.overworld.map.id=='MAP_G01_N04','starter rescue script did not reach Birch lab')
+  local choice=C.getVar(game.save,0x4023)
+  assert(game.save.party[1].species==game.data.constants.gen3Starters.species[choice+1],
+    'remembered choice and actual starter disagree')
+  print('[driver] PASS native bag, starter choice, first battle and Birch lab warp')
   local mon=Pokemon.new(game.data,'MEWTWO',100)
   mon.moves={{id='PSYCHIC',pp=99,maxPp=99}}
   game.save.party={mon}
@@ -50,7 +71,9 @@ return function(game)
   end
   assert(complete,'Roxanne battle/reward did not finish')
   love.graphics.captureScreenshot('ruby-roxanne-reward.png');U.wait(12)
-  love.filesystem.write('edition-result.json',require('src.link.Json').encode({status='pass',edition='ruby',newGame=true,allModsDisabled=true,fullStoryTested=false}))
+  love.filesystem.write('edition-result.json',require('src.link.Json').encode({status='pass',edition='ruby',newGame=true,
+    truckExitAndMom=true,saveReload=true,starterAndFirstBattle=true,roxanneBattleAndReward=true,
+    allModsDisabled=true,fullStoryTested=false}))
   print('[driver] PASS Ruby native new game')
   love.event.quit(0)
 end

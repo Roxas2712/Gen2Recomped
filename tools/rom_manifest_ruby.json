@@ -908,6 +908,12 @@
       }
     ]
   },
+  "trainerBack": {
+    "table": 2018020,
+    "palettes": 2018044,
+    "count": 3,
+    "compressed": true
+  },
   "pocketEnum": {
     "1": "ITEM",
     "2": "BALL",
@@ -1917,6 +1923,8 @@
       "gFont4LatinGlyphs": 15363012,
       "sFont4Widths": 1991610,
       "sFontType1Map": 1990640,
+      "gTrainerBackPicTable": 2018020,
+      "gTrainerBackPicPaletteTable": 2018044,
       "sSaveBlockChunks": 4201892,
       "ScrSpecial_HealPlayerParty": 807600,
       "SetCableClubWarp": 430060,
