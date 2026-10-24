@@ -1,6 +1,7 @@
 package.path = "./?.lua;./?/init.lua;" .. package.path
 local T = require("tests.modkit")
 local Extractor = require("src.import.RomExtractorGen3")
+local Rom = require("src.import.RomGba")
 local previous = love.image
 love.image = {}
 local pixels
@@ -35,9 +36,17 @@ end
 for i = 70 * 32 + 1, 71 * 32 do
   elements[i] = i % 2 == 0 and 0x21 or 0x10
 end
+local encoded = {}
+for i, byte in ipairs(elements) do
+  encoded[i] = string.char(byte)
+end
+local offset = 37
+extractor.rom = Rom.new(string.rep(string.char(255), offset) .. table.concat(encoded))
+local before = extractor.rom:bytes(offset, 66 * 32)
+T.eq(#before, 66 * 32, "normal bar/status scan retains its original 66 tiles")
 local palette = { { 0, 0, 0 }, { 255, 0, 0 }, { 0, 255, 0 }, { 0, 0, 255 } }
 T.eq(
-  extractor:battleCaughtMarker(elements, palette),
+  extractor:battleCaughtMarker(offset, palette),
   "assets/generated/battle/hud/caught.png",
   "import publishes tile 70 path"
 )
@@ -57,6 +66,9 @@ for y = 0, 7 do
     end
   end
 end
-T.eq(extractor:battleCaughtMarker({}, palette), nil, "short optional old sheet is unavailable")
+T.same(extractor.rom:bytes(offset, 66 * 32), before, "marker import does not alter the bar/status scan")
+extractor.rom = Rom.new(string.rep(string.char(0), offset + 66 * 32))
+T.eq(extractor:battleCaughtMarker(offset, palette), nil, "short optional sheet refuses an out-of-ROM tail")
+T.eq(extractor:battleCaughtMarker(-1, palette), nil, "invalid element offset is refused")
 love.image = previous
 T.finish("native caught-marker 4bpp import")

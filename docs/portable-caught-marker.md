@@ -74,4 +74,5 @@ native predicate and SDK boundary, not full shared compositor or cartridge
 playthrough parity. Host renderer tests separately drive classic/wide/GBA HUD
 compositors with spies only at font/tile/image leaves, including GBA caching,
 status precedence, hidden HUDs and ownership gates. A separate 4bpp test verifies
-tile selection, palette and transparency for the importer.
+the real flat ROM reader, tile selection, palette and transparency for the
+importer, including the separate read beyond the unchanged 66-tile status scan.
