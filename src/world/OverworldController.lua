@@ -5031,6 +5031,25 @@ function OverworldState:gen3DecorateInput()
   return true
 end
 
+-- Public Gen2 menu predicates use the native script/transition owners. They
+-- do not infer readiness merely from a visible map or an empty overlay stack.
+function OverworldState:scriptRunning()
+  return (self.runner and self.runner:isRunning()) and true or false
+end
+
+function OverworldState:busy()
+  return (self:scriptRunning() or (self.scriptMoves and #self.scriptMoves > 0)
+    or self.engaging or self.emote or self.teleportOut or self.whirlSpin
+    or self.gen4Waterfall or self.transitioning or self.flyAnim or self.fishing
+    or (self.player and (self.player.stairExit or self.player.inputLocked))
+    or (self.pendingScripts and self.pendingScripts[1])) and true or false
+end
+
+function OverworldState:acceptsMenuInput()
+  return not self.battleActive and not self:busy()
+    and not (self.player and self.player.moving) and not self.iceSlide
+end
+
 function OverworldState:handleInput()
   local input = Game.input
   if self.gen3Decorate then return self:gen3DecorateInput() end
@@ -11694,7 +11713,7 @@ end
 
 function OverworldState:checkTrainerSight()
   if self.player.moving or self.engaging then return end
-  if Game.stack:top() ~= self then return end
+  if (Game.stack.active and Game.stack:active() or Game.stack:top()) ~= self then return end
   local p = self.player
   -- A TRAINER WHOSE APPROACH ENDED WITHOUT A BATTLE MUST NOT RE-APPROACH
   -- FROM THE SAME TILE.
@@ -16069,6 +16088,12 @@ end
 --
 -- Zoom is folded in, so this tracks the survey/diorama ladder rather than the
 -- fixed fit scale.  Returns nil before the renderer exists (headless, boot).
+-- Screen units per native UI pixel, matching the renderer's DPI conversion.
+function OverworldState:fitScale()
+  if not (Game and Game.renderer and Game.renderer.drawScale) then return nil end
+  return Game.renderer:drawScale()
+end
+
 function OverworldState:zoomScale()
   if not (Game and Game.renderer and Game.renderer.fitScale) then return nil end
   local ok, fit = pcall(Game.renderer.fitScale, Game.renderer)
