@@ -575,6 +575,15 @@ for _, name in ipairs({
   T.check(Actions.supports(name), "action capability " .. name)
 end
 T.eq(Actions.supports("party"), false, "reader capability remains separate")
+do
+  local api, game, ow = boot("crystal")
+  game.stack.states={};game.stack.worldState=ow
+  function game.stack:active()return self:top()or self.worldState end
+  T.eq(api.world:canReorderParty(),true,"persistent Gen2 world admits action")
+  T.eq(api.world:reorderParty(1,2),true,"native party action reaches persistent world")
+  game.stack:push({});T.eq(api.world:canReorderParty(),false,"overlay retains input ownership")
+  game.stack:pop();T.eq(api.world:canReorderParty(),true,"overlay release restores world action")
+end
 GameVersion.set(saved[1])
 Runtime.install(saved[2], saved[3], saved[4])
 love = saved[5]
