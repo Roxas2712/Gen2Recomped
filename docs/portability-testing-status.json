@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "c5efc14503ca6c25afa32d97536dde2f6ab6dbbd",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/160",
-  "feature_ref": "61616f61e2c5b4dd698ed9413d487ed5983e7c2c",
+  "runtime_ref": "6a1238a7c42b09fbd9694149b35146d17bb9b720",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/161",
+  "feature_ref": "44e746d68e76dd2a37d56079e485f7144efede2e",
   "gen1_contract_ref": "79ea62f45fb2ea8f65d081a109431e4eb1bbdb36",
-  "engine_suites_passed": 168,
-  "engine_suites_total": 168,
+  "engine_suites_passed": 169,
+  "engine_suites_total": 169,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
   "cross_engine_worker_runs": 64,
-  "cross_engine_paired_observations": 631,
+  "cross_engine_paired_observations": 1020,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Latest encounter.table preview consumer; older family results recorded separately",
+  "cross_engine_scope": "Latest charge-required consumer; equal observations compare preservation of native enemy PP policy, not unequal Gold enemy PP counts",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -106,5 +106,23 @@
     "leafgreen",
     "ruby",
     "sapphire"
-  ]
+  ],
+  "encounter_table_full_suite_runtime_ref": "c5efc14503ca6c25afa32d97536dde2f6ab6dbbd",
+  "charge_required_native_checks_passed": 7070,
+  "charge_required_cross_engine_worker_runs": 64,
+  "charge_required_cross_engine_paired_observations": 1020,
+  "charge_required_cross_engine_runtime_ref": "b5bc959d19b3d9e5ebc4528c9f47323bd35a0fbb",
+  "native_charge_required_smoke_games": [
+    "red",
+    "gold",
+    "firered",
+    "emerald"
+  ],
+  "native_charge_required_runtime_ref": "e47c4ec558034c0b83b5f6ff5158510a79c3a459",
+  "native_charge_required_scope": "Same installed API-3 consumer; imported SolarBeam/Fly, constructed native battles, charge/bypass/release/PP/GBA animation metadata, ordinary text/result queue with sendout intro skipped and animations disabled; no normal SAVE, no full-playthrough/whole-battle/GPU/pixel parity claim",
+  "known_gen2_enemy_pp_difference": {
+    "reference_cost": 1,
+    "host_cost": 0,
+    "scope": "Default native enemy move PP; recorded separately, charge/bypass preserve each native policy; not counted as equal PP observations"
+  }
 }

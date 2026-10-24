@@ -1,19 +1,20 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–160
+hook, rendering, shader and baseline test fixes prepared in PRs #88–161
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`c5efc14503ca6c25afa32d97536dde2f6ab6dbbd`. Its ROM-free run passed
-168/168 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
-The unchanged encounter-preview consumer passed both real SDK/world facades
-in four modes (64 worker runs / 631 paired observations). Its native suite
-passed 2,783 checks. Prior GBA field-item, GB item, follower, live-map, storage,
-battle and party results retain their historical refs in
-`portability-testing-status.json`. The GBA no-mod fixture audit also excludes
-the consumer from its in-memory filesystem; all four shared modes passed.
+`6a1238a7c42b09fbd9694149b35146d17bb9b720`. Its ROM-free run passed
+169/169 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+The unchanged charge-turn consumer passed the native battle paths on both
+engines in four SDK modes (64 workers / 1,020 paired contract observations).
+Its native suite passed 7,070 checks. Enemy PP is compared as preservation of
+each engine's baseline; the reports separately record the existing Gold
+reference/host discrepancy (one enemy PP versus zero). Prior preview, GBA/GB
+item, follower, live-map, storage, battle and party families retain their own
+historical refs in `portability-testing-status.json`.
 
 Native LÖVE 11.5 smoke tests reached the intro, title and New Game
 world/introduction for Red, Gold, FireRed and Emerald using isolated copies
@@ -127,9 +128,9 @@ roundtrip, then deletes only the smoke keys. The ordinary test save remains.
 Red, Gold, FireRed and Emerald passed both phases with the same installed
 API-3 consumer. No generated cartridge data is distributed by this branch.
 
-The recorded full-suite runtime includes the older GBA smoke driver.
-Later commits add only the standalone encounter-preview smoke driver and
-record validation/documentation. Older native smoke
+The recorded full-suite runtime includes the older GBA and encounter-preview
+smoke drivers. Later commits add only the standalone charge-turn smoke driver
+and record validation/documentation. Older native smoke
 families retain their own historical runtime refs; they are not relabeled as
 new executions on this runtime.
 
@@ -246,3 +247,31 @@ engines: actual encounters still use `encounter.roll`/`encounter.species`.
 DS does not advertise this hook. The shared fixture rejects unregistered
 versions, including LeafGreen/Ruby/Sapphire, rather than silently testing Red.
 See `portable-encounter-table.md` for the contract and generation boundaries.
+
+
+## Native charge-turn resolution and queue test
+
+Install and enable `examples/portable_charge_required` in the isolated test
+installation, then run with an imported cartridge:
+
+```sh
+POKEPORT_VERSION=red POKEPORT_DRIVER=tests/portability_charge_required_driver.lua \
+  bash scripts/run-portability-test.sh
+```
+
+Repeat with `gold`, `firered` or `emerald`. All four passed on LÖVE 11.5
+using the same installed API-3 consumer. The driver starts New Game in memory,
+constructs native battlers with actual imported SolarBeam/Fly records and
+checks charge/bypass, release without another callback/player PP cost,
+GBA release animation metadata and unsubscribe. It uses the ordinary battle
+state/input to consume the native text/result queue. This bounded test skips
+the separate sendout intro and disables animation playback; it is not proof
+of complete battle-entry, GPU animation, pixel parity or a full playthrough.
+It does not issue normal SAVE.
+
+The native ref is `e47c4ec558034c0b83b5f6ff5158510a79c3a459`; shared-report
+ref `b5bc959d19b3d9e5ebc4528c9f47323bd35a0fbb` adds only the standalone driver
+over the full-suite runtime. Native enemy PP costs are recorded separately:
+Gold's reference spends one while this host's current Gen-1-default rules
+spend zero. The new hook preserves that native policy; correcting the existing
+rule difference remains work. See `portable-charge-required.md`.
