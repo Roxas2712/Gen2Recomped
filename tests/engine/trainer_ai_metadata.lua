@@ -3,7 +3,12 @@ local T = require("tests.modkit")
 local F = dofile("tests/trainer_ai_metadata/fixtures.lua")
 local rows, e = F.gen2("gen2")
 T.same(F.normalized(rows), {
-  { index = 1, attributes = { 13, 13, 8, 170, 187, 1, 2 }, items = { "ITEM_013", "ITEM_013" }, baseMoney = 8 },
+  {
+    index = 1,
+    attributes = { 13, 13, 8, 170, 187, 1, 2 },
+    items = { "ITEM_013", "ITEM_013" },
+    baseMoney = 8,
+  },
   { index = 2, attributes = { 0, 19, 12, 204, 221, 4, 0 }, items = { "ITEM_019" }, baseMoney = 12 },
 }, "native trainer extraction retains exact seven-byte records and stocked slots")
 local attrs, items = e:gen2TrainerAttributes(1)
@@ -18,6 +23,28 @@ e.symbol = function()
   return nil
 end
 T.eq(e:gen2TrainerAttributes(1), nil, "missing attributes do not fabricate native flags")
+for _, row in ipairs({ { 1, 2, 3, 4, 5, 6 }, { 1, 2, 3, 4, 5, 6, -1 }, { 1, 2, 3, 4, 5, 6, 256 }, {
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+} }) do
+  local invalid = setmetatable({
+    symbol = function()
+      return { bank = 1, address = 0x4000 }
+    end,
+    rom = {
+      bytes = function()
+        return row
+      end,
+    },
+  }, { __index = require("src.import.RomExtractorGen2") })
+  T.eq(invalid:gen2TrainerAttributes(1), nil, "incomplete or invalid attribute row refused")
+end
 local G = require("src.import.RomExtractorGen3")
 local R = require("src.import.RomGba")
 local r = R.new(string.char(1, 2, 3, 4, 4, 0, 255))

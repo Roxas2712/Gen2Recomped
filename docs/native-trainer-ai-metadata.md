@@ -18,8 +18,8 @@ Gen-2 rows use the existing seven-byte class stride and version-selected
 symbol lookup. Missing, invalid or truncated optional rows leave AI metadata
 absent; they do not fabricate flags or stock. An empty valid stock becomes an
 empty list. References use the host's existing `ITEM_nnn` format. GBA payloads
-use native amount-field counts, including the shared PP argument, and ordinary
-ROM bounds checks refuse truncated data instead of reading a neighboring item.
+use native amount-field counts, including the shared PP argument. Ordinary ROM
+bounds checks refuse truncated headers and argument payloads.
 
 These fields are generated during import. Existing caches retain their previous
 format until reimported; this change does not invent missing bytes or mutate a
