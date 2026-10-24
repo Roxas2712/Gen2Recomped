@@ -309,6 +309,7 @@ local function writeRecord(ctx, kind, id, value, old, mode)
       unsupported("explicit item indices require a native generation-specific adapter")
     end
     if value.index ~= nil and value.index ~= DELETE then
+      check(value.index <= 255, "Gen-2 item index must be a byte")
       if value.index == 0 and not old then unsupported("item index zero is reserved") end
       for key, row in ctx.loader.content.items:each() do
         if row.index == value.index and ctx.ids:read("items", key) ~= id then

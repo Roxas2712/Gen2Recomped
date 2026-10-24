@@ -33,6 +33,8 @@ shapes. Exact native keys remain usable even when display names collide;
 ambiguous common names are refused. Unrelated generations keep their existing
 native item accessors.
 Unknown effect names can be interpreted through `held_item.trigger`.
+Native effect numbers without a known GSC name are not advertised as named
+base definitions; explicit portable definitions can still replace them.
 API 2/3 reject invalid known fields; API 1 retains its warning-based legacy
 validation behavior. This does not make arbitrary metadata gameplay fields.
 
