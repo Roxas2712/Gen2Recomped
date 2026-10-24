@@ -7,6 +7,7 @@ local Input = require("src.core.Input")
 local Logger = require("src.core.Logger")
 local Platform = require("src.core.Platform")
 local Renderer = require("src.render.Renderer")
+local GameViewport = require("src.render.GameViewport")
 local SaveData = require("src.core.SaveData")
 local StateStack = require("src.core.StateStack")
 local FrameProfile = require("src.core.FrameProfile")
@@ -16,6 +17,16 @@ local ModRuntime = require("src.mods.Runtime")
 local Screens = require("src.ui.Screens")
 
 local Game = {}
+
+-- Legacy/tool stack doubles may not expose the optional visibility method.
+local function renderVisible(stack, state)
+  return state ~= nil and (not stack.renderVisible or stack:renderVisible(state))
+end
+
+-- The default must follow an explicit next(otherGame), not capture the caller.
+local function resolveLogicSpeedVanilla(game)
+  return game:_resolveLogicSpeed()
+end
 
 -- dev-mode gate for the F5/backtick hotkeys; false keeps every src/dev
 -- module unloaded, so a player boot never touches a byte of dev code
@@ -30,6 +41,7 @@ end
 
 function Game:load()
   self.pointerOwners={}
+  self.modPointers={}
   self.secondScreenPointerOwner=nil
   self.secondScreenOverworldPoketch=nil
   self.data = Data
@@ -107,7 +119,10 @@ function Game:load()
   -- apply the persisted audio + display options before anything plays
   self:applyOptions(self.save.options)
 
-  FixedStep:init(function(step) self:step(step) end)
+  FixedStep:init(function(step)
+    self:step(step)
+    self:_speedLockEdge()
+  end)
   self.fixedStep = FixedStep
 
   local OverworldState = require("src.world.OverworldController")
@@ -377,24 +392,46 @@ function Game:_step(dt)
   -- it on its own real-time 60Hz accumulator instead.
 end
 
--- The logic multiplier for this frame. Read live rather than cached so the
--- Options row takes effect immediately; speedOverride is the --speed /
--- POKEPORT_SPEED run argument, which wins over the saved option so a bot
--- or screenshot run does not depend on whatever the player last chose.
-function Game:logicSpeed()
+-- Keep the native global option; the portable hook wraps resolution, not
+-- engine-specific category settings or the speed ladder.
+function Game:_resolveLogicSpeed()
   local GameSpeed = require("src.core.GameSpeed")
-  -- Link play is always 1X on both machines, and this wins over every other
-  -- source including POKEPORT_SPEED.  Fast-forward multiplies the logic
-  -- clock, so a peer at 10X burned a tournament shot clock ten times faster
-  -- than the opponent it is racing, and drove its own animation/message
-  -- queue at a different rate than the peer it is locked to.  Nothing about
-  -- a match should depend on what either player set this to.
-  if self.linkSession or (self.linkNet and not self.linkNet.closed) then
-    return 1
-  end
-  if self.speedOverride then return GameSpeed.clamp(self.speedOverride) end
   local opts = self.save and self.save.options
   return GameSpeed.clamp(opts and opts.speed or GameSpeed.DEFAULT)
+end
+
+function Game:speedLocked()
+  if self.linkSession or (self.linkNet and not self.linkNet.closed) then
+    return true, "link"
+  end
+  -- A menu on top must not hide a fixed-speed state underneath it.
+  local states = self.stack and self.stack.states or {}
+  for i = #states, 1, -1 do
+    local state = states[i]
+    if state and (state.isFixedSpeed or state.isMinigame) then
+      return true, "minigame"
+    end
+  end
+  return false
+end
+
+-- A link/fixed-speed state may start inside an accelerated logic step. Drop
+-- the remaining budget now instead of running that state at the old speed.
+function Game:_speedLockEdge()
+  if (self._frameSpeed or 1) > 1 and self:speedLocked() then
+    FixedStep:endFrame()
+  end
+end
+
+-- Read live on every resolution. Hard locks win over --speed/POKEPORT_SPEED,
+-- and those explicit overrides win over mods. Clamp the final hook result as
+-- well as the native default so invalid output cannot poison the accumulator.
+function Game:logicSpeed()
+  if self:speedLocked() then return 1 end
+  local GameSpeed = require("src.core.GameSpeed")
+  if self.speedOverride then return GameSpeed.clamp(self.speedOverride) end
+  if not ModRuntime.wantsHook("core.logic_speed") then return self:_resolveLogicSpeed() end
+  return GameSpeed.clamp(ModRuntime.call("core.logic_speed", resolveLogicSpeedVanilla, self))
 end
 
 -- THE FREE CAMERA, when one owns the frame -- otherwise nil.
@@ -597,6 +634,7 @@ function Game:update(dt)
   -- or the anti-spiral clamp quietly caps every level above ~15X.
   self:updateCameraStick(dt)
   local speed = self:logicSpeed()
+  self._frameSpeed = speed
   FixedStep.maxAccum = math.max(0.25, speed * FixedStep.STEP * 1.5)
   do
     local close = FrameProfile.section("  update: fixed steps")
@@ -825,11 +863,11 @@ function Game.drawBaseInStack(stack, visibleBase)
   local states = stack and stack.states or {}
   for i = visibleBase - 1, 1, -1 do
     local state = states[i]
-    if state and state.bgMode and state:bgMode() == "world" then
+    if renderVisible(stack, state) and state.bgMode and state:bgMode() == "world" then
       -- restart the search from under the battle: the highest opaque state at
       -- or below it (the overworld), not the menu sitting over it
       for j = i, 1, -1 do
-        if states[j].isOpaque then return j end
+        if renderVisible(stack, states[j]) and states[j].isOpaque then return j end
       end
       return 1
     end
@@ -917,6 +955,8 @@ Game.centerClassicZones = centerClassicZones
 function Game:draw()
   local closeDraw = FrameProfile.section("draw: whole frame")
   local screenLayout=require('src.ui.SecondScreen')
+  local generation = require('src.core.GameVersion').generation()
+  GameViewport.begin(generation, generation <= 3 and not screenLayout.combined(self))
   Renderer.splitViewport=nil
   if screenLayout.combined(self) then
     local w,h=love.graphics.getDimensions()
@@ -979,8 +1019,9 @@ function Game:draw()
 
   if screenLayout.combined(self) then
     screenLayout.composeWindow(self)
-    TouchControls:draw()
   end
+  GameViewport.finish(self)
+  TouchControls:draw()
   closeDraw()
   -- THE SECOND PANEL'S FRAME LEAVES LAST.
   --
@@ -1010,10 +1051,12 @@ function Game:_draw()
   -- white clear
   local base = self.stack:visibleBase()
   local worldBelow = self.stack.states[base] == self.overworld
+    and renderVisible(self.stack, self.overworld)
   -- a world-bg battle keeps the map drawing under whatever it opened, so the
   -- world pass can run for a frame whose CLEAR is still an opaque menu's
   local drawFrom = Game.drawBaseInStack(self.stack, base)
   local worldDrawn = self.stack.states[drawFrom] == self.overworld
+    and renderVisible(self.stack, self.overworld)
   -- A wide battle holds its 304px surface through every menu or prompt it
   -- opens. States that do not draw the wide battle composition are centred
   -- in that surface below, so their classic coordinates and hit testing stay
@@ -1089,7 +1132,7 @@ function Game:_draw()
     local ownsSurface = wideState
       or (native ~= nil and state == native)
       or Game.wantsThisSurface(state)
-    if state and state.draw then
+    if renderVisible(self.stack, state) and state.draw then
       -- ...and it is centred by ITS OWN size, not by the Game Boy's (see
       -- Game.homeOffset).  classicOffset still gates it: a surface that is
       -- the Game Boy's centres nothing, which is every frame outside a wide
@@ -1114,7 +1157,7 @@ function Game:_draw()
   local zones, worldZones, zoneOwner
   for i = #self.stack.states, 1, -1 do
     local s = self.stack.states[i]
-    if s.sgbPalettes then
+    if renderVisible(self.stack, s) and s.sgbPalettes then
       zones = s:sgbPalettes(self)
       zoneOwner = s
       break
@@ -1168,6 +1211,9 @@ function Game:_draw()
   if worldDrawn and self.overworld.sgbWorldZones then
     worldZones = self.overworld:sgbWorldZones()
   end
+  -- Keep shader controls readable even when a local shader paints black.
+  local top = self.stack:top()
+  Renderer.shaderPresetBypass = top and top.shaderPresetBypass or false
   local viewport = Renderer:endFrame(zones, worldZones)
   -- Persistent tool status is screen-space UI: draw it over the completed
   -- render pipeline with exact playfield/margin geometry, but below mobile
@@ -1176,7 +1222,7 @@ function Game:_draw()
     ModRuntime.call("render.hud", function() end, self, viewport)
   end
   -- on-screen mobile controls: pure screen-space, over the finished frame
-  if not Renderer.splitViewport then TouchControls:draw() end
+  -- OS-window controls draw after GameViewport.finish in Game:draw.
 end
 
 -- overworld survey zoom: wheel up / '=' zooms in, wheel down / '-' out
@@ -1192,7 +1238,7 @@ function Game:zoomStep(delta)
   end
 end
 
-function Game:wheelmoved(_, dy)
+local function wheelmovedBody(self, dy)
   -- THE WHEEL ZOOMS THE FREE CAMERA when one owns the frame, and the
   -- window otherwise.
   --
@@ -1211,6 +1257,17 @@ function Game:wheelmoved(_, dy)
   elseif dy < 0 then
     self:zoomStep(-1)
   end
+end
+
+function Game:wheelmoved(_, dy)
+  if not ModRuntime.wantsHook("input.wheel") then
+    return wheelmovedBody(self, dy)
+  end
+  -- Keep the native callback arguments even if a wrapper rewrites next(...),
+  -- matching Gen1. Omitting next suppresses the complete native body.
+  return ModRuntime.call("input.wheel", function()
+    return wheelmovedBody(self, dy)
+  end, self, dy)
 end
 
 -- WHEN THE STACK IS EMPTIED AND NOBODY PUSHES ANYTHING BACK.
@@ -1344,8 +1401,16 @@ function Game:cycleGen4CameraTilt()
   return true
 end
 
-function Game:keypressed(key)
+local function keypressedBody(self, key)
   -- ...ahead of the delegation below, which is unconditional.
+  if key == "f8" then
+    require("src.render.ShaderPresets"):off()
+    if self.save and self.save.options then
+      self.save.options.shaderPreset = "off"
+      self:writeOptions()
+    end
+    return
+  end
   if key == "f9" then return self:unstick() end
   if key == "f11" then return self:toggleFrameProfile() end
   if key == "f10" then return self:toggleModManager() end
@@ -1477,6 +1542,17 @@ function Game:keypressed(key)
   Input:keypressed(key)
 end
 
+function Game:keypressed(key)
+  if not ModRuntime.wantsHook("input.key") then
+    return keypressedBody(self, key)
+  end
+  -- Keep the native callback arguments even if a wrapper rewrites next(...),
+  -- matching Gen1. Omitting next suppresses the complete native body.
+  return ModRuntime.call("input.key", function()
+    return keypressedBody(self, key)
+  end, self, { phase = "pressed", key = key })
+end
+
 function Game:textinput(text)
   local top = self.stack and self.stack:top()
   if top and top.onTextInput then
@@ -1504,19 +1580,31 @@ function Game:returnToLauncher()
   require("src.core.HostShell").toLauncher()
 end
 
--- Releases reach Input even while a top state captures raw input: a
+-- Unless an input.key wrapper swallows the event, releases reach Input
+-- even while a top state captures raw input: a
 -- swallowed key-up would strand a held-state flag for a key Input saw go
 -- down before the capture armed (the stuck-flag hazard Input:reset
 -- exists for).  The top state only OBSERVES the release afterwards,
 -- unlike onKeyPressed above which owns the press, so BindingsMenu can
 -- commit a capture on the key-up (#589).
-function Game:keyreleased(key)
+local function keyreleasedBody(self, key)
   Input:keyreleased(key)
   local top = self.stack and self.stack:top()
   if top and top.onKeyReleased then top:onKeyReleased(key) end
 end
 
-function Game:gamepadpressed(joystick, button)
+function Game:keyreleased(key)
+  if not ModRuntime.wantsHook("input.key") then
+    return keyreleasedBody(self, key)
+  end
+  -- Keep the native callback arguments even if a wrapper rewrites next(...),
+  -- matching Gen1. Omitting next suppresses the complete native body.
+  return ModRuntime.call("input.key", function()
+    return keyreleasedBody(self, key)
+  end, self, { phase = "released", key = key })
+end
+
+local function gamepadpressedBody(self, joystick, button)
   -- a controller is being used: the touch overlay steps aside until the
   -- next screen touch (mobile only; a no-op elsewhere)
   TouchControls:noteGamepad()
@@ -1529,14 +1617,36 @@ function Game:gamepadpressed(joystick, button)
   Input:gamepadpressed(joystick, button)
 end
 
-function Game:gamepadreleased(joystick, button)
+function Game:gamepadpressed(joystick, button)
+  if not ModRuntime.wantsHook("input.gamepad") then
+    return gamepadpressedBody(self, joystick, button)
+  end
+  -- Keep the native callback arguments even if a wrapper rewrites next(...),
+  -- matching Gen1. Omitting next suppresses the complete native body.
+  return ModRuntime.call("input.gamepad", function()
+    return gamepadpressedBody(self, joystick, button)
+  end, self, { phase = "pressed", joystick = joystick, button = button })
+end
+
+local function gamepadreleasedBody(self, joystick, button)
   -- same observe-after-Input contract as Game:keyreleased (#589)
   Input:gamepadreleased(joystick, button)
   local top = self.stack and self.stack:top()
   if top and top.onGamepadReleased then top:onGamepadReleased(button) end
 end
 
-function Game:gamepadaxis(joystick, axis, value)
+function Game:gamepadreleased(joystick, button)
+  if not ModRuntime.wantsHook("input.gamepad") then
+    return gamepadreleasedBody(self, joystick, button)
+  end
+  -- Keep the native callback arguments even if a wrapper rewrites next(...),
+  -- matching Gen1. Omitting next suppresses the complete native body.
+  return ModRuntime.call("input.gamepad", function()
+    return gamepadreleasedBody(self, joystick, button)
+  end, self, { phase = "released", joystick = joystick, button = button })
+end
+
+local function gamepadaxisBody(self, joystick, axis, value)
   -- past-deadzone only, so resting-stick drift can't hide the overlay
   if math.abs(value) > 0.5 then TouchControls:noteGamepad() end
   -- the triggers and the right stick as bindable pseudo-buttons (Input
@@ -1557,6 +1667,17 @@ function Game:gamepadaxis(joystick, axis, value)
     end
   end
   Input:gamepadaxis(joystick, axis, value)
+end
+
+function Game:gamepadaxis(joystick, axis, value)
+  if not ModRuntime.wantsHook("input.gamepad") then
+    return gamepadaxisBody(self, joystick, axis, value)
+  end
+  -- Keep the native callback arguments even if a wrapper rewrites next(...),
+  -- matching Gen1. Omitting next suppresses the complete native body.
+  return ModRuntime.call("input.gamepad", function()
+    return gamepadaxisBody(self, joystick, axis, value)
+  end, self, { phase = "axis", joystick = joystick, axis = axis, value = value })
 end
 
 -- conf.lua turns the mobile accelerometer-joystick off (#468), but guard the
@@ -1710,9 +1831,13 @@ end
 local function offerPointer(self, method, id, x, y)
   self.pointerOwners=self.pointerOwners or {}
   local captured=self.pointerOwners[id]
+  local gameX, gameY, inside = GameViewport.toLocal(x, y)
+  local panel = self.secondScreenPointerOwner
   local function offer(screen)
     if not (screen and type(screen[method])=='function') then return false end
-    local ok,claimed=pcall(screen[method],screen,id,x,y)
+    local ok,claimed=pcall(screen[method],screen,id,
+      (self.secondScreenInjecting or screen == panel) and x or gameX,
+      (self.secondScreenInjecting or screen == panel) and y or gameY)
     if not ok then
       require('src.core.Logger').warn('%s raised in a touch handler: %s',
         tostring(screen.name or 'a screen'),tostring(claimed))
@@ -1727,14 +1852,42 @@ local function offerPointer(self, method, id, x, y)
     return true
   end
   local top = self.stack and self.stack.top and self.stack:top()
-  if offer(top) then return true end
+  if (inside or self.secondScreenInjecting) and offer(top) then return true end
   -- The always-present Android lower-panel watch is drawn outside the stack.
   -- Its coordinate mapper rejects main-window input in display mode.
-  local panel=self.secondScreenPointerOwner
   return panel~=top and offer(panel) or false
 end
 
-function Game:touchpressed(id, x, y)
+-- Window-space pointer metadata plus coordinates local to the game rectangle.
+local function pointerUnclaimed() return false end
+function Game:pointerEvent(phase, source, id, x, y, dx, dy, pressure, button)
+  local gameX, gameY, inside = GameViewport.toLocal(x, y)
+  return ModRuntime.call("input.pointer", pointerUnclaimed, self, {
+    phase = phase, source = source, id = id, x = x, y = y,
+    gameX = gameX, gameY = gameY, insideGame = inside,
+    dx = dx or 0, dy = dy or 0, pressure = pressure, button = button,
+  }) == true
+end
+local function modPointer(self, phase, id, x, y, dx, dy, pressure)
+  if self.secondScreenInjecting then return false end
+  local p = self.modPointers and self.modPointers[id]
+  if phase == "pressed" then
+    if not ModRuntime.wantsHook("input.pointer") then return false end
+    self.modPointers = self.modPointers or {}
+    p = { source = id == "mouse" and "mouse" or "touch", x = x, y = y }
+    self.modPointers[id] = p
+  elseif not p then return false end
+  dx, dy = dx or (x - p.x), dy or (y - p.y)
+  p.x, p.y = x, y
+  if pressure ~= nil then p.pressure = pressure end
+  local nativeOwner = self.pointerOwners and self.pointerOwners[id]
+  local claimed = self:pointerEvent(phase, p.source, id, x, y, dx, dy, p.pressure, id == "mouse" and 1 or nil)
+  if not nativeOwner and claimed then p.claimed = true end
+  if phase == "released" and self.modPointers then self.modPointers[id] = nil end
+  return not nativeOwner and p.claimed == true
+end
+
+function Game:touchpressed(id, x, y, dx, dy, pressure)
   -- Visible virtual controls own their complete gesture, even when pressing
   -- one opens a different screen before the finger is lifted.
   if not self.secondScreenInjecting and TouchControls.visible and TouchControls:visible()
@@ -1742,6 +1895,7 @@ function Game:touchpressed(id, x, y)
     TouchControls:touchpressed(id,x,y)
     return
   end
+  if modPointer(self, "pressed", id, x, y, dx, dy, pressure) then return end
   if offerPointer(self, "touchpressed", id, x, y) then return end
   if self.secondScreenInjecting then return end
   TouchControls:touchpressed(id, x, y)
@@ -1756,21 +1910,23 @@ function Game:hasPointerScreen()
   return top and type(top.touchpressed)=='function' or false
 end
 
-function Game:touchmoved(id, x, y)
+function Game:touchmoved(id, x, y, dx, dy, pressure)
   if not self.secondScreenInjecting and TouchControls.touches and TouchControls.touches[id] then
     TouchControls:touchmoved(id,x,y)
     return
   end
+  if modPointer(self, "moved", id, x, y, dx, dy, pressure) then return end
   if offerPointer(self, "touchmoved", id, x, y) then return end
   if self.secondScreenInjecting then return end
   TouchControls:touchmoved(id, x, y)
 end
 
-function Game:touchreleased(id, x, y)
+function Game:touchreleased(id, x, y, dx, dy, pressure)
   if not self.secondScreenInjecting and TouchControls.touches and TouchControls.touches[id] then
     TouchControls:touchreleased(id,x,y)
     return
   end
+  if modPointer(self, "released", id, x, y, dx, dy, pressure) then return end
   if offerPointer(self, "touchreleased", id, x, y) then return end
   if self.secondScreenInjecting then return end
   TouchControls:touchreleased(id, x, y)
@@ -1855,10 +2011,12 @@ function Game:applyOptions(opts)
     self.input:setButtonMode(opts.gen3ButtonMode or 1)
   end
   require("src.render.PaletteFX").applyOptions(opts)
+  require("src.render.GbcColorCorrection").applyOptions(opts)
   require("src.render.Tilt").applyOptions(opts)
   -- after Tilt, so a persisted world pipeline can switch the tilt level it
   -- just restored back off (the two are mutually exclusive)
   require("src.render.Pipelines").applyOptions(opts)
+  require("src.render.ShaderPresets"):applyOptions(opts)
   require("src.render.Zoom").applyOptions(opts)
   require("src.render.TileRenderer").applyOptions(opts)
   -- returns true when a persisted GBC FX level was cleared on mobile

@@ -192,48 +192,77 @@ check(quitHook:find('package.loaded["src.update.Check"].shutdown', 1, true) ~= n
 -- so the quit event exits the process outright.  It has to sit after the
 -- love.quit() veto test, or the editor's abort-quit path would die on a quit
 -- it refused.
--- main.lua also has an import-only event loop. Scope the check to the real
--- gameplay loop, then execute its event dispatch with an isolated love table.
-local runHook = assert(mainSrc:match("\nfunction love%.run%(%)(.-)\nend"))
-local dispatch = assert(runHook:match("%-%- process events(.-)%-%- update dt"))
-local function quitEvent(platform, veto)
-  local order, exits, sent = {}, {}, false
-  local env = {
+-- Execute the actual run-loop function in an isolated environment. Scanning
+-- nested `end`s or counting os.exit in comments cannot prove veto behavior.
+local runAt = assert(mainSrc:find("\nfunction love.run()", 1, true))
+local runSource = mainSrc:sub(runAt + 1)
+local function quitFrame(platform, answer, code, noCallback)
+  local calls, exits = {}, {}
+  local function record(name) calls[#calls + 1] = name end
+  local env = setmetatable({
+    BootTrace = { mark = function() end, frame = function() record("frame") end },
+    Frames = { tick = function() record("tick") end },
+    FrameProfile = { section = function() return function() end end },
+    pacingEnabled = function() return false end,
+    os = { exit = function(value) record("exit"); exits[#exits + 1] = value end },
     love = {
-      system = { getOS = function() return platform end },
+      handlers = { quit = function() record("dispatch") end },
+      update = function() record("update") end,
       event = {
         pump = function() end,
         poll = function()
+          local sent = false
           return function()
-            if not sent then sent = true; return "quit", 7 end
+            if not sent then sent = true; return "quit", code end
           end
         end,
       },
-      quit = function() order[#order + 1] = "veto"; return veto end,
-      handlers = { quit = function() end },
     },
-    os = { exit = function(code)
-      order[#order + 1] = "exit"
-      exits[#exits + 1] = code
-    end },
-  }
-  local chunk = assert(loadstring('return function() ' .. dispatch .. '\nreturn "continued" end'))
-  setfenv(chunk, env)
-  local result = chunk()()
-  return result, exits, table.concat(order, ",")
+  }, { __index = _G })
+  if platform then env.love.system = { getOS = function() return platform end } end
+  if not noCallback then
+    env.love.quit = function() record("quit"); return answer end
+  end
+  local compile = loadstring or load
+  local chunk
+  if setfenv then
+    chunk = assert(compile(runSource, "@main.lua:love.run"))
+    setfenv(chunk, env)
+  else
+    chunk = assert(load(runSource, "@main.lua:love.run", "t", env))
+  end
+  chunk()
+  local result = env.love.run()()
+  return result, table.concat(calls, ","), exits
 end
-local result, exitCodes, order = quitEvent("Android", false)
-eq(result, 7, "Android quit returns the requested exit code")
-eq(exitCodes[1], 7, "Android exits the process with the requested code")
-eq(order, "veto,exit", "the process exit follows the declined quit veto")
-local continued, vetoExits = quitEvent("Android", true)
-eq(continued, "continued", "a veto keeps the Android event loop alive")
-eq(#vetoExits, 0, "a veto never exits the Android process")
-local desktop, desktopExits = quitEvent("OS X", false)
-eq(desktop, 7, "desktop returns through normal LOVE teardown")
-eq(#desktopExits, 0, "desktop never invokes the Android process exit")
-local exits = 0
-for _ in mainSrc:gmatch("os%.exit") do exits = exits + 1 end
-eq(exits, 1, "os.exit appears once, at the quit event")
+
+for _, platform in ipairs({ "Android", "Windows", "OS X", "Linux", "NX", false }) do
+  local label = tostring(platform)
+  for _, code in ipairs({ 0, 7, false }) do
+    -- false is a table-friendly sentinel for an omitted exit status.
+    local expected = code or 0
+    for _, noCallback in ipairs({ false, true }) do
+      for _, answer in ipairs({ false, "nil" }) do
+        local callbackAnswer = answer
+        if answer == "nil" then callbackAnswer = nil end
+        local result, order, exits = quitFrame(platform, callbackAnswer, code or nil, noCallback)
+        local prefix = noCallback and "" or "quit"
+        eq(result, expected, label .. ": accepted quit returns its exit status")
+        if platform == "Android" then
+          eq(#exits, 1, "Android exits exactly once after accepting quit")
+          eq(exits[1], expected, "Android forwards the requested exit status")
+          eq(order, prefix == "" and "exit" or "quit,exit", "shutdown precedes process exit")
+        else
+          eq(#exits, 0, label .. ": accepted quit does not force a process exit")
+          eq(order, prefix, label .. ": no further frame work after accepted quit")
+        end
+      end
+    end
+  end
+  local result, order, exits = quitFrame(platform, true, 7)
+  eq(result, nil, label .. ": veto keeps the frame running")
+  eq(#exits, 0, label .. ": veto never exits the process")
+  eq(order, "quit,dispatch,update,frame,tick", label .. ": veto resumes event and frame processing")
+end
 
 T.finish("quit thread shutdown")

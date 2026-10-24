@@ -242,6 +242,7 @@ local lastLogFlush = 0
 -- unrelated push overflows it and ends the process with a traceback pointing at
 -- innocent code.  See src/render/GraphicsStack.lua.
 local GraphicsStack = require("src.render.GraphicsStack")
+local PlatformHooks = require("src.core.PlatformHooks")
 -- Declared HERE rather than further down beside its first mark: bootGame below
 -- calls BootTrace.booted(), and a `local` declared after a function's body is
 -- not in scope inside it -- the name resolved to the nil GLOBAL instead and
@@ -689,7 +690,9 @@ function love.update(dt)
   -- unguarded dereference here is not a theoretical race -- it is
   -- "attempt to index upvalue 'Game' (a nil value)" a second after launch.
   if not Game then return end
-  Game:update(dt)
+  -- Only the interactive game frame is a core.update seam, as in Gen1.
+  -- Scripted act+step loops above retain their deterministic direct updates.
+  PlatformHooks.update(Game, dt)
 end
 
 -- THE LAUNCHER'S OWN BOTTOM SCREEN.
@@ -880,7 +883,7 @@ function love.touchpressed(id, x, y, dx, dy, pressure)
   end
   if Importer then return Importer:touchpressed(id,x,y,dx,dy,pressure) end
   if not Game then return end
-  Game:touchpressed(id, x, y)
+  Game:touchpressed(id, x, y, dx, dy, pressure)
 end
 
 function love.touchmoved(id, x, y, dx, dy, pressure)
@@ -894,7 +897,7 @@ function love.touchmoved(id, x, y, dx, dy, pressure)
   end
   if Importer then return Importer:touchmoved(id,x,y,dx,dy,pressure) end
   if not Game then return end
-  Game:touchmoved(id, x, y)
+  Game:touchmoved(id, x, y, dx, dy, pressure)
 end
 
 function love.touchreleased(id, x, y, dx, dy, pressure)
@@ -908,7 +911,7 @@ function love.touchreleased(id, x, y, dx, dy, pressure)
   end
   if Importer then return Importer:touchreleased(id,x,y,dx,dy,pressure) end
   if not Game then return end
-  Game:touchreleased(id, x, y)
+  Game:touchreleased(id, x, y, dx, dy, pressure)
 end
 
 function love.wheelmoved(x, y)
@@ -1187,6 +1190,9 @@ function love.quit()
   end
   if package.loaded["src.update.Check"] then
     pcall(package.loaded["src.update.Check"].shutdown)
+  end
+  if package.loaded["src.render.ShaderBrowser"] then
+    pcall(package.loaded["src.render.ShaderBrowser"].shutdown)
   end
   if package.loaded["src.translation.Service"] then
     pcall(package.loaded["src.translation.Service"].shutdown)

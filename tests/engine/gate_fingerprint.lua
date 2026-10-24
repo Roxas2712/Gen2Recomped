@@ -9,8 +9,8 @@
 -- itself, and would silently make two builds of the same engine refuse to
 -- link.  Here it flips one hex string and fails.
 --
--- Regenerate deliberately with scripts/test.sh --bless after recording the
--- intended parity change; never automatically.
+-- Regenerate deliberately after auditing each changed surface section; see
+-- tests/goldens/fixture_fingerprint.md. Never update expected values automatically.
 
 package.path = "./?.lua;./?/init.lua;" .. package.path
 
@@ -45,6 +45,40 @@ surfaceFile:close()
 local surface = Fingerprint.surface(data, {})
 T.eq(surface .. "\n", surfaceGolden, "fixture link surface matches its reviewed input")
 T.eq(actual, Fingerprint.digest(surface), "cached fingerprint agrees with its full current input")
+
+-- Section pins make a registry addition reviewable without treating a whole
+-- digest change as permission to bless unrelated species or move changes.
+local sectionFile = assert(io.open("tests/goldens/fixture_fingerprint_sections.txt", "r"))
+local expectedSections = {}
+for line in sectionFile:lines() do
+  local name, expected = line:match("^(%S+)%s+(%x+)$")
+  if name then expectedSections[name] = expected end
+end
+sectionFile:close()
+local sectionCount = 0
+for name, body in Fingerprint.surface(data, {}):gmatch("%[([^%]]+)%]([^%[]*)") do
+  sectionCount = sectionCount + 1
+  T.eq(Fingerprint.digest("[" .. name .. "]" .. body), expectedSections[name],
+    "audited fixture surface section: " .. name)
+  expectedSections[name] = nil
+end
+T.eq(sectionCount, 7, "the fixture has seven populated fingerprint sections")
+T.eq(next(expectedSections), nil, "all committed section pins were checked")
+
+-- Platinum's four dynamic-power effects were added in 3252aec. They are
+-- native full handlers, and removing any one must change link compatibility.
+local sinnoh = {
+  "POWER_BASED_ON_LOW_SPEED", "INCREASE_POWER_WITH_MORE_HP",
+  "DOUBLE_POWER_WHEN_BELOW_HALF", "DOUBLE_POWER_HEAL_SLEEP",
+}
+for _, id in ipairs(sinnoh) do
+  T.eq(data.move_effects[id].kind, "full", "Sinnoh effect is registered: " .. id)
+  local copy = T.fixtures.fresh()
+  local copyRun = T.sdk.loadNone({ data = copy })
+  copy.move_effects[id] = nil
+  T.neq(Fingerprint.compute(copy, {}), actual, "omitting " .. id .. " changes compatibility")
+  copyRun.release()
+end
 
 -- determinism: same data, same digest.  A fingerprint that folded a table
 -- address or a pairs() order would pass once and fail in CI.

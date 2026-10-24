@@ -223,6 +223,20 @@ local body = Json.encode({
   tag_name = "v1.4.2",
   assets = assets,
 })
+-- A same-version Gen1 payload is not a fallback for a missing Gen2 asset.
+local foreign = Check.parseRelease(Json.encode({tag_name="v1.4.2", assets={
+  {name="gen1recomp-1.4.2.love",browser_download_url="http://x/foreign",size=88},
+  {name="Gen2Recomped-1.4.2-macos.zip",browser_download_url="http://x/zip",size=99},
+}}))
+check(foreign ~= nil, "a release without a matching game payload still parses")
+eq(foreign.payload,nil,"Gen1 and platform archives never substitute for the Gen2 payload")
+local competing = Check.parseRelease(Json.encode({tag_name="v1.4.2", assets={
+  {name="gen1recomp-1.4.2.love",browser_download_url="http://x/foreign",size=88},
+  {name="Gen2Recomped-1.4.2.love",browser_download_url="http://x/correct",size=123},
+}}))
+check(competing.payload ~= nil,"exact Gen2 payload wins among same-version assets")
+eq(competing.payload and competing.payload.url,"http://x/correct","foreign game asset is ignored even when listed first")
+
 local rel = Check.parseRelease(body)
 check(rel ~= nil, "parseRelease accepts a valid release")
 eq(rel.version, "1.4.2", "parseRelease strips the leading v from tag_name")

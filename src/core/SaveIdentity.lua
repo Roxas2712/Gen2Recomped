@@ -140,6 +140,8 @@ end
 -- Call once, as early in love.load as possible and before anything reads or
 -- writes the save directory.  Returns the number of files copied.
 function SaveIdentity.migrateLegacy()
+  -- A dedicated test installation must not inherit legacy saves or settings.
+  if os.getenv("POKEPORT_SKIP_LEGACY_MIGRATION") == "1" then return 0 end
   local f = fs()
   if not (f and f.setIdentity and f.getIdentity) then return 0 end
 
