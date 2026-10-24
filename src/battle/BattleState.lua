@@ -5645,6 +5645,13 @@ function BattleState:resolveTurn(playerAction)
   -- switch (src/battle/Gen5MoveRules.lua)
   if self.bw then order = require("src.battle.Gen5MoveRules").arrange(self, order) end
 
+  if GameVersion.isGen3() then
+    self._gbaResidualPriority = {}
+    for _, entry in ipairs(order) do
+      local move = entry[3] and not entry[3].special and self:moveDef(entry[3])
+      if move then self._gbaResidualPriority[entry[1].position] = move.priority or 0 end
+    end
+  end
   self.phase = "messages"
   self.afterQueue = "menu"
   if GameVersion.generation() == 3 then
@@ -5890,8 +5897,8 @@ function BattleState:abilitySwitchIn(battler)
   -- anything else on the field gets to speak.
   self:abilityForecast(battler)
   local act = Abilities.onSwitchIn(battler)
-  if not act then return end
-  self:abilitySwitchInEffect(battler, act)
+  if act then self:abilitySwitchInEffect(battler, act) end
+  if GameVersion.isGen3() then require("src.battle.GbaItemSchedule").afterAction(self) end
 end
 
 -- The visible half of a switch-in ability, split out so TRACE can run the
@@ -6287,7 +6294,8 @@ function BattleState:holdItemTrigger(battler, when)
     local moves = battler.curMoves or battler.mon.moves
     local slot = moves and moves[act.slot]
     if not slot then return false end
-    local cap = slot.maxPp or slot.pp_max or act.amount
+    local move = GameVersion.isGen3() and self:moveDef(slot)
+    local cap = slot.maxPp or slot.pp_max or (move and move.pp) or act.amount
     slot.pp = math.min(cap, (slot.pp or 0) + act.amount)
     self:sayNext(Strings("%s's %s\nrestored %s's PP!", who, label,
                          tostring(slot.id or "its move")))
@@ -6303,7 +6311,8 @@ function BattleState:holdItemTrigger(battler, when)
     if not stat then
       -- STARF BERRY picks one of the five at random
       local list = HoldItems.RANDOM_STATS
-      stat = list[rng(1, #list)]
+      repeat stat = list[rng(1, #list)]
+      until not GameVersion.isGen3() or ((battler.stages or {})[stat] or 0) < 6
     end
     self:sayNext(Strings("%s used its\n%s!", who, label))
     for _, m in ipairs(MoveEffects.changeStage(self, battler, stat,
@@ -6335,6 +6344,9 @@ function BattleState:endOfTurn()
     Runtime.emit("battle.turn_ended", { battle = self, turn = self.turnCount or 0 })
     return
   end
+  if GameVersion.isGen3() then
+    require("src.battle.GbaItemSchedule").residuals(self)
+  else
   -- sideToxic mirrors w*ToxicCounter: it advances only while the
   -- battler's badly-poisoned flag (toxicCounter) is set, an item/AI
   -- cure clears the flag but NOT the side counter, and a fresh Toxic
@@ -6425,6 +6437,7 @@ function BattleState:endOfTurn()
     self:holdItemTrigger(self.enemy, "turn")
   end
   self:gen3CountersTick()
+  end
   self:tickTokens()
   self:roamerFlees()
   -- BATTLE ARENA: the third turn is over and both are standing -- judgment
@@ -6454,78 +6467,96 @@ end
 -- THE COUNTERS HOENN'S NEW MOVES SET, ticked once per turn in the order
 -- HandleBetweenTurnEffects walks them.  Each one is a plain countdown; the
 -- interesting part is what happens when it runs out.
-function BattleState:gen3CountersTick()
-  for _, b in activeBattlers(self) do
-    if b and b.mon and b.mon.hp > 0 then
-      if GameVersion.isGen3() then require("src.battle.Gen3LockOn").tick(self, b) end
-      -- YAWN: the sleep lands at the END of the turn AFTER the one it was
-      -- used on, which is the whole reason it is worth using at all.
-      if b.drowsyTurns then
-        b.drowsyTurns = b.drowsyTurns - 1
-        if b.drowsyTurns <= 0 then
-          b.drowsyTurns = nil
-          for _, m in ipairs(StatusRegistry.inflict(self, b, "SLP", {})) do
-            self:sayNext(m)
-          end
-        end
-      end
-      if b.tauntTurns then
-        b.tauntTurns = b.tauntTurns - 1
-        if b.tauntTurns <= 0 then
-          b.tauntTurns = nil
-          self:sayNext(Strings("%s's taunt\nwore off!", displayName(b)))
-        end
-      end
-      if b.encoreTurns then
-        b.encoreTurns = b.encoreTurns - 1
-        if b.encoreTurns <= 0 then
-          b.encoreTurns, b.encoreMove = nil, nil
-          self:sayNext(Strings("%s's ENCORE\nended!", displayName(b)))
-        end
-      end
-      if b.safeguardTurns then
-        b.safeguardTurns = b.safeguardTurns - 1
-        if b.safeguardTurns <= 0 then
-          b.safeguardTurns = nil
-          self:sayNext(Strings("%s's party is no\nlonger protected!",
-                               displayName(b)))
-        end
-      end
-      -- WISH: half of maximum HP, arriving at the end of the turn AFTER the
-      -- one it was made on -- which is what makes it a switch-in heal.
-      if b.wishTurns then
-        b.wishTurns = b.wishTurns - 1
-        if b.wishTurns <= 0 then
-          local heal = b.wishHeal or math.max(1, math.floor(maxHpOf(b) / 2))
-          b.wishTurns, b.wishHeal = nil, nil
-          local max = maxHpOf(b)
-          if b.mon.hp < max then
-            b.mon.hp = math.min(max, b.mon.hp + heal)
-            self:drainNext(b, b.mon.hp)
-            self:sayNext(Strings("%s's wish\ncame true!", displayName(b)))
-          end
-        end
-      end
-      -- INGRAIN: a sixteenth back every turn for as long as it stands there
-      if b.ingrained and b.mon.hp < maxHpOf(b) then
-        b.mon.hp = math.min(maxHpOf(b),
-                            b.mon.hp + math.max(1, math.floor(maxHpOf(b) / 16)))
+function BattleState:gen3WishTick(b)
+  if not (b and b.mon and b.mon.hp > 0) then return end
+  -- WISH: half of maximum HP, arriving at the end of the turn AFTER the
+  -- one it was made on -- which is what makes it a switch-in heal.
+  if b.wishTurns then
+    b.wishTurns = b.wishTurns - 1
+    if b.wishTurns <= 0 then
+      local heal = b.wishHeal or math.max(1, math.floor(maxHpOf(b) / 2))
+      b.wishTurns, b.wishHeal = nil, nil
+      local max = maxHpOf(b)
+      if b.mon.hp < max then
+        b.mon.hp = math.min(max, b.mon.hp + heal)
         self:drainNext(b, b.mon.hp)
-        self:sayNext(Strings("%s absorbed\nnutrients with its\nroots!",
-                             displayName(b)))
-      end
-      -- UPROAR: three turns of noise, and nobody sleeps through it
-      if b.uproarTurns then
-        b.uproarTurns = b.uproarTurns - 1
-        if b.uproarTurns <= 0 then
-          b.uproarTurns = nil
-          self:sayNext(Strings("%s calmed down.", displayName(b)))
-        else
-          self:sayNext(Strings("%s is making\nan UPROAR!", displayName(b)))
-        end
+        self:sayNext(Strings("%s's wish\ncame true!", displayName(b)))
       end
     end
   end
+end
+
+function BattleState:gen3IngrainTick(b)
+  if not (b and b.mon and b.mon.hp > 0) then return end
+  -- INGRAIN: a sixteenth back every turn for as long as it stands there
+  if b.ingrained and b.mon.hp < maxHpOf(b) then
+    b.mon.hp = math.min(maxHpOf(b),
+                        b.mon.hp + math.max(1, math.floor(maxHpOf(b) / 16)))
+    self:drainNext(b, b.mon.hp)
+    self:sayNext(Strings("%s absorbed\nnutrients with its\nroots!",
+                         displayName(b)))
+  end
+end
+
+function BattleState:gen3CountersTick()
+  for _, b in activeBattlers(self) do self:gen3BattlerCountersTick(b) end
+  self:gen3DelayedCountersTick()
+end
+
+function BattleState:gen3BattlerCountersTick(b, scheduled)
+  if b and b.mon and b.mon.hp > 0 then
+    if GameVersion.isGen3() then require("src.battle.Gen3LockOn").tick(self, b) end
+    -- YAWN: the sleep lands at the END of the turn AFTER the one it was
+    -- used on, which is the whole reason it is worth using at all.
+    if b.drowsyTurns then
+      b.drowsyTurns = b.drowsyTurns - 1
+      if b.drowsyTurns <= 0 then
+        b.drowsyTurns = nil
+        for _, m in ipairs(StatusRegistry.inflict(self, b, "SLP", {})) do
+          self:sayNext(m)
+        end
+      end
+    end
+    if b.tauntTurns then
+      b.tauntTurns = b.tauntTurns - 1
+      if b.tauntTurns <= 0 then
+        b.tauntTurns = nil
+        self:sayNext(Strings("%s's taunt\nwore off!", displayName(b)))
+      end
+    end
+    if b.encoreTurns then
+      b.encoreTurns = b.encoreTurns - 1
+      if b.encoreTurns <= 0 then
+        b.encoreTurns, b.encoreMove = nil, nil
+        self:sayNext(Strings("%s's ENCORE\nended!", displayName(b)))
+      end
+    end
+    if b.safeguardTurns then
+      b.safeguardTurns = b.safeguardTurns - 1
+      if b.safeguardTurns <= 0 then
+        b.safeguardTurns = nil
+        self:sayNext(Strings("%s's party is no\nlonger protected!",
+                             displayName(b)))
+      end
+    end
+    if not scheduled then
+      self:gen3WishTick(b)
+      self:gen3IngrainTick(b)
+    end
+    -- UPROAR: three turns of noise, and nobody sleeps through it
+    if b.uproarTurns then
+      b.uproarTurns = b.uproarTurns - 1
+      if b.uproarTurns <= 0 then
+        b.uproarTurns = nil
+        self:sayNext(Strings("%s calmed down.", displayName(b)))
+      else
+        self:sayNext(Strings("%s is making\nan UPROAR!", displayName(b)))
+      end
+    end
+  end
+end
+
+function BattleState:gen3DelayedCountersTick()
   -- FUTURE SIGHT and DOOM DESIRE, whose damage was rolled two turns ago and
   -- lands on whoever is standing there now.
   for index, side in ipairs(self.sides or {}) do
@@ -7712,7 +7743,17 @@ function BattleState:executeAction(user, target, action)
       end
     end
   end
+  local parent = self._gbaActionFrame
+  local frame = GameVersion.isGen3() and {} or nil
+  if frame then self._gbaActionFrame = frame end
   run()
+  if frame then
+    self._gbaActionFrame = parent
+    local Schedule = require("src.battle.GbaItemSchedule")
+    if action.id and not frame.moved then Schedule.moveEnd(self) end
+    -- Switch-in abilities are queued; their completion performs the sweep.
+    if not isSwitch then Schedule.afterAction(self) end
+  end
   -- after announce/anim/effect text (pokered DrawHUDsAndHPBars)
   self:actNext(function() self:syncShownStatus() end)
 end
@@ -7988,7 +8029,8 @@ local WEATHER_BALL_ANIM = {
   SUN = 1, RAIN = 2, SANDSTORM = 3, HAIL = 4,
 }
 
-function BattleState:performMove(user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
+local function performMove(battle, user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
+  local self = battle
   local move = self:moveDef(moveInst)
   if not move then
     Logger.warn("unknown move instance %s", tostring(moveInst.id))
@@ -8244,6 +8286,22 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
          == "ELECTRIC" then
     user.charged = nil
   end
+end
+
+function BattleState:performMove(user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
+  if not GameVersion.isGen3() then
+    return performMove(self, user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
+  end
+  local Schedule = require("src.battle.GbaItemSchedule")
+  local parent = self._gbaMoveFrame
+  local frame = {}
+  if parent then parent.called = true end
+  self._gbaMoveFrame = frame
+  if self._gbaActionFrame then self._gbaActionFrame.moved = true end
+  performMove(self, user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
+  if not frame.finished and not frame.called then Schedule.moveEnd(self) end
+  self._gbaMoveFrame = parent
+  if not isCalled and not parent and not self._gbaActionFrame then Schedule.afterAction(self) end
 end
 
 function BattleState:continueTrapping(user, target)

@@ -150,4 +150,4 @@ see [Gen-3 critical/type rounding](gen3-critical-order.md).
 See [portable Pokemon identity hooks](portable-pokemon-rolls.md) for
 `shiny.roll`, `gender.roll`, native DV/PID semantics and shared contracts.
 
-[Portable held-item reads](portable-held-items.md) documents shared names and native consumers.
+[Portable held-item reads](portable-held-items.md) documents shared names and native consumers and GBA scheduling phases.

@@ -41,11 +41,26 @@ UP_GRADE SHELL_BELL LUCKY_PUNCH METAL_POWDER THICK_CLUB STICK
     noMod,
     failing,
     "portable_held_item",
-    function(data, gen)
+    function(data, gen, _, rom, names)
       if backend == "gen2" then
         data.constants.generation = gen
       end
       if gen == 3 then
+        for _, move in ipairs({ { "SURF", 57, 95, 8, 0, "NO_ADDITIONAL_EFFECT" },
+          { "MIRROR_MOVE", 119, 0, 0, 9, "MIRROR_MOVE_EFFECT" } }) do
+          local name, number, power, target, effect, hostEffect = unpack(move)
+          if backend == "gen1" then
+            data.gen3Moves._rom[number] = { effect = effect, power = power, type = 0,
+              accuracy = 100, pp = 10, target = target, priority = 0, flags = 51 }
+            data.gen3Pokemon._moveNames[number] = name
+            rom[number], names[number] = data.gen3Moves._rom[number], name
+          else
+            local id = ("MOVE_%03d"):format(number)
+            data.moves[id] = { id = id, index = number, name = name, power = power,
+              type = "NORMAL", accuracy = 100, pp = 10, target = target,
+              priority = 0, effect = hostEffect, kingsRockAffected = true }
+          end
+        end
         for name in gbaNames:gmatch("%S+") do
           local index = #catalog + 1
           local row = { "PORTABLE_HOLD_" .. index, 500 + index, name, 0, 16, index }
@@ -104,9 +119,25 @@ UP_GRADE SHELL_BELL LUCKY_PUNCH METAL_POWDER THICK_CLUB STICK
   end
   local native = f.fresh
   local b, step
-  function f.reset(item)
+  function f.reset(item, double)
     step = native("TACKLE")
     b = step.battle
+    if double then
+      local copy = require("src.mods.Merge").deepCopy
+      if backend == "gen1" then
+        b = require("src.core.game3.battle.state").new({ double = true, wild = true,
+          playerParty = { b.player.mon, copy(b.player.mon) },
+          foeParty = { b.enemy.mon, copy(b.enemy.mon) } })
+        b.rng = function(lo) return lo or 0 end
+      else
+        local extra = native("TACKLE").battle
+        b.playerParty, b.enemyParty = { b.player.mon, extra.player.mon }, { b.enemy.mon, extra.enemy.mon }
+        f.game.save.party, b.double = b.playerParty, true
+        b:placeBattler(2, extra.player)
+        b:placeBattler(3, extra.enemy)
+        b:syncSides()
+      end
+    end
     if backend == "gen1" and f.gen == 2 then
       b.random = function()
         return 0
@@ -172,8 +203,24 @@ UP_GRADE SHELL_BELL LUCKY_PUNCH METAL_POWDER THICK_CLUB STICK
       b:endOfTurn()
     end
   end
-  function f.attack()
-    return step.use()
+  function f.attack(called)
+    return step.use(called)
+  end
+  function f.resolve(name, execute)
+    local number = ({ TACKLE = 33, SURF = 57, MIRROR_MOVE = 119 })[name]
+    if backend == "gen1" then
+      b.player.mon.moves, b.player.mon.pp = { number }, { 10 }
+      return require("src.core.game3.battle.engine").resolveMove(b.player, b.enemy, number, 1,
+        require("src.core.game3.battle.adapter").new(b), b, {}, {})
+    end
+    local action = { id = ("MOVE_%03d"):format(number), pp = 10 }
+    b.player.mon.moves, b.player.curMoves = { action }, { action }
+    if execute then return b:executeAction(b.player, b.enemy, action) end
+    return b:performMove(b.player, b.enemy, action)
+  end
+  function f.actor(id)
+    if backend == "gen1" then return require("src.core.game3.battle.state").battler(b, id) end
+    return b:battlerAt(id)
   end
   function f.flinched()
     if backend == "gen1" and f.gen == 2 then

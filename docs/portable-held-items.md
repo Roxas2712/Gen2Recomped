@@ -75,15 +75,29 @@ below half HP, matching the reference; GBA retains at-half activation. The GBA
 
 This is a held-read contract, not complete native battle equivalence. Other
 move/rule differences and GBA's full Choice Band locking remain separate work.
-The source GBA residual scheduler includes extra after-action item scans. A
-hook that grants a Berry even to **empty hands** can heal repeatedly there
-(reference observation: 35 HP versus the host's 7 for a 7-HP override). The
-checker records this as `native_policy` and prints `NATIVE SCHEDULE GAP`; it
-is excluded from equal contract observations, never reported as equivalent.
-`--require-native-schedule-parity` intentionally fails on that known gap.
-The public example defaults to requiring an actual held item, so consuming it
-ends the override on both engines. Counting callback invocations, unrestricted
-empty-hand grants and identical residual schedules are not established.
+The GBA host now separates selective move-end cures/White Herb from normal
+item checks. After a completed action it retries the normal scan up to four
+times, restarting at the first slot after each successful activation. Called
+moves do not add another action sweep; spread moves finish all targets first.
+Queued switch-in abilities complete before their normal item sweep. Leftovers
+is eligible only in the regular end-of-turn phase.
+
+The GBA residual path orders Wish before weather, then Ingrain, abilities,
+items, Leech Seed and status damage per battler. The post-residual item sweep
+precedes Future Sight/Perish Song and the public field-residual hook. Weather
+uses all active slots and the GBA sixteenth-max-HP chip; Leech Seed uses its
+current source slot, eighth-max-HP drain and Liquid Ooze. Pinch berries respect
+stage caps and existing Focus Energy; Leppa restores only up to the move's PP
+cap. These changes do not replace the GB/Gen2/DS turn loops.
+
+The formerly unequal unrestricted 7-HP Berry fixture now heals **35 HP on both
+engines**, with six residual reads. Native move/called/spread, PP, cure-before-
+poison, Ingrain, Wish/weather, Seed/status, speed-order and four-slot cases run
+through the same consumer and native handlers. The strict checker compares
+both the raw HP result and read count and is required by CI. This proves the
+listed item phases, not all battle rules: Choice Band locking, deferred
+ability interactions, Quick Claw turn-RNG ordering and further volatile rules
+still need their own cross-engine coverage.
 
 ## Validation
 
