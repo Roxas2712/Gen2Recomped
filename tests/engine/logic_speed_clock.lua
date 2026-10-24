@@ -32,7 +32,8 @@ local function upvalue(name, value)
 end
 -- Stop real Game:load immediately after it installs its real FixedStep
 -- callback. Unrelated ROM loading, rendering and save services are isolated.
-upvalue("Data", { load = noop, applyMapEditorOverlay = noop, publishGen2Palettes = noop })
+upvalue("Data", { load = noop, applyMapEditorOverlay = noop,
+  publishGen2Palettes = noop, publishGen2MapMetadata = noop })
 upvalue("ModLoader", {
   new = function()
     return { load = noop, status = noop }
