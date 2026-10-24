@@ -1,14 +1,40 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–176
+hook, rendering, shader and baseline test fixes prepared in PRs #88–177
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`6ba0ca1569a27faba67f0481e602df777fa5dc39`. Its ROM-free run passed
-**197/197 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
-Later commits only record validation documentation.
+`bb85a4412a28233738f2faeacbf6ea18dfb1ba4c`. Its ROM-free run passed
+**198/198 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+Subsequent commits add optional validation tooling and record results.
+
+[PR #177](https://github.com/UNDERdecoded/Gen2Recomped/pull/177) matches native
+GBA AI random-branch semantics: draw a u16 and compare its low byte for all
+four operators. It is independent and based directly on upstream `main`.
+**1,920** host checks and **4 workers / 240 paired interpreter observations**
+pass. The optional native Emerald importer/interpreter comparison passes at
+clean combined tooling runtime `1f6de178ed7a0764e5b240dd600937d6888e3127`:
+**39 common subroutines / 390 paired observations**, no differences or missing
+reference entries; 42 additional host entry boundaries remain unpaired.
+This is CPU/native-VM evidence, not a new LÖVE gameplay run. See
+[native GBA AI random branches](gen3-ai-random-contract.md).
+
+Clean upstream `13af468` fails 631 assertions per profile on the new matrix
+and differs in all 390 native RNG traces and 41 resulting scores. The isolated
+feature passes **65/75** engine suites versus upstream **64/74**; all **27 FAIL
+lines across ten baseline suites** match exactly. Their repairs are already
+part of this combined branch. The unfinished enemy switch/item hook remains
+separate.
+
+Both hosted #177 workflows await maintainer approval (`action_required`);
+the [AI random-branch workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40101310265)
+has zero executed jobs. Local acceptance is separate.
+
+Prior #176 combined validation below retains runtime
+`6ba0ca1569a27faba67f0481e602df777fa5dc39` and its 197/197 engine result;
+its feature-native GUI evidence is not relabeled as a new composed run.
 
 [PR #176](https://github.com/UNDERdecoded/Gen2Recomped/pull/176) selects Gen-2's
 native critical-base step instead of doubling the level. At level 29, power 35

@@ -62,3 +62,27 @@ paired evidence. The current supported ROM yields 39 common subroutines /
 390 paired observations, plus 42 host-only entries. This is an interpreter
 subroutine check, not a complete trainer decision or graphical gameplay test.
 The workflow runs the ROM-free matrix only.
+
+## Validation record
+
+At clean feature runtime `40ec724aaeb65ea470d2503af86edcf0d1c6c31e`:
+
+- The host checks pass **1,920/1,920**. The ROM-free cross-engine matrix passes
+  **4 workers / 240 paired observations**, with zero differences.
+- Both native Emerald AI-stage imports pass **39 common subroutines / 390
+  paired observations**, with zero differences and no missing reference entry.
+  The 42 additional host entries remain explicitly unpaired.
+- Clean upstream `13af468b97dc37015d14ad5c71d7f067c3ee810d` fails **631
+  assertions per GBA profile** on the new matrix. On the same native Emerald
+  subroutines it differs in all 390 RNG traces and in 41 resulting scores.
+- The complete feature run passes **65/75** engine suites, **3/3** SDK suites
+  and B30. Upstream passes **64/74**; the **27 FAIL lines across ten suites**
+  match exactly. There are no new baseline failures.
+- Workflow lint and formatting checks for the new Lua files pass. A wrong ROM
+  is rejected by the hash gate before either import worker starts.
+
+Local evidence is in the ignored `tmp/gen3-ai-random-qa/` directory:
+`full-final.log`, `main-baseline-full.log`, `contracts-final.json`,
+`native-final.json`, `main-parent-negative.json` and
+`main-native-parent-differences.json`. Hosted workflow results are separate
+from this local record. No new LÖVE gameplay run is claimed.

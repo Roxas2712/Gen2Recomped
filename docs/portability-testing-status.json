@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "6ba0ca1569a27faba67f0481e602df777fa5dc39",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/176",
-  "feature_ref": "127ff4cb2be7d465b3bc7c86727f34112b349ba2",
+  "runtime_ref": "bb85a4412a28233738f2faeacbf6ea18dfb1ba4c",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/177",
+  "feature_ref": "2358a8901762321ee87b9b7a5324ba78cbd5d630",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 197,
-  "engine_suites_total": 197,
+  "engine_suites_passed": 198,
+  "engine_suites_total": 198,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 20,
-  "cross_engine_paired_observations": 960,
+  "cross_engine_worker_runs": 4,
+  "cross_engine_paired_observations": 240,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All 35 #176 workflows report action_required pending maintainer approval; critical-order workflow has zero executed jobs; local validation is separate",
+  "hosted_ci": "Both #177 workflows report action_required pending maintainer approval; native AI random workflow has zero executed jobs; local validation is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Actual native trainer/group and item-pack importer outputs with synthetic cartridge bytes; format/serialization contract, not native gameplay or AI policy",
+  "cross_engine_scope": "Actual native AI VMs with equal random/score/call/end programs; separate optional real Emerald AI-stage imports and RNG-only subroutines; not ordinary controller or whole AI parity",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -189,7 +189,8 @@
     "b30_profile": "passed"
   },
   "post_runtime_changes": [
-    "API documentation and validation status"
+    "Optional native-ROM validation tooling",
+    "Validation documentation/status"
   ],
   "caught_marker_hosted_ci": {
     "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40048498745",
@@ -892,5 +893,49 @@
     "post_runtime_changes": [
       "Validation documentation/status"
     ]
+  },
+  "gen3_ai_random": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/177",
+    "feature_ref": "2358a8901762321ee87b9b7a5324ba78cbd5d630",
+    "feature_runtime_ref": "40ec724aaeb65ea470d2503af86edcf0d1c6c31e",
+    "upstream_base": "13af468b97dc37015d14ad5c71d7f067c3ee810d",
+    "independent_pr": true,
+    "combined_runtime_ref": "bb85a4412a28233738f2faeacbf6ea18dfb1ba4c",
+    "combined_tooling_runtime_ref": "1f6de178ed7a0764e5b240dd600937d6888e3127",
+    "host_checks_passed": 1920,
+    "cross_engine_worker_runs": 4,
+    "cross_engine_paired_observations": 240,
+    "combined_engine_suites_passed": 198,
+    "combined_engine_suites_total": 198,
+    "optional_native_rom_sha1": "f3ae088181bf583e55daf962a92bb46f4f1d07b7",
+    "optional_native_paired_subroutines": 39,
+    "optional_native_paired_observations": 390,
+    "optional_native_reference_only_entries": 0,
+    "optional_native_host_only_entries": 42,
+    "optional_native_scope": "Read-only actual local Emerald AI-stage import through each native importer, common RNG-only subroutines through actual VMs; not full trainer/controller/graphical gameplay parity",
+    "negative_control": {
+      "parent_ref": "13af468b97dc37015d14ad5c71d7f067c3ee810d",
+      "assertion_failures_per_profile": 631,
+      "native_rng_trace_differences": 390,
+      "native_score_differences": 41
+    },
+    "feature_baseline": {
+      "engine_suites_passed": 65,
+      "engine_suites_total": 75,
+      "upstream_engine_suites_passed": 64,
+      "upstream_engine_suites_total": 74,
+      "known_failing_suites": 10,
+      "failure_lines": 27,
+      "all_failure_lines_match_upstream": true,
+      "new_failures": 0,
+      "sdk_suites_passed": 3,
+      "b30_profile": "passed"
+    },
+    "hosted_ci": {
+      "workflow_count": 2,
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40101310265",
+      "jobs": 0
+    }
   }
 }
