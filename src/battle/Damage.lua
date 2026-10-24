@@ -294,15 +294,51 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
   local atkStat = special and (split and "spatk" or "special") or "attack"
   local defStat = special and (split and "spdef" or "special") or "defense"
 
+  -- GBA set-damage effects use the native base command without a critical
+  -- roll, variance or battle.damage hook. Its stat modifiers precede stages.
+  local rawAtk, rawDef = attacker.curStats[atkStat], defender.curStats[defStat]
+  if opts.gbaSetDamage then
+    local ability = Abilities.of(attacker)
+    if not special and (ability == "HUGE_POWER" or ability == "PURE_POWER") then rawAtk = rawAtk * 2 end
+    local tn, td = HoldItems.damageMultiplier(attacker, move)
+    rawAtk = math.floor(rawAtk * tn / td)
+    local an, ad = HoldItems.attackMultiplier(attacker, move, special)
+    rawAtk = math.floor(rawAtk * an / ad)
+    local dn, dd = HoldItems.defenceMultiplier(defender, move, special)
+    rawDef = math.floor(rawDef * dn / dd)
+    local kind = Abilities.normalizeType(move.type)
+    if special and Abilities.of(defender) == "THICK_FAT" and (kind == "FIRE" or kind == "ICE") then
+      rawAtk = math.floor(rawAtk / 2)
+    end
+    if special and (ability == "PLUS" or ability == "MINUS") and opts.battle then
+      local wanted = ability == "PLUS" and "MINUS" or "PLUS"
+      for _, other in opts.battle:activeBattlers() do
+        if Abilities.of(other) == wanted then rawAtk = math.floor(rawAtk * 3 / 2); break end
+      end
+    end
+    if not special and (ability == "HUSTLE" or ability == "GUTS" and attacker.mon.status) then
+      rawAtk = math.floor(rawAtk * 3 / 2)
+    end
+    if not special and Abilities.of(defender) == "MARVEL_SCALE" and defender.mon.status then
+      rawDef = math.floor(rawDef * 3 / 2)
+    end
+  end
+
+  local applyStage = Stats.applyStage
+  if opts.gbaSetDamage then
+    applyStage = function(value, stage)
+      stage = math.max(-6, math.min(6, stage or 0))
+      if stage >= 0 then return math.floor(value * (2 + stage) / 2) end
+      return math.floor(value * 2 / (2 - stage))
+    end
+  end
   local atk, dfn
   if crit and ruleset.critIgnoresStages then
     atk = attacker.curStats[atkStat]
     dfn = defender.curStats[defStat]
   else
-    atk = Stats.applyStage(attacker.curStats[atkStat],
-                           stageOf(attacker, atkStat))
-    dfn = Stats.applyStage(defender.curStats[defStat],
-                           stageOf(defender, defStat))
+    atk = applyStage(rawAtk, stageOf(attacker, atkStat))
+    dfn = applyStage(rawDef, stageOf(defender, defStat))
     -- badge boosts (x9/8), engine/battle/core.asm ApplyBadgeStatBoosts:
     -- Boulder -> attack, Thunder -> defense, Soul -> speed (TurnOrder),
     -- Volcano -> special
@@ -380,7 +416,7 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
   -- the defence and THICK FAT halves what a FIRE or ICE move gets to work
   -- with.  A Gen 1 or Gen 2 Pokemon has no ability at all and every one of
   -- these answers 1/1, so nothing below this line changes for them.
-  do
+  if not opts.gbaSetDamage then
     local an, ad = Abilities.attackMultiplier(attacker, move, special)
     if an ~= 1 or ad ~= 1 then atk = math.max(1, math.floor(atk * an / ad)) end
     local dn, dd = Abilities.defenceMultiplier(defender, move, special)
@@ -391,7 +427,7 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
   -- species-locked doublings -- THICK CLUB, LIGHT BALL, METAL POWDER, the
   -- two DEEP SEA halves and SOUL DEW.  A battler with no `items` view (every
   -- Gen 1 and Gen 2 one) answers 1/1 here too.
-  do
+  if not opts.gbaSetDamage then
     local an, ad = HoldItems.attackMultiplier(attacker, move, special)
     if an ~= 1 or ad ~= 1 then atk = math.max(1, math.floor(atk * an / ad)) end
     local dn, dd = HoldItems.defenceMultiplier(defender, move, special)
@@ -425,6 +461,10 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
   local power = move.power
   if opts.powerMultiplier and opts.powerMultiplier ~= 1 then
     power = math.max(1, math.floor(power * opts.powerMultiplier))
+  end
+  if opts.gbaSetDamage then
+    local pn, pd = Abilities.damageMultiplier(attacker, move)
+    power = math.floor(power * pn / pd)
   end
   d = math.floor(math.floor(d * power * atk / math.max(1, dfn)) / 50)
 
@@ -461,16 +501,22 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
         d = math.floor(d / 2)
       end
     end
+    if opts.gbaSetDamage and special then
+      local fn, fd = Abilities.flashFireBoost(attacker, move)
+      d = math.floor(d * fn / fd)
+    end
     d = d + 2
   else
     d = math.min(d, 997) + 2
   end
 
+  if opts.gbaSetDamage then d = d * opts.gbaSetDamage end
+
   -- Held type boosters live inside BattleCommand_DamageCalc, before weather,
   -- STAB and effectiveness.  This placement matters because every stage floors
   -- independently.  HeldItems applies the recomp's intentional Gen II cleanup
   -- for the retail Dragon Fang/Dragon Scale held-effect data bug.
-  if not opts.typeless then
+  if not opts.typeless and not opts.gbaSetDamage then
     d = HeldItems.applyTypeBoost(opts.data, attacker, move.type, d)
   end
 
@@ -531,7 +577,7 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
     -- WONDER GUARD, which is the one immunity that needs the chart's answer
     -- first: anything that is not super-effective does nothing at all.  It
     -- is SHEDINJA's whole reason to exist.
-    if Abilities.blocks(defender, move, mult)
+    if not opts.gbaSetDamage and Abilities.blocks(defender, move, mult)
        and not (bwLevitate and Abilities.of(defender) == "LEVITATE") then
       return 0, { crit = false, typeMult = 0,
                   ability = Abilities.of(defender) }
@@ -539,9 +585,12 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
     for _, m in ipairs(TypeChart.rows(move.type, defender.curTypes)) do
       -- the identified GHOST's zero row is the one skipped; every other
       -- row a dual-typed Pokemon carries still applies
-      if not (foresight and m == 0) then d = math.floor(d * m / 10) end
+      if not (foresight and m == 0) then
+        d = math.floor(d * m / 10)
+        if opts.gbaSetDamage and m > 0 and d == 0 then d = 1 end
+      end
     end
-    if d == 0 then
+    if d == 0 and not opts.gbaSetDamage then
       -- a 2-3 damage hit at 0.25x floors to zero: the original flags
       -- the move as missed rather than dealing a minimum 1
       return 0, { crit = false, typeMult = mult, missed = true }
@@ -550,36 +599,38 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
     -- a Pokemon's own type hits half again as hard.  Applied here because
     -- the cartridge applies it to the finished damage rather than the stat,
     -- which is not the same number once the floors are counted.
-    local pn, pd = Abilities.damageMultiplier(attacker, move)
-    if pn ~= 1 or pd ~= 1 then d = math.floor(d * pn / pd) end
-    -- FLASH FIRE, once something has lit it: every FIRE move this Pokemon
-    -- makes is half again as strong for the rest of the battle.  The flag
-    -- rides the battler, so it leaves when the Pokemon does.
-    local fn, fd = Abilities.flashFireBoost(attacker, move)
-    if fn ~= 1 or fd ~= 1 then d = math.floor(d * fn / fd) end
-    -- ...and the sixteen type trinkets, each by its own parameter: 10
-    -- percent for a CHARCOAL or a MAGNET, 5 for the two INCENSEs.  Reading
-    -- the number off the item rather than assuming ten is the difference
-    -- between a SEA INCENSE that works and one that is a MYSTIC WATER.
-    local tn, td = HoldItems.damageMultiplier(attacker, move)
-    if tn ~= 1 or td ~= 1 then d = math.floor(d * tn / td) end
-    -- BLACK AND WHITE's held items on the finished damage: type items,
-    -- Life Orb, Expert Belt, gems, resist berries (src/battle/Gen5HoldItems.lua)
-    if attacker.items or defender.items then
-      d = require("src.battle.Gen5HoldItems").modifyDamage(attacker, defender, move, mult, d, special)
-    end
-    -- CHARGE: the user's NEXT Electric move is worth double.  The flag is
-    -- spent here and cleared by the turn loop once the move has resolved,
-    -- so it survives a miss the way the cartridge's does.
-    local moveType = Abilities.normalizeType(move.type)
-    if attacker.charged and moveType == "ELECTRIC" then
-      d = d * 2
-    end
-    -- MUD SPORT and WATER SPORT halve one type for the rest of the battle,
-    -- for BOTH sides -- they are a field effect, not a buff.  opts.sports
-    -- carries them because Damage.compute never sees the field.
-    for _, muted in pairs(opts.sports or {}) do
-      if muted == moveType then d = math.floor(d / 2) end
+    if not opts.gbaSetDamage then
+      local pn, pd = Abilities.damageMultiplier(attacker, move)
+      if pn ~= 1 or pd ~= 1 then d = math.floor(d * pn / pd) end
+      -- FLASH FIRE, once something has lit it: every FIRE move this Pokemon
+      -- makes is half again as strong for the rest of the battle.  The flag
+      -- rides the battler, so it leaves when the Pokemon does.
+      local fn, fd = Abilities.flashFireBoost(attacker, move)
+      if fn ~= 1 or fd ~= 1 then d = math.floor(d * fn / fd) end
+      -- ...and the sixteen type trinkets, each by its own parameter: 10
+      -- percent for a CHARCOAL or a MAGNET, 5 for the two INCENSEs.  Reading
+      -- the number off the item rather than assuming ten is the difference
+      -- between a SEA INCENSE that works and one that is a MYSTIC WATER.
+      local tn, td = HoldItems.damageMultiplier(attacker, move)
+      if tn ~= 1 or td ~= 1 then d = math.floor(d * tn / td) end
+      -- BLACK AND WHITE's held items on the finished damage: type items,
+      -- Life Orb, Expert Belt, gems, resist berries (src/battle/Gen5HoldItems.lua)
+      if attacker.items or defender.items then
+        d = require("src.battle.Gen5HoldItems").modifyDamage(attacker, defender, move, mult, d, special)
+      end
+      -- CHARGE: the user's NEXT Electric move is worth double.  The flag is
+      -- spent here and cleared by the turn loop once the move has resolved,
+      -- so it survives a miss the way the cartridge's does.
+      local moveType = Abilities.normalizeType(move.type)
+      if attacker.charged and moveType == "ELECTRIC" then
+        d = d * 2
+      end
+      -- MUD SPORT and WATER SPORT halve one type for the rest of the battle,
+      -- for BOTH sides -- they are a field effect, not a buff.  opts.sports
+      -- carries them because Damage.compute never sees the field.
+      for _, muted in pairs(opts.sports or {}) do
+        if muted == moveType then d = math.floor(d / 2) end
+      end
     end
   end
 
@@ -591,12 +642,15 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
   if crit and ruleset.critMultiplier and not ruleset.critBeforeType then
     d = math.floor(d * ruleset.critMultiplier)
   end
-  if d > 1 and not opts.typeless then
+  if d > 1 and not opts.typeless and not opts.gbaSetDamage then
     local r = rng(ruleset.randMin, ruleset.randMax)
     -- randDiv defaults to 255 because that is Gen 1 and Gen 2's denominator
     -- (r runs 217..255).  Gen 3 rolls 85..100 out of 100; dividing that by
     -- 255 would cut every hit to roughly a third.
     d = math.floor(d * r / (ruleset.randDiv or 255))
+  end
+  if opts.gbaSetDamage then
+    return math.max(d, 0), { crit = false, typeMult = mult, eventTypeMult = 10, gbaSetDamage = true }
   end
   return math.max(d, 1), { crit = crit, typeMult = mult }
 end

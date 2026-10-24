@@ -749,10 +749,31 @@ P.SWALLOW_EFFECT = function(battle, user)
   return { Strings("%s\nregained health!", displayName(user)) }
 end
 
--- SPIT UP is a damaging move whose power IS the counter: 100, 200, 300.
+-- GBA Spit Up scales the calculated base (including +2), rather than power.
+-- The earlier-generation fallback retains the existing power-based path.
 F.SPIT_UP_EFFECT = {
-  gate = function(ctx)
+  rev = 1, -- Native set-damage semantics change link compatibility.
+  onProtect = function(ctx)
+    if not require("src.core.GameVersion").isGen3() then return false end
     if (ctx.user.stockpile or 0) <= 0 then
+      ctx.say(Strings("But, it failed!"))
+      return true
+    end
+    ctx.user.stockpile = 0
+    return false
+  end,
+  chooseDamage = function(ctx)
+    if not require("src.core.GameVersion").isGen3() then
+      return ctx.computeDamage({ rng = ctx.rng, powerMultiplier = math.max(1, ctx.user.stockpile or 1) })
+    end
+    if ctx.battle.abilityAbsorb and ctx.battle:abilityAbsorb(ctx.target, ctx.move) then return nil end
+    local n = ctx.user.stockpile or 0
+    if n <= 0 then return nil, Strings("But, it failed!") end
+    ctx.user.stockpile = 0
+    return ctx.computeDamage({ rng = ctx.rng, forceCrit = false, gbaSetDamage = n })
+  end,
+  gate = function(ctx)
+    if not require("src.core.GameVersion").isGen3() and (ctx.user.stockpile or 0) <= 0 then
       return false, Strings("But, it failed!")
     end
     return true
