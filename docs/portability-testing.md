@@ -1,14 +1,41 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–177
+hook, rendering, shader and baseline test fixes prepared in PRs #88–178
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`bb85a4412a28233738f2faeacbf6ea18dfb1ba4c`. Its ROM-free run passed
-**198/198 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
-Subsequent commits add optional validation tooling and record results.
+`735c7ec0bba6e73075be708cf1e88a89872b3bd3`. Its ROM-free run passed
+**199/199 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+Subsequent commits record validation documentation/status.
+
+[PR #178](https://github.com/UNDERdecoded/Gen2Recomped/pull/178) selects native
+GBA base-damage arithmetic: wide stats, burn/screens/spread/weather before
++2, the physical minimum and Solar Beam's bad-weather step. It is independent
+and based directly on upstream `main`. **20,742** host checks and **4 workers /
+6,912 paired ordinary damage observations** pass for FireRed/Emerald, with
+six checks preserving Gen-1/Gen-2 arithmetic. Clean upstream differs in
+2,209 numeric observations per GBA profile. See
+[ordinary GBA base damage](gba-base-damage.md).
+
+The combined calculation retains Gen-2 critical-base doubling in its existing
+position and the separate GBA opt-in. The unchanged public critical consumer
+matches both native SDKs on Gold/Silver/Crystal/FireRed/Emerald in **20 workers /
+960 paired observations** across host API 3 and API 2/unified, with no differences.
+These checks are CPU/native-calculator and SDK/move-pipeline evidence, not a
+new composed graphical gameplay run.
+
+The independent feature passes **65/75** engine suites versus upstream
+**64/74**; all **27 FAIL lines across ten baseline suites** match exactly.
+Their repairs are already included here. Both hosted #178 workflows await
+maintainer approval (`action_required`); the
+[base-damage workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40103939356)
+has zero executed jobs. Local acceptance is separate. The unfinished enemy
+switch/item hook and its AI/controller changes remain outside this branch.
+
+Prior #177 results retain runtime
+`bb85a4412a28233738f2faeacbf6ea18dfb1ba4c` and its 198/198 engine result:
 
 [PR #177](https://github.com/UNDERdecoded/Gen2Recomped/pull/177) matches native
 GBA AI random-branch semantics: draw a u16 and compare its low byte for all
@@ -51,9 +78,9 @@ Native LÖVE 11.5 results retain the clean feature runtime
 `397d7d6fb48bcf8f539c152397bb3e5ad220d23d`: imported Gold, FireRed and Emerald,
 six constructed battles each, **18 battles / 36 public critical decisions**.
 The same public consumer, actual FIGHT/move input and native queues pass HP,
-PP and callback-count checks. Critical implementation/consumer/driver files
-are byte-identical in this combined tree. This is feature-runtime native
-acceptance, not a newly relabeled composed GUI run. The owned example was
+PP and callback-count checks. Those native file hashes describe the #176 snapshot;
+`Damage.lua` has since gained #178's GBA base profile. This remains feature-runtime
+native acceptance, not a newly relabeled composed GUI run. The owned example was
 removed with hash guards. Drivers stop before battle finish/afterBattle/SAVE;
 no native Silver/Crystal GUI, full playthrough or fresh-ROM import is claimed.
 

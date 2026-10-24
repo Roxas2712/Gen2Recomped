@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "bb85a4412a28233738f2faeacbf6ea18dfb1ba4c",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/177",
-  "feature_ref": "2358a8901762321ee87b9b7a5324ba78cbd5d630",
+  "runtime_ref": "735c7ec0bba6e73075be708cf1e88a89872b3bd3",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/178",
+  "feature_ref": "a7944332a5136d7814279b6fe31c6e14020480c1",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 198,
-  "engine_suites_total": 198,
+  "engine_suites_passed": 199,
+  "engine_suites_total": 199,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
   "cross_engine_worker_runs": 4,
-  "cross_engine_paired_observations": 240,
+  "cross_engine_paired_observations": 6912,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "Both #177 workflows report action_required pending maintainer approval; native AI random workflow has zero executed jobs; local validation is separate",
+  "hosted_ci": "Both #178 workflows await maintainer approval (action_required); base-damage workflow has zero executed jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Actual native AI VMs with equal random/score/call/end programs; separate optional real Emerald AI-stage imports and RNG-only subroutines; not ordinary controller or whole AI parity",
+  "cross_engine_scope": "Actual ordinary noncritical GBA damage calculators with equal typed session inputs; separate unchanged public critical consumer passes both host API modes on G2/GBA; no new graphical/native whole-playthrough claim",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -189,7 +189,6 @@
     "b30_profile": "passed"
   },
   "post_runtime_changes": [
-    "Optional native-ROM validation tooling",
     "Validation documentation/status"
   ],
   "caught_marker_hosted_ci": {
@@ -868,7 +867,7 @@
     "native_public_critical_decisions": 36,
     "native_runtime_ref": "397d7d6fb48bcf8f539c152397bb3e5ad220d23d",
     "native_runtime_kind": "clean feature branch; no fresh composed native GUI run",
-    "native_files_byte_identical_with_combined": true,
+    "native_files_byte_identical_with_combined": false,
     "native_files_sha256": {
       "src/battle/Damage.lua": "5080a59dca09d380bd8420d3e7bf90d7da7b2e6121746b6c5662d7fe6d9eee9f",
       "src/battle/rulesets/gen3_emerald.lua": "d3e9bb200fe98bd96ac0ae43291405199d1256ca30932e996388f5ea486abb9d",
@@ -892,7 +891,9 @@
     },
     "post_runtime_changes": [
       "Validation documentation/status"
-    ]
+    ],
+    "native_files_byte_identical_at_recorded_snapshot": true,
+    "later_file_changes": "Damage.lua now includes the separately validated GBA base profile; native hashes and results retain their recorded #176 runtime"
   },
   "gen3_ai_random": {
     "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/177",
@@ -935,6 +936,54 @@
       "workflow_count": 2,
       "conclusion": "action_required",
       "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40101310265",
+      "jobs": 0
+    }
+  },
+  "gba_base_damage": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/178",
+    "feature_ref": "a7944332a5136d7814279b6fe31c6e14020480c1",
+    "feature_runtime_ref": "a9a3cbf2b4973865378649a980cbd3c5143c672b",
+    "independent_pr": true,
+    "upstream_base": "13af468b97dc37015d14ad5c71d7f067c3ee810d",
+    "combined_runtime_ref": "735c7ec0bba6e73075be708cf1e88a89872b3bd3",
+    "host_checks_passed": 20742,
+    "older_profile_retention_checks": 6,
+    "cross_engine_worker_runs": 4,
+    "cross_engine_paired_observations": 6912,
+    "combined_engine_suites_passed": 199,
+    "combined_engine_suites_total": 199,
+    "sdk_suites_passed": 3,
+    "b30_profile": "passed",
+    "negative_control": {
+      "parent_ref": "13af468b97dc37015d14ad5c71d7f067c3ee810d",
+      "numeric_differences_per_gba_profile": 2209
+    },
+    "feature_baseline": {
+      "engine_suites_passed": 65,
+      "engine_suites_total": 75,
+      "upstream_engine_suites_passed": 64,
+      "upstream_engine_suites_total": 74,
+      "known_failing_suites": 10,
+      "failure_lines": 27,
+      "all_failure_lines_match_upstream": true,
+      "new_failures": 0
+    },
+    "critical_contract_preserved": {
+      "runtime_ref": "735c7ec0bba6e73075be708cf1e88a89872b3bd3",
+      "host_api_modes": [
+        3,
+        2
+      ],
+      "reference_api": 3,
+      "worker_runs": 20,
+      "paired_observations": 960,
+      "differences": 0
+    },
+    "scope": "Ordinary noncritical base-damage arithmetic through actual production calculators with synthetic equal session stats; STAB/burn/screens/spread/weather/resistance/immunity and older-profile retention; no cartridge assets or new graphical gameplay run",
+    "hosted_ci": {
+      "workflow_count": 2,
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40103939356",
       "jobs": 0
     }
   }
