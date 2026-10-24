@@ -1,5 +1,5 @@
 local M = {}
-function M.new(root, backend, version, api, format, configure)
+function M.new(root, backend, version, api, format, configure, entryOverride)
   local consumer = "portable_enemy_action"
   local T = require("tests.modkit")
   local V = require("src.core.GameVersion")
@@ -69,6 +69,8 @@ function M.new(root, backend, version, api, format, configure)
     files["mods/" .. consumer .. "/" .. name] = f:read("*a")
     f:close()
   end
+  -- Effect-composition probes must patch content during this same load.
+  if entryOverride then files["mods/" .. consumer .. "/main.lua"] = entryOverride end
   local manifest = Json.decode(files["mods/" .. consumer .. "/manifest.json"])
   manifest.api, manifest.callback_format, manifest.gen2compat = api, format, api < 3 and true or nil
   files["mods/" .. consumer .. "/manifest.json"] = Json.encode(manifest)
