@@ -141,6 +141,7 @@ local function array(t, label, max)
 end
 
 function R.new(loader, name, generation, api3)
+  local identityRoll = name == "shiny.roll" or name == "gender.roll"
   local ids = Ids.new(loader)
   local portable = api3 and Api3Records or nil
   local function readStatus(value)
@@ -214,7 +215,10 @@ function R.new(loader, name, generation, api3)
     return out
   end
   local function fields(raw, kind)
-    if kind == "mon" then
+    if kind == "rollIvs" then
+      return { hp = raw.hp, atk = raw.attack, def = raw.defense,
+        spe = raw.speed, spa = raw.spatk, spd = raw.spdef }
+    elseif kind == "mon" then
       return {
         species = read("pokemon", raw.species),
         item = read("items", raw.item),
@@ -245,9 +249,10 @@ function R.new(loader, name, generation, api3)
       end
       out.id = read("items", raw.id)
       return out
-    elseif kind == "move" or kind == "species" or kind == "item" then
+    elseif kind == "move" or kind == "species" or kind == "item" or kind == "identitySpecies" then
       local out = { native = copy(raw), name = raw.name }
-      local registryKind = kind == "species" and "pokemon" or kind == "move" and "moves" or "items"
+      local registryKind = (kind == "species" or kind == "identitySpecies") and "pokemon"
+        or kind == "move" and "moves" or "items"
       local key = raw.id or raw.index or raw.numId
       if key == nil then
         for id, row in loader.content[registryKind]:each() do
@@ -258,7 +263,7 @@ function R.new(loader, name, generation, api3)
         end
       end
       out.id = read(registryKind, key)
-      if kind == "species" then
+      if kind == "species" or kind == "identitySpecies" then
         out.baseStats = statView(raw.baseStats)
         out.types = {}
         for i, t in ipairs(raw.types or {}) do
@@ -267,6 +272,7 @@ function R.new(loader, name, generation, api3)
         out.baseExp = raw.baseExp or raw.expYield
         out.catchRate = raw.catchRate
         out.growthRate = raw.growthRate
+        if kind == "identitySpecies" then out.genderRatio = raw.genderRatio end
       elseif kind == "move" then
         for _, key in ipairs({ "type", "power", "accuracy", "pp", "priority" }) do
           out[key] = raw[key]
@@ -301,6 +307,9 @@ function R.new(loader, name, generation, api3)
     local out = shallow(raw)
     for k, v in pairs(raw) do
       local role = recordRoles[k]
+      if identityRoll and k == "def" then role = "identitySpecies" end
+      if identityRoll and (k == "dvs" or k == "ivs") then role = "context" end
+      if identityRoll and generation == 3 and k == "ivs" then role = "rollIvs" end
       if name == "held_item.trigger" and k == "def" then role = "heldItem" end
       if name == "world.interacted" and k == "target" then
         role = nil
@@ -465,7 +474,7 @@ function R.new(loader, name, generation, api3)
     end
     return out
   end
-  restore = function(value, kind)
+  restore = function(value, kind, original)
     if type(value) ~= "table" then
       assert(
         value == nil or (kind == "encounter" and value == false),
@@ -480,10 +489,18 @@ function R.new(loader, name, generation, api3)
           or kind == "encounter"
           or kind == "trainerMon"
           or kind == "candidates"
-          or kind == "trainerParty",
+          or kind == "trainerParty"
+          or (identityRoll and (kind == "context" or kind == "rollIvs" or kind == "identitySpecies")),
         "replacement " .. tostring(kind) .. " must be a bound record"
       )
-      e = { public = value, kind = kind, raw = {}, before = {} }
+      local target = identityRoll and api3 and type(original) == "table" and original or nil
+      local previous = target and byRaw[target] and byRaw[target][kind]
+      e = { public = value, kind = kind, raw = target or {},
+        before = previous and previous.before or {}, replacement = true }
+      if target then
+        byView[value] = e
+        entries[#entries + 1] = e
+      end
     end
     if visiting[e] then
       return e.raw
@@ -503,6 +520,24 @@ function R.new(loader, name, generation, api3)
             require("src.battle.HeldItemRead").writeDefinition(raw, key, v)
           end
         end
+      end
+    elseif kind == "rollIvs" then
+      local aliases = { hp = "hp", atk = "attack", def = "defense",
+        spe = "speed", spa = "spatk", spd = "spdef" }
+      for k, v in pairs(value) do
+        assert(aliases[k], "unknown IV field")
+        if v ~= before[k] then stage(raw, aliases[k], integer(v, 0, 31, "IV")) end
+      end
+      for k in pairs(before) do assert(value[k] ~= nil, "IV field is required") end
+    elseif kind == "identitySpecies" then
+      local current, original = shallow(value), shallow(before)
+      current.genderRatio, original.genderRatio = nil, nil
+      if e.replacement then
+        for key in pairs(original) do if current[key] == nil then original[key] = nil end end
+      end
+      assert(equal(current, original), "species definition is read-only except genderRatio")
+      if value.genderRatio ~= before.genderRatio then
+        stage(raw, "genderRatio", integer(value.genderRatio, 0, 255, "gender ratio"))
       end
     elseif kind == "move" or kind == "species" or kind == "item" or kind == "battler" then
       if kind == "battler" then
@@ -682,11 +717,14 @@ function R.new(loader, name, generation, api3)
           assert(equal(v, before[k]), "learnable is read-only")
         elseif v ~= before[k] then
           local role = recordRoles[k]
+          if identityRoll and k == "def" then role = "identitySpecies" end
+          if identityRoll and (k == "dvs" or k == "ivs") then role = "context" end
+          if identityRoll and generation == 3 and k == "ivs" then role = "rollIvs" end
           if kind == "encounter" and k == "level" then
             integer(v, 1, 100, "encounter level")
           end
           if role and type(v) == "table" then
-            v = restore(v, role)
+            v = restore(v, role, identityRoll and api3 and old or nil)
           end
           stage(raw, k, v)
         end
@@ -739,8 +777,8 @@ function R.new(loader, name, generation, api3)
       open = false
     end,
     view = view,
-    restore = function(v, kind)
-      return restore(v, kind)
+    restore = function(v, kind, original)
+      return restore(v, kind, original)
     end,
     commit = commit,
     refresh = refresh,
