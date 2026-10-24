@@ -11,17 +11,17 @@ The combined runtime tested for this snapshot is
 Later commits only record validation documentation.
 
 [PR #176](https://github.com/UNDERdecoded/Gen2Recomped/pull/176) selects Gen-2's
-native critical-base step instead of doubling the level. At level 29, power35
-and equal Attack/Defense, a non-STAB critical with random217 now deals **17HP**,
-not16; with STAB it deals **25**, not23. Native generation metadata selects the
+native critical-base step instead of doubling the level. At level 29, power 35
+and equal Attack/Defense, a non-STAB critical with random 217 now deals **17 HP**,
+not 16; with STAB it deals **25**, not 23. Native generation metadata selects the
 step; the Gen-1 and explicit-multiplier paths retain their own rules. Seven
 arithmetic regressions and **1,950** loader checks pass. Both host API modes
-match Gen1 API3 in **20 workers / 960 paired observations**, covering
+match Gen1 API 3 in **20 workers / 960 paired observations**, covering
 Gold/Silver/Crystal plus the existing FireRed/Emerald matrix. Unchanged #175
 differs in 32 damage cases and fails two assertions per Gen-2 version.
 See [native Gen-2 critical base](gen2-critical-base.md).
 
-Native LÖVE11.5 results retain the clean feature runtime
+Native LÖVE 11.5 results retain the clean feature runtime
 `397d7d6fb48bcf8f539c152397bb3e5ad220d23d`: imported Gold, FireRed and Emerald,
 six constructed battles each, **18 battles / 36 public critical decisions**.
 The same public consumer, actual FIGHT/move input and native queues pass HP,
