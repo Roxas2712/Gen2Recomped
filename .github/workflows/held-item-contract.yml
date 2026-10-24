@@ -24,19 +24,20 @@ jobs:
         run: |
           luajit tests/engine/held_item_contract.lua
           luajit tests/engine/held_item_authority.lua
+          luajit tests/engine/held_item_scheduling.lua
           luajit tests/engine/api3_compat.lua
           luajit tests/engine/unified_mod_callbacks.lua
       - name: Compare both engines in every SDK mode
         run: |
           mkdir -p /tmp/held-item-contract
           python3 tools/held-item-contract-check/check.py --gen1 .contract-reference/gen1 \
-            --api 1 --format native --report /tmp/held-item-contract/api1-native.json
+            --api 1 --format native --require-native-schedule-parity --report /tmp/held-item-contract/api1-native.json
           python3 tools/held-item-contract-check/check.py --gen1 .contract-reference/gen1 \
-            --api 2 --format native --report /tmp/held-item-contract/api2-native.json
+            --api 2 --format native --require-native-schedule-parity --report /tmp/held-item-contract/api2-native.json
           python3 tools/held-item-contract-check/check.py --gen1 .contract-reference/gen1 \
-            --api 2 --format unified --report /tmp/held-item-contract/api2-unified.json
+            --api 2 --format unified --require-native-schedule-parity --report /tmp/held-item-contract/api2-unified.json
           python3 tools/held-item-contract-check/check.py --gen1 .contract-reference/gen1 \
-            --api 3 --format unified --report /tmp/held-item-contract/api3.json
+            --api 3 --format unified --require-native-schedule-parity --report /tmp/held-item-contract/api3.json
       - uses: actions/upload-artifact@v6
         if: always()
         with:

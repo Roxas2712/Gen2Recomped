@@ -23,9 +23,10 @@ than asserting identical formulas. The source GBA residual collector is not
 its complete presentation/award controller. See the public documentation for
 other native boundaries.
 
-Native call scheduling is recorded separately as `native_policy`. Unrestricted
-Berry grants even to empty hands heal 35 HP in the reference GBA fixture and
-7 in the host; this known gap is printed and excluded from equal observations.
-Use `--require-native-schedule-parity` as a strict negative control: it currently
-fails on FireRed/Emerald. Do not interpret the default read-contract comparison
-as proof of identical residual scheduling or arbitrary-mod compatibility.
+Native call scheduling is also recorded as `native_policy`. Unrestricted
+7-HP Berry grants now heal 35 HP on both GBA engines, with six residual reads.
+`--require-native-schedule-parity` checks the entire policy record (HP and read
+count) and is required in all four CI modes. Shared cases additionally cover
+real called/spread actions, canceled actions, PP/cures, residual ordering and
+four active slots. These assertions are not a proof of arbitrary-mod or
+complete battle-rule equivalence.

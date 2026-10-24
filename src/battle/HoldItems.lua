@@ -314,6 +314,7 @@ end
 --   { kind = "critUp", delta = 2 }                    LANSAT BERRY
 --   { kind = "restoreStats" }                         WHITE HERB
 function HoldItems.trigger(battler, when)
+  local gba = require("src.core.GameVersion").isGen3()
   local effect, param = HoldItems.effectOf(battler, when == "entry" and "check" or "residual")
   if not effect then return nil end
   local mon = battler.mon
@@ -322,6 +323,13 @@ function HoldItems.trigger(battler, when)
   if when == "entry" then
     if effect == "DOUBLE_PRIZE" then return { kind = "prize", consume = false } end
     if effect ~= "RESTORE_STATS" then return nil end
+  end
+  -- MOVEEND_ITEM_EFFECTS_ALL is a selective cure/herb scan, not the normal
+  -- HP/PP/pinch check. In particular it must not add a fifth Berry grant
+  -- before the four after-action passes.
+  if when == "moveEnd" and not (CURE_STATUS[effect] or effect == "CURE_STATUS"
+      or effect == "CURE_CONFUSION" or effect == "CURE_ATTRACT" or effect == "RESTORE_STATS") then
+    return nil
   end
 
   -- LEFTOVERS, the one that is never eaten.  Its parameter is 10 and it is
@@ -341,7 +349,7 @@ function HoldItems.trigger(battler, when)
   if effect == "RESTORE_HP" then
     if mon.hp * 2 > max then return nil end
     if mon.hp >= max then return nil end
-    return { kind = "heal", effect = effect, amount = math.max(1, param),
+    return { kind = "heal", effect = effect, amount = math.max(gba and 0 or 1, param),
              consume = true }
   end
 
@@ -352,13 +360,15 @@ function HoldItems.trigger(battler, when)
     if mon.hp * 2 > max then return nil end
     if mon.hp >= max then return nil end
     return { kind = "heal", effect = effect,
-             amount = math.max(1, math.floor(max / (param > 0 and param or 8))),
-             confuse = HoldItems.dislikesFlavour(battler, flavourStat),
+             amount = math.max(1, math.floor(max / (gba and math.max(1, param) or (param > 0 and param or 8)))),
+             confuse = HoldItems.dislikesFlavour(battler, flavourStat)
+                       and (not gba or (require("src.battle.Abilities").of(battler) ~= "OWN_TEMPO"
+                       and not battler.confusedTurns)),
              consume = true }
   end
 
   if effect == "RESTORE_PP" then
-    if when ~= "turn" then return nil end
+    if when ~= "turn" and when ~= "action" then return nil end
     -- the caller finds the empty move; nil here means every move has PP
     local slot
     for i, m in ipairs(battler.curMoves or mon.moves or {}) do
@@ -366,10 +376,10 @@ function HoldItems.trigger(battler, when)
     end
     if not slot then return nil end
     return { kind = "restorePP", effect = effect, slot = slot,
-             amount = math.max(1, param), consume = true }
+             amount = math.max(gba and 0 or 1, param), consume = true }
   end
 
-  if when ~= "turn" and when ~= "entry" then return nil end
+  if when ~= "turn" and when ~= "entry" and when ~= "action" and when ~= "moveEnd" then return nil end
 
   local cured = CURE_STATUS[effect]
   if cured then
@@ -401,19 +411,24 @@ function HoldItems.trigger(battler, when)
 
   -- the pinch berries, at a quarter of maximum HP or less
   local pinchStat = PINCH_STAT[effect]
-  local divisor = (param and param > 0) and param or 4
+  local divisor = gba and math.max(1, param) or ((param > 0) and param or 4)
   if pinchStat then
-    if mon.hp * divisor > max then return nil end
+    if mon.hp * divisor > max or (gba and ((battler.stages or {})[pinchStat] or 0) >= 6) then return nil end
     return { kind = "statUp", effect = effect, stat = pinchStat, delta = 1,
              consume = true }
   end
   if effect == "RANDOM_STAT_UP" then
     if mon.hp * divisor > max then return nil end
+    local eligible = false
+    for _, stat in ipairs(HoldItems.RANDOM_STATS) do
+      if ((battler.stages or {})[stat] or 0) < 6 then eligible = true break end
+    end
+    if gba and not eligible then return nil end
     return { kind = "statUp", effect = effect, stat = nil, delta = 2,
              consume = true }
   end
   if effect == "CRITICAL_UP" then
-    if mon.hp * divisor > max then return nil end
+    if mon.hp * divisor > max or (gba and battler.focusEnergy) then return nil end
     return { kind = "critUp", effect = effect, delta = 2, consume = true }
   end
   return nil

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare public held-effect reads and real native consumers; report native scheduling separately."""
+"""Compare public held-effect reads, real native consumers and native scheduling."""
 import argparse
 import hashlib
 import json
@@ -53,7 +53,7 @@ def main():
                             "checks": run.stdout.splitlines()[-1]})
         assert observations[0] == observations[1], f"held item mismatch: {version}"
         print(f"PASS {version}: {len(observations[0])} matching native held item observations")
-        if policies[0]["unrestricted_residual_heal"] != policies[1]["unrestricted_residual_heal"]:
+        if policies[0] != policies[1]:
             print(f"NATIVE SCHEDULE GAP {version}: reference={policies[0]}, host={policies[1]}")
             if a.require_native_schedule_parity:
                 raise AssertionError(f"native held-item scheduling mismatch: {version}")

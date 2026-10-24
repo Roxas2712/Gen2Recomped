@@ -2,11 +2,11 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, format = unpack(arg)
 local Fixture = dofile(root .. "/tests/held_item/fixture.lua")
 local f = Fixture.new(root, backend, version, tonumber(api), format)
-local rows = dofile(root .. "/tests/held_item/cases.lua").run(f)
+local rows = dofile(root .. "/tests/held_item/scheduling.lua").run(f)
+for _, row in ipairs(dofile(root .. "/tests/held_item/cases.lua").run(f)) do rows[#rows + 1] = row end
 f.close()
--- Record an actual remaining native scheduling difference, not an equal
--- contract observation: granting berries even to empty hands can repeat in
--- the source GBA controller's after-action scans.
+-- Keep the raw native policy in the report as well as the paired action/
+-- residual cases. Strict CI compares the complete record, including reads.
 local policy = Fixture.new(root, backend, version, tonumber(api), format)
 policy.e.state.mode, policy.e.state.trigger, policy.e.state.holder = "override", "residual", "PLAYER"
 policy.e.state.effect, policy.e.state.parameter, policy.e.state.requiresItem = "HELD_BERRY", 7, false

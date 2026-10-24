@@ -101,7 +101,7 @@ function M.new(root, backend, version, api, format, noMod, failing, consumer, pr
       }
     end
   end
-  if prepare then prepare(data, gen, backend) end
+  if prepare then prepare(data, gen, backend, rom, names) end
   local files, Json = {}, require("src.link.Json")
   for _, name in ipairs({ "main.lua", "manifest.json" }) do
     local f = assert(io.open(root .. "/examples/" .. consumer .. "/" .. name, "rb"))

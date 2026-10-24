@@ -78,14 +78,19 @@ return function(game)
     local b = fresh(240)
     e.state.mode, e.state.trigger, e.state.holder = mode, "residual", "PLAYER"
     e.state.effect, e.state.parameter = "HELD_BERRY", 7
+    local lost = 0
+    local off = e.api.events:on("battle.damage_dealt", function(ctx)
+      if ctx.target.mon.nickname == "PLAYER" then lost = lost + ctx.damage end
+    end)
     U.tap(game, "a")
     assert(b.phase == "moveSelect", "native FIGHT did not open move selection")
     U.tap(game, "a")
     drain(b)
+    off()
     local ctx = assert(e.state.selected, "native player's held read missing")
     assert(ctx.mon.species == "MEW" and ctx.item == "LEFTOVERS", "portable imported held IDs")
     assert(
-      b.player.mon.hp == ctx.mon.hp + (mode == "override" and 7 or 0),
+      b.player.mon.hp == 240 - lost + (mode == "override" and 7 or 0),
       "native input/HP follows held decision"
     )
     assert((b.player.mon.item ~= nil) == (mode ~= "override"), "native held consumption")
