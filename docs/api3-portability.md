@@ -100,7 +100,7 @@ emits nothing. Invalid save stores are refused without overwriting them.
 Gen1 API-3 callback names from the pinned reference are recognized even when
 this engine has no call site for them. Registration is allowed; availability
 still requires a native call site in the selected version. For example,
-`battle.caught_marker_visible` can be subscribed to but reports unavailable here. Unknown
+`battle.field_residual` can be subscribed to but reports unavailable here. Unknown
 names remain errors. An accepted subscription is not proof that a feature
 runs. Source-specific engine handles in lifecycle/UI payloads remain native.
 
@@ -179,3 +179,6 @@ GBA contract and the remaining Gold/DS boundaries.
 [Automatic native rulesets](native-ruleset-defaults.md) document enemy PP
 accounting and the existing-settings boundary. The read-only
 `examples/portable_enemy_pp` consumer runs unchanged on both engines.
+
+[Portable caught markers](portable-caught-marker.md) document strict visibility,
+native ownership gates, API-3 contexts and GBA presentation caching.

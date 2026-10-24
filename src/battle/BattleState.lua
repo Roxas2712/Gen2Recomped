@@ -366,6 +366,26 @@ end
 -- its RIGHT.  Left and right then did nothing at all, because a vertical list
 -- has no use for them.  The fix is one clause, not new maths: the grid this
 -- layout already draws is the grid it should navigate.
+function BattleState:caughtMarkerVisible(battler)
+  return require("src.battle.CaughtMarker").visible(self, battler)
+end
+
+local caughtBallQuads = setmetatable({}, { __mode = "k" })
+function BattleState:drawCaughtBall(x, y)
+  local Assets = require("src.render.Assets")
+  local path = "assets/generated/battle/balls.png"
+  if not Assets.exists(Assets.resolve(path)) then return false end
+  local image = Assets.image(path)
+  local quad = caughtBallQuads[image]
+  if not quad then
+    quad = love.graphics.newQuad(0, 0, 8, 8, image:getDimensions())
+    caughtBallQuads[image] = quad
+  end
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.draw(image, quad, x, y)
+  return true
+end
+
 function BattleState:moveGridNavigation()
   return MoveNavigation.grid(self)
 end
@@ -1437,6 +1457,7 @@ function BattleState.newWild(game, species, level, opts)
     Pokemon.applySeed(game.data, wild, opts.roamerSeed)
   end
   self.enemy = makeBattler(game.data, wild, false)
+  self.caughtMark = require("src.battle.CaughtMarker").caught(game, wild.species)
   require("src.battle.Gen2Wild").initialize(self, opts)
   if self.roamer then
     local kept = math.floor(tonumber(opts.roamerHP) or 0)
@@ -12283,7 +12304,16 @@ function BattleState:drawHUDs(slide)
       love.graphics.translate(hudShake, 0)
     end
     love.graphics.setColor(0, 0, 0, 1)
-    Font.draw(self.enemy.name, nameX(1, self.enemy.name), 0)
+    local enemyNameX = nameX(1, self.enemy.name)
+    local enemyNameWidth = Font.draw(self.enemy.name, enemyNameX, 0)
+    if self:caughtMarkerVisible() then
+      if require("src.core.GameVersion").isGen2() then
+        hudTile(0x5d, 8, 8)
+      else
+        self:drawCaughtBall(enemyNameX + enemyNameWidth, 0)
+      end
+      love.graphics.setColor(0, 0, 0, 1)
+    end
     if self.enemy.shownStatus then
       Font.draw(self:statusLabel({ status = self.enemy.shownStatus }), 40, 8)
     elseif LevelDisplay.visible(self.enemy.mon, "battle.enemy", self.game) then
