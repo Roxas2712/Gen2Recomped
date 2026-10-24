@@ -426,6 +426,9 @@ local function protect(fn)
 end
 function U.new(loader, mod, native, gen)
   local out = {}; for name, handle in pairs(native) do out[name] = handle end
+  if native.text and gen <= 3 then
+    out.text = require("src.mods.TextContent").api(loader, mod, native.text, gen)
+  end
   if native.held_items then
     out.held_items = require("src.mods.HeldItemContent").api(loader, mod, native.held_items, gen, true)
   end
