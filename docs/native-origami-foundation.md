@@ -160,6 +160,13 @@ original RGBA data and Core Animation retains an immutable copy. Both games
 pass separate OpenGL/Metal window and real-ROM pixel checks; full GPU readback
 and native image copying remain costs. The engine/SDK/B30 checks remain green.
 
+The [remaining OpenGL spike investigation](opengl-spike-investigation.md)
+identifies synchronous readback waits as the dominant long-frame cost. Extra
+native-reader, context-repair and descriptor-reuse proposals are rejected;
+notably the latter regresses Emerald in the complete comparison. The isolated
+Windows/macOS preview retains the verified renderer and exposes these remaining
+limits for external hardware tests. It does not resume the Origami port.
+
 ## Remaining engine work
 
 | Area | Remaining acceptance/work |

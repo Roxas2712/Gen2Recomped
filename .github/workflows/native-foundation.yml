@@ -41,6 +41,10 @@ jobs:
           luajit tests/engine/window_frame.lua
           luajit tests/engine/mac_window_surface.lua
           python3 -m unittest discover -s tests -p test_window_frame_tools.py
+      - name: Isolated preview profile and archive gates
+        run: |
+          luajit tests/engine/native_preview.lua
+          python3 -m unittest discover -s tests -p test_native_preview.py
       - name: Cache-reference policy regressions
         run: python3 -m unittest discover -s tests -p test_modkit_cache_comments.py
       - name: Existing contracts on the combined engine
