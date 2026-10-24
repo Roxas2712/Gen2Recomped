@@ -211,3 +211,6 @@ FireRed Item-PC withdrawal labels, see [GBA menu prose](portable-gba-menu-prose.
 
 For common AI-class item IDs, detached definition records and the API-2/unified
 boundary, see [portable AI-class content](portable-ai-class-content.md).
+
+For the native damage-order correction used by portable `battle.crit` mods,
+see [Gen-3 critical/type rounding](gen3-critical-order.md).
