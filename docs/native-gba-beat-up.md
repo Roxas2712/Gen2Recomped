@@ -34,6 +34,9 @@ python3 tools/enemy-action-contract-check/check.py \
 luajit tests/beat_up/public_effect.lua
 ```
 
+The composed public patch uses canonical `EFFECT_BEAT_UP` (semantic 154);
+`BEAT_UP` is a native move name, not that public effect ID.
+
 The shared API-3 consumer is loaded through each engine's real mod SDK.
 FireRed and Emerald comparisons use unchanged read-only Gen1Recomp
 `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`, all four user positions and
