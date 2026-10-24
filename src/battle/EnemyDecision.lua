@@ -1,0 +1,325 @@
+-- The shared hook has two native contracts: Gen 2 executes inside the
+-- query and returns a boolean; GBA reserves stock and returns an action.
+local Runtime = require("src.mods.Runtime")
+local TrainerAI = require("src.battle.TrainerAI")
+local M = {}
+
+local function slug(value)
+  return type(value) == "string" and value:upper():gsub("[^%w]+", "_"):gsub("^_+", ""):gsub("_+$", "") or nil
+end
+
+function M.itemKey(data, ref)
+  local items = data and data.items or {}
+  if items[ref] then
+    return ref
+  end
+  local number, name, found = tonumber(ref), slug(ref), nil
+  for key, row in pairs(items) do
+    if
+      type(row) == "table"
+      and (
+        number and tonumber(row.index) == number
+        or name and (slug(row.key) == name or slug(row.name) == name)
+      )
+    then
+      if
+        found
+        and items[found] ~= row
+        and (not tonumber(row.index) or tonumber(items[found].index) ~= tonumber(row.index))
+      then
+        return nil
+      end
+      found = key
+    end
+  end
+  return found
+end
+
+local function itemNumber(battle, key)
+  local def = (battle.data.items or {})[key]
+  return tonumber(def and def.index) or tonumber(key)
+end
+
+function M.validSwitch(battle, battler, value, gba)
+  local index = tonumber(value)
+  if not index or index ~= index then
+    return nil
+  end
+  if gba then
+    index = math.floor(index)
+  end
+  local party = battle:benchFor(false, battler.position)
+  local mon = party and party[index]
+  if not mon or (tonumber(mon.hp) or 0) <= 0 then
+    return nil
+  end
+  if gba and (index < 1 or index > 6 or require("src.pokemon.Party").isEgg(mon)) then
+    return nil
+  end
+  for _, active in pairs(battle.sides[2].battlers) do
+    if active and active.mon == mon then
+      return nil
+    end
+  end
+  if gba then
+    for who, reserved in pairs(battle._enemySwitchReservations or {}) do
+      if who ~= battler and reserved == mon then
+        return nil
+      end
+    end
+  end
+  return index
+end
+
+local HEAL =
+  { POTION = 20, SUPER_POTION = 50, HYPER_POTION = 200, MAX_POTION = math.huge, FULL_RESTORE = math.huge }
+
+function M.gen2Item(battle, ref)
+  if not ref then
+    return false
+  end
+  local key = M.itemKey(battle.data, ref) or ref
+  local trainer, mon = battle.trainer, battle.enemy.mon
+  -- Gen 2's native handler accepts an explicit item even when absent from
+  -- stock. Preserve that native distinction from GBA's useStocked refusal.
+  for i, id in ipairs(trainer and trainer.items or {}) do
+    if id == key then
+      table.remove(trainer.items, i)
+      break
+    end
+  end
+  local def = (battle.data.items or {})[key]
+  local name = slug(def and def.key) or slug(key)
+  local amount = HEAL[name]
+  if amount then
+    mon.hp = math.min(mon.stats.hp, mon.hp + amount)
+  end
+  if name == "FULL_HEAL" or name == "FULL_RESTORE" then
+    mon.status, battle.enemy.confusedTurns = nil, nil
+  end
+  battle:say(
+    require("src.core.Strings")("%s used %s!", trainer and trainer.name or "TRAINER", def and def.name or key)
+  )
+  return true
+end
+
+function M.gen2Native(battle)
+  if battle.kind ~= "trainer" or not battle.trainer or type(battle.trainer.attributes) ~= "table" then
+    return false
+  end
+  local enemy, player = battle.enemy, battle.player
+  local TypeChart = require("src.battle.TypeChart")
+  local function multiplier(kind, types)
+    local unique, seen = {}, {}
+    for _, t in ipairs(types or {}) do
+      if not seen[t] then
+        unique[#unique + 1], seen[t] = t, true
+      end
+    end
+    return TypeChart.effectiveness(kind, unique)
+  end
+  local score, bench = 10, {}
+  for _, id in ipairs(player._gen2UsedMoves or {}) do
+    local move = battle.data.moves[id]
+    if move and (move.power or 0) > 0 and multiplier(move.type, enemy.curTypes) > 10 then
+      score = score - 1
+    end
+  end
+  for i, mon in ipairs(battle.enemyParty or {}) do
+    if mon ~= enemy.mon and (mon.hp or 0) > 0 then
+      local types = ((battle.data.pokemon or {})[mon.species] or {}).types or mon.types or {}
+      local incoming = multiplier((player.curTypes or {})[1], types)
+      local super = false
+      for _, slot in ipairs(mon.moves or {}) do
+        local move = battle.data.moves[slot.id]
+        if move and (move.power or 0) > 0 and multiplier(move.type, player.curTypes) > 10 then
+          super = true
+        end
+      end
+      bench[#bench + 1] = { index = i, resists = incoming < 10, super = super }
+    end
+  end
+  local desire, target = 0, nil
+  if #bench > 0 and enemy.perishTurns == 1 then
+    desire, target = 48, bench[1].index
+  elseif score < 10 then
+    for _, row in ipairs(bench) do
+      if row.resists and row.super then
+        desire, target = 32, row.index
+        break
+      end
+      if row.resists and not target then
+        desire, target = 16, row.index
+      end
+    end
+  end
+  local attrs = battle.trainer.attributes
+  local flags = (attrs[6] or 0) + (attrs[7] or 0) * 256
+  local chances = {
+    [1] = { [16] = 50, [32] = 79, [48] = 96 },
+    [2] = { [16] = 8, [32] = 12, [48] = 21 },
+    [4] = { [16] = 20, [32] = 50, [48] = 80 },
+  }
+  local chance
+  for _, bit in ipairs({ 1, 2, 4 }) do
+    if math.floor(flags / bit) % 2 == 1 then
+      chance = chances[bit][desire]
+      break
+    end
+  end
+  local trapped = enemy.trapped or (enemy.boundTurns or 0) > 0 or (player.trappingTurns or 0) > 0
+  if target and not trapped and chance and battle.rng(0, 99) < chance then
+    return battle:performEnemySwitch(enemy, target)
+  end
+  local highest = 0
+  for _, mon in ipairs(battle.enemyParty or {}) do
+    highest = math.max(highest, mon.level or 0)
+  end
+  if (enemy.mon.level or 0) < highest then
+    return false
+  end
+  local stock = {}
+  for _, id in ipairs(battle.trainer.items or {}) do
+    local key = M.itemKey(battle.data, id) or id
+    local def = (battle.data.items or {})[key]
+    stock[slug(def and def.key) or slug(key)] = key
+  end
+  for _, name in ipairs({
+    "FULL_RESTORE",
+    "MAX_POTION",
+    "HYPER_POTION",
+    "SUPER_POTION",
+    "POTION",
+    "X_ACCURACY",
+    "FULL_HEAL",
+    "GUARD_SPEC",
+    "DIRE_HIT",
+    "X_ATTACK",
+    "X_DEFEND",
+    "X_SPEED",
+    "X_SPECIAL",
+  }) do
+    local key, amount = stock[name], HEAL[name]
+    if key then
+      local hp, max = enemy.mon.hp, enemy.mon.stats.hp
+      local use = amount and hp * 2 <= max and max - hp >= math.min(amount, max) / 2
+        or name == "FULL_HEAL" and enemy.mon.status ~= nil
+        or not amount and name ~= "FULL_HEAL" and (enemy._gen2TurnsTaken or 0) == 0
+      if use then
+        return M.gen2Item(battle, key)
+      end
+    end
+  end
+  return false
+end
+
+function M.gen2(battle)
+  local chosen
+  if Runtime.wantsHook("battle.enemy_switch_or_item") then
+    chosen = Runtime.call("battle.enemy_switch_or_item", M.gen2Native, battle)
+  else
+    chosen = M.gen2Native(battle)
+  end
+  if type(chosen) == "table" then
+    if chosen.kind == "switch" then
+      return battle:performEnemySwitch(battle.enemy, tonumber(chosen.index) or 0)
+    end
+    if chosen.kind == "item" then
+      return M.gen2Item(battle, chosen.item)
+    end
+    return false
+  end
+  return not not chosen
+end
+
+local function reserveSwitch(battle, battler, index)
+  battle._enemySwitchReservations = battle._enemySwitchReservations or {}
+  battle._enemySwitchReservations[battler] = battle:benchFor(false, battler.position)[index]
+end
+
+local function reserveItem(battle, battler, key)
+  if not key then
+    return nil
+  end
+  local record = require("src.inventory.ItemEffects").gen3RecordFor(key, battle.data)
+  if not record then
+    return nil
+  end
+  battle.gen3ItemsUsed = battle.gen3ItemsUsed or {}
+  for slot, item in ipairs(battle.trainer and battle.trainer.items or {}) do
+    if not battle.gen3ItemsUsed[slot] and M.itemKey(battle.data, item) == key then
+      battle.gen3ItemsUsed[slot] = true
+      return { special = "aiItem", item = key, slot = slot, decisionBattler = battler }
+    end
+  end
+end
+
+local function sourceAction(battle, battler, action)
+  if not action then
+    return nil
+  end
+  local id = battler.position or 1
+  if action.special == "aiSwitch" then
+    reserveSwitch(battle, battler, action.index)
+    return { kind = "switch", slot = action.index, user = "enemy", battler = id }
+  elseif action.special == "aiItem" then
+    battle.gen3ItemsUsed = battle.gen3ItemsUsed or {}
+    if action.slot then
+      battle.gen3ItemsUsed[action.slot] = true
+    end
+    return {
+      kind = "item",
+      item = itemNumber(battle, action.item),
+      aiItemType = action.aiItemType,
+      aiItemFlags = action.aiItemFlags or 0,
+      user = "enemy",
+      battler = id,
+      target = id,
+    }
+  end
+end
+
+function M.gba(battle, battler)
+  if battle.kind ~= "trainer" or battle.pokedudeDemo then
+    return nil
+  end
+  local native, action
+  local function base()
+    action = TrainerAI.classAction(battle, battler)
+    if action then
+      action.decisionBattler = battler
+    end
+    native = sourceAction(battle, battler, action)
+    return native or false
+  end
+  local chosen
+  if Runtime.wantsHook("battle.enemy_switch_or_item") then
+    chosen = Runtime.call("battle.enemy_switch_or_item", base, battle)
+  else
+    chosen = base()
+  end
+  if chosen == true or native and chosen == native then
+    -- The reference returns this same native action after next(). A mod can
+    -- edit its item without consuming another stock slot.
+    if native and native.kind == "item" and action then
+      action.item = M.itemKey(battle.data, native.item) or native.item
+      action.aiItemType, action.aiItemFlags = native.aiItemType, native.aiItemFlags
+    end
+    return action
+  end
+  if type(chosen) ~= "table" then
+    return nil
+  end
+  if chosen.kind == "switch" then
+    local index = M.validSwitch(battle, battler, chosen.index or chosen.slot, true)
+    if not index then
+      return nil
+    end
+    reserveSwitch(battle, battler, index)
+    return { special = "aiSwitch", index = index, decisionBattler = battler }
+  elseif chosen.kind == "item" then
+    return reserveItem(battle, battler, M.itemKey(battle.data, chosen.item))
+  end
+end
+
+return M

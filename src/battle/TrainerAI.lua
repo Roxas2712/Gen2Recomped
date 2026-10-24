@@ -85,11 +85,11 @@ local function gen3HealAmount(battle, item)
   return HEAL_AMOUNT[item]
 end
 
-function TrainerAI.gen3ItemAction(battle)
+function TrainerAI.gen3ItemAction(battle, battler)
   local trainer = battle.trainer
   local items = trainer and trainer.items
   if type(items) ~= "table" or #items == 0 then return nil end
-  local enemy = battle.enemy
+  local enemy = battler or battle.enemy
   -- the same empty-slot guard the class path needs: a foe lifted off the
   -- field in a double battle has nobody to heal
   if not (enemy and enemy.mon and enemy.mon.stats) then return nil end
@@ -112,28 +112,42 @@ function TrainerAI.gen3ItemAction(battle)
     if not used[slot] and not (i ~= 0 and valid > (itemsNo - i) + 1) then
       local item = items[slot]
       local heal = gen3HealAmount(battle, item)
-      if item == "FULL_RESTORE" then
+      local def = (battle.data.items or {})[item]
+      local record = require("src.inventory.ItemEffects").gen3RecordFor(item, battle.data)
+      if item == "FULL_RESTORE" or record and def and tonumber(def.index) == 19 then
         -- AI_ITEM_FULL_RESTORE: breaks out at hp >= maxHP/4 and at hp == 0
         if hp > 0 and hp < quarter then
-          return { special = "aiItem", item = item, slot = slot }
+          return { special = "aiItem", item = item, slot = slot, aiItemType = 1, aiItemFlags = 0 }
         end
       elseif heal then
         -- AI_ITEM_HEAL_HP: below a quarter, or once the damage taken
         -- exceeds what the item would put back (so none of it is wasted)
         if hp > 0 and (hp < quarter or (maxHp - hp) > heal) then
-          return { special = "aiItem", item = item, slot = slot }
+          return { special = "aiItem", item = item, slot = slot, aiItemType = 2, aiItemFlags = 0 }
         end
+      elseif record and (record.cureAll or record.cures) then
+        local masks = { SLP = 32, PSN = 16, TOX = 16, BRN = 8, FRZ = 4, PAR = 2, CONFUSION = 1 }
+        local long = { sleep = "SLP", poison = "PSN", toxic = "TOX", burn = "BRN", freeze = "FRZ", paralyze = "PAR" }
+        local flags, status = 0, long[enemy.mon.status] or enemy.mon.status
+        local function cures(name)
+          if record.cureAll then return true end
+          for _, value in ipairs(record.cures or {}) do if value == name or name == "TOX" and value == "PSN" then return true end end
+          return false
+        end
+        if status and masks[status] and cures(status) then flags = masks[status] end
+        if (enemy.confusedTurns or 0) > 0 and cures("CONFUSION") then flags = flags + 1 end
+        if flags > 0 then return { special = "aiItem", item = item, slot = slot, aiItemType = 3, aiItemFlags = flags } end
       end
     end
   end
   return nil
 end
 
-function TrainerAI.classAction(battle)
+function TrainerAI.classAction(battle, battler)
   if battle.kind ~= "trainer" or not battle.trainer then return nil end
   -- a trainer carrying its own bag (Gen 3) is answered from the bag; there
   -- is no ai_classes record for it and no per-Pokemon use counter
-  local carried = TrainerAI.gen3ItemAction(battle)
+  local carried = TrainerAI.gen3ItemAction(battle, battler)
   if carried then return carried end
   local class = TrainerAI.classFor(battle)
   if not class then return nil end
@@ -193,8 +207,8 @@ function TrainerAI.switchAction(battle)
 end
 
 -- Apply an aiItem action to the enemy battler; returns messages.
-function TrainerAI.useItem(battle, item)
-  local enemy = battle.enemy
+function TrainerAI.useItem(battle, item, battler)
+  local enemy = battler or battle.enemy
   local trainerName = battle.trainer.name
   local itemName = battle.data.items[item] and battle.data.items[item].name or item
   local msgs = { Strings("%s\nused %s!", trainerName, itemName) }
@@ -207,7 +221,8 @@ function TrainerAI.useItem(battle, item)
   local okEffects, ItemEffects = pcall(require, "src.inventory.ItemEffects")
   if okEffects and ItemEffects and ItemEffects.gen3RecordFor
      and ItemEffects.gen3RecordFor(item, battle.data) then
-    local _, said = ItemEffects.use(battle.data, nil, item, enemy.mon, battle)
+    local context = enemy == battle.enemy and battle or setmetatable({ enemy = enemy }, { __index = battle })
+    local _, said = ItemEffects.use(battle.data, nil, item, enemy.mon, context)
     if type(said) == "table" then
       for _, m in ipairs(said) do msgs[#msgs + 1] = m end
     end

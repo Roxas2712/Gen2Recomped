@@ -5423,9 +5423,23 @@ function BattleState:enemyAction(battler)
   return self:vanillaEnemyAction(battler)
 end
 
+function BattleState:enemyTrySwitchOrItem()
+  return require("src.battle.EnemyDecision").gen2(self)
+end
+
+function BattleState:enemySwitchOrItem(battler)
+  return require("src.battle.EnemyDecision").gba(self, battler or self.enemy)
+end
+
 function BattleState:vanillaEnemyAction(battler)
   battler = battler or self.enemy
   if not battler then return nil end
+  if GameVersion.isGen2() then
+    if self:enemyTrySwitchOrItem() then return { special = "aiDecisionSpent" } end
+    -- A delegate can switch first and then return false, allowing the new
+    -- occupant to choose a move, just as the reference's Gen-2 producer does.
+    battler = self.enemy
+  end
   local locked = self:lockedAction(battler)
   if locked then return locked end
   if self.palace then return require("src.battle.Gen3Palace").choose(self, battler) end
@@ -5441,8 +5455,10 @@ function BattleState:vanillaEnemyAction(battler)
   -- slot the whole of TrainerAI already reads (`battle.enemy`).  Letting the
   -- right-hand slot ask too would have a trainer drink two SUPER POTIONs on
   -- the same Pokemon in the same turn.
-  if battler == self.enemy then
-    local classAct = TrainerAI.classAction(self)
+  if not GameVersion.isGen2() and (GameVersion.isGen3() or battler == self.enemy) then
+    local classAct
+    if GameVersion.isGen3() then classAct = self:enemySwitchOrItem(battler)
+    else classAct = TrainerAI.classAction(self) end
     if classAct then return classAct end
   end
   return TrainerAI.chooseMove(battler, self.rng, self)
@@ -5507,6 +5523,7 @@ function BattleState:choosingBattler()
 end
 
 function BattleState:resolveTurn(playerAction)
+  self._enemySwitchReservations = nil
   -- nil in a double battle whose left-hand foe has fainted with nothing on
   -- the bench to replace it; `actionFor` asks each surviving slot for its own
   local enemyAction = self:enemyAction(self.enemy)
@@ -5673,6 +5690,37 @@ function BattleState:resolveTurn(playerAction)
     self.pendingActions, self.chosenTargets = nil, nil
     self:endOfTurn()
   end)
+end
+
+-- Place the requested opponent, including the right-hand GBA double slot.
+-- The Gen-2 query calls this immediately; a GBA action calls it on execution.
+function BattleState:performEnemySwitch(user, index)
+  local Decision = require("src.battle.EnemyDecision")
+  local gba = GameVersion.isGen3()
+  index = user and Decision.validSwitch(self, user, index, gba)
+  if not index then return false end
+  local position = user.position or BattleState.POS.OPPONENT_LEFT
+  local mon = self:benchFor(false, position)[index]
+  local oldName = user.name
+  self:abilitySwitchOut(user)
+  local incoming = makeBattler(self.data, mon, false, nil, self)
+  self:placeBattler(position, incoming)
+  if position == BattleState.POS.OPPONENT_LEFT then self.enemyIndex = index end
+  if self._enemySwitchReservations then self._enemySwitchReservations[user] = nil end
+  clearTrapping(self.player)
+  if self:isDouble() then clearTrapping(self:battlerAt(BattleState.POS.PLAYER_RIGHT)) end
+  self:syncSides()
+  if GameVersion.isGen2() then self.participants = {}; self:markParticipant() end
+  Runtime.emit("battle.battler_switched", {
+    battle = self, side = self.sides[2], battler = incoming, previous = user,
+  })
+  self.aiUses = self:aiUsesFor()
+  markSeen(self.game, mon.species, mon)
+  self:sayNext(Strings("%s withdrew %s!", self:trainerLabel_(), oldName))
+  self:sayNext(Strings("%s sent out %s!", self:trainerLabel_(), incoming.name))
+  HeldItems.onEntry(self, incoming)
+  self:actNext(function() self:abilitySwitchIn(incoming) end)
+  return true
 end
 
 -- WHICH ACTION BELONGS TO WHICH SLOT.
@@ -7535,6 +7583,7 @@ function BattleState:executeAction(user, target, action)
   if not (user and user.mon) then return end
   if user.mon.hp <= 0 then return end
   if not action then return end
+  if action.special == "aiDecisionSpent" then return end
   -- A SWITCH NEEDS NO TARGET.  Everything else does, and with four on the
   -- field the one it was aimed at can already be off it -- the entry's
   -- target is resolved as the entry runs, and there may be nobody left to
@@ -7587,10 +7636,10 @@ function BattleState:executeAction(user, target, action)
         self.gen3ItemsUsed = self.gen3ItemsUsed or {}
         self.gen3ItemsUsed[action.slot] = true
       end
-      for _, m in ipairs(TrainerAI.useItem(self, action.item)) do
-        self:sayNext(prefixEnemy(m, self.enemy))
+      for _, m in ipairs(TrainerAI.useItem(self, action.item, action.decisionBattler)) do
+        self:sayNext(prefixEnemy(m, action.decisionBattler or self.enemy))
       end
-      self:drainNext()
+      self:drainNext(action.decisionBattler)
       -- the Gen 3 arm of useItem runs the item through ItemEffects, which
       -- plays the cartridge's own fanfare for it; playing this one too would
       -- put two heal sounds on the same frame
@@ -7600,6 +7649,10 @@ function BattleState:executeAction(user, target, action)
       return
     end
     if action.special == "aiSwitch" then
+      if action.decisionBattler then
+        self:performEnemySwitch(user, action.index)
+        return
+      end
       self.aiUses = (self.aiUses or 1) - 1
       local previous = self.enemy
       local oldName = self.enemy.name
@@ -8130,6 +8183,13 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
     user.rampRun, user.rampMove = nil, nil
   end
   user.lastMove = move.id
+  if GameVersion.isGen2() then
+    user._gen2TurnsTaken = (user._gen2TurnsTaken or 0) + 1
+    user._gen2UsedMoves = user._gen2UsedMoves or {}
+    local seen = false
+    for _, id in ipairs(user._gen2UsedMoves) do if id == move.id then seen = true end end
+    if not seen then user._gen2UsedMoves[#user._gen2UsedMoves + 1] = move.id end
+  end
 
   -- charge moves: first turn just charges; the text comes from the move
   -- record (chargeText) and the invulnerability from semiInvulnerable,
