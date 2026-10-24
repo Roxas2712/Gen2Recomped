@@ -3798,15 +3798,15 @@ function RomExtractorGen3:animCallbackFamily(callback)
   elseif hasArc and from == "attacker" then
     family = "arc_candidate"
   end
-  local isFireRed = self.version == "firered"
-                    or (type(self.version) == "table"
-                        and self.version.id == "firered")
+  local version = type(self.version) == "table" and self.version.id or self.version
+  local isFireRed = require("src.core.GameVersion").isFRLG(version)
   if isFireRed then
+    local canonical = (self.manifest.callbackAddressMap or {})[("%06X"):format(callback)] or callback
     if from == "target" then
-      local exact = RomExtractorGen3.FRLG_TARGET_LOCAL_LINEAR[callback]
+      local exact = RomExtractorGen3.FRLG_TARGET_LOCAL_LINEAR[canonical]
       if exact then family = exact end
     end
-    local exact = RomExtractorGen3.FRLG_CALLBACK_PATH[callback]
+    local exact = RomExtractorGen3.FRLG_CALLBACK_PATH[canonical]
     if exact then family = exact end
   end
   local rec = { family = family,
@@ -45303,6 +45303,7 @@ RomExtractorGen3.FRLG_TITLE = {
   BORDER = { PAL = 0xEAE094, TILES = 0x3BF58C, MAP = 0x3BF5A8 },
   FLAMES = { GFX = 0x3BF79C, PAL = 0x3BF77C, COLS = 2, ROWS = 2 },
   FLAME_X = 0x3BFBD4, -- sFlameXPositions, 15 u8
+  EFFECT = "flames", CRY = "CHARIZARD", STREAK = false, STREAK_Y = false,
 }
 
 -- A 30x20 screen from a 32-column tilemap, honouring flips.  `blink` swaps
@@ -45381,12 +45382,23 @@ function RomExtractorGen3:extractFireRedTitle()
                       size = 16 }
   end
   local flameX = {}
-  for i = 0, 14 do
-    flameX[#flameX + 1] = self.rom:u8(T.FLAME_X + i) or 0
+  if T.FLAME_X then
+    for i = 0, 14 do
+      flameX[#flameX + 1] = self.rom:u8(T.FLAME_X + i) or 0
+    end
+  end
+  local streakY = {}
+  if T.STREAK then
+    local img, frames = self:frlgIntroSpriteSheet(T.STREAK, "streak")
+    if img then
+      self:saveImage(img, "title_frlg/streak.png")
+      images.streak = { path = "assets/generated/title_frlg/streak.png", frames = frames }
+    end
+    for i = 0, 7 do streakY[#streakY + 1] = self.rom:u16(T.STREAK_Y + i * 2) end
   end
   local constants = self._constants or {}
   constants.gen3FRLGTitle = {
-    images = images, flameX = flameX,
+    images = images, flameX = flameX, effect = T.EFFECT, cry = T.CRY, streakY = streakY,
     backdrop = backdrop and { backdrop[1], backdrop[2], backdrop[3] } or nil,
     source = "ROM:gGraphics_TitleScreen_* and title_screen.c sBorderBg/sFlames",
   }
