@@ -726,7 +726,7 @@ function Loader:_contentApi(mod, registry, deprecation)
     if apiLevel >= 2 then error(err, 0) end
     Logger.warn("[%s] %s", modId, err)
   end
-  return {
+  local api = {
     register = function(_, id, value)
       note()
       validate("register", id, value)
@@ -759,6 +759,10 @@ function Loader:_contentApi(mod, registry, deprecation)
       return registry:each()
     end,
   }
+  if registry.name == "held_items" then
+    return require("src.mods.HeldItemContent").api(loader, mod, api, loader:_generation(), false)
+  end
+  return api
 end
 
 -- mod.commands is sugar over the commands registry; the engine's own verbs
@@ -1410,6 +1414,7 @@ function Loader:load(data)
       end
     end
   end
+  require("src.mods.HeldItemContent").prepare(self, data)
   -- vanilla content is registrations too, and they land before discovery so
   -- a mod's register collides with the engine's and has to say override
   require("src.mods.Builtins").install(self.content, data)
@@ -1637,6 +1642,7 @@ function Loader:load(data)
       stampAudioOwners(data, name, registry)
     end
   end
+  require("src.mods.HeldItemContent").apply(self, data)
   -- dangling f.id references are attributed to the id's last writer;
   -- api 1 mods keep the warning-only compat path
   if data then

@@ -1,5 +1,5 @@
 local M = {}
-function M.new(root, backend, version, api, format, noMod, failing, consumer, prepare)
+function M.new(root, backend, version, api, format, noMod, failing, consumer, prepare, prepareFiles)
   consumer = consumer or "portable_charge_required"
   local T = require("tests.modkit")
   local V = require("src.core.GameVersion")
@@ -115,6 +115,7 @@ function M.new(root, backend, version, api, format, noMod, failing, consumer, pr
     files["mods/" .. consumer .. "/main.lua"] = files["mods/" .. consumer .. "/main.lua"]
       .. '\nerror("intentional charge entry failure")'
   end
+  if prepareFiles then prepareFiles(files, data, gen) end
   if noMod then
     files = {}
   end

@@ -485,6 +485,17 @@ R.items = {
   example = 'mod.content.items:patch("POTION", { price = 100 })',
 }
 
+-- Virtual native projection. HeldItemContent seeds its base before mod entry
+-- and writes only these attributes back after the normal items merge.
+R.held_items = {
+  semantics = "record", generations = "2",
+  fields = {
+    heldEffect = f.str,
+    heldParameter = f.opt(f.int(0, 255)),
+  },
+  example = 'mod.content.held_items:override("LEFTOVERS", { heldEffect = "HELD_BERRY", heldParameter = 7 })',
+}
+
 R.maps = {
   semantics = "record", target = "maps",
   fields = {
