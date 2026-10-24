@@ -36,3 +36,29 @@ retains its JSON comparison report.
 These checks prove native interpreter branch behavior. They do not claim
 complete AI opcode coverage, identical damage estimates, full ordinary
 opponent-controller RNG setup, or a portable public battle-hook contract.
+
+## Optional native cartridge checks
+
+To reproduce the bounded native-import comparison locally, supply your own
+English Emerald ROM matching both engines' manifests:
+
+```sh
+python3 tools/gen3-ai-random-contract-check/check.py --gen1 /path/to/gen1 \
+  --emerald-rom /path/to/emerald.gba --report /tmp/gen3-ai-random.json
+```
+
+The checker validates the ROM hash before starting either worker. Both native
+AI importers read that same cartridge into memory. Each real interpreter
+runs imported subroutines whose reachable instructions consist entirely of
+random comparisons, score changes and control flow. Ten raw RNG values probe
+each common entry, including byte-boundary and high-byte changes. No synthetic
+instruction replaces the imported code. No normal cache, save or generated
+cartridge asset is written.
+
+The report explicitly lists unpaired entry offsets: the importers split
+bodies at different boundaries. A reference-only entry fails the check;
+additional host entries are reported separately and are not counted as
+paired evidence. The current supported ROM yields 39 common subroutines /
+390 paired observations, plus 42 host-only entries. This is an interpreter
+subroutine check, not a complete trainer decision or graphical gameplay test.
+The workflow runs the ROM-free matrix only.
