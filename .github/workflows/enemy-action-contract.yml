@@ -13,6 +13,7 @@ on:
       - 'tests/engine/gen3_helping_hand.lua'
       - 'tests/engine/gen3_spit_up.lua'
       - 'tests/engine/gen3_beat_up.lua'
+      - 'tests/engine/gen3_beat_up_adjustment.lua'
       - 'tools/enemy-action-contract-check/**'
   push:
     branches: [main, dev]
