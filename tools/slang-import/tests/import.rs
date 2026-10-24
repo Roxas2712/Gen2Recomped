@@ -2,22 +2,26 @@ use gen2_slang_import::{convert, publish};
 use std::{
     fs,
     path::{Path, PathBuf},
+    sync::atomic::{AtomicUsize, Ordering},
 };
 fn fixture(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("fixtures")
         .join(name)
 }
+// Filesystem timestamps can repeat across parallel tests on macOS/Windows.
+static NEXT_SCRATCH: AtomicUsize = AtomicUsize::new(0);
 struct Scratch(PathBuf);
 impl Scratch {
     fn new() -> Self {
         let p = std::env::temp_dir().join(format!(
-            "gen2-import-test-{}-{}",
+            "gen2-import-test-{}-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
-                .as_nanos()
+                .as_nanos(),
+            NEXT_SCRATCH.fetch_add(1, Ordering::Relaxed)
         ));
         fs::create_dir(&p).unwrap();
         Self(p)
