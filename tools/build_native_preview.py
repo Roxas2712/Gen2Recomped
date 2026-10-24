@@ -52,7 +52,7 @@ def main():
   (source/'conf.lua').write_text('local P=require("src.core.NativePreview");P.activate('+json.dumps(identity)+')\nassert(love.filesystem.load("src/preview/conf.lua"))()\nlocal configure=love.conf\nfunction love.conf(t)configure(t);t.identity=P.identity;t.window.title="Gen2Recomped Native Preview" end\n')
   (source/'main.lua').write_text('require("src.core.NativePreview").prepare()\nassert(love.getVersion()>=12,"Use the bundled LOVE12 runtime for this preview")\nassert(love.filesystem.load("src/preview/main.lua"))()\n')
   payload=out/'Gen2Recomped-NativePreview.love'
-  subprocess.run(['bash',str(source/'scripts/pack_love.sh'),'--output',str(payload)],check=True,stdout=subprocess.DEVNULL)
+  subprocess.run(['bash',str(source/'scripts/pack_love.sh'),'--engine-only','--output',str(payload)],check=True,stdout=subprocess.DEVNULL)
   normalize_zip(payload);verify_payload(payload)
   runtime_dir=work/'runtime';unpack_zip(a.runtime,runtime_dir);inner=runtime_dir/runtime['inner']
   if a.platform=='windows':
