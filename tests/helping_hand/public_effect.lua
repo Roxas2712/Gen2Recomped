@@ -7,6 +7,7 @@ for _, version in ipairs({ "firered", "emerald" }) do
     assert(mod.content.moves:patch("TACKLE", { effect = "HELPING_HAND", power = 0 }))
     mod.exports.effect = assert(mod.content.moves:get("TACKLE")).effect
     mod.exports.hits = {}
+    mod.hooks:wrap("battle.crit", function() return false end)
     mod.hooks:wrap("battle.enemy_action", function() return { move = "SCRATCH", target = 0 } end)
     mod.events:on("battle.damage_dealt", function(e)
       mod.exports.hits[#mod.exports.hits+1] = { target = e.target.mon.nickname, amount = e.damage }
@@ -26,6 +27,12 @@ for _, version in ipairs({ "firered", "emerald" }) do
   T.eq(f.data.moves[f.ids.TACKLE].gen3Effect, 176, "canonical effect selects native semantic 176")
   local b = f.fresh("TACKLE", { enemy = true }).battle
   b.double = true
+  b.rng = function(lo, hi)
+    if lo == 85 and hi == 100 then
+      return 100
+    end
+    return lo or 0
+  end
   local right = require("src.battle.BattleState").makeBattler(
     f.data,
     require("src.mods.Merge").deepCopy(b.enemy.mon),
