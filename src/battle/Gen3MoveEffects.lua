@@ -1030,7 +1030,20 @@ F.FUTURE_SIGHT_EFFECT = {
 
 -- BEAT UP strikes once per healthy party member.
 F.BEAT_UP_EFFECT = {
+  rev = 1,
+  chooseDamage = function(ctx)
+    if not require("src.core.GameVersion").isGen3() then return ctx.computeDamage({ rng = ctx.rng }) end
+    if not require("src.battle.Gen3BeatUp").prepare(ctx) then return nil, Strings("But, it failed!") end
+    return 0, { crit = false, typeMult = 10, gbaBeatUp = true }
+  end,
+  perHitDamage = function(ctx, _, damage, info)
+    if not require("src.core.GameVersion").isGen3() then return damage, info end
+    return require("src.battle.Gen3BeatUp").nextDamage(ctx)
+  end,
   hitCount = function(ctx)
+    -- The party is read after accuracy, and eligibility can change in a mod's
+    -- hit callback. Six is the valid party bound; perHitDamage stops early.
+    if require("src.core.GameVersion").isGen3() then return 6 end
     local party = ctx.user.isPlayer and ctx.battle.game
                   and ctx.battle.game.save and ctx.battle.game.save.party
     if not party then return 1 end
