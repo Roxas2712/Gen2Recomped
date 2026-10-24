@@ -48,8 +48,8 @@ DS reports this hook unavailable and keeps its own renderer.
 
 New GBA imports extract healthbox element tile 70 into
 `battle/hud/caught.png` and publish `constants.gen3BattleHud.images.caught`.
-Existing caches use their already imported Pokédex marker as a fallback, as the
-reference renderer does when its element sheet is unavailable. Reimport for
+Existing caches use their already imported Pokédex marker as a fallback, with
+the older tall Emerald cell cropped to its central native 8x8 footprint. Reimport for
 the dedicated native 8x8 healthbox tile. Missing optional art draws no placeholder.
 Legacy fallback artwork/layout is not claimed pixel-identical to the new tile.
 No cartridge art is bundled by this change.

@@ -43948,6 +43948,14 @@ function RomExtractorGen3:hudImage(raw, from, cols, rows, colors)
   return image
 end
 
+-- The dedicated 8x8 caught indicator from the validated healthbox sheet.
+function RomExtractorGen3:battleCaughtMarker(elements, colors)
+  if type(elements) ~= "table" or #elements < 71 * 32 then return nil end
+  local path = "battle/hud/caught.png"
+  self:saveImage(self:hudImage(elements, 70 * 32 + 1, 1, 1, colors), path)
+  return "assets/generated/" .. path
+end
+
 -- The two OAM halves side by side, which is the panel as the player sees it.
 -- TWO SPRITES SIDE BY SIDE -- AND THEY ARE NOT ALWAYS THE SAME SIZE.
 --
@@ -48933,13 +48941,6 @@ end
 --
 -- Returns nil rather than half a record: a row of balls in the wrong place is
 -- worse than no row, and the screen already knows how to draw nothing.
-function RomExtractorGen3:battleCaughtMarker(elements, colors)
-  if type(elements) ~= "table" or #elements < 71 * 32 then return nil end
-  local path = "battle/hud/caught.png"
-  self:saveImage(self:hudImage(elements, 70 * 32 + 1, 1, 1, colors), path)
-  return "assets/generated/" .. path
-end
-
 function RomExtractorGen3:partySummary()
   local S = RomExtractorGen3.PARTY_SUMMARY
   local rom = self.rom

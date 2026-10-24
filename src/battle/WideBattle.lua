@@ -169,7 +169,7 @@ local function drawGen2Panel(battle, battler, x, y, player, gray)
   else
     local nx = nameX(x + 8, battler.name)
     local width = Font.draw(fitName(battler.name, 80), nx, y)
-    if battle:caughtMarkerVisible(battler) then
+    if require("src.battle.CaughtMarker").forBattle(battle, battler) then
       if require("src.core.GameVersion").isGen2() then
         HudTiles.tile(0x5d, x + 8, y + 8)
       else

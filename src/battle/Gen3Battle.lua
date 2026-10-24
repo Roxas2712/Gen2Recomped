@@ -907,7 +907,8 @@ local function levelAt(battle, battler, x, y, text, isStatus)
 end
 
 -- Native imports carry tile 70 of the healthbox elements. Older caches use
--- the existing Pokédex marker, the same fallback as the reference renderer.
+-- the existing Pokédex marker, cropped to the native 8x8 healthbox footprint.
+local caughtQuads = setmetatable({}, { __mode = "k" })
 local function drawCaughtMarker(battle, battler, x, y)
   if not require("src.battle.CaughtMarker").gbaVisible(battle, battler) then return end
   local record = hudRecord(battle)
@@ -919,7 +920,19 @@ local function drawCaughtMarker(battle, battler, x, y)
   end
   if not exists(path) then return end
   love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.draw(Assets.image(path), x + 8, y + 16)
+  local image = Assets.image(path)
+  local w, h = image:getDimensions()
+  if w == 8 and h == 16 then
+    -- The older Emerald Pokédex cache centers a 7x7 mark inside an 8x16 cell.
+    local quad = caughtQuads[image]
+    if not quad then
+      quad = love.graphics.newQuad(0, 4, 8, 8, w, h)
+      caughtQuads[image] = quad
+    end
+    love.graphics.draw(image, quad, x + 8, y + 16)
+  else
+    love.graphics.draw(image, x + 8, y + 16)
+  end
 end
 
 local function drawStatusPanel(battle, battler, x, y, player)
