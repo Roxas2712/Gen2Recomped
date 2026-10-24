@@ -11,14 +11,62 @@ SDK consumers. It has independent metadata validation and does not publish
 this branch's battle hook. Gen1 API-2 live-record aliasing is explicitly outside
 that common API-3 contract.
 
-Current source: clean `Roxas2712/gen1recomp-Mac-fix` at
-`fb7b0366efcb85e703e9e6d5a8a24d01456a109b` on `codex/portability-testing`,
-composing [Gen1 PR #3052](https://github.com/bryanthaboi/gen1recomp/pull/3052),
-[Gen1 PR #3053](https://github.com/bryanthaboi/gen1recomp/pull/3053) and
-[Gen1 PR #3054](https://github.com/bryanthaboi/gen1recomp/pull/3054).
-This explicit fork reference includes Taunt, item-knowledge and party-status
-fixes; none of the counterparts is claimed merged upstream.
-Earlier milestones retain their recorded upstream `535a5ec` source evidence.
+Publication scope is **Gen2Recomped only**. Gen1Recomp and existing reference
+forks are read-only inputs. Do not open, reopen or update upstream Gen1 PRs.
+
+The historical modified reference fork remains clean at
+`Roxas2712/gen1recomp-Mac-fix@fb7b0366efcb85e703e9e6d5a8a24d01456a109b`.
+It includes earlier reference-fixture corrections; comparisons against it
+are not proof of parity with unchanged upstream Gen1. Historical milestones
+below retain their evidence at the time and do not authorize publication there.
+
+## Current status after native order and target-handle corrections
+
+[Gen2 PR #188](https://github.com/UNDERdecoded/Gen2Recomped/pull/188) is integrated
+at development commit `0f74db32`. Native AI order prediction and actual planning
+share the prepared round word; the original pinned C comparison and its
+16,680 focused checks pass. The independent combined testing branch passed
+206/206 engine suites for that milestone. Both enemy choices and reservations
+are preserved before turn flags reset; the metadata prefix is applied once.
+
+The strict shared comparison is now **not green**: each API-3 and API-2/unified
+run executes 12 workers / 1,101 paired observations and reports **534 RNG-trace
+differences**. Every difference is exactly the host's additional initial
+`rng(0, 65535)` for the prepared turn word; the remainder of the unmodified
+records is equal. Gen1 samples that word later in its planner. The checker
+still exits 1 and preserves all raw differences. Do not filter that prefix,
+change the reference, or claim complete RNG/controller parity from this run.
+
+[Gen2 PR #189](https://github.com/UNDERdecoded/Gen2Recomped/pull/189) fixes a
+reproduced native controller crash on a delegated double-move `target=true`.
+The shared Test Mod's new case now matches complete HP, party PP, stock and
+event observations in FireRed/Emerald for both host API modes. This introduces
+no further strict differences. Core tests pass **712/712** in Red/Gold/FireRed/
+Emerald; valid target identities and side-aware redirection are preserved.
+
+A separate isolated 45-case Emerald controller audit covers scalar/table,
+boolean, fractional, out-of-range, infinite and NaN target/slot/item/switch/
+watch payloads. The host crash count falls from one to zero; the unchanged
+reference has nine crashes, including watch targets and non-integral target
+IDs. This is boundary evidence, not a shared malformed-payload contract or
+permission to reproduce those reference crashes. The selected-case argument
+of `turn_cases.lua` only selects test inputs; it replaces no owned producer.
+
+Development production commit `b0f60781` plus the expanded test fixture passes
+**151/161 engine suites**, SDK **3/3** and B30. Its exact **26 FAIL lines** match
+the preceding ten-suite baseline. Focused enemy decisions pass **4,654/4,654**.
+The independent combined testing branch passes **207/207** with #189, and
+still excludes the unfinished enemy-decision hook. No Gen1 code was changed.
+
+Evidence in ignored `tmp/enemy-switch-item-qa/`:
+`contracts-unusable-target.json`, `contracts-unusable-target-api2.json`,
+`full-unusable-target.log`, `targeted-unusable-target.log`, `malformed-before.json`,
+`malformed-after.json`, `native-order-prerequisite.json` and
+`order-prerequisite-focused.log`. Older strict order reports retain 1,099
+observations and the same 534 trace differences. These are CPU-only results.
+
+## Historical development evidence
+
 `tools/enemy-decision-contract-check/check.py` runs the unchanged public consumer
 through both real SDKs in separate workers. The current matrix covers Red's
 unavailable producer and Gold/Silver/Crystal/FireRed/Emerald native query paths.
@@ -685,7 +733,7 @@ the unfinished enemy switch/item hook remains outside the combined branch.
 [Gen2 PR #182](https://github.com/UNDERdecoded/Gen2Recomped/pull/182) publishes
 native held-effect and item-membership commands, real Focus Band/Leftovers
 observation producers, and GBA direct-damage/confusion/OHKO adjustment order.
-Its explicit counterpart is [Gen1 #3053](https://github.com/bryanthaboi/gen1recomp/pull/3053).
+Its explicit counterpart is the historical modified reference fixture.
 Both are regular, published and unmerged. Their hosted workflows await
 maintainer approval; the dedicated host workflow and source CI have zero jobs.
 The independent interpreter/damage matrix passes **1,491 host / 1,240 source**
@@ -737,7 +785,7 @@ next native prerequisites, alongside the earlier controller gaps.
 
 [Gen2 PR #184](https://github.com/UNDERdecoded/Gen2Recomped/pull/184) publishes
 native party-status equality and stored sleep state, paired with
-[Gen1 #3054](https://github.com/bryanthaboi/gen1recomp/pull/3054). Both PRs are
+the historical modified reference fixture. Both PRs are
 regular, published and unmerged. Hosted workflows await maintainer approval;
 the dedicated host workflow and source CI have zero executed jobs. Local
 acceptance is separate. The independent shared matrix passes **10,006 host /

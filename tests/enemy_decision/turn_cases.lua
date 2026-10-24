@@ -1,6 +1,6 @@
 -- Real GBA controller startup/update on the reference; real trainer
 -- construction, turn planning and presentation-queue processing on the host.
-local function run(f, root, backend)
+local function run(f, root, backend, selectedSpecs)
   local T, rows = f.T, {}
   local copy = require("src.mods.Merge").deepCopy
   local B, trainers, oldTrainers
@@ -527,6 +527,13 @@ local function run(f, root, backend)
       changes = { kind = "move", move = 33, slot = 1, user = "player" },
     },
     {
+      name = "delegated-move-double-unusable-target",
+      mode = "mutate-fields",
+      double = true,
+      stock = { item(13), item(13) },
+      changes = { kind = "move", move = 33, slot = 1, target = true },
+    },
+    {
       name = "delegated-move-double-selected-target",
       mode = "mutate-fields",
       double = true,
@@ -631,7 +638,7 @@ local function run(f, root, backend)
     { name = "double-x-last-first-age", double = true, x = true, age = 1, stock = { item(300), item(300) } },
     { name = "double-x-later-age", double = true, x = true, age = 0, stock = { item(300), item(300) } },
   }
-  for _, spec in ipairs(specs) do
+  for _, spec in ipairs(selectedSpecs or specs) do
     local b = fresh(spec)
     turn(b)
     T.eq(f.e.state.calls, spec.class and 0 or spec.double and 2 or 1, spec.name .. " public query count")
