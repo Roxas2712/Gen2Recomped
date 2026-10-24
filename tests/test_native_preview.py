@@ -22,6 +22,11 @@ class Payload(unittest.TestCase):
   with self.assertRaises(ValueError):module.verify_payload(p,'0.7.6')
  def test_release_version_cannot_be_silently_absent(self):
   with self.assertRaises(KeyError):module.verify_payload(self.archive(),'0.8.45')
+ def test_mac_archive_excludes_unrestorable_host_metadata(self):
+  module.verify_mac_archive(self.archive())
+  for f in ('macos/App.app/._Info.plist','__MACOSX/._App.app','macos/App.app/Contents/Frameworks/x.framework/._x'):
+   with self.subTest(f=f):
+    with self.assertRaises(ValueError):module.verify_mac_archive(self.archive((f,)))
  def test_pinned_platforms_same_runtime(self):
   self.assertEqual(set(module.RUNTIMES),{'windows','macos'})
   for runtime in module.RUNTIMES.values():self.assertEqual(len(runtime['sha256']),64)

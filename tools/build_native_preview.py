@@ -36,6 +36,11 @@ def unpack_zip(path,dest):
    p=PurePosixPath(name)
    if p.is_absolute()or '..'in p.parts:raise ValueError('unsafe runtime archive')
   z.extractall(dest)
+def verify_mac_archive(path):
+ with zipfile.ZipFile(path)as z:
+  for name in z.namelist():
+   if any(p=='__MACOSX'or p.startswith('._')for p in PurePosixPath(name).parts):
+    raise ValueError('macOS archive contains host metadata')
 def main():
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--platform',choices=RUNTIMES,required=True);p.add_argument('--runtime',type=Path,required=True);p.add_argument('--source-ref',required=True);p.add_argument('--release-id',required=True);p.add_argument('--engine-version',required=True,help='Real engine release X.Y.Z, stamped identically to regular releases');p.add_argument('--out',type=Path,required=True);a=p.parse_args()
  if not re.fullmatch(r'[0-9]{8}\.[0-9]+',a.release_id):p.error('release-id must be YYYYMMDD.N')
@@ -83,7 +88,8 @@ def main():
    stage=work/'macos';stage.mkdir();shutil.move(bundle,stage/bundle.name)
    for backend in ('OpenGL','Metal'):
     cmd=stage/(backend+'-Test.command');cmd.write_text('#!/bin/sh\ncd "$(dirname "$0")"\nexport POKEPORT_GRAPHICS_BACKEND='+backend.lower()+'\nexec "./Gen2Recomped-NativePreview.app/Contents/MacOS/love" "$@"\n');cmd.chmod(0o755)
-   target=out/f'Gen2Recomped-NativePreview-{a.release_id}-macos.zip';subprocess.run(['ditto','-c','-k','--keepParent',str(stage),str(target)],check=True)
+   target=out/f'Gen2Recomped-NativePreview-{a.release_id}-macos.zip';subprocess.run(['ditto','-c','-k','--norsrc','--noextattr','--noacl','--keepParent',str(stage),str(target)],check=True)
+   verify_mac_archive(target)
   metadata=dict(engineVersion=a.engine_version,sourceCommit=ref,runtimeCommit=RUNTIME_COMMIT,runtimeArtifact=runtime['id'],runtimeSha256=runtime['sha256'],platform=a.platform,previewIdentity=identity,payloadSha256=sha(payload),archiveSha256=sha(target),modsIncluded=False,modsEnabled=True,legacyMigration=False,automaticInstallation=False)
   (out/'build.json').write_text(json.dumps(metadata,indent=2)+'\n');print(json.dumps(metadata))
 if __name__=='__main__':main()
