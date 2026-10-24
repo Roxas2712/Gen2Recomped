@@ -732,3 +732,47 @@ The audit is `audit-emerald-ai-item-knowledge.log`; reachability is not proof
 of complete stock-program/controller behavior. No new graphical run or
 full-gameplay parity is claimed. Party status and action-order contracts are
 next native prerequisites, alongside the earlier controller gaps.
+
+## Native party status and public scorer milestone
+
+[Gen2 PR #184](https://github.com/UNDERdecoded/Gen2Recomped/pull/184) publishes
+native party-status equality and stored sleep state, paired with
+[Gen1 #3054](https://github.com/bryanthaboi/gen1recomp/pull/3054). Both PRs are
+regular, published and unmerged. Hosted workflows await maintainer approval;
+the dedicated host workflow and source CI have zero executed jobs. Local
+acceptance is separate. The independent shared matrix passes **10,006 host /
+7,496 source** focused checks and **4 workers / 2,500 paired observations**.
+
+Development runtime `bcf8076e7de864b7421f467aa09d3fe8f8d317ba` includes eight
+additional cases per GBA profile through real native opponent decisions and
+the unchanged public scorer: own/target party words, full equality versus a
+subset mask, fainted refusal, sixth reserve slot, ordinary egg eligibility,
+and actual sleep/toxic infliction. Both move candidates must reach scoring;
+the expected native score, stored-party purity and producer RNG are asserted.
+The host fixture uses its real game-save player party fallback.
+
+Focused checks pass **4,592/4,592**. Clean API 3 and API 2/unified each match
+in **12 workers / 1,087 paired observations**, with zero differences. The full
+development run passes **148/158** engine suites, SDK **3/3** and B30. Its exact
+**26 FAIL lines across ten inherited suites** match the prior item milestone.
+The fully composed testing branch passes **204/204** engine suites; it still
+excludes this unfinished public enemy hook.
+
+The checker explicitly pins clean combined source
+`fb7b0366efcb85e703e9e6d5a8a24d01456a109b`, composing source PRs #3052–3054.
+Its Taunt, item and party focused suites pass **372**, **1,240** and **7,496**
+checks respectively. The independent party checker keeps its own source
+#3054 pin and checks an identical shared fixture. Historical evidence keeps
+its original refs. No new graphical or complete native-controller/gameplay
+parity is claimed; unrelated status producers remain separate work.
+
+Reports in ignored `tmp/enemy-switch-item-qa/`:
+`contracts-party-status-clean.json`, `contracts-party-status-clean-api2.json`,
+`party-vm-clean.json`, `targeted-party-status.log`, `full-party-status.log`
+and `audit-emerald-ai-party-status.log`. The fresh read-only Emerald AI import
+now considers flags **0, 1, 3–9** runnable; flag **2** still lacks
+`if_user_goes` and `if_user_has_no_attacking_moves`. The unused broken inverse
+party macro remains unsupported. Reachability is not a proof that every
+stock-program/controller path matches. Order prediction and attacking-move
+queries are the next native prerequisites, alongside the controller gaps
+already recorded above.
