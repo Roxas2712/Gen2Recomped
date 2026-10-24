@@ -31,8 +31,8 @@ end
 -- BattleState:say takes text that is already expanded, not a label.
 local function resolvedText(ctx, textId)
   local data = ctx.game.data
-  local text = data.text[textId]
-  if not text and ctx.overworld then
+  local text, private = require("src.script.ScriptText").get(data, textId)
+  if not text and not private and ctx.overworld then
     text = data:resolveText(ctx.overworld.map.def.label, textId)
   end
   text = text or textId

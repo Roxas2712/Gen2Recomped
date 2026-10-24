@@ -231,6 +231,11 @@ function TextBox.registerInto(registry, _, owner)
 end
 
 function TextBox.substitute(game, text)
+  if type(text) == "string" and game.data and game.data._romTextGeneration == 2 then
+    -- Prose end markers are control metadata, not visible glyphs. The
+    -- native Gen-2 battle/UI paths strip them before their textbox pass.
+    text = text:gsub("{DONE}", ""):gsub("{PROMPT}", "")
+  end
   local Tokens = require("src.script.Tokens")
   local handlers = game.data and game.data.tokens or TextBox.TOKENS
   return Tokens.expand(game, text, handlers)

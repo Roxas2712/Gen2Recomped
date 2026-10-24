@@ -3,8 +3,12 @@
 local Strings = require("src.core.Strings")
 local ENDING = { ["{DONE}"] = true, ["{PROMPT}"] = true }
 return function(data, label, fallback, ...)
-  local text = data and data.text and data.text[label]
-  if text == nil then
+  local prose = data and data._romTextGeneration == 2 and data.romText
+  local text = prose and prose[label] or nil
+  if text == nil and not (prose and data._romTextTouched and data._romTextTouched[label]) then
+    text = data and data.text and data.text[label]
+  end
+  if not text then
     if fallback == nil then
       error("ROM text " .. tostring(label) .. " is not in the cache", 2)
     end

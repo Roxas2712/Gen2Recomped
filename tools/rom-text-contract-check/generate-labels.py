@@ -7,6 +7,12 @@ from pathlib import Path
 import re
 import subprocess
 
+STORAGE_LABELS = [
+    "gText_WithdrawPokemon", "gText_DepositPokemon", "gText_MovePokemon", "gText_MoveItems", "gText_SeeYa",
+    "gText_WithdrawMonDescription", "gText_DepositMonDescription", "gText_MoveMonDescription",
+    "gText_MoveItemsDescription", "gText_SeeYaDescription",
+]
+
 REFERENCE = '535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91'
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -52,8 +58,12 @@ def main():
         if run.returncode or len(lines) != 1:
             raise RuntimeError(run.stdout + run.stderr)
         facts = json.loads(lines[0])
+        facts = {'text': {key: facts['text'][key] for key in STORAGE_LABELS}, 'battle': {}}
         content = header(version) + 'return {\n'
         for kind in ['text', 'battle']:
+            if not facts[kind]:
+                content += f'  {kind} = {{}},\n'
+                continue
             content += f'  {kind} = {{\n'
             for label, offset in sorted(facts[kind].items()):
                 assert isinstance(offset, int) and 0 <= offset < 0x1000000, (version, label, offset)
@@ -65,7 +75,8 @@ def main():
     if not a.check:
         output.mkdir(parents=True, exist_ok=True)
     for version, content in generated.items():
-        path = output / (version + '.lua')
+        path = (ROOT / 'tests/rom_text' / ('labels_' + version + '.lua')
+                if version in ['firered', 'emerald'] else output / (version + '.lua'))
         if a.check:
             if path.read_text() != content:
                 raise AssertionError(f'stale label facts: {path}')

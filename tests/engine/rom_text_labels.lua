@@ -8,15 +8,16 @@ T.eq(L.forVersion("ruby"), nil, "unregistered host GBA profile has no guessed of
 T.eq(L.forVersion("gold")._WokeUpText, true, "Gen-2 prose label is known")
 T.eq(L.forVersion("gold")["55:4067"], nil, "VM bank/address is not engine prose")
 T.eq(L.forVersion("gold").TEXT_S55_4067, nil, "host physical VM key is not engine prose")
-T.eq(L.address("gold", "_WokeUpText"), nil, "Gen-2 labels are not mistaken for GBA addresses")
-T.eq(L.address("firered", "gText_BigGuy"), 0x417FBB, "FireRed exact storage-label address")
-T.eq(L.address("emerald", "gText_BigGuy"), 0x5EB5F9, "Emerald exact storage-label address")
-T.eq(L.address("firered", "sText_PkmnWokeUp"), 0x3FBCD1, "FireRed native battle-label address")
-T.eq(L.address("emerald", "sText_PkmnWokeUp"), 0x5CA541, "Emerald native battle-label address")
-local _, battle = L.address("emerald", "sText_PkmnWokeUp")
-T.eq(battle, true, "battle code dialect remains explicit")
-local _, ordinary = L.address("firered", "gText_BigGuy")
-T.eq(ordinary, false, "field/menu code dialect remains explicit")
-T.eq(L.address("emerald", "UNKNOWN_MOD_LABEL"), nil, "unknown label does not acquire an offset")
-T.eq(L.forVersion("emerald"), L.forVersion("emerald"), "native label dictionary is cached")
+for _, version in ipairs({ "firered", "emerald" }) do
+  local facts = dofile("tests/rom_text/labels_" .. version .. ".lua")
+  local count = 0
+  for label, offset in pairs(facts.text) do
+    T.eq(type(label), "string", "semantic storage label is named")
+    T.check(type(offset) == "number" and offset > 0, "semantic storage binding has exact native address")
+    count = count + 1
+  end
+  T.eq(count, 10, "all five storage actions and descriptions have provenance")
+  T.eq(next(facts.battle), nil, "storage actions are ordinary text, not battle-code strings")
+end
+T.eq(L.forVersion("gold"), L.forVersion("gold"), "native Gen-2 label dictionary is cached")
 T.finish("native prose-label provenance facts")

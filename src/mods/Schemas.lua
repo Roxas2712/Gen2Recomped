@@ -613,6 +613,11 @@ R.sprites = {
   example = 'mod.content.sprites:register("SPRITE_HERO", { image = "...", frames = 6 })',
 }
 
+R.rom_text = {
+  semantics = "record", generations = "23", value = f.str,
+  example = 'mod.content.rom_text:override("_WokeUpText", "{USER} woke up!")',
+}
+
 R.text = {
   semantics = "record", target = "text",
   value = f.str,
