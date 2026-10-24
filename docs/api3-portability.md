@@ -196,3 +196,6 @@ boundary, see [portable AI-class content](portable-ai-class-content.md).
 
 For the native damage-order correction used by portable `battle.crit` mods,
 see [Gen-3 critical/type rounding](gen3-critical-order.md).
+
+For the distinct Gold/Silver/Crystal critical-base calculation used by the
+same public consumer, see [native Gen-2 critical base](gen2-critical-base.md).

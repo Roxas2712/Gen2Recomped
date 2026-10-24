@@ -23,6 +23,7 @@ jobs:
       - name: Check critical/type boundaries
         run: |
           luajit tests/engine/gen3_critical_order.lua
+          luajit tests/engine/gen2_critical_base.lua
           luajit tests/engine/critical_order_contract.lua
       - name: Compare unchanged public consumer
         run: |

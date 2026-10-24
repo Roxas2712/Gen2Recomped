@@ -1,4 +1,7 @@
 return function(root, backend, version, api)
+  if version == "gold" or version == "silver" or version == "crystal" then
+    return dofile(root .. "/tests/critical_order/gen2_cases.lua")(root, backend, version, api)
+  end
   local native = backend == "gen1"
   local f = dofile(root .. "/tests/charge_required/fixture.lua").new(
     root,
