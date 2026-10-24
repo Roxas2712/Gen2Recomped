@@ -287,7 +287,7 @@ local function writeRecord(ctx, kind, id, value, old, mode)
     end
     if value.index ~= nil and value.index ~= DELETE then
       check(value.index <= 255, "Gen-2 item index must be a byte")
-      if value.index == 0 and not old then unsupported("item index zero is reserved") end
+      if value.index == 0 and (not old or old.index ~= 0) then unsupported("item index zero is reserved") end
       for key, row in ctx.loader.content.items:each() do
         if row.index == value.index and ctx.ids:read("items", key) ~= id then
           unsupported("item index is already assigned: " .. tostring(value.index))

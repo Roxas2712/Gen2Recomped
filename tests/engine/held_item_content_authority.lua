@@ -88,6 +88,11 @@ for _, mode in ipairs({ { 1, "native" }, { 2, "native" }, { 2, "unified" }, { 3,
     -- Index checks happen before the freeze guard; neither failure may write.
     local _, reason = items:register("CONFLICT", { id = "CONFLICT", name = "CONFLICT", price = 1, index = 0 })
     T.check(type(reason) == "string" and reason:find("reserved", 1, true), "new item cannot claim NONE index")
+    local _, existingReason = items:patch("LEFTOVERS", { index = 0 })
+    T.check(
+      type(existingReason) == "string" and existingReason:find("reserved", 1, true),
+      "existing item cannot claim NONE index"
+    )
   end
   r.release()
   local clean = loadNone(d)
