@@ -33,18 +33,17 @@ end
 
 local Renderer = {}
 
--- Legacy world shaders pre-flip clip-space Y for LÖVE 11 render targets.
--- LÖVE 12 normalizes that coordinate itself on every backend, so those
--- completed images need one presentation mirror. Native targets and the
--- detached renderData contract already use LÖVE's current image convention.
+-- Legacy mod shaders are normalized at compilation, before HUDs or weather
+-- are painted into their canvases (LegacyShaderCompat). Ordinary world images
+-- are therefore upright too. A producer of an explicitly unconverted image
+-- can still request the old presentation convention.
 function Renderer.mirrorsWorldOverride(pipeline)
   if not love.getVersion or love.getVersion() < 12 then return false end
   pipeline = pipeline or {}
   if pipeline.worldOrientation == "native" or pipeline.worldFormat == "renderData.v1" then
     return false
   end
-  if pipeline.worldOrientation == "legacy" then return true end
-  return require("src.core.GameVersion").generation() <= 3
+  return pipeline.worldOrientation == "legacy"
 end
 
 -- The Game Boy surface.  WIDTH/HEIGHT are the classic dimensions every
