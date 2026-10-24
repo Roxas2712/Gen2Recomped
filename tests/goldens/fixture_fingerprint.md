@@ -34,3 +34,12 @@ To audit a future change, load a fresh `tests.modkit` fixture with
 by section, and then update only reviewed pins. Run the gate again and keep
 the mutation assertions enabled. The ROM-dependent vanilla golden is separate
 and was not re-blessed by this update.
+
+## Native GBA Follow Me (#196)
+
+The intentional `FOLLOW_ME_EFFECT` primary record adds one native registry
+entry. With it the full fixture digest is `128fc071ae7249cd` and the
+`move_effects` section is `7cd0ac0f527968fb`. Removing only that entry
+restores full digest `41e69caf4afa35ab` and section `3bef37494ca4a845`.
+All six other populated section digests stay identical. Only these two pins
+change for this integration; mutation/determinism checks remain enabled.
