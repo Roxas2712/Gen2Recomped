@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "10421a5125d1289bdcee7b5811957b954013a033",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/189",
-  "feature_ref": "1a9c9df9db022ef1b3edfd7a15085b4ced48944f",
+  "runtime_ref": "fbd10fa1288ee9c09ec7823a8e606765278d88e8",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/190",
+  "feature_ref": "64068911a5b48a9332b69428b4b12f159036649a",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 207,
-  "engine_suites_total": 207,
+  "engine_suites_passed": 208,
+  "engine_suites_total": 208,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 4,
-  "cross_engine_paired_observations": 4272,
+  "cross_engine_worker_runs": 8,
+  "cross_engine_paired_observations": 100,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "The #189 CI workflow awaits maintainer approval (action_required) with zero jobs; local acceptance is separate",
+  "hosted_ci": "All three #190 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Historical native GBA attacking-move comparison; current order validation uses original pinned native C, not a modified Gen1 reference",
+  "cross_engine_scope": "Current public GBA enemy move-result normalization against unchanged read-only Gen1; no damage-amount, RNG-trace or whole-battle parity claim",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -1400,5 +1400,37 @@
       "API 2 unified"
     ],
     "reference_publication_allowed": false
+  },
+  "enemy_move_choices": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/190",
+    "feature_ref": "64068911a5b48a9332b69428b4b12f159036649a",
+    "prerequisite_pr": 102,
+    "combined_runtime_ref": "fbd10fa1288ee9c09ec7823a8e606765278d88e8",
+    "focused_checks_passed": 1252,
+    "combined_engine_suites_passed": 208,
+    "combined_engine_suites_total": 208,
+    "source_reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_modified": false,
+    "games": [
+      "firered",
+      "emerald"
+    ],
+    "cross_engine_worker_runs": 8,
+    "cross_engine_paired_observations": 100,
+    "paired_result": "passed",
+    "feature_baseline": {
+      "prerequisite_ref": "69c3474958ec09b48b91b55ff8cfd0ed15501d46",
+      "engine_suites_passed": 77,
+      "engine_suites_total": 87,
+      "failure_lines": 27,
+      "exact_failure_counter_matches_prerequisite": true,
+      "new_failures": 0
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40131487598",
+      "jobs": 0
+    },
+    "scope": "Public GBA move choices and native execution/PP ownership; hook argument parity, public item/switch/watch records, explicit double-target conversion, damage amounts and RNG traces remain separate"
   }
 }

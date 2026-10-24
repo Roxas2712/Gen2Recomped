@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–189 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–190 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,32 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`10421a5125d1289bdcee7b5811957b954013a033`. Its ROM-free run passed
-**207/207 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
-Subsequent status/integration-fixture commits do not change production code.
+`fbd10fa1288ee9c09ec7823a8e606765278d88e8`. Its ROM-free run passed
+**208/208 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+Subsequent status commits do not change production code.
+
+[PR #190](https://github.com/UNDERdecoded/Gen2Recomped/pull/190) normalizes public
+GBA `battle.enemy_action` move choices and binds execution PP to the native
+selected slot. Bare names/numbers and new `move`/`id` records execute the
+requested move, preserve learned moves, and handle nil/false fallback.
+The **1,252/1,252** focused checks pass across FireRed/Emerald and API 1 native,
+API 2 native/unified and API 3 unified, including Pressure, Mimic, duplicate
+moves, right-flank ownership, exhausted slots and native charge continuations.
+
+The same public consumer matches unchanged read-only Gen1
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91` in **8 isolated engine runs /
+100 paired execution observations**. Both the feature and combined runtime
+pass. The feature is stacked on #102 and retains exactly its **27 FAIL lines
+across ten baseline suites**, with no new failures; the combined branch includes
+the baseline repairs. [Hosted CI](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40131487598)
+requires maintainer approval and has zero jobs. Local acceptance is separate.
+This verifies move-result selection, owned PP, actual damage occurrence and
+charge outcomes; hook arguments, double target conversion, damage amounts,
+RNG traces and public item/switch/watch actions remain separate contracts.
+See [portable enemy move choices](portable-enemy-move-choices.md).
+
+Prior #189 results retain runtime
+`10421a5125d1289bdcee7b5811957b954013a033` and its 207/207 engine result:
 
 [PR #189](https://github.com/UNDERdecoded/Gen2Recomped/pull/189) prevents
 scalar chosen/rampage target values from aborting an ordinary move queue.
