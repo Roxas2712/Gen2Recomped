@@ -49,7 +49,8 @@ remain in the comparison. Local Gen2 checks additionally execute complete
 native single/double turn queues, mix native/public callbacks, retain legacy
 API-1/2 argument/handle identities, and verify native-error cleanup.
 
-Native result record fields, public item/switch/watch actions, explicit
+Native move result fields are covered by the follow-up
+[move record contract](portable-enemy-move-records.md). Public item/switch/watch actions, explicit
 move-target conversion, damage amounts and RNG traces remain separate
 contracts. No Gen1 source change or publication is required. This feature is
 stacked on #190; review its feature commit relative to that prerequisite.

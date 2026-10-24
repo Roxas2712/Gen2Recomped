@@ -7,6 +7,7 @@ on:
       - 'examples/portable_enemy_action/**'
       - 'tests/enemy_actions/**'
       - 'tests/engine/portable_enemy_action_*.lua'
+      - 'tests/engine/portable_enemy_move_records.lua'
       - 'tools/enemy-action-contract-check/**'
   push:
     branches: [main, dev]

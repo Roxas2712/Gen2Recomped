@@ -1,4 +1,5 @@
 local Api3Records = require("src.mods.Api3Records")
+local EnemyMoveChoice = require("src.battle.EnemyMoveChoice")
 -- A call-local transaction. Only known record roles cross this boundary;
 -- opaque engine handles (Game, battle, save, map, RNG, UI callbacks) stay native.
 local Ids = require("src.mods.UnifiedIds")
@@ -141,6 +142,7 @@ local function array(t, label, max)
 end
 
 function R.new(loader, name, generation, api3)
+  local portableEnemyAction = api3 and generation == 3 and name == "battle.enemy_action"
   local ids = Ids.new(loader)
   local portable = api3 and Api3Records or nil
   local function readStatus(value)
@@ -292,6 +294,18 @@ function R.new(loader, name, generation, api3)
       return out
     end
     local out = shallow(raw)
+    local nativeAction = portableEnemyAction and kind == "action" and EnemyMoveChoice.nativeView(raw)
+    if nativeAction then
+      local def = moveDef(raw.id)
+      local number = def and tonumber(def.index or def.numId)
+      if not number and type(raw.id) == "number" then number = raw.id end
+      out.kind = raw.kind or "move"
+      out.move = raw.move ~= nil and raw.move or (raw.struggle and "STRUGGLE" or number)
+      out.slot = raw.slot or nativeAction.slot
+      out.user = raw.user or "enemy"
+      out.battler = raw.battler ~= nil and raw.battler or nativeAction.battler
+      out.targetType = raw.targetType or (nativeAction.double and (tonumber(def and def.target) or 0)) or nil
+    end
     for k, v in pairs(raw) do
       local role = recordRoles[k]
       if name == "world.interacted" and k == "target" then
@@ -303,7 +317,9 @@ function R.new(loader, name, generation, api3)
       if name == "pokemon.before_give" and k == "ctx" then
         role = nil
       end
-      if k == "status" then
+      if nativeAction and k == "move" then
+        out[k] = v
+      elseif k == "status" then
         out[k] = readStatus(v)
       elseif k == "move" and type(v) ~= "table" then
         out[k] = read("moves", v)
@@ -329,6 +345,16 @@ function R.new(loader, name, generation, api3)
           end
           refresh()
           return unpack(result, 2, result.n)
+        end
+      end
+    end
+    if portableEnemyAction and kind == "action" then
+      for _, key in ipairs({ "move", "id" }) do
+        local authored, unchanged, known = EnemyMoveChoice.publicReference(raw, key)
+        if unchanged then out[key] = authored
+        elseif known and key == "move" then
+          local def = moveDef(raw[key])
+          out[key] = def and tonumber(def.index or def.numId) or raw[key]
         end
       end
     end
@@ -652,6 +678,14 @@ function R.new(loader, name, generation, api3)
           local restored = restore(v)
           if v ~= before[k] then
             stage(raw, k, restored)
+          end
+        elseif portableEnemyAction and kind == "action" and not value.special
+            and (k == "move" or k == "id") and v ~= before[k] then
+          local known = type(v) == "string" and ids:resolve("moves", v)
+          local converted = known and native("moves", v, old) or v
+          stage(raw, k, converted)
+          pending[#pending + 1] = function()
+            EnemyMoveChoice.rememberReference(raw, k, v, converted)
           end
         elseif kind == "action" and name == "battle.enemy_action" and generation == 3
             and not value.special and (k == "move" or k == "id") and v ~= before[k]

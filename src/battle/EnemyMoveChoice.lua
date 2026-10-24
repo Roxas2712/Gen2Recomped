@@ -1,7 +1,10 @@
 -- Public GBA move choices are action records, not the learned move slot.
 -- A separate action can change its move/target without rewriting party data;
 -- its PP still belongs to the selected native slot (including Pressure).
+local Context = require("src.battle.EnemyActionContext")
 local M = {}
+local nativeViews = setmetatable({}, { __mode = "k" })
+local publicReferences = setmetatable({}, { __mode = "k" })
 local slots = setmetatable({}, { __mode = "k" })
 local function shallow(row)
   local out = {}
@@ -82,24 +85,59 @@ end
 function M.exhausted(action)
   return slots[action] ~= nil and action.pp <= 0
 end
-function M.delegate(battler, action)
-  if
-    type(action) ~= "table"
-    or action.special
-    or action == battler.charging
-    or action == battler.thrashMove
-    or action == battler.rageMove
-  then
+function M.nativeView(action)
+  return nativeViews[action]
+end
+function M.rememberReference(action, key, public, native)
+  local refs = publicReferences[action]
+  if not refs then
+    refs = {}
+    publicReferences[action] = refs
+  end
+  refs[key] = { public = public, native = native }
+end
+function M.publicReference(action, key)
+  local ref = publicReferences[action] and publicReferences[action][key]
+  if ref then
+    return ref.public, action[key] == ref.native, true
+  end
+end
+function M.delegate(battle, battler, action)
+  if type(action) ~= "table" or action.special then
     return action
+  end
+  local slotIndex
+  for i, slot in ipairs(battler.curMoves or {}) do
+    if M.slot(action) == slot then
+      slotIndex = i
+      break
+    end
+  end
+  local function describe(value)
+    if value.id ~= nil then
+      local known, requested = pcall(Context.publicId, battle, battler)
+      if not known then
+        return value
+      end -- legacy native AI queries may use a detached actor
+      nativeViews[value] = {
+        slot = slotIndex,
+        battler = battle:isDouble() and (requested or 1) or requested ~= nil and 1 or nil,
+        double = battle:isDouble(),
+      }
+    end
+    return value
+  end
+  if action == battler.charging or action == battler.thrashMove or action == battler.rageMove then
+    return describe(action)
   end
   for i, slot in ipairs(battler.curMoves or {}) do
     if action == slot then
       local copy = shallow(action)
       copy.slot = i
-      return copy, { raw = action, before = shallow(copy), owner = battler }
+      return describe(copy), { raw = action, before = shallow(copy), owner = battler }
     end
   end
-  return action
+  return describe(action)
 end
 function M.normalize(data, battler, value, delegated, captured)
   if captured and value == delegated then

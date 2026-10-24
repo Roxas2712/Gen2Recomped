@@ -7,6 +7,7 @@ function M.new(root, backend, version, api, format)
   V.set(version)
   local gen = V.generation()
   local rows = {
+    { "STRUGGLE", 165, 50, "NORMAL", "RECOIL_EFFECT", "EFFECT_RECOIL_HIT", 48 },
     { "MIMIC", 102, 0, "NORMAL", "MIMIC_EFFECT", "EFFECT_MIMIC", 82 },
     { "SCRATCH", 10, 40, "NORMAL", "NO_ADDITIONAL_EFFECT", "EFFECT_NORMAL_HIT", 0 },
     { "FLY", 19, 70, "FLYING", "FLY_EFFECT", "EFFECT_FLY", 155 },
@@ -55,6 +56,9 @@ function M.new(root, backend, version, api, format)
         effectChanceRaw = name == "SKY_ATTACK" and 77 or 0,
       }
     end
+  end
+  if backend == "gen2" then
+    data.moves.STRUGGLE = data.moves[ids.STRUGGLE]
   end
   local files, Json = {}, require("src.link.Json")
   for _, name in ipairs({ "main.lua", "manifest.json" }) do
