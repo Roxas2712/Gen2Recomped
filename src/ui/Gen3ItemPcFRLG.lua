@@ -52,15 +52,19 @@ function Gen3ItemPcFRLG.new(game, opts)
   self.rows = opts.rows or {}
   self.nativeProse = opts.nativeProse == true or opts.title == nil
   self.title = opts.title or Strings("WITHDRAW ITEM")
-  if self.nativeProse then
-    self.title = require("src.ui.GbaProse").itemPc(game, "title", self.title)
-  end
   self.onPick = opts.onPick
   self.onCancel = opts.onCancel
   self.onReorder = opts.onReorder
   self.index, self.top = 1, 1
   self.transientWindow = nil
   return self
+end
+
+function Gen3ItemPcFRLG:titleText()
+  if self.nativeProse then
+    return require("src.ui.GbaProse").itemPc(self.game, "title", self.title)
+  end
+  return self.title
 end
 
 -- item_pc.c keeps the base screen alive while it places transient BG0 windows
@@ -304,7 +308,7 @@ function Gen3ItemPcFRLG:draw()
 
   love.graphics.setColor(0, 0, 0, 1)
   local label = self:box("label")
-  local labelText = tostring(self.title or ""):gsub(" ", "\n", 1)
+  local labelText = tostring(self:titleText() or ""):gsub(" ", "\n", 1)
   local faced = Font.hasFace and Font.hasFace("small") and Font.pushFace("small")
   local uiStyles = self.game.data.font and self.game.data.font.uiTextStyles or {}
   if uiStyles.white then Font.pushStyle(uiStyles.white) end

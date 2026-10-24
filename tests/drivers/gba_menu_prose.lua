@@ -92,7 +92,10 @@ return function(game)
     U.tap(game, "a")
     U.wait(10) -- native WITHDRAW ITEM
     local list = game.stack:top()
-    assert(list.title == "MOD_PC_TITLE" and list.nativeProse, "Player PC did not route native title label")
+    assert(
+      list.titleText and list:titleText() == "MOD_PC_TITLE" and list.nativeProse,
+      "Player PC did not route native title label"
+    )
     assert(captured.MOD_PC_TITLE and captured.MOD_FOOTER, "native Item-PC render missed title/cancel")
     U.tap(game, "a")
     U.wait(10)

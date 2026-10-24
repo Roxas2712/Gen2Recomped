@@ -15,9 +15,9 @@ branch instead of silently falling back to FireRed's table keys. The actual
 reference party-footer and FireRed Item-PC draw functions run with captured font
 output and fixture artwork/palette/item data. No text producer is replaced.
 
-Each configuration compares 232 native text values across both profiles: baseline,
+Each configuration compares 261 native text values across both profiles: baseline,
 replacement, wrong-profile isolation, primary TAKE/action CANCEL separation,
-empty strings, removal and failed-owner rollback. The host also runs native
+empty strings, line/page/scroll controls, removal and failed-owner rollback. The host also runs native
 action/render integration checks. These tests do not prove pixel equivalence,
 complete battle flow, every party message, Item-PC quantity/results, or DS support.
 The source's native API 2 is not claimed as a portable source-string registry;
