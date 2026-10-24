@@ -21,6 +21,9 @@ local function api()
     void *CGImageCreate(unsigned long,unsigned long,unsigned long,unsigned long,
       unsigned long,void*,unsigned int,void*,const double*,bool,int);
     void CGImageRelease(void*);
+    typedef struct { void* data; unsigned long height,width,rowBytes; } G2SurfaceImageBuffer;
+    long vImagePermuteChannels_ARGB8888(const G2SurfaceImageBuffer*,const G2SurfaceImageBuffer*,const unsigned char*,unsigned int);
+
   ]]
   local objc=ffi.load("/usr/lib/libobjc.A.dylib")
   -- Anonymous function-pointer declarations create fresh LuaJIT CTypes on
@@ -41,7 +44,8 @@ local function api()
     sendRect(object,
       objc.sel_registerName("setFrame:"),ffi.new("G2SurfaceRect",{{0,0},{w,h}}))
   end
-  native={ffi=ffi,objc=objc,msg=msg,arg=arg,rect=rect,sendBool=sendBool,
+  native={accelerate=ffi.load("/System/Library/Frameworks/Accelerate.framework/Accelerate"),
+    permutation=ffi.new("unsigned char[4]",{2,1,0,3}),ffi=ffi,objc=objc,msg=msg,arg=arg,rect=rect,sendBool=sendBool,
     number=number,at=at,string=string,
     cg=ffi.load("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics"),
     cf=ffi.load("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation"),
@@ -81,6 +85,7 @@ function M.createIfUndefined()
   if binding[0]~=0 or a.gl.glCheckFramebufferStatus(0x8D40)~=0x8219 then return nil end
   local self={reason="GL_FRAMEBUFFER_UNDEFINED",layer=nil,view=nil}
   function self:close()
+    if self.pixels then self.pixels:release();self.pixels=nil end
     if self.layer~=nil then
       a.msg(self.layer,"removeFromSuperlayer");a.msg(self.layer,"release")
       self.layer,self.view=nil,nil
@@ -104,15 +109,27 @@ function M.createIfUndefined()
     local width,height=data:getDimensions()
     local size=data:getSize()
     assert(data:getFormat()=="rgba8" and size==width*height*4,"OpenGL recovery requires RGBA8")
-    -- CFData owns a copy before this call returns. Reading ImageData directly
-    -- avoids an additional full-frame Lua string copy/hash/GC allocation,
-    -- without lending mutable/released LÖVE memory to asynchronous Core Animation.
-    local cfdata=a.cf.CFDataCreate(nil,data:getFFIPointer(),size)
+    -- Core Animation's RGBA CGImage commit performs expensive conversion.
+    -- Permute exact bytes into native premultiplied BGRA (32-bit little-endian)
+    -- with vImage, leaving the RGBA readback/capture untouched. One scratch
+    -- buffer is reused; CFData still owns an immutable copy for async display.
+    local pointer=data:getFFIPointer()
+    if not self.pixels or self.pixels:getSize()~=size then
+      local pixels=love.data.newByteData(size)
+      if self.pixels then self.pixels:release() end
+      self.pixels=pixels
+    end
+    local input=a.ffi.new("G2SurfaceImageBuffer",{pointer,height,width,width*4})
+    local output=a.ffi.new("G2SurfaceImageBuffer",{self.pixels:getFFIPointer(),height,width,width*4})
+    -- kvImageDoNotTile: avoid worker scheduling for this memory-only shuffle.
+    assert(a.accelerate.vImagePermuteChannels_ARGB8888(input,output,a.permutation,16)==0,
+      "OpenGL recovery could not convert frame to BGRA")
+    local cfdata=a.cf.CFDataCreate(nil,output.data,size)
     assert(cfdata~=nil,"OpenGL recovery could not allocate frame data")
     local provider=a.cg.CGDataProviderCreateWithCFData(cfdata)
     local space=a.cg.CGColorSpaceCreateDeviceRGB()
     local image=provider~=nil and space~=nil
-      and a.cg.CGImageCreate(width,height,8,32,width*4,space,1,provider,nil,false,0) or nil
+      and a.cg.CGImageCreate(width,height,8,32,width*4,space,0x2002,provider,nil,false,0) or nil
     if image~=nil then
       local transaction=a.objc.objc_getClass("CATransaction")
       a.msg(transaction,"begin")

@@ -173,3 +173,9 @@ The failed original baseline is retained. For the completed OpenGL comparison,
 the presenter fix is applied equally to both palette variants. Metal timing
 uses its GPU frame path, which does not call the OpenGL presenter; the sampler
 source bytes are unchanged between the Metal measurements and final build.
+
+The subsequent [FireRed OpenGL CPU investigation](firered-opengl-cpu.md)
+addresses the avoidable native RGBA presentation cost left open here. It uses
+exports without mods and an explicit no-mod flag, with the same pinned runtime
+and a current-source baseline. Its scoped CPU and pixel/window results do not
+replace the historical trials above or pool their different source conditions.

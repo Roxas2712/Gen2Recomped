@@ -152,6 +152,14 @@ Objective-C function-pointer ABIs once. The ROM-free runner passes 105/105
 engine suites, 3/3 SDK suites and B30. This remains scoped native flat-world
 acceptance, with the Origami port paused.
 
+The [FireRed OpenGL CPU follow-up](firered-opengl-cpu.md) localises expensive
+RGBA image presentation in the macOS recovery bridge. A lossless vImage shuffle
+into one reusable BGRA scratch buffer lowers sampled FireRed process CPU about
+12% and Emerald 15–17% in the scoped OpenGL comparison. Captures retain their
+original RGBA data and Core Animation retains an immutable copy. Both games
+pass separate OpenGL/Metal window and real-ROM pixel checks; full GPU readback
+and native image copying remain costs. The engine/SDK/B30 checks remain green.
+
 ## Remaining engine work
 
 | Area | Remaining acceptance/work |

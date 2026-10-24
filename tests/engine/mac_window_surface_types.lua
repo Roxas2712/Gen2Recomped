@@ -18,9 +18,12 @@ local objc={objc_msgSend=msg,sel_registerName=function(s)return s end,objc_getCl
 local cf={CFDataCreate=function()cfCopies=cfCopies+1;return 'cfdata'end,CFRelease=function()released=released+1 end}
 local cg={CGDataProviderCreateWithCFData=function()return 'provider'end,CGColorSpaceCreateDeviceRGB=function()return 'space'end,
  CGImageCreate=function()return 'image'end,CGImageRelease=function()end,CGColorSpaceRelease=function()end,CGDataProviderRelease=function()end}
-local ffi={cdef=function()end,new=function(kind,value)if kind=='int[1]'then return {[0]=0}end;return value end,
+love={data={newByteData=function(size)return {getSize=function()return size end,
+ getFFIPointer=function()return 'bgra'end,release=function()end}end}}
+local ffi={cdef=function()end,new=function(kind,value)if kind=='int[1]'then return {[0]=0}end;if kind=='G2SurfaceImageBuffer'then return {data=value[1],height=value[2],width=value[3],rowBytes=value[4]}end;return value end,
  cast=function(_,fn)casts=casts+1;return fn end,
  load=function(path)
+  if path:find('Accelerate',1,true)then return {vImagePermuteChannels_ARGB8888=function()return 0 end}end
   if path:find('libobjc',1,true)then return objc end
   if path:find('CoreGraphics',1,true)then return cg end
   if path:find('CoreFoundation',1,true)then return cf end

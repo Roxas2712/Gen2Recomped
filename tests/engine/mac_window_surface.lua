@@ -3,8 +3,10 @@
 package.path="./?.lua;./?/init.lua;"..package.path
 local T=require("tests.harness")
 local eq,check=T.eq,T.check
+local imageWidth,imageHeight=1,1
+local failAllocation=false
 local view,context={layer={}},{ }
-local counts={data=0,provider=0,space=0,image=0,layer=0,ptr=0}
+local counts={data=0,provider=0,space=0,image=0,layer=0,ptr=0,scratch=0,permutations=0}
 local classes={}
 local objc={}
 function objc.objc_getClass(name)classes[name]=classes[name] or {class=name};return classes[name]end
@@ -24,7 +26,7 @@ function objc.objc_msgSend(object,selector,value)
 end
 local cf={}
 function cf.CFDataCreate(_,pointer,size)
-  eq(size,4,"copy extent matches RGBA storage")
+  eq(size,imageWidth*imageHeight*4,"copy extent matches RGBA storage")
   counts.data=counts.data+1
   return {bytes={unpack(pointer)}}
 end
@@ -35,13 +37,36 @@ function cg.CGColorSpaceRelease()counts.space=counts.space-1 end
 function cg.CGDataProviderCreateWithCFData(data)counts.provider=counts.provider+1;return data end
 function cg.CGDataProviderRelease()counts.provider=counts.provider-1 end
 function cg.CGImageCreate(w,h,bits,pixelBits,stride,space,alpha,provider)
-  eq(w,1,"image width");eq(h,1,"image height");eq(stride,4,"row stride")
+  eq(w,imageWidth,"image width");eq(h,imageHeight,"image height");eq(stride,imageWidth*4,"row stride")
+  eq(alpha,0x2002,"CGImage describes little-endian premultiplied BGRA")
   counts.image=counts.image+1;return {bytes=provider.bytes}
 end
 function cg.CGImageRelease()counts.image=counts.image-1 end
 local ffi={cdef=function()end,cast=function(_,fn)return fn end}
-function ffi.new(name,value)return name=="int[1]" and {[0]=0} or value end
+function ffi.new(name,value)
+  if name=="int[1]" then return {[0]=0} end
+  if name=="G2SurfaceImageBuffer" then return {data=value[1],height=value[2],width=value[3],rowBytes=value[4]} end
+  return value
+end
+love={data={newByteData=function(size)
+  assert(not failAllocation,"scratch allocation failed")
+  counts.scratch=counts.scratch+1;local pointer={}
+  return {getSize=function()return size end,getFFIPointer=function()return pointer end,
+    release=function()counts.scratch=counts.scratch-1 end}
+end}}
+local conversionError=0
+local accelerate={vImagePermuteChannels_ARGB8888=function(input,output,map,flags)
+  eq(flags,16,"byte shuffle does not schedule extra workers")
+  eq(input.height,imageHeight,"source height");eq(input.width,imageWidth,"source width");eq(input.rowBytes,imageWidth*4,"source stride")
+  eq(output.rowBytes,imageWidth*4,"destination stride")
+  if conversionError~=0 then return conversionError end
+  for p=0,input.width*input.height-1 do
+    for i=1,4 do output.data[p*4+i]=input.data[p*4+map[i]+1] end
+  end
+  counts.permutations=counts.permutations+1;return 0
+end}
 function ffi.load(path)
+  if path:find("Accelerate",1,true) then return accelerate end
   if path:find("libobjc",1,true) then return objc end
   if path:find("CoreGraphics",1,true) then return cg end
   if path:find("CoreFoundation",1,true) then return cf end
@@ -54,20 +79,53 @@ package.loaded.ffi=ffi
 local Surface=require("src.render.MacWindowSurface")
 local bridge=assert(Surface.createIfUndefined())
 local pixels={10,20,30,255}
-local data={getDimensions=function()return 1,1 end,getSize=function()return 4 end,
+local data={getDimensions=function()return imageWidth,imageHeight end,getSize=function()return imageWidth*imageHeight*4 end,
   getFormat=function()return "rgba8" end,getFFIPointer=function()counts.ptr=counts.ptr+1;return pixels end,
   getString=function()error("full-frame Lua copy forbidden")end}
 for i=1,40 do
   pixels[1]=i;bridge:present(data,100,100)
-  eq(view.layer.child.image.bytes[1],i,"current copied frame presented")
+  eq(view.layer.child.image.bytes[3],i,"current copied frame presented")
+  eq(view.layer.child.image.bytes[1],30,"blue channel is exact")
+  eq(view.layer.child.image.bytes[2],20,"green channel is exact")
+  eq(view.layer.child.image.bytes[4],255,"alpha channel is exact")
+  eq(pixels[1],i,"original RGBA data remains unchanged for observers")
   pixels[1]=255
-  eq(view.layer.child.image.bytes[1],i,"Core Animation does not borrow mutable readback storage")
+  eq(view.layer.child.image.bytes[3],i,"Core Animation does not borrow mutable readback storage")
   eq(counts.data+counts.provider+counts.space+counts.image,0,"temporary native objects released")
 end
-eq(counts.ptr,40,"presenter reads native ImageData storage directly")
+local oldImage=view.layer.child.image
+imageWidth,imageHeight=2,1
+pixels[5],pixels[6],pixels[7],pixels[8]=80,40,20,128
+bridge:present(data,100,100)
+eq(counts.scratch,1,"resize releases previous scratch buffer")
+eq(bridge.pixels:getSize(),8,"resize uses exact complete-frame extent")
+eq(view.layer.child.image.bytes[5],20,"second pixel blue")
+eq(view.layer.child.image.bytes[7],80,"second pixel red")
+eq(view.layer.child.image.bytes[8],128,"premultiplied alpha preserved")
+eq(oldImage.bytes[3],40,"retained old CF image survives scratch reuse and resize")
+imageWidth,imageHeight=1,2
+bridge:present(data,100,100)
+eq(counts.scratch,1,"equal-byte-size reshape reuses storage with current row geometry")
+imageWidth,imageHeight=3,1;failAllocation=true
+local currentImage=view.layer.child.image
+check(not pcall(bridge.present,bridge,data,100,100),"failed replacement allocation propagates")
+eq(bridge.pixels:getSize(),8,"failed replacement keeps previous buffer alive")
+eq(counts.scratch,1,"failed replacement does not leak or release retained buffer")
+eq(view.layer.child.image,currentImage,"failed frame never replaces current immutable CF image")
+failAllocation=false;imageWidth,imageHeight=1,2
+bridge:present(data,100,100)
+eq(counts.ptr,44,"presenter reads native ImageData storage directly")
 eq(counts.layer,1,"only one owned layer retained")
 data.getFormat=function()return "rgba16f" end
 check(not pcall(bridge.present,bridge,data,100,100),"non-RGBA8 buffer refused before native access")
-eq(counts.ptr,40,"invalid format never read")
-bridge:close();eq(counts.layer,0,"owned layer released at shutdown")
+eq(counts.ptr,44,"invalid format never read")
+eq(counts.scratch,1,"one scratch buffer reused for all presents")
+eq(counts.permutations,43,"every presented frame converted once")
+data.getFormat=function()return "rgba8" end
+conversionError=-1
+check(not pcall(bridge.present,bridge,data,100,100),"failed conversion cannot present a partial/stale frame")
+eq(counts.data+counts.provider+counts.space+counts.image,0,"failed conversion owns no temporary CF objects")
+bridge:close();eq(counts.scratch,0,"scratch buffer released at shutdown")
+bridge:close();eq(counts.scratch,0,"closing twice cannot release scratch twice")
+eq(counts.layer,0,"owned layer released at shutdown")
 T.finish()
