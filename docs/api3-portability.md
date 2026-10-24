@@ -51,8 +51,9 @@ frozen after loading.
 ## Public contracts
 
 Core `pokemon`, `moves`, `items`, `trainers` and `encounters` handles use the
-existing unified adapters. Other registries retain their native record
-shapes, rather than inventing canonical fields. Every content handle exposes
+existing unified adapters. Script `text` uses the shared source-string adapter
+described in [portable text sources](api3-text-sources.md). Other registries
+retain their documented record shapes. Every content handle exposes
 `has(id)`, `supports()` and `available`. API-3 passthrough reads and iteration
 return detached values too; change data through the write methods.
 
