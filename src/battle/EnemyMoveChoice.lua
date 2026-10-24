@@ -96,14 +96,14 @@ function M.delegate(battler, action)
     if action == slot then
       local copy = shallow(action)
       copy.slot = i
-      return copy, { raw = action, before = shallow(copy) }
+      return copy, { raw = action, before = shallow(copy), owner = battler }
     end
   end
   return action
 end
 function M.normalize(data, battler, value, delegated, captured)
   if captured and value == delegated then
-    if same(value, captured.before) then
+    if captured.owner == battler and same(value, captured.before) then
       return captured.raw
     end
     local id = resolve(data, value.move or value.id)
