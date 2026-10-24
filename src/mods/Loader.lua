@@ -784,6 +784,9 @@ function Loader:_contentApi(mod, registry, deprecation)
   if registry.name == "held_items" then
     return require("src.mods.HeldItemContent").api(loader, mod, api, loader:_generation(), false)
   end
+  if registry.name == "items" then
+    return require("src.mods.HeldItemContent").itemApi(loader, api, loader:_generation())
+  end
   return api
 end
 

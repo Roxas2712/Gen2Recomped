@@ -75,7 +75,7 @@ function C.run(root, backend, version, api, format)
       end
       row.count = count
       if mode == "price" then
-        f.T.eq(f.data.items.LEFTOVERS.price, 999, "item price composes with held fields")
+        f.T.eq(f.data.items[f.nativeItem("LEFTOVERS")].price, 999, "item price composes with held fields")
       end
     end
     rows[#rows + 1] = row
