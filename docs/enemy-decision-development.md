@@ -11,7 +11,10 @@ SDK consumers. It has independent metadata validation and does not publish
 this branch's battle hook. Gen1 API-2 live-record aliasing is explicitly outside
 that common API-3 contract.
 
-Current source: clean Gen1Recomp `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`.
+Current source: clean `Roxas2712/gen1recomp-Mac-fix` at
+`10613015fc68d924915570bd1abee34b70d5bd01`, the paired Taunt predicate fix in
+[Gen1 PR #3052](https://github.com/bryanthaboi/gen1recomp/pull/3052).
+Earlier milestones retain their recorded upstream `535a5ec` source evidence.
 `tools/enemy-decision-contract-check/check.py` runs the unchanged public consumer
 through both real SDKs in separate workers. The current matrix covers Red's
 unavailable producer and Gold/Silver/Crystal/FireRed/Emerald native query paths.
@@ -640,3 +643,35 @@ effects, party status, taunt, move-order and attacking-move queries. This is
 reachability evidence, not proof of full stock-program/controller parity.
 No graphical run is added. The unfinished enemy switch/item hook and its
 extended controller wiring remain outside the combined testing branch.
+
+## Live Taunt predicates and public scorer milestone
+
+[Gen2 PR #181](https://github.com/UNDERdecoded/Gen2Recomped/pull/181) publishes
+both native AI Taunt predicates, the two-tick GBA owned effect and cleared-zero
+application behavior. The source counterpart replaces unconditional false/true
+placeholders; other source production code is unchanged. The independent
+interpreter/effect/residual matrix passes 567 host / 372 source checks and
+4 workers / 96 paired observations. Both PRs are regular, published and
+unmerged. Their hosted workflows await maintainer approval.
+
+Development runtime `6e8e3ea7bfa0dc6bf8db6d8532b90bb7c21ab2b1` runs ten
+additional cases per GBA profile through the unchanged public scoring consumer:
+zero/live timers, both predicate directions, double targeting and actual
+native `Engine.resolveMove` / host `performMove` Taunt production. The move
+fixture uses equivalent declared records and controlled accuracy RNG, then
+the real opponent query and public scorer read its produced timer. It does
+not replace the timer or the predicate with an expected-result stub.
+
+Focused checks pass **4,290/4,290**. Clean host API 3 and API 2/unified each
+match the fixed source in **12 workers / 1,047 paired observations**, with zero
+differences. Reports are `contracts-taunt-clean.json`,
+`contracts-taunt-clean-api2.json`, `targeted-taunt.log` and `full-taunt.log`
+in ignored `tmp/enemy-switch-item-qa/`. The full development run passes
+**146/156** engine suites, SDK **3/3** and B30; its exact **26 FAIL lines**
+remain unchanged across the ten inherited suites.
+
+The paired source reference is explicit in the checker. Other historical
+contract tools keep their own upstream pins. No graphical run or complete
+stock-AI/controller parity is claimed. Held-item observations/effects, party
+status and move-order predicates still require functional native contracts;
+the unfinished enemy switch/item hook remains outside the combined branch.
