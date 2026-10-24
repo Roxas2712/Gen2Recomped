@@ -1,22 +1,22 @@
 # Combined mod-portability testing branch
 
 The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in PRs #88–162
+hook, rendering, shader and baseline test fixes prepared in PRs #88–163
 (excluding unrelated #138). It is for testing the combined changes before
 upstream reviews and merges the individual PRs. Upstream `main` is separate.
 
 The combined runtime tested for this snapshot is
-`3a944cc7c0e455c094596aa83315150b249f8bbd`. Its ROM-free run passed
-170/170 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
-The charge-turn and enemy-PP checks passed on both engines (70 isolated workers /
-1,044 paired contract observations). Raw native enemy PP costs now compare
-exactly in all four SDK modes, including the former Gold-family discrepancy.
-The charge suite passed 7,070 checks and the native default/PP suite 926 checks.
-The same public API-3 PP observer additionally passed Gold/Silver/Crystal native
-move depletion, real AI/Struggle execution, last-PP charge release and snapshot
-reads. The unit suite also covers explicit settings, option cycling,
-per-generation persistence and save-import defaults. Prior families retain
-their historical refs in `portability-testing-status.json`.
+`650467e7bea28eee1dd6e2dc967b566dc3429ce6`. Its ROM-free run passed
+173/173 engine suites, 3/3 SDK suites and the Dramatic Shape B30 profile.
+The caught-marker consumer passed on both engines in four SDK configurations
+(64 isolated workers / 492 paired native predicate observations).
+Its native suites passed 2,078 SDK/predicate checks, 840 compositor checks and
+216 real-ROM-reader/4bpp import checks. The public entry runs unchanged through
+the actual reference GB/Gold/GBA predicates and the host producer. Native LÖVE
+HUD/GPU smoke on Red/Gold/FireRed/Emerald retains its separate runtime ref
+`40e3e1219e05dd3f675fddcc01c7b1b0f92593ab` below. Prior charge, PP,
+item, follower, map and storage families retain their historical refs in
+`portability-testing-status.json`; those results are not relabeled as new runs.
 
 Native LÖVE 11.5 smoke tests reached the intro, title and New Game
 world/introduction for Red, Gold, FireRed and Emerald using isolated copies
@@ -130,8 +130,9 @@ roundtrip, then deletes only the smoke keys. The ordinary test save remains.
 Red, Gold, FireRed and Emerald passed both phases with the same installed
 API-3 consumer. No generated cartridge data is distributed by this branch.
 
-The current full-suite runtime includes the enemy-PP input/queue driver.
-Later commits record validation/documentation only. Older native smoke families
+The current full-suite runtime includes the enemy-PP and caught-marker drivers.
+Later commits normalize test-fixture formatting (verified bytecode-equivalent)
+and record validation/documentation; they change no production code. Older native smoke families
 retain their historical runtime refs; they are not relabeled as new executions
 on this runtime.
 
@@ -310,3 +311,41 @@ covered by PRs #128–134 (115/125, SDK 3/3 and B30); this combined runtime incl
 those repairs and passes all 170 suites. All 23 hosted PR workflows currently report `action_required` pending maintainer
 approval; the [new PP workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40046010257)
 has zero jobs. These have not executed and are separate from the local results.
+
+
+## Native caught-marker HUD/GPU test
+
+PR #163 adds `battle.caught_marker_visible` and its actual classic/wide GB and
+GBA single-battle marker rendering. Gen 1 defaults off; Gold/GBA default on for
+eligible already-caught wild species. Only literal true shows it. Ownership,
+trainer/tutorial/ghost/status/hidden-HUD gates and GBA presentation caching
+remain native. DS reports unavailable. See [portable caught markers](portable-caught-marker.md).
+
+Install and enable `examples/portable_caught_marker` in the isolated identity:
+
+```sh
+POKEPORT_VERSION=gold POKEPORT_DRIVER=tests/drivers/caught_marker.lua \
+  bash scripts/run-portability-test.sh
+```
+
+Imported Red, Gold, FireRed and Emerald passed on LÖVE 11.5 at native runtime
+`40e3e1219e05dd3f675fddcc01c7b1b0f92593ab`. The driver starts New Game,
+constructs a native battle and draws the actual HUD into GPU canvases. Pixel
+readback checks show/hide/native/nil/zero, ownership/trainer/status/hidden-HUD
+exclusions and unsubscribe with the same installed API-3 consumer. Optional
+`POKEPORT_CAUGHT_SHOT=/absolute/path/hud.png` writes an inspected HUD image.
+No normal SAVE is issued. This is bounded native HUD/GPU verification, not a
+complete playthrough, full battle sequence or cross-engine pixel-equality proof.
+
+The GPU smoke uses existing cache artwork/fallbacks. The older Emerald glyph
+is cropped to its native 8x8 footprint. Fresh GBA imports now read tile 70
+separately from the unchanged 66-tile status scan; synthetic ROM bytes exercise
+the real reader/decoder and output palette/transparency. Complete fresh-ROM
+reimports were not performed. The later full-suite runtime includes this
+import-reader correction; it is not relabeled as a new GPU execution.
+
+Feature full-suite ref `bd182e0f4c39df69f86bcc76ceb15a51e1330579` passed
+118/128 engine suites with exactly the ten old baseline failures covered by
+#128–134, SDK 3/3 and B30. The combined runtime includes those repairs and passes
+173/173. The feature head's later change is bytecode-equivalent fixture formatting;
+the native contract suite was rerun afterward.

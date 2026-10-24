@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/162",
-  "feature_ref": "72ad168fabb613d371eddf73ab0616d264abac03",
+  "runtime_ref": "650467e7bea28eee1dd6e2dc967b566dc3429ce6",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/163",
+  "feature_ref": "b1c8e7e76b3e23a591e0f26635ca2867ec6d5f89",
   "gen1_contract_ref": "79ea62f45fb2ea8f65d081a109431e4eb1bbdb36",
-  "engine_suites_passed": 170,
-  "engine_suites_total": 170,
+  "engine_suites_passed": 173,
+  "engine_suites_total": 173,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 70,
-  "cross_engine_paired_observations": 1044,
+  "cross_engine_worker_runs": 64,
+  "cross_engine_paired_observations": 492,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Charge decisions with exact raw native enemy PP policy in four SDK modes plus API-3 Gold-family enemy PP observer, native depletion/AI/Struggle and last-PP release",
+  "cross_engine_scope": "Latest caught-marker native predicate and SDK family in four host SDK configurations; reference API-2 remains native; compositor and native GPU results are separate",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -161,5 +161,35 @@
     "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40046010257",
     "conclusion": "action_required",
     "jobs": 0
-  }
+  },
+  "enemy_pp_full_suite_runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
+  "feature_tested_ref": "bd182e0f4c39df69f86bcc76ceb15a51e1330579",
+  "caught_marker_native_checks_passed": 2078,
+  "caught_marker_renderer_checks_passed": 840,
+  "caught_marker_import_checks_passed": 216,
+  "caught_marker_cross_engine_worker_runs": 64,
+  "caught_marker_cross_engine_paired_observations": 492,
+  "caught_marker_cross_engine_runtime_ref": "650467e7bea28eee1dd6e2dc967b566dc3429ce6",
+  "native_caught_marker_smoke_games": [
+    "red",
+    "gold",
+    "firered",
+    "emerald"
+  ],
+  "native_caught_marker_runtime_ref": "40e3e1219e05dd3f675fddcc01c7b1b0f92593ab",
+  "native_caught_marker_scope": "Same installed API-3 consumer; imported native title/New Game and constructed battles; real HUD rendering to GPU canvas and pixel readback for show/hide/default/nil/zero, ownership/trainer/status/hidden-HUD gates and unsubscribe; existing cache fallback artwork, no normal SAVE; no full-playthrough/full-battle/cross-engine pixel equality or fresh-ROM-reimport claim",
+  "caught_marker_import_scope": "Synthetic bytes through actual RomGba reader and 4bpp decoder; separate tile-70 read leaves 66-tile status scan unchanged; palette/transparency and short-ROM refusal; no complete fresh-ROM reimport",
+  "caught_marker_feature_baseline": {
+    "engine_suites_passed": 118,
+    "engine_suites_total": 128,
+    "existing_failure_suites": 10,
+    "new_failures": 0,
+    "repair_prs": "#128\u2013134",
+    "sdk_suites_passed": 3,
+    "b30_profile": "passed"
+  },
+  "post_runtime_changes": [
+    "Bytecode-equivalent test-fixture formatting",
+    "Validation documentation/status"
+  ]
 }
