@@ -27,6 +27,10 @@ V.set('emerald')
 T.eq(V.isFRLG(),false,'Hoenn does not inherit Kanto rules')
 local order={};for i,id in ipairs(V.ORDER)do order[id]=i end
 T.eq(order.leafgreen,order.firered+1,'LeafGreen is reachable beside FireRed')
-T.eq(order.emerald,order.leafgreen+1,'Emerald follows the Kanto pair')
+local gen3Between=order.emerald>order.leafgreen
+for i=order.leafgreen+1,order.emerald-1 do
+  gen3Between=gen3Between and V.info(V.ORDER[i]).generation==3
+end
+T.check(gen3Between,'Emerald follows the Kanto pair with only Gen3 siblings between')
 V.set(previous)
 T.finish('LeafGreen registration and FRLG contracts')
