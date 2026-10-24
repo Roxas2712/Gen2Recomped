@@ -70,6 +70,9 @@ function C.run(root, backend, version, api, format, inspect)
     end
   end
   if f.gen == 3 then
+    for _, row in ipairs(dofile(root .. "/tests/enemy_decision/turn_cases.lua")(f, root, backend)) do
+      rows[#rows + 1] = row
+    end
     local b = f.freshDecision({ f.item("POTION") }, true)
     f.mon(1).hp, f.mon(3).hp = 1, 1
     out.mode, out.decision = "override", { kind = "item", item = "POTION" }
@@ -171,6 +174,7 @@ function C.run(root, backend, version, api, format, inspect)
       rows[#rows + 1] = row
     end
   end
+  dofile(root .. "/tests/enemy_decision/constructors.lua")(f, backend)
   out.stop()
   f.close()
   return rows

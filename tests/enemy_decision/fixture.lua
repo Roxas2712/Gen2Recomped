@@ -13,6 +13,9 @@ function F.new(root, backend, version, api, format, noMod)
       if gen == 3 then
         data.constants = data.constants or {}
         data.constants.gen3ItemEffects = {}
+        if backend == "gen2" then
+          data.pokemon.CHARMANDER.types = { "FIRE" }
+        end
       end
       for _, row in ipairs({ { "POTION", 13, 20 }, { "FULL_RESTORE", 19, "all" }, { "FULL_HEAL", 23, false } }) do
         local key = backend == "gen2" and gen == 3 and ("ITEM_%03d"):format(row[2]) or row[1]
@@ -105,7 +108,8 @@ function F.new(root, backend, version, api, format, noMod)
       local State = require("src.core.game3.battle.state")
       local p, e = copy(b.player.mon), copy(b.enemy.mon)
       local p2, e2, e3 = copy(p), copy(e), copy(e)
-      p.nickname, e.nickname, e2.nickname, e3.nickname = "PLAYER", "ENEMY", "BENCH", "THIRD"
+      p.nickname, p2.nickname, e.nickname, e2.nickname, e3.nickname =
+        "PLAYER", "ALLY", "ENEMY", "BENCH", "THIRD"
       b = State.new({ wild = false, double = double, playerParty = { p, p2 }, foeParty = { e, e2, e3 } })
       b.trainerItems, b.rng = stock or {}, function(lo)
         return lo or 0
@@ -115,15 +119,20 @@ function F.new(root, backend, version, api, format, noMod)
       b.kind, b.trainer =
         "trainer",
         { id = "PORTABLE_FOE", name = "FOE", items = stock or {}, attributes = { 0, 0, 0, 0, 0, 0, 0 } }
+      b.enemy.mon.moves = { { id = f.ids.TACKLE, pp = 10 } }
+      b.enemy.curMoves = b.enemy.mon.moves
       local bench, third = copy(b.enemy.mon), copy(b.enemy.mon)
       b.enemy.mon.nickname, bench.nickname, third.nickname = "ENEMY", "BENCH", "THIRD"
       b.enemy.name = "ENEMY"
       b.enemyParty = { b.enemy.mon, bench, third }
       b.enemyIndex = 1
+      b.player.mon.nickname, b.player.name = "PLAYER", "PLAYER"
       b:syncSides()
       if double then
         local extra = f.fresh("TACKLE").battle
+        extra.player.mon.nickname, extra.player.name = "ALLY", "ALLY"
         extra.enemy.mon, extra.enemy.name = bench, "BENCH"
+        extra.enemy.curMoves = bench.moves
         b.double = true
         b:placeBattler(2, extra.player)
         b:placeBattler(3, extra.enemy)

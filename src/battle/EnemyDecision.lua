@@ -287,7 +287,7 @@ local function sourceAction(battle, battler, action)
 end
 
 function M.gba(battle, battler)
-  if battle.kind ~= "trainer" or battle.pokedudeDemo then
+  if battle.kind ~= "trainer" or battle.pokedudeDemo or battle.demo and not battle.dudeDemo then
     return nil
   end
   local native, action

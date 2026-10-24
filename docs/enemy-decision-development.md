@@ -80,6 +80,39 @@ original battle handle, as in the reference. Native automatic selection and
 presentation are still being audited; passing the current matrix is not a
 claim of full AI or battle parity.
 
+## Ordinary controller milestone
+
+The same public consumer now runs through the reference's public GBA battle
+module startup/update and the host's real trainer constructor, turn planner
+and presentation queue. Twelve ordinary-turn cases per FireRed/Emerald compare
+complete HP/stage/stock observations and event order. They cover item priority,
+constructor stock freezing, lethal-hit prevention, suppression/replay/recovery,
+explicit/automatic switches and both double-slot first-turn decisions. Six
+additional native command-producer gates cover wild, tutorial, locked and
+recharge cases. Fixture species types, move records and session stats are
+explicitly equivalent; final HP values are not filtered from comparisons.
+
+The host snapshots native GBA stock at construction, queries both enemy slots
+before advancing first-turn ages and resolves queued attacks against the live
+slot occupant after a switch. Gen-2 trainer stock is copied per battle without
+mutating the imported class definition; thirteen constructor/rematch checks
+pass for each of Gold, Silver and Crystal.
+
+Focused checks pass **1,046/1,046**. Both API 3 and host API 2/unified pass
+**12 workers / 369 paired observations**, with zero differences. Running these
+same tests against the previous engine commit `9671c57` produces eight actual
+GBA assertion failures and three Gen-2 stock/rematch failures, demonstrating
+that the checks detect the corrected behavior. The temporary parent checkout
+was clean; these are negative controls, not current failures.
+
+The complete run still passes **139/149** engine suites, **3/3** SDK suites
+and B30. All **26** failure lines exactly match the ten baseline suites.
+Reports are `contracts-native-turns.json`, `contracts-native-turns-api2.json`,
+`targeted-native-turns.log`, `full-native-turns-final.log`,
+`controller-parent-negative.log` and `controller-parent-gold-negative.log`.
+These remain bounded synthetic-session controller checks, not fresh cartridge
+imports, full Gen-2 ordinary-turn coverage or complete native battle parity.
+
 Required before publication:
 
 - Wire and test #173's imported Gen-2 attributes/stock through the ordinary

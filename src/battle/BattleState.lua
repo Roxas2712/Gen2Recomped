@@ -1718,6 +1718,12 @@ function BattleState.newTrainer(game, oppClass, partyIndex, opts)
   self.partyIndex = tonumber(partyIndex) or 1
   self.trainer = game.data.trainers[oppClass]
   assert(self.trainer, "unknown trainer class " .. tostring(oppClass))
+  if GameVersion.isGen2() and type(self.trainer.items) == "table" then
+    -- Gen 2 consumes this list immediately. A rematch starts with the
+    -- imported stock again, rather than mutating the shared class record.
+    self.trainer = setmetatable({ items = require("src.mods.Merge").deepCopy(self.trainer.items) },
+                               { __index = self.trainer })
+  end
   -- pret GetTrainerName_: RIVAL1/2/3 copy wRivalName into wTrainerName
   -- instead of TrainerNames ("RIVAL1" etc.).  Overlay so we don't mutate
   -- the shared data table.
@@ -1791,6 +1797,7 @@ function BattleState.newTrainer(game, oppClass, partyIndex, opts)
     self.trainerLabel = shownName
   end
   self.introText = Strings("%s wants\nto fight!", shownName)
+  if GameVersion.isGen3() then require("src.battle.EnemyItems").history(self) end
   return self
 end
 
@@ -5450,11 +5457,8 @@ function BattleState:vanillaEnemyAction(battler)
     local brain = self.trainer.brain or (class and class.brain)
     if brain then return brain(self, battler) end
   end
-  -- CLASS AI MAY SPEND THE TURN ON AN ITEM OR A SWITCH -- but a trainer has
-  -- one bag and one bench, not one per slot, so it is asked once, for the
-  -- slot the whole of TrainerAI already reads (`battle.enemy`).  Letting the
-  -- right-hand slot ask too would have a trainer drink two SUPER POTIONs on
-  -- the same Pokemon in the same turn.
+  -- GBA queries each opponent controller against shared reserved stock and
+  -- bench slots. The older class AI remains a left-opponent-only query.
   if not GameVersion.isGen2() and (GameVersion.isGen3() or battler == self.enemy) then
     local classAct
     if GameVersion.isGen3() then classAct = self:enemySwitchOrItem(battler)
@@ -5527,6 +5531,13 @@ function BattleState:resolveTurn(playerAction)
   -- nil in a double battle whose left-hand foe has fainted with nothing on
   -- the bench to replace it; `actionFor` asks each surviving slot for its own
   local enemyAction = self:enemyAction(self.enemy)
+  local enemyRightAction
+  if GameVersion.isGen3() and self:isDouble() then
+    -- Both native controllers choose before the turn flags advance. In
+    -- particular, X-item eligibility must see the same age on both flanks.
+    local right = self:battlerAt(BattleState.POS.OPPONENT_RIGHT)
+    if right then enemyRightAction = self:enemyAction(right) end
+  end
   self.turnCount = (self.turnCount or 0) + 1
   -- BATTLE ARENA: arenaTurnCounter
   if self.arena then require("src.battle.Gen3Arena").turnStarted(self) end
@@ -5552,8 +5563,14 @@ function BattleState:resolveTurn(playerAction)
   -- parameter for each side and a winner simply goes first.  Both sides
   -- rolling it is not a draw -- the cartridge checks the player's first, so
   -- a double claw is the player's turn.
-  local pClaw = self:quickClawWins(self.player)
-  local eClaw = not pClaw and self:quickClawWins(self.enemy)
+  local function gbaMeta(action)
+    local special = action and action.special
+    return GameVersion.isGen3()
+      and (special == "aiItem" or special == "aiSwitch" or special == "playerSwitch")
+  end
+  local singleMeta = not self:isDouble() and (gbaMeta(enemyAction) or gbaMeta(playerAction))
+  local pClaw = not singleMeta and self:quickClawWins(self.player)
+  local eClaw = not singleMeta and not pClaw and self:quickClawWins(self.enemy)
   local pFirst
   -- EITHER LEFT SLOT CAN BE EMPTY IN A DOUBLE.  A fainted battler is lifted
   -- off the field at once and only replaced when the turn ends, so between
@@ -5561,7 +5578,9 @@ function BattleState:resolveTurn(playerAction)
   -- flank fights on.  The pairwise comparison below is the SINGLE battle's
   -- ordering and has nothing to compare; the double branch sorts all four
   -- entries with the same comparator a few lines down and does not read it.
-  if not (self.player and self.enemy) then
+  if singleMeta then
+    pFirst = gbaMeta(playerAction)
+  elseif not (self.player and self.enemy) then
     pFirst = true
   elseif pClaw or eClaw then
     pFirst = pClaw == true
@@ -5595,10 +5614,24 @@ function BattleState:resolveTurn(playerAction)
     for pos = 0, 3 do
       local b = self:battlerAt(pos)
       if b and b.mon and (b.mon.hp or 0) > 0 then
-        local action = self:actionFor(b, playerAction, enemyAction)
+        local action
+        if GameVersion.isGen3() and pos == BattleState.POS.OPPONENT_RIGHT then
+          action = enemyRightAction
+        else
+          action = self:actionFor(b, playerAction, enemyAction)
+        end
         entries[#entries + 1] = { battler = b, move = orderMove(action, self.data),
                                   action = action }
       end
+    end
+    local metadata = {}
+    if GameVersion.isGen3() then
+      local moves = {}
+      for _, e in ipairs(entries) do
+        if gbaMeta(e.action) then metadata[#metadata + 1] = e
+        else moves[#moves + 1] = e end
+      end
+      entries = moves
     end
     TurnOrder.order(entries, self.rng, self)
     -- and a QUICK CLAW winner is simply hoisted to the front
@@ -5630,6 +5663,10 @@ function BattleState:resolveTurn(playerAction)
     if #switches > 0 then
       entries = switches
       for _, e in ipairs(moves) do entries[#entries + 1] = e end
+    end
+    if #metadata > 0 then
+      for _, e in ipairs(entries) do metadata[#metadata + 1] = e end
+      entries = metadata
     end
     order = {}
     for _, e in ipairs(entries) do
@@ -5674,15 +5711,23 @@ function BattleState:resolveTurn(playerAction)
       -- from play: Marshtomp KO'd the last foe and Hariyama, moving after
       -- it, "hit himself" with the Arm Thrust aimed at nobody.
       if self.result then return end
+      local actor = entry[1]
+      if GameVersion.isGen3() and actor and actor.position ~= nil then
+        actor = self:battlerAt(actor.position)
+        if not actor then return end
+      end
       local target = entry[2]
+      if GameVersion.isGen3() and target and target.position ~= nil then
+        target = self:battlerAt(target.position)
+      end
       if target == nil then
         -- what the player aimed at, if they were asked; otherwise whoever
         -- is standing on the other side
-        local chosen = (self.chosenTargets or {})[entry[1].position]
-        target = Targeting.redirect(self, entry[1], nil, chosen)[1]
-                 or self:defaultTargetFor(entry[1])
+        local chosen = (self.chosenTargets or {})[actor.position]
+        target = Targeting.redirect(self, actor, nil, chosen)[1]
+                 or self:defaultTargetFor(actor)
       end
-      self:executeAction(entry[1], target, entry[3])
+      self:executeAction(actor, target, entry[3])
     end)
   end
   self:act(function()
@@ -7629,6 +7674,7 @@ function BattleState:executeAction(user, target, action)
 
     -- trainer class AI actions (engine/battle/trainer_ai.asm)
     if action.special == "aiItem" then
+      local recipient = trainerItem and user or action.decisionBattler
       self.aiUses = (self.aiUses or 1) - 1
       -- a Gen 3 trainer spends a SLOT, not a per-Pokemon allowance: the
       -- cartridge nulls the entry in trainerItems as it emits the action, so
@@ -7637,11 +7683,11 @@ function BattleState:executeAction(user, target, action)
         self.gen3ItemsUsed = self.gen3ItemsUsed or {}
         self.gen3ItemsUsed[action.slot] = true
       end
-      for _, m in ipairs(TrainerAI.useItem(self, action.item, action.decisionBattler,
+      for _, m in ipairs(TrainerAI.useItem(self, action.item, recipient,
                                          action.aiItemType, action.aiItemFlags)) do
-        self:sayNext(prefixEnemy(m, action.decisionBattler or self.enemy))
+        self:sayNext(prefixEnemy(m, recipient or self.enemy))
       end
-      self:drainNext(action.decisionBattler)
+      self:drainNext(recipient)
       -- the Gen 3 arm of useItem runs the item through ItemEffects, which
       -- plays the cartridge's own fanfare for it; playing this one too would
       -- put two heal sounds on the same frame
