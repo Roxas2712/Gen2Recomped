@@ -678,3 +678,56 @@ contract tools keep their own upstream pins. No graphical run or complete
 stock-AI/controller parity is claimed. Held-item observations/effects, party
 status and move-order predicates still require functional native contracts;
 the unfinished enemy switch/item hook remains outside the combined branch.
+
+## Native item knowledge and public scorer milestone
+
+[Gen2 PR #182](https://github.com/UNDERdecoded/Gen2Recomped/pull/182) publishes
+native held-effect and item-membership commands, real Focus Band/Leftovers
+observation producers, and GBA direct-damage/confusion/OHKO adjustment order.
+Its explicit counterpart is [Gen1 #3053](https://github.com/bryanthaboi/gen1recomp/pull/3053).
+Both are regular, published and unmerged. Their hosted workflows await
+maintainer approval; the dedicated host workflow and source CI have zero jobs.
+The independent interpreter/damage matrix passes **1,491 host / 1,240 source**
+checks and **4 workers / 364 paired observations**. It also passes against
+this development runtime; the fully composed testing branch passes **203/203**
+engine suites, SDK **3/3** and B30. The unfinished public enemy hook is still
+excluded from that testing branch.
+
+Development production runtime `d29b2307cf273f91e23e03342b07153939c91a6b`
+passes **147/157** engine suites, SDK **3/3** and B30. All **26 FAIL lines across
+ten inherited suites** match the prior Taunt runtime exactly. Subsequent
+commits clarify only test-fixture construction and callback expectations;
+production code is unchanged. At clean contract runtime
+`73988ca878338a7c2da3e9bffa1a4cd5c6d8c4f1`, focused checks pass **4,480/4,480**.
+Host API 3 and API 2/unified each match in **12 workers / 1,071 paired
+observations**, with zero differences.
+
+Twelve additional cases per GBA profile run through real opponent decisions
+and the unchanged public scoring consumer: own physical metadata, hidden
+opponent reads, actual nonlethal Focus Band rolls and failed rolls, Leftovers
+healing/full-HP refusal, observed effect bytes, retail byte folding and partner
+IDs. Scorer input, item history and producer RNG are asserted. The eleven
+single-battle cases and FireRed's partner case require both real move
+candidates to reach scoring. Emerald's loaded per-target doubles program
+bypasses custom scoring in both native engines; this case explicitly requires
+zero callbacks rather than claiming delivery. The independent actual-VM
+matrix covers its literal partner item branch.
+
+The clean combined source fork is pinned explicitly at
+`a0c74c9570f0482a85886ecd8a2328de79ba7e09` on
+`Roxas2712/gen1recomp-Mac-fix:codex/portability-testing`. It composes the two
+independent source PRs and passes their **372** Taunt and **1,240** item checks.
+The individual feature checker still pins its independent source #3053 head.
+Historical evidence above retains its original refs.
+
+Reports in ignored `tmp/enemy-switch-item-qa/`:
+`contracts-item-knowledge-final-clean.json`,
+`contracts-item-knowledge-final-clean-api2.json`,
+`interpreter-item-knowledge-clean.json`, `targeted-item-knowledge-final.log`
+and `full-item-knowledge.log`. A fresh read-only English Emerald AI-stage
+import now considers flags **0, 1, 3–9** runnable. Flag **2** still requires
+`if_status_in_party`, `if_user_goes` and `if_user_has_no_attacking_moves`.
+The audit is `audit-emerald-ai-item-knowledge.log`; reachability is not proof
+of complete stock-program/controller behavior. No new graphical run or
+full-gameplay parity is claimed. Party status and action-order contracts are
+next native prerequisites, alongside the earlier controller gaps.
