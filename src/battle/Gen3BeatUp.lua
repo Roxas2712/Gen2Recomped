@@ -66,7 +66,7 @@ function B.nextDamage(ctx)
         tonumber(mon.level) or 1,
         ctx.move.power or 10,
         base(ctx, mon.species, "attack"),
-        base(ctx, ctx.target.mon.species, "defense")
+        base(ctx, ctx.target.species or ctx.target.mon.species, "defense")
       ) + 2
       amount = HelpingHand.damage(ctx.user, amount)
       local def = ctx.data.pokemon[mon.species]

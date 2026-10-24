@@ -262,6 +262,12 @@ function M.run(root, backend, version, patchStats)
         f.data.moves[f.ids.BEAT_UP].type = "DARK"
       end
     end
+    if spec.targetSpecies then
+      target.species = native and 151 or "MEW"
+    end
+    if spec.userSpecies then
+      user.species = native and 151 or "MEW"
+    end
     if spec.battleStats then
       if native then
         user.mon.attack, target.mon.defense = 999, 1
@@ -386,6 +392,8 @@ function M.run(root, backend, version, patchStats)
     { name = "super", typeName = "GHOST" },
     { name = "authored-normal-ghost", normalMove = true, typeName = "GHOST" },
     { name = "ignores-battle-stats", battleStats = true },
+    { name = "target-active-species", targetSpecies = true },
+    { name = "user-active-species", userSpecies = true },
     { name = "critical-each", critical = { true } },
     { name = "critical-mixed", critical = { false, true, false, true } },
     { name = "variation", variation = 85 },
@@ -471,12 +479,19 @@ function M.run(root, backend, version, patchStats)
       if spec.name == "mixed-team" then
         T.eq(#hits, 6, "six healthy members each contribute a real strike")
       end
-      if spec.name == "mixed-team" or spec.name == "critical-each" or spec.name == "variation" then
+      if
+        spec.name == "mixed-team"
+        or spec.name == "critical-each"
+        or spec.name == "variation"
+        or spec.name == "target-active-species"
+        or spec.name == "user-active-species"
+      then
         local amounts = {}
         for _, h in ipairs(hits) do
           amounts[#amounts + 1] = h.amount
         end
-        local expected = spec.name == "critical-each" and { 6, 10, 14, 8, patchStats and 22 or 18, 12 }
+        local expected = spec.name == "target-active-species" and { 2, 3, 4, 3, patchStats and 5 or 4, 3 }
+          or spec.name == "critical-each" and { 6, 10, 14, 8, patchStats and 22 or 18, 12 }
           or spec.name == "variation" and { 2, 4, 5, 3, patchStats and 9 or 7, 5 }
           or { 3, 5, 7, 4, patchStats and 11 or 9, 6 }
         T.same(amounts, expected, "native per-member level/base/critical/variation rounding")
