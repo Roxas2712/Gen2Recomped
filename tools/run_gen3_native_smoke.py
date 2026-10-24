@@ -30,6 +30,7 @@ def main():
     p.add_argument('--driver', default='tests/leafgreen_native_driver.lua')
     p.add_argument('--cache-identity')
     p.add_argument('--timeout', type=int, default=1200)
+    p.add_argument('--speed', type=int, default=1)
     args = p.parse_args()
     assert not subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=ROOT).strip(), 'Commit candidate and driver first'
     commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
@@ -48,9 +49,11 @@ def main():
     host = out / 'host'
     host.mkdir()
     for file in engine.iterdir():
-        if file.name != 'conf.lua':
+        if file.name not in ('conf.lua', 'main.lua'):
             (host / file.name).symlink_to(file, target_is_directory=file.is_dir())
     (host / 'engine-conf.lua').symlink_to(engine / 'conf.lua')
+    (host / 'engine-main.lua').symlink_to(engine / 'main.lua')
+    (host / 'main.lua').write_text("io.stdout:setvbuf('no')\nassert(love.filesystem.load('engine-main.lua'))()\nlove.errorhandler=function(e) print(debug.traceback(tostring(e),2));return function() return 1 end end\n")
     (host / 'conf.lua').write_text("love.filesystem.setSymlinksEnabled(true)\nassert(love.filesystem.load('engine-conf.lua'))()\nlocal base=love.conf\nfunction love.conf(t)base(t);t.version='12.0';t.graphics.renderers={'metal'}end\n")
     save_root = Path.home() / 'Library/Application Support/LOVE'
     save = save_root / identity
@@ -65,6 +68,7 @@ def main():
             shutil.copytree(cache, save / args.edition)
         env = dict(os.environ, POKEPORT_IDENTITY=identity, POKEPORT_VERSION=args.edition,
                    POKEPORT_IMPORT_ROM=str(args.rom.resolve()), POKEPORT_DRIVER=str(driver),
+                   POKEPORT_SPEED=str(args.speed),
                    POKEPORT_NO_MODS='1', POKEPORT_NO_BOOT_REPORT='1')
         receipt = dict(identity=identity, sourceCommit=commit,
                        cartridgeSHA1=hashlib.sha1(args.rom.read_bytes()).hexdigest(),
