@@ -13,9 +13,9 @@ return function(game)
  assert(Version.get()=='red'and not next(game.mods.mods),'Use a separate Red import without mods')
  local out=assert(os.getenv('PALETTE_GPU_OUT'));local R=setmetatable({},{__index=Renderer});R:init()
  local report={backend=g.getRendererInfo(),cases={}}
- if os.getenv('POKEPORT_ORIENTATION_NEGATIVE')=='1'then Renderer.mirrorsWorldOverride=function()return false end;report.negativeControl=true end
+ local negative=os.getenv('POKEPORT_ORIENTATION_NEGATIVE')=='1';report.negativeControl=negative or nil
  local function save()local f=assert(io.open(out..'/orientation-pixels.json','w'));f:write(Json.encode(report));f:close()end
- local shader=g.newShader([[
+ local shader=g.newShader((negative and "#define POKEPORT_NATIVE_CLIP_SPACE 1\n" or "")..[[
   vec4 position(mat4 matrix,vec4 p){
    // A LÖVE 11 custom 3D shader: author projected Y-up then pre-flipped
    // its render-target clip Y. LÖVE 12 will normalize clip Y again.
