@@ -694,6 +694,7 @@ OPS.if_target_not_taunted = function(vm, args)
 end
 require("src.battle.Gen3AIItemKnowledge").install(Gen3AI)
 require("src.battle.Gen3AIPartyStatus").install(Gen3AI)
+require("src.battle.Gen3AIAttackingMoves").install(Gen3AI)
 
 -- Every opcode a script can reach, followed through its branches.  Memoised
 -- on the program table: the answer depends only on the cartridge.
