@@ -48,3 +48,23 @@ inputs. It does not establish every move effect, ability, held-item rule,
 critical rule, ordinary turn/controller, or a full graphical playthrough.
 The unfinished enemy switch/item hook and AI simulation wiring are outside
 this PR.
+
+## Validation record
+
+At clean feature runtime `a9a3cbf2b4973865378649a980cbd3c5143c672b`:
+
+- **20,742/20,742** host checks pass, including six Gen-1/Gen-2 retention checks.
+- Both native calculators match in **4 workers / 6,912 paired observations**,
+  with zero differences against clean Gen1Recomp `535a5ec`.
+- Clean upstream `13af468b97dc37015d14ad5c71d7f067c3ee810d` differs in
+  **2,209 numeric observations per GBA profile** on the same matrix.
+- The complete feature run passes **65/75** engine suites, **3/3** SDK suites
+  and B30. Upstream passes **64/74**; all **27 FAIL lines across ten baseline
+  suites** match exactly. Workflow lint and formatting of the new Lua files pass.
+
+Evidence is retained in the ignored `tmp/gba-base-qa/` directory:
+`targeted.log`, `contracts-clean.json`, `full.log` and `parent-differences.json`.
+The unchanged upstream full-run baseline is recorded under
+`../gen2recomped-ai-random/tmp/gen3-ai-random-qa/main-baseline-full.log`.
+Hosted CI is separate from local validation. No new graphical gameplay run
+or complete-playthrough claim is made.
