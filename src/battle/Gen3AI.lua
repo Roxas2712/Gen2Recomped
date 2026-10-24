@@ -777,16 +777,19 @@ end
 -- program, no trainer, no flags, or every script the flags name is one this
 -- file cannot run yet.  nil means "no opinion", and the caller keeps whatever
 -- it was doing.
-function Gen3AI.scoreMoves(battle, user, target, moves)
+function Gen3AI.scoreMoves(battle, user, target, moves, opts)
+  opts = opts or {}
   local program = Gen3AI.program(battle)
   local trainer = battle and battle.trainer
-  local flags = trainer and tonumber(trainer.aiFlags)
+  local flags = tonumber(opts.flags or (trainer and trainer.aiFlags))
   if not (program and flags and flags > 0 and moves and moves[1]) then
     return nil
   end
   local data = battle.data or {}
   local score, ran = {}, false
-  for i = 1, #moves do score[i] = Gen3AI.START_SCORE end
+  for i = 1, #moves do
+    score[i] = opts.scores and opts.scores[i] or Gen3AI.START_SCORE
+  end
 
   local vm = {
     battle = battle, user = user, target = target, program = program,
@@ -799,13 +802,17 @@ function Gen3AI.scoreMoves(battle, user, target, moves)
       local entry = program.entries[bit]
       if entry and Gen3AI.runs(program, entry) then
         for i = 1, #moves do
-          local def = data.moves and data.moves[moves[i].id]
-          vm.moveIndex = i
-          vm.moveEffect = def and tonumber(def.gen3Effect) or 0
-          vm.moveNumber = def and tonumber(def.index) or 0
-          vm.result = 0
-          vm.stack = {}
-          if runScript(vm, entry) then ran = true end
+          if moves[i].pp ~= nil and moves[i].pp <= 0 then
+            score[i] = 0
+          else
+            local def = data.moves and data.moves[moves[i].id]
+            vm.moveIndex = i
+            vm.moveEffect = def and tonumber(def.gen3Effect) or 0
+            vm.moveNumber = def and tonumber(def.index) or 0
+            vm.result = 0
+            vm.stack = {}
+            if runScript(vm, entry) then ran = true end
+          end
         end
       end
     end

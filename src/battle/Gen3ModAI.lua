@@ -106,7 +106,118 @@ local function limits(battle, user)
   end
   return bad
 end
-local function choose(battle, user, class)
+local function layersFor(battle)
+  local layers, records = {}, battle.data.ai_classes or {}
+  local function add(id)
+    local record = id and records[id]
+    if
+      type(record) == "table"
+      and type(record.score) == "function"
+      and (record.kind == nil or record.kind == "layer")
+    then
+      layers[#layers + 1] = record.score
+    end
+  end
+  -- GBA identifiers are literal, including numeric keys. Duplicates and the
+  -- explicit class appended after aiMods are part of the public contract.
+  for _, id in ipairs(battle.enemyAIMods or {}) do
+    add(id)
+  end
+  add(battle.trainer.aiClass)
+  return layers
+end
+local function scoresFor(battle, user, target, bad, flags)
+  local scores, moves, slots, initial = {}, {}, {}, {}
+  for i = 1, 4 do
+    scores[i] = bad[i] and 0 or 100
+    local move = (user.curMoves or {})[i]
+    if present(move) then
+      moves[#moves + 1], slots[#slots + 1], initial[#initial + 1] = move, i, scores[i]
+    end
+  end
+  local native =
+    require("src.battle.Gen3AI").scoreMoves(battle, user, target, moves, { scores = initial, flags = flags })
+  if native then
+    for i, slot in ipairs(slots) do
+      scores[slot] = native[i]
+    end
+  end
+  return scores
+end
+local function applyLayers(battle, user, target, scores, bad, layers)
+  if #layers == 0 then
+    return
+  end
+  local view = { battle = battle, user = user, target = target, data = battle.data, rng = battle.rng }
+  for slot = 1, 4 do
+    local move = (user.curMoves or {})[slot]
+    if present(move) and not bad[slot] then
+      -- One detached view per physical slot, shared by its successive layers.
+      local def = moveView(battle, move)
+      for _, score in ipairs(layers) do
+        scores[slot] = score(view, def, scores[slot]) or scores[slot]
+      end
+    end
+  end
+end
+local function pick(battle, user, scores, bad)
+  local emerald = require("src.core.GameVersion").get() == "emerald"
+  local best, candidates = scores[1], { 1 }
+  for i = 2, 4 do
+    if not emerald or present((user.curMoves or {})[i]) then
+      if best < scores[i] then
+        best, candidates = scores[i], { i }
+        -- FireRed appends a newly higher slot twice; Emerald includes it once.
+        if not emerald then
+          candidates[2] = i
+        end
+      elseif best == scores[i] then
+        candidates[#candidates + 1] = i
+      end
+    end
+  end
+  local slot = candidates[battle.rng(1, #candidates)]
+  if not present((user.curMoves or {})[slot]) then
+    for i = 1, 4 do
+      if not bad[i] and present((user.curMoves or {})[i]) then
+        slot = i
+        break
+      end
+    end
+  end
+  return slot, best
+end
+local function chooseDouble(battle, user, bad, flags)
+  local id, slots, points = user.position or 1, {}, {}
+  for targetId = 0, 3 do
+    local target = battle:battlerAt(targetId)
+    points[targetId] = -1
+    if targetId ~= id and target and (target.mon.hp or 0) > 0 then
+      for _ = 1, 4 do
+        battle.rng(0, 15)
+      end
+      battle.rng(0, 65535)
+      local scores = scoresFor(battle, user, target, bad, flags)
+      local slot, best = pick(battle, user, scores, bad)
+      slots[targetId], points[targetId] = slot, best
+      if targetId % 2 == id % 2 and best < 100 then
+        points[targetId] = -1
+      end
+    end
+  end
+  local best, targets = points[0], { 0 }
+  for i = 1, 3 do
+    if best == points[i] then
+      targets[#targets + 1] = i
+    end
+    if best < points[i] then
+      best, targets = points[i], { i }
+    end
+  end
+  local targetId = targets[battle.rng(1, #targets)]
+  return slots[targetId], targetId
+end
+local function choose(battle, user, class, layers)
   local bad = limits(battle, user)
   if bad[1] and bad[2] and bad[3] and bad[4] then
     return struggle(battle), true
@@ -114,7 +225,7 @@ local function choose(battle, user, class)
   local id = user.position or 1
   local target = battle:battlerAt(id % 2 == 1 and id - 1 or id + 1)
   local slot
-  if class.kind == "brain" and type(class.brain) == "function" then
+  if class and class.kind == "brain" and type(class.brain) == "function" then
     local view =
       { battle = battle, user = user, target = target, data = battle.data, rng = battle.rng, moves = {} }
     for i = 1, 4 do
@@ -148,42 +259,24 @@ local function choose(battle, user, class)
     end
   end
   if not slot then
-    -- Native bytecode/layer scoring remains owned by the existing host AI.
-    -- With no such program, preserve the native tied-slot selection exactly.
-    if
-      (tonumber(battle.trainer.aiFlags) or 0) ~= 0
-      or type(class.score) == "function"
-      or #(battle.enemyAIMods or {}) > 0
-    then
+    -- Unscored native programs retain their existing path while VM coverage
+    -- is expanded separately from the portable mod callback contract.
+    if #layers == 0 and (tonumber(battle.trainer.aiFlags) or 0) ~= 0 then
       return nil, false
     end
-    local scores = {}
-    for i = 1, 4 do
-      scores[i] = bad[i] and 0 or 100
+    local flags = tonumber(battle.trainer.aiFlags) or 0
+    local emeraldDouble = battle:isDouble() and require("src.core.GameVersion").get() == "emerald"
+    if emeraldDouble and math.floor(flags / 128) % 2 == 0 then
+      flags = flags + 128
     end
-    local best, candidates = scores[1], { 1 }
-    for i = 2, 4 do
-      if require("src.core.GameVersion").get() ~= "emerald" or present((user.curMoves or {})[i]) then
-        if best < scores[i] then
-          best, candidates = scores[i], { i }
-          -- FireRed's tie list appends a newly higher slot twice; Emerald's
-          -- native picker includes it once. This affects the RNG bound.
-          if require("src.core.GameVersion").get() ~= "emerald" then
-            candidates[2] = i
-          end
-        elseif best == scores[i] then
-          candidates[#candidates + 1] = i
-        end
-      end
-    end
-    slot = candidates[battle.rng(1, #candidates)]
-    if not present((user.curMoves or {})[slot]) then
-      for i = 1, 4 do
-        if not bad[i] and present((user.curMoves or {})[i]) then
-          slot = i
-          break
-        end
-      end
+    if emeraldDouble and require("src.battle.Gen3AI").program(battle) then
+      -- The reference's loaded Emerald per-target program branch bypasses
+      -- mod layers. A missing pack still follows the ordinary layer path.
+      slot, targetId = chooseDouble(battle, user, bad, flags)
+    else
+      local scores = scoresFor(battle, user, battle:battlerAt(targetId), bad, flags)
+      applyLayers(battle, user, battle:battlerAt(targetId), scores, bad, layers)
+      slot = pick(battle, user, scores, bad)
     end
   end
   local move = (user.curMoves or {})[slot]
@@ -207,14 +300,15 @@ local function choose(battle, user, class)
   return move, true
 end
 function M.choose(battle, user)
-  if battle.kind ~= "trainer" or not battle.trainer or not battle.trainer.aiClass then
+  if battle.kind ~= "trainer" or not battle.trainer then
     return nil, false
   end
-  local class = TrainerAI.classFor(battle)
-  if not class then
+  local class = battle.trainer.aiClass and TrainerAI.classFor(battle)
+  local layers = layersFor(battle)
+  if not class and #layers == 0 then
     return nil, false
   end
-  local ok, action, handled = pcall(choose, battle, user, class)
+  local ok, action, handled = pcall(choose, battle, user, class, layers)
   if not ok then
     return fallback(battle, user), true
   end

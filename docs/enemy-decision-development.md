@@ -388,6 +388,54 @@ suites and B30. All **26 FAIL lines** exactly match the prior ten baseline
 suites. Runtime is `784c8ec` plus the recorded changes. The unfinished hook
 remains outside the combined testing branch.
 
+## Mod-defined GBA scoring milestone
+
+The public `ai_classes` scorers now use the GBA move-selection path rather
+than the legacy Gen-1 minimum-score fallback. Literal `aiMods` IDs run in
+order, preserving duplicates, followed by an explicit layer class. Only a
+function-valued score on a `layer` or an unspecified kind is eligible; brain
+and action-class scores cannot accidentally become layers. Base scores are
+100 for usable slots and zero for limited slots, and native maximum/tie
+selection preserves the FireRed/Emerald RNG bounds.
+
+An unchanged public scorer entry runs through both real SDKs. Thirty-eight
+new cases per GBA version compare callback order, incoming scores, selected
+physical slots, exact native battle/user/target/data/RNG identities, and RNG
+ranges/order. They include class-only and mods-only records, a class appended
+last, duplicates, numeric/unknown IDs, nil/false/zero/negative/infinite/NaN
+returns, callback/type failures, callback RNG, empty/duplicate move slots,
+PP/Disable limits and valid/invalid/error brains. One view persists across
+slots; each slot gets its own detached move view shared by its successive
+layers. A scorer cannot mutate the underlying move definition through that
+view.
+
+Supported native program scores feed the layers before selection, including
+multiple flag bits, disabled and zero-PP moves, and sparse physical slots.
+Emerald's loaded per-target double branch preserves the reference's bypass
+of mod layers, considers the partner, and retains its setup/target/tie draws.
+Missing packs still permit the normal mod layers. The program fixtures use
+actual native VMs with equal conditional/score/end instructions in their own
+importer formats. These bounded programs do **not** establish full VM opcode,
+simulated damage RNG, action-control or imported trainer-program parity.
+Unsupported programs retain the host VM's existing coverage limitations.
+
+The matrix passes **12 workers / 689 paired observations** in each of API 3
+and host API 2/unified, with zero differences. Host checks pass
+**2,518/2,518**. Running the same new consumer and cases on clean `0812422`
+produces **35 differing observations per GBA version**; its failed assertions
+are recorded without treating them as current failures. The temporary parent
+checkout was clean before and after and has been removed.
+
+The complete development run remains **141/151** engine suites, **3/3** SDK
+suites and B30. Its **26 FAIL lines** exactly match the prior ten baseline
+suites. Runtime is `0812422` plus the recorded scoring changes. Reports are
+`contracts-scoring.json`, `contracts-scoring-api2.json`, `targeted-scoring.log`,
+`full-scoring.log`, `scoring-parent-differences.json` and
+`scoring-parent-{firered,emerald}.log` in the ignored QA directory.
+This milestone is CPU/native-controller selection evidence, not a new LÖVE
+smoke or full playthrough. The unfinished hook remains outside the combined
+testing branch and is not yet published as a PR.
+
 Required before publication:
 
 - Extend real imported Gen-2 coverage beyond Gold's actual attributes, stock
@@ -401,8 +449,10 @@ Required before publication:
   action crashes the current reference controller; the valid-target cases
   above do not establish a portable malformed-action contract. Ordinary item,
   switch, move, actor-ID and controller-flag paths above are covered.
-- Extend native bytecode/scored-layer fallback coverage beyond the tested
-  brain choice and unscored-class paths. Existing Imprison/Choice-lock flags
+- Extend native bytecode coverage beyond the conditional/score/end programs
+  above, including damage simulation RNG, action controls and real imported
+  trainer programs. The public brain/scored-layer paths and Emerald loaded-
+  program bypass now have shared contracts. Existing Imprison/Choice-lock flags
   have validated read semantics; their complete native producers/rules remain
   separate battle work.
 - Review participants, Pursuit, hazards/abilities and stale queued actors after

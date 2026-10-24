@@ -104,6 +104,9 @@ function F.new(root, backend, version, api, format, noMod)
         local entry = "mods/portable_enemy_decision/main.lua"
         files[entry] = files[entry] .. "\n" .. file:read("*a")
         file:close()
+        local scores = assert(io.open(root .. "/tests/enemy_decision/scoring_mod.lua", "rb"))
+        files[entry] = files[entry] .. "\n" .. scores:read("*a")
+        scores:close()
       end
     end
   )
