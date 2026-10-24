@@ -1,10 +1,10 @@
 {
-  "runtime_ref": "aed508c2918a369f1d19e2250eb11635c17bd78f",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/188",
-  "feature_ref": "6178ae1f3329fc53a66d7ba08cd8fa2deb43bff9",
+  "runtime_ref": "10421a5125d1289bdcee7b5811957b954013a033",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/189",
+  "feature_ref": "1a9c9df9db022ef1b3edfd7a15085b4ced48944f",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 206,
-  "engine_suites_total": 206,
+  "engine_suites_passed": 207,
+  "engine_suites_total": 207,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "Both #188 workflows await maintainer approval (action_required); dedicated workflow has zero jobs; local acceptance is separate",
+  "hosted_ci": "The #189 CI workflow awaits maintainer approval (action_required) with zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -1354,5 +1354,51 @@
       ],
       "scope": "Reachability/handler availability from read-only extraction only, not proof of every predicate, complete native scoring or controller semantics; no generated cartridge assets committed"
     }
+  },
+  "unusable_target_handles": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/189",
+    "feature_ref": "1a9c9df9db022ef1b3edfd7a15085b4ced48944f",
+    "combined_runtime_ref": "10421a5125d1289bdcee7b5811957b954013a033",
+    "focused_checks_passed": 712,
+    "games": [
+      "red",
+      "gold",
+      "firered",
+      "emerald"
+    ],
+    "combined_engine_suites_passed": 207,
+    "combined_engine_suites_total": 207,
+    "sdk_suites_passed": 3,
+    "b30_profile": "passed",
+    "feature_baseline": {
+      "engine_suites_passed": 65,
+      "engine_suites_total": 75,
+      "failure_lines": 27,
+      "all_failure_lines_match_upstream": true,
+      "new_failures": 0
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40129207307",
+      "jobs": 0
+    },
+    "scope": "Actual CPU battle queues and native helper invariants; no new graphical or complete controller parity claim"
+  },
+  "enemy_decision_development_status": {
+    "included_in_combined_branch": false,
+    "read_only_reference_ref": "fb7b0366efcb85e703e9e6d5a8a24d01456a109b",
+    "paired_observations_per_api_mode": 1101,
+    "strict_differences_per_api_mode": 534,
+    "strict_result": "failed; every difference is the additional initial native turn-word RNG call; raw records retained",
+    "new_target_case_matches": true,
+    "target_case_profiles": [
+      "firered",
+      "emerald"
+    ],
+    "target_case_host_modes": [
+      "API 3 unified",
+      "API 2 unified"
+    ],
+    "reference_publication_allowed": false
   }
 }

@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–189 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,34 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`aed508c2918a369f1d19e2250eb11635c17bd78f`. Its ROM-free run passed
-**206/206 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`10421a5125d1289bdcee7b5811957b954013a033`. Its ROM-free run passed
+**207/207 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status/integration-fixture commits do not change production code.
+
+[PR #189](https://github.com/UNDERdecoded/Gen2Recomped/pull/189) prevents
+scalar chosen/rampage target values from aborting an ordinary move queue.
+Its **712/712** focused checks pass for Red, Gold, FireRed and Emerald,
+including actual single/double action execution, fallback targets, native
+handle identity and PP consumption. Valid ally, self, field, fainted-target
+and living rampage-lock behavior is preserved. Run
+`luajit tests/engine/unusable_target_handles.lua`.
+
+The independent feature retains the same **27 FAIL lines across ten existing
+upstream suites**; this combined branch includes their fixes. The
+[hosted #189 CI](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40129207307)
+requires maintainer approval (`action_required`) and has zero executed jobs.
+Local acceptance is separate. No Gen1 code or publication is required.
+
+The in-progress enemy-decision branch additionally verifies the new delegated
+`target=true` controller case with the same Test Mod on both GBA profiles in
+API 3 and API 2/unified, including complete HP/PP/stock/event observations.
+Its larger strict comparison still reports 534 RNG-trace differences from
+the earlier turn-word sampling introduced by #188. Those raw differences
+remain failures; this is not a claim of complete native-controller parity.
+That unfinished hook is still excluded from this combined branch.
+
+Prior #188 results retain runtime
+`aed508c2918a369f1d19e2250eb11635c17bd78f` and its 206/206 engine result:
 
 [PR #188](https://github.com/UNDERdecoded/Gen2Recomped/pull/188) implements
 native GBA AI order prediction and actual turn planning with one shared
