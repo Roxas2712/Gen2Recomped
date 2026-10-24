@@ -54,3 +54,21 @@ enemy switch/item hook, establish every native AI opcode or stock trainer
 script, or claim new graphical gameplay validation. Other unsupported
 queries remain gated. Reference-side held-effect/taunt placeholders require
 further work before those families can have a functional common contract.
+
+## Validation record
+
+At clean feature runtime `5e7823d63346816b333eaae34d600a0ff84b12f2`:
+
+- **2,339/2,339** host checks pass, including the unsupported-script guard.
+- Both actual interpreters match in **4 workers / 472 paired observations**,
+  with zero differences against clean Gen1Recomp `535a5ec`.
+- Clean upstream `13af468b97dc37015d14ad5c71d7f067c3ee810d` fails **702
+  assertions per GBA profile**, with 236 differing observations per profile.
+- The complete feature run passes **65/75** engine suites, SDK **3/3** and
+  B30. Upstream passes **64/74**; all **27 FAIL lines across ten baseline
+  suites** match exactly. Workflow lint and new-file formatting pass.
+
+Local evidence is in ignored `tmp/ai-query-qa/`: `targeted.log`,
+`contracts-clean.json`, `full.log` and `parent-differences.json`.
+Hosted CI is separate from these local results. No new LÖVE or full
+playthrough result is claimed.
