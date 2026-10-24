@@ -2,10 +2,10 @@ require("love.thread")
 require("love.filesystem")
 require("love.timer")
 require("love.system")
-local commands, results, quit, token = ...
+local commands, results, quit, token, workerIndex = ...
 local Host = assert(love.filesystem.load("src/core/HostShell.lua"))()
-local directory = "net-get/" .. token
-assert(love.filesystem.createDirectory(directory))
+local directory = "net-get/" .. token .. "/" .. workerIndex
+-- The main thread creates this workspace before starting any worker.
 local saveDir = love.filesystem.getSaveDirectory()
 
 local function run(job)
@@ -29,6 +29,8 @@ while true do
   if quit:peek() or job == false then break end
   if type(job) == "table" then
     local ok, response = pcall(run, job)
+    love.filesystem.remove(directory .. "/" .. job.id .. ".stderr")
+    love.filesystem.remove(directory .. "/" .. job.id .. ".stderr.cfg")
     if not ok then response = {id = job.id, ok = false, err = tostring(response)} end
     results:push(response)
   end

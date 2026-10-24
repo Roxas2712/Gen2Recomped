@@ -1,7 +1,7 @@
 -- Bounded engine-owned GET workers. No network or pipe read runs in poll().
 local Get = { MAX_JOBS = 16, MAX_BYTES = 16 * 1024 * 1024 }
 local jobs, workers, nextId = {}, {}, 0
-local commands, results, quit, ready, failure
+local commands, results, quit, ready, failure, poolDirectory
 
 local function now() return love.timer.getTime() end
 
@@ -12,10 +12,22 @@ local function ensure()
   end
   commands, results, quit = love.thread.newChannel(), love.thread.newChannel(), love.thread.newChannel()
   local token = tostring(os.time()) .. "-" .. tostring({}):gsub("[^%w]", "")
-  for _ = 1, 3 do
+  poolDirectory = "net-get/" .. token
+  for workerIndex = 1, 3 do
+    -- Initialize the writable filesystem on the main thread, before any
+    -- workers race its first write-directory creation. Each owns its files.
+    if love.filesystem then
+      local made, done = pcall(love.filesystem.createDirectory, poolDirectory .. "/" .. workerIndex)
+      if not made or not done then
+        ready, failure = false, "could not create GET worker directory"
+        return false
+      end
+    end
+  end
+  for workerIndex = 1, 3 do
     local ok, thread = pcall(love.thread.newThread, "src/net/get_worker.lua")
     if ok and thread then
-      local started = pcall(thread.start, thread, commands, results, quit, token)
+      local started = pcall(thread.start, thread, commands, results, quit, token, workerIndex)
       if started then workers[#workers + 1] = thread end
     end
   end
@@ -127,6 +139,8 @@ function Get.shutdown()
     for _ = 1, #workers do commands:push(false) end
   end
   for _, thread in ipairs(workers) do pcall(thread.wait, thread) end
+  if poolDirectory and love.filesystem then love.filesystem.remove(poolDirectory) end
+  poolDirectory = nil
   for _, job in pairs(jobs) do
     job.busy = false
     if job.state.status == "pending" then job.state = {status = "cancelled"} end

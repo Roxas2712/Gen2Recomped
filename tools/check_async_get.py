@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Exercise real LOVE worker HTTP against only a task-owned loopback server."""
-import argparse, http.server, os, pathlib, subprocess, threading, time, tempfile, shutil
+import argparse, http.server, os, pathlib, subprocess, threading, time, tempfile, shutil, uuid
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *args): pass
     def do_GET(self):
@@ -24,7 +24,7 @@ if __name__=='__main__':
     server=http.server.ThreadingHTTPServer(('127.0.0.1',0),Handler)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
-        env=os.environ.copy();env.update(POKEPORT_SOURCE=str(root),GET_TEST_URL=f'http://127.0.0.1:{server.server_port}')
+        env=os.environ.copy();env.update(GET_TEST_IDENTITY='Gen2Recomp-Async-GET-Check-'+uuid.uuid4().hex,GET_TEST_URL=f'http://127.0.0.1:{server.server_port}')
         result=subprocess.run([str(pathlib.Path(args.love).resolve()),str(project)],env=env,cwd=root,timeout=45)
         raise SystemExit(result.returncode)
     finally: server.shutdown();server.server_close();temporary.cleanup()

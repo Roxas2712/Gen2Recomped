@@ -38,7 +38,7 @@ function Net.forMod(loader, mod)
       capabilities = function() return {} end }
   end
   local api = {}
-  function api:available() return Fetch.available() end
+  function api:available() return Host.canSpawnProcess() and Fetch.available() end
   function api:capabilities()
     return Host.canSpawnProcess() and {boundedHttpsGet = 1} or {}
   end
