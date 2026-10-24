@@ -152,6 +152,22 @@ function M.run(f)
   f.residual()
   observe("item then seed then poison", { player = 125, enemy = 250 })
 
+  reset("LEFTOVERS")
+  f.mon("player").hp, f.mon("enemy").hp = 200, 100
+  local previous = f.battle.enemy
+  local replacement = require("src.mods.Merge").deepCopy(previous.mon)
+  if f.backend == "gen1" then
+    f.battle.player.expSeeded, f.battle.player.expSeedSource = true, previous
+    f.battle.enemy = require("src.core.game3.battle.state").makeBattler(replacement, "enemy", { id = 1 })
+  else
+    f.battle.player.leechSeeded, f.battle.player.leechSeedSource = true, previous
+    f.battle.enemy = require("src.battle.BattleState").makeBattler(f.data, replacement, false, nil, f.battle)
+    f.battle:syncSides()
+  end
+  f.residual()
+  T.eq(previous.mon.hp, 100, "withdrawn seed source does not receive healing")
+  observe("seed heals current occupant", { player = 175, enemy = 150 })
+
   reset()
   speed(100, 10)
   f.mon("player").hp, f.mon("enemy").hp = 100, 20

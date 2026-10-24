@@ -322,7 +322,11 @@ function Status.residual(battler, opponent, battle)
   if gba and battler.leechSeeded then
     local source = battler.leechSeedSource or opponent
     -- Resolve the slot again: a switched-out seeder does not receive HP.
-    if source and source.position and battle.battlerAt then source = battle:battlerAt(source.position) end
+    if source and source.position ~= nil and battle.battlerAt then
+      source = battle:battlerAt(source.position)
+    elseif source and source.isPlayer ~= nil then
+      source = source.isPlayer and battle.player or battle.enemy
+    end
     if source and source.mon.hp > 0 then
       local dmg = math.min(mon.hp, math.max(1, math.floor(mon.stats.hp / 8)))
       mon.hp = mon.hp - dmg
