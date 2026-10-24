@@ -25,7 +25,9 @@ or normal Gen2 saves or install automatic updates. Mods can now be installed
 and enabled through the existing launcher in this dedicated profile; none
 are bundled. The engine reports version **0.7.6 / mod API 2**, and mod manifest
 requirements still apply. Enabling the loader alone does not establish VASC2
-compatibility. Keep
+compatibility. The [real VASC release check](vasc-release-compatibility.md)
+reproduces both its Gen3 exclusion and the engine version mismatch in Emerald
+and FireRed. Keep
 the default preview data location; portable/external-data roots are rejected.
 Normal source builds do not activate the preview profile.
 
