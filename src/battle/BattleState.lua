@@ -5509,6 +5509,7 @@ function BattleState:resolveTurn(playerAction)
   -- the bench to replace it; `actionFor` asks each surviving slot for its own
   local enemyAction = self:enemyAction(self:isDouble() and self.enemy or nil)
   self.turnCount = (self.turnCount or 0) + 1
+  if GameVersion.isGen3() then require("src.battle.Gen3FollowMe").clear(self) end
   -- BATTLE ARENA: arenaTurnCounter
   if self.arena then require("src.battle.Gen3Arena").turnStarted(self) end
   -- TURN-SCOPED FLAGS, cleared before anybody moves.  REVENGE reads
