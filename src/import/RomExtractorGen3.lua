@@ -48933,6 +48933,13 @@ end
 --
 -- Returns nil rather than half a record: a row of balls in the wrong place is
 -- worse than no row, and the screen already knows how to draw nothing.
+function RomExtractorGen3:battleCaughtMarker(elements, colors)
+  if type(elements) ~= "table" or #elements < 71 * 32 then return nil end
+  local path = "battle/hud/caught.png"
+  self:saveImage(self:hudImage(elements, 70 * 32 + 1, 1, 1, colors), path)
+  return "assets/generated/" .. path
+end
+
 function RomExtractorGen3:partySummary()
   local S = RomExtractorGen3.PARTY_SUMMARY
   local rom = self.rom
@@ -49922,6 +49929,9 @@ function RomExtractorGen3:extractBattleHud()
     bars.label = "assets/generated/battle/hud/hp_label.png"
   end)
   local _ = okBars
+
+  -- B_INTERFACE_GFX_CAUGHT_BALL (tile 70) uses the healthbox palette.
+  images.caught = self:battleCaughtMarker(elements, boxColors)
 
   -- WHERE INSIDE ITS OWN TILE THE EXP BAR ACTUALLY IS.
   --
