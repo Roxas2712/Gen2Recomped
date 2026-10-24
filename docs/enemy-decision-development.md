@@ -113,21 +113,48 @@ Reports are `contracts-native-turns.json`, `contracts-native-turns-api2.json`,
 These remain bounded synthetic-session controller checks, not fresh cartridge
 imports, full Gen-2 ordinary-turn coverage or complete native battle parity.
 
+## Imported-data native smoke milestone
+
+The owned `portable_enemy_decision` consumer passes native LÖVE 11.5 smoke
+runs on imported Gold, FireRed and Emerald data. The driver starts an isolated
+New Game and uses the real FIGHT/move inputs, constructor and result queues.
+It verifies suppression, an explicit Potion, replay, post-next error recovery,
+stock isolation, incoming switch targets and unsubscribe. Species, moves,
+items and artwork come from the existing imported caches; parties and trainer
+stock are deliberately bounded in-memory test sessions. No normal SAVE action
+or full-playthrough claim is made. Gold's old cache has no imported AI
+attributes, so its delegated native decision is expected to remain inactive.
+
+A separate FireRed run invokes the actual current item-effects importer on the
+local cartridge, redirects its output to memory and uses those generated raw
+bytes through ordinary turns. Potion, X Attack and Guard Spec pass, including
+first-turn X eligibility and Guard Spec's first native residual decrement.
+This is an item-effects-only partial import, not a fresh full-ROM import or
+Emerald raw-byte gameplay validation. Neither the cartridge nor generated
+cartridge data is part of the source change. The temporary consumer was removed
+with file-inventory and SHA-256 guards after the native processes exited.
+
+Evidence: `native-controller-status.json`, `native-old-cache-*-final.log`,
+`native-firered-raw-import.log` and `native-install.json`. The recorded runtime
+is `33c8588`; the status file also records the exact driver hash. Reproduce
+with `POKEPORT_DRIVER=tests/drivers/enemy_decision.lua` in an isolated identity.
+The optional `POKEPORT_ITEM_EFFECT_ROM` selects a local FireRed cartridge for
+the in-memory item-effects stage; it is never needed for the old-cache cases.
+
 Required before publication:
 
-- Wire and test #173's imported Gen-2 attributes/stock through the ordinary
-  battle constructors, including old caches that lack these fields. The seven
-  bytes are now imported; missing flags must not be fabricated.
-- Exercise the raw GBA effects through imported-data gameplay and ordinary
-  controller queues. Audit first-turn timing for both enemy double slots.
-- Extend native trap/status construction, stock-boundary and imported-data
-  cases beyond the bounded automatic-policy fixtures. Audit native action
-  mutations and both GBA double slots beyond Potion.
-- Exercise the ordinary turn/controller paths, forced/locked/tutorial/wild
-  gates, native imported-data gameplay and the complete feature/combined suites.
-- Review ordering, participants, hazards/abilities and stale queued actors.
-  Keep further native battle-rule gaps explicit rather than counting them as
-  equal contract observations.
+- Exercise actual imported Gen-2 attributes and stock through ordinary turns.
+  Constructor/rematch isolation is covered, as is an old cache without flags;
+  native policy with freshly imported class attributes still needs gameplay proof.
+- Extend the FireRed raw-effects smoke to Emerald, both native double slots,
+  further trap/status construction and imported stock boundaries.
+- Audit mutations of delegated native actions (kind, slot and battler as well
+  as item/type/flags), and custom GBA class/brain precedence before the hook.
+- Review participants, Pursuit, hazards/abilities and stale queued actors after
+  forced switches. Keep native battle-rule gaps explicit rather than counting
+  them as equal contract observations.
+- Run the complete feature/combined validation before publication. The combined
+  testing branch does not yet contain this unfinished hook.
 
 Commands (the reference must be clean at the pin):
 
