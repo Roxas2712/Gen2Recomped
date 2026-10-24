@@ -681,6 +681,7 @@ end
 -- ---------------------------------------------------------------------------
 
 require("src.battle.Gen3AIItemKnowledge").install(Gen3AI)
+require("src.battle.Gen3AIOrder").install(Gen3AI)
 
 -- Every opcode a script can reach, followed through its branches.  Memoised
 -- on the program table: the answer depends only on the cartridge.
