@@ -8,7 +8,7 @@ from pathlib import Path
 import subprocess
 
 REFERENCE = "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91"
-VERSIONS = ("firered", "emerald")
+VERSIONS = ("gold", "silver", "crystal", "firered", "emerald")
 
 
 def git(root, *args):
@@ -27,7 +27,7 @@ def main():
     if git(source, "rev-parse", "HEAD") != REFERENCE or git(source, "status", "--porcelain"):
         parser.error("reference must be clean at " + REFERENCE)
     paths = ["examples/portable_critical_order/manifest.json", "examples/portable_critical_order/main.lua"]
-    paths += ["tests/critical_order/" + name for name in ("cases.lua", "worker.lua")]
+    paths += ["tests/critical_order/" + name for name in ("cases.lua", "gen2_cases.lua", "worker.lua")]
     hashes = {name: hashlib.sha256((host / name).read_bytes()).hexdigest() for name in paths}
     runs, differences = [], []
     for version in VERSIONS:

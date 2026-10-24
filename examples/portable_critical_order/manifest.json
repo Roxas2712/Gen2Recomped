@@ -4,5 +4,5 @@
   "version": "1.0.0",
   "api": 3,
   "entry": "main.lua",
-  "games": ["gen3"]
+  "games": ["gen2", "gen3"]
 }
