@@ -6,7 +6,7 @@ require("src.mods.UnifiedEffects")
 for _, version in ipairs({ "firered", "emerald" }) do
   local entry = [[return function(mod)
     assert(mod.content.moves:patch("TACKLE", {
-      effect = "FOLLOW_ME", power = 0, target = 16, priority = 3
+      effect = "FOLLOW_ME", power = 0
     }))
     mod.exports.effect = assert(mod.content.moves:get("TACKLE")).effect
     mod.exports.hits = {}
@@ -17,7 +17,11 @@ for _, version in ipairs({ "firered", "emerald" }) do
       mod.exports.hits[#mod.exports.hits + 1] = e.target.mon.nickname
     end)
   end]]
-  local f = require("tests.enemy_actions.fixture").new(".", "gen2", version, 3, "unified", nil, entry)
+  local function configure(data, _, ids)
+    local move = data.moves[ids.TACKLE]
+    move.target, move.priority, move.protectAffected = 16, 3, false
+  end
+  local f = require("tests.enemy_actions.fixture").new(".", "gen2", version, 3, "unified", configure, entry)
   local e = f.e
   T.eq(#f.result.errors, 0, version .. " real API-3 effect mod loads")
   T.eq(e.effect, "FOLLOW_ME", "public canonical read matches authored effect")
