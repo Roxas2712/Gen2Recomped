@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191 and #194–196 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196 and #198 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,45 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`218cf2c9879bf8dd7687491429ca2a427d5eee83`. Its ROM-free run passed
-**212/212 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`bf67876e473c7881fe2d08935c504fc7a922291c`. Its ROM-free run passed
+**213/213 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #198](https://github.com/UNDERdecoded/Gen2Recomped/pull/198) implements
+native GBA Helping Hand (effect 176) and its shared ordinary-damage modifier.
+The current living partner receives nonstacking support until next-turn
+planning; replacement does not inherit it. Critical/STAB/type rounding,
+physical/special/spread attacks, fixed damage and confusion exclusions,
+status/refusal gates, residual lifetime, owned PP and actual priority queues
+are covered by **5,322/5,322** focused checks.
+
+The same API-3 consumer and shared fixture match unchanged read-only Gen1
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91` in **28 engine workers / 1,916 paired
+observations** on feature and combined runtimes. The clean prerequisite fails
+391 assertions in the initial new FireRed matrix. Existing paired GBA base
+and critical-order checks remain green. A real mod's canonical
+`effect = "HELPING_HAND"` patch with #121 passes **12/12** additional checks,
+including a publicly selected right-flank enemy move with supported damage.
+
+Feature quick acceptance is **86/95** engine suites versus **85/94** on clean
+prerequisite `45f5b4e3386f704ab011ca3b6690aaa79f0bc425`. The exact Counter of
+all **25 FAIL lines across nine inherited suites** matches, with no additions;
+SDK 3/3 and B30 pass. Dependencies #196, #178 and #175 remain separately
+published. This combined checkout already contains their baseline repairs,
+updates the former missing-handler assertion and audits the intentional
+fingerprint change in only `move_effects`; its full run passes **213/213**.
+
+All five hosted workflows await maintainer approval; the
+[dedicated workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40139823577)
+has zero jobs. Local acceptance is separate. The chat's attachment limit
+prevents a new PR card; the published PR remains linked here. Dedicated
+set-damage/delayed executors (Spit Up, Beat Up, Future Sight/Doom Desire),
+full ability/held-item ordering, other effect producers, AI scoring,
+called/link moves and full gameplay/RNG parity remain separate surfaces.
+See [native GBA Helping Hand](native-gba-helping-hand.md).
+
+Prior #196 results retain runtime
+`218cf2c9879bf8dd7687491429ca2a427d5eee83` and its 212/212 engine result:
 
 [PR #196](https://github.com/UNDERdecoded/Gen2Recomped/pull/196) implements
 native GBA Follow Me (effect 172) through the ordinary registry, selected

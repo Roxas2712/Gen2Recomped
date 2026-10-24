@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "218cf2c9879bf8dd7687491429ca2a427d5eee83",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/196",
-  "feature_ref": "8052c7916b12d57c425ce2fc92e6aa2ca3f9acc4",
+  "runtime_ref": "bf67876e473c7881fe2d08935c504fc7a922291c",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/198",
+  "feature_ref": "f09b570eaaef1fb8bb48b58fe20f501869a5edd8",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 212,
-  "engine_suites_total": 212,
+  "engine_suites_passed": 213,
+  "engine_suites_total": 213,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 24,
-  "cross_engine_paired_observations": 354,
+  "cross_engine_worker_runs": 28,
+  "cross_engine_paired_observations": 1916,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All three #196 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
+  "hosted_ci": "All five #198 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Current public GBA enemy choices, selectors, records, selected action targets and native Follow Me against unchanged read-only Gen1; no full AI, RNG, damage-amount or whole-battle parity claim",
+  "cross_engine_scope": "Current public GBA enemy choices, selectors, records, selected action targets, native Follow Me and native Helping Hand shared-damage path against unchanged read-only Gen1; no full special-executor, AI, RNG, held-item/ability-order or gameplay parity claim",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -163,7 +163,7 @@
     "jobs": 0
   },
   "enemy_pp_full_suite_runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
-  "feature_tested_ref": "ae3c8925dc364447120ae9167cd2bb107fb6d8a3",
+  "feature_tested_ref": "f09b570eaaef1fb8bb48b58fe20f501869a5edd8",
   "caught_marker_native_checks_passed": 2078,
   "caught_marker_renderer_checks_passed": 840,
   "caught_marker_import_checks_passed": 216,
@@ -1593,5 +1593,60 @@
     },
     "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
     "scope": "Native GBA producer, current-position selected redirection, both sides, live/fainted Lightning Rod precedence, ordinary status/PP/priority, residual and next-planning lifetime; synthetic imported-shaped data, no full gameplay/RNG/link/called-move/damage-amount parity claim"
+  },
+  "native_gba_helping_hand": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/198",
+    "feature_ref": "f09b570eaaef1fb8bb48b58fe20f501869a5edd8",
+    "prerequisite_prs": [
+      196,
+      178,
+      175
+    ],
+    "prerequisite_ref": "45f5b4e3386f704ab011ca3b6690aaa79f0bc425",
+    "canonical_effect_composition_pr": 121,
+    "combined_runtime_ref": "bf67876e473c7881fe2d08935c504fc7a922291c",
+    "focused_checks_passed": 5322,
+    "public_effect_composition_checks_passed": 12,
+    "source_reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_modified": false,
+    "games": [
+      "firered",
+      "emerald"
+    ],
+    "cross_engine_worker_runs": 28,
+    "cross_engine_paired_observations": 1916,
+    "paired_result": "passed",
+    "combined_engine_suites_passed": 213,
+    "combined_engine_suites_total": 213,
+    "prerequisite_negative_control_failed_assertions": 391,
+    "prior_base_damage_comparison": "passed on clean final feature",
+    "prior_critical_order_comparison": "passed on clean final feature",
+    "feature_baseline": {
+      "engine_suites_passed": 86,
+      "engine_suites_total": 95,
+      "prerequisite_engine_suites_passed": 85,
+      "prerequisite_engine_suites_total": 94,
+      "failure_lines": 25,
+      "exact_failure_counter_matches_prerequisite": true,
+      "new_failure_lines": 0,
+      "existing_failure_suites": 9
+    },
+    "fingerprint": {
+      "before": "128fc071ae7249cd",
+      "after": "032184f68094e9ca",
+      "changed_section": "move_effects",
+      "section_before": "7cd0ac0f527968fb",
+      "section_after": "52cc8398513ed12c",
+      "other_six_populated_sections": "unchanged",
+      "single_entry_removal_restores_prerequisite": true
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "workflow_count": 5,
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40139823577",
+      "jobs": 0
+    },
+    "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
+    "scope": "Native GBA producer and shared ordinary damage path, actual public choices/events and numeric damage, rounding/critical/type/spread, fixed/confusion exclusions, gates, lifetime, replacement, real priority queues and PP; dedicated set-damage/delayed executors and full gameplay/RNG/held-item/ability parity remain separate"
   }
 }
