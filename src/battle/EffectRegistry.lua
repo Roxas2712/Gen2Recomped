@@ -123,6 +123,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   local lockedOHKO = record and record.gbaOHKO and user.lockedOn == target
   if target.protecting and move.protectAffected ~= false and not lockedOHKO then
     battle:cancelMoveAnim()
+    if record and record.onProtect and record.onProtect(ctx) then return end
     battle:sayNext(Strings("%s\nprotected itself!", displayName(target)))
     return
   end
@@ -318,7 +319,9 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     battle.lastDamage = hitDamage
     -- ...and the one applyDamage a Gen 3 FOCUS BAND answers: a move landing
     -- on someone
+    local substituteBefore = target.substituteHP
     local dealt = battle:applyDamage(target, hitDamage, true, info.damageAdjustment)
+    if info.gbaSetDamage and substituteBefore then dealt = math.min(dealt, substituteBefore) end
     totalDealt = totalDealt + dealt
     -- MIRROR COAT is COUNTER's special twin and needs the SPECIAL half of
     -- the damage kept separately; battle.lastDamage is shared by both and
@@ -356,7 +359,8 @@ function EffectRegistry.runDamaging(battle, ctx, record)
         or (record and record.chooseDamage) or not require("src.core.GameVersion").isGen3()) then
       Runtime.emit("battle.damage_dealt", {
         battle = battle, user = user, target = target, move = move,
-        damage = dealt, crit = info.crit, typeMult = info.typeMult,
+        damage = dealt, crit = info.crit, typeMult = info.eventTypeMult or info.typeMult,
+        substitute = info.gbaSetDamage and hadSub or nil,
       })
     end
     if hadSub and not target.substituteHP then

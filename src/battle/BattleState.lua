@@ -5247,6 +5247,7 @@ end
 -- Damage.compute, hooked as battle.damage; the ctx table is only built
 -- when a chain is installed, so the no-mod path allocates nothing
 function BattleState:computeDamage(user, target, move, opts)
+  if opts and opts.gbaSetDamage then opts.battle = self end
   -- Damage's Gen II held-item path needs the imported item records alongside
   -- the ordinary formula options. Keep Gen I's no-mod fast path allocation-free.
   if self.data and self.data.constants and self.data.constants.generation == 2 then
@@ -5333,7 +5334,7 @@ function BattleState:computeDamage(user, target, move, opts)
     opts = opts or {}
     opts.bwBattle = self
   end
-  if Runtime.wantsHook("battle.damage") then
+  if Runtime.wantsHook("battle.damage") and not (opts and opts.gbaSetDamage) then
     return Runtime.call("battle.damage", function(c)
       return Damage.compute(c.ruleset, c.user, c.target, c.move, c.opts)
     end, { battle = self, ruleset = self.ruleset, user = user,

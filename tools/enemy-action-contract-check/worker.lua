@@ -2,7 +2,9 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "helping_hand" then
+if mode == "spit_up" then
+  rows = dofile(root .. "/tests/enemy_actions/spit_up.lua").run(root, backend, version)
+elseif mode == "helping_hand" then
   rows = dofile(root .. "/tests/enemy_actions/helping_hand.lua").run(root, backend, version)
 elseif mode == "follow_me" then
   rows = dofile(root .. "/tests/enemy_actions/follow_me.lua").run(root, backend, version)
