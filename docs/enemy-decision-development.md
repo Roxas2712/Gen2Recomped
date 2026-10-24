@@ -521,6 +521,52 @@ inputs, not actual imported trainer-program coverage, a new LÖVE run or
 complete native battle parity. The unfinished hook remains outside the
 combined testing branch.
 
+## Native move/battler query milestone
+
+`Gen3AIQueries` supplies seven functional native query families: last-used
+move (both command names), move type/power/effect from the result register,
+protection count, active types and Flash Fire. It reads current typed records,
+preserves native type numbers across aliases and declared custom indices,
+handles absent partners, and rejects unknown move definitions without
+inventing a zero result. MOVE_NONE retains the native zero row. These queries
+do not consume RNG. This independent prerequisite is published in
+[PR #179](https://github.com/UNDERdecoded/Gen2Recomped/pull/179).
+
+The direct interpreter matrix passes **4 workers / 472 paired observations**
+and **2,339** host checks. It includes all native type numbers, both importer
+names, declared custom type indices, metadata/error boundaries and the
+reference's distinct legacy versus partner-aware selectors. Clean upstream
+fails 702 assertions and differs in 236 observations per GBA profile. Its
+complete run matches all 27 existing upstream failure lines exactly.
+
+The unchanged public scorer also passes through the real trainer constructors
+and opponent query producers, including singles/doubles, normal and invalid
+metadata, missing history, counters and partner state. Actual native attacks
+populate the last move; a Fire hit triggers Flash Fire; an actual Protect
+produces its counter before the AI reads it. Those checks use the real move
+pipelines and equal explicit session/ability inputs, not hand-set producer
+results. They are CPU selection/move-query checks, not a new graphical turn
+or complete ordinary presentation/controller run.
+
+Both host API 3 and API 2/unified pass **12 workers / 995 paired observations**,
+with zero differences. Hook checks pass **4,178/4,178**. The complete development
+run passes **144/154** engine suites, SDK **3/3** and B30; its **26 FAIL lines**
+exactly match the preceding ten-suite baseline. Runtime is `9e8983a5` plus the
+recorded query changes. Reports: `query-contracts-expanded.json`,
+`contracts-queries.json`, `contracts-queries-api2.json` and `full-queries.log`.
+
+A fresh actual Emerald AI-stage audit still reports runnable flag programs
+0, 1, 3, 4 and 5; the new queries alone do not prove more complete stock
+programs. Flag 2 still needs held effects, move/effect membership, party
+status, taunt and speed/attacking-move predicates. Flag 6 needs effect
+membership; flags 7–9 still need move/held-item knowledge. Source-side held
+effect, gender, used-item and taunt handlers include placeholders, and
+existing weather ordinals/aliases also need a semantic audit. Do not port
+placeholders or count opcode names as full parity. Actual program audit:
+`audit-emerald-ai-queries.log`. The unfinished hook stays outside the
+combined testing branch, whose independently validated PR-179 snapshot
+passes 200/200 engine suites.
+
 Required before publication:
 
 - Extend real imported Gen-2 coverage beyond Gold's actual attributes, stock
@@ -535,11 +581,13 @@ Required before publication:
   above do not establish a portable malformed-action contract. Ordinary item,
   switch, move, actor-ID and controller-flag paths above are covered.
 - Extend native bytecode coverage beyond the tested random/score/KO/power
-  programs, including remaining query opcodes, variable-power move effects,
+  programs, including remaining query opcodes and existing handler semantics,
+  reference-side placeholder providers, variable-power move effects,
   ability/held-item contexts, action controls and actual imported trainer
   programs. Setup RNG and ordinary numeric damage queries now have shared
   contracts; that does not prove all native damage/AI rules. The public
-  brain/scored-layer paths and Emerald loaded-program bypass are covered. Existing Imprison/Choice-lock flags
+  brain/scored-layer paths and Emerald loaded-program bypass are covered.
+  Existing Imprison/Choice-lock flags
   have validated read semantics; their complete native producers/rules remain
   separate battle work.
 - Review participants, Pursuit, hazards/abilities and stale queued actors after

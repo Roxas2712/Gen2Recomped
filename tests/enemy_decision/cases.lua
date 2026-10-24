@@ -78,6 +78,9 @@ function C.run(root, backend, version, api, format, inspect)
     for _, row in ipairs(dofile(root .. "/tests/enemy_decision/brain_cases.lua")(f, backend)) do
       rows[#rows + 1] = row
     end
+    for _, row in ipairs(dofile(root .. "/tests/enemy_decision/query_cases.lua")(f, backend)) do
+      rows[#rows + 1] = row
+    end
     for _, row in ipairs(dofile(root .. "/tests/enemy_decision/damage_ai_cases.lua")(f, backend)) do
       rows[#rows + 1] = row
     end
