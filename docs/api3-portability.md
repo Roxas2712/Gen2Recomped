@@ -187,4 +187,4 @@ native ownership gates, API-3 contexts and GBA presentation caching.
 end-of-turn views, validated damage batches and native faint/EXP authority.
 
 [Portable held-item reads](portable-held-items.md) document shared `HELD_*`
-names, byte odds, native consumers and the remaining GBA scheduling gap.
+names, byte odds, native consumers and the tested GBA item scheduling phases.

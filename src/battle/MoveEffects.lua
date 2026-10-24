@@ -270,6 +270,7 @@ MoveEffects.primary = {
       if t == "GRASS" then return { Strings("But, it failed!") } end
     end
     target.leechSeeded = true
+    if require("src.core.GameVersion").isGen3() then target.leechSeedSource = user end
     return { Strings("%s\nwas seeded!", displayName(target)) }
   end,
 
