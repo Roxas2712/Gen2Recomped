@@ -48,7 +48,8 @@ end
 -- The named effect and its parameter, or nil.  An effect the extractor had
 -- no name for comes back as a number and matches no rule below, which is
 -- the same silence an unknown ability gets.
-local function nativeEffect(battler)
+local function nativeEffect(battler, native)
+  if type(native) == "table" then return native.effect, native.parameter, HoldItems.defOf(battler) end
   local def = HoldItems.defOf(battler)
   if not def then return nil end
   -- A Gen-2 held_items definition owns this item's GSC behavior; do not also
@@ -61,8 +62,8 @@ local function nativeEffect(battler)
   return effect, tonumber(def.holdEffectParam) or 0, def
 end
 
-function HoldItems.effectOf(battler, trigger)
-  local effect, param, def = nativeEffect(battler)
+function HoldItems.effectOf(battler, trigger, native)
+  local effect, param, def = nativeEffect(battler, native)
   if not require("src.mods.Runtime").wantsHook("held_item.trigger") then return effect, param, def end
   local definition = def or HoldItems.defOf(battler)
   local chosen, amount = require("src.battle.HeldItemRead").read(battler, definition, effect, param or 0, trigger, 3)
