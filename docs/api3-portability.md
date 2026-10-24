@@ -146,3 +146,6 @@ comparison pass by changing only one engine's mod fixture.
 
 For the native damage-order correction used by portable `battle.crit` mods,
 see [Gen-3 critical/type rounding](gen3-critical-order.md).
+
+See [portable Pokemon identity hooks](portable-pokemon-rolls.md) for
+`shiny.roll`, `gender.roll`, native DV/PID semantics and shared contracts.
