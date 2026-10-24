@@ -10,13 +10,35 @@ function F.new(root, backend, version, api, format, noMod)
     false,
     "portable_enemy_decision",
     function(data, gen)
+      if gen == 2 then
+        data.constants = data.constants or {}
+        data.constants.generation = 2
+      end
       if gen == 3 then
         data.constants = data.constants or {}
         data.constants.gen3ItemEffects = {}
         if backend == "gen2" then
           data.pokemon.CHARMANDER.types = { "FIRE" }
-          data.constants.typeOrder = { "NORMAL", "FIGHTING", "FLYING", "POISON", "GROUND", "ROCK", "BUG",
-            "GHOST", "STEEL", "CURSE_TYPE", "FIRE", "WATER", "GRASS", "ELECTRIC", "PSYCHIC_TYPE", "ICE", "DRAGON", "DARK" }
+          data.constants.typeOrder = {
+            "NORMAL",
+            "FIGHTING",
+            "FLYING",
+            "POISON",
+            "GROUND",
+            "ROCK",
+            "BUG",
+            "GHOST",
+            "STEEL",
+            "CURSE_TYPE",
+            "FIRE",
+            "WATER",
+            "GRASS",
+            "ELECTRIC",
+            "PSYCHIC_TYPE",
+            "ICE",
+            "DRAGON",
+            "DARK",
+          }
           local effects = { [33] = 0, [76] = 151, [19] = 155, [91] = 155, [13] = 39, [130] = 145, [143] = 75 }
           for _, move in pairs(data.moves) do
             move.gen3Effect = effects[move.index]
@@ -26,7 +48,8 @@ function F.new(root, backend, version, api, format, noMod)
         end
       end
       for _, row in ipairs({ { "POTION", 13, 20 }, { "FULL_RESTORE", 19, "all" }, { "FULL_HEAL", 23, false } }) do
-        local key = backend == "gen2" and gen == 3 and ("ITEM_%03d"):format(row[2]) or row[1]
+        local number = gen == 2 and ({ POTION = 18, FULL_RESTORE = 14, FULL_HEAL = 38 })[row[1]] or row[2]
+        local key = backend == "gen2" and gen >= 2 and ("ITEM_%03d"):format(number) or row[1]
         if backend == "gen1" and gen == 3 then
           data.gen3Items._byId[row[2]] = {
             name = row[1]:gsub("_", " "),
@@ -42,7 +65,13 @@ function F.new(root, backend, version, api, format, noMod)
             },
           }
         else
-          data.items[key] = { id = key, name = row[1]:gsub("_", " "), index = row[2], price = 100 }
+          data.items[key] = {
+            id = key,
+            name = row[1]:gsub("_", " "),
+            index = number,
+            price = 100,
+            key = gen == 2 and row[1] or nil,
+          }
           if gen == 3 then
             data.constants.gen3ItemEffects[key] = {
               heal = row[3] and true or nil,
@@ -101,6 +130,10 @@ function F.new(root, backend, version, api, format, noMod)
     oldClose()
   end
   function f.item(name)
+    if f.gen == 2 and backend == "gen2" then
+      local n = ({ POTION = 18, FULL_RESTORE = 14, FULL_HEAL = 38 })[name]
+      return n and ("ITEM_%03d"):format(n) or name
+    end
     if f.gen == 3 then
       local n = ({ POTION = 13, FULL_RESTORE = 19, FULL_HEAL = 23 })[name]
       return backend == "gen1" and n or ("ITEM_%03d"):format(n)
@@ -238,11 +271,15 @@ function F.new(root, backend, version, api, format, noMod)
     local b, count = f.battle, 0
     if backend == "gen1" then
       for _, id in ipairs(require("src.core.game3.battle.ai_items").history(b).items) do
-        if id ~= 0 then count = count + 1 end
+        if id ~= 0 then
+          count = count + 1
+        end
       end
     else
       for _, row in ipairs(require("src.battle.EnemyItems").history(b).items) do
-        if not (b.gen3ItemsUsed or {})[row.slot] then count = count + 1 end
+        if not (b.gen3ItemsUsed or {})[row.slot] then
+          count = count + 1
+        end
       end
     end
     return count

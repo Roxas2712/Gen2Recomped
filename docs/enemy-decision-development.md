@@ -323,13 +323,74 @@ playthrough or normal SAVE test. Runtime is `f805ee6` plus the recorded changes;
 exact hashes/results are in `native-controls-status.json` and associated logs.
 The owned example was removed after hash verification.
 
+## Gen-2 ordinary turns and real cartridge inputs
+
+Twelve additional ordinary turns per Gen-2 version compare native healing,
+stock exhaustion, duplicate Full Restores, suppression, repeat/failure after
+delegation, highest-level and half-HP gates, and missing attributes. They run
+the native turn controller and presentation queues, not just the item query.
+Fixtures now mount actual Gen-2 physical item indices, generation metadata
+and equal session stats/nicknames. The complete matrix passes **12 workers /
+613 paired observations** in each host API mode. Host hook checks pass
+**1,884/1,884**, and seven separate Gen-2 critical-base regressions pass.
+
+These cases exposed two product defects. Gen-2 stock consumption compared a
+resolved physical key against an unnormalized alias and could leave a Potion
+in stock. It now compares resolved keys while removing exactly one slot.
+Gen-2 critical damage doubles the truncated base before the cap and +2;
+doubling the level instead used the wrong floor at levels such as 29. Native
+generation metadata now selects that base step; Gen-1's existing level rule
+and the Gen-3 profile remain separate. Other Gen-2 modifiers/rules are not
+claimed universally equivalent by these regressions.
+
+The unchanged `784c8ec` parent fails **4 critical-base assertions** and the
+alias-stock constructor assertion, with **one differing ordinary-turn HP
+observation** on Gold. The temporary checkout was verified clean and removed.
+Reports: `contracts-gen2-turns.json`, `contracts-gen2-turns-api2.json`,
+`targeted-gen2-turns.log`, `gen2-critical-base.log`, `gen2-parent-*.log` and
+`gen2-parent-differences.json`.
+
+The actual English Gold ROM, SHA-1
+`d8b8a3600a465308c9953dfa04f0081c05bdcb94`, is read through each native trainer
+importer and its own manifest: **all 66** seven-byte attribute rows and ordered
+item stocks agree. The host uses setup constants from an existing cache of
+that same ROM. Feeding the freshly read Red attributes/stock into the native
+turn fixtures produces **13 equal metadata/turn observations** through both
+SDKs. Private cartridge-derived reports remain in the ignored QA directory;
+no ROM/cache assets are committed. See `fresh-gold-comparison.json` and the
+two `fresh-gold-*-turns.log` files.
+
+The new native `tests/drivers/enemy_decision_gen2_import.lua` also passes on
+LÖVE 11.5. It imports the Gold trainer stage into memory, constructs Red's
+actual six-Pokemon roster (level-81 lead), and runs four real FIGHT/move turns
+across two encounters. Both Full Restores are consumed once, the third turn
+has no stock, the shared imported class remains unchanged, and a new encounter
+gets both slots back. Each ordinary turn reaches the public hook once with
+the exact battle handle. The ROM must match the isolated cache; no complete
+fresh-ROM import, battle finish or normal SAVE is claimed.
+
+The GBA driver now accepts the Emerald item-effect ROM stage too. The actual
+Emerald raw-effects run passes its single/double controllers, including both
+item recipients, run/forfeit/flag checks, X Attack, Guard Spec/Mist and the
+Steel critical regression. This extends the earlier FireRed raw-effects
+evidence; it does not establish every imported trainer-stock/status boundary.
+Native hashes and results are in `native-gen2-import-status.json`,
+`native-emerald-raw-status.json` and their logs. The owned example was removed
+with hash guards after both processes exited.
+
+The complete development run passes **141/151** engine suites, **3/3** SDK
+suites and B30. All **26 FAIL lines** exactly match the prior ten baseline
+suites. Runtime is `784c8ec` plus the recorded changes. The unfinished hook
+remains outside the combined testing branch.
+
 Required before publication:
 
-- Exercise actual imported Gen-2 attributes and stock through ordinary turns.
-  Constructor/rematch isolation is covered, as is an old cache without flags;
-  native policy with freshly imported class attributes still needs gameplay proof.
-- Extend the FireRed raw-effects smoke to Emerald, both native double slots,
-  further trap/status construction and imported stock boundaries.
+- Extend real imported Gen-2 coverage beyond Gold's actual attributes, stock
+  and ordinary/rematch turns. Silver/Crystal synthetic controller contracts
+  pass; their own native ROM/controller paths and more switch policies remain.
+- Extend raw GBA controller coverage to further trap/status construction and
+  actual imported trainer-stock boundaries. Both GBA item-effect stages and
+  both native double recipients are now covered above.
 - Extend delegated-action coverage to malformed slot/move payloads and unsafe
   watch targets. Keeping the original numeric item target on a single watch
   action crashes the current reference controller; the valid-target cases

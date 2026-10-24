@@ -37,13 +37,17 @@ return function(game)
   local potion = named(game.data.items, "POTION")
   local itemRom = os.getenv("POKEPORT_ITEM_EFFECT_ROM")
   if itemRom then
-    assert(V.get() == "firered", "this optional ROM probe expects FireRed")
+    assert(
+      V.get() == "firered" or V.get() == "emerald",
+      "this optional ROM probe expects a registered GBA game"
+    )
     local file = assert(io.open(itemRom, "rb"))
     local raw = file:read("*a")
     file:close()
-    assert(raw:sub(0xAD, 0xB0) == "BPRE", "wrong item-effect cartridge")
-    local manifest =
-      require("src.link.Json").decode(assert(love.filesystem.read("tools/rom_manifest_firered.json")))
+    assert(raw:sub(0xAD, 0xB0) == (V.get() == "firered" and "BPRE" or "BPEE"), "wrong item-effect cartridge")
+    local manifest = require("src.link.Json").decode(
+      assert(love.filesystem.read("tools/rom_manifest_" .. V.get() .. ".json"))
+    )
     local extractor = require("src.import.RomExtractorGen3").new(raw, V.info(), manifest)
     extractor._constants = { itemOrder = game.data.constants.itemOrder }
     local generated
@@ -54,7 +58,7 @@ return function(game)
     extractor:extractItemEffects()
     assert(generated and generated.gen3ItemEffects[potion].bytes[7] == 20, "actual Potion effect bytes")
     game.data.constants.gen3ItemEffects = generated.gen3ItemEffects
-    print("PORTABILITY_ENEMY_RAW_IMPORT FireRed item-effects stage, memory only")
+    print("PORTABILITY_ENEMY_RAW_IMPORT " .. V.get() .. " item-effects stage, memory only")
   end
   game.save.options.ruleset = false
   game.save.options.textSpeed, game.save.options.animations = 1, false
@@ -311,7 +315,7 @@ return function(game)
     damage, beforeHit = 0, nil
     turn(b)
     assert(b.enemy.stages.attack == 1 and b.gen3ItemsUsed[1], "actual native X Attack bytes run through turn")
-    print("PORTABILITY_ENEMY_CASE firered raw-x-attack")
+    print("PORTABILITY_ENEMY_CASE " .. V.get() .. " raw-x-attack")
     b = fresh("delegate", { named(game.data.items, "GUARD SPEC.") })
     damage, beforeHit = 0, nil
     turn(b)
@@ -319,7 +323,7 @@ return function(game)
       b.sides[2].mistTurns == 4 and b.gen3ItemsUsed[1],
       "actual native Guard Spec bytes and first residual"
     )
-    print("PORTABILITY_ENEMY_CASE firered raw-guard-spec")
+    print("PORTABILITY_ENEMY_CASE " .. V.get() .. " raw-guard-spec")
   end
   b = fresh("delegate")
   e.state.stop()

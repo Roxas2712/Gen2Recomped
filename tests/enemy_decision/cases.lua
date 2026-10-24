@@ -11,6 +11,11 @@ function C.run(root, backend, version, api, format, inspect)
     return { { available = false } }
   end
   T.eq(f.e.available, true, "native producer advertised")
+  if f.gen == 2 then
+    for _, row in ipairs(dofile(root .. "/tests/enemy_decision/gen2_turn_cases.lua")(f, backend)) do
+      rows[#rows + 1] = row
+    end
+  end
   local out = f.e.state
   for _, mode in ipairs({
     "override",

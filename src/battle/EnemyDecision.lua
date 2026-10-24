@@ -104,7 +104,7 @@ function M.gen2Item(battle, ref)
   -- Gen 2's native handler accepts an explicit item even when absent from
   -- stock. Preserve that native distinction from GBA's useStocked refusal.
   for i, id in ipairs(trainer and trainer.items or {}) do
-    if id == key then
+    if (M.itemKey(battle.data, id) or id) == key then
       table.remove(trainer.items, i)
       break
     end
