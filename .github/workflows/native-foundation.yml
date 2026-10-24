@@ -29,6 +29,12 @@ jobs:
           luajit tests/engine/gen3_color_failures.lua
           luajit tests/engine/gen3_palette_renderer.lua
           luajit tests/engine/gen3_weather_color.lua
+      - name: Automatic ROM palette program import, bounds and public consumers
+        run: |
+          luajit tests/engine/gen3_palette_program_import.lua
+          luajit tests/engine/gen3_palette_program_failures.lua
+          luajit tests/engine/gen3_palette_program_public.lua
+          python3 -m unittest discover -s tests -p test_gen3_palette_profiles.py
       - name: Cache-reference policy regressions
         run: python3 -m unittest discover -s tests -p test_modkit_cache_comments.py
       - name: Existing contracts on the combined engine

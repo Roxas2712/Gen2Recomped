@@ -22,6 +22,8 @@
 -- Nothing here hardcodes an address; if the manifest lacks a symbol, the
 -- stage that needs it says so and is skipped rather than reading whatever
 -- happens to be at offset zero.
+-- Terrain palette callback classifications are a separately identified,
+-- source-pinned manifest profile, gated again on the actual full ROM digest.
 --
 -- The CONTRACT is the same as Gen 2's, because the runtime's is: `new` takes
 -- (romData, version, manifest, progress), `run` walks DATA_STAGES then
@@ -53,7 +55,7 @@ RomExtractorGen3.__index = RomExtractorGen3
 -- The progress denominator.  Kept honest with the two stage lists below: a
 -- mismatch does not break anything, it just makes the bar lie, which is the
 -- kind of small wrongness that survives for months.
-local STAGE_COUNT = 94
+local STAGE_COUNT = 95
 
 -- ---------------------------------------------------------------------------
 -- The stage tables below are keyed to Emerald's ROM.  A sibling cartridge
@@ -40984,7 +40986,7 @@ RomExtractorGen3.DATA_STAGES = {
   "extractMoveAnimations",
   "extractStarterSelect",
   "extractNamingKeyboard", "extractBattleMenu", "extractSummaryText",
-  "extractHoennDex", "extractTilesetAnimations", "extractSafari",
+  "extractHoennDex", "extractTilesetAnimations", "extractTilesetPalettePrograms", "extractSafari",
   "extractTrainerMemo", "extractAbilityDescriptions",
   "extractMonAnims", "extractCries", "extractReflections", "extractElevation",
   "extractBattleWindows",
@@ -42517,6 +42519,29 @@ function RomExtractorGen3:thumbLength(fn, limit)
     end
   end
   return nil
+end
+
+function RomExtractorGen3:extractTilesetPalettePrograms()
+  self:beginStage("Gen3 tileset palette programs")
+  if type(self._tilesets)~="table" then
+    Logger.warn("gen3 palette programs: no tilesets -- run extractTilesets first")
+    return
+  end
+  -- Authenticate the actual bytes, not just the manifest/selected game label.
+  -- The application has verified these too, but a standalone stage must not
+  -- reinterpret another revision through a known program-address catalog.
+  local ok,digest=pcall(require("src.import.RomVerification").sha1,self.rom.data)
+  local report=require("src.import.Gen3PalettePrograms").extract(
+    self.rom,self._tilesets,self.manifest,ok and digest or nil)
+  self._tilesets._romInfo=self._tilesets._romInfo or {}
+  self._tilesets._romInfo.palettePrograms=report
+  self:write("map_tilesets",self._tilesets)
+  Logger.info("Gen3 palette programs: %d static, %d animated, %d unavailable",
+    report.static,report.animated,report.unavailable)
+  if report.unavailable>0 then
+    Logger.warn("gen3 palette programs: incomplete sources retain native base palettes; "
+      .. "check map_tilesets.paletteProgram diagnostics and the ROM revision")
+  end
 end
 
 function RomExtractorGen3:extractTilesetAnimations()

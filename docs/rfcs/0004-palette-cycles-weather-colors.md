@@ -1,7 +1,8 @@
 # RFC 0004 — Native palette cycles and public weather colours
 
-Status: implemented on the native foundation branch. Stock palette-program
-extraction and GPU/gameplay acceptance remain open; Origami port paused.
+Status: implemented on the native foundation branch. Audited stock
+palette-program extraction follows in [RFC 0005](0005-rom-palette-program-import.md);
+GPU/gameplay acceptance remains open. Origami port paused.
 
 ## Motivation and decision extended
 
@@ -28,7 +29,8 @@ The native terrain decoder can sample these cycles. The flat renderer updates
 existing layer images, animated variants, reflection covers and border fills
 on colour changes. Palette timing never changes tile picture timing or atlas
 size. Existing stock caches have no declarations and retain base behaviour.
-The stock importer does not yet produce declarations; this RFC does not claim
+The initial implementation did not produce declarations; see RFC 0005 for
+the subsequent audited import. This RFC does not claim
 automatic extraction or full cartridge callback/fade/transition semantics.
 
 `Gen3Weather.colorFilter()` factors out the existing veil/flash composition.

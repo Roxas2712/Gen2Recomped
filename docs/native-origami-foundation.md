@@ -19,7 +19,7 @@ Development branch: `codex/native-origami-foundation`. This is not a release.
 | Surf mounts | `codex/portable-surf-mount-render-data` / `90b5446` | native mount/rider observations; Gen3 update-owned bob |
 | Cell surfaces | this branch / [RFC 0002](rfcs/0002-native-render-foundation.md) | live raw elevation, collision and behavior, including resident neighbor crops |
 | Animated terrain sources | this branch / [RFC 0003](rfcs/0003-animated-terrain-sources.md) | selected native animation picture, fresh source palettes and exact content-change token |
-| Palette cycles and weather colours | this branch / [RFC 0004](rfcs/0004-palette-cycles-weather-colors.md) | independent declared colour cycles, native sheet/border/cover refresh, public native veil/flash observations; stock palette-program extraction remains open |
+| Palette cycles and weather colours | this branch / [RFC 0004](rfcs/0004-palette-cycles-weather-colors.md) | independent colour cycles, native sheet/border/cover refresh, public native veil/flash observations; [audited stock palette-program import](gen3-palette-program-import.md) |
 
 The loader composes every family on one handle before executing a consumer.
 The new surface contract preserves elevation 15's bridge semantics and reads
@@ -70,11 +70,27 @@ palette-cycle declarations: automatic cartridge-program extraction and real
 GPU/gameplay acceptance are not claimed. See the
 [colour contract](gen3-color-data-v1.md) for the exact boundary.
 
+The next follow-up adds automatic palette-program import for the exact audited
+Emerald/FireRed rev-0 profiles, described in
+[RFC 0005](rfcs/0005-rom-palette-program-import.md). Three new Lua suites pass
+2,655 checks, including actual synthetic source headers, digest refusal,
+binary cache serialization and public API-1/2 pixel tests; six Python tests
+keep both manifests and regeneration catalog aligned. The local ROM-free
+runner passes 99/99 engine suites, 3/3 SDK suites and B30. The earlier note
+about missing automatic declarations describes the previous checkpoint;
+existing installed caches still require re-import. Actual-ROM acceptance
+is now recorded in the separate
+[observed-digest/callback-coverage report](qa/native-foundation/palette-program-import.json):
+73/73 Emerald and 63/63 FireRed source tilesets recognized, zero unknown
+programs, and 42,496 successful real-source RGBA comparisons through APIs 1/2.
+Both input dumps remained unchanged; no installed caches, saves or player
+sessions were used. These are import/CPU pixel results, not GPU/gameplay acceptance.
+
 ## Remaining engine work
 
 | Area | Remaining acceptance/work |
 | --- | --- |
-| Terrain graphics over time | animated sources, independent declared palette cycles and native recolouring implemented; automatic stock palette-program extraction, cartridge fade/task semantics, general GPU invalidation and performance acceptance remain |
+| Terrain graphics over time | animated sources, independent palette cycles, audited Emerald/FireRed palette-program import and native recolouring implemented; additional ROM profiles, cartridge fade/task/reset-phase semantics, general GPU invalidation and performance acceptance remain |
 | Neighbor streaming | public readiness/preparation lifecycle beyond already resident maps |
 | Buildings, trees, bridges, interiors | native object/geometry metadata and lifecycle; surface codes alone do not provide meshes |
 | Camera and controls | native public camera/input ownership suitable for First/Third Person |

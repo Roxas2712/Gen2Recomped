@@ -89,12 +89,13 @@ palettes on the next tick. Re-import/source replacement still requires the
 existing native sheet invalidation; structural tileset edits are not a live
 GPU geometry-reload contract.
 
-**Importer boundary:** the current stock Gen3 importer extracts tile frames,
-not these palette-cycle declarations. This change does not mark its existing
-records static or claim to extract the original palette programs. A cache
-producer must supply verified declarations before stock palette programs can
-animate through this path. Automatic extraction remains separate work. The
-tests supply original synthetic declarations, not ROM-derived palettes.
+**Importer boundary:** [automatic terrain palette-program extraction](gen3-palette-program-import.md)
+now supplies these declarations for the audited Emerald/FireRed rev-0 profiles,
+authenticated against the actual ROM digest. Emerald's Battle Dome floor
+frames are read from ROM; recognized tile-only/null programs are explicitly
+static. Unknown programs remain incomplete. Existing caches require re-import.
+General cartridge callback/fade/transition behaviour remains separate work.
+The committed tests contain only original synthetic colours and code.
 
 The reason this boundary matters is visible in the primary sources:
 [Emerald's tileset callbacks](https://github.com/pret/pokeemerald/blob/master/src/tileset_anims.c)
