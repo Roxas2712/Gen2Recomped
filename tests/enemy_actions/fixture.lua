@@ -1,5 +1,5 @@
 local M = {}
-function M.new(root, backend, version, api, format)
+function M.new(root, backend, version, api, format, configure)
   local consumer = "portable_enemy_action"
   local T = require("tests.modkit")
   local V = require("src.core.GameVersion")
@@ -59,6 +59,9 @@ function M.new(root, backend, version, api, format)
   end
   if backend == "gen2" then
     data.moves.STRUGGLE = data.moves[ids.STRUGGLE]
+  end
+  if configure then
+    configure(data, backend, ids, rom, names)
   end
   local files, Json = {}, require("src.link.Json")
   for _, name in ipairs({ "main.lua", "manifest.json" }) do
