@@ -62,9 +62,10 @@ RulesetDefaults.DEFAULT_BY_GENERATION = {
 }
 
 RulesetDefaults.FALLBACK = "gen1_faithful"
-RulesetDefaults.AUTO = "auto"
+RulesetDefaults.AUTO = false
 
--- AUTO is an option value, not a content registry id. Missing old preferences
+-- AUTO uses false, the existing no-explicit-choice value, so no string id
+-- is reserved from mods. Missing old preferences
 -- mean automatic too; a saved explicit id is never migrated to another one.
 function RulesetDefaults.selection(game)
   local selected = game and game.save and game.save.options and game.save.options.ruleset

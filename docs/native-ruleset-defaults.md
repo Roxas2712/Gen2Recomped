@@ -1,9 +1,10 @@
 # Automatic rulesets and native enemy PP
 
-New settings select `options.ruleset = "auto"`. The shared RULESET option row
+New settings select `options.ruleset = false`. The shared RULESET option row
 shows AUTO first, followed by sorted non-hidden registered rulesets, and can
-return to AUTO from an explicit choice. AUTO is a reserved preference value,
-not a ruleset registry id. Missing old preferences have the same meaning.
+return to AUTO from an explicit choice. AUTO uses the existing false/no-explicit-choice value, so no string id is
+reserved from mods (including a registered id named `auto`). Missing old
+preferences have the same meaning.
 
 Automatic selection honors `data.constants.defaultRuleset` before the existing
 generation fallback. Gen 1 retains `gen1_faithful`; Gen 2 uses `gen2_finite_pp`;

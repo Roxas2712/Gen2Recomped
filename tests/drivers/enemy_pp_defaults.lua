@@ -43,7 +43,7 @@ return function(game)
   )
   -- Existing explicit choices are intentionally preserved. Opt into AUTO only
   -- in memory for this disposable battle; do not write installation options.
-  game.save.options.ruleset = "auto"
+  game.save.options.ruleset = false
   game.save.options.textSpeed, game.save.options.animations = 1, false
   local world = game.overworld
   local function fresh()

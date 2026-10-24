@@ -299,7 +299,7 @@ do
     menu:update(1 / 60)
     pressed = {}
   end
-  check(game.save.options.ruleset == "auto",
+  check(game.save.options.ruleset == false,
         "new saves follow the cartridge default")
   press("right")
   check(game.save.options.ruleset == "aaa_rules",
@@ -311,7 +311,7 @@ do
   check(game.save.options.ruleset == "modern_clean",
         "right steps to the next sorted id")
   press("right")
-  check(game.save.options.ruleset == "auto",
+  check(game.save.options.ruleset == false,
         "the cycle returns to AUTO and skips hidden records")
   press("left")
   check(game.save.options.ruleset == "modern_clean", "left steps backwards")
