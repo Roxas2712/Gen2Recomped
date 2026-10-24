@@ -44,6 +44,14 @@ function M.visible(battle, battler)
     return default
   end, battle) == true
 end
+-- Legacy standalone compositors can carry a partial battle fixture.
+function M.forBattle(battle, battler)
+  local method = battle.caughtMarkerVisible
+  if type(method) == "function" then
+    return method(battle, battler)
+  end
+  return M.visible(battle, battler)
+end
 -- The GBA renderer creates this element for a presented healthbox and retains
 -- its verdict until that presentation changes, as in the reference engine.
 function M.gbaVisible(battle, battler)

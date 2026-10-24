@@ -95,12 +95,13 @@ for _, version in ipairs(V.ORDER) do
       end
       if f.gen == 3 then
         local panel, marker = love.graphics.newCanvas(128, 40), love.graphics.newCanvas(8, 8)
+        local markerPath = "marker"
         local draw = love.graphics.draw
         patch(Assets, "exists", function(path)
-          return path == "marker"
+          return path == markerPath
         end)
         patch(Assets, "image", function(path)
-          return path == "marker" and marker or panel
+          return path == markerPath and marker or panel
         end)
         patch(love.graphics, "draw", function(image, ...)
           if image == marker then
@@ -156,6 +157,38 @@ for _, version in ipairs(V.ORDER) do
           false,
           "GBA doubles retain native marker exclusion"
         )
+      end
+      if f.gen == 3 then
+        b.double = false
+        local legacy = love.graphics.newCanvas(8, 16)
+        local path = V.get() == "firered" and "assets/generated/pokedex_frlg/caught.png"
+          or "assets/generated/ui/pokedex/caught_ball.png"
+        f.data.constants.gen3BattleHud.images.caught = nil
+        patch(Assets, "exists", function(candidate)
+          return candidate == path
+        end)
+        local panel = love.graphics.newCanvas(128, 40)
+        patch(Assets, "image", function(candidate)
+          return candidate == path and legacy or panel
+        end)
+        local quadArgs
+        local quad = love.graphics.newQuad
+        patch(love.graphics, "newQuad", function(...)
+          quadArgs = { ... }
+          return quad(...)
+        end)
+        patch(love.graphics, "draw", function(image)
+          if image == legacy then
+            ink = ink + 1
+          end
+        end)
+        draw("show", true, 1, 1)
+        T.check(quadArgs ~= nil, "legacy tall marker uses a cropped native tile")
+        T.same(quadArgs, { 0, 4, 8, 8, 8, 16 }, "legacy cell crops to central 8x8 without stretching")
+        patch(Assets, "exists", function()
+          return false
+        end)
+        draw("show", true, 0, 1)
       end
       for i = #restore, 1, -1 do
         restore[i]()

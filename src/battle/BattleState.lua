@@ -366,26 +366,6 @@ end
 -- its RIGHT.  Left and right then did nothing at all, because a vertical list
 -- has no use for them.  The fix is one clause, not new maths: the grid this
 -- layout already draws is the grid it should navigate.
-function BattleState:caughtMarkerVisible(battler)
-  return require("src.battle.CaughtMarker").visible(self, battler)
-end
-
-local caughtBallQuads = setmetatable({}, { __mode = "k" })
-function BattleState:drawCaughtBall(x, y)
-  local Assets = require("src.render.Assets")
-  local path = "assets/generated/battle/balls.png"
-  if not Assets.exists(Assets.resolve(path)) then return false end
-  local image = Assets.image(path)
-  local quad = caughtBallQuads[image]
-  if not quad then
-    quad = love.graphics.newQuad(0, 0, 8, 8, image:getDimensions())
-    caughtBallQuads[image] = quad
-  end
-  love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.draw(image, quad, x, y)
-  return true
-end
-
 function BattleState:moveGridNavigation()
   return MoveNavigation.grid(self)
 end
@@ -603,6 +583,27 @@ function BattleState:uiSize()
 end
 
 BattleState.statusHUDVisible = StatusHUDVisibility.visible
+
+function BattleState:caughtMarkerVisible(battler)
+  return require("src.battle.CaughtMarker").visible(self, battler)
+end
+
+local caughtBallQuads = setmetatable({}, { __mode = "k" })
+function BattleState:drawCaughtBall(x, y)
+  local Assets = require("src.render.Assets")
+  local path = "assets/generated/battle/balls.png"
+  if not Assets.exists(Assets.resolve(path)) then return false end
+  local image = Assets.image(path)
+  local quad = caughtBallQuads[image]
+  if not quad then
+    quad = love.graphics.newQuad(0, 0, 8, 8, image:getDimensions())
+    caughtBallQuads[image] = quad
+  end
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.draw(image, quad, x, y)
+  return true
+end
+
 
 function BattleState:playerPartyView()
   return self.playerParty or self.game.save.party or {}
