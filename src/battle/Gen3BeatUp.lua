@@ -82,7 +82,16 @@ function B.nextDamage(ctx)
         name = "Enemy " .. name
       end
       ctx.say(ctx.battle:romText("STRINGID_PKMNATTACK", "%s's attack!", name))
-      local critical = Damage.critRoll(ctx.ruleset, ctx.user, ctx.move.id, ctx.rng, false, ctx.data)
+      local critical = require("src.battle.Gen3Critical").roll(
+        ctx.battle,
+        Damage.critRoll,
+        ctx.ruleset,
+        ctx.user,
+        ctx.move.id,
+        ctx.rng,
+        false,
+        ctx.data
+      )
       if critical then
         amount = amount * 2
       end

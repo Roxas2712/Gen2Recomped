@@ -1417,6 +1417,11 @@ function BattleState.newWild(game, species, level, opts)
   -- kind of their own, because everything else about the fight -- the music,
   -- the intro line, the wild-mon held item roll -- is an ordinary wild one.
   self.noRun = opts and opts.noRun or nil
+  if GameVersion.isGen3() then
+    self.firstBattle = opts and opts.firstBattle and true or nil
+    self.firstBattleKind = opts and opts.firstBattleKind
+      or (self.firstBattle and (GameVersion.get() == "emerald" and "birch" or "oak"))
+  end
   self.canLose = opts and opts.canLose or nil
   -- ...AND A ROAMER IS THE SAME INDIVIDUAL EVERY TIME.  The cartridge keeps
   -- its personality and IVs and rebuilds from them, which is what makes a
@@ -2138,6 +2143,7 @@ end
 -- script under "PROF.OAK" (pokeyellow core.asm .profOakName), so the
 -- displayed thrower name is a parameter.
 function BattleState:makeOldManDemo(name)
+  self.wallyTutorial = nil
   self.demo = true
   self.demoName = name or "OLD MAN"
   -- LoadPlayerBackPic and DisplayBattleMenu split on the same wBattleType:
@@ -2185,6 +2191,7 @@ end
 function BattleState:makeDudeDemo(name)
   self:makeOldManDemo(name or "DUDE")
   self.dudeDemo = true
+  self.wallyTutorial = GameVersion.get() == "emerald" and true or nil
   self.demoBallCount = "x1"
 end
 
@@ -5230,7 +5237,10 @@ end
 -- Damage.compute, hooked as battle.damage; the ctx table is only built
 -- when a chain is installed, so the no-mod path allocates nothing
 function BattleState:computeDamage(user, target, move, opts)
-  if opts and opts.gbaSetDamage then opts.battle = self end
+  if GameVersion.isGen3() then
+    opts = opts or {}
+    opts.battle = self
+  end
   -- Damage's Gen II held-item path needs the imported item records alongside
   -- the ordinary formula options. Keep Gen I's no-mod fast path allocation-free.
   if self.data and self.data.constants and self.data.constants.generation == 2 then
@@ -6297,7 +6307,8 @@ function BattleState:holdItemTrigger(battler, when)
     end
 
   elseif act.kind == "critUp" then
-    battler.critStage = (battler.critStage or 0) + act.delta
+    if GameVersion.isGen3() then battler.focusEnergy = true
+    else battler.critStage = (battler.critStage or 0) + act.delta end
     self:sayNext(Strings("%s used its\n%s!", who, label))
     self:sayNext(Strings("%s is getting\npumped!", who))
 

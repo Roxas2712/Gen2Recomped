@@ -2,7 +2,9 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "beat_up_side_party" then
+if mode == "critical_context" then
+  rows = dofile(root .. "/tests/enemy_actions/critical_kinds.lua").run(root, backend, version)
+elseif mode == "beat_up_side_party" then
   rows = dofile(root .. "/tests/enemy_actions/beat_up.lua").run(
     root,
     backend,

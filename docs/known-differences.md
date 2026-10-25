@@ -55,3 +55,12 @@ Beat Up now reads the entire side party in two-trainer and player/ally
 battles, retaining live slot replacement and the active user's HP/status.
 Replacement benches remain owned separately. The reviewed effect revision
 changes the link fingerprint; see [contract coverage and remaining scope](native-gba-beat-up-side-parties.md).
+
+## Native GBA critical context and hit metadata
+
+Critical exclusions now preserve native draw order for first/tutorial battles
+and Teachy TV, including scripted Beat Up. Shared critical context fields,
+physical item/current-species stages, Lansat/Focus Energy behavior and GBA
+hit kind/Substitute metadata are covered by cross-engine contracts. The
+reviewed scripted effect revision changes the link fingerprint; see
+[verification and remaining scope](native-gba-critical-context.md).
