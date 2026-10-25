@@ -105,9 +105,10 @@ has zero jobs. The 100-artifact attachment cap persists; the regular PR remains
 published and linked. Evidence is retained in `tmp/lock-on-full-accepted.log`,
 `tmp/lock-on-contracts.json` and `tmp/lock-on-import-smoke.log`.
 
-The explicit Baton Pass switch entry is covered; its complete move/UI chooser
-remains separate, together with other side/volatile producers, native egg
-legality and whole-game RNG/VBlank scheduling. See
+At #217 only the explicit Baton Pass switch entry was covered; PR #218 now
+adds the complete native move/UI choice and link continuation described above.
+Other side/volatile producers, native egg legality and whole-game RNG/VBlank
+scheduling remain separate. See
 [the scoped lifecycle contract](native-gen3-lock-on.md).
 
 [PR #216](https://github.com/UNDERdecoded/Gen2Recomped/pull/216) adds a separate
