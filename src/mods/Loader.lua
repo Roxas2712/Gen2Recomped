@@ -1448,7 +1448,7 @@ end
 -- any compatibility module on an ordinary native boot.
 local function retireCompatibilityMaps()
   for _, name in ipairs({"src.core.game3.runtime", "src.core.Game3",
-      "src.core.game3.map", "src.core.game3.player", "src.core.game3.collision",
+      "src.core.game3.map", "src.core.game3.player", "src.core.game3.collision", "src.core.game3.objects",
       "src.core.game3.warm", "src.core.game3.asset_stream", "src.core.game3.tileset_native", "src.core.game3.tileset_anim"}) do
     local module = package.loaded[name]
     if type(module) == "table" and type(module.release) == "function" then module.release() end
