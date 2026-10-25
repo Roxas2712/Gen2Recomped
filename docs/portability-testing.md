@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219, #220, #222, #225, #226, #228, #230, #241, #244, #248 and #252 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219, #220, #222, #225, #226, #228, #230, #241, #244, #248, #252 and #258 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,10 +12,54 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined production/test/tool runtime for this snapshot is
-`0ed0602be9019102a06f4df3ee22480bca1d800f`. It passes **271/271 engine
+`5e384409322e98dfd292716b9c97d2bdcdf9936e`. It passes **275/275 engine
 suites**, **3/3 SDK suites**, all quick tiers and B30. Later publication edits
 preserve those trees. This testing branch remains separate from the
 independently maintained fork `main`.
+
+[PR #258](https://github.com/UNDERdecoded/Gen2Recomped/pull/258) implements
+native GBA Assist and the same API-3 canonical effect registration/read-back as
+the unchanged reference. Party candidates retain native order and occurrence
+weighting, including active partners, fainted members and zero-PP moves. Parent
+callbacks run before the pool and PP command. Children retain native targeting,
+PP ownership and nested caller history; failed nested Assist/Mirror Move retain
+the previous history. Metronome/Mirror Move use the shared native child targeting.
+
+Each runtime passes **188 workers / 160,724 identical paired enemy/action
+rows**, plus **2,040 held-command** and **6,912 ordinary-damage rows**:
+**196 workers / 169,676 selected paired observations**. The new Assist matrices
+retain **38,712 rows**, including public registered party moves, split trainer
+parties, three held items, move/damage events, raw/public PP, queued animation
+metadata, held callbacks, complete RNG bounds/values and actor/party state.
+Every final worker exits zero without timeout.
+
+Actual linked host/guest/spectator menus pass **120 checks** across two turns
+per profile, all events, paired completed hashes and state components. Existing
+FireRed/Emerald imports pass **160 controlled public-submit scenarios** with
+native/registered Assist, direct party moves and nested Nature Power, zero-PP
+party children, Choice Band and Shell Bell. Their native queue returns to menu.
+These are CPU checks; graphical/full-mod/full-playthrough acceptance remains open.
+
+Four held formats pass strict scheduling (**40 workers / 1,914 rows**); charge
+contracts pass four formats (**64 workers / 1,020 rows**), including raw native
+policy on the combined fork. The isolated feature passes **157/166** engine
+suites with exactly the same **25 FAIL lines / nine suites** as fresh #252
+(**153/162**). The combined runtime has zero FAIL lines. Native command revision
+**15** refuses revision 14; party codec stays **1**. The independent frozen-parent
+serializer audit yields `662d7e5ee823ce82`, retaining legacy `e33d251961f2a41d`.
+The unchanged parent differs in **4,860/6,480** selected full native rows,
+**36/36** failed caller histories and rejects public ASSIST registration.
+
+All ten #258 hosted workflows require maintainer approval (`action_required`);
+the [dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40221142115)
+has zero jobs. Local acceptance is separate. App attachment hit the existing
+100-artifact identity cap. See the [contract and reproduction](native-gen3-assist.md)
+and [source-bound receipt](qa/native-gen3-assist.json). Initial fixture failures,
+incorrect local expectations and superseded RNG/targeting observations remain
+retained. Full catalogs/controllers, broad public-effect overrides, qualification
+of other editions, text-resource/pixel parity and full-mod playthroughs remain open.
+
+## Historical #252 acceptance
 
 [PR #252](https://github.com/UNDERdecoded/Gen2Recomped/pull/252) implements
 native GBA Nature Power and the same API-3 effect registration/read-back as
