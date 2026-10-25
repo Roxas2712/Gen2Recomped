@@ -2,7 +2,9 @@
 
 `src.core.Game3` is a distinct class with per-native-owner facade instances.
 It does not alias the central `Game`, instantiate a second engine or bootstrap
-Game when imported. Explicit owner resolution rejects retired handles. A source
+Game when imported. Standalone construction without an explicit native owner
+declines instead of silently sharing another game; full source construction
+remains separate. Explicit owner resolution rejects retired handles. A source
 session is scoped to its native save, dataset, map table and edition; replacing
 one retires its observations and queued callbacks.
 

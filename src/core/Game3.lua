@@ -167,7 +167,10 @@ function G.forNative(value)
   })
   return view
 end
-function G.new(owner)return G.forNative(owner)end
+function G.new(owner)
+  if owner==nil then return nil,'native game creation belongs to the host'end
+  return G.forNative(owner)
+end
 function G._dispatch(name,owner,native,...)
   local sourceName=name=='_step'and'fixedUpdate'or name
   if mouseBodies[owner]and(name=='touchpressed'or name=='touchmoved'or name=='touchreleased')
