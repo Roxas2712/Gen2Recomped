@@ -164,3 +164,28 @@ to four rows under the old 18-column budget and stays at two rows now. Actual
 readyReport rejects the old v2 marker and accepts the fresh v3 cache. Frozen
 engine source files remain unchanged. The native proof JSON records hashes;
 original RS dialogue frame art, full UI and story acceptance remain open.
+
+## Subsequent RS item-action candidate (native verification pending)
+
+The matching-ELF generator now verifies all ten `sItemPopupMenuActions`
+text/handler pointer pairs and the five fixed six-byte pocket rows. RS prints
+these in column-major order; the extractor transposes the four-/six-cell lists
+for the unchanged native row-major action menu. `REGISTER` retains its real RS
+label and toggle; no Emerald DESELECT record is invented. The RS cache marker
+advances to `rs-item-menu-v4:`; prior dex/item-effect/field corrections remain.
+Other editions keep their markers.
+
+Both cartridge CPU regressions pass ten labels/handler kinds, 22 independent
+raw pocket positions, the actual native bag consumer's 22 cells, real grid
+navigation/callback methods, registration eligibility, the missing-metadata
+negative and an unknown-order rejection. Field-window and item-effect data
+regressions remain separate. These are not rendered/input acceptance.
+
+The fresh native no-mod Ruby run at source `35685f3` was aborted during import
+when the unchanged **8 GiB** free-disk reserve was reached. It produced no
+`edition-result.json`; no native UI failure or pass is inferred. Sapphire's
+native action run has not started. The committed
+`tests/gen3_rs_item_menu_driver.lua` still needs both fresh native runs for
+USE, grid input, REGISTER toggle and quantity cancellation. Previous native
+field-window evidence belongs to `91c6aec` and remains historical. No new
+native/full-UI/story/mobile acceptance is claimed for this action candidate.
