@@ -1316,6 +1316,9 @@ local function markerFor(version)
   -- RS now carries its own action tables as well as field geometry. Rebuild these
   -- caches; retain the earlier 36-byte dex and item-effect corrections.
   if version == "ruby" or version == "sapphire" then revision = "rs-item-menu-v4:" end
+  -- Keep original behavior IDs alongside the existing native normalization.
+  -- Only GBA caches lack this additional source contract; saves are unchanged.
+  if GameVersion.isGen3(version) then revision = revision .. "source-metatile-attrs-v1:" end
   return CACHE_FORMAT .. revision .. GameVersion.info(version).sha1
 end
 

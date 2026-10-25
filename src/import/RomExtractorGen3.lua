@@ -27174,7 +27174,9 @@ function RomExtractorGen3:extractTilesets()
         end
         -- metatile composition and attributes, as byte strings for the same
         -- reason the blockdata is: 73 tilesets come to about 26,000 metatiles
-        local comp, attrs = {}, {}
+        local comp, attrs, sourceAttrs = {}, {}, {}
+        local A = self.manifest.metatileAttributes
+        local sourceBytes = A and A.bytes == 4 and 4 or 2
         for m = 0, metatiles - 1 do
           for t = 0, 7 do
             local v = rom:u16(metaAt + m * 16 + t * 2)
@@ -27185,10 +27187,12 @@ function RomExtractorGen3:extractTilesets()
           -- downstream reads Emerald's u16 (behaviour low byte, layer type
           -- bits 12-15) with Emerald's numbering, so the record is packed
           -- into that shape here, once (manifest `metatileAttributes`).
-          local A = self.manifest.metatileAttributes
           local av
           if A and A.bytes == 4 then
             local raw32 = rom:u32(attrAt + m * 4)
+            sourceAttrs[#sourceAttrs + 1] = string.char(raw32 % 256,
+              math.floor(raw32 / 256) % 256, math.floor(raw32 / 65536) % 256,
+              math.floor(raw32 / 16777216) % 256)
             local beh = raw32 % ((A.behaviorMask or 0x1FF) + 1)
             local own = RomExtractorGen3.FRLG_BEHAVIOUR_OVERRIDES[beh]
             local mapped = A.behaviorRemap and A.behaviorRemap[tostring(beh)]
@@ -27225,6 +27229,12 @@ function RomExtractorGen3:extractTilesets()
           tiles = table.concat(pixels),
           metatiles = table.concat(comp),
           attributes = table.concat(attrs),
+          -- Compatibility readers need the cartridge's own behavior IDs.
+          -- Native FRLG normalization is many-to-one and cannot be reversed.
+          -- A 16-bit source is already byte-exact in attributes: do not copy it.
+          sourceAttributes = sourceBytes == 4 and table.concat(sourceAttrs) or nil,
+          sourceAttributeBytes = sourceBytes,
+          sourceBehaviorMask = A and A.behaviorMask or (sourceBytes == 4 and 511 or 255),
           callback = rom:u32(a + (attrAt == rom:pointer(a + 16) and 20 or 16)),
           image = "assets/generated/tilesets/" .. key:lower() .. ".png",
           source = ("ROM:Tileset@%07X"):format(a),
