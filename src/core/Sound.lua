@@ -14,6 +14,7 @@ local Sound = {}
 local cache = {}
 -- Native M4A players own one live effect each, independently of cached PCM variants.
 local nativePlayers = {}
+local nativeSeWaits = {}
 -- port addition: 0-7 SFX volume from save.options.sfxVol (OptionsMenu),
 -- scaling the 0.8 base every source gets
 local BASE_VOLUME = 0.8
@@ -602,6 +603,33 @@ function Sound.stopSe(data, key)
   end
   local name = Sound.seName(data, key)
   if name ~= nil then Sound.stop(name) end
+end
+
+-- Native world waitse has two clocks: a latched 180-tick audio callback
+-- and a separate 181-poll script fallback. Audio continues at 60 Hz when
+-- logic is accelerated; observing silence here must survive a later sound.
+function Sound.waitSe(data)
+  local wait = { data = data, frames = 180, polls = 0, done = false }
+  nativeSeWaits[#nativeSeWaits + 1] = wait
+  return function()
+    wait.polls = wait.polls + 1
+    return wait.polls > 180 or wait.done or not Sound.isSePlaying(data)
+  end
+end
+
+-- Called once per real-time audio tick, after the frame's logic steps.
+function Sound.update()
+  if #nativeSeWaits == 0 then return end
+  local pending = {}
+  for _, wait in ipairs(nativeSeWaits) do
+    wait.frames = wait.frames - 1
+    if wait.frames <= 0 or not Sound.isSePlaying(wait.data) then
+      wait.done = true
+    else
+      pending[#pending + 1] = wait
+    end
+  end
+  nativeSeWaits = pending
 end
 
 -- Play a move's sound with its MoveSoundTable pitch/tempo modifiers

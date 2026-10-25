@@ -41,6 +41,7 @@ on:
       - 'tests/engine/gen3_effect_presentation.lua'
       - 'tests/engine/gen3_native_sound.lua'
       - 'tests/engine/gen3_sound_player_lifecycle.lua'
+      - 'tests/engine/gen3_sound_script_waits.lua'
       - 'tests/native_sound/**'
       - 'tests/substitute_art/**'
       - 'tests/tools/test_gba_substitute_art.py'

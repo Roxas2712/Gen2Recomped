@@ -1,4 +1,4 @@
-# Native world-script sound waits — reproduction checkpoint
+# Native world-script sound waits — development checkpoint
 
 Gen2Recomped currently lowers native GBA `waitse` to no operation. A script
 therefore reaches its following variable write while native sounds are still
@@ -21,11 +21,27 @@ overrides. Native sound plus a file override must still wait for the native
 sound. The full negative observations remain retained, with a source-bound
 [negative receipt](qa/native-sound-script-waits-negative.json).
 
-No runtime fix is included at this checkpoint. Before implementation, the
-native polling fallback and Audio.update callback clock must be qualified as
-well, including current-player replacement, stops, suspension and return to
-gameplay. The frozen player-ownership change on
-`feature/native-sound-player-lifecycle` remains separate.
+The runtime now lowers `waitse` to a yielding native command. It polls the
+current native players, uses the measured 181-poll fallback and keeps the
+180-audio-tick callback on the real-time audio clock. `Game:update` services
+that clock after logic, alongside its existing 60 Hz music service. A callback
+that already observed silence stays complete when a replacement starts.
+
+The expanded paired contract passes **36 complete cases** across FireRed and
+Emerald, including both clocks, consecutive waits, player replacement, native
+stops, independent players, special-player policy and separate file overrides.
+The actual host suite passes **6,306 checks**. It also drives real `Game:update`,
+FixedStep, StateStack and the native script runner at 1X/2X/10X, preserves the
+yielding public command hook and script-ended event, and exercises actual field
+object freeze/release commands. The owning state continues updating after the
+wait, with no retained input/object lock.
+
+The earlier player-ownership change is published in Gen2Recomped #277; the
+current runtime extends that prerequisite. Complete fresh-baseline regression,
+broad existing contracts, actual-import qualification and combined-fork gates
+remain required before publication or playable-branch integration. Mobile
+audio-session parity, every sound event's timing and complete rendered scenes
+remain separate work; controller and game-update tests do not claim those.
 
 The unchanged reference's [clock oracle](qa/native-sound-script-wait-clocks.json)
 now qualifies ten actual-controller cases across the two profiles. With no
