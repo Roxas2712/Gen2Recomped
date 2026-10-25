@@ -2521,5 +2521,12 @@
       "save block fields          NOT DERIVED  needs the sector layout and the script command table",
       "gMPlayJumpTableTemplate    NOT FOUND  no loop copying 36 words into the command table"
     ]
+  },
+  "metatileBehaviorFlags": {
+    "offset": 3182124,
+    "count": 240,
+    "sha256": "cf25f69a32000022fe10be1c2fc9efec780d830e8eb0d6fe205cb4feb0d1badb",
+    "sourceSha256": "62453418a51baf12a356300d843e88adb5a3e94f92e29b8ca71a0b5bef40d922",
+    "source": "https://github.com/pret/pokeruby/blob/5784633ce4ef7ade1a7f2d2d0c288e3d5e6cdd7f/src/metatile_behavior.c"
   }
 }

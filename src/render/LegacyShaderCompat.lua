@@ -6,6 +6,23 @@ local Compat = {}
 local shaders = setmetatable({}, { __mode = "k" })
 local installed
 local uniform = "pokeportLegacyCanvasY"
+local markers = { POKEPORT_NATIVE_CLIP_SPACE = true, POKEPORT_LEGACY_CLIP_SPACE_ADAPTED = true }
+
+-- LÖVE accepts named defines and an array of preprocessor definitions.
+-- Presence is what matters, including a value of 0 or false: #ifdef agrees.
+local function nativeOptions(options)
+  if type(options) ~= "table" then return false end
+  local defines = rawget(options, "defines")
+  if type(defines) ~= "table" then return false end
+  for name in pairs(markers) do if rawget(defines, name) ~= nil then return true end end
+  for key, value in next, defines do
+    if type(key) == "number" and key >= 1 and key % 1 == 0 and type(value) == "string" then
+      local name = value:match("^%s*([%a_][%w_]*)")
+      if markers[name] then return true end
+    end
+  end
+  return false
+end
 
 local function uncomment(source)
   local out, at = {}, 1
@@ -32,7 +49,9 @@ local function uncomment(source)
 end
 
 local prefix = [[
+#if !defined(POKEPORT_NATIVE_CLIP_SPACE) && !defined(POKEPORT_LEGACY_CLIP_SPACE_ADAPTED)
 #define POKEPORT_LEGACY_CLIP_SPACE_ADAPTED 1
+#define POKEPORT_LEGACY_CANVAS_Y_ACTIVE 1
 #ifdef VERTEX
 uniform float pokeportLegacyCanvasY;
 mat4 pokeportLegacyMatrix(mat4 m) {
@@ -51,11 +70,12 @@ mat4 pokeportLegacyProjection() {
 #define ProjectionMatrix pokeportLegacyProjection()
 #define position pokeportLegacyPosition
 #endif
+#endif
 #line 1
 ]]
 local suffix = [[
 
-#ifdef VERTEX
+#if defined(VERTEX) && defined(POKEPORT_LEGACY_CANVAS_Y_ACTIVE)
 #undef position
 vec4 position(mat4 matrix, vec4 vertex) {
   vec4 clip = pokeportLegacyPosition(pokeportLegacyMatrix(matrix), vertex);
@@ -67,11 +87,11 @@ vec4 position(mat4 matrix, vec4 vertex) {
 
 -- Modern low-level entry points and explicitly current-coordinate shaders
 -- remain untouched. The high-level 2D matrix path cancels both reflections.
-function Compat.source(source)
-  if type(source) ~= "string" then return source, false end
+function Compat.source(source, options)
+  if type(source) ~= "string" or nativeOptions(options) then return source, false end
   local code = uncomment(source)
-  if code:find("#%s*define%s+POKEPORT_NATIVE_CLIP_SPACE%f[%W]")
-      or code:find("#%s*define%s+POKEPORT_LEGACY_CLIP_SPACE_ADAPTED%f[%W]")
+  if code:find("#%s*define%s+POKEPORT_NATIVE_CLIP_SPACE%f[^%w_]")
+      or code:find("#%s*define%s+POKEPORT_LEGACY_CLIP_SPACE_ADAPTED%f[^%w_]")
       or code:find("void%s+vertexmain%s*%(")
       or not code:find("vec4%s+position%s*%(") then
     return source, false
@@ -93,7 +113,10 @@ function Compat.install()
       if shaders[shader] ~= y then shader:send(uniform, y); shaders[shader] = y end
     end
   end
-  local function source(arg)
+  local function source(arg, preserve)
+    -- Keep file names, FileData and source strings intact for an explicitly
+    -- native compile. No redundant file read, comment scan or source copy.
+    if preserve then return arg, false end
     local text = arg
     if type(arg) == "string" and not arg:find("\n", 1, true) then
       local fs = love.filesystem
@@ -106,7 +129,8 @@ function Compat.install()
   end
   g.newShader = function(a, b, c)
     local changed, changed2
-    a, changed = source(a); b, changed2 = source(b)
+    local preserve = nativeOptions(type(b) == "table" and b or c)
+    a, changed = source(a, preserve); b, changed2 = source(b, preserve)
     local shader = newShader(a, b, c)
     if (changed or changed2) and shader:hasUniform(uniform) then
       shaders[shader] = true
@@ -116,7 +140,8 @@ function Compat.install()
   end
   if validateShader then
     g.validateShader = function(es, a, b, c)
-      a = source(a); b = source(b)
+      local preserve = nativeOptions(type(b) == "table" and b or c)
+      a = source(a, preserve); b = source(b, preserve)
       return validateShader(es, a, b, c)
     end
   end
