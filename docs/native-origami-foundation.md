@@ -5,6 +5,57 @@ contracts a future native Origami consumer can use. This branch contains no
 private Origami source/assets, imported ROM/cache data or player saves.
 The existing Gen1 checkout and player runtime are outside this work.
 
+## Original OASC native reference, 2026-10-25
+
+The requested Gen1 comparison uses a new, private remote reference copy of
+OASC 1.0.9 at `aa7e6061232c4c08ee78650c5cc79a4734437748`. Its original `gen3/`
+mod and bundled Gen1-based engine 0.3.94 remain unmodified. The latter includes
+private integrations over upstream `37a49b31`; the newer general Gen1
+comparison tree alone is therefore not the complete OASC runtime oracle.
+The paused Gen2 compatibility port in that repository is not used.
+
+The pinned private macOS LÖVE archive is verified by SHA256. A native smoke
+loads all 2,211 Lua files. Fresh FireRed and Emerald imports use new QA-only
+identities. Both editions pass original native tests for detached content,
+script/flag validation and completion, registered menu input/nesting/clear,
+saving and continuing in separate processes, live battle snapshots, native /
+paper battle-view switching without changing HP or PP, and the Manga move
+menu. Ten fresh owned-window proofs pass under Metal; battle/menu images are
+visually inspected. These captures are instrumented functional evidence, not
+FPS or complete campaign acceptance.
+
+Additional trusted native fixtures pass for both editions: four teleported
+maps each, home and Pokemon Center First/Third/normal views, native map-data
+immutability, F3 menu open/close, and activation/deactivation health of all
+26 registered Cards (15 active by default). Every Card can initialize and
+clean up in this fixture; its complete gameplay is not thereby accepted.
+Interior views include real original windows, room geometry and actors.
+These additional GPU captures do not carry separate OS-window stamps.
+
+The literal import inventory contains 161 native module names: 98 native GBA
+world/script/battle, 38 native GBA UI and 25 shared core/render/mod modules.
+Computed imports and optional paths make that an incomplete inventory. It is
+not a count of missing functions or a parity percentage. Runtime observations
+include engine startup dependencies as well as OASC calls.
+
+An unchanged-original-mod load probe through this fork's actual SDK already
+fails at `src.ui.game3.stack`. This probe uses the ROM-free fixture and does
+not claim GPU gameplay on this fork. The native Gen3 modal-layer contract
+differs from the shared state stack: it excludes the world/battle controller,
+owns menu layers, exposes the actual mod-screen state, and supports real
+clear/reopen and preview suspension. A name-only alias would misreport
+readiness or remove the world. Native ownership/lifecycle behavior must be
+implemented before publishing that module. Subsequent requirements include
+the actual map/player/atlas records, renderer/presentation lifecycle, battle
+controls and effects, and field handoffs; satisfying the first import will
+not establish full compatibility.
+
+The [sanitized reference receipt](qa/native-foundation/oasc-gen1-reference.json)
+binds the exact private inputs, native runs, image hashes, loader failure and
+scope. Private code/assets, ROMs and saves stay outside Git/public PRs. The
+existing Gen1/player installation was neither read nor controlled. The fork
+and its engine PRs remain the implementation target; no mod port was resumed.
+
 Base: `13af468b97dc37015d14ad5c71d7f067c3ee810d` (main, v0.8.45).
 Development branch: `codex/native-origami-foundation`. This is not a release.
 
