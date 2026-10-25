@@ -16,6 +16,7 @@ local cache = {}
 -- scaling the 0.8 base every source gets
 local BASE_VOLUME = 0.8
 local volumeScale = 1
+local muted = false
 -- port addition (Yellow only): 0-7 trim from save.options.pikaVol on top of
 -- the SFX level, for Pikachu's voice clips alone.  Yellow voices every
 -- Pikachu cry with PCM samples that are far louder and far more frequent
@@ -105,6 +106,7 @@ end
 Sound.cryScale = cryScale
 
 local function volumeFor(key)
+  if muted then return 0 end
   local scale = volumeScale
   if isPikaKey(key) then scale = scale * pikaScale end
   return BASE_VOLUME * scale
@@ -860,6 +862,7 @@ end
 -- re-apply persisted audio options (Game calls this on boot and after
 -- loading a save)
 function Sound.applyOptions(opts)
+  muted = opts and opts.audioMuted == true or false
   Sound.setVolumeLevel(opts and opts.sfxVol or 7)
   Sound.setPikaVolumeLevel(opts and opts.pikaVol or 7)
 end

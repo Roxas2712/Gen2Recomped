@@ -13,14 +13,16 @@ end
 
 function Hardware.cartModel(version)
   local kind=Hardware.kind(version)
-  if kind=='gba' then return {w=156,h=90,depth=8,labelY=20,
-    face={3,0,153,0,156,5,156,18,148,18,148,82,140,90,16,90,8,82,8,18,0,18,0,5}} end
-  if kind=='nds' then return {w=108,h=102,depth=3,labelY=20,
-    face={5,0,85,0,108,22,108,56,103,56,103,65,108,65,108,97,103,102,5,102,0,97,0,5}} end
-  if kind=='gbc' then return {w=132,h=152,depth=7,labelY=30,
-    face={0,16,7,7,28,2,66,0,104,2,125,7,132,16,132,145,125,152,7,152,0,145}} end
-  return {w=132,h=152,depth=9,labelY=32,
-    face={6,0,108,0,108,10,132,10,132,145,125,152,7,152,0,145,0,6}}
+  if kind=='gba' then return {w=156,h=90,depth=6,labelY=25,family='agb',
+    face={4,0,152,0,156,4,156,17,150,17,150,84,144,90,12,90,6,84,6,17,0,17,0,4}} end
+  if kind=='nds' then return {w=108,h=102,depth=3,labelY=12,family='ntr',
+    face={4,0,91,0,108,17,108,54,103,54,103,64,108,64,108,98,104,102,4,102,0,98,0,4}} end
+  -- Gold/Silver use the original notched dual-compatible GB mould, while
+  -- Crystal uses the rounded Color-only shell with a visible circuit board.
+  if kind=='gbc' and version~='gold' and version~='silver' then return {w=132,h=152,depth=6,labelY=37,family='cgb',
+    face={0,14,5,6,18,2,38,0,94,0,114,2,127,6,132,14,132,146,126,152,6,152,0,146}} end
+  return {w=132,h=152,depth=7,labelY=38,family='dmg',
+    face={5,0,110,0,110,12,132,12,132,146,126,152,6,152,0,146,0,5}}
 end
 
 function Hardware.cartSize(version)
@@ -59,7 +61,7 @@ local function drawCartridge(self,version,cx,cy,maxW,maxH,angle,options)
     artwork(design.image,0,0,w,h,design);g.pop();return
   end
   -- The top and right side are actual separate faces, visible at rest too.
-  color({0,0,0},0.26);g.rectangle('fill',model.depth,model.depth+5,w,h,8,8)
+  color({0,0,0},0.26);g.push();g.translate(model.depth,model.depth+5);g.polygon('fill',model.face);g.pop()
   color(shade(shell,0.36));g.push();g.translate(model.depth,model.depth*.65);g.polygon('fill',model.face);g.pop()
   color(shade(shell,1.14));g.polygon('fill',8,-3,w-27,-3,w-18,5,0,8)
   color(shade(shell,0.72));g.polygon('fill',model.face)
@@ -68,14 +70,28 @@ local function drawCartridge(self,version,cx,cy,maxW,maxH,angle,options)
   color({0,0,0},0.25);g.line(w-3,27,w-3,h-10)
   local kind=Hardware.kind(version)
   local labelY=model.labelY
-  local labelH=h-labelY-(kind=='nds' and 8 or 16)
+  local labelH=h-labelY-(kind=='nds' and 16 or kind=='gba' and 13 or 18)
+  if model.family=='cgb' then
+    color({38,83,70},.4);g.rectangle('fill',12,20,w-24,h-30,6,6)
+    color({18,36,39},.4);g.rectangle('fill',w*.48,24,38,18,2,2)
+    color({170,213,163},.4);for i=1,5 do g.line(16+i*5,25,16+i*5,h-12) end
+  end
   color(shade(shell,0.26));g.rectangle('fill',11,labelY,w-22,labelH,5,5)
   color(label);g.rectangle('fill',15,labelY+4,w-30,labelH-8,3,3)
-  if kind~='nds' then
+  if model.family=='dmg' then
     for i=0,(kind=='gba' and 1 or 2) do
       color({0,0,0},0.16);g.line(18,12+i*4,w-24,12+i*4)
       color({255,255,255},0.2);g.line(18,13+i*4,w-24,13+i*4)
     end
+    color(shade(shell,.5));g.rectangle('line',14,7,w-38,23,10,10)
+  elseif model.family=='cgb' then
+    color(shade(shell,.65));g.arc('line','open',w/2,35,w*.42,math.pi*1.1,math.pi*1.9)
+  elseif model.family=='agb' then
+    color(shade(shell,.4));g.line(13,18,w-13,18)
+    color({255,255,255},.25);g.line(14,5,w-14,5)
+    for _,side in ipairs({10,w-10}) do for i=0,4 do color(shade(shell,.55));g.line(side,30+i*8,side,34+i*8) end end
+  else
+    color(shade(shell,.5));g.line(7,8,85,8)
   end
   local branded=self._settings and self:_settings().launcherLogoCards and not (options and options.customLabel)
   local image=design.image or (branded and (self.gen2Logo or self.logo))
@@ -104,8 +120,7 @@ local function drawCartridge(self,version,cx,cy,maxW,maxH,angle,options)
   color({247,247,239});g.print(name,w/2-font:getWidth(name)*fs/2,labelY+labelH-20,0,fs,fs)
   -- Gold edge connector catches the light as the cartridge turns.
   -- Contacts sit on the lower/back edge; the front is a solid moulded shell.
-  color({55,44,22});g.rectangle('fill',w*0.27,h-2,w*0.46,4,1,1)
-  for i=0,7 do color({218,185,104});g.rectangle('fill',w*0.29+i*w*0.052,h,w*0.032,2) end
+  color(shade(shell,.3));g.rectangle('fill',w*.22,h-2,w*.56,2,1,1)
   if kind~='nds' then
     color({0,0,0},0.2);g.polygon('fill',w*.46,h-10,w*.54,h-10,w*.5,h-5)
   end

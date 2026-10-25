@@ -898,7 +898,9 @@ function love.touchpressed(id, x, y, dx, dy, pressure)
   end
   if Importer then return Importer:touchpressed(id,x,y,dx,dy,pressure) end
   if not Game then return end
-  if RetroOverlay.press(Game,x,y) then return end
+  if RetroOverlay.touchpressed then
+    if RetroOverlay.touchpressed(Game,id,x,y) then return end
+  elseif RetroOverlay.press(Game,x,y) then return end
   Game:touchpressed(id, x, y, dx, dy, pressure)
 end
 
@@ -913,7 +915,7 @@ function love.touchmoved(id, x, y, dx, dy, pressure)
   end
   if Importer then return Importer:touchmoved(id,x,y,dx,dy,pressure) end
   if not Game then return end
-  if RetroOverlay.game then return end
+  if RetroOverlay.game then if RetroOverlay.touchmoved then RetroOverlay.touchmoved(id,x,y) end;return end
   Game:touchmoved(id, x, y, dx, dy, pressure)
 end
 
@@ -928,7 +930,7 @@ function love.touchreleased(id, x, y, dx, dy, pressure)
   end
   if Importer then return Importer:touchreleased(id,x,y,dx,dy,pressure) end
   if not Game then return end
-  if RetroOverlay.game then return end
+  if RetroOverlay.game then if RetroOverlay.touchreleased then RetroOverlay.touchreleased(Game,id,x,y) end;return end
   Game:touchreleased(id, x, y, dx, dy, pressure)
 end
 
@@ -940,7 +942,7 @@ function love.wheelmoved(x, y)
   if TouchEditor then return end
   if Importer then return end
   if not Game then return end
-  if RetroOverlay.game then return end
+  if RetroOverlay.game then RetroOverlay.wheel(x,y);return end
   Game:wheelmoved(x, y)
 end
 
