@@ -28,6 +28,9 @@ function M.signature(user, role)
     end
     out[#out + 1] = tostring(value)
   end
+  for _, key in ipairs({ "spatk", "spdef" }) do
+    out[#out + 1] = tostring((user.stages or {})[key] or 0)
+  end
   return ":baton=" .. table.concat(out, ",")
 end
 function M.party(battle, user)
@@ -260,7 +263,11 @@ function M.await(battle, pending)
     battle._gen3BatonPending = nil
     pending.ctx.user = M.switch(battle, pending.user, pending.choice, pending.party)
     if pending.frame then
-      pending.frame.finished = true
+      local frame = pending.frame
+      while frame do
+        frame.finished = true
+        frame = frame.parent
+      end
       require("src.battle.GbaItemSchedule").moveEnd(battle)
       require("src.battle.GbaItemSchedule").afterAction(battle)
     end
@@ -354,8 +361,10 @@ function M.perform(ctx)
   end
   battle._gen3BatonPending = pending
   pending.frame = battle._gbaMoveFrame
-  if pending.frame then
-    pending.frame.suspended = true
+  local frame = pending.frame
+  while frame do
+    frame.suspended = true
+    frame = frame.parent
   end
   local remote = battle._gen3BatonRequest and battle:_gen3BatonRequest(pending) or false
   if not remote then

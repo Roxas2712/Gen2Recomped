@@ -2,8 +2,22 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local T = require("tests.modkit")
 local Copy = require("src.mods.Merge").deepCopy
 local C, B = require("src.link.Gen3BatonChoice"), require("src.battle.Gen3BatonPass")
+for _, stat in ipairs({ "spatk", "spdef" }) do
+  local changed = { stages = { [stat] = 2 } }
+  T.neq(B.signature(changed), B.signature({}), "native active hashes include transferred " .. stat)
+end
+T.eq(
+  B.signature({ leechSeedSource = { position = 0 } }, "host"),
+  B.signature({ leechSeedSource = { position = 1 } }, "guest"),
+  "seed-source ownership hashes in host coordinates"
+)
 for _, version in ipairs({ "firered", "emerald" }) do
   local f = require("tests.enemy_actions.baton_pass").fixture(".", "gen2", version)
+  local H = require("src.link.Handshake")
+  local current, old = H.hello(f.game, "battle"), H.hello(f.game, "battle")
+  old.nativeBattleRevision = 2
+  T.eq(H.checkCompat(current, old), "subset", "pre-choice native rules cannot enter a battle")
+  T.eq(H.checkCompat(old, current), "subset", "pre-choice native guard is symmetric")
   local function fresh(spectator)
     local b = f.fresh("TACKLE", { enemy = true }).battle
     b:syncSides()
