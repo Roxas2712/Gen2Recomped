@@ -6,6 +6,10 @@ Gold/Silver/Crystal's actual native save flags and imported landing spots.
 The destination and Gold flag constants follow the separate read-only
 Gen1Recomp reference `535a5ec0`; existing upstream rights remain effective.
 
+The map region boundary comes from the native Pallet header. Crystal inserts
+the Battle Tower before Silver Cave; the former fixed Gold boundary put
+Crystal’s Silver Cave cursor on the wrong regional painting.
+
 Native `setflag` and `clearflag` keys take priority over older visited-map,
 spawn-name or numeric-engine-flag fallback saves. Crystal's inserted flag row
 is resolved through the same `Gen2Flags.scriptFlag` function as the native
@@ -25,7 +29,7 @@ or another generation. Their existing native picker paths remain in place.
 
 ## Verification and remaining work
 
-`tests/engine/gen2_fly_destinations.lua` passes 137 checks: actual native VM
+`tests/engine/gen2_fly_destinations.lua` passes 149 checks: actual native VM
 set/clear execution, Crystal/Gold/Silver flag numbering, explicit-clear
 precedence, previous save fallbacks, exact registered aliases, regional gates,
 actual `TownMap` A/B selection/cancellation and a real SDK-loaded query wrapper
