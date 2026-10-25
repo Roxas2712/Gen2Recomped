@@ -39,6 +39,52 @@ def rs_field_window(pret, at):
             frame=dimensions,printerCallCount=len(printers)))
 
 
+def rs_item_menu(pret, target, at):
+    """Verified RS action records and fixed-stride column-major pocket lists."""
+    source=(pret/'src/item_menu.c').read_text()
+    clean=re.sub(r'//[^\n]*|/\*.*?\*/','',source,flags=re.S)
+    enums=re.findall(r'enum\s*\{(.*?)\};',clean,re.S)
+    enum=next(e for e in enums if 'ITEM_ACTION_USE_0' in e)
+    names=[n.strip() for n in enum.split(',') if n.strip()]
+    assert names==['ITEM_ACTION_USE_0','ITEM_ACTION_TOSS','ITEM_ACTION_CANCEL_2','ITEM_ACTION_REGISTER','ITEM_ACTION_USE_4','ITEM_ACTION_CANCEL_5','ITEM_ACTION_GIVE','ITEM_ACTION_CHECK_TAG','ITEM_ACTION_NONE','ITEM_ACTION_CONFIRM']
+    ids={n:i for i,n in enumerate(names)}
+    pocket_names=['BAG_POCKET_ITEMS','BAG_POCKET_POKE_BALLS','BAG_POCKET_TMs_HMs','BAG_POCKET_BERRIES','BAG_POCKET_KEY_ITEMS']
+    enum=next(e for e in enums if 'BAG_POCKET_ITEMS' in e)
+    assert [n.strip() for n in enum.split(',') if n.strip()]==pocket_names
+    actions=at('sItemPopupMenuActions');choices=at('sItemPopupMenuChoicesTable')
+    assert target.by_name['sItemPopupMenuActions'][0]['size']==10*8
+    assert target.by_name['sItemPopupMenuChoicesTable'][0]['size']==5*6
+    table=re.search(r'sItemPopupMenuActions\[\]\s*=\s*\{(.*?)\};',clean,re.S)
+    pairs=re.findall(r'\{\s*(\w+)\s*,\s*(\w+)\s*\}',table[1])
+    assert len(pairs)==10
+    functions=['HandlePopupMenuAction_UseOnField','HandlePopupMenuAction_Toss','sub_80A5F80','HandlePopupMenuAction_Register','HandlePopupMenuAction_UseInBattle','sub_80A7124','HandlePopupMenuAction_Give','HandlePopupMenuAction_CheckTag','NULL','HandlePopupMenuAction_Confirm']
+    assert [fn for _,fn in pairs]==functions
+    for i,(text,fn) in enumerate(pairs):
+        tp,fp=struct.unpack_from('<II',target.rom,actions+i*8)
+        assert tp==0x08000000+at(text),(i,text)
+        assert fp==(0 if fn=='NULL' else 0x08000001+at(fn)),(i,fn)
+    table=re.search(r'sItemPopupMenuChoicesTable\[\]\[6\]\s*=\s*\{(.*?)\n\};',clean,re.S)
+    rows=re.findall(r'\[(\w+)\]\s*=\s*\{(.*?)\}',table[1],re.S)
+    assert [name for name,_ in rows]==pocket_names
+    pockets={}
+    for i,(name,values) in enumerate(rows):
+        values=[ids[v.strip()] for v in values.split(',') if v.strip()]
+        count=6 if i==3 else 4
+        assert len(values)==count and values[-1]==ids['ITEM_ACTION_CANCEL_2']
+        raw=target.rom[choices+i*6:choices+(i+1)*6]
+        assert raw==bytes(values+[0]*(6-count)),(name,raw)
+        pockets[['ITEM','BALL','TM_HM','BERRY','KEY_ITEM'][i]]=dict(row=i,count=count)
+    # The actual printers are column-major, with two or three rows per
+    # column. The native generic action menu consumes row-major entries.
+    assert '1 + (i / 2) * 6, 8 + (i % 2) * 2' in source
+    assert '1 + (i / 3) * 6, 6 + (i % 3) * 2' in source
+    return dict(actions=actions,actionCount=10,choices=choices,choiceStride=6,pockets=pockets,
+        kinds=['use','toss','cancel','register','use','cancel','give','checkTag','blank','other'],
+        columns=2,cancel=3,blank=9,register=4,sourceOrder='column-major',
+        evidence=dict(sourceSHA256=hashlib.sha256(source.encode()).hexdigest(),recordCount=10,
+            actionEnum=names,printerRows=[2,3],pointerPairsVerified=True))
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--rom',type=Path,required=True)
@@ -105,6 +151,7 @@ def main():
     # Field text is printed at (2,15) in the matching RS code. Its older
     # WindowTemplate is not an Emerald/FRLG battle-window scan anchor.
     result['rsFieldMessageWindow']=rs_field_window(args.pret,at)
+    result['rsItemMenu']=rs_item_menu(args.pret,target,at)
     # Speech contents are recovered from the cartridge by the native importer.
     for row in ((result.get('introSprites') or {}).get('birch') or {}).get('speech',[]):
         row.pop('text',None)
