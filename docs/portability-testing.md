@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203 and #206 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206 and #209 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,45 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`f6f3bfe95dc70256bea403afc9423bf35c73162b`. Its ROM-free run passed
-**215/215 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`4d169998e342794802c87b043796ed7c9dfa51e8`. Its ROM-free run passed
+**216/216 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #209](https://github.com/UNDERdecoded/Gen2Recomped/pull/209) adds
+cross-engine acceptance for the composition of Beat Up (#206) and native
+held-item adjustment (#182). It adds no new runtime policy. FireRed and
+Emerald roll Focus Band independently after each reached strike's variance,
+including nonlethal hits, Substitute and zero damage under Endure. Earlier
+procs cannot protect later strikes; removal/equipping inside actual public
+hit callbacks and a second move are exercised.
+
+The focused suite passes **1,672/1,672 checks**. The same actual API-3 mod,
+fixture, selected actions and native executor match unchanged read-only Gen1
+in **44 isolated workers / 4,622 paired observations** on this clean runtime.
+Physical Focus Band 196 and imported-shaped item 1196 are covered; parameter
+mutation uses the latter because the reference has built-in metadata for
+physical item IDs. The #206-only negative control fails **56 assertions** in
+the new FireRed cases. See [contract scope](beat-up-held-item-contracts.md).
+
+The test-only feature commit passes **90/99** engine suites compared with
+**89/98** on the clean prerequisite (#206 plus #182). Exact Counters of all
+**25 inherited FAIL lines across nine suites** match, with no additions;
+SDK 3/3 and B30 pass. This combined branch includes the baseline repairs and
+passes **216/216**, SDK 3/3 and B30 with zero FAIL lines. No record revision,
+fingerprint golden or production behavior changes are introduced by the
+contract commit.
+
+The reference's persistent move-local Focus Band state belongs to the
+Ruby/Sapphire policy; these FireRed/Emerald profiles do not select it. All
+six hosted #209 workflows await maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40144832869)
+has zero executed jobs. The app's 100-artifact cap prevents another PR card;
+the regular PR is published and linked. Other scripted executors, joined
+multi-trainer/link parties, Ruby/Sapphire controllers, animations and full
+gameplay remain separate acceptance surfaces.
+
+Prior #206 results retain runtime
+`f6f3bfe95dc70256bea403afc9423bf35c73162b` and its 215/215 engine result:
 
 [PR #206](https://github.com/UNDERdecoded/Gen2Recomped/pull/206) executes
 native GBA Beat Up with each healthy party member's level/species base

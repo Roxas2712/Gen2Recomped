@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "f6f3bfe95dc70256bea403afc9423bf35c73162b",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/206",
-  "feature_ref": "92ade2b2cf72238e3594cf46f5c670ef857ac2a3",
+  "runtime_ref": "4d169998e342794802c87b043796ed7c9dfa51e8",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/209",
+  "feature_ref": "03d68a41d2d25f3b51920655fa29c9602c3f11ca",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 215,
-  "engine_suites_total": 215,
+  "engine_suites_passed": 216,
+  "engine_suites_total": 216,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 40,
-  "cross_engine_paired_observations": 4486,
+  "cross_engine_worker_runs": 44,
+  "cross_engine_paired_observations": 4622,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All five #206 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
+  "hosted_ci": "All six #209 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -1765,5 +1765,59 @@
     },
     "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
     "scope": "Native party/base/level damage, per-hit critical/variation and Helping Hand, live callbacks, active target species fields, events/PP/Substitute/Endure/last-strike memory; synthetic imported-shaped sessions; full Transform/controller, held-item schedule, joined multi-trainer/link parties, animation/gameplay and raw RNG-trace parity remain separate"
+  },
+  "native_gba_beat_up_held_item_contracts": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/209",
+    "feature_ref": "03d68a41d2d25f3b51920655fa29c9602c3f11ca",
+    "prerequisite_prs": [
+      206,
+      182
+    ],
+    "composed_prerequisite_ref": "45220e4413ecbf8a70eb2021f5810ad4fca6f04b",
+    "combined_runtime_ref": "4d169998e342794802c87b043796ed7c9dfa51e8",
+    "runtime_policy_changes": false,
+    "focused_checks_passed": 1672,
+    "source_reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_modified": false,
+    "games": [
+      "firered",
+      "emerald"
+    ],
+    "physical_item_id": 196,
+    "imported_shaped_item_id": 1196,
+    "cross_engine_worker_runs": 44,
+    "cross_engine_paired_observations": 4622,
+    "paired_result": "passed",
+    "combined_engine_suites_passed": 216,
+    "combined_engine_suites_total": 216,
+    "combined_failure_lines": 0,
+    "negative_control_without_182_failed_assertions": 56,
+    "feature_baseline": {
+      "engine_suites_passed": 90,
+      "engine_suites_total": 99,
+      "prerequisite_engine_suites_passed": 89,
+      "prerequisite_engine_suites_total": 98,
+      "failure_lines": 25,
+      "exact_failure_counter_matches_prerequisite": true,
+      "new_failure_lines": 0,
+      "existing_failure_suites": 9
+    },
+    "vm": {
+      "official_luajit_ref": "a4c064539ea931274d407e1249b4bb575424a0f4",
+      "version": "2.1.1792588164",
+      "jit_enabled": true
+    },
+    "fingerprint": {
+      "changed": false,
+      "fixture_digest": "d518411055f17444"
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "workflow_count": 6,
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40144832869",
+      "jobs": 0
+    },
+    "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
+    "scope": "Test-only acceptance for #206 plus #182: physical/custom metadata, strict/zero chance, per-strike Focus Band RNG, nonlethal/Substitute/Endure, callback removal/equipping, subsequent move, public events/PP/counter memory. Full raw RNG trace, other scripted executors, joined multi-trainer/link, Ruby/Sapphire controllers and complete gameplay remain separate"
   }
 }

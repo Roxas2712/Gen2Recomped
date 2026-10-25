@@ -68,8 +68,9 @@ only its `move_effects` section from `c62807cde682a669` to
 `f45a80ce5e45ef42`. Removing only that revision restores the prior digest;
 all six other populated sections remain unchanged.
 
-The native adjustment schedule for Focus Band, joined multi-trainer/link
-parties, intro/tutorial controllers, animation fidelity and full gameplay
+Composed Focus Band acceptance with #182 is recorded in
+[the held-item contracts](beat-up-held-item-contracts.md). Joined
+multi-trainer/link parties, intro/tutorial controllers, animation fidelity and full gameplay
 are separate remaining acceptance surfaces. Synthetic imported-shaped rows
 and ordinary side parties are used here; a complete ROM playthrough or all
 held-item/controller parity is not claimed. Gen1 remains read-only and
