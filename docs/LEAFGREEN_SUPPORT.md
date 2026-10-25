@@ -75,3 +75,11 @@ Remaining scope: full story/post-game, link play and physical mobile QA are
 not certified. Existing extractor warnings for unsupported Emerald-only
 stages and the existing missing `scenes.lua`/generic `summary_info.png` cache
 warnings are not being reported as completed LeafGreen features.
+
+Completed walking steps now use the existing native Gen3 friendship routine
+for every Gen3 edition, rather than only Emerald. This also prevents the
+generic +2/+2/+1 fallback from being applied to LeafGreen or FireRed.
+`tests/gen3_walking_friendship.lua` executes the actual controller branch
+for all three Gen3 registrations in this contribution, both coin outcomes
+and egg exclusion across 256 steps each. No full story/mobile acceptance
+is implied by this dispatch correction.
