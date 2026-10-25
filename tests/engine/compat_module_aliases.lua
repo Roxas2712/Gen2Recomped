@@ -3,7 +3,11 @@ love=require('tests.love_stub')
 local C=require('src.core.ModCompat')
 C.install()
 T.eq(require('src.world.gen2.WorldAPI'),require('src.world.WorldAPI'),'world API alias preserves object identity')
-T.eq(require('src.world.gen2.Follower'),require('src.world.OptionalFollower'),'Gen2 follower alias preserves object identity')
+if loadfile('src/world/OptionalFollower.lua') then
+ T.eq(require('src.world.gen2.Follower'),require('src.world.OptionalFollower'),'Gen2 follower alias preserves object identity')
+else
+ T.raises(function()require('src.world.gen2.Follower')end,'src.world.OptionalFollower','alias identifies an unavailable native follower provider')
+end
 local names=require('src.mods.Gen1Compat')
 for name in pairs(names.UNAVAILABLE)do
  local ok,reason=pcall(require,name)
