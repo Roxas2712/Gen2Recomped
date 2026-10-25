@@ -12,6 +12,8 @@ local Runtime = require("src.mods.Runtime")
 local Sound = {}
 
 local cache = {}
+-- Native M4A players own one live effect each, independently of cached PCM variants.
+local nativePlayers = {}
 -- port addition: 0-7 SFX volume from save.options.sfxVol (OptionsMenu),
 -- scaling the 0.8 base every source gets
 local BASE_VOLUME = 0.8
@@ -225,14 +227,72 @@ local function newSfxSource(data, key, def, pitch, tempo)
   return newFileSource(def)
 end
 
+local function nativeEffect(data, def)
+  if not require("src.core.GameVersion").isGen3() or type(def) ~= "table" or def.nds ~= nil then
+    return
+  end
+  local id = tonumber(def.m4a)
+  if not id or id ~= id or id < 0 or id > 65535 or id % 1 ~= 0 then
+    return
+  end
+  local song = data and data.audio and data.audio.songs and data.audio.songs[("SONG_%03X"):format(id)]
+  if type(song) ~= "table" then
+    return
+  end
+  return tonumber(song.player) or 1, id
+end
+
+local function forgetNative(src)
+  for player, entry in pairs(nativePlayers) do
+    if entry.src == src then
+      nativePlayers[player] = nil
+    end
+  end
+end
+
+local function nativeSeId(data, key)
+  local id = tonumber(key)
+  if id and id == id and id >= 0 and id <= 65535 and id % 1 == 0 then return id end
+  local audio = data and data.audio or {}
+  local def = audio.sfx and audio.sfx[key]
+  if type(def) == "table" and tonumber(def.m4a) then return tonumber(def.m4a) end
+  for _, song in pairs(audio.songs or {}) do
+    if type(song) == "table" and (song.sfxName == key or song.id == key) then return tonumber(song.index) end
+  end
+end
+
 local function playPath(data, key, def, pitch, tempo)
   key = tostring(key)
-  if not love.audio or not def then return nil end
+  if not love.audio or not def then
+    return nil
+  end
   -- INTERRUPTION: building a Source now would fail and cache `false` below,
   -- permanently disabling this effect (see sessionSuspended, case 2)
-  if sessionSuspended then return nil end
+  if sessionSuspended then
+    return nil
+  end
+  local baseKey = key
+  local player, nativeId = nativeEffect(data, def)
+  if player ~= nil then
+    local previous = nativePlayers[player]
+    if previous then
+      safeAudio("Source:stop", previous.src.stop, previous.src)
+      nativePlayers[player] = nil
+    end
+    -- A cached PCM variant may still be playing on another native player.
+    -- Keep a separately cached voice rather than rewinding that player's one.
+    local cached = cache[key]
+    for _, entry in pairs(nativePlayers) do
+      if cached and entry.src == cached then
+        key = key .. "@mplay:" .. tostring(player)
+        break
+      end
+    end
+  end
   local src = cache[key]
-  if src == false then return nil end -- known bad, already logged
+  if src == false then
+    return nil
+  end -- known bad, already logged
   if not src then
     local s, err = newSfxSource(data, key, def, pitch, tempo)
     if not s then
@@ -244,7 +304,13 @@ local function playPath(data, key, def, pitch, tempo)
     cache[key] = s
     src = s
   end
-  if not restart(src) then return nil end
+  if not restart(src) then
+    return nil
+  end
+  if player ~= nil then
+    nativePlayers[player] =
+      { src = src, id = nativeId, key = key, name = baseKey:match("^([^@]+)") or baseKey }
+  end
   return src
 end
 
@@ -486,6 +552,10 @@ end
 --   effect can sound several times at once on separate players; it bypasses
 --   the SE player slots because the caller picked its player itself.
 function Sound.playSe(data, key, opts)
+  if require("src.core.GameVersion").isGen3() then
+    local id = nativeSeId(data, key)
+    return id ~= nil and Sound.playId(data, id, opts) or nil
+  end
   local def = Sound.seDef(data, key)
   if not def then return nil end
   local name = def.name or def.nds
@@ -521,12 +591,35 @@ function Sound.playSe(data, key, opts)
 end
 
 function Sound.isSePlaying(data, key, handle)
+  local V = require("src.core.GameVersion")
+  if V.isGen3() then
+    if sessionSuspended then return false end
+    local id = key ~= nil and nativeSeId(data, key) or nil
+    if key ~= nil and id == nil then return false end
+    for player, entry in pairs(nativePlayers) do
+      if (id ~= nil and entry.id == id) or (key == nil and (V.get() ~= "emerald" or player ~= 3)) then
+        if sounding(entry.src) then return true end
+      end
+    end
+    return false
+  end
   local name = Sound.seName(data, key)
   if name ~= nil and handle ~= nil then name = ("%s#%s"):format(tostring(name), tostring(handle)) end
   return name ~= nil and Sound.isPlaying(name)
 end
 
 function Sound.stopSe(data, key)
+  if require("src.core.GameVersion").isGen3() then
+    local id = key ~= nil and nativeSeId(data, key) or nil
+    if key ~= nil and id == nil then return end
+    for player, entry in pairs(nativePlayers) do
+      if key == nil or entry.id == id then
+        pcall(entry.src.stop, entry.src)
+        nativePlayers[player] = nil
+      end
+    end
+    return
+  end
   local name = Sound.seName(data, key)
   if name ~= nil then Sound.stop(name) end
 end
@@ -720,8 +813,21 @@ end
 -- .musicLoop polls wChannelSoundIDs+CHAN5 until SFX_SAFARI_ZONE_PA
 -- ends.)  Headless / never-played names read as silent.
 function Sound.isPlaying(name)
-  local src = cache[tostring(name)]
-  if not src then return false end
+  name = tostring(name)
+  if require("src.core.GameVersion").isGen3() then
+    for _, entry in pairs(nativePlayers) do
+      if entry.name == name or entry.key == name then
+        local ok, playing = pcall(entry.src.isPlaying, entry.src)
+        if ok and playing then
+          return true
+        end
+      end
+    end
+  end
+  local src = cache[name]
+  if not src then
+    return false
+  end
   local ok, playing = pcall(src.isPlaying, src)
   return ok and playing or false
 end
@@ -729,8 +835,21 @@ end
 -- cut a one-shot short (the SFX_STOP_ALL_MUSIC beats around the
 -- elevator shake stop the last collision thud mid-ring)
 function Sound.stop(name)
-  local src = cache[tostring(name)]
-  if src then pcall(src.stop, src) end
+  name = tostring(name)
+  local src = cache[name]
+  if src then
+    pcall(src.stop, src)
+  end
+  if require("src.core.GameVersion").isGen3() then
+    for player, entry in pairs(nativePlayers) do
+      if entry.name == name or entry.key == name then
+        if entry.src ~= src then
+          pcall(entry.src.stop, entry.src)
+        end
+        nativePlayers[player] = nil
+      end
+    end
+  end
 end
 
 function Sound.anyPlaying(kind)
@@ -833,7 +952,10 @@ function Sound.invalidate(name)
   byNumber = nil
   local function evict(store, key)
     local src = store[key]
-    if src then pcall(src.stop, src) end
+    if src then
+      pcall(src.stop, src)
+      forgetNative(src)
+    end
     store[key] = nil
   end
   for _, store in ipairs({ cache, loopCache }) do
@@ -863,6 +985,11 @@ Assets.register(Sound.invalidate)
 function Sound.suspend()
   if sessionSuspended then return end
   sessionSuspended = true
+  -- Native effects can sustain and own additional cached voices as well.
+  for player, entry in pairs(nativePlayers) do
+    safeAudio("Source:stop", entry.src.stop, entry.src)
+    nativePlayers[player] = nil
+  end
   -- A LOOPING source (the low-health siren, the link tournament theme) is the
   -- only kind that is still sounding when the call arrives.  Ask it to stop
   -- while the device may still take the call, and forget it, so its owner's
