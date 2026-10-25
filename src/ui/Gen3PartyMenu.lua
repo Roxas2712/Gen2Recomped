@@ -141,9 +141,6 @@ function Gen3PartyMenu.new(game, opts)
   self.noCancel = opts.noCancel
   self.onUpdate = opts.onUpdate
   self._party = opts.party
-  -- An ordinary linked screen follows its battle's live roster. A distinct
-  -- owner-specific picker (for example an ally) retains its explicit party.
-  if self.battle and self._party == self.battle.playerParty then self._party = nil end
   self.pickOnly = opts.pickOnly
   -- FireRed's POKé DUDE drives the ordinary party screen with synthetic
   -- input.  The screen stays the cartridge one; only its input source changes.
@@ -178,6 +175,11 @@ function Gen3PartyMenu.new(game, opts)
 end
 
 function Gen3PartyMenu:party()
+  -- The battle may install or replace its clamped roster after opening the
+  -- screen. Forced owner-specific choices retain their explicit party.
+  if self.battle and not self.forceSwitch and self.battle.playerParty then
+    return self.battle.playerParty
+  end
   return self._party or (self.battle and self.battle.playerParty) or self.game.save.party or {}
 end
 

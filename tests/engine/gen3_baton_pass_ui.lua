@@ -102,6 +102,10 @@ for _, version in ipairs({ "firered", "emerald" }) do
   local ally = Menu.new(game, { battle = owner, party = distinct, forceSwitch = true })
   T.eq(ally:party(), distinct, "owner-specific picker retains its distinct party")
   T.eq(#ally:party(), 1, "owner-specific roster never expands into the other trainer's party")
+  local lateOwner = {}
+  local late = Menu.new(game, { battle = lateOwner, party = initial })
+  lateOwner.playerParty = distinct
+  T.eq(late:party(), distinct, "ordinary picker follows a roster installed after screen creation")
   f.close()
 end
 T.finish("native Baton Pass party UI and queued turn continuation")
