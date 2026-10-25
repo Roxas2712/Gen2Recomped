@@ -467,7 +467,8 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
     local pn, pd = Abilities.damageMultiplier(attacker, move)
     power = math.floor(power * pn / pd)
     local kind = Abilities.normalizeType(move.type)
-    for _, muted in pairs(opts.sports or {}) do
+    -- Spit Up's set-damage opcode does not forward the field sport flags.
+    for _, muted in pairs(not opts.gbaSetDamage and opts.sports or {}) do
       if muted == kind then power = math.floor(power / 2) end
     end
   end
@@ -537,7 +538,8 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
   if crit and ruleset.critMultiplier and ruleset.critBeforeType then
     d = math.floor(d * ruleset.critMultiplier)
   end
-  if gbaBase and attacker.charged and Abilities.normalizeType(move.type) == "ELECTRIC" then d = d * 2 end
+  if gbaBase and not opts.gbaSetDamage and attacker.charged
+     and Abilities.normalizeType(move.type) == "ELECTRIC" then d = d * 2 end
 
   -- Native Helping Hand scales the calculated base after the critical
   -- multiplier, before STAB/type rounding. Fixed damage and confusion's

@@ -22,6 +22,7 @@ for _, version in ipairs({ "firered", "emerald" }) do
   local ga = T.link.fakeGame(f.data, "CHARMANDER", { name = "HOST", level = 30 })
   local gb = T.link.fakeGame(f.data, "CHARMANDER", { name = "GUEST", level = 30 })
   for i, game in ipairs({ ga, gb }) do
+    game.save.version, game.save.options.ruleset = version, "gen3_emerald"
     local mon = game.save.party[1]
     mon.nickname = i == 1 and "HOST" or "GUEST"
     mon.moves = { { id = f.ids.TACKLE, pp = 10 } }
@@ -63,6 +64,7 @@ for _, version in ipairs({ "firered", "emerald" }) do
   ga.stack:push(a)
   gb.stack:push(b)
   for _, battle in ipairs({ a, b }) do
+    T.eq(battle.ruleset.baseDamageStyle, "gba", "actual linked battle uses the GBA damage profile")
     for _, actor in ipairs({ battle.player, battle.enemy }) do
       actor.mon.hp, actor.mon.stats.hp = 1000, 1000
       actor.curStats.attack, actor.curStats.defense, actor.curTypes = 51, 51, { "NORMAL" }
