@@ -295,18 +295,14 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
   local atkStat = special and (split and "spatk" or "special") or "attack"
   local defStat = special and (split and "spdef" or "special") or "defense"
 
-  -- GBA set-damage effects use the native base command without a critical
-  -- roll, variance or battle.damage hook. Its stat modifiers precede stages.
+  -- The GBA base command resolves both held effects once. Its stat modifiers
+  -- precede stages for ordinary attacks and scripted set-damage alike.
   local rawAtk, rawDef = attacker.curStats[atkStat], defender.curStats[defStat]
-  if opts.gbaSetDamage then
+  if gbaBase then
     local ability = Abilities.of(attacker)
     if not special and (ability == "HUGE_POWER" or ability == "PURE_POWER") then rawAtk = rawAtk * 2 end
-    local tn, td = HoldItems.damageMultiplier(attacker, move)
-    rawAtk = math.floor(rawAtk * tn / td)
-    local an, ad = HoldItems.attackMultiplier(attacker, move, special)
-    rawAtk = math.floor(rawAtk * an / ad)
-    local dn, dd = HoldItems.defenceMultiplier(defender, move, special)
-    rawDef = math.floor(rawDef * dn / dd)
+    rawAtk, rawDef = require("src.battle.Gen3DamageStats").held(
+      attacker, defender, move, special, rawAtk, rawDef, opts.battle)
     local kind = Abilities.normalizeType(move.type)
     if special and Abilities.of(defender) == "THICK_FAT" and (kind == "FIRE" or kind == "ICE") then
       rawAtk = math.floor(rawAtk / 2)
@@ -326,7 +322,7 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
   end
 
   local applyStage = Stats.applyStage
-  if opts.gbaSetDamage then
+  if gbaBase then
     applyStage = function(value, stage)
       stage = math.max(-6, math.min(6, stage or 0))
       if stage >= 0 then return math.floor(value * (2 + stage) / 2) end
@@ -338,8 +334,12 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
     atk = attacker.curStats[atkStat]
     dfn = defender.curStats[defStat]
   else
-    atk = applyStage(rawAtk, stageOf(attacker, atkStat))
-    dfn = applyStage(rawDef, stageOf(defender, defStat))
+    local attackStage, defenseStage = stageOf(attacker, atkStat), stageOf(defender, defStat)
+    if gbaBase and crit then
+      attackStage, defenseStage = math.max(0, attackStage), math.min(0, defenseStage)
+    end
+    atk = applyStage(rawAtk, attackStage)
+    dfn = applyStage(rawDef, defenseStage)
     -- badge boosts (x9/8), engine/battle/core.asm ApplyBadgeStatBoosts:
     -- Boulder -> attack, Thunder -> defense, Soul -> speed (TurnOrder),
     -- Volcano -> special
@@ -417,7 +417,7 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
   -- the defence and THICK FAT halves what a FIRE or ICE move gets to work
   -- with.  A Gen 1 or Gen 2 Pokemon has no ability at all and every one of
   -- these answers 1/1, so nothing below this line changes for them.
-  if not opts.gbaSetDamage then
+  if not gbaBase then
     local an, ad = Abilities.attackMultiplier(attacker, move, special)
     if an ~= 1 or ad ~= 1 then atk = math.max(1, math.floor(atk * an / ad)) end
     local dn, dd = Abilities.defenceMultiplier(defender, move, special)
@@ -428,7 +428,7 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
   -- species-locked doublings -- THICK CLUB, LIGHT BALL, METAL POWDER, the
   -- two DEEP SEA halves and SOUL DEW.  A battler with no `items` view (every
   -- Gen 1 and Gen 2 one) answers 1/1 here too.
-  if not opts.gbaSetDamage then
+  if not gbaBase then
     local an, ad = HoldItems.attackMultiplier(attacker, move, special)
     if an ~= 1 or ad ~= 1 then atk = math.max(1, math.floor(atk * an / ad)) end
     local dn, dd = HoldItems.defenceMultiplier(defender, move, special)
@@ -465,9 +465,13 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
   if opts.powerMultiplier and opts.powerMultiplier ~= 1 then
     power = math.max(1, math.floor(power * opts.powerMultiplier))
   end
-  if opts.gbaSetDamage then
+  if gbaBase then
     local pn, pd = Abilities.damageMultiplier(attacker, move)
     power = math.floor(power * pn / pd)
+    local kind = Abilities.normalizeType(move.type)
+    for _, muted in pairs(opts.sports or {}) do
+      if muted == kind then power = math.floor(power / 2) end
+    end
   end
   d = math.floor(math.floor(d * power * atk / math.max(1, dfn)) / 50)
 
@@ -507,7 +511,7 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
         d = math.floor(d / 2)
       end
     end
-    if opts.gbaSetDamage and special then
+    if special then
       local fn, fd = Abilities.flashFireBoost(attacker, move)
       d = math.floor(d * fn / fd)
     end
@@ -538,6 +542,7 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
   if crit and ruleset.critMultiplier and ruleset.critBeforeType then
     d = math.floor(d * ruleset.critMultiplier)
   end
+  if gbaBase and attacker.charged and Abilities.normalizeType(move.type) == "ELECTRIC" then d = d * 2 end
 
   -- Native Helping Hand scales the calculated base after the critical
   -- multiplier, before STAB/type rounding. Fixed damage and confusion's
@@ -605,7 +610,7 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
     -- a Pokemon's own type hits half again as hard.  Applied here because
     -- the cartridge applies it to the finished damage rather than the stat,
     -- which is not the same number once the floors are counted.
-    if not opts.gbaSetDamage then
+    if not gbaBase then
       local pn, pd = Abilities.damageMultiplier(attacker, move)
       if pn ~= 1 or pd ~= 1 then d = math.floor(d * pn / pd) end
       -- FLASH FIRE, once something has lit it: every FIRE move this Pokemon

@@ -342,6 +342,8 @@ function R.new(loader, name, generation, api3)
         out[k] = read("moves", v)
       elseif kind == "action" and k == "id" and not raw.special then
         out[k] = read("moves", v)
+      elseif name == "held_item.trigger" and generation == 3 and kind == "context" and k == "item" and v == 0 then
+        out[k] = 0 -- Native empty-hand sentinel; it is not a content item ID.
       elseif idRoles[k] and type(v) ~= "table" then
         out[k] = read(idRoles[k], v)
       elseif role and type(v) == "table" then

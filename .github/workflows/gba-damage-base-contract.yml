@@ -21,11 +21,15 @@ jobs:
       - name: Install runtime
         run: sudo apt-get update && sudo apt-get install -y luajit
       - name: Check GBA damage and older-profile retention
-        run: luajit tests/engine/gba_damage_base.lua
+        run: |
+          luajit tests/engine/gba_damage_base.lua
+          luajit tests/engine/gen3_held_damage.lua
+          luajit tests/engine/gen3_held_damage_link.lua
       - name: Compare actual ordinary damage calculators
         run: |
           mkdir -p /tmp/gba-damage-base
           python3 tools/gba-damage-base-contract-check/check.py --gen1 .contract-reference/gen1 --report /tmp/gba-damage-base/records.json
+          python3 tools/held-damage-contract-check/check.py --gen1 .contract-reference/gen1 --report /tmp/gba-damage-base/held-records.json
       - uses: actions/upload-artifact@v6
         if: always()
         with:
