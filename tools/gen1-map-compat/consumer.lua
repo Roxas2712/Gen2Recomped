@@ -3,8 +3,13 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local Version = require("src.core.GameVersion")
 local Catalog = require("src.import.gba.map_catalog")
 local names = dofile(arg[1] .. "/src/compat/gen1/MapNames.lua")
-for _, edition in ipairs({ "firered", "leafgreen", "emerald", "ruby", "sapphire" }) do
+local editions = {}
+for edition in (arg[2] or "firered,leafgreen,emerald,ruby,sapphire"):gmatch("[^,]+") do
+  editions[#editions + 1] = edition
+end
+for _, edition in ipairs(editions) do
   Version.set(edition)
+  assert(Version.get() == edition, "host does not support requested edition " .. edition)
   local checks = 0
   local function check(condition)
     checks = checks + 1
