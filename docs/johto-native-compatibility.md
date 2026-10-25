@@ -1,7 +1,7 @@
 # Native Johto compatibility checkpoint
 
-The supplied ASC OMEGA Ver.1.7 package (`3.1.2-omega.1.7`) is being tested
-unmodified with an actual Crystal Rev0 import in separate native-preview
+The supplied ASC OMEGA Ver.1.8 package (`3.1.2-omega.1.8`) is the current
+read-only test input, superseding the previously tested Ver.1.7. It is tested unmodified with an actual Crystal Rev0 import in separate native-preview
 profiles. Full compatibility is **not established**. The Origami port remains
 paused; existing Gen1 installations and player profiles are outside this work.
 
@@ -24,9 +24,12 @@ ROMs or player saves are included in this repository or its releases.
 | Public environment names and native byte readers | 1,221 independent checks; native bicycle, Dig, spawn and VM policies; all 388 original Crystal map headers retain their grid and event tables | [#213](https://github.com/UNDERdecoded/Gen2Recomped/pull/213), action follow-up in [#94](https://github.com/UNDERdecoded/Gen2Recomped/pull/94) |
 | Persistent Gen2 world and menu ownership | 33 ownership and 29 readiness checks; actual V/F6 input and upright menus on OpenGL/Metal | [draft #204](https://github.com/UNDERdecoded/Gen2Recomped/pull/204) |
 | Portable scripts and world actions on persistent worlds | 5,290 composed script checks and 2,778 action checks; independent existing branches also pass | Existing [#98](https://github.com/UNDERdecoded/Gen2Recomped/pull/98), [#94](https://github.com/UNDERdecoded/Gen2Recomped/pull/94) updated |
+| Live Gen2 battle model and native sprite captures | 306 native checks; real damage, native HP drain, switches and RUN/return in both field-camera entries on OpenGL and Metal | [#223](https://github.com/UNDERdecoded/Gen2Recomped/pull/223) |
+| Native Gen2 shared menu chrome | 116 independent checks; unchanged supplied mod installs picture hooks and draws actual sprites | [#224](https://github.com/UNDERdecoded/Gen2Recomped/pull/224) |
+| Completed native queue/HP transient retirement | 144 lifecycle and 4,680 auxiliary-hook checks; callback reentry remains blocked and native timing stays unchanged | [#227](https://github.com/UNDERdecoded/Gen2Recomped/pull/227) |
 
-The current full ROM-free quick suite passes: 262 engine suites, three SDK suites and
-B30. Its native clock fixture was updated for the additional startup method;
+The current full ROM-free quick suite at `8df05832` passes: 264 engine suites,
+three SDK suites and B30. Its native clock fixture was updated for the additional startup method;
 the existing independent logic-speed PR retains all 407 passing assertions.
 These checks do not establish complete gameplay, all maps or Windows GPU
 acceptance. HTTP cancellation discards a result immediately; a curl already
@@ -562,8 +565,10 @@ See the [source-bound encounter receipt](qa/native-foundation/johto-native-wild-
   rendering remain unaccepted.
 - The first voxel-character frame reports missing sprite bounds. Later frames
   render; the initial failure and its fallback remain recorded.
-- Gen2 PC/mail/box interfaces, follower spawning, battle HP presentation,
-  capture animation and registered-item seams are incomplete.
+- Gen2 PC/mail/box interfaces, follower spawning, battle text/move-menu and
+  specialized HP presentation, capture animation and registered-item seams
+  are incomplete. Actual native HP values/draining and sprite cards are now
+  accepted in the scoped battle loop below.
 - The package itself disables overworld capture pending its own ROM QA.
   Engine compatibility cannot turn that disabled feature into a tested one.
 - Complete normal doors/warps beyond the tested home/Mart/Center, battles and
@@ -599,10 +604,57 @@ not switch the field camera during battle. Native no-mod battle actors/HUD,
 RUN and return remain correct. This uses the supported classic random
 encounter option and does not accept default visible-only contacts.
 
-**Staged Pokemon actors are still absent.** The mod gates picture-hook
-installation on the missing native Gen2 `Chrome` module. The generated
-VoxelScene upvalue limit is also still open. The picture API unit checks do
-not establish full mod actor presentation. The next work is the genuine
-native menu-chrome contract, followed by another unchanged-mod GPU run.
+**At this earlier source, staged Pokemon actors were absent.** The mod gated
+picture-hook installation on the then-missing native Gen2 `Chrome` module.
+The subsequent checkpoint below supplies that contract and verifies sprite
+cards; the separate generated VoxelScene upvalue limit remains open.
 The existing release is unchanged. The [source-bound receipt](qa/native-foundation/johto-native-battle-view.json)
 records this partial result and the failed initial camera-test assumption.
+
+## Native chrome, visible battle sprites and corrected package
+
+GPU source `d6149206` includes the real shared Gen2 chrome and the corrected
+player-front FX clip window. The unchanged supplied mod now installs its
+actual picture hook. Native Cyndaquil/Swinub sprite cards are visible with
+correct levels and HP; after the native party menu switches to Totodile, both
+the visible actor and HUD follow the actual saved Pokemon. These are native
+sprite cards, not acceptance of the separate generated model renderer.
+
+The complete loop passes on OpenGL/VSync 0 and Metal/VSync 1 with Ver.1.7.
+The corrected Ver.1.8 also passes on **both OpenGL and Metal with VSync 1**.
+Each backend enters an actual native VM-scripted Swinub battle from each
+selected First/Third field camera, uses a real QUICK_ATTACK, observes native
+damage and HP drain, opens the native party menu, selects the actual second
+Pokemon, accepts the opponent's reply, selects RUN and returns to a presented
+world. Four fresh owned-window proofs pass once per run. Native input key
+edges are injected; OS keyboard hardware is not covered. The proof named
+`resized` is a post-switch frame and does not establish resize coverage.
+
+Ver.1.8 was compared by hash across all 27,329 supplied files. Only
+`manifest.json` and `gen2/lib/GoldFlyCinematic.lua` differ; the latter anchors
+the cinematic on the player when the engine exposes screen offsets rather
+than position in `flyAnim`. The flight sequence itself was not exercised by
+these battle tests. Supplied sources remain unchanged; each task-owned mod
+copy was verified byte-for-byte and removed after its process exited.
+
+Native no-mod ice traversal, random-floor encounter, RUN, VM wild switches
+and map return pass on both GPU backends too. In addition, `8df05832` retires
+the native queue insertion cursor and completed HP closing hold. Those
+markers had prevented the START auxiliary hook from becoming ready again.
+The callback still blocks reentrant input, and the original timing and
+multihit drains remain unchanged. This separate CPU-tested follow-up passes
+144 lifecycle and 4,680 hook checks. The combined suite passes all 264 engine
+suites, three SDK suites and B30. GPU evidence remains bound to `d6149206`.
+
+The [sanitized checkpoint](qa/native-foundation/johto-native-battle-chrome.json)
+records exact sources, packages, mod versions, damage/switch results and image
+hashes. Earlier failed QA assumptions and the unresolved admission of a
+battle during one modded ice probe remain recorded; that admission had no
+captured caller and is not attributed to the closed native random gate.
+
+The generated Stadium overworld patch still exceeds LuaJIT's 60-upvalue
+limit. Complete native text/move-menu/animation contracts, default visible
+contacts, continuous movement and full field-move handoffs, PC/mail/box and
+follower/capture/registered-item protocols, broader maps/interiors/story/save
+and long-session QA remain open. Windows packages pass static verification;
+Windows GPU hardware is untested. The existing release remains unchanged.
