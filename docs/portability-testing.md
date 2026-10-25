@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210 and #212 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212 and #214 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,44 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`b298c7188bd731dc65d191cceea1456f555dca50`. Its ROM-free run passed
-**218/218 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`a238391bfed65ac554260eb61d64acf95182f598`. Its ROM-free run passed
+**219/219 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #214](https://github.com/UNDERdecoded/Gen2Recomped/pull/214) replaces
+midpoint/random-mon construction for native Gen-3 demo presets with a private
+constrained-identity builder. Zero IVs/EVs, nature-adjusted stats, PID-selected
+ability, full PP/HP, native friendship/experience and Poke Ball now agree with
+the unchanged source. `gender.roll` executes only for nature-matching candidate
+PIDs. Cartridge order maps/native indices handle canonical, raw and translated
+registries without English-only lookups. Party construction completes before
+borrowing the real save party, which is restored by reference without edits.
+
+The clean feature `440a5da635dc9737875c38e4ac324ce2343a23ee` passes **209,742
+focused checks**. All **56 workers / 5,574 paired observations** agree on the
+clean combined runtime above; 180 new preset cases per profile include every
+consumed word, final input-stream state and public gender-hook call. The source
+runs its original LCRNG; the host receives an independent equivalent input
+stream. Only engine field/ID schemas are normalized. No observations are
+removed. The old prerequisite fails 1,065 assertions before reaching the missing
+new private factory. The exact Counter of all **25 inherited FAIL lines across
+nine suites** is unchanged: feature 95/104 vs prerequisite 94/103. Their separate
+repairs are already in this combined branch, whose complete run is green.
+
+A CPU-only smoke also creates all nine preset members independently from each
+actual locally imported FireRed/Emerald cache (18 total). This checks the private
+constructor with real imported records; it is not live rendering or full demo
+playback acceptance. Emerald covers the shared Gen-3 data contract; retail
+Teachy TV is FireRed-specific. Whole-game/VBlank RNG scheduling and the subsequent
+demo controller's midpoint battle RNG remain open. The move-effect fingerprint
+is unchanged (`a000e3862d11a73a`). See [the scoped contract](native-gen3-constrained-party.md).
+
+All seven hosted #214 workflows await maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40150160378)
+has zero jobs. Local green checks are separate. The PR attachment was attempted
+but the chat's 100-attachment limit is reached. Evidence is retained in
+`tmp/constrained-party-full-accepted.log`, `tmp/constrained-party-contracts.json`
+and `tmp/constrained-party-import-smoke.json` (private ignored QA outputs).
 
 [PR #212](https://github.com/UNDERdecoded/Gen2Recomped/pull/212) shares
 native GBA critical policy between ordinary damage and Beat Up. First/Wally
