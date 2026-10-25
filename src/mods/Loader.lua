@@ -1121,6 +1121,7 @@ function Loader:_api(mod)
       end
       return data
     end)
+  api.postLog = Net.logReporter(loader,mod)
   -- mod.world / mod.game / mod.storage all materialize on first touch, for
   -- the same reason: a headless load must not drag the world stack in, and
   -- the Game the facade acts on is still being wired when the entry chunk

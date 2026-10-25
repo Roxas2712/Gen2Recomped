@@ -301,3 +301,7 @@ The launcher hands the link to the operating system to open, so only `http://`
 and `https://` links are accepted. Any other value, such as a `file:` link or
 a custom scheme, is dropped with a warning. The mod itself still loads; it
 just gets no button.
+
+With `network` and a fixed HTTPS `log_url`, `mod:postLog` sends bounded one-way
+diagnostics through the shared workers. See [log reporting](mod-log-reporting.md)
+for payload, ownership and native platform boundaries.

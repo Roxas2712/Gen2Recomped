@@ -1,6 +1,6 @@
 -- Per-mod, opaque ownership over the engine's non-blocking GET transport.
 local Fetch = require("src.net.Fetch")
-local Host = require("src.core.HostShell")
+local Transport = require('src.net.BoundedHttp')
 local Net = { MAX_INFLIGHT = 4 }
 local loaders = setmetatable({}, {__mode = "k"})
 
@@ -17,10 +17,38 @@ local function bucket(loader, owner)
 end
 
 function Net.releaseAll(loader, owner)
+  if loader.netOneWay then loader.netOneWay[owner]=nil end
   local b = loader.netJobs and loader.netJobs[owner]
   if not b then return end
   for handle, id in pairs(b) do Fetch.cancel(id); Fetch.release(id); b[handle] = nil end
   loader.netJobs[owner] = nil
+end
+
+local function submit(loader,owner,method,...)
+  local b,count=bucket(loader,owner),0
+  for _,id in pairs(b)do if Fetch.isPending(id) then count=count+1 end end
+  if count>=Net.MAX_INFLIGHT then return nil,'too many requests in flight' end
+  local id,why=Fetch[method](...)
+  if not id then return nil,why end
+  local handle={};b[handle]=id
+  if method=='postLog' then
+    loader.netOneWay=loader.netOneWay or {};loader.netOneWay[owner]=loader.netOneWay[owner] or {}
+    loader.netOneWay[owner][handle]=true
+  end
+  return handle
+end
+
+function Net.logReporter(loader,mod)
+  local owner,url,granted=mod.manifest.id,mod.manifest.log_url,mod.manifest.permissionSet.network
+  return function(_,body,opts)
+    if not granted then error('mod.postLog for '..owner..' needs the "network" permission',2) end
+    if not url then return nil,'mod has no log_url' end
+    local payload,kind=require('src.mods.LogReport').prepare(owner,body,opts)
+    if not payload then return nil,kind end
+    if not Transport.available() then return nil,'bounded HTTP transport unavailable' end
+    return submit(loader,owner,'postLog',url,payload,{userAgent='gen2recomp-mod/'..owner,contentType=kind,
+      maxSeconds=20,maxBytes=4*1024*1024,boundedHttpsGet=1})
+  end
 end
 
 function Net.unloadAll()
@@ -38,30 +66,28 @@ function Net.forMod(loader, mod)
       capabilities = function() return {} end }
   end
   local api = {}
-  function api:available() return Host.canSpawnProcess() and Fetch.available() end
+  function api:available() return Transport.available() and Fetch.available() end
   function api:capabilities()
-    return Host.canSpawnProcess() and {boundedHttpsGet = 1, maxResponseBytes = require("src.net.AsyncGet").MAX_BYTES} or {}
+    return Transport.available() and {boundedHttpsGet = 1, maxResponseBytes = require("src.net.AsyncGet").MAX_BYTES} or {}
   end
   function api:get(url, opts)
     local denial = Net.urlDenial(url)
     if denial then return nil, denial end
     opts = type(opts) == "table" and opts or {}
     if opts.boundedHttpsGet == 1 and not url:lower():match("^https://") then return nil, "HTTPS required" end
-    local b, count = bucket(loader, owner), 0
-    for _, id in pairs(b) do if Fetch.isPending(id) then count = count + 1 end end
-    if count >= Net.MAX_INFLIGHT then return nil, "too many requests in flight" end
-    local id, err = Fetch.get(url, { userAgent = "gen2recomp-mod/" .. owner,
+    return submit(loader,owner,'get',url, { userAgent = "gen2recomp-mod/" .. owner,
       accept = type(opts.accept) == "string" and opts.accept or nil,
       maxSeconds = opts.maxSeconds, maxBytes = opts.maxBytes, boundedHttpsGet = opts.boundedHttpsGet })
-    if not id then return nil, err end
-    local handle = {}; b[handle] = id
-    return handle
   end
   function api:poll(handle)
     local id = bucket(loader, owner)[handle]
     if not id then return {status = "error", err = "unknown request"} end
     local state = Fetch.poll(id); local out = {}
     for key, value in pairs(state) do out[key] = value end
+    if loader.netOneWay and loader.netOneWay[owner] and loader.netOneWay[owner][handle] then
+      return {status=out.status,progress=out.progress,receivedBytes=0,httpStatus=out.httpStatus,
+        err=out.status=='error' and 'log upload failed' or nil}
+    end
     return out
   end
   function api:cancel(handle)
@@ -72,7 +98,9 @@ function Net.forMod(loader, mod)
   function api:release(handle)
     local b = bucket(loader, owner); local id = b[handle]
     if not id then return false end
-    Fetch.cancel(id); Fetch.release(id); b[handle] = nil; return true
+    Fetch.cancel(id); Fetch.release(id); b[handle] = nil
+    if loader.netOneWay and loader.netOneWay[owner] then loader.netOneWay[owner][handle]=nil end
+    return true
   end
   return api
 end

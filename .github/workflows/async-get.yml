@@ -1,4 +1,4 @@
-name: async mod GET
+name: Async mod HTTP and file downloads
 on:
   pull_request:
   workflow_dispatch:
@@ -35,4 +35,4 @@ jobs:
               with zipfile.ZipFile(archive) as z: z.extractall(target)
               executable = next(target.rglob('love.app/Contents/MacOS/love')) if host == 'macOS' else next(target.rglob('lovec.exe'))
               if host == 'macOS': executable.chmod(0o755)
-          subprocess.run(['python', 'tools/check_async_get.py', '--love', str(executable)], check=True)
+          subprocess.run(['python', 'tools/check_async_get.py', '--love', str(executable), '--tls'], check=True)

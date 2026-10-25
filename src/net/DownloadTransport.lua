@@ -20,13 +20,23 @@ function M.run(job, output)
   if not ua or not accept then return nil, "invalid HTTP header" end
   local seconds = math.max(.1, math.min(job.maxSeconds, job.deadline - love.timer.getTime()))
   local protocol = job.httpsOnly and "https" or "http,https"
-  local config = table.concat({ "silent", "show-error", "fail", "location", "globoff",
+  local lines = { "silent", "show-error", "fail", "location", "globoff",
     "connect-timeout = " .. math.min(10, seconds), "max-time = " .. seconds,
     "max-filesize = " .. job.maxBytes, "max-redirs = 5",
     'proto = "=' .. protocol .. '"', 'proto-redir = "=' .. protocol .. '"',
     "user-agent = " .. ua, "header = " .. quote("Accept: " .. (job.accept or "*/*")),
     "stderr = " .. quote(fs.getSaveDirectory() .. "/" .. errorPath),
-    'write-out = "\\n%{http_code}"', "url = " .. quote(job.url), "" }, "\n")
+    'write-out = "\\n%{http_code}"', "url = " .. quote(job.url) }
+  -- Keep explicit trust bundles consistent with the bounded request transport,
+  -- including Windows curl builds that do not consume CURL_CA_BUNDLE themselves.
+  local ca = os.getenv("CURL_CA_BUNDLE")
+  if ca and ca ~= "" then
+    local value = quote(ca)
+    if not value then return nil, "invalid CA bundle path" end
+    lines[#lines + 1] = "cacert = " .. value
+  end
+  lines[#lines + 1] = ""
+  local config = table.concat(lines, "\n")
   local wrote, why = fs.write(configPath, config)
   if not wrote then return nil, tostring(why or "could not write download config") end
   local pipe = Host.popen("curl --disable --config " .. Host.quote(absolute),
