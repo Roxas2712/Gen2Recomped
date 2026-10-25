@@ -12935,8 +12935,9 @@ function OverworldState:onStepComplete()
   require("src.world.PikachuFollower").onStep(Game.save)
   require("src.world.HgssFollowMon").onStep(Game, self)
   -- Original Gen 2 friendship shares the egg step counter in stepEggs.
-  -- Keep the existing walking rule for other datasets.
-  if GameVersion.get()=="emerald" then
+  -- All Gen 3 editions use their own 128-step coin-flip rule, rather than
+  -- falling through to the generic +2/+2/+1 walking adjustment.
+  if GameVersion.isGen3() then
     require("src.pokemon.Gen3Friendship").step(Game.data,Game.save,self.map and self.map.def)
   elseif GameVersion.isGen4() then
     -- Platinum's own rule: a coin flip, Luxury Ball, egg location and Soothe
