@@ -36,6 +36,7 @@ the five-edition composed fork passes 57. Replacing the extractor with the
 pre-change version makes the same test fail on absent source bytes/metadata.
 Twelve relevant composed suites pass, covering terrain animation, render data,
 palette refresh, dataset views and all three additional cartridge registrations.
+The frozen final composed fork passes 326/326 engine suites and SDK 3/3.
 This does not constitute a new real-ROM import, GPU run, or full mod acceptance.
 
 Run `luajit tests/engine/gen3_source_attributes.lua`. These records are a

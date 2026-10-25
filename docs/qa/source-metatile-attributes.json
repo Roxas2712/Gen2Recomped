@@ -10,5 +10,12 @@
     "src/import/RomImporter.lua": "f40548cb82b4a838e5d8551d859a296bf08bc936ba05f5e69483d8f40cde1e1a",
     "src/render/Gen3Tiles.lua": "2215a2d4963600cf2443d921467731772e4b9ee29965a513057154c6bbde7e7d",
     "tests/engine/gen3_source_attributes.lua": "cdb728a211dc52b2948772e77915a9212b405106a792b0f87034f2754cb5bfd8"
+  },
+  "composedForkVerification": {
+    "commit": "f2d9c5bc328de9e3ac1923c46c24b5cbcbc01018",
+    "engineSuitesPassed": 326,
+    "engineSuitesTotal": 326,
+    "sdkSuitesPassed": 3,
+    "sdkSuitesTotal": 3
   }
 }
