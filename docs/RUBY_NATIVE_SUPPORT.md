@@ -131,3 +131,11 @@ is `rs-item-effects-layout-v2:` so affected old imports rebuild.
 extractor and checks 163 entries / 441 raw effect fields, Potion/Protein/Rare
 Candy sentinels and the failing old-address negative control. This is import
 metadata evidence; it does not certify every item-use menu or broader story.
+
+All Gen3 editions now dispatch completed walking steps to the existing native
+`Gen3Friendship.step`, once per step. This also prevents the generic older
++2/+2/+1 fallback from being applied to Ruby. The independent regression
+`tests/gen3_walking_friendship.lua` runs the actual controller branch for all
+available Gen3 edition registrations, both coin outcomes and an egg across
+256 steps each (all five in the combined sibling QA candidate).
+This narrow step correction is not a full friendship/story acceptance.
