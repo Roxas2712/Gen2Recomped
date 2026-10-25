@@ -19,7 +19,7 @@ def assemble(directory):
             maps.add(row['id'])
             key = row['primary'], row['secondary']
             assert all(type(n) is int and 0 <= n < 0x2000000 for n in key)
-            value = row['pair'], row['primaryName'], row['secondaryName']
+            value = row['pair'], row['primaryName'], row['secondaryName'], row['tileset']
             assert all(type(n) is str and n for n in value)
             assert key not in pairs or pairs[key] == value, 'Ambiguous source pair'
             assert row['pair'] not in names or names[row['pair']] == key, 'Ambiguous semantic name'

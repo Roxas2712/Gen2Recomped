@@ -28,7 +28,7 @@
     "fullCompatibility": false,
     "playerProfilesUsed": false
   },
-  "isolatedChecks": 3733,
+  "isolatedChecks": 4339,
   "nativeMapsMatched": 2156,
   "sourcePairsMatched": 303,
   "metadataRegeneration": "byte-identical",
@@ -40,15 +40,16 @@
   "gpu": false,
   "fullCompatibility": false,
   "sourceSha256": {
-    "src/compat/gen1/PairIdentity.lua": "460dcec573c7963aa796916a4cde2739dfc370840dc7e73a67c2501c13cac046",
-    "src/compat/gen1/PairNames.lua": "830bf0350fe83a31b6b289c832046ddb104150022cb67b11fcba840c2012efdc",
-    "tests/engine/compatibility_pair_identity.lua": "8d79802fee3c4ddea9bbbeb37279bf34c7ae47a9f6795ba6beae47aee1c8348a",
-    "tools/pair-identities/export.lua": "3fc9f0f067930090b6a59cf72d58f628fe87a4de94aec852b19e6adbe50ea3f2",
-    "tools/pair-identities/assemble.py": "b1021f75c47ec99ce9b9e818603de6b59e6523ee5ffb5026c1adfa3d75fffd79",
-    "tools/pair-identities/rom-host/main.lua": "2ffedb7347d22a6ccfd1d2d4e83d14c7f009ef1ecc144b65d3ac10d8d3863de8",
+    "src/compat/gen1/PairIdentity.lua": "e24d2169b4277d184fd0f734ca78b99269ba42b3c1a63c56836ed2eb75a7b1b8",
+    "src/compat/gen1/PairNames.lua": "2aebd4e5e552fc3200d584b3bbc928620656db18e3c0cf5831c816d8065a52cd",
+    "tests/engine/compatibility_pair_identity.lua": "2c94d2673b947b5eeb31032631e4b260ea56b2e9b6d7e86c265786a9f0c783e0",
+    "tools/pair-identities/export.lua": "a9ac14a4e95b9c498ddc6ebffd7231ba8b1914fcd41f094ad56bfad5cac5e861",
+    "tools/pair-identities/assemble.py": "508ee4d9a6e8a13d93bcd54dd858f409a1ca8ef6aaa10a9a48577c5b57f0e792",
+    "tools/pair-identities/rom-host/main.lua": "fbe43b5778b9b1fa088f62196c0dcfdf6ca5702f973a5dbc9a3b84b6b3a6fa3a",
     "tools/pair-identities/rom-host/conf.lua": "a969e23fed727643e0fa3d571df52a4c45b754cd31d39d74e45022ed296c7c13"
   },
-  "composedRegression": {
+  "sourceTilesetAliasesMatched": 303,
+  "previousComposedRegression": {
     "commit": "f9f956032bf05c0beb620168f5743fcbf558478c",
     "engineSuitesPassed": 329,
     "engineSuitesTotal": 329,

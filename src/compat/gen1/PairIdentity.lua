@@ -18,7 +18,7 @@ end
 function M.lookup(edition, primary, secondary)
   local rows = index(edition)
   local row = rows and address(primary) and address(secondary) and rows[primary] and rows[primary][secondary]
-  if row then return row[3], row[4], row[5] end
+  if row then return row[3], row[4], row[5], row[6] end
 end
 function M.bind(pairDefs, banks, edition)
   assert(type(pairDefs) == 'table' and type(banks) == 'table', 'native pair and bank tables required')
@@ -29,10 +29,10 @@ function M.bind(pairDefs, banks, edition)
       local primary, secondary = banks[def.primaryKey], banks[def.secondaryKey]
       if type(primary) == 'table' and type(secondary) == 'table'
           and primary.secondary == false and secondary.secondary == true then
-        local name, pn, sn = M.lookup(edition, primary.address, secondary.address)
+        local name, pn, sn, tileset = M.lookup(edition, primary.address, secondary.address)
         if name then
           local row = {id=name,nativeId=key,primary=pn,secondary=sn,
-            primaryKey=def.primaryKey,secondaryKey=def.secondaryKey,
+            primaryKey=def.primaryKey,secondaryKey=def.secondaryKey,tileset=tileset,
             pa=primary.address,sa=secondary.address,def=def,p=primary,s=secondary}
           byNative[key] = row
           local prior = byName[name]
@@ -72,7 +72,7 @@ function M.bind(pairDefs, banks, edition)
     end
     if not valid(row) then return nil, 'native pair unavailable or retired' end
     return {id=row.id,nativeId=row.nativeId,primary=row.primary,secondary=row.secondary,
-      primaryKey=row.primaryKey,secondaryKey=row.secondaryKey}
+      primaryKey=row.primaryKey,secondaryKey=row.secondaryKey,tileset=row.tileset}
   end
   function binding:release()
     released = true; pairDefs, banks, byNative, byName, ambiguous = nil, nil, {}, {}, {}
