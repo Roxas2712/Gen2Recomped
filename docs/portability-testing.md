@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218 and #219 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219 and #220 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,47 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`ae385bae803e8a94eb4b2c73e2c1425d1a68868d`. Its ROM-free run passed
-**234/234 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`abd621282715d072b421e7b30f3f5c60628d771d`. Its ROM-free run passed
+**237/237 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #220](https://github.com/UNDERdecoded/Gen2Recomped/pull/220) binds native
+Disable to the last executed learned move with a 2–5-phase residual timer.
+Move eligibility follows identity through reordering/duplicates, including
+public snapshot/submission and native AI predicates. A faster Disable cancels
+the already queued move before PP, confusion and move-used events; called moves
+retain their native bypass. Actual residuals, Bide interruption, switching,
+Baton Pass, builtin delegation and the Disable interactions with Haze/Transform
+are covered. Broader native controllers and Haze/Transform rules remain separate.
+
+Clean feature runtime `55f4301ab6ef190051b1f6d420f22636a61a1809` passes
+**930 focused checks** and **116/125 engine suites**, SDK 3/3 and B30. The exact
+Counter of all 25 inherited FAIL lines across nine suites equals clean #219
+(113/122). Their independent repairs remain green in this combined checkout.
+Both feature and combined runtime match unchanged read-only Gen1 in **96 workers /
+62,976 paired observations**, including 810 new Disable observations per profile.
+Eligibility uses the real native admission checks; Gen1's omitted GBA snapshot
+`disabled` field is not invented or interpreted as false. Every bounded RNG draw,
+HP/PP, learned/last moves, native state and actual move event remains recorded.
+
+Two actual link roles complete three full turns with every paired hash/component
+equal. Four CPU-only tests with actual local FireRed/Emerald imports pass public
+selection/submission, preapplied and same-turn interruption and real residuals.
+Unchanged #219 fails the same public command's identity/duration assertions
+(random slot 2 / eight phases); the raw negative report remains retained.
+Native command revision 5 refuses older peers before party selection; party codec
+stays at 1. The raw native fixture digest `da62fe7b50f40107` was audited with the
+unchanged #219 hasher and only its explicit revision token changed.
+
+All eight #220 workflows require maintainer approval (`action_required`); the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40165934516)
+has zero jobs. Local acceptance is separate. The app's 100-artifact cap prevents
+another attachment; the regular PR is published and linked. Combined evidence:
+`tmp/disable-full.log`, `tmp/disable-contracts.json`, `tmp/disable-imported.log` and
+`tmp/disable-accepted-evidence.json`. See [the scoped Disable contract](native-gen3-disable.md).
+
+Prior #219 results retain runtime `ae385bae803e8a94eb4b2c73e2c1425d1a68868d`
+and its 234/234 engine result:
 
 [PR #219](https://github.com/UNDERdecoded/Gen2Recomped/pull/219) adds native
 Encore move/slot binding, a three-to-six-phase duration draw and actual residual
