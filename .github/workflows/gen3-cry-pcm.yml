@@ -13,4 +13,8 @@ jobs:
       - name: Install ROM-free runtime
         run: sudo apt-get update && sudo apt-get install -y luajit
       - name: Verify compressed block and reconstruction contracts
-        run: luajit tests/engine/gen3_cry_pcm.lua
+        run: |
+          luajit tests/engine/gen3_cry_pcm.lua
+          luajit tests/engine/gen3_audio_modes.lua
+          luajit tests/engine/gen3_cry_owner.lua
+          luajit tests/engine/gen3_audio_prep.lua

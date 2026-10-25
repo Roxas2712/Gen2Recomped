@@ -27,10 +27,10 @@ local function u16(s,p)local a,b=s:byte(p+1,p+2);if b then return a+b*256 end en
 local function u32(s,p)local a,b,c,d=s:byte(p+1,p+4);if d then return a+b*256+c*65536+d*16777216 end end
 -- handled=false leaves existing file/chip/uncompressed/custom cry paths alone.
 -- Recognized but damaged compressed data is silent, never adjacent ROM bytes.
-function C.render(image,base,cries,index,options)
+function C.describe(image,base,cries,index)
   if type(image)~='string' or type(cries)~='table' or type(cries.table)~='number'
      or type(index)~='number' or index<0 or index%1~=0 or index>=(cries.count or 4096) then return nil,false end
-  base=base or 0;options=options or {}
+  base=base or 0
   local at=cries.table+index*12-base
   if at<0 or at+12>#image then return nil,false end
   local kind,key=image:byte(at+1,at+2)
@@ -43,26 +43,20 @@ function C.render(image,base,cries,index,options)
   if u16(image,wave)~=1 then return nil,false end
   local rate=(u32(image,wave+4) or 0)/1024;local size=u32(image,wave+12)
   if rate<=0 or rate>88200 then return nil,true end
+  return {wave=wave,rate=rate,size=size,reverse=kind==0x30},true
+end
+function C.render(image,base,cries,index,options)
+  local info,handled=C.describe(image,base,cries,index)
+  if not info then return nil,handled end
+  options=options or {}
+  local wave,rate,size=info.wave,info.rate,info.size
   local pcm=C.decode(image,wave+16,size)
   if not pcm then return nil,true end
-  local seconds=math.min(5,math.max(.05,options.seconds or size/rate))
-  local n=math.floor(44100*seconds)
-  local result=love.sound.newSoundData(n,44100,16,2)
-  local gain=(options.volume or 1)*.5;local step=rate/44100
-  local reverse=kind==0x30
-  for i=0,n-1 do
-    local position=i*step
-    if reverse then position=size-1-position end
-    local pos=math.floor(position);local fraction=position-pos
-    local b=pos>=0 and pos<size and pcm:byte(pos+1) or 0
-    local nextByte=pos>=0 and pos+1<size and pcm:byte(pos+2) or b
-    if b>=128 then b=b-256 end
-    if nextByte>=128 then nextByte=nextByte-256 end
-    -- Same linear reconstruction as the original OASC DirectSound music.
-    -- Preserve native rate, output length, gain, pan and Source ownership.
-    local v=math.max(-1,math.min(1,(b+(nextByte-b)*fraction)/128*gain))
-    result:setSample(i,1,v);result:setSample(i,2,v)
-  end
-  return result,true,{rate=rate,sourceSamples=size,outputSamples=n,compressed=true,reverse=reverse}
+  local Voice=C.voice or require('src.core.Gen3CryVoice')
+  local params=Voice.params(options.edition,options)
+  local renderOptions={};for k,v in pairs(options)do renderOptions[k]=v end
+  renderOptions.reverse=info.reverse
+  local result,info=Voice.render(pcm,rate,params,renderOptions)
+  return result,true,info
 end
 return C

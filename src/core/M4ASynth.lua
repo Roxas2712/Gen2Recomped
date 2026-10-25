@@ -57,6 +57,7 @@
 
 local M4A = {}
 M4A.cryPCMVersion = 1
+M4A.cryModesVersion = 2
 
 local SAMPLE_RATE = 44100
 M4A.SAMPLE_RATE = SAMPLE_RATE
@@ -927,6 +928,13 @@ local CRY_CAP = 5           -- seconds; nothing in the cartridge is close
 -- which sits around a tenth of full scale
 local CRY_GAIN = 0.5
 
+function M4A.crySupports(data,index)
+  local audio=data and data.audio
+  if not(audio and audio.gen3 and audio.gen3Cries)then return false end
+  local _,handled=require("src.core.Gen3CryPCM").describe(loadImage(audio),audio.gen3.base or 0,audio.gen3Cries,index)
+  return handled
+end
+
 function M4A.renderCry(data, index, options)
   options = options or {}
   local audio = (data and data.audio) or {}
@@ -1046,4 +1054,5 @@ function M4A.soundData(engine, samples, channels)
   return result
 end
 
+require("src.core.Gen3AudioPrep").install(M4A)
 return M4A

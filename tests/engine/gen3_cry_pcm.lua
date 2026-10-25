@@ -15,12 +15,12 @@ local function u32(v)return string.char(v%256,math.floor(v/256)%256,math.floor(v
 local record=string.char(32,60,0,0)..u32(0x08000010)..string.char(255,0,255,0)
 local image=record..string.rep('\0',4)..string.char(1,0,0,0)..u32(44100*1024)..u32(0)..u32(64)..seed
 local sd,handled=C.render(image,0,{table=0,count=1},0)
-assert(handled and sd.n==2205 and sd.rate==44100 and sd.channels==2)
-for i=0,63 do local b=p:byte(i+1);if b>=128 then b=b-256 end;assert(sd.values[i*2+1]==b/256 and sd.values[i*2+2]==b/256)end
-assert(sd.values[129]==0 and sd.values[130]==0,'Read past decoded cry')
+assert(handled and sd.n==64 and sd.rate==44100 and sd.channels==2)
+for i=0,63 do local b=p:byte(i+1);if b>=128 then b=b-256 end;assert(sd.values[i*2+1]==b/128*(94/256) and sd.values[i*2+2]==b/128*(96/256))end
+assert(sd.values[129]==nil and sd.values[130]==nil,'Read past decoded cry')
 assert(select(2,C.render(image,0,{table=0,count=1},1))==false)
 assert(select(2,C.render(image:sub(1,-2),0,{table=0,count=1},0))==true)
-local rev=string.char(48)..image:sub(2);local rd=C.render(rev,0,{table=0,count=1},0);local b=p:byte(64);if b>=128 then b=b-256 end;assert(rd.values[1]==b/256)
+local rev=string.char(48)..image:sub(2);local rd=C.render(rev,0,{table=0,count=1},0);local b=p:byte(64);if b>=128 then b=b-256 end;assert(rd.values[1]==b/128*(94/256))
 local ordinary=image:sub(1,16)..'\0\0'..image:sub(19);assert(select(2,C.render(ordinary,0,{table=0,count=1},0))==false)
 if arg[1]then
  local function read(path)local f=assert(io.open(path,'rb'));local s=f:read('*a');f:close();return s end
@@ -40,12 +40,12 @@ if arg[1]then
   if i==0 or i==3 or i==6 or i==24 or i==251 or i==280 or i==311 then
    local data={audio={gen3={file='owned-ROM',base=0},gen3Cries={table=tableAt,count=count}}}
    local out=assert(M.renderCry(data,i));local step=word(at+4)/1024/44100
-   assert(out.n==math.floor(44100*math.max(.05,math.min(5,size/(word(at+4)/1024)))))
+   assert(out.n==math.ceil(size/step))
    for j=0,out.n-1 do
     local position=j*step;local pos=math.floor(position);local v=pos<size and expected:byte(pos+1)or 0;local v2=pos+1<size and expected:byte(pos+2)or v
     if v>=128 then v=v-256 end;if v2>=128 then v2=v2-256 end
-    local value=(v+(v2-v)*(position-pos))/256
-    assert(out.values[j*2+1]==value and out.values[j*2+2]==value,'Rendered PCM mismatch '..i..':'..j)
+    local value=(v+(v2-v)*(position-pos))/128
+    assert(out.values[j*2+1]==value*(94/256) and out.values[j*2+2]==value*(96/256),'Rendered PCM mismatch '..i..':'..j)
    end
   end
  end
