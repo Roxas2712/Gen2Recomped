@@ -15,7 +15,9 @@ function M.install(root, native, f)
   function Source:isPlaying()
     return self.playing
   end
-  function Source:setVolume() end
+  function Source:setVolume(value)
+    self.volume = value
+  end
   function Source:setLooping() end
   function Source:clone()
     local copy = setmetatable({ input = self.input }, Source)
@@ -25,7 +27,10 @@ function M.install(root, native, f)
   function Source:play()
     self.playing = true
     local id, pan, mono
-    if native then
+    if type(self.input) == "string" then
+      id = assert(tonumber(self.input:match("owned%-effect%-(%d+)%.wav")), "owned file identity")
+      pan, mono = 0, false
+    elseif native then
       local meta = assert(Audio._seMeta[self], "native source retains its actual sound metadata")
       id, pan, mono = meta.id, meta.pan, meta.mono and true or false
     else
@@ -71,7 +76,12 @@ function M.install(root, native, f)
   }
   local off, saved
   if native then
-    saved = { ready = Audio._ready, pack = Audio._pack, mono = Audio._mono }
+    saved = {
+      ready = Audio._ready,
+      pack = Audio._pack,
+      mono = Audio._mono,
+      modData = require("src.core.game3.mod_audio").data,
+    }
     Audio._ready, Audio._pack = true, { index = { songs = {} } }
     for _, id in ipairs({ 141, 148, 164, 171 }) do
       Audio._pack.index.songs[id] = { kind = "sfx", player = 1 }
@@ -111,6 +121,23 @@ function M.install(root, native, f)
     end)
   end
   return {
+    override = function(id, kind)
+      local file = "owned-effect-" .. id .. ".wav"
+      local def = kind == "file" and { file = file } or kind == "string" and file or false
+      if native then
+        local effects = {}
+        for key, value in pairs(require("src.core.game3.se_ids")) do
+          if value == id and key:match("^SE_") then
+            effects[key] = def
+          end
+        end
+        require("src.core.game3.mod_audio").install({ audio = { sfx = effects } })
+      else
+        local name = "OWNED_NATIVE_" .. id
+        f.data.audio.sfx[name] = def
+        require("src.core.Sound").invalidate(name)
+      end
+    end,
     role = function(id, name)
       if not native then
         roleIds[name] = id
@@ -127,8 +154,13 @@ function M.install(root, native, f)
     clear = function()
       if native then
         Audio.stopSe()
+        require("src.core.Sound").invalidate()
+        require("src.core.game3.mod_audio").reset()
       else
         require("src.core.Sound").invalidate()
+        for key in pairs(f.data.audio.sfx) do
+          f.data.audio.sfx[key] = nil
+        end
       end
       -- The native PCM source cache survives stopSe. Keep stopped hardware
       -- objects in the inventory so reuse is observed on later commands.
@@ -153,6 +185,15 @@ function M.install(root, native, f)
       end)
       return active
     end,
+    volumes = function()
+      local out = {}
+      for _, source in ipairs(allSources) do
+        if source.playing then
+          out[#out + 1] = source.volume
+        end
+      end
+      return out
+    end,
     stereo = function(value)
       if native then
         Audio._mono = not value
@@ -170,12 +211,25 @@ function M.install(root, native, f)
     trace = function()
       return trace
     end,
+    queries = function()
+      local out = {}
+      for _, id in ipairs({ 141, 148, 164, 171 }) do
+        out[tostring(id)] = native and Audio.isSePlaying(id)
+          or not native and require("src.core.Sound").isSePlaying(f.data, id)
+          or false
+      end
+      out.any = native and Audio.isSePlaying()
+        or not native and require("src.core.Sound").isSePlaying(f.data)
+        or false
+      return out
+    end,
     close = function()
       if off then
         off()
       end
       if native then
         Audio._ready, Audio._pack, Audio._mono = saved.ready, saved.pack, saved.mono
+        require("src.core.game3.mod_audio").data = saved.modData
         Audio._seRawClear()
       else
         require("src.core.Sound").invalidate()

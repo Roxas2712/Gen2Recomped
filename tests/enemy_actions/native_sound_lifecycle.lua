@@ -4,6 +4,12 @@ local M = {}
 function M.run(root, backend, version)
   local native = backend == "gen1"
   local f = dofile(root .. "/tests/enemy_actions/assist.lua").fixture(root, backend, version)
+  local runtime, savedSession
+  if native then
+    runtime = require("src.core.game3.runtime")
+    savedSession, runtime.session = runtime.session, { version = version }
+    assert(require("src.core.game3.profile").forSession(nil).id == version, "actual native audio profile")
+  end
   local hardware = dofile(root .. "/tests/native_sound/fixture.lua").install(root, native, f)
   local cases = {
     { name = "same-id-same-controls", steps = { { 141, -64 }, { 141, -64 } } },
@@ -19,6 +25,26 @@ function M.run(root, backend, version)
       name = "replace-after-clone",
       steps = { { 141, -64 }, { 141, -64, false, false, 2 }, { 164, 63, false, false, 2 } },
     },
+    { name = "stop-id", otherPlayer = 2, steps = { { 141, -64 }, { 164, 63 }, { op = "stop", id = 141 } } },
+    { name = "stop-all", otherPlayer = 2, steps = { { 141, -64 }, { 164, 63 }, { op = "stop" } } },
+    {
+      name = "stop-cloned-id",
+      steps = { { 141, -64 }, { 141, -64, false, false, 2 }, { op = "stop", id = 141 } },
+    },
+    { name = "special-player", otherPlayer = 3, steps = { { 164, 63 } } },
+    {
+      name = "retain-special-player",
+      otherPlayer = 3,
+      steps = { { 141, -64 }, { 164, 63 }, {
+        op = "stop",
+        id = 141,
+      } },
+    },
+    { name = "file-override", override = "file", steps = { { 141, -64 }, { 164, 63 } } },
+    { name = "string-override", override = "string", steps = { { 141, -64 }, { 164, 63 } } },
+    { name = "disabled-override", override = "disabled", steps = { { 141, -64 }, { 164, 63 } } },
+    { name = "native-then-playSe", steps = { { 141, -64 }, { 164, 63, false, false, false, true } } },
+    { name = "playSe-then-role", steps = { { 141, -64, false, false, false, true }, { 164, nil, false, true } } },
   }
   local rows = {}
   for _, case in ipairs(cases) do
@@ -26,7 +52,10 @@ function M.run(root, backend, version)
     hardware.player(141, 1)
     hardware.player(148, 1)
     hardware.player(164, case.otherPlayer or 1)
-    local states = {}
+    if case.override then
+      hardware.override(164, case.override)
+    end
+    local states, queries = {}, {}
     for tick, step in ipairs(case.steps) do
       if step[5] then
         hardware.player(step[1], step[5])
@@ -36,19 +65,31 @@ function M.run(root, backend, version)
       if step[4] then
         hardware.role(step[1], "OWNED_ROLE_" .. step[1])
       end
-      if native then
-        assert(require("src.core.game3.audio").playSe(step[1], { pan = step[2] }))
+      if step.op == "stop" then
+        if native then
+          require("src.core.game3.audio").stopSe(step.id)
+        else
+          require("src.core.Sound").stopSe(f.data, step.id)
+        end
+      elseif native then
+        require("src.core.game3.audio").playSe(step[1], { pan = step[2] })
       elseif step[4] then
         assert(require("src.core.Sound").play(f.data, "OWNED_ROLE_" .. step[1]))
+      elseif step[6] then
+        require("src.core.Sound").playSe(f.data, step[1], { pan = step[2], mono = step[3] or false })
       else
-        assert(require("src.core.Sound").playId(f.data, step[1], { pan = step[2], mono = step[3] or false }))
+        require("src.core.Sound").playId(f.data, step[1], { pan = step[2], mono = step[3] or false })
       end
       states[#states + 1] = hardware.active()
+      queries[#queries + 1] = hardware.queries()
     end
-    rows[#rows + 1] = { case = case.name, states = states, sounds = hardware.trace() }
+    rows[#rows + 1] = { case = case.name, states = states, sounds = hardware.trace(), queries = queries }
   end
   hardware.clear()
   hardware.close()
+  if native then
+    runtime.session = savedSession
+  end
   f.close()
   return rows
 end
