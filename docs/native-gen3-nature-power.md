@@ -37,6 +37,10 @@ Native command revision is 14; party codec remains 1. The independent unchanged
   read, RNG, damage, actor state and retired PP are compared without filtering.
 - Exact #248 production differs in **5,376** of the same rows. Both negative
   workers exit zero: these are behavioral differences, not fixture crashes.
+- A second **6,048-row** matrix runs the same authored API-3 mod on both engines.
+  It registers `PORTABLE_NATURE` with canonical effect `NATURE_POWER`, verifies
+  its public record round trip and retains the same full execution evidence.
+  Its direct regression passes **17,474** checks.
 - The direct engine suite passes **28,926** checks, including generation
   boundaries and event-visible child PP. Actual host/guest/spectator completes
   two native menu turns per profile with stateful held steering, **108** checks,
@@ -50,7 +54,7 @@ Native command revision is 14; party codec remains 1. The independent unchanged
 The fixture uses owned, controlled native-shaped child definitions to isolate
 caller behavior; it does not certify the complete cartridge child catalog.
 Full engine regression, other called-move contracts, final combined-fork gates,
-actual imported Nature Power scenarios and broader public-content integration
+actual imported Nature Power scenarios and broader public-content overrides
 remain pending. This checkpoint is not yet a published pull request or a new
 stable combined testing snapshot. No ROMs, caches, normal saves or mod assets
 are included.

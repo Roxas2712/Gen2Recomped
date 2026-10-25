@@ -13,9 +13,44 @@ local DEFS = {
   { 247, "SHADOW_BALL", 0, "NO_ADDITIONAL_EFFECT", 35, 0 },
   { 129, "SWIFT", 0, "NO_ADDITIONAL_EFFECT", 35, 8 },
 }
-function M.fixture(root, backend, version)
+function M.fixture(root, backend, version, options)
   local native = backend == "gen1"
-  local f = dofile(root .. "/tests/enemy_actions/post_hit_items.lua").fixture(root, backend, version)
+  options = options or {}
+  local f
+  if options.entry then
+    f = dofile(root .. "/tests/enemy_actions/choice_band.lua").fixture(
+      root,
+      backend,
+      version,
+      { entry = options.entry }
+    )
+    local field = f.field
+    f.field = function(double)
+      local b = field(double)
+      f.actor = function(id)
+        return f.at(b, id)
+      end
+      return b
+    end
+    f.put = f.hold
+  else
+    f = dofile(root .. "/tests/enemy_actions/post_hit_items.lua").fixture(root, backend, version)
+  end
+  f.game.save.options.ruleset = "gen3_emerald"
+  for _, item in ipairs({
+    { 187, "KINGS ROCK", 30, "FLINCH", 10 },
+    { 219, "SHELL BELL", 62, "SHELL_BELL", 8 },
+  }) do
+    local n, name, effect, kind, parameter = unpack(item)
+    if native then
+      f.data.gen3Items._byId[n] =
+        { name = name, pocket = "ITEMS", price = 100, holdEffect = effect, holdEffectParam = parameter }
+    else
+      local id = ("ITEM_%03d"):format(n)
+      f.data.items[id] =
+        { id = id, index = n, name = name, price = 100, holdEffect = kind, holdEffectParam = parameter }
+    end
+  end
   if native then
     f.data.gen3Items._byId[186] =
       { name = "CHOICE BAND", pocket = "ITEMS", price = 100, holdEffect = 29, holdEffectParam = 0 }
@@ -66,9 +101,39 @@ function M.fixture(root, backend, version)
   end
   return f
 end
-function M.run(root, backend, version)
+function M.run(root, backend, version, options)
+  options = options or {}
   local native = backend == "gen1"
-  local f = M.fixture(root, backend, version)
+  local f = M.fixture(root, backend, version, options)
+  local caller = native and 267 or "MOVE_267"
+  if options.public then
+    if native then
+      caller = assert(require("src.mods.Gen3Compat").moveId("PORTABLE_NATURE"))
+      local moves = require("src.core.game3.battle.moves")
+      moves._rom[caller] = assert(f.data.gen3Moves._rom[caller])
+      moves.BY_NUM[caller], moves._numByName.PORTABLE_NATURE = "PORTABLE_NATURE", caller
+    else
+      caller = "PORTABLE_NATURE"
+    end
+  end
+  local function history(value)
+    if not options.public or value == nil then
+      return value
+    end
+    if native then
+      return require("src.mods.Gen3Compat").moveName(value)
+    end
+    local row = f.data.moves[value]
+    if row then
+      return row.name
+    end
+    for _, def in pairs(f.data.moves) do
+      if type(def) == "table" and def.index == value then
+        return def.name
+      end
+    end
+    return value
+  end
   local rows = {}
   for _, double in ipairs({ false, true }) do
     for actor = 0, double and 3 or 1 do
@@ -94,11 +159,11 @@ function M.run(root, backend, version)
             local original
             if native then
               user.mon.moves, user.mon.pp, user.mon.maxPp =
-                { 267, 33 }, { kind == "zero_pp" and 0 or 10, 10 }, { 10, 10 }
+                { caller, 33 }, { kind == "zero_pp" and 0 or 10, 10 }, { 10, 10 }
               original = user.mon.pp
             else
               user.mon.moves =
-                { { id = "MOVE_267", pp = kind == "zero_pp" and 0 or 10 }, { id = "MOVE_033", pp = 10 } }
+                { { id = caller, pp = kind == "zero_pp" and 0 or 10 }, { id = "MOVE_033", pp = 10 } }
               user.curMoves = user.mon.moves
               original = user.curMoves[1]
             end
@@ -161,9 +226,9 @@ function M.run(root, backend, version)
                 end
                 if kind == "parent_replace" then
                   if native then
-                    user.mon.moves, user.mon.pp, user.mon.maxPp = { 33, 267 }, { 3, 8 }, { 10, 10 }
+                    user.mon.moves, user.mon.pp, user.mon.maxPp = { 33, caller }, { 3, 8 }, { 10, 10 }
                   else
-                    user.mon.moves = { { id = "MOVE_033", pp = 3 }, { id = "MOVE_267", pp = 8 } }
+                    user.mon.moves = { { id = "MOVE_033", pp = 3 }, { id = caller, pp = 8 } }
                     user.curMoves = user.mon.moves
                   end
                 end
@@ -176,9 +241,9 @@ function M.run(root, backend, version)
                   end
                 elseif kind == "parent_reorder" then
                   if native then
-                    user.mon.moves, user.mon.pp, user.mon.maxPp = { 33, 267 }, { 4, 10 }, { 10, 10 }
+                    user.mon.moves, user.mon.pp, user.mon.maxPp = { 33, caller }, { 4, 10 }, { 10, 10 }
                   else
-                    user.mon.moves = { { id = "MOVE_033", pp = 4 }, { id = "MOVE_267", pp = 10 } }
+                    user.mon.moves = { { id = "MOVE_033", pp = 4 }, { id = caller, pp = 10 } }
                     user.curMoves = user.mon.moves
                   end
                 end
@@ -222,7 +287,7 @@ function M.run(root, backend, version)
               require("src.core.game3.battle.engine").resolveMove(
                 actor,
                 targetId,
-                267,
+                caller,
                 1,
                 require("src.core.game3.battle.adapter").new(b),
                 b,
@@ -259,8 +324,8 @@ function M.run(root, backend, version)
                 pp = pps,
                 status = a.mon.status,
                 flinched = a.flinched or false,
-                lastMove = last,
-                choice = choice,
+                lastMove = history(last),
+                choice = history(choice),
               }
             end
             local oldPP = native and original[1] or original.pp
@@ -286,5 +351,17 @@ function M.run(root, backend, version)
   end
   f.close()
   return rows
+end
+function M.content(root, backend, version)
+  return M.run(root, backend, version, {
+    public = true,
+    entry = [=[return function(mod)
+    assert(mod.content.moves:register("PORTABLE_NATURE", {id="PORTABLE_NATURE",name="PORTABLE_NATURE",
+      type="NORMAL",power=0,accuracy=100,pp=10,effect="NATURE_POWER"}))
+    local move=assert(mod.content.moves:get("PORTABLE_NATURE"))
+    assert(move.effect=="NATURE_POWER" and move.pp==10 and move.type=="NORMAL" and move.power==0)
+    mod.exports.api=mod
+  end]=],
+  })
 end
 return M
