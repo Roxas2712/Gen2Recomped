@@ -70,7 +70,9 @@ all six other populated sections remain unchanged.
 
 Composed Focus Band acceptance with #182 is recorded in
 [the held-item contracts](beat-up-held-item-contracts.md). Joined
-multi-trainer/link parties, intro/tutorial controllers, animation fidelity and full gameplay
+side-party reads are now covered by
+[the native constructor/action contracts](native-gba-beat-up-side-parties.md).
+Full link/multi-owner controllers, intro/tutorial execution, animation fidelity and full gameplay
 are separate remaining acceptance surfaces. Synthetic imported-shaped rows
 and ordinary side parties are used here; a complete ROM playthrough or all
 held-item/controller parity is not claimed. Gen1 remains read-only and

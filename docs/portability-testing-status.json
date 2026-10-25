@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "4d169998e342794802c87b043796ed7c9dfa51e8",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/209",
-  "feature_ref": "03d68a41d2d25f3b51920655fa29c9602c3f11ca",
+  "runtime_ref": "f39cc19534737f8f3b764cdd1c1a1d993a96fd6e",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/210",
+  "feature_ref": "c2a1a032eab21646d025b8b9704b6553507e1a01",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 216,
-  "engine_suites_total": 216,
+  "engine_suites_passed": 217,
+  "engine_suites_total": 217,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 44,
-  "cross_engine_paired_observations": 4622,
+  "cross_engine_worker_runs": 48,
+  "cross_engine_paired_observations": 4766,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All six #209 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
+  "hosted_ci": "All six #210 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -1819,5 +1819,67 @@
     },
     "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
     "scope": "Test-only acceptance for #206 plus #182: physical/custom metadata, strict/zero chance, per-strike Focus Band RNG, nonlethal/Substitute/Endure, callback removal/equipping, subsequent move, public events/PP/counter memory. Full raw RNG trace, other scripted executors, joined multi-trainer/link, Ruby/Sapphire controllers and complete gameplay remain separate"
+  },
+  "native_gba_beat_up_side_parties": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/210",
+    "feature_ref": "c2a1a032eab21646d025b8b9704b6553507e1a01",
+    "prerequisite_pr": 209,
+    "prerequisite_ref": "03d68a41d2d25f3b51920655fa29c9602c3f11ca",
+    "combined_runtime_ref": "f39cc19534737f8f3b764cdd1c1a1d993a96fd6e",
+    "focused_checks_passed": 1728,
+    "source_reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_modified": false,
+    "games": [
+      "firered",
+      "emerald"
+    ],
+    "cases_per_position": 18,
+    "positions": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "constructors": "Gen1 State.new ownership halves; Gen2 newTrainer/setAlly/addOpponentTrainer/sendOutSecondPair with prebuilt members",
+    "cross_engine_worker_runs": 48,
+    "cross_engine_paired_observations": 4766,
+    "paired_result": "passed",
+    "combined_engine_suites_passed": 217,
+    "combined_engine_suites_total": 217,
+    "combined_failure_lines": 0,
+    "negative_control_failed_assertions": 58,
+    "feature_baseline": {
+      "engine_suites_passed": 91,
+      "engine_suites_total": 100,
+      "prerequisite_engine_suites_passed": 90,
+      "prerequisite_engine_suites_total": 99,
+      "failure_lines": 25,
+      "exact_failure_counter_matches_prerequisite": true,
+      "new_failure_lines": 0,
+      "existing_failure_suites": 9
+    },
+    "vm": {
+      "official_luajit_ref": "a4c064539ea931274d407e1249b4bb575424a0f4",
+      "version": "2.1.1792588164",
+      "jit_enabled": true
+    },
+    "fingerprint": {
+      "before": "d518411055f17444",
+      "after": "fdbfa30b20cbbaef",
+      "changed_record": "BEAT_UP_EFFECT.rev = 2",
+      "changed_section": "move_effects",
+      "section_before": "f45a80ce5e45ef42",
+      "section_after": "e4d28f474c15cd8b",
+      "other_six_populated_sections": "unchanged",
+      "revision_1_restores_prerequisite": true
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "workflow_count": 6,
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40145716820",
+      "jobs": 0
+    },
+    "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
+    "scope": "Native joined side-party reads with independent ownership benches; actual constructor/actions and synthetic prebuilt parties; scoped view/detached active mon seeded explicitly. Full raw RNG traces, arbitrary mid-move ownership reshaping, full link/multi-owner controllers, animations and complete gameplay remain separate"
   }
 }

@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206 and #209 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209 and #210 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,44 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`4d169998e342794802c87b043796ed7c9dfa51e8`. Its ROM-free run passed
-**216/216 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`f39cc19534737f8f3b764cdd1c1a1d993a96fd6e`. Its ROM-free run passed
+**217/217 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #210](https://github.com/UNDERdecoded/Gen2Recomped/pull/210) reads
+Beat Up participants across both native side parties in two-trainer and
+player/ally battles. A private live view preserves trainer-owned replacement
+benches, the battle-scoped player view, upcoming slot replacement and the
+current user's HP/status. Party-array references are captured for the move,
+matching the reference when whole fields are reassigned during a hit callback.
+
+The focused suite passes **1,728/1,728 checks**. Eighteen cases at all four
+positions on FireRed/Emerald use native constructors and actions, including
+status/egg/faint filtering, one or both owners blocked, accuracy-time
+eligibility, callback mutations, live/detached active battlers, Substitute,
+fainting, criticals and variation. The same API-3 consumer and shared fixture
+match clean read-only Gen1 in **48 isolated workers / 4,766 paired
+observations** on this clean combined runtime. The #209 negative control
+fails **58 assertions** in the new FireRed cases.
+
+Feature quick acceptance is **91/100** engine suites against **90/99** on
+clean #209. Exact Counters of the **25 inherited FAIL lines across nine
+suites** match, with no additions; SDK 3/3 and B30 pass. This combined branch
+includes the baseline repairs and passes **217/217**, SDK 3/3 and B30 with
+zero FAIL lines. Raising `BEAT_UP_EFFECT.rev` from 1 to 2 changes only the
+audited effect fingerprint section; all six other populated sections and
+their mutation checks remain unchanged.
+
+All six hosted #210 workflows await maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40145716820)
+has zero executed jobs. The app's 100-artifact cap prevents another PR card;
+the regular PR is published and linked. These constructor/action contracts
+use synthetic imported-shaped parties. Full link/multi-owner controllers,
+arbitrary mid-move ownership reshaping, graphical intros/animations and
+complete gameplay remain separate; see [scope](native-gba-beat-up-side-parties.md).
+
+Prior #209 results retain runtime
+`4d169998e342794802c87b043796ed7c9dfa51e8` and its 216/216 engine result:
 
 [PR #209](https://github.com/UNDERdecoded/Gen2Recomped/pull/209) adds
 cross-engine acceptance for the composition of Beat Up (#206) and native
