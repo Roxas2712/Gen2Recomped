@@ -12,6 +12,7 @@ GEN1_REF = "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91"
 
 
 MODES = [
+    (3, 'nature_power'),
     (3, 'post_hit_items_command'),
     (3, 'post_hit_items_execution'),
     (3, 'move_used_pp'),

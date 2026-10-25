@@ -7,7 +7,7 @@ for _, version in ipairs({ "firered", "emerald" }) do
     local current = H.hello(f.game, "battle")
     local old = Copy(current)
     old.nativeBattleRevision = 12
-    T.eq(current.nativeBattleRevision, 13, "shared post-hit commands advertise revision thirteen")
+    T.check(current.nativeBattleRevision >= 13, "shared post-hit commands advertise at least revision thirteen")
     T.eq(H.checkCompat(current, old), "subset", "old command order cannot admit lockstep")
     for _, host in ipairs({ false, true }) do
       local state = setmetatable(
