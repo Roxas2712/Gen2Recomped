@@ -1,4 +1,4 @@
--- Native status-animation controllers. Presentation never changes battle HP,
+-- Native battle-effect controllers. Presentation never changes battle HP,
 -- status, PP or RNG; the battle queue owns its lifetime and native frame clock.
 local M = {}
 local V = require("src.core.GameVersion")
@@ -17,9 +17,17 @@ function M.queue(battle, user, name)
   })
 end
 
-local function startFade(from, target)
+local function startFade(from, target, delay, color)
   -- The initialization callback performs the first background half-step.
-  return { y = from, target = target, toggle = 1, delay = 0, active = true }
+  return {
+    y = from,
+    target = target,
+    toggle = 1,
+    delay = 0,
+    active = true,
+    interval = delay or 2,
+    color = color or { 30 / 31, 0, 1 },
+  }
 end
 
 local function fade(state)
@@ -36,7 +44,7 @@ local function fade(state)
     return
   end
   if f.toggle == 0 then
-    if f.delay < 2 then
+    if f.delay < f.interval then
       f.delay = f.delay + 1
       return
     end
@@ -46,35 +54,102 @@ local function fade(state)
   end
   state.coeff = f.y / 16
   local k = state.coeff
-  state.color = k > 0 and { (30 / 31 * k) / k, 0, (1 * k) / k } or { 0, 0, 0 }
+  state.color = k > 0 and { (f.color[1] * k) / k, (f.color[2] * k) / k, (f.color[3] * k) / k } or { 0, 0, 0 }
   f.toggle = 0
   if f.y == f.target then
     f.finishing = 0
   else
-    f.y = f.y + (f.target > f.y and 2 or -2)
+    f.y = f.target > f.y and math.min(f.target, f.y + 2) or math.max(f.target, f.y - 2)
   end
 end
 
 function M.start(battle, row)
-  if not V.isGen3() or row.anim ~= "POISON" then
+  if not V.isGen3() or row.anim ~= "POISON" and row.anim ~= "FOCUS_BAND" then
     return false
   end
   local user = row.attackerPosition ~= nil and battle:battlerAt(row.attackerPosition)
     or (row.attackerIsPlayer and battle.player or battle.enemy)
-  if not user or not battle:animationsOn() or user.invulnerable or (user.substituteHP or 0) > 0 then
+  if not user then
+    return false
+  end
+  local focus = row.anim == "FOCUS_BAND"
+  local pause = focus and not battle:animationsOn()
+  local protected = focus and battle:substituteVisible(user) or not focus and (user.substituteHP or 0) > 0
+  if not pause and (not battle:animationsOn() or user.invulnerable or protected) then
     return false
   end
   battle._gbaEffectPresentation = {
     user = user,
+    kind = row.anim,
+    pause = pause and 32 or nil,
     frame = 0,
     x = 0,
     y = 0,
     coeff = 0,
     color = { 0, 0, 0 },
-    sound = V.get() == "firered" and 141 or 148,
-    soundLeft = 6,
+    sound = focus and (V.get() == "firered" and 164 or 171) or (V.get() == "firered" and 141 or 148),
+    soundLeft = focus and 1 or 6,
     soundWait = 0,
   }
+  return true
+end
+
+local function focusStep(state)
+  if state.frame == 1 then
+    state.fade = startFade(0, 9, 7, { 1, 0, 0 })
+    state.phase, state.remaining = "ramp", 30
+    state.jitterWait, state.jitterPeriod, state.jitter, state.amplitude = 0, 1, 0, 2
+    state.distance = 0
+  elseif state.phase == "ramp" or state.phase == "hold" then
+    fade(state)
+    state.jitterWait = state.jitterWait - 1
+    if state.jitterWait < 0 then
+      if state.jitter == 0 then
+        state.jitter, state.amplitude = state.amplitude, -state.amplitude
+      else
+        state.jitter = 0
+      end
+      state.jitterWait = state.jitterPeriod
+    end
+    if state.phase == "ramp" then
+      state.distance = state.distance + 128
+    end
+    state.x = state.jitter + (state.user.isPlayer and -1 or 1) * math.floor(state.distance / 256)
+    state.remaining = state.remaining - 1
+    if state.remaining == 0 then
+      if state.phase == "ramp" then
+        state.phase, state.remaining, state.jitterPeriod = "hold", 30, 0
+      else
+        state.phase = "second-fade"
+        state.fade = startFade(9, 0, 4, { 1, 0, 0 })
+      end
+    end
+  elseif state.phase == "second-fade" then
+    -- Sprite callbacks observe fade completion before that tick's tasks.
+    if not state.fade.active then
+      state.phase, state.delay = "delay", 6
+    else
+      fade(state)
+    end
+  elseif state.phase == "delay" then
+    if state.delay > 0 then
+      state.delay = state.delay - 1
+    elseif not state.waitReleased then
+      state.waitReleased = true
+    else
+      state.phase, state.remaining, state.origin = "return", 15, state.x
+      local velocity = -state.x * 256 / 15
+      state.velocity = velocity < 0 and math.ceil(velocity) or math.floor(velocity)
+      state.distance = 0
+    end
+  else
+    if state.remaining == 0 then
+      state.x = 0
+      return false
+    end
+    state.remaining, state.distance = state.remaining - 1, state.distance + state.velocity
+    state.x = state.origin + math.floor(state.distance / 256)
+  end
   return true
 end
 
@@ -84,6 +159,14 @@ function M.update(battle)
     return false
   end
   state.frame = state.frame + 1
+  if state.pause ~= nil then
+    if state.pause > 0 then
+      state.pause = state.pause - 1
+      return true
+    end
+    battle._gbaEffectPresentation = nil
+    return false
+  end
   -- The native sound task precedes shake and palette callbacks. Its
   -- thirteen-frame counter plays again on the following callback.
   if state.soundWait > 0 then
@@ -97,7 +180,13 @@ function M.update(battle)
     )
     state.soundLeft, state.soundWait = state.soundLeft - 1, 13
   end
-  if state.frame == 1 then
+  if state.kind == "FOCUS_BAND" then
+    if focusStep(state) then
+      return true
+    end
+    battle._gbaEffectPresentation = nil
+    return false
+  elseif state.frame == 1 then
     state.x, state.shakes, state.shakeWait = 1, 18, 1
     state.fade, state.cycles = startFade(0, 12), 1
   else

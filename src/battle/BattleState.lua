@@ -8595,6 +8595,7 @@ function BattleState:applyDamage(target, dmg, fromMove, adjustment)
     if prepared and adjustment.endured then
       self:sayNext(Strings("%s endured\nthe hit!", displayName(target)))
     elseif prepared and adjustment.hung then
+      require("src.battle.Gen3EffectPresentation").queue(self, target, "FOCUS_BAND")
       self:sayNext(Strings("%s hung on\nusing its FOCUS BAND!", displayName(target)))
     end
     return gba and absorbed or dmg
@@ -8624,6 +8625,7 @@ function BattleState:applyDamage(target, dmg, fromMove, adjustment)
   if endured then
     self:sayNext(Strings("%s endured\nthe hit!", displayName(target)))
   elseif band then
+    require("src.battle.Gen3EffectPresentation").queue(self, target, "FOCUS_BAND")
     self:sayNext(require("src.battle.Gen5HoldItems").hungOnLine(self, target)
                  or Strings("%s hung on\nusing its FOCUS BAND!", displayName(target)))
   end
