@@ -103,9 +103,16 @@ end
 -- mods is id -> status manifest; enabledSet is the current desired set.
 -- Module-level so tests table-drive it without a game.
 
-function ManagerState.resolveToggle(mods, id, want, enabledSet)
+function ManagerState.resolveToggle(mods, id, want, enabledSet, version)
   local r = { apply = {}, alsoEnable = {}, alsoDisable = {},
               conflicts = {}, missing = {}, badVersion = {} }
+  local function specs(manifest, field)
+    local out = {}
+    for _, spec in ipairs(manifest and manifest[field] or {}) do
+      if ModTargets.specApplies(spec, version) then out[#out + 1] = spec end
+    end
+    return out
+  end
   local function enabledAfter(mid)
     if r.apply[mid] ~= nil then return r.apply[mid] end
     return enabledSet[mid] and true or false
@@ -120,7 +127,7 @@ function ManagerState.resolveToggle(mods, id, want, enabledSet)
       r.badVersion[#r.badVersion + 1] =
         { id = mid, need = m.game_version, got = Version.engine, engine = true }
     end
-    for _, spec in ipairs(m.dependencySpecs or {}) do
+    for _, spec in ipairs(specs(m, "dependencySpecs")) do
       local dep = mods[spec.id]
       if not dep then
         r.missing[#r.missing + 1] = spec.id
@@ -139,7 +146,7 @@ function ManagerState.resolveToggle(mods, id, want, enabledSet)
     -- reverse hard deps: whoever needs mid has to switch off with it
     for otherId, other in pairs(mods) do
       if enabledAfter(otherId) then
-        for _, spec in ipairs(other.dependencySpecs or {}) do
+        for _, spec in ipairs(specs(other, "dependencySpecs")) do
           if spec.id == mid then
             disableWalk(otherId, false)
             break
@@ -153,7 +160,7 @@ function ManagerState.resolveToggle(mods, id, want, enabledSet)
     -- a conflict blocks whichever side declared it
     for mid in pairs(r.apply) do
       local m = mods[mid]
-      for _, spec in ipairs((m and m.conflictSpecs) or {}) do
+      for _, spec in ipairs(specs(m, "conflictSpecs")) do
         local other = mods[spec.id]
         if other and spec.id ~= mid and enabledAfter(spec.id)
             and (not spec.range or Semver.satisfies(other.version, spec.range)) then
@@ -162,7 +169,7 @@ function ManagerState.resolveToggle(mods, id, want, enabledSet)
       end
       for otherId, other in pairs(mods) do
         if otherId ~= mid and enabledAfter(otherId) then
-          for _, spec in ipairs(other.conflictSpecs or {}) do
+          for _, spec in ipairs(specs(other, "conflictSpecs")) do
             if spec.id == mid and (not spec.range
                 or not m or Semver.satisfies(m.version, spec.range)) then
               r.conflicts[#r.conflicts + 1] = otherId
@@ -863,7 +870,7 @@ function ManagerState:beginToggle(m)
     r = loader:resolveToggle(m.id, want, self:enabledSet())
   else
     r = ManagerState.resolveToggle(self:manifestMap(), m.id, want,
-                                   self:enabledSet())
+                                   self:enabledSet(), GameVersion.get())
   end
   local function proceed()
     if #r.missing > 0 or #r.conflicts > 0 or #r.badVersion > 0 then
@@ -958,7 +965,7 @@ function ManagerState:applyProfile(p)
     local want = p.enabled[m.id] ~= false
     local cur = set[m.id] and true or false
     if cur ~= want then
-      local r = ManagerState.resolveToggle(mods, m.id, want, set)
+      local r = ManagerState.resolveToggle(mods, m.id, want, set, GameVersion.get())
       if #r.missing > 0 or #r.conflicts > 0 or #r.badVersion > 0 then
         self:openBlocked(r)
         return
