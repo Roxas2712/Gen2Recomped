@@ -40,5 +40,11 @@ are tested separately; this branch does not invent a public flag-writing API.
 
 Raw successes, negative controls, fixture corrections and failed expanded
 comparisons are kept in the ignored local `tmp/mirror-move-qa/` directory.
-The fresh #258 baseline remains 157/166 engine suites with the same nine inherited
-failing suites; this branch has not yet completed its full regression gate.
+The fresh #258 baseline remains 157/166 engine suites with nine inherited
+failing suites. The first full run at `a3a80a19` exposed a stale held-item
+fixture: it seeded the opponent's selected move instead of the user's received
+history. Commit `2f6ae788` corrects only that input mapping, retaining all
+expected item reads. Its new full run passes 157/166 suites, SDK 3/3 and B30;
+the exact anchored FAIL-line Counter equals the fresh #258 baseline (25 lines,
+no additions or removals). Strict native held scheduling also passes all four
+API formats. Presentation and the other acceptance gates above remain open.
