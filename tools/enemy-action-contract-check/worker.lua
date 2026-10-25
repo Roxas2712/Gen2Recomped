@@ -2,7 +2,9 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "choice_band_baton" then
+if mode == "choice_band_call_failure" then
+  rows = dofile(root .. "/tests/enemy_actions/choice_call_failure.lua").run(root, backend, version)
+elseif mode == "choice_band_baton" then
   rows = dofile(root .. "/tests/enemy_actions/baton_pass.lua").run(root, backend, version, { choiceBand = true })
 elseif mode == "choice_band_content" then
   rows = dofile(root .. "/tests/enemy_actions/choice_content.lua").run(root, backend, version)

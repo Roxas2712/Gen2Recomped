@@ -97,6 +97,23 @@ explicitly use GBA rules and constructed parties/public menus, without a
 normal SAVE, ROM/data distribution, graphics or playthrough certification.
 Final clean full/matrix repetitions remain pending.
 
+Clean feature `9329838e` passes 142/151 engine suites, SDK 3/3 and B30, with
+the exact same 25 inherited FAIL lines as unchanged #230. Its full native
+matrix and both imported modes pass. The first combined candidate retains an
+additional #162 explicit-unlimited-enemy-PP regression (260/261); native
+finite-PP selection/planning now preserves that explicit non-link exception.
+The API-3 positional action remains separate while API-1/2 native slot handles
+retain their identity. Focused tests also verify the private target reaches
+the actual right-hand opponent and learned move records remain unchanged.
+
+A new actual failed Mirror Move comparison records every held read and all
+RNG/events/HP/PP for 24 rows over both profiles. The unmodified reference
+returns before move-end; the initial host incorrectly bound Mirror Move and
+ran extra item commands. The corrected default-caller failure retains only
+its separate after-action sweep. The raw failing host observation and source
+reference are retained. This does not certify successful Mirror Move target /
+history selection or Metronome catalog/RNG parity.
+
 ## Required validation before a PR
 
 - Execute `tests/engine/gen3_choice_band.lua` and compare the same complete
