@@ -157,8 +157,11 @@ say "staged $manifests ROM manifest(s)"
 # release builds write it with scripts/write_cloud_clients.sh).
 [ -f "$ROOT/cloud_clients.lua" ] && cp "$ROOT/cloud_clients.lua" "$STAGE/"
 
-for licence in LICENSE LICENSE.MD LICENSE.md LICENSE-ROXAS2712.md NOTICE.md; do
+for licence in LICENSE LICENSE.MD LICENSE.md; do
   [ -f "$ROOT/$licence" ] && cp "$ROOT/$licence" "$STAGE/" && break
+done
+for notice in LICENSE-ROXAS2712.md NOTICE.md; do
+  if [ -f "$ROOT/$notice" ]; then cp "$ROOT/$notice" "$STAGE/"; fi
 done
 
 # ---------------------------------------------------------------- excludes
