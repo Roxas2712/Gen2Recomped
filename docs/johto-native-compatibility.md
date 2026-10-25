@@ -9,15 +9,18 @@ local WIP branch, outside this active worktree's changes. Gen1 installations
 and player profiles remain outside the test scope.
 
 A direct read-only compiler probe of the supplied Ver.1.8 package confirms
-that both original `VoxelScene` modules compile under the local LuaJIT.
+that both original `VoxelScene` modules compile under the local LuaJIT and
+the unchanged bundled LÖVE12 runtime.
 Calling the supplied Gen2 structural patch generator on its unchanged Gen2
 scene fails compilation: the function starting at generated line 2862 exceeds
 60 upvalues at generated line 3273. The probe intercepts compilation before
 module execution and does not load the engine or alter mod source. This
 establishes that the engine loader does not introduce that compiler failure;
-it does not establish a runtime fix or full renderer acceptance.
+the same error is reproduced in the bundled runtime without a window. Its
+executable and Lua framework match the distributed archive. This does not
+establish a runtime fix or full renderer acceptance.
 
-The next native movement change supplies the four missing terrain queries
+The native movement foundation now supplies the four missing terrain queries
 behind the existing `src.world.gen2.Permissions` alias. See the
 [contract and test scope](native-gen2-movement-permissions.md). Crystal's
 complete valid-byte/directional comparison agrees with the separate public
@@ -43,6 +46,7 @@ ROMs or player saves are included in this repository or its releases.
 | Public palette row metadata | 19 checks; Crystal GPU window changes from grayscale fallback to colored terrain/buildings | [#202](https://github.com/UNDERdecoded/Gen2Recomped/pull/202) |
 | Native map generation/outdoor and phone-service metadata | 256 map and 3,127 phone-service checks; full native Crystal reimport retains all 388 headers including 99 no-service maps | [#205](https://github.com/UNDERdecoded/Gen2Recomped/pull/205) |
 | Gen2 collision classes and bounded terrain queries | 525 independent checks; all sampled live cells agree with the native mover in both camera modes on OpenGL/Metal | [#207](https://github.com/UNDERdecoded/Gen2Recomped/pull/207) |
+| Native Gen2 directional and special-terrain queries | 264,000 checks independently and in the fork; complete Crystal byte/directional dump matches the pinned public Gen1 reference; continuous controls remain unactivated | [#235](https://github.com/UNDERdecoded/Gen2Recomped/pull/235) |
 | Public tileset constant names | 129 independent checks; actual Mart/Center geometry, native grid steps and menus on both backends | [#208](https://github.com/UNDERdecoded/Gen2Recomped/pull/208) |
 | Verified native map-source joins | 105 independent checks; encounter, music, scene storage, trainer continuations and deferred scenes follow declared aliases with exact authored overrides | [#211](https://github.com/UNDERdecoded/Gen2Recomped/pull/211) |
 | Public environment names and native byte readers | 1,221 independent checks; native bicycle, Dig, spawn and VM policies; all 388 original Crystal map headers retain their grid and event tables | [#213](https://github.com/UNDERdecoded/Gen2Recomped/pull/213), action follow-up in [#94](https://github.com/UNDERdecoded/Gen2Recomped/pull/94) |

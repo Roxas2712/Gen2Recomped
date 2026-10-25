@@ -43,6 +43,25 @@
       "lib/VoxelScene.lua": "c1c412ed61e91d4d89aac7798d9555dd37329c75db63199745316649051753ee",
       "gen2/lib/VoxelScene.lua": "13735cfbd346b0758ed666bb1948a4ab574b9972784ef40f508ea49af7d5f47d",
       "gen2/lib/VoxelScenePatch.lua": "6348fda7e928e10936c53c5581c76ec26e5f10a12d1488056a6bee5ea03e732d"
+    },
+    "bundledRuntime": {
+      "loveVersion": "12.0.0",
+      "luaVersion": "LuaJIT 2.1.1781602682",
+      "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+      "windowCreated": false,
+      "originalScenesCompile": true,
+      "generatedSceneCompiles": false,
+      "matchesDistributedRuntimeFiles": [
+        {
+          "file": "Contents/MacOS/love",
+          "sha256": "cb136e72f2f2639f889245c0a6fca355178da71f05e460a9f3d01d0fafcc1b0b"
+        },
+        {
+          "file": "Contents/Frameworks/Lua.framework/Versions/A/Lua",
+          "sha256": "d99eed38c9752775028ed88b7b23285cd3b1abea4154a41b06fb2ace9c0a3edc"
+        }
+      ],
+      "logSha256": "dfce96e13426b2c3e2538777d8e3b781e40cfd60ee3ccba9a8b214ca92bd5b94"
     }
   },
   "notAccepted": [
