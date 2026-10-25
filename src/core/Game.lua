@@ -321,11 +321,19 @@ end
 function Game:makeTitleState()
   local factory = Screens.get(self, bootScreens(self).title or "TitleState")
   local title = factory.new(self, {
-    onNewGame = function() return self:newGame() end,
+    onNewGame = function()
+      local facade=package.loaded['src.core.Game3']
+      local run=function()return self:newGame()end
+      if facade and facade._bootAction then return facade._bootAction(self,{action='new_game'},run)end
+      return run()
+    end,
     onContinue = function()
       local loaded, recovered = SaveData.load()
       if loaded then
-        self:continueGame(loaded, recovered)
+        local facade=package.loaded['src.core.Game3']
+        local run=function()return self:continueGame(loaded,recovered)end
+        if facade and facade._bootAction then return facade._bootAction(self,{action='continue'},run)end
+        return run()
       end
     end,
   })
@@ -399,6 +407,11 @@ function Game:_step(dt)
   end
   -- AN EMPTY STACK IS NOT A GAME.
   if self:ensureStack() then return end
+  -- Source callbacks observe this native phase, after input promotion and
+  -- stack recovery. A wrapped runtime may hold it; no second loop is run.
+  local compatibility = package.loaded['src.core.game3.runtime']
+  if compatibility and compatibility._fixedBoundary
+      and compatibility._fixedBoundary(self, dt) == false then return end
   local closeStep = FrameProfile.section("  logic: stack:update")
   self.stack:update(dt)
   closeStep()
@@ -711,7 +724,8 @@ function Game:update(dt)
   -- assumed.
   if collectgarbage then
     local close = FrameProfile.section("  update: gc step")
-    collectgarbage("step", 1)
+    local facade=package.loaded['src.core.Game3']
+    if not(facade and facade._stepGC and facade._stepGC(self))then collectgarbage("step", 1)end
     close()
   end
 end
@@ -2201,6 +2215,23 @@ function Game:restoreSave(loaded, recovered)
   if ModRuntime.wants("save.loaded") then
     ModRuntime.emit("save.loaded",
       { save = loaded, meta = loaded.meta, modsDiff = modsDiff })
+  end
+end
+
+-- Require nothing on an ordinary boot. Source Game3 wrappers receive their
+-- distinct facade while the captured native method retains its own owner.
+for _, name in ipairs({ 'update', 'draw', '_step', 'keypressed', 'keyreleased',
+    'textinput', 'wheelmoved', 'touchpressed', 'touchmoved', 'touchreleased',
+    'gamepadpressed', 'gamepadreleased', 'gamepadaxis', 'joystickpressed',
+    'joystickreleased', 'joystickaxis', 'joystickhat', 'joystickremoved',
+    'focus', 'visible', 'returnToTitle', 'returnToLauncher', 'restartWithMods',
+    'writeOptions', 'applyOptions', 'writeSave', '_resolveLogicSpeed',
+    'logicSpeed', 'speedLocked', 'zoomStep' }) do
+  local key, native = name, Game[name]
+  Game[key] = function(self, ...)
+    local facade = package.loaded['src.core.Game3']
+    if facade and facade._dispatch then return facade._dispatch(key, self, native, ...) end
+    return native(self, ...)
   end
 end
 

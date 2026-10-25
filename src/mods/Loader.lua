@@ -1322,6 +1322,8 @@ end
 -- migration it took goes with them.  The journal only exists around an
 -- entry chunk; a later failure (script validation) purges every registry.
 function Loader:_rollback(modId)
+  local facade=package.loaded['src.core.Game3']
+  if facade and facade._retireMod then facade._retireMod(modId)end
   Net.releaseAll(self, modId)
   self.inputControl:retire(modId)
   Api3WildBattle.cancelAll(self, modId)
@@ -1445,11 +1447,18 @@ end
 -- Retire them after wrapper unwind on reload/exit, without loading Game or
 -- any compatibility module on an ordinary native boot.
 local function retireCompatibilityMaps()
-  for _, name in ipairs({"src.core.game3.map", "src.core.game3.player", "src.core.game3.collision",
+  for _, name in ipairs({"src.core.game3.runtime", "src.core.Game3",
+      "src.core.game3.map", "src.core.game3.player", "src.core.game3.collision",
       "src.core.game3.warm", "src.core.game3.asset_stream", "src.core.game3.tileset_native", "src.core.game3.tileset_anim"}) do
     local module = package.loaded[name]
     if type(module) == "table" and type(module.release) == "function" then module.release() end
   end
+end
+
+local function notifyCompatibilityReset()
+  local facade=package.loaded['src.core.Game3']
+  local game=package.loaded['src.core.Game']
+  if facade and facade._notifyReset and game then facade._notifyReset(game)end
 end
 
 function Loader:load(data)
@@ -1465,6 +1474,7 @@ function Loader:load(data)
   -- LOAD'S MODS.  EXIT GAME -> launcher -> Play runs every mod's main.lua
   -- again (and the launcher backdrop boots the plain game in between); the
   -- wraps and flags the previous load put on engine tables come off first.
+  notifyCompatibilityReset()
   ModSeams.unwindAll()
   retireCompatibilityMaps()
   self.baseData = data
@@ -1826,6 +1836,7 @@ function Loader.teardown()
   Api3NPC.cancelAll()
   Api3Warp.cancelAll()
   PortableScripts.cancelAll(nil, nil, "mods unloaded")
+  notifyCompatibilityReset()
   local undone = select(1, ModSeams.unwindAll())
   retireCompatibilityMaps()
   pcall(function()
