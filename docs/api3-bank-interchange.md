@@ -1,11 +1,16 @@
 # Bank interchange and account-shared Lua storage
 
-RetroRecomped API 3 adds two versioned interfaces: `mod.storage:shared(game)`
-for a mod's data across games, and `mod.bank` for explicit Bank-copy exchange.
+RetroRecomped adds two versioned interfaces: API 3's `mod.storage:shared(game)`
+for a mod's data across games, and `mod.bank` on API 2 and 3 for explicit Bank-copy exchange.
 Normal per-playthrough `mod.storage` remains available. Both new persistent
 interfaces require a linked account with a confirmed email. Existing verified
 local profiles work offline. A handle remains bound to the account that opened
 it and refuses access after the active account changes.
+
+API-2 mods such as KASC can use the Bank facade without changing their native
+callbacks or content format. Their existing installation/cache storage keeps
+its legacy contract; the new `storage:shared(game)` extension is API 3 only.
+Exposing interchange does not activate the complete KASC gameplay/PC bridge.
 
 ## Shared storage v1
 

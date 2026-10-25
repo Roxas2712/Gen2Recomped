@@ -5,6 +5,8 @@ local S=require('src.core.SaveSerializer')
 local L=require('src.storage.LuaData')
 local B=require('src.storage.PokemonBank')
 local Games=require('src.core.GameVersion')
+local methods={inspect=true,deposit=true,previewLegacy=true,importLegacy=true,export=true,formats=true}
+function I.supports(name) return methods[name]==true end
 local function hash(value) return love.data.encode('string','hex',love.data.hash('sha256',value)) end
 local function clone(v) return S.decode(S.encode(v)) end
 local function identifier(v) return type(v)=='string' and #v>0 and #v<=160 end

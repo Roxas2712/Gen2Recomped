@@ -37,7 +37,6 @@ local function block(gen)
 end
 function A.install(api, loader, readContext, overviewContext, engineRequire, engineCall)
   local storage = require("src.mods.PlaythroughStorage").new(api.id, loader.fs)
-  api.bank=require('src.storage.BankInterop').facade(api.id,api.version)
   api.storage = {}
   for _, method in ipairs({ "context", "selected", "read", "write", "readBytes", "writeBytes", "list", "delete", "shared" }) do
     local name = method
@@ -211,7 +210,6 @@ function A.install(api, loader, readContext, overviewContext, engineRequire, eng
   local supports = api.supports
   function api:supports(surface, name)
     if surface=='storage' and name=='shared' then return true end
-    if surface=='bank' and ({inspect=true,deposit=true,previewLegacy=true,importLegacy=true,export=true,formats=true})[name] then return true end
     if surface == "world" then
       if name == "liveMaps" and gen >= 1 and gen <= 5 then return true end
       if supportedGeneration and SUPPORTED[name] then
