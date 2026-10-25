@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "a238391bfed65ac554260eb61d64acf95182f598",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/214",
-  "feature_ref": "440a5da635dc9737875c38e4ac324ce2343a23ee",
+  "runtime_ref": "4a2f0d15de9820e897f6dfe895e204b3737a15d6",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/215",
+  "feature_ref": "a6205dfce1b6d091e758238447db3b25462367f4",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 219,
-  "engine_suites_total": 219,
+  "engine_suites_passed": 222,
+  "engine_suites_total": 222,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 56,
-  "cross_engine_paired_observations": 5574,
+  "cross_engine_worker_runs": 72,
+  "cross_engine_paired_observations": 48524,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All seven #214 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
+  "hosted_ci": "All seven #215 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -2030,6 +2030,138 @@
       "tmp/constrained-party-full-accepted.log",
       "tmp/constrained-party-contracts.json",
       "tmp/constrained-party-import-smoke.json"
+    ]
+  },
+  "native_gba_hit_commands": {
+    "feature_pr": 215,
+    "feature_ref": "a6205dfce1b6d091e758238447db3b25462367f4",
+    "combined_runtime_ref": "4a2f0d15de9820e897f6dfe895e204b3737a15d6",
+    "prerequisites": [
+      214,
+      212,
+      169
+    ],
+    "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_unchanged": true,
+    "focused_checks": {
+      "accuracy": 15082,
+      "secondary": 53598,
+      "protocol": 156,
+      "total": 68836
+    },
+    "shared_worker_runs": 72,
+    "shared_paired_observations": 48524,
+    "all_observations_equal": true,
+    "feature_engine_suites_passed": 98,
+    "feature_engine_suites_total": 107,
+    "baseline_ref": "440a5da635dc9737875c38e4ac324ce2343a23ee",
+    "baseline_engine_suites_passed": 95,
+    "baseline_engine_suites_total": 104,
+    "inherited_fail_lines": 25,
+    "inherited_failing_suites": 9,
+    "exact_failure_counter_equal": true,
+    "negative_control": {
+      "ref": "184fdaaaf10db458065533d30522bdef34ec7377",
+      "differing_thunder_execution_observations": 56,
+      "failing_reports_retained": true
+    },
+    "native_command_revision": 1,
+    "native_move_fields": [
+      "index",
+      "gen3Effect",
+      "secondaryChance",
+      "target",
+      "flags",
+      "protectAffected"
+    ],
+    "raw_fixture_legacy_fingerprint": "e33d251961f2a41d",
+    "raw_fixture_native_fingerprint": "3a76cc5fce47a5c3",
+    "combined_non_gba_fingerprint": "a000e3862d11a73a",
+    "goldens_reblessed": false,
+    "synthetic_complete_link_mirrors": 2,
+    "link_scope": "Current native runtime/marker agreement and older-peer refusal; not full cartridge party genetics certification",
+    "imported_cache_smoke": {
+      "runtime": "4a2f0d15de9820e897f6dfe895e204b3737a15d6",
+      "profiles": [
+        {
+          "version": "firered",
+          "chance": 30,
+          "passed": true,
+          "hp": 962,
+          "draws": [
+            [
+              0,
+              65535
+            ],
+            [
+              1,
+              100
+            ],
+            [
+              85,
+              100
+            ],
+            [
+              0,
+              99
+            ]
+          ],
+          "moveIndex": 87,
+          "event": "PAR",
+          "effect": 152
+        },
+        {
+          "version": "emerald",
+          "chance": 30,
+          "passed": true,
+          "hp": 966,
+          "draws": [
+            [
+              0,
+              65535
+            ],
+            [
+              1,
+              100
+            ],
+            [
+              85,
+              100
+            ],
+            [
+              0,
+              99
+            ]
+          ],
+          "moveIndex": 87,
+          "event": "PAR",
+          "effect": 152
+        }
+      ],
+      "scope": "CPU-only actual imported Thunder through public enemy-action and status event; controlled HP; no rendering/full playthrough"
+    },
+    "combined_engine_suites_passed": 222,
+    "combined_engine_suites_total": 222,
+    "sdk_suites": "3/3",
+    "b30": "passed",
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "workflow_runs": 7,
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40154632317",
+      "jobs": 0
+    },
+    "chat_attachment": "attempted; thread attachment identity count exceeds 100",
+    "remaining_scope": [
+      "Full native cartridge party genetics transport",
+      "Timed Lock-On and side/volatile state producers",
+      "Whole-game RNG and VBlank scheduling",
+      "Demo midpoint RNG and controller playback",
+      "Live UI and full playthrough acceptance"
+    ],
+    "proof": [
+      "tmp/native-hit-full-accepted.log",
+      "tmp/native-hit-contracts.json",
+      "tmp/native-hit-import-smoke.log"
     ]
   }
 }

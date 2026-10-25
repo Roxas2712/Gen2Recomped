@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212 and #214 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214 and #215 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,49 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`a238391bfed65ac554260eb61d64acf95182f598`. Its ROM-free run passed
-**219/219 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`4a2f0d15de9820e897f6dfe895e204b3737a15d6`. Its ROM-free run passed
+**222/222 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #215](https://github.com/UNDERdecoded/Gen2Recomped/pull/215) aligns native
+GBA accuracy and ordinary post-hit chances. The percentage command now shares
+native stage/ability/item arithmetic, all-slot weather suppression, Protect and
+semi-invulnerability guards, guaranteed-hit cases, absorption and the public
+`battle.accuracy` context. Secondary effects retain the native inclusive chance
+boundary, including explicit zero, Serene Grace and draw-before-protection
+ordering. Authored effect handlers keep their policies. Real special Fire hits
+thaw after secondary processing; Substitute hits do not. Strong poison retains
+its native marker through public API-3 views/edits, saves and party transport;
+callback edits update the owning counter transactionally.
+
+The clean feature `a6205dfce1b6d091e758238447db3b25462367f4` passes **68,836
+focused checks** (15,082 accuracy, 53,598 secondary, 156 protocol). Its full run
+passes 98/107 engine suites, SDK 3/3 and B30. The exact Counter of all 25 inherited
+FAIL lines across nine suites matches clean #214 (95/104). Their separate fixes
+remain green in the combined runtime above. Both clean feature and combined
+runtime match the unchanged source in **72 workers / 48,524 paired observations**.
+The checker retains every bounded RNG call/value, callback context, PP, HP,
+stage and status event. Clean pre-secondary `184fdaaa` retains 56 differing
+Thunder execution observations as the negative control; no failures are hidden.
+
+Native GBA command revision 1 and six native move fields enter link hashes;
+runtime-aware cache keys prevent stale cross-game reuse. The audited raw fixture
+changes from `e33d251961f2a41d` to `3a76cc5fce47a5c3`. Non-GBA fingerprints,
+including the combined red golden `a000e3862d11a73a`, stay unchanged. Actual
+handshake/controller tests stop older peers before battle. Two complete seeded
+synthetic link mirrors retain matching turn hashes/components and toxic markers.
+A CPU-only smoke also runs actual imported Thunder through public enemy-action
+and status-event paths in FireRed/Emerald. No imported assets/data are published.
+
+All seven hosted #215 workflows await maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40154632317)
+has zero jobs. The chat's 100-artifact limit prevents another attachment; the
+regular PR is published and linked. Evidence is retained in
+`tmp/native-hit-full-accepted.log`, `tmp/native-hit-contracts.json` and
+`tmp/native-hit-import-smoke.log`. Complete cartridge genetics transport,
+timed Lock-On/side/volatile producers, global RNG/VBlank scheduling and demo
+controller playback remain separate. This does not certify live rendering or
+whole-game acceptance. See [the scoped contract](native-gen3-hit-commands.md).
 
 [PR #214](https://github.com/UNDERdecoded/Gen2Recomped/pull/214) replaces
 midpoint/random-mon construction for native Gen-3 demo presets with a private
