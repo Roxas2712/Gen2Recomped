@@ -126,8 +126,9 @@ process. The shared harness constructs native-shaped synthetic datasets;
 the mod fixtures contain no engine imports or engine-specific branches.
 The runner also generates an API-3 mod through the real scaffold CLI and
 loads those same generated files on both engines for each version. This adds
-eight comparisons to the sixteen normal/rollback cases: 24 comparisons and
-48 isolated loader runs. It compares JSON projections of public results and
+eight comparisons to the sixteen normal/rollback cases. This native-command
+stack also includes eight effect cases: 32 configured comparisons and 64
+isolated loader runs. It compares JSON projections of public results and
 records hashes of both shared and generated fixture files. It refuses a different or modified reference.
 
 Coverage includes canonical content reads/writes/iteration and native merge
