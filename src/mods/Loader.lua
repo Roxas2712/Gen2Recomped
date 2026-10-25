@@ -557,6 +557,14 @@ function Loader:_validate()
         local first = missing[1]
         self:_fail(mod,"missing_imports",("required import not ready: %s (%s)")
           :format(first.entry.name,tostring(first.reason or first.entry.file)))
+      else
+        local assets = require("src.mods.AssetPacks").missing(manifest, self.fs)
+        if assets then
+          mod.missingAssets = assets
+          local first = assets[1]
+          self:_fail(mod, "missing_assets", ("required asset pack not ready: %s/%s (%s)")
+            :format(first.importer, first.pack, tostring(first.reason)))
+        end
       end
     end
   end
@@ -1227,6 +1235,7 @@ function Loader:_api(mod)
       end
       return data
     end)
+  api.packs = require("src.mods.AssetPacks").new(mod.manifest, loader.fs)
   -- Capture the host selected for this API, as with generation/gameVersion.
   -- Probing must not instantiate mod.world/mod.game or register callbacks.
   function api:supports(surface, name)
@@ -1828,6 +1837,8 @@ function Loader:status()
     manifest.skipReason = mod.skipReason
     manifest.waitingImports = mod.state == "missing_imports"
     manifest.missingImports = mod.missingImports
+    manifest.waitingAssets = mod.state == "missing_assets"
+    manifest.missingAssets = mod.missingAssets
     manifest.forcedGame = mod.forcedGame
     available[#available + 1] = manifest
     if manifest.state == "loaded" then loaded[#loaded + 1] = manifest end
