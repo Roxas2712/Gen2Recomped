@@ -255,6 +255,7 @@ function LinkBattle.new(game, net, opts)
                                          or "RATTATA", 5)
   self.kind = "link"
   self.linkRole = role
+  if require("src.core.GameVersion").isGen3() then self._gbaInitialItemEntries = {} end
   self.net = net
   -- BattleState:update only runs while it's the top of the state
   -- stack, but the player can push PartyMenu/ChoiceBox/NamingScreen on
@@ -438,7 +439,15 @@ function LinkBattle.new(game, net, opts)
       local selectedMine,selectedTheirs=myAction,theirAction
       if require("src.core.GameVersion").isGen3() then
         local Choice=require("src.battle.Gen3ChoiceBand")
-        myAction,theirAction=Choice.plan(s,s.player,myAction),Choice.plan(s,s.enemy,theirAction)
+        -- Held hooks can be stateful. Both simulations query the canonical
+        -- host actor first, as the spectator does, regardless of local side.
+        if role == "host" then
+          myAction = Choice.plan(s,s.player,myAction)
+          theirAction = Choice.plan(s,s.enemy,theirAction)
+        else
+          theirAction = Choice.plan(s,s.enemy,theirAction)
+          myAction = Choice.plan(s,s.player,myAction)
+        end
         local Rage=require("src.battle.Gen3Rage")
         Rage.selected(s,s.player,myAction);Rage.selected(s,s.enemy,theirAction)
       end
@@ -745,6 +754,7 @@ function LinkBattle.newSpectator(game, net, opts)
   local self = BattleState.newWild(game, guestParty[1] and guestParty[1].species
                                          or "RATTATA", 5)
   self.kind = "link" -- exact same visual treatment as a real link battle
+  if require("src.core.GameVersion").isGen3() then self._gbaInitialItemEntries = {} end
   self.spectating = true -- Tournament.lua's marker: don't report a result for this one
   self.net = net
   game.linkNet = net

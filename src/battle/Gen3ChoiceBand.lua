@@ -81,16 +81,17 @@ function C.plan(battle, user, action)
   if not V.isGen3() then
     return action
   end
-  action = require("src.battle.Gen3Encore").plan(user, action)
-  if
-    not (user and action)
-    or action.special
-    or action.kind and action.kind ~= "move"
-    or user.charging
-    or user.thrashTurns and user.thrashTurns > 0
+  if not (user and action) or action.special or action.kind and action.kind ~= "move" then
+    return action
+  end
+  local locked = user.charging
+    or user.thrashTurns and user.thrashTurns > 0 and user.thrashMove
     or user.rageMove
-    or (tonumber(user.encoreTurns) or 0) > 0 and user.encoreMove
-  then
+  if locked then
+    return Choices.withMove(action, locked.id)
+  end
+  action = require("src.battle.Gen3Encore").plan(user, action)
+  if (tonumber(user.encoreTurns) or 0) > 0 and user.encoreMove then
     return action
   end
   if
