@@ -63,8 +63,10 @@ clock replacement remain native commands. Temporary presentation extensions and
 preview replacements never replace the underlying native save/stack. Persistence
 continues through the existing native services and `mod.save`.
 
-This is not the complete source session schema. Party, bag, storage, dex, numeric
-script stores, complete session enumeration/deep-copy, preview isolation, custom
+Numeric flags and variables now use typed native command-backed views, with
+session/map iteration and detached recursive-copy support; see
+`native-script-state.md`. Party, bag, storage, dex, complete session schemas,
+preview isolation, custom
 boot UI and further field/actor/battle/audio services still need their typed
 adapters. A differently shaped native collection is not exposed under a source
 name. The data facade supplies the prior owned map views; other data schemas need
