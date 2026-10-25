@@ -20,10 +20,16 @@ jobs:
             label: linux-x64
           - runner: windows-2022
             label: windows-x64
+            love-artifact: '12514271124'
+            library: lua51.dll
           - runner: macos-15-intel
             label: macos-x64
+            love-artifact: '12513712494'
+            library: libluajit.so
           - runner: macos-15
             label: macos-arm64
+            love-artifact: '12513712494'
+            library: libluajit.so
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 25
     steps:
@@ -49,6 +55,22 @@ jobs:
           --luajit-source runtime-source
           --output "${{ runner.temp }}/runtime-capacity/candidate"
           --engine-tests
+      - name: Fetch pinned LOVE12 host artifact
+        if: matrix.love-artifact != ''
+        shell: bash
+        run: >-
+          curl --fail --location --retry 2
+          --output "${{ runner.temp }}/love-runtime.zip"
+          "https://nightly.link/love2d/love/actions/artifacts/${{ matrix.love-artifact }}.zip"
+      - name: Qualify the actual LOVE12 host, thread VM and FFI
+        if: matrix.love-artifact != ''
+        shell: bash
+        run: >-
+          python engine/tools/runtime-upvalue-check/love_abi.py
+          --runtime-archive "${{ runner.temp }}/love-runtime.zip"
+          --qualification "${{ runner.temp }}/runtime-capacity/candidate/report.json"
+          --library "${{ runner.temp }}/runtime-capacity/candidate/artifacts/extended/${{ matrix.library }}"
+          --output "${{ runner.temp }}/runtime-love-abi/candidate"
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -57,5 +79,7 @@ jobs:
             ${{ runner.temp }}/runtime-capacity/candidate/report.json
             ${{ runner.temp }}/runtime-capacity/candidate/*.log
             ${{ runner.temp }}/runtime-capacity/candidate/artifacts/
+            ${{ runner.temp }}/runtime-love-abi/candidate/report.json
+            ${{ runner.temp }}/runtime-love-abi/candidate/*.log
           if-no-files-found: error
           retention-days: 14
