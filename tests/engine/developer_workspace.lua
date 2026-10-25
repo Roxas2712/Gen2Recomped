@@ -1,12 +1,10 @@
 package.path='./?.lua;'..package.path
 love=require('tests.love_stub')
 local n=0;local function check(v,m) assert(v,m);n=n+1 end
-local signed=false;local calls={};local opened={};local profile={account={id=1},repository='author/mod',verified=true}
-package.loaded['src.cloud.RetroCloud']={signedIn=function() return signed end,account=function() return 'author@example.invalid' end,
-  begin=function() calls[#calls+1]='begin';return {url='https://pokexpert.de/konto/cloud',code='ABCD1234',nextPoll=0} end,
-  poll=function() calls[#calls+1]='poll';signed=true;return 'done' end}
-package.loaded['src.cloud.DeveloperAccount']={read=function() return profile end,profile=function() calls[#calls+1]='profile';return profile end,
-  save=function(repo) calls[#calls+1]=repo;return profile end,verify=function() return profile end,proofUrl=function() return 'https://github.com/author/mod/new/HEAD' end}
+local signed=false;local calls={};local opened={};local profile={id=1,repository='author/mod',verified=true}
+package.loaded['src.cloud.RetroCloud']={signedIn=function() return signed end,account=function() return 'author@example.invalid' end}
+package.loaded['src.cloud.DeveloperProjects']={list=function(page) calls[#calls+1]='list';return {repositories={profile},page=page,total=1} end,
+  prepare=function(repo) calls[#calls+1]=repo;return profile end,verify=function() return profile end,proofUrl=function() return 'https://github.com/author/mod/new/HEAD' end}
 package.loaded['src.cloud.Task']={new=function(fn) return {poll=function() return {kind='done',first=fn()} end,cancel=function() calls[#calls+1]='cancel' end} end}
 love.system={openURL=function(url) opened[#opened+1]=url end}
 love.keyboard={setTextInput=function(on) TextInput=on end,isDown=function() return false end}
@@ -16,7 +14,7 @@ local UI={_ui={inside=function(r,x,y) return r and x>=r.x and y>=r.y and x<r.x+r
   draw=noop,update=noop,mousepressed=noop,keypressed=noop,textinput=noop,touchpressed=noop,touchmoved=noop,touchreleased=noop,gamepadpressed=noop,play=noop,
   palette=function() return {ink={},detail={},cardBlue={},link={}} end,
   _chipButton=function(_,x,y,_,opts) return {x=x,y=y,width=opts.w,height=opts.h} end,
-  _refreshFind=function(self) self.refreshed=true end}
+  _refreshFind=function(self) self.refreshed=true end, _openAccount=function(self,mode) self.accountMode=mode end}
 W.install(UI)
 local function font(size)
   local f=love.graphics.newFont(size)
@@ -29,14 +27,15 @@ local function font(size)
 end
 UI.hintFont=font(16);UI.stateFont=font(22)
 W.open(UI,'browse')
-check(#calls==0 and #opened==0,'opening the account notice does not start linkage or open a browser')
-W.action(UI,'link');W.tick(UI)
-check(calls[1]=='begin' and opened[1]=='https://pokexpert.de/konto/cloud?code=ABCD1234','only explicit linkage opens the common account page with its device code')
-W.tick(UI);W.tick(UI);W.tick(UI)
-check(signed and UI._developerOverlay.profile==profile and not UI._developerOverlay.flow,'approval is exchanged and followed by the shared developer profile')
+check(#calls==0 and #opened==0 and UI.accountMode=='browse','signed-out browsing opens native account entry without starting linkage or opening a browser')
+signed=true
+W.open(UI,'browse');W.tick(UI)
 W.action(UI,'browse');check(not UI._developerOverlay and UI.refreshed,'the linked device can enter the native browser')
 W.open(UI,'developer');W.tick(UI)
-check(UI._developerOverlay.repository=='author/mod','the developer corner loads the repository already linked on the website')
+check(UI._developerOverlay.projects[1]==profile,'the developer corner loads all linked repositories')
+W.action(UI,'select:1')
+check(UI._developerOverlay.repository=='author/mod','selecting a project loads its own control status')
+W.action(UI,'save');check(calls[#calls]=='list','preparing a new proof requires explicit rights confirmation')
 love.graphics.getDimensions=function() return 375,300 end
 W.draw(UI)
 local f=UI._developerOverlay

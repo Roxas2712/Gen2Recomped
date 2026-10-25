@@ -241,8 +241,10 @@ function W.install(RI)
   local games=RI._sbGames
   RI._sbGames=function(self,x,y,w,h,...)
     local s=self._s
-    local r=self:_chipButton(x,y,'POKÉMON BANK · OPEN BOX WORKSPACE',{w=w,h=44*s,kind='accent'})
+    local half=(w-10*s)/2
+    local r=self:_chipButton(x,y,'POKÉMON BANK',{w=half,h=44*s,kind='accent'})
     self._bankLibraryButton=r
+    self._saveHistoryLibraryButton=self:_chipButton(x+half+10*s,y,'SAVE HISTORY',{w=half,h=44*s,kind='accent'})
     return 56*s+games(self,x,y+56*s,w,h-56*s,...)
   end
   local press=RI.mousepressed

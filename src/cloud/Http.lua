@@ -59,6 +59,35 @@ local function viaCurl(method, url, opts)
   return status, body
 end
 
+-- Credentials travel over stdin, never through shell arguments or a request
+-- file. Do not follow redirects with passwords or device tokens attached.
+local function viaPrivateCurl(method,url,opts)
+  if not url:match('^https://[^%s]+$') or not method:match('^[A-Z]+$') then return nil,'Invalid secure request.' end
+  local shell=require('src.core.HostShell')
+  local function quoted(value)
+    return '"'..tostring(value):gsub('\\','\\\\'):gsub('"','\\"'):gsub('\r','\\r'):gsub('\n','\\n'):gsub('\t','\\t')..'"'
+  end
+  local outAbs,outRel=tmpPath('private_res')
+  local codeAbs,codeRel=tmpPath('private_status')
+  local windows=love.system.getOS()=='Windows'
+  if windows and (outAbs..codeAbs):find('[%%!"^]') then return nil,'Unsupported network workspace path.' end
+  local config={'silent','connect-timeout = 15','max-time = 25','proto = "=https"','request = '..quoted(method),'url = '..quoted(url),'output = '..quoted(outAbs),'write-out = "%{http_code}"'}
+  for k,v in pairs(opts.headers or {}) do
+    if tostring(k):find('[%c:]') or tostring(v):find('[%c]') then return nil,'Invalid request header.' end
+    config[#config+1]='header = '..quoted(k..': '..v)
+  end
+  if opts.body then config[#config+1]='data-binary = '..quoted(opts.body) end
+  local pipe=shell.popen((windows and '' or 'umask 077; ')..'curl --disable --config - > '..shell.quote(codeAbs)..' 2>'..(windows and 'NUL' or '/dev/null'),'w')
+  if not pipe then return nil,'Secure network transport unavailable.' end
+  local ok=pcall(function() pipe:write(table.concat(config,'\n')..'\n') end)
+  pcall(function() pipe:close() end)
+  local code=tonumber(love.filesystem.read(codeRel) or '')
+  local body=love.filesystem.read(outRel) or ''
+  love.filesystem.remove(codeRel);love.filesystem.remove(outRel)
+  if not ok or not code or code==0 then return nil,'Secure network request failed. Please try again.' end
+  return code,body
+end
+
 local function viaBridge(method, url, opts)
   local Json = require("src.link.Json")
   local ok, res = pcall(love.system.httpRequest, Json.encode({
@@ -113,7 +142,9 @@ function H.request(method, url, opts)
     return viaBridge(method, url, opts)
   end
   if isIOS() and luaHttps() then return viaLuaHttps(method, url, opts) end
-  local status, body = viaCurl(method, url, opts)
+  local status, body
+  if opts.sensitive then status,body=viaPrivateCurl(method,url,opts)
+  else status,body=viaCurl(method,url,opts) end
   if not status and luaHttps() then return viaLuaHttps(method, url, opts) end
   return status, body
 end

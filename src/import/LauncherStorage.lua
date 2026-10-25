@@ -69,7 +69,7 @@ function Storage.install(RI)
   end
   local action=RI._settingsAction
   RI._settingsAction=function(self,entry,...)
-    if entry and entry.action=='retroCloudAccount' then love.system.openURL('https://pokexpert.de/konto/cloud');return end
+    if entry and entry.action=='retroCloudAccount' then self:_openAccount();return end
     if entry and entry.action=='retroCloudCancel' then
       if self._storageTask then self._storageTask:cancel();self._storageTask=nil end
       self.settingsNotice='Cloud sync cancelled. Local saves are preserved.';self._settingsRowCache=nil;return
@@ -110,7 +110,7 @@ function Storage.install(RI)
           end
           for _,v in ipairs(self._storageVersions or {}) do pcall(self._refreshSlots,self,v) end
         end
-      elseif self.launcher and not self._handedOff and not self.toolFlow and not self._bankOverlay and not self._developerOverlay and not self._profileApplying and not self._profileRecoveryBlocked and self.workState~='working'
+      elseif self.launcher and not self._handedOff and not self.toolFlow and not self._bankOverlay and not self._developerOverlay and not self._accountOverlay and not self._resumeOverlay and not self._saveHistoryOverlay and not self._resumeRestore and not self._profileApplying and not self._profileRecoveryBlocked and self.workState~='working'
         and not self._cloudFlow and self:_settings().cloudAutoSync~=false and os.time()>=(self._storageNext or 0) then
         self._storageNext=os.time()+5
         local service=self:_sbCloudService()

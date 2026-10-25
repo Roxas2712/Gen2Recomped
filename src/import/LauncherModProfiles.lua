@@ -35,6 +35,8 @@ function M.tick(self)
     state.stage='resolve'
   end
   if state.stage=='resolve' then
+    if state.retryAt and love.timer.getTime()<state.retryAt then return end
+    state.retryAt=nil
     local wanted=state.plan.downloads[state.cursor]
     if not wanted then state.stage='backup';return end
     local entry=state.byRepo[wanted.repo:lower()]
@@ -44,6 +46,7 @@ function M.tick(self)
       state.job=Task.new(function()
         local query={version=wanted.version};if wanted.tag then query.tag=wanted.tag end
         local code,bytes=Http.request('GET',entry.resolveUrl..'/latest?'..Http.form(query),{headers={Accept='application/json'}})
+        if code==429 then return {rateLimited=true} end
         if code~=200 then return nil,'Repository check failed ('..tostring(code or 'offline')..').' end
         return Json.decode(bytes)
       end)
@@ -51,6 +54,13 @@ function M.tick(self)
     end
     local result=state.job:poll();if not result then return end
     state.job=nil
+    if result.kind=='done' and type(result.first)=='table' and result.first.rateLimited then
+      state.retryCount=(state.retryCount or 0)+1
+      if state.retryCount>3 then stop(self,'ModCompass is busy. Try again later; installed packages are unchanged.');return end
+      state.retryAt=love.timer.getTime()+65
+      message(self,'ModCompass request limit reached. Retrying in 65 seconds; you can cancel the transfer.',true);return
+    end
+    state.retryCount=0
     if result.kind~='done' or not Community.resolve(entry,result.first) or entry.id~=wanted.id then stop(self,'Repository identity could not be verified for '..wanted.id..'.');return end
     local release
     for _,row in ipairs(result.first.releases or {}) do if row.version==wanted.version and (not wanted.tag or row.tag==wanted.tag) then release=row;break end end
@@ -70,6 +80,13 @@ function M.tick(self)
       state.download=nil;state.bytes=0;state.total=nil;state.cursor=state.cursor+1;state.stage='resolve'
     else stop(self,'Mod download failed: '..tostring(result.error or 'cancelled'));return end
   elseif state.stage=='backup' then
+    local pending=state.plan.resume and self._resumeRestore
+    if pending then
+      local snapshot=Saves.peekSlot(pending.version,pending.slot)
+      if Saves.activeSlot(pending.version)~=pending.slot or not snapshot or require('src.storage.SaveResume').fingerprint(snapshot)~=pending.fingerprint then
+        stop(self,'The selected save changed during download. Choose Play again.');return
+      end
+    end
     if not Profile.unchanged(state.plan,Packages.list(),Saves.loadOptions()) then stop(self,'Local mods changed while downloading. Sync again.');return end
     local ids={};for _,file in ipairs(state.files) do ids[#ids+1]=file.id end
     local backup,why=Packages.backupProfile(ids)
@@ -89,8 +106,8 @@ function M.tick(self)
       if not ok then stop(self,tostring(why));return end
       local finished,err=Packages.finishProfile(state.backup)
       if not finished then stop(self,tostring(err));return end
-      clearFiles(state);self._profileApplying=nil;self._modProfilePlan=nil;self._settingsCache=nil;self:_refreshMods()
-      message(self,'Cloud mod profile applied. Package versions and activation now match.',true)
+      clearFiles(state);self._profileApplying=nil;if not state.plan.resume then self._modProfilePlan=nil end;self._settingsCache=nil;self:_refreshMods()
+      message(self,state.plan.resume and 'This save’s mod versions and activation have been restored.' or 'Cloud mod profile applied. Package versions and activation now match.',true)
     end
   end
 end
@@ -102,13 +119,14 @@ function M.install(RI)
     if not Profile.unchanged(plan,installed,Saves.loadOptions()) then
       self._modProfilePlan=nil;message(self,'Local mods changed during sync. Sync again before applying the cloud profile.',false);return
     end
-    local current=Profile.plan(plan.profile,installed);current.hash=plan.hash;current.scope=plan.scope;current.localHash=plan.localHash
+    local current=Profile.plan(plan.profile,installed,plan.resume);current.hash=plan.hash;current.scope=plan.scope;current.localHash=plan.localHash
     if #current.downloads==0 then
       local ok,why=Profile.accept(current)
       if not ok then message(self,tostring(why),false);return end
-      self._modProfilePlan=nil;self._settingsCache=nil;self:_refreshMods();message(self,'Cloud mod activation applied.',true);return
+      if not current.resume then self._modProfilePlan=nil end;self._settingsCache=nil;self:_refreshMods();message(self,current.resume and 'This save’s mod activation has been restored.' or 'Cloud mod activation applied.',true);return
     end
     self._profileApplying={plan=current,stage='catalogue',cursor=1,files={}}
+    if not self.findIndex then self.findLoaded=false end
     if not self.findLoaded then self:_ensureFind() end
     message(self,'Preparing '..#current.downloads..' pinned mod downloads from ModCompass...',true)
   end
@@ -199,6 +217,7 @@ function M.install(RI)
       self._profileCancelRect=nil
       if not state then return original(self,x,y,w,h,...) end
       local s=self._s;local label='MOD PROFILE · '..state.stage:upper()..' · '..(state.title or '')
+      if state.retryAt then label=label..' · RETRY IN '..math.max(0,math.ceil(state.retryAt-love.timer.getTime()))..'s' end
       if state.total then label=label..string.format(' · %.1f / %.1f MB',(state.bytes or 0)/1048576,state.total/1048576) end
       love.graphics.setFont(self.hintFont);RI._ui.col(RI.palette().link)
       love.graphics.printf(label,x,y,math.max(60,w-110*s),'left')

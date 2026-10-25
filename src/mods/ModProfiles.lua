@@ -64,7 +64,7 @@ function P.decode(bytes)
   table.sort(clean.mods,function(a,b) return a.id<b.id end)
   return clean
 end
-function P.plan(profile,installed)
+function P.plan(profile,installed,resume)
   local byId={};for _,m in ipairs(installed or {}) do byId[m.id]=m end
   local receipts=Saves.loadOptions().modInstallSources or {}
   local plan={profile=profile,downloads={},flags={},disable={},engineMismatch=profile.engine~=Version.engine}
@@ -79,7 +79,14 @@ function P.plan(profile,installed)
     plan.flags[m.id]={on=m.on,gens=clone(m.gens)}
     desired[m.id]=true
   end
+  if resume then
+    plan.resume=clone(resume)
+    for _,id in ipairs(resume.required or {}) do
+      desired[id]=true;plan.flags[id]={on=true,gens={true,true,true,true,true}}
+    end
+  end
   for id in pairs(byId) do if not desired[id] then plan.disable[#plan.disable+1]=id end end
+  plan.experimental={};plan.present={};for _,m in ipairs(installed or {}) do plan.present[m.id]=true;if m.experimental then plan.experimental[m.id]=true end end
   table.sort(plan.disable)
   return plan
 end
@@ -114,6 +121,30 @@ function P.sync(store,mods,options)
 end
 function P.accept(plan)
   local options=Saves.loadOptions();options.mods=options.mods or {}
+  if plan.resume then
+    local generation=plan.resume.generation
+    if type(generation)~='number' or generation%1~=0 or generation<1 or generation>Gens.COUNT then return nil,'Invalid save generation.' end
+    local required={};for _,id in ipairs(plan.resume.required or {}) do required[id]=true end
+    local function select(id,want)
+      local on,gens,force=Gens.decode(options.mods[id])
+      if on==nil then on=not (plan.experimental and plan.experimental[id]) end
+      -- Preserve effective activation elsewhere: a master-off, experimental
+      -- default-off or previously absent package was off on every generation.
+      if want and (not on or not (plan.present and plan.present[id])) then
+        for i=1,Gens.COUNT do gens[i]=false end
+      end
+      if want then on=true end
+      gens[generation]=want;if not want then force[generation]=false end
+      options.mods[id]=Gens.encode(on,gens,force)
+    end
+    for id in pairs(plan.flags) do select(id,required[id]==true) end
+    for _,id in ipairs(plan.disable or {}) do select(id,false) end
+    for id in pairs(options.mods) do if not required[id] then select(id,false) end end
+    if not Saves.saveOptions(options) then return nil,'Could not save this game’s mod choices.' end
+    -- A per-save restore is a local change, not acceptance of the unrelated
+    -- global cloud profile. Keep its conflict base unchanged.
+    return true
+  end
   local desired={}
   for id,value in pairs(plan.flags) do desired[id]=true;options.mods[id]=clone(value) end
   for _,id in ipairs(plan.disable or {}) do options.mods[id]=Gens.withEnabled(options.mods[id],false) end
@@ -125,6 +156,7 @@ function P.accept(plan)
   local ok=Saves.saveOptions(options);if not ok then return nil,'Could not save the mod profile.' end
   return persist({scope=plan.scope or 'default',base=plan.hash or fingerprint(plan.profile)})
 end
+P.fingerprint=localFingerprint
 function P.unchanged(plan,mods,options) return not plan.localHash or plan.localHash==localFingerprint(mods,options) end
 function P.publish(store,mods,options)
   local profile=P.capture(mods,options)
