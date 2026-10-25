@@ -6,7 +6,7 @@ local Strings = require('src.core.Strings')
 local Versions = require('src.core.GameVersion')
 
 Sequence.INTRO_DURATION = 6.0
-Sequence.PLAY_DURATION = 1.1
+Sequence.PLAY_DURATION = 2.4
 
 function Sequence.new(kind, version)
   return {kind=kind, version=version or 'crystal', elapsed=0,
@@ -19,10 +19,18 @@ function Sequence.advance(state, dt)
 end
 
 function Sequence.insertion(state)
-  local start=state.kind=='intro' and 0.55 or 0.12
-  local span=state.kind=='intro' and 0.27 or 0.62
+  local start=state.kind=='intro' and 0.55 or 0.07
+  local span=state.kind=='intro' and 0.24 or 0.42
   local p = math.max(0, math.min(1, (state.elapsed/state.duration - start)/span))
   return p*p*(3-2*p)
+end
+
+function Sequence.motion(state)
+  local p=Sequence.insertion(state)
+  local align=math.max(0,math.min(1,p/0.68))
+  align=align*align*(3-2*align)
+  local descend=math.max(0,math.min(1,(p-0.68)/0.32))
+  return p,align,descend*descend
 end
 
 function Sequence.install(RI)
@@ -59,7 +67,7 @@ function Sequence.install(RI)
         state.soundStarted=true
         if love.audio and love.audio.newSource then
           local ok,source=pcall(love.audio.newSource,'assets/launcher/retro_intro_riff.wav','static')
-          if ok then
+          if ok and source then
             self._introSound=source
             source:setVolume(math.max(0,math.min(1,(tonumber(self:_settings().musicVol) or 5)/7))*0.65)
             source:play()
@@ -67,9 +75,22 @@ function Sequence.install(RI)
         end
       end
       self.pulse = (self.pulse or 0) + dt
-      if state.cancelled or Sequence.advance(state, dt) then
+      local done=not state.cancelled and Sequence.advance(state, dt)
+      if not state.cancelled and not done and not state.latchStarted and Sequence.insertion(state)>=1 then
+        state.latchStarted=true
+        if love.audio and love.audio.newSource then
+          local ok,source=pcall(love.audio.newSource,'assets/launcher/cartridge_latch.wav','static')
+          if ok and source then
+            self._latchSound=source
+            source:setVolume(math.max(0,math.min(1,(tonumber(self:_settings().sfxVol) or 5)/7))*0.7)
+            source:play()
+          end
+        end
+      end
+      if state.cancelled or done then
         self._launcherSequence = nil
         if self._introSound then self._introSound:stop();self._introSound=nil end
+        if self._latchSound then self._latchSound:stop();self._latchSound=nil end
         self._sequenceInputGuard = 0.15
         if state.kind=='play' and not state.cancelled then return play(self, state.version) end
       end
@@ -136,6 +157,27 @@ function Sequence.install(RI)
     g.setLineWidth(1)
   end
 
+  local function screenLightning(sx,sy,tx,ty,progress,s)
+    if progress<=0 or progress>=1 then return end
+    local g=love.graphics
+    local strength=math.sin(progress*math.pi)
+    for ray=1,5 do
+      local targetX=tx+(ray-3)*48*s
+      local targetY=ty+math.sin(ray*1.7)*18*s
+      local points={sx,sy}
+      for i=1,8 do
+        local t=i/8
+        local jitter=math.sin(ray*13+i*8+math.floor(progress*26))*13*s*math.sin(t*math.pi)
+        points[#points+1]=sx+(targetX-sx)*t+jitter
+        points[#points+1]=sy+(targetY-sy)*t-jitter
+      end
+      col(ray%2==0 and {189,121,255} or {112,224,255},strength*0.15)
+      g.setLineWidth(8*s);g.line(points)
+      col({216,246,255},strength*0.9);g.setLineWidth(1.3*s);g.line(points)
+    end
+    g.setLineWidth(1)
+  end
+
   function RI:_drawLauncherSequence()
     local state = self._launcherSequence
     if not state then return end
@@ -144,10 +186,12 @@ function Sequence.install(RI)
     local s=math.min(w/680,h/640,1.4)
     local cx,cy=ox+w/2,oy+h*(state.kind=='intro' and 0.50 or 0.47)
     local accent=Library.edition(state.version)
-    local p=Sequence.insertion(state)
+    local p,align,descent=Sequence.motion(state)
     local intro=state.kind=='intro'
     local phase=state.elapsed/state.duration
-    local dock=intro and math.max(0,math.min(1,(phase-0.82)/0.18)) or 0
+    local dock=intro and math.max(0,math.min(1,(phase-0.90)/0.10)) or 0
+    local burst=math.max(0,math.min(1,(phase-(intro and 0.79 or 0.49))/(intro and 0.11 or 0.31)))
+    local ending=not intro and math.max(0,math.min(1,(phase-0.94)/0.06)) or 0
     dock=dock*dock*(3-2*dock)
     self._sequenceFadeShader=self._sequenceFadeShader or g.newShader([[
       extern number opacity;
@@ -156,7 +200,7 @@ function Sequence.install(RI)
       }
     ]])
     g.push('all'); g.origin(); g.setScissor()
-    self._sequenceFadeShader:send('opacity',1-dock)
+    self._sequenceFadeShader:send('opacity',(1-dock)*(1-ending))
     g.setShader(self._sequenceFadeShader)
     col(P.bgBot);g.rectangle('fill',0,0,g.getWidth(),g.getHeight())
     col(accent,0.035);g.circle('fill',cx,cy,230*s)
@@ -166,24 +210,27 @@ function Sequence.install(RI)
     g.setFont(self.labelFont);col(accent)
     g.printf(Strings(intro and 'YOUR NEXT CHAPTER' or 'ONE MORE ADVENTURE'),ox,oy+32*s,w,'center')
     local title=intro and '' or (Versions.info(state.version).displayName)
-    g.setFont(self.gameNameFont);col(P.ink)
+    g.setFont(self.gameNameFont);col(P.ink,math.max(0,1-burst*5))
     local font=self.gameNameFont
     local ts=math.min(1.35,w*0.85/math.max(1,font:getWidth(title)))
     g.print(title,cx-font:getWidth(title)*ts/2,oy+83*s,0,ts,ts)
     -- A turning cartridge arcs into the top slot of its own handheld family.
     local Hardware=require('src.import.LauncherHardware')
     local device=Hardware.deviceGeometry(state.version,cx,cy,s)
-    local cartH=(142*(1-p)+(device.kind=='gba' and 66 or device.kind=='nds' and 82 or 100)*p)*s
+    local cartH=(142*(1-align)+(device.kind=='gba' and 66 or device.kind=='nds' and 82 or 100)*align)*s
     local startX=cx-250*s
-    local cartX=startX+(device.slotX-startX)*p
-    local cartY=device.slotY-24*s+(64*s)*p-82*s*math.sin(p*math.pi)
+    local cartX=startX+(device.slotX-startX)*align
+    local cartY=device.slotY-24*s-36*s*align-65*s*math.sin(align*math.pi)+100*s*descent
     local cw,ch=Hardware.cartSize(state.version)
-    Hardware.cartridge(self,state.version,cartX,cartY,cartH*cw/ch,cartH,-0.46*(1-p))
-    Hardware.device(self,state.version,device,p>0.96)
+    Hardware.cartridge(self,state.version,cartX,cartY,cartH*cw/ch,cartH,-0.46*(1-align))
+    Hardware.device(self,state.version,device,p>=1)
+    local screenX,screenY,screenW=Hardware.screenPoint(device)
+    screenLightning(screenX,screenY,cx,oy+125*s,burst,s)
     local statusY=math.min(oy+h-112*s,device.y+device.h+28*s)
     g.setFont(self.labelFont);col(accent)
     local status=intro and phase<0.53 and 'CHARGING THE NEXT CHAPTER'
-      or p<0.98 and 'INSERTING CARTRIDGE' or intro and 'WELCOME HOME' or 'CARTRIDGE CONNECTED'
+      or p<1 and 'INSERTING CARTRIDGE' or burst<0.35 and 'CARTRIDGE LOCKED'
+      or intro and 'WELCOME HOME' or 'POWERING YOUR NEXT CHAPTER'
     g.printf(Strings(status),ox,statusY,w,'center')
     local barW=220*s
     col(P.cardBorder,0.2);g.rectangle('fill',cx-barW/2,statusY+32*s,barW,3*s,1,1)
@@ -197,14 +244,22 @@ function Sequence.install(RI)
       local lw,lh=logo:getDimensions()
       local mainS=self._s
       local startW=math.min(w*0.78,(intro and 380 or 140)*s)
+      local targetW=math.min(w*0.78,380*s)
+      local rise=1-(1-burst)^3
+      local secondLogo=burst>0
+      local logoW=secondLogo and (screenW*0.8*(1-rise)+targetW*rise) or startW
       local endScale=math.min(218*mainS/lw,62*mainS/lh,(w-40*mainS)/lw)
-      local scale=startW/lw*(1-dock)+endScale*dock
-      local startLeft=intro and cx-lw*scale/2 or ox+24*s
+      local scale=logoW/lw*(1-dock)+endScale*dock
+      local logoCX=secondLogo and (screenX*(1-rise)+cx*rise) or cx
+      local targetTop=oy+60*s
+      local startLeft=secondLogo and logoCX-lw*scale/2 or intro and cx-lw*scale/2 or ox+24*s
+      local startTop=secondLogo and (screenY-lh*scale/2)*(1-rise)+targetTop*rise or oy+(intro and 60 or 16)*s
       local left=startLeft*(1-dock)+(ox+20*mainS)*dock
-      local top=(oy+(intro and 60 or 16)*s)*(1-dock)+(oy+(80*mainS-lh*scale)/2)*dock
-      local reveal=intro and math.max(0,math.min(1,(state.elapsed-0.8)/1.4)) or math.min(1,state.elapsed/0.32)
+      local top=startTop*(1-dock)+(oy+(80*mainS-lh*scale)/2)*dock
+      local reveal=secondLogo and 1 or intro and math.max(0,math.min(1,(state.elapsed-0.8)/1.4)) or math.min(1,state.elapsed/0.32)
+      local opacity=secondLogo and math.min(1,burst*5) or intro and (1-math.max(0,math.min(1,(phase-0.58)/0.16))) or 1
       g.setScissor(math.floor(left),math.floor(top),math.ceil(lw*scale*reveal),math.ceil(lh*scale))
-      g.setColor(1,1,1,math.min(1,state.elapsed/0.2))
+      g.setColor(1,1,1,math.min(1,state.elapsed/0.2)*opacity*(1-ending))
       g.draw(logo,left,top,0,scale,scale)
       g.setScissor()
     end
@@ -215,7 +270,7 @@ function Sequence.install(RI)
   RI.draw=function(self,...)
     -- The first normal draw creates the responsive fonts used by the sequence.
     local state=self._launcherSequence
-    if not state or not self.gameNameFont or (state.kind=='intro' and state.elapsed/state.duration>0.82) then draw(self,...) end
+    if not state or not self.gameNameFont or (state.kind=='intro' and state.elapsed/state.duration>0.90) then draw(self,...) end
     if self._launcherSequence then self:_drawLauncherSequence() end
   end
 

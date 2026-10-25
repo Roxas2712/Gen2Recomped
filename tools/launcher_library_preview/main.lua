@@ -34,7 +34,7 @@ function love.load()
   end
   if mode=='intro' or mode=='insertion' then
     ui._launcherSequence=require('src.import.LauncherSequence').new(mode=='intro' and 'intro' or 'play',version)
-    if output then ui._launcherSequence.elapsed=mode=='intro' and 2.25 or 0.7 end
+    if output then ui._launcherSequence.elapsed=tonumber(os.getenv('LIBRARY_PREVIEW_TIME')) or (mode=='intro' and 2.25 or 1.5) end
   end
   if mode == 'list' then
     ui.section, ui.gamesView, ui.browseConsole, ui.browseSeries = 'games', 'list', 'gbc', 'pokemon'

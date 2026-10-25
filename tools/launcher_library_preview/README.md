@@ -19,6 +19,7 @@ Environment options:
 | `LIBRARY_PREVIEW_MODE` | `library`, `game`, `tools`, `designer`, `settings`, `appearance`, `mods`, `news`, `intro`, `insertion`, `list`. |
 | `LIBRARY_PREVIEW_WIDTH`, `LIBRARY_PREVIEW_HEIGHT` | Window dimensions. |
 | `LIBRARY_PREVIEW_LOGO_CARDS=1` | Show the alternate logo-card view. |
+| `LIBRARY_PREVIEW_TIME` | Explicit sequence time for a static capture, in seconds. |
 | `LIBRARY_PREVIEW_OUT=/absolute/file.png` | Capture a settled frame and exit. |
 | `LIBRARY_PREVIEW_SMOKE=1` | Run live input, navigation, design persistence and artwork checks; exit on completion. |
 | `LIBRARY_PREVIEW_AUDIO=1` | Enable audio for an interactive intro preview. |

@@ -27,12 +27,14 @@ hardware illustrations, editor and intro sequence.
   into the header. Audio follows Music Volume and stops immediately on skip.
   The entire sequence can be skipped or disabled in Launcher settings.
 - Play arcs the cartridge into the matching GB/GBC/GBA/DS silhouette and
-  lights its screen before the original boot callback runs. Enter/tap skips;
+  aligns before its final straight descent, plays a plastic latch click, then
+  lights its screen. Lightning travels out of that screen and forms the
+  RetroRecomped logo again before the original boot callback runs. Enter/tap skips;
   Escape/B cancels. Duplicate input cannot boot twice.
 
 ## Verification
 
-Passing checks: 59 new pure Lua assertions, 58 existing scroll/touch/delete
+Passing checks: 64 new pure Lua assertions, 58 existing scroll/touch/delete
 assertions, and 26 live UI checks on each of LÖVE 11.5 and 12. The pure Lua
 checks cover sequence lifecycle, category filtering, grid sizing,
 design validation and hardware selection. The preview host exercises the real
@@ -42,12 +44,14 @@ decode, design save/reload and cancellation. See `tools/launcher_library_preview
 
 The PNGs are actual LÖVE renders, including 480-pixel portrait and short-window
 cases. Sample readiness and the KRIS summary are fixtures, not a real playthrough.
-`intro-preview.mp4` pairs deterministic rendered frames with the generated WAV.
+`intro-preview.mp4` and `launch-preview.mp4` pair deterministic rendered frames
+with the guitar/latch sounds. The latch follows Sound Volume.
 
 The audio is synthesized locally; no recorded audio or soundfonts are bundled.
 The short opening figure was checked against the local reference's
 `audio/music/introbattle.asm` and its use in `engine/movie/intro.asm`.
-`tools/build_launcher_riff.py` regenerates the WAV with NumPy.
+`tools/build_launcher_riff.py` regenerates the guitar WAV with NumPy;
+`tools/build_launcher_latch.py` regenerates the mechanical click with Python.
 
 Gameplay itself is not driven by the layout smoke host. Existing import, save,
 mod and boot implementations remain responsible for those operations.

@@ -85,6 +85,15 @@ function Hardware.deviceGeometry(version,cx,cy,s)
   return {kind=kind,x=cx-w/2,y=top,w=w,h=h,slotX=cx,slotY=top}
 end
 
+function Hardware.screenPoint(geometry)
+  local kind=geometry.kind
+  local base=kind=='gba' and 330 or kind=='nds' and 220 or 170
+  local s=geometry.w/base
+  local px=kind=='gba' and 165 or kind=='nds' and 110 or 87
+  local py=kind=='gba' and 76 or kind=='nds' and 65 or 76.5
+  return geometry.x+px*s,geometry.y+py*s,(kind=='gba' and 170 or kind=='nds' and 156 or 108)*s
+end
+
 local function dpad(x,y,r)
   local g=love.graphics
   color({19,22,30});g.rectangle('fill',x-r,y-r*0.34,r*2,r*0.68,2,2)

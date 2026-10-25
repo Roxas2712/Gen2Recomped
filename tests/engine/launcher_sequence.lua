@@ -33,7 +33,7 @@ ui:play('crystal');check(ui.boots==0,'starting insertion does not boot synchrono
 ui:play('crystal');check(ui.boots==0,'double play cannot start another boot')
 ui:wheelmoved();check(ui.clicks==1,'the hidden page cannot scroll during insertion')
 ui:update(0.5);check(ui.boots==0,'partly inserted cartridge cannot boot')
-ui:update(0.7);check(ui.boots==1 and ui.bootVersion=='crystal','completed insertion boots the selected cartridge')
+ui:update(2.0);check(ui.boots==1 and ui.bootVersion=='crystal','completed insertion boots the selected cartridge')
 ui:update(2);ui:play('crystal');check(ui.boots==1,'handoff is exactly once')
 
 ui=RI.new();ui._launcherSequence=nil;ui:play('crystal');ui:keypressed('escape');ui:update(0.1)
@@ -66,6 +66,25 @@ local before=Sequence.insertion(state)
 Sequence.advance(state,0.5);local middle=Sequence.insertion(state)
 Sequence.advance(state,100)
 check(before==0 and middle>before and Sequence.insertion(state)==1,'insertion reaches its slot monotonically')
+local motion=Sequence.new('play','crystal')
+motion.elapsed=motion.duration*0.43
+local p,aligned,descent=Sequence.motion(motion)
+check(aligned==1 and descent>0 and descent<1,'final insertion is straight with rotation already settled')
+motion.elapsed=motion.duration*0.50
+check(Sequence.insertion(motion)==1,'cartridge locks before screen/logo effects begin')
+local previousAudio=love.audio
+local latchPlays=0
+love.audio={newSource=function(path)
+  return {setVolume=function() end,stop=function() end,play=function()
+    if path:find('cartridge_latch',1,true) then latchPlays=latchPlays+1 end
+  end}
+end}
+ui=RI.new();ui._launcherSequence=nil;ui:play('crystal');ui:update(1.3)
+check(latchPlays==1 and ui.boots==0,'mechanical click occurs after insertion and before handoff')
+ui:update(0.2);check(latchPlays==1,'the latch click cannot repeat on subsequent frames')
+ui:keypressed('escape');ui:update(0)
+check(ui.boots==0,'the post-latch logo reveal can still be cancelled')
+love.audio=previousAudio
 local Workspace=require('src.import.LauncherWorkspace')
 local settingsRows={
   {kind='section',label='CLOUD SAVES'},
