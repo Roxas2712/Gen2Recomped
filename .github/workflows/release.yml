@@ -89,6 +89,10 @@ jobs:
   # --------------------------------------------------------------- version
   version:
     name: resolve version
+    # This fork ships its separately verified native preview explicitly.
+    # Source merges must not publish an additional general-purpose release.
+    # Upstream's automatic release behavior is unchanged; maintainers can opt in.
+    if: github.repository == 'UNDERdecoded/Gen2Recomped' || github.event_name == 'workflow_dispatch' || vars.AUTOMATIC_FORK_RELEASE == 'true'
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.ver.outputs.version }}

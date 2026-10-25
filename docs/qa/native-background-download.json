@@ -1,0 +1,53 @@
+{
+  "testedEngineSource": "048fe51b",
+  "scope": "Desktop file transport and native SDK package data installation; no new gameplay/UI/GPU acceptance",
+  "queueChecks": 73,
+  "fullQuick": {
+    "engineSuites": 325,
+    "sdkSuites": 3,
+    "allTiersPassed": true
+  },
+  "loopbackCoverage": [
+    "existing bounded GET permission/ownership and binary tests",
+    "nonblocking file start/poll with visible in-progress staging bytes",
+    "atomic replacement of a previous complete file",
+    "HTTP 404, truncation, timeout, cancellation and size mismatch retain the previous file",
+    "known/unknown-length receive limits",
+    "redirects, valid zero-byte response, exact 17 MiB binary file beyond the GET memory ceiling",
+    "bounded worker queue, release/unload/shutdown and restart"
+  ],
+  "actualVasc": {
+    "polls": 2522,
+    "ticks": 2588,
+    "packageId": "apo.pokemon-hd.g01.dex0141-0151",
+    "verifiedFiles": 66,
+    "nativeMode": "bounded",
+    "maxPollSeconds": 0.0011669166666674613,
+    "seconds": 15.171562458333335,
+    "activationRestored": true,
+    "sourceUnmodified": true,
+    "bytes": 24765251,
+    "passed": true,
+    "manifestSha256": "6fefa8927087aa878ed1e28c2e8a2d31b4537fbcf0436b4b8c71e6c1413f65f2",
+    "modulesUnmodified": {
+      "HdContentDownload.lua": "e2ae9722e45a2fe33a3ac519cd8ffe4e9d951e13eca96c6ddbbe1878863b52c8",
+      "HdContentStore.lua": "e5a5ba899a09873e9abd3ebc5b2a52a464bce3629e95ab20f6badd067fd28474"
+    },
+    "runtime": "Unchanged bundled LOVE 12, 937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+    "execution": "Native Net.forMod SDK and real HTTPS; owned isolated cache; no source/player-state modifications",
+    "catalogPackages": 8,
+    "catalogScope": "The currently published catalog supplies Gen1 roster packages; this does not establish availability of additional roster generations",
+    "accepted": "Catalog, exact chunk hashes, manifest, all package PNG file bytes, activation journal and restore from fresh store instance",
+    "notEstablished": [
+      "In-game download-menu interaction",
+      "Private Windows-specific VASC fetch wrapper",
+      "Every remote package or roster generation",
+      "Full native VASC models/continuous control acceptance"
+    ]
+  },
+  "evidenceSHA256": {
+    "download-queue.log": "b0e5a45001a3cfbc03533d915b4b18a0af4e0f971d6c746f51867fa69b94e571",
+    "download-full-quick.log": "08d3f6f8ec8e28944b9672930e45420b4acaf914aa389f0d7de7569b5e3c9f96",
+    "vasc-native-download.log": "56418001f6504a0599792eaf2d5af3055c148636e5dcfe85440067aa3f780b7d"
+  }
+}
