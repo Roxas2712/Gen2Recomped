@@ -2,7 +2,11 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "substitute_multi_hit" then
+if mode == "battle_effect_presentation" then
+  rows = dofile(root .. "/tests/enemy_actions/battle_effect_presentation.lua").run(root, backend, version)
+elseif mode == "native_sound_pan" then
+  rows = dofile(root .. "/tests/enemy_actions/native_sound_pan.lua").run(root, backend, version)
+elseif mode == "substitute_multi_hit" then
   rows = dofile(root .. "/tests/enemy_actions/multi_hit.lua").run(root, backend, version, { substitute = true })
 elseif mode == "substitute_presentation" then
   rows = dofile(root .. "/tests/enemy_actions/substitute_presentation.lua").run(root, backend, version)

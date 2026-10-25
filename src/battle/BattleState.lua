@@ -2587,6 +2587,8 @@ function BattleState:updateQueue()
   end
   if self._gbaSubstituteTransition
       and require("src.battle.Gen3SubstitutePresentation").update(self) then return true end
+  if self._gbaEffectPresentation
+      and require("src.battle.Gen3EffectPresentation").update(self) then return true end
   -- HOENN'S PARTICLES TICK BEFORE THE QUEUE'S OWN HOLD, and the whole
   -- reason the animations looked broken is that they used to tick after it.
   --
@@ -2706,8 +2708,9 @@ function BattleState:updateQueue()
   end
   if not self.current then
     local item = table.remove(self.queue, 1)
-    while item and item.gbaSubstituteSpecial do
-      if require("src.battle.Gen3SubstitutePresentation").start(self, item) then return true end
+    while item and (item.gbaSubstituteSpecial or item.gbaNativeEffect) do
+      local controller = item.gbaSubstituteSpecial and "Gen3SubstitutePresentation" or "Gen3EffectPresentation"
+      if require("src.battle." .. controller).start(self, item) then return true end
       item = table.remove(self.queue, 1)
     end
     if not item then
@@ -11413,6 +11416,8 @@ end
 function BattleState:gen3AnimShake(battler)
   local substituteX = GameVersion.isGen3() and battler
     and require("src.battle.Gen3SubstitutePresentation").offset(self, battler) or 0
+  local effect = self._gbaEffectPresentation
+  if effect and effect.user == battler then return substituteX + effect.x, effect.y end
   -- SINNOH'S ANIMATOR SPEAKS THE SAME THREE METHODS, which is why
   -- it plugs in here rather than bringing a second draw path: a
   -- second one would have none of the grow-in scale, hit shake or
@@ -11457,6 +11462,10 @@ end
 -- draws reproduce exactly: the sprite dimmed by (1 - c), and the colour added
 -- back at c through the sprite's own alpha.
 function BattleState:gen3AnimTint(battler)
+  local effect = self._gbaEffectPresentation
+  if effect and effect.user == battler and effect.coeff > 0 then
+    return effect.color[1], effect.color[2], effect.color[3], effect.coeff
+  end
   -- SINNOH'S ANIMATOR SPEAKS THE SAME THREE METHODS, which is why
   -- it plugs in here rather than bringing a second draw path: a
   -- second one would have none of the grow-in scale, hit shake or
