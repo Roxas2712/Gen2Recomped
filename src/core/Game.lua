@@ -2008,9 +2008,11 @@ function Game:writeSave()
   -- file gets; mods snapshot runtime state into their namespace now
   self.save.meta = SaveData.buildMeta(
     self.modStatus and self.modStatus.loaded, self.save.meta)
-  local ran, requirements = pcall(require("src.storage.SaveResume").capture,
-    self.save.version or require("src.core.GameVersion").get(),
-    self.modStatus and self.modStatus.loaded or {}, SaveData.loadOptions())
+  local ran, requirements = pcall(function()
+    return require("src.storage.SaveResume").capture(
+      self.save.version or require("src.core.GameVersion").get(),
+      self.modStatus and self.modStatus.loaded or {}, SaveData.loadOptions())
+  end)
   -- A metadata failure must never prevent a local progress save. Preserve an
   -- explicit invalid marker so another device cannot mistake it for vanilla.
   self.save.meta.resume = ran and requirements or nil
