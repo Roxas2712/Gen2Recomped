@@ -145,6 +145,41 @@ function OverworldState:tryPushBoulder(dir, cx, cy)
   return gen2Handoff(self, dir, gen2BoulderHandoff, cx, cy)
 end
 
+local function gen2ForcedHandoff(world, dir, ice)
+  local p = world.player
+  -- The caller has centred its free body before returning ownership. The
+  -- existing ice handler owns its queue, collision and subsequent landings.
+  if ice then
+    world.iceSlide = dir
+    if not world:checkGen2Ice() then world.turningDirection = nil end
+    return true
+  end
+  -- Current/door collisions choose movement without a held direction. A
+  -- blocked forced tile still owns this input frame; it cannot be escaped
+  -- by substituting a different held direction for the forced one.
+  if Collision.canMove(world.map, world.cast or world.entities, p, dir) then
+    p.facing = dir
+    world:scriptMove(p, dir, 1, function() world:onStepComplete() end)
+  end
+  return true
+end
+
+-- Resume the native mover after an external body lands on forced terrain.
+-- A free body has already run the public landing phases; replaying the whole
+-- landing here would double-count steps/events. Start only the existing
+-- native movement queue, whose completion runs the next actual landing.
+function OverworldState:resumeForcedMovement()
+  if not GameVersion.isGen2() or not (self.map and self.player
+      and type(self.map.cellCollision) == "function") then return false end
+  local coll = self:playerCollision()
+  local dir = Collision.currentDirection(coll) or Collision.doorForcedDirection(coll)
+  local ice = Collision.isIce(coll)
+  if not ice then self.turningDirection = nil end
+  if not dir and ice then dir = self.turningDirection end
+  if not Collision.DELTA[dir] then return false end
+  return gen2Handoff(self, dir, gen2ForcedHandoff, ice)
+end
+
 function OverworldState:movementState()
   if not GameVersion.isGen2() then return nil end
   return require("src.world.Gen2PlayerState").read(self.player, Game and Game.save)
@@ -1201,6 +1236,7 @@ function OverworldState:stampClosedDoors()
 end
 
 function OverworldState:setMap(mapId, x, y, facing, opts)
+  if GameVersion.isGen2() then self.turningDirection, self.iceSlide = nil, nil end
   -- BLACK / WHITE'S ARRIVAL GUARD: the warp you land on stays disarmed until
   -- you step off it (see checkGen4EntranceWarp's gen5 branch)
   self.gen5ArrivalMap, self.gen5ArrivalX, self.gen5ArrivalY = mapId, x, y
@@ -4220,7 +4256,7 @@ function OverworldState:stepBody(scriptJustEnded)
                or self.whirlSpin or self.player.stairExit
   end
   if (not scripted and not self.transitioning) or gen2BootBedroom then
-    self:handleInput()
+    if not self:resumeForcedMovement() then self:handleInput() end
     self.lockedFrames = nil
   else
     -- THE WATCHDOG, because "I could not walk" is the one bug report this
