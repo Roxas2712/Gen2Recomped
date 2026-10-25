@@ -38,7 +38,11 @@ function A.complete(challenge,code) return call('POST','/auth/challenge',{challe
 function A.resend(challenge) return call('POST','/auth/resend',{challenge=challenge}) end
 function A.forgot(email) return call('POST','/auth/password/email',{email=email}) end
 function A.reset(challenge,code,password,confirmation) return call('POST','/auth/password/reset',{challenge=challenge,code=code,password=password,password_confirmation=confirmation}) end
-function A.devices() return call('GET','/account/devices',nil,true) end
+function A.devices()
+  local doc,why=call('GET','/account/devices',nil,true)
+  if doc then local ok,err=Auth.acceptAccount(doc);if not ok then return nil,err end end
+  return doc,why
+end
 function A.revoke(id)
   if type(id)~='string' or #id~=64 or not id:match('^[a-f0-9]+$') then return nil,'Invalid device.' end
   return call('DELETE','/account/devices/'..id,nil,true)

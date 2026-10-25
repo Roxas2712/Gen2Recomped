@@ -4,6 +4,7 @@ local Versions=require('src.core.GameVersion')
 local Task=require('src.cloud.Task')
 function Storage.install(RI)
   function RI:_storageSync(version,slot)
+    if not require('src.storage.AccountStorage').requireUI(self,'storage') then return end
     if self._storageTask then self.settingsNotice='Cloud sync is already running.';return end
     if self._profileApplying then self.settingsNotice='Finish the mod profile transfer before syncing again.';return end
     local list={}

@@ -10,6 +10,7 @@ local function reset(f)
   f.scroll=0;f.rects={};f.padIndex=2;f.padActive=false;f.touch=nil;f.notice=nil;f.chosen=nil
 end
 function W.open(self)
+  if not require('src.storage.AccountStorage').requireUI(self,'history') then return end
   if busy(self) then self.settingsNotice='Finish the current transfer before opening save history.';return end
   self._saveHistoryOverlay={step='games',scroll=0,rects={},padIndex=2}
 end

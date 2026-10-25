@@ -104,6 +104,7 @@ end
 -- it the active slot, and returns true + the new slot id.  On any failure
 -- returns false + a friendly message.
 function SaveFileIO.importToSlot(source, version)
+  local permitted,why=require('src.storage.AccountStorage').check();if not permitted then return false,why end
   version = version or GameVersion.get()
   local want = saveSize(version)
   local bytes, readErr = readSource(source, version)
