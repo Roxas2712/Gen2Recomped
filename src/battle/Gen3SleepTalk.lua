@@ -83,11 +83,9 @@ function S.pick(ctx)
     return
   end
   local pool = {}
-  for slot, inst in ipairs(user.curMoves or user.mon.moves or {}) do
-    if slot > 4 then
-      break
-    end
-    local move = ctx.data.moves[inst.id]
+  for slot = 1, 4 do
+    local inst = (user.curMoves or user.mon.moves or {})[slot]
+    local move = inst and ctx.data.moves[inst.id]
     local n = number(move)
     if
       move

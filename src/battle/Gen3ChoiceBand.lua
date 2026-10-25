@@ -138,7 +138,8 @@ function C.call(ctx, pick, target, suppressAnimation, spreadContinuation, ppSlot
   if parent then
     parent.nativeCalled = true
   end
-  battle._gbaNextCaller = { parent = parent, move = ctx.move.id, ppSlot = ppSlot }
+  local call = { parent = parent, move = ctx.move.id, ppSlot = ppSlot }
+  battle._gbaNextCaller = call
   local ok, err = pcall(
     battle.performMove,
     battle,
@@ -155,7 +156,9 @@ function C.call(ctx, pick, target, suppressAnimation, spreadContinuation, ppSlot
     error(err, 0)
   end
   ctx.user = parent and parent.user or ctx.user
-  ctx.user.lastMove = ctx.move.id
+  local chained = call.frame and call.frame.nativeCalled or false
+  if not chained then ctx.user.lastMove = ctx.move.id end
+  return chained
 end
 function C.builtin(id, base)
   if not V.isGen3() or not base or (id ~= "METRONOME_EFFECT" and id ~= "MIRROR_MOVE_EFFECT") then

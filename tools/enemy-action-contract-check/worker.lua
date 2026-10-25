@@ -2,7 +2,9 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "nature_power_content" then
+if mode == "nature_power_chained" then
+  rows = dofile(root .. "/tests/enemy_actions/nature_power.lua").chained(root, backend, version)
+elseif mode == "nature_power_content" then
   rows = dofile(root .. "/tests/enemy_actions/nature_power.lua").content(root, backend, version)
 elseif mode == "nature_power" then
   rows = dofile(root .. "/tests/enemy_actions/nature_power.lua").run(root, backend, version)

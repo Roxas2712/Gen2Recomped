@@ -3,6 +3,7 @@
 local M = {}
 local DEFS = {
   { 267, "NATURE_POWER", 173, "NATURE_POWER_EFFECT", 0, 1 },
+  { 214, "SLEEP_TALK", 97, "SLEEP_TALK_EFFECT", 0, 1 },
   { 78, "STUN_SPORE", 67, "PARALYZE_EFFECT", 0, 0 },
   { 75, "RAZOR_LEAF", 0, "NO_ADDITIONAL_EFFECT", 35, 8 },
   { 89, "EARTHQUAKE", 0, "NO_ADDITIONAL_EFFECT", 35, 32 },
@@ -116,6 +117,11 @@ function M.run(root, backend, version, options)
       caller = "PORTABLE_NATURE"
     end
   end
+  local second = native and 33 or "MOVE_033"
+  if options.sleepCaller then
+    second = caller
+    caller = native and 214 or "MOVE_214"
+  end
   local function history(value)
     if not options.public or value == nil then
       return value
@@ -155,15 +161,18 @@ function M.run(root, backend, version, options)
             local user, targetId = f.actor(actor), actor % 2 == 0 and actor + 1 or actor - 1
             local target = f.actor(targetId)
             user.mon.hp = 200
+            if options.sleepCaller then
+              user.mon.status, user.sleepTurns = "SLP", 4
+            end
             f.put(user, item ~= 0 and item or nil)
             local original
             if native then
               user.mon.moves, user.mon.pp, user.mon.maxPp =
-                { caller, 33 }, { kind == "zero_pp" and 0 or 10, 10 }, { 10, 10 }
+                { caller, second }, { kind == "zero_pp" and 0 or 10, 10 }, { 10, 10 }
               original = user.mon.pp
             else
               user.mon.moves =
-                { { id = caller, pp = kind == "zero_pp" and 0 or 10 }, { id = "MOVE_033", pp = 10 } }
+                { { id = caller, pp = kind == "zero_pp" and 0 or 10 }, { id = second, pp = 10 } }
               user.curMoves = user.mon.moves
               original = user.curMoves[1]
             end
@@ -363,5 +372,8 @@ function M.content(root, backend, version)
     mod.exports.api=mod
   end]=],
   })
+end
+function M.chained(root, backend, version)
+  return M.run(root, backend, version, { sleepCaller = true })
 end
 return M

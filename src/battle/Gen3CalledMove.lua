@@ -24,9 +24,21 @@ function C.call(ctx, pick, ppSlot)
   else
     targets = { tonumber(move.target) == 16 and user or b:defaultTargetFor(user) }
   end
+  local chained = false
   for i, target in ipairs(targets) do
-    require("src.battle.Gen3ChoiceBand").call(ctx, pick, target, i > 1, i > 1, i == 1 and ppSlot or nil)
+    chained = require("src.battle.Gen3ChoiceBand").call(
+      ctx,
+      pick,
+      target,
+      i > 1,
+      i > 1,
+      i == 1 and ppSlot or nil
+    ) or chained
   end
-  user.lastMove = ctx.move.id
+  -- A nested native caller owns the resulting history; an ordinary child
+  -- records this caller, including the existing switch/resume behavior.
+  if not chained then
+    user.lastMove = ctx.move.id
+  end
 end
 return C

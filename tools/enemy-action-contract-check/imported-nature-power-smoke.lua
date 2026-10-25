@@ -3,6 +3,7 @@
 package.path = "./?.lua;./?/init.lua;" .. package.path
 local T = require("tests.modkit")
 local cache = assert(arg[1], "pass the existing local Gen2Recomp cache root")
+local chained = arg[2] == "--sleep-talk"
 local children = { [0] = 78, 75, 89, 56, 57, 61, 157, 247, 129, 129 }
 local rows = {}
 for _, version in ipairs({ "firered", "emerald" }) do
@@ -51,7 +52,9 @@ for _, version in ipairs({ "firered", "emerald" }) do
         local publicParent = assert(f.e.api.content.moves:get(parent))
         assert(publicParent.effect == "NATURE_POWER")
         local child = assert(f.e.api.content.moves:get(id(children[terrain])))
-        local learned = { { id = parent, pp = 10 }, { id = id(33), pp = 10 } }
+        local selected = chained and id(214) or parent
+        local publicSelected = assert(f.e.api.content.moves:get(selected))
+        local learned = { { id = selected, pp = 10 }, { id = chained and parent or id(33), pp = 10 } }
         b.player.mon.moves, b.player.curMoves = learned, learned
         b.enemy.mon.moves = { { id = id(33), pp = 10 } }
         b.enemy.curMoves = b.enemy.mon.moves
@@ -62,6 +65,9 @@ for _, version in ipairs({ "firered", "emerald" }) do
           a.abilityOverride = false
         end
         b.player.mon.hp = 2000
+        if chained then
+          b.player.mon.status, b.player.sleepTurns = "SLP", 4
+        end
         for key, def in pairs(f.data.items) do
           if type(def) == "table" and tonumber(def.index) == itemNumber then
             b.player.mon.item = key
@@ -116,12 +122,28 @@ for _, version in ipairs({ "firered", "emerald" }) do
           game.stack:update(1 / 60)
         end
         assert(b.phase == "menu" and b.turnCount == 1, "actual submitted imported turn must finish")
-        assert(#used == 2 and used[1].move == publicParent.id and not used[1].called)
+        assert(#used == (chained and 3 or 2) and used[1].move == publicSelected.id and not used[1].called)
+        local final = used[#used]
         assert(
-          used[2].move == child.id and used[2].called,
+          final.move == child.id and final.called,
           "actual terrain child uses advertised public identity"
         )
-        assert(used[1].pp == 10 and used[2].pp == 10, "both public announcements precede child PP ownership")
+        assert(used[1].pp == 10, "selected announcement precedes its PP command")
+        if chained then
+          assert(
+            used[2].move == publicParent.id and used[2].called and used[2].pp == 9 and final.pp == 9,
+            "native called Nature Power borrows no PP from the outer Sleep Talk"
+          )
+        else
+          assert(final.pp == 10, "Nature Power child announces before its selected PP command")
+        end
+        assert(b.player.lastMove == parent, "inner native caller preserves resulting move history")
+        if itemNumber == 186 then
+          assert(
+            b.player.choicedMove == require("src.battle.Gen3ChoiceBand").identity(b, parent),
+            "native Choice Band owns the innermost caller"
+          )
+        end
         assert(learned[1].pp == 9 and learned[2].pp == 10, "only selected caller slot spends PP")
         local healing = itemNumber == 219 and damage[1] and math.max(1, math.floor(damage[1] / 8)) or 0
         assert(beforeFoe == 2000 + healing, "native move-end healing completes before the next actor")
@@ -137,6 +159,7 @@ for _, version in ipairs({ "firered", "emerald" }) do
         rows[#rows + 1] = {
           version = version,
           authored = authored,
+          chained = chained,
           terrain = terrain,
           item = itemNumber,
           used = used,
