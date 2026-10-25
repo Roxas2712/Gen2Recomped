@@ -21,7 +21,7 @@ function love.load()
   for _,row in ipairs(expected)do
    local native,def=maps:nativeId(row.id);assert(native,def)
    local descriptor,why=binding:descriptor(def.tileset);assert(descriptor,why)
-   assert(descriptor.id==row.pair and descriptor.primary==row.primaryName and descriptor.secondary==row.secondaryName,'semantic pair differs')
+   assert(descriptor.id==row.pair and descriptor.primary==row.primaryName and descriptor.secondary==row.secondaryName and descriptor.tileset==row.tileset,'semantic pair differs')
    assert(binding:nativeId(row.pair)==def.tileset,'semantic pair does not resolve exact native owner')
    local p,s=data.map_tilesets[descriptor.primaryKey],data.map_tilesets[descriptor.secondaryKey]
    assert(p.address==row.primary and s.address==row.secondary,'wrong physical source pair')

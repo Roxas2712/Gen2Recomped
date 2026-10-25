@@ -6,7 +6,7 @@ for _,ed in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
  local defs,banks={},{}
  for i,row in ipairs(Names[ed])do
   count=count+1
-  local name,p,s=M.lookup(ed,row[1],row[2]);T.eq(name,row[3]);T.eq(p,row[4]);T.eq(s,row[5])
+  local name,p,s,alias=M.lookup(ed,row[1],row[2]);T.eq(name,row[3]);T.eq(p,row[4]);T.eq(s,row[5]);T.eq(alias,row[6])
   T.eq(M.lookup(ed,row[1],-1),nil);T.eq(M.lookup(ed,.5,row[2]),nil)
   local pk,sk='P'..i,'S'..i
   banks[pk]={address=row[1],secondary=false};banks[sk]={address=row[2],secondary=true}
@@ -17,7 +17,7 @@ for _,ed in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
   local key='NATIVE_'..i
   T.eq(binding:nativeId(row[3]),key);T.eq(binding:canonicalId(key),row[3])
   local a,b=binding:descriptor(key),binding:descriptor(row[3])
-  T.eq(a.id,b.id);T.eq(a.primary,row[4]);T.eq(a.secondary,row[5])
+  T.eq(a.id,b.id);T.eq(a.primary,row[4]);T.eq(a.secondary,row[5]);T.eq(a.tileset,row[6])
   a.id='EDIT';T.eq(binding:descriptor(key).id,row[3],'descriptor edits cannot corrupt binding')
   T.eq(defs[key].primaryKey,'P'..i,'binding does not mutate native pair')
  end

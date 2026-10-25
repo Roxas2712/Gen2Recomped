@@ -13,7 +13,7 @@ local rows={}
 for _,id in ipairs(registered)do
  local e=byId[id];local spec=assert(Versions.MAPS[id]);local pair=assert(Versions.TILESET_PAIRS[spec.pair])
  local primary=assert(rom:ptrOffset(e.layout.primaryTilesetPtr));local secondary=assert(rom:ptrOffset(e.layout.secondaryTilesetPtr))
- rows[#rows+1]={id=id,primary=primary,secondary=secondary,pair=spec.pair,primaryName=pair.primary,secondaryName=pair.secondary}
+ rows[#rows+1]={id=id,primary=primary,secondary=secondary,pair=spec.pair,primaryName=pair.primary,secondaryName=pair.secondary,tileset=Versions.PAIR_TILESET[spec.pair]}
 end
 local file=assert(io.open(out,'w'));file:write(require('src.link.Json').encode(rows));file:close()
 print('PAIR_IDENTITIES',edition,#rows)
