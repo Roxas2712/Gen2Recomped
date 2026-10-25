@@ -2,12 +2,14 @@
 """Compile and exercise the real Swift/Java step journal storage sources."""
 # Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 import argparse
+import atexit
 import hashlib
 import json
 import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 import time
 import uuid
 import zipfile
@@ -32,6 +34,7 @@ def main():
     p.add_argument('--lua',type=Path,required=True)
     p.add_argument('--love',type=Path,required=True)
     p.add_argument('--output',type=Path)
+    p.add_argument('--qa-tools',type=Path,help='directory containing local qa_storage helpers')
     args=p.parse_args()
     # Swift dispatches by argv[0]; resolving swiftc to swift-frontend changes it.
     swift=args.swiftc.expanduser().absolute();java=args.java_home.resolve(strict=True)
@@ -47,7 +50,11 @@ def main():
     run=subprocess.run
     profile=None
     if not os.getenv('GITHUB_ACTIONS'):
-        from qa_storage import qa_source,qa_cache,qa_copy,qa_profile,qa_run
+        if args.qa_tools:sys.path.insert(0,str(args.qa_tools.resolve(strict=True)))
+        from qa_storage import Storage
+        manager=Storage(ROOT);atexit.register(manager.close)
+        qa_source,qa_cache,qa_copy=manager.source,manager.cache,manager.copy
+        qa_profile,qa_run=manager.destination,manager.run
         for source in (ROOT,swift,java,jar,sdk,lua,love):qa_source(source)
         if ios:qa_source(ios)
         qa_cache(output.parent);qa_copy(output)

@@ -62,3 +62,7 @@ receipt publication in a real isolated LÖVE filesystem. The Java host test uses
 a POSIX rename shim; its JSON dependency is checksum pinned. Sensor accuracy,
 OS authorization UI, complete Android JNI packaging, background suspension and
 physical iPhone/Android acceptance require native build/device checks.
+
+For a local qualification pass the Swift compiler, macOS SDK, optional iOS SDK,
+JDK, pinned JSON jar, Lua and LÖVE paths to the tool. Local runs use `qa_storage`;
+`--qa-tools` selects an external helper directory when the checkout has none.

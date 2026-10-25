@@ -33,7 +33,7 @@ jobs:
         run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platforms;android-34" "build-tools;34.0.0" "ndk;25.2.9519653"'
       - name: Compile the Android sensor bridge and native Lua binding
         working-directory: mobile/android
-        run: ./gradlew --no-daemon :love:compileEmbedDebugJavaWithJavac :love:externalNativeBuildEmbedDebug
+        run: bash ./gradlew --no-daemon :love:compileEmbedDebugJavaWithJavac :love:externalNativeBuildEmbedDebug
   native-journals:
     runs-on: macos-15
     timeout-minutes: 20
