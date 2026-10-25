@@ -489,6 +489,7 @@ local function dismissBootReport()
 end
 
 function love.load(args)
+  require('src.storage.AccountStorage').enable()
   BootTrace.mark("love.load enter")
   GraphicsStack.install()
   require("src.render.LegacyShaderCompat").install()

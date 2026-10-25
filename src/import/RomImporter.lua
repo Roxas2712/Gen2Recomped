@@ -4570,6 +4570,7 @@ end
 -- is visible.  Requires the ROM to be imported first, since a save is only
 -- playable with its game's data present.
 function RomImporter:_importSave(version, source)
+  if not require('src.storage.AccountStorage').requireUI(self,'storage') then return end
   if self.workState == "working" then return end
   if GameVersion.VERSIONS[self.tab] or self.tab == "mods" then
     self.tab = version
@@ -11892,5 +11893,6 @@ require("src.import.DeveloperWorkspace").install(RomImporter)
 require("src.import.AccountWorkspace").install(RomImporter)
 require("src.import.ResumeWorkspace").install(RomImporter)
 require("src.import.SaveHistoryWorkspace").install(RomImporter)
+require("src.storage.AccountStorage").install(RomImporter)
 
 return RomImporter

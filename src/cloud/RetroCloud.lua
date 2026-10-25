@@ -26,11 +26,20 @@ local function save(value)
 end
 function R.signedIn() local value=load();return value and (tonumber(value.expires) or 0)>os.time() or false end
 function R.account() local value=load();return value and value.email end
+function R.accountId() local value=load();return value and value.accountId end
+function R.acceptAccount(doc)
+  local value=load()
+  if not value or type(doc.account_id)~='string' or #doc.account_id>20 or not doc.account_id:match('^[1-9][0-9]*$') then return nil,'Account identity unavailable. Sign in again.' end
+  value.accountId=doc.account_id
+  if type(doc.email)=='string' then value.email=doc.email end
+  return save(value)
+end
 function R.acceptConnection(doc)
   if type(doc)~='table' or type(doc.access_token)~='string' or #doc.access_token~=64
     or not doc.access_token:match('^[a-f0-9]+$') or type(doc.expires_in)~='number'
     or doc.expires_in<120 or doc.expires_in>90*86400 or type(doc.email)~='string' then return nil,'Invalid device connection.' end
-  local ok,why=save({access=doc.access_token,expires=os.time()+doc.expires_in-60,email=doc.email})
+  local accountId=type(doc.account_id)=='string' and #doc.account_id<=20 and doc.account_id:match('^[1-9][0-9]*$') and doc.account_id or nil
+  local ok,why=save({access=doc.access_token,expires=os.time()+doc.expires_in-60,email=doc.email,accountId=accountId})
   if not ok then return nil,'Could not store the device connection: '..tostring(why) end
   return true
 end
@@ -76,6 +85,7 @@ end
 function R.open()
   local token,why=R.accessToken()
   if not token then return nil,why end
+  local accountId,email=R.accountId(),R.account()
   local status,doc=document('GET','/objects',nil,token)
   if status~=200 or not (doc and type(doc.objects)=='table') then
     return nil,'Cloud listing failed ('..tostring(status or 'offline')..').'
@@ -84,7 +94,7 @@ function R.open()
   for _,object in ipairs(doc.objects) do
     if type(object.path)=='string' and type(object.revision)=='string' then revisions[object.path]=object.revision end
   end
-  local store={kind='retro',label='RetroRecomped Cloud',profileScope='retro:'..tostring(R.account() or ''):lower()}
+  local store={kind='retro',label='RetroRecomped Cloud',accountId=accountId,profileScope='retro:'..tostring(email or ''):lower()}
   function store.list(directory)
     local prefix=directory..'/'
     local result={}

@@ -4,7 +4,7 @@ local Json=require('src.link.Json')
 local n=0;local function check(v,m) assert(v,m);n=n+1 end
 local token,accepted,expired
 package.loaded['src.cloud.RetroCloud']={API='https://pokexpert.de/api/cloud/v1',accessToken=function() return token end,
-  acceptConnection=function(doc) accepted=doc.access_token;return true end,expire=function() expired=true end}
+  acceptConnection=function(doc) accepted=doc.access_token;return true end,acceptAccount=function(doc) return doc.account_id=='17' end,expire=function() expired=true end}
 love.system={getOS=function() return 'OS X' end}
 local response={version='test-policy'};local code=200;local sent
 package.loaded['src.cloud.Http']={request=function(m,u,o) sent={method=m,url=u,opts=o};return code,Json.encode(response) end}
@@ -20,7 +20,7 @@ code=422;response={errors={password={'Choose a longer password.'}}}
 local _,why=A.reset(string.rep('a',64),'12345678','short','short');check(why=='Choose a longer password.','validation feedback is readable inside the launcher')
 code=500;response={message='private exception contents'};_,why=A.forgot('fixture@example.test')
 check(not why:find('private',1,true),'server exception details do not reach the account UI')
-code=200;response={devices={}};token='my-device-token'
+code=200;response={devices={},account_id='17'};token='my-device-token'
 check(A.devices() and sent.opts.headers.Authorization=='Bearer my-device-token','the device list uses the existing cloud identity')
 local before=sent;check(not A.revoke('../other') and sent==before,'invalid device identifiers never become request paths')
 code=401;response={message='Reconnect'};check(not A.devices() and expired,'expired sessions return to native sign-in')

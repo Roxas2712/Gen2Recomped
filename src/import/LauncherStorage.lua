@@ -4,6 +4,7 @@ local Versions=require('src.core.GameVersion')
 local Task=require('src.cloud.Task')
 function Storage.install(RI)
   function RI:_storageSync(version,slot)
+    if not require('src.storage.AccountStorage').requireUI(self,'storage') then return end
     if self._storageTask then self.settingsNotice='Cloud sync is already running.';return end
     if self._profileApplying then self.settingsNotice='Finish the mod profile transfer before syncing again.';return end
     local list={}
@@ -23,7 +24,7 @@ function Storage.install(RI)
       if not result then return nil,problem end
       local message='Cloud sync: '..Cloud.describe(result)
       local ok,Bank=pcall(require,'src.storage.PokemonBank')
-      if ok then
+      if ok and require('src.cloud.RetroCloud').signedIn() then
         local synced,bankWhy=Bank.sync(target)
         if not synced then return nil,bankWhy end
         message=message..' · Bank '..tostring(synced)..' entries.'
