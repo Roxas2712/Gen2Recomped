@@ -166,6 +166,8 @@ function LauncherMods.deriveList(manifests, options)
       -- the player had no way to reach one.
       optionsSchema = m.options_schema,
       version = m.version,
+      api = m.api,
+      game_version = m.game_version,
       badge = badge,
       description = m.description or "",
       enabled = enabled,
