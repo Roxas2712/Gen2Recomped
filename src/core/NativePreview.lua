@@ -1,5 +1,15 @@
 -- Activated only by the generated preview payload, never by a normal build.
 local M = {}
+function M.runtimeSupported(osName, major, minor)
+  if type(major) ~= "number" or type(minor) ~= "number" then return false end
+  if major >= 12 then return true end
+  return (osName == "Android" or osName == "NX") and major == 11 and minor >= 5
+end
+function M.checkRuntime()
+  local major, minor = love.getVersion()
+  assert(M.runtimeSupported(love.system.getOS(), major, minor),
+    "Use the preview runtime supplied for this platform")
+end
 function M.activate(identity)
   assert(type(identity)=="string" and identity:match("^Gen2Recomp%-NativePreview%-%d+%-%d+$"),"invalid preview identity")
   assert(not M.identity or M.identity==identity,"preview identity changed")

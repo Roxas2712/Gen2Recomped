@@ -27,5 +27,6 @@ retro_overlay cloud_running_slot developer_account developer_workspace native_ac
 account_workspace private_http developer_projects mod_profile_recovery retro_overlay_main
 window_frame window_frame_async portable_input_hooks touch_orientation_bug633
 save_resume resume_workspace save_resume_capture save_resume_slot save_history_workspace'''.split()
+suites.append('native_preview')
 for suite in suites:
     qa_run([runtime, str(root / 'tests/engine' / (suite + '.lua'))], cwd=root, check=True)

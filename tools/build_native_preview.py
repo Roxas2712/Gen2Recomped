@@ -16,7 +16,7 @@ def verify_payload(path,engine_version=None):
    if p.suffix.lower()in ('.gb','.gbc','.gba','.sav','.srm','.bak'):raise ValueError('private ROM/save content')
    if 'generated'in p.parts or 'baseroms'in p.parts or p.name=='rom-cache.complete':raise ValueError('generated game content')
    if name.startswith('mods/')or name in ('options.lua','save.lua','cloud_clients.lua'):raise ValueError('non-preview content')
-  for f in ('main.lua','conf.lua','src/preview/main.lua','src/preview/conf.lua','src/core/NativePreview.lua'):
+  for f in ('main.lua','conf.lua','src/preview/main.lua','src/preview/conf.lua','src/preview/release.json','src/core/NativePreview.lua'):
    if f not in z.namelist():raise ValueError('missing preview entry: '+f)
   if engine_version is not None:
    version=z.read('src/core/Version.lua').decode('utf-8')
@@ -60,7 +60,8 @@ def main():
   with tarfile.open(fileobj=io.BytesIO(archive))as t:t.extractall(source,filter='data')
   preview=source/'src/preview';preview.mkdir();(source/'main.lua').rename(preview/'main.lua');(source/'conf.lua').rename(preview/'conf.lua')
   (source/'conf.lua').write_text('local P=require("src.core.NativePreview");P.activate('+json.dumps(identity)+')\nassert(love.filesystem.load("src/preview/conf.lua"))()\nlocal configure=love.conf\nfunction love.conf(t)configure(t);t.identity=P.identity;t.window.title="Gen2Recomped Native Preview" end\n')
-  (source/'main.lua').write_text('require("src.core.NativePreview").prepare()\nassert(love.getVersion()>=12,"Use the bundled LOVE12 runtime for this preview")\nassert(love.filesystem.load("src/preview/main.lua"))()\n')
+  (source/'main.lua').write_text('local P=require("src.core.NativePreview")\nP.checkRuntime()\nP.prepare()\nassert(love.filesystem.load("src/preview/main.lua"))()\n')
+  (preview/'release.json').write_text(json.dumps(dict(sourceCommit=ref,releaseId=a.release_id,engineVersion=a.engine_version,previewIdentity=identity),sort_keys=True)+'\n')
   payload=out/'Gen2Recomped-NativePreview.love'
   subprocess.run(['bash',str(source/'scripts/pack_love.sh'),'--engine-only','--version',a.engine_version,'--output',str(payload)],check=True,stdout=subprocess.DEVNULL)
   normalize_zip(payload);verify_payload(payload,a.engine_version)
@@ -90,6 +91,6 @@ def main():
     cmd=stage/(backend+'-Test.command');cmd.write_text('#!/bin/sh\ncd "$(dirname "$0")"\nexport POKEPORT_GRAPHICS_BACKEND='+backend.lower()+'\nexec "./Gen2Recomped-NativePreview.app/Contents/MacOS/love" "$@"\n');cmd.chmod(0o755)
    target=out/f'Gen2Recomped-NativePreview-{a.release_id}-macos.zip';subprocess.run(['ditto','-c','-k','--norsrc','--noextattr','--noacl','--keepParent',str(stage),str(target)],check=True)
    verify_mac_archive(target)
-  metadata=dict(engineVersion=a.engine_version,sourceCommit=ref,runtimeCommit=RUNTIME_COMMIT,runtimeArtifact=runtime['id'],runtimeSha256=runtime['sha256'],platform=a.platform,previewIdentity=identity,payloadSha256=sha(payload),archiveSha256=sha(target),modsIncluded=False,modsEnabled=True,legacyMigration=False,automaticInstallation=False)
+  metadata=dict(engineVersion=a.engine_version,sourceCommit=ref,runtimeCommit=RUNTIME_COMMIT,runtimeArtifact=runtime['id'],runtimeSha256=runtime['sha256'],platform=a.platform,previewIdentity=identity,payloadSha256=sha(payload),archiveSha256=sha(target),archive=target.name,buildVerified=True,launchVerified=False,realDeviceVerified=False,extendedUpvaluesQualified=False,modsIncluded=False,modsEnabled=True,legacyMigration=False,automaticInstallation=False)
   (out/'build.json').write_text(json.dumps(metadata,indent=2)+'\n');print(json.dumps(metadata))
 if __name__=='__main__':main()
