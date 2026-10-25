@@ -48,4 +48,9 @@ options.mods={};local new=P.plan({engine=V.engine,mods={}}, {}, {generation=2,re
 check(P.accept(new) and G.active(options.mods.new,2)==true and G.active(options.mods.new,1)==false,'a newly installed package activates only for the restored game generation')
 local forced={id='one',version='1.0.0',github='author/one',supportedGens={2}}
 check(not R.assess({meta={resume=assert(R.capture('red',{loaded[1]},options))}},'red',{forced},options).plan,'save restore cannot silently force a package into an unsupported generation')
+local missingAssets={id='one',version='1.0.0',github='author/one',missingImports={{id='base'}}}
+local portableSave={meta={resume=assert(R.capture('red',{loaded[1]},options))}}
+check(not R.assess(portableSave,'red',{missingAssets},options).plan,'required private asset imports are never treated as downloadable mod packages')
+missingAssets.missingImports=nil;missingAssets.game_version='>=99.0.0'
+check(not R.assess(portableSave,'red',{missingAssets},options).plan,'an incompatible installed package cannot be silently enabled for resume')
 print('Save resume requirements: '..n..' checks passed')

@@ -70,6 +70,13 @@ function M.tick(self)
       state.download=nil;state.bytes=0;state.total=nil;state.cursor=state.cursor+1;state.stage='resolve'
     else stop(self,'Mod download failed: '..tostring(result.error or 'cancelled'));return end
   elseif state.stage=='backup' then
+    local pending=state.plan.resume and self._resumeRestore
+    if pending then
+      local snapshot=Saves.peekSlot(pending.version,pending.slot)
+      if Saves.activeSlot(pending.version)~=pending.slot or not snapshot or require('src.storage.SaveResume').fingerprint(snapshot)~=pending.fingerprint then
+        stop(self,'The selected save changed during download. Choose Play again.');return
+      end
+    end
     if not Profile.unchanged(state.plan,Packages.list(),Saves.loadOptions()) then stop(self,'Local mods changed while downloading. Sync again.');return end
     local ids={};for _,file in ipairs(state.files) do ids[#ids+1]=file.id end
     local backup,why=Packages.backupProfile(ids)

@@ -7,6 +7,7 @@ local Version=require('src.core.Version')
 local Games=require('src.core.GameVersion')
 local Gens=require('src.mods.ModGens')
 local Profile=require('src.mods.ModProfiles')
+local Semver=require('src.mods.Semver')
 local function id(value) return type(value)=='string' and #value<=128 and value:match('^[%w_%-][%w_.%-]*$') and not value:find('..',1,true) end
 local function text(value) return type(value)=='string' and #value>0 and #value<=80 and not value:find('[%c]') end
 local function integer(value,limit) return type(value)=='number' and value%1==0 and value>=0 and value<=limit end
@@ -87,6 +88,12 @@ function R.assess(save,version,installed,options)
     local unsupported=have and not Gens.permits({generations=have.supportedGens or have.generations},options.mods and options.mods[wanted.id],generation)
     local row={id=wanted.id,version=wanted.version,status=mismatch and (wanted.repo and 'download' or 'manual') or not enabled and 'enable' or 'ready'}
     if wanted.api>Version.modApi then row.status='manual';report.blocked=true end
+    if have and (type(have.api)=='number' and have.api>Version.modApi or have.game_version and not Semver.satisfies(Version.engine,have.game_version)) then
+      row.status='manual';row.detail='This installed package does not support the current engine.'
+    end
+    if have and (have.missingImports and next(have.missingImports) or have.missingGames and next(have.missingGames)) then
+      row.status='manual';row.detail='Import this mod’s required local files or games in the mod manager.'
+    end
     if unsupported then row.status='manual';row.detail='Enable the generation override manually in Mods if you intend to use it.' end
     if row.status=='manual' then canRestore=false end
     if row.status~='ready' then report.needsReview=true end

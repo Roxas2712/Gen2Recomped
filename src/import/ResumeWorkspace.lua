@@ -18,16 +18,19 @@ local function unchanged(self,f)
   if not current or current.fingerprint~=f.fingerprint then return nil,why or 'This save changed while it was being reviewed. Choose Play again.' end
   return current
 end
-local function open(self,version,slot,snapshot)
-  local installed=Packages.list();local options=Saves.loadOptions()
-  local ok,report=pcall(Resume.assess,snapshot.save,version,installed,options)
-  if not ok then report={blocked=true,needsReview=true,rows={},problems={'Save requirements could not be read. Restore a known good copy before playing.'}} end
+local function open(self,version,slot,snapshot,report)
+  if not report then
+    local ok,result=pcall(Resume.assess,snapshot.save,version,Packages.list(),Saves.loadOptions())
+    report=ok and result or {blocked=true,needsReview=true,rows={},problems={'Save requirements could not be read. Restore a known good copy before playing.'}}
+  end
   self._resumeOverlay={version=version,slot=slot,fingerprint=snapshot.fingerprint,report=report,scroll=0,rects={},padIndex=2}
 end
 function W.close(self) self._resumeOverlay=nil end
 function W.action(self,id)
   local f=self._resumeOverlay;if not f then return end
   if id=='close' then W.close(self);return end
+  if id=='mods' then W.close(self);self:_sbGo('mods');self:_refreshMods();return end
+  if id=='account' then W.close(self);self:_openAccount();return end
   if self._storageTask or self._profileApplying or self._communityDownload then f.notice='Finish the current transfer first.';return end
   local snapshot,why=unchanged(self,f)
   if not snapshot then f.notice=why;f.stale=true;return end
@@ -55,10 +58,7 @@ function W.action(self,id)
     W.close(self)
     self._resumeBypass={version=version,slot=copy,fingerprint=copied.fingerprint,localHash=Profile.fingerprint(Packages.list(),Saves.loadOptions())}
     self:play(version)
-  elseif id=='mods' then
-    W.close(self);self:_sbGo('mods');self:_refreshMods()
-  elseif id=='account' then
-    W.close(self);self:_openAccount()
+
   end
 end
 function W.tick(self)
@@ -69,7 +69,7 @@ function W.tick(self)
   if not snapshot then notice(self,why);return end
   local report=Resume.assess(snapshot.save,pending.version,Packages.list(),Saves.loadOptions())
   if report.needsReview then
-    open(self,pending.version,pending.slot,snapshot)
+    open(self,pending.version,pending.slot,snapshot,report)
     self._resumeOverlay.notice=report.engineMismatch and 'Mod choices restored. Review the engine version before continuing on a copy.' or 'Restore incomplete. Your original save is preserved; review the remaining requirements.'
   else self:play(pending.version) end
 end
@@ -153,7 +153,7 @@ function W.install(RI)
         if bypass and bypass.version==version and bypass.slot==slot and bypass.fingerprint==snapshot.fingerprint
           and bypass.localHash==Profile.fingerprint(Packages.list(),Saves.loadOptions()) then return play(self,version,...) end
         local ok,report=pcall(Resume.assess,snapshot.save,version,Packages.list(),Saves.loadOptions())
-        if not ok or report.needsReview then open(self,version,slot,snapshot);return end
+        if not ok or report.needsReview then open(self,version,slot,snapshot,ok and report or nil);return end
       end
     end
     return play(self,version,...)
