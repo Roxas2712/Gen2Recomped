@@ -47,6 +47,7 @@ local function bootScreens(game)
 end
 
 function Game:load()
+  self.nativeStackReady = false
   self.pointerOwners={}
   self.modPointers={}
   self.secondScreenPointerOwner=nil
@@ -159,6 +160,7 @@ function Game:load()
   -- its party-follower bridge reads `game.world` the same way.  The metatable
   -- costs nothing, keeps `payload.game` working for everyone who reads it the
   -- documented way, and adds no keys -- `pairs(payload)` is unchanged.
+  self.nativeStackReady = true
   ModRuntime.emit("game.ready",
     setmetatable({ game = self }, { __index = self }))
 
