@@ -318,7 +318,8 @@ local function frameOf(win, fallback)
   return {
     tx = math.max(0, left - 1), ty = math.max(0, top - 1),
     tw = math.floor(win.width) + 2, th = math.floor(win.height) + 2,
-    textX = left * 8, row1 = top * 8, row2 = top * 8 + 16,
+    textX = left * 8, row1 = top * 8 + (GameVersion.isFRLG() and 2 or 0),
+    row2 = top * 8 + 16 + (GameVersion.isFRLG() and 2 or 0),
     cols = math.floor(win.width),
   }
 end
@@ -360,9 +361,14 @@ function Gen3Battle.windows(battle)
   -- that edge; the prompt starts on tile 0 and the four move slots sit
   -- against the left, so neither moves at all.
   local msg = frameOf(rec.message, nil)
+  local prompt = frameOf(rec.prompt, message)
+  if GameVersion.isFRLG() then
+    if msg then msg.textX = msg.textX + 2 end
+    if rec.prompt and prompt then prompt.textX = prompt.textX + 2 end
+  end
   return {
     message = msg and spanBox(msg, battle) or message,
-    prompt = frameOf(rec.prompt, message),
+    prompt = prompt,
     action = shiftBox(frameOf(rec.action, message), battle),
     moves = moves,
   }
@@ -381,9 +387,9 @@ function Gen3Battle.strip(battle)
   return spanBox({
     tx = math.max(0, left - 1), ty = math.max(0, top - 1),
     tw = w + 2, th = h + 2,
-    textX = left * 8,
-    row1 = top * 8,
-    row2 = top * 8 + 16,
+    textX = left * 8 + (GameVersion.isFRLG() and 2 or 0),
+    row1 = top * 8 + (GameVersion.isFRLG() and 2 or 0),
+    row2 = top * 8 + 16 + (GameVersion.isFRLG() and 2 or 0),
     cols = w,
   }, battle)
 end
@@ -1886,6 +1892,13 @@ end
 -- The selection arrow: the cartridge's own two tiles when the import has
 -- them, and the font's marker when it does not.
 local function drawArrow(battle, x, y)
+  -- FRLG Menu_InitCursor prints gText_SelectorArrow2 (0xEF) from FONT_NORMAL.
+  -- The old ripped textbox tile includes its opaque paper/teal background,
+  -- which becomes a white rectangle when a mod replaces the panel skin.
+  if GameVersion.isFRLG() then
+    Font.drawCode(0xEF, x, y)
+    return
+  end
   local record = Gen3Battle.textbox(battle)
   local path = record and record.images and record.images.cursor
   if type(path) == "string" then
@@ -2061,8 +2074,22 @@ local function drawMoveDetails(battle, move, panelDrawn)
   local maxPP = def.pp + (move.ppUps or 0) * math.floor(def.pp / 5)
   local x = (tx + 1) * 8
   shadowed(battle, "menu", function(dx, dy)
-    Font.draw(("PP %2d/%2d"):format(move.pp or 0, maxPP), x + dx, s.row1 + dy)
-    Font.draw(fitName(TypeChart.displayName(def.type), 56), x + dx, s.row2 + dy)
+    if GameVersion.isFRLG() then
+      local small = Font.pushFace("small")
+      local ok, err = pcall(Font.draw, "PP", x + dx, s.row1 + dy)
+      if small then Font.popFace() end
+      if not ok then error(err) end
+      Font.draw(("%2d/%2d"):format(move.pp or 0, maxPP), x + 34 + dx, s.row1 + dy)
+      small = Font.pushFace("small")
+      ok, err = pcall(function()
+        Font.draw(fitName(TypeChart.displayName(def.type), 56), x + dx, s.row2 + dy)
+      end)
+      if small then Font.popFace() end
+      if not ok then error(err) end
+    else
+      Font.draw(("PP %2d/%2d"):format(move.pp or 0, maxPP), x + dx, s.row1 + dy)
+      Font.draw(fitName(TypeChart.displayName(def.type), 56), x + dx, s.row2 + dy)
+    end
   end)
 end
 
@@ -2091,6 +2118,10 @@ local function drawMoveGrid(battle, moves, selected)
     return { textX = s.textX + (col == 0 and 8 or 88),
              row1 = s.row1 + row * 16 }
   end
+  -- FireRed's MoveSelectionDisplayMoveNames uses FONT_SMALL. Measure in
+  -- that same face: fitting in normal and drawing small still truncates names.
+  local small = GameVersion.isFRLG() and Font.pushFace("small")
+  local ok, err = pcall(function()
   shadowed(battle, "menu", function(dx, dy)
     for i, move in ipairs(moves or {}) do
       local slot = slotAt(i)
@@ -2099,6 +2130,9 @@ local function drawMoveGrid(battle, moves, selected)
                 slot.textX + dx, slot.row1 + dy)
     end
   end)
+  end)
+  if small then Font.popFace() end
+  if not ok then error(err) end
   local chosen = slotAt(selected)
   drawArrow(battle, chosen.textX - 8, chosen.row1)
   drawMoveDetails(battle, moves and moves[selected], panelDrawn)
