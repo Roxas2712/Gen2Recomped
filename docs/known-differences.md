@@ -41,7 +41,7 @@ functional in the original game. The door layout lives in
 since no retail ROM data encodes it; `src/import/RomExtractor.lua` copies
 it straight through on ROM import.
 
-## Fork fixture fingerprint baseline (2026-10-24)
+## Historical fork fixture fingerprint baseline (2026-10-24)
 
 The initial fork commit retained fixture golden `7de3051a7b3c108e`, but its
 actual no-mod runtime already produces `41e69caf4afa35ab`. The same mismatch
@@ -49,7 +49,7 @@ exists on main `13af468b97dc37015d14ad5c71d7f067c3ee810d`, before the native
 renderer foundation. The initial import contains no older canonical input
 for the stale hash, so its exact historical record delta cannot be recovered.
 
-The current fixture's reviewed link surface includes three synthetic species,
+That checkpoint's reviewed link surface includes three synthetic species,
 four synthetic moves, fifteen type categories, five statuses and 198 native
 move-effect records, including the intended Gen2/Gen3 additions registered by
 `MoveEffects` (`RETURN_EFFECT`, `WISH_EFFECT`, `YAWN_EFFECT`, among others).
@@ -67,3 +67,26 @@ revisions alongside the previous battle-data mutations. The deliberate
 This correction changes no game data, runtime hash algorithm or current link
 handshake. No ROM, imported-data or screenshot golden is regenerated. Future
 battle-content changes must review the pinned input delta as well as the hash.
+## Native GBA Beat Up party damage
+
+Beat Up now reads each healthy party member's level/species base Attack
+and target species base Defense, with per-hit native critical/variation
+rolls, live callback eligibility, Substitute continuation and last-strike
+special counter memory. The effect revision intentionally changes the link
+fingerprint; see [the contract and remaining acceptance](native-gba-beat-up.md).
+
+## Native GBA Beat Up shared side parties
+
+Beat Up now reads the entire side party in two-trainer and player/ally
+battles, retaining live slot replacement and the active user's HP/status.
+Replacement benches remain owned separately. The reviewed effect revision
+changes the link fingerprint; see [contract coverage and remaining scope](native-gba-beat-up-side-parties.md).
+
+## Native GBA critical context and hit metadata
+
+Critical exclusions now preserve native draw order for first/tutorial battles
+and Teachy TV, including scripted Beat Up. Shared critical context fields,
+physical item/current-species stages, Lansat/Focus Energy behavior and GBA
+hit kind/Substitute metadata are covered by cross-engine contracts. The
+reviewed scripted effect revision changes the link fingerprint; see
+[verification and remaining scope](native-gba-critical-context.md).

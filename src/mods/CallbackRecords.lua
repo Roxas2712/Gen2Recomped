@@ -1,4 +1,5 @@
 local Api3Records = require("src.mods.Api3Records")
+local EnemyMoveChoice = require("src.battle.EnemyMoveChoice")
 -- A call-local transaction. Only known record roles cross this boundary;
 -- opaque engine handles (Game, battle, save, map, RNG, UI callbacks) stay native.
 local Ids = require("src.mods.UnifiedIds")
@@ -142,6 +143,7 @@ end
 
 function R.new(loader, name, generation, api3)
   local identityRoll = name == "shiny.roll" or name == "gender.roll"
+  local portableEnemyAction = api3 and generation == 3 and name == "battle.enemy_action"
   local ids = Ids.new(loader)
   local portable = api3 and Api3Records or nil
   local function readStatus(value)
@@ -227,7 +229,7 @@ function R.new(loader, name, generation, api3)
         level = raw.level,
         hp = raw.hp,
         maxHp = raw.stats and raw.stats.hp,
-        status = readStatus(raw.status),
+        status = portable and generation == 3 and raw.toxic == true and readStatus(raw.status) == "PSN" and "TOX" or readStatus(raw.status),
         isEgg = raw.isEgg == true,
         dvs = portable and generation ~= 3 and type(raw.dvs) == "table" and copy(raw.dvs) or nil,
         shiny = portable and portable.shiny(raw, generation),
@@ -305,6 +307,18 @@ function R.new(loader, name, generation, api3)
       return out
     end
     local out = shallow(raw)
+    local nativeAction = portableEnemyAction and kind == "action" and EnemyMoveChoice.nativeView(raw)
+    if nativeAction then
+      local def = moveDef(raw.id)
+      local number = def and tonumber(def.index or def.numId)
+      if not number and type(raw.id) == "number" then number = raw.id end
+      out.kind = raw.kind or "move"
+      out.move = raw.move ~= nil and raw.move or (raw.struggle and "STRUGGLE" or number)
+      out.slot = raw.slot or nativeAction.slot
+      out.user = raw.user or "enemy"
+      out.battler = raw.battler ~= nil and raw.battler or nativeAction.battler
+      out.targetType = raw.targetType or (nativeAction.double and (tonumber(def and def.target) or 0)) or nil
+    end
     for k, v in pairs(raw) do
       local role = recordRoles[k]
       if identityRoll and k == "def" then role = "identitySpecies" end
@@ -320,12 +334,16 @@ function R.new(loader, name, generation, api3)
       if name == "pokemon.before_give" and k == "ctx" then
         role = nil
       end
-      if k == "status" then
+      if nativeAction and k == "move" then
+        out[k] = v
+      elseif k == "status" then
         out[k] = readStatus(v)
       elseif k == "move" and type(v) ~= "table" then
         out[k] = read("moves", v)
       elseif kind == "action" and k == "id" and not raw.special then
         out[k] = read("moves", v)
+      elseif name == "held_item.trigger" and generation == 3 and kind == "context" and k == "item" and v == 0 then
+        out[k] = 0 -- Native empty-hand sentinel; it is not a content item ID.
       elseif idRoles[k] and type(v) ~= "table" then
         out[k] = read(idRoles[k], v)
       elseif role and type(v) == "table" then
@@ -346,6 +364,16 @@ function R.new(loader, name, generation, api3)
           end
           refresh()
           return unpack(result, 2, result.n)
+        end
+      end
+    end
+    if portableEnemyAction and kind == "action" then
+      for _, key in ipairs({ "move", "id" }) do
+        local authored, unchanged, known = EnemyMoveChoice.publicReference(raw, key)
+        if unchanged then out[key] = authored
+        elseif known and key == "move" then
+          local def = moveDef(raw[key])
+          out[key] = def and tonumber(def.index or def.numId) or raw[key]
         end
       end
     end
@@ -475,6 +503,12 @@ function R.new(loader, name, generation, api3)
     return out
   end
   restore = function(value, kind, original)
+    -- GBA enemy-action normalization accepts scalar move choices and false
+    -- fallback. Other record boundaries keep their existing validation.
+    if name == "battle.enemy_action" and generation == 3 and kind == "action"
+        and (type(value) == "string" or type(value) == "number" or value == false) then
+      return value
+    end
     if type(value) ~= "table" then
       assert(
         value == nil or (kind == "encounter" and value == false),
@@ -579,6 +613,16 @@ function R.new(loader, name, generation, api3)
             v = integer(v, 1, 65535, key)
           elseif key == "status" then
             v = writeStatus(v, raw.status)
+            if portable and generation == 3 then
+              local toxic = v == "TOX"
+              stage(raw, "toxic", toxic or nil)
+              for _, parent in ipairs(entries) do
+                if parent.kind == "battler" and parent.raw.mon == raw then
+                  stage(parent.raw, "toxicCounter", toxic and 1 or nil)
+                end
+              end
+              if toxic then v = "PSN" end
+            end
           elseif key == "nickname" then
             assert(v == nil or type(v) == "string", "nickname must be a string")
           elseif key == "isEgg" then
@@ -703,6 +747,21 @@ function R.new(loader, name, generation, api3)
           if v ~= before[k] then
             stage(raw, k, restored)
           end
+        elseif portableEnemyAction and kind == "action" and not value.special
+            and (k == "move" or k == "id") and v ~= before[k] then
+          local known = type(v) == "string" and ids:resolve("moves", v)
+          local converted = known and native("moves", v, old) or v
+          stage(raw, k, converted)
+          pending[#pending + 1] = function()
+            EnemyMoveChoice.rememberReference(raw, k, v, converted)
+          end
+        elseif kind == "action" and name == "battle.enemy_action" and generation == 3
+            and not value.special and (k == "move" or k == "id") and v ~= before[k]
+            and (type(v) == "number" or type(v) == "string") then
+          local known = type(v) == "string" and ids:resolve("moves", v)
+          -- Keep canonical IDs native inside nested callbacks. Numeric and
+          -- alternate name spellings are resolved by the actual producer.
+          stage(raw, k, known and native("moves", v, old) or v)
         elseif k == "move" and type(v) ~= "table" and v ~= before[k] then
           stage(raw, k, native("moves", v, old))
         elseif kind == "action" and k == "id" and not value.special and v ~= before[k] then

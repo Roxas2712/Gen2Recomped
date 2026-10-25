@@ -432,7 +432,7 @@ function HoldItems.trigger(battler, when)
              consume = true }
   end
   if effect == "CRITICAL_UP" then
-    if mon.hp * divisor > max or (gba and battler.focusEnergy) then return nil end
+    if mon.hp * divisor > max or (gba and (battler.focusEnergy or battler.expFocusEnergy)) then return nil end
     return { kind = "critUp", effect = effect, delta = 2, consume = true }
   end
   return nil

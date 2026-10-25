@@ -1,5 +1,6 @@
 local Api3Catalog = require("src.mods.Api3Catalog")
 local Records = require("src.mods.CallbackRecords")
+local EnemyActionContext = require("src.battle.EnemyActionContext")
 local Ids = require("src.mods.UnifiedIds")
 local C = {}
 local unpack = table.unpack or unpack
@@ -156,13 +157,16 @@ function C.install(loader, api, owner, generation)
       assert(type(callback) == "function", "hook callback must be a function")
       return loader.hooks:wrap(name, function(nextFn, ...)
         local boundary = Records.new(loader, name, generation, api3)
-        local roles = positions[name] or {}
+        local portableEnemy = api3 and generation == 3 and name == "battle.enemy_action"
+        local roles = portableEnemy and { false, "enemySlot" } or positions[name] or {}
         local function translate(args)
           local out = { n = args.n }
           for i = 1, args.n do
             local role = roles[i]
             local v = args[i]
-            if role == "items" or role == "moves" or role == "itemId" then
+            if role == "enemySlot" then
+              v = EnemyActionContext.publicId(args[1], v)
+            elseif role == "items" or role == "moves" or role == "itemId" then
               v = boundary.read(role == "itemId" and "items" or role, v)
             elseif role then
               v = boundary.view(v, role)
@@ -176,13 +180,18 @@ function C.install(loader, api, owner, generation)
           local out = { n = args.n }
           for i = 1, args.n do
             local role, v = roles[i], args[i]
-            if role == "items" or role == "moves" or role == "itemId" then
+            if role == "enemySlot" then
+              v = EnemyActionContext.nativeActor(args[1], v)
+            elseif role == "items" or role == "moves" or role == "itemId" then
               v = boundary.native(role == "itemId" and "items" or role, v, original[i])
             elseif role then
               local identity = api3 and (name == "shiny.roll" or name == "gender.roll")
               v = boundary.restore(v, role, identity and original[i] or nil)
             end
             out[i] = v
+          end
+          if portableEnemy and args.n < 2 then
+            out.n, out[2] = 2, EnemyActionContext.nativeActor(args[1], nil)
           end
           return out
         end
@@ -198,7 +207,11 @@ function C.install(loader, api, owner, generation)
               return rawArgs(args)
             end)
             called = true
-            downstream = pack(pcall(nextFn, unpack(raw, 1, raw.n)))
+            if portableEnemy then
+              downstream = pack(pcall(EnemyActionContext.call, raw[1], args[2], nextFn, unpack(raw, 1, raw.n)))
+            else
+              downstream = pack(pcall(nextFn, unpack(raw, 1, raw.n)))
+            end
             if downstream[1] then
               boundary.refresh()
               publicResult = pack(unpack(downstream, 2, downstream.n))

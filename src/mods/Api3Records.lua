@@ -48,6 +48,7 @@ function R.mon(out, data, gen)
     return out
   end
   out.status = R.status(out.status)
+  if gen == 3 and (out.native or {}).toxic == true and out.status == "PSN" then out.status = "TOX" end
   out.stats = R.stats(out.stats or {}, gen)
   local raw = out.native or {}
   local def = ((data or {}).pokemon or {})[raw.species or out.species] or {}

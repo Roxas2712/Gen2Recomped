@@ -18,7 +18,7 @@ local function gate(ctx)
     return false, Strings("%s's STURDY\nmade the move fail!", ctx.displayName(target))
   end
   local userLevel, targetLevel = tonumber(user.mon.level) or 1, tonumber(target.mon.level) or 1
-  if user.lockedOn == target and userLevel >= targetLevel then
+  if require("src.battle.Gen3LockOn").active(battle, user, target) and userLevel >= targetLevel then
     return true
   end
   local chance = (tonumber(ctx.move.accuracy) or 30) + userLevel - targetLevel

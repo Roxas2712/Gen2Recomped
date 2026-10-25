@@ -369,7 +369,7 @@ local function build(game, battle, covered, ids)
     local def = (data.moves or {})[move.id] or {}
     -- The three explicit guards used by BattleState's move selector. This
     -- is a local menu restriction, not a guarantee a move will execute.
-    row.disabled = actor.disabledSlot == slot
+    row.disabled = require("src.battle.Gen3Disable").blocked(actor, move, slot)
       or (move.pp or 0) <= 0
       or (actor.tauntTurns ~= nil and (def.power or 0) == 0)
       or (actor.tormented and actor.lastMove ~= nil and move.id == actor.lastMove)
