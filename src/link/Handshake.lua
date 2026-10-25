@@ -159,6 +159,7 @@ function Handshake.hello(game, mode)
     apiVersion = Version.modApi,
     fingerprint = Fingerprint.compute(game and game.data, mods),
     nativeBattleRevision = Fingerprint.nativeBattleRevision(),
+    nativePartyRevision = Fingerprint.nativePartyRevision(),
     linkModified = Handshake.linkModified(game),
     mods = mods,
   }
@@ -183,6 +184,9 @@ function Handshake.checkCompat(localHello, remoteHello)
   end
   if major(remoteHello.engineVersion) ~= major(localHello.engineVersion) then
     return "refused", "engine_mismatch"
+  end
+  if localHello.nativePartyRevision ~= remoteHello.nativePartyRevision then
+    return "refused", "native_party_codec_mismatch"
   end
   if remoteHello.fingerprint == localHello.fingerprint then
     return "full", nil
