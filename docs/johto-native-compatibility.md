@@ -25,7 +25,7 @@ ROMs or player saves are included in this repository or its releases.
 | Persistent Gen2 world and menu ownership | 33 ownership and 29 readiness checks; actual V/F6 input and upright menus on OpenGL/Metal | [draft #204](https://github.com/UNDERdecoded/Gen2Recomped/pull/204) |
 | Portable scripts and world actions on persistent worlds | 5,290 composed script checks and 2,778 action checks; independent existing branches also pass | Existing [#98](https://github.com/UNDERdecoded/Gen2Recomped/pull/98), [#94](https://github.com/UNDERdecoded/Gen2Recomped/pull/94) updated |
 
-The full ROM-free quick suite passes: 246 engine suites, three SDK suites and
+The current full ROM-free quick suite passes: 250 engine suites, three SDK suites and
 B30. Its native clock fixture was updated for the additional startup method;
 the existing independent logic-speed PR retains all 407 passing assertions.
 These checks do not establish complete gameplay, all maps or Windows GPU
@@ -58,10 +58,11 @@ same live COLL_* value and terrain permission as the native mover. Block
 changes, boundaries and the separate GBA blocking-bit contract also have
 ROM-free coverage. This does not enable the missing continuous movement chain.
 
-The interior probe can select both camera modes, but its First Person image
+At that earlier checkpoint the interior probe could select both camera modes, but its First Person image
 is largely black above a strip of floor. **Interior visuals are not accepted**
 from frame counters alone. Map IDs differ from the room profile keys expected by the supplied package.
-Tileset names have since been corrected; canonical map IDs remain open.
+Tileset names were corrected first. Automatic canonical map names and normal
+home traversal are now accepted for the two home rooms, as described below.
 
 Additional no-mod runs on OpenGL and Metal complete native New Game, walk
 through the bedroom staircase and the house exit into New Bark Town, and open
@@ -171,14 +172,14 @@ in upstream #211; the existing published `f0d37ae1` package remains the
 previous GPU-verified composition.
 
 The [diagnostic receipt](qa/native-foundation/johto-home-map-alias-probe.json)
-is evidence of the naming mismatch. Native startup and door destinations
-still use raw IDs; canonical runtime publication and all dependent storage
-joins remain unfinished. A visible canonical room does not establish normal
-home traversal or complete room/actor presentation.
+is evidence of the naming mismatch. At that diagnostic checkpoint native startup and door destinations still used
+raw IDs and runtime/storage joins were unfinished. That probe alone did not
+establish normal home traversal or complete room/actor presentation. The
+automatic startup and normal traversal acceptance below supersede its naming gap.
 
-## Shared physical-map foundation (not activated at startup)
+## Shared physical-map foundation (prior checkpoint)
 
-The development branch now has an explicit `Gen2MapNames.publish` adapter.
+The foundation checkpoint introduced the explicit `Gen2MapNames.publish` adapter.
 It joins verified, equal native/normalized/scaffold records into one physical
 map while retaining native provenance. Conflicting authored definitions stay
 distinct. The maps content registry folds both names through the same address,
@@ -201,11 +202,69 @@ retains 244 trainer continuations and queues the same 34 scene-zero programs
 through the new names. These queues are compared without executing the story.
 
 The [source-tree-bound receipt](qa/native-foundation/johto-shared-map-identities.json)
-records the exact implementation and tests. **Data startup does not call this
-adapter yet.** Persistent state, native entry/warp contexts and API identity
-checks must be adapted before automatic publication and fresh GPU acceptance.
-This foundation is in upstream #211; it is not part of the currently published
-`f0d37ae1` release and does not fix normal home entry by itself.
+records that foundation implementation and its tests. Startup was disabled
+at that checkpoint. The next section records automatic publication after the
+persistent-state, entry/warp and public API consumers were adapted. The
+foundation alone was insufficient to fix normal home entry.
+
+## Automatic runtime names and normal home traversal
+
+Committed code `052c71eafc890033cb99377b3067acaf93df16a4` publishes verified
+shared map names during actual Data startup, before mods, and reconciles
+editor/mod replacements afterward. Incoming native warp requests resolve
+through actual shared registry records; original ROM warp tables are retained.
+The source maps keep their native addresses and independent authored variants
+stay distinct.
+
+Native NPC/item/trainer identities, object visibility, hidden items, scene
+state, text pointers, flight visits, blackout spawn and roamers retain their
+native save/data keys. Source-first per-leaf reads preserve older public-only
+save entries and explicit false values. The bedroom's actual Gen2 PC collision
+now opens the personal PC; a Center still opens the general PC. This regression
+failed three assertions before the routing fix and passes afterward.
+
+Independent upstream #211 passes 105 source/VM, 260 content-transaction,
+23 cache/neighbor and 108 automatic-startup/native-state checks. The independent
+reader PR #93 passes its existing 1,041 checks plus 11 physical-alias checks;
+#94 passes 2,685 world-action checks. The composed fork passes 250 engine
+suites, three SDK suites, B30, 14 physical world/warp checks, 2,792 action
+checks and seven package tests. The numeric-environment native-state fixture
+follow-up is `5f13ce74`; its production code is identical to the GPU build.
+
+Actual Crystal New Game now reaches `PLAYERS_HOUSE_2F`, takes the normal
+stairs to `PLAYERS_HOUSE_1F`, and exits to `NEW_BARK_TOWN` on OpenGL and Metal,
+without mods. StartMenu opens/closes after those native warps.
+
+With all 27,329 supplied mod files hash-verified and unmodified, separate
+OpenGL and Metal runs start a new game without teleport. Each shows bedroom
+and downstairs geometry in the selected First/Third modes, opens/closes the
+native menu in each room probe, walks the stairs down/up/down and takes the
+normal house exit. Four fresh owned-window proofs per backend show upright
+walls, beams, floor and furniture. Native arrival guards remain active: before
+returning on a landing staircase the test takes a real collision-valid step
+off it, and the engine clears the positional guard itself. It never clears
+the guard or assigns player/map positions directly. Initial native scenes are
+allowed to release their input owner; this is not complete story acceptance.
+
+The same committed build also repeats normal Cherrygrove Mart/Center entry
+and exit in both selected camera modes on OpenGL and Metal: 16 native door
+transitions, with StartMenu after every room entry and camera mode retained.
+Only the town start position is set by teleport for this regression. Each
+backend has four fresh room-window proofs in addition to its four home proofs.
+The existing black-and-white Center object and incomplete First-Person avatar
+presentation remain visible; they are not marked fixed.
+
+The [sanitized activation receipt](qa/native-foundation/johto-canonical-map-startup.json)
+binds these runs to the committed source tree, runtime, unchanged mod manifest,
+independent upstream checks and per-file hashes. The tested code head has
+63/63 successful hosted CI checks. All 128 open own upstream PR heads were
+verified against pushed fork branches at this checkpoint. Windows packages
+receive the same source and payload, but Windows GPU execution remains open.
+
+The supplied full generated renderer still fails its 60-upvalue compilation
+limit, and these visible scenes use its existing fallback. Selected camera
+mode and visible room geometry do not establish complete First/Third avatar
+presentation or continuous camera-relative movement.
 
 ## Open acceptance and concrete failures
 
@@ -224,7 +283,7 @@ This foundation is in upstream #211; it is not part of the currently published
   capture animation and registered-item seams are incomplete.
 - The package itself disables overworld capture pending its own ROM QA.
   Engine compatibility cannot turn that disabled feature into a tested one.
-- Canonical map identity, complete normal doors/warps, battles and
+- Complete normal doors/warps beyond the tested home/Mart/Center, battles and
   return, all interiors, continuous First/Third Person movement, extended
   sessions and current Windows GPU execution remain open.
 
