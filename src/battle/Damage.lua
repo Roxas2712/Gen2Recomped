@@ -104,6 +104,7 @@ function Damage.critRoll(ruleset, attacker, moveId, rng, highCrit, data, battle)
   if ruleset.critStages then
     local stage = require("src.battle.Gen3Critical").stage(battle, attacker, highCrit)
     local den = CRIT_STAGE_DEN[stage] or 16
+    if battle and require("src.core.GameVersion").isGen3() then return rng(0, den - 1) == 0 end
     return rng(1, den) == 1
   end
   local function shl(x) return math.min(255, x * 2) end

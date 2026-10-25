@@ -159,6 +159,7 @@ function S.run(ctx, record)
   if not record or not native or record.run ~= native.run then
     return false
   end
+  if ctx.gbaNoEffect then return true end
   local _, messages = S.withChance(ctx, spec)
   for _, message in ipairs(messages) do
     ctx.battle:sayNext(message)
