@@ -176,6 +176,37 @@ still use raw IDs; canonical runtime publication and all dependent storage
 joins remain unfinished. A visible canonical room does not establish normal
 home traversal or complete room/actor presentation.
 
+## Shared physical-map foundation (not activated at startup)
+
+The development branch now has an explicit `Gen2MapNames.publish` adapter.
+It joins verified, equal native/normalized/scaffold records into one physical
+map while retaining native provenance. Conflicting authored definitions stay
+distinct. The maps content registry folds both names through the same address,
+including conflict preference, failed-mod rollback, replacement and removal.
+A single editor replacement is reconciled; deleted maps are not resurrected.
+
+MapLoader shares one actual Map and GPU owner under those verified physical
+aliases. Native/public invalidation, eviction, resident protection and connected
+map traversal use that identity. Merely having a similar name or source key
+is insufficient; the registry must prove a shared record. Other generations'
+registry/cache address spaces retain their behavior.
+
+Tests pass 260 actual content/loader transaction checks and 23 cache/neighbor
+checks independently and in the fork; the composed quick suite passes 248
+engine suites, three SDK suites and B30. Explicit publication over the actual
+Crystal import joins all 214 generated alias addresses in 204 physical
+families; 195 original runtime names change. All 388 original block/event
+records and native group/number addresses remain intact. The actual compiler
+retains 244 trainer continuations and queues the same 34 scene-zero programs
+through the new names. These queues are compared without executing the story.
+
+The [source-tree-bound receipt](qa/native-foundation/johto-shared-map-identities.json)
+records the exact implementation and tests. **Data startup does not call this
+adapter yet.** Persistent state, native entry/warp contexts and API identity
+checks must be adapted before automatic publication and fresh GPU acceptance.
+This foundation is in upstream #211; it is not part of the currently published
+`f0d37ae1` release and does not fix normal home entry by itself.
+
 ## Open acceptance and concrete failures
 
 - Persistent world ownership is implemented and enables actual camera/menu

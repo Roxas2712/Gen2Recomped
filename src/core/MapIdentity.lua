@@ -46,6 +46,23 @@ function Identity.sourceId(data, id)
   end
 end
 
+-- Only a shared registry record proves that two names address one live map.
+-- Declared source provenance alone may also describe an authored variant.
+function Identity.runtimeId(data, id)
+  if not Version.isGen2() or type(id) ~= "string" then return id end
+  local maps = data and data.maps
+  local def = type(maps) == "table" and maps[id]
+  if type(def) == "table" and type(def.id) == "string"
+     and type(def.sourceId) == "string" and maps[def.sourceId] == def
+     and maps[def.id] == def then return def.id end
+  return id
+end
+
+function Identity.same(data, a, b)
+  return a == b or (a ~= nil and b ~= nil
+    and Identity.runtimeId(data, a) == Identity.runtimeId(data, b))
+end
+
 function Identity.aliases(data, id)
   local out, seen = {}, {}
   local function add(key)

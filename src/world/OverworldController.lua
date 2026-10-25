@@ -20,6 +20,7 @@ local Logger = require("src.core.Logger")
 local Probe = require("src.core.Probe")
 local Map = require("src.world.Map")
 local MapLoader = require("src.world.MapLoader")
+local MapIdentity = require("src.core.MapIdentity")
 local LiveMaps = require("src.world.LiveMaps")
 local NPC = require("src.world.NPC")
 local PaletteFX = require("src.render.PaletteFX")
@@ -861,6 +862,8 @@ local function blockPx(def)
 end
 
 function OverworldState.computeNeighbors(maps, rootId, hops, reachW, reachH)
+  local identities = { maps=maps }
+  rootId = MapIdentity.runtimeId(identities, rootId)
   local out = {}
   local rootDef = maps[rootId]
   local placed = { [rootId] = true }
@@ -887,9 +890,10 @@ function OverworldState.computeNeighbors(maps, rootId, hops, reachW, reachH)
     -- the cartridge's own connection list says to do.
     for dir, first in pairs(cur.def.connections or {}) do
     for _, conn in ipairs(first.list or { first }) do
-      local destDef = NEIGHBOUR_DIRS[dir] and maps[conn.map]
-      if destDef and not placed[conn.map] then
-        placed[conn.map] = true
+      local destId = MapIdentity.runtimeId(identities, conn.map)
+      local destDef = NEIGHBOUR_DIRS[dir] and maps[destId]
+      if destDef and not placed[destId] then
+        placed[destId] = true
         local ox, oy
         local cp, dp = blockPx(cur.def), blockPx(destDef)
         if dir == "north" then
@@ -903,7 +907,7 @@ function OverworldState.computeNeighbors(maps, rootId, hops, reachW, reachH)
         end
         ox, oy = cur.ox + ox, cur.oy + oy
         if cur.hops + 1 <= hops or inReach(destDef, ox, oy) then
-          table.insert(out, { id = conn.map, ox = ox, oy = oy })
+          table.insert(out, { id = destId, ox = ox, oy = oy })
           if cur.hops + 1 < hops or inReach(destDef, ox, oy) then
             table.insert(queue,
                          { def = destDef, ox = ox, oy = oy,

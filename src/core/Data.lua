@@ -544,10 +544,14 @@ local function seedMapAliases(maps, aliases)
   -- aliases table: rawId → friendlyId; work both directions so either source can seed the other
   for rawId, friendlyId in pairs(aliases or {}) do
     if not maps[rawId] and maps[friendlyId] then
-      local mapped = copy(maps[friendlyId]); mapped.id = rawId; maps[rawId] = mapped
+      local mapped = copy(maps[friendlyId]); mapped.id = rawId
+      if require("src.core.GameVersion").isGen2() then mapped.sourceId = maps[friendlyId].sourceId or friendlyId end
+      maps[rawId] = mapped
     end
     if not maps[friendlyId] and maps[rawId] then
-      local mapped = copy(maps[rawId]); mapped.id = friendlyId; maps[friendlyId] = mapped
+      local mapped = copy(maps[rawId]); mapped.id = friendlyId
+      if require("src.core.GameVersion").isGen2() then mapped.sourceId = maps[rawId].sourceId or rawId end
+      maps[friendlyId] = mapped
     end
   end
 end

@@ -33,11 +33,19 @@ local function validId(self, id)
     or self.numericIds and type(id) == "number" and id >= 1 and id < math.huge and id % 1 == 0
 end
 
+local function canonicalId(self, id)
+  if self.spec.canonicalId then
+    return self.spec.canonicalId(self.base and self.base(), id)
+  end
+  return id
+end
+
 local function append(self, id, op, value, owner)
   if self.frozen then
     error(self.name .. ": content is frozen after load")
   end
   assert(validId(self, id), self.name .. " id is required")
+  id = canonicalId(self, id)
   local list = self.ops[id]
   if not list then
     list = {}
@@ -149,6 +157,7 @@ function Registry:remove(id, owner)
 end
 
 function Registry:get(id)
+  id = canonicalId(self, id)
   if self.spec.semantics == "compose" then
     -- chain() sorts top priority first, so the head is the effective value
     local chain = self:chain(id)
@@ -176,6 +185,7 @@ end
 -- Owner-less ops are left out. They are the engine's own contributions and
 -- nobody is choosing between them and a mod.
 function Registry:claimants(id)
+  id = canonicalId(self, id)
   local seen, out = {}, {}
   for _, entry in ipairs(self.ops[id] or {}) do
     local owner = entry.owner
@@ -211,6 +221,7 @@ end
 -- Works after the loader has frozen content, because it appends nothing -- the
 -- ops are untouched and only the reading of them changes.
 function Registry:preferOwner(id, owner)
+  id = canonicalId(self, id)
   assert(validId(self, id), self.name .. " id is required")
   self.prefer = self.prefer or {}
   self.prefer[id] = owner
@@ -219,6 +230,7 @@ function Registry:preferOwner(id, owner)
 end
 
 function Registry:preferredOwner(id)
+  id = canonicalId(self, id)
   return self.prefer and self.prefer[id] or nil
 end
 
