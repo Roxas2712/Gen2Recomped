@@ -36,7 +36,7 @@ bit patterns plus nil, all semantic IDs at terrain boundaries, map kinds,
 category/direction seeding, and every live surfability flag value 0–7. It
 compares 517,218 result tuples per host using two independent rolling digests;
 metadata regeneration must also be byte-identical. The focused suite checks
-802 expectations, including semantic counterexamples and snapshot isolation.
+807 expectations, including semantic counterexamples and snapshot isolation.
 `benchmark.lua reference|native` is an optional CPU microbenchmark, not an FPS
 or gameplay acceptance test.
 
@@ -44,13 +44,14 @@ or gameplay acceptance test.
 
 These modules deliberately have their own namespace. They do not claim the
 entire old `game3.mb` or importer contract, including ROM symbol resolution and
-tile-flag extraction. The active native map/session, layout revisions, script
-writes and atlas ownership must be connected before unchanged mods can use
-them. In particular, the native FRLG importer currently normalizes attributes
-to its own behavior space and loses some original distinctions. Preserve the
-original cartridge attributes alongside that native representation; do not
-guess a reverse mapping from a many-to-one normalization. Stale normalized-only
-caches cannot establish the source bytes. Full compatibility remains open.
+tile-flag extraction. The internal `MapViews` backend now observes the native session and live grid
+revisions through source metadata supplied by #246. It requires the companion
+identity/layout contributions #239/#240; see `native-map-observations.md` for
+explicit integration tests. `CollisionClass.new(family, bits)` gives each view
+its own flag state without replacing `impl` singleton state. Script writes,
+atlas ownership and the complete map/Game3 facade still require integration.
+Stale normalized-only caches cannot establish source bytes. Full compatibility
+remains open.
 
 Blattgrün, Rubin and Saphir are included in the explicit cartridge scope.
 Their existing upstream contributions are #183, #186 and #187; US Rev 0 support

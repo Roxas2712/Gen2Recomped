@@ -82,17 +82,17 @@ end
 for _, row in ipairs({blockedRow, waterRow, pathRow, townRow, groundRow}) do
   row[3], row[4] = seed(row[1]), seed(row[1], nil, "indoor")
 end
-local function rseCell(collision, behavior, kind)
+local function rseCell(owner, collision, behavior, kind)
   local b, blocked = behavior or 0, (collision or 0) ~= 0
-  local bits = Rse._tileBits and Rse._tileBits[b]
-  if bits ~= nil and math.floor(bits / Rse.TILE_FLAG_SURFABLE) % 2 == 1 then
+  local bits = owner._tileBits and owner._tileBits[b]
+  if bits ~= nil and math.floor(bits / owner.TILE_FLAG_SURFABLE) % 2 == 1 then
     return blocked and blockedRow or waterRow
   end
   if b == puddle or b == shallowWater then return blocked and blockedRow or pathRow end
   return rse[b] or (blocked and blockedRow or (kind == "town" and townRow or groundRow))
 end
 function Rse.classify(_, collision, behavior, kind)
-  local row = rseCell(collision, behavior, kind)
+  local row = rseCell(Rse, collision, behavior, kind)
   return row[1], row[2]
 end
 local rseClassify = Rse.classify
@@ -104,7 +104,7 @@ function Rse.fromCell(mid, collision, behavior, kind)
   -- The fixed rows already own both door-arrival variants. Preserve the
   -- public extension seam when a mod replaces either stage of classification.
   if Rse.classify == rseClassify and Rse.seed == seed then
-    local row = rseCell(collision, behavior, kind)
+    local row = rseCell(Rse, collision, behavior, kind)
     return row[kind == "indoor" and 4 or 3], row[1], row[2]
   end
   local category, direction = Rse.classify(mid, collision, behavior, kind)
@@ -113,5 +113,25 @@ end
 function M.impl(family)
   assert(family == "frlg" or family == "rse", "unsupported compatibility collision family")
   return family == "frlg" and Frlg or Rse
+end
+-- Live views own their flag state. They never replace the singleton used by
+-- existing consumers, nor borrow another edition's active classification.
+function M.new(family, bits)
+  M.impl(family)
+  local instance = { seed = seed }
+  if family == "rse" then
+    instance.TILE_FLAG_SURFABLE = 2
+    function instance.setTileBits(value) instance._tileBits = type(value) == "table" and value or nil end
+    instance.setTileBits(bits)
+    function instance.classify(_, collision, behavior, kind)
+      local row = rseCell(instance, collision, behavior, kind)
+      return row[1], row[2]
+    end
+  else instance.classify = Frlg.classify end
+  function instance.fromCell(mid, collision, behavior, kind)
+    local category, direction = instance.classify(mid, collision, behavior, kind)
+    return instance.seed(category, direction, kind), category, direction
+  end
+  return instance
 end
 return M
