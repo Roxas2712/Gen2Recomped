@@ -96,6 +96,7 @@ local BATTLER_FLAGS = {
   "thrashTurns",
   "thrashMove",
   "rageMove",
+  "rage",
   "trappingTurns",
   "bideTurns",
   "encoreTurns",

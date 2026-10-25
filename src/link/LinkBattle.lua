@@ -165,6 +165,7 @@ local function activeStr(b, role)
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3BatonPass").signature(b, role) or "")
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3Encore").signature(b) or "")
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3Disable").signature(b) or "")
+    .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3Rage").signature(b) or "")
 end
 
 local function benchStr(party)
@@ -437,6 +438,8 @@ function LinkBattle.new(game, net, opts)
       if require("src.core.GameVersion").isGen3() then
         local Encore=require("src.battle.Gen3Encore")
         myAction,theirAction=Encore.plan(s.player,myAction),Encore.plan(s.enemy,theirAction)
+        local Rage=require("src.battle.Gen3Rage")
+        Rage.selected(s,s.player,myAction);Rage.selected(s,s.enemy,theirAction)
       end
       Runtime.emit("battle.turn_started", {
         battle = s, turn = s.turnCount,
@@ -843,6 +846,8 @@ function LinkBattle.newSpectator(game, net, opts)
       if require("src.core.GameVersion").isGen3() then
         local Encore=require("src.battle.Gen3Encore")
         hostAction,guestAction=Encore.plan(s.player,hostAction),Encore.plan(s.enemy,guestAction)
+        local Rage=require("src.battle.Gen3Rage")
+        Rage.selected(s,s.player,hostAction);Rage.selected(s,s.enemy,guestAction)
       end
       Runtime.emit("battle.turn_started", {
         battle = s, turn = s.turnCount,
