@@ -23,6 +23,34 @@ This stacks on #228. Gen1 remains a clean, read-only reference at
 
 ## Validation and reproduction
 
+Accepted full-test runtimes are feature
+`9ad4f6ab90524eda893d0d6dbfb6f12ab71f9e9f` and combined
+`7a681ca8b81be0e77d3447ff3069459cda0bb974`. Later commits only apply
+AST-verified fixture formatting and document acceptance/publication. The
+formatted fixture is checked again against both engines on clean commits.
+
+- **10,202 focused assertions**, **48 real-link assertions** and the feature's
+  **154 protocol assertions** pass. Both linked roles select the GBA profile,
+  complete two menu-driven turns, observe matching ordered reads and agree on
+  every completed hash/component and real learned PP.
+- **124 workers / 86,620 paired observations** agree with unchanged Gen1:
+  2,040 held-command rows, 6,912 ordinary base-damage rows and the existing
+  77,668 selection/execution observations. The new matrix includes sport-before-
+  pinch flooring, Flash Fire, Charge and stateful successive commands.
+- Full feature: **132/141 engine suites**, SDK **3/3**, B30. The exact Counter
+  of **25 inherited FAIL lines in nine suites** equals clean #228
+  `491d3a2f0b997f8f5c801ebcd12524e70ba5cf54` (130/139); its nonzero exit is
+  retained. Combined: **251/251 engine suites**, SDK **3/3**, B30.
+- The unchanged prerequisite fails **2,041 assertions per profile**, with all
+  1,020 complete command rows differing. The additional isolated sport/pinch
+  probe retained 24 differing rows across both profiles, including native 42
+  versus host 44 damage; corrected ordering passes.
+- Twelve existing CPU-only imported FireRed/Emerald Sleep Talk scenarios pass
+  again on both branches. These are regression checks of actual loaded attack
+  metadata and public menu submissions, not certification of the entire item
+  catalog. No assets or normal SAVE are distributed/issued.
+- Scoped StyLua (including AST verification), actionlint and whitespace pass.
+
 The shared fixture executes the actual calculators and public API-3 hook chains
 in both engines. It compares every recorded read field, ordered actor identity,
 calculated damage, bounded RNG call/value and HP observation. Inputs include
@@ -47,6 +75,14 @@ nice -n 19 python3 tools/enemy-action-contract-check/check.py \
 nice -n 19 env LUA="$LUA" bash scripts/test.sh --quick
 ```
 
+Local evidence is retained under `tmp/held-damage-qa/` in each worktree:
+`full-complete.log`, `enemy-complete.json`, `held-complete.json`,
+`base-complete.json`, `held-formatted.json`, `imported-complete.log` and
+`accepted-evidence.json`. Feature evidence also retains baseline/negative,
+initial mismatched-fixture, set-damage gating, link-profile and formatting
+failures. The clean prerequisite's full log is in the Sleep Talk worktree's
+`tmp/sleep-talk-qa/held-damage-baseline-full.log`.
+
 The native command revision is 10; peers at revision 9 cannot enter a full
 battle. Party codec remains 1. The native fixture hash changes from
 `f1bec52ffc687ea3` to `3a2adb7fa1caee3b`. An independent copy of the unchanged
@@ -65,7 +101,10 @@ Unbadged controlled inputs are compared here. Full badge/obedience/controller
 orchestration, arbitrary imported catalogs and playthrough/graphics parity are
 not established by these calculator tests. The real-link fixture must explicitly
 select its GBA profile: the generic link helper creates a Red save with Gen1
-options. Fresh/imported save rule selection requires its own audit.
+options. A separate fresh-save probe reproduces this for
+`SaveData.newGame({version = "firered"})` and Emerald: the actual constructed
+battle still selects `gen1_faithful`. Native defaults need a separate fix;
+these calculator/link tests explicitly exercise the GBA profile.
 
 Historical held-item workflows using a modified reference are not proof against
 unchanged Gen1. The new damage comparison pins the clean reference above.
