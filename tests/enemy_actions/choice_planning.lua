@@ -15,8 +15,14 @@ function M.run(root, backend, version)
   local function view(user)
     local pp, learned = {}, {}
     for slot = 1, 4 do
-      pp[slot] = native and user.mon.pp[slot] or user.curMoves[slot].pp
-      learned[slot] = number(native and user.mon.moves[slot] or user.curMoves[slot].id)
+      if native then
+        pp[slot] = user.mon.pp[slot]
+        learned[slot] = number(user.mon.moves[slot])
+      else
+        local move = user.curMoves[slot]
+        pp[slot] = move and move.pp
+        learned[slot] = move and number(move.id)
+      end
     end
     return {
       hp = user.mon.hp,
@@ -49,12 +55,27 @@ function M.run(root, backend, version)
         "charging",
         "replace_moves",
         "replace_reordered_moves",
+        "replace_removed_slot",
+        "replace_moves_pressure",
+        "replace_removed_slot_pressure",
       }) do
+        local removedSlot = kind == "replace_removed_slot" or kind == "replace_removed_slot_pressure"
+        local pressure = kind == "replace_moves_pressure" or kind == "replace_removed_slot_pressure"
         local b = f.field(double)
         local user, targetId = f.at(b, id), id % 2 == 0 and id + 1 or id - 1
         local target = f.at(b, targetId)
         if kind ~= "unbound" then
           user.choicedMove = kind == "forced_status" and 214 or 33
+        end
+        if removedSlot then
+          user.choicedMove = 10
+        end
+        if pressure then
+          if native then
+            target.ability, target.mon.ability = 46, 46
+          else
+            target.abilityOverride = "PRESSURE"
+          end
         end
         local item = 186
         if kind == "empty_item" or kind == "empty_override" then
@@ -71,6 +92,9 @@ function M.run(root, backend, version)
         end
         local struggle = kind:match("^struggle") ~= nil
         local selected = kind == "same_move" and 1 or struggle and 4 or 2
+        if removedSlot then
+          selected = 1
+        end
         if kind == "struggle_ghost" or kind == "struggle_rock" then
           if native then
             target.type1 = kind == "struggle_ghost" and 7 or 5
@@ -165,12 +189,13 @@ function M.run(root, backend, version)
         )
         local plannerTrace = Copy(trace)
         local oldPP, oldSlot
-        if kind == "replace_moves" or kind == "replace_reordered_moves" then
+        if kind == "replace_moves" or kind == "replace_reordered_moves" or removedSlot or pressure then
           oldSlot = native and user.mon.pp or user.curMoves
           oldPP = native and oldSlot[plannedSlot] or oldSlot[plannedSlot].pp
           f.moves(
             user,
-            kind == "replace_moves" and { "TACKLE", "SCRATCH", "SLEEP_TALK", "STRUGGLE" }
+            removedSlot and { "TACKLE" }
+              or (kind == "replace_moves" or pressure) and { "TACKLE", "SCRATCH", "SLEEP_TALK", "STRUGGLE" }
               or { "SCRATCH", "TACKLE", "SLEEP_TALK", "STRUGGLE" },
             7
           )
@@ -205,6 +230,20 @@ function M.run(root, backend, version)
         local retainedPP = oldSlot and (native and oldSlot[plannedSlot] or oldSlot[plannedSlot].pp)
         if oldSlot then
           T.eq(retainedPP, oldPP, "replaced learned records do not spend old PP")
+        end
+        if removedSlot then
+          T.check(target.mon.hp < 400, "removing the PP slot does not cancel the already planned move")
+          T.eq(
+            native and user.mon.pp[1] or user.curMoves[1].pp,
+            7,
+            "removing the planned slot does not spend another current move's PP"
+          )
+        elseif pressure then
+          T.eq(
+            native and user.mon.pp[1] or user.curMoves[1].pp,
+            5,
+            "Pressure spends two PP from the replacement slot when it exists"
+          )
         end
         T.eq(#f.result.errors, 0, "planner and actual move callbacks stay error-free")
         rows[#rows + 1] = {
