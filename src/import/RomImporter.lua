@@ -1313,9 +1313,9 @@ local function markerFor(version)
   if version == "red" or version == "blue" or version == "yellow" then
     revision = "gen1-trade-art-v1:"
   end
-  -- RS now carries its own field printer geometry. Rebuild only these
+  -- RS now carries its own action tables as well as field geometry. Rebuild these
   -- caches; retain the earlier 36-byte dex and item-effect corrections.
-  if version == "ruby" or version == "sapphire" then revision = "rs-field-window-v3:" end
+  if version == "ruby" or version == "sapphire" then revision = "rs-item-menu-v4:" end
   return CACHE_FORMAT .. revision .. GameVersion.info(version).sha1
 end
 
