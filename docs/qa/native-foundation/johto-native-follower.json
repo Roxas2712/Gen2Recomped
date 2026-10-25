@@ -1,0 +1,64 @@
+{
+  "scope": "Scoped unchanged Johto package ownership integration; not complete native follower art or all-feature acceptance",
+  "sourceCommit": "5aebfb4ceb2ddc05f71091ecbb14612ee176f23e",
+  "qualificationRun": 40217304144,
+  "payloadSha256": "9893dde96c8470a93b2758de00f613ec58c3d1808288fa2807fdf4d8636fad82",
+  "universalMacRuntimeSha256": "0b9e147ab903851cb488391ba7e6979f1e36b424e51dd4db48e5c97979a94f5c",
+  "nativeCpuChecks": 159,
+  "composedEngineSuites": 359,
+  "sdkSuites": 3,
+  "bothSelectedCameras": true,
+  "testSetup": "Introduction skipped; map positions and one-member healthy QA party explicitly selected; public follower count=1 and follow mode configured. Exact packaged src/runtime under isolated QA identity; fixed release identity never launched.",
+  "ownerAccepted": "Embedded Wilds owns the configured actor; actual native fallback remains absent through normal doors and connected maps.",
+  "runs": [
+    {
+      "backend": "opengl",
+      "checks": 366,
+      "normalTransitions": 12,
+      "nativeMenuChecks": 4,
+      "ownershipObservations": 24,
+      "freshOsWindows": 4,
+      "modFilesRechecked": 27329,
+      "modSourceUnmodified": true,
+      "resultSha256": "8244e0c2faac6c1bd36324b8627b6e70c8d875f7283fcc04ad5a25d027556be7",
+      "verificationSha256": "dd12d8091ff8d041c7d6237e3c73ed88d02e2a38bb65dc78286e9ae993ffc1bb",
+      "windowImageSha256": {
+        "os-window-resized.png": "344356e0811d8d1c0b33e39ccf959dbdbb6a9ff516bcfaaa263a6f8a5adb0ea2",
+        "os-window-initial-map.png": "025c2128f1fb2eb4585facf08172340df3c52b767e55136acf24885cbbd3788f",
+        "os-window-second-map.png": "a81d918e6e7938a3cdbdaa55c22c94c1d67f82fe2f9b64a469538bf382967a30",
+        "os-window-map-return.png": "e4f60382c3f6015d5648f703b4e312d4f5d4f5fab7219381c0d83d5d82154254"
+      }
+    },
+    {
+      "backend": "metal",
+      "checks": 400,
+      "normalTransitions": 12,
+      "nativeMenuChecks": 4,
+      "ownershipObservations": 24,
+      "freshOsWindows": 4,
+      "modFilesRechecked": 27329,
+      "modSourceUnmodified": true,
+      "resultSha256": "053336125f7273d0c7a509d62a13c9f94d6cab0c2edbfc3a7d7e22b089a4a31d",
+      "verificationSha256": "def2b2d872450758b94ffd291b34a10143ba799cf4d99f8d1de3074120f09895",
+      "windowImageSha256": {
+        "os-window-resized.png": "47a006f1e3ddb06e29615123c45e7f6312ab50c851fd3d7bf83956f39738ac98",
+        "os-window-initial-map.png": "cd14b7cf3be47db36c26f6e68f88676b62159f925a0f67c062b8be6555b51701",
+        "os-window-second-map.png": "c1b26e31eeb43726c091a85fc7783424d3ada88a87a091995dfb99f56ee19ad1",
+        "os-window-map-return.png": "de72db89c792057eda24e2a4a6340dad34d970e27a0463dd441e4f983aed3ac6"
+      }
+    }
+  ],
+  "imagesInspected": 8,
+  "remaining": [
+    "Black/white question-mark actor still visible in some Center views; full follower species art not accepted.",
+    "Metal deprecation overlays remain.",
+    "Native fallback art, additional modes, full story lifecycle and Windows/Intel GPU are unaccepted.",
+    "These source-bound receipts do not qualify later main/asset-pack or flight code automatically."
+  ],
+  "earlierUnacceptedQa": [
+    "Test-only options setter absent on both engines; corrected to use declared default and actual follower public methods.",
+    "OS screenshot command timeout; later standalone runs passed with one bounded capture attempt per proof."
+  ],
+  "privateAssetsPublished": false,
+  "publicReleaseIncludesFeature": false
+}
