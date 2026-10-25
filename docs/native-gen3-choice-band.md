@@ -114,6 +114,31 @@ its separate after-action sweep. The raw failing host observation and source
 reference are retained. This does not certify successful Mirror Move target /
 history selection or Metronome catalog/RNG parity.
 
+The later complete feature run at `a7b14c7d` passes 143/152 engine suites,
+SDK 3/3 and B30, retaining the exact same 25 inherited FAIL lines as the
+fresh #230 parent. The combined candidate at `fc41fcc5` passes 262/262 engine
+suites, SDK 3/3 and B30. Both final cross-engine matrices were interrupted
+for separately reserved graphics measurements. These completed full runs
+do not certify the subsequently prepared missing-slot change.
+
+That pending regression replaces the learned move/PP arrays after forced
+planning and removes the selected slot entirely. The unchanged native PP
+command permits the planned move without spending retired or other current
+slots. Prepared Pressure controls also distinguish this case from a present
+replacement slot, which must spend two PP. The expanded comparison now passes
+all 276 rows over both profiles, with all recorded planner payloads, RNG,
+events, HP and current/retired PP equal. The exact saved old module fails 24
+rows, spending one or two PP from the retired slot. Full feature/combined
+acceptance and publication remain pending.
+
+The planning fixture observes final PP and move-used events, but does not
+observe PP inside the event callback. A separate actual-script diagnostic
+retains 72 rows over both profiles, including 60 mismatches: ordinary and
+Pressure callbacks observe PP before reduction in Gen1 and after reduction
+in Gen2; zero-PP native failures still emit the event whereas Gen2 does not.
+All raw rows are retained. This gap remains open; final-state equality does
+not prove native event/PP-command timing.
+
 ## Required validation before a PR
 
 - Execute `tests/engine/gen3_choice_band.lua` and compare the same complete

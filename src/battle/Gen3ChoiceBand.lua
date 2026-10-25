@@ -120,8 +120,12 @@ function C.execution(user, action)
   local plan = planned[action]
   if plan then
     local slot = (user.curMoves or user.mon.moves or {})[plan.index]
-    if slot and Choices.slot(action) ~= slot then
-      local rebound = Choices.withMove(action, plan.id, slot, plan.index)
+    if Choices.slot(action) ~= slot then
+      -- A removed native PP slot still permits the planned move, without
+      -- spending retired or other current learned records. Its temporary
+      -- action PP is consumed before the effect callback, as for an unowned call.
+      local owner = slot or { id = plan.id, pp = 1 }
+      local rebound = Choices.withMove(action, plan.id, owner, plan.index)
       planned[rebound] = plan
       return rebound
     end
