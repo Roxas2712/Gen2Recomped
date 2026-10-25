@@ -43,10 +43,13 @@ function love.load()
       extractor=require('src.import.RomExtractorGen3').new(raw,V.info(edition),manifest)
       local generated={};extractor.write=function(_,name,value)generated[name]=value end
       extractor.objectGfxSheet=function()return nil end
+      local checkpoints=0;extractor.checkpoint=function()checkpoints=checkpoints+1 end
       extractor:extractOverworldSprites()
       result.nativeSprites=hash(canonical(assert(generated.sprites)))
       if mode=='native' then
         native=assert(generated.gen3_object_sheets,'actual sprite import did not emit original sheets')
+        assert(checkpoints>0,'original sheet import omitted cooperative checkpoints')
+        result.cooperativeCheckpoints=checkpoints
         assert(result.nativeSprites==baseline.editions[edition].nativeSprites,'normalized native sprite output changed')
         local text=require('src.import.LuaWriter').encodeSplit(native)
         local decoded=assert((loadstring or load)(text,'@generated/gen3_object_sheets.lua'))()
