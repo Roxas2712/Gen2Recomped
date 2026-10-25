@@ -387,6 +387,21 @@ for _, version in ipairs({ "red", "gold", "emerald" }) do
   T.eq(ow.teleportOut.frames, 48, version .. " native Dig animation timing")
   T.eq(ow.teleportOut.escape, gen >= 2 and true or nil, version .. " native Dig escape destination semantics")
   T.eq(ow.player.inputLocked, true, version .. " native Dig input lock")
+  if gen == 2 then
+    for _, row in ipairs({{'CAVE',4,true},{'DUNGEON',7,true},{'TOWN',1,false}}) do
+      ow.teleportOut = nil
+      ow.player.inputLocked, ow.player.spinning = false, false
+      ow.map.def.tileset = "NATIVE_GEN2"
+      ow.map.def.environment, ow.map.def.environmentId = row[1], row[2]
+      T.eq(api.world:useFieldAction("dig"),row[3] and true or nil,
+        version .. " public environment native Dig dispatch " .. row[1])
+      T.eq(ow.teleportOut ~= nil,row[3],version .. " native Dig ownership " .. row[1])
+      if row[3] then
+        T.eq(ow.teleportOut.frames,48,"public environment retains native animation")
+        T.eq(ow.teleportOut.escape,true,"public environment retains recorded escape destination")
+      end
+    end
+  end
   ow.teleportOut = nil
   ow.player.inputLocked = false
   ow.player.spinning = false
