@@ -623,7 +623,7 @@ function Sidebar.install(RI)
 
   local function crumbs(self)
     if self.section == "games" then
-      local out = { Strings("Games") }
+      local out = { Strings("Library") }
       local c = self.browseConsole
       if c and self.gamesView ~= "consoles" then
         for _, row in ipairs(Sidebar.CONSOLES) do if row.id == c then out[#out + 1] = Strings(row.name) end end
@@ -1883,30 +1883,38 @@ function Sidebar.install(RI)
       return origGamePanel(self, version, x, y, w, h, paged)
     end
     local art, meta = self:_sbArt(version), self:_sbArtMeta(version)
+    if self:_settings().launcherCartDesigns and self:_settings().launcherCartDesigns[version] then art=nil end
     local s, P, g = self._s, PAL(), love.graphics
     local pad = 16 * s
-    local artH = art and math.min(150 * s, w * 0.3) or 0
-    local artW = art and artH * art:getWidth() / art:getHeight() or 0
-    local textX = x + pad + (art and (artW + pad) or 0)
+    local artH = art and math.min(150 * s, w * 0.3) or math.min(104 * s, w * 0.22)
+    local artW = art and artH * art:getWidth() / art:getHeight() or artH * 132 / 164
+    local textX = x + pad + artW + pad
     local textW = x + w - pad - textX
     local lines = {}
     if meta and meta.description then _, lines = self.hintFont:getWrap(meta.description, textW) end
     local nLines = math.min(#lines, 7)
-    local titleH = (self.stateFont or self.detailFont):getHeight()
+    local titleH = self.gameNameFont:getHeight()
     local btnH = math.max(36 * s, self.saveBtnFont:getHeight() + 18 * s)
-    local textH = titleH + 8 * s + nLines * self.hintFont:getHeight()
+    local textH = titleH + 8 * s + 32 * s + nLines * self.hintFont:getHeight()
                   + (meta and meta.source and (self.hintFont:getHeight() + 6 * s) or 0)
-    local ch = math.max(artH, textH + 14 * s + btnH) + pad * 2
+    local ready = self.ready[version] and GameVersion.info(version).importable ~= false
+    local stacked = ready and textW < 340 * s
+    local ch = math.max(artH, textH + 14 * s + btnH * (stacked and 2 or 1) + (stacked and 8 * s or 0)) + pad * 2
     -- the panel first: it decides the game's import button (self._sbRomBtn)
     local gap = 14 * s
-    local rest = origGamePanel(self, version, x, y + ch + gap, w, math.max(0, h - ch - gap), paged) or 0
+    self._libraryDetailsBody = true
+    local rest = origGamePanel(self, version, x, y + ch + gap, w, math.max(0, h - ch - gap), true) or 0
+    self._libraryDetailsBody = nil
     card(self, x, y, w, ch)
     if art then
       g.setColor(1, 1, 1, 1)
       g.draw(art, x + pad, y + (ch - artH) / 2, 0, artH / art:getHeight(), artH / art:getHeight())
+    else
+      require("src.import.LauncherLibrary").drawCartridge(self, version,
+        x + pad + artW / 2, y + ch / 2, artH)
     end
     local ty = y + pad
-    g.setFont(self.stateFont or self.detailFont); col(P.ink)
+    g.setFont(self.gameNameFont); col(P.ink)
     g.print(ellipsize(g.getFont(), (meta and meta.title) or nameOf(version), textW), textX, ty)
     ty = ty + titleH + 8 * s
     g.setFont(self.hintFont); col(P.detail)
@@ -1915,13 +1923,23 @@ function Sidebar.install(RI)
       col(P.detail, 0.6)
       g.print(Strings("From ") .. tostring(meta.source), textX, ty + nLines * self.hintFont:getHeight() + 6 * s)
     end
+    local designY=ty+nLines*self.hintFont:getHeight()+(meta and meta.source and (self.hintFont:getHeight()+8*s) or 0)
+    local designWidth=math.min(textW,self.hintFont:getWidth(Strings('DESIGN CARTRIDGE'))+24*s)
+    self._sb.designCart=self:_chipButton(textX,designY,'DESIGN CARTRIDGE',{w=designWidth,h=26*s})
+    self._sb.designCart.version=version
     -- bottom right: the one import button -- "Import ROM" until the game is
     -- in, "Re-import ROM" after (the panel picks the label)
     local rb = self._sbRomBtn
     if rb and rb.label then
       local bw = math.max(150 * s, self.saveBtnFont:getWidth(Strings(rb.label)) + 40 * s)
+      bw = math.min(bw, textW)
       self.romButtonRect = self:_glassyButton(x + w - pad - bw, y + ch - pad - btnH, bw, btnH,
                                               rb.label, self.saveBtnFont, rb.enabled)
+    end
+    if ready then
+      local playW = stacked and textW or math.min(220 * s, textW - 166 * s)
+      local playY = y + ch - pad - btnH - (stacked and (btnH + 8 * s) or 0)
+      self:_playButton(textX, playY, playW, btnH, nameOf(version), true, false)
     end
     return ch + gap + rest
   end

@@ -439,3 +439,15 @@ one.
 ### Settings page
 
 In the sidebar layout, the Settings page fills the whole content area and is drawn over the footer. While Settings is open, the live background is paused (`LauncherBackdrop.setPaused`): the game doesn't update, its music is suspended, and no switch happens. This is why stepping through the BACKGROUND list no longer boots a cartridge at each step. That list only offers games that are imported, importable, and haven't failed to boot.
+
+## RetroRecomped library shell (fork)
+
+The fork now opens the library first, with in-place system/ready/favorite filters,
+a Logo Cards checkbox, task-grouped tools, a settings category hub, and
+Cartridge Studio for custom shells, labels and artwork. The startup includes
+a skippable lightning/logo/guitar sequence; game launch inserts the selected
+cartridge into its matching handheld silhouette before the original boot.
+
+See [implementation and QA](qa/retro-launcher/README.md) and the
+[standalone preview](../tools/launcher_library_preview/README.md). The lower-level
+import, save-slot, mod and cloud contracts described above still apply.

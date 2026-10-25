@@ -527,6 +527,9 @@ function SaveData.defaultOptions()
     -- Launcher appearance: a palette preset and an accent colour, both ids
     -- from src/import/LauncherTheme.lua.  false on either means "the one the
     -- launcher shipped with".
+    launcherLogoCards = false,
+    launcherCartDesigns = {},
+    launcherAnimations = true,
     launcherTheme = false,
     launcherAccent = false,
     launcherText = false,

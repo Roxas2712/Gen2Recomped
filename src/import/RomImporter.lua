@@ -1700,40 +1700,40 @@ end
 -- Red, Blue, and Yellow share the same importer flow once listed in
 -- GameVersion.VERSIONS.  Values are 0-255 RGB; alpha is applied per draw.
 local PAL = {
-  -- radial background gradient (bright navy at top-centre -> near black)
-  bgTop       = { 22, 34, 74 },   -- #16224a
-  bgBot       = { 7, 11, 29 },    -- #070b1d
+  -- radial background gradient (muted midnight at top-centre -> near black)
+  bgTop       = { 29, 32, 43 },
+  bgBot       = { 14, 17, 23 },
   -- The bright point of that gradient.  Identical to bgTop until a theme is
   -- applied, at which point LauncherTheme rewrites it as the preset's top
   -- colour with the accent mixed in -- which is what makes the accent visible
   -- across the whole screen rather than only on the links.
-  bgGlow      = { 22, 34, 74 },   -- #16224a
+  bgGlow      = { 29, 32, 43 },
   -- neon accents, one per cartridge
   red         = { 255, 60, 72 },  -- rgb(255,60,72)
   blue        = { 70, 150, 255 }, -- rgb(70,150,255)
   gold        = { 255, 203, 5 },  -- rgb(255,203,5)
   -- card interiors (the dark colour the accent tint fades into)
-  cardRed     = { 20, 12, 26 },   -- #140c1a
-  cardBlue    = { 12, 18, 40 },   -- #0c1228
-  cardGold    = { 30, 22, 8 },    -- #1e1608
+  cardRed     = { 36, 27, 30 },
+  cardBlue    = { 27, 32, 43 },
+  cardGold    = { 38, 33, 25 },
   -- text
   heading     = { 255, 255, 255 },
-  detail      = { 198, 208, 230 }, -- #c6d0e6
-  warning     = { 159, 176, 208 }, -- #9fb0d0
-  link        = { 127, 208, 255 }, -- #7fd0ff, the bois.icu link
-  linkHover   = { 191, 234, 255 }, -- #bfeaff, brighter on hover
+  detail      = { 197, 207, 204 },
+  warning     = { 153, 169, 164 },
+  link        = { 119, 222, 244 },
+  linkHover   = { 182, 242, 255 },
   white       = { 255, 255, 255 },
   -- THE READING COLOUR, and deliberately not `white`.  Most of the launcher's
   -- text prints with this; `white` stays what it also is -- the glass sheen on
   -- a button, the 18% border highlight, the toggle knob, and the ink on a
   -- filled red or green plate where contrast against the FILL is what matters
-  -- and the theme has no business changing it.  Identical to white until a
+  -- and the theme has no business changing it. Paper-white until a
   -- text family is applied (src/import/LauncherTheme.lua).
-  ink         = { 255, 255, 255 },
+  ink         = { 240, 242, 232 },
   -- "Play" button (green gradient) + its ink
-  playTop     = { 62, 224, 138 }, -- #3ee08a
-  playBot     = { 22, 163, 90 },  -- #16a35a
-  playInk     = { 6, 32, 18 },    -- #062012
+  playTop     = { 144, 225, 242 },
+  playBot     = { 100, 190, 219 },
+  playInk     = { 14, 30, 43 },
   -- "Choose ROM" button (red gradient)
   chooseTop   = { 255, 83, 97 },  -- #ff5361
   chooseBot   = { 214, 31, 44 },  -- #d61f2c
@@ -1743,10 +1743,10 @@ local PAL = {
   -- redesign (FirstRun.dc.html): tab chrome, cards, status pills
   green       = { 62, 224, 138 },  -- #3ee08a  "GOOD TO GO" / toggle-on / LOADED
   greenDark   = { 22, 163, 90 },   -- #16a35a
-  labelGray   = { 143, 163, 200 }, -- #8fa3c8  letterspaced ROM / SAVE FILES labels
-  cardBorder  = { 120, 150, 220 }, -- rgba(120,150,220,*) card + divider strokes
-  slotBg      = { 9, 14, 34 },     -- rgba(9,14,34,0.6) save-slot row interior
-  modDot      = { 159, 180, 221 }, -- #9fb4dd  MODS chip grid dots + underline
+  labelGray   = { 153, 169, 164 },
+  cardBorder  = { 117, 134, 158 },
+  slotBg      = { 21, 26, 35 },
+  modDot      = { 164, 183, 173 },
   -- tab-chip gradients (top -> bottom)
   chipRedTop  = { 255, 92, 103 },  -- #ff5c67
   chipRedBot  = { 181, 35, 42 },   -- #b5232a
@@ -6311,8 +6311,10 @@ function RomImporter:draw()
 
   -- CRT scanlines + vignette, over everything
   love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.draw(self.scanlineImage, self.scanlineQuad, 0, 0)
-  love.graphics.draw(self.vignetteMesh)
+  if not self.sidebarMode then
+    love.graphics.draw(self.scanlineImage, self.scanlineQuad, 0, 0)
+    love.graphics.draw(self.vignetteMesh)
+  end
   love.graphics.setColor(1, 1, 1, 1)
 
   -- drag-to-scroll the save-slot list (polls the pointer; no move/release
@@ -7491,9 +7493,11 @@ function RomImporter:_playButton(x, y, w, h, gameName, ready, locked)
       love.graphics.setBlendMode("alpha")
     end
     buttonShine(x, y, w, h, r, (pulse % 2.8) / 2.8)
-    local label = "Play " .. gameName
-    local tw = self.playFont:getWidth(label)
+    local label = Strings("Play %s", gameName)
     local tri = self.playFont:getHeight() * 0.55
+    if self.playFont:getWidth(label) > w - tri - 36 * s then label = Strings("PLAY") end
+    label = ellipsize(self.playFont, label, w - tri - 36 * s)
+    local tw = self.playFont:getWidth(label)
     local groupW = tri + 12 * s + tw
     local gx = x + (w - groupW) / 2
     local gy = y + h / 2
@@ -8204,7 +8208,7 @@ function RomImporter:_drawGamePanel(version, x, y, w, h, paged)
   local sfHintH = math.max(1, #sfHl) * self.hintFont:getHeight()
   local sfFolderH = (sfNotice and sfNotice.dir) and (self.hintFont:getHeight() + 4 * s) or 0
   local saveFilesH = pad + labelH + 10 * s + sfBtnH + 6 * s + sfHintH + sfFolderH + pad
-  local playH = math.max(50 * s, self.playFont:getHeight() + 30 * s)
+  local playH = self._libraryDetailsBody and 0 or math.max(50 * s, self.playFont:getHeight() + 30 * s)
   -- Touch Controls editor entry (layout + permanent disable).  Drawn whenever
   -- the host supplied onEditTouchControls; height reserved only then so a
   -- scripted/headless importer without the callback stays compact.
@@ -11681,11 +11685,15 @@ RomImporter._ui = {
   chooseFolder = chooseFolder,
 }
 require("src.import.LauncherSidebar").install(RomImporter)
+require("src.import.LauncherLibrary").install(RomImporter)
 -- Android's "All files access" for a chosen GAME DATA FOLDER, asked again
 -- whenever the folder is unusable for want of it (src/import/AndroidStorage.lua)
 require("src.import.AndroidStorage").install(RomImporter)
 -- Tools -> Restore a Save: every backup of a slot, with a Restore button
 -- (src/import/LauncherRestore.lua, docs/save-safety.md)
 require("src.import.LauncherRestore").install(RomImporter)
+require("src.import.LauncherWorkspace").install(RomImporter)
+require("src.import.CartDesigner").install(RomImporter)
+require("src.import.LauncherSequence").install(RomImporter)
 
 return RomImporter
