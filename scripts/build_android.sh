@@ -762,7 +762,22 @@ text = path.read_text()
 name = "org.love2d.android.SecondDisplayHost"
 
 if name in text:
-    sys.stdout.write("   second-display provider already registered\n")
+    # Rebuilding a preview from the vendored stable manifest must update this
+    # authority too: Android requires provider authorities to be device-wide
+    # unique, even when the application IDs differ.
+    provider_pattern = r'<provider\b(?=[^>]*android:name="' + re.escape(name) + r'")[^>]*>'
+    def update_authority(match):
+        updated, count = re.subn(r'android:authorities="[^"]*"',
+                                 'android:authorities="%s.seconddisplay"' % app_id,
+                                 match.group(0))
+        if count != 1:
+            raise SystemExit("second-display provider must declare one authority")
+        return updated
+    text, count = re.subn(provider_pattern, update_authority, text)
+    if count != 1:
+        raise SystemExit("expected one second-display provider")
+    path.write_text(text)
+    sys.stdout.write("   second-display provider authority refreshed\n")
     raise SystemExit(0)
 
 # An authority must be unique across the whole device, so it hangs off the

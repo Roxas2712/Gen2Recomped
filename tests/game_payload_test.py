@@ -83,7 +83,11 @@ class PayloadContract(unittest.TestCase):
         for name in ("settings.gradle", "gradlew"):
             (android / name).write_text("")
         (android / "gradle.properties").write_text("app.application_id=stable.app\napp.name=stable\n")
-        (android / "app/src/main/AndroidManifest.xml").write_text("<manifest><application/></manifest>")
+        manifest = android / "app/src/main/AndroidManifest.xml"
+        manifest.write_text("<manifest><application></application></manifest>")
+        host = self.root / "mobile/second-display/SecondDisplayHost.java"
+        host.parent.mkdir(parents=True)
+        host.write_text("// synthetic packaging fixture")
         result = qa_run(["bash", str(self.root / "scripts/build_android.sh"), "--package-only",
                          "--version", "1.2.3", "--game-love", str(self.source)],
                         env={**os.environ, "GEN2_APPLICATION_ID": "org.example.preview", "GEN2_APP_NAME": "Preview"},
@@ -93,6 +97,18 @@ class PayloadContract(unittest.TestCase):
         props = (android / "gradle.properties").read_text()
         self.assertIn("app.application_id=org.example.preview", props)
         self.assertIn("app.version_name=1.2.3", props)
+        self.assertIn('android:authorities="org.example.preview.seconddisplay"', manifest.read_text())
+        # The real vendored manifest already contains a provider. A subsequent
+        # build with a different app ID must update it instead of preserving
+        # an authority that conflicts with the stable installed application.
+        result = qa_run(["bash", str(self.root / "scripts/build_android.sh"), "--package-only",
+                         "--version", "1.2.3", "--game-love", str(self.source)],
+                        env={**os.environ, "GEN2_APPLICATION_ID": "org.example.otherpreview"},
+                        capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('android:authorities="org.example.otherpreview.seconddisplay"', manifest.read_text())
+        self.assertNotIn('android:authorities="org.example.preview.seconddisplay"', manifest.read_text())
+        self.assertEqual(manifest.read_text().count('<provider'), 1)
 
 
 if __name__ == "__main__":
