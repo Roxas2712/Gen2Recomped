@@ -28,7 +28,7 @@ function P.inspect(manifests,options,version,fs)
     end
   end
   local ids={};for id in pairs(active) do ids[#ids+1]=id end;table.sort(ids)
-  local budget={files=0,bytes=0}
+  local budget={files=0,bytes=0,listed=0}
   for _,id in ipairs(ids) do
     local m=active[id];report.checked[#report.checked+1]=id
     if m.api and m.api>V.modApi then issue('errors',id,'Requires mod API '..m.api..'; this engine provides '..V.modApi..'.') end
@@ -46,18 +46,25 @@ function P.inspect(manifests,options,version,fs)
       if m[field] and not fs.getInfo(m.path..'/'..m[field]) then issue('errors',id,'Missing '..field..' file: '..m[field]) end
     end
     local function scan(path,depth)
-      if depth>24 or budget.files>=4096 or budget.bytes>=16*1024*1024 then issue('errors',id,'Source inspection limit reached. Reduce the package before enabling it.');return end
+      local function incomplete(reason)
+        if not budget.exhausted then issue('warnings',id,reason..' Remaining source can only be checked when loaded at runtime.');budget.exhausted=true end
+      end
+      if budget.exhausted then return end
+      if depth>24 or budget.files>=4096 or budget.bytes>=16*1024*1024 then incomplete('Static source inspection limit reached.');return end
       for _,name in ipairs(fs.getDirectoryItems(path) or {}) do
+        budget.listed=budget.listed+1
+        if budget.listed>20000 or budget.exhausted then incomplete('Static directory inspection limit reached.');return end
         if name~='.' and name~='..' and not name:find('/',1,true) and not name:find('\\',1,true) then
           local file=path..'/'..name;local info=fs.getInfo(file)
           if info and info.type=='directory' then scan(file,depth+1)
           elseif info and name:lower():match('%.lua$') then
             budget.files=budget.files+1
-            if budget.files>4096 or info.size and info.size>4*1024*1024 then issue('errors',id,'Lua source is too large to inspect: '..file);return end
+            if budget.files>4096 or info.size and info.size>4*1024*1024 then incomplete('Lua source exceeds the static scan budget: '..file);return end
             local bytes=fs.read(file)
-            if type(bytes)~='string' or #bytes>4*1024*1024 or budget.bytes+#bytes>16*1024*1024 then issue('errors',id,'Unreadable or oversized Lua source: '..file);return end
+            if type(bytes)~='string' then issue('errors',id,'Unreadable Lua source: '..file);return end
+            if #bytes>4*1024*1024 or budget.bytes+#bytes>16*1024*1024 then incomplete('Lua source exceeds the static scan budget: '..file);return end
             budget.bytes=budget.bytes+#bytes
-            if bytes:byte(1)==27 then issue('errors',id,'Precompiled Lua bytecode cannot be checked portably: '..file)
+            if bytes:byte(1)==27 then issue('warnings',id,'Precompiled Lua bytecode cannot be checked portably: '..file)
             else
               local chunk,why=(loadstring or load)(bytes,'@'..file)
               if not chunk then issue('errors',id,'Lua syntax error: '..tostring(why)) end

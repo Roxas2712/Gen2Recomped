@@ -28,7 +28,7 @@ check(#r.errors==1 and r.errors[1].message:find('syntax',1,true),'syntax errors 
 file('mods/second/broken.lua','return {}')
 file('mods/second/bytecode.lua','\27Lua\0broken')
 r=P.inspect({second},{},'red',love.filesystem)
-check(r.errors[1].message:find('bytecode',1,true),'binary bytecode is not executed or treated as portable source')
+check(r.warnings[1].message:find('bytecode',1,true),'binary bytecode is not executed or treated as portable source')
 love.filesystem.remove('mods/second/bytecode.lua')
 first=manifest('first',{dependencies={'second'}});second=manifest('second',{dependencies={'first'}})
 r=P.inspect({first,second},{},'red',love.filesystem)
