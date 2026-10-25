@@ -90,3 +90,10 @@ physical item/current-species stages, Lansat/Focus Energy behavior and GBA
 hit kind/Substitute metadata are covered by cross-engine contracts. The
 reviewed scripted effect revision changes the link fingerprint; see
 [verification and remaining scope](native-gba-critical-context.md).
+
+The composed Origami fork now includes the reviewed Follow Me, Helping Hand,
+Spit Up revision 1 and Beat Up revision 3 contributions. Its already-pinned
+`a000e3862d11a73a` fixture digest and seven section pins were consistent;
+the additional canonical-input file still described the older foundation.
+Regenerate only that ROM-free input file for these four audited catalog
+changes. This adds no further runtime, digest or imported-data change.
