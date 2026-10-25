@@ -130,7 +130,7 @@ for _, version in ipairs({ "firered", "emerald" }) do
     T.eq(c.user.curMoves[1].pp, 9, "authored Rage retains native PP ownership")
     g.close()
   end
-  for _, mode in ipairs({ "item", "ball", "reply", "switch", "baton" }) do
+  for _, mode in ipairs({ "item", "ball", "reply", "switch", "baton", "run" }) do
     local g = require("tests.enemy_actions.rage").fixture(".", "gen2", version)
     local c = g.fresh("TACKLE")
     local battle, donor = c.battle, c.user
@@ -147,6 +147,10 @@ for _, version in ipairs({ "firered", "emerald" }) do
     end
     if mode == "item" then
       battle:itemUsed({})
+    elseif mode == "run" then
+      battle.player.curStats.speed, battle.enemy.curStats.speed = 200, 100
+      battle:tryRun()
+      T.eq(battle.result, "run", "actual successful escape finishes with the cleaned native state")
     elseif mode == "ball" then
       battle:throwBall("POKE_BALL")
     elseif mode == "reply" then
