@@ -12,9 +12,14 @@ local function legacy(base)
 end
 function F.prefix(base,id)
   local owner=legacy(base)
-  if owner==false then return '' end -- surface corruption through the policy
-  if valid(id) and (not owner or owner==id) then return '' end
-  return 'profiles/'..(valid(id) and id or 'guest')..'/'
+  if not valid(id) then return 'profiles/guest/' end
+  if owner==id then return '' end
+  local prefix='profiles/'..id..'/'
+  -- An existing named profile keeps its own routing even if the legacy
+  -- binding needs repair. Invalid named bindings are surfaced by the policy.
+  if base.read(prefix..'storage_account.lua')~=nil then return prefix end
+  if owner==false or not owner then return '' end
+  return prefix
 end
 local function private(path)
   return path:match('^options%.lua') or path:match('^storage_account%.lua') or path:match('^save[%w_]*%.lua')

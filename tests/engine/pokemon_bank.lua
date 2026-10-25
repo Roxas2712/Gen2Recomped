@@ -109,4 +109,9 @@ check(roundtrip.item=='BERRY' and not roundtrip.heldItem and roundtrip.otId==271
 check(S.encode(roundtrip.kasc)==S.encode(native.kasc) and native.item=='BERRY','unrecognized mod Lua fields survive both conversions without changing the source')
 local conflict=S.decode(S.encode(nativeEntry));conflict.mon.heldItem='OTHER'
 check(not B.convert(conflict,'gold',data),'conflicting item aliases require explicit resolution')
+for _,none in ipairs({0,false,'','NO_ITEM'}) do
+  local empty=S.decode(S.encode(nativeEntry));empty.mon.item=none
+  local clean=assert(B.convert(empty,'red',data))
+  check(not clean.item and not clean.heldItem and not clean.retroBankHeld,'empty-item sentinels do not create phantom custody records')
+end
 print('Pokémon Bank: '..checks..' checks passed')

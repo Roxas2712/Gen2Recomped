@@ -31,4 +31,12 @@ check(P.check() and Saves.peekSlot('red',slot).player.name=='Alice' and Saves.lo
 local ui={_bankOverlay={accountId='17',right={dirty=true}},ready={}}
 account='29';P.profileChanged(ui)
 check(not ui._bankOverlay and ui._profileBankDrafts['17'].right.dirty,'account switching retains another profile’s staged Bank draft without displaying it')
+local binding=files[P.FILE];files[P.FILE]='damaged legacy binding'
+check(P.check() and Saves.peekSlot('red',slotB).player.name=='Bob','a damaged legacy binding does not block an independently linked named profile')
+account='17';check(not P.check() and files[P.FILE]=='damaged legacy binding','the affected legacy account still requires explicit recovery without automatic reassignment')
+files[P.FILE]=nil;account='29'
+check(P.check() and Saves.peekSlot('red',slotB).player.name=='Bob','named profiles retain routing if the legacy binding is missing')
+account=nil
+check(not Saves.persistenceFs().read('bank/legacy.lua') and not Saves.persistenceFs().read('cloud_google.lua'),'guest routing cannot expose legacy or named-profile data during recovery')
+files[P.FILE]=binding
 print('Account profiles: '..n..' checks passed')

@@ -116,6 +116,12 @@ a package onto this page also works. Mobile/console fallback lists `.lua` files
 explicitly copied into `imports/bank/`; reviewing never consumes the input.
 Exports are account-private under `bank/exports/`.
 
+Portrait Bank views show one touch-sized box at a time, with Save A / Bank /
+Save B tabs. Tap a source Pokémon, change tabs and tap an empty PC cell to stage
+a copy. Small screens page through portions of a box instead of shrinking its
+cells. The Pokémon Info page shows complete origin IDs and the Lua inventory;
+desktop keeps the three simultaneous panels for dragging between them.
+
 The ROM-free launcher contract includes `tests/engine/bank_interop.lua`, native
 item conversion regressions and the existing API-3 playthrough/storage suites.
 These verify persistence and interfaces without launching a game. They do not
