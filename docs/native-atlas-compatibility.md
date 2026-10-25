@@ -28,6 +28,13 @@ owned resources. Loader cleanup runs after mod wrappers unwind.
 
 ## Verification
 
+Integration prerequisites: terrain palette decoding/import (#259), semantic
+pair identities (#250), early native session resolution (#254), and the map
+fixture/read-view foundations from #251 with its dependencies. Five-edition
+tests also require the separate cartridge registrations (#183, #186, #187).
+Loader cleanup overlaps those integration branches and should retain both
+map/player retirement and the resource retirement added here.
+
 From the repository root, with LuaJIT:
 
 ```
