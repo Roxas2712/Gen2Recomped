@@ -1,3 +1,5 @@
+-- Native Sleep Talk selection/dispatch and the sleep precheck. Other attack
+-- canceller phases retain their existing controller and are audited separately.
 local S = {}
 local V = require("src.core.GameVersion")
 local Strings = require("src.core.Strings")
@@ -9,6 +11,7 @@ local function number(move)
 end
 local function clear(user)
   user.mon.status, user.sleepTurns, user.nightmare, user.expNightmare = nil, nil, nil, nil
+  user.mon.sleepTurns = 0
 end
 function S.beforeMove(user, rng, battle, move)
   local ability = require("src.battle.Abilities").of(user)
@@ -30,7 +33,7 @@ function S.beforeMove(user, rng, battle, move)
     turns = rng(0, 3) % 4 + 2
   end
   turns = math.max(0, turns - (ability == "EARLY_BIRD" and 2 or 1))
-  user.sleepTurns = turns
+  user.sleepTurns, user.mon.sleepTurns = turns, turns
   if turns == 0 then
     clear(user)
     return true, { Strings("%s\nwoke up!", user.name) }

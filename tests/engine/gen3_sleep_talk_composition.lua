@@ -63,6 +63,7 @@ for _, version in ipairs({ "firered", "emerald" }) do
       T.eq(c.user.curMoves[1].pp, 9, "caller alone spends PP")
       T.eq(c.user.curMoves[2].pp, 0, "called learned slot retains zero PP")
       T.eq(c.user.sleepTurns, 3, "native sleep ticks once")
+      T.eq(c.user.mon.sleepTurns, 3, "the party record retains the actual remaining sleep count")
       T.check(
         c.target.mon.hp < 400 and c.user.mon.hp == 400,
         "nested attack targets the foe rather than the caller"
