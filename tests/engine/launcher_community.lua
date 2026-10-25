@@ -91,6 +91,12 @@ compatible.api=2;compatible.game_version='>=9.0.0';check(not C.weekCompatible(co
 check(C.videoUrl({id='1zapYKShrtQ',url='https://attacker.test'})=='https://www.youtube.com/watch?v=1zapYKShrtQ','video links use canonical YouTube IDs rather than arbitrary catalogue URLs')
 check(not C.videoUrl({id='../bad'}),'invalid video IDs never become external links')
 signedIn=false;local beforeRequests=requests;ui:_refreshFind(true)
-check(ui._findNeedsLogin and not ui.findIndex and requests==beforeRequests,'browsing is gated before any catalogue fetch, including cached views')
+ui:update(0)
+check(not ui._findNeedsLogin and ui.findIndex and #ui.findIndex.mods==1,'guests can browse cached catalogue entries without linking an account')
+local account=false;ui._openAccount=function() account=true end
+ui:_findConfirmInstall(card)
+check(account and not ui._communityLatestJob,'installing still requires the native account login before a download begins')
+check(C.compatibility({_communityResolved=true,api=99,game_version='>=0.1.0'})=='INCOMPATIBLE','future APIs receive an explicit incompatibility status')
+check(C.compatibility({})=='NOT VERIFIED','missing information never claims verified gameplay compatibility')
 Index.readCache,Index.writeCache,Index.cacheFresh=oldRead,oldWrite,oldFresh
 print('Launcher community: '..checks..' checks passed')

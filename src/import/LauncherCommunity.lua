@@ -1,6 +1,6 @@
 -- ModCompass provides public catalogue facts. The original GitHub manifest
 -- and release remain the authority for IDs, versions and installable ZIPs.
-local C={URL='https://pokexpert.de',FEED='https://pokexpert.de/api/cloud/v1/catalogue'}
+local C={URL='https://pokexpert.de',FEED='https://pokexpert.de/api/launcher/index.json'}
 local Index=require('src.mods.ModIndex')
 local Update=require('src.mods.ModUpdate')
 local Http=require('src.cloud.Http')
@@ -11,10 +11,6 @@ local Download=require('src.mods.ModDownload')
 local Auth=require('src.cloud.RetroCloud')
 local function get(url)
   local headers={Accept='application/json',['User-Agent']='RetroRecomped/1.0'}
-  if url==C.FEED then
-    local token,why=Auth.accessToken();if not token then return nil,why end
-    headers.Authorization='Bearer '..token
-  end
   local status,body=Http.request('GET',url,{headers=headers})
   if status==401 and url==C.FEED and Auth.expire then Auth.expire() end
   if status~=200 or type(body)~='string' or #body>4*1024*1024 then
@@ -53,6 +49,7 @@ function C.resolve(entry,doc)
   entry.id=doc.id
   if doc.api then entry.api=tonumber(doc.api) end
   if type(doc.game_version)=='string' then entry.game_version=doc.game_version end
+  if type(doc.games)=='table' then entry.games=doc.games end
   entry.latest=Update.pickBest(releases)
   entry.releases=releases
   for _,field in ipairs({'dependencies','conflicts','permissions'}) do if type(doc[field])=='table' then entry[field]=doc[field] end end
@@ -63,6 +60,7 @@ end
 function C.describe(entry)
   local body=entry.description or entry.summary or ''
   if entry.github then body=body..'\n\nRepository: '..entry.github end
+  if entry.thumbnailCredit then body=body..'\nPreview image: '..entry.thumbnailCredit end
   if entry.sourceChecked then body=body..'\nCatalogue checked: '..entry.sourceChecked end
   if entry.game_version then body=body..'\nEngine: '..entry.game_version end
   if entry.games and #entry.games>0 then body=body..'\nGames: '..table.concat(entry.games,', ') end
@@ -73,7 +71,24 @@ function C.describe(entry)
     body=body..'\n'..Update.cleanBody(entry.latest.body or '',12000)
   end
   if entry.update_check and entry.update_check:match('^error:') then body=body..'\n\n'..entry.update_check end
-  return body
+  local status,note=C.compatibility(entry)
+  return 'RETRORECOMPED · '..status..'\n'..note..'\n\n'..body
+end
+function C.compatibility(entry,game)
+  local V=require('src.core.Version')
+  if entry.api and (entry.api<1 or entry.api>V.modApi) then return 'INCOMPATIBLE','Requires a different mod API.' end
+  if entry.game_version then
+    local ok,matches=pcall(require('src.mods.Semver').satisfies,V.engine,entry.game_version)
+    if not ok or not matches then return 'INCOMPATIBLE','Requires engine '..tostring(entry.game_version)..'; this build is '..V.engine..'.' end
+  end
+  if game and entry.games and #entry.games>0 then
+    local targets=require('src.mods.ModTargets').normalize(entry.games)
+    if not require('src.mods.ModTargets').supports({games=targets},game) then return 'OTHER GAMES','This release does not declare support for the selected game.' end
+  end
+  if not entry._communityResolved or not entry.api or not entry.game_version then
+    return 'NOT VERIFIED','Compatibility information is incomplete. Check the project notes before installing.'
+  end
+  return 'MANIFEST MATCH','Engine/API requirements match. This is a metadata check, not a completed gameplay test.'
 end
 function C.weekCompatible(entry)
   local version=require('src.core.Version')
@@ -132,7 +147,6 @@ function C.install(RI)
     return remove(self,feed,...)
   end
   function RI:_refreshFind(force)
-    if not Auth.signedIn() then self.findIndex=nil;self.findLoaded=true;self._findNeedsLogin=true;self.findNotice={ok=false,text='Register or sign in to browse mods. This starts linking this device to your ModCompass account.'};return end
     self._findNeedsLogin=nil
     self:_refreshFindSources()
     if self._communityFindJob then self._communityFindJob:cancel() end
@@ -170,7 +184,7 @@ function C.install(RI)
   end
   local confirm=RI._findConfirmInstall
   RI._findConfirmInstall=function(self,entry,...)
-    if not Auth.signedIn() then if self._openDeveloper then self:_openDeveloper('browse') end;return end
+    if not Auth.signedIn() then self.findNotice={ok=false,text='Sign in or register to install. This links this device to your ModCompass account. Two-factor authentication is optional unless already enabled on your account.'};if self._openAccount then self:_openAccount() end;return end
     if not entry.catalogueId then return confirm(self,entry,...) end
     if self._communityLatestJob or self._communityDownload then
       self.findNotice={ok=false,text='A release check or download is already running.'};return
@@ -189,7 +203,7 @@ function C.install(RI)
     self.findNotice={text=text,ok=ok};self.modNotice={text=text,ok=ok}
   end
   function RI:_communityStartDownload(id,release,title,repo)
-    if not Auth.signedIn() then if self._openDeveloper then self:_openDeveloper('browse') end;return end
+    if not Auth.signedIn() then if self._openAccount then self:_openAccount() end;return end
     if self._profileApplying or self._profileRecoveryBlocked then notice(self,'Complete or recover the cloud mod profile first.',false);return end
     if self._communityDownload then notice(self,'A mod is already downloading.',false);return end
     local job,why=Download.start(release)
@@ -237,6 +251,19 @@ function C.install(RI)
         self._communityQueued[entry.catalogueId]=true
         self._communityResolveQueue[#self._communityResolveQueue+1]=entry
       end
+    end
+    if entry.catalogueId then
+      self._communityImages=self._communityImages or {}
+      local cached=self._communityImages[entry.catalogueId]
+      if cached~=nil then return cached or nil end
+      self._communityImageJobs=self._communityImageJobs or {}
+      local active=0;for _ in pairs(self._communityImageJobs) do active=active+1 end
+      if not self._communityImageJobs[entry.catalogueId] and active<3 then
+        local job=require('src.import.CartridgeDownload').preview(entry.thumbnail)
+        if job then self._communityImageJobs[entry.catalogueId]=job
+        else self._communityImages[entry.catalogueId]=false end
+      end
+      return nil
     end
     return thumb(self,entry,...)
   end
@@ -302,14 +329,6 @@ function C.install(RI)
     RI[method]=function(self,x,y,w,h,...)
       local used=paintLinks(self,x,y,w)
       self._communityGateRect=nil
-      if method=='_drawFindPanel' and not Auth.signedIn() then
-        local s=self._s;love.graphics.setFont(self.stateFont);U.col(RI.palette().ink)
-        love.graphics.printf('ONE ACCOUNT · YOUR MOD LIBRARY',x,y+used+12*s,w,'left')
-        love.graphics.setFont(self.hintFont);U.col(RI.palette().detail)
-        love.graphics.printf('Register or sign in with ModCompass to browse and download. Continuing starts linking this device to the same account used for cloud saves and your developer profile.',x,y+used+56*s,w,'left')
-        self._communityGateRect=self:_chipButton(x,y+used+150*s,'REGISTER / SIGN IN & LINK DEVICE >',{w=w,h=44*s,kind='accent'})
-        return used+220*s
-      end
       if method=='_drawFindPanel' and self._findNeedsLogin then self:_refreshFind(true) end
       local week=self.findIndex and self.findIndex.week
       self._communityWeekRect=nil
@@ -341,6 +360,23 @@ function C.install(RI)
   local update=RI.update
   RI.update=function(self,dt,...)
     Download.reap()
+    require('src.import.CartridgeDownload').reap()
+    for id,job in pairs(self._communityImageJobs or {}) do
+      local result=job:poll()
+      if result then
+        self._communityImageJobs[id]=nil
+        local image=false
+        if result.kind=='done' then
+          local ok,value=pcall(function()
+            local pixels=love.image.newImageData(love.filesystem.newFileData(result.bytes,'preview.png'))
+            if pixels:getWidth()>2048 or pixels:getHeight()>2048 then return false end
+            local value=love.graphics.newImage(pixels);value:setFilter('linear','linear');return value
+          end)
+          if ok then image=value end
+        end
+        self._communityImages[id]=image
+      end
+    end
     if self._launcherSequence then return update(self,dt,...) end
     local download=self._communityDownload
     if download then

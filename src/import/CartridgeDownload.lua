@@ -7,19 +7,26 @@ function D.reap()
     if not job.thread:isRunning() then love.filesystem.remove(job.path);table.remove(retired,i) end
   end
 end
-function D.start(version,confirmed)
-  if confirmed~=true then return nil,'Confirm the artwork source and rights notice first.' end
-  local source=require('src.import.CartridgeSources').get(version)
-  if not source then return nil,'No original cartridge reference is available for this edition.' end
+local function start(url,version,preview)
   if not (love.thread and love.thread.newThread and love.thread.newChannel) then return nil,'Background downloading is unavailable.' end
   D.reap();love.filesystem.createDirectory('launcher/cart_downloads')
   local path=('launcher/cart_downloads/%s_%d_%d.png'):format(version,os.time(),math.random(1,999999999))
   local ok,job=pcall(function()
     local channel=love.thread.newChannel();local thread=love.thread.newThread('src/import/cartridge_download_worker.lua')
-    thread:start({url=source.image,path=path,absolute=love.filesystem.getSaveDirectory()..'/'..path,packagePath=package.path},channel)
+    thread:start({url=url,preview=preview,path=path,absolute=love.filesystem.getSaveDirectory()..'/'..path,packagePath=package.path},channel)
     return setmetatable({path=path,thread=thread,channel=channel,started=love.timer.getTime()},D)
   end)
   return ok and job or nil,ok and nil or tostring(job)
+end
+function D.start(version,confirmed)
+  if confirmed~=true then return nil,'Confirm the artwork source and rights notice first.' end
+  local source=require('src.import.CartridgeSources').get(version)
+  if not source then return nil,'No original cartridge reference is available for this edition.' end
+  return start(source.image,version,false)
+end
+function D.preview(url)
+  if type(url)~='string' or not (url:match('^https://pokexpert%.de/') or url:match('^https://i%.ytimg%.com/')) then return nil,'Untrusted preview source.' end
+  return start(url,'preview',true)
 end
 function D:cancel()
   if self.cancelled or self.finished then return end

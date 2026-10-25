@@ -11707,6 +11707,10 @@ function RomImporter:_drawFindPanel(x, y, w, h, paged)
   local layout, totalH = {}, 0
   for i, entry in ipairs(rows) do
     local action, note = findActionFor(entry, installed[entry.id])
+    if entry.catalogueId then
+      local status=require('src.import.LauncherCommunity').compatibility(entry)
+      note='RETRORECOMPED · '..status
+    end
     local detW = self.hintFont:getWidth("Details") + 24 * s
     local repoW = entry.repo and (self.hintFont:getWidth("Source") + 24 * s) or 0
     local actW = action and (self.hintFont:getWidth(action) + 24 * s) or 0

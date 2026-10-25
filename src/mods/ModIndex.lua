@@ -175,6 +175,7 @@ local function parseEntry(raw)
     dependencies = raw.dependencies,
     conflicts = raw.conflicts,
     thumbnail = str(raw.thumbnail),
+    thumbnailCredit = str(raw.thumbnail_credit),
     description_url = str(raw.description_url),
     latest = parseLatest(raw.latest),
     update_check = str(raw.update_check) or "pending",
