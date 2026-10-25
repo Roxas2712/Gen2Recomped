@@ -92,8 +92,19 @@ def main():
         if platform.system() == "Darwin":
             env.setdefault("MACOSX_DEPLOYMENT_TARGET", "11.0")
         if os.name == "nt":
-            command(label + "-build", ["cmd", "/d", "/c", "msvcbuild.bat", "lua52compat"],
-                    build / "src", env, timeout=300)
+            # Git Bash prepends its Unix utilities to PATH, including a `link`
+            # command unrelated to MSVC. The vendor batch file invokes `link`
+            # by name, so keep the selected compiler's tools first in that child.
+            compiler = shutil.which("cl.exe", path=env.get("PATH"))
+            if not compiler or not Path(compiler).with_name("link.exe").is_file():
+                raise RuntimeError("an MSVC developer environment is required")
+            env["PATH"] = str(Path(compiler).parent) + os.pathsep + env["PATH"]
+            build_log = command(label + "-build", ["cmd", "/d", "/c", "msvcbuild.bat", "lua52compat"],
+                                build / "src", env, timeout=300)
+            # msvcbuild.bat can reach its failure label with exit status zero.
+            if "=== Successfully built LuaJIT for Windows/x64 ===" not in build_log:
+                print(build_log[-6000:], flush=True)
+                raise RuntimeError("MSVC runtime build did not complete; see build log")
             interpreter = build / "src/luajit.exe"
             library = build / "src/lua51.dll"
             c_program = build / "src/c-api-upvalues.exe"
