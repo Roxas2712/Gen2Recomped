@@ -9933,6 +9933,7 @@ function BattleState:tryRun()
                            TurnOrder.effectiveSpeed(self.enemy))
   end
   if escaped then
+    if GameVersion.isGen3() then self:nonMoveAction() end
     require("src.core.Sound").play(self.data, "Run")
     -- BLACK AND WHITE: "X fled using its Smoke Ball!" (bank 14 #1004)
     local smoke = self.bw and require("src.battle.Gen5HoldItems").smokeBallLine(self, self.player)
