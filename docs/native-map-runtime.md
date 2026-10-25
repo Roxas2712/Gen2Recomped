@@ -93,3 +93,10 @@ not implemented here and are not silently delegated to incompatible functions.
 Game3 lifecycle, player/script writes, atlas resources/animation, UI/battles/audio
 and unchanged full-package execution remain open. No new GPU/gameplay or complete
 map-runtime certification follows from the source-data comparisons.
+
+
+The final frozen composed source `9fcc703e` passes 329/329 engine suites,
+SDK 3/3 and Dramatic Shape B30. All five unchanged 1.0.9 source-load probes
+assert actual mod discovery and advance to the same missing player module.
+An earlier absolute-path SDK probe discovered no mod; it is retained as an
+unadmitted attempt and does not count as initialization or compatibility.
