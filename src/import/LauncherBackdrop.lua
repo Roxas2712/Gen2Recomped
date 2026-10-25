@@ -270,7 +270,10 @@ function B.draw(w, h, area)
   end
   local now=love.timer and love.timer.getTime() or 0
   local function composite(target)
-    g.push("all");g.origin();g.setColor(1,1,1,1)
+    g.push("all");g.origin();g.setShader();g.setColor(1,1,1,1)
+    if g.setStencilTest then g.setStencilTest() end
+    if g.setDepthMode then g.setDepthMode() end
+    if g.setColorMask then g.setColorMask(true,true,true,true) end
     if g.intersectScissor then g.intersectScissor(ax,ay,aw,ah) else g.setScissor(ax,ay,aw,ah) end
     g.setBlendMode("alpha","premultiplied")
     local sx,sy=aw/cw,ah/chh
@@ -307,7 +310,10 @@ function B.draw(w, h, area)
     target = state.canvas
     Renderer.splitViewport = { w = cw, h = chh }
     saved = {}
-    local function swap(name, fn) saved[name] = g[name]; g[name] = fn end
+    local function swap(name, fn)
+      if not saved[name] then saved[name]={value=g[name]} end
+      g[name]=fn
+    end
     local setCanvas = g.setCanvas
     swap("setCanvas", function(c, ...)
       if c == nil then return setCanvas({ target, depthstencil = true }) end
@@ -317,8 +323,6 @@ function B.draw(w, h, area)
     swap("getWidth", function() return cw end)
     swap("getHeight", function() return chh end)
     if g.getDPIScale then swap("getDPIScale",function()return 1 end) end
-    swap("getWidth", function() return cw end)
-    swap("getHeight", function() return chh end)
     if g.getPixelDimensions then
       swap("getPixelDimensions", function() return math.floor(cw * dpi), math.floor(chh * dpi) end)
       swap("getPixelWidth", function() return math.floor(cw * dpi) end)
@@ -373,7 +377,7 @@ function B.draw(w, h, area)
   local ok, err = pcall(state.game._draw, state.game)
   g.pop()
   if SS then SS.mode, SS.draw = ssMode, ssDraw end
-  if saved then for name, fn in pairs(saved) do g[name] = fn end end
+  if saved then for name, record in pairs(saved) do g[name] = record.value end end
   g.setCanvas(previousCanvas)
   Renderer.splitViewport = prevSplit
   if target then composite(target) end

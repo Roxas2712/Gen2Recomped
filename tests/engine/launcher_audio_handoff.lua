@@ -29,10 +29,29 @@ Sound.applyOptions({audioMuted=true,sfxVol=5});Sound.play(data,'Click')
 check(sources[#sources].volume==0,'master mute also silences already cached effects')
 Sound.applyOptions({audioMuted=false,sfxVol=5});check(sources[#sources].volume>0,'unmute restores the saved effects level')
 check(not require('src.import.CartridgeDownload').start('red',false),'original artwork requires explicit confirmation before any network request')
+local g=love.graphics;local originalWidth,originalHeight=g.getWidth,g.getHeight
+g.getWidth=function() return 1280 end;g.getHeight=function() return 720 end
+local widthFn,heightFn=g.getWidth,g.getHeight;local pixelWidth=g.getPixelWidth
+local savedRenderer=package.loaded['src.render.Renderer'];package.loaded['src.render.Renderer']={}
+B._state.game={_draw=function()
+ check(g.getWidth()==480 and g.getHeight()==432,'preview rendering sees its native aspect canvas')
+ g.setCanvas()
+end};B._state.current='red';B._state.canvas=nil;B._state.paused=false
+check(B.draw(600,200,{x=100,y=20,w=348,h=200,fit='cover'}),'an offscreen preview renders without starting a game')
+check(g.getWidth==widthFn and g.getHeight==heightFn and g.getWidth()==1280 and g.getHeight()==720,
+ 'preview cannot leave native canvas dimensions installed on the launcher window')
+check(g.getPixelWidth==pixelWidth,'temporarily supplied graphics APIs are also restored when originally absent')
+B._state.game=nil;B._state.current=nil;B._state.canvas=nil
+package.loaded['src.render.Renderer']=savedRenderer;g.getWidth,g.getHeight=originalWidth,originalHeight
 local L=require('src.import.LauncherLibrary');local calls={}
 B.current=function() return 'red' end
 B.draw=function(_,_,area) calls[#calls+1]=area;return true end
+local rectangles,meshes=0,0;local originalRect,originalMesh=g.rectangle,g.newMesh
+g.rectangle=function() rectangles=rectangles+1 end
+g.newMesh=function(vertices) meshes=meshes+1;check(#vertices==4,'banner shade is a single interpolated quad');return {} end
 check(L.preview({},'red',10,20,300,170) and calls[1].x==136 and calls[1].w==174 and calls[1].h==170 and calls[1].fit=='cover',
   'the preview covers the right side of the selected banner without stretching or hiding save actions')
+check(rectangles==0 and meshes==1,'the preview shade has no overlapping strip edges')
 check(not L.preview({},'crystal',0,0,300,170) and #calls==1,'another game never inherits the selected game preview')
+g.rectangle,g.newMesh=originalRect,originalMesh
 print('Launcher audio handoff: '..n..' checks passed')

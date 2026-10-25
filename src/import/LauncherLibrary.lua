@@ -18,6 +18,12 @@ local EDITIONS = {
   soulsilver = {{173,195,220}, 'SOUL SILVER'}, black = {{159,165,186}, 'BLACK'},
   white = {{223,221,211}, 'WHITE'},
 }
+local CARD_ACCENTS = {
+  platinum={{213,222,237},{234,108,100}},
+  black={{105,203,245},{127,145,222}},
+  white={{249,237,214},{242,174,114}},
+}
+local previewShade
 
 function Library.edition(version)
   local e = EDITIONS[version]
@@ -41,9 +47,15 @@ function Library.preview(self,version,x,y,w,h)
     if g.intersectScissor then g.intersectScissor(x,y,w,h) else g.setScissor(x,y,w,h) end
     -- Leave the live picture visible on the right, with stable contrast for
     -- the title and save actions on the left.
-    for i=0,31 do
-      local alpha=.92-.58*(i/31)
-      g.setColor(.025,.04,.065,alpha);g.rectangle('fill',x+w*i/32,y,w/32+1,h)
+    g.setShader();g.setBlendMode('alpha','alphamultiply')
+    if g.newMesh then
+      previewShade=previewShade or g.newMesh({
+        {0,0,0,0,.025,.04,.065,.94},{1,0,0,0,.025,.04,.065,.14},
+        {1,1,0,0,.025,.04,.065,.14},{0,1,0,0,.025,.04,.065,.94},
+      },'fan','static')
+      g.setColor(1,1,1,1);g.draw(previewShade,x,y,0,w,h)
+    else
+      g.setColor(.025,.04,.065,.5);g.rectangle('fill',x,y,w,h)
     end
   end
   g.pop();return ok and drew or false
@@ -249,9 +261,15 @@ function Library.install(RI)
     local r={x=x,y=y,width=w,height=h,version=version}
     local hot=self:_hover(r)
     surface(x,y,w,h,12*s,accent,hot)
+    local tones=CARD_ACCENTS[version]
+    if tones then
+      U.fillGradRounded(x+2*s,y+2*s,w-4*s,h-4*s,10*s,tones[1],tones[2],hot and .23 or .15,.45)
+      col(tones[2],.85);g.rectangle('fill',x+16*s,y+h-4*s,w-32*s,2*s,s,s)
+      accent=tones[1]
+    end
     local stageH=math.max(40*s,h-88*s)
     artwork(self,version,x+w/2,y+stageH/2+4*s,w-42*s,stageH-28*s)
-    col(P.cardBorder,0.18);g.line(x+16*s,y+stageH,x+w-16*s,y+stageH)
+    col(tones and tones[2] or P.cardBorder,tones and .7 or .18);g.line(x+16*s,y+stageH,x+w-16*s,y+stageH)
     local short=Sidebar.consoleOf(version):upper()
     label(self,short,x+16*s,y+stageH+10*s,accent)
     text(self,self.stateFont,Sidebar.nameOf(version),x+16*s,y+stageH+29*s,w-32*s)
