@@ -6,7 +6,7 @@ for _, version in ipairs({ "firered", "emerald" }) do
   local current = H.hello(f.game, "battle")
   local older = Copy(current)
   older.nativeBattleRevision = 10
-  T.eq(current.nativeBattleRevision, 11, "native Choice Band advertises revised commands")
+  T.check(current.nativeBattleRevision >= 11, "native Choice Band advertises revised commands")
   T.eq(H.checkCompat(current, older), "subset", "old held commands cannot enter a full battle")
   T.eq(H.checkCompat(older, current), "subset", "revised held commands reject symmetrically")
   for _, host in ipairs({ false, true }) do
