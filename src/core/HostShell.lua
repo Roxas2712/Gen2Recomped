@@ -461,7 +461,7 @@ local function httpBounded(url, opts, method, postBody)
   if status then body = body:sub(1, -5) end
   if #body > bytes then return nil, "response exceeds byte limit" end
   if complaint then
-    return nil, complaint, tonumber(complaint:match("returned error: (%d%d%d)"))
+    return nil, complaint, tonumber(complaint:match("returned error: (%d%d%d)")) or status
   end
   if not closeOk or done == nil or (type(code) == "number" and code ~= 0) then
     return nil, "curl failed"
