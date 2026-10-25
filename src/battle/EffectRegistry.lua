@@ -104,6 +104,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   local user, target = ctx.user, ctx.target
   local move, moveInst = ctx.move, ctx.moveInst
   local neverMiss = record and record.neverMiss
+  local gba = require("src.core.GameVersion").isGen3()
   -- alwaysHits is neverMiss's weaker sibling and the distinction is CheckHit's
   -- own ordering: .FlyDigMoves is tested BEFORE .ThunderRain
   -- (effect_commands.asm:1559-1563), so Thunder in rain skips the accuracy
@@ -115,13 +116,15 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   -- accuracyRaw replaces the move's accuracy BYTE for this turn
   -- (BattleCommand_ThunderAccuracy), so it is a 0-255 threshold, not a percent
   local accuracyRaw = record and record.accuracyRaw and record.accuracyRaw(ctx)
+  local nativeAccuracy = gba and (not neverMiss and not alwaysHits
+    or move.gen3Effect == 17 or move.gen3Effect == 78 or move.gen3Effect == 152)
 
   -- PROTECT and DETECT, before anything else happens.  Only a move the
   -- cartridge marks PROTECT-affected is stopped, which is the second use the
   -- extracted flags byte is put to; a move with no flags recorded (every Gen
   -- 1 and Gen 2 one) is treated as affected, which is that generation's rule.
   local lockedOHKO = record and record.gbaOHKO and user.lockedOn == target
-  if target.protecting and move.protectAffected ~= false and not lockedOHKO then
+  if target.protecting and (not gba or target ~= user) and move.protectAffected ~= false and not lockedOHKO then
     battle:cancelMoveAnim()
     if record and record.onProtect and record.onProtect(ctx) then return end
     battle:sayNext(Strings("%s\nprotected itself!", displayName(target)))
@@ -132,7 +135,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   -- SWIFT_EFFECT before the INVULNERABLE check), and so does SKY UPPERCUT,
   -- which reaches a target in the middle of FLY without being a never-miss
   -- move in any other respect -- hence the second, narrower field.
-  if target.invulnerable and not neverMiss
+  if target.invulnerable and not nativeAccuracy and not neverMiss
      and not (record and record.neverMissInvulnerable) and not lockedOHKO then
     -- Explosion/Selfdestruct still animate on a miss (HandleIfPlayerMoveMissed)
     if not (record and record.explode) then battle:cancelMoveAnim() end
@@ -162,8 +165,10 @@ function EffectRegistry.runDamaging(battle, ctx, record)
 
   if record and record.beforeAccuracy then record.beforeAccuracy(ctx) end
 
-  if not neverMiss and not alwaysHits then
-    if not battle:accuracyRoll(move, user, target, accuracyRaw) then
+  if nativeAccuracy or not neverMiss and not alwaysHits then
+    local hit, reason = battle:accuracyRoll(move, user, target, accuracyRaw)
+    if not hit then
+      if reason == "absorbed" then battle:cancelMoveAnim(); return end
       -- Explosion/Selfdestruct still animate on a miss (HandleIfPlayerMoveMissed)
       if not (record and record.explode) then battle:cancelMoveAnim() end
       missBeat(battle, record)
