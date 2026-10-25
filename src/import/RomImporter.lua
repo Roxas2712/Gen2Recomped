@@ -1317,6 +1317,12 @@ local function markerFor(version)
   -- RS now carries its own action tables as well as field geometry. Rebuild these
   -- caches; retain the earlier 36-byte dex and item-effect corrections.
   if version == "ruby" or version == "sapphire" then revision = "rs-item-menu-v4:" end
+  -- Keep original behavior IDs alongside the existing native normalization.
+  -- Only GBA caches lack this additional source contract; saves are unchanged.
+  if GameVersion.isGen3(version) then revision = revision .. "source-metatile-attrs-v1:source-map-views-v1:" end
+  if version == "emerald" or version == "ruby" or version == "sapphire" then
+    revision = revision .. "source-behavior-flags-v1:"
+  end
   return CACHE_FORMAT .. revision .. GameVersion.info(version).sha1
 end
 
@@ -1518,6 +1524,10 @@ local REQUIRED_FILES_GEN3 = {
   -- Absent, NPC.resolveSpriteDef falls through to SPRITE_RED and the whole
   -- region is populated by Kanto -- which is what it was.
   "data/generated/sprites.lua",
+  -- Original object picture order, independent of normalized native poses.
+  -- Older GBA caches re-import automatically through the existing readiness
+  -- check; no mod package or player save needs conversion.
+  "data/generated/gen3_object_sheets.lua",
   -- THE PARTY MENU'S OWN ART, and required for the same reason as the font:
   -- Data no longer blocks `icons` on a Gen 3 cache, so a cache that does not
   -- carry its own resolves to RED'S and every Hoenn species wears a Kanto

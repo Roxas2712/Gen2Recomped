@@ -953,7 +953,7 @@ function love.wheelmoved(x, y)
   Game:wheelmoved(x, y)
 end
 
-function love.mousepressed(x, y, button, istouch)
+local function nativeMousePressed(x, y, button, istouch)
   if bootReport then return dismissBootReport() end
   if TouchEditor then
     -- Android primary touch already arrived via love.touchpressed; a second
@@ -979,7 +979,7 @@ function love.mousepressed(x, y, button, istouch)
   end
 end
 
-function love.mousereleased(x, y, button, istouch)
+local function nativeMouseReleased(x, y, button, istouch)
   if TouchEditor then
     if love.system.getOS() == "Android" then return end
     return TouchEditor.mousereleased(x, y, button)
@@ -1010,7 +1010,7 @@ function love.mousereleased(x, y, button, istouch)
   end
 end
 
-function love.mousemoved(x, y, dx, dy, istouch)
+local function nativeMouseMoved(x, y, dx, dy, istouch)
   if RetroOverlay.game then return end
   -- FREE-CAMERA LOOK FIRST, and only when one is up: `Game:cameraLook`
   -- answers false on every other map and camera, so the touch path below
@@ -1040,6 +1040,34 @@ function love.mousemoved(x, y, dx, dy, istouch)
   if Game and not istouch and (mouseTouch or Game:hasPointerScreen()) and love.mouse.isDown(1) then
     Game:touchmoved("mouse", x, y)
   end
+end
+
+-- Source mouse wrappers see one desktop event. The native pointer path keeps
+-- its touch synthesis, without also reporting that synthesis as a second
+-- source touch event. Editors/importers and physical touch keep their owners.
+function love.mousepressed(x, y, button, istouch)
+  local facade=package.loaded['src.core.Game3']
+  if Game and not(bootReport or editorMode or Importer or TouchEditor or istouch)
+      and facade and facade._pointer then
+    return facade._pointer('mousepressed',Game,nativeMousePressed,x,y,button,istouch)
+  end
+  return nativeMousePressed(x,y,button,istouch)
+end
+function love.mousereleased(x, y, button, istouch)
+  local facade=package.loaded['src.core.Game3']
+  if Game and not(bootReport or editorMode or Importer or TouchEditor or istouch)
+      and facade and facade._pointer then
+    return facade._pointer('mousereleased',Game,nativeMouseReleased,x,y,button,istouch)
+  end
+  return nativeMouseReleased(x,y,button,istouch)
+end
+function love.mousemoved(x, y, dx, dy, istouch)
+  local facade=package.loaded['src.core.Game3']
+  if Game and not(bootReport or editorMode or Importer or TouchEditor or istouch or Game.lookWarping)
+      and facade and facade._pointer then
+    return facade._pointer('mousemoved',Game,nativeMouseMoved,x,y,dx,dy,istouch)
+  end
+  return nativeMouseMoved(x,y,dx,dy,istouch)
 end
 
 function love.textinput(text)

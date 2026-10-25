@@ -862,7 +862,7 @@ function Player:walkPhase()
   -- moving, the land-frame after a completed step, or an active wall-bonk
   -- (issue #230) animate; a standing sprite otherwise
   if not self.moving and not self.stepLanded and not self.stairExit
-     and not self.freeWalking
+     and not self.freeWalking and not self.compatWalkInPlace
      and not (self.bumpFrames and self.bumpFrames > 0) then
     return 0
   end

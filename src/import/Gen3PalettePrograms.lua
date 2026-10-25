@@ -88,20 +88,22 @@ local function recipe(rom,record,profile,layout)
     or program.table%4~=0 or program.frames*program.count*3>262144 then error("invalid palette recipe") end
   local lo,hi=record.secondary and split*16 or 0,record.secondary and 256 or split*16
   if program.first<lo or program.first+program.count>hi then error("palette recipe crosses bank") end
-  local frames={}
+  local frames,sourceFrames={},{}
   for frame=0,program.frames-1 do
     local at=offset(rom,rom:u32(program.table+frame*4),program.count*2)
     if at%2~=0 then error("unaligned palette frame") end
-    local rgb={}
+    local rgb,raw={},{}
     for color=0,program.count-1 do
       local word=rom:u16(at+color*2)
       if word>=0x8000 then error("invalid BGR555 palette frame") end
       rgb[#rgb+1]=string.char(Rom.bgr555(word))
+      raw[#raw+1]=string.char(word%256,math.floor(word/256))
     end
     frames[#frames+1]=table.concat(rgb)
+    sourceFrames[#sourceFrames+1]=table.concat(raw)
   end
   return {{kind="frames",first=program.first,count=program.count,step=program.step,
-    phase=program.phase or 0,frames=frames}},program.id
+    phase=program.phase or 0,frames=frames,sourceFrames=sourceFrames}},program.id
 end
 
 function M.extract(rom,sets,manifest,actualSha1)
