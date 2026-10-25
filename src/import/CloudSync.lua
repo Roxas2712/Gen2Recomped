@@ -179,8 +179,8 @@ end
 function C.loadState(kind)
   local st
   local file = stateFile(kind)
-  if love and love.filesystem and love.filesystem.getInfo(file) then
-    local ok, t = pcall(SaveSerializer.decode, love.filesystem.read(file) or "")
+  if love and love.filesystem and SaveData.persistenceFs().getInfo(file) then
+    local ok, t = pcall(SaveSerializer.decode, SaveData.persistenceFs().read(file) or "")
     if ok and type(t) == "table" then st = t end
   end
   st = st or {}
@@ -202,10 +202,10 @@ function C.saveState(st, kind)
     -- atomic: a lost link table makes the next sync treat every slot as new
     local okS, Safety = pcall(require, "src.core.SaveSafety")
     if okS then
-      Safety.atomicWrite(love.filesystem, stateFile(kind), SaveSerializer.encode(st),
+      Safety.atomicWrite(SaveData.persistenceFs(), stateFile(kind), SaveSerializer.encode(st),
         { bak = stateFile(kind) .. ".bak", decode = Safety.decodeAny })
     else
-      love.filesystem.write(stateFile(kind), SaveSerializer.encode(st))
+      SaveData.persistenceFs().write(stateFile(kind), SaveSerializer.encode(st))
     end
   end
 end
@@ -270,12 +270,12 @@ local function rotateLocal(version, slotId)
   local cur = localBytes(version, slotId)
   if not (cur and love and love.filesystem) then return end
   local dir = ("cloud_backups/%s"):format(version)
-  love.filesystem.createDirectory(dir)
+  SaveData.persistenceFs().createDirectory(dir)
   for i = C.BACKUPS, 2, -1 do
-    local older = love.filesystem.read(("%s/%s.%d.lua"):format(dir, slotId, i - 1))
-    if older then love.filesystem.write(("%s/%s.%d.lua"):format(dir, slotId, i), older) end
+    local older = SaveData.persistenceFs().read(("%s/%s.%d.lua"):format(dir, slotId, i - 1))
+    if older then SaveData.persistenceFs().write(("%s/%s.%d.lua"):format(dir, slotId, i), older) end
   end
-  love.filesystem.write(("%s/%s.1.lua"):format(dir, slotId), cur)
+  SaveData.persistenceFs().write(("%s/%s.1.lua"):format(dir, slotId), cur)
 end
 
 local function upload(store, st, version, slotId, cloudId, bytes, label)

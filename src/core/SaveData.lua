@@ -40,6 +40,7 @@ local OPTIONS_FILENAME = "options.lua"
 -- once the options IO it depends on exists, because it now resolves the
 -- ACTIVE slot for a version rather than the fixed flat name.
 local saveNames
+local persistFs
 
 -- The main save filename for a version -- used by the title screen's
 -- CONTINUE gate so it looks for the right game's save.
@@ -48,6 +49,7 @@ function SaveData.saveFilename(version)
   -- a good copy behind it is put back before the answer (once per process)
   pcall(SaveData.ensureRecovered, version)
   local main = saveNames(version)
+  local fs=persistFs(nil);if fs.mapPath then main=fs.mapPath(main) end
   return main
 end
 
@@ -395,12 +397,29 @@ end
 -- Resolve the filesystem a persistent read/write should land on: an
 -- explicitly injected non-love fs (headless tests, the mod loader's stub)
 -- always wins; otherwise portable mode reroutes off the OS save directory.
-local function persistFs(fs)
+local function rawPersistFs(fs)
   if fs and love and love.filesystem and fs ~= love.filesystem then
     return fs
   end
   return SaveData.portableFs() or fs or (love and love.filesystem)
 end
+local profileKey
+persistFs=function(fs)
+  local base=rawPersistFs(fs)
+  if base and base._profileBase then return base end
+  local policy=package.loaded['src.storage.AccountStorage']
+  if policy and policy.enabled and (not fs or fs==love.filesystem) then
+    local wrapped=require('src.storage.ProfileFs').wrap(base,policy.scope())
+    local key=wrapped
+    if profileKey~=key then
+      if SaveData._profileCacheSwitch then SaveData._profileCacheSwitch(profileKey,key) end
+      profileKey=key
+    end
+    return wrapped
+  end
+  return base
+end
+function SaveData.rawPersistenceFs() return rawPersistFs(nil) end
 
 -- Public seam for mods (Stadium import, HD zip install, custom pickers).
 -- Same routing as options/saves: injected fs, then portable.io, then LOVE.
@@ -1016,6 +1035,8 @@ function SaveData.slotDiskPath(version, slotId)
   if not base then return nil end
   local sep = package.config:sub(1, 1)
   local rel = select(1, slotNames(version, slotId))
+  local fs=persistFs(nil)
+  if fs.mapPath then rel=fs.mapPath(rel) end
   return base .. sep .. rel:gsub("/", sep)
 end
 
@@ -2654,5 +2675,11 @@ for _,name in ipairs({'save','writeSlot','commitSave','createSlot','deleteSlot',
     end
     return original(...)
   end
+end
+local profileCaches={}
+function SaveData._profileCacheSwitch(oldKey,newKey)
+  if oldKey then profileCaches[oldKey]={activeSlotCache,slotsChecked,knownBytes,loadedWalkerKeys,lastRecovery,recoveryChecked} end
+  local row=profileCaches[newKey] or {{},{},{},{},{},{}};profileCaches[newKey]=row
+  activeSlotCache,slotsChecked,knownBytes,loadedWalkerKeys,lastRecovery,recoveryChecked=(table.unpack or unpack)(row)
 end
 return SaveData

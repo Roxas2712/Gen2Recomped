@@ -29,7 +29,8 @@ function W.open(self,mode)
     return false
   end
   -- Re-authentication keeps any staged save copies intact.
-  self._bankOverlay=self._bankOverlay or {bank=B.list(),left={box=0},right={box=1},page=1,slots=W.slots(self),sprites={},mode='bank'}
+  local id=Storage.scope()
+  self._bankOverlay=self._bankOverlay or self._profileBankDrafts and self._profileBankDrafts[id] or {bank=B.list(),left={box=0},right={box=1},page=1,slots=W.slots(self),sprites={},mode='bank',accountId=id}
   if mode then W.mode(self,mode) end
   return true
 end
