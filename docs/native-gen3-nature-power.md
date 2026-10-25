@@ -21,7 +21,9 @@ Shared called-target dispatch preserves existing Sleep Talk targets and caller
 provenance. Nature Power lends PP ownership only to the first child body, so
 spread continuations do not spend it repeatedly. Choice Band and move-end
 commands identify the native parent. Generic authored calls keep their existing
-ownership path. This is a public-event/native-command change, not a claim of
+ownership path. Nested native callers preserve the innermost caller's resulting
+history: Sleep Talk -> Nature Power -> terrain move records Nature Power. Sleep
+Talk scans all four native slots even when a callback removes an earlier slot. This is a public-event/native-command change, not a claim of
 complete graphical or full-mod acceptance.
 
 Native command revision is 14; party codec remains 1. The independent unchanged
@@ -41,6 +43,14 @@ Native command revision is 14; party codec remains 1. The independent unchanged
   It registers `PORTABLE_NATURE` with canonical effect `NATURE_POWER`, verifies
   its public record round trip and retains the same full execution evidence.
   Its direct regression passes **17,474** checks.
+- Another **6,048** paired rows exercise native Sleep Talk -> Nature Power
+  chains, including slot removal, replacement, reordering and Pressure. The
+  previous feature production differs in **4,032** chained rows. A complete
+  actual-script probe originally showed last move 267 in the reference versus
+  214 in the host; that failure is retained.
+- Related Sleep Talk, Choice Band, Baton Pass, authored calls and PP contracts
+  pass **36 workers / 21,474 paired rows**, including all three Nature Power
+  modes. The direct chained regression passes **15,458** checks.
 - The direct engine suite passes **28,926** checks, including generation
   boundaries and event-visible child PP. Actual host/guest/spectator completes
   two native menu turns per profile with stateful held steering, **108** checks,
@@ -53,16 +63,19 @@ Native command revision is 14; party codec remains 1. The independent unchanged
 
 The fixture uses owned, controlled native-shaped child definitions to isolate
 caller behavior; it does not certify the complete cartridge child catalog.
-Actual local FireRed/Emerald imports additionally pass **80 controlled public-menu
+Actual local FireRed/Emerald imports additionally pass **160 controlled public-menu
 scenarios**: native and API-3 registered callers, all ten terrains, Choice Band
-and Shell Bell, event-visible PP, selected-slot ownership, advertised child IDs,
+and Shell Bell, direct and Sleep Talk callers, event-visible PP, selected-slot
+ownership, resulting history, advertised child IDs,
 actual Stun Spore status and damaging children. Every move is submitted through
 `mod.battle:submit()`, and the native text/result queue returns to its menu. This
 is CPU-only constructed-battle acceptance with the intro skipped, not a graphics
 or complete-playthrough result.
 
-Full engine regression, other called-move contracts, final combined-fork gates
-and broader public-content overrides remain pending. This checkpoint is not yet a published pull request or a new
+The first full feature/combined batches were explicitly interrupted after the
+new nested-history failure was proven; partial raw logs and interruption records
+are retained. They are not final acceptance. Full engine regression, final
+combined-fork gates and broader public-content overrides remain pending. This checkpoint is not yet a published pull request or a new
 stable combined testing snapshot. No ROMs, caches, normal saves or mod assets
 are included.
 
