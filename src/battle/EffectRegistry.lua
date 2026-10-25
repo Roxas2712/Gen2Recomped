@@ -105,6 +105,9 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   local move, moveInst = ctx.move, ctx.moveInst
   local neverMiss = record and record.neverMiss
   local gba = require("src.core.GameVersion").isGen3()
+  if gba and type(target.substituteHP) == "number" and target.substituteHP <= 0 then
+    target.substituteHP = nil
+  end
   -- alwaysHits is neverMiss's weaker sibling and the distinction is CheckHit's
   -- own ordering: .FlyDigMoves is tested BEFORE .ThunderRain
   -- (effect_commands.asm:1559-1563), so Thunder in rain skips the accuracy
@@ -333,6 +336,9 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     local dealt = battle:applyDamage(target, hitDamage, true, info.damageAdjustment)
     if (info.gbaSetDamage or info.gbaBeatUp) and substituteBefore then dealt = math.min(dealt, substituteBefore) end
     totalDealt = totalDealt + dealt
+    if gba and not hadSub and require("src.battle.Damage").isSpecial(move.type) then
+      ctx.gbaSpecialHit = true
+    end
     -- MIRROR COAT is COUNTER's special twin and needs the SPECIAL half of
     -- the damage kept separately; battle.lastDamage is shared by both and
     -- cannot answer for it.  Cleared at the head of every turn.
@@ -419,8 +425,11 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     battle:applyDamage(user, recoil)
   end
 
-  -- secondary side effects (blocked by fainting)
-  if record and record.run and record.kind ~= "primary"
+  -- Native chance runs before effect-level faint/Substitute/ability guards.
+  local nativeSecondary = require("src.core.GameVersion").isGen3()
+    and require("src.battle.Gen3Secondary").run(ctx, record)
+  -- Other/custom records retain their existing post-damage handler.
+  if not nativeSecondary and record and record.run and record.kind ~= "primary"
      and target.mon.hp > 0 and totalDealt > 0 then
     for _, m in ipairs(record.run(ctx)) do
       battle:sayNext(m)
@@ -428,6 +437,12 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   end
   if record == nil then
     MoveEffects.warnUnknown(move.effect)
+  end
+
+  if gba and ctx.gbaSpecialHit and target ~= user and target.mon.hp > 0
+      and target.mon.status == "FRZ" and require("src.battle.Abilities").normalizeType(move.type) == "FIRE" then
+    target.mon.status = nil
+    battle:sayNext(Strings("Fire defrosted\n%s!", displayName(target)))
   end
 
   -- King's Rock is an explicit command in selected Gen II move scripts.  It

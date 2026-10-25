@@ -20,19 +20,6 @@ local STAGE = {
 local function hasFlag(battle, flag)
   return math.floor((tonumber(battle.oakMsgFlags) or 0) / flag) % 2 == 1
 end
-local function weather(battle)
-  local sky = require("src.battle.Weather").raw(battle)
-  if not sky then
-    return nil
-  end
-  for _, b in battle:activeBattlers() do
-    local ab = Abilities.of(b)
-    if ab == "CLOUD_NINE" or ab == "AIR_LOCK" then
-      return nil
-    end
-  end
-  return sky == "SANDSTORM" and "SAND" or sky
-end
 function A.guaranteed(battle, user, target, move)
   if battle.firstBattle and user.isPlayer then
     if not hasFlag(battle, (tonumber(move.power) or 0) > 0 and 1 or 2) then
@@ -79,7 +66,7 @@ function A.check(battle, move, user, target, accuracyRaw)
       return false, "invulnerable"
     end
   end
-  local sky = weather(battle)
+  local sky = require("src.battle.Gen3BattleWeather").effective(battle)
   if guaranteed or effect == 17 or effect == 78 or effect == 152 and sky == "RAIN" then
     if absorbed(battle, user, target, move) then
       return false, "absorbed"
