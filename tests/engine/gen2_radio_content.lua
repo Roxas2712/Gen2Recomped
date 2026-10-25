@@ -46,7 +46,7 @@ V.set('crystal')
 for _,mode in ipairs({{1,'native'},{2,'native'}})do
   local d=fixture()
   local r=load(d,[[
-    local radio=mod.content.radio_channels
+    local radio=mod.content["radio_channels"]
     local row=assert(radio:get('OAKS_POKEMON_TALK'));row.name='BORROWED'
     assert(radio:get('OAKS_POKEMON_TALK').name~='BORROWED')
     for id,value in radio:each()do value.name='ITERATOR MUTATION' end
