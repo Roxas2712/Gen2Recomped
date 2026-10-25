@@ -9828,6 +9828,17 @@ function RomExtractorGen3:extractOverworldSprites()
                    walkers = walkers, still = still, failed = failed,
                    sheets = drawn, substituted = substituted }
   self:write("sprites", out)
+  -- Keep original picture-table order and palette words as an additive
+  -- compact cache. Existing actor sheets and their frame numbers stay intact.
+  local edition = type(self.version) == "table" and self.version.id or self.version
+  self:write("gen3_object_sheets", require("src.import.Gen3ObjectSheets").extract(self.rom, {
+    edition = edition, romSha1 = self.manifest.romSha1,
+    gfxTable = table_, count = count, paletteTable = palTable, paletteCount = palCount,
+    wideSubsprites = edition == "ruby" or edition == "sapphire",
+    reflectionProfile = edition == "emerald" and "raw" or "paired",
+    reflectionFor = function(info) return self:reflectionPaletteFor(info) end,
+    progress = function(current,total) self:tick("Gen3 original object sheets",current,total) end,
+  }))
   Logger.info("Gen3 overworld sprites: %d rows, %d that turn and walk, %d "
               .. "non-walkers, %d unreadable, %d sheets composed, %d "
               .. "run-time slots standing in",
