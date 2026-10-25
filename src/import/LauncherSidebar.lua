@@ -1134,6 +1134,7 @@ function Sidebar.install(RI)
   end
 
   function RI:_sbCloudSignIn()
+    if self:_sbCloudService()=="retro" then return self:_openAccount() end
     if self._cloudFlow then self:_sbCloudCancel();return end
     local def = Sidebar.CLOUD_SERVICES[self:_sbCloudService()]
     if not def then return end
@@ -1769,7 +1770,7 @@ function Sidebar.install(RI)
   end
 
   Sidebar.DEFAULTS = { launcherLayout = "sidebar", launcherBackground = "game", launcherBgMusic = "on",
-                       cloudFolder = "off", cloudService = "retro", cloudAutoSync=true }
+                       cloudFolder = "off", cloudService = "retro", cloudAutoSync=false }
 
   local origRows = RI._launcherSettingsRows
   RI._launcherSettingsRows = function(self, ...)

@@ -275,8 +275,8 @@ function C.install(RI)
     local s=self._s
     local h=34*s
     self._communityLinks={}
-    local first=self:_chipButton(x,y,'MODCOMPASS >',{h=h,w=math.min(w*.49,200*s),kind='accent'})
-    first.url=C.URL;self._communityLinks[#self._communityLinks+1]=first
+    local first=self:_chipButton(x,y,'MY ACCOUNT',{h=h,w=math.min(w*.49,200*s),kind='accent'})
+    first.action='account';self._communityLinks[#self._communityLinks+1]=first
     local second=self:_chipButton(x+math.min(w*.49,200*s)+10*s,y,'DEVELOPER PROFILE',{h=h,w=math.min(w*.47,230*s)})
     second.action='developer';self._communityLinks[#self._communityLinks+1]=second
     local used=h+12*s
@@ -333,7 +333,7 @@ function C.install(RI)
       if self._communityWeekRect and U.inside(self._communityWeekRect,x,y) then self:_findShowDetails(self._communityWeekRect.entry);return true end
       if self._communityCancelRect and U.inside(self._communityCancelRect,x,y) then self:_communityCancelDownload();return true end
       for _,rect in ipairs(self._communityLinks or {}) do
-        if U.inside(rect,x,y) then if rect.action=='developer' then self:_openDeveloper('developer') else love.system.openURL(rect.url) end;return true end
+        if U.inside(rect,x,y) then if rect.action=='developer' then self:_openDeveloper('developer') elseif rect.action=='account' then self:_openAccount() else love.system.openURL(rect.url) end;return true end
       end
     end
     return press(self,x,y,...)

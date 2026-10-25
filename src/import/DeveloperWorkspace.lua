@@ -1,6 +1,6 @@
 local W={}
 local Auth=require('src.cloud.RetroCloud')
-local Developer=require('src.cloud.DeveloperAccount')
+local Developer=require('src.cloud.DeveloperProjects')
 local Task=require('src.cloud.Task')
 local function job(self,purpose,fn)
   local f=self._developerOverlay
@@ -8,9 +8,9 @@ local function job(self,purpose,fn)
   local task,why=Task.new(fn);f.job=task;f.purpose=purpose;f.notice=task and 'Connecting to your ModCompass account...' or tostring(why)
 end
 function W.open(self,mode)
-  local profile=Auth.signedIn() and Developer.read() or nil
-  self._developerOverlay={mode=mode or 'developer',profile=profile,repository=profile and profile.repository or '',rects={},scroll=0,padIndex=2}
-  if Auth.signedIn() then job(self,'profile',Developer.profile) end
+  if not Auth.signedIn() then return self:_openAccount(mode=='browse' and 'browse' or 'developer') end
+  self._developerOverlay={mode=mode or 'developer',repository='',rects={},scroll=0,padIndex=2,page=1}
+  job(self,'list',function() return Developer.list(1) end)
 end
 function W.close(self)
   local f=self._developerOverlay;if f and f.job then f.job:cancel() end
@@ -24,13 +24,23 @@ function W.action(self,id)
   if love.keyboard and love.keyboard.setTextInput then love.keyboard.setTextInput(f.focus) end
   if f.focus then return end
   if f.job then return end
-  if id=='link' then job(self,'begin',Auth.begin)
-  elseif id=='browser' and f.flow then love.system.openURL(f.flow.url..'?code='..f.flow.code)
-  elseif id=='refresh' then job(self,'profile',Developer.profile)
-  elseif id=='save' then local value=f.repository;job(self,'profile',function() return Developer.save(value) end)
-  elseif id=='verify' then job(self,'profile',Developer.verify)
+  if id=='refresh' then local page=f.page;job(self,'list',function() return Developer.list(page) end)
+  elseif id=='previous' or id=='next' then
+    local page=id=='previous' and math.max(1,f.page-1) or f.nextPage
+    if page then job(self,'list',function() return Developer.list(page) end) end
+  elseif id:match('^select:') then
+    f.profile=f.projects[tonumber(id:sub(8))];f.repository=f.profile.repository
+  elseif id=='rights' then f.rights=not f.rights
+  elseif id=='agreement' then
+    job(self,'policy',require('src.cloud.NativeAccount').policy)
+  elseif id=='agreementBack' then f.agreement=nil;f.scroll=0
+  elseif id=='save' then
+    if not f.rights then f.notice='Read the developer confirmation and confirm your rights before linking a project.';return end
+    if not f.policy then job(self,'policy',require('src.cloud.NativeAccount').policy);return end
+    local value,version=f.repository,f.policy.version;job(self,'profile',function() return Developer.prepare(value,version) end)
+  elseif id=='verify' and f.profile then local id=f.profile.id;job(self,'profile',function() return Developer.verify(id) end)
   elseif id=='github' then local url=Developer.proofUrl(f.profile);if url then love.system.openURL(url) end
-  elseif id=='copy' and f.profile and f.profile.proof then love.system.setClipboardText(f.profile.proof);f.notice='Proof copied. Add it as .modcompass-developer.json in your repository.'
+  elseif id=='copy' and f.profile and f.profile.proof then love.system.setClipboardText(f.profile.proof);f.notice='Proof copied. Add it as .modcompass-developer.json in this repository.'
   elseif id=='browse' then W.close(self);self.findLoaded=false;self:_refreshFind(true) end
 end
 function W.tick(self)
@@ -40,18 +50,16 @@ function W.tick(self)
     if result then
       local purpose=f.purpose;f.job=nil
       if result.kind~='done' or not result.first then f.notice=tostring(result.error or result.second or 'Account unavailable.')
-      elseif purpose=='begin' then
-        f.flow=result.first;f.notice='This starts linking this device to your ModCompass account. Sign in or register, confirm your email once, then approve this device.'
-        love.system.openURL(f.flow.url..'?code='..f.flow.code)
-      elseif purpose=='poll' then
-        if result.first=='done' then f.flow=nil;job(self,'profile',Developer.profile)
-        elseif result.first=='failed' then f.flow=nil;f.notice=tostring(result.second) end
+      elseif purpose=='list' then
+        f.projects=result.first.repositories;f.page=result.first.page;f.nextPage=result.first.next_page;f.total=result.first.total;f.notice=nil
+      elseif purpose=='policy' then f.policy=result.first;f.agreement=true;f.scroll=0
       else
-        f.profile=result.first;f.repository=result.first.repository or '';f.notice=result.first.verified and 'Repository linked. The same developer profile is available on all your connected devices.' or 'One ModCompass account for saves, mods and your developer profile.'
+        f.profile=result.first;f.repository=result.first.repository or ''
+        local found=false;for i,p in ipairs(f.projects or {}) do if p.id==f.profile.id then f.projects[i]=f.profile;found=true end end
+        if not found then f.projects=f.projects or {};f.projects[#f.projects+1]=f.profile end
+        f.notice=result.first.verified and 'Repository linked. Catalogue publication is reviewed separately.' or 'Proof prepared for this repository.'
       end
     end
-  elseif f.flow and os.time()>=f.flow.nextPoll then
-    job(self,'poll',function() return Auth.poll(f.flow) end)
   end
 end
 function W.navigate(self,step)
@@ -96,28 +104,32 @@ function W.draw(self)
     top=top+math.max(1,#lines)*font:getHeight()+(gap or 18)*s
   end
   local function row(label,id)
-    button(label,x+24*s,top,width-48*s,id);top=top+50*s
+    local _,lines=self.hintFont:getWrap(label,width-72*s)
+    local h=math.max(38*s,#lines*self.hintFont:getHeight()+20*s)
+    local r=self:_chipButton(x+24*s,top,'',{w=width-48*s,h=h,kind='accent'});r.id=id;f.rects[#f.rects+1]=r
+    text(label,x+36*s,top+10*s,width-72*s);top=top+h+12*s
   end
   f.rects[1].pinned=true
   g.setScissor(v.x,v.y,v.width,v.height)
-  paragraph('One account. Your saves, mod profile and developer repository across devices.')
-  if not Auth.signedIn() then
-    paragraph('Registration is required to browse and download mods in RetroRecomped. Use your existing ModCompass account or create one during sign-in.')
-    paragraph('Continuing starts linking THIS DEVICE to that account. GitHub passwords and account passwords stay in the browser.')
-    if f.flow then
-      paragraph('DEVICE CODE · '..f.flow.code,true)
-      row('OPEN ACCOUNT LINK AGAIN >','browser')
-    else row('REGISTER / SIGN IN & LINK DEVICE >','link') end
+  paragraph('One account. Your saves, mod profile and developer projects across devices.')
+  if f.agreement and f.policy then
+    paragraph(f.policy.developer.title,true);paragraph(f.policy.developer.text);paragraph('Version '..f.policy.version);row('BACK TO MY REPOSITORIES','agreementBack')
   elseif f.mode=='browse' then
     paragraph('Connected as '..tostring(Auth.account()),true)
     row('OPEN MOD BROWSER','browse')
   else
     paragraph('Connected as '..tostring(Auth.account()))
-    paragraph('YOUR PUBLIC GITHUB REPOSITORY',false,10)
+    paragraph('MY PROJECTS · '..tostring(f.total or #(f.projects or {})),true)
+    for i,project in ipairs(f.projects or {}) do row(project.repository..(project.verified and ' · LINKED' or ' · NEEDS PROOF'),'select:'..i) end
+    if f.page>1 then row('PREVIOUS PROJECTS','previous') end
+    if f.nextPage then row('MORE PROJECTS','next') end
+    paragraph('ADD / SELECT A PUBLIC GITHUB REPOSITORY',false,10)
     f.input={x=x+24*s,y=top,width=width-48*s,height=46*s,id='repository'}
     f.rects[#f.rects+1]=f.input
     U.col(p.cardBlue);g.rectangle('fill',f.input.x,top,f.input.width,f.input.height,6*s,6*s)
     text((f.repository~='' and f.repository or 'author/my-mod')..(f.focus and ' |' or ''),x+34*s,top+12*s,width-68*s);top=top+58*s
+    row('READ DEVELOPER CONFIRMATION','agreement')
+    row((f.rights and '[x] ' or '[ ] ')..'I confirm my rights to submit this project','rights')
     button('PREPARE LINK',x+24*s,top,(width-60*s)/2,'save');button('REFRESH STATUS',x+36*s+(width-60*s)/2,top,(width-60*s)/2,'refresh');top=top+58*s
     if f.profile and f.profile.verified then
       paragraph('REPOSITORY LINKED',true)

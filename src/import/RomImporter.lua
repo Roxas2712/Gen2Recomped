@@ -11881,5 +11881,6 @@ require("src.import.LauncherStorage").install(RomImporter)
 require("src.import.LauncherBank").install(RomImporter)
 require("src.import.BankWorkspace").install(RomImporter)
 require("src.import.DeveloperWorkspace").install(RomImporter)
+require("src.import.AccountWorkspace").install(RomImporter)
 
 return RomImporter

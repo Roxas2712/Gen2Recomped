@@ -1,5 +1,4 @@
--- Uses the existing ModCompass account. Passwords remain in the browser;
--- this device stores only its revocable, expiring connection token.
+-- The shared ModCompass account stores only a revocable device token here.
 local Http=require('src.cloud.Http')
 local Json=require('src.link.Json')
 local Serializer=require('src.core.SaveSerializer')
@@ -16,7 +15,7 @@ local function request(method,path,body,token,headers)
   headers.Accept='application/json'
   if token then headers.Authorization='Bearer '..token end
   if type(body)=='table' then headers['Content-Type']='application/json';body=Json.encode(body) end
-  return Http.request(method,R.API..path,{body=body,headers=headers})
+  return Http.request(method,R.API..path,{body=body,headers=headers,sensitive=true})
 end
 local function document(method,path,body,token,headers)
   return Http.json(request(method,path,body,token,headers))
@@ -27,6 +26,14 @@ local function save(value)
 end
 function R.signedIn() local value=load();return value and (tonumber(value.expires) or 0)>os.time() or false end
 function R.account() local value=load();return value and value.email end
+function R.acceptConnection(doc)
+  if type(doc)~='table' or type(doc.access_token)~='string' or #doc.access_token~=64
+    or not doc.access_token:match('^[a-f0-9]+$') or type(doc.expires_in)~='number'
+    or doc.expires_in<120 or doc.expires_in>90*86400 or type(doc.email)~='string' then return nil,'Invalid device connection.' end
+  local ok,why=save({access=doc.access_token,expires=os.time()+doc.expires_in-60,email=doc.email})
+  if not ok then return nil,'Could not store the device connection: '..tostring(why) end
+  return true
+end
 function R.accessToken()
   local value=load()
   if value and (tonumber(value.expires) or 0)>os.time() then return value.access end
@@ -49,8 +56,8 @@ function R.poll(flow)
   if status==400 and doc and doc.error=='authorization_pending' then return 'waiting' end
   if status==429 then flow.interval=math.min(30,flow.interval+5);return 'waiting' end
   if status==200 and doc and type(doc.access_token)=='string' and #doc.access_token==64 then
-    local ok,why=save({access=doc.access_token,expires=os.time()+(tonumber(doc.expires_in) or 0)-60,email=doc.email})
-    if not ok then return 'failed','Could not store the device connection: '..tostring(why) end
+    local ok,why=R.acceptConnection(doc)
+    if not ok then return 'failed',why end
     return 'done'
   end
   return 'failed','Device connection failed ('..tostring(status or 'offline')..').'
