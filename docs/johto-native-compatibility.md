@@ -34,7 +34,7 @@ executing may occupy its bounded worker until its timeout.
 
 The palette correction was first verified at `b0d4dddd`; world ownership at
 `c833eb8887decc2d9d0e8ac135f31c098b5be988`. The latest map-metadata/collision
-build is source `fe14e8d9c3dcc891cb019b3ea827e477a1117b65`, fused with pinned
+build is source `cb12d995b2cd51ccc3e19083ae968d386dfe1147`, fused with pinned
 LÖVE12 `937eb3b`. The full supplied package is copied
 into each owned profile and verified against the original file hashes before
 execution. Only task-owned imported Crystal data is used.
@@ -48,7 +48,8 @@ visually inspected. These scenes were set up by teleport; this is not normal
 door-traversal acceptance.
 
 The actual map definitions now expose generation 2 and the ROM-derived
-outdoor flag while retaining native IDs, tileset names and numeric environment.
+outdoor flag while retaining map IDs and numeric environment. The tileset
+constant aliases described below retain the original family as `sourceTileset`.
 The package classifies New Bark Town as `trees` and the home as `interior`.
 Across the five phases per backend, all 1,240 sampled cell queries return the
 same live COLL_* value and terrain permission as the native mover. Block
@@ -117,6 +118,6 @@ and broader gameplay remain open.
   return, all interiors, continuous First/Third Person movement, extended
   sessions and current Windows GPU execution remain open.
 
-The existing preview release has not been updated to this checkpoint. Its
-published source and the separate QA builds must not be conflated. No parity
+Separate QA builds do not themselves publish a release. The release manifest
+records the exact packaged source and its scoped verification. No parity
 percentage follows from initialization, visible geometry or passing tests.
