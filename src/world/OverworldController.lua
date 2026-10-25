@@ -12919,6 +12919,71 @@ function OverworldState.gen4EmoteSpot(ground, npc, cam, record, age)
          top - (record.height or 16) - Gen4Emotes.bounce(age), rise
 end
 
+-- Arrival suppression is the native destination cell, not a frame counter or
+-- a second compatibility-only cooldown. Reading it does not consume it.
+function OverworldState:warpsSuppressed()
+  local entry, p = self.warpEntryCell, self.player
+  return (entry and p and p.cellX == entry.x and p.cellY == entry.y) and true or false
+end
+
+function OverworldState:clearWarpCooldownIfLeft()
+  local entry, p = self.warpEntryCell, self.player
+  if entry and p and (p.cellX ~= entry.x or p.cellY ~= entry.y) then
+    self.warpEntryCell = nil
+  end
+end
+
+-- Shared native arrival phase. Directional Gen2 carpets stay on the input
+-- side (checkGen2CarpetExit); a side-step onto one must leave its coord event
+-- reachable. A true verdict means a real resolved warp acquired control.
+function OverworldState:checkWarpOnArrive()
+  local p = self.player
+  if not (p and self.map and Game and Game.data and Game.save) then return false end
+  if GameVersion.isGen2() and (p.moving or self:busy()) then return false end
+  -- The arrival disable is POSITIONAL: warpEntryCell above is the whole
+  -- test.  Consuming a completed step with a one-shot "just warped" counter
+  -- instead swallowed the warp under the player's feet, which is why a
+  -- second ladder one cell from the first did nothing (Seafoam B3F has warp
+  -- tiles on (25,3) and (25,4)) -- issue #265.  pokered has no such counter:
+  -- every completed step runs CheckWarpsNoCollision (home/overworld.asm).
+  -- That same step is where BIT_STANDING_ON_WARP is maintained: cleared
+  -- before the check (home/overworld.asm:324), set again while standing on a
+  -- warp square, then cleared once more when the square is a warp-activating
+  -- tile that is not a door tile (IsPlayerStandingOnDoorTileOrWarpTile).
+  self:refreshStandingOnWarp()
+  if self:warpsSuppressed() then
+    -- still standing on the warp we arrived through; do not re-trigger it
+  else
+    -- CheckWarpsNoCollision: door/warp tiles fire immediately; otherwise
+    -- ExtraWarpCheck must pass AND either a d-pad is held or BIT_FORCED_WARP
+    -- is set (Seafoam B3F currents -- home/overworld.asm).
+    -- ...and the direction goes to THIS one too.  It was stated at the
+    -- ordering check above and not at the call that actually takes the warp
+    -- once before -- that is exactly how the Gen 2 doormat became a trapdoor
+    -- (see the comment on Warp.onArrive), so both sites pass it.
+    local w = Warp.onArrive(self.map, p.cellX, p.cellY, p.facing)
+    -- ...and ExtraWarpCheck is a GEN 1 routine with no Gen 2 counterpart.
+    -- Gen 2's CheckTileEvent runs CheckWarpTile and nothing else; the only
+    -- other way a warp fires there is DoPlayerMovement .CheckWarp, which is
+    -- the directional carpet and is handled on the input side.
+    --
+    -- Leaving this on would put the corner mats back: ExtraWarpCheck falls
+    -- back to "is the player facing the map edge", so a LEFT-facing carpet
+    -- sitting on the bottom row would still warp somebody who walked down
+    -- along it -- the same wrong exit, through a different door.
+    local gen2Classes = GameVersion.isGen2()
+      and self.map.speaksGen2Collision and self.map:speaksGen2Collision()
+    if not w and not gen2Classes and (self:dirHeld() or self.forcedWarp) then
+      w = Warp.onCollision(self.map, Game.data.field.warpCarpets,
+                           p.cellX, p.cellY, p.facing)
+    end
+    if w then
+      return self:takeWarp(w.def) and true or false
+    end
+  end
+  return false
+end
+
 function OverworldState:onStepComplete()
   local p = self.player
   -- THE DISTORTION WORLD'S COORDINATE EVENTS fire where a step ends
@@ -13348,60 +13413,8 @@ function OverworldState:onStepComplete()
 
   self.boulderTried = nil -- a completed step ends any armed boulder push
 
-  -- arriving on a door/warp tile warp; a non-door warp square also fires
-  -- when the extra check passes and the d-pad is held
-  -- (CheckWarpsNoCollision)
-  -- The cell we warped in on is inert until we step off it: standing on it,
-  -- or being walked back onto it before leaving, does not re-fire (see
-  -- warpEntryCell where it is set). Once we are on any other cell it clears
-  -- and every warp is live again.
-  local entry = self.warpEntryCell
-  if entry and (p.cellX ~= entry.x or p.cellY ~= entry.y) then
-    self.warpEntryCell = nil
-    entry = nil
-  end
-  -- The arrival disable is POSITIONAL: warpEntryCell above is the whole
-  -- test.  Consuming a completed step with a one-shot "just warped" counter
-  -- instead swallowed the warp under the player's feet, which is why a
-  -- second ladder one cell from the first did nothing (Seafoam B3F has warp
-  -- tiles on (25,3) and (25,4)) -- issue #265.  pokered has no such counter:
-  -- every completed step runs CheckWarpsNoCollision (home/overworld.asm).
-  -- That same step is where BIT_STANDING_ON_WARP is maintained: cleared
-  -- before the check (home/overworld.asm:324), set again while standing on a
-  -- warp square, then cleared once more when the square is a warp-activating
-  -- tile that is not a door tile (IsPlayerStandingOnDoorTileOrWarpTile).
-  self:refreshStandingOnWarp()
-  if entry then
-    -- still standing on the warp we arrived through; do not re-trigger it
-  else
-    -- CheckWarpsNoCollision: door/warp tiles fire immediately; otherwise
-    -- ExtraWarpCheck must pass AND either a d-pad is held or BIT_FORCED_WARP
-    -- is set (Seafoam B3F currents -- home/overworld.asm).
-    -- ...and the direction goes to THIS one too.  It was stated at the
-    -- ordering check above and not at the call that actually takes the warp
-    -- once before -- that is exactly how the Gen 2 doormat became a trapdoor
-    -- (see the comment on Warp.onArrive), so both sites pass it.
-    local w = Warp.onArrive(self.map, p.cellX, p.cellY, p.facing)
-    -- ...and ExtraWarpCheck is a GEN 1 routine with no Gen 2 counterpart.
-    -- Gen 2's CheckTileEvent runs CheckWarpTile and nothing else; the only
-    -- other way a warp fires there is DoPlayerMovement .CheckWarp, which is
-    -- the directional carpet and is handled on the input side.
-    --
-    -- Leaving this on would put the corner mats back: ExtraWarpCheck falls
-    -- back to "is the player facing the map edge", so a LEFT-facing carpet
-    -- sitting on the bottom row would still warp somebody who walked down
-    -- along it -- the same wrong exit, through a different door.
-    local gen2Classes = GameVersion.isGen2()
-      and self.map.speaksGen2Collision and self.map:speaksGen2Collision()
-    if not w and not gen2Classes and (self:dirHeld() or self.forcedWarp) then
-      w = Warp.onCollision(self.map, Game.data.field.warpCarpets,
-                           p.cellX, p.cellY, p.facing)
-    end
-    if w then
-      self:takeWarp(w.def)
-      return
-    end
-  end
+  self:clearWarpCooldownIfLeft()
+  if self:checkWarpOnArrive() then return end
 
   if Game.save.repelSteps and Game.save.repelSteps > 0 then
     Game.save.repelSteps = Game.save.repelSteps - 1
@@ -14584,7 +14597,7 @@ function OverworldState:takeWarp(warpDef)
   -- door naming the dynamic-warp placeholder before anything set it.  Standing
   -- still with a line in the log beats handing MapLoader an id that does not
   -- exist, which raises under the player's feet.
-  if not destMap then return end
+  if not destMap then return false end
   -- GEN 4'S LIFTS REMEMBER THE FLOOR YOU GOT ON AT, and the door you are
   -- taking is the only place that knows it.  Stepping into a lift car
   -- overwrites the special location with the floor being left
@@ -14622,17 +14635,17 @@ function OverworldState:takeWarp(warpDef)
     self.player.spinTimer = 0
     self.arriveWarp = "teleport"
     self:startWarpTo(destMap, x, y, facing)
-    return
+    return true
   elseif pad == "hole" then
     -- falling through a hole: no door SFX, no walk-out step.  Lavaridge's two
     -- are holes with an animation of their own -- see startLavaridgeWarp
     local lav = self.map.lavaridgeWarpAt
                 and self.map:lavaridgeWarpAt(self.player.cellX, self.player.cellY)
     if lav and self:startLavaridgeWarp(lav, destMap, x, y, facing) then
-      return
+      return true
     end
     self:startWarpTo(destMap, x, y, facing)
-    return
+    return true
   end
   -- THE ESCALATORS.  All 34 of them already carried a warp event, so the
   -- player was being moved between floors correctly -- through the DOOR path,
@@ -14650,10 +14663,11 @@ function OverworldState:takeWarp(warpDef)
     self.arriveWarp = "escalator"
     self.escalatorWay = escalator
     self:startWarpTo(destMap, x, y, facing)
-    return
+    return true
   end
   self.doorWarp = true -- door SFX + PlayerStepOutFromDoor walk-out
   self:startWarpTo(destMap, x, y, facing)
+  return true
 end
 
 -- wDigWarpNumber / wDigMapGroup / wDigMapNumber (EnterMapWarp.SaveDigWarp).
