@@ -25,7 +25,7 @@ ROMs or player saves are included in this repository or its releases.
 | Persistent Gen2 world and menu ownership | 33 ownership and 29 readiness checks; actual V/F6 input and upright menus on OpenGL/Metal | [draft #204](https://github.com/UNDERdecoded/Gen2Recomped/pull/204) |
 | Portable scripts and world actions on persistent worlds | 5,290 composed script checks and 2,778 action checks; independent existing branches also pass | Existing [#98](https://github.com/UNDERdecoded/Gen2Recomped/pull/98), [#94](https://github.com/UNDERdecoded/Gen2Recomped/pull/94) updated |
 
-The current full ROM-free quick suite passes: 254 engine suites, three SDK suites and
+The current full ROM-free quick suite passes: 255 engine suites, three SDK suites and
 B30. Its native clock fixture was updated for the additional startup method;
 the existing independent logic-speed PR retains all 407 passing assertions.
 These checks do not establish complete gameplay, all maps or Windows GPU
@@ -282,7 +282,7 @@ their input path. Same-tick overlays and battles close movement readiness,
 including a menu opened inside the body phase; the world itself on a legacy
 stack is not treated as an overlay.
 
-The composed quick suite passes 254 engine suites, three SDK suites and B30.
+The composed quick suite passes 255 engine suites, three SDK suites and B30.
 Independent upstream #204 passes 110 live-state/adoption, 21 input/body/overlay,
 33 world-owner and 29 menu-readiness checks. The actor/body test advances a
 scripted moving player once and preserves the native actor/input/landing order.
@@ -311,6 +311,33 @@ player collision and grass readers pass 51 checks; independently #207 passes
 its existing 525 collision checks plus these 51. Exact-source GPU acceptance
 of this trainer/terrain follow-up is still open. The published release remains
 the separately accepted `ae8359c0` composition.
+
+## Development: shared native warp arrival
+
+Source `b6dc1244` extracts the real completed-step warp arrival into
+`checkWarpOnArrive`, used by the native step chain as well as integrations.
+`clearWarpCooldownIfLeft` and `warpsSuppressed` observe the existing native
+arrival cell; there is no parallel cooldown or timer. The guard clears only
+when the player leaves that cell. A resolved native warp returns true;
+an unresolved dynamic destination returns false without a transition or
+backup-state mutation. Gen2 scripts, overlays, active transitions and
+unfinished steps retain ownership.
+
+Directional Gen2 carpets remain on native input dispatch rather than becoming
+immediate step warps. This preserves coord events on exit mats and prevents
+sideways mat traversal from throwing the player outside. The full permission,
+special-movement and landing chain is still required before free-cell camera
+movement can be enabled.
+
+All 119 focused checks pass across Gold, Silver, Crystal and Prism, including
+the real destination resolver, fade midpoint/completion and arrival guard;
+only audio output and graphics-dependent map materialization are substituted.
+The actual completed-step chain calls the shared arrival phase once and starts
+one transition. The independent #204 composition also passes these checks,
+64 trainer-priority, 110 state, 21 input/body, 33 ownership and 29 menu checks.
+The composed fork passes 255 engine suites, three SDK suites and B30.
+Exact-source GPU acceptance and publication of this follow-up remain open;
+the published release is still `ae8359c0`.
 
 ## Open acceptance and concrete failures
 
