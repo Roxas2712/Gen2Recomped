@@ -17,6 +17,12 @@ Broader transitions/forced-terrain GPU tests and full visuals remain open. See t
 [contract and exact limits](native-gen2-camera-movement.md). The currently
 published download/cache fix remains bound to release source `321019ae`.
 
+Apple Silicon now follows the desktop performance policy instead of being
+misclassified as a low-end ARM handheld. Fresh full-package Crystal profiles
+on OpenGL and Metal use the mod's MEDIUM default; physical NATIVE resolution
+and 2X AA are exercised in both selected cameras. See the
+[quality measurements and remaining visual limits](native-apple-silicon-quality.md).
+
 A direct read-only compiler probe of the supplied Ver.1.8 package confirms
 that both original `VoxelScene` modules compile under the local LuaJIT and
 the unchanged bundled LÖVE12 runtime.
