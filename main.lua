@@ -1063,6 +1063,7 @@ local defaultErrorHandler = love.errorhandler or love.errhand
 -- device with no console and no file manager to hand.
 local function minimalErrorScreen(text)
   if not (love.graphics and love.event) then return nil end
+  pcall(WindowFrame.shutdown)
   local ok = pcall(function()
     love.graphics.reset()
     love.graphics.setNewFont(14)
@@ -1167,6 +1168,7 @@ function love.quit()
     if not abort then WindowFrame.shutdown() end
     return abort -- return true to abort quit
   end
+  WindowFrame.shutdown()
   walkerTick("quit")
   -- let go of the "save open in a running game" markers (SaveData.closeOpen),
   -- so the launcher's Pokewalker in a later run is not told to wait

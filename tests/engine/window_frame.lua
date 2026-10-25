@@ -164,4 +164,42 @@ backend="Metal"
 Frame.draw(function()g.clear("metal-no-readback")end)
 eq(allocated,beforeMetal,"Metal does not allocate readback buffers")
 Frame.shutdown()
+-- Queued public requests use the same final target as the actual window,
+-- coalesce into one independent readback and never call a stale frame.
+local delivered={}
+local nextRequest
+local beforeQueued=allocated
+check(Frame.capture(function(d,info)
+  delivered[#delivered+1]=d.pixels
+  eq(info.mode,"metal-frame","queued capture reports actual completed backend")
+  nextRequest=Frame.capture(function(later)delivered[#delivered+1]=later.pixels end)
+end),"first queued capture accepted")
+check(Frame.capture(function(d)delivered[#delivered+1]=d.pixels end),"second queued capture accepted")
+Frame.draw(function()g.clear("queued-current-rgba")end)
+eq(#delivered,2,"all requests before draw see one completed frame")
+eq(delivered[1],"queued-current-rgba","queued capture gets current upright final pixels")
+eq(delivered[2],delivered[1],"same-frame captures share the current image")
+eq(allocated,beforeQueued+1,"queued requests coalesce one independent readback")
+check(nextRequest,"callback may schedule a later capture")
+Frame.draw(function()g.clear("queued-following-frame")end)
+eq(delivered[3],"queued-following-frame","callback request waits for next frame")
+for i=1,16 do check(Frame.capture(function()end),"bounded queue admits request "..i)end
+local admitted,reason=Frame.capture(function()error("overflow callback ran")end)
+check(not admitted and type(reason)=="string","queue refuses excess without retaining callback")
+Frame.shutdown()
+Frame.draw(function()g.clear("after-shutdown")end)
+eq(#delivered,3,"shutdown cancels pending capture callbacks")
+local beforeFailure=dataReleases
+Frame.capture(function()error("queued callback failed")end)
+check(not pcall(Frame.draw,function()g.clear("queued-failure")end),"queued failure propagates")
+eq(dataReleases,beforeFailure+1,"queued failure releases independent image")
+Frame.shutdown()
+osName,backend="Linux","OpenGL"
+Frame.capture(function(d)eq(d.pixels,"queued-direct","direct backend gives its own current frame")end)
+local startCalls=#calls
+Frame.draw(function()calls[#calls+1]="draw-queued";g.clear("queued-direct")end)
+eq(calls[startCalls+1],"request","queued direct capture scheduled before any draw")
+eq(calls[startCalls+2],"draw-queued","queued direct capture retains native ordering")
+pending({pixels=window});pending=nil
+Frame.shutdown()
 T.finish()
