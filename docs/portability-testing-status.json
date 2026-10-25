@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "4941d8d6c753925ab47180aaa80bf37b665ff7b6",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/228",
-  "feature_ref": "491d3a2f0b997f8f5c801ebcd12524e70ba5cf54",
+  "runtime_ref": "7a681ca8b81be0e77d3447ff3069459cda0bb974",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/230",
+  "feature_ref": "d2665df673e87fddbf94f3670a1e9f278744680c",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 249,
-  "engine_suites_total": 249,
+  "engine_suites_passed": 251,
+  "engine_suites_total": 251,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 116,
-  "cross_engine_paired_observations": 77668,
+  "cross_engine_worker_runs": 124,
+  "cross_engine_paired_observations": 86620,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All nine #228 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
+  "hosted_ci": "All nine #230 workflows await maintainer approval (action_required); dedicated base-damage run 40179851767 has zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -150,20 +150,20 @@
     "engine_suites_total": 125,
     "new_failures": 0,
     "existing_failure_suites": 10,
-    "repair_prs": "#128\u2013134",
+    "repair_prs": "#128–134",
     "sdk_suites_passed": 3,
     "b30_profile": "passed"
   },
   "enemy_pp_negative_controls": "Strict raw-policy checker and public/native observer both reject the unchanged #161 host for Gold PP discrepancy",
   "charge_required_original_full_suite_runtime_ref": "6a1238a7c42b09fbd9694149b35146d17bb9b720",
-  "hosted_ci_workflow_count": 8,
+  "hosted_ci_workflow_count": 9,
   "enemy_pp_hosted_ci": {
     "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40046010257",
     "conclusion": "action_required",
     "jobs": 0
   },
   "enemy_pp_full_suite_runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
-  "feature_tested_ref": "03c4a841ee327d232ca504a1ae5df1c5159064b6",
+  "feature_tested_ref": "9ad4f6ab90524eda893d0d6dbfb6f12ab71f9e9f",
   "caught_marker_native_checks_passed": 2078,
   "caught_marker_renderer_checks_passed": 840,
   "caught_marker_import_checks_passed": 216,
@@ -184,7 +184,7 @@
     "engine_suites_total": 128,
     "existing_failure_suites": 10,
     "new_failures": 0,
-    "repair_prs": "#128\u2013134",
+    "repair_prs": "#128–134",
     "sdk_suites_passed": 3,
     "b30_profile": "passed"
   },
@@ -220,7 +220,7 @@
     "existing_failure_suites": 10,
     "new_failures": 0,
     "all_fail_lines_match_previous": true,
-    "repair_prs": "#128\u2013134",
+    "repair_prs": "#128–134",
     "sdk_suites_passed": 3,
     "b30_profile": "passed"
   },
@@ -262,7 +262,7 @@
     "existing_failure_suites": 10,
     "new_failures": 0,
     "all_fail_lines_match_previous": true,
-    "repair_prs": "#128\u2013134",
+    "repair_prs": "#128–134",
     "sdk_suites_passed": 3,
     "b30_profile": "passed"
   },
@@ -322,7 +322,7 @@
       "new_failures": 0,
       "sdk_suites_passed": 3,
       "b30_profile": "passed",
-      "repair_prs": "#128\u2013134"
+      "repair_prs": "#128–134"
     },
     "combined_engine_suites_passed": 178,
     "combined_engine_suites_total": 178,
@@ -336,7 +336,7 @@
       "emerald"
     ],
     "native_runtime_ref": "d812e1b144aabd1e4be1ba79c9c31528bd750a74",
-    "native_scope": "L\u00d6VE 11.5; isolated identity; imported title/New Game and constructed native battles; actual FIGHT/move input and result queues, 13 unrestricted Berry activations over one full turn, cure before lethal poison, item consumption and unsubscribe; existing HP/endurance/entry/RUN held smoke rerun; stops before finish/afterBattle/SAVE; no full playthrough or pixel-equivalence claim",
+    "native_scope": "LÖVE 11.5; isolated identity; imported title/New Game and constructed native battles; actual FIGHT/move input and result queues, 13 unrestricted Berry activations over one full turn, cure before lethal poison, item consumption and unsubscribe; existing HP/endurance/entry/RUN held smoke rerun; stops before finish/afterBattle/SAVE; no full playthrough or pixel-equivalence claim",
     "shared_scope": "Native move-end and normal item phases, called/nested/spread/canceled moves, four slots, PP/cures, Ingrain, Wish/weather, Seed/status/current occupant/Liquid Ooze, speed order and capped/zero-heal effects; unchanged public consumer via both real SDKs in all four modes",
     "negative_control": "Unchanged #165 strict checker rejects actual FireRed 35-vs-7 native scheduling discrepancy",
     "imported_red_regressions": {
@@ -370,7 +370,7 @@
       "existing_failure_suites": 10,
       "new_failures": 0,
       "all_26_fail_lines_match_parent": true,
-      "repair_prs": "#128\u2013134",
+      "repair_prs": "#128–134",
       "sdk_suites_passed": 3,
       "b30_profile": "passed"
     },
@@ -380,7 +380,7 @@
       "gold"
     ],
     "native_runtime_ref": "5d49906947262af38d25ad01f1886473e3f40910",
-    "native_scope": "L\u00d6VE 11.5, isolated imported Gold title/New Game and constructed native battle, real FIGHT/move input and result queues, imported LEFTOVERS mapping, exact 7-HP heal and held consumption, detached/frozen records; stops before finish/afterBattle/SAVE; no full-playthrough or pixel-parity claim",
+    "native_scope": "LÖVE 11.5, isolated imported Gold title/New Game and constructed native battle, real FIGHT/move input and result queues, imported LEFTOVERS mapping, exact 7-HP heal and held consumption, detached/frozen records; stops before finish/afterBattle/SAVE; no full-playthrough or pixel-parity claim",
     "stock_gold_held_smoke_rerun": true,
     "negative_control": "Unchanged #166 reports the registry unavailable and native Leftovers heals 25 HP instead of requested 7",
     "imported_red_regressions": {
@@ -415,7 +415,7 @@
       "existing_failure_suites": 10,
       "new_failures": 0,
       "all_26_fail_lines_match_parent": true,
-      "repair_prs": "#128\u2013134",
+      "repair_prs": "#128–134",
       "sdk_suites_passed": 3,
       "b30_profile": "passed"
     },
@@ -428,7 +428,7 @@
     "native_post_runtime_changes": [
       "Shared test metadata probe uses get instead of unavailable native API-1/2 has; production, example and native driver unchanged"
     ],
-    "native_scope": "L\u00d6VE 11.5, isolated imported Gold title/New Game; actual lowered ROM-IR and real script coroutines/UI input; ordinary purchase/native price, bargain independent price and one-item limit, sold-out/reopen protection and close/resume; detached reads/frozen writes; no normal SAVE, full-playthrough or pixel-parity claim",
+    "native_scope": "LÖVE 11.5, isolated imported Gold title/New Game; actual lowered ROM-IR and real script coroutines/UI input; ordinary purchase/native price, bargain independent price and one-item limit, sold-out/reopen protection and close/resume; detached reads/frozen writes; no normal SAVE, full-playthrough or pixel-parity claim",
     "import_scope": "Synthetic bytes through actual Gen-2 ROM reader; zero-based ordinary rows and independent 16-bit bargain prices; fresh full-ROM reimport not exercised",
     "negative_control": "Unchanged #167 reports registry unavailable, leaves POTION instead of requested ULTRA_BALL and drops native bargain shop type during actual VM lowering",
     "imported_red_regressions": {
@@ -474,7 +474,7 @@
       "existing_failure_suites": 10,
       "new_failures": 0,
       "all_26_fail_lines_match_parent": true,
-      "repair_prs": "#128\u2013134",
+      "repair_prs": "#128–134",
       "sdk_suites_passed": 3,
       "b30_profile": "passed"
     },
@@ -486,7 +486,7 @@
       "emerald"
     ],
     "native_runtime_ref": "19513a930c6befae0b0ee336d0c9f4984d7ae929",
-    "native_scope": "L\u00d6VE 11.5, isolated imported title/New Game; real constructors, native summary creation/draw/B-close, Gen-2 refresh, GBA cached/live distinction, common imported IDs, preserved genetics/stats for plain overrides, actual forced-wild constructor and shiny callback bypass, retirement; no normal SAVE, complete battle/playthrough or pixel-equivalence claim",
+    "native_scope": "LÖVE 11.5, isolated imported title/New Game; real constructors, native summary creation/draw/B-close, Gen-2 refresh, GBA cached/live distinction, common imported IDs, preserved genetics/stats for plain overrides, actual forced-wild constructor and shiny callback bypass, retirement; no normal SAVE, complete battle/playthrough or pixel-equivalence claim",
     "negative_control": "Unchanged #168 has unavailable hooks, false/male instead of requested true/female, coarse Gen-2 DV boundary and ignored split SID",
     "imported_red_regressions": {
       "battle": 468,
@@ -531,7 +531,7 @@
       "existing_failure_suites": 10,
       "new_failures": 0,
       "all_26_fail_lines_match_parent": true,
-      "repair_prs": "#128\u2013134",
+      "repair_prs": "#128–134",
       "sdk_suites_passed": 3,
       "b30_profile": "passed"
     },
@@ -543,7 +543,7 @@
       "emerald"
     ],
     "native_runtime_ref": "a7a4091be9f4b631d54cd6f57ce1d33c5d8bed46",
-    "native_scope": "L\u00d6VE 11.5, isolated imported title/New Game; unchanged consumer; actual imported Gold text ID and native lowered writetext/GBA script commands; player/string-buffer expansion, native textbox rendering/paragraph pages/A-close/script resume and frozen late writes; no normal SAVE, full playthrough, fresh full-ROM reimport or pixel-equivalence claim",
+    "native_scope": "LÖVE 11.5, isolated imported title/New Game; unchanged consumer; actual imported Gold text ID and native lowered writetext/GBA script commands; player/string-buffer expansion, native textbox rendering/paragraph pages/A-close/script resume and frozen late writes; no normal SAVE, full playthrough, fresh full-ROM reimport or pixel-equivalence claim",
     "owned_native_example_removed_with_hash_guards": true,
     "negative_control": "Unchanged #169 SDK writes unused 55:4067 shadow while native VM reads SCRIPT BASE; common GBA string variable remains literal through actual reader",
     "imported_red_runtime_ref": "13598190777c0de6fac79cbe0f2663b8f8c56725",
@@ -587,7 +587,7 @@
       "existing_failure_suites": 10,
       "new_failures": 0,
       "all_26_fail_lines_match_parent": true,
-      "repair_prs": "#128\u2013134",
+      "repair_prs": "#128–134",
       "sdk_suites_passed": 3,
       "b30_profile": "passed"
     },
@@ -599,7 +599,7 @@
       "emerald"
     ],
     "native_runtime_ref": "62f8902617255195b4a12b176f171925c49209ec",
-    "native_scope": "L\u00d6VE 11.5, isolated imported title/New Game; unchanged public consumer; Gold native battle-prose helper/textbox/ending display and independent same-label ScriptRunner text/A-close/resume; real GBA storage-menu five action labels/descriptions/B-close/reopen, frozen late writes; does not execute full battle/wakeup turn; no normal SAVE, full playthrough, fresh full-ROM reimport or pixel-equivalence claim",
+    "native_scope": "LÖVE 11.5, isolated imported title/New Game; unchanged public consumer; Gold native battle-prose helper/textbox/ending display and independent same-label ScriptRunner text/A-close/resume; real GBA storage-menu five action labels/descriptions/B-close/reopen, frozen late writes; does not execute full battle/wakeup turn; no normal SAVE, full playthrough, fresh full-ROM reimport or pixel-equivalence claim",
     "owned_example_removed_with_hash_guards": true,
     "negative_control": "Unchanged #170 rejects absent registry; actual native Gold prose and GBA storage readers retain original values",
     "imported_red_runtime_ref": "52541d1b0160de2361a2bffe15fd4fad4eb9a20c",
@@ -642,7 +642,7 @@
       "existing_failure_suites": 10,
       "new_failures": 0,
       "all_26_fail_lines_match_parent": true,
-      "repair_prs": "#128\u2013134",
+      "repair_prs": "#128–134",
       "sdk_suites_passed": 3,
       "b30_profile": "passed"
     },
@@ -653,7 +653,7 @@
       "emerald"
     ],
     "native_runtime_ref": "7a12243293dcb7a6ff2a00dc64490f3c6bb5aa32",
-    "native_scope": "L\u00d6VE 11.5, isolated imported title/New Game; same installed public example; real party/footer/action rendering, SUMMARY open/B-return, ITEM submenu/B-close and party close; FireRed Player-PC -> Item Storage -> withdrawal title/list/submenu and translated CANCEL with unchanged inventory; no normal SAVE, full playthrough, fresh full-ROM import or pixel equality",
+    "native_scope": "LÖVE 11.5, isolated imported title/New Game; same installed public example; real party/footer/action rendering, SUMMARY open/B-return, ITEM submenu/B-close and party close; FireRed Player-PC -> Item Storage -> withdrawal title/list/submenu and translated CANCEL with unchanged inventory; no normal SAVE, full playthrough, fresh full-ROM import or pixel equality",
     "owned_example_removed_with_hash_guards": true,
     "negative_control": "Unchanged #171 actual party reader retains BASE_SUMMARY after same public MOD_SUMMARY override",
     "imported_red_runtime_ref": "236591a1fa50266311837f2d8569d7395c365b46",
@@ -697,7 +697,7 @@
       "all_26_fail_lines_match_parent": true,
       "sdk_suites_passed": 3,
       "b30_profile": "passed",
-      "repair_prs": "#128\u2013134"
+      "repair_prs": "#128–134"
     },
     "combined_engine_suites_passed": 193,
     "combined_engine_suites_total": 193,
@@ -740,7 +740,7 @@
       "all_26_fail_lines_match_parent": true,
       "sdk_suites_passed": 3,
       "b30_profile": "passed",
-      "repair_prs": "#128\u2013134"
+      "repair_prs": "#128–134"
     },
     "combined_engine_suites_passed": 194,
     "combined_engine_suites_total": 194,
@@ -792,7 +792,7 @@
       "all_26_fail_lines_match_parent": true,
       "sdk_suites_passed": 3,
       "b30_profile": "passed",
-      "repair_prs": "#128\u2013134"
+      "repair_prs": "#128–134"
     },
     "combined_engine_suites_passed": 196,
     "combined_engine_suites_total": 196,
@@ -854,7 +854,7 @@
       "all_26_fail_lines_match_parent": true,
       "sdk_suites_passed": 3,
       "b30_profile": "passed",
-      "repair_prs": "#128\u2013134"
+      "repair_prs": "#128–134"
     },
     "combined_engine_suites_passed": 197,
     "combined_engine_suites_total": 197,
@@ -2783,6 +2783,70 @@
       "tmp/sleep-talk-contracts-final-accepted.json",
       "tmp/sleep-talk-imported-final-accepted.log",
       "tmp/sleep-talk-accepted-evidence.json"
+    ],
+    "snapshot_scope": "Historical #228 acceptance; current held-command follow-up is native_held_damage (#230)"
+  },
+  "native_held_damage": {
+    "pr": 230,
+    "feature_runtime_ref": "9ad4f6ab90524eda893d0d6dbfb6f12ab71f9e9f",
+    "feature_ref": "d2665df673e87fddbf94f3670a1e9f278744680c",
+    "combined_runtime_ref": "7a681ca8b81be0e77d3447ff3069459cda0bb974",
+    "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_read_only": true,
+    "focused_checks": 10202,
+    "actual_link_checks": 48,
+    "feature_protocol_checks": 154,
+    "cross_engine_workers": 124,
+    "paired_observations": 86620,
+    "held_command_rows": 2040,
+    "ordinary_base_rows": 6912,
+    "existing_execution_rows": 77668,
+    "native_command_revision": 10,
+    "native_party_revision": 1,
+    "raw_native_hash": "3a2adb7fa1caee3b",
+    "previous_raw_native_hash": "f1bec52ffc687ea3",
+    "hash_audit": "Unchanged #228 hasher with only revision 9 -> 10; older-generation goldens unchanged",
+    "feature_engine_suites_passed": 132,
+    "feature_engine_suites_total": 141,
+    "baseline_engine_suites_passed": 130,
+    "baseline_engine_suites_total": 139,
+    "baseline_ref": "491d3a2f0b997f8f5c801ebcd12524e70ba5cf54",
+    "inherited_fail_lines": 25,
+    "inherited_failing_suites": 9,
+    "exact_fail_counter_equal": true,
+    "combined_engine_suites_passed": 251,
+    "combined_engine_suites_total": 251,
+    "sdk_suites": "3/3",
+    "b30": "passed",
+    "negative_assertion_failures_per_profile": 2041,
+    "negative_rows_different_per_profile": 1020,
+    "negative_rows_total_per_profile": 1020,
+    "actual_imported_scenarios": 12,
+    "actual_imported_scope": "Existing imported FireRed/Emerald Sleep Talk public-menu regression scenarios; not full item catalog certification; no normal SAVE or asset distribution",
+    "full_held_script_trace_equal": false,
+    "full_trace_source_reads": 10,
+    "full_trace_host_reads": 10,
+    "failed_call_traces_equal": true,
+    "remaining": [
+      "Choice Band check/binding",
+      "Shared Kings Rock/Shell Bell command",
+      "Fresh native GBA save rule selection",
+      "Full badge/controller/catalog/playthrough coverage"
+    ],
+    "fresh_save_ruleset_probe": "FireRed and Emerald SaveData.newGame({version = game}) still construct a gen1_faithful battle; tests explicitly exercise GBA rules",
+    "hosted_workflows": 9,
+    "hosted_ci": "action_required",
+    "dedicated_run": 40179851767,
+    "dedicated_jobs": 0,
+    "artifact_attachment": "Rejected by existing 100-artifact identity cap; regular English PR is published",
+    "evidence": [
+      "tmp/held-damage-qa/full-complete.log",
+      "tmp/held-damage-qa/enemy-complete.json",
+      "tmp/held-damage-qa/held-complete.json",
+      "tmp/held-damage-qa/base-complete.json",
+      "tmp/held-damage-qa/held-formatted.json",
+      "tmp/held-damage-qa/imported-complete.log",
+      "tmp/held-damage-qa/accepted-evidence.json"
     ]
   }
 }
