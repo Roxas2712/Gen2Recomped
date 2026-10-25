@@ -43,6 +43,7 @@ local Gen3SummaryMenu = {}
 Gen3SummaryMenu.__index = Gen3SummaryMenu
 Gen3SummaryMenu.isOpaque = true
 Gen3SummaryMenu.holdsUIAnchors = true
+Gen3SummaryMenu.supportsNoInput = true
 
 local GBA_W, GBA_H = 240, 160
 
@@ -219,6 +220,8 @@ function Gen3SummaryMenu.new(game, opts)
   local self = setmetatable({}, Gen3SummaryMenu)
   self.game = game
   opts = opts or {}
+  -- Native preview owners may advance animation without accepting menu actions.
+  self.noInput = opts.noInput and true or false
   self.mon = opts.mon
   self.party = opts.party
   self.partyIndex = opts.partyIndex
@@ -516,6 +519,7 @@ end
 function Gen3SummaryMenu:update(dt)
   if self.picAnim then self.picAnim:update(dt) end
   if self.monAnim then self.monAnim:update(dt) end
+  if self.noInput then return end
   local input = self.game.input
   if not input then return end
   if type(self.choose) == "table" then
