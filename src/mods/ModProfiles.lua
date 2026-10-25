@@ -127,10 +127,13 @@ function P.accept(plan)
     local required={};for _,id in ipairs(plan.resume.required or {}) do required[id]=true end
     local function select(id,want)
       local on,gens,force=Gens.decode(options.mods[id])
-      if want and on==false then for i=1,Gens.COUNT do gens[i]=false end end
-      -- An experimental package defaults off on every generation.
-      if want and on==nil and (not (plan.present and plan.present[id]) or plan.experimental and plan.experimental[id]) then for i=1,Gens.COUNT do gens[i]=false end end
-      if want then on=true elseif on==nil then on=true end
+      if on==nil then on=not (plan.experimental and plan.experimental[id]) end
+      -- Preserve effective activation elsewhere: a master-off, experimental
+      -- default-off or previously absent package was off on every generation.
+      if want and (not on or not (plan.present and plan.present[id])) then
+        for i=1,Gens.COUNT do gens[i]=false end
+      end
+      if want then on=true end
       gens[generation]=want;if not want then force[generation]=false end
       options.mods[id]=Gens.encode(on,gens,force)
     end

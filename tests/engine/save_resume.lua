@@ -53,4 +53,6 @@ local portableSave={meta={resume=assert(R.capture('red',{loaded[1]},options))}}
 check(not R.assess(portableSave,'red',{missingAssets},options).plan,'required private asset imports are never treated as downloadable mod packages')
 missingAssets.missingImports=nil;missingAssets.game_version='>=99.0.0'
 check(not R.assess(portableSave,'red',{missingAssets},options).plan,'an incompatible installed package cannot be silently enabled for resume')
+options.mods={};local experimental=P.plan({engine=V.engine,mods={}},{{id='experimental',version='1.0.0',experimental=true}}, {generation=1,required={}})
+check(P.accept(experimental) and G.active(options.mods.experimental,1)==false and G.active(options.mods.experimental,2)==false,'disabling an unused experimental package cannot activate it for other generations')
 print('Save resume requirements: '..n..' checks passed')
