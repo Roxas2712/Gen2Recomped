@@ -217,3 +217,23 @@ Numeric/hash-only proof: [`sapphire-ball-native.json`](sapphire-ball-native.json
 This is a narrow import/send-out correction, not all balls/throws/catches,
 remaining original RS art, full battle/story/link parity or physical iOS
 acceptance. Previous v2/v3/v4 proof records remain historical evidence.
+
+
+### Original terrain flag metadata
+
+The manifest additionally identifies this cartridge's 240 original terrain
+flags by offset and SHA256 for the source-metadata reader in #246. The shared
+`tools/gen3_source_flags.py` checks the full cartridge hash, pinned public
+source hash, every flag byte and a shifted-range negative. The matching-ELF
+manifest generator also requires the exact original table symbol offset.
+Only metadata is included; no terrain bytes or extracted assets are committed.
+
+On the composed five-edition integration, actual native layout/map/tileset
+extraction plus the compatibility observation backend in #245 matches every
+map, cell, border, ordered connection and warp against the original public
+import pipeline: 394 maps / 258200 padded cells for this edition. This is
+CPU-only data equivalence, not new GPU/gameplay or full-mod acceptance. The
+independent flag metadata reproduction passes; a new full matching-ELF rebuild
+is not claimed for this metadata-only addition. Existing RS ball/field/item
+metadata and cache revision remain intact; #246 composes its source-metadata
+marker suffix with the cartridge revision.
