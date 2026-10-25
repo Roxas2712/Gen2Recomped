@@ -1307,7 +1307,7 @@ local function markerFor(version)
   -- Only these three caches need rebuilding; other markers remain stable.
   -- v9: retain the map header's phone-service nibble beside its palette.
   if version == "gold" or version == "silver" or version == "crystal" then
-    revision = "gen2-field-encounters-v9:gen2-town-map-lz-v1:gen2-mail-v1:"
+    revision = "gen2-field-encounters-v9:gen2-town-map-lz-v1:gen2-mail-v1:gen2-event-targets-v1:"
   end
   -- field.tradeArt: the cable-trade movie's tiles out of the ROM
   -- (Gen1TradeArt); without it the trade ran on drawn stand-ins.
