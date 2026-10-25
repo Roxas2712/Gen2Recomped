@@ -1,0 +1,373 @@
+{
+  "schema": 1,
+  "sourceCommit": "6ca30e8251127811db74f5203feb3047fef6e9d1",
+  "srcTree": "d46b1234df8835508b0b2c00be8f30d51cfb8d46",
+  "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+  "engineVersion": "0.8.45",
+  "payloadSha256": "841d11b0b13e7fa535b2153c39657131f0f96b0d944f157bb38265e45ff99c90",
+  "game": "crystal",
+  "vsyncDuringQARuns": 0,
+  "defaultPresentationAccepted": false,
+  "metalWindowAccepted": false,
+  "windowsHardwareExecuted": false,
+  "fullMovementAccepted": false,
+  "fullParity": false,
+  "protectedPlayerProfilesUsed": false,
+  "romsOrModsIncluded": false,
+  "cpu": {
+    "engineSuites": 256,
+    "sdkSuites": 3,
+    "B30Passed": true,
+    "coordinateChecks": 264,
+    "quickLogSha256": "ee25a4dc44c6b0f0c3998580a829836146653c5296b291db941415628c047966",
+    "negativeControlSource": "8c7c892f9a978678903618e1be990a90c270df90",
+    "sameVisitNativeScriptStartsBefore": 2,
+    "sameVisitNativeScriptStartsAfter": 1,
+    "independentUpstream204": {
+      "head": "6ad524691e818771c100a4df8a0b76529d346b73",
+      "coordinateChecks": 264,
+      "warpArrivalChecks": 119,
+      "trainerChecks": 64,
+      "stateChecks": 110,
+      "phaseChecks": 21,
+      "ownershipChecks": 33,
+      "menuChecks": 29
+    }
+  },
+  "packageVerification": {
+    "sourceCommit": "6ca30e8251127811db74f5203feb3047fef6e9d1",
+    "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+    "payloadSha256": "841d11b0b13e7fa535b2153c39657131f0f96b0d944f157bb38265e45ff99c90",
+    "identicalPlatformPayloads": true,
+    "windowsPE64AndEmbeddedPayload": true,
+    "windowsAMD64DLLs": 11,
+    "macArchiveExtractedPayloadAndStrictSignature": true,
+    "windowsHardwareExecuted": false,
+    "published": false,
+    "allPackagedSrcFilesMatchCommittedSourceExceptDeclaredEngineStamp": true,
+    "sourceFilesCompared": 1025,
+    "previewEntryPointsMatchSource": true
+  },
+  "unmodifiedMod": {
+    "version": "3.1.2-omega.1.7",
+    "filesVerified": 27329,
+    "manifestSha256": "080b39b6bc1b6e1c557432eb911f46aeeeaaf52c829a4688b5bce9928aaf5374"
+  },
+  "openGL": {
+    "nativeWithoutMods": {
+      "initialMap": "PLAYERS_HOUSE_2F",
+      "finalMap": "NEW_BARK_TOWN",
+      "transitions": [
+        {
+          "normalMovement": true,
+          "from": "PLAYERS_HOUSE_2F",
+          "to": "PLAYERS_HOUSE_1F"
+        },
+        {
+          "normalMovement": true,
+          "from": "PLAYERS_HOUSE_1F",
+          "to": "NEW_BARK_TOWN"
+        }
+      ],
+      "bodyCalls": 520,
+      "inputPolls": 226,
+      "coordinatePolls": 34,
+      "coordinateScripts": 1,
+      "coordinateDispatches": [
+        {
+          "x": 9,
+          "serial": 13,
+          "y": 4,
+          "map": "PLAYERS_HOUSE_1F"
+        }
+      ],
+      "finalMovementState": "normal",
+      "menusOpenedAndClosedByNativeInput": true,
+      "freshOSProofs": {
+        "initial-map": {
+          "freshFrameStamp": 67,
+          "minimumFrameStamp": 1,
+          "centralColours": 17,
+          "colourProfile": "gbc",
+          "minimumColours": 4,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        }
+      }
+    },
+    "homeWithUnmodifiedMod": {
+      "scope": "cold New Game, native collision-valid stairs both directions, room menus, Mother entry scene and normal house exit; home First and Third Person",
+      "normalTransitions": [
+        {
+          "camera": "first",
+          "from": "PLAYERS_HOUSE_2F",
+          "normalMovement": true,
+          "to": "PLAYERS_HOUSE_1F"
+        },
+        {
+          "camera": "third",
+          "from": "PLAYERS_HOUSE_1F",
+          "normalMovement": true,
+          "to": "PLAYERS_HOUSE_2F"
+        },
+        {
+          "camera": "third",
+          "from": "PLAYERS_HOUSE_2F",
+          "normalMovement": true,
+          "to": "PLAYERS_HOUSE_1F"
+        },
+        {
+          "camera": "third",
+          "from": "PLAYERS_HOUSE_1F",
+          "normalMovement": true,
+          "to": "NEW_BARK_TOWN"
+        }
+      ],
+      "menusOpenedAndClosedByNativeInput": true,
+      "arrivalGuardReleasedByNormalStep": true,
+      "coordinatePolls": 42,
+      "coordinateScripts": 1,
+      "coordinateDispatches": [
+        {
+          "serial": 19,
+          "map": "PLAYERS_HOUSE_1F",
+          "y": 4,
+          "x": 9
+        }
+      ],
+      "phases": [
+        {
+          "label": "cold-bedroom-first",
+          "map": "PLAYERS_HOUSE_2F",
+          "camera": "first",
+          "movementState": "normal",
+          "overlayDepth": 0,
+          "rendererInstalled": false
+        },
+        {
+          "label": "normal-downstairs-first",
+          "map": "PLAYERS_HOUSE_1F",
+          "camera": "first",
+          "movementState": "normal",
+          "overlayDepth": 0,
+          "rendererInstalled": false
+        },
+        {
+          "label": "normal-downstairs-third",
+          "map": "PLAYERS_HOUSE_1F",
+          "camera": "third",
+          "movementState": "normal",
+          "overlayDepth": 0,
+          "rendererInstalled": false
+        },
+        {
+          "label": "normal-upstairs-third",
+          "map": "PLAYERS_HOUSE_2F",
+          "camera": "third",
+          "movementState": "normal",
+          "overlayDepth": 0,
+          "rendererInstalled": false
+        },
+        {
+          "label": "normal-house-exit-third",
+          "map": "NEW_BARK_TOWN",
+          "camera": "third",
+          "movementState": "normal",
+          "overlayDepth": 0,
+          "rendererInstalled": false
+        },
+        {
+          "label": "normal-house-exit-first",
+          "map": "NEW_BARK_TOWN",
+          "camera": "first",
+          "movementState": "normal",
+          "overlayDepth": 0,
+          "rendererInstalled": false
+        }
+      ],
+      "freshOSProofs": {
+        "initial-map": {
+          "freshFrameStamp": 1543,
+          "minimumFrameStamp": 1537,
+          "centralColours": 1446,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 2052,
+          "minimumFrameStamp": 2043,
+          "centralColours": 15004,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-second-map.png",
+          "attempts": 1
+        },
+        "resized": {
+          "freshFrameStamp": 2220,
+          "minimumFrameStamp": 2213,
+          "centralColours": 21218,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-resized.png",
+          "attempts": 1
+        },
+        "map-return": {
+          "freshFrameStamp": 2632,
+          "minimumFrameStamp": 2629,
+          "centralColours": 4617,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-map-return.png",
+          "attempts": 1
+        }
+      },
+      "testModFolderRemoved": true
+    },
+    "martCenterWithUnmodifiedMod": {
+      "scope": "teleported town setup, collision-valid native movement through four room entry/exit pairs and native menu, both camera modes",
+      "normalTransitions": [
+        {
+          "camera": "first",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_MART",
+          "from": "CHERRYGROVE_CITY"
+        },
+        {
+          "camera": "first",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_CITY",
+          "from": "CHERRYGROVE_MART"
+        },
+        {
+          "camera": "third",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_MART",
+          "from": "CHERRYGROVE_CITY"
+        },
+        {
+          "camera": "third",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_CITY",
+          "from": "CHERRYGROVE_MART"
+        },
+        {
+          "camera": "first",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_POKECENTER_1F",
+          "from": "CHERRYGROVE_CITY"
+        },
+        {
+          "camera": "first",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_CITY",
+          "from": "CHERRYGROVE_POKECENTER_1F"
+        },
+        {
+          "camera": "third",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_POKECENTER_1F",
+          "from": "CHERRYGROVE_CITY"
+        },
+        {
+          "camera": "third",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_CITY",
+          "from": "CHERRYGROVE_POKECENTER_1F"
+        }
+      ],
+      "menusOpenedAndClosedByNativeInput": true,
+      "arrivalGuardReleasedByNormalStep": null,
+      "coordinatePolls": 116,
+      "coordinateScripts": 0,
+      "coordinateDispatches": [],
+      "phases": [
+        {
+          "label": "first-normal-door-CHERRYGROVE_MART",
+          "map": "CHERRYGROVE_MART",
+          "camera": "first",
+          "movementState": "normal",
+          "overlayDepth": 0,
+          "rendererInstalled": false
+        },
+        {
+          "label": "third-normal-door-CHERRYGROVE_MART",
+          "map": "CHERRYGROVE_MART",
+          "camera": "third",
+          "movementState": "normal",
+          "overlayDepth": 0,
+          "rendererInstalled": false
+        },
+        {
+          "label": "first-normal-door-CHERRYGROVE_POKECENTER1_F",
+          "map": "CHERRYGROVE_POKECENTER_1F",
+          "camera": "first",
+          "movementState": "normal",
+          "overlayDepth": 0,
+          "rendererInstalled": false
+        },
+        {
+          "label": "third-normal-door-CHERRYGROVE_POKECENTER1_F",
+          "map": "CHERRYGROVE_POKECENTER_1F",
+          "camera": "third",
+          "movementState": "normal",
+          "overlayDepth": 0,
+          "rendererInstalled": false
+        }
+      ],
+      "freshOSProofs": {
+        "initial-map": {
+          "freshFrameStamp": 743,
+          "minimumFrameStamp": 738,
+          "centralColours": 59668,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 1709,
+          "minimumFrameStamp": 1704,
+          "centralColours": 64675,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-second-map.png",
+          "attempts": 1
+        },
+        "resized": {
+          "freshFrameStamp": 2791,
+          "minimumFrameStamp": 2782,
+          "centralColours": 74796,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-resized.png",
+          "attempts": 1
+        },
+        "map-return": {
+          "freshFrameStamp": 3795,
+          "minimumFrameStamp": 3792,
+          "centralColours": 57153,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-map-return.png",
+          "attempts": 1
+        }
+      },
+      "testModFolderRemoved": true
+    }
+  },
+  "openAcceptance": [
+    "Default VSync and Metal presentation are unaccepted for this composition.",
+    "Windows package checks do not establish Windows hardware execution.",
+    "FieldMoves, native permissions and special handoffs, and the complete count/encounter chain remain open; continuous camera movement is uninstalled.",
+    "The full supplied generated renderer exceeds 60 Lua upvalues; tested scenes use its fallback.",
+    "All coordinates, all maps, story, battle return, save/continue and long-session acceptance remain open.",
+    "Published preview remains ae8359c0; these task-owned builds are not a release update."
+  ],
+  "hostedCI": {
+    "sourceCommit": "6ca30e8251127811db74f5203feb3047fef6e9d1",
+    "checksPassed": 63,
+    "checksTotal": 63
+  }
+}

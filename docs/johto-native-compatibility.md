@@ -25,7 +25,7 @@ ROMs or player saves are included in this repository or its releases.
 | Persistent Gen2 world and menu ownership | 33 ownership and 29 readiness checks; actual V/F6 input and upright menus on OpenGL/Metal | [draft #204](https://github.com/UNDERdecoded/Gen2Recomped/pull/204) |
 | Portable scripts and world actions on persistent worlds | 5,290 composed script checks and 2,778 action checks; independent existing branches also pass | Existing [#98](https://github.com/UNDERdecoded/Gen2Recomped/pull/98), [#94](https://github.com/UNDERdecoded/Gen2Recomped/pull/94) updated |
 
-The current full ROM-free quick suite passes: 255 engine suites, three SDK suites and
+The current full ROM-free quick suite passes: 256 engine suites, three SDK suites and
 B30. Its native clock fixture was updated for the additional startup method;
 the existing independent logic-speed PR retains all 407 passing assertions.
 These checks do not establish complete gameplay, all maps or Windows GPU
@@ -282,7 +282,7 @@ their input path. Same-tick overlays and battles close movement readiness,
 including a menu opened inside the body phase; the world itself on a legacy
 stack is not treated as an overlay.
 
-The composed quick suite passes 255 engine suites, three SDK suites and B30.
+At the phase source, the composed quick suite passes 252 engine suites, three SDK suites and B30.
 Independent upstream #204 passes 110 live-state/adoption, 21 input/body/overlay,
 33 world-owner and 29 menu-readiness checks. The actor/body test advances a
 scripted moving player once and preserves the native actor/input/landing order.
@@ -338,6 +338,52 @@ one transition. The independent #204 composition also passes these checks,
 The composed fork passes 255 engine suites, three SDK suites and B30.
 Exact-source GPU acceptance and publication of this follow-up remain open;
 the published release is still `ae8359c0`.
+
+## Development: native coordinate handoff and visit consumption
+
+Source `6ca30e8251127811db74f5203feb3047fef6e9d1` adds `tryCoordScript`
+as the actual Gen2 coordinate phase. Native completed steps and deferred or
+scripted arrivals dispatch through the same phase. The preceding branch
+starts a real compiled coordinate program once on landing and again on its
+idle re-ask; this source executes it once for that visit.
+
+Authored replacement events precede the native VM hook; ordinary authored
+events follow it. Native saved scenes and the FF wildcard still select the
+compiled program. An ineligible scene does not consume a later eligible ask.
+Actual cell changes, including a map round trip at identical coordinates,
+rearm the visit. A graphics rebuild of the same map does not. New save/data
+contexts and a fresh world entry retire old consumption. Running scripts,
+overlays, unfinished steps and immediate warp priority remain in force;
+directional carpets still admit their native scene events. Reentrant polling
+cannot start a second program, and a hook that acquires a real owner or changes
+context cannot continue into stale authored events.
+
+All 264 focused checks pass across Gold, Silver, Crystal and Prism, using the
+actual VM compiler, ScriptRunner and native Map. The independent #204 branch
+also passes these checks and the existing 119 warp, 64 trainer, 110 state,
+21 phase, 33 ownership and 29 menu checks. The composed final quick run passes
+256 engine suites, three SDK suites and B30.
+All 63 hosted GitHub CI checks pass on this production code source.
+
+On this exact source, scoped OpenGL with QA VSync disabled passes native
+no-mod New Game, stairs, house exit and menu, and the unmodified supplied
+mod's normal home stairs/entry scene/exit, menus and First/Third selection.
+The Mart/Center regression passes eight normal transitions, native menus and
+both selected modes; only its initial town setup uses teleport. Four fresh
+owned-window proofs pass for the home run and four for Mart/Center.
+Each run really dispatches one first-floor coordinate program without a
+duplicate; fresh owned-window proofs pass. The full continuous camera
+controller remains uninstalled. This does not establish all coordinates,
+all maps or story completion. Default presentation, Metal and Windows hardware
+execution remain open; the published preview is still `ae8359c0`.
+See the [source-bound coordinate receipt](qa/native-foundation/johto-native-coordinate-phase.json).
+
+Prepared Windows/macOS QA packages have identical payloads. All 1,025 committed
+`src` files match the source except the declared engine-version stamp; the two
+relocated preview entry points match their originals. The Windows executable
+contains that payload and all eleven DLLs are AMD64; strict macOS signature
+verification passes. These packaging checks do not establish Windows gameplay
+or publication of these task-owned test artifacts.
 
 ## Open acceptance and concrete failures
 
