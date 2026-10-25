@@ -1313,9 +1313,9 @@ local function markerFor(version)
   if version == "red" or version == "blue" or version == "yellow" then
     revision = "gen1-trade-art-v1:"
   end
-  -- Rebuild RS caches which used Emerald's item-effect address/count.
-  -- Keep the prior 36-byte dex correction in this same revision lineage.
-  if version == "ruby" or version == "sapphire" then revision = "rs-item-effects-layout-v2:" end
+  -- RS now carries its own field printer geometry. Rebuild only these
+  -- caches; retain the earlier 36-byte dex and item-effect corrections.
+  if version == "ruby" or version == "sapphire" then revision = "rs-field-window-v3:" end
   return CACHE_FORMAT .. revision .. GameVersion.info(version).sha1
 end
 

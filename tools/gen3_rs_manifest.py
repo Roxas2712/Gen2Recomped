@@ -15,6 +15,30 @@ from gen3_sibling_manifest import Symbols
 import gen3_discover as discover
 
 
+def rs_field_window(pret, at):
+    """RS uses code coordinates, not Emerald's eight-byte BG windows."""
+    message_source=(pret/'src/field_message_box.c').read_text()
+    frame_source=(pret/'src/text_window.c').read_text()
+    printers=re.findall(r'Contest_StartTextPrinter\s*\(\s*&gFieldMessageBoxWindow\s*,\s*gStringVar4\s*,\s*gMenuTextTileOffset\s*,\s*(\d+)\s*,\s*(\d+)\s*\)',message_source)
+    assert len(printers)==2 and len(set(printers))==1,'Field printer coordinates changed'
+    left,top=map(int,printers[0])
+    dimensions={}
+    for key in ('LEFT','TOP','WIDTH','HEIGHT'):
+        found=re.findall(r'^#define\s+STD_DLG_FRAME_'+key+r'\s+(\d+)\s*$',frame_source,re.M)
+        assert len(found)==1,(key,found)
+        dimensions[key.lower()]=int(found[0])
+    assert (left,top)==(2,15) and dimensions==dict(left=0,top=14,width=26,height=4)
+    assert 'DrawDialogueFrame(win, STD_DLG_FRAME_LEFT, STD_DLG_FRAME_TOP, STD_DLG_FRAME_WIDTH, STD_DLG_FRAME_HEIGHT);'in frame_source
+    sites={name:at(name)for name in ('PrintFieldMessage','PrintFieldMessageFromStringVar4','TextWindow_DrawDialogueFrame','gMenuTextWindowTemplate')}
+    return dict(kind='rs-field-code',left=left,top=top,width=dimensions['width'],height=dimensions['height'],
+        source='ROM:PrintFieldMessage %07X / PrintFieldMessageFromStringVar4 %07X; matching RS field printer and dialogue-frame code'%
+               (sites['PrintFieldMessage'],sites['PrintFieldMessageFromStringVar4']),
+        evidence=dict(symbols=sites,sourceSHA256={
+            'src/field_message_box.c':hashlib.sha256(message_source.encode()).hexdigest(),
+            'src/text_window.c':hashlib.sha256(frame_source.encode()).hexdigest()},
+            frame=dimensions,printerCallCount=len(printers)))
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--rom',type=Path,required=True)
@@ -78,6 +102,9 @@ def main():
     result['stageOverrides']={'ITEM_EFFECTS':dict(TABLE=effects,FIRST=13,COUNT=163)}
     for name in ('scenes','sceneRoles','sceneOverlays','screenText','bagSprite','wallClock','introCast','introShots','messageWindow','specials','starters','playerTitles','movementActions','playerSprites','m4aWidths','introSprites'):
         result[name]=copy.deepcopy(getattr(f,name,None))
+    # Field text is printed at (2,15) in the matching RS code. Its older
+    # WindowTemplate is not an Emerald/FRLG battle-window scan anchor.
+    result['rsFieldMessageWindow']=rs_field_window(args.pret,at)
     # Speech contents are recovered from the cartridge by the native importer.
     for row in ((result.get('introSprites') or {}).get('birch') or {}).get('speech',[]):
         row.pop('text',None)

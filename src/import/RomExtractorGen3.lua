@@ -4659,6 +4659,22 @@ function RomExtractorGen3:extractConstants()
                 window.width, window.height, window.left, window.top)
   end
 
+  -- RS positions the field printer in task code, not in Emerald's BG
+  -- WindowTemplate records. Keep it separate from the battle-window anchor.
+  local rsWindow = self.manifest.rsFieldMessageWindow
+  if type(rsWindow) == "table" and rsWindow.kind == "rs-field-code" then
+    assert(rsWindow.left == 2 and rsWindow.top == 15
+           and rsWindow.width == 26 and rsWindow.height == 4
+           and type(rsWindow.source) == "string", "Invalid RS field-window metadata")
+    constants.gen3FieldMessageWindow = {
+      left = rsWindow.left, top = rsWindow.top,
+      width = rsWindow.width, height = rsWindow.height,
+      source = rsWindow.source,
+    }
+    Logger.info("Gen3 RS field window: %d columns by %d rows at (%d,%d)",
+                rsWindow.width, rsWindow.height, rsWindow.left, rsWindow.top)
+  end
+
   -- THE ATTRACT SEQUENCE'S CAST.
   --
   -- Its backdrops come out of the scene pass; its choreography is task code
