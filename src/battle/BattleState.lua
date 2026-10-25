@@ -5132,6 +5132,9 @@ function BattleState:effectRecord(effect)
   if GameVersion.isGen3() and effect == "OHKO_EFFECT" then
     return require("src.battle.Gen3OHKO").record(record, MoveEffects.RECORDS.OHKO_EFFECT)
   end
+  if GameVersion.isGen3() and effect == "BATON_PASS_EFFECT" then
+    return require("src.battle.Gen3BatonPass").record(record, MoveEffects.RECORDS.BATON_PASS_EFFECT)
+  end
   return record
 end
 
@@ -5871,7 +5874,10 @@ function BattleState:abilitySwitchIn(battler)
   -- An eighth of maximum HP, and a FLYING or LEVITATing Pokemon never lands
   -- on them at all.
   local side = self.sideOf and self:sideOf(battler)
-  if side and side.spikes then
+  local layers = side and side.spikes and (tonumber(side.spikes) or 1) or 0
+  if layers ~= layers then layers = 0 end
+  layers = GameVersion.isGen3() and math.max(0, math.min(3, math.floor(layers))) or 1
+  if side and side.spikes and layers > 0 then
     local grounded = Abilities.of(battler) ~= "LEVITATE"
     for _, t in ipairs(battler.curTypes or {}) do
       if t == "FLYING" then grounded = false end
@@ -5879,7 +5885,8 @@ function BattleState:abilitySwitchIn(battler)
     if grounded then
       local max = (battler.mon.stats and battler.mon.stats.hp) or battler.mon.hp
       self:sayNext(Strings("%s is hurt\nby SPIKES!", displayName(battler)))
-      self:applyDamage(battler, math.max(1, math.floor(max / 8)))
+      local divisor = ({ 8, 6, 4 })[math.max(1, layers)]
+      self:applyDamage(battler, math.max(1, math.floor(max / divisor)))
       self:drainNext()
       if battler.mon.hp <= 0 then
         self:onFaint(battler)
@@ -5898,7 +5905,7 @@ function BattleState:abilitySwitchIn(battler)
   self:abilityForecast(battler)
   local act = Abilities.onSwitchIn(battler)
   if act then self:abilitySwitchInEffect(battler, act) end
-  if GameVersion.isGen3() then require("src.battle.GbaItemSchedule").afterAction(self) end
+  if GameVersion.isGen3() and not self._gen3BatonSwitching then require("src.battle.GbaItemSchedule").afterAction(self) end
 end
 
 -- The visible half of a switch-in ability, split out so TRACE can run the
@@ -7557,6 +7564,12 @@ function BattleState:executeAction(user, target, action)
   -- faint cases are already covered by the HP guard below (#441)
   if self.result then return end
   if not (user and user.mon) then return end
+  if GameVersion.isGen3() then
+    if user.position ~= nil and self:battlerAt(user.position) ~= user then return end
+    if target and target.position ~= nil and self:battlerAt(target.position) ~= target then
+      target = self:battlerAt(target.position) or self:defaultTargetFor(user)
+    end
+  end
   if user.mon.hp <= 0 then return end
   if not action then return end
   local explicitTarget = false
@@ -7752,7 +7765,7 @@ function BattleState:executeAction(user, target, action)
     local Schedule = require("src.battle.GbaItemSchedule")
     if action.id and not frame.moved then Schedule.moveEnd(self) end
     -- Switch-in abilities are queued; their completion performs the sweep.
-    if not isSwitch then Schedule.afterAction(self) end
+    if not isSwitch and not self._gen3BatonPending then Schedule.afterAction(self) end
   end
   -- after announce/anim/effect text (pokered DrawHUDsAndHPBars)
   self:actNext(function() self:syncShownStatus() end)
@@ -8173,7 +8186,7 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
   if user.rampMove and user.rampMove ~= move.id then
     user.rampRun, user.rampMove = nil, nil
   end
-  user.lastMove = move.id
+  if not (record and record.gbaBatonPass or GameVersion.isGen3() and move.gen3Effect == 127) then user.lastMove = move.id end
 
   -- charge moves: first turn just charges; the text comes from the move
   -- record (chargeText) and the invulnerability from semiInvulnerable,
@@ -8299,9 +8312,9 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   self._gbaMoveFrame = frame
   if self._gbaActionFrame then self._gbaActionFrame.moved = true end
   performMove(self, user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
-  if not frame.finished and not frame.called then Schedule.moveEnd(self) end
+  if not frame.finished and not frame.called and not frame.suspended then Schedule.moveEnd(self) end
   self._gbaMoveFrame = parent
-  if not isCalled and not parent and not self._gbaActionFrame then Schedule.afterAction(self) end
+  if not isCalled and not parent and not self._gbaActionFrame and not frame.suspended then Schedule.afterAction(self) end
 end
 
 function BattleState:continueTrapping(user, target)

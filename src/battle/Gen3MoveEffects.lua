@@ -379,7 +379,12 @@ end
 
 -- BATON PASS: the stat stages and the volatiles go with the switch.  The
 -- switch itself is BattleState's; this records what must survive it.
-P.BATON_PASS_EFFECT = function(battle, user)
+P.BATON_PASS_EFFECT = function(battle, user, target, move, moveInst)
+  if require("src.core.GameVersion").isGen3() then
+    require("src.battle.Gen3BatonPass").perform(
+      require("src.battle.EffectRegistry").makeCtx(battle,user,target,move,moveInst))
+    return {}
+  end
   user.batonPass = {
     stages = user.stages,
     confusedTurns = user.confusedTurns,

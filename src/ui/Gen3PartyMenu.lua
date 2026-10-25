@@ -135,6 +135,9 @@ function Gen3PartyMenu.new(game, opts)
   self.onSwitch = opts.onSwitch
   self.battle = opts.battle
   self.forceSwitch = opts.forceSwitch
+  self.noCancel = opts.noCancel
+  self.onUpdate = opts.onUpdate
+  self._party = opts.party
   self.pickOnly = opts.pickOnly
   -- FireRed's POKé DUDE drives the ordinary party screen with synthetic
   -- input.  The screen stays the cartridge one; only its input source changes.
@@ -168,7 +171,7 @@ function Gen3PartyMenu.new(game, opts)
   return self
 end
 
-function Gen3PartyMenu:party() return self.game.save.party or {} end
+function Gen3PartyMenu:party() return self._party or self.game.save.party or {} end
 
 -- slots 1..6, then the CANCEL button as slot #party+1
 function Gen3PartyMenu:slots() return #self:party() + 1 end
@@ -179,6 +182,7 @@ function Gen3PartyMenu:slots() return #self:party() + 1 end
 -- whatever the presentation left on top.  Closing twice was always a bug; it
 -- simply never happened before.
 function Gen3PartyMenu:close()
+  if self.noCancel then return end
   if self.closed then return end
   self.closed = true
   self.game.stack:pop()
@@ -1048,6 +1052,7 @@ function Gen3PartyMenu:cancel()
 end
 
 function Gen3PartyMenu:update(dt)
+  if self.onUpdate then self.onUpdate(self); if self.closed then return end end
   -- RECONSTRUCTED: every icon bounces, all the time, on the same beat.  On
   -- the cartridge each one is an OBJ with its own callback; here it is one
   -- clock, which is indistinguishable on screen and cannot drift.

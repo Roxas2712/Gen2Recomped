@@ -93,7 +93,9 @@ function Commands.describe(game, screen, ids)
     end
   end
   if kind:match("^party_") then
+    if screen.noCancel then out.canBack = false end
     local party = kind == "party_gb" and (screen.party or game.save.party) or screen:party()
+    refs.party = party
     for i, mon in ipairs(party or {}) do
       refs["mon:" .. i] = mon
     end
@@ -116,7 +118,7 @@ function Commands.describe(game, screen, ids)
         if kind == "party_ds" and screen.select then
           row(out, "confirm", ids)
         end
-        row(out, "back", ids)
+        if not screen.noCancel then row(out, "back", ids) end
       end
     end
   elseif kind == "text" then
