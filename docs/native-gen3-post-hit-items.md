@@ -52,6 +52,11 @@ Development checkpoint, before the final complete regression gate:
   ten ordered held reads in both engines; awake/empty/blocked cases retain 2/2/4.
 
 Failed and superseded fixture observations are retained separately in local QA.
+The first complete run also exposed missing GBA Tackle flags in the older held
+fixture: the source side already supplied 51, while the host side omitted it.
+Supplying the same flags preserves all assertions and passes 5,511 checks. The
+initial eight failures remain recorded; no production fallback or relaxed
+expectation is used to hide the mismatched input.
 The first link probe omitted the owned move's flinch flag; after supplying the
 native-shaped flag, it exposed the real spectator turn-overlap bug. No rows are
 filtered to establish equality. Final baseline, full engine regression, wider

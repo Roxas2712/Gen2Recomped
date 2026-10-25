@@ -46,6 +46,11 @@ UP_GRADE SHELL_BELL LUCKY_PUNCH METAL_POWDER THICK_CLUB STICK
         data.constants.generation = gen
       end
       if gen == 3 then
+        if backend == "gen2" then
+          -- Match the native-shaped reference Tackle record. The command
+          -- tests its actual bit flag, independently of public hook output.
+          data.moves.MOVE_033.flags = 51
+        end
         for _, move in ipairs({ { "SURF", 57, 95, 8, 0, "NO_ADDITIONAL_EFFECT" },
           { "MIRROR_MOVE", 119, 0, 0, 9, "MIRROR_MOVE_EFFECT" } }) do
           local name, number, power, target, effect, hostEffect = unpack(move)
