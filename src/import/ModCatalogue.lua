@@ -146,7 +146,12 @@ function M.install(RI)
     self.findSearchRect={x=x,y=y,width=w-44*s,height=fieldH}
     action('clear','×',x+w-38*s,y+1*s,36*s)
     y=y+fieldH+10*s
+    local compact=w<600*s
     local gx=x
+    if compact and not self._catalogGenerations then
+      action('generations',self.catalogGeneration and ('Generation · '..self.catalogGeneration) or 'All generations',x,y,math.min(w,164*s))
+      y=y+44*s
+    else
     for gen=0,5 do
       local label=gen==0 and 'All generations' or ('Gen '..gen)
       local bw=self.hintFont:getWidth(label)+22*s
@@ -157,8 +162,14 @@ function M.install(RI)
       gx=gx+bw+6*s
     end
     y=y+48*s
+    end
     local bx=x
-    for _,a in ipairs({{'categories','Categories',120},{'account','Account',100},{'developer','Developer',120},{'manage','Manage installed',164},{'refresh','Refresh',100}}) do
+    local actions={{'categories','Categories',120},{'account','Account',100},{'developer','Developer',120},{'manage','Manage installed',164},{'refresh','Refresh',100}}
+    if compact then
+      if self._catalogOptions then table.insert(actions,1,{'options','Less options',120})
+      else actions={{'categories','Categories',120},{'options','More…',92}} end
+    end
+    for _,a in ipairs(actions) do
       local bw=a[3]*s;if bx+bw>x+w then bx=x;y=y+44*s end
       action(a[1],a[2],bx,y,bw);bx=bx+bw+8*s
     end
@@ -290,7 +301,9 @@ function M.install(RI)
           elseif r.action=='manage' then self._catalogManage=true;self:_selectTab('mods');self.pageScroll=0
           elseif r.action=='refresh' then self:_refreshFind(true);self:_syncModUpdateInfo(true)
           elseif r.action=='details' then self:_findShowDetails(r.entry)
-          elseif r.action=='generation' then self.catalogGeneration=r.generation;self.pageScroll=0
+          elseif r.action=='generation' then self.catalogGeneration=r.generation;self._catalogGenerations=false;self.pageScroll=0
+          elseif r.action=='generations' then self._catalogGenerations=not self._catalogGenerations
+          elseif r.action=='options' then self._catalogOptions=not self._catalogOptions
           elseif r.action=='clear' then self.findQuery='';self.findCategory=nil;self.catalogGeneration=nil;self.pageScroll=0
           elseif r.action=='categories' then self._catalogCategories=not self._catalogCategories
           elseif r.action=='source' then if r.entry.repo then love.system.openURL(r.entry.repo) else self:_findShowDetails(r.entry) end

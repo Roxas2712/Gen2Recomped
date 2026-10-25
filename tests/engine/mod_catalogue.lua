@@ -76,5 +76,12 @@ for _,r in ipairs(ui._catalogActions) do
   if r.action=='install' then ui:_sbMousepressed(r.x+2,r.y+2);check(ui.install==r.entry,'install uses the existing account-gated flow');break end
 end
 ui:_selectTab('mods');check(ui.tab=='find','opening Mods defaults to the catalogue')
+ui:_drawFindPanel(10,0,320,812,true)
+local firstCover
+for _,r in ipairs(ui._catalogActions) do
+  check(r.x>=10 and r.x+r.width<=330.01,'portrait controls stay within the content width')
+  if r.action=='preview' and not firstCover then firstCover=r end
+end
+check(firstCover and firstCover.y<500,'portrait toolbar leaves the catalogue visible without expanding every filter')
 ui._catalogManage=true;ui:_selectTab('mods');check(ui.tab=='mods' and ui:_drawModsPanel()==123 and ui.managed,'load order, import and enable controls remain available')
 print('Mod catalogue: '..checks..' checks passed')
