@@ -70,9 +70,13 @@ for _, version in ipairs(Version.ORDER) do
     end
   end
 end
--- Unregistered profiles must not silently run Red fixtures and masquerade as GBA.
-for _, version in ipairs({ "leafgreen", "ruby", "sapphire" }) do
-  T.eq(Version.VERSIONS[version], nil, "additional GBA ROM profile is not yet registered")
+-- Downstream builds may register additional GBA editions. Each registered
+-- edition must be in ORDER so the real generation fixtures above exercise it.
+local ordered = {}
+for _, version in ipairs(Version.ORDER) do ordered[version] = true end
+for version, profile in pairs(Version.VERSIONS) do
+  T.check(ordered[version], "registered cartridge has encounter preview coverage: " .. version)
+  T.eq(Version.generation(version), profile.generation, "fixture uses the actual cartridge generation")
 end
 Version.set(old)
 T.finish("native encounter.table preview and generation contracts")
