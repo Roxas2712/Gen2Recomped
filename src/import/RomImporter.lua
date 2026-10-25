@@ -11883,5 +11883,6 @@ require("src.import.BankWorkspace").install(RomImporter)
 require("src.import.DeveloperWorkspace").install(RomImporter)
 require("src.import.AccountWorkspace").install(RomImporter)
 require("src.import.ResumeWorkspace").install(RomImporter)
+require("src.import.SaveHistoryWorkspace").install(RomImporter)
 
 return RomImporter
