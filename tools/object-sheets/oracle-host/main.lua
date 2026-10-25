@@ -34,27 +34,41 @@ function love.load()
     local count=manifest.layout.objectEventGfxCount
     local result={objects={},missing={},additionalNative={},differences={},sheets=0,frames=0,pixels=0}
     local rom,version,extractor,pals,reflect,native
+    local art={}
     if mode=='source' then
       local Versions=require('src.import.gba.versions');Versions.select(sha);version=assert(Versions.lookup(sha))
       rom=setmetatable({_raw=raw,size=#raw,sha1=sha},require('src.import.gba.rom'))
       extractor=require('src.import.gba.ow_extract');pals=extractor.loadPaletteTable(rom,version)
       reflect=extractor.loadReflectionMappings(rom,version.ow_reflection)
+      result.avatars=extractor.readAvatars(rom)
     else
       extractor=require('src.import.RomExtractorGen3').new(raw,V.info(edition),manifest)
       local generated={};extractor.write=function(_,name,value)generated[name]=value end
-      extractor.objectGfxSheet=function()return nil end
+      extractor.objectGfxSheet=function(_,w,h)return love.image.newImageData(w,h,'rgba8')end
+      extractor.saveImage=function(_,image,path)
+        art['assets/generated/'..path]={width=image:getWidth(),height=image:getHeight(),bytes=image:getString()}
+        image:release()
+      end
       local checkpoints=0;extractor.checkpoint=function()checkpoints=checkpoints+1 end
       extractor:extractOverworldSprites()
       result.nativeSprites=hash(canonical(assert(generated.sprites)))
+      local artHashes={};for path,image in pairs(art)do artHashes[path]=hash(image.bytes)end
+      result.nativeArt=hash(canonical(artHashes))
       if mode=='native' then
         native=assert(generated.gen3_object_sheets,'actual sprite import did not emit original sheets')
+        assert(native.schema==require('src.import.Gen3ObjectSheets').SCHEMA,'cache schema differs')
+        result.schema=native.schema;result.avatars=native.avatars
+        assert(canonical(result.avatars)==canonical(expected.editions[edition].avatars),'avatar state tables differ')
+        result.avatarTablesMatch=true
         assert(checkpoints>0,'original sheet import omitted cooperative checkpoints')
         result.cooperativeCheckpoints=checkpoints
         assert(result.nativeSprites==baseline.editions[edition].nativeSprites,'normalized native sprite output changed')
+        assert(result.nativeArt==baseline.editions[edition].nativeArt,'normalized native sprite pixels changed')
         local text=require('src.import.LuaWriter').encodeSplit(native)
         local decoded=assert((loadstring or load)(text,'@generated/gen3_object_sheets.lua'))()
         assert(hash(canonical(decoded))==hash(canonical(native)),'generated cache module did not round-trip')
         result.cacheRoundTrip=true;result.cacheModuleBytes=#text
+        result.nativeFrameMapChecks=0;result.nativeFrameMapExceptions={}
       end
     end
     for id=0,(mode=='baseline' and 0 or count)-1 do
@@ -86,6 +100,39 @@ function love.load()
           mappedReflection=record.reflectionPaletteMappedTag,indexed=hash(indexed),rgba=hash(rgba)}
         result.objects[key]=summary;result.sheets=result.sheets+1;result.frames=result.frames+record.frameCount
         result.pixels=result.pixels+#indexed
+        if native and record.native and expected.editions[edition].objects[key] then
+          local n=record.native
+          -- Native art floors 5-bit expansion; the original-order contract
+          -- rounds it. Compare the independently decoded indices using the
+          -- native palette rule without changing either public output.
+          local nativeColors={[0]='\0\0\0\0'}
+          for c=1,15 do
+            local rr,gg,bb=require('src.import.RomGba').bgr555(record.palette[c])
+            nativeColors[c]=string.char(rr,gg,bb,255)
+          end
+          local projected={};for p=1,#indexed do projected[p]=nativeColors[indexed:byte(p)]end
+          local nativePixels=table.concat(projected)
+          for _,projection in ipairs({{n.image,n.order,n.defaultWidth,n.defaultHeight,n.frames},
+              {n.runImage,n.runOrder,n.runWidth,n.runHeight,n.runFrames}})do
+            local path,order,w,h,frames=unpack(projection)
+            if path and order then
+              local image=assert(art[path],'mapped native image not composed: '..path)
+              if w==record.width and h==record.height and frames==#order
+                  and image.width==w and image.height==h*#order then
+                for frame,original in ipairs(order)do
+                  assert(original>=0 and original<record.frameCount,'mapped frame outside original sheet')
+                  local size=w*h*4
+                  assert(image.bytes:sub((frame-1)*size+1,frame*size)==nativePixels:sub(original*size+1,(original+1)*size),
+                    'native frame projection differs: '..path..'/'..frame..' -> '..original)
+                  result.nativeFrameMapChecks=result.nativeFrameMapChecks+1
+                end
+              else
+                result.nativeFrameMapExceptions[#result.nativeFrameMapExceptions+1]={id=id,path=path,
+                  reason='native special-sheet geometry or stage rewrite',width=w,height=h,frames=frames}
+              end
+            end
+          end
+        end
         if expected then
           local prior=expected.editions[edition].objects[key]
           if not prior then result.additionalNative[#result.additionalNative+1]=id
