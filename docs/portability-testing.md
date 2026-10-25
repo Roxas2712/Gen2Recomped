@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216 and #217 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217 and #218 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,56 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`244d2367da28e6205611fc79c5fd16093315d451`. Its ROM-free run passed
-**226/226 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`86b12d7b7a816a2782ba5cfba804b103630eda5b`. Its ROM-free run passed
+**231/231 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #218](https://github.com/UNDERdecoded/Gen2Recomped/pull/218) implements
+native GBA Baton Pass as a resumable choice and actual switch. Stages and
+native volatiles pass to the chosen party member, switch-in effects run, and
+later queued attacks resolve against the current occupant. Players use the
+actual forced party screen; NPCs use the native type heuristic. Link owners
+send their selected member, spectators consume the same choice, and disconnects
+remain serviced while the picker owns input. Nested called moves defer native
+item phases until selection completes. Ordinary link screens follow live or
+late-installed battle rosters; forced owner-specific pickers retain their own
+party, preserving the existing 4,849 navigation checks.
+
+The clean feature runtime `d5ad56afccca21d107f21b5b561b908fa650e59e` passes
+915 focused checks (654 command, 52 actual party UI, 72 link/spectator/disconnect,
+95 packet/signature/compatibility, 42 authored/called), 154 protocol and 3,002
+existing UI checks. Both that runtime and the clean combined runtime above
+match unchanged Gen1 in **88 workers / 60,132 paired observations**. The new
+mode retains 156 complete observations per profile: actual resolvers/resumption,
+all four slots, PP/HP, every bounded RNG call, stages/volatiles, seed identities,
+public switch events, excluded/reserved members, one/two/three Spikes layers,
+called PP semantics and the actual NPC selector with empty PP. Original failed
+schema-mapping reports remain retained; no source code or compared calls are
+filtered to obtain agreement.
+
+Feature regression is 110/119 engine suites, SDK 3/3 and B30. The exact Counter
+of all 25 inherited FAIL lines across nine suites equals clean prerequisite
+`c27c37a667e8a40613c22506448ab4886fc9b431` (105/114). Their independent repairs
+remain in this branch, which passes **231/231 engine suites**, SDK 3/3 and B30.
+The unchanged prerequisite leaves its donor active after the same public mod
+selector; the first Baton implementation also fails the nested-choice item-phase
+checks. Both negative outputs are retained. Actual imported FireRed/Emerald
+records pass the public canonical selector and actual forced-party/queued-turn
+smoke selecting the third member, on both feature and combined runtimes.
+This is CPU-only, with no distributed ROM/cache assets or saves and no normal
+SAVE, GPU/pixel or full-playthrough claim.
+
+Native command revision 3 prevents older rules from starting a full battle.
+The raw fixture changes from `cf73a8e083fb8a54` to `c2a03195bc4588f9`, independently
+audited with the unchanged #217 hasher and only the explicit revision token.
+Native party revision and non-GBA goldens remain unchanged. All eight hosted
+#218 workflows currently require maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40161166597)
+has zero jobs. Local acceptance is separate. The app's 100-artifact cap prevents
+another attachment; the regular PR remains published and linked. Evidence is
+retained in `tmp/baton-pass-full-accepted.log`, `tmp/baton-pass-contracts-final.json`
+and `tmp/baton-pass-import-smoke-final.log`. See
+[the native Baton Pass contract](native-gen3-baton-pass.md).
 
 [PR #217](https://github.com/UNDERdecoded/Gen2Recomped/pull/217) replaces native
 GBA Lock-On/Mind Reader's one-use attacker pointer with target-owned duration

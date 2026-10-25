@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "244d2367da28e6205611fc79c5fd16093315d451",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/217",
-  "feature_ref": "0905dcd005d102c33d31fad12d2082290d76f56c",
+  "runtime_ref": "86b12d7b7a816a2782ba5cfba804b103630eda5b",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/218",
+  "feature_ref": "e8d65156d62605c52203c88a6f3f9c82e2f67e42",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 226,
-  "engine_suites_total": 226,
+  "engine_suites_passed": 231,
+  "engine_suites_total": 231,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 84,
-  "cross_engine_paired_observations": 59820,
+  "cross_engine_worker_runs": 88,
+  "cross_engine_paired_observations": 60132,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All seven #217 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
+  "hosted_ci": "All eight #218 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Current public GBA enemy choices, selectors, records, selected targets, Follow Me, Helping Hand shared damage and native Spit Up set damage against unchanged read-only Gen1 on pinned maintained JIT-enabled VM; no full gameplay/animation/RNG/ability/item/badge parity claim",
+  "cross_engine_scope": "Actual public GBA enemy choices and selected native command/data contracts, including native Baton Pass commands, resumed choices and NPC selection, against clean read-only Gen1 on pinned maintained JIT-enabled LuaJIT; no complete gameplay/animation/global RNG/ability/item parity claim",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -2415,5 +2415,44 @@
       "tmp/lock-on-contracts.json",
       "tmp/lock-on-import-smoke.log"
     ]
+  },
+  "native_baton_pass": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/218",
+    "feature_ref": "e8d65156d62605c52203c88a6f3f9c82e2f67e42",
+    "feature_tested_ref": "d5ad56afccca21d107f21b5b561b908fa650e59e",
+    "runtime_ref": "86b12d7b7a816a2782ba5cfba804b103630eda5b",
+    "focused_checks_passed": 915,
+    "command_checks_passed": 654,
+    "party_ui_checks_passed": 52,
+    "link_spectator_disconnect_checks_passed": 72,
+    "packet_signature_compatibility_checks_passed": 95,
+    "authored_called_checks_passed": 42,
+    "cross_engine_workers": 88,
+    "paired_observations": 60132,
+    "new_observations_per_profile": 156,
+    "native_command_revision": 3,
+    "native_fixture_digest": "c2a03195bc4588f9",
+    "native_party_revision": 1,
+    "feature_engine_suites_passed": 110,
+    "feature_engine_suites_total": 119,
+    "inherited_failing_suites": 9,
+    "exact_fail_counter_equal": true,
+    "inherited_fail_lines": 25,
+    "combined_engine_suites_passed": 231,
+    "combined_engine_suites_total": 231,
+    "native_imported_smoke_games": [
+      "firered",
+      "emerald"
+    ],
+    "native_scope": "CPU-only actual imported records; public canonical enemy selector, actual forced party screen and queued turn selecting the third member; no normal SAVE, GPU/pixel/full-playthrough claim",
+    "negative_controls": [
+      "Clean prerequisite keeps the donor active after the same public selector",
+      "Initial Baton implementation runs item phases before nested selection completes"
+    ],
+    "hosted_workflows": 8,
+    "hosted_conclusion": "action_required",
+    "contract_run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40161166597",
+    "hosted_jobs": 0,
+    "attachment": "App artifact identity cap of 100 reached; PR published and linked"
   }
 }
