@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "baseSourceCommit": "4674e78e637c2bed43569e184d199ffbdacbdb6f",
+  "qualificationFailure": {
+    "run": 40237549565,
+    "platform": "windows-x64",
+    "suite": "tests/engine/wonder_reward.lua",
+    "reason": "Git core.autocrlf rewrote canonical reward fixture bytes; strict serializer equality correctly rejected them."
+  },
+  "verification": {
+    "method": "Actual Git index checkout with core.autocrlf=true; production serializer/native reward suite unchanged",
+    "before": {
+      "crlfCount": 29,
+      "matchesCanonical": false,
+      "nativeExitCode": 1,
+      "fixtureSha256": "3433d4e80b016df68719e9e1abb50d9962a4fcb84721c37e32424d37a7648808"
+    },
+    "after": {
+      "crlfCount": 0,
+      "matchesCanonical": true,
+      "nativeExitCode": 0,
+      "fixtureSha256": "8edc972ee8fb9be5f985374c22ea47dbafdeff8311020c87f1a19817bdcd0256"
+    },
+    "nativeRewardChecksAfter": 9
+  },
+  "scope": "Checkout byte preservation only. Windows runtime qualification and GPU gameplay are separate requirements; this receipt does not establish them. No private mod, ROM or save content is included."
+}

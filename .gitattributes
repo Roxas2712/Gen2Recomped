@@ -23,3 +23,8 @@ mobile/android/gradlew text eol=lf
 # Pinned upstream notices are authenticated as exact bytes in the converter
 # bundle. Windows checkout must not rewrite their line endings.
 tools/slang-import/licenses/** -text
+
+# This server reward is canonical SaveSerializer output. Keep its exact LF
+# bytes on Windows as well; the native byte-for-byte compatibility gate
+# must not depend on the checkout platform.
+tests/engine/fixtures/wonder_reward.lua text eol=lf
