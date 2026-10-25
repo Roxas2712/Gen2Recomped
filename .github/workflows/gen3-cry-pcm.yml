@@ -1,0 +1,16 @@
+name: Gen3 compressed cry PCM contract
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pcm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install ROM-free runtime
+        run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: Verify compressed block and reconstruction contracts
+        run: luajit tests/engine/gen3_cry_pcm.lua
