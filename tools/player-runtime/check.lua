@@ -77,6 +77,9 @@ for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
   P.update=function(game,input)base(game,input);P.tick(game);P.walkPhase();P.walkPhase()end
   clock=p.animClock;w:stepBody(false)
   T.eq(p.bobTimer,1);T.eq(p.animClock,clock+1)
+  local _,_,_,_,phase,flip=p:pose()
+  T.eq(P.walkPhase(),phase);T.eq(P.drawFlip(),flip,'pose alternation follows the native animation clock')
+  p:pose();p:pose();T.eq(p.bobTimer,1,'repeated native poses cannot advance the GBA surf clock')
   P.walkInPlace=false;p.surfing=false
   -- A replacement native world becomes authoritative immediately.
   local held=p;local other=F.new(edition)

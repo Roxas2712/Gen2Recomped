@@ -25,7 +25,7 @@ observations without bootstrapping compatibility modules on native-only boots.
 
 ## Verification
 
-`luajit tools/player-runtime/check.lua` runs 246 ROM-free checks across all five
+`luajit tools/player-runtime/check.lua` runs 261 ROM-free checks across all five
 GBA editions and checks the three native GBC editions keep their original phase.
 It uses the real native player clock, input handler and arrival bookkeeping on
 small synthetic fields, with authored event handlers replaced by counting
@@ -47,3 +47,10 @@ operations and pose/atlas resources still need integration. In particular, do
 not claim all surf/dive/ledge/bike transitions or unchanged rendering have been
 accepted from these synthetic checks. Real maps, actual events and visuals
 must be verified after the remaining modules allow the package to initialize.
+
+The standalone upstream branch runs 108 checks on its two registered GBA
+editions; LeafGreen, Ruby and Sapphire are explicitly skipped there until
+cartridge PRs #183, #186 and #187 are integrated. All five run in the composed
+fork. On pristine upstream main `13af468b`, the engine tier has 10 existing
+failures (64/74 suites). The player branch has the same 10 failures (65/75),
+with no newly failing suite. The composed fork includes the existing fixes.

@@ -110,7 +110,7 @@ function Player.runPose()
   return p:walkPhase()
 end
 function Player.drawFlip()
-  local g,_,p=owner();return g and not p.stepFlip or false
+  local g,_,p=owner();return g and math.floor((p.animClock or 0)/16)%2==1 or false
 end
 function Player.release()runtime:release()end
 setmetatable(Player,{
