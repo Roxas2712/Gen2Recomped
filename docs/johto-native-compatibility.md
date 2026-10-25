@@ -18,8 +18,9 @@ Normal Mart/Center entry/exit and Cherrygrove/Route 29 connection tests now pass
 cameras. Other story transitions, forced-terrain GPU tests and full visuals
 remain open. See the
 [contract and exact limits](native-gen2-camera-movement.md). The currently
-published `20261025.1` preview remains bound to source `0780731e`; it still
-contains the official stock runtime.
+published `20261025.1` desktop assets are now refreshed from `0acb23b7` with
+the qualified extended runtime. Its original tag/source archive remains
+`0780731e`; the binary manifest and README identify the tested source.
 
 Apple Silicon now follows the desktop performance policy instead of being
 misclassified as a low-end ARM handheld. Fresh full-package Crystal profiles
@@ -39,9 +40,12 @@ and four window proofs per OpenGL/Metal backend in First and Third Person.
 The generated renderer must be installed; originals remain unchanged. The
 release entry points are replaced only in owned QA copies to prevent using a
 real release profile. Some frames still contain unusual objects, and Metal
-shows deprecated-shader warnings. These candidates are not yet published;
-complete renderer/gameplay, Windows/Intel GPU and long-session acceptance
-remain open. See the
+shows deprecated-shader warnings. The existing desktop release has since been refreshed from `0acb23b7`; both
+backends repeat the 213-check matrix and add staged battles with native input,
+visible colored Pokemon cards, damage and victory callbacks (20 checks and four
+window proofs per backend). Black/white overworld actors and performance spikes
+remain. Complete renderer/gameplay, ordinary encounters, Windows/Intel GPU and
+long-session acceptance remain open. See the
 [reproducible probes](../tools/runtime-upvalue-check/README.md) and
 [exact experiment receipt](qa/native-foundation/johto-native-runtime-upvalues.json).
 
