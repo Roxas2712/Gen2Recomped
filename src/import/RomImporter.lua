@@ -1315,7 +1315,10 @@ local function markerFor(version)
   end
   -- RS now carries its own action tables as well as field geometry. Rebuild these
   -- caches; retain the earlier 36-byte dex and item-effect corrections.
-  if version == "ruby" or version == "sapphire" then revision = "rs-ball-art-v5:" end
+  -- v6 adds the cartridge's two-lap MetallicShine task to HARDEN/IRON DEFENSE.
+  -- Keep the v5 ball-art corrections; only fresh native extraction supplies
+  -- the RS-owned flourish image and 64-frame record.
+  if version == "ruby" or version == "sapphire" then revision = "rs-stat-flourish-v6:" end
   return CACHE_FORMAT .. revision .. GameVersion.info(version).sha1
 end
 

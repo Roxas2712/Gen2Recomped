@@ -2612,11 +2612,18 @@ function RomExtractorGen3:statFlourish()
   -- immediates independent of the compiler-selected low register.
   local drift = self:thumbImmCount(step, F.SCAN, 0x3000, 4) > 0 and 4 or nil
   local lap = self:thumbImmCount(step, F.SCAN, 0x2800, 128) > 0 and 128 or nil
-  local wrap = self:thumbImmCount(step, F.SCAN, 0x3000, 124) > 0 and 124 or nil
-  local laps = self:thumbImmCount(step, F.SCAN, 0x2800, 3) > 0 and 3 or nil
+  -- Ruby/Sapphire's sub_80E0CD0 finishes after TWO laps; the later task
+  -- runs THREE. Both compiled forms fuse the -4 scroll and +128 wrap as
+  -- ADD 124. Keep every existing motion/blob gate and select only the lap
+  -- count from the cartridge header, never the active application's version.
+  local gameCode = rom:u32(0xAC)
+  local rs = gameCode == 0x45565841 or gameCode == 0x45505841 -- AXVE / AXPE
+  local wrapValue, lapCount = 124, rs and 2 or 3
+  local wrap = self:thumbImmCount(step, F.SCAN, 0x3000, wrapValue) > 0 and wrapValue or nil
+  local laps = self:thumbImmCount(step, F.SCAN, 0x2800, lapCount) > 0 and lapCount or nil
   local cx, cy = 96, 32 -- source-defined placement after this exact task is proved
   if not (drift and lap and wrap and laps) then
-    return fail("the stat-up task's installed step does not carry its 4/128/124/3 motion")
+    return fail("the stat-up task's installed step does not carry its cartridge-specific scroll/lap motion")
   end
   -- ...and the wrap has to bring the lap back where it started, less one
   -- step: 128 out, 124 back, and the step itself is the 4 that is missing
