@@ -20,6 +20,7 @@ import re
 import shutil
 import subprocess
 import tarfile
+from qa_storage import qa_cache, qa_run, qa_source
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -70,12 +71,13 @@ def main():
     args = p.parse_args()
     assert not subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=ROOT).strip(), 'Commit candidate and driver first'
     commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
-    archive = subprocess.check_output(['git', 'archive', commit], cwd=ROOT)
     identity = 'gen2recomp-qa-' + args.edition + '-' + datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')
-    out = ROOT / '.local/qa' / identity
+    if args.cache_identity:qa_source(Path.home()/'Library/Application Support/LOVE'/args.cache_identity)
+    out = qa_cache(ROOT / '.local/qa' / identity)
     out.mkdir(parents=True)
     engine = out / 'engine'
     engine.mkdir()
+    archive = subprocess.check_output(['git', 'archive', commit], cwd=ROOT)
     archive_sha256=hashlib.sha256(archive).hexdigest()
     hashes,allocation=freeze_engine(archive,engine,ROOT)
     # Nothing below executes from these in-memory buffers. Release them
@@ -124,7 +126,7 @@ def main():
         (out / 'verification.json').write_text(json.dumps(receipt, indent=2) + '\n')
         print('NATIVE_QA', out, flush=True)
         with (out / 'native.log').open('w') as log:
-            run = subprocess.run([str(args.love.resolve()), str(host)], env=env,
+            run = qa_run([str(args.love.resolve()), str(host)], env=env,
                                  stdout=log, stderr=subprocess.STDOUT, timeout=args.timeout)
         print('NATIVE_EXIT', run.returncode, flush=True)
         for file in save.iterdir():
