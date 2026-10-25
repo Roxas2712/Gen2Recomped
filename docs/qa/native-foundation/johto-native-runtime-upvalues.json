@@ -363,7 +363,7 @@
       "reportSha256": "bad16a63138d43916d614f9fae021e632429a84faa4f4a982870b7e464e69dfb"
     }
   ],
-  "hostAbiLimits": "Local arm64 host gate passes. Windows and Intel macOS CI qualification is running; neither has final acceptance yet.",
+  "hostAbiLimits": "Local arm64 and hosted Intel/arm64 Mac host gates pass; Linux capacity/engine gate passes. Windows stock fixture correction is awaiting native requalification. Universal packaging and Windows GPU acceptance remain open.",
   "extendedRuntimeTransitions": {
     "scope": "Normal Cherrygrove Mart/Center doors, native START ownership and Cherrygrove/Route 29 connections using continuous controls with the generated extension installed; initial positions selected and fresh-save introduction skipped",
     "runs": [
@@ -404,5 +404,529 @@
     ],
     "visualInspection": "All eight fresh window proofs inspected: visible upright rooms and NPC figures; black-and-white objects remain visible in some First Person frames and are unresolved. No complete avatar/model/occlusion or performance acceptance.",
     "failedSetup": "The first new starter referenced an already reclaimed historical QA runtime and failed before any application launch. The passing runs use the copied, locally qualified LOVE ABI app and pin the entire runtime app as an input."
+  },
+  "hostedQualification": {
+    "runId": 40207002780,
+    "url": "https://github.com/Roxas2712/Gen2Recomped/actions/runs/40207002780",
+    "scope": "Three passed platform jobs; Windows stock engine fixtures failed on path/CRLF assumptions and the correction is awaiting the next native run. Not a four-platform pass or a packaged release.",
+    "results": [
+      {
+        "artifactId": 12604786530,
+        "artifactName": "runtime-capacity-macos-x64",
+        "artifactSha256": "67a4f94490d7a5284b1d1e9aff893cdd026067ae13b4c8e23bb40be78ce656bd",
+        "capacityReport": {
+          "experimental": true,
+          "luaJitSource": "a4c064539ea931274d407e1249b4bb575424a0f4",
+          "engineSource": "94f63723288c6246802a2541df1f22551647451e",
+          "platform": "Darwin",
+          "machine": "x86_64",
+          "toolsSha256": {
+            "README.md": "d0725bc4c5a442e51db28324ab0ea90a222985aef54ccf3d1bd9de6e42142aa9",
+            "c_api.c": "b473dc627d45430bf4a48640775e73126371e4d5efb263f6d75e71b49743bfec",
+            "check.lua": "3f39d04d9b9fc9f93ad920a219b20cf1e27d62e5c200f08c29073ee7bde294a7",
+            "love-conf.lua": "fffc2ebea85eed77cb35c7b55910c25e755c9779258ed53766f9f027306ff2b0",
+            "love-main.lua": "47cd7491da83c8478ba290c6698ca3af6b8dfd9b50005b12234fa324c30b3a29",
+            "love-thread.lua": "db3b2eb5d7e3f7bcc1d1644c6ebdf91adbbde8992351d0e830e2e728752cd297",
+            "love_abi.py": "6af1a60c1e4f3dce3ba1d85cbae9b5e300417402216c0bc6c012ec3c2226eb63",
+            "luajit-upvalues.patch": "022b346f64aa620a04c0ccfee616088b747e340ac3ac3485680a7eb30e9652dd",
+            "qualify.py": "8c644b06e05ae891e736412c9659bbff3b5516a4842298709bccb9a037efd014"
+          },
+          "variants": [
+            {
+              "name": "stock",
+              "capacity": 60,
+              "closure": {
+                "cases": [
+                  {
+                    "interpreter": true,
+                    "jit": true,
+                    "upvalues": 1,
+                    "compiles": true
+                  },
+                  {
+                    "interpreter": true,
+                    "jit": true,
+                    "upvalues": 8,
+                    "compiles": true
+                  },
+                  {
+                    "interpreter": true,
+                    "jit": true,
+                    "upvalues": 32,
+                    "compiles": true
+                  },
+                  {
+                    "interpreter": true,
+                    "jit": true,
+                    "upvalues": 60,
+                    "compiles": true
+                  },
+                  {
+                    "upvalues": 61,
+                    "compiles": false
+                  },
+                  {
+                    "upvalues": 64,
+                    "compiles": false
+                  },
+                  {
+                    "upvalues": 96,
+                    "compiles": false
+                  },
+                  {
+                    "upvalues": 120,
+                    "compiles": false
+                  }
+                ],
+                "minimum": 60,
+                "passed": true,
+                "checks": 160250,
+                "runtime": "LuaJIT 2.1.1792588164"
+              },
+              "cApiCounts": [
+                60
+              ],
+              "librarySha256": "22edeea3bba4b278a002784c0a0ff699ba8be7bb1fa2f5c2d5d05c0cdec1ed73",
+              "headerSha256": "a7e86384bfa9638da06e4db5166551e75494ceae0e8bd0505d365cba7f83af85",
+              "engineSuites": 351
+            },
+            {
+              "name": "extended",
+              "capacity": 120,
+              "closure": {
+                "runtime": "LuaJIT 2.1.1792588164",
+                "cases": [
+                  {
+                    "jit": true,
+                    "upvalues": 1,
+                    "compiles": true,
+                    "interpreter": true
+                  },
+                  {
+                    "jit": true,
+                    "upvalues": 8,
+                    "compiles": true,
+                    "interpreter": true
+                  },
+                  {
+                    "jit": true,
+                    "upvalues": 32,
+                    "compiles": true,
+                    "interpreter": true
+                  },
+                  {
+                    "jit": true,
+                    "upvalues": 60,
+                    "compiles": true,
+                    "interpreter": true
+                  },
+                  {
+                    "jit": true,
+                    "upvalues": 61,
+                    "compiles": true,
+                    "interpreter": true
+                  },
+                  {
+                    "jit": true,
+                    "upvalues": 64,
+                    "compiles": true,
+                    "interpreter": true
+                  },
+                  {
+                    "jit": true,
+                    "upvalues": 96,
+                    "compiles": true,
+                    "interpreter": true
+                  },
+                  {
+                    "jit": true,
+                    "upvalues": 120,
+                    "compiles": true,
+                    "interpreter": true
+                  }
+                ],
+                "minimum": 120,
+                "passed": true,
+                "checks": 320964
+              },
+              "cApiCounts": [
+                60,
+                61,
+                64,
+                96,
+                120
+              ],
+              "librarySha256": "366721589883641d92bb76a5e4c4978223ea3867de8930a8efd38d9fa8ccbdb2",
+              "headerSha256": "793f34ccc7668e553ee8a5aa65c3a80c821b292aa98501d63235b7fb91d96948",
+              "engineSuites": 351
+            }
+          ],
+          "sourceUnchanged": true,
+          "passed": true
+        },
+        "hostAbiReport": {
+          "passed": true,
+          "experimental": true,
+          "platform": "Darwin",
+          "machine": "x86_64",
+          "baseLoveCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+          "originalArchiveSha256": "f70f60d162eda6931b0b28e2b094b83b741986f0feac08d33a10be7c57e724f8",
+          "originalLibrarySha256": "d99eed38c9752775028ed88b7b23285cd3b1abea4154a41b06fb2ace9c0a3edc",
+          "inputCandidateLibrarySha256": "366721589883641d92bb76a5e4c4978223ea3867de8930a8efd38d9fa8ccbdb2",
+          "qualificationSha256": "d417403956924c2679054a5474406dad60421f3aeeb19e1f890ae04dab4bd840",
+          "scope": "headless LOVE12 boot, closure/JIT/GC/bytecode, FFI callback and thread VM; not GPU/gameplay",
+          "variants": [
+            {
+              "variant": "stock",
+              "capacity": 60,
+              "checks": 160250,
+              "librarySha256": "d99eed38c9752775028ed88b7b23285cd3b1abea4154a41b06fb2ace9c0a3edc"
+            },
+            {
+              "variant": "extended",
+              "capacity": 120,
+              "checks": 320964,
+              "librarySha256": "3f2ef3c5de765575c381c4e554bac5fcdb850660206d11c47d02d64cdbdef802"
+            }
+          ]
+        }
+      },
+      {
+        "artifactId": 12604700991,
+        "artifactName": "runtime-capacity-linux-x64",
+        "artifactSha256": "063448c27f9c7a09d9f2b8e71832183edb71affa422acd82508231c74508e264",
+        "capacityReport": {
+          "experimental": true,
+          "luaJitSource": "a4c064539ea931274d407e1249b4bb575424a0f4",
+          "engineSource": "94f63723288c6246802a2541df1f22551647451e",
+          "platform": "Linux",
+          "machine": "x86_64",
+          "toolsSha256": {
+            "README.md": "d0725bc4c5a442e51db28324ab0ea90a222985aef54ccf3d1bd9de6e42142aa9",
+            "c_api.c": "b473dc627d45430bf4a48640775e73126371e4d5efb263f6d75e71b49743bfec",
+            "check.lua": "3f39d04d9b9fc9f93ad920a219b20cf1e27d62e5c200f08c29073ee7bde294a7",
+            "love-conf.lua": "fffc2ebea85eed77cb35c7b55910c25e755c9779258ed53766f9f027306ff2b0",
+            "love-main.lua": "47cd7491da83c8478ba290c6698ca3af6b8dfd9b50005b12234fa324c30b3a29",
+            "love-thread.lua": "db3b2eb5d7e3f7bcc1d1644c6ebdf91adbbde8992351d0e830e2e728752cd297",
+            "love_abi.py": "6af1a60c1e4f3dce3ba1d85cbae9b5e300417402216c0bc6c012ec3c2226eb63",
+            "luajit-upvalues.patch": "022b346f64aa620a04c0ccfee616088b747e340ac3ac3485680a7eb30e9652dd",
+            "qualify.py": "8c644b06e05ae891e736412c9659bbff3b5516a4842298709bccb9a037efd014"
+          },
+          "variants": [
+            {
+              "name": "stock",
+              "capacity": 60,
+              "closure": {
+                "passed": true,
+                "minimum": 60,
+                "runtime": "LuaJIT 2.1.1792588164",
+                "cases": [
+                  {
+                    "jit": true,
+                    "upvalues": 1,
+                    "compiles": true,
+                    "interpreter": true
+                  },
+                  {
+                    "jit": true,
+                    "upvalues": 8,
+                    "compiles": true,
+                    "interpreter": true
+                  },
+                  {
+                    "jit": true,
+                    "upvalues": 32,
+                    "compiles": true,
+                    "interpreter": true
+                  },
+                  {
+                    "jit": true,
+                    "upvalues": 60,
+                    "compiles": true,
+                    "interpreter": true
+                  },
+                  {
+                    "compiles": false,
+                    "upvalues": 61
+                  },
+                  {
+                    "compiles": false,
+                    "upvalues": 64
+                  },
+                  {
+                    "compiles": false,
+                    "upvalues": 96
+                  },
+                  {
+                    "compiles": false,
+                    "upvalues": 120
+                  }
+                ],
+                "checks": 160250
+              },
+              "cApiCounts": [
+                60
+              ],
+              "librarySha256": "8eaeb5d14d578e893d0df1685cd857d58a04307c285341c708416354583e5435",
+              "headerSha256": "a7e86384bfa9638da06e4db5166551e75494ceae0e8bd0505d365cba7f83af85",
+              "engineSuites": 351
+            },
+            {
+              "name": "extended",
+              "capacity": 120,
+              "closure": {
+                "runtime": "LuaJIT 2.1.1792588164",
+                "cases": [
+                  {
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true,
+                    "upvalues": 1
+                  },
+                  {
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true,
+                    "upvalues": 8
+                  },
+                  {
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true,
+                    "upvalues": 32
+                  },
+                  {
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true,
+                    "upvalues": 60
+                  },
+                  {
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true,
+                    "upvalues": 61
+                  },
+                  {
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true,
+                    "upvalues": 64
+                  },
+                  {
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true,
+                    "upvalues": 96
+                  },
+                  {
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true,
+                    "upvalues": 120
+                  }
+                ],
+                "minimum": 120,
+                "passed": true,
+                "checks": 320964
+              },
+              "cApiCounts": [
+                60,
+                61,
+                64,
+                96,
+                120
+              ],
+              "librarySha256": "51e81b943f271639004cd21d8f3f61f52b61c01281ab813d4facfd05f41ee9be",
+              "headerSha256": "793f34ccc7668e553ee8a5aa65c3a80c821b292aa98501d63235b7fb91d96948",
+              "engineSuites": 351
+            }
+          ],
+          "sourceUnchanged": true,
+          "passed": true
+        }
+      },
+      {
+        "artifactId": 12604061670,
+        "artifactName": "runtime-capacity-macos-arm64",
+        "artifactSha256": "94e03c94f2e16008e8ed59604249d32f8b6f4f874e2ca95d113548a0e7496b40",
+        "capacityReport": {
+          "experimental": true,
+          "luaJitSource": "a4c064539ea931274d407e1249b4bb575424a0f4",
+          "engineSource": "94f63723288c6246802a2541df1f22551647451e",
+          "platform": "Darwin",
+          "machine": "arm64",
+          "toolsSha256": {
+            "README.md": "d0725bc4c5a442e51db28324ab0ea90a222985aef54ccf3d1bd9de6e42142aa9",
+            "c_api.c": "b473dc627d45430bf4a48640775e73126371e4d5efb263f6d75e71b49743bfec",
+            "check.lua": "3f39d04d9b9fc9f93ad920a219b20cf1e27d62e5c200f08c29073ee7bde294a7",
+            "love-conf.lua": "fffc2ebea85eed77cb35c7b55910c25e755c9779258ed53766f9f027306ff2b0",
+            "love-main.lua": "47cd7491da83c8478ba290c6698ca3af6b8dfd9b50005b12234fa324c30b3a29",
+            "love-thread.lua": "db3b2eb5d7e3f7bcc1d1644c6ebdf91adbbde8992351d0e830e2e728752cd297",
+            "love_abi.py": "6af1a60c1e4f3dce3ba1d85cbae9b5e300417402216c0bc6c012ec3c2226eb63",
+            "luajit-upvalues.patch": "022b346f64aa620a04c0ccfee616088b747e340ac3ac3485680a7eb30e9652dd",
+            "qualify.py": "8c644b06e05ae891e736412c9659bbff3b5516a4842298709bccb9a037efd014"
+          },
+          "variants": [
+            {
+              "name": "stock",
+              "capacity": 60,
+              "closure": {
+                "runtime": "LuaJIT 2.1.1792588164",
+                "cases": [
+                  {
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true,
+                    "upvalues": 1
+                  },
+                  {
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true,
+                    "upvalues": 8
+                  },
+                  {
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true,
+                    "upvalues": 32
+                  },
+                  {
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true,
+                    "upvalues": 60
+                  },
+                  {
+                    "compiles": false,
+                    "upvalues": 61
+                  },
+                  {
+                    "compiles": false,
+                    "upvalues": 64
+                  },
+                  {
+                    "compiles": false,
+                    "upvalues": 96
+                  },
+                  {
+                    "compiles": false,
+                    "upvalues": 120
+                  }
+                ],
+                "minimum": 60,
+                "passed": true,
+                "checks": 160250
+              },
+              "cApiCounts": [
+                60
+              ],
+              "librarySha256": "770c2e5c855bba6d138c24441b5df4780e892a58193ac3c824d89f2af2b3c9ed",
+              "headerSha256": "a7e86384bfa9638da06e4db5166551e75494ceae0e8bd0505d365cba7f83af85",
+              "engineSuites": 351
+            },
+            {
+              "name": "extended",
+              "capacity": 120,
+              "closure": {
+                "passed": true,
+                "minimum": 120,
+                "runtime": "LuaJIT 2.1.1792588164",
+                "cases": [
+                  {
+                    "upvalues": 1,
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true
+                  },
+                  {
+                    "upvalues": 8,
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true
+                  },
+                  {
+                    "upvalues": 32,
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true
+                  },
+                  {
+                    "upvalues": 60,
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true
+                  },
+                  {
+                    "upvalues": 61,
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true
+                  },
+                  {
+                    "upvalues": 64,
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true
+                  },
+                  {
+                    "upvalues": 96,
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true
+                  },
+                  {
+                    "upvalues": 120,
+                    "compiles": true,
+                    "jit": true,
+                    "interpreter": true
+                  }
+                ],
+                "checks": 320964
+              },
+              "cApiCounts": [
+                60,
+                61,
+                64,
+                96,
+                120
+              ],
+              "librarySha256": "b2f5783405bd6430e0a8f6839b513456cc02ff51aa73065d253c5aaf6300fc5e",
+              "headerSha256": "793f34ccc7668e553ee8a5aa65c3a80c821b292aa98501d63235b7fb91d96948",
+              "engineSuites": 351
+            }
+          ],
+          "sourceUnchanged": true,
+          "passed": true
+        },
+        "hostAbiReport": {
+          "passed": true,
+          "experimental": true,
+          "platform": "Darwin",
+          "machine": "arm64",
+          "baseLoveCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+          "originalArchiveSha256": "f70f60d162eda6931b0b28e2b094b83b741986f0feac08d33a10be7c57e724f8",
+          "originalLibrarySha256": "d99eed38c9752775028ed88b7b23285cd3b1abea4154a41b06fb2ace9c0a3edc",
+          "inputCandidateLibrarySha256": "b2f5783405bd6430e0a8f6839b513456cc02ff51aa73065d253c5aaf6300fc5e",
+          "qualificationSha256": "12ab1cf7f0c3f5c33805c436ece0acd3a14a42217a60edf8895685b12da5a757",
+          "scope": "headless LOVE12 boot, closure/JIT/GC/bytecode, FFI callback and thread VM; not GPU/gameplay",
+          "variants": [
+            {
+              "variant": "stock",
+              "capacity": 60,
+              "checks": 160250,
+              "librarySha256": "d99eed38c9752775028ed88b7b23285cd3b1abea4154a41b06fb2ace9c0a3edc"
+            },
+            {
+              "variant": "extended",
+              "capacity": 120,
+              "checks": 320964,
+              "librarySha256": "8f14e8eaaafdc7e49583a0fb1bc65020148492441d0edc9be3d77a3ce5641f89"
+            }
+          ]
+        }
+      }
+    ]
   }
 }
