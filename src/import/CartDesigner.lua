@@ -84,6 +84,7 @@ function Designer.install(RI)
 
   function RI:_cartImageBytes(bytes)
     if type(bytes)~='string' or #bytes>8*1024*1024 then return nil,'Use an image smaller than 8 MB.' end
+    if not require('src.import.ImageBounds').allowed(bytes,2048) then return nil,'Use a supported image up to 2048 × 2048 pixels.' end
     local ok,data=pcall(function()
       return love.image.newImageData(love.filesystem.newFileData(bytes,'label.png'))
     end)

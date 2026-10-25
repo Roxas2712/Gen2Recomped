@@ -40,6 +40,7 @@ function W.trade(self,action,exchange)
   local client=require('src.cloud.BankExchange')
   if action=='submit' and (not f.tradeSelected or not f.tradeConsent) then f.notice='Choose a Bank copy and confirm what will be shared first.';return end
   local selected,mode,recipient,reply=f.tradeSelected,f.mode,f.recipient,f.replying
+  f.tradeNext=os.time()+10
   f.tradeAction=action
   f.tradeJob=require('src.cloud.Task').new(function()
     if action=='profile' then return client.profile()
@@ -351,7 +352,7 @@ function W.install(RI)
         if result then
           f.tradeJob=nil;local action=f.tradeAction;f.tradeAction=nil
           local value=result.kind=='done' and result.first
-          if not value then f.notice=tostring(result.error or result.second or 'Exchange unavailable. Original copies are preserved.')
+          if not value then f.notice=tostring(result.error or result.second or 'Exchange unavailable. Original copies are preserved.');f.tradeNext=os.time()+30
           elseif action=='profile' then
             if type(value.recompiler_id)=='string' and value.recompiler_id:match('^RRC%-%x%x%x%x%x%x%-%x%x%x%x%x%x$') and type(value.exchanges)=='table' then
               f.tradeProfile=value;f.tradeNext=os.time()+10;f.notice='Your device IDs and exchanges are up to date.'

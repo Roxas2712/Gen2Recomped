@@ -368,6 +368,7 @@ function C.install(RI)
         local image=false
         if result.kind=='done' then
           local ok,value=pcall(function()
+            if not require('src.import.ImageBounds').allowed(result.bytes,2048) then return false end
             local pixels=love.image.newImageData(love.filesystem.newFileData(result.bytes,'preview.png'))
             if pixels:getWidth()>2048 or pixels:getHeight()>2048 then return false end
             local value=love.graphics.newImage(pixels);value:setFilter('linear','linear');return value

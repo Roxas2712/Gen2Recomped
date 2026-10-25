@@ -27,8 +27,9 @@ function T.request(method,path,body)
   local token,why=Auth.accessToken();if not token then return nil,why end
   if type(path)~='string' or not path:match('^/bank/[%w/%-]+$') then return nil,'Invalid Bank endpoint.' end
   local device,err=T.device();if not device then return nil,err end
+  local platform=love.system and love.system.getOS and love.system.getOS() or 'Device'
   local headers={Accept='application/json',Authorization='Bearer '..token,['X-Retro-Device']=device,
-    ['X-Retro-Device-Label']='RetroRecomped · '..tostring(love.system.getOS())}
+    ['X-Retro-Device-Label']='RetroRecomped · '..tostring(platform)}
   local bytes
   if body then headers['Content-Type']='application/json';bytes=Json.encode(body) end
   local status,result=require('src.cloud.Http').request(method,Auth.API..path,{headers=headers,body=bytes,sensitive=true})

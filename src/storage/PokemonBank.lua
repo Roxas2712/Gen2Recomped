@@ -86,6 +86,13 @@ function B.decode(bytes,id)
   end
   if value.origin and (type(value.origin)~='table' or not validId(value.origin.recordId)) then return nil,'Invalid Bank origin.' end
   if value.mon.retroBankOrigin and (type(value.mon.retroBankOrigin)~='table' or not validId(value.mon.retroBankOrigin.recordId)) then return nil,'Invalid Pokémon origin.' end
+  for _,origin in ipairs({value.source,value.origin or {},value.mon.retroBankOrigin or {}}) do
+    if origin.version and not Versions.VERSIONS[origin.version] then return nil,'Unknown Bank origin game.' end
+    for _,field in ipairs({'slot','place','saveId'}) do
+      if origin[field]~=nil and (type(origin[field])~='string' or #origin[field]>160) then return nil,'Invalid Bank origin details.' end
+    end
+  end
+  if value.mon.nickname~=nil and (type(value.mon.nickname)~='string' or #value.mon.nickname>160) then return nil,'Invalid Pokémon nickname.' end
   if id and (not validId(id) or hash(S.encode(value))~=id) then return nil,'Bank entry fingerprint does not match.' end
   return value
 end

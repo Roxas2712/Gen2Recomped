@@ -87,6 +87,7 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
       text(tostring(row.mode):upper()..' · '..row.status..' · '..tostring(row.partner or 'Finding a partner'),x+10*s,by+5*s,w-155*s)
       text(tostring(offered.nickname or offered.species or '?')..(row.reply and (' ⇄ '..tostring(reply.nickname or reply.species)) or ''),x+10*s,by+29*s,w-155*s)
       local action=row.status=='completed' and 'tradeReceive' or row.status=='prepared' and row.sender and 'tradeConfirm' or row.status=='pending' and not row.sender and 'tradeReply' or nil
+      if action and row.status~='completed' then button('CANCEL',x+w-264*s,by+12*s,118*s,'tradeCancel',{exchange=row.id}) end
       if action then button(action=='tradeReceive' and 'RECEIVE' or action=='tradeConfirm' and 'CONFIRM' or 'REPLY',x+w-136*s,by+12*s,126*s,action,{exchange=row.id})
       elseif row.status=='pending' or row.status=='prepared' then button('CANCEL',x+w-136*s,by+12*s,126*s,'tradeCancel',{exchange=row.id}) end
     end
