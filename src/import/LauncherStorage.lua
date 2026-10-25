@@ -23,7 +23,7 @@ function Storage.install(RI)
       if not result then return nil,problem end
       local message='Cloud sync: '..Cloud.describe(result)
       local ok,Bank=pcall(require,'src.storage.PokemonBank')
-      if ok then
+      if ok and require('src.cloud.RetroCloud').signedIn() then
         local synced,bankWhy=Bank.sync(target)
         if not synced then return nil,bankWhy end
         message=message..' · Bank '..tostring(synced)..' entries.'

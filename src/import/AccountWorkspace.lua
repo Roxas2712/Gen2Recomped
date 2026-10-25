@@ -30,6 +30,7 @@ local function connected(self,f)
   local after=f.after;W.close(self)
   if after=='developer' then self:_openDeveloper()
   elseif after=='browse' then self.findLoaded=false;self:_refreshFind(true)
+  elseif after=='bank' or after=='bankDex' then require('src.import.BankWorkspace').open(self,after=='bankDex' and 'dex' or nil)
   else W.open(self) end
 end
 function W.action(self,id)
@@ -151,6 +152,7 @@ function W.draw(self)
     row('SIGN OUT ON THIS DEVICE','signout')
   else
     paragraph('One account for RetroRecomped and ModCompass. Signing in links this device. Your password is never saved here.')
+    if f.after=='bank' or f.after=='bankDex' then paragraph('The Pokémon Bank, Item Bank and global Pokédex require a registered account with confirmed email. After confirmation you return directly to the Bank.') end
     if f.mode=='register' then
       paragraph('CREATE YOUR ACCOUNT',true);field('Nickname','name');field('Email','email');field('Password','password',true);field('Confirm password','confirmation',true)
       check('I develop mods','developer')
