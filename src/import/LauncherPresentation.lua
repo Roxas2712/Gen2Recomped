@@ -27,8 +27,10 @@ function P.parse(doc)
   return state
 end
 function P.current(self)
-  local t=now()
-  if self._presentation and self._presentationAt and t>=self._presentationAt and t-self._presentationAt<120 then return self._presentation end
+  local t,wall=now(),os.time()
+  if self._presentation and self._presentationAt and self._presentationWall
+    and t>=self._presentationAt and t-self._presentationAt<120
+    and wall>=self._presentationWall and wall-self._presentationWall<120 then return self._presentation end
 end
 function P.week(self)
   local state=P.current(self)
@@ -42,15 +44,18 @@ function P.update(self)
   local enabled=not self._settings or self:_settings().modCompassEnabled~=false
   if not enabled or self.section~='mods' then
     if self._presentationJob then self._presentationJob:cancel();self._presentationJob=nil end
-    if not enabled then self._presentation=nil;self._presentationAt=nil;self._presentationNext=nil end
+    if not enabled then self._presentation=nil;self._presentationAt=nil;self._presentationWall=nil;self._presentationNext=nil end
     return
   end
+  -- Some mobile performance clocks pause during device sleep. Wall time also
+  -- expires the lease, so reopening the app cannot revive an old promotion.
+  if self._presentation and not P.current(self) then self._presentation=nil;self._presentationNext=0 end
   if self._presentationJob then
     local result=self._presentationJob:poll()
     if result then
       self._presentationJob=nil
       local state=result.kind=='done' and P.parse(result.first)
-      if state then self._presentation=state;self._presentationAt=now() end
+      if state then self._presentation=state;self._presentationAt=now();self._presentationWall=os.time() end
     end
   end
   if not self._presentationJob and now()>=(self._presentationNext or 0) then

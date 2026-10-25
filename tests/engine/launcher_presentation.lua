@@ -1,6 +1,7 @@
 package.path='./?.lua;'..package.path
 love=require('tests.love_stub')
 local now=0;love.timer.getTime=function() return now end
+local wall=1000;os.time=function() return wall end
 local P=require('src.import.LauncherPresentation')
 local checks=0
 local function check(v,m) assert(v,m);checks=checks+1 end
@@ -39,6 +40,12 @@ now=179;check(P.current(ui)~=nil,'fresh placements remain for less than two minu
 now=180;check(P.current(ui)==nil and #P.items(ui)==0,'stale campaigns and weekly highlights expire without needing another successful request')
 P.update(ui);ui.section='library';P.update(ui)
 check(cancelled==1,'leaving Mods cancels the outstanding request')
+ui.section='mods';now=200;ui._presentationNext=0;P.update(ui);P.update(ui)
+check(#P.items(ui)==1,'a fresh response restores currently published content')
+wall=1200
+check(P.current(ui)==nil,'device sleep expires campaigns even if the performance clock was paused')
+P.update(ui)
+check(ui._presentationJob~=nil,'resuming with expired content triggers a fresh request immediately')
 ui.section='mods';enabled=false;P.update(ui)
 check(not ui._presentation and not ui._presentationAt,'disabling ModCompass drops all public placements')
 print('Launcher presentation: '..checks..' checks passed')
