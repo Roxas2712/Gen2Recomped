@@ -157,6 +157,7 @@ function W.draw(self,x,y,w,h)
   if c.rules~='' then text(c.rules) end
   if c.prize then text('CHAMPION: # '..c.prize.dex..(c.prize.shiny and ' · SHINY' or '')..(c.prize.egg and ' · EGG' or '')..' + Champion achievement',false,P.link) else text('CHAMPION: permanent achievement',false,P.link) end
   text(f.notice)
+  if c.battle_gate~='verified' then text('ONLINE BATTLES LOCKED · Fully verified Bank teams are required. Team verification is still in development. Organizers can run the bracket and confirm community results.',false,P.link) end
   if f.confirm then
    local q=f.confirm;text('CONFIRM '..q.kind:upper(),true,P.ink)
    if q.winner then text('Winner: '..name(q.winner)) end
@@ -195,7 +196,7 @@ function W.draw(self,x,y,w,h)
    y=y+14*s;text(name(m.left)..'  vs  '..name(m.right),true,P.ink)
    text(m.state:upper()..(m.winner and ' · Winner: '..name(m.winner) or ''))
    if m.can_report then
-    if m.state=='ready' then
+    if m.state=='ready' and c.battle_gate=='verified' then
      text(m.left==f.account and 'You host this pairing. Enter to publish its room.' or (m.room and 'Host room ready · '..m.room or 'Waiting for the host to open the battle.'))
      button('ENTER LINK BATTLE','fight:'..i)
     end
