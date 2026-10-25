@@ -1516,6 +1516,7 @@ function Loader:load(data)
   -- wraps and flags the previous load put on engine tables come off first.
   ModSeams.unwindAll()
   self.baseData = data
+  require("src.core.Gen2SpeciesNames").publish(data)
   require("src.mods.TextContent").prepare(self, data)
   -- every registry folds against the pristine view of its Data target;
   -- resolution is lazy so optional namespaces may appear later
