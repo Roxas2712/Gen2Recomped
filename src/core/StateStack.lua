@@ -277,7 +277,7 @@ local function visibleByDefault() return true end
 
 -- A pure main-screen predicate: only literal false hides the native state.
 -- Update/input ownership and the stored stack remain unchanged.
-function StateStack:modalRenderPlan()
+local function modalRenderPlan(self)
   local modal = self._modalTracker
   if not modal or not modal:isCurrent() then return end
   local visible, hooked = {}, Runtime.wantsHook("screen.render_visible")
@@ -289,7 +289,7 @@ end
 
 function StateStack:renderVisible(state, plan)
   if not state then return false end
-  plan = plan or self:modalRenderPlan()
+  plan = plan or modalRenderPlan(self)
   if plan then return plan.visible[state] == true end
   if not Runtime.wantsHook("screen.render_visible") then return true end
   return Runtime.call("screen.render_visible", visibleByDefault, state) ~= false
@@ -297,7 +297,7 @@ end
 
 -- index of the lowest state drawn this frame (highest visible opaque, else 1)
 function StateStack:visibleBase(plan)
-  plan = plan or self:modalRenderPlan()
+  plan = plan or modalRenderPlan(self)
   if plan then
     for i = #self.states, 1, -1 do
       local state = self.states[i]
@@ -317,7 +317,7 @@ function StateStack:visibleBase(plan)
 end
 
 function StateStack:draw()
-  local plan = self:modalRenderPlan()
+  local plan = modalRenderPlan(self)
   for i = self:visibleBase(plan), #self.states do
     local state = self.states[i]
     if self:renderVisible(state, plan) and state.draw then state:draw() end

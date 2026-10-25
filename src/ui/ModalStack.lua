@@ -8,8 +8,10 @@ local serial = 0
 
 local function baseIndex(stack)
   local base = 0
+  local battle = package.loaded["src.battle.BattleState"]
   for i, state in ipairs(stack.states) do
-    if state.isOverworld or state.isBattleState then base = i end
+    if state.isOverworld or state.isBattleState
+      or type(battle) == "table" and getmetatable(state) == battle then base = i end
   end
   return base
 end
