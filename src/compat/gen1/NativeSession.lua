@@ -23,6 +23,10 @@ function M.resolve(game)
   if not (world and world.isOverworld and world.player and world.map) then
     return nil, 'no active native player'
   end
+  if not (game.data and game.data.maps and world.map.def
+      and game.data.maps[world.map.id] == world.map.def) then
+    return nil, 'native world belongs to a retired dataset'
+  end
   return game, world, world.player
 end
 function M.acceptsInput(game, world, player)

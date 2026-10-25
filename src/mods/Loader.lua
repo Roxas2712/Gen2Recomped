@@ -1445,7 +1445,7 @@ end
 -- Retire them after wrapper unwind on reload/exit, without loading Game or
 -- any compatibility module on an ordinary native boot.
 local function retireCompatibilityMaps()
-  for _, name in ipairs({"src.core.game3.map", "src.core.game3.player"}) do
+  for _, name in ipairs({"src.core.game3.map", "src.core.game3.player", "src.core.game3.collision"}) do
     local module = package.loaded[name]
     if type(module) == "table" and type(module.release) == "function" then module.release() end
   end
