@@ -5528,6 +5528,7 @@ function BattleState:resolveTurn(playerAction)
   -- nil in a double battle whose left-hand foe has fainted with nothing on
   -- the bench to replace it; `actionFor` asks each surviving slot for its own
   local enemyAction = self:enemyAction(self:isDouble() and self.enemy or nil)
+  local selectedPlayerAction, selectedEnemyAction = playerAction, enemyAction
   if GameVersion.isGen3() then
     local Encore = require("src.battle.Gen3Encore")
     playerAction, enemyAction = Encore.plan(self.player, playerAction), Encore.plan(self.enemy, enemyAction)
@@ -5550,7 +5551,7 @@ function BattleState:resolveTurn(playerAction)
   end
   Runtime.emit("battle.turn_started", {
     battle = self, turn = self.turnCount,
-    playerAction = playerAction, enemyAction = enemyAction,
+    playerAction = selectedPlayerAction, enemyAction = selectedEnemyAction,
   })
   local pMove = orderMove(playerAction, self.data)
   local eMove = orderMove(enemyAction, self.data)

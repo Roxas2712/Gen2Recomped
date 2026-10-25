@@ -34,6 +34,10 @@ for _, version in ipairs({ "firered", "emerald" }) do
       return { move = "SCRATCH" }
     end)
     local used = {}
+    local declared
+    local offStart = f.e.api.events:on("battle.turn_started", function(e)
+      declared = e.playerAction.id
+    end)
     local off = f.e.api.events:on("battle.move_used", function(e)
       used[#used + 1] = { user = e.user.mon.nickname, move = e.move.id }
     end)
@@ -72,6 +76,11 @@ for _, version in ipairs({ "firered", "emerald" }) do
     T.eq(b.player.encoreTurns, 3, "real end-of-turn processing ages Encore once")
     T.check(b.enemy.mon.hp < 400, "the forced move actually damages the opponent")
     T.eq(#used, 2, "both native actions execute once")
+    T.eq(
+      declared,
+      selection == "fight" and "TACKLE" or "SCRATCH",
+      "turn-start event retains the original declared choice"
+    )
     if selection == "late_priority" then
       T.eq(
         used[1].user,
@@ -88,6 +97,7 @@ for _, version in ipairs({ "firered", "emerald" }) do
     end
     T.eq(playerMoves, 1, "the player emits one actual move event")
     off()
+    offStart()
     f.close()
   end
   for _, mode in ipairs({ "override", "delegate" }) do

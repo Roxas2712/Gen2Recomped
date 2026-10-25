@@ -432,13 +432,14 @@ function LinkBattle.new(game, net, opts)
 
     s:act(function()
       local theirAction = decodeTheirAction(s, theirMsg)
+      local selectedMine,selectedTheirs=myAction,theirAction
       if require("src.core.GameVersion").isGen3() then
         local Encore=require("src.battle.Gen3Encore")
         myAction,theirAction=Encore.plan(s.player,myAction),Encore.plan(s.enemy,theirAction)
       end
       Runtime.emit("battle.turn_started", {
         battle = s, turn = s.turnCount,
-        playerAction = myAction, enemyAction = theirAction,
+        playerAction = selectedMine, enemyAction = selectedTheirs,
       })
       if myAction and theirAction then
         -- the tie-break roll is shared: the guest inverts it so both
@@ -837,13 +838,14 @@ function LinkBattle.newSpectator(game, net, opts)
                           and decodeWireAction(s, hostMsg, s.player) or nil
       local guestAction = guestMsg.kind ~= "switch" and guestMsg.kind ~= "run"
                           and decodeWireAction(s, guestMsg, s.enemy) or nil
+      local selectedHost,selectedGuest=hostAction,guestAction
       if require("src.core.GameVersion").isGen3() then
         local Encore=require("src.battle.Gen3Encore")
         hostAction,guestAction=Encore.plan(s.player,hostAction),Encore.plan(s.enemy,guestAction)
       end
       Runtime.emit("battle.turn_started", {
         battle = s, turn = s.turnCount,
-        playerAction = hostAction, enemyAction = guestAction,
+        playerAction = selectedHost, enemyAction = selectedGuest,
       })
       if hostAction and guestAction then
         local hostMove, guestMove = orderMove(hostAction), orderMove(guestAction)
