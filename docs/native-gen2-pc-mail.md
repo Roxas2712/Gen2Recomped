@@ -28,7 +28,7 @@ actual entry, carrier, slot, message and author. `mail.read` carries the
 entry, message, author and displayed lines once per opening. These native
 capabilities are advertised only for generation 2.
 
-The two focused suites exercise 328 checks through production modules,
+The two focused suites exercise 342 checks through production modules,
 native menu input, the save codec, public SDK, actual coroutine runner and
 synthetic binary ROM decoding. Full quick-tier and packaged GPU acceptance
 must be recorded separately against their exact source commits.

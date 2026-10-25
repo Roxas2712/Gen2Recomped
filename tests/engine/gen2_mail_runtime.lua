@@ -212,6 +212,33 @@ T.eq(exports.writes,1,'public SDK receives the native write once')
 T.eq(exports.reads,1,'public SDK receives the native read once, not every redraw')
 T.eq(exports.message,'PUBLIC','public SDK receives actual letter contents')
 run.release()
+for _,api in ipairs({2,3})do
+  local sdkData=T.fixtures.fresh()
+  sdkData.items.ITEM_158={id='ITEM_158',key='FLOWER_MAIL',name='Letter',pocket='ITEM'}
+  local unified=T.sdk.loadMods({'mods/mail_unified'},{data=sdkData,fs=T.sdk.memfs({
+    ['mods/mail_unified/manifest.json']='{"id":"mail_unified","name":"Unified mail","version":"1.0.0","api":'..api..',"callback_format":"unified","entry":"main.lua"}',
+    ['mods/mail_unified/main.lua']=[[
+      local mod=...
+      mod.events:on("mail.written",function(e)
+        mod.exports.item=e.entry.type;mod.exports.species=e.mon.species
+        e.entry.message='CHANGED';e.mon.hp=0
+      end)
+      mod.events:on("mail.read",function(e)mod.exports.read=e.message;e.entry.author='CHANGED' end)
+    ]],
+  })})
+  T.eq(#unified.errors,0,'unified mail subscriptions load for API '..api)
+  reset();Mail.load(data);local hp=game.save.party[1].hp
+  Mail.compose(game.save,1,'UNCHANGED',game.save.party[1],'ITEM_158')
+  Mail.lines(Mail.get(game.save,1))
+  local got=unified.loader.exports.mail_unified
+  T.eq(got.item,'LETTER','unified event translates native stationery to its public item ID for API '..api)
+  T.eq(got.species,T.fixtures.ids.species[1],'unified event translates actual carrier for API '..api)
+  T.eq(got.read,'UNCHANGED','unified listener receives actual read for API '..api)
+  T.eq(game.save.party[1].hp,hp,'unified mail event cannot mutate actual carrier for API '..api)
+  T.eq(game.save.mail.party[1].message,'UNCHANGED','unified mail event cannot mutate actual message for API '..api)
+  T.eq(game.save.mail.party[1].author,'AUTHOR','unified read cannot mutate actual author for API '..api)
+  unified.release()
+end
 local Caps=require('src.mods.Capabilities')
 for _,version in ipairs({'gold','silver','crystal'})do
   T.check(Caps.supports('events','mail.read',version),'native mail read available: '..version)
