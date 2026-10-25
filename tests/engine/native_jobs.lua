@@ -132,7 +132,9 @@ do
 end
 do
   local file=assert(io.open('main.lua','rb'));local source=file:read('*a');file:close()
-  local hook=assert(source:match('\nfunction love%.quit%(%).-\nend\n'))
+  local function extract(value)return assert(value:gsub('\r\n','\n'):match('\nfunction love%.quit%(%).-\nend\n'))end
+  local hook=extract(source)
+  T.eq(extract(source:gsub('\r\n','\n'):gsub('\n','\r\n')),hook,'quit regression reads Windows CRLF checkouts')
   for _,veto in ipairs({true,false}) do
     local stopped,closed=0,0
     local env={love={},editorMode=true,EditorApp={quit=function()return veto end},
