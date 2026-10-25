@@ -439,3 +439,114 @@ one.
 ### Settings page
 
 In the sidebar layout, the Settings page fills the whole content area and is drawn over the footer. While Settings is open, the live background is paused (`LauncherBackdrop.setPaused`): the game doesn't update, its music is suspended, and no switch happens. This is why stepping through the BACKGROUND list no longer boots a cartridge at each step. That list only offers games that are imported, importable, and haven't failed to boot.
+
+## RetroRecomped library shell (fork)
+
+The fork now opens the library first, with in-place system/ready/favorite filters,
+a Logo Labels checkbox that prints the wordmark onto cartridge labels, task-grouped tools, a settings category hub, and
+Cartridge Studio for custom shells, labels and artwork. The startup includes
+a skippable 17.4-second lightning/logo/guitar sequence with the complete
+IntroBattle lead phrase and three heavy closing attacks. Game launch inserts the selected cartridge into its
+matching handheld silhouette, plays the latch and power cue, lights the power
+LED, forms the logo inside the screen, and flies into that screen before the
+original boot. A native-to-window resolution readout accompanies the camera.
+
+The application intro has no enclosing circle. **Intro season** chooses
+Automatic, Lightning, Spring, Summer, Autumn or Winter; Automatic follows the
+local calendar. Four original vector mascots deliver the wordmark: a branchling,
+spark drake, shade and winter courier. **Preview startup intro** replays the
+same application sequence from Settings → RetroRecomped. A prominent **Play
+startup intro** button is also at the top of the Settings overview. The retired Classic
+launcher choice migrates to this library. Window titles now say RetroRecomped;
+game-family settings identify GB, GBC, GBA and the supported Gen 4 DS engine,
+and hide GB color controls when a later engine is selected.
+
+`assets/launcher/intro_score.json` supplies the same cue times to audio generation
+and animation. With sound available, the intro follows the source's playback
+clock. Lightning strands build and cross, the autumn shade fades in and orbits
+in front of and behind the logo. The closing attacks at 13.68, 15.12 and 16.02s
+accompany the catch, carry and final placement in the header. Startup waits for
+the first drawn, focused visible window. Cartridge illustrations use bounded
+3x supersampled caches and linear artwork filtering; desktop windows use native
+display density while game framebuffer sampling remains separate.
+
+See [implementation and QA](qa/retro-launcher/README.md) and the
+[standalone preview](../tools/launcher_library_preview/README.md). The lower-level
+import, save-slot, mod and cloud contracts described above still apply.
+
+## RetroRecomped cloud profile and library workspace
+
+The ModCompass account connection is `src/cloud/RetroCloud.lua`. The current
+HTTPS endpoint is `https://pokexpert.de/api/cloud/v1`; the proposed
+`cloud.pokexpert.de` address still needs a valid subdomain certificate.
+Passwords stay in the account browser. The launcher stores only a revocable,
+expiring device token. Saves and mod-profile bases are separated by account.
+
+Native browsing and ZIP installation require this connection. The entry screen
+explicitly says that continuing links this device to the existing ModCompass
+account (or registration). `DeveloperWorkspace` reads and edits that same
+account's public repository through `/developer`; it does not create a second
+account or request GitHub credentials. The two-step repository proof opens a
+prepared GitHub file, then verifies it. Verification queues private catalogue
+review rather than publishing the project. The overlay scrolls on small windows
+and supports touch, keyboard and controller focus.
+
+The authenticated `/catalogue` supplies descriptions, original release resolvers,
+verified YouTube IDs and the website's current weekly selection. The native
+weekly highlight is shown only after a stable ZIP and declared engine/API
+requirements resolve compatibly. That declaration is not a gameplay test.
+Video buttons open canonical YouTube HTTPS links through the operating system;
+iPhone app handoff still needs an on-device check.
+
+`SYNC MY MOD PROFILE` is opt-in. `DOWNLOAD MY CLOUD MODS AUTOMATICALLY` also
+enables profile sync. Profiles contain public GitHub package identities,
+exact release versions/tags, known ZIP SHA-256 values, activation and the five
+generation choices. Local artwork, credentials, paths and private mod settings
+are excluded. Unversioned local development builds cannot be reproduced by a
+cloud profile. Extra local packages remain installed but are switched off when
+the cloud profile is explicitly adopted.
+
+`LauncherModProfiles` stages every pinned ZIP before touching installed files.
+It checks local edits again before committing, preserves the previous stack in
+`mod-profile-backups/`, and keeps `mod_profile_recovery.lua` until all packages
+and flags commit. Startup retries an interrupted recovery; a failed recovery
+blocks Play and offers a Settings retry. A two-device conflict offers either
+reviewing/applying the cloud profile or publishing this device's current stack.
+
+The native `BankWorkspace` opens from the top of Library. Drag-and-drop stages
+copies into empty destination PC cells; Save as new slot commits the draft.
+Sources and Bank entries remain intact. Cross-model IV/DV adaptation requires
+confirmation. Cartridge artwork is a local PNG/JPEG import with label/full-cart
+and crop controls. `CartridgeSources` links individual original-edition photo
+pages for the player to review and download themselves; these are not bundled
+assets or promises of a free image licence.
+
+The in-game `RetroOverlay` opens with F1, Guide or the on-screen RETRO button.
+It pauses logic, captures ordinary progress into the existing slot, exports
+battery `.sav`, uploads that slot without replacing it from cloud, and returns
+to Library after saving. These battery saves are **not exact runtime
+savestates**: battle queues, Lua closures and suspended script coroutines need
+an additional persistence implementation before mid-battle device handoff can
+be advertised.
+
+Manual desktop checks on 2026-10-25 used a separate
+`RetroRecomped-qa-20261025` identity containing extracted game caches, with no
+personal saves or installed mods copied. After explicit owner approval, the
+device connection showed the already verified developer repository and loaded
+148 live catalogue entries. Mod details, the empty three-panel Bank workspace,
+Red's real game handoff, the F1 menu, title-screen save refusal and return to
+Library were checked. The GPU fixture smoke covers 31 checks including release
+notes, details with and without videos, and video selection without opening
+external sites. Fourteen focused Lua suites cover 334 checks. Real cross-device
+save handoff, live mod ZIP installation, populated Bank drag-and-drop and iPhone
+video handoff are not established by those visual checks.
+
+The Journey wordmark is `assets/launcher/journey_wordmark.png` (1942×809 RGBA),
+created with the built-in imagegen edit mode from this fork's existing logo.
+Final prompt: “Replace the reference word with exactly two centered lines:
+‘Your Journey’ and ‘starts now’. Keep the chunky monster-collecting RPG
+lettering, glossy cyan-blue fill, white bevel, purple-indigo extrusion and
+restrained electric accents. Transparent background. No characters, background
+or additional text.” Winter bells and the autumn dissonant theme are generated
+by `tools/build_launcher_seasonal_audio.py`; no original game recordings are
+included.

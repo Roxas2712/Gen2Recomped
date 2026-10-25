@@ -49,6 +49,14 @@ GenOptions.SHARED_ONLY = {
   modData = true,
   modIndexes = true,
   modIndexCache = true,
+  modCompassEnabled = true,
+  modProfileSync = true,
+  modProfileAutoDownload = true,
+  modInstallSources = true,
+  modCompassReleaseCache = true,
+  cloudService = true,
+  cloudFolder = true,
+  cloudAutoSync = true,
   modUpdateCache = true,
   saveSlots = true,
   touchControls = true,
@@ -59,6 +67,10 @@ GenOptions.SHARED_ONLY = {
   launcherAccent = true,
   launcherText = true,
   launcherGeneration = true,
+  launcherAnimations = true,
+  launcherIntroSeason = true,
+  launcherLogoCards = true,
+  launcherCartDesigns = true,
 }
 
 function GenOptions.isGeneration(g)

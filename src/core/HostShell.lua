@@ -300,7 +300,7 @@ end
 -- there is one, and its exit status otherwise -- on a runtime that reports
 -- one.  LuaJIT answers close() the 5.1 way and simply has no status to give,
 -- which is why the text is the primary source and the code only a fallback.
-function HostShell.httpDownload(url, absPath, userAgent, accept)
+function HostShell.httpDownload(url, absPath, userAgent, accept, options)
   if type(url) ~= "string" or url == "" then return nil, "missing url" end
   if type(absPath) ~= "string" or absPath == "" then return nil, "missing path" end
   userAgent = userAgent or "gen1recomp"
@@ -309,6 +309,9 @@ function HostShell.httpDownload(url, absPath, userAgent, accept)
       .. "-H " .. HostShell.quote("User-Agent: " .. userAgent) .. " "
     if accept then
       cmd = cmd .. "-H " .. HostShell.quote("Accept: " .. accept) .. " "
+    end
+    if options and tonumber(options.maxBytes) then
+      cmd=cmd..'--max-filesize '..tostring(math.floor(options.maxBytes))..' '
     end
     cmd = cmd .. "-o " .. HostShell.quote(absPath) .. " " .. HostShell.quote(url)
     -- stderr is where the sentence is, and cmd.exe and sh spell the redirect

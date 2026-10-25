@@ -1,0 +1,25 @@
+{
+  "duration": 17.4,
+  "musicStart": 0.72,
+  "noteUnit": 0.09,
+  "chargeStart": 0.24,
+  "logoReveal": 4.32,
+  "logoLock": 7.92,
+  "ghostAppear": 2.16,
+  "ghostReady": 5.04,
+  "orbitStart": 7.92,
+  "orbitEnd": 12.96,
+  "catch": 13.68,
+  "carryStart": 14.4,
+  "place": 16.02,
+  "closingLevel": 0.70,
+  "journeyStart": 0.72,
+  "journeyLine2": 4.32,
+  "journeyComplete": 7.92,
+  "journeyFade": 9.72,
+  "closing": [
+    {"at": 13.68, "length": 1.12, "gain": 0.24},
+    {"at": 15.12, "length": 0.65, "gain": 0.28},
+    {"at": 16.02, "length": 0.66, "gain": 0.34}
+  ]
+}

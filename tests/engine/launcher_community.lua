@@ -1,0 +1,96 @@
+-- Catalogue metadata may enrich a card, but must never select another repo's ZIP.
+package.path='./?.lua;'..package.path
+love=require('tests.love_stub')
+local checks=0
+local function check(v,why) assert(v,why);checks=checks+1 end
+local options={}
+local saved=0
+local signedIn=true
+package.loaded['src.cloud.RetroCloud']={signedIn=function() return signedIn end,accessToken=function() return 'test-device-token' end}
+package.loaded['src.core.SaveData']={loadOptions=function() return options end,saveOptions=function(o) options=o;saved=saved+1 end}
+local requests=0
+local requestUrls={}
+local response
+package.loaded['src.cloud.Http']={request=function(_,url) requests=requests+1;requestUrls[url]=(requestUrls[url] or 0)+1;return 200,response end}
+package.loaded['src.cloud.Task']={new=function(fn)
+  return {cancel=function() end,poll=function() local a,b=fn();return {kind='done',first=a,second=b} end}
+end}
+local C=require('src.import.LauncherCommunity')
+local Json=require('src.link.Json')
+local Index=require('src.mods.ModIndex')
+local function release(version,repo,pre)
+  return {version=version,prerelease=pre,zip={name='original-'..version..'.zip',url='https://github.com/'..(repo or 'author/mod')..'/releases/download/v'..version..'/mod.zip'}}
+end
+local entry={id='catalogue-slug',github='author/mod',summary='Short',description='Full details',games={'red','blue'},sourceChecked='2026-10-25'}
+check(C.resolve(entry,{id='REAL_ID',releases={release('1.0.0'),release('2.0.0'),release('3.0.0','author/mod',true)}}),'original releases resolve')
+check(entry.id=='REAL_ID' and entry.latest.version=='2.0.0','manifest ID and newest stable release win')
+local before=entry.latest
+check(not C.resolve(entry,{id='FORGED',releases={release('5.0.0','attacker/mod')}}),'another repository is refused')
+check(entry.id=='REAL_ID' and entry.latest==before,'a rejected response cannot mutate the card')
+check(not C.resolve(entry,{id='../wrong',releases={}}),'invalid manifest ID is refused')
+check(not C.resolve(entry,{id='real'}),'malformed release response is refused')
+check(not C.resolve(entry,{id='real',releases={{version='not semver',zip={}}}}),'malformed release is refused')
+check(C.resolve(entry,{id='REAL_ID',releases={}}) and entry.update_check=='no installable release','a source-only mod never invents an install URL')
+local body=C.describe(entry)
+check(body:find('Full details',1,true) and body:find('red, blue',1,true) and body:find('author/mod',1,true),'details preserve curated text, games and origin')
+local document={schema_version=1,mods={{id='catalogue-slug',catalogue_id='slug',github='author/mod',summary=string.rep('Long description. ',100),description='Full curated details',games={'red'},project_url='https://pokexpert.de/projects/slug',resolve_url='https://pokexpert.de/api/launcher/mods/slug'}}}
+local parsed=assert(Index.parse(Json.encode(document)))
+check(parsed.mods[1].description=='Full curated details' and parsed.mods[1].games[1]=='red','feed parser preserves detail metadata')
+local RI={_ui={inside=function() return false end}}
+function RI:_settings() return options end
+function RI:_refreshFindSources() self.findSources={{feed='https://custom.test/index.json',label='Custom'}} end
+function RI:_removeIndex() self.customRemoved=true end
+function RI:_refreshMods() self.mods={{id='REAL_ID',github='AUTHOR/MOD',description='Original manifest'}};self:_syncModUpdateInfo() end
+function RI:_findShowDetails() self.customDetails=true end
+function RI:_findThumb() end
+function RI:_drawFindPanel() return 100 end
+function RI:_drawModsPanel() return 100 end
+function RI:_sbMousepressed() end
+function RI:update() self.updated=true end
+function RI:_ensureFind() self:_refreshFind() end
+C.install(RI)
+local ui=setmetatable({section='mods',tab='find'},{__index=RI})
+ui:_refreshFindSources()
+check(ui.findSources[1].feed==C.FEED and #ui.findSources==2,'ModCompass is available by default beside custom feeds')
+ui:_removeIndex(C.FEED)
+ui:_refreshFindSources()
+check(options.modCompassEnabled==false and #ui.findSources==1,'built-in feed can be removed persistently')
+ui:_removeIndex('custom');check(ui.customRemoved,'custom feed removal is preserved')
+options.modCompassEnabled=true
+-- Cache avoids network when still fresh, while the card keeps its full detail text.
+local oldRead,oldWrite=Index.readCache,Index.writeCache
+Index.readCache=function(feed) return feed==C.FEED and parsed or {mods={},categories={}} end
+parsed.cachedAt=os.time()
+local oldFresh=Index.cacheFresh;Index.cacheFresh=function() return true end
+ui:_refreshFind();ui:update(0)
+check(requests==0 and #ui.findIndex.mods==1,'fresh cached catalogue works offline without requests')
+local card=ui.findIndex.mods[1]
+check(#card.summary<230 and card.description=='Full curated details','card preview is bounded without losing full details')
+ui:_refreshMods()
+check(ui.mods[1].description:find('ModCompass:',1,true),'refreshing installed mods restores curated metadata')
+C.enrich(ui)
+local _,count=ui.mods[1].description:gsub('ModCompass:','')
+check(count==1 and ui.mods[1].description:find('Original manifest',1,true),'enrichment does not duplicate itself or erase manifest information')
+ui:_findShowDetails(card)
+check(ui._findDetails.body:find('Full curated details',1,true),'details show full description')
+ui:_findShowDetails({id='custom'})
+check(ui.customDetails,'custom feed detail behavior remains supported')
+ui:_findThumb(card);ui:_findThumb(card)
+check(#ui._communityResolveQueue==1,'visible cards queue one repository check')
+response=Json.encode({id='REAL_ID',releases={release('1.2.3')}})
+ui:update(0);ui:update(0)
+check(card.id=='REAL_ID' and card.latest.version=='1.2.3','background resolver enables the original release on its card')
+check(requestUrls[card.resolveUrl]==1 and saved>=2,'repository result is fetched once and cached')
+local forged={id='bad',catalogueId='bad',resolveUrl='https://evil.test/api/launcher/mods/bad'}
+ui:_findThumb(forged)
+check(#ui._communityResolveQueue==0,'custom feeds cannot enqueue foreign endpoints as ModCompass')
+local compatible={_communityResolved=true,api=2,game_version='>=0.3.0 <2.0.0',latest=release('1.0.0')}
+check(C.weekCompatible(compatible),'weekly highlight requires a resolved release compatible with this engine and API')
+compatible.api=99;check(not C.weekCompatible(compatible),'future mod APIs cannot become the weekly highlight')
+compatible.api=2;compatible.game_version='>=9.0.0';check(not C.weekCompatible(compatible),'a mod for another engine version stays out of the highlight')
+check(C.videoUrl({id='1zapYKShrtQ',url='https://attacker.test'})=='https://www.youtube.com/watch?v=1zapYKShrtQ','video links use canonical YouTube IDs rather than arbitrary catalogue URLs')
+check(not C.videoUrl({id='../bad'}),'invalid video IDs never become external links')
+signedIn=false;local beforeRequests=requests;ui:_refreshFind(true)
+check(ui._findNeedsLogin and not ui.findIndex and requests==beforeRequests,'browsing is gated before any catalogue fetch, including cached views')
+Index.readCache,Index.writeCache,Index.cacheFresh=oldRead,oldWrite,oldFresh
+print('Launcher community: '..checks..' checks passed')
