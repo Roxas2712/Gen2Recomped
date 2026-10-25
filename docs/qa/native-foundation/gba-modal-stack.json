@@ -1,0 +1,292 @@
+{
+  "schema": 1,
+  "sourceCommit": "8afbf4221b3fcd4db6dda31cbeab3f07cb536cca",
+  "referenceCommit": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+  "cpu": {
+    "sourceCommit": "8afbf4221b3fcd4db6dda31cbeab3f07cb536cca",
+    "engineSuites": 266,
+    "sdkSuites": 3,
+    "B30Passed": true,
+    "nativeLifecycleChecks": 116,
+    "sharedLocalChecks": 94,
+    "sharedUnchangedChecksPerEngineAndEdition": 46,
+    "quickLogSha256": "e7f6d5901b43dad5ef2bdeecd9e999065ad2b4812392658bc6b732f412098046",
+    "crossEngine": {
+      "gen1_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+      "gen2_ref": "8afbf4221b3fcd4db6dda31cbeab3f07cb536cca",
+      "gen2_tracked_changes": false,
+      "fixture_sha256": {
+        "consumer.lua": "7e1a716fcf5f082ed8b2957b96e1def418f1c993cbee464b4ef3489e614fc5fe",
+        "worker.lua": "379c6db72343c8799c42b9e73300c126a8ba4f35d50d1c6490c8174fa1ee0e23"
+      },
+      "comparisons": [
+        {
+          "version": "firered",
+          "result": {
+            "finalDepth": 0,
+            "finalBusy": false,
+            "operations": 10,
+            "callbacks": 2
+          }
+        },
+        {
+          "version": "emerald",
+          "result": {
+            "finalDepth": 0,
+            "finalBusy": false,
+            "operations": 10,
+            "callbacks": 2
+          }
+        }
+      ]
+    }
+  },
+  "upstream": {
+    "number": 229,
+    "head": "71b1ae8166ac1c036faf92a13e4322181b1b8b04",
+    "dependsOn": 146,
+    "independentChecks": 116,
+    "sharedLocalChecks": 94,
+    "negativeControlFails": true
+  },
+  "package": {
+    "sourceCommit": "8afbf4221b3fcd4db6dda31cbeab3f07cb536cca",
+    "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+    "payloadSha256": "a606147fc46d8eb31ae2b53569aa969a0128d55330210cb9a2cc815aa45be12f",
+    "identicalPlatformPayloads": true,
+    "sourceFilesCompared": 1033,
+    "allPackagedSrcFilesMatchCommittedSourceExceptDeclaredEngineStamp": true,
+    "previewEntryPointsMatchSource": true,
+    "windowsPE64AndEmbeddedPayload": true,
+    "windowsAMD64DLLs": 11,
+    "macArchiveExtractedPayloadAndStrictSignature": true,
+    "windowsHardwareExecuted": false,
+    "published": false
+  },
+  "runs": [
+    {
+      "edition": "firered",
+      "gpu": {
+        "vendor": "",
+        "api": "2.1",
+        "device": "Apple M3",
+        "renderer": "Metal"
+      },
+      "vsync": 1,
+      "map": "MAP_G04_N01",
+      "nativeChecks": 17,
+      "completed": true,
+      "proofs": [
+        {
+          "phase": "initial-map",
+          "sha256": "34375a4b31e5b223de7e50a4f893406007715be7f9e4490576c37f5fea3fee13",
+          "freshFrameStamp": 9,
+          "minimumFrameStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "second-map",
+          "sha256": "402ebdcf6d17215d019ad13027318c4d6d254579cfaa9a62389b7c44a3d2be71",
+          "freshFrameStamp": 7,
+          "minimumFrameStamp": 1,
+          "centralColours": 31,
+          "attempts": 1
+        },
+        {
+          "phase": "resized",
+          "sha256": "f1df2755e0d55546cead92c53ed80e04052e062669289982cf90959cd3101afb",
+          "freshFrameStamp": 8,
+          "minimumFrameStamp": 1,
+          "centralColours": 19,
+          "attempts": 1
+        },
+        {
+          "phase": "map-return",
+          "sha256": "77efab0f898b27339af2197ea5c07615aafd41f049f055782c472bddacc719c0",
+          "freshFrameStamp": 10,
+          "minimumFrameStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        }
+      ],
+      "driverSha256": "9d82449ef36531c3dc77a6f022bd2130e35c90bb3cd1b11bf895140a0a37c559",
+      "logSha256": "e68bf651138443440e7a8423a8ea217881736dca9ae52147b27515fb62946f82",
+      "modFolderRemoved": true
+    },
+    {
+      "edition": "firered",
+      "gpu": {
+        "device": "Apple M3",
+        "api": "4.1 Metal - 89.4",
+        "vendor": "Apple",
+        "renderer": "OpenGL"
+      },
+      "vsync": 1,
+      "map": "MAP_G04_N01",
+      "nativeChecks": 17,
+      "completed": true,
+      "proofs": [
+        {
+          "phase": "initial-map",
+          "sha256": "79380c877d67290dbfe0aebb34df6f6de9eea664d49062b686ac95afcb6de7f2",
+          "freshFrameStamp": 14,
+          "minimumFrameStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "second-map",
+          "sha256": "b30fb966e5c0251ff703f801c2cced69f269119fc30ee952230fba6200ada4e3",
+          "freshFrameStamp": 11,
+          "minimumFrameStamp": 1,
+          "centralColours": 31,
+          "attempts": 1
+        },
+        {
+          "phase": "resized",
+          "sha256": "1d14fe93a097c9a7aefa8316fccae7993fbe704d9b427ed4615030e4b9f38586",
+          "freshFrameStamp": 13,
+          "minimumFrameStamp": 1,
+          "centralColours": 19,
+          "attempts": 1
+        },
+        {
+          "phase": "map-return",
+          "sha256": "169146bcdb1112ec7177d69a82f2bd8cff7a078d4bb13333b343faf31896f2f2",
+          "freshFrameStamp": 13,
+          "minimumFrameStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        }
+      ],
+      "driverSha256": "9d82449ef36531c3dc77a6f022bd2130e35c90bb3cd1b11bf895140a0a37c559",
+      "logSha256": "ada7b6ff4c147166843d604038015640ebe258c33e8562ff7961b69b2b9d9944",
+      "modFolderRemoved": true
+    },
+    {
+      "edition": "emerald",
+      "gpu": {
+        "device": "Apple M3",
+        "api": "2.1",
+        "renderer": "Metal",
+        "vendor": ""
+      },
+      "vsync": 1,
+      "map": "MAP_G25_N40",
+      "nativeChecks": 17,
+      "completed": true,
+      "proofs": [
+        {
+          "phase": "initial-map",
+          "sha256": "b0aa92a7d8876996b992635dec79d3460051f9b09c61d743c9599e0689c54da3",
+          "freshFrameStamp": 16,
+          "minimumFrameStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        },
+        {
+          "phase": "second-map",
+          "sha256": "d933aea4f6506c0c26c0a183dfaf162828e74980205b2250fc9d7bf598c38703",
+          "freshFrameStamp": 10,
+          "minimumFrameStamp": 1,
+          "centralColours": 28,
+          "attempts": 1
+        },
+        {
+          "phase": "resized",
+          "sha256": "5d73aff1e2828d1444382772d984c4ad6c31c7346bb031f1cd943515faeb2c78",
+          "freshFrameStamp": 8,
+          "minimumFrameStamp": 1,
+          "centralColours": 19,
+          "attempts": 1
+        },
+        {
+          "phase": "map-return",
+          "sha256": "536be8b804c96c02360577094a0b740e59633ef5fa5f715d89783a756a583352",
+          "freshFrameStamp": 10,
+          "minimumFrameStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        }
+      ],
+      "driverSha256": "9d82449ef36531c3dc77a6f022bd2130e35c90bb3cd1b11bf895140a0a37c559",
+      "logSha256": "4718ea6fce8777757c1282cff7c8da3dc4f66797035f3ba8f1a45a675cd9319f",
+      "modFolderRemoved": true
+    },
+    {
+      "edition": "emerald",
+      "gpu": {
+        "device": "Apple M3",
+        "vendor": "Apple",
+        "renderer": "OpenGL",
+        "api": "4.1 Metal - 89.4"
+      },
+      "vsync": 1,
+      "map": "MAP_G25_N40",
+      "nativeChecks": 17,
+      "completed": true,
+      "proofs": [
+        {
+          "phase": "initial-map",
+          "sha256": "99c0eaf7f7f2103f21ff680582cd8067b54466f1e1cc4cc4ab65a1e3dbda754b",
+          "freshFrameStamp": 24,
+          "minimumFrameStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        },
+        {
+          "phase": "second-map",
+          "sha256": "431a00ac0dd3a5c5127162e79421aaad78e5d24ec634dde2243dbe0960e17bb2",
+          "freshFrameStamp": 14,
+          "minimumFrameStamp": 1,
+          "centralColours": 28,
+          "attempts": 1
+        },
+        {
+          "phase": "resized",
+          "sha256": "3dca8922d4c83563c2cd125110987e8a7d4abcca18e7deff80859d1424aa11b9",
+          "freshFrameStamp": 12,
+          "minimumFrameStamp": 1,
+          "centralColours": 19,
+          "attempts": 1
+        },
+        {
+          "phase": "map-return",
+          "sha256": "395640b94d7eab3e006fe311be7f9c518de21d38bb09e2bf3a8de592da047c4a",
+          "freshFrameStamp": 11,
+          "minimumFrameStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        }
+      ],
+      "driverSha256": "9d82449ef36531c3dc77a6f022bd2130e35c90bb3cd1b11bf895140a0a37c559",
+      "logSha256": "2931d77c37b4c93cf0c10214589d2a339f01625ca99d803a0193d3e89f4d9cfb",
+      "modFolderRemoved": true
+    }
+  ],
+  "originalOASCProbe": {
+    "referenceSource": "cef4a9ef3e8338b3b97b99d679011eb57c731617",
+    "previousSource": "aa7e6061232c4c08ee78650c5cc79a4734437748",
+    "fixtureOnly": true,
+    "firstMissingModule": "src.core.game3.map",
+    "mapStackManifestEntrypointUnchanged": true,
+    "newOriginalReferenceGPUExecuted": false
+  },
+  "scope": [
+    "Native QA mod with actual API3 factories; unchanged original OASC does not fully load on the fork",
+    "Fresh unsaved starting map; introduction bypassed, no story acceptance",
+    "Native key-edge injection, not OS keyboard hardware",
+    "The proof named resized is a battle modal; no window-resize acceptance",
+    "Full original OASC map/player/atlas/renderer/field integration remains open",
+    "Protected Gen1/player instances unused; no private source/assets/ROMs/saves included",
+    "Existing public preview unchanged; QA packages unpublished"
+  ],
+  "preservedFailures": [
+    "initial modal fullscreen/drawUnder boundary corrected",
+    "QA live-array alias and unsupported game-ID assumptions corrected; only registered FireRed and Emerald tested",
+    "full regression found scene-view receiver without modalRenderPlan; now local helper, existing Gen2 regression and full suite pass",
+    "first independent fixture archive omitted required examples; fixed harness without source workaround",
+    "full new private reference archive interrupted before extraction; exact changed-file read-only overlay used for current loader probe"
+  ]
+}

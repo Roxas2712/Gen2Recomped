@@ -1,0 +1,763 @@
+{
+  "schema": 1,
+  "gpuSourceCommit": "d6149206e471d7fcc8a5ab790234b33017c3b6d7",
+  "referenceCommit": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+  "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+  "cpu": {
+    "sourceCommit": "8df058320bec252b691f37f8fe8542a75200b89d",
+    "engineSuites": 264,
+    "sdkSuites": 3,
+    "B30Passed": true,
+    "quickLogSha256": "827d767d854dc4302b5c33c3d3f8d109cf6003f71f7b8b72bd22a355fd149157",
+    "battleViewChecks": 306,
+    "chromeChecks": 116,
+    "transientLifecycleChecks": 144,
+    "auxiliaryHookChecks": 4680,
+    "nativeTimingChecks": 163,
+    "multihitHpChecks": 18
+  },
+  "package": {
+    "sourceCommit": "d6149206e471d7fcc8a5ab790234b33017c3b6d7",
+    "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+    "payloadSha256": "5dbb8ba369f9e86e9c64738ff005a7b0aa67708f1d481130084fcc73fd16ef4e",
+    "identicalPlatformPayloads": true,
+    "sourceFilesCompared": 1031,
+    "allPackagedSrcFilesMatchCommittedSourceExceptDeclaredEngineStamp": true,
+    "previewEntryPointsMatchSource": true,
+    "windowsPE64AndEmbeddedPayload": true,
+    "windowsAMD64DLLs": 11,
+    "macArchiveExtractedPayloadAndStrictSignature": true,
+    "windowsHardwareExecuted": false,
+    "published": false
+  },
+  "upstream": {
+    "battleView": {
+      "number": 223,
+      "head": "8b4e90728967b4efc9d1620afe9fd64259f8ca23"
+    },
+    "menuChrome": {
+      "number": 224,
+      "head": "6165969e0d5f4d9a072f5388e4aaa49f42bebc9b"
+    },
+    "transientLifecycle": {
+      "number": 227,
+      "head": "5775f5aa10156911c3cf388e394481c09256f7fd"
+    }
+  },
+  "correctedPackage": {
+    "version": "3.1.2-omega.1.8",
+    "files": 27329,
+    "changedFromPrevious": [
+      "gen2/lib/GoldFlyCinematic.lua",
+      "manifest.json"
+    ],
+    "addedFiles": 0,
+    "removedFiles": 0,
+    "manifestSha256": "fa670deea788d02965fa3f0c174208153a9241bd4a27441bfd80cdd2ccfc7cfe",
+    "flySequenceExecuted": false
+  },
+  "runs": [
+    {
+      "modVersion": "3.1.2-omega.1.7",
+      "backend": "opengl",
+      "vsync": 0,
+      "nativeDamageAndSwitch": [
+        {
+          "incomingHp": 104,
+          "partyHost": "party surface",
+          "nativeSwitch": true,
+          "drainingFrames": 523,
+          "camera": "first",
+          "incomingLevel": 45,
+          "enemyHp": 40,
+          "damageMove": "QUICK_ATTACK",
+          "maxGap": 21,
+          "playerLevel": 45,
+          "enemyBefore": 61,
+          "enemyAfter": 40,
+          "partyConfirm": "second native confirm",
+          "observations": 1430,
+          "phase": "messages",
+          "enemyShown": 40
+        },
+        {
+          "incomingHp": 100,
+          "partyHost": "party surface",
+          "nativeSwitch": true,
+          "drainingFrames": 414,
+          "camera": "third",
+          "incomingLevel": 45,
+          "enemyHp": 35,
+          "damageMove": "QUICK_ATTACK",
+          "maxGap": 21,
+          "playerLevel": 45,
+          "enemyBefore": 56,
+          "enemyAfter": 35,
+          "partyConfirm": "second native confirm",
+          "observations": 1180,
+          "phase": "messages",
+          "enemyShown": 35
+        }
+      ],
+      "returns": [
+        {
+          "camera": "first",
+          "result": "run",
+          "grace": 5,
+          "nativeInputEdges": true
+        },
+        {
+          "camera": "third",
+          "result": "run",
+          "grace": 5,
+          "nativeInputEdges": true
+        }
+      ],
+      "models": [
+        {
+          "enemyShown": 61,
+          "distinctModel": true,
+          "enemyLevel": 23,
+          "playerLevel": 35,
+          "camera": "first",
+          "playerHp": 80,
+          "enemyHp": 61,
+          "playerShown": 80
+        },
+        {
+          "enemyShown": 56,
+          "distinctModel": true,
+          "enemyLevel": 23,
+          "playerLevel": 35,
+          "camera": "third",
+          "playerHp": 73,
+          "enemyHp": 56,
+          "playerShown": 73
+        }
+      ],
+      "nativePictureArt": [
+        {
+          "width": 40,
+          "height": 40,
+          "side": "player",
+          "liveSpecies": "SPECIES_155",
+          "camera": "first",
+          "ink": 936,
+          "colours": 4
+        },
+        {
+          "width": 40,
+          "height": 40,
+          "side": "enemy",
+          "liveSpecies": "SPECIES_220",
+          "camera": "first",
+          "ink": 616,
+          "colours": 4
+        },
+        {
+          "width": 40,
+          "height": 40,
+          "side": "player",
+          "liveSpecies": "SPECIES_155",
+          "camera": "third",
+          "ink": 936,
+          "colours": 4
+        },
+        {
+          "width": 40,
+          "height": 40,
+          "side": "enemy",
+          "liveSpecies": "SPECIES_220",
+          "camera": "third",
+          "ink": 616,
+          "colours": 4
+        }
+      ],
+      "osProofs": {
+        "initial-map": {
+          "freshFrameStamp": 11,
+          "minimumFrameStamp": 1,
+          "centralColours": 40523,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 12,
+          "minimumFrameStamp": 1,
+          "centralColours": 40277,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-second-map.png",
+          "attempts": 1
+        },
+        "resized": {
+          "freshFrameStamp": 8,
+          "minimumFrameStamp": 1,
+          "centralColours": 38222,
+          "colourProfile": "gbc",
+          "minimumColours": 4,
+          "screenshot": "os-window-resized.png",
+          "attempts": 1
+        },
+        "map-return": {
+          "freshFrameStamp": 9,
+          "minimumFrameStamp": 1,
+          "centralColours": 21217,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-map-return.png",
+          "attempts": 1
+        }
+      },
+      "windowHashes": {
+        "initial-map": "d544f38369bafc15f436625c20e43bb6da0b3c12118e667e1f72106ed9be5c17",
+        "second-map": "469455990448191fd141085b5c8f2c7970ee8735941c8a693579e47a16cdf5a6",
+        "resized": "18d587e2c2c5a5db738c4fb3fb886489cef3f1e6ae5bfb1cfe54b8f15e9dde31",
+        "map-return": "72e3f11a1635bb519a7f9077bfdea7e025fdcf6207ac8cb4f579ccb1b307ebb1"
+      },
+      "modFiles": 27329,
+      "modUnmodified": true,
+      "testModRemoved": true,
+      "finalWorldPresented": true,
+      "receiptSha256": "4a2edc6393313940dff1aa8ec8eb117fad8bd9284f0803c45e5abdbab607cbf6"
+    },
+    {
+      "modVersion": "3.1.2-omega.1.7",
+      "backend": "metal",
+      "vsync": 1,
+      "nativeDamageAndSwitch": [
+        {
+          "incomingHp": 109,
+          "observations": 1168,
+          "enemyAfter": 34,
+          "partyConfirm": "second native confirm",
+          "nativeSwitch": true,
+          "partyHost": "party surface",
+          "enemyBefore": 57,
+          "camera": "first",
+          "maxGap": 23,
+          "drainingFrames": 292,
+          "phase": "messages",
+          "playerLevel": 45,
+          "incomingLevel": 45,
+          "enemyHp": 34,
+          "damageMove": "QUICK_ATTACK",
+          "enemyShown": 34
+        },
+        {
+          "incomingHp": 107,
+          "observations": 1434,
+          "enemyAfter": 37,
+          "partyConfirm": "second native confirm",
+          "nativeSwitch": true,
+          "partyHost": "party surface",
+          "enemyBefore": 61,
+          "camera": "third",
+          "maxGap": 24,
+          "drainingFrames": 528,
+          "phase": "messages",
+          "playerLevel": 45,
+          "incomingLevel": 45,
+          "enemyHp": 37,
+          "damageMove": "QUICK_ATTACK",
+          "enemyShown": 37
+        }
+      ],
+      "returns": [
+        {
+          "camera": "first",
+          "result": "run",
+          "grace": 5,
+          "nativeInputEdges": true
+        },
+        {
+          "camera": "third",
+          "result": "run",
+          "grace": 5,
+          "nativeInputEdges": true
+        }
+      ],
+      "models": [
+        {
+          "distinctModel": true,
+          "enemyLevel": 23,
+          "enemyHp": 57,
+          "playerLevel": 35,
+          "playerHp": 73,
+          "camera": "first",
+          "playerShown": 73,
+          "enemyShown": 57
+        },
+        {
+          "distinctModel": true,
+          "enemyLevel": 23,
+          "enemyHp": 61,
+          "playerLevel": 35,
+          "playerHp": 73,
+          "camera": "third",
+          "playerShown": 73,
+          "enemyShown": 61
+        }
+      ],
+      "nativePictureArt": [
+        {
+          "height": 40,
+          "liveSpecies": "SPECIES_155",
+          "width": 40,
+          "ink": 936,
+          "camera": "first",
+          "colours": 4,
+          "side": "player"
+        },
+        {
+          "height": 40,
+          "liveSpecies": "SPECIES_220",
+          "width": 40,
+          "ink": 616,
+          "camera": "first",
+          "colours": 4,
+          "side": "enemy"
+        },
+        {
+          "height": 40,
+          "liveSpecies": "SPECIES_155",
+          "width": 40,
+          "ink": 936,
+          "camera": "third",
+          "colours": 4,
+          "side": "player"
+        },
+        {
+          "height": 40,
+          "liveSpecies": "SPECIES_220",
+          "width": 40,
+          "ink": 616,
+          "camera": "third",
+          "colours": 4,
+          "side": "enemy"
+        }
+      ],
+      "osProofs": {
+        "initial-map": {
+          "freshFrameStamp": 60,
+          "minimumFrameStamp": 1,
+          "centralColours": 33541,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 15,
+          "minimumFrameStamp": 1,
+          "centralColours": 32787,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-second-map.png",
+          "attempts": 1
+        },
+        "resized": {
+          "freshFrameStamp": 15,
+          "minimumFrameStamp": 1,
+          "centralColours": 42925,
+          "colourProfile": "gbc",
+          "minimumColours": 4,
+          "screenshot": "os-window-resized.png",
+          "attempts": 1
+        },
+        "map-return": {
+          "freshFrameStamp": 11,
+          "minimumFrameStamp": 1,
+          "centralColours": 21496,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-map-return.png",
+          "attempts": 1
+        }
+      },
+      "windowHashes": {
+        "initial-map": "0f217eab8b194c536fb5a712953fef0b0541d6857778aa42c3487cb2def62d38",
+        "second-map": "bf3538ae57135f59a2a1ca6b4fbd98934e761721deb1db6cc14594cb9be81aac",
+        "resized": "a103553b63a94c5613a34958db33556e5b1766ef7d72b0138f06d22c9b2ddbc3",
+        "map-return": "e63f7d56e48e638251d732f5d368debb7dd634c9bcdc1aa2d383c8ed4092938e"
+      },
+      "modFiles": 27329,
+      "modUnmodified": true,
+      "testModRemoved": true,
+      "finalWorldPresented": true,
+      "receiptSha256": "bd743e202df4b34f7afa86a2c926f97f9f7ff5eed056b5842c1fcd5f15628379"
+    },
+    {
+      "modVersion": "3.1.2-omega.1.8",
+      "backend": "metal",
+      "vsync": 1,
+      "nativeDamageAndSwitch": [
+        {
+          "playerLevel": 45,
+          "incomingHp": 110,
+          "enemyHp": 31,
+          "phase": "messages",
+          "camera": "first",
+          "observations": 1688,
+          "damageMove": "QUICK_ATTACK",
+          "enemyShown": 31,
+          "incomingLevel": 45,
+          "nativeSwitch": true,
+          "enemyAfter": 31,
+          "partyConfirm": "second native confirm",
+          "partyHost": "party surface",
+          "enemyBefore": 56,
+          "maxGap": 25,
+          "drainingFrames": 638
+        },
+        {
+          "playerLevel": 45,
+          "incomingHp": 110,
+          "enemyHp": 37,
+          "phase": "messages",
+          "camera": "third",
+          "observations": 1174,
+          "damageMove": "QUICK_ATTACK",
+          "enemyShown": 37,
+          "incomingLevel": 45,
+          "nativeSwitch": true,
+          "enemyAfter": 37,
+          "partyConfirm": "second native confirm",
+          "partyHost": "party surface",
+          "enemyBefore": 58,
+          "maxGap": 21,
+          "drainingFrames": 295
+        }
+      ],
+      "returns": [
+        {
+          "camera": "first",
+          "result": "run",
+          "grace": 5,
+          "nativeInputEdges": true
+        },
+        {
+          "camera": "third",
+          "result": "run",
+          "grace": 5,
+          "nativeInputEdges": true
+        }
+      ],
+      "models": [
+        {
+          "playerLevel": 35,
+          "playerHp": 72,
+          "enemyHp": 56,
+          "playerShown": 72,
+          "camera": "first",
+          "enemyLevel": 23,
+          "distinctModel": true,
+          "enemyShown": 56
+        },
+        {
+          "playerLevel": 35,
+          "playerHp": 70,
+          "enemyHp": 58,
+          "playerShown": 70,
+          "camera": "third",
+          "enemyLevel": 23,
+          "distinctModel": true,
+          "enemyShown": 58
+        }
+      ],
+      "nativePictureArt": [
+        {
+          "ink": 936,
+          "liveSpecies": "SPECIES_155",
+          "height": 40,
+          "camera": "first",
+          "width": 40,
+          "colours": 4,
+          "side": "player"
+        },
+        {
+          "ink": 616,
+          "liveSpecies": "SPECIES_220",
+          "height": 40,
+          "camera": "first",
+          "width": 40,
+          "colours": 4,
+          "side": "enemy"
+        },
+        {
+          "ink": 936,
+          "liveSpecies": "SPECIES_155",
+          "height": 40,
+          "camera": "third",
+          "width": 40,
+          "colours": 4,
+          "side": "player"
+        },
+        {
+          "ink": 616,
+          "liveSpecies": "SPECIES_220",
+          "height": 40,
+          "camera": "third",
+          "width": 40,
+          "colours": 4,
+          "side": "enemy"
+        }
+      ],
+      "osProofs": {
+        "initial-map": {
+          "freshFrameStamp": 18,
+          "minimumFrameStamp": 1,
+          "centralColours": 32932,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 23,
+          "minimumFrameStamp": 1,
+          "centralColours": 32779,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-second-map.png",
+          "attempts": 1
+        },
+        "resized": {
+          "freshFrameStamp": 12,
+          "minimumFrameStamp": 1,
+          "centralColours": 42465,
+          "colourProfile": "gbc",
+          "minimumColours": 4,
+          "screenshot": "os-window-resized.png",
+          "attempts": 1
+        },
+        "map-return": {
+          "freshFrameStamp": 11,
+          "minimumFrameStamp": 1,
+          "centralColours": 21347,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-map-return.png",
+          "attempts": 1
+        }
+      },
+      "windowHashes": {
+        "initial-map": "0ec74a0cb5ae1c286139219c7f6f76741b0ff7b3157ca0e201afdc9ca8c05d39",
+        "second-map": "2147dd0f2d692e221d87c49dd938798f01d5c394b2617d22fdd6107c3fee908f",
+        "resized": "ba9dce8770d8c4cde92f7e41be4d35b2da03a36754a1336978b7d5f8c6b9fa53",
+        "map-return": "d2569356e0b82185fb04d9a1345486b20d1312d4db278ef513739f2a783e4414"
+      },
+      "modFiles": 27329,
+      "modUnmodified": true,
+      "testModRemoved": true,
+      "finalWorldPresented": true,
+      "receiptSha256": "e40bec1f8b1fbe138248dc93c4ce537e4962197815bc301a6d8da5f575c47a45"
+    },
+    {
+      "modVersion": "3.1.2-omega.1.8",
+      "backend": "opengl",
+      "vsync": 1,
+      "nativeDamageAndSwitch": [
+        {
+          "incomingHp": 97,
+          "camera": "first",
+          "partyConfirm": "second native confirm",
+          "maxGap": 19,
+          "nativeSwitch": true,
+          "partyHost": "party surface",
+          "enemyAfter": 42,
+          "enemyBefore": 61,
+          "phase": "messages",
+          "damageMove": "QUICK_ATTACK",
+          "playerLevel": 45,
+          "incomingLevel": 45,
+          "enemyHp": 42,
+          "drainingFrames": 285,
+          "enemyShown": 42,
+          "observations": 1148
+        },
+        {
+          "incomingHp": 95,
+          "camera": "third",
+          "partyConfirm": "second native confirm",
+          "maxGap": 24,
+          "nativeSwitch": true,
+          "partyHost": "party surface",
+          "enemyAfter": 32,
+          "enemyBefore": 56,
+          "phase": "messages",
+          "damageMove": "QUICK_ATTACK",
+          "playerLevel": 45,
+          "incomingLevel": 45,
+          "enemyHp": 32,
+          "drainingFrames": 643,
+          "enemyShown": 32,
+          "observations": 1714
+        }
+      ],
+      "returns": [
+        {
+          "camera": "first",
+          "result": "run",
+          "grace": 5,
+          "nativeInputEdges": true
+        },
+        {
+          "camera": "third",
+          "result": "run",
+          "grace": 5,
+          "nativeInputEdges": true
+        }
+      ],
+      "models": [
+        {
+          "enemyHp": 61,
+          "camera": "first",
+          "playerLevel": 35,
+          "playerHp": 74,
+          "enemyLevel": 23,
+          "playerShown": 74,
+          "enemyShown": 61,
+          "distinctModel": true
+        },
+        {
+          "enemyHp": 56,
+          "camera": "third",
+          "playerLevel": 35,
+          "playerHp": 74,
+          "enemyLevel": 23,
+          "playerShown": 74,
+          "enemyShown": 56,
+          "distinctModel": true
+        }
+      ],
+      "nativePictureArt": [
+        {
+          "height": 40,
+          "camera": "first",
+          "liveSpecies": "SPECIES_155",
+          "width": 40,
+          "colours": 4,
+          "ink": 936,
+          "side": "player"
+        },
+        {
+          "height": 40,
+          "camera": "first",
+          "liveSpecies": "SPECIES_220",
+          "width": 40,
+          "colours": 4,
+          "ink": 616,
+          "side": "enemy"
+        },
+        {
+          "height": 40,
+          "camera": "third",
+          "liveSpecies": "SPECIES_155",
+          "width": 40,
+          "colours": 4,
+          "ink": 936,
+          "side": "player"
+        },
+        {
+          "height": 40,
+          "camera": "third",
+          "liveSpecies": "SPECIES_220",
+          "width": 40,
+          "colours": 4,
+          "ink": 616,
+          "side": "enemy"
+        }
+      ],
+      "osProofs": {
+        "initial-map": {
+          "freshFrameStamp": 17,
+          "minimumFrameStamp": 1,
+          "centralColours": 39530,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 9,
+          "minimumFrameStamp": 1,
+          "centralColours": 42128,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-second-map.png",
+          "attempts": 1
+        },
+        "resized": {
+          "freshFrameStamp": 9,
+          "minimumFrameStamp": 1,
+          "centralColours": 32057,
+          "colourProfile": "gbc",
+          "minimumColours": 4,
+          "screenshot": "os-window-resized.png",
+          "attempts": 1
+        },
+        "map-return": {
+          "freshFrameStamp": 18,
+          "minimumFrameStamp": 1,
+          "centralColours": 21724,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-map-return.png",
+          "attempts": 1
+        }
+      },
+      "windowHashes": {
+        "initial-map": "69cd85804f75d7e0d5a13ac6ff45661b6798ce71b690e9e258476ed13442d475",
+        "second-map": "b1b886934dff685c22b150dec888bbdb5374270e182079336c3e8f3790e13d4c",
+        "resized": "5194cec84401539bed7d5c5350ae2c5fdaa1e25696e5aedc2811cdcaf78b39bf",
+        "map-return": "027c9dfe35cc7f9beb57c2a9ac43915e03f28f54dbf96e9c575328b64e73dfd6"
+      },
+      "modFiles": 27329,
+      "modUnmodified": true,
+      "testModRemoved": true,
+      "finalWorldPresented": true,
+      "receiptSha256": "8bc09f8d6de28c36a3cc43f3bb3fb598f3be5b1ecaaf760b016882cc4fd5509a"
+    }
+  ],
+  "accepted": {
+    "nativeSpriteCards": true,
+    "liveHud": true,
+    "nativeDamageAndHpDrain": true,
+    "nativePartySwitch": true,
+    "nativeRunAndPresentedReturn": true,
+    "selectedFieldCameras": [
+      "first",
+      "third"
+    ]
+  },
+  "notAccepted": [
+    "full generated model renderer; patched module exceeds LuaJIT 60 upvalues",
+    "native Gen2 text/move-menu/controller/animation parity",
+    "default visible-only encounters and continuous movement",
+    "full FieldMoves/permission/special handoff protocols",
+    "PC/mail/box/follower/fishing/capture and registered-item integration",
+    "all interiors/maps/story/save/load and extended sessions",
+    "Windows GPU hardware",
+    "new Fly anchor flow; package difference is audited but Fly was not exercised"
+  ],
+  "scope": [
+    "Actual Crystal Rev0 import and unchanged supplied mod; private QA gift commands and VM scripted encounters, not story progression",
+    "Native input key-edge injection, not OS keyboard hardware",
+    "Field First/Third camera selected before battle; V does not switch field camera during battle",
+    "The proof named resized records the Third-camera post-switch frame; no window-resize acceptance",
+    "Classic encounter setting explicit; default visible contacts are not covered",
+    "GPU tested source precedes the separately CPU-tested native transient lifecycle follow-up",
+    "Existing release unchanged; no user/Gen1 profile or supplied source writes"
+  ],
+  "preservedFailedAttempts": [
+    "old-source actors absent before Chrome implementation",
+    "initial camera switch attempted during battle instead of before entry",
+    "QA move-grid/text-message/ORAS navigation/party-owner assumptions corrected against native execution",
+    "one immediate proof lacked a fresh frame; barrier now requires actual draws and strict guard passes once",
+    "one QA run manually stopped after selecting an OHKO-prone move",
+    "ice traversal admitted a battle through an untraced caller; native random gate was closed, caller remains unclassified"
+  ]
+}

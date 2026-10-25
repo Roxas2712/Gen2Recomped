@@ -1,0 +1,259 @@
+{
+  "schema": 1,
+  "game": "crystal",
+  "romRevision": 0,
+  "sourceCommit": "cb12d995b2cd51ccc3e19083ae968d386dfe1147",
+  "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+  "engineVersion": "0.8.45",
+  "modVersion": "3.1.2-omega.1.7",
+  "scope": "Cherrygrove room geometry and native grid/menu probes; teleported setup on unoccupied collision-valid land, no continuous movement or normal door acceptance",
+  "cases": [
+    {
+      "backend": "opengl",
+      "exitCode": 0,
+      "modFilesUnmodified": 27329,
+      "testModFolderRemoved": true,
+      "ownedWindowProofs": 4,
+      "phases": [
+        {
+          "label": "first-CHERRYGROVE_MART",
+          "map": "CHERRYGROVE_MART",
+          "camera": "first",
+          "setupX": 3,
+          "setupY": 6,
+          "mapMetadata": {
+            "width": 6,
+            "generation": 2,
+            "tileset": "TILESET_MART",
+            "height": 4,
+            "environment": 3,
+            "outdoor": false
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "allMatchNative": true,
+            "cells": 96,
+            "classes": 5
+          },
+          "overlayDepth": 0,
+          "nativeMenuPassed": null,
+          "nativeRoomMoved": null,
+          "roomGeometryVisuallyInspected": true,
+          "fullRendererInstalled": false,
+          "voxelFrames": 371,
+          "voxelFailures": 0
+        },
+        {
+          "label": "third-CHERRYGROVE_MART",
+          "map": "CHERRYGROVE_MART",
+          "camera": "third",
+          "setupX": 3,
+          "setupY": 6,
+          "mapMetadata": {
+            "width": 6,
+            "generation": 2,
+            "tileset": "TILESET_MART",
+            "height": 4,
+            "environment": 3,
+            "outdoor": false
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "allMatchNative": true,
+            "cells": 96,
+            "classes": 5
+          },
+          "overlayDepth": 0,
+          "nativeMenuPassed": true,
+          "nativeRoomMoved": true,
+          "roomGeometryVisuallyInspected": true,
+          "fullRendererInstalled": false,
+          "voxelFrames": 467,
+          "voxelFailures": 0
+        },
+        {
+          "label": "first-CHERRYGROVE_POKECENTER1_F",
+          "map": "CHERRYGROVE_POKECENTER1_F",
+          "camera": "first",
+          "setupX": 5,
+          "setupY": 6,
+          "mapMetadata": {
+            "width": 5,
+            "generation": 2,
+            "tileset": "TILESET_POKECENTER",
+            "height": 4,
+            "environment": 3,
+            "outdoor": false
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "allMatchNative": true,
+            "cells": 80,
+            "classes": 6
+          },
+          "overlayDepth": 0,
+          "nativeMenuPassed": null,
+          "nativeRoomMoved": null,
+          "roomGeometryVisuallyInspected": true,
+          "fullRendererInstalled": false,
+          "voxelFrames": 958,
+          "voxelFailures": 0
+        },
+        {
+          "label": "third-CHERRYGROVE_POKECENTER1_F",
+          "map": "CHERRYGROVE_POKECENTER1_F",
+          "camera": "third",
+          "setupX": 5,
+          "setupY": 6,
+          "mapMetadata": {
+            "width": 5,
+            "generation": 2,
+            "tileset": "TILESET_POKECENTER",
+            "height": 4,
+            "environment": 3,
+            "outdoor": false
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "allMatchNative": true,
+            "cells": 80,
+            "classes": 6
+          },
+          "overlayDepth": 0,
+          "nativeMenuPassed": true,
+          "nativeRoomMoved": true,
+          "roomGeometryVisuallyInspected": true,
+          "fullRendererInstalled": false,
+          "voxelFrames": 1044,
+          "voxelFailures": 0
+        }
+      ]
+    },
+    {
+      "backend": "metal",
+      "exitCode": 0,
+      "modFilesUnmodified": 27329,
+      "testModFolderRemoved": true,
+      "ownedWindowProofs": 4,
+      "phases": [
+        {
+          "label": "first-CHERRYGROVE_MART",
+          "map": "CHERRYGROVE_MART",
+          "camera": "first",
+          "setupX": 3,
+          "setupY": 6,
+          "mapMetadata": {
+            "outdoor": false,
+            "tileset": "TILESET_MART",
+            "generation": 2,
+            "width": 6,
+            "height": 4,
+            "environment": 3
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "allMatchNative": true,
+            "classes": 5,
+            "cells": 96
+          },
+          "overlayDepth": 0,
+          "nativeMenuPassed": null,
+          "nativeRoomMoved": null,
+          "roomGeometryVisuallyInspected": true,
+          "fullRendererInstalled": false,
+          "voxelFrames": 372,
+          "voxelFailures": 0
+        },
+        {
+          "label": "third-CHERRYGROVE_MART",
+          "map": "CHERRYGROVE_MART",
+          "camera": "third",
+          "setupX": 3,
+          "setupY": 6,
+          "mapMetadata": {
+            "outdoor": false,
+            "tileset": "TILESET_MART",
+            "generation": 2,
+            "width": 6,
+            "height": 4,
+            "environment": 3
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "allMatchNative": true,
+            "classes": 5,
+            "cells": 96
+          },
+          "overlayDepth": 0,
+          "nativeMenuPassed": true,
+          "nativeRoomMoved": true,
+          "roomGeometryVisuallyInspected": true,
+          "fullRendererInstalled": false,
+          "voxelFrames": 462,
+          "voxelFailures": 0
+        },
+        {
+          "label": "first-CHERRYGROVE_POKECENTER1_F",
+          "map": "CHERRYGROVE_POKECENTER1_F",
+          "camera": "first",
+          "setupX": 5,
+          "setupY": 6,
+          "mapMetadata": {
+            "outdoor": false,
+            "tileset": "TILESET_POKECENTER",
+            "generation": 2,
+            "width": 5,
+            "height": 4,
+            "environment": 3
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "allMatchNative": true,
+            "classes": 6,
+            "cells": 80
+          },
+          "overlayDepth": 0,
+          "nativeMenuPassed": null,
+          "nativeRoomMoved": null,
+          "roomGeometryVisuallyInspected": true,
+          "fullRendererInstalled": false,
+          "voxelFrames": 948,
+          "voxelFailures": 0
+        },
+        {
+          "label": "third-CHERRYGROVE_POKECENTER1_F",
+          "map": "CHERRYGROVE_POKECENTER1_F",
+          "camera": "third",
+          "setupX": 5,
+          "setupY": 6,
+          "mapMetadata": {
+            "outdoor": false,
+            "tileset": "TILESET_POKECENTER",
+            "generation": 2,
+            "width": 5,
+            "height": 4,
+            "environment": 3
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "allMatchNative": true,
+            "classes": 6,
+            "cells": 80
+          },
+          "overlayDepth": 0,
+          "nativeMenuPassed": true,
+          "nativeRoomMoved": true,
+          "roomGeometryVisuallyInspected": true,
+          "fullRendererInstalled": false,
+          "voxelFrames": 1041,
+          "voxelFailures": 0
+        }
+      ]
+    }
+  ],
+  "open": [
+    "native floor/route map-ID spelling differs from some authored profiles",
+    "full generated renderer patch still exceeds 60 upvalues",
+    "all interiors, actor/model presentation, full battles and long sessions unaccepted"
+  ]
+}

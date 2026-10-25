@@ -178,7 +178,12 @@ end
 -- `chosen` is the battler the player picked, when they were asked.  A single
 -- battle passes the one foe it always passed and gets it straight back.
 function Targeting.resolve(battle, user, move, chosen)
+  if type(chosen) ~= "table" then chosen = nil end
   local k = kindOf(move)
+  if k == Targeting.SELECTED then
+    local center = require("src.battle.Gen3FollowMe").center(battle, user)
+    if center then return { center } end
+  end
 
   -- BLACK AND WHITE: FOLLOW ME / RAGE POWDER draw every single-target move
   -- from the other side to themselves this turn (src/battle/Gen5MoveRules.lua)
@@ -218,7 +223,7 @@ function Targeting.resolve(battle, user, move, chosen)
   if k == Targeting.RANDOM then
     -- rolled once and then held for as long as the rampage lasts, which is
     -- why it is remembered on the user rather than re-rolled each turn
-    local held = user.thrashTarget
+    local held = type(user.thrashTarget) == "table" and user.thrashTarget or nil
     if held and held.mon and (held.mon.hp or 0) > 0 then return { held } end
     if #foes == 0 then return {} end
     local pick = foes[1]
@@ -266,6 +271,7 @@ end
 -- With one foe there is nothing to re-point to and this answers the same
 -- empty list the old `target.mon.hp <= 0` guard produced.
 function Targeting.redirect(battle, user, move, target)
+  if type(target) ~= "table" then target = nil end
   if target and target.mon and (target.mon.hp or 0) > 0 then return { target } end
   local wanted = target and target.isPlayer
   local pool
@@ -278,6 +284,104 @@ function Targeting.redirect(battle, user, move, target)
   end
   if #pool == 0 then return {} end
   return { pool[1] }
+end
+
+-- Public GBA actions retain positional targets until execution, so a switch
+-- between selection and execution resolves the current occupant of that slot.
+function Targeting.fromAction(battle, action)
+  if type(action) ~= "table" or action.target == nil then
+    return nil, false
+  end
+  local ref, id = action.target
+  if type(ref) == "number" then
+    id = ref
+  elseif type(ref) == "table" then
+    id = ref == battle.player and 0 or ref == battle.enemy and 1 or ref.position
+  end
+  if type(id) ~= "number" or id % 1 ~= 0 or id < 0 or id > 3 then
+    return nil, true
+  end
+  if id == 0 then
+    return battle.player, true
+  end
+  if id == 1 then
+    return battle.enemy, true
+  end
+  return battle:battlerAt(id), true
+end
+
+function Targeting.actionTargets(battle, user, move, chosen)
+  local kind = kindOf(move)
+  local abilities = require("src.battle.Abilities")
+  local _, followMeActive = require("src.battle.Gen3FollowMe").center(battle, user)
+  -- Gen 3 Lightning Rod redirects Electric selected attacks; it does not
+  -- grant the later-generation immunity or Special Attack boost.
+  if
+    (kind == Targeting.SELECTED or kind == Targeting.DEPENDS or kind == Targeting.USER_OR_SELECTED)
+    and move.type == "ELECTRIC"
+    and not followMeActive
+    and abilities.of(chosen) ~= "LIGHTNING_ROD"
+  then
+    local rank = {}
+    for i, id in ipairs(battle._actionTargetOrder or { 0, 1, 2, 3 }) do
+      rank[id] = i
+    end
+    local best, bestRank
+    for _, actor in battle:activeBattlers() do
+      if
+        actor.isPlayer ~= user.isPlayer
+        and actor.mon
+        and (actor.mon.hp or 0) > 0
+        and abilities.of(actor) == "LIGHTNING_ROD"
+      then
+        local n = rank[actor.position] or 5
+        if not bestRank or n < bestRank then
+          best, bestRank = actor, n
+        end
+      end
+    end
+    if best then
+      chosen = best
+    end
+  end
+  local targets = Targeting.resolve(battle, user, move, chosen)
+  if kind == Targeting.BOTH then
+    for i, actor in ipairs(targets) do
+      if actor == chosen and i > 1 then
+        table.remove(targets, i)
+        table.insert(targets, 1, actor)
+        break
+      end
+    end
+  elseif kind == Targeting.FOES_AND_ALLY then
+    table.sort(targets, function(a, b)
+      return a.position < b.position
+    end)
+  end
+  return targets
+end
+
+function Targeting.gen3PPCost(battle, user, target, move)
+  local extra = require("src.battle.Abilities").extraPP
+  local kind, cost = kindOf(move), 1
+  if
+    battle:isDouble()
+    and (kind == Targeting.BOTH or kind == Targeting.FOES_AND_ALLY or kind == Targeting.OPPONENTS_FIELD)
+  then
+    for _, actor in battle:activeBattlers() do
+      if
+        actor ~= user
+        and actor.mon
+        and (actor.mon.hp or 0) > 0
+        and (kind == Targeting.FOES_AND_ALLY or actor.isPlayer ~= user.isPlayer)
+      then
+        cost = cost + extra(actor)
+      end
+    end
+  elseif target and target ~= user and kind ~= Targeting.USER then
+    cost = cost + extra(target)
+  end
+  return cost
 end
 
 return Targeting

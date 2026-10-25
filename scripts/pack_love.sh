@@ -8,7 +8,9 @@
 #
 # Usage:
 #   scripts/pack_love.sh --output PATH [--listing PATH] [--version X.Y.Z]
-#                        [--dry-run]
+#                        [--dry-run] [--engine-only]
+# --engine-only explicitly excludes bundled mods for isolated native previews;
+# normal builds retain the complete bundled-mod contract.
 #
 #   --output   where to write the .love (required)
 #   --listing  write the archive's file listing here, one path per line, in
@@ -36,6 +38,7 @@ OUTPUT=""
 LISTING=""
 VERSION=""
 DRY_RUN=0
+ENGINE_ONLY=0
 
 fail() { printf 'pack_love: error: %s\n' "$*" >&2; exit 1; }
 say()  { printf 'pack_love: %s\n' "$*"; }
@@ -51,6 +54,8 @@ while [ $# -gt 0 ]; do
     --version)
       [ $# -ge 2 ] || fail "--version requires X.Y.Z"
       VERSION="$2"; shift 2 ;;
+    --engine-only)
+      ENGINE_ONLY=1; shift ;;
     --dry-run)
       DRY_RUN=1; shift ;;
     -h|--help)
@@ -122,6 +127,7 @@ MANIFEST_GLOB="tools/rom_manifest*.json"
 
 say "staging payload from $ROOT"
 for entry in "${CONTENT[@]}"; do
+  if [ "$ENGINE_ONLY" -eq 1 ] && [ "$entry" = mods ]; then continue; fi
   if [ -e "$ROOT/$entry" ]; then
     # Nested entries (tools/save-editor) keep their prefix: the require path
     # the game builds is the archive path, so a flattened copy is invisible.
@@ -208,7 +214,7 @@ done < <(find "$STAGE/mods" -mindepth 2 -maxdepth 2 -type d \
 find "$STAGE/mods" -mindepth 2 -maxdepth 2 -type f \
      \( -iname 'CHANGELOG.md' -o -iname '*_PLAN.md' \) -delete 2>/dev/null || true
 find "$STAGE" -type f \( \
-     -iname '*.gb' -o -iname '*.gbc' -o -iname '*.sav' -o -iname '*.bak' \
+     -iname '*.gb' -o -iname '*.gbc' -o -iname '*.gba' -o -iname '*.srm' -o -iname '*.sav' -o -iname '*.bak' \
   -o -iname '*.love' -o -iname '*.exe' -o -iname '*.zip' \
   -o -name 'rom-cache.complete' -o -name '.DS_Store' \
   \) -delete
@@ -237,6 +243,7 @@ for required in main.lua conf.lua src/core/Version.lua \
                 tools/map-editor/panels/Preview.lua \
                 mods/DRAMATIC_SHAPE/manifest.json \
                 mods/DRAMATIC_SHAPE/main.lua; do
+  if [ "$ENGINE_ONLY" -eq 1 ] && [[ "$required" == mods/* ]]; then continue; fi
   [ -e "$STAGE/$required" ] || fail "payload is missing $required"
 done
 

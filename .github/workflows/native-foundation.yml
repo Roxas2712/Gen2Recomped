@@ -1,0 +1,72 @@
+name: native Gen3 render foundation
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-foundation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  combined-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install LuaJIT
+        run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: Public loader, surfaces and no-mod parity
+        run: |
+          luajit tests/engine/gen3_surface_data.lua
+          luajit tests/engine/native_foundation.lua
+      - name: Animated terrain sources and native pixel parity
+        run: |
+          luajit tests/engine/gen3_animated_terrain.lua
+          luajit tests/engine/gen3_animated_terrain_failures.lua
+      - name: Palette cycles, native texture refresh and weather colour parity
+        run: |
+          luajit tests/engine/gen3_color_data.lua
+          luajit tests/engine/gen3_color_failures.lua
+          luajit tests/engine/gen3_palette_renderer.lua
+          luajit tests/engine/gen3_palette_frame_cache.lua
+          luajit tests/engine/gen3_weather_color.lua
+      - name: Automatic ROM palette program import, bounds and public consumers
+        run: |
+          luajit tests/engine/gen3_palette_program_import.lua
+          luajit tests/engine/gen3_palette_program_failures.lua
+          luajit tests/engine/gen3_palette_program_public.lua
+          python3 -m unittest discover -s tests -p test_gen3_palette_profiles.py
+      - name: Window frame ownership, native copy lifetime and capture gates
+        run: |
+          luajit tests/engine/window_frame.lua
+          luajit tests/engine/window_frame_async.lua
+          luajit tests/engine/mac_window_surface.lua
+          python3 -m unittest discover -s tests -p test_window_frame_tools.py
+      - name: Isolated preview profile and archive gates
+        run: |
+          luajit tests/engine/native_preview.lua
+          python3 -m unittest discover -s tests -p test_native_preview.py
+      - name: Cache-reference policy regressions
+        run: python3 -m unittest discover -s tests -p test_modkit_cache_comments.py
+      - name: Existing contracts on the combined engine
+        run: |
+          luajit tests/engine/gen3_render_data.lua
+          luajit tests/engine/gen3_render_data_sources.lua
+          luajit tests/engine/portable_world_context.lua
+          luajit tests/engine/portable_oasc_adapter.lua
+          luajit tests/engine/actor_render_data.lua
+          luajit tests/engine/actor_billboard_resources.lua
+          luajit tests/engine/field_effect_render_data.lua
+          luajit tests/engine/field_effect_resources.lua
+          luajit tests/engine/surf_mount_clock.lua
+          luajit tests/engine/surf_mount_render_data.lua
+          luajit tests/engine/surf_mount_resources.lua
+      - name: Generate combined registry reference
+        run: |
+          mkdir -p /tmp/native-foundation-docs
+          luajit tools/gen_registry_docs.lua /tmp/native-foundation-docs
+      - uses: actions/upload-artifact@v7
+        with:
+          name: native-foundation-registry-reference
+          path: /tmp/native-foundation-docs/Reference-Registries.md
+          if-no-files-found: error

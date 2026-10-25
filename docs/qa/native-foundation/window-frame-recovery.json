@@ -1,0 +1,673 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-24",
+  "baseCommit": "1d7eb5cec77ffc33d3c714d2f3f21f33da558cbd",
+  "implementationSha256": {
+    "main.lua": "f4ea9b10f4e44358f82c14f8b9e4ad989d49e50532fcbcaca3d6f565a502b99d",
+    "conf.lua": "4ea23f458f3bae0f25fad0f0fc8b8a3f81ebba05bbea12c2530c1d11f6c7eebb",
+    "src/render/WindowFrame.lua": "8a1c6c2067f071ff3586e346740fdb0b08a30b14f012190f6c3a4a8e9102a127",
+    "src/render/MacWindowSurface.lua": "e8e785862637d85158b2265d87ffca0eaffc33859c501e97eae6c457228b2fcf",
+    "tools/check_gen3_palette_gpu.py": "118663abfd22a8e32612edd70fac77d0d269b4855c8b03886d1065623192664e",
+    "tools/gen3_window_frame_driver.lua": "9a71cf058c6e43d55225147330b903e19869579ba6ef042fe035055306537cb2"
+  },
+  "sourceProvenance": "Exported base commit plus candidate main/conf/WindowFrame/MacWindowSurface; current driver loaded explicitly. A main.lua comment-only change followed the snapshot. Imported game-version assets came only from prior task-owned fresh full-import identities; new UUID identities contain no copied saves/options.",
+  "host": {
+    "os": "macOS",
+    "version": "15.8.2",
+    "device": "Apple M3",
+    "love12Commit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663"
+  },
+  "diagnosis": {
+    "opengl": {
+      "actualOSWindowBlack": true,
+      "defaultFramebuffer": 0,
+      "status": "GL_FRAMEBUFFER_UNDEFINED",
+      "statusHex": "0x8219",
+      "readBuffer": "GL_NONE",
+      "readPixelsError": "GL_INVALID_FRAMEBUFFER_OPERATION",
+      "readPixelsErrorHex": "0x506",
+      "offscreenTexturesValid": true,
+      "defaultFramebufferRepaired": false,
+      "recovery": "Completed OpenGL GPU canvas readback to owned Cocoa view CALayer; per-frame RGBA transfer"
+    },
+    "metal": {
+      "originalIntermittentBlackFrameReproduced": false,
+      "lateDrawableReadabilityIsSuspectedDependency": true,
+      "recovery": "Completed owned GPU target with single physical blit; captures read owned target",
+      "ordinaryFramesWithoutCaptureRequireCPUReadback": false
+    }
+  },
+  "cases": [
+    {
+      "game": "emerald",
+      "runtime": {
+        "revision": 0,
+        "major": 11,
+        "minor": 5
+      },
+      "gpu": {
+        "version": "4.1 Metal - 89.4",
+        "renderer": "OpenGL",
+        "device": "Apple M3",
+        "vendor": "Apple"
+      },
+      "framesChecked": 641,
+      "assertions": 22443,
+      "blankFrames": 0,
+      "staleFrames": 0,
+      "retries": 0,
+      "phases": [
+        {
+          "mode": "opengl-cocoa-frame",
+          "frames": 192,
+          "name": "initial-map",
+          "firstStamp": 66,
+          "lastStamp": 257,
+          "map": "MAP_G26_N21"
+        },
+        {
+          "mode": "opengl-cocoa-frame",
+          "frames": 130,
+          "name": "second-map",
+          "firstStamp": 323,
+          "lastStamp": 452,
+          "map": "MAP_G26_N18"
+        },
+        {
+          "mode": "opengl-cocoa-frame",
+          "frames": 130,
+          "name": "resized",
+          "firstStamp": 538,
+          "lastStamp": 667,
+          "map": "MAP_G26_N18"
+        },
+        {
+          "mode": "opengl-cocoa-frame",
+          "frames": 189,
+          "name": "map-return",
+          "firstStamp": 733,
+          "lastStamp": 921,
+          "map": "MAP_G26_N21"
+        }
+      ],
+      "osWindowProof": {
+        "initial-map": {
+          "freshFrameStamp": 254,
+          "minimumFrameStamp": 247,
+          "centralColours": 62,
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 450,
+          "minimumFrameStamp": 444,
+          "centralColours": 47,
+          "attempts": 1
+        },
+        "resized": {
+          "freshFrameStamp": 665,
+          "minimumFrameStamp": 659,
+          "centralColours": 38,
+          "attempts": 1
+        },
+        "map-return": {
+          "freshFrameStamp": 920,
+          "minimumFrameStamp": 914,
+          "centralColours": 43,
+          "attempts": 1
+        }
+      },
+      "movement": true,
+      "mapReturn": true,
+      "paletteRegression": {
+        "passed": true,
+        "assertions": 1255,
+        "rgbaPixels": 308480,
+        "tileFramesObserved": 2,
+        "sourceSha1": "f3ae088181bf583e55daf962a92bb46f4f1d07b7",
+        "sourceImport": {
+          "animated": 1,
+          "unavailable": 0,
+          "version": 1,
+          "static": 72
+        }
+      }
+    },
+    {
+      "game": "firered",
+      "runtime": {
+        "revision": 0,
+        "major": 11,
+        "minor": 5
+      },
+      "gpu": {
+        "vendor": "Apple",
+        "device": "Apple M3",
+        "renderer": "OpenGL",
+        "version": "4.1 Metal - 89.4"
+      },
+      "framesChecked": 694,
+      "assertions": 24298,
+      "blankFrames": 0,
+      "staleFrames": 0,
+      "retries": 0,
+      "phases": [
+        {
+          "frames": 197,
+          "firstStamp": 66,
+          "lastStamp": 262,
+          "mode": "opengl-cocoa-frame",
+          "name": "initial-map",
+          "map": "MAP_G03_N00"
+        },
+        {
+          "frames": 162,
+          "firstStamp": 328,
+          "lastStamp": 489,
+          "mode": "opengl-cocoa-frame",
+          "name": "second-map",
+          "map": "MAP_G04_N01"
+        },
+        {
+          "frames": 140,
+          "firstStamp": 575,
+          "lastStamp": 714,
+          "mode": "opengl-cocoa-frame",
+          "name": "resized",
+          "map": "MAP_G04_N01"
+        },
+        {
+          "frames": 195,
+          "firstStamp": 780,
+          "lastStamp": 974,
+          "mode": "opengl-cocoa-frame",
+          "name": "map-return",
+          "map": "MAP_G03_N00"
+        }
+      ],
+      "osWindowProof": {
+        "initial-map": {
+          "freshFrameStamp": 258,
+          "minimumFrameStamp": 247,
+          "centralColours": 57,
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 468,
+          "minimumFrameStamp": 449,
+          "centralColours": 37,
+          "attempts": 1
+        },
+        "resized": {
+          "freshFrameStamp": 710,
+          "minimumFrameStamp": 696,
+          "centralColours": 40,
+          "attempts": 1
+        },
+        "map-return": {
+          "freshFrameStamp": 972,
+          "minimumFrameStamp": 961,
+          "centralColours": 50,
+          "attempts": 1
+        }
+      },
+      "movement": true,
+      "mapReturn": true,
+      "paletteRegression": {
+        "passed": true,
+        "assertions": 1748,
+        "rgbaPixels": 440832,
+        "tileFramesObserved": 16,
+        "sourceSha1": "41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc",
+        "sourceImport": {
+          "animated": 0,
+          "version": 1,
+          "static": 63,
+          "unavailable": 0
+        }
+      }
+    },
+    {
+      "game": "emerald",
+      "runtime": {
+        "revision": 0,
+        "major": 12,
+        "minor": 0
+      },
+      "gpu": {
+        "renderer": "Metal",
+        "version": "2.1",
+        "vendor": "",
+        "device": "Apple M3"
+      },
+      "framesChecked": 662,
+      "assertions": 23178,
+      "blankFrames": 0,
+      "staleFrames": 0,
+      "retries": 0,
+      "phases": [
+        {
+          "map": "MAP_G26_N21",
+          "mode": "metal-frame",
+          "name": "initial-map",
+          "frames": 196,
+          "firstStamp": 66,
+          "lastStamp": 261
+        },
+        {
+          "map": "MAP_G26_N18",
+          "mode": "metal-frame",
+          "name": "second-map",
+          "frames": 136,
+          "firstStamp": 327,
+          "lastStamp": 462
+        },
+        {
+          "map": "MAP_G26_N18",
+          "mode": "metal-frame",
+          "name": "resized",
+          "frames": 137,
+          "firstStamp": 548,
+          "lastStamp": 684
+        },
+        {
+          "map": "MAP_G26_N21",
+          "mode": "metal-frame",
+          "name": "map-return",
+          "frames": 193,
+          "firstStamp": 750,
+          "lastStamp": 942
+        }
+      ],
+      "osWindowProof": {
+        "initial-map": {
+          "freshFrameStamp": 256,
+          "minimumFrameStamp": 247,
+          "centralColours": 46,
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 458,
+          "minimumFrameStamp": 448,
+          "centralColours": 37,
+          "attempts": 1
+        },
+        "resized": {
+          "freshFrameStamp": 680,
+          "minimumFrameStamp": 669,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        "map-return": {
+          "freshFrameStamp": 939,
+          "minimumFrameStamp": 931,
+          "centralColours": 43,
+          "attempts": 1
+        }
+      },
+      "movement": true,
+      "mapReturn": true,
+      "paletteRegression": {
+        "passed": true,
+        "assertions": 1255,
+        "rgbaPixels": 308480,
+        "tileFramesObserved": 2,
+        "sourceSha1": "f3ae088181bf583e55daf962a92bb46f4f1d07b7",
+        "sourceImport": {
+          "unavailable": 0,
+          "version": 1,
+          "animated": 1,
+          "static": 72
+        }
+      }
+    },
+    {
+      "game": "firered",
+      "runtime": {
+        "minor": 0,
+        "revision": 0,
+        "major": 12
+      },
+      "gpu": {
+        "vendor": "",
+        "device": "Apple M3",
+        "version": "2.1",
+        "renderer": "Metal"
+      },
+      "framesChecked": 662,
+      "assertions": 23178,
+      "blankFrames": 0,
+      "staleFrames": 0,
+      "retries": 0,
+      "phases": [
+        {
+          "mode": "metal-frame",
+          "frames": 196,
+          "firstStamp": 66,
+          "lastStamp": 261,
+          "map": "MAP_G03_N00",
+          "name": "initial-map"
+        },
+        {
+          "mode": "metal-frame",
+          "frames": 136,
+          "firstStamp": 327,
+          "lastStamp": 462,
+          "map": "MAP_G04_N01",
+          "name": "second-map"
+        },
+        {
+          "mode": "metal-frame",
+          "frames": 133,
+          "firstStamp": 548,
+          "lastStamp": 680,
+          "map": "MAP_G04_N01",
+          "name": "resized"
+        },
+        {
+          "mode": "metal-frame",
+          "frames": 197,
+          "firstStamp": 746,
+          "lastStamp": 942,
+          "map": "MAP_G03_N00",
+          "name": "map-return"
+        }
+      ],
+      "osWindowProof": {
+        "initial-map": {
+          "freshFrameStamp": 256,
+          "minimumFrameStamp": 247,
+          "centralColours": 50,
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 457,
+          "minimumFrameStamp": 448,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        "resized": {
+          "freshFrameStamp": 676,
+          "minimumFrameStamp": 669,
+          "centralColours": 40,
+          "attempts": 1
+        },
+        "map-return": {
+          "freshFrameStamp": 937,
+          "minimumFrameStamp": 927,
+          "centralColours": 50,
+          "attempts": 1
+        }
+      },
+      "movement": true,
+      "mapReturn": true,
+      "paletteRegression": {
+        "passed": true,
+        "assertions": 1748,
+        "rgbaPixels": 440832,
+        "tileFramesObserved": 16,
+        "sourceSha1": "41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc",
+        "sourceImport": {
+          "version": 1,
+          "animated": 0,
+          "unavailable": 0,
+          "static": 63
+        }
+      }
+    },
+    {
+      "game": "emerald",
+      "runtime": {
+        "revision": 0,
+        "major": 12,
+        "minor": 0
+      },
+      "gpu": {
+        "renderer": "OpenGL",
+        "version": "4.1 Metal - 89.4",
+        "device": "Apple M3",
+        "vendor": "Apple"
+      },
+      "framesChecked": 650,
+      "assertions": 22758,
+      "blankFrames": 0,
+      "staleFrames": 0,
+      "retries": 0,
+      "phases": [
+        {
+          "map": "MAP_G26_N21",
+          "mode": "opengl-cocoa-frame",
+          "frames": 192,
+          "lastStamp": 257,
+          "name": "initial-map",
+          "firstStamp": 66
+        },
+        {
+          "map": "MAP_G26_N18",
+          "mode": "opengl-cocoa-frame",
+          "frames": 132,
+          "lastStamp": 454,
+          "name": "second-map",
+          "firstStamp": 323
+        },
+        {
+          "map": "MAP_G26_N18",
+          "mode": "opengl-cocoa-frame",
+          "frames": 133,
+          "lastStamp": 672,
+          "name": "resized",
+          "firstStamp": 540
+        },
+        {
+          "map": "MAP_G26_N21",
+          "mode": "opengl-cocoa-frame",
+          "frames": 193,
+          "lastStamp": 930,
+          "name": "map-return",
+          "firstStamp": 738
+        }
+      ],
+      "osWindowProof": {
+        "initial-map": {
+          "freshFrameStamp": 255,
+          "minimumFrameStamp": 247,
+          "centralColours": 46,
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 452,
+          "minimumFrameStamp": 444,
+          "centralColours": 37,
+          "attempts": 1
+        },
+        "resized": {
+          "freshFrameStamp": 669,
+          "minimumFrameStamp": 661,
+          "centralColours": 39,
+          "attempts": 1
+        },
+        "map-return": {
+          "freshFrameStamp": 928,
+          "minimumFrameStamp": 919,
+          "centralColours": 43,
+          "attempts": 1
+        }
+      },
+      "movement": true,
+      "mapReturn": true,
+      "paletteRegression": {
+        "passed": true,
+        "assertions": 1255,
+        "rgbaPixels": 308480,
+        "tileFramesObserved": 2,
+        "sourceSha1": "f3ae088181bf583e55daf962a92bb46f4f1d07b7",
+        "sourceImport": {
+          "version": 1,
+          "animated": 1,
+          "unavailable": 0,
+          "static": 72
+        }
+      }
+    },
+    {
+      "game": "firered",
+      "runtime": {
+        "major": 12,
+        "minor": 0,
+        "revision": 0
+      },
+      "gpu": {
+        "device": "Apple M3",
+        "renderer": "OpenGL",
+        "version": "4.1 Metal - 89.4",
+        "vendor": "Apple"
+      },
+      "framesChecked": 655,
+      "assertions": 22933,
+      "blankFrames": 0,
+      "staleFrames": 0,
+      "retries": 0,
+      "phases": [
+        {
+          "frames": 195,
+          "name": "initial-map",
+          "firstStamp": 66,
+          "map": "MAP_G03_N00",
+          "mode": "opengl-cocoa-frame",
+          "lastStamp": 260
+        },
+        {
+          "frames": 133,
+          "name": "second-map",
+          "firstStamp": 326,
+          "map": "MAP_G04_N01",
+          "mode": "opengl-cocoa-frame",
+          "lastStamp": 458
+        },
+        {
+          "frames": 133,
+          "name": "resized",
+          "firstStamp": 544,
+          "map": "MAP_G04_N01",
+          "mode": "opengl-cocoa-frame",
+          "lastStamp": 676
+        },
+        {
+          "frames": 194,
+          "name": "map-return",
+          "firstStamp": 742,
+          "map": "MAP_G03_N00",
+          "mode": "opengl-cocoa-frame",
+          "lastStamp": 935
+        }
+      ],
+      "osWindowProof": {
+        "initial-map": {
+          "freshFrameStamp": 258,
+          "minimumFrameStamp": 247,
+          "centralColours": 50,
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 456,
+          "minimumFrameStamp": 447,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        "resized": {
+          "freshFrameStamp": 674,
+          "minimumFrameStamp": 665,
+          "centralColours": 40,
+          "attempts": 1
+        },
+        "map-return": {
+          "freshFrameStamp": 932,
+          "minimumFrameStamp": 923,
+          "centralColours": 50,
+          "attempts": 1
+        }
+      },
+      "movement": true,
+      "mapReturn": true,
+      "paletteRegression": {
+        "passed": true,
+        "assertions": 1748,
+        "rgbaPixels": 440832,
+        "tileFramesObserved": 16,
+        "sourceSha1": "41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc",
+        "sourceImport": {
+          "static": 63,
+          "version": 1,
+          "animated": 0,
+          "unavailable": 0
+        }
+      }
+    }
+  ],
+  "totals": {
+    "framesChecked": 3964,
+    "assertions": 138788,
+    "osWindowSnapshots": 24,
+    "blankFrames": 0,
+    "staleFrames": 0,
+    "retries": 0,
+    "paletteAssertions": 9009,
+    "paletteRgbaPixels": 2247936
+  },
+  "standalone": {
+    "configurations": 3,
+    "alternatingFramesEach": 120,
+    "passingCompletedFrames": 360
+  },
+  "errorScreen": {
+    "gl11": {
+      "visibleError": true,
+      "redPixels": 1148450,
+      "textPixels": 34300,
+      "expectedErrorExit": 1
+    },
+    "metal12": {
+      "visibleError": true,
+      "redPixels": 1052676,
+      "textPixels": 44136,
+      "expectedErrorExit": 1
+    }
+  },
+  "regression": {
+    "engineSuitesPassed": 100,
+    "engineSuitesTotal": 100,
+    "modSdkSuitesPassed": 3,
+    "dramaticShape": "B30 passed",
+    "windowFrameChecks": 990,
+    "pythonOwnershipTests": 6
+  },
+  "isolation": {
+    "portPaused": true,
+    "gen1Untouched": true,
+    "playerInstanceUntouched": true,
+    "independentRuntimeDownloads": true,
+    "newUUIDIdentities": true,
+    "legacyMigrationBypassed": true,
+    "identityChangesRejected": true,
+    "externalCacheRejected": true,
+    "modsLoaded": false,
+    "osCapturesOnlyOwnTestChildWindow": true,
+    "romDerivedImagesAndCachesPrivate": true,
+    "sourceRomHashesRecheckedUnchanged": true
+  },
+  "scope": {
+    "continuous": "Every completed GPU frame in each observed steady-state interval",
+    "excludedSetupTicksPerPhase": 60,
+    "actualOSWindowSnapshotsPerCase": 4,
+    "lastGoodFrameFallback": false,
+    "notAccepted": [
+      "long-duration stability",
+      "general performance",
+      "fullscreen",
+      "GPU/context loss",
+      "all platforms",
+      "cartridge fade/task/reset-phase semantics",
+      "First/Third Person",
+      "native Origami consumer"
+    ]
+  }
+}

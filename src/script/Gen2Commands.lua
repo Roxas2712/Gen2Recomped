@@ -23,6 +23,11 @@ local Strings = require("src.core.Strings")
 
 local Gen2Commands = {}
 
+function Commands.g2_wild_encounters(ctx, enabled)
+  local ow=ctx.overworld
+  if ow and ow.setWildEncounters then ow:setWildEncounters(enabled) end
+end
+
 local function scriptVar(ctx)
   return ctx.g2Var or 0
 end
@@ -31,8 +36,8 @@ end
 -- BattleState:say takes text that is already expanded, not a label.
 local function resolvedText(ctx, textId)
   local data = ctx.game.data
-  local text = data.text[textId]
-  if not text and ctx.overworld then
+  local text, private = require("src.script.ScriptText").get(data, textId)
+  if not text and not private and ctx.overworld then
     text = data:resolveText(ctx.overworld.map.def.label, textId)
   end
   text = text or textId
@@ -936,6 +941,8 @@ local function mapKeyAliases(mapId)
   return aliases
 end
 
+local MapIdentity = require("src.core.MapIdentity")
+
 local function resolveMapKey(ctx, mapId)
   if type(mapId) == "number" then
     -- Extract failed to fold (group, number) → registry key.  Never fall back
@@ -944,12 +951,13 @@ local function resolveMapKey(ctx, mapId)
     return nil
   end
   if type(mapId) ~= "string" or mapId == "" then
-    return ctx.overworld and ctx.overworld.map and ctx.overworld.map.id
+    return MapIdentity.sourceId(ctx.game and ctx.game.data,
+      ctx.overworld and ctx.overworld.map and ctx.overworld.map.id)
   end
   local data = ctx.game and ctx.game.data
   local maps = data and data.maps
   for _, key in ipairs(mapKeyAliases(mapId)) do
-    if maps and maps[key] then return key end
+    if maps and maps[key] then return MapIdentity.sourceId(data, key) end
   end
   -- Prefer the compact form (ROUTE25) which matches scaffold registry keys.
   return mapKeyAliases(mapId)[1] and (mapId:gsub("_(%d+)$", "%1")) or mapId
@@ -959,11 +967,13 @@ local function sceneMapId(ctx, mapId)
   return resolveMapKey(ctx, mapId)
 end
 
-function Gen2Commands.getScene(save, mapId)
+function Gen2Commands.getScene(save, mapId, data)
   local scenes = save.g2Scenes or {}
   if type(mapId) ~= "string" then return scenes[mapId] or 0 end
-  for _, key in ipairs(mapKeyAliases(mapId)) do
-    if scenes[key] ~= nil then return scenes[key] end
+  for _, name in ipairs(MapIdentity.aliases(data, mapId)) do
+    for _, key in ipairs(mapKeyAliases(name)) do
+      if scenes[key] ~= nil then return scenes[key] end
+    end
   end
   return 0
 end
@@ -999,8 +1009,10 @@ local function mapHasScene(ctx, id)
   -- actually carry callbacks
   if type(vars) ~= "table" then return true end
   if id == nil then return false end
-  for _, key in ipairs(mapKeyAliases(id)) do
-    if vars[key] ~= nil then return true end
+  for _, name in ipairs(MapIdentity.aliases(data, id)) do
+    for _, key in ipairs(mapKeyAliases(name)) do
+      if vars[key] ~= nil then return true end
+    end
   end
   return false
 end
@@ -1010,7 +1022,7 @@ function Commands.g2_check_scene(ctx, mapId)
   if not mapHasScene(ctx, id) then
     ctx.g2Var = SCENE_NONE
   else
-    ctx.g2Var = id and Gen2Commands.getScene(ctx.save, id) or 0
+    ctx.g2Var = id and Gen2Commands.getScene(ctx.save, id, ctx.game and ctx.game.data) or 0
   end
   ctx.lastCheck = ctx.g2Var ~= 0
 end
@@ -1098,6 +1110,12 @@ function Commands.g2_object(ctx, index, visible)
     obj, mapId = objectByIndex(ctx, index)
   end
   if not obj or not mapId then return end
+  return Gen2Commands.setObjectVisibility(ctx, obj, mapId, visible)
+end
+
+-- Shared native effect after resolving a map object. Public API adapters can
+-- supply the resolved template without depending on cached script-ID numbering.
+function Gen2Commands.setObjectVisibility(ctx, obj, mapId, visible)
   local OverworldState = require("src.world.OverworldController")
   local name = OverworldState.objectToggleKey(obj)
   -- The PERSISTENT half, which this used to leave to a `setevent` the ROM
@@ -1768,6 +1786,7 @@ end
 -- `reloadmapafterbattle`, and branch on the result themselves.  The canLose
 -- guard is belt and braces for a mod that pairs them anyway.
 function Commands.g2_after_battle(ctx)
+  if ctx.overworld and ctx.overworld.armWildCooldown then ctx.overworld:armWildCooldown() end
   if ctx.lastBattleResult == "lose" and not ctx.lastBattleCanLose then
     return math.huge
   end
@@ -1877,16 +1896,15 @@ end
 
 -- `pokemart MARTTYPE_*, MART_*`: the item list lives in map_scripts.marts,
 -- read straight out of the ROM's Marts pointer table.
-function Commands.g2_mart(ctx, index)
-  local pool = ctx.game.data.map_scripts
-  local stock = pool and pool.marts and pool.marts[index]
+function Commands.g2_mart(ctx, index, martType)
+  local stock, opts = require("src.inventory.Gen2MartStock").get(ctx.game.data, index, martType)
   if type(stock) ~= "table" or #stock == 0 then
     Logger.warn("gen2 script: no mart %s", tostring(index))
     return
   end
   local runner = ctx.runner
   local Screens = require("src.ui.Screens")
-  Screens.push(ctx.game, "ShopMenu", stock, function() runner:resume() end)
+  Screens.push(ctx.game, "ShopMenu", stock, function() runner:resume() end, opts)
   runner:yield()
 end
 
@@ -2186,8 +2204,7 @@ function Gen2Commands.rollIncomingCall(data, save, mapDef, tod, minutes, entranc
   -- `Random / ld b, a / and $7f / cp b` is true only when bit 7 is clear
   if math.random(0, 255) >= 128 then return nil end
   -- GetMapPhoneService: the palette byte's high nibble, nonzero = no service
-  local palette = mapDef and tonumber(mapDef.mapPalette) or 0
-  if math.floor(palette / 16) % 16 ~= 0 then return nil end
+  if not require("src.world.Gen2PhoneService").available(mapDef) then return nil end
   local callers = Gen2Commands.availableCallers(data, save, mapDef, tod)
   if #callers == 0 then return nil end
   local id = callers[math.random(#callers)]
@@ -2613,7 +2630,7 @@ function Commands.g2_readvar(ctx, var)
     -- wEnvironment (the map header's environment byte: 1 TOWN, 2 ROUTE,
     -- 3 INDOOR, 4 CAVE, 5 ENVIRONMENT_5, 6 GATE, 7 DUNGEON)
     local def = ctx.overworld and ctx.overworld.map and ctx.overworld.map.def
-    ctx.g2Var = tonumber(def and def.environment) or 0
+    ctx.g2Var = require("src.core.Gen2Environment").id(def) or 0
   elseif var == 18 or var == 19 then
     -- wXCoord / wYCoord: the player's cell within the map, 0-based, the same
     -- frame the warp_event and object_event tables are stored in.
@@ -3952,9 +3969,12 @@ function Commands.g2_changemap(ctx, blocks)
   end
 end
 
--- refreshmap / reloadmap / newloadmap / reanchormap: redraw the loaded map.
-function Commands.g2_refreshmap(ctx)
+-- Refresh-only operations redraw without entering the map; setup/reload
+-- operations also rearm EnterMap's native random-encounter grace interval.
+-- Their existing object/graphics refresh remains the same here.
+function Commands.g2_refreshmap(ctx, setup)
   local ow = ctx.overworld
+  if setup and ow and ow.armWildCooldown then ow:armWildCooldown() end
   if ow and ow.map and ow.map.renderer then ow.map.renderer:rebuild() end
   Commands.reload_map_objects(ctx)
 end
@@ -5198,7 +5218,8 @@ function Commands.g2_update_roam_positions(ctx)
   local r = (love and love.math and love.math.random) or math.random
   local curMap = ctx.game and ctx.game.overworld and ctx.game.overworld.map
     and ctx.game.overworld.map.id
-  local lastMap = ctx.save.g2RoamLastMap
+  curMap = MapIdentity.sourceId(ctx.game and ctx.game.data, curMap)
+  local lastMap = MapIdentity.sourceId(ctx.game and ctx.game.data, ctx.save.g2RoamLastMap)
 
   -- Always refresh landmarks
   Commands.g2_ensure_roam_landmarks(ctx)

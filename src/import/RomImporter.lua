@@ -1278,8 +1278,9 @@ local function markerFor(version)
   -- emerald-trade-scene-v3 / firered-trade-scene-v1: the in-game trade
   -- sequence's art (extractTradeScene, gen3_trade_art) -- without it special
   -- 257 falls back to the bare swap, so both Gen 3 caches re-import once
-  if version == "emerald" then revision = "emerald-trade-scene-v3:" end
-  if version == "firered" then revision = "firered-trade-scene-v1:" end
+  -- Summary presentation v1 adds source controls, type/category sprites and PP colours.
+  if version == "emerald" then revision = "emerald-trade-scene-v3:summary-presentation-v1:" end
+  if GameVersion.isFRLG(version) then revision = version .. "-trade-scene-v1:summary-presentation-v1:" end
   if version == "polishedcrystal" then revision = "polished-stored-unown-forms-v7:" end
   if version == "prism" then revision = "prism-events-art-v2:" end
   -- hgss-phone-call-v1: gen4_hgss_phone_call (Gen4HgssPhoneCall), the
@@ -1304,15 +1305,18 @@ local function markerFor(version)
   if version == "heartgold" or version == "soulsilver" then revision = "hgss-gear-dex-v1:hgss-summary-v2:hgss-effect-bg-v1:hgss-field-fx-v1:hgss-pc-anim-v1:" end
   -- Include version-specific field encounters, sleep, swarm and rate tables.
   -- Only these three caches need rebuilding; other markers remain stable.
-  -- v8: field.gen2TradeAnim, GSC's own trade movie art (Gen2TradeArt).
+  -- v9: retain the map header's phone-service nibble beside its palette.
   if version == "gold" or version == "silver" or version == "crystal" then
-    revision = "gen2-field-encounters-v8:"
+    revision = "gen2-field-encounters-v9:"
   end
   -- field.tradeArt: the cable-trade movie's tiles out of the ROM
   -- (Gen1TradeArt); without it the trade ran on drawn stand-ins.
   if version == "red" or version == "blue" or version == "yellow" then
     revision = "gen1-trade-art-v1:"
   end
+  -- RS now carries its own action tables as well as field geometry. Rebuild these
+  -- caches; retain the earlier 36-byte dex and item-effect corrections.
+  if version == "ruby" or version == "sapphire" then revision = "rs-item-menu-v4:" end
   return CACHE_FORMAT .. revision .. GameVersion.info(version).sha1
 end
 
@@ -1402,6 +1406,7 @@ local CREDITS = {
   },
 }
 RomImporter.CREDITS = CREDITS
+CREDITS.leafgreen = CREDITS.firered
 
 function RomImporter.creditFor(tab)
   return CREDITS[tab] or CREDITS.default
@@ -1586,11 +1591,23 @@ local VERSION_REQUIRED_FILES = {
   -- come back with nothing at all -- no title art, and no marker here
   -- to notice it was missing.
   prism = { "assets/generated/title/prism_title.png" },
+  -- Summary sprites and controls are extracted only for their verified source.
+  emerald = {
+    "assets/generated/ui/summary_buttons.png",
+    "assets/generated/ui/summary_markings.png",
+    "assets/generated/ui/summary_selector.png",
+    "assets/generated/ui/summary_types.png",
+  },
   -- item_pc.c is FireRed-only, and an older FireRed cache otherwise has no
   -- reason to re-run the new extraction stage: constants.lua already exists
   -- and the shared Gen 3 required-file set is satisfied.  Requiring the one
   -- background this stage always writes upgrades only FireRed caches.
   firered = {
+    "assets/generated/ui/summary_keypad.png",
+    "assets/generated/ui/item_pc_frlg.png",
+    "assets/generated/ui/bag_male_item_pc.png",
+  },
+  leafgreen = {
     "assets/generated/ui/item_pc_frlg.png",
     "assets/generated/ui/bag_male_item_pc.png",
   },
@@ -1678,6 +1695,24 @@ local function requiredFiles(version)
   if gen == 3 then return REQUIRED_FILES_GEN3 end
   if gen == 2 then return REQUIRED_FILES_GEN2 end
   return REQUIRED_FILES_GEN1
+end
+
+-- Read-only metadata inspection shares the importer's exact format/hash gate.
+-- This descriptor does not read files, mount caches or touch active prefixes.
+function RomImporter.datasetContract(version)
+  local info = GameVersion.info(version)
+  if not info or info.generation > 3 then return nil end
+  local modules, seen = {}, {}
+  for _, path in ipairs(requiredFiles(version)) do
+    local name = path:match("^data/generated/(.+)%.lua$")
+    if name and not seen[name] then modules[#modules + 1] = name; seen[name] = true end
+  end
+  for _, name in ipairs({ "constants", "pokemon", "moves", "items", "maps",
+      "trainers", "encounters", "type_chart" }) do
+    if not seen[name] then modules[#modules + 1] = name; seen[name] = true end
+  end
+  table.sort(modules)
+  return { marker = markerFor(version), modules = modules }
 end
 
 local function gen2TilesetRegistryLooksValid(version)
@@ -5447,6 +5482,9 @@ function RomImporter:_resetFrameRects()
   self.modImportManyRect = nil
   self.modImportFolderRect = nil
   self.modGenRects = nil
+  self.modOrderRects = nil
+  self.modResetOrderRect = nil
+  self.modOrderViewRect = nil
   -- The generation dropdown is drawn on every tab, but only when the row is
   -- wide enough for it (see draw()), so a stale rect would keep taking clicks
   -- on a narrow window.  The MENU's rows are rebuilt only while it is open.
@@ -7143,6 +7181,28 @@ function RomImporter:mousepressed(x, y, button)
   if inside(self.modImportRect, x, y) then
     self:chooseMod(); return
   end
+  if inside(self.modOrderViewRect, x, y) then
+    self.modSort = "order"
+    local options = self:_settings()
+    options.launcherModSort = "order"
+    require("src.core.SaveData").saveOptions(options)
+    self._settingsCache = nil
+    self.pageScroll, self.modScroll = 0, 0
+    return
+  end
+  if inside(self.modResetOrderRect, x, y) then
+    local ok = require("src.mods.LauncherMods").resetOrder()
+    self.modNotice = { ok = ok, text = ok and Strings("Default load order restored.")
+      or Strings("Could not save load order.") }
+    self:_refreshMods()
+    return
+  end
+  for _, r in ipairs(self.modOrderRects or {}) do
+    if inside(r, x, y) then
+      self:_moveModInOrder(r.id, r.delta)
+      return
+    end
+  end
   -- Enable all / Disable all sit in that same fixed header, so they dispatch on
   -- press like the import button rather than arming a drag (#647).
   if inside(self.modEnableAllRect, x, y) then
@@ -7440,9 +7500,13 @@ function RomImporter:_chipButton(x, y, label, opts)
   local r = opts.r or math.min(8 * s, h / 2)
   local kind = opts.kind or "neutral"
   local rect = { x = x, y = y, width = w, height = h, id = opts.id, pinned = opts.pinned }
-  local hot = self:_hover(rect)
+  local hot = opts.enabled ~= false and self:_hover(rect)
 
-  if kind == "dangerArmed" then
+  if opts.enabled == false then
+    col(PAL.disabled, 0.12)
+    love.graphics.rectangle("fill", x, y, w, h, r, r)
+    col(PAL.disabled, 0.45)
+  elseif kind == "dangerArmed" then
     fillGradRounded(x, y, w, h, r, PAL.chooseTop, PAL.chooseBot,
       hot and 1 or 0.92, hot and 1 or 0.92)
     col(PAL.white)
@@ -7749,6 +7813,9 @@ function RomImporter:_drawTabBar(x, y, w, h, chip)
     { id = "firered", letter = "FR", top = PAL.chipFireRedTop,
       bot = PAL.chipFireRedBot, under = PAL.chipFireRedTop,
       label = Strings("FIRERED"), ink = PAL.chipInkSilver },
+    { id = "leafgreen", letter = "LG", top = PAL.chipEmeraldTop,
+      bot = PAL.chipEmeraldBot, under = PAL.chipEmeraldTop,
+      label = Strings("LEAFGREEN"), ink = PAL.chipInkSilver },
     -- FireRed and Emerald sit after Crystal because they are cartridges, and
     -- the row runs cartridges in generation order and then the hacks -- the same rule
     -- GameVersion.ORDER follows, and the one polished_crystal_registration_test
@@ -7758,6 +7825,12 @@ function RomImporter:_drawTabBar(x, y, w, h, chip)
     -- what that costs: the game was hashed, recognised by setup, counted in
     -- "N of X ready" -- and had no way in.  The tab row showed eight tabs
     -- beside a counter that said nine.
+    { id = "ruby", letter = "R", top = PAL.chipFireRedTop,
+      bot = PAL.chipFireRedBot, under = PAL.chipFireRedTop,
+      label = Strings("RUBY"), ink = PAL.chipInkSilver },
+    { id = "sapphire", letter = "S", top = PAL.chipEmeraldTop,
+      bot = PAL.chipEmeraldBot, under = PAL.chipEmeraldTop,
+      label = Strings("SAPPHIRE"), ink = PAL.chipInkSilver },
     { id = "emerald", letter = "E", top = PAL.chipEmeraldTop,
       bot = PAL.chipEmeraldBot, under = PAL.chipEmeraldTop,
       label = Strings("EMERALD"), ink = PAL.chipInkSilver },
@@ -8076,6 +8149,7 @@ function RomImporter:_drawGamePanel(version, x, y, w, h, paged)
   elseif version == "silver" then accent = PAL.chipSilverTop
   elseif version == "crystal" then accent = PAL.chipCrystalTop
   elseif version == "firered" then accent = PAL.chipFireRedTop
+  elseif version == "leafgreen" then accent = PAL.chipEmeraldTop
   elseif version == "emerald" then accent = PAL.chipEmeraldTop
   elseif version == "platinum" then accent = PAL.chipPlatinumTop
   elseif version == "heartgold" then accent = PAL.chipHeartGoldTop
@@ -8564,6 +8638,9 @@ RomImporter.SETTINGS_ROWS = {
     labels = { gbc = "GBC", sgb = "SGB", dmg = "DMG", classic = "CLASSIC" } },
   { id = "gbcfx", label = "GBC FX",
     values = { false, true }, labels = { [false] = "OFF", [true] = "ON" } },
+  { id = "gbcColorCorrection", label = "GBC COLOR (GEN 2)",
+    values = { "off", "accurate", "harsh" },
+    labels = { off = "OFF", accurate = "MODERN ACCURATE", harsh = "HARSH REALITY" } },
   { id = "videoMode", label = "VIDEO MODE",
     values = { "windowed", "borderless", "fullscreen" },
     labels = { windowed = "WINDOWED", borderless = "BORDERLESS",
@@ -9912,6 +9989,16 @@ function RomImporter:_ensureMods()
   if not self.mods then self:_refreshMods() end
 end
 
+function RomImporter:_moveModInOrder(id, delta)
+  local ok, err = require("src.mods.LauncherMods").moveInOrder(id, delta,
+    self._visibleOrderMods)
+  if ok then
+    self:_refreshMods()
+  elseif err then
+    self.modNotice = { ok = false, text = Strings(err) }
+  end
+end
+
 -- Resolve cached (or freshly fetched) GitHub status for every mod that
 -- declares a github field and has not opted out with `update_check: false`.
 -- force=true bypasses the 6h cache on every repo.
@@ -10289,7 +10376,12 @@ function RomImporter:_drawModsPanel(x, y, w, h, paged)
   local mods = self.mods or {}
   if self.sidebarMode then
     mods = require("src.import.LauncherSidebar").filterMods(mods, self.modSearch, self.modTag, self.modSort)
+  else
+    mods = require("src.import.LauncherSidebar").filterMods(mods, nil, nil, "order")
   end
+  local showOrder = not self.sidebarMode or self.modSort == "order"
+  self._visibleOrderMods = mods
+  self.modOrderRects = {}
 
   -- header: "Mods" + "N of M enabled" (left) and "Import mod .zip" (right)
   love.graphics.setFont(self.gameNameFont)
@@ -10387,6 +10479,24 @@ function RomImporter:_drawModsPanel(x, y, w, h, paged)
   end
 
   local top = y + headerH + 14 * s
+  -- A separate row stays reachable on narrow layouts; card actions already
+  -- contain several maintenance buttons. Only load-order view offers moves.
+  self.modOrderViewRect = self:_chipButton(x, top, Strings("Load order"),
+    { h = btnH, kind = showOrder and "accent" or "neutral" })
+  local resetX, resetY = self.modOrderViewRect.x + self.modOrderViewRect.width + 8 * s, top
+  local resetLabel = Strings("Reset order")
+  if resetX + self.hintFont:getWidth(resetLabel) + 24 * s > x + w then
+    resetX, resetY = x, top + btnH + 8 * s
+  end
+  self.modResetOrderRect = self:_chipButton(resetX, resetY, resetLabel,
+    { h = btnH })
+  top = resetY + btnH + 8 * s
+  love.graphics.setFont(self.hintFont)
+  col(PAL.detail)
+  local orderHint = Strings("Earlier loads first; dependencies always load first. Changes apply on next launch.")
+  local _, orderLines = self.hintFont:getWrap(orderHint, w)
+  love.graphics.printf(orderHint, x, top, w, "left")
+  top = top + math.max(1, #orderLines) * self.hintFont:getHeight() + 10 * s
 
   -- Notice line: the last install/delete result, else the platform hint.
   --
@@ -10626,6 +10736,7 @@ function RomImporter:_drawModsPanel(x, y, w, h, paged)
     end
     local bodyH = math.max(nameH + 4 * s + metaH, clusterH)
     local cardH = padV * 2 + bodyH + 10 * s + btnH
+    if showOrder then cardH = cardH + btnH + 8 * s end
     layout[i] = { h = cardH, leftW = leftW, clusterW = clusterW,
       genW = genW, genH = genH, genGap = genGap, genRowW = genRowW,
       chipText = chipText, chipW = chipW, delW = delW,
@@ -10826,6 +10937,30 @@ function RomImporter:_drawModsPanel(x, y, w, h, paged)
 
       -- Action chip-buttons in one right-aligned row under the body
       local btnY = cy + cardH - padV - btnH
+      if showOrder then
+        local orderY = btnY
+        local moveX = nx
+        for _, action in ipairs({
+          { label = Strings("Earlier"), delta = -1, enabled = i > 1 },
+          { label = Strings("Later"), delta = 1, enabled = i < #mods },
+        }) do
+          local rect = self:_chipButton(moveX, orderY, action.label,
+            { h = btnH, enabled = action.enabled })
+          if action.enabled then
+            local vy, vy2 = math.max(rect.y, top), math.min(rect.y + rect.height, top + listH)
+            if vy2 > vy then
+              self.modOrderRects[#self.modOrderRects + 1] = {
+                x = rect.x, y = vy, width = rect.width, height = vy2 - vy,
+                id = m.id, delta = action.delta }
+            end
+          end
+          moveX = moveX + rect.width + 8 * s
+        end
+        love.graphics.setFont(self.hintFont)
+        col(PAL.detail)
+        love.graphics.print("#" .. tostring(m.orderPosition or i), moveX, orderY + 5 * s)
+        btnY = btnY - btnH - 8 * s
+      end
       local btnX = x + w - padH - L.btnRowW
       local darmed = armedDelete(self._confirmDelete, "mod", m.id, nil)
       local function clipHit(rect, bucket)

@@ -1,0 +1,44 @@
+{
+  "generatedAliasAddresses": 214,
+  "changedRuntimeNames": 195,
+  "physicalFamilies": 204,
+  "romRevision": 0,
+  "originalMaps": 388,
+  "gridObjectWarpTablesUnchanged": true,
+  "nativeGroupNumberUnchanged": true,
+  "actualCompiledTrainerContinuations": 244,
+  "actualCompiledSceneZeroDispatches": 34,
+  "automaticRuntimePublicationEnabled": false,
+  "game": "crystal",
+  "schema": 1,
+  "testedSourceParent": "09dc0c329b630baca1018130dadd305692e8f8f1",
+  "testedSrcTree": "db10301e12185e08a67e7847615c6aec7a76aee7",
+  "independentPrHead": "7b77d944bda0bbf063601bde63e9387c71f722fc",
+  "unitChecks": {
+    "physicalContentTransactions": 260,
+    "cacheAndNeighborLifecycle": 23,
+    "mapSourceAndVm": 105
+  },
+  "composedQuick": {
+    "engineSuites": 248,
+    "sdkSuites": 3,
+    "b30": true
+  },
+  "independentFocusedSuitesPassed": true,
+  "automaticNativeStartupOrWarpPublication": false,
+  "newGpuAcceptance": false,
+  "protectedProfilesUsed": false,
+  "romsOrModAssetsIncluded": false,
+  "sourceFilesSha256": {
+    "src/core/Gen2MapNames.lua": "baff73db1323ab9a51c0eaf52a42dfb74ce47bd9c7228abc193ac46f2d0cfb66",
+    "src/core/MapIdentity.lua": "2a32f071ac60e3222f303dab32090bfff5d2da999c43a108818d045e6a728a7d",
+    "src/core/Data.lua": "eca6aaad3694b11ea1204c9137726a262ec498f23dda580f876a33e591bfcf5a",
+    "src/mods/Registry.lua": "08cf0c2066306a6334c26c7db9573c2a701cb1bcc5c4cbdd37163f2825d8bd19",
+    "src/mods/Schemas.lua": "0703adf68cd3dd12757bbba99663ac9ddc71d8bfc969e80d841a9d9b5630dd37",
+    "src/world/MapLoader.lua": "885379651cc47b881b0be2d845e61a8dabd9c60db3c408a61f8b1d662b3a9dc0",
+    "src/world/OverworldController.lua": "4eba3b12a25b9fd60162f06bf2c046b29bd8a10623e586d36464d0bc71e47f23",
+    "tests/engine/gen2_map_names.lua": "db4c9a55b45157b3da8b518c6780593853eb081db99773bed072cdf44d8e076c",
+    "tests/engine/gen2_map_alias_lifecycle.lua": "bad1e647d35ad42e5d249a0aefab74be0ceec4d7e36c2138c262a61ec7bd6e2c"
+  },
+  "scope": "Source records are published explicitly in the test process. Actual engine alias generation and compiled Crystal script pools are exercised; queues are compared without executing story scripts. Native startup and normal warps are not globally switched to canonical IDs yet."
+}

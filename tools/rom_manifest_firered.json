@@ -841,6 +841,44 @@
    0
   ]
  ],
+ "terrainPalettePrograms": {
+  "version": 1,
+  "game": "firered",
+  "romSha1": "41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc",
+  "source": "https://github.com/pret/pokefirered/blob/d58bf398b2b83a326d23d14d531de7f45a1058bb/asm/tileset_anims.s",
+  "programs": {
+   "459040": {
+    "id": "general",
+    "kind": "static",
+    "secondary": false
+   },
+   "459180": {
+    "id": "celadon",
+    "kind": "static",
+    "secondary": true
+   },
+   "459300": {
+    "id": "silph",
+    "kind": "static",
+    "secondary": true
+   },
+   "459420": {
+    "id": "ember",
+    "kind": "static",
+    "secondary": true
+   },
+   "459524": {
+    "id": "vermilion-gym",
+    "kind": "static",
+    "secondary": true
+   },
+   "459624": {
+    "id": "celadon-gym",
+    "kind": "static",
+    "secondary": true
+   }
+  }
+ },
  "symbolSource": "structural discovery against the cartridge itself (tools/gen3_discover.py); a retail GBA ROM ships no symbol table, so every address here is found by shape and verified against a fact the table must satisfy",
  "symbols": {
   "CalculateChecksum": 893352,

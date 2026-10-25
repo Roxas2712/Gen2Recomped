@@ -1,0 +1,130 @@
+{
+  "base": "13af468b97dc37015d14ad5c71d7f067c3ee810d",
+  "mode": "ROM-free LuaJIT headless contracts; no native gameplay or visual acceptance",
+  "tests": [
+    {
+      "path": "tests/engine/gen3_surface_data.lua",
+      "exit": 0,
+      "checks": [
+        "312",
+        "312"
+      ]
+    },
+    {
+      "path": "tests/engine/native_foundation.lua",
+      "exit": 0,
+      "checks": [
+        "1444",
+        "1444"
+      ]
+    },
+    {
+      "path": "tests/engine/gen3_render_data.lua",
+      "exit": 0,
+      "checks": [
+        "128",
+        "128"
+      ]
+    },
+    {
+      "path": "tests/engine/gen3_render_data_sources.lua",
+      "exit": 0,
+      "checks": [
+        "2175",
+        "2175"
+      ]
+    },
+    {
+      "path": "tests/engine/portable_world_context.lua",
+      "exit": 0,
+      "checks": [
+        "53",
+        "53"
+      ]
+    },
+    {
+      "path": "tests/engine/portable_oasc_adapter.lua",
+      "exit": 0,
+      "checks": [
+        "40",
+        "40"
+      ]
+    },
+    {
+      "path": "tests/engine/actor_render_data.lua",
+      "exit": 0,
+      "checks": [
+        "88",
+        "88"
+      ]
+    },
+    {
+      "path": "tests/engine/actor_billboard_resources.lua",
+      "exit": 0,
+      "checks": [
+        "19",
+        "19"
+      ]
+    },
+    {
+      "path": "tests/engine/field_effect_render_data.lua",
+      "exit": 0,
+      "checks": [
+        "82",
+        "82"
+      ]
+    },
+    {
+      "path": "tests/engine/field_effect_resources.lua",
+      "exit": 0,
+      "checks": [
+        "21",
+        "21"
+      ]
+    },
+    {
+      "path": "tests/engine/surf_mount_clock.lua",
+      "exit": 0,
+      "checks": [
+        "393",
+        "393"
+      ]
+    },
+    {
+      "path": "tests/engine/surf_mount_render_data.lua",
+      "exit": 0,
+      "checks": [
+        "69",
+        "69"
+      ]
+    },
+    {
+      "path": "tests/engine/surf_mount_resources.lua",
+      "exit": 0,
+      "checks": [
+        "24",
+        "24"
+      ]
+    }
+  ],
+  "targeted_checks": 4848,
+  "targeted_suites": 13,
+  "inherited_failed_suites": [
+    "tests/engine/gate_fingerprint.lua",
+    "tests/engine/gate_meta_coverage.lua",
+    "tests/engine/quit_thread_shutdown.lua",
+    "tests/engine/rebind_capture_bug510.lua",
+    "tests/engine/rebind_swap_clear_bug589.lua",
+    "tests/engine/soft_reset_bug563.lua",
+    "tests/engine/tool_mod_hooks.lua",
+    "tests/engine/update_check_tests.lua",
+    "tests/engine/update_tests.lua",
+    "tests/engine/wide_battle_layout.lua"
+  ],
+  "new_failed_suites": [],
+  "broad_result": "T1/T2 fails same 10 suites as main; T4 mod-SDK and Dramatic Shape B30 pass; T3/link content skipped because no imported ROM",
+  "luajit_commit": "a4c064539ea931274d407e1249b4bb575424a0f4",
+  "date": "2026-10-23",
+  "status": "focused-contracts-pass; broad-suite-blocked-by-inherited-failures; native-gameplay-not-accepted",
+  "inherited_failure_details_unchanged": true
+}

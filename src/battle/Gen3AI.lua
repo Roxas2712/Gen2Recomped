@@ -131,15 +131,18 @@ OPS["if_not_in_hwords"] = OPS["if_not_in_bytes"]
 
 -- ------- the roll
 --
--- Random() & 0xFF < n, so `if_random_less_than 0x80` is a coin flip and
--- 0x50 is a little under a third.
-OPS["if_random_less_than"] = function(vm, args)
-  if vm.rng(0, 255) < args[1] then return args[#args] end
+-- Random() returns a u16. Compare its low byte while consuming the same
+-- range as the native interpreter, including values above 255.
+local function randomBranch(test)
+  return function(vm, args)
+    if test(vm.rng(0, 65535) % 256, args[1]) then return args[#args] end
+  end
 end
 
-OPS["if_random_greater_than"] = function(vm, args)
-  if vm.rng(0, 255) > args[1] then return args[#args] end
-end
+OPS["if_random_less_than"] = randomBranch(function(a, b) return a < b end)
+OPS["if_random_greater_than"] = randomBranch(function(a, b) return a > b end)
+OPS["if_random_equal"] = randomBranch(function(a, b) return a == b end)
+OPS["if_random_not_equal"] = randomBranch(function(a, b) return a ~= b end)
 
 -- ------- reading the battle
 
@@ -433,7 +436,7 @@ OPS["count_usable_party_mons"] = function(vm, args)
   local party
   if b.isPlayer then
     party = battle.playerParty or (battle.game and battle.game.save
-                                   and battle.game.save.party)
+                                   and (battle.playerParty or battle.game.save.party))
   else
     party = battle.enemyParty
   end
@@ -555,6 +558,7 @@ local function status2(b)
   if b.confusedTurns then v = v + 0x7 end
   if b.infatuated then v = v + 0xF0000 end
   if b.focusEnergy then v = v + 0x100000 end
+  if b.rage then v = v + 0x800000 end
   if b.substituteHP then v = v + 0x1000000 end
   if b.trappingTurns or b.boundTurns then v = v + 0x4000000 end
   if b.nightmare then v = v + 0x8000000 end
@@ -652,14 +656,14 @@ end
 OPS["if_any_move_disabled_or_encored"] = function(vm, args)
   local b = who(vm, args[1])
   if not b then return end
-  local hit = (args[2] == 0) and b.disabledSlot ~= nil
+  local hit = (args[2] == 0) and require("src.battle.Gen3Disable").has(b)
               or (args[2] == 1) and b.encoreTurns ~= nil
   if hit then return args[#args] end
 end
 
 OPS["if_curr_move_disabled_or_encored"] = function(vm, args)
   local b = vm.user
-  local hit = (args[1] == 0) and b and b.disabledSlot == vm.moveIndex
+  local hit = (args[1] == 0) and b and require("src.battle.Gen3Disable").blocked(b, (b.curMoves or {})[vm.moveIndex], vm.moveIndex)
               or (args[1] == 1) and b and b.encoreTurns ~= nil
   if hit then return args[#args] end
 end
@@ -675,9 +679,24 @@ OPS["if_level_cond"] = function(vm, args)
   if hit then return args[#args] end
 end
 
+require("src.battle.Gen3AIQueries").install(Gen3AI)
+
 -- ---------------------------------------------------------------------------
 -- Running one script over one move
 -- ---------------------------------------------------------------------------
+
+require("src.battle.Gen3AIMoveKnowledge").install(Gen3AI)
+
+OPS.if_target_taunted = function(vm, args)
+  if (tonumber(vm.target and vm.target.tauntTurns) or 0) > 0 then return args[#args] end
+end
+OPS.if_target_not_taunted = function(vm, args)
+  if (tonumber(vm.target and vm.target.tauntTurns) or 0) <= 0 then return args[#args] end
+end
+require("src.battle.Gen3AIItemKnowledge").install(Gen3AI)
+require("src.battle.Gen3AIPartyStatus").install(Gen3AI)
+require("src.battle.Gen3AIAttackingMoves").install(Gen3AI)
+require("src.battle.Gen3AIOrder").install(Gen3AI)
 
 -- Every opcode a script can reach, followed through its branches.  Memoised
 -- on the program table: the answer depends only on the cartridge.
@@ -835,6 +854,7 @@ function Gen3AI.chooseAction(battle, user, moves, foes)
   if not (moves and moves[1] and foes and foes[1]) then return nil end
   local best, tied, pairs_ = nil, {}, 0
   for _, foe in ipairs(foes) do
+    require("src.battle.Gen3AIMoveKnowledge").observe(battle, foe)
     local score = Gen3AI.scoreMoves(battle, user, foe, moves)
     if score then
       for i = 1, #moves do
@@ -861,6 +881,7 @@ end
 -- answer the caller already has and going through a second roll here would
 -- only spend a different random number on it.
 function Gen3AI.chooseMove(battle, user, target, moves)
+  require("src.battle.Gen3AIMoveKnowledge").observe(battle, target)
   local score = Gen3AI.scoreMoves(battle, user, target, moves)
   if not score then return nil end
   local best, spread = score[1], false

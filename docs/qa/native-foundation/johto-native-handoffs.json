@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "scope": "Native Gen2 special-movement handoffs, without enabling the incomplete FieldMoves facade",
+  "implementationCommit": "c88ce436e832410fa985b4fd0ce11b536be3cd68",
+  "prerequisite": "https://github.com/UNDERdecoded/Gen2Recomped/pull/235",
+  "focusedChecks": 549,
+  "independentFocusedChecks": 549,
+  "terrainPrerequisiteChecks": 264000,
+  "negativeControl": {
+    "predecessor": "740807d75a0eac49ef413731fdcbbf2f3c5ccddc",
+    "seamFenceFailures": 96,
+    "missingMethods": 3
+  },
+  "intermediateBoulderFenceFailures": 16,
+  "quick": {
+    "engineSuites": 271,
+    "sdkSuites": 3,
+    "B30Passed": true,
+    "logSha256": "213022d830f1e4f675a793dd8b1628ae06610540368dc019f58acf5465339f6c"
+  },
+  "verified": [
+    "actual four-direction connection selection and native Player interpolation",
+    "native two-cell ledge queue drains",
+    "actual NPC boulder interpolation and public API-2 completion observer",
+    "directional carpet native fade and destination",
+    "source and destination directional fences on native connection and boulder paths",
+    "native script/overlay/battle/transition ownership and callback reentry",
+    "expired numeric whirlpool hold and admission recovery after handler error"
+  ],
+  "independentFullSuite": "Pre-existing upstream baseline failures remain outside this focused PR; no full independent green claim. Fork composition passes its complete quick suite.",
+  "notAccepted": [
+    "complete FieldMoves/continuous movement activation",
+    "full generated model renderer",
+    "new actual VASC GPU acceptance",
+    "all special terrain and landing chains"
+  ],
+  "gen1OrPlayerProfileTouched": false,
+  "releaseUpdated": false
+}

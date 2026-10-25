@@ -24,6 +24,7 @@ if love.filesystem.getInfo("love12_preview.lua", "file") then
 end
 
 local Game, EditorApp, Importer, TouchEditor
+local WindowFrame = require("src.render.WindowFrame")
 
 local autopilot -- optional scripted-input dev tool (tests/autopilot.lua)
 local driverCo  -- optional frame-driver (POKEPORT_DRIVER=file.lua): a
@@ -241,6 +242,7 @@ local lastLogFlush = 0
 -- unrelated push overflows it and ends the process with a traceback pointing at
 -- innocent code.  See src/render/GraphicsStack.lua.
 local GraphicsStack = require("src.render.GraphicsStack")
+local PlatformHooks = require("src.core.PlatformHooks")
 -- Declared HERE rather than further down beside its first mark: bootGame below
 -- calls BootTrace.booted(), and a `local` declared after a function's body is
 -- not in scope inside it -- the name resolved to the nil GLOBAL instead and
@@ -486,6 +488,7 @@ end
 function love.load(args)
   BootTrace.mark("love.load enter")
   GraphicsStack.install()
+  require("src.render.LegacyShaderCompat").install()
   pcall(function() require('src.core.SwitchAudioCheck').run() end)
 
   -- Teach SDL about the pads its built-in database misses (Switch Pro over
@@ -688,7 +691,9 @@ function love.update(dt)
   -- unguarded dereference here is not a theoretical race -- it is
   -- "attempt to index upvalue 'Game' (a nil value)" a second after launch.
   if not Game then return end
-  Game:update(dt)
+  -- Only the interactive game frame is a core.update seam, as in Gen1.
+  -- Scripted act+step loops above retain their deterministic direct updates.
+  PlatformHooks.update(Game, dt)
 end
 
 -- THE LAUNCHER'S OWN BOTTOM SCREEN.
@@ -720,19 +725,6 @@ function love.draw()
 
   if not Game then return drawSecondPanel() end
   Game:draw()
-  -- frame capture requested by a driver
-  if Game.capturePath then
-    local path = Game.capturePath
-    Game.capturePath = nil
-    love.graphics.captureScreenshot(function(imagedata)
-      local fd = imagedata:encode("png")
-      local f = io.open(path, "wb")
-      if f then
-        f:write(fd:getString())
-        f:close()
-      end
-    end)
-  end
 end
 
 function love.keypressed(key, scancode, isrepeat)
@@ -892,7 +884,7 @@ function love.touchpressed(id, x, y, dx, dy, pressure)
   end
   if Importer then return Importer:touchpressed(id,x,y,dx,dy,pressure) end
   if not Game then return end
-  Game:touchpressed(id, x, y)
+  Game:touchpressed(id, x, y, dx, dy, pressure)
 end
 
 function love.touchmoved(id, x, y, dx, dy, pressure)
@@ -906,7 +898,7 @@ function love.touchmoved(id, x, y, dx, dy, pressure)
   end
   if Importer then return Importer:touchmoved(id,x,y,dx,dy,pressure) end
   if not Game then return end
-  Game:touchmoved(id, x, y)
+  Game:touchmoved(id, x, y, dx, dy, pressure)
 end
 
 function love.touchreleased(id, x, y, dx, dy, pressure)
@@ -920,7 +912,7 @@ function love.touchreleased(id, x, y, dx, dy, pressure)
   end
   if Importer then return Importer:touchreleased(id,x,y,dx,dy,pressure) end
   if not Game then return end
-  Game:touchreleased(id, x, y)
+  Game:touchreleased(id, x, y, dx, dy, pressure)
 end
 
 function love.wheelmoved(x, y)
@@ -1065,12 +1057,13 @@ end
 -- crash.txt AND no screen is then genuinely below Lua.
 local defaultErrorHandler = love.errorhandler or love.errhand
 
--- Last-resort error screen: no fonts we did not just create, no modules beyond
--- graphics/event, no reliance on anything the failed frame left behind.  Draws
+-- Last-resort error screen: no game-state dependencies, freshly created fonts,
+-- and no reliance on anything the failed frame left behind. Draws
 -- the traceback and waits, so the message can be read (and photographed) on a
 -- device with no console and no file manager to hand.
 local function minimalErrorScreen(text)
   if not (love.graphics and love.event) then return nil end
+  pcall(WindowFrame.shutdown)
   local ok = pcall(function()
     love.graphics.reset()
     love.graphics.setNewFont(14)
@@ -1081,16 +1074,20 @@ local function minimalErrorScreen(text)
     if love.event then
       love.event.pump()
       for name, a in love.event.poll() do
-        if name == "quit" then return 1 end
-        if name == "keypressed" and (a == "escape" or a == "q") then return 1 end
+        if name == "quit" or (name == "keypressed" and (a == "escape" or a == "q")) then
+          if love.quit then pcall(love.quit) end
+          return 1
+        end
       end
     end
     if love.graphics and love.graphics.isActive() then
-      love.graphics.origin()
-      love.graphics.clear(0.35, 0.06, 0.06)
-      love.graphics.setColor(1, 1, 1)
-      local w = love.graphics.getWidth()
-      love.graphics.printf(text, 20, 20, math.max(120, w - 40), "left")
+      WindowFrame.draw(function()
+        love.graphics.origin()
+        love.graphics.clear(0.35, 0.06, 0.06)
+        love.graphics.setColor(1, 1, 1)
+        local w = love.graphics.getWidth()
+        love.graphics.printf(text, 20, 20, math.max(120, w - 40), "left")
+      end)
       love.graphics.present()
     end
     if love.timer then love.timer.sleep(0.02) end
@@ -1125,7 +1122,14 @@ function love.errorhandler(msg)
   -- else in the tree called this.
   pcall(function() require("src.core.Logger").flush() end)
 
-  -- The stock handler first, so desktop keeps the screen everyone knows.  It is
+  -- The stock error loop draws straight to the system framebuffer. Keep
+  -- errors visible through the same macOS presentation path as game frames.
+  if love.system and love.system.getOS and love.system.getOS()=="OS X"
+      and love.graphics and love.graphics.isActive() then
+    return minimalErrorScreen(trace)
+  end
+
+  -- The stock handler on other platforms keeps the familiar screen. It is
   -- pcall'd because it is exactly the thing that can fail here, and a raise
   -- inside it would otherwise be the second error that ends the process.
   if defaultErrorHandler then
@@ -1160,8 +1164,11 @@ end
 
 function love.quit()
   if editorMode and EditorApp.quit then
-    return EditorApp.quit() -- return true to abort quit
+    local abort=EditorApp.quit()
+    if not abort then WindowFrame.shutdown() end
+    return abort -- return true to abort quit
   end
+  WindowFrame.shutdown()
   walkerTick("quit")
   -- let go of the "save open in a running game" markers (SaveData.closeOpen),
   -- so the launcher's Pokewalker in a later run is not told to wait
@@ -1187,9 +1194,16 @@ function love.quit()
   if package.loaded["src.update.Check"] then
     pcall(package.loaded["src.update.Check"].shutdown)
   end
+  if package.loaded["src.render.ShaderBrowser"] then
+    pcall(package.loaded["src.render.ShaderBrowser"].shutdown)
+  end
   if package.loaded["src.translation.Service"] then
     pcall(package.loaded["src.translation.Service"].shutdown)
   end
+  if package.loaded["src.net.Fetch"] then
+    pcall(package.loaded["src.net.Fetch"].shutdown)
+  end
+  WindowFrame.shutdown()
 end
 
 function love.filedropped(file)
@@ -1262,9 +1276,22 @@ function love.run()
     end
 
     if love.graphics and love.graphics.isActive() then
-      love.graphics.origin()
-      love.graphics.clear(love.graphics.getBackgroundColor())
-      if love.draw then love.draw() end
+      local capture
+      if Game and Game.capturePath and not (Importer or bootReport or editorMode or TouchEditor) then
+        local path=Game.capturePath
+        Game.capturePath=nil
+        capture=function(data)
+          local encoded=data:encode("png")
+          local file=assert(io.open(path,"wb"))
+          file:write(encoded:getString());file:close()
+        end
+      end
+      GraphicsStack.drain()
+      WindowFrame.draw(function()
+        love.graphics.origin()
+        love.graphics.clear(love.graphics.getBackgroundColor())
+        if love.draw then love.draw() end
+      end,capture)
       local closeP = FrameProfile.section("present (GPU wait / vsync)")
       love.graphics.present()
       closeP()

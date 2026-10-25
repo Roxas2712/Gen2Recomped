@@ -500,30 +500,7 @@ local function copy(value)
   return out
 end
 
-local function normalizeMapId(mapId)
-  if type(mapId) ~= "string" then return mapId end
-  local id = mapId:gsub("([0-9]+)_([FB])$", "%1%2")
-  local out, i, len = {}, 1, #id
-  while i <= len do
-    local ch = id:sub(i, i)
-    if ch:match("%d") then
-      local j = i + 1
-      while j <= len and id:sub(j, j):match("%d") do
-        j = j + 1
-      end
-      local prev = i > 1 and id:sub(i - 1, i - 1) or ""
-      if prev:match("%a") and prev ~= "B" and out[#out] ~= "_" then
-        out[#out + 1] = "_"
-      end
-      out[#out + 1] = id:sub(i, j - 1)
-      i = j
-    else
-      out[#out + 1] = ch
-      i = i + 1
-    end
-  end
-  return table.concat(out)
-end
+local normalizeMapId = require("src.core.MapIdentity").normalize
 
 -- AN ALIAS REMEMBERS WHAT IT WAS MADE FROM.
 --
@@ -567,10 +544,14 @@ local function seedMapAliases(maps, aliases)
   -- aliases table: rawId → friendlyId; work both directions so either source can seed the other
   for rawId, friendlyId in pairs(aliases or {}) do
     if not maps[rawId] and maps[friendlyId] then
-      local mapped = copy(maps[friendlyId]); mapped.id = rawId; maps[rawId] = mapped
+      local mapped = copy(maps[friendlyId]); mapped.id = rawId
+      if require("src.core.GameVersion").isGen2() then mapped.sourceId = maps[friendlyId].sourceId or friendlyId end
+      maps[rawId] = mapped
     end
     if not maps[friendlyId] and maps[rawId] then
-      local mapped = copy(maps[rawId]); mapped.id = friendlyId; maps[friendlyId] = mapped
+      local mapped = copy(maps[rawId]); mapped.id = friendlyId
+      if require("src.core.GameVersion").isGen2() then mapped.sourceId = maps[rawId].sourceId or rawId end
+      maps[friendlyId] = mapped
     end
   end
 end
@@ -672,6 +653,37 @@ local function gen2PaletteRows(tileset)
   local rows = {}
   for _, tod in ipairs(GEN2_TOD_ROWS) do rows[tod] = single end
   return rows
+end
+
+-- Native map records retain their ROM environment byte and identifiers.
+-- Publish the missing host/render metadata without replacing authored values.
+-- The Gen2 header enum is TOWN=1, ROUTE=2, followed by enclosed environments
+-- 3..7 (the importer uses the same 1/2 test for outdoor behavior).
+function Data:publishGen2MapMetadata()
+  if not require("src.core.GameVersion").isGen2() or type(self.maps) ~= "table" then
+    return false
+  end
+  for _, def in pairs(self.maps) do
+    if type(def) == "table" then
+      if def.generation == nil then def.generation = 2 end
+      if def.outdoor == nil then
+        local env = def.environment
+        if type(env) == "number" and env % 1 == 0 and env >= 1 and env <= 7 then
+          def.outdoor = env == 1 or env == 2
+        elseif env == "TOWN" or env == "ROUTE" then
+          def.outdoor = true
+        elseif env == "INDOOR" or env == "CAVE" or env == "GATE" or env == "DUNGEON" then
+          def.outdoor = false
+        end
+      end
+    end
+  end
+  return true
+end
+
+function Data:publishGen2TilesetNames()
+  if not require("src.core.GameVersion").isGen2() then return false end
+  return require("src.core.Gen2TilesetNames").publish(self)
 end
 
 function Data:publishGen2Palettes()
@@ -1104,7 +1116,7 @@ function Data:seedDefaults()
       -- still gets SOMETHING rather than a screen with no images to draw.
       local core = self.constants and self.constants.gen3FRLGIntro
       local images = core and core.images
-      if V.get() == "firered" and type(images) == "table"
+      if V.isFRLG() and type(images) == "table"
          and images.gfBg and images.scene1Grass and images.scene3Bg then
         boot.screens.splash = "Gen3IntroFRLG"
       end
@@ -1302,7 +1314,9 @@ function Data:seedDefaults()
       require("src.world.Gen3Weather").setCycles(cycles)
     end
 
-    local win = (self.constants or {}).gen3MessageWindow
+    -- RS field text and battle chrome use different native contracts.
+    local win = (self.constants or {}).gen3FieldMessageWindow
+                or (self.constants or {}).gen3MessageWindow
     if type(win) == "table" and win.width and win.height then
       self.field.theme = self.field.theme or {}
       if self.field.theme.textBox == nil then
@@ -1876,7 +1890,9 @@ function Data:seedDefaults()
         or self.tilesets.TilesetPlayersHouse
     end
     seedMissingGen2Tilesets(self)
+    self:publishGen2TilesetNames()
     self:publishGen2Palettes()
+    self:publishGen2MapMetadata()
     ensureGen2WarpFallbacks(self)
     ensureGen2HomeTextFallbacks(self)
   end
@@ -1907,15 +1923,17 @@ function Data:seedDefaults()
   -- ids (REDS_HOUSE2_F, ROCK_TUNNEL_B1_F, ROUTE10_POKECENTER1_F, ...).  Add
   -- normalized aliases so every runtime map lookup can resolve the same room.
   aliasAllMaps(self.maps)
+  require("src.core.Gen2Environment").publish(self)
   if require("src.core.GameVersion").isGen2() then
     seedMapAliases(self.maps, GEN2_SCAFFOLD_MAP_ALIASES)
+    require("src.core.Gen2MapNames").publish(self, GEN2_SCAFFOLD_MAP_ALIASES)
     -- Alias text_pointers by each map's camelCase label so resolveText finds
     -- Gen2 entries (text_pointers uses uppercase ID, map.def.label is camelCase)
     local tp = self.text_pointers
     local th = self.trainer_headers
     for _, mapDef in pairs(self.maps) do
       if type(mapDef) == "table" then
-        local id = type(mapDef.id) == "string" and mapDef.id
+        local id = type(mapDef.id) == "string" and require("src.core.MapIdentity").sourceId(self, mapDef.id)
         local lbl = type(mapDef.label) == "string" and mapDef.label
         if id and lbl and id ~= lbl then
           if tp and tp[id] and not tp[lbl] then tp[lbl] = tp[id] end
@@ -1924,7 +1942,7 @@ function Data:seedDefaults()
       end
     end
   end
-  if require("src.core.GameVersion").get() == "firered" then
+  if require("src.core.GameVersion").isFRLG() then
     seedMapAliases(self.maps, FIRERED_STORY_MAP_ALIASES)
     preferMapAliases(self.maps, FIRERED_STORY_MAP_ALIASES)
     for mapId, textConst in pairs(FIRERED_STORY_OBJECT_TEXT) do
@@ -1941,6 +1959,7 @@ function Data:seedDefaults()
     seedTrainerPartyAlias(self.trainers, "OPP_RIVAL3",
       { "TERRY_438", "TERRY_439", "TERRY_440" })
   end
+  if require("src.core.GameVersion").isGen3() then require("src.core.Gen3MapNames").publish(self) end
 end
 
 -- The Karate Master (FightingDojo.asm) is a text_asm object: his object has
@@ -2598,7 +2617,7 @@ function Data:textEntry(mapLabel, textConst)
   -- should always be here, but a bare index is a crash rather than a miss
   local pointers = self.text_pointers
   if not pointers then return nil end
-  local perMap = pointers[mapLabel]
+  local perMap = require("src.core.MapIdentity").lookup(self, pointers, mapLabel)
   if not perMap then return nil end
   local entry = perMap[textConst]
   if entry then return entry end
@@ -2628,7 +2647,7 @@ end
 function Data:trainerHeader(mapLabel, objIndex)
   local headers = self.trainer_headers
   if not headers then return nil end
-  local perMap = headers[mapLabel]
+  local perMap = require("src.core.MapIdentity").lookup(self, headers, mapLabel)
   return perMap and perMap[objIndex] or nil
 end
 

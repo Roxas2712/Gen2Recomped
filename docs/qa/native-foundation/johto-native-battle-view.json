@@ -1,0 +1,111 @@
+{
+  "schema": 1,
+  "sourceCommit": "816126e4635d6275351b6eb194b5e424266dd3be",
+  "srcTree": "ceaeecf26b4129f125627516bcca866f61a90706",
+  "referenceCommit": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+  "upstreamPR": 223,
+  "independentHead": "ebd1cad23a4dad0140759ef6a5c8aea0d21bad00",
+  "cpu": {
+    "liveBattleChecks": 304,
+    "independentChecks": 304,
+    "mainNegativeControlFails": true,
+    "engineSuites": 262,
+    "sdkSuites": 3,
+    "B30Passed": true,
+    "quickLogSha256": "c1da0394368c1d7f6a239ad22225e46b619359d905ba04bcadfdbdcec5625395",
+    "api3SnapshotChecks": 2946
+  },
+  "package": {
+    "sourceCommit": "816126e4635d6275351b6eb194b5e424266dd3be",
+    "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+    "payloadSha256": "8655ee02f9d8569329080874aae312dc06be7b095d2bd061f6859495c297f5e3",
+    "identicalPlatformPayloads": true,
+    "sourceFilesCompared": 1030,
+    "allPackagedSrcFilesMatchCommittedSourceExceptDeclaredEngineStamp": true,
+    "previewEntryPointsMatchSource": true,
+    "windowsPE64AndEmbeddedPayload": true,
+    "windowsAMD64DLLs": 11,
+    "macArchiveExtractedPayloadAndStrictSignature": true,
+    "windowsHardwareExecuted": false,
+    "published": false
+  },
+  "actualCrystal": {
+    "modFiles": 27329,
+    "modUnmodified": true,
+    "backend": "opengl",
+    "vsync": 0,
+    "nativeNoModFlowPassed": true,
+    "modBattleModels": [
+      {
+        "playerShown": 196,
+        "playerLevel": 100,
+        "playerHp": 196,
+        "enemyHp": 56,
+        "camera": "first",
+        "enemyShown": 56,
+        "distinctModel": true,
+        "enemyLevel": 23
+      },
+      {
+        "playerShown": 196,
+        "playerLevel": 100,
+        "playerHp": 196,
+        "enemyHp": 56,
+        "camera": "third",
+        "enemyShown": 56,
+        "distinctModel": true,
+        "enemyLevel": 23
+      }
+    ],
+    "modBattleReturns": [
+      {
+        "grace": 5,
+        "level": 23,
+        "camera": "first",
+        "physicalRunInput": true,
+        "species": "SPECIES_220",
+        "result": "run"
+      },
+      {
+        "grace": 5,
+        "level": 23,
+        "camera": "third",
+        "physicalRunInput": true,
+        "species": "SPECIES_220",
+        "result": "run"
+      }
+    ],
+    "classicRandomEncountersExplicitlySelected": true,
+    "originalOption": true,
+    "optionRestored": true,
+    "testModRemoved": true,
+    "hudLevelHpVisuallyAccepted": true,
+    "pokemonActorsVisuallyAccepted": false,
+    "imageSha256": {
+      "initial-map": "c03ff02b949cef9a4f8bf2398fab3bf7382eff519620d4ef3f611dd46354b7a0",
+      "second-map": "bdb788d5cb6ef679b2751277675c167d72a4b0aaa68d0e677e13c99950c0e39a",
+      "resized": "8e0bbec46c3d92c2091779f780887bc3d53db22878e2d26404ed23f6c78a9cf0",
+      "map-return": "4673a002f27f2c00d34978b9b72951697d014787f91761a38c2dc19afe039ea0"
+    }
+  },
+  "failedQASetup": {
+    "attempt": "mod-battle-v1",
+    "reason": "Test attempted to change field camera with V during a battle; engine reached the menu, but the key correctly did not change the field camera. Repeated as two encounters with camera selected in the field.",
+    "testModRemoved": true
+  },
+  "remaining": [
+    "Native Gen2 Chrome is absent at this source, so the supplied mod declines installing its native picture-capture hook.",
+    "Pokemon actors remain absent in the staged battle, despite correct live HUD data.",
+    "Generated mod VoxelScene still exceeds the LuaJIT 60-upvalue limit.",
+    "Default visible-only wild contacts, complete battle-controller parity and continuous movement remain open.",
+    "Current default/Metal presentation and Windows hardware acceptance remain open."
+  ],
+  "defaultPresentationAccepted": false,
+  "metalWindowAccepted": false,
+  "windowsHardwareExecuted": false,
+  "fullParity": false,
+  "published": false,
+  "protectedPlayerProfilesUsed": false,
+  "origamiPortPaused": true,
+  "romsOrModsIncluded": false
+}

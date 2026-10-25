@@ -12,6 +12,9 @@ local PaletteFX = require("src.render.PaletteFX")
 local Pipelines = require("src.render.Pipelines")
 local PixelCanvas = require("src.render.PixelCanvas")
 local Runtime = require("src.mods.Runtime")
+local GbcColorCorrection = require("src.render.GbcColorCorrection")
+local Output = require("src.render.Output")
+local GameViewport = require("src.render.GameViewport")
 
 -- RESOLVED ONCE, NOT EVERY FRAME.  These three were `require`d from inside
 -- beginFrame and endFrame -- three string hashes into package.loaded on every
@@ -31,7 +34,22 @@ local function gbcFX()
   return GBCFXMod
 end
 
+local ShaderPresets = require("src.render.ShaderPresets")
+
 local Renderer = {}
+
+-- Legacy mod shaders are normalized at compilation, before HUDs or weather
+-- are painted into their canvases (LegacyShaderCompat). Ordinary world images
+-- are therefore upright too. A producer of an explicitly unconverted image
+-- can still request the old presentation convention.
+function Renderer.mirrorsWorldOverride(pipeline)
+  if not love.getVersion or love.getVersion() < 12 then return false end
+  pipeline = pipeline or {}
+  if pipeline.worldOrientation == "native" or pipeline.worldFormat == "renderData.v1" then
+    return false
+  end
+  return pipeline.worldOrientation == "legacy"
+end
 
 -- The Game Boy surface.  WIDTH/HEIGHT are the classic dimensions every
 -- screen is laid out in; uiWidth/uiHeight are the surface actually
@@ -85,10 +103,10 @@ Renderer.UPRIGHT_MARGIN = 160
 -- Keep separate dpiX/dpiY so each GB pixel covers fitScale() physical pixels
 -- on BOTH axes (square).
 local function displayMetrics()
-  local ww, wh = love.graphics.getDimensions()
+  local ww, wh = GameViewport.dimensions()
   local pw, ph = ww, wh
   if love.graphics.getPixelDimensions then
-    pw, ph = love.graphics.getPixelDimensions()
+    pw, ph = GameViewport.pixelDimensions()
   end
   local dpiX, dpiY = 1, 1
   if ww > 0 and pw > 0 then dpiX = pw / ww end
@@ -109,6 +127,7 @@ local function displayMetrics()
 end
 
 function Renderer:init()
+  GameViewport.reset()
   -- 160x144 real pixels, never DPI-scaled: see src/render/PixelCanvas.lua
   -- (#208).  Every canvas below is sized in framebuffer pixels for the same
   -- reason -- worldViewSize() already works in drawable pixels.
@@ -127,18 +146,20 @@ function Renderer:init()
   -- frame", which is every vanilla frame.
   self.uiOverride = nil
   self.worldOverride = nil
+  self.worldOverrideMirrored = nil
 end
 
 -- Hand endFrame a pipeline's world image to composite instead of the world
 -- canvas.  Cleared every frame, so a pipeline that declines one frame falls
 -- straight back to the 2D path rather than showing a stale image.
-function Renderer:setWorldOverride(canvas)
+function Renderer:setWorldOverride(canvas, pipeline)
   -- Defensive: a pipeline that hands back a non-canvas (forgotten return, a
   -- truthy sentinel) must not reach the worldOverride blit in endFrame, where
   -- love.graphics.draw on it would crash the frame.  Reject it and fall back
   -- to the 2D path rather than trust it.
   if canvas ~= nil and not isCanvas(canvas) then canvas = nil end
   self.worldOverride = canvas
+  self.worldOverrideMirrored = canvas ~= nil and Renderer.mirrorsWorldOverride(pipeline)
 end
 
 -- Integer framebuffer pixels per GB pixel that fit the window.  Zoom /
@@ -332,6 +353,7 @@ function Renderer:beginFrame(transparent)
   self.uprightActive = false
   self.uiOverride = nil
   self.worldOverride = nil
+  self.worldOverrideMirrored = nil
   -- warp-fade overlay from Transition (issue #121); cleared each frame so
   -- a popped transition cannot leave a sticky black veil
   self.worldFadeAlpha = nil
@@ -827,7 +849,7 @@ end
 -- When GBC FX is active the composite is drawn into presentCanvas and
 -- presented through the GBC FX shader as a final pass.
 function Renderer:endFrame(zones, worldZones)
-  love.graphics.setCanvas()
+  GameViewport.setTarget()
   local ww, wh, pw, ph, dpiX, dpiY = displayMetrics()
   -- Sp = integer framebuffer pixels per GB pixel;
   -- Sx/Sy = LOVE-unit draw scales (may differ when dpiX ≠ dpiY).
@@ -897,6 +919,7 @@ function Renderer:endFrame(zones, worldZones)
       -- Gen 2 and the right one for Gen 3.
       generation = require("src.core.GameVersion").generation(),
       worldOverride = self.worldOverride,
+      worldOverrideMirrored = self.worldOverrideMirrored,
       worldActive = self.worldActive and true or false,
       zones = zones, worldZones = worldZones,
       ww = ww, wh = wh, pw = pw, ph = ph, ox = ox, oy = oy,
@@ -908,7 +931,8 @@ function Renderer:endFrame(zones, worldZones)
       self.worldActive = false
       self.uprightActive = false
       self.uiOverride = nil
-  self.worldOverride = nil
+      self.worldOverride = nil
+      self.worldOverrideMirrored = nil
       PaletteFX.setPass(nil)
       return {
         width = ww, height = wh, gameX = ox, gameY = oy,
@@ -929,8 +953,10 @@ function Renderer:endFrame(zones, worldZones)
                             and (self.battleWipe.style == "frlg_swirl"
                                  or self.battleWipe.needsSource)
                             and self.battleWipe.screenDraw
-  local needPresent = GBCFX.active() or Pipelines.wantsPresent()
-                      or battleNeedsSource
+  local hasOutputHook = Output.enabled()
+  local needPresent = GBCFX.active() or GbcColorCorrection.active() or Pipelines.wantsPresent()
+                      or (ShaderPresets:active() and not self.shaderPresetBypass)
+                      or battleNeedsSource or hasOutputHook
   local present = nil
   if needPresent then
     if not self.presentCanvas or self.presentCanvas:getWidth() ~= ww
@@ -943,6 +969,7 @@ function Renderer:endFrame(zones, worldZones)
       -- what remains here is the dpiX vs dpiY truncation gap (well under 1%,
       -- one seam across the window) that a single scalar dpiscale cannot
       -- express.
+      if self.presentCanvas and self.presentCanvas.release then self.presentCanvas:release() end
       self.presentCanvas = love.graphics.newCanvas(ww, wh)
       -- NEAREST, like every other surface in this pipeline.
       --
@@ -1041,7 +1068,10 @@ function Renderer:endFrame(zones, worldZones)
   -- anyway. Cheap: one pcall per frame, and only when an override is set.
   if self.worldOverride then
     local measurable = pcall(self.worldOverride.getDimensions, self.worldOverride)
-    if not measurable then self.worldOverride = nil end
+    if not measurable then
+      self.worldOverride = nil
+      self.worldOverrideMirrored = nil
+    end
   end
 
   if self.worldOverride then
@@ -1072,17 +1102,9 @@ function Renderer:endFrame(zones, worldZones)
     local ow, oh = self.worldOverride:getDimensions()
     local osx = (ow and ow > 0) and (ww / ow) or (1 / dpiX)
     local osy = (oh and oh > 0) and (wh / oh) or (1 / dpiY)
-    -- iOS still needs the historical presentation flip for the older
-    -- generations. Gen 4 is the exception: its 3D worldOverride already
-    -- reaches this point in the correct orientation, so applying the same
-    -- iOS flip a second time turns Platinum upside down while its UI remains
-    -- upright.
-    local loveMajor = love.getVersion()
-    local gen = require("src.core.GameVersion").generation()
-    if love.system and love.system.getOS
-       and love.system.getOS() == "iOS"
-       and loveMajor >= 12
-       and gen ~= 4 then
+    -- Retain the producer's orientation with its image rather than guessing
+    -- from the OS at composition time. The UI is composited separately.
+    if self.worldOverrideMirrored then
       love.graphics.draw(self.worldOverride, 0, wh, 0, osx, -osy)
     else
       love.graphics.draw(self.worldOverride, 0, 0, 0, osx, osy)
@@ -1393,28 +1415,31 @@ function Renderer:endFrame(zones, worldZones)
   end
 
   if present then
-    love.graphics.setCanvas()
-    -- Post-process pipelines run over the finished composite -- world, UI
-    -- and all -- and before GBC FX, so a blur or colour grade is what the
-    -- LCD grid is then drawn over rather than something that smears the
-    -- grid itself.  Each pass hands back a canvas; with none registered
-    -- this returns `present` unchanged and the frame is byte-identical.
-    local composed = Pipelines.present(present,
-      { width = ww, height = wh, scale = Sp, dpi = dpiY, dpiX = dpiX, dpiY = dpiY }) or present
-    if GBCFX.active() then
-      -- shader grid/shadow math is in framebuffer pixels
-      GBCFX.present(composed, Sp)
-    else
-      -- the present canvas only existed for the post-process, so put the
-      -- result on the screen at the same 1:1 unit mapping it was built at
-      love.graphics.setColor(1, 1, 1, 1)
-      love.graphics.draw(composed, 0, 0)
+    GameViewport.setTarget()
+    local corrected = GbcColorCorrection.apply(present)
+    local composed = Pipelines.present(corrected,
+      { width = ww, height = wh, scale = Sp, dpi = dpiY, dpiX = dpiX, dpiY = dpiY }) or corrected
+    local outputHandled = hasOutputHook and Output.draw({
+      canvas = composed, width = ww, height = wh,
+      gameX = ox, gameY = oy, gameWidth = vpw, gameHeight = vph,
+      scale = Sp, dpiX = dpiX, dpiY = dpiY,
+      generation = require("src.core.GameVersion").generation(),
+    })
+    if not outputHandled then
+      if not self.shaderPresetBypass then composed = ShaderPresets:apply(composed, Sp) end
+      if GBCFX.active() then
+        GBCFX.present(composed, Sp)
+      else
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(composed, 0, 0)
+      end
     end
   end
   self.worldActive = false
   self.uprightActive = false
   self.uiOverride = nil
   self.worldOverride = nil
+  self.worldOverrideMirrored = nil
   PaletteFX.setPass(nil)
   return {
     width = ww, height = wh,

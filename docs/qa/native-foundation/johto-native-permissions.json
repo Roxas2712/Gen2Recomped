@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "scope": "Native Gen2 VASC/Johto terrain query foundation; no Gen3 or Origami work",
+  "implementationCommit": "740807d75a0eac49ef413731fdcbbf2f3c5ccddc",
+  "upstreamBase": "13af468b97dc37015d14ad5c71d7f067c3ee810d",
+  "unitChecks": 264000,
+  "independentUpstreamChecks": 264000,
+  "negativeControlMissingMethodFailures": 4,
+  "referenceContract": {
+    "referenceCommit": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "version": "crystal",
+    "exactStdoutEqual": true,
+    "byteQueries": 768,
+    "directionalPairs": 262144,
+    "results": {
+      "native": {
+        "sha256": "aefa6f885b6183263beccdfb838894fcc68139112fa57c9522676f7f621f507a",
+        "bytes": 274198
+      },
+      "reference": {
+        "sha256": "aefa6f885b6183263beccdfb838894fcc68139112fa57c9522676f7f621f507a",
+        "bytes": 274198
+      }
+    }
+  },
+  "quick": {
+    "engineSuites": 270,
+    "sdkSuites": 3,
+    "B30Passed": true,
+    "logSha256": "63ac6430fec93eaa8dbbac30c29c93fc4f0307f33f797c42e8edeb2306172180"
+  },
+  "generatedRendererProbe": {
+    "unmodifiedPackageVersion": "3.1.2-omega.1.8",
+    "originalScenesCompile": true,
+    "generatedSceneCompiles": false,
+    "engineLoaded": false,
+    "moduleExecuted": false,
+    "generatedFunctionLine": 2862,
+    "generatedFailureLine": 3273,
+    "error": "more than 60 upvalues",
+    "inputSha256": {
+      "manifest.json": "fa670deea788d02965fa3f0c174208153a9241bd4a27441bfd80cdd2ccfc7cfe",
+      "lib/VoxelScene.lua": "c1c412ed61e91d4d89aac7798d9555dd37329c75db63199745316649051753ee",
+      "gen2/lib/VoxelScene.lua": "13735cfbd346b0758ed666bb1948a4ab574b9972784ef40f508ea49af7d5f47d",
+      "gen2/lib/VoxelScenePatch.lua": "6348fda7e928e10936c53c5581c76ec26e5f10a12d1488056a6bee5ea03e732d"
+    },
+    "bundledRuntime": {
+      "loveVersion": "12.0.0",
+      "luaVersion": "LuaJIT 2.1.1781602682",
+      "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+      "windowCreated": false,
+      "originalScenesCompile": true,
+      "generatedSceneCompiles": false,
+      "matchesDistributedRuntimeFiles": [
+        {
+          "file": "Contents/MacOS/love",
+          "sha256": "cb136e72f2f2639f889245c0a6fca355178da71f05e460a9f3d01d0fafcc1b0b"
+        },
+        {
+          "file": "Contents/Frameworks/Lua.framework/Versions/A/Lua",
+          "sha256": "d99eed38c9752775028ed88b7b23285cd3b1abea4154a41b06fb2ace9c0a3edc"
+        }
+      ],
+      "logSha256": "dfce96e13426b2c3e2538777d8e3b781e40cfd60ee3ccba9a8b214ca92bd5b94"
+    }
+  },
+  "notAccepted": [
+    "FieldMoves facade and continuous camera movement activation",
+    "full model renderer and generated source compilation",
+    "native special movement handoffs",
+    "actual GPU runtime acceptance for this change"
+  ],
+  "protectedStateTouched": false,
+  "releaseUpdated": false
+}

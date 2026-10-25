@@ -4,6 +4,7 @@
 -- probability buckets.
 
 local FieldDefaults = require("src.world.FieldDefaults")
+local MapIdentity = require("src.core.MapIdentity")
 
 local Encounter = {}
 
@@ -132,10 +133,13 @@ end
 -- the party itself.
 function Encounter.leadRateMod(data, save, weather)
   local lead = save and save.party and save.party[1]
-  if not lead then return nil end
-  local def = data and data.pokemon and data.pokemon[lead.species]
-  local n, d = require("src.battle.Abilities").encounterRateMod(lead, def,
-                                                                weather)
+  local def = lead and data and data.pokemon and data.pokemon[lead.species]
+  local n, d = 1, 1
+  if lead then n, d = require("src.battle.Abilities").encounterRateMod(lead, def, weather) end
+  if require("src.core.GameVersion").isGen3() and save then
+    if save.gen3Flute == "white" then n, d = n * 3, d * 2
+    elseif save.gen3Flute == "black" then d = d * 2 end
+  end
   if n == 1 and d == 1 then return nil end
   return { n, d }
 end
@@ -289,9 +293,9 @@ local gen4Views = setmetatable({}, { __mode = "k" })
 function Encounter.forMap(data, mapDef, mapId, hour, save)
   local all = data and data.encounters
   if not all then return nil end
-  local def = all[(mapDef and mapDef.encounters) or mapId]
+  local def = MapIdentity.lookup(data, all, (mapDef and mapDef.encounters) or mapId)
   if data.field and data.field.gen2Swarms then
-    def=require("src.world.Gen2Swarms").forMap(data,save,mapDef,mapId,def)
+    def=require("src.world.Gen2Swarms").forMap(data,save,mapDef,MapIdentity.sourceId(data,mapId),def)
   end
   if not isGen4Shaped(def) then return def end
   -- BLACK / WHITE: seasons, dark grass, phenomena, rippling water (src/world/Gen5WildTables.lua)

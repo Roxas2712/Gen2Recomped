@@ -143,6 +143,15 @@ effect, `=1` forces it available. The Anbernic handheld pack exports `0` from
 its launcher because the device reports `"Linux"` while its GPU is in the
 phone class (see [Anbernic RG34XXSP](anbernic-rg34xxsp.md)).
 
+## GBC colour correction
+
+Gold, Silver and Crystal offer **OPTIONS -> GBC COLOR -> OFF / ACCURATE /
+HARSH**, independently of GBC FX. The profiles adapt SameBoy's Modern Accurate
+and Harsh Reality GBC display response. OFF preserves the previous rendering;
+the selection is saved and does not require a ROM reimport. Details, scope,
+source attribution and verification are in
+[GBC colour correction](gbc-color-correction.md).
+
 ## Performance tier (low-end devices)
 
 The Options **PERFORMANCE** row scales the port's optional presentation
@@ -508,3 +517,27 @@ file pickers are ordinary desktop dialogs and still appear normally, and a
 run started from a terminal (`lovec.exe`, what `scripts\run.ps1` prefers)
 keeps its terminal and its printed output. Set `POKEPORT_CONSOLE=1` to opt
 out.
+
+## Native GBA Beat Up party damage
+
+Beat Up now reads each healthy party member's level/species base Attack
+and target species base Defense, with per-hit native critical/variation
+rolls, live callback eligibility, Substitute continuation and last-strike
+special counter memory. The effect revision intentionally changes the link
+fingerprint; see [the contract and remaining acceptance](native-gba-beat-up.md).
+
+## Native GBA Beat Up shared side parties
+
+Beat Up now reads the entire side party in two-trainer and player/ally
+battles, retaining live slot replacement and the active user's HP/status.
+Replacement benches remain owned separately. The reviewed effect revision
+changes the link fingerprint; see [contract coverage and remaining scope](native-gba-beat-up-side-parties.md).
+
+## Native GBA critical context and hit metadata
+
+Critical exclusions now preserve native draw order for first/tutorial battles
+and Teachy TV, including scripted Beat Up. Shared critical context fields,
+physical item/current-species stages, Lansat/Focus Energy behavior and GBA
+hit kind/Substitute metadata are covered by cross-engine contracts. The
+reviewed scripted effect revision changes the link fingerprint; see
+[verification and remaining scope](native-gba-critical-context.md).

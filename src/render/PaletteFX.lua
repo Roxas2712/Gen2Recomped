@@ -467,6 +467,10 @@ local gen2ClockTod = "DAY"   -- what the clock alone says
 local gen2MapPalette = 0     -- PALETTE_* from the current map's header
 -- OverworldState:timeOfDay answers "MORNING"/"NITE"; a mod's world.tod hook may
 -- answer "NIGHT".  Normalise to the four row names the importer writes.
+-- Public ROM row order, shared with native Gen2 atlas consumers.
+PaletteFX.DAYTIMES = { "MORN", "DAY", "NITE", "DARK" }
+PaletteFX.DAYTIME_ID = { MORN = 1, DAY = 2, NITE = 3, DARK = 4 }
+
 local GEN2_TOD_ALIAS = {
   MORN = "MORN", MORNING = "MORN", DAY = "DAY", DAYTIME = "DAY",
   NITE = "NITE", NIGHT = "NITE", EVE = "NITE", EVENING = "NITE",
@@ -1155,7 +1159,7 @@ function PaletteFX.paperShade(data)
   return c[1] / 255, c[2] / 255, c[3] / 255
 end
 
-function PaletteFX.effectiveColors(c)
+function PaletteFX.effectiveColors(c, invert)
   if not c then return nil end
   local mode = PaletteFX.mode or "gbc"
   local out = c
@@ -1176,6 +1180,10 @@ function PaletteFX.effectiveColors(c)
   -- cave has to read dark in CLASSIC's pea greens and in plain DMG grays too
   -- (#322).  permute() is the identity (and returns `out` itself, which the
   -- mod-graphics parity check leans on) while nothing has armed one.
+  -- An inverted font page reverses its settled display ramp before the
+  -- hardware shade register permutes it. Keep this on the native path so
+  -- Gen2 menu chrome cannot carry a second palette mode/register state.
+  if invert then out = { out[4], out[3], out[2], out[1] } end
   return PaletteFX.permute(out, shadeMap)
 end
 

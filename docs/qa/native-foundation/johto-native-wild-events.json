@@ -1,0 +1,464 @@
+{
+  "schema": 1,
+  "sourceCommit": "5b7d630d2d30a431f5cbcf1666f29b5e71486deb",
+  "srcTree": "3ea6d06827737ab765f3b8b77d8906e6ce2deb85",
+  "previousAcceptanceSource": "f5f275b27c758e19c19e65c4ff3ce56a4d9e6c5a",
+  "previousReceipt": "johto-native-landing-retirement.json",
+  "referenceCommit": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+  "engineVersion": "0.8.45",
+  "vsyncDuringQARuns": 0,
+  "defaultPresentationAccepted": false,
+  "metalWindowAccepted": false,
+  "windowsHardwareExecuted": false,
+  "fullMovementAccepted": false,
+  "fullParity": false,
+  "protectedPlayerProfilesUsed": false,
+  "origamiPortPaused": true,
+  "romsOrModsIncluded": false,
+  "behavior": [
+    "Cave/dungeon ice refuses random encounters before any rate, slot or Pokemon RNG.",
+    "Native collision/permission chooses the water table independently of copied surf state. Missing water data cannot fall through into cave grass.",
+    "Imported/authored encounter-class membership gates route currents and aliases; adopted non-Gen2 collision vocabularies retain their own meanings.",
+    "Real native VM wildoff/wildon changes transient world state. Script-controlled battles bypass the random gate.",
+    "Native map entry, battle return and setup/reload commands rearm five-step grace: four protected completed encounter phases, then a fifth eligible phase. Graphics-only refresh/reanchor preserve it.",
+    "One physical visit consumes at most one grace step. Scripts/overlays/mid-step/invalid cells and earlier CountStep owners cannot consume one; no-party/wildoff eligibility follows grace."
+  ],
+  "cpu": {
+    "engineSuites": 261,
+    "sdkSuites": 3,
+    "B30Passed": true,
+    "eventsChecks": 281,
+    "cooldownChecks": 420,
+    "versions": [
+      "gold",
+      "silver",
+      "crystal",
+      "prism",
+      "polishedcrystal"
+    ],
+    "otherGenerationRegressionVersions": [
+      "red",
+      "firered",
+      "emerald"
+    ],
+    "quickLogSha256": "428216f31b9d0a900569fdda31ec53a7345a50980d4b2d382d35d8e6da79515f",
+    "independentUpstream204": {
+      "head": "2cf604ffbe7f491fc64a839a79c688d2b1f0970c",
+      "eventsChecks": 281,
+      "cooldownChecks": 420,
+      "retirementChecks": 153,
+      "countChecks": 313,
+      "coordinateChecks": 264,
+      "warpChecks": 119,
+      "trainerChecks": 64,
+      "stateChecks": 110,
+      "bodyInputChecks": 21,
+      "menuChecks": 29,
+      "ownershipChecks": 33
+    },
+    "negativeControls": {
+      "source": "e602ea72509739a2ef091d31f9eb0f0862c18b31",
+      "events": {
+        "total": 281,
+        "passed": 61,
+        "failed": 220
+      },
+      "cooldown": {
+        "total": 420,
+        "passed": 180,
+        "failed": 240
+      },
+      "actualImportedIceBattle": {
+        "map": "ICE_PATH_B1_F",
+        "x": 14,
+        "y": 28,
+        "collision": "0x23",
+        "species": "SPECIES_220"
+      }
+    }
+  },
+  "actualCrystalImport": {
+    "producerSource": "d319d71da1f20fd873a10b396d9b909663babd72",
+    "consumerSource": "5b7d630d2d30a431f5cbcf1666f29b5e71486deb",
+    "cacheRevision": 9,
+    "importCodeUnchanged": true,
+    "importReceipt": {
+      "cacheProducerSourceCommit": "d319d71da1f20fd873a10b396d9b909663babd72",
+      "consumerSourceCommit": "5b7d630d2d30a431f5cbcf1666f29b5e71486deb",
+      "nativeImportCodeUnchanged": true,
+      "cacheRevision": 9,
+      "onlyAssetsDataMarkerCloned": true,
+      "allCopiedBytesVerified": true
+    },
+    "mapsInspected": 5,
+    "iceCellsInspected": 677,
+    "iceRandomCalls": 0,
+    "iceBattles": 0,
+    "nonIceFloorConstructsActualNativeBattle": true,
+    "actualSpecies": "SPECIES_220",
+    "positiveBattleDispatchIncludesActualTransition": true,
+    "probeLogSha256": "20964a4723b057018f136c16f53b3ba08f34fa12e76a6a0653532e6d471043ab",
+    "wildonOffStockReachableIRInstructions": 0,
+    "wildonOffQAScope": "QA-supplied IR through actual native compiler/commands; stock Crystal reachable pool does not invoke these commands."
+  },
+  "packageVerification": {
+    "sourceCommit": "5b7d630d2d30a431f5cbcf1666f29b5e71486deb",
+    "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+    "payloadSha256": "91c6bdad307f7dde3efa44143ad54c961ad8a4478bae7fa25bb818c4601f647f",
+    "identicalPlatformPayloads": true,
+    "sourceFilesCompared": 1029,
+    "allPackagedSrcFilesMatchCommittedSourceExceptDeclaredEngineStamp": true,
+    "previewEntryPointsMatchSource": true,
+    "windowsPE64AndEmbeddedPayload": true,
+    "windowsAMD64DLLs": 11,
+    "macArchiveExtractedPayloadAndStrictSignature": true,
+    "windowsHardwareExecuted": false,
+    "published": false
+  },
+  "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+  "payloadSha256": "91c6bdad307f7dde3efa44143ad54c961ad8a4478bae7fa25bb818c4601f647f",
+  "openGL": {
+    "nativeWithoutMods": {
+      "initialMap": "PLAYERS_HOUSE_2F",
+      "finalMap": "NEW_BARK_TOWN",
+      "transitions": [
+        {
+          "to": "PLAYERS_HOUSE_1F",
+          "normalMovement": true,
+          "from": "PLAYERS_HOUSE_2F"
+        },
+        {
+          "to": "NEW_BARK_TOWN",
+          "normalMovement": true,
+          "from": "PLAYERS_HOUSE_1F"
+        }
+      ],
+      "mapEntries": [
+        {
+          "cooldown": 5,
+          "map": "PLAYERS_HOUSE_2F",
+          "wildoff": false
+        },
+        {
+          "cooldown": 5,
+          "map": "PLAYERS_HOUSE_1F",
+          "wildoff": false
+        },
+        {
+          "cooldown": 5,
+          "map": "NEW_BARK_TOWN",
+          "wildoff": false
+        },
+        {
+          "cooldown": 5,
+          "map": "ICE_PATH_B2_FMAHOGANY_SIDE",
+          "wildoff": false
+        },
+        {
+          "cooldown": 5,
+          "map": "ICE_PATH_B2_FMAHOGANY_SIDE",
+          "wildoff": false
+        },
+        {
+          "cooldown": 5,
+          "map": "NEW_BARK_TOWN",
+          "wildoff": true
+        }
+      ],
+      "icePlan": {
+        "stopY": 0,
+        "source": "ICE_PATH_B2_FMAHOGANY_SIDE",
+        "x": 2,
+        "y": 16,
+        "map": "ICE_PATH_B2_FMAHOGANY_SIDE",
+        "dir": "up",
+        "iceCells": 16,
+        "stopX": 2
+      },
+      "iceSlide": {
+        "noRandomBattles": true,
+        "afterGrace": 12,
+        "nativeInput": true,
+        "iceFootfalls": 16
+      },
+      "nativeBattleReturn": {
+        "result": "run",
+        "species": "SPECIES_220",
+        "physicalRunInput": true,
+        "level": 23,
+        "grace": 5
+      },
+      "nativeWildSwitch": {
+        "offRefusedFiveInputSteps": true,
+        "persistedAcrossNativeWarp": true,
+        "onRestored": true
+      },
+      "setup": "Native QA warps to imported Ice Path; native gift command prepares one level-100 Cyndaquil. No story progression is inferred.",
+      "countPhaseCalls": 41,
+      "counterAdvances": 40,
+      "countPhaseStops": 1,
+      "coordinateScripts": 1,
+      "finalMovementState": "normal",
+      "freshOwnedWindowProofs": {
+        "initial-map": {
+          "freshFrameStamp": 34,
+          "minimumFrameStamp": 1,
+          "centralColours": 8,
+          "colourProfile": "gbc",
+          "minimumColours": 4,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 30,
+          "minimumFrameStamp": 1,
+          "centralColours": 8,
+          "colourProfile": "gbc",
+          "minimumColours": 4,
+          "screenshot": "os-window-second-map.png",
+          "attempts": 1
+        },
+        "resized": {
+          "freshFrameStamp": 26,
+          "minimumFrameStamp": 1,
+          "centralColours": 8,
+          "colourProfile": "gbc",
+          "minimumColours": 4,
+          "screenshot": "os-window-resized.png",
+          "attempts": 1
+        },
+        "map-return": {
+          "freshFrameStamp": 26,
+          "minimumFrameStamp": 1,
+          "centralColours": 17,
+          "colourProfile": "gbc",
+          "minimumColours": 4,
+          "screenshot": "os-window-map-return.png",
+          "attempts": 1
+        }
+      },
+      "privateReportSha256": "3cba57af712c800eb5a1fafea6b6e97702529dea31e4c172977773ff3e35e432",
+      "nativeMenuInputPassed": true,
+      "proofPhaseMeaning": {
+        "initial-map": "native imported ice corridor wall stop",
+        "second-map": "actual Swinub/Cyndaquil battle command menu",
+        "resized": "native world after physical RUN input and real battle return",
+        "map-return": "world after native wildoff/wildon, actual warp and menu regression"
+      }
+    },
+    "unmodifiedModWithClassicRandomEncounters": {
+      "initialMap": "PLAYERS_HOUSE_2F",
+      "finalMap": "NEW_BARK_TOWN",
+      "transitions": [
+        {
+          "from": "PLAYERS_HOUSE_2F",
+          "to": "PLAYERS_HOUSE_1F",
+          "normalMovement": true
+        },
+        {
+          "from": "PLAYERS_HOUSE_1F",
+          "to": "NEW_BARK_TOWN",
+          "normalMovement": true
+        }
+      ],
+      "mapEntries": [
+        {
+          "map": "PLAYERS_HOUSE_2F",
+          "cooldown": 5,
+          "wildoff": false
+        },
+        {
+          "map": "PLAYERS_HOUSE_1F",
+          "cooldown": 5,
+          "wildoff": false
+        },
+        {
+          "map": "NEW_BARK_TOWN",
+          "cooldown": 5,
+          "wildoff": false
+        },
+        {
+          "map": "ICE_PATH_B2_FMAHOGANY_SIDE",
+          "cooldown": 5,
+          "wildoff": false
+        },
+        {
+          "map": "ICE_PATH_B2_FMAHOGANY_SIDE",
+          "cooldown": 5,
+          "wildoff": false
+        },
+        {
+          "map": "ICE_PATH_B2_FMAHOGANY_SIDE",
+          "cooldown": 5,
+          "wildoff": false
+        },
+        {
+          "map": "NEW_BARK_TOWN",
+          "cooldown": 5,
+          "wildoff": true
+        }
+      ],
+      "icePlan": {
+        "map": "ICE_PATH_B2_FMAHOGANY_SIDE",
+        "iceCells": 16,
+        "dir": "up",
+        "stopX": 2,
+        "source": "ICE_PATH_B2_FMAHOGANY_SIDE",
+        "x": 2,
+        "y": 16,
+        "stopY": 0
+      },
+      "iceSlides": [
+        {
+          "nativeInput": true,
+          "iceFootfalls": 16,
+          "rendererError": "patched VoxelScene did not compile: ...VOXEL_ASCENDANT/lib/VoxelScene.lua+stadium-overworld-v16:3273: function at line 2862 has more than 60 upvalues",
+          "afterGrace": 12,
+          "continuousMovementInstalled": false,
+          "rendererInstalled": false,
+          "noRandomBattles": true,
+          "camera": "first"
+        },
+        {
+          "nativeInput": true,
+          "iceFootfalls": 16,
+          "rendererError": "patched VoxelScene did not compile: ...VOXEL_ASCENDANT/lib/VoxelScene.lua+stadium-overworld-v16:3273: function at line 2862 has more than 60 upvalues",
+          "afterGrace": 12,
+          "continuousMovementInstalled": false,
+          "rendererInstalled": false,
+          "noRandomBattles": true,
+          "camera": "third"
+        }
+      ],
+      "nativeBattleReturn": {
+        "result": "run",
+        "level": 23,
+        "grace": 5,
+        "species": "SPECIES_220",
+        "physicalRunInput": true,
+        "camera": "third"
+      },
+      "nativeWildSwitch": {
+        "offRefusedFiveInputSteps": true,
+        "persistedAcrossNativeWarp": true,
+        "onRestored": true
+      },
+      "configuration": {
+        "defaultVisibleOnlyNotAcceptedByThisRun": true,
+        "restored": true,
+        "randomEncounters": true,
+        "originalRandomEncounters": false
+      },
+      "setup": "Native QA warps to imported Ice Path; native gift command prepares one level-100 Cyndaquil. No story progression is inferred.",
+      "countPhaseCalls": 58,
+      "counterAdvances": 56,
+      "countPhaseStops": 2,
+      "coordinateScripts": 1,
+      "finalMovementState": "normal",
+      "freshOwnedWindowProofs": {
+        "initial-map": {
+          "freshFrameStamp": 8,
+          "minimumFrameStamp": 1,
+          "centralColours": 14760,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 9,
+          "minimumFrameStamp": 1,
+          "centralColours": 26393,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-second-map.png",
+          "attempts": 1
+        },
+        "resized": {
+          "freshFrameStamp": 11,
+          "minimumFrameStamp": 1,
+          "centralColours": 41500,
+          "colourProfile": "gbc",
+          "minimumColours": 4,
+          "screenshot": "os-window-resized.png",
+          "attempts": 1
+        },
+        "map-return": {
+          "freshFrameStamp": 14,
+          "minimumFrameStamp": 1,
+          "centralColours": 448,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-map-return.png",
+          "attempts": 1
+        }
+      },
+      "privateReportSha256": "7ba70d2b52e78496cdde1bda4b8a63520b17b62486edb843f131cda2f00547be",
+      "nativeMenuInputPassed": true,
+      "unmodifiedModFiles": 27329,
+      "manifestSha256": "080b39b6bc1b6e1c557432eb911f46aeeeaaf52c829a4688b5bce9928aaf5374",
+      "modVersion": "3.1.2-omega.1.7",
+      "testModFolderRemoved": true,
+      "defaultVisibleOnlyEncounterSystemAccepted": false,
+      "fullContinuousCameraMovementAccepted": false,
+      "battleVisualAccepted": false,
+      "visualObservation": {
+        "missingPokemonActors": true,
+        "displayedPlayerLevel": 1,
+        "displayedEnemyLevel": 1,
+        "actualPlayerLevel": 100,
+        "actualEnemyLevel": 23,
+        "hpHUDIncorrect": true,
+        "nativeRunAndReturnPassed": true,
+        "causeAudit": "Reference Gen2 screen owns a separate logic battle whose player/enemy are live Pokemon; fork screen owns battler wrappers directly. A backed data/presentation adapter remains to implement and verify."
+      },
+      "proofPhaseMeaning": {
+        "initial-map": "First Person selected, actual native ice traversal",
+        "second-map": "Third Person selected, actual native ice traversal",
+        "resized": "actual battle command menu under mod rendering",
+        "map-return": "world after physical RUN, wildoff/wildon, actual warp and menu regression"
+      }
+    }
+  },
+  "qaSetupCorrections": [
+    {
+      "attempt": "default-visible-only mod setup",
+      "exitCode": 1,
+      "reason": "Mod intentionally blocks ordinary native step encounters by default; the assertion expecting grace to drain was invalid for that configuration.",
+      "copiedTestModRemoved": true
+    },
+    {
+      "attempt": "classic-option setup v2",
+      "exitCode": 1,
+      "reason": "Test driver addressed the renderer library rather than exported Wilds configuration; failed before applying the option.",
+      "copiedTestModRemoved": true
+    }
+  ],
+  "hostedCI": {
+    "sourceCommit": "5b7d630d2d30a431f5cbcf1666f29b5e71486deb",
+    "checks": 63,
+    "passed": 63
+  },
+  "pushedUpstreamPRs": {
+    "openOwnPRs": 134,
+    "allHeadsPushed": true,
+    "mismatches": []
+  },
+  "upstreamSync": {
+    "forkMain": "13af468b97dc37015d14ad5c71d7f067c3ee810d",
+    "upstreamMain": "13af468b97dc37015d14ad5c71d7f067c3ee810d",
+    "includedByWorkingBranch": true
+  },
+  "publishedPreview": {
+    "sourceCommit": "ae8359c0369e88b5fd553c39d16938926e7e3aa0",
+    "unchanged": true,
+    "url": "https://github.com/Roxas2712/Gen2Recomped/releases/tag/native-preview-20261024.1"
+  },
+  "remainingAcceptance": [
+    "Gen2 mod battle data/presentation bridge: missing actors, level-1/incorrect-HP HUD despite live level-100/23 Pokemon. Full native FieldMoves/permissions/special-movement contracts and continuous camera motion also remain open.",
+    "Default visible-only mod encounter/contact/battle integration; this QA uses its supported Classic Random Enc option.",
+    "Supplied generated renderer exceeds 60 upvalues and falls back; full actor/First-Person/Center foreground and optional PC/mail/box/follower/HP/fishing/capture interfaces.",
+    "Full map-setup/music/presentation semantics for reload/newloadmap, all maps/story/save/extended sessions and remaining encounter parity.",
+    "Current default/Metal window acceptance and Windows hardware execution."
+  ]
+}

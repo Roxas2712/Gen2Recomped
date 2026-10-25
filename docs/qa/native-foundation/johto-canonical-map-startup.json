@@ -1,0 +1,992 @@
+{
+  "schema": 1,
+  "sourceCommit": "052c71eafc890033cb99377b3067acaf93df16a4",
+  "sourceTree": "6247d71c219e8aa8e7791d7e518bbc07734afb1e",
+  "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+  "engineVersion": "0.8.45",
+  "modApi": 3,
+  "automaticRuntimePublicationEnabled": true,
+  "originalCartridgeRecords": 388,
+  "nativeWarpTablesRewritten": false,
+  "saveMigration": false,
+  "authoredVariantsKeptDistinct": true,
+  "game": "crystal",
+  "romRevision": 0,
+  "modVersion": "3.1.2-omega.1.7",
+  "modManifestSha256": "080b39b6bc1b6e1c557432eb911f46aeeeaaf52c829a4688b5bce9928aaf5374",
+  "unmodifiedModFiles": 27329,
+  "fullParity": false,
+  "completeCameraPresentation": false,
+  "windowsHardwareExecution": false,
+  "protectedPlayerProfilesUsed": false,
+  "romFreeValidation": {
+    "engineSuites": 250,
+    "sdkSuites": 3,
+    "b30": true,
+    "sourceVmChecks": 105,
+    "contentTransactionChecks": 260,
+    "cacheNeighborChecks": 23,
+    "nativeStateChecks": 108,
+    "aliasWorldReadChecks": 14,
+    "worldActionChecks": 2792,
+    "environmentChecks": 1221,
+    "previewPackageTests": 7,
+    "engineSuiteSourceCommit": "052c71eafc890033cb99377b3067acaf93df16a4",
+    "nativeStateFixtureCommit": "5f13ce74d15f786269b134760593f355c45c5320"
+  },
+  "independentUpstream": [
+    {
+      "number": 211,
+      "head": "3aa7017f7ef1410f4c21135909a0675e2f38f583",
+      "base": "7b77d944bda0bbf063601bde63e9387c71f722fc",
+      "checks": {
+        "sourceVM": 105,
+        "contentTransactions": 260,
+        "cacheNeighbors": 23,
+        "nativeState": 108
+      }
+    },
+    {
+      "number": 93,
+      "head": "dd4b201af7b7a670e7b1a479a136ce3532080b69",
+      "base": "886fca58204c5043f31a6d8f5e325c3cd0d3d4bf",
+      "checks": {
+        "existingWorldReads": 1041,
+        "physicalAliasReads": 11
+      }
+    },
+    {
+      "number": 94,
+      "head": "2c8add573b32eeabfa5689405307f58d653d2460",
+      "base": "a854b7ba6f81c99a31d32332260a5beeaf5ca0d7",
+      "checks": {
+        "worldActions": 2685
+      }
+    }
+  ],
+  "cases": [
+    {
+      "backend": "opengl",
+      "platform": "macos",
+      "nativeNoMods": {
+        "transitions": [
+          {
+            "to": "PLAYERS_HOUSE_1F",
+            "from": "PLAYERS_HOUSE_2F",
+            "normalMovement": true
+          },
+          {
+            "to": "NEW_BARK_TOWN",
+            "from": "PLAYERS_HOUSE_1F",
+            "normalMovement": true
+          }
+        ],
+        "completed": true,
+        "nativeNoMods": true,
+        "errors": [],
+        "overlayDepth": 0,
+        "initialMap": "PLAYERS_HOUSE_2F",
+        "finalMap": "NEW_BARK_TOWN"
+      },
+      "nativeOSProof": {
+        "initial-map": {
+          "freshFrameStamp": 12,
+          "minimumFrameStamp": 1,
+          "centralColours": 15,
+          "colourProfile": "gbc",
+          "minimumColours": 4,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        }
+      },
+      "home": {
+        "scope": "cold New Game, native collision-valid stairs both directions, room menus, Mother entry scene and normal house exit; home First and Third Person",
+        "phases": [
+          {
+            "label": "cold-bedroom-first",
+            "map": "PLAYERS_HOUSE_2F",
+            "camera": "first",
+            "x": 3,
+            "y": 3,
+            "sourceMapId": "PLAYERS_HOUSE2_F",
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "height": 3,
+              "width": 4,
+              "environment": "INDOOR",
+              "tileset": "TILESET_PLAYERS_ROOM",
+              "generation": 2,
+              "outdoor": false,
+              "environmentId": 3
+            },
+            "collisionQuery": {
+              "allMatchNative": true,
+              "cells": 48,
+              "classes": 5
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          },
+          {
+            "label": "normal-downstairs-first",
+            "map": "PLAYERS_HOUSE_1F",
+            "camera": "first",
+            "x": 9,
+            "y": 0,
+            "sourceMapId": "PLAYERS_HOUSE1_F",
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "height": 4,
+              "width": 5,
+              "environment": "INDOOR",
+              "tileset": "TILESET_PLAYERS_HOUSE",
+              "generation": 2,
+              "outdoor": false,
+              "environmentId": 3
+            },
+            "collisionQuery": {
+              "allMatchNative": true,
+              "cells": 80,
+              "classes": 5
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          },
+          {
+            "label": "normal-downstairs-third",
+            "map": "PLAYERS_HOUSE_1F",
+            "camera": "third",
+            "x": 9,
+            "y": 0,
+            "sourceMapId": "PLAYERS_HOUSE1_F",
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "height": 4,
+              "width": 5,
+              "environment": "INDOOR",
+              "tileset": "TILESET_PLAYERS_HOUSE",
+              "generation": 2,
+              "outdoor": false,
+              "environmentId": 3
+            },
+            "collisionQuery": {
+              "allMatchNative": true,
+              "cells": 80,
+              "classes": 5
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          },
+          {
+            "label": "normal-upstairs-third",
+            "map": "PLAYERS_HOUSE_2F",
+            "camera": "third",
+            "x": 7,
+            "y": 0,
+            "sourceMapId": "PLAYERS_HOUSE2_F",
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "height": 3,
+              "width": 4,
+              "environment": "INDOOR",
+              "tileset": "TILESET_PLAYERS_ROOM",
+              "generation": 2,
+              "outdoor": false,
+              "environmentId": 3
+            },
+            "collisionQuery": {
+              "allMatchNative": true,
+              "cells": 48,
+              "classes": 5
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          },
+          {
+            "label": "normal-house-exit-third",
+            "map": "NEW_BARK_TOWN",
+            "camera": "third",
+            "x": 13,
+            "y": 6,
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "height": 9,
+              "width": 10,
+              "environment": "TOWN",
+              "tileset": "TILESET_JOHTO",
+              "generation": 2,
+              "outdoor": true,
+              "environmentId": 1
+            },
+            "collisionQuery": {
+              "allMatchNative": true,
+              "cells": 360,
+              "classes": 5
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          },
+          {
+            "label": "normal-house-exit-first",
+            "map": "NEW_BARK_TOWN",
+            "camera": "first",
+            "x": 13,
+            "y": 6,
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "height": 9,
+              "width": 10,
+              "environment": "TOWN",
+              "tileset": "TILESET_JOHTO",
+              "generation": 2,
+              "outdoor": true,
+              "environmentId": 1
+            },
+            "collisionQuery": {
+              "allMatchNative": true,
+              "cells": 360,
+              "classes": 5
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          }
+        ],
+        "normalTransitions": [
+          {
+            "normalMovement": true,
+            "camera": "first",
+            "from": "PLAYERS_HOUSE_2F",
+            "to": "PLAYERS_HOUSE_1F"
+          },
+          {
+            "normalMovement": true,
+            "camera": "third",
+            "from": "PLAYERS_HOUSE_1F",
+            "to": "PLAYERS_HOUSE_2F"
+          },
+          {
+            "normalMovement": true,
+            "camera": "third",
+            "from": "PLAYERS_HOUSE_2F",
+            "to": "PLAYERS_HOUSE_1F"
+          },
+          {
+            "normalMovement": true,
+            "camera": "third",
+            "from": "PLAYERS_HOUSE_1F",
+            "to": "NEW_BARK_TOWN"
+          }
+        ],
+        "nativeMenuAfterEveryRoomEntry": true,
+        "freshOwnedWindowProofs": {
+          "initial-map": {
+            "freshFrameStamp": 1542,
+            "minimumFrameStamp": 1537,
+            "centralColours": 1446,
+            "colourProfile": "gba",
+            "minimumColours": 16,
+            "screenshot": "os-window-initial-map.png",
+            "attempts": 1
+          },
+          "second-map": {
+            "freshFrameStamp": 2046,
+            "minimumFrameStamp": 2039,
+            "centralColours": 15004,
+            "colourProfile": "gba",
+            "minimumColours": 16,
+            "screenshot": "os-window-second-map.png",
+            "attempts": 1
+          },
+          "resized": {
+            "freshFrameStamp": 2215,
+            "minimumFrameStamp": 2203,
+            "centralColours": 21218,
+            "colourProfile": "gba",
+            "minimumColours": 16,
+            "screenshot": "os-window-resized.png",
+            "attempts": 1
+          },
+          "map-return": {
+            "freshFrameStamp": 2613,
+            "minimumFrameStamp": 2609,
+            "centralColours": 4617,
+            "colourProfile": "gba",
+            "minimumColours": 16,
+            "screenshot": "os-window-map-return.png",
+            "attempts": 1
+          }
+        },
+        "unmodifiedModFiles": 27329,
+        "testModFolderRemoved": true,
+        "arrivalGuardReleasedByNormalStep": true,
+        "teleportedSetup": false
+      },
+      "martCenter": {
+        "scope": "teleported town setup, collision-valid native movement through four room entry/exit pairs and native menu, both camera modes",
+        "phases": [
+          {
+            "label": "first-normal-door-CHERRYGROVE_MART",
+            "map": "CHERRYGROVE_MART",
+            "camera": "first",
+            "x": 3,
+            "y": 7,
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "tileset": "TILESET_MART",
+              "outdoor": false,
+              "width": 6,
+              "environmentId": 3,
+              "height": 4,
+              "generation": 2,
+              "environment": "INDOOR"
+            },
+            "collisionQuery": {
+              "classes": 5,
+              "allMatchNative": true,
+              "cells": 96
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          },
+          {
+            "label": "third-normal-door-CHERRYGROVE_MART",
+            "map": "CHERRYGROVE_MART",
+            "camera": "third",
+            "x": 3,
+            "y": 7,
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "tileset": "TILESET_MART",
+              "outdoor": false,
+              "width": 6,
+              "environmentId": 3,
+              "height": 4,
+              "generation": 2,
+              "environment": "INDOOR"
+            },
+            "collisionQuery": {
+              "classes": 5,
+              "allMatchNative": true,
+              "cells": 96
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          },
+          {
+            "label": "first-normal-door-CHERRYGROVE_POKECENTER1_F",
+            "map": "CHERRYGROVE_POKECENTER_1F",
+            "camera": "first",
+            "x": 3,
+            "y": 7,
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "tileset": "TILESET_POKECENTER",
+              "outdoor": false,
+              "width": 5,
+              "environmentId": 3,
+              "height": 4,
+              "generation": 2,
+              "environment": "INDOOR"
+            },
+            "collisionQuery": {
+              "classes": 6,
+              "allMatchNative": true,
+              "cells": 80
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          },
+          {
+            "label": "third-normal-door-CHERRYGROVE_POKECENTER1_F",
+            "map": "CHERRYGROVE_POKECENTER_1F",
+            "camera": "third",
+            "x": 3,
+            "y": 7,
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "tileset": "TILESET_POKECENTER",
+              "outdoor": false,
+              "width": 5,
+              "environmentId": 3,
+              "height": 4,
+              "generation": 2,
+              "environment": "INDOOR"
+            },
+            "collisionQuery": {
+              "classes": 6,
+              "allMatchNative": true,
+              "cells": 80
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          }
+        ],
+        "normalTransitions": [
+          {
+            "normalMovement": true,
+            "to": "CHERRYGROVE_MART",
+            "camera": "first",
+            "from": "CHERRYGROVE_CITY"
+          },
+          {
+            "normalMovement": true,
+            "to": "CHERRYGROVE_CITY",
+            "camera": "first",
+            "from": "CHERRYGROVE_MART"
+          },
+          {
+            "normalMovement": true,
+            "to": "CHERRYGROVE_MART",
+            "camera": "third",
+            "from": "CHERRYGROVE_CITY"
+          },
+          {
+            "normalMovement": true,
+            "to": "CHERRYGROVE_CITY",
+            "camera": "third",
+            "from": "CHERRYGROVE_MART"
+          },
+          {
+            "normalMovement": true,
+            "to": "CHERRYGROVE_POKECENTER_1F",
+            "camera": "first",
+            "from": "CHERRYGROVE_CITY"
+          },
+          {
+            "normalMovement": true,
+            "to": "CHERRYGROVE_CITY",
+            "camera": "first",
+            "from": "CHERRYGROVE_POKECENTER_1F"
+          },
+          {
+            "normalMovement": true,
+            "to": "CHERRYGROVE_POKECENTER_1F",
+            "camera": "third",
+            "from": "CHERRYGROVE_CITY"
+          },
+          {
+            "normalMovement": true,
+            "to": "CHERRYGROVE_CITY",
+            "camera": "third",
+            "from": "CHERRYGROVE_POKECENTER_1F"
+          }
+        ],
+        "nativeMenuAfterEveryRoomEntry": true,
+        "freshOwnedWindowProofs": {
+          "initial-map": {
+            "freshFrameStamp": 741,
+            "minimumFrameStamp": 738,
+            "centralColours": 59668,
+            "colourProfile": "gba",
+            "minimumColours": 16,
+            "screenshot": "os-window-initial-map.png",
+            "attempts": 1
+          },
+          "second-map": {
+            "freshFrameStamp": 1701,
+            "minimumFrameStamp": 1697,
+            "centralColours": 64675,
+            "colourProfile": "gba",
+            "minimumColours": 16,
+            "screenshot": "os-window-second-map.png",
+            "attempts": 1
+          },
+          "resized": {
+            "freshFrameStamp": 2779,
+            "minimumFrameStamp": 2772,
+            "centralColours": 65304,
+            "colourProfile": "gba",
+            "minimumColours": 16,
+            "screenshot": "os-window-resized.png",
+            "attempts": 1
+          },
+          "map-return": {
+            "freshFrameStamp": 3785,
+            "minimumFrameStamp": 3779,
+            "centralColours": 73505,
+            "colourProfile": "gba",
+            "minimumColours": 16,
+            "screenshot": "os-window-map-return.png",
+            "attempts": 1
+          }
+        },
+        "unmodifiedModFiles": 27329,
+        "testModFolderRemoved": true,
+        "teleportedTownSetup": true
+      }
+    },
+    {
+      "backend": "metal",
+      "platform": "macos",
+      "nativeNoMods": {
+        "transitions": [
+          {
+            "normalMovement": true,
+            "from": "PLAYERS_HOUSE_2F",
+            "to": "PLAYERS_HOUSE_1F"
+          },
+          {
+            "normalMovement": true,
+            "from": "PLAYERS_HOUSE_1F",
+            "to": "NEW_BARK_TOWN"
+          }
+        ],
+        "nativeNoMods": true,
+        "finalMap": "NEW_BARK_TOWN",
+        "overlayDepth": 0,
+        "initialMap": "PLAYERS_HOUSE_2F",
+        "errors": [],
+        "completed": true
+      },
+      "nativeOSProof": {
+        "initial-map": {
+          "freshFrameStamp": 9,
+          "minimumFrameStamp": 1,
+          "centralColours": 15,
+          "colourProfile": "gbc",
+          "minimumColours": 4,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        }
+      },
+      "home": {
+        "scope": "cold New Game, native collision-valid stairs both directions, room menus, Mother entry scene and normal house exit; home First and Third Person",
+        "phases": [
+          {
+            "label": "cold-bedroom-first",
+            "map": "PLAYERS_HOUSE_2F",
+            "camera": "first",
+            "x": 3,
+            "y": 3,
+            "sourceMapId": "PLAYERS_HOUSE2_F",
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "width": 4,
+              "generation": 2,
+              "environment": "INDOOR",
+              "height": 3,
+              "environmentId": 3,
+              "tileset": "TILESET_PLAYERS_ROOM",
+              "outdoor": false
+            },
+            "collisionQuery": {
+              "classes": 5,
+              "allMatchNative": true,
+              "cells": 48
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          },
+          {
+            "label": "normal-downstairs-first",
+            "map": "PLAYERS_HOUSE_1F",
+            "camera": "first",
+            "x": 9,
+            "y": 0,
+            "sourceMapId": "PLAYERS_HOUSE1_F",
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "width": 5,
+              "generation": 2,
+              "environment": "INDOOR",
+              "height": 4,
+              "environmentId": 3,
+              "tileset": "TILESET_PLAYERS_HOUSE",
+              "outdoor": false
+            },
+            "collisionQuery": {
+              "classes": 5,
+              "allMatchNative": true,
+              "cells": 80
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          },
+          {
+            "label": "normal-downstairs-third",
+            "map": "PLAYERS_HOUSE_1F",
+            "camera": "third",
+            "x": 9,
+            "y": 0,
+            "sourceMapId": "PLAYERS_HOUSE1_F",
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "width": 5,
+              "generation": 2,
+              "environment": "INDOOR",
+              "height": 4,
+              "environmentId": 3,
+              "tileset": "TILESET_PLAYERS_HOUSE",
+              "outdoor": false
+            },
+            "collisionQuery": {
+              "classes": 5,
+              "allMatchNative": true,
+              "cells": 80
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          },
+          {
+            "label": "normal-upstairs-third",
+            "map": "PLAYERS_HOUSE_2F",
+            "camera": "third",
+            "x": 7,
+            "y": 0,
+            "sourceMapId": "PLAYERS_HOUSE2_F",
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "width": 4,
+              "generation": 2,
+              "environment": "INDOOR",
+              "height": 3,
+              "environmentId": 3,
+              "tileset": "TILESET_PLAYERS_ROOM",
+              "outdoor": false
+            },
+            "collisionQuery": {
+              "classes": 5,
+              "allMatchNative": true,
+              "cells": 48
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          },
+          {
+            "label": "normal-house-exit-third",
+            "map": "NEW_BARK_TOWN",
+            "camera": "third",
+            "x": 13,
+            "y": 6,
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "width": 10,
+              "generation": 2,
+              "environment": "TOWN",
+              "height": 9,
+              "environmentId": 1,
+              "tileset": "TILESET_JOHTO",
+              "outdoor": true
+            },
+            "collisionQuery": {
+              "classes": 5,
+              "allMatchNative": true,
+              "cells": 360
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          },
+          {
+            "label": "normal-house-exit-first",
+            "map": "NEW_BARK_TOWN",
+            "camera": "first",
+            "x": 13,
+            "y": 6,
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "width": 10,
+              "generation": 2,
+              "environment": "TOWN",
+              "height": 9,
+              "environmentId": 1,
+              "tileset": "TILESET_JOHTO",
+              "outdoor": true
+            },
+            "collisionQuery": {
+              "classes": 5,
+              "allMatchNative": true,
+              "cells": 360
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          }
+        ],
+        "normalTransitions": [
+          {
+            "to": "PLAYERS_HOUSE_1F",
+            "camera": "first",
+            "normalMovement": true,
+            "from": "PLAYERS_HOUSE_2F"
+          },
+          {
+            "to": "PLAYERS_HOUSE_2F",
+            "camera": "third",
+            "normalMovement": true,
+            "from": "PLAYERS_HOUSE_1F"
+          },
+          {
+            "to": "PLAYERS_HOUSE_1F",
+            "camera": "third",
+            "normalMovement": true,
+            "from": "PLAYERS_HOUSE_2F"
+          },
+          {
+            "to": "NEW_BARK_TOWN",
+            "camera": "third",
+            "normalMovement": true,
+            "from": "PLAYERS_HOUSE_1F"
+          }
+        ],
+        "nativeMenuAfterEveryRoomEntry": true,
+        "freshOwnedWindowProofs": {
+          "initial-map": {
+            "freshFrameStamp": 1543,
+            "minimumFrameStamp": 1537,
+            "centralColours": 1446,
+            "colourProfile": "gba",
+            "minimumColours": 16,
+            "screenshot": "os-window-initial-map.png",
+            "attempts": 1
+          },
+          "second-map": {
+            "freshFrameStamp": 2045,
+            "minimumFrameStamp": 2041,
+            "centralColours": 15004,
+            "colourProfile": "gba",
+            "minimumColours": 16,
+            "screenshot": "os-window-second-map.png",
+            "attempts": 1
+          },
+          "resized": {
+            "freshFrameStamp": 2205,
+            "minimumFrameStamp": 2201,
+            "centralColours": 21218,
+            "colourProfile": "gba",
+            "minimumColours": 16,
+            "screenshot": "os-window-resized.png",
+            "attempts": 1
+          },
+          "map-return": {
+            "freshFrameStamp": 2601,
+            "minimumFrameStamp": 2596,
+            "centralColours": 4617,
+            "colourProfile": "gba",
+            "minimumColours": 16,
+            "screenshot": "os-window-map-return.png",
+            "attempts": 1
+          }
+        },
+        "unmodifiedModFiles": 27329,
+        "testModFolderRemoved": true,
+        "arrivalGuardReleasedByNormalStep": true,
+        "teleportedSetup": false
+      },
+      "martCenter": {
+        "scope": "teleported town setup, collision-valid native movement through four room entry/exit pairs and native menu, both camera modes",
+        "phases": [
+          {
+            "label": "first-normal-door-CHERRYGROVE_MART",
+            "map": "CHERRYGROVE_MART",
+            "camera": "first",
+            "x": 3,
+            "y": 7,
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "environmentId": 3,
+              "width": 6,
+              "height": 4,
+              "outdoor": false,
+              "environment": "INDOOR",
+              "tileset": "TILESET_MART",
+              "generation": 2
+            },
+            "collisionQuery": {
+              "allMatchNative": true,
+              "cells": 96,
+              "classes": 5
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          },
+          {
+            "label": "third-normal-door-CHERRYGROVE_MART",
+            "map": "CHERRYGROVE_MART",
+            "camera": "third",
+            "x": 3,
+            "y": 7,
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "environmentId": 3,
+              "width": 6,
+              "height": 4,
+              "outdoor": false,
+              "environment": "INDOOR",
+              "tileset": "TILESET_MART",
+              "generation": 2
+            },
+            "collisionQuery": {
+              "allMatchNative": true,
+              "cells": 96,
+              "classes": 5
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          },
+          {
+            "label": "first-normal-door-CHERRYGROVE_POKECENTER1_F",
+            "map": "CHERRYGROVE_POKECENTER_1F",
+            "camera": "first",
+            "x": 3,
+            "y": 7,
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "environmentId": 3,
+              "width": 5,
+              "height": 4,
+              "outdoor": false,
+              "environment": "INDOOR",
+              "tileset": "TILESET_POKECENTER",
+              "generation": 2
+            },
+            "collisionQuery": {
+              "allMatchNative": true,
+              "cells": 80,
+              "classes": 6
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          },
+          {
+            "label": "third-normal-door-CHERRYGROVE_POKECENTER1_F",
+            "map": "CHERRYGROVE_POKECENTER_1F",
+            "camera": "third",
+            "x": 3,
+            "y": 7,
+            "overlayDepth": 0,
+            "mapMetadata": {
+              "environmentId": 3,
+              "width": 5,
+              "height": 4,
+              "outdoor": false,
+              "environment": "INDOOR",
+              "tileset": "TILESET_POKECENTER",
+              "generation": 2
+            },
+            "collisionQuery": {
+              "allMatchNative": true,
+              "cells": 80,
+              "classes": 6
+            },
+            "rendererInstalled": false,
+            "rendererError": "Generated mod VoxelScene patch exceeds Lua 60-upvalue limit"
+          }
+        ],
+        "normalTransitions": [
+          {
+            "camera": "first",
+            "to": "CHERRYGROVE_MART",
+            "normalMovement": true,
+            "from": "CHERRYGROVE_CITY"
+          },
+          {
+            "camera": "first",
+            "to": "CHERRYGROVE_CITY",
+            "normalMovement": true,
+            "from": "CHERRYGROVE_MART"
+          },
+          {
+            "camera": "third",
+            "to": "CHERRYGROVE_MART",
+            "normalMovement": true,
+            "from": "CHERRYGROVE_CITY"
+          },
+          {
+            "camera": "third",
+            "to": "CHERRYGROVE_CITY",
+            "normalMovement": true,
+            "from": "CHERRYGROVE_MART"
+          },
+          {
+            "camera": "first",
+            "to": "CHERRYGROVE_POKECENTER_1F",
+            "normalMovement": true,
+            "from": "CHERRYGROVE_CITY"
+          },
+          {
+            "camera": "first",
+            "to": "CHERRYGROVE_CITY",
+            "normalMovement": true,
+            "from": "CHERRYGROVE_POKECENTER_1F"
+          },
+          {
+            "camera": "third",
+            "to": "CHERRYGROVE_POKECENTER_1F",
+            "normalMovement": true,
+            "from": "CHERRYGROVE_CITY"
+          },
+          {
+            "camera": "third",
+            "to": "CHERRYGROVE_CITY",
+            "normalMovement": true,
+            "from": "CHERRYGROVE_POKECENTER_1F"
+          }
+        ],
+        "nativeMenuAfterEveryRoomEntry": true,
+        "freshOwnedWindowProofs": {
+          "initial-map": {
+            "freshFrameStamp": 746,
+            "minimumFrameStamp": 738,
+            "centralColours": 59668,
+            "colourProfile": "gba",
+            "minimumColours": 16,
+            "screenshot": "os-window-initial-map.png",
+            "attempts": 1
+          },
+          "second-map": {
+            "freshFrameStamp": 1718,
+            "minimumFrameStamp": 1712,
+            "centralColours": 64673,
+            "colourProfile": "gba",
+            "minimumColours": 16,
+            "screenshot": "os-window-second-map.png",
+            "attempts": 1
+          },
+          "resized": {
+            "freshFrameStamp": 2801,
+            "minimumFrameStamp": 2796,
+            "centralColours": 74796,
+            "colourProfile": "gba",
+            "minimumColours": 16,
+            "screenshot": "os-window-resized.png",
+            "attempts": 1
+          },
+          "map-return": {
+            "freshFrameStamp": 3802,
+            "minimumFrameStamp": 3798,
+            "centralColours": 73070,
+            "colourProfile": "gba",
+            "minimumColours": 16,
+            "screenshot": "os-window-map-return.png",
+            "attempts": 1
+          }
+        },
+        "unmodifiedModFiles": 27329,
+        "testModFolderRemoved": true,
+        "teleportedTownSetup": true
+      }
+    }
+  ],
+  "openAcceptance": [
+    "continuous camera-relative movement and native landing handoffs",
+    "full generated renderer exceeds Lua 60-upvalue limit; supplied fallback is in use",
+    "complete First/Third Person avatar presentation",
+    "Center black-and-white object",
+    "all interiors, battle transitions, complete story and long sessions",
+    "Windows GPU execution"
+  ],
+  "sourceFilesSha256": {
+    "src/core/Data.lua": "c6d603bfe2b6b97a92a3e009d9bf08ae399fe7cfb9872cdf9507749e78691ab1",
+    "src/core/Game.lua": "fc1cbd99f4d5275f880a7eb05b4b0600d0704cca2bf682d1a9cbf37fe442e2e6",
+    "src/core/MapIdentity.lua": "e20e35e0f40af57fed5e5b24ac57f123136e132d4dc536488dc9fcf7bcb53df5",
+    "src/script/Gen2Commands.lua": "0c51d6ded6b930d8d9a5bbe7a3a58b4b8c6ab19d2a7c96760923c00d3d6e5066",
+    "src/world/FieldDefaults.lua": "7220e88cc899583de442e18135ecdf32968537a3f263086828121b5c83cc76c9",
+    "src/world/OverworldController.lua": "26a15d4b47c45f0814772abdb03a03917f2309b53826acea3134e00dbc4fba91",
+    "src/world/Warp.lua": "fa4beec19fbd486b9edb324c88a6b21c153f1795b3d4c901d344ed8e18c29d2b",
+    "src/world/WorldAPI.lua": "fe17bade3efc87ee3c7dcfc228a6516261ad83d9b14a4fcd1ada28bdf6258be2",
+    "src/world/WorldActions.lua": "62cac2beb5f618e684daeb62f1c0f4f3ed3de004a72d0de3ea8c038bfac15a5b",
+    "tests/engine/gen2_alias_world_reads.lua": "c36fece144aed40060e370e1cd5c093a3c8424c7f3ef416f72feaecf1d9e3ab1",
+    "tests/engine/gen2_map_names.lua": "ccb3675b0167e86885384af187a5d4f3abc3f81b3cbf961a5f6b6fa6bc216a43",
+    "tests/engine/gen2_native_map_state.lua": "36c0655ef718c256aff0fbefa4f600ba37bea9fb1aabc61873347b0a2c54b507",
+    "tests/engine/world_actions_api.lua": "1926d64fbc242d4c64d2ad3e91ca1471faf6fca18ab60b81b60b45fe50ddd543"
+  }
+}

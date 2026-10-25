@@ -150,6 +150,9 @@ function love.conf(t)
     if osName == "Windows" or osName == "Linux" then
       local backend = os.getenv("POKEPORT_GRAPHICS_BACKEND")
       t.graphics.renderers = {backend == "vulkan" and "vulkan" or "opengl"}
+    elseif osName == "OS X" then
+      local backend = os.getenv("POKEPORT_GRAPHICS_BACKEND")
+      if backend == "opengl" or backend == "metal" then t.graphics.renderers = {backend} end
     end
   end
 end

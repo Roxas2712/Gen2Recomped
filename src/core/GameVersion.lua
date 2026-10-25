@@ -897,6 +897,34 @@ GameVersion.VERSIONS = {
     hasRunning = true,
   },
 
+  ruby = {
+    id = "ruby", generation = 3, label = "Ruby", displayName = "Pokemon Ruby",
+    launcherName = "Ruby", sha1 = "f28b6ffc97847e94a6c21a63cacf633ee5c8df1e",
+    manifest = "tools/rom_manifest_ruby.json", cachePrefix = "ruby/", saveSuffix = "_ruby",
+    importable = true, experimental = true, experimentalLabel = "ALPHA", hasRunning = true,
+  },
+  sapphire = {
+    id = "sapphire", generation = 3, label = "Sapphire", displayName = "Pokemon Sapphire",
+    launcherName = "Sapphire", sha1 = "3ccbbd45f8553c36463f13b938e833f652b793e4",
+    manifest = "tools/rom_manifest_sapphire.json", cachePrefix = "sapphire/", saveSuffix = "_sapphire",
+    importable = true, experimental = true, experimentalLabel = "ALPHA", hasRunning = true,
+  },
+  leafgreen = {
+    id = "leafgreen",
+    generation = 3,
+    label = "LeafGreen",
+    displayName = "Pokemon LeafGreen",
+    launcherName = "LeafGreen",
+    sha1 = "574fa542ffebb14be69902d1d36f1ec0a4afd71e",
+    manifest = "tools/rom_manifest_leafgreen.json",
+    cachePrefix = "leafgreen/",
+    saveSuffix = "_leafgreen",
+    importable = true,
+    experimental = true,
+    experimentalLabel = "ALPHA",
+    hasRunning = true,
+  },
+
   emerald = {
     id = "emerald",
     generation = 3,
@@ -1075,7 +1103,7 @@ GameVersion.VERSIONS = {
 -- put a Game Boy Advance game behind two Game Boy Color hacks, and broke the
 -- ordering rule tests/polished_crystal_registration_test.lua asserts.
 GameVersion.ORDER = { "red", "blue", "yellow", "gold", "silver", "crystal",
-                      "firered", "emerald", "platinum",
+                      "firered", "leafgreen", "ruby", "sapphire", "emerald", "platinum",
                       "heartgold", "soulsilver", "black", "white",
                       "prism", "polishedcrystal" }
 
@@ -1090,17 +1118,17 @@ function GameVersion.get()
   return GameVersion.current
 end
 
-function GameVersion.generation(id)
-  local info = GameVersion.info(id)
+function GameVersion.generation(id, versionId)
+  local info = GameVersion.info(id, versionId)
   return info and info.generation or 1
 end
 
-function GameVersion.isGen1(id)
-  return GameVersion.generation(id) == 1
+function GameVersion.isGen1(id, versionId)
+  return GameVersion.generation(id, versionId) == 1
 end
 
-function GameVersion.isGen2(id)
-  return GameVersion.generation(id) == 2
+function GameVersion.isGen2(id, versionId)
+  return GameVersion.generation(id, versionId) == 2
 end
 
 -- The third arm.  Worth stating plainly because ~135 call sites across the
@@ -1108,8 +1136,15 @@ end
 -- -- so a Gen 3 game currently renders, walks and battles as Gen 1 wherever
 -- one of those has not been widened.  This predicate is what those sites get
 -- widened WITH; it is not, on its own, support.
-function GameVersion.isGen3(id)
-  return GameVersion.generation(id) == 3
+function GameVersion.isGen3(id, versionId)
+  return GameVersion.generation(id, versionId) == 3
+end
+
+-- The paired Kanto games share field/script/UI contracts, while their ROM
+-- addresses, art, encounters, caches and saves remain cartridge-specific.
+function GameVersion.isFRLG(id)
+  id = id or GameVersion.get()
+  return id == "firered" or id == "leafgreen"
 end
 
 -- The fourth arm.  Same caveat the Gen 3 one carries and then some: a
@@ -1118,18 +1153,18 @@ end
 -- a flat ROM, two screens instead of one, and a 3D field.  This exists so the
 -- Gen 4 work has a gate to hang itself on without touching the branches the
 -- other three generations take.
-function GameVersion.isGen4(id)
-  return GameVersion.generation(id) == 4
+function GameVersion.isGen4(id, versionId)
+  return GameVersion.generation(id, versionId) == 4
 end
 
 -- The fifth, Black and White. Same caveat again: a predicate, not support.
-function GameVersion.isGen5(id)
-  return GameVersion.generation(id) == 5
+function GameVersion.isGen5(id, versionId)
+  return GameVersion.generation(id, versionId) == 5
 end
 
 -- A Nintendo DS cartridge: a filesystem, two screens, a 3D field.
-function GameVersion.isNds(id)
-  return GameVersion.generation(id) >= 4
+function GameVersion.isNds(id, versionId)
+  return GameVersion.generation(id, versionId) >= 4
 end
 
 -- TWO SCREENS: `GameVersion.isDualScreen` below. src/ui/SecondScreen.lua
@@ -1137,8 +1172,8 @@ end
 -- layout) wherever it is true: Platinum, HeartGold, SoulSilver, Black, White.
 
 -- The game's family within its generation ("platinum", "hgss", "bw").
-function GameVersion.family(id)
-  local info = GameVersion.info(id)
+function GameVersion.family(id, versionId)
+  local info = GameVersion.info(id, versionId)
   return info and (info.family or info.id) or nil
 end
 
@@ -1174,8 +1209,8 @@ end
 -- Does this cartridge have a second screen?  Asked of the VERSION rather than
 -- computed from the generation, because "Gen 4" and "has two screens" are not
 -- the same claim and the field code should say which one it means.
-function GameVersion.isDualScreen(id)
-  local info = GameVersion.info(id)
+function GameVersion.isDualScreen(id, versionId)
+  local info = GameVersion.info(id, versionId)
   return (info and info.dualScreen) == true
 end
 
@@ -1197,21 +1232,25 @@ end
 
 -- Crystal shares the Gen2 engine with Gold/Silver but not its script opcode
 -- table, so anything that decodes ROM bytecode has to branch on this.
-function GameVersion.isCrystal(id)
+function GameVersion.isCrystal(id, versionId)
+  if id == GameVersion then id = versionId end
   return (id or GameVersion.current) == "crystal"
 end
 
--- Metadata for a version id, defaulting to the active one.
-function GameVersion.info(id)
+-- Metadata queries accept both dot and method calls. A module receiver is
+-- not a cartridge id: treating it as one made generation() silently report
+-- Gen1 when a native mod queried the active Crystal host with colon syntax.
+function GameVersion.info(id, versionId)
+  if id == GameVersion then id = versionId end
   return GameVersion.VERSIONS[id or GameVersion.current]
 end
 
-function GameVersion.saveSuffix(id)
-  return GameVersion.info(id).saveSuffix
+function GameVersion.saveSuffix(id, versionId)
+  return GameVersion.info(id, versionId).saveSuffix
 end
 
-function GameVersion.cachePrefix(id)
-  return GameVersion.info(id).cachePrefix
+function GameVersion.cachePrefix(id, versionId)
+  return GameVersion.info(id, versionId).cachePrefix
 end
 
 -- Does this version accept that ROM hash?  Most versions have exactly one

@@ -1,0 +1,512 @@
+{
+  "schema": 1,
+  "sourceCommit": "09d3c78f0abc5c9f81ad51940bc4e7661521a7cf",
+  "srcTree": "e423104b4870663470f164be3ae8ff70bee978e9",
+  "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+  "engineVersion": "0.8.45",
+  "payloadSha256": "f1364990808f462b5225a2be26564eea88aa565e91065045d92a14e61d6a34c3",
+  "game": "crystal",
+  "vsyncDuringQARuns": 0,
+  "defaultPresentationAccepted": false,
+  "metalWindowAccepted": false,
+  "windowsHardwareExecuted": false,
+  "fullMovementAccepted": false,
+  "fullParity": false,
+  "protectedPlayerProfilesUsed": false,
+  "romsOrModsIncluded": false,
+  "cpu": {
+    "engineSuites": 258,
+    "sdkSuites": 3,
+    "B30Passed": true,
+    "countChecks": 313,
+    "phoneServiceChecks": 3127,
+    "quickLogSha256": "7ecd717fb46aaff3ef128a307a2e8edf9750d4d52d2a66f88c8fc5f21b3ee553",
+    "independentUpstream204": {
+      "head": "ba87267e92b2743d5dd2bf892f41412671e46b2b",
+      "countChecks": 313,
+      "coordinateChecks": 264,
+      "warpArrivalChecks": 119,
+      "trainerChecks": 64,
+      "stateChecks": 110,
+      "phaseChecks": 21,
+      "menuChecks": 29
+    },
+    "independentUpstream205": {
+      "head": "82ae9520e013e62cffa760528ad569dbcb971de2",
+      "phoneServiceChecks": 3127,
+      "mapMetadataChecks": 256
+    }
+  },
+  "repelNegativeControl": {
+    "beforeSource": "6ad524691e818771c100a4df8a0b76529d346b73",
+    "repelBefore": 1,
+    "repelAfter": 0,
+    "before": {
+      "daycareSteps": 1,
+      "eggByte": 128,
+      "poisonCounter": 0,
+      "hp": 28
+    },
+    "after": {
+      "daycareSteps": 0,
+      "eggByte": 127,
+      "poisonCounter": 3,
+      "hp": 29
+    },
+    "setup": {
+      "daycareSteps": 0,
+      "eggByte": 127,
+      "poisonCounter": 3,
+      "hp": 29
+    }
+  },
+  "actualImport": {
+    "game": "crystal",
+    "cartridgeRevision": "UE Rev0",
+    "mapHeaders": 388,
+    "phoneServiceAvailable": 289,
+    "phoneServiceUnavailable": 99,
+    "cacheRevision": "gen2-field-encounters-v9:",
+    "actualNativeImporterCompleted": true,
+    "producerSource": "d319d71da1f20fd873a10b396d9b909663babd72",
+    "consumerSource": "09d3c78f0abc5c9f81ad51940bc4e7661521a7cf",
+    "importerAndPhonePredicateIdenticalBetweenProducerAndConsumer": true,
+    "taskOwnedCacheCopiedByteForByte": true,
+    "suppliedCartridgeUnchanged": true
+  },
+  "packageVerification": {
+    "sourceCommit": "09d3c78f0abc5c9f81ad51940bc4e7661521a7cf",
+    "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+    "payloadSha256": "f1364990808f462b5225a2be26564eea88aa565e91065045d92a14e61d6a34c3",
+    "identicalPlatformPayloads": true,
+    "sourceFilesCompared": 1029,
+    "allPackagedSrcFilesMatchCommittedSourceExceptDeclaredEngineStamp": true,
+    "previewEntryPointsMatchSource": true,
+    "windowsPE64AndEmbeddedPayload": true,
+    "windowsAMD64DLLs": 11,
+    "macArchiveExtractedPayloadAndStrictSignature": true,
+    "windowsHardwareExecuted": false,
+    "published": false
+  },
+  "unmodifiedMod": {
+    "version": "3.1.2-omega.1.7",
+    "filesVerified": 27329,
+    "manifestSha256": "080b39b6bc1b6e1c557432eb911f46aeeeaaf52c829a4688b5bce9928aaf5374"
+  },
+  "openGL": {
+    "nativeWithoutMods": {
+      "initialMap": "PLAYERS_HOUSE_2F",
+      "finalMap": "NEW_BARK_TOWN",
+      "transitions": [
+        {
+          "to": "PLAYERS_HOUSE_1F",
+          "normalMovement": true,
+          "from": "PLAYERS_HOUSE_2F"
+        },
+        {
+          "to": "NEW_BARK_TOWN",
+          "normalMovement": true,
+          "from": "PLAYERS_HOUSE_1F"
+        }
+      ],
+      "countPhaseCalls": 14,
+      "counterAdvances": 14,
+      "countPhaseStops": 0,
+      "coordinateScripts": 1,
+      "coordinateDispatches": [
+        {
+          "y": 4,
+          "x": 9,
+          "map": "PLAYERS_HOUSE_1F",
+          "serial": 13
+        }
+      ],
+      "finalMovementState": "normal",
+      "nativeMenuInputPassed": true,
+      "freshOSProofs": {
+        "initial-map": {
+          "freshFrameStamp": 28,
+          "minimumFrameStamp": 1,
+          "centralColours": 16,
+          "colourProfile": "gbc",
+          "minimumColours": 4,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        }
+      }
+    },
+    "homeWithUnmodifiedMod": {
+      "scope": "cold New Game, native collision-valid stairs both directions, room menus, Mother entry scene and normal house exit; home First and Third Person",
+      "normalDoors": [
+        {
+          "to": "PLAYERS_HOUSE_1F",
+          "from": "PLAYERS_HOUSE_2F",
+          "camera": "first",
+          "normalMovement": true
+        },
+        {
+          "to": "PLAYERS_HOUSE_2F",
+          "from": "PLAYERS_HOUSE_1F",
+          "camera": "third",
+          "normalMovement": true
+        },
+        {
+          "to": "PLAYERS_HOUSE_1F",
+          "from": "PLAYERS_HOUSE_2F",
+          "camera": "third",
+          "normalMovement": true
+        },
+        {
+          "to": "NEW_BARK_TOWN",
+          "from": "PLAYERS_HOUSE_1F",
+          "camera": "third",
+          "normalMovement": true
+        }
+      ],
+      "countPhaseCalls": 16,
+      "counterAdvances": 16,
+      "countPhaseStops": 0,
+      "coordinateScripts": 1,
+      "coordinateDispatches": [
+        {
+          "x": 9,
+          "serial": 19,
+          "y": 4,
+          "map": "PLAYERS_HOUSE_1F"
+        }
+      ],
+      "nativeMenuInputPassed": true,
+      "freshOSProofs": {
+        "initial-map": {
+          "freshFrameStamp": 1542,
+          "minimumFrameStamp": 1537,
+          "centralColours": 1446,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 2044,
+          "minimumFrameStamp": 2039,
+          "centralColours": 15004,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-second-map.png",
+          "attempts": 1
+        },
+        "resized": {
+          "freshFrameStamp": 2205,
+          "minimumFrameStamp": 2200,
+          "centralColours": 21218,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-resized.png",
+          "attempts": 1
+        },
+        "map-return": {
+          "freshFrameStamp": 2598,
+          "minimumFrameStamp": 2593,
+          "centralColours": 4617,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-map-return.png",
+          "attempts": 1
+        }
+      },
+      "phases": [
+        {
+          "phoneService": true,
+          "map": "PLAYERS_HOUSE_2F",
+          "overlayDepth": 0,
+          "label": "cold-bedroom-first",
+          "rendererInstalled": false,
+          "movementState": "normal",
+          "camera": "first",
+          "mapPaletteBits": 1
+        },
+        {
+          "phoneService": true,
+          "map": "PLAYERS_HOUSE_1F",
+          "overlayDepth": 0,
+          "label": "normal-downstairs-first",
+          "rendererInstalled": false,
+          "movementState": "normal",
+          "camera": "first",
+          "mapPaletteBits": 1
+        },
+        {
+          "phoneService": true,
+          "map": "PLAYERS_HOUSE_1F",
+          "overlayDepth": 0,
+          "label": "normal-downstairs-third",
+          "rendererInstalled": false,
+          "movementState": "normal",
+          "camera": "third",
+          "mapPaletteBits": 1
+        },
+        {
+          "phoneService": true,
+          "map": "PLAYERS_HOUSE_2F",
+          "overlayDepth": 0,
+          "label": "normal-upstairs-third",
+          "rendererInstalled": false,
+          "movementState": "normal",
+          "camera": "third",
+          "mapPaletteBits": 1
+        },
+        {
+          "phoneService": true,
+          "map": "NEW_BARK_TOWN",
+          "overlayDepth": 0,
+          "label": "normal-house-exit-third",
+          "rendererInstalled": false,
+          "movementState": "normal",
+          "camera": "third",
+          "mapPaletteBits": 0
+        },
+        {
+          "phoneService": true,
+          "map": "NEW_BARK_TOWN",
+          "overlayDepth": 0,
+          "label": "normal-house-exit-first",
+          "rendererInstalled": false,
+          "movementState": "normal",
+          "camera": "first",
+          "mapPaletteBits": 0
+        }
+      ],
+      "copiedTestModRemoved": true
+    },
+    "martAndCenterWithUnmodifiedMod": {
+      "scope": "teleported town setup, collision-valid native movement through four room entry/exit pairs and native menu, both camera modes",
+      "normalDoors": [
+        {
+          "to": "CHERRYGROVE_MART",
+          "from": "CHERRYGROVE_CITY",
+          "camera": "first",
+          "normalMovement": true
+        },
+        {
+          "to": "CHERRYGROVE_CITY",
+          "from": "CHERRYGROVE_MART",
+          "camera": "first",
+          "normalMovement": true
+        },
+        {
+          "to": "CHERRYGROVE_MART",
+          "from": "CHERRYGROVE_CITY",
+          "camera": "third",
+          "normalMovement": true
+        },
+        {
+          "to": "CHERRYGROVE_CITY",
+          "from": "CHERRYGROVE_MART",
+          "camera": "third",
+          "normalMovement": true
+        },
+        {
+          "to": "CHERRYGROVE_POKECENTER_1F",
+          "from": "CHERRYGROVE_CITY",
+          "camera": "first",
+          "normalMovement": true
+        },
+        {
+          "to": "CHERRYGROVE_CITY",
+          "from": "CHERRYGROVE_POKECENTER_1F",
+          "camera": "first",
+          "normalMovement": true
+        },
+        {
+          "to": "CHERRYGROVE_POKECENTER_1F",
+          "from": "CHERRYGROVE_CITY",
+          "camera": "third",
+          "normalMovement": true
+        },
+        {
+          "to": "CHERRYGROVE_CITY",
+          "from": "CHERRYGROVE_POKECENTER_1F",
+          "camera": "third",
+          "normalMovement": true
+        }
+      ],
+      "countPhaseCalls": 48,
+      "counterAdvances": 48,
+      "countPhaseStops": 0,
+      "coordinateScripts": 0,
+      "coordinateDispatches": [],
+      "nativeMenuInputPassed": true,
+      "freshOSProofs": {
+        "initial-map": {
+          "freshFrameStamp": 742,
+          "minimumFrameStamp": 738,
+          "centralColours": 59668,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 1701,
+          "minimumFrameStamp": 1698,
+          "centralColours": 64675,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-second-map.png",
+          "attempts": 1
+        },
+        "resized": {
+          "freshFrameStamp": 2783,
+          "minimumFrameStamp": 2775,
+          "centralColours": 75113,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-resized.png",
+          "attempts": 1
+        },
+        "map-return": {
+          "freshFrameStamp": 3779,
+          "minimumFrameStamp": 3776,
+          "centralColours": 73070,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-map-return.png",
+          "attempts": 1
+        }
+      },
+      "phases": [
+        {
+          "overlayDepth": 0,
+          "rendererInstalled": false,
+          "camera": "first",
+          "mapPaletteBits": 1,
+          "label": "first-normal-door-CHERRYGROVE_MART",
+          "movementState": "normal",
+          "phoneService": true,
+          "map": "CHERRYGROVE_MART"
+        },
+        {
+          "overlayDepth": 0,
+          "rendererInstalled": false,
+          "camera": "third",
+          "mapPaletteBits": 1,
+          "label": "third-normal-door-CHERRYGROVE_MART",
+          "movementState": "normal",
+          "phoneService": true,
+          "map": "CHERRYGROVE_MART"
+        },
+        {
+          "overlayDepth": 0,
+          "rendererInstalled": false,
+          "camera": "first",
+          "mapPaletteBits": 1,
+          "label": "first-normal-door-CHERRYGROVE_POKECENTER1_F",
+          "movementState": "normal",
+          "phoneService": true,
+          "map": "CHERRYGROVE_POKECENTER_1F"
+        },
+        {
+          "overlayDepth": 0,
+          "rendererInstalled": false,
+          "camera": "third",
+          "mapPaletteBits": 1,
+          "label": "third-normal-door-CHERRYGROVE_POKECENTER1_F",
+          "movementState": "normal",
+          "phoneService": true,
+          "map": "CHERRYGROVE_POKECENTER_1F"
+        }
+      ],
+      "copiedTestModRemoved": true
+    },
+    "actualImportedBikeShopCall": {
+      "initialMap": "PLAYERS_HOUSE_2F",
+      "finalMap": "NEW_BARK_TOWN",
+      "transitions": [
+        {
+          "to": "PLAYERS_HOUSE_1F",
+          "normalMovement": true,
+          "from": "PLAYERS_HOUSE_2F"
+        },
+        {
+          "to": "NEW_BARK_TOWN",
+          "normalMovement": true,
+          "from": "PLAYERS_HOUSE_1F"
+        }
+      ],
+      "countPhaseCalls": 16,
+      "counterAdvances": 15,
+      "countPhaseStops": 1,
+      "coordinateScripts": 1,
+      "coordinateDispatches": [
+        {
+          "serial": 13,
+          "x": 9,
+          "map": "PLAYERS_HOUSE_1F",
+          "y": 4
+        }
+      ],
+      "bikeCall": {
+        "setup": "native state adoption and restored bike counter 1023; actual input for both following footfalls",
+        "realPhoneTextVisible": true,
+        "nativeCleanupPassed": true,
+        "threshold": 1024,
+        "caller": 2,
+        "returnedToWorld": true,
+        "scriptRows": 4
+      },
+      "finalMovementState": "bike",
+      "nativeMenuInputPassed": true,
+      "freshOSProofs": {
+        "initial-map": {
+          "freshFrameStamp": 29,
+          "minimumFrameStamp": 1,
+          "centralColours": 14,
+          "colourProfile": "gbc",
+          "minimumColours": 4,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 24,
+          "minimumFrameStamp": 1,
+          "centralColours": 13,
+          "colourProfile": "gbc",
+          "minimumColours": 4,
+          "screenshot": "os-window-second-map.png",
+          "attempts": 1
+        }
+      },
+      "proofPhaseMeaning": {
+        "initial-map": "real bike-shop call text",
+        "second-map": "native world after call and menu close"
+      }
+    }
+  },
+  "ci": {
+    "sourceCommit": "09d3c78f0abc5c9f81ad51940bc4e7661521a7cf",
+    "checks": 63,
+    "passed": 63,
+    "transportMacOSFirstAttempt": "timeout after 45 seconds without harness output; cause unresolved",
+    "transportMacOSSecondAttempt": "passed",
+    "transportRun": "https://github.com/Roxas2712/Gen2Recomped/actions/runs/40163022400",
+    "localLove115LoopbackPassed": true,
+    "localLove115Checks": 784
+  },
+  "pushedUpstreamPRs": {
+    "openOwnPRs": 132,
+    "allHeadsPushed": true,
+    "mismatches": 0
+  },
+  "publishedPreview": {
+    "sourceCommit": "ae8359c0369e88b5fd553c39d16938926e7e3aa0",
+    "unchanged": true,
+    "url": "https://github.com/Roxas2712/Gen2Recomped/releases/tag/native-preview-20261024.1"
+  },
+  "remainingAcceptance": [
+    "Native FieldMoves, terrain permissions and special-movement handoffs; full continuous camera movement remains uninstalled.",
+    "Broader encounter eligibility, cooldowns, battles and return, full map/story/save/long-session regression.",
+    "Supplied generated renderer exceeds 60 upvalues and falls back; complete renderer installation is not established.",
+    "Full actor and optional PC/mail/box/follower/HP/fishing/capture interfaces.",
+    "Current default presentation, Metal window acceptance and Windows hardware execution."
+  ]
+}

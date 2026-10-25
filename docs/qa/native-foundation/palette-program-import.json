@@ -1,0 +1,50 @@
+{
+  "cases": [
+    {
+      "consumerApis": [
+        1,
+        2
+      ],
+      "game": "firered",
+      "metatilesChecked": 47,
+      "pair": "TILESET_02D4A94_02D4AAC",
+      "paletteMetatiles": 0,
+      "pixelChecks": 12032,
+      "sha1": "41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc",
+      "summary": {
+        "animated": 0,
+        "static": 63,
+        "unavailable": 0,
+        "version": 1
+      },
+      "visiblePaletteChange": false
+    },
+    {
+      "consumerApis": [
+        1,
+        2
+      ],
+      "game": "emerald",
+      "metatilesChecked": 119,
+      "pair": "TILESET_03DF884_03DFCC4",
+      "paletteMetatiles": 95,
+      "pixelChecks": 30464,
+      "sha1": "f3ae088181bf583e55daf962a92bb46f4f1d07b7",
+      "summary": {
+        "animated": 1,
+        "static": 72,
+        "unavailable": 0,
+        "version": 1
+      },
+      "visiblePaletteChange": true
+    }
+  ],
+  "clock": "controlled native terrain ticks 0 through 31",
+  "date": "2026-10-24",
+  "gpuTested": false,
+  "installedCachesOrSavesWritten": false,
+  "scope": "Read-only real retail ROM import and CPU pixel verification",
+  "sourceRomHashesUnchangedAfterTest": true,
+  "totalRgbaComparisons": 42496,
+  "worldIdentity": "ROM-free fixture; no running game session"
+}

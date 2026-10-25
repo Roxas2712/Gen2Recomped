@@ -1,0 +1,375 @@
+{
+  "schema": 1,
+  "privateReferenceSource": "aa7e6061232c4c08ee78650c5cc79a4734437748",
+  "referenceModVersion": "1.0.9",
+  "privateEngineVersion": "0.3.94",
+  "privateEngineBasedOn": "37a49b31f458d51ea9e00b90f2a247272ad09cb8",
+  "privateRuntimeSha256": "0c49ac0ae3cfcb33bcf1deaa4f0e2eddb2808e956077ee6c5a48030f6f137a52",
+  "ownFreshImports": [
+    "firered",
+    "emerald"
+  ],
+  "smokeLuaFiles": 2211,
+  "runs": [
+    {
+      "edition": "firered",
+      "stage": "write",
+      "passed": true,
+      "renderer": "Metal",
+      "vsync": 0,
+      "nativeModulesObserved": 570,
+      "nativeHookCalls": {
+        "world.follower.spawn": 142,
+        "ui.start_menu.items": 1,
+        "input.step": 631,
+        "script.command": 16,
+        "render.hud": 1338,
+        "core.update": 1195
+      },
+      "screens": [
+        {
+          "phase": "field",
+          "name": "world",
+          "rendererInstalled": true,
+          "battleActive": false
+        },
+        {
+          "battleModel": {
+            "playerHp": 69,
+            "enemyHp": 18
+          },
+          "phase": "field",
+          "name": "paper-battle",
+          "rendererInstalled": true,
+          "battleActive": true
+        },
+        {
+          "battleModel": {
+            "playerHp": 69,
+            "enemyHp": 18
+          },
+          "phase": "field",
+          "name": "native-battle",
+          "rendererInstalled": true,
+          "battleActive": true
+        },
+        {
+          "battleModel": {
+            "playerHp": 69,
+            "enemyHp": 18
+          },
+          "phase": "field",
+          "name": "manga-moves",
+          "rendererInstalled": true,
+          "battleActive": true
+        }
+      ],
+      "ownedWindowProofs": {
+        "initial-map": {
+          "freshFrameStamp": 16,
+          "minimumFrameStamp": 1,
+          "centralColours": 12254,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 16,
+          "minimumFrameStamp": 1,
+          "centralColours": 9337,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-second-map.png",
+          "attempts": 1
+        },
+        "resized": {
+          "freshFrameStamp": 31,
+          "minimumFrameStamp": 1,
+          "centralColours": 47,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-resized.png",
+          "attempts": 1
+        },
+        "map-return": {
+          "freshFrameStamp": 12,
+          "minimumFrameStamp": 1,
+          "centralColours": 28205,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-map-return.png",
+          "attempts": 1
+        }
+      },
+      "imageSha256": {
+        "initial-map": "ce05aac5f2ec306506d6a8f975fd1ab6f9868116f3d2ac448c54b786120fea5a",
+        "second-map": "ffa4fb58be27a5876c6ec966c1de824f15932b74379c6efca4aa7620e6a6b895",
+        "resized": "db6036ee98cc7a7d3a2c6c58a11f1ebf9835ff6a57f8deb12453ff0d8cc68461",
+        "map-return": "ac76f43bb2fa751bd063cc60f9803508548b42a577affea9c676ec84df1ac1e1"
+      }
+    },
+    {
+      "edition": "firered",
+      "stage": "read",
+      "passed": true,
+      "renderer": "Metal",
+      "vsync": 0,
+      "nativeModulesObserved": 563,
+      "nativeHookCalls": {
+        "world.follower.spawn": 24,
+        "input.step": 331,
+        "core.update": 577,
+        "script.command": 17,
+        "render.hud": 437
+      },
+      "screens": [
+        {
+          "battleActive": false,
+          "name": "continued-world",
+          "phase": "field",
+          "rendererInstalled": true
+        }
+      ],
+      "ownedWindowProofs": {
+        "initial-map": {
+          "freshFrameStamp": 36,
+          "minimumFrameStamp": 1,
+          "centralColours": 13595,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        }
+      },
+      "imageSha256": {
+        "initial-map": "caee1e60a5806bdecd22ba2dfa5907be49660c4b8953f2400bf5c2a37787cb59"
+      }
+    },
+    {
+      "edition": "emerald",
+      "stage": "write",
+      "passed": true,
+      "renderer": "Metal",
+      "vsync": 0,
+      "nativeModulesObserved": 707,
+      "nativeHookCalls": {
+        "core.update": 1337,
+        "world.follower.spawn": 158,
+        "script.command": 276,
+        "render.hud": 1722,
+        "ui.start_menu.items": 1,
+        "input.step": 668
+      },
+      "screens": [
+        {
+          "battleActive": false,
+          "phase": "field",
+          "name": "world",
+          "rendererInstalled": true
+        },
+        {
+          "battleActive": true,
+          "battleModel": {
+            "enemyHp": 18,
+            "playerHp": 69
+          },
+          "phase": "field",
+          "name": "paper-battle",
+          "rendererInstalled": true
+        },
+        {
+          "battleActive": true,
+          "battleModel": {
+            "enemyHp": 18,
+            "playerHp": 69
+          },
+          "phase": "field",
+          "name": "native-battle",
+          "rendererInstalled": true
+        },
+        {
+          "battleActive": true,
+          "battleModel": {
+            "enemyHp": 18,
+            "playerHp": 69
+          },
+          "phase": "field",
+          "name": "manga-moves",
+          "rendererInstalled": true
+        }
+      ],
+      "ownedWindowProofs": {
+        "initial-map": {
+          "freshFrameStamp": 14,
+          "minimumFrameStamp": 1,
+          "centralColours": 7626,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        },
+        "second-map": {
+          "freshFrameStamp": 46,
+          "minimumFrameStamp": 1,
+          "centralColours": 6173,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-second-map.png",
+          "attempts": 1
+        },
+        "resized": {
+          "freshFrameStamp": 26,
+          "minimumFrameStamp": 1,
+          "centralColours": 49,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-resized.png",
+          "attempts": 1
+        },
+        "map-return": {
+          "freshFrameStamp": 13,
+          "minimumFrameStamp": 1,
+          "centralColours": 19656,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-map-return.png",
+          "attempts": 1
+        }
+      },
+      "imageSha256": {
+        "initial-map": "166f2de77fd6a2562da2103dbd7cc2a2d74bb6a7a1665ff29297df25a8e9ff4c",
+        "second-map": "f9767baa61dcdd006f3ea72c920f056a0da0ab306cec582b57d20f19b152478b",
+        "resized": "2e82173b894a323df413131b730891e80a1b8ed0c698f98a7a5c42e73896c3d3",
+        "map-return": "fb04f0a7bb6639979e2edfb4b88766f3e6dc33b69aa778108dbae9cdd700224b"
+      }
+    },
+    {
+      "edition": "emerald",
+      "stage": "read",
+      "passed": true,
+      "renderer": "Metal",
+      "vsync": 0,
+      "nativeModulesObserved": 685,
+      "nativeHookCalls": {
+        "core.update": 830,
+        "render.hud": 845,
+        "world.follower.spawn": 63,
+        "input.step": 63,
+        "script.command": 31
+      },
+      "screens": [
+        {
+          "phase": "field",
+          "name": "continued-world",
+          "rendererInstalled": true,
+          "battleActive": false
+        }
+      ],
+      "ownedWindowProofs": {
+        "initial-map": {
+          "freshFrameStamp": 9,
+          "minimumFrameStamp": 1,
+          "centralColours": 8609,
+          "colourProfile": "gba",
+          "minimumColours": 16,
+          "screenshot": "os-window-initial-map.png",
+          "attempts": 1
+        }
+      },
+      "imageSha256": {
+        "initial-map": "85d29d90a52e8d3ea132a5b8854aa9a3ddc3a22b8d8a71fd174b77b512e9b218"
+      }
+    }
+  ],
+  "sourceUnmodified": true,
+  "protectedInstancesUnused": true,
+  "privateAssetsOrSavesIncluded": false,
+  "staticImportInventory": {
+    "nativeModuleNames": 161,
+    "literalHookOrEventNames": 18,
+    "complete": false,
+    "groups": {
+      "Shared core/render/mod APIs": 25,
+      "Native GBA world/scripting/battle": 98,
+      "Native GBA UI": 38
+    }
+  },
+  "actualForkLoader": {
+    "source": "a5b13c65",
+    "fixtureOnly": true,
+    "firstMissingNativeContract": "src.ui.game3.stack",
+    "originalManifestUnchanged": true,
+    "allDownstreamErrorsNotYetEnumerated": true
+  },
+  "scope": [
+    "Original Gen1-based private runtime and actual original mod, never the paused Gen2 compatibility port",
+    "Native test-provided warps and QA party setup; not story progression",
+    "Actual screen/menu input, native script/flag validation, save and continue in separate QA processes",
+    "Paper/native battle view switching preserves real combat HP and PP; separate Manga move-menu data consumer",
+    "Ten fresh actual OS window proofs; proof named resized means native battle, map-return means Manga move menu, not resizing or field return",
+    "Native-module observation includes boot and engine dependencies, not exclusively direct OASC imports",
+    "Snapshot observation and graphics proof add overhead; no FPS/performance acceptance",
+    "Starter fixture also covers native menu open/close, four teleported maps per edition, First/Third/normal in home and Center interiors, unchanged native map signatures and activation/deactivation health of all 26 registered Cards",
+    "Starter fixture runs in its own trusted native host with exactly one PlatformHooks core.update dispatcher; no private production files changed",
+    "Card activation/cleanup is not complete gameplay/visual acceptance of every Card; these camera/room GPU captures have no additional OS proof stamp"
+  ],
+  "preservedSetupFailures": [
+    "Initial Git partial checkout HTTP error; sparse reference checkout recovered and verified clean",
+    "Original zip ditto metadata extraction failed; separate extraction verified all 66 regular files and 36 internal symlinks; original app bundle unsigned",
+    "First import harness assumed fused-app save root; import succeeded in the QA-only LOVE subdirectory, then Emerald imported there",
+    "First observer lazily loaded its own window helper in a mod require environment and was correctly denied ffi; only trusted QA helper scope was corrected",
+    "Initial starter runner incorrectly assumed an assets directory; native Gen1 imports keep the assets under data instead",
+    "The engine-main starter helper attempted ffi in a mod require scope and was denied; starter rerun uses the trusted native test host and no redundant core.update wrapper"
+  ],
+  "starterFixtureChecks": [
+    {
+      "edition": "firered",
+      "passed": true,
+      "defaultActiveCards": 15,
+      "registeredCards": 26,
+      "allCardActivationAndCleanupHealthPassed": true,
+      "actualMenuInputs": true,
+      "nativeMapSignaturesUnchanged": true,
+      "images": {
+        "FR_PALLET_TOWN.png": "a57e74f34572a05e01d03ea9af2647ae9daa5bdae3d1be98711ee5eb7fe8dcb2",
+        "FR_PLAYERS_HOUSE_1F-first.png": "b517321186fd099e209b1023bae74ea28326713433d7f7fac387b7ad0219e51e",
+        "FR_PLAYERS_HOUSE_1F-normal.png": "788bd19386af911d0b5356a78072d8dca0782594592cc0cb73b14f837526ca41",
+        "FR_PLAYERS_HOUSE_1F-third.png": "5c1e241cc7fb8ab9b1ee995a17e25dadc71430db79020429a99c4102ffb989e0",
+        "FR_PLAYERS_HOUSE_1F.png": "897815f25bc84bd9fea112f29b84ce693a62f3e62ef3d8edffed6c1472c28475",
+        "FR_ROUTE_1.png": "fc3b888eae6e78bc9389a2cb2ec13ccb168eb6c4a348c5d2193ba0a016204343",
+        "FR_VIRIDIAN_CITY_POKEMON_CENTER_1F-first.png": "0c9aa9a89cace37a092a87ae081f64fd71560b52ae46f4d70f98149dd62b2b34",
+        "FR_VIRIDIAN_CITY_POKEMON_CENTER_1F-normal.png": "f963a0acb5694c9f70e0ac6c1d3fc1406680747429ca8d387ed65f771860f824",
+        "FR_VIRIDIAN_CITY_POKEMON_CENTER_1F-third.png": "47c2c9a258f2e18b00666c30afdbd1478d5b4d6ab488333d181c19f4186ea40a",
+        "FR_VIRIDIAN_CITY_POKEMON_CENTER_1F.png": "79c844999a4a1d266288fbbf610cb4ba6baf0d601dc6b419dbf4cb3b665cc9ff",
+        "all-cards-enabled.png": "40ca1adb7b92e4f7edfe3941264490dea2d3ca9823ab8411c1e5382e4ad8c9a3",
+        "cards-restored.png": "0c3133e3eb963fec309235dd5c22adb9c49d3cb7613f1ee7d1d9accef11872a5",
+        "starter-quick-menu.png": "34c242f8528283515161639ea70e645f809ba774265611d58b355d53d562789a"
+      }
+    },
+    {
+      "edition": "emerald",
+      "passed": true,
+      "defaultActiveCards": 15,
+      "registeredCards": 26,
+      "allCardActivationAndCleanupHealthPassed": true,
+      "actualMenuInputs": true,
+      "nativeMapSignaturesUnchanged": true,
+      "images": {
+        "EM_LITTLEROOT_TOWN.png": "7fa5d103c901c93ffaa894f18a57f374c6d8903cdf56de9e9529d2063a730416",
+        "EM_LITTLEROOT_TOWN_BRENDANS_HOUSE_1F-first.png": "b6eabb3b04cca5d4fb4e18a1b6d70b868bbefbd3485a07d40b93121fafb0b330",
+        "EM_LITTLEROOT_TOWN_BRENDANS_HOUSE_1F-normal.png": "43b5a43cfb098de647ed7cc801c1f29b0836816089853d63cdb9fafda70b5244",
+        "EM_LITTLEROOT_TOWN_BRENDANS_HOUSE_1F-third.png": "71f68f7b90fabde96a990815c644e8c8461d3fe896ca077cdc432a0728d8fe5f",
+        "EM_LITTLEROOT_TOWN_BRENDANS_HOUSE_1F.png": "7c5f273af6f9e532da23db41471a59b16047e399fb383f60f0442b8d9c43ecfa",
+        "EM_OLDALE_TOWN_POKEMON_CENTER_1F-first.png": "4d3a7a7eab79dcc6f290a889893f6781fee922df5364ff34d122fe0feb61f8ef",
+        "EM_OLDALE_TOWN_POKEMON_CENTER_1F-normal.png": "623f7837de93c6592f9133864b4154ca46b03f0ae13b56ff140d115ad4729101",
+        "EM_OLDALE_TOWN_POKEMON_CENTER_1F-third.png": "8781adfae3c4ee1fff7d934ea17642a69635127ce8c008ac73a378618219bfaf",
+        "EM_OLDALE_TOWN_POKEMON_CENTER_1F.png": "58d2578164020567119fa8c42dc608901ab654866282dd8a5ff2405cd26d9689",
+        "EM_ROUTE101.png": "8de3e80a19227534ee235ee657591069c389e278d7846e0e6373de61fc38fec1",
+        "all-cards-enabled.png": "5ab2b5bae73c7eb08fb3e18277f6d17bd5aa9e14580a88e304d1e48950c9dc6c",
+        "cards-restored.png": "111118a396737a415ee7b6022cefa2cffc185a30abfc5017f50575336a06a9d2",
+        "starter-quick-menu.png": "e05ed8e206dc71bccc2016284b0cb2ca0dfd762a476e4b1bb877fd135b0cb9df"
+      }
+    }
+  ]
+}

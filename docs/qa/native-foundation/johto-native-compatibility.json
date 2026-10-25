@@ -1,0 +1,363 @@
+{
+  "schema": 1,
+  "game": "crystal",
+  "romRevision": 0,
+  "sourceCommit": "cb12d995b2cd51ccc3e19083ae968d386dfe1147",
+  "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+  "engineVersion": "0.8.45",
+  "modVersion": "3.1.2-omega.1.7",
+  "manifestSha256": "080b39b6bc1b6e1c557432eb911f46aeeeaaf52c829a4688b5bce9928aaf5374",
+  "cases": [
+    {
+      "backend": "opengl",
+      "exitCode": 0,
+      "actualVandF6KeysPassed": true,
+      "ownedWindowProofs": 4,
+      "modFilesUnmodified": 27329,
+      "modFolderRemoved": true,
+      "phases": [
+        {
+          "label": "first-outdoors",
+          "map": "NEW_BARK_TOWN",
+          "camera": "first",
+          "overlayDepth": 0,
+          "nativeGridMoved": true,
+          "voxelFrames": 332,
+          "voxelFailures": 0,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": null,
+          "mapMetadata": {
+            "height": 9,
+            "generation": 2,
+            "width": 10,
+            "outdoor": true,
+            "environment": 1,
+            "tileset": "TILESET_JOHTO"
+          },
+          "horizonClass": "trees",
+          "collisionQuery": {
+            "classes": 5,
+            "cells": 360,
+            "allMatchNative": true
+          }
+        },
+        {
+          "label": "third-outdoors",
+          "map": "NEW_BARK_TOWN",
+          "camera": "third",
+          "overlayDepth": 0,
+          "nativeGridMoved": true,
+          "voxelFrames": 494,
+          "voxelFailures": 0,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": null,
+          "mapMetadata": {
+            "height": 9,
+            "generation": 2,
+            "width": 10,
+            "outdoor": true,
+            "environment": 1,
+            "tileset": "TILESET_JOHTO"
+          },
+          "horizonClass": "trees",
+          "collisionQuery": {
+            "classes": 5,
+            "cells": 360,
+            "allMatchNative": true
+          }
+        },
+        {
+          "label": "third-native-menu",
+          "map": "NEW_BARK_TOWN",
+          "camera": "third",
+          "overlayDepth": 1,
+          "nativeGridMoved": null,
+          "voxelFrames": 535,
+          "voxelFailures": 0,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": null,
+          "mapMetadata": {
+            "height": 9,
+            "generation": 2,
+            "width": 10,
+            "outdoor": true,
+            "environment": 1,
+            "tileset": "TILESET_JOHTO"
+          },
+          "horizonClass": "trees",
+          "collisionQuery": {
+            "classes": 5,
+            "cells": 360,
+            "allMatchNative": true
+          }
+        },
+        {
+          "label": "first-interior",
+          "map": "PLAYERS_HOUSE1_F",
+          "camera": "first",
+          "overlayDepth": 0,
+          "nativeGridMoved": null,
+          "voxelFrames": 854,
+          "voxelFailures": 0,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": false,
+          "mapMetadata": {
+            "height": 4,
+            "generation": 2,
+            "width": 5,
+            "outdoor": false,
+            "environment": 3,
+            "tileset": "TILESET_PLAYERS_HOUSE"
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "classes": 5,
+            "cells": 80,
+            "allMatchNative": true
+          }
+        },
+        {
+          "label": "third-interior",
+          "map": "PLAYERS_HOUSE1_F",
+          "camera": "third",
+          "overlayDepth": 0,
+          "nativeGridMoved": null,
+          "voxelFrames": 929,
+          "voxelFailures": 0,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": false,
+          "mapMetadata": {
+            "height": 4,
+            "generation": 2,
+            "width": 5,
+            "outdoor": false,
+            "environment": 3,
+            "tileset": "TILESET_PLAYERS_HOUSE"
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "classes": 5,
+            "cells": 80,
+            "allMatchNative": true
+          }
+        }
+      ]
+    },
+    {
+      "backend": "metal",
+      "exitCode": 0,
+      "actualVandF6KeysPassed": true,
+      "ownedWindowProofs": 4,
+      "modFilesUnmodified": 27329,
+      "modFolderRemoved": true,
+      "phases": [
+        {
+          "label": "first-outdoors",
+          "map": "NEW_BARK_TOWN",
+          "camera": "first",
+          "overlayDepth": 0,
+          "nativeGridMoved": true,
+          "voxelFrames": 333,
+          "voxelFailures": 1,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": null,
+          "mapMetadata": {
+            "generation": 2,
+            "environment": 1,
+            "width": 10,
+            "outdoor": true,
+            "tileset": "TILESET_JOHTO",
+            "height": 9
+          },
+          "horizonClass": "trees",
+          "collisionQuery": {
+            "cells": 360,
+            "classes": 5,
+            "allMatchNative": true
+          }
+        },
+        {
+          "label": "third-outdoors",
+          "map": "NEW_BARK_TOWN",
+          "camera": "third",
+          "overlayDepth": 0,
+          "nativeGridMoved": true,
+          "voxelFrames": 501,
+          "voxelFailures": 1,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": null,
+          "mapMetadata": {
+            "generation": 2,
+            "environment": 1,
+            "width": 10,
+            "outdoor": true,
+            "tileset": "TILESET_JOHTO",
+            "height": 9
+          },
+          "horizonClass": "trees",
+          "collisionQuery": {
+            "cells": 360,
+            "classes": 5,
+            "allMatchNative": true
+          }
+        },
+        {
+          "label": "third-native-menu",
+          "map": "NEW_BARK_TOWN",
+          "camera": "third",
+          "overlayDepth": 1,
+          "nativeGridMoved": null,
+          "voxelFrames": 542,
+          "voxelFailures": 1,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": null,
+          "mapMetadata": {
+            "generation": 2,
+            "environment": 1,
+            "width": 10,
+            "outdoor": true,
+            "tileset": "TILESET_JOHTO",
+            "height": 9
+          },
+          "horizonClass": "trees",
+          "collisionQuery": {
+            "cells": 360,
+            "classes": 5,
+            "allMatchNative": true
+          }
+        },
+        {
+          "label": "first-interior",
+          "map": "PLAYERS_HOUSE1_F",
+          "camera": "first",
+          "overlayDepth": 0,
+          "nativeGridMoved": null,
+          "voxelFrames": 868,
+          "voxelFailures": 1,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": false,
+          "mapMetadata": {
+            "generation": 2,
+            "environment": 3,
+            "width": 5,
+            "outdoor": false,
+            "tileset": "TILESET_PLAYERS_HOUSE",
+            "height": 4
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "cells": 80,
+            "classes": 5,
+            "allMatchNative": true
+          }
+        },
+        {
+          "label": "third-interior",
+          "map": "PLAYERS_HOUSE1_F",
+          "camera": "third",
+          "overlayDepth": 0,
+          "nativeGridMoved": null,
+          "voxelFrames": 940,
+          "voxelFailures": 1,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "interiorVisualAccepted": false,
+          "mapMetadata": {
+            "generation": 2,
+            "environment": 3,
+            "width": 5,
+            "outdoor": false,
+            "tileset": "TILESET_PLAYERS_HOUSE",
+            "height": 4
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "cells": 80,
+            "classes": 5,
+            "allMatchNative": true
+          }
+        }
+      ]
+    }
+  ],
+  "scope": "short macOS tests, teleported scene setup; native grid walking rather than continuous camera-relative movement",
+  "open": [
+    "First Person interior image needs investigation",
+    "continuous movement interfaces unavailable",
+    "generated mod renderer patch exceeds 60 Lua upvalues",
+    "initial actor bounds failure remains recorded",
+    "PC/mail/box/follower/battle interfaces not fully accepted",
+    "full story, all doors/maps and Windows GPU acceptance pending"
+  ],
+  "nativeNoModChecks": [
+    {
+      "sourceCommit": "cb12d995b2cd51ccc3e19083ae968d386dfe1147",
+      "backend": "opengl",
+      "exitCode": 0,
+      "newGame": true,
+      "modCount": 0,
+      "normalWarps": [
+        {
+          "from": "PLAYERS_HOUSE2_F",
+          "normalMovement": true,
+          "to": "PLAYERS_HOUSE1_F"
+        },
+        {
+          "from": "PLAYERS_HOUSE1_F",
+          "normalMovement": true,
+          "to": "NEW_BARK_TOWN"
+        }
+      ],
+      "finalMap": "NEW_BARK_TOWN",
+      "overlayDepth": 0,
+      "windowFreshFrameStamp": 11,
+      "windowColourProfile": "gbc",
+      "centralColours": 15,
+      "minimumColours": 4
+    },
+    {
+      "sourceCommit": "cb12d995b2cd51ccc3e19083ae968d386dfe1147",
+      "backend": "metal",
+      "exitCode": 0,
+      "newGame": true,
+      "modCount": 0,
+      "normalWarps": [
+        {
+          "normalMovement": true,
+          "from": "PLAYERS_HOUSE2_F",
+          "to": "PLAYERS_HOUSE1_F"
+        },
+        {
+          "normalMovement": true,
+          "from": "PLAYERS_HOUSE1_F",
+          "to": "NEW_BARK_TOWN"
+        }
+      ],
+      "finalMap": "NEW_BARK_TOWN",
+      "overlayDepth": 0,
+      "windowFreshFrameStamp": 9,
+      "windowColourProfile": "gbc",
+      "centralColours": 15,
+      "minimumColours": 4
+    }
+  ],
+  "romFreeChecks": {
+    "engineSuites": 244,
+    "sdkSuites": 3,
+    "b30": true,
+    "mapMetadataChecks": 256,
+    "mapCollisionChecks": 525,
+    "nativeClockFixtureChecks": 407,
+    "quickPassed": true,
+    "tilesetNameChecks": 129
+  }
+}

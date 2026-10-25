@@ -81,13 +81,59 @@ local deepSaid = {}
 
 function StateStack:init()
   self.states = {}
+  self._modalTracker = nil
+  self.worldState, self.worldOwner, self._sceneStack = nil, nil, nil
+end
+
+-- Gen2's persistent world is not a screen. The public stack contains only
+-- overlays; the native update and scene-render paths still own that world.
+function StateStack:setWorldOwner(owner)
+  self:clearWorld()
+  self.worldOwner = owner
+  if owner then owner.world = nil end
+end
+
+function StateStack:clearWorld()
+  local world = self.worldState
+  self.worldState = nil
+  if self.worldOwner then self.worldOwner.world = nil end
+  if world and type(world.exit) == "function" then world:exit() end
+end
+
+function StateStack:active()
+  return self:top() or self.worldState
+end
+
+-- A scene view includes the persistent world for native composition. Its
+-- states are separate from the real overlay stack: drawing the overlay stack
+-- from a mod cannot re-enter the world's render pipeline recursively.
+function StateStack:sceneStack()
+  if not self.worldState then return self end
+  local view = self._sceneStack
+  if not view then
+    view = { states = {}, visibleBase = StateStack.visibleBase }
+    view.renderVisible = function(_, state) return self:renderVisible(state) end
+    self._sceneStack = view
+  end
+  local states = view.states
+  states[1] = self.worldState
+  for i, state in ipairs(self.states) do states[i + 1] = state end
+  for i = #self.states + 2, #states do states[i] = nil end
+  return view
 end
 
 -- screen.pushed/popped fire after enter/exit so listeners observe the
 -- settled state; the wants guard keeps the no-listener path allocation-free
 
 function StateStack:push(state, ...)
+  if self.worldOwner and state.isOverworld then
+    if self.worldState and self.worldState ~= state then self:clearWorld() end
+    self.worldState, self.worldOwner.world = state, state
+    if type(state.enter) == "function" then state:enter(...) end
+    return
+  end
   table.insert(self.states, state)
+  if self._modalTracker then self._modalTracker:added(state) end
   if state.enter then state:enter(...) end
   local depth = #self.states
   Logger.debug("state stack: push %s (depth %d)",
@@ -105,15 +151,14 @@ function StateStack:push(state, ...)
   end
 end
 
-function StateStack:pop()
-  local state = table.remove(self.states)
+local function finishRemoval(self, state)
   if state and state.exit then state:exit() end
   -- A POP THAT EMPTIES THE STACK is not debug-level news.  The engine does it
   -- on purpose in exactly two places and pushes the replacement in the same
   -- breath; everywhere else it is one pop too many, and the thing it leaves
   -- behind -- a screen that never changes, with no error -- gives the reader
   -- nothing to search for.  So it is said in words, once per culprit.
-  if state ~= nil and #self.states == 0 then
+  if state ~= nil and #self.states == 0 and not self.worldState then
     Logger.warn("state stack: popping %s emptied the stack -- nothing will "
       .. "update or draw until something is pushed back", 
       StateStack.describe(state))
@@ -125,6 +170,35 @@ function StateStack:pop()
     Runtime.emit("screen.popped", { state = state })
   end
   return state
+end
+
+function StateStack:pop()
+  local state = table.remove(self.states)
+  if state and self._modalTracker then self._modalTracker:removed(state) end
+  return finishRemoval(self, state)
+end
+
+-- Remove actual native states, including a named modal beneath another one.
+-- Detach the whole selection before callbacks: a new screen opened by exit
+-- must survive and must never receive another removed screen's exit event.
+function StateStack:removeAll(selected)
+  local wanted, removed = {}, {}
+  for _, state in ipairs(selected) do wanted[state] = true end
+  for i = #self.states, 1, -1 do
+    local state = self.states[i]
+    if wanted[state] then
+      table.remove(self.states, i)
+      if self._modalTracker then self._modalTracker:removed(state) end
+      removed[#removed + 1] = state
+    end
+  end
+  local firstError
+  for _, state in ipairs(removed) do
+    local ok, err = pcall(finishRemoval, self, state)
+    if not ok and not firstError then firstError = err end
+  end
+  if firstError then error(firstError, 0) end
+  return #removed
 end
 
 function StateStack:top()
@@ -139,7 +213,12 @@ end
 -- does not emit screen.pushed, because nothing was entered.
 function StateStack:restore(state)
   if type(state) ~= "table" then return false end
+  if self.worldOwner and state.isOverworld then
+    self.worldState, self.worldOwner.world = state, state
+    return true
+  end
   table.insert(self.states, state)
+  if self._modalTracker then self._modalTracker:added(state) end
   Logger.warn("state stack: restored %s (depth %d)",
               StateStack.describe(state), #self.states)
   return true
@@ -172,26 +251,76 @@ end
 -- update opens the menu on A, and running that under the menu would open a
 -- second one on the same press) and it must not push, pop or finish. A state
 -- that wants both puts the motion in animate and calls it from update.
+-- Update/covered animation follows native opacity, regardless of rendering.
+-- Hiding a mirrored menu must not animate newly exposed states during logic.
+local function opaqueBase(states, modal)
+  for i = #states, 1, -1 do
+    if modal then
+      if modal:allows(states[i]) and modal:opaque(states[i]) then return i end
+    elseif states[i].isOpaque then return i end
+  end
+  return 1
+end
+
 function StateStack:update(dt)
-  local top = self:top()
+  local top = self:active()
   if top and top.update then top:update(dt) end
-  for i = self:visibleBase(), #self.states - 1 do
+  local modal = self._modalTracker
+  if modal and not modal:isCurrent() then modal = nil end
+  for i = opaqueBase(self.states, modal), #self.states - 1 do
     local state = self.states[i]
-    if state.animate then state:animate(dt) end
+    if state.animate and (not modal or modal:allows(state)) then state:animate(dt) end
   end
 end
 
--- index of the lowest state drawn this frame (highest opaque, else 1)
-function StateStack:visibleBase()
+local function visibleByDefault() return true end
+
+-- A pure main-screen predicate: only literal false hides the native state.
+-- Update/input ownership and the stored stack remain unchanged.
+local function modalRenderPlan(self)
+  local modal = self._modalTracker
+  if not modal or not modal:isCurrent() then return end
+  local visible, hooked = {}, Runtime.wantsHook("screen.render_visible")
+  for _, state in ipairs(self.states) do
+    visible[state] = not hooked or Runtime.call("screen.render_visible", visibleByDefault, state) ~= false
+  end
+  return modal:renderPlan(visible)
+end
+
+function StateStack:renderVisible(state, plan)
+  if not state then return false end
+  plan = plan or modalRenderPlan(self)
+  if plan then return plan.visible[state] == true end
+  if not Runtime.wantsHook("screen.render_visible") then return true end
+  return Runtime.call("screen.render_visible", visibleByDefault, state) ~= false
+end
+
+-- index of the lowest state drawn this frame (highest visible opaque, else 1)
+function StateStack:visibleBase(plan)
+  plan = plan or modalRenderPlan(self)
+  if plan then
+    for i = #self.states, 1, -1 do
+      local state = self.states[i]
+      if plan.visible[state] and (state == plan.opaque
+        or not self._modalTracker.records[state] and state.isOpaque) then return i end
+    end
+    return 1
+  end
+  local modal = self._modalTracker
+  if modal and not modal:isCurrent() then modal = nil end
+  if not Runtime.wantsHook("screen.render_visible") then return opaqueBase(self.states, modal) end
   for i = #self.states, 1, -1 do
-    if self.states[i].isOpaque then return i end
+    local state = self.states[i]
+    if self:renderVisible(state) and (modal and modal:opaque(state) or not modal and state.isOpaque) then return i end
   end
   return 1
 end
 
 function StateStack:draw()
-  for i = self:visibleBase(), #self.states do
-    if self.states[i].draw then self.states[i]:draw() end
+  local plan = modalRenderPlan(self)
+  for i = self:visibleBase(plan), #self.states do
+    local state = self.states[i]
+    if self:renderVisible(state, plan) and state.draw then state:draw() end
   end
 end
 

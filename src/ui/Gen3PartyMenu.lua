@@ -48,11 +48,14 @@
 -- bounce below is this port's, since the cartridge's is a sprite-callback
 -- rather than data.
 
+local PartyNavigation = require("src.ui.PartyNavigation")
 local Assets = require("src.render.Assets")
 local Font = require("src.render.Font")
+local LevelDisplay = require("src.ui.LevelDisplay")
 local Logger = require("src.core.Logger")
 local Screens = require("src.ui.Screens")
 local Strings = require("src.core.Strings")
+local Prose = require("src.ui.GbaProse")
 local Theme = require("src.ui.Theme")
 
 -- Sprites reaches back into the party screen, so it is resolved once on
@@ -135,6 +138,9 @@ function Gen3PartyMenu.new(game, opts)
   self.onSwitch = opts.onSwitch
   self.battle = opts.battle
   self.forceSwitch = opts.forceSwitch
+  self.noCancel = opts.noCancel
+  self.onUpdate = opts.onUpdate
+  self._party = opts.party
   self.pickOnly = opts.pickOnly
   -- FireRed's POKé DUDE drives the ordinary party screen with synthetic
   -- input.  The screen stays the cartridge one; only its input source changes.
@@ -168,7 +174,14 @@ function Gen3PartyMenu.new(game, opts)
   return self
 end
 
-function Gen3PartyMenu:party() return self.game.save.party or {} end
+function Gen3PartyMenu:party()
+  -- The battle may install or replace its clamped roster after opening the
+  -- screen. Forced owner-specific choices retain their explicit party.
+  if self.battle and not self.forceSwitch and self.battle.playerParty then
+    return self.battle.playerParty
+  end
+  return self._party or (self.battle and self.battle.playerParty) or self.game.save.party or {}
+end
 
 -- slots 1..6, then the CANCEL button as slot #party+1
 function Gen3PartyMenu:slots() return #self:party() + 1 end
@@ -179,6 +192,7 @@ function Gen3PartyMenu:slots() return #self:party() + 1 end
 -- whatever the presentation left on top.  Closing twice was always a bug; it
 -- simply never happened before.
 function Gen3PartyMenu:close()
+  if self.noCancel then return end
   if self.closed then return end
   self.closed = true
   self.game.stack:pop()
@@ -187,7 +201,7 @@ end
 
 function Gen3PartyMenu:word(n, fallback)
   local words = self.words
-  return (words and words[n]) or Strings(fallback)
+  return Prose.partyWord(self.game, n, (words and words[n]) or Strings(fallback))
 end
 
 -- DOES THIS POKEMON KNOW A FIELD MOVE THAT WOULD DO SOMETHING HERE?
@@ -458,7 +472,7 @@ function Gen3PartyMenu:actionsFor()
                         self.forceSwitch and "SEND OUT" or "SHIFT"),
       action = "switch" },
     { label = self:word(4, "SUMMARY"), action = "summary" },
-    { label = Strings("CANCEL"), action = "cancel" },
+    { label = self:actionWord("cancel", nil, "CANCEL"), action = "cancel" },
   }
 end
 
@@ -499,7 +513,8 @@ end
 
 function Gen3PartyMenu:actionWord(key, index, fallback)
   local words = self:actionWords()
-  return (words and words[key]) or self:word(index, fallback)
+  local native = (words and words[key]) or (self.words and self.words[index]) or Strings(fallback)
+  return Prose.partyAction(self.game, key, native)
 end
 
 -- The cartridge's field-move rows, in the order this Pokemon's move slots
@@ -823,7 +838,7 @@ function Gen3PartyMenu:orderActionsFor(slot)
     rows[#rows + 1] = { label = self:word(6, "ENTER"), action = "enter" }
   end
   rows[#rows + 1] = { label = self:word(4, "SUMMARY"), action = "summary" }
-  rows[#rows + 1] = { label = Strings("CANCEL"), action = "cancel" }
+  rows[#rows + 1] = { label = self:actionWord("cancel", nil, "CANCEL"), action = "cancel" }
   return rows
 end
 
@@ -1015,7 +1030,44 @@ function Gen3PartyMenu:animateTo(mon, fromHP, onDone)
   self.heal = { mon = mon, from = from, shown = from, onDone = onDone }
 end
 
+function Gen3PartyMenu:confirm()
+  if self.index > #self:party() then
+    if self.hpTransferFrom then
+      self.hpTransferFrom = nil
+      return
+    end
+    -- the CANCEL button VALIDATES when a team is being chosen; everywhere
+    -- else it is the way out
+    if self.chooseOrder then
+      return self:confirmOrder()
+    end
+    return self:close()
+  end
+  self:choose()
+end
+
+function Gen3PartyMenu:cancel()
+  if self.hpTransferFrom then
+    self.hpTransferFrom = nil
+    return
+  end
+  -- B drops a SWITCH that was half-made before it closes the screen
+  if self.switchFrom then
+    self.switchFrom = nil
+    return
+  end
+  if self.chooseOrder then
+    return self:handOrder(nil)
+  end
+  self:close()
+end
+
+function Gen3PartyMenu:gridNavigation()
+  return PartyNavigation.enabled(self)
+end
+
 function Gen3PartyMenu:update(dt)
+  if self.onUpdate then self.onUpdate(self); if self.closed then return end end
   -- RECONSTRUCTED: every icon bounces, all the time, on the same beat.  On
   -- the cartridge each one is an OBJ with its own callback; here it is one
   -- clock, which is indistinguishable on screen and cannot drift.
@@ -1059,6 +1111,15 @@ function Gen3PartyMenu:update(dt)
     return
   end
 
+  local grid = not (self.switchFrom or self.hpTransferFrom)
+    and self:gridNavigation() and PartyNavigation.spatial(self, input)
+  if grid then
+    self.index = grid
+    -- GBA handles confirm/cancel after navigation, including combined input.
+    if input:wasPressed("a") then self:confirm()
+    elseif input:wasPressed("b") then self:cancel() end
+    return
+  end
   local n = self:slots()
   if input:wasPressed("down") then self.index = self.index % n + 1
   elseif input:wasPressed("up") then self.index = (self.index - 2) % n + 1
@@ -1073,20 +1134,9 @@ function Gen3PartyMenu:update(dt)
       self.index = 1
     end
   elseif input:wasPressed("a") then
-    if self.index > #self:party() then
-      if self.hpTransferFrom then self.hpTransferFrom=nil;return end
-      -- the CANCEL button VALIDATES when a team is being chosen; everywhere
-      -- else it is the way out
-      if self.chooseOrder then return self:confirmOrder() end
-      return self:close()
-    end
-    self:choose()
+    self:confirm()
   elseif input:wasPressed("b") then
-    if self.hpTransferFrom then self.hpTransferFrom=nil;return end
-    -- B drops a SWITCH that was half-made before it closes the screen
-    if self.switchFrom then self.switchFrom = nil return end
-    if self.chooseOrder then return self:handOrder(nil) end
-    self:close()
+    self:cancel()
   end
 end
 
@@ -1157,7 +1207,7 @@ function Gen3PartyMenu:drawFireRedCancel(bg, images, party, ball)
   end
 
   g.setColor(0, 0, 0, 1)
-  local label = Strings("CANCEL")
+  local label = Prose.partyCancel(self.game, Strings("CANCEL"))
   local lx = FIRERED_CANCEL.x + 3
     + math.floor((FIRERED_CANCEL.width - Font.width(label)) / 2)
   local ly = FIRERED_CANCEL.y
@@ -1433,7 +1483,7 @@ function Gen3PartyMenu:drawMember(mon, panel, selected, inset)
 
   -- (FireRed's DisplayPartyPokemonBarDetail prints every field in FONT_SMALL,
   -- the lead panel's name included)
-  local frlg = require("src.core.GameVersion").get() == "firered"
+  local frlg = require("src.core.GameVersion").isFRLG()
   local faced = (not panel.wide or frlg) and Font.pushFace("small") or nil
   love.graphics.setColor(0, 0, 0, 1)
 
@@ -1441,7 +1491,9 @@ function Gen3PartyMenu:drawMember(mon, panel, selected, inset)
   Font.draw(Font.fit(name, rects.name.width + 16), nx, ny)
 
   local lx, ly = at("level")
-  Font.draw(Strings("Lv%d", mon.level or 1), lx, ly)
+  if LevelDisplay.visible(mon, "party", self.game) then
+    Font.draw(Strings("Lv%d", mon.level or 1), lx, ly)
+  end
 
   -- Gen 3 derives gender from species ratio + personality when the save does
   -- not carry an explicit field. Use the engine's common derivation instead of
@@ -1593,7 +1645,7 @@ function Gen3PartyMenu:draw()
     self:drawFireRedCancel(bg, images, party, ball)
   elseif bg and cancel then
     love.graphics.setColor(0, 0, 0, 1)
-    local label = Strings("CANCEL")
+    local label = Prose.partyCancel(self.game, Strings("CANCEL"))
     local lx = cancel.x + math.floor((cancel.width - Font.width(label)) / 2)
     local ly = cancel.y + math.floor((cancel.height - Font.glyphHeight()) / 2)
     Font.draw(label, lx, ly)
@@ -1603,7 +1655,7 @@ function Gen3PartyMenu:draw()
   else
     Font.drawBox(CANCEL.tx, CANCEL.ty, CANCEL.tw, CANCEL.th)
     love.graphics.setColor(0, 0, 0, 1)
-    local label = Strings("CANCEL")
+    local label = Prose.partyCancel(self.game, Strings("CANCEL"))
     local y = (CANCEL.ty + 1) * 8 + inset
     Font.draw(label, (CANCEL.tx + 2) * 8, y)
     if self.index > #party then
