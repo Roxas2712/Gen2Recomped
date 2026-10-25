@@ -1239,6 +1239,7 @@ function Loader:_api(mod)
   api.packs = require("src.mods.AssetPacks").new(mod.manifest, loader.fs)
   require('src.mods.HostServices').install(loader,mod,api)
   api.job = Job.forMod(loader, mod, api.cache)
+  api.steps = require('src.mods.Steps').forMod(loader,mod)
   -- Capture the host selected for this API, as with generation/gameVersion.
   -- Probing must not instantiate mod.world/mod.game or register callbacks.
   function api:supports(surface, name)
@@ -1385,6 +1386,7 @@ end
 -- migration it took goes with them.  The journal only exists around an
 -- entry chunk; a later failure (script validation) purges every registry.
 function Loader:_rollback(modId)
+  require('src.mods.Steps').retire(self,modId)
   Net.releaseAll(self, modId)
   Job.releaseAll(self, modId)
   self.inputControl:retire(modId)
@@ -1506,6 +1508,7 @@ local function stampAudioOwners(data, name, registry)
 end
 
 function Loader:load(data)
+  require('src.mods.Steps').retire(self)
   Job.releaseAll(self)
   InputControl.closeAll()
   self.inputControl = InputControl.new()
@@ -1888,6 +1891,7 @@ end
 -- boots) ran on a modded engine whose mod instance nothing drives any more,
 -- and the next Play loaded every mod on top of what the last one left.
 function Loader.teardown()
+  require('src.mods.Steps').unloadAll()
   Net.unloadAll()
   Job.unloadAll()
   InputControl.closeAll()
