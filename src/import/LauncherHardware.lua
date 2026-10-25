@@ -43,12 +43,21 @@ local function artwork(image,x,y,w,h,design)
   local quad=g.newQuad(sx,sy,cw,ch,iw,ih)
   g.setColor(1,1,1,1);g.draw(image,quad,x+(w-cw*sc)/2,y+(h-ch*sc)/2,0,sc,sc)
 end
+function Hardware.appearance(self,version)
+  local source=self._cartStyle and self:_cartStyle(version) or {}
+  local design={}
+  for k,v in pairs(source) do
+    if type(v)=='table' then local t={};for a,b in pairs(v) do t[a]=b end;design[k]=t else design[k]=v end
+  end
+  return {design=design,branded=self._settings and self:_settings().launcherLogoCards,logo=self.gen2Logo or self.logo}
+end
 
 local function drawCartridge(self,version,cx,cy,maxW,maxH,angle,options)
   local g=love.graphics
   local Library=require('src.import.LauncherLibrary')
   local accent,name=Library.edition(version)
-  local design=self._cartStyle and self:_cartStyle(version) or {}
+  local appearance=options and options.appearance or Hardware.appearance(self,version)
+  local design=appearance.design
   local shell=design.shell or accent
   local label=design.label or shade(accent,0.32)
   name=design.name and design.name~='' and design.name or name
@@ -62,12 +71,11 @@ local function drawCartridge(self,version,cx,cy,maxW,maxH,angle,options)
   end
   -- The top and right side are actual separate faces, visible at rest too.
   color({0,0,0},0.26);g.push();g.translate(model.depth,model.depth+5);g.polygon('fill',model.face);g.pop()
-  color(shade(shell,0.36));g.push();g.translate(model.depth,model.depth*.65);g.polygon('fill',model.face);g.pop()
-  color(shade(shell,1.14));g.polygon('fill',8,-3,w-27,-3,w-18,5,0,8)
-  color(shade(shell,0.72));g.polygon('fill',model.face)
-  color(shell,0.78);g.push();g.translate(3,3);g.scale((w-6)/w,(h-6)/h);g.polygon('fill',model.face);g.pop()
-  color({255,255,255},0.24);g.setLineWidth(1);g.polygon('line',model.face)
-  color({0,0,0},0.25);g.line(w-3,27,w-3,h-10)
+  color(shade(shell,0.48));g.push();g.translate(model.depth,model.depth*.5);g.polygon('fill',model.face);g.pop()
+  color(shade(shell,0.77));g.polygon('fill',model.face)
+  color(shell);g.push();g.translate(1.5,1.5);g.scale((w-3)/w,(h-3)/h);g.polygon('fill',model.face);g.pop()
+  color({255,255,255},0.22);g.setLineWidth(.65);g.polygon('line',model.face)
+  color({0,0,0},0.13);g.line(w-2,27,w-2,h-10)
   local kind=Hardware.kind(version)
   local labelY=model.labelY
   local labelH=h-labelY-(kind=='nds' and 16 or kind=='gba' and 13 or 18)
@@ -83,7 +91,7 @@ local function drawCartridge(self,version,cx,cy,maxW,maxH,angle,options)
       color({0,0,0},0.16);g.line(18,12+i*4,w-24,12+i*4)
       color({255,255,255},0.2);g.line(18,13+i*4,w-24,13+i*4)
     end
-    color(shade(shell,.5));g.rectangle('line',14,7,w-38,23,10,10)
+    color(shade(shell,.64));g.setLineWidth(.8);g.rectangle('line',12,6,w-36,24,7,7)
   elseif model.family=='cgb' then
     color(shade(shell,.65));g.arc('line','open',w/2,35,w*.42,math.pi*1.1,math.pi*1.9)
   elseif model.family=='agb' then
@@ -93,8 +101,8 @@ local function drawCartridge(self,version,cx,cy,maxW,maxH,angle,options)
   else
     color(shade(shell,.5));g.line(7,8,85,8)
   end
-  local branded=self._settings and self:_settings().launcherLogoCards and not (options and options.customLabel)
-  local image=design.image or (branded and (self.gen2Logo or self.logo))
+  local branded=appearance.branded and not (options and options.customLabel)
+  local image=design.image or (branded and appearance.logo)
   if image then
     if image.setFilter then image:setFilter('linear','linear') end
     artwork(image,19,labelY+8,w-38,labelH-29,design.image and design or {})
@@ -124,7 +132,7 @@ local function drawCartridge(self,version,cx,cy,maxW,maxH,angle,options)
   if kind~='nds' then
     color({0,0,0},0.2);g.polygon('fill',w*.46,h-10,w*.54,h-10,w*.5,h-5)
   end
-  color({255,255,255},0.13);g.polygon('fill',6,18,w*0.4,12,6,h*0.62)
+  color({255,255,255},0.055);g.polygon('fill',6,18,w*0.4,12,6,h*0.62)
   g.pop()
 end
 
@@ -136,11 +144,12 @@ function Hardware.cartridge(self,version,cx,cy,maxW,maxH,angle,options)
   -- Rasterize these vector illustrations at 3x once, then filter them down.
   -- Local supersampling smooths rotated edges without changing game pixels
   -- or requiring multisampling on the entire window every frame.
-  local style=self._cartStyle and self:_cartStyle(version) or {}
+  local appearance=options and options.appearance or Hardware.appearance(self,version)
+  local style=appearance.design
   local shell,label=style.shell or {},style.label or {}
-  local branded=self._settings and self:_settings().launcherLogoCards and not (options and options.customLabel)
+  local branded=appearance.branded and not (options and options.customLabel)
   local key=table.concat({version,tostring(self.labelFont),tostring(self._s),tostring(branded),
-    style.name or '',style.pattern or '',tostring(style.image),tostring(self.gen2Logo or self.logo),
+    style.name or '',style.pattern or '',tostring(style.image),tostring(appearance.logo),
     style.artMode or '',style.artFit or '',tostring(style.artZoom),tostring(style.artX),tostring(style.artY),
     table.concat(shell,','),table.concat(label,',')},'|')
   self._hardwareCarts=self._hardwareCarts or {}

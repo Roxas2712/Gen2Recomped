@@ -73,6 +73,7 @@ function Sequence.install(RI)
     self._padDir = {}
     self._padAxis = {leftx=0,lefty=0,righty=0}
     self._launcherSequence = Sequence.new('play', version)
+    self._launcherSequence.cartAppearance=require('src.import.LauncherHardware').appearance(self,version)
   end
 
   local update = RI.update
@@ -328,7 +329,7 @@ function Sequence.install(RI)
       local cartX=startX+(device.slotX-startX)*align
       local cartY=device.slotY-24*s-36*s*align-65*s*math.sin(align*math.pi)+100*s*descent
       local cw,ch=Hardware.cartSize(state.version)
-      Hardware.cartridge(self,state.version,cartX,cartY,cartH*cw/ch,cartH,-0.46*(1-align))
+      Hardware.cartridge(self,state.version,cartX,cartY,cartH*cw/ch,cartH,-0.46*(1-align),{appearance=state.cartAppearance})
       Hardware.device(self,state.version,device,stage.locked,{powered=stage.powered,logo=false})
       if stage.powered then
         -- Keep electricity and the wordmark inside the physical display aperture.

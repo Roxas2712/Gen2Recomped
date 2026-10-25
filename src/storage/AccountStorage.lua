@@ -35,6 +35,16 @@ function P.check()
   if owner~=id then return nil,'These local saves and Bank belong to another account. Sign in with that account; no files were reassigned.' end
   return true
 end
+-- Device-local saves are available to guests. Bank and cloud boundaries keep
+-- using check(), which still requires a confirmed, explicitly linked owner.
+function P.saveCheck()
+  if not P.enabled then return true end
+  local id=auth().accountId and auth().accountId()
+  if valid(id) then return P.check() end
+  local scope=P.scope()
+  if scope and scope~='guest' then return nil,'The account changed during this operation. Existing records were preserved.' end
+  return true
+end
 function P.profileChanged(self)
   self._settingsCache=nil;self._settingsRowCache=nil;self._gameSlotRows=nil
   local id=P.scope();local bank=self._bankOverlay
@@ -58,15 +68,17 @@ function P.bind()
   end})
 end
 function P.requireUI(self,after)
-  local ok,why=P.check();if ok then return true end
+  local localSave=after=='history' or type(after)=='table' and after.kind=='play'
+  local ok,why=(localSave and P.saveCheck or P.check)();if ok then return true end
   self:_openAccount(after)
   if self._accountOverlay then self._accountOverlay.notice=why end
   return false
 end
 function P.stamp(save)
   if not P.enabled then return true end
-  local ok,why=P.check();if not ok then return nil,why end
-  save.meta=save.meta or {};save.meta.retroAccountId=auth().accountId();return true
+  local ok,why=P.saveCheck();if not ok then return nil,why end
+  save.meta=save.meta or {};save.meta.retroAccountId=auth().accountId()
+  save.meta.localOnly=not valid(save.meta.retroAccountId) or nil;return true
 end
 function P.storeCheck(store)
   local ok,why=P.check();if not ok then return nil,why end
@@ -85,6 +97,12 @@ function P.install(RI)
   local play=RI.play
   RI.play=function(self,version,...)
     if not P.requireUI(self,{kind='play',version=version}) then return end
+    if P.enabled and not valid(auth().accountId and auth().accountId()) then
+      local options=self._settings and self:_settings() or require('src.core.SaveData').loadOptions()
+      if not options.launcherSaveStorageChoice then
+        self:_openAccount({kind='play',version=version,storagePrompt=true});return
+      end
+    end
     return play(self,version,...)
   end
 end

@@ -303,6 +303,10 @@ function Library.install(RI)
     local top=y
     local list
     if self.gamesView=='consoles' then
+      if not self._sb.account then
+        self._sb.account=self:_chipButton(x,y,require('src.cloud.RetroCloud').signedIn() and 'MY ACCOUNT / CLOUD SAVES' or 'SIGN IN / CLOUD SAVES',{w=w,h=38*s,kind='accent'})
+        y=y+48*s
+      end
       y=y+self:_sbContinueCard(x,y,w)
       label(self,'BROWSE BY SYSTEM',x,y)
       y=y+28*s
@@ -339,6 +343,8 @@ function Library.install(RI)
       text(self,self.hintFont,caption,toggle.x+24*s,toggle.y+4*s,toggleW-24*s,checked and P.link or P.detail)
       self._sb.logoCards=toggle
       y=y+26*s
+      self._sb.cartBatch=self:_chipButton(x,y,'LOAD ALL ORIGINAL CARTRIDGES',{w=w,h=38*s,kind='accent'})
+      y=y+50*s
       self._sb.libraryFilters={}
       local fx=x
       for _,f in ipairs({{'all','All cartridges'},{'ready','Ready to play'},{'favorites','Favorites'}}) do

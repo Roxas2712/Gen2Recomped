@@ -405,6 +405,7 @@ function Sidebar.install(RI)
   -- one step back in whichever flow is open; false when there is nowhere to go
   function RI:_sbBack()
     if self.section == "games" then
+      self._sb.account = chip(require('src.cloud.RetroCloud').signedIn() and 'MY ACCOUNT' or 'SIGN IN / CLOUD SAVES', 'accent')
       if self.gamesView == "game" then self.gamesView = "list"
       elseif self.gamesView == "list" then self.gamesView = "series"
       elseif self.gamesView == "series" then self.gamesView = "consoles"
@@ -1449,6 +1450,7 @@ function Sidebar.install(RI)
       if inside(r, x, y) then self:_sbGo(r.id); return true end
     end
     if inside(sb.back, x, y) then self:_sbBack(); return true end
+    if inside(sb.account,x,y) then self:_openAccount();return true end
     if self.section == "walker" and self.walker and self.walker:mousepressed(x, y) then return true end
     if inside(sb.fav, x, y) then
       local opts = options(self)

@@ -10,11 +10,13 @@ local signed,account=false,nil
 package.loaded['src.cloud.RetroCloud']={signedIn=function() return signed end,accountId=function() return account end}
 local Saves=require('src.core.SaveData');Saves.persistenceFs=function() return fs end
 local P=require('src.storage.AccountStorage');P.enable()
-check(not P.check() and not Saves.save({version='red',player={name='Guest'}}) and writes==0,'guest saves are refused at the real persistence boundary before any writes')
-check(not Saves.createSlot('red') and not Saves.writeSlot('red','slot1',{player={}}) and #Saves.listSlots('red')==0 and writes==0,'guest imports, slot creation and save browsing cannot bypass registration')
+check(not P.check() and P.saveCheck() and Saves.save({version='red',player={name='Guest'}}),'guest game progress is saved locally without granting Bank or cloud access')
+local guestSlot=assert(Saves.createSlot('red'))
+check(Saves.writeSlot('red',guestSlot,{player={name='Local'}}) and #Saves.listSlots('red')>0,'guest imports, slots and local save browsing work without registration')
+local guestWrites=writes
 local B=require('src.storage.PokemonBank')
 local stored,bankReason=B.keep({schema=1,source={version='red'},mon={species='BULBASAUR',level=5,moves={}},canonical={dex=1,moves={}}})
-check(not stored and bankReason:find('confirm your email',1,true) and #B.list()==0 and writes==0,'direct Bank storage access cannot bypass the account gate or create guest copies')
+check(not stored and bankReason:find('confirm your email',1,true) and #B.list()==0 and writes==guestWrites,'direct Bank storage access cannot bypass the account gate or create guest copies')
 signed=true;account='17'
 check(not P.check() and not files[P.FILE],'sign-in never silently assigns pre-existing storage')
 files['saves/red/slot1.lua']='original save';files['bank/entries/original.lua']='original Bank copy'
@@ -30,7 +32,9 @@ check(not P.check() and not P.bind() and writes==before and files[P.FILE]=='dama
 files[P.FILE]=binding
 local opened;local ui={_openAccount=function(self,after) opened=after;self._accountOverlay={} end,play=function(self,v) self.played=v end}
 P.install(ui);account=nil;ui:play('red')
-check(opened.kind=='play' and opened.version=='red' and not ui.played,'the account gate runs before any play animation or game handoff')
+check(opened.kind=='play' and opened.version=='red' and opened.storagePrompt and not ui.played,'the first guest play offers cloud saves once before a handoff')
+ui._settings=function() return {launcherSaveStorageChoice='local'} end
+ui:play('blue');check(ui.played=='blue','declining cloud keeps subsequent play local and never reopens account login')
 account='17';P.resume(ui,opened)
 check(ui.played=='red','confirmed storage linking resumes the originally requested game')
 local network=0;local wrongStore={accountId='29',list=function() network=network+1;return {} end,read=function() network=network+1 end,write=function() network=network+1 end}
