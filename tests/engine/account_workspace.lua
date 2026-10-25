@@ -42,4 +42,13 @@ love.graphics.getDimensions=function() return 375,300 end
 W.draw(UI);check(f.maxScroll>0,'long registration forms scroll on small screens')
 W.action(UI,'field:password');UI:textinput('private fixture');f.job={cancel=function() cancelled=true end};W.close(UI)
 check(cancelled and f.password=='' and not TextInput,'closing cancels pending work and clears the password and keyboard focus')
+package.loaded['src.import.BankWorkspace']={open=function(self,mode) self.bankOpened=true;self.bankMode=mode end}
+for _,destination in ipairs({'bank','bankDex'}) do
+  signed=false;UI.bankOpened=nil
+  W.open(UI,destination);W.tick(UI);f=UI._accountOverlay
+  f.mode='email_code';f.challenge=string.rep('a',64);f.code='12345678'
+  check(not UI.bankOpened,'requesting email verification never opens the Bank early')
+  W.action(UI,'submit');W.tick(UI)
+  check(UI.bankOpened and not UI._accountOverlay and UI.bankMode==(destination=='bankDex' and 'dex' or nil),'confirmed registration returns directly to the requested Bank page')
+end
 print('Account workspace: '..n..' checks passed')

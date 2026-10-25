@@ -1163,6 +1163,8 @@ function SaveData.writeSlot(version, slotId, saveTable)
   local main, bak = slotNames(version, slotId)
   local fs = persistFs(nil)
   saveTable = require("src.core.PlaythroughIdentity").prepareSlot(saveTable, version, slotId, fs)
+  local owned,why=require('src.storage.AccountStorage').stamp(saveTable)
+  if not owned then return false,why end
   local encoded = SaveSerializer.encode(saveTable)
   ensureParentDir(fs, main)
   -- atomic, previous good copy kept (SaveData.commitSave)
@@ -1775,6 +1777,8 @@ function SaveData.save(data, mods)
   if mods ~= nil or data.meta == nil then
     data.meta = SaveData.buildMeta(mods, data.meta)
   end
+  local owned,why=require('src.storage.AccountStorage').stamp(data)
+  if not owned then Logger.error('save refused: %s',tostring(why));return false end
   local function encode()
     local gameOnly = {}
     for k, v in pairs(data) do
@@ -2637,4 +2641,18 @@ function SaveData.selectedNormalSaveInfo(save, fs)
   return require("src.core.PlaythroughIdentity").normalInfo(save, persistFs(fs))
 end
 
+-- Enforce the app's storage policy at persistence boundaries, including
+-- imports, autosaves, history restores and cloud writes. Options stay local.
+for _,name in ipairs({'save','writeSlot','commitSave','createSlot','deleteSlot','renameSlot','setActiveSlot',
+  'load','peekSlot','restoreBackup','restoreAsNewSlot','listSlots','slotBackups','deletedSlots','_foreignSlots','saveFileExists'}) do
+  local original=SaveData[name]
+  SaveData[name]=function(...)
+    local ok,why=require('src.storage.AccountStorage').check()
+    if not ok then
+      if name=='listSlots' or name=='slotBackups' or name=='deletedSlots' or name=='_foreignSlots' then return {},why end
+      return nil,why
+    end
+    return original(...)
+  end
+end
 return SaveData

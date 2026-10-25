@@ -1,6 +1,6 @@
 # gen2recomp
 
-> **Roxas2712 development fork — contributions by Maarten Paus (Roxas2712).**
+> **Roxas2712 development fork — contributions by Roxas2712.**
 > Upstream: Cedric / UNDERdecoded's Gen2Recomped, based on Gen1Recomp by
 > bryanthaboi / BOIS CLUB GAMES, LLC. Read the [fork ownership notice](NOTICE.md)
 > and [contribution licence](LICENSE-ROXAS2712.md). Cedric has specific
@@ -609,7 +609,7 @@ Platinum port
 Upstream Gen2Recomped is by **Cedric / UNDERdecodedHD**, based on
 **Gen1Recomp** by **bryanthaboi / BOIS CLUB GAMES, LLC**.
 
-**Contributions by Maarten Paus (Roxas2712)** —
+**Contributions by Roxas2712** —
 <https://github.com/Roxas2712> — include this fork's original integration
 and development work. Other contributors retain their applicable credits
 and rights. See [NOTICE.md](NOTICE.md) for the ownership distinction.
@@ -618,7 +618,7 @@ and rights. See [NOTICE.md](NOTICE.md) for the ownership distinction.
 
 Licensing depends on the provenance and existing grants for each component.
 The upstream texts are retained in [LICENSE](LICENSE) and
-[LICENSE.MD](LICENSE.MD). Maarten Paus's own contributions are addressed in
+[LICENSE.MD](LICENSE.MD). Roxas2712's own contributions are addressed in
 [LICENSE-ROXAS2712.md](LICENSE-ROXAS2712.md), including explicit permission
 for Cedric to integrate PR contributions with credit. Existing permissions
 are preserved; no blanket relicensing of upstream or third-party code is

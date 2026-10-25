@@ -319,6 +319,7 @@ end
 
 -- one slot; returns a short word for what happened, or nil + why
 function C.syncSlot(target, st, version, slotId, pushOnly)
+  local permitted,why=require('src.storage.AccountStorage').storeCheck(target);if not permitted then return nil,why end
   local store = asStore(target)
   st.links[version] = st.links[version] or {}
   local link = st.links[version][slotId]
@@ -391,6 +392,7 @@ end
 
 -- cloud entries no local slot is linked to come down as new slots
 function C.pullNew(target, st, version)
+  local permitted,why=require('src.storage.AccountStorage').storeCheck(target);if not permitted then return nil,why end
   local store = asStore(target)
   st.links[version] = st.links[version] or {}
   local linked = {}
@@ -417,6 +419,7 @@ end
 -- every slot of these versions, then whatever is new in the cloud; a summary.
 -- `target` is a sync folder's path or an open store (GoogleDrive.open())
 function C.syncVersions(target, versions)
+  local permitted,why=require('src.storage.AccountStorage').storeCheck(target);if not permitted then return nil,why end
   local store = asStore(target)
   if not store then return nil, "no sync folder chosen" end
   local key=stateKey(store)
@@ -428,13 +431,15 @@ function C.syncVersions(target, versions)
       if what and tally[what] then tally[what] = tally[what] + 1
       elseif not what then tally.failed = tally.failed + 1 end
     end
-    tally.new = tally.new + C.pullNew(store, st, v)
+    local count,why=C.pullNew(store, st, v);if not count then return nil,why end
+    tally.new = tally.new + count
   end
   C.saveState(st, key)
   return tally
 end
 
 function C.syncOne(target, version, slotId, pushOnly)
+  local permitted,why=require('src.storage.AccountStorage').storeCheck(target);if not permitted then return nil,why end
   local store = asStore(target)
   if not store then return nil, "no sync folder chosen" end
   local key=stateKey(store)

@@ -30,6 +30,7 @@ local function connected(self,f)
   local after=f.after;W.close(self)
   if after=='developer' then self:_openDeveloper()
   elseif after=='browse' then self.findLoaded=false;self:_refreshFind(true)
+  elseif after=='bank' or after=='bankDex' or after=='history' or type(after)=='table' and after.kind=='play' then require('src.storage.AccountStorage').resume(self,after)
   else W.open(self) end
 end
 function W.action(self,id)
@@ -65,6 +66,11 @@ function W.action(self,id)
   elseif id=='resend' and f.challenge then local challenge=f.challenge;job(self,'resend',function() return A.resend(challenge) end)
   elseif id=='operator' and f.policy and f.policy.operator_url=='https://pokexpert.de/impressum' then love.system.openURL(f.policy.operator_url)
   elseif id=='devices' then job(self,'devices',A.devices)
+  elseif id=='linkStorage' then
+    if not f.storageConsent then f.notice='Confirm that these local saves and Bank should belong to this account first.';return end
+    local ok,why=require('src.storage.AccountStorage').bind()
+    if not ok then f.notice=why;return end
+    local after=f.after;W.close(self);require('src.storage.AccountStorage').resume(self,after)
   elseif id:match('^revoke:') then
     local device=f.devices and f.devices[tonumber(id:sub(8))]
     if device then job(self,'revoke',function() local doc,why=A.revoke(device.id);if doc and device.current then Auth.expire() end;return doc,why end) end
@@ -80,7 +86,10 @@ function W.tick(self)
   if r.kind~='done' or not r.first then f.notice=tostring(r.second or r.error or 'Account unavailable.');return end
   local doc=r.first
   if purpose=='policy' then f.policy=doc;f.notice=nil
-  elseif purpose=='devices' then f.devices=doc.devices;f.notice=nil
+  elseif purpose=='devices' then
+    f.devices=doc.devices;f.notice=nil
+    local storage=require('src.storage.AccountStorage')
+    if storage.enabled and (f.after=='bank' or f.after=='bankDex' or f.after=='history' or f.after=='storage' or type(f.after)=='table' and f.after.kind=='play') and storage.check() then local after=f.after;W.close(self);storage.resume(self,after) end
   elseif purpose=='resend' then f.notice=doc.message or 'A fresh code was requested. Check your email.'
   elseif purpose=='signout' or purpose=='revoke' then
     if not Auth.signedIn() then f.mode='login';f.devices=nil;f.notice='This device is disconnected.'
@@ -146,11 +155,21 @@ function W.draw(self)
   elseif f.mode=='account' then
     paragraph('Connected as '..tostring(Auth.account()),true)
     paragraph('The same account connects your mods, developer projects and optional cloud storage.')
+    local storage=require('src.storage.AccountStorage');local permitted,why=storage.check()
+    if storage.enabled and not permitted then
+      paragraph(why)
+      local owner,recovery=storage.owner()
+      if not owner and not recovery then
+        check('Assign existing local saves and Bank to this account. Originals stay on this device; this does not enable cloud uploads.','storageConsent')
+        row('LINK SAVES & BANK TO MY ACCOUNT','linkStorage')
+      end
+    end
     row('BROWSE MODS','browse');row('MOD DEVELOPER · MY REPOSITORIES','developer');row('REFRESH CONNECTED DEVICES','devices')
     for i,d in ipairs(f.devices or {}) do paragraph(tostring(d.label)..(d.current and ' · THIS DEVICE' or ''));paragraph('Expires '..tostring(d.expires_at));row('DISCONNECT DEVICE','revoke:'..i) end
     row('SIGN OUT ON THIS DEVICE','signout')
   else
     paragraph('One account for RetroRecomped and ModCompass. Signing in links this device. Your password is never saved here.')
+    if f.after=='bank' or f.after=='bankDex' then paragraph('The Pokémon Bank, Item Bank and global Pokédex require a registered account with confirmed email. After confirmation you return directly to the Bank.') end
     if f.mode=='register' then
       paragraph('CREATE YOUR ACCOUNT',true);field('Nickname','name');field('Email','email');field('Password','password',true);field('Confirm password','confirmation',true)
       check('I develop mods','developer')

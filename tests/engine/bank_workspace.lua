@@ -12,8 +12,13 @@ local B={list=function() return clone(bank) end,readSave=function() return clone
   commitDraft=function(_,_,save) writes=writes+1;Written=clone(save);return 'slot-copy' end}
 package.loaded['src.storage.PokemonBank']=B
 package.loaded['src.core.SaveData']={listSlots=function() return {{id='slot1',exists=true,name='Test'}} end}
+local signed=false
+package.loaded['src.cloud.RetroCloud']={signedIn=function() return signed end}
 local W=require('src.import.BankWorkspace')
-local ui={ready={red=true,gold=true},_refreshSlots=function() end}
+local ui={ready={red=true,gold=true},_refreshSlots=function() end,_openAccount=function(self,after) self.after=after;self._accountOverlay={} end}
+check(not W.open(ui) and not ui._bankOverlay and ui.after=='bank','the whole Bank requires a registered, email-confirmed device connection')
+check(not W.open(ui,'dex') and not ui._bankOverlay and ui.after=='bankDex','the global Pokédex has the same account gate and remembers its destination')
+signed=true;ui._accountOverlay=nil
 W.open(ui);check(#ui._bankOverlay.slots==2,'the native workspace lists saves across imported games')
 check(W.select(ui,ui._bankOverlay.left,{version='red',slot='slot1',label='Red'}),'source panel reads the chosen save')
 check(W.select(ui,ui._bankOverlay.right,{version='gold',slot='slot1',label='Gold'}),'target panel reads a separate save')
@@ -33,13 +38,16 @@ check(not f.right.dirty and f.right.slot=='slot-copy' and not original.boxes[1][
 local adapted={entry=clone(entry),data={}};adapted.entry.adapt=true
 check(not W.place(ui,adapted,{panel='right',slot=4},false) and f.adapt,'a cross-model drop opens explicit adaptation review')
 check(W.place(ui,adapted,{panel='right',slot=4},true) and not f.adapt,'confirmed adaptation stages only the target copy')
-local signed=false;local started,cancelled=0,0
-package.loaded['src.cloud.RetroCloud']={signedIn=function() return signed end}
+signed=false;local started,cancelled=0,0
+local beforeWrites=writes;local beforeBank=#bank
+check(not W.place(ui,payload,{bank=true},false) and not W.save(ui,'right') and writes==beforeWrites and #bank==beforeBank,'an expired connection cannot deposit or commit staged Bank copies')
 package.loaded['src.cloud.BankExchange']={profile=function() error('cancelled networking must not execute') end}
 package.loaded['src.cloud.Task']={new=function(fn) started=started+1;return {cancel=function() cancelled=cancelled+1 end} end}
 W.mode(ui,'trade');W.trade(ui,'submit');W.mode(ui,'wonder');W.trade(ui,'submit')
 check(started==0 and not f.tradeJob and f.notice:find('Register',1,true),'signed-out visitors cannot start either native trade flow')
-signed=true;W.trade(ui,'submit')
+signed=true;W.open(ui)
+check(ui._bankOverlay==f and f.right.dirty,'re-authentication preserves staged save copies instead of reopening an empty Bank')
+W.trade(ui,'submit')
 check(started==0,'registration alone does not bypass choosing a copy and explicitly consenting to share it')
 W.trade(ui,'profile');check(started==1 and f.tradeJob,'registered players can request their account-wide device and trade profile')
 W.close(ui);check(not ui._bankOverlay and cancelled==1,'closing the Bank cancels its pending background request')

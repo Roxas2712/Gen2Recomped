@@ -5,6 +5,10 @@ local B=require('src.storage.PokemonBank')
 local Saves=require('src.core.SaveData')
 local Versions=require('src.core.GameVersion')
 local Serializer=require('src.core.SaveSerializer')
+local Auth=require('src.cloud.RetroCloud')
+local Storage=require('src.storage.AccountStorage')
+local function registered() if Storage.enabled then return Storage.check() end;return Auth.signedIn() end
+local ACCOUNT_REQUIRED='Register and confirm your email to use the Pokémon Bank, Item Bank and global Pokédex.'
 local function clone(t) return Serializer.decode(Serializer.encode(t)) end
 local function inside(r,x,y) return r and x>=r.x and y>=r.y and x<=r.x+r.width and y<=r.y+r.height end
 function W.slots(self)
@@ -18,11 +22,20 @@ function W.slots(self)
   end
   return out
 end
-function W.open(self)
-  self._bankOverlay={bank=B.list(),left={box=0},right={box=1},page=1,slots=W.slots(self),sprites={},mode='bank'}
+function W.open(self,mode)
+  if not registered() then
+    self:_openAccount(mode=='dex' and 'bankDex' or 'bank')
+    if self._accountOverlay then self._accountOverlay.notice=ACCOUNT_REQUIRED end
+    return false
+  end
+  -- Re-authentication keeps any staged save copies intact.
+  self._bankOverlay=self._bankOverlay or {bank=B.list(),left={box=0},right={box=1},page=1,slots=W.slots(self),sprites={},mode='bank'}
+  if mode then W.mode(self,mode) end
+  return true
 end
 function W.mode(self,mode)
   local f=self._bankOverlay;if not f then return end
+  if not registered() then f.notice=ACCOUNT_REQUIRED;return end
   f.mode=mode;f.modePage=0;f.tradeConsent=false;f.tradeFocus=nil;f.tradeChoose=nil
   f.subScroll=0;f.subMax=0
   if self._disarmTextInput then self:_disarmTextInput() end
@@ -57,6 +70,7 @@ function W.close(self)
   if self._disarmTextInput then self:_disarmTextInput() end
 end
 function W.select(self,panel,choice)
+  if not registered() then return nil,ACCOUNT_REQUIRED end
   local save,why=B.readSave(choice.version,choice.slot);if not save then return nil,why end
   local data,err=B.data(choice.version);if not data then return nil,err end
   local previous=panel.box or 1
@@ -65,6 +79,7 @@ function W.select(self,panel,choice)
   return true
 end
 function W.place(self,payload,target,allow)
+  if not registered() then return nil,ACCOUNT_REQUIRED end
   local f=self._bankOverlay
   if target.bank then
     local e=payload.entry
@@ -91,6 +106,7 @@ function W.place(self,payload,target,allow)
   return true
 end
 function W.save(self,panelName)
+  if not registered() then return nil,ACCOUNT_REQUIRED end
   local f=self._bankOverlay;local panel=f[panelName]
   local id,why=B.commitDraft(panel.version,panel.slot,panel.save)
   if not id then return nil,why end
@@ -138,6 +154,12 @@ function W.draw(self)
   col(41,145,201);g.rectangle('fill',x,y+62*s,w,3*s)
   text('RETRORECOMPED · POKÉMON BANK',x+18*s,y+15*s,w-160*s,true,{245,255,252})
   button('CLOSE',x+w-110*s,y+15*s,92*s,'close')
+  if not registered() then
+    text('A VERIFIED ACCOUNT IS REQUIRED',x+24*s,y+100*s,w-48*s,true)
+    text('Register or sign in and confirm your email. Existing records and staged copies are preserved.',x+24*s,y+144*s,w-48*s)
+    button('REGISTER / SIGN IN',x+24*s,y+195*s,math.min(300*s,w-48*s),'bankLogin')
+    g.pop();return
+  end
   local tabW=(w-36*s)/5
   for i,mode in ipairs({{'bank','BANK BOXES'},{'items','ITEMS'},{'dex','POKÉDEX'},{'trade','LINK TRADE'},{'wonder','WONDER'}}) do
     local r=button(mode[2],x+18*s+(i-1)*tabW,y+77*s,tabW-7*s,'mode',{mode=mode[1]});r.pinned=true
@@ -264,12 +286,14 @@ function W.draw(self)
 end
 function W.press(self,x,y)
   local f=self._bankOverlay
-  if f.animation then return end
+  if f.animation and registered() then return end
   for i=#(f.rects or {}),1,-1 do local r=f.rects[i]
     if inside(r,x,y) then
+      if r.action=='bankLogin' then self:_openAccount('bank');return end
+      if r.action~='close' and not registered() then f.notice=ACCOUNT_REQUIRED;return end
       if f.mode and f.mode~='bank' and not r.pinned and r.action~='close' and not inside(f.pageView,x,y) then return end
-      if f.picker and r.action~='pick' and r.action~='pickerPage' and r.action~='cancelPicker' then return end
-      if f.adapt and r.action~='adapt' and r.action~='cancelAdapt' then return end
+      if registered() and f.picker and r.action~='pick' and r.action~='pickerPage' and r.action~='cancelPicker' then return end
+      if registered() and f.adapt and r.action~='adapt' and r.action~='cancelAdapt' then return end
       if r.action=='close' then
         if (f.left.dirty or f.right.dirty) and not f.closeArmed then f.closeArmed=true;f.notice='Unsaved staged copies. Save them first, or press Close again to discard the draft.'
         else W.close(self) end
@@ -290,6 +314,7 @@ function W.press(self,x,y)
       return
     end
   end
+  if not registered() then f.notice=ACCOUNT_REQUIRED;return end
   if f.picker or f.adapt then return end
   for _,cell in ipairs(f.cells or {}) do
     if inside(cell,x,y) then
@@ -332,7 +357,7 @@ function W.install(RI)
   RI.mousepressed=function(self,x,y,button,...)
     if self._bankOverlay then if button==1 then local f=self._bankOverlay;local ok,why=pcall(W.press,self,x,y);if not ok then f.notice=tostring(why) end end;return end
     if self.section=='games' and U.inside(self._bankLibraryButton,x,y) then W.open(self);return end
-    if self.section=='games' and U.inside(self._bankDexLibraryButton,x,y) then W.open(self);W.mode(self,'dex');return end
+    if self.section=='games' and U.inside(self._bankDexLibraryButton,x,y) then W.open(self,'dex');return end
     return press(self,x,y,button,...)
   end
   local release=RI.mousereleased
@@ -345,6 +370,11 @@ function W.install(RI)
   local update=RI.update
   RI.update=function(self,dt,...)
     local f=self._bankOverlay
+    if f and not registered() then
+      if f.tradeJob then f.tradeJob:cancel();f.tradeJob=nil end
+      f.drag=nil;f.selected=nil
+      return update(self,dt,...)
+    end
     if f and f.drag and not f.drag.touch and love.mouse then f.drag.x,f.drag.y=love.mouse.getPosition() end
     if f then
       if f.animation then f.animation.elapsed=f.animation.elapsed+dt;if f.animation.elapsed>=3.6 then f.animation=nil end end

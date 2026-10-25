@@ -184,7 +184,7 @@
     "Earlier arm64-only experiments and later packaged universal-runtime runs are source-bound separately below.",
     "Windows x64 and Intel/ARM Mac native capacity, C API, engine and LOVE host/thread/FFI gates pass; Linux capacity/engine gates pass. Windows GPU and Intel GPU gameplay remain unverified.",
     "No complete Pokemon model, all effects, battles, movement, all-story, long-session or physical input parity claim.",
-    "Published 20261025.1 still contains stock LuaJIT. Qualified package candidates below are not published; a source PR does not replace an installed runtime.",
+    "The existing 20261025.1 desktop assets were refreshed with the qualified runtime from 0acb23b7. Earlier f7a86975 candidates below remain historical; installing source alone does not replace an installed runtime.",
     "No private mod source/assets, generated renderer source, ROM data, screenshots or saves published."
   ],
   "reproducibleLocalBuild": {
@@ -1547,6 +1547,280 @@
         "releaseProfileNeverLaunched": true,
         "visualInspection": "All four images inspected: upright rooms/NPCs; no complete occlusion/model parity acceptance. OpenGL first-person Center view pitched toward the ceiling and includes a black/white object. Metal includes transient deprecated-shader warnings and a dark right-edge object in later proofs."
       }
+    ]
+  },
+  "publishedDesktopRefresh": {
+    "release": "https://github.com/Roxas2712/Gen2Recomped/releases/tag/native-preview-20261025.1",
+    "sourceCommit": "0acb23b7ae467c6bef6555bb1b3caa689712cfc7",
+    "tagUnchanged": true,
+    "originalTagSource": "0780731e0a925618538d9048524042ca2680ac85",
+    "assetSha256": {
+      "Gen2Recomped-NativePreview.love": "7477b6900223ab9124140b0582ffe28bcc2d4867a8044add4f97b82bf8923ba0",
+      "Gen2Recomped-NativePreview-20261025.1-macos.zip": "3df1b969fa78bfa7536169d766824bb6af4ce2fb94e1785abb9f7e13148c0a14",
+      "Gen2Recomped-NativePreview-20261025.1-windows.zip": "cbba903e71aa2d44f6bf4ef3a11f8f154f5edb33757b4c3656d2d2a073e742ef",
+      "build-manifest.json": "d42fc204f2654778aeb531fef33c74ed00305e7d067d5e4043b14d554a5c29b8",
+      "README-Testrelease.txt": "a459424647fcc4dc22883a5517652756d766c05b99fb21283367eaad66bb8ac3",
+      "SHA256SUMS.txt": "67e7b84ed2981bc4e3e4095271f32fd4938a3faf0807e1a0f21f201174f6d772"
+    },
+    "nativeQualificationRun": 40211783006,
+    "nativeQualificationArtifactSha256": "d8feb669745ef1f0d79c39e09363f4de485f10108bd2b77c96140093d41a13a0",
+    "builds": [
+      {
+        "engineVersion": "0.8.46",
+        "sourceCommit": "0acb23b7ae467c6bef6555bb1b3caa689712cfc7",
+        "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+        "runtimeArtifact": 12514271124,
+        "runtimeSha256": "1f4c6997bd93502f986f5187d877da84247617eede89d8140bcbf570bd07ea22",
+        "platform": "windows",
+        "previewIdentity": "Gen2Recomp-NativePreview-20261025-1",
+        "payloadSha256": "7477b6900223ab9124140b0582ffe28bcc2d4867a8044add4f97b82bf8923ba0",
+        "archiveSha256": "cbba903e71aa2d44f6bf4ef3a11f8f154f5edb33757b4c3656d2d2a073e742ef",
+        "archive": "Gen2Recomped-NativePreview-20261025.1-windows.zip",
+        "buildVerified": true,
+        "launchVerified": false,
+        "realDeviceVerified": false,
+        "extendedUpvaluesQualified": true,
+        "modsIncluded": false,
+        "modsEnabled": true,
+        "legacyMigration": false,
+        "automaticInstallation": false,
+        "qualifiedRuntime": {
+          "experimental": true,
+          "luaJitSource": "a4c064539ea931274d407e1249b4bb575424a0f4",
+          "capacity": 120,
+          "architectures": [
+            "x86_64"
+          ],
+          "componentManifestSha256": "055bea4f3c67c942ec14d056ed1ad9fd507ea109e591a4d1174066cc68bf8402",
+          "inputLibrarySha256": "18f020622b623364f0a82cfafbaa0f95d7cb490c42f19c70fba4768e78a042d0",
+          "engineTreeVerified": true,
+          "qualifications": [
+            {
+              "architecture": "x86_64",
+              "capacityReport": "reports/x86_64-capacity.json",
+              "hostReport": "reports/x86_64-host.json",
+              "capacitySha256": "9b0a2bd48b9f246b0c789a01af0b2a81a9658b3aed148ddf98868f1b367ac036",
+              "hostSha256": "a81c79211e55b0ea968b780603e0cd46cd3fe526400f9cd5b51fc75c86890b87"
+            }
+          ],
+          "installedLibrarySha256": "18f020622b623364f0a82cfafbaa0f95d7cb490c42f19c70fba4768e78a042d0"
+        }
+      },
+      {
+        "engineVersion": "0.8.46",
+        "sourceCommit": "0acb23b7ae467c6bef6555bb1b3caa689712cfc7",
+        "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+        "runtimeArtifact": 12513712494,
+        "runtimeSha256": "f70f60d162eda6931b0b28e2b094b83b741986f0feac08d33a10be7c57e724f8",
+        "platform": "macos",
+        "previewIdentity": "Gen2Recomp-NativePreview-20261025-1",
+        "payloadSha256": "7477b6900223ab9124140b0582ffe28bcc2d4867a8044add4f97b82bf8923ba0",
+        "archiveSha256": "3df1b969fa78bfa7536169d766824bb6af4ce2fb94e1785abb9f7e13148c0a14",
+        "archive": "Gen2Recomped-NativePreview-20261025.1-macos.zip",
+        "buildVerified": true,
+        "launchVerified": false,
+        "realDeviceVerified": false,
+        "extendedUpvaluesQualified": true,
+        "modsIncluded": false,
+        "modsEnabled": true,
+        "legacyMigration": false,
+        "automaticInstallation": false,
+        "qualifiedRuntime": {
+          "experimental": true,
+          "luaJitSource": "a4c064539ea931274d407e1249b4bb575424a0f4",
+          "capacity": 120,
+          "architectures": [
+            "arm64",
+            "x86_64"
+          ],
+          "componentManifestSha256": "bd096f8b087d651cef7c4073f17b20f1683d2e8999618f1c5dd4862e58f36a89",
+          "inputLibrarySha256": "2ccdcc40c0b2a02e12abc8069a9bf9523c1978a8efd46a248f15bf67c629748d",
+          "engineTreeVerified": true,
+          "qualifications": [
+            {
+              "architecture": "x86_64",
+              "capacityReport": "reports/x86_64-capacity.json",
+              "hostReport": "reports/x86_64-host.json",
+              "capacitySha256": "abc0cb8e017c158caf0f20e9aaaaa984b0ecbfc566f78a591558f1168c2b3450",
+              "hostSha256": "e2940b54371e12778f6a99fff8e16d604ca04e4ad005dbe100b3f66afd355d69"
+            },
+            {
+              "architecture": "arm64",
+              "capacityReport": "reports/arm64-capacity.json",
+              "hostReport": "reports/arm64-host.json",
+              "capacitySha256": "a640daa7ee0063f7ec5e713a2f8b6c1ea890e1f04672b8633aee37698e6edf6e",
+              "hostSha256": "da47a386ef1a48e47c4ff867db38fafa69150a5046ce8d16614ba3a7b9198a85"
+            }
+          ],
+          "minimumMacOS": "11.0.0",
+          "installedLibrarySha256": "0b9e147ab903851cb488391ba7e6979f1e36b424e51dd4db48e5c97979a94f5c"
+        }
+      }
+    ],
+    "gpu": [
+      {
+        "scenario": "transitions",
+        "backend": "opengl",
+        "sourceCommit": "0acb23b7ae467c6bef6555bb1b3caa689712cfc7",
+        "checks": 213,
+        "windowProofs": 4,
+        "qaBootstrapScope": "Exact packaged engine src and stamped version, tests copied from the same commit; generated preview entry points replaced by bounded QA identity bootstrap. Own runtime copy has game.love removed and is re-signed; Lua library remains byte-identical to the package.",
+        "resultSha256": "aa42f1a8b26e1a210893f83e4d8e6a7bdfcc43952f3ba8ff1f5b6bd472427ef0",
+        "verificationSha256": "3d36233c696041cecc716373a13fa2e290eb87b5a5ba049b47699d9ae6c104e6",
+        "transitions": 12,
+        "menuChecks": 4
+      },
+      {
+        "scenario": "transitions",
+        "backend": "metal",
+        "sourceCommit": "0acb23b7ae467c6bef6555bb1b3caa689712cfc7",
+        "checks": 213,
+        "windowProofs": 4,
+        "qaBootstrapScope": "Exact packaged engine src and stamped version, tests copied from the same commit; generated preview entry points replaced by bounded QA identity bootstrap. Own runtime copy has game.love removed and is re-signed; Lua library remains byte-identical to the package.",
+        "resultSha256": "89bba065a8d182564f9cb10fc9123603f0a6fb471b1cd8ef8c2cff200c04d480",
+        "verificationSha256": "b20b777bb570dbec65d05ef4e2161a96d832194df5b0c056258ec2f63ffc635b",
+        "transitions": 12,
+        "menuChecks": 4
+      },
+      {
+        "scenario": "battle",
+        "backend": "opengl",
+        "sourceCommit": "0acb23b7ae467c6bef6555bb1b3caa689712cfc7",
+        "checks": 20,
+        "windowProofs": 4,
+        "qaBootstrapScope": "Exact packaged engine src and stamped version, tests copied from the same commit; generated preview entry points replaced by bounded QA identity bootstrap. Own runtime copy has game.love removed and is re-signed; Lua library remains byte-identical to the package.",
+        "resultSha256": "d12b85d44ccd1359ca091d08d74702392f7c826778a68ad6b5bda0356f5dd236",
+        "verificationSha256": "2f1fc9be736750500060b06822005503edf10a9784c613a7950b984f5334265c",
+        "cases": [
+          {
+            "damage": 19,
+            "enemySpecies": "SPECIES_019",
+            "provider": {
+              "fallbacks": 0,
+              "installed": true,
+              "frames": 912,
+              "active": false
+            },
+            "camera": "first",
+            "phase": "messages",
+            "fieldRig": {
+              "yaw": 1.5707963267948966,
+              "pitch": 0.17453292519943295,
+              "engaged": true,
+              "cardBlend": 1,
+              "driving": true,
+              "blend": 1,
+              "hidePlayer": true
+            },
+            "playerSpecies": "SPECIES_152",
+            "finished": "win"
+          },
+          {
+            "damage": 19,
+            "enemySpecies": "SPECIES_019",
+            "provider": {
+              "fallbacks": 0,
+              "installed": true,
+              "frames": 1795,
+              "active": false
+            },
+            "camera": "third",
+            "phase": "messages",
+            "fieldRig": {
+              "yaw": 1.5707963267948966,
+              "pitch": 0.17453292519943295,
+              "engaged": true,
+              "cardBlend": 1,
+              "driving": true,
+              "blend": 1,
+              "hidePlayer": false
+            },
+            "playerSpecies": "SPECIES_152",
+            "finished": "win"
+          }
+        ],
+        "visiblePokemon": "Native colored sprite cards on the 3D map; no full volumetric-model parity claim"
+      },
+      {
+        "scenario": "battle",
+        "backend": "metal",
+        "sourceCommit": "0acb23b7ae467c6bef6555bb1b3caa689712cfc7",
+        "checks": 20,
+        "windowProofs": 4,
+        "qaBootstrapScope": "Exact packaged engine src and stamped version, tests copied from the same commit; generated preview entry points replaced by bounded QA identity bootstrap. Own runtime copy has game.love removed and is re-signed; Lua library remains byte-identical to the package.",
+        "resultSha256": "ca8b923c115cb462bd66276ed4ca77524b17e2cbde57c8d45d5ec07e05e96aef",
+        "verificationSha256": "da8c29436523cee79cd0d871e65fb979c95a4b1759be59707fd31b4e3c0dee31",
+        "cases": [
+          {
+            "finished": "win",
+            "enemySpecies": "SPECIES_019",
+            "damage": 18,
+            "phase": "messages",
+            "playerSpecies": "SPECIES_152",
+            "provider": {
+              "installed": true,
+              "frames": 928,
+              "active": false,
+              "fallbacks": 0
+            },
+            "fieldRig": {
+              "engaged": true,
+              "yaw": 1.5707963267948966,
+              "hidePlayer": true,
+              "cardBlend": 1,
+              "pitch": 0.17453292519943295,
+              "blend": 1,
+              "driving": true
+            },
+            "camera": "first"
+          },
+          {
+            "finished": "win",
+            "enemySpecies": "SPECIES_019",
+            "damage": 18,
+            "phase": "messages",
+            "playerSpecies": "SPECIES_152",
+            "provider": {
+              "installed": true,
+              "frames": 1816,
+              "active": false,
+              "fallbacks": 0
+            },
+            "fieldRig": {
+              "engaged": true,
+              "yaw": 1.5707963267948966,
+              "hidePlayer": false,
+              "cardBlend": 1,
+              "pitch": 0.17453292519943295,
+              "blend": 1,
+              "driving": true
+            },
+            "camera": "third"
+          }
+        ],
+        "visiblePokemon": "Native colored sprite cards on the 3D map; no full volumetric-model parity claim"
+      }
+    ],
+    "originalModFilesUnchanged": 27329,
+    "visualInspection": "All 16 current-main window proofs inspected. Actual native colored Pokemon cards and upright battle HUDs are visible in both cameras/backends. First Person hides the player; Third Person shows the player. After-damage images show return to the field. Overworld black/white actors, some bottom-edge command clipping and Metal deprecation overlays remain unresolved; no full volumetric-model or performance parity claim.",
+    "failedQaAssumptions": [
+      "First staged probe used symbolic species names; corrected to the native imported SPECIES_### keys.",
+      "Second staged probe selected the first learned move GROWL and incorrectly expected damage. The passing probe records the imported learnset and explicitly chooses its learned RAZOR_LEAF using native input."
+    ],
+    "openNativeInterfaces": [
+      "party follower predicate/current lifecycle facade",
+      "HP presentation step protocol",
+      "battle animation view/capture presentation",
+      "PC box/mail integration",
+      "registered item and field action/fly picker protocols"
+    ],
+    "limits": [
+      "Battle party, initial map and intro are explicit QA setup. Ordinary visible contacts, capture, party switching, RUN, story, all maps, long sessions and physical input are not established by this staged probe.",
+      "Window labels resized/map-return are historical capture tags, not evidence of a resize.",
+      "OpenGL outdoor render CPU samples around 40ms and spikes around 100ms remain; Metal also recorded a ~1s hitch. No controlled performance comparison or 60FPS acceptance.",
+      "Windows x64 and Intel Mac native ABI/headless qualification and packaging pass; GPU gameplay was executed only on Mac ARM.",
+      "Mod-reported overworld capture is disabled by its own RC policy; an engine facade must not force it active.",
+      "The original release tag remains at 0780731e; refreshed binary sources are identified by the manifest/README and commit link. No original mod source/assets, ROM data, screenshots or saves are published."
     ]
   }
 }

@@ -1,13 +1,13 @@
-# Maarten Paus / Roxas2712 — Fork Contributions
+# Roxas2712 — Fork Contributions
 
 Version 1.0 · Effective 25 October 2026
 
-Copyright © 2026 Maarten Paus (Roxas2712), to the extent of rights held.
+Copyright © 2026 Roxas2712, to the extent of rights held.
 All rights reserved except as expressly granted below or already granted.
 
 ## 1. Scope and ownership
 
-This notice applies only to original contributions made by Maarten Paus
+This notice applies only to original contributions made by Roxas2712
 (GitHub: Roxas2712) to `Roxas2712/Gen2Recomped`, including original additions
 within modified files, insofar as he owns the relevant rights. Git history,
 pull-request diffs and source provenance identify contributions; a commit
@@ -26,21 +26,21 @@ For contributions covered by this notice and not already licensed more
 broadly, you may read and study the published source and make private,
 non-commercial modifications and builds for your own use. This grants no
 general permission to redistribute, sublicense, sell, or offer those
-contributions as a hosted service. Other uses require Maarten Paus's
+contributions as a hosted service. Other uses require Roxas2712's
 written permission, except for the specific permission below and rights
 available independently under applicable law.
 
 Keep the relevant copyright, licence and attribution notices. Do not
-represent Maarten Paus's contributions as exclusively authored by someone
+represent Roxas2712's contributions as exclusively authored by someone
 else. Public source availability alone does not put them in the public
 domain or grant an open-source licence.
 
 ## 3. Specific permission for Cedric / UNDERdecoded
 
-Maarten Paus expressly grants Cedric (Ced; GitHub: UNDERdecoded /
+Roxas2712 expressly grants Cedric (Ced; GitHub: UNDERdecoded /
 UNDERdecodedHD) a non-exclusive, worldwide, perpetual, royalty-free
 permission to use, reproduce, integrate, modify and distribute the covered
-contributions that Maarten Paus submits or expressly offers through pull
+contributions that Roxas2712 submits or expressly offers through pull
 requests to `UNDERdecoded/Gen2Recomped`, for Cedric's Gen2Recomped /
 RetroRecompiled project. This includes its renamed continuation maintained
 by Cedric, its official builds, and its commercial operation.
@@ -50,7 +50,7 @@ that project, subject to preserving this permission's applicable credit and
 notice requirements. This permission is not a copyright assignment, is not
 exclusive, and does not cover unpublished work, separate repositories,
 ModCompass service operation, credentials, or content not offered in those
-pull requests. Maarten Paus retains his own rights to his contributions.
+pull requests. Roxas2712 retains his own rights to his contributions.
 
 For uses relying on this permission:
 
@@ -59,7 +59,7 @@ For uses relying on this permission:
   page, and in the application's existing About / Credits view, if present;
 - use at least the following credit, or a substantially equivalent one:
 
-  > Contributions by Maarten Paus (Roxas2712) —
+  > Contributions by Roxas2712 —
   > https://github.com/Roxas2712
 
 A maintained consolidated contributor credit is sufficient; a separate
@@ -76,8 +76,7 @@ pull requests. Where an earlier grant permits a use independently of this
 notice, its existing terms govern that use. For such earlier uses, the
 visible credit above is requested to the extent it is not already required.
 
-For subsequent contributions, this is the default statement of Maarten
-Paus's own reserved rights and the specific PR permission, subject to any
+For subsequent contributions, this is the default statement of Roxas2712's own reserved rights and the specific PR permission, subject to any
 applicable existing licence obligations or separately agreed terms. It
 does not change another rights holder's licence or guarantee compatibility
 of a particular combination of code.

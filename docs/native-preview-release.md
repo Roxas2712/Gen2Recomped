@@ -1,7 +1,9 @@
 # RetroRecomped intermediate pre-releases
 
 Download the **Gen2Recomped-NativePreview** package for your platform from the
-fork's pre-release:
+fork's pre-release. Availability varies: the refreshed `20261025.1` release
+contains the two desktop packages; mobile/console entries below describe the
+required future publishing workflow.
 
 - Windows: `OpenGL-Test.cmd` or `Gen2Recomped-NativePreview.exe`.
 - macOS: the preview app or `Metal-Test.command`; `OpenGL-Test.command`
@@ -36,11 +38,11 @@ repository linking, mod browsing/downloads, cloud saves and Pokemon Bank.
 Mod version and generation requirements still apply. Save-bound compatibility
 review can restore known packages or continue from a separate slot copy.
 Exact mid-battle execution snapshots and seamless device handoff remain in
-development. The published `20261025.1` build does not bundle the extended
-LuaJIT candidate, so mods exceeding the official capacity can still fail to
-load. Qualification and packaging changes below prepare subsequent builds;
-they do not retroactively change existing downloads or establish full-game
-3D or universal mod compatibility.
+development. The existing `20261025.1` desktop assets were refreshed from
+`0acb23b7` with the qualified experimental 120-upvalue runtime. The original
+tag/source archives retain `0780731e`; the manifest and README identify the
+actual binary source and link to it. The preview profile is unchanged. This
+update does not establish full-game 3D or universal mod compatibility.
 
 ## Publishing
 
@@ -79,10 +81,10 @@ action which triggered the problem. Never attach ROMs, credentials or caches.
 
 ## VASC4Gen2 development test status
 
-The `native-preview-20261025.1` intermediate pre-release includes the native
-camera/movement and Apple Silicon tier changes. It still bundles the official
-runtime with the 60-upvalue limit: the supplied generated renderer extension
-cannot fully initialize there. A source PR alone cannot change that runtime.
+The refreshed `native-preview-20261025.1` desktop downloads include native
+camera/movement, Apple Silicon tier corrections and the qualified extended
+runtime. The unchanged supplied generated renderer now initializes in the
+tested Mac ARM copies. A stock LOVE installation still cannot compile it.
 
 The separate experimental host passes normal Mart/Center doors, native menus
 and Cherrygrove/Route 29 connections in First and Third Person on OpenGL and
@@ -92,5 +94,9 @@ bootstrap scope, is recorded in
 [the runtime receipt](qa/native-foundation/johto-native-runtime-upvalues.json).
 Some black-and-white objects remain visible. Complete model/effect/battle/story,
 long-session and Windows GPU checks remain open. These results support a
-limited experimental Mac play test; the published stock preview still cannot
-initialize the full generated renderer.
+limited experimental Mac play test. Current packaged-source/runtime tests at
+`0acb23b7` add 20 assertions and four window proofs per backend for explicitly
+staged battles in both camera modes: native menu input, visible colored Pokemon
+cards, damage and victory callbacks. They do not establish ordinary encounters,
+party switching, capture, RUN or all-story playability. Black/white overworld
+actors, some command clipping and outdoor performance spikes remain open.
