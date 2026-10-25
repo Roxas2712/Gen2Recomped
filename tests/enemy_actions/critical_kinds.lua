@@ -38,6 +38,13 @@ function M.run(root, backend, version)
       }) do
         data.items[id] = { index = row[1], name = id, holdEffect = row[2], holdEffectParam = 4 }
       end
+      data.constants.itemOrder = { [4] = "POKE_BALL" }
+      data.items.POKE_BALL = { index = 4, name = "POKE BALL", ball = "POKE_BALL" }
+      data.constants.natureOrder = { [2] = "LONELY", [5] = "NAUGHTY" }
+      data.pokemon.CHARMANDER.genderRatio = 127
+      for _, number in ipairs({ 39, 158, 98, 28, 16 }) do
+        data.moves["MOVE_" .. number] = { index = number, pp = 30 }
+      end
       for name, index in pairs({ RATTATA = 19, PIDGEY = 16, CHANSEY = 113, FARFETCH_D = 83 }) do
         local d = require("src.mods.Merge").deepCopy(data.pokemon.CHARMANDER)
         d.id, d.name, d.index, d.dex, d.evolutions = name, name, index, index, {}

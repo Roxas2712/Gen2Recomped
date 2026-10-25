@@ -1470,11 +1470,11 @@ end
 local POKEDUDE_DEMOS = {
   battle = {
     player = {
-      { species="RATTATA", level=15, nature="LONELY",
-        moves={"TACKLE","TAIL_WHIP","HYPER_FANG","QUICK_ATTACK"} },
+      { species=19, level=15, nature=1, gender="male",
+        moves={33,39,158,98} },
     },
-    enemy = { species="PIDGEY", level=18, nature="NAUGHTY",
-              moves={"TACKLE","SAND_ATTACK","GUST","QUICK_ATTACK"} },
+    enemy = { species=16, level=18, nature=4, gender="male",
+              moves={33,28,16,98} },
     turns = {
       { action="fight", playerMove=3, enemyMove=3, voices={1} },
       { action="fight", playerMove=3, enemyMove=3, voices={2,3}, repeatTurn=true },
@@ -1483,11 +1483,11 @@ local POKEDUDE_DEMOS = {
   },
   status = {
     player = {
-      { species="RATTATA", level=15, nature="LONELY",
-        moves={"TACKLE","TAIL_WHIP","HYPER_FANG","QUICK_ATTACK"} },
+      { species=19, level=15, nature=1, gender="male",
+        moves={33,39,158,98} },
     },
-    enemy = { species="ODDISH", level=14, nature="RASH",
-              moves={"ABSORB","SWEET_SCENT","POISONPOWDER"} },
+    enemy = { species=43, level=14, nature=19, gender="male",
+              moves={71,230,77} },
     turns = {
       { action="fight", playerMove=3, enemyMove=3 },
       { action="item", item="ANTIDOTE", enemyMove=1, voices={1,2} },
@@ -1497,13 +1497,13 @@ local POKEDUDE_DEMOS = {
   },
   matchups = {
     player = {
-      { species="POLIWAG", level=15, nature="RASH",
-        moves={"WATER_GUN","HYPNOSIS","BUBBLE"} },
-      { species="BUTTERFREE", level=15, nature="RASH",
-        moves={"CONFUSION","POISONPOWDER","STUN_SPORE","SLEEP_POWDER"} },
+      { species=60, level=15, nature=19, gender="male",
+        moves={55,95,145} },
+      { species=12, level=15, nature=19, gender="male",
+        moves={93,77,78,79} },
     },
-    enemy = { species="ODDISH", level=14, nature="RASH",
-              moves={"ABSORB","SWEET_SCENT","POISONPOWDER"} },
+    enemy = { species=43, level=14, nature=19, gender="male",
+              moves={71,230,77} },
     turns = {
       { action="fight", playerMove=3, enemyMove=1 },
       { action="switch", switchTo=2, enemyMove=1, voices={1,2,3} },
@@ -1513,11 +1513,11 @@ local POKEDUDE_DEMOS = {
   },
   catch = {
     player = {
-      { species="BUTTERFREE", level=15, nature="RASH",
-        moves={"CONFUSION","POISONPOWDER","SLEEP_POWDER","STUN_SPORE"} },
+      { species=12, level=15, nature=19, gender="male",
+        moves={93,77,79,78} },
     },
-    enemy = { species="JIGGLYPUFF", level=11, nature="CAREFUL",
-              moves={"SING","DEFENSE_CURL","POUND"} },
+    enemy = { species=39, level=11, nature=23, gender="male",
+              moves={47,111,1} },
     turns = {
       { action="fight", playerMove=1, enemyMove=3, voices={1} },
       { action="fight", playerMove=3, enemyMove=3, voices={2,3} },
@@ -1527,33 +1527,14 @@ local POKEDUDE_DEMOS = {
   },
 }
 
-local function pokedudeMon(game, spec)
-  -- Fixed mid-range IVs keep the scripted demonstrations deterministic while
-  -- still using the ordinary Gen-3 stat path.  Retail's creator also forces
-  -- the requested nature/gender rather than using the player's Pokémon.
-  local mon = Pokemon.new(game.data, spec.species, spec.level,
-                          function(a, b) return math.floor((a + b) / 2) end)
-  mon.nature = spec.nature
-  mon.gender = "male"
-  mon.stats = require("src.pokemon.Stats").calc(game.data.pokemon[spec.species],
-                                                spec.level, mon.ivs, mon.evs,
-                                                mon.nature)
-  mon.hp = mon.stats.hp
-  mon.moves = {}
-  for _, id in ipairs(spec.moves) do
-    local def = game.data.moves[id]
-    mon.moves[#mon.moves + 1] = { id=id, pp=def and def.pp or 0,
-                                  maxPp=def and def.pp or 0 }
-  end
-  return mon
-end
-
-function BattleState.newPokedudeDemo(game, lesson)
+function BattleState.newPokedudeDemo(game, lesson, rng)
+  local Preset = require("src.pokemon.Gen3ConstrainedMon")
   local def = POKEDUDE_DEMOS[lesson]
   assert(def, "unknown POKé DUDE lesson " .. tostring(lesson))
   local savedParty = game.save.party
   local party = {}
-  for _, spec in ipairs(def.player) do party[#party + 1] = pokedudeMon(game, spec) end
+  for _, spec in ipairs(def.player) do party[#party + 1] = Preset.new(game.data, spec, rng) end
+  local enemyParty = { Preset.new(game.data, def.enemy, rng) }
   require("src.pokemon.PartyAside").hold(game.save, savedParty)  -- kept in the save too
   game.save.party = party
 
@@ -1561,7 +1542,7 @@ function BattleState.newPokedudeDemo(game, lesson)
   self.kind = "wild"
   self.noRun = true
   self.player = makeBattler(game.data, party[1], true, game.save, self)
-  self.enemyParty = { pokedudeMon(game, def.enemy) }
+  self.enemyParty = enemyParty
   self.enemy = makeBattler(game.data, self.enemyParty[1], false, nil, self)
   self.introText = self:romText("_WildMonAppearedText", "Wild %s\nappeared!",
                                 self.enemy.name)
@@ -1570,10 +1551,9 @@ function BattleState.newPokedudeDemo(game, lesson)
     lesson=lesson, def=def, turn=1, timer=0, savedParty=savedParty,
     voiceDone={},
   }
-  -- The retail tutorial is a prerecorded demonstration, not a battle whose
-  -- damage/accuracy swings with the player's global RNG state.  A midpoint
-  -- generator keeps the scripted turns stable while still running through the
-  -- ordinary Gen-3 battle formulas and status checks.
+  -- The existing scripted-turn midpoint policy is separate from native
+  -- identity creation above. Whole-game RNG scheduling and retail demo
+  -- playback timing still need their own controller-level comparison.
   self.rng = function(a, b)
     if a ~= nil and b ~= nil then return math.floor((a + b) / 2) end
     if a ~= nil then return math.max(1, math.floor((a + 1) / 2)) end
