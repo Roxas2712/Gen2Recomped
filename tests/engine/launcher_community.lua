@@ -11,7 +11,10 @@ package.loaded['src.core.SaveData']={loadOptions=function() return options end,s
 local requests=0
 local requestUrls={}
 local response
-package.loaded['src.cloud.Http']={request=function(_,url) requests=requests+1;requestUrls[url]=(requestUrls[url] or 0)+1;return 200,response end}
+package.loaded['src.cloud.Http']={request=function(_,url)
+  if url=='https://pokexpert.de/api/launcher/presentation.json' then return 200,'{"schema_version":1,"week_enabled":false,"promotions_enabled":false,"items":[]}' end
+  requests=requests+1;requestUrls[url]=(requestUrls[url] or 0)+1;return 200,response
+end}
 package.loaded['src.cloud.Task']={new=function(fn)
   return {cancel=function() end,poll=function() local a,b=fn();return {kind='done',first=a,second=b} end}
 end}

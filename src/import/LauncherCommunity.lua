@@ -391,7 +391,7 @@ function C.install(RI)
       local used=paintLinks(self,x,y,w)
       self._communityGateRect=nil
       if method=='_drawFindPanel' and self._findNeedsLogin then self:_refreshFind(true) end
-      local week=self.findIndex and self.findIndex.week
+      local week=require('src.import.LauncherPresentation').week(self)
       self._communityWeekRect=nil
       if week then
         for _,entry in ipairs(self.findIndex.mods or {}) do if entry.catalogueId==week.catalogue_id then
@@ -420,6 +420,7 @@ function C.install(RI)
   end
   local update=RI.update
   RI.update=function(self,dt,...)
+    require('src.import.LauncherPresentation').update(self)
     Download.reap()
     require('src.import.CartridgeDownload').reap()
     for id,job in pairs(self._communityImageJobs or {}) do

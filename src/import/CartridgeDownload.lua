@@ -22,7 +22,18 @@ function D.start(version,confirmed)
   if confirmed~=true then return nil,'Confirm the artwork source and rights notice first.' end
   local source=require('src.import.CartridgeSources').get(version)
   if not source then return nil,'No original cartridge reference is available for this edition.' end
-  return start(source.image,version,false)
+  local job,why=start(source.image,version,false)
+  if job then job.source=source end
+  return job,why
+end
+function D.verify(bytes,source)
+  if type(bytes)~='string' or #bytes==0 or #bytes>8*1024*1024 then return nil,'Invalid artwork download.' end
+  if source and source.sha256 then
+    if #bytes~=source.bytes or love.data.encode('string','hex',love.data.hash('sha256',bytes))~=source.sha256 then
+      return nil,'The cartridge image did not match its published fingerprint. Please retry the download.'
+    end
+  end
+  return true
 end
 function D.preview(url)
   if type(url)~='string' or not (url:match('^https://pokexpert%.de/') or url:match('^https://i%.ytimg%.com/')) then return nil,'Untrusted preview source.' end
@@ -43,7 +54,11 @@ function D:poll()
     if result.kind=='done' then
       local info=love.filesystem.getInfo(self.path)
       if not info or info.size<=0 or info.size>8*1024*1024 then result={kind='error',error='Artwork exceeds the 8 MB limit.'}
-      else result.bytes=love.filesystem.read(self.path) end
+      else
+        local bytes=love.filesystem.read(self.path)
+        local valid,why=D.verify(bytes,self.source)
+        if valid then result.bytes=bytes else result={kind='error',error=why} end
+      end
     end
     love.filesystem.remove(self.path);self.finished=result;return result
   end

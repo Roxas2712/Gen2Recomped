@@ -41,7 +41,17 @@ for _,v in ipairs({'red','blue','yellow','gold','silver','crystal','firered','le
 end
 check(Sources.get('prism')==nil and Sources.get('polishedcrystal')==nil,'ROM hacks never falsely claim an original retail cartridge')
 check(Sources.get('red').page~=Sources.get('blue').page,'edition links do not silently share the wrong artwork')
-check(Sources.get('red').image:find('https://archives.bulbagarden.net/media/upload/',1,true)==1,'original download references point to the source image host')
+check(Sources.get('red').image:find('https://pokexpert.de/launcher/cartridges/v1/',1,true)==1,'downloads use the operator image host rather than the source browser challenge')
+for version,asset in pairs(require('src.import.CartridgeImages')) do
+  local reference=Sources.get(version)
+  check(reference.sha256==asset.sha256 and #asset.sha256==64 and asset.width<=2048 and asset.height<=2048 and asset.bytes<8*1024*1024,'hosted originals have bounded dimensions and a pinned fingerprint')
+  check(reference.originalImage:find('https://archives.bulbagarden.net/media/upload/',1,true)==1 and reference.credit~=nil,'the original source and contributor remain attributed')
+end
+local D=require('src.import.CartridgeDownload')
+love.data={hash=function(_,bytes) return bytes=='original' and 'digest' or 'wrong' end,encode=function(_,_,bytes) return bytes end}
+check(D.verify('original',{bytes=8,sha256='digest'}),'an unchanged original passes fingerprint verification')
+check(not D.verify('modified',{bytes=8,sha256='digest'}),'altered bytes are refused before decoding the cartridge image')
+check(not D.verify('original-extra',{bytes=8,sha256='digest'}),'unexpected file length is refused')
 check(H.cartModel('gold').family=='dmg' and H.cartModel('crystal').family=='cgb','Gold and Silver use their notched dual-compatible shell while Crystal keeps its Color-only mould')
 local Bounds=require('src.import.ImageBounds')
 local header='\137PNG\13\10\26\10'..string.char(0,0,0,13)..'IHDR'

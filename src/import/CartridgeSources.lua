@@ -2,6 +2,7 @@
 -- after the player explicitly confirms the source and rights notice.
 -- Edition/file names checked against Bulbagarden Archives on 2026-10-25.
 local Sources={}
+local hosted=require('src.import.CartridgeImages')
 local files={
   red='Pokemon_Red_cartridge.png',blue='Pokemon_Blue_cartridge.png',yellow='Pokemon_Yellow_cartridge.png',
   gold='Pokemon_Gold_cartridge.png',silver='Pokemon_Silver_cartridge.png',crystal='Pokemon_Crystal_cartridge.png',
@@ -15,8 +16,12 @@ directories.leafgreen='9/9a';directories.ruby='0/0e';directories.sapphire='2/28'
 function Sources.get(version)
   local file=files[version];if not file then return nil end
   local encoded=file:gsub('[^%w_.%-]',function(c) return ('%%%02X'):format(c:byte()) end)
+  local asset=hosted[version]
   return {page='https://archives.bulbagarden.net/wiki/File:'..encoded,
-    image='https://archives.bulbagarden.net/media/upload/'..directories[version]..'/'..encoded,
+    image=asset and ('https://pokexpert.de/launcher/cartridges/v1/'..asset.file) or ('https://archives.bulbagarden.net/media/upload/'..directories[version]..'/'..encoded),
+    originalImage='https://archives.bulbagarden.net/media/upload/'..directories[version]..'/'..encoded,
+    sha256=asset and asset.sha256,bytes=asset and asset.bytes,width=asset and asset.width,height=asset and asset.height,
+    credit=asset and asset.credit,delivery=asset and 'ModCompass · pokexpert.de' or 'Bulbagarden Archives',
     publisher='Bulbagarden Archives',checked='2026-10-25',
     note='Source provides cartridge images under a fair-use claim. Review the source usage terms; this is not a reuse license.'}
 end

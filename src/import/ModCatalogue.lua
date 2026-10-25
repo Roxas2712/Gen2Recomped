@@ -174,7 +174,8 @@ function M.install(RI)
       action(a[1],a[2],bx,y,bw);bx=bx+bw+8*s
     end
     y=y+48*s
-    local week=self.findIndex and self.findIndex.week
+    local Presentation=require('src.import.LauncherPresentation')
+    local week=Presentation.week(self)
     local weeklyEntry
     if week then for _,entry in ipairs(self.findIndex.mods or {}) do if entry.catalogueId==week.catalogue_id then
       self:_findThumb(entry)
@@ -196,6 +197,28 @@ function M.install(RI)
     local filtered,approximate=self:_findRows();approximate=approximate or 0
     text(('%d results%s'):format(#filtered,approximate>0 and (' · '..approximate..' similar spelling') or ''),x,y,w,self.hintFont,P.warning);y=y+fh+12*s
     local installed,available=M.sections(self.mods,filtered,{query=self.findQuery,category=self.findCategory,generation=self.catalogGeneration})
+    -- Placement buttons only open their disclosed destination when clicked.
+    -- They cannot install mods, inject code or change the catalogue search.
+    for _,item in ipairs(Presentation.items(self)) do
+      local ph=110*s
+      if y+ph>=visibleTop and y<visibleBottom then
+        U.roundedCard(x,y,w,ph,12*s)
+        local image=item.thumbnail and self:_findThumb(item)
+        local offset=14*s
+        if image and w>=520*s then
+          local iw,ih=image:getDimensions();local scale=math.min(145*s/iw,82*s/ih)
+          U.col(P.ink);g.draw(image,x+14*s+(145*s-iw*scale)/2,y+14*s+(82*s-ih*scale)/2,0,scale,scale)
+          offset=174*s
+        end
+        local tw=math.max(40*s,w-offset-110*s)
+        text(item.kind=='promotion' and 'PROMOTION · MODCOMPASS' or 'MODCOMPASS ANNOUNCEMENT',x+offset,y+12*s,tw,self.hintFont,P.link)
+        text(item.title,x+offset,y+36*s,tw,self.stateFont,P.ink)
+        text(item.description,x+offset,y+70*s,tw)
+        local r=action('placement','Open ↗',x+w-96*s,y+37*s,82*s,item)
+        r.url=item.url
+      end
+      y=y+ph+14*s
+    end
     for i,row in ipairs(available) do if row.entry==weeklyEntry then table.remove(available,i);table.insert(available,1,row);break end end
     local cols=math.max(1,math.floor((w+16*s)/(280*s+16*s)))
     local gap=16*s;local cw=(w-(cols-1)*gap)/cols
@@ -294,12 +317,14 @@ function M.install(RI)
   RI._sbMousepressed=function(self,x,y,...)
     if self.section=='mods' then
       if self._sb and U.inside(self._sb.modsFind,x,y) then self._catalogManage=false end
+      if self._sb and U.inside(self._sb.modsInstalled,x,y) then self._catalogManage=true end
       if not self._catalogManage then
         for _,r in ipairs(self._catalogActions or {}) do if U.inside(r,x,y) then
           if r.action=='account' then self:_openAccount()
           elseif r.action=='developer' then self:_openDeveloper('developer')
           elseif r.action=='manage' then self._catalogManage=true;self:_selectTab('mods');self.pageScroll=0
           elseif r.action=='refresh' then self:_refreshFind(true);self:_syncModUpdateInfo(true)
+          elseif r.action=='placement' then love.system.openURL(r.url)
           elseif r.action=='details' then self:_findShowDetails(r.entry)
           elseif r.action=='generation' then self.catalogGeneration=r.generation;self._catalogGenerations=false;self.pageScroll=0
           elseif r.action=='generations' then self._catalogGenerations=not self._catalogGenerations

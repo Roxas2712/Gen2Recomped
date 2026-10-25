@@ -24,7 +24,7 @@ syntax = ['main.lua', 'conf.lua', 'src/cloud/Http.lua', 'src/cloud/RetroCloud.lu
           'src/import/AccountWorkspace.lua', 'src/import/DeveloperWorkspace.lua',
           'src/import/LauncherStorage.lua', 'src/import/LauncherSidebar.lua', 'src/import/CartridgeDownload.lua',
           'src/import/cartridge_download_worker.lua', 'src/core/Music.lua', 'src/core/Sound.lua',
-          'src/import/LauncherCommunity.lua', 'src/import/ModCatalogue.lua', 'src/mods/ModSearch.lua', 'src/mods/ModPreflight.lua', 'src/import/RomImporter.lua',
+          'src/import/LauncherCommunity.lua', 'src/import/LauncherPresentation.lua', 'src/import/CartridgeImages.lua', 'src/import/ModCatalogue.lua', 'src/mods/ModSearch.lua', 'src/mods/ModPreflight.lua', 'src/import/RomImporter.lua',
           'src/core/Game.lua', 'src/core/SaveData.lua', 'src/storage/SaveResume.lua',
           'src/import/ResumeWorkspace.lua', 'src/import/SaveHistoryWorkspace.lua', 'src/mods/ModProfiles.lua',
           'src/import/LauncherModProfiles.lua', 'src/mods/LauncherMods.lua', 'src/storage/BankItems.lua',
@@ -41,7 +41,7 @@ account_workspace private_http developer_projects mod_profile_recovery retro_ove
 window_frame window_frame_async portable_input_hooks touch_orientation_bug633
 save_resume resume_workspace save_resume_capture save_resume_slot save_history_workspace launcher_audio_handoff bank_exchange'''.split()
 suites.extend(['native_preview','account_storage','account_profiles','bank_interop',
-               'api3_storage_transactions','api3_playthrough_storage','bank_portrait','api3_compat','mod_catalogue','mod_preflight'])
+               'api3_storage_transactions','api3_playthrough_storage','bank_portrait','api3_compat','mod_catalogue','mod_preflight','launcher_presentation'])
 for suite in suites:
     command = [runtime, str(root / 'tests/engine' / (suite + '.lua'))]
     if suite == 'bank_interop' and args.legacy_bank_source:

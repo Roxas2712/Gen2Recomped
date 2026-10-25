@@ -190,10 +190,10 @@ function Designer.install(RI)
       paint.surface(x,yy,w,ph,16*s,p.link,false)
       Hardware.cartridge(self,d.version,x+w/2,yy+ph/2,w-48*s,ph-30*s,-.08,{customLabel=true})
       yy=yy+ph+18*s
-      local rights='Download the original '..d.style.name..' cartridge photograph from Bulbagarden Archives. Artwork belongs to its respective rights holders, including Nintendo, Game Freak and Creatures. Check the source terms and your permitted use. Downloading grants no reuse licence. The image stays on this device.'
+      local source=Sources.get(d.version)
+      local rights='Original '..d.style.name..' cartridge photograph. Source: '..source.publisher..'; contributor: '..tostring(source.credit or 'see source')..'. Download served by '..source.delivery..' at '..tostring(source.width or '?')..' × '..tostring(source.height or '?')..' pixels. Artwork belongs to its respective rights holders, including Nintendo, Game Freak and Creatures. Check the source terms and your permitted use. Downloading grants no reuse licence. The image stays on this device.'
       g.setFont(self.hintFont);U.col(p.detail);g.printf(rights,x,yy,w,'left')
       local _,lines=self.hintFont:getWrap(rights,w);yy=yy+#lines*self.hintFont:getHeight()+16*s
-      local source=Sources.get(d.version)
       control('source','VIEW IMAGE SOURCE ↗',yy);self._cartControls[#self._cartControls].value=source.page;yy=yy+52*s
       control('consent',d.originalConsent and '✓ I HAVE CHECKED MY PERMITTED USE' or '□ I HAVE CHECKED MY PERMITTED USE',yy);yy=yy+52*s
       if self._cartDownload then control('cancelDownload','CANCEL DOWNLOAD',yy);yy=yy+52*s
@@ -257,7 +257,7 @@ function Designer.install(RI)
       local download=self:_glassyButton(ex,ey,ew,42*s,self._cartDownload and 'CANCEL ARTWORK DOWNLOAD' or 'DOWNLOAD ORIGINAL CARTRIDGE IMAGE',self.hintFont,true)
       control(self._cartDownload and 'cancelDownload' or 'original',nil,download);ey=ey+54*s
       if d.showOriginalConsent then
-        local rights=Strings('Source: Bulbagarden Archives. Artwork belongs to its respective rights holders, including Nintendo, Game Freak and Creatures. Downloading does not grant a reuse licence. The image is stored only on this device.')
+        local rights='Source: '..reference.publisher..' · '..tostring(reference.credit or 'see source')..'. Served by '..reference.delivery..'. Original image bytes; no added compression. Artwork belongs to its respective rights holders, including Nintendo, Game Freak and Creatures. Downloading does not grant a reuse licence. The image is stored only on this device.'
         g.setFont(self.hintFont);U.col(p.detail);g.printf(rights,ex,ey,ew,'left')
         local _,lines=self.hintFont:getWrap(rights,ew);ey=ey+#lines*self.hintFont:getHeight()+14*s
         control('consent',nil,self:_chipButton(ex,ey,d.originalConsent and '✓ I HAVE CHECKED MY PERMITTED USE' or '□ I HAVE CHECKED MY PERMITTED USE',{w=ew,h=38*s}));ey=ey+48*s
