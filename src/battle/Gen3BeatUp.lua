@@ -2,25 +2,27 @@
 local Damage = require("src.battle.Damage")
 local HelpingHand = require("src.battle.Gen3HelpingHand")
 local B = {}
-local function partyFor(ctx)
+-- The native side party is shared across both trainers. Keep the engine's
+-- owning arrays separate, but retain live slot reads rather than copying
+-- their members: a public hit callback may replace an upcoming bench mon.
+local function partiesFor(ctx)
   local battle, user = ctx.battle, ctx.user
   if user.isPlayer then
-    if battle.playerParty then
-      return battle.playerParty
-    end
-    if battle.ally and user.position == 2 then
-      return battle.ally.party or {}
-    end
-    return battle.game and battle.game.save and battle.game.save.party or {}
+    local first = battle.playerParty or (battle.game and battle.game.save and battle.game.save.party) or {}
+    return first, battle.ally and battle.ally.party
   end
-  if user.position == 3 and battle.enemyPartyB then
-    return battle.enemyPartyB
-  end
-  return battle.enemyParty or { user.mon }
+  return battle.enemyParty or { user.mon }, battle.enemyPartyB
 end
-local function userIndex(ctx, party)
-  for i, mon in ipairs(party) do
-    if mon == ctx.user.mon then
+local function member(ctx, index)
+  if index <= ctx._gen3BeatUpSplit then
+    return ctx._gen3BeatUpParty[index]
+  end
+  local second = ctx._gen3BeatUpSecondParty
+  return second and second[index - ctx._gen3BeatUpSplit]
+end
+local function userIndex(ctx, count)
+  for i = 1, count do
+    if member(ctx, i) == ctx.user.mon then
       return i
     end
   end
@@ -42,10 +44,16 @@ local function base(ctx, species, stat)
   return def and def.baseStats and def.baseStats[stat] or 50
 end
 function B.prepare(ctx)
-  local party = partyFor(ctx)
-  ctx._gen3BeatUpParty, ctx._gen3BeatUpCursor = party, 0
-  ctx._gen3BeatUpUserIndex = userIndex(ctx, party)
-  for i, mon in ipairs(party) do
+  local first, second = partiesFor(ctx)
+  ctx._gen3BeatUpParty, ctx._gen3BeatUpSecondParty = first, second
+  ctx._gen3BeatUpSplit, ctx._gen3BeatUpCursor = #first, 0
+  local count = #first + (second and #second or 0)
+  ctx._gen3BeatUpUserIndex = userIndex(ctx, count)
+  for i = 1, count do
+    local mon = member(ctx, i)
+    if not mon then
+      break
+    end
     if eligible(ctx, mon, i) then
       return true
     end
@@ -53,11 +61,10 @@ function B.prepare(ctx)
   return false
 end
 function B.nextDamage(ctx)
-  local party = ctx._gen3BeatUpParty
   while true do
     local index = ctx._gen3BeatUpCursor + 1
     ctx._gen3BeatUpCursor = index
-    local mon = party[index]
+    local mon = member(ctx, index)
     if not mon then
       return nil
     end

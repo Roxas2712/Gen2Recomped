@@ -1030,7 +1030,7 @@ F.FUTURE_SIGHT_EFFECT = {
 
 -- BEAT UP strikes once per healthy party member.
 F.BEAT_UP_EFFECT = {
-  rev = 1,
+  rev = 2,
   chooseDamage = function(ctx)
     if not require("src.core.GameVersion").isGen3() then return ctx.computeDamage({ rng = ctx.rng }) end
     if not require("src.battle.Gen3BeatUp").prepare(ctx) then return nil, Strings("But, it failed!") end
