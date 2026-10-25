@@ -56,6 +56,16 @@ function M.run(root, backend, version)
     { name = "water-sport", item = "FIRE_POWER", special = true, sport = true },
     { name = "screen-band", item = "CHOICE_BAND", screen = true },
     { name = "screen-fire", item = "FIRE_POWER", special = true, screen = true },
+    {
+      name = "blaze-water-sport",
+      item = "FIRE_POWER",
+      special = true,
+      ability = "BLAZE",
+      pinch = true,
+      sport = true,
+    },
+    { name = "flash-fire", item = "FIRE_POWER", special = true, ability = "FLASH_FIRE", flash = true },
+    { name = "charged-boost", item = "ELECTRIC_POWER", special = true, electric = true, charged = true },
   }
   local function item(effect)
     for _, row in ipairs(f.catalog) do
@@ -79,9 +89,11 @@ function M.run(root, backend, version)
           if native then
             user.type1, user.type2, target.type1, target.type2 = 0, 0, 0, 0
             user.expTracedAbility, target.expTracedAbility = scenario.ability, scenario.targetAbility
+            user.expFlashFire, user.expCharged = scenario.flash, scenario.charged
           else
             user.curTypes, target.curTypes = { "NORMAL" }, { "NORMAL" }
             user.abilityOverride, target.abilityOverride = scenario.ability, scenario.targetAbility
+            user.flashFire, user.charged = scenario.flash, scenario.charged
           end
           local attackStat, defenseStat =
             scenario.special and "spAtk" or "attack", scenario.special and "spDef" or "defense"
@@ -128,7 +140,13 @@ function M.run(root, backend, version)
               return require("src.core.game3.battle.damage").calc(
                 user,
                 target,
-                { id = "TACKLE", numId = 33, power = 35, type = scenario.special and 10 or 0, effect = 0 },
+                {
+                  id = "TACKLE",
+                  numId = 33,
+                  power = 35,
+                  type = scenario.electric and 13 or scenario.special and 10 or 0,
+                  effect = 0,
+                },
                 {
                   forceCrit = crit,
                   rng = rng,
@@ -145,7 +163,7 @@ function M.run(root, backend, version)
                 id = f.ids.TACKLE,
                 index = 33,
                 power = 35,
-                type = scenario.special and "FIRE" or "NORMAL",
+                type = scenario.electric and "ELECTRIC" or scenario.special and "FIRE" or "NORMAL",
                 effect = "NO_ADDITIONAL_EFFECT",
                 gen3Effect = 0,
               }, {
@@ -160,6 +178,9 @@ function M.run(root, backend, version)
           local damage = calculate()
           local repeated = scenario.stateful and calculate() or nil
           off()
+          if scenario.name == "blaze-water-sport" and stat == 257 and stage == 0 and not crit then
+            T.eq(damage, 42, "unchanged reference anchor: sport floors before pinch ability")
+          end
           T.eq(#trace, scenario.stateful and 4 or 2, "one held read per actor in each GBA base command")
           T.eq(reads, scenario.stateful and 2 or 1, "answers expire before the next native command")
           T.eq(trace[1] and trace[1].holder, "PLAYER", "attacker held read first")
