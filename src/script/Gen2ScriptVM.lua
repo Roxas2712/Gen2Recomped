@@ -2615,7 +2615,7 @@ function Gen2ScriptVM.runMapScene(game, overworld, mapId)
   local scenes = Gen2ScriptVM.mapScenes[mapId]
   if not (scenes and game and overworld) then return false end
   local Gen2Commands = require("src.script.Gen2Commands")
-  local scene = Gen2Commands.getScene(game.save, mapId)
+  local scene = Gen2Commands.getScene(game.save, mapId, game.data)
   local rows = scenes[(tonumber(scene) or 0) + 1]
   if not rows then return false end
   return queue(overworld, rows, { mapId = mapId })
@@ -2745,7 +2745,7 @@ local function contributionFor(data, mapId, entry, mapDef)
     local Gen2Commands = require("src.script.Gen2Commands")
     contribution.onStep = function(game, overworld, x, y)
       if overworld.runner:isRunning() then return false end
-      local scene = Gen2Commands.getScene(game.save, mapId)
+      local scene = Gen2Commands.getScene(game.save, mapId, game.data)
       for _, coord in ipairs(coords) do
         -- $FF is the ROM's "any scene" wildcard
         if coord.x == x and coord.y == y
