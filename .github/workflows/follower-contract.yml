@@ -23,6 +23,7 @@ jobs:
       - name: Check native followers and compatibility
         run: |
           luajit tests/engine/follower_spawn.lua
+          luajit tests/engine/gen2_follower_predicate.lua
           luajit tests/engine/api3_compat.lua
           luajit tests/engine/unified_mod_callbacks.lua
       - name: Compare both engines in every SDK mode

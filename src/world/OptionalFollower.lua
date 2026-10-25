@@ -6,7 +6,22 @@ local Version = require("src.core.GameVersion")
 local F = {}
 local DELTA = { up = { 0, -1 }, down = { 0, 1 }, left = { -1, 0 }, right = { 1, 0 } }
 
-local function nativeDefault()
+-- Keep the predicate on the native module table so ModSeams can restore it
+-- when a legacy mod fails to load or is disabled. A closure-only setter would
+-- leave the unloaded mod's callback alive in subsequent game sessions.
+F._shouldSpawn = function()
+  return false
+end
+function F.setShouldSpawn(fn)
+  local previous = F._shouldSpawn
+  if fn then
+    assert(type(fn) == "function", "follower predicate must be a function")
+    F._shouldSpawn = fn
+  end
+  return previous
+end
+local function nativeDefault(game, world)
+  if Version.generation() == 2 then return F._shouldSpawn(game, world) end
   return false
 end
 local function current(world)
@@ -15,6 +30,9 @@ local function current(world)
       return npc, i
     end
   end
+end
+function F.current(world)
+  return (current(world))
 end
 local function remove(world)
   local npc, at = current(world)
