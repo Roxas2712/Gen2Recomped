@@ -44,6 +44,9 @@
 -- still the mod's to guard; this takes away the common case, not the need.
 
 local ModSeams = {}
+-- Mutation journals must remain operable while an entry has temporarily
+-- replaced global iteration (including a wrapper that throws).
+local pairs,next=pairs,next
 
 -- every change, oldest first: { tbl, key, before, after, owner }
 local journal = {}
