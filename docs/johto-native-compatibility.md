@@ -13,7 +13,10 @@ and resumes forced terrain through the existing mover. The unchanged supplied
 camera/control modules now pass 92 CPU integration assertions in both selected
 camera modes; the fork passes 328 engine suites and all quick tiers. A subsequent full-package Crystal GPU motion smoke passes on OpenGL and
 Metal in both selected modes, including V input and fresh owned-window proofs.
-Broader transitions/forced-terrain GPU tests and full visuals remain open. See the
+Normal Mart/Center entry/exit and Cherrygrove/Route 29 connection tests now pass
+212 assertions and four owned-window proofs per backend in both selected
+cameras. Other story transitions, forced-terrain GPU tests and full visuals
+remain open. See the
 [contract and exact limits](native-gen2-camera-movement.md). The currently
 published download/cache fix remains bound to release source `321019ae`.
 
