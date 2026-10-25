@@ -17,20 +17,25 @@ ROMs or player saves are included in this repository or its releases.
 | Active-generation method queries | 362 checks; actual Crystal dispatcher now selects Gen2 rather than Gen1 | [#200](https://github.com/UNDERdecoded/Gen2Recomped/pull/200) |
 | Observable new-game/continue entry points | 11 native dispatch/recovery checks; actual Gen2 package initialization completes | [#201](https://github.com/UNDERdecoded/Gen2Recomped/pull/201) |
 | Public palette row metadata | 19 checks; Crystal GPU window changes from grayscale fallback to colored terrain/buildings | [#202](https://github.com/UNDERdecoded/Gen2Recomped/pull/202) |
+| Native map generation/outdoor metadata | 256 independent checks; actual ROM-header classification agrees in Crystal on both backends | [#205](https://github.com/UNDERdecoded/Gen2Recomped/pull/205) |
+| Gen2 collision classes and bounded terrain queries | 525 independent checks; all sampled live cells agree with the native mover in both camera modes on OpenGL/Metal | [#207](https://github.com/UNDERdecoded/Gen2Recomped/pull/207) |
+| Public tileset constant names | 129 independent checks; actual Mart/Center geometry, native grid steps and menus on both backends | [#208](https://github.com/UNDERdecoded/Gen2Recomped/pull/208) |
 | Persistent Gen2 world and menu ownership | 33 ownership and 29 readiness checks; actual V/F6 input and upright menus on OpenGL/Metal | [draft #204](https://github.com/UNDERdecoded/Gen2Recomped/pull/204) |
 | Portable scripts and world actions on persistent worlds | 5,290 composed script checks and 2,778 action checks; independent existing branches also pass | Existing [#98](https://github.com/UNDERdecoded/Gen2Recomped/pull/98), [#94](https://github.com/UNDERdecoded/Gen2Recomped/pull/94) updated |
 
-The full ROM-free engine/SDK/B30 quick suite passes after the lifecycle change.
-The newer palette metadata change also passes its focused main-based test.
+The full ROM-free quick suite passes: 244 engine suites, three SDK suites and
+B30. Its native clock fixture was updated for the additional startup method;
+the existing independent logic-speed PR retains all 407 passing assertions.
 These checks do not establish complete gameplay, all maps or Windows GPU
 acceptance. HTTP cancellation discards a result immediately; a curl already
 executing may occupy its bounded worker until its timeout.
 
 ## Actual Crystal checkpoint
 
-The palette correction was first verified at `b0d4dddd`. The subsequent world
-ownership/readiness build is source
-`c833eb8887decc2d9d0e8ac135f31c098b5be988`, fused with pinned LÖVE12 `937eb3b`. The full supplied package is copied
+The palette correction was first verified at `b0d4dddd`; world ownership at
+`c833eb8887decc2d9d0e8ac135f31c098b5be988`. The latest map-metadata/collision
+build is source `fe14e8d9c3dcc891cb019b3ea827e477a1117b65`, fused with pinned
+LÖVE12 `937eb3b`. The full supplied package is copied
 into each owned profile and verified against the original file hashes before
 execution. Only task-owned imported Crystal data is used.
 
@@ -41,6 +46,14 @@ empty overlay stack. Four owned-window proofs per backend cover the outdoor
 modes, upright menu, and the interior probe. Outdoor and menu images were also
 visually inspected. These scenes were set up by teleport; this is not normal
 door-traversal acceptance.
+
+The actual map definitions now expose generation 2 and the ROM-derived
+outdoor flag while retaining native IDs, tileset names and numeric environment.
+The package classifies New Bark Town as `trees` and the home as `interior`.
+Across the five phases per backend, all 1,240 sampled cell queries return the
+same live COLL_* value and terrain permission as the native mover. Block
+changes, boundaries and the separate GBA blocking-bit contract also have
+ROM-free coverage. This does not enable the missing continuous movement chain.
 
 The interior probe can select both camera modes, but its First Person image
 is largely black above a strip of floor. **Interior visuals are not accepted**
@@ -59,6 +72,30 @@ The [sanitized receipt](qa/native-foundation/johto-native-compatibility.json)
 records exact tested source/runtime, camera phases and the remaining renderer
 failures without ROM/mod contents, private paths, process IDs or window IDs.
 
+## Tileset names and two room probes
+
+Source `cb12d995b2cd51ccc3e19083ae968d386dfe1147` publishes named ROM families
+under public constants such as `TILESET_POKECENTER`. These are aliases to the
+same actual tileset objects; original registry keys, asset/animation IDs and
+image paths remain. Map definitions expose that constant and retain their
+original family as `sourceTileset`. Map IDs and numeric environments are
+unchanged. Authored targets and ambiguous families are not overwritten.
+
+With the unmodified supplied package, Cherrygrove Mart and Pokemon Center
+show room geometry, furniture, walls and ceiling lights in First and Third
+Person on OpenGL and Metal. Repeated probes use unoccupied native land cells
+with a clear aisle, rather than placing the First Person camera directly
+against a shelf. Both rooms also pass a native grid step and menu open/close.
+Four fresh owned-window captures per backend were recorded, with the scene
+geometry visually inspected. These are teleport setups and do not establish
+normal door traversal, complete actor/model presentation or all interiors.
+Floor/route map-ID spelling still prevents some authored profiles from
+matching, including the native home probe above.
+
+The [room receipt](qa/native-foundation/johto-room-tileset-names.json) records
+the exact source and scope. Full renderer installation, continuous movement
+and broader gameplay remain open.
+
 ## Open acceptance and concrete failures
 
 - Persistent world ownership is implemented and enables actual camera/menu
@@ -76,7 +113,7 @@ failures without ROM/mod contents, private paths, process IDs or window IDs.
   capture animation and registered-item seams are incomplete.
 - The package itself disables overworld capture pending its own ROM QA.
   Engine compatibility cannot turn that disabled feature into a tested one.
-- Canonical map/tileset metadata, complete normal doors/warps, battles and
+- Canonical map identity, complete normal doors/warps, battles and
   return, all interiors, continuous First/Third Person movement, extended
   sessions and current Windows GPU execution remain open.
 

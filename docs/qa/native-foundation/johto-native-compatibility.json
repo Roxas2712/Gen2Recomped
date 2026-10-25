@@ -2,7 +2,7 @@
   "schema": 1,
   "game": "crystal",
   "romRevision": 0,
-  "sourceCommit": "c833eb8887decc2d9d0e8ac135f31c098b5be988",
+  "sourceCommit": "fe14e8d9c3dcc891cb019b3ea827e477a1117b65",
   "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
   "engineVersion": "0.8.45",
   "modVersion": "3.1.2-omega.1.7",
@@ -22,11 +22,25 @@
           "camera": "first",
           "overlayDepth": 0,
           "nativeGridMoved": true,
-          "voxelFrames": 337,
+          "voxelFrames": 338,
           "voxelFailures": 1,
           "continuousMovementInstalled": false,
           "fullRendererInstalled": false,
-          "interiorVisualAccepted": null
+          "interiorVisualAccepted": null,
+          "mapMetadata": {
+            "generation": 2,
+            "environment": 1,
+            "tileset": "TilesetJohto",
+            "width": 10,
+            "outdoor": true,
+            "height": 9
+          },
+          "horizonClass": "trees",
+          "collisionQuery": {
+            "cells": 360,
+            "classes": 5,
+            "allMatchNative": true
+          }
         },
         {
           "label": "third-outdoors",
@@ -34,11 +48,25 @@
           "camera": "third",
           "overlayDepth": 0,
           "nativeGridMoved": true,
-          "voxelFrames": 500,
+          "voxelFrames": 499,
           "voxelFailures": 1,
           "continuousMovementInstalled": false,
           "fullRendererInstalled": false,
-          "interiorVisualAccepted": null
+          "interiorVisualAccepted": null,
+          "mapMetadata": {
+            "generation": 2,
+            "environment": 1,
+            "tileset": "TilesetJohto",
+            "width": 10,
+            "outdoor": true,
+            "height": 9
+          },
+          "horizonClass": "trees",
+          "collisionQuery": {
+            "cells": 360,
+            "classes": 5,
+            "allMatchNative": true
+          }
         },
         {
           "label": "third-native-menu",
@@ -50,7 +78,21 @@
           "voxelFailures": 1,
           "continuousMovementInstalled": false,
           "fullRendererInstalled": false,
-          "interiorVisualAccepted": null
+          "interiorVisualAccepted": null,
+          "mapMetadata": {
+            "generation": 2,
+            "environment": 1,
+            "tileset": "TilesetJohto",
+            "width": 10,
+            "outdoor": true,
+            "height": 9
+          },
+          "horizonClass": "trees",
+          "collisionQuery": {
+            "cells": 360,
+            "classes": 5,
+            "allMatchNative": true
+          }
         },
         {
           "label": "first-interior",
@@ -58,11 +100,25 @@
           "camera": "first",
           "overlayDepth": 0,
           "nativeGridMoved": null,
-          "voxelFrames": 864,
+          "voxelFrames": 863,
           "voxelFailures": 1,
           "continuousMovementInstalled": false,
           "fullRendererInstalled": false,
-          "interiorVisualAccepted": false
+          "interiorVisualAccepted": false,
+          "mapMetadata": {
+            "generation": 2,
+            "environment": 3,
+            "tileset": "TilesetPlayersHouse",
+            "width": 5,
+            "outdoor": false,
+            "height": 4
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "cells": 80,
+            "classes": 5,
+            "allMatchNative": true
+          }
         },
         {
           "label": "third-interior",
@@ -70,11 +126,25 @@
           "camera": "third",
           "overlayDepth": 0,
           "nativeGridMoved": null,
-          "voxelFrames": 934,
+          "voxelFrames": 940,
           "voxelFailures": 1,
           "continuousMovementInstalled": false,
           "fullRendererInstalled": false,
-          "interiorVisualAccepted": false
+          "interiorVisualAccepted": false,
+          "mapMetadata": {
+            "generation": 2,
+            "environment": 3,
+            "tileset": "TilesetPlayersHouse",
+            "width": 5,
+            "outdoor": false,
+            "height": 4
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "cells": 80,
+            "classes": 5,
+            "allMatchNative": true
+          }
         }
       ]
     },
@@ -92,11 +162,25 @@
           "camera": "first",
           "overlayDepth": 0,
           "nativeGridMoved": true,
-          "voxelFrames": 330,
-          "voxelFailures": 0,
+          "voxelFrames": 339,
+          "voxelFailures": 1,
           "continuousMovementInstalled": false,
           "fullRendererInstalled": false,
-          "interiorVisualAccepted": null
+          "interiorVisualAccepted": null,
+          "mapMetadata": {
+            "environment": 1,
+            "tileset": "TilesetJohto",
+            "width": 10,
+            "height": 9,
+            "outdoor": true,
+            "generation": 2
+          },
+          "horizonClass": "trees",
+          "collisionQuery": {
+            "classes": 5,
+            "allMatchNative": true,
+            "cells": 360
+          }
         },
         {
           "label": "third-outdoors",
@@ -104,11 +188,25 @@
           "camera": "third",
           "overlayDepth": 0,
           "nativeGridMoved": true,
-          "voxelFrames": 506,
-          "voxelFailures": 0,
+          "voxelFrames": 502,
+          "voxelFailures": 1,
           "continuousMovementInstalled": false,
           "fullRendererInstalled": false,
-          "interiorVisualAccepted": null
+          "interiorVisualAccepted": null,
+          "mapMetadata": {
+            "environment": 1,
+            "tileset": "TilesetJohto",
+            "width": 10,
+            "height": 9,
+            "outdoor": true,
+            "generation": 2
+          },
+          "horizonClass": "trees",
+          "collisionQuery": {
+            "classes": 5,
+            "allMatchNative": true,
+            "cells": 360
+          }
         },
         {
           "label": "third-native-menu",
@@ -116,11 +214,25 @@
           "camera": "third",
           "overlayDepth": 1,
           "nativeGridMoved": null,
-          "voxelFrames": 555,
-          "voxelFailures": 0,
+          "voxelFrames": 540,
+          "voxelFailures": 1,
           "continuousMovementInstalled": false,
           "fullRendererInstalled": false,
-          "interiorVisualAccepted": null
+          "interiorVisualAccepted": null,
+          "mapMetadata": {
+            "environment": 1,
+            "tileset": "TilesetJohto",
+            "width": 10,
+            "height": 9,
+            "outdoor": true,
+            "generation": 2
+          },
+          "horizonClass": "trees",
+          "collisionQuery": {
+            "classes": 5,
+            "allMatchNative": true,
+            "cells": 360
+          }
         },
         {
           "label": "first-interior",
@@ -128,11 +240,25 @@
           "camera": "first",
           "overlayDepth": 0,
           "nativeGridMoved": null,
-          "voxelFrames": 889,
-          "voxelFailures": 0,
+          "voxelFrames": 867,
+          "voxelFailures": 1,
           "continuousMovementInstalled": false,
           "fullRendererInstalled": false,
-          "interiorVisualAccepted": false
+          "interiorVisualAccepted": false,
+          "mapMetadata": {
+            "environment": 3,
+            "tileset": "TilesetPlayersHouse",
+            "width": 5,
+            "height": 4,
+            "outdoor": false,
+            "generation": 2
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "classes": 5,
+            "allMatchNative": true,
+            "cells": 80
+          }
         },
         {
           "label": "third-interior",
@@ -140,11 +266,25 @@
           "camera": "third",
           "overlayDepth": 0,
           "nativeGridMoved": null,
-          "voxelFrames": 965,
-          "voxelFailures": 0,
+          "voxelFrames": 940,
+          "voxelFailures": 1,
           "continuousMovementInstalled": false,
           "fullRendererInstalled": false,
-          "interiorVisualAccepted": false
+          "interiorVisualAccepted": false,
+          "mapMetadata": {
+            "environment": 3,
+            "tileset": "TilesetPlayersHouse",
+            "width": 5,
+            "height": 4,
+            "outdoor": false,
+            "generation": 2
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "classes": 5,
+            "allMatchNative": true,
+            "cells": 80
+          }
         }
       ]
     }
@@ -160,6 +300,7 @@
   ],
   "nativeNoModChecks": [
     {
+      "sourceCommit": "fe14e8d9c3dcc891cb019b3ea827e477a1117b65",
       "backend": "opengl",
       "exitCode": 0,
       "newGame": true,
@@ -184,28 +325,38 @@
       "minimumColours": 4
     },
     {
+      "sourceCommit": "fe14e8d9c3dcc891cb019b3ea827e477a1117b65",
       "backend": "metal",
       "exitCode": 0,
       "newGame": true,
       "modCount": 0,
       "normalWarps": [
         {
-          "to": "PLAYERS_HOUSE1_F",
           "normalMovement": true,
-          "from": "PLAYERS_HOUSE2_F"
+          "from": "PLAYERS_HOUSE2_F",
+          "to": "PLAYERS_HOUSE1_F"
         },
         {
-          "to": "NEW_BARK_TOWN",
           "normalMovement": true,
-          "from": "PLAYERS_HOUSE1_F"
+          "from": "PLAYERS_HOUSE1_F",
+          "to": "NEW_BARK_TOWN"
         }
       ],
       "finalMap": "NEW_BARK_TOWN",
       "overlayDepth": 0,
-      "windowFreshFrameStamp": 8,
+      "windowFreshFrameStamp": 7,
       "windowColourProfile": "gbc",
       "centralColours": 15,
       "minimumColours": 4
     }
-  ]
+  ],
+  "romFreeChecks": {
+    "engineSuites": 243,
+    "sdkSuites": 3,
+    "b30": true,
+    "mapMetadataChecks": 256,
+    "mapCollisionChecks": 525,
+    "nativeClockFixtureChecks": 407,
+    "quickPassed": true
+  }
 }
