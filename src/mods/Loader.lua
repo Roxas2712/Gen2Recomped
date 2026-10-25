@@ -1236,6 +1236,7 @@ function Loader:_api(mod)
       return data
     end)
   api.packs = require("src.mods.AssetPacks").new(mod.manifest, loader.fs)
+  require('src.mods.HostServices').install(loader,mod,api)
   -- Capture the host selected for this API, as with generation/gameVersion.
   -- Probing must not instantiate mod.world/mod.game or register callbacks.
   function api:supports(surface, name)
