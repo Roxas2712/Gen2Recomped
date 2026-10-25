@@ -42,6 +42,13 @@ The reference's `expEncore*` fields and numeric move IDs are mapped explicitly
 to the host's native fields and fixture registry IDs. Failed/raw reports remain
 under `tmp/encore-qa/`; the checker never edits source code or filters calls.
 
+The two public-choice/planning cases start with the same explicit prepared
+Quick Claw word. The combined fork's C-validated native AI-order controller
+prepares that word earlier than Gen1's standalone command; the original failed
+comparison retains that extra `0..65535` call. This is an input-state boundary,
+not proof that the engines' complete selection/RNG orchestration agrees. The
+comparison retains every subsequent bounded draw and records the prepared word.
+
 Development acceptance is in progress. Full regression, clean-commit engine
 comparisons, imported-record smoke, combined-fork acceptance and publication
 remain to be verified. These CPU fixtures do not certify a complete playthrough,
