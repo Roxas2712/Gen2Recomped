@@ -2,7 +2,9 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "rage" then
+if mode == "triple_kick" then
+  rows = dofile(root .. "/tests/enemy_actions/triple_kick.lua").run(root, backend, version)
+elseif mode == "rage" then
   rows = dofile(root .. "/tests/enemy_actions/rage.lua").run(root, backend, version)
 elseif mode == "multi_hit" then
   rows = dofile(root .. "/tests/enemy_actions/multi_hit.lua").run(root, backend, version)
