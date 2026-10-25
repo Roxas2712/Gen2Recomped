@@ -3241,7 +3241,7 @@ function BattleState:gen3MusicKind()
     local species = mon and mon.species
     local def = species and self.data.pokemon and self.data.pokemon[species]
     local table_ = GEN3_LEGEND_MUSIC
-    if require("src.core.GameVersion").get() == "firered" then
+    if require("src.core.GameVersion").isFRLG() then
       table_ = GEN3_LEGEND_MUSIC_FRLG
     end
     local kind = table_[tostring((def and (def.translationSourceName or def.name)) or species):upper()]
@@ -3658,7 +3658,7 @@ function BattleState:enter()
   -- FIRERED'S INTRO (battle_intro.c BattleIntroSlide1): the window opens out
   -- of the middle for 32 frames before anything moves, then both halves of
   -- the field and both battlers travel the whole 240 pixels at 2 a frame
-  if require("src.core.GameVersion").get() == "firered" and self:gen3Layout() then
+  if require("src.core.GameVersion").isFRLG() and self:gen3Layout() then
     self.introSlide = 120
     self.frlgIntro = { hold = 32, t = 0, light = nil }
   end
@@ -8321,7 +8321,7 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
     if not chargeRequired then animContext.moveTurn = 1 end
   end
   if chargeRequired then
-    local branchAware = GameVersion.get() == "firered"
+    local branchAware = GameVersion.isFRLG()
                         and hasMoveTurnVariant(move.anim)
     if not branchAware then self:cancelMoveAnim() end
     user.charging = moveInst

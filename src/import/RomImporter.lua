@@ -1280,7 +1280,7 @@ local function markerFor(version)
   -- 257 falls back to the bare swap, so both Gen 3 caches re-import once
   -- Summary presentation v1 adds source controls, type/category sprites and PP colours.
   if version == "emerald" then revision = "emerald-trade-scene-v3:summary-presentation-v1:" end
-  if version == "firered" then revision = "firered-trade-scene-v1:summary-presentation-v1:" end
+  if GameVersion.isFRLG(version) then revision = version .. "-trade-scene-v1:summary-presentation-v1:" end
   if version == "polishedcrystal" then revision = "polished-stored-unown-forms-v7:" end
   if version == "prism" then revision = "prism-events-art-v2:" end
   -- hgss-phone-call-v1: gen4_hgss_phone_call (Gen4HgssPhoneCall), the
@@ -1406,6 +1406,7 @@ local CREDITS = {
   },
 }
 RomImporter.CREDITS = CREDITS
+CREDITS.leafgreen = CREDITS.firered
 
 function RomImporter.creditFor(tab)
   return CREDITS[tab] or CREDITS.default
@@ -1603,6 +1604,10 @@ local VERSION_REQUIRED_FILES = {
   -- background this stage always writes upgrades only FireRed caches.
   firered = {
     "assets/generated/ui/summary_keypad.png",
+    "assets/generated/ui/item_pc_frlg.png",
+    "assets/generated/ui/bag_male_item_pc.png",
+  },
+  leafgreen = {
     "assets/generated/ui/item_pc_frlg.png",
     "assets/generated/ui/bag_male_item_pc.png",
   },
@@ -7808,6 +7813,9 @@ function RomImporter:_drawTabBar(x, y, w, h, chip)
     { id = "firered", letter = "FR", top = PAL.chipFireRedTop,
       bot = PAL.chipFireRedBot, under = PAL.chipFireRedTop,
       label = Strings("FIRERED"), ink = PAL.chipInkSilver },
+    { id = "leafgreen", letter = "LG", top = PAL.chipEmeraldTop,
+      bot = PAL.chipEmeraldBot, under = PAL.chipEmeraldTop,
+      label = Strings("LEAFGREEN"), ink = PAL.chipInkSilver },
     -- FireRed and Emerald sit after Crystal because they are cartridges, and
     -- the row runs cartridges in generation order and then the hacks -- the same rule
     -- GameVersion.ORDER follows, and the one polished_crystal_registration_test
@@ -8141,6 +8149,7 @@ function RomImporter:_drawGamePanel(version, x, y, w, h, paged)
   elseif version == "silver" then accent = PAL.chipSilverTop
   elseif version == "crystal" then accent = PAL.chipCrystalTop
   elseif version == "firered" then accent = PAL.chipFireRedTop
+  elseif version == "leafgreen" then accent = PAL.chipEmeraldTop
   elseif version == "emerald" then accent = PAL.chipEmeraldTop
   elseif version == "platinum" then accent = PAL.chipPlatinumTop
   elseif version == "heartgold" then accent = PAL.chipHeartGoldTop

@@ -89,6 +89,10 @@ RomRevisions.ACCEPTED = {
   sapphire = {
     { sha1 = "3ccbbd45f8553c36463f13b938e833f652b793e4", code = "AXPE", revision = 0, label = "Pokemon Sapphire (USA)" },
   },
+  leafgreen = {
+    { sha1 = "574fa542ffebb14be69902d1d36f1ec0a4afd71e", code = "BPGE", revision = 0,
+      label = "Pokemon LeafGreen (USA, Europe)" },
+  },
   emerald = {
     { sha1 = "f3ae088181bf583e55daf962a92bb46f4f1d07b7", code = "BPEE", revision = 0,
       label = "Pokemon Emerald (USA, Europe)" },
@@ -138,10 +142,6 @@ RomRevisions.KNOWN = {
        .. "with a separate linker script) and the extractor is mapped to Rev 0",
   },
   -- pret/pokefirered leafgreen*.sha1
-  ["574fa542ffebb14be69902d1d36f1ec0a4afd71e"] = {
-    game = "leafgreen", code = "BPGE", revision = 0,
-    label = "Pokemon LeafGreen (USA, Europe)",
-  },
   ["7862c67bdecbe21d1d69ce082ce34327e1c6ed5e"] = {
     game = "leafgreen", code = "BPGE", revision = 1,
     label = "Pokemon LeafGreen (USA, Europe) (Rev 1)",
