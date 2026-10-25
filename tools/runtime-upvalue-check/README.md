@@ -20,6 +20,34 @@ copy with an arm64-only replacement Lua framework and ad-hoc signing. The
 original stock app and dependency checkout remain unchanged. This is not a
 universal macOS or Windows release recipe.
 
+## Reproducible qualification builds
+
+`qualify.py` builds both variants from the same clean, pinned Git input, without
+modifying that checkout. It refuses existing output directories and checks that
+the dependency patch applies to the pinned blobs. On local participating
+checkouts it uses the shared QA storage leases. For example:
+
+```sh
+python3 tools/runtime-upvalue-check/qualify.py \
+  --luajit-source /path/to/clean/LuaJIT \
+  --output .local/qa/runtime-capacity-test/candidate --engine-tests
+```
+
+The Windows build requires an x64 MSVC developer environment. Unix uses the
+host C compiler and make; macOS defaults the deployment target to 11.0 unless
+the caller explicitly supplies one. The output includes per-step logs, a
+source/tool/library hash report and separate licensed stock/extended artifacts.
+These are qualification artifacts, not a replacement installation or a release.
+
+The `Native runtime capacity` workflow schedules this same check on Linux x64,
+Windows x64, Intel macOS and arm64 macOS using explicit
+[GitHub runner labels](https://github.com/actions/runner-images#available-images).
+Both variants must pass the closure/C API checks and the engine's quick tiers;
+the workflow does not publish a GitHub release. Loading the candidate library
+inside the actual packaged LÖVE host remains a separate ABI/runtime gate.
+
+## Individual probes
+
 From the engine repository root, run both interpreters:
 
 ```sh
