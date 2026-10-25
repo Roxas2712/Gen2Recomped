@@ -2,7 +2,13 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "assist_held" then
+if mode == "mirror_move_content" then
+  rows = dofile(root .. "/tests/enemy_actions/mirror_move.lua").content(root, backend, version)
+elseif mode == "mirror_move_chained" then
+  rows = dofile(root .. "/tests/enemy_actions/mirror_move.lua").chained(root, backend, version)
+elseif mode == "mirror_move" then
+  rows = dofile(root .. "/tests/enemy_actions/mirror_move.lua").run(root, backend, version)
+elseif mode == "assist_held" then
   rows = dofile(root .. "/tests/enemy_actions/assist.lua").held(root, backend, version)
 elseif mode == "assist_failed_callers" then
   rows = dofile(root .. "/tests/enemy_actions/assist.lua").failedCallers(root, backend, version)

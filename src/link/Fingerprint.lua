@@ -21,7 +21,7 @@ local Fingerprint = {}
 -- Runtime command semantics are part of native GBA lockstep compatibility,
 -- even when both peers load byte-identical data. Keep older game digests.
 local function nativeBattleRevision()
-  return require("src.core.GameVersion").isGen3() and 15 or nil
+  return require("src.core.GameVersion").isGen3() and 16 or nil
 end
 Fingerprint.nativeBattleRevision = nativeBattleRevision
 function Fingerprint.nativePartyRevision()

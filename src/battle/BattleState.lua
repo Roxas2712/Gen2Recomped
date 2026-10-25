@@ -5205,7 +5205,9 @@ end
 -- would round to.
 function BattleState:accuracyRoll(move, user, target, accuracyRaw)
   if GameVersion.isGen3() then
-    return require("src.battle.Gen3Accuracy").check(self, move, user, target, accuracyRaw)
+    local hit, reason = require("src.battle.Gen3Accuracy").check(self, move, user, target, accuracyRaw)
+    if not hit and self._gbaMoveFrame then self._gbaMoveFrame.missed = true end
+    return hit, reason
   end
   -- LOCK-ON / MIND READER: the next move cannot miss, and the aim is spent
   -- whether it was needed or not.
@@ -8310,6 +8312,7 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
   -- happen before the effect record is consulted at all.
   if target.protecting and move.power == 0 and move.protectAffected ~= false
      and record and record.kind == "primary" then
+    if GameVersion.isGen3() and self._gbaMoveFrame then self._gbaMoveFrame.missed = true end
     self:cancelMoveAnim()
     self:sayNext(Strings("%s\nprotected itself!", displayName(target)))
     return
