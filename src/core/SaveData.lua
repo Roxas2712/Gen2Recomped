@@ -1049,6 +1049,16 @@ function SaveData.listSlots(version)
   return out
 end
 
+-- Inspect a slot before migrations or mod validation can alter its contents.
+-- The usual recovery reader can inspect complete backups, but this neither
+-- writes progress, selects a slot nor invokes game/mod code.
+function SaveData.peekSlot(version, slotId)
+  if not knownVersion(version) or type(slotId) ~= "string" or not slotId:match("^slot%d+$") then return nil, "Unknown save slot." end
+  local ok, save, state = pcall(decodeSlot, persistFs(nil), version, slotId)
+  if not ok or state == "unreadable" then return nil, "This save needs recovery before it can be opened." end
+  return save
+end
+
 -- Give a registered slot a custom label (#205: "a way to name save slots so
 -- you can see that in the launcher").  The label lives in the options
 -- registry next to list/active, never in the save file itself, so renaming
@@ -1249,6 +1259,7 @@ function SaveData.buildMeta(mods, previous)
     engine = Version.engine,
     savedAt = os.time(),
     mods = list,
+    resume = type(previous) == "table" and previous.resume or nil,
     playthroughId = type(previous) == "table" and previous.playthroughId or nil,
   }
 end

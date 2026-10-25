@@ -4,6 +4,8 @@ on:
     paths:
       - main.lua
       - conf.lua
+      - src/core/Game.lua
+      - src/core/SaveData.lua
       - src/cloud/**
       - src/import/**
       - src/mods/**

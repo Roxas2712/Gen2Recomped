@@ -89,8 +89,8 @@ function M.tick(self)
       if not ok then stop(self,tostring(why));return end
       local finished,err=Packages.finishProfile(state.backup)
       if not finished then stop(self,tostring(err));return end
-      clearFiles(state);self._profileApplying=nil;self._modProfilePlan=nil;self._settingsCache=nil;self:_refreshMods()
-      message(self,'Cloud mod profile applied. Package versions and activation now match.',true)
+      clearFiles(state);self._profileApplying=nil;if not state.plan.resume then self._modProfilePlan=nil end;self._settingsCache=nil;self:_refreshMods()
+      message(self,state.plan.resume and 'This save’s mod versions and activation have been restored.' or 'Cloud mod profile applied. Package versions and activation now match.',true)
     end
   end
 end
@@ -102,13 +102,14 @@ function M.install(RI)
     if not Profile.unchanged(plan,installed,Saves.loadOptions()) then
       self._modProfilePlan=nil;message(self,'Local mods changed during sync. Sync again before applying the cloud profile.',false);return
     end
-    local current=Profile.plan(plan.profile,installed);current.hash=plan.hash;current.scope=plan.scope;current.localHash=plan.localHash
+    local current=Profile.plan(plan.profile,installed,plan.resume);current.hash=plan.hash;current.scope=plan.scope;current.localHash=plan.localHash
     if #current.downloads==0 then
       local ok,why=Profile.accept(current)
       if not ok then message(self,tostring(why),false);return end
-      self._modProfilePlan=nil;self._settingsCache=nil;self:_refreshMods();message(self,'Cloud mod activation applied.',true);return
+      if not current.resume then self._modProfilePlan=nil end;self._settingsCache=nil;self:_refreshMods();message(self,current.resume and 'This save’s mod activation has been restored.' or 'Cloud mod activation applied.',true);return
     end
     self._profileApplying={plan=current,stage='catalogue',cursor=1,files={}}
+    if not self.findIndex then self.findLoaded=false end
     if not self.findLoaded then self:_ensureFind() end
     message(self,'Preparing '..#current.downloads..' pinned mod downloads from ModCompass...',true)
   end
