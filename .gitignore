@@ -174,3 +174,9 @@ mobile/ios/bundle_id.local
 
 # Optional desktop shader compiler bundle (built from tools/slang-import).
 /shader-tools/
+
+# Owned compatibility harness and digest-only external fixture index.
+!/tests/fixtures/
+/tests/fixtures/*
+!/tests/fixtures/upstream_mods/
+!/tests/engine/

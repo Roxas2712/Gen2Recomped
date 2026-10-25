@@ -103,6 +103,13 @@ ModCompat.ALIASES = {
   ["src.render.GbcPalette"] = "src.render.GBCFX",
 }
 
+-- Extend the data vocabulary without changing loader permissions or public
+-- module objects. Existing aliases retain their native identities.
+local Compatibility = require("src.mods.Gen1Compat")
+for name, target in pairs(Compatibility.ALIASES) do
+  if ModCompat.ALIASES[name] == nil then ModCompat.ALIASES[name] = target end
+end
+
 local seen = {}
 local installed = false
 
@@ -110,6 +117,8 @@ local installed = false
 -- matters because "the target is missing too" is a build problem, not a mod
 -- problem, and should not be reported as an unknown module.
 function ModCompat.resolve(name)
+  local missing = Compatibility.unavailable(name)
+  if missing then return nil, missing end
   local target = ModCompat.ALIASES[name]
   if not target then return nil, nil end
   local ok, value = pcall(require, target)
@@ -132,6 +141,8 @@ function ModCompat.install()
   local loaders = package.loaders or package.searchers
   if type(loaders) ~= "table" then return false end
   loaders[#loaders + 1] = function(name)
+    local missing = Compatibility.unavailable(name)
+    if missing then return function() error(missing, 0) end end
     if not ModCompat.ALIASES[name] then
       -- the standard "not found" contract: a string the require error joins
       return "\n\tno mod-compat alias for '" .. tostring(name) .. "'"

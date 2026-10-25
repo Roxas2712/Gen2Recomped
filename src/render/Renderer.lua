@@ -6,6 +6,7 @@
 -- neighbor filtering.
 -- Spec: docs/new-features.md (survey zoom)
 
+local FrameProfile = require("src.core.FrameProfile")
 local Zoom = require("src.render.Zoom")
 local Tilt = require("src.render.Tilt")
 local PaletteFX = require("src.render.PaletteFX")
@@ -708,11 +709,13 @@ end
 -- render.compose mod can composite the world/UI canvases into its own layout.
 function Renderer:blitCanvas(canvas, sx, sy, zoneList, zoneSx, zoneSy,
                              bx, by, boxX, boxY, boxW, boxH, dpiX, dpiY)
+  local closeBlit = FrameProfile.section("  renderer: zone blit")
   local shader = zoneList and zoneList[1] and PaletteFX.shader() or nil
   if not shader then
     love.graphics.setScissor(boxX, boxY, boxW, boxH)
     love.graphics.draw(canvas, bx, by, 0, sx, sy)
     love.graphics.setScissor()
+    closeBlit()
     return
   end
   love.graphics.setShader(shader)
@@ -735,6 +738,7 @@ function Renderer:blitCanvas(canvas, sx, sy, zoneList, zoneSx, zoneSy,
   end
   love.graphics.setScissor()
   love.graphics.setShader()
+  closeBlit()
 end
 
 -- THE BARS, FILLED WITH THE EDGE THEY FRAME.
@@ -1415,10 +1419,12 @@ function Renderer:endFrame(zones, worldZones)
   end
 
   if present then
+    local closePresent = FrameProfile.section("  renderer: present pipeline")
     GameViewport.setTarget()
     local corrected = GbcColorCorrection.apply(present)
     local composed = Pipelines.present(corrected,
       { width = ww, height = wh, scale = Sp, dpi = dpiY, dpiX = dpiX, dpiY = dpiY }) or corrected
+    closePresent()
     local outputHandled = hasOutputHook and Output.draw({
       canvas = composed, width = ww, height = wh,
       gameX = ox, gameY = oy, gameWidth = vpw, gameHeight = vph,
@@ -1426,6 +1432,7 @@ function Renderer:endFrame(zones, worldZones)
       generation = require("src.core.GameVersion").generation(),
     })
     if not outputHandled then
+      closePresent = FrameProfile.section("  renderer: present pipeline")
       if not self.shaderPresetBypass then composed = ShaderPresets:apply(composed, Sp) end
       if GBCFX.active() then
         GBCFX.present(composed, Sp)
@@ -1433,6 +1440,7 @@ function Renderer:endFrame(zones, worldZones)
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.draw(composed, 0, 0)
       end
+      closePresent()
     end
   end
   self.worldActive = false
