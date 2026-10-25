@@ -289,6 +289,34 @@ function Gen3Tiles:setAnimFrame(f)
   self.tileCache = {}
 end
 
+-- Observe independent VRAM animation clocks without pre-baking a combined
+-- cycle. A projection can keep fixed atlas slots even when animation periods
+-- have a large LCM. Only changed tile decodes are invalidated; native shared
+-- bank bytes and the renderer's legacy frame-selection API stay untouched.
+function Gen3Tiles:setAnimationTicks(ticks)
+  assert(type(ticks) == "number" and ticks >= 0 and ticks % 1 == 0
+    and ticks <= 9007199254740991, "invalid terrain animation ticks")
+  local nextOverrides = {}
+  for _, a in ipairs(self:animations()) do
+    local frame = a.frames[(math.floor(ticks / math.max(1, a.step)) % #a.frames) + 1]
+    if type(frame) == "string" then
+      for k = 0, a.count - 1 do
+        local at = k * 32
+        if at + 32 <= #frame then nextOverrides[a.tile + k] = frame:sub(at + 1, at + 32) end
+      end
+    end
+  end
+  local previous, dirty = self.tileOverride or {}, {}
+  for tile, bytes in pairs(nextOverrides) do
+    if previous[tile] ~= bytes then dirty[tile] = true; self.tileCache[tile] = nil end
+  end
+  for tile in pairs(previous) do
+    if nextOverrides[tile] == nil then dirty[tile] = true; self.tileCache[tile] = nil end
+  end
+  self.tileOverride, self.animationTicks = nextOverrides, ticks
+  return dirty
+end
+
 -- Which metatiles change when the frame does -- the only ones a sheet has to
 -- hold more than one picture of.
 function Gen3Tiles:animatedMetatiles()
