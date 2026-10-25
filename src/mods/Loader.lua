@@ -1441,6 +1441,14 @@ local function stampAudioOwners(data, name, registry)
   owners[key] = map
 end
 
+-- Compatibility observations own decoded views, not the native simulation.
+-- Retire them after wrapper unwind on reload/exit, without loading Game or
+-- any compatibility module on an ordinary native boot.
+local function retireCompatibilityMaps()
+  local maps = package.loaded["src.core.game3.map"]
+  if type(maps) == "table" and type(maps.release) == "function" then maps.release() end
+end
+
 function Loader:load(data)
   InputControl.closeAll()
   self.inputControl = InputControl.new()
@@ -1455,6 +1463,7 @@ function Loader:load(data)
   -- again (and the launcher backdrop boots the plain game in between); the
   -- wraps and flags the previous load put on engine tables come off first.
   ModSeams.unwindAll()
+  retireCompatibilityMaps()
   self.baseData = data
   require("src.mods.TextContent").prepare(self, data)
   -- every registry folds against the pristine view of its Data target;
@@ -1815,6 +1824,7 @@ function Loader.teardown()
   Api3Warp.cancelAll()
   PortableScripts.cancelAll(nil, nil, "mods unloaded")
   local undone = select(1, ModSeams.unwindAll())
+  retireCompatibilityMaps()
   pcall(function()
     Runtime.install(Events.new(), Hooks.new(), nil)
     Runtime.currentMod = nil
