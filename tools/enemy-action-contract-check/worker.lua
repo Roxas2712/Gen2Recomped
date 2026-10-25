@@ -2,7 +2,11 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "move_used_pp" then
+if mode == "post_hit_items_execution" then
+  rows = dofile(root .. "/tests/enemy_actions/post_hit_items.lua").execution(root, backend, version)
+elseif mode == "post_hit_items_command" then
+  rows = dofile(root .. "/tests/enemy_actions/post_hit_items.lua").command(root, backend, version)
+elseif mode == "move_used_pp" then
   rows = dofile(root .. "/tests/enemy_actions/move_used_pp.lua").run(root, backend, version)
 elseif mode == "choice_band_call_failure" then
   rows = dofile(root .. "/tests/enemy_actions/choice_call_failure.lua").run(root, backend, version)

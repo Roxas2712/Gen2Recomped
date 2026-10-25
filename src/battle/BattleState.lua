@@ -5298,7 +5298,9 @@ function BattleState:computeDamage(user, target, move, opts)
       local n = 0
       for flank = 1, 2 do
         local b = self.sides[isPlayer and 1 or 2].battlers[flank]
-        if b and b.mon and (b.mon.hp or 0) > 0 then n = n + 1 end
+        -- Native GBA counts occupied slots. A fainted target stays present
+        -- until its queued removal, including the rest of a spread script.
+        if b and b.mon and (GameVersion.isGen3() or (b.mon.hp or 0) > 0) then n = n + 1 end
       end
       return n
     end
@@ -7660,6 +7662,9 @@ function BattleState:executeAction(user, target, action)
   end
   if user.mon.hp <= 0 then return end
   if not action then return end
+  if GameVersion.isGen3() and action.id and not action.special then
+    require("src.battle.Gen3PostHitItems").markMoved(self, user)
+  end
   if GameVersion.isGen3() then action = require("src.battle.Gen3ChoiceBand").execution(user, action) end
   local explicitTarget = false
   if GameVersion.generation() == 3 and self:isDouble() and not action.special then
@@ -7838,7 +7843,9 @@ function BattleState:executeAction(user, target, action)
         spreadAnimation = targetKind == Targeting.BOTH
                           or targetKind == Targeting.FOES_AND_ALLY
         local chosen = explicitTarget and target or (self.chosenTargets or {})[user.position] or target
-        local got = encoreTargets or explicitTarget and Targeting.actionTargets(self, user, def, chosen)
+        local nativeSpread = GameVersion.isGen3()
+          and (targetKind == Targeting.BOTH or targetKind == Targeting.FOES_AND_ALLY)
+        local got = encoreTargets or (explicitTarget or nativeSpread) and Targeting.actionTargets(self, user, def, chosen)
           or Targeting.resolve(self, user, def, chosen)
         if #got > 0 then list = got end
       end
@@ -8469,9 +8476,10 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   end
   local Schedule = require("src.battle.GbaItemSchedule")
   local parent = self._gbaMoveFrame
+  if not isCalled then require("src.battle.Gen3PostHitItems").markMoved(self, user) end
   local caller = self._gbaNextCaller
   self._gbaNextCaller = nil
-  local frame = { parent = parent, user = user, move = self:moveDef(moveInst), moveId = moveInst.id,
+  local frame = { parent = parent, user = user, target = target, move = self:moveDef(moveInst), moveId = moveInst.id,
     calledBy = isCalled and caller and caller.parent == parent and caller.move or nil }
   if parent then parent.called = true end
   self._gbaMoveFrame = frame

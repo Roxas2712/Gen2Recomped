@@ -50,12 +50,14 @@ end
 -- the same silence an unknown ability gets.
 local function nativeEffect(battler, native)
   local def, item = HoldItems.defOf(battler)
-  -- The native Choice Band entry is intrinsic (ITEM_HOLD[186]); mutable
+  -- Native Choice Band, King's Rock and Shell Bell entries are intrinsic; mutable
   -- descriptive metadata cannot remove it. Public hook substitutions still
   -- run below, and item ids in other generations keep their existing reader.
-  if require("src.core.GameVersion").isGen3()
-      and (tonumber(item) or tonumber(def and def.index)) == 186 then
-    return "CHOICE_BAND", 0, def
+  if require("src.core.GameVersion").isGen3() then
+    local number = tonumber(item) or tonumber(def and def.index)
+    if number == 186 then return "CHOICE_BAND", 0, def end
+    if number == 187 then return "FLINCH", 10, def end
+    if number == 219 then return "SHELL_BELL", 8, def end
   end
   if type(native) == "table" then return native.effect, native.parameter, def end
   if not def then return nil end
@@ -70,8 +72,8 @@ function HoldItems.effectOf(battler, trigger, native)
   local effect, param, def = nativeEffect(battler, native)
   if not require("src.mods.Runtime").wantsHook("held_item.trigger") then return effect, param, def end
   local definition = def or HoldItems.defOf(battler)
-  local chosen, amount = require("src.battle.HeldItemRead").read(battler, definition, effect, param or 0, trigger, 3)
-  return chosen, amount, def
+  local chosen, amount, changed = require("src.battle.HeldItemRead").read(battler, definition, effect, param or 0, trigger, 3)
+  return chosen, amount, def, changed
 end
 
 HoldItems.effect = HoldItems.effectOf

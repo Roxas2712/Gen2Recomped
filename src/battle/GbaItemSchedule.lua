@@ -41,6 +41,7 @@ function Schedule.moveEnd(battle, completedFrame)
   for _, b in ipairs(Schedule.battlers(battle)) do
     battle:holdItemTrigger(b, "moveEnd")
   end
+  require("src.battle.Gen3PostHitItems").run(battle, frame)
 end
 
 function Schedule.afterAction(battle)

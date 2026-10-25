@@ -205,6 +205,11 @@ function EffectRegistry.runDamaging(battle, ctx, record)
 
   if gba and record and record.gbaAfterAccuracy then record.gbaAfterAccuracy(ctx) end
   if gba then hits = hitCount(ctx, record) end
+  if gba and user.mon.hp <= 0 and not (record and record.explode) then
+    ctx.gbaNoEffect = true
+    if battle._gbaMoveFrame then battle._gbaMoveFrame.noEffect = true end
+    return
+  end
 
   -- damage per hit
   local dmg, info
@@ -377,6 +382,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     local substituteBefore = target.substituteHP
     local dealt, endured = battle:applyDamage(target, hitDamage, true, info.damageAdjustment)
     if (info.gbaSetDamage or info.gbaBeatUp) and substituteBefore then dealt = math.min(dealt, substituteBefore) end
+    if gba then require("src.battle.Gen3PostHitItems").damage(battle, hitDamage, dealt, hadSub) end
     totalDealt = totalDealt + dealt
     if gba and not hadSub and require("src.battle.Damage").isSpecial(move.type) then
       ctx.gbaSpecialHit = true
@@ -526,8 +532,12 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   -- SITRUS BERRY the hit dropped below half goes off immediately rather
   -- than waiting for the end of the turn.
   local gba = require("src.core.GameVersion").isGen3()
-  if gba then require("src.battle.GbaItemSchedule").moveEnd(battle) end
-  if totalDealt > 0 and battle.shellBellDrain then
+  if gba then
+    local frame = battle._gbaMoveFrame
+    if frame then frame.noEffect = ctx.gbaNoEffect end
+    require("src.battle.GbaItemSchedule").moveEnd(battle)
+  end
+  if not gba and totalDealt > 0 and battle.shellBellDrain then
     local flinch = HoldItems.flinchChance(user, move)
     if flinch > 0 and target.mon.hp > 0 and not target.substituteHP
        and (battle.rng or love.math.random)(0, 99) < flinch

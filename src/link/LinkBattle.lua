@@ -923,7 +923,7 @@ function LinkBattle.newSpectator(game, net, opts)
     s.afterQueue = "finish"
   end
 
-  self.hostMsg, self.guestMsg = nil, nil
+  local hostActions, guestActions = {}, {}
   local baseUpdate = self.update
   self.update = function(s, dt)
     net:update()
@@ -931,12 +931,8 @@ function LinkBattle.newSpectator(game, net, opts)
       if msg.type == "spectate" then
         local inner = msg.msg
         if inner.type == "action" then
-          if msg.side == "host" then s.hostMsg = inner else s.guestMsg = inner end
-          if s.hostMsg and s.guestMsg then
-            local h, g = s.hostMsg, s.guestMsg
-            s.hostMsg, s.guestMsg = nil, nil
-            resolveSpecTurn(s, h, g)
-          end
+          local pending = msg.side == "host" and hostActions or guestActions
+          pending[#pending + 1] = inner
         elseif inner.type == "baton_pass" then
           require("src.link.Gen3BatonChoice").receive(s, inner, msg.side)
         elseif inner.type == "bye" or inner.type == "forfeit" then
@@ -954,6 +950,13 @@ function LinkBattle.newSpectator(game, net, opts)
     end
     if net.closed and not s.linkEnded and not s.result then
       endSpectate(s)
+    end
+    -- Participants can finish animations before the spectator. Keep later
+    -- actions FIFO and advance the logical turn only after the current queue
+    -- has completed; otherwise its remaining commands observe the next turn.
+    if not s.result and not s.linkEnded and (s.phase == "menu" or s.phase == "waitBoth")
+        and #hostActions > 0 and #guestActions > 0 then
+      resolveSpecTurn(s, table.remove(hostActions, 1), table.remove(guestActions, 1))
     end
     -- same as the real-participant loop: every path that skips baseUpdate
     -- still has to advance the presentational clock, and a spectator sits in
