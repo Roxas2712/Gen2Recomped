@@ -134,7 +134,14 @@ def main():
         if args.engine_tests:
             engine_env = {k: v for k, v in env.items() if not k.startswith("POKEPORT_")}
             engine_env["LUA"] = interpreter.as_posix()
-            text = command(label + "-engine", ["bash", "scripts/test.sh", "--quick"], ROOT, engine_env, 900)
+            shell = "bash"
+            if os.name == "nt":
+                # System32/bash.exe is a WSL launcher on Windows runners.
+                # Use the Bash belonging to the already selected Git install.
+                shell = Path(git(source, "--exec-path")).parents[2] / "bin/bash.exe"
+                if not shell.is_file():
+                    raise RuntimeError("Git for Windows Bash is required for engine tiers")
+            text = command(label + "-engine", [shell, "scripts/test.sh", "--quick"], ROOT, engine_env, 900)
             match = re.search(r"engine: (\d+)/(\d+) suites passed", text)
             if not match or match[1] != match[2] or "ALL TIERS PASSED" not in text:
                 raise RuntimeError("engine quick tiers did not all pass")
