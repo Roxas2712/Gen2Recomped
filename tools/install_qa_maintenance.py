@@ -14,6 +14,23 @@ FILES = ('qa_storage.py', 'qa_legacy_storage.py', 'qa_preserved.py', 'qa_mainten
 LABEL = 'com.maarten.origami-qa-cleanup'
 
 
+def application(home, source):
+    app=home/'Applications/Origami QA Cleanup.app'
+    contents=app/'Contents';resources=contents/'Resources';macos=contents/'MacOS'
+    resources.mkdir(parents=True,exist_ok=True);macos.mkdir(exist_ok=True)
+    swift=source/'qa_maintenance_app.swift';saved=resources/'runner.swift';binary=macos/'OrigamiQACleanup'
+    if not saved.exists() or saved.read_bytes()!=swift.read_bytes() or not binary.exists():
+        subprocess.run(['xcrun','swiftc','-swift-version','5','-O',str(swift),'-o',str(binary)],check=True)
+        saved.write_bytes(swift.read_bytes())
+        info=dict(CFBundleIdentifier=LABEL,CFBundleExecutable='OrigamiQACleanup',CFBundleName='Origami QA Cleanup',
+                  CFBundleDisplayName='Origami QA Cleanup',CFBundleVersion='1',CFBundlePackageType='APPL',LSUIElement=True,
+                  NSDocumentsFolderUsageDescription='Alte QA-Testkopien in den bekannten Projektordnern automatisch aufräumen; Quellcode und Modelle sichern, Spielstände behalten.')
+        (contents/'Info.plist').write_bytes(plistlib.dumps(info))
+        subprocess.run(['codesign','--force','--sign','-',str(app)],check=True,capture_output=True)
+    subprocess.run(['codesign','--verify','--deep','--strict',str(app)],check=True)
+    return app
+
+
 def install(roots, *, home=None, load=True, python=None):
     home = Path(home or Path.home()).resolve();roots = [Path(root).resolve() for root in roots]
     if not roots or any(not root.is_relative_to(home) or not root.is_dir() for root in roots):
@@ -32,7 +49,11 @@ def install(roots, *, home=None, load=True, python=None):
     subprocess.run([interpreter, '-c', 'import sys; assert sys.version_info >= (3,9); import qa_storage, qa_maintenance'], cwd=destination, check=True)
     state = home/'.cache/origami-qa-storage';state.mkdir(parents=True, exist_ok=True)
     plist_path = home/'Library/LaunchAgents'/f'{LABEL}.plist';plist_path.parent.mkdir(parents=True, exist_ok=True)
-    plist = dict(Label=LABEL, ProgramArguments=[str(interpreter),str(destination/'qa_maintenance.py'),'--root',str(roots[0])],
+    arguments=[str(interpreter),str(destination/'qa_maintenance.py'),'--root',str(roots[0])]
+    if load:
+        app=application(home,source)
+        arguments=['/usr/bin/open','-W','-g','-n','-a',str(app),'--args',str(destination/'qa_maintenance.py'),'--root',str(roots[0])]
+    plist = dict(Label=LABEL, ProgramArguments=arguments,
                  StartInterval=900,RunAtLoad=True,ProcessType='Background',Nice=10,LowPriorityIO=True,
                  StandardOutPath='/dev/null',StandardErrorPath='/dev/null')
     with (state/'collection.lock').open('a+') as lock:
