@@ -72,5 +72,21 @@
     "tools/rom_manifest_emerald.json": "0969978b8c13896f707333491ea96fbd2b88b90541451e7d710e03887323b710",
     "tools/rom_manifest_ruby.json": "a26468a22baba62083a146bf5f280256859b918b02942db89dda0ae23fd276fb",
     "tools/rom_manifest_sapphire.json": "5d860da0dc136e2b0419f837fa6c6eed736fdbd12eb3129c2f5f2122fdb17036"
+  },
+  "composedRegression": {
+    "commit": "e64a5b8d",
+    "engineSuitesPassed": 328,
+    "engineSuitesTotal": 328,
+    "sdkSuitesPassed": 3,
+    "sdkSuitesTotal": 3,
+    "dramaticShapeB30": "pass",
+    "firstAttempt": {
+      "engineSuitesPassed": 327,
+      "engineSuitesTotal": 328,
+      "failure": "synthetic palette cartridge inherited retail flag metadata without its original bytes/hash host",
+      "resolution": "scope synthetic fixture metadata to the bytes it generates; production flag checksum remains mandatory",
+      "retainedFailure": true
+    },
+    "syntheticPaletteFixtureSha256": "292c1e2363b331ff21d10c55aa55390b6d2216384204866e1e15ec11a9e092bb"
   }
 }
