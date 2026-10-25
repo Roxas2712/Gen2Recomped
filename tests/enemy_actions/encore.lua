@@ -393,6 +393,10 @@ function M.run(root, backend, version)
     local b = fresh(true, 3)
     last(at(b, uid), 33)
     cast(b, 0, uid, 2)
+    -- This contract starts at the prepared selection boundary. The combined
+    -- fork owns an earlier cartridge-faithful Quick Claw word; Gen1's standalone
+    -- command does not prepare it. Give both engines the same explicit input.
+    b.randomTurnNumber, b._nativeOrderReady = 65535, true
     f.e.choose(function()
       return { move = "SCRATCH", slot = 3, target = 2 }
     end)
@@ -416,6 +420,7 @@ function M.run(root, backend, version)
     T.eq(events[#events].move, "TACKLE", "native planning enforces Encore after the public choice")
     T.eq(events[#events].target, "P2", "early Encore planning retains the explicitly chosen target")
     record(b, "planned_public/" .. uid, uid, 0)
+    rows[#rows].preparedTurnWord = b.randomTurnNumber
   end
   noCrit()
   stop()
