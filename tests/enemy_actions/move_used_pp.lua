@@ -149,6 +149,8 @@ function M.run(root, backend, version)
         "sleeping_block",
         "charge_start",
         "charge_release",
+        "charge_planned_release",
+        "charge_planned_release_zero",
         "charge_bypass",
         "charge_hook_set",
         "charge_hook_remove",
@@ -185,7 +187,11 @@ function M.run(root, backend, version)
         then
           setPP(user, 1, 0)
         end
-        if kind == "one_pp_pressure" or kind == "spread_one_pressure" then
+        if
+          kind == "one_pp_pressure"
+          or kind == "spread_one_pressure"
+          or kind == "charge_planned_release_zero"
+        then
           setPP(user, 1, 1)
         end
         if kind == "pressure" or kind == "one_pp_pressure" or kind == "callback_pressure_off" then
@@ -247,10 +253,21 @@ function M.run(root, backend, version)
             b:executeAction(user, target, action)
           end
         end
-        if kind == "charge_release" then
+        local plannedRelease = kind == "charge_planned_release" or kind == "charge_planned_release_zero"
+        if kind == "charge_release" or plannedRelease then
           execute()
           if not native then
             action = user.charging
+            if plannedRelease then
+              action = require("src.battle.Gen3ChoiceBand").plan(b, user, action)
+            end
+          elseif plannedRelease then
+            local plan = require("src.core.game3.battle.engine").planTurnActions(
+              b,
+              require("src.core.game3.battle.adapter").new(b),
+              { [actor] = { kind = "move", move = number, slot = slot, target = targetId } }
+            )[1]
+            number, slot = plan.move, plan.slot
           end
           b.queue, b.current = {}, nil
         end
@@ -324,7 +341,13 @@ function M.run(root, backend, version)
         local state = {}
         for id = 0, double and 3 or 1 do
           local a = f.at(b, id)
-          state[#state + 1] = { pp = pp(a), hp = a.mon.hp }
+          local charging, hidden
+          if native then
+            charging, hidden = a.twoTurnMove ~= nil, a.semiInvulnerable ~= nil
+          else
+            charging, hidden = a.charging ~= nil, a.invulnerable == true
+          end
+          state[#state + 1] = { pp = pp(a), hp = a.mon.hp, charging = charging, hidden = hidden }
         end
         local oldPP = {}
         for i = 1, 4 do

@@ -8163,6 +8163,11 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
 
   -- charge release?
   local releasing = user.charging == moveInst and user.chargeReady
+  if not releasing and GameVersion.isGen3() and user.charging and user.chargeReady then
+    -- Native planning may wrap the learned action; release follows the
+    -- locked move identity rather than the action table's identity.
+    releasing = user.charging.id == moveInst.id
+  end
   if releasing then
     user.charging, user.chargeReady, user.invulnerable = nil, nil, nil
     user.hiddenAs = nil

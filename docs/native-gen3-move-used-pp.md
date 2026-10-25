@@ -19,7 +19,7 @@ bypass and native sunlight consume PP before the subsequent event. Release
 does not consume a second PP. Non-GBA ordering is preserved.
 
 The new shared fixture executes unchanged native scripts for FireRed and
-Emerald. Its 384 rows retain event-visible PP, the public API-3 move records,
+Emerald. Its 408 rows retain event-visible PP, the public API-3 move records,
 the next subscriber's view after native callback changes, charge-hook PP, all RNG,
 current/retired PP and all active HP. They cover ordinary, Pressure, one/zero
 PP, callback refill/edit/replacement/removal, changed Pressure, forced slots,
@@ -28,13 +28,19 @@ charge/release/bypass/sunlight and spread targets. Callback mutations are
 controlled native fixture inputs; this does not introduce a new public PP
 writer or promise writeback of event snapshots.
 
-All 384 rows currently agree. The exact composed prerequisite fails 336 rows
+All 408 rows currently agree. The exact composed prerequisite fails 360 rows
 with that same fixture. Raw initial failures and corrected results remain in
 `tmp/move-used-pp-qa/`. The actual host/guest/spectator test passes 84 checks
 over two menu-driven turns per profile, with a stateful public held-damage
 consumer depending on event-visible PP. The first linked probe attempted to
 write an event snapshot and lacked a two-turn input barrier; its failed raw
 result is retained separately from the corrected read-only public consumer.
+
+The fixture also repeats actual planning before charge release, including
+release after the last PP was spent. A wrapped action must release the stored
+move by identity, rather than charge again or refuse for zero PP. The exact
+previous module fails 24 rows for this case; the fixed path clears charge and
+invulnerability, deals native damage and spends no second PP.
 
 Native command revision is 12; party codec remains 1. An independent audit
 applies only token 11 -> 12 to the unchanged prerequisite hasher and reproduces
