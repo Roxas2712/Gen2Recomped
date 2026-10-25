@@ -4042,7 +4042,7 @@ function BattleState:playerHasPP(who)
   who = who or self:menuBattler()
   if not (who and who.curMoves) then return false end
   for i, mv in ipairs(who.curMoves) do
-    if mv.pp > 0 and who.disabledSlot ~= i then return true end
+    if mv.pp > 0 and not require("src.battle.Gen3Disable").blocked(who, mv, i) then return true end
   end
   return false
 end
@@ -5130,6 +5130,12 @@ function BattleState:effectRecord(effect)
   end
   local effects = self.data.move_effects
   local record = effects and effects[effect] or not effects and MoveEffects.RECORDS[effect]
+  if GameVersion.isGen3() and not effects then
+    record = require("src.battle.Gen3Disable").builtin(effect, record)
+  end
+  if GameVersion.isGen3() and effect == "DISABLE_EFFECT" then
+    return require("src.battle.Gen3Disable").record(record, MoveEffects.RECORDS.DISABLE_EFFECT)
+  end
   if GameVersion.isGen3() and effect == "OHKO_EFFECT" then
     return require("src.battle.Gen3OHKO").record(record, MoveEffects.RECORDS.OHKO_EFFECT)
   end
@@ -6523,6 +6529,7 @@ end
 function BattleState:gen3BattlerCountersTick(b, scheduled)
   if b and b.mon and b.mon.hp > 0 then
     if GameVersion.isGen3() then
+      require("src.battle.Gen3Disable").tick(self, b)
       require("src.battle.Gen3Encore").tick(self, b)
       require("src.battle.Gen3LockOn").tick(self, b)
     end
@@ -7733,12 +7740,13 @@ function BattleState:executeAction(user, target, action)
       return
     end
     if action.special == "bide" then
-      if self:statusInterrupt(user, target) then return end
+      local move = GameVersion.isGen3() and require("src.battle.Gen3Disable").bideMove(self, user) or nil
+      if self:statusInterrupt(user, target, move) then return end
       self:continueBide(user, target)
       return
     end
 
-    if self:statusInterrupt(user, target) then return end
+    if self:statusInterrupt(user, target, action) then return end
     -- ONE MOVE, POSSIBLY SEVERAL TARGETS.
     --
     -- The cartridge prints "X used SURF!" once and then resolves the move
@@ -7887,7 +7895,7 @@ end
 
 -- Runs Status.beforeMove plus the shared interruption bookkeeping;
 -- returns true when the user's action is interrupted.
-function BattleState:statusInterrupt(user, target)
+function BattleState:statusInterrupt(user, target, move)
   -- TRUANT, before the conditions.  SLAKING and SLAKOTH move every OTHER
   -- turn: the cartridge sets a flag after a move and reads it before the
   -- next one, which is why this is a toggle rather than "every second turn
@@ -7901,8 +7909,12 @@ function BattleState:statusInterrupt(user, target)
     end
     user.truantLoafing = true
   end
-  local canMove, msgs, selfHit = Status.beforeMove(user, self.rng, self)
+  local canMove, msgs, selfHit, reason = Status.beforeMove(user, self.rng, self, move)
   for _, m in ipairs(msgs) do self:sayStatusMsg(user, m) end
+  if reason == "gen3_disabled" then
+    require("src.battle.Gen3Disable").cancel(user)
+    return true
+  end
   if selfHit then
     -- confusion self-hit (core.asm:3428-3434): clears everything in
     -- status1 except CONFUSED, then HandleSelfConfusionDamage deals a
@@ -12731,7 +12743,7 @@ function BattleState:drawTextAreaInner()
     local sel = chooser.curMoves[self.moveIndex]
     if sel then
       local def = self.data.moves[sel.id]
-      if chooser.disabledSlot == self.moveIndex then
+      if require("src.battle.Gen3Disable").blocked(chooser, sel, self.moveIndex) then
         Font.draw(Strings("disabled!"), 8, 80)
       elseif def then
         Font.draw(Strings("TYPE/"), 8, 72)

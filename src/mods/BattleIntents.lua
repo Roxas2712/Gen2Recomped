@@ -86,6 +86,8 @@ local BATTLE_FLAGS = {
 }
 local BATTLER_FLAGS = {
   "disabledSlot",
+  "disabledMove",
+  "disabledTurns",
   "tauntTurns",
   "tormented",
   "lastMove",

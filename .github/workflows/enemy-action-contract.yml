@@ -26,6 +26,7 @@ on:
       - 'tests/engine/gen3_lock_on_link.lua'
       - 'tests/engine/gen3_baton_pass*.lua'
       - 'tests/engine/gen3_encore*.lua'
+      - 'tests/engine/gen3_disable*.lua'
       - 'tools/enemy-action-contract-check/**'
   push:
     branches: [main, dev]

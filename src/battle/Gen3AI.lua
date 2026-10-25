@@ -652,14 +652,14 @@ end
 OPS["if_any_move_disabled_or_encored"] = function(vm, args)
   local b = who(vm, args[1])
   if not b then return end
-  local hit = (args[2] == 0) and b.disabledSlot ~= nil
+  local hit = (args[2] == 0) and require("src.battle.Gen3Disable").has(b)
               or (args[2] == 1) and b.encoreTurns ~= nil
   if hit then return args[#args] end
 end
 
 OPS["if_curr_move_disabled_or_encored"] = function(vm, args)
   local b = vm.user
-  local hit = (args[1] == 0) and b and b.disabledSlot == vm.moveIndex
+  local hit = (args[1] == 0) and b and require("src.battle.Gen3Disable").blocked(b, (b.curMoves or {})[vm.moveIndex], vm.moveIndex)
               or (args[1] == 1) and b and b.encoreTurns ~= nil
   if hit then return args[#args] end
 end
