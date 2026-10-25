@@ -132,13 +132,13 @@ function C.execution(user, action)
   end
   return action
 end
-function C.call(ctx, pick, target, suppressAnimation, spreadContinuation)
+function C.call(ctx, pick, target, suppressAnimation, spreadContinuation, ppSlot)
   local battle = ctx.battle
   local previous, parent = battle._gbaNextCaller, battle._gbaMoveFrame
   if parent then
     parent.nativeCalled = true
   end
-  battle._gbaNextCaller = { parent = parent, move = ctx.move.id }
+  battle._gbaNextCaller = { parent = parent, move = ctx.move.id, ppSlot = ppSlot }
   local ok, err = pcall(
     battle.performMove,
     battle,

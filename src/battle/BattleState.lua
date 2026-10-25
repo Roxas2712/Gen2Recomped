@@ -8232,6 +8232,7 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
       and self.ruleset and self.ruleset.enemyUnlimitedPP
   local nativePP = GameVersion.isGen3()
     and require("src.battle.Gen3PPCommand").prepare(self, user, target, moveInst, isContinuation, isCalled)
+  if nativePP and self._gbaMoveFrame then self._gbaMoveFrame.ppIndex = nativePP.index end
   if not nativePP and not isContinuation and not moveInst.struggle and not isCalled
       and not enemyUnlimited and EnemyMoveChoice.exhausted(moveInst) then
     self:sayNext(self:romText("_MoveNoPPText", "No PP left for\nthis move!"))
@@ -8299,7 +8300,7 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
       self:sayNext(self:romText("_MoveNoPPText", "No PP left for\nthis move!"))
       return
     end
-    moveInst = nativePP.reduce()
+    if not (record and record.gbaNaturePower) then moveInst = nativePP.reduce() end
   end
 
   -- PROTECT stops a status move too, and it is the only check that has to
@@ -8327,7 +8328,8 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
       self:cancelMoveAnim()
     end
     if pick then
-      if record.gbaSleepTalk then require("src.battle.Gen3SleepTalk").call(ctx, pick)
+      if record.gbaNaturePower and GameVersion.isGen3() then require("src.battle.Gen3NaturePower").call(ctx, pick)
+      elseif record.gbaSleepTalk then require("src.battle.Gen3SleepTalk").call(ctx, pick)
       elseif record.gbaNativeChoiceCaller and record.gbaNativeChoiceCaller == record.callsMove then
         require("src.battle.Gen3ChoiceBand").call(ctx, pick, target)
       else self:performMove(user, target, { id = pick, pp = 1 }, true) end
@@ -8480,7 +8482,8 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   local caller = self._gbaNextCaller
   self._gbaNextCaller = nil
   local frame = { parent = parent, user = user, target = target, move = self:moveDef(moveInst), moveId = moveInst.id,
-    calledBy = isCalled and caller and caller.parent == parent and caller.move or nil }
+    calledBy = isCalled and caller and caller.parent == parent and caller.move or nil,
+    calledPPSlot = isCalled and caller and caller.parent == parent and caller.ppSlot or nil }
   if parent then parent.called = true end
   self._gbaMoveFrame = frame
   if self._gbaActionFrame then self._gbaActionFrame.moved = true end

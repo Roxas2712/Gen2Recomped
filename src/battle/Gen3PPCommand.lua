@@ -1,5 +1,6 @@
 -- PP admission precedes the script; the PP command itself reads the current
--- selected slot after public callbacks. Called children have no selected PP.
+-- selected slot after public callbacks. Nature Power lends its selected slot
+-- to its child; ordinary called children have no selected PP.
 local Choices = require("src.battle.EnemyMoveChoice")
 local P = {}
 function P.prepare(battle, user, target, action, continuation, called)
@@ -13,15 +14,21 @@ function P.prepare(battle, user, target, action, continuation, called)
       end
     end
   end
+  local frame = battle._gbaMoveFrame
+  local calledSlot = called and frame and frame.calledPPSlot
+  if calledSlot then
+    index = calledSlot
+  end
   local skip = continuation
-    or called
+    or (called and not calledSlot)
     or action.struggle
     or require("src.battle.Gen3ChoiceBand").enemyUnlimited(battle, user)
   local move = battle:moveDef(action)
   local number = move and tonumber(move.index or move.numId)
   local current = index and (user.curMoves or user.mon.moves or {})[index]
   local command = {
-    blocked = not skip and number ~= 165 and current and tonumber(current.pp) == 0 or false,
+    index = index,
+    blocked = not called and not skip and number ~= 165 and current and tonumber(current.pp) == 0 or false,
     done = false,
   }
   function command.reduce()

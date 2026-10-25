@@ -119,6 +119,9 @@ function Builtins.install(content, data)
         end
       end
     end
+    if registry and entry.name == "move_effects" then
+      require("src.battle.Gen3Builtins").install(registry, Builtins.OWNER)
+    end
   end
 end
 
