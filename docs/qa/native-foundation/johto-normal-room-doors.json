@@ -1,0 +1,296 @@
+{
+  "schema": 1,
+  "game": "crystal",
+  "romRevision": 0,
+  "sourceCommit": "cb12d995b2cd51ccc3e19083ae968d386dfe1147",
+  "releaseSourceCommit": "f56a81f6e0eb97ab5024706fca3f07cfe4d1eca0",
+  "packedSrcIdentical": 1023,
+  "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+  "scope": "Teleport only initializes Cherrygrove City at collision-valid land (24,12); room entries/exits use native movement, collision, warps and input. No continuous movement, entire story, every door or post-exit visual acceptance inferred.",
+  "cases": [
+    {
+      "backend": "opengl",
+      "exitCode": 0,
+      "modFilesUnmodified": 27329,
+      "testModFolderRemoved": true,
+      "freshOwnedWindowProofs": 4,
+      "normalTransitions": [
+        {
+          "camera": "first",
+          "from": "CHERRYGROVE_CITY",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_MART"
+        },
+        {
+          "camera": "first",
+          "from": "CHERRYGROVE_MART",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_CITY"
+        },
+        {
+          "camera": "third",
+          "from": "CHERRYGROVE_CITY",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_MART"
+        },
+        {
+          "camera": "third",
+          "from": "CHERRYGROVE_MART",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_CITY"
+        },
+        {
+          "camera": "first",
+          "from": "CHERRYGROVE_CITY",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_POKECENTER1_F"
+        },
+        {
+          "camera": "first",
+          "from": "CHERRYGROVE_POKECENTER1_F",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_CITY"
+        },
+        {
+          "camera": "third",
+          "from": "CHERRYGROVE_CITY",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_POKECENTER1_F"
+        },
+        {
+          "camera": "third",
+          "from": "CHERRYGROVE_POKECENTER1_F",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_CITY"
+        }
+      ],
+      "menuOpenCloseAfterEveryEntry": true,
+      "finalMap": "CHERRYGROVE_CITY",
+      "cameraPreservedAcrossEveryWarp": true,
+      "phases": [
+        {
+          "label": "first-normal-door-CHERRYGROVE_MART",
+          "map": "CHERRYGROVE_MART",
+          "camera": "first",
+          "overlayDepth": 0,
+          "collisionQuery": {
+            "cells": 96,
+            "classes": 5,
+            "allMatchNative": true
+          },
+          "mapMetadata": {
+            "width": 6,
+            "height": 4,
+            "generation": 2,
+            "environment": 3,
+            "tileset": "TILESET_MART",
+            "outdoor": false
+          },
+          "fullRendererInstalled": false
+        },
+        {
+          "label": "third-normal-door-CHERRYGROVE_MART",
+          "map": "CHERRYGROVE_MART",
+          "camera": "third",
+          "overlayDepth": 0,
+          "collisionQuery": {
+            "cells": 96,
+            "classes": 5,
+            "allMatchNative": true
+          },
+          "mapMetadata": {
+            "width": 6,
+            "height": 4,
+            "generation": 2,
+            "environment": 3,
+            "tileset": "TILESET_MART",
+            "outdoor": false
+          },
+          "fullRendererInstalled": false
+        },
+        {
+          "label": "first-normal-door-CHERRYGROVE_POKECENTER1_F",
+          "map": "CHERRYGROVE_POKECENTER1_F",
+          "camera": "first",
+          "overlayDepth": 0,
+          "collisionQuery": {
+            "cells": 80,
+            "classes": 6,
+            "allMatchNative": true
+          },
+          "mapMetadata": {
+            "width": 5,
+            "height": 4,
+            "generation": 2,
+            "environment": 3,
+            "tileset": "TILESET_POKECENTER",
+            "outdoor": false
+          },
+          "fullRendererInstalled": false
+        },
+        {
+          "label": "third-normal-door-CHERRYGROVE_POKECENTER1_F",
+          "map": "CHERRYGROVE_POKECENTER1_F",
+          "camera": "third",
+          "overlayDepth": 0,
+          "collisionQuery": {
+            "cells": 80,
+            "classes": 6,
+            "allMatchNative": true
+          },
+          "mapMetadata": {
+            "width": 5,
+            "height": 4,
+            "generation": 2,
+            "environment": 3,
+            "tileset": "TILESET_POKECENTER",
+            "outdoor": false
+          },
+          "fullRendererInstalled": false
+        }
+      ]
+    },
+    {
+      "backend": "metal",
+      "exitCode": 0,
+      "modFilesUnmodified": 27329,
+      "testModFolderRemoved": true,
+      "freshOwnedWindowProofs": 4,
+      "normalTransitions": [
+        {
+          "normalMovement": true,
+          "to": "CHERRYGROVE_MART",
+          "camera": "first",
+          "from": "CHERRYGROVE_CITY"
+        },
+        {
+          "normalMovement": true,
+          "to": "CHERRYGROVE_CITY",
+          "camera": "first",
+          "from": "CHERRYGROVE_MART"
+        },
+        {
+          "normalMovement": true,
+          "to": "CHERRYGROVE_MART",
+          "camera": "third",
+          "from": "CHERRYGROVE_CITY"
+        },
+        {
+          "normalMovement": true,
+          "to": "CHERRYGROVE_CITY",
+          "camera": "third",
+          "from": "CHERRYGROVE_MART"
+        },
+        {
+          "normalMovement": true,
+          "to": "CHERRYGROVE_POKECENTER1_F",
+          "camera": "first",
+          "from": "CHERRYGROVE_CITY"
+        },
+        {
+          "normalMovement": true,
+          "to": "CHERRYGROVE_CITY",
+          "camera": "first",
+          "from": "CHERRYGROVE_POKECENTER1_F"
+        },
+        {
+          "normalMovement": true,
+          "to": "CHERRYGROVE_POKECENTER1_F",
+          "camera": "third",
+          "from": "CHERRYGROVE_CITY"
+        },
+        {
+          "normalMovement": true,
+          "to": "CHERRYGROVE_CITY",
+          "camera": "third",
+          "from": "CHERRYGROVE_POKECENTER1_F"
+        }
+      ],
+      "menuOpenCloseAfterEveryEntry": true,
+      "finalMap": "CHERRYGROVE_CITY",
+      "cameraPreservedAcrossEveryWarp": true,
+      "phases": [
+        {
+          "label": "first-normal-door-CHERRYGROVE_MART",
+          "map": "CHERRYGROVE_MART",
+          "camera": "first",
+          "overlayDepth": 0,
+          "collisionQuery": {
+            "cells": 96,
+            "classes": 5,
+            "allMatchNative": true
+          },
+          "mapMetadata": {
+            "generation": 2,
+            "width": 6,
+            "outdoor": false,
+            "environment": 3,
+            "tileset": "TILESET_MART",
+            "height": 4
+          },
+          "fullRendererInstalled": false
+        },
+        {
+          "label": "third-normal-door-CHERRYGROVE_MART",
+          "map": "CHERRYGROVE_MART",
+          "camera": "third",
+          "overlayDepth": 0,
+          "collisionQuery": {
+            "cells": 96,
+            "classes": 5,
+            "allMatchNative": true
+          },
+          "mapMetadata": {
+            "generation": 2,
+            "width": 6,
+            "outdoor": false,
+            "environment": 3,
+            "tileset": "TILESET_MART",
+            "height": 4
+          },
+          "fullRendererInstalled": false
+        },
+        {
+          "label": "first-normal-door-CHERRYGROVE_POKECENTER1_F",
+          "map": "CHERRYGROVE_POKECENTER1_F",
+          "camera": "first",
+          "overlayDepth": 0,
+          "collisionQuery": {
+            "cells": 80,
+            "classes": 6,
+            "allMatchNative": true
+          },
+          "mapMetadata": {
+            "generation": 2,
+            "width": 5,
+            "outdoor": false,
+            "environment": 3,
+            "tileset": "TILESET_POKECENTER",
+            "height": 4
+          },
+          "fullRendererInstalled": false
+        },
+        {
+          "label": "third-normal-door-CHERRYGROVE_POKECENTER1_F",
+          "map": "CHERRYGROVE_POKECENTER1_F",
+          "camera": "third",
+          "overlayDepth": 0,
+          "collisionQuery": {
+            "cells": 80,
+            "classes": 6,
+            "allMatchNative": true
+          },
+          "mapMetadata": {
+            "generation": 2,
+            "width": 5,
+            "outdoor": false,
+            "environment": 3,
+            "tileset": "TILESET_POKECENTER",
+            "height": 4
+          },
+          "fullRendererInstalled": false
+        }
+      ]
+    }
+  ]
+}

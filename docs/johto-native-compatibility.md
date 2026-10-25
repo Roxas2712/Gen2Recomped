@@ -97,6 +97,22 @@ The [room receipt](qa/native-foundation/johto-room-tileset-names.json) records
 the exact source and scope. Full renderer installation, continuous movement
 and broader gameplay remain open.
 
+## Native room doors
+
+Additional runs of the same gameplay source `cb12d995` (all 1,023 packed src
+files identical to release source `f56a81f6`) pass four normal entry/exit pairs
+per backend: Cherrygrove Mart and Pokemon Center, each in First and Third
+Person, on OpenGL and Metal. Only the initial town setup is teleported; the
+room doors and exits are reached through native collision-valid movement.
+The native menu opens and closes after each entry, and every warp preserves
+the selected camera. Four fresh owned-window proofs per backend cover the
+entered rooms. The final native map is Cherrygrove City.
+
+The [door receipt](qa/native-foundation/johto-normal-room-doors.json) records
+all 16 actual transitions. This is acceptance of those tested native doors,
+not all-door/story, continuous movement or post-exit visual acceptance. The
+separate home profile/rendering gap remains open.
+
 ## Open acceptance and concrete failures
 
 - Persistent world ownership is implemented and enables actual camera/menu
