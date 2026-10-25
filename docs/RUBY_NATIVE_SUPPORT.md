@@ -139,3 +139,10 @@ All Gen3 editions now dispatch completed walking steps to the existing native
 available Gen3 edition registrations, both coin outcomes and an egg across
 256 steps each (all five in the combined sibling QA candidate).
 This narrow step correction is not a full friendship/story acceptance.
+
+A rejected HM replacement now returns to the native summary move chooser.
+Previously the chooser closed before the refusal and left the underlying
+learner non-selectable. The actual native menu/HM-reader regression covers
+chooser reopen, unavailable-summary fallback, an already-selectable list,
+retired-screen ownership and unchanged moves/PP. Presentation is stubbed in
+that test; separate real native input/renderer follow-ups remain necessary.
