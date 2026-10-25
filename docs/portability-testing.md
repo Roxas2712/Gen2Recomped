@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219, #220, #222, #225, #226, #228 and #230 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219, #220, #222, #225, #226, #228, #230 and #241 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,47 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`7a681ca8b81be0e77d3447ff3069459cda0bb974`. Its ROM-free run passed
-**251/251 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
-Subsequent status commits do not change production code.
+`83346a1907a7baae942faa47364a07e4a4d57b70`. Its ROM-free run passed
+**262/262 engine suites**, **3/3 SDK suites**, all quick tiers and B30.
+Later documentation and CI path changes preserve those production sources.
+This branch is separate from the independently maintained fork `main`.
+
+[PR #241](https://github.com/UNDERdecoded/Gen2Recomped/pull/241) aligns native
+GBA Choice Band move-end, manual/AI selection, ordinary wild selection,
+forced-slot PP ownership and native/authored caller provenance. Actual public
+snapshots, stale submissions, keyboard/message return, API-1/2 native handles,
+API-3 positional actions and host/guest/spectator held traces are covered.
+Replaced or removed forced PP slots retain native behavior, including Pressure.
+
+Both the clean feature and this combined candidate pass **148 workers /
+80,132 paired enemy/action rows**, **2,040 held-damage command rows** and
+**6,912 ordinary damage rows**: **156 workers / 89,084 paired observations**.
+All four held-item CI formats also pass strict native scheduling (**40 workers /
+1,914 rows**). The removed-slot negative control fails 24 rows with the exact
+old module; the expanded final planning comparison passes all 276 rows.
+Both actual imported FireRed/Emerald modes pass. No new graphical playthrough
+or normal SAVE acceptance is claimed.
+
+The isolated feature passes 143/152 engine suites, SDK 3/3 and B30; its exact
+Counter of 25 inherited FAIL lines matches fresh unchanged #230. The combined
+candidate has zero FAIL lines. Native command revision **11** refuses revision
+10; party codec stays **1**. The independent token audit reproduces
+`3e2986da83083f86` with unchanged legacy digest `e33d251961f2a41d`.
+
+Full native execution parity remains open. A separate 72-row actual-script
+probe retains 48 differences in PP visibility/event admission at
+`battle.move_used`. A complete successful Sleep Talk held-phase probe still
+has 10 native versus 11 host reads; awake/empty/blocked retain equal 2/2/4
+counts. Shared King's Rock/Shell Bell ordering, successful Mirror Move
+history/targets, Metronome catalog/RNG and complete controller/playthrough
+coverage remain separate. See [the scoped contract](native-gen3-choice-band.md).
+
+All nine #241 hosted workflows await maintainer approval (`action_required`);
+the [dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40197434005)
+has zero jobs. The English regular PR is published from the user's fork. App
+attachment was rejected by the existing 100-artifact identity cap.
+
+## Historical #230 acceptance
 
 [PR #230](https://github.com/UNDERdecoded/Gen2Recomped/pull/230) aligns the
 native GBA base-damage held reads and item rounding. Resolve attacker then
