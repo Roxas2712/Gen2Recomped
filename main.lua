@@ -1059,6 +1059,7 @@ local defaultErrorHandler = love.errorhandler or love.errhand
 -- device with no console and no file manager to hand.
 local function minimalErrorScreen(text)
   if not (love.graphics and love.event) then return nil end
+  pcall(WindowFrame.shutdown)
   local ok = pcall(function()
     love.graphics.reset()
     love.graphics.setNewFont(14)
@@ -1069,8 +1070,9 @@ local function minimalErrorScreen(text)
     if love.event then
       love.event.pump()
       for name, a in love.event.poll() do
-        if name == "quit" then return 1 end
-        if name == "keypressed" and (a == "escape" or a == "q") then return 1 end
+        if name == "quit" or name == "keypressed" and (a == "escape" or a == "q") then
+          WindowFrame.shutdown();return 1
+        end
       end
     end
     if love.graphics and love.graphics.isActive() then
