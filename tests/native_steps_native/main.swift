@@ -42,6 +42,12 @@ refused("corruption is not silently reset") { _ = try store.load(fallbackAnchor:
 try Data(repeating: 32, count: 8193).write(to: path)
 refused("oversized state refused") { _ = try store.load(fallbackAnchor: 0) }
 try before.write(to: path)
+for key in ["version", "anchor", "total"] {
+    var invalid = zero; invalid[key] = true
+    try JSONSerialization.data(withJSONObject: invalid).write(to: path)
+    refused("boolean numeric journal fields refused") { _ = try store.load(fallbackAnchor: 0) }
+}
+try before.write(to: path)
 try store.commit(zero, steps: 10, anchor: 2300)
 let retried = try store.load(fallbackAnchor: 0)
 try check((retried["total"] as? NSNumber)?.int64Value == 75_027, "retry commits exactly the missed delta")

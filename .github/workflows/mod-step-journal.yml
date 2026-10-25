@@ -19,6 +19,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: native-step-journal-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   android-bridge-build:
     runs-on: ubuntu-latest
@@ -43,7 +46,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - run: brew install luajit love
+      - run: brew install luajit
+      - name: Verify the official LÖVE test runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location https://github.com/love2d/love/releases/download/11.5/love-11.5-macos.zip -o "$RUNNER_TEMP/love-11.5-macos.zip"
+          printf '%s  %s\n' 6795bb3a1656af6a2fdfe741e150787b481886d3a280327a261a3fdded586913 "$RUNNER_TEMP/love-11.5-macos.zip" | shasum -a 256 -c -
+          ditto -x -k "$RUNNER_TEMP/love-11.5-macos.zip" "$RUNNER_TEMP/love-runtime"
       - run: luajit tests/engine/native_steps.lua
       - name: Verify the pinned host-test JSON dependency
         shell: bash
@@ -55,7 +65,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 tools/qualify_native_steps.py --swiftc "$(xcrun --find swiftc)" --sdk "$(xcrun --sdk macosx --show-sdk-path)" --ios-sdk "$(xcrun --sdk iphoneos --show-sdk-path)" --java-home "$JAVA_HOME" --json-jar "$RUNNER_TEMP/json-20240303.jar" --lua "$(command -v luajit)" --love /Applications/love.app/Contents/MacOS/love --output "$RUNNER_TEMP/native-steps"
+          python3 tools/qualify_native_steps.py --swiftc "$(xcrun --find swiftc)" --sdk "$(xcrun --sdk macosx --show-sdk-path)" --ios-sdk "$(xcrun --sdk iphoneos --show-sdk-path)" --java-home "$JAVA_HOME" --json-jar "$RUNNER_TEMP/json-20240303.jar" --lua "$(command -v luajit)" --love "$RUNNER_TEMP/love-runtime/love.app/Contents/MacOS/love" --output "$RUNNER_TEMP/native-steps"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

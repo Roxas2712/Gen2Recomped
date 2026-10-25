@@ -61,6 +61,13 @@ public final class StepJournalCheck {
         Files.writeString(root.resolve(StepJournal.NAME), "{unfinished");
         refused(() -> StepJournal.deliver(dir, 30, 2700, -1, 1000));
         Files.write(root.resolve(StepJournal.NAME), before);
+        for (String key : new String[]{"version", "anchor", "total", "epoch"}) {
+            JSONObject bad = new JSONObject(new String(before, java.nio.charset.StandardCharsets.UTF_8));
+            bad.put(key, key.equals("epoch") ? 1 : true);
+            Files.writeString(root.resolve(StepJournal.NAME), bad.toString());
+            refused(() -> StepJournal.deliver(dir, 30, 2700, -1, 1000));
+        }
+        Files.write(root.resolve(StepJournal.NAME), before);
         check(Files.readString(root.resolve("steps_pending.json")).equals("{\"steps\":17}"), "migration preserves legacy source");
         System.out.println("Native steps Java: " + checks + " PASS");
     }

@@ -55,14 +55,19 @@ final class StepJournal {
             if (value.charAt(i) < 32 || value.charAt(i) == 127) return false;
         return true;
     }
+    private static String string(JSONObject value, String key) throws Exception {
+        Object raw = value.get(key);
+        if (!(raw instanceof String)) throw new IOException("invalid " + key);
+        return (String) raw;
+    }
 
     private static JSONObject load(File dir, long fallbackCounter, long fallbackTime) throws Exception {
         File path = new File(dir, NAME);
         if (path.exists()) {
             JSONObject state = read(path);
-            if (state.getInt("version") != 1 || !state.getString("source").equals("android-counter")
-                    || !state.getString("epoch").matches("[a-zA-Z0-9_-]{1,64}")
-                    || !text(state.getString("from")) || !text(state.getString("to")))
+            if (integer(state, "version") != 1 || !string(state, "source").equals("android-counter")
+                    || !string(state, "epoch").matches("[a-zA-Z0-9_-]{1,64}")
+                    || !text(string(state, "from")) || !text(string(state, "to")))
                 throw new IOException("invalid step journal");
             integer(state, "total"); integer(state, "anchor"); integer(state, "anchorTime");
             if (!(state.get("anchorKnown") instanceof Boolean)) throw new IOException("invalid anchor state");

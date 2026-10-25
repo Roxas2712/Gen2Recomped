@@ -27,7 +27,8 @@ final class GRStepJournalStore {
         let url = directory.appendingPathComponent(Self.name)
         if FileManager.default.fileExists(atPath: url.path) {
             let state = try read(url)
-            guard (state["version"] as? Int) == 1,
+            guard let version = state["version"] as? NSNumber,
+                  CFGetTypeID(version) != CFBooleanGetTypeID(), version.doubleValue == 1,
                   (state["source"] as? String) == "healthkit",
                   let epoch = state["epoch"] as? String,
                   epoch.range(of: "^[a-zA-Z0-9_-]{1,64}$", options: .regularExpression) != nil,
@@ -35,7 +36,9 @@ final class GRStepJournalStore {
                   CFGetTypeID(total) != CFBooleanGetTypeID(),
                   total.doubleValue.isFinite, total.doubleValue >= 0,
                   total.doubleValue <= Double(Self.maximum), total.doubleValue.rounded(.down) == total.doubleValue,
-                  let anchor = state["anchor"] as? Double, anchor.isFinite, anchor >= 0,
+                  let rawAnchor = state["anchor"] as? NSNumber,
+                  CFGetTypeID(rawAnchor) != CFBooleanGetTypeID(),
+                  rawAnchor.doubleValue.isFinite, rawAnchor.doubleValue >= 0,
                   let from = state["from"] as? String, validText(from),
                   let to = state["to"] as? String, validText(to)
             else { throw Failure.invalidJournal }
