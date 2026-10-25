@@ -8,6 +8,14 @@ local pendingReadback,asyncDisabled
 local latencyFrames=0
 local mode="direct"
 local frames=0
+local captures={}
+-- Complete-frame pixels are borrowed only for the duration of the callback.
+-- Requests made inside a draw/capture callback belong to the following frame.
+function M.capture(callback)
+  assert(type(callback)=="function","complete-frame capture requires a callback")
+  if #captures>=16 then return false,"complete-frame capture queue is full" end
+  captures[#captures+1]=callback;return true
+end
 local function waitPending()
   if not pendingReadback then return true end
   local request=pendingReadback
@@ -66,10 +74,18 @@ function M.shutdown()
   if bridge then bridge:close();bridge=nil end
   releaseReadback()
   if canvas then canvas:release();canvas=nil end
-  observer=nil;mode="direct"
+  observer=nil;captures={};mode="direct"
 end
 
 function M.draw(body,capture)
+  local requested=captures;captures={}
+  if #requested>0 then
+    local immediate=capture
+    capture=function(data)
+      if immediate then immediate(data) end
+      for _,callback in ipairs(requested) do callback(data,M.info()) end
+    end
+  end
   local g=love.graphics
   local osName=love.system and love.system.getOS and love.system.getOS()
   local renderer=g.getRendererInfo and g.getRendererInfo() or ""
