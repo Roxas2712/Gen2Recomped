@@ -142,7 +142,9 @@ function M.delegate(battle, battler, action)
     return describe(action)
   end
   for i, slot in ipairs(battler.curMoves or {}) do
-    if action == slot then
+    -- Native wild selection already returns a separate PP-bound action.
+    -- A delegated edit must retain that selected slot, just like a raw slot.
+    if M.slot(action) == slot then
       local copy = shallow(action)
       copy.slot = i
       return describe(copy), { raw = action, before = shallow(copy), owner = battler }

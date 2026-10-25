@@ -66,6 +66,13 @@ passing `selection-fixed`, `planning-struggle-fixed`, `wild-input-fixed`,
 fixture errors and genuine runtime mismatches are kept separately in those
 raw outputs. Initial full link traces failed even when turn hashes matched.
 
+The first clean full contract matrix at `be88b1fd` retains a failed result:
+eight host workers expose a delegated selected-slot PP regression in the new
+ordinary-wild action records. The delegate now captures an already-bound
+action's original slot too. All 16 focused workers / 220 paired rows for
+the unchanged choices/arguments/records contracts pass after the correction;
+the full matrix must be repeated before acceptance.
+
 ## Required validation before a PR
 
 - Execute `tests/engine/gen3_choice_band.lua` and compare the same complete
