@@ -1893,6 +1893,7 @@ function Data:seedDefaults()
     self:publishGen2TilesetNames()
     self:publishGen2Palettes()
     self:publishGen2MapMetadata()
+    require("src.core.Gen2SpeciesNames").publish(self)
     ensureGen2WarpFallbacks(self)
     ensureGen2HomeTextFallbacks(self)
   end

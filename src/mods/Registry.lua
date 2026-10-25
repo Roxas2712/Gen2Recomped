@@ -147,7 +147,10 @@ function Registry:patch(id, partial, owner, replaceLists)
     error(self.name .. ": patch is not supported on compose registries")
   end
   local result = append(self, id, "patch", partial, owner)
-  if replaceLists then self.ops[id][#self.ops[id]].replaceLists = Merge.deepCopy(replaceLists) end
+  if replaceLists then
+    local list = self.ops[canonicalId(self, id)]
+    list[#list].replaceLists = Merge.deepCopy(replaceLists)
+  end
   return result
 end
 
