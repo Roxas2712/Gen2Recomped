@@ -57,6 +57,7 @@ function Seasons.pose(kind,t,cx,cy,s)
     pose.logoX=originX+(cx-originX)*travel
     pose.logoY=originY+(cy-originY)*travel-math.sin(travel*math.pi)*170*s
     pose.logoScale=.08+.92*travel;pose.logoAlpha=ease((t-release)/.25);pose.rotation=-(1-travel)*.8
+    if t>=release+2.1 then pose.logoX=cx;pose.logoY=cy;pose.logoScale=1 end
     return pose
   end
   if kind=='summer' then

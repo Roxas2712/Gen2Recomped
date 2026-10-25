@@ -32,6 +32,7 @@ check(not require('src.import.CartridgeDownload').start('red',false),'original a
 local L=require('src.import.LauncherLibrary');local calls={}
 B.current=function() return 'red' end
 B.draw=function(_,_,area) calls[#calls+1]=area;return true end
-check(L.preview({},'red',10,20,300,170) and calls[1].x==10 and calls[1].h==170,'the preview is drawn into the selected game banner bounds')
+check(L.preview({},'red',10,20,300,170) and calls[1].x==136 and calls[1].w==174 and calls[1].h==170 and calls[1].fit=='cover',
+  'the preview covers the right side of the selected banner without stretching or hiding save actions')
 check(not L.preview({},'crystal',0,0,300,170) and #calls==1,'another game never inherits the selected game preview')
 print('Launcher audio handoff: '..n..' checks passed')

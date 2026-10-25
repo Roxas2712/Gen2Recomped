@@ -24,7 +24,7 @@ local function load(name)
   return ok and model or nil
 end
 local function hidden(name)
-  return name:find('eyelid',1,true) or name:find('half_eye',1,true) or name:find('eye_angry',1,true) or name:find('eye_sad',1,true) or name:find('pupil_left2',1,true) or name:find('pupil_right2',1,true)
+  return name:find('eyelid',1,true) or name:find('full_eye',1,true) or name:find('eye_angry',1,true) or name:find('eye_sad',1,true) or name:find('pupil_left2',1,true) or name:find('pupil_right2',1,true)
 end
 local faces={
  north={{4,3,2,1},1},south={{7,8,5,6},.78},west={{8,4,1,5},.82},east={{3,7,6,2},.9},up={{8,7,3,4},1},down={{1,2,6,5},.7}}
@@ -87,10 +87,12 @@ function C.geometry(model,name,t,pose)
       local a,b=cube['from'],cube.to;local inf=cube.inflate or 0
       local x,y,z=a[1]-inf,a[2]-inf,a[3]-inf;local X,Y,Z=b[1]+inf,b[2]+inf,b[3]+inf
       local points={{x,y,z},{X,y,z},{X,Y,z},{x,Y,z},{x,y,Z},{X,y,Z},{X,Y,Z},{x,Y,Z}}
-      local eye=name=='haunter' and (bone.name:find('full_eye',1,true) or bone.name:find('pupil',1,true))
+      local pupil=bone.name:find('pupil',1,true)
+      local eye=bone.name:find('half_eye',1,true) or bone.name=='eye_left' or bone.name=='eye_right'
+      local outline=bone.name:find('eye_outline',1,true)
       -- The launcher uses visible white eyes and black pupils. Put the eye
       -- planes in front of the opaque body instead of burying them in it.
-      if eye then for _,p in ipairs(points) do p[3]=p[3]-.4 end end
+      if name=='haunter' and (eye or pupil) then for _,p in ipairs(points) do p[3]=p[3]-.4 end end
       for j,p in ipairs(points) do points[j]=project(p,i,cube) end
       for _,face in ipairs(faceOrder) do
         local info=faces[face]
@@ -98,25 +100,33 @@ function C.geometry(model,name,t,pose)
         -- Zero-area box faces (flat fur/eyelid planes) can carry negative
         -- unused UV edges in Blockbench. They are not drawable surfaces.
         if uv and uv[1]~=uv[3] and uv[2]~=uv[4] then
-          if eye then
-            -- Unchanged texture swatches: pale white (35,79), black (0,1).
-            local u,v=35.5,79.5;if bone.name:find('pupil',1,true) then u,v=.5,1.5 end
-            uv={u,v,u,v}
+          if name=='haunter' and pupil then
+            -- Black pupil swatch. Keep the source half-eye texture/mask so
+            -- the sharp slanted eye contour is not replaced by a rectangle.
+            uv={.5,1.5,.5,1.5}
           end
-          local q={depth=0,color=eye and 1 or info[2],points={},uv=uv};serial=serial+1;q.serial=serial
+          local q={depth=0,color=(eye or pupil) and 1 or info[2],points={},uv=uv,bone=bone.name,
+            layer=pupil and 3 or eye and 2 or outline and 1 or 0};serial=serial+1;q.serial=serial
           for j,index in ipairs(info[1]) do q.points[j]=points[index];q.depth=q.depth+points[index][3]/4 end
           quads[#quads+1]=q
         end
       end
     end
   end end
-  table.sort(quads,function(a,b) if math.abs(a.depth-b.depth)<.00001 then return a.serial<b.serial end;return a.depth>b.depth end)
+  -- These intros keep a front three-quarter view. Eyes are decal layers;
+  -- centroid sorting a large head face over a small eye hid one eye as the
+  -- model turned. Draw outlines, sharp eye masks, then pupils after the shell.
+  table.sort(quads,function(a,b)
+    if a.layer~=b.layer then return a.layer<b.layer end
+    if math.abs(a.depth-b.depth)<.00001 then return a.serial<b.serial end
+    return a.depth>b.depth
+  end)
   local vertices={}
   for _,q in ipairs(quads) do
     local uv={{q.uv[1]/model.width,q.uv[2]/model.height},{q.uv[3]/model.width,q.uv[2]/model.height},{q.uv[3]/model.width,q.uv[4]/model.height},{q.uv[1]/model.width,q.uv[4]/model.height}}
     for _,j in ipairs({1,2,3,1,3,4}) do local p=q.points[j];vertices[#vertices+1]={p[1],p[2],uv[j][1],uv[j][2],q.color,q.color,q.color,1} end
   end
-  return vertices
+  return vertices,quads
 end
 local function modelScale(name) return name=='haunter' and 4.6 or name=='sudowoodo' and 5.2 or 5.2 end
 function C.sackOrigin(t,pose,s)
@@ -138,7 +148,7 @@ function C.mist(t,pose,s,foreground)
     local y=20+math.sin(angle)*(18+age*28)-age*50
     local radius=18+age*26
     for layer=5,1,-1 do
-      local a=pose.alpha*math.sin(age*math.pi)*(foreground and .009 or .018)*(1-layer/6)
+      local a=pose.alpha*math.sin(age*math.pi)*(foreground and .024 or .055)*(1-layer/6)
       g.setColor(foreground and .41 or .16,.08,foreground and .6 or .3,a)
       g.ellipse('fill',x,y,radius*layer/3,radius*layer/5)
     end

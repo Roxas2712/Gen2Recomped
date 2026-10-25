@@ -119,9 +119,19 @@ function Library.install(RI)
       g.setColor(1,1,1,1)
       g.draw(logo,x+20*s,y+(h-lh*sc)/2,0,sc,sc)
     end
-    if w > 690*s then
+    self._headerAccount,self._headerRegister=nil,nil
+    local signed=require('src.cloud.RetroCloud').signedIn()
+    local bw=math.min(104*s,(w-245*s)/2)
+    if bw>60*s then
+      local right=x+w-18*s
+      if not signed then
+        self._headerRegister=self:_chipButton(right-bw,y+22*s,'REGISTER',{w=bw,h=36*s,kind='accent'})
+        right=right-bw-8*s
+      end
+      self._headerAccount=self:_chipButton(right-bw,y+22*s,signed and 'MY ACCOUNT' or 'LOGIN',{w=bw,h=36*s,kind='accent'})
+    end
+    if w > 950*s then
       label(self, 'YOUR GAMES. YOUR JOURNEY STARTS NOW.', x+278*s, y+34*s)
-      text(self,self.hintFont,'GB / GBC / GBA / DS',x+w-180*s,y+34*s,160*s,P.link)
     end
     return h
   end
@@ -266,6 +276,12 @@ function Library.install(RI)
 
   local mouse = RI._sbMousepressed
   RI._sbMousepressed = function(self,x,y)
+    if U.inside(self._headerAccount,x,y) then self:_openAccount();return true end
+    if U.inside(self._headerRegister,x,y) then
+      self:_openAccount();require('src.import.AccountWorkspace').action(self,'register')
+      if self._accountOverlay then self._accountOverlay.mode='register' end
+      return true
+    end
     if self.section=='games' and U.inside(self._sb.continueSaves,x,y) then
       self:_sbOpenGame(self._sb.continueSaves.version);return true
     end
@@ -303,10 +319,6 @@ function Library.install(RI)
     local top=y
     local list
     if self.gamesView=='consoles' then
-      if not self._sb.account then
-        self._sb.account=self:_chipButton(x,y,require('src.cloud.RetroCloud').signedIn() and 'MY ACCOUNT / CLOUD SAVES' or 'SIGN IN / CLOUD SAVES',{w=w,h=38*s,kind='accent'})
-        y=y+48*s
-      end
       y=y+self:_sbContinueCard(x,y,w)
       label(self,'BROWSE BY SYSTEM',x,y)
       y=y+28*s

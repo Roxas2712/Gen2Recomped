@@ -12,7 +12,16 @@ for _,name in ipairs({'haunter','delibird','sudowoodo'}) do
   for i,bone in ipairs(model.bones) do
     check(bone.parent==nil or bone.parent<i,'parents precede children and cannot form a traversal cycle')
   end
-  local a=C.geometry(model,name,2,{action=0});local b=C.geometry(model,name,4,{action=1})
+  local a,layers=C.geometry(model,name,2,{action=0});local b=C.geometry(model,name,4,{action=1})
+  local eyes={};local lastLayer=0
+  for _,q in ipairs(layers) do
+    assert(q.layer>=lastLayer,'facial decals cannot be covered by a later head face');lastLayer=q.layer
+    eyes[q.bone]=true
+  end
+  if name=='haunter' then check(eyes.half_eye_left and eyes.half_eye_right and not eyes.full_eye_left and not eyes.full_eye_right,
+    'both source slanted eye contours are present instead of the rectangular full-eye variant')
+  elseif name=='delibird' then check(eyes.eye_left and eyes.eye_right and eyes.pupil_left and eyes.pupil_right,
+    'both winter mascot eyes and pupils survive the facial layer pass') end
   check(#a>0 and #a==#b and #a%6==0,'a complete animated mesh has stable triangle capacity')
   local changed=false
   for i,v in ipairs(a) do
