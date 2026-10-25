@@ -66,7 +66,10 @@ run_tier() {
 # ------- ROM-free tiers: these are what CI runs
 
 run_tier "T1/T2 engine invariants + parity gates" "$LUA" tests/run_engine.lua
+run_tier "Gen3 summary source resources" "$LUA" tests/gen3_summary_parts_test.lua
+run_tier "Gen3 summary presentation" "$LUA" tests/gen3_summary_test.lua
 run_tier "T4 mod-SDK" "$LUA" tests/run_modkit.lua
+run_tier "Classic GB item-list overlay" "$LUA" tests/classic_item_box_test.lua
 run_tier "Dramatic Shape B30 profile" "$LUA" tests/dramatic_shape_b30.lua
 
 # The modded-link desync suite (symmetric mod, handshake fail-closed,
