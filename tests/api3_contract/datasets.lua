@@ -1,7 +1,7 @@
 -- Native cache formats differ; the mod and assertions are identical.
 local M = {}
 function M.fixture(root, backend, version)
-  local codeRoot = debug.getinfo(1, "S").source:sub(2):match("^(.*)/datasets%.lua$")
+  local codeRoot = debug.getinfo(1, "S").source:sub(2):gsub("\\", "/"):match("^(.*)/datasets%.lua$")
   local Version = require("src.core.GameVersion")
   Version.set(version)
   local gen = Version.generation(version)

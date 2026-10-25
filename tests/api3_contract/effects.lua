@@ -1,6 +1,6 @@
 local M = {}
 function M.fixture(root, backend, version)
-  local codeRoot = debug.getinfo(1, "S").source:sub(2):match("^(.*)/effects%.lua$")
+  local codeRoot = debug.getinfo(1, "S").source:sub(2):gsub("\\", "/"):match("^(.*)/effects%.lua$")
   return dofile(codeRoot .. "/warp.lua").fixture(root, backend, version, "effects")
 end
 function M.run(root, backend, version)

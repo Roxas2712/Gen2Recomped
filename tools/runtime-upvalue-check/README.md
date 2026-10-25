@@ -39,6 +39,12 @@ the caller explicitly supplies one. The output includes per-step logs, a
 source/tool/library hash report and separate licensed stock/extended artifacts.
 These are qualification artifacts, not a replacement installation or a release.
 
+On Windows the builder explicitly selects MSVC's linker and Git for Windows
+Bash, avoiding the unrelated Git Unix `link` utility and System32's WSL
+launcher. Shared fixture source paths accept Windows separators, and tests
+that inspect source/text goldens normalize checkout CRLF only. Their native
+behavior checks and reviewed fingerprint values are unchanged.
+
 The `Native runtime capacity` workflow schedules this same check on Linux x64,
 Windows x64, Intel macOS and arm64 macOS using explicit
 [GitHub runner labels](https://github.com/actions/runner-images#available-images).

@@ -1,6 +1,6 @@
 local M = {}
 function M.fixture(root, backend, version)
-  local codeRoot = debug.getinfo(1, "S").source:sub(2):match("^(.*)/script_shops%.lua$")
+  local codeRoot = debug.getinfo(1, "S").source:sub(2):gsub("\\", "/"):match("^(.*)/script_shops%.lua$")
   local f = dofile(codeRoot .. "/script_gifts.lua").fixture(root, backend, version, "script_shops")
   local data = f.game.data
   f.ow.game, f.ow.text = f.game, data.text

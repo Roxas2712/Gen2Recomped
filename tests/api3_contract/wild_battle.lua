@@ -1,7 +1,7 @@
 -- Production public facades/loaders; native battle entry/timing seams only.
 local M = {}
 function M.fixture(root, backend, version, modId)
-  local codeRoot = debug.getinfo(1, "S").source:sub(2):match("^(.*)/wild_battle%.lua$")
+  local codeRoot = debug.getinfo(1, "S").source:sub(2):gsub("\\", "/"):match("^(.*)/wild_battle%.lua$")
   local f = dofile(codeRoot .. "/warp.lua").fixture(root, backend, version, modId or "wild_battle")
   love = love or require("tests.love_stub")
   f.game.save.party = { { species = "MEW", hp = 20, level = 10, stats = { hp = 20 } } }

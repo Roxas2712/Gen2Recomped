@@ -14,7 +14,7 @@ function M.fixture(root, backend, version, modId)
   local Runtime = require("src.mods.Runtime")
   Version.set(version)
   local gen = Version.generation(version)
-  local codeRoot = (debug.getinfo(1, "S").source:sub(2)):match("^(.*)/warp%.lua$")
+  local codeRoot = (debug.getinfo(1, "S").source:sub(2):gsub("\\", "/")):match("^(.*)/warp%.lua$")
   local data = dofile(codeRoot .. "/run.lua").dataFor(backend, gen)
   local prefix = gen == 3 and (version == "emerald" and "EM_" or "FR_") or ""
   local home, dest = prefix .. "HOME", prefix .. "DEST"

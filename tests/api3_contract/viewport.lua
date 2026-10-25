@@ -1,6 +1,6 @@
 local M = {}
 function M.fixture(root, backend, version)
-  local codeRoot = debug.getinfo(1, "S").source:sub(2):match("^(.*)/viewport%.lua$")
+  local codeRoot = debug.getinfo(1, "S").source:sub(2):gsub("\\", "/"):match("^(.*)/viewport%.lua$")
   local f = dofile(codeRoot .. "/warp.lua").fixture(root, backend, version, "viewport")
   love = love or require("tests.love_stub")
   return f

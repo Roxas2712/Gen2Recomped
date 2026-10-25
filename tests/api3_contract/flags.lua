@@ -1,6 +1,6 @@
 local M = {}
 function M.fixture(root, backend, version)
-  local codeRoot = debug.getinfo(1, "S").source:sub(2):match("^(.*)/flags%.lua$")
+  local codeRoot = debug.getinfo(1, "S").source:sub(2):gsub("\\", "/"):match("^(.*)/flags%.lua$")
   local f = dofile(codeRoot .. "/warp.lua").fixture(root, backend, version, "flags")
   if backend == "gen1" and f.gen == 2 then
     f.ow.events = require("src.world.gen2.Events").new()
