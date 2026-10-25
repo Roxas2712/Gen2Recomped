@@ -50,6 +50,9 @@ Protocol.plainCopy = plainCopy
 -- mon as traded (boosted EXP, high-level disobedience).  Omitting them made
 -- a received mon show the receiver as its OT (#215).
 function Protocol.packMon(mon)
+  if require("src.core.GameVersion").isGen3() then
+    return require("src.link.Gen3Party").pack(mon, plainCopy)
+  end
   local moves = {}
   for _, mv in ipairs(mon.moves) do
     table.insert(moves, { id = mv.id, pp = mv.pp, ppUps = mv.ppUps })
@@ -77,6 +80,9 @@ end
 -- peers have agreed on a verdict: a mon that cannot be rebuilt identically
 -- is rejected by name instead of quietly mutated into something else.
 function Protocol.unpackMon(data, packed, opts)
+  if require("src.core.GameVersion").isGen3() then
+    return require("src.link.Gen3Party").unpack(data, packed, opts, plainCopy)
+  end
   local Stats = require("src.pokemon.Stats")
   local Growth = require("src.pokemon.Growth")
   local strict = opts and opts.strict

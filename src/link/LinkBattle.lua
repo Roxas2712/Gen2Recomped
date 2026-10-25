@@ -155,6 +155,7 @@ end
 local function toxicSignature(mon)
   if not require("src.core.GameVersion").isGen3() then return "" end
   return ":toxic=" .. tostring(mon.status == "PSN" and mon.toxic == true)
+    .. require("src.link.Gen3Party").signature(mon)
 end
 local function activeStr(b)
   return ("%s:%d:%s:%s:%s:%s"):format(b.mon.species, b.mon.hp,

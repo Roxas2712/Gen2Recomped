@@ -20,6 +20,8 @@ on:
       - 'tests/engine/gen3_native_accuracy.lua'
       - 'tests/engine/gen3_native_secondary.lua'
       - 'tests/engine/gen3_battle_protocol.lua'
+      - 'tests/engine/gen3_party_codec.lua'
+      - 'tests/engine/gen3_party_transport.lua'
       - 'tools/enemy-action-contract-check/**'
   push:
     branches: [main, dev]

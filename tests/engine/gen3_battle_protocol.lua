@@ -4,9 +4,9 @@ local V, F, H =
   require("src.core.GameVersion"), require("src.link.Fingerprint"), require("src.link.Handshake")
 local Copy = require("src.mods.Merge").deepCopy
 local data, before = T.fixtures.fresh(), V.get()
--- Audited against the unchanged #214 Fingerprint module and this raw fixture.
+-- Legacy hash audited against #214; native hash is #215 plus [native_gba_party]1.
 local LEGACY = "e33d251961f2a41d"
-local NATIVE = "3a76cc5fce47a5c3"
+local NATIVE = "2fd444270c3d90db"
 for _, version in ipairs({ "red", "firered", "gold", "emerald", "diamond", "firered", "black" }) do
   V.set(version)
   local gba = V.isGen3()

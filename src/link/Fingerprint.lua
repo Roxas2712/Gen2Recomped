@@ -24,6 +24,9 @@ local function nativeBattleRevision()
   return require("src.core.GameVersion").isGen3() and 1 or nil
 end
 Fingerprint.nativeBattleRevision = nativeBattleRevision
+function Fingerprint.nativePartyRevision()
+  return require("src.core.GameVersion").isGen3() and require("src.link.Gen3Party").REVISION or nil
+end
 
 -- ------- FNV-1a, two lanes
 
@@ -256,6 +259,8 @@ local function surface(data, mods)
   writeLinkFields(out, data)
   local revision = nativeBattleRevision()
   if revision then out[#out + 1] = "[native_gba_commands]" .. revision end
+  local partyRevision = Fingerprint.nativePartyRevision()
+  if partyRevision then out[#out + 1] = "[native_gba_party]" .. partyRevision end
   out[#out + 1] = "[mods]" .. modKey(mods)
   return table.concat(out)
 end
@@ -266,6 +271,7 @@ Fingerprint.surface = surface
 function Fingerprint.compute(data, mods)
   if not data then return digest("") end
   local key = modKey(mods) .. "|native_gba:" .. tostring(nativeBattleRevision())
+    .. "|native_party:" .. tostring(Fingerprint.nativePartyRevision())
   local hit = cache[data]
   if hit and hit.key == key then return hit.value end
   local value = Runtime.call("link.fingerprint", function(d, m)
