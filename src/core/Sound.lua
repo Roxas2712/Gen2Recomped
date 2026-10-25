@@ -315,9 +315,9 @@ end
 -- anywhere in the ROM.  So this answers a number, by looking for a role that
 -- already plays it.
 --
--- A number no role covers plays nothing and says nothing: the animation is
--- still right, it is just quieter, and inventing a substitute sound would be
--- worse than silence.
+-- Native GBA numbers without a named role resolve through their imported
+-- song metadata. Explicit pan/mono controls own separate source variants;
+-- other generations retain their existing named-role lookup.
 local byNumber = nil
 function Sound.playId(data, id, options)
   id = tonumber(id)
