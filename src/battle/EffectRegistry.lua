@@ -180,7 +180,11 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   if nativeAccuracy or not neverMiss and not alwaysHits then
     local hit, reason = battle:accuracyRoll(move, user, target, accuracyRaw)
     if not hit then
-      if reason == "absorbed" then battle:cancelMoveAnim(); return end
+      if reason == "absorbed" then
+        battle:cancelMoveAnim()
+        if record and record.onMiss then record.onMiss(ctx, "absorbed") end
+        return
+      end
       -- Explosion/Selfdestruct still animate on a miss (HandleIfPlayerMoveMissed)
       if not (record and record.explode) then battle:cancelMoveAnim() end
       missBeat(battle, record)
@@ -192,6 +196,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     end
   end
 
+  if record and record.afterAccuracy then record.afterAccuracy(ctx) end
   if gba then hits = hitCount(ctx, record) end
 
   -- damage per hit
@@ -461,6 +466,8 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   if record == nil then
     MoveEffects.warnUnknown(move.effect)
   end
+
+  if gba then require("src.battle.Gen3Rage").moveEnd(battle, ctx, landed) end
 
   if gba and ctx.gbaSpecialHit and target ~= user and target.mon.hp > 0
       and target.mon.status == "FRZ" and require("src.battle.Abilities").normalizeType(move.type) == "FIRE" then

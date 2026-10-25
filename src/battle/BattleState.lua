@@ -5250,9 +5250,7 @@ function BattleState:pokedudeUseAntidote(step)
     .use(self.data, self.game.save, "ANTIDOTE", self.player.mon, self)
   for _, message in ipairs(messages or {}) do self:say(message) end
   self:syncShownStatus()
-  self:act(function()
-    self:executeAction(self.enemy, self.player, self:enemyAction())
-  end)
+  self:act(self:nonMoveAction())
   self:act(function() self:endOfTurn() end)
 end
 
@@ -5564,9 +5562,28 @@ function BattleState:resolveTurn(playerAction)
   end
   self._nativeOrderSelectionTurn = nil
   local selectedPlayerAction, selectedEnemyAction = playerAction, enemyAction
+  local nativeActions
   if GameVersion.isGen3() then
     local Encore = require("src.battle.Gen3Encore")
     playerAction, enemyAction = Encore.plan(self.player, playerAction), Encore.plan(self.enemy, enemyAction)
+    local Rage = require("src.battle.Gen3Rage")
+    if self:isDouble() then
+      nativeActions = {}
+      for pos = 0, 3 do
+        local b = self:battlerAt(pos)
+        if b and b.mon and b.mon.hp > 0 then
+          local action
+          if enemyActions and not b.isPlayer and not b.ally then action = enemyActions[pos]
+          else action = self:actionFor(b, playerAction, enemyAction) end
+          action = Encore.plan(b, action)
+          nativeActions[pos] = action
+          Rage.selected(self, b, action)
+        end
+      end
+    else
+      Rage.selected(self, self.player, playerAction)
+      Rage.selected(self, self.enemy, enemyAction)
+    end
   end
   self.turnCount = (self.turnCount or 0) + 1
   if GameVersion.isGen3() then require("src.battle.Gen3FollowMe").clear(self) end
@@ -5641,13 +5658,10 @@ function BattleState:resolveTurn(playerAction)
     for pos = 0, 3 do
       local b = self:battlerAt(pos)
       if b and b.mon and (b.mon.hp or 0) > 0 then
+        -- Native choices were resolved once, before turn-start observers.
         local action
-        if enemyActions and not b.isPlayer and not b.ally then
-          action = enemyActions[pos]
-        else
-          action = self:actionFor(b, playerAction, enemyAction)
-        end
-        if GameVersion.isGen3() then action = require("src.battle.Gen3Encore").plan(b, action) end
+        if nativeActions then action = nativeActions[pos]
+        else action = self:actionFor(b, playerAction, enemyAction) end
         entries[#entries + 1] = { battler = b, move = orderMove(action, self.data),
                                   action = action }
       end
@@ -5806,9 +5820,7 @@ function BattleState:resolveSwitch(newMon)
   if self.bw and require("src.battle.Gen5MoveRules").playerSwitch(self, newMon) then return end
   self:act(function() self:switchPlayerInto(BattleState.POS.PLAYER_LEFT,
                                             newMon) end)
-  self:act(function()
-    self:executeAction(self.enemy, self.player, self:enemyAction())
-  end)
+  self:act(self:nonMoveAction())
   self:act(function() self:endOfTurn() end)
 end
 
@@ -9893,9 +9905,7 @@ function BattleState:tryRun()
   -- lucky roll can never break the scene.
   if self.noRun then
     self:say(self:romText("_CantEscapeText", "Can't escape!"))
-    self:act(function()
-      self:executeAction(self.enemy, self.player, self:enemyAction())
-    end)
+    self:act(self:nonMoveAction())
     self:act(function() self:endOfTurn() end)
     return
   end
@@ -9957,9 +9967,7 @@ function BattleState:tryRun()
     self.afterQueue = "finish"
   else
     self:say(self:romText("_CantEscapeText", "Can't escape!"))
-    self:act(function()
-      self:executeAction(self.enemy, self.player, self:enemyAction())
-    end)
+    self:act(self:nonMoveAction())
     self:act(function() self:endOfTurn() end)
   end
 end
@@ -9984,6 +9992,23 @@ function BattleState:gen4ItemTargetScreen()
   return Gen4Battle.partyScreenId(self)
 end
 
+-- A committed non-move action consumes the turn. Native enemy selection
+-- precedes Rage cleanup; older generations retain their delayed selection.
+function BattleState:nonMoveAction()
+  local native, action = GameVersion.isGen3()
+  if native then
+    action = self:enemyAction()
+    action = require("src.battle.Gen3Encore").plan(self.enemy, action)
+    local Rage = require("src.battle.Gen3Rage")
+    Rage.selected(self, self.player, nil)
+    Rage.selected(self, self.enemy, action)
+  end
+  return function()
+    if not native then action = self:enemyAction() end
+    self:executeAction(self.enemy, self.player, action)
+  end
+end
+
 -- called by BagMenu after an item is used in battle (consumes the turn)
 function BattleState:itemUsed(messages)
   -- bag cures clear mon.status before the message UI; refresh the HUD
@@ -9991,9 +10016,7 @@ function BattleState:itemUsed(messages)
   self:syncShownStatus()
   for _, m in ipairs(messages or {}) do self:say(m) end
   table.insert(self.queue, { drain = true }) -- potions animate the bar
-  self:act(function()
-    self:executeAction(self.enemy, self.player, self:enemyAction())
-  end)
+  self:act(self:nonMoveAction())
   self:act(function() self:endOfTurn() end)
 end
 
@@ -10500,6 +10523,7 @@ end
 
 -- called by BagMenu when a ball is thrown
 function BattleState:throwBall(ball)
+  local reply = self:nonMoveAction()
   -- ItemUseBall branches to ThrowBallAtTrainerMon on wIsInBattle != 1
   -- (item_effects.asm:109-113) BEFORE it reaches `ld hl, ItemUseText00 /
   -- call PrintText` (:146-147), so a trainer battle never shows the
@@ -10532,9 +10556,7 @@ function BattleState:throwBall(ball)
                    or self:romText("_ThrowBallAtTrainerMonText1", "The trainer\nblocked the BALL!"))
       self:sayNext(t._ThrowBallAtTrainerMonText2
                    or self:romText("_ThrowBallAtTrainerMonText2", "Don't be a thief!"))
-      self:act(function()
-        self:executeAction(self.enemy, self.player, self:enemyAction())
-      end)
+      self:act(reply)
       self:act(function() self:endOfTurn() end)
       return
     end
@@ -10550,9 +10572,7 @@ function BattleState:throwBall(ball)
       self:animNext(self:tossAnimFor(ball), true, nil, ball)
       self:sayNext(Strings("It dodged the\nthrown BALL!"))
       self:sayNext(Strings("This POKéMON\ncan't be caught!"))
-      self:act(function()
-        self:executeAction(self.enemy, self.player, self:enemyAction())
-      end)
+      self:act(reply)
       self:act(function() self:endOfTurn() end)
       return
     end
@@ -10576,9 +10596,7 @@ function BattleState:throwBall(ball)
       self:act(function() self:storeCaughtMon() end)
     else
       self:sayNext(self:ballMissMessage(shakes))
-      self:act(function()
-        self:executeAction(self.enemy, self.player, self:enemyAction())
-      end)
+      self:act(reply)
       self:act(function() self:endOfTurn() end)
     end
   end)
@@ -10630,9 +10648,7 @@ function BattleState:bugContestBall()
     else
       self:sayNext(self:ballMissMessage(shakes))
       -- the ball is the player's turn, so the foe still moves
-      self:act(function()
-        self:executeAction(self.enemy, self.player, self:enemyAction())
-      end)
+      self:act(self:nonMoveAction())
       self:act(function() self:endOfTurn() end)
     end
   end)

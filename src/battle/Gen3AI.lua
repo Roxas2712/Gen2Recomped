@@ -558,6 +558,7 @@ local function status2(b)
   if b.confusedTurns then v = v + 0x7 end
   if b.infatuated then v = v + 0xF0000 end
   if b.focusEnergy then v = v + 0x100000 end
+  if b.rage then v = v + 0x800000 end
   if b.substituteHP then v = v + 0x1000000 end
   if b.trappingTurns or b.boundTurns then v = v + 0x4000000 end
   if b.nightmare then v = v + 0x8000000 end
