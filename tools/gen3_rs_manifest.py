@@ -13,6 +13,7 @@ import struct
 import subprocess
 from gen3_sibling_manifest import Symbols
 import gen3_discover as discover
+from gen3_rs_ball_metadata import rs_ball_animation
 
 
 def rs_field_window(pret, at):
@@ -146,6 +147,7 @@ def main():
         pointer=struct.unpack_from('<I',rom,effects+index*4)[0]
         assert pointer==(0 if name=='NULL' else 0x08000000+at(name)),(index,name)
     result['stageOverrides']={'ITEM_EFFECTS':dict(TABLE=effects,FIRST=13,COUNT=163)}
+    result['stageOverrides']['BALL_ANIM'],result['rsBallAnimationEvidence']=rs_ball_animation(args.pret,target,at)
     for name in ('scenes','sceneRoles','sceneOverlays','screenText','bagSprite','wallClock','introCast','introShots','messageWindow','specials','starters','playerTitles','movementActions','playerSprites','m4aWidths','introSprites'):
         result[name]=copy.deepcopy(getattr(f,name,None))
     # Field text is printed at (2,15) in the matching RS code. Its older

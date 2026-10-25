@@ -1315,7 +1315,7 @@ local function markerFor(version)
   end
   -- RS now carries its own action tables as well as field geometry. Rebuild these
   -- caches; retain the earlier 36-byte dex and item-effect corrections.
-  if version == "ruby" or version == "sapphire" then revision = "rs-item-menu-v4:" end
+  if version == "ruby" or version == "sapphire" then revision = "rs-ball-art-v5:" end
   return CACHE_FORMAT .. revision .. GameVersion.info(version).sha1
 end
 
