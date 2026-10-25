@@ -35,6 +35,8 @@ on:
       - 'tests/engine/gen3_move_used*.lua'
       - 'tests/engine/gen3_post_hit*.lua'
       - 'tests/post_hit_items/**'
+      - 'tests/held_item/**'
+      - 'tests/charge_required/**'
       - 'tools/enemy-action-contract-check/**'
   push:
     branches: [main, dev]
