@@ -1,0 +1,147 @@
+{
+  "scope": "Corrected native retail GSC town-map image decoding and staged Crystal flight integration; not complete VASC/UI/story acceptance",
+  "sourceCommit": "8ab72ab8af505b942a00fba0148384ad820cc984",
+  "qualificationRun": 40223059704,
+  "payloadSha256": "57dddadbe30bdd036d5fc75db40dc00cce79b615ff844f6299b9d8d1b006e0c9",
+  "cpuChecks": {
+    "flight": 149,
+    "fieldState": 30,
+    "pixels": 36
+  },
+  "engineSuites": 362,
+  "sdkSuites": 3,
+  "originalGbcPalettesRetained": true,
+  "previousImporterRejectedByRegression": true,
+  "imagesInspected": 8,
+  "remaining": [
+    "Existing Metal deprecation warnings cover the lower map edge. Oversized cursor presentation and placeholder overworld actors are not full UI/art parity acceptance.",
+    "Native story/Hall-of-Fame unlock, party/badge admission and full mod flight cinematic are not accepted.",
+    "Windows and Intel Mac hardware GPU gameplay, long sessions and full art/effect parity remain open."
+  ],
+  "testSetup": "Exact qualified packaged engine and runtime; full unchanged supplied Johto package, Crystal Rev0. Introduction skipped and map/party/visited flags/Hall-of-Fame presentation marker explicitly staged. Only isolated owned QA profiles launched.",
+  "runs": [
+    {
+      "backend": "opengl",
+      "checks": 84,
+      "actualFlights": [
+        {
+          "target": "VIOLET_CITY",
+          "camera": "first",
+          "source": "CHERRYGROVE_CITY",
+          "actual": {
+            "x": 31,
+            "y": 26
+          },
+          "combinedAtlasObserved": true,
+          "landing": {
+            "x": 31,
+            "y": 26
+          }
+        },
+        {
+          "target": "VIOLET_CITY",
+          "camera": "third",
+          "source": "CHERRYGROVE_CITY",
+          "actual": {
+            "x": 31,
+            "y": 26
+          },
+          "combinedAtlasObserved": true,
+          "landing": {
+            "x": 31,
+            "y": 26
+          }
+        }
+      ],
+      "completeImportedMapPixelOracles": {
+        "kanto": {
+          "rgbaSha256": "290ead8596714174f286c70d9ca8c97ef95d611b4adbc2cb9d9bd6cda7d9352d",
+          "independentRomOracle": true,
+          "pixels": 23040
+        },
+        "johto": {
+          "rgbaSha256": "d56de3fbb4f2030f8380499fa41185c2c825af97949f79a742094049003a9cc7",
+          "independentRomOracle": true,
+          "pixels": 23040
+        }
+      },
+      "freshOsWindows": 4,
+      "modFilesVerified": 27329,
+      "modSourceUnmodified": true,
+      "resultSha256": "157fcf03a5a5642d7275b2c9e295fd4f483da6ae152a47055608134213d57cc4",
+      "verificationSha256": "30a67569fe307349b0e6aff5f63a6d212d25ae39b760256c2fd8d156a631002d",
+      "windowImageSha256": {
+        "os-window-resized.png": "8b9593009866d0dc97141cab988de4e9b21aaf8861f53479882b9cd3fad32ce7",
+        "os-window-initial-map.png": "38b787d1071f96a139d4298fd334ec4c6d29de5e12163d0a31cf13a4a505f3eb",
+        "os-window-second-map.png": "f2dee114ec1a2480256b042e363d6065601d91a4c4367208487e6d1f9b4f0c1f",
+        "os-window-map-return.png": "e20000dbb29d2cc664f463f01e2161dcbd71ae0a70b16a4152d8c63333e6f8f0"
+      }
+    },
+    {
+      "backend": "metal",
+      "checks": 84,
+      "actualFlights": [
+        {
+          "source": "CHERRYGROVE_CITY",
+          "landing": {
+            "y": 26,
+            "x": 31
+          },
+          "combinedAtlasObserved": true,
+          "actual": {
+            "y": 26,
+            "x": 31
+          },
+          "camera": "first",
+          "target": "VIOLET_CITY"
+        },
+        {
+          "source": "CHERRYGROVE_CITY",
+          "landing": {
+            "y": 26,
+            "x": 31
+          },
+          "combinedAtlasObserved": true,
+          "actual": {
+            "y": 26,
+            "x": 31
+          },
+          "camera": "third",
+          "target": "VIOLET_CITY"
+        }
+      ],
+      "completeImportedMapPixelOracles": {
+        "kanto": {
+          "rgbaSha256": "290ead8596714174f286c70d9ca8c97ef95d611b4adbc2cb9d9bd6cda7d9352d",
+          "pixels": 23040,
+          "independentRomOracle": true
+        },
+        "johto": {
+          "rgbaSha256": "d56de3fbb4f2030f8380499fa41185c2c825af97949f79a742094049003a9cc7",
+          "pixels": 23040,
+          "independentRomOracle": true
+        }
+      },
+      "freshOsWindows": 4,
+      "modFilesVerified": 27329,
+      "modSourceUnmodified": true,
+      "resultSha256": "dca8fee1bebe5e0669e778717d42f41355a6058a3daab0973ea22baddb7eba98",
+      "verificationSha256": "6b97cba563f934d4e12e0a511703c9b23ae70caf5167106360659f66a75d9eba",
+      "windowImageSha256": {
+        "os-window-resized.png": "73d23304e4b77e5a1dc46498b8b51418e9352ab645d34d170e073e9b39d060aa",
+        "os-window-initial-map.png": "17ae1b76eaba96b6f1d85468cf234bd242db66faedfee236787635f7796d1f06",
+        "os-window-second-map.png": "fb315bc8e5762ac871ab038234bde4af35aa7036b62f1c536b4f588e054c0a14",
+        "os-window-map-return.png": "bd8b6ef8901986aeed5f1acb0c29bb54b5a526848506cfa5971652a3340ccc74"
+      }
+    }
+  ],
+  "privateAssetsPublished": false,
+  "publicReleaseIncludesFeature": true,
+  "earlierUnacceptedQa": [
+    "Previous e8eaff6d flight runs passed logic but their imported map images were visually broken; they do not accept corrected art.",
+    "The first 8ab72ab8 GPU starter failed before app launch because system Python lacked Pillow; the bundled dependency runtime then completed both backends."
+  ],
+  "release": "https://github.com/Roxas2712/Gen2Recomped/releases/tag/native-preview-20261025.1",
+  "releaseAssetsRefreshedInPlace": true,
+  "releaseTagRetargeted": false
+}

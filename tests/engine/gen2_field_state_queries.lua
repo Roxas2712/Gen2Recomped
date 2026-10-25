@@ -26,6 +26,6 @@ player.surfing, player.surfingPikachu = true, true
 T.eq(Fields.isSurfing(State.read(player, save)), true, "actual Pikachu surf overrides stale bike flag")
 T.eq(save.onBike, true, "observing state does not edit save flags")
 T.eq(Fields.fromMenu, nil, "no invented legacy action protocol")
-T.eq(Fields.flyPoints, nil, "no invented visited-destination or fly-picker protocol")
+T.eq(type(Fields.flyPoints), "function", "native flight-destination query is available")
 T.eq(Fields.encounterTable, nil, "no guessed permission table for imported collision classes")
 T.finish("native Gen2 field-state queries")

@@ -28,7 +28,21 @@ predicate/lifecycle surface, not a new species-art or field-action protocol.
 - The test deliberately calls `Loader.teardown()` for lifecycle acceptance.
   The SDK fixture's `release()` only restores buses and is not a mod unload.
 
-These CPU checks do not establish that the unchanged supplied package's
-follower art, ownership choices, First/Third Person rendering or every story
-transition is correct. That live integration remains a separate gate. The
-published desktop refresh from `0acb23b7` predates this feature.
+The exact packaged `5aebfb4c` engine and qualified universal runtime also
+pass a scoped unchanged-package Crystal test: OpenGL 366 checks and Metal
+400. Each covers selected First/Third Person, twelve ordinary doors/map seams,
+four native menus, 24 ownership observations and four fresh OS-window proofs.
+All eight window images were inspected, and the 27,329 original mod files were
+rechecked unchanged. VASC's embedded follower owns the configured actor;
+the native fallback never creates a duplicate. See the sanitized
+[receipt](qa/native-foundation/johto-native-follower.json).
+
+These checks do not establish native fallback species art, every mode or
+story path, or Windows/Intel GPU acceptance. Some Center images still contain
+a black/white question-mark actor, and Metal deprecation overlays remain.
+Introduction, map positions and a one-member healthy QA party are explicit
+setups. Earlier failed test-harness runs are retained and excluded from passes.
+
+Fork PR18 is merged. Upstream PR157 retains its independent validation scope.
+The published desktop refresh from `0acb23b7` predates this feature; later main
+or flight changes require their own package qualification.
