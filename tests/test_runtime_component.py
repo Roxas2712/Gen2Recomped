@@ -13,7 +13,7 @@ spec.loader.exec_module(C)
 
 def thin(arch):
     return struct.pack("<IIIIIIII", 0xFEEDFACF, 0x0100000C if arch == "arm64" else 0x01000007,
-                       0, 6, 0, 0, 0, 0) + b"unit Mach-O payload"
+                       0, 6, 1, 24, 0, 0) + struct.pack("<IIIIII", 0x32, 24, 1, 0x000B0000, 0x000F0000, 0) + b"unit Mach-O payload"
 
 
 def universal(first, second):
@@ -92,6 +92,13 @@ class Components(unittest.TestCase):
                 library, notice, manifest = C.verify(p, platform, self.tree)
                 self.assertTrue(library.is_file() and notice.is_file())
                 self.assertEqual(manifest["capacity"], 120)
+                if platform == "macos":
+                    self.assertEqual(manifest["minimumMacOS"], "11.0.0")
+
+    def test_highest_native_macos_minimum_is_preserved(self):
+        higher = bytearray(thin("x86_64"))
+        struct.pack_into("<I", higher, 44, 0x000E0100)
+        self.assertEqual(C.macos_minimum({"x86_64": bytes(higher), "arm64": thin("arm64")}), "14.1.0")
 
     def test_source_only_or_unrelated_host_report_is_rejected(self):
         capacity, host, body = self.pair()
