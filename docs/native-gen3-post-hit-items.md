@@ -55,7 +55,10 @@ Failed and superseded fixture observations are retained separately in local QA.
 The first complete run also exposed missing GBA Tackle flags in the older held
 fixture: the source side already supplied 51, while the host side omitted it.
 Supplying the same flags preserves all assertions and passes 5,511 checks. The
-initial eight failures remain recorded; no production fallback or relaxed
+initial eight failures remain recorded. The expanded script worker also hit the
+old 60-second wall-clock limit under concurrent QA. Its bound is now 180 seconds;
+a timeout still fails and retains partial text and exact captured bytes. No
+production fallback or relaxed
 expectation is used to hide the mismatched input.
 The first link probe omitted the owned move's flinch flag; after supplying the
 native-shaped flag, it exposed the real spectator turn-overlap bug. No rows are
