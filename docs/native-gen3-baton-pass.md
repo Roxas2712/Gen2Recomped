@@ -31,6 +31,7 @@ LUA=/absolute/path/to/luajit
 "$LUA" tests/engine/gen3_baton_pass_ui.lua
 "$LUA" tests/engine/gen3_baton_pass_link.lua
 "$LUA" tests/engine/gen3_baton_pass_packets.lua
+"$LUA" tests/engine/gen3_baton_pass_composition.lua
 "$LUA" tests/engine/gen3_battle_protocol.lua
 "$LUA" tests/engine/ui_actions.lua
 python3 tools/enemy-action-contract-check/check.py \
@@ -45,7 +46,32 @@ infatuation has a separate active flag and owner pointer, whereas the host's
 pointer is the active state. These are explicit schema mappings. Original
 failed comparison reports are retained locally.
 
-This is work in progress: full feature regression, clean-commit comparisons,
-imported-record smoke, combined-fork integration and PR publication are still
-pending. CPU fixtures do not certify GPU animation, pixel equality, a complete
+Validation at clean runtime `4db98efc73d23d53ff3b9a83f705e100f93e63cd`:
+
+- 905 focused Baton Pass checks pass: 654 command, 42 actual party UI, 72 link/
+  spectator/disconnect, 95 packet/signature/compatibility and 42 authored-effect/
+  called-move checks. The 154 native protocol and 3,002 existing UI checks pass.
+- All 88 workers / 60,132 paired observations equal clean Gen1
+  `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`. The new mode has 156 complete
+  observations per profile, including actual commands, resumed selections,
+  called moves, all four slots, seeds/infatuation, excluded/reserved members,
+  one/two/three Spikes layers and the real NPC type selector with empty PP.
+- Full feature regression is 110/119 engine suites, SDK 3/3 and B30. The exact
+  Counter of all 25 FAIL lines across nine inherited suites equals clean
+  prerequisite `c27c37a667e8a40613c22506448ab4886fc9b431` (105/114). Their
+  independent repairs are present in the combined fork.
+- The same public canonical selector on the clean prerequisite spends PP and
+  sets `wantsSwitch`, but leaves the donor active. Its failing assertion and
+  raw state are retained. The initial Baton implementation also fails the
+  later nested-choice item-phase checks; the fix suspends ancestor frames.
+- Actual locally imported FireRed/Emerald records select canonical
+  `BATON_PASS` through the public enemy-action mod, then exercise the real
+  party screen and queued turn with the third member selected. Both profiles
+  retain stages and spend native PP once. This is a CPU-only imported-record
+  smoke; no ROM/cache assets or saves are distributed.
+
+Evidence is retained under `tmp/baton-pass-qa/`, including complete failed and
+accepted reports. Combined-fork acceptance and hosted workflow status are
+recorded separately in the combined testing document and the published PR.
+CPU fixtures do not certify GPU animation, pixel equality, a complete
 playthrough, global RNG/VBlank scheduling or all native side/volatile producers.
