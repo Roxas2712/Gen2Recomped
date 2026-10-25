@@ -1196,6 +1196,8 @@ end
 -- migration it took goes with them.  The journal only exists around an
 -- entry chunk; a later failure (script validation) purges every registry.
 function Loader:_rollback(modId)
+  -- Restore failed wrappers before any native registry/resource cleanup.
+  ModSeams.unwindOwner(modId)
   for name in pairs(self.journal or self.content) do
     self.content[name]:rollback(modId)
   end
@@ -1206,9 +1208,6 @@ function Loader:_rollback(modId)
   self.optionStatus[modId] = nil
   self.migrations[modId] = nil
   self.modSave[modId] = nil
-  -- Restore failed entry wrappers before optional resource cleanup. This also
-  -- covers entries rejected only by the later script-validation phase.
-  ModSeams.unwindOwner(modId)
   local stream=package.loaded['src.core.game3.asset_stream']
   if stream and stream.cancelOwner then pcall(stream.cancelOwner,modId)end
 end
