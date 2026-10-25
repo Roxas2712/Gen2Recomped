@@ -415,7 +415,8 @@ local function fieldPlan(game, ow, id)
         if not require("src.world.Gen3FieldRules").allowsEscape(ow.map.def, point) then
           return nil, "field action unavailable"
         end
-      elseif ow.map.def.environment ~= 4 and ow.map.def.environment ~= 7 then
+      elseif require("src.core.Gen2Environment").id(ow.map.def) ~= 4
+         and require("src.core.Gen2Environment").id(ow.map.def) ~= 7 then
         return nil, "field action unavailable"
       end
       escape = true
