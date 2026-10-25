@@ -1,5 +1,12 @@
 # gen2recomp
 
+> **Roxas2712 development fork — contributions by Maarten Paus (Roxas2712).**
+> Upstream: Cedric / UNDERdecoded's Gen2Recomped, based on Gen1Recomp by
+> bryanthaboi / BOIS CLUB GAMES, LLC. Read the [fork ownership notice](NOTICE.md)
+> and [contribution licence](LICENSE-ROXAS2712.md). Cedric has specific
+> permission to incorporate PR contributions with credit; existing grants
+> and other authors' rights remain effective.
+
 <p align="center"><img src="./assets/logo/gen2logo.png"></p>
 
 <p align="center"><img src="./assets/logo/UD.png" width="220"></p>
@@ -599,22 +606,23 @@ Platinum port
 
 ## Credits
 
-gen2recomp is by **UNDERdecodedHD**, forked from **Gen1Recomp** by
-**bryanthaboi** and **BOIS CLUB GAMES, LLC**. The Generation I engine, mod
-platform, renderer, and tooling are theirs; the Generation II import, script
-VM, world, and battle work are this fork's. See [LICENSE.MD](LICENSE.MD) for
-the full copyright split.
+Upstream Gen2Recomped is by **Cedric / UNDERdecodedHD**, based on
+**Gen1Recomp** by **bryanthaboi / BOIS CLUB GAMES, LLC**.
+
+**Contributions by Maarten Paus (Roxas2712)** —
+<https://github.com/Roxas2712> — include this fork's original integration
+and development work. Other contributors retain their applicable credits
+and rights. See [NOTICE.md](NOTICE.md) for the ownership distinction.
 
 ## Licence in one paragraph
 
-Two parts. **Everything inherited from Gen1Recomp, and every shared engine
-file since, stays MIT** under its original authors' copyright — that is the
-default, and it is most of the repository. **The Generation II components
-written for this fork are source-available rather than open source**
-(© 2026 UNDERdecodedHD): read them, run them, change your own copy, and write
-and even sell mods against them — but don't redistribute or fork them. A file
-is only in that second group if it is named in the list in
-[LICENSE](LICENSE); everything else is MIT.
+Licensing depends on the provenance and existing grants for each component.
+The upstream texts are retained in [LICENSE](LICENSE) and
+[LICENSE.MD](LICENSE.MD). Maarten Paus's own contributions are addressed in
+[LICENSE-ROXAS2712.md](LICENSE-ROXAS2712.md), including explicit permission
+for Cedric to integrate PR contributions with credit. Existing permissions
+are preserved; no blanket relicensing of upstream or third-party code is
+claimed. Read [NOTICE.md](NOTICE.md) before reusing or distributing code.
 
 ## Special Thanks
 
@@ -637,5 +645,5 @@ palette map, and true overworld GBC colouring from
 [data/palettes_gbc.lua](data/palettes_gbc.lua). Neither pokered-gbc nor the
 pret disassemblies ship a licence file, so the palette tables in
 [data/](data) are reproduced with attribution rather than under this
-project's MIT grant, and will be removed on request from their authors.
+project's own licence grants, and will be removed on request from their authors.
 
