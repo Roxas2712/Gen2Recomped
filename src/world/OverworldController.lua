@@ -78,6 +78,32 @@ function OverworldState:applyPlayerState(state)
   return require("src.world.Gen2PlayerState").apply(self.player, Game and Game.save, state)
 end
 
+-- Script_wildon/wildoff change a transient field bit, not a saved event flag.
+-- Explicit script-controlled battles do not consult this random-battle gate.
+function OverworldState:setWildEncounters(enabled)
+  if not GameVersion.isGen2() then return nil, "not Gen2" end
+  if type(enabled) ~= "boolean" then return nil, "expected encounter enable boolean" end
+  self.noWildEncounters = not enabled
+  return true
+end
+
+-- EnterMap's five-step counter protects four completed encounter phases;
+-- the fifth is allowed to roll. Public encounter polling consumes it only
+-- after the physical-visit guard below, so repeats cannot shorten it.
+function OverworldState:armWildCooldown()
+  if not GameVersion.isGen2() then return false end
+  self.wildCooldown = 5
+  return true
+end
+
+function OverworldState:wildCooldownStep()
+  if not GameVersion.isGen2() then return false end
+  local left = self.wildCooldown or 0
+  if left <= 0 then return false end
+  self.wildCooldown = left - 1
+  return left > 1
+end
+
 -- This engine's live world is the module itself (StateStack.push enters it
 -- directly). A computed property keeps every native script/warp change
 -- observable immediately without maintaining another saved state field.
@@ -1026,6 +1052,8 @@ function OverworldState:enter(mapId, x, y, facing)
   -- A fresh world entry may reuse this singleton and the same save/data.
   -- It starts a new coordinate visit; a same-map graphics rebuild does not.
   self.gen2CoordVisit, self.gen2StepVisit, self.gen2EncounterVisit, self.lastCellMapId = nil, nil, nil, nil
+  self.noWildEncounters, self.wildCooldown = nil, nil
+  if GameVersion.isGen2() then self.noWildEncounters = false end
   self.pendingScripts = {}
   self.parallelRunners = {}
   self.parallelQueue = {}
@@ -1194,6 +1222,7 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
     end
   end
   self.map = MapLoader.load(Game.data, mapId)
+  if GameVersion.isGen2() then self:armWildCooldown() end
   if GameVersion.isGen3() then
     require("src.world.Gen3SecretBase").restoreEntrance(Game.data, Game.save, self.map)
   end
@@ -13602,13 +13631,20 @@ function OverworldState:tryWildEncounter()
   local p = self.player
   if not (p and self.map and Game and Game.data and Game.save) then return false end
   if GameVersion.isGen2() then
-    if p.moving or self:busy() or not (Game.save.party and #Game.save.party > 0) then return false end
+    if p.moving or self:busy() or not self.map:inBounds(p.cellX,p.cellY) then return false end
     self:noteCellChange()
     local Steps = require("src.world.Gen2StepEvents")
     if Steps.matches(self.gen2CoordVisit,self,Game)
        or (Steps.matches(self.gen2StepVisit,self,Game) and self.gen2StepVisit.blocked)
        or Steps.matches(self.gen2EncounterVisit,self,Game) then return false end
     self.gen2EncounterVisit=Steps.visit(self,Game)
+    if self:wildCooldownStep() then return false end
+    if not (Game.save.party and #Game.save.party>0) then return false end
+    if self.noWildEncounters then return false end
+    if self.map:speaksGen2Collision()
+       and not require("src.world.Gen2EncounterRules").canEncounterWildMon(
+         self.map.def.environment, self.map:cellTile(p.cellX,p.cellY),
+         self.noWildEncounters, self.map:isEncounterCell(p.cellX,p.cellY)) then return false end
   end
   -- TryWildEncounter_BugContest (25:$7D64): while the contest is running the
   -- park rolls its OWN table (ContestMons) and ignores the map's wildmons
@@ -13679,8 +13715,17 @@ function OverworldState:tryWildEncounter()
   local bwDark = GameVersion.isGen5() and encDef and encDef.darkGrass
                  and require("src.world.Gen5FieldRules").isDarkGrass(self.map, p.cellX, p.cellY) or false
   if bwDark then land = { grass = encDef.darkGrass } end
-  local onWater = (p.surfing and self.map:isWaterCell(p.cellX, p.cellY)) or false
-  if pikeWild or pyramidWild then
+  local nativeGen2 = GameVersion.isGen2() and self.map:speaksGen2Collision()
+  local onWater = ((nativeGen2 or p.surfing) and self.map:isWaterCell(p.cellX, p.cellY)) or false
+  if nativeGen2 then
+    -- CheckOnWater selects the table by permission, independently of the
+    -- player's sprite/state. Missing water data must not reuse cave grass.
+    if onWater then
+      enc = self:rollEncounter(encDef and {grass=encDef.water}, "water")
+    else
+      enc = self:rollEncounter(land, CAVE_ENVIRONMENTS[env] and "indoor" or "grass")
+    end
+  elseif pikeWild or pyramidWild then
     -- ...on EVERY tile of the room: StandardWildEncounter's Pike and Pyramid
     -- arms ask no metatile behaviour, only whether this is a new tile
     enc = self:rollEncounter(land, "grass")
@@ -14507,6 +14552,7 @@ function OverworldState:gen4FieldResumed()
 end
 
 function OverworldState:afterBattle(result, battle)
+  if GameVersion.isGen2() then self:armWildCooldown() end
   self.gen4EncounterAttempts = 0
   -- a battle a script did not start (a wild one, a trainer's sight) comes
   -- back to the field here; a scripted one already did in its onFinish
