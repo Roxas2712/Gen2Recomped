@@ -8,6 +8,14 @@ Unfinished Gen3 canonical-definition changes are preserved on a separate
 local WIP branch, outside this active worktree's changes. Gen1 installations
 and player profiles remain outside the test scope.
 
+The current development follow-up supplies native movement-state predicates
+and resumes forced terrain through the existing mover. The unchanged supplied
+camera/control modules now pass 92 CPU integration assertions in both selected
+camera modes; the fork passes 328 engine suites and all quick tiers. Full
+package/GPU continuous-movement acceptance is still open. See the
+[contract and exact limits](native-gen2-camera-movement.md). The currently
+published download/cache fix remains bound to release source `321019ae`.
+
 A direct read-only compiler probe of the supplied Ver.1.8 package confirms
 that both original `VoxelScene` modules compile under the local LuaJIT and
 the unchanged bundled LÖVE12 runtime.
@@ -629,10 +637,11 @@ See the [source-bound encounter receipt](qa/native-foundation/johto-native-wild-
 - Persistent world ownership is implemented and enables actual camera/menu
   behavior. Broader story, field-action, save and map-lifecycle regressions
   still need acceptance; other generations retain their original stack model.
-- Continuous camera-relative movement is not enabled. Development has live
-  native state and consumed input/body phases; the FieldMoves facade, terrain
-  permissions, special handoffs and broader encounter acceptance remain open. Native grid
-  walking and boundary tests do not cover complete continuous movement.
+- Continuous camera-relative movement now installs and passes the scoped CPU
+  probe with native state predicates and forced-terrain handoffs. Full-package
+  GPU acceptance, broader story/map/encounter acceptance and complete legacy
+  FieldMoves action/fly-picker contracts remain open. Earlier native grid
+  walking and boundary tests alone do not cover continuous movement.
 - The supplied mod's generated `VoxelScene` patch fails compilation with
   `function ... has more than 60 upvalues`. Its exported
   `rendererInstalled` is false even while the fallback voxel pipeline renders.
