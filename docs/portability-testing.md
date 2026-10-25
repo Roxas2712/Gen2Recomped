@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219, #220, #222, #225, #226, #228, #230 and #241 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219, #220, #222, #225, #226, #228, #230, #241 and #244 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,10 +12,53 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`83346a1907a7baae942faa47364a07e4a4d57b70`. Its ROM-free run passed
-**262/262 engine suites**, **3/3 SDK suites**, all quick tiers and B30.
-Later documentation and CI path changes preserve those production sources.
-This branch is separate from the independently maintained fork `main`.
+`b70f28ef071b019c88829b30488dcd7f6eba086e`. It passes **264/264 engine
+suites**, **3/3 SDK suites**, all quick tiers and B30. Subsequent status and
+documentation changes preserve its production and test sources. This testing
+branch is separate from the independently maintained fork `main`.
+
+[PR #244](https://github.com/UNDERdecoded/Gen2Recomped/pull/244) aligns native
+GBA `battle.move_used` and the selected-slot PP command. Ordinary events see
+PP before reduction; zero-PP failures still emit but cannot be retroactively
+admitted by a refill or continue through spread targets. Current slot and
+Pressure reads follow callbacks. Native charge decisions precede PP; first
+charge has no event, bypass/sunlight reduce before it, and release spends no
+second PP. Replanned charge copies also release correctly after their last PP.
+
+The final shared fixture retains **408 identical rows** over FireRed/Emerald,
+including public API-3 records, consecutive subscribers, native callback
+changes, all RNG, active HP, current/retired PP, charge and invulnerability.
+The exact prerequisite differs in 360 rows; the prior release implementation
+fails 24 rows. Actual two-turn host/guest/spectator checks retain public event
+PP, stateful held-damage steering, every paired hash and state component.
+
+Both feature and combined pass **152 workers / 80,540 paired enemy/action
+rows**, plus **2,040 held-damage command** and **6,912 ordinary damage rows**:
+**160 workers / 89,492 paired observations**. Strict held-item scheduling
+passes four API formats (**40 workers / 1,914 rows**); charge-decision contracts
+pass four formats (**64 workers / 1,020 rows**) with strict raw native-policy
+parity on the combined branch. Both actual imported-data modes pass. No new
+graphical playthrough or normal SAVE acceptance is claimed.
+
+The isolated feature passes 146/155 engine suites, SDK 3/3 and B30, retaining
+exactly 25 inherited FAIL lines from fresh #241+#161 (144/153). This combined
+runtime has zero FAIL lines. Native command revision **12** refuses revision
+11; party codec stays **1**. The independently audited raw hash is
+`6ce58ced7ffad4d9`; legacy `e33d251961f2a41d` is unchanged.
+
+A complete successful Sleep Talk held-phase probe still has 10 native versus
+11 host reads; awake/empty/blocked remain equal at 2/2/4. King's Rock/Shell Bell
+orchestration, other special callers such as Nature Power, full native
+catalogs/controllers and graphical playthroughs remain open. See the
+[scoped PP/event contract](native-gen3-move-used-pp.md).
+
+All ten #244 hosted workflows require maintainer approval (`action_required`);
+the [dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40201496037)
+has zero jobs. Local acceptance is separate. The regular English PR is
+published from the user's fork; app attachment hit the existing 100-artifact
+identity cap.
+
+## Historical #241 acceptance
 
 [PR #241](https://github.com/UNDERdecoded/Gen2Recomped/pull/241) aligns native
 GBA Choice Band move-end, manual/AI selection, ordinary wild selection,

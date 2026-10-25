@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "83346a1907a7baae942faa47364a07e4a4d57b70",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/241",
-  "feature_ref": "3ff39407073022beaf54628c3e0a0828ed2b10a8",
+  "runtime_ref": "b70f28ef071b019c88829b30488dcd7f6eba086e",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/244",
+  "feature_ref": "f7c18701a1241e168c404f7db82bb54ae1fe6f5b",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 262,
-  "engine_suites_total": 262,
+  "engine_suites_passed": 264,
+  "engine_suites_total": 264,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 156,
-  "cross_engine_paired_observations": 89084,
+  "cross_engine_worker_runs": 160,
+  "cross_engine_paired_observations": 89492,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All nine #241 workflows await maintainer approval (action_required); dedicated contract run 40197434005 has zero jobs; local acceptance is separate",
+  "hosted_ci": "All ten #244 workflows require maintainer approval (action_required); dedicated run 40201496037 has zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Selected actual public GBA hook, selection/planning, native command and authored-content contracts including Choice Band, forced-slot replacement/removal, Sleep Talk/Baton Pass provenance, actual host/guest/spectator and imported menus; unchanged read-only Gen1. PP event visibility/admission, complete held scripts, other controllers/catalogs/global RNG, graphics/playthrough parity remain open.",
+  "cross_engine_scope": "Selected actual public GBA hooks and native commands: selection/planning, current-slot PP, event-visible PP and consecutive subscribers, charge/replanned last-PP release, authored/native calls and linked roles; complete held scripts, other special callers, catalogs/controllers, graphics and playthroughs remain open.",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -2918,6 +2918,80 @@
       "tmp/choice-band-qa/held-strict-final-summary.json",
       "tmp/choice-band-qa/full-phase-final-60d5.json",
       "tmp/choice-band-qa/pp-event-order-native-called-diagnostic.json"
+    ],
+    "pp_event_probe_resolved_by": "https://github.com/UNDERdecoded/Gen2Recomped/pull/244"
+  },
+  "native_move_used_pp": {
+    "pr": 244,
+    "prerequisite_prs": [
+      241,
+      161
+    ],
+    "feature_ref": "f7c18701a1241e168c404f7db82bb54ae1fe6f5b",
+    "feature_runtime_ref": "05927b85d01d9b230abadb9d309541da2d6d0df3",
+    "combined_runtime_ref": "b70f28ef071b019c88829b30488dcd7f6eba086e",
+    "baseline_ref": "167f6c91",
+    "feature_engine_passed": 146,
+    "feature_engine_total": 155,
+    "baseline_engine_passed": 144,
+    "baseline_engine_total": 153,
+    "inherited_fail_lines": 25,
+    "exact_parent_fail_counter_equal": true,
+    "combined_engine_passed": 264,
+    "combined_engine_total": 264,
+    "combined_fail_lines": 0,
+    "sdk": "3/3",
+    "b30": "passed",
+    "enemy_workers": 152,
+    "enemy_rows": 80540,
+    "held_damage_rows": 2040,
+    "ordinary_damage_rows": 6912,
+    "aggregate_workers": 160,
+    "aggregate_rows": 89492,
+    "held_strict_workers": 40,
+    "held_strict_rows": 1914,
+    "charge_workers": 64,
+    "charge_rows": 1020,
+    "combined_charge_native_policy_strict": true,
+    "feature_charge_policy": "Existing prerequisite legacy policy preserved; combined AUTO already fixed by #162",
+    "new_rows": 408,
+    "negative_parent_different_rows": 360,
+    "negative_prior_release_different_rows": 24,
+    "actual_link_checks": 84,
+    "consecutive_public_event_subscribers": 2,
+    "native_command_revision": 12,
+    "party_revision": 1,
+    "native_hash": "6ce58ced7ffad4d9",
+    "legacy_hash": "e33d251961f2a41d",
+    "source_refs": [
+      "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+      "79ea62f45fb2ea8f65d081a109431e4eb1bbdb36"
+    ],
+    "source_read_only": true,
+    "imported_modes": [
+      "existing-sleep-talk",
+      "choice-band"
+    ],
+    "imported_scope": "CPU-only actual local FireRed/Emerald data, explicit GBA rules and public menus; no normal SAVE, asset distribution or graphical playthrough claim",
+    "full_sleep_talk_held_phase_equal": false,
+    "full_phase_source_reads": 10,
+    "full_phase_host_reads": 11,
+    "remaining": [
+      "Kings Rock/Shell Bell command orchestration",
+      "Other native special command boundaries/callers such as Nature Power",
+      "Full catalogs/controllers, graphics and playthrough parity"
+    ],
+    "hosted_ci": "action_required",
+    "hosted_workflows": 10,
+    "dedicated_run": 40201496037,
+    "dedicated_jobs": 0,
+    "artifact_attachment": "Rejected by existing 100-artifact identity cap",
+    "evidence": [
+      "tmp/move-used-pp-qa/batch-final-0592.json",
+      "tmp/move-used-pp-qa/batch-final-release-final.json",
+      "tmp/move-used-pp-qa/zero-release-negative-and-fix.json",
+      "tmp/move-used-pp-qa/hash-audit.log",
+      "tmp/move-used-pp-qa/full-phase-final.json"
     ]
   }
 }
