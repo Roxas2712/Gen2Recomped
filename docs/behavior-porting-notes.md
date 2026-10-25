@@ -523,3 +523,14 @@ Focus Band and Poison controllers with native sound controls; native doll
 art comes from the user's cartridge. [Contract and validation](native-gen3-mirror-move.md)
 describe the scope, revision 17 compatibility, retained failure evidence and
 remaining audio/profile/graphics qualification.
+
+## Native GBA sound-player ownership
+
+Native effects now replace the previous source on their imported M4A player
+across sound IDs, named roles and pan/mono variants, while independent players
+retain their voices. Native queries/stops, override behavior and cache/device
+cleanup are covered by [the source-bound sound-player contract](native-sound-player-lifecycle.md).
+This follow-up uses native revision 18, with unchanged party codec 1 and legacy
+digests. The earlier Mirror Move receipt remains historical validation of its
+revision-17 foundation. Public sound-event timing and native world-script waits
+remain separate qualification work.
