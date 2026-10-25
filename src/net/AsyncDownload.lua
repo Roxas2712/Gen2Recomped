@@ -1,32 +1,9 @@
 -- File downloads have bounded, engine-owned workers. Poll only drains results,
--- reads file metadata and atomically publishes a completed staging file.
+-- reads coalesced progress. All file IO/publication stays on the workers.
 local M = { MAX_JOBS = 8, MAX_BYTES = 512 * 1024 * 1024 }
 local jobs, workers, destinations, nextId = {}, {}, {}, 0
 local commands, results, quit, directory, ready, failure
 local function now() return love.timer.getTime() end
-
-local function replace(source, target)
-  if love.system.getOS() ~= "Windows" then return os.rename(source, target) end
-  -- Windows rename cannot overwrite an existing file. Never delete the old
-  -- destination first: MoveFileExW replaces it in one filesystem operation.
-  local ffi = require("ffi")
-  ffi.cdef[[
-    int MultiByteToWideChar(unsigned int, unsigned long, const char *, int, unsigned short *, int);
-    int MoveFileExW(const unsigned short *, const unsigned short *, unsigned long);
-    unsigned long GetLastError(void);
-  ]]
-  local function wide(s)
-    local n = ffi.C.MultiByteToWideChar(65001, 8, s, #s, nil, 0)
-    if n == 0 then error("invalid UTF-8 download path") end
-    local out = ffi.new("unsigned short[?]", n + 1)
-    if ffi.C.MultiByteToWideChar(65001, 8, s, #s, out, n) ~= n then error("download path conversion failed") end
-    return out
-  end
-  if ffi.C.MoveFileExW(wide(source), wide(target), 1) == 0 then
-    return nil, "download publish failed (Windows " .. tonumber(ffi.C.GetLastError()) .. ")"
-  end
-  return true
-end
 
 local function ensure()
   if ready ~= nil then return ready end
@@ -50,13 +27,17 @@ end
 local function retire(job)
   if destinations[job.key] == job.id then destinations[job.key] = nil end
 end
+local function cancelTransfer(job)
+  if not job.control then return true end
+  return job.control:performAtomic(function(control)
+    if control:peek() ~= "open" then return false end
+    control:clear(); control:push("cancelled"); job.cancel:push(true)
+    return true
+  end)
+end
 local function failed(job, reason)
-  if job.cancel then job.cancel:push(true) end
   job.state = {status = "error", err = reason, progress = 0}
   retire(job)
-end
-local function removeStage(job)
-  if job.stage then love.filesystem.remove(job.stage) end
 end
 local function drain()
   if not results then return end
@@ -67,25 +48,14 @@ local function drain()
     if job then
       job.busy = false
       if job.retained and job.state.status == "pending" then
-        if now() >= job.deadline then failed(job, "download timed out")
-        elseif not response.ok then failed(job, response.err or "download failed")
+        if not response.ok then failed(job, response.err or "download failed")
         else
-          local info = love.filesystem.getInfo(job.stage, "file")
-          if not info or info.size ~= response.bytes or job.size ~= nil and info.size ~= job.size then
-            failed(job, "download size mismatch")
-          else
-            local base = love.filesystem.getSaveDirectory() .. "/"
-            local ok, moved, why = pcall(replace, base .. job.stage, base .. job.dest)
-            if not ok or not moved then failed(job, tostring(why or moved or "could not publish download"))
-            else
-              job.state = {status = "ok", progress = 1, receivedBytes = response.bytes, httpStatus = response.httpStatus}
-              retire(job)
-            end
-          end
+          job.state = {status = "ok", progress = 1, receivedBytes = response.bytes, httpStatus = response.httpStatus}
+          retire(job)
         end
         if job.state.status == "error" then job.state.httpStatus = response.httpStatus end
       end
-      removeStage(job)
+      retire(job)
       if not job.retained then jobs[response.id] = nil end
     end
   end
@@ -95,12 +65,16 @@ local function drain()
       ready, failure = false, tostring(err)
       quit:push(true); commands:clear()
       for _ = 1, #workers do commands:push(false) end
-      for _, job in pairs(jobs) do if job.state.status == "pending" then failed(job, failure) end end
+      for _, job in pairs(jobs) do
+        if job.state.status == "pending" then cancelTransfer(job); failed(job, failure) end
+      end
       break
     end
   end
   for _, job in pairs(jobs) do
-    if job.state.status == "pending" and now() >= job.deadline then failed(job, "download timed out") end
+    if job.state.status == "pending" and now() >= job.deadline and cancelTransfer(job) then
+      failed(job, "download timed out")
+    end
   end
 end
 
@@ -150,15 +124,13 @@ function M.download(url, destination, options)
     state = {status = "pending", progress = 0, receivedBytes = 0}}
   jobs[id] = job
   if not ensure() then failed(job, failure); return id end
-  local parent = dest:match("^(.+)/[^/]+$")
-  if parent then
-    local ok, made = pcall(love.filesystem.createDirectory, parent)
-    if not ok or not made then failed(job, "could not create download destination directory"); return id end
-  end
   job.stage, job.cancel = directory .. "/" .. id .. ".part", love.thread.newChannel()
+  job.control, job.progress = love.thread.newChannel(), love.thread.newChannel()
+  job.control:push("open")
   job.deadline, job.busy = now() + seconds, true
   destinations[key] = id
-  commands:push({id = id, url = url, stage = job.stage, cancel = job.cancel,
+  commands:push({id = id, url = url, stage = job.stage, dest = dest, cancel = job.cancel,
+    control = job.control, progress = job.progress,
     deadline = job.deadline, maxSeconds = seconds, size = size, maxBytes = limit,
     userAgent = options.userAgent, accept = options.accept, httpsOnly = options.boundedHttpsGet == 1})
   return id
@@ -170,31 +142,42 @@ function M.poll(id)
   if not job or not job.retained then return {status = "error", err = "invalid job handle"} end
   local state = {}
   for k, v in pairs(job.state) do state[k] = v end
-  if state.status == "pending" and job.stage then
-    local info = love.filesystem.getInfo(job.stage, "file")
-    state.receivedBytes = info and info.size or 0
+  if state.status == "pending" and job.progress then
+    local received = job.progress:peek()
+    job.receivedBytes = math.max(job.receivedBytes or 0, tonumber(received) or 0)
+    state.receivedBytes = job.receivedBytes
     state.progress = job.size and job.size > 0 and math.min(1, state.receivedBytes / job.size) or 0
+    state.cancellable = job.control:peek() == "open"
+    if not state.cancellable then state.phase = "publishing" end
   end
   return state
 end
 function M.cancel(id)
   local job = jobs[id]
   if not job or not job.retained then return false end
-  if job.state.status == "pending" then failed(job, "cancelled") end
-  return true
+  if job.state.status == "pending" then
+    -- Publication claims and accepted cancellations are ordered by one short
+    -- channel transaction. No disk IO runs under that lock. Once publication
+    -- has claimed the completed transfer, cancellation is too late.
+    if not cancelTransfer(job) then return false end
+    failed(job, "cancelled")
+  end
+  return job.state.status ~= "ok"
 end
 function M.release(id)
   local job = jobs[id]
   if not job then return end
   M.cancel(id); job.retained = false
-  if not job.busy then removeStage(job); jobs[id] = nil end
+  if not job.busy then jobs[id] = nil end
 end
 function M.shutdown()
   for id in pairs(jobs) do M.cancel(id) end
   if quit then quit:push(true); commands:clear(); for _ = 1, #workers do commands:push(false) end end
   for _, thread in ipairs(workers) do pcall(thread.wait, thread) end
+  drain()
   for _, job in pairs(jobs) do
-    job.busy = false; removeStage(job)
+    job.busy = false
+    if job.stage then love.filesystem.remove(job.stage) end
     if job.stage then love.filesystem.remove(job.stage .. ".cfg"); love.filesystem.remove(job.stage .. ".stderr") end
   end
   if directory then love.filesystem.remove(directory) end
