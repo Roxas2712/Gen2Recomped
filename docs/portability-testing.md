@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219, #220, #222, #225, #226, #228, #230, #241, #244 and #248 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219, #220, #222, #225, #226, #228, #230, #241, #244, #248 and #252 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -11,13 +11,52 @@ reference. Historical results below that use a modified Gen1 reference fork
 are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
-The combined production/test runtime for this snapshot is
-`d9cf080d676eccefa861b8ecc93de621782dd5a6`. It passes **267/267 engine
-suites**, **3/3 SDK suites**, all quick tiers and B30. The final cross-engine
-checker is `f829462500c6dc2035fd06739f2e2cc95495df2f`; subsequent reproduction
-and documentation changes preserve the accepted production and test trees.
-This testing branch remains separate from the independently maintained fork
-`main`.
+The combined production/test/tool runtime for this snapshot is
+`0ed0602be9019102a06f4df3ee22480bca1d800f`. It passes **271/271 engine
+suites**, **3/3 SDK suites**, all quick tiers and B30. Later publication edits
+preserve those trees. This testing branch remains separate from the
+independently maintained fork `main`.
+
+[PR #252](https://github.com/UNDERdecoded/Gen2Recomped/pull/252) implements
+native GBA Nature Power and the same API-3 effect registration/read-back as
+the unchanged reference. Its child owns the selected PP slot after public
+subscribers and uses child target/Pressure rules. Native Sleep Talk -> Nature
+Power chains preserve the inner caller's resulting history. Removing an early
+learned slot does not hide later Sleep Talk candidates.
+
+Each runtime passes **172 workers / 122,012 identical paired enemy/action
+rows**, plus **2,040 held-command** and **6,912 ordinary-damage rows**:
+**180 workers / 130,964 paired observations**. Three new 6,048-row matrices
+cover native, public registered and chained callers, including all captured
+held/event/RNG payloads, current/retired PP, actor state and history. Exact #248
+production differs in 5,376 ordinary rows; previous feature production differs
+in 4,032 chained rows. All final workers exit zero with no timeout.
+
+Actual host/guest/spectator completes two native menu turns per profile with
+108 checks, public stateful held steering and every paired hash/component.
+Actual import definitions pass **160 controlled public-submit scenarios** for
+native/registered callers, all ten terrains, direct/Sleep Talk paths, Choice
+Band and Shell Bell. The native result queue returns to its menu; no new
+normal SAVE, graphical playthrough or unchanged full-mod acceptance is claimed.
+
+Four held formats pass strict scheduling (40 workers / 1,914 rows); charge
+contracts pass four formats (64 workers / 1,020 rows), with raw native policy
+on the combined fork. The isolated feature passes 153/162 engine suites and
+retains the exact 25 inherited FAIL lines from fresh #248 (149/158). This
+combined runtime has zero FAIL lines. Native command revision **14** refuses
+revision 13; party codec stays **1**. Independent unchanged-hasher audit yields
+`cb314093f24370e7`, retaining legacy `e33d251961f2a41d`.
+
+All ten #252 hosted workflows require maintainer approval (`action_required`);
+the [dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40215838170)
+has zero jobs. Local acceptance is separate. App attachment hit the existing
+100-artifact identity cap. See the [contract and reproduction](native-gen3-nature-power.md)
+and [source-bound receipt](qa/native-gen3-nature-power.json). Initial failures
+and deliberately interrupted pre-fix batches remain separate. Further special
+callers/catalogs/controllers, broad public-effect overrides, Ruby/Sapphire
+qualification, text-resource/pixel parity and full-mod playthroughs remain open.
+
+## Historical #248 acceptance
 
 [PR #248](https://github.com/UNDERdecoded/Gen2Recomped/pull/248) aligns the
 native shared King's Rock / Shell Bell move-end command. Stateful hooks see
