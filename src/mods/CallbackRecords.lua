@@ -217,7 +217,12 @@ function R.new(loader, name, generation, api3)
     return out
   end
   local function fields(raw, kind)
-    if kind == "rollIvs" then
+    if kind == "mail" then
+      local out=copy(raw)
+      out.type=read("items",raw.type)
+      out.species=read("pokemon",raw.species)
+      return out
+    elseif kind == "rollIvs" then
       return { hp = raw.hp, atk = raw.attack, def = raw.defense,
         spe = raw.speed, spa = raw.spatk, spd = raw.spdef }
     elseif kind == "mon" then
@@ -321,6 +326,7 @@ function R.new(loader, name, generation, api3)
     end
     for k, v in pairs(raw) do
       local role = recordRoles[k]
+      if (name=="mail.read" or name=="mail.written") and k=="entry" then role="mail" end
       if identityRoll and k == "def" then role = "identitySpecies" end
       if identityRoll and (k == "dvs" or k == "ivs") then role = "context" end
       if identityRoll and generation == 3 and k == "ivs" then role = "rollIvs" end

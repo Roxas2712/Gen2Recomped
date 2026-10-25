@@ -1009,6 +1009,15 @@ local function handOver(game, mon, id, onChanged, opts)
     return
   end
   local held = mon.item
+  if require("src.core.GameVersion").isGen2() and require("src.pokemon.Gen2Mail").monHoldsMail(mon) then
+    showMessages(game,{Strings("Remove MAIL first.")});return
+  end
+  if require("src.core.GameVersion").isGen2() and require("src.pokemon.Gen2Mail").isMail(id) then
+    game.stack:push(require("src.ui.Gen2MailCompose").new(game,{mon=mon,item=id,onDone=function()
+      if onChanged then onChanged() end
+      showMessages(game,{Strings("%s is now holding\n%s.",monName,name)})
+    end}));return
+  end
   local function hand()
     local changed
     if opts and opts.giveHeld then

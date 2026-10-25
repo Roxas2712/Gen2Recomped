@@ -388,6 +388,9 @@ end
 -- player picks what to hand over; TAKE moves the held item back.
 function PartyMenu:openItemMenu(mon)
   local game = self.game
+  if require("src.core.GameVersion").isGen2() and require("src.pokemon.Gen2Mail").monHoldsMail(mon) then
+    game.stack:push(require("src.ui.Gen2MailMenu").new(game,{mon=mon}));return
+  end
   local TextBox = require("src.render.TextBox")
   local Bag = require("src.inventory.Bag")
   local Menu = require("src.ui.Menu")
@@ -742,6 +745,9 @@ function PartyMenu:confirm()
   elseif self.swapFrom then
     if self.swapFrom ~= self.index then
       party[self.swapFrom], party[self.index] = party[self.index], party[self.swapFrom]
+      if require("src.core.GameVersion").isGen2() and party==self.game.save.party then
+        require("src.pokemon.Gen2Mail").swapSlots(self.game.save,self.swapFrom,self.index)
+      end
       require("src.core.Sound").play(self.game.data, "Swap")
     end
     self.swapFrom = nil
@@ -846,7 +852,7 @@ function PartyMenu:confirm()
         local stats, switch = table.remove(items, 1), table.remove(items, 1)
         items[#items + 1] = stats
         items[#items + 1] = switch
-        items[#items + 1] = { label = Strings("ITEM"), action = "item" }
+        items[#items + 1] = { label = Strings(require("src.pokemon.Gen2Mail").monHoldsMail(mon) and "MAIL" or "ITEM"), action = "item" }
         items[#items + 1] = { label = Strings("QUIT"), action = "quit" }
       end
     end

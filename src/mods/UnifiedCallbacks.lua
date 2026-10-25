@@ -34,7 +34,7 @@ C.events = names([[
  battle.exp_gained battle.fainted battle.move_used battle.started battle.status_inflicted battle.turn_ended
  battle.turn_started discord.join_requested flag.changed game.ready intro.birch_speech.finished
  intro.birch_speech.started intro.oak_speech.answered intro.oak_speech.finished intro.oak_speech.started
- intro.oak_speech.step link.connected link.desync link.ended map.entered map.exited map.reloaded
+ intro.oak_speech.step link.connected link.desync link.ended mail.read mail.written map.entered map.exited map.reloaded
  mod.option_action mod.options_changed mods.loaded music.started music.stopped player.warped
  pokemon.before_give pokemon.caught pokemon.egg_hatched pokemon.evolved pokemon.level_up
  pokemon.move_learned pokemon.received save.created save.loaded save.loading save.writing screen.popped
