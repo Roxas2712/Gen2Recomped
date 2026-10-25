@@ -2,6 +2,7 @@
 -- guards keep companion UIs out of screens/scripts/transitions that own input.
 local GameVersion = require("src.core.GameVersion")
 local Map = require("src.world.Map")
+local MapIdentity = require("src.core.MapIdentity")
 local FieldDefaults = require("src.world.FieldDefaults")
 local Party = require("src.pokemon.Party")
 local A = {}
@@ -299,9 +300,9 @@ local function flyPlan(game, ow, mapId)
       local def = data.maps and data.maps[id]
       local spot = field.flyWarps and field.flyWarps[id]
       if
-        (not mapId or mapId == id)
+        (not mapId or MapIdentity.same(data, mapId, id))
         and save.visited
-        and save.visited[id]
+        and MapIdentity.savedValue(data, save.visited, id)
         and spot
         and def
         and (Map.isOutdoor(def) or def.tileset == "PLATEAU")

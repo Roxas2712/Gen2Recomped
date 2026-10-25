@@ -590,6 +590,23 @@ for _, name in ipairs({
   T.check(Actions.supports(name), "action capability " .. name)
 end
 T.eq(Actions.supports("party"), false, "reader capability remains separate")
+-- A public destination addresses the same native flight/visited record.
+do
+  local api,game,ow,calls=boot("crystal")
+  local raw,public="ROUTE29","ROUTE_29"
+  local dest=game.data.maps.DEST;dest.id=public;dest.sourceId=raw
+  game.data.maps[raw],game.data.maps[public]=dest,dest
+  game.data.field.flyOrder={raw};game.data.field.flyWarps={[raw]={x=3,y=4}}
+  game.save.visited={[raw]=true}
+  T.eq(api.world:flyTo(public),true,"canonical flight reads native unlocked destination")
+  T.eq(calls[#calls].id,raw,"native flight handler retains native destination address")
+  ow.flyAnim=nil
+  game.save.visited={[public]=true}
+  T.eq(api.world:flyTo(raw),true,"older public-only visited destination stays usable")
+  ow.flyAnim=nil
+  game.data.maps.VARIANT={id="VARIANT",sourceId=raw,width=20,height=20,outdoor=true,tileset="TEST"}
+  T.eq(api.world:flyTo("VARIANT"),nil,"unshared authored variant is not a flight destination alias")
+end
 do
   local api, game, ow = boot("crystal")
   game.stack.states={};game.stack.worldState=ow
