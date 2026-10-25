@@ -84,9 +84,10 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
       local row=exchanges[i];local by=top+(i-from)*63*s
       col(206,226,245);g.rectangle('fill',x,by,w,57*s,8*s,8*s)
       local offered=row.offered or {};local reply=row.reply or {}
-      text(tostring(row.mode):upper()..' · '..row.status..' · '..tostring(row.partner or 'Finding a partner'),x+10*s,by+5*s,w-155*s)
-      text(tostring(offered.nickname or offered.species or '?')..(row.reply and (' ⇄ '..tostring(reply.nickname or reply.species)) or ''),x+10*s,by+29*s,w-155*s)
       local action=row.status=='completed' and 'tradeReceive' or row.status=='prepared' and row.sender and 'tradeConfirm' or row.status=='pending' and not row.sender and 'tradeReply' or nil
+      local textWidth=math.max(1,w-(action and row.status~='completed' and 282 or 155)*s)
+      text(tostring(row.mode):upper()..' · '..row.status..' · '..tostring(row.partner or 'Finding a partner'),x+10*s,by+5*s,textWidth)
+      text(tostring(offered.nickname or offered.species or '?')..(row.reply and (' ⇄ '..tostring(reply.nickname or reply.species)) or ''),x+10*s,by+29*s,textWidth)
       if action and row.status~='completed' then button('CANCEL',x+w-264*s,by+12*s,118*s,'tradeCancel',{exchange=row.id}) end
       if action then button(action=='tradeReceive' and 'RECEIVE' or action=='tradeConfirm' and 'CONFIRM' or 'REPLY',x+w-136*s,by+12*s,126*s,action,{exchange=row.id})
       elseif row.status=='pending' or row.status=='prepared' then button('CANCEL',x+w-136*s,by+12*s,126*s,'tradeCancel',{exchange=row.id}) end
@@ -107,6 +108,10 @@ function P.press(self,W,r)
     local id,why=require('src.storage.BankItems').equip(f.itemSelected,f.inspected.entry)
     if id then f.bank=B.list();f.items=require('src.storage.BankItems').list();f.notice='Equipped a new Bank copy. Drag it into a supported save to keep it there.';f.itemSelected=nil else f.notice=why end
   elseif r.action=='dexSpecies' then f.dexSelected=r.id
+  elseif r.action=='copyPokemonId' then
+    local entry=f.inspected and f.inspected.entry
+    local origin=entry and (entry.origin or entry.mon.retroBankOrigin)
+    if origin and origin.recordId and love.system and love.system.setClipboardText then love.system.setClipboardText(origin.recordId);f.notice='Pokémon origin ID copied.' end
   elseif r.action=='tradeLogin' then
     if f.left.dirty or f.right.dirty then f.notice='Save your staged copies before signing in.'
     else W.close(self);self:_openAccount() end

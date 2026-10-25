@@ -50,6 +50,13 @@ local returning=assert(B.convert(returnEntry,'gold',data))
 check(returning.heldItem=='BERRY' and returning.retroBankItem,'the associated item is restored when the Pokémon returns to a supported game')
 check(Items.transaction({version='gold',party={returning}},function() return 'returned-copy' end),'restoring an item commits its custody assignment with the destination save')
 check(Items.list()[1].state=='assigned','a restored held item cannot also be assigned from available storage')
+assert(Items.transaction({version='red',party={parked}},function() return 'parked-again' end))
+local otherEntry=B.makeEntry(mon,'gold','slot9','Party 2',data)
+local oldData=B.data;B.data=function() return data end
+local equipped=assert(Items.equip(Items.list()[1].id,otherEntry));B.data=oldData
+check(equipped and Items.list()[1].assignedTo==otherEntry.origin.recordId,'a stored item can be attached to a different Bank Pokémon')
+local withoutItem=assert(B.convert(returnEntry,'gold',data))
+check(not withoutItem.heldItem and not withoutItem.retroBankHeld,'the original Pokémon can return without stealing an item assigned to another monster')
 local beforeItems=files[Items.FILE]
 local fake={read=function() return 'not a valid item bank' end,write=function() error('invalid remote data must not be overwritten') end}
 check(not Items.sync(fake) and files[Items.FILE]==beforeItems,'invalid remote item records never replace either side')
@@ -82,10 +89,11 @@ Saves.slotOpenElsewhere=function() return true end
 check(not B.deliver({entry},'gold','base-slot',false,data) and writes==1,'an open save cannot be copied while being played')
 Saves.slotOpenElsewhere=function() return false end
 local remote={}
-local store={list=function(dir) local list={};for p in pairs(remote) do list[#list+1]=p:sub(#dir+2) end;return list end,
+local store={list=function(dir) local list={};for p in pairs(remote) do local name=p:match('^'..dir..'/([^/]+)$');if name then list[#list+1]=name end end;return list end,
  read=function(p) return remote[p] end,write=function(p,b) remote[p]=b;return true end}
-check(B.sync(store)==1 and remote[path]==files[path],'sync uploads immutable Bank entries')
-files={};check(B.sync(store)==1 and #B.list()==1,'another device can import the full Bank entry')
+local bankCount=#B.list()
+check(bankCount==2 and B.sync(store)==bankCount and remote[path]==files[path],'sync uploads both original and item-equipped immutable Bank entries')
+files={};check(B.sync(store)==bankCount and #B.list()==bankCount,'another device can import every full Bank entry')
 local prior=files[path];remote[path]='return {schema=1}'
 check(not B.sync(store) and files[path]==prior,'an invalid cloud copy cannot overwrite a local entry')
 print('Pokémon Bank: '..checks..' checks passed')

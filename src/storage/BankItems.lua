@@ -35,6 +35,7 @@ function M.returnable(held)
   local inventory=M.load()
   if not inventory or type(held)~='table' or not id(held.id) then return false end
   local item=inventory.items[held.id]
+  if item and item.state=='assigned' then return false,'assigned' end
   return not item or item.owner==held.owner and item.state=='available'
 end
 function M.list()

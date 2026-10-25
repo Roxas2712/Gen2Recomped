@@ -160,6 +160,13 @@ function B.convert(entry,version,data,allowAdaptation)
   mon.retroBankOrigin=clone(origin)
   local Items=require('src.storage.BankItems')
   local heldNote
+  if mon.retroBankHeld and not mon.heldItem then
+    local _,state=Items.returnable(mon.retroBankHeld)
+    if state=='assigned' then
+      mon.retroBankHeld=nil
+      heldNote='The associated item is already assigned from your Item Bank; this copy travels without it.'
+    end
+  end
   if mon.heldItem and mon.heldItem~='' and (gen==1 or not data.items[mon.heldItem] and not named(data.items,info.item)) then
     local held=Items.custody(origin,mon.heldItem,info.item or key(mon.heldItem),entry.source.version)
     if not held then return nil,'Could not preserve the held-item identity.' end

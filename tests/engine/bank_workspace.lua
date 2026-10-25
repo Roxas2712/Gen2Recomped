@@ -33,4 +33,14 @@ check(not f.right.dirty and f.right.slot=='slot-copy' and not original.boxes[1][
 local adapted={entry=clone(entry),data={}};adapted.entry.adapt=true
 check(not W.place(ui,adapted,{panel='right',slot=4},false) and f.adapt,'a cross-model drop opens explicit adaptation review')
 check(W.place(ui,adapted,{panel='right',slot=4},true) and not f.adapt,'confirmed adaptation stages only the target copy')
+local signed=false;local started,cancelled=0,0
+package.loaded['src.cloud.RetroCloud']={signedIn=function() return signed end}
+package.loaded['src.cloud.BankExchange']={profile=function() error('cancelled networking must not execute') end}
+package.loaded['src.cloud.Task']={new=function(fn) started=started+1;return {cancel=function() cancelled=cancelled+1 end} end}
+W.mode(ui,'trade');W.trade(ui,'submit');W.mode(ui,'wonder');W.trade(ui,'submit')
+check(started==0 and not f.tradeJob and f.notice:find('Register',1,true),'signed-out visitors cannot start either native trade flow')
+signed=true;W.trade(ui,'submit')
+check(started==0,'registration alone does not bypass choosing a copy and explicitly consenting to share it')
+W.trade(ui,'profile');check(started==1 and f.tradeJob,'registered players can request their account-wide device and trade profile')
+W.close(ui);check(not ui._bankOverlay and cancelled==1,'closing the Bank cancels its pending background request')
 print('Bank workspace: '..n..' checks passed')

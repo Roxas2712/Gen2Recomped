@@ -213,7 +213,7 @@ function O.draw(game)
   g.setColor(.065,.09,.14,1);g.rectangle('fill',x,y,w,h,16*s,16*s)
   g.setColor(.45,.91,1,1);text('RETRORECOMPED',x+24*s,y+20*s,w-48*s,true)
   g.setColor(.74,.78,.85,1);text(Versions.info().displayName..' · PAUSED',x+24*s,y+61*s,w-48*s)
-  local rows=actions();local top=y+134*s-(O.scroll or 0)
+  local rows=actions();local layoutScroll=O.scroll or 0;local nextScroll=layoutScroll;local top=y+134*s-layoutScroll
   O.rects={};O.selected=math.min(O.selected or 1,math.max(1,#rows))
   for i,tab in ipairs({{'home','QUICK MENU'},{'saves','SAVES & CLOUD'},{'options','SETTINGS'}}) do
     local tw=(w-48*s)/3;local tx=x+24*s+(i-1)*tw
@@ -238,13 +238,13 @@ function O.draw(game)
       local last=table.remove(O.rects);table.insert(O.rects,#O.rects,last)
     end
     if selected and O.followSelection then
-      if ry<view.y then O.scroll=math.max(0,(O.scroll or 0)+ry-view.y)
-      elseif ry+step>view.y+view.height then O.scroll=(O.scroll or 0)+ry+step-view.y-view.height end
+      if ry<view.y then nextScroll=math.max(0,layoutScroll+ry-view.y)
+      elseif ry+step>view.y+view.height then nextScroll=layoutScroll+ry+step-view.y-view.height end
     end
     top=top+step
   end
   O.followSelection=false
-  O.maxScroll=math.max(0,top+(O.scroll or 0)-view.y-view.height);O.scroll=math.min(O.scroll or 0,O.maxScroll)
+  O.maxScroll=math.max(0,top+layoutScroll-view.y-view.height);O.scroll=math.min(nextScroll,O.maxScroll)
   g.setScissor()
   g.setColor(.61,.74,.83,1);text(O.notice or (O.page=='options' and 'Change options with ← / →. Your choices are saved immediately.' or 'Normal saves keep game progress. Exact mid-battle savestates are still in development.'),x+24*s,y+h-74*s,w-48*s)
   g.pop()

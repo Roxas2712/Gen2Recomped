@@ -226,7 +226,8 @@ function W.draw(self)
       if image then local iw,ih=image:getDimensions();local edge=math.min(iw,ih);local sc=(infoH-26*s)/edge
         col(255,255,255);g.draw(image,g.newQuad(0,0,edge,edge,iw,ih),x+26*s,iy+8*s,0,sc,sc) end
       local tx=x+infoH+24*s;local tw=w-infoH-70*s
-      text((entry.mon.nickname or tostring(entry.mon.species))..' · Lv.'..entry.mon.level,tx,iy+10*s,tw,true)
+      text((entry.mon.nickname or tostring(entry.mon.species))..' · Lv.'..entry.mon.level,tx,iy+10*s,math.max(1,tw-100*s),true)
+      button('COPY ID',x+w-120*s,iy+8*s,100*s,'copyPokemonId')
       text('ORIGIN · '..Versions.info(origin.version or entry.source.version).label..' / '..tostring(origin.slot or '?')..' / '..tostring(origin.place or '?'),tx,iy+39*s,tw)
       text('SAVE ID · '..tostring(origin.saveId or entry.source.saveId or 'Legacy save')..' · TRAINER ID · '..tostring(origin.trainerId or (entry.mon.ot or {}).id or 'Unknown'),tx,iy+61*s,tw)
       text('POKÉMON ID · '..tostring(origin.recordId or entry.id or 'Available after deposit'),tx,iy+83*s,tw)
@@ -329,7 +330,7 @@ function W.install(RI)
   end
   local press=RI.mousepressed
   RI.mousepressed=function(self,x,y,button,...)
-    if self._bankOverlay then if button==1 then local ok,why=pcall(W.press,self,x,y);if not ok then self._bankOverlay.notice=tostring(why) end end;return end
+    if self._bankOverlay then if button==1 then local f=self._bankOverlay;local ok,why=pcall(W.press,self,x,y);if not ok then f.notice=tostring(why) end end;return end
     if self.section=='games' and U.inside(self._bankLibraryButton,x,y) then W.open(self);return end
     if self.section=='games' and U.inside(self._bankDexLibraryButton,x,y) then W.open(self);W.mode(self,'dex');return end
     return press(self,x,y,button,...)

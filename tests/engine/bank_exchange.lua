@@ -22,7 +22,7 @@ local T=require('src.cloud.BankExchange')
 local first=assert(T.device());package.loaded['src.cloud.BankExchange']=nil;T=require('src.cloud.BankExchange')
 check(T.device()==first and #first==32,'the same installation keeps its device identity across reloads and session changes')
 local entry={schema=1,source={version='red',slot='slot1',place='Party 1'},mon={species='BULBASAUR',level=5,moves={{id='TACKLE'}}},canonical={dex=1,moves={{name='TACKLE'}}}}
-signed=false;check(not T.submit(entry,'wonder') and #http==0,'both direct trade and Wonder Trade require registration before networking')
+signed=false;check(not T.submit(entry,'wonder') and not T.submit(entry,'direct','RRC-ABCDEF-012345') and not T.profile() and #http==0,'both direct trade and Wonder Trade require registration before networking')
 signed=true;offline=true
 check(not T.submit(entry,'wonder'),'an unavailable network leaves a retryable offer')
 local nonce=http[#http].body.nonce;local deviceHeader=http[#http].opts.headers['X-Retro-Device']
