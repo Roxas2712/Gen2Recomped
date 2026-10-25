@@ -3996,6 +3996,7 @@ function BattleState:fightLockedAction(battler)
   end
   -- ENCORE: the same move again, whether the Pokemon wants to or not.  Only
   -- if it still has the move -- an ENCOREd move that ran out of PP frees it.
+  if GameVersion.isGen3() then return require("src.battle.Gen3Encore").menu(battler) end
   if battler.encoreTurns and battler.encoreMove then
     for _, m in ipairs(battler.curMoves or battler.mon.moves or {}) do
       if m.id == battler.encoreMove and (m.pp or 0) > 0 then
@@ -5145,6 +5146,9 @@ function BattleState:effectRecord(effect)
   if GameVersion.isGen3() and effect == "BATON_PASS_EFFECT" then
     return require("src.battle.Gen3BatonPass").record(record, MoveEffects.RECORDS.BATON_PASS_EFFECT)
   end
+  if GameVersion.isGen3() and effect == "ENCORE_EFFECT" then
+    return require("src.battle.Gen3Encore").record(record, MoveEffects.RECORDS.ENCORE_EFFECT)
+  end
   return record
 end
 
@@ -5553,6 +5557,10 @@ function BattleState:resolveTurn(playerAction)
     end
   end
   self._nativeOrderSelectionTurn = nil
+  if GameVersion.isGen3() then
+    local Encore = require("src.battle.Gen3Encore")
+    playerAction, enemyAction = Encore.plan(self.player, playerAction), Encore.plan(self.enemy, enemyAction)
+  end
   self.turnCount = (self.turnCount or 0) + 1
   if GameVersion.isGen3() then require("src.battle.Gen3FollowMe").clear(self) end
   -- BATTLE ARENA: arenaTurnCounter
@@ -5632,6 +5640,7 @@ function BattleState:resolveTurn(playerAction)
         else
           action = self:actionFor(b, playerAction, enemyAction)
         end
+        if GameVersion.isGen3() then action = require("src.battle.Gen3Encore").plan(b, action) end
         entries[#entries + 1] = { battler = b, move = orderMove(action, self.data),
                                   action = action }
       end
@@ -6568,7 +6577,10 @@ end
 
 function BattleState:gen3BattlerCountersTick(b, scheduled)
   if b and b.mon and b.mon.hp > 0 then
-    if GameVersion.isGen3() then require("src.battle.Gen3LockOn").tick(self, b) end
+    if GameVersion.isGen3() then
+      require("src.battle.Gen3Encore").tick(self, b)
+      require("src.battle.Gen3LockOn").tick(self, b)
+    end
     -- YAWN: the sleep lands at the END of the turn AFTER the one it was
     -- used on, which is the whole reason it is worth using at all.
     if b.drowsyTurns then
@@ -6587,7 +6599,7 @@ function BattleState:gen3BattlerCountersTick(b, scheduled)
         self:sayNext(Strings("%s's taunt\nwore off!", displayName(b)))
       end
     end
-    if b.encoreTurns then
+    if not GameVersion.isGen3() and b.encoreTurns then
       b.encoreTurns = b.encoreTurns - 1
       if b.encoreTurns <= 0 then
         b.encoreTurns, b.encoreMove = nil, nil
@@ -7636,6 +7648,17 @@ function BattleState:executeAction(user, target, action)
       target = Targeting.redirect(self, user, nil, selected)[1] or self:defaultTargetFor(user)
     end
   end
+  local encoreTargets
+  if GameVersion.isGen3() then
+    local chosen = self:moveDef(action)
+    local changed
+    action, changed = require("src.battle.Gen3Encore").forced(user, action)
+    if changed and self:isDouble() then
+      explicitTarget = false
+      encoreTargets = require("src.battle.Gen3Encore").targets(self,user,self:moveDef(action),chosen)
+      target = encoreTargets[1] or self:defaultTargetFor(user)
+    end
+  end
   -- A SWITCH NEEDS NO TARGET.  Everything else does, and with four on the
   -- field the one it was aimed at can already be off it -- the entry's
   -- target is resolved as the entry runs, and there may be nobody left to
@@ -7793,7 +7816,7 @@ function BattleState:executeAction(user, target, action)
         spreadAnimation = targetKind == Targeting.BOTH
                           or targetKind == Targeting.FOES_AND_ALLY
         local chosen = explicitTarget and target or (self.chosenTargets or {})[user.position] or target
-        local got = explicitTarget and Targeting.actionTargets(self, user, def, chosen)
+        local got = encoreTargets or explicitTarget and Targeting.actionTargets(self, user, def, chosen)
           or Targeting.resolve(self, user, def, chosen)
         if #got > 0 then list = got end
       end
@@ -8370,6 +8393,14 @@ end
 function BattleState:performMove(user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
   if not GameVersion.isGen3() then
     return performMove(self, user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
+  end
+  if not isCalled then
+    local chosen = self:moveDef(moveInst)
+    local changed
+    moveInst, changed = require("src.battle.Gen3Encore").forced(user, moveInst)
+    if changed and self:isDouble() then
+      target = require("src.battle.Gen3Encore").targets(self,user,self:moveDef(moveInst),chosen)[1] or target
+    end
   end
   local Schedule = require("src.battle.GbaItemSchedule")
   local parent = self._gbaMoveFrame
