@@ -1,0 +1,380 @@
+{
+  "schema": 1,
+  "sourceCommit": "6004286e4659d993c0ded87a2677247a610a15b8",
+  "referenceCommit": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+  "forkPrs": [
+    30,
+    32,
+    34,
+    35
+  ],
+  "upstream": [
+    {
+      "pr": 264,
+      "head": "a70e34bc5d3fc1d661588ae4f4601c43e2b6ba02",
+      "scope": "Standalone native PC/mail core, not fork UI/capability/runtime composition",
+      "readyForReview": true
+    },
+    {
+      "pr": 268,
+      "head": "c111c1d6216c776f27ab190e7f9ef89465e9c309",
+      "scope": "Independent object event-target classifier and scoped stock-GSC cache revision",
+      "focusedChecks": 55,
+      "baselineEngine": "64/74",
+      "candidateEngine": "65/75",
+      "sdkBoth": "3/3",
+      "identicalFailedAssertionsAndSuites": true,
+      "readyForReview": true
+    }
+  ],
+  "localQuick": {
+    "sourceCommit": "6004286e4659d993c0ded87a2677247a610a15b8",
+    "engineSuites": "380/380",
+    "sdkSuites": "3/3",
+    "allRomFreeQuickTiersPassed": true,
+    "logSha256": "e66a0090c151778ea1a66006a00287d9f600e3de149ec4aba96776de7ad6270d"
+  },
+  "package": {
+    "sourceCommit": "6004286e4659d993c0ded87a2677247a610a15b8",
+    "qualificationRun": 40238124576,
+    "qualificationArtifact": 12615769336,
+    "qualificationArtifactSha256": "5c24421c75adccd6e4c4b584fb0c5a193fc4faaa36ed26e482a9f35afc42ad38",
+    "payloadSha256": "3c1ce54b0bbd4b36cadef5331adabac5f954eaf046d46c5a4e532163de80a36f",
+    "identicalPlatformPayloads": true,
+    "macUniversalArchitectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "macStrictSignature": true,
+    "windowsFusedPayload": true,
+    "builds": {
+      "windows": {
+        "engineVersion": "0.8.46",
+        "sourceCommit": "6004286e4659d993c0ded87a2677247a610a15b8",
+        "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+        "runtimeArtifact": 12514271124,
+        "runtimeSha256": "1f4c6997bd93502f986f5187d877da84247617eede89d8140bcbf570bd07ea22",
+        "platform": "windows",
+        "previewIdentity": "Gen2Recomp-NativePreview-20261025-1",
+        "payloadSha256": "3c1ce54b0bbd4b36cadef5331adabac5f954eaf046d46c5a4e532163de80a36f",
+        "archiveSha256": "0a5af59d6b8aef3acb0944b998d3afdc4453b9016702c4fc787716de01254e5f",
+        "archive": "Gen2Recomped-NativePreview-20261025.1-windows.zip",
+        "buildVerified": true,
+        "launchVerified": false,
+        "realDeviceVerified": false,
+        "extendedUpvaluesQualified": true,
+        "modsIncluded": false,
+        "modsEnabled": true,
+        "legacyMigration": false,
+        "automaticInstallation": false,
+        "qualifiedRuntime": {
+          "experimental": true,
+          "luaJitSource": "a4c064539ea931274d407e1249b4bb575424a0f4",
+          "capacity": 120,
+          "architectures": [
+            "x86_64"
+          ],
+          "componentManifestSha256": "9459450adbc934298de34ea425708cbf391559f22373332f01f47ee07e3418bd",
+          "inputLibrarySha256": "9a68a5e0a112775ec435056f58e7507f3af92c102fea8670ee0eeb621dcc1604",
+          "engineTreeVerified": true,
+          "qualifications": [
+            {
+              "architecture": "x86_64",
+              "capacityReport": "reports/x86_64-capacity.json",
+              "hostReport": "reports/x86_64-host.json",
+              "capacitySha256": "8866b4e7030c261133943c7132ad9d801ea83fec9cd455e06b8206a47ea42c18",
+              "hostSha256": "42588fd66b0bd0e582cb2ddb51d5b71485349de01e5fa339f978b19bfd9f38b9"
+            }
+          ],
+          "installedLibrarySha256": "9a68a5e0a112775ec435056f58e7507f3af92c102fea8670ee0eeb621dcc1604"
+        }
+      },
+      "macos": {
+        "engineVersion": "0.8.46",
+        "sourceCommit": "6004286e4659d993c0ded87a2677247a610a15b8",
+        "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+        "runtimeArtifact": 12513712494,
+        "runtimeSha256": "f70f60d162eda6931b0b28e2b094b83b741986f0feac08d33a10be7c57e724f8",
+        "platform": "macos",
+        "previewIdentity": "Gen2Recomp-NativePreview-20261025-1",
+        "payloadSha256": "3c1ce54b0bbd4b36cadef5331adabac5f954eaf046d46c5a4e532163de80a36f",
+        "archiveSha256": "72f71d42ed75aee6a03c27d534dda02f8f4f01c67a360475762fc137f52b934d",
+        "archive": "Gen2Recomped-NativePreview-20261025.1-macos.zip",
+        "buildVerified": true,
+        "launchVerified": false,
+        "realDeviceVerified": false,
+        "extendedUpvaluesQualified": true,
+        "modsIncluded": false,
+        "modsEnabled": true,
+        "legacyMigration": false,
+        "automaticInstallation": false,
+        "qualifiedRuntime": {
+          "experimental": true,
+          "luaJitSource": "a4c064539ea931274d407e1249b4bb575424a0f4",
+          "capacity": 120,
+          "architectures": [
+            "arm64",
+            "x86_64"
+          ],
+          "componentManifestSha256": "d145259eae82fa34c9bc9e19ce27cf0fdf9a2d7983fa005a3284d90c39adda3c",
+          "inputLibrarySha256": "2ccdcc40c0b2a02e12abc8069a9bf9523c1978a8efd46a248f15bf67c629748d",
+          "engineTreeVerified": true,
+          "qualifications": [
+            {
+              "architecture": "x86_64",
+              "capacityReport": "reports/x86_64-capacity.json",
+              "hostReport": "reports/x86_64-host.json",
+              "capacitySha256": "29e150d4a1f7ea7f04cc1eba49cc921041f4e0546a77a05f06e7d80e99951b02",
+              "hostSha256": "66c1b0f1a93c99bff5640e56ecf95c09a8cb0c98835ca7edb2e0685b7469c887"
+            },
+            {
+              "architecture": "arm64",
+              "capacityReport": "reports/arm64-capacity.json",
+              "hostReport": "reports/arm64-host.json",
+              "capacitySha256": "60064fcde14896204cb83c9d1e56414b4ad95ff946e8ee178440db7763e3a072",
+              "hostSha256": "8ee445d7263c8b76c981f7efff370c747b27e2468564b328ba67da8c005c934a"
+            }
+          ],
+          "minimumMacOS": "11.0.0",
+          "installedLibrarySha256": "0b9e147ab903851cb488391ba7e6979f1e36b424e51dd4db48e5c97979a94f5c"
+        },
+        "macosDistribution": {
+          "signing": "ad-hoc",
+          "notarized": false,
+          "ticketStapled": false,
+          "gatekeeperVerified": false,
+          "iconSha256": "28c269b2fe4923b629f3ad9246c72591a161f47a20f9be0ee19cbc819921ac59"
+        }
+      }
+    }
+  },
+  "mod": {
+    "version": "3.1.2-omega.1.8",
+    "files": 27329,
+    "allFileNamesAndContentsUnmodified": true
+  },
+  "rom": {
+    "version": "crystal",
+    "sha1": "f4cd194bdee0d04ca4eac29e09b8e4e9d818c133",
+    "originalUnmodified": true
+  },
+  "gpuRuns": [
+    {
+      "backend": "opengl",
+      "checks": 68,
+      "snapshots": [
+        {
+          "tag": "initial-map",
+          "providerFallback": false,
+          "surface": "pc_box",
+          "partyCount": 3,
+          "map": "VIOLET_POKECENTER_1F",
+          "boxCount": 14,
+          "activeHost": "vasc_gen2_native",
+          "camera": "third"
+        },
+        {
+          "tag": "second-map",
+          "surface": "mail_read",
+          "map": "VIOLET_POKECENTER_1F",
+          "mailboxCount": 0,
+          "message": "NATIVE JOHTO MAIL",
+          "camera": "third"
+        },
+        {
+          "tag": "resized",
+          "providerFallback": false,
+          "surface": "pc_box",
+          "partyCount": 3,
+          "map": "VIOLET_POKECENTER_1F",
+          "boxCount": 14,
+          "activeHost": "vasc_gen2_native",
+          "camera": "first"
+        },
+        {
+          "tag": "map-return",
+          "surface": "mail_read",
+          "map": "VIOLET_POKECENTER_1F",
+          "mailboxCount": 0,
+          "message": "NATIVE JOHTO MAIL",
+          "camera": "first"
+        }
+      ],
+      "nativePcAdmissions": [
+        {
+          "mailboxViaPlayerPc": true,
+          "providerFallback": false,
+          "parentReturned": true,
+          "scriptResumed": 1,
+          "command": "g2_pokemon_center_pc",
+          "provider": "vasc_gen2_native",
+          "camera": "third"
+        },
+        {
+          "mailboxViaPlayerPc": true,
+          "providerFallback": false,
+          "parentReturned": true,
+          "scriptResumed": 1,
+          "command": "g2_pokemon_center_pc",
+          "provider": "vasc_gen2_native",
+          "camera": "first"
+        }
+      ],
+      "importedMail": {
+        "deliverySites": 1,
+        "item": "ITEM_158",
+        "giftSites": 1
+      },
+      "importedScriptInfo": {
+        "movementCount": 410,
+        "sceneCount": 170,
+        "scriptCount": 5038,
+        "signCount": 707,
+        "objectCount": 1229,
+        "callbackCount": 103,
+        "coordCount": 114,
+        "desyncCount": 0,
+        "failureCount": 0,
+        "instructionCount": 28549,
+        "mapCount": 388
+      },
+      "freshOsWindows": 4,
+      "resultSha256": "8bda59d7141f1746013d7d09624323c6aae01885901f33795f32ed032e314470",
+      "verificationSha256": "97b56beb9123aff3e4da8c640a540ab43c54313f2ae41660d5a2d19a60d2a91c",
+      "qaDriverSha256": "331379b6ae25593b20bc969e4e5388df6a9327fec56bba97aed3ede5fcfeb297",
+      "ownQaWindowActivation": true,
+      "ownedProfileReused": true,
+      "images": {
+        "initial-map": "58a3e471a0f8de15e718ffe6a1d2fd084ed6302222dd57abf686cc99f84dea1f",
+        "second-map": "846975e8de340d22c016b97df1b7d5fdd0b7d4e2c0f0da6714dfac428a0a6ad8",
+        "resized": "580e5b87a2ed7f9f07577877848fbdce581f40b49fa22c88feb3d08dc3b88ea6",
+        "map-return": "08ea4d884c3249df0f3b45134e3b8962a954a9341913f7d5d606e8db7917690e"
+      }
+    },
+    {
+      "backend": "metal",
+      "checks": 68,
+      "snapshots": [
+        {
+          "camera": "third",
+          "map": "VIOLET_POKECENTER_1F",
+          "surface": "pc_box",
+          "activeHost": "vasc_gen2_native",
+          "boxCount": 14,
+          "partyCount": 3,
+          "tag": "initial-map",
+          "providerFallback": false
+        },
+        {
+          "surface": "mail_read",
+          "mailboxCount": 0,
+          "message": "NATIVE JOHTO MAIL",
+          "map": "VIOLET_POKECENTER_1F",
+          "tag": "second-map",
+          "camera": "third"
+        },
+        {
+          "camera": "first",
+          "map": "VIOLET_POKECENTER_1F",
+          "surface": "pc_box",
+          "activeHost": "vasc_gen2_native",
+          "boxCount": 14,
+          "partyCount": 3,
+          "tag": "resized",
+          "providerFallback": false
+        },
+        {
+          "surface": "mail_read",
+          "mailboxCount": 0,
+          "message": "NATIVE JOHTO MAIL",
+          "map": "VIOLET_POKECENTER_1F",
+          "tag": "map-return",
+          "camera": "first"
+        }
+      ],
+      "nativePcAdmissions": [
+        {
+          "parentReturned": true,
+          "scriptResumed": 1,
+          "camera": "third",
+          "command": "g2_pokemon_center_pc",
+          "mailboxViaPlayerPc": true,
+          "provider": "vasc_gen2_native",
+          "providerFallback": false
+        },
+        {
+          "parentReturned": true,
+          "scriptResumed": 1,
+          "camera": "first",
+          "command": "g2_pokemon_center_pc",
+          "mailboxViaPlayerPc": true,
+          "provider": "vasc_gen2_native",
+          "providerFallback": false
+        }
+      ],
+      "importedMail": {
+        "giftSites": 1,
+        "deliverySites": 1,
+        "item": "ITEM_158"
+      },
+      "importedScriptInfo": {
+        "scriptCount": 5038,
+        "callbackCount": 103,
+        "coordCount": 114,
+        "desyncCount": 0,
+        "failureCount": 0,
+        "instructionCount": 28549,
+        "mapCount": 388,
+        "movementCount": 410,
+        "sceneCount": 170,
+        "objectCount": 1229,
+        "signCount": 707
+      },
+      "freshOsWindows": 4,
+      "resultSha256": "b79fcf6a24c347eabdbbbeb0317477e524bbbb3a13f9930dde5cc75bb8f5f24d",
+      "verificationSha256": "b918b7bc641391688afa1190d588c6c9487683bdf1c2c6ff03c0b6a68009c1de",
+      "qaDriverSha256": "331379b6ae25593b20bc969e4e5388df6a9327fec56bba97aed3ede5fcfeb297",
+      "ownQaWindowActivation": true,
+      "ownedProfileReused": true,
+      "images": {
+        "initial-map": "7928989d8d10f4467dcce5e929b320fe18b2b441c2d107825f3b357a1fcc69ba",
+        "second-map": "060f0e67f466f1ce32c32dc2ed93115835eec0b4ea7e117973349a8dc03cbd29",
+        "resized": "bb75151c276096446aab561fc15bc1c9a310a8aac770e9b353a956886aa42160",
+        "map-return": "aa466961f709cb8de2236a50d70d07399a661c05298263344e8308bc1b7a5a95"
+      }
+    }
+  ],
+  "imagesInspected": 8,
+  "testSetup": "Own QA introduction/map/party/inventory are staged. Actual imported Crystal PC special uses real VM lowering; native boot/return, provider transfers, held-mail refusal, summary/dex, player-PC mailbox, compose/read and native save-codec checks. Not story admission or a full playthrough.",
+  "failedAttemptsRetained": [
+    "First Metal OS proof retained an old splash frame and failed the fresh-frame gate. It is not acceptance. The successful rerun explicitly activates only the owned QA app/window.",
+    "One expanded QA PC operand was malformed. Corrected to the actual imported numeric+symbol operand and real VM lowering; both backends rerun. No engine/package bytes changed for those test-starter corrections."
+  ],
+  "visualLimitations": [
+    "PC grayscale native GBC fallback art and raw/truncated held-item label.",
+    "Large provider margins in the tested 800x720 QA window.",
+    "Metal deprecation overlay partially obscures second mail line and lower window edge; OpenGL complete two-line text visible.",
+    "Focused own QA window explicitly activated; background Metal presentation is not established.",
+    "No Windows/Intel hardware GPU or full story/encounter/field/save/link acceptance."
+  ],
+  "release": {
+    "url": "https://github.com/Roxas2712/Gen2Recomped/releases/tag/native-preview-20261025.1",
+    "tag": "native-preview-20261025.1",
+    "published": true,
+    "allSixRemoteAssetsVerified": true,
+    "tagRetargeted": false,
+    "originalTagSource": "0780731e0a925618538d9048524042ca2680ac85",
+    "binarySource": "6004286e4659d993c0ded87a2677247a610a15b8",
+    "assets": {
+      "Gen2Recomped-NativePreview.love": "3c1ce54b0bbd4b36cadef5331adabac5f954eaf046d46c5a4e532163de80a36f",
+      "Gen2Recomped-NativePreview-20261025.1-macos.zip": "72f71d42ed75aee6a03c27d534dda02f8f4f01c67a360475762fc137f52b934d",
+      "Gen2Recomped-NativePreview-20261025.1-windows.zip": "0a5af59d6b8aef3acb0944b998d3afdc4453b9016702c4fc787716de01254e5f",
+      "build-manifest.json": "f9d0117898e715e57cc72ac393de39263375007289b58286addedadfb35531b4",
+      "README-Testrelease.txt": "50b4e99aa82aa20561b812eda4adbf384d96f7f816e28f85e0322a0a0b4ebcee",
+      "SHA256SUMS.txt": "677c7b1ffc8b0996989863ebf2bf10adf05bebe328b7cf6516978e1f6b88c73b"
+    }
+  },
+  "protectedInstallationsTouched": false,
+  "portPaused": true,
+  "remaining": "Full native Gen1/VASC parity remains open: all content registries and dynamic contracts, complete story/encounter/capture/field admission, every PC/UI mode, stationery/SRAM mail support, full models/effects, background Metal presentation, long sessions and Windows/Intel GPU hardware acceptance."
+}
