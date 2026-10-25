@@ -17,10 +17,25 @@ function W.close(self)
   self._developerOverlay=nil
   if love.keyboard and love.keyboard.setTextInput then love.keyboard.setTextInput(false) end
 end
+function W.coverBytes(self,bytes)
+  local f=self._developerOverlay
+  if not f or not f.profile or not f.profile.verified then return nil,'Select a verified repository first.' end
+  if type(bytes)~='string' or #bytes>2*1024*1024 or not require('src.import.ImageBounds').allowed(bytes,2048) then f.notice='Use a PNG, JPEG or WebP up to 2048 pixels and 2 MB.';return nil,f.notice end
+  local ok,image=pcall(function()
+    local pixels=love.image.newImageData(love.filesystem.newFileData(bytes,'mod-cover.png'))
+    if pixels:getWidth()<64 or pixels:getHeight()<64 then error('Use at least 64 pixels per side.') end
+    local image=love.graphics.newImage(pixels);image:setFilter('linear','linear');return image
+  end)
+  if not ok then f.notice=tostring(image);return nil,f.notice end
+  f.coverImage=image;f.coverBytes=bytes;f.coverRepository=f.profile.id;f.coverRights=false
+  f.coverCredit=f.coverCredit or f.profile.repository;f.coverAlt=f.coverAlt or (f.profile.repository..' mod preview')
+  f.notice='Cover loaded locally. Review the preview and image rights before uploading.';return true
+end
 function W.action(self,id)
   local f=self._developerOverlay;if not f then return end
   if id=='close' then W.close(self);return end
-  f.focus=id=='repository'
+  f.focus=id=='repository' or id=='coverCredit' or id=='coverAlt'
+  if f.focus then f.field=id end
   if love.keyboard and love.keyboard.setTextInput then love.keyboard.setTextInput(f.focus) end
   if f.focus then return end
   if f.job then return end
@@ -30,6 +45,18 @@ function W.action(self,id)
     if page then job(self,'list',function() return Developer.list(page) end) end
   elseif id:match('^select:') then
     f.profile=f.projects[tonumber(id:sub(8))];f.repository=f.profile.repository
+    f.coverImage=nil;f.coverBytes=nil;f.coverRights=false;f.coverCredit=nil;f.coverAlt=nil
+  elseif id=='chooseCover' then
+    local path=self._ui.chooseFileByExt({'png','jpg','jpeg','webp'},'mod cover image')
+    if not path then f.notice='Drop a PNG, JPEG or WebP onto this developer window to preview your cover.';return end
+    local file=io.open(path,'rb');if not file then f.notice='The image could not be read.';return end
+    local bytes=file:read(2*1024*1024+1);file:close();W.coverBytes(self,bytes)
+  elseif id=='coverRights' then f.coverRights=not f.coverRights
+  elseif id=='uploadCover' then
+    if not f.profile or f.coverRepository~=f.profile.id or not f.coverBytes then f.notice='Select a verified repository and choose its cover first.';return end
+    if not f.coverRights then f.notice='Confirm that you may publish this image first.';return end
+    local profile,bytes,credit,alt=f.profile,f.coverBytes,f.coverCredit,f.coverAlt
+    job(self,'cover',function() return Developer.uploadCover(profile,bytes,credit,alt,true) end)
   elseif id=='rights' then f.rights=not f.rights
   elseif id=='agreement' then
     job(self,'policy',require('src.cloud.NativeAccount').policy)
@@ -53,6 +80,9 @@ function W.tick(self)
       elseif purpose=='list' then
         f.projects=result.first.repositories;f.page=result.first.page;f.nextPage=result.first.next_page;f.total=result.first.total;f.notice=nil
       elseif purpose=='policy' then f.policy=result.first;f.agreement=true;f.scroll=0
+      elseif purpose=='cover' then
+        if f.profile then f.profile.cover=result.first end
+        f.coverRights=false;f.notice='Cover submitted · '..tostring(result.first.status)..'. It appears on the public mod card after review.'
       else
         f.profile=result.first;f.repository=result.first.repository or ''
         local found=false;for i,p in ipairs(f.projects or {}) do if p.id==f.profile.id then f.projects[i]=f.profile;found=true end end
@@ -134,6 +164,19 @@ function W.draw(self)
     if f.profile and f.profile.verified then
       paragraph('REPOSITORY LINKED',true)
       paragraph('Catalogue review: '..tostring(f.profile.review_status or 'pending review')..'. Linking a repository does not publish it automatically.')
+      paragraph('MY MOD CARD COVER',true)
+      if f.profile.cover then paragraph('Cover status: '..tostring(f.profile.cover.status)) end
+      row('CHOOSE COVER IMAGE · PNG / JPEG / WEBP','chooseCover')
+      if f.coverImage then
+        local iw,ih=f.coverImage:getDimensions();local ph=170*s;local fit=math.min((width-48*s)/iw,ph/ih)
+        g.setColor(1,1,1,1);g.draw(f.coverImage,x+width/2-iw*fit/2,top,0,fit,fit);top=top+ih*fit+18*s
+        paragraph('Image credit and description',false,8)
+        row('CREDIT · '..tostring(f.coverCredit or '')..(f.focus and f.field=='coverCredit' and ' |' or ''),'coverCredit')
+        row('DESCRIPTION · '..tostring(f.coverAlt or '')..(f.focus and f.field=='coverAlt' and ' |' or ''),'coverAlt')
+        paragraph('I hold the necessary rights and allow ModCompass and RetroRecomped to show this cover publicly for my mod. The image will be uploaded and reviewed separately.')
+        row((f.coverRights and '[x] ' or '[ ] ')..'I confirm these image rights','coverRights')
+        row('UPLOAD COVER FOR REVIEW','uploadCover')
+      end
     elseif f.profile and f.profile.proof then
       paragraph('1 · Commit the prepared file on GitHub.  2 · Return here and verify.')
       row('1 · OPEN PREPARED GITHUB FILE >','github')
@@ -178,14 +221,30 @@ function W.install(RI)
     if k=='escape' then W.close(self)
     elseif k=='tab' then W.navigate(self,love.keyboard and love.keyboard.isDown('lshift','rshift') and -1 or 1)
     elseif f.focus then
-      if k=='backspace' then f.repository=f.repository:sub(1,-2);f.profile=nil
-      elseif k=='return' then f.focus=false;W.action(self,'save')
-      elseif k=='v' and love.keyboard and love.keyboard.isDown('lctrl','rctrl','lgui','rgui') then f.repository=(love.system.getClipboardText() or ''):sub(1,250):gsub('[\r\n]','');f.profile=nil end
+      local field=f.field or 'repository';local limit=field=='repository' and 250 or field=='coverCredit' and 160 or 300
+      if k=='backspace' then
+        local value=f[field] or '';local start=value:match('()[%z\1-\127\194-\244][\128-\191]*$');f[field]=start and value:sub(1,start-1) or ''
+        if field=='repository' then f.profile=nil end
+      elseif k=='return' then f.focus=false;if field=='repository' then W.action(self,'save') end
+      elseif k=='v' and love.keyboard and love.keyboard.isDown('lctrl','rctrl','lgui','rgui') then f[field]=(love.system.getClipboardText() or ''):sub(1,limit):gsub('[\r\n]','');if field=='repository' then f.profile=nil end end
     elseif k=='down' then W.navigate(self,1)
     elseif k=='up' then W.navigate(self,-1)
     elseif k=='return' or k=='space' then local r=f.rects[f.padIndex or 2];if r then W.action(self,r.id) end end
   end
-  local input=RI.textinput;RI.textinput=function(self,t,...) local f=self._developerOverlay;if not f then return input(self,t,...) end;if f.focus then f.repository=(f.repository..t:gsub('[^%w%p ]','')):sub(1,250);f.profile=nil end end
+  local input=RI.textinput;RI.textinput=function(self,t,...)
+    local f=self._developerOverlay;if not f then return input(self,t,...) end
+    if f.focus then
+      local field=f.field or 'repository';local limit=field=='repository' and 250 or field=='coverCredit' and 160 or 300
+      local value=field=='repository' and t:gsub('[^%w%p ]','') or t:gsub('[%z\1-\31\127]','')
+      if #(f[field] or '')+#value<=limit then f[field]=(f[field] or '')..value end
+      if field=='repository' then f.profile=nil end
+    end
+  end
+  local drop=RI.filedropped;RI.filedropped=function(self,file,...)
+    if not self._developerOverlay then return drop(self,file,...) end
+    local ok,bytes=pcall(function()file:open('r');local data=file:read(2*1024*1024+1);file:close();return data end)
+    if ok then W.coverBytes(self,bytes) else self._developerOverlay.notice='The cover image could not be read.' end
+  end
   local touch=RI.touchpressed;RI.touchpressed=function(self,id,x,y,...)
     local f=self._developerOverlay;if not f then return touch(self,id,x,y,...) end
     if not f.touch then f.touch={id=id,x=x,y=y,startY=y} end

@@ -1425,6 +1425,7 @@ function Sidebar.install(RI)
   end
 
   function RI:_sbDrawContent(x, y, w, h, paged)
+    self._sb.cartArt = {}
     self._sb.consoles, self._sb.series, self._sb.tiles, self._sb.stars = {}, {}, {}, {}
     self._sb.gameChips, self._sb.importButtons, self._sb.tools = {}, {}, {}
     self._sb.toolGames, self._sb.toolSlots, self._sb.newsItems, self._sb.modTags = {}, {}, {}, {}
@@ -1924,8 +1925,9 @@ function Sidebar.install(RI)
       g.print(Strings("From ") .. tostring(meta.source), textX, ty + nLines * self.hintFont:getHeight() + 6 * s)
     end
     local designY=ty+nLines*self.hintFont:getHeight()+(meta and meta.source and (self.hintFont:getHeight()+8*s) or 0)
-    local designWidth=math.min(textW,self.hintFont:getWidth(Strings('CARTRIDGE ART & DESIGN'))+24*s)
-    self._sb.designCart=self:_chipButton(textX,designY,'CARTRIDGE ART & DESIGN',{w=designWidth,h=32*s,kind='accent'})
+    local artLabel=require('src.import.CartridgeSources').get(version) and 'ORIGINAL CARTRIDGE IMAGE ↓' or 'CARTRIDGE ART & DESIGN'
+    local designWidth=math.min(textW,self.hintFont:getWidth(Strings(artLabel))+24*s)
+    self._sb.designCart=self:_chipButton(textX,designY,artLabel,{w=designWidth,h=32*s,kind='accent'})
     self._sb.designCart.version=version
     -- bottom right: the one import button -- "Import ROM" until the game is
     -- in, "Re-import ROM" after (the panel picks the label)

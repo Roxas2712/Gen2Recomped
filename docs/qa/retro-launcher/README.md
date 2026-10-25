@@ -7,6 +7,29 @@ hardware illustrations, editor and intro sequence.
 
 ## Behavior
 
+- Mods opens a shared catalogue with compact installed cards first and a
+  responsive discovery grid below. Publisher images take precedence over local
+  category illustrations; preview clicks open an enlarged, aspect-preserving
+  image with project information. Generation labels use declared host games,
+  rather than guessing from names such as “Gen 2 Dex”. Search combines names,
+  authors, descriptions and tags, supports quoted phrases and marked near
+  matches, and composes with category/generation filters.
+- Each app session forces one queued check per installed GitHub repository.
+  Checks continue after leaving the launcher; new versions get a pulsing red
+  installed-card outline. Updates still require an explicit installation.
+- Before play, source is compiled without execution and manifests, dependency
+  versions/cycles, conflicts, required files/imports and asset packs are checked.
+  Errors block launch with a copyable report; notices require review. Runtime
+  callbacks and gameplay remain explicitly untested by this static preflight.
+- Verified developers can preview and submit their own cover from the native
+  developer workspace, with credit, description and separate image-rights
+  confirmation. The deployed service keeps submissions private until reviewed;
+  an approved cover is attached to the exact verified repository in the public
+  feed. A changed thumbnail URL invalidates the launcher's old preview cache.
+- Retail cartridge tiles expose **Original ↓** directly. The dedicated screen
+  offers confirmed direct download, a browser route for providers requiring
+  browser verification, local image import and explicit design application.
+
 - The library opens first. Console, imported-game and favorite filters compose
   in place. Opening a cartridge and pressing Back returns directly to the library.
 - System cards show the corresponding handheld silhouette. The **LOGO LABELS**

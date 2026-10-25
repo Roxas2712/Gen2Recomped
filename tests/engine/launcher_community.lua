@@ -11,7 +11,10 @@ package.loaded['src.core.SaveData']={loadOptions=function() return options end,s
 local requests=0
 local requestUrls={}
 local response
-package.loaded['src.cloud.Http']={request=function(_,url) requests=requests+1;requestUrls[url]=(requestUrls[url] or 0)+1;return 200,response end}
+package.loaded['src.cloud.Http']={request=function(_,url)
+  if url=='https://pokexpert.de/api/launcher/presentation.json' then return 200,'{"schema_version":1,"week_enabled":false,"promotions_enabled":false,"items":[]}' end
+  requests=requests+1;requestUrls[url]=(requestUrls[url] or 0)+1;return 200,response
+end}
 package.loaded['src.cloud.Task']={new=function(fn)
   return {cancel=function() end,poll=function() local a,b=fn();return {kind='done',first=a,second=b} end}
 end}
@@ -47,6 +50,7 @@ function RI:_drawFindPanel() return 100 end
 function RI:_drawModsPanel() return 100 end
 function RI:_sbMousepressed() end
 function RI:update() self.updated=true end
+function RI:play() self.launched=true end
 function RI:_ensureFind() self:_refreshFind() end
 C.install(RI)
 local ui=setmetatable({section='mods',tab='find'},{__index=RI})
@@ -98,5 +102,19 @@ ui:_findConfirmInstall(card)
 check(account and not ui._communityLatestJob,'installing still requires the native account login before a download begins')
 check(C.compatibility({_communityResolved=true,api=99,game_version='>=0.1.0'})=='INCOMPATIBLE','future APIs receive an explicit incompatibility status')
 check(C.compatibility({})=='NOT VERIFIED','missing information never claims verified gameplay compatibility')
+check(C.compatibility({game_version='Not documented'})=='NOT VERIFIED','missing version documentation is not reported as a proven incompatibility')
 Index.readCache,Index.writeCache,Index.cacheFresh=oldRead,oldWrite,oldFresh
+ui.mods={{id='first',github='Author/Shared',version='1.0.0'},{id='second',github='author/shared',version='1.0.0'}}
+ui:_syncModUpdateInfo(true)
+check(#ui._communityUpdateQueue==1,'startup checks each repository once even when several mods share it')
+response=Json.encode({{tag_name='v2.0.0',assets={{name='first-2.0.0.zip',browser_download_url='https://github.com/Author/Shared/releases/download/v2.0.0/first-2.0.0.zip'},
+  {name='second-2.0.0.zip',browser_download_url='https://github.com/Author/Shared/releases/download/v2.0.0/second-2.0.0.zip'}}}})
+C.backgroundUpdates()
+local pending=ui._communityUpdateJob
+ui:play('red')
+check(ui.launched and ui._communityUpdateJob==pending,'starting a game preserves the public repository check')
+C.backgroundUpdates()
+check(ui.modUpdateInfo.first.status=='available' and ui.modUpdateInfo.second.status=='available','background completion updates every installed mod from the same repository')
+check(ui.modUpdateInfo.first.best.zip.name=='first-2.0.0.zip' and ui.modUpdateInfo.second.best.zip.name=='second-2.0.0.zip','a shared repository still selects and caches the correct ZIP for each individual mod')
+check(not C._updateOwner,'completed startup checks release their old launcher instance')
 print('Launcher community: '..checks..' checks passed')

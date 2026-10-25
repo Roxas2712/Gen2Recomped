@@ -160,6 +160,7 @@ local function parseEntry(raw)
     summary = str(raw.summary) or "",
     description = str(raw.description),
     games = strArray(raw.games),
+    compatibility = type(raw.compatibility)=="table" and raw.compatibility or {},
     categories = strArray(raw.categories),
     tags = strArray(raw.tags),
     license = str(raw.license),

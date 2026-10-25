@@ -106,7 +106,7 @@ function Designer.install(RI)
     local image,why=self:_cartImageBytes(bytes)
     if not image then draft.notice=Strings(why);return end
     draft.image,draft.png=image.image,image.bytes
-    if draft.referenceOpened then draft.style.artMode='cartridge' end
+    if draft.referenceOpened or draft.originalOnly then draft.style.artMode='cartridge' end
     draft.notice=Strings('Artwork loaded. Save the design to keep it.')
   end
 
@@ -136,7 +136,7 @@ function Designer.install(RI)
             if ok and image then d.image=image.image;d.png=image.bytes;d.style.artMode='cartridge';d.originalConsent=nil
               d.notice='Original image loaded. Save the design to use it in your library.'
             else d.notice=tostring(ok and why or image) end
-          else d.notice=tostring(result.error or 'Artwork download cancelled.') end
+          else d.notice='Direct download is unavailable. The image host may require browser verification. Open the image source in your browser, save the full-size image, then import it here. '..tostring(result.error or '') end
         end
       end
     end
@@ -179,6 +179,36 @@ function Designer.install(RI)
     end
     local g,s,p=love.graphics,self._s,RI.palette()
     self._cartControls={}
+    if d.originalOnly then
+      local function control(id,label,yy,kind)
+        local r=self:_chipButton(x,yy,label,{w=w,h=42*s,kind=kind})
+        r.id=id;self._cartControls[#self._cartControls+1]=r
+      end
+      local yy=y
+      paint.label(self,'ORIGINAL CARTRIDGE ARTWORK',x,yy,p.link);yy=yy+30*s
+      local ph=230*s
+      paint.surface(x,yy,w,ph,16*s,p.link,false)
+      Hardware.cartridge(self,d.version,x+w/2,yy+ph/2,w-48*s,ph-30*s,-.08,{customLabel=true})
+      yy=yy+ph+18*s
+      local source=Sources.get(d.version)
+      local rights='Original '..d.style.name..' cartridge photograph. Source: '..source.publisher..'; contributor: '..tostring(source.credit or 'see source')..'. Download served by '..source.delivery..' at '..tostring(source.width or '?')..' × '..tostring(source.height or '?')..' pixels. Artwork belongs to its respective rights holders, including Nintendo, Game Freak and Creatures. Check the source terms and your permitted use. Downloading grants no reuse licence. The image stays on this device.'
+      g.setFont(self.hintFont);U.col(p.detail);g.printf(rights,x,yy,w,'left')
+      local _,lines=self.hintFont:getWrap(rights,w);yy=yy+#lines*self.hintFont:getHeight()+16*s
+      control('source','VIEW IMAGE SOURCE ↗',yy);self._cartControls[#self._cartControls].value=source.page;yy=yy+52*s
+      control('consent',d.originalConsent and '✓ I HAVE CHECKED MY PERMITTED USE' or '□ I HAVE CHECKED MY PERMITTED USE',yy);yy=yy+52*s
+      if self._cartDownload then control('cancelDownload','CANCEL DOWNLOAD',yy);yy=yy+52*s
+      elseif d.originalConsent then
+        control('downloadOriginal','CONFIRM & DOWNLOAD ORIGINAL',yy,'accent');yy=yy+52*s
+        control('browserDownload','DOWNLOAD IN BROWSER ↗',yy);self._cartControls[#self._cartControls].value=source.image;yy=yy+52*s
+      end
+      control('image','IMPORT DOWNLOADED IMAGE',yy);yy=yy+52*s
+      if d.image then control('save','USE THIS CARTRIDGE IN MY LIBRARY',yy,'accent');yy=yy+52*s end
+      if d.notice then
+        g.setFont(self.hintFont);U.col(p.link);g.printf(d.notice,x,yy,w,'left')
+        local _,noticeLines=self.hintFont:getWrap(d.notice,w);yy=yy+#noticeLines*self.hintFont:getHeight()+16*s
+      end
+      return yy-y+16*s
+    end
     local wide=w>=680*s
     local previewW=wide and w*0.42 or w
     local previewH=wide and 460*s or 280*s
@@ -227,7 +257,7 @@ function Designer.install(RI)
       local download=self:_glassyButton(ex,ey,ew,42*s,self._cartDownload and 'CANCEL ARTWORK DOWNLOAD' or 'DOWNLOAD ORIGINAL CARTRIDGE IMAGE',self.hintFont,true)
       control(self._cartDownload and 'cancelDownload' or 'original',nil,download);ey=ey+54*s
       if d.showOriginalConsent then
-        local rights=Strings('Source: Bulbagarden Archives. Artwork belongs to its respective rights holders, including Nintendo, Game Freak and Creatures. Downloading does not grant a reuse licence. The image is stored only on this device.')
+        local rights='Source: '..reference.publisher..' · '..tostring(reference.credit or 'see source')..'. Served by '..reference.delivery..'. Original image bytes; no added compression. Artwork belongs to its respective rights holders, including Nintendo, Game Freak and Creatures. Downloading does not grant a reuse licence. The image is stored only on this device.'
         g.setFont(self.hintFont);U.col(p.detail);g.printf(rights,ex,ey,ew,'left')
         local _,lines=self.hintFont:getWrap(rights,ew);ey=ey+#lines*self.hintFont:getHeight()+14*s
         control('consent',nil,self:_chipButton(ex,ey,d.originalConsent and '✓ I HAVE CHECKED MY PERMITTED USE' or '□ I HAVE CHECKED MY PERMITTED USE',{w=ew,h=38*s}));ey=ey+48*s
@@ -270,8 +300,17 @@ function Designer.install(RI)
 
   local mouse=RI._sbMousepressed
   RI._sbMousepressed=function(self,x,y)
+    if self.section=='games' then
+      for _,r in ipairs(self._sb and self._sb.cartArt or {}) do
+        if U.inside(r,x,y) then self:_openCartDesigner(r.version);self._cartDraft.originalOnly=true;return true end
+      end
+    end
     local quick=self._sb and self._sb.designCart
-    if quick and U.inside(quick,x,y) then self:_openCartDesigner(quick.version);return true end
+    if quick and self.section=='games' and U.inside(quick,x,y) then
+      self:_openCartDesigner(quick.version)
+      self._cartDraft.originalOnly=Sources.get(quick.version)~=nil
+      return true
+    end
     if self.section=='tools' and self.toolFlow and self.toolFlow.tool.id=='cartDesign' and self._cartDraft then
       for _,r in ipairs(self._cartControls or {}) do
         if U.inside(r,x,y) then
@@ -287,6 +326,9 @@ function Designer.install(RI)
           elseif r.id=='consent' then d.originalConsent=not d.originalConsent
           elseif r.id=='downloadOriginal' then self:_cartDownloadOriginal()
           elseif r.id=='cancelDownload' then cancelDownload(self);d.notice='Artwork download cancelled.'
+          elseif r.id=='browserDownload' and d.originalConsent then
+            love.system.openURL(r.value);d.referenceOpened=true
+            d.notice='Save the full-size image in your browser, then choose Import downloaded image here.'
           elseif r.id=='source' then
             love.system.openURL(r.value);d.referenceOpened=true
             d.notice=Strings('Save the full-size image from the source page, then choose Import your own cartridge image. Images are not freely licensed merely because they can be downloaded.')
