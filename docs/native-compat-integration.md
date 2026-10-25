@@ -12,6 +12,7 @@ movement phases and map identities remain their owners.
 | Player phases and collision observations | #254, #255 |
 | Session and frame callback ownership | #265 |
 | Object views and original sprite sheets | #266, #269 |
+| Owned original-order sprite runtime | #276 |
 
 These existing reviews should be reused. This integration does not submit
 another copy of those contributions upstream.
@@ -48,3 +49,11 @@ and scoped consumers on the composed source before integration. Real GPU
 comparison, complete original-mod startup, camera/battle/UI presentation,
 save/restart gameplay and physical mobile/console acceptance remain open.
 Party, bag, storage, dex and script-store schema completion also remains open.
+
+The sprite follow-up reuses source `343e3260` and schema-2 object caches. It
+adds owned original-order resources, native asset override projection, pose
+observations and bounded stream preparation. Old caches request the native
+re-import path; the integration does not modify mod packages or player saves.
+Its composed regressions and fresh original-entry probes must pass separately
+from the earlier map/session receipt. The numeric script-store work after that
+source snapshot is not included in this follow-up.
