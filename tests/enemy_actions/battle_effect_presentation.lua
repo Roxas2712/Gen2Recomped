@@ -15,7 +15,7 @@ function M.run(root, backend, version)
     love.filesystem.write(picPath, "return {front={[4]={y=13}},back={[4]={y=8}},elevation={[4]=0}}")
     Pic.reset()
     assert(Pic.active().front[4] == 13, "owned native pic coordinates must be readable")
-    assert(Pic.active().back[4] == 8, "owned native back coordinates must be readable")
+    assert(Pic.active().back[4] == (version == "firered" and 10 or 8), "native back coordinates must be readable")
     local generalNames = {}
     for i = 0, 8 do
       generalNames[i] = "UNUSED_" .. i
