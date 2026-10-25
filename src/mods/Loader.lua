@@ -1196,6 +1196,8 @@ end
 -- migration it took goes with them.  The journal only exists around an
 -- entry chunk; a later failure (script validation) purges every registry.
 function Loader:_rollback(modId)
+  local facade=package.loaded['src.core.Game3']
+  if facade and facade._retireMod then facade._retireMod(modId)end
   for name in pairs(self.journal or self.content) do
     self.content[name]:rollback(modId)
   end
@@ -1309,12 +1311,28 @@ local function stampAudioOwners(data, name, registry)
   owners[key] = map
 end
 
+-- Notify source cleanup while its wrappers still exist, then retire only
+-- already-loaded session scopes after unwind. No native boot imports Game3.
+local function notifyCompatibilitySession()
+  local facade=package.loaded['src.core.Game3']
+  local game=package.loaded['src.core.Game']
+  if facade and facade._notifyReset and game then facade._notifyReset(game)end
+end
+local function retireCompatibilitySession()
+  for _,name in ipairs({'src.core.game3.runtime','src.core.Game3'})do
+    local module=package.loaded[name]
+    if type(module)=='table'and type(module.release)=='function'then module.release()end
+  end
+end
+
 function Loader:load(data)
   -- A SECOND LOAD IN ONE PROCESS STARTS FROM THE ENGINE, NOT FROM THE LAST
   -- LOAD'S MODS.  EXIT GAME -> launcher -> Play runs every mod's main.lua
   -- again (and the launcher backdrop boots the plain game in between); the
   -- wraps and flags the previous load put on engine tables come off first.
+  notifyCompatibilitySession()
   ModSeams.unwindAll()
+  retireCompatibilitySession()
   self.baseData = data
   -- every registry folds against the pristine view of its Data target;
   -- resolution is lazy so optional namespaces may appear later
@@ -1653,7 +1671,9 @@ end
 -- boots) ran on a modded engine whose mod instance nothing drives any more,
 -- and the next Play loaded every mod on top of what the last one left.
 function Loader.teardown()
+  notifyCompatibilitySession()
   local undone = select(1, ModSeams.unwindAll())
+  retireCompatibilitySession()
   pcall(function()
     Runtime.install(Events.new(), Hooks.new(), nil)
     Runtime.currentMod = nil
