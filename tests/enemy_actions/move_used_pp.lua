@@ -107,6 +107,19 @@ function M.run(root, backend, version)
       user.curMoves[slot].pp = value
     end
   end
+  local function eventPP(event)
+    local out = {}
+    for i = 1, 4 do
+      local row = event.user.mon.moves[i]
+      f.T.check(row == nil or type(row) == "table", "public API-3 moves expose PP records")
+      local value
+      if row then
+        value = row.pp
+      end
+      out[i] = value == nil and "absent" or value
+    end
+    return out
+  end
   local function pressure(target, enabled)
     if native then
       target.ability, target.mon.ability = enabled and 46 or 0, enabled and 46 or 0
@@ -241,7 +254,7 @@ function M.run(root, backend, version)
           end
           b.queue, b.current = {}, nil
         end
-        local events, chargeCalls, draws = {}, {}, {}
+        local events, eventsAfter, chargeCalls, draws = {}, {}, {}, {}
         local offCrit = f.e.api.hooks:wrap("battle.crit", function()
           return false
         end)
@@ -265,6 +278,7 @@ function M.run(root, backend, version)
         local off = f.e.api.events:on("battle.move_used", function(e)
           events[#events + 1] = {
             pp = pp(user),
+            publicPP = eventPP(e),
             user = e.user.mon.nickname,
             target = e.target.mon.nickname,
             move = e.move.id,
@@ -294,6 +308,9 @@ function M.run(root, backend, version)
             end
           end
         end)
+        local offAfter = f.e.api.events:on("battle.move_used", function(e)
+          eventsAfter[#eventsAfter + 1] = { pp = pp(user), publicPP = eventPP(e), move = e.move.id }
+        end)
         b.rng = function(lo, hi)
           draws[#draws + 1] = { lo, hi, hi }
           return hi
@@ -301,6 +318,7 @@ function M.run(root, backend, version)
         local before = pp(user)
         execute()
         off()
+        offAfter()
         offCharge()
         offCrit()
         local state = {}
@@ -325,6 +343,7 @@ function M.run(root, backend, version)
           actor = actor,
           before = before,
           events = events,
+          eventsAfter = eventsAfter,
           chargeCalls = chargeCalls,
           draws = draws,
           state = state,

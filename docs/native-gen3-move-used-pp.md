@@ -19,7 +19,8 @@ bypass and native sunlight consume PP before the subsequent event. Release
 does not consume a second PP. Non-GBA ordering is preserved.
 
 The new shared fixture executes unchanged native scripts for FireRed and
-Emerald. Its 384 rows retain event-visible PP, charge-hook PP, all RNG,
+Emerald. Its 384 rows retain event-visible PP, the public API-3 move records,
+the next subscriber's view after native callback changes, charge-hook PP, all RNG,
 current/retired PP and all active HP. They cover ordinary, Pressure, one/zero
 PP, callback refill/edit/replacement/removal, changed Pressure, forced slots,
 actual Sleep Talk, awake/asleep failures, authored `ctx.callMove`, Struggle,
