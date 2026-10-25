@@ -12,6 +12,9 @@ function M.mark(battle, row, user, left)
   if not V.isGen3() or not frame or not row or not row.anim then
     return
   end
+  if not protected(user) then
+    return
+  end
   frame.presentationOwner = frame.presentationOwner or {}
   row.gbaPresentationOwner = frame.presentationOwner
   row.gbaBehindSubstitute = protected(user)
@@ -36,16 +39,26 @@ function M.finish(battle, frame)
   if not owner then
     return
   end
-  local lowered, i = false, 1
+  local lowered, i, last = false, 1, 0
+  for index in pairs(battle.queue) do
+    if type(index) == "number" and index % 1 == 0 and index > last then
+      last = index
+    end
+  end
   local function insert(index, row)
-    table.insert(battle.queue, index, row)
+    -- Existing action callbacks can leave holes before later queued rows.
+    -- Preserve every row and hole instead of relying on Lua's sparse length.
+    for j = last, index, -1 do
+      battle.queue[j + 1] = battle.queue[j]
+    end
+    battle.queue[index], last = row, last + 1
     if battle.nextInsert and index <= battle.nextInsert + 1 then
       battle.nextInsert = battle.nextInsert + 1
     end
   end
-  while i <= #battle.queue do
+  while i <= last do
     local row = battle.queue[i]
-    if row.gbaPresentationOwner == owner then
+    if row and row.gbaPresentationOwner == owner then
       row.gbaPresentationOwner = nil
       if row.gbaBehindSubstitute then
         if not lowered then

@@ -26,6 +26,15 @@ end
 local V = require("src.core.GameVersion")
 local B = require("src.battle.BattleState")
 local P = require("src.battle.Gen3SubstitutePresentation")
+local animation, trailing = { anim = "MOVE_033", attackerPosition = 0 }, { fn = function() end }
+local sparse = { queue = { [1] = animation, [3] = trailing }, nextInsert = 1, _gbaMoveFrame = {} }
+P.mark(sparse, animation, { substituteHP = 100 })
+P.finish(sparse, sparse._gbaMoveFrame)
+T.eq(sparse.queue[1].anim, "SUBSTITUTE_TO_MON", "sparse queue retains native lowering")
+T.eq(sparse.queue[2], animation, "sparse queue retains original animation identity")
+T.eq(sparse.queue[3].anim, "MON_TO_SUBSTITUTE", "sparse queue retains native restoration")
+T.eq(sparse.queue[4], nil, "sparse queue preserves its original hole")
+T.eq(sparse.queue[5], trailing, "sparse queue preserves trailing callback identity")
 local user = { isPlayer = true, position = 0, substituteHP = 100, mon = { species = "FIX", hp = 400 } }
 local battle = setmetatable({
   player = user,
