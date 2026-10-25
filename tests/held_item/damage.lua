@@ -137,27 +137,22 @@ function M.run(root, backend, version)
           end
           local function calculate()
             if native then
-              return require("src.core.game3.battle.damage").calc(
-                user,
-                target,
-                {
-                  id = "TACKLE",
-                  numId = 33,
-                  power = 35,
-                  type = scenario.electric and 13 or scenario.special and 10 or 0,
-                  effect = 0,
-                },
-                {
-                  forceCrit = crit,
-                  rng = rng,
-                  adapter = require("src.core.game3.battle.adapter").new(b),
-                  st = b,
-                  weather = scenario.weather,
-                  waterSport = scenario.sport,
-                  reflect = scenario.screen,
-                  lightScreen = scenario.screen,
-                }
-              )
+              return require("src.core.game3.battle.damage").calc(user, target, {
+                id = "TACKLE",
+                numId = 33,
+                power = 35,
+                type = scenario.electric and 13 or scenario.special and 10 or 0,
+                effect = 0,
+              }, {
+                forceCrit = crit,
+                rng = rng,
+                adapter = require("src.core.game3.battle.adapter").new(b),
+                st = b,
+                weather = scenario.weather,
+                waterSport = scenario.sport,
+                reflect = scenario.screen,
+                lightScreen = scenario.screen,
+              })
             else
               return b:computeDamage(user, target, {
                 id = f.ids.TACKLE,
