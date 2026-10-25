@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "4a2f0d15de9820e897f6dfe895e204b3737a15d6",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/215",
-  "feature_ref": "a6205dfce1b6d091e758238447db3b25462367f4",
+  "runtime_ref": "abeaf23461ee80e95a7ff0f9cfd98bb5e5075062",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/216",
+  "feature_ref": "b1795a79cb03a4de7171d50db93a39ce49dddd64",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 222,
-  "engine_suites_total": 222,
+  "engine_suites_passed": 224,
+  "engine_suites_total": 224,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 72,
-  "cross_engine_paired_observations": 48524,
+  "cross_engine_worker_runs": 80,
+  "cross_engine_paired_observations": 59394,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All seven #215 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
+  "hosted_ci": "All seven #216 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -2162,6 +2162,125 @@
       "tmp/native-hit-full-accepted.log",
       "tmp/native-hit-contracts.json",
       "tmp/native-hit-import-smoke.log"
+    ]
+  },
+  "native_gba_party_codec": {
+    "feature_pr": 216,
+    "feature_ref": "b1795a79cb03a4de7171d50db93a39ce49dddd64",
+    "combined_runtime_ref": "abeaf23461ee80e95a7ff0f9cfd98bb5e5075062",
+    "prerequisite": 215,
+    "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_unchanged": true,
+    "codec_revision": 1,
+    "focused_checks": {
+      "codec_and_hooks": 194540,
+      "transport_trade_link": 303,
+      "total": 194843
+    },
+    "shared_worker_runs": 80,
+    "shared_paired_observations": 59394,
+    "all_observations_equal": true,
+    "codec_cases_per_profile": 5400,
+    "gender_hook_cases_per_profile": 35,
+    "public_gender_hook_policies": [
+      "none",
+      "delegate",
+      "female",
+      "invalid",
+      "threshold"
+    ],
+    "feature_engine_suites_passed": 100,
+    "feature_engine_suites_total": 109,
+    "baseline_ref": "a6205dfce1b6d091e758238447db3b25462367f4",
+    "baseline_engine_suites_passed": 98,
+    "baseline_engine_suites_total": 107,
+    "inherited_fail_lines": 25,
+    "inherited_failing_suites": 9,
+    "exact_failure_counter_equal": true,
+    "negative_control": {
+      "lost_fields": [
+        "personality",
+        "ivs",
+        "evs",
+        "nature",
+        "abilitySlot",
+        "otSecretId"
+      ],
+      "expected_hp_max": 92,
+      "old_hp_max": 67,
+      "failing_report_retained": true
+    },
+    "full_seeded_link_mirrors": 2,
+    "sender_genotype_checked": true,
+    "all_paired_turn_hashes_and_components_equal": true,
+    "strict_packet_refusals": true,
+    "actual_trade_application_and_save_roundtrip": true,
+    "raw_fixture_prior_hash": "3a76cc5fce47a5c3",
+    "raw_fixture_codec_hash": "2fd444270c3d90db",
+    "hash_audit": "Unchanged #215 hasher plus explicit [native_gba_party]1 surface token",
+    "non_gba_golden_changed": false,
+    "combined_engine_suites_passed": 224,
+    "combined_engine_suites_total": 224,
+    "sdk_suites": "3/3",
+    "b30": "passed",
+    "imported_cache_smoke": {
+      "runtime": "abeaf23461ee80e95a7ff0f9cfd98bb5e5075062",
+      "profiles": [
+        {
+          "passed": true,
+          "speciesIndex": 60,
+          "version": "firered",
+          "publicStatus": "TOX",
+          "abilitySlot": 2,
+          "stats": {
+            "hp": 92,
+            "attack": 47,
+            "defense": 33,
+            "speed": 85,
+            "spatk": 35,
+            "spdef": 35,
+            "special": 35
+          }
+        },
+        {
+          "passed": true,
+          "speciesIndex": 60,
+          "version": "emerald",
+          "publicStatus": "TOX",
+          "abilitySlot": 2,
+          "stats": {
+            "hp": 92,
+            "attack": 47,
+            "defense": 33,
+            "speed": 85,
+            "spatk": 35,
+            "spdef": 35,
+            "special": 35
+          }
+        }
+      ],
+      "scope": "CPU-only actual imported Poliwag identity/stats/PP and public API reads; no live UI/full playthrough"
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "workflow_runs": 7,
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40155830700",
+      "jobs": 0
+    },
+    "chat_attachment": "attempted; thread attachment identity count exceeds 100",
+    "remaining_scope": [
+      "Cross-engine network packet compatibility is not asserted",
+      "Full native egg-legality checks",
+      "Other-generation codecs",
+      "Timed side and volatile state producers",
+      "Whole-game RNG and VBlank scheduling",
+      "Demo midpoint RNG and controller playback",
+      "Live UI and full playthrough acceptance"
+    ],
+    "proof": [
+      "tmp/party-codec-full-accepted.log",
+      "tmp/party-codec-contracts.json",
+      "tmp/party-codec-import-smoke.log"
     ]
   }
 }

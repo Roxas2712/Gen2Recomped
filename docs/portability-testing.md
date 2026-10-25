@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214 and #215 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215 and #216 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,51 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`4a2f0d15de9820e897f6dfe895e204b3737a15d6`. Its ROM-free run passed
-**222/222 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`abeaf23461ee80e95a7ff0f9cfd98bb5e5075062`. Its ROM-free run passed
+**224/224 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #216](https://github.com/UNDERdecoded/Gen2Recomped/pull/216) adds a separate
+versioned GBA party codec. Native PID, six IVs/EVs, selected valid ability slot,
+native nature/stats, trainer/secret identity, PP-Ups and native metadata now
+survive trade/link transport. The old DV codec lost all six checked identity
+fields and changed the negative example's HP maximum from 92 to 67. Auto-level
+now heals GBA HP/status while retaining genotype. The actual trade controller
+files the received mon and its genotype persists across save serialization.
+Both live `gender.roll` calls are retained, including public override and
+metadata-steering policies. Engine ID/stat-key/gender-code mappings are explicit.
+
+The clean feature `b1795a79cb03a4de7171d50db93a39ce49dddd64` passes **194,843
+focused checks** (194,540 codec/hooks and 303 transport/trade/link). Both clean
+feature and combined runtime above match the unchanged source in **80 workers /
+59,394 paired observations**. The new matrices cover all 25 natures, levels
+1/35/100 and forced levels, two species including Shedinja, both ability slots,
+zero/max/mixed investments and three registry ID formats. The previously failed
+ID-schema comparison remains retained; no observations/calls were filtered.
+The full feature run passes 100/109 engine suites, SDK 3/3 and B30. Its exact
+Counter of all 25 inherited FAIL lines across nine suites equals #215 (98/107).
+Their independent repairs remain green in the combined runtime above.
+
+Native party revision 1 is negotiated before both trade and battle exchange;
+older/different codecs are refused in either role. Full GBA fingerprints and
+active/bench signatures include the codec/genotype. The raw fixture hash changes
+from `3a76cc5fce47a5c3` to `2fd444270c3d90db`, independently audited with the
+unchanged #215 hasher and explicit surface token. Non-GBA golden values remain
+unchanged. Two complete seeded link mirrors verify original sender genotype as
+well as every completed paired turn hash/component. A CPU-only smoke on actual
+FireRed/Emerald Poliwag imports also retains genotype/stats and public API-3
+status/personality reads. No ROM/assets/saves are distributed.
+
+All seven hosted #216 workflows await maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40155830700)
+has zero jobs. The chat's 100-artifact cap prevents another attachment; the
+regular PR is published and linked. Evidence is retained in
+`tmp/party-codec-full-accepted.log`, `tmp/party-codec-contracts.json` and
+`tmp/party-codec-import-smoke.log`. This establishes engine-local native packet
+fidelity; it does not assert cross-engine network packet compatibility. Full
+native egg-legality checks, other-generation codecs, timed side/volatile
+producers, global RNG/VBlank and demo controller playback remain separate.
+See [the scoped codec contract](native-gen3-party-codec.md).
 
 [PR #215](https://github.com/UNDERdecoded/Gen2Recomped/pull/215) aligns native
 GBA accuracy and ordinary post-hit chances. The percentage command now shares
