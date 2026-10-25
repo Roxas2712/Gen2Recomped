@@ -10,7 +10,7 @@ local VM=require('src.script.Gen2ScriptVM')
 local Runner=require('src.script.ScriptRunner')
 local Runtime=require('src.mods.Runtime')
 local oldEvents=Runtime.events;local events=require('src.mods.Events').new();Runtime.events=events
-local emitted={};events:on('radio.channel',function(e)emitted[#emitted+1]=e end)
+local emitted={};events:on("radio.channel",function(e)emitted[#emitted+1]=e end)
 local data=T.fixtures.fresh();require('src.render.Font').load(data)
 data.maps.PALLET_TOWN={landmark=47}
 data.gen2RadioChannels=Radio.defaults();data.gen2RadioChannels.TEST_RADIO={channel=9,name='TEST RADIO'}

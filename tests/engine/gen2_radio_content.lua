@@ -46,8 +46,8 @@ V.set('crystal')
 for _,mode in ipairs({{1,'native'},{2,'native'},{2,'unified'},{3,'unified'}})do
   local d=fixture()
   local r=load(d,[[
-    assert(mod:supports('content','radio_channels'))
-    assert(mod:supports('events','radio.channel'))
+    assert(mod:supports('content',"radio_channels"))
+    assert(mod:supports('events',"radio.channel"))
     local radio=mod.content.radio_channels
     local row=assert(radio:get('OAKS_POKEMON_TALK'));row.name='BORROWED'
     assert(radio:get('OAKS_POKEMON_TALK').name~='BORROWED')
@@ -57,7 +57,7 @@ for _,mode in ipairs({{1,'native'},{2,'native'},{2,'unified'},{3,'unified'}})do
     radio:register('PIRATE_RADIO',{channel=9,name='PIRATE RADIO'})
     radio:remove('POKEDEX_SHOW')
     radio:patch('LUCKY_CHANNEL',{channel=11})
-    mod.events:on('radio.channel',function(e)
+    mod.events:on("radio.channel",function(e)
       mod.exports.event={station=e.station,channel=e.channel,name=e.name,source=e.source}
       e.name='CALLBACK MUTATION'
     end)
@@ -142,7 +142,7 @@ local extras={
  ['mods/broken/manifest.json']=Json.encode({id='broken',name='Broken radio',version='1',api=2,entry='main.lua',dependencies={'radio'}}),
  ['mods/broken/main.lua']=[[
    local mod=...;mod.content.radio_channels:patch('OAKS_POKEMON_TALK',{name='BROKEN'})
-   mod.events:on('radio.channel',function()error('leaked failed listener')end)
+   mod.events:on("radio.channel",function()error('leaked failed listener')end)
    mod.content.radio_channels:register('BAD',{channel=1})
  ]],
 }
@@ -159,8 +159,8 @@ finish(r)
 for _,version in ipairs({'red','emerald','platinum','black'})do
   V.set(version);d=T.fixtures.fresh()
   r=load(d,[[
-    assert(not mod:supports('content','radio_channels'))
-    assert(not mod:supports('events','radio.channel'))
+    assert(not mod:supports('content',"radio_channels"))
+    assert(not mod:supports('events',"radio.channel"))
     assert(mod.content.radio_channels:get('OAKS_POKEMON_TALK')==nil)
     assert(mod.content.radio_channels:each()()==nil)
     assert(mod.content.radio_channels:register('NOT_NATIVE',{channel=9})==nil)
