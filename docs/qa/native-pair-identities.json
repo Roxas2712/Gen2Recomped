@@ -57,5 +57,14 @@
     "sdkSuitesTotal": 3,
     "dramaticShapeB30": "pass",
     "fullCompatibility": false
+  },
+  "composedRegression": {
+    "commit": "9fcc703ebff48e62eb0c008fbc739eae1faa42be",
+    "engineSuitesPassed": 329,
+    "engineSuitesTotal": 329,
+    "sdkSuitesPassed": 3,
+    "sdkSuitesTotal": 3,
+    "dramaticShapeB30": "pass",
+    "fullCompatibility": false
   }
 }

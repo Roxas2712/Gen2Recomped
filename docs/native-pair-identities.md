@@ -83,3 +83,6 @@ The source dataset tileset alias is verified independently, rather than
 guessed from the pair spelling. The native map facade needs this additional
 name while preserving its explicit native pair key. Real source/native
 comparison agrees on all 303 aliases and 2,156 map assignments.
+
+The source-alias addition also passes the final composed regression at
+`9fcc703e`: engine 329/329, SDK 3/3 and Dramatic Shape B30.
