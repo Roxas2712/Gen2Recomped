@@ -166,3 +166,16 @@ Zusätzliche Regressionen:
 ```sh
 python3 tests/qa_legacy_storage_test.py
 ```
+
+## Zusätzliche Scratch-Testläufe
+
+Registrierte Projekte unter `~/Documents/Codex/JJJJ-MM-TT/<chat>/work/<projekt>`
+erkennen auch benachbarte `runs/oasc-gen2recomp-qa-full109-fork-<hash>-<edition>`
+und `native-mod-shader-runs/oasc-gen2recomp-qa-native-mod-shader-<hash>` automatisch.
+Nur `engine`, `host`, `installer` und `mod.zip` gehören zum bestehenden gemeinsamen
+4-GiB-/24-Stunden-Budget. Berichte, Logs und Treiber außerhalb dieser Kopien
+bleiben erhalten. Git-Checkouts, Quellen und Modellbytes, baseroms und Spielstände
+behalten den bestehenden Schutz beziehungsweise die dauerhafte Archivierung.
+Sperren und Aktivitätsprüfungen beziehen den ganzen Lauf und seine LOVE-Identity
+ein; auch ein während der Sicherung neu gestarteter Leser verhindert die Löschung.
+Beliebige Nachbarordner und Spieleridentities werden nicht als Kopien behandelt.

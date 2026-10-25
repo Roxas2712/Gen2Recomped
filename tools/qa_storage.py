@@ -611,7 +611,8 @@ class Storage:
         elif entry['kind']=='ula':
             self._remove_tree(path)
         elif entry['kind']=='legacy':
-            legacy.preserve(path,self.home,active=self._legacy_live.busy)
+            legacy.preserve(path,self.home,active=lambda p:self._legacy_live.busy(p) or any(
+                self._legacy_live.busy(dependency) for dependency in legacy.dependencies(p,self._valid(entry)[1],self.home)))
         else:
             for file, _ in self._files(entry):
                 file.unlink()

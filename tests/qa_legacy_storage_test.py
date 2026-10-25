@@ -175,6 +175,56 @@ class Retention(unittest.TestCase):
             self.manager(copy_limit=0).sweep();self.assertTrue(source.exists())
         self.activity.start()
 
+    def scratch(self):
+        root=self.home/'Documents/Codex/2026-10-25/task/work/origami';root.mkdir(parents=True)
+        run=root.parent/'runs/oasc-gen2recomp-qa-full109-fork-abcdef-ruby'
+        return root,run
+
+    def test_scratch_copy_discovery_preserves_code_models_roms_reports_and_saves(self):
+        root,run=self.scratch();code=self.put(run/'engine/main.lua');model=self.put(run/'host/models/a.png')
+        rom=self.put(run/'host/baseroms/a.gba');save=self.put(run/'host/saves/a.bin');report=self.put(run/'receipt.json')
+        m=Storage(root,home=self.home,min_free=0,copy_limit=0,clock=lambda:time.time()+4000)
+        try:m.sweep()
+        finally:m.close(collect=False)
+        self.assertFalse(code.exists()or model.exists());self.assertTrue(rom.exists()and save.exists()and report.exists())
+        self.assertEqual(self.show(run,'engine','main.lua'),b'source')
+        self.assertEqual(self.show(run,'host','models/a.png'),b'source')
+
+    def test_scratch_profile_lease_and_unmanaged_reader_protect_copies(self):
+        root,run=self.scratch();source=self.put(run/'engine/main.lua')
+        writer=Storage(root,home=self.home,min_free=0,copy_limit=100000);writer.copy(run/'engine');writer.close()
+        reader=Storage(root,home=self.home,min_free=0);reader.destination(self.home/'Library/Application Support/LOVE'/run.name)
+        cleaner=Storage(root,home=self.home,min_free=0,copy_limit=0)
+        try:
+            cleaner.sweep();self.assertTrue(source.exists());reader.close(collect=False)
+            with patch('qa_legacy_storage.LiveUse.busy',side_effect=lambda p:p==run):
+                cleaner.sweep();self.assertTrue(source.exists())
+            cleaner.sweep();self.assertFalse(source.exists())
+        finally:reader.close(collect=False);cleaner.close(collect=False)
+
+    def test_scratch_profile_reader_starting_during_archive_prevents_removal(self):
+        root,run=self.scratch();m=Storage(root,home=self.home,min_free=0,copy_limit=0)
+        p=m.copy(run/'engine');source=self.put(p/'main.lua');m.close(collect=False)
+        cleaner=Storage(root,home=self.home,min_free=0,copy_limit=0)
+        from qa_preserved import Vault
+        original=Vault.capture;busy=[False]
+        def capture(vault,path):
+            proof=original(vault,path);busy[0]=True;return proof
+        try:
+            with patch('qa_preserved.Vault.capture',capture),patch('qa_legacy_storage.LiveUse.busy',side_effect=lambda p:busy[0]and p==run):cleaner.sweep()
+            self.assertTrue(source.exists())
+        finally:cleaner.close(collect=False)
+
+    def test_scratch_layout_rejects_player_folders_other_roots_and_nested_git(self):
+        root,run=self.scratch()
+        self.assertIsNone(legacy.identify(root.parent/'runs/player/engine',root,self.home))
+        self.assertIsNone(legacy.identify(run/'engine',self.root,self.home))
+        self.assertIsNone(legacy.identify(run/'receipt.json',root,self.home))
+        m=Storage(root,home=self.home,min_free=0,copy_limit=0)
+        source=self.put(run/'engine/main.lua');self.put(run/'engine/sub/.git/HEAD')
+        try:m.copy(run/'engine');m.close();self.assertTrue(source.exists())
+        finally:m.close(collect=False)
+
     def test_maintenance_install_uses_stable_package_and_smokes_without_real_home(self):
         plist,package=install([self.root],home=self.home,load=False,python=sys.executable)
         cfg=plistlib.loads(plist.read_bytes());self.assertEqual(cfg['StartInterval'],900)

@@ -23,6 +23,29 @@ def qa_profile(name):
              and re.search(r'(?:^|-)(?:qa|test)(?:-|$)', name) is not None))
 
 
+SCRATCH_RUNS = {
+    'runs': re.compile(r'oasc-gen2recomp-qa-full109-fork-[a-f0-9]+-(?:firered|leafgreen|ruby|sapphire|emerald)\Z'),
+    'native-mod-shader-runs': re.compile(r'oasc-gen2recomp-qa-native-mod-shader-[a-f0-9]+\Z'),
+}
+SCRATCH_PARTS = {'engine', 'host', 'installer', 'mod.zip'}
+
+
+def scratch_base(root, home):
+    base = Path(home)/'Documents/Codex'
+    if not root.is_relative_to(base):return None
+    parts = root.relative_to(base).parts
+    if len(parts)!=4 or not re.fullmatch(r'\d{4}-\d{2}-\d{2}',parts[0]) or parts[2]!='work':return None
+    return root.parent
+
+
+def scratch_run(path, root, home):
+    base = scratch_base(root,home)
+    if base is None or not path.is_relative_to(base):return None
+    parts = path.relative_to(base).parts
+    if len(parts)<3 or parts[0] not in SCRATCH_RUNS or not SCRATCH_RUNS[parts[0]].fullmatch(parts[1]) or parts[2] not in SCRATCH_PARTS:return None
+    return base/parts[0]/parts[1]
+
+
 def identify(path, root, home):
     """Return the exact disposable root, including for a child/source path."""
     path, root, home = map(Path, (path, root, home))
@@ -34,6 +57,8 @@ def identify(path, root, home):
             if parts[0].startswith('oasc-') and re.search(r'(?:^|-)qa(?:-|$)', parts[0]) and parts[2] in {'ORIGAMI_ASCENDANT', 'ORIGAMI_ASCENDANT_GEN2_PREP'}:
                 return None
             return love/parts[0]/'mods'/parts[2]
+    run = scratch_run(path,root,home)
+    if run is not None:return run/path.relative_to(run).parts[0]
     local = root/'.local'
     if path.is_relative_to(local):
         parts = path.relative_to(local).parts
@@ -51,6 +76,12 @@ def identify(path, root, home):
 
 
 def candidates(root, home):
+    scratch = scratch_base(root,home)
+    if scratch is not None:
+        for folder,pattern in SCRATCH_RUNS.items():
+            for run in (scratch/folder).glob('*'):
+                if run.is_symlink() or not run.is_dir() or not pattern.fullmatch(run.name):continue
+                for name in sorted(SCRATCH_PARTS):yield run/name
     local = root/'.local'
     for name in sorted(BASELINES | RUN_GROUPS):
         yield local/name
@@ -73,6 +104,10 @@ def candidates(root, home):
 
 
 def dependencies(path, root, home):
+    run = scratch_run(path,root,home)
+    if run is not None:
+        yield run
+        yield home/'Library/Application Support/LOVE'/run.name
     local = root/'.local/qa'
     if path.is_relative_to(local):
         parts = path.relative_to(local).parts
