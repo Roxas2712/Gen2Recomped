@@ -1,7 +1,15 @@
 package.path = "./?.lua;./?/init.lua;" .. package.path
 local T = require("tests.modkit")
 for _, version in ipairs({ "firered", "emerald" }) do
-  for _, mode in ipairs({ "delegate", "primary_delegate", "override", "status_override", "fallback" }) do
+  for _, mode in ipairs({
+    "delegate",
+    "primary_delegate",
+    "override",
+    "status_override",
+    "fallback",
+    "awake",
+    "empty",
+  }) do
     local entry
     if mode ~= "fallback" then
       entry = [[return function(mod)
@@ -33,10 +41,22 @@ for _, version in ipairs({ "firered", "emerald" }) do
     c.user.mon.moves =
       { { id = f.ids.SLEEP_TALK, pp = 10 }, { id = f.ids.TACKLE, pp = 0 }, { id = f.ids.SCRATCH, pp = 10 } }
     c.user.curMoves = c.user.mon.moves
+    if mode == "awake" then
+      c.user.mon.status, c.user.sleepTurns = nil, nil
+    end
+    if mode == "empty" then
+      c.user.curMoves[2].id, c.user.curMoves[3].id = f.ids.METRONOME, f.ids.MIRROR_MOVE
+    end
+    c.user.lastMove = f.ids.SCRATCH
     local originalEffects, originalStatuses = b.data.move_effects, b.data.statuses
     if mode == "fallback" then
       b.data.move_effects, b.data.statuses = nil, nil
     end
+    local reads = {}
+    local offReads = f.e.api.hooks:wrap("held_item.trigger", function(nextRead, ctx)
+      reads[#reads + 1] = { trigger = ctx.trigger, parameter = ctx.parameter, item = ctx.item }
+      return nextRead(ctx)
+    end)
     local used = {}
     local off = f.e.api.events:on("battle.move_used", function(e)
       used[#used + 1] = { move = e.move.id, target = e.target.mon.nickname, called = e.isCalled or false }
@@ -48,7 +68,15 @@ for _, version in ipairs({ "firered", "emerald" }) do
       return hi
     end
     b:executeAction(c.user, c.user, c.user.curMoves[1])
-    if mode == "status_override" then
+    if mode == "awake" or mode == "empty" then
+      T.eq(#used, 1, "failed Sleep Talk emits only its caller event")
+      T.eq(c.user.curMoves[1].pp, 9, "failed executed caller still spends its PP")
+      T.eq(c.user.lastMove, f.ids.SCRATCH, "failed caller preserves previous move bookkeeping")
+      T.eq(#reads, 2, "failed caller performs only the separate after-action item reads")
+      for _, read in ipairs(reads) do
+        T.eq(read.trigger, "residual", "no failed-call move-end sweep is inserted")
+      end
+    elseif mode == "status_override" then
       T.eq(#used, 0, "authored sleep interruption owns cancellation")
       T.eq(f.e.calls, 0, "cancelled caller never selects a nested move")
       T.eq(c.user.curMoves[1].pp, 10, "authored cancellation spends no PP")
@@ -96,6 +124,7 @@ for _, version in ipairs({ "firered", "emerald" }) do
     )
     T.same(f.result.loader.errors, {}, "record callbacks complete without swallowed runtime errors")
     off()
+    offReads()
     b.data.move_effects, b.data.statuses = originalEffects, originalStatuses
     f.close()
   end
