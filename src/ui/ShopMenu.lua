@@ -315,7 +315,7 @@ function ShopMenu.new(game, stock, onQuit, opts)
   if opts and opts.bargain then return buy(game, stock, true, onQuit) end
   local counter = gen3Counter(game)
   if counter then
-    local fireRed = require("src.core.GameVersion").get() == "firered"
+    local fireRed = require("src.core.GameVersion").isFRLG()
     local Menu = require("src.ui.Menu")
     local menu
     menu = Menu.new(game, {
