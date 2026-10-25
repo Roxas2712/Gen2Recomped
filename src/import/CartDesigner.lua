@@ -36,6 +36,7 @@ function Designer.normalize(value)
     return math.max(lo,math.min(hi,n))
   end
   return {name=name,shell=rgb(value.shell),label=rgb(value.label),pattern=pattern,art=art,
+    originalSha256=type(value.originalSha256)=='string' and #value.originalSha256==64 and value.originalSha256:match('^[a-f0-9]+$') and value.originalSha256 or nil,
     artMode=value.artMode=='cartridge' and 'cartridge' or 'label',
     artFit=value.artFit=='cover' and 'cover' or 'contain',artZoom=bounded(value.artZoom,1,3,1),
     artX=bounded(value.artX,0,1,.5),artY=bounded(value.artY,0,1,.5)}
@@ -49,6 +50,13 @@ function Designer.install(RI)
   local U,paint=RI._ui,Library.paint
   local tool={id='cartDesign',label='Cartridge Studio',note='Design your own shell, label and artwork.'}
   Sidebar.TOOLS[#Sidebar.TOOLS+1]=tool
+  local batchTool={id='cartBatch',label='Original cartridge collection',note='Load and apply all available originals in one batch.'}
+  Sidebar.TOOLS[#Sidebar.TOOLS+1]=batchTool
+  function RI:_openCartBatch()
+    self._cartDraft=nil
+    self.section='tools';self.settingsOpen=false;self.toolFlow={tool=batchTool,label=batchTool.label}
+    self._cartBatch=self._cartBatch or {};self.pageScroll=0
+  end
 
   function RI:_cartStyle(version)
     if self._cartDraft and self._cartDraft.version==version then
@@ -106,6 +114,7 @@ function Designer.install(RI)
     local image,why=self:_cartImageBytes(bytes)
     if not image then draft.notice=Strings(why);return end
     draft.image,draft.png=image.image,image.bytes
+    draft.style.originalSha256=nil
     if draft.referenceOpened or draft.originalOnly then draft.style.artMode='cartridge' end
     draft.notice=Strings('Artwork loaded. Save the design to keep it.')
   end
@@ -123,6 +132,7 @@ function Designer.install(RI)
   local update=RI.update
   RI.update=function(self,dt,...)
     local D=require('src.import.CartridgeDownload');D.reap()
+    require('src.import.CartridgeBatch').tick(self)
     local pending=self._cartDownload
     if pending then
       if self._cartDraft~=pending.draft then cancelDownload(self)
@@ -133,7 +143,7 @@ function Designer.install(RI)
           local d=pending.draft
           if result.kind=='done' then
             local ok,image,why=pcall(self._cartImageBytes,self,result.bytes)
-            if ok and image then d.image=image.image;d.png=image.bytes;d.style.artMode='cartridge';d.originalConsent=nil
+            if ok and image then d.image=image.image;d.png=image.bytes;d.style.artMode='cartridge';d.style.originalSha256=Sources.get(d.version).sha256;d.originalConsent=nil
               d.notice='Original image loaded. Save the design to use it in your library.'
             else d.notice=tostring(ok and why or image) end
           else d.notice='Direct download is unavailable. The image host may require browser verification. Open the image source in your browser, save the full-size image, then import it here. '..tostring(result.error or '') end
@@ -167,12 +177,40 @@ function Designer.install(RI)
 
   local run=RI._sbRunTool
   RI._sbRunTool=function(self,selected,version,...)
+    if selected.id=='cartBatch' then return self:_openCartBatch() end
     if selected.id=='cartDesign' then return self:_openCartDesigner(version) end
     return run(self,selected,version,...)
   end
 
   local tools=RI._sbTools
   RI._sbTools=function(self,x,y,w,h)
+    if self.toolFlow and self.toolFlow.tool.id=='cartBatch' and self._cartBatch then
+      local f=self._cartBatch;local s,p,g=self._s,RI.palette(),love.graphics
+      local yy=y;self._cartBatchControls={}
+      local function paragraph(value)
+        g.setFont(self.hintFont);U.col(p.detail);g.printf(value,x,yy,w,'left')
+        local _,lines=self.hintFont:getWrap(value,w);yy=yy+#lines*self.hintFont:getHeight()+18*s
+      end
+      local function button(id,label)
+        local r=self:_chipButton(x,yy,label,{w=w,h=44*s,kind='accent'});r.id=id;self._cartBatchControls[#self._cartBatchControls+1]=r;yy=yy+56*s
+      end
+      paint.label(self,'ALL ORIGINAL CARTRIDGES',x,yy,p.link);yy=yy+38*s
+      paragraph('Download and apply all 16 supported retail cartridge photographs at once (about 20 MB). Original PNG quality, served by ModCompass. Existing artwork and custom designs are skipped; ROM hacks keep their own designs. No ROM or login is required.')
+      paragraph('Sources: Bulbagarden Archives · TheMalevolentOne / UnethicalVoxel. Cartridge artwork belongs to its respective rights holders, including Nintendo, Game Freak and Creatures. The source claims fair use; downloading grants no reuse licence. Review your permitted use. Images remain on this device.')
+      if f.running then
+        paragraph(('%d / %d applied · now loading %s'):format(f.done or 0,f.total or 0,tostring(f.current or 'next cartridge')))
+        local progress=((f.total or 0)-#(f.queue or {})-(f.job and 1 or 0))/math.max(1,f.total or 1)
+        U.col(p.link,.25);g.rectangle('fill',x,yy,w,8*s,4*s,4*s);U.col(p.link);g.rectangle('fill',x,yy,w*progress,8*s,4*s,4*s);yy=yy+26*s
+        button('cancel','STOP BATCH · KEEP COMPLETED IMAGES')
+      else
+        button('consent',f.consent and '[x] I HAVE CHECKED MY PERMITTED USE' or '[ ] I HAVE CHECKED MY PERMITTED USE')
+        if f.consent then button('start','LOAD & APPLY ALL MISSING ORIGINALS') end
+      end
+      if f.notice then paragraph(f.notice) end
+      for _,failed in ipairs(f.failed or {}) do paragraph(failed.version..': '..failed.reason) end
+      button('library','BACK TO LIBRARY')
+      return yy-y
+    end
     local d=self._cartDraft
     if not (self.toolFlow and self.toolFlow.tool.id=='cartDesign' and self.toolFlow.version and d) then
       return tools(self,x,y,w,h)
@@ -300,7 +338,18 @@ function Designer.install(RI)
 
   local mouse=RI._sbMousepressed
   RI._sbMousepressed=function(self,x,y)
+    if self.section=='tools' and self.toolFlow and self.toolFlow.tool.id=='cartBatch' and self._cartBatch then
+      for _,r in ipairs(self._cartBatchControls or {}) do if U.inside(r,x,y) then
+        local f=self._cartBatch
+        if r.id=='consent' then f.consent=not f.consent
+        elseif r.id=='start' then require('src.import.CartridgeBatch').start(self,f.consent)
+        elseif r.id=='cancel' then require('src.import.CartridgeBatch').cancel(self)
+        elseif r.id=='library' then self:_sbGo('games') end
+        return true
+      end end
+    end
     if self.section=='games' then
+      if U.inside(self._sb and self._sb.cartBatch,x,y) then self:_openCartBatch();return true end
       for _,r in ipairs(self._sb and self._sb.cartArt or {}) do
         if U.inside(r,x,y) then self:_openCartDesigner(r.version);self._cartDraft.originalOnly=true;return true end
       end
@@ -401,6 +450,7 @@ function Designer.install(RI)
       local ok,bytes=pcall(function() file:open('r');local b=file:read(8*1024*1024+1);file:close();return b end)
       local image,why=self:_cartImageBytes(ok and bytes or nil)
       if image then self._cartDraft.image=image.image;self._cartDraft.png=image.bytes
+        self._cartDraft.style.originalSha256=nil
         if self._cartDraft.referenceOpened then self._cartDraft.style.artMode='cartridge' end
         self._cartDraft.notice=Strings('Artwork loaded. Save the design to keep it.')
       else self._cartDraft.notice=Strings(why) end

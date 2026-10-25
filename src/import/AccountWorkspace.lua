@@ -15,7 +15,9 @@ local function job(self,purpose,fn)
 end
 function W.open(self,after)
   if self._developerOverlay then require('src.import.DeveloperWorkspace').close(self) end
-  self._accountOverlay={mode=Auth.signedIn() and 'account' or 'login',after=after,email='',name='',password='',confirmation='',code='',repositories={''},rects={},scroll=0,accountAtOpen=Auth.accountId and Auth.accountId()}
+  local choice=type(after)=='table' and after.storagePrompt and not (Auth.accountId and Auth.accountId())
+  self._accountOverlay={mode=choice and 'storage_choice' or Auth.signedIn() and 'account' or 'login',after=after,email='',name='',password='',confirmation='',code='',repositories={''},rects={},scroll=0,accountAtOpen=Auth.accountId and Auth.accountId()}
+  if choice then return end
   job(self,Auth.signedIn() and 'devices' or 'policy',Auth.signedIn() and A.devices or A.policy)
 end
 function W.close(self)
@@ -26,6 +28,8 @@ local function connected(self,f)
   if Auth.accountId and Auth.accountId()~=f.accountAtOpen then require('src.storage.AccountStorage').profileChanged(self) end
   -- Connecting an account never silently enables uploads or downloads.
   local settings=self:_settings();settings.cloudAutoSync=f.cloudSync==true
+  settings.cartridgeCloudSync=f.cloudSync==true
+  settings.launcherSaveStorageChoice=f.cloudSync and 'cloud' or 'local'
   if self._saveSettings then self:_saveSettings() end
   self._settingsRowCache=nil
   local after=f.after;W.close(self)
@@ -36,12 +40,24 @@ local function connected(self,f)
 end
 function W.action(self,id)
   local f=self._accountOverlay;if not f then return end
+  if id=='local' and not (Auth.accountId and Auth.accountId()) then
+    local settings=require('src.core.SaveData').loadOptions()
+    settings.launcherSaveStorageChoice='local';settings.cloudAutoSync=false
+    if not require('src.core.SaveData').saveOptions(settings) then f.notice='Could not remember your local-save choice. Please retry.';return end
+    self._settingsCache=nil
+    local after=f.after;W.close(self)
+    if type(after)=='table' and after.kind=='play' then return require('src.storage.AccountStorage').resume(self,after) end
+    return
+  end
   if id=='close' then W.close(self);return end
   if id=='back' and f.document then f.document=nil;f.scroll=0;return end
   if f.job then return end
   if id:match('^field:') then inputMode(f,id:sub(7));return end
   inputMode(f,nil)
-  if id=='login' or id=='register' or id=='forgot' or id=='back' then
+  if id=='cloud' then
+    f.mode='login';f.cloudSync=true;f.scroll=0
+    if not f.policy then job(self,'policy',A.policy) end
+  elseif id=='login' or id=='register' or id=='forgot' or id=='back' then
     clearSecrets(f);f.challenge=nil;f.mode=id=='back' and 'login' or id;f.scroll=0;f.notice=nil
     if id=='register' and not f.policy then job(self,'policy',A.policy) end
   elseif id:match('^read:') then
@@ -67,6 +83,7 @@ function W.action(self,id)
   elseif id=='resend' and f.challenge then local challenge=f.challenge;job(self,'resend',function() return A.resend(challenge) end)
   elseif id=='operator' and f.policy and f.policy.operator_url=='https://pokexpert.de/impressum' then love.system.openURL(f.policy.operator_url)
   elseif id=='devices' then job(self,'devices',A.devices)
+  elseif id=='sync' then W.close(self);self:_storageSync()
   elseif id=='linkStorage' then
     if not f.storageConsent then f.notice='Confirm that these local saves and Bank should belong to this account first.';return end
     local ok,why=require('src.storage.AccountStorage').bind()
@@ -98,9 +115,12 @@ function W.tick(self)
     else job(self,'devices',A.devices) end
   elseif doc.state=='connected' then connected(self,f)
   elseif doc.state=='password_reset' then f.mode='login';f.challenge=nil;f.notice='Password updated. Sign in with your new password.';f.scroll=0
+  elseif doc.state=='mfa_code' then
+    clearSecrets(f);f.mode='login';f.challenge=nil;f.scroll=0
+    f.notice='Please sign in again with email and password. This launcher does not require an authenticator.'
   elseif doc.challenge then
     f.mode=doc.state;f.challenge=doc.challenge;f.scroll=0
-    f.notice=doc.state=='mfa_code' and 'Enter your authenticator code or a recovery code.' or 'Enter the eight-digit code from your ModCompass email. It expires after 15 minutes.'
+    f.notice='Enter the eight-digit code from your ModCompass email. It expires after 15 minutes.'
   else f.notice='Account response incomplete. Please try again.' end
 end
 function W.scroll(self,dy)
@@ -151,13 +171,20 @@ function W.draw(self)
     row((value~='' and value or '...')..(f.focus==key and ' |' or ''),'field:'..key)
   end
   g.setScissor(v.x,v.y,v.width,v.height)
-  if f.document then
+  if f.mode=='storage_choice' then
+    paragraph('YOUR GAME. YOUR CHOICE.',true)
+    paragraph('Play without an account. Saves stay on this device and survive app updates. Cloud saves are optional and let you continue on another device after signing in.')
+    row('PLAY WITHOUT AN ACCOUNT · SAVE LOCALLY','local')
+    row('I WANT CLOUD SAVES · SIGN IN / REGISTER','cloud')
+    paragraph('Bank, trading and mod installation require a confirmed account. Public mod browsing and local play do not.')
+  elseif f.document then
     local d=f.policy[f.document];if d then paragraph(d.title,true);paragraph(d.text);paragraph('Version '..f.policy.version);row('OPERATOR CONTACT >','operator') end
     row('BACK','back')
   elseif f.mode=='account' then
     paragraph('Connected as '..tostring(Auth.account()),true)
     paragraph('ACCOUNT PROFILE · '..tostring(Auth.accountId and Auth.accountId() or 'Updating identity')..' · Saves, Bank and mod choices are kept separately for each account.')
-    paragraph('The same account connects your mods, developer projects and optional cloud storage.')
+    paragraph('The same account connects your mods, developer projects, custom cartridge artwork and optional cloud storage.')
+    row('SYNC MY SAVES & CUSTOM CARTRIDGES','sync')
     local storage=require('src.storage.AccountStorage');local permitted,why=storage.check()
     if storage.enabled and not permitted then
       paragraph(why)
@@ -173,6 +200,10 @@ function W.draw(self)
     row('USE ANOTHER ACCOUNT / LOCAL PROFILE','switchAccount')
   else
     paragraph('One account for RetroRecomped and ModCompass. Signing in links this device. Your password is never saved here.')
+    if not (Auth.accountId and Auth.accountId()) then
+      row('CONTINUE WITHOUT AN ACCOUNT · LOCAL SAVES','local')
+      paragraph('No account is needed to play or keep local saves. Sign in below to access your cloud saves, Bank and mod downloads.')
+    end
     if f.after=='bank' or f.after=='bankDex' then paragraph('The Pokémon Bank, Item Bank and global Pokédex require a registered account with confirmed email. After confirmation you return directly to the Bank.') end
     if f.mode=='register' then
       paragraph('CREATE YOUR ACCOUNT',true);field('Nickname','name');field('Email','email');field('Password','password',true);field('Confirm password','confirmation',true)
@@ -184,19 +215,20 @@ function W.draw(self)
       end
       row('READ TERMS OF USE','read:terms');check('I accept the terms of use','terms')
       row('READ PRIVACY NOTICE','read:privacy');check('I have read the privacy notice','privacy')
-      check('Enable automatic save sync on this device (optional)','cloudSync')
-      paragraph('Mod profile sync and automatic mod downloads are separate settings. No ROMs or cartridge pictures are uploaded.')
+      check('Enable automatic save & cartridge sync on this device (optional)','cloudSync')
+      paragraph('Cloud sync includes your cartridge designs and their images. Mod profile downloads are separate settings. ROMs and imported game caches are not uploaded.')
       row('CREATE ACCOUNT · SEND EMAIL CODE','submit');row('ALREADY REGISTERED? SIGN IN','login')
     elseif f.mode=='login' then
       paragraph('WELCOME BACK',true);field('Email','email');field('Password','password',true)
-      check('Enable automatic save sync on this device (optional)','cloudSync')
+      check('Enable automatic save & cartridge sync on this device (optional)','cloudSync')
+      paragraph('Sync includes saves, Bank and custom cartridge images/settings. ROMs and game caches stay local.')
       row('SIGN IN & LINK THIS DEVICE','submit');row('CREATE AN ACCOUNT','register');row('FORGOT PASSWORD','forgot')
     elseif f.mode=='forgot' then paragraph('RECOVER YOUR ACCOUNT',true);field('Email','email');row('SEND RECOVERY CODE','submit');row('BACK TO SIGN IN','back')
     else
-      paragraph(f.mode=='mfa_code' and 'TWO-FACTOR VERIFICATION' or 'CHECK YOUR EMAIL',true);field(f.mode=='mfa_code' and 'Authenticator / recovery code' or 'Email code','code')
+      paragraph('CHECK YOUR EMAIL',true);field('Email code','code')
       if f.mode=='reset_code' then field('New password','password',true);field('Confirm new password','confirmation',true) end
       row(f.mode=='reset_code' and 'UPDATE PASSWORD' or 'VERIFY & CONTINUE','submit')
-      if f.mode~='mfa_code' then row('RESEND EMAIL CODE','resend') end
+      row('RESEND EMAIL CODE','resend')
       row('START AGAIN','back')
     end
   end

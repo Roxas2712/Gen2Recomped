@@ -3,7 +3,7 @@ local SaveData=require('src.core.SaveData')
 local Versions=require('src.core.GameVersion')
 local Task=require('src.cloud.Task')
 function Storage.install(RI)
-  function RI:_storageSync(version,slot)
+  function RI:_storageSync(version,slot,cartChoice)
     if not require('src.storage.AccountStorage').requireUI(self,'storage') then return end
     if self._storageTask then self.settingsNotice='Cloud sync is already running.';return end
     if self._profileApplying then self.settingsNotice='Finish the mod profile transfer before syncing again.';return end
@@ -14,6 +14,11 @@ function Storage.install(RI)
     local task,why=Task.new(function()
       local target,err=self:_sbCloudTarget()
       if not target then return nil,err end
+      if cartChoice then
+        if target.kind~='retro' then return nil,'Choose your RetroRecomped account for cartridge sync.' end
+        local synced,why=require('src.storage.CartridgeCloud').sync(target,cartChoice)
+        return synced and ('Custom cartridges: '..synced..'.') or nil,why
+      end
       local Cloud=require('src.import.CloudSync')
       if type(target)=='string' then target=Cloud.folderStore(target) end
       if version then
@@ -23,6 +28,11 @@ function Storage.install(RI)
       local result,problem=Cloud.syncVersions(target,list)
       if not result then return nil,problem end
       local message='Cloud sync: '..Cloud.describe(result)
+      if target.kind=='retro' and options.cartridgeCloudSync then
+        local carts,cartWhy=require('src.storage.CartridgeCloud').sync(target)
+        if not carts then return nil,cartWhy end
+        message=message..' · Custom cartridges: '..carts..'.'
+      end
       local ok,Bank=pcall(require,'src.storage.PokemonBank')
       if ok and require('src.cloud.RetroCloud').signedIn() then
         local synced,bankWhy=Bank.sync(target)
@@ -55,8 +65,14 @@ function Storage.install(RI)
       note='Sync while the launcher is open. Local play remains available offline.',
       row={id='cloudAutoSync',values={true,false},labels={[true]='ON',[false]='OFF'}}})
     add({kind='action',label='MODCOMPASS ACCOUNT & DEVICES',value='OPEN',action='retroCloudAccount'})
+    add({kind='section',label='MY CARTRIDGES IN THE CLOUD',note='Your private cartridge images, colors, labels and logo choice join account save sync. Original versions are kept when two devices conflict.'})
+    add({kind='option',scope='launcher',label='SYNC CUSTOM CARTRIDGE IMAGES & SETTINGS',
+      note='Optional account storage for your artwork. This does not transfer ROMs or imported game caches.',
+      row={id='cartridgeCloudSync',values={false,true},labels={[true]='ON',[false]='OFF'}}})
+    add({kind='action',label='UPLOAD THIS DEVICE’S CARTRIDGES',value='UPLOAD',action='cartCloudUpload'})
+    add({kind='action',label='RESTORE MY CLOUD CARTRIDGES',value='RESTORE',action='cartCloudRestore'})
     add({kind='option',scope='launcher',label='SYNC MY MOD PROFILE',
-      note='Use your ModCompass login for package versions, activation and generation choices. Login secrets, artwork and private mod settings stay local.',
+      note='Use your ModCompass login for package versions, activation and generation choices. Passwords and private mod settings stay local. Cartridge designs sync separately with account saves.',
       row={id='modProfileSync',values={false,true},labels={[true]='ON',[false]='OFF'}}})
     add({kind='option',scope='launcher',label='DOWNLOAD MY CLOUD MODS AUTOMATICALLY',
       note='Optional. Download the exact profile versions inside the launcher. Different engine versions and conflicts require review.',
@@ -70,6 +86,9 @@ function Storage.install(RI)
   end
   local action=RI._settingsAction
   RI._settingsAction=function(self,entry,...)
+    if entry and (entry.action=='cartCloudUpload' or entry.action=='cartCloudRestore') then
+      return self:_storageSync(nil,nil,entry.action=='cartCloudUpload' and 'local' or 'cloud')
+    end
     if entry and entry.action=='retroCloudAccount' then self:_openAccount();return end
     if entry and entry.action=='retroCloudCancel' then
       if self._storageTask then self._storageTask:cancel();self._storageTask=nil end
@@ -98,7 +117,7 @@ function Storage.install(RI)
       if self._storageTask then
         local result=self._storageTask:poll()
         if result then
-          self._storageTask=nil;self._settingsRowCache=nil
+          self._storageTask=nil;self._settingsRowCache=nil;self._settingsCache=nil;self._cartStyleCache=nil
           local payload=result.kind=='done' and result.first
           self.settingsNotice=type(payload)=='table' and payload.message or payload or ('Cloud sync paused: '..tostring(result.error or result.second))
           if type(payload)=='table' and payload.profile and (payload.profile.kind=='apply' or payload.profile.kind=='conflict') then

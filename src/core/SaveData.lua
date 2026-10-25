@@ -558,6 +558,7 @@ function SaveData.defaultOptions()
     -- launcher shipped with".
     launcherLogoCards = true,
     launcherCartDesigns = {},
+    cartridgeCloudSync = false,
     launcherAnimations = true,
     launcherIntroSeason = "auto",
     launcherTheme = false,
@@ -2683,7 +2684,7 @@ for _,name in ipairs({'save','writeSlot','commitSave','createSlot','deleteSlot',
   'load','peekSlot','restoreBackup','restoreAsNewSlot','listSlots','slotBackups','deletedSlots','_foreignSlots','saveFileExists'}) do
   local original=SaveData[name]
   SaveData[name]=function(...)
-    local ok,why=require('src.storage.AccountStorage').check()
+    local ok,why=require('src.storage.AccountStorage').saveCheck()
     if not ok then
       if name=='listSlots' or name=='slotBackups' or name=='deletedSlots' or name=='_foreignSlots' then return {},why end
       return nil,why

@@ -34,6 +34,14 @@ end
 check(H.cartModel('emerald').w/H.cartModel('emerald').h>1.65,'GBA cartridges have the broad original proportions')
 check(math.abs(H.cartModel('heartgold').w/H.cartModel('heartgold').h-35/33)<.02,'DS cartridges have the near-square original proportions')
 check(require('src.core.SaveData').defaultOptions().launcherLogoCards==true,'brand labels are on for new preferences')
+local originalImage=function() end
+local liveStyle={shell={15,35,75},art='launcher/cart_art/red.png',image=originalImage,artMode='cartridge'}
+local liveOptions={launcherLogoCards=true}
+local frozen=H.appearance({_cartStyle=function() return liveStyle end,_settings=function() return liveOptions end},'red')
+liveStyle.shell[1]=99;liveStyle.art='launcher/cart_art/changed.png';liveOptions.launcherLogoCards=false
+check(frozen.design.shell[1]==15 and frozen.design.art=='launcher/cart_art/red.png' and frozen.branded,
+  'insertion keeps the exact shell, image path and logo preference captured at launch')
+check(frozen.design.image==originalImage,'the captured appearance reuses the decoded artwork rather than loading another design')
 local Sources=require('src.import.CartridgeSources')
 for _,v in ipairs({'red','blue','yellow','gold','silver','crystal','firered','leafgreen','ruby','sapphire','emerald','platinum','heartgold','soulsilver','black','white'}) do
   local source=Sources.get(v)

@@ -1,9 +1,10 @@
--- Original, code-drawn seasonal mascots. No game sprites or firmware assets.
+-- Seasonal choreography. Autumn/winter use credited Cobblemon models;
+-- spring also uses Cobblemon; summer is an electric identity without a mascot.
 local Seasons = {}
 local Score=require('src.import.LauncherIntroScore')
 Seasons.VALUES={'auto','lightning','spring','summer','autumn','winter'}
 Seasons.LABELS={auto='AUTOMATIC',lightning='LIGHTNING',spring='SPRING · BRANCHLING',
-  summer='SUMMER · SPARK DRAKE',autumn='AUTUMN · SHADE',winter='WINTER · COURIER'}
+  summer='SUMMER · ELECTRIC',autumn='AUTUMN · GEIST',winter='WINTER · COURIER'}
 local function clamp(v) return math.max(0,math.min(1,v)) end
 local function ease(v) v=clamp(v);return v*v*(3-2*v) end
 
@@ -40,6 +41,29 @@ function Seasons.pose(kind,t,cx,cy,s)
       logoX=cx,logoY=cy,logoScale=1,logoAlpha=ease((t-Score.logoReveal)/(Score.logoLock-Score.logoReveal)),
       rotation=0,behind=t>=Score.orbitStart and t<Score.orbitEnd and math.sin(angle)<0,
       holding=t>=Score.catch,grasp=grasp}
+  end
+  if kind=='winter' then
+    local entry=ease((t-.45)/2.05)
+    local exit=ease((t-10.8)/1.8)
+    local release=3.8
+    local action=math.sin(clamp((t-release+.9)/1.6)*math.pi)
+    local pose={x=cx-155*s-(1-entry)*380*s-exit*340*s,y=cy+170*s,
+      alpha=entry*(1-exit),action=action,slide=entry,bodyRotation=-(1-entry)*.22+math.sin(t*2)*.025,
+      release=release,travel=ease((t-release)/2.1),size=1}
+    local originX,originY
+    if love and love.graphics and love.graphics.newMesh then originX,originY=require('src.import.LauncherCobblemon').sackOrigin(t,pose,s) end
+    originX,originY=originX or pose.x+67*s,originY or pose.y+8*s
+    local travel=pose.travel
+    pose.logoX=originX+(cx-originX)*travel
+    pose.logoY=originY+(cy-originY)*travel-math.sin(travel*math.pi)*170*s
+    pose.logoScale=.08+.92*travel;pose.logoAlpha=ease((t-release)/.25);pose.rotation=-(1-travel)*.8
+    if t>=release+2.1 then pose.logoX=cx;pose.logoY=cy;pose.logoScale=1 end
+    return pose
+  end
+  if kind=='summer' then
+    local travel=ease((t-1.4)/2.1)
+    return {x=cx,y=cy,alpha=0,action=0,release=1.4,travel=travel,logoX=cx,logoY=cy,
+      logoScale=.8+.2*travel,logoAlpha=travel,rotation=0}
   end
   local release=({autumn=3.2,winter=3.8,spring=3.4,summer=3.0})[kind] or 0.72
   local entry=ease((t-0.65)/1.5)
@@ -81,6 +105,16 @@ function Seasons.draw(kind,t,cx,cy,s,override)
       g.ellipse('fill',trail.x,trail.y+27*s,(5+i*.5)*s,(3+i*.25)*s)
     end
   end
+  if kind=='winter' then
+    g.push('all')
+    for i=1,16 do
+      local q=(t*.8+i*.117)%1
+      g.setColor(.7,.86,1,pose.alpha*(1-q)*.12*(1-(pose.slide or 1)))
+      g.ellipse('fill',pose.x-(20+q*150)*s,pose.y+(69+math.sin(i*2.4)*8)*s,(8+q*19)*s,(2+q*4)*s)
+    end
+    g.pop()
+  end
+  if kind~='summer' and not require('src.import.LauncherCobblemon').draw(kind,t,pose,s) then
   g.push('all');g.translate(pose.x,pose.y);g.scale(s*(pose.size or 1))
   if kind~='autumn' then col(0,0,0,0.24);g.ellipse('fill',8,82,84,10) end
   if kind=='autumn' then
@@ -138,22 +172,10 @@ function Seasons.draw(kind,t,cx,cy,s,override)
     col(124,87,57);g.setLineWidth(13);g.line(-34,-1,-67,-21);g.line(32,-3,66,-30)
     oval(-72,-25,21,13,128,188,116);oval(72,-34,21,13,128,188,116)
     oval(-23,-8,7,3,210,151,110);oval(27,-8,7,3,210,151,110)
-  else
-    -- A turquoise spark drake, saffron sail wings and a firefly tail.
-    col(237,170,71);g.polygon('fill',-28,0,-100,-81,-88,-16,-119,-29,-80,35,-40,24)
-    col(255,210,116);g.polygon('fill',23,0,87,-75,77,-13,107,-27,80,34,34,28)
-    col(38,105,117);g.setLineWidth(19);g.line(-29,42,-68,49,-91,25,-103,32)
-    oval(-108,22,12,17,255,190,72)
-    oval(0,17,48,60,58,150,156)
-    oval(10,24,29,44,171,218,181)
-    oval(5,-51,48,39,75,176,178)
-    oval(38,-38,29,20,93,189,184)
-    col(248,191,83);g.polygon('fill',-23,-78,-30,-106,-8,-85,8,-109,17,-84)
-    eyes(-59,15)
-    col(29,96,106);g.setLineWidth(3);g.arc('line','open',41,-39,13,0,2.4)
-    oval(-26,68,26,10,49,126,137);oval(30,68,26,10,49,126,137)
+
   end
   g.pop()
+  end
 
   -- Confetti travels from the action into the logo; no enclosing disk/ring.
   g.push('all')

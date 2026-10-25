@@ -18,6 +18,12 @@ local EDITIONS = {
   soulsilver = {{173,195,220}, 'SOUL SILVER'}, black = {{159,165,186}, 'BLACK'},
   white = {{223,221,211}, 'WHITE'},
 }
+local CARD_ACCENTS = {
+  platinum={{213,222,237},{234,108,100}},
+  black={{105,203,245},{127,145,222}},
+  white={{249,237,214},{242,174,114}},
+}
+local previewShade
 
 function Library.edition(version)
   local e = EDITIONS[version]
@@ -36,14 +42,20 @@ function Library.preview(self,version,x,y,w,h)
   if B.current()~=version and B.current()~='video' then return false end
   local g=love.graphics
   g.push('all')
-  local ok,drew=pcall(B.draw,w,h,{x=x,y=y,w=w,h=h})
+  local ok,drew=pcall(B.draw,w,h,{x=x+w*.42,y=y,w=w*.58,h=h,fit='cover'})
   if ok and drew then
     if g.intersectScissor then g.intersectScissor(x,y,w,h) else g.setScissor(x,y,w,h) end
     -- Leave the live picture visible on the right, with stable contrast for
     -- the title and save actions on the left.
-    for i=0,31 do
-      local alpha=.92-.58*(i/31)
-      g.setColor(.025,.04,.065,alpha);g.rectangle('fill',x+w*i/32,y,w/32+1,h)
+    g.setShader();g.setBlendMode('alpha','alphamultiply')
+    if g.newMesh then
+      previewShade=previewShade or g.newMesh({
+        {0,0,0,0,.025,.04,.065,.94},{1,0,0,0,.025,.04,.065,.14},
+        {1,1,0,0,.025,.04,.065,.14},{0,1,0,0,.025,.04,.065,.94},
+      },'fan','static')
+      g.setColor(1,1,1,1);g.draw(previewShade,x,y,0,w,h)
+    else
+      g.setColor(.025,.04,.065,.5);g.rectangle('fill',x,y,w,h)
     end
   end
   g.pop();return ok and drew or false
@@ -119,9 +131,19 @@ function Library.install(RI)
       g.setColor(1,1,1,1)
       g.draw(logo,x+20*s,y+(h-lh*sc)/2,0,sc,sc)
     end
-    if w > 690*s then
+    self._headerAccount,self._headerRegister=nil,nil
+    local signed=require('src.cloud.RetroCloud').signedIn()
+    local bw=math.min(104*s,(w-245*s)/2)
+    if bw>60*s then
+      local right=x+w-18*s
+      if not signed then
+        self._headerRegister=self:_chipButton(right-bw,y+22*s,'REGISTER',{w=bw,h=36*s,kind='accent'})
+        right=right-bw-8*s
+      end
+      self._headerAccount=self:_chipButton(right-bw,y+22*s,signed and 'MY ACCOUNT' or 'LOGIN',{w=bw,h=36*s,kind='accent'})
+    end
+    if w > 950*s then
       label(self, 'YOUR GAMES. YOUR JOURNEY STARTS NOW.', x+278*s, y+34*s)
-      text(self,self.hintFont,'GB / GBC / GBA / DS',x+w-180*s,y+34*s,160*s,P.link)
     end
     return h
   end
@@ -239,9 +261,15 @@ function Library.install(RI)
     local r={x=x,y=y,width=w,height=h,version=version}
     local hot=self:_hover(r)
     surface(x,y,w,h,12*s,accent,hot)
+    local tones=CARD_ACCENTS[version]
+    if tones then
+      U.fillGradRounded(x+2*s,y+2*s,w-4*s,h-4*s,10*s,tones[1],tones[2],hot and .23 or .15,.45)
+      col(tones[2],.85);g.rectangle('fill',x+16*s,y+h-4*s,w-32*s,2*s,s,s)
+      accent=tones[1]
+    end
     local stageH=math.max(40*s,h-88*s)
     artwork(self,version,x+w/2,y+stageH/2+4*s,w-42*s,stageH-28*s)
-    col(P.cardBorder,0.18);g.line(x+16*s,y+stageH,x+w-16*s,y+stageH)
+    col(tones and tones[2] or P.cardBorder,tones and .7 or .18);g.line(x+16*s,y+stageH,x+w-16*s,y+stageH)
     local short=Sidebar.consoleOf(version):upper()
     label(self,short,x+16*s,y+stageH+10*s,accent)
     text(self,self.stateFont,Sidebar.nameOf(version),x+16*s,y+stageH+29*s,w-32*s)
@@ -266,6 +294,12 @@ function Library.install(RI)
 
   local mouse = RI._sbMousepressed
   RI._sbMousepressed = function(self,x,y)
+    if U.inside(self._headerAccount,x,y) then self:_openAccount();return true end
+    if U.inside(self._headerRegister,x,y) then
+      self:_openAccount();require('src.import.AccountWorkspace').action(self,'register')
+      if self._accountOverlay then self._accountOverlay.mode='register' end
+      return true
+    end
     if self.section=='games' and U.inside(self._sb.continueSaves,x,y) then
       self:_sbOpenGame(self._sb.continueSaves.version);return true
     end
@@ -339,6 +373,8 @@ function Library.install(RI)
       text(self,self.hintFont,caption,toggle.x+24*s,toggle.y+4*s,toggleW-24*s,checked and P.link or P.detail)
       self._sb.logoCards=toggle
       y=y+26*s
+      self._sb.cartBatch=self:_chipButton(x,y,'LOAD ALL ORIGINAL CARTRIDGES',{w=w,h=38*s,kind='accent'})
+      y=y+50*s
       self._sb.libraryFilters={}
       local fx=x
       for _,f in ipairs({{'all','All cartridges'},{'ready','Ready to play'},{'favorites','Favorites'}}) do

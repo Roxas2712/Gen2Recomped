@@ -156,6 +156,7 @@ end
 O.actions=actions
 function O.key(game,key)
   if key=='f1' then if O.game then O.close() else O.open(game) end;return true end
+  if key=='escape' and not O.game then O.open(game);return true end
   if not O.game then return false end
   if key=='escape' then if O.confirm then O.confirm=nil elseif O.page~='home' then O.action('home') else O.close() end
   elseif key=='up' then O.selected=math.max(1,(O.selected or 1)-1)
@@ -199,13 +200,18 @@ function O.draw(game)
   local s=math.max(.65,math.min(ww/1050,hh/720,1.35))
   O.font=O.font or g.newFont(16);O.titleFont=O.titleFont or g.newFont(25)
   g.push('all');g.setCanvas();g.origin();g.setShader();g.setScissor();g.setBlendMode('alpha')
+  -- Game/post-process passes can leave depth, stencil or channel masks set.
+  -- The OS-window menu must own a clean screen-space state on every path.
+  if g.setStencilTest then g.setStencilTest() end
+  if g.setDepthMode then g.setDepthMode() end
+  if g.setColorMask then g.setColorMask(true,true,true,true) end
   O.handle={x=ww-142*s,y=10*s,width=132*s,height=36*s}
   local function text(value,x,y,w,big)
     g.setFont(big and O.titleFont or O.font);g.printf(value,x,y,w,'left')
   end
   if not O.game then
     g.setColor(.025,.045,.08,.80);g.rectangle('fill',O.handle.x,O.handle.y,O.handle.width,O.handle.height,8,8)
-    g.setColor(.42,.90,1,1);text('RETRO · F1',O.handle.x+10*s,O.handle.y+7*s,O.handle.width-12*s)
+    g.setColor(.42,.90,1,1);text('RETRO · ESC',O.handle.x+10*s,O.handle.y+7*s,O.handle.width-12*s)
     g.pop();return
   end
   g.setColor(.015,.025,.05,.87);g.rectangle('fill',0,0,ww,hh)

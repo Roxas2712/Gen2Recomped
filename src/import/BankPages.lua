@@ -96,6 +96,7 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
       button('PASTE',x+w-82*s,top,82*s,'tradePaste');top=top+46*s
     elseif f.replying then text('Reply to the selected incoming offer.',x,top,w);top=top+30*s end
     local notice='Share this Bank copy, including nickname, trainer and origin information, with the other player. Original saves and Bank archives remain intact.'
+    if wonder then notice=notice..' Up to 30 active offers per account, including eggs. Results unlock after at least 10 minutes; after 6 hours without a partner you receive a random native Gen 1–5 encounter with OT RetroRecomp.' end
     local _,lines=font:getWrap(notice,w);g.setFont(font);col(43,76,103);g.printf(notice,x,top,w,'left');top=top+#lines*font:getHeight()+10*s
     button(f.tradeConsent and '✓ I AGREE TO SHARE THIS COPY' or '□ I AGREE TO SHARE THIS COPY',x,top,w,'tradeConsent');top=top+45*s
     local half=(w-10*s)/2
@@ -109,7 +110,8 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
       local offered=row.offered or {};local reply=row.reply or {}
       local action=row.status=='completed' and 'tradeReceive' or row.status=='prepared' and row.sender and 'tradeConfirm' or row.status=='pending' and not row.sender and 'tradeReply' or nil
       local textWidth=math.max(1,w-(action and row.status~='completed' and 282 or 155)*s)
-      text(tostring(row.mode):upper()..' · '..row.status..' · '..tostring(row.partner or 'Finding a partner'),x+10*s,by+5*s,textWidth)
+      local partner=row.legacy_offer and 'Older offer · cancel and submit again' or row.system_partner and 'SYSTEM · OT RetroRecomp' or row.partner or 'Finding a partner · 10 min–6 h'
+      text(tostring(row.mode):upper()..' · '..row.status..' · '..tostring(partner),x+10*s,by+5*s,textWidth)
       text(tostring(offered.nickname or offered.species or '?')..(row.reply and (' ⇄ '..tostring(reply.nickname or reply.species)) or ''),x+10*s,by+29*s,textWidth)
       if action and row.status~='completed' then button('CANCEL',x+w-264*s,by+12*s,118*s,'tradeCancel',{exchange=row.id}) end
       if action then button(action=='tradeReceive' and 'RECEIVE' or action=='tradeConfirm' and 'CONFIRM' or 'REPLY',x+w-136*s,by+12*s,126*s,action,{exchange=row.id})

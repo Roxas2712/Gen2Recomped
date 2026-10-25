@@ -237,7 +237,7 @@ function C.install(RI)
   end
   local confirm=RI._findConfirmInstall
   RI._findConfirmInstall=function(self,entry,...)
-    if not Auth.signedIn() then self.findNotice={ok=false,text='Sign in or register to install. This links this device to your ModCompass account. Two-factor authentication is optional unless already enabled on your account.'};if self._openAccount then self:_openAccount() end;return end
+    if not Auth.signedIn() then self.findNotice={ok=false,text='Sign in or register to install. This links this device to your ModCompass account. A confirmed email is required; the launcher does not require a second factor.'};if self._openAccount then self:_openAccount() end;return end
     if not entry.catalogueId then return confirm(self,entry,...) end
     if self._communityLatestJob or self._communityDownload then
       self.findNotice={ok=false,text='A release check or download is already running.'};return

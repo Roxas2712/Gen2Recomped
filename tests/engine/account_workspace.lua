@@ -51,4 +51,21 @@ for _,destination in ipairs({'bank','bankDex'}) do
   W.action(UI,'submit');W.tick(UI)
   check(UI.bankOpened and not UI._accountOverlay and UI.bankMode==(destination=='bankDex' and 'dex' or nil),'confirmed registration returns directly to the requested Bank page')
 end
+signed=false
+local SaveData=require('src.core.SaveData')
+local previousLoad,previousSave=SaveData.loadOptions,SaveData.saveOptions
+local options={cloudAutoSync=true};local writes=0
+SaveData.loadOptions=function() return options end
+SaveData.saveOptions=function(value) writes=writes+1;options=value;return true end
+W.open(UI,{kind='play',version='red',storagePrompt=true});f=UI._accountOverlay
+check(f.mode=='storage_choice' and not f.job,'first guest play offers local saves without making an account request')
+local storage=require('src.storage.AccountStorage');local previousResume=storage.resume;local resumed
+storage.resume=function(_,after) resumed=after.version end
+f.password='private fixture';f.job={cancel=function() cancelled=true end};cancelled=false
+W.action(UI,'local')
+check(cancelled and not UI._accountOverlay and f.password=='' and resumed=='red',
+  'local play cancels pending networking, clears credentials and resumes the requested game')
+check(writes==1 and options.launcherSaveStorageChoice=='local' and options.cloudAutoSync==false,
+  'declining cloud persists a local-only choice without enabling uploads')
+storage.resume=previousResume;SaveData.loadOptions,SaveData.saveOptions=previousLoad,previousSave
 print('Account workspace: '..n..' checks passed')

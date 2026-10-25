@@ -73,6 +73,7 @@ function Sequence.install(RI)
     self._padDir = {}
     self._padAxis = {leftx=0,lefty=0,righty=0}
     self._launcherSequence = Sequence.new('play', version)
+    self._launcherSequence.cartAppearance=require('src.import.LauncherHardware').appearance(self,version)
   end
 
   local update = RI.update
@@ -253,7 +254,10 @@ function Sequence.install(RI)
         return Texel(tex, uv) * color * vec4(1.0,1.0,1.0,opacity);
       }
     ]])
-    g.push('all');g.origin();g.setScissor()
+    g.push('all');g.origin();g.setScissor();g.setShader();g.setBlendMode('alpha','alphamultiply')
+    if g.setStencilTest then g.setStencilTest() end
+    if g.setDepthMode then g.setDepthMode() end
+    if g.setColorMask then g.setColorMask(true,true,true,true) end
     self._sequenceFadeShader:send('opacity',1-dock)
     g.setShader(self._sequenceFadeShader)
     col(P.bgBot);g.rectangle('fill',0,0,g.getWidth(),g.getHeight())
@@ -261,6 +265,7 @@ function Sequence.install(RI)
     if intro then
       -- Application identity only: no game, cartridge or device in this intro.
       local logoY=oy+h*0.44
+      require('src.import.LauncherSeasonScene').draw(state.season,state.elapsed,ox,oy,w,h,s,false)
       local seasonal=state.season~='lightning'
       local pose=seasonal and Seasons.pose(state.season,state.elapsed,cx,logoY,s)
       local logoW=math.min(w*.70,420*s)
@@ -308,8 +313,13 @@ function Sequence.install(RI)
       if seasonal and state.season=='autumn' and not pose.behind then
         Seasons.draw(state.season,state.elapsed,cx,logoY,s,pose)
       end
+      require('src.import.LauncherSeasonScene').draw(state.season,state.elapsed,ox,oy,w,h,s,true)
       g.setFont(self.hintFont);col(P.warning,1-dock)
       g.printf(Strings('Tap or press any key to skip'),ox,oy+h-44*s,w,'center')
+      if state.season=='autumn' or state.season=='winter' or state.season=='spring' then
+        col(P.muted or P.warning,.65*(1-dock))
+        g.printf('Models: Cobblemon Team · CC BY-NC 3.0',ox,oy+h-22*s,w,'center')
+      end
     else
       local Hardware=require('src.import.LauncherHardware')
       local p,align,descent=Sequence.motion(state)
@@ -328,7 +338,7 @@ function Sequence.install(RI)
       local cartX=startX+(device.slotX-startX)*align
       local cartY=device.slotY-24*s-36*s*align-65*s*math.sin(align*math.pi)+100*s*descent
       local cw,ch=Hardware.cartSize(state.version)
-      Hardware.cartridge(self,state.version,cartX,cartY,cartH*cw/ch,cartH,-0.46*(1-align))
+      Hardware.cartridge(self,state.version,cartX,cartY,cartH*cw/ch,cartH,-0.46*(1-align),{appearance=state.cartAppearance})
       Hardware.device(self,state.version,device,stage.locked,{powered=stage.powered,logo=false})
       if stage.powered then
         -- Keep electricity and the wordmark inside the physical display aperture.

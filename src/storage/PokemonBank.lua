@@ -169,6 +169,12 @@ function B.convert(entry,version,data,allowAdaptation)
     end
   end
   if not def then return nil,'Species '..tostring(original)..' is unavailable in this game.' end
+  local systemEncounter=entry.origin and entry.origin.kind=='retrorecomp_wonder'
+  if systemEncounter then
+    local reward,why=require('src.storage.WonderReward').build(entry,mon.species,data)
+    if not reward then return nil,why end
+    mon=reward
+  end
   local gen=Versions.generation(version)
   if gen==1 and (mon.isEgg or mon.egg or (tonumber(mon.eggSteps) or 0)>0) then return nil,'Generation 1 cannot represent eggs.' end
   local origin=clone(entry.origin or mon.retroBankOrigin or entry.source)
@@ -214,7 +220,7 @@ function B.convert(entry,version,data,allowAdaptation)
   local modern=Stats.isGen3(def)
   local adapt=modern~=(type(mon.ivs)=='table')
   if adapt and not allowAdaptation then return nil,'This copy needs IV/DV and training adaptation for the destination generation.' end
-  local note=heldNote
+  local note=heldNote or systemEncounter and 'System Wonder Trade encounter · OT RetroRecomp · native learnset and deterministic genetics.' or nil
   if adapt then
     note=(note and note..' ' or '')..'IV/DV and training adapted; nature and ability follow the destination. The original remains in your Bank.'
     if modern then

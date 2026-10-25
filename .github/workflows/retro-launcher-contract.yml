@@ -8,6 +8,7 @@ on:
       - src/core/SaveData.lua
       - src/cloud/**
       - src/import/**
+      - assets/launcher/cobblemon/**
       - src/mods/**
       - src/storage/**
       - src/ui/RetroOverlay.lua

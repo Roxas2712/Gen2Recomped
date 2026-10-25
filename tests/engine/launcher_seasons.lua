@@ -25,6 +25,13 @@ for _,kind in ipairs({'spring','summer','autumn','winter'}) do
   end
 end
 check(Seasons.resolve('lightning',10)=='lightning','plain lightning remains selectable')
+local winterEntry=Seasons.pose('winter',.5,720,420,1)
+local winterStop=Seasons.pose('winter',2.6,720,420,1)
+check(winterEntry.x<winterStop.x and winterEntry.bodyRotation<winterStop.bodyRotation,
+  'winter slides into position and straightens before reaching for the sack')
+check(Seasons.pose('winter',3.79,720,420,1).logoAlpha==0 and Seasons.pose('winter',4.2,720,420,1).logoAlpha>0,
+  'the winter logo stays in the sack until the throwing cue')
+check(Seasons.pose('summer',5,720,420,1).alpha==0,'summer uses sparks without the removed dragon')
 check(Seasons.resolve('obsolete',12)=='winter','unknown saved themes fall back to the calendar')
 check(Score.closing[1].at==Score.catch and Score.closing[3].at==Score.place,
   'first and final cadence attacks are the catch and placement cues')
@@ -50,6 +57,23 @@ end
 love.graphics.arc=function(mode,closure)
   assert(mode=='fill' or mode=='line','invalid arc drawing mode')
   assert(closure=='open' or closure=='closed' or closure=='pie','arc mode must work on LOVE 11.5')
+end
+local Scene=require('src.import.LauncherSeasonScene')
+for _,kind in ipairs({'winter','autumn'}) do
+  for _,size in ipairs({{320,640},{960,360},{1440,900}}) do
+    local w,h=size[1],size[2];local frame=Scene.frame(kind,5,13,27,w,h,1)
+    check(#frame.particles==(kind=='winter' and 112 or 52),'seasonal atmosphere has a bounded particle budget')
+    for _,p in ipairs(frame.particles) do
+      assert(p.x>=13 and p.x<13+w and p.y>=27 and p.y<27+h and p.size>0,'weather stays inside the current viewport')
+    end
+    local again=Scene.frame(kind,5,13,27,w,h,1);local later=Scene.frame(kind,5.5,13,27,w,h,1)
+    check(again.particles[1].x==frame.particles[1].x and later.particles[1].x~=frame.particles[1].x,
+      'seasonal motion is deterministic and advances without game RNG')
+    check(Scene.frame(kind,0,0,0,w,h,1).alpha==0 and Scene.frame(kind,Score.place,0,0,w,h,1).alpha==0,
+      'scenery fades in and clears before the launcher header docking finishes')
+    Scene.draw(kind,5,13,27,w,h,1,false);Scene.draw(kind,5,13,27,w,h,1,true)
+    check(depth==0,'weather and illuminated decorations restore their graphics state')
+  end
 end
 for _,kind in ipairs({'autumn','winter','spring','summer'}) do
   for _,at in ipairs({0,5,8.6,11.8,15.3,Score.duration}) do Seasons.draw(kind,at,720,420,1.4) end

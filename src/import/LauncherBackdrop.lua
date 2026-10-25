@@ -263,12 +263,22 @@ function B.draw(w, h, area)
   end
   if not state.game then return false end
   local cw,chh=backdropSize(aw,ah)
+  if area and area.fit=='cover' then
+    local info=require('src.core.GameVersion').info(state.current)
+    local gen=info and info.generation or 1
+    cw,chh=backdropSize(gen>=4 and 768 or gen==3 and 720 or 480,gen>=4 and 576 or gen==3 and 480 or 432)
+  end
   local now=love.timer and love.timer.getTime() or 0
   local function composite(target)
-    g.push("all");g.origin();g.setColor(1,1,1,1)
+    g.push("all");g.origin();g.setShader();g.setColor(1,1,1,1)
+    if g.setStencilTest then g.setStencilTest() end
+    if g.setDepthMode then g.setDepthMode() end
+    if g.setColorMask then g.setColorMask(true,true,true,true) end
     if g.intersectScissor then g.intersectScissor(ax,ay,aw,ah) else g.setScissor(ax,ay,aw,ah) end
     g.setBlendMode("alpha","premultiplied")
-    g.draw(target,ax,ay,0,aw/cw,ah/chh);g.pop()
+    local sx,sy=aw/cw,ah/chh
+    if area and area.fit=='cover' then sx=math.max(sx,sy);sy=sx end
+    g.draw(target,ax+(aw-cw*sx)/2,ay+(ah-chh*sy)/2,0,sx,sy);g.pop()
   end
   if state.canvas and state.canvas:getWidth()==cw and state.canvas:getHeight()==chh
       and (state.paused or now<(state.previewNext or 0)) then
@@ -290,6 +300,7 @@ function B.draw(w, h, area)
   local prevSplit = Renderer.splitViewport
   local saved, target
   local previousCanvas=g.getCanvas()
+  g.push('all')
   do
     local dpi=1
     if not (state.canvas and state.canvas:getWidth() == cw and state.canvas:getHeight() == chh) then
@@ -299,22 +310,29 @@ function B.draw(w, h, area)
     target = state.canvas
     Renderer.splitViewport = { w = cw, h = chh }
     saved = {}
-    local function swap(name, fn) saved[name] = g[name]; g[name] = fn end
+    local function swap(name, fn)
+      if not saved[name] then saved[name]={value=g[name]} end
+      g[name]=fn
+    end
     local setCanvas = g.setCanvas
     swap("setCanvas", function(c, ...)
       if c == nil then return setCanvas({ target, depthstencil = true }) end
       return setCanvas(c, ...)
     end)
     swap("getDimensions", function() return cw, chh end)
-    if g.getDPIScale then swap("getDPIScale",function()return 1 end) end
     swap("getWidth", function() return cw end)
     swap("getHeight", function() return chh end)
+    if g.getDPIScale then swap("getDPIScale",function()return 1 end) end
     if g.getPixelDimensions then
       swap("getPixelDimensions", function() return math.floor(cw * dpi), math.floor(chh * dpi) end)
       swap("getPixelWidth", function() return math.floor(cw * dpi) end)
       swap("getPixelHeight", function() return math.floor(chh * dpi) end)
     end
     setCanvas({ target, depthstencil = true })
+    g.origin();g.setScissor();g.setShader()
+    if g.setStencilTest then g.setStencilTest() end
+    if g.setDepthMode then g.setDepthMode() end
+    if g.setColorMask then g.setColorMask(true,true,true,true) end
     g.clear(0, 0, 0, 1)
   end
   -- A DS GAME: THE TOP SCREEN, AND ITS SINGLE-SCREEN TITLE.
@@ -356,11 +374,10 @@ function B.draw(w, h, area)
       end
     end
   end
-  g.push("all")
   local ok, err = pcall(state.game._draw, state.game)
   g.pop()
   if SS then SS.mode, SS.draw = ssMode, ssDraw end
-  if saved then for name, fn in pairs(saved) do g[name] = fn end end
+  if saved then for name, record in pairs(saved) do g[name] = record.value end end
   g.setCanvas(previousCanvas)
   Renderer.splitViewport = prevSplit
   if target then composite(target) end

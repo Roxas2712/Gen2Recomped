@@ -1,0 +1,18 @@
+Cobblemon Assets — Haunter, Delibird and Sudowoodo models, textures and idle poses
+Source: https://gitlab.com/cable-mc/cobblemon-assets
+Pinned revision: c22016bfb1263a762c91762997e9dca198d574df
+License: Creative Commons Attribution-NonCommercial 3.0 Unported.
+Full upstream licence is included in LICENSE. Source file URLs and SHA-256
+fingerprints are recorded in provenance.json; original editable .bbmodel,
+.geo.json and .animation.json sources accompany the derived launcher JSON.
+
+Credit: The Cobblemon Team and its contributing artists. These are Cobblemon
+assets, not artwork owned or authored by Roxas2712. Existing underlying rights
+and notices remain applicable. No affiliation or endorsement is claimed.
+
+Adaptations by Roxas2712: compact data-only mesh conversion; native LÖVE
+renderer; intro-specific hand/wing motion and logo choreography, and visible
+white-eye/black-pupil geometry in the Haunter render. Original editable models
+and texture pixels are retained unchanged. The asset licence is retained separately
+from the engine and fork contribution licences. Non-commercial asset terms
+must be observed; this is not a general commercial-use permission.
