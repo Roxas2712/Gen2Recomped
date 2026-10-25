@@ -466,13 +466,13 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
     power = math.max(1, math.floor(power * opts.powerMultiplier))
   end
   if gbaBase then
-    local pn, pd = Abilities.damageMultiplier(attacker, move)
-    power = math.floor(power * pn / pd)
     local kind = Abilities.normalizeType(move.type)
     -- Spit Up's set-damage opcode does not forward the field sport flags.
     for _, muted in pairs(not opts.gbaSetDamage and opts.sports or {}) do
       if muted == kind then power = math.floor(power / 2) end
     end
+    local pn, pd = Abilities.damageMultiplier(attacker, move)
+    power = math.floor(power * pn / pd)
   end
   d = math.floor(math.floor(d * power * atk / math.max(1, dfn)) / 50)
 
