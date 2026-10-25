@@ -164,7 +164,9 @@ T.eq(game.save.inventory.ITEM_158,2,'declining message loss adds no stationery')
 
 -- The compatibility PC's dismissal is caller-owned; its close callback may
 -- pop exactly one screen, as existing Gen2 hosts do.
-local BoxMenu=require('src.ui.BoxMenu')
+require('src.core.ModCompat').install()
+local BoxMenu=require('src.ui.gen2.BoxMenu')
+T.eq(BoxMenu,require('src.ui.BoxMenu'),'legacy Gen2 PC namespace reaches the actual native factory')
 reset();parent=game.stack:top();local calls=0;local pc
 pc=BoxMenu.new(game,{onClose=function()
   calls=calls+1;T.eq(game.stack:top(),pc,'PC remains on stack during caller-owned close');game.stack:pop()
