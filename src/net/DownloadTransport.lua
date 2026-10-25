@@ -49,6 +49,9 @@ function M.run(job, output)
         local flushed, flushWhy = output:flush()
         if not flushed then error(flushWhy or "download flush failed") end
         bytes = bytes + n
+        -- One progress slot per request; a paused menu cannot accumulate an
+        -- unbounded message queue while a large file keeps streaming.
+        job.progress:clear(); job.progress:push(bytes)
       end
       tail = chunk:sub(n + 1)
     end

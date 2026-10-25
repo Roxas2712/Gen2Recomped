@@ -22,6 +22,11 @@ end
 function love.load()
   Fetch = require('src.net.Fetch'); Net = require('src.mods.Net')
   base = assert(os.getenv('GET_TEST_URL'))
+  local newThread = love.thread.newThread
+  love.thread.newThread = function(source, ...)
+    if source == 'src/net/download_worker.lua' then source = 'download_test_worker.lua' end
+    return newThread(source, ...)
+  end
 end
 function love.run()
   local ok, err = xpcall(function()
@@ -68,7 +73,19 @@ function love.run()
     check(Fetch.available(),'worker service can restart')
     local restart=assert(b:get(base..'/binary'));state=await(b,restart)
     check(state.status=='ok','GET after shutdown works');b:release(restart)
-    local fileApi = {poll = function(_, id) return Fetch.poll(id) end}
+    local inFilePoll = false
+    local getInfo = love.filesystem.getInfo
+    love.filesystem.getInfo = function(...)
+      assert(not inFilePoll, 'file poll must not perform filesystem IO')
+      return getInfo(...)
+    end
+    local fileApi = {poll = function(_, id)
+      inFilePoll = true
+      local ok, result = pcall(Fetch.poll, id)
+      inFilePoll = false
+      assert(ok, result)
+      return result
+    end}
     local expected = string.char(0,255,13,10)..'GET binary'
     love.filesystem.createDirectory('downloads')
     local target = 'downloads/target.bin'
@@ -85,7 +102,7 @@ function love.run()
     local observedProgress = false
     while true do
       local before = love.timer.getTime()
-      state = Fetch.poll(fileJob)
+      state = fileApi:poll(fileJob)
       check(love.timer.getTime()-before < .1, 'file poll never waits on HTTP')
       if state.status ~= 'pending' then break end
       preserved('in-flight file does not overwrite previous complete file')
@@ -129,6 +146,29 @@ function love.run()
     check(state.status=='ok' and state.receivedBytes==17*1024*1024,'file can exceed in-memory GET ceiling')
     check(love.filesystem.read('downloads/large.bin')==pattern:rep(69632),'large file bytes exact')
     Fetch.release(large)
+    local delayedPath='downloads/delay-publish.bin'
+    assert(love.filesystem.write(delayedPath,'previous complete file'))
+    local finishing=assert(Fetch.download(base..'/binary',delayedPath,{size=14}))
+    local observedPublication=false
+    local finishingAt=love.timer.getTime()
+    while true do
+      state=fileApi:poll(finishing)
+      if state.status~='pending' then break end
+      if state.phase=='publishing' then
+        observedPublication=true
+        check(not Fetch.cancel(finishing),'cancellation after publication claim is refused without waiting')
+        check(state.cancellable==false,'committing request reports cancellation boundary')
+      end
+      check(love.timer.getTime()-finishingAt<5,'delayed publication completes')
+      love.timer.sleep(.005)
+    end
+    check(observedPublication and state.status=='ok','main thread pumps during slow filesystem publication')
+    check(love.filesystem.read(delayedPath)==expected,'claimed publication completes with exact bytes')
+    Fetch.release(finishing)
+    local invalidTarget=assert(Fetch.download(base..'/binary','downloads',{size=14}))
+    state=await(fileApi,invalidTarget)
+    check(state.status=='error' and love.filesystem.getInfo('downloads').type=='directory','publish error preserves existing directory')
+    Fetch.release(invalidTarget)
     local heldFiles={}
     for i=1,8 do heldFiles[i]=assert(Fetch.download(base..'/slow','downloads/held'..i)) end
     check(Fetch.download(base..'/slow','downloads/overflow')==nil,'file queue bounded')

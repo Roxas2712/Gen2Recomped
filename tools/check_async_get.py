@@ -15,7 +15,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.send_response(200);self.send_header('Content-Length',str(4*65536));self.end_headers()
             try:
                 for _ in range(4):self.wfile.write(bytes(range(256))*256);self.wfile.flush();time.sleep(.25)
-            except (BrokenPipeError,ConnectionResetError):pass
+            except (BrokenPipeError,ConnectionResetError,ConnectionAbortedError):pass
             return
         if path=='/partial':
             self.send_response(200);self.send_header('Content-Length','999');self.end_headers();self.wfile.write(b'short');return
@@ -23,14 +23,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.send_response(200);self.send_header('Content-Length',str(17*1024*1024));self.end_headers()
             try:
                 for _ in range(272):self.wfile.write(bytes(range(256))*256)
-            except (BrokenPipeError,ConnectionResetError):pass
+            except (BrokenPipeError,ConnectionResetError,ConnectionAbortedError):pass
             return
         body=b'\x00\xff\r\nGET binary' if path=='/binary' else b'slow' if path=='/slow' else b'x'*4096
         self.send_response(200)
         if path!='/chunk': self.send_header('Content-Length',str(len(body)))
         self.end_headers()
         try: self.wfile.write(body)
-        except (BrokenPipeError,ConnectionResetError): pass
+        except (BrokenPipeError,ConnectionResetError,ConnectionAbortedError): pass
 def main():
     p=argparse.ArgumentParser();p.add_argument('--love',required=True);p.add_argument('--source-root',type=pathlib.Path);args=p.parse_args()
     root=pathlib.Path(__file__).resolve().parents[1]
@@ -55,10 +55,10 @@ def main():
         temporary=tempfile.TemporaryDirectory(prefix='gen2recomp-get-check-')
         project=pathlib.Path(temporary.name)
     for name in ('src/net/Fetch.lua','src/net/AsyncGet.lua','src/net/get_worker.lua',
-                 'src/net/AsyncDownload.lua','src/net/DownloadTransport.lua','src/net/download_worker.lua',
+                 'src/net/AsyncDownload.lua','src/net/DownloadTransport.lua','src/net/DownloadPublish.lua','src/net/download_worker.lua',
                  'src/mods/Net.lua','src/core/HostShell.lua'):
         target=project/name;target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(source/name,target)
-    for name in ('main.lua','conf.lua'):shutil.copy2(root/'tools/async-get-check'/name,project/name)
+    for name in ('main.lua','conf.lua','download_test_worker.lua'):shutil.copy2(root/'tools/async-get-check'/name,project/name)
     server=http.server.ThreadingHTTPServer(('127.0.0.1',0),Handler)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
