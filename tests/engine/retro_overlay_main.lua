@@ -32,7 +32,7 @@ install(game,overlay,graphics,function() end,nil,{},nil);calls={};love.draw()
 check(#calls==1 and calls[1][1]=='game','scripted drivers do not draw the interactive overlay')
 install(game,overlay,graphics,function() end,nil,nil,{});calls={};love.draw()
 check(#calls==1 and calls[1][1]=='game','autopilot captures retain their original frame content')
-install(game,overlay,graphics,function() event('second-panel') end,{draw=function() event('launcher') end,touchpressed=function(...) event('launcher-touch',...) end});calls={}
+install(game,overlay,graphics,function() event('second-panel') end,{draw=function() event('launcher') end,touchpressed=function(_,...) event('launcher-touch',...) end});calls={}
 love.draw();check(calls[1][1]=='launcher' and calls[2][1]=='second-panel','the launcher still draws its independent secondary display')
 calls={};love.touchpressed('finger',1,2,3,4,.5)
 check(calls[1][1]=='launcher-touch' and calls[1][7]==.5,'launcher touch forwarding also retains delta and pressure')
