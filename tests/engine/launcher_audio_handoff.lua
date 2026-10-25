@@ -23,6 +23,11 @@ Music.applyOptions({audioMuted=true,musicVol=5});local song=sources[#sources-1]
 check(song.volume==0,'master mute applies to the running music source')
 Music.setVolumeLevel(7);check(song.volume==0,'changing music volume cannot bypass master mute')
 Music.applyOptions({audioMuted=false,musicVol=5});check(song.volume>0,'unmute restores the chosen music level')
+Music.fadeOut(1);Music.applyOptions({audioMuted=true,musicVol=5});Music.update(data)
+check(song.volume==0,'a scripted fade cannot turn music back on after master mute')
+Sound.applyOptions({audioMuted=true,sfxVol=5});Sound.play(data,'Click')
+check(sources[#sources].volume==0,'master mute also silences already cached effects')
+Sound.applyOptions({audioMuted=false,sfxVol=5});check(sources[#sources].volume>0,'unmute restores the saved effects level')
 check(not require('src.import.CartridgeDownload').start('red',false),'original artwork requires explicit confirmation before any network request')
 local L=require('src.import.LauncherLibrary');local calls={}
 B.current=function() return 'red' end

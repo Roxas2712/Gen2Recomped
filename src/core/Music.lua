@@ -765,7 +765,7 @@ function Music.update(data)
         Music.stop()
         return
       end
-      local vol = f.from * f.level / 7
+      local vol = muted and 0 or f.from * f.level / 7
       if state.source then pcall(state.source.setVolume, state.source, vol) end
       if state.loopSource then
         pcall(state.loopSource.setVolume, state.loopSource, vol)
