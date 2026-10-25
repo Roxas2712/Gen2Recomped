@@ -112,7 +112,7 @@ function Actions.new(provider, loader, builders)
     -- Capture live eligibility, target and inventory changes even when the
     -- native screen has not rebuilt its labels yet. Never return this data.
     local controls = copy({
-      party = type(top.party) == "table" and top.party or game.save and game.save.party,
+      party = refs.party or type(top.party) == "table" and top.party or game.save and game.save.party,
       inventory = game.save and game.save.inventory,
       bagOrder = game.save and game.save.bagOrder,
       select = top.select,

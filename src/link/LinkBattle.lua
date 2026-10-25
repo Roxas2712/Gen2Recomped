@@ -162,6 +162,7 @@ local function activeStr(b, role)
                                       tostring(b.mon.status), tostring(b.mon.item),
                                       stageStr(b), ppStr(b.mon)) .. toxicSignature(b.mon)
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3LockOn").signature(b, role) or "")
+    .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3BatonPass").signature(b, role) or "")
 end
 
 local function benchStr(party)
@@ -394,6 +395,13 @@ function LinkBattle.new(game, net, opts)
     end
   end
 
+  if require("src.core.GameVersion").isGen3() then
+    require("src.link.Gen3BatonChoice").attach(self, {
+      role=role, mine=myParty, theirs=theirParty, send=send,
+      invalid=function() endAsDraw(self, Strings("Link choice mismatch!")) end,
+    })
+  end
+
   -- both actions in hand: resolve the turn identically on both machines
   local function resolveLockstep(s, myMsg, theirMsg)
     if myMsg.kind == "run" or theirMsg.kind == "run" then
@@ -578,12 +586,14 @@ function LinkBattle.new(game, net, opts)
   end
 
   local baseUpdate = self.update
-  self.update = function(s, dt)
+  local function poll(s)
     net:update()
     for _, msg in ipairs(net:poll()) do
       if msg.type == "action" then
         s.remoteAction = msg
         tryResolve(s)
+      elseif msg.type == "baton_pass" then
+        require("src.link.Gen3BatonChoice").receive(s, msg)
       elseif msg.type == "hash" then
         s.remoteHashes[msg.turn or 0] = msg.value
         s.remoteParts[msg.turn or 0] = msg.parts
@@ -612,6 +622,10 @@ function LinkBattle.new(game, net, opts)
     if net.closed and not s.linkEnded and not s.result then
       endAsDraw(s)
     end
+  end
+  self._gen3BatonPoll = poll
+  self.update = function(s, dt)
+    poll(s)
     -- Both early returns below skip baseUpdate, which is where the
     -- presentational clock normally advances -- so tick it here, in the same
     -- order baseUpdate would (fx, then the queue).  Without this an
@@ -781,6 +795,13 @@ function LinkBattle.newSpectator(game, net, opts)
     end)
   end
 
+  if require("src.core.GameVersion").isGen3() then
+    require("src.link.Gen3BatonChoice").attach(self, {
+      role="host", mine=hostParty, theirs=guestParty, spectator=true,
+      invalid=function() endSpectate(self, "Invalid Baton Pass choice.") end,
+    })
+  end
+
   local function resolveSpecTurn(s, hostMsg, guestMsg)
     if hostMsg.kind == "run" or guestMsg.kind == "run" then
       endSpectate(s, "The match ended.")
@@ -888,6 +909,8 @@ function LinkBattle.newSpectator(game, net, opts)
             s.hostMsg, s.guestMsg = nil, nil
             resolveSpecTurn(s, h, g)
           end
+        elseif inner.type == "baton_pass" then
+          require("src.link.Gen3BatonChoice").receive(s, inner, msg.side)
         elseif inner.type == "bye" or inner.type == "forfeit" then
           if not s.result then endSpectate(s, "The match ended.") end
         end
