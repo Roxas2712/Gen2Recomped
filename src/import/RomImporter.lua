@@ -1323,6 +1323,9 @@ local function markerFor(version)
   if version == "emerald" or version == "ruby" or version == "sapphire" then
     revision = revision .. "source-behavior-flags-v1:"
   end
+  if GameVersion.generation(version) == 3 then
+    revision = revision .. "original-object-sheets-v" .. require("src.import.Gen3ObjectSheets").SCHEMA .. ":"
+  end
   return CACHE_FORMAT .. revision .. GameVersion.info(version).sha1
 end
 

@@ -18,6 +18,12 @@ end
 function S.cancelPending()
   for _,service in pairs(services)do if service.cancelPending then service:cancelPending()end end
 end
+function S.cancelOwner(owner)
+  for _,service in pairs(services)do if service.releaseOwner then
+    local ok,why=pcall(service.releaseOwner,service,owner)
+    if not ok then print('[compat/stream] owner cleanup failed: '..tostring(why))end
+  end end
+end
 function S.frameComplete()S._uploadedThisFrame=false end
 function S.shutdown()
   for _,service in pairs(services)do if service.release then service:release()end end
