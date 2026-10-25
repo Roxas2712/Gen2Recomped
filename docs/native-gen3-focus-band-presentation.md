@@ -1,6 +1,6 @@
-# Native GBA Focus Band presentation — development checkpoint
+# Native GBA Focus Band presentation
 
-This branch extends `816346bc` and queues the native Focus Band general
+This path queues the native Focus Band general
 animation before the held-on message in both native damage paths. The real
 battle queue owns its frame clock, sound, red palette fades and signed
 fixed-point movement. Animation options retain the native general-animation
@@ -20,10 +20,13 @@ the existing virtual cache filesystem; no reference functions or files are
 patched. The comparison checker now rejects native VM error/wait-cap
 diagnostics even if the worker exits zero, and fingerprints the sound fixture.
 
-The reference remains read-only at
-`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`. The source-bound frozen rerun,
-complete damage-command matrix and full regression are still pending at this
-checkpoint. Substitute fade, broader Mirror Move/link/public-submit gates
-and native command revision review remain prerequisites for final acceptance.
-There is no claim of final GPU pixel or complete synthesizer waveform parity.
-No PR or playable-branch update has been made for this checkpoint.
+The frozen runtime completes 161/170 engine suites, SDK 3/3 and B30, with
+exactly the same 25 inherited FAIL lines as fresh #258. The corrected frozen
+controller rerun passes all eight Poison/Focus Band and PCM workers at
+`d470eeee`. FireRed retains its built-in back offset 10; the owned Emerald
+input uses 8. The earlier incorrect shared-offset assertion remains retained
+as a failed fixture. The final 32-worker matrix also passes on the combined
+fork. Native revision 17, Substitute fade and linked/imported qualification
+are documented in `native-gen3-mirror-move.md`. The reference remains read-only
+at `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`; final GPU pixels and whole
+synthesizer waveforms are outside these CPU results.

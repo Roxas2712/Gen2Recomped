@@ -1,7 +1,6 @@
-# Native GBA battle-effect presentation work in progress
+# Native GBA Poison presentation and native sound controls
 
-This branch extends native Substitute art at `bff8ec57`. It is development
-work, not an accepted PR or a replacement for the playable testing branch.
+This path extends native Substitute art and the existing battle queue.
 Gen1 remains read-only at `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`.
 
 ## Implemented native Poison path
@@ -37,8 +36,8 @@ Cache invalidation refreshes the native number lookup after a mod audio edit.
 - The broader complete command regression retains **11,520 multi-hit rows**,
   **1,920 Mirror Move rows** and **360 Substitute-controller cases**. The 192
   poison-command differences are resolved. The complete comparison remains
-  **failed** on **1,152 animation observations**, all Substitute fade or
-  Focus Band. No observation, event, RNG field or animation was removed.
+  **failed at that checkpoint** on **1,152 animation observations**, all
+  Substitute fade or Focus Band. No observation, event, RNG field or animation was removed.
 
 Audio controls are measured at the output source. The Source carrier uses
 owned cached PCM; the host carrier runs through its actual M4A sequencer.
@@ -47,14 +46,14 @@ This does not establish whole-synthesizer waveform equality, all public audio
 event parity, or final scene pixel equality. CPU hardware doubles launch no
 game, audio device or GPU preview and modify no normal cache/save.
 
-## Remaining gates
+## Combined qualification
 
-Implement and qualify actual Substitute-fade and Focus Band playback, not
-ignored animation rows. Retain the failed broader matrix until every captured
-field agrees. Full regression for this runtime, native command revision/link
-compatibility review, broader Mirror Move history, real linked roles and actual
-public-submission scenarios also remain required before publication or stable
-testing-branch integration.
+Actual Substitute-fade and Focus Band playback are now implemented. The final
+32-worker / 14,816-observation matrix passes with all captured fields retained.
+The original Poison runtime completes 161/170 engine suites, SDK 3/3 and B30,
+with exactly the same 25 inherited FAIL lines as fresh #258. Native revision
+17, real linked roles, received-history and public imported-submission evidence
+are recorded in `native-gen3-mirror-move.md`. Earlier failures remain retained.
 
 Raw successes, failed/superseded inputs and complete observations remain in
 `tmp/battle-effect-qa/`. Reproduce the focused contracts with:

@@ -1,6 +1,6 @@
-# Native GBA Substitute doll art work in progress
+# Native GBA Substitute doll art
 
-This development branch extends the native Substitute command/controller work.
+This importer and renderer extend the native Substitute command/controller work.
 It imports the doll from the player's cartridge and uses its native 64x64 OBJ
 geometry, including each double-battle slot and the controller's live offsets.
 Existing caches need a reimport to populate the new art metadata. The previous
@@ -39,13 +39,15 @@ included in this branch.
 - Frozen runtime `bff8ec57`: 159/168 engine suites, SDK 3/3 and B30. The exact
   anchored FAIL-line Counter matches fresh #258: the same 25 inherited lines,
   with no additions or removals. The failed broader animation matrix remains
-  retained separately and is not reported as passing.
+  retained separately as historical failure evidence.
 
-These checks establish decoded artwork and draw commands. They are not final
-scene screenshots or whole-battle graphical acceptance. General/status playback
-for Substitute fade, Focus Band and poison remains open in the broader command
-matrix; its 1,344 differing observations are retained. Mirror Move history,
-linked-role and actual public-submission gates also remain open before a PR.
+The extended actual-draw suite now passes 70 checks, including palette
+composition, full-wrapper fade alpha and graphics-state restoration. The final
+32-worker / 14,816-observation matrix includes implemented Substitute fade,
+Focus Band and Poison; all captured fields agree. Historical differing reports
+remain retained. History, linked-role and actual public-submission evidence is
+recorded in `native-gen3-mirror-move.md`. These CPU checks establish decoded
+artwork and draw commands, not final scene screenshots or whole-battle pixels.
 
 Raw local QA is retained in `tmp/substitute-art-qa/`. Run the owned checks with:
 

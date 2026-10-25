@@ -1,6 +1,6 @@
-# Native Mirror Move integration gates — development checkpoint
+# Native Mirror Move integration contracts
 
-This branch extends native Substitute fade at `458a6504`. Its runtime change
+This contract extends native Substitute fade. Its runtime change
 advances the native GBA command revision from 16 to 17: additional queued
 animation commands and sound callbacks change runtime behavior even with the
 same imported records. Party codec revision remains 1. Older native peers
@@ -37,9 +37,12 @@ captured state, event, held read, RNG draw and animation row. The earlier
 Substitute/Focus Band/Poison differences have been implemented and qualified,
 not removed from comparison.
 
-Full regression of this exact runtime, broader received-history command
-conditions and remaining native profile coverage still require qualification
-before final publication or playable-branch integration. The unchanged Gen1
+The exact runtime at `f9016f1c` completes 163/172 engine suites, SDK 3/3
+and B30, with exactly the same 25 inherited FAIL lines as fresh #258. The
+additional KO/self-target history cases pass 994 host checks and extend the
+complete matrix to 14,816 equal paired observations. Combined-fork qualification
+and the limits of native profile coverage are recorded in
+`native-gen3-mirror-move.md`. The unchanged Gen1
 reference remains read-only at `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`.
 No Gen1 PR or write is involved. GPU scene parity and whole-synthesizer waveform
 parity are not established by these CPU contracts.

@@ -1,8 +1,7 @@
-# Native GBA Substitute presentation work in progress
+# Native GBA Substitute presentation
 
-This branch builds on the unpublished Mirror Move development at
-`2f6ae7888d8250ddb7d61f484c003d7ad52d5824`. It is not an accepted PR or the
-combined playable testing branch. Gen1 remains a clean read-only reference at
+This controller accompanies native Mirror Move received-history support.
+Gen1 remains a clean read-only reference at
 `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`.
 
 ## Implemented
@@ -19,7 +18,7 @@ the Transform/Substitute exceptions. Skipped commands add no waiting tick.
 The renderer's sprite selection and native OAM Y consult that presentation;
 queue completion clears its transient state. Legacy battles retain their path.
 
-## Evidence and open gates
+## Controller evidence and retained failures
 
 - The first 1,920 complete Mirror Move observations now match unchanged Gen1,
   including all previously differing 144 animation command streams.
@@ -33,15 +32,15 @@ queue completion clears its transient state. Legacy battles retain their path.
   functions are replaced. CPU graphics doubles launch no game or GPU preview.
 - The expanded multi-hit contract retains all existing state, events and RNG,
   and adds the complete move/general animation stream. All 11,520 actions
-  execute, but **1,344 observations still differ** in animation commands:
+  execute; at this earlier checkpoint **1,344 observations differed** in animation commands:
   Substitute fade, Focus Band and poison presentation. Those differences and
   every failed/superseded fixture report remain in local ignored QA output.
 
-The native GBA Substitute doll artwork/import path still needs implementation.
-The current legacy doll renderer is not graphical acceptance. Full native
-artwork/positioning, general/status animation playback, broader regression and
-Mirror Move history/link/actual-import gates remain open. No PR is published
-and the stable testing branch is unchanged at this checkpoint.
+Native doll import/drawing and all three general/status controllers are now
+implemented. The final complete matrix passes 32 workers / 14,816 paired
+observations, including every earlier differing animation stream. Full evidence
+and scope are recorded in `native-gen3-mirror-move.md`. CPU draw/state checks
+are not final GPU scene acceptance.
 
 Reproduce the complete paired CPU contracts with:
 
