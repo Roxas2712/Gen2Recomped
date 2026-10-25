@@ -1058,6 +1058,9 @@ function OverworldState:enter(mapId, x, y, facing)
   self.camera = Camera.new()
   self.runner = ScriptRunner.new(Game, self)
   self.scriptMoves = {}
+  -- A fresh world entry may reuse this singleton and the same save/data.
+  -- It starts a new coordinate visit; a same-map graphics rebuild does not.
+  self.gen2CoordVisit, self.lastCellMapId = nil, nil
   self.pendingScripts = {}
   self.parallelRunners = {}
   self.parallelQueue = {}
@@ -2846,8 +2849,11 @@ end
 function OverworldState:noteCellChange()
   local p = self.player
   if not (p and p.cellX and p.cellY) then return end
-  if self.lastCellX ~= p.cellX or self.lastCellY ~= p.cellY then
+  local mapId = GameVersion.isGen2() and self.map and self.map.id or nil
+  if self.lastCellX ~= p.cellX or self.lastCellY ~= p.cellY
+     or (GameVersion.isGen2() and self.lastCellMapId ~= mapId) then
     self.lastCellX, self.lastCellY = p.cellX, p.cellY
+    if GameVersion.isGen2() then self.lastCellMapId = mapId end
     self.cellSerial = (self.cellSerial or 0) + 1
     if self.gen5ArrivalMap and (p.cellX ~= self.gen5ArrivalX or p.cellY ~= self.gen5ArrivalY) then
       self.gen5ArrivalMap = nil
@@ -12790,6 +12796,56 @@ function OverworldState:hatchEgg(hatched)
   return true
 end
 
+-- Gen2's native coord scripts and authored tile events share a completed-cell
+-- handoff. Both native step completion and deferred/scripted-arrival checks
+-- use this phase; polling an already claimed visit cannot replay its script.
+function OverworldState:tryCoordScript()
+  local p, map = self.player, self.map
+  if not GameVersion.isGen2() or not (p and map and mapScripts and self.runner
+      and Game and Game.data and Game.save) or p.moving or self:busy() then return false end
+  self:noteCellChange()
+  local old = self.gen2CoordVisit
+  if old and old.mapId == map.id and old.save == Game.save
+     and old.data == Game.data and old.serial == self.cellSerial then return false end
+  -- Immediate native warps retain priority; a directional carpet still falls
+  -- through to its scene event, and an inert arrival cell stays inert.
+  if not self:warpsSuppressed()
+     and Warp.onArrive(map, p.cellX, p.cellY, p.facing) then return false end
+  local visit = { mapId = map.id, data = Game.data, save = Game.save, serial = self.cellSerial }
+  local events = map.def and map.def.events
+  if type(events) == "table" then
+    for _, ev in ipairs(events) do
+      if ev.replaces and ev.x == p.cellX and ev.y == p.cellY
+         and type(ev.script) == "table" and #ev.script > 0 then
+        self.gen2CoordVisit = visit
+        self.runner:run(ev.script, { event = ev.id })
+        return true
+      end
+    end
+  end
+  local hooks = mapScripts.get(map.id)
+  if hooks and hooks.onStep then
+    -- Install before dispatch: a synchronous script/hook may call back into
+    -- this phase. A non-matching hook does not consume the visit.
+    self.gen2CoordVisit = visit
+    if hooks.onStep(Game, self, p.cellX, p.cellY) then return true end
+    if self.map ~= map or self.player ~= p or Game.save ~= visit.save
+       or Game.data ~= visit.data or self:busy() then return true end
+    if self.gen2CoordVisit == visit then self.gen2CoordVisit = nil end
+  end
+  if type(events) == "table" then
+    for _, ev in ipairs(events) do
+      if ev.x == p.cellX and ev.y == p.cellY
+         and type(ev.script) == "table" and #ev.script > 0 then
+        self.gen2CoordVisit = visit
+        self.runner:run(ev.script, { event = ev.id })
+        return true
+      end
+    end
+  end
+  return false
+end
+
 -- Run the map's step trigger for the cell the player is standing on, once.
 --
 -- `onStep` is the same hook onStepComplete uses; what is different here is
@@ -12810,6 +12866,7 @@ end
 -- fired at the cell the player is standing on, so a row cannot run twice
 -- while the player stands there however often it is asked.
 function OverworldState:checkCoordEventHere(again)
+  if GameVersion.isGen2() then return self:tryCoordScript() end
   local hooks = mapScripts.get(self.map and self.map.id)
   if not (hooks and hooks.onStep) then return false end
   local p = self.player
@@ -13304,6 +13361,8 @@ function OverworldState:onStepComplete()
     end
   end
 
+  if GameVersion.isGen2() and self:tryCoordScript() then return end
+
   -- AN AUTHORED EVENT THAT DECLARES ITSELF A REPLACEMENT, ahead of the hooks.
   --
   -- The default below is that the cartridge's own scenes own their squares,
@@ -13321,7 +13380,7 @@ function OverworldState:onStepComplete()
   -- STILL AFTER THE WARP. That half of the ordering is not about authorship --
   -- it is CheckTileEvent testing the warp tile first -- and an authored event
   -- that swallowed a door would strand the player just as surely.
-  if not warpFirst and not self.runner:isRunning() then
+  if not GameVersion.isGen2() and not warpFirst and not self.runner:isRunning() then
     local events = self.map and self.map.def and self.map.def.events
     if type(events) == "table" then
       for _, ev in ipairs(events) do
@@ -13408,7 +13467,7 @@ function OverworldState:onStepComplete()
 
   -- hand-ported step triggers (Pallet intro, Saffron gate guards, ...)
   local hooks = mapScripts.get(self.map.id)
-  if not warpFirst and hooks and hooks.onStep then
+  if not GameVersion.isGen2() and not warpFirst and hooks and hooks.onStep then
     if hooks.onStep(Game, self, p.cellX, p.cellY) then
       return
     end
@@ -13429,7 +13488,7 @@ function OverworldState:onStepComplete()
   -- second interpreter. Whether the event repeats is the SCRIPT's business:
   -- it opens with its own `check_flag`/`jump_if_true` when the author asked
   -- for once-only, which is the same mechanism they use for everything else.
-  if not warpFirst and not self.runner:isRunning() then
+  if not GameVersion.isGen2() and not warpFirst and not self.runner:isRunning() then
     local events = self.map and self.map.def and self.map.def.events
     if type(events) == "table" then
       for _, ev in ipairs(events) do
