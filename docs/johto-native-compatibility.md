@@ -65,6 +65,11 @@ earlier PR snapshots must not roll these back. The audited PR inventory and
 validation scope are recorded in
 [the integration receipt](qa/fork-inbox-integration.json).
 This is an engine test checkpoint, not full VASC/native parity or a new release.
+At composed source `5c8e4b8a`, all 324 engine suites, three SDK suites and
+all standalone quick tiers pass. The existing public enemy-action consumers
+match the pinned reference in 58 comparisons / 116 workers; held-damage
+contracts match in four workers, with no differences. These checks use
+ROM-free fixtures and establish no additional graphical gameplay acceptance.
 
 ## Fixed engine contracts
 

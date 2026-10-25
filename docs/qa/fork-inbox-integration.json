@@ -12,8 +12,36 @@
   "snapshotAt": "2026-10-25",
   "upstreamPullRequestsRemainOpen": true,
   "validation": {
-    "state": "pending final composed run",
-    "focusedSuitesPassed": 7
+    "state": "passed local composed validation",
+    "testedSource": "5c8e4b8a5c85cc6a6d31eb41a828eacd85c50adb",
+    "engineSuites": {
+      "passed": 324,
+      "total": 324
+    },
+    "sdkSuites": {
+      "passed": 3,
+      "total": 3
+    },
+    "standaloneTiers": "Classic GB item list, native summary UI, summary extraction parts and B30 all pass",
+    "focusedSuitesPassed": 7,
+    "enemyActionContracts": {
+      "pairedComparisons": 58,
+      "isolatedWorkers": 116,
+      "differences": 0,
+      "reference": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91"
+    },
+    "heldDamageContracts": {
+      "isolatedWorkers": 4,
+      "differences": 0,
+      "reference": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91"
+    },
+    "evidenceSHA256": {
+      "zero-final-quick.log": "860c95bd77a27245d7ce14d4bb49f71e9ac2845a1d2cb0f5918b196cd81a41d6",
+      "zero-integration-focused.log": "afc24850f8cf75d2854786cf1efd3b325574eeb169c15c383de3501798e4b45f",
+      "zero-enemy-contract.json": "a5b9d7382bea5826c2ac1e45dd27570e1a0e3caf27f4dd63f3caa4198b644efa",
+      "zero-held-damage-contract.json": "f7d81fae596a71e0db9d73c5067b9f9f88f38fa6db65b44976fd1a201bc36350"
+    },
+    "scope": "ROM-free engine/API regression and reference contracts. No new GPU/full gameplay or VASC package-download acceptance; hosted platform CI is separate."
   },
   "knownOpen": [
     "Legacy Fetch.download blocks on the first poll",
