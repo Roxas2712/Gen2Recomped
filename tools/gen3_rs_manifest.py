@@ -56,6 +56,12 @@ def main():
             result['symbols'][name]=at(target_name)
     result['symbols']['gScriptCmdTable']=at('gScriptCmdTable')
     result['symbols']['gStdScripts']=at('gStdScripts')
+    # RS retains two description pointers: 387 entries, 36 bytes each.
+    # The matching ELF and raw Bulbasaur dimensions independently check it.
+    dex=at('gPokedexEntries')
+    assert target.by_name['gPokedexEntries'][0]['size']==387*36
+    assert struct.unpack_from('<HH',rom,dex+36+12)==(7,69)
+    result['pokedexEntrySize']=36
     for name in ('scenes','sceneRoles','sceneOverlays','screenText','bagSprite','wallClock','introCast','introShots','messageWindow','specials','starters','playerTitles','movementActions','playerSprites','m4aWidths','introSprites'):
         result[name]=copy.deepcopy(getattr(f,name,None))
     # Speech contents are recovered from the cartridge by the native importer.
