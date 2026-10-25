@@ -1,6 +1,12 @@
 package.path='./?.lua;./?/init.lua;'..package.path
 local T=require('tests.harness');local getenv=os.getenv
 local P=require('src.core.NativePreview')
+for _,osName in ipairs({'Windows','OS X','Linux','iOS','Android','NX'}) do
+  T.check(P.runtimeSupported(osName,12,0),osName..' accepts preview 12 runtime')
+  T.eq(P.runtimeSupported(osName,11,5),osName=='Android' or osName=='NX',osName..' stable port policy')
+  T.check(not P.runtimeSupported(osName,11,4),osName..' old runtime refused')
+end
+T.check(not P.runtimeSupported('NX',nil,5),'invalid version refused')
 T.check(not pcall(P.activate,'Gen2Recomp'),'normal player identity refused')
 P.activate('Gen2Recomp-NativePreview-20261024-1')
 T.eq(os.getenv('POKEPORT_IDENTITY'),P.identity,'preview owns a dedicated namespace')
