@@ -100,7 +100,8 @@ local function ordinaryDamage(battle, ctx, record)
   return battle:computeDamage(ctx.user, ctx.target, ctx.move,
     { rng = battle.rng, explode = (record and record.explode) or nil,
       powerMultiplier = record and record.powerMultiplier and record.powerMultiplier(ctx) or nil,
-      highCrit = record and record.highCrit or nil })
+      highCrit = record and record.highCrit or nil,
+      power = record and record.gbaTripleKick and 10 * (ctx.gbaHit or 1) or nil })
 end
 
 -- The damaging pipeline, extracted from the performMove monolith: every
@@ -113,6 +114,8 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   local neverMiss = record and record.neverMiss
   local gba = require("src.core.GameVersion").isGen3()
   local ordinaryMulti = gba and require("src.battle.Gen3MultiHit").ordinary(move)
+  local tripleKick = gba and record and record.gbaTripleKick
+  local nativeMulti = ordinaryMulti or tripleKick
   if gba and type(target.substituteHP) == "number" and target.substituteHP <= 0 then
     target.substituteHP = nil
   end
@@ -298,13 +301,21 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   local landed, brokeSub = 0, false
   for h = 1, hits do
     if target.mon.hp <= 0 then break end
-    if ordinaryMulti and (user.mon.hp <= 0 or h > 1 and user.mon.status == "SLP"
+    if nativeMulti and (user.mon.hp <= 0 or h > 1 and user.mon.status == "SLP"
         and not require("src.battle.Gen3MultiHit").sleepTalk(battle)) then break end
+    -- Unlike ordinary multi-hit moves, each reached native kick checks
+    -- accuracy again before its critical/damage opcodes. A later miss ends
+    -- the script quietly; already landed kicks still reach move-end (Rage).
+    if tripleKick and h > 1 then
+      local hit = battle:accuracyRoll(move, user, target, accuracyRaw)
+      if not hit then break end
+    end
+    ctx.gbaHit = h
     if record and record.perHitDamage then
       local nextDamage, nextInfo = record.perHitDamage(ctx, h, dmg, info)
       if nextDamage == nil then break end
       dmg, info = nextDamage, nextInfo or info
-    elseif ordinaryMulti and h > 1
+    elseif nativeMulti and h > 1
         and not (record and record.chooseDamage) then
       dmg, info = ordinaryDamage(battle, ctx, record)
       if info.typeMult == 0 or info.missed then
@@ -429,7 +440,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
       brokeSub = true
       if not gba then break end
     end
-    if ordinaryMulti and endured then break end
+    if nativeMulti and endured then break end
   end
   hits = landed > 0 and landed or hits
   if hits > 1 and not info.gbaBeatUp then

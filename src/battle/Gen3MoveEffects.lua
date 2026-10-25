@@ -1140,15 +1140,9 @@ F.LOW_KICK_EFFECT = {
   end,
 }
 
--- TRIPLE KICK hits three times and its power escalates 10, 20, 30.
---
--- This pipeline rolls the damage ONCE and applies it per hit, so a per-hit
--- ramp is not something it can express.  Three hits at twice the base power
--- is the same TOTAL -- 3 x 2 x 10 is 60, and 10 + 20 + 30 is 60 -- so the
--- damage a Hitmontop does over the move is right even though it is spread
--- evenly rather than escalating.  Said plainly here rather than left to be
--- discovered: what is not modelled is the ramp, and the cartridge's rule
--- that the move stops early if a kick misses.
+-- Legacy fallback: three equal-power hits with one accuracy check.
+-- Native GBA loads adapt this record per dataset in Gen3TripleKick before
+-- mods capture it: its script checks every kick and assigns 10/20/30 power.
 F.TRIPLE_KICK_EFFECT = {
   hitCount = function() return 3 end,
   powerMultiplier = function() return 2 end,

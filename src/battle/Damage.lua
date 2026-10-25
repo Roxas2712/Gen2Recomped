@@ -459,7 +459,7 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
   -- FURY CUTTER and ROLLOUT doubling each turn they land -- hand the
   -- pipeline a multiplier and it arrives here.  Floored at 1 so a scaled
   -- move never becomes a status move by arithmetic.
-  local power = move.power
+  local power = gbaBase and opts.power or move.power
   if opts.powerMultiplier and opts.powerMultiplier ~= 1 then
     power = math.max(1, math.floor(power * opts.powerMultiplier))
   end
