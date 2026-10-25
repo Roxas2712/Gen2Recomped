@@ -133,9 +133,12 @@ acceptance and publication remain pending.
 
 The planning fixture observes final PP and move-used events, but does not
 observe PP inside the event callback. A separate actual-script diagnostic
-retains 72 rows over both profiles, including 60 mismatches: ordinary and
+retains 72 rows over both profiles, including 48 mismatches: ordinary and
 Pressure callbacks observe PP before reduction in Gen1 and after reduction
 in Gen2; zero-PP native failures still emit the event whereas Gen2 does not.
+The first probe incorrectly supplied a selected PP slot for a called child;
+native `run_called` supplies none. That first diagnostic is retained separately
+from the corrected 72-row probe, with the same complete observation fields.
 All raw rows are retained. This gap remains open; final-state equality does
 not prove native event/PP-command timing.
 
