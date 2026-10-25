@@ -45,6 +45,13 @@ function P.stamp(save)
   local ok,why=P.check();if not ok then return nil,why end
   save.meta=save.meta or {};save.meta.retroAccountId=auth().accountId();return true
 end
+function P.storeCheck(store)
+  local ok,why=P.check();if not ok then return nil,why end
+  if P.enabled and type(store)=='table' and store.accountId and store.accountId~=auth().accountId() then
+    return nil,'The cloud connection belongs to another account. Reconnect before syncing.'
+  end
+  return true
+end
 function P.resume(self,after)
   if after=='bank' or after=='bankDex' then return require('src.import.BankWorkspace').open(self,after=='bankDex' and 'dex' or nil) end
   if after=='history' then return require('src.import.SaveHistoryWorkspace').open(self) end

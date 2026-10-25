@@ -270,7 +270,7 @@ B.boxes=boxes
 B.boxMons=mons
 B.shape=shape
 function B.sync(target)
-  local permitted,why=require('src.storage.AccountStorage').check();if not permitted then return nil,why end
+  local permitted,why=require('src.storage.AccountStorage').storeCheck(target);if not permitted then return nil,why end
   local store=type(target)=='table' and target or require('src.import.CloudSync').folderStore(target)
   local localById={};local disk=fs();disk.createDirectory(B.DIRECTORY)
   for _,entry in ipairs(B.list()) do localById[entry.id]=true end

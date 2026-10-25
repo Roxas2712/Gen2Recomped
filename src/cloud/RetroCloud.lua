@@ -85,6 +85,7 @@ end
 function R.open()
   local token,why=R.accessToken()
   if not token then return nil,why end
+  local accountId,email=R.accountId(),R.account()
   local status,doc=document('GET','/objects',nil,token)
   if status~=200 or not (doc and type(doc.objects)=='table') then
     return nil,'Cloud listing failed ('..tostring(status or 'offline')..').'
@@ -93,7 +94,7 @@ function R.open()
   for _,object in ipairs(doc.objects) do
     if type(object.path)=='string' and type(object.revision)=='string' then revisions[object.path]=object.revision end
   end
-  local store={kind='retro',label='RetroRecomped Cloud',profileScope='retro:'..tostring(R.account() or ''):lower()}
+  local store={kind='retro',label='RetroRecomped Cloud',accountId=accountId,profileScope='retro:'..tostring(email or ''):lower()}
   function store.list(directory)
     local prefix=directory..'/'
     local result={}

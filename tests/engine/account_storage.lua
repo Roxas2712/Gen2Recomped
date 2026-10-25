@@ -30,4 +30,6 @@ P.install(ui);account=nil;ui:play('red')
 check(opened.kind=='play' and opened.version=='red' and not ui.played,'the account gate runs before any play animation or game handoff')
 account='17';P.resume(ui,opened)
 check(ui.played=='red','confirmed storage linking resumes the originally requested game')
+local network=0;local wrongStore={accountId='29',list=function() network=network+1;return {} end,read=function() network=network+1 end,write=function() network=network+1 end}
+check(not require('src.import.CloudSync').syncOne(wrongStore,'red','slot1') and network==0,'a cloud store opened for another account cannot read or upload local saves')
 print('Account-owned storage: '..n..' checks passed')
