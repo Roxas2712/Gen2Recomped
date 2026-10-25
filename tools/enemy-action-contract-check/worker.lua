@@ -2,7 +2,9 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "sleep_talk_content" then
+if mode == "choice_band_command" then
+  rows = dofile(root .. "/tests/enemy_actions/choice_band.lua").run(root, backend, version)
+elseif mode == "sleep_talk_content" then
   rows = dofile(root .. "/tests/enemy_actions/sleep_talk.lua").content(root, backend, version)
 elseif mode == "sleep_talk" then
   rows = dofile(root .. "/tests/enemy_actions/sleep_talk.lua").run(root, backend, version)

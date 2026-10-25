@@ -251,6 +251,15 @@ function M.select(battle, pending, index)
   end
   return true
 end
+local function switchContext(ctx, user, index, party, frame)
+  ctx.user = M.switch(ctx.battle, user, index, party)
+  -- The native battler slot is replaced in place; host battlers are distinct
+  -- tables. Every active caller frame must follow that same slot replacement.
+  while frame do
+    if frame.user == user then frame.user = ctx.user end
+    frame = frame.parent
+  end
+end
 function M.await(battle, pending)
   if battle._gen3BatonPending ~= pending then
     return
@@ -261,14 +270,14 @@ function M.await(battle, pending)
   end
   if pending.choice then
     battle._gen3BatonPending = nil
-    pending.ctx.user = M.switch(battle, pending.user, pending.choice, pending.party)
+    switchContext(pending.ctx, pending.user, pending.choice, pending.party, pending.frame)
     if pending.frame then
       local frame = pending.frame
       while frame do
         frame.finished = true
         frame = frame.parent
       end
-      require("src.battle.GbaItemSchedule").moveEnd(battle)
+      require("src.battle.GbaItemSchedule").moveEnd(battle, pending.frame)
       require("src.battle.GbaItemSchedule").afterAction(battle)
     end
   else
@@ -326,6 +335,7 @@ function M.perform(ctx)
   local battle, user = ctx.battle, ctx.user
   local candidates, party = M.candidates(battle, user)
   if #candidates == 0 then
+    if battle._gbaMoveFrame then battle._gbaMoveFrame.failed = true end
     battle:cancelMoveAnim()
     battle:sayNext(Strings("But, it failed!"))
     return
@@ -343,7 +353,7 @@ function M.perform(ctx)
         index = i
       end
     end
-    ctx.user = M.switch(battle, user, index, party)
+    switchContext(ctx, user, index, party, battle._gbaMoveFrame)
     return
   end
   if
@@ -356,7 +366,7 @@ function M.perform(ctx)
         chosen = i
       end
     end
-    ctx.user = M.switch(battle, user, chosen, party)
+    switchContext(ctx, user, chosen, party, battle._gbaMoveFrame)
     return
   end
   battle._gen3BatonPending = pending

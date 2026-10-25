@@ -10,9 +10,10 @@ function Schedule.battlers(battle)
   return list
 end
 
-function Schedule.moveEnd(battle)
-  local frame = battle._gbaMoveFrame
+function Schedule.moveEnd(battle, completedFrame)
+  local frame = completedFrame or battle._gbaMoveFrame
   if frame then
+    require("src.battle.Gen3ChoiceBand").moveEnd(battle, frame)
     frame.finished = true
   end
   for _, b in ipairs(Schedule.battlers(battle)) do

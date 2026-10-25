@@ -374,6 +374,9 @@ local function build(game, battle, covered, ids)
       or (actor.tauntTurns ~= nil and (def.power or 0) == 0)
       or (actor.tormented and actor.lastMove ~= nil and move.id == actor.lastMove)
       or false
+    if require("src.core.GameVersion").isGen3() then
+      row.disabled = require("src.battle.Gen3MoveSelection").manualReason(battle, actor, move, slot) ~= nil
+    end
     -- BW adds Choice/Imprison/Gravity/Heal Block checks through native
     -- controllers. Do not report an unverified false for those moves.
     if battle.bw and not row.disabled then
