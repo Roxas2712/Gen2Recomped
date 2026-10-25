@@ -439,6 +439,8 @@ function PartyMenu.new(game, opts)
   -- "Use TM on which POKeMON?" prompt). Set by BagMenu.pickTargetAndUse. #210
   self.tmhm = opts.tmhm
   self.forceSwitch = opts.forceSwitch
+  self.noCancel = opts.noCancel
+  self.onUpdate = opts.onUpdate
   self.battle = opts.battle
   self.party = opts.party or (opts.battle and opts.battle.playerParty) -- link copies or trainer selection
   self.swapFrom = nil
@@ -863,6 +865,7 @@ end
 
 function PartyMenu:cancel()
   if self.submenu then self.submenu = nil; return end
+  if self.noCancel then return end
   self.game.stack:pop()
   if self.onCancel then self.onCancel() end
 end
@@ -872,6 +875,7 @@ function PartyMenu:gridNavigation()
 end
 
 function PartyMenu:update(dt)
+  if self.onUpdate then self.onUpdate(self); if self.closed then return end end
   -- icon animation counter; 320 = a whole cycle at every HP speed
   self.blink = ((self.blink or 0) + 1) % 320
   -- The bar fill owns the menu while it runs: UpdateHPBar2 is a blocking

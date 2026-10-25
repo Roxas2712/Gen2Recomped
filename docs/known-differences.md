@@ -67,3 +67,38 @@ revisions alongside the previous battle-data mutations. The deliberate
 This correction changes no game data, runtime hash algorithm or current link
 handshake. No ROM, imported-data or screenshot golden is regenerated. Future
 battle-content changes must review the pinned input delta as well as the hash.
+
+## Native GBA Beat Up party damage
+
+Beat Up now reads each healthy party member's level/species base Attack
+and target species base Defense, with per-hit native critical/variation
+rolls, live callback eligibility, Substitute continuation and last-strike
+special counter memory. The effect revision intentionally changes the link
+fingerprint; see [the contract and remaining acceptance](native-gba-beat-up.md).
+
+## Native GBA Beat Up shared side parties
+
+Beat Up now reads the entire side party in two-trainer and player/ally
+battles, retaining live slot replacement and the active user's HP/status.
+Replacement benches remain owned separately. The reviewed effect revision
+changes the link fingerprint; see [contract coverage and remaining scope](native-gba-beat-up-side-parties.md).
+
+## Native GBA critical context and hit metadata
+
+Critical exclusions now preserve native draw order for first/tutorial battles
+and Teachy TV, including scripted Beat Up. Shared critical context fields,
+physical item/current-species stages, Lansat/Focus Energy behavior and GBA
+hit kind/Substitute metadata are covered by cross-engine contracts. The
+reviewed scripted effect revision changes the link fingerprint; see
+[verification and remaining scope](native-gba-critical-context.md).
+
+## Fork inbox integration fixture (2026-10-25)
+
+Integrating the existing native battle-command PR stack changes only four
+records in the ROM-free fixture's `move_effects` section: Beat Up revision 3,
+Spit Up revision 1, and the implemented Follow Me / Helping Hand primary
+records. No species, move, type, status or constant fixture input changes.
+The reviewed full input and its section pin are updated together; the fixture
+digest becomes `a000e3862d11a73a` (previously `41e69caf4afa35ab`).
+The GBA runtime command/party revisions also participate in GBA handshakes;
+peers must run the same integrated engine rather than bypassing compatibility.

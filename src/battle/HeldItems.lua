@@ -128,6 +128,17 @@ local function nativeEffect(data, holder)
     end
   end
 
+  -- Intentional Gen II cleanup approved for the recomp ruleset: retail
+  -- Crystal accidentally assigns HELD_DRAGON_BOOST to Dragon Scale and leaves
+  -- Dragon Fang with HELD_NONE.  Treat Dragon Fang as the Dragon-type booster
+  -- and Dragon Scale as a normal held item instead of reproducing that bug.
+  local key = norm(ItemEffects.alias(id, def) or def.key or def.name or id)
+  if key == "DRAGON_FANG" then
+    return HeldItems.EFFECT.DRAGON_BOOST, 10
+  elseif key == "DRAGON_SCALE" then
+    return HeldItems.EFFECT.NONE, 0
+  end
+
   return tonumber(def.heldEffect) or require("src.battle.HeldItemRead").goldNative(def.heldEffect) or HeldItems.EFFECT.NONE,
          tonumber(def.heldParam) or 0
 end
