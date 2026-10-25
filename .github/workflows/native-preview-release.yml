@@ -25,6 +25,7 @@ jobs:
       - run: python3 tools/run_retro_launcher_contract.py
       - run: python3 tests/game_payload_test.py
       - run: python3 tests/native_release_test.py
+      - run: python3 -m unittest discover -s tests -p test_native_preview.py
   build:
     needs: contract
     runs-on: macos-15
