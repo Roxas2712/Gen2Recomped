@@ -66,6 +66,8 @@ function M.run(root, backend, version, options)
         "zero-pp",
         "pressure",
         "custom-incoming",
+        "faint-target",
+        "self-target",
       }) do
         if (kind ~= "other-target" or double) and (kind ~= "custom-incoming" or options.public) then
           for _, item in ipairs({ 0, 186, 187, 219 }) do
@@ -251,6 +253,13 @@ function M.run(root, backend, version, options)
               end
             elseif kind == "other-target" then
               act(foeId, actor < 2 and actor + 2 or actor - 2, 3, "other-target")
+            elseif kind == "faint-target" then
+              -- A second received move KOs the recipient. Its earlier valid
+              -- history must survive; a fainted Pokemon cannot then copy it.
+              user.mon.hp = 1
+              act(foeId, actor, 3, "faint-target")
+            elseif kind == "self-target" then
+              act(foeId, foeId, 3, "self-target")
             end
             if kind == "zero-pp" then
               if native then
@@ -259,7 +268,9 @@ function M.run(root, backend, version, options)
                 user.curMoves[1].pp = 0
               end
             end
-            act(actor, foeId, 1, "copy")
+            if kind ~= "faint-target" then
+              act(actor, foeId, 1, "copy")
+            end
             offHeld()
             offCrit()
             offMove()
