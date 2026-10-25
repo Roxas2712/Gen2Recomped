@@ -51,7 +51,45 @@ comparison retains that extra `0..65535` call. This is an input-state boundary,
 not proof that the engines' complete selection/RNG orchestration agrees. The
 comparison retains every subsequent bounded draw and records the prepared word.
 
-Development acceptance is in progress. Full regression, clean-commit engine
-comparisons, imported-record smoke, combined-fork acceptance and publication
-remain to be verified. These CPU fixtures do not certify a complete playthrough,
-GPU/pixel equality, global RNG/VBlank scheduling or every other native producer.
+## Validation
+
+Clean feature runtime `6998a429a99dcc94d3f7c8b9a337ddfbcdaea3ba` passes:
+
+- **637 focused Encore checks**: 480 command/lifecycle, 99 public-command/
+  queue/authored-policy/legacy checks, and 58 actual link/compatibility checks.
+  The native protocol suite also passes 154 checks.
+- **92 workers / 61,356 paired observations** agree with clean Gen1
+  `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`. The new mode retains 612 complete
+  observations per profile, including all four slots, all duration draws,
+  native failure guards, custom moves without cartridge indices, actual
+  residual expiry/slot edits, called moves, late retargeting, public choices
+  and cancellation after planning. No compared observations or calls are removed.
+- Full ROM-free feature run: **113/122 engine suites**, SDK 3/3 and B30.
+  The exact Counter of all **25 inherited FAIL lines across nine suites** equals
+  clean #218 (110/119); the combined fork carries their independent repairs.
+- The same public canonical command on unchanged #218 returns three phases
+  and no slot binding, failing both native assertions. Its raw state/failures
+  remain in `tmp/encore-qa/negative-command.log`.
+- Both link roles complete three ordinary native turns: Tackle, a faster
+  Encore overriding the queued opposing Encore, then an independently selected
+  Scratch overridden again. Actual PP ownership and every paired completed
+  turn hash/state component agree. Older rules are refused even with an equal
+  custom fingerprint.
+- Actual local FireRed/Emerald records pass four CPU-only scenarios: the public
+  canonical enemy selector applies Encore, then public FIGHT or a separately
+  selected move runs a real turn. The bound Tackle slot spends PP once and the
+  actual residual scheduler ages the timer. No ROM/cache assets or saves are
+  distributed, and no normal SAVE is issued.
+- Scoped StyLua, actionlint and whitespace checks pass.
+
+Clean combined runtime `ae385bae803e8a94eb4b2c73e2c1425d1a68868d` passes all
+**234/234 engine suites**, SDK 3/3, B30, the same 92/61,356 comparisons and the
+same imported-record smoke. Integration preserves the existing native AI-order
+word preparation and both preselected double-battle enemy actions. Its first
+unprepared-input mismatch is retained in `tmp/encore-contracts-first.json`.
+
+These CPU fixtures do not certify a complete playthrough, GPU/pixel equality,
+global RNG/VBlank orchestration, or every other native state producer and its
+interactions (including legacy repeated-move controllers). The broader native
+alignment goal remains open. Publication and hosted-CI status are recorded in
+the PR and the combined testing document.
