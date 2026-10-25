@@ -11,6 +11,7 @@ on:
       - src/ui/RetroOverlay.lua
       - tests/engine/**
       - tools/launcher_library_preview/**
+      - tools/run_retro_launcher_contract.py
       - .github/workflows/retro-launcher-contract.yml
   workflow_dispatch:
 permissions:
@@ -26,11 +27,5 @@ jobs:
       - uses: actions/checkout@v7
       - name: Install ROM-free test runtime
         run: sudo apt-get update && sudo apt-get install -y luajit
-      - name: Check merged entry points
-        run: luajit -e 'assert(loadfile("main.lua")); assert(loadfile("conf.lua"))'
-      - name: Check launcher, storage and engine integration
-        run: |
-          set -eu
-          for suite in launcher_sequence cart_designer launcher_seasons launcher_community pokemon_bank mod_profiles mod_download bank_workspace launcher_mod_profiles retro_overlay cloud_running_slot developer_account developer_workspace mod_profile_recovery retro_overlay_main window_frame window_frame_async portable_input_hooks touch_orientation_bug633; do
-            luajit "tests/engine/$suite.lua"
-          done
+      - name: Check launcher contracts without a game runtime
+        run: python3 tools/run_retro_launcher_contract.py
