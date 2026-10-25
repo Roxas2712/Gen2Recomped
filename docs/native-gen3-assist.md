@@ -54,3 +54,46 @@ These checks use owned controlled definitions and separate existing imported
 FireRed/Emerald data. They do not establish whole-catalog Metronome parity,
 visual animation parity, arbitrary mod compatibility or a complete playthrough.
 Final acceptance counts and retained negative evidence are recorded with the PR.
+
+## Accepted source-bound results
+
+The combined runtime passes **275/275 engine suites**, **3/3 SDK suites**, B30
+and every quick tier. The isolated feature passes **157/166** and retains the
+exact 25 inherited FAIL lines across the same nine suites as fresh #252
+(**153/162**). No additional failure is accepted.
+
+Each runtime passes **188 enemy/action workers / 160,724 identical paired
+observations**, including **38,712 new Assist observations**. All workers exit
+zero without timeout. The ordinary-damage and held-command comparisons add
+**8 workers / 8,952 rows**, for **196 workers / 169,676 selected paired rows**.
+Four held-item formats pass strict native schedules (**40 workers / 1,914
+rows**); charge contracts pass four formats (**64 workers / 1,020 rows**), with
+strict raw native policy on the combined runtime.
+
+Actual linked host/guest/spectator menus pass **120 checks** across two turns
+per profile, retaining every event and paired completed hash/state component.
+Existing FireRed/Emerald imports pass **160 controlled public-submit scenarios**
+with native/registered Assist, direct party children and nested Nature Power,
+Choice Band and Shell Bell. The result queue returns to its native menu.
+
+The unchanged parent differs in **4,860/6,480** complete native rows and all
+**36/36** selected failed-caller histories; public `ASSIST` registration is
+rejected there. Initial fixture failures, the incorrect local PP assertion,
+the too-strict imported Choice Band expectation, superseded observations and
+the first native-targeting RNG difference remain retained as negative evidence.
+
+See [the receipt](qa/native-gen3-assist.json) for tested refs and raw-log digests.
+Reproduce the portable comparison with the pinned LuaJIT and clean reference:
+
+```sh
+python3 tools/enemy-action-contract-check/check.py \
+  --gen1 /path/to/clean/gen1 --lua /path/to/pinned/luajit \
+  --report /tmp/enemy-action-report.json
+```
+
+The actual-import CPU scenarios additionally accept an existing cache root:
+
+```sh
+luajit tools/enemy-action-contract-check/imported-assist-smoke.lua /path/to/cache
+luajit tools/enemy-action-contract-check/imported-assist-smoke.lua /path/to/cache --nature-power
+```
