@@ -5141,7 +5141,7 @@ function BattleState:effectRecord(effect)
   local effects = self.data.move_effects
   local record = effects and effects[effect] or not effects and MoveEffects.RECORDS[effect]
   if GameVersion.isGen3() and not effects then
-    record = require("src.battle.Gen3Disable").builtin(effect, record)
+    record = require("src.battle.Gen3Builtins").record(effect, record)
   end
   if GameVersion.isGen3() and effect == "DISABLE_EFFECT" then
     return require("src.battle.Gen3Disable").record(record, MoveEffects.RECORDS.DISABLE_EFFECT)
@@ -8417,7 +8417,7 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   end
   local Schedule = require("src.battle.GbaItemSchedule")
   local parent = self._gbaMoveFrame
-  local frame = { parent = parent }
+  local frame = { parent = parent, move = self:moveDef(moveInst) }
   if parent then parent.called = true end
   self._gbaMoveFrame = frame
   if self._gbaActionFrame then self._gbaActionFrame.moved = true end
@@ -8509,7 +8509,7 @@ function BattleState:applyDamage(target, dmg, fromMove, adjustment)
   -- Pokemon standing on a single HP instead of fainting.  Asked here rather
   -- than at the faint check because the cartridge's band changes the DAMAGE,
   -- and everything downstream -- Bide's tally, Rage, the exp award -- reads
-  -- what was actually dealt.
+-- what was actually dealt.
   -- ENDURE first: it is a certainty where the band is a roll, so a Pokemon
   -- that used ENDURE this turn never needs the band at all.
   local mayEndure = fromMove == true or selfHit
@@ -8540,7 +8540,8 @@ function BattleState:applyDamage(target, dmg, fromMove, adjustment)
     target.stages.attack = math.min(6, (target.stages.attack or 0) + 1)
     self:sayNext(self:romText("_BuildingRageText", "%s's\nRAGE is building!", displayName(target)))
   end
-  return dealt
+  -- Native multi-hit continuation also needs the actual Endure decision.
+  return dealt, endured
 end
 
 -- ---------------------------------------------------------------------

@@ -96,10 +96,17 @@ local function hitCount(ctx, record)
   return dist[r + 1]
 end
 
+local function ordinaryDamage(battle, ctx, record)
+  return battle:computeDamage(ctx.user, ctx.target, ctx.move,
+    { rng = battle.rng, explode = (record and record.explode) or nil,
+      powerMultiplier = record and record.powerMultiplier and record.powerMultiplier(ctx) or nil,
+      highCrit = record and record.highCrit or nil })
+end
+
 -- The damaging pipeline, extracted from the performMove monolith: every
--- stage keeps the original's exact check order and rng consumption
--- (invulnerability -> gate -> hit count -> pre-accuracy -> accuracy ->
--- damage choice -> hits -> messages -> after-damage -> secondary run).
+-- stage keeps its generation's check order and RNG consumption. GBA draws
+-- hit count after accuracy and computes ordinary damage separately per hit;
+-- older generations retain their pre-accuracy count and shared damage roll.
 function EffectRegistry.runDamaging(battle, ctx, record)
   local user, target = ctx.user, ctx.target
   local move, moveInst = ctx.move, ctx.moveInst
@@ -165,7 +172,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     end
   end
 
-  local hits = hitCount(ctx, record)
+  local hits = not gba and hitCount(ctx, record) or 1
 
   if record and record.beforeAccuracy then record.beforeAccuracy(ctx) end
 
@@ -183,6 +190,8 @@ function EffectRegistry.runDamaging(battle, ctx, record)
       return
     end
   end
+
+  if gba then hits = hitCount(ctx, record) end
 
   -- damage per hit
   local dmg, info
@@ -220,13 +229,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     end
     dmg, info = chosen, extra or { crit = false, typeMult = 10 }
   else
-    dmg, info = battle:computeDamage(user, target, move,
-      { rng = battle.rng, explode = (record and record.explode) or nil,
-        -- a record whose EFFECT decides the power or the crit rate this
-        -- turn rather than the move's own byte
-        powerMultiplier = record and record.powerMultiplier
-                          and record.powerMultiplier(ctx) or nil,
-        highCrit = record and record.highCrit or nil })
+    dmg, info = ordinaryDamage(battle, ctx, record)
   end
 
   if battle.arenaOutcome then
@@ -289,10 +292,27 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   local landed, brokeSub = 0, false
   for h = 1, hits do
     if target.mon.hp <= 0 then break end
+    if gba and (user.mon.hp <= 0 or h > 1 and user.mon.status == "SLP"
+        and not require("src.battle.Gen3MultiHit").sleepTalk(battle)) then break end
     if record and record.perHitDamage then
       local nextDamage, nextInfo = record.perHitDamage(ctx, h, dmg, info)
       if nextDamage == nil then break end
       dmg, info = nextDamage, nextInfo or info
+    elseif gba and h > 1 and require("src.battle.Gen3MultiHit").ordinary(move)
+        and not (record and record.chooseDamage) then
+      dmg, info = ordinaryDamage(battle, ctx, record)
+      if info.typeMult == 0 or info.missed then
+        ctx.gbaNoEffect = true
+        if info.typeMult == 0 then
+          if not (info.ability and battle.abilityAbsorb and battle:abilityAbsorb(target, move)) then
+            battle:sayNext(Strings("It doesn't affect\n%s!", displayName(target)))
+          end
+        else
+          battle:sayNext(Strings("%s's\nattack missed!", displayName(user)))
+        end
+        if record and record.onMiss then record.onMiss(ctx, info.typeMult == 0 and "immune" or "floored") end
+        break
+      end
     end
     local hitRow
     if h == 1 then
@@ -334,7 +354,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     -- ...and the one applyDamage a Gen 3 FOCUS BAND answers: a move landing
     -- on someone
     local substituteBefore = target.substituteHP
-    local dealt = battle:applyDamage(target, hitDamage, true, info.damageAdjustment)
+    local dealt, endured = battle:applyDamage(target, hitDamage, true, info.damageAdjustment)
     if (info.gbaSetDamage or info.gbaBeatUp) and substituteBefore then dealt = math.min(dealt, substituteBefore) end
     totalDealt = totalDealt + dealt
     if gba and not hadSub and require("src.battle.Damage").isSpecial(move.type) then
@@ -399,10 +419,11 @@ function EffectRegistry.runDamaging(battle, ctx, record)
       require("src.battle.Gen3Critical").noteHit(battle, user, target, dealt, hadSub)
     end
     if hadSub and not target.substituteHP and not info.gbaBeatUp then
-      -- AttackSubstitute: breaking the substitute ends a multi-hit move
+      -- Older AttackSubstitute ends the move; GBA continues against real HP.
       brokeSub = true
-      break
+      if not gba then break end
     end
+    if gba and endured then break end
   end
   hits = landed > 0 and landed or hits
   if hits > 1 and not info.gbaBeatUp then
