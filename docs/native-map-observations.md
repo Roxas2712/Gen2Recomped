@@ -92,3 +92,11 @@ module, provides no legacy atlas-name alias, and does not supply Game3 lifecycle
 script writes, UI, battles or audio. Native gameplay/GPU and unchanged full
 Origami execution are not established by these CPU data comparisons. Full
 compatibility remains false; existing native Gen2 ownership remains intact.
+
+
+The final composed source at `e64a5b8d` passes 328/328 engine suites,
+SDK 3/3 and Dramatic Shape B30. Its first full run passed 327/328: the
+synthetic palette-cartridge fixture inherited retail flag metadata without
+providing those source bytes or a real hash implementation. The test fixture
+now declares only its generated source records; production checksum validation
+is unchanged. That original failure and the later passing run are retained.
