@@ -281,6 +281,14 @@
     "sWeatherCycleRoute123": 3779360,
     "sWindowFrames": 3629440
   },
+  "pokedexEntrySize": 36,
+  "stageOverrides": {
+    "ITEM_EFFECTS": {
+      "TABLE": 2084212,
+      "FIRST": 13,
+      "COUNT": 163
+    }
+  },
   "scenes": [],
   "sceneRoles": null,
   "sceneOverlays": null,
@@ -871,6 +879,99 @@
       ],
       "width": 64,
       "height": 64
+    }
+  },
+  "rsFieldMessageWindow": {
+    "kind": "rs-field-code",
+    "left": 2,
+    "top": 15,
+    "width": 26,
+    "height": 4,
+    "source": "ROM:PrintFieldMessage 0064BF8 / PrintFieldMessageFromStringVar4 0064C30; matching RS field printer and dialogue-frame code",
+    "evidence": {
+      "symbols": {
+        "PrintFieldMessage": 412664,
+        "PrintFieldMessageFromStringVar4": 412720,
+        "TextWindow_DrawDialogueFrame": 414516,
+        "gMenuTextWindowTemplate": 1993844
+      },
+      "sourceSHA256": {
+        "src/field_message_box.c": "dd4fce31e8a7dfe89a0317147eba3f98b0cdc0205d63aae56eabfcc5158adede",
+        "src/text_window.c": "dae570ea8ca874a5b567e149da3911f3324b0243e5d1bf51bdec22cb6284fc52"
+      },
+      "frame": {
+        "left": 0,
+        "top": 14,
+        "width": 26,
+        "height": 4
+      },
+      "printerCallCount": 2
+    }
+  },
+  "rsItemMenu": {
+    "actions": 3937944,
+    "actionCount": 10,
+    "choices": 3938024,
+    "choiceStride": 6,
+    "pockets": {
+      "ITEM": {
+        "row": 0,
+        "count": 4
+      },
+      "BALL": {
+        "row": 1,
+        "count": 4
+      },
+      "TM_HM": {
+        "row": 2,
+        "count": 4
+      },
+      "BERRY": {
+        "row": 3,
+        "count": 6
+      },
+      "KEY_ITEM": {
+        "row": 4,
+        "count": 4
+      }
+    },
+    "kinds": [
+      "use",
+      "toss",
+      "cancel",
+      "register",
+      "use",
+      "cancel",
+      "give",
+      "checkTag",
+      "blank",
+      "other"
+    ],
+    "columns": 2,
+    "cancel": 3,
+    "blank": 9,
+    "register": 4,
+    "sourceOrder": "column-major",
+    "evidence": {
+      "sourceSHA256": "2f4aa61e85953af81843349ad9c9a29a12047be6e2fd4953df8d0f96f0046210",
+      "recordCount": 10,
+      "actionEnum": [
+        "ITEM_ACTION_USE_0",
+        "ITEM_ACTION_TOSS",
+        "ITEM_ACTION_CANCEL_2",
+        "ITEM_ACTION_REGISTER",
+        "ITEM_ACTION_USE_4",
+        "ITEM_ACTION_CANCEL_5",
+        "ITEM_ACTION_GIVE",
+        "ITEM_ACTION_CHECK_TAG",
+        "ITEM_ACTION_NONE",
+        "ITEM_ACTION_CONFIRM"
+      ],
+      "printerRows": [
+        2,
+        3
+      ],
+      "pointerPairsVerified": true
     }
   },
   "font": {
@@ -1959,6 +2060,93 @@
       "sWeatherCycleRoute119": 3779356,
       "sWeatherCycleRoute123": 3779360,
       "sTextWindowFrameGraphics": 3629440,
+      "gItemEffectTable": 2084212,
+      "gItemEffect_Potion": 2083748,
+      "gItemEffect_Antidote": 2083755,
+      "gItemEffect_BurnHeal": 2083761,
+      "gItemEffect_IceHeal": 2083767,
+      "gItemEffect_Awakening": 2083773,
+      "gItemEffect_ParalyzeHeal": 2083779,
+      "gItemEffect_FullRestore": 2083785,
+      "gItemEffect_MaxPotion": 2083792,
+      "gItemEffect_HyperPotion": 2083799,
+      "gItemEffect_SuperPotion": 2083806,
+      "gItemEffect_FullHeal": 2083813,
+      "gItemEffect_Revive": 2083819,
+      "gItemEffect_MaxRevive": 2083826,
+      "gItemEffect_FreshWater": 2083833,
+      "gItemEffect_SodaPop": 2083840,
+      "gItemEffect_Lemonade": 2083847,
+      "gItemEffect_MoomooMilk": 2083854,
+      "gItemEffect_EnergyPowder": 2083861,
+      "gItemEffect_EnergyRoot": 2083871,
+      "gItemEffect_HealPowder": 2083881,
+      "gItemEffect_RevivalHerb": 2083890,
+      "gItemEffect_Ether": 2083900,
+      "gItemEffect_MaxEther": 2083907,
+      "gItemEffect_Elixir": 2083914,
+      "gItemEffect_MaxElixir": 2083921,
+      "gItemEffect_LavaCookie": 2083928,
+      "gItemEffect_BlueFlute": 2083934,
+      "gItemEffect_YellowFlute": 2083940,
+      "gItemEffect_RedFlute": 2083946,
+      "gItemEffect_BerryJuice": 2083952,
+      "gItemEffect_SacredAsh": 2083959,
+      "gItemEffect_HPUp": 2083966,
+      "gItemEffect_Protein": 2083976,
+      "gItemEffect_Iron": 2083986,
+      "gItemEffect_Carbos": 2083996,
+      "gItemEffect_Calcium": 2084006,
+      "gItemEffect_RareCandy": 2084016,
+      "gItemEffect_PPUp": 2084026,
+      "gItemEffect_Zinc": 2084035,
+      "gItemEffect_PPMax": 2084045,
+      "gItemEffect_GuardSpec": 2084054,
+      "gItemEffect_DireHit": 2084062,
+      "gItemEffect_XAttack": 2084070,
+      "gItemEffect_XDefend": 2084078,
+      "gItemEffect_XSpeed": 2084086,
+      "gItemEffect_XAccuracy": 2084094,
+      "gItemEffect_XSpecial": 2084102,
+      "gItemEffect_SunStone": 2084110,
+      "gItemEffect_MoonStone": 2084116,
+      "gItemEffect_FireStone": 2084122,
+      "gItemEffect_ThunderStone": 2084128,
+      "gItemEffect_WaterStone": 2084134,
+      "gItemEffect_LeafStone": 2084140,
+      "gItemEffect_CheriBerry": 2084146,
+      "gItemEffect_ChestoBerry": 2084152,
+      "gItemEffect_PechaBerry": 2084158,
+      "gItemEffect_RawstBerry": 2084164,
+      "gItemEffect_AspearBerry": 2084170,
+      "gItemEffect_LeppaBerry": 2084176,
+      "gItemEffect_OranBerry": 2084183,
+      "gItemEffect_PersimBerry": 2084190,
+      "gItemEffect_LumBerry": 2084196,
+      "gItemEffect_SitrusBerry": 2084202,
+      "PrintFieldMessage": 412664,
+      "PrintFieldMessageFromStringVar4": 412720,
+      "TextWindow_DrawDialogueFrame": 414516,
+      "gMenuTextWindowTemplate": 1993844,
+      "sItemPopupMenuActions": 3937944,
+      "sItemPopupMenuChoicesTable": 3938024,
+      "OtherText_Use": 4253293,
+      "HandlePopupMenuAction_UseOnField": 678776,
+      "OtherText_Toss": 4253297,
+      "HandlePopupMenuAction_Toss": 679700,
+      "gOtherText_CancelNoTerminator": 4253344,
+      "sub_80A5F80": 679808,
+      "OtherText_Register": 4253302,
+      "HandlePopupMenuAction_Register": 679852,
+      "HandlePopupMenuAction_UseInBattle": 684276,
+      "sub_80A7124": 684324,
+      "OtherText_Give2": 4253311,
+      "HandlePopupMenuAction_Give": 680136,
+      "OtherText_CheckTag": 4253316,
+      "HandlePopupMenuAction_CheckTag": 680312,
+      "gOtherText_CancelWithTerminator": 4253351,
+      "OtherText_Confirm": 4253326,
+      "HandlePopupMenuAction_Confirm": 682464,
       "gFont4LatinGlyphs": 15363440,
       "sFont4Widths": 1991498,
       "sFontType1Map": 1990528,

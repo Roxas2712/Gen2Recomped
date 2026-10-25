@@ -43,6 +43,22 @@ bag capacities and storage boundaries are checked, and all 24 substructure
 orders are taken from the matching source. Only metadata and hashes are
 committed; no cartridge, extracted image, map, audio or speech files are.
 
+The RS Pokédex entry is 36 bytes, with two description pointers. The
+manifest now declares that layout, independently checked against the matching
+ELF table length and the cartridge's Bulbasaur dimensions. Reading Emerald's
+32-byte stride corrupted sizes and size-comparison poses for all 386 dex
+entries. A version-specific cache revision rebuilds only stale RS caches;
+FireRed, LeafGreen and Emerald markers retain their previous values.
+
+`tests/gen3_dex_entry_stride.lua <cartridge> <manifest>` runs the real extractor
+and checks all 386 height/weight rows and all four affine pose fields against
+independent raw ROM reads. The old 32-byte negative control reproduces 386
+corrupted RS species. FireRed, LeafGreen and Emerald control cartridges pass
+their own 36/36/32-byte layouts. Both RS manifest generators reproduce the
+committed metadata after matching-ELF byte verification. Fresh native RS imports
+also confirm the corrected sentinel sizes and the RS-only completion marker.
+No cartridge data is written or included by the regression test.
+
 ## Validation and reproduction
 
 Candidate `6d74f51` passed the native rendered driver with all mods off:
@@ -81,8 +97,8 @@ and native/canonical special address spaces. `ruby_save_layout.lua`
 roundtrips patterned nonzero save blocks through multiple sector rotations and
 checks plain RS inventory encryption and game-of-origin. `rs_braille.lua`
 checks mapped 1bpp tiles, dot identities, header geometry and rejection of a
-corrupted font (13/13). All four suites pass. The engine
-suite is 68/78 passing; the same ten failures reproduce on the unmodified
+corrupted font (13/13). All five suites pass. The engine
+suite is 69/79 passing; the same ten failures reproduce on the unmodified
 baseline (64/74).
 
 Reproduce using `tools/run_gen3_native_smoke.py ruby --rom YOUR_ROM
@@ -90,8 +106,61 @@ Reproduce using `tools/run_gen3_native_smoke.py ruby --rom YOUR_ROM
 tests/ruby_native_driver.lua --speed 8`. The helper snapshots committed
 sources and rejects cache reuse if extraction inputs changed.
 
+The generic summary fallback right-aligns each stat value within its own
+column. Previously a value beginning at x=120 overlapped the next label at
+x=132. The 15-check `summary_fallback_columns.lua` exercises worst-case
+three-digit stats and full HP pairs; actual native summary/IV views were
+inspected after the change. Extracted Emerald/FRLG window art keeps its own
+unchanged layout.
+
 Remaining alpha scope includes the original RS title/intro backdrop (the
 engine currently uses its fallback title), several UI art/minigame stages,
 and unmapped native specials. Generic `scenes.lua`/`summary_info.png` cache
 warnings remain disclosed. This is playable native support with concrete
 opening/battle tests, not a complete feature-parity certification.
+
+RS item effects use the cartridge's own `gItemEffectTable`: 163 pointers,
+starting with item 13. The generator verifies all 163 pointers against the
+matching ELF and C table, including null entries. The previous import used
+Emerald's address/count and produced two unrelated records for Ruby instead
+of the 63 real effects. `stageOverrides.ITEM_EFFECTS` now supplies the correct
+address and count; no item effects are hardcoded by name. The RS cache marker
+is `rs-item-effects-layout-v2:` so affected old imports rebuild.
+
+`tests/gen3_rs_item_effects.lua <cartridge> <manifest>` executes the actual
+extractor and checks 163 entries / 441 raw effect fields, Potion/Protein/Rare
+Candy sentinels and the failing old-address negative control. This is import
+metadata evidence; it does not certify every item-use menu or broader story.
+
+All Gen3 editions now dispatch completed walking steps to the existing native
+`Gen3Friendship.step`, once per step. This also prevents the generic older
++2/+2/+1 fallback from being applied to Ruby. The independent regression
+`tests/gen3_walking_friendship.lua` runs the actual controller branch for all
+available Gen3 edition registrations, both coin outcomes and an egg across
+256 steps each (all five in the combined sibling QA candidate).
+This narrow step correction is not a full friendship/story acceptance.
+
+A rejected HM replacement now returns to the native summary move chooser.
+Previously the chooser closed before the refusal and left the underlying
+learner non-selectable. The actual native menu/HM-reader regression covers
+chooser reopen, unavailable-summary fallback, an already-selectable list,
+retired-screen ownership and unchanged moves/PP. Presentation is stubbed in
+that test; separate real native input/renderer follow-ups remain necessary.
+
+
+### RS field message geometry candidate
+
+The matching RS field printer calls establish text at tile (2,15), with
+26 columns and four rows from the dialogue-frame code. A separate
+`gen3FieldMessageWindow` record supplies the native field theme; it does not
+become an Emerald battle-window scan anchor. The version-specific
+`rs-field-window-v3` cache marker retains earlier dex/item-effect corrections
+and requires an updated RS import. Other versions keep their cache markers.
+The actual-cartridge extractor test passes the old-missing-record negative
+and an unchanged native battle strip. The fresh native import now passes without mods: 240x160 field UI,
+26 columns, the extracted 254-character font, two visible native text rows,
+A completion and native choice input. An explicit 204-pixel test line wrapped
+to four rows under the old 18-column budget and stays at two rows now. Actual
+readyReport rejects the old v2 marker and accepts the fresh v3 cache. Frozen
+engine source files remain unchanged. The native proof JSON records hashes;
+original RS dialogue frame art, full UI and story acceptance remain open.

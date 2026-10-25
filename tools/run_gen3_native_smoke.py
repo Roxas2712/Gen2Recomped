@@ -6,19 +6,55 @@ The shared lock serializes native runs; a migration marker is written before
 the first boot so no personal save is copied by SaveIdentity.
 """
 import argparse
+import ctypes
+import errno
+import gc
 from datetime import datetime, timezone
 import fcntl
 import hashlib
 import io
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import shutil
 import subprocess
 import tarfile
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def freeze_engine(archive, destination, reference):
+    """Freeze committed bytes; a working file is only a checked clone source."""
+    hashes={};cloned=logical=0
+    with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
+        for member in tar:
+            path=PurePosixPath(member.name)
+            assert not path.is_absolute() and '..'not in path.parts
+            target=destination/member.name
+            if member.isdir():
+                target.mkdir(parents=True,exist_ok=True);continue
+            assert member.isfile(),'Unexpected non-regular Git archive member'
+            data=tar.extractfile(member).read();digest=hashlib.sha256(data).hexdigest()
+            target.parent.mkdir(parents=True,exist_ok=True)
+            source=reference/member.name;copied=False
+            if(os.uname().sysname=='Darwin'and len(data)>=16384 and source.is_file()
+               and not source.is_symlink()and source.stat().st_size==len(data)
+               and hashlib.sha256(source.read_bytes()).hexdigest()==digest):
+                clone=ctypes.CDLL(None,use_errno=True).clonefile
+                clone.argtypes=[ctypes.c_char_p,ctypes.c_char_p,ctypes.c_int];clone.restype=ctypes.c_int
+                if clone(os.fsencode(source),os.fsencode(target),0)==0:
+                    assert target.stat().st_ino!=source.stat().st_ino
+                    copied=True;cloned+=1;logical+=len(data)
+                else:
+                    error=ctypes.get_errno()
+                    if error not in(errno.EXDEV,errno.ENOTSUP,errno.ENOSYS,errno.EINVAL):raise OSError(error,'clonefile')
+            if not copied:
+                with target.open('xb')as output:output.write(data)
+            os.chmod(target,member.mode)
+            assert hashlib.sha256(target.read_bytes()).hexdigest()==digest,'Frozen Git bytes changed'
+            hashes[member.name]=digest
+    return hashes,dict(independentClonedFiles=cloned,clonedLogicalBytes=logical,mutableHardlinks=False)
 
 
 def main():
@@ -40,8 +76,12 @@ def main():
     out.mkdir(parents=True)
     engine = out / 'engine'
     engine.mkdir()
-    with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
-        tar.extractall(engine, filter='data')
+    archive_sha256=hashlib.sha256(archive).hexdigest()
+    hashes,allocation=freeze_engine(archive,engine,ROOT)
+    # Nothing below executes from these in-memory buffers. Release them
+    # before the native importer/renderer allocates its own cartridge data.
+    del archive
+    gc.collect()
     driver = engine / args.driver
     assert driver.is_file(), 'Driver must be committed in the source snapshot'
     # The Metal renderer is a QA host configuration for this macOS runtime.
@@ -76,7 +116,7 @@ def main():
                    POKEPORT_IMPORT_ROM=str(args.rom.resolve()), POKEPORT_DRIVER=str(driver),
                    POKEPORT_SPEED=str(args.speed),
                    POKEPORT_NO_MODS='1', POKEPORT_NO_BOOT_REPORT='1')
-        receipt = dict(identity=identity, sourceCommit=commit,
+        receipt = dict(identity=identity, sourceCommit=commit,engineArchiveSHA256=archive_sha256,frozenInputAllocation=allocation,
                        cartridgeSHA1=hashlib.sha1(args.rom.read_bytes()).hexdigest(),
                        loveSHA256=hashlib.sha256(args.love.read_bytes()).hexdigest(),
                        driverSHA256=hashlib.sha256(driver.read_bytes()).hexdigest(),
@@ -91,6 +131,10 @@ def main():
             if file.suffix == '.png' or file.name == 'edition-result.json':
                 shutil.copy2(file, out / file.name)
         assert run.returncode == 0, (out / 'native.log').read_text(errors='replace')[-8000:]
+        for name,digest in hashes.items():
+            assert hashlib.sha256((engine/name).read_bytes()).hexdigest()==digest,name
+        receipt['engineFilesUnchanged']=len(hashes)
+        (out/'verification.json').write_text(json.dumps(receipt,indent=2)+'\n')
         report = json.loads((out / 'edition-result.json').read_text())
         assert report['status'] == 'pass'
         print('PASS_NATIVE_EDITION', out, flush=True)
