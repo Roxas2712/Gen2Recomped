@@ -144,6 +144,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   local lockedOHKO = record and record.gbaOHKO
     and require("src.battle.Gen3LockOn").active(battle, user, target)
   if target.protecting and (not gba or target ~= user) and move.protectAffected ~= false and not lockedOHKO then
+    if gba and battle._gbaMoveFrame then battle._gbaMoveFrame.missed = true end
     battle:cancelMoveAnim()
     if record and record.onProtect and record.onProtect(ctx) then return end
     battle:sayNext(Strings("%s\nprotected itself!", displayName(target)))
@@ -257,6 +258,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     if info.typeMult == 0 and info.ability then battle.arenaOutcome.ability = true end
   end
   if info.typeMult == 0 then
+    if gba and battle._gbaMoveFrame then battle._gbaMoveFrame.noEffect = true end
     -- type immunity zeros damage and sets wMoveMissed in Gen 1, so no anim
     if not (record and record.explode) then battle:cancelMoveAnim() end
     missBeat(battle, record)
@@ -274,6 +276,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     return
   end
   if info.missed then
+    if gba and battle._gbaMoveFrame then battle._gbaMoveFrame.missed = true end
     -- 0.25x floored the damage to zero: the original registers a miss
     if not (record and record.explode) then battle:cancelMoveAnim() end
     missBeat(battle, record)
@@ -367,6 +370,10 @@ function EffectRegistry.runDamaging(battle, ctx, record)
                  targetPosition = target and target.position,
                  animContext = hitCtx }
       table.insert(battle.queue, battle.nextInsert, hitRow)
+    end
+    if gba then
+      require("src.battle.Gen3SubstitutePresentation").mark(battle, hitRow, user,
+        tripleKick and 4 - h or nativeMulti and hits - h + 1 or 0)
     end
     local hadSub = target.substituteHP ~= nil
     local hitDamage = dmg

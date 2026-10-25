@@ -2591,6 +2591,10 @@ function BattleState:updateQueue()
     if self.game.stack:top() ~= self then return true end
     self.waitingUI = nil
   end
+  if self._gbaSubstituteTransition
+      and require("src.battle.Gen3SubstitutePresentation").update(self) then return true end
+  if self._gbaEffectPresentation
+      and require("src.battle.Gen3EffectPresentation").update(self) then return true end
   -- HOENN'S PARTICLES TICK BEFORE THE QUEUE'S OWN HOLD, and the whole
   -- reason the animations looked broken is that they used to tick after it.
   --
@@ -2710,7 +2714,20 @@ function BattleState:updateQueue()
   end
   if not self.current then
     local item = table.remove(self.queue, 1)
-    if not item then return false end
+    while item and (item.gbaSubstituteSpecial or item.gbaNativeEffect) do
+      local controller = item.gbaSubstituteSpecial and "Gen3SubstitutePresentation" or "Gen3EffectPresentation"
+      if require("src.battle." .. controller).start(self, item) then return true end
+      item = table.remove(self.queue, 1)
+    end
+    if not item then
+      if self._gbaEffectReconcile then
+        require("src.battle.Gen3EffectPresentation").reconcile(self)
+      end
+      if self._gbaSubstitutePresentation then
+        require("src.battle.Gen3SubstitutePresentation").reconcile(self)
+      end
+      return false
+    end
     if item.fn then
       self.nextInsert = 0 -- sayNext inserts right after this item
       item.fn()
@@ -5215,7 +5232,9 @@ end
 -- would round to.
 function BattleState:accuracyRoll(move, user, target, accuracyRaw)
   if GameVersion.isGen3() then
-    return require("src.battle.Gen3Accuracy").check(self, move, user, target, accuracyRaw)
+    local hit, reason = require("src.battle.Gen3Accuracy").check(self, move, user, target, accuracyRaw)
+    if not hit and self._gbaMoveFrame then self._gbaMoveFrame.missed = true end
+    return hit, reason
   end
   -- LOCK-ON / MIND READER: the next move cannot miss, and the aim is spent
   -- whether it was needed or not.
@@ -8298,6 +8317,7 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
                            attackerPosition = user.position,
                            targetPosition = target and target.position,
                            animContext = animContext }
+      require("src.battle.Gen3SubstitutePresentation").mark(self, self.moveAnimRow, user)
       table.insert(self.queue, self.nextInsert, self.moveAnimRow)
     end
   end
@@ -8324,6 +8344,7 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
   -- happen before the effect record is consulted at all.
   if target.protecting and move.power == 0 and move.protectAffected ~= false
      and record and record.kind == "primary" then
+    if GameVersion.isGen3() and self._gbaMoveFrame then self._gbaMoveFrame.missed = true end
     self:cancelMoveAnim()
     self:sayNext(Strings("%s\nprotected itself!", displayName(target)))
     return
@@ -8507,6 +8528,7 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   self._gbaMoveFrame = frame
   if self._gbaActionFrame then self._gbaActionFrame.moved = true end
   performMove(self, user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
+  require("src.battle.Gen3SubstitutePresentation").finish(self, frame)
   if not frame.finished and not frame.nativeCalled and not frame.suspended then Schedule.moveEnd(self) end
   if frame.called and not frame.nativeCalled and not frame.suspended and frame.move
       and tonumber(frame.move.gen3Effect) ~= 127 and frame.move.effect ~= "BATON_PASS_EFFECT" then
@@ -8582,6 +8604,7 @@ function BattleState:applyDamage(target, dmg, fromMove, adjustment)
     local absorbed = math.min(math.max(0, dmg), target.substituteHP)
     target.substituteHP = target.substituteHP - dmg
     if target.substituteHP <= 0 then
+      require("src.battle.Gen3SubstitutePresentation").broken(self, target)
       target.substituteHP = nil
       self:sayNext(self:romText("_SubstituteBrokeText", "%s's\nSUBSTITUTE broke!", displayName(target)))
     else
@@ -8590,6 +8613,7 @@ function BattleState:applyDamage(target, dmg, fromMove, adjustment)
     if prepared and adjustment.endured then
       self:sayNext(Strings("%s endured\nthe hit!", displayName(target)))
     elseif prepared and adjustment.hung then
+      require("src.battle.Gen3EffectPresentation").queue(self, target, "FOCUS_BAND")
       self:sayNext(Strings("%s hung on\nusing its FOCUS BAND!", displayName(target)))
     end
     return gba and absorbed or dmg
@@ -8619,6 +8643,7 @@ function BattleState:applyDamage(target, dmg, fromMove, adjustment)
   if endured then
     self:sayNext(Strings("%s endured\nthe hit!", displayName(target)))
   elseif band then
+    require("src.battle.Gen3EffectPresentation").queue(self, target, "FOCUS_BAND")
     self:sayNext(require("src.battle.Gen5HoldItems").hungOnLine(self, target)
                  or Strings("%s hung on\nusing its FOCUS BAND!", displayName(target)))
   end
@@ -11142,6 +11167,7 @@ end
 -- (32,72) player.
 local substDoll
 function BattleState:drawSubstituteDoll(battler)
+  if GameVersion.isGen3() and require("src.battle.Gen3SubstituteArt").draw(self, battler) then return end
   if substDoll == nil then
     local ok, img = pcall(love.graphics.newImage,
                           "assets/generated/sprites/monster.png")
@@ -11411,6 +11437,10 @@ end
 -- to happen where the mon is drawn rather than as a particle laid over it --
 -- which is why it is here and not in Gen3MoveAnim's own draw.
 function BattleState:gen3AnimShake(battler)
+  local substituteX = GameVersion.isGen3() and battler
+    and require("src.battle.Gen3SubstitutePresentation").offset(self, battler) or 0
+  local effect = self._gbaEffectPresentation
+  if effect and effect.user == battler then return substituteX + effect.x, effect.y end
   -- SINNOH'S ANIMATOR SPEAKS THE SAME THREE METHODS, which is why
   -- it plugs in here rather than bringing a second draw path: a
   -- second one would have none of the grow-in scale, hit shake or
@@ -11422,11 +11452,18 @@ function BattleState:gen3AnimShake(battler)
     return 0, 0
   end
   if not (self.gen3AnimPlaying and self.gen3Anim and battler) then
-    return 0, 0
+    return substituteX, 0
   end
   local ok, dx, dy = pcall(self.gen3Anim.monOffset, self.gen3Anim, battler)
-  if not ok then return 0, 0 end
-  return dx or 0, dy or 0
+  if not ok then return substituteX, 0 end
+  return (dx or 0) + substituteX, dy or 0
+end
+
+function BattleState:substituteVisible(battler)
+  if GameVersion.isGen3() then
+    return require("src.battle.Gen3SubstitutePresentation").showing(self, battler)
+  end
+  return battler and battler.substituteHP
 end
 
 -- ...AND WHICH HBLANK ROW TRANSFORM ITS COPIED BG IS USING.
@@ -11448,6 +11485,10 @@ end
 -- draws reproduce exactly: the sprite dimmed by (1 - c), and the colour added
 -- back at c through the sprite's own alpha.
 function BattleState:gen3AnimTint(battler)
+  local effect = self._gbaEffectPresentation
+  if effect and effect.user == battler and effect.coeff > 0 then
+    return effect.color[1], effect.color[2], effect.color[3], effect.coeff
+  end
   -- SINNOH'S ANIMATOR SPEAKS THE SAME THREE METHODS, which is why
   -- it plugs in here rather than bringing a second draw path: a
   -- second one would have none of the grow-in scale, hit shake or
@@ -11476,6 +11517,8 @@ function BattleState:gen3AnimSpecialMonState(battler)
     tint = 0, r = 1, g = 1, b = 1,
     alpha = 1, brightness = 1, mosaic = 1,
   }
+  local effect = self._gbaEffectPresentation
+  if effect and effect.user == battler and effect.alpha then state.alpha = effect.alpha end
   -- Sinnoh: alpha / mosaic / brightness / white from Gen4MoveAnimExtras.
   if self.gen4AnimPlaying and self.gen4Anim and self.gen4Anim.monSpecial then
     local ok4, sp = pcall(self.gen4Anim.monSpecial, self.gen4Anim, battler == self.player, battler)
@@ -11746,7 +11789,7 @@ function BattleState:drawBattlerPicAt(battler, x, y, scale)
   -- copies rather than being hidden behind them
   local ghosts = self:gen3AnimGhosts(battler)
   if ghosts and not battler.fainted and not self:fxFaintActive(battler)
-     and not battler.substituteHP then
+     and not self:substituteVisible(battler) then
     local img = self:battlerPic(battler)
     if img then
       local cr, cg, cb, ca = love.graphics.getColor()
@@ -11760,7 +11803,7 @@ function BattleState:drawBattlerPicAt(battler, x, y, scale)
     end
   end
   local img = self:battlerPic(battler)
-  if battler.substituteHP and not self:fxFaintActive(battler)
+  if self:substituteVisible(battler) and not self:fxFaintActive(battler)
      and not battler.fainted then
     self:drawSubstituteDoll(battler)
     return

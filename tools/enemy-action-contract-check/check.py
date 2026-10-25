@@ -12,6 +12,14 @@ GEN1_REF = "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91"
 
 
 MODES = [
+    (3, 'substitute_fade'),
+    (3, 'battle_effect_presentation'),
+    (3, 'native_sound_pan'),
+    (3, 'substitute_multi_hit'),
+    (3, 'substitute_presentation'),
+    (3, 'mirror_move'),
+    (3, 'mirror_move_content'),
+    (3, 'mirror_move_chained'),
     (3, 'assist'),
     (3, 'assist_content'),
     (3, 'assist_held'),
@@ -81,6 +89,7 @@ def main():
     paths = [*sorted((host / "examples/portable_enemy_action").glob("*")),
              *sorted((host / "tests/post_hit_items").glob("*.json")),
              *sorted((host / "tests/enemy_actions").glob("*.lua")), Path(__file__).with_name("worker.lua")]
+    paths.extend(sorted((host / "tests/native_sound").glob("*.lua")))
     report = {"source_ref": GEN1_REF, "host_ref": git(host, "rev-parse", "HEAD"),
               "host_dirty": bool(git(host, "status", "--porcelain")),
               "fixture_sha256": {str(p.relative_to(host)): hashlib.sha256(p.read_bytes()).hexdigest()
@@ -110,10 +119,14 @@ def main():
                                                       captured(error.stderr) + "\nWorker timed out and was terminated.\n")
                 rows = [json.loads(line.removeprefix("ENEMY_ACTION_OBSERVATIONS "))
                         for line in run.stdout.splitlines() if line.startswith("ENEMY_ACTION_OBSERVATIONS ")]
+                # The native VM catches task errors and wait caps internally.
+                # A zero worker exit must not turn an aborted animation into an oracle.
+                diagnostics = [line for line in run.stdout.splitlines()
+                               if line.startswith("[battle.anim]")]
                 report["runs"].append({"backend": backend, "version": version, "api": api, "mode": mode,
                                        "exit": run.returncode, "stdout": run.stdout, "stderr": run.stderr,
-                                       "timeout": timed_out})
-                if run.returncode or len(rows) != 1:
+                                       "timeout": timed_out, "native_vm_diagnostics": diagnostics})
+                if run.returncode or len(rows) != 1 or diagnostics:
                     failed = True
                 else:
                     values[backend] = rows[0]

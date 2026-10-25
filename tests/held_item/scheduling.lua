@@ -236,7 +236,7 @@ function M.run(f)
   if f.backend == "gen1" then
     f.battle.player.expLastTakenMove = 33
   else
-    f.battle.enemy.lastMove = f.ids.TACKLE
+    f.battle.player.gbaLastTakenMove = f.ids.TACKLE
   end
   f.resolve("MIRROR_MOVE", true)
   observe(
