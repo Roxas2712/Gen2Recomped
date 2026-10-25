@@ -28,7 +28,7 @@ function A.guaranteed(battle, user, target, move)
   end
   return battle.pokedudeDemo ~= nil and battle.pokedudeDemo ~= false
     or battle.pokedude == true
-    or user.lockedOn == target
+    or require("src.battle.Gen3LockOn").active(battle, user, target)
 end
 local function absorbed(battle, user, target, move)
   if target == user then
@@ -49,8 +49,8 @@ function A.check(battle, move, user, target, accuracyRaw)
     return false, "protected"
   end
   local guaranteed = A.guaranteed(battle, user, target, move)
-  -- The existing Lock-On producer uses a one-use pointer. Its native timed
-  -- producer is a separate lifecycle contract; preserve that legacy lifetime.
+  -- Authored legacy bindings keep their one-use lifetime. The native
+  -- producer stores a separate target-owned timer and is not consumed here.
   if user.lockedOn == target then
     user.lockedOn = nil
   end

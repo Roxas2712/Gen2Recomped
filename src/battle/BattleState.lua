@@ -3413,6 +3413,9 @@ end
 -- caller already means.
 function BattleState:placeBattler(pos, battler)
   local side, flank = slotOf(pos)
+  if GameVersion.isGen3() then
+    require("src.battle.Gen3LockOn").replacing(self, pos, self.sides[side].battlers[flank], battler)
+  end
   self.sides[side].battlers[flank] = battler
   if battler then
     battler.position = pos
@@ -3522,6 +3525,11 @@ end
 function BattleState:activeBattlers() return activeBattlers(self) end
 
 function BattleState:syncSides()
+  if GameVersion.isGen3() then
+    local lock = require("src.battle.Gen3LockOn")
+    lock.replacing(self, 0, self.sides[1].battlers[1], self.player)
+    lock.replacing(self, 1, self.sides[2].battlers[1], self.enemy)
+  end
   self.sides[1].battlers[1] = self.player
   self.sides[2].battlers[1] = self.enemy
   if self.player then self.player.position = BattleState.POS.PLAYER_LEFT end
@@ -6553,6 +6561,7 @@ end
 
 function BattleState:gen3BattlerCountersTick(b, scheduled)
   if b and b.mon and b.mon.hp > 0 then
+    if GameVersion.isGen3() then require("src.battle.Gen3LockOn").tick(self, b) end
     -- YAWN: the sleep lands at the END of the turn AFTER the one it was
     -- used on, which is the whole reason it is worth using at all.
     if b.drowsyTurns then
