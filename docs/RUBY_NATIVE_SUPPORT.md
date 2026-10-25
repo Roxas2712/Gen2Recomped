@@ -81,14 +81,21 @@ and native/canonical special address spaces. `ruby_save_layout.lua`
 roundtrips patterned nonzero save blocks through multiple sector rotations and
 checks plain RS inventory encryption and game-of-origin. `rs_braille.lua`
 checks mapped 1bpp tiles, dot identities, header geometry and rejection of a
-corrupted font (13/13). All four suites pass. The engine
-suite is 68/78 passing; the same ten failures reproduce on the unmodified
+corrupted font (13/13). All five suites pass. The engine
+suite is 69/79 passing; the same ten failures reproduce on the unmodified
 baseline (64/74).
 
 Reproduce using `tools/run_gen3_native_smoke.py ruby --rom YOUR_ROM
 --love YOUR_LOVE12_BINARY --lock YOUR_SHARED_QA_LOCK --driver
 tests/ruby_native_driver.lua --speed 8`. The helper snapshots committed
 sources and rejects cache reuse if extraction inputs changed.
+
+The generic summary fallback right-aligns each stat value within its own
+column. Previously a value beginning at x=120 overlapped the next label at
+x=132. The 15-check `summary_fallback_columns.lua` exercises worst-case
+three-digit stats and full HP pairs; actual native summary/IV views were
+inspected after the change. Extracted Emerald/FRLG window art keeps its own
+unchanged layout.
 
 Remaining alpha scope includes the original RS title/intro backdrop (the
 engine currently uses its fallback title), several UI art/minigame stages,
