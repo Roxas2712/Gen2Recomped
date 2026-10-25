@@ -7,6 +7,19 @@ local base=P.update
 T.eq(package.loaded['src.core.Game'],nil,'import does not bootstrap Game')
 T.eq(P.cellX,nil,'there is no synthetic player before a session')
 T.eq(P.tick(),nil,'out-of-phase ticks cannot run a second simulation')
+-- Atlas preparation can resolve data before an overworld/player exists.
+local Session=require('src.compat.gen1.NativeSession')
+require('src.core.GameVersion').set('firered')
+local early={data={tilesets={},map_tilesets={},constants={gen3Layout={}}}}
+T.eq(Session.game(early),early,'prewarm resolves explicit native owner')
+local owner,data=Session.data(early)
+T.eq(owner,early);T.eq(data,early.data)
+T.eq(Session.resolve(early),nil,'prewarm cannot invent a player')
+early.data.map_tilesets=nil
+T.eq(Session.data(early),nil,'incomplete imports decline before resource preparation')
+T.eq(package.loaded['src.core.Game'],nil,'data observation never bootstraps Game')
+require('src.core.GameVersion').set('gold')
+T.eq(Session.data(early),nil,'other generations never expose GBA resources')
 for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
  if require('src.core.GameVersion').info(edition) then
   local f=F.new(edition);local w,p,g=f.world,f.player,f.game
