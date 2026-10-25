@@ -109,3 +109,17 @@ animations, live UI pixels and a full cartridge playthrough need separate work.
 The existing prepared Quick Claw boundary in the public Encore planning cases
 remains documented in [the Encore contract](native-gen3-encore.md); no RNG calls
 or differing observations are filtered from this checker.
+
+## Combined fork acceptance
+
+The tested combined runtime `abd621282715d072b421e7b30f3f5c60628d771d`
+passes **237/237 engine suites**, SDK **3/3**, B30, the same **96 workers /
+62,976 paired observations**, and all four imported CPU smoke scenarios.
+Both comparison reports identify a clean host at their respective runtime.
+The integration preserves the existing GBA item/residual scheduling and native
+AI-order preparation. Later commits only record validation/publication.
+
+Combined evidence is retained in `tmp/disable-full.log`,
+`tmp/disable-contracts.json`, `tmp/disable-imported.log` and
+`tmp/disable-accepted-evidence.json`. The source checkout remains clean at the
+pinned Gen1 revision. Hosted CI status is reported separately in the PR.
