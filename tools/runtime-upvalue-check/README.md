@@ -103,6 +103,9 @@ official stock runtime. `package_native_release.py` accepts paired
 `--windows-runtime-component` and `--macos-runtime-component` inputs; an
 extended-runtime release cannot silently ship only one qualified platform.
 The standalone `.love` still needs the corresponding extended runtime.
+The Mac minimum system version is read from the actual library load commands;
+the package raises its advertised minimum when necessary and records it in
+the manifest and README. A component cannot lower the base app's requirement.
 
 Component and package checks do not replace actual fused-application GPU,
 input, gameplay or long-session verification before release claims.

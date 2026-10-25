@@ -123,6 +123,36 @@ def qualify(capacity_bytes, host_bytes, library_bytes, platform):
     return arch, tree
 
 
+def macos_minimum(bodies):
+    versions = []
+    for data in bodies.values():
+        endian = "<" if data[:4] == b"\xcf\xfa\xed\xfe" else ">"
+        commands, total = struct.unpack_from(endian + "II", data, 16)
+        at, end = 32, 32 + total
+        found = []
+        if end > len(data):
+            raise ValueError("truncated Mach-O load commands")
+        for _ in range(commands):
+            if at + 8 > end:
+                raise ValueError("truncated Mach-O load command")
+            cmd, size = struct.unpack_from(endian + "II", data, at)
+            if size < 8 or at + size > end:
+                raise ValueError("invalid Mach-O load command")
+            if cmd == 0x32 and size >= 24:  # LC_BUILD_VERSION
+                target, version = struct.unpack_from(endian + "II", data, at + 8)
+                if target != 1:
+                    raise ValueError("runtime library targets a different Apple platform")
+                found.append(version)
+            elif cmd == 0x24 and size >= 16:  # LC_VERSION_MIN_MACOSX
+                found.append(struct.unpack_from(endian + "I", data, at + 8)[0])
+            at += size
+        if not found:
+            raise ValueError("Mac runtime has no deployment-version command")
+        versions.extend(found)
+    version = max(versions)
+    return "%d.%d.%d" % (version >> 16, (version >> 8) & 255, version & 255)
+
+
 def verify(manifest_path, platform, expected_tree):
     manifest_path = manifest_path.resolve()
     root = manifest_path.parent
@@ -138,6 +168,11 @@ def verify(manifest_path, platform, expected_tree):
     bodies = slices(data, platform)
     if set(bodies) != ARCHES[platform]:
         raise ValueError("component is missing a required desktop architecture")
+    if platform == "macos":
+        minimum = macos_minimum(bodies)
+        if manifest.get("minimumMacOS", minimum) != minimum:
+            raise ValueError("component deployment version disagrees with its library")
+        manifest["minimumMacOS"] = minimum
     seen = set()
     for row in manifest["qualifications"]:
         capacity = child(root, row["capacityReport"]).read_bytes()
@@ -211,6 +246,8 @@ def main():
                     luaJitSource=PIN, baseLoveCommit=LOVE, library=target.name,
                     librarySha256=sha(target.read_bytes()), notice=notice.name,
                     noticeSha256=sha(notice.read_bytes()), qualifications=records)
+    if args.platform == "macos":
+        manifest["minimumMacOS"] = macos_minimum(slices(target.read_bytes(), "macos"))
     path = output / "component.json"
     path.write_text(json.dumps(manifest, indent=2) + "\n")
     verify(path, args.platform, tree)
