@@ -49,7 +49,7 @@ battle queue rather than omitted from observation:
 
 ## Validation
 
-The frozen complete comparison at `74602df7` executes **32 workers / 14,816
+The focused frozen comparison at `74602df7` executes **32 workers / 14,816
 paired observations**, all equal, with every worker exiting zero, no timeout
 and no native VM diagnostic. It retains all captured events, held reads, RNG,
 PP, damage, actor/display state and animation commands. The combined fork at
@@ -81,8 +81,15 @@ The runtime at `f9016f1c` completes 163/172 engine suites, SDK 3/3 and B30.
 Its exact anchored FAIL-line Counter equals fresh #258 (157/166): the same
 25 lines in nine inherited suites, with no additions or removals. The later
 history/CI commits change tests and workflow only; their added host suite
-passes 994 checks. Fresh combined-fork and stable-baseline full runs are being
-qualified separately before the playable branch is advanced.
+passes 994 checks. The combined fork completes **282/282** engine suites, SDK **3/3** and B30;
+fresh stable baseline completes **275/275**, SDK **3/3** and B30. Their exact
+anchored FAIL-line Counters are both empty. Each runtime also qualifies all
+**220 workers / 175,540 paired observations** across every existing enemy-action
+mode. Two original combined Assist workers terminated at 60 seconds. Those
+failed reports remain retained; eight fresh workers with a bounded 180-second
+budget complete in at most 36.2911 seconds and retain every earlier completed
+observation unchanged. The source-bound evidence is in
+`qa/native-gen3-mirror-move.json`.
 
 ## Scope and reproduction
 
@@ -94,7 +101,10 @@ normal cache/save and launch no game, audio device or GPU preview.
 
 This evidence does not establish final scene pixels, whole-synthesizer waveform
 identity, all public audio-event timing, arbitrary full-mod compatibility or a
-complete playthrough. Ruby/Sapphire are unregistered in this feature stack;
+complete playthrough. Native player replacement across cached pan/mono/sound
+variants is reproduced separately in 16/20 lifecycle cases and remains a
+follow-up; these controls do not claim that player lifecycle is fixed.
+Ruby/Sapphire are unregistered in this feature stack;
 their separate support prerequisites require integration before qualification.
 
 ```sh
