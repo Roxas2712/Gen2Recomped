@@ -4,6 +4,7 @@ local M = {}
 function M.install(root, native, f)
   local previousAudio, currentTick = love.audio, 0
   local trace, carrier = {}, nil
+  local allSources, lastSource = {}, nil
   local Audio = native and require("src.core.game3.audio")
   local Source = {}
   Source.__index = Source
@@ -16,7 +17,9 @@ function M.install(root, native, f)
   function Source:setVolume() end
   function Source:setLooping() end
   function Source:clone()
-    return setmetatable({ input = self.input }, Source)
+    local copy = setmetatable({ input = self.input }, Source)
+    allSources[#allSources + 1] = copy
+    return copy
   end
   function Source:play()
     self.playing = true
@@ -52,11 +55,15 @@ function M.install(root, native, f)
       end
       assert(pan ~= nil, "effect sound must be audible")
     end
-    trace[#trace + 1] = { tick = currentTick, id = id, pan = pan, mono = mono }
+    self.observed = { tick = currentTick, id = id, pan = pan, mono = mono }
+    trace[#trace + 1] = self.observed
+    lastSource = self
   end
   love.audio = {
     newSource = function(input)
-      return setmetatable({ input = input }, Source)
+      local source = setmetatable({ input = input }, Source)
+      allSources[#allSources + 1] = source
+      return source
     end,
   }
   local off, saved
@@ -96,10 +103,47 @@ function M.install(root, native, f)
       local id = tonumber(event.name:match("^OWNED_NATIVE_(%d+)$"))
       if id then
         assert(trace[#trace]).id = id
+        assert(lastSource).observed.id = id
       end
     end)
   end
   return {
+    player = function(id, player)
+      if native then
+        Audio._pack.index.songs[id].player = player
+      else
+        f.data.audio.songs[("SONG_%03X"):format(id)].player = player
+      end
+    end,
+    clear = function()
+      if native then
+        Audio.stopSe()
+      else
+        require("src.core.Sound").invalidate()
+      end
+      -- The native PCM source cache survives stopSe. Keep stopped hardware
+      -- objects in the inventory so reuse is observed on later commands.
+      trace, lastSource = {}, nil
+    end,
+    active = function()
+      local active = {}
+      for _, source in ipairs(allSources) do
+        if source.playing then
+          local state = assert(source.observed)
+          active[#active + 1] = { id = assert(state.id), pan = state.pan, mono = state.mono }
+        end
+      end
+      table.sort(active, function(a, b)
+        if a.id ~= b.id then
+          return a.id < b.id
+        end
+        if a.pan ~= b.pan then
+          return a.pan < b.pan
+        end
+        return tostring(a.mono) < tostring(b.mono)
+      end)
+      return active
+    end,
     stereo = function(value)
       if native then
         Audio._mono = not value

@@ -2,7 +2,9 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "substitute_fade" then
+if mode == "native_sound_lifecycle" then
+  rows = dofile(root .. "/tests/enemy_actions/native_sound_lifecycle.lua").run(root, backend, version)
+elseif mode == "substitute_fade" then
   rows = dofile(root .. "/tests/enemy_actions/substitute_fade.lua").run(root, backend, version)
 elseif mode == "battle_effect_presentation" then
   rows = dofile(root .. "/tests/enemy_actions/battle_effect_presentation.lua").run(root, backend, version)

@@ -12,6 +12,7 @@ GEN1_REF = "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91"
 
 
 MODES = [
+    (3, 'native_sound_lifecycle'),
     (3, 'substitute_fade'),
     (3, 'battle_effect_presentation'),
     (3, 'native_sound_pan'),
