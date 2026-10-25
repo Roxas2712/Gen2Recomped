@@ -106,7 +106,13 @@ function M.install(RI)
   local legacy=RI._drawModsPanel
   local toolbar=RI._sbModToolbar
   function RI:_findRows()
-    return Search.filter(self.findIndex and self.findIndex.mods or {},{query=self.findQuery,category=self.findCategory,generation=self.catalogGeneration})
+    local revision=require('src.import.LauncherCommunity').catalogueRevision
+    local cached=self._catalogSearch
+    if cached and cached.index==self.findIndex and cached.query==self.findQuery and cached.category==self.findCategory
+      and cached.generation==self.catalogGeneration and cached.revision==revision then return cached.rows,cached.approximate end
+    local rows,approximate=Search.filter(self.findIndex and self.findIndex.mods or {},{query=self.findQuery,category=self.findCategory,generation=self.catalogGeneration})
+    self._catalogSearch={index=self.findIndex,query=self.findQuery,category=self.findCategory,generation=self.catalogGeneration,revision=revision,rows=rows,approximate=approximate}
+    return rows,approximate
   end
   RI._sbModToolbar=function(self,...) if self._catalogManage then return toolbar(self,...) end;return 0 end
   local selectTab=RI._selectTab

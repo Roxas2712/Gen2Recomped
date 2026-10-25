@@ -2,6 +2,7 @@
 local S={}
 local Targets=require('src.mods.ModTargets')
 local Versions=require('src.core.GameVersion')
+local documents=setmetatable({},{__mode='k'})
 local function norm(v)
   local s=tostring(v or ''):lower()
   for a,b in pairs({['Ä']='a',['ä']='a',['Ö']='o',['ö']='o',['Ü']='u',['ü']='u',['ß']='ss',['é']='e',['É']='e',['è']='e',['á']='a',['ó']='o'}) do s=s:gsub(a,b) end
@@ -24,6 +25,16 @@ local function tokens(query)
   for term in query:gmatch('%S+') do if #out<16 then out[#out+1]=term end end
   return out
 end
+local function document(e)
+  local cached=documents[e]
+  if cached and cached.id==e.id and cached.title==(e.title or e.name) and cached.author==e.author
+    and cached.summary==e.summary and cached.description==e.description and cached.tags==e.tags and cached.categories==e.categories then return cached end
+  cached={id=e.id,title=e.title or e.name,author=e.author,summary=e.summary,description=e.description,tags=e.tags,categories=e.categories}
+  cached.normalTitle=norm(e.title or e.name or e.id)
+  cached.fields=norm(table.concat({e.id or '',e.author or '',e.summary or '',e.description or '',
+    table.concat(e.tags or {},' '),table.concat(e.categories or {},' ')},' '))
+  documents[e]=cached;return cached
+end
 local function near(a,b)
   if math.abs(#a-#b)>1 or #a<4 then return false end
   local i,j,edits=1,1,0
@@ -45,9 +56,7 @@ function S.filter(entries,filters)
       keep=false;for _,cat in ipairs(e.categories or {}) do if cat==filters.category then keep=true end end
     end
     if keep then
-      local title=norm(e.title or e.name or e.id)
-      local fields=norm(table.concat({e.id or '',e.author or '',e.summary or '',e.description or '',
-        table.concat(e.tags or {},' '),table.concat(e.categories or {},' ')},' '))
+      local doc=document(e);local title,fields=doc.normalTitle,doc.fields
       local score=0;local fuzzy=false
       for _,term in ipairs(terms) do
         if title==term then score=score+100

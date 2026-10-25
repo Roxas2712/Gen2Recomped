@@ -55,6 +55,7 @@ function C.resolve(entry,doc)
   for _,field in ipairs({'dependencies','conflicts','permissions'}) do if type(doc[field])=='table' then entry[field]=doc[field] end end
   entry.update_check=entry.latest and entry.latest.zip and 'ok' or 'no installable release'
   entry._communityResolved=true
+  C.catalogueRevision=(C.catalogueRevision or 0)+1
   return true
 end
 function C.describe(entry)
@@ -344,6 +345,7 @@ function C.install(RI)
     self.modUpdateInfo=self.modUpdateInfo or {}
     self._communityUpdateQueue={}
     local queued={}
+    if self._communityUpdateJob and self._communityUpdating then queued[self._communityUpdating.github:lower()]=true end
     for _,mod in ipairs(self.mods or {}) do
       if mod.github and mod.updateCheck~=false and mod.github:match('^[%w_.%-]+/[%w_.%-]+$') then
         local cached=Update.readCache(updateCacheKey(mod))

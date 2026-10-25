@@ -24,6 +24,8 @@ results,approximate=Search.filter(entries,{query='batlle'})
 check(#results==1 and approximate==1,'one-edit misspellings are marked as approximate matches')
 check(#Search.filter(entries,{generation=2})==1 and #Search.filter(entries,{generation=1})==1,'generation filters use declared base games instead of title content')
 check(#Search.filter(entries,{query='roxas',generation=2})==0,'generation and free text filters combine')
+entries[1].description='Changed description'
+check(#Search.filter(entries,{query='engine'})==0 and #Search.filter(entries,{query='changed'})==1,'cached documents refresh when catalogue fields change')
 local imageCalls,prints,buttons=0,{},{}
 local font=love.graphics.newFont(12)
 function font:getWrap(v,w)
