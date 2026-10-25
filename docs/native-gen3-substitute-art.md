@@ -36,6 +36,10 @@ included in this branch.
 - The structural locator uniquely resolves complete art in five existing
   cartridges: BPRE, BPEE, BPRD, BPED and BPGE, revision zero. The extra three
   locator checks do not claim support for additional game profiles.
+- Frozen runtime `bff8ec57`: 159/168 engine suites, SDK 3/3 and B30. The exact
+  anchored FAIL-line Counter matches fresh #258: the same 25 inherited lines,
+  with no additions or removals. The failed broader animation matrix remains
+  retained separately and is not reported as passing.
 
 These checks establish decoded artwork and draw commands. They are not final
 scene screenshots or whole-battle graphical acceptance. General/status playback
