@@ -5210,7 +5210,8 @@ function Commands.g2_update_roam_positions(ctx)
   local r = (love and love.math and love.math.random) or math.random
   local curMap = ctx.game and ctx.game.overworld and ctx.game.overworld.map
     and ctx.game.overworld.map.id
-  local lastMap = ctx.save.g2RoamLastMap
+  curMap = MapIdentity.sourceId(ctx.game and ctx.game.data, curMap)
+  local lastMap = MapIdentity.sourceId(ctx.game and ctx.game.data, ctx.save.g2RoamLastMap)
 
   -- Always refresh landmarks
   Commands.g2_ensure_roam_landmarks(ctx)

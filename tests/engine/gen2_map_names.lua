@@ -113,7 +113,9 @@ T.eq(noDigits.maps.MAP_G24_N05,noDigits.maps.ELMS_LAB,'unchanged public name sti
 T.eq(Identity.runtimeId(noDigits,'MAP_G24_N05'),'ELMS_LAB','scaffold request reaches existing unchanged native name')
 -- Exercise the real mod loader merge and its failed-entry rollback, not
 -- merely the map write helper or a made-up registry fixture.
-local data=T.fixtures.fresh()
+-- Replace the native dataset as a ROM import does; adding mod maps after
+-- startup intentionally does not enroll them in the engine alias families.
+local data=T.fixtures.fresh();data.maps=Merge.deepCopy(data.maps)
 local homes=fixture();data.maps[native],data.maps[canonical]=homes.maps[native],homes.maps[canonical]
 Names.publish(data)
 local files={}

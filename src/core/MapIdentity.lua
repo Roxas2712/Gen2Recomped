@@ -70,6 +70,7 @@ function Identity.aliases(data, id)
   end
   local source = Identity.sourceId(data, id)
   add(source); add(id)
+  add(Identity.runtimeId(data, id))
   if Version.isGen2() and type(source) == "string" then
     local name = Identity.normalize(source)
     local maps = data and data.maps
@@ -79,6 +80,27 @@ function Identity.aliases(data, id)
        and Identity.sourceId(data, name) == source then add(name) end
   end
   return out
+end
+
+-- Save keys remain native. Older public-only values stay readable per leaf,
+-- including when the native row already contains a different object's state.
+function Identity.savedValue(data, records, id, entry)
+  if type(records) ~= "table" then return nil end
+  for _, name in ipairs(Identity.aliases(data, id)) do
+    local value = records[name]
+    if entry ~= nil then
+      if type(value) == "table" then value = value[entry] else value = nil end
+    end
+    if value ~= nil then return value end
+  end
+end
+
+function Identity.savedFlag(data, records, id, suffix)
+  if type(records) ~= "table" then return nil end
+  for _, name in ipairs(Identity.aliases(data, id)) do
+    local value = records[tostring(name) .. suffix]
+    if value ~= nil then return value end
+  end
 end
 
 function Identity.lookup(data, records, id)

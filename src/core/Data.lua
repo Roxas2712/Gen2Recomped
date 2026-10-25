@@ -1924,13 +1924,14 @@ function Data:seedDefaults()
   require("src.core.Gen2Environment").publish(self)
   if require("src.core.GameVersion").isGen2() then
     seedMapAliases(self.maps, GEN2_SCAFFOLD_MAP_ALIASES)
+    require("src.core.Gen2MapNames").publish(self, GEN2_SCAFFOLD_MAP_ALIASES)
     -- Alias text_pointers by each map's camelCase label so resolveText finds
     -- Gen2 entries (text_pointers uses uppercase ID, map.def.label is camelCase)
     local tp = self.text_pointers
     local th = self.trainer_headers
     for _, mapDef in pairs(self.maps) do
       if type(mapDef) == "table" then
-        local id = type(mapDef.id) == "string" and mapDef.id
+        local id = type(mapDef.id) == "string" and require("src.core.MapIdentity").sourceId(self, mapDef.id)
         local lbl = type(mapDef.label) == "string" and mapDef.label
         if id and lbl and id ~= lbl then
           if tp and tp[id] and not tp[lbl] then tp[lbl] = tp[id] end
@@ -2613,7 +2614,7 @@ function Data:textEntry(mapLabel, textConst)
   -- should always be here, but a bare index is a crash rather than a miss
   local pointers = self.text_pointers
   if not pointers then return nil end
-  local perMap = pointers[mapLabel]
+  local perMap = require("src.core.MapIdentity").lookup(self, pointers, mapLabel)
   if not perMap then return nil end
   local entry = perMap[textConst]
   if entry then return entry end
@@ -2643,7 +2644,7 @@ end
 function Data:trainerHeader(mapLabel, objIndex)
   local headers = self.trainer_headers
   if not headers then return nil end
-  local perMap = headers[mapLabel]
+  local perMap = require("src.core.MapIdentity").lookup(self, headers, mapLabel)
   return perMap and perMap[objIndex] or nil
 end
 
