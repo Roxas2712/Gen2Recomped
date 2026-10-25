@@ -70,6 +70,13 @@ stamp, clear and border behavior. Shared Gen1/Fork consumer checks and both
 games on Metal/OpenGL pass. The original `src.core.game3.map` lifecycle remains
 absent; these layout primitives do not establish full OASC/VASC2 operation.
 
+The [native GBA identity follow-up](native-gen3-map-identities.md) verifies
+all 2,156 public map slots across five metadata profiles and binds actual
+FireRed/Emerald definitions to their public names without changing native
+runtime/save keys. Registry, VM, cache and public-address GPU entry/return
+checks pass. The original Game3 map lifecycle and definition protocol remain
+open; no additional playable edition is enabled by catalogue metadata.
+
 ## Integrated engine contracts
 
 | Capability | Source branch / commit | Current scope |

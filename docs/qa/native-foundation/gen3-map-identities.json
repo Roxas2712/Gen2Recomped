@@ -1,0 +1,377 @@
+{
+  "schema": 1,
+  "sourceCommit": "26d854cddb6fbf3e538beee3a0edc032ef63ab36",
+  "game3MapLifecycleImplemented": false,
+  "additionalPlayableProfilesEnabled": false,
+  "referenceComparison": {
+    "reference": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "nativeSource": "26d854cddb6fbf3e538beee3a0edc032ef63ab36",
+    "nativeTrackedChanges": false,
+    "observationsSha256": "aa4b89daf9642e778ab6b3853c43c67359dcdea4818293ab6725b316e34e3cb2",
+    "profiles": [
+      {
+        "version": "firered",
+        "slots": 425,
+        "checks": {
+          "gen1": 5107,
+          "gen2": 5107
+        }
+      },
+      {
+        "version": "leafgreen",
+        "slots": 425,
+        "checks": {
+          "gen1": 5107,
+          "gen2": 5107
+        }
+      },
+      {
+        "version": "emerald",
+        "slots": 518,
+        "checks": {
+          "gen1": 6741,
+          "gen2": 6741
+        }
+      },
+      {
+        "version": "ruby",
+        "slots": 394,
+        "checks": {
+          "gen1": 5129,
+          "gen2": 5129
+        }
+      },
+      {
+        "version": "sapphire",
+        "slots": 394,
+        "checks": {
+          "gen1": 5129,
+          "gen2": 5129
+        }
+      }
+    ],
+    "playableProfilesAdded": false
+  },
+  "nativeSourceFactsSha256": "3339b76ac0cd02a65f2fdb7ca7d77d157910165cfb89319bf71b28de4f12fcd9",
+  "cpu": {
+    "nativeOwnerChecks": 132,
+    "engineSuites": 269,
+    "sdkSuites": 3,
+    "B30Passed": true,
+    "quickLogSha256": "2b3867986e4b31e1b307045be1933a3238751d2af7303af20d1a99880358e646"
+  },
+  "upstream": {
+    "number": 234,
+    "head": "1e591de13bc989ecf7262404627a16c934b7dfce",
+    "base": "3aa7017f7ef1410f4c21135909a0675e2f38f583",
+    "dependsOn": 211,
+    "independentOwnerChecks": 132,
+    "negativeMissingNativeModule": true
+  },
+  "realImportedMapProbe": {
+    "emerald": {
+      "unlistedNativeMaps": [],
+      "nativeDefinitionsAndPackedSourceUnchanged": true,
+      "nativeMaps": 518,
+      "knownMaps": 518
+    },
+    "firered": {
+      "unlistedNativeMaps": [],
+      "nativeDefinitionsAndPackedSourceUnchanged": true,
+      "nativeMaps": 425,
+      "knownMaps": 425
+    }
+  },
+  "package": {
+    "sourceCommit": "26d854cddb6fbf3e538beee3a0edc032ef63ab36",
+    "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+    "payloadSha256": "b0d7f9b012dc3e6306631491ca968dbe386d79fd50e8b8637c6ccd272f4fb291",
+    "identicalPlatformPayloads": true,
+    "sourceFilesCompared": 1037,
+    "allPackagedSrcFilesMatchCommittedSourceExceptDeclaredEngineStamp": true,
+    "previewEntryPointsMatchSource": true,
+    "windowsPE64AndEmbeddedPayload": true,
+    "windowsAMD64DLLs": 11,
+    "macArchiveExtractedPayloadAndStrictSignature": true,
+    "windowsHardwareExecuted": false,
+    "published": false
+  },
+  "cache": {
+    "consumerSource": "26d854cddb6fbf3e538beee3a0edc032ef63ab36",
+    "games": [
+      {
+        "edition": "firered",
+        "files": 3120,
+        "cacheTreeSha256": "56d9ca84b5fe95689120f833fbd15078a21aa5050feb57a903798c2fed20a7df",
+        "sourceCacheProducerCommit": "8afbf4221b3fcd4db6dda31cbeab3f07cb536cca",
+        "importerUnchanged": true,
+        "onlyAssetsDataMarkerCloned": true,
+        "saveCopied": false
+      },
+      {
+        "edition": "emerald",
+        "files": 3951,
+        "cacheTreeSha256": "e5fa107d350f70c2ad961485881637874c50ee6b96b3f41602f7d8a36955c416",
+        "sourceCacheProducerCommit": "8afbf4221b3fcd4db6dda31cbeab3f07cb536cca",
+        "importerUnchanged": true,
+        "onlyAssetsDataMarkerCloned": true,
+        "saveCopied": false
+      }
+    ]
+  },
+  "runs": [
+    {
+      "edition": "firered",
+      "gpu": {
+        "api": "2.1",
+        "device": "Apple M3",
+        "renderer": "Metal",
+        "vendor": ""
+      },
+      "nativeChecks": 31,
+      "nativeMap": "MAP_G04_N01",
+      "publicMap": "FR_PLAYERS_HOUSE_2F",
+      "stock": null,
+      "vsync": 1,
+      "driverSha256": "4268dc3fe6ae5ab418d30f97d156d2aeff4073ccea30dc62fcc00a33b999ac7a",
+      "logSha256": "f70062a856054e5e668f6f96637dc4cce6f3737f4bd5a2ac4a4603b289e270b3",
+      "proofs": [
+        {
+          "phase": "initial-map",
+          "sha256": "6e549a1351453048ffb6389aff4d4989c31d65ac03afb919ff7e161483e59614",
+          "freshFrameStamp": 7,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "second-map",
+          "sha256": "a0de815453a617131d986ac53ea8112104a79ac7aa930a4894de52c34c2baf56",
+          "freshFrameStamp": 8,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "resized",
+          "sha256": "a5c0d397c5492937dbfcb9c5709cf6399b74b38897a0fe6fb1fe6a97fb27b329",
+          "freshFrameStamp": 7,
+          "minimumStamp": 1,
+          "centralColours": 40,
+          "attempts": 1
+        },
+        {
+          "phase": "map-return",
+          "sha256": "86954ef6058dea023088418a678e8211f55200a5ef96c5bdaa68ebaf519ef899",
+          "freshFrameStamp": 8,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        }
+      ]
+    },
+    {
+      "edition": "firered",
+      "gpu": {
+        "renderer": "OpenGL",
+        "device": "Apple M3",
+        "api": "4.1 Metal - 89.4",
+        "vendor": "Apple"
+      },
+      "nativeChecks": 31,
+      "nativeMap": "MAP_G04_N01",
+      "publicMap": "FR_PLAYERS_HOUSE_2F",
+      "stock": null,
+      "vsync": 1,
+      "driverSha256": "4268dc3fe6ae5ab418d30f97d156d2aeff4073ccea30dc62fcc00a33b999ac7a",
+      "logSha256": "6e3c1218df299893b7d7b0cb44e471b3494e2f155a050ee1d589c2a767787a8a",
+      "proofs": [
+        {
+          "phase": "initial-map",
+          "sha256": "34375a4b31e5b223de7e50a4f893406007715be7f9e4490576c37f5fea3fee13",
+          "freshFrameStamp": 9,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "second-map",
+          "sha256": "c6107eb4e56cc0ec7e0cea7411937bd4e6deaf6f88f4fb0c026e69488c050b8c",
+          "freshFrameStamp": 10,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "resized",
+          "sha256": "a68fb0314f8d6589133470094556f2dad9209d223951da956c2b866f5afb4f59",
+          "freshFrameStamp": 9,
+          "minimumStamp": 1,
+          "centralColours": 40,
+          "attempts": 1
+        },
+        {
+          "phase": "map-return",
+          "sha256": "11f33bc780a37ad7aad2293d91ade64ad1382ec0af0fab24c23b136f213cb363",
+          "freshFrameStamp": 10,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        }
+      ]
+    },
+    {
+      "edition": "emerald",
+      "gpu": {
+        "renderer": "Metal",
+        "vendor": "",
+        "api": "2.1",
+        "device": "Apple M3"
+      },
+      "nativeChecks": 41,
+      "nativeMap": "MAP_G25_N40",
+      "publicMap": "EM_INSIDE_OF_TRUCK",
+      "stock": {
+        "baseLayout": 8,
+        "alternateLayout": 357,
+        "cells": 3600,
+        "y": 22,
+        "x": 27,
+        "map": "MAP_G00_N07"
+      },
+      "vsync": 1,
+      "driverSha256": "4268dc3fe6ae5ab418d30f97d156d2aeff4073ccea30dc62fcc00a33b999ac7a",
+      "logSha256": "3986da9604ebca02680d274631cc85919bdd9453735e186f4c92a17afe52b773",
+      "proofs": [
+        {
+          "phase": "initial-map",
+          "sha256": "06e08b2aef92af87472233da1d2053feb7ed771a266676aa80d35277405bd583",
+          "freshFrameStamp": 7,
+          "minimumStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        },
+        {
+          "phase": "second-map",
+          "sha256": "c5545a4a936415ebf9048e6fd3ed496cdab2866dea45683eb0614e79eeffcca3",
+          "freshFrameStamp": 8,
+          "minimumStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        },
+        {
+          "phase": "resized",
+          "sha256": "21dfe3d0757005479f9e07c56cd2afa7933999bfc1f7d808bb9c6d6adcf98608",
+          "freshFrameStamp": 6,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "map-return",
+          "sha256": "69d1ba047ce165629914a22cf72d7b26f313bf6add74e272c3ccf71e18ba3b8c",
+          "freshFrameStamp": 8,
+          "minimumStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        }
+      ]
+    },
+    {
+      "edition": "emerald",
+      "gpu": {
+        "api": "4.1 Metal - 89.4",
+        "renderer": "OpenGL",
+        "device": "Apple M3",
+        "vendor": "Apple"
+      },
+      "nativeChecks": 41,
+      "nativeMap": "MAP_G25_N40",
+      "publicMap": "EM_INSIDE_OF_TRUCK",
+      "stock": {
+        "cells": 3600,
+        "x": 27,
+        "baseLayout": 8,
+        "alternateLayout": 357,
+        "y": 22,
+        "map": "MAP_G00_N07"
+      },
+      "vsync": 1,
+      "driverSha256": "4268dc3fe6ae5ab418d30f97d156d2aeff4073ccea30dc62fcc00a33b999ac7a",
+      "logSha256": "1ef2577342cbf3ee2206dc6018185a3d45bd0a0424e4dedd6cc4be852de68087",
+      "proofs": [
+        {
+          "phase": "initial-map",
+          "sha256": "69d1ba047ce165629914a22cf72d7b26f313bf6add74e272c3ccf71e18ba3b8c",
+          "freshFrameStamp": 8,
+          "minimumStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        },
+        {
+          "phase": "second-map",
+          "sha256": "12a2a065bdda99aea6bc7b48a5a17d3c96868ddfbdd0c22ed44ce9a0b38a6b07",
+          "freshFrameStamp": 9,
+          "minimumStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        },
+        {
+          "phase": "resized",
+          "sha256": "0eaf27514eb6b2f55137457e467dfac4e55afd0f8cb2f6be9b73bdca79973584",
+          "freshFrameStamp": 10,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "map-return",
+          "sha256": "20d5694d88f278703468897ae9a7cc4593af117a43ef922c7c0f732dd46016b0",
+          "freshFrameStamp": 9,
+          "minimumStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        }
+      ]
+    }
+  ],
+  "originalOascProbe": {
+    "referenceSource": "cef4a9ef3e8338b3b97b99d679011eb57c731617",
+    "fixtureOnly": true,
+    "firstMissingModule": "src.core.game3.map",
+    "logSha256": "74c60e5609934c76d5dd62b8467f8e784afe5aa18988c541379cea519280009d"
+  },
+  "scope": [
+    "Native aliases share actual definitions, grids, Map/renderer and source storage ids",
+    "All five reference profiles cover catalogue metadata only; no additional playable profiles",
+    "Public-address hardware entry/return and actual in-memory native save capture, no save IO",
+    "Fresh unsaved QA entries; introduction bypassed, not full story or First/Third acceptance",
+    "Sootopolis compares all 3600 live native/layout cell triples through base/alternate/restored stock layouts",
+    "Sixteen fresh owned-window proofs; resized phase is not a window resize",
+    "Windows hardware untested, QA packages unpublished, existing public preview unchanged",
+    "Original Game3 map/definition/player/atlas lifecycle and complete catalogue importer still missing",
+    "Protected Gen1/player installations and source mods unchanged; mod port paused"
+  ],
+  "preservedAttempts": [
+    "Wrong observation working directory corrected before capture, reference untouched",
+    "Standalone hook context adapted to actual prerequisite source, product code unchanged",
+    "Pinned Windows runtime restored from same unexpired official artifact with exact digest verification",
+    "Initial Emerald driver assumed immediate save snapshot update; actual native captureSave is now tested in memory, product source unchanged, failed runs/proofs retained"
+  ],
+  "functionalIntegrationControl": {
+    "onlyNativeIdentityHooksReverted": true,
+    "splitNativeMapOwnershipDemonstrated": true,
+    "logSha256": "0e05da6c8d5ab7a6cd3d77f199c3ee02e8c99fb005f5333eb6041931c3ea8602"
+  },
+  "pushAudit": {
+    "openOwnPRs": 147,
+    "allHeadsPushed": true
+  },
+  "hostedSourceCheckpoint": {
+    "source": "26d854cddb6fbf3e538beee3a0edc032ef63ab36",
+    "states": {
+      "SUCCESS": 64,
+      "IN_PROGRESS": 2
+    }
+  }
+}
