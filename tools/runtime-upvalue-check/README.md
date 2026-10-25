@@ -10,15 +10,17 @@ The patch here is an **experimental dependency patch**, not an engine-side
 source rewriter. It applies to LuaJIT commit
 `a4c064539ea931274d407e1249b4bb575424a0f4` and raises `LJ_MAX_UPVAL` to 120.
 The recorder's own source notes a 127 limit; this is not proof that every
-architecture is safe at 120. The normal runtime/release is not replaced by
-these tools. No supplied renderer source/assets or cartridge data are included.
+architecture is safe at 120. The tools do not modify an existing installation.
+Packaging must explicitly select qualified components as described below.
+No supplied renderer source/assets or cartridge data are included.
 
 Always use a separate clean dependency checkout/build directory. On macOS the
 local experiment builds with `MACOSX_DEPLOYMENT_TARGET=11.0` and
 `make -j4 XCFLAGS=-DLUAJIT_ENABLE_LUA52COMPAT`. Its LÖVE test app is a separate
 copy with an arm64-only replacement Lua framework and ad-hoc signing. The
-original stock app and dependency checkout remain unchanged. This is not a
-universal macOS or Windows release recipe.
+original stock app and dependency checkout remain unchanged. That local
+experiment alone does not qualify Windows or a universal Mac app; the native
+matrix and component staging below cover those separate requirements.
 
 ## Reproducible qualification builds
 
@@ -143,7 +145,8 @@ cc -I/path/to/candidate/src tools/runtime-upvalue-check/c_api.c \
 These microchecks must accompany engine regressions and real GPU verification.
 A generated extension compiling/initializing is not proof that all its Pokemon
 models, movement, combat, shadows and other effects are equivalent to Gen1.
-Windows/x64, Intel macOS, architecture packaging, dependency ABI compatibility,
-bytecode interchange and broader native renderer/gameplay coverage remain
-release gates. See the source-bound runtime experiment receipt under
-`docs/qa/native-foundation/` for completed local evidence and exact limits.
+Native platform, architecture packaging and dependency ABI gates must pass
+for the selected source before packaging. They do not establish Windows GPU,
+complete native renderer/gameplay, long-session or saved-bytecode migration
+acceptance. See the source-bound runtime experiment receipt under
+`docs/qa/native-foundation/` for completed evidence and exact limits.
