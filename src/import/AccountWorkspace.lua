@@ -44,14 +44,14 @@ function W.action(self,id)
     if id=='register' and not f.policy then job(self,'policy',A.policy) end
   elseif id:match('^read:') then
     if not f.policy then job(self,'policy',A.policy);return end
-    f.document=id:sub(6);f.scroll=0
+    f.document=id:sub(6);f.scroll=0;f.padIndex=2;f.padActive=false
   elseif id:match('^toggle:') then local key=id:sub(8);f[key]=not f[key]
   elseif id=='addRepo' then f.repositories[#f.repositories+1]='';f.focus='repo'..#f.repositories;inputMode(f,f.focus)
   elseif id=='submit' then
     if f.mode=='login' then
       local email,password=f.email,f.password;job(self,'auth',function() return A.login(email,password) end);clearSecrets(f)
     elseif f.mode=='register' then
-      if not f.policy then f.notice='Load the current terms before registering.';return end
+      if not f.policy then f.notice='Load the current terms before registering.';job(self,'policy',A.policy);return end
       if not f.terms or not f.privacy or f.developer and not f.rights then f.notice='Please review and accept the required account agreements.';return end
       local repositories={};if f.developer then for _,r in ipairs(f.repositories) do if r:match('%S') then repositories[#repositories+1]=r end end end
       local payload={name=f.name,email=f.email,password=f.password,password_confirmation=f.confirmation,developer=f.developer==true,repositories=repositories,
@@ -63,6 +63,7 @@ function W.action(self,id)
       job(self,'auth',function() return A.reset(challenge,code,password,confirmation) end);clearSecrets(f)
     elseif f.challenge then local challenge,code=f.challenge,f.code;job(self,'auth',function() return A.complete(challenge,code) end);clearSecrets(f) end
   elseif id=='resend' and f.challenge then local challenge=f.challenge;job(self,'resend',function() return A.resend(challenge) end)
+  elseif id=='operator' and f.policy and f.policy.operator_url=='https://pokexpert.de/impressum' then love.system.openURL(f.policy.operator_url)
   elseif id=='devices' then job(self,'devices',A.devices)
   elseif id:match('^revoke:') then
     local device=f.devices and f.devices[tonumber(id:sub(8))]
@@ -140,7 +141,7 @@ function W.draw(self)
   end
   g.setScissor(v.x,v.y,v.width,v.height)
   if f.document then
-    local d=f.policy[f.document];if d then paragraph(d.title,true);paragraph(d.text);paragraph('Version '..f.policy.version) end
+    local d=f.policy[f.document];if d then paragraph(d.title,true);paragraph(d.text);paragraph('Version '..f.policy.version);row('OPERATOR CONTACT >','operator') end
     row('BACK','back')
   elseif f.mode=='account' then
     paragraph('Connected as '..tostring(Auth.account()),true)

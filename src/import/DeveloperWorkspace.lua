@@ -178,14 +178,14 @@ function W.install(RI)
     if k=='escape' then W.close(self)
     elseif k=='tab' then W.navigate(self,love.keyboard and love.keyboard.isDown('lshift','rshift') and -1 or 1)
     elseif f.focus then
-      if k=='backspace' then f.repository=f.repository:sub(1,-2)
+      if k=='backspace' then f.repository=f.repository:sub(1,-2);f.profile=nil
       elseif k=='return' then f.focus=false;W.action(self,'save')
-      elseif k=='v' and love.keyboard and love.keyboard.isDown('lctrl','rctrl','lgui','rgui') then f.repository=(love.system.getClipboardText() or ''):sub(1,250):gsub('[\r\n]','') end
+      elseif k=='v' and love.keyboard and love.keyboard.isDown('lctrl','rctrl','lgui','rgui') then f.repository=(love.system.getClipboardText() or ''):sub(1,250):gsub('[\r\n]','');f.profile=nil end
     elseif k=='down' then W.navigate(self,1)
     elseif k=='up' then W.navigate(self,-1)
     elseif k=='return' or k=='space' then local r=f.rects[f.padIndex or 2];if r then W.action(self,r.id) end end
   end
-  local input=RI.textinput;RI.textinput=function(self,t,...) local f=self._developerOverlay;if not f then return input(self,t,...) end;if f.focus then f.repository=(f.repository..t:gsub('[^%w%p ]','')):sub(1,250) end end
+  local input=RI.textinput;RI.textinput=function(self,t,...) local f=self._developerOverlay;if not f then return input(self,t,...) end;if f.focus then f.repository=(f.repository..t:gsub('[^%w%p ]','')):sub(1,250);f.profile=nil end end
   local touch=RI.touchpressed;RI.touchpressed=function(self,id,x,y,...)
     local f=self._developerOverlay;if not f then return touch(self,id,x,y,...) end
     if not f.touch then f.touch={id=id,x=x,y=y,startY=y} end
