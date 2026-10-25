@@ -27,6 +27,28 @@ well, including current-player replacement, stops, suspension and return to
 gameplay. The frozen player-ownership change on
 `feature/native-sound-player-lifecycle` remains separate.
 
+The unchanged reference's [clock oracle](qa/native-sound-script-wait-clocks.json)
+now qualifies ten actual-controller cases across the two profiles. With no
+audio ticks, the native polling fallback completes at logic tick **181**. One
+post-logic audio tick per logic step completes at **180**; two complete at
+**90**. One audio tick per two logic steps reaches the **181** polling fallback.
+These clocks cannot be collapsed into a single fixed delay.
+
+The native callback also latches silence: if Audio.update observes silence and
+a replacement starts before the next VM tick, the script still resumes at
+tick **2**, with the replacement sound playing. Polling only the current sound
+would miss this behavior. The implementation must preserve both the callback
+clock and native polling fallback, including that latched completion.
+
+To reproduce those source-only controller cases, run from the pinned clean
+reference checkout:
+
+```sh
+nice -n 19 /path/to/pinned/luajit \
+  /path/to/host/tools/enemy-action-contract-check/native-sound-wait-clock-oracle.lua \
+  /path/to/host
+```
+
 ```sh
 nice -n 19 python3 tools/enemy-action-contract-check/check.py \
   --gen1 /path/to/clean/reference --lua /path/to/pinned/luajit \
