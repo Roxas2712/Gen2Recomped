@@ -13588,7 +13588,7 @@ function OverworldState:onStepComplete()
     end
   end
 
-  return self:tryWildEncounter()
+  self:tryWildEncounter()
 end
 
 function OverworldState:tryWildEncounter()
