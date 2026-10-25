@@ -232,7 +232,9 @@ end
 -- the merged view when a battle is on hand, the vanilla records otherwise
 function Status.recordFor(statuses, id)
   if id == nil then return nil end
-  return (statuses or Status.RECORDS)[id]
+  local record = (statuses or Status.RECORDS)[id]
+  if not statuses then record = require("src.battle.Gen3SleepTalk").status(id, record) end
+  return record
 end
 
 local function battleStatuses(battle)
@@ -252,7 +254,8 @@ function Status.beforeMove(battler, rng, battle, move)
     battler.skipMove = nil
     return false, {}
   end
-  if battler.flinched then
+  local gba = require("src.core.GameVersion").isGen3()
+  if battler.flinched and not gba then
     battler.flinched = false
     return false, { Strings("%s\nflinched!", name(battler)) }
   end
@@ -261,14 +264,19 @@ function Status.beforeMove(battler, rng, battle, move)
   local priority = handler and (record.beforeMovePriority or 0)
   local msgs = {}
   local function runStatus()
-    local canMove, statusMsgs, selfHit = handler(battler, rng, battle)
+    local canMove, statusMsgs, selfHit, reason = handler(battler, rng, battle, move)
     for _, m in ipairs(statusMsgs or {}) do msgs[#msgs + 1] = m end
-    return canMove, selfHit
+    return canMove, selfHit, reason
   end
   if handler and priority > VOLATILE_PRIORITY then
-    local canMove, selfHit = runStatus()
-    if not canMove or selfHit then return canMove, msgs, selfHit end
+    local canMove, selfHit, reason = runStatus()
+    if not canMove or selfHit then return canMove, msgs, selfHit, reason end
     handler = nil
+  end
+  if gba and battler.flinched then
+    battler.flinched = false
+    msgs[#msgs + 1] = Strings("%s\nflinched!", name(battler))
+    return false, msgs, false, "gen3_flinch"
   end
   if battler.boundTurns and battler.boundTurns > 0 then
     battler.boundTurns = battler.boundTurns - 1
@@ -307,8 +315,8 @@ function Status.beforeMove(battler, rng, battle, move)
     end
   end
   if handler then
-    local canMove, selfHit = runStatus()
-    if not canMove or selfHit then return canMove, msgs, selfHit end
+    local canMove, selfHit, reason = runStatus()
+    if not canMove or selfHit then return canMove, msgs, selfHit, reason end
   end
   return true, msgs
 end

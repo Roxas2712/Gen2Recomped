@@ -102,6 +102,7 @@ end
 function Builtins.install(content, data)
   for _, entry in ipairs(REGISTRANTS) do
     local adapt = entry.name == "move_effects" and require("src.battle.Gen3Builtins").record or nil
+    if entry.name == "statuses" then adapt = require("src.battle.Gen3SleepTalk").status end
     local registry = content[entry.name] and isolate(content[entry.name], adapt)
     if registry then
       if entry.install then
