@@ -155,6 +155,25 @@ class CompleteRelease(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "separate SD"):
             verify_embedded(path, "switch", self.payload)
 
+    def test_notarized_publication_cannot_accept_missing_or_partial_receipts(self):
+        desktop = json.loads(self.desktop_manifest.read_text())
+        for receipt in ({}, dict(signing='ad-hoc', notarized=False),
+                        dict(signing='developer-id', notarized=True, ticketStapled=False,
+                             gatekeeperVerified=True)):
+            desktop['builds'][1]['macosDistribution'] = receipt
+            self.desktop_manifest.write_text(json.dumps(desktop))
+            with self.assertRaisesRegex(ValueError, 'notarization is required'):
+                assemble(self.inputs, self.out, self.source, self.release_id, self.version, True)
+            self.assertFalse(self.out.exists())
+
+    def test_mac_icon_bytes_are_checked_after_platform_archive_digest(self):
+        desktop = json.loads(self.desktop_manifest.read_text())
+        desktop['builds'][1]['macosDistribution'] = dict(iconSha256='a' * 64)
+        self.desktop_manifest.write_text(json.dumps(desktop))
+        with self.assertRaisesRegex(ValueError, 'expected one macOS application'):
+            self.assemble()
+        self.assertFalse(self.out.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

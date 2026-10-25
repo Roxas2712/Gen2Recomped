@@ -10,6 +10,10 @@ on:
         description: 'Engine version stamped into all packages (X.Y.Z)'
         required: true
         type: string
+      notarize_macos:
+        description: 'Require Developer ID signing and Apple notarization (configured secrets required)'
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -32,7 +36,7 @@ jobs:
   build:
     needs: [contract, runtime]
     runs-on: macos-15
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
         with:
@@ -46,6 +50,15 @@ jobs:
           path: qualified-runtime
       - name: Verify preview packaging guards
         run: python3 -m unittest discover -s tests -p test_native_preview.py -v
+      - name: Prepare private Apple signing keychain
+        if: inputs.notarize_macos || vars.NATIVE_MACOS_NOTARIZE == 'true'
+        env:
+          MACOS_CERTIFICATE_P12_BASE64: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: python3 tools/macos_distribution.py setup-ci
       - name: Package committed source with qualified extended runtimes
         env:
           RELEASE_ID: ${{ inputs.release_id }}
@@ -56,6 +69,9 @@ jobs:
           --windows-runtime-component qualified-runtime/windows/component.json
           --macos-runtime-component qualified-runtime/macos/component.json
           --out "$RUNNER_TEMP/release"
+      - name: Remove private Apple signing keychain
+        if: always() && (inputs.notarize_macos || vars.NATIVE_MACOS_NOTARIZE == 'true')
+        run: python3 tools/macos_distribution.py cleanup-ci
       - uses: actions/upload-artifact@v4
         with:
           name: native-preview-desktop
@@ -165,7 +181,15 @@ jobs:
         env:
           RELEASE_ID: ${{ inputs.release_id }}
           ENGINE_VERSION: ${{ inputs.engine_version }}
-        run: python3 tools/assemble_native_release.py --inputs release-inputs --out release --release-id "$RELEASE_ID" --engine-version "$ENGINE_VERSION"
+          REQUIRE_MACOS_NOTARIZATION: ${{ inputs.notarize_macos || vars.NATIVE_MACOS_NOTARIZE == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          options=()
+          if [[ "$REQUIRE_MACOS_NOTARIZATION" == true ]]; then
+            options+=(--require-macos-notarization)
+          fi
+          python3 tools/assemble_native_release.py --inputs release-inputs --out release --release-id "$RELEASE_ID" --engine-version "$ENGINE_VERSION" "${options[@]}"
       - name: Verify and publish a new immutable pre-release
         env:
           GH_TOKEN: ${{ github.token }}

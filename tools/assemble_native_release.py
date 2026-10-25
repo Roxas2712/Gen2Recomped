@@ -8,13 +8,13 @@ import zipfile
 from pathlib import Path
 
 from package_native_port import digest, verify_embedded
-from build_native_preview import verify_payload
+from build_native_preview import verify_payload, verify_mac_archive
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_PLATFORMS = ("windows", "macos", "ios", "android", "switch")
 
 
-def assemble(inputs, out, source, release_id, engine_version):
+def assemble(inputs, out, source, release_id, engine_version, require_macos_notarization=False):
     inputs, out = Path(inputs), Path(out)
     desktop = inputs / "native-preview-desktop"
     manifest = json.loads((desktop / "build-manifest.json").read_text())
@@ -49,6 +49,16 @@ def assemble(inputs, out, source, release_id, engine_version):
         if digest(package) != build["archiveSha256"]:
             raise ValueError("archive checksum mismatch: " + platform)
         verify_embedded(package, platform, payload)
+        if platform == 'macos':
+            distribution = build.get('macosDistribution', {})
+            if require_macos_notarization and (distribution.get('signing') != 'developer-id' or
+                    any(distribution.get(key) is not True for key in
+                        ('notarized', 'ticketStapled', 'gatekeeperVerified'))):
+                raise ValueError('verified macOS notarization is required for publication')
+            if distribution:
+                if not distribution.get('iconSha256'):
+                    raise ValueError('macOS application icon receipt missing')
+                verify_mac_archive(package, distribution['iconSha256'])
         packages.append(package)
     # Validate every platform before writing a publishable output directory.
     out.mkdir(parents=True, exist_ok=False)
@@ -83,9 +93,11 @@ def main():
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--release-id", required=True)
     parser.add_argument("--engine-version", required=True)
+    parser.add_argument("--require-macos-notarization", action="store_true")
     args = parser.parse_args()
     source = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
-    print(json.dumps(assemble(args.inputs, args.out, source, args.release_id, args.engine_version), indent=2))
+    print(json.dumps(assemble(args.inputs, args.out, source, args.release_id, args.engine_version,
+                              args.require_macos_notarization), indent=2))
 
 
 if __name__ == "__main__":

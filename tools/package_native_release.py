@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -30,7 +31,13 @@ def main():
                         help='optional qualified Windows component.json')
     parser.add_argument('--macos-runtime-component', type=Path,
                         help='optional qualified universal Mac component.json')
+    parser.add_argument('--macos-signing-identity', default=os.environ.get('MACOS_SIGNING_IDENTITY'))
+    parser.add_argument('--macos-notary-profile', default=os.environ.get('MACOS_NOTARY_PROFILE'))
+    parser.add_argument('--macos-signing-keychain', type=Path,
+                        default=os.environ.get('MACOS_SIGNING_KEYCHAIN'))
     args = parser.parse_args()
+    if bool(args.macos_signing_identity) != bool(args.macos_notary_profile) or (args.macos_signing_keychain and not args.macos_signing_identity):
+        parser.error('Developer ID identity and notary profile must be supplied together')
     if not re.fullmatch(r'[0-9]{8}\.[0-9]+', args.release_id):
         parser.error('release-id must be YYYYMMDD.N')
     if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', args.engine_version):
@@ -61,6 +68,11 @@ def main():
                             '--engine-version', args.engine_version, '--out', str(package)]
             if components[platform]:
                 command.extend(['--qualified-runtime', str(components[platform].resolve())])
+            if platform == 'macos' and args.macos_signing_identity:
+                command.extend(['--macos-signing-identity', args.macos_signing_identity,
+                                '--macos-notary-profile', args.macos_notary_profile])
+                if args.macos_signing_keychain:
+                    command.extend(['--macos-signing-keychain', str(args.macos_signing_keychain.resolve())])
             subprocess.run(command, cwd=ROOT, check=True)
             metadata = json.loads((package / 'build.json').read_text())
             if metadata['sourceCommit'] != source or metadata['runtimeCommit'] != RUNTIME_COMMIT:
@@ -94,6 +106,12 @@ def main():
     if all(components.values()):
         mac = next(row for row in builds if row['platform'] == 'macos')
         runtime_notes += 'The qualified Mac package requires macOS ' + mac['qualifiedRuntime']['minimumMacOS'] + ' or newer.\n'
+    mac = next(row for row in builds if row['platform'] == 'macos')
+    mac_notes = ('The macOS app is Developer ID signed, accepted by Apple notarization,\n'
+                 'and carries a validated stapled ticket; Gatekeeper assessment passed.\n'
+                 if mac['macosDistribution']['notarized'] else
+                 'The macOS app is ad-hoc signed, without Apple notarization.\n'
+                 'Downloaded copies may require a per-app approval in macOS Privacy & Security.\n')
     notes = f'''RetroRecomped Preview {args.release_id} · engine {args.engine_version} / mod API 3
 
 Intermediate pre-release from main, source commit: {source}
@@ -109,8 +127,7 @@ Downloads:
 - macOS ZIP: extract and open the preview app; Metal/OpenGL launchers included.
 - .love: identical engine payload, requires the pinned LOVE 12 runtime.
 Both ZIPs use official LOVE 12 revision {RUNTIME_COMMIT} as their base.
-The macOS app is ad-hoc signed, without Apple notarization.
-
+{mac_notes}
 Import your own supported ROMs and save files. No ROMs, extracted game caches,
 user saves, account credentials or mod packages are included. This preview
 uses a separate Gen2Recomp-NativePreview-{args.release_id.replace('.', '-')} profile;
