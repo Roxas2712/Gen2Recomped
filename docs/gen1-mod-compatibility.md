@@ -47,6 +47,11 @@ catalog and requires byte equality, then runs the identical consumer on both
 engines. There are 34,127 checks per engine across FireRed, LeafGreen, Emerald,
 Ruby and Sapphire. The independent native binding suite adds 10,824 checks,
 including stale records, duplicate slots, same-object aliases and invalid IDs.
+The five-edition comparison requires the host's LeafGreen/Ruby/Sapphire
+cartridge support (PRs #183/#186/#187). On a host with FireRed and Emerald
+only, pass `--edition firered --edition emerald`; that consumer performs
+14,766 checks per engine. The detached binding suite covers all five catalogs
+on either host and does not activate an unavailable cartridge.
 
 Optional `--native-cache /path/to/own-qa-imports --native-edition firered
 --native-edition emerald` checks existing QA-only native imports without any

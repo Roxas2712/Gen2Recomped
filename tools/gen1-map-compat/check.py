@@ -18,6 +18,8 @@ def main():
     p.add_argument('--gen1', type=Path, required=True)
     p.add_argument('--gen2', type=Path, default=Path(__file__).resolve().parents[2])
     p.add_argument('--lua', default='luajit')
+    p.add_argument('--edition', action='append', choices=['firered', 'leafgreen', 'emerald', 'ruby', 'sapphire'],
+                   help='Host editions to compare (default: all five; requires their cartridge support)')
     p.add_argument('--native-cache', type=Path, help='Optional QA-only cache root with edition/data/generated/maps.lua')
     p.add_argument('--native-edition', action='append', choices=['firered', 'leafgreen', 'emerald', 'ruby', 'sapphire'],
                    help='Native cache editions to check (default: all five)')
@@ -32,13 +34,14 @@ def main():
     names = (gen2 / 'src/compat/gen1/MapNames.lua').read_text()
     if names.split('\n', 2)[2] != generated:
         raise RuntimeError('committed names differ from original public Gen1 catalog')
-    command = [a.lua, str(folder / 'consumer.lua'), str(gen2)]
+    editions = a.edition or ['firered', 'leafgreen', 'emerald', 'ruby', 'sapphire']
+    command = [a.lua, str(folder / 'consumer.lua'), str(gen2), ','.join(editions)]
     expected, actual = run(command, gen1), run(command, gen2)
     if expected != actual:
         raise RuntimeError('old map catalog consumer differs between engines')
     checks = {line.split('\t')[0]: int(line.split('\t')[2])
               for line in actual.splitlines() if '\tchecks\t' in line}
-    assert len(checks) == 5
+    assert len(checks) == len(set(editions))
     native = []
     if a.native_cache:
         for edition in a.native_edition or checks:

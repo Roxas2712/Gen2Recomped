@@ -19,7 +19,11 @@ for _, edition in ipairs({ "firered", "leafgreen", "emerald", "ruby", "sapphire"
     T.eq(key, nativeKeys[row[3]], "original name reaches actual native record")
     T.eq(def, maps[key], "definition is borrowed with its exact identity")
     T.eq(binding:legacyId(key), row[3], "native name returns original name")
-    T.eq(Catalog.resolve(row[4]), row[3], "original mod import resolves pret alias")
+    if Version.get() == edition then
+      T.eq(Catalog.resolve(row[4]), row[3], "original mod import resolves pret alias")
+    else
+      T.eq(Catalog.isKnown(row[3]), false, "unavailable host edition has no active catalog")
+    end
     T.eq(def.id, key, "native id was never rewritten")
   end
   local first = Names[edition][1]
