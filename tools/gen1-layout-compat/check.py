@@ -25,19 +25,23 @@ def main():
     if git('rev-parse', 'HEAD') != PIN or git('status', '--porcelain'):
         p.error('Gen1 must be clean at ' + PIN)
     folder = gen2 / 'tools/gen1-layout-compat'
-    command = [a.lua, str(folder / 'worker.lua'), str(gen2)]
-    original, native = run(command, gen1), run(command, gen2)
-    if original != native:
-        raise RuntimeError('decoded-layout consumer differs between engines')
-    checks = int(native.splitlines()[0])
-    assert checks >= 245
+    contracts = {}
+    for label, script, minimum in [('decoded-layout', 'worker.lua', 245), ('connections', 'connections.lua', 12160)]:
+        command = [a.lua, str(folder / script), str(gen2)]
+        original, native = run(command, gen1), run(command, gen2)
+        if original != native:
+            raise RuntimeError(label + ' consumer differs between engines')
+        checks = int(native.splitlines()[0])
+        assert checks >= minimum
+        contracts[label] = dict(checksPerHost=checks, consumerSha256=hashlib.sha256(native.encode()).hexdigest())
     if git('status', '--porcelain'):
         raise RuntimeError('reference changed during check')
     paths = [gen2 / 'src/core/game3/layout_native.lua',
+             gen2 / 'src/core/game3/connections.lua',
              gen2 / 'tests/engine/gen1_layout_native.lua', gen2 / 'tests/gba_layout/consumer.lua',
-             folder / 'worker.lua', folder / 'check.py']
-    report = dict(gen1Commit=PIN, checksPerHost=checks,
-                  consumerSha256=hashlib.sha256(native.encode()).hexdigest(),
+             gen2 / 'tests/engine/gen1_connections.lua', gen2 / 'tests/gba_layout/connections.lua',
+             folder / 'worker.lua', folder / 'connections.lua', folder / 'check.py']
+    report = dict(gen1Commit=PIN, contracts=contracts,
                   sourceSha256={str(path.relative_to(gen2)): hashlib.sha256(path.read_bytes()).hexdigest()
                                 for path in paths},
                   nativeGridBridged=False, collisionOrSaveChanges=False,
@@ -45,7 +49,7 @@ def main():
     if a.report:
         a.report.parent.mkdir(parents=True, exist_ok=True)
         a.report.write_text(json.dumps(report, indent=2) + '\n')
-    print('PASS', checks, 'unchanged decoded-layout checks per engine')
+    print('PASS', sum(row['checksPerHost'] for row in contracts.values()), 'unchanged layout/connection checks per engine')
 
 
 if __name__ == '__main__':

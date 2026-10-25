@@ -1,4 +1,4 @@
--- Gen1Recomp's decoded 16px layout contract. These are mod-owned layouts,
+-- Legacy decoded 16px layout contract. These are mod-owned layouts,
 -- not aliases to the shared native Map or its two-bit collision grid.
 -- coll here is the old classified COLL_* byte; it is not raw GBA collision.
 local Layout = {}
