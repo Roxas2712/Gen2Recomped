@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import time
 
 GEN1_REF = "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91"
 
@@ -105,8 +106,12 @@ def main():
                        str(host), backend, version, str(api), mode]
                 # This matrix executes thousands of complete scripts per worker.
                 # Retain a real failure on timeout, including partial raw output.
-                timeout = 180 if mode == "post_hit_items_execution" else 60
+                # These exhaustive matrices resolve thousands of complete scripts.
+                # Keep a bounded three-minute budget for their native work,
+                # including low-priority local runs, rather than a 60s cutoff.
+                timeout = 180 if mode in {"post_hit_items_execution", "assist", "assist_content", "assist_held"} else 60
                 timed_out = None
+                started = time.monotonic()
                 try:
                     run = subprocess.run(cmd, cwd=root, text=True, capture_output=True, timeout=timeout)
                 except subprocess.TimeoutExpired as error:
@@ -117,6 +122,7 @@ def main():
                                  "stderr_hex": error.stderr.hex() if isinstance(error.stderr, bytes) else None}
                     run = subprocess.CompletedProcess(cmd, 124, captured(error.stdout),
                                                       captured(error.stderr) + "\nWorker timed out and was terminated.\n")
+                elapsed = time.monotonic() - started
                 rows = [json.loads(line.removeprefix("ENEMY_ACTION_OBSERVATIONS "))
                         for line in run.stdout.splitlines() if line.startswith("ENEMY_ACTION_OBSERVATIONS ")]
                 # The native VM catches task errors and wait caps internally.
@@ -125,7 +131,8 @@ def main():
                                if line.startswith("[battle.anim]")]
                 report["runs"].append({"backend": backend, "version": version, "api": api, "mode": mode,
                                        "exit": run.returncode, "stdout": run.stdout, "stderr": run.stderr,
-                                       "timeout": timed_out, "native_vm_diagnostics": diagnostics})
+                                       "timeout": timed_out, "wall_seconds": round(elapsed, 4),
+                                       "native_vm_diagnostics": diagnostics})
                 if run.returncode or len(rows) != 1 or diagnostics:
                     failed = True
                 else:
