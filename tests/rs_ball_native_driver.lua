@@ -21,7 +21,9 @@ return function(game)
  local Battle=require('src.battle.BattleState');local Pokemon=require('src.pokemon.Pokemon');local cases={}
  for _,gender in ipairs{'boy','girl'}do
   game.save.player.gender=gender
-  local mon=Pokemon.new(game.data,'BULBASAUR',20);mon.moves={{id='GROWL',pp=40}};mon.ball='ULTRA_BALL';game.save.party={mon}
+  local mon=Pokemon.new(game.data,'BULBASAUR',20)
+  -- Explicit non-shiny fixture: this test asserts the base 39-frame path.
+  mon.personality=0;mon.otId=0x1000;mon.shiny=false;mon.moves={{id='GROWL',pp=40}};mon.ball='ULTRA_BALL';game.save.party={mon}
   local b=Battle.newTrainer(game,trainer,1);game.stack:push(b);local seen={};local list={};local views={}
   observe=function()
    local ball=b.gen3Ball
