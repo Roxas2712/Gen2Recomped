@@ -1,0 +1,14 @@
+{
+  "checks": 49,
+  "romFree": true,
+  "actualExtractorWriteBoundary": true,
+  "newGpuAcceptance": false,
+  "playerProfilesUsed": false,
+  "fullCompatibility": false,
+  "sourceSha256": {
+    "src/import/RomExtractorGen3.lua": "f2d8d269a06ef3afec1a4f20792df6b891c1f28c2ece714db948bdf7ef87482d",
+    "src/import/RomImporter.lua": "f40548cb82b4a838e5d8551d859a296bf08bc936ba05f5e69483d8f40cde1e1a",
+    "src/render/Gen3Tiles.lua": "2215a2d4963600cf2443d921467731772e4b9ee29965a513057154c6bbde7e7d",
+    "tests/engine/gen3_source_attributes.lua": "cdb728a211dc52b2948772e77915a9212b405106a792b0f87034f2754cb5bfd8"
+  }
+}
