@@ -137,6 +137,9 @@ function View.install(Screen, images)
     if trainer then love.graphics.draw(image, x, y, 0, scale, scale); return end
     local screen = self
     local capture = setmetatable({
+      -- This isolated window owns the clip below. The native effect drawer's
+      -- rear-side window would erase a front capture of the SAME player.
+      wideRegion = true,
       battlerPic = function() return image end,
       -- Sprite extraction must stay a sprite even with native Stadium enabled.
       drawStadiumBattlerPic = function() return false end,
@@ -149,7 +152,15 @@ function View.install(Screen, images)
         g.pop(); if not ok then error(err, 0) end
       end,
     }, { __index = self })
-    capture:drawBattlerPic(b, x, y, scale)
+    local g = love.graphics
+    g.push("all")
+    if g.intersectScissor then
+      g.intersectScissor(back and 16 or 96, back and 48 or 0,
+        back and 48 or 56, back and 48 or 56)
+    end
+    local ok, err = pcall(capture.drawBattlerPic, capture, b, x, y, scale)
+    g.pop()
+    if not ok then error(err, 0) end
   end
 end
 

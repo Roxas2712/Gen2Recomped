@@ -87,6 +87,17 @@ do
   T.eq(#draws,1,'real native faint sink can still draw its remaining rows')
   b.fx.faint.frames=0;draws={};b:drawPic(player.mon,false)
   T.eq(#draws,0,'completed native faint stays hidden')
+  player.fainted=nil;b.fx=nil;pf.kind='shakeBF'
+  local intersect,get=love.graphics.intersectScissor,love.graphics.getScissor
+  local clips={}
+  love.graphics.intersectScissor=function(...)clips[#clips+1]={...}end
+  love.graphics.getScissor=function()end
+  b:drawPic(player.mon,false)
+  T.check(#clips>0,'effect capture has an actual bounded picture window')
+  for _,clip in ipairs(clips)do
+    T.check(clip[1]>=96,'front player effect is never clipped by native rear-side window')
+  end
+  love.graphics.intersectScissor,love.graphics.getScissor=intersect,get
   love.graphics.draw=draw
 end
 for _, version in ipairs({'red','firered','emerald'}) do
