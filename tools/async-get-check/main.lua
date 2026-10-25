@@ -100,19 +100,31 @@ function love.run()
     local fileJob = assert(Fetch.download(base..'/stream', target, {size=262144}))
     check(love.timer.getTime()-started < .1, 'file transfer starts without waiting for server')
     local observedProgress = false
+    local pattern = {}; for i=0,255 do pattern[#pattern+1] = string.char(i) end
+    pattern = table.concat(pattern)
+    local completeFile = pattern:rep(1024)
     while true do
       local before = love.timer.getTime()
       state = fileApi:poll(fileJob)
       check(love.timer.getTime()-before < .1, 'file poll never waits on HTTP')
       if state.status ~= 'pending' then break end
-      preserved('in-flight file does not overwrite previous complete file')
+      -- Publication can finish after poll returns pending. Bracket the read
+      -- with a fresh control snapshot: only an unclaimed transfer still
+      -- promises the old file. At every phase the bytes must be one complete
+      -- version, never an in-place/partial overwrite.
+      local contents = love.filesystem.read(target)
+      local boundary = fileApi:poll(fileJob)
+      check(contents == 'previous complete file' or contents == completeFile,
+        'concurrent publication exposes only a complete old or new file')
+      if boundary.status == 'pending' and boundary.cancellable then
+        check(contents == 'previous complete file',
+          'unclaimed transfer preserves previous complete file')
+      end
       if state.receivedBytes > 0 and state.receivedBytes < 262144 then observedProgress = true end
       pulses = pulses + 1; love.timer.sleep(.005)
     end
     check(state.status == 'ok' and state.receivedBytes == 262144, 'streamed file completes: '..tostring(state.err))
     check(observedProgress, 'progress available before transfer finishes')
-    local pattern = {}; for i=0,255 do pattern[#pattern+1] = string.char(i) end
-    pattern = table.concat(pattern)
     check(love.filesystem.read(target) == pattern:rep(1024), 'streaming preserves all binary bytes')
     Fetch.release(fileJob)
     for _, case in ipairs({

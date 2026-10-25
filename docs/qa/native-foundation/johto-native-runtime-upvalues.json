@@ -1,0 +1,190 @@
+{
+  "status": "experimental qualification; not distributed",
+  "scope": "Higher-upvalue LuaJIT dependency allows an unchanged supplied Gen2 renderer extension to compile and initialize in owned Crystal GPU tests",
+  "luaJitSource": "a4c064539ea931274d407e1249b4bb575424a0f4",
+  "patch": "tools/runtime-upvalue-check/luajit-upvalues.patch",
+  "patchSha256": "022b346f64aa620a04c0ccfee616088b747e340ac3ac3485680a7eb30e9652dd",
+  "capacity": {
+    "stock": 60,
+    "experimental": 120
+  },
+  "build": {
+    "platform": "macOS arm64",
+    "MACOSX_DEPLOYMENT_TARGET": "11.0",
+    "flags": "-DLUAJIT_ENABLE_LUA52COMPAT",
+    "candidateLibrarySha256": "d30fa0c327754e1de28a92ba4e65fe3f60427dfefc8c591a58398a32f2d83cdd",
+    "originalLoveLuaSha256": "d99eed38c9752775028ed88b7b23285cd3b1abea4154a41b06fb2ace9c0a3edc",
+    "originalLoveUnchanged": true,
+    "separateSignedQaApp": true,
+    "baseLoveCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+    "stockBundledLuaJitVersion": "2.1.1781602682"
+  },
+  "compileOnly": {
+    "generatedBytes": 161419,
+    "stock": false,
+    "experimental": true,
+    "moduleExecuted": false
+  },
+  "closureChecks": [
+    {
+      "variant": "stock",
+      "checks": 160250,
+      "minimum": 60,
+      "cases": [
+        {
+          "upvalues": 1,
+          "compiles": true,
+          "jit": true,
+          "interpreter": true
+        },
+        {
+          "upvalues": 8,
+          "compiles": true,
+          "jit": true,
+          "interpreter": true
+        },
+        {
+          "upvalues": 32,
+          "compiles": true,
+          "jit": true,
+          "interpreter": true
+        },
+        {
+          "upvalues": 60,
+          "compiles": true,
+          "jit": true,
+          "interpreter": true
+        },
+        {
+          "upvalues": 61,
+          "compiles": false
+        },
+        {
+          "upvalues": 64,
+          "compiles": false
+        },
+        {
+          "upvalues": 96,
+          "compiles": false
+        },
+        {
+          "upvalues": 120,
+          "compiles": false
+        }
+      ],
+      "logSha256": "28a59fb5dcc323eabc5264bdc831427a733365f1894b9dc0e6db42b37a7b1cbd"
+    },
+    {
+      "variant": "extended",
+      "checks": 320964,
+      "minimum": 120,
+      "cases": [
+        {
+          "jit": true,
+          "upvalues": 1,
+          "compiles": true,
+          "interpreter": true
+        },
+        {
+          "jit": true,
+          "upvalues": 8,
+          "compiles": true,
+          "interpreter": true
+        },
+        {
+          "jit": true,
+          "upvalues": 32,
+          "compiles": true,
+          "interpreter": true
+        },
+        {
+          "jit": true,
+          "upvalues": 60,
+          "compiles": true,
+          "interpreter": true
+        },
+        {
+          "jit": true,
+          "upvalues": 61,
+          "compiles": true,
+          "interpreter": true
+        },
+        {
+          "jit": true,
+          "upvalues": 64,
+          "compiles": true,
+          "interpreter": true
+        },
+        {
+          "jit": true,
+          "upvalues": 96,
+          "compiles": true,
+          "interpreter": true
+        },
+        {
+          "jit": true,
+          "upvalues": 120,
+          "compiles": true,
+          "interpreter": true
+        }
+      ],
+      "logSha256": "baca1c129315e49184b69f020b15a441d1d7c2220f260c313c73f7730733ca72"
+    }
+  ],
+  "cApi": {
+    "captures": [
+      60,
+      61,
+      64,
+      96,
+      120
+    ],
+    "callsPerCount": 10000,
+    "passed": true
+  },
+  "engineQuick": {
+    "source": "6fc36bab7b3abb44db2dc97e743c9753fb146cfb",
+    "engineSuites": 343,
+    "sdkSuites": 3,
+    "allQuickTiersPassed": true,
+    "logSha256": "a009b7651c67f40387f5df17a8d36f686d3fc9f36c596f6dba173213776883e8"
+  },
+  "gpu": [
+    {
+      "backend": "OpenGL",
+      "engineSource": "aa669f69136d1db579937e767a2ff63beb755ad1",
+      "checks": 16,
+      "cameras": [
+        "first",
+        "third"
+      ],
+      "rendererExtensionInstalled": true,
+      "ownedWindowProofs": 2,
+      "unchangedModFiles": 27329,
+      "resultSha256": "74c3d1495f0fb690bf5ea8b81045b0f099dcba5f199d6f67ab2003244f915b1a",
+      "verificationSha256": "9f74b72918b4e9d16add6704d8ca9b0322b21ef005f4de35a2eddd61c844a8c8"
+    },
+    {
+      "backend": "Metal",
+      "engineSource": "aa669f69136d1db579937e767a2ff63beb755ad1",
+      "checks": 16,
+      "cameras": [
+        "first",
+        "third"
+      ],
+      "rendererExtensionInstalled": true,
+      "ownedWindowProofs": 2,
+      "unchangedModFiles": 27329,
+      "resultSha256": "d3056fff2acecb0ec70c9c7bbe884c438f92c38758c00fc169b77653b6aa83bc",
+      "verificationSha256": "c9dd571f1a3702ca4a104a33d42a9b8d42dc9acba17e164d902d9db01eb42926"
+    }
+  ],
+  "initialProbeCorrection": "A debug.setupvalue check first omitted the stock LuaJIT trace flush required before changing a constant captured value. The corrected probe explicitly flushes, retaining interpreter/JIT, GC, shared captures and bytecode checks; it does not disable JIT for large closures.",
+  "limits": [
+    "Compiler and GPU checks are separate: GPU uses a copied LOVE12 app with a new arm64 Lua library",
+    "No Windows or Intel macOS/universal framework/packaging acceptance yet",
+    "No complete Pokemon model, all effects, battles, movement or all-story parity claim",
+    "Stock release unchanged; installing the source PR does not replace its Lua runtime",
+    "No private mod source/assets, generated renderer source, ROM data, screenshots or saves published"
+  ]
+}

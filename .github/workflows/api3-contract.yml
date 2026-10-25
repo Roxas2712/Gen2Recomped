@@ -29,10 +29,12 @@ jobs:
       - uses: actions/checkout@v7
         with:
           path: gen2
+          # Headless dataset imports also load the launcher's cue sheet.
           sparse-checkout: |
             src
             data
             tests
+            assets/launcher
             tools/api3-contract-check
             tools/flag-catalog-check
       - uses: actions/checkout@v7
