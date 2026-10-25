@@ -10,6 +10,10 @@ end
 function F.new(game)
   local file=assert(io.open("tools/rom_manifest_"..game..".json","rb"))
   local manifest=Json.decode(file:read("*a"));file:close()
+  -- This synthetic cartridge contains palette programs, not the independent
+  -- retail terrain-flag table. Its source-byte/hash contract is tested by
+  -- gen3_source_flags and the real-cartridge integration host.
+  manifest.metatileBehaviorFlags=nil
   local chunks={}
   local out={manifest=manifest,frames={},initializers={},sets={}}
   local function put(at,bytes) chunks[at]=bytes end
