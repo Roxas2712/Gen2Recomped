@@ -79,7 +79,7 @@ def main():
   work=Path(temp);source=work/'source';source.mkdir()
   paths=['main.lua','conf.lua','src','assets','data','tools','scripts/pack_love.sh','scripts/switch/verify_payload.sh','scripts/macos-entitlements.plist']
   root_files=subprocess.check_output(['git','ls-tree','--name-only',ref],cwd=ROOT,text=True).splitlines()
-  licenses=[name for name in root_files if name.lower()in ('license','license.md')]
+  licenses=[name for name in root_files if name.lower()in ('license','license.md','license-roxas2712.md','notice.md')]
   if not licenses:raise ValueError('source revision has no license')
   paths.extend(licenses)
   archive=subprocess.check_output(['git','archive',ref,*paths],cwd=ROOT)
