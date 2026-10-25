@@ -137,9 +137,23 @@ function ModCompat.install()
   if installed then return false end
   local loaders = package.loaders or package.searchers
   if type(loaders) ~= "table" then return false end
-  loaders[#loaders + 1] = function(name)
+  local searcher
+  searcher = function(name)
     local missing = Compatibility.unavailable(name)
-    if missing then return function() error(missing, 0) end end
+    if missing then
+      -- A later host/plugin provider still outranks an unsupported descriptor.
+      local following = false
+      for _, candidate in ipairs(loaders) do
+        if candidate == searcher then following = true
+        elseif following then
+          local provider, origin = candidate(name)
+          if type(provider) == "function" then return provider, origin end
+        end
+      end
+      -- Raise before require installs its in-progress sentinel. Retrying the
+      -- import must retain the diagnostic instead of reporting a fake loop.
+      error(missing, 0)
+    end
     if not ModCompat.ALIASES[name] then
       -- the standard "not found" contract: a string the require error joins
       return "\n\tno mod-compat alias for '" .. tostring(name) .. "'"
@@ -153,6 +167,7 @@ function ModCompat.install()
       return value
     end
   end
+  loaders[#loaders + 1] = searcher
   installed = true
   return true
 end
