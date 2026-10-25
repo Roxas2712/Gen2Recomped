@@ -14,7 +14,11 @@ function P.tick()
   if P.job then P.job:cancel() end
   P.account=account;P.job=nil;P.profile=nil;P.next=0
  end
- if not account or not Auth.signedIn() then return end
+ if not account or not Auth.signedIn() then
+  if P.job then P.job:cancel();P.job=nil end
+  P.profile=nil
+  return
+ end
  if P.job then
   local result=P.job:poll()
   if result then
@@ -27,6 +31,6 @@ function P.tick()
  end
 end
 function P.read()
- return P.account==Auth.accountId() and P.profile or nil
+ return Auth.signedIn() and P.account==Auth.accountId() and P.profile or nil
 end
 return P

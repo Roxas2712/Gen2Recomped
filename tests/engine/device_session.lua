@@ -17,8 +17,14 @@ status=nil;body=nil
 check(not R.open() and R.signedIn(),'being offline does not remove the stored login')
 status=503;body='{}'
 check(not R.open() and R.signedIn(),'service downtime keeps the same device credentials')
+package.loaded['src.core.SaveData']={persistenceFs=function() return fs end}
+local policy=require('src.storage.AccountStorage');policy.enable()
+files[policy.FILE]=S.encode({schema=1,accountId='17'})
 status=401;body='{}'
-check(not R.open() and not R.signedIn() and not files[R.FILE],'server revocation removes the invalid device credential')
+check(not R.open() and not R.signedIn() and not R.accessToken(),'server revocation removes online access')
+check(R.accountId()=='17' and not files[R.FILE]:find(token,1,true),'revocation keeps the local account namespace while removing its token')
+R=fresh();check(not R.signedIn() and R.accountId()=='17','a restart after revocation still preserves offline save ownership')
+check(policy.scope()=='17' and policy.saveCheck(),'the running save policy keeps the same account scope after remote revocation')
 assert(R.acceptConnection({access_token=token,expires_in=3600,email='fixture@example.test',account_id='17'}))
 local newer=string.rep('b',64)
 assert(R.acceptConnection({access_token=newer,expires_in=3600,email='second@example.test',account_id='18'}))

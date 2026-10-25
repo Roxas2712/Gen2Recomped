@@ -3,13 +3,17 @@ local Http=require('src.cloud.Http')
 local Json=require('src.link.Json')
 local Serializer=require('src.core.SaveSerializer')
 local R={FILE='cloud_retro.lua',API='https://pokexpert.de/api/cloud/v1'}
+local revoked={}
 local function load()
   if not (love and love.filesystem and love.filesystem.read) then return nil end
   local bytes=love.filesystem.read(R.FILE)
   if not bytes then return nil end
   local ok,value=pcall(Serializer.decode,bytes)
-  if ok and type(value)=='table' and type(value.access)=='string'
-    and value.access:match('^[a-f0-9]+$') and #value.access==64 then return value end
+  if ok and type(value)=='table' then
+    local token=type(value.access)=='string' and value.access:match('^[a-f0-9]+$') and #value.access==64
+    local identity=value.revoked==true and type(value.accountId)=='string' and #value.accountId<=20 and value.accountId:match('^[1-9][0-9]*$')
+    if token or identity then return value end
+  end
 end
 local function request(method,path,body,token,headers)
   headers=headers or {}
@@ -29,7 +33,7 @@ local function save(value)
 end
 -- Device credentials survive restarts and offline periods. Only the service
 -- can revoke them; the old expiry field is retained for older builds.
-function R.signedIn() return load()~=nil end
+function R.signedIn() local value=load();return value~=nil and value.access~=nil and not value.revoked and not revoked[value.access] end
 function R.account() local value=load();return value and value.email end
 function R.accountId() local value=load();return value and value.accountId end
 function R.nickname() local value=load();return value and (value.name or value.email) end
@@ -54,7 +58,7 @@ function R.acceptConnection(doc)
 end
 function R.accessToken()
   local value=load()
-  if value then return value.access end
+  if value and value.access and not value.revoked and not revoked[value.access] then return value.access end
   return nil,'Connect this device to your ModCompass account in Cloud saves.'
 end
 function R.begin()
@@ -83,15 +87,24 @@ end
 function R.cancel() end
 function R.expire(expected)
   local current=load()
-  if not expected or current and current.access==expected then love.filesystem.remove(R.FILE) end
+  if not current or expected and current.access~=expected then return end
+  if current.access then revoked[current.access]=true end
+  -- Revoking online access must not change a running game's save namespace.
+  -- Only explicit sign-out forgets the local account profile as well.
+  if current.accountId then
+    current.access=nil;current.expires=nil;current.revoked=true
+    return save(current)
+  end
+  return love.filesystem.remove(R.FILE)
 end
 function R.signOut()
   local value=load()
-  if value then
+  if value and value.access then
     local status=request('POST','/logout',{},value.access)
     if status~=200 and status~=401 then error('Cloud sign-out unavailable. Please try again when online.',0) end
   end
-  if value then R.expire(value.access) end
+  local current=load()
+  if value and current and current.accountId==value.accountId and (current.access==value.access or current.revoked) then love.filesystem.remove(R.FILE) end
 end
 
 function R.open()

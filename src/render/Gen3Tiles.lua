@@ -187,6 +187,22 @@ function Gen3Tiles:attributes(metatile)
   return word % 256, math.floor(word / 4096) % 16
 end
 
+-- Original cartridge behavior, distinct from attributes()' native numbering.
+-- Old normalized-only records cannot prove this value and must not guess it.
+function Gen3Tiles:sourceBehavior(metatile)
+  if type(metatile) ~= "number" or metatile < 0 or metatile % 1 ~= 0 then return nil end
+  if metatile >= self.metatilesInPrimary and not self.secondary then return nil end
+  local record, index = self:metatileBank(metatile)
+  local stride = record and record.sourceAttributeBytes
+  local mask = record and record.sourceBehaviorMask
+  if (stride ~= 2 and stride ~= 4) or type(mask) ~= "number"
+      or (mask ~= 255 and mask ~= 511) then return nil end
+  local data = stride == 4 and record.sourceAttributes or record.attributes
+  local base = index * stride
+  if type(data) ~= "string" or base + stride > #data then return nil end
+  return (byte(data, base + 1) + byte(data, base + 2) * 256) % (mask + 1)
+end
+
 -- Draw one metatile's layer into `plot(x, y, r, g, b)` at (ox, oy).  Layer 1
 -- is what the player walks in front of and layer 2 what they walk behind, so
 -- the caller draws them either side of the sprites rather than flattening the
@@ -313,6 +329,34 @@ function Gen3Tiles:setAnimFrame(f)
     end
   end
   self.tileCache = {}
+end
+
+-- Observe independent VRAM animation clocks without pre-baking a combined
+-- cycle. A projection can keep fixed atlas slots even when animation periods
+-- have a large LCM. Only changed tile decodes are invalidated; native shared
+-- bank bytes and the renderer's legacy frame-selection API stay untouched.
+function Gen3Tiles:setAnimationTicks(ticks)
+  assert(type(ticks) == "number" and ticks >= 0 and ticks % 1 == 0
+    and ticks <= 9007199254740991, "invalid terrain animation ticks")
+  local nextOverrides = {}
+  for _, a in ipairs(self:animations()) do
+    local frame = a.frames[(math.floor(ticks / math.max(1, a.step)) % #a.frames) + 1]
+    if type(frame) == "string" then
+      for k = 0, a.count - 1 do
+        local at = k * 32
+        if at + 32 <= #frame then nextOverrides[a.tile + k] = frame:sub(at + 1, at + 32) end
+      end
+    end
+  end
+  local previous, dirty = self.tileOverride or {}, {}
+  for tile, bytes in pairs(nextOverrides) do
+    if previous[tile] ~= bytes then dirty[tile] = true; self.tileCache[tile] = nil end
+  end
+  for tile in pairs(previous) do
+    if nextOverrides[tile] == nil then dirty[tile] = true; self.tileCache[tile] = nil end
+  end
+  self.tileOverride, self.animationTicks = nextOverrides, ticks
+  return dirty
 end
 
 -- Which metatiles change when the frame does -- the only ones a sheet has to

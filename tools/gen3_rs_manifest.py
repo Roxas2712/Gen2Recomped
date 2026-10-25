@@ -13,6 +13,7 @@ import struct
 import subprocess
 from gen3_sibling_manifest import Symbols
 import gen3_discover as discover
+from gen3_source_flags import source_metadata
 
 
 def rs_field_window(pret, at):
@@ -106,11 +107,13 @@ def main():
     emrom=args.emerald_rom.read_bytes()
     emerald=Symbols(args.emerald_elf,emrom)
     records={}
-    def at(name):
+    def symbol_offset(name):
         rows=target.by_name.get(name,[])
         offsets={r['at'] for r in rows}
         assert len(offsets)==1,(name,rows)
-        value=offsets.pop();records[name]=value;return value
+        return offsets.pop()
+    def at(name):
+        value=symbol_offset(name);records[name]=value;return value
     f=discover.discover(discover.Rom(rom))
     base=json.loads((Path(__file__).parent/'rom_manifest_emerald.json').read_text())
     result={k:copy.deepcopy(base[k]) for k in ('format','generation','romBase','charmap','layout')}
@@ -152,6 +155,7 @@ def main():
     # WindowTemplate is not an Emerald/FRLG battle-window scan anchor.
     result['rsFieldMessageWindow']=rs_field_window(args.pret,at)
     result['rsItemMenu']=rs_item_menu(args.pret,target,at)
+    result['metatileBehaviorFlags']=source_metadata(edition,rom,(args.pret/'src/metatile_behavior.c').read_bytes(),symbol_offset('sTileBitAttributes'))
     # Speech contents are recovered from the cartridge by the native importer.
     for row in ((result.get('introSprites') or {}).get('birch') or {}).get('speech',[]):
         row.pop('text',None)
