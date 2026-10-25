@@ -25,7 +25,7 @@ ROMs or player saves are included in this repository or its releases.
 | Persistent Gen2 world and menu ownership | 33 ownership and 29 readiness checks; actual V/F6 input and upright menus on OpenGL/Metal | [draft #204](https://github.com/UNDERdecoded/Gen2Recomped/pull/204) |
 | Portable scripts and world actions on persistent worlds | 5,290 composed script checks and 2,778 action checks; independent existing branches also pass | Existing [#98](https://github.com/UNDERdecoded/Gen2Recomped/pull/98), [#94](https://github.com/UNDERdecoded/Gen2Recomped/pull/94) updated |
 
-The current full ROM-free quick suite passes: 258 engine suites, three SDK suites and
+The current full ROM-free quick suite passes: 259 engine suites, three SDK suites and
 B30. Its native clock fixture was updated for the additional startup method;
 the existing independent logic-speed PR retains all 407 passing assertions.
 These checks do not establish complete gameplay, all maps or Windows GPU
@@ -437,6 +437,45 @@ fork branches at this checkpoint.
 
 See the [source-bound count/import/phone receipt](qa/native-foundation/johto-native-count-phase.json).
 
+## Development: retire earlier landing phases
+
+Source `f5f275b27c758e19c19e65c4ff3ce56a4d9e6c5a` prevents native
+idle/script-end coordinate polling from running backwards after CountStep or an
+encounter query has already consumed that physical visit. This matters when a
+phone script changes the saved scene without moving the player: the newly
+eligible coordinate program belongs to a later landing, not the just-finished
+call. A completed nonmatching encounter roll also retires earlier phases;
+calling the public count API afterwards cannot advance counters late.
+
+The new native-VM/phone/counter/real-encounter suite passes 153 checks. Against
+preceding independent #204 source `ba87267e`, 36 of the same 153 checks fail.
+Current independent #204 head `e602ea72` passes these and all seven existing
+focused count/coordinate/warp/trainer/state/input/menu suites, plus 33 world/overlay
+ownership checks. Physical movement,
+actual save-codec context replacement and eligible retries before a later phase
+owns the visit remain valid. The composed quick suite passes 259 engine suites,
+three SDK suites and B30; all 63 hosted code checks pass on the exact source.
+
+The current isolated OpenGL build, with QA VSync disabled, also passes actual
+Crystal New Game/stairs/exit, the imported bike-shop phone text and cleanup,
+and native menu input. The unchanged supplied mod passes home traversal,
+entry scene/exit and First/Third selection, plus eight normal Mart/Center door
+transitions in both selected modes. Ten fresh owned-window proofs accompany
+these runs. These remain native grid-movement regressions; continuous camera
+movement and the full generated renderer are not installed. The current Windows
+and macOS packages share the verified source payload; Windows hardware and
+current default/Metal presentation remain open.
+
+Fork main and upstream main both remain `13af468b`; the working branch includes
+that base. All own open upstream PR heads match pushed branches at the recorded
+audit. The existing published preview stays `ae8359c0`.
+
+The next concrete encounter work is native `wildoff`/`wildon` (currently VM
+no-ops), cave-ice exclusion and the protection interval after battle/warp.
+These are open behaviors, not covered by the new landing-phase guarantees.
+
+See the [source-bound retirement receipt](qa/native-foundation/johto-native-landing-retirement.json).
+
 ## Open acceptance and concrete failures
 
 - Persistent world ownership is implemented and enables actual camera/menu
@@ -450,6 +489,9 @@ See the [source-bound count/import/phone receipt](qa/native-foundation/johto-nat
   `function ... has more than 60 upvalues`. Its exported
   `rendererInstalled` is false even while the fallback voxel pipeline renders.
   This must not be reported as a complete renderer install.
+- The current Third Person Center capture still includes the previously
+  recorded black-and-white foreground object. Its cause and full scene
+  rendering remain unaccepted.
 - The first voxel-character frame reports missing sprite bounds. Later frames
   render; the initial failure and its fallback remain recorded.
 - Gen2 PC/mail/box interfaces, follower spawning, battle HP presentation,
