@@ -101,10 +101,13 @@ Unbadged controlled inputs are compared here. Full badge/obedience/controller
 orchestration, arbitrary imported catalogs and playthrough/graphics parity are
 not established by these calculator tests. The real-link fixture must explicitly
 select its GBA profile: the generic link helper creates a Red save with Gen1
-options. A separate fresh-save probe reproduces this for
-`SaveData.newGame({version = "firered"})` and Emerald: the actual constructed
-battle still selects `gen1_faithful`. Native defaults need a separate fix;
-these calculator/link tests explicitly exercise the GBA profile.
+options. On this isolated command stack, a fresh-save probe reproduces
+`gen1_faithful` for `SaveData.newGame({version = "firered"})` and Emerald.
+The existing [#162 automatic-default fix](https://github.com/UNDERdecoded/Gen2Recomped/pull/162)
+already resolves this and is integrated in the combined fork: the same probe
+there selects `gen3_emerald` for both games. Its 926-check regression suite
+also passes, including preservation of explicit selections. No duplicate
+defaults fix is needed. These calculator/link fixtures explicitly select GBA.
 
 Historical held-item workflows using a modified reference are not proof against
 unchanged Gen1. The new damage comparison pins the clean reference above.
