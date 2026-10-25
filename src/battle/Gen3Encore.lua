@@ -77,12 +77,7 @@ function E.plan(user, action)
   end
   -- The planner changes move priority now, while retaining the chosen target
   -- and slot descriptor. Execution later binds PP to the actual Encore slot.
-  local out = {}
-  for key, value in pairs(action) do
-    out[key] = value
-  end
-  out.id, out.pp = forced.id, action.pp
-  return out
+  return require("src.battle.EnemyMoveChoice").withMove(action, forced.id)
 end
 function E.targets(battle, user, move, chosen)
   local Targeting, Abilities = require("src.battle.Targeting"), require("src.battle.Abilities")

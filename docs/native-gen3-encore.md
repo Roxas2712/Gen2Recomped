@@ -15,6 +15,8 @@ recomputing its target with native bounded draws and redirection. Execution
 spends the actual learned slot's PP, preserves called-move PP rules and emits
 the actual move through public events. Forced FIGHT returns a native move
 instance rather than an unrecognized nested descriptor.
+`battle.turn_started` retains the original declared action. A planned action
+also retains its PP binding if Encore is cleared before execution.
 
 Actual residual processing cancels Encore on expiry, depleted PP or a changed
 original slot. It does not transfer through Baton Pass. Link state components
@@ -42,7 +44,7 @@ The reference's `expEncore*` fields and numeric move IDs are mapped explicitly
 to the host's native fields and fixture registry IDs. Failed/raw reports remain
 under `tmp/encore-qa/`; the checker never edits source code or filters calls.
 
-The two public-choice/planning cases start with the same explicit prepared
+The public-choice/planning cases start with the same explicit prepared
 Quick Claw word. The combined fork's C-validated native AI-order controller
 prepares that word earlier than Gen1's standalone command; the original failed
 comparison retains that extra `0..65535` call. This is an input-state boundary,

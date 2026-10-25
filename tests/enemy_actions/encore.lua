@@ -389,38 +389,51 @@ function M.run(root, backend, version)
     end
   end
   for _, uid in ipairs({ 1, 3 }) do
-    draws, events = {}, {}
-    local b = fresh(true, 3)
-    last(at(b, uid), 33)
-    cast(b, 0, uid, 2)
-    -- This contract starts at the prepared selection boundary. The combined
-    -- fork owns an earlier cartridge-faithful Quick Claw word; Gen1's standalone
-    -- command does not prepare it. Give both engines the same explicit input.
-    b.randomTurnNumber, b._nativeOrderReady = 65535, true
-    f.e.choose(function()
-      return { move = "SCRATCH", slot = 3, target = 2 }
-    end)
-    if source then
-      local action = require("src.core.game3.battle.commands").enemyAction(b, uid)
-      T.eq(action.move, 10, "public mod supplies the requested alternative before native planning")
-      local Engine = require("src.core.game3.battle.engine")
-      local ad = require("src.core.game3.battle.adapter").new(b)
-      for _, row in ipairs(Engine.planTurnActions(b, ad, { [uid] = action })) do
-        if row.kind == "move" then
-          Engine.resolveMove(row.user, row.target, row.move, row.slot, ad, b, {})
+    for _, state in ipairs({ "active", "cleared_after_planning" }) do
+      draws, events = {}, {}
+      local b = fresh(true, 3)
+      last(at(b, uid), 33)
+      cast(b, 0, uid, 2)
+      -- This contract starts at the prepared selection boundary. The combined
+      -- fork owns an earlier cartridge-faithful Quick Claw word; Gen1's standalone
+      -- command does not prepare it. Give both engines the same explicit input.
+      b.randomTurnNumber, b._nativeOrderReady = 65535, true
+      local function cancel()
+        if state == "cleared_after_planning" then
+          local actor = at(b, uid)
+          actor[source and "expEncoreTurns" or "encoreTurns"] = nil
+          actor[source and "expEncoreMove" or "encoreMove"] = nil
+          actor[source and "expEncoreSlot" or "encoreSlot"] = nil
         end
       end
-    else
-      local action = b:enemyAction(at(b, uid))
-      T.eq(action.id, f.ids.SCRATCH, "public mod supplies the requested alternative before native planning")
-      action = require("src.battle.Gen3Encore").plan(at(b, uid), action)
-      b:executeAction(at(b, uid), at(b, 0), action)
+      f.e.choose(function()
+        return { move = "SCRATCH", slot = 3, target = 2 }
+      end)
+      if source then
+        local action = require("src.core.game3.battle.commands").enemyAction(b, uid)
+        T.eq(action.move, 10, "public mod supplies the requested alternative before native planning")
+        local Engine = require("src.core.game3.battle.engine")
+        local ad = require("src.core.game3.battle.adapter").new(b)
+        local planned = Engine.planTurnActions(b, ad, { [uid] = action })
+        cancel()
+        for _, row in ipairs(planned) do
+          if row.kind == "move" then
+            Engine.resolveMove(row.user, row.target, row.move, row.slot, ad, b, {})
+          end
+        end
+      else
+        local action = b:enemyAction(at(b, uid))
+        T.eq(action.id, f.ids.SCRATCH, "public mod supplies the requested alternative before native planning")
+        action = require("src.battle.Gen3Encore").plan(at(b, uid), action)
+        cancel()
+        b:executeAction(at(b, uid), at(b, 0), action)
+      end
+      f.e.choose(nil)
+      T.eq(events[#events].move, "TACKLE", "native planning enforces Encore after the public choice")
+      T.eq(events[#events].target, "P2", "early Encore planning retains the explicitly chosen target")
+      record(b, "planned_public/" .. state .. "/" .. uid, uid, 0)
+      rows[#rows].preparedTurnWord = b.randomTurnNumber
     end
-    f.e.choose(nil)
-    T.eq(events[#events].move, "TACKLE", "native planning enforces Encore after the public choice")
-    T.eq(events[#events].target, "P2", "early Encore planning retains the explicitly chosen target")
-    record(b, "planned_public/" .. uid, uid, 0)
-    rows[#rows].preparedTurnWord = b.randomTurnNumber
   end
   noCrit()
   stop()

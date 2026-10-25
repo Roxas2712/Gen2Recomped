@@ -5557,6 +5557,7 @@ function BattleState:resolveTurn(playerAction)
     end
   end
   self._nativeOrderSelectionTurn = nil
+  local selectedPlayerAction, selectedEnemyAction = playerAction, enemyAction
   if GameVersion.isGen3() then
     local Encore = require("src.battle.Gen3Encore")
     playerAction, enemyAction = Encore.plan(self.player, playerAction), Encore.plan(self.enemy, enemyAction)
@@ -5579,7 +5580,7 @@ function BattleState:resolveTurn(playerAction)
   end
   Runtime.emit("battle.turn_started", {
     battle = self, turn = self.turnCount,
-    playerAction = playerAction, enemyAction = enemyAction,
+    playerAction = selectedPlayerAction, enemyAction = selectedEnemyAction,
   })
   local pMove = orderMove(playerAction, self.data)
   local eMove = orderMove(enemyAction, self.data)

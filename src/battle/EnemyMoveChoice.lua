@@ -82,6 +82,15 @@ end
 function M.slot(action)
   return slots[action] or action
 end
+function M.withMove(action, id)
+  local copy = shallow(action)
+  copy.id = id
+  if nativeViews[action] then
+    nativeViews[copy] = shallow(nativeViews[action])
+  end
+  publicReferences[copy] = publicReferences[action]
+  return bind(copy, M.slot(action))
+end
 function M.exhausted(action)
   return slots[action] ~= nil and action.pp <= 0
 end
