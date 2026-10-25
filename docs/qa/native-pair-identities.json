@@ -47,5 +47,14 @@
     "tools/pair-identities/assemble.py": "b1021f75c47ec99ce9b9e818603de6b59e6523ee5ffb5026c1adfa3d75fffd79",
     "tools/pair-identities/rom-host/main.lua": "2ffedb7347d22a6ccfd1d2d4e83d14c7f009ef1ecc144b65d3ac10d8d3863de8",
     "tools/pair-identities/rom-host/conf.lua": "a969e23fed727643e0fa3d571df52a4c45b754cd31d39d74e45022ed296c7c13"
+  },
+  "composedRegression": {
+    "commit": "f9f956032bf05c0beb620168f5743fcbf558478c",
+    "engineSuitesPassed": 329,
+    "engineSuitesTotal": 329,
+    "sdkSuitesPassed": 3,
+    "sdkSuitesTotal": 3,
+    "dramaticShapeB30": "pass",
+    "fullCompatibility": false
   }
 }

@@ -74,3 +74,7 @@ The helper is an internal atlas-identity prerequisite. Native texture leases,
 animated palette revisions and the full older atlas API remain to be connected.
 It is not installed as a replacement field or tileset runtime. Full unchanged
 Origami execution and overall feature parity remain open.
+
+The frozen composed source at `f9f95603` passes 329/329 engine suites,
+SDK 3/3 and Dramatic Shape B30. These results include the existing Gen2
+regression suites; they are not a full visual or story-parity certification.
