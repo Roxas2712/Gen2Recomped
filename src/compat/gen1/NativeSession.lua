@@ -2,9 +2,11 @@
 local Version = require('src.core.GameVersion')
 local M = {}
 function M.game(game)
+  local explicit = game ~= nil
   local facade = package.loaded['src.core.Game3']
   if type(facade) == 'table' and type(facade.native) == 'function' then
     game = facade.native(game)
+    if explicit and game == nil then return nil, 'native Game3 facade retired' end
   end
   game = game or package.loaded['src.core.Game']
   local info = Version.info(Version.get())

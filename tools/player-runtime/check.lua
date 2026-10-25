@@ -115,4 +115,11 @@ for _,edition in ipairs({'gold','silver','crystal'})do
   f.world:stepBody(false);T.eq(calls,0,edition..' keeps its native player phase')
   P.update=base;P.release()
 end
+-- An explicitly retired facade must never resolve to the currently loaded Game.
+local previousFacade=package.loaded['src.core.Game3'];local retired={}
+package.loaded['src.core.Game3']={native=function(value)if value~=retired then return value end end}
+require('src.core.GameVersion').set('firered')
+T.eq(Session.game(retired),nil,'explicit retired owner cannot fall through to the current native Game')
+T.eq(Session.game(package.loaded['src.core.Game']),package.loaded['src.core.Game'])
+package.loaded['src.core.Game3']=previousFacade
 T.finish('native compatibility player runtime')
