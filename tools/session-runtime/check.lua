@@ -9,6 +9,7 @@ local NativeRuntime=require('src.mods.Runtime')
 T.eq(package.loaded['src.core.Game'],nil,'queries never bootstrap the native Game')
 T.eq(R.isActive(),false);T.eq(R.getSession(),nil);T.eq(R.defer(function()end),false)
 T.eq(R.update(),nil);T.eq(R.drainDeferred(),0)
+T.eq(G.new(),nil,'a source constructor cannot silently share another live game')
 local F=require('tools.session-runtime.fixture')
 local Touch=require('src.core.TouchControls');local poll=Touch.pollTouches;Touch.pollTouches=function()end
 local baseUpdate,baseFixed,baseRuntime,baseReset,baseDraw=G.update,G.fixedUpdate,R.update,G.reset,G.draw
