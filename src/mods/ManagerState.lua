@@ -7,6 +7,8 @@
 local Font = require("src.render.Font")
 local Runtime = require("src.mods.Runtime")
 local ModImports = require("src.mods.ModImports")
+local ModTargets = require("src.mods.ModTargets")
+local GameVersion = require("src.core.GameVersion")
 local Semver = require("src.mods.Semver")
 local Version = require("src.core.Version")
 local Theme = require("src.ui.Theme")
@@ -14,6 +16,7 @@ local OptionRows = require("src.ui.OptionRows")
 local Strings = require("src.core.Strings")
 local ModProfile = require("src.mods.ModProfile")
 local LoadOrder = require("src.mods.LoadOrder")
+local Merge = require("src.mods.Merge")
 
 local ManagerState = {}
 ManagerState.__index = ManagerState
@@ -220,7 +223,7 @@ function ManagerState:refresh()
     self.bootOrder = LoadOrder.normalize(loader and loader.requestedOrder
       or self:optionsTable().modOrder)
   end
-  self.restartPending = #self:stagedList() > 0 or self:orderChanged()
+  self.restartPending = #self:stagedList() > 0 or self:orderChanged() or self.targetsChanged == true
   -- a live set that drifted off the named profile reverts to ad-hoc
   local opts = self:optionsTable()
   if opts.activeProfile then
@@ -270,6 +273,7 @@ end
 function ManagerState:glyphFor(m)
   if self:isStaged(m) then return GLYPH.staged end
   if not m.enabled then return GLYPH.disabled end
+  if m.skipReason then return GLYPH.disabled end
   if m.state == "blocked_dependency" then return GLYPH.blocked end
   if m.error then return GLYPH.errored end
   return " "
@@ -390,6 +394,29 @@ function ManagerState:detailRows(m)
   local rows = {}
   rows[#rows + 1] = { label = m.enabled and "DISABLE" or "ENABLE",
     action = function() self:beginToggle(m) end }
+  local version = GameVersion.get()
+  if m.games then
+    for _, line in ipairs(wrap("FOR " .. ModTargets.label(m):upper(), 16)) do
+      rows[#rows + 1] = { label = line, inert = true }
+    end
+    if not ModTargets.supports(m, version) then
+      local forced = ModTargets.forced(self:optionsTable(), m.id, version)
+      rows[#rows + 1] = { label = forced and "STOP FORCING HERE" or "TRY HERE ANYWAY",
+        action = function()
+          local options = self:optionsTable()
+          if not self.bootGameOverrides then
+            self.bootGameOverrides = Merge.deepCopy(options.modsGames or {})
+          end
+          ModTargets.setForced(options, m.id, version, not forced)
+          self.targetsChanged = true
+          self:persistOptions()
+          self:refresh()
+        end }
+    end
+  end
+  if m.skipReason then
+    for _, line in ipairs(wrap(m.skipReason, 16)) do rows[#rows + 1] = { label = line, inert = true } end
+  end
   -- a mod with no options_schema still gets an OPTIONS screen when it
   -- declares a required import, because that is where its IMPORT row lives
   if self:schemaFor(m) or ModImports.of(m) then
@@ -874,7 +901,8 @@ function ManagerState:discardChanges()
   local loader = self.game.mods
   local opts = self:optionsTable()
   opts.modOrder = LoadOrder.normalize(self.bootOrder)
-  self:persistOptions()
+  if self.bootGameOverrides then opts.modsGames = Merge.deepCopy(self.bootGameOverrides) end
+  self.targetsChanged = false
   for _, m in ipairs(self:stagedList()) do
     local en = bootEnabled(m)
     if loader and loader.setEnabled then loader:setEnabled(m.id, en) end
@@ -882,6 +910,7 @@ function ManagerState:discardChanges()
     opts.mods[m.id] = en
   end
   if loader and loader.status then self.game.modStatus = loader:status() end
+  self:persistOptions()
   self:refresh()
   self:notify("CHANGES DISCARDED")
 end
@@ -1421,6 +1450,10 @@ function ManagerState:drawApply()
     Font.draw(Strings("LOAD ORDER CHANGED"), 16, y * 8)
     y = y + 1
   end
+  if self.targetsChanged then
+    Font.draw("GAME TARGET CHANGED", 16, y * 8)
+    y = y + 1
+  end
   local shown = math.min(#staged, 7)
   for i = 1, shown do
     local m = staged[i]
@@ -1428,7 +1461,7 @@ function ManagerState:drawApply()
     drawTruncated(verb .. (m.name or m.id), 16, y * 8, 17)
     y = y + 1
   end
-  if #staged == 0 and not self:orderChanged() then
+  if #staged == 0 and not self:orderChanged() and not self.targetsChanged then
     Font.draw(Runtime.safeMode and "SAFE MODE" or Strings("NO CHANGES"), 16, y * 8)
     y = y + 1
   end
