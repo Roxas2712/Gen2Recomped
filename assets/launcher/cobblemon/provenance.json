@@ -47,6 +47,46 @@
       "file": "LICENSE",
       "source": "https://gitlab.com/cable-mc/cobblemon-assets/-/blob/c22016bfb1263a762c91762997e9dca198d574df/LICENSE",
       "sha256": "fb8e971d1895863ec9fc5f3cfc526c64af980bd6c93d0a1615c7969df46a6660"
+    },
+    {
+      "file": "haunter_alpha.png",
+      "source": "https://gitlab.com/cable-mc/cobblemon-assets/-/blob/c22016bfb1263a762c91762997e9dca198d574df/blockbench/pokemon/gen1/0093_haunter/haunter_alpha.png",
+      "sha256": "6afc10bc594f0bfca1d45b195a9d99e87424917ba845d61ccbc7b4dad786a234"
+    },
+    {
+      "file": "sudowoodo_male.bbmodel",
+      "source": "https://gitlab.com/cable-mc/cobblemon-assets/-/blob/c22016bfb1263a762c91762997e9dca198d574df/blockbench/pokemon/gen2/0185_sudowoodo/sudowoodo_male.bbmodel",
+      "sha256": "78df8a0f97e3b31e6f1aaa48e7a210b50d3802007d85a46f8ef253f3b577526f"
+    },
+    {
+      "file": "sudowoodo_male.geo.json",
+      "source": "https://gitlab.com/cable-mc/cobblemon-assets/-/blob/c22016bfb1263a762c91762997e9dca198d574df/blockbench/pokemon/gen2/0185_sudowoodo/sudowoodo_male.geo.json",
+      "sha256": "429a8163d6e238403b38aa111d9da1c6e289457e3189b0859e543f9d52cac81c"
+    },
+    {
+      "file": "sudowoodo.animation.json",
+      "source": "https://gitlab.com/cable-mc/cobblemon-assets/-/blob/c22016bfb1263a762c91762997e9dca198d574df/blockbench/pokemon/gen2/0185_sudowoodo/sudowoodo.animation.json",
+      "sha256": "9661a0d3bc417f5bf59d73ce8e9a8563ab6d551b8914ddda3af9e2b3725f8c48"
+    },
+    {
+      "file": "sudowoodo.png",
+      "source": "https://gitlab.com/cable-mc/cobblemon-assets/-/blob/c22016bfb1263a762c91762997e9dca198d574df/blockbench/pokemon/gen2/0185_sudowoodo/sudowoodo.png",
+      "sha256": "1da7f3ce0460008f18c3dad3ea71275427e66615fccb0c109d3de875bc020f7b"
+    },
+    {
+      "file": "haunter.LICENSE",
+      "source": "https://gitlab.com/cable-mc/cobblemon-assets/-/blob/c22016bfb1263a762c91762997e9dca198d574df/blockbench/pokemon/gen1/0093_haunter/LICENSE",
+      "sha256": "fb8e971d1895863ec9fc5f3cfc526c64af980bd6c93d0a1615c7969df46a6660"
+    },
+    {
+      "file": "delibird.LICENSE",
+      "source": "https://gitlab.com/cable-mc/cobblemon-assets/-/blob/c22016bfb1263a762c91762997e9dca198d574df/blockbench/pokemon/gen2/0225_delibird/LICENSE",
+      "sha256": "fb8e971d1895863ec9fc5f3cfc526c64af980bd6c93d0a1615c7969df46a6660"
+    },
+    {
+      "file": "sudowoodo.LICENSE",
+      "source": "https://gitlab.com/cable-mc/cobblemon-assets/-/blob/c22016bfb1263a762c91762997e9dca198d574df/blockbench/pokemon/gen2/0185_sudowoodo/LICENSE",
+      "sha256": "fb8e971d1895863ec9fc5f3cfc526c64af980bd6c93d0a1615c7969df46a6660"
     }
   ]
 }

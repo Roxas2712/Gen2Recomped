@@ -25,6 +25,13 @@ for _,kind in ipairs({'spring','summer','autumn','winter'}) do
   end
 end
 check(Seasons.resolve('lightning',10)=='lightning','plain lightning remains selectable')
+local winterEntry=Seasons.pose('winter',.5,720,420,1)
+local winterStop=Seasons.pose('winter',2.6,720,420,1)
+check(winterEntry.x<winterStop.x and winterEntry.bodyRotation<winterStop.bodyRotation,
+  'winter slides into position and straightens before reaching for the sack')
+check(Seasons.pose('winter',3.79,720,420,1).logoAlpha==0 and Seasons.pose('winter',4.2,720,420,1).logoAlpha>0,
+  'the winter logo stays in the sack until the throwing cue')
+check(Seasons.pose('summer',5,720,420,1).alpha==0,'summer uses sparks without the removed dragon')
 check(Seasons.resolve('obsolete',12)=='winter','unknown saved themes fall back to the calendar')
 check(Score.closing[1].at==Score.catch and Score.closing[3].at==Score.place,
   'first and final cadence attacks are the catch and placement cues')

@@ -36,7 +36,7 @@ function Library.preview(self,version,x,y,w,h)
   if B.current()~=version and B.current()~='video' then return false end
   local g=love.graphics
   g.push('all')
-  local ok,drew=pcall(B.draw,w,h,{x=x,y=y,w=w,h=h})
+  local ok,drew=pcall(B.draw,w,h,{x=x+w*.42,y=y,w=w*.58,h=h,fit='cover'})
   if ok and drew then
     if g.intersectScissor then g.intersectScissor(x,y,w,h) else g.setScissor(x,y,w,h) end
     -- Leave the live picture visible on the right, with stable contrast for

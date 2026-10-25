@@ -8717,8 +8717,9 @@ RomImporter.SETTINGS_ROWS = {
       if ok and S and S.setVolumeLevel then pcall(S.setVolumeLevel, v) end
     end },
   { id = "colors", label = "GB / GBC COLOR PALETTE",
-    values = { "gbc", "sgb", "dmg", "classic" },
-    labels = { gbc = "GBC", sgb = "SGB", dmg = "DMG", classic = "CLASSIC" } },
+    values = { "redpp", "ogred", "gbc", "og", "og_inv", "gbc_inv", "classic" },
+    labels = { redpp = "ADVANCED · PER-SPECIES COLORS", ogred = "ORIGINAL GBC", gbc = "SUPER GAME BOY",
+      og = "GRAYSCALE", og_inv = "GRAYSCALE INVERTED", gbc_inv = "SGB INVERTED", classic = "CLASSIC GREEN" } },
   { id = "gbcfx", label = "GB / GBC COLOR EFFECTS",
     values = { false, true }, labels = { [false] = "OFF", [true] = "ON" } },
   { id = "gbcColorCorrection", label = "GBC COLOR (GEN 2)",

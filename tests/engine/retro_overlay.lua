@@ -17,6 +17,8 @@ local game={save={player={}},stack={states={world}},overworld=world,
  input={reset=function() reset=reset+1 end},writeSave=function() writes=writes+1;return not failure end,
  returnToLauncher=function() returned=returned+1 end}
 check(not O.update(game),'closed menu never pauses gameplay')
+check(O.key(game,'escape') and O.game==game,'Escape opens the quick menu without an OS function-key shortcut')
+O.key(game,'escape');reset=0
 check(O.key(game,'f1') and O.game==game and reset==2,'F1 opens the menu and clears held touch and keyboard inputs')
 check(O.update(game),'open menu pauses game logic')
 O.action('save');check(writes==1 and O.notice:find('normal save slot',1,true),'ordinary saving writes the current registered slot')
@@ -48,5 +50,11 @@ O.action('options');O.action('option:1:-1')
 check(game.changed==-1 and #O.actions()==1,'all settings reuse native option descriptors including mod-provided rows')
 local count=writes;O.action('unknown');check(writes==count,'unknown menu actions cannot unexpectedly write a progress save')
 O.action('home');O.action('saves');check(O.page=='saves' and O.actions()[1].id=='save','the large saves entry leads to the dedicated save and cloud menu')
+local stencil,depth,mask=0,0,0
+love.graphics.setStencilTest=function() stencil=stencil+1 end
+love.graphics.setDepthMode=function() depth=depth+1 end
+love.graphics.setColorMask=function(r,g,b,a) assert(r and g and b and a);mask=mask+1 end
+O.draw(game);O.close();O.draw(game)
+check(stencil==2 and depth==2 and mask==2,'both menu and closed handle clear inherited depth, stencil and color masks')
 O.clear()
 print('Retro overlay: '..n..' checks passed')

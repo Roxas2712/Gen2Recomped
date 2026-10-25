@@ -2,8 +2,9 @@
 from pathlib import Path
 import json
 ROOT=Path(__file__).resolve().parents[1]/'assets/launcher/cobblemon'
-for name in ['haunter','delibird']:
- raw=json.loads((ROOT/(name+'.bbmodel')).read_text())
+for name in ['haunter','delibird','sudowoodo']:
+ source=name+'_male' if name=='sudowoodo' else name
+ raw=json.loads((ROOT/(source+'.bbmodel')).read_text())
  groups={g['uuid']:g for g in raw['groups']};elements={e['uuid']:e for e in raw['elements']};bones=[]
  def walk(rows,parent=None):
   for row in rows:

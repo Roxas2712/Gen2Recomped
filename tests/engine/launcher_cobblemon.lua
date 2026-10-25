@@ -6,7 +6,7 @@ local Json=require('src.link.Json')
 local n=0;local function check(v,m) assert(v,m);n=n+1 end
 local base='assets/launcher/cobblemon/'
 local function read(path) local f=assert(io.open(path,'rb'));local b=f:read('*a');f:close();return b end
-for _,name in ipairs({'haunter','delibird'}) do
+for _,name in ipairs({'haunter','delibird','sudowoodo'}) do
   local model=assert(Json.decode(read(base..name..'.launcher.json')))
   check(model.source=='Cobblemon Assets' and model.license=='CC-BY-NC-3.0','derived mesh retains its third-party attribution')
   for i,bone in ipairs(model.bones) do
@@ -30,5 +30,5 @@ local model={width=16,height=16,idle={},bones={{name='torso',pivot={0,0,0},rotat
 local v=C.geometry(model,'haunter',0,{action=0})
 check(v[1][2]<v[3][2] and v[1][3]==0 and v[1][4]==0 and v[3][3]==.5 and v[3][4]==.5,
   'front face maps texture top-left to model top-left without a rotated face')
-check(C.draw('spring',0,{x=0,y=0,alpha=1},1)==false,'unavailable models use the existing seasonal fallback')
+check(C.draw('summer',0,{x=0,y=0,alpha=1},1)==false,'summer has no invented mascot')
 print('Cobblemon launcher geometry: '..n..' checks passed')
