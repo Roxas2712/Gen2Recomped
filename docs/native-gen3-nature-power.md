@@ -1,6 +1,6 @@
 # Native GBA Nature Power caller
 
-Development checkpoint stacked on #248. Gen1 is an unchanged, read-only
+Tested contribution stacked on #248. Gen1 is an unchanged, read-only
 reference at `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`.
 
 ## Implemented contract
@@ -73,10 +73,41 @@ is CPU-only constructed-battle acceptance with the intro skipped, not a graphics
 or complete-playthrough result.
 
 The first full feature/combined batches were explicitly interrupted after the
-new nested-history failure was proven; partial raw logs and interruption records
-are retained. They are not final acceptance. Full engine regression, final
-combined-fork gates and broader public-content overrides remain pending. This checkpoint is not yet a published pull request or a new
-stable combined testing snapshot. No ROMs, caches, normal saves or mod assets
+nested-history failure was proven. Partial raw logs and interruption records
+are retained separately from final acceptance.
+
+## Final acceptance
+
+Feature `0536521ea23e41af8c206961a266db96f5ff6eb1` passes **153/162** engine
+suites, SDK **3/3** and B30. The exact Counter of **25 inherited FAIL lines in
+nine suites** equals fresh unchanged #248 (`1ea0f875`, **149/158**).
+Combined `0ed0602be9019102a06f4df3ee22480bca1d800f` passes **271/271**, SDK
+**3/3**, all quick tiers and B30, with zero FAIL lines.
+
+Each runtime passes **172 workers / 122,012 identical paired enemy/action
+rows**, plus **2,040 held-command** and **6,912 ordinary-damage rows**:
+**180 workers / 130,964** selected paired observations. Every accepted worker
+exits zero; there is no accepted timeout or filtered observation. The native,
+public-content and chained Nature Power matrices each contribute 6,048 rows.
+
+All four held-item formats pass strict scheduling (**40 workers / 1,914 rows**).
+Charge contracts pass four formats (**64 workers / 1,020 rows**), preserving
+the feature prerequisite's explicit legacy enemy-PP policy; the combined fork
+requires raw native policy through existing #162. Existing imported Sleep Talk
+and post-hit scenarios pass alongside the 160 new Nature Power scenarios.
+Independent protocol audit, AST-verified formatting, actionlint and whitespace
+checks pass. Later publication edits preserve these runtime, test and tool trees.
+
+Source-bound summaries and raw-report digests are in
+[the QA receipt](qa/native-gen3-nature-power.json).
+
+## Remaining scope
+
+Additional special callers/catalogs/controllers, broad public-effect overrides,
+Ruby/Sapphire-specific qualification, native text-resource/pixel parity and
+unchanged full-mod/complete graphical playthrough acceptance remain open.
+No claim of complete battle or mod portability is made by this contribution.
+No ROMs, caches, normal saves or mod assets
 are included.
 
 ## Reproduction
@@ -87,4 +118,6 @@ Use maintained LuaJIT at `a4c064539ea931274d407e1249b4bb575424a0f4`.
 python3 tools/enemy-action-contract-check/check.py --gen1 /path/to/read-only-gen1 --lua /path/to/luajit --mode nature_power --report /tmp/nature-power-report.json
 /path/to/luajit tests/engine/gen3_nature_power.lua
 /path/to/luajit tests/engine/gen3_nature_power_link.lua
+/path/to/luajit tools/enemy-action-contract-check/imported-nature-power-smoke.lua /path/to/local-cache
+/path/to/luajit tools/enemy-action-contract-check/imported-nature-power-smoke.lua /path/to/local-cache --sleep-talk
 ```
