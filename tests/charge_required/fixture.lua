@@ -111,6 +111,13 @@ function M.new(root, backend, version, api, format, noMod, failing, consumer, pr
   local manifest = Json.decode(files["mods/" .. consumer .. "/manifest.json"])
   manifest.api, manifest.callback_format, manifest.gen2compat = api, format, api < 3 and true or nil
   files["mods/" .. consumer .. "/manifest.json"] = Json.encode(manifest)
+  -- Unsupported-game capability cases use a deliberate edition override.
+  if backend == "gen2" and not require("src.mods.ModTargets").supports(
+      require("src.mods.Manifest").validate(manifest), version) then
+    files["options.lua"] = require("src.core.SaveData").encode({
+      modsGames = { [consumer] = { [version] = true } },
+    })
+  end
   if failing then
     files["mods/" .. consumer .. "/main.lua"] = files["mods/" .. consumer .. "/main.lua"]
       .. '\nerror("intentional charge entry failure")'
