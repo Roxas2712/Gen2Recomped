@@ -37,6 +37,15 @@ with actual loader teardown. Existing field-state checks also pass (30).
 The tests use generated-data and device fixtures, not a cartridge or player
 profile. A CI contract runs both suites.
 
+The retail G/S/C town-map graphics are LZ-compressed. The importer previously
+treated them as raw 2bpp tiles, producing repeated horizontal dashes and broken
+coastlines on both regional paintings. It now decompresses them before pixel
+decoding, rejects undersized sheets, and invalidates only G/S/C import markers
+so existing bad images rebuild. Explicit hack layout overrides remain intact.
+The ROM-free pixel regression checks every pixel of both 160×144 regional
+fixtures across G/S/C (36 checks), including distinct palette nibbles and
+asymmetric tile patterns. The saturated original GBC palette is retained.
+
 This change does not add legacy action-result protocols, change field-move
 badges or party admission, or accept the unchanged package's complete flight
 cinematic. Live Crystal flight, full field-action integration and the mod's

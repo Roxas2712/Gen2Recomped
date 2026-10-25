@@ -19,3 +19,5 @@ jobs:
         run: luajit tests/engine/gen2_fly_destinations.lua
       - name: Existing native field state queries
         run: luajit tests/engine/gen2_field_state_queries.lua
+      - name: ROM-free town-map pixel import regression
+        run: luajit tests/engine/gen2_town_map_pixels.lua
