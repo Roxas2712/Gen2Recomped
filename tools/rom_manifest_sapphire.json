@@ -881,6 +881,33 @@
       "height": 64
     }
   },
+  "rsFieldMessageWindow": {
+    "kind": "rs-field-code",
+    "left": 2,
+    "top": 15,
+    "width": 26,
+    "height": 4,
+    "source": "ROM:PrintFieldMessage 0064BF8 / PrintFieldMessageFromStringVar4 0064C30; matching RS field printer and dialogue-frame code",
+    "evidence": {
+      "symbols": {
+        "PrintFieldMessage": 412664,
+        "PrintFieldMessageFromStringVar4": 412720,
+        "TextWindow_DrawDialogueFrame": 414516,
+        "gMenuTextWindowTemplate": 1993844
+      },
+      "sourceSHA256": {
+        "src/field_message_box.c": "dd4fce31e8a7dfe89a0317147eba3f98b0cdc0205d63aae56eabfcc5158adede",
+        "src/text_window.c": "dae570ea8ca874a5b567e149da3911f3324b0243e5d1bf51bdec22cb6284fc52"
+      },
+      "frame": {
+        "left": 0,
+        "top": 14,
+        "width": 26,
+        "height": 4
+      },
+      "printerCallCount": 2
+    }
+  },
   "font": {
     "bits": 4,
     "glyphBytes": 64,
@@ -2031,6 +2058,10 @@
       "gItemEffect_PersimBerry": 2084190,
       "gItemEffect_LumBerry": 2084196,
       "gItemEffect_SitrusBerry": 2084202,
+      "PrintFieldMessage": 412664,
+      "PrintFieldMessageFromStringVar4": 412720,
+      "TextWindow_DrawDialogueFrame": 414516,
+      "gMenuTextWindowTemplate": 1993844,
       "gFont4LatinGlyphs": 15363440,
       "sFont4Widths": 1991498,
       "sFontType1Map": 1990528,
