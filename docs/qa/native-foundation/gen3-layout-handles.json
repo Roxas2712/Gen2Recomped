@@ -1,0 +1,453 @@
+{
+  "schema": 1,
+  "sourceCommit": "8e41e6d4e811bc8647e1b7961e9c96d399493508",
+  "originalGame3MapLifecycleModuleImplemented": false,
+  "rawImportedProjectionMutationImplemented": false,
+  "cpu": {
+    "nativeLayoutOwnerChecks": 226,
+    "nativeGridVMChecks": 246,
+    "engineSuites": 268,
+    "sdkSuites": 3,
+    "B30Passed": true,
+    "quickLogSha256": "bc040933c7ab66064682653ed40c8624e1a19908a27b5a179aaa8f9b925d9a24"
+  },
+  "nativeEngineComparison": {
+    "gen1_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "gen2_ref": "8e41e6d4e811bc8647e1b7961e9c96d399493508",
+    "gen2_tracked_changes": false,
+    "file_sha256": {
+      "src/core/game3/layout_native.lua": "ef8083df530da99e70924a608d938ad7952da87aa804d51208f3715d8f4a6c1e",
+      "src/world/Map.lua": "cca966cedae37697cefb62a0973a8f7ad0f52f48f6f8004f447433b125a5cc88",
+      "tests/gba_layout/consumer.lua": "a55a8d16998bcfe39e61f044db4449cf2671d83ff8fafcdf623295f432273bc2",
+      "tests/gba_layout/worker.lua": "bd8c5b0bf2d69715bab58d31c942649f6e4a621cd88c07104d24df3d2172dd03"
+    },
+    "runs": [
+      {
+        "backend": "gen1",
+        "version": "firered",
+        "checks": 59
+      },
+      {
+        "backend": "gen2",
+        "version": "firered",
+        "checks": 56
+      },
+      {
+        "backend": "gen1",
+        "version": "emerald",
+        "checks": 59
+      },
+      {
+        "backend": "gen2",
+        "version": "emerald",
+        "checks": 56
+      }
+    ],
+    "comparisons": [
+      {
+        "version": "firered",
+        "result": {
+          "afterClear": [
+            {
+              "elev": 3,
+              "mid": 1,
+              "coll": 0
+            },
+            {
+              "elev": 0,
+              "mid": 14,
+              "coll": 255
+            },
+            [
+              0,
+              1,
+              255,
+              3,
+              0,
+              255
+            ]
+          ],
+          "revision": 5,
+          "packed": {
+            "stride": 3,
+            "border": 33,
+            "mid": 32,
+            "blob": "SVML\u0001\u0000\u0003\u0000\u0002\u0000\u0002\u0000\u0002\u0000\u0002\u0002\u000b\u0000\f\u0000\r\u0000\u000e\u0000\u0001\u0000\u0000\u0003\u0002\u0000\u0001\u0004\u0003\u0000\u0002\u0000\u0004\u0000\u0003\u000f\u0005\u0000\u0000\u0000\u0006\u0000\u0001\u0001"
+          },
+          "beforeClear": [
+            {
+              "elev": 0,
+              "mid": 20,
+              "coll": 0
+            },
+            {
+              "elev": 0,
+              "mid": 22,
+              "coll": 0
+            },
+            {
+              "elev": 15,
+              "mid": 30,
+              "coll": 0
+            },
+            {
+              "elev": 0,
+              "mid": 21,
+              "coll": 255
+            }
+          ]
+        }
+      },
+      {
+        "version": "emerald",
+        "result": {
+          "packed": {
+            "mid": 32,
+            "blob": "SVML\u0001\u0000\u0003\u0000\u0002\u0000\u0002\u0000\u0002\u0000\u0002\u0002\u000b\u0000\f\u0000\r\u0000\u000e\u0000\u0001\u0000\u0000\u0003\u0002\u0000\u0001\u0004\u0003\u0000\u0002\u0000\u0004\u0000\u0003\u000f\u0005\u0000\u0000\u0000\u0006\u0000\u0001\u0001",
+            "border": 33,
+            "stride": 3
+          },
+          "beforeClear": [
+            {
+              "mid": 20,
+              "coll": 0,
+              "elev": 0
+            },
+            {
+              "mid": 22,
+              "coll": 0,
+              "elev": 0
+            },
+            {
+              "mid": 30,
+              "coll": 0,
+              "elev": 15
+            },
+            {
+              "mid": 21,
+              "coll": 255,
+              "elev": 0
+            }
+          ],
+          "revision": 5,
+          "afterClear": [
+            {
+              "mid": 1,
+              "coll": 0,
+              "elev": 3
+            },
+            {
+              "mid": 14,
+              "coll": 255,
+              "elev": 0
+            },
+            [
+              0,
+              1,
+              255,
+              3,
+              0,
+              255
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  "upstream": {
+    "number": 232,
+    "head": "d4256597f3d0a9b53073620cc02e935a41f124b2",
+    "base": "ed5e02e5a55f0dca9ba06ab1d6c2afe7a21ae81e",
+    "dependsOn": 231,
+    "independentChecks": 226,
+    "precedingNativeModuleAbsent": true,
+    "negativeLogSha256": "e06e99c0b809fa47b2ebbd4edda8d734695745ed2754bd868dab3bfc6a6b34b1"
+  },
+  "package": {
+    "sourceCommit": "8e41e6d4e811bc8647e1b7961e9c96d399493508",
+    "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+    "payloadSha256": "651c70a4bd9d0d3df9b81d7eda0f69651ce8147b52e1eec227aecee36dc40c5b",
+    "identicalPlatformPayloads": true,
+    "sourceFilesCompared": 1034,
+    "allPackagedSrcFilesMatchCommittedSourceExceptDeclaredEngineStamp": true,
+    "previewEntryPointsMatchSource": true,
+    "windowsPE64AndEmbeddedPayload": true,
+    "windowsAMD64DLLs": 11,
+    "macArchiveExtractedPayloadAndStrictSignature": true,
+    "windowsHardwareExecuted": false,
+    "published": false
+  },
+  "cache": {
+    "consumerSource": "8e41e6d4e811bc8647e1b7961e9c96d399493508",
+    "games": [
+      {
+        "edition": "firered",
+        "files": 3120,
+        "cacheTreeSha256": "56d9ca84b5fe95689120f833fbd15078a21aa5050feb57a903798c2fed20a7df",
+        "sourceCacheProducerCommit": "8afbf4221b3fcd4db6dda31cbeab3f07cb536cca",
+        "importerUnchanged": true,
+        "onlyAssetsDataMarkerCloned": true,
+        "saveCopied": false
+      },
+      {
+        "edition": "emerald",
+        "files": 3951,
+        "cacheTreeSha256": "e5fa107d350f70c2ad961485881637874c50ee6b96b3f41602f7d8a36955c416",
+        "sourceCacheProducerCommit": "8afbf4221b3fcd4db6dda31cbeab3f07cb536cca",
+        "importerUnchanged": true,
+        "onlyAssetsDataMarkerCloned": true,
+        "saveCopied": false
+      }
+    ]
+  },
+  "runs": [
+    {
+      "edition": "firered",
+      "gpu": {
+        "device": "Apple M3",
+        "vendor": "",
+        "api": "2.1",
+        "renderer": "Metal"
+      },
+      "vsync": 1,
+      "nativeChecks": 28,
+      "initialMap": "MAP_G04_N01",
+      "stock": null,
+      "driverSha256": "59d31fab4fd62c7207f6cb7329cbe315ca8a7e106468e7c23a49193a06b03b7b",
+      "logSha256": "b0e7736b7a6bfd88ec014bd02f99fe9c62df2d8e59b839e1469f25dcb01058c9",
+      "proofs": [
+        {
+          "phase": "initial-map",
+          "sha256": "771c07d1ba7c5ef0dd1f72599d78eeeec7e259ecdc557a74b960869ff54e450d",
+          "freshFrameStamp": 11,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "second-map",
+          "sha256": "874f821640d177e3febb3ccb9379a2c937103e441c20f92dab94d038d2806305",
+          "freshFrameStamp": 9,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "resized",
+          "sha256": "68381620dfa2f93e8567db6e10fa45f1b5122b823b096344dbc299ff3e58a10f",
+          "freshFrameStamp": 8,
+          "minimumStamp": 1,
+          "centralColours": 40,
+          "attempts": 1
+        },
+        {
+          "phase": "map-return",
+          "sha256": "86954ef6058dea023088418a678e8211f55200a5ef96c5bdaa68ebaf519ef899",
+          "freshFrameStamp": 8,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        }
+      ]
+    },
+    {
+      "edition": "firered",
+      "gpu": {
+        "renderer": "OpenGL",
+        "api": "4.1 Metal - 89.4",
+        "device": "Apple M3",
+        "vendor": "Apple"
+      },
+      "vsync": 1,
+      "nativeChecks": 28,
+      "initialMap": "MAP_G04_N01",
+      "stock": null,
+      "driverSha256": "59d31fab4fd62c7207f6cb7329cbe315ca8a7e106468e7c23a49193a06b03b7b",
+      "logSha256": "f98a67ab87ad8e9be508c43f647a000e40fcb5aff04b6843335a346da376a167",
+      "proofs": [
+        {
+          "phase": "initial-map",
+          "sha256": "34375a4b31e5b223de7e50a4f893406007715be7f9e4490576c37f5fea3fee13",
+          "freshFrameStamp": 9,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "second-map",
+          "sha256": "c6107eb4e56cc0ec7e0cea7411937bd4e6deaf6f88f4fb0c026e69488c050b8c",
+          "freshFrameStamp": 10,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "resized",
+          "sha256": "a68fb0314f8d6589133470094556f2dad9209d223951da956c2b866f5afb4f59",
+          "freshFrameStamp": 9,
+          "minimumStamp": 1,
+          "centralColours": 40,
+          "attempts": 1
+        },
+        {
+          "phase": "map-return",
+          "sha256": "7a115c0d928c3e944977b6dc0bdf4d0f5e0d14b0b040012980295bbfad461ce0",
+          "freshFrameStamp": 11,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        }
+      ]
+    },
+    {
+      "edition": "emerald",
+      "gpu": {
+        "renderer": "Metal",
+        "api": "2.1",
+        "device": "Apple M3",
+        "vendor": ""
+      },
+      "vsync": 1,
+      "nativeChecks": 36,
+      "initialMap": "MAP_G25_N40",
+      "stock": {
+        "alternateLayout": 357,
+        "map": "MAP_G00_N07",
+        "y": 22,
+        "cells": 3600,
+        "x": 27,
+        "baseLayout": 8
+      },
+      "driverSha256": "59d31fab4fd62c7207f6cb7329cbe315ca8a7e106468e7c23a49193a06b03b7b",
+      "logSha256": "15067f3f885fa6933a8b8257fc4b5c48b6e42c0561c21634db7a9bad1bd0d49c",
+      "proofs": [
+        {
+          "phase": "initial-map",
+          "sha256": "06e08b2aef92af87472233da1d2053feb7ed771a266676aa80d35277405bd583",
+          "freshFrameStamp": 7,
+          "minimumStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        },
+        {
+          "phase": "second-map",
+          "sha256": "d3e48a8ab544d07b7a7ac58093917e3d3d93ac23df657935cdc542551ff7e71b",
+          "freshFrameStamp": 7,
+          "minimumStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        },
+        {
+          "phase": "resized",
+          "sha256": "6ef85abc0fbe1844228f980cfbe05c111e93bd6e134db786e780cb8c7eccdecf",
+          "freshFrameStamp": 8,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "map-return",
+          "sha256": "06e08b2aef92af87472233da1d2053feb7ed771a266676aa80d35277405bd583",
+          "freshFrameStamp": 7,
+          "minimumStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        }
+      ]
+    },
+    {
+      "edition": "emerald",
+      "gpu": {
+        "api": "4.1 Metal - 89.4",
+        "device": "Apple M3",
+        "vendor": "Apple",
+        "renderer": "OpenGL"
+      },
+      "vsync": 1,
+      "nativeChecks": 36,
+      "initialMap": "MAP_G25_N40",
+      "stock": {
+        "baseLayout": 8,
+        "alternateLayout": 357,
+        "map": "MAP_G00_N07",
+        "x": 27,
+        "y": 22,
+        "cells": 3600
+      },
+      "driverSha256": "c1a20834f9729719652999a5bc977fbb0726ceed291d12d256cb758c58845ec6",
+      "logSha256": "2ebc7b03e3ff9f1b7f8c16202591c6cf541fb92111154addda7c9cdc8733f170",
+      "proofs": [
+        {
+          "phase": "initial-map",
+          "sha256": "20d5694d88f278703468897ae9a7cc4593af117a43ef922c7c0f732dd46016b0",
+          "freshFrameStamp": 9,
+          "minimumStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        },
+        {
+          "phase": "second-map",
+          "sha256": "12a2a065bdda99aea6bc7b48a5a17d3c96868ddfbdd0c22ed44ce9a0b38a6b07",
+          "freshFrameStamp": 9,
+          "minimumStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        },
+        {
+          "phase": "resized",
+          "sha256": "ef6ec590df6b600c3539f1edfc6e0b93cda5b7c263db2a8633e00eb3ce166fe6",
+          "freshFrameStamp": 9,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "map-return",
+          "sha256": "f778d870bba58ebadb99fe16e8c78466c823758d94a8916084b5c23b55f8f3d1",
+          "freshFrameStamp": 10,
+          "minimumStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        }
+      ]
+    }
+  ],
+  "originalOascFixtureProbe": {
+    "source": "cef4a9ef3e8338b3b97b99d679011eb57c731617",
+    "modVersion": "1.0.9",
+    "fixtureOnly": true,
+    "firstMissingNativeModule": "src.core.game3.map",
+    "logSha256": "74c60e5609934c76d5dd62b8467f8e784afe5aa18988c541379cea519280009d"
+  },
+  "pushAudit": {
+    "openOwnPRs": 145,
+    "allHeadsPushed": true
+  },
+  "scope": [
+    "Actual native Map and TileRenderer ownership; no parallel field loop",
+    "Actual immutable supplied SVML source only; ordinary native Map words do not advertise SVML fast path",
+    "Named mutators implemented; imported raw cells/overrides are observation projections",
+    "Fresh unsaved native QA entries bypass introduction; no full story, keyboard hardware, original OASC or First/Third renderer acceptance",
+    "Stock Sootopolis base/alternate/restored map and layout observations compare all 3600 cells on Metal/OpenGL",
+    "16 fresh owned-window proofs; phase named resized is not a window-resize test",
+    "Windows hardware untested; QA packages unpublished; existing public preview unchanged",
+    "Protected Gen1/player installations and source mods unchanged; mod port paused"
+  ],
+  "preservedAttempts": [
+    "First independent archive harness requested a test not present in its base; native owner and grid tests had passed",
+    "First GPU runner used system Python without PIL and failed before Popen",
+    "First FireRed GPU driver shadowed expected source layout with observation handle; corrected driver, unchanged product source",
+    "Initial Emerald OpenGL driver selected the first unordered map sharing layout 8; selected verified native Sootopolis ID explicitly, unchanged product source; failed run/two proofs retained"
+  ],
+  "hostedCompositionSourceCI": {
+    "sourceCommit": "8e41e6d4e811bc8647e1b7961e9c96d399493508",
+    "states": {
+      "SUCCESS": 63,
+      "IN_PROGRESS": 2
+    },
+    "transportInitialMacosTimeoutSeconds": 45,
+    "transportRerunOnUnchangedSource": "success",
+    "transportFailureLogSha256": "177c91ff02c1550825f6a13eafbd70cb1cd67eba9a67bcb52d4bab3b9694bad8",
+    "transportRerunReceiptSha256": "6068920e1b59afdeb4d88f8d1b4a440a641d4f4664caf4de58811e047dd9b29b"
+  }
+}

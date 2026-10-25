@@ -64,6 +64,12 @@ Sootopolis additionally verifies all 3,600 cells against its real alternate
 and restored layouts. This supplies a correct native grid owner for the
 remaining map interface, without advertising that interface as implemented.
 
+The [native layout-handle follow-up](native-gen3-layout-handles.md) exposes
+cell queries and edits through that actual Map owner, including native script,
+stamp, clear and border behavior. Shared Gen1/Fork consumer checks and both
+games on Metal/OpenGL pass. The original `src.core.game3.map` lifecycle remains
+absent; these layout primitives do not establish full OASC/VASC2 operation.
+
 ## Integrated engine contracts
 
 | Capability | Source branch / commit | Current scope |
