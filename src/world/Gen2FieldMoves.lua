@@ -13,4 +13,14 @@ local FieldMoves = {
   isSurfing = State.isSurfing,
 }
 
+local Fly = require("src.world.Gen2Fly")
+FieldMoves.FLYPOINTS = Fly.FLYPOINTS
+FieldMoves.KANTO_FLYPOINT = Fly.KANTO_FLYPOINT
+function FieldMoves.hasVisitedSpawn(save, spawn)
+  return Fly.hasVisitedSpawn(require("src.core.Data"), save, spawn)
+end
+function FieldMoves.flyPoints(save, landmarks, region)
+  return Fly.flyPoints(require("src.core.Data"), save, landmarks, region)
+end
+
 return FieldMoves

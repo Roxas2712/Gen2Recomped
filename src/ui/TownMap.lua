@@ -210,6 +210,10 @@ end
 -- towns that have a fly-warp spot, deduped, reusing the grid loc so the cursor
 -- lands on the town and its name shows in the banner.
 local function buildFlyList(game, byMap)
+  local Fly = require("src.world.Gen2Fly")
+  if Fly.supported() then
+    return Fly.picker(game, byMap, require("src.world.Gen2FieldMoves"))
+  end
   local field = game.data.field or {}
   local visited = game.save.visited or {}
   local flyWarps = field.flyWarps or {}
