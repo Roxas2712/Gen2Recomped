@@ -1,5 +1,6 @@
 local M = {}
 local DEFS = {
+  { 701, "MOD_STRIKE", 0, "NO_ADDITIONAL_EFFECT", 35, 0 },
   { 700, "MOD_SLEEP_TALK", 97, "SLEEP_TALK_EFFECT", 0, 1 },
   { 57, "SURF", 0, "NO_ADDITIONAL_EFFECT", 35, 8 },
   { 89, "EARTHQUAKE", 0, "NO_ADDITIONAL_EFFECT", 35, 32 },
@@ -25,13 +26,15 @@ local DEFS = {
 }
 function M.fixture(root, backend, version, entry)
   local native = backend == "gen1"
-  return dofile(root .. "/tests/enemy_actions/fixture.lua").new(
+  local nativeRows, nativeNames
+  local fixture = dofile(root .. "/tests/enemy_actions/fixture.lua").new(
     root,
     backend,
     version,
     3,
     "unified",
     function(data, _, ids, rom, names)
+      nativeRows, nativeNames = rom, names
       for _, r in ipairs(DEFS) do
         local number, name, effect, binding, power, target = unpack(r)
         local id = native and name or ("MOVE_%03d"):format(number)
@@ -72,6 +75,8 @@ function M.fixture(root, backend, version, entry)
     end,
     entry
   )
+  fixture.nativeRows, fixture.nativeNames = nativeRows, nativeNames
+  return fixture
 end
 function M.run(root, backend, version)
   local native = backend == "gen1"
@@ -167,6 +172,7 @@ function M.run(root, backend, version)
           "spread_all",
           "rage",
           "wake_flinch",
+          "indexless",
         }) do
           draws, used, damage = {}, {}, {}
           local b = f.fresh("TACKLE", { enemy = true }).battle
@@ -210,7 +216,7 @@ function M.run(root, backend, version)
           if kind == "forbidden" then
             slots = { 214, 264, 253, 19 }
           end
-          local nested = ({ spread_both = 57, spread_all = 89, rage = 99 })[kind]
+          local nested = ({ spread_both = 57, spread_all = 89, rage = 99, indexless = 701 })[kind]
           if nested then
             slots = { 214, nested, nested, nested }
           end
@@ -247,6 +253,9 @@ function M.run(root, backend, version)
               end
             end
             a.mon.hp = 400
+          end
+          if kind == "indexless" and not native then
+            def(701).index = nil
           end
           local user, target = at(b, uid), at(b, tid)
           user.mon.status, user.sleepTurns = "SLP", 4
@@ -347,6 +356,13 @@ function M.run(root, backend, version)
             used = Copy(used),
             damage = Copy(damage),
           }
+          if kind == "indexless" and not native then
+            def(701).index = 701
+          end
+          if kind == "indexless" then
+            T.eq(#used, 2, "a learned custom move needs no imported numeric index")
+            T.eq(#damage, 1, "the indexless custom move executes through the native caller")
+          end
           if kind == "ordinary" or kind == "zero_pp" then
             T.eq(#used, 2, "Sleep Talk and the chosen move each emit one public event")
             T.eq(native and user.mon.pp[1] or user.curMoves[1].pp, 9, "only the selected caller spends PP")
@@ -384,6 +400,140 @@ function M.run(root, backend, version)
   offUsed()
   offDamage()
   f.close()
+  return rows
+end
+function M.content(root, backend, version)
+  local native = backend == "gen1"
+  local rows = {}
+  for _, kind in ipairs({ "ordinary", "zero_pp", "awake", "primary", "patched" }) do
+    local entry = [=[return function(mod)
+   assert(mod.content.move_effects:register("PORTABLE_SLEEP_CHOICE",{kind="secondary",run=function(ctx)
+    mod.exports.runs=mod.exports.runs+1
+    return {}
+   end}))
+   assert(mod.content.moves:register("PORTABLE_SLEEP_MOVE",{id="PORTABLE_SLEEP_MOVE",name="PORTABLE_SLEEP_MOVE",type="NORMAL",power=35,accuracy=100,pp=10,effect="PORTABLE_SLEEP_CHOICE"}))
+   mod.exports.runs=0
+   mod.exports.api=mod
+  end]=]
+    if kind == "primary" then
+      entry = entry:gsub('kind="secondary"', 'kind="primary"'):gsub("power=35", "power=0")
+      entry = entry:gsub(
+        "mod.exports.runs=mod.exports.runs%+1",
+        'mod.exports.runs=mod.exports.runs+1;ctx.changeStage(ctx.user,"attack",1)'
+      )
+    elseif kind == "patched" then
+      entry = entry:gsub(
+        "mod.exports.runs=0",
+        'assert(mod.content.moves:patch("FLY",{effect="PORTABLE_SLEEP_CHOICE"}));mod.exports.runs=0'
+      )
+    end
+    local f = M.fixture(root, backend, version, entry)
+    local T = f.T
+    local c = f.fresh("TACKLE", { enemy = true })
+    local b, user, target = c.battle, c.user, c.target
+    if not native then
+      for _, actor in ipairs({ user, target }) do
+        for _, stat in ipairs({ "attack", "defense", "spatk", "spdef" }) do
+          actor.curStats[stat] = 50
+        end
+      end
+    end
+    local number, previousRegistryData
+    if native then
+      number = kind == "patched" and 19
+        or assert(require("src.mods.Gen3Compat").moveId("PORTABLE_SLEEP_MOVE"))
+      -- The base fixture mounts its explicit native rows after public load.
+      -- Mount the actually merged authored row/name too; do not reconstruct
+      -- or modify its effect/power/type/flags. All mounted tables are owned
+      -- by this fixture and restored by close(). The source checkout stays clean.
+      local moves = require("src.core.game3.battle.moves")
+      assert(moves._rom == f.nativeRows and moves.BY_NUM == f.nativeNames)
+      f.nativeRows[number] = assert(f.data.gen3Moves._rom[number])
+      local name = kind == "patched" and "FLY" or "PORTABLE_SLEEP_MOVE"
+      f.nativeNames[number] = name
+      moves._numByName[name] = number
+      local registries = require("src.core.game3.battle.mod_registries")
+      previousRegistryData = registries.data()
+      registries.bind(f.data)
+      assert(registries.hasEffects())
+      user.mon.moves, user.mon.pp, user.mon.maxPp =
+        { 214, number }, { 10, kind == "zero_pp" and 0 or 10 }, { 10, 10 }
+    else
+      b:syncSides()
+      T.eq(
+        f.data.moves.PORTABLE_SLEEP_MOVE.index,
+        nil,
+        "portable authored move has no required numeric index"
+      )
+      user.mon.moves = {
+        { id = f.ids.SLEEP_TALK, pp = 10 },
+        { id = kind == "patched" and f.ids.FLY or "PORTABLE_SLEEP_MOVE", pp = kind == "zero_pp" and 0 or 10 },
+      }
+      user.curMoves = user.mon.moves
+      if kind == "patched" then
+        T.eq(f.data.moves[f.ids.FLY].gen3Effect, nil, "authored effect clears the old native two-turn script")
+      end
+    end
+    user.mon.status, user.sleepTurns = "SLP", 4
+    if kind == "awake" then
+      user.mon.status, user.sleepTurns = nil, nil
+    end
+    local draws, used, damage = {}, {}, {}
+    b.rng = function(lo, hi)
+      local v = lo == 1 and 1 or hi
+      draws[#draws + 1] = { lo = lo, hi = hi, value = v }
+      return v
+    end
+    local off = f.e.api.events:on("battle.move_used", function(e)
+      used[#used + 1] = { move = e.move.id, called = e.isCalled or false }
+    end)
+    local offDamage = f.e.api.events:on("battle.damage_dealt", function(e)
+      damage[#damage + 1] =
+        { move = e.move.id, damage = e.damage, crit = e.crit or false, typeMult = e.typeMult }
+    end)
+    if native then
+      require("src.core.game3.battle.engine").resolveMove(
+        1,
+        0,
+        214,
+        1,
+        require("src.core.game3.battle.adapter").new(b),
+        b,
+        {}
+      )
+    else
+      b:executeAction(user, target, user.curMoves[1])
+    end
+    T.eq(f.e.runs, kind == "awake" and 0 or 1, "same API-3 authored effect executes through Sleep Talk")
+    T.eq(native and user.mon.pp[1] or user.curMoves[1].pp, 9, "portable custom call spends caller PP only")
+    T.eq(
+      native and user.mon.pp[2] or user.curMoves[2].pp,
+      kind == "zero_pp" and 0 or 10,
+      "portable learned custom move keeps its PP"
+    )
+    T.same(f.result.loader.errors, {}, "custom content and public callbacks execute without runtime errors")
+    rows[#rows + 1] = {
+      label = kind,
+      runs = f.e.runs,
+      attack = user.stages.attack or 0,
+      pp = {
+        native and user.mon.pp[1] or user.curMoves[1].pp,
+        native and user.mon.pp[2] or user.curMoves[2].pp,
+      },
+      hp = { user.mon.hp, target.mon.hp },
+      status = user.mon.status,
+      sleep = user.sleepTurns,
+      draws = draws,
+      used = used,
+      damage = damage,
+    }
+    off()
+    offDamage()
+    if native then
+      require("src.core.game3.battle.mod_registries").bind(previousRegistryData)
+    end
+    f.close()
+  end
   return rows
 end
 return M
