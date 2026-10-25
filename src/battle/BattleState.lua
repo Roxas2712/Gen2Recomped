@@ -5167,6 +5167,9 @@ end
 -- sun and rain, and `50 percent + 1` is 128 rather than the 127 a percentage
 -- would round to.
 function BattleState:accuracyRoll(move, user, target, accuracyRaw)
+  if GameVersion.isGen3() then
+    return require("src.battle.Gen3Accuracy").check(self, move, user, target, accuracyRaw)
+  end
   -- LOCK-ON / MIND READER: the next move cannot miss, and the aim is spent
   -- whether it was needed or not.
   if user.lockedOn == target then
@@ -8163,9 +8166,13 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
     -- 100%-accuracy early-out (even Thunder Wave misses on the 255
     -- roll) and misses outright against a mid-Fly/Dig target; the
     -- never-miss paths (X ACCURACY) live inside Damage.accuracyRoll
-    if record.accuracyChecked
-       and (target.invulnerable
-            or not self:accuracyRoll(move, user, target)) then
+    local hit, reason = true, nil
+    if record.accuracyChecked then
+      if target.invulnerable and not GameVersion.isGen3() then hit = false
+      else hit, reason = self:accuracyRoll(move, user, target) end
+    end
+    if not hit then
+      if reason == "absorbed" then self:cancelMoveAnim(); return end
       -- SleepEffect/PoisonEffect/... call PlayCurrentMoveAnimation only
       -- after the effect lands; a miss skips it
       self:cancelMoveAnim()

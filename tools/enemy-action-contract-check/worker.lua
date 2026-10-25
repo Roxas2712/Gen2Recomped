@@ -2,7 +2,11 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "constrained_party" then
+if mode == "accuracy_execution" then
+  rows = dofile(root .. "/tests/enemy_actions/accuracy.lua").run(root, backend, version, true)
+elseif mode == "accuracy" then
+  rows = dofile(root .. "/tests/enemy_actions/accuracy.lua").run(root, backend, version)
+elseif mode == "constrained_party" then
   rows = dofile(root .. "/tests/enemy_actions/constrained_party.lua").run(root, backend, version)
 elseif mode == "critical_context" then
   rows = dofile(root .. "/tests/enemy_actions/critical_kinds.lua").run(root, backend, version)
