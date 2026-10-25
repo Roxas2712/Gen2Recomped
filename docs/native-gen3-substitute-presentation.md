@@ -59,4 +59,7 @@ The frozen `63084eca` full run passes 156/167 engine suites, SDK 3/3 and B30.
 Its exact FAIL-line Counter adds two queue-hole crashes to the inherited 25
 lines. The follow-up preserves every sparse queue row/hole, avoids grouping
 unprotected users, and passes the controller, Follow Me and move-used PP suites.
-The failed full run remains retained; a new full regression is still required.
+The failed full run remains retained. Runtime `729c07fa` passes the repeated
+full gate at 158/167 engine suites, SDK 3/3 and B30. Its exact anchored FAIL-line
+Counter equals fresh #258: the same 25 inherited lines, with no additions or
+removals.
