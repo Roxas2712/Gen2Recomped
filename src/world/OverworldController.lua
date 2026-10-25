@@ -4188,8 +4188,13 @@ function OverworldState:stepBody(scriptJustEnded)
                or self.engaging or self.emote or self.teleportOut
                or self.whirlSpin or self.player.stairExit
   end
+  local compatibilityHandled = false
   if (not scripted and not self.transitioning) or gen2BootBedroom then
-    self:handleInput()
+    local avatar = GameVersion.isGen3() and package.loaded["src.core.game3.player"]
+    if playerStepped == nil and type(avatar) == "table" and type(avatar._dispatch) == "function" then
+      compatibilityHandled = avatar._dispatch(Game, self, Game.input)
+    end
+    if not compatibilityHandled then self:handleInput() end
     self.lockedFrames = nil
   else
     -- THE WATCHDOG, because "I could not walk" is the one bug report this
@@ -4268,8 +4273,16 @@ function OverworldState:stepBody(scriptJustEnded)
   -- above carries its result down here instead of being stepped again, which
   -- would hand the player the one-frame advantage this fix took away from the
   -- NPCs.
+  if compatibilityHandled then return end
   local stepped = playerStepped
   if stepped == nil then stepped = self.player:update() end
+  self:finishPlayerStep(stepped, scripted)
+end
+
+-- Shared native arrival owner for ordinary and compatibility-driven steps.
+-- Compatibility calls this synchronously so its caller sees a warp or script
+-- before it restores a fractional body position. No second event pipeline.
+function OverworldState:finishPlayerStep(stepped, scripted)
   -- the warp-arrival cell goes stale the instant the player's real cell
   -- leaves it, scripted walk-outs included -- pokered re-checks warps
   -- after simulated steps too (CheckWarpsNoCollision), so a forced
@@ -6195,7 +6208,7 @@ function OverworldState:noteRunGate(why)
   return why
 end
 
-function OverworldState:runFrames()
+function OverworldState:runFrames(ignoreButton)
   local frames = FieldDefaults.world(Game.data, "runStepFrames")
   if type(frames) ~= "number" then
     self:noteRunGate("this dataset has no run speed at all")
@@ -6300,7 +6313,7 @@ function OverworldState:runFrames()
     return nil
   end
   if self.player and self.player.surfing then return nil end
-  if not (Game.input and Game.input:isDown("b")) then return nil end
+  if not ignoreButton and not (Game.input and Game.input:isDown("b")) then return nil end
   self:noteRunGate("running")
   -- playing AS a Pokemon is Prism's own refusal and does not apply to Hoenn
   if not gen3 then
