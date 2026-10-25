@@ -23,6 +23,8 @@ local ModStorage = require("src.mods.Storage")
 local Runtime = require("src.mods.Runtime")
 local ModGens = require("src.mods.ModGens")
 local ModSeams = require("src.mods.ModSeams")
+-- Install typed-view iteration before mod mutation journals open.
+require("src.compat.gen1.TableIteration")
 -- Module-name aliases for mods written against the Gold port's per-generation
 -- layout (src.world.gen2.Player and friends).  Installed here because this is
 -- the module that loads mods: the searcher has to be in place before the
@@ -1196,6 +1198,8 @@ end
 -- migration it took goes with them.  The journal only exists around an
 -- entry chunk; a later failure (script validation) purges every registry.
 function Loader:_rollback(modId)
+  -- Failed global/module wrappers must unwind before registry cleanup.
+  ModSeams.unwindOwner(modId)
   local facade=package.loaded['src.core.Game3']
   if facade and facade._retireMod then facade._retireMod(modId)end
   for name in pairs(self.journal or self.content) do
@@ -1489,7 +1493,6 @@ function Loader:load(data)
       Runtime.currentMod = nil
       if not success then
         self:_rollback(modId)
-        ModSeams.unwindOwner(modId)
       end
       self.journal = nil
       if success then
