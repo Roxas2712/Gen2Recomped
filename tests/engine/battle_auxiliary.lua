@@ -9,6 +9,21 @@ for _, version in ipairs(Version.ORDER) do
     local b, game, e = f.battle, f.game, f.exports
     T.eq(e.api:supports("hooks", "battle.menu_auxiliary"), true, version .. " capability")
     T.eq(Auxiliary.ready(b), true, "native command menu ready")
+    -- Reach the boundary through actual native queue/drain execution. Merely
+    -- constructing an idle menu misses stale insertion and closing markers.
+    local during
+    b:act(function() during = Auxiliary.ready(b) end)
+    b:updateQueue()
+    T.eq(during, false, "callback insertion cursor blocks reentrant START")
+    T.eq(Auxiliary.ready(b), true, "native callback releases menu boundary")
+    b.enemy.mon.hp = b.enemy.mon.hp - 2
+    local frames = 0
+    while b:stepHPDrain() and frames < 1000 do
+      frames = frames + 1
+      T.eq(Auxiliary.ready(b), false, "native drain and closing hold block START")
+    end
+    T.check(frames < 1000, "native HP drain finishes")
+    T.eq(Auxiliary.ready(b), true, "completed native drain releases menu boundary")
     f.press(false, true)
     T.eq(e.seen.calls, 0, "no START leaves hook idle")
     T.eq(b.menuIndex, 2, "ordinary native navigation")
