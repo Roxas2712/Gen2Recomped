@@ -134,6 +134,7 @@ function M.read(holder, def, effect, parameter, trigger, generation)
     value = math.floor(value * 256 / 100)
   end
   local item = holder.mon.item or holder.mon.heldItem
+  if generation == 3 and item == nil then item = 0 end
   local view
   if def then
     view = {}
