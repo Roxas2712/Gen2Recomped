@@ -14,6 +14,8 @@ local function fixture()
   for i, row in ipairs(Fly.FLYPOINTS) do
     local id = row.map
     local landmark = i < Fly.KANTO_FLYPOINT and i or i+40
+    if i==12 then landmark=Version.isCrystal() and 46 or 45 end
+    if i==13 then landmark=Version.isCrystal() and 47 or 46 end
     Data.maps[id] = {id=id,landmark=landmark}
     Data.field.flyWarps[id] = {x=i,y=i+1}
     Data.field.townMap.landmarks[landmark] = {name="Town "..i,x=16+i,y=24+i}
@@ -106,6 +108,18 @@ for _, version in ipairs({"gold","silver","crystal"}) do
   local screen=TownMap.new(game,{fly=true,onFly=function(id)chosen=id end})
   T.eq(screen.fly,true,"actual native TownMap opens the facade-backed flight list")
   T.eq(screen.flyMapIds[1],"NEW_BARK_TOWN","controller cursor uses visited destination")
+  T.eq(screen.byMap.SILVER_CAVE_OUTSIDE.region,"johto","actual cartridge boundary keeps Silver Cave on Johto")
+  T.eq(screen.byMap.PALLET_TOWN.region,"kanto","Pallet header starts Kanto on Gold/Silver/Crystal")
+  -- An actual visited Silver Cave cursor follows the Johto painting. Native
+  -- imported headers, not the reference's or another cartridge's literal id.
+  Flags.set(save,Fly.flagKey("SPAWN_MT_SILVER"))
+  local silverScreen=TownMap.new(game,{fly=true})
+  for _=1,30 do
+    if silverScreen.flyMapIds[silverScreen.sel]=="SILVER_CAVE_OUTSIDE" then break end
+    pressed="down";silverScreen:update(1)
+  end
+  T.eq(silverScreen.flyMapIds[silverScreen.sel],"SILVER_CAVE_OUTSIDE","native input reaches visited Silver Cave")
+  T.eq(silverScreen.region,"johto","Silver Cave cursor does not switch to wrong region")
   pressed="a";screen:update(1)
   T.eq(chosen,"NEW_BARK_TOWN","A returns native destination to existing flyTo owner")
   T.eq(popped,1,"A closes actual native picker")
