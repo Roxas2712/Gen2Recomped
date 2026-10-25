@@ -652,6 +652,7 @@ function love.update(dt)
   -- The report deliberately runs nothing else: the boot path it is reporting on
   -- is the code that just died.
   if bootReport then return end
+  require('src.cloud.Presence').tick()
   local community=package.loaded['src.import.LauncherCommunity']
   if community then community.backgroundUpdates() end
   walkerTick("tick", dt)

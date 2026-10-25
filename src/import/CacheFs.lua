@@ -996,6 +996,13 @@ function CacheFs.mountVersion(version)
     return false, "no imported cache at " .. sub .. "/"
   end
 
+  -- Private imports use an immutable account path. Redirect every generated
+  -- read to that path, including on platforms with no reliable mount support.
+  if prefix:match('^launcher/private_games/') then
+    if CacheFs.installPrefixShim(prefix) and overlayVisible() then return true end
+    return false, 'could not activate the private imported game'
+  end
+
   -- The cache root is the portable game folder when active, else LÖVE's OS
   -- save directory (where love.filesystem wrote blue/... or yellow/...).
   local base = CacheFs.root()
@@ -1092,6 +1099,7 @@ local function shimRedirect(path)
           or path:sub(1, 17) == "assets/generated/") then
     return path
   end
+  if prefix:match('^launcher/private_games/') then return prefix .. path end
   if shimRealGetInfo(path, "file") then return path end
   local alt = prefix .. path
   if shimRealGetInfo(alt, "file") then return alt end
@@ -1241,6 +1249,12 @@ end
 -- Returns true when nothing was mounted or the unmount took.  Red is a no-op
 -- because its cache lives at the root and was never overlaid.
 function CacheFs.unmountVersion(version)
+  -- Account changes can remove the current registry pointer before the
+  -- launcher releases its preview. The old private shim must still stop.
+  if shimPrefix and shimPrefix:match('^launcher/private_games/') then
+    CacheFs.clearPrefixShim()
+    return true
+  end
   local prefix = require("src.core.GameVersion").cachePrefix(version)
   if prefix == "" then return true end
   local sub = prefix:gsub("/+$", "")

@@ -1725,6 +1725,13 @@ function RomImporter.datasetContract(version)
   return { marker = markerFor(version), modules = modules }
 end
 
+-- Private cache transfer covers every supported cartridge, independently of
+-- the deliberately narrower mod-facing dataset inspection API above.
+function RomImporter.cacheContract(version)
+  if not GameVersion.info(version) then return nil end
+  return {marker=markerFor(version),files=requiredFiles(version)}
+end
+
 local function gen2TilesetRegistryLooksValid(version)
   if GameVersion.generation(version) ~= 2 then return true end
   local CacheFs = require("src.import.CacheFs")
@@ -3371,6 +3378,7 @@ end
 -- the cartridge itself and read ranges out of it on demand.
 function RomImporter:startData(data, displayName, sourcePath, verified)
   if self.workState == "working" then return end
+  if self._storageTask then self.settingsNotice='Finish or cancel the cloud transfer before importing a game.';return end
   self:_acknowledgeInterruptedImport()
   if not verified and type(data)=='string' then
     if self:_beginRomProbe(data,sourcePath,displayName) then return end
@@ -3425,6 +3433,12 @@ function RomImporter:startData(data, displayName, sourcePath, verified)
   -- (a dropped cart is routed by SHA-1 regardless of which tab was showing).
   if GameVersion.VERSIONS[self.tab] then
     self.tab = version
+  end
+  local privateCache=package.loaded['src.storage.GameCache']
+  if privateCache and privateCache.prefix(version) then
+    require('src.import.LauncherBackdrop').stop()
+    local detached,why=privateCache.detach(version)
+    if not detached then self:setError(tostring(why),version);return end
   end
   self.importing = version
   self.workState = "working"
