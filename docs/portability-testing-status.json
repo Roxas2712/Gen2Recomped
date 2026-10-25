@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "abeaf23461ee80e95a7ff0f9cfd98bb5e5075062",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/216",
-  "feature_ref": "b1795a79cb03a4de7171d50db93a39ce49dddd64",
+  "runtime_ref": "244d2367da28e6205611fc79c5fd16093315d451",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/217",
+  "feature_ref": "0905dcd005d102c33d31fad12d2082290d76f56c",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 224,
-  "engine_suites_total": 224,
+  "engine_suites_passed": 226,
+  "engine_suites_total": 226,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 80,
-  "cross_engine_paired_observations": 59394,
+  "cross_engine_worker_runs": 84,
+  "cross_engine_paired_observations": 59820,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All seven #216 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
+  "hosted_ci": "All seven #217 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -2281,6 +2281,139 @@
       "tmp/party-codec-full-accepted.log",
       "tmp/party-codec-contracts.json",
       "tmp/party-codec-import-smoke.log"
+    ]
+  },
+  "native_gba_lock_on": {
+    "feature_pr": 217,
+    "feature_ref": "0905dcd005d102c33d31fad12d2082290d76f56c",
+    "combined_runtime_ref": "244d2367da28e6205611fc79c5fd16093315d451",
+    "prerequisite": 216,
+    "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_unchanged": true,
+    "native_command_revision": 2,
+    "focused_checks": {
+      "lifecycle": 492,
+      "ownership_link": 64,
+      "total": 556
+    },
+    "shared_worker_runs": 84,
+    "shared_paired_observations": 59820,
+    "all_observations_equal": true,
+    "new_cases_per_profile": 213,
+    "profiles": [
+      "firered",
+      "emerald"
+    ],
+    "all_four_actor_slots": true,
+    "full_seeded_native_link_mirrors": 2,
+    "all_paired_turn_hashes_and_components_equal": true,
+    "feature_engine_suites_passed": 102,
+    "feature_engine_suites_total": 111,
+    "baseline_ref": "b1795a79cb03a4de7171d50db93a39ce49dddd64",
+    "baseline_engine_suites_passed": 100,
+    "baseline_engine_suites_total": 109,
+    "inherited_fail_lines": 25,
+    "inherited_failing_suites": 9,
+    "exact_failure_counter_equal": true,
+    "negative_control": {
+      "completed_observations": 213,
+      "differing_observations": 207,
+      "failed_assertions": 103,
+      "full_output_retained": true
+    },
+    "integration": "Preserve existing GBA item/residual scheduling; tick in gen3BattlerCountersTick instead of restoring the monolithic counter loop",
+    "raw_fixture_prior_hash": "2fd444270c3d90db",
+    "raw_fixture_revision_2_hash": "cf73a8e083fb8a54",
+    "hash_audit": "Unchanged #216 hasher; only native command revision token 1 to 2 changes",
+    "non_gba_golden_changed": false,
+    "combined_engine_suites_passed": 226,
+    "combined_engine_suites_total": 226,
+    "sdk_suites": "3/3",
+    "b30": "passed",
+    "imported_cache_smoke": {
+      "runtime": "244d2367da28e6205611fc79c5fd16093315d451",
+      "profiles": [
+        {
+          "hp": 964,
+          "effect": 94,
+          "accuracyHooks": 1,
+          "version": "firered",
+          "draws": [
+            [
+              0,
+              65535
+            ],
+            [
+              1,
+              100
+            ],
+            [
+              85,
+              100
+            ],
+            [
+              85,
+              100
+            ]
+          ],
+          "passed": true,
+          "moveIndex": 199
+        },
+        {
+          "hp": 976,
+          "effect": 94,
+          "accuracyHooks": 1,
+          "version": "emerald",
+          "draws": [
+            [
+              0,
+              65535
+            ],
+            [
+              1,
+              100
+            ],
+            [
+              85,
+              100
+            ],
+            [
+              85,
+              100
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "passed": true,
+          "moveIndex": 199
+        }
+      ],
+      "scope": "CPU-only actual imported canonical Lock-On selection, two real Tackle hits and two end-of-turn sweeps; controlled HP; no live UI/full playthrough"
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "workflow_runs": 7,
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40157494497",
+      "jobs": 0
+    },
+    "chat_attachment": "attempted; thread attachment identity count exceeds 100",
+    "remaining_scope": [
+      "Full Baton Pass move and UI chooser lifecycle; explicit switch entry already tested",
+      "Other side and volatile state producers",
+      "Native egg-legality validation",
+      "Whole-game RNG and VBlank scheduling",
+      "Live UI and full playthrough acceptance"
+    ],
+    "proof": [
+      "tmp/lock-on-full-accepted.log",
+      "tmp/lock-on-contracts.json",
+      "tmp/lock-on-import-smoke.log"
     ]
   }
 }

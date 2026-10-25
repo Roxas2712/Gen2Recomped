@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215 and #216 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216 and #217 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,56 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`abeaf23461ee80e95a7ff0f9cfd98bb5e5075062`. Its ROM-free run passed
-**224/224 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`244d2367da28e6205611fc79c5fd16093315d451`. Its ROM-free run passed
+**226/226 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #217](https://github.com/UNDERdecoded/Gen2Recomped/pull/217) replaces native
+GBA Lock-On/Mind Reader's one-use attacker pointer with target-owned duration
+and originating side/slot. The actual producer now observes Substitute,
+accuracy, Protect and hidden-target ordering. Repeated queries and actual
+attacks preserve the two-phase timer. Owner replacement clears owned bindings;
+unrelated partner replacement preserves them; ordinary target replacement drops
+them. Both ordinary accuracy and OHKO use the shared native ownership predicate.
+Older-game and authored legacy pointer behavior remains available.
+
+The clean feature `0905dcd005d102c33d31fad12d2082290d76f56c` passes **556 focused
+checks** (492 lifecycle, 64 ownership/link). Feature and clean combined runtime
+above match unchanged Gen1 in **84 workers / 59,820 paired observations**. The
+new 213 rows per profile retain raw timer/side/slot state, HP/PP, every bounded
+RNG call/value and public accuracy/damage/move-event calls. Both moves, all four
+slots, singles/doubles, refresh/ownership transfer, real switches, explicit Baton
+Pass switch entry, repeated real hits and OHKO level/Sturdy/guard paths agree.
+Clean #216 completes all 213 rows but differs in 207 and fails 103 assertions;
+the complete negative output is retained. Full feature regression is 102/111
+engine suites, SDK 3/3 and B30, with the exact same 25 inherited FAIL lines across
+nine suites as #216 (100/109). Their independent repairs remain in this branch.
+
+The integration preserves the existing GBA item/residual scheduler and ticks
+the timer in `gen3BattlerCountersTick`; it does not restore the older monolithic
+counter sweep. Two full seeded link mirrors aim once, then attack, retaining
+one phase on turn one and expiring together on turn two. Every paired completed
+turn hash/component agrees. Active signatures canonicalize owned side/slot to
+host coordinates. Native command revision 2 guards battle entry even when a
+custom fingerprint would otherwise be equal. The raw fixture hash changes from
+`2fd444270c3d90db` to `cf73a8e083fb8a54`, independently audited with the unchanged
+#216 hasher and only the explicit revision token. Non-GBA goldens stay unchanged.
+
+Actual imported FireRed/Emerald records also select canonical `LOCK_ON` through
+the shared public enemy-action consumer, execute two Tackle hits and two real
+end-of-turn sweeps, and retain ownership/duration with only one accuracy-hook
+call before expiring. This is CPU-only with controlled HP; no ROM/cache assets
+or saves are distributed and no live UI/full-playthrough acceptance is claimed.
+All seven hosted #217 workflows await maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40157494497)
+has zero jobs. The 100-artifact attachment cap persists; the regular PR remains
+published and linked. Evidence is retained in `tmp/lock-on-full-accepted.log`,
+`tmp/lock-on-contracts.json` and `tmp/lock-on-import-smoke.log`.
+
+The explicit Baton Pass switch entry is covered; its complete move/UI chooser
+remains separate, together with other side/volatile producers, native egg
+legality and whole-game RNG/VBlank scheduling. See
+[the scoped lifecycle contract](native-gen3-lock-on.md).
 
 [PR #216](https://github.com/UNDERdecoded/Gen2Recomped/pull/216) adds a separate
 versioned GBA party codec. Native PID, six IVs/EVs, selected valid ability slot,
