@@ -190,7 +190,7 @@ function W.draw(self,x,y,w,h)
   for i,m in ipairs(c.matches or {}) do
    if round~=m.round then round=m.round;y=y+14*s;text('ROUND '..round,true,P.link) end
    local height=(m.can_report and 244 or 108)*s
-   if c.manage and m.state=='disputed' then height=height+92*s end
+   if c.manage and (m.state=='ready' or m.state=='disputed') then height=height+92*s end
    paint.surface(x,y,w,height,12*s,m.state=='disputed' and P.chooseTop or P.link,false)
    y=y+14*s;text(name(m.left)..'  vs  '..name(m.right),true,P.ink)
    text(m.state:upper()..(m.winner and ' · Winner: '..name(m.winner) or ''))
@@ -202,7 +202,7 @@ function W.draw(self,x,y,w,h)
     button('I WON · CONFIRM RESULT','report:'..i..':'..(m.left==f.account and 'left' or 'right'))
     button('OPPONENT WON · CONFIRM RESULT','report:'..i..':'..(m.left==f.account and 'right' or 'left'))
    end
-   if c.manage and m.state=='disputed' then
+   if c.manage and (m.state=='ready' or m.state=='disputed') then
     button('RESOLVE: '..name(m.left),'resolve:'..i..':left');button('RESOLVE: '..name(m.right),'resolve:'..i..':right')
    end
    y=y+18*s
