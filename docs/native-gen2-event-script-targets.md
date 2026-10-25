@@ -12,8 +12,11 @@ retain the object and omit its executable script binding. Other scene,
 callback, coordinate, object and neighboring script targets keep their
 normal decoder paths. No map-specific name or warning suppression is used.
 
+A scoped stock-GSC cache revision rebuilds existing imports once; other
+editions retain their previous marker.
+
 The synthetic Gold/Silver/Crystal regression exercises the real event
-reader and script extractor: 39 checks, including valid code immediately
+reader and script extractor, plus the real cache-readiness gate: 55 checks, including valid code immediately
 after the event table and an independent scene script.
 
 An actual Crystal Rev0 before/after import into memory retains all 388 maps,

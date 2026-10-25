@@ -49,4 +49,30 @@ for _,version in ipairs({'gold','silver','crystal'})do
   T.eq(pool.info.scriptCount,2,'exact scene and object scripts are retained: '..version)
   T.eq(pool.info.desyncCount,0,'known data does not generate a false bytecode desync: '..version)
 end
+-- Exercise the real cache-readiness gate as well as a fresh import: existing
+-- imports must be rebuilt once to remove the false script binding.
+local Importer=require('src.import.RomImporter')
+local V=require('src.core.GameVersion')
+local initial=V.get()
+local markerFor
+for i=1,100 do
+  local name,value=debug.getupvalue(Importer.readyReport,i)
+  if not name then break end
+  if name=='markerFor' then markerFor=value;break end
+end
+assert(markerFor)
+for _,version in ipairs({'gold','silver','crystal'})do
+  V.set(version)
+  local marker=markerFor(version)
+  T.check(marker:find('gen2-event-targets-v1:',1,true)~=nil,'native cache includes event-target revision: '..version)
+  local old=marker:gsub('gen2%-event%-targets%-v1:','')
+  love.filesystem.write(V.cachePrefix(version)..'rom-cache.complete',old)
+  local report=Importer.readyReport(version)
+  T.eq(report.ok,false,'actual readiness gate rejects old object scripts: '..version)
+  T.check(report.why:find('another version',1,true)~=nil,'reimport reason is old cache revision: '..version)
+end
+for _,version in ipairs({'red','blue','yellow','firered','emerald','prism','polishedcrystal'})do
+  T.check(not markerFor(version):find('gen2-event-targets-v1:',1,true),'unrelated cache remains unchanged: '..version)
+end
+V.set(initial)
 T.finish('native GSC object event-table pointers are data, not scripts')
