@@ -27,6 +27,8 @@ for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'}) do
   T.eq(Objects.find(1),v,'stable live object view'); T.eq(v.localId,1); T.eq(v.id,a.id)
   T.eq(v.originMapId,f.canonical); T.eq(Objects._mapId,f.canonical)
   T.eq(v.graphicsId,42); T.eq(v.currentElevation,3); T.eq(v.visible,true)
+  T.eq(select(2,Objects.loadMap(g,f.canonical)),nil,'adopting a pool never lends its private native context')
+  T.eq(select(2,Objects._pool(f.canonical)),nil,'shared neighbour entry returns only owned views')
   T.eq(v.def.passable,false,'definition copy retains false values')
   v.def.script[1]='detached'; T.eq(a.def.script[1],'native','nested definitions are owned')
   v.customExtension={probe=true}; T.eq(a.customExtension,nil)

@@ -7,7 +7,10 @@ local directions = {up=true,down=true,left=true,right=true}
 local function finite(v) return type(v)=='number' and v==v and math.abs(v)<math.huge end
 local function integer(v,lo,hi) return finite(v) and v%1==0 and v>=lo and v<=hi end
 local function copy(v,seen)
-  if type(v)~='table' then if type(v)=='function' then return nil end; return v end
+  if type(v)~='table' then
+    if type(v)=='string' or type(v)=='number' or type(v)=='boolean' then return v end
+    return nil
+  end
   seen=seen or {}; if seen[v] then return seen[v] end
   local out={}; seen[v]=out
   for k,value in pairs(v) do if type(k)=='string' or type(k)=='number' then out[k]=copy(value,seen) end end
