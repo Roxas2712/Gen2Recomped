@@ -91,6 +91,17 @@ for _, version in ipairs({ "firered", "emerald" }) do
     "completed choice cannot be replayed"
   )
   T.eq(b.player.mon.nickname, "GAMMA", "replayed callback cannot replace the selected mon")
+  local initial = { game.save.party[1] }
+  local owner = { playerParty = initial }
+  local Menu = require("src.ui.Gen3PartyMenu")
+  local linked = Menu.new(game, { battle = owner, party = initial })
+  T.eq(linked:party(), initial, "ordinary link picker starts with the live battle roster")
+  owner.playerParty = { game.save.party[2], game.save.party[3] }
+  T.eq(linked:party(), owner.playerParty, "ordinary link picker follows a replaced live roster")
+  local distinct = { game.save.party[3] }
+  local ally = Menu.new(game, { battle = owner, party = distinct, forceSwitch = true })
+  T.eq(ally:party(), distinct, "owner-specific picker retains its distinct party")
+  T.eq(#ally:party(), 1, "owner-specific roster never expands into the other trainer's party")
   f.close()
 end
 T.finish("native Baton Pass party UI and queued turn continuation")
