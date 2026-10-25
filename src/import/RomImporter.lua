@@ -9887,7 +9887,7 @@ function RomImporter:_stepAssetPacks()
   elseif coroutine.status(co)=="dead" then
     self._assetPackInstallJob=nil
     if value.found==0 then
-      self.modNotice={ok=false,text=Strings("Copy extracted packs into %s/imports/asset_packs/<importer>/<pack>/, then install again.",
+      self.modNotice={ok=false,text=Strings("Copy extracted packs into %s/imports/asset_packs/<importer>/<pack>/, or supported cartridges into imports/asset_sources/.",
         require("src.import.CacheFs").rootReport().path or love.filesystem.getSaveDirectory())}
     elseif #value.failed>0 then
       local first=value.failed[1]
@@ -10423,7 +10423,7 @@ function RomImporter:_drawModsPanel(x, y, w, h, paged)
 
   local top = y + headerH + 14 * s
   self.modAssetPacksRect = self:_glassyButton(x, top, w, btnH,
-    self._assetPackInstallJob and Strings("Installing asset packs...") or Strings("Install asset packs from inbox"),
+    self._assetPackInstallJob and Strings("Installing asset packs...") or Strings("Import asset packs from inbox"),
     self.saveBtnFont, not self._assetPackInstallJob and self.workState~="working")
   top = top + btnH + 8 * s
 

@@ -21,7 +21,7 @@ local catalog = {
   {id="pmd_red",name="Red Rescue Team",status="beta",
     source={name="Red Rescue Team cartridge dump",formats={"gba"},sizes={33554432}},
     packs={{id="sprites",name="Sprite sheets",kind="sprite"}}},
-  {id="lttp",name="A Link to the Past",status="beta",
+  {id="lttp",name="A Link to the Past",status="beta",module="src.import.lttp.LttpImport",
     source={name="A Link to the Past cartridge dump",formats={"sfc","smc"},sizes={1048576,2097152}},
     packs={{id="sprites",name="Sprites",kind="sprite"},{id="tiles",name="Tiles",kind="tileset"},
       {id="palettes",name="Palettes",kind="palette"},
@@ -80,6 +80,16 @@ end
 function Importers.fs(fs)
   if fs and (not love or fs~=love.filesystem) then return fs end
   return require("src.import.CacheFs").dataFs()
+end
+-- Long-running pack operations yield to the launcher. A folder switch must
+-- stop that operation instead of splitting its objects between two roots.
+function Importers.pinScope(fs)
+  local getter=fs and fs.getWriteRoot
+  local captured=getter and getter()
+  return function()
+    if getter and getter()~=captured then return nil,"game-data folder changed during the pack operation" end
+    return true
+  end
 end
 function Importers.validatePack(m,id,pack)
   if type(m)~="table" or m.format~=Importers.PACK_FORMAT or not validId(m.importer) or not validId(m.pack) then
@@ -183,33 +193,15 @@ function Importers.readMetadata(id,pack,entry,fs)
   local bytes; bytes,err=Data.read(Importers.fs(fs),path,meta.size); if not bytes then return nil,err end
   return Data.decode(bytes)
 end
-local serial=0
-local function mkdir(fs,path)
-  local dir=path:match("^(.*)/[^/]+$")
-  if dir and fs.createDirectory then return fs.createDirectory(dir) end
-  return true
-end
-local function publish(fs,path,bytes)
-  if not (fs and fs.write and fs.rename and fs.remove) then return nil,"atomic pack publication is unavailable" end
-  serial=serial+1
-  local stage=path..".pending-"..serial
-  local called,ok,err=pcall(function()
-    local made,why=mkdir(fs,stage); if not made then return nil,why end
-    local wrote; wrote,why=fs.write(stage,bytes); if not wrote then return nil,why end
-    local staged; staged,why=Data.read(fs,stage,#bytes)
-    if staged~=bytes then return nil,why or "pack staging write did not match" end
-    return fs.rename(stage,path)
-  end)
-  if not called then err,ok=tostring(ok),nil end
-  if not ok then pcall(fs.remove,stage); return nil,err or "pack publication failed" end
-  return true
-end
+local publish=require("src.import.PackPublish")
 -- Install from an existing extracted pack, one bounded file per resume. The
 -- source remains untouched. Immutable objects are written before the atomic
 -- descriptor switch, so cancellation never changes the previous pack.
 function Importers.install(id,pack,sourceFs,sourceRoot,destinationFs)
   destinationFs=Importers.fs(destinationFs)
+  local sourceScope,destinationScope=Importers.pinScope(sourceFs),Importers.pinScope(destinationFs)
   return coroutine.create(function()
+    assert(sourceScope());assert(destinationScope())
     assert(Importers.pack(id,pack),"unknown asset pack")
     assert(pathInside(sourceRoot)==sourceRoot,"source root must be a relative directory")
     local text,err=Data.read(sourceFs,sourceRoot.."/"..Importers.PACK_FILE); assert(text,err)
@@ -219,6 +211,7 @@ function Importers.install(id,pack,sourceFs,sourceRoot,destinationFs)
     local keys={}; for key in pairs(m.entries) do keys[#keys+1]=key end; table.sort(keys)
     local copied={}
     local function copy(rec,metadata)
+      assert(sourceScope());assert(destinationScope())
       local rel=pathInside(rec.file)
       local old=copied[rel]
       if old and (not metadata or old.metadata) then rec.file=old.file; return end
@@ -238,6 +231,7 @@ function Importers.install(id,pack,sourceFs,sourceRoot,destinationFs)
       coroutine.yield({done=i,total=#keys,status="Installing "..key})
     end
     local encoded=Writer.encode(m); assert(#encoded<=Data.MAX_BYTES,"pack manifest exceeds the read limit")
+    assert(sourceScope());assert(destinationScope())
     ok,err=publish(destinationFs,assert(Importers.manifestPath(id,pack)),encoded); assert(ok,err)
     Importers.invalidate(destinationFs,id,pack)
     return {importer=id,pack=pack,version=m.version,entries=#keys}
