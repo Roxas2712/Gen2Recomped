@@ -13,6 +13,14 @@ Tile allocation is compiled once per sheet, and byte-pair lookup expands tiled
 4bpp data without allocating a table entry for every pixel. RGBA expansion is
 available on demand for a later owned texture upload.
 
+Schema 2 also retains each normalized native sheet's original frame indices,
+final image/geometry defaults and running-sheet mapping. An owned resource
+adapter can project a native asset override into original slots without
+assuming that row numbers match. Special native stage rewrites retain their
+actual final definitions rather than guessed default filenames. Hoenn's
+player/rival avatar state tables, link pairs and gender-specific flags are
+read from edition-specific cartridge offsets.
+
 Picture arrays end at their own boundaries, including lists named by adjacent
 graphics-info records. Mixed-size arrays retain their slots; a slot for a
 different graphics row's dimensions remains transparent instead of consuming
@@ -33,6 +41,9 @@ optional module only for a GBA dataset; an earlier generation cannot inherit
 it from a cache overlay. The GBA importer's required-file check requests the
 normal automatic re-import for an older cache missing this module. No global
 cache-format bump, mod-package conversion or player-save change is involved.
+The GBA-only completion marker includes the object-sheet schema, so a cache
+from an earlier schema follows the same automatic regeneration path even if
+the module already exists. Earlier-generation markers remain unchanged.
 
 ## Verification
 
@@ -46,7 +57,12 @@ The optional `oracle-host` compares the pinned independent extraction contract
 against all five cartridge inputs. It compares every original indexed/RGBA
 pixel, palette word, frame count and anchor. Its baseline mode runs the previous
 native importer and checks that the new importer's normalized sprite records
-are identical. Generated object modules also round-trip through the actual Lua
+and composed image pixels are identical. It also compares avatar tables and
+checks native walk/run frame mappings against independently extracted original
+indices. Native color expansion floors 5-bit channels while the original-order
+interface rounds them; the mapping comparison preserves each rule. Special
+native geometry/stage rewrites and the additional native table rows are
+reported separately. Generated object modules also round-trip through the actual Lua
 cache writer and LuaJIT compiler. Emerald's seven additional native table rows
 are reported separately; they do not replace any original sheet.
 

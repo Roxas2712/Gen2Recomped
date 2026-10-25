@@ -26,7 +26,7 @@ local function fixture(w,h,wide)
 end
 local f=fixture(16,16)
 local result=Sheets.extract(f.rom(),f.spec);local r=assert(result.objects[0])
-T.eq(result.schema,1);T.eq(r.width,16);T.eq(r.height,16);T.eq(r.frameCount,1)
+T.eq(result.schema,Sheets.SCHEMA);T.eq(r.width,16);T.eq(r.height,16);T.eq(r.frameCount,1)
 T.eq(r.paletteTag,123);T.eq(r.paletteSlot,2);T.eq(#r.indexed,256)
 for y=0,15 do for x=0,15 do
   T.eq(r.indexed:byte(y*16+x+1),math.floor(y/8)*2+math.floor(x/8)+1,'tiled bytes become row-major indices')
@@ -42,6 +42,19 @@ local blank={width=8,height=8,frameCount=1,indexed=string.rep('\0',64),palette={
 T.eq(Sheets.rgba(blank),string.rep('\0',256),'palette index zero is transparent even when colored')
 local high={width=8,height=8,frameCount=1,indexed=string.rep('\1',64),palette={[1]=65535}}
 T.eq(Sheets.rgba(high),string.rep(string.char(255,255,255,255),64),'BGR bit 15 does not affect color')
+local avatar=fixture(16,16)
+avatar.spec.avatarTables={player=0x1800,player_states=2,rival=0x1810,rival_states=1,
+  stateNames={'NORMAL','SURFING'},link_frlg=0x1820,link_rs=0x1822,state_flags=0x1830,state_flag_count=1}
+for i,v in ipairs({0,89,2,92})do avatar.u8(0x17ff+i,v)end
+avatar.u8(0x1810,5);avatar.u8(0x1811,6)
+avatar.u8(0x1820,10);avatar.u8(0x1821,11);avatar.u8(0x1822,12);avatar.u8(0x1823,13)
+avatar.u8(0x1830,0);avatar.u8(0x1831,1);avatar.u8(0x1832,89);avatar.u8(0x1833,2)
+local av=Sheets.extract(avatar.rom(),avatar.spec).avatars
+T.same(av,{player={{state='NORMAL',male=0,female=89},{state='SURFING',male=2,female=92}},
+  rival={{state='NORMAL',male=5,female=6}},linkFrlg={male=10,female=11},linkRs={male=12,female=13},
+  stateFlags={male={{gfx=0,flag=1}},female={{gfx=89,flag=2}}}},'independent avatar roles and state flags')
+avatar.spec.avatarTables.player=8192
+T.raises(function()Sheets.extract(avatar.rom(),avatar.spec)end,'outside cartridge','out-of-range avatar metadata declines')
 T.raises(function()Sheets.rgba({width=8,height=8,frameCount=1,indexed='x'})end,'invalid indexed','invalid sheet sizes decline')
 -- Original picture-table order and noncontiguous frame pointers survive.
 f.ptr(0x408,0x1400);f.u16(0x40c,128)
@@ -99,6 +112,7 @@ end
 for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire','red','yellow','gold','silver','crystal'}) do
   local marker=currentMarker(edition)
   local present=require('src.core.GameVersion').generation(edition)==3
+  T.eq(marker:find('original-object-sheets-v'..Sheets.SCHEMA..':',1,true)~=nil,present,'schema marker applies only to GBA')
   Cache.read=function(path)
     if path=='rom-cache.complete' then return marker end
     if path=='data/generated/tilesets.lua' then return 'return {TilesetPlayersHouse={},TilesetHouse={}}' end
@@ -109,6 +123,11 @@ for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire','red'
   if present then T.same(ready.missing,{'data/generated/gen3_object_sheets.lua'}) end
   Cache.exists=function()return true end
   T.eq(Importer.readyReport(edition).ok,true,'a completed upgrade becomes ready without a format bump')
+  if present then
+    local oldMarker=marker:gsub('original%-object%-sheets%-v'..Sheets.SCHEMA..':','original-object-sheets-v1:')
+    Cache.read=function(path)if path=='rom-cache.complete'then return oldMarker end end
+    T.eq(Importer.readyReport(edition).ok,false,'previous object schema requests automatic cache regeneration')
+  end
 end
 Cache.read,Cache.exists,Cache.rootReport=read,exists,rootReport
 T.finish('compact original object sheets')
