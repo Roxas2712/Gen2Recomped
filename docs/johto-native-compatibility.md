@@ -33,8 +33,8 @@ The native movement foundation now supplies the four missing terrain queries
 behind the existing `src.world.gen2.Permissions` alias. See the
 [contract and test scope](native-gen2-movement-permissions.md). Crystal's
 complete valid-byte/directional comparison agrees with the separate public
-Gen1 reference. This does not activate the incomplete `FieldMoves` facade or
-claim continuous camera movement acceptance.
+Gen1 reference. Those prerequisite tests alone do not establish the complete `FieldMoves`
+action facade or continuous camera movement acceptance.
 
 The native special-movement foundation additionally exposes connection, ledge
 and adjacent-boulder handoffs through existing native handlers. The composed
@@ -42,9 +42,9 @@ quick suite passes 271 engine suites, three SDK suites and B30. Real CPU actor
 interpolation, queues, carpet fades and public boulder completion events pass
 549 focused checks. Source/destination side-wall bypasses are fixed on the
 shared native paths. See the [handoff contract](native-gen2-movement-handoffs.md)
-and [scoped evidence](qa/native-foundation/johto-native-handoffs.json). This
-still does not activate continuous camera controls or establish new GPU/model
-acceptance.
+and [scoped evidence](qa/native-foundation/johto-native-handoffs.json). Those foundation-only results do not by themselves establish the later
+continuous-camera or GPU/model acceptance; the newer scoped checkpoint above
+records what has subsequently been exercised.
 
 The supplied ASC OMEGA Ver.1.8 package (`3.1.2-omega.1.8`) is the current
 read-only test input, superseding the previously tested Ver.1.7. It is tested unmodified with an actual Crystal Rev0 import in separate native-preview
@@ -628,8 +628,9 @@ show the correct Pokemon, levels and HP.
 Current Windows/macOS QA packages share a verified source payload, with PE64,
 eleven AMD64 DLLs, relocated entry points and strict macOS signature checks.
 Windows hardware and current default/Metal window acceptance remain open.
-Fork/upstream main are still `13af468b`; the working branch includes that base.
-The existing published preview remains `ae8359c0`.
+At that earlier encounter checkpoint, fork/upstream main were `13af468b` and
+the published preview was `ae8359c0`. These historical source statements do not
+describe the later download release or current movement development above.
 
 See the [source-bound encounter receipt](qa/native-foundation/johto-native-wild-events.json).
 
