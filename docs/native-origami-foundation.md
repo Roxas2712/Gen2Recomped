@@ -38,17 +38,15 @@ Computed imports and optional paths make that an incomplete inventory. It is
 not a count of missing functions or a parity percentage. Runtime observations
 include engine startup dependencies as well as OASC calls.
 
-An unchanged-original-mod load probe through this fork's actual SDK already
-fails at `src.ui.game3.stack`. This probe uses the ROM-free fixture and does
-not claim GPU gameplay on this fork. The native Gen3 modal-layer contract
-differs from the shared state stack: it excludes the world/battle controller,
-owns menu layers, exposes the actual mod-screen state, and supports real
-clear/reopen and preview suspension. A name-only alias would misreport
-readiness or remove the world. Native ownership/lifecycle behavior must be
-implemented before publishing that module. Subsequent requirements include
-the actual map/player/atlas records, renderer/presentation lifecycle, battle
-controls and effects, and field handoffs; satisfying the first import will
-not establish full compatibility.
+The first unchanged-original-mod fixture probe failed at
+`src.ui.game3.stack`. That historical failure is retained in the reference
+receipt. The [native GBA modal follow-up](native-gba-modal-stack.md) now
+implements real menu/state ownership and passes separate FireRed/Emerald
+Metal/OpenGL tests. The original fixture loader reaches the next missing
+module, `src.core.game3.map`, including with newer private reference
+`cef4a9ef`. This does not establish original OASC GPU compatibility on the
+fork. Actual map/player/atlas records, renderer/presentation lifecycle,
+battle controls/effects and field handoffs remain to implement.
 
 The [sanitized reference receipt](qa/native-foundation/oasc-gen1-reference.json)
 binds the exact private inputs, native runs, image hashes, loader failure and
