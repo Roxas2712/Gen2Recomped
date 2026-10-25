@@ -1750,7 +1750,7 @@ function Sidebar.install(RI)
       local cur = options(self).cloudFolder
       if cur and cur ~= "off" and not cfLabels[cur] then cfValues[#cfValues + 1] = cur; cfLabels[cur] = "Folder  " .. cur end
       add({ kind = "section", label = "CLOUD SAVES",
-            note = "Sync your saves with Google Drive, OneDrive, or a sync folder on this computer (Dropbox, iCloud...). A save is never replaced on its first sync; two backups are kept on each side." })
+            note = "Use your RetroRecomped account, Google Drive, OneDrive, or a sync folder. Choose whether saves sync automatically; local copies remain available offline." })
       add({ kind = "option", scope = "launcher", label = "SERVICE",
             row = { id = "cloudService", values = { "retro", "folder", "google", "onedrive" },
                     labels = { retro='RetroRecomped · ModCompass',folder = "Sync folder", google = "Google Drive", onedrive = "OneDrive" } } })
@@ -1759,7 +1759,7 @@ function Sidebar.install(RI)
         local Auth = require(svcDef.auth)
         local who = Auth.signedIn() and (Auth.account() or "signed in") or nil
         add({ kind = "action", label = who and ("ACCOUNT  " .. who) or "ACCOUNT",
-              value = self._cloudFlow and "CANCEL" or (who and "SIGN OUT" or "SIGN IN"), action = "sbCloudSignIn",
+              value = self:_sbCloudService()=="retro" and (who and "MANAGE" or "SIGN IN") or (self._cloudFlow and "CANCEL" or (who and "SIGN OUT" or "SIGN IN")), action = "sbCloudSignIn",
               note = self._cloudFlow and self._cloudFlow.hint or nil })
       else
         add({ kind = "option", scope = "launcher", label = "SYNC FOLDER",
