@@ -36,6 +36,17 @@ on:
       - 'tests/engine/gen3_post_hit*.lua'
       - 'tests/engine/gen3_nature_power*.lua'
       - 'tests/engine/gen3_assist*.lua'
+      - 'tests/engine/gen3_mirror*.lua'
+      - 'tests/engine/gen3_substitute*.lua'
+      - 'tests/engine/gen3_effect_presentation.lua'
+      - 'tests/engine/gen3_native_sound.lua'
+      - 'tests/native_sound/**'
+      - 'tests/substitute_art/**'
+      - 'tests/tools/test_gba_substitute_art.py'
+      - 'tools/gba_substitute_art.py'
+      - 'tools/gen3_discover.py'
+      - 'tools/rom_manifest_firered.json'
+      - 'tools/rom_manifest_emerald.json'
       - 'tests/post_hit_items/**'
       - 'tests/held_item/**'
       - 'tests/charge_required/**'
@@ -68,6 +79,8 @@ jobs:
           path: luajit-runtime
       - name: Build pinned LuaJIT
         run: make -C luajit-runtime -j2
+      - name: Validate owned Substitute import locator inputs
+        run: nice -n 19 python3 -m unittest discover -s gen2/tests/tools -p test_gba_substitute_art.py
       - name: Actual public hook and native move execution
         run: >-
           python3 gen2/tools/enemy-action-contract-check/check.py
