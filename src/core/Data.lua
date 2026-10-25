@@ -500,30 +500,7 @@ local function copy(value)
   return out
 end
 
-local function normalizeMapId(mapId)
-  if type(mapId) ~= "string" then return mapId end
-  local id = mapId:gsub("([0-9]+)_([FB])$", "%1%2")
-  local out, i, len = {}, 1, #id
-  while i <= len do
-    local ch = id:sub(i, i)
-    if ch:match("%d") then
-      local j = i + 1
-      while j <= len and id:sub(j, j):match("%d") do
-        j = j + 1
-      end
-      local prev = i > 1 and id:sub(i - 1, i - 1) or ""
-      if prev:match("%a") and prev ~= "B" and out[#out] ~= "_" then
-        out[#out + 1] = "_"
-      end
-      out[#out + 1] = id:sub(i, j - 1)
-      i = j
-    else
-      out[#out + 1] = ch
-      i = i + 1
-    end
-  end
-  return table.concat(out)
-end
+local normalizeMapId = require("src.core.MapIdentity").normalize
 
 -- AN ALIAS REMEMBERS WHAT IT WAS MADE FROM.
 --
