@@ -164,6 +164,7 @@ local function activeStr(b, role)
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3LockOn").signature(b, role) or "")
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3BatonPass").signature(b, role) or "")
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3Encore").signature(b) or "")
+    .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3Disable").signature(b) or "")
 end
 
 local function benchStr(party)

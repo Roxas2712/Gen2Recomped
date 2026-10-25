@@ -2,7 +2,9 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "encore" then
+if mode == "disable" then
+  rows = dofile(root .. "/tests/enemy_actions/disable.lua").run(root, backend, version)
+elseif mode == "encore" then
   rows = dofile(root .. "/tests/enemy_actions/encore.lua").run(root, backend, version)
 elseif mode == "baton_pass" then
   rows = dofile(root .. "/tests/enemy_actions/baton_pass.lua").run(root, backend, version)

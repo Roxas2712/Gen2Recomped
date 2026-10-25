@@ -250,7 +250,7 @@ end
 -- The active status record's beforeMove runs at its priority slot: above
 -- VOLATILE_PRIORITY before the held/disable/confusion block (sleep,
 -- freeze), at or below after it (paralysis) -- the original's order.
-function Status.beforeMove(battler, rng, battle)
+function Status.beforeMove(battler, rng, battle, move)
   local mon = battler.mon
   -- Haze curing this mon's sleep/freeze forfeits its pending move for
   -- the turn, silently (haze.asm writes $ff/CANNOT_MOVE to the selected
@@ -282,7 +282,12 @@ function Status.beforeMove(battler, rng, battle)
     msgs[#msgs + 1] = Strings("%s\ncan't move!", name(battler))
     return false, msgs
   end
-  if battler.disabledTurns then
+  if require("src.core.GameVersion").isGen3() and battler.disabledMove then
+    if require("src.battle.Gen3Disable").blocked(battler, move) then
+      msgs[#msgs + 1] = Strings("%s's\nmove is disabled!", name(battler))
+      return false, msgs, false, "gen3_disabled"
+    end
+  elseif battler.disabledTurns then
     battler.disabledTurns = battler.disabledTurns - 1
     if battler.disabledTurns <= 0 then
       battler.disabledTurns, battler.disabledSlot = nil, nil

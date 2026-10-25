@@ -57,7 +57,7 @@ function Methods.chooseMove(self, index)
   self.moveIndex = index
   local mv = moves[self.moveIndex]
   local mvDef = mv and self.data.moves[mv.id]
-  if chooser.disabledSlot == self.moveIndex then
+  if require("src.battle.Gen3Disable").blocked(chooser, mv, self.moveIndex) then
     self:say(self:romText("_MoveDisabledText", "The move is\ndisabled!"))
     self.phase = "messages"
     self.afterQueue = "menu"
@@ -175,7 +175,7 @@ local function moveReason(b, actor, slot, move)
   if not move or not b.data.moves[move.id] then
     return "invalid move slot"
   end
-  if actor.disabledSlot == slot then
+  if require("src.battle.Gen3Disable").blocked(actor, move, slot) then
     return "move is disabled"
   end
   if (move.pp or 0) <= 0 then
