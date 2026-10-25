@@ -22,10 +22,12 @@ local T=require('src.cloud.BankExchange')
 local first=assert(T.device());package.loaded['src.cloud.BankExchange']=nil;T=require('src.cloud.BankExchange')
 check(T.device()==first and #first==32,'the same installation keeps its device identity across reloads and session changes')
 local entry={schema=1,source={version='red',slot='slot1',place='Party 1'},mon={species='BULBASAUR',level=5,moves={{id='TACKLE'}}},canonical={dex=1,moves={{name='TACKLE'}}}}
+entry.mon.isEgg=true;entry.mon.eggSteps=300
 signed=false;check(not T.submit(entry,'wonder') and not T.submit(entry,'direct','RRC-ABCDEF-012345') and not T.profile() and #http==0,'both direct trade and Wonder Trade require registration before networking')
 signed=true;offline=true
 check(not T.submit(entry,'wonder'),'an unavailable network leaves a retryable offer')
 local nonce=http[#http].body.nonce;local deviceHeader=http[#http].opts.headers['X-Retro-Device']
+check(http[#http].body.summary.is_egg==true,'Wonder Trade explicitly transmits egg status without modifying the immutable Pokémon record')
 check(deviceHeader==first and http[#http].opts.sensitive,'requests send the persistent device ID through the private authenticated transport')
 offline=false;local exchange='aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
 response={id=exchange,status='pending'}
@@ -37,6 +39,7 @@ local bytes=S.encode(entry);local hash=love.data.hash('sha256',bytes)
 response={status='completed',incoming_entry=bytes,incoming_digest=hash,partner='RRC-ABCDEF-012345',mode='wonder'}
 local received=assert(T.receive(exchange))
 check(received.id==hash and #B.list()==1 and not received.alreadyReceived,'a completed exchange verifies and durably imports its Bank copy')
+check(received.entry.mon.isEgg and received.entry.mon.eggSteps==300,'receiving an egg preserves its hatch progress')
 check(T.receive(exchange).alreadyReceived and #B.list()==1,'collecting the same receipt on retry cannot duplicate its immutable Bank entry')
 response.incoming_digest=string.rep('0',64)
 check(not T.receive(exchange) and #B.list()==1,'a fingerprint mismatch never alters the existing Bank')

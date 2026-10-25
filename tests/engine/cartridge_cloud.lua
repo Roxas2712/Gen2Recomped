@@ -27,7 +27,7 @@ check(C.sync(store)=='current','the restored device shares the same sync base')
 options.launcherCartDesigns.red.name='LOCAL EDIT';doc.designs.red.style.name='OTHER DEVICE';remote[C.PATH]=S.encode(doc)
 check(not C.sync(store) and options.launcherCartDesigns.red.name=='LOCAL EDIT' and C.decode(remote[C.PATH]).designs.red.style.name=='OTHER DEVICE',
   'concurrent edits preserve both designs instead of silently overwriting either side')
-check(C.sync(store,'cloud')=='restored' and options.launcherCartDesigns.red.name=='OTHER DEVICE' and files.cloud_sync_cartridges_backup_lua==nil,
+check(C.sync(store,'cloud')=='restored' and options.launcherCartDesigns.red.name=='OTHER DEVICE',
   'explicit restore resolves the conflict')
 check(S.decode(files['cloud_sync_cartridges_backup.lua']).designs.red.name=='LOCAL EDIT','the replaced local design remains in the account-private recovery copy')
 local asset='profiles/cartridges/assets/'..image.id..'_1.lua';remote[asset]='broken';files={};options={launcherLogoCards=true,launcherCartDesigns={}}
