@@ -72,6 +72,41 @@ python3 tools/runtime-upvalue-check/love_abi.py \
   --output .local/qa/runtime-host-test/candidate
 ```
 
+## Qualified desktop components
+
+After every native matrix job passes, the workflow combines the two Mac
+libraries and stages the Windows library as `qualified-desktop-runtime`.
+`component.py` verifies the capacity/host receipt pairing, the exact library
+bytes, native architecture, both variants' engine/C API gates and a matching
+engine source tree. The universal Mac library must contain both original
+qualified slices byte-for-byte. It includes the LuaJIT license notice and
+original receipts. These artifacts contain no application, ROM or mod data.
+
+The engine tree is recorded at qualification time and must still match the
+source selected for packaging. Older reports without that binding are not
+eligible components. The local staging command uses QA leases and refuses
+existing outputs. Given the separately extracted native CI artifacts:
+
+```sh
+python3 tools/runtime-upvalue-check/component.py --platform macos \
+  --candidate /path/to/runtime-capacity-macos-x64 \
+  --candidate /path/to/runtime-capacity-macos-arm64 \
+  --output .local/qa/desktop-components/candidate/macos
+```
+
+`build_native_preview.py --qualified-runtime /path/to/component.json` opts
+into that platform's checked component. It still verifies the official host
+archive, copies only into its own package, preserves preview isolation, and
+records the override and final installed-library hash. The Mac framework is
+renamed/signed only in that package. The normal builder default remains the
+official stock runtime. `package_native_release.py` accepts paired
+`--windows-runtime-component` and `--macos-runtime-component` inputs; an
+extended-runtime release cannot silently ship only one qualified platform.
+The standalone `.love` still needs the corresponding extended runtime.
+
+Component and package checks do not replace actual fused-application GPU,
+input, gameplay or long-session verification before release claims.
+
 ## Individual probes
 
 From the engine repository root, run both interpreters:
