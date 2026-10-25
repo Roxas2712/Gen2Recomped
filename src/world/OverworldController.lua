@@ -1060,7 +1060,7 @@ function OverworldState:enter(mapId, x, y, facing)
   self.scriptMoves = {}
   -- A fresh world entry may reuse this singleton and the same save/data.
   -- It starts a new coordinate visit; a same-map graphics rebuild does not.
-  self.gen2CoordVisit, self.lastCellMapId = nil, nil
+  self.gen2CoordVisit, self.gen2StepVisit, self.gen2EncounterVisit, self.lastCellMapId = nil, nil, nil, nil
   self.pendingScripts = {}
   self.parallelRunners = {}
   self.parallelQueue = {}
@@ -3335,23 +3335,24 @@ end
 -- Poll it here, on an idle frame, and hand the caller script to the same
 -- pending-script FIFO a warp cutscene uses.
 function OverworldState:checkSpecialPhoneCall()
-  if not GameVersion.isGen2() then return end
-  if Game.save.g2SpecialCall == nil then return end
+  if not GameVersion.isGen2() then return false end
+  if Game.save.g2SpecialCall == nil then return false end
   if self.transitioning or self.runner:isRunning() or #self.scriptMoves > 0 then
-    return
+    return false
   end
-  if self.player and (self.player.moving or self.player.targetX) then return end
+  if self.player and (self.player.moving or self.player.targetX) then return false end
   local outside = self.map and self.map.def and Map.isOutdoor(self.map.def)
   local Gen2Commands = require("src.script.Gen2Commands")
   local caller, script =
     Gen2Commands.pendingSpecialCall(Game.data, Game.save, outside)
-  if not script then return end
+  if not script then return false end
   Game.save.g2SpecialCallActive = Game.save.g2SpecialCall
   Game.save.g2SpecialCall = nil
   -- wCurCaller, which the caller script's `readvar 23` reads back
   Game.save.g2CurCaller = caller
   self:queueScript(script, { phoneCaller = caller,
     onDone = function() Game.save.g2CurCaller = nil end })
+  return true
 end
 
 -- CheckPhoneCall (36:$4074): the random incoming call, rolled on every step
@@ -3364,22 +3365,22 @@ end
 -- "in-game minutes since the last call", and the port has no separate RTC to
 -- keep them apart.
 function OverworldState:checkIncomingPhoneCall()
-  if not GameVersion.isGen2() then return end
+  if not GameVersion.isGen2() then return false end
   if self.transitioning or self.runner:isRunning() or #self.scriptMoves > 0 then
-    return
+    return false
   end
-  if Game.save.g2SpecialCall ~= nil then return end
-  if self.pendingScripts and self.pendingScripts[1] then return end
+  if Game.save.g2SpecialCall ~= nil then return false end
+  if self.pendingScripts and self.pendingScripts[1] then return false end
   local p = self.player
-  if not (p and self.map) then return end
+  if not (p and self.map) then return false end
   -- CheckStandingOnEntrance: no call while the player is on a door or warp
-  if self.map:warpAtCell(p.cellX, p.cellY) then return end
+  if self.map:warpAtCell(p.cellX, p.cellY) then return false end
   local Gen2Commands = require("src.script.Gen2Commands")
   local minutes = math.floor(
     require("src.core.SaveData").playSeconds(Game.save) / 60)
   local id, script = Gen2Commands.rollIncomingCall(
     Game.data, Game.save, self.map.def, self:timeOfDay(), minutes, false)
-  if not script then return end
+  if not script then return false end
   Game.save.g2CurCaller = id
   -- Phone_StartRinging (36:$4337) before the script, Phone_CallEnd after it
   pcall(function() require("src.core.Sound").play(Game.data, "Call") end)
@@ -3387,6 +3388,7 @@ function OverworldState:checkIncomingPhoneCall()
     Game.save.g2CurCaller = nil
     pcall(function() require("src.core.Sound").play(Game.data, "Hang_Up") end)
   end })
+  return true
 end
 
 function OverworldState:update(dt)
@@ -3719,7 +3721,7 @@ function OverworldState:update(dt)
   -- a standing instruction ("wPlayerState is PLAYER_BIKE while this is set"),
   -- not an event, and the check is two flag reads.
   self:applyForcedBike()
-  self:checkSpecialPhoneCall()
+  if not require("src.world.Gen2StepEvents").vanilla() then self:checkSpecialPhoneCall() end
   self:checkBugContestClock()
   -- world.tick: the per-frame seam for mods that simulate something in the
   -- overworld rather than draw it.
@@ -12442,14 +12444,28 @@ end
 -- SFX_POISONED; fainted mons get their message; a whole-party faint
 -- blacks out like a lost battle.  Returns true when the step should
 -- stop (a text box is up).
-function OverworldState:applyFieldPoison()
+function OverworldState:advanceFieldPoisonCounter(deferReset)
   local save = Game.save
   local emerald = GameVersion.get() == "emerald"
   -- UpdatePoisonStepCounter does not advance while inside a Secret Base.
   if emerald and self.map and self.map.def and self.map.def.mapType == "SECRET_BASE" then return false end
   local interval = FieldDefaults.world(Game.data, "poisonStepInterval") or 4
+  if deferReset then
+    save.poisonSteps=((save.poisonSteps or 0)+1)%256
+    return save.poisonSteps>=interval
+  end
   save.poisonSteps = ((save.poisonSteps or 0) + 1) % interval
-  if save.poisonSteps ~= 0 then return false end
+  return save.poisonSteps == 0
+end
+
+function OverworldState:applyFieldPoison()
+  if not self:advanceFieldPoisonCounter() then return false end
+  return self:applyFieldPoisonDamage()
+end
+
+function OverworldState:applyFieldPoisonDamage()
+  local save = Game.save
+  local emerald = GameVersion.get() == "emerald"
   local damage = FieldDefaults.world(Game.data, "poisonDamage") or 1
   -- GEN 4 CHANGED THIS RULE AND THE PORT WAS STILL PLAYING GEN 2'S.
   --
@@ -13136,6 +13152,67 @@ function OverworldState:checkWarpOnArrive()
   return false
 end
 
+-- Native Gen2 CountStep, after warp/coordinate ownership and before encounters.
+-- Existing save counters and presentation remain authoritative. A repeat uses
+-- the same carry verdict without ticking again; hatch retains pending poison.
+function OverworldState:countStep()
+  local p=self.player
+  if not GameVersion.isGen2() or not (p and self.map and self.runner and Game and Game.data and Game.save)
+     or p.moving then return false end
+  if self:busy() then return true end -- an actual script/overlay already owns this frame
+  self:noteCellChange()
+  local Steps=require("src.world.Gen2StepEvents")
+  if Steps.matches(self.gen2CoordVisit,self,Game) then return true end
+  if Steps.matches(self.gen2StepVisit,self,Game) then return self.gen2StepVisit.blocked end
+  local visit=Steps.visit(self,Game);self.gen2StepVisit=visit
+  local function stop()visit.blocked=true;return true end
+  if Steps.vanilla() and self:checkSpecialPhoneCall() then return stop() end
+  local save=Game.save
+  if Steps.vanilla() and save.repelSteps and save.repelSteps>0 then
+    save.repelSteps=save.repelSteps-1
+    if save.repelSteps==0 then
+      Game.stack:push(TextBox.new(Game,Strings("REPEL's effect\nwore off.")))
+      return stop()
+    end
+  end
+  self.todSteps=(self.todSteps or 0)+1
+  require("src.world.PikachuFollower").onStep(save)
+  require("src.world.HgssFollowMon").onStep(Game,self)
+  if not require("src.pokemon.Gen2Friendship").isVanilla() and self.todSteps%128==0 then
+    for _,mon in ipairs(save.party or {}) do require("src.pokemon.Evolution").changeHappiness(mon,"WALKING") end
+  end
+  if Runtime.wantsHook("world.tod") then self:timeOfDay() end
+  if self:safariStep() then return stop() end
+  local due
+  if Steps.vanilla() then
+    due=self:advanceFieldPoisonCounter(true)
+    if self:stepEggs() then return stop() end
+  end
+  if save.daycare and save.daycare.mon then
+    save.daycare.steps=(save.daycare.steps or 0)+(FieldDefaults.world(Game.data,"daycareExpPerStep") or 1)
+  end
+  require("src.pokemon.DayCare").step(Game.data,save,FieldDefaults.world(Game.data,"daycareExpPerStep") or 1)
+  if Steps.vanilla() then
+    if due then
+      save.poisonSteps=0
+      if self:applyFieldPoisonDamage() then return stop() end
+    end
+    Steps.bikeStep(save,self:movementState(),self.map.def)
+  else
+    -- Preserve non-vanilla Gen2 datasets' own per-step egg and poison rules.
+    if self:applyFieldPoison() or self:stepEggs() then return stop() end
+    if save.repelSteps and save.repelSteps>0 then
+      save.repelSteps=save.repelSteps-1
+      if save.repelSteps==0 then
+        Game.stack:push(TextBox.new(Game,Strings("REPEL's effect\nwore off.")))
+        return stop()
+      end
+    end
+  end
+  if self:checkIncomingPhoneCall() then return stop() end
+  return false
+end
+
 function OverworldState:onStepComplete()
   local p = self.player
   -- THE DISTORTION WORLD'S COORDINATE EVENTS fire where a step ends
@@ -13240,6 +13317,7 @@ function OverworldState:onStepComplete()
     p.elevation = self.map:elevationAfter(p.elevation, p.cellX, p.cellY, from and from.x, from and from.y)
     self.elevationFrom = { map = self.map, x = p.cellX, y = p.cellY }
   end
+  if not GameVersion.isGen2() then
   self.todSteps = (self.todSteps or 0) + 1
   -- UpdatePikachuHappinessAndMood rides the step counter (poison.asm)
   require("src.world.PikachuFollower").onStep(Game.save)
@@ -13263,6 +13341,8 @@ function OverworldState:onStepComplete()
   -- paletteNameFor reads self.tod on the next paint
   if Runtime.wantsHook("world.tod") then
     self:timeOfDay()
+  end
+
   end
 
   -- hot path: the payload is only built when something is listening
@@ -13316,7 +13396,7 @@ function OverworldState:onStepComplete()
   self:gen3FieldCallStep()
 
   -- CheckPhoneCall rides this same step, right after the warp checks
-  self:checkIncomingPhoneCall()
+  if not GameVersion.isGen2() then self:checkIncomingPhoneCall() end
 
   -- Route 22 Gate rewrites LAST_MAP by Y before warps/guards fire
   self:syncLastMapRewrite()
@@ -13361,7 +13441,15 @@ function OverworldState:onStepComplete()
     end
   end
 
-  if GameVersion.isGen2() and self:tryCoordScript() then return end
+  if GameVersion.isGen2() then
+    if self:busy() then return true end
+    self.boulderTried=nil
+    self:clearWarpCooldownIfLeft()
+    if self:checkWarpOnArrive() then return true end
+    if self:tryCoordScript() then return true end
+    if self:countStep() then return true end
+    if self:tryWildEncounter() then return true end
+  end
 
   -- AN AUTHORED EVENT THAT DECLARES ITSELF A REPLACEMENT, ahead of the hooks.
   --
@@ -13538,13 +13626,13 @@ function OverworldState:onStepComplete()
   if self:checkHgssSpinTiles() then return end
 
   -- the Safari game step counter (engine/events/hidden_events/safari_game.asm)
-  if self:safariStep() then return end
+  if not GameVersion.isGen2() and self:safariStep() then return end
   if GameVersion.isGen4() then self:gen4RadarStep() end
   -- BLACK / WHITE: the phenomena's step roll (src/world/Gen5Phenomena.lua)
   if GameVersion.isGen5() then require("src.world.Gen5Phenomena").step(self) end
 
   -- day-care: the boarded Pokémon gains 1 exp per step (like the original)
-  if Game.save.daycare and Game.save.daycare.mon then
+  if not GameVersion.isGen2() and Game.save.daycare and Game.save.daycare.mon then
     Game.save.daycare.steps = (Game.save.daycare.steps or 0)
       + (FieldDefaults.world(Game.data, "daycareExpPerStep") or 1)
   end
@@ -13553,18 +13641,19 @@ function OverworldState:onStepComplete()
   -- and rolls for an egg when the counter's low byte comes round.  Without
   -- this the Route 117 day care took your Pokemon and then stood still --
   -- nothing grew a level and no egg was ever laid.
-  if GameVersion.isGen2() or GameVersion.isGen3() then
+  if GameVersion.isGen3() then
     require("src.pokemon.DayCare").step(Game.data, Game.save,
       FieldDefaults.world(Game.data, "daycareExpPerStep") or 1)
   end
 
   -- out-of-battle poison (engine/events/poison.asm): every 4th step
   -- each poisoned mon loses 1 HP, with the screen flicker + sound
-  if self:applyFieldPoison() then return end
+  if not GameVersion.isGen2() and self:applyFieldPoison() then return end
 
   -- an EGG one step from hatching owns the screen the same way
-  if self:stepEggs() then return end
+  if not GameVersion.isGen2() and self:stepEggs() then return end
 
+  if GameVersion.isGen2() then return end -- shared native count/encounter phases already ran
   self.boulderTried = nil -- a completed step ends any armed boulder push
 
   self:clearWarpCooldownIfLeft()
@@ -13594,6 +13683,21 @@ function OverworldState:onStepComplete()
     end
   end
 
+  return self:tryWildEncounter()
+end
+
+function OverworldState:tryWildEncounter()
+  local p = self.player
+  if not (p and self.map and Game and Game.data and Game.save) then return false end
+  if GameVersion.isGen2() then
+    if p.moving or self:busy() or not (Game.save.party and #Game.save.party > 0) then return false end
+    self:noteCellChange()
+    local Steps = require("src.world.Gen2StepEvents")
+    if Steps.matches(self.gen2CoordVisit,self,Game)
+       or (Steps.matches(self.gen2StepVisit,self,Game) and self.gen2StepVisit.blocked)
+       or Steps.matches(self.gen2EncounterVisit,self,Game) then return false end
+    self.gen2EncounterVisit=Steps.visit(self,Game)
+  end
   -- TryWildEncounter_BugContest (25:$7D64): while the contest is running the
   -- park rolls its OWN table (ContestMons) and ignores the map's wildmons
   -- entirely.  Guarded on the run being live, so visiting the park outside the
@@ -13612,7 +13716,7 @@ function OverworldState:onStepComplete()
         end
         self:pushBattle(battle)
       end
-      return
+      return battle ~= nil
     end
   end
   local BugContest = require("src.world.BugContest")
@@ -13627,7 +13731,7 @@ function OverworldState:onStepComplete()
       battle.onFinish = function(result) self:afterBattle(result, battle) end
       self:pushBattle(battle)
     end
-    return
+    return wild ~= nil
   end
 
   -- wild encounters in grass, on water while surfing, or -- on indoor
@@ -13651,9 +13755,9 @@ function OverworldState:onStepComplete()
   if pyramidWild then encDef = Pyramid.wildTable(Game.save) end
   -- THE POKE RADAR: stepping into a shaking patch is always an encounter, and
   -- not one Repel or a roamer can touch (src/world/Gen4Radar.lua)
-  if GameVersion.isGen4() and self:gen4RadarEncounter(encDef) then return end
+  if GameVersion.isGen4() and self:gen4RadarEncounter(encDef) then return true end
   -- BLACK / WHITE: a phenomenon underfoot is its own guaranteed encounter
-  if GameVersion.isGen5() and require("src.world.Gen5Phenomena").encounter(self, encDef) then return end
+  if GameVersion.isGen5() and require("src.world.Gen5Phenomena").encounter(self, encDef) then return true end
   local enc
   local indoor = Game.data.field.indoorEncounters
   local env = Gen2Environment.id(self.map.def)
@@ -13713,12 +13817,12 @@ function OverworldState:onStepComplete()
   if pyramidWild and enc then
     -- GenerateBattlePyramidWildMon: the slot names an index into the round's list
     enc = Pyramid.wildFor(Game.data, Game.save, enc)
-    if not enc then return end
+    if not enc then return false end
   elseif pikeWild and enc then
     -- TryGenerateBattlePikeWildMon(TRUE): its level, its moves, and the lead's
     -- Keen Eye / Intimidate; no roamer joins
     enc = Pike.wildFor(Game.data, Game.save, enc)
-    if not enc then return end
+    if not enc then return false end
   elseif enc and GameVersion.isGen3() and (not onWater or GameVersion.get()=="emerald") then
     -- HOENN'S ROAMER IS ONE, NOT THREE, and the roll is its own: the
     -- cartridge asks IsRoamerAt first and only then spends a quarter chance,
@@ -13800,7 +13904,7 @@ function OverworldState:onStepComplete()
     local lead = Party.firstHealthy(Game.save.party) or Game.save.party[1]
     if Game.save.repelSteps and Game.save.repelSteps > 0
        and lead and lead.level and enc.level < lead.level then
-      return
+      return false
     end
     local BattleState = require("src.battle.BattleState")
     -- BATTLETYPE_ROAMING: Music_SuicuneBattle, the one-turn flee, and the
@@ -13830,7 +13934,7 @@ function OverworldState:onStepComplete()
         Pyramid.afterBattle(Game, self)
       end
       self:pushBattle(battle)
-      return
+      return true
     end
     if pikeWild then
       Pike.prepareWild(battle, enc)
@@ -13839,7 +13943,7 @@ function OverworldState:onStepComplete()
         self:afterBattle(result, battle)
       end
       self:pushBattle(battle)
-      return
+      return true
     end
     -- BLACK / WHITE: the terrain under the battle, and dark grass's thick-
     -- grass flag and double (src/world/Gen5WildTables.lua)
@@ -13848,12 +13952,13 @@ function OverworldState:onStepComplete()
     end
     -- PLATINUM, WALKING WITH A PARTNER: a double, the partner beside you
     if GameVersion.isGen4() and self:gen4Escorted() and not roamer then
-      if not self:gen4EscortWild(battle, onWater, land) then return end
+      if not self:gen4EscortWild(battle, onWater, land) then return false end
     end
     battle.onFinish = function(result) self:afterBattle(result, battle) end
     self:pushBattle(battle)
-    return
+    return true
   end
+  return false
 end
 
 -- SystemFlag_CheckHasPartner: Cheryl, Mira, Riley, Marley or Buck is walking

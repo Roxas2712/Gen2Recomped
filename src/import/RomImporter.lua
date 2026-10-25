@@ -1304,9 +1304,9 @@ local function markerFor(version)
   if version == "heartgold" or version == "soulsilver" then revision = "hgss-gear-dex-v1:hgss-summary-v2:hgss-effect-bg-v1:hgss-field-fx-v1:hgss-pc-anim-v1:" end
   -- Include version-specific field encounters, sleep, swarm and rate tables.
   -- Only these three caches need rebuilding; other markers remain stable.
-  -- v8: field.gen2TradeAnim, GSC's own trade movie art (Gen2TradeArt).
+  -- v9: retain the map header's phone-service nibble beside its palette.
   if version == "gold" or version == "silver" or version == "crystal" then
-    revision = "gen2-field-encounters-v8:"
+    revision = "gen2-field-encounters-v9:"
   end
   -- field.tradeArt: the cable-trade movie's tiles out of the ROM
   -- (Gen1TradeArt); without it the trade ran on drawn stand-ins.
