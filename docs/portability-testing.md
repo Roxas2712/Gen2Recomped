@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209 and #210 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210 and #212 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,46 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`f39cc19534737f8f3b764cdd1c1a1d993a96fd6e`. Its ROM-free run passed
-**217/217 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`b298c7188bd731dc65d191cceea1456f555dca50`. Its ROM-free run passed
+**218/218 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #212](https://github.com/UNDERdecoded/Gen2Recomped/pull/212) shares
+native GBA critical policy between ordinary damage and Beat Up. First/Wally
+states skip critcalc's draw; Teachy TV consumes it and discards its result.
+Oak's inflicted-damage bit advances after the public hit event. Existing
+script/constructor metadata reaches the policy. Public critical contexts
+carry battle, target, canonical/numeric move IDs and stage, and ordinary GBA
+hit events carry damage kind and Substitute metadata.
+
+Native physical item/current-species stages and the critical cap are covered.
+Lansat uses Focus Energy and is not consumed or stacked when already focused.
+The focused suite passes **3,396/3,396 checks**, including legacy passthrough
+controls. The shared API-3 mod/action/executor matrix matches clean read-only
+Gen1 in **52 isolated workers / 5,214 paired observations** on this runtime.
+The new critical matrix has 27 FireRed and 29 Emerald cases at all four
+positions with ordinary and scripted attacks; see [coverage and limits](native-gba-critical-context.md).
+The clean #210 negative control fails **288 assertions** in its new FireRed cases.
+
+Feature quick acceptance is **92/101** engine suites against **91/100** on
+clean #210. Exact Counters of all **25 inherited FAIL lines across nine
+suites** match, with no additions; SDK 3/3 and B30 pass. This combined branch
+includes the baseline repairs and passes **218/218**, SDK 3/3 and B30 with
+zero FAIL lines. Integration preserves the existing native held-item phase
+guard while adding the alternate Focus Energy marker. Only the audited
+effect fingerprint section changes for `BEAT_UP_EFFECT.rev = 3`; the
+fingerprint gate passes 33/33 checks.
+
+All six hosted #212 workflows await maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40148026770)
+has zero executed jobs. The app's 100-artifact cap prevents another PR card;
+the regular PR is published and linked. Stats are controlled and kind fields
+on the reference/Oak cases are seeded. Full controller playback, constructor
+stat generation, advice/intro/animation behavior, fresh ROM import, raw RNG
+traces and complete gameplay remain separate acceptance surfaces.
+
+Prior #210 results retain runtime
+`f39cc19534737f8f3b764cdd1c1a1d993a96fd6e` and its 217/217 engine result:
 
 [PR #210](https://github.com/UNDERdecoded/Gen2Recomped/pull/210) reads
 Beat Up participants across both native side parties in two-trainer and

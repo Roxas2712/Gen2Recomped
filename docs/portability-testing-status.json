@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "f39cc19534737f8f3b764cdd1c1a1d993a96fd6e",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/210",
-  "feature_ref": "c2a1a032eab21646d025b8b9704b6553507e1a01",
+  "runtime_ref": "b298c7188bd731dc65d191cceea1456f555dca50",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/212",
+  "feature_ref": "d2d1f3b7b56493505df147fb5083d68ba78f46d7",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 217,
-  "engine_suites_total": 217,
+  "engine_suites_passed": 218,
+  "engine_suites_total": 218,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 48,
-  "cross_engine_paired_observations": 4766,
+  "cross_engine_worker_runs": 52,
+  "cross_engine_paired_observations": 5214,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All six #210 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
+  "hosted_ci": "All six #212 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -1881,5 +1881,84 @@
     },
     "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
     "scope": "Native joined side-party reads with independent ownership benches; actual constructor/actions and synthetic prebuilt parties; scoped view/detached active mon seeded explicitly. Full raw RNG traces, arbitrary mid-move ownership reshaping, full link/multi-owner controllers, animations and complete gameplay remain separate"
+  },
+  "native_gba_critical_context": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/212",
+    "feature_ref": "d2d1f3b7b56493505df147fb5083d68ba78f46d7",
+    "prerequisite_pr": 210,
+    "prerequisite_ref": "c2a1a032eab21646d025b8b9704b6553507e1a01",
+    "combined_runtime_ref": "b298c7188bd731dc65d191cceea1456f555dca50",
+    "focused_checks_passed": 3396,
+    "source_reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_modified": false,
+    "games": [
+      "firered",
+      "emerald"
+    ],
+    "new_cases": {
+      "firered": 27,
+      "emerald": 29
+    },
+    "positions": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "attacks": [
+      "ordinary",
+      "scripted Beat Up"
+    ],
+    "shared_critical_fields": [
+      "battle",
+      "target",
+      "moveId",
+      "moveNum",
+      "stage"
+    ],
+    "shared_hit_fields": [
+      "kind",
+      "substitute"
+    ],
+    "cross_engine_worker_runs": 52,
+    "cross_engine_paired_observations": 5214,
+    "paired_result": "passed",
+    "combined_engine_suites_passed": 218,
+    "combined_engine_suites_total": 218,
+    "combined_failure_lines": 0,
+    "negative_control_failed_assertions": 288,
+    "feature_baseline": {
+      "engine_suites_passed": 92,
+      "engine_suites_total": 101,
+      "prerequisite_engine_suites_passed": 91,
+      "prerequisite_engine_suites_total": 100,
+      "failure_lines": 25,
+      "exact_failure_counter_matches_prerequisite": true,
+      "new_failure_lines": 0,
+      "existing_failure_suites": 9
+    },
+    "vm": {
+      "official_luajit_ref": "a4c064539ea931274d407e1249b4bb575424a0f4",
+      "version": "2.1.1792588164",
+      "jit_enabled": true
+    },
+    "fingerprint": {
+      "before": "fdbfa30b20cbbaef",
+      "after": "a000e3862d11a73a",
+      "changed_record": "BEAT_UP_EFFECT.rev = 3",
+      "changed_section": "move_effects",
+      "section_before": "e4d28f474c15cd8b",
+      "section_after": "cca86e08b893522c",
+      "other_six_populated_sections": "unchanged",
+      "revision_2_restores_prerequisite": true
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "workflow_count": 6,
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40148026770",
+      "jobs": 0
+    },
+    "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
+    "scope": "Native critical guards/draw order, hook context/overrides and hit metadata, physical item/current-species stages, Lansat producer; actual Gen2 script/constructors with controlled stats and reference kind/Oak fields seeded. Full controller/constructor stat/advice/intro/animation, fresh ROM/raw RNG/link/gameplay acceptance remains separate"
   }
 }
