@@ -5694,6 +5694,7 @@ function RomImporter:draw()
   local donateH = self.hintFont:getHeight() + 10 * s
   local chipsH = (#footerLinks > 0) and (8 * s + donateH) or 0
   local footerH = 10 * s + bcgDH + 6 * s + warningH + 8 * s + creditH + chipsH + 12 * s
+  if self.sidebarMode then footerH=creditH+26*s end
 
   -- Logo: centred over the strip, width clamped, gentle bob + glow pulse.  The
   -- resting metrics fix the tab bar's top so the layout never shifts as it bobs.
@@ -6173,6 +6174,13 @@ function RomImporter:draw()
   col(PAL.cardBorder, 0.18)
   love.graphics.line(appX + padH, footerTop, appX + appW - padH, footerTop)
 
+  if self.sidebarMode then
+    self.bcgButton,self.bcgUrl,self.linkUrlRect=nil,nil,nil
+    self.donateButtons,self.donateButton={},nil
+    love.graphics.setFont(self.hintFont)
+    col(PAL.detail,.7)
+    love.graphics.printf('RetroRecomped  /  Engine: '..credit.by,appX+padH,footerTop+12*s,appW-2*padH,'center')
+  else
   local bcgX, bcgY = appX + (appW - bcgDW) / 2, footerTop + 10 * s
   local warningY = bcgY + bcgDH + 6 * s
   self.bcgButton = { x = bcgX, y = bcgY, width = bcgDW, height = bcgDH }
@@ -6249,6 +6257,8 @@ function RomImporter:draw()
       self.donateButton = self.donateButtons[1]
     end
   end
+
+  end -- Classic upstream footer. RetroRecomped keeps a compact engine credit.
 
   -- End of the scrolling column; the logo and the page scrollbar are pinned and
   -- draw outside it.
@@ -6531,8 +6541,8 @@ function RomImporter:draw()
     -- author wrote before installing, not to reproduce their formatting.
     local d = self._findDetails
     local ModUpdate = require("src.mods.ModUpdate")
-    local dw = math.min(appW - 32 * s, 520 * s)
-    local dh = math.min(height - 48 * s, 420 * s)
+    local dw = math.min(appW - 32 * s, (d.communityEntry and 820 or 520) * s)
+    local dh = math.min(height - 48 * s, (d.communityEntry and 650 or 420) * s)
     local dx = appX + (appW - dw) / 2
     local dy = oy + (height - dh) / 2
     local rr = 12 * s
@@ -6549,7 +6559,8 @@ function RomImporter:draw()
     love.graphics.setFont(self.hintFont)
     col(PAL.detail)
     local textTop = dy + 44 * s
-    local textH = dh - 44 * s - 52 * s
+    local videos=d.communityEntry and d.communityEntry.videos or {}
+    local textH = dh - 44 * s - 52 * s - (#videos>0 and 42*s or 0)
     local _, lines = self.hintFont:getWrap(body, dw - 32 * s)
     local bodyH = #lines * self.hintFont:getHeight()
     d.max = math.max(0, bodyH - textH)
@@ -6565,6 +6576,27 @@ function RomImporter:draw()
       x = dx + (dw - closeW) / 2, y = dy + dh - closeH - 12 * s,
       width = closeW, height = closeH,
     }
+    self._findDetailsInstall=nil
+    self._findDetailsVideos={}
+    if #videos>0 then
+      d.videoIndex=math.max(1,math.min(#videos,d.videoIndex or 1))
+      local video=videos[d.videoIndex]
+      local url=require('src.import.LauncherCommunity').videoUrl(video)
+      local nextW=#videos>1 and 86*s or 0
+      if url then
+        local r=self:_chipButton(dx+16*s,dy+dh-closeH-54*s,'VIDEO: '..tostring(video.title or ('Video '..d.videoIndex)),{w=dw-32*s-nextW,h=32*s,kind='accent'})
+        r.url=url;self._findDetailsVideos[#self._findDetailsVideos+1]=r
+      end
+      if #videos>1 then
+        local r=self:_chipButton(dx+dw-16*s-nextW,dy+dh-closeH-54*s,tostring(d.videoIndex)..'/'..#videos..' >',{w=nextW,h=32*s})
+        r.nextVideo=true;self._findDetailsVideos[#self._findDetailsVideos+1]=r
+      end
+    end
+    if d.communityEntry then
+      self._findDetailsClose.x=dx+dw-closeW-16*s
+      self._findDetailsInstall=self:_chipButton(dx+16*s,dy+dh-closeH-12*s,'INSTALL LATEST ZIP',{
+        w=math.min(dw-closeW-48*s,230*s),h=closeH,kind='accent'})
+    end
     local chot = self:_hover(self._findDetailsClose)
     col(PAL.disabled, chot and 0.55 or 0.35)
     love.graphics.rectangle("fill", self._findDetailsClose.x,
@@ -6833,6 +6865,18 @@ function RomImporter:mousepressed(x, y, button)
   end
   if self._findDetails then
     if button ~= 1 then return end
+    for _,r in ipairs(self._findDetailsVideos or {}) do
+      if inside(r,x,y) then
+        if r.nextVideo then self._findDetails.videoIndex=(self._findDetails.videoIndex or 1)%#self._findDetails.communityEntry.videos+1
+        else love.system.openURL(r.url) end
+        return
+      end
+    end
+    if self._findDetails.communityEntry and inside(self._findDetailsInstall,x,y) then
+      local entry=self._findDetails.communityEntry
+      self._findDetails=nil;self:_findConfirmInstall(entry)
+      return
+    end
     if inside(self._findDetailsClose, x, y) then
       self._findDetails = nil
     end
@@ -11696,5 +11740,11 @@ require("src.import.LauncherRestore").install(RomImporter)
 require("src.import.LauncherWorkspace").install(RomImporter)
 require("src.import.CartDesigner").install(RomImporter)
 require("src.import.LauncherSequence").install(RomImporter)
+require("src.import.LauncherCommunity").install(RomImporter)
+require("src.import.LauncherModProfiles").install(RomImporter)
+require("src.import.LauncherStorage").install(RomImporter)
+require("src.import.LauncherBank").install(RomImporter)
+require("src.import.BankWorkspace").install(RomImporter)
+require("src.import.DeveloperWorkspace").install(RomImporter)
 
 return RomImporter

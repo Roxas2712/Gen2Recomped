@@ -6,6 +6,7 @@ local SaveData = require('src.core.SaveData')
 local Sidebar = require('src.import.LauncherSidebar')
 local Library = require('src.import.LauncherLibrary')
 local Hardware = require('src.import.LauncherHardware')
+local Sources = require('src.import.CartridgeSources')
 
 Designer.SHELLS = {{126,211,225},{166,135,218},{231,178,92},{228,100,101},{103,165,238},{100,201,148},{214,217,224},{61,68,84}}
 Designer.LABELS = {{32,52,65},{48,35,69},{65,47,28},{68,30,39},{24,39,71},{21,54,43},{54,58,67},{18,21,29}}
@@ -30,7 +31,14 @@ function Designer.normalize(value)
   local pattern='orbit'
   for _,p in ipairs(Designer.PATTERNS) do if value.pattern==p then pattern=p end end
   local art=type(value.art)=='string' and value.art:match('^launcher/cart_art/[%w_%-]+%.png$') and value.art or nil
-  return {name=name,shell=rgb(value.shell),label=rgb(value.label),pattern=pattern,art=art}
+  local function bounded(n,lo,hi,fallback)
+    n=tonumber(n);if not n or n~=n then return fallback end
+    return math.max(lo,math.min(hi,n))
+  end
+  return {name=name,shell=rgb(value.shell),label=rgb(value.label),pattern=pattern,art=art,
+    artMode=value.artMode=='cartridge' and 'cartridge' or 'label',
+    artFit=value.artFit=='cover' and 'cover' or 'contain',artZoom=bounded(value.artZoom,1,3,1),
+    artX=bounded(value.artX,0,1,.5),artY=bounded(value.artY,0,1,.5)}
 end
 
 local function same(a,b)
@@ -97,6 +105,7 @@ function Designer.install(RI)
     local image,why=self:_cartImageBytes(bytes)
     if not image then draft.notice=Strings(why);return end
     draft.image,draft.png=image.image,image.bytes
+    if draft.referenceOpened then draft.style.artMode='cartridge' end
     draft.notice=Strings('Artwork loaded. Save the design to keep it.')
   end
 
@@ -179,8 +188,33 @@ function Designer.install(RI)
       control('pattern',id,r)
     end
     ey=ey+54*s
-    local upload=self:_glassyButton(ex,ey,ew,38*s,'Use your own image',self.hintFont,true)
+    local reference=Sources.get(d.version)
+    if reference then
+      local source=self:_glassyButton(ex,ey,ew,38*s,'Original cartridge: image source ↗',self.hintFont,true)
+      control('source',reference.page,source);ey=ey+50*s
+      local help=Strings('Open Bulbagarden Archives, check its usage terms and save the image yourself. Then import the saved file below.')
+      paint.text(self,self.hintFont,help,ex,ey,ew,p.detail)
+      local _,lines=self.hintFont:getWrap(help,ew);ey=ey+#lines*self.hintFont:getHeight()+14*s
+    end
+    local upload=self:_glassyButton(ex,ey,ew,38*s,'Import your own cartridge image',self.hintFont,true)
     control('image',nil,upload);ey=ey+52*s
+    paint.text(self,self.hintFont,Strings('Choose a PNG/JPEG you saved yourself. Artwork stays on this device; no image search, download or upload is performed.'),ex,ey,ew,p.detail)
+    local _,helpLines=self.hintFont:getWrap(Strings('Choose a PNG/JPEG you saved yourself. Artwork stays on this device; no image search, download or upload is performed.'),ew)
+    ey=ey+#helpLines*self.hintFont:getHeight()+14*s
+    if d.image then
+      local half=(ew-10*s)/2
+      control('artMode','label',self:_chipButton(ex,ey,'LABEL ART',{w=half,h=34*s,kind=d.style.artMode~='cartridge' and 'accent' or 'neutral'}))
+      control('artMode','cartridge',self:_chipButton(ex+half+10*s,ey,'WHOLE CARTRIDGE',{w=half,h=34*s,kind=d.style.artMode=='cartridge' and 'accent' or 'neutral'}));ey=ey+44*s
+      local bw=(ew-20*s)/3
+      control('artFit',d.style.artFit=='cover' and 'contain' or 'cover',self:_chipButton(ex,ey,d.style.artFit=='cover' and 'FILL / CROP' or 'FIT IMAGE',{w=bw,h=34*s}))
+      control('zoom',-.15,self:_chipButton(ex+bw+10*s,ey,'ZOOM −',{w=bw,h=34*s}))
+      control('zoom',.15,self:_chipButton(ex+2*(bw+10*s),ey,'ZOOM +',{w=bw,h=34*s}));ey=ey+44*s
+      local pw=(ew-30*s)/4
+      for i,v in ipairs({{'←','artX',-.1},{'→','artX',.1},{'↑','artY',-.1},{'↓','artY',.1}}) do
+        control('pan',v,self:_chipButton(ex+(i-1)*(pw+10*s),ey,v[1],{w=pw,h=34*s}))
+      end
+      ey=ey+48*s
+    end
     local save=self:_chipButton(ex,ey,'SAVE DESIGN',{w=(ew-10*s)*0.62,h=42*s,kind='accent'})
     local reset=self:_chipButton(ex+(ew-10*s)*0.62+10*s,ey,'RESET',{w=(ew-10*s)*0.38,h=42*s})
     control('save',nil,save);control('reset',nil,reset);ey=ey+56*s
@@ -206,6 +240,12 @@ function Designer.install(RI)
           if r.id=='shell' or r.id=='label' then d.style[r.id]=r.value
           elseif r.id=='pattern' then d.style.pattern=r.value;d.style.art=nil;d.image=nil;d.png=nil
           elseif r.id=='image' then self:_cartImportImage()
+          elseif r.id=='source' then
+            love.system.openURL(r.value);d.referenceOpened=true
+            d.notice=Strings('Save the full-size image from the source page, then choose Import your own cartridge image. Images are not freely licensed merely because they can be downloaded.')
+          elseif r.id=='artMode' or r.id=='artFit' then d.style[r.id]=r.value
+          elseif r.id=='zoom' then d.style.artZoom=math.max(1,math.min(3,(d.style.artZoom or 1)+r.value))
+          elseif r.id=='pan' then d.style[r.value[2]]=math.max(0,math.min(1,(d.style[r.value[2]] or .5)+r.value[3]))
           elseif r.id=='save' then self:_cartSaveDesign()
           elseif r.id=='reset' then
             local shell,name=Library.edition(d.version)
@@ -270,6 +310,7 @@ function Designer.install(RI)
       local ok,bytes=pcall(function() file:open('r');local b=file:read(8*1024*1024+1);file:close();return b end)
       local image,why=self:_cartImageBytes(ok and bytes or nil)
       if image then self._cartDraft.image=image.image;self._cartDraft.png=image.bytes
+        if self._cartDraft.referenceOpened then self._cartDraft.style.artMode='cartridge' end
         self._cartDraft.notice=Strings('Artwork loaded. Save the design to keep it.')
       else self._cartDraft.notice=Strings(why) end
       return

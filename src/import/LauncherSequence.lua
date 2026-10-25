@@ -93,7 +93,7 @@ function Sequence.install(RI)
       if state.kind=='intro' and not state.soundStarted then
         state.soundStarted=true
         if love.audio and love.audio.newSource then
-          local ok,source=pcall(love.audio.newSource,'assets/launcher/retro_intro_riff.wav','static')
+          local ok,source=pcall(love.audio.newSource,Seasons.audio(state.season),'static')
           if ok and source then
             self._introSound=source
             source:setVolume(math.max(0,math.min(1,(tonumber(self:_settings().musicVol) or 5)/7))*0.65)
@@ -286,8 +286,7 @@ function Sequence.install(RI)
       if seasonal and (state.season~='autumn' or pose.behind) then
         Seasons.draw(state.season,state.elapsed,cx,logoY,s,pose)
       end
-      g.setFont(self.labelFont);col(accent,1-dock)
-      g.printf(Strings('YOUR NEXT CHAPTER'),ox,oy+h*.20,w,'center')
+      require('src.import.LauncherJourney').draw(self,state.elapsed,ox,oy,w,h)
       if logo then
         local reveal=smooth((state.elapsed-Score.logoReveal)/(Score.logoLock-Score.logoReveal))
         local alpha=pose and pose.logoAlpha or reveal
@@ -370,7 +369,7 @@ function Sequence.install(RI)
       local status=not stage.locked and 'INSERTING CARTRIDGE'
         or not stage.powered and 'CARTRIDGE LOCKED'
         or state.elapsed<Sequence.LOGO_AT and 'POWER ON'
-        or stage.zoom>0 and 'ENTERING YOUR NEXT CHAPTER' or 'FORMING YOUR NEXT CHAPTER'
+        or stage.zoom>0 and 'YOUR JOURNEY STARTS NOW' or 'FORMING YOUR JOURNEY'
       local statusY=math.min(oy+h-150*s,device.y+device.h+28*s)
       g.setFont(self.labelFont);col(accent,hud);g.printf(Strings(status),ox,statusY,w,'center')
       -- Native framebuffer and current drawable size, independent of camera magnification.
@@ -415,9 +414,9 @@ function Sequence.install(RI)
   end
   local settingsAction=RI._settingsAction
   RI._settingsAction=function(self,entry,...)
-    if entry and entry.action=='launcherPreviewIntro' then
+    if entry and (entry.action=='launcherPreviewIntro' or entry.action=='launcherPreviewSeason') then
       if not self._launcherSequence then
-        self._launcherSequence=Sequence.new('intro',nil,self:_settings().launcherIntroSeason)
+        self._launcherSequence=Sequence.new('intro',nil,entry.season or self:_settings().launcherIntroSeason)
         self._launcherSequence.waitForWindow=true
       end
       return

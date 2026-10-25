@@ -1066,10 +1066,11 @@ function Sidebar.install(RI)
 
   -- the cloud service: "folder" (a sync folder), "google" or "onedrive"
   Sidebar.CLOUD_SERVICES = {
+    retro = {auth='src.cloud.RetroCloud',store='src.cloud.RetroCloud',name='RetroRecomped · ModCompass'},
     google = { auth = "src.cloud.GoogleAuth", store = "src.cloud.GoogleDrive", name = "Google Drive" },
     onedrive = { auth = "src.cloud.MicrosoftAuth", store = "src.cloud.OneDrive", name = "OneDrive" },
   }
-  function RI:_sbCloudService() return options(self).cloudService or "folder" end
+  function RI:_sbCloudService() return options(self).cloudService or "retro" end
 
   -- what to sync with right now: a folder path or an open store, or nil + why
   function RI:_sbCloudTarget()
@@ -1620,7 +1621,7 @@ function Sidebar.install(RI)
     local okD, drew = pcall(Backdrop.draw, w, h, self._sbContentRect)
     if okD and drew then
       -- a scrim, so the panels stay readable over a bright title screen
-      col(PAL().bgBot, 0.62)
+      col(PAL().bgBot, 0.88)
       love.graphics.rectangle("fill", 0, 0, w, h)
     end
   end
@@ -1744,8 +1745,8 @@ function Sidebar.install(RI)
       add({ kind = "section", label = "CLOUD SAVES",
             note = "Sync your saves with Google Drive, OneDrive, or a sync folder on this computer (Dropbox, iCloud...). A save is never replaced on its first sync; two backups are kept on each side." })
       add({ kind = "option", scope = "launcher", label = "SERVICE",
-            row = { id = "cloudService", values = { "folder", "google", "onedrive" },
-                    labels = { folder = "Sync folder", google = "Google Drive", onedrive = "OneDrive" } } })
+            row = { id = "cloudService", values = { "retro", "folder", "google", "onedrive" },
+                    labels = { retro='RetroRecomped · ModCompass',folder = "Sync folder", google = "Google Drive", onedrive = "OneDrive" } } })
       local svcDef = Sidebar.CLOUD_SERVICES[self:_sbCloudService()]
       if svcDef then
         local Auth = require(svcDef.auth)
@@ -1762,7 +1763,7 @@ function Sidebar.install(RI)
   end
 
   Sidebar.DEFAULTS = { launcherLayout = "sidebar", launcherBackground = "game", launcherBgMusic = "on",
-                       cloudFolder = "off", cloudService = "folder" }
+                       cloudFolder = "off", cloudService = "retro", cloudAutoSync=true }
 
   local origRows = RI._launcherSettingsRows
   RI._launcherSettingsRows = function(self, ...)
@@ -1822,7 +1823,7 @@ function Sidebar.install(RI)
     local id = entry and entry.row and entry.row.id
     if entry and entry.scope == "launcher" and Sidebar.DEFAULTS[id] then
       local v = options(self)[id]
-      if v == nil or v == false then return Sidebar.DEFAULTS[id] end
+      if v == nil or (v == false and type(Sidebar.DEFAULTS[id])~='boolean') then return Sidebar.DEFAULTS[id] end
       return v
     end
     return origValue(self, entry, ...)

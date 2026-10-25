@@ -120,6 +120,8 @@ mix *= .84 / max(.84, float(np.max(np.abs(mix))))
 fade = np.minimum(1, np.arange(len(mix)) / (RATE * .01))
 fade *= np.minimum(1, (len(mix) - np.arange(len(mix))) / (RATE * .32))
 mix *= fade[:, None]
+closing_fade = np.clip((np.arange(len(mix))/RATE - (SCORE['catch']-.09))/.09, 0, 1)
+mix *= (1 - closing_fade * (1 - SCORE.get('closingLevel', .70)))[:, None]
 pcm = (mix * 32767).astype('<i2')
 path = Path(__file__).resolve().parents[1] / 'assets/launcher/retro_intro_riff.wav'
 path.parent.mkdir(parents=True, exist_ok=True)

@@ -813,6 +813,21 @@ local function copyTree(src, dst)
   return true
 end
 
+local function sameFiles(src,dst)
+  local fs=love.filesystem
+  local expected={}
+  for _,name in ipairs(fs.getDirectoryItems(src)) do
+    local from,to=src..'/'..name,dst..'/'..name
+    local info=fs.getInfo(from)
+    if info and info.type=='directory' then
+      if not sameFiles(from,to) then return false end
+    elseif fs.read(from)~=fs.read(to) then return false end
+    expected[name]=true
+  end
+  for _,name in ipairs(fs.getDirectoryItems(dst)) do if not expected[name] then return false end end
+  return true
+end
+
 -- Delete an installed mod subtree.  Enumeration stays on love.filesystem (the
 -- portable game folder is on its read path), but the deletes go through
 -- CacheFs so a portable install's real files actually go away instead of
@@ -1313,6 +1328,7 @@ function LauncherMods._installZipInner(source, opts)
     installedRaw = Json.encode(data)
   end
   local dest = LauncherMods.folderFor(manifest.id)
+  local rollbackPath
   if not dest then
     local free, freeErr = freeInstallPath(fs, manifest.id)
     if not free then cleanup(); return nil, freeErr end
@@ -1342,6 +1358,12 @@ function LauncherMods._installZipInner(source, opts)
     -- somebody's game folder.
     local savedPrefix = CacheFs.prefix
     CacheFs.prefix = ""
+    rollbackPath=("mod-install-backups/%s-%d-%d"):format(manifest.id,os.time(),math.random(1,999999999))
+    local kept,keepWhy=copyTree(dest,rollbackPath)
+    if not kept then
+      removeTree(rollbackPath);CacheFs.prefix=savedPrefix;cleanup()
+      return nil,"Could not preserve the previous mod: "..tostring(keepWhy)
+    end
     removeTree(dest)
     CacheFs.prefix = savedPrefix
   end
@@ -1359,7 +1381,14 @@ function LauncherMods._installZipInner(source, opts)
   if copied and installedRaw then
     copied, copyErr = CacheFs.write(dest .. "/manifest.json", installedRaw)
   end
-  if not copied then removeTree(dest) end
+  if not copied then
+    removeTree(dest)
+    if rollbackPath then
+      local restored=copyTree(rollbackPath,dest)
+      if restored then removeTree(rollbackPath)
+      else copyErr=tostring(copyErr).."; previous mod preserved at "..rollbackPath end
+    end
+  end
   CacheFs.prefix = savedPrefix
   if not copied then
     cleanup()
@@ -1377,11 +1406,32 @@ function LauncherMods._installZipInner(source, opts)
   local landed = fs.read(dest .. "/manifest.json")
   local got = landed and decodeManifest(landed, dest) or nil
   if got and manifest.version and got.version ~= manifest.version then
+    if rollbackPath then
+      local oldPrefix=CacheFs.prefix;CacheFs.prefix=""
+      removeTree(dest)
+      local restored=copyTree(rollbackPath,dest)
+      if restored then removeTree(rollbackPath) end
+      CacheFs.prefix=oldPrefix
+    end
     cleanup()
     return nil, ("installed %s %s, but %s still reads %s -- an older copy in "
                  .. "%s is in front of it"):format(
       manifest.id, tostring(manifest.version), dest, tostring(got.version),
       LauncherMods.realFolder(dest) or "the game folder")
+  end
+
+  if not got then
+    local oldPrefix=CacheFs.prefix;CacheFs.prefix=""
+    removeTree(dest)
+    if rollbackPath then
+      local restored=copyTree(rollbackPath,dest)
+      if restored then removeTree(rollbackPath) end
+    end
+    CacheFs.prefix=oldPrefix;cleanup()
+    return nil,"The installed manifest could not be verified; the previous copy was preserved."
+  end
+  if rollbackPath then
+    local oldPrefix=CacheFs.prefix;CacheFs.prefix="";removeTree(rollbackPath);CacheFs.prefix=oldPrefix
   end
 
   cleanup()
@@ -1399,7 +1449,7 @@ end
 -- Install (or replace) a mod from a GitHub release zip URL.
 -- Returns true, version  |  nil, errString. Soft-fails: download / install /
 -- cleanup errors never throw into the launcher UI.
-function LauncherMods.installFromRelease(modId, release)
+function LauncherMods.installFromRelease(modId, release, downloadedPath)
   local ok, result, err, mismatch = pcall(function()
     if type(modId) ~= "string" or modId == "" then
       return nil, "missing mod id"
@@ -1410,8 +1460,10 @@ function LauncherMods.installFromRelease(modId, release)
     local ModUpdate = require("src.mods.ModUpdate")
     local tmpName = ("mod_update_%s_%s.zip"):format(
       tostring(modId), tostring(release.version or os.time()))
-    local localPath, dlErr = ModUpdate.downloadZip(release.zip.url, tmpName,
-      release.zip.size)
+    local localPath, dlErr = downloadedPath, nil
+    if not localPath then
+      localPath, dlErr = ModUpdate.downloadZip(release.zip.url, tmpName, release.zip.size)
+    end
     if not localPath then return nil, dlErr end
     local folder = LauncherMods.folderFor(modId)
     local installedRaw = folder and love.filesystem.read(folder .. "/manifest.json")
@@ -1474,6 +1526,68 @@ function LauncherMods.installFromIndex(entry)
   end)
   if not ok then return nil, "install failed: " .. tostring(result) end
   return result, err, mismatch
+end
+
+-- Whole-profile recovery, in addition to each install's rollback copy. Kept
+-- until the entire requested stack has installed and its enable flags commit.
+function LauncherMods.backupProfile(ids)
+  local root=("mod-profile-backups/%d-%d"):format(os.time(),math.random(1,999999999))
+  local options=SaveData.loadOptions()
+  local snapshot={root=root,entries={},mods=options.mods or {},sources=options.modInstallSources or {},syncState=SaveData.persistenceFs().read('mod_profile_sync.lua')}
+  local prefix=CacheFs.prefix;CacheFs.prefix=""
+  for _,id in ipairs(ids) do
+    if type(id)~='string' or not id:match('^[%w_%-][%w_.%-]*$') then removeTree(root);CacheFs.prefix=prefix;return nil,'Invalid mod ID.' end
+    local folder=LauncherMods.folderFor(id)
+    if folder and LauncherMods.checkoutAt(folder) then removeTree(root);CacheFs.prefix=prefix;return nil,'Source checkouts cannot be replaced by cloud profiles: '..id end
+    local backup=folder and (root..'/'..id) or nil
+    if folder then
+      local ok,why=copyTree(folder,backup)
+      if ok and not sameFiles(folder,backup) then ok=nil;why='The preserved files did not read back whole.' end
+      if not ok then removeTree(root);CacheFs.prefix=prefix;return nil,tostring(why) end
+    end
+    snapshot.entries[#snapshot.entries+1]={id=id,backup=backup}
+  end
+  CacheFs.prefix=prefix
+  local Safety=require('src.core.SaveSafety')
+  local ok,why=Safety.atomicWrite(SaveData.persistenceFs(),'mod_profile_recovery.lua',require('src.core.SaveSerializer').encode(snapshot),{decode=Safety.decodeAny})
+  if not ok then return nil,why end
+  return snapshot
+end
+
+function LauncherMods.finishProfile(snapshot)
+  if not (snapshot and type(snapshot.root)=='string' and snapshot.root:match('^mod%-profile%-backups/%d+%-%d+$')) then return nil,'Invalid recovery folder.' end
+  if not SaveData.persistenceFs().remove('mod_profile_recovery.lua') then return nil,'Profile committed, but its recovery marker could not be cleared.' end
+  local prefix=CacheFs.prefix;CacheFs.prefix='';removeTree(snapshot.root);CacheFs.prefix=prefix
+  return true
+end
+
+function LauncherMods.restoreProfile(snapshot)
+  if type(snapshot)~='table' or type(snapshot.root)~='string' or not snapshot.root:match('^mod%-profile%-backups/%d+%-%d+$') or type(snapshot.entries)~='table' then return nil,'Invalid profile recovery record.' end
+  local prefix=CacheFs.prefix;CacheFs.prefix=''
+  for _,entry in ipairs(snapshot.entries) do
+    if type(entry.id)~='string' or not entry.id:match('^[%w_%-][%w_.%-]*$') or entry.backup and entry.backup~=snapshot.root..'/'..entry.id then CacheFs.prefix=prefix;return nil,'Invalid recovery path.' end
+    local folder=LauncherMods.folderFor(entry.id)
+    if folder and LauncherMods.checkoutAt(folder) then CacheFs.prefix=prefix;return nil,'A source checkout now occupies '..entry.id end
+    if entry.backup and not love.filesystem.getInfo(entry.backup..'/manifest.json') then CacheFs.prefix=prefix;return nil,'The recovery copy is unavailable: '..entry.id end
+  end
+  for _,entry in ipairs(snapshot.entries) do
+    local folder=LauncherMods.folderFor(entry.id) or ('mods/'..entry.id)
+    removeTree(folder)
+    if entry.backup then
+      local ok,why=copyTree(entry.backup,folder)
+      if ok and not sameFiles(entry.backup,folder) then ok=nil;why='Recovered files differ from the preserved copy.' end
+      if not ok then CacheFs.prefix=prefix;return nil,'Recovery copy kept at '..entry.backup..': '..tostring(why) end
+    elseif love.filesystem.getInfo(folder) then CacheFs.prefix=prefix;return nil,'Could not remove the incomplete package: '..entry.id end
+  end
+  CacheFs.prefix=prefix
+  local options=SaveData.loadOptions();options.mods=snapshot.mods;options.modInstallSources=snapshot.sources or {}
+  if not SaveData.saveOptions(options) then return nil,'Could not restore mod activation settings.' end
+  local fs=SaveData.persistenceFs()
+  if snapshot.syncState then
+    local ok,why=require('src.core.SaveSafety').atomicWrite(fs,'mod_profile_sync.lua',snapshot.syncState,{decode=require('src.core.SaveSafety').decodeAny})
+    if not ok then return nil,'Could not restore profile sync metadata: '..tostring(why) end
+  elseif fs.getInfo('mod_profile_sync.lua') and not fs.remove('mod_profile_sync.lua') then return nil,'Could not reset profile sync metadata.' end
+  return LauncherMods.finishProfile(snapshot)
 end
 
 -- uninstall(id) -> true  |  nil, errString

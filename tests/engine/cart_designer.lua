@@ -19,4 +19,26 @@ for _,pair in ipairs({{'red','gb'},{'crystal','gbc'},{'emerald','gba'},{'heartgo
   local device=H.deviceGeometry(pair[1],500,400,1)
   check(device.slotX>=device.x and device.slotX<=device.x+device.w,'slot stays on the device')
 end
+local custom=D.normalize({artMode='cartridge',artFit='cover',artZoom=99,artX=-1,artY=0/0})
+check(custom.artMode=='cartridge' and custom.artFit=='cover','whole cartridge photos and crop mode persist')
+check(custom.artZoom==3 and custom.artX==0 and custom.artY==.5,'image adjustments are bounded and nonfinite values reset')
+check(D.normalize({art='https://example.test/cart.png'}).art==nil,'artwork is never a remote download URL')
+local x,y,cw,ch,sc=H.artCrop(400,200,100,100,{artFit='cover',artX=1,artY=.5})
+check(x==200 and y==0 and cw==200 and ch==200 and sc==.5,'fill crops a wide photo at the chosen edge without distortion')
+x,y,cw,ch,sc=H.artCrop(400,200,100,100,{artFit='contain'})
+check(cw==400 and ch==200 and sc==.25,'fit preserves the complete original photo')
+for _,v in ipairs({'red','crystal','emerald','heartgold'}) do
+  local model=H.cartModel(v)
+  check(#model.face>=8 and model.depth>0,'every cartridge has its own solid silhouette')
+end
+check(H.cartModel('emerald').w/H.cartModel('emerald').h>1.65,'GBA cartridges have the broad original proportions')
+check(math.abs(H.cartModel('heartgold').w/H.cartModel('heartgold').h-35/33)<.02,'DS cartridges have the near-square original proportions')
+check(require('src.core.SaveData').defaultOptions().launcherLogoCards==true,'brand labels are on for new preferences')
+local Sources=require('src.import.CartridgeSources')
+for _,v in ipairs({'red','blue','yellow','gold','silver','crystal','firered','emerald','platinum','heartgold','soulsilver','black','white'}) do
+  local source=Sources.get(v)
+  check(source and source.page:find('https://archives.bulbagarden.net/wiki/File:',1,true)==1,'each original edition links to its own cartridge file page')
+end
+check(Sources.get('prism')==nil and Sources.get('polishedcrystal')==nil,'ROM hacks never falsely claim an original retail cartridge')
+check(Sources.get('red').page~=Sources.get('blue').page,'edition links do not silently share the wrong artwork')
 print('Cartridge designer: '..n..' checks passed')

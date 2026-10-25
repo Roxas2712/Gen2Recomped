@@ -7,6 +7,12 @@ Seasons.LABELS={auto='AUTOMATIC',lightning='LIGHTNING',spring='SPRING · BRANCHL
 local function clamp(v) return math.max(0,math.min(1,v)) end
 local function ease(v) v=clamp(v);return v*v*(3-2*v) end
 
+function Seasons.audio(kind)
+  if kind=='winter' then return 'assets/launcher/retro_intro_winter.wav' end
+  if kind=='autumn' then return 'assets/launcher/retro_intro_autumn.wav' end
+  return 'assets/launcher/retro_intro_riff.wav'
+end
+
 function Seasons.resolve(choice,month)
   if choice and choice~='auto' and Seasons.LABELS[choice] then return choice end
   month=tonumber(month) or tonumber(os.date('%m')) or 1

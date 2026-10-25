@@ -83,9 +83,27 @@ return function(ui,step,boots)
     check(ui:_cartImageBytes('not an image')==nil,'invalid artwork is rejected')
     ui:play('crystal');ui:keypressed('escape');ui:update(0.1)
     check(boots()==1,'custom launch cancellation does not boot a game')
+    ui._sequenceInputGuard=0 -- The fixture advances by steps, not wall-clock frames.
     local SaveData=require('src.core.SaveData')
     local opts=SaveData.loadOptions();opts.launcherCartDesigns.crystal=nil;SaveData.saveOptions(opts)
     ui._settingsCache=nil;ui._cartStyleCache=nil
+    ui._modReleaseNotes={version='1.0.0',body='Release notes without catalogue videos.'}
+  elseif step==12 then
+    check(ui._modReleaseNotesClose~=nil,'release notes draw independently of catalogue details')
+    ui._modReleaseNotes=nil
+    ui._findDetails={title='Local index mod',body='A description without videos.'}
+  elseif step==13 then
+    check(ui._findDetailsClose and #ui._findDetailsVideos==0,'ordinary mod details draw without a video list')
+    ui._findDetails={title='Catalogue mod',body='A catalogue description.',communityEntry={videos={}}}
+  elseif step==14 then
+    check(ui._findDetailsInstall and #ui._findDetailsVideos==0,'catalogue details without videos retain their install action')
+    ui._findDetails={title='Catalogue videos',body='Two verified video links.',communityEntry={videos={
+      {id='abcdefghijk',title='First video'},{id='lmnopqrstuv',title='Second video'}}}}
+  elseif step==15 then
+    check(#ui._findDetailsVideos==2 and ui._findDetailsVideos[1].url=='https://www.youtube.com/watch?v=abcdefghijk','video details draw a canonical link and next-video action')
+    click(ui,ui._findDetailsVideos[2])
+  elseif step==16 then
+    check(ui._findDetails.videoIndex==2 and ui._findDetailsVideos[1].url=='https://www.youtube.com/watch?v=lmnopqrstuv','next-video selection updates the actual link without opening a browser')
     print('Live launcher smoke: '..checks..' checks passed')
     love.event.quit(0)
   end

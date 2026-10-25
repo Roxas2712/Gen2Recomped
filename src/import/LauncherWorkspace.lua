@@ -9,7 +9,7 @@ Workspace.CATEGORIES = {
   {id='launcher',name='RetroRecomped',note='Intro seasons, cartridge labels, appearance and game storage.',icon='games'},
   {id='game',name='Picture & sound',note='Display, audio and defaults for every generation.',icon='speaker'},
   {id='controls',name='Controls',note='Configure the on-screen pad and its layout.',icon='games'},
-  {id='cloud',name='Cloud saves',note='Keep your adventures with you across devices.',icon='news'},
+  {id='cloud',name='Saves & Pokémon Bank',note='One ModCompass account. Your adventures across devices.',icon='news'},
   {id='language',name='Game language',note='Translation language and progress for your games.',icon='news'},
   {id='mods',name='Mod preferences',note='Settings provided by your installed mods.',icon='mods'},
   {id='all',name='All settings',note='Every available setting in one list.',icon='settings'},
@@ -24,7 +24,7 @@ function Workspace.filterRows(rows, category)
     local selected = category=='game' and (entry.scope=='game' or entry.scope=='settingsGen' or action=='clearGenOverrides')
       or category=='controls' and (entry.scope=='touch' or action=='touchLayout')
       or category=='mods' and entry.scope=='mod'
-      or category=='cloud' and (currentSection and currentSection.label=='CLOUD SAVES')
+      or category=='cloud' and (currentSection and (currentSection.label=='CLOUD SAVES' or currentSection.label=='YOUR STORAGE'))
       or category=='language' and (entry.scope=='translation' or action=='translateGame' or entry.kind=='progress')
     if selected and entry.kind~='section' then
       if section then result[#result+1]=section;section=nil end
@@ -101,7 +101,7 @@ function Workspace.install(RI)
     if self.toolFlow then return tools(self,x,y,w,h) end
     local top,s,g=y,self._s,love.graphics
     local groups={
-      {name='YOUR SAVES',ids={save=true,saveImport=true,saveExport=true,restore=true,cloud=true},icon='news'},
+      {name='YOUR SAVES',ids={save=true,saveImport=true,saveExport=true,restore=true,cloud=true,bank=true},icon='news'},
       {name='CREATE & CUSTOMIZE',ids={map=true,translate=true,touch=true,scrape=true,cartDesign=true},icon='tools'},
       {name='YOUR LIBRARY',ids={roms=true},icon='games'},
     }
@@ -211,6 +211,16 @@ function Workspace.install(RI)
     self._workspaceIntro=replay
     self.settingsRowRects[#self.settingsRowRects+1]={entry={kind='action',action='launcherPreviewIntro'},value=replay}
     y=y+78*s
+    local seasons={{'lightning','LIGHTNING'},{'spring','SPRING'},{'summer','SUMMER'},{'autumn','HALLOWEEN'},{'winter','WINTER BELLS'}}
+    local seasonCols=w>=620*s and 5 or 3
+    local seasonW=(w-8*s*(seasonCols-1))/seasonCols
+    for i,item in ipairs(seasons) do
+      local sx=x+((i-1)%seasonCols)*(seasonW+8*s)
+      local sy=y+math.floor((i-1)/seasonCols)*46*s
+      local r=self:_chipButton(sx,sy,item[2],{w=seasonW,h=36*s,font=self.hintFont})
+      self.settingsRowRects[#self.settingsRowRects+1]={entry={kind='action',action='launcherPreviewSeason',season=item[1]},value=r}
+    end
+    y=y+math.ceil(#seasons/seasonCols)*46*s+10*s
     local cols=w>=620*s and 2 or 1
     local gap=16*s
     local cw=(w-gap*(cols-1))/cols

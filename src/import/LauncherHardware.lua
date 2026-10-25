@@ -11,11 +11,35 @@ function Hardware.kind(version)
   return gen>=4 and 'nds' or gen==3 and 'gba' or gen==2 and 'gbc' or 'gb'
 end
 
-function Hardware.cartSize(version)
+function Hardware.cartModel(version)
   local kind=Hardware.kind(version)
-  if kind=='gba' then return 156,92 end
-  if kind=='nds' then return 108,120 end
-  return 132,164
+  if kind=='gba' then return {w=156,h=90,depth=8,labelY=20,
+    face={3,0,153,0,156,5,156,18,148,18,148,82,140,90,16,90,8,82,8,18,0,18,0,5}} end
+  if kind=='nds' then return {w=108,h=102,depth=3,labelY=20,
+    face={5,0,85,0,108,22,108,56,103,56,103,65,108,65,108,97,103,102,5,102,0,97,0,5}} end
+  if kind=='gbc' then return {w=132,h=152,depth=7,labelY=30,
+    face={0,16,7,7,28,2,66,0,104,2,125,7,132,16,132,145,125,152,7,152,0,145}} end
+  return {w=132,h=152,depth=9,labelY=32,
+    face={6,0,108,0,108,10,132,10,132,145,125,152,7,152,0,145,0,6}}
+end
+
+function Hardware.cartSize(version)
+  local model=Hardware.cartModel(version)
+  return model.w,model.h
+end
+
+-- Pixel-space crop shared by labels and complete, player-supplied cart photos.
+function Hardware.artCrop(iw,ih,w,h,design)
+  local sc=(design.artFit=='cover' and math.max(w/iw,h/ih) or math.min(w/iw,h/ih))*(design.artZoom or 1)
+  local cw,ch=math.min(iw,w/sc),math.min(ih,h/sc)
+  return (iw-cw)*(design.artX or .5),(ih-ch)*(design.artY or .5),cw,ch,sc
+end
+local function artwork(image,x,y,w,h,design)
+  local g=love.graphics
+  local iw,ih=image:getDimensions()
+  local sx,sy,cw,ch,sc=Hardware.artCrop(iw,ih,w,h,design)
+  local quad=g.newQuad(sx,sy,cw,ch,iw,ih)
+  g.setColor(1,1,1,1);g.draw(image,quad,x+(w-cw*sc)/2,y+(h-ch*sc)/2,0,sc,sc)
 end
 
 local function drawCartridge(self,version,cx,cy,maxW,maxH,angle,options)
@@ -26,31 +50,38 @@ local function drawCartridge(self,version,cx,cy,maxW,maxH,angle,options)
   local shell=design.shell or accent
   local label=design.label or shade(accent,0.32)
   name=design.name and design.name~='' and design.name or name
-  local w,h=Hardware.cartSize(version)
+  local model=Hardware.cartModel(version)
+  local w,h=model.w,model.h
   local sc=math.min(maxW/(w+12),maxH/(h+12))
   g.push('all');g.translate(cx,cy);g.rotate(angle or -0.055);g.scale(sc)
   g.translate(-w/2,-h/2)
+  if design.image and design.artMode=='cartridge' then
+    artwork(design.image,0,0,w,h,design);g.pop();return
+  end
   -- The top and right side are actual separate faces, visible at rest too.
-  color({0,0,0},0.28);g.rectangle('fill',9,14,w,h,9,9)
-  color(shade(shell,0.36));g.polygon('fill',w-2,4,w+10,13,w+10,h+4,w-2,h-2)
-  color(shade(shell,1.1));g.polygon('fill',8,-5,w-4,-5,w+10,7,0,7)
-  color(shade(shell,0.72));g.rectangle('fill',0,0,w,h,8,8)
-  color(shell,0.68);g.rectangle('fill',3,2,w-7,h-5,7,7)
-  color({255,255,255},0.3);g.line(8,3,w-10,3)
-  color({0,0,0},0.25);g.line(w-3,10,w-3,h-10)
+  color({0,0,0},0.26);g.rectangle('fill',model.depth,model.depth+5,w,h,8,8)
+  color(shade(shell,0.36));g.push();g.translate(model.depth,model.depth*.65);g.polygon('fill',model.face);g.pop()
+  color(shade(shell,1.14));g.polygon('fill',8,-3,w-27,-3,w-18,5,0,8)
+  color(shade(shell,0.72));g.polygon('fill',model.face)
+  color(shell,0.78);g.push();g.translate(3,3);g.scale((w-6)/w,(h-6)/h);g.polygon('fill',model.face);g.pop()
+  color({255,255,255},0.24);g.setLineWidth(1);g.polygon('line',model.face)
+  color({0,0,0},0.25);g.line(w-3,27,w-3,h-10)
   local kind=Hardware.kind(version)
-  local labelY=kind=='gba' and 19 or 29
-  local labelH=h-labelY-21
+  local labelY=model.labelY
+  local labelH=h-labelY-(kind=='nds' and 8 or 16)
   color(shade(shell,0.26));g.rectangle('fill',11,labelY,w-22,labelH,5,5)
   color(label);g.rectangle('fill',15,labelY+4,w-30,labelH-8,3,3)
-  for i=0,2 do color({255,255,255},0.16);g.line(17,9+i*4,w-18,9+i*4) end
+  if kind~='nds' then
+    for i=0,(kind=='gba' and 1 or 2) do
+      color({0,0,0},0.16);g.line(18,12+i*4,w-24,12+i*4)
+      color({255,255,255},0.2);g.line(18,13+i*4,w-24,13+i*4)
+    end
+  end
   local branded=self._settings and self:_settings().launcherLogoCards and not (options and options.customLabel)
-  local image=branded and (self.gen2Logo or self.logo) or design.image
+  local image=design.image or (branded and (self.gen2Logo or self.logo))
   if image then
     if image.setFilter then image:setFilter('linear','linear') end
-    local iw,ih=image:getDimensions()
-    local fit=math.min((w-38)/iw,(labelH-20)/ih)
-    g.setColor(1,1,1,1);g.draw(image,(w-iw*fit)/2,labelY+8+(labelH-20-ih*fit)/2,0,fit,fit)
+    artwork(image,19,labelY+8,w-38,labelH-29,design.image and design or {})
   else
     local mx,my=w/2,labelY+labelH*0.43
     color(shell,0.9);g.setLineWidth(2)
@@ -72,9 +103,13 @@ local function drawCartridge(self,version,cx,cy,maxW,maxH,angle,options)
   local fs=math.min(1/(self._s or 1),(w-40)/math.max(1,font:getWidth(name)))
   color({247,247,239});g.print(name,w/2-font:getWidth(name)*fs/2,labelY+labelH-20,0,fs,fs)
   -- Gold edge connector catches the light as the cartridge turns.
-  color({55,44,22});g.rectangle('fill',w*0.27,h-13,w*0.46,13,2,2)
-  for i=0,7 do color({218,185,104});g.rectangle('fill',w*0.29+i*w*0.052,h-11,w*0.032,10) end
-  color({255,255,255},0.16);g.polygon('fill',6,4,w*0.45,4,6,h*0.65)
+  -- Contacts sit on the lower/back edge; the front is a solid moulded shell.
+  color({55,44,22});g.rectangle('fill',w*0.27,h-2,w*0.46,4,1,1)
+  for i=0,7 do color({218,185,104});g.rectangle('fill',w*0.29+i*w*0.052,h,w*0.032,2) end
+  if kind~='nds' then
+    color({0,0,0},0.2);g.polygon('fill',w*.46,h-10,w*.54,h-10,w*.5,h-5)
+  end
+  color({255,255,255},0.13);g.polygon('fill',6,18,w*0.4,12,6,h*0.62)
   g.pop()
 end
 
@@ -91,6 +126,7 @@ function Hardware.cartridge(self,version,cx,cy,maxW,maxH,angle,options)
   local branded=self._settings and self:_settings().launcherLogoCards and not (options and options.customLabel)
   local key=table.concat({version,tostring(self.labelFont),tostring(self._s),tostring(branded),
     style.name or '',style.pattern or '',tostring(style.image),tostring(self.gen2Logo or self.logo),
+    style.artMode or '',style.artFit or '',tostring(style.artZoom),tostring(style.artX),tostring(style.artY),
     table.concat(shell,','),table.concat(label,',')},'|')
   self._hardwareCarts=self._hardwareCarts or {}
   self._hardwareCartOrder=self._hardwareCartOrder or {}

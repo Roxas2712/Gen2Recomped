@@ -219,11 +219,16 @@ function C.folderStore(folder)
   local root = join(folder, C.ROOT)
   local function abs(rel) return join(root, (rel:gsub("/", SEP))) end
   return {
-    kind = "folder", label = folder,
+    kind = "folder", label = folder, profileScope = "folder:" .. root,
     read = function(rel) return readAll(abs(rel)) end,
     write = function(rel, data) return writeAll(abs(rel), data) end,
     list = function(relDir) return listDir(abs(relDir)) end,
   }
+end
+
+local function stateKey(store)
+  if store.kind=='retro' and store.profileScope then return 'retro_'..C.hash(store.profileScope) end
+  return store.kind
 end
 
 local function asStore(target)
@@ -313,7 +318,7 @@ local function slotLabel(version, slotId)
 end
 
 -- one slot; returns a short word for what happened, or nil + why
-function C.syncSlot(target, st, version, slotId)
+function C.syncSlot(target, st, version, slotId, pushOnly)
   local store = asStore(target)
   st.links[version] = st.links[version] or {}
   local link = st.links[version][slotId]
@@ -359,6 +364,7 @@ function C.syncSlot(target, st, version, slotId)
   -- an older branch): never a silent replacement -- it comes down as its own
   -- slot below and the local save goes up
   if cloudChanged and not localChanged and bytes then
+    if pushOnly then localChanged=true end
     local lt, ct = SaveSafety.decodeSave(bytes), SaveSafety.decodeSave(cloudBytes)
     if lt and ct and SaveSafety.playSeconds(ct) + 60 < SaveSafety.playSeconds(lt) then
       localChanged = true
@@ -413,7 +419,8 @@ end
 function C.syncVersions(target, versions)
   local store = asStore(target)
   if not store then return nil, "no sync folder chosen" end
-  local st = C.loadState(store.kind)
+  local key=stateKey(store)
+  local st = C.loadState(key)
   local tally = { uploaded = 0, downloaded = 0, ["kept both"] = 0, new = 0, failed = 0 }
   for _, v in ipairs(versions) do
     for _, s in ipairs(SaveData.listSlots(v) or {}) do
@@ -423,16 +430,17 @@ function C.syncVersions(target, versions)
     end
     tally.new = tally.new + C.pullNew(store, st, v)
   end
-  C.saveState(st, store.kind)
+  C.saveState(st, key)
   return tally
 end
 
-function C.syncOne(target, version, slotId)
+function C.syncOne(target, version, slotId, pushOnly)
   local store = asStore(target)
   if not store then return nil, "no sync folder chosen" end
-  local st = C.loadState(store.kind)
-  local what, why = C.syncSlot(store, st, version, slotId)
-  C.saveState(st, store.kind)
+  local key=stateKey(store)
+  local st = C.loadState(key)
+  local what, why = C.syncSlot(store, st, version, slotId, pushOnly)
+  C.saveState(st, key)
   return what, why
 end
 

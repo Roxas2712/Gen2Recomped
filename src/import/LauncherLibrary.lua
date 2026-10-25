@@ -101,7 +101,7 @@ function Library.install(RI)
       g.draw(logo,x+20*s,y+(h-lh*sc)/2,0,sc,sc)
     end
     if w > 690*s then
-      label(self, 'YOUR GAMES. YOUR NEXT CHAPTER.', x+278*s, y+34*s)
+      label(self, 'YOUR GAMES. YOUR JOURNEY STARTS NOW.', x+278*s, y+34*s)
       text(self,self.hintFont,'GB / GBC / GBA / DS',x+w-180*s,y+34*s,160*s,P.link)
     end
     return h
@@ -151,14 +151,9 @@ function Library.install(RI)
     end
   end
 
-  local railFoot = RI._sbDrawRailFoot
-  function RI:_sbDrawRailFoot(...)
-    local rail = self._sbRail
-    if not rail or rail.y + rail.h - rail.navBottom < 200 * self._s then return end
-    local height = rail.h
-    rail.h = height - 42 * self._s
-    railFoot(self, ...)
-    rail.h = height
+  function RI:_sbDrawRailFoot()
+    -- The upstream sponsor code is not a RetroRecomped promotion.
+    self.tiltRipsButton=nil
   end
 
   local function featured(self)
@@ -173,19 +168,19 @@ function Library.install(RI)
     local artVersion=v or 'crystal'
     local accent=Library.edition(artVersion)
     local wide=w>=540*s
-    local h=(wide and 190 or 220)*s
-    surface(x,y,w,h,16*s,accent,false)
     local artW=wide and math.min(w*0.31,220*s) or 0
+    local tx,tw=x+24*s,w-artW-48*s
+    local title=v and Sidebar.nameOf(v) or Strings('Small cartridges.\nBig adventures.')
+    local _,lines=self.gameNameFont:getWrap(title,tw)
+    local titleH=math.min(#lines,2)*self.gameNameFont:getHeight()
+    local h=math.max((wide and 190 or 220)*s,57*s+titleH+self.hintFont:getHeight()+20*s+64*s)
+    surface(x,y,w,h,16*s,accent,false)
     if wide then
       col(accent,0.09);g.circle('fill',x+w-artW/2,y+h/2,90*s)
       artwork(self,artVersion,x+w-artW/2-8*s,y+h/2,artW-24*s,h-38*s)
     end
-    local tx,tw=x+24*s,w-artW-48*s
     label(self,v and 'CONTINUE YOUR JOURNEY' or 'YOUR NEXT ADVENTURE',tx,y+24*s,accent)
-    local title=v and Sidebar.nameOf(v) or Strings('Small cartridges.\nBig adventures.')
     g.setFont(self.gameNameFont);col(P.ink)
-    local _,lines=self.gameNameFont:getWrap(title,tw)
-    local titleH=math.min(#lines,2)*self.gameNameFont:getHeight()
     for i=1,math.min(#lines,2) do
       g.print(ellipsize(self.gameNameFont,lines[i],tw),tx,y+49*s+(i-1)*self.gameNameFont:getHeight())
     end

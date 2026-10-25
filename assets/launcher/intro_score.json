@@ -12,6 +12,11 @@
   "catch": 13.68,
   "carryStart": 14.4,
   "place": 16.02,
+  "closingLevel": 0.70,
+  "journeyStart": 0.72,
+  "journeyLine2": 4.32,
+  "journeyComplete": 7.92,
+  "journeyFade": 9.72,
   "closing": [
     {"at": 13.68, "length": 1.12, "gain": 0.24},
     {"at": 15.12, "length": 0.65, "gain": 0.28},

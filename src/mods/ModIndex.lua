@@ -11,9 +11,9 @@
 -- no network) so the engine tier can table-drive it, and the fetch/cache half
 -- reaches for curl and options.lua.
 --
--- Sources are never added automatically.  options.modIndexes is a player-built
--- list -- adding an index is a deliberate act of trusting whoever publishes it,
--- so the launcher ships with none and asks.
+-- options.modIndexes contains player-added feeds. LauncherCommunity also
+-- supplies the removable ModCompass feed; catalogue metadata grants no
+-- exemption from the installer's archive/manifest checks.
 --
 -- schema_version is a hard gate, not a hint: a bumped feed may reuse a field
 -- name for something else, so an unknown version is refused outright rather
@@ -137,7 +137,7 @@ local function parseLatest(raw)
   local zip = nil
   if type(raw.zip) == "table" and str(raw.zip.url) then
     zip = { name = str(raw.zip.name), url = raw.zip.url,
-            size = tonumber(raw.zip.size) }
+            size = tonumber(raw.zip.size),sha256=str(raw.zip.sha256) }
   end
   return {
     version = str(raw.version),
@@ -158,6 +158,8 @@ local function parseEntry(raw)
     author = str(raw.author),
     version = str(raw.version),
     summary = str(raw.summary) or "",
+    description = str(raw.description),
+    games = strArray(raw.games),
     categories = strArray(raw.categories),
     tags = strArray(raw.tags),
     license = str(raw.license),
@@ -176,6 +178,12 @@ local function parseEntry(raw)
     description_url = str(raw.description_url),
     latest = parseLatest(raw.latest),
     update_check = str(raw.update_check) or "pending",
+    catalogueId = str(raw.catalogue_id),
+    resolveUrl = str(raw.resolve_url),
+    latestUrl = str(raw.latest_url),
+    projectUrl = str(raw.project_url),
+    sourceChecked = str(raw.source_checked),
+    videos = type(raw.videos)=='table' and raw.videos or {},
   }
 end
 
@@ -211,6 +219,7 @@ function ModIndex.parse(jsonText, Json)
       generatedAt = str(doc.generated_at),
       categories = strArray(doc.categories),
       mods = mods,
+      week = type(doc.week)=='table' and doc.week or nil,
     }
   end)
   if not ok then return nil, "could not read the index: " .. tostring(result) end
@@ -352,7 +361,8 @@ end
 
 local function haystack(entry)
   return (tostring(entry.title or "") .. " " .. tostring(entry.author or "")
-    .. " " .. tostring(entry.summary or "") .. " " .. tostring(entry.id or ""))
+    .. " " .. tostring(entry.summary or "") .. " " .. tostring(entry.description or "")
+    .. " " .. table.concat(entry.tags or {},' ') .. " " .. tostring(entry.id or ""))
     :lower()
 end
 
