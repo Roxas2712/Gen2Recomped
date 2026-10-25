@@ -27,8 +27,6 @@
 -- Deliberately ABSENT, because this engine has no equivalent module and the
 -- honest answer is "not found":
 --
---   src.world.gen2.Follower     PikachuFollower is Yellow's, not a general
---                               party follower
 --   src.ui.gen2.SaveMenu        the save flow is part of StartMenu here
 --   src.ui.gen2.BattleAnimView  Gen2AnimPlayer is a player, not a view
 --   src.battle.UIVisibility     no equivalent
@@ -62,6 +60,9 @@ ModCompat.ALIASES = {
   -- State predicates share the actual native mover. Legacy field-action,
   -- collision classification and fly-picker functions are not emulated.
   ["src.world.gen2.FieldMoves"] = "src.world.Gen2FieldMoves",
+  -- The optional native companion owns Gen2's actual NPC/trail lifecycle;
+  -- this is separate from Yellow's Pikachu-specific dialogue controller.
+  ["src.world.gen2.Follower"] = "src.world.OptionalFollower",
   ["src.world.gen2.Palettes"] = "src.render.PaletteFX",
 
   -- save-side data
