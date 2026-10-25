@@ -4,6 +4,7 @@ local Sequence = {}
 local Library = require('src.import.LauncherLibrary')
 local Strings = require('src.core.Strings')
 local Versions = require('src.core.GameVersion')
+local Seasons = require('src.import.LauncherSeasons')
 
 Sequence.INTRO_DURATION = 14.4
 Sequence.PLAY_DURATION = 5.6
@@ -23,8 +24,8 @@ function Sequence.stages(state)
     zoom=state.kind=='play' and smooth((t-Sequence.ZOOM_AT)/(Sequence.PLAY_DURATION-Sequence.ZOOM_AT)) or 0}
 end
 
-function Sequence.new(kind, version)
-  return {kind=kind, version=version or 'crystal', elapsed=0,
+function Sequence.new(kind, version, season)
+  return {kind=kind, version=version or 'crystal', elapsed=0,season=kind=='intro' and Seasons.resolve(season) or nil,
     duration=kind=='intro' and Sequence.INTRO_DURATION or Sequence.PLAY_DURATION}
 end
 
@@ -55,7 +56,7 @@ function Sequence.install(RI)
     local self = new(...)
     if self.launcher and self.sidebarMode and not self.workState and not self.forceImport
       and self:_settings().launcherAnimations ~= false then
-      self._launcherSequence = Sequence.new('intro')
+      self._launcherSequence = Sequence.new('intro',nil,self:_settings().launcherIntroSeason)
     end
     return self
   end
@@ -233,9 +234,14 @@ function Sequence.install(RI)
     if intro then
       -- Application identity only: no game, cartridge or device in this intro.
       local logoY=oy+h*0.44
-      col(accent,0.04);g.circle('fill',cx,logoY,230*s)
-      col(accent,0.09);g.circle('line',cx,logoY,230*s)
-      lightning(cx,logoY,w,h,s,state.elapsed,phase)
+      local seasonal=state.season~='lightning'
+      local pose=seasonal and Seasons.pose(state.season,state.elapsed,cx,logoY,s)
+      if seasonal then
+        Seasons.draw(state.season,state.elapsed,cx,logoY,s)
+        if state.elapsed>pose.release then
+          lightning(cx,logoY,w,h,s,state.elapsed-pose.release,(state.elapsed-pose.release)/6)
+        end
+      else lightning(cx,logoY,w,h,s,state.elapsed,phase) end
       g.setFont(self.labelFont);col(accent,1-dock)
       g.printf(Strings('YOUR NEXT CHAPTER'),ox,oy+h*0.22,w,'center')
       if logo then
@@ -243,13 +249,16 @@ function Sequence.install(RI)
         local logoW=math.min(w*0.80,460*s)
         local mainS=self._s or 1
         local endScale=math.min(218*mainS/lw,62*mainS/lh,(w-40*mainS)/lw)
-        local sc=logoW/lw*(1-dock)+endScale*dock
-        local left=(cx-lw*sc/2)*(1-dock)+(ox+20*mainS)*dock
-        local top=(logoY-lh*sc/2)*(1-dock)+(oy+(80*mainS-lh*sc)/2)*dock
+        local sc=logoW/lw*(pose and pose.logoScale or 1)*(1-dock)+endScale*dock
+        local left=((pose and pose.logoX or cx)-lw*sc/2)*(1-dock)+(ox+20*mainS)*dock
+        local top=((pose and pose.logoY or logoY)-lh*sc/2)*(1-dock)+(oy+(80*mainS-lh*sc)/2)*dock
         local reveal=smooth((state.elapsed-0.72)/7.0)
         g.setShader()
-        g.setScissor(math.floor(left),math.floor(top),math.ceil(lw*sc*reveal),math.ceil(lh*sc))
-        g.setColor(1,1,1,clamp(state.elapsed/0.3));g.draw(logo,left,top,0,sc,sc)
+        if not seasonal then g.setScissor(math.floor(left),math.floor(top),math.ceil(lw*sc*reveal),math.ceil(lh*sc)) end
+        g.setColor(1,1,1,pose and pose.logoAlpha or clamp(state.elapsed/0.3))
+        g.push();g.translate(left+lw*sc/2,top+lh*sc/2)
+        g.rotate(pose and pose.rotation*(1-dock) or 0)
+        g.draw(logo,-lw*sc/2,-lh*sc/2,0,sc,sc);g.pop()
         g.setScissor()
       end
       g.setFont(self.hintFont);col(P.warning,1-dock)
@@ -267,8 +276,6 @@ function Sequence.install(RI)
       local focusX=cx+(screenX-cx)*stage.zoom
       local focusY=cy+(screenY-cy)*stage.zoom
       g.push('all');g.translate(cx,cy);g.scale(cameraScale);g.translate(-focusX,-focusY)
-      col(accent,0.035);g.circle('fill',cx,cy,230*s)
-      col(accent,0.09);g.circle('line',cx,cy,230*s)
       local cartH=(142*(1-align)+(device.kind=='gba' and 66 or device.kind=='nds' and 82 or 100)*align)*s
       local startX=cx-250*s
       local cartX=startX+(device.slotX-startX)*align
@@ -347,8 +354,24 @@ function Sequence.install(RI)
       result[#result+1]={kind='option',scope='launcher',label='STARTUP & CARTRIDGE ANIMATION',
         note='A short intro and cartridge insertion when starting a game.',
         row={id='launcherAnimations',values={true,false},labels={[true]='ON',[false]='OFF'}}}
+      result[#result+1]={kind='option',scope='launcher',label='INTRO SEASON',
+        note='Automatic follows your calendar. Choose a season to keep it all year.',
+        row={id='launcherIntroSeason',values=Seasons.VALUES,labels=Seasons.LABELS}}
+      result[#result+1]={kind='option',scope='launcher',label='LOGO ON CARTRIDGE LABELS',
+        row={id='launcherLogoCards',values={false,true},labels={[false]='OFF',[true]='ON'}}}
+      result[#result+1]={kind='action',label='PREVIEW STARTUP INTRO',value='PLAY',action='launcherPreviewIntro'}
     end
     return result
+  end
+  local settingsAction=RI._settingsAction
+  RI._settingsAction=function(self,entry,...)
+    if entry and entry.action=='launcherPreviewIntro' then
+      if not self._launcherSequence then
+        self._launcherSequence=Sequence.new('intro',nil,self:_settings().launcherIntroSeason)
+      end
+      return
+    end
+    if settingsAction then return settingsAction(self,entry,...) end
   end
 end
 

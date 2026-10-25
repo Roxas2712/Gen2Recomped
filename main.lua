@@ -359,7 +359,7 @@ local function bootGame(version)
   if love.window and love.window.setTitle then
     local Version = require("src.core.Version")
     love.window.setTitle(Version.title(
-      GameVersion.info().displayName .. " (Gen 1 Recompilation Project)"))
+      "RetroRecomped · " .. GameVersion.info().displayName))
   end
   Game = require("src.core.Game")
   Game:load()
@@ -1098,7 +1098,7 @@ local function minimalErrorScreen(text)
 end
 
 function love.errorhandler(msg)
-  local trace = "gen2recomp error\n\n" .. tostring(msg)
+  local trace = "RetroRecomped error\n\n" .. tostring(msg)
   pcall(function()
     local parts = {
       "---- " .. tostring(os.date and os.date("%Y-%m-%d %H:%M:%S") or "?") .. " ----",

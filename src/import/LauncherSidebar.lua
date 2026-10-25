@@ -1768,11 +1768,6 @@ function Sidebar.install(RI)
   RI._launcherSettingsRows = function(self, ...)
     local rows = origRows(self, ...)
     local function add(r) rows[#rows + 1] = r end
-    add({ kind = "section", label = "LAUNCHER LAYOUT",
-          note = "The sidebar (News, Games, Mods, Tools, Settings) or the classic row of game chips." })
-    add({ kind = "option", scope = "launcher", label = "LAYOUT",
-          row = { id = "launcherLayout", values = { "sidebar", "classic" },
-                  labels = { sidebar = "Sidebar", classic = "Classic" } } })
     local bgValues = { "game", "last", "off", "video" }
     local bgLabels = { game = "The game you're viewing", last = "Last game played", off = "None",
                        video = "Custom video" }

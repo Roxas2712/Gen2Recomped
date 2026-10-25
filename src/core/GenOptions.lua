@@ -58,6 +58,10 @@ GenOptions.SHARED_ONLY = {
   launcherAccent = true,
   launcherText = true,
   launcherGeneration = true,
+  launcherAnimations = true,
+  launcherIntroSeason = true,
+  launcherLogoCards = true,
+  launcherCartDesigns = true,
 }
 
 function GenOptions.isGeneration(g)

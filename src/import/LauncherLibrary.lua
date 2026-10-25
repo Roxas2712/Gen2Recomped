@@ -67,7 +67,14 @@ function Library.install(RI)
   local new = RI.new
   RI.new = function(...)
     local self = new(...)
-    self.sidebarMode = self.sidebarMode and self:_settings().launcherLayout ~= 'classic'
+    if self.launcher then
+      local opts=self:_settings()
+      if opts.launcherLayout=='classic' or opts.launcherClassic==true then
+        opts.launcherLayout='sidebar';opts.launcherClassic=nil
+        pcall(require('src.core.SaveData').saveOptions,opts)
+      end
+      self.sidebarMode=true
+    end
     if self.sidebarMode and not self.interruptedImport then
       self.section = 'games'
       self._newsPending, self._newsDrawn = nil, nil

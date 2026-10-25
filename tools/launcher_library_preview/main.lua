@@ -20,6 +20,7 @@ function love.load()
   local RI = require('src.import.RomImporter')
   ui = RI.new(function(v) bootCount=bootCount+1;previewBooted=true;print('PLAY ' .. tostring(v)) end, {launcher = true})
   ui._launcherSequence = nil
+  if os.getenv('LIBRARY_PREVIEW_SEASON') then ui:_settings().launcherIntroSeason=os.getenv('LIBRARY_PREVIEW_SEASON') end
   if os.getenv('LIBRARY_PREVIEW_LOGO_CARDS')=='1' then ui:_settings().launcherLogoCards=true end
   ui._newsPending = false
   ui._news = {items = {}, offline = true}
@@ -39,7 +40,7 @@ function love.load()
     end
   end
   if mode=='intro' or mode=='insertion' then
-    ui._launcherSequence=require('src.import.LauncherSequence').new(mode=='intro' and 'intro' or 'play',version)
+    ui._launcherSequence=require('src.import.LauncherSequence').new(mode=='intro' and 'intro' or 'play',version,ui:_settings().launcherIntroSeason)
     if output then ui._launcherSequence.elapsed=tonumber(os.getenv('LIBRARY_PREVIEW_TIME')) or (mode=='intro' and 2.25 or 1.5) end
   end
   if mode == 'list' then
@@ -101,7 +102,7 @@ function love.keypressed(key)
       if ui[field] then ui[field]:stop();ui[field]=nil end
     end
     ui._handedOff=false
-    ui._launcherSequence=require('src.import.LauncherSequence').new('intro',version)
+    ui._launcherSequence=require('src.import.LauncherSequence').new('intro',version,ui:_settings().launcherIntroSeason)
     return
   end
   ui:keypressed(key)

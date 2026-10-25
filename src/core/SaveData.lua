@@ -530,6 +530,7 @@ function SaveData.defaultOptions()
     launcherLogoCards = false,
     launcherCartDesigns = {},
     launcherAnimations = true,
+    launcherIntroSeason = "auto",
     launcherTheme = false,
     launcherAccent = false,
     launcherText = false,

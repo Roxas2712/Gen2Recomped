@@ -8563,16 +8563,16 @@ RomImporter.SETTINGS_ROWS = {
       local ok, S = pcall(require, "src.core.Sound")
       if ok and S and S.setVolumeLevel then pcall(S.setVolumeLevel, v) end
     end },
-  { id = "colors", label = "COLORS",
+  { id = "colors", label = "GB / GBC COLOR PALETTE",
     values = { "gbc", "sgb", "dmg", "classic" },
     labels = { gbc = "GBC", sgb = "SGB", dmg = "DMG", classic = "CLASSIC" } },
-  { id = "gbcfx", label = "GBC FX",
+  { id = "gbcfx", label = "GB / GBC COLOR EFFECTS",
     values = { false, true }, labels = { [false] = "OFF", [true] = "ON" } },
   { id = "videoMode", label = "VIDEO MODE",
     values = { "windowed", "borderless", "fullscreen" },
     labels = { windowed = "WINDOWED", borderless = "BORDERLESS",
                fullscreen = "FULLSCREEN" } },
-  { id = "faithfulRes", label = "FAITHFUL RES",
+  { id = "faithfulRes", label = "NATIVE PIXEL SCALE",
     values = { false, true }, labels = { [false] = "OFF", [true] = "ON" } },
   { id = "fpsCap", label = "MAX FPS",
     values = { 0, 30, 60, 120, 144 },
@@ -8612,8 +8612,8 @@ function RomImporter:_settingsRows()
   -- set once and never again, and interleaving them with the rows a player
   -- actually comes here to change makes both lists longer to read.
   if self.settingsPage~="translation"then
-  add({ kind = "section", label = "LAUNCHER" })
-  add({ kind = "action", label = "LAUNCHER SETTINGS",
+  add({ kind = "section", label = "RETRORECOMPED" })
+  add({ kind = "action", label = "RETRORECOMPED SETTINGS",
         value = "OPEN", action = "launcherPage",
         note = "Where games are installed, and how the launcher looks." })
   end
@@ -8643,14 +8643,16 @@ function RomImporter:_settingsRows()
   -- Game Boy screen and a GBA one.  ALL sets the shared value every generation
   -- follows, a generation sets an override only it reads
   -- (src/core/GenOptions.lua).
-  add({ kind = "option", scope = "settingsGen", label = "APPLIES TO",
+  add({ kind = "option", scope = "settingsGen", label = "GAME FAMILY",
         row = { id = "settingsGen",
-                values = { false, 1, 2, 3 },
-                labels = { [false] = "ALL GAMES", [1] = "GEN 1 ONLY",
-                           [2] = "GEN 2 ONLY", [3] = "GEN 3 ONLY" } } })
+                values = { false, 1, 2, 3, 4 },
+                labels = { [false] = "ALL SYSTEMS", [1] = "GAME BOY",
+                           [2] = "GAME BOY COLOR", [3] = "GAME BOY ADVANCE", [4] = "DS (GEN 4)" } } })
   for _, row in ipairs(RomImporter.SETTINGS_ROWS) do
-    add({ kind = "option", scope = "game", gen = gen, row = row,
-          label = row.label })
+    if not (gen and gen>=3 and (row.id=='colors' or row.id=='gbcfx')) then
+      add({ kind = "option", scope = "game", gen = gen, row = row,
+            label = row.label })
+    end
   end
   -- Only while a generation is selected AND has something to clear: an action
   -- that is always there and usually does nothing is one a player learns to
@@ -8791,9 +8793,8 @@ function RomImporter:_launcherSettingsRows()
   end
 
   -- ------- how the launcher looks
-  add({ kind = "section", label = "APPEARANCE",
-        note = "Chip colours stay as they are: they are how you tell the "
-            .. "cartridges apart at a glance." })
+  add({ kind = "section", label = "RETRORECOMPED APPEARANCE",
+        note = "Choose the library's colors and text. Design individual cartridge shells and labels in Cartridge Studio." })
   add({ kind = "option", scope = "launcher", label = "THEME",
         row = { id = "launcherTheme", values = LauncherTheme.presetValues(),
                 labels = self:_themeLabels(LauncherTheme.PRESETS,

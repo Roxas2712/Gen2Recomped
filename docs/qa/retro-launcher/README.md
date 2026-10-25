@@ -63,3 +63,33 @@ device cues; these are recreations, not extracted firmware recordings.
 
 Gameplay itself is not driven by the layout smoke host. Existing import, save,
 mod and boot implementations remain responsible for those operations.
+
+## Seasonal intro and settings follow-up
+
+The current source removes the large enclosing ring from startup and insertion.
+Startup includes original vector mascots with distinct entrances, effects and
+logo delivery: autumn shade, hopping winter courier with a mail sack, shaking
+spring branchling, and summer spark drake. Automatic follows local calendar
+months; each season and plain Lightning can be selected manually. Application
+settings expose the selector, label branding, and **Preview startup intro**.
+This is installed in the production RomImporter, not only in the preview host.
+
+Classic launcher selection and its explanatory row are removed; old preferences
+migrate once to the RetroRecomped library. Application and game window titles
+use RetroRecomped instead of the inherited Gen 1 project title. The appearance
+category and labels use the fork's name; game-family controls include the
+supported DS engine, with GB-only color controls filtered from GBA/DS views.
+The save identity and compatibility formats retain their established names.
+
+CPU checks pass: 58 sequence, 20 cartridge, and 51 seasonal/settings assertions,
+plus syntax checks for the twelve changed application/preview Lua sources.
+They exercise calendar boundaries, wordmark landing at three viewport shapes,
+old-preference migration, settings rows, intro preview action, and global scope.
+
+**Visual verification boundary:** existing PNGs/videos and the 11.5/12 native
+smoke results above cover commit `b522ab45`, before this seasonal/settings
+follow-up. They still show the former circular backdrop. No new native graphics
+run or video render was started after the user's cross-chat instruction to free
+the machine for OASC and then VASC/KASC Android measurements. The new mascot
+art, circle removal, and revised settings still require native visual review
+once that explicit graphics/testing pause is lifted.

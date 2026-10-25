@@ -6,7 +6,7 @@ local Sidebar = require('src.import.LauncherSidebar')
 local Library = require('src.import.LauncherLibrary')
 
 Workspace.CATEGORIES = {
-  {id='launcher',name='Launcher & appearance',note='Theme, background, animation and game storage.',icon='games'},
+  {id='launcher',name='RetroRecomped',note='Intro seasons, cartridge labels, appearance and game storage.',icon='games'},
   {id='game',name='Picture & sound',note='Display, audio and defaults for every generation.',icon='speaker'},
   {id='controls',name='Controls',note='Configure the on-screen pad and its layout.',icon='games'},
   {id='cloud',name='Cloud saves',note='Keep your adventures with you across devices.',icon='news'},
@@ -201,7 +201,7 @@ function Workspace.install(RI)
     self.settingsRowRects={};self._workspaceCards={}
     paint.text(self,self.gameNameFont,Strings('Make it yours.'),x,y,w)
     y=y+48*s
-    paint.text(self,self.hintFont,Strings('A place for every preference.'),x,y,w,P().detail)
+    paint.text(self,self.hintFont,Strings('Your RetroRecomped preferences.'),x,y,w,P().detail)
     y=y+38*s
     local cols=w>=620*s and 2 or 1
     local gap=16*s

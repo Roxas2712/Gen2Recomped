@@ -24,7 +24,7 @@ local Version = {
 
 -- "gen2recomp v0.5.1" (or the stamped release version in shipped builds)
 function Version.title(base)
-  return (base or "gen2recomp")
+  return (base or "RetroRecomped")
     .. " v" .. Version.engine
 end
 

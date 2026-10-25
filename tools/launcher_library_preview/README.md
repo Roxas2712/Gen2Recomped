@@ -24,6 +24,7 @@ Environment options:
 | `LIBRARY_PREVIEW_OUT=/absolute/file.png` | Capture a settled frame and exit. |
 | `LIBRARY_PREVIEW_SMOKE=1` | Run live input, navigation, design persistence and artwork checks; exit on completion. |
 | `LIBRARY_PREVIEW_AUDIO=1` | Enable audio for an interactive intro preview. |
+| `LIBRARY_PREVIEW_SEASON` | `auto`, `lightning`, `spring`, `summer`, `autumn`, or `winter`. |
 | `LIBRARY_PREVIEW_FRAMES=/absolute/folder` | Capture deterministic sequence frames into an existing folder. |
 | `LIBRARY_PREVIEW_FRAME_COUNT` | Sequence capture count, default 91, including both endpoints. |
 
@@ -36,3 +37,7 @@ F5 replays the full startup intro with audio when enabled. After the Play
 animation the preview returns to the launcher, allowing repeated launches.
 Automated smoke checks use a third identity, `Gen2Recomp-layout-smoke`, so
 their persistence checks do not alter interactive preview preferences.
+
+The application itself has the same intro and season selector under
+Settings → RetroRecomped, with **Preview startup intro** for immediate replay.
+The standalone host is only a separate-storage way of trying the real UI.
