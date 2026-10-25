@@ -804,8 +804,9 @@ local function realFile(rel)
     if not handle then return false, "not open" end
     if mode == "r" then return false, "opened for reading" end
     if kind == "io" then
-      local ok, err = pcall(handle.write, handle, chunk)
-      if not ok then return false, err end
+      local ok, result, err = pcall(handle.write, handle, chunk)
+      if not ok then return false, result end
+      if not result then return false, err end
       return true
     end
     return handle:write(chunk)
@@ -827,8 +828,11 @@ local function realFile(rel)
   end
 
   function file:close()
-    if handle and handle.close then pcall(handle.close, handle) end
+    local called,result,err=true,true
+    if handle and handle.close then called,result,err=pcall(handle.close,handle) end
     handle, kind = nil, nil
+    if not called then return false,result end
+    if not result then return false,err end
     return true
   end
 
