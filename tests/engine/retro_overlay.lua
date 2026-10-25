@@ -1,0 +1,37 @@
+package.path='./?.lua;'..package.path
+love=require('tests.love_stub')
+local n=0
+local function check(v,m) assert(v,m);n=n+1 end
+local writes,reset,returned,exports=0,0,0,0
+local failure=false
+package.loaded['src.core.SaveData']={activeSlot=function() return 'running' end}
+package.loaded['src.core.TouchControls']={reset=function() reset=reset+1 end}
+package.loaded['src.cloud.Task']={reap=function() end,new=function(fn) return {cancel=function() end,poll=function() local a,b=fn();return {kind='done',first=a,second=b} end} end}
+local upload
+package.loaded['src.cloud.RetroCloud']={open=function() return {kind='retro'} end}
+package.loaded['src.import.CloudSync']={syncOne=function(_,v,slot,pushOnly) upload={v,slot,pushOnly};return 'uploaded' end}
+package.loaded['src.import.SaveFileIO']={exportActiveSlot=function() exports=exports+1;return true,'/demo/exports/game.sav' end}
+local O=require('src.ui.RetroOverlay')
+local world={isOverworld=true}
+local game={save={player={}},stack={states={world}},overworld=world,
+ input={reset=function() reset=reset+1 end},writeSave=function() writes=writes+1;return not failure end,
+ returnToLauncher=function() returned=returned+1 end}
+check(not O.update(game),'closed menu never pauses gameplay')
+check(O.key(game,'f1') and O.game==game and reset==2,'F1 opens the menu and clears held touch and keyboard inputs')
+check(O.update(game),'open menu pauses game logic')
+O.action('save');check(writes==1 and O.notice:find('normal save slot',1,true),'ordinary saving writes the current registered slot')
+O.action('export');check(writes==2 and exports==1 and O.exportPath,'battery export captures live progress first')
+O.action('cloud');check(writes==3 and O.job,'cloud upload saves locally before starting network I/O')
+O.close();check(O.game==game,'the game stays paused during an upload')
+O.update(game);check(upload[2]=='running' and upload[3]==true and not O.job,'in-game sync protects the running slot against remote replacement')
+O.action('library');check(returned==0 and O.confirm=='library','switching games asks before leaving live progress')
+O.action('cancel');check(not O.confirm and returned==0,'cancelling a game switch keeps the current session')
+failure=true;O.action('library');O.action('library')
+check(returned==0 and O.game==game,'a failed save cannot discard the running session')
+failure=false;O.action('library');check(returned==1 and not O.game,'a successful save returns through the normal library hook')
+local before=writes;game.stack.states={{name='title'}};O.open(game);O.action('save')
+check(writes==before and O.notice:find('Start or continue',1,true),'the title-screen new-game skeleton cannot overwrite an existing save')
+O.action('library');O.action('library');check(returned==2 and writes==before,'returning from the title screen does not create a blank save')
+O.open(game);check(O.key(game,'down') and O.selected==2,'keyboard navigation stays inside the overlay')
+O.key(game,'escape');check(not O.game and reset>=4,'closing resets input before play resumes')
+print('Retro overlay: '..n..' checks passed')
