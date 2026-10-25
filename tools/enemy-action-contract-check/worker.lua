@@ -2,7 +2,9 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "accuracy_execution" then
+if mode == "secondary" or mode == "secondary_execution" then
+  rows = dofile(root .. "/tests/enemy_actions/secondary.lua").run(root, backend, version, mode == "secondary_execution")
+elseif mode == "accuracy_execution" then
   rows = dofile(root .. "/tests/enemy_actions/accuracy.lua").run(root, backend, version, true)
 elseif mode == "accuracy" then
   rows = dofile(root .. "/tests/enemy_actions/accuracy.lua").run(root, backend, version)

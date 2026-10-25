@@ -1029,6 +1029,7 @@ local function makeBattler(data, mon, isPlayer, save, battle)
     -- while the tilemap still shows the prior condition until the next
     -- post-action HUD refresh (core.asm after Execute*Move)
     shownStatus = mon.status,
+    toxicCounter = GameVersion.isGen3() and mon.status == "PSN" and mon.toxic == true and 1 or nil,
     -- a sleep put on outside battle with its own count (the Battle Pike's
     -- Kirlia: STATUS1_SLEEP, all three bits); spent, it is gone
     sleepTurns = (mon.status == "SLP" and mon.sleepTurns) or nil,

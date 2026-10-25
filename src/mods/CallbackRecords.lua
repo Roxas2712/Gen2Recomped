@@ -229,7 +229,7 @@ function R.new(loader, name, generation, api3)
         level = raw.level,
         hp = raw.hp,
         maxHp = raw.stats and raw.stats.hp,
-        status = readStatus(raw.status),
+        status = portable and generation == 3 and raw.toxic == true and readStatus(raw.status) == "PSN" and "TOX" or readStatus(raw.status),
         isEgg = raw.isEgg == true,
         dvs = portable and generation ~= 3 and type(raw.dvs) == "table" and copy(raw.dvs) or nil,
         shiny = portable and portable.shiny(raw, generation),
@@ -611,6 +611,16 @@ function R.new(loader, name, generation, api3)
             v = integer(v, 1, 65535, key)
           elseif key == "status" then
             v = writeStatus(v, raw.status)
+            if portable and generation == 3 then
+              local toxic = v == "TOX"
+              stage(raw, "toxic", toxic or nil)
+              for _, parent in ipairs(entries) do
+                if parent.kind == "battler" and parent.raw.mon == raw then
+                  stage(parent.raw, "toxicCounter", toxic and 1 or nil)
+                end
+              end
+              if toxic then v = "PSN" end
+            end
           elseif key == "nickname" then
             assert(v == nil or type(v) == "string", "nickname must be a string")
           elseif key == "isEgg" then
