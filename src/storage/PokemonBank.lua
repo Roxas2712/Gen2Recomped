@@ -110,6 +110,7 @@ function B.deposit(mon,version,slot,place,data,save)
   return B.keep(value)
 end
 function B.keep(value)
+  local permitted,why=require('src.storage.AccountStorage').check();if not permitted then return nil,why end
   value=clone(value);value.id=nil
   local bytes=S.encode(value);local id=hash(bytes)
   local good,why=B.decode(bytes,id);if not good then return nil,why end
@@ -120,6 +121,7 @@ function B.keep(value)
   return ok and id or nil,err
 end
 function B.list()
+  local permitted,why=require('src.storage.AccountStorage').check();if not permitted then return {},why end
   local out={};local disk=fs()
   for _,name in ipairs(disk.getDirectoryItems(B.DIRECTORY) or {}) do
     local id=name:match('^([a-f0-9]+)%.lua$')

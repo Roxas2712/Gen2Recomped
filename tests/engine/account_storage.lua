@@ -12,6 +12,9 @@ local Saves=require('src.core.SaveData');Saves.persistenceFs=function() return f
 local P=require('src.storage.AccountStorage');P.enable()
 check(not P.check() and not Saves.save({version='red',player={name='Guest'}}) and writes==0,'guest saves are refused at the real persistence boundary before any writes')
 check(not Saves.createSlot('red') and not Saves.writeSlot('red','slot1',{player={}}) and #Saves.listSlots('red')==0 and writes==0,'guest imports, slot creation and save browsing cannot bypass registration')
+local B=require('src.storage.PokemonBank')
+local stored,bankReason=B.keep({schema=1,source={version='red'},mon={species='BULBASAUR',level=5,moves={}},canonical={dex=1,moves={}}})
+check(not stored and bankReason:find('confirm your email',1,true) and #B.list()==0 and writes==0,'direct Bank storage access cannot bypass the account gate or create guest copies')
 signed=true;account='17'
 check(not P.check() and not files[P.FILE],'sign-in never silently assigns pre-existing storage')
 files['saves/red/slot1.lua']='original save';files['bank/entries/original.lua']='original Bank copy'
