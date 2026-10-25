@@ -25,10 +25,14 @@ function M.new(getGame, getEdition)
   assert(type(getGame)=='function' and type(getEdition)=='function','native session resolvers required')
   local handle = {}
   local views = Views.new(getGame,getEdition)
+  local observing=false
   local owner,data,nativeMaps,edition,binding,pairBinding,epoch
   local maps,known,published,loaded = {},setmetatable({},{__mode='k'}),{},{}
   local ended,allIndexed = false,false
   local function clear()
+    if observing or ended then
+      views:release();views=not ended and Views.new(getGame,getEdition)or nil;observing=false
+    end
     if pairBinding then pairBinding:release() end
     owner,data,nativeMaps,edition,binding,pairBinding,epoch=nil,nil,nil,nil,nil,nil,nil
     maps,known,published,loaded={},setmetatable({},{__mode='k'}),{},{}
@@ -138,6 +142,7 @@ function M.new(getGame, getEdition)
       return nil,'owned map definition retired'
     end
     if not def then def,why=self:definition(id);if not def then return nil,why end end
+    observing=true
     local view;view,why=views:map(id);if not view then return nil,why end
     local prior=published[def.id]
     if prior~=view then
@@ -199,7 +204,7 @@ function M.new(getGame, getEdition)
   function handle:loadedLayouts() session();return loaded end
   function handle:release()
     if ended then return end
-    ended=true;views:release();clear();getGame,getEdition=nil,nil
+    ended=true;clear();getGame,getEdition=nil,nil
   end
   return handle
 end

@@ -38,7 +38,7 @@
     "fullCompatibility": false,
     "playerProfilesUsed": false
   },
-  "syntheticChecks": 223,
+  "syntheticChecks": 236,
   "customDefinitionGraphComparison": {
     "values": 194623,
     "cases": 1000,
@@ -59,11 +59,11 @@
   "newGpuAcceptance": false,
   "fullCompatibility": false,
   "sourceSha256": {
-    "src/compat/gen1/MapRuntime.lua": "686c42650a30ee8a24d315afee449e92af741a755f04d194ea3c6e86560c52a0",
+    "src/compat/gen1/MapRuntime.lua": "e03ce2834a778a77d382a6d26b1a5ac6540619521182e941c325afe8eb34b8c0",
     "src/compat/gen1/MapGraph.lua": "eb93413b3950b56790f305b1b27f650ed32ae9372e308bec32ccdd8528375d41",
-    "src/core/game3/map.lua": "4fbf2886c06cfcf7ea2838dbb6c6f7970084ca21ed2e26bce87a4f3d99be38e6",
+    "src/core/game3/map.lua": "46205d43526a25e8e246b3d46db7bd83e7c89fc44fa78ddcee137ebb953d0c96",
     "src/mods/Loader.lua": "2a0bd033bb94c1db76d300029395689428f1db9df3077b8df8ba9c6b155c828b",
-    "tools/map-runtime/check.lua": "59f1a6c30e8b91c2ac589a91cf77f9e6b02bab55c4bbcf851843bf3db82b6eae",
+    "tools/map-runtime/check.lua": "c2deb123128521f6f2df28b58c8a79be47481d8077775c9a70bf34447c675640",
     "tools/map-runtime/oracle.lua": "5766540cc86b766caeef26f74b28da95ca02d9eeb56c35fc44ae595f0f65a175",
     "tools/map-runtime/projection.lua": "e4e922bfb801195fc77642d9243b544e141553ba4b0ef118144c0ae6ddee9a8a",
     "tools/map-runtime/graph-consumer.lua": "c2187de06296e6f31db0c0e1679561c914857d486b4aecff6e31affc58f0c346",

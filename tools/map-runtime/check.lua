@@ -30,6 +30,12 @@ for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
  f.game.stack.states={f.world};T.eq(runtime:current(),def)
  runtime:invalidate();T.eq(runtime:isOwned(def),false,'explicit dataset invalidation retires borrowed views')
  local current=assert(runtime:current());T.check(current~=def)
+ local replacement={};for key,value in pairs(native)do replacement[key]=value end;replacement.weather=9
+ f.game.data.maps.NATIVE_A=replacement;f.map.def=replacement
+ runtime:invalidate();local replaced=assert(runtime:current())
+ T.eq(replaced.weather,9,'full invalidation rebinds replaced native definitions in the same table')
+ T.eq(current.midLayout,nil,'previous metadata epoch cannot borrow a replacement layout')
+ current=replaced
  runtime:release();T.eq(runtime:current(),nil);T.eq(current.midLayout,nil,'retired lazy definition cannot resolve another owner')
  f.views:release()
 end
@@ -64,6 +70,11 @@ do
  T.eq(Map.currentDef,original,'real loader teardown restores compatibility wrappers')
  T.eq(held.midLayout,nil,'real loader teardown retires held lazy observations')
  T.check(Map.currentDef()~=held,'the same native owner creates fresh observations after teardown')
+ Map.release();package.loaded[key]=nil
+ local explicit=Map.refreshWorld(f.game,0,0)
+ T.eq(#explicit,1,'explicit native owner does not require bootstrapping Game')
+ T.eq(explicit[1].ox,3,'explicit owner keeps true grid geometry during graph traversal')
+ T.eq(package.loaded[key],nil)
  Map.release();f.views:release();package.loaded[key]=previous
 end
 do

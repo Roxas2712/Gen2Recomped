@@ -38,7 +38,7 @@ owned metadata; typed cell APIs publish grid revisions normally.
 
 ## Validation
 
-- `luajit tools/map-runtime/check.lua`: 223 ROM-free checks, including real native
+- `luajit tools/map-runtime/check.lua`: 236 ROM-free checks, including real native
   Map patch/restore APIs, canonical metadata, semantic layouts, all parallel
   neighbours, true/padded boundary counterexamples, epoch retirement, actual
   Loader teardown/wrapper unwind and weak map/renderer ownership controls.

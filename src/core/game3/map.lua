@@ -15,7 +15,7 @@ local function currentGame()
   return type(game)=='table'and game or nil
 end
 local function getContext(game)
-  game=rawGame(game or currentGame())
+  game=rawGame(game or currentGame() or gameOwner)
   local id=Version.get();local info=Version.info(id)
   if not game or not info or info.generation~=3 then
     if context then context:release()end
@@ -49,7 +49,7 @@ end
 function Map.computeWorld(maps,root,hops,reachW,reachH,ensure)
   -- Custom definitions follow the established public dimensions. Native
   -- source grids retain authored padding but connect at their true extent.
-  local runtime=getContext()
+  local runtime=context
   local C=require('src.core.game3.connections')
   local function size(def)
     if runtime and runtime:isOwned(def)then return def.width,def.height end
