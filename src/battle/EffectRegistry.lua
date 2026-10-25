@@ -112,6 +112,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   local move, moveInst = ctx.move, ctx.moveInst
   local neverMiss = record and record.neverMiss
   local gba = require("src.core.GameVersion").isGen3()
+  local ordinaryMulti = gba and require("src.battle.Gen3MultiHit").ordinary(move)
   if gba and type(target.substituteHP) == "number" and target.substituteHP <= 0 then
     target.substituteHP = nil
   end
@@ -292,13 +293,13 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   local landed, brokeSub = 0, false
   for h = 1, hits do
     if target.mon.hp <= 0 then break end
-    if gba and (user.mon.hp <= 0 or h > 1 and user.mon.status == "SLP"
+    if ordinaryMulti and (user.mon.hp <= 0 or h > 1 and user.mon.status == "SLP"
         and not require("src.battle.Gen3MultiHit").sleepTalk(battle)) then break end
     if record and record.perHitDamage then
       local nextDamage, nextInfo = record.perHitDamage(ctx, h, dmg, info)
       if nextDamage == nil then break end
       dmg, info = nextDamage, nextInfo or info
-    elseif gba and h > 1 and require("src.battle.Gen3MultiHit").ordinary(move)
+    elseif ordinaryMulti and h > 1
         and not (record and record.chooseDamage) then
       dmg, info = ordinaryDamage(battle, ctx, record)
       if info.typeMult == 0 or info.missed then
@@ -423,7 +424,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
       brokeSub = true
       if not gba then break end
     end
-    if gba and endured then break end
+    if ordinaryMulti and endured then break end
   end
   hits = landed > 0 and landed or hits
   if hits > 1 and not info.gbaBeatUp then
