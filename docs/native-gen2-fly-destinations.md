@@ -38,3 +38,12 @@ badges or party admission, or accept the unchanged package's complete flight
 cinematic. Live Crystal flight, full field-action integration and the mod's
 Hall-of-Fame flag/presentation expectations still need separate acceptance.
 No new release acceptance follows solely from these CPU checks.
+
+## Upstream composition
+
+This topic is based on the camera/state-query series in PR243 (`b9c0545a`).
+It includes the standalone Gen2 `MapIdentity` reader unchanged from PR211
+(`3aa7017f`), so the flight query can run without copying unrelated fork or
+Gen3 naming code. Complete imported shared-map alias production remains in
+PR211. The new flight delta does not include private mod data, ROM data,
+launcher/release policy or the fork contribution-notice packaging changes.
