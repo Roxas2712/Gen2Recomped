@@ -25,7 +25,7 @@ ROMs or player saves are included in this repository or its releases.
 | Persistent Gen2 world and menu ownership | 33 ownership and 29 readiness checks; actual V/F6 input and upright menus on OpenGL/Metal | [draft #204](https://github.com/UNDERdecoded/Gen2Recomped/pull/204) |
 | Portable scripts and world actions on persistent worlds | 5,290 composed script checks and 2,778 action checks; independent existing branches also pass | Existing [#98](https://github.com/UNDERdecoded/Gen2Recomped/pull/98), [#94](https://github.com/UNDERdecoded/Gen2Recomped/pull/94) updated |
 
-The current full ROM-free quick suite passes: 259 engine suites, three SDK suites and
+The current full ROM-free quick suite passes: 261 engine suites, three SDK suites and
 B30. Its native clock fixture was updated for the additional startup method;
 the existing independent logic-speed PR retains all 407 passing assertions.
 These checks do not establish complete gameplay, all maps or Windows GPU
@@ -475,6 +475,74 @@ no-ops), cave-ice exclusion and the protection interval after battle/warp.
 These are open behaviors, not covered by the new landing-phase guarantees.
 
 See the [source-bound retirement receipt](qa/native-foundation/johto-native-landing-retirement.json).
+
+## Development: native encounter gates and entry grace
+
+Source `5b7d630d2d30a431f5cbcf1666f29b5e71486deb` backs the random
+encounter phase with native ice/collision eligibility, the actual VM
+`wildoff`/`wildon` switch and map-entry/battle-return grace. Cave/dungeon ice
+refuses before RNG. The terrain permission chooses the water table independently
+of the avatar's surf flag; missing water data cannot reuse cave grass. The
+live imported/authored encounter-class list gates route currents. Adopted
+non-Gen2 behaviour-byte maps keep their existing meanings.
+
+A five-step counter protects four completed encounter phases and lets the fifth
+roll. Physical-visit ownership prevents double decrement. Earlier CountStep
+owners, scripts/overlays, moving or out-of-bounds players cannot consume it;
+party/wildoff eligibility follows the countdown. Actual map loads, native
+battle return and setup/reload commands arm it; graphics-only refresh/reanchor
+preserve it. Full map-setup/music/presentation semantics remain separate work.
+The wild switch is transient world state and never disables scripted battles.
+
+The new suites pass 281 gate and 420 grace/VM/lifecycle checks. Independent
+#204 head `2cf604ff` passes both and all nine existing focused movement/ownership
+suites. Preceding `e602ea72` fails 220 gate and 240 grace checks. With the actual
+imported Crystal geometry, species, moves and encounter tables, that preceding
+code starts a real Swinub battle at an ice cell in Ice Path B1F `(14,28)`. Current
+code checks all 677 ice cells in five maps without RNG or battle materialization,
+while ordinary floor still constructs a real native Swinub battle/transition.
+The composed fork passes 261 engine suites, three SDK suites, B30 and all 63
+hosted code checks on the exact source.
+
+Actual isolated OpenGL, with QA VSync disabled, passes a 16-cell native ice slide
+ending against a wall; 12 ice footsteps occur after grace reaches zero, all
+without encounter RNG or a battle. A two-cell floor route is protected for four
+real input steps; the fifth starts a real Swinub battle. The actual command menu
+renders, direction input selects RUN, and native BattleState finish/fade/callback
+returns to the map with grace 5. Five further input steps with a real compiled
+wildoff program do not battle, the switch survives a native warp, and wildon
+restores it. QA uses native warps and the native gift command to prepare a
+level-100 Cyndaquil test party; normal story progression is not inferred.
+
+The unchanged supplied mod passes the same real 16-cell ice traversal in both
+selected First and Third Person modes, plus the floor battle/menu/RUN/return
+regression in Third Person. This run uses the mod's public Wilds
+`setRandomEncounters` option to enable classic step encounters, then restores
+its original value. The default visible-only encounter system is not accepted
+by this test: an initial run correctly blocked the underlying native encounter
+phase and invalidated the test's countdown assumption. A separate setup attempt
+addressed the wrong exported library and failed before applying the option.
+Both failed test copies were removed; the final run also removes its verified
+27,329-file mod copy. These are native grid and forced-slide checks; continuous
+camera-relative movement remains uninstalled. Native and mod runs each have
+four fresh owned-window proofs; mixed voxel/native battle proof thresholds are
+recorded explicitly.
+
+The mod battle flow passing does not establish correct visuals. Its current
+capture has missing Pokemon actors and a level-1/incorrect-HP HUD, while the
+actual battle contains level-100 Cyndaquil and level-23 Swinub. The reference
+Gen2 screen wraps a separate logic model with live Pokemon in player/enemy;
+the fork screen directly holds battler wrappers. A backed data/presentation
+bridge needs implementation and live validation. Native no-mod battle visuals
+show the correct Pokemon, levels and HP.
+
+Current Windows/macOS QA packages share a verified source payload, with PE64,
+eleven AMD64 DLLs, relocated entry points and strict macOS signature checks.
+Windows hardware and current default/Metal window acceptance remain open.
+Fork/upstream main are still `13af468b`; the working branch includes that base.
+The existing published preview remains `ae8359c0`.
+
+See the [source-bound encounter receipt](qa/native-foundation/johto-native-wild-events.json).
 
 ## Open acceptance and concrete failures
 
