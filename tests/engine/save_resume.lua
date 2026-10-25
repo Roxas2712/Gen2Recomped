@@ -55,4 +55,6 @@ missingAssets.missingImports=nil;missingAssets.game_version='>=99.0.0'
 check(not R.assess(portableSave,'red',{missingAssets},options).plan,'an incompatible installed package cannot be silently enabled for resume')
 options.mods={};local experimental=P.plan({engine=V.engine,mods={}},{{id='experimental',version='1.0.0',experimental=true}}, {generation=1,required={}})
 check(P.accept(experimental) and G.active(options.mods.experimental,1)==false and G.active(options.mods.experimental,2)==false,'disabling an unused experimental package cannot activate it for other generations')
+local sparse={schema=1,version='red',engine=V.engine,modApi=V.modApi,saveFormat=V.saveFormat,mods={[2]={id='required',version='1.0.0',api=3}}}
+check(not R.decode(sparse),'sparse requirement lists cannot silently drop a missing mod')
 print('Save resume requirements: '..n..' checks passed')

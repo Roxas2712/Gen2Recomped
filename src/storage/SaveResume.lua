@@ -11,6 +11,15 @@ local Semver=require('src.mods.Semver')
 local function id(value) return type(value)=='string' and #value<=128 and value:match('^[%w_%-][%w_.%-]*$') and not value:find('..',1,true) end
 local function text(value) return type(value)=='string' and #value>0 and #value<=80 and not value:find('[%c]') end
 local function integer(value,limit) return type(value)=='number' and value%1==0 and value>=0 and value<=limit end
+local function array(value,limit)
+  if type(value)~='table' or #value>limit then return false end
+  local count=0
+  for key in pairs(value) do
+    if type(key)~='number' or key%1~=0 or key<1 or key>#value then return false end
+    count=count+1
+  end
+  return count==#value
+end
 function R.capture(version,loaded,options)
   if not Games.VERSIONS[version] then return nil,'Unknown game version.' end
   local portable={}
@@ -26,7 +35,7 @@ function R.capture(version,loaded,options)
 end
 function R.decode(raw)
   if type(raw)~='table' or raw.schema~=R.SCHEMA or not Games.VERSIONS[raw.version] or not text(raw.engine)
-    or not integer(raw.modApi,1000) or not integer(raw.saveFormat,1000) or type(raw.mods)~='table' or #raw.mods>256 then return nil,'Unsupported save requirements.' end
+    or not integer(raw.modApi,1000) or not integer(raw.saveFormat,1000) or not array(raw.mods,256) then return nil,'Unsupported save requirements.' end
   local clean={schema=R.SCHEMA,version=raw.version,engine=raw.engine,modApi=raw.modApi,saveFormat=raw.saveFormat,mods={}}
   local seen={}
   for _,m in ipairs(raw.mods) do
@@ -55,7 +64,7 @@ function R.assess(save,version,installed,options)
   if not legacy then requirements,why=R.decode(meta.resume)
   else
     local mods={}
-    if meta.mods~=nil and type(meta.mods)~='table' then return {blocked=true,needsReview=true,rows={},problems={'Invalid legacy mod list.'},version=version} end
+    if meta.mods~=nil and not array(meta.mods,256) then return {blocked=true,needsReview=true,rows={},problems={'Invalid legacy mod list.'},version=version} end
     for _,m in ipairs(meta.mods or {}) do
       if type(m)~='table' then return {blocked=true,needsReview=true,rows={},problems={'Invalid legacy mod identity.'},version=version} end
       mods[#mods+1]={id=m.id,version=m.version,api=m.api or 1}

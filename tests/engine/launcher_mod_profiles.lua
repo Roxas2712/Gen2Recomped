@@ -9,7 +9,7 @@ local failId,changed,recovered,accepted
 local function event(name) sequence[#sequence+1]=name end
 package.loaded['src.core.SaveData']={persistenceFs=function() return {read=function() end} end,loadOptions=function() return options end,saveOptions=function(value) options=value;return true end}
 package.loaded['src.mods.ModProfiles']={
-  plan=function(profile) return {profile=profile,downloads=profile.mods,flags={},hash='remote'} end,
+  plan=function(profile,_,resume) return {profile=profile,downloads=profile.mods,flags={},hash='remote',resume=resume} end,
   unchanged=function() return not changed end,
   accept=function() event('accept');accepted=true;return true end,
 }
@@ -83,4 +83,15 @@ plan.kind='apply';local playing=ui();playing:_communityApplyProfile(plan);playin
 check(not playing.played,'game launch cannot load a partly applied mod stack')
 playing._profileApplying=nil;playing._profileRecoveryBlocked=true;playing:play()
 check(not playing.played,'an unfinished recovery also blocks game hand-off')
+local save={fingerprint='approved'}
+package.loaded['src.core.SaveData'].peekSlot=function() return save end
+package.loaded['src.core.SaveData'].activeSlot=function() return 'slot1' end
+package.loaded['src.storage.SaveResume']={fingerprint=function(value) return value.fingerprint end}
+plan.resume={generation=1,required={'mod1','mod2'}}
+local changedSave=ui();changedSave._resumeRestore={version='red',slot='slot1',fingerprint='approved'}
+changedSave:_communityApplyProfile(plan,true)
+check(changedSave._profileApplying.plan.resume.generation==1,'the save generation survives the fresh package plan')
+for _=1,30 do if changedSave._profileApplying.stage=='backup' then break end;changedSave:update(0) end
+save.fingerprint='changed';sequence={};accepted=false;changedSave:update(0)
+check(not changedSave._profileApplying and #sequence==0 and not accepted,'a save changed during download is refused before any mod backup or replacement')
 print('Launcher mod profiles: '..n..' checks passed')
