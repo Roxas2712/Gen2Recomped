@@ -1,0 +1,1067 @@
+{
+  "target": "Roxas2712/Gen2Recomped:main",
+  "scope": "Existing own-fork PR #1 and pending Recompiler feature work; no changes to protected Gen1/player installations",
+  "priorComposition": "fda469d1ad6b2171dd6e897ae9bd5212ca078194",
+  "inventoryCount": 148,
+  "mergeCommits": [
+    "d82b53ec",
+    "894308ca",
+    "a5057806",
+    "96f8e45b"
+  ],
+  "snapshotAt": "2026-10-25",
+  "upstreamPullRequestsRemainOpen": true,
+  "validation": {
+    "state": "pending final composed run",
+    "focusedSuitesPassed": 7
+  },
+  "knownOpen": [
+    "Legacy Fetch.download blocks on the first poll",
+    "VASC end-to-end file/package download acceptance",
+    "Supplied Gen2 scene patch generator exceeds the bundled LuaJIT 60-upvalue limit",
+    "Full native VASC parity and GPU acceptance"
+  ],
+  "inventory": [
+    {
+      "number": 86,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/86",
+      "head": "69727a99bc8214d01b62cdb43207dbdbaa0669c5",
+      "title": "Restore classic GB item-list overlays and selectable Cancel",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 87,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/87",
+      "head": "dc24da362b3a3bfc56eec6cb10f1f422472915f0",
+      "title": "Fix FireRed and Emerald summary controls, badges and move details",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 88,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/88",
+      "head": "a3221711f319f31d6399abe98a972603984d9e01",
+      "title": "Add configurable mod load order to launcher and mod profiles",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 89,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/89",
+      "head": "5bb306c4117122dd44e96e7a5fca804ff636b684",
+      "title": "Add optional GBC colour correction with Accurate and Harsh profiles",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 90,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/90",
+      "head": "59348147b706bad091d095ef247c100b6438b2d9",
+      "title": "Add version-aware mod:supports capability queries",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 91,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/91",
+      "head": "044ff9205ef332b9d54b3ce7dc2ebad7e5312bb8",
+      "title": "Add opt-in unified mod content records across generations",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 92,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/92",
+      "head": "4822a59042c2b65ca2a8d9883d34b3e1f056004a",
+      "title": "Add opt-in unified hook and event records",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 93,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/93",
+      "head": "dd4b201af7b7a670e7b1a479a136ce3532080b69",
+      "title": "Add read-only world and party queries with portable records",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 94,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/94",
+      "head": "2c8add573b32eeabfa5689405307f58d653d2460",
+      "title": "Add guarded public world actions and native flight",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 95,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/95",
+      "head": "52b0055ef9679e31e9cc0f24069c87e50c1f4401",
+      "title": "Add read-only mod.battle:snapshot() for Gen 1\u20135",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 96,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/96",
+      "head": "904490919a64c3a4ba72914baecbb696c76cbd6f",
+      "title": "Add revision-bound mod.battle:submit() through native battle commands",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 97,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/97",
+      "head": "418b55ff7359643dcb2e06c2fecfd4f2d620756b",
+      "title": "Add revision-bound public party, bag and dialogue UI actions",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 98,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/98",
+      "head": "300e91f1ccecbdd50d561815a216b3e47451c0ab",
+      "title": "Add opt-in prevalidated portable world dialogue scripts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 99,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/99",
+      "head": "b46e1289f0038b1538190b956ce07117e5fda066",
+      "title": "Add read-only map overview and encounter table queries",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 100,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/100",
+      "head": "3ed4741afb030feb8a7653a93927e83c8d6a0095",
+      "title": "Add optional local shader presets with persistent parameters",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 101,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/101",
+      "head": "7f7e92d79f58d2a94302195c41f9ddd8ea80c854",
+      "title": "Add preflighted single-pass RetroArch shader import",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 102,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/102",
+      "head": "69c3474958ec09b48b91b55ff8cfd0ed15501d46",
+      "title": "Add shared API 3 entry and pinned cross-engine contracts",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 103,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/103",
+      "head": "ab7d941dcdb58cb9d8a346ffb0aa6c6b8ef8a867",
+      "title": "Add validated API 3 world warps and cross-engine contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 104,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/104",
+      "head": "2ea78e3db7a07532c6ab08a2c0cd0e7b7edeee5d",
+      "title": "Add API 3 object visibility and block edits with shared contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 105,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/105",
+      "head": "f18425648ef6bbc17b67b7ed46ad514f381a53a1",
+      "title": "Add API 3 public NPC actions with cross-engine contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 106,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/106",
+      "head": "602302a8362cea3e0238b4cf7d53b5226f72f269",
+      "title": "Add guarded API 3 wild encounters and shared contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 107,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/107",
+      "head": "b191fdcc3d904e51619e250f0c984236e8980aed",
+      "title": "Add guarded API 3 native map invalidation",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 108,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/108",
+      "head": "569b78980a0586b1ed8ee9662e0a94da134f254a",
+      "title": "Map API 3 native flags to version-correct VM storage",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 109,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/109",
+      "head": "20fd4f6b0f4cd6c2546a5f447172aebc5f109f85",
+      "title": "Add prevalidated portable flag script commands",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 110,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/110",
+      "head": "235b8f975f9e4c74cf0775dc6f18e9cc7220439b",
+      "title": "Add portable wallet, inventory and party script actions",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 111,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/111",
+      "head": "76717887264f26b93bc0343e27e23b93c607b88a",
+      "title": "Add portable item and Pok\u00e9mon gift scripts with owned native dialogs",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 112,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/112",
+      "head": "25af724d2ae554ec206ec4715ac10fc63b679aaa",
+      "title": "Add validated portable object and block script commands",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 113,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/113",
+      "head": "4632d3a75be10e7af8161c715de0647b31dc1437",
+      "title": "Add owned portable movement and facing scripts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 114,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/114",
+      "head": "7e620268d09f78d8fc01664ba2329eb6e3936763",
+      "title": "Add portable native travel with destination-aware preflight",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 115,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/115",
+      "head": "7f46d4d0a6164ab6101816ebdf09ee8dc7253640",
+      "title": "Add portable wild and static battle scripts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 116,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/116",
+      "head": "089a4c9c1dbdbbbd65fd02bee19ad3af3f356d00",
+      "title": "Add native portable trainer battle scripts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 117,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/117",
+      "head": "1a09b6c7847a723805fd39e88ea0be17f5dc7795",
+      "title": "Add portable native marts with owned transaction callbacks",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 118,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/118",
+      "head": "1fa9d59d90fbb6391a4a6cf994de56c016f40436",
+      "title": "Add validated portable script audio commands for API 3",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 119,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/119",
+      "head": "8a6eca8ebcc5501bc390f39de6aeba75b2878d48",
+      "title": "Add deferred dialogue audio with owned callbacks for API 3",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 120,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/120",
+      "head": "5528ea28a9e8f9451aa27bbc6f2d411fa8ef2e62",
+      "title": "Add bounded save-field and option commands to portable scripts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 121,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/121",
+      "head": "1d9b8ef0ae11e8faa791da895d9b3d305da1be4e",
+      "title": "Map portable move effects and secondary chances to native handlers",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 122,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/122",
+      "head": "72f4fb2acb8bb84678369ddb0ce2807ef512c69f",
+      "title": "Add validated read-only version datasets for API 3",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 123,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/123",
+      "head": "aa70f506a2bd299ef090a529a77c639b42f8e5a7",
+      "title": "Add final-output ownership hooks with scoped GPU state",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 124,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/124",
+      "head": "ce4a825a961d35df2e6748b22632843f77d5c671",
+      "title": "Add game viewport, window composition and pointer contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 125,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/125",
+      "head": "f62b3751d6417b7a287915e862a16b81889c8b81",
+      "title": "Support bounded multipass shader imports and PNG LUTs",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 126,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/126",
+      "head": "53382756827e5e0a900451054e629c2031f4fdb5",
+      "title": "Add pinned shader browser and GPU-approved desktop installation",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 127,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/127",
+      "head": "d6b5a552a7425011d8f9ad2ecf257bb6ec7b463f",
+      "title": "Ship verified desktop shader converters with source and notice bundles",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 128,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/128",
+      "head": "d7d2f1cdb5d1ffc8ce34cba674d06c9d8838c2fc",
+      "title": "test: repair Gen2 updater asset fixtures",
+      "disposition": "already included; three-way merge changes no file"
+    },
+    {
+      "number": 129,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/129",
+      "head": "282373b7089fd0d0ebba506c6b3bde697a223580",
+      "title": "test: repair rebinding regressions for the twelve-action controls",
+      "disposition": "already included; three-way merge changes no file"
+    },
+    {
+      "number": 130,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/130",
+      "head": "a704889f4a7cf0830cb95d2691c3308354ceb0cd",
+      "title": "test: restore soft-reset and tool-hook coverage through profiled Game methods",
+      "disposition": "already included; three-way merge changes no file"
+    },
+    {
+      "number": 131,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/131",
+      "head": "c78d3f1759658faf85b476f3c98f15d3780f98f9",
+      "title": "test: execute quit veto and Android process-exit behavior",
+      "disposition": "already included; three-way merge changes no file"
+    },
+    {
+      "number": 132,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/132",
+      "head": "aa55b827e136417ae381207bce8bea9b9f6e0c58",
+      "title": "test: pin the continuous wide-battle animation mapping",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 133,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/133",
+      "head": "57f67e5b89d6b36dc3a1b508e3e2b256257170e0",
+      "title": "test: audit and refresh the stale Gen2 fixture fingerprint",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 134,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/134",
+      "head": "8c8b6d8bbaa5ddcc43e5ba4daffb5ba831e58f8e",
+      "title": "test: cover six native mod event and HUD producers",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 135,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/135",
+      "head": "f0e00baf68e1ae1f8236540aa9fa93985a36a76c",
+      "title": "fix: support the public Gen1Recomp Gen2 naming screen contract",
+      "disposition": "already included; three-way merge changes no file"
+    },
+    {
+      "number": 136,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/136",
+      "head": "c33d4d397193e3b4ce30b8f7f4ea0cd995ee80c4",
+      "title": "Add a versioned read-only Gen3 render data contract",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 137,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/137",
+      "head": "cb56e734a941a24a3ebffdb186eff464ff8fb883",
+      "title": "Add a portable Gen3 world pass and OASC terrain adapter",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 139,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/139",
+      "head": "4507c1eb03fd3b24928d7a3d16446796991194a0",
+      "title": "Add portable read-only Gen3 player and NPC render data",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 140,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/140",
+      "head": "ffebd37d79356851c956a993e914fa2f87a16551",
+      "title": "Add portable read-only Gen3 field effect render data",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 141,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/141",
+      "head": "90b54467fff19ef3c1acb2535e0fec19fed8df68",
+      "title": "Expose portable surf mount data to mod render hooks",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 142,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/142",
+      "head": "5324b5c22c541454162dd284e283976c5ae8658c",
+      "title": "Add portable keyboard, gamepad and wheel input hooks",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 143,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/143",
+      "head": "bbf00f2df2657da2d2b554a2b6cc40a5bc166339",
+      "title": "Add portable mod.input tap, press and release controls",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 144,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/144",
+      "head": "34d5c10ff5cf5c8c65170a339a0ba9504972bf40",
+      "title": "Add portable core.update dispatch and cross-engine contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 145,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/145",
+      "head": "6c6fa1e26267cca5f72d8cdf3f7b79cf39ad48d3",
+      "title": "Add portable core.logic_speed dispatch and cross-engine contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 146,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/146",
+      "head": "af4571fa9037273879229c42c9f0219f016ddffa",
+      "title": "Add portable screen.render_visible dispatch and cross-engine contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 147,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/147",
+      "head": "5764ec80f5d4f0070d1069ea6ae4bd30fa3b45c9",
+      "title": "Add portable battle.bottom_ui_visible dispatch and cross-engine contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 148,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/148",
+      "head": "eae79aaaa0bb7048cc9c4d8e4b7b8919a9e908f1",
+      "title": "Add portable battle.status_hud_visible for GB/GBA and shared contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 149,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/149",
+      "head": "95d6c7555cdcc99675a01f5cd716e40496ddc9dd",
+      "title": "Add portable world.talk dispatch and cross-engine NPC contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 150,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/150",
+      "head": "ca7aed554ba3bb06a26365430358574dd69d2e87",
+      "title": "Add portable trainer.before_battle and battle-local party scopes",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 151,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/151",
+      "head": "6e61c01ebe6ccaca1c2b9588d6e9fe5cedbe24cc",
+      "title": "Add portable Pok\u00e9mon level visibility for GB/GBA screens",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 152,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/152",
+      "head": "97eac5593cbab7e3ff537879a148fb084046982d",
+      "title": "Add portable auxiliary battle menu actions and shared native contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 153,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/153",
+      "head": "3800b634d9f362bde275b63985f82ac49a9c759b",
+      "title": "Add portable battle move-grid navigation and native controller contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 154,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/154",
+      "head": "5ed6353372be5f70fb7812780bfcea338c1815b9",
+      "title": "Add portable battle-party grid navigation and shared native contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 155,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/155",
+      "head": "aef565014e18051acc979aabac6641978b5e822d",
+      "title": "Add API-3 playthrough storage and shared persistence contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 156,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/156",
+      "head": "d7581ba7202773cd58945c00fb030fc1a35e6bb5",
+      "title": "Add native live-map lifecycle events and portable API-3 pixel placements",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 157,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/157",
+      "head": "5481fa2a463a24cf314c6ad60c8fb7df886fa495",
+      "title": "Add portable native follower spawning and shared lifecycle contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 158,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/158",
+      "head": "0520e65b0a53e12c078891679b69721be63f73b6",
+      "title": "Add native GB item-use dispatch and cross-engine UI contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 159,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/159",
+      "head": "1c35b4a5174680104ee85d9b3bc5d40bab33fd38",
+      "title": "Add native GBA field item-use results and cross-engine contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 160,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/160",
+      "head": "789219b0748394524a44f12694c616cf53592114",
+      "title": "Add portable encounter.table preview transforms and shared contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 161,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/161",
+      "head": "44e746d68e76dd2a37d56079e485f7144efede2e",
+      "title": "Add portable battle.charge_required and native cross-engine contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 162,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/162",
+      "head": "72ad168fabb613d371eddf73ab0616d264abac03",
+      "title": "Fix automatic ruleset selection and Gen-2 enemy PP",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 163,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/163",
+      "head": "b1c8e7e76b3e23a591e0f26635ca2867ec6d5f89",
+      "title": "Add portable battle.caught_marker_visible for GB/GBA",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 164,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/164",
+      "head": "124da70a77a09737d6a99aef2933ab722b3d5133",
+      "title": "Add portable battle.field_residual and native cross-engine contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 165,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/165",
+      "head": "1ce83faf4b980584be9d747eee82efc530ede09f",
+      "title": "Add portable held_item.trigger and native effect-read contracts",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 166,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/166",
+      "head": "38a33ed20d0d50899886699b473f8db81cff81e8",
+      "title": "Align native GBA held-item action and residual phases",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 167,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/167",
+      "head": "373f07d5afa4bfc9b08788e35d5e860ce69449be",
+      "title": "Add portable Gen-2 held-item content definitions",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 168,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/168",
+      "head": "fbb21ba43e64e35562a30d9f1f1aff8ba22d6aa6",
+      "title": "Add portable Gen-2 mart definitions and native bargain purchases",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 169,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/169",
+      "head": "049217dbe3a1096bc6fd0544dbd4febb101194f1",
+      "title": "Add portable shiny.roll and gender.roll hooks for Gen 2/3",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 170,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/170",
+      "head": "cedba8db00e3639bd00a8f996ad949bf45fd320d",
+      "title": "Unify API-3 script-text sources and native Gen-2 text IDs",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 171,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/171",
+      "head": "901ea77f7f0bfb15b5f125ee0b3e6e3797da3b21",
+      "title": "Add shared ROM-prose registry and native Gen-2/GBA storage readers",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 172,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/172",
+      "head": "236591a1fa50266311837f2d8569d7395c365b46",
+      "title": "Bind portable ROM prose to native GBA party and item-PC menus",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 173,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/173",
+      "head": "0244afae3f573e9680525b3ef0f81a5452722a24",
+      "title": "Preserve native trainer AI metadata during ROM import",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 174,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/174",
+      "head": "6b16be59a7bb5f6b966cbd21454579fa20bac024",
+      "title": "Align portable AI-class item references and detached records",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 175,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/175",
+      "head": "19997e91ef462833c570d2b61484af811fa676a4",
+      "title": "Apply native GBA critical multiplier before type rounding",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 176,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/176",
+      "head": "127ff4cb2be7d465b3bc7c86727f34112b349ba2",
+      "title": "Apply the native Gen-2 critical base calculation",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 177,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/177",
+      "head": "2358a8901762321ee87b9b7a5324ba78cbd5d630",
+      "title": "Match native GBA AI random-branch semantics",
+      "disposition": "already included; three-way merge changes no file"
+    },
+    {
+      "number": 178,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/178",
+      "head": "a7944332a5136d7814279b6fe31c6e14020480c1",
+      "title": "Use native GBA base-damage rounding",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 179,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/179",
+      "head": "3c399f61be001df18d0b412ff30ffc536a960391",
+      "title": "Support native GBA AI move and battler queries",
+      "disposition": "already included; three-way merge changes no file"
+    },
+    {
+      "number": 180,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/180",
+      "head": "cf761ca9b1be9da528ccecec5e826f23ce4a7bed",
+      "title": "Support native GBA AI move knowledge",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 181,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/181",
+      "head": "5e1b4c4e4e924e94f46efc2247e5588248c2e857",
+      "title": "Support live GBA AI Taunt predicates and native duration",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 182,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/182",
+      "head": "ae64d9f378f879f937dac906f607c3fe4c17518b",
+      "title": "Align native GBA AI held-item knowledge and observation producers",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 183,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/183",
+      "head": "ac182bde8f9b1b454ef8bc7a98765320c86b525f",
+      "title": "Add native LeafGreen Rev 0 cartridge support",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 184,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/184",
+      "head": "6dfc660ddf8357c40f3819302635de30263be621",
+      "title": "Align native GBA AI party-status queries and stored sleep state",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 185,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/185",
+      "head": "ae3c8925dc364447120ae9167cd2bb107fb6d8a3",
+      "title": "Support native GBA AI attacking-move predicates",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 186,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/186",
+      "head": "3a9bec78de06ce971daa84dac76c00e825d124c9",
+      "title": "Add alpha native Ruby Rev 0 cartridge support",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 187,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/187",
+      "head": "9b48799deb59a61dc70db9114fb6c39f2a052758",
+      "title": "Add alpha native Sapphire Rev 0 cartridge support",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 188,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/188",
+      "head": "6178ae1f3329fc53a66d7ba08cd8fa2deb43bff9",
+      "title": "Implement native GBA AI order prediction and shared turn planning",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 189,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/189",
+      "head": "1a9c9df9db022ef1b3edfd7a15085b4ced48944f",
+      "title": "Handle unusable target choices before battle retargeting",
+      "disposition": "already included; three-way merge changes no file"
+    },
+    {
+      "number": 190,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/190",
+      "head": "64068911a5b48a9332b69428b4b12f159036649a",
+      "title": "Normalize public GBA enemy move choices and native PP ownership",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 191,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/191",
+      "head": "206052fb3b901d343017dac6212ef818ec13b05f",
+      "title": "Align API-3 GBA enemy-action battler selectors",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 192,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/192",
+      "head": "bb11efb4cb40bf6b18ce44020ca696b5d3818dc8",
+      "title": "Expose native remembered map music for central playback adapters",
+      "disposition": "already included; three-way merge changes no file"
+    },
+    {
+      "number": 193,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/193",
+      "head": "74229761a49ff40515283d5147382e89b8d3fd44",
+      "title": "Preserve LOVE 11 shader coordinates without inverting embedded HUDs",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 194,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/194",
+      "head": "3f01f29e47c191eb1da1f0b80ab68eace8d1b035",
+      "title": "Expose shared API-3 GBA native move records",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 195,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/195",
+      "head": "f84dfb5664d28f47b763e4cf701be1cb5c82556a",
+      "title": "Honor positional GBA mod-action targets through native execution",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 196,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/196",
+      "head": "8052c7916b12d57c425ce2fc92e6aa2ca3f9acc4",
+      "title": "Implement native GBA Follow Me targeting and round lifetime",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 197,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/197",
+      "head": "935ef14bb015f97bafe555f0fb5c6fa3ae31913b",
+      "title": "Accept compute permission for native LOVE worker threads",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 198,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/198",
+      "head": "f09b570eaaef1fb8bb48b58fe20f501869a5edd8",
+      "title": "Implement native GBA Helping Hand and shared damage modifier",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 199,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/199",
+      "head": "b0a80349f773094db34ef100232b4ee8ff96a90f",
+      "title": "Provide bounded background GET transport to native mods",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 200,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/200",
+      "head": "22bbe07ecfc156ad9fe43e286417efc0884e0e17",
+      "title": "Resolve active cartridge in method-style version queries",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 201,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/201",
+      "head": "4ae8acde18bbd61c53497c3979208ab723effc50",
+      "title": "Expose real new-game and continue lifecycle to native integrations",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 202,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/202",
+      "head": "fb22e4a1ad1e7278559fb42ae4d290e226a78a32",
+      "title": "Publish Gen2 palette row metadata for native atlas renderers",
+      "disposition": "already included; three-way merge changes no file"
+    },
+    {
+      "number": 203,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/203",
+      "head": "8c7df4d7dff206b8a88ba9a9a819c6128b311a91",
+      "title": "Match native GBA Spit Up damage and Stockpile consumption",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 204,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/204",
+      "head": "2cf604ffbe7f491fc64a839a79c688d2b1f0970c",
+      "title": "Share native Gen2 world ownership and landing phases",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 205,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/205",
+      "head": "82ae9520e013e62cffa760528ad569dbcb971de2",
+      "title": "Preserve native Gen2 map and phone-service metadata",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 206,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/206",
+      "head": "92ade2b2cf72238e3594cf46f5c670ef857ac2a3",
+      "title": "Calculate native GBA Beat Up damage per party member",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 207,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/207",
+      "head": "12896a65f2cbf57a10446e4cbf78a4ab2647052b",
+      "title": "Expose native Gen2 collision classes and bounded terrain queries",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 208,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/208",
+      "head": "db4ff08a238812b06112fa9f8396a0c8032aa6d7",
+      "title": "Publish native Gen2 tileset constant names without map ID migration",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 209,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/209",
+      "head": "03d68a41d2d25f3b51920655fa29c9602c3f11ca",
+      "title": "Verify native Beat Up held-item adjustment across engines",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 210,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/210",
+      "head": "c2a1a032eab21646d025b8b9704b6553507e1a01",
+      "title": "Read native Beat Up participants across both side parties",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 211,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/211",
+      "head": "3aa7017f7ef1410f4c21135909a0675e2f38f583",
+      "title": "Publish shared Gen2 map names while preserving native world and save identities",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 212,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/212",
+      "head": "d2d1f3b7b56493505df147fb5083d68ba78f46d7",
+      "title": "Match native GBA critical context and hit metadata",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 213,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/213",
+      "head": "b2b05e90cc89081030773d950267b70f303f07f7",
+      "title": "Publish Gen2 environment names while preserving native field rules",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 214,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/214",
+      "head": "440a5da635dc9737875c38e4ac324ce2343a23ee",
+      "title": "Create native Gen-3 preset parties with consistent identities",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 215,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/215",
+      "head": "a6205dfce1b6d091e758238447db3b25462367f4",
+      "title": "Align native GBA accuracy and post-hit chance commands",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 216,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/216",
+      "head": "b1795a79cb03a4de7171d50db93a39ce49dddd64",
+      "title": "Preserve native GBA party genetics across trades and link battles",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 217,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/217",
+      "head": "0905dcd005d102c33d31fad12d2082290d76f56c",
+      "title": "Track native GBA Lock-On ownership through residuals and switches",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 218,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/218",
+      "head": "e8d65156d62605c52203c88a6f3f9c82e2f67e42",
+      "title": "Implement native GBA Baton Pass selection and synchronized link choices",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 219,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/219",
+      "head": "313eb7a1841844aad124e1c60088dcdd20755574",
+      "title": "Implement native GBA Encore timing and forced move execution",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 220,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/220",
+      "head": "6a3a3155bb2d3433a8c587333d11870ed10f60eb",
+      "title": "Implement native GBA Disable identity and queued move interruption",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 222,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/222",
+      "head": "1d958bca394b280f91f5977785128dcc9c26fd98",
+      "title": "Align ordinary native GBA multi-hit execution and RNG boundaries",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 223,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/223",
+      "head": "8b4e90728967b4efc9d1620afe9fd64259f8ca23",
+      "title": "Back Gen2 battle models and sprite captures with live native state",
+      "disposition": "already included; three-way merge changes no file"
+    },
+    {
+      "number": 224,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/224",
+      "head": "6165969e0d5f4d9a072f5388e4aaa49f42bebc9b",
+      "title": "Add native Gen2 menu chrome with shared font and palette ownership",
+      "disposition": "already included; three-way merge changes no file"
+    },
+    {
+      "number": 225,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/225",
+      "head": "8e543618bc3a6ec9e0c6d8f1f31f9e12b5259f2e",
+      "title": "Implement native GBA Rage state and move-end boosts",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 226,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/226",
+      "head": "ecd2c0cc8efbe1301b19bc289858e952dfbc2f95",
+      "title": "Implement native GBA Triple Kick accuracy and escalating power",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 227,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/227",
+      "head": "5775f5aa10156911c3cf388e394481c09256f7fd",
+      "title": "Retire completed native battle queue and HP drain markers",
+      "disposition": "already included; three-way merge changes no file"
+    },
+    {
+      "number": 228,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/228",
+      "head": "491d3a2f0b997f8f5c801ebcd12524e70ba5cf54",
+      "title": "Implement native GBA Sleep Talk and named authored move calls",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 229,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/229",
+      "head": "71b1ae8166ac1c036faf92a13e4322181b1b8b04",
+      "title": "Back native GBA modal menus with actual engine states",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 230,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/230",
+      "head": "2fbfd30c1710b7ad7bc70fc44ea73ec32fa68a94",
+      "title": "Align native GBA held damage reads and pre-stage item modifiers",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 231,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/231",
+      "head": "ed5e02e5a55f0dca9ba06ab1d6c2afe7a21ae81e",
+      "title": "Restore all native Gen3 layout cell components",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 232,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/232",
+      "head": "d4256597f3d0a9b53073620cc02e935a41f124b2",
+      "title": "Bind Gen3 layout handles to the native map grid",
+      "disposition": "already included; three-way merge changes no file"
+    },
+    {
+      "number": 233,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/233",
+      "head": "374d02a4154269ceb43925c2f8e6612121e3ea4f",
+      "title": "Capture and present complete native window frames on macOS",
+      "disposition": "included by merge ancestry"
+    },
+    {
+      "number": 234,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/234",
+      "head": "1e591de13bc989ecf7262404627a16c934b7dfce",
+      "title": "Bind public GBA map names to native map identities",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    },
+    {
+      "number": 235,
+      "url": "https://github.com/UNDERdecoded/Gen2Recomped/pull/235",
+      "head": "740807d75a0eac49ef413731fdcbbf2f3c5ccddc",
+      "title": "Expose native Gen2 special-terrain and directional permission queries",
+      "disposition": "already composed with newer native fixes; retain current implementations"
+    }
+  ],
+  "supersessionReview": {
+    "nonConflictAdditions": "Only duplicate definitions, duplicate docs/tests, and a redundant grid-revision increment remained after choosing the newer conflict regions. Native noteGridChange already advances that revision once.",
+    "conflictReview": "Older hook catalogs, world ownership, API3 facades, callback adapters, script lifetimes, item scheduling, shader import and live-map branches are retained through their newer composed implementations. Existing regression suites remain enabled.",
+    "movementHandoff": "Upstream #236 is already composed at fda469d1ad6b2171dd6e897ae9bd5212ca078194; terrain queries from #235 are included there too."
+  }
+}

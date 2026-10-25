@@ -5554,6 +5554,12 @@ end
 
 function BattleState:resolveTurn(playerAction)
   if GameVersion.isGen3() then
+    -- A single-battle constructor can reach the native turn planner before
+    -- the ordinary entry path binds its two slots. Command and item phases
+    -- share those native IDs, including scripted/demo starts.
+    if (self.player and self.player.position == nil) or (self.enemy and self.enemy.position == nil) then
+      self:syncSides()
+    end
     self._nativeOrderSelectionTurn = (self.turnCount or 0) + 1
     require("src.battle.Gen3AIOrder").prepare(self, self._nativeOrderSelectionTurn)
   end

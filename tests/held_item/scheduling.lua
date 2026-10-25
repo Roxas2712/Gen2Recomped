@@ -291,6 +291,8 @@ function M.run(f)
     T.eq(f.battle.player.position, nil, "native single constructor has no slot ID")
     f.battle:resolveTurn(f.battle.player.curMoves[1])
     T.check(#f.battle.queue > 0, "native single round start builds action queue without slot IDs")
+    T.eq(f.battle.player.position, 0, "native planner binds player slot before scheduling")
+    T.eq(f.battle.enemy.position, 1, "native planner binds enemy slot before scheduling")
   end
   off()
   f.e.state.requiresItem = true

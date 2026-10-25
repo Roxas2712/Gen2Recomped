@@ -45,6 +45,27 @@ paused; existing Gen1 installations and player profiles are outside this work.
 The verified package has 27,329 files. No mod assets, extracted cartridge data,
 ROMs or player saves are included in this repository or its releases.
 
+## File-download boundary (2026-10-25)
+
+Background `mod.fetch:get` transport is implemented and tested on desktop
+platforms. This does **not** establish complete file/package-download support:
+legacy `src/net/Fetch.download` still invokes synchronous
+`HostShell.httpDownload` from the first `poll`, so that path can block native
+frames. VASC's complete package fetch, storage and activation flow has not
+passed end-to-end acceptance. Keep these as open engine/integration work;
+a successful GET or a green queue test is not evidence that these are fixed.
+
+## Fork integration for testing
+
+The own-fork inbox is integrated separately from upstream review. Existing
+battle-command, complete-window capture, item-list/summary and sibling-profile
+PR work is combined with this native Gen2 foundation. The composition retains
+the newer Gen2 ownership, alias, movement, API-3 and shader-coordinate fixes;
+earlier PR snapshots must not roll these back. The audited PR inventory and
+validation scope are recorded in
+[the integration receipt](qa/fork-inbox-integration.json).
+This is an engine test checkpoint, not full VASC/native parity or a new release.
+
 ## Fixed engine contracts
 
 | Contract | Evidence | Upstream |

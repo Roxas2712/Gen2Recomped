@@ -70,9 +70,9 @@ for _, version in ipairs(Version.ORDER) do
     end
   end
 end
--- Unregistered profiles must not silently run Red fixtures and masquerade as GBA.
+-- Registered sibling profiles must use their own GBA identity, not Red fixtures.
 for _, version in ipairs({ "leafgreen", "ruby", "sapphire" }) do
-  T.eq(Version.VERSIONS[version], nil, "additional GBA ROM profile is not yet registered")
+  T.eq(Version.generation(version), 3, "registered sibling preview uses native GBA profile")
 end
 Version.set(old)
 T.finish("native encounter.table preview and generation contracts")
