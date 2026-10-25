@@ -34,5 +34,17 @@
     "gpu": false,
     "fullCompatibility": false,
     "minimumFreeGiB": 8
+  },
+  "latestComposedRegression": {
+    "commit": "e64a5b8d",
+    "engineSuitesPassed": 328,
+    "engineSuitesTotal": 328,
+    "sdkSuitesPassed": 3,
+    "sdkSuitesTotal": 3,
+    "dramaticShapeB30": "pass",
+    "independentChecks": 83,
+    "fullCompatibility": false,
+    "playerProfilesUsed": false,
+    "firstComposedFailureRetained": true
   }
 }
