@@ -9837,7 +9837,9 @@ function RomExtractorGen3:extractOverworldSprites()
     wideSubsprites = edition == "ruby" or edition == "sapphire",
     reflectionProfile = edition == "emerald" and "raw" or "paired",
     reflectionFor = function(info) return self:reflectionPaletteFor(info) end,
-    progress = function(current,total) self:tick("Gen3 original object sheets",current,total) end,
+    progress = function(current,total)
+      if self.checkpoint then self.checkpoint(("Decoding original object sheets %d/%d"):format(current,total)) end
+    end,
   }))
   Logger.info("Gen3 overworld sprites: %d rows, %d that turn and walk, %d "
               .. "non-walkers, %d unreadable, %d sheets composed, %d "
