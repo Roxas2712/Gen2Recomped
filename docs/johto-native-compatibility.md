@@ -20,7 +20,7 @@ ROMs or player saves are included in this repository or its releases.
 | Native map generation/outdoor metadata | 256 independent checks; actual ROM-header classification agrees in Crystal on both backends | [#205](https://github.com/UNDERdecoded/Gen2Recomped/pull/205) |
 | Gen2 collision classes and bounded terrain queries | 525 independent checks; all sampled live cells agree with the native mover in both camera modes on OpenGL/Metal | [#207](https://github.com/UNDERdecoded/Gen2Recomped/pull/207) |
 | Public tileset constant names | 129 independent checks; actual Mart/Center geometry, native grid steps and menus on both backends | [#208](https://github.com/UNDERdecoded/Gen2Recomped/pull/208) |
-| Verified native map-source joins | 94 independent checks; encounter, music and scene storage follow declared aliases with exact authored overrides | [#211](https://github.com/UNDERdecoded/Gen2Recomped/pull/211) |
+| Verified native map-source joins | 105 independent checks; encounter, music, scene storage, trainer continuations and deferred scenes follow declared aliases with exact authored overrides | [#211](https://github.com/UNDERdecoded/Gen2Recomped/pull/211) |
 | Public environment names and native byte readers | 1,221 independent checks; native bicycle, Dig, spawn and VM policies; all 388 original Crystal map headers retain their grid and event tables | [#213](https://github.com/UNDERdecoded/Gen2Recomped/pull/213), action follow-up in [#94](https://github.com/UNDERdecoded/Gen2Recomped/pull/94) |
 | Persistent Gen2 world and menu ownership | 33 ownership and 29 readiness checks; actual V/F6 input and upright menus on OpenGL/Metal | [draft #204](https://github.com/UNDERdecoded/Gen2Recomped/pull/204) |
 | Portable scripts and world actions on persistent worlds | 5,290 composed script checks and 2,778 action checks; independent existing branches also pass | Existing [#98](https://github.com/UNDERdecoded/Gen2Recomped/pull/98), [#94](https://github.com/UNDERdecoded/Gen2Recomped/pull/94) updated |
@@ -149,6 +149,32 @@ room shell and remains visually unaccepted.
 
 The [current schema receipt](qa/native-foundation/johto-environment-schema.json)
 records these exact-source regressions and their remaining limits.
+
+## Diagnostic home-ID comparison
+
+Additional runs of the same gameplay source `a96e5604` compare native
+`PLAYERS_HOUSE1_F` with existing `PLAYERS_HOUSE_1F` / `PLAYERS_HOUSE_2F`
+aliases on OpenGL and Metal. Teleporting through the public native warp path
+loads actual Map objects under those names. The native 1F view remains mostly
+black above the floor strip; the canonical views draw walls and floors.
+Four fresh owned-window proofs per backend record the comparison with the
+unmodified mod. No renderer name or profile table was injected. A direct
+interior-profile query was unavailable on the exported handle and is not
+claimed as evidence.
+
+A subsequent development fix also resolves native trainer continuations and
+deferred map-scene dispatch through verified aliases. Its actual VM
+registration/compiler/queue regression produces four failures on the previous
+code and passes with the fix: 105 total identity checks independently and in
+the fork, plus 246 engine suites, three SDK suites and B30. This follow-up is
+in upstream #211; the existing published `f0d37ae1` package remains the
+previous GPU-verified composition.
+
+The [diagnostic receipt](qa/native-foundation/johto-home-map-alias-probe.json)
+is evidence of the naming mismatch. Native startup and door destinations
+still use raw IDs; canonical runtime publication and all dependent storage
+joins remain unfinished. A visible canonical room does not establish normal
+home traversal or complete room/actor presentation.
 
 ## Open acceptance and concrete failures
 

@@ -1,0 +1,181 @@
+{
+  "schema": 1,
+  "game": "crystal",
+  "sourceCommit": "a96e560449d6430de5aaeb1664132b284fa6995e",
+  "samePackedSrcAsRelease": "f0d37ae18f66113358ef9edf642f296c0c39a9bc",
+  "scope": "Diagnostic teleport comparison of published native/canonical home IDs. Does not activate canonical IDs for native startup/warps or establish complete interiors.",
+  "cases": [
+    {
+      "backend": "opengl",
+      "freshOwnedWindowProofs": 4,
+      "unmodifiedModFiles": 27329,
+      "modFolderRemoved": true,
+      "phases": [
+        {
+          "label": "first-PLAYERS_HOUSE1_F",
+          "map": "PLAYERS_HOUSE1_F",
+          "camera": "first",
+          "mapMetadata": {
+            "height": 4,
+            "environment": "INDOOR",
+            "width": 5,
+            "environmentId": 3,
+            "tileset": "TILESET_PLAYERS_HOUSE",
+            "outdoor": false,
+            "generation": 2
+          },
+          "collisionQuery": {
+            "allMatchNative": true,
+            "cells": 80,
+            "classes": 5
+          }
+        },
+        {
+          "label": "first-PLAYERS_HOUSE_1F",
+          "map": "PLAYERS_HOUSE_1F",
+          "camera": "first",
+          "mapMetadata": {
+            "height": 4,
+            "environment": "INDOOR",
+            "width": 5,
+            "environmentId": 3,
+            "tileset": "TILESET_PLAYERS_HOUSE",
+            "outdoor": false,
+            "generation": 2
+          },
+          "collisionQuery": {
+            "allMatchNative": true,
+            "cells": 80,
+            "classes": 5
+          }
+        },
+        {
+          "label": "first-PLAYERS_HOUSE_2F",
+          "map": "PLAYERS_HOUSE_2F",
+          "camera": "first",
+          "mapMetadata": {
+            "height": 3,
+            "environment": "INDOOR",
+            "width": 4,
+            "environmentId": 3,
+            "tileset": "TILESET_PLAYERS_ROOM",
+            "outdoor": false,
+            "generation": 2
+          },
+          "collisionQuery": {
+            "allMatchNative": true,
+            "cells": 48,
+            "classes": 5
+          }
+        },
+        {
+          "label": "third-PLAYERS_HOUSE_1F",
+          "map": "PLAYERS_HOUSE_1F",
+          "camera": "third",
+          "mapMetadata": {
+            "height": 4,
+            "environment": "INDOOR",
+            "width": 5,
+            "environmentId": 3,
+            "tileset": "TILESET_PLAYERS_HOUSE",
+            "outdoor": false,
+            "generation": 2
+          },
+          "collisionQuery": {
+            "allMatchNative": true,
+            "cells": 80,
+            "classes": 5
+          }
+        }
+      ]
+    },
+    {
+      "backend": "metal",
+      "freshOwnedWindowProofs": 4,
+      "unmodifiedModFiles": 27329,
+      "modFolderRemoved": true,
+      "phases": [
+        {
+          "label": "first-PLAYERS_HOUSE1_F",
+          "map": "PLAYERS_HOUSE1_F",
+          "camera": "first",
+          "mapMetadata": {
+            "height": 4,
+            "width": 5,
+            "tileset": "TILESET_PLAYERS_HOUSE",
+            "generation": 2,
+            "outdoor": false,
+            "environment": "INDOOR",
+            "environmentId": 3
+          },
+          "collisionQuery": {
+            "cells": 80,
+            "classes": 5,
+            "allMatchNative": true
+          }
+        },
+        {
+          "label": "first-PLAYERS_HOUSE_1F",
+          "map": "PLAYERS_HOUSE_1F",
+          "camera": "first",
+          "mapMetadata": {
+            "height": 4,
+            "width": 5,
+            "tileset": "TILESET_PLAYERS_HOUSE",
+            "generation": 2,
+            "outdoor": false,
+            "environment": "INDOOR",
+            "environmentId": 3
+          },
+          "collisionQuery": {
+            "cells": 80,
+            "classes": 5,
+            "allMatchNative": true
+          }
+        },
+        {
+          "label": "first-PLAYERS_HOUSE_2F",
+          "map": "PLAYERS_HOUSE_2F",
+          "camera": "first",
+          "mapMetadata": {
+            "height": 3,
+            "width": 4,
+            "tileset": "TILESET_PLAYERS_ROOM",
+            "generation": 2,
+            "outdoor": false,
+            "environment": "INDOOR",
+            "environmentId": 3
+          },
+          "collisionQuery": {
+            "cells": 48,
+            "classes": 5,
+            "allMatchNative": true
+          }
+        },
+        {
+          "label": "third-PLAYERS_HOUSE_1F",
+          "map": "PLAYERS_HOUSE_1F",
+          "camera": "third",
+          "mapMetadata": {
+            "height": 4,
+            "width": 5,
+            "tileset": "TILESET_PLAYERS_HOUSE",
+            "generation": 2,
+            "outdoor": false,
+            "environment": "INDOOR",
+            "environmentId": 3
+          },
+          "collisionQuery": {
+            "cells": 80,
+            "classes": 5,
+            "allMatchNative": true
+          }
+        }
+      ]
+    }
+  ],
+  "visualObservation": "Native PLAYERS_HOUSE1_F remains mostly black above the floor strip. Existing PLAYERS_HOUSE_1F and PLAYERS_HOUSE_2F runtime aliases draw room walls and floors. This confirms an ID-dependent room-shell mismatch without changing mod profile data.",
+  "profileFunctionProbe": "The expected interior module was not exposed on this export handle, so no direct profile-match API result is asserted.",
+  "nativeRuntimeMapIdsChanged": false,
+  "completeInteriorAcceptance": false
+}
