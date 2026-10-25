@@ -93,6 +93,16 @@ function OverworldState:movementState()
   return require("src.world.Gen2PlayerState").read(self.player, Game and Game.save)
 end
 
+function OverworldState:playerCollision()
+  local player = self.player
+  if not (player and self.map) then return nil end
+  return self.map:cellCollision(player.cellX, player.cellY)
+end
+
+function OverworldState:grassAt(x, y)
+  return self.map ~= nil and self.map:isGrassCell(x, y) or false
+end
+
 function OverworldState:applyPlayerState(state)
   if not GameVersion.isGen2() then return nil, "not Gen2" end
   return require("src.world.Gen2PlayerState").apply(self.player, Game and Game.save, state)
@@ -11854,8 +11864,9 @@ local function canFieldTwo(save)
 end
 
 function OverworldState:checkTrainerSight()
-  if self.player.moving or self.engaging then return end
-  if (Game.stack.active and Game.stack:active() or Game.stack:top()) ~= self then return end
+  if self.player.moving or self.engaging then return false end
+  if (Game.stack.active and Game.stack:active() or Game.stack:top()) ~= self then return false end
+  if GameVersion.isGen2() and #(Game.save.party or {}) == 0 then return false end
   local p = self.player
   -- A TRAINER WHOSE APPROACH ENDED WITHOUT A BATTLE MUST NOT RE-APPROACH
   -- FROM THE SAME TILE.
@@ -12047,15 +12058,23 @@ function OverworldState:checkTrainerSight()
       if aloneIsDouble or #spotted >= 2 or not pairUp then break end
     end
   end
-  if #spotted == 0 then return end
+  if #spotted == 0 then return false end
   -- Both walk up; the first one spotted leads, and its script is the one
   -- that runs -- which on the cartridge is the synthesized approach that
   -- sets trainer A and then trainer B.
   if #spotted >= 2 then
     self:startTrainerApproach(spotted[1].npc, spotted[1].dist, spotted[2].npc)
-    return
+    return self.engaging and true or false
   end
   self:startTrainerApproach(spotted[1].npc, spotted[1].dist)
+  return self.engaging and true or false
+end
+
+-- A completed-cell handoff must report whether the native approach acquired
+-- control. It cannot start an unscripted trainer event under another owner.
+function OverworldState:checkTrainerBattle()
+  if not (self.map and self.player and self.runner and Game and Game.save) or self:busy() then return false end
+  return self:checkTrainerSight()
 end
 
 -- data/trainers/encounter_types.asm
@@ -13007,6 +13026,14 @@ function OverworldState:onStepComplete()
   -- this after the frame's earlier noteCellChange; leaving the old serial
   -- here made the next idle check treat the same switch as a second visit.
   self:noteCellChange()
+  if GameVersion.isGen2() then
+    p.inGrass = self.map ~= nil and self.map:isGrassCell(p.cellX, p.cellY) or false
+    p.grassShake = p.inGrass or nil
+    -- PlayerEvents checks trainer sight before the tile's warp/coord event
+    -- or step counters. The earlier input scan ran while this step was still
+    -- moving, so it cannot stand in for this completed-cell check.
+    if self:checkTrainerBattle() then return true end
+  end
   self:gen4BankStep()
   -- Gen 4's elevated-bridge bit (Gen4CyclingRoad: the Cycling Road roll)
   if GameVersion.isGen4() then pcall(require("src.world.Gen4CyclingRoad").stepEnded, self) end
