@@ -449,6 +449,17 @@ function C.syncOne(target, version, slotId, pushOnly)
   return what, why
 end
 
+function C.restoreVersions(target,versions)
+  local permitted,why=require('src.storage.AccountStorage').storeCheck(target);if not permitted then return nil,why end
+  local store=asStore(target);if not store then return nil,'No cloud account connected.' end
+  local key=stateKey(store);local st=C.loadState(key);local result={new=0}
+  for _,version in ipairs(versions) do
+    local count,problem=C.pullNew(store,st,version);if not count then return nil,problem end
+    result.new=result.new+count
+  end
+  C.saveState(st,key);return result
+end
+
 function C.describe(t)
   if not t then return "nothing synced" end
   local parts = {}
