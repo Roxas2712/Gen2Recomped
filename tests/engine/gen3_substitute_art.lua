@@ -132,6 +132,41 @@ for _, double in ipairs({ false, true }) do
     T.same({ graphics.getColor() }, { 0.2, 0.4, 0.6, 0.7 }, "doll drawing preserves graphics color state")
   end
 end
+local paints = {}
+battle.gen3AnimTint = function()
+  return 1, 1, 1, 0.5
+end
+graphics.draw = function(...)
+  paints[#paints + 1] = { args = { ... }, color = { graphics.getColor() }, blend = graphics.getBlendMode() }
+end
+graphics.setBlendMode("alpha")
+T.check(Draw.draw(battle, { position = 0, isPlayer = true }), "native doll accepts live palette fade")
+T.eq(#paints, 2, "actual renderer composites both native palette contributions")
+T.same(paints[1].color, { 0.1, 0.2, 0.3, 0.7 }, "base draw retains incoming alpha and untinted contribution")
+T.same(paints[2].color, { 0.5, 0.5, 0.5, 0.7 }, "white contribution retains incoming alpha")
+T.eq(paints[2].blend, "add", "palette contribution adds through sprite coverage")
+T.eq(graphics.getBlendMode(), "alpha", "native palette draw restores blend state")
+T.same({ graphics.getColor() }, { 0.2, 0.4, 0.6, 0.7 }, "native palette draw restores incoming color")
+local B, actor = require("src.battle.BattleState"), { position = 0, isPlayer = true }
+battle.gen3AnimMonBgHidden = function()
+  return false
+end
+battle.gen3AnimRotate = function() end
+battle.gen3AnimSquash = function() end
+battle.gen3AnimSpecialMonState = B.gen3AnimSpecialMonState
+battle.battlerPic = function()
+  return images["battle/substitute_back.png"]
+end
+battle.drawBattlerPicAt = function(self, user)
+  B.drawSubstituteDoll(self, user)
+end
+battle._gbaEffectPresentation = { user = actor, alpha = 0.5 }
+paints = {}
+B.drawBattlerPic(battle, actor, 0, 0, 1)
+T.eq(#paints, 2, "complete battler wrapper retains native doll palette draws")
+T.eq(paints[1].color[4], 0.35, "real battler wrapper applies native fade alpha to the doll")
+T.eq(paints[2].color[4], 0.35, "palette contribution shares native fade alpha")
+T.same({ graphics.getColor() }, { 0.2, 0.4, 0.6, 0.7 }, "complete battler wrapper restores incoming alpha")
 graphics.draw, graphics.newImage = originalDraw, originalNewImage
 Assets.flush()
 V.set("red")

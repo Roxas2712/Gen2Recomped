@@ -64,13 +64,36 @@ local function fade(state)
 end
 
 function M.start(battle, row)
-  if not V.isGen3() or row.anim ~= "POISON" and row.anim ~= "FOCUS_BAND" then
+  if
+    not V.isGen3() or row.anim ~= "POISON" and row.anim ~= "FOCUS_BAND" and row.anim ~= "SUBSTITUTE_FADE"
+  then
     return false
   end
   local user = row.attackerPosition ~= nil and battle:battlerAt(row.attackerPosition)
     or (row.attackerIsPlayer and battle.player or battle.enemy)
   if not user then
     return false
+  end
+  if row.anim == "SUBSTITUTE_FADE" then
+    local Sub = require("src.battle.Gen3SubstitutePresentation")
+    local hidden = battle.picFx and battle.picFx[user] and battle.picFx[user].hidden
+    if battle:substituteVisible(user) and hidden then
+      local swap = Sub.beginSwap(battle, user, false)
+      swap.state.substitute = false
+      return false
+    end
+    battle._gbaEffectPresentation = {
+      user = user,
+      kind = row.anim,
+      frame = 0,
+      x = 0,
+      y = 0,
+      alpha = 1,
+      monbg = false,
+      coeff = 0,
+      color = { 0, 0, 0 },
+    }
+    return true
   end
   local focus = row.anim == "FOCUS_BAND"
   local pause = focus and not battle:animationsOn()
@@ -159,6 +182,38 @@ function M.update(battle)
     return false
   end
   state.frame = state.frame + 1
+  if state.kind == "SUBSTITUTE_FADE" then
+    local frame = state.frame
+    -- Sixteen alpha decrements every third callback finish at tick 49;
+    -- task release, waitforvisualfinish and script delays clear monbg at 55.
+    -- The palette reset and ordinary native swap begin together at tick 57.
+    if frame <= 56 then
+      state.monbg = frame < 55
+      state.alpha = 1 - math.min(16, math.floor((frame - 1) / 3)) / 16
+      state.coeff = math.min(16, frame - 1) / 16
+      state.color = state.coeff > 0 and { 1, 1, 1 } or { 0, 0, 0 }
+      return true
+    end
+    local Sub = require("src.battle.Gen3SubstitutePresentation")
+    if not state.swap then
+      state.coeff, state.color = 0, { 0, 0, 0 }
+      state.swap = Sub.beginSwap(battle, state.user, false)
+    end
+    local busy = Sub.stepSwap(state.swap)
+    if state.swap.phase == "in" then
+      state.alpha = 1
+    end
+    if busy then
+      return true
+    end
+    if battle.picFx and battle.picFx[state.user] then
+      battle.picFx[state.user].hidden = nil
+    end
+    battle._gbaEffectReconcile = battle._gbaEffectReconcile or {}
+    battle._gbaEffectReconcile[state.user] = true
+    battle._gbaEffectPresentation = nil
+    return false
+  end
   if state.pause ~= nil then
     if state.pause > 0 then
       state.pause = state.pause - 1
@@ -213,5 +268,22 @@ end
 function M.view(battle, user)
   local state = battle._gbaEffectPresentation
   return state and state.user == user and state or nil
+end
+
+function M.monBg(battle, user)
+  local state = battle._gbaEffectPresentation
+  local hidden = battle.picFx and battle.picFx[user] and battle.picFx[user].hidden
+  return state ~= nil and state.monbg == true and user.isPlayer == state.user.isPlayer and not hidden
+end
+
+function M.reconcile(battle)
+  for user in pairs(battle._gbaEffectReconcile or {}) do
+    if user.invulnerable and battle:animationsOn() and user.mon and user.mon.hp > 0 then
+      battle.picFx = battle.picFx or {}
+      battle.picFx[user] = battle.picFx[user] or {}
+      battle.picFx[user].hidden = true
+    end
+  end
+  battle._gbaEffectReconcile = nil
 end
 return M

@@ -1,6 +1,7 @@
 -- Real native VM / host queue, complete tick states and measured sound controls.
 local M = {}
-function M.run(root, backend, version)
+function M.run(root, backend, version, options)
+  options = options or {}
   local native = backend == "gen1"
   local f = dofile(root .. "/tests/enemy_actions/assist.lua").fixture(root, backend, version)
   local hardware = dofile(root .. "/tests/native_sound/fixture.lua").install(root, native, f)
@@ -15,17 +16,44 @@ function M.run(root, backend, version)
     love.filesystem.write(picPath, "return {front={[4]={y=13}},back={[4]={y=8}},elevation={[4]=0}}")
     Pic.reset()
     assert(Pic.active().front[4] == 13, "owned native pic coordinates must be readable")
-    assert(Pic.active().back[4] == 8, "owned native back coordinates must be readable")
+    assert(
+      Pic.active().back[4] == (version == "firered" and 10 or 8),
+      "native back coordinates must be readable"
+    )
     local generalNames = {}
     for i = 0, 8 do
       generalNames[i] = "UNUSED_" .. i
     end
     generalNames[9] = "FOCUS_BAND"
+    generalNames[2] = "SUBSTITUTE_FADE"
     Anim.loadPack({
       version = 5,
       tags = {},
       generalNames = generalNames,
       general = {
+        [2] = {
+          { op = "monbg", battler = "attacker" },
+          { op = "createvisualtask", task = "SubstituteFadeToInvisible", priority = 5, args = {} },
+          {
+            op = "createvisualtask",
+            task = "BlendBattleAnimPal",
+            priority = 10,
+            args = { 2, 0, 0, 16, 32767 },
+          },
+          { op = "waitforvisualfinish" },
+          { op = "delay", frames = 1 },
+          { op = "clearmonbg", battler = "attacker" },
+          { op = "delay", frames = 2 },
+          { op = "blendoff" },
+          {
+            op = "createvisualtask",
+            task = "BlendBattleAnimPal",
+            priority = 10,
+            args = { 2, 0, 0, 0, 32767 },
+          },
+          { op = "createvisualtask", task = "SwapMonSpriteToFromSubstitute", priority = 2, args = { 1 } },
+          { op = "end" },
+        },
         [9] = {
           {
             op = "createsprite",
@@ -94,12 +122,17 @@ function M.run(root, backend, version)
     for actor = 0, double and 3 or 1 do
       for _, scene in ipairs({ false, true }) do
         for _, stereo in ipairs({ false, true }) do
-          for _, name in ipairs({ "POISON", "FOCUS_BAND" }) do
-            for _, kind in ipairs({ "ordinary", "substitute", "lowered-substitute", "hidden" }) do
+          for _, name in ipairs(options.names or { "POISON", "FOCUS_BAND" }) do
+            for _, kind in
+              ipairs(options.kinds or { "ordinary", "substitute", "lowered-substitute", "hidden" })
+            do
               local b = f.field(double)
               local user, draws = f.actor(actor), 0
               user.substituteHP = (kind == "substitute" or kind == "lowered-substitute") and 100 or nil
               user.mon.status = "PSN"
+              local fading = name == "SUBSTITUTE_FADE"
+              local showing = kind == "substitute" or fading and (kind == "ordinary" or kind == "hidden")
+              local hidden = kind == "hidden" or kind == "hidden-mon"
               b.rng = function()
                 draws = draws + 1
                 error("presentation cannot draw battle RNG")
@@ -109,14 +142,14 @@ function M.run(root, backend, version)
               if native then
                 require("src.core.game3.battle")._st = b
                 user.status = "PSN"
-                user.semiInvulnerable = kind == "hidden" and "ON_AIR" or nil
+                user.semiInvulnerable = hidden and "ON_AIR" or nil
                 Runtime.session = { version = version, options = { battleScene = scene and 0 or 1 } }
                 Anim.reset({ headless = false, double = double })
                 for id = 0, double and 3 or 1 do
                   Anim.present(id).visible = true
                 end
-                Anim.setSubstitute(actor, kind == "substitute")
-                if kind == "hidden" then
+                Anim.setSubstitute(actor, showing)
+                if hidden then
                   Anim.present(actor).visible = false
                 end
                 Seq.beginEvents({
@@ -130,13 +163,25 @@ function M.run(root, backend, version)
                 }, function() end)
               else
                 f.game.save.options.animations = scene
-                user.invulnerable = kind == "hidden" or nil
-                b.picFx = kind == "hidden" and { [user] = { hidden = true } } or nil
+                user.invulnerable = hidden or nil
+                b.picFx = hidden and { [user] = { hidden = true } } or nil
+                f.data.constants.gen3BattlerCoords = {
+                  singles = { { x = 72, y = 80 }, { x = 176, y = 40 } },
+                  doubles = {
+                    { x = 32, y = 80 },
+                    { x = 200, y = 40 },
+                    { x = 90, y = 88 },
+                    { x = 152, y = 32 },
+                  },
+                }
                 b.current, b.waitFrames, b.nextInsert = nil, nil, 0
                 b._gbaEffectPresentation = nil
                 b._gbaSubstitutePresentation = kind == "lowered-substitute"
                     and { [user] = { substitute = false, lowered = true, x = 0 } }
                   or nil
+                if fading then
+                  b._gbaSubstitutePresentation = { [user] = { substitute = showing, x = 0 } }
+                end
                 b.queue = {
                   {
                     anim = name,
@@ -179,13 +224,14 @@ function M.run(root, backend, version)
                   else
                     local x, y = b:gen3AnimShake(a)
                     local r, g, blue, coeff = b:gen3AnimTint(a)
+                    local special = b:gen3AnimSpecialMonState(a)
                     state = {
                       x = x,
                       y = y,
-                      alpha = 1,
+                      alpha = special and special.alpha or 1,
                       visible = not (b.picFx and b.picFx[a] and b.picFx[a].hidden),
                       substitute = b:substituteVisible(a),
-                      monbg = false,
+                      monbg = require("src.battle.Gen3EffectPresentation").monBg(b, a),
                       coeff = coeff or 0,
                       color = { r or 0, g or 0, blue or 0 },
                     }
@@ -211,7 +257,8 @@ function M.run(root, backend, version)
               )
               f.T.eq(
                 #hardware.trace(),
-                scene
+                name ~= "SUBSTITUTE_FADE"
+                    and scene
                     and (kind == "ordinary" or name == "FOCUS_BAND" and kind == "lowered-substitute")
                     and (name == "POISON" and 6 or 1)
                   or 0,

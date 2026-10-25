@@ -2714,6 +2714,9 @@ function BattleState:updateQueue()
       item = table.remove(self.queue, 1)
     end
     if not item then
+      if self._gbaEffectReconcile then
+        require("src.battle.Gen3EffectPresentation").reconcile(self)
+      end
       if self._gbaSubstitutePresentation then
         require("src.battle.Gen3SubstitutePresentation").reconcile(self)
       end
@@ -8587,6 +8590,7 @@ function BattleState:applyDamage(target, dmg, fromMove, adjustment)
     local absorbed = math.min(math.max(0, dmg), target.substituteHP)
     target.substituteHP = target.substituteHP - dmg
     if target.substituteHP <= 0 then
+      require("src.battle.Gen3SubstitutePresentation").broken(self, target)
       target.substituteHP = nil
       self:sayNext(self:romText("_SubstituteBrokeText", "%s's\nSUBSTITUTE broke!", displayName(target)))
     else
@@ -11496,6 +11500,8 @@ function BattleState:gen3AnimSpecialMonState(battler)
     tint = 0, r = 1, g = 1, b = 1,
     alpha = 1, brightness = 1, mosaic = 1,
   }
+  local effect = self._gbaEffectPresentation
+  if effect and effect.user == battler and effect.alpha then state.alpha = effect.alpha end
   -- Sinnoh: alpha / mosaic / brightness / white from Gen4MoveAnimExtras.
   if self.gen4AnimPlaying and self.gen4Anim and self.gen4Anim.monSpecial then
     local ok4, sp = pcall(self.gen4Anim.monSpecial, self.gen4Anim, battler == self.player, battler)

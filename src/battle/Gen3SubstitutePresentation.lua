@@ -96,6 +96,36 @@ local function actor(battle, row)
   return row.attackerIsPlayer and battle.player or battle.enemy
 end
 
+function M.beginSwap(battle, user, substitute)
+  battle._gbaSubstitutePresentation = battle._gbaSubstitutePresentation or {}
+  local states = battle._gbaSubstitutePresentation
+  states[user] = states[user] or { substitute = protected(user), x = 0 }
+  local pos = tonumber(user.position) or (user.isPlayer and 0 or 1)
+  local coords = (battle.data.constants or {}).gen3BattlerCoords
+  local layout = coords and (battle:isDouble() and coords.doubles or coords.singles)
+  local point = layout and layout[pos + 1]
+  return {
+    user = user,
+    state = states[user],
+    phase = "out",
+    baseX = tonumber(point and point.x) or (user.isPlayer and 72 or 176),
+    direction = user.isPlayer and -1 or 1,
+    substitute = substitute,
+  }
+end
+
+-- Damage calculation can remove the logical protection before its queued
+-- break animation runs. Preserve the displayed doll until that command swaps it.
+function M.broken(battle, user)
+  if not V.isGen3() then
+    return
+  end
+  battle._gbaSubstitutePresentation = battle._gbaSubstitutePresentation or {}
+  local states = battle._gbaSubstitutePresentation
+  states[user] = states[user] or { substitute = true, x = 0 }
+  require("src.battle.Gen3EffectPresentation").queue(battle, user, "SUBSTITUTE_FADE")
+end
+
 function M.start(battle, row)
   if not V.isGen3() then
     return false
@@ -131,26 +161,13 @@ function M.start(battle, row)
       return false
     end
   end
-  local pos = tonumber(user.position) or (user.isPlayer and 0 or 1)
-  local coords = (battle.data.constants or {}).gen3BattlerCoords
-  local layout = coords and (battle:isDouble() and coords.doubles or coords.singles)
-  local point = layout and layout[pos + 1]
-  local baseX = tonumber(point and point.x) or (user.isPlayer and 72 or 176)
-  battle._gbaSubstituteTransition = {
-    user = user,
-    state = state,
-    phase = "out",
-    baseX = baseX,
-    direction = user.isPlayer and -1 or 1,
-    substitute = not lower,
-  }
+  battle._gbaSubstituteTransition = M.beginSwap(battle, user, not lower)
   return true
 end
 
 -- Native SwapMonSpriteToFromSubstitute moves five pixels per controller tick.
 -- The exchange happens offscreen, on its own tick, before the return trip.
-function M.update(battle)
-  local transition = battle._gbaSubstituteTransition
+function M.stepSwap(transition)
   if not transition then
     return false
   end
@@ -169,11 +186,18 @@ function M.update(battle)
     if state.x * transition.direction <= 0 then
       state.x = 0
       state.substitute = transition.substitute
-      battle._gbaSubstituteTransition = nil
       return false
     end
   end
   return true
+end
+
+function M.update(battle)
+  if M.stepSwap(battle._gbaSubstituteTransition) then
+    return true
+  end
+  battle._gbaSubstituteTransition = nil
+  return false
 end
 
 function M.reconcile(battle)

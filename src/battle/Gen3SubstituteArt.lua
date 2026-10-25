@@ -36,7 +36,24 @@ function M.draw(battle, battler)
     return false
   end
   local image = Assets.image(pose.image)
-  love.graphics.draw(image, pose.x, pose.y)
+  local g = love.graphics
+  local r, green, blue, coeff
+  if battle.gen3AnimTint then
+    r, green, blue, coeff = battle:gen3AnimTint(battler)
+  end
+  if coeff and coeff > 0 then
+    local cr, cg, cb, ca = g.getColor()
+    local blend, alpha = g.getBlendMode()
+    g.setColor(cr * (1 - coeff), cg * (1 - coeff), cb * (1 - coeff), ca)
+    g.draw(image, pose.x, pose.y)
+    g.setBlendMode("add")
+    g.setColor(r * coeff, green * coeff, blue * coeff, ca)
+    g.draw(image, pose.x, pose.y)
+    g.setBlendMode(blend, alpha)
+    g.setColor(cr, cg, cb, ca)
+  else
+    g.draw(image, pose.x, pose.y)
+  end
   return true
 end
 
