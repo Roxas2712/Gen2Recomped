@@ -36,3 +36,8 @@ cache is present, so `tests/mod_examples_tests.lua` runs its original effect and
 hook assertions in a ROM-free checkout. It validates the legacy API-1 manifest
 separately from the retired production example path. No compatibility fixtures
 are placed under `mods/`.
+
+Use `--phase aliases` only for the explicitly defined intermediate acceptance: the
+one sprite-interface gap must be reported with its module and affected consumer.
+It is recorded as an expected gap, never as a loaded mod. Default complete
+acceptance remains red until the entrypoint actually loads.
