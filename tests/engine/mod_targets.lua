@@ -51,7 +51,7 @@ local legacy = Manifest.validate(manifest({gen2compat=true}))
 T.check(Targets.supports(legacy,"red"),"legacy compatibility flag includes first generation")
 T.check(Targets.supports(legacy,"crystal"),"legacy compatibility flag includes second generation")
 T.eq(Targets.supports(legacy,"emerald"),false,"legacy flag excludes unrelated generations")
-for _,bad in ipairs({"blue", {"unknown_game"}, {[2]="blue"}, {blue=true}, {}}) do
+for _,bad in ipairs({"blue", {"unknown_game"}, {[2]="blue"}, {[1]="blue",[3]="red"}, {blue=true}, {}}) do
   T.raises(function() Manifest.validate(manifest({games=bad})) end,nil,"invalid edition declaration rejected")
 end
 local relaxed=Manifest.validate(manifest({api=1,games={"blue","unknown_game"}}))
@@ -113,6 +113,9 @@ action()
 T.check(Targets.forced(game.save.options,m.id,"red"),"manager stores the selected edition only")
 T.check(manager.restartPending,"target change requires restart")
 T.eq(Targets.forced(game.save.options,m.id,"gold"),false,"manager does not force other games")
+for _,row in ipairs(manager:detailRows(m)) do if row.label=="STOP FORCING HERE" then row.action() end end
+T.eq(manager.restartPending,false,"returning to the boot target is a no-op")
+for _,row in ipairs(manager:detailRows(m)) do if row.label=="TRY HERE ANYWAY" then row.action() end end
 manager:discardChanges()
 T.eq(Targets.forced(game.save.options,m.id,"red"),false,"discard restores boot override state")
 T.eq(manager.restartPending,false,"discard clears target-only pending change")

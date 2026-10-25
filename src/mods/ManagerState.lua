@@ -362,7 +362,11 @@ function ManagerState:detailRows(m)
             self.bootGameOverrides = Merge.deepCopy(options.modsGames or {})
           end
           ModTargets.setForced(options, m.id, version, not forced)
-          self.targetsChanged = true
+          self.targetBaseline = self.targetBaseline or {}
+          self.targetEdits = self.targetEdits or {}
+          if self.targetBaseline[m.id] == nil then self.targetBaseline[m.id] = forced end
+          self.targetEdits[m.id] = (not forced) ~= self.targetBaseline[m.id] and true or nil
+          self.targetsChanged = next(self.targetEdits) ~= nil
           self:persistOptions()
           self:refresh()
         end }
@@ -851,7 +855,7 @@ function ManagerState:discardChanges()
   local loader = self.game.mods
   local opts = self:optionsTable()
   if self.bootGameOverrides then opts.modsGames = Merge.deepCopy(self.bootGameOverrides) end
-  self.targetsChanged = false
+  self.targetsChanged, self.targetEdits = false, {}
   for _, m in ipairs(self:stagedList()) do
     local en = bootEnabled(m)
     if loader and loader.setEnabled then loader:setEnabled(m.id, en) end

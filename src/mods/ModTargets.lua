@@ -46,10 +46,13 @@ end
 function Targets.parse(raw)
   if raw.games == nil and raw.gen2compat == nil then return nil end
   assert(raw.games == nil or type(raw.games) == "table", "games must be an array")
+  local count = 0
   for key in pairs(raw.games or {}) do
+    count = count + 1
     assert(type(key) == "number" and key % 1 == 0 and key >= 1
       and key <= #raw.games, "games must be an array")
   end
+  assert(count == #(raw.games or {}), "games must be an array")
   local games, unknown = Targets.normalize(raw.games)
   if #games == 0 then games = Targets.expand("gen1") or {} end
   if raw.gen2compat == true then
