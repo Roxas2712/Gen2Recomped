@@ -86,3 +86,12 @@ frame clock/audio/GC ownership, title callbacks with a synthetic disk reader,
 failure/replacement paths, all five editions, other-generation isolation, and
 unchanged SDK consumers sharing callbacks with a native peer. They do not open
 player profiles. Native QA must use the shared 8 GiB free-space guard.
+
+The same callback consumer runs on API 2 and API 3 where supported, selected by
+`SESSION_RUNTIME_API`; its default is the host's actual advertised API level.
+Integration prerequisites are the early native owner/player boundary (#254),
+source map identities (#239), and owned map read views (#251 with dependencies)
+when the data facade is used. The five-edition checks also need the separate
+cartridge registrations (#183, #186, #187). Loading an original API-3 mod on
+upstream additionally requires the existing API-3 stack; this boundary does not
+raise or bypass the advertised mod API version.

@@ -3,10 +3,12 @@ local T=require('tests.modkit')
 local Json=require('src.link.Json')
 local F=require('tools.session-runtime.fixture')
 local f=F.new('emerald');local native=f.game
+local api=tonumber(os.getenv('SESSION_RUNTIME_API'))or require('src.core.Version').modApi
+assert(api==2 or api==3,'session callback probe requires API 2 or 3')
 T.eq(package.loaded['src.core.Game3'],nil,'first runtime import also exercises automatic facade journaling')
 local files={}
 local function mod(id,priority,body)
- files['mods/'..id..'/manifest.json']=Json.encode({id=id,name=id,version='1.0.0',api=3,
+ files['mods/'..id..'/manifest.json']=Json.encode({id=id,name=id,version='1.0.0',api=api,
    entry='main.lua',games={'gen3'},priority=priority,permissions={'engine_internals'}})
  files['mods/'..id..'/main.lua']=body
 end
@@ -114,4 +116,4 @@ require('src.mods.Loader').teardown()
 T.eq(G._usesCallbacks('source_game'),false);T.eq(G.update,src.base)
 T.eq(R.isActive(),false)
 run.release()
-T.finish('source game callbacks with a native peer and unchanged SDK manifests')
+T.finish('source game callbacks with a native peer through SDK API '..api)
