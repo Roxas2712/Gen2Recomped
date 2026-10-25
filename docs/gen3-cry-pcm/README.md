@@ -73,7 +73,10 @@ premature flattening of chorus peaks, rather than reducing the user's SFX level.
 The observed slice may overrun by one checkpoint. Current battlers/party move
 sounds and imported animation variants are planned without playback. PCM is
 bounded to 48 entries/16 MiB, with at most 64 pending jobs; Source ownership and
-volume remain in Sound. Dataset/prefix, invalidation, session suspend/resume and
+volume remain in Sound. Float64 chunk leases preserve exact samples, retain at
+most 2 MiB of reusable scratch and isolate a synchronous cache miss from a
+paused preparation job. Non-FFI hosts use the same bounded chunk contract.
+Dataset/prefix, invalidation, session suspend/resume and
 loader lifetime cancel stale work. A real sound request that beats preparation
 still renders synchronously and on time. This does not remove every possible
 cold miss or implement missing imported sound-task timelines.
