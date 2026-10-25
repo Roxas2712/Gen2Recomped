@@ -174,7 +174,8 @@ function W.action(self,id)
     local after=f.after;W.close(self);require('src.storage.AccountStorage').resume(self,after)
   elseif id:match('^revoke:') then
     local device=f.devices and f.devices[tonumber(id:sub(8))]
-    if device then job(self,'revoke',function() local doc,why=A.revoke(device.id);if doc and device.current then Auth.expire() end;return doc,why end) end
+    local token=Auth.accessToken and Auth.accessToken()
+    if device then job(self,'revoke',function() local doc,why=A.revoke(device.id);if doc and device.current then Auth.expire(token) end;return doc,why end) end
   elseif id=='signout' or id=='switchAccount' then job(self,'signout',function() Auth.signOut();return {ok=true} end)
   elseif id=='developer' then W.close(self);self:_openDeveloper()
   elseif id=='browse' then W.close(self);self.findLoaded=false;self:_refreshFind(true)
@@ -388,6 +389,9 @@ function W.draw(self)
     if not (Auth.accountId and Auth.accountId()) then
       row('CONTINUE WITHOUT AN ACCOUNT · LOCAL SAVES','local')
       paragraph('No account is needed to play or keep local saves. Sign in below to access your cloud saves, Bank and mod downloads.')
+    elseif not Auth.signedIn() then
+      paragraph('Online access needs a fresh login. Your existing local account profile and saves remain available offline.')
+      row('SIGN OUT OF THIS LOCAL ACCOUNT PROFILE','signout')
     end
     if f.after=='bank' or f.after=='bankDex' then paragraph('The Pokémon Bank, Item Bank and global Pokédex require a registered account with confirmed email. After confirmation you return directly to the Bank.') end
     if f.mode=='register' then
