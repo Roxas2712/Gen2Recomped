@@ -1,0 +1,51 @@
+{
+  "referenceCommit": "37a49b31f458d51ea9e00b90f2a247272ad09cb8",
+  "nativeCpuImport": {
+    "status": "pass",
+    "editions": {
+      "leafgreen": {
+        "maps": 425,
+        "pairs": 60
+      },
+      "emerald": {
+        "maps": 518,
+        "pairs": 75
+      },
+      "ruby": {
+        "maps": 394,
+        "pairs": 54
+      },
+      "sapphire": {
+        "maps": 394,
+        "pairs": 54
+      },
+      "firered": {
+        "maps": 425,
+        "pairs": 60
+      }
+    },
+    "gpu": false,
+    "fullCompatibility": false,
+    "playerProfilesUsed": false
+  },
+  "isolatedChecks": 3733,
+  "nativeMapsMatched": 2156,
+  "sourcePairsMatched": 303,
+  "metadataRegeneration": "byte-identical",
+  "nativeMapsRenamed": false,
+  "texturesAllocated": false,
+  "nativeRenderOwnerModified": false,
+  "playerProfilesUsed": false,
+  "minimumFreeGiB": 8,
+  "gpu": false,
+  "fullCompatibility": false,
+  "sourceSha256": {
+    "src/compat/gen1/PairIdentity.lua": "460dcec573c7963aa796916a4cde2739dfc370840dc7e73a67c2501c13cac046",
+    "src/compat/gen1/PairNames.lua": "830bf0350fe83a31b6b289c832046ddb104150022cb67b11fcba840c2012efdc",
+    "tests/engine/compatibility_pair_identity.lua": "8d79802fee3c4ddea9bbbeb37279bf34c7ae47a9f6795ba6beae47aee1c8348a",
+    "tools/pair-identities/export.lua": "3fc9f0f067930090b6a59cf72d58f628fe87a4de94aec852b19e6adbe50ea3f2",
+    "tools/pair-identities/assemble.py": "b1021f75c47ec99ce9b9e818603de6b59e6523ee5ffb5026c1adfa3d75fffd79",
+    "tools/pair-identities/rom-host/main.lua": "2ffedb7347d22a6ccfd1d2d4e83d14c7f009ef1ecc144b65d3ac10d8d3863de8",
+    "tools/pair-identities/rom-host/conf.lua": "a969e23fed727643e0fa3d571df52a4c45b754cd31d39d74e45022ed296c7c13"
+  }
+}
