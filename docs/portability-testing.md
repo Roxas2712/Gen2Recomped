@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219 and #220 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219, #220 and #222 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,50 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`abd621282715d072b421e7b30f3f5c60628d771d`. Its ROM-free run passed
-**237/237 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`1a20cb1f104972c46c756ba6a55e814fc27619c8`. Its ROM-free run passed
+**240/240 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #222](https://github.com/UNDERdecoded/Gen2Recomped/pull/222) corrects
+ordinary GBA multi-hit effects 29/44/77. Accuracy precedes the native hit-count
+opcode, each reached strike calculates damage independently, later strikes
+continue after Substitute, and actual Endure/sleep/faint/immunity conditions
+control continuation. Exact critical RNG bounds are native `0..denominator-1`.
+Public builtin delegation and authored count/damage handlers are preserved;
+scripted Beat Up retains its separate party eligibility and Endure rules.
+
+Clean feature runtime `00e67c40abcb224ff693e4f543a4d018014edf73` passes
+**17,974 focused checks** and **119/128 engine suites**, SDK 3/3 and B30.
+The exact Counter of all 25 inherited FAIL lines across nine suites equals clean
+#220 (116/125). Their independent repairs remain green in this combined branch.
+Both clean runtimes match unchanged read-only Gen1 in **100 workers / 74,496
+paired observations**, including 5,760 new ordinary multi-hit rows per profile.
+Raw RNG bounds/values, every hit event and all battler HP/PP/status/Substitute/
+last-move/stage observations are retained. Public events are detached views;
+continuation probes mutate and assert their owned live fixture battlers.
+
+Two actual link roles complete three turns with every completed hash/component
+and learned PP equal. **18 CPU-only tests with actual FireRed/Emerald imports**
+pass public enemy-action selection and ordinary/Substitute/Endure execution for
+DoubleSlap, Double Kick and Twineedle. Unchanged #220 fails 1,524 assertions;
+5,088/5,760 complete FireRed rows differ from the same unchanged source fixture.
+Raw negatives and the first integration's Beat Up failures remain retained.
+Native command revision 6 refuses older peers; party codec remains 1. The raw
+fixture hash `a7db0874db78aec0` was audited with the unchanged #220 hasher and
+only the explicit revision token changed.
+
+All eight #222 hosted workflows require maintainer approval (`action_required`);
+the [dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40167556778)
+has zero jobs. Local acceptance is separate. The app's 100-artifact cap prevents
+another card; the regular PR remains published and linked. Evidence:
+`tmp/multi-hit-full-accepted.log`, `tmp/multi-hit-contracts-accepted.json`,
+`tmp/multi-hit-imported.log` and `tmp/multi-hit-accepted-evidence.json`.
+See [the scoped ordinary multi-hit contract](native-gen3-multi-hit.md).
+Rage itself, Triple Kick, full Sleep Talk controllers and broader battle/RNG
+parity remain separate work.
+
+Prior #220 results retain runtime `abd621282715d072b421e7b30f3f5c60628d771d`
+and its 237/237 engine result:
 
 [PR #220](https://github.com/UNDERdecoded/Gen2Recomped/pull/220) binds native
 Disable to the last executed learned move with a 2–5-phase residual timer.

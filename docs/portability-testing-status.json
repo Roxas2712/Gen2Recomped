@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "abd621282715d072b421e7b30f3f5c60628d771d",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/220",
-  "feature_ref": "6a3a3155bb2d3433a8c587333d11870ed10f60eb",
+  "runtime_ref": "1a20cb1f104972c46c756ba6a55e814fc27619c8",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/222",
+  "feature_ref": "1d958bca394b280f91f5977785128dcc9c26fd98",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 237,
-  "engine_suites_total": 237,
+  "engine_suites_passed": 240,
+  "engine_suites_total": 240,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 96,
-  "cross_engine_paired_observations": 62976,
+  "cross_engine_worker_runs": 100,
+  "cross_engine_paired_observations": 74496,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All eight #220 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
+  "hosted_ci": "All eight #222 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Selected actual public GBA enemy-action and native command/data contracts, now including Disable identity, selection, interruption and residual lifecycle, against clean read-only Gen1 at documented input-state boundaries; not complete selection/RNG orchestration or full gameplay/animation/ability/item parity",
+  "cross_engine_scope": "Selected actual public GBA enemy-action and native command/data contracts, now including ordinary multi-hit execution and exact critical RNG bounds, against clean read-only Gen1 at documented input-state boundaries; not complete selection/RNG orchestration or full gameplay/animation/ability/item parity",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -163,7 +163,7 @@
     "jobs": 0
   },
   "enemy_pp_full_suite_runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
-  "feature_tested_ref": "55f4301ab6ef190051b1f6d420f22636a61a1809",
+  "feature_tested_ref": "00e67c40abcb224ff693e4f543a4d018014edf73",
   "caught_marker_native_checks_passed": 2078,
   "caught_marker_renderer_checks_passed": 840,
   "caught_marker_import_checks_passed": 216,
@@ -2541,6 +2541,77 @@
       "tmp/disable-contracts.json",
       "tmp/disable-imported.log",
       "tmp/disable-accepted-evidence.json"
+    ]
+  },
+  "native_ordinary_multi_hit": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/222",
+    "feature_ref": "1d958bca394b280f91f5977785128dcc9c26fd98",
+    "feature_tested_ref": "00e67c40abcb224ff693e4f543a4d018014edf73",
+    "runtime_ref": "1a20cb1f104972c46c756ba6a55e814fc27619c8",
+    "focused_checks_passed": 17974,
+    "native_command_checks": 17856,
+    "composition_caller_legacy_checks": 68,
+    "link_compatibility_checks": 50,
+    "cross_engine_workers": 100,
+    "paired_observations": 74496,
+    "new_observations_per_profile": 5760,
+    "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_unchanged": true,
+    "ordinary_effects": [
+      29,
+      44,
+      77
+    ],
+    "native_command_revision": 6,
+    "native_party_revision": 1,
+    "native_fixture_digest": "a7db0874db78aec0",
+    "prior_fixture_digest": "da62fe7b50f40107",
+    "hash_audit": "Unchanged #220 hasher with only explicit native command revision 5 to 6; older-generation goldens unchanged",
+    "native_crit_rng": "0..denominator-1 == 0; raw bounds/values retained for all critical stages",
+    "feature_engine_suites_passed": 119,
+    "feature_engine_suites_total": 128,
+    "inherited_failing_suites": 9,
+    "inherited_fail_lines": 25,
+    "exact_fail_counter_equal": true,
+    "combined_engine_suites_passed": 240,
+    "combined_engine_suites_total": 240,
+    "sdk_suites": "3/3",
+    "b30": "passed",
+    "negative_control": {
+      "baseline_ref": "6a3a3155bb2d3433a8c587333d11870ed10f60eb",
+      "failed_assertions": 1524,
+      "complete_observations": 5760,
+      "differing_observations": 5088,
+      "same_source_fixture_sha256": true,
+      "raw_outputs_retained": true
+    },
+    "initial_regression": "Ordinary termination first interrupted scripted Beat Up; original failed full log and eight differing runs retained. Accepted runtime preserves all existing Beat Up contracts.",
+    "event_boundary": "Public event views are detached; controlled fixture mutations target live battlers and are asserted, not claimed as event-view write-through",
+    "sleep_talk_boundary": "Actual nested dispatcher tested after caller selection; full Sleep Talk selection/status-controller parity remains outside scope",
+    "native_imported_smoke_games": [
+      "firered",
+      "emerald"
+    ],
+    "native_imported_smoke_scenarios": 18,
+    "native_scope": "CPU-only actual imported DoubleSlap/Double Kick/Twineedle via canonical public enemy selector, ordinary/breaking Substitute/Endure. Accuracy/type/power/PP preserved with controlled valid accuracy roll. No normal SAVE/distributed ROM/cache/save data; no GPU/full-playthrough claim",
+    "hosted_workflows": 8,
+    "hosted_conclusion": "action_required",
+    "contract_run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40167556778",
+    "hosted_jobs": 0,
+    "attachment": "App artifact identity cap of 100 reached; regular PR published and linked",
+    "remaining": [
+      "Native Rage production and lifecycle",
+      "Triple Kick accuracy/power script",
+      "Ruby/Sapphire per-hit move-end scheduling",
+      "Full Sleep Talk selection/status controller",
+      "Complete ability and broader battle-controller parity",
+      "Whole-game RNG/VBlank and full playthroughs"
+    ],
+    "proof": [
+      "tmp/multi-hit-full-accepted.log",
+      "tmp/multi-hit-contracts-accepted.json",
+      "tmp/multi-hit-imported.log",
+      "tmp/multi-hit-accepted-evidence.json"
     ]
   }
 }
