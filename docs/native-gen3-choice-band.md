@@ -19,7 +19,7 @@ planner applies the choice. Manual Torment also retains the Struggle exception.
 Planning binds the actual forced learned slot's PP and priority while keeping
 the declared turn event separate. A later replacement of the move table must
 rebind PP to the current slot. Native caller provenance is explicit: Sleep
-Talk and the unchanged native Mirror Move/Metronome selectors differ from a
+Talk and the unchanged default Mirror Move/Metronome selectors differ from a
 custom handler's `ctx.callMove`. Active Baton Pass caller frames follow the
 replacement battler slot. Generic custom callers retain their own move-end
 command rather than inheriting the native caller's early return.
@@ -73,6 +73,30 @@ action's original slot too. All 16 focused workers / 220 paired rows for
 the unchanged choices/arguments/records contracts pass after the correction;
 the full matrix must be repeated before acceptance.
 
+The repeated clean matrix at `32e69c0b` passes all 132 workers / 78,444 paired
+rows. Its full engine run retains three additional compatibility failures:
+existing public refusal wording and legacy native choice-handle identity.
+Focused repetitions pass after retaining the existing reasons and keeping
+selection-only fields private until planning consumes them. The real double
+controller now plans each actor once, rather than planning its two left
+actors twice; a new legacy/target/controller suite passes 84 assertions.
+
+Additional focused native comparisons pass for actual Sleep Talk dispatch
+with a physical Choice Band, including custom callers and failure paths;
+real synchronous/asynchronous Baton Pass with the item; and an unchanged
+authored API-3 `ctx.callMove("TACKLE")` handler. The latter exposed a genuine
+canonical-ID resolution gap and outer caller bookkeeping; the GBA helper now
+resolves the same canonical references and preserves both move-end commands.
+Forced status-move planning also retains the resulting target byte in single
+battles. Raw failed probes are retained alongside their corrected reruns.
+
+Twelve actual imported FireRed/Emerald scenarios pass with `--choice-band`,
+including three sleeping calls, item loss before waking/ordinary selection,
+zero-PP children, empty/forbidden pools, early wake and awake failure. These
+explicitly use GBA rules and constructed parties/public menus, without a
+normal SAVE, ROM/data distribution, graphics or playthrough certification.
+Final clean full/matrix repetitions remain pending.
+
 ## Required validation before a PR
 
 - Execute `tests/engine/gen3_choice_band.lua` and compare the same complete
@@ -95,3 +119,8 @@ the full matrix must be repeated before acceptance.
   Publish a regular English Gen2 PR only after acceptance; Gen1 stays read-only.
 
 No complete feature/combined acceptance or PR publication is claimed yet.
+
+Mirror Move/Metronome selector/catalog/RNG parity, the complete held-script
+King's Rock/Shell Bell phase, other attack-canceller phases and full native
+playthrough/graphics remain separate gaps. The new caller provenance alone
+does not certify those selectors or full scripts.

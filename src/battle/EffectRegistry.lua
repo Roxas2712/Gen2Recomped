@@ -76,6 +76,10 @@ function EffectRegistry.makeCtx(battle, user, target, move, moveInst, isCalled)
       return battle:accuracyRoll(move, user, target)
     end,
     callMove = function(moveId)
+      if require("src.core.GameVersion").isGen3() then
+        moveId = require("src.battle.EnemyMoveChoice").resolveMove(battle.data, moveId)
+        if not moveId then return nil end
+      end
       return battle:performMove(user, target, { id = moveId, pp = 1 }, true)
     end,
     side = function(who) return battle:sideOf(who) end,

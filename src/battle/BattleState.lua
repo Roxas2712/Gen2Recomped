@@ -5566,7 +5566,6 @@ function BattleState:resolveTurn(playerAction)
   local nativeActions
   if GameVersion.isGen3() then
     local Choice = require("src.battle.Gen3ChoiceBand")
-    playerAction, enemyAction = Choice.plan(self, self.player, playerAction), Choice.plan(self, self.enemy, enemyAction)
     local Rage = require("src.battle.Gen3Rage")
     if self:isDouble() then
       nativeActions = {}
@@ -5581,7 +5580,10 @@ function BattleState:resolveTurn(playerAction)
           Rage.selected(self, b, action)
         end
       end
+      playerAction, enemyAction = nativeActions[0], nativeActions[1]
     else
+      playerAction = Choice.plan(self, self.player, playerAction)
+      enemyAction = Choice.plan(self, self.enemy, enemyAction)
       Rage.selected(self, self.player, playerAction)
       Rage.selected(self, self.enemy, enemyAction)
     end
@@ -8433,6 +8435,10 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   if self._gbaActionFrame then self._gbaActionFrame.moved = true end
   performMove(self, user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
   if not frame.finished and not frame.nativeCalled and not frame.suspended then Schedule.moveEnd(self) end
+  if frame.called and not frame.nativeCalled and not frame.suspended and frame.move
+      and tonumber(frame.move.gen3Effect) ~= 127 and frame.move.effect ~= "BATON_PASS_EFFECT" then
+    frame.user.lastMove = frame.moveId
+  end
   self._gbaMoveFrame = parent
   if not isCalled and not parent and not self._gbaActionFrame and not frame.suspended then Schedule.afterAction(self) end
 end

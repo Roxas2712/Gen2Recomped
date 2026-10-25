@@ -6,6 +6,7 @@ local M = {}
 local nativeViews = setmetatable({}, { __mode = "k" })
 local publicReferences = setmetatable({}, { __mode = "k" })
 local slots = setmetatable({}, { __mode = "k" })
+local pendingSelections = setmetatable({}, { __mode = "k" })
 local function shallow(row)
   local out = {}
   for k, v in pairs(row) do
@@ -61,6 +62,7 @@ local function resolve(data, ref)
   end
   return found, row
 end
+M.resolveMove = resolve
 local function bind(action, slot)
   slots[action] = slot
   action.pp = nil
@@ -87,11 +89,26 @@ function M.withMove(action, id, forcedSlot, forcedIndex)
   copy.id = id
   if nativeViews[action] then
     nativeViews[copy] = shallow(nativeViews[action])
-    if forcedIndex then nativeViews[copy].slot = forcedIndex end
+    if forcedIndex then
+      nativeViews[copy].slot = forcedIndex
+    end
   end
-  if forcedIndex then copy.slot = forcedIndex end
+  if forcedIndex then
+    copy.slot = forcedIndex
+  end
   publicReferences[copy] = publicReferences[action]
   return bind(copy, forcedSlot or M.slot(action))
+end
+function M.resolveSelection(action)
+  if type(action) ~= "table" then
+    return action
+  end
+  local selected = pendingSelections[action]
+  pendingSelections[action] = nil
+  if selected and selected.id == action.id then
+    return M.withMove(selected, selected.id, action, selected.slot)
+  end
+  return action
 end
 function M.exhausted(action)
   return slots[action] ~= nil and action.pp <= 0
@@ -147,7 +164,13 @@ function M.delegate(battle, battler, action)
     if M.slot(action) == slot then
       local copy = shallow(action)
       copy.slot = i
-      return describe(copy), { raw = action, before = shallow(copy), owner = battler }
+      return describe(copy),
+        {
+          raw = action,
+          before = shallow(copy),
+          owner = battler,
+          originalSlot = action ~= slot and slot or nil,
+        }
     end
   end
   return describe(action)
@@ -155,6 +178,12 @@ end
 function M.normalize(data, battler, value, delegated, captured)
   if captured and value == delegated then
     if captured.owner == battler and same(value, captured.before) then
+      if captured.originalSlot then
+        -- Existing API-1/2 callbacks retain their native slot handle. Keep
+        -- selection-only fields private until planning/execution consumes it.
+        pendingSelections[captured.originalSlot] = shallow(captured.raw)
+        return captured.originalSlot
+      end
       return captured.raw
     end
     local id = resolve(data, value.move or value.id)
