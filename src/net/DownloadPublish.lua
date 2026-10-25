@@ -1,5 +1,5 @@
--- Worker-only atomic replacement. The caller owns the publication claim;
--- slow filesystem/antivirus operations never run in the game's poll path.
+-- Atomic replacement shared by download workers and validated import copies.
+-- The caller owns its staging file and supplies the scoped destination.
 return function(source, target)
   if love.system.getOS() ~= "Windows" then return os.rename(source, target) end
   -- Windows rename cannot overwrite an existing file. Never delete the old
