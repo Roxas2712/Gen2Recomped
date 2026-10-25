@@ -102,13 +102,19 @@ end
 function Objects.loadMap(game,mapId)
   local c,why=runtime:current(game); if not c then return nil,why end
   if mapId~=c.id then return nil,'object loading belongs to the native map transition' end
-  return runtime:pool(mapId,game)
+  local list,why=runtime:pool(mapId,game)
+  if not list then return nil,why end
+  return list
 end
 function Objects.clear() runtime:release() end
 Objects.reset=Objects.clear
 Objects.release=Objects.clear
 -- Internal shared observer for the separate, map-local neighbour facade.
-function Objects._pool(mapId) return runtime:pool(mapId) end
+function Objects._pool(mapId)
+  local list,why=runtime:pool(mapId)
+  if not list then return nil,why end
+  return list
+end
 setmetatable(Objects,{__index=function(_,key)
   if key=='_mapId' then local c=runtime:current(); return c and c.id end
   if key=='_byId' or key=='_order' then
