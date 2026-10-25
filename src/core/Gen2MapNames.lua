@@ -86,6 +86,7 @@ end
 -- Fold edits through one registry address, then publish the result under
 -- every existing physical alias. Removing an alias removes that map, too.
 function Names.write(target, registry)
+  if Version.isGen3() then return require("src.core.Gen3MapNames").write(target, registry) end
   local aliases = {}
   for name in pairs(target) do
     local id = Names.registryId(target, name)
