@@ -160,6 +160,9 @@ say "staged $manifests ROM manifest(s)"
 for licence in LICENSE LICENSE.MD LICENSE.md; do
   [ -f "$ROOT/$licence" ] && cp "$ROOT/$licence" "$STAGE/" && break
 done
+for notice in LICENSE-ROXAS2712.md NOTICE.md; do
+  if [ -f "$ROOT/$notice" ]; then cp "$ROOT/$notice" "$STAGE/"; fi
+done
 
 # ---------------------------------------------------------------- excludes
 # Pruned from the STAGE rather than passed to zip as -x patterns: the two
