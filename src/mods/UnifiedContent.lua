@@ -274,7 +274,15 @@ local function writeRecord(ctx, kind, id, value, old, mode)
     end
     if value.effect and value.effect ~= DELETE then
       reference(ctx, "move_effects", value.effect)
-      if ctx.gen > 1 and (not old or value.effect ~= old.effect) then unsupported("changing move effects requires a native effect adapter") end
+      if ctx.gen > 1 and (not old or value.effect ~= old.effect) then
+        -- GBA's common battle core can execute authored records directly.
+        -- Native builtin IDs still need their own numeric-script adapters;
+        -- Gen1's GBA catalog does not expose those builtins as shared content.
+        local authored = ctx.gen == 3 and not require("src.battle.MoveEffects").RECORDS[value.effect]
+        if not authored then unsupported("changing move effects requires a native effect adapter") end
+        if old and old.gen3Effect ~= nil then out.gen3Effect = DELETE end
+        out.highCrit = false
+      end
     end
     if value.category ~= nil and old and old.class ~= nil then
       check(value.category ~= DELETE, "native move class cannot be deleted")

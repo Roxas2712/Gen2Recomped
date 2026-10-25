@@ -82,7 +82,6 @@ function S.pick(ctx)
     local n = number(move)
     if
       move
-      and n
       and n ~= 0
       and not EXCLUDED[n]
       and not TWO_TURN[tonumber(move.gen3Effect)]
