@@ -1,9 +1,19 @@
 # Native engine preview for Windows and macOS
 
-This preview carries the combined native Gen3 contracts, audited palette
-imports, static/animated palette caches and macOS OpenGL/Metal output fixes
-from the development branch. It runs the native flat-world renderer. The
-Origami port and First/Third Person integration remain paused.
+The existing `native-preview-20261024.1` release currently distributes source
+`321019ae83d70314aab7ac86d91ef0bf9b52b320`, stamped **0.8.45 / mod API 3**.
+Its latest asset update fixes background downloads and the VASC package-cache
+metadata. It retains the earlier native graphics and palette fixes. The
+Origami/Gen3 port remains paused; active development focuses on VASC for
+native Gen2/Crystal in separate test profiles.
+
+The newer native First/Third Person movement, Apple Silicon quality policy
+and experimental higher-upvalue runtime are **not in those public assets**.
+Their scoped development evidence is recorded in
+[the Johto checkpoint](johto-native-compatibility.md). The experimental arm64
+runtime lets the unchanged supplied renderer extension initialize, but this
+does not establish complete gameplay, Windows GPU or universal packaging
+acceptance. Source changes alone do not replace an installed Lua runtime.
 
 Download the Windows or macOS **Gen2Recomped-NativePreview** ZIP from the
 repository's pre-release, extract into a new folder and start its launcher:
@@ -18,16 +28,16 @@ source revision, `937eb3b21f973607ab080aa26b7ef2a6b3b2b663`. No separate LÖVE
 installation is needed. The `.love` asset is for the same LÖVE 12 runtime;
 using a stable LÖVE 11.5 installation is not this preview configuration.
 
-Import your own supported Emerald/FireRed ROM through the launcher. ROMs,
+Import your own supported ROM, including Crystal, through the launcher. ROMs,
 extracted graphics and save files are not supplied. The preview starts in its
 own `Gen2Recomp-NativePreview-<release-id>` profile. It does not migrate Gen1
 or normal Gen2 saves or install automatic updates. Mods can now be installed
 and enabled through the existing launcher in this dedicated profile; none
-are bundled. The engine reports version **0.7.6 / mod API 2**, and mod manifest
-requirements still apply. Enabling the loader alone does not establish VASC2
-compatibility. The [real VASC release check](vasc-release-compatibility.md)
-reproduces both its Gen3 exclusion and the engine version mismatch in Emerald
-and FireRed. Keep
+are bundled. Mod manifest requirements still apply. Enabling the loader alone
+does not establish full VASC compatibility. The older
+[Gen3 VASC release check](vasc-release-compatibility.md) describes a previous
+release and its Emerald/FireRed exclusion; it is not a current VASC4Gen2
+acceptance result. Keep
 the default preview data location; portable/external-data roots are rejected.
 Normal source builds do not activate the preview profile.
 
