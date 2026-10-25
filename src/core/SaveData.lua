@@ -556,6 +556,7 @@ function SaveData.defaultOptions()
     -- launcher shipped with".
     launcherLogoCards = true,
     launcherCartDesigns = {},
+    cartridgeCloudSync = false,
     launcherAnimations = true,
     launcherIntroSeason = "auto",
     launcherTheme = false,

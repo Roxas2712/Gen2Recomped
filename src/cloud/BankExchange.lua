@@ -59,7 +59,8 @@ function T.submit(entry,mode,recipient,exchange)
   end
   local saved,why=write(T.JOURNAL,journal);if not saved then return nil,why end
   local body={nonce=pending.nonce,entry=bytes,digest=digest,consent=true,
-    summary={species=tostring(value.mon.species),nickname=value.mon.nickname,level=value.mon.level,game=value.source.version}}
+    summary={species=tostring(value.mon.species),nickname=value.mon.nickname,level=value.mon.level,game=value.source.version,
+      is_egg=value.mon.isEgg==true or value.mon.egg==true or (tonumber(value.mon.eggSteps) or 0)>0}}
   local path='/bank/offers'
   if mode=='reply' then
     if type(exchange)~='string' or #exchange~=36 or not exchange:match('^[a-f0-9%-]+$') then return nil,'Invalid exchange identifier.' end

@@ -71,6 +71,8 @@ GenOptions.SHARED_ONLY = {
   launcherIntroSeason = true,
   launcherLogoCards = true,
   launcherCartDesigns = true,
+  cartridgeCloudSync = true,
+  launcherSaveStorageChoice = true,
 }
 
 function GenOptions.isGeneration(g)

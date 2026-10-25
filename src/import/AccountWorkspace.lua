@@ -28,6 +28,7 @@ local function connected(self,f)
   if Auth.accountId and Auth.accountId()~=f.accountAtOpen then require('src.storage.AccountStorage').profileChanged(self) end
   -- Connecting an account never silently enables uploads or downloads.
   local settings=self:_settings();settings.cloudAutoSync=f.cloudSync==true
+  settings.cartridgeCloudSync=f.cloudSync==true
   settings.launcherSaveStorageChoice=f.cloudSync and 'cloud' or 'local'
   if self._saveSettings then self:_saveSettings() end
   self._settingsRowCache=nil
@@ -82,6 +83,7 @@ function W.action(self,id)
   elseif id=='resend' and f.challenge then local challenge=f.challenge;job(self,'resend',function() return A.resend(challenge) end)
   elseif id=='operator' and f.policy and f.policy.operator_url=='https://pokexpert.de/impressum' then love.system.openURL(f.policy.operator_url)
   elseif id=='devices' then job(self,'devices',A.devices)
+  elseif id=='sync' then W.close(self);self:_storageSync()
   elseif id=='linkStorage' then
     if not f.storageConsent then f.notice='Confirm that these local saves and Bank should belong to this account first.';return end
     local ok,why=require('src.storage.AccountStorage').bind()
@@ -178,7 +180,8 @@ function W.draw(self)
   elseif f.mode=='account' then
     paragraph('Connected as '..tostring(Auth.account()),true)
     paragraph('ACCOUNT PROFILE · '..tostring(Auth.accountId and Auth.accountId() or 'Updating identity')..' · Saves, Bank and mod choices are kept separately for each account.')
-    paragraph('The same account connects your mods, developer projects and optional cloud storage.')
+    paragraph('The same account connects your mods, developer projects, custom cartridge artwork and optional cloud storage.')
+    row('SYNC MY SAVES & CUSTOM CARTRIDGES','sync')
     local storage=require('src.storage.AccountStorage');local permitted,why=storage.check()
     if storage.enabled and not permitted then
       paragraph(why)
@@ -209,12 +212,13 @@ function W.draw(self)
       end
       row('READ TERMS OF USE','read:terms');check('I accept the terms of use','terms')
       row('READ PRIVACY NOTICE','read:privacy');check('I have read the privacy notice','privacy')
-      check('Enable automatic save sync on this device (optional)','cloudSync')
-      paragraph('Mod profile sync and automatic mod downloads are separate settings. No ROMs or cartridge pictures are uploaded.')
+      check('Enable automatic save & cartridge sync on this device (optional)','cloudSync')
+      paragraph('Cloud sync includes your cartridge designs and their images. Mod profile downloads are separate settings. ROMs and imported game caches are not uploaded.')
       row('CREATE ACCOUNT · SEND EMAIL CODE','submit');row('ALREADY REGISTERED? SIGN IN','login')
     elseif f.mode=='login' then
       paragraph('WELCOME BACK',true);field('Email','email');field('Password','password',true)
-      check('Enable automatic save sync on this device (optional)','cloudSync')
+      check('Enable automatic save & cartridge sync on this device (optional)','cloudSync')
+      paragraph('Sync includes saves, Bank and custom cartridge images/settings. ROMs and game caches stay local.')
       row('SIGN IN & LINK THIS DEVICE','submit');row('CREATE AN ACCOUNT','register');row('FORGOT PASSWORD','forgot')
     elseif f.mode=='forgot' then paragraph('RECOVER YOUR ACCOUNT',true);field('Email','email');row('SEND RECOVERY CODE','submit');row('BACK TO SIGN IN','back')
     else
