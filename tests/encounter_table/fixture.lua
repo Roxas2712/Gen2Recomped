@@ -130,6 +130,14 @@ function M.new(root, backend, version, api, format, noMod, failing)
   control.id, control.name = "preview_control", "Preview control"
   files["mods/preview_control/manifest.json"] = Json.encode(control)
   files["mods/preview_control/main.lua"] = "local m=...; m.exports.api=m"
+  -- Probe unavailable capabilities through explicit fixture-only overrides.
+  if backend == "gen2" and not require("src.mods.ModTargets").supports(
+      require("src.mods.Manifest").validate(manifest), version) then
+    files["options.lua"] = require("src.core.SaveData").encode({ modsGames = {
+      portable_encounter_table = { [version] = true },
+      preview_control = { [version] = true },
+    } })
+  end
   if noMod then
     files["mods/portable_encounter_table/manifest.json"], files["mods/portable_encounter_table/main.lua"] =
       nil, nil

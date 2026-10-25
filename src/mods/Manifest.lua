@@ -4,6 +4,7 @@
 local Logger = require("src.core.Logger")
 local Semver = require("src.mods.Semver")
 local Version = require("src.core.Version")
+local ModTargets = require("src.mods.ModTargets")
 
 local Manifest = {}
 
@@ -227,6 +228,15 @@ function Manifest.validate(raw, path)
   assert(api <= Version.modApi, ("requires mod API %d; this engine provides %d")
     :format(api, Version.modApi))
   local strict = api >= 2
+  local games, unknownGames = ModTargets.parse(raw)
+  for _, token in ipairs(unknownGames or {}) do
+    violation(strict, raw.id, "unknown game " .. token)
+  end
+  if raw.games ~= nil and #raw.games == 0 then
+    violation(strict, raw.id, "games names no game this engine knows")
+  end
+  local gen2compat = raw.gen2compat
+  if games then gen2compat = ModTargets.supports({games=games}, nil, 2) end
   -- API 3 is one portable contract, not three independent API-2 opt-ins.
   for _, field in ipairs({ "content_format", "callback_format", "script_format" }) do
     assert(api < 3 or raw[field] == nil or raw[field] == "unified",
@@ -381,6 +391,8 @@ function Manifest.validate(raw, path)
     -- not default them or refuse.  Declared here, it can do both.  Absent
     -- means all three, which is every mod that predates the field.
     generations = parseGenerations(raw),
+    games = games,
+    gen2compat = gen2compat,
     -- Which maps this mod says it touches; see parseMaps. Absent on every mod
     -- that predates the field, which is why nothing may depend on it.
     maps = parseMaps(raw),

@@ -33,6 +33,7 @@
 local Manifest = require("src.mods.Manifest")
 local ManagerState = require("src.mods.ManagerState")
 local ModGens = require("src.mods.ModGens")
+local ModTargets = require("src.mods.ModTargets")
 local Semver = require("src.mods.Semver")
 local Version = require("src.core.Version")
 local SaveData = require("src.core.SaveData")
@@ -47,8 +48,16 @@ local LauncherMods = {}
 -- the id -> validated-manifest map resolveToggle reads (its dependencySpecs,
 -- conflictSpecs, version and game_version are exactly the fields the loader's
 -- Manifest.validate produced); enabledSet is the current desired enable-set.
-local function statusFor(mods, id, enabledSet, enabled)
+local function statusFor(mods, id, enabledSet, enabled, version, options)
   local m = mods[id]
+  if version and not ModTargets.supports(m, version) then
+    if ModTargets.forced(options, id, version) then return "warn", "Forced onto " .. version end
+    return "other_game", ModTargets.detail(m, version)
+  end
+  if version and not ModGens.allows(m, require("src.core.GameVersion").generation(version))
+      and not ModTargets.forced(options, id, version) then
+    return "other_game", "Outside declared generations"
+  end
   -- conflict only bites an enabled mod: resolveToggle's conflict list is
   -- bidirectional (this mod's conflicts spec vs an enabled other, and an
   -- enabled other's spec vs this mod), which is exactly the launcher chip.
@@ -88,7 +97,7 @@ end
 -- manifests is an array of validated manifests (Manifest.validate output);
 -- options is the options table (only options.mods is read).  Rows come back
 -- sorted by id so the panel order is stable.
-function LauncherMods.deriveList(manifests, options)
+function LauncherMods.deriveList(manifests, options, version)
   local mods = options and options.mods or {}
   local rank = LoadOrder.rank(options and options.modOrder, manifests)
   local ordered = {}
@@ -114,7 +123,7 @@ function LauncherMods.deriveList(manifests, options)
   local out = {}
   for _, m in ipairs(ordered) do
     local enabled = enabledSet[m.id] == true
-    local status, detail = statusFor(byId, m.id, enabledSet, enabled)
+    local status, detail = statusFor(byId, m.id, enabledSet, enabled, version, options)
     local raw = m.raw or {}
     local badge = tostring(raw.category or m.profile or "MOD"):upper()
     if m.experimental then badge = "EXPERIMENTAL" end
@@ -178,7 +187,9 @@ function LauncherMods.deriveList(manifests, options)
       -- The generations the MOD says it works in, so the card can show a chip
       -- the player cannot usefully turn on (see ModGens.supported).  nil on
       -- every mod that declares nothing, which is every mod predating it.
-      supportedGens = m.generations,
+      supportedGens = ModTargets.generations(m) or m.generations,
+      games = m.games,
+      targets = ModTargets.label(m),
       -- ...and the generations the player has overruled that claim for, so a
       -- chip the mod says it cannot fill can still be drawn as one the player
       -- deliberately lit (see ModGens.forced).  All false on every row nobody
