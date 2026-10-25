@@ -22,6 +22,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y luajit
       - name: Compare queries with actual native grid movement
         run: luajit tests/engine/gen2_movement_permissions.lua
+      - name: Exercise native special movement handoffs
+        run: luajit tests/engine/gen2_movement_handoffs.lua
       - name: Compare all Crystal collision pairs with the pinned Gen1 engine
         run: |
           mkdir -p /tmp/gen2-permissions-contract

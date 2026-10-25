@@ -27,6 +27,16 @@ complete valid-byte/directional comparison agrees with the separate public
 Gen1 reference. This does not activate the incomplete `FieldMoves` facade or
 claim continuous camera movement acceptance.
 
+The native special-movement foundation additionally exposes connection, ledge
+and adjacent-boulder handoffs through existing native handlers. The composed
+quick suite passes 271 engine suites, three SDK suites and B30. Real CPU actor
+interpolation, queues, carpet fades and public boulder completion events pass
+549 focused checks. Source/destination side-wall bypasses are fixed on the
+shared native paths. See the [handoff contract](native-gen2-movement-handoffs.md)
+and [scoped evidence](qa/native-foundation/johto-native-handoffs.json). This
+still does not activate continuous camera controls or establish new GPU/model
+acceptance.
+
 The supplied ASC OMEGA Ver.1.8 package (`3.1.2-omega.1.8`) is the current
 read-only test input, superseding the previously tested Ver.1.7. It is tested unmodified with an actual Crystal Rev0 import in separate native-preview
 profiles. Full compatibility is **not established**. The Origami port remains
