@@ -1,4 +1,5 @@
--- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
+-- Copyright (c) 2026 Roxas2712. Contribution terms:
+-- https://github.com/Roxas2712/Gen2Recomped/blob/7867399c753186778bd4b8816ba37573357e4b40/LICENSE-ROXAS2712.md
 -- G/S/C species identifiers used by the separate Gen1Recomp reference
 -- 535a5ec0 (constant names only; no ROM bytes or artwork). Native SPECIES_nnn
 -- records remain the only stored/iterated rows. Names are live lookup aliases.

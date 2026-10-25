@@ -15,7 +15,7 @@ The real Pokémon registry uses the same native address for reads, patches,
 full replacements, removal, conflict preferences and
 rollback. New Pokémon requested by a symbolic name store the native species
 ID. Existing named save records remain readable without rewriting saves.
-Deleted native rows cannot be resurrected by a stale alias. 
+Deleted native rows cannot be resurrected by a stale alias.
 
 The ROM-free suite `tests/engine/gen2_species_names.lua` passes 130 checks,
 including actual API2 loader success/failure and actual Pokémon creation.
