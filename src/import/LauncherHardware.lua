@@ -18,7 +18,7 @@ function Hardware.cartSize(version)
   return 132,164
 end
 
-function Hardware.cartridge(self,version,cx,cy,maxW,maxH,angle,options)
+local function drawCartridge(self,version,cx,cy,maxW,maxH,angle,options)
   local g=love.graphics
   local Library=require('src.import.LauncherLibrary')
   local accent,name=Library.edition(version)
@@ -47,6 +47,7 @@ function Hardware.cartridge(self,version,cx,cy,maxW,maxH,angle,options)
   local branded=self._settings and self:_settings().launcherLogoCards and not (options and options.customLabel)
   local image=branded and (self.gen2Logo or self.logo) or design.image
   if image then
+    if image.setFilter then image:setFilter('linear','linear') end
     local iw,ih=image:getDimensions()
     local fit=math.min((w-38)/iw,(labelH-20)/ih)
     g.setColor(1,1,1,1);g.draw(image,(w-iw*fit)/2,labelY+8+(labelH-20-ih*fit)/2,0,fit,fit)
@@ -74,6 +75,51 @@ function Hardware.cartridge(self,version,cx,cy,maxW,maxH,angle,options)
   color({55,44,22});g.rectangle('fill',w*0.27,h-13,w*0.46,13,2,2)
   for i=0,7 do color({218,185,104});g.rectangle('fill',w*0.29+i*w*0.052,h-11,w*0.032,10) end
   color({255,255,255},0.16);g.polygon('fill',6,4,w*0.45,4,6,h*0.65)
+  g.pop()
+end
+
+function Hardware.cartridge(self,version,cx,cy,maxW,maxH,angle,options)
+  local g=love.graphics
+  if not (g.newCanvas and g.setCanvas and g.getCanvas and g.origin and g.setBlendMode) then
+    return drawCartridge(self,version,cx,cy,maxW,maxH,angle,options)
+  end
+  -- Rasterize these vector illustrations at 3x once, then filter them down.
+  -- Local supersampling smooths rotated edges without changing game pixels
+  -- or requiring multisampling on the entire window every frame.
+  local style=self._cartStyle and self:_cartStyle(version) or {}
+  local shell,label=style.shell or {},style.label or {}
+  local branded=self._settings and self:_settings().launcherLogoCards and not (options and options.customLabel)
+  local key=table.concat({version,tostring(self.labelFont),tostring(self._s),tostring(branded),
+    style.name or '',style.pattern or '',tostring(style.image),tostring(self.gen2Logo or self.logo),
+    table.concat(shell,','),table.concat(label,',')},'|')
+  self._hardwareCarts=self._hardwareCarts or {}
+  self._hardwareCartOrder=self._hardwareCartOrder or {}
+  local canvas=self._hardwareCarts[key]
+  local w,h=Hardware.cartSize(version)
+  local factor=3
+  local originX,originY=(w/2+16)*factor,(h/2+12)*factor
+  if not canvas then
+    local ok,result=pcall(g.newCanvas,(w+40)*factor,(h+40)*factor,{dpiscale=1})
+    if not ok or not result then return drawCartridge(self,version,cx,cy,maxW,maxH,angle,options) end
+    canvas=result;canvas:setFilter('linear','linear')
+    local previous=g.getCanvas()
+    g.push('all');g.setCanvas(canvas);g.origin();g.setScissor();g.setShader()
+    g.clear(0,0,0,0);g.setBlendMode('alpha','alphamultiply')
+    if g.setLineStyle then g.setLineStyle('smooth') end
+    drawCartridge(self,version,originX,originY,(w+12)*factor,(h+12)*factor,0,options)
+    g.setCanvas(previous);g.pop()
+    self._hardwareCarts[key]=canvas
+    local order=self._hardwareCartOrder;order[#order+1]=key
+    if #order>24 then
+      local old=table.remove(order,1)
+      local retired=self._hardwareCarts[old]
+      self._hardwareCarts[old]=nil
+      if retired and retired.release then retired:release() end
+    end
+  end
+  local sc=math.min(maxW/(w+12),maxH/(h+12))/factor
+  g.push('all');g.setColor(1,1,1,1);g.setBlendMode('alpha','premultiplied')
+  g.draw(canvas,cx,cy,angle or -0.055,sc,sc,originX,originY)
   g.pop()
 end
 

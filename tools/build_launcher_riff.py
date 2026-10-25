@@ -5,11 +5,13 @@ arranged for plucked, distorted power chords with original drums and texture.
 Requires numpy only to regenerate; the application plays the bundled WAV.
 """
 from pathlib import Path
+import json
 import wave
 import numpy as np
 
 RATE = 22050
-DURATION = 14.4
+SCORE = json.loads((Path(__file__).resolve().parents[1] / 'assets/launcher/intro_score.json').read_text())
+DURATION = SCORE['duration']
 rng = np.random.default_rng(2712)
 mix = np.zeros((int(RATE * DURATION), 2), dtype=np.float64)
 
@@ -46,8 +48,8 @@ def add(signal, start, gain, pan=0.0):
     mix[at:at + count, 1] += signal[:count] * gain * (1 + pan * 0.5)
 
 
-start = 0.72  # The original eight-unit opening rest.
-unit = 0.09
+start = SCORE['musicStart']  # The original eight-unit opening rest.
+unit = SCORE['noteUnit']
 # Full channel-2 phrase from pokered/audio/music/introbattle.asm, transposed
 # for guitar. The sustained bridge and high closing D complete the tune.
 notes = [(38,2),(38,2),(45,4), (38,2),(38,2),(46,4),
@@ -73,12 +75,23 @@ for pitch, length in notes:
     add(np.tanh(pluck(pitch + 12, duration + 0.10) * 4), start, 0.055)
     start += duration
 
-# Let the closing D ring naturally into the wordmark docking transition.
-tail = sum(pluck(pitch, 2.0) * weight for pitch, weight in [(38, 1), (45, .7), (50, .5)])
-add(np.tanh(tail * 5), start - unit * 16, 0.12)
+# The long-long-short closing cadence is also the visual catch/carry/place cue.
+assert abs(start - SCORE['closing'][0]['at']) < 1e-8
+for hit in SCORE['closing']:
+    at, length = hit['at'], hit['length']
+    for pan, detune, offset in [(-.85, -.004, 0), (.85, .004, .009)]:
+        chord = sum(pluck(pitch, length, detune=detune) * gain
+                    for pitch, gain in [(38, 1), (45, .75), (50, .55)])
+        add(np.tanh(chord * 10), at + offset, hit['gain'], pan)
+    add(pluck(26, length + .15), at, .24)
+    t = np.arange(int(RATE * .55)) / RATE
+    impact = np.sin(2*np.pi*(42*t+1.8*(1-np.exp(-t*24)))) * np.exp(-t*11)
+    add(impact, at, .34)
+    crash = rng.uniform(-1,1,len(t)) * np.exp(-t*9)
+    add(crash, at, .075)
 
 for beat in range(36):
-    at = 0.72 + beat * 0.36
+    at = SCORE['musicStart'] + beat * 0.36
     t = np.arange(int(RATE * 0.25)) / RATE
     kick = np.sin(2 * np.pi * (43 * t + 2.0 * (1 - np.exp(-t * 35)))) * np.exp(-t * 19)
     add(kick, at, 0.26)

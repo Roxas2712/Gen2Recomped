@@ -23,6 +23,7 @@ Sequence.install(RI)
 
 local ui=RI.new()
 check(ui._launcherSequence.kind=='intro','fresh launch has its own intro')
+ui._launcherSequence.presented=true;ui:update(0)
 ui:keypressed('space');check(ui.clicks==0,'skip cannot activate a hidden control')
 ui:update(0.01);check(not ui._launcherSequence and ui.boots==0,'intro skip returns to the library')
 ui:mousepressed();check(ui.clicks==0,'synthesized duplicate of skip is swallowed')
@@ -111,6 +112,36 @@ for _,entry in ipairs({{'red',160,144,1},{'crystal',160,144,1},{'emerald',240,16
   check(rw==entry[2] and rh==entry[3] and screens==entry[4],'resolution readout follows the selected hardware')
 end
 love.audio=previousAudio
+local oldFocus,oldVisible=love.window.hasFocus,love.window.isVisible
+local focused=false
+love.window.hasFocus=function() return focused end
+love.window.isVisible=function() return true end
+ui=RI.new()
+ui:update(30)
+check(ui._launcherSequence.elapsed==0 and not ui._launcherSequence.soundStarted,
+  'background startup cannot consume the intro or its audio')
+ui:mousepressed()
+check(ui._launcherSequence.elapsed==0,'the activating click cannot skip an unseen intro')
+ui._launcherSequence.presented=true;ui:update(30)
+check(ui._launcherSequence.elapsed==0,'a rendered but unfocused window still waits')
+focused=true;ui:update(30)
+check(ui._launcherSequence.elapsed==0 and ui._launcherSequence.soundStarted,
+  'focus begins the intro at time zero even after a long background wait')
+ui:update(.1)
+check(math.abs(ui._launcherSequence.elapsed-.1)<.001,'visible startup proceeds normally')
+love.window.hasFocus, love.window.isVisible=oldFocus,oldVisible
+local clock=0
+local oldAudio=love.audio
+love.audio={newSource=function()
+  return {setVolume=function() end,play=function() end,stop=function() end,
+    isPlaying=function() return true end,tell=function() return clock end}
+end}
+ui=RI.new();ui._launcherSequence.presented=true;ui:update(0)
+clock=require('src.import.LauncherIntroScore').logoLock;ui:update(.01)
+check(ui._launcherSequence.elapsed==clock,'intro choreography follows the audible sample clock')
+ui:keypressed('space');ui:update(0)
+check(not ui._launcherSequence,'sample-clock synchronization cannot resurrect a skipped intro')
+love.audio=oldAudio
 local Workspace=require('src.import.LauncherWorkspace')
 local settingsRows={
   {kind='section',label='CLOUD SAVES'},

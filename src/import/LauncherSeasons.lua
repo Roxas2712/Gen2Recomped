@@ -1,5 +1,6 @@
 -- Original, code-drawn seasonal mascots. No game sprites or firmware assets.
 local Seasons = {}
+local Score=require('src.import.LauncherIntroScore')
 Seasons.VALUES={'auto','lightning','spring','summer','autumn','winter'}
 Seasons.LABELS={auto='AUTOMATIC',lightning='LIGHTNING',spring='SPRING · BRANCHLING',
   summer='SUMMER · SPARK DRAKE',autumn='AUTUMN · SHADE',winter='WINTER · COURIER'}
@@ -16,6 +17,24 @@ function Seasons.resolve(choice,month)
 end
 
 function Seasons.pose(kind,t,cx,cy,s)
+  if kind=='autumn' then
+    local appear=ease((t-Score.ghostAppear)/(Score.ghostReady-Score.ghostAppear))
+    local approach=ease((t-Score.ghostReady)/(Score.orbitStart-Score.ghostReady))
+    local orbit=ease((t-Score.orbitStart)/(Score.orbitEnd-Score.orbitStart))
+    local angle=orbit*math.pi*2
+    local radius=math.min(292*s,math.max(70*s,cx-80*s))
+    local size=math.min(1,cx/(450*s))
+    local x=cx-210*s+(210*s+radius)*approach
+    local y=cy+135*s*(1-approach)+math.sin(approach*math.pi)*80*s
+    if t>=Score.orbitStart then x,y=cx+math.cos(angle)*radius,cy+math.sin(angle)*110*s end
+    local grasp=ease((t-Score.orbitEnd)/(Score.catch-Score.orbitEnd))
+    local exit=ease((t-Score.place-0.15)/(Score.duration-Score.place-0.35))
+    return {x=x,y=y,alpha=appear*(1-exit),size=size*(.86+.14*math.sin(angle)),
+      action=grasp,release=Score.logoReveal,travel=ease((t-Score.logoReveal)/(Score.logoLock-Score.logoReveal)),
+      logoX=cx,logoY=cy,logoScale=1,logoAlpha=ease((t-Score.logoReveal)/(Score.logoLock-Score.logoReveal)),
+      rotation=0,behind=t>=Score.orbitStart and t<Score.orbitEnd and math.sin(angle)<0,
+      holding=t>=Score.catch,grasp=grasp}
+  end
   local release=({autumn=3.2,winter=3.8,spring=3.4,summer=3.0})[kind] or 0.72
   local entry=ease((t-0.65)/1.5)
   local action=math.sin(clamp((t-release+0.8)/1.6)*math.pi)
@@ -36,10 +55,10 @@ function Seasons.pose(kind,t,cx,cy,s)
     rotation=(1-travel)*(kind=='winter' and -0.65 or kind=='spring' and 0.35 or -0.15)}
 end
 
-function Seasons.draw(kind,t,cx,cy,s)
+function Seasons.draw(kind,t,cx,cy,s,override)
   if kind=='lightning' then return end
   local g=love.graphics
-  local pose=Seasons.pose(kind,t,cx,cy,s)
+  local pose=override or Seasons.pose(kind,t,cx,cy,s)
   local function col(r,b,c,a) g.setColor(r/255,b/255,c/255,(a or 1)*pose.alpha) end
   local function oval(x,y,rx,ry,r,b,c) col(r,b,c);g.ellipse('fill',x,y,rx,ry) end
   local function eyes(y,space)
@@ -49,8 +68,15 @@ function Seasons.draw(kind,t,cx,cy,s)
       oval(side*space+4,y-2,1.5,2,255,255,255)
     end
   end
-  g.push('all');g.translate(pose.x,pose.y);g.scale(s)
-  col(0,0,0,0.24);g.ellipse('fill',8,82,84,10)
+  if kind=='autumn' and t>=Score.orbitStart and t<Score.orbitEnd then
+    for i=12,1,-1 do
+      local trail=Seasons.pose(kind,t-i*.045,cx,cy,s)
+      g.setColor(.53,.31,.82,pose.alpha*(1-i/13)*.12)
+      g.ellipse('fill',trail.x,trail.y+27*s,(5+i*.5)*s,(3+i*.25)*s)
+    end
+  end
+  g.push('all');g.translate(pose.x,pose.y);g.scale(s*(pose.size or 1))
+  if kind~='autumn' then col(0,0,0,0.24);g.ellipse('fill',8,82,84,10) end
   if kind=='autumn' then
     -- A long-eared wisp with a split vapor tail and a crooked little smile.
     col(58,34,96);g.polygon('fill',-67,5,-48,-53,-58,-102,-18,-71,20,-81,54,-111,48,-50,73,8,49,61,23,48,1,83,-19,55,-47,62)
@@ -59,7 +85,7 @@ function Seasons.draw(kind,t,cx,cy,s)
     col(167,122,220,0.65);g.arc('line','open',-9,-21,48,3.4,4.9)
     col(177,243,230);g.polygon('fill',-43,-30,-10,-22,-24,-12)
     col(177,243,230);g.polygon('fill',13,-22,45,-35,29,-12)
-    col(34,22,59);g.arc('fill','chord',0,0,37,0.12,3.02)
+    col(34,22,59);g.arc('fill','closed',0,0,37,0.12,3.02)
     col(235,231,251);g.polygon('fill',-29,7,-18,12,-21,20)
     col(235,231,251);g.polygon('fill',27,7,17,13,20,21)
     oval(-72,23,17,23,114,75,172)

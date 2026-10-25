@@ -5,8 +5,9 @@ local Library = require('src.import.LauncherLibrary')
 local Strings = require('src.core.Strings')
 local Versions = require('src.core.GameVersion')
 local Seasons = require('src.import.LauncherSeasons')
+local Score = require('src.import.LauncherIntroScore')
 
-Sequence.INTRO_DURATION = 14.4
+Sequence.INTRO_DURATION = Score.duration
 Sequence.PLAY_DURATION = 5.6
 Sequence.LATCH_AT = 1.65
 Sequence.POWER_AT = 1.98
@@ -57,6 +58,7 @@ function Sequence.install(RI)
     if self.launcher and self.sidebarMode and not self.workState and not self.forceImport
       and self:_settings().launcherAnimations ~= false then
       self._launcherSequence = Sequence.new('intro',nil,self:_settings().launcherIntroSeason)
+      self._launcherSequence.waitForWindow=true
     end
     return self
   end
@@ -79,6 +81,15 @@ function Sequence.install(RI)
     local state = self._launcherSequence
     if state then
       require('src.import.LauncherBackdrop').setPaused(true)
+      -- A background launch must not consume the intro before its first
+      -- visible frame. The click that activates the window is swallowed below.
+      if state.waitForWindow and not state.cancelled and state.elapsed<state.duration then
+        local window=love.window
+        if not state.presented or (window and window.hasFocus and not window.hasFocus())
+          or (window and window.isVisible and not window.isVisible()) then return end
+        state.waitForWindow=false
+        dt=0
+      end
       if state.kind=='intro' and not state.soundStarted then
         state.soundStarted=true
         if love.audio and love.audio.newSource then
@@ -91,7 +102,16 @@ function Sequence.install(RI)
         end
       end
       self.pulse = (self.pulse or 0) + dt
+      local skipped=state.elapsed>=state.duration
       local done=not state.cancelled and Sequence.advance(state, dt)
+      -- Follow audible playback rather than accumulating frame timing drift.
+      local sound=self._introSound
+      if state.kind=='intro' and not skipped and not state.cancelled and sound and sound.tell and sound.isPlaying then
+        if sound:isPlaying() then
+          state.elapsed=math.max(0,math.min(state.duration,sound:tell('seconds')))
+          done=state.elapsed>=state.duration
+        end
+      end
       if state.kind=='play' and not state.cancelled and not done and not state.latchStarted and Sequence.insertion(state)>=1 then
         state.latchStarted=true
         if love.audio and love.audio.newSource then
@@ -131,6 +151,7 @@ function Sequence.install(RI)
   local function input(self, cancel)
     local state = self._launcherSequence
     if not state then return (self._sequenceInputGuard or 0)>0 end
+    if state.waitForWindow then return true end
     if cancel and state.kind=='play' then state.cancelled=true
     else state.elapsed=state.duration end
     return true
@@ -156,32 +177,38 @@ function Sequence.install(RI)
     end end
   end
 
-  local function lightning(cx,cy,w,h,s,elapsed,phase)
-    if phase>0.62 then return end
+  local function lightning(cx,cy,w,h,s,elapsed)
     local g=love.graphics
-    local fade=math.min(1,elapsed*2)*math.min(1,(0.62-phase)*7)
-    local targets={{0.03,0.12},{0.94,0.06},{0.01,0.72},{0.98,0.80},{0.30,0.02},{0.78,0.98}}
-    for i,origin in ipairs(targets) do
-      local travel=(elapsed*1.1+i*0.17)%1
-      local sx,sy=origin[1]*w,origin[2]*h
-      local points={}
-      for segment=0,11 do
-        local q=segment/11
-        local along=math.min(1,travel*1.4+q*0.28)
-        local jag=math.sin(segment*17.31+i*2.9+math.floor(elapsed*17))*18*s*(1-q)
-        points[#points+1]=sx+(cx-sx)*along+jag
-        points[#points+1]=sy+(cy-sy)*along-jag*0.6
+    local charge=smooth((elapsed-Score.chargeStart)/(Score.logoLock-Score.chargeStart))
+    local fade=1-smooth((elapsed-Score.catch)/0.5)
+    if charge<=0 or fade<=0 then return end
+    local beat=math.max(0,elapsed-Score.musicStart)/(Score.noteUnit*2)
+    local pulse=0.72+0.28*math.exp(-(beat%1)*6)
+    -- Opposing curved strands cross and braid as the charge builds. Each new
+    -- strand fades in; the last segments converge on different logo edges.
+    for ray=1,14 do
+      local active=clamp(charge*14-(ray-1))
+      if active>0 then
+        local side=ray%2==0 and 1 or -1
+        local angle=ray*2.39996+elapsed*0.045*side
+        local sx=cx+math.cos(angle)*w*.66
+        local sy=cy+math.sin(angle)*h*.7
+        local tx=cx+(((ray-1)%7)/6-.5)*360*s
+        local ty=cy+side*(28+math.sin(ray)*12)*s
+        local points={}
+        for segment=0,24 do
+          local q=segment/24
+          local braid=math.sin(q*math.pi)*math.sin(q*math.pi*2+elapsed*.7+ray*.6)*side*(30+80*charge)*s
+          local jag=math.sin(segment*13.17+ray*7+math.floor(elapsed*24))*7*s*math.sin(q*math.pi)
+          points[#points+1]=sx+(tx-sx)*q+braid+jag
+          points[#points+1]=sy+(ty-sy)*q-braid*.7-jag*.4
+        end
+        local rgb=side==1 and {112,220,255} or {180,105,255}
+        local alpha=active*fade*pulse
+        col(rgb,alpha*.075);g.setLineWidth(10*s);g.line(points)
+        col(rgb,alpha*.28);g.setLineWidth(3.5*s);g.line(points)
+        col({222,246,255},alpha*.85);g.setLineWidth(math.max(.65,1.0*s));g.line(points)
       end
-      local rgb=i%2==0 and {112,220,255} or {180,105,255}
-      col(rgb,fade*0.09);g.setLineWidth(10*s);g.line(points)
-      col(rgb,fade*0.35);g.setLineWidth(4*s);g.line(points)
-      col({221,245,255},fade*0.9);g.setLineWidth(math.max(1,1.2*s));g.line(points)
-    end
-    for i=1,18 do
-      local angle=i*2.39996+elapsed*0.3
-      local radius=(1-((elapsed*0.5+i/18)%1))*210*s
-      col(i%2==0 and {136,227,255} or {196,141,255},fade*0.7)
-      g.circle('fill',cx+math.cos(angle)*radius,cy+math.sin(angle)*radius*0.38,1.6*s)
     end
     g.setLineWidth(1)
   end
@@ -219,7 +246,7 @@ function Sequence.install(RI)
     local accent=Library.edition(state.version)
     local logo=self.gen2Logo or self.logo
     local stage=Sequence.stages(state)
-    local dock=intro and smooth((phase-0.93)/0.07) or 0
+    local dock=intro and smooth((state.elapsed-Score.carryStart)/(Score.place-Score.carryStart)) or 0
     self._sequenceFadeShader=self._sequenceFadeShader or g.newShader([[
       extern number opacity;
       vec4 effect(vec4 color, Image tex, vec2 uv, vec2 pos) {
@@ -236,30 +263,51 @@ function Sequence.install(RI)
       local logoY=oy+h*0.44
       local seasonal=state.season~='lightning'
       local pose=seasonal and Seasons.pose(state.season,state.elapsed,cx,logoY,s)
-      if seasonal then
-        Seasons.draw(state.season,state.elapsed,cx,logoY,s)
-        if state.elapsed>pose.release then
-          lightning(cx,logoY,w,h,s,state.elapsed-pose.release,(state.elapsed-pose.release)/6)
-        end
-      else lightning(cx,logoY,w,h,s,state.elapsed,phase) end
-      g.setFont(self.labelFont);col(accent,1-dock)
-      g.printf(Strings('YOUR NEXT CHAPTER'),ox,oy+h*0.22,w,'center')
+      local logoW=math.min(w*.70,420*s)
+      local mainS=self._s or 1
+      local left,top,sc,lw,lh
       if logo then
-        local lw,lh=logo:getDimensions()
-        local logoW=math.min(w*0.80,460*s)
-        local mainS=self._s or 1
+        lw,lh=logo:getDimensions()
         local endScale=math.min(218*mainS/lw,62*mainS/lh,(w-40*mainS)/lw)
-        local sc=logoW/lw*(pose and pose.logoScale or 1)*(1-dock)+endScale*dock
-        local left=((pose and pose.logoX or cx)-lw*sc/2)*(1-dock)+(ox+20*mainS)*dock
-        local top=((pose and pose.logoY or logoY)-lh*sc/2)*(1-dock)+(oy+(80*mainS-lh*sc)/2)*dock
-        local reveal=smooth((state.elapsed-0.72)/7.0)
+        sc=logoW/lw*(pose and pose.logoScale or 1)*(1-dock)+endScale*dock
+        left=((pose and pose.logoX or cx)-lw*sc/2)*(1-dock)+(ox+20*mainS)*dock
+        top=((pose and pose.logoY or logoY)-lh*sc/2)*(1-dock)+(oy+(80*mainS-lh*sc)/2)*dock
+        if pose and state.season=='autumn' and pose.grasp>0 then
+          local size=pose.size*(1-dock*.18)
+          -- His left hand stays on the wordmark's right edge for the carry.
+          local handX=left+lw*sc+72*s*size
+          local handY=top+lh*sc/2-23*s*size
+          pose.x=pose.x+(handX-pose.x)*pose.grasp
+          pose.y=pose.y+(handY-pose.y)*pose.grasp
+          pose.size=size
+        end
+      end
+      lightning(cx,logoY,w,h,s,state.elapsed)
+      if seasonal and (state.season~='autumn' or pose.behind) then
+        Seasons.draw(state.season,state.elapsed,cx,logoY,s,pose)
+      end
+      g.setFont(self.labelFont);col(accent,1-dock)
+      g.printf(Strings('YOUR NEXT CHAPTER'),ox,oy+h*.20,w,'center')
+      if logo then
+        local reveal=smooth((state.elapsed-Score.logoReveal)/(Score.logoLock-Score.logoReveal))
+        local alpha=pose and pose.logoAlpha or reveal
+        local hit=0
+        for _,cue in ipairs(Score.closing) do
+          if state.elapsed>=cue.at then hit=math.max(hit,math.exp(-(state.elapsed-cue.at)*12)) end
+        end
         g.setShader()
-        if not seasonal then g.setScissor(math.floor(left),math.floor(top),math.ceil(lw*sc*reveal),math.ceil(lh*sc)) end
-        g.setColor(1,1,1,pose and pose.logoAlpha or clamp(state.elapsed/0.3))
+        if reveal<1 and (not seasonal or state.season=='autumn') then
+          g.setScissor(math.floor(left),math.floor(top),math.ceil(lw*sc*reveal),math.ceil(lh*sc))
+        end
+        g.setColor(1,1,1,alpha)
         g.push();g.translate(left+lw*sc/2,top+lh*sc/2)
         g.rotate(pose and pose.rotation*(1-dock) or 0)
-        g.draw(logo,-lw*sc/2,-lh*sc/2,0,sc,sc);g.pop()
+        local impactScale=1+hit*.018*(1-dock)
+        g.draw(logo,-lw*sc*impactScale/2,-lh*sc*impactScale/2,0,sc*impactScale,sc*impactScale);g.pop()
         g.setScissor()
+      end
+      if seasonal and state.season=='autumn' and not pose.behind then
+        Seasons.draw(state.season,state.elapsed,cx,logoY,s,pose)
       end
       g.setFont(self.hintFont);col(P.warning,1-dock)
       g.printf(Strings('Tap or press any key to skip'),ox,oy+h-44*s,w,'center')
@@ -328,6 +376,7 @@ function Sequence.install(RI)
       -- Native framebuffer and current drawable size, independent of camera magnification.
       local nativeW,nativeH,screens=Hardware.nativeResolution(state.version)
       local targetW,targetH=g.getDimensions()
+      if g.getPixelDimensions then targetW,targetH=g.getPixelDimensions() end
       local resolution=('%d × %d%s  >  %d × %d'):format(nativeW,nativeH,screens==2 and ' · 2 SCREENS' or '',targetW,targetH)
       g.setFont(self.hintFont)
       local rw=self.hintFont:getWidth(resolution)+32*s
@@ -343,8 +392,9 @@ function Sequence.install(RI)
   RI.draw=function(self,...)
     -- The first normal draw creates the responsive fonts used by the sequence.
     local state=self._launcherSequence
-    if not state or not self.gameNameFont or (state.kind=='intro' and state.elapsed/state.duration>0.93) then draw(self,...) end
+    if not state or not self.gameNameFont or (state.kind=='intro' and state.elapsed>Score.carryStart) then draw(self,...) end
     if self._launcherSequence then self:_drawLauncherSequence() end
+    if self._launcherSequence then self._launcherSequence.presented=true end
   end
 
   local rows=RI._settingsRows
@@ -368,6 +418,7 @@ function Sequence.install(RI)
     if entry and entry.action=='launcherPreviewIntro' then
       if not self._launcherSequence then
         self._launcherSequence=Sequence.new('intro',nil,self:_settings().launcherIntroSeason)
+        self._launcherSequence.waitForWindow=true
       end
       return
     end

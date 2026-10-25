@@ -194,6 +194,7 @@ function Workspace.install(RI)
   local settings=RI._drawSettingsPanel
   RI._drawSettingsPanel=function(self,x,y,w,h,paged)
     self._workspaceCards=nil
+    self._workspaceIntro=nil
     if not self.sidebarMode or self._workspaceCategory or self.settingsPage then
       return settings(self,x,y,w,h,paged)
     end
@@ -203,6 +204,13 @@ function Workspace.install(RI)
     y=y+48*s
     paint.text(self,self.hintFont,Strings('Your RetroRecomped preferences.'),x,y,w,P().detail)
     y=y+38*s
+    local replay={x=x,y=y,width=w,height=58*s,pinned=true}
+    paint.surface(x,y,w,replay.height,9*s,P().link,self:_hover(replay))
+    U.col(P().link);g.polygon('fill',x+20*s,y+17*s,x+20*s,y+41*s,x+38*s,y+29*s)
+    paint.text(self,self.stateFont,Strings('PLAY STARTUP INTRO'),x+54*s,y+13*s,w-70*s,P().ink)
+    self._workspaceIntro=replay
+    self.settingsRowRects[#self.settingsRowRects+1]={entry={kind='action',action='launcherPreviewIntro'},value=replay}
+    y=y+78*s
     local cols=w>=620*s and 2 or 1
     local gap=16*s
     local cw=(w-gap*(cols-1))/cols

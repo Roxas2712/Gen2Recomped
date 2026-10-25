@@ -140,6 +140,7 @@ function love.conf(t)
     t.accelerometerjoystick = false
   else
     t.window.resizable = true
+    t.window.highdpi = true
   end
   if loveMajor >= 12 then
     t.highdpi = t.window.highdpi ~= false

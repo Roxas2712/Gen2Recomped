@@ -5,6 +5,7 @@ local Library = {}
 local Versions = require('src.core.GameVersion')
 local Strings = require('src.core.Strings')
 local Sidebar = require('src.import.LauncherSidebar')
+local IntroScore = require('src.import.LauncherIntroScore')
 
 local EDITIONS = {
   red = {{242,100,94}, 'RED'}, blue = {{104,160,247}, 'BLUE'},
@@ -67,6 +68,9 @@ function Library.install(RI)
   local new = RI.new
   RI.new = function(...)
     local self = new(...)
+    for _,image in ipairs({self.gen2Logo,self.logo}) do
+      if image and image.setFilter then image:setFilter('linear','linear') end
+    end
     if self.launcher then
       local opts=self:_settings()
       if opts.launcherLayout=='classic' or opts.launcherClassic==true then
@@ -88,6 +92,8 @@ function Library.install(RI)
     col(P.bgBot, 0.98); g.rectangle('fill', x, y, w, h)
     col(P.cardBorder, 0.22); g.rectangle('fill', x, y + h - 1, w, 1)
     local logo = self.gen2Logo or self.logo
+    local intro=self._launcherSequence
+    if intro and intro.kind=='intro' and intro.elapsed<IntroScore.place then logo=nil end
     if logo then
       local lw, lh = logo:getDimensions()
       local sc = math.min(218*s/lw, 62*s/lh, (w-40*s)/lw)

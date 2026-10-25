@@ -41,6 +41,7 @@ function love.load()
   end
   if mode=='intro' or mode=='insertion' then
     ui._launcherSequence=require('src.import.LauncherSequence').new(mode=='intro' and 'intro' or 'play',version,ui:_settings().launcherIntroSeason)
+    ui._launcherSequence.waitForWindow=not output and not frameFolder and not smoke
     if output then ui._launcherSequence.elapsed=tonumber(os.getenv('LIBRARY_PREVIEW_TIME')) or (mode=='intro' and 2.25 or 1.5) end
   end
   if mode == 'list' then
@@ -103,6 +104,7 @@ function love.keypressed(key)
     end
     ui._handedOff=false
     ui._launcherSequence=require('src.import.LauncherSequence').new('intro',version,ui:_settings().launcherIntroSeason)
+    ui._launcherSequence.waitForWindow=true
     return
   end
   ui:keypressed(key)

@@ -2,6 +2,7 @@
 package.path='./?.lua;'..package.path
 love=require('tests.love_stub')
 local Seasons=require('src.import.LauncherSeasons')
+local Score=require('src.import.LauncherIntroScore')
 local GenOptions=require('src.core.GenOptions')
 local n=0
 local function check(v,m) assert(v,m);n=n+1 end
@@ -10,7 +11,7 @@ for month,expected in ipairs({'winter','winter','spring','spring','spring','summ
 end
 for _,kind in ipairs({'spring','summer','autumn','winter'}) do
   check(Seasons.resolve(kind,1)==kind,'manual season overrides the calendar')
-  local endPose=Seasons.pose(kind,14.4,720,420,1.4)
+  local endPose=Seasons.pose(kind,Score.duration,720,420,1.4)
   check(endPose.logoX==720 and endPose.logoY==420 and endPose.logoScale==1 and endPose.alpha==0,
     'mascot clears the scene and wordmark settles before header docking')
   local first=Seasons.pose(kind,0,720,420,1.4)
@@ -25,6 +26,36 @@ for _,kind in ipairs({'spring','summer','autumn','winter'}) do
 end
 check(Seasons.resolve('lightning',10)=='lightning','plain lightning remains selectable')
 check(Seasons.resolve('obsolete',12)=='winter','unknown saved themes fall back to the calendar')
+check(Score.closing[1].at==Score.catch and Score.closing[3].at==Score.place,
+  'first and final cadence attacks are the catch and placement cues')
+check(Score.logoReveal<Score.logoLock and Score.logoLock==Score.orbitStart
+  and Score.orbitEnd<Score.catch and Score.catch<Score.carryStart and Score.place<Score.duration,
+  'formation, orbit, catch, carry and placement have distinct ordered intervals')
+local behind=Seasons.pose('autumn',Score.orbitStart+(Score.orbitEnd-Score.orbitStart)*.75,720,420,1.4)
+local front=Seasons.pose('autumn',Score.orbitStart+(Score.orbitEnd-Score.orbitStart)*.25,720,420,1.4)
+check(behind.behind and not front.behind,'ghost changes depth as it orbits the wordmark')
+check(not Seasons.pose('autumn',Score.catch-.01,720,420,1.4).holding
+  and Seasons.pose('autumn',Score.catch,720,420,1.4).holding,'first heavy attack precisely switches to carrying')
+local previousGraphics=love.graphics
+local depth=0
+love.graphics={}
+for _,method in ipairs({'translate','scale','ellipse','polygon','rectangle','circle','line','setLineWidth','rotate'}) do
+  love.graphics[method]=function() end
+end
+love.graphics.push=function() depth=depth+1 end
+love.graphics.pop=function() depth=depth-1;assert(depth>=0,'unbalanced seasonal graphics stack') end
+love.graphics.setColor=function(r,g,b,a)
+  for _,value in ipairs({r,g,b,a}) do assert(value==value and value>=0 and value<=1,'invalid mascot color') end
+end
+love.graphics.arc=function(mode,closure)
+  assert(mode=='fill' or mode=='line','invalid arc drawing mode')
+  assert(closure=='open' or closure=='closed' or closure=='pie','arc mode must work on LOVE 11.5')
+end
+for _,kind in ipairs({'autumn','winter','spring','summer'}) do
+  for _,at in ipairs({0,5,8.6,11.8,15.3,Score.duration}) do Seasons.draw(kind,at,720,420,1.4) end
+  check(depth==0,'every seasonal drawing path balances graphics state and uses valid drawing modes')
+end
+love.graphics=previousGraphics
 for _,key in ipairs({'launcherAnimations','launcherIntroSeason','launcherLogoCards','launcherCartDesigns'}) do
   local opts={};GenOptions.set(opts,key,'choice',1)
   check(opts[key]=='choice' and not opts.perGeneration,'launcher preferences cannot leak into game-family overrides')

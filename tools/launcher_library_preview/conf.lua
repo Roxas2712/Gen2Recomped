@@ -5,7 +5,8 @@ function love.conf(t)
   t.window.width = tonumber(os.getenv('LIBRARY_PREVIEW_WIDTH')) or 1440
   t.window.height = tonumber(os.getenv('LIBRARY_PREVIEW_HEIGHT')) or 960
   t.window.resizable = true
-  t.window.highdpi = false
+  t.window.highdpi = true
+  if love.getVersion and love.getVersion()>=12 then t.highdpi=true;t.window.highdpi=nil end
   t.modules.audio = os.getenv('LIBRARY_PREVIEW_AUDIO') == '1'
   t.modules.physics = false
 end

@@ -445,8 +445,8 @@ In the sidebar layout, the Settings page fills the whole content area and is dra
 The fork now opens the library first, with in-place system/ready/favorite filters,
 a Logo Labels checkbox that prints the wordmark onto cartridge labels, task-grouped tools, a settings category hub, and
 Cartridge Studio for custom shells, labels and artwork. The startup includes
-a skippable 14.4-second lightning/logo/guitar sequence with the complete
-IntroBattle lead phrase. Game launch inserts the selected cartridge into its
+a skippable 17.4-second lightning/logo/guitar sequence with the complete
+IntroBattle lead phrase and three heavy closing attacks. Game launch inserts the selected cartridge into its
 matching handheld silhouette, plays the latch and power cue, lights the power
 LED, forms the logo inside the screen, and flies into that screen before the
 original boot. A native-to-window resolution readout accompanies the camera.
@@ -455,10 +455,20 @@ The application intro has no enclosing circle. **Intro season** chooses
 Automatic, Lightning, Spring, Summer, Autumn or Winter; Automatic follows the
 local calendar. Four original vector mascots deliver the wordmark: a branchling,
 spark drake, shade and winter courier. **Preview startup intro** replays the
-same application sequence from Settings → RetroRecomped. The retired Classic
+same application sequence from Settings → RetroRecomped. A prominent **Play
+startup intro** button is also at the top of the Settings overview. The retired Classic
 launcher choice migrates to this library. Window titles now say RetroRecomped;
 game-family settings identify GB, GBC, GBA and the supported Gen 4 DS engine,
 and hide GB color controls when a later engine is selected.
+
+`assets/launcher/intro_score.json` supplies the same cue times to audio generation
+and animation. With sound available, the intro follows the source's playback
+clock. Lightning strands build and cross, the autumn shade fades in and orbits
+in front of and behind the logo. The closing attacks at 13.68, 15.12 and 16.02s
+accompany the catch, carry and final placement in the header. Startup waits for
+the first drawn, focused visible window. Cartridge illustrations use bounded
+3x supersampled caches and linear artwork filtering; desktop windows use native
+display density while game framebuffer sampling remains separate.
 
 See [implementation and QA](qa/retro-launcher/README.md) and the
 [standalone preview](../tools/launcher_library_preview/README.md). The lower-level

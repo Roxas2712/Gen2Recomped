@@ -40,4 +40,8 @@ their persistence checks do not alter interactive preview preferences.
 
 The application itself has the same intro and season selector under
 Settings → RetroRecomped, with **Preview startup intro** for immediate replay.
+The Settings overview also has a prominent **Play startup intro** button.
+Interactive startup waits for a visible, focused window before its audio or
+animation begins. With audio enabled, choreography follows the playback clock;
+the shared cue sheet is `assets/launcher/intro_score.json` (17.4s duration).
 The standalone host is only a separate-storage way of trying the real UI.

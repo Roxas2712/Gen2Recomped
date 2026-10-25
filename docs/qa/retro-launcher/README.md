@@ -24,7 +24,7 @@ hardware illustrations, editor and intro sequence.
 - Artwork is decoded to PNG, limited to 8 MB input and 2048 x 2048 pixels.
   Stored paths are confined to `launcher/cart_art/`. A failed preference write
   leaves the previous saved design intact.
-- The 14.4-second startup has converging lightning, a synthesized guitar
+- The 17.4-second startup has converging lightning, a synthesized guitar
   arrangement of the complete IntroBattle lead phrase, and a logo that docks
   into the header. Audio follows Music Volume and stops immediately on skip.
   The entire sequence can be skipped or disabled in Launcher settings.
@@ -86,10 +86,39 @@ plus syntax checks for the twelve changed application/preview Lua sources.
 They exercise calendar boundaries, wordmark landing at three viewport shapes,
 old-preference migration, settings rows, intro preview action, and global scope.
 
-**Visual verification boundary:** existing PNGs/videos and the 11.5/12 native
+**Historical visual verification boundary:** existing PNGs/videos and the 11.5/12 native
 smoke results above cover commit `b522ab45`, before this seasonal/settings
-follow-up. They still show the former circular backdrop. No new native graphics
-run or video render was started after the user's cross-chat instruction to free
-the machine for OASC and then VASC/KASC Android measurements. The new mascot
-art, circle removal, and revised settings still require native visual review
-once that explicit graphics/testing pause is lifted.
+follow-up. They still show the former circular backdrop. Graphics review was
+paused at that checkpoint for the user's OASC and VASC/KASC Android work.
+
+## Playback, sharpness and cue synchronization follow-up
+
+A later user-prioritized LÖVE 11.5 demo exposed an unsupported `chord` arc mode;
+the shade now uses the supported `closed` mode. The repaired app stayed running,
+and a native Retina screenshot confirmed the library's smoother cartridge
+edges, filtered wordmarks and crisp type. Cartridge vectors use 3x supersampled
+canvases with a 24-entry bound. Native display density is enabled on desktop;
+the resolution badge reports physical output pixels. Game texture filtering is
+not changed by the local cartridge renderer.
+
+Startup waits for a drawn, visible, focused window and discards the background
+wait delta. The activation click cannot accidentally skip it. Both application
+startup and preview/replay entry points use this guard.
+
+The current choreography reads `assets/launcher/intro_score.json`, also read by
+the audio generator. Riff duration is now 17.4s, with the full lead phrase plus
+heavy closing attacks at 13.68, 15.12 and 16.02s. Increasing, braided lightning
+forms the wordmark; the shade fades in, makes a full orbit with correct front /
+back layering, grips at the first attack, then carries and places it on the
+last attack. Header art stays hidden until placement to avoid a duplicate logo.
+When available, the audible Source playback position drives the animation.
+Settings now has **Play startup intro** directly above its category cards, in
+addition to the replay action next to the season selector.
+
+CPU checks pass: 65 sequence, 20 cartridge and 59 seasonal/settings assertions.
+New checks cover background startup, the activation click, audio-clock timing
+and skip, orbit depth, ordered closing cues, and valid drawing modes across all
+four seasonal render paths. The WAV's duration is checked against the cue sheet.
+The latest cue choreography and overview button still await a native visual /
+interaction pass: the user closed the demo and resumed prioritized Android
+measurements. No new graphics run or video rendering has been started since.
