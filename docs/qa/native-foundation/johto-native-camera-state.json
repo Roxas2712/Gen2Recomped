@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "sourceCommit": "2c0320062fe5a08f38c6e68f5679841502b55027",
+  "independentUpstreamSource": "edc4cbef",
+  "previousMain": "321019ae83d70314aab7ac86d91ef0bf9b52b320",
+  "fullQuick": {
+    "engineSuites": 328,
+    "sdkSuites": 3,
+    "allTiersPassed": true
+  },
+  "focusedChecks": {
+    "fieldStateQueries": 30,
+    "forcedBodyHandoff": 584,
+    "existingBodyPhases": 21,
+    "existingSpecialHandoffs": 549,
+    "existingCountStep": 313
+  },
+  "suppliedCameraProbe": {
+    "checks": 92,
+    "passedInForkAndIndependentUpstream": true,
+    "modVersion": "3.1.2-omega.1.8",
+    "sourceUnmodified": true,
+    "cameraModes": [
+      "first",
+      "third"
+    ],
+    "thirdPersonExtension": 1,
+    "nativeMapsCollisionActorsScriptRunnerAndCounters": true,
+    "rendererAvailabilityBoundarySubstituted": true,
+    "gpuExecuted": false,
+    "importedRomUsed": false,
+    "oldMainResult": "Controller installation fails: Gold free-movement dependencies unavailable",
+    "moduleSha256": {
+      "GoldCameraControls.lua": "e1cd84d74faabdde0de18cba1565f5646b91b2ab6577cccb5793e1e875ba8d67",
+      "FirstPerson.lua": "482c40977d95e5aaa8476f1e3676050c69af959028fa1a4e6d397efa51250417",
+      "ThirdPerson.lua": "56a98dd4a71bd07b1c75db1adc649a43c96e6dff1e9a7f51325efc398f9deee1",
+      "VoxelState.lua": "bfa464e438f8a8d2476502301d0f7727f6868545a5fe68b452237b1914918658",
+      "Mat4.lua": "af1bf410b6d2855cce3d361837f9096613b17f4300a076e8b530fae5228b4827"
+    }
+  },
+  "scope": "CPU query and native movement/landing integration; not full VASC graphics, gameplay or all field-move parity.",
+  "releaseUpdated": false,
+  "privateContentDistributed": false,
+  "protectedPlayerOrGen1Used": false,
+  "logSha256": {
+    "gen2-camera-full-quick.log": "c7ce7db7b553098b65bd64046d221a859d04cb32fc573c96b92f38d2dc6c41b5",
+    "gen2_field_state_queries.log": "bf6badcb7884bcaeef04ec740078da42737b7db55cf0d7fccfec09f85e408cb7",
+    "gen2_forced_body_handoff.log": "cdf15faad3d37080d24fdf3d2e86b61e40f157f617ef2d44fdc1e9969fce71a3",
+    "gen2-camera-upstream-focused.log": "b3e21e7c3244136f2b6dc49a07fb212580d4a7e1587554e9e562397d21bff7c4",
+    "vasc-camera-native-probe.log": "b411ac287fbcd321b4b2af2fb38effc4fae1ac811f114743a3b3d79b0a53d701",
+    "vasc-camera-upstream-probe.log": "64e4937e9fb4d0a26736beb7e956770c5717fa6b6ef6c779267a8b327e77d960",
+    "gen2-camera-main-negative.log": "ac0622b0f37afd4b1e88e4f6547148a39985eb120f077a256899b7a679c2b0ca"
+  }
+}
