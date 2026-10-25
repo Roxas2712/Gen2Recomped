@@ -19,7 +19,7 @@ function R.builtin(id, base)
   for key, value in pairs(base) do
     out[key] = value
   end
-  out.afterAccuracy = R.activate
+  out.gbaAfterAccuracy = R.activate
   out.afterDamage = function(ctx, ...)
     if V.isGen3() then
       return R.activate(ctx)
