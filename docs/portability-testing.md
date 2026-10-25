@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217 and #218 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218 and #219 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,58 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`86b12d7b7a816a2782ba5cfba804b103630eda5b`. Its ROM-free run passed
-**231/231 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`ae385bae803e8a94eb4b2c73e2c1425d1a68868d`. Its ROM-free run passed
+**234/234 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #219](https://github.com/UNDERdecoded/Gen2Recomped/pull/219) adds native
+Encore move/slot binding, a three-to-six-phase duration draw and actual residual
+expiry on timeout, depleted PP or an edited original slot. It validates native
+last-move exclusions and accepts known authored moves without a cartridge index.
+Planning uses the forced move's priority and retains the selected target; a later
+Encore also changes an already-queued action and recomputes native targets.
+Forced FIGHT now dispatches a real move instance. Called moves, authored handlers
+and older games retain their policies. Planned PP binding survives cancellation
+before execution. Public turn-start events retain the original declaration;
+move-used events report the actual executed move.
+
+The clean feature runtime `6998a429a99dcc94d3f7c8b9a337ddfbcdaea3ba` passes
+**637 focused Encore checks** (480 command/lifecycle, 99 public/queue/authored/
+legacy, 58 actual link/compatibility) and 154 protocol checks. Feature and clean
+combined runtime above match unchanged Gen1 in **92 workers / 61,356 paired
+observations**. The new mode retains 612 complete observations per profile,
+including all battler HP/PP, every bounded RNG call/value, native move/slot/timer
+state and actual public move events/targets. Both real link roles complete three
+native turns with equal paired hashes/components and correct learned-slot PP.
+
+The public-choice/planning cases start from the same explicit prepared Quick
+Claw word. The combined fork's C-validated native controller prepares that word
+earlier than Gen1's standalone command. The original failed report retains the
+extra 0..65535 draw; no compared calls or observations are filtered. This tests
+Encore from a documented input-state boundary and does not certify complete
+selection/RNG orchestration. Global RNG/VBlank scheduling and other native
+state producers/interactions remain additional work.
+
+Full feature regression is 113/122 engine suites, SDK 3/3 and B30. All 25 inherited
+FAIL lines across nine suites match clean #218 exactly (110/119). Their existing
+independent repairs remain green here: **234/234 engine suites**, SDK 3/3 and B30.
+The same public selector on unchanged #218 fails the native duration/slot
+assertions, retaining three phases and no binding; its raw failure is preserved.
+Actual locally imported FireRed/Emerald records pass four CPU-only scenarios:
+public canonical Encore, then public FIGHT or an independently selected move
+through real turn/residual queues. No ROM/cache assets or saves are distributed;
+no normal SAVE, GPU/pixel or full-playthrough acceptance is claimed.
+
+Native command revision 4 prevents older rules from entering full battles.
+The raw fixture changes from `c2a03195bc4588f9` to `8be423c61a4477a2`, independently
+audited with the unchanged #218 hasher and only the explicit revision token.
+Native party revision and non-GBA goldens remain unchanged. All eight hosted
+#219 workflows require maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40164228999)
+has zero jobs. Local acceptance is separate. The app's 100-artifact cap prevents
+another attachment; the regular PR remains published and linked. Evidence is
+retained in `tmp/encore-full-accepted.log`, `tmp/encore-contracts-final.json` and
+`tmp/encore-import-smoke-final.log`. See [the scoped Encore contract](native-gen3-encore.md).
 
 [PR #218](https://github.com/UNDERdecoded/Gen2Recomped/pull/218) implements
 native GBA Baton Pass as a resumable choice and actual switch. Stages and
