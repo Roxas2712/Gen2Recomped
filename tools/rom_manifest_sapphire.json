@@ -1,6 +1,7 @@
 {
   "format": 3,
   "generation": 3,
+  "pokedexEntrySize": 36,
   "romBase": 134217728,
   "charmap": {
     "0": " ",
