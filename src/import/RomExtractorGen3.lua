@@ -27188,9 +27188,11 @@ function RomExtractorGen3:extractTilesets()
       local ok, err = pcall(function()
         local raw = compressed and rom:lz77(tilesAt)
                     or rom:bytes(tilesAt, 512 * 32)
-        local palettes = {}
+        local palettes, sourcePalettes = {}, {}
         for p = 0, 15 do
-          palettes[p + 1] = RomGba.palette(rom:bytes(palAt + p * 32, 32))
+          local rawPalette = rom:bytes(palAt + p * 32, 32)
+          palettes[p + 1] = RomGba.palette(rawPalette)
+          for _, value in ipairs(rawPalette) do sourcePalettes[#sourcePalettes + 1] = string.char(value) end
         end
         -- metatile composition and attributes, as byte strings for the same
         -- reason the blockdata is: 73 tilesets come to about 26,000 metatiles
@@ -27246,6 +27248,7 @@ function RomExtractorGen3:extractTilesets()
           -- owns its own bank.  Which half to read is the pair's business, not
           -- the tileset's -- see palettesInPrimary in the manifest.
           palettes = palettes,
+          sourcePaletteBytes = table.concat(sourcePalettes),
           tiles = table.concat(pixels),
           metatiles = table.concat(comp),
           attributes = table.concat(attrs),

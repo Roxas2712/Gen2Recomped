@@ -1,7 +1,7 @@
 -- Resolve the live owner without bootstrapping Game or keeping a retired world.
 local Version = require('src.core.GameVersion')
 local M = {}
-function M.resolve(game)
+function M.game(game)
   local facade = package.loaded['src.core.Game3']
   if type(facade) == 'table' and type(facade.native) == 'function' then
     game = facade.native(game)
@@ -11,6 +11,19 @@ function M.resolve(game)
   if type(game) ~= 'table' or not info or info.generation ~= 3 then
     return nil, 'no native GBA session'
   end
+  return game
+end
+function M.data(game)
+  local owner,why=M.game(game);if not owner then return nil,why end
+  local data=owner.data
+  if type(data)~='table'or type(data.tilesets)~='table'or type(data.map_tilesets)~='table'
+      or type(data.constants)~='table'or type(data.constants.gen3Layout)~='table'then
+    return nil,'native GBA tileset data unavailable'
+  end
+  return owner,data
+end
+function M.resolve(game)
+  local why;game,why=M.game(game);if not game then return nil,why end
   local states = game.stack and game.stack.states
   local world
   if type(states) == 'table' then
