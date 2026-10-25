@@ -16,6 +16,7 @@ on:
       - 'tests/engine/gen3_beat_up_adjustment.lua'
       - 'tests/engine/gen3_beat_up_side_party.lua'
       - 'tests/engine/gen3_critical_context.lua'
+      - 'tests/engine/gen3_constrained_party.lua'
       - 'tools/enemy-action-contract-check/**'
   push:
     branches: [main, dev]
