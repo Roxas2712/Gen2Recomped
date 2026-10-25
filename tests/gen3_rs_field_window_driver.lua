@@ -15,11 +15,11 @@ return function(game)
  local Cache=require('src.import.CacheFs');local Importer=require('src.import.RomImporter')
  assert(Cache.rootReport().kind~='portable','QA must not purge a portable user cache')
  assert(Importer.readyReport(edition).ok,'Fresh RS cache is not ready')
- local raw=assert(fs.read(edition..'/rom-cache.complete'));assert(raw:find('rs%-field%-window%-v3:'))
- local old,n=raw:gsub('rs%-field%-window%-v3:','rs-item-effects-layout-v2:',1);assert(n==1)
+ local raw=assert(fs.read(edition..'/rom-cache.complete'));assert(raw:find('rs%-item%-menu%-v4:'))
+ local old,n=raw:gsub('rs%-item%-menu%-v4:','rs-field-window-v3:',1);assert(n==1)
  local read=Cache.read;Cache.read=function(path,...)if path=='rom-cache.complete'then return old end;return read(path,...)end
  local ok,report=pcall(Importer.readyReport,edition);Cache.read=read
- assert(ok and report.ok==false,'Old RS cache was accepted without field geometry');assert(Importer.readyReport(edition).ok)
+ assert(ok and report.ok==false,'Old RS cache was accepted without current action metadata');assert(Importer.readyReport(edition).ok)
  U.teleport(game,'MAP_G00_N16',10,12,'up');local world=game.stack:top()
  local function press(key)game.input:overlayPressed(key);U.wait(1);game.input:overlayReleased(key);U.wait(1)end
  local function until_(fn,seconds,label)local endAt=love.timer.getTime()+seconds;repeat U.wait(1);assert(love.timer.getTime()<endAt,label)until fn()end

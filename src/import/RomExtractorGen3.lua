@@ -32242,8 +32242,46 @@ function RomExtractorGen3:itemMenuActionsFireRed(constants, M)
               table.concat(rows[3], ","), martFound)
 end
 
+-- RS has ten actions, fixed six-byte pocket rows and a column-major grid.
+-- The Emerald scanner expects a different action count/layout and must not
+-- infer this table from its repeated English labels.
+function RomExtractorGen3:itemMenuActionsRS(constants, M)
+  assert(M.actionCount == 10 and M.choiceStride == 6 and M.columns == 2
+         and M.sourceOrder == "column-major", "Invalid verified RS action layout")
+  local rom, labels, kinds, pockets = self.rom, {}, {}, {}
+  for i = 1, M.actionCount do
+    local offset = M.actions + (i - 1) * 8
+    local pointer = assert(rom:pointer(offset), "Missing RS item-action label")
+    labels[i] = self:readText(pointer, 20)
+    kinds[i] = assert(M.kinds[i], "Missing RS item-action handler kind")
+    assert((kinds[i] == "blank") == (rom:u32(offset + 4) == 0), "RS blank action handler mismatch")
+  end
+  assert(labels[M.blank] == "" and kinds[M.cancel] == "cancel"
+         and kinds[M.register] == "register", "RS item-action sentinels differ")
+  for key, spec in pairs(M.pockets) do
+    assert((spec.count == 4 or spec.count == 6) and spec.row >= 0 and spec.row < 5)
+    local raw = {}
+    for i = 1, spec.count do
+      raw[i] = rom:u8(M.choices + spec.row * M.choiceStride + i - 1) + 1
+      assert(kinds[raw[i]], "RS pocket references an unknown action")
+    end
+    assert(raw[#raw] == M.cancel, "RS pocket does not close on CANCEL")
+    local rows, list = spec.count / 2, {}
+    for row = 1, rows do
+      for col = 0, 1 do list[#list + 1] = raw[col * rows + row] end
+    end
+    pockets[key] = list
+  end
+  constants.gen3ItemMenu = {labels=labels,kinds=kinds,pockets=pockets,columns=2,
+    cancel=M.cancel,blank=M.blank,register=M.register,
+    source=("ROM:sItemPopupMenuActions %07X, sItemPopupMenuChoicesTable %07X; RS column-major to native row-major")
+      :format(M.actions,M.choices)}
+end
+
 function RomExtractorGen3:itemMenuActions(constants)
   local rom = self.rom
+  local rsMenu = (self.manifest or {}).rsItemMenu
+  if type(rsMenu) == "table" then return self:itemMenuActionsRS(constants, rsMenu) end
   local frlgMenu = (self.manifest or {}).frlgItemMenu
   if type(frlgMenu) == "table" then
     return self:itemMenuActionsFireRed(constants, frlgMenu)
