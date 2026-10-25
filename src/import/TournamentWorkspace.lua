@@ -51,7 +51,10 @@ function W.action(self,id)
  elseif id=='edition' then local at=1;for i,v in ipairs(editions) do if v==f.form.edition then at=i end end;f.form.edition=editions[at%#editions+1]
  elseif id=='egg' or id=='shiny' then f.form[id]=not f.form[id]
  elseif id=='saveCup' then
-  local d=f.form;local payload={title=d.title,edition=d.edition,capacity=tonumber(d.capacity),team_size=tonumber(d.team_size),level=tonumber(d.level),rules=d.rules,starts_at=d.starts_at~='' and d.starts_at or nil}
+  local d=f.form
+  for _,key in ipairs({'capacity','team_size','level','prizeLevel'}) do if not tonumber(d[key]) then f.notice='Enter a number for '..key..'.';return end end
+  if d.dex~='' and not tonumber(d.dex) then f.notice='Enter a valid species number for the prize.';return end
+  local payload={title=d.title,edition=d.edition,capacity=tonumber(d.capacity),team_size=tonumber(d.team_size),level=tonumber(d.level),rules=d.rules,starts_at=d.starts_at}
   if d.dex~='' then
    local moves={};for move in d.moves:upper():gmatch('[^,%s]+') do moves[#moves+1]=move end
    payload.prize={dex=tonumber(d.dex),level=tonumber(d.prizeLevel),egg=d.egg,shiny=d.shiny,moves=moves}
