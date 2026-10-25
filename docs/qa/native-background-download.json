@@ -1,0 +1,67 @@
+{
+  "testedEngineSource": "c47458261b82cd4b390ae9a6eb2fb8e5143d64b8",
+  "scope": "Desktop file transport and native SDK package data installation; no new gameplay/UI/GPU acceptance",
+  "queueChecks": 67,
+  "fullQuick": {
+    "engineSuites": 326,
+    "sdkSuites": 3,
+    "allTiersPassed": true
+  },
+  "loopbackCoverage": [
+    "existing bounded GET permission/ownership and binary tests",
+    "nonblocking file start/poll with visible in-progress staging bytes",
+    "atomic replacement of a previous complete file",
+    "HTTP 404, truncation, timeout, cancellation and size mismatch retain the previous file",
+    "known/unknown-length receive limits",
+    "redirects, valid zero-byte response, exact 17 MiB binary file beyond the GET memory ceiling",
+    "bounded worker queue, release/unload/shutdown and restart",
+    "No main-thread filesystem access during poll; slow worker-side publication, refused cancellation after claim, accepted cancellation before claim, and destination ownership through released publication"
+  ],
+  "actualVasc": {
+    "polls": 1492,
+    "ticks": 1558,
+    "packageId": "apo.pokemon-hd.g01.dex0141-0151",
+    "verifiedFiles": 66,
+    "nativeMode": "bounded",
+    "maxPollSeconds": 0.00026491666666617064,
+    "seconds": 9.143118000000001,
+    "activationRestored": true,
+    "sourceUnmodified": true,
+    "bytes": 24765251,
+    "passed": true,
+    "manifestSha256": "6fefa8927087aa878ed1e28c2e8a2d31b4537fbcf0436b4b8c71e6c1413f65f2",
+    "modulesUnmodified": {
+      "HdContentDownload.lua": "e2ae9722e45a2fe33a3ac519cd8ffe4e9d951e13eca96c6ddbbe1878863b52c8",
+      "HdContentStore.lua": "e5a5ba899a09873e9abd3ebc5b2a52a464bce3629e95ab20f6badd067fd28474"
+    },
+    "runtime": "Unchanged bundled LOVE 12, 937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+    "execution": "Native Net.forMod, ImportAccess and Storage cache APIs; filesystem root explicitly scoped to the owned profile; real HTTPS; no source/player-state modifications",
+    "catalogPackages": 8,
+    "catalogScope": "The currently published catalog supplies Gen1 roster packages; this does not establish availability of additional roster generations",
+    "accepted": "Catalog, exact chunk hashes, manifest, all package PNG file bytes, activation journal and restore from fresh store instance",
+    "notEstablished": [
+      "In-game download-menu interaction",
+      "Private Windows-specific VASC fetch wrapper",
+      "Every remote package or roster generation",
+      "Full native VASC models/continuous control acceptance"
+    ],
+    "nativeCacheApi": true,
+    "cacheAdapterSubstituted": false,
+    "negativeControl": {
+      "source": "b3585071",
+      "actualNativeCache": true,
+      "result": "cache_write_failed",
+      "reason": "The prior cache:info metadata has kind=bytes but no type=file. The unchanged downloader/store rejects the persisted chunk."
+    }
+  },
+  "evidenceSHA256": {
+    "download-final-full-quick.log": "a0e57fcbb7041d9c3992517428739d42acf1849eb74b23e514e32a35d1e06aee",
+    "download-worker-finalize-queue.log": "415105b6b7cbb92ad0c11476914ca628813e7707644c280b64e0d93586204f1b",
+    "native-cache-info.log": "59ed15109d2b3e70d500b384199e8e6637e8a941f9f0f7df623be37b56aa1fa2",
+    "vasc-native-cache-negative.log": "840dc1bdf65e66f1481214a32baff679db5b831ed7f979ee84310139ef885f60",
+    "vasc-native-cache-final.log": "226b4653fa5c4d24df1da01486a83dfa58edfea83ba2a7b40c62bb5ed77931c2",
+    "download-upstream-final-focus.log": "2f02c4086446d103973cfda266e53037ad198ed68187807e55bbe77fa6dc43c4"
+  },
+  "cacheFacadeChecks": 22,
+  "cancellationBoundary": "Only accepted cancellation before the worker publication claim preserves the prior destination; a short channel transaction orders that boundary. Once publication is claimed, cancellable=false and cancel returns false; no IO runs under the transaction lock."
+}
