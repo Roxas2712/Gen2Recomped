@@ -1,0 +1,40 @@
+# Native GSC flight destinations
+
+`src.world.gen2.FieldMoves` now exposes `FLYPOINTS`, `KANTO_FLYPOINT`,
+`hasVisitedSpawn(save, spawn)` and `flyPoints(save, landmarks, region)` over
+Gold/Silver/Crystal's actual native save flags and imported landing spots.
+The destination and Gold flag constants follow the separate read-only
+Gen1Recomp reference `535a5ec0`; existing upstream rights remain effective.
+
+Native `setflag` and `clearflag` keys take priority over older visited-map,
+spawn-name or numeric-engine-flag fallback saves. Crystal's inserted flag row
+is resolved through the same `Gen2Flags.scriptFlag` function as the native
+script VM. No second save bit or write is introduced. A clear therefore
+cannot be undone by a stale visited fallback. Registered map aliases retain
+the native destination identity and landing coordinates.
+
+The default query returns the visited Johto destinations. A Kanto request
+switches regions only after Indigo is visited, matching the reference query.
+The actual `TownMap` flight picker consumes this public query, so a mod's
+wrapper can combine both regional lists. Selection still uses real imported
+fly warps and the existing native flight/arrival owner. Unrecognized spawns
+and absent landing spots cannot become selectable.
+
+The GSC flag layout is deliberately not applied to Prism, Polished Crystal
+or another generation. Their existing native picker paths remain in place.
+
+## Verification and remaining work
+
+`tests/engine/gen2_fly_destinations.lua` passes 137 checks: actual native VM
+set/clear execution, Crystal/Gold/Silver flag numbering, explicit-clear
+precedence, previous save fallbacks, exact registered aliases, regional gates,
+actual `TownMap` A/B selection/cancellation and a real SDK-loaded query wrapper
+with actual loader teardown. Existing field-state checks also pass (30).
+The tests use generated-data and device fixtures, not a cartridge or player
+profile. A CI contract runs both suites.
+
+This change does not add legacy action-result protocols, change field-move
+badges or party admission, or accept the unchanged package's complete flight
+cinematic. Live Crystal flight, full field-action integration and the mod's
+Hall-of-Fame flag/presentation expectations still need separate acceptance.
+No new release acceptance follows solely from these CPU checks.

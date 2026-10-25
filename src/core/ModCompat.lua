@@ -60,8 +60,8 @@ ModCompat.ALIASES = {
   ["src.world.gen2.World"] = "src.world.OverworldController",
   ["src.world.gen2.Map"] = "src.world.Map",
   ["src.world.gen2.Permissions"] = "src.world.Collision",
-  -- State predicates share the actual native mover. Legacy field-action,
-  -- collision classification and fly-picker functions are not emulated.
+  -- State predicates and GSC Fly queries use the native mover/picker.
+  -- Legacy field-action result protocols are still separate capabilities.
   ["src.world.gen2.FieldMoves"] = "src.world.Gen2FieldMoves",
   ["src.world.gen2.Palettes"] = "src.render.PaletteFX",
 
