@@ -118,3 +118,15 @@ engine currently uses its fallback title), several UI art/minigame stages,
 and unmapped native specials. Generic `scenes.lua`/`summary_info.png` cache
 warnings remain disclosed. This is playable native support with concrete
 opening/battle tests, not a complete feature-parity certification.
+
+RS item effects use the cartridge's own `gItemEffectTable`: 163 pointers,
+starting with item 13. The generator verifies all 163 pointers against the
+matching ELF and C table, including null entries. The previous import used
+Emerald's address/count and produced two unrelated records instead of the
+63 real effects. `stageOverrides.ITEM_EFFECTS` supplies the actual address
+and count, and `rs-item-effects-layout-v2:` forces affected imports to rebuild.
+
+`tests/gen3_rs_item_effects.lua <cartridge> <manifest>` runs the real extractor
+against all 163 entries / 441 raw effect fields, Potion/Protein/Rare Candy
+sentinels and a failing old-address negative control. No ROM or derived
+assets are written. This does not certify every item menu or full story.
