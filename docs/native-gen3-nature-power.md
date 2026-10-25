@@ -53,9 +53,16 @@ Native command revision is 14; party codec remains 1. The independent unchanged
 
 The fixture uses owned, controlled native-shaped child definitions to isolate
 caller behavior; it does not certify the complete cartridge child catalog.
-Full engine regression, other called-move contracts, final combined-fork gates,
-actual imported Nature Power scenarios and broader public-content overrides
-remain pending. This checkpoint is not yet a published pull request or a new
+Actual local FireRed/Emerald imports additionally pass **80 controlled public-menu
+scenarios**: native and API-3 registered callers, all ten terrains, Choice Band
+and Shell Bell, event-visible PP, selected-slot ownership, advertised child IDs,
+actual Stun Spore status and damaging children. Every move is submitted through
+`mod.battle:submit()`, and the native text/result queue returns to its menu. This
+is CPU-only constructed-battle acceptance with the intro skipped, not a graphics
+or complete-playthrough result.
+
+Full engine regression, other called-move contracts, final combined-fork gates
+and broader public-content overrides remain pending. This checkpoint is not yet a published pull request or a new
 stable combined testing snapshot. No ROMs, caches, normal saves or mod assets
 are included.
 
