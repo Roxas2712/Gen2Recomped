@@ -1,0 +1,689 @@
+{
+  "schema": 1,
+  "game": "crystal",
+  "romRevision": 0,
+  "sourceCommit": "a96e560449d6430de5aaeb1664132b284fa6995e",
+  "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+  "engineVersion": "0.8.45",
+  "modVersion": "3.1.2-omega.1.7",
+  "cases": [
+    {
+      "backend": "opengl",
+      "normalTransitions": [
+        {
+          "normalMovement": true,
+          "from": "CHERRYGROVE_CITY",
+          "camera": "first",
+          "to": "CHERRYGROVE_MART"
+        },
+        {
+          "normalMovement": true,
+          "from": "CHERRYGROVE_MART",
+          "camera": "first",
+          "to": "CHERRYGROVE_CITY"
+        },
+        {
+          "normalMovement": true,
+          "from": "CHERRYGROVE_CITY",
+          "camera": "third",
+          "to": "CHERRYGROVE_MART"
+        },
+        {
+          "normalMovement": true,
+          "from": "CHERRYGROVE_MART",
+          "camera": "third",
+          "to": "CHERRYGROVE_CITY"
+        },
+        {
+          "normalMovement": true,
+          "from": "CHERRYGROVE_CITY",
+          "camera": "first",
+          "to": "CHERRYGROVE_POKECENTER1_F"
+        },
+        {
+          "normalMovement": true,
+          "from": "CHERRYGROVE_POKECENTER1_F",
+          "camera": "first",
+          "to": "CHERRYGROVE_CITY"
+        },
+        {
+          "normalMovement": true,
+          "from": "CHERRYGROVE_CITY",
+          "camera": "third",
+          "to": "CHERRYGROVE_POKECENTER1_F"
+        },
+        {
+          "normalMovement": true,
+          "from": "CHERRYGROVE_POKECENTER1_F",
+          "camera": "third",
+          "to": "CHERRYGROVE_CITY"
+        }
+      ],
+      "doorWindowProofs": 4,
+      "doorMenuAfterEveryEntry": true,
+      "cameraPreservedAcrossDoors": true,
+      "unmodifiedModFiles": 27329,
+      "modFolderRemoved": true,
+      "roomPhases": [
+        {
+          "label": "first-normal-door-CHERRYGROVE_MART",
+          "map": "CHERRYGROVE_MART",
+          "camera": "first",
+          "overlayDepth": 0,
+          "nativeGridMoved": null,
+          "voxelFrames": 703,
+          "voxelFailures": 0,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "mapMetadata": {
+            "outdoor": false,
+            "generation": 2,
+            "environmentId": 3,
+            "tileset": "TILESET_MART",
+            "height": 4,
+            "width": 6,
+            "environment": "INDOOR"
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "allMatchNative": true,
+            "classes": 5,
+            "cells": 96
+          }
+        },
+        {
+          "label": "third-normal-door-CHERRYGROVE_MART",
+          "map": "CHERRYGROVE_MART",
+          "camera": "third",
+          "overlayDepth": 0,
+          "nativeGridMoved": null,
+          "voxelFrames": 1670,
+          "voxelFailures": 0,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "mapMetadata": {
+            "outdoor": false,
+            "generation": 2,
+            "environmentId": 3,
+            "tileset": "TILESET_MART",
+            "height": 4,
+            "width": 6,
+            "environment": "INDOOR"
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "allMatchNative": true,
+            "classes": 5,
+            "cells": 96
+          }
+        },
+        {
+          "label": "first-normal-door-CHERRYGROVE_POKECENTER1_F",
+          "map": "CHERRYGROVE_POKECENTER1_F",
+          "camera": "first",
+          "overlayDepth": 0,
+          "nativeGridMoved": null,
+          "voxelFrames": 2726,
+          "voxelFailures": 0,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "mapMetadata": {
+            "outdoor": false,
+            "generation": 2,
+            "environmentId": 3,
+            "tileset": "TILESET_POKECENTER",
+            "height": 4,
+            "width": 5,
+            "environment": "INDOOR"
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "allMatchNative": true,
+            "classes": 6,
+            "cells": 80
+          }
+        },
+        {
+          "label": "third-normal-door-CHERRYGROVE_POKECENTER1_F",
+          "map": "CHERRYGROVE_POKECENTER1_F",
+          "camera": "third",
+          "overlayDepth": 0,
+          "nativeGridMoved": null,
+          "voxelFrames": 3733,
+          "voxelFailures": 0,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "mapMetadata": {
+            "outdoor": false,
+            "generation": 2,
+            "environmentId": 3,
+            "tileset": "TILESET_POKECENTER",
+            "height": 4,
+            "width": 5,
+            "environment": "INDOOR"
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "allMatchNative": true,
+            "classes": 6,
+            "cells": 80
+          }
+        }
+      ],
+      "nativeNoMods": {
+        "completed": true,
+        "initialMap": "PLAYERS_HOUSE2_F",
+        "finalMap": "NEW_BARK_TOWN",
+        "transitions": [
+          {
+            "from": "PLAYERS_HOUSE2_F",
+            "normalMovement": true,
+            "to": "PLAYERS_HOUSE1_F"
+          },
+          {
+            "from": "PLAYERS_HOUSE1_F",
+            "normalMovement": true,
+            "to": "NEW_BARK_TOWN"
+          }
+        ],
+        "menuOpenClose": true,
+        "freshOwnedWindowProofs": 1
+      },
+      "cameraKeys": {
+        "actualVandF6": true,
+        "freshOwnedWindowProofs": 4,
+        "phases": [
+          {
+            "label": "first-outdoors",
+            "map": "NEW_BARK_TOWN",
+            "camera": "first",
+            "overlayDepth": 0,
+            "nativeGridMoved": true,
+            "voxelFrames": 335,
+            "voxelFailures": 1,
+            "continuousMovementInstalled": false,
+            "fullRendererInstalled": false,
+            "mapMetadata": {
+              "width": 10,
+              "generation": 2,
+              "environmentId": 1,
+              "outdoor": true,
+              "height": 9,
+              "tileset": "TILESET_JOHTO",
+              "environment": "TOWN"
+            },
+            "horizonClass": "trees",
+            "collisionQuery": {
+              "allMatchNative": true,
+              "cells": 360,
+              "classes": 5
+            }
+          },
+          {
+            "label": "third-outdoors",
+            "map": "NEW_BARK_TOWN",
+            "camera": "third",
+            "overlayDepth": 0,
+            "nativeGridMoved": true,
+            "voxelFrames": 497,
+            "voxelFailures": 1,
+            "continuousMovementInstalled": false,
+            "fullRendererInstalled": false,
+            "mapMetadata": {
+              "width": 10,
+              "generation": 2,
+              "environmentId": 1,
+              "outdoor": true,
+              "height": 9,
+              "tileset": "TILESET_JOHTO",
+              "environment": "TOWN"
+            },
+            "horizonClass": "trees",
+            "collisionQuery": {
+              "allMatchNative": true,
+              "cells": 360,
+              "classes": 5
+            }
+          },
+          {
+            "label": "third-native-menu",
+            "map": "NEW_BARK_TOWN",
+            "camera": "third",
+            "overlayDepth": 1,
+            "nativeGridMoved": null,
+            "voxelFrames": 535,
+            "voxelFailures": 1,
+            "continuousMovementInstalled": false,
+            "fullRendererInstalled": false,
+            "mapMetadata": {
+              "width": 10,
+              "generation": 2,
+              "environmentId": 1,
+              "outdoor": true,
+              "height": 9,
+              "tileset": "TILESET_JOHTO",
+              "environment": "TOWN"
+            },
+            "horizonClass": "trees",
+            "collisionQuery": {
+              "allMatchNative": true,
+              "cells": 360,
+              "classes": 5
+            }
+          },
+          {
+            "label": "first-interior",
+            "map": "PLAYERS_HOUSE1_F",
+            "camera": "first",
+            "overlayDepth": 0,
+            "nativeGridMoved": null,
+            "voxelFrames": 849,
+            "voxelFailures": 1,
+            "continuousMovementInstalled": false,
+            "fullRendererInstalled": false,
+            "mapMetadata": {
+              "width": 5,
+              "generation": 2,
+              "environmentId": 3,
+              "outdoor": false,
+              "height": 4,
+              "tileset": "TILESET_PLAYERS_HOUSE",
+              "environment": "INDOOR"
+            },
+            "horizonClass": "interior",
+            "collisionQuery": {
+              "allMatchNative": true,
+              "cells": 80,
+              "classes": 5
+            }
+          },
+          {
+            "label": "third-interior",
+            "map": "PLAYERS_HOUSE1_F",
+            "camera": "third",
+            "overlayDepth": 0,
+            "nativeGridMoved": null,
+            "voxelFrames": 924,
+            "voxelFailures": 1,
+            "continuousMovementInstalled": false,
+            "fullRendererInstalled": false,
+            "mapMetadata": {
+              "width": 5,
+              "generation": 2,
+              "environmentId": 3,
+              "outdoor": false,
+              "height": 4,
+              "tileset": "TILESET_PLAYERS_HOUSE",
+              "environment": "INDOOR"
+            },
+            "horizonClass": "interior",
+            "collisionQuery": {
+              "allMatchNative": true,
+              "cells": 80,
+              "classes": 5
+            }
+          }
+        ]
+      }
+    },
+    {
+      "backend": "metal",
+      "normalTransitions": [
+        {
+          "from": "CHERRYGROVE_CITY",
+          "camera": "first",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_MART"
+        },
+        {
+          "from": "CHERRYGROVE_MART",
+          "camera": "first",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_CITY"
+        },
+        {
+          "from": "CHERRYGROVE_CITY",
+          "camera": "third",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_MART"
+        },
+        {
+          "from": "CHERRYGROVE_MART",
+          "camera": "third",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_CITY"
+        },
+        {
+          "from": "CHERRYGROVE_CITY",
+          "camera": "first",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_POKECENTER1_F"
+        },
+        {
+          "from": "CHERRYGROVE_POKECENTER1_F",
+          "camera": "first",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_CITY"
+        },
+        {
+          "from": "CHERRYGROVE_CITY",
+          "camera": "third",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_POKECENTER1_F"
+        },
+        {
+          "from": "CHERRYGROVE_POKECENTER1_F",
+          "camera": "third",
+          "normalMovement": true,
+          "to": "CHERRYGROVE_CITY"
+        }
+      ],
+      "doorWindowProofs": 4,
+      "doorMenuAfterEveryEntry": true,
+      "cameraPreservedAcrossDoors": true,
+      "unmodifiedModFiles": 27329,
+      "modFolderRemoved": true,
+      "roomPhases": [
+        {
+          "label": "first-normal-door-CHERRYGROVE_MART",
+          "map": "CHERRYGROVE_MART",
+          "camera": "first",
+          "overlayDepth": 0,
+          "nativeGridMoved": null,
+          "voxelFrames": 713,
+          "voxelFailures": 0,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "mapMetadata": {
+            "environment": "INDOOR",
+            "generation": 2,
+            "tileset": "TILESET_MART",
+            "environmentId": 3,
+            "outdoor": false,
+            "width": 6,
+            "height": 4
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "cells": 96,
+            "classes": 5,
+            "allMatchNative": true
+          }
+        },
+        {
+          "label": "third-normal-door-CHERRYGROVE_MART",
+          "map": "CHERRYGROVE_MART",
+          "camera": "third",
+          "overlayDepth": 0,
+          "nativeGridMoved": null,
+          "voxelFrames": 1681,
+          "voxelFailures": 0,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "mapMetadata": {
+            "environment": "INDOOR",
+            "generation": 2,
+            "tileset": "TILESET_MART",
+            "environmentId": 3,
+            "outdoor": false,
+            "width": 6,
+            "height": 4
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "cells": 96,
+            "classes": 5,
+            "allMatchNative": true
+          }
+        },
+        {
+          "label": "first-normal-door-CHERRYGROVE_POKECENTER1_F",
+          "map": "CHERRYGROVE_POKECENTER1_F",
+          "camera": "first",
+          "overlayDepth": 0,
+          "nativeGridMoved": null,
+          "voxelFrames": 2770,
+          "voxelFailures": 0,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "mapMetadata": {
+            "environment": "INDOOR",
+            "generation": 2,
+            "tileset": "TILESET_POKECENTER",
+            "environmentId": 3,
+            "outdoor": false,
+            "width": 5,
+            "height": 4
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "cells": 80,
+            "classes": 6,
+            "allMatchNative": true
+          }
+        },
+        {
+          "label": "third-normal-door-CHERRYGROVE_POKECENTER1_F",
+          "map": "CHERRYGROVE_POKECENTER1_F",
+          "camera": "third",
+          "overlayDepth": 0,
+          "nativeGridMoved": null,
+          "voxelFrames": 3774,
+          "voxelFailures": 0,
+          "continuousMovementInstalled": false,
+          "fullRendererInstalled": false,
+          "mapMetadata": {
+            "environment": "INDOOR",
+            "generation": 2,
+            "tileset": "TILESET_POKECENTER",
+            "environmentId": 3,
+            "outdoor": false,
+            "width": 5,
+            "height": 4
+          },
+          "horizonClass": "interior",
+          "collisionQuery": {
+            "cells": 80,
+            "classes": 6,
+            "allMatchNative": true
+          }
+        }
+      ],
+      "nativeNoMods": {
+        "completed": true,
+        "initialMap": "PLAYERS_HOUSE2_F",
+        "finalMap": "NEW_BARK_TOWN",
+        "transitions": [
+          {
+            "from": "PLAYERS_HOUSE2_F",
+            "normalMovement": true,
+            "to": "PLAYERS_HOUSE1_F"
+          },
+          {
+            "from": "PLAYERS_HOUSE1_F",
+            "normalMovement": true,
+            "to": "NEW_BARK_TOWN"
+          }
+        ],
+        "menuOpenClose": true,
+        "freshOwnedWindowProofs": 1
+      },
+      "cameraKeys": {
+        "actualVandF6": true,
+        "freshOwnedWindowProofs": 4,
+        "phases": [
+          {
+            "label": "first-outdoors",
+            "map": "NEW_BARK_TOWN",
+            "camera": "first",
+            "overlayDepth": 0,
+            "nativeGridMoved": true,
+            "voxelFrames": 339,
+            "voxelFailures": 1,
+            "continuousMovementInstalled": false,
+            "fullRendererInstalled": false,
+            "mapMetadata": {
+              "tileset": "TILESET_JOHTO",
+              "environmentId": 1,
+              "outdoor": true,
+              "height": 9,
+              "width": 10,
+              "environment": "TOWN",
+              "generation": 2
+            },
+            "horizonClass": "trees",
+            "collisionQuery": {
+              "cells": 360,
+              "classes": 5,
+              "allMatchNative": true
+            }
+          },
+          {
+            "label": "third-outdoors",
+            "map": "NEW_BARK_TOWN",
+            "camera": "third",
+            "overlayDepth": 0,
+            "nativeGridMoved": true,
+            "voxelFrames": 503,
+            "voxelFailures": 1,
+            "continuousMovementInstalled": false,
+            "fullRendererInstalled": false,
+            "mapMetadata": {
+              "tileset": "TILESET_JOHTO",
+              "environmentId": 1,
+              "outdoor": true,
+              "height": 9,
+              "width": 10,
+              "environment": "TOWN",
+              "generation": 2
+            },
+            "horizonClass": "trees",
+            "collisionQuery": {
+              "cells": 360,
+              "classes": 5,
+              "allMatchNative": true
+            }
+          },
+          {
+            "label": "third-native-menu",
+            "map": "NEW_BARK_TOWN",
+            "camera": "third",
+            "overlayDepth": 1,
+            "nativeGridMoved": null,
+            "voxelFrames": 543,
+            "voxelFailures": 1,
+            "continuousMovementInstalled": false,
+            "fullRendererInstalled": false,
+            "mapMetadata": {
+              "tileset": "TILESET_JOHTO",
+              "environmentId": 1,
+              "outdoor": true,
+              "height": 9,
+              "width": 10,
+              "environment": "TOWN",
+              "generation": 2
+            },
+            "horizonClass": "trees",
+            "collisionQuery": {
+              "cells": 360,
+              "classes": 5,
+              "allMatchNative": true
+            }
+          },
+          {
+            "label": "first-interior",
+            "map": "PLAYERS_HOUSE1_F",
+            "camera": "first",
+            "overlayDepth": 0,
+            "nativeGridMoved": null,
+            "voxelFrames": 868,
+            "voxelFailures": 1,
+            "continuousMovementInstalled": false,
+            "fullRendererInstalled": false,
+            "mapMetadata": {
+              "tileset": "TILESET_PLAYERS_HOUSE",
+              "environmentId": 3,
+              "outdoor": false,
+              "height": 4,
+              "width": 5,
+              "environment": "INDOOR",
+              "generation": 2
+            },
+            "horizonClass": "interior",
+            "collisionQuery": {
+              "cells": 80,
+              "classes": 5,
+              "allMatchNative": true
+            }
+          },
+          {
+            "label": "third-interior",
+            "map": "PLAYERS_HOUSE1_F",
+            "camera": "third",
+            "overlayDepth": 0,
+            "nativeGridMoved": null,
+            "voxelFrames": 940,
+            "voxelFailures": 1,
+            "continuousMovementInstalled": false,
+            "fullRendererInstalled": false,
+            "mapMetadata": {
+              "tileset": "TILESET_PLAYERS_HOUSE",
+              "environmentId": 3,
+              "outdoor": false,
+              "height": 4,
+              "width": 5,
+              "environment": "INDOOR",
+              "generation": 2
+            },
+            "horizonClass": "interior",
+            "collisionQuery": {
+              "cells": 80,
+              "classes": 5,
+              "allMatchNative": true
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "actualImport": {
+    "environmentDistribution": {
+      "6": 25,
+      "7": 39,
+      "2": 54,
+      "1": 23,
+      "4": 39,
+      "3": 208
+    },
+    "sourceCommit": "a96e560449d6430de5aaeb1664132b284fa6995e",
+    "game": "crystal",
+    "romRevision": 0,
+    "importedMaps": 388,
+    "allNativeBytesPreserved": true,
+    "allNamesMatchHeaderEnum": true,
+    "nativeGridAndEventTablesUnchanged": true
+  },
+  "romFreeValidation": {
+    "engineSuites": 246,
+    "sdkSuites": 3,
+    "b30": true,
+    "mapIdentityChecks": 94,
+    "environmentChecks": 1221,
+    "worldActionChecks": 2788,
+    "independentWorldActionChecks": 2681,
+    "previewPackageTests": 7
+  },
+  "completeParity": false,
+  "windowsHardwareExecution": false,
+  "protectedProfilesUsed": false,
+  "romsOrModAssetsIncluded": false,
+  "scope": "Town setup is teleported, room doors are reached through native collision-valid movement. Outdoor/home camera probes are teleported. No all-map, story, continuous movement, battle or full actor acceptance.",
+  "remaining": [
+    "canonical runtime floor/route map IDs and home profiles",
+    "continuous camera-relative movement and field-move adapters",
+    "generated full renderer exceeds 60 Lua upvalues",
+    "Center black/white object and player avatar in selected First Person",
+    "complete actors, battles, all doors and long sessions",
+    "Windows GPU execution"
+  ]
+}

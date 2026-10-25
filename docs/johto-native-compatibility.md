@@ -20,10 +20,12 @@ ROMs or player saves are included in this repository or its releases.
 | Native map generation/outdoor metadata | 256 independent checks; actual ROM-header classification agrees in Crystal on both backends | [#205](https://github.com/UNDERdecoded/Gen2Recomped/pull/205) |
 | Gen2 collision classes and bounded terrain queries | 525 independent checks; all sampled live cells agree with the native mover in both camera modes on OpenGL/Metal | [#207](https://github.com/UNDERdecoded/Gen2Recomped/pull/207) |
 | Public tileset constant names | 129 independent checks; actual Mart/Center geometry, native grid steps and menus on both backends | [#208](https://github.com/UNDERdecoded/Gen2Recomped/pull/208) |
+| Verified native map-source joins | 94 independent checks; encounter, music and scene storage follow declared aliases with exact authored overrides | [#211](https://github.com/UNDERdecoded/Gen2Recomped/pull/211) |
+| Public environment names and native byte readers | 1,221 independent checks; native bicycle, Dig, spawn and VM policies; all 388 original Crystal map headers retain their grid and event tables | [#213](https://github.com/UNDERdecoded/Gen2Recomped/pull/213), action follow-up in [#94](https://github.com/UNDERdecoded/Gen2Recomped/pull/94) |
 | Persistent Gen2 world and menu ownership | 33 ownership and 29 readiness checks; actual V/F6 input and upright menus on OpenGL/Metal | [draft #204](https://github.com/UNDERdecoded/Gen2Recomped/pull/204) |
 | Portable scripts and world actions on persistent worlds | 5,290 composed script checks and 2,778 action checks; independent existing branches also pass | Existing [#98](https://github.com/UNDERdecoded/Gen2Recomped/pull/98), [#94](https://github.com/UNDERdecoded/Gen2Recomped/pull/94) updated |
 
-The full ROM-free quick suite passes: 244 engine suites, three SDK suites and
+The full ROM-free quick suite passes: 246 engine suites, three SDK suites and
 B30. Its native clock fixture was updated for the additional startup method;
 the existing independent logic-speed PR retains all 407 passing assertions.
 These checks do not establish complete gameplay, all maps or Windows GPU
@@ -33,8 +35,8 @@ executing may occupy its bounded worker until its timeout.
 ## Actual Crystal checkpoint
 
 The palette correction was first verified at `b0d4dddd`; world ownership at
-`c833eb8887decc2d9d0e8ac135f31c098b5be988`. The latest map-metadata/collision
-build is source `cb12d995b2cd51ccc3e19083ae968d386dfe1147`, fused with pinned
+`c833eb8887decc2d9d0e8ac135f31c098b5be988`. The earlier map-metadata/collision
+checkpoint is source `cb12d995b2cd51ccc3e19083ae968d386dfe1147`, fused with pinned
 LÖVE12 `937eb3b`. The full supplied package is copied
 into each owned profile and verified against the original file hashes before
 execution. Only task-owned imported Crystal data is used.
@@ -58,8 +60,8 @@ ROM-free coverage. This does not enable the missing continuous movement chain.
 
 The interior probe can select both camera modes, but its First Person image
 is largely black above a strip of floor. **Interior visuals are not accepted**
-from frame counters alone. Map/tileset metadata differs from the room profile
-keys expected by the supplied package and needs investigation.
+from frame counters alone. Map IDs differ from the room profile keys expected by the supplied package.
+Tileset names have since been corrected; canonical map IDs remain open.
 
 Additional no-mod runs on OpenGL and Metal complete native New Game, walk
 through the bedroom staircase and the house exit into New Bark Town, and open
@@ -112,6 +114,41 @@ The [door receipt](qa/native-foundation/johto-normal-room-doors.json) records
 all 16 actual transitions. This is acceptance of those tested native doors,
 not all-door/story, continuous movement or post-exit visual acceptance. The
 separate home profile/rendering gap remains open.
+
+## Native map sources and environment names
+
+Gameplay source `a96e560449d6430de5aaeb1664132b284fa6995e` adds verified
+Gen2 map-source joins and the public environment schema. Encounter tables,
+map music and scene values can be read through declared `sourceId` aliases;
+exact authored overrides win. Scene writes retain native save keys. This
+prepares canonical map identity; it does not globally rename runtime maps.
+
+Gen2 maps now expose `TOWN`, `ROUTE`, `INDOOR`, `CAVE`, `ENVIRONMENT_5`,
+`GATE` or `DUNGEON` as `environment`, with the native byte retained as
+`environmentId`. Native readers accept both old numeric caches and named
+records. The native bicycle, Dig/rope, cave encounters, Flash, gate signs,
+blackout spawns and VM environment queries retain their byte semantics.
+Authored values and other generations' registries are not converted.
+
+All 388 original map records in the actual Crystal import pass the schema
+check without changing native IDs, group/number, block grids, warp or object
+tables. Runtime registries additionally contain generated aliases; their
+larger record count is not the original cartridge map count.
+
+The same source repeats all 16 native Mart/Center entry and exit transitions
+across OpenGL/Metal and both selected camera modes, with menus after entry,
+camera preservation and four fresh owned-window proofs per backend. Native
+New Game, the bedroom staircase and the house exit also pass without mods on
+both backends. Room geometry is visible and upright. A black/white object
+remains visible in the Center, and the player avatar can remain visible in the
+selected First Person mode. These scenes do not establish complete actor or
+First Person presentation. The full renderer and continuous movement remain
+unaccepted. Actual V/F6 input, outdoor native grid steps and upright menus
+also pass on both backends for this source. The home image still lacks its
+room shell and remains visually unaccepted.
+
+The [current schema receipt](qa/native-foundation/johto-environment-schema.json)
+records these exact-source regressions and their remaining limits.
 
 ## Open acceptance and concrete failures
 
