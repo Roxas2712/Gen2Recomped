@@ -73,3 +73,33 @@ failure. The fallback scene is visible; avatar/occlusion and complete First/
 Third Person visual equivalence are **not accepted** by these proofs. The PR
 remains a development checkpoint pending broader movement/transition tests.
 The existing public release assets are unchanged by this follow-up.
+
+## Full-package normal transition smoke
+
+The next actual Crystal matrix passes 212 assertions on each of macOS
+OpenGL and Metal. In both First and Third Person it walks through the normal
+Cherrygrove Mart and Center entrances, opens/closes the native START menu
+without moving behind it, walks inside to the exit, and returns through the
+real directional carpet and native fade. It also crosses the actual
+Cherrygrove/Route 29 connection in both directions. That is 12 transitions,
+four menu ownership checks and four fresh owned-window proofs per backend.
+Selected camera modes survive normal map handoffs and all final native owners
+are clear. Original supplied files remain byte-identical.
+
+OpenGL uses source `18489b7a`; Metal uses `aa669f69`, which additionally
+integrates the current fork's separate launcher work. The
+[source-bound receipt](qa/native-foundation/johto-native-camera-transitions.json)
+distinguishes these builds. Initial exterior approaches are selected by QA;
+travel itself uses real native input. Camera yaw uses the supplied look API,
+so this is not physical mouse acceptance. No window resize is implied by the
+legacy capture labels.
+
+Two failed scenarios remain explicit: the first backward-facing entrance
+looked into the front void and failed the blank-frame guard; the ordinary
+forward-looking approach passes without changing that guard. A separate
+fresh-save New Bark west approach did not clear a native owner and is not
+accepted here. The successful connection matrix uses Cherrygrove/Route 29,
+outside that early-story approach. Full story, all maps, forced-terrain GPU,
+Windows and complete avatar/model/occlusion parity remain open. The generated
+Stadium extension is still uninstalled. This checkpoint does not change the
+existing release assets.
