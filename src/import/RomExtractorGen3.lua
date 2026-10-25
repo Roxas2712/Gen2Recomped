@@ -12417,7 +12417,11 @@ function RomExtractorGen3:extractDexEntries()
     frontCoords = coordTable(front) or frontCoords
     backCoords = coordTable(back) or backCoords
   end
-  local stride, poseAt = frlg and 36 or 32, frlg and 26 or 22
+  -- Ruby/Sapphire also carry two description pointers. Their manifest
+  -- declares the same 36-byte structure without selecting FRLG UI rules.
+  local stride = (self.manifest or {}).pokedexEntrySize or (frlg and 36 or 32)
+  assert(stride == 32 or stride == 36, "Unsupported Gen3 Pokedex entry size")
+  local poseAt = stride == 36 and 26 or 22
   for _, def in pairs(self._pokemon) do
     local dex = def.dex
     if dex and dex > 0 and dex <= 386 then
