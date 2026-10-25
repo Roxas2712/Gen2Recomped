@@ -202,6 +202,12 @@ function Storage:context(game)
     playthroughId = scope.playthroughId,
   }
 end
+function Storage:shared(game)
+  local permitted,why=require('src.storage.AccountStorage').check()
+  if not permitted then return nil,'account_required',why end
+  if not game or not game.save or not validSegment(game.save.version) then return nil,'not_in_playthrough','Choose a game before opening shared storage.' end
+  return require('src.mods.SharedStorage').new(self.modId,self.injectedFs)
+end
 
 function Storage:_names(game, key, allowEmpty, extension)
   if not validKey(key, allowEmpty) then

@@ -70,7 +70,8 @@ local function canonical(mon,data)
     local record=data.moves[move.id] or {}
     info.moves[i]={name=key(record.name or move.id)}
   end
-  if mon.heldItem and mon.heldItem~='' then info.item=key((data.items[mon.heldItem] or {}).name or mon.heldItem) end
+  local item=mon.item or mon.heldItem
+  if item and item~='' then info.item=key((data.items[item] or {}).name or item) end
   return info
 end
 function B.decode(bytes,id)
@@ -98,7 +99,7 @@ function B.decode(bytes,id)
 end
 function B.makeEntry(mon,version,slot,place,data,save)
   local source={version=version,slot=slot,place=place,saveId=save and save.meta and save.meta.playthroughId,
-    trainerId=mon.ot and (mon.ot.id or mon.ot.trainerId) or save and save.player and save.player.id}
+    trainerId=mon.otId or type(mon.ot)=='table' and (mon.ot.id or mon.ot.trainerId) or save and save.player and save.player.id}
   local origin=clone(mon.retroBankOrigin or source)
   if not origin.recordId then origin.recordId=hash(S.encode({source=source,species=mon.species,ot=mon.ot,personality=mon.personality,dvs=mon.dvs,ivs=mon.ivs})) end
   return {schema=1,source=source,origin=clone(origin),mon=clone(mon),canonical=canonical(mon,data)}
@@ -146,6 +147,10 @@ local function clamp(n,hi) return math.max(0,math.min(hi,math.floor(tonumber(n) 
 function B.convert(entry,version,data,allowAdaptation)
   if not Versions.VERSIONS[version] or type(entry)~='table' then return nil,'Unknown destination.' end
   local mon=clone(entry.mon);local info=entry.canonical or {};local original=mon.species
+  if mon.item and mon.heldItem and mon.item~=mon.heldItem then return nil,'Conflicting held-item fields need an explicit source adapter.' end
+  -- Native records use item. Older interchange records may use heldItem;
+  -- normalize only the working copy and emit the destination's native field.
+  mon.heldItem=mon.item or mon.heldItem;mon.item=nil
   local def=data.pokemon[original]
   if def and info.dex and (def.dex or def.nationalDex) and (def.dex or def.nationalDex)~=info.dex then def=nil end
   if not def and info.dex then
@@ -230,6 +235,7 @@ function B.convert(entry,version,data,allowAdaptation)
     return Stats.calc(def,mon.level,mon.dvs or {},mon.statExp)
   end)
   mon.hp=clamp(mon.hp or mon.stats.hp,mon.stats.hp)
+  mon.item=mon.heldItem;mon.heldItem=nil
   return mon,note
 end
 function B.deliver(entries,version,slot,allowAdaptation,data)
@@ -298,6 +304,7 @@ function B.sync(target)
   end
   local items,why=require('src.storage.BankItems').sync(store);if not items then return nil,why end
   local dex,err=require('src.storage.GlobalPokedex').sync(store);if not dex then return nil,err end
+  local archives,problem=require('src.storage.BankInterop').sync(store);if not archives then return nil,problem end
   return total
 end
 return B

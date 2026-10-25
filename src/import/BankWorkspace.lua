@@ -161,18 +161,18 @@ function W.draw(self)
     button('REGISTER / SIGN IN',x+24*s,y+195*s,math.min(300*s,w-48*s),'bankLogin')
     g.pop();return
   end
-  local tabW=(w-36*s)/5
-  for i,mode in ipairs({{'bank','BANK BOXES'},{'items','ITEMS'},{'dex','POKÉDEX'},{'trade','LINK TRADE'},{'wonder','WONDER'}}) do
-    local r=button(mode[2],x+18*s+(i-1)*tabW,y+77*s,tabW-7*s,'mode',{mode=mode[1]});r.pinned=true
+  local tabCols=w<650*s and 3 or 6;local tabW=(w-36*s)/tabCols
+  for i,mode in ipairs({{'bank','BANK BOXES'},{'items','ITEMS'},{'dex','POKÉDEX'},{'trade','LINK TRADE'},{'wonder','WONDER'},{'interop','LEGACY / LUA'}}) do
+    local r=button(mode[2],x+18*s+((i-1)%tabCols)*tabW,y+77*s+math.floor((i-1)/tabCols)*42*s,tabW-7*s,'mode',{mode=mode[1]});r.pinned=true
   end
-  local top=y+122*s
+  local top=y+122*s+(tabCols==3 and 42*s or 0)
   text(f.notice or 'Drag to copy between saves and the Bank. Save copy creates a new slot.',x+18*s,top,w-36*s)
   top=top+34*s
   local Pages=require('src.import.BankPages')
   local pageView={x=x+18*s,y=top,width=w-36*s,height=math.max(60*s,h-(top-y)-18*s)}
   f.pageView=pageView
   if f.mode and f.mode~='bank' then
-    local contentH=math.max(pageView.height,(f.mode=='trade' or f.mode=='wonder') and 660*s or 290*s)
+    local contentH=math.max(pageView.height,f.mode=='interop' and 1100*s or (f.mode=='trade' or f.mode=='wonder') and 660*s or 290*s)
     f.subMax=math.max(0,contentH-pageView.height);f.subScroll=math.min(f.subScroll or 0,f.subMax)
     g.setScissor(pageView.x,pageView.y,pageView.width,pageView.height)
     Pages.draw(self,f,pageView.x,pageView.y-f.subScroll,pageView.width,contentH,s,button,text,col)
@@ -252,9 +252,9 @@ function W.draw(self)
       text((entry.mon.nickname or tostring(entry.mon.species))..' · Lv.'..entry.mon.level,tx,iy+10*s,math.max(1,tw-100*s),true)
       button('COPY ID',x+w-120*s,iy+8*s,100*s,'copyPokemonId')
       text('ORIGIN · '..Versions.info(origin.version or entry.source.version).label..' / '..tostring(origin.slot or '?')..' / '..tostring(origin.place or '?'),tx,iy+39*s,tw)
-      text('SAVE ID · '..tostring(origin.saveId or entry.source.saveId or 'Legacy save')..' · TRAINER ID · '..tostring(origin.trainerId or (entry.mon.ot or {}).id or 'Unknown'),tx,iy+61*s,tw)
+      text('SAVE ID · '..tostring(origin.saveId or entry.source.saveId or 'Legacy save')..' · TRAINER ID · '..tostring(origin.trainerId or entry.mon.otId or type(entry.mon.ot)=='table' and entry.mon.ot.id or 'Unknown'),tx,iy+61*s,tw)
       text('POKÉMON ID · '..tostring(origin.recordId or entry.id or 'Available after deposit'),tx,iy+83*s,tw)
-      text('HELD ITEM · '..tostring(entry.mon.heldItem or entry.mon.retroBankHeld and ('In Item Bank: '..entry.mon.retroBankHeld.canonical) or 'None'),tx,iy+104*s,tw)
+      text('HELD ITEM · '..tostring(entry.mon.item or entry.mon.heldItem or entry.mon.retroBankHeld and ('In Item Bank: '..entry.mon.retroBankHeld.canonical) or 'None'),tx,iy+104*s,tw)
     else text('Select a Pokémon to inspect its origin, trainer, save identity and held item.',x+34*s,iy+26*s,w-68*s,true) end
   end
   if #panels==2 then button('SAVE A / SAVE B',x+18*s,y+h-56*s,180*s,'mobilePanel') end
@@ -344,6 +344,18 @@ function W.install(RI)
   local tool=require('src.import.LauncherBank').TOOL;tool.noGame=true
   local run=RI._sbRunTool
   RI._sbRunTool=function(self,t,...) if t.id=='bank' then return W.open(self) end;return run(self,t,...) end
+  local drop=RI.filedropped
+  RI.filedropped=function(self,file,...)
+    if self._bankOverlay then
+      local f=self._bankOverlay
+      if f.mode~='interop' then f.notice='Open Legacy / Lua to review a Bank package.';return end
+      local permitted,why=registered();if not permitted then f.notice=why or ACCOUNT_REQUIRED;return end
+      local ok,bytes=pcall(function() assert(file:open('r'));local value=file:read(require('src.storage.BankInterop').MAX_BYTES+1);file:close();return value end)
+      if ok then require('src.import.BankInterchangeWorkspace').load(self,bytes) else f.notice='The dropped package could not be read.' end
+      return
+    end
+    if drop then return drop(self,file,...) end
+  end
   local games=RI._sbGames
   RI._sbGames=function(self,x,y,w,h,...)
     local s=self._s

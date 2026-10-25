@@ -7,7 +7,9 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
   local g=love.graphics;local font=self.hintFont
   local bottom=y+h
   local function line(label,by,big) text(label,x,by,w,big) end
-  if f.mode=='items' then
+  if f.mode=='interop' then
+    require('src.import.BankInterchangeWorkspace').draw(self,f,x,y,w,h,s,button,text,col)
+  elseif f.mode=='items' then
     line('ITEM BANK · HELD ITEMS IN SAFEKEEPING',y,true)
     line('Choose an available item, then attach it to a selected Bank Pokémon.',y+32*s)
     local pageSize=math.max(1,math.floor((h-140*s)/(54*s)));local from=(f.modePage or 0)*pageSize+1
@@ -99,6 +101,7 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
 end
 function P.press(self,W,r)
   local f=self._bankOverlay
+  if require('src.import.BankInterchangeWorkspace').press(self,r) then return true end
   if r.action=='mode' then W.mode(self,r.mode)
   elseif r.action=='modePage' or r.action=='tradePage' or r.action=='tradePickPage' then
     local key=r.action=='modePage' and 'modePage' or r.action=='tradePage' and 'tradePage' or 'tradeChoosePage'
