@@ -46,9 +46,9 @@ infatuation has a separate active flag and owner pointer, whereas the host's
 pointer is the active state. These are explicit schema mappings. Original
 failed comparison reports are retained locally.
 
-Validation at clean runtime `4db98efc73d23d53ff3b9a83f705e100f93e63cd`:
+Validation at clean runtime `d5ad56afccca21d107f21b5b561b908fa650e59e`:
 
-- 905 focused Baton Pass checks pass: 654 command, 42 actual party UI, 72 link/
+- 915 focused Baton Pass checks pass: 654 command, 52 actual party UI, 72 link/
   spectator/disconnect, 95 packet/signature/compatibility and 42 authored-effect/
   called-move checks. The 154 native protocol and 3,002 existing UI checks pass.
 - All 88 workers / 60,132 paired observations equal clean Gen1
@@ -60,6 +60,11 @@ Validation at clean runtime `4db98efc73d23d53ff3b9a83f705e100f93e63cd`:
   Counter of all 25 FAIL lines across nine inherited suites equals clean
   prerequisite `c27c37a667e8a40613c22506448ab4886fc9b431` (105/114). Their
   independent repairs are present in the combined fork.
+- Combined runtime `86b12d7b7a816a2782ba5cfba804b103630eda5b` passes all
+  231/231 engine suites, SDK 3/3 and B30, plus the same clean-reference
+  comparison and imported-record smoke. Its existing 4,849 party-navigation
+  checks remain green. Ordinary link screens follow live/late-installed battle
+  rosters; forced owner-specific choices retain the explicit party.
 - The same public canonical selector on the clean prerequisite spends PP and
   sets `wantsSwitch`, but leaves the donor active. Its failing assertion and
   raw state are retained. The initial Baton implementation also fails the
