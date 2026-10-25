@@ -212,7 +212,7 @@ int w_httpRequestBounded(lua_State *L)
 		std::string envelope = "{\"boundedEnvelope\":";
 		envelope.append(json, size);
 		envelope.push_back('}');
-		luax_pushstring(L, instance()->httpRequest(envelope));
+	luax_pushstring(L, instance()->httpRequest(envelope.c_str()));
 	}
 	return 1;
 }
