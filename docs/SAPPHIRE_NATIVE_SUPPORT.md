@@ -156,6 +156,10 @@ become an Emerald battle-window scan anchor. The version-specific
 `rs-field-window-v3` cache marker retains earlier dex/item-effect corrections
 and requires an updated RS import. Other versions keep their cache markers.
 The actual-cartridge extractor test passes the old-missing-record negative
-and an unchanged native battle strip. Native fresh-import/UI acceptance for
-this candidate is still pending; original RS dialogue frame art and full UI
-remain outside this change.
+and an unchanged native battle strip. The fresh native import now passes without mods: 240x160 field UI,
+26 columns, the extracted 254-character font, two visible native text rows,
+A completion and native choice input. An explicit 204-pixel test line wrapped
+to four rows under the old 18-column budget and stays at two rows now. Actual
+readyReport rejects the old v2 marker and accepts the fresh v3 cache. Frozen
+engine source files remain unchanged. The native proof JSON records hashes;
+original RS dialogue frame art, full UI and story acceptance remain open.
