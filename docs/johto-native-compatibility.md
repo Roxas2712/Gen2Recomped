@@ -17,7 +17,7 @@ ROMs or player saves are included in this repository or its releases.
 | Active-generation method queries | 362 checks; actual Crystal dispatcher now selects Gen2 rather than Gen1 | [#200](https://github.com/UNDERdecoded/Gen2Recomped/pull/200) |
 | Observable new-game/continue entry points | 11 native dispatch/recovery checks; actual Gen2 package initialization completes | [#201](https://github.com/UNDERdecoded/Gen2Recomped/pull/201) |
 | Public palette row metadata | 19 checks; Crystal GPU window changes from grayscale fallback to colored terrain/buildings | [#202](https://github.com/UNDERdecoded/Gen2Recomped/pull/202) |
-| Native map generation/outdoor metadata | 256 independent checks; actual ROM-header classification agrees in Crystal on both backends | [#205](https://github.com/UNDERdecoded/Gen2Recomped/pull/205) |
+| Native map generation/outdoor and phone-service metadata | 256 map and 3,127 phone-service checks; full native Crystal reimport retains all 388 headers including 99 no-service maps | [#205](https://github.com/UNDERdecoded/Gen2Recomped/pull/205) |
 | Gen2 collision classes and bounded terrain queries | 525 independent checks; all sampled live cells agree with the native mover in both camera modes on OpenGL/Metal | [#207](https://github.com/UNDERdecoded/Gen2Recomped/pull/207) |
 | Public tileset constant names | 129 independent checks; actual Mart/Center geometry, native grid steps and menus on both backends | [#208](https://github.com/UNDERdecoded/Gen2Recomped/pull/208) |
 | Verified native map-source joins | 105 independent checks; encounter, music, scene storage, trainer continuations and deferred scenes follow declared aliases with exact authored overrides | [#211](https://github.com/UNDERdecoded/Gen2Recomped/pull/211) |
@@ -25,7 +25,7 @@ ROMs or player saves are included in this repository or its releases.
 | Persistent Gen2 world and menu ownership | 33 ownership and 29 readiness checks; actual V/F6 input and upright menus on OpenGL/Metal | [draft #204](https://github.com/UNDERdecoded/Gen2Recomped/pull/204) |
 | Portable scripts and world actions on persistent worlds | 5,290 composed script checks and 2,778 action checks; independent existing branches also pass | Existing [#98](https://github.com/UNDERdecoded/Gen2Recomped/pull/98), [#94](https://github.com/UNDERdecoded/Gen2Recomped/pull/94) updated |
 
-The current full ROM-free quick suite passes: 256 engine suites, three SDK suites and
+The current full ROM-free quick suite passes: 258 engine suites, three SDK suites and
 B30. Its native clock fixture was updated for the additional startup method;
 the existing independent logic-speed PR retains all 407 passing assertions.
 These checks do not establish complete gameplay, all maps or Windows GPU
@@ -385,6 +385,58 @@ contains that payload and all eleven DLLs are AMD64; strict macOS signature
 verification passes. These packaging checks do not establish Windows gameplay
 or publication of these task-owned test artifacts.
 
+## Development: native count and encounter phases
+
+Source `09d3c78f0abc5c9f81ad51940bc4e7661521a7cf` adds native
+`countStep` and `tryWildEncounter` phases to the existing Gen2 landing chain.
+The order is trainer, warp, coordinate program, count events, then encounter.
+Each phase uses the real VM, maps, party and native dispatch; counted visits
+cannot double-advance eggs, friendship, poison or either day-care pen.
+A pending phone call or expired Repel consumes the footfall before counters.
+Egg hatching defers poison presentation, preserving the pending poison count.
+Prism and Polished retain their existing counter algorithms. Other generations
+retain the original `onStepComplete` return contract.
+
+A negative control against the preceding upstream world branch shows the
+Repel-expiry bug: both pens advance and poison removes one HP. The new chain
+expires Repel without either advancement or damage. There are 313 focused
+CountStep checks; the independently updated #204 passes these plus the existing
+coordinate, warp, trainer, state, input/body and menu suites. The composed fork
+passes 258 engine suites, three SDK suites and B30. All 63 hosted code checks
+pass. The macOS transport job first timed out without diagnostic output, then
+passed a single rerun; the initial cause remains unresolved. A local actual
+LOVE11.5 loopback transport run also passes.
+
+The importer now retains the complete ROM palette/service byte instead of
+losing its high nibble. Native incoming calls and the bike-shop threshold use
+that real service gate. Existing masked caches cannot reconstruct the byte,
+so stock Gold/Silver/Crystal require native cache revision 9. The supplied
+Crystal cartridge was actually reimported through the native importer: all 388
+headers are retained, 289 allow phone service and 99 refuse it. Its bytes remain
+unchanged. The 3,127-check parser/lowering/serialization/cache/phone suite also
+passes on independent #205, alongside its existing 256 metadata checks.
+
+Actual OpenGL with VSync disabled passes no-mod New Game, stairs, house exit
+and native menus (14 count calls/14 counter advances). The unchanged supplied
+mod passes home traversal and First/Third selection (16/16), and eight normal
+Mart/Center transitions in both selected modes (48/48). Eleven fresh owned-window
+proofs cover these runs and the actual imported bike-shop call. For the latter,
+QA adopts native bike state and restores progress to 1,023; two real input steps
+then queue the call at 1,024 and run its actual ROM-derived four-command program
+on the following footfall. The phone text appears, no step counters advance
+during its ownership, and actual caller/flag cleanup returns control. This is
+not a claim that QA manually walked 1,024 bike steps.
+
+Prepared Windows/macOS packages contain the same verified payload. All 1,029
+packaged `src` files match committed inputs except the declared engine stamp;
+relocated entry points, PE64 executable, eleven AMD64 DLLs and strict macOS
+signature checks pass. These artifacts are not published. The existing preview
+remains `ae8359c0`; current default/Metal presentation and Windows hardware
+execution are still unaccepted. All 132 own open upstream PR heads match pushed
+fork branches at this checkpoint.
+
+See the [source-bound count/import/phone receipt](qa/native-foundation/johto-native-count-phase.json).
+
 ## Open acceptance and concrete failures
 
 - Persistent world ownership is implemented and enables actual camera/menu
@@ -392,7 +444,7 @@ or publication of these task-owned test artifacts.
   still need acceptance; other generations retain their original stack model.
 - Continuous camera-relative movement is not enabled. Development has live
   native state and consumed input/body phases; the FieldMoves facade, terrain
-  permissions and complete shared landing chain remain open. Native grid
+  permissions, special handoffs and broader encounter acceptance remain open. Native grid
   walking and boundary tests do not cover complete continuous movement.
 - The supplied mod's generated `VoxelScene` patch fails compilation with
   `function ... has more than 60 upvalues`. Its exported
