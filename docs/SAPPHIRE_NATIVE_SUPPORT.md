@@ -43,6 +43,22 @@ bag capacities and storage boundaries are checked, and all 24 substructure
 orders are taken from the matching source. Only metadata and hashes are
 committed; no cartridge, extracted image, map, audio or speech files are.
 
+The RS Pokédex entry is 36 bytes, with two description pointers. The
+manifest now declares that layout, independently checked against the matching
+ELF table length and the cartridge's Bulbasaur dimensions. Reading Emerald's
+32-byte stride corrupted sizes and size-comparison poses for all 386 dex
+entries. A version-specific cache revision rebuilds only stale RS caches;
+FireRed, LeafGreen and Emerald markers retain their previous values.
+
+`tests/gen3_dex_entry_stride.lua <cartridge> <manifest>` runs the real extractor
+and checks all 386 height/weight rows and all four affine pose fields against
+independent raw ROM reads. The old 32-byte negative control reproduces 386
+corrupted RS species. FireRed, LeafGreen and Emerald control cartridges pass
+their own 36/36/32-byte layouts. Both RS manifest generators reproduce the
+committed metadata after matching-ELF byte verification. Fresh native RS imports
+also confirm the corrected sentinel sizes and the RS-only completion marker.
+No cartridge data is written or included by the regression test.
+
 ## Validation and reproduction
 
 Candidate `d11d8cd` passed the native rendered driver with all mods off:
