@@ -33,7 +33,7 @@ def main():
                                  for p in paths}, "runs": [], "comparisons": []}
     failed = False
     for version in ("firered", "emerald"):
-        for api, mode in ((2, "choices"), (3, "choices"), (3, "arguments"), (3, "records"), (3, "targets"), (3, "follow_me"), (3, "helping_hand"), (3, "spit_up"), (3, "beat_up"), (3, "beat_up_content"), (3, "beat_up_adjustment")):
+        for api, mode in ((2, "choices"), (3, "choices"), (3, "arguments"), (3, "records"), (3, "targets"), (3, "follow_me"), (3, "helping_hand"), (3, "spit_up"), (3, "beat_up"), (3, "beat_up_content"), (3, "beat_up_adjustment"), (3, "beat_up_side_party")):
             values = {}
             for backend, root in (("gen1", source), ("gen2", host)):
                 cmd = [args.lua, str(host / "tools/enemy-action-contract-check/worker.lua"),
