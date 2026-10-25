@@ -146,3 +146,17 @@ learner non-selectable. The actual native menu/HM-reader regression covers
 chooser reopen, unavailable-summary fallback, an already-selectable list,
 retired-screen ownership and unchanged moves/PP. Presentation is stubbed in
 that test; separate real native input/renderer follow-ups remain necessary.
+
+
+### RS field message geometry candidate
+
+The matching RS field printer calls establish text at tile (2,15), with
+26 columns and four rows from the dialogue-frame code. A separate
+`gen3FieldMessageWindow` record supplies the native field theme; it does not
+become an Emerald battle-window scan anchor. The version-specific
+`rs-field-window-v3` cache marker retains earlier dex/item-effect corrections
+and requires an updated RS import. Other versions keep their cache markers.
+The actual-cartridge extractor test passes the old-missing-record negative
+and an unchanged native battle strip. Native fresh-import/UI acceptance for
+this candidate is still pending; original RS dialogue frame art and full UI
+remain outside this change.
