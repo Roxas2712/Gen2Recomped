@@ -1,5 +1,29 @@
 # Native Johto compatibility checkpoint
 
+## Current focus: VASC on native Gen2
+
+This chat's active development scope is VASC / ASC OMEGA Johto on native
+Gen2/Crystal. Origami and Gen3 work belongs to the separate Origami effort.
+Unfinished Gen3 canonical-definition changes are preserved on a separate
+local WIP branch, outside this active worktree's changes. Gen1 installations
+and player profiles remain outside the test scope.
+
+A direct read-only compiler probe of the supplied Ver.1.8 package confirms
+that both original `VoxelScene` modules compile under the local LuaJIT.
+Calling the supplied Gen2 structural patch generator on its unchanged Gen2
+scene fails compilation: the function starting at generated line 2862 exceeds
+60 upvalues at generated line 3273. The probe intercepts compilation before
+module execution and does not load the engine or alter mod source. This
+establishes that the engine loader does not introduce that compiler failure;
+it does not establish a runtime fix or full renderer acceptance.
+
+The next native movement change supplies the four missing terrain queries
+behind the existing `src.world.gen2.Permissions` alias. See the
+[contract and test scope](native-gen2-movement-permissions.md). Crystal's
+complete valid-byte/directional comparison agrees with the separate public
+Gen1 reference. This does not activate the incomplete `FieldMoves` facade or
+claim continuous camera movement acceptance.
+
 The supplied ASC OMEGA Ver.1.8 package (`3.1.2-omega.1.8`) is the current
 read-only test input, superseding the previously tested Ver.1.7. It is tested unmodified with an actual Crystal Rev0 import in separate native-preview
 profiles. Full compatibility is **not established**. The Origami port remains
