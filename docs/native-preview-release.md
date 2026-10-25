@@ -14,12 +14,15 @@ fork's pre-release:
   `switch/gen2recomp-native-preview/` with full application memory via hbmenu.
   The preview does not bundle the stable-channel OTA updater.
 
-All five packages contain an identical engine payload. Windows/macOS bundle
-official LOVE 12 revision `937eb3b21f973607ab080aa26b7ef2a6b3b2b663`; iOS builds
-that source revision with pinned Apple dependencies. Android uses the vendored
-11.5a runtime and Switch the hash-verified 11.5-nx1 runtime. No separate runtime
-installation is needed. The `.love` download requires the supplied LOVE 12
-runtime on desktop; the 11.5 allowance is limited to Android and NX ports.
+All five packages contain an identical engine payload. Windows/macOS use official
+LOVE 12 revision `937eb3b21f973607ab080aa26b7ef2a6b3b2b663` as their base;
+iOS builds that revision with pinned Apple dependencies. Android uses vendored
+11.5a and Switch the hash-verified 11.5-nx1 runtime. No separate installation is
+needed. Check `build-manifest.json` for the exact Lua runtime: qualified desktop
+builds record `qualifiedRuntime` and include receipts. Their standalone `.love`
+requires that extended runtime; stock LOVE still has the 60-upvalue limit.
+Mobile/console runtimes are qualified separately and do not inherit the desktop
+runtime's increased capacity.
 
 Import your own supported ROMs and save files. ROMs, extracted game caches,
 account credentials, save files and mod packages are not supplied. The preview
@@ -33,18 +36,27 @@ repository linking, mod browsing/downloads, cloud saves and Pokemon Bank.
 Mod version and generation requirements still apply. Save-bound compatibility
 review can restore known packages or continue from a separate slot copy.
 Exact mid-battle execution snapshots and seamless device handoff remain in
-development. The extended-upvalue LuaJIT candidate is not bundled: mods which
-exceed the official runtime's limits can still fail to load. This pre-release
-does not establish full-game 3D or universal mod compatibility.
+development. The published `20261025.1` build does not bundle the extended
+LuaJIT candidate, so mods exceeding the official capacity can still fail to
+load. Qualification and packaging changes below prepare subsequent builds;
+they do not retroactively change existing downloads or establish full-game
+3D or universal mod compatibility.
 
 ## Publishing
 
 Run **RetroRecomped intermediate pre-release** on the selected `main` commit
 with a fresh `YYYYMMDD.N` release identifier and the engine `X.Y.Z` version.
-The workflow runs ROM-free launcher and packaging contracts, builds desktop and
-iOS on hosted macOS runners and Android/Switch on Linux, checks runtime digests
-and actual embedded payload parity, and publishes a **pre-release**. Every one
-of the five platform builds is required; a missing package prevents publication.
+The workflow runs ROM-free launcher and packaging contracts, then calls the
+native runtime qualification workflow at the same commit. Linux x64, Windows
+x64, Intel Mac and ARM Mac must pass stock/extended closure, C API and engine
+checks; desktop jobs also test the actual LOVE host, thread VM and FFI. The
+component job checks receipts, source trees and hashes and combines both Mac
+slices. Desktop packaging consumes those exact components, signs the Mac app,
+and verifies identical engine payloads. Missing or mismatched components fail
+the build instead of falling back to stock. Mac minimum OS is derived from the
+actual library load commands. iOS builds on hosted macOS, Android/Switch on
+Linux. All five platform packages must pass embedded-payload parity before
+publication as a **pre-release**; a missing package prevents publication.
 It does not start a game or alter the stable latest release.
 
 `tools/package_native_release.py` invokes the isolated desktop builder.
@@ -64,3 +76,21 @@ support on a phone or console; those runtime acceptance items remain open.
 
 For feedback, include source commit, game, OS, backend, window size and the
 action which triggered the problem. Never attach ROMs, credentials or caches.
+
+## VASC4Gen2 development test status
+
+The `native-preview-20261025.1` intermediate pre-release includes the native
+camera/movement and Apple Silicon tier changes. It still bundles the official
+runtime with the 60-upvalue limit: the supplied generated renderer extension
+cannot fully initialize there. A source PR alone cannot change that runtime.
+
+The separate experimental host passes normal Mart/Center doors, native menus
+and Cherrygrove/Route 29 connections in First and Third Person on OpenGL and
+Metal: 213 assertions, 12 transitions and four fresh window proofs per backend.
+Source-bound qualification, packaging and GPU evidence, with the precise QA
+bootstrap scope, is recorded in
+[the runtime receipt](qa/native-foundation/johto-native-runtime-upvalues.json).
+Some black-and-white objects remain visible. Complete model/effect/battle/story,
+long-session and Windows GPU checks remain open. These results support a
+limited experimental Mac play test; the published stock preview still cannot
+initialize the full generated renderer.

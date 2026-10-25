@@ -34,6 +34,10 @@ def main():
     parser.add_argument("--engine-tests", action="store_true")
     args = parser.parse_args()
     source, output = args.luajit_source.resolve(), args.output.resolve()
+    engine_paths = ("main.lua", "conf.lua", "src", "assets", "data", "tests")
+    engine_status = git(ROOT, "status", "--porcelain", "--untracked-files=no", "--", *engine_paths)
+    if engine_status:
+        parser.error("engine runtime and test inputs must be committed before qualification")
     if git(source, "rev-parse", "HEAD") != PIN:
         parser.error("LuaJIT source must be pinned to " + PIN)
     original_status = git(source, "status", "--porcelain", "--untracked-files=normal")
@@ -63,6 +67,8 @@ def main():
     artifacts.mkdir()
     report = {"experimental": True, "luaJitSource": PIN,
               "engineSource": git(ROOT, "rev-parse", "HEAD"),
+              "engineTree": {name: git(ROOT, "rev-parse", "HEAD:" + name)
+                             for name in ("main.lua", "conf.lua", "src", "assets", "data")},
               "platform": platform.system(), "machine": platform.machine(),
               "toolsSha256": {p.name: digest(p) for p in sorted(HERE.iterdir()) if p.is_file()},
               "variants": []}
@@ -155,6 +161,8 @@ def main():
         print("QUALIFIED", label, capacity, flush=True)
     if git(source, "status", "--porcelain", "--untracked-files=normal") != original_status:
         raise RuntimeError("input dependency checkout changed")
+    if git(ROOT, "status", "--porcelain", "--untracked-files=no", "--", *engine_paths) != engine_status:
+        raise RuntimeError("engine runtime/test inputs changed during qualification")
     report["sourceUnchanged"] = True
     report["passed"] = True
     (output / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

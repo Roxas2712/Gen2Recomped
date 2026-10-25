@@ -2,7 +2,7 @@
 local M = {}
 local unpack = table.unpack or unpack
 function M.fixture(root, backend, version, modId)
-  local codeRoot = (debug.getinfo(1, "S").source:sub(2)):match("^(.*)/npcs%.lua$")
+  local codeRoot = (debug.getinfo(1, "S").source:sub(2):gsub("\\", "/")):match("^(.*)/npcs%.lua$")
   local f = dofile(codeRoot .. "/warp.lua").fixture(root, backend, version, modId or "npcs")
   local Runtime = require("src.mods.Runtime")
   love = love or require("tests.love_stub")

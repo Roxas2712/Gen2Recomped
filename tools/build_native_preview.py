@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Build an isolated native-engine preview from committed source + pinned LÖVE12 artifacts."""
-import argparse,hashlib,io,json,os,plistlib,re,shutil,subprocess,tarfile,tempfile,zipfile
+import argparse,hashlib,importlib.util,io,json,os,plistlib,re,shutil,subprocess,tarfile,tempfile,zipfile
 from pathlib import Path,PurePosixPath
 ROOT=Path(__file__).resolve().parents[1]
 RUNTIME_COMMIT='937eb3b21f973607ab080aa26b7ef2a6b3b2b663'
@@ -8,6 +8,29 @@ RUNTIMES={
  'windows':dict(id=12514271124,sha256='1f4c6997bd93502f986f5187d877da84247617eede89d8140bcbf570bd07ea22',inner='love-12.0-win64.zip'),
  'macos':dict(id=12513712494,sha256='f70f60d162eda6931b0b28e2b094b83b741986f0feac08d33a10be7c57e724f8',inner='love-macos.zip')}
 def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()
+def qualified_runtime(path,platform,ref):
+ spec=importlib.util.spec_from_file_location('preview_runtime_component',ROOT/'tools/runtime-upvalue-check/component.py')
+ component=importlib.util.module_from_spec(spec);spec.loader.exec_module(component)
+ library,notice,manifest=component.verify(path,platform,component.engine_tree(ref,ROOT))
+ return library,notice,manifest
+def raise_macos_minimum(info,minimum):
+ current=info.get('LSMinimumSystemVersion','0')
+ def version(value):return tuple(int(part)for part in value.split('.'))+(0,)*(3-len(value.split('.')))
+ if version(current)<version(minimum):info['LSMinimumSystemVersion']=minimum
+def install_qualified_runtime(checked,manifest_path,target,receipts):
+ library,notice,manifest=checked
+ shutil.copy2(library,target);receipts.mkdir(parents=True)
+ shutil.copy2(manifest_path,receipts/'input-component.json')
+ shutil.copy2(notice,receipts/notice.name)
+ for row in manifest['qualifications']:
+  for key in ('capacityReport','hostReport'):
+   relative=Path(row[key]);destination=receipts/relative
+   destination.parent.mkdir(parents=True,exist_ok=True)
+   shutil.copy2(manifest_path.parent/relative,destination)
+ return dict(experimental=True,luaJitSource=manifest['luaJitSource'],capacity=manifest['capacity'],
+             architectures=sorted(row['architecture'] for row in manifest['qualifications']),
+             componentManifestSha256=sha(manifest_path),inputLibrarySha256=sha(library),
+             engineTreeVerified=True,qualifications=manifest['qualifications'])
 def verify_payload(path,engine_version=None):
  with zipfile.ZipFile(path)as z:
   for name in z.namelist():
@@ -42,12 +65,15 @@ def verify_mac_archive(path):
    if any(p=='__MACOSX'or p.startswith('._')for p in PurePosixPath(name).parts):
     raise ValueError('macOS archive contains host metadata')
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('--platform',choices=RUNTIMES,required=True);p.add_argument('--runtime',type=Path,required=True);p.add_argument('--source-ref',required=True);p.add_argument('--release-id',required=True);p.add_argument('--engine-version',required=True,help='Real engine release X.Y.Z, stamped identically to regular releases');p.add_argument('--out',type=Path,required=True);a=p.parse_args()
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('--platform',choices=RUNTIMES,required=True);p.add_argument('--runtime',type=Path,required=True);p.add_argument('--source-ref',required=True);p.add_argument('--release-id',required=True);p.add_argument('--engine-version',required=True,help='Real engine release X.Y.Z, stamped identically to regular releases');p.add_argument('--out',type=Path,required=True);p.add_argument('--qualified-runtime',type=Path,help='Optional component.json with passing native engine/host gates for every platform architecture');a=p.parse_args()
  if not re.fullmatch(r'[0-9]{8}\.[0-9]+',a.release_id):p.error('release-id must be YYYYMMDD.N')
  if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+',a.engine_version):p.error('engine-version must be X.Y.Z')
  runtime=RUNTIMES[a.platform]
  if sha(a.runtime)!=runtime['sha256']:p.error('runtime digest does not match the pinned official artifact')
  ref=subprocess.check_output(['git','rev-parse','--verify','--end-of-options',a.source_ref+'^{commit}'],cwd=ROOT,text=True).strip()
+ component_path=a.qualified_runtime.resolve()if a.qualified_runtime else None
+ checked=qualified_runtime(component_path,a.platform,ref)if component_path else None
+ runtime_override=None
  out=a.out.resolve();out.mkdir(parents=True,exist_ok=False);identity='Gen2Recomp-NativePreview-'+a.release_id.replace('.','-')
  with tempfile.TemporaryDirectory(prefix='native-preview-')as temp:
   work=Path(temp);source=work/'source';source.mkdir()
@@ -69,6 +95,9 @@ def main():
   if a.platform=='windows':
    unpack_zip(inner,runtime_dir/'unpacked');exes=list((runtime_dir/'unpacked').rglob('love.exe'));assert len(exes)==1
    bundle=work/'Gen2Recomped-NativePreview';shutil.copytree(exes[0].parent,bundle)
+   if checked:
+    runtime_override=install_qualified_runtime(checked,component_path,bundle/'lua51.dll',bundle/'runtime-qualification')
+    runtime_override['installedLibrarySha256']=sha(bundle/'lua51.dll')
    (bundle/'Gen2Recomped-NativePreview.exe').write_bytes(exes[0].read_bytes()+payload.read_bytes())
    (bundle/'love.exe').unlink();(bundle/'lovec.exe').unlink(missing_ok=True)
    (bundle/'OpenGL-Test.cmd').write_bytes(b'@echo off\r\nset "POKEPORT_GRAPHICS_BACKEND=opengl"\r\n"%~dp0Gen2Recomped-NativePreview.exe" %*\r\n')
@@ -77,20 +106,29 @@ def main():
    subprocess.run(['unzip','-q',str(inner),'-d',str(runtime_dir/'unpacked')],check=True)
    apps=list((runtime_dir/'unpacked').rglob('love.app'));assert len(apps)==1
    bundle=work/'Gen2Recomped-NativePreview.app';shutil.copytree(apps[0],bundle,symlinks=True)
+   if checked:
+    target_library=bundle/'Contents/Frameworks/Lua.framework/Versions/A/Lua'
+    runtime_override=install_qualified_runtime(checked,component_path,target_library,bundle/'Contents/Resources/runtime-qualification')
+    subprocess.run(['install_name_tool','-id','@rpath/Lua.framework/Versions/A/Lua',str(target_library)],check=True)
    shutil.copy2(payload,bundle/'Contents/Resources/game.love');info=bundle/'Contents/Info.plist'
    with info.open('rb')as f:pl=plistlib.load(f)
    assert pl['CFBundleExecutable']=='love'
    for key in ('CFBundleDocumentTypes','CFBundleURLTypes','UTExportedTypeDeclarations','UTImportedTypeDeclarations'):pl.pop(key,None)
    engine_version=a.engine_version
    pl.update(CFBundleShortVersionString=engine_version,CFBundleIdentifier='de.roxas2712.gen2recomp.native-preview',CFBundleName='Gen2Recomped Native Preview',CFBundleDisplayName='Gen2Recomped Native Preview',CFBundleVersion=a.release_id)
+   if checked:
+    raise_macos_minimum(pl,checked[2]['minimumMacOS'])
+    runtime_override['minimumMacOS']=pl['LSMinimumSystemVersion']
    with info.open('wb')as f:plistlib.dump(pl,f)
    subprocess.run(['codesign','--force','--deep','--sign','-','--entitlements',str(source/'scripts/macos-entitlements.plist'),str(bundle)],check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
    subprocess.run(['codesign','--verify','--deep','--strict',str(bundle)],check=True)
+   if checked:runtime_override['installedLibrarySha256']=sha(target_library)
    stage=work/'macos';stage.mkdir();shutil.move(bundle,stage/bundle.name)
    for backend in ('OpenGL','Metal'):
     cmd=stage/(backend+'-Test.command');cmd.write_text('#!/bin/sh\ncd "$(dirname "$0")"\nexport POKEPORT_GRAPHICS_BACKEND='+backend.lower()+'\nexec "./Gen2Recomped-NativePreview.app/Contents/MacOS/love" "$@"\n');cmd.chmod(0o755)
    target=out/f'Gen2Recomped-NativePreview-{a.release_id}-macos.zip';subprocess.run(['ditto','-c','-k','--norsrc','--noextattr','--noacl','--keepParent',str(stage),str(target)],check=True)
    verify_mac_archive(target)
-  metadata=dict(engineVersion=a.engine_version,sourceCommit=ref,runtimeCommit=RUNTIME_COMMIT,runtimeArtifact=runtime['id'],runtimeSha256=runtime['sha256'],platform=a.platform,previewIdentity=identity,payloadSha256=sha(payload),archiveSha256=sha(target),archive=target.name,buildVerified=True,launchVerified=False,realDeviceVerified=False,extendedUpvaluesQualified=False,modsIncluded=False,modsEnabled=True,legacyMigration=False,automaticInstallation=False)
+  metadata=dict(engineVersion=a.engine_version,sourceCommit=ref,runtimeCommit=RUNTIME_COMMIT,runtimeArtifact=runtime['id'],runtimeSha256=runtime['sha256'],platform=a.platform,previewIdentity=identity,payloadSha256=sha(payload),archiveSha256=sha(target),archive=target.name,buildVerified=True,launchVerified=False,realDeviceVerified=False,extendedUpvaluesQualified=bool(runtime_override),modsIncluded=False,modsEnabled=True,legacyMigration=False,automaticInstallation=False)
+  if runtime_override:metadata['qualifiedRuntime']=runtime_override
   (out/'build.json').write_text(json.dumps(metadata,indent=2)+'\n');print(json.dumps(metadata))
 if __name__=='__main__':main()

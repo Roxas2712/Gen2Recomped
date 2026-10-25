@@ -40,7 +40,9 @@ T.eq(actual, golden, "fixture fingerprint matches the committed golden")
 -- Pin the complete reviewed input as well as its opaque digest. A future
 -- re-pin must show which battle records changed instead of replacing one hash.
 local surfaceFile = assert(io.open(SURFACE_GOLDEN, "rb"))
-local surfaceGolden = surfaceFile:read("*a")
+-- Git may check out this text fixture as CRLF on Windows. Its link-surface
+-- content and audited digest are platform independent; keep every other byte.
+local surfaceGolden = surfaceFile:read("*a"):gsub("\r\n", "\n")
 surfaceFile:close()
 local surface = Fingerprint.surface(data, {})
 T.eq(surface .. "\n", surfaceGolden, "fixture link surface matches its reviewed input")

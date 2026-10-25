@@ -1,7 +1,7 @@
 -- Actual native dialogue UI, with an explicit fake audio-device clock.
 local M = {}
 function M.fixture(root, backend, version)
-  local codeRoot = debug.getinfo(1, "S").source:sub(2):match("^(.*)/script_dialogue_audio%.lua$")
+  local codeRoot = debug.getinfo(1, "S").source:sub(2):gsub("\\", "/"):match("^(.*)/script_dialogue_audio%.lua$")
   local base =
     dofile(codeRoot .. "/script_gifts.lua").fixture(root, backend, version, "script_dialogue_audio")
   local f = dofile(codeRoot .. "/script_audio.lua").fixture(root, backend, version, nil, base)

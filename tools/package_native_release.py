@@ -26,6 +26,10 @@ def main():
     parser.add_argument('--release-id', required=True)
     parser.add_argument('--engine-version', required=True)
     parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--windows-runtime-component', type=Path,
+                        help='optional qualified Windows component.json')
+    parser.add_argument('--macos-runtime-component', type=Path,
+                        help='optional qualified universal Mac component.json')
     args = parser.parse_args()
     if not re.fullmatch(r'[0-9]{8}\.[0-9]+', args.release_id):
         parser.error('release-id must be YYYYMMDD.N')
@@ -33,6 +37,9 @@ def main():
         parser.error('engine-version must be X.Y.Z')
     if sys.platform != 'darwin':
         parser.error('macOS is required to sign the macOS preview package')
+    components = {'windows': args.windows_runtime_component, 'macos': args.macos_runtime_component}
+    if any(components.values()) and not all(components.values()):
+        parser.error('an extended-runtime release requires qualified components for both platforms')
     source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=False)
@@ -48,11 +55,13 @@ def main():
             if digest(archive) != runtime['sha256']:
                 raise ValueError('Official runtime digest mismatch: ' + platform)
             package = work / platform
-            subprocess.run([sys.executable, str(ROOT / 'tools/build_native_preview.py'),
+            command = [sys.executable, str(ROOT / 'tools/build_native_preview.py'),
                             '--platform', platform, '--runtime', str(archive),
                             '--source-ref', source, '--release-id', args.release_id,
-                            '--engine-version', args.engine_version, '--out', str(package)],
-                           cwd=ROOT, check=True)
+                            '--engine-version', args.engine_version, '--out', str(package)]
+            if components[platform]:
+                command.extend(['--qualified-runtime', str(components[platform].resolve())])
+            subprocess.run(command, cwd=ROOT, check=True)
             metadata = json.loads((package / 'build.json').read_text())
             if metadata['sourceCommit'] != source or metadata['runtimeCommit'] != RUNTIME_COMMIT:
                 raise ValueError('Package source/runtime does not match the frozen release')
@@ -72,6 +81,19 @@ def main():
     manifest = dict(releaseId=args.release_id, sourceCommit=source,
                     engineVersion=args.engine_version, modApi=3, builds=builds)
     (out / 'build-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+    runtime_notes = (
+        'The experimental extended-upvalue LuaJIT is bundled on Windows x64 and both Mac\n'
+        'architectures. Native closure/C API/engine and actual LOVE host/thread/FFI\n'
+        'qualification receipts accompany the packages. This does not establish complete\n'
+        'mod/gameplay or Windows GPU acceptance. The standalone .love needs this\n'
+        'extended runtime for mods which exceed the official 60-upvalue limit.\n'
+        if all(components.values()) else
+        'The experimental extended-upvalue LuaJIT is NOT bundled. Mods that exceed the\n'
+        'official runtime\'s capacity may still fail to load. Full-game 3D/mod compatibility\n'
+        'and Windows/macOS hardware acceptance are not claimed by this intermediate build.\n')
+    if all(components.values()):
+        mac = next(row for row in builds if row['platform'] == 'macos')
+        runtime_notes += 'The qualified Mac package requires macOS ' + mac['qualifiedRuntime']['minimumMacOS'] + ' or newer.\n'
     notes = f'''RetroRecomped Preview {args.release_id} · engine {args.engine_version} / mod API 3
 
 Intermediate pre-release from main, source commit: {source}
@@ -86,7 +108,7 @@ Downloads:
 - Windows ZIP: extract and start Gen2Recomped-NativePreview.exe.
 - macOS ZIP: extract and open the preview app; Metal/OpenGL launchers included.
 - .love: identical engine payload, requires the pinned LOVE 12 runtime.
-Both ZIPs bundle official LOVE 12 revision {RUNTIME_COMMIT}.
+Both ZIPs use official LOVE 12 revision {RUNTIME_COMMIT} as their base.
 The macOS app is ad-hoc signed, without Apple notarization.
 
 Import your own supported ROMs and save files. No ROMs, extracted game caches,
@@ -96,9 +118,7 @@ existing profiles are preserved and are not automatically migrated.
 
 Known limits: exact mid-battle savestates/device handoff are still in development.
 Normal save progress is supported; saving progress is not an execution snapshot.
-The experimental extended-upvalue LuaJIT is NOT bundled. Mods that exceed the
-official runtime's capacity may still fail to load. Full-game 3D/mod compatibility
-and Windows/macOS hardware acceptance are not claimed by this intermediate build.
+{runtime_notes}
 
 Validation: headless launcher contracts, package content checks, identical payload
 hashes and SHA256SUMS.txt. No new in-game test was run for this release.

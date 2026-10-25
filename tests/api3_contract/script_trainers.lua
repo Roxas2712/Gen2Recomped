@@ -1,6 +1,6 @@
 local M = {}
 function M.fixture(root, backend, version)
-  local codeRoot = debug.getinfo(1, "S").source:sub(2):match("^(.*)/script_trainers%.lua$")
+  local codeRoot = debug.getinfo(1, "S").source:sub(2):gsub("\\", "/"):match("^(.*)/script_trainers%.lua$")
   local f = dofile(codeRoot .. "/script_battles.lua").fixture(root, backend, version, "script_trainers")
   f.game.data.trainers =
     { PROBE = { id = "PROBE", index = 7, name = "PROBE", parties = { { { species = "MEW", level = 5 } } } } }

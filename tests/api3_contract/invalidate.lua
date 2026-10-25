@@ -1,6 +1,6 @@
 local M = {}
 function M.fixture(root, backend, version)
-  local codeRoot = debug.getinfo(1, "S").source:sub(2):match("^(.*)/invalidate%.lua$")
+  local codeRoot = debug.getinfo(1, "S").source:sub(2):gsub("\\", "/"):match("^(.*)/invalidate%.lua$")
   local f = dofile(codeRoot .. "/warp.lua").fixture(root, backend, version, "invalidate")
   local Runtime = require("src.mods.Runtime")
   f.reloads, f.loads = 0, {}

@@ -1,6 +1,6 @@
 local M = {}
 function M.fixture(root, backend, version, modId)
-  local codeRoot = debug.getinfo(1, "S").source:sub(2):match("^(.*)/script_gifts%.lua$")
+  local codeRoot = debug.getinfo(1, "S").source:sub(2):gsub("\\", "/"):match("^(.*)/script_gifts%.lua$")
   local f = dofile(codeRoot .. "/script_state.lua").fixture(root, backend, version, modId or "script_gifts")
   love = love or require("tests.love_stub")
   local data, save = f.game.data, f.game.save

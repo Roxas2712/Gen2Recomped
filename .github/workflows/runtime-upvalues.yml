@@ -4,11 +4,16 @@ on:
     paths:
       - '.github/workflows/runtime-upvalues.yml'
       - 'tools/runtime-upvalue-check/**'
+      - 'tools/build_native_preview.py'
+      - 'tools/package_native_release.py'
+      - 'tests/test_runtime_component.py'
+      - 'tests/test_native_preview.py'
   workflow_dispatch:
+  workflow_call:
 permissions:
   contents: read
 concurrency:
-  group: runtime-upvalues-${{ github.ref }}
+  group: runtime-upvalues-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   qualify:
@@ -36,6 +41,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           path: engine
+          ref: ${{ github.sha }}
       - uses: actions/checkout@v7
         with:
           repository: LuaJIT/LuaJIT
@@ -81,5 +87,45 @@ jobs:
             ${{ runner.temp }}/runtime-capacity/candidate/artifacts/
             ${{ runner.temp }}/runtime-love-abi/candidate/report.json
             ${{ runner.temp }}/runtime-love-abi/candidate/*.log
+          if-no-files-found: error
+          retention-days: 14
+  components:
+    needs: qualify
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: engine
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: runtime-capacity-*
+          path: runtime-candidates
+      - name: Verify component packaging guards
+        shell: bash
+        run: python -m unittest discover -s engine/tests -p test_runtime_component.py -v
+      - name: Combine the two qualified Mac slices
+        shell: bash
+        run: >-
+          python engine/tools/runtime-upvalue-check/component.py
+          --platform macos
+          --candidate runtime-candidates/runtime-capacity-macos-x64
+          --candidate runtime-candidates/runtime-capacity-macos-arm64
+          --output "${{ runner.temp }}/qualified-runtime/candidate/macos"
+      - name: Stage the qualified Windows component
+        shell: bash
+        run: >-
+          python engine/tools/runtime-upvalue-check/component.py
+          --platform windows
+          --candidate runtime-candidates/runtime-capacity-windows-x64
+          --output "${{ runner.temp }}/qualified-runtime/candidate/windows"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: qualified-desktop-runtime
+          path: ${{ runner.temp }}/qualified-runtime/candidate/
           if-no-files-found: error
           retention-days: 14

@@ -1,6 +1,6 @@
 local M = {}
 function M.fixture(root, backend, version)
-  local codeRoot = debug.getinfo(1, "S").source:sub(2):match("^(.*)/script_travel%.lua$")
+  local codeRoot = debug.getinfo(1, "S").source:sub(2):gsub("\\", "/"):match("^(.*)/script_travel%.lua$")
   local f = dofile(codeRoot .. "/script_motion.lua").fixture(root, backend, version, "script_travel")
   f.game.data.tilesets = f.game.data.tilesets or {}
   f.game.data.tilesets.FIX = f.tiles

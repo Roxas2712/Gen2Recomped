@@ -1,7 +1,7 @@
 -- Real loaders/adapters; an explicit source/clock seam avoids audio-device timing.
 local M = {}
 function M.fixture(root, backend, version, modId, base)
-  local codeRoot = debug.getinfo(1, "S").source:sub(2):match("^(.*)/script_audio%.lua$")
+  local codeRoot = debug.getinfo(1, "S").source:sub(2):gsub("\\", "/"):match("^(.*)/script_audio%.lua$")
   local f = base
     or dofile(codeRoot .. "/script_flags.lua").fixture(root, backend, version, modId or "script_audio")
   f.game.data.audio = {
