@@ -5,7 +5,7 @@ class Payload(unittest.TestCase):
  def archive(self,extra=()):
   tmp=tempfile.TemporaryDirectory();self.addCleanup(tmp.cleanup);p=Path(tmp.name)/'game.love'
   with zipfile.ZipFile(p,'w')as z:
-   for f in ('main.lua','conf.lua','src/preview/main.lua','src/preview/conf.lua','src/core/NativePreview.lua',*extra):z.writestr(f,'test')
+   for f in ('main.lua','conf.lua','src/preview/main.lua','src/preview/conf.lua','src/preview/release.json','src/core/NativePreview.lua',*extra):z.writestr(f,'test')
   return p
  def test_isolated_payload(self):module.verify_payload(self.archive())
  def test_rom_save_and_user_data_rejected(self):

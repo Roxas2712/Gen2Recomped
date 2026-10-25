@@ -1,18 +1,28 @@
 # RetroRecomped intermediate pre-releases
 
-Download the Windows or macOS **Gen2Recomped-NativePreview** ZIP from the
-fork's pre-release, extract into a new folder and start its launcher:
+Download the **Gen2Recomped-NativePreview** package for your platform from the
+fork's pre-release:
 
 - Windows: `OpenGL-Test.cmd` or `Gen2Recomped-NativePreview.exe`.
 - macOS: the preview app or `Metal-Test.command`; `OpenGL-Test.command`
   selects OpenGL. The app is ad-hoc signed, without Apple notarization.
+- Android: install the APK. It uses a separate preview application identifier
+  and the committed test signing key.
+- iPhone/iPad: sign the unsigned IPA using a sideload tool or your Apple team,
+  then install. An unsigned IPA cannot be directly installed on a stock device.
+- Nintendo Switch: extract the ZIP at the SD root. Start the preview NRO under
+  `switch/gen2recomp-native-preview/` with full application memory via hbmenu.
+  The preview does not bundle the stable-channel OTA updater.
 
-Both ZIPs contain an identical engine payload and use official LOVE 12
-revision `937eb3b21f973607ab080aa26b7ef2a6b3b2b663` as their base. No separate
-runtime installation is needed for the ZIPs. Check `build-manifest.json` for
-the exact Lua runtime: extended builds record `qualifiedRuntime` and include
-qualification receipts. Their standalone `.love` requires that extended
-runtime; a stock LOVE installation still has the 60-upvalue limit.
+All five packages contain an identical engine payload. Windows/macOS use official
+LOVE 12 revision `937eb3b21f973607ab080aa26b7ef2a6b3b2b663` as their base;
+iOS builds that revision with pinned Apple dependencies. Android uses vendored
+11.5a and Switch the hash-verified 11.5-nx1 runtime. No separate installation is
+needed. Check `build-manifest.json` for the exact Lua runtime: qualified desktop
+builds record `qualifiedRuntime` and include receipts. Their standalone `.love`
+requires that extended runtime; stock LOVE still has the 60-upvalue limit.
+Mobile/console runtimes are qualified separately and do not inherit the desktop
+runtime's increased capacity.
 
 Import your own supported ROMs and save files. ROMs, extracted game caches,
 account credentials, save files and mod packages are not supplied. The preview
@@ -36,24 +46,33 @@ they do not retroactively change existing downloads or establish full-game
 
 Run **RetroRecomped intermediate pre-release** on the selected `main` commit
 with a fresh `YYYYMMDD.N` release identifier and the engine `X.Y.Z` version.
-The workflow runs ROM-free launcher contracts, then calls the native runtime
-qualification workflow at the same commit. Linux x64, Windows x64, Intel Mac
-and ARM Mac must all pass stock/extended closure, C API and engine checks.
-Windows and both Mac jobs also exercise the actual pinned LOVE host, its
-thread VM and FFI. The component job verifies receipt/source/hash bindings and
-combines both qualified Mac slices. The packaging job consumes those exact
-components, signs the Mac app, checks runtime digests and payload parity, and
-publishes a **pre-release**. Any missing or mismatched component fails the
-build instead of falling back to stock. Mac minimum OS is derived from the
-actual Mach-O load commands and recorded in the package and manifest.
+The workflow runs ROM-free launcher and packaging contracts, then calls the
+native runtime qualification workflow at the same commit. Linux x64, Windows
+x64, Intel Mac and ARM Mac must pass stock/extended closure, C API and engine
+checks; desktop jobs also test the actual LOVE host, thread VM and FFI. The
+component job checks receipts, source trees and hashes and combines both Mac
+slices. Desktop packaging consumes those exact components, signs the Mac app,
+and verifies identical engine payloads. Missing or mismatched components fail
+the build instead of falling back to stock. Mac minimum OS is derived from the
+actual library load commands. iOS builds on hosted macOS, Android/Switch on
+Linux. All five platform packages must pass embedded-payload parity before
+publication as a **pre-release**; a missing package prevents publication.
 It does not start a game or alter the stable latest release.
 
-`tools/package_native_release.py` invokes the existing isolated builder for
-both platforms and collects packages, `.love`, README, `build-manifest.json`
-and `SHA256SUMS.txt`. The tag points to the exact source commit recorded in
+`tools/package_native_release.py` invokes the isolated desktop builder.
+`tools/package_native_port.py` embeds that frozen payload in the three port
+packages, using `--game-love` for mobile. `tools/assemble_native_release.py`
+validates all five builds before collecting packages, `.love`, README,
+`build-manifest.json` and `SHA256SUMS.txt`. The tag points to the source commit recorded in
 the manifest. Existing tags/releases are not replaced. Each package stamps
 the requested engine version; the working source's development version can
 differ. Mod API remains 3.
+
+The build manifest records build verification, launch verification and physical
+device evidence separately. Package contract tests use synthetic binaries and
+do not count as device evidence. A successful build does not establish gameplay,
+touch/controller behavior, suspend/resume, mod networking or extended-upvalue
+support on a phone or console; those runtime acceptance items remain open.
 
 For feedback, include source commit, game, OS, backend, window size and the
 action which triggered the problem. Never attach ROMs, credentials or caches.
