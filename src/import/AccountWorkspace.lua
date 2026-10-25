@@ -16,7 +16,7 @@ end
 function W.open(self,after)
   if self._developerOverlay then require('src.import.DeveloperWorkspace').close(self) end
   local choice=type(after)=='table' and after.storagePrompt and not (Auth.accountId and Auth.accountId())
-  self._accountOverlay={mode=choice and 'storage_choice' or Auth.signedIn() and 'account' or 'login',after=after,email='',name='',password='',confirmation='',code='',repositories={''},rects={},scroll=0,accountAtOpen=Auth.accountId and Auth.accountId()}
+  self._accountOverlay={mode=choice and 'storage_choice' or Auth.signedIn() and 'account' or 'login',after=after,email='',name='',password='',confirmation='',code='',repositories={''},restore=true,rects={},scroll=0,accountAtOpen=Auth.accountId and Auth.accountId()}
   if choice then return end
   job(self,Auth.signedIn() and 'devices' or 'policy',Auth.signedIn() and A.devices or A.policy)
 end
@@ -26,9 +26,11 @@ function W.close(self)
 end
 local function connected(self,f)
   if Auth.accountId and Auth.accountId()~=f.accountAtOpen then require('src.storage.AccountStorage').profileChanged(self) end
-  -- Connecting an account never silently enables uploads or downloads.
+  -- Restore is offered explicitly; uploads need their separate opt-in.
   local settings=self:_settings();settings.cloudAutoSync=f.cloudSync==true
   settings.cartridgeCloudSync=f.cloudSync==true
+  settings.gameCacheDownload=f.restore~=false
+  self._cloudRestoreOnce=f.restore~=false
   settings.launcherSaveStorageChoice=f.cloudSync and 'cloud' or 'local'
   if self._saveSettings then self:_saveSettings() end
   self._settingsRowCache=nil
@@ -195,7 +197,8 @@ function W.draw(self)
       end
     end
     row('BROWSE MODS','browse');row('MOD DEVELOPER · MY REPOSITORIES','developer');row('REFRESH CONNECTED DEVICES','devices')
-    for i,d in ipairs(f.devices or {}) do paragraph(tostring(d.label)..(d.current and ' · THIS DEVICE' or ''));paragraph('Expires '..tostring(d.expires_at));row('DISCONNECT DEVICE','revoke:'..i) end
+    paragraph('You stay signed in on this device until you sign out, change your password or disconnect it from your account. Offline periods keep your login.')
+    for i,d in ipairs(f.devices or {}) do paragraph(tostring(d.label)..(d.current and ' · THIS DEVICE' or ''));paragraph(d.expires_at and ('Expires '..tostring(d.expires_at)) or 'Signed in until disconnected');row('DISCONNECT DEVICE','revoke:'..i) end
     row('SIGN OUT ON THIS DEVICE','signout')
     row('USE ANOTHER ACCOUNT / LOCAL PROFILE','switchAccount')
   else
@@ -221,7 +224,8 @@ function W.draw(self)
     elseif f.mode=='login' then
       paragraph('WELCOME BACK',true);field('Email','email');field('Password','password',true)
       check('Enable automatic save & cartridge sync on this device (optional)','cloudSync')
-      paragraph('Sync includes saves, Bank and custom cartridge images/settings. ROMs and game caches stay local.')
+      check('Download my cloud saves and private imported games on this device','restore')
+      paragraph('Private game downloads avoid importing again. Uploading imported game data is a separate opt-in under Cloud settings. Automatic save sync also includes Bank and cartridge designs.')
       row('SIGN IN & LINK THIS DEVICE','submit');row('CREATE AN ACCOUNT','register');row('FORGOT PASSWORD','forgot')
     elseif f.mode=='forgot' then paragraph('RECOVER YOUR ACCOUNT',true);field('Email','email');row('SEND RECOVERY CODE','submit');row('BACK TO SIGN IN','back')
     else

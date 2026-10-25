@@ -15,7 +15,9 @@ local function request(method,path,body,token,headers)
   headers.Accept='application/json'
   if token then headers.Authorization='Bearer '..token end
   if type(body)=='table' then headers['Content-Type']='application/json';body=Json.encode(body) end
-  return Http.request(method,R.API..path,{body=body,headers=headers,sensitive=true})
+  local code,bytes=Http.request(method,R.API..path,{body=body,headers=headers,sensitive=true})
+  if code==401 and token then R.expire() end
+  return code,bytes
 end
 local function document(method,path,body,token,headers)
   return Http.json(request(method,path,body,token,headers))
@@ -24,7 +26,9 @@ local function save(value)
   local Safety=require('src.core.SaveSafety')
   return Safety.atomicWrite(love.filesystem,R.FILE,Serializer.encode(value),{decode=Safety.decodeAny})
 end
-function R.signedIn() local value=load();return value and (tonumber(value.expires) or 0)>os.time() or false end
+-- Device credentials survive restarts and offline periods. Only the service
+-- can revoke them; the old expiry field is retained for older builds.
+function R.signedIn() return load()~=nil end
 function R.account() local value=load();return value and value.email end
 function R.accountId() local value=load();return value and value.accountId end
 function R.acceptAccount(doc)
@@ -32,6 +36,7 @@ function R.acceptAccount(doc)
   if not value or type(doc.account_id)~='string' or #doc.account_id>20 or not doc.account_id:match('^[1-9][0-9]*$') then return nil,'Account identity unavailable. Sign in again.' end
   value.accountId=doc.account_id
   if type(doc.email)=='string' then value.email=doc.email end
+  if type(doc.name)=='string' then value.name=doc.name end
   return save(value)
 end
 function R.acceptConnection(doc)
@@ -39,13 +44,13 @@ function R.acceptConnection(doc)
     or not doc.access_token:match('^[a-f0-9]+$') or type(doc.expires_in)~='number'
     or doc.expires_in<120 or doc.expires_in>90*86400 or type(doc.email)~='string' then return nil,'Invalid device connection.' end
   local accountId=type(doc.account_id)=='string' and #doc.account_id<=20 and doc.account_id:match('^[1-9][0-9]*$') and doc.account_id or nil
-  local ok,why=save({access=doc.access_token,expires=os.time()+doc.expires_in-60,email=doc.email,accountId=accountId})
+  local ok,why=save({access=doc.access_token,expires=os.time()+doc.expires_in-60,email=doc.email,accountId=accountId,name=type(doc.name)=='string' and doc.name or nil})
   if not ok then return nil,'Could not store the device connection: '..tostring(why) end
   return true
 end
 function R.accessToken()
   local value=load()
-  if value and (tonumber(value.expires) or 0)>os.time() then return value.access end
+  if value then return value.access end
   return nil,'Connect this device to your ModCompass account in Cloud saves.'
 end
 function R.begin()
@@ -94,7 +99,8 @@ function R.open()
   for _,object in ipairs(doc.objects) do
     if type(object.path)=='string' and type(object.revision)=='string' then revisions[object.path]=object.revision end
   end
-  local store={kind='retro',label='RetroRecomped Cloud',accountId=accountId,profileScope='retro:'..tostring(email or ''):lower()}
+  local store={kind='retro',label='RetroRecomped Cloud',accountId=accountId,profileScope='retro:'..tostring(email or ''):lower(),storage=doc.storage}
+  function store.has(path) return revisions[path]~=nil end
   function store.list(directory)
     local prefix=directory..'/'
     local result={}

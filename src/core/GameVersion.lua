@@ -1250,7 +1250,9 @@ function GameVersion.saveSuffix(id, versionId)
 end
 
 function GameVersion.cachePrefix(id, versionId)
-  return GameVersion.info(id, versionId).cachePrefix
+  local info=GameVersion.info(id,versionId)
+  local cache=package.loaded['src.storage.GameCache']
+  return cache and cache.prefix(info.id) or info.cachePrefix
 end
 
 -- Does this version accept that ROM hash?  Most versions have exactly one
