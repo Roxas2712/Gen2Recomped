@@ -35,6 +35,8 @@ local UIActions = require("src.mods.UIActions")
 local Net = require("src.mods.Net")
 local ModGens = require("src.mods.ModGens")
 local ModSeams = require("src.mods.ModSeams")
+-- Install typed-view iteration before any source/native mod opens a journal.
+require("src.compat.gen1.TableIteration")
 local WorldOverview = require("src.mods.WorldOverview")
 local LoadOrder = require("src.mods.LoadOrder")
 local WorldActions = require("src.world.WorldActions")
@@ -1322,6 +1324,9 @@ end
 -- migration it took goes with them.  The journal only exists around an
 -- entry chunk; a later failure (script validation) purges every registry.
 function Loader:_rollback(modId)
+  -- Restore failed wrappers before any native cleanup iterates registries or
+  -- calls a module the failed entry may have replaced.
+  ModSeams.unwindOwner(modId)
   local facade=package.loaded['src.core.Game3']
   if facade and facade._retireMod then facade._retireMod(modId)end
   Net.releaseAll(self, modId)
@@ -1342,7 +1347,6 @@ function Loader:_rollback(modId)
   self.modSave[modId] = nil
   -- Late validation failures retire entry-time wrappers too. Restore those
   -- before invoking an optional resource service a failed entry may wrap.
-  ModSeams.unwindOwner(modId)
   local stream=package.loaded['src.core.game3.asset_stream']
   if stream and stream.cancelOwner then pcall(stream.cancelOwner,modId)end
 end
