@@ -40,4 +40,12 @@ w.results:push({id=id,ok=true,body='ok'})
 local state=Get.poll(id);state.status='changed'
 check(Get.poll(id).status=='ok','poll returns detached state')
 Get.release(id);Get.shutdown()
+check(Get.postLog('http://host','log')==nil,'POST always requires HTTPS')
+check(Get.postLog('https://host',string.rep('x',512*1024+1))==nil,'wire payload has a byte ceiling')
+id=assert(Get.postLog('https://host','log',{contentType='text/plain'}))
+w=workers[#workers]
+w.results:push({id=id,ok=true,body='must not escape',err='must not escape',httpStatus=204})
+state=Get.poll(id)
+check(state.status=='ok' and state.body==nil and state.err==nil,'one-way worker results hide body and diagnostics')
+Get.release(id);Get.shutdown()
 print(('async GET queue: %d checks PASS'):format(checks))

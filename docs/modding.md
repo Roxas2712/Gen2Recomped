@@ -535,6 +535,10 @@ and `mod.device`.
 The `steps` permission enables [native step deliveries](mod-native-steps.md),
 with independent persistent receipts for each mod on supported mobile hosts.
 
+With `network` and a fixed HTTPS `log_url`, `mod:postLog` sends bounded one-way
+diagnostics through the shared workers. See [log reporting](mod-log-reporting.md)
+for the closed options, result shape and native platform qualification boundaries.
+
 ## Unified content records (opt-in)
 
 API-2 mods can select `"content_format": "unified"` to read and edit common

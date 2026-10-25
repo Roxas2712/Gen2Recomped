@@ -46,9 +46,12 @@ local function drain()
       job.busy = false
       if not job.retained then jobs[msg.id] = nil
       elseif job.state.status == "pending" then
-        job.state = { status = msg.ok and "ok" or "error", body = msg.body,
-          err = msg.err, httpStatus = msg.httpStatus,
-          receivedBytes = msg.body and #msg.body or 0, progress = msg.ok and 1 or 0 }
+        local body=not job.oneWay and msg.body or nil
+        local failure=msg.err
+        if job.oneWay then failure=not msg.ok and 'log upload failed' or nil end
+        job.state = { status = msg.ok and "ok" or "error", body = body,
+          err = failure, httpStatus = msg.httpStatus,
+          receivedBytes = body and #body or 0, progress = msg.ok and 1 or 0 }
       end
     end
   end
@@ -79,11 +82,12 @@ end
 
 function Get.available() return ensure() end
 
-function Get.get(url, opts)
+local function request(url, opts, method, body)
   opts = type(opts) == "table" and opts or {}
   if type(url) ~= "string" or #url > 8192 or url:find("[%z%c%s]")
       or not url:lower():match("^https?://[^/?#]+") then return nil, "invalid HTTP URL" end
-  if opts.boundedHttpsGet == 1 and not url:lower():match("^https://") then return nil, "HTTPS required" end
+  if (opts.boundedHttpsGet == 1 or method=="POST") and not url:lower():match("^https://") then return nil, "HTTPS required" end
+  if method=="POST" and (type(body)~="string" or #body>512*1024) then return nil,"POST body exceeds byte limit" end
   drain()
   local busy = 0
   for _, job in pairs(jobs) do if job.busy then busy = busy + 1 end end
@@ -98,13 +102,17 @@ function Get.get(url, opts)
   end
   local cancel = love.thread.newChannel()
   local deadline = now() + seconds
-  jobs[id] = { retained = true, busy = true, cancel = cancel, state = state, deadline = deadline }
+  jobs[id] = { retained = true, busy = true, cancel = cancel, state = state, deadline = deadline,oneWay=method=="POST" }
   commands:push({ id = id, url = url, cancel = cancel, deadline = deadline,
+    method=method,body=body,discardBody=method=="POST",contentType=opts.contentType,
     userAgent = opts.userAgent, accept = opts.accept,
     maxSeconds = seconds, maxBytes = math.floor(finite(opts.maxBytes, 4 * 1024 * 1024, Get.MAX_BYTES)),
-    httpsOnly = opts.boundedHttpsGet == 1 })
+    httpsOnly = opts.boundedHttpsGet == 1 or method=="POST" })
   return id
 end
+
+function Get.get(url,opts)return request(url,opts,"GET")end
+function Get.postLog(url,body,opts)return request(url,opts,"POST",body)end
 
 function Get.poll(id)
   drain()

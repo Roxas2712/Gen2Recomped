@@ -34,12 +34,39 @@ function love.run()
     local loader = {}
     local function mod(id, network) return Net.forMod(loader, {manifest={id=id, permissionSet={network=network}}}) end
     local a, b, denied = mod('a', true), mod('b', true), mod('denied', false)
+    if os.getenv('GET_TEST_UNTRUSTED')=='1' then
+      local record={manifest={id='untrusted',permissionSet={network=true},log_url=base..'/must-not-send'}}
+      local logs=Net.forMod(loader,record)
+      local h=assert(Net.logReporter(loader,record)(nil,'untrusted certificate probe'))
+      local reply=await(logs,h)
+      check(reply.status=='error' and reply.body==nil,'untrusted TLS certificate must be refused')
+      logs:release(h);Net.unloadAll();Fetch.shutdown();return
+    end
+    if base:sub(1,8)=='https://' then
+      local function reporter(id,path)
+        local record={manifest={id=id,permissionSet={network=true},log_url=base..path}}
+        return Net.forMod(loader,record),Net.logReporter(loader,record)
+      end
+      local logs,send=reporter('log_text','/post-text')
+      local h=assert(send(nil,'literal\0\255\r\n$(printf injected) "quote"'))
+      local reply=await(logs,h)
+      check(reply.status=='ok' and reply.body==nil and reply.httpStatus==200,'TLS log hides real server reply')
+      logs:release(h)
+      logs,send=reporter('log_json','/post-json')
+      h=assert(send(nil,string.rep('\0',65536),{format='json'}));reply=await(logs,h)
+      check(reply.status=='ok' and reply.body==nil,'expanded JSON envelope preserves the input byte ceiling')
+      logs:release(h)
+      logs,send=reporter('log_redirect','/redirect-post')
+      h=assert(send(nil,'fixed destination'));reply=await(logs,h)
+      check(reply.status=='error' and reply.body==nil and reply.httpStatus==307,'POST cannot change its declared endpoint via redirect')
+      logs:release(h)
+    end
     check(not denied:available(), 'network permission required')
     check(not pcall(denied.get, denied, base), 'ungranted GET refuses')
     check(a:available(), 'real thread workers available')
     check(a:capabilities().maxResponseBytes >= 4194304, 'bounded receive ceiling advertised to package consumers')
     check(a:get('file:///etc/hosts') == nil, 'non HTTP URL denied')
-    check(a:get(base..'/binary', {boundedHttpsGet=1}) == nil, 'bounded HTTPS rejects HTTP')
+    check(a:get(base:gsub('^https:','http:')..'/binary', {boundedHttpsGet=1}) == nil, 'bounded HTTPS rejects HTTP')
     local started = love.timer.getTime()
     local slow = assert(a:get(base..'/slow', {maxSeconds=3}))
     check(love.timer.getTime()-started < .1, 'GET starts without waiting for server')
