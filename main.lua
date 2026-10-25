@@ -1063,6 +1063,7 @@ local defaultErrorHandler = love.errorhandler or love.errhand
 -- device with no console and no file manager to hand.
 local function minimalErrorScreen(text)
   if not (love.graphics and love.event) then return nil end
+  pcall(WindowFrame.shutdown)
   local ok = pcall(function()
     love.graphics.reset()
     love.graphics.setNewFont(14)
