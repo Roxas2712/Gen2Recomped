@@ -38,8 +38,26 @@ check(not B.convert(entry,'gold',bad),'unknown target species is refused')
 bad={pokemon=data.pokemon,moves={},items={},constants={}}
 check(not B.convert(entry,'gold',bad),'unknown target moves are refused rather than removed')
 local held=S.decode(S.encode(entry));held.mon.heldItem='BERRY';held.canonical.item='BERRY'
-check(not B.convert(held,'red',data),'held items are refused for generation 1')
+local parked=assert(B.convert(held,'red',data))
+check(not parked.heldItem and parked.retroBankHeld.item=='BERRY','unsupported held items are staged for custody while Gen1 receives a compatible Pokémon')
 check(B.convert(held,'gold',data).heldItem=='BERRY','supported held item survives')
+local Items=require('src.storage.BankItems')
+local fail=Items.transaction({version='red',party={parked}},function() return nil,'injected save failure' end)
+check(not fail and #Items.list()==0,'a failed save rolls item custody back without consuming the original')
+check(Items.transaction({version='red',party={parked}},function() return 'new-copy' end) and #Items.list()==1,'committing a Gen1 copy keeps its held item in the Item Bank')
+local returnEntry=B.makeEntry(parked,'red','slot2','Party 1',data)
+local returning=assert(B.convert(returnEntry,'gold',data))
+check(returning.heldItem=='BERRY' and returning.retroBankItem,'the associated item is restored when the Pokémon returns to a supported game')
+check(Items.transaction({version='gold',party={returning}},function() return 'returned-copy' end),'restoring an item commits its custody assignment with the destination save')
+check(Items.list()[1].state=='assigned','a restored held item cannot also be assigned from available storage')
+local beforeItems=files[Items.FILE]
+local fake={read=function() return 'not a valid item bank' end,write=function() error('invalid remote data must not be overwritten') end}
+check(not Items.sync(fake) and files[Items.FILE]==beforeItems,'invalid remote item records never replace either side')
+local Dex=require('src.storage.GlobalPokedex')
+local pokedex=assert(Dex.collect({},B.list()))
+check(pokedex.species[1].owned and pokedex.species[1].sources['red:slot1'],'the global Pokédex registers Bank species with their source game and save slot')
+local merged=Dex.merge(pokedex,{schema=1,species={[2]={owned=true,sources={['gold:slot2']={version='gold',slot='slot2'}}}}})
+check(merged.species[1].owned and merged.species[2].owned,'global Pokédex merging preserves discoveries from both devices')
 local form=S.decode(S.encode(entry));form.mon.form=1
 check(not B.convert(form,'gold',data),'unsupported cross-game forms are refused')
 local modern={pokemon={BULBASAUR={dex=1,baseStats={hp=45,attack=49,defense=49,speed=45,spatk=65,spdef=65},evYield={},abilities={'OVERGROW'}}},moves=data.moves,items=data.items,constants={natureOrder={'HARDY'}}}

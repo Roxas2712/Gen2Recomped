@@ -19,7 +19,8 @@ syntax = ['main.lua', 'conf.lua', 'src/cloud/Http.lua', 'src/cloud/RetroCloud.lu
           'src/import/LauncherCommunity.lua', 'src/import/RomImporter.lua',
           'src/core/Game.lua', 'src/core/SaveData.lua', 'src/storage/SaveResume.lua',
           'src/import/ResumeWorkspace.lua', 'src/import/SaveHistoryWorkspace.lua', 'src/mods/ModProfiles.lua',
-          'src/import/LauncherModProfiles.lua', 'src/mods/LauncherMods.lua']
+          'src/import/LauncherModProfiles.lua', 'src/mods/LauncherMods.lua', 'src/storage/BankItems.lua',
+          'src/storage/GlobalPokedex.lua']
 source = '\n'.join('assert(loadfile(' + json.dumps(path) + '))' for path in syntax)
 qa_run([runtime, '-e', source], cwd=root, check=True)
 suites = '''launcher_sequence cart_designer launcher_seasons launcher_community

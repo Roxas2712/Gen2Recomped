@@ -84,16 +84,26 @@ function B.decode(bytes,id)
   for _,move in ipairs(value.mon.moves) do
     if type(move)~='table' or (type(move.id)~='string' and type(move.id)~='number') then return nil,'Invalid Bank move.' end
   end
+  if value.origin and (type(value.origin)~='table' or not validId(value.origin.recordId)) then return nil,'Invalid Bank origin.' end
+  if value.mon.retroBankOrigin and (type(value.mon.retroBankOrigin)~='table' or not validId(value.mon.retroBankOrigin.recordId)) then return nil,'Invalid Pokémon origin.' end
   if id and (not validId(id) or hash(S.encode(value))~=id) then return nil,'Bank entry fingerprint does not match.' end
   return value
 end
-function B.makeEntry(mon,version,slot,place,data)
-  return {schema=1,source={version=version,slot=slot,place=place},mon=clone(mon),canonical=canonical(mon,data)}
+function B.makeEntry(mon,version,slot,place,data,save)
+  local source={version=version,slot=slot,place=place,saveId=save and save.meta and save.meta.playthroughId,
+    trainerId=mon.ot and (mon.ot.id or mon.ot.trainerId) or save and save.player and save.player.id}
+  local origin=clone(mon.retroBankOrigin or source)
+  if not origin.recordId then origin.recordId=hash(S.encode({source=source,species=mon.species,ot=mon.ot,personality=mon.personality,dvs=mon.dvs,ivs=mon.ivs})) end
+  return {schema=1,source=source,origin=clone(origin),mon=clone(mon),canonical=canonical(mon,data)}
 end
-function B.deposit(mon,version,slot,place,data)
+function B.deposit(mon,version,slot,place,data,save)
   data=data or B.data(version)
   if not data then return nil,'Source game data is unavailable.' end
-  local value=B.makeEntry(mon,version,slot,place,data)
+  local value=B.makeEntry(mon,version,slot,place,data,save)
+  return B.keep(value)
+end
+function B.keep(value)
+  value=clone(value);value.id=nil
   local bytes=S.encode(value);local id=hash(bytes)
   local good,why=B.decode(bytes,id);if not good then return nil,why end
   local disk=fs();disk.createDirectory(B.DIRECTORY)
@@ -137,7 +147,22 @@ function B.convert(entry,version,data,allowAdaptation)
   end
   if not def then return nil,'Species '..tostring(original)..' is unavailable in this game.' end
   local gen=Versions.generation(version)
-  if gen==1 and (mon.isEgg or mon.egg or (tonumber(mon.eggSteps) or 0)>0 or mon.heldItem and mon.heldItem~='') then return nil,'Generation 1 cannot represent eggs or held items.' end
+  if gen==1 and (mon.isEgg or mon.egg or (tonumber(mon.eggSteps) or 0)>0) then return nil,'Generation 1 cannot represent eggs.' end
+  local origin=clone(entry.origin or mon.retroBankOrigin or entry.source)
+  if not origin.recordId then origin.recordId=entry.id or hash(S.encode({source=entry.source,mon=entry.mon})) end
+  mon.retroBankOrigin=clone(origin)
+  local Items=require('src.storage.BankItems')
+  local heldNote
+  if mon.heldItem and mon.heldItem~='' and (gen==1 or not data.items[mon.heldItem] and not named(data.items,info.item)) then
+    local held=Items.custody(origin,mon.heldItem,info.item or key(mon.heldItem),entry.source.version)
+    if not held then return nil,'Could not preserve the held-item identity.' end
+    if mon.retroBankItem then held.id=mon.retroBankItem end
+    mon.retroBankHeld=held;mon.retroBankItem=nil;mon.heldItem=nil
+    heldNote='Held item goes into your Item Bank when this save copy is committed.'
+  elseif not mon.heldItem and mon.retroBankHeld and gen>=2 and Items.returnable(mon.retroBankHeld) then
+    local item=named(data.items,mon.retroBankHeld.canonical)
+    if item then mon.heldItem=item;mon.retroBankItem=mon.retroBankHeld.id;mon.retroBankItemRecord=clone(mon.retroBankHeld);mon.retroBankHeld=nil end
+  end
   local form=mon.form or mon.gen4Form
   if form~=nil and form~=0 and form~='base' and entry.source.version~=version then
     return nil,'This form cannot be transferred safely between these games.'
@@ -159,9 +184,9 @@ function B.convert(entry,version,data,allowAdaptation)
   local modern=Stats.isGen3(def)
   local adapt=modern~=(type(mon.ivs)=='table')
   if adapt and not allowAdaptation then return nil,'This copy needs IV/DV and training adaptation for the destination generation.' end
-  local note
+  local note=heldNote
   if adapt then
-    note='IV/DV and training adapted; nature and ability follow the destination. The original remains in your Bank.'
+    note=(note and note..' ' or '')..'IV/DV and training adapted; nature and ability follow the destination. The original remains in your Bank.'
     if modern then
       mon.ivs={};mon.evs={};local sum=0
       for _,stat in ipairs(Stats.ORDER_GEN3) do
@@ -212,9 +237,7 @@ function B.deliver(entries,version,slot,allowAdaptation,data)
     converted[i]=mon
   end
   for i,mon in ipairs(converted) do local p=free[i];copy.boxes[p[1]][p[2]]=mon end
-  local id=Saves.createSlot(version);if not id then return nil,'Could not create a new save slot.' end
-  local written,err=Saves.writeSlot(version,id,copy)
-  if not written then return nil,err end
+  local id,err=B.commitDraft(version,slot,copy);if not id then return nil,err end
   Saves.renameSlot(version,id,slot..' · Bank copy')
   return id
 end
@@ -222,9 +245,12 @@ function B.commitDraft(version,slot,draft)
   if Saves.slotOpenElsewhere(version,slot) then return nil,'Close this save in the running game first.' end
   local bytes=S.encode(draft)
   if not Safety.decodeSave(bytes) then return nil,'The copied save is invalid.' end
-  local id=Saves.createSlot(version);if not id then return nil,'Could not create a save slot.' end
-  local ok,why=Saves.writeSlot(version,id,clone(draft));if not ok then return nil,why end
-  Saves.renameSlot(version,id,slot..' · Bank copy');return id
+  local custodyDraft=clone(draft);custodyDraft.version=version
+  return require('src.storage.BankItems').transaction(custodyDraft,function()
+    local id=Saves.createSlot(version);if not id then return nil,'Could not create a save slot.' end
+    local ok,why=Saves.writeSlot(version,id,clone(draft));if not ok then return nil,why end
+    Saves.renameSlot(version,id,slot..' · Bank copy');return id
+  end)
 end
 B.boxes=boxes
 B.boxMons=mons
@@ -253,6 +279,8 @@ function B.sync(target)
     local ok,why=store.write(path,disk.read(path));if not ok then return nil,why end
     total=total+1
   end
+  local items,why=require('src.storage.BankItems').sync(store);if not items then return nil,why end
+  local dex,err=require('src.storage.GlobalPokedex').sync(store);if not dex then return nil,err end
   return total
 end
 return B
