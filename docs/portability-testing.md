@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219, #220, #222, #225, #226, #228, #230, #241 and #244 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219, #220, #222, #225, #226, #228, #230, #241, #244 and #248 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -11,11 +11,53 @@ reference. Historical results below that use a modified Gen1 reference fork
 are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
-The combined runtime tested for this snapshot is
-`b70f28ef071b019c88829b30488dcd7f6eba086e`. It passes **264/264 engine
-suites**, **3/3 SDK suites**, all quick tiers and B30. Subsequent status and
-documentation changes preserve its production and test sources. This testing
-branch is separate from the independently maintained fork `main`.
+The combined production/test runtime for this snapshot is
+`d9cf080d676eccefa861b8ecc93de621782dd5a6`. It passes **267/267 engine
+suites**, **3/3 SDK suites**, all quick tiers and B30. The final cross-engine
+checker is `f829462500c6dc2035fd06739f2e2cc95495df2f`; subsequent reproduction
+and documentation changes preserve the accepted production and test trees.
+This testing branch remains separate from the independently maintained fork
+`main`.
+
+[PR #248](https://github.com/UNDERdecoded/Gen2Recomped/pull/248) aligns the
+native shared King's Rock / Shell Bell move-end command. Stateful hooks see
+the same canonical player read, public parameters and RNG order. Shell Bell
+uses first damage, including the FireRed/Emerald substitute convention.
+Spread scripts retain chosen ordering and occupied slots after a faint;
+later ordinary damage stops after attacker fainting. Spectators buffer future
+action pairs until the current command queue finishes.
+
+Both final runtimes pass **160 workers / 103,868 identical paired enemy/action
+rows**, **2,040 held-command rows** and **6,912 ordinary-damage rows**:
+**168 workers / 112,820 paired observations**, with no accepted timeout or
+nonzero worker. New command/script comparisons retain **7,488 + 15,840 rows**;
+exact #244 production differs in 12,032 new rows. Actual host/guest/spectator
+passes 172 checks; the old spectator module fails 14. Full captured Sleep Talk
+held traces agree at **10/2/2/4** reads for both profiles and both runtimes.
+
+All four held formats pass strict scheduling (40 workers / 1,914 rows), and
+charge contracts pass four formats (64 workers / 1,020 rows) with strict raw
+native policy on the combined fork. Existing imported modes and 32 controlled
+physical-item scenarios using actual imported definitions pass. No graphical
+playthrough or complete unchanged-mod acceptance is claimed.
+
+The isolated feature passes 149/158 engine suites, SDK 3/3 and B30; its exact
+Counter of 25 inherited FAIL lines matches fresh #244 (146/155). This combined
+runtime has zero FAIL lines. Native command revision **13** refuses revision
+12; party codec remains **1**. Independent unchanged-hasher token audit yields
+`beacb71804a6af34`, with legacy `e33d251961f2a41d` retained. Initial fixture
+flag failures and a superseded sixty-second worker timeout remain recorded.
+The final checker retains partial timeout bytes and still fails such a worker.
+
+All ten #248 hosted workflows require maintainer approval (`action_required`);
+the [dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40208868136)
+has zero jobs. Local acceptance is separate. App attachment hit the existing
+100-artifact identity cap. See the [contract and reproduction](native-gen3-post-hit-items.md)
+and [source-bound receipt](qa/native-gen3-post-hit-items.json). Ruby/Sapphire
+per-hit scheduling, other special callers such as Nature Power, full native
+catalogs/controllers and graphical playthroughs remain open.
+
+## Historical #244 acceptance
 
 [PR #244](https://github.com/UNDERdecoded/Gen2Recomped/pull/244) aligns native
 GBA `battle.move_used` and the selected-slot PP command. Ordinary events see

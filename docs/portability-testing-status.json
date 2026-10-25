@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "b70f28ef071b019c88829b30488dcd7f6eba086e",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/244",
-  "feature_ref": "f7c18701a1241e168c404f7db82bb54ae1fe6f5b",
+  "runtime_ref": "d9cf080d676eccefa861b8ecc93de621782dd5a6",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/248",
+  "feature_ref": "1ea0f875ea03cc1ca7b22f88191d9bb15b51bac0",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 264,
-  "engine_suites_total": 264,
+  "engine_suites_passed": 267,
+  "engine_suites_total": 267,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 160,
-  "cross_engine_paired_observations": 89492,
+  "cross_engine_worker_runs": 168,
+  "cross_engine_paired_observations": 112820,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All ten #244 workflows require maintainer approval (action_required); dedicated run 40201496037 has zero jobs; local acceptance is separate",
+  "hosted_ci": "All ten #248 workflows require maintainer approval (action_required); dedicated run 40208868136 has zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Selected actual public GBA hooks and native commands: selection/planning, current-slot PP, event-visible PP and consecutive subscribers, charge/replanned last-PP release, authored/native calls and linked roles; complete held scripts, other special callers, catalogs/controllers, graphics and playthroughs remain open.",
+  "cross_engine_scope": "Selected actual public GBA hooks and native commands, including shared post-hit item ordering, first damage, moved-target checks, spread continuation and linked spectator queue lifetime; additional special callers, full catalogs/controllers, graphics and full-mod playthroughs remain open.",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -150,7 +150,7 @@
     "engine_suites_total": 125,
     "new_failures": 0,
     "existing_failure_suites": 10,
-    "repair_prs": "#128–134",
+    "repair_prs": "#128\u2013134",
     "sdk_suites_passed": 3,
     "b30_profile": "passed"
   },
@@ -184,7 +184,7 @@
     "engine_suites_total": 128,
     "existing_failure_suites": 10,
     "new_failures": 0,
-    "repair_prs": "#128–134",
+    "repair_prs": "#128\u2013134",
     "sdk_suites_passed": 3,
     "b30_profile": "passed"
   },
@@ -220,7 +220,7 @@
     "existing_failure_suites": 10,
     "new_failures": 0,
     "all_fail_lines_match_previous": true,
-    "repair_prs": "#128–134",
+    "repair_prs": "#128\u2013134",
     "sdk_suites_passed": 3,
     "b30_profile": "passed"
   },
@@ -262,7 +262,7 @@
     "existing_failure_suites": 10,
     "new_failures": 0,
     "all_fail_lines_match_previous": true,
-    "repair_prs": "#128–134",
+    "repair_prs": "#128\u2013134",
     "sdk_suites_passed": 3,
     "b30_profile": "passed"
   },
@@ -322,7 +322,7 @@
       "new_failures": 0,
       "sdk_suites_passed": 3,
       "b30_profile": "passed",
-      "repair_prs": "#128–134"
+      "repair_prs": "#128\u2013134"
     },
     "combined_engine_suites_passed": 178,
     "combined_engine_suites_total": 178,
@@ -336,7 +336,7 @@
       "emerald"
     ],
     "native_runtime_ref": "d812e1b144aabd1e4be1ba79c9c31528bd750a74",
-    "native_scope": "LÖVE 11.5; isolated identity; imported title/New Game and constructed native battles; actual FIGHT/move input and result queues, 13 unrestricted Berry activations over one full turn, cure before lethal poison, item consumption and unsubscribe; existing HP/endurance/entry/RUN held smoke rerun; stops before finish/afterBattle/SAVE; no full playthrough or pixel-equivalence claim",
+    "native_scope": "L\u00d6VE 11.5; isolated identity; imported title/New Game and constructed native battles; actual FIGHT/move input and result queues, 13 unrestricted Berry activations over one full turn, cure before lethal poison, item consumption and unsubscribe; existing HP/endurance/entry/RUN held smoke rerun; stops before finish/afterBattle/SAVE; no full playthrough or pixel-equivalence claim",
     "shared_scope": "Native move-end and normal item phases, called/nested/spread/canceled moves, four slots, PP/cures, Ingrain, Wish/weather, Seed/status/current occupant/Liquid Ooze, speed order and capped/zero-heal effects; unchanged public consumer via both real SDKs in all four modes",
     "negative_control": "Unchanged #165 strict checker rejects actual FireRed 35-vs-7 native scheduling discrepancy",
     "imported_red_regressions": {
@@ -370,7 +370,7 @@
       "existing_failure_suites": 10,
       "new_failures": 0,
       "all_26_fail_lines_match_parent": true,
-      "repair_prs": "#128–134",
+      "repair_prs": "#128\u2013134",
       "sdk_suites_passed": 3,
       "b30_profile": "passed"
     },
@@ -380,7 +380,7 @@
       "gold"
     ],
     "native_runtime_ref": "5d49906947262af38d25ad01f1886473e3f40910",
-    "native_scope": "LÖVE 11.5, isolated imported Gold title/New Game and constructed native battle, real FIGHT/move input and result queues, imported LEFTOVERS mapping, exact 7-HP heal and held consumption, detached/frozen records; stops before finish/afterBattle/SAVE; no full-playthrough or pixel-parity claim",
+    "native_scope": "L\u00d6VE 11.5, isolated imported Gold title/New Game and constructed native battle, real FIGHT/move input and result queues, imported LEFTOVERS mapping, exact 7-HP heal and held consumption, detached/frozen records; stops before finish/afterBattle/SAVE; no full-playthrough or pixel-parity claim",
     "stock_gold_held_smoke_rerun": true,
     "negative_control": "Unchanged #166 reports the registry unavailable and native Leftovers heals 25 HP instead of requested 7",
     "imported_red_regressions": {
@@ -415,7 +415,7 @@
       "existing_failure_suites": 10,
       "new_failures": 0,
       "all_26_fail_lines_match_parent": true,
-      "repair_prs": "#128–134",
+      "repair_prs": "#128\u2013134",
       "sdk_suites_passed": 3,
       "b30_profile": "passed"
     },
@@ -428,7 +428,7 @@
     "native_post_runtime_changes": [
       "Shared test metadata probe uses get instead of unavailable native API-1/2 has; production, example and native driver unchanged"
     ],
-    "native_scope": "LÖVE 11.5, isolated imported Gold title/New Game; actual lowered ROM-IR and real script coroutines/UI input; ordinary purchase/native price, bargain independent price and one-item limit, sold-out/reopen protection and close/resume; detached reads/frozen writes; no normal SAVE, full-playthrough or pixel-parity claim",
+    "native_scope": "L\u00d6VE 11.5, isolated imported Gold title/New Game; actual lowered ROM-IR and real script coroutines/UI input; ordinary purchase/native price, bargain independent price and one-item limit, sold-out/reopen protection and close/resume; detached reads/frozen writes; no normal SAVE, full-playthrough or pixel-parity claim",
     "import_scope": "Synthetic bytes through actual Gen-2 ROM reader; zero-based ordinary rows and independent 16-bit bargain prices; fresh full-ROM reimport not exercised",
     "negative_control": "Unchanged #167 reports registry unavailable, leaves POTION instead of requested ULTRA_BALL and drops native bargain shop type during actual VM lowering",
     "imported_red_regressions": {
@@ -474,7 +474,7 @@
       "existing_failure_suites": 10,
       "new_failures": 0,
       "all_26_fail_lines_match_parent": true,
-      "repair_prs": "#128–134",
+      "repair_prs": "#128\u2013134",
       "sdk_suites_passed": 3,
       "b30_profile": "passed"
     },
@@ -486,7 +486,7 @@
       "emerald"
     ],
     "native_runtime_ref": "19513a930c6befae0b0ee336d0c9f4984d7ae929",
-    "native_scope": "LÖVE 11.5, isolated imported title/New Game; real constructors, native summary creation/draw/B-close, Gen-2 refresh, GBA cached/live distinction, common imported IDs, preserved genetics/stats for plain overrides, actual forced-wild constructor and shiny callback bypass, retirement; no normal SAVE, complete battle/playthrough or pixel-equivalence claim",
+    "native_scope": "L\u00d6VE 11.5, isolated imported title/New Game; real constructors, native summary creation/draw/B-close, Gen-2 refresh, GBA cached/live distinction, common imported IDs, preserved genetics/stats for plain overrides, actual forced-wild constructor and shiny callback bypass, retirement; no normal SAVE, complete battle/playthrough or pixel-equivalence claim",
     "negative_control": "Unchanged #168 has unavailable hooks, false/male instead of requested true/female, coarse Gen-2 DV boundary and ignored split SID",
     "imported_red_regressions": {
       "battle": 468,
@@ -531,7 +531,7 @@
       "existing_failure_suites": 10,
       "new_failures": 0,
       "all_26_fail_lines_match_parent": true,
-      "repair_prs": "#128–134",
+      "repair_prs": "#128\u2013134",
       "sdk_suites_passed": 3,
       "b30_profile": "passed"
     },
@@ -543,7 +543,7 @@
       "emerald"
     ],
     "native_runtime_ref": "a7a4091be9f4b631d54cd6f57ce1d33c5d8bed46",
-    "native_scope": "LÖVE 11.5, isolated imported title/New Game; unchanged consumer; actual imported Gold text ID and native lowered writetext/GBA script commands; player/string-buffer expansion, native textbox rendering/paragraph pages/A-close/script resume and frozen late writes; no normal SAVE, full playthrough, fresh full-ROM reimport or pixel-equivalence claim",
+    "native_scope": "L\u00d6VE 11.5, isolated imported title/New Game; unchanged consumer; actual imported Gold text ID and native lowered writetext/GBA script commands; player/string-buffer expansion, native textbox rendering/paragraph pages/A-close/script resume and frozen late writes; no normal SAVE, full playthrough, fresh full-ROM reimport or pixel-equivalence claim",
     "owned_native_example_removed_with_hash_guards": true,
     "negative_control": "Unchanged #169 SDK writes unused 55:4067 shadow while native VM reads SCRIPT BASE; common GBA string variable remains literal through actual reader",
     "imported_red_runtime_ref": "13598190777c0de6fac79cbe0f2663b8f8c56725",
@@ -587,7 +587,7 @@
       "existing_failure_suites": 10,
       "new_failures": 0,
       "all_26_fail_lines_match_parent": true,
-      "repair_prs": "#128–134",
+      "repair_prs": "#128\u2013134",
       "sdk_suites_passed": 3,
       "b30_profile": "passed"
     },
@@ -599,7 +599,7 @@
       "emerald"
     ],
     "native_runtime_ref": "62f8902617255195b4a12b176f171925c49209ec",
-    "native_scope": "LÖVE 11.5, isolated imported title/New Game; unchanged public consumer; Gold native battle-prose helper/textbox/ending display and independent same-label ScriptRunner text/A-close/resume; real GBA storage-menu five action labels/descriptions/B-close/reopen, frozen late writes; does not execute full battle/wakeup turn; no normal SAVE, full playthrough, fresh full-ROM reimport or pixel-equivalence claim",
+    "native_scope": "L\u00d6VE 11.5, isolated imported title/New Game; unchanged public consumer; Gold native battle-prose helper/textbox/ending display and independent same-label ScriptRunner text/A-close/resume; real GBA storage-menu five action labels/descriptions/B-close/reopen, frozen late writes; does not execute full battle/wakeup turn; no normal SAVE, full playthrough, fresh full-ROM reimport or pixel-equivalence claim",
     "owned_example_removed_with_hash_guards": true,
     "negative_control": "Unchanged #170 rejects absent registry; actual native Gold prose and GBA storage readers retain original values",
     "imported_red_runtime_ref": "52541d1b0160de2361a2bffe15fd4fad4eb9a20c",
@@ -642,7 +642,7 @@
       "existing_failure_suites": 10,
       "new_failures": 0,
       "all_26_fail_lines_match_parent": true,
-      "repair_prs": "#128–134",
+      "repair_prs": "#128\u2013134",
       "sdk_suites_passed": 3,
       "b30_profile": "passed"
     },
@@ -653,7 +653,7 @@
       "emerald"
     ],
     "native_runtime_ref": "7a12243293dcb7a6ff2a00dc64490f3c6bb5aa32",
-    "native_scope": "LÖVE 11.5, isolated imported title/New Game; same installed public example; real party/footer/action rendering, SUMMARY open/B-return, ITEM submenu/B-close and party close; FireRed Player-PC -> Item Storage -> withdrawal title/list/submenu and translated CANCEL with unchanged inventory; no normal SAVE, full playthrough, fresh full-ROM import or pixel equality",
+    "native_scope": "L\u00d6VE 11.5, isolated imported title/New Game; same installed public example; real party/footer/action rendering, SUMMARY open/B-return, ITEM submenu/B-close and party close; FireRed Player-PC -> Item Storage -> withdrawal title/list/submenu and translated CANCEL with unchanged inventory; no normal SAVE, full playthrough, fresh full-ROM import or pixel equality",
     "owned_example_removed_with_hash_guards": true,
     "negative_control": "Unchanged #171 actual party reader retains BASE_SUMMARY after same public MOD_SUMMARY override",
     "imported_red_runtime_ref": "236591a1fa50266311837f2d8569d7395c365b46",
@@ -697,7 +697,7 @@
       "all_26_fail_lines_match_parent": true,
       "sdk_suites_passed": 3,
       "b30_profile": "passed",
-      "repair_prs": "#128–134"
+      "repair_prs": "#128\u2013134"
     },
     "combined_engine_suites_passed": 193,
     "combined_engine_suites_total": 193,
@@ -740,7 +740,7 @@
       "all_26_fail_lines_match_parent": true,
       "sdk_suites_passed": 3,
       "b30_profile": "passed",
-      "repair_prs": "#128–134"
+      "repair_prs": "#128\u2013134"
     },
     "combined_engine_suites_passed": 194,
     "combined_engine_suites_total": 194,
@@ -792,7 +792,7 @@
       "all_26_fail_lines_match_parent": true,
       "sdk_suites_passed": 3,
       "b30_profile": "passed",
-      "repair_prs": "#128–134"
+      "repair_prs": "#128\u2013134"
     },
     "combined_engine_suites_passed": 196,
     "combined_engine_suites_total": 196,
@@ -854,7 +854,7 @@
       "all_26_fail_lines_match_parent": true,
       "sdk_suites_passed": 3,
       "b30_profile": "passed",
-      "repair_prs": "#128–134"
+      "repair_prs": "#128\u2013134"
     },
     "combined_engine_suites_passed": 197,
     "combined_engine_suites_total": 197,
@@ -2992,6 +2992,42 @@
       "tmp/move-used-pp-qa/zero-release-negative-and-fix.json",
       "tmp/move-used-pp-qa/hash-audit.log",
       "tmp/move-used-pp-qa/full-phase-final.json"
+    ],
+    "historical_acceptance": true,
+    "superseded_by": "https://github.com/UNDERdecoded/Gen2Recomped/pull/248"
+  },
+  "native_post_hit_items": {
+    "pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/248",
+    "feature_gate_ref": "d88be1fc42df80756dfc7daa918b7d5c77e80004",
+    "feature_oracle_ref": "80c8bd8e4d2e403b94679f6e9283d616d77f5007",
+    "combined_gate_ref": "d9cf080d676eccefa861b8ecc93de621782dd5a6",
+    "combined_oracle_ref": "f829462500c6dc2035fd06739f2e2cc95495df2f",
+    "enemy_action_workers": 160,
+    "enemy_action_rows": 103868,
+    "new_command_rows": 7488,
+    "new_script_rows": 15840,
+    "native_command_revision": 13,
+    "party_codec_revision": 1,
+    "raw_digest": "beacb71804a6af34",
+    "legacy_digest": "e33d251961f2a41d",
+    "old_execution_different_rows": 12032,
+    "linked_role_checks": 172,
+    "old_spectator_failed_checks": 14,
+    "full_sleep_talk_held_phase_equal": true,
+    "full_sleep_talk_held_phase_reads": {
+      "success": 10,
+      "awake": 2,
+      "empty": 2,
+      "blocked": 4
+    },
+    "imported_controlled_scenarios": 32,
+    "accepted_timeout_workers": 0,
+    "failed_and_timeout_observations_retained": true,
+    "remaining": [
+      "Ruby/Sapphire per-hit scheduling",
+      "Other special native callers including Nature Power",
+      "Full catalogs/controllers",
+      "Graphical playthrough and unchanged full-mod acceptance"
     ]
   }
 }
