@@ -11141,6 +11141,7 @@ end
 -- (32,72) player.
 local substDoll
 function BattleState:drawSubstituteDoll(battler)
+  if GameVersion.isGen3() and require("src.battle.Gen3SubstituteArt").draw(self, battler) then return end
   if substDoll == nil then
     local ok, img = pcall(love.graphics.newImage,
                           "assets/generated/sprites/monster.png")
