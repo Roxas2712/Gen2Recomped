@@ -41,6 +41,6 @@ return function(game)
   rows[#rows+1]={move=key,player=player,life=shape.life,laps=shape.laps,visible=true,restoreExact=true,source=shape.source}
   anim:release();b.gen3Anim=host;b.gen3AnimPlaying=false;wait(1)
  end end
- game.stack:pop();assert(love.filesystem.write('rs-stat-flourish-result.json',Json.encode({edition=edition,status='pass',modsEnabled=false,cases=rows,physicalIOSTested=false})))
+ game.stack:pop();assert(love.filesystem.write('edition-result.json',Json.encode({edition=edition,status='pass',modsEnabled=false,cases=rows,physicalIOSTested=false})))
  print('PASS_NATIVE_RS_STAT_FLOURISH',edition,#rows,'real ROM import, both sides, visible negative, exact restore, 64-frame terminal');love.event.quit(0)
 end
