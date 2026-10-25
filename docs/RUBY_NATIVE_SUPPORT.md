@@ -188,3 +188,33 @@ producing no result; that log/input remains local. The later fresh run is a
 separate receipt. Original RS bag/menu artwork, Berry Tag, remaining native
 UI/story and physical mobile acceptance remain open. This is not a full UI
 or complete-story certification.
+
+
+## Verified RS ball art and native send-out
+
+The matching-ELF generator now supplies the cartridge's twelve ball-sheet and
+palette records, shared open halves, eight particle frames and colour table.
+It verifies table tags/decompressed sizes and nine actual Thumb send-out/release
+sites against the matching ROM, retaining source/function/ELF hashes. RS uses
+its own caught jingle (371); it has no Emerald-only frame-40 click.
+
+Only RS advances to `rs-ball-art-v5:`. This retains the earlier dex, item-effect,
+field-window and item-action fixes and requires a fresh RS import; other
+editions keep their markers. `RomExtractorGen3` uses a supplied provenance
+string when present and retains its existing native decoder/animation logic.
+
+The actual-cartridge CPU test `tests/gen3_rs_ball_anims.lua <ROM> <manifest>`
+checks all twelve composed three-frame sheets, particles, native 39/30-frame
+send-outs, RS sounds, invalid Thumb-site/table/old-address controls and pristine
+restoration. Independent private PNG decoding also matches all imported ball
+and particle pixels; no ROM bytes or extracted images are in this contribution.
+
+A separate fresh native import with all mods disabled passes both player
+genders, real native ball/particle draws, ULTRA item-to-sheet mapping, unchanged
+native draw clocks, visible ball-only/particle-only negatives and exact PNG
+restoration. All 8,993 frozen engine files remain unchanged during each run.
+Numeric/hash-only proof: [`ruby-ball-native.json`](ruby-ball-native.json).
+
+This is a narrow import/send-out correction, not all balls/throws/catches,
+remaining original RS art, full battle/story/link parity or physical iOS
+acceptance. Previous v2/v3/v4 proof records remain historical evidence.
