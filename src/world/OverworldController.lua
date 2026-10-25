@@ -68,6 +68,34 @@ local OverworldState = { isOpaque = true, isOverworld = true }
 
 local Game -- set on enter (avoids circular require at load time)
 
+function OverworldState:movementState()
+  if not GameVersion.isGen2() then return nil end
+  return require("src.world.Gen2PlayerState").read(self.player, Game and Game.save)
+end
+
+function OverworldState:applyPlayerState(state)
+  if not GameVersion.isGen2() then return nil, "not Gen2" end
+  return require("src.world.Gen2PlayerState").apply(self.player, Game and Game.save, state)
+end
+
+-- This engine's live world is the module itself (StateStack.push enters it
+-- directly). A computed property keeps every native script/warp change
+-- observable immediately without maintaining another saved state field.
+setmetatable(OverworldState, {
+  __index = function(world, key)
+    if key == "playerState" then return world:movementState() end
+  end,
+  __newindex = function(world, key, value)
+    if key == "playerState" and GameVersion.isGen2() then
+      local ok, reason = world:applyPlayerState(value)
+      if not ok then error(reason, 2) end
+    else
+      rawset(world, key, value)
+    end
+  end,
+})
+
+
 -- AN EMPTY PLOT DRAWS NOTHING, asked once per entity per frame.  Written
 -- with `pcall(function() ... require(...) ... end)` this was a closure, a
 -- pcall frame and a package.loaded lookup for every entity on the map, sixty
@@ -3962,6 +3990,33 @@ function OverworldState:update(dt)
     UG.tickSparkles(Game, self)
   end
   -- every body on screen, home and foreign alike, in this map's cells
+  self:stepBody(scriptJustEnded)
+
+  self:followCamera()
+
+  -- pan_camera offset rides on top of the follow; the ramp resumes its
+  -- runner when it lands
+  local pan = self.cameraPan
+  if pan then
+    if pan.frames then
+      pan.t = pan.t + 1
+      local k = math.min(1, pan.t / pan.frames)
+      pan.ox = pan.fromX + (pan.toX - pan.fromX) * k
+      pan.oy = pan.fromY + (pan.toY - pan.fromY) * k
+      if pan.t >= pan.frames then
+        pan.frames = nil
+        local done = pan.onDone
+        pan.onDone = nil
+        if done then done() end
+      end
+    end
+    self.camera.x = self.camera.x + pan.ox
+    self.camera.y = self.camera.y + pan.oy
+  end
+end
+
+-- Native actor/input/player phase; outer update retains clocks, runners and camera.
+function OverworldState:stepBody(scriptJustEnded)
   self:updateCast()
   local cast = self.cast or self.entities
   for _, npc in ipairs(self.npcs) do
@@ -4199,27 +4254,6 @@ function OverworldState:update(dt)
     self:onStepComplete()
   end
 
-  self:followCamera()
-
-  -- pan_camera offset rides on top of the follow; the ramp resumes its
-  -- runner when it lands
-  local pan = self.cameraPan
-  if pan then
-    if pan.frames then
-      pan.t = pan.t + 1
-      local k = math.min(1, pan.t / pan.frames)
-      pan.ox = pan.fromX + (pan.toX - pan.fromX) * k
-      pan.oy = pan.fromY + (pan.toY - pan.fromY) * k
-      if pan.t >= pan.frames then
-        pan.frames = nil
-        local done = pan.onDone
-        pan.onDone = nil
-        if done then done() end
-      end
-    end
-    self.camera.x = self.camera.x + pan.ox
-    self.camera.y = self.camera.y + pan.oy
-  end
 end
 
 -- any direction currently held (hJoyHeld & PAD_CTRL_PAD)
@@ -5038,6 +5072,15 @@ function OverworldState:scriptRunning()
 end
 
 function OverworldState:busy()
+  -- Gen2's world lives below overlays. A movement wrapper runs after the
+  -- native body, including a START/A press that just opened a screen: it
+  -- must not move behind that new owner on the same tick.
+  if GameVersion.isGen2() then
+    if self.battleActive then return true end
+    local stack = Game and Game.stack
+    local top = stack and stack.top and stack:top()
+    if top and top ~= self then return true end
+  end
   return (self:scriptRunning() or (self.scriptMoves and #self.scriptMoves > 0)
     or self.engaging or self.emote or self.teleportOut or self.whirlSpin
     or self.gen4Waterfall or self.transitioning or self.flyAnim or self.fishing
@@ -5048,6 +5091,17 @@ end
 function OverworldState:acceptsMenuInput()
   return not self.battleActive and not self:busy()
     and not (self.player and self.player.moving) and not self.iceSlide
+end
+
+function OverworldState:pollInput(input)
+  local dir
+  if input then
+    if input:isDown("up") then dir = "up"
+    elseif input:isDown("down") then dir = "down"
+    elseif input:isDown("left") then dir = "left"
+    elseif input:isDown("right") then dir = "right" end
+  end
+  self.heldDir = dir
 end
 
 function OverworldState:handleInput()
@@ -5264,8 +5318,11 @@ function OverworldState:handleInput()
     return
   end
 
+  local gen2Intent = GameVersion.isGen2()
+  if gen2Intent then self:pollInput(input) end
   for _, pressed in ipairs({ "up", "down", "left", "right" }) do
-    if input:isDown(pressed) then
+    if (gen2Intent and self.heldDir == pressed)
+       or (not gen2Intent and input:isDown(pressed)) then
       -- WHAT THAT PRESS MEANS UNDER A SWUNG CAMERA.
       --
       -- Everything below this line -- turning, stepping, ledges, warps, the
@@ -5273,7 +5330,7 @@ function OverworldState:handleInput()
       -- always been handed the key that was pressed, because until there was
       -- a camera that could turn, those were the same thing.  Rotating here
       -- and nowhere else means not one of them learns about cameras.
-      local dir = self:walkDirection(pressed)
+      local dir = gen2Intent and pressed or self:walkDirection(pressed)
       -- .Normal and .Surf both `call .CheckTile` straight after .GetAction
       -- and `ret c`, so the eddy pre-empts turning, stepping, ledges and
       -- warps alike -- and, being a bump, it never lets the player in.
