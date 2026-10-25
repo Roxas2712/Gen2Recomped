@@ -24,5 +24,7 @@ for _,iv in pairs(modern.ivs) do assert(iv>=0 and iv<=31 and iv%1==0,'native IV 
 check(not B.convert(entry,'red',{pokemon={},moves={},items={}}),'an unsupported species is preserved in Bank rather than replaced with a different roll')
 local bad=S.decode(original);bad.origin.seed='invalid'
 check(not B.convert(bad,'emerald',data),'a malformed system seed cannot produce a partial monster')
+bad=S.decode(original);bad.canonical.dex=1.5
+check(not R.build(bad,'NATIVE_SPECIES',data),'a fractional species identifier is rejected')
 check(not R.build(entry,'UNKNOWN',data),'missing native species data cannot fabricate a reward')
 print('System Wonder Trade reward: '..n..' checks passed')

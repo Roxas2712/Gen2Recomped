@@ -110,7 +110,8 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
       local offered=row.offered or {};local reply=row.reply or {}
       local action=row.status=='completed' and 'tradeReceive' or row.status=='prepared' and row.sender and 'tradeConfirm' or row.status=='pending' and not row.sender and 'tradeReply' or nil
       local textWidth=math.max(1,w-(action and row.status~='completed' and 282 or 155)*s)
-      text(tostring(row.mode):upper()..' · '..row.status..' · '..tostring(row.system_partner and 'SYSTEM · OT RetroRecomp' or row.partner or 'Finding a partner · 10 min–6 h'),x+10*s,by+5*s,textWidth)
+      local partner=row.legacy_offer and 'Older offer · cancel and submit again' or row.system_partner and 'SYSTEM · OT RetroRecomp' or row.partner or 'Finding a partner · 10 min–6 h'
+      text(tostring(row.mode):upper()..' · '..row.status..' · '..tostring(partner),x+10*s,by+5*s,textWidth)
       text(tostring(offered.nickname or offered.species or '?')..(row.reply and (' ⇄ '..tostring(reply.nickname or reply.species)) or ''),x+10*s,by+29*s,textWidth)
       if action and row.status~='completed' then button('CANCEL',x+w-264*s,by+12*s,118*s,'tradeCancel',{exchange=row.id}) end
       if action then button(action=='tradeReceive' and 'RECEIVE' or action=='tradeConfirm' and 'CONFIRM' or 'REPLY',x+w-136*s,by+12*s,126*s,action,{exchange=row.id})

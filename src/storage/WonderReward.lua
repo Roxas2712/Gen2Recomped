@@ -5,7 +5,7 @@ function R.build(entry,species,data)
   local o=entry.origin or {}
   if o.kind~='retrorecomp_wonder' then return nil,'Not a system encounter.' end
   if o.pool~=R.POOL or type(o.seed)~='string' or #o.seed~=64 or not o.seed:match('^[a-f0-9]+$')
-    or entry.mon.ot~='RetroRecomp' or type(entry.canonical.dex)~='number' or entry.canonical.dex<1 or entry.canonical.dex>649 then
+    or entry.mon.ot~='RetroRecomp' or type(entry.canonical.dex)~='number' or entry.canonical.dex%1~=0 or entry.canonical.dex<1 or entry.canonical.dex>649 then
     return nil,'The system encounter receipt is invalid.'
   end
   local def=data.pokemon[species];if not def then return nil,'This species is unavailable in this cartridge.' end

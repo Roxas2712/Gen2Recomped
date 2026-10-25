@@ -28,6 +28,7 @@ signed=true;offline=true
 check(not T.submit(entry,'wonder'),'an unavailable network leaves a retryable offer')
 local nonce=http[#http].body.nonce;local deviceHeader=http[#http].opts.headers['X-Retro-Device']
 check(http[#http].body.summary.is_egg==true,'Wonder Trade explicitly transmits egg status without modifying the immutable Pokémon record')
+check(http[#http].body.wonder_policy=='wonder-10m-6h-v1','only a client that supports the timed system receipt opts into the new Wonder Trade pool')
 check(deviceHeader==first and http[#http].opts.sensitive,'requests send the persistent device ID through the private authenticated transport')
 offline=false;local exchange='aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
 response={id=exchange,status='pending'}

@@ -65,7 +65,10 @@ function T.submit(entry,mode,recipient,exchange)
   if mode=='reply' then
     if type(exchange)~='string' or #exchange~=36 or not exchange:match('^[a-f0-9%-]+$') then return nil,'Invalid exchange identifier.' end
     path='/bank/exchanges/'..exchange..'/respond'
-  else body.mode=mode;body.recipient=recipient end
+  else
+    body.mode=mode;body.recipient=recipient
+    if mode=='wonder' then body.wonder_policy='wonder-10m-6h-v1' end
+  end
   local result,err=T.request('POST',path,body);if not result then return nil,err end
   pending.exchange=result.id;pending.status=result.status
   local ok,problem=write(T.JOURNAL,journal)

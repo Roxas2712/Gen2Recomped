@@ -115,9 +115,12 @@ function W.tick(self)
     else job(self,'devices',A.devices) end
   elseif doc.state=='connected' then connected(self,f)
   elseif doc.state=='password_reset' then f.mode='login';f.challenge=nil;f.notice='Password updated. Sign in with your new password.';f.scroll=0
+  elseif doc.state=='mfa_code' then
+    clearSecrets(f);f.mode='login';f.challenge=nil;f.scroll=0
+    f.notice='Please sign in again with email and password. This launcher does not require an authenticator.'
   elseif doc.challenge then
     f.mode=doc.state;f.challenge=doc.challenge;f.scroll=0
-    f.notice=doc.state=='mfa_code' and 'Enter your authenticator code or a recovery code.' or 'Enter the eight-digit code from your ModCompass email. It expires after 15 minutes.'
+    f.notice='Enter the eight-digit code from your ModCompass email. It expires after 15 minutes.'
   else f.notice='Account response incomplete. Please try again.' end
 end
 function W.scroll(self,dy)
@@ -222,10 +225,10 @@ function W.draw(self)
       row('SIGN IN & LINK THIS DEVICE','submit');row('CREATE AN ACCOUNT','register');row('FORGOT PASSWORD','forgot')
     elseif f.mode=='forgot' then paragraph('RECOVER YOUR ACCOUNT',true);field('Email','email');row('SEND RECOVERY CODE','submit');row('BACK TO SIGN IN','back')
     else
-      paragraph(f.mode=='mfa_code' and 'TWO-FACTOR VERIFICATION' or 'CHECK YOUR EMAIL',true);field(f.mode=='mfa_code' and 'Authenticator / recovery code' or 'Email code','code')
+      paragraph('CHECK YOUR EMAIL',true);field('Email code','code')
       if f.mode=='reset_code' then field('New password','password',true);field('Confirm new password','confirmation',true) end
       row(f.mode=='reset_code' and 'UPDATE PASSWORD' or 'VERIFY & CONTINUE','submit')
-      if f.mode~='mfa_code' then row('RESEND EMAIL CODE','resend') end
+      row('RESEND EMAIL CODE','resend')
       row('START AGAIN','back')
     end
   end
