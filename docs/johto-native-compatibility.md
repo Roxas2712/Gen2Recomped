@@ -26,6 +26,16 @@ on OpenGL and Metal use the mod's MEDIUM default; physical NATIVE resolution
 and 2X AA are exercised in both selected cameras. See the
 [quality measurements and remaining visual limits](native-apple-silicon-quality.md).
 
+An isolated arm64 LuaJIT capacity experiment now compiles and initializes the
+unchanged generated renderer extension on OpenGL and Metal in both selected
+cameras. The stock runtime still rejects it. The experimental runtime also
+passes the 343 engine suites, three SDK suites, high-index closure/GC/debug/
+bytecode checks and C API capture checks through 120 upvalues. This is not
+distributed runtime acceptance: Windows, Intel/universal macOS and complete
+renderer/gameplay parity remain open. See the
+[reproducible probes](../tools/runtime-upvalue-check/README.md) and
+[exact experiment receipt](qa/native-foundation/johto-native-runtime-upvalues.json).
+
 A direct read-only compiler probe of the supplied Ver.1.8 package confirms
 that both original `VoxelScene` modules compile under the local LuaJIT and
 the unchanged bundled LÖVE12 runtime.
