@@ -103,3 +103,22 @@ outside that early-story approach. Full story, all maps, forced-terrain GPU,
 Windows and complete avatar/model/occlusion parity remain open. The generated
 Stadium extension is still uninstalled. This checkpoint does not change the
 existing release assets.
+
+## Transitions with the experimental runtime
+
+The separate extended-upvalue arm64 LÖVE host now repeats the complete normal
+transition matrix with `rendererInstalled == true` required. OpenGL at source
+`6f0f8d2c` and Metal at `6f926f9c` each pass 213 assertions, 12 normal door/map
+transitions, four native menu ownership checks and four fresh OS-window
+proofs. Both selected cameras retain native ownership and return correctly.
+All 27,329 supplied files remain unchanged. The
+[runtime receipt](qa/native-foundation/johto-native-runtime-upvalues.json)
+binds these results to the separately qualified Lua library.
+
+All eight room proofs were inspected and show upright geometry and NPC
+figures. Black-and-white objects remain visible in some First Person frames;
+complete avatar/model/occlusion and performance parity remain unaccepted.
+Initial QA positions and skipped introduction still preclude all-story
+acceptance. These tests use the experimental host, not the public release's
+stock 60-upvalue runtime. Windows and universal packaging remain separate
+gates.

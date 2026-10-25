@@ -186,5 +186,223 @@
     "No complete Pokemon model, all effects, battles, movement or all-story parity claim",
     "Stock release unchanged; installing the source PR does not replace its Lua runtime",
     "No private mod source/assets, generated renderer source, ROM data, screenshots or saves published"
-  ]
+  ],
+  "reproducibleLocalBuild": {
+    "experimental": true,
+    "luaJitSource": "a4c064539ea931274d407e1249b4bb575424a0f4",
+    "engineSource": "224fa467ed84f4348faeeb3958dca25aa3b850b6",
+    "platform": "Darwin",
+    "machine": "arm64",
+    "toolsSha256": {
+      "README.md": "a6610cd64eeb530375266ea2513fde29d4addd323b2383d8157fea95b2d13ca8",
+      "c_api.c": "b473dc627d45430bf4a48640775e73126371e4d5efb263f6d75e71b49743bfec",
+      "check.lua": "3f39d04d9b9fc9f93ad920a219b20cf1e27d62e5c200f08c29073ee7bde294a7",
+      "luajit-upvalues.patch": "022b346f64aa620a04c0ccfee616088b747e340ac3ac3485680a7eb30e9652dd",
+      "qualify.py": "4d04b556e7b32d0689ef4662c273ae211dd4a9e9f6515d320294a79f78c5d7ed"
+    },
+    "variants": [
+      {
+        "name": "stock",
+        "capacity": 60,
+        "closure": {
+          "runtime": "LuaJIT 2.1.1792588164",
+          "cases": [
+            {
+              "upvalues": 1,
+              "compiles": true,
+              "interpreter": true,
+              "jit": true
+            },
+            {
+              "upvalues": 8,
+              "compiles": true,
+              "interpreter": true,
+              "jit": true
+            },
+            {
+              "upvalues": 32,
+              "compiles": true,
+              "interpreter": true,
+              "jit": true
+            },
+            {
+              "upvalues": 60,
+              "compiles": true,
+              "interpreter": true,
+              "jit": true
+            },
+            {
+              "upvalues": 61,
+              "compiles": false
+            },
+            {
+              "upvalues": 64,
+              "compiles": false
+            },
+            {
+              "upvalues": 96,
+              "compiles": false
+            },
+            {
+              "upvalues": 120,
+              "compiles": false
+            }
+          ],
+          "minimum": 60,
+          "passed": true,
+          "checks": 160250
+        },
+        "cApiCounts": [
+          60
+        ],
+        "librarySha256": "7e937d1095a1298ad831265edde2c583ad622d22a3bfedaddd5142820b0b1176",
+        "headerSha256": "a7e86384bfa9638da06e4db5166551e75494ceae0e8bd0505d365cba7f83af85",
+        "engineSuites": 343
+      },
+      {
+        "name": "extended",
+        "capacity": 120,
+        "closure": {
+          "passed": true,
+          "runtime": "LuaJIT 2.1.1792588164",
+          "cases": [
+            {
+              "compiles": true,
+              "jit": true,
+              "interpreter": true,
+              "upvalues": 1
+            },
+            {
+              "compiles": true,
+              "jit": true,
+              "interpreter": true,
+              "upvalues": 8
+            },
+            {
+              "compiles": true,
+              "jit": true,
+              "interpreter": true,
+              "upvalues": 32
+            },
+            {
+              "compiles": true,
+              "jit": true,
+              "interpreter": true,
+              "upvalues": 60
+            },
+            {
+              "compiles": true,
+              "jit": true,
+              "interpreter": true,
+              "upvalues": 61
+            },
+            {
+              "compiles": true,
+              "jit": true,
+              "interpreter": true,
+              "upvalues": 64
+            },
+            {
+              "compiles": true,
+              "jit": true,
+              "interpreter": true,
+              "upvalues": 96
+            },
+            {
+              "compiles": true,
+              "jit": true,
+              "interpreter": true,
+              "upvalues": 120
+            }
+          ],
+          "minimum": 120,
+          "checks": 320964
+        },
+        "cApiCounts": [
+          60,
+          61,
+          64,
+          96,
+          120
+        ],
+        "librarySha256": "5c51a7937a97b483c903f415161575ea0a074382f7923b5dd774ba5dec9fd023",
+        "headerSha256": "793f34ccc7668e553ee8a5aa65c3a80c821b292aa98501d63235b7fb91d96948",
+        "engineSuites": 343
+      }
+    ],
+    "sourceUnchanged": true,
+    "passed": true,
+    "reportSha256": "64f0d1937a4cf4f0c5de3baabc2a0387f535221b06484851ed755f5c1c6f893e"
+  },
+  "copiedHostAbi": [
+    {
+      "passed": true,
+      "experimental": true,
+      "platform": "Darwin",
+      "machine": "arm64",
+      "baseLoveCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+      "originalArchiveSha256": "f70f60d162eda6931b0b28e2b094b83b741986f0feac08d33a10be7c57e724f8",
+      "originalLibrarySha256": "d99eed38c9752775028ed88b7b23285cd3b1abea4154a41b06fb2ace9c0a3edc",
+      "inputCandidateLibrarySha256": "5c51a7937a97b483c903f415161575ea0a074382f7923b5dd774ba5dec9fd023",
+      "qualificationSha256": "64f0d1937a4cf4f0c5de3baabc2a0387f535221b06484851ed755f5c1c6f893e",
+      "scope": "headless LOVE12 boot, closure/JIT/GC/bytecode, FFI callback and thread VM; not GPU/gameplay",
+      "variants": [
+        {
+          "variant": "stock",
+          "capacity": 60,
+          "checks": 160250,
+          "librarySha256": "d99eed38c9752775028ed88b7b23285cd3b1abea4154a41b06fb2ace9c0a3edc"
+        },
+        {
+          "variant": "extended",
+          "capacity": 120,
+          "checks": 320964,
+          "librarySha256": "d30fa0c327754e1de28a92ba4e65fe3f60427dfefc8c591a58398a32f2d83cdd"
+        }
+      ],
+      "reportSha256": "bad16a63138d43916d614f9fae021e632429a84faa4f4a982870b7e464e69dfb"
+    }
+  ],
+  "hostAbiLimits": "Local arm64 host gate passes. Windows and Intel macOS CI qualification is running; neither has final acceptance yet.",
+  "extendedRuntimeTransitions": {
+    "scope": "Normal Cherrygrove Mart/Center doors, native START ownership and Cherrygrove/Route 29 connections using continuous controls with the generated extension installed; initial positions selected and fresh-save introduction skipped",
+    "runs": [
+      {
+        "backend": "opengl",
+        "engineSource": "6f0f8d2c794a5b5d036fe0d614a9cbeba3a231ee",
+        "checks": 213,
+        "normalTransitions": 12,
+        "menuOwnershipChecks": 4,
+        "ownedWindowProofs": 4,
+        "cameras": [
+          "first",
+          "third"
+        ],
+        "modelRendererInstalled": true,
+        "unchangedModFiles": 27329,
+        "runtimeLibrarySha256": "d30fa0c327754e1de28a92ba4e65fe3f60427dfefc8c591a58398a32f2d83cdd",
+        "resultSha256": "2386287dcbe52786cfe3960b089107d454c3d4734b192ef9301e6268692dc765",
+        "verificationSha256": "78d2c2be2bfec3675d6041e2b9998ad91d46422013e1c631cae177329eb99142"
+      },
+      {
+        "backend": "metal",
+        "engineSource": "6f926f9c0096d89e45dfedfc0dabcde181e40b9d",
+        "checks": 213,
+        "normalTransitions": 12,
+        "menuOwnershipChecks": 4,
+        "ownedWindowProofs": 4,
+        "cameras": [
+          "first",
+          "third"
+        ],
+        "modelRendererInstalled": true,
+        "unchangedModFiles": 27329,
+        "runtimeLibrarySha256": "d30fa0c327754e1de28a92ba4e65fe3f60427dfefc8c591a58398a32f2d83cdd",
+        "resultSha256": "0a1b51525fbfaa3eb3048b5181516d9c81943bfbda582f7635fad529fd129d06",
+        "verificationSha256": "a626d81b0631c1b6e9420e8cf522e01d7a42a7153e166d9d2211427ba9ef2322"
+      }
+    ],
+    "visualInspection": "All eight fresh window proofs inspected: visible upright rooms and NPC figures; black-and-white objects remain visible in some First Person frames and are unresolved. No complete avatar/model/occlusion or performance acceptance.",
+    "failedSetup": "The first new starter referenced an already reclaimed historical QA runtime and failed before any application launch. The passing runs use the copied, locally qualified LOVE ABI app and pin the entire runtime app as an input."
+  }
 }
