@@ -47,6 +47,11 @@ ImportAccess.MAX_CACHE_WRITE_BYTES = 64 * 1024 * 1024
 -- code in `err` and "not_found" is a normal answer rather than a failure.
 local function makeCache(modId, fs)
   local store = ModStorage.new(modId, fs)
+  local handle=store:_fs()
+  if handle then
+    local ok,why=require('src.mods.JobCache').recover(store,handle)
+    assert(ok,'job cache recovery failed: '..tostring(why))
+  end
   local cache = { modId = modId }
 
   function cache:write(key, bytes)

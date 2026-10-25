@@ -21,6 +21,7 @@ local Events = require("src.mods.Events")
 local Hooks = require("src.mods.Hooks")
 local ModStorage = require("src.mods.Storage")
 local Runtime = require("src.mods.Runtime")
+local Job = require("src.mods.Job")
 local ModGens = require("src.mods.ModGens")
 local ModSeams = require("src.mods.ModSeams")
 -- Module-name aliases for mods written against the Gold port's per-generation
@@ -1142,6 +1143,7 @@ function Loader:_api(mod)
       return data
     end)
   api.packs = require("src.mods.AssetPacks").new(mod.manifest, loader.fs)
+  api.job = Job.forMod(loader, mod, api.cache)
   -- mod.world / mod.game / mod.storage all materialize on first touch, for
   -- the same reason: a headless load must not drag the world stack in, and
   -- the Game the facade acts on is still being wired when the entry chunk
@@ -1210,6 +1212,7 @@ end
 -- migration it took goes with them.  The journal only exists around an
 -- entry chunk; a later failure (script validation) purges every registry.
 function Loader:_rollback(modId)
+  Job.releaseAll(self, modId)
   for name in pairs(self.journal or self.content) do
     self.content[name]:rollback(modId)
   end
@@ -1324,6 +1327,7 @@ local function stampAudioOwners(data, name, registry)
 end
 
 function Loader:load(data)
+  Job.releaseAll(self)
   -- A SECOND LOAD IN ONE PROCESS STARTS FROM THE ENGINE, NOT FROM THE LAST
   -- LOAD'S MODS.  EXIT GAME -> launcher -> Play runs every mod's main.lua
   -- again (and the launcher backdrop boots the plain game in between); the
@@ -1671,6 +1675,7 @@ end
 -- boots) ran on a modded engine whose mod instance nothing drives any more,
 -- and the next Play loaded every mod on top of what the last one left.
 function Loader.teardown()
+  Job.unloadAll()
   local undone = select(1, ModSeams.unwindAll())
   pcall(function()
     Runtime.install(Events.new(), Hooks.new(), nil)

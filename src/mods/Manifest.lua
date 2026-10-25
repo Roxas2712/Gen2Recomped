@@ -8,7 +8,11 @@ local Version = require("src.core.Version")
 local Manifest = {}
 
 Manifest.PROFILES = { content = true, overhaul = true, total_conversion = true }
-Manifest.PERMISSIONS = { network = true, filesystem = true, engine_internals = true }
+-- `compute` declares direct LÖVE worker-thread use. It is distinct from the
+-- sandboxed mod.job/background service; the native host already exposes the
+-- LÖVE thread module and must not reject a mod which declares that use.
+Manifest.PERMISSIONS = { network = true, filesystem = true,
+                         engine_internals = true, compute = true, background = true }
 
 -- link-relevant registries; a mod that writes into one of these while
 -- declaring affects_link = false gets an attributed warning from the loader
