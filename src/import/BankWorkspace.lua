@@ -134,7 +134,10 @@ local function sprite(self,entry,data)
 end
 function W.draw(self)
   local f=self._bankOverlay;if not f then return end
-  local g=love.graphics;local ww,hh=g.getDimensions();local s=math.max(.45,math.min(ww/1050,hh/720,1.2))
+  local g=love.graphics;local ww,hh=g.getDimensions()
+  local portrait=ww<700 and hh>ww*1.1
+  local s=portrait and 1 or math.max(.45,math.min(ww/1050,hh/720,1.2))
+  local buttonH=portrait and 44 or 34*s
   local U=self._ui;local font=self.hintFont;local large=self.stateFont or font
   local x,y=16*s,22*s;local w,h=ww-32*s,hh-44*s
   f.rects={};f.cells={}
@@ -144,7 +147,7 @@ function W.draw(self)
     g.print(U.ellipsize(fn,tostring(value),width),tx,ty)
   end
   local function button(label,bx,by,bw,action,fields)
-    local r=fields or {};r.x=bx;r.y=by;r.width=bw;r.height=34*s;r.action=action;f.rects[#f.rects+1]=r
+    local r=fields or {};r.x=bx;r.y=by;r.width=bw;r.height=buttonH;r.action=action;f.rects[#f.rects+1]=r
     col(34,113,132);g.rectangle('fill',bx,by,bw,r.height,6*s,6*s)
     text(label,bx+9*s,by+(r.height-font:getHeight())/2,bw-18*s,false,{244,252,250});return r
   end
@@ -153,7 +156,7 @@ function W.draw(self)
   col(224,239,253);g.rectangle('fill',x,y,w,h,16*s,16*s)
   for i=0,15 do col(26+i,96+i*2,155+i*3);g.rectangle('fill',x,y+i*4*s,w,5*s) end
   col(41,145,201);g.rectangle('fill',x,y+62*s,w,3*s)
-  text('RETRORECOMPED · POKÉMON BANK',x+18*s,y+15*s,w-160*s,true,{245,255,252})
+  text(portrait and 'POKÉMON BANK' or 'RETRORECOMPED · POKÉMON BANK',x+18*s,y+15*s,w-160*s,true,{245,255,252})
   button('CLOSE',x+w-110*s,y+15*s,92*s,'close')
   if not registered() then
     text('A VERIFIED ACCOUNT IS REQUIRED',x+24*s,y+100*s,w-48*s,true)
@@ -163,26 +166,34 @@ function W.draw(self)
   end
   local tabCols=w<650*s and 3 or 6;local tabW=(w-36*s)/tabCols
   for i,mode in ipairs({{'bank','BANK BOXES'},{'items','ITEMS'},{'dex','POKÉDEX'},{'trade','LINK TRADE'},{'wonder','WONDER'},{'interop','LEGACY / LUA'}}) do
-    local r=button(mode[2],x+18*s+((i-1)%tabCols)*tabW,y+77*s+math.floor((i-1)/tabCols)*42*s,tabW-7*s,'mode',{mode=mode[1]});r.pinned=true
+    local r=button(mode[2],x+18*s+((i-1)%tabCols)*tabW,y+77*s+math.floor((i-1)/tabCols)*(buttonH+8*s),tabW-7*s,'mode',{mode=mode[1]});r.pinned=true
   end
-  local top=y+122*s+(tabCols==3 and 42*s or 0)
-  text(f.notice or 'Drag to copy between saves and the Bank. Save copy creates a new slot.',x+18*s,top,w-36*s)
+  local top=y+77*s+math.ceil(6/tabCols)*(buttonH+8*s)+6*s
+  text(f.notice or (portrait and 'Select a Pokémon, switch Save / Bank, then tap an empty cell.' or 'Drag to copy between saves and the Bank. Save copy creates a new slot.'),x+18*s,top,w-36*s)
   top=top+34*s
   local Pages=require('src.import.BankPages')
   local pageView={x=x+18*s,y=top,width=w-36*s,height=math.max(60*s,h-(top-y)-18*s)}
   f.pageView=pageView
   if f.mode and f.mode~='bank' then
-    local contentH=math.max(pageView.height,f.mode=='interop' and 1100*s or (f.mode=='trade' or f.mode=='wonder') and 660*s or 290*s)
+    local contentH=math.max(pageView.height,f.mode=='interop' and 1100*s or f.mode=='details' and 800*s or (f.mode=='trade' or f.mode=='wonder') and 660*s or 290*s)
     f.subMax=math.max(0,contentH-pageView.height);f.subScroll=math.min(f.subScroll or 0,f.subMax)
     g.setScissor(pageView.x,pageView.y,pageView.width,pageView.height)
     Pages.draw(self,f,pageView.x,pageView.y-f.subScroll,pageView.width,contentH,s,button,text,col)
     g.setScissor();Pages.animation(self,f,x+18*s,top,w-36*s,pageView.height,s)
     g.pop();return
   end
-  local infoH=hh>=520 and 132*s or 0
+  local infoH=not portrait and hh>=520 and 132*s or 0
   local gap=12*s;local cw=(w-36*s-2*gap)/3;local ph=math.max(190*s,h-(top-y)-76*s-infoH)
   local panels={{name='left',title='GAME SAVE A'},{name='bank',title='YOUR BANK'},{name='right',title='GAME SAVE B'}}
-  if cw<230*s then
+  if portrait then
+    local view=f.mobileView or 'bank';local viewW=(w-36*s)/3
+    for i,row in ipairs({{'left','SAVE A'},{'bank','BANK'},{'right','SAVE B'}}) do
+      button((row[1]==view and '● ' or '')..row[2],x+18*s+(i-1)*viewW,top,viewW-6*s,'mobileView',{view=row[1]})
+    end
+    top=top+buttonH+10*s
+    panels={{name=view,title=view=='bank' and 'YOUR BANK' or view=='left' and 'GAME SAVE A' or 'GAME SAVE B'}}
+    cw=w-36*s;ph=math.max(220,h-(top-y)-buttonH-40*s)
+  elseif cw<230*s then
     panels={{name=f.mobilePanel or 'left',title='GAME SAVE'},{name='bank',title='BANK'}};cw=(w-36*s-gap)/2
   end
   local function monCell(entry,data,cx,cy,size,target)
@@ -204,36 +215,59 @@ function W.draw(self)
     local px=x+18*s+(pi-1)*(cw+gap)
     col(185,215,242);g.rectangle('fill',px,top,cw,ph,11*s,11*s)
     col(134,184,225,.55);g.rectangle('line',px+1,top+1,cw-2,ph-2,11*s,11*s)
-    text(kind.title,px+10*s,top+12*s,cw-20*s,true)
-    local gy=top+48*s
+    local compact=portrait and kind.name~='bank' and ph<310
+    if not compact then text(kind.title,px+10*s,top+12*s,cw-20*s,true) end
+    local gy=top+(compact and 12 or 48)*s
+    local navW=portrait and 44 or 32*s;local navText=portrait and 64 or 50*s
     if kind.name=='bank' then
       local pages=math.max(1,math.ceil(#f.bank/30));f.page=math.max(1,math.min(pages,f.page))
-      button('<',px+10*s,gy,32*s,'bankPage',{delta=-1})
-      text('Box '..f.page..' / '..pages,px+50*s,gy+8*s,cw-100*s)
-      button('>',px+cw-42*s,gy,32*s,'bankPage',{delta=1});gy=gy+48*s
-      local size=math.min((cw-20*s)/6,(ph-116*s)/5)
-      for pos=1,30 do local entry=f.bank[(f.page-1)*30+pos];monCell(entry,nil,px+10*s+((pos-1)%6)*size,gy+math.floor((pos-1)/6)*size,size,{bank=true}) end
+      local gridTop=gy+buttonH+14*s
+      local cols=portrait and ww<400 and 5 or 6
+      local cell=(cw-20*s)/cols
+      local available=ph-(gridTop-top)-30*s
+      local perPage=portrait and (available<cell*math.ceil(30/cols) and cols*math.max(1,math.min(3,math.floor(available/cell))) or 30) or 30
+      f.bankSlices=math.ceil(30/perPage);f.bankSlice=math.min(f.bankSlice or 0,f.bankSlices-1)
+      button('<',px+10*s,gy,navW,'bankPage',{delta=-1})
+      text('Box '..f.page..' / '..pages..(f.bankSlices>1 and (' · '..(f.bankSlice+1)..'/'..f.bankSlices) or ''),px+navText,gy+8*s,cw-2*navText)
+      button('>',px+cw-10*s-navW,gy,navW,'bankPage',{delta=1});gy=gridTop
+      local size=math.min(cell,(ph-(gy-top)-30*s)/math.ceil(perPage/cols))
+      local first=f.bankSlice*perPage+1
+      for pos=first,math.min(30,first+perPage-1) do local entry=f.bank[(f.page-1)*30+pos];local n=pos-first
+        monCell(entry,nil,px+10*s+(n%cols)*size,gy+math.floor(n/cols)*size,size,{bank=true}) end
       text(#f.bank..' Pokémon · originals preserved',px+10*s,top+ph-24*s,cw-20*s)
     else
       local panel=f[kind.name]
-      button(panel.label or 'CHOOSE SAVE',px+10*s,gy,cw-20*s,'choose',{panel=kind.name});gy=gy+44*s
+      button(panel.label or 'CHOOSE SAVE',px+10*s,gy,cw-20*s,'choose',{panel=kind.name});gy=gy+(portrait and buttonH+8*s or 44*s)
       if panel.save then
         local count,capacity=B.shape(panel.version,panel.data)
         if panel.box>count then panel.box=1 end
-        button('<',px+10*s,gy,32*s,'box',{panel=kind.name,delta=-1})
-        text(panel.box==0 and 'PARTY' or 'BOX '..panel.box,px+50*s,gy+8*s,cw-100*s)
-        button('>',px+cw-42*s,gy,32*s,'box',{panel=kind.name,delta=1});gy=gy+44*s
-        local cols=capacity==20 and 5 or 6;local rows=panel.box==0 and 1 or capacity==20 and 4 or 5
+        local cols=portrait and ww<400 and 5 or capacity==20 and 5 or 6
+        local rows=panel.box==0 and 1 or math.ceil(capacity/cols)
+        local firstGrid=gy+buttonH+10*s
+        local cell=(cw-20*s)/cols
+        local available=ph-(firstGrid-top)-buttonH-20*s
+        local visibleRows=math.max(1,math.min(2,math.floor(available/cell)))
+        local partyCompact=portrait and panel.box==0 and available<88
+        local perPage=partyCompact and 3 or portrait and (available<cell*rows and cols*visibleRows or capacity) or capacity
+        local slices=panel.box==0 and (partyCompact and 2 or 1) or math.ceil(capacity/perPage);panel.slice=math.min(panel.slice or 0,slices-1)
+        button('<',px+10*s,gy,navW,'box',{panel=kind.name,delta=-1,slices=portrait and slices,perPage=perPage,partySlices=portrait and available<88 and 2 or 1})
+        text((panel.box==0 and 'PARTY' or 'BOX '..panel.box)..(slices>1 and (' · '..(panel.slice+1)..'/'..slices) or ''),px+navText,gy+8*s,cw-2*navText)
+        button('>',px+cw-10*s-navW,gy,navW,'box',{panel=kind.name,delta=1,slices=portrait and slices,perPage=perPage,partySlices=portrait and available<88 and 2 or 1});gy=portrait and firstGrid or gy+44*s
         local box=panel.box==0 and panel.save.party or B.boxMons(B.boxes(panel.save)[panel.box])
         local size=math.min((cw-20*s)/cols,(ph-174*s)/math.max(4,rows))
         local n=panel.box==0 and 6 or capacity
-        if panel.box==0 then cols=3;rows=2;size=math.min((cw-20*s)/cols,(ph-174*s)/4) end
-        for pos=1,n do
+        if portrait then size=math.min(cell,(ph-(gy-top)-buttonH-20*s)/math.ceil(perPage/cols)) end
+        if panel.box==0 then
+          cols=3;rows=partyCompact and 1 or 2
+          size=math.min((cw-20*s)/cols,(ph-(gy-top)-buttonH-20*s)/rows)
+        end
+        local first=portrait and panel.slice*perPage+1 or 1
+        for pos=first,math.min(n,first+perPage-1) do
           local mon=box and box[pos]
           local entry=mon and B.makeEntry(mon,panel.version,panel.slot,panel.box==0 and ('Party '..pos) or ('Box '..panel.box..' / '..pos),panel.data,panel.save)
-          monCell(entry,panel.data,px+10*s+((pos-1)%cols)*size,gy+math.floor((pos-1)/cols)*size,size,{panel=kind.name,slot=pos})
+          monCell(entry,panel.data,px+10*s+((pos-first)%cols)*size,gy+math.floor((pos-first)/cols)*size,size,{panel=kind.name,slot=pos})
         end
-        if panel.dirty then button('SAVE AS NEW SLOT',px+10*s,top+ph-42*s,cw-20*s,'save',{panel=kind.name}) end
+        if panel.dirty then button('SAVE AS NEW SLOT',px+10*s,top+ph-buttonH-8*s,cw-20*s,'save',{panel=kind.name}) end
       else
         text('Choose a save to show its boxes.',px+10*s,gy+14*s,cw-20*s)
         require('src.import.LauncherHardware').symbol(self,'gbc',px+cw/2,gy+math.max(74*s,(ph-110*s)/2),math.min(120*s,ph-130*s))
@@ -258,12 +292,17 @@ function W.draw(self)
     else text('Select a Pokémon to inspect its origin, trainer, save identity and held item.',x+34*s,iy+26*s,w-68*s,true) end
   end
   if #panels==2 then button('SAVE A / SAVE B',x+18*s,y+h-56*s,180*s,'mobilePanel') end
+  if portrait then
+    button('POKÉMON INFO',x+18*s,y+h-buttonH-23*s,w-36*s,'mode',{mode='details'})
+  end
   text('Your Pokémon · Your adventures · Bank copies sync through your own account.',x+18*s,y+h-24*s,w-36*s)
   if f.picker then
     col(17,38,49,.96);g.rectangle('fill',x+30*s,top,w-60*s,ph,10*s,10*s)
     text('CHOOSE GAME / SAVE SLOT',x+45*s,top+12*s,w-90*s,true,{236,252,246})
-    local from=(f.pickerPage or 0)*6+1
-    for i=from,math.min(#f.slots,from+5) do local row=f.slots[i];button(row.label,x+45*s,top+52*s+(i-from)*42*s,w-90*s,'pick',{choice=row,panel=f.picker}) end
+    local step=portrait and buttonH+8*s or 42*s
+    f.pickerSize=math.max(1,math.min(6,math.floor((ph-112*s)/step)))
+    local from=(f.pickerPage or 0)*f.pickerSize+1
+    for i=from,math.min(#f.slots,from+f.pickerSize-1) do local row=f.slots[i];button(row.label,x+45*s,top+52*s+(i-from)*step,w-90*s,'pick',{choice=row,panel=f.picker}) end
     if #f.slots==0 then text('No readable saves yet. Import a save or save your game first.',x+45*s,top+60*s,w-90*s,false,{236,252,246}) end
     button('PREVIOUS',x+45*s,top+ph-45*s,120*s,'pickerPage',{delta=-1})
     button('NEXT',x+175*s,top+ph-45*s,120*s,'pickerPage',{delta=1})
@@ -305,10 +344,20 @@ function W.press(self,x,y)
         else f.picker=r.panel;f.pickerPage=0 end
       elseif r.action=='pick' then local ok,why=W.select(self,f[r.panel],r.choice);if ok then f.picker=nil else f.notice=why end
       elseif r.action=='cancelPicker' then f.picker=nil
-      elseif r.action=='pickerPage' then f.pickerPage=math.max(0,math.min(math.ceil(#f.slots/6)-1,(f.pickerPage or 0)+r.delta))
-      elseif r.action=='bankPage' then f.page=math.max(1,f.page+r.delta)
+      elseif r.action=='pickerPage' then f.pickerPage=math.max(0,math.min(math.ceil(#f.slots/(f.pickerSize or 6))-1,(f.pickerPage or 0)+r.delta))
+      elseif r.action=='bankPage' then
+        local slices=f.bankSlices or 1;local pages=math.max(1,math.ceil(#f.bank/30))
+        local cursor=math.max(0,math.min(pages*slices-1,(f.page-1)*slices+(f.bankSlice or 0)+r.delta))
+        f.page=math.floor(cursor/slices)+1;f.bankSlice=cursor%slices
+      elseif r.action=='mobileView' then f.mobileView=r.view;f.drag=nil
       elseif r.action=='mobilePanel' then f.mobilePanel=f.mobilePanel=='right' and 'left' or 'right'
-      elseif r.action=='box' then local panel=f[r.panel];local count=B.shape(panel.version,panel.data);panel.box=(panel.box+r.delta)%(count+1)
+      elseif r.action=='box' then
+        local panel=f[r.panel];local count,capacity=B.shape(panel.version,panel.data)
+        if r.slices then
+          panel.slice=(panel.slice or 0)+r.delta
+          if panel.slice<0 then panel.box=(panel.box-1)%(count+1);panel.slice=panel.box==0 and (r.partySlices or 1)-1 or math.ceil(capacity/r.perPage)-1
+          elseif panel.slice>=r.slices then panel.box=(panel.box+1)%(count+1);panel.slice=0 end
+        else panel.box=(panel.box+r.delta)%(count+1);panel.slice=0 end
       elseif r.action=='save' then local ok,why=W.save(self,r.panel);if not ok then f.notice=why end
       elseif r.action=='adapt' then local a=f.adapt;local ok,why=W.place(self,a.payload,a.target,true);if not ok then f.notice=why;f.adapt=nil end
       elseif r.action=='cancelAdapt' then f.adapt=nil end

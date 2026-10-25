@@ -8,6 +8,9 @@ local function disk() return require('src.core.SaveData').persistenceFs() end
 local function valid(id) return type(id)=='string' and #id<=20 and id:match('^[1-9][0-9]*$') end
 function P.enable() P.enabled=true end
 function P.scope()
+  -- Pure/headless SDK consumers do not enable RetroRecomped's account policy.
+  -- Constructing a public API must not read cloud credentials or require LOVE.
+  if not P.enabled then return nil end
   local co=coroutine.running()
   if co and tasks[co] then return tasks[co] end
   local a=auth();return a.accountId and a.accountId()

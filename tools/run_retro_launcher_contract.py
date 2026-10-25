@@ -41,7 +41,7 @@ account_workspace private_http developer_projects mod_profile_recovery retro_ove
 window_frame window_frame_async portable_input_hooks touch_orientation_bug633
 save_resume resume_workspace save_resume_capture save_resume_slot save_history_workspace launcher_audio_handoff bank_exchange'''.split()
 suites.extend(['native_preview','account_storage','account_profiles','bank_interop',
-               'api3_storage_transactions','api3_playthrough_storage'])
+               'api3_storage_transactions','api3_playthrough_storage','bank_portrait','api3_compat'])
 for suite in suites:
     command = [runtime, str(root / 'tests/engine' / (suite + '.lua'))]
     if suite == 'bank_interop' and args.legacy_bank_source:
