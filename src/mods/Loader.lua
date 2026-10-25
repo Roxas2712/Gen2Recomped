@@ -1239,6 +1239,7 @@ function Loader:_api(mod)
       end
       return data
     end)
+  api.postLog = Net.logReporter(loader,mod)
   api.packs = require("src.mods.AssetPacks").new(mod.manifest, loader.fs)
   require('src.mods.HostServices').install(loader,mod,api)
   api.job = Job.forMod(loader, mod, api.cache)
