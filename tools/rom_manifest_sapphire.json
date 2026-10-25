@@ -908,6 +908,72 @@
       "printerCallCount": 2
     }
   },
+  "rsItemMenu": {
+    "actions": 3937944,
+    "actionCount": 10,
+    "choices": 3938024,
+    "choiceStride": 6,
+    "pockets": {
+      "ITEM": {
+        "row": 0,
+        "count": 4
+      },
+      "BALL": {
+        "row": 1,
+        "count": 4
+      },
+      "TM_HM": {
+        "row": 2,
+        "count": 4
+      },
+      "BERRY": {
+        "row": 3,
+        "count": 6
+      },
+      "KEY_ITEM": {
+        "row": 4,
+        "count": 4
+      }
+    },
+    "kinds": [
+      "use",
+      "toss",
+      "cancel",
+      "register",
+      "use",
+      "cancel",
+      "give",
+      "checkTag",
+      "blank",
+      "other"
+    ],
+    "columns": 2,
+    "cancel": 3,
+    "blank": 9,
+    "register": 4,
+    "sourceOrder": "column-major",
+    "evidence": {
+      "sourceSHA256": "2f4aa61e85953af81843349ad9c9a29a12047be6e2fd4953df8d0f96f0046210",
+      "recordCount": 10,
+      "actionEnum": [
+        "ITEM_ACTION_USE_0",
+        "ITEM_ACTION_TOSS",
+        "ITEM_ACTION_CANCEL_2",
+        "ITEM_ACTION_REGISTER",
+        "ITEM_ACTION_USE_4",
+        "ITEM_ACTION_CANCEL_5",
+        "ITEM_ACTION_GIVE",
+        "ITEM_ACTION_CHECK_TAG",
+        "ITEM_ACTION_NONE",
+        "ITEM_ACTION_CONFIRM"
+      ],
+      "printerRows": [
+        2,
+        3
+      ],
+      "pointerPairsVerified": true
+    }
+  },
   "font": {
     "bits": 4,
     "glyphBytes": 64,
@@ -2062,6 +2128,25 @@
       "PrintFieldMessageFromStringVar4": 412720,
       "TextWindow_DrawDialogueFrame": 414516,
       "gMenuTextWindowTemplate": 1993844,
+      "sItemPopupMenuActions": 3937944,
+      "sItemPopupMenuChoicesTable": 3938024,
+      "OtherText_Use": 4253293,
+      "HandlePopupMenuAction_UseOnField": 678776,
+      "OtherText_Toss": 4253297,
+      "HandlePopupMenuAction_Toss": 679700,
+      "gOtherText_CancelNoTerminator": 4253344,
+      "sub_80A5F80": 679808,
+      "OtherText_Register": 4253302,
+      "HandlePopupMenuAction_Register": 679852,
+      "HandlePopupMenuAction_UseInBattle": 684276,
+      "sub_80A7124": 684324,
+      "OtherText_Give2": 4253311,
+      "HandlePopupMenuAction_Give": 680136,
+      "OtherText_CheckTag": 4253316,
+      "HandlePopupMenuAction_CheckTag": 680312,
+      "gOtherText_CancelWithTerminator": 4253351,
+      "OtherText_Confirm": 4253326,
+      "HandlePopupMenuAction_Confirm": 682464,
       "gFont4LatinGlyphs": 15363440,
       "sFont4Widths": 1991498,
       "sFontType1Map": 1990528,
