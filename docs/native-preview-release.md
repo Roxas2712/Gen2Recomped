@@ -1,51 +1,46 @@
-# Native engine preview for Windows and macOS
-
-This preview carries the combined native Gen3 contracts, audited palette
-imports, static/animated palette caches and macOS OpenGL/Metal output fixes
-from the development branch. It runs the native flat-world renderer. The
-Origami port and First/Third Person integration remain paused.
+# RetroRecomped intermediate pre-releases
 
 Download the Windows or macOS **Gen2Recomped-NativePreview** ZIP from the
-repository's pre-release, extract into a new folder and start its launcher:
+fork's pre-release, extract into a new folder and start its launcher:
 
 - Windows: `OpenGL-Test.cmd` or `Gen2Recomped-NativePreview.exe`.
-- macOS: `Metal-Test.command` or the preview app for Metal;
-  `OpenGL-Test.command` for the OpenGL comparison. This is an ad-hoc signed
-  test app, without Apple notarization.
+- macOS: the preview app or `Metal-Test.command`; `OpenGL-Test.command`
+  selects OpenGL. The app is ad-hoc signed, without Apple notarization.
 
-Both packages contain the same engine payload and the same official LÖVE 12
-source revision, `937eb3b21f973607ab080aa26b7ef2a6b3b2b663`. No separate LÖVE
-installation is needed. The `.love` asset is for the same LÖVE 12 runtime;
-using a stable LÖVE 11.5 installation is not this preview configuration.
+Both ZIPs contain an identical engine payload and the official LOVE 12
+revision `937eb3b21f973607ab080aa26b7ef2a6b3b2b663`. No separate runtime
+installation is needed. The `.love` download requires that LOVE 12 runtime.
 
-Import your own supported Emerald/FireRed ROM through the launcher. ROMs,
-extracted graphics and save files are not supplied. The preview starts in its
-own `Gen2Recomp-NativePreview-<release-id>` profile. It does not migrate Gen1
-or normal Gen2 saves or install automatic updates. Mods can now be installed
-and enabled through the existing launcher in this dedicated profile; none
-are bundled. The engine reports version **0.7.6 / mod API 2**, and mod manifest
-requirements still apply. Enabling the loader alone does not establish VASC2
-compatibility. The [real VASC release check](vasc-release-compatibility.md)
-reproduces both its Gen3 exclusion and the engine version mismatch in Emerald
-and FireRed. Keep
-the default preview data location; portable/external-data roots are rejected.
-Normal source builds do not activate the preview profile.
+Import your own supported ROMs and save files. ROMs, extracted game caches,
+account credentials, save files and mod packages are not supplied. The preview
+uses its own `Gen2Recomp-NativePreview-<release-id>` data profile. Existing
+profiles are preserved and are not automatically migrated. Normal source
+builds do not activate this preview isolation. Keep the default data location;
+portable/external-data roots are rejected by the isolated preview.
 
-For feedback, record the source commit in `build.json`, game, OS, graphics
-backend, window size, map/position, movement versus standing, and whether a
-pause appears during a map change or in steady play. A screenshot of the
-scene and approximate duration help separate loading from repeated stalls.
-Never attach ROM files or extracted game caches.
+The launcher provides native ModCompass registration, sign-in, developer
+repository linking, mod browsing/downloads, cloud saves and Pokemon Bank.
+Mod version and generation requirements still apply. Save-bound compatibility
+review can restore known packages or continue from a separate slot copy.
+Exact mid-battle execution snapshots and seamless device handoff remain in
+development. The extended-upvalue LuaJIT candidate is not bundled: mods which
+exceed the official runtime's limits can still fail to load. This pre-release
+does not establish full-game 3D or universal mod compatibility.
 
-The release notes and SHA256 sums identify the actual packaged payload and
-runtime. `tools/build_native_preview.py` exports committed runtime sources,
-excludes mods, applies the isolated entry points only in staging, and verifies
-the archive excludes ROM/save/generated data. Windows wraps the official x64
-runtime; macOS preserves the original framework links and signs a separate
-preview bundle. Neither build installs to an existing application directory.
+## Publishing
 
-Local macOS GPU results are not Windows hardware acceptance. Omegadias's
-Windows and macOS play tests are the next external acceptance step. OpenGL's
-synchronous GPU readback still permits driver/compositor wait spikes; the
-preview does not claim to eliminate those waits or establish all-gameplay,
-fullscreen/context-loss or long-duration stability.
+Run **RetroRecomped intermediate pre-release** on the selected `main` commit
+with a fresh `YYYYMMDD.N` release identifier and the engine `X.Y.Z` version.
+The workflow runs ROM-free launcher contracts, builds on a hosted macOS runner,
+checks runtime digests and payload parity, and publishes a **pre-release**.
+It does not start a game or alter the stable latest release.
+
+`tools/package_native_release.py` invokes the existing isolated builder for
+both platforms and collects packages, `.love`, README, `build-manifest.json`
+and `SHA256SUMS.txt`. The tag points to the exact source commit recorded in
+the manifest. Existing tags/releases are not replaced. Each package stamps
+the requested engine version; the working source's development version can
+differ. Mod API remains 3.
+
+For feedback, include source commit, game, OS, backend, window size and the
+action which triggered the problem. Never attach ROMs, credentials or caches.
