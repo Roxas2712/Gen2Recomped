@@ -1,8 +1,10 @@
 package.path='./?.lua;./?/init.lua;'..package.path
 local T=require('tests.modkit')
-local V=require('src.core.GameVersion');local oldVersion=V.get();V.set('crystal')
+local V=require('src.core.GameVersion');local oldVersion=V.get()
 local W=require('src.world.OverworldController');local Map=require('src.world.Map')
 local Music=require('src.core.Music');local oldPlay=Music.play;Music.play=function()end -- audio device only
+for _,version in ipairs({'gold','silver','crystal','prism'})do
+V.set(version)
 local data=T.fixtures.fresh();local def={id='TRAINER_ROAD',label='TrainerRoad',tileset='FIX_OUT',width=4,height=4,generation=2,environment=2,blocks={}}
 for i=1,16 do def.blocks[i]=1 end;data.maps[def.id]=def
 data.tilesets.FIX_OUT.walkable={0,1,2};data.tilesets.FIX_OUT._walkableSet=nil -- native importer list format
@@ -55,5 +57,7 @@ T.eq(world.engaging,nil,'scripted movement cannot start an unscripted approach')
 world.runner.isRunning=function()return false end
 reset();world.npcs={}
 T.eq(W.checkTrainerSight(world),false,'empty sight scan returns a useful event verdict')
-Music.play=oldPlay;debug.setupvalue(W.onStepComplete,slot,oldGame);V.set(oldVersion)
+debug.setupvalue(W.onStepComplete,slot,oldGame)
+end
+Music.play=oldPlay;V.set(oldVersion)
 T.finish('native Gen2 trainer priority at a completed landing')
