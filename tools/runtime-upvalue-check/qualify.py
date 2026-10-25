@@ -53,8 +53,10 @@ def main():
         qa_copy(output)
         run = qa_run
     patch = HERE / "luajit-upvalues.patch"
-    # Check the pinned Git blobs, independently of Windows checkout CRLF rules.
-    subprocess.run(["git", "-C", str(source), "apply", "--check", "--cached", str(patch)], check=True)
+    # Check pinned Git blobs and normalize the patch itself: Windows checkout
+    # conversion otherwise turns the patch's final empty context line into CRLF.
+    subprocess.run(["git", "-C", str(source), "apply", "--check", "--cached", "-"],
+                   input=patch.read_bytes().replace(b"\r\n", b"\n"), check=True)
     archive = subprocess.check_output(["git", "-C", str(source), "archive", PIN])
     output.mkdir(parents=True, exist_ok=False)
     artifacts = output / "artifacts"

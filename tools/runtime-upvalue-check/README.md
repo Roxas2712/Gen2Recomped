@@ -43,8 +43,28 @@ The `Native runtime capacity` workflow schedules this same check on Linux x64,
 Windows x64, Intel macOS and arm64 macOS using explicit
 [GitHub runner labels](https://github.com/actions/runner-images#available-images).
 Both variants must pass the closure/C API checks and the engine's quick tiers;
-the workflow does not publish a GitHub release. Loading the candidate library
-inside the actual packaged LÖVE host remains a separate ABI/runtime gate.
+the workflow does not publish a GitHub release.
+
+On Windows and both macOS architectures, `love_abi.py` additionally checks the
+candidate inside a separate copy of the actual pinned LÖVE12 host. It verifies
+the official artifact's SHA-256 before extraction, requires the passing engine
+qualification and exact candidate library hash, then runs both stock and
+extended closure probes, an FFI callback and a secondary LÖVE thread VM. Each
+host uses a unique QA identity; graphics and audio are disabled. Only reports,
+logs and licensed candidate components are uploaded, not an application or
+game profile. macOS adjusts the copied framework's install name and ad-hoc
+signs and verifies that copied app. This is a host ABI gate, not a GPU or
+gameplay test, nor proof that a universal app has been packaged correctly.
+
+For an already qualified local macOS library:
+
+```sh
+python3 tools/runtime-upvalue-check/love_abi.py \
+  --runtime-archive /path/to/pinned/love-macos-artifact.zip \
+  --qualification .local/qa/runtime-capacity-test/candidate/report.json \
+  --library .local/qa/runtime-capacity-test/candidate/artifacts/extended/libluajit.so \
+  --output .local/qa/runtime-host-test/candidate
+```
 
 ## Individual probes
 
