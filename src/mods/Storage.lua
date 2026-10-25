@@ -84,6 +84,15 @@ function Storage.new(modId, fs)
   }, Storage)
 end
 
+-- Selected-playthrough reads are an additive service. Legacy read/write and
+-- byte methods keep their original per-mod root and signatures.
+function Storage:selected(game)
+  if not self._playthroughStorage then
+    self._playthroughStorage = require("src.mods.PlaythroughStorage").new(self.modId, self.fs)
+  end
+  return self._playthroughStorage:selected(game)
+end
+
 -- Resolved once per call and cached back onto the instance, so the helpers
 -- below (which reach for self.fs directly) can never see a different
 -- filesystem than the method that admitted them.
