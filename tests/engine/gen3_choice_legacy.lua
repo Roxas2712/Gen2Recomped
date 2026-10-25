@@ -44,6 +44,31 @@ for _, version in ipairs({ "firered", "emerald" }) do
   end
   do
     local f = dofile("tests/enemy_actions/choice_band.lua").fixture(".", "gen2", version)
+    local b = f.field(false)
+    b.ruleset = require("src.mods.Merge").deepCopy(b.ruleset)
+    b.ruleset.enemyUnlimitedPP = true
+    f.hold(b.enemy, 186)
+    b.enemy.choicedMove = 33
+    for _, slot in ipairs(b.enemy.curMoves) do
+      slot.pp = 0
+    end
+    b.rng = function(lo)
+      return lo
+    end
+    T.eq(
+      b:vanillaEnemyAction(b.enemy).id,
+      f.ids.TACKLE,
+      "explicit unlimited enemy policy admits dry learned moves"
+    )
+    local planned = require("src.battle.Gen3ChoiceBand").plan(b, b.enemy, b.enemy.curMoves[2])
+    T.eq(planned.id, f.ids.TACKLE, "explicit unlimited enemy policy retains the choice lock")
+    b:executeAction(b.enemy, b.player, planned)
+    T.check(b.player.mon.hp < 400, "explicit unlimited enemy policy executes the dry selected move")
+    T.eq(b.enemy.curMoves[1].pp, 0, "explicit unlimited enemy policy preserves dry PP")
+    f.close()
+  end
+  do
+    local f = dofile("tests/enemy_actions/choice_band.lua").fixture(".", "gen2", version)
     local b, checks, trace = f.field(true), {}, {}
     for _, actor in b:activeBattlers() do
       f.hold(actor, 186)

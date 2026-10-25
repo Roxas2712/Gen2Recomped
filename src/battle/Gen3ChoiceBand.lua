@@ -6,6 +6,10 @@ local Choices = require("src.battle.EnemyMoveChoice")
 local C = {}
 local planned = setmetatable({}, { __mode = "k" })
 local builtinCache = setmetatable({}, { __mode = "k" })
+function C.enemyUnlimited(battle, user)
+  return not user.isPlayer and battle.kind ~= "link" and battle.ruleset and battle.ruleset.enemyUnlimitedPP
+    or false
+end
 function C.signature(user)
   local value = user.choicedMove
   if value == false then
@@ -102,7 +106,7 @@ function C.plan(battle, user, action)
     and C.identity(battle, action) ~= 165
   then
     local forced, index = learned(battle, user, user.choicedMove)
-    if forced and (tonumber(forced.pp) or 1) > 0 then
+    if forced and ((tonumber(forced.pp) or 1) > 0 or C.enemyUnlimited(battle, user)) then
       local out = Choices.withMove(action, forced.id, forced, index)
       out.targetType = tonumber(definition(battle, forced).target) or 0
       planned[out] = { index = index, id = forced.id }

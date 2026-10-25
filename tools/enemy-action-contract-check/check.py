@@ -48,6 +48,7 @@ MODES = [
     (3, 'choice_band_calls'),
     (3, 'choice_band_content'),
     (3, 'choice_band_baton'),
+    (3, 'choice_band_call_failure'),
 ]
 
 

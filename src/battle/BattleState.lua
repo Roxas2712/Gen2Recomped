@@ -8272,6 +8272,10 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
   -- already said its failure text
   if record and record.callsMove then
     local pick = record.callsMove(ctx)
+    if not pick and record.gbaNativeChoiceCaller == record.callsMove then
+      local frame = self._gbaMoveFrame
+      if frame then frame.finished = true end
+    end
     -- Mirror Move never plays its own anim (MetronomePickMove does;
     -- MirrorMoveCopyMove only reloads the copied move or prints fail)
     if move.id == "MIRROR_MOVE" or not pick then

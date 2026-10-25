@@ -68,7 +68,7 @@ function Selection.aiMask(battle, user)
   for slot = 1, 4 do
     local move = moves(user)[slot]
     local bad = reason(battle, user, move, slot, effect == "CHOICE_BAND") ~= nil
-    if move and tonumber(move.pp) == 0 then
+    if move and tonumber(move.pp) == 0 and not Choice.enemyUnlimited(battle, user) then
       bad = true
     end
     if
