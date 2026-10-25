@@ -91,6 +91,9 @@ def main():
         'The experimental extended-upvalue LuaJIT is NOT bundled. Mods that exceed the\n'
         'official runtime\'s capacity may still fail to load. Full-game 3D/mod compatibility\n'
         'and Windows/macOS hardware acceptance are not claimed by this intermediate build.\n')
+    if all(components.values()):
+        mac = next(row for row in builds if row['platform'] == 'macos')
+        runtime_notes += 'The qualified Mac package requires macOS ' + mac['qualifiedRuntime']['minimumMacOS'] + ' or newer.\n'
     notes = f'''RetroRecomped Preview {args.release_id} · engine {args.engine_version} / mod API 3
 
 Intermediate pre-release from main, source commit: {source}

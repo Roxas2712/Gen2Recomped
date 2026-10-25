@@ -13,6 +13,10 @@ def qualified_runtime(path,platform,ref):
  component=importlib.util.module_from_spec(spec);spec.loader.exec_module(component)
  library,notice,manifest=component.verify(path,platform,component.engine_tree(ref,ROOT))
  return library,notice,manifest
+def raise_macos_minimum(info,minimum):
+ current=info.get('LSMinimumSystemVersion','0')
+ def version(value):return tuple(int(part)for part in value.split('.'))+(0,)*(3-len(value.split('.')))
+ if version(current)<version(minimum):info['LSMinimumSystemVersion']=minimum
 def install_qualified_runtime(checked,manifest_path,target,receipts):
  library,notice,manifest=checked
  shutil.copy2(library,target);receipts.mkdir(parents=True)
@@ -111,6 +115,9 @@ def main():
    for key in ('CFBundleDocumentTypes','CFBundleURLTypes','UTExportedTypeDeclarations','UTImportedTypeDeclarations'):pl.pop(key,None)
    engine_version=a.engine_version
    pl.update(CFBundleShortVersionString=engine_version,CFBundleIdentifier='de.roxas2712.gen2recomp.native-preview',CFBundleName='Gen2Recomped Native Preview',CFBundleDisplayName='Gen2Recomped Native Preview',CFBundleVersion=a.release_id)
+   if checked:
+    raise_macos_minimum(pl,checked[2]['minimumMacOS'])
+    runtime_override['minimumMacOS']=pl['LSMinimumSystemVersion']
    with info.open('wb')as f:plistlib.dump(pl,f)
    subprocess.run(['codesign','--force','--deep','--sign','-','--entitlements',str(source/'scripts/macos-entitlements.plist'),str(bundle)],check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
    subprocess.run(['codesign','--verify','--deep','--strict',str(bundle)],check=True)

@@ -30,4 +30,11 @@ class Payload(unittest.TestCase):
  def test_pinned_platforms_same_runtime(self):
   self.assertEqual(set(module.RUNTIMES),{'windows','macos'})
   for runtime in module.RUNTIMES.values():self.assertEqual(len(runtime['sha256']),64)
+ def test_qualified_mac_runtime_cannot_understate_minimum_os(self):
+  info={'LSMinimumSystemVersion':'10.15'}
+  module.raise_macos_minimum(info,'11.0.0')
+  self.assertEqual(info['LSMinimumSystemVersion'],'11.0.0')
+  info={'LSMinimumSystemVersion':'14.1'}
+  module.raise_macos_minimum(info,'11.0.0')
+  self.assertEqual(info['LSMinimumSystemVersion'],'14.1')
 if __name__=='__main__':unittest.main()
