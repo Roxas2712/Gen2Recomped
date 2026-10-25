@@ -1,4 +1,4 @@
-# Gen1Recomp decoded layout compatibility
+# Legacy decoded layout compatibility
 
 Existing mods can require `src.core.game3.layout_native` and construct their
 decoded 16px layouts with `fromDecoded(decoded, mapId, pair, sourceBlob)`.
@@ -19,14 +19,14 @@ asset overrides reject that packed shortcut, allowing the caller's ordinary
 sampled fallback. This follows the original host's contract; decoded source
 cells must remain immutable while using its original packed bytes.
 
-`coll` is the Gen1 host's classified `COLL_*` byte, **not** the native grid's
+`coll` is the legacy host's classified `COLL_*` byte, **not** the native grid's
 raw two-bit collision value. This module does not translate the two schemas
 or bind these mod-owned layouts to the game's current map. An old map/session
 adapter must own that translation and lifecycle explicitly. Native walking,
 elevation, scripts, saves and caches are not changed by this module.
 
 Verification runs the same consumer with the same original require name on
-public Gen1Recomp v0.3.94 at `37a49b31f458d51ea9e00b90f2a247272ad09cb8`
+the public v0.3.94 reference runtime at `37a49b31f458d51ea9e00b90f2a247272ad09cb8`
 and this engine. All 245 checks and the full cell-sampling signature match.
 Coverage includes borrowed/copied identities, negative borders/padding,
 partial cells, zero fields, duplicate writes, source invariance, revision and
@@ -40,3 +40,18 @@ The consumer needs no ROM, graphics context or player profile. This is not a
 live-map/GPU test or an Origami 1.0.9 acceptance. Its unchanged entry still
 requires the missing `src.core.game3.map` contract and the remaining native
 session, atlas, battle and presentation boundaries.
+
+## Connection coordinates
+
+`src.core.game3.connections` supplies the matching pure map-view contract:
+cardinal aliases, array/keyed definitions, parallel connections, authored
+layout dimensions, incoming overlap, destination-local coordinates and
+directional boundary lookup. Dive/emerge records remain outside cardinal
+placement. It does not load neighbors, mutate positions or replace the
+native world's connection controller.
+
+The identical reference/native consumer checks 12,160 cases and compares
+the entire result stream for four cardinal directions and their aliases,
+negative/zero/positive offsets, overlapping connections, unavailable
+destinations and edge/corner samples. Source connections remain unchanged.
+These checks run with the same command above alongside decoded layouts.
