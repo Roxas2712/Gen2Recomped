@@ -8,6 +8,11 @@ on:
       - 'tools/package_native_release.py'
       - 'tests/test_runtime_component.py'
       - 'tests/test_native_preview.py'
+      - 'src/mods/Job*.lua'
+      - 'src/mods/job_worker.lua'
+      - 'src/mods/ImportAccess.lua'
+      - 'tests/native_jobs_runtime/**'
+      - 'tools/qualify_native_jobs.py'
   workflow_dispatch:
   workflow_call:
 permissions:
@@ -87,6 +92,8 @@ jobs:
             ${{ runner.temp }}/runtime-capacity/candidate/artifacts/
             ${{ runner.temp }}/runtime-love-abi/candidate/report.json
             ${{ runner.temp }}/runtime-love-abi/candidate/*.log
+            ${{ runner.temp }}/runtime-love-abi/candidate/native-jobs/*.json
+            ${{ runner.temp }}/runtime-love-abi/candidate/native-jobs/*.log
           if-no-files-found: error
           retention-days: 14
   components:
