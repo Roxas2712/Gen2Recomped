@@ -30,7 +30,12 @@ An isolated arm64 LuaJIT capacity experiment now compiles and initializes the
 unchanged generated renderer extension on OpenGL and Metal in both selected
 cameras. The stock runtime still rejects it. The experimental runtime also
 passes the 343 engine suites, three SDK suites, high-index closure/GC/debug/
-bytecode checks and C API capture checks through 120 upvalues. This is not
+bytecode checks and C API capture checks through 120 upvalues. Its reproducible
+arm64 build also passes the copied LÖVE host's thread/FFI ABI gate. With that
+host, the normal Mart/Center and Cherrygrove/Route 29 transition matrix passes
+213 assertions and four fresh window proofs per backend in both selected
+cameras, requiring the renderer extension to be installed. Some First Person
+frames still contain black-and-white objects. This is not
 distributed runtime acceptance: Windows, Intel/universal macOS and complete
 renderer/gameplay parity remain open. See the
 [reproducible probes](../tools/runtime-upvalue-check/README.md) and
