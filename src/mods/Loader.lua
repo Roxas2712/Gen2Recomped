@@ -836,6 +836,9 @@ function Loader:_contentApi(mod, registry, deprecation)
   if registry.name == "items" then
     return require("src.mods.HeldItemContent").itemApi(loader, api, loader:_generation())
   end
+  if registry.name == "radio_channels" then
+    return require("src.mods.RadioContent").api(loader,mod,api,loader:_generation())
+  end
   return api
 end
 
@@ -1562,6 +1565,7 @@ function Loader:load(data)
   require("src.mods.HeldItemContent").prepare(self, data)
   require("src.mods.MartContent").prepare(self, data)
   require("src.mods.RomTextContent").prepare(self, data)
+  require("src.mods.RadioContent").prepare(self, data)
   -- vanilla content is registrations too, and they land before discovery so
   -- a mod's register collides with the engine's and has to say override
   require("src.mods.Builtins").install(self.content, data)
