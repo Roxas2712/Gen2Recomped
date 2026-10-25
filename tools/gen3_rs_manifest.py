@@ -62,6 +62,20 @@ def main():
     assert target.by_name['gPokedexEntries'][0]['size']==387*36
     assert struct.unpack_from('<HH',rom,dex+36+12)==(7,69)
     result['pokedexEntrySize']=36
+    # RS has 163 item-effect pointers, indexed from ITEM_POTION (13).
+    # Emerald's table/address and its three extra berry rows are unrelated.
+    effects=at('gItemEffectTable')
+    effect_rows=target.by_name['gItemEffectTable']
+    assert len(effect_rows)==1 and effect_rows[0]['size']==163*4
+    effect_source=(args.pret/'src/data/pokemon/item_effects.h').read_text()
+    effect_table=re.search(r'gItemEffectTable\[\]\s*=\s*\{(.*?)\};',effect_source,re.S)
+    assert effect_table
+    effect_names=[name.strip() for name in effect_table[1].split(',') if name.strip()]
+    assert len(effect_names)==163
+    for index,name in enumerate(effect_names):
+        pointer=struct.unpack_from('<I',rom,effects+index*4)[0]
+        assert pointer==(0 if name=='NULL' else 0x08000000+at(name)),(index,name)
+    result['stageOverrides']={'ITEM_EFFECTS':dict(TABLE=effects,FIRST=13,COUNT=163)}
     for name in ('scenes','sceneRoles','sceneOverlays','screenText','bagSprite','wallClock','introCast','introShots','messageWindow','specials','starters','playerTitles','movementActions','playerSprites','m4aWidths','introSprites'):
         result[name]=copy.deepcopy(getattr(f,name,None))
     # Speech contents are recovered from the cartridge by the native importer.
