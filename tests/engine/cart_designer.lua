@@ -41,4 +41,11 @@ for _,v in ipairs({'red','blue','yellow','gold','silver','crystal','firered','em
 end
 check(Sources.get('prism')==nil and Sources.get('polishedcrystal')==nil,'ROM hacks never falsely claim an original retail cartridge')
 check(Sources.get('red').page~=Sources.get('blue').page,'edition links do not silently share the wrong artwork')
+check(Sources.get('red').image:find('https://archives.bulbagarden.net/media/upload/',1,true)==1,'original download references point to the source image host')
+check(H.cartModel('gold').family=='dmg' and H.cartModel('crystal').family=='cgb','Gold and Silver use their notched dual-compatible shell while Crystal keeps its Color-only mould')
+local Bounds=require('src.import.ImageBounds')
+local header='\137PNG\13\10\26\10'..string.char(0,0,0,13)..'IHDR'
+check(Bounds.allowed(header..string.char(0,0,4,0,0,0,4,0),2048),'image dimensions are checked before decoding pixels')
+check(not Bounds.allowed(header..string.char(0,0,255,255,0,0,255,255),2048),'small compressed images cannot request huge decoded canvases')
+check(not Bounds.allowed('\255\216\255',2048),'truncated JPEG marker chains are rejected without raising')
 print('Cartridge designer: '..n..' checks passed')

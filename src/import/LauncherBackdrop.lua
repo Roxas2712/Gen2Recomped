@@ -101,7 +101,7 @@ function B.stop()
     state.video = nil
   end
   if state.game then
-    pcall(function() require("src.core.Music").stop() end)
+    pcall(function() require("src.core.Music").resetSession() end)
     pcall(function() require("src.core.Sound").stopAll() end)
   end
   if was and was ~= "video" then
@@ -266,6 +266,7 @@ function B.draw(w, h, area)
   local now=love.timer and love.timer.getTime() or 0
   local function composite(target)
     g.push("all");g.origin();g.setColor(1,1,1,1)
+    if g.intersectScissor then g.intersectScissor(ax,ay,aw,ah) else g.setScissor(ax,ay,aw,ah) end
     g.setBlendMode("alpha","premultiplied")
     g.draw(target,ax,ay,0,aw/cw,ah/chh);g.pop()
   end
@@ -288,6 +289,7 @@ function B.draw(w, h, area)
   local Renderer = require("src.render.Renderer")
   local prevSplit = Renderer.splitViewport
   local saved, target
+  local previousCanvas=g.getCanvas()
   do
     local dpi=1
     if not (state.canvas and state.canvas:getWidth() == cw and state.canvas:getHeight() == chh) then
@@ -359,7 +361,7 @@ function B.draw(w, h, area)
   g.pop()
   if SS then SS.mode, SS.draw = ssMode, ssDraw end
   if saved then for name, fn in pairs(saved) do g[name] = fn end end
-  g.setCanvas()
+  g.setCanvas(previousCanvas)
   Renderer.splitViewport = prevSplit
   if target then composite(target) end
   state.previewNext=now+1/previewFPS()

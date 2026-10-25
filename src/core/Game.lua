@@ -47,6 +47,8 @@ local function bootScreens(game)
 end
 
 function Game:load()
+  require("src.core.Music").resetSession()
+  self.audioSuspended = false
   self.nativeStackReady = false
   self.pointerOwners={}
   self.modPointers={}

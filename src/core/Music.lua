@@ -21,6 +21,7 @@ local VOLUME = 0.7
 -- step's treble (highgain 0.4^level), so 2X/3X are the 1X filter
 -- applied twice/three times over.
 local volumeScale = 1
+local muted = false
 local FILTER_HIGHGAIN = { 0.4, 0.16, 0.064 }
 local filterLevel = 0
 
@@ -91,7 +92,7 @@ local function applyVolume(src)
     vol = tonumber(vol) or (VOLUME * volumeScale)
     if vol < 0 then vol = 0 end
   end
-  pcall(src.setVolume, src, vol)
+  pcall(src.setVolume, src, muted and 0 or vol)
 end
 
 -- Source:setFilter needs OpenAL EFX; the pcall degrades to unfiltered
@@ -415,6 +416,17 @@ function Music.reload()
   Music.stop()
 end
 
+-- A launcher preview can suspend the shared audio modules without an OS
+-- focus transition. End that session before a different game is booted;
+-- never re-cue the preview's suspended song against the next ROM's data.
+function Music.resetSession()
+  Music.stop()
+  sessionSuspended, suspendedSong, resumeRetry = false, nil, nil
+  state.failed = {}
+  require("src.core.ChipAudio").resume()
+  require("src.core.Sound").resume()
+end
+
 -- Ramp the current song's volume to silence, then stop it, mirroring the
 -- Game Boy's audio fade-out (home/fade_audio.asm FadeOutAudio +
 -- home/audio.asm's .fadeOut): rAUDVOL's master volume steps 7 -> 0 in
@@ -595,6 +607,7 @@ end
 -- re-apply persisted audio options (Game calls this on boot and after
 -- loading a save)
 function Music.applyOptions(opts)
+  muted = opts and opts.audioMuted == true or false
   require("src.core.ChipAudio").setStereo(opts and opts.stereo)
   Music.setVolumeLevel(opts and opts.musicVol or 7)
   Music.setFilterLevel(opts and opts.musicFilter or 0)
@@ -752,7 +765,7 @@ function Music.update(data)
         Music.stop()
         return
       end
-      local vol = f.from * f.level / 7
+      local vol = muted and 0 or f.from * f.level / 7
       if state.source then pcall(state.source.setVolume, state.source, vol) end
       if state.loopSource then
         pcall(state.loopSource.setVolume, state.loopSource, vol)

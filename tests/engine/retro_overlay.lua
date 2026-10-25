@@ -34,4 +34,19 @@ check(writes==before and O.notice:find('Start or continue',1,true),'the title-sc
 O.action('library');O.action('library');check(returned==2 and writes==before,'returning from the title screen does not create a blank save')
 O.open(game);check(O.key(game,'down') and O.selected==2,'keyboard navigation stays inside the overlay')
 O.key(game,'escape');check(not O.game and reset>=4,'closing resets input before play resumes')
+local persisted=0
+game.save.options={speed=1,musicVol=5,sfxVol=3};game.writeOptions=function() persisted=persisted+1 end
+package.loaded['src.core.Music']={applyOptions=function(o) MusicMuted=o.audioMuted end}
+package.loaded['src.core.Sound']={applyOptions=function(o) SoundMuted=o.audioMuted end}
+O.open(game);O.action('speed')
+check(game.save.options.speed==2 and persisted==1,'quick speed changes use and persist the engine speed ladder')
+game.speedLocked=function() return true end;O.action('speed');check(game.save.options.speed==2,'link or fixed-speed locks cannot be bypassed by the overlay')
+O.action('mute');check(MusicMuted and SoundMuted and game.save.options.musicVol==5 and game.save.options.sfxVol==3,'mute keeps both stored volume levels intact')
+O.action('mute');check(not MusicMuted and not SoundMuted,'unmute restores both buses without inventing new levels')
+package.loaded['src.ui.OptionsMenu']={new=function() return {rows={{label='A mod option',value=function() return 'LIVE' end,step=function(g,dir) g.changed=dir;return true end}}} end}
+O.action('options');O.action('option:1:-1')
+check(game.changed==-1 and #O.actions()==1,'all settings reuse native option descriptors including mod-provided rows')
+local count=writes;O.action('unknown');check(writes==count,'unknown menu actions cannot unexpectedly write a progress save')
+O.action('home');O.action('saves');check(O.page=='saves' and O.actions()[1].id=='save','the large saves entry leads to the dedicated save and cloud menu')
+O.clear()
 print('Retro overlay: '..n..' checks passed')

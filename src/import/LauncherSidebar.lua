@@ -1610,6 +1610,7 @@ function Sidebar.install(RI)
     local opts = options(self)
     local mode = opts.launcherBackground or "game"
     if mode == "off" then return nil end
+    if self.section ~= "games" then return nil end
     if mode == "video" then return "video" end
     if GameVersion.VERSIONS[mode] then return self.ready[mode] and mode or nil end
     if mode == "game" and self.section == "games" and self.gamesView == "game"
@@ -1625,12 +1626,7 @@ function Sidebar.install(RI)
   end
 
   function RI:_sbDrawBackdrop(w, h)
-    local okD, drew = pcall(Backdrop.draw, w, h, self._sbContentRect)
-    if okD and drew then
-      -- a scrim, so the panels stay readable over a bright title screen
-      col(PAL().bgBot, 0.88)
-      love.graphics.rectangle("fill", 0, 0, w, h)
-    end
+    -- Live previews belong to the selected game's banner, not the window.
   end
 
   local origUpdate2 = RI.update
@@ -1909,6 +1905,7 @@ function Sidebar.install(RI)
     local rest = origGamePanel(self, version, x, y + ch + gap, w, math.max(0, h - ch - gap), true) or 0
     self._libraryDetailsBody = nil
     card(self, x, y, w, ch)
+    require('src.import.LauncherLibrary').preview(self,version,x,y,w,ch)
     if art then
       g.setColor(1, 1, 1, 1)
       g.draw(art, x + pad, y + (ch - artH) / 2, 0, artH / art:getHeight(), artH / art:getHeight())
@@ -1927,8 +1924,8 @@ function Sidebar.install(RI)
       g.print(Strings("From ") .. tostring(meta.source), textX, ty + nLines * self.hintFont:getHeight() + 6 * s)
     end
     local designY=ty+nLines*self.hintFont:getHeight()+(meta and meta.source and (self.hintFont:getHeight()+8*s) or 0)
-    local designWidth=math.min(textW,self.hintFont:getWidth(Strings('DESIGN CARTRIDGE'))+24*s)
-    self._sb.designCart=self:_chipButton(textX,designY,'DESIGN CARTRIDGE',{w=designWidth,h=26*s})
+    local designWidth=math.min(textW,self.hintFont:getWidth(Strings('CARTRIDGE ART & DESIGN'))+24*s)
+    self._sb.designCart=self:_chipButton(textX,designY,'CARTRIDGE ART & DESIGN',{w=designWidth,h=32*s,kind='accent'})
     self._sb.designCart.version=version
     -- bottom right: the one import button -- "Import ROM" until the game is
     -- in, "Re-import ROM" after (the panel picks the label)

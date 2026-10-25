@@ -84,6 +84,7 @@ function Designer.install(RI)
 
   function RI:_cartImageBytes(bytes)
     if type(bytes)~='string' or #bytes>8*1024*1024 then return nil,'Use an image smaller than 8 MB.' end
+    if not require('src.import.ImageBounds').allowed(bytes,2048) then return nil,'Use a supported image up to 2048 × 2048 pixels.' end
     local ok,data=pcall(function()
       return love.image.newImageData(love.filesystem.newFileData(bytes,'label.png'))
     end)
@@ -107,6 +108,39 @@ function Designer.install(RI)
     draft.image,draft.png=image.image,image.bytes
     if draft.referenceOpened then draft.style.artMode='cartridge' end
     draft.notice=Strings('Artwork loaded. Save the design to keep it.')
+  end
+
+  function RI:_cartDownloadOriginal()
+    local d=self._cartDraft
+    if not d or self._cartDownload then return end
+    local job,why=require('src.import.CartridgeDownload').start(d.version,d.originalConsent==true)
+    if not job then d.notice=why;return end
+    self._cartDownload={job=job,draft=d};d.notice='Downloading the original cartridge image...'
+  end
+  local function cancelDownload(self)
+    if self._cartDownload then self._cartDownload.job:cancel();self._cartDownload=nil end
+  end
+  local update=RI.update
+  RI.update=function(self,dt,...)
+    local D=require('src.import.CartridgeDownload');D.reap()
+    local pending=self._cartDownload
+    if pending then
+      if self._cartDraft~=pending.draft then cancelDownload(self)
+      else
+        local result=pending.job:poll()
+        if result then
+          self._cartDownload=nil
+          local d=pending.draft
+          if result.kind=='done' then
+            local ok,image,why=pcall(self._cartImageBytes,self,result.bytes)
+            if ok and image then d.image=image.image;d.png=image.bytes;d.style.artMode='cartridge';d.originalConsent=nil
+              d.notice='Original image loaded. Save the design to use it in your library.'
+            else d.notice=tostring(ok and why or image) end
+          else d.notice=tostring(result.error or 'Artwork download cancelled.') end
+        end
+      end
+    end
+    return update(self,dt,...)
   end
 
   function RI:_cartSaveDesign()
@@ -190,16 +224,25 @@ function Designer.install(RI)
     ey=ey+54*s
     local reference=Sources.get(d.version)
     if reference then
+      local download=self:_glassyButton(ex,ey,ew,42*s,self._cartDownload and 'CANCEL ARTWORK DOWNLOAD' or 'DOWNLOAD ORIGINAL CARTRIDGE IMAGE',self.hintFont,true)
+      control(self._cartDownload and 'cancelDownload' or 'original',nil,download);ey=ey+54*s
+      if d.showOriginalConsent then
+        local rights=Strings('Source: Bulbagarden Archives. Artwork belongs to its respective rights holders, including Nintendo, Game Freak and Creatures. Downloading does not grant a reuse licence. The image is stored only on this device.')
+        g.setFont(self.hintFont);U.col(p.detail);g.printf(rights,ex,ey,ew,'left')
+        local _,lines=self.hintFont:getWrap(rights,ew);ey=ey+#lines*self.hintFont:getHeight()+14*s
+        control('consent',nil,self:_chipButton(ex,ey,d.originalConsent and '✓ I HAVE CHECKED MY PERMITTED USE' or '□ I HAVE CHECKED MY PERMITTED USE',{w=ew,h=38*s}));ey=ey+48*s
+        if d.originalConsent then control('downloadOriginal',nil,self:_chipButton(ex,ey,'CONFIRM & DOWNLOAD',{w=ew,h=42*s,kind='accent'}));ey=ey+54*s end
+      end
       local source=self:_glassyButton(ex,ey,ew,38*s,'Original cartridge: image source ↗',self.hintFont,true)
       control('source',reference.page,source);ey=ey+50*s
-      local help=Strings('Open Bulbagarden Archives, check its usage terms and save the image yourself. Then import the saved file below.')
+      local help=Strings('View the source, or download directly above after confirming the rights notice.')
       paint.text(self,self.hintFont,help,ex,ey,ew,p.detail)
       local _,lines=self.hintFont:getWrap(help,ew);ey=ey+#lines*self.hintFont:getHeight()+14*s
     end
     local upload=self:_glassyButton(ex,ey,ew,38*s,'Import your own cartridge image',self.hintFont,true)
     control('image',nil,upload);ey=ey+52*s
-    paint.text(self,self.hintFont,Strings('Choose a PNG/JPEG you saved yourself. Artwork stays on this device; no image search, download or upload is performed.'),ex,ey,ew,p.detail)
-    local _,helpLines=self.hintFont:getWrap(Strings('Choose a PNG/JPEG you saved yourself. Artwork stays on this device; no image search, download or upload is performed.'),ew)
+    paint.text(self,self.hintFont,Strings('Use your own PNG/JPEG, or choose the original image above. Artwork stays on this device.'),ex,ey,ew,p.detail)
+    local _,helpLines=self.hintFont:getWrap(Strings('Use your own PNG/JPEG, or choose the original image above. Artwork stays on this device.'),ew)
     ey=ey+#helpLines*self.hintFont:getHeight()+14*s
     if d.image then
       local half=(ew-10*s)/2
@@ -240,6 +283,10 @@ function Designer.install(RI)
           if r.id=='shell' or r.id=='label' then d.style[r.id]=r.value
           elseif r.id=='pattern' then d.style.pattern=r.value;d.style.art=nil;d.image=nil;d.png=nil
           elseif r.id=='image' then self:_cartImportImage()
+          elseif r.id=='original' then d.showOriginalConsent=not d.showOriginalConsent;d.originalConsent=false
+          elseif r.id=='consent' then d.originalConsent=not d.originalConsent
+          elseif r.id=='downloadOriginal' then self:_cartDownloadOriginal()
+          elseif r.id=='cancelDownload' then cancelDownload(self);d.notice='Artwork download cancelled.'
           elseif r.id=='source' then
             love.system.openURL(r.value);d.referenceOpened=true
             d.notice=Strings('Save the full-size image from the source page, then choose Import your own cartridge image. Images are not freely licensed merely because they can be downloaded.')
@@ -296,11 +343,13 @@ function Designer.install(RI)
   end
   local back=RI._sbBack
   RI._sbBack=function(self,...)
+    cancelDownload(self)
     if self._cartDraft then self._cartDraft=nil;self._cartNameFocus=false;self._cartColorFocus=nil;self:_disarmTextInput() end
     return back(self,...)
   end
   local go=RI._sbGo
   RI._sbGo=function(self,...)
+    cancelDownload(self)
     self._cartDraft=nil;self._cartNameFocus=false;self._cartColorFocus=nil
     return go(self,...)
   end

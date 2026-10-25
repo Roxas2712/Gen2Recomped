@@ -30,6 +30,24 @@ function Library.grid(width, scale)
   return cols, (width - (cols - 1) * gap) / cols, 264 * scale, gap
 end
 
+function Library.preview(self,version,x,y,w,h)
+  local B=require('src.import.LauncherBackdrop')
+  if B.current()~=version and B.current()~='video' then return false end
+  local g=love.graphics
+  g.push('all')
+  local ok,drew=pcall(B.draw,w,h,{x=x,y=y,w=w,h=h})
+  if ok and drew then
+    if g.intersectScissor then g.intersectScissor(x,y,w,h) else g.setScissor(x,y,w,h) end
+    -- Leave the live picture visible on the right, with stable contrast for
+    -- the title and save actions on the left.
+    for i=0,31 do
+      local alpha=.92-.58*(i/31)
+      g.setColor(.025,.04,.065,alpha);g.rectangle('fill',x+w*i/32,y,w/32+1,h)
+    end
+  end
+  g.pop();return ok and drew or false
+end
+
 function Library.install(RI)
   local U = RI._ui
   local col, ellipsize = U.col, U.ellipsize
@@ -175,6 +193,7 @@ function Library.install(RI)
     local titleH=math.min(#lines,2)*self.gameNameFont:getHeight()
     local h=math.max((wide and 190 or 220)*s,57*s+titleH+self.hintFont:getHeight()+20*s+64*s)
     surface(x,y,w,h,16*s,accent,false)
+    Library.preview(self,artVersion,x,y,w,h)
     if wide then
       col(accent,0.09);g.circle('fill',x+w-artW/2,y+h/2,90*s)
       artwork(self,artVersion,x+w-artW/2-8*s,y+h/2,artW-24*s,h-38*s)
@@ -196,6 +215,11 @@ function Library.install(RI)
       col(hot and P.playBot or P.playTop); g.rectangle('fill',tx,by,bw,42*s,8*s,8*s)
       text(self,self.stateFont,Strings('CONTINUE') .. '  >',tx+18*s,by+(42*s-self.stateFont:getHeight())/2,bw-36*s,P.playInk)
       self._sb.continue=r
+      if tw>285*s then
+        local sw=math.min(150*s,tw-bw-12*s)
+        local saves=self:_chipButton(tx+bw+12*s,by,'SAVE FILES',{w=sw,h=42*s,kind='accent'})
+        saves.version=v;self._sb.continueSaves=saves
+      end
     else
       local r=self:_chipButton(tx,by,'IMPORT ROMS',{w=bw,h=42*s,kind='accent'})
       if r then self._sb.importButtons[#self._sb.importButtons+1]=r end
@@ -235,6 +259,9 @@ function Library.install(RI)
 
   local mouse = RI._sbMousepressed
   RI._sbMousepressed = function(self,x,y)
+    if self.section=='games' and U.inside(self._sb.continueSaves,x,y) then
+      self:_sbOpenGame(self._sb.continueSaves.version);return true
+    end
     if self.section=='games' and self.gamesView=='consoles' then
       if U.inside(self._sb.logoCards,x,y) then
         local SaveData=require('src.core.SaveData')
