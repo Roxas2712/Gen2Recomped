@@ -98,6 +98,7 @@ local BATTLER_FLAGS = {
   "bideTurns",
   "encoreTurns",
   "encoreMove",
+  "encoreSlot",
   "bwSkyDropped",
   "bwChoiceLock",
   "bwImprison",

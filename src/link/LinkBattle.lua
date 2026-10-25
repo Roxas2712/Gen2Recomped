@@ -163,6 +163,7 @@ local function activeStr(b, role)
                                       stageStr(b), ppStr(b.mon)) .. toxicSignature(b.mon)
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3LockOn").signature(b, role) or "")
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3BatonPass").signature(b, role) or "")
+    .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3Encore").signature(b) or "")
 end
 
 local function benchStr(party)
@@ -431,6 +432,10 @@ function LinkBattle.new(game, net, opts)
 
     s:act(function()
       local theirAction = decodeTheirAction(s, theirMsg)
+      if require("src.core.GameVersion").isGen3() then
+        local Encore=require("src.battle.Gen3Encore")
+        myAction,theirAction=Encore.plan(s.player,myAction),Encore.plan(s.enemy,theirAction)
+      end
       Runtime.emit("battle.turn_started", {
         battle = s, turn = s.turnCount,
         playerAction = myAction, enemyAction = theirAction,
@@ -832,6 +837,10 @@ function LinkBattle.newSpectator(game, net, opts)
                           and decodeWireAction(s, hostMsg, s.player) or nil
       local guestAction = guestMsg.kind ~= "switch" and guestMsg.kind ~= "run"
                           and decodeWireAction(s, guestMsg, s.enemy) or nil
+      if require("src.core.GameVersion").isGen3() then
+        local Encore=require("src.battle.Gen3Encore")
+        hostAction,guestAction=Encore.plan(s.player,hostAction),Encore.plan(s.enemy,guestAction)
+      end
       Runtime.emit("battle.turn_started", {
         battle = s, turn = s.turnCount,
         playerAction = hostAction, enemyAction = guestAction,

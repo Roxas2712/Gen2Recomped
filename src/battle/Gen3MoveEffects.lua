@@ -314,6 +314,9 @@ P.ENDURE_EFFECT = protection("enduring",
 
 -- ENCORE: the target must repeat its last move for a few turns.
 P.ENCORE_EFFECT = function(battle, user, target)
+  if require("src.core.GameVersion").isGen3() then
+    return require("src.battle.Gen3Encore").apply(battle, user, target)
+  end
   if target.encoreTurns or not target.lastMove then
     return { Strings("But, it failed!") }
   end
