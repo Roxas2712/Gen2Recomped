@@ -580,6 +580,35 @@ end
 -- list() -> the mods-panel rows for the current install.  Reads the same
 -- options.mods enable-state the loader persists, so a toggle here is what the
 -- game sees on its next boot.
+function LauncherMods.preflight(version)
+  local options=SaveData.loadOptions()
+  local manifests=discover()
+  local P=require('src.mods.ModPreflight')
+  local report=P.inspect(manifests,options,version,love.filesystem)
+  for _,invalid in ipairs(LauncherMods._lastScan and LauncherMods._lastScan.invalid or {}) do
+    local folder=invalid.path:match('([^/]+)$')
+    local id=folder
+    local raw=love.filesystem.read(invalid.path..'/manifest.json')
+    if type(raw)=='string' and #raw<=1024*1024 then
+      local ok,doc=pcall(require('src.link.Json').decode,raw)
+      if ok and type(doc)=='table' and type(doc.id)=='string' then id=doc.id end
+    end
+    if ModGens.active((options.mods or {})[id])~=false then report.errors[#report.errors+1]={id=id or 'manifest',message='Invalid manifest: '..tostring(invalid.err)} end
+  end
+  for _,m in ipairs(manifests) do
+    local checked=false;for _,id in ipairs(report.checked) do if id==m.id then checked=true end end
+    if checked then
+      for _,missing in ipairs(require('src.mods.ModImports').missing(m,false) or {}) do report.errors[#report.errors+1]={id=m.id,message='Required import missing: '..tostring(missing.entry.name)} end
+      for _,missing in ipairs(require('src.mods.AssetPacks').missing(m) or {}) do report.errors[#report.errors+1]={id=m.id,message='Required asset pack missing: '..missing.importer..'/'..missing.pack} end
+      if m.requiredGames then
+        local versions={};for _,row in ipairs(m.requiredGames) do versions[#versions+1]=row.version end
+        for _,missing in ipairs(require('src.import.AdoptedTileset').missing(versions) or {}) do report.errors[#report.errors+1]={id=m.id,message='Import the required game data first: '..tostring(missing.name or missing.version)} end
+      end
+    end
+  end
+  report.ok=#report.errors==0;report.log=P.log(report);return report
+end
+
 function LauncherMods.list()
   local ok, result = pcall(function()
     local options = SaveData.loadOptions()

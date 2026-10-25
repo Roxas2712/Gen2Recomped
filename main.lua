@@ -650,6 +650,8 @@ function love.update(dt)
   -- The report deliberately runs nothing else: the boot path it is reporting on
   -- is the code that just died.
   if bootReport then return end
+  local community=package.loaded['src.import.LauncherCommunity']
+  if community then community.backgroundUpdates() end
   walkerTick("tick", dt)
   if editorMode then return EditorApp.update(dt) end
   if TouchEditor then return TouchEditor.update(dt) end

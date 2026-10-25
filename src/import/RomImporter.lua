@@ -6602,6 +6602,14 @@ function RomImporter:draw()
     local textTop = dy + 44 * s
     local videos=d.communityEntry and d.communityEntry.videos or {}
     local textH = dh - 44 * s - 52 * s - (#videos>0 and 42*s or 0)
+    if d.continueVersion then textH=textH-44*s end
+    if d.communityEntry then
+      local artH=math.min((d.previewExpanded and 280 or 180)*s,math.max(0,textH-self.hintFont:getHeight()*4-16*s))
+      if artH>40*s then
+        require('src.import.ModCatalogue').cover(self,d.communityEntry,dx+16*s,textTop,dw-32*s,artH,1)
+        textTop=textTop+artH+14*s;textH=textH-artH-14*s
+      end
+    end
     local _, lines = self.hintFont:getWrap(body, dw - 32 * s)
     local bodyH = #lines * self.hintFont:getHeight()
     d.max = math.max(0, bodyH - textH)
@@ -6618,6 +6626,18 @@ function RomImporter:draw()
       width = closeW, height = closeH,
     }
     self._findDetailsInstall=nil
+    self._findDetailsManage=nil
+    self._findDetailsCopy=nil
+    self._findDetailsContinue=nil
+    if d.preflight then
+      self._findDetailsClose.x=dx+dw-closeW-16*s
+      local bw=(dw-closeW-64*s)/2
+      self._findDetailsManage=self:_chipButton(dx+16*s,dy+dh-closeH-12*s,'MANAGE MODS',{w=bw,h=closeH,kind='accent'})
+      self._findDetailsCopy=self:_chipButton(dx+24*s+bw,dy+dh-closeH-12*s,'COPY LOG',{w=bw,h=closeH})
+      if d.continueVersion then
+        self._findDetailsContinue=self:_chipButton(dx+16*s,dy+dh-closeH-56*s,'ACKNOWLEDGE NOTICES & PLAY',{w=dw-32*s,h=34*s,kind='accent'})
+      end
+    end
     self._findDetailsVideos={}
     if #videos>0 then
       d.videoIndex=math.max(1,math.min(#videos,d.videoIndex or 1))
@@ -6905,6 +6925,13 @@ function RomImporter:mousepressed(x, y, button)
     return
   end
   if self._findDetails then
+    if self._findDetails.continueVersion and inside(self._findDetailsContinue,x,y) then
+      local d=self._findDetails;self._preflightApproval=d.body;self._findDetails=nil;self:play(d.continueVersion);return
+    end
+    if self._findDetails.preflight and inside(self._findDetailsCopy,x,y) then love.system.setClipboardText(self._findDetails.body);return end
+    if self._findDetails.preflight and inside(self._findDetailsManage,x,y) then
+      self._findDetails=nil;self._catalogManage=true;self.section='mods';self:_selectTab('mods');return
+    end
     if button ~= 1 then return end
     for _,r in ipairs(self._findDetailsVideos or {}) do
       if inside(r,x,y) then
@@ -7449,6 +7476,7 @@ function RomImporter:keypressed(key)
     if key == "backspace" then
       self.findQuery = utf8Back(self.findQuery or "")
       self.findScroll = 0
+      self.pageScroll = 0
     elseif key == "escape" or key == "return" or key == "kpenter" then
       self._findSearchFocus = false
       self:_disarmTextInput()
@@ -8543,7 +8571,7 @@ local MAX_SLOT_LABEL = 24
 -- Long enough for a Pages URL with a deep path; short enough that a paste of
 -- something that is not a URL at all cannot fill options.lua.
 local MAX_INDEX_URL = 200
-local MAX_FIND_QUERY = 48
+local MAX_FIND_QUERY = 160
 
 -- Mobile LOVE only delivers love.textinput while setTextInput(true) is armed,
 -- and arming it is also what raises the soft keyboard, so a cabled USB
@@ -8604,6 +8632,7 @@ function RomImporter:textinput(text)
   if self._findSearchFocus then
     self.findQuery = utf8Cap((self.findQuery or "") .. text, MAX_FIND_QUERY)
     self.findScroll = 0
+    self.pageScroll = 0
     return
   end
   if not self._rename then return end
@@ -11924,6 +11953,7 @@ require("src.import.LauncherWorkspace").install(RomImporter)
 require("src.import.CartDesigner").install(RomImporter)
 require("src.import.LauncherSequence").install(RomImporter)
 require("src.import.LauncherCommunity").install(RomImporter)
+require("src.import.ModCatalogue").install(RomImporter)
 require("src.import.LauncherModProfiles").install(RomImporter)
 require("src.import.LauncherStorage").install(RomImporter)
 require("src.import.LauncherBank").install(RomImporter)

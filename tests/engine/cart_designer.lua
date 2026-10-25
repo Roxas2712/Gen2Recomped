@@ -35,7 +35,7 @@ check(H.cartModel('emerald').w/H.cartModel('emerald').h>1.65,'GBA cartridges hav
 check(math.abs(H.cartModel('heartgold').w/H.cartModel('heartgold').h-35/33)<.02,'DS cartridges have the near-square original proportions')
 check(require('src.core.SaveData').defaultOptions().launcherLogoCards==true,'brand labels are on for new preferences')
 local Sources=require('src.import.CartridgeSources')
-for _,v in ipairs({'red','blue','yellow','gold','silver','crystal','firered','emerald','platinum','heartgold','soulsilver','black','white'}) do
+for _,v in ipairs({'red','blue','yellow','gold','silver','crystal','firered','leafgreen','ruby','sapphire','emerald','platinum','heartgold','soulsilver','black','white'}) do
   local source=Sources.get(v)
   check(source and source.page:find('https://archives.bulbagarden.net/wiki/File:',1,true)==1,'each original edition links to its own cartridge file page')
 end

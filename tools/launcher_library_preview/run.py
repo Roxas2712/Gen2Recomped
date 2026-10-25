@@ -52,9 +52,18 @@ def main():
     here = Path(__file__).resolve().parent
     root = here.parent.parent
     qa_source(root)
+    for key in ('LIBRARY_PREVIEW_CATALOGUE', 'LIBRARY_PREVIEW_THUMBNAILS'):
+        if os.getenv(key):
+            qa_source(Path(os.environ[key]))
+    executable = shutil.which(args.love)
+    if executable:
+        qa_source(Path(executable).resolve())
+        runtime_bundle = next((p for p in Path(executable).resolve().parents if p.suffix == '.app'), None)
+        if runtime_bundle:
+            qa_source(runtime_bundle)
     if args.seed_from:
         qa_source(args.seed_from)
-    identity = args.identity if args.playable else ('Gen2Recomp-layout-smoke' if os.getenv('LIBRARY_PREVIEW_SMOKE') == '1' else 'Gen2Recomp-layout-preview')
+    identity = args.identity if args.playable else ('oasc-retro-launcher-qa-smoke' if os.getenv('LIBRARY_PREVIEW_SMOKE') == '1' else 'oasc-retro-launcher-qa-layout')
     if sys.platform == 'darwin':
         profile = Path.home() / 'Library/Application Support/LOVE' / identity
         qa_source(profile)
@@ -70,6 +79,15 @@ def main():
     qa_cache(source.parent)
     source.mkdir(parents=True)
     try:
+        # A distributed LOVE app always prefers its embedded game.love over
+        # a directory argument. Use a private runtime copy for layout QA.
+        if executable and runtime_bundle and (runtime_bundle / 'Contents/Resources/game.love').is_file():
+            runtime_copy = source / 'runtime/PreviewRuntime.app'
+            runtime_copy.parent.mkdir()
+            qa_run(['cp', '-cR', str(runtime_bundle), str(runtime_copy)], check=True)
+            (runtime_copy / 'Contents/Resources/game.love').unlink()
+            qa_run(['codesign', '--force', '--deep', '--sign', '-', str(runtime_copy)], check=True)
+            args.love = str(runtime_copy / 'Contents/MacOS' / Path(executable).name)
         for name in ('src', 'data', 'assets', 'mods', 'tools'):
             if (root / name).exists():
                 (source / name).symlink_to(root / name, target_is_directory=True)

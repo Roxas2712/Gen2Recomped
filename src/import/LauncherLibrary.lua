@@ -13,6 +13,7 @@ local EDITIONS = {
   silver = {{184,201,216}, 'SILVER'}, crystal = {{126,211,225}, 'CRYSTAL'},
   prism = {{125,219,165}, 'PRISM'}, polishedcrystal = {{190,159,236}, 'POLISHED'},
   firered = {{245,147,89}, 'FIRE RED'}, emerald = {{102,210,158}, 'EMERALD'},
+  leafgreen = {{137,211,111}, 'LEAF GREEN'}, ruby = {{232,91,112}, 'RUBY'}, sapphire = {{97,147,237}, 'SAPPHIRE'},
   platinum = {{175,181,211}, 'PLATINUM'}, heartgold = {{235,189,94}, 'HEART GOLD'},
   soulsilver = {{173,195,220}, 'SOUL SILVER'}, black = {{159,165,186}, 'BLACK'},
   white = {{223,221,211}, 'WHITE'},
@@ -254,6 +255,12 @@ function Library.install(RI)
     col(fav and P.gold or P.detail,fav and 1 or 0.7)
     Sidebar.icon(fav and 'star' or 'starOff',st.x+15*s,st.y+15*s,8*s,s)
     self._sb.stars[#self._sb.stars+1]=st
+    if require('src.import.CartridgeSources').get(version) then
+      local ar=self:_chipButton(x+8*s,y+8*s,'ORIGINAL ↓',{w=108*s,h=30*s})
+      ar.version=version
+      self._sb.cartArt=self._sb.cartArt or {}
+      self._sb.cartArt[#self._sb.cartArt+1]=ar
+    end
     return r
   end
 

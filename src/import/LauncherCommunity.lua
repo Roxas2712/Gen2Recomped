@@ -78,8 +78,9 @@ function C.compatibility(entry,game)
   local V=require('src.core.Version')
   if entry.api and (entry.api<1 or entry.api>V.modApi) then return 'INCOMPATIBLE','Requires a different mod API.' end
   if entry.game_version then
-    local ok,matches=pcall(require('src.mods.Semver').satisfies,V.engine,entry.game_version)
-    if not ok or not matches then return 'INCOMPATIBLE','Requires engine '..tostring(entry.game_version)..'; this build is '..V.engine..'.' end
+    local ok,matches,why=pcall(require('src.mods.Semver').satisfies,V.engine,entry.game_version)
+    if not ok or why then return 'NOT VERIFIED','Engine requirements are not documented as a readable version range.' end
+    if not matches then return 'INCOMPATIBLE','Requires engine '..tostring(entry.game_version)..'; this build is '..V.engine..'.' end
   end
   if game and entry.games and #entry.games>0 then
     local targets=require('src.mods.ModTargets').normalize(entry.games)
@@ -116,6 +117,55 @@ function C.enrich(self)
       mod.catalogueUrl=entry.projectUrl
     end
   end
+end
+function C.pumpUpdates(self)
+  local task=self._communityUpdateJob
+  if task then
+    local result=task:poll()
+    if result then
+      self._communityUpdateJob=nil
+      local mod=self._communityUpdating;self._communityUpdating=nil
+      if mod then
+        local releases=result.kind=='done' and result.first
+        if releases then
+          Update.writeCache(mod.github,releases)
+          for _,row in ipairs(self.mods or {}) do
+            if row.github and row.github:lower()==mod.github:lower() and row.updateCheck~=false then
+              local status,best=Update.statusFor(row.version,releases)
+              self.modUpdateInfo[row.id]={status=status,best=best,latest=best and best.version,releases=releases,checkedAt=os.time()}
+            end
+          end
+        else
+          local info=self.modUpdateInfo[mod.id] or {status='error'}
+          info.err=tostring(result.error or result.second);self.modUpdateInfo[mod.id]=info
+        end
+      end
+    end
+  end
+  if not self._communityUpdateJob and self._communityUpdateQueue and #self._communityUpdateQueue>0 then
+      local mod=table.remove(self._communityUpdateQueue,1);self._communityUpdating=mod
+      local task,why=Task.new(function()
+        local body,why=get(Update.apiReleasesUrl(mod.github))
+        if not body then return nil,why end
+        return Update.parseReleases(body,mod.id)
+      end)
+      self._communityUpdateJob=task
+      if not task then
+        self.modUpdateInfo[mod.id]={status='error',err=tostring(why)}
+        self.modNotice={ok=false,text='Repository check unavailable: '..tostring(why)}
+      end
+  end
+end
+function C.backgroundUpdates()
+  local owner=C._updateOwner
+  if not owner then return end
+  local ok,why=pcall(C.pumpUpdates,owner)
+  if not ok then
+    if owner._communityUpdateJob then owner._communityUpdateJob:cancel() end
+    owner._communityUpdateJob=nil;owner._communityUpdateQueue={}
+    owner.modNotice={ok=false,text='Repository update check stopped: '..tostring(why)}
+  end
+  if not owner._communityUpdateJob and #(owner._communityUpdateQueue or {})==0 then C._updateOwner=nil end
 end
 function C.install(RI)
   local U=RI._ui
@@ -234,7 +284,7 @@ function C.install(RI)
   local play=RI.play
   RI.play=function(self,...)
     self:_communityCancelDownload()
-    for _,field in ipairs({'_communityLatestJob','_communityFindJob','_communityResolveJob','_communityUpdateJob'}) do
+    for _,field in ipairs({'_communityLatestJob','_communityFindJob','_communityResolveJob'}) do
       if self[field] then self[field]:cancel();self[field]=nil end
     end
     return play(self,...)
@@ -254,14 +304,15 @@ function C.install(RI)
     end
     if entry.catalogueId then
       self._communityImages=self._communityImages or {}
-      local cached=self._communityImages[entry.catalogueId]
+      local imageKey=entry.catalogueId..':'..tostring(entry.thumbnail or '')
+      local cached=self._communityImages[imageKey]
       if cached~=nil then return cached or nil end
       self._communityImageJobs=self._communityImageJobs or {}
       local active=0;for _ in pairs(self._communityImageJobs) do active=active+1 end
-      if not self._communityImageJobs[entry.catalogueId] and active<3 then
+      if not self._communityImageJobs[imageKey] and active<3 then
         local job=require('src.import.CartridgeDownload').preview(entry.thumbnail)
-        if job then self._communityImageJobs[entry.catalogueId]=job
-        else self._communityImages[entry.catalogueId]=false end
+        if job then self._communityImageJobs[imageKey]=job
+        else self._communityImages[imageKey]=false end
       end
       return nil
     end
@@ -282,6 +333,12 @@ function C.install(RI)
   end
   -- Replace the old synchronous automatic checks with real background I/O.
   function RI:_syncModUpdateInfo(force)
+    if force and self._communityUpdateJob then self._communityUpdateJob:cancel();self._communityUpdateJob=nil;self._communityUpdating=nil end
+    if C._updateOwner and C._updateOwner~=self then
+      if C._updateOwner._communityUpdateJob then C._updateOwner._communityUpdateJob:cancel() end
+      C._updateOwner._communityUpdateQueue={}
+    end
+    C._updateOwner=self
     self.modUpdateInfo=self.modUpdateInfo or {}
     self._communityUpdateQueue={}
     local queued={}
@@ -292,8 +349,8 @@ function C.install(RI)
           local status,best=Update.statusFor(mod.version,cached.releases)
           self.modUpdateInfo[mod.id]={status=status,best=best,latest=best and best.version,releases=cached.releases,checkedAt=cached.checkedAt}
         end
-        if (force or not Update.cacheFresh(cached)) and not queued[mod.github] then
-          queued[mod.github]=true;self._communityUpdateQueue[#self._communityUpdateQueue+1]=mod
+        if (force or not Update.cacheFresh(cached)) and not queued[mod.github:lower()] then
+          queued[mod.github:lower()]=true;self._communityUpdateQueue[#self._communityUpdateQueue+1]=mod
         end
       end
     end
@@ -427,37 +484,12 @@ function C.install(RI)
         end
       end
     end)
-    if not self._communityResolveJob and self.tab=='find' and self._communityResolveQueue and #self._communityResolveQueue>0 then
+    if not self._communityResolveJob and self.section=='mods' and self._communityResolveQueue and #self._communityResolveQueue>0 then
       local entry=table.remove(self._communityResolveQueue,1)
       self._communityResolving=entry
       self._communityResolveJob=Task.new(function() return resolveEntry(entry) end)
     end
-    pump('_communityUpdateJob',function(result)
-      local mod=self._communityUpdating;self._communityUpdating=nil
-      if mod then
-        local releases=result.kind=='done' and result.first
-        if releases then
-          Update.writeCache(mod.github,releases)
-          for _,row in ipairs(self.mods or {}) do
-            if row.github==mod.github and row.updateCheck~=false then
-              local status,best=Update.statusFor(row.version,releases)
-              self.modUpdateInfo[row.id]={status=status,best=best,latest=best and best.version,releases=releases,checkedAt=os.time()}
-            end
-          end
-        else
-          local info=self.modUpdateInfo[mod.id] or {status='error'}
-          info.err=tostring(result.error or result.second);self.modUpdateInfo[mod.id]=info
-        end
-      end
-    end)
-    if not self._communityUpdateJob and self._communityUpdateQueue and #self._communityUpdateQueue>0 then
-      local mod=table.remove(self._communityUpdateQueue,1);self._communityUpdating=mod
-      self._communityUpdateJob=Task.new(function()
-        local body,why=get(Update.apiReleasesUrl(mod.github))
-        if not body then return nil,why end
-        return Update.parseReleases(body,mod.id)
-      end)
-    end
+    C.backgroundUpdates()
     if self.section=='mods' and not self.findLoaded then self:_ensureFind() end
     return update(self,dt,...)
   end

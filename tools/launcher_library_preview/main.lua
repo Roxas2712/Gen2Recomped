@@ -13,6 +13,7 @@ local version = os.getenv('LIBRARY_PREVIEW_VERSION') or 'crystal'
 local previewBooted = false
 
 function love.load()
+  if love.setDeprecationOutput then love.setDeprecationOutput(false) end
   local root = assert(os.getenv('LIBRARY_PREVIEW_ROOT'), 'Use run.py to open the preview')
   package.path = root .. '/?.lua;' .. package.path
   require('src.core.SaveData').otherLocations = function() return {} end
@@ -49,8 +50,41 @@ function love.load()
   elseif mode == 'settings' then ui:_sbGo('settings')
   elseif mode == 'tools' then ui:_sbGo('tools')
   elseif mode == 'designer' then ui:_openCartDesigner(version)
+  elseif mode == 'original' then ui:_openCartDesigner(version);ui._cartDraft.originalOnly=true
   elseif mode == 'appearance' then ui:_sbGo('settings');ui:_workspaceOpenCategory('launcher')
-  elseif mode == 'mods' then ui:_sbGo('mods')
+  elseif mode == 'mods' then
+    ui:_sbGo('mods')
+    local catalogue=os.getenv('LIBRARY_PREVIEW_CATALOGUE')
+    if catalogue then
+      local file=assert(io.open(catalogue,'rb'));local bytes=file:read('*a');file:close()
+      ui.findIndex=assert(require('src.mods.ModIndex').parse(bytes));ui.findLoaded=true
+      ui.findIndex.categories=require('src.mods.ModIndex').categoriesIn(ui.findIndex)
+      ui.findQuery=os.getenv('LIBRARY_PREVIEW_QUERY') or ''
+      ui._ensureFind=function() end
+      local images={}
+      local imageManifest=os.getenv('LIBRARY_PREVIEW_THUMBNAILS')
+      if imageManifest then
+        local f=assert(io.open(imageManifest,'rb'));local paths=require('src.link.Json').decode(f:read('*a'));f:close()
+        for id,path in pairs(paths) do
+          local f=assert(io.open(path,'rb'));local bytes=f:read(2*1024*1024+1);f:close()
+          assert(require('src.import.ImageBounds').allowed(bytes,2048))
+          images[id]=love.graphics.newImage(love.filesystem.newFileData(bytes,'preview.jpg'))
+          images[id]:setFilter('linear','linear')
+        end
+      end
+      ui._findThumb=function(_,entry) return images[entry.catalogueId] end
+      ui.mods={};ui.modsLoaded=true;ui._ensureMods=function() end
+      local first=ui.findIndex.mods[1]
+      if first then ui.mods={{id=first.id,name=first.title,version=first.version,enabled=true,github=first.github}} end
+      if first and os.getenv('LIBRARY_PREVIEW_UPDATE')=='1' then ui.modUpdateInfo={[first.id]={status='available',latest='2.0.0'}} end
+      for _,entry in ipairs(ui.findIndex.mods) do
+        if ui.findIndex.week and entry.catalogueId==ui.findIndex.week.catalogue_id then entry._communityResolved=entry.latest~=nil end
+      end
+      if os.getenv('LIBRARY_PREVIEW_DETAILS')=='1' then
+        local rows=ui:_findRows()
+        if rows[1] then ui:_findShowDetails(rows[1]);ui._findDetails.previewExpanded=true end
+      end
+    end
   elseif mode == 'game' then ui:_sbOpenGame(version)
   elseif mode == 'news' then ui:_sbGo('news') end
 end

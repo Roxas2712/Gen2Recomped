@@ -18,5 +18,15 @@ check(list.repositories[1].proof==proof and not list.repositories[2].proof,'refr
 account='two@example.test';check(not D.list(1).repositories[1].proof,'account switches never reuse another account project proof')
 response={id=2,repository='author/second',verified=true};check(D.verify(2).verified and sent.path=='/developer/repositories/2/verify','verification selects one project by server identifier')
 check(not D.verify(-1),'invalid project ids cannot become API paths')
+response={id=4,repository='author/branch',verified=false,proof=Json.encode({service='modcompass',account=1,repository='author/branch',nonce='branch-proof'}),proof_url='https://github.com/author/branch/new/release%2Fnext?filename=.modcompass-developer.json'}
+local branch=assert(D.prepare('author/branch','policy-v1'))
+check(D.proofUrl(branch)==response.proof_url,'prepared GitHub links retain the actual repository default branch')
+check(not D.uploadCover({id=4,verified=false},'bytes','Credit','Cover',true),'unverified projects cannot upload a cover')
+check(not D.uploadCover({id=4,verified=true},'bytes','Credit','Cover',false),'cover publication needs separate image rights consent')
+local header='\137PNG\13\10\26\10'..string.char(0,0,0,13)..'IHDR'..string.char(0,0,0,64,0,0,0,64)
+love.data={encode=function() return 'encoded-png' end}
+response={digest=string.rep('a',64),status='pending_review'}
+check(D.uploadCover({id=4,verified=true},header,'Artist','Mod preview',true).status=='pending_review','verified developers can submit a selected cover to review')
+check(sent.path=='/developer/repositories/4/cover' and sent.payload.artwork_rights_accepted and sent.payload.credit=='Artist','the upload is bound to the verified repository and explicit rights choice')
 response={repositories={{id=3,repository='../private',verified=false}}};check(not D.list(1),'invalid repository identities are rejected')
 print('Developer projects: '..n..' checks passed')
