@@ -32,6 +32,7 @@ on:
       - 'tests/engine/gen3_triple_kick*.lua'
       - 'tests/engine/gen3_sleep_talk*.lua'
       - 'tests/engine/gen3_choice*.lua'
+      - 'tests/engine/gen3_move_used*.lua'
       - 'tools/enemy-action-contract-check/**'
   push:
     branches: [main, dev]

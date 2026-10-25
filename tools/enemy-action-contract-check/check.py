@@ -12,6 +12,7 @@ GEN1_REF = "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91"
 
 
 MODES = [
+    (3, 'move_used_pp'),
     (2, 'choices'),
     (3, 'choices'),
     (3, 'arguments'),

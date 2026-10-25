@@ -7849,6 +7849,7 @@ function BattleState:executeAction(user, target, action)
         -- only the first announces; the rest are the same move landing again
         self:performMove(user, one, action, i > 1,
                          spreadAnimation and animationPlayed, GameVersion.generation() == 3 and i > 1)
+        if self._gbaActionFrame and self._gbaActionFrame.ppBlocked then break end
         -- FireRed's Cmd_attackanimation increments animTargetsHit only when an
         -- animation actually survives the no-effect/failure path.  If the
         -- first target cancels it, a later spread target is still allowed to
@@ -8217,12 +8218,14 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
       or moveInst == user.rageMove
   local enemyUnlimited = not user.isPlayer and self.kind ~= "link"
       and self.ruleset and self.ruleset.enemyUnlimitedPP
-  if not isContinuation and not moveInst.struggle and not isCalled
+  local nativePP = GameVersion.isGen3()
+    and require("src.battle.Gen3PPCommand").prepare(self, user, target, moveInst, isContinuation, isCalled)
+  if not nativePP and not isContinuation and not moveInst.struggle and not isCalled
       and not enemyUnlimited and EnemyMoveChoice.exhausted(moveInst) then
     self:sayNext(self:romText("_MoveNoPPText", "No PP left for\nthis move!"))
     return
   end
-  if not isContinuation and not moveInst.struggle and not isCalled
+  if not nativePP and not isContinuation and not moveInst.struggle and not isCalled
       and not enemyUnlimited then
     -- PRESSURE costs the ATTACKER an extra point for every move aimed at its
     -- holder.  Two per use, not double the total -- which is why it is
@@ -8232,16 +8235,37 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
     moveInst.pp = math.max(0, moveInst.pp - cost)
   end
 
+  local function resolveCharge()
+    local required = record and record.charge ~= nil and not releasing and not skipCharge
+    if required and GameVersion.generation() <= 3 and Runtime.wantsHook("battle.charge_required") then
+      required = Runtime.call("battle.charge_required", function(c) return c.charge end, {
+        battle = self, user = user, target = target, move = move,
+        charge = true, isCalled = isCalled or false,
+      }) ~= false
+      if not required then animContext.moveTurn = 1 end
+    end
+    return required
+  end
+  local chargeRequired
+  if nativePP and not nativePP.blocked then
+    chargeRequired = resolveCharge()
+    -- Native charge setup/bypass/sunlight consumes PP before any attack
+    -- string. A retained first charge has no move-used event at all.
+    if record and record.charge and not releasing then moveInst = nativePP.reduce() end
+  end
+
   if record and record.gbaSleepTalk and user.mon.status == "SLP" then self:statusOnomatopoeia(user, "sleep") end
   self.moveAnimRow = nil
   if not (user.thrashTurns and moveInst == user.thrashMove and user.thrashAnnounced) then
-    self:sayNext(self:romText("_ItemUseText001", "%s\nused %s!", displayName(user), move.name))
+    if not chargeRequired then
+      self:sayNext(self:romText("_ItemUseText001", "%s\nused %s!", displayName(user), move.name))
+    end
     -- the move's animation plays right after the announcement; the
     -- damage path attaches the target's hit blink to this row so the
     -- blink follows the animation (pokered's order).  Mimic is the
     -- exception (announceAnim = false): PlayCurrentMoveAnimation runs
     -- only after a successful copy, never on a miss -- applyMimic queues it
-    if not suppressAnimation and not (record and record.announceAnim == false) then
+    if not (nativePP and nativePP.blocked) and not suppressAnimation and not (record and record.announceAnim == false) then
       self.nextInsert = (self.nextInsert or 0) + 1
       self.moveAnimRow = { anim = move.id, attackerIsPlayer = user.isPlayer,
                            attackerPosition = user.position,
@@ -8250,11 +8274,20 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
       table.insert(self.queue, self.nextInsert, self.moveAnimRow)
     end
   end
-  if not spreadContinuation then
+  if not spreadContinuation and not chargeRequired then
     Runtime.emit("battle.move_used", {
       battle = self, user = user, target = target, move = move,
       isCalled = isCalled or false,
     })
+  end
+  if nativePP then
+    if nativePP.blocked then
+      if self._gbaMoveFrame then self._gbaMoveFrame.finished = true end
+      if self._gbaActionFrame then self._gbaActionFrame.ppBlocked = true end
+      self:sayNext(self:romText("_MoveNoPPText", "No PP left for\nthis move!"))
+      return
+    end
+    moveInst = nativePP.reduce()
   end
 
   -- PROTECT stops a status move too, and it is the only check that has to
@@ -8309,15 +8342,7 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
   -- BattleCommand_SkipSunCharge (effect_commands.asm:6535): Solar Beam jumps
   -- straight past `charge` while the sun is up and fires on the turn it was
   -- selected.  Every other charge move ignores the weather.
-  local chargeRequired = record and record.charge ~= nil and not releasing and not skipCharge
-  if chargeRequired and GameVersion.generation() <= 3 and Runtime.wantsHook("battle.charge_required") then
-    local required = Runtime.call("battle.charge_required", function(c) return c.charge end, {
-      battle = self, user = user, target = target, move = move,
-      charge = true, isCalled = isCalled or false,
-    })
-    chargeRequired = required ~= false
-    if not chargeRequired then animContext.moveTurn = 1 end
-  end
+  if not nativePP then chargeRequired = resolveCharge() end
   if chargeRequired then
     local branchAware = GameVersion.get() == "firered"
                         and hasMoveTurnVariant(move.anim)
