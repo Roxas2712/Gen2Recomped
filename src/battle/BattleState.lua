@@ -4041,6 +4041,12 @@ end
 function BattleState:playerHasPP(who)
   who = who or self:menuBattler()
   if not (who and who.curMoves) then return false end
+  if GameVersion.isGen3() then
+    for slot = 1, 4 do
+      if not require("src.battle.Gen3MoveSelection").manualReason(self, who, who.curMoves[slot], slot) then return true end
+    end
+    return false
+  end
   for i, mv in ipairs(who.curMoves) do
     if mv.pp > 0 and not require("src.battle.Gen3Disable").blocked(who, mv, i) then return true end
   end
@@ -4351,6 +4357,8 @@ function BattleState:update(dt)
     if not self:updateQueue() then
       if self.afterQueue == "menu" then
         self.phase = "menu"
+      elseif self.afterQueue == "moveSelect" then
+        self.phase = "moveSelect"
       elseif self.afterQueue == "finish" then
         self:finish()
       end
@@ -5455,7 +5463,10 @@ function BattleState:vanillaEnemyAction(battler)
   battler = battler or self.enemy
   if not battler then return nil end
   local locked = self:lockedAction(battler)
-  if locked then return locked end
+  local encoreOnly = GameVersion.isGen3() and not battler.charging and not battler.rageMove
+    and not (battler.thrashTurns and battler.thrashTurns > 0)
+    and locked == require("src.battle.Gen3Encore").menu(battler)
+  if locked and not encoreOnly then return locked end
   if self.palace then return require("src.battle.Gen3Palace").choose(self, battler) end
   -- an ai_classes brain (or one on the trainer record) supersedes the
   -- class action and move scoring entirely
@@ -5554,8 +5565,8 @@ function BattleState:resolveTurn(playerAction)
   local selectedPlayerAction, selectedEnemyAction = playerAction, enemyAction
   local nativeActions
   if GameVersion.isGen3() then
-    local Encore = require("src.battle.Gen3Encore")
-    playerAction, enemyAction = Encore.plan(self.player, playerAction), Encore.plan(self.enemy, enemyAction)
+    local Choice = require("src.battle.Gen3ChoiceBand")
+    playerAction, enemyAction = Choice.plan(self, self.player, playerAction), Choice.plan(self, self.enemy, enemyAction)
     local Rage = require("src.battle.Gen3Rage")
     if self:isDouble() then
       nativeActions = {}
@@ -5565,7 +5576,7 @@ function BattleState:resolveTurn(playerAction)
           local action
           if enemyActions and not b.isPlayer and not b.ally then action = enemyActions[pos]
           else action = self:actionFor(b, playerAction, enemyAction) end
-          action = Encore.plan(b, action)
+          action = Choice.plan(self, b, action)
           nativeActions[pos] = action
           Rage.selected(self, b, action)
         end
@@ -7647,6 +7658,7 @@ function BattleState:executeAction(user, target, action)
   end
   if user.mon.hp <= 0 then return end
   if not action then return end
+  if GameVersion.isGen3() then action = require("src.battle.Gen3ChoiceBand").execution(user, action) end
   local explicitTarget = false
   if GameVersion.generation() == 3 and self:isDouble() and not action.special then
     local selected
@@ -8265,6 +8277,8 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
     end
     if pick then
       if record.gbaSleepTalk then require("src.battle.Gen3SleepTalk").call(ctx, pick)
+      elseif record.gbaNativeChoiceCaller and record.gbaNativeChoiceCaller == record.callsMove then
+        require("src.battle.Gen3ChoiceBand").call(ctx, pick, target)
       else self:performMove(user, target, { id = pick, pp = 1 }, true) end
     end
     return
@@ -8410,12 +8424,15 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   end
   local Schedule = require("src.battle.GbaItemSchedule")
   local parent = self._gbaMoveFrame
-  local frame = { parent = parent, move = self:moveDef(moveInst) }
+  local caller = self._gbaNextCaller
+  self._gbaNextCaller = nil
+  local frame = { parent = parent, user = user, move = self:moveDef(moveInst), moveId = moveInst.id,
+    calledBy = isCalled and caller and caller.parent == parent and caller.move or nil }
   if parent then parent.called = true end
   self._gbaMoveFrame = frame
   if self._gbaActionFrame then self._gbaActionFrame.moved = true end
   performMove(self, user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
-  if not frame.finished and not frame.called and not frame.suspended then Schedule.moveEnd(self) end
+  if not frame.finished and not frame.nativeCalled and not frame.suspended then Schedule.moveEnd(self) end
   self._gbaMoveFrame = parent
   if not isCalled and not parent and not self._gbaActionFrame and not frame.suspended then Schedule.afterAction(self) end
 end
@@ -9977,7 +9994,7 @@ function BattleState:nonMoveAction()
   local native, action = GameVersion.isGen3()
   if native then
     action = self:enemyAction()
-    action = require("src.battle.Gen3Encore").plan(self.enemy, action)
+    action = require("src.battle.Gen3ChoiceBand").plan(self, self.enemy, action)
     local Rage = require("src.battle.Gen3Rage")
     Rage.selected(self, self.player, nil)
     Rage.selected(self, self.enemy, action)

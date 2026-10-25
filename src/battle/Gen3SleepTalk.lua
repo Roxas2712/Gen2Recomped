@@ -130,7 +130,7 @@ function S.call(ctx, pick)
     targets = { tonumber(move.target) == 16 and user or b:defaultTargetFor(user) }
   end
   for i, target in ipairs(targets) do
-    b:performMove(user, target, { id = pick, pp = 1 }, true, i > 1, i > 1)
+    require("src.battle.Gen3ChoiceBand").call(ctx, pick, target, i > 1, i > 1)
   end
   user.lastMove = ctx.move.id
 end

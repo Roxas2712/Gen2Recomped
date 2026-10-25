@@ -166,6 +166,7 @@ local function activeStr(b, role)
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3Encore").signature(b) or "")
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3Disable").signature(b) or "")
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3Rage").signature(b) or "")
+    .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3ChoiceBand").signature(b) or "")
 end
 
 local function benchStr(party)
@@ -436,8 +437,8 @@ function LinkBattle.new(game, net, opts)
       local theirAction = decodeTheirAction(s, theirMsg)
       local selectedMine,selectedTheirs=myAction,theirAction
       if require("src.core.GameVersion").isGen3() then
-        local Encore=require("src.battle.Gen3Encore")
-        myAction,theirAction=Encore.plan(s.player,myAction),Encore.plan(s.enemy,theirAction)
+        local Choice=require("src.battle.Gen3ChoiceBand")
+        myAction,theirAction=Choice.plan(s,s.player,myAction),Choice.plan(s,s.enemy,theirAction)
         local Rage=require("src.battle.Gen3Rage")
         Rage.selected(s,s.player,myAction);Rage.selected(s,s.enemy,theirAction)
       end
@@ -844,8 +845,8 @@ function LinkBattle.newSpectator(game, net, opts)
                           and decodeWireAction(s, guestMsg, s.enemy) or nil
       local selectedHost,selectedGuest=hostAction,guestAction
       if require("src.core.GameVersion").isGen3() then
-        local Encore=require("src.battle.Gen3Encore")
-        hostAction,guestAction=Encore.plan(s.player,hostAction),Encore.plan(s.enemy,guestAction)
+        local Choice=require("src.battle.Gen3ChoiceBand")
+        hostAction,guestAction=Choice.plan(s,s.player,hostAction),Choice.plan(s,s.enemy,guestAction)
         local Rage=require("src.battle.Gen3Rage")
         Rage.selected(s,s.player,hostAction);Rage.selected(s,s.enemy,guestAction)
       end
