@@ -1,0 +1,52 @@
+{
+  "project": "Cobblemon Assets",
+  "revision": "c22016bfb1263a762c91762997e9dca198d574df",
+  "license": "CC-BY-NC-3.0",
+  "files": [
+    {
+      "file": "haunter.geo.json",
+      "source": "https://gitlab.com/cable-mc/cobblemon-assets/-/blob/c22016bfb1263a762c91762997e9dca198d574df/blockbench/pokemon/gen1/0093_haunter/haunter.geo.json",
+      "sha256": "ccff07f312fe78abe4fbf467f21102c7464262235bf5fa2be09d5c6ed4c10381"
+    },
+    {
+      "file": "haunter.animation.json",
+      "source": "https://gitlab.com/cable-mc/cobblemon-assets/-/blob/c22016bfb1263a762c91762997e9dca198d574df/blockbench/pokemon/gen1/0093_haunter/haunter.animation.json",
+      "sha256": "f5d28798ca9715508dea66990feaad33d3e12767c6f35c8e84f1ad597fe7d949"
+    },
+    {
+      "file": "haunter.png",
+      "source": "https://gitlab.com/cable-mc/cobblemon-assets/-/blob/c22016bfb1263a762c91762997e9dca198d574df/blockbench/pokemon/gen1/0093_haunter/haunter.png",
+      "sha256": "38db6b029ad6683185472d24ec5958bfce02c86ea94bfe44ef3b0799b9c647a7"
+    },
+    {
+      "file": "haunter.bbmodel",
+      "source": "https://gitlab.com/cable-mc/cobblemon-assets/-/blob/c22016bfb1263a762c91762997e9dca198d574df/blockbench/pokemon/gen1/0093_haunter/haunter.bbmodel",
+      "sha256": "8d97b0861c613effa42b8682efcb2f15b705e5ad89118e647b7b921b1098d2e7"
+    },
+    {
+      "file": "delibird.geo.json",
+      "source": "https://gitlab.com/cable-mc/cobblemon-assets/-/blob/c22016bfb1263a762c91762997e9dca198d574df/blockbench/pokemon/gen2/0225_delibird/delibird.geo.json",
+      "sha256": "ed2dfb8eaa7b4dd3d604f712948faee6284a60aff4e3b8b3465bc812149b4683"
+    },
+    {
+      "file": "delibird.animation.json",
+      "source": "https://gitlab.com/cable-mc/cobblemon-assets/-/blob/c22016bfb1263a762c91762997e9dca198d574df/blockbench/pokemon/gen2/0225_delibird/delibird.animation.json",
+      "sha256": "facdd7fe74a8fa790d6fb57d12edf7123c1e49d126dcf672b19e168a42d92b68"
+    },
+    {
+      "file": "delibird.png",
+      "source": "https://gitlab.com/cable-mc/cobblemon-assets/-/blob/c22016bfb1263a762c91762997e9dca198d574df/blockbench/pokemon/gen2/0225_delibird/delibird.png",
+      "sha256": "36b5ee7eddf57b312b56847e967518a2741a66c76a13993cb455f55925a07c84"
+    },
+    {
+      "file": "delibird.bbmodel",
+      "source": "https://gitlab.com/cable-mc/cobblemon-assets/-/blob/c22016bfb1263a762c91762997e9dca198d574df/blockbench/pokemon/gen2/0225_delibird/delibird.bbmodel",
+      "sha256": "c23da172fcb33b364403cda2c1bb2ffd15f85143f53648e837ee2763dcb33452"
+    },
+    {
+      "file": "LICENSE",
+      "source": "https://gitlab.com/cable-mc/cobblemon-assets/-/blob/c22016bfb1263a762c91762997e9dca198d574df/LICENSE",
+      "sha256": "fb8e971d1895863ec9fc5f3cfc526c64af980bd6c93d0a1615c7969df46a6660"
+    }
+  ]
+}

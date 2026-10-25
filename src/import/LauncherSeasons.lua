@@ -1,9 +1,10 @@
--- Original, code-drawn seasonal mascots. No game sprites or firmware assets.
+-- Seasonal choreography. Autumn/winter use credited Cobblemon models;
+-- spring/summer and the renderer fallback remain code-drawn mascots.
 local Seasons = {}
 local Score=require('src.import.LauncherIntroScore')
 Seasons.VALUES={'auto','lightning','spring','summer','autumn','winter'}
 Seasons.LABELS={auto='AUTOMATIC',lightning='LIGHTNING',spring='SPRING · BRANCHLING',
-  summer='SUMMER · SPARK DRAKE',autumn='AUTUMN · SHADE',winter='WINTER · COURIER'}
+  summer='SUMMER · SPARK DRAKE',autumn='AUTUMN · GEIST',winter='WINTER · COURIER'}
 local function clamp(v) return math.max(0,math.min(1,v)) end
 local function ease(v) v=clamp(v);return v*v*(3-2*v) end
 
@@ -81,6 +82,7 @@ function Seasons.draw(kind,t,cx,cy,s,override)
       g.ellipse('fill',trail.x,trail.y+27*s,(5+i*.5)*s,(3+i*.25)*s)
     end
   end
+  if not require('src.import.LauncherCobblemon').draw(kind,t,pose,s) then
   g.push('all');g.translate(pose.x,pose.y);g.scale(s*(pose.size or 1))
   if kind~='autumn' then col(0,0,0,0.24);g.ellipse('fill',8,82,84,10) end
   if kind=='autumn' then
@@ -154,6 +156,7 @@ function Seasons.draw(kind,t,cx,cy,s,override)
     oval(-26,68,26,10,49,126,137);oval(30,68,26,10,49,126,137)
   end
   g.pop()
+  end
 
   -- Confetti travels from the action into the logo; no enclosing disk/ring.
   g.push('all')

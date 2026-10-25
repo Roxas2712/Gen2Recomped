@@ -311,6 +311,10 @@ function Sequence.install(RI)
       end
       g.setFont(self.hintFont);col(P.warning,1-dock)
       g.printf(Strings('Tap or press any key to skip'),ox,oy+h-44*s,w,'center')
+      if state.season=='autumn' or state.season=='winter' then
+        col(P.muted or P.warning,.65*(1-dock))
+        g.printf('Models: Cobblemon Team · CC BY-NC 3.0',ox,oy+h-22*s,w,'center')
+      end
     else
       local Hardware=require('src.import.LauncherHardware')
       local p,align,descent=Sequence.motion(state)

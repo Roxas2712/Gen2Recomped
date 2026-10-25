@@ -12,6 +12,7 @@ function B.available(version,design,exists)
   return false
 end
 function B.plan(designs,exists)
+  designs=type(designs)=='table' and designs or {}
   local queue,skipped,bytes={},0,0
   for _,version in ipairs(B.ORDER) do
     if B.available(version,(designs or {})[version],exists) then queue[#queue+1]=version;bytes=bytes+(Sources.get(version).bytes or 0)
@@ -42,7 +43,7 @@ function B.tick(self)
       f.job=nil;local version=f.current;f.current=nil
       if result.kind~='done' then fail(version,result.error or 'Download cancelled.')
       else
-        local options=SaveData.loadOptions();local designs=options.launcherCartDesigns or {}
+        local options=SaveData.loadOptions();local designs=type(options.launcherCartDesigns)=='table' and options.launcherCartDesigns or {}
         if not B.available(version,designs[version],function(path) return love.filesystem.getInfo(path)~=nil end) then f.skipped=f.skipped+1
         else
           local ok,image,why=pcall(self._cartImageBytes,self,result.bytes)

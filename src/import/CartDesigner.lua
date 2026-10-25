@@ -450,6 +450,7 @@ function Designer.install(RI)
       local ok,bytes=pcall(function() file:open('r');local b=file:read(8*1024*1024+1);file:close();return b end)
       local image,why=self:_cartImageBytes(ok and bytes or nil)
       if image then self._cartDraft.image=image.image;self._cartDraft.png=image.bytes
+        self._cartDraft.style.originalSha256=nil
         if self._cartDraft.referenceOpened then self._cartDraft.style.artMode='cartridge' end
         self._cartDraft.notice=Strings('Artwork loaded. Save the design to keep it.')
       else self._cartDraft.notice=Strings(why) end
