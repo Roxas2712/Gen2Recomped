@@ -21,7 +21,7 @@ local function call(method,path,payload)
   if type(bytes)~='string' or #bytes>256*1024 then return nil,'Invalid developer profile size.' end
   local ok,doc=pcall(Json.decode,bytes or '')
   if code~=200 or not ok or type(doc)~='table' then
-    if code==401 and Auth.expire then Auth.expire() end
+    if code==401 and Auth.expire then Auth.expire(token) end
     local message=ok and type(doc)=='table' and (doc.errors and doc.errors.repository and doc.errors.repository[1] or doc.message)
     return nil,message or ('Account request failed ('..tostring(code or 'offline')..').')
   end

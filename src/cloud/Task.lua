@@ -21,6 +21,10 @@ function T.new(fn)
  Http.async[self.co]=true
  return self
 end
+function T.yield()
+ local co=coroutine.running()
+ if co and Http.async[co] then return coroutine.yield({kind='tick'}) end
+end
 function T:cancel()
  if self.co then Http.async[self.co]=nil;self.co=nil end
  -- LOVE's thread destructor may wait. Retain in-flight workers until they
@@ -57,6 +61,7 @@ function T:poll()
   Http.async[self.co]=nil;self.co=nil
   self.terminal={kind='done',first=a,second=b};return self.terminal
  end
+ if type(a)=='table' and a.kind=='tick' then return end
  if type(a)~='table' or a.kind~='http' then return self:fail('Invalid cloud network request.') end
  local started,why=pcall(function()
   local channel=love.thread.newChannel()

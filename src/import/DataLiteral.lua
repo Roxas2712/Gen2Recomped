@@ -112,6 +112,33 @@ function D.decode(source, limits)
     fail("unterminated string")
   end
   local value
+  local function expect(token)
+    skip()
+    if source:sub(p,p+#token-1)~=token then fail('expected generated-data token '..token) end
+    p=p+#token
+  end
+  -- LuaWriter.encodeSplit emits this one fixed table-assembly grammar to
+  -- avoid LuaJIT's constant limit. Interpret its literals, never its Lua.
+  local function chunked()
+    depth=depth+1;if depth>limits.depth then fail('depth limit') end
+    expect('(function()');expect('local __t = {}');expect('local __p = {')
+    local out,seen,count={}, {},0
+    skip()
+    while source:sub(p,p)~='}' do
+      expect('function(__t)');skip()
+      while source:sub(p,p+2)~='end' do
+        count=count+1;node();if count>limits.entries then fail('table entry limit') end
+        expect('__t[');local key=value();expect(']');expect('=');local child=value()
+        if type(key)~='string' and type(key)~='number' and type(key)~='boolean' then fail('invalid key') end
+        if seen[key] then fail('duplicate key') end
+        seen[key]=true;out[key]=child;skip()
+      end
+      expect('end');skip()
+      if source:sub(p,p)==',' then p=p+1;skip() elseif source:sub(p,p)~='}' then fail('expected chunk separator') end
+    end
+    expect('}');expect('for __i = 1, #__p do __p[__i](__t) end');expect('return __t');expect('end)()')
+    depth=depth-1;return out
+  end
   local function identifier()
     local word = source:match("^[%a_][%w_]*", p)
     if not word then
@@ -199,6 +226,7 @@ function D.decode(source, limits)
     if c == "{" then
       return array()
     end
+    if c=='(' and limits.chunked then return chunked() end
     if c == '"' or c == "'" then
       return quoted()
     end

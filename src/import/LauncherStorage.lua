@@ -3,14 +3,18 @@ local SaveData=require('src.core.SaveData')
 local Versions=require('src.core.GameVersion')
 local Task=require('src.cloud.Task')
 function Storage.install(RI)
-  function RI:_storageSync(version,slot,cartChoice)
+  local GameCache=require('src.storage.GameCache');GameCache.refresh()
+  function RI:_storageSync(version,slot,cartChoice,mode)
     if not require('src.storage.AccountStorage').requireUI(self,'storage') then return end
     if self._storageTask then self.settingsNotice='Cloud sync is already running.';return end
     if self._profileApplying then self.settingsNotice='Finish the mod profile transfer before syncing again.';return end
     local list={}
-    for _,v in ipairs(Versions.ORDER) do if self.ready[v] then list[#list+1]=v end end
+    for _,v in ipairs(Versions.ORDER) do list[#list+1]=v end
     local mods=self.mods or require('src.mods.LauncherMods').list()
     local options=self:_settings()
+    local restoreOnly=mode=='restore'
+    local ready={};for v,on in pairs(self.ready) do ready[v]=on end
+    require('src.import.LauncherBackdrop').stop()
     local task,why=Task.new(function()
       local target,err=self:_sbCloudTarget()
       if not target then return nil,err end
@@ -19,28 +23,43 @@ function Storage.install(RI)
         local synced,why=require('src.storage.CartridgeCloud').sync(target,cartChoice)
         return synced and ('Custom cartridges: '..synced..'.') or nil,why
       end
+      local games,cacheWarning
+      if target.kind=='retro' then
+        local cacheOptions={gameCacheDownload=options.gameCacheDownload,gameCacheUpload=not restoreOnly and options.gameCacheUpload}
+        games,err=GameCache.sync(target,cacheOptions,ready,function(note) self.settingsNotice=note end,mode=='games-upload')
+        if not games then
+          if mode=='games-upload' or mode=='games' then return nil,err end
+          cacheWarning=err;games={uploaded=0,downloaded=0,versions={}}
+        end
+        if mode=='games-upload' or mode=='games' then return {message='Private games: '..games.uploaded..' uploaded, '..games.downloaded..' restored.',games=games} end
+      end
       local Cloud=require('src.import.CloudSync')
       if type(target)=='string' then target=Cloud.folderStore(target) end
       if version then
         local result,problem=Cloud.syncOne(target,version,slot)
         return result and ('Cloud sync: '..result) or nil,problem
       end
-      local result,problem=Cloud.syncVersions(target,list)
+      local result,problem
+      if restoreOnly then
+        result,problem=Cloud.restoreVersions(target,list)
+      else result,problem=Cloud.syncVersions(target,list) end
       if not result then return nil,problem end
       local message='Cloud sync: '..Cloud.describe(result)
-      if target.kind=='retro' and options.cartridgeCloudSync then
+      if games then message=message..' · Private games: '..games.uploaded..' uploaded / '..games.downloaded..' restored.' end
+      if cacheWarning then message=message..' · Private game transfer paused: '..tostring(cacheWarning) end
+      if target.kind=='retro' and options.cartridgeCloudSync and not restoreOnly then
         local carts,cartWhy=require('src.storage.CartridgeCloud').sync(target)
         if not carts then return nil,cartWhy end
         message=message..' · Custom cartridges: '..carts..'.'
       end
       local ok,Bank=pcall(require,'src.storage.PokemonBank')
-      if ok and require('src.cloud.RetroCloud').signedIn() then
+      if ok and not restoreOnly and require('src.cloud.RetroCloud').signedIn() then
         local synced,bankWhy=Bank.sync(target)
         if not synced then return nil,bankWhy end
         message=message..' · Bank '..tostring(synced)..' entries.'
       end
       local profile
-      if options.modProfileSync then
+      if not restoreOnly and options.modProfileSync then
         local profileWhy
         local profileStore=target
         if target.kind~='retro' then profileStore,profileWhy=require('src.cloud.RetroCloud').open() end
@@ -49,7 +68,7 @@ function Storage.install(RI)
         if not profile then return nil,profileWhy end
         message=message..' · Mod profile: '..profile.kind..'.'
       end
-      return {message=message,profile=profile}
+      return {message=message,profile=profile,games=games}
     end)
     self._storageTask=task;self._storageVersions=list
     self.settingsNotice=task and 'Syncing your saves and Pokémon Bank...' or tostring(why)
@@ -60,12 +79,17 @@ function Storage.install(RI)
   local rows=RI._sbCloudRows
   RI._sbCloudRows=function(self,add,...)
     rows(self,add,...)
-    add({kind='section',label='YOUR STORAGE',note='Imported games and saves live outside the app. Updates keep them. Cloud transfers saves and Bank entries; each device keeps its own imported game data.'})
+    add({kind='section',label='YOUR STORAGE',cloud=true,note='Saves, Bank and designs use progress storage. Private imported games have a separate account quota and remain available locally after app updates.'})
     add({kind='option',scope='launcher',label='AUTOMATIC SAVE SYNC',
       note='Sync while the launcher is open. Local play remains available offline.',
       row={id='cloudAutoSync',values={true,false},labels={[true]='ON',[false]='OFF'}}})
     add({kind='action',label='MODCOMPASS ACCOUNT & DEVICES',value='OPEN',action='retroCloudAccount'})
-    add({kind='section',label='MY CARTRIDGES IN THE CLOUD',note='Your private cartridge images, colors, labels and logo choice join account save sync. Original versions are kept when two devices conflict.'})
+    add({kind='section',label='PRIVATE IMPORTED GAMES',cloud=true,note='Optional private copies of data you imported yourself, shared only with your own account devices. Saves keep their own quota. Existing imports are preserved when a cloud copy is activated.'})
+    add({kind='option',scope='launcher',label='UPLOAD MY IMPORTED GAMES TO MY PRIVATE CACHE',note='Uploads game content to your private account storage. No sharing between accounts.',row={id='gameCacheUpload',values={false,true},labels={[true]='ON',[false]='OFF'}}})
+    add({kind='option',scope='launcher',label='DOWNLOAD MY PRIVATE GAMES ON THIS DEVICE',note='Restore matching game/import revisions after signing in.',row={id='gameCacheDownload',values={false,true},labels={[true]='ON',[false]='OFF'}}})
+    add({kind='action',label='UPLOAD MY IMPORTED GAMES NOW',value='UPLOAD',action='gameCacheUploadNow'})
+    add({kind='action',label='RESTORE MY CLOUD GAMES & SAVES',value='RESTORE',action='accountRestoreNow'})
+    add({kind='section',label='MY CARTRIDGES IN THE CLOUD',cloud=true,note='Your private cartridge images, colors, labels and logo choice join account save sync. Original versions are kept when two devices conflict.'})
     add({kind='option',scope='launcher',label='SYNC CUSTOM CARTRIDGE IMAGES & SETTINGS',
       note='Optional account storage for your artwork. This does not transfer ROMs or imported game caches.',
       row={id='cartridgeCloudSync',values={false,true},labels={[true]='ON',[false]='OFF'}}})
@@ -86,6 +110,8 @@ function Storage.install(RI)
   end
   local action=RI._settingsAction
   RI._settingsAction=function(self,entry,...)
+    if entry and entry.action=='gameCacheUploadNow' then return self:_storageSync(nil,nil,nil,'games-upload') end
+    if entry and entry.action=='accountRestoreNow' then return self:_storageSync(nil,nil,nil,'restore') end
     if entry and (entry.action=='cartCloudUpload' or entry.action=='cartCloudRestore') then
       return self:_storageSync(nil,nil,entry.action=='cartCloudUpload' and 'local' or 'cloud')
     end
@@ -103,6 +129,7 @@ function Storage.install(RI)
     if id=='modProfileAutoDownload' and value then self:_settings().modProfileSync=true end
     if id=='modProfileSync' and not value then self:_settings().modProfileAutoDownload=false end
     if id=='modProfileSync' or id=='modProfileAutoDownload' then self._storageNext=0;self._settingsRowCache=nil end
+    if id=='gameCacheUpload' or id=='gameCacheDownload' then self._storageNext=0;self._settingsRowCache=nil end
     return result
   end
   local play=RI.play
@@ -129,14 +156,20 @@ function Storage.install(RI)
             self._modProfilePlan=nil
           end
           for _,v in ipairs(self._storageVersions or {}) do pcall(self._refreshSlots,self,v) end
+          GameCache.refresh();self:_recheckReady()
         end
-      elseif self.launcher and not self._handedOff and not self.toolFlow and not self._bankOverlay and not self._developerOverlay and not self._accountOverlay and not self._resumeOverlay and not self._saveHistoryOverlay and not self._resumeRestore and not self._profileApplying and not self._profileRecoveryBlocked and self.workState~='working'
-        and not self._cloudFlow and self:_settings().cloudAutoSync~=false and os.time()>=(self._storageNext or 0) then
+      elseif self.launcher and not self._handedOff and not self.toolFlow and not self._bankOverlay and not self._developerOverlay
+        and (not self._accountOverlay or self._cloudRestoreOnce and self._accountOverlay.mode=='account' and not self._accountOverlay.job and require('src.storage.AccountStorage').check())
+        and not self._resumeOverlay and not self._saveHistoryOverlay and not self._resumeRestore and not self._profileApplying and not self._profileRecoveryBlocked and self.workState~='working'
+        and not self._cloudFlow and (self:_settings().cloudAutoSync~=false or self:_settings().gameCacheUpload or self._cloudRestoreOnce) and (self._cloudRestoreOnce or os.time()>=(self._storageNext or 0)) then
         self._storageNext=os.time()+5
         local service=self:_sbCloudService()
         local definitions=require('src.import.LauncherSidebar').CLOUD_SERVICES
         local definition=definitions[service]
-        if definition and require(definition.auth).signedIn() then self:_storageSync() end
+        if definition and require(definition.auth).signedIn() then
+          local mode=self._cloudRestoreOnce and 'restore' or self:_settings().cloudAutoSync==false and 'games' or nil
+          self._cloudRestoreOnce=nil;self:_storageSync(nil,nil,nil,mode)
+        end
       end
     end
     return update(self,dt,...)
