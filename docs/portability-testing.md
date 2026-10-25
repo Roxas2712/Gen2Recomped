@@ -40,8 +40,11 @@ select GBA rules and compare every completed hash/component and ordered read.
 The retained complete valid-attack probe still differs (10 reads on both
 engines): Choice Band check/binding and the shared King's Rock/Shell Bell
 command remain open. Awake/empty/blocked traces now agree completely. A
-separate fresh-save probe reproduces `gen1_faithful` selection for FireRed and
-Emerald; native defaults need a follow-up. Full badge/controller/catalog,
+separate fresh-save probe reproduces `gen1_faithful` only on the isolated
+command stack. The combined fork already includes [#162](https://github.com/UNDERdecoded/Gen2Recomped/pull/162):
+its AUTO defaults select `gen3_emerald` for fresh FireRed/Emerald saves, and
+the existing 926-check defaults/PP suite passes. No duplicate defaults PR is
+needed. Full badge/controller/catalog,
 graphics and playthrough parity are not established here.
 
 All nine #230 hosted workflows await maintainer approval (`action_required`).

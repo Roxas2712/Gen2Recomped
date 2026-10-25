@@ -1,7 +1,7 @@
 {
   "runtime_ref": "7a681ca8b81be0e77d3447ff3069459cda0bb974",
   "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/230",
-  "feature_ref": "d2665df673e87fddbf94f3670a1e9f278744680c",
+  "feature_ref": "2fbfd30c1710b7ad7bc70fc44ea73ec32fa68a94",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
   "engine_suites_passed": 251,
   "engine_suites_total": 251,
@@ -2789,7 +2789,7 @@
   "native_held_damage": {
     "pr": 230,
     "feature_runtime_ref": "9ad4f6ab90524eda893d0d6dbfb6f12ab71f9e9f",
-    "feature_ref": "d2665df673e87fddbf94f3670a1e9f278744680c",
+    "feature_ref": "2fbfd30c1710b7ad7bc70fc44ea73ec32fa68a94",
     "combined_runtime_ref": "7a681ca8b81be0e77d3447ff3069459cda0bb974",
     "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
     "source_read_only": true,
@@ -2830,10 +2830,9 @@
     "remaining": [
       "Choice Band check/binding",
       "Shared Kings Rock/Shell Bell command",
-      "Fresh native GBA save rule selection",
       "Full badge/controller/catalog/playthrough coverage"
     ],
-    "fresh_save_ruleset_probe": "FireRed and Emerald SaveData.newGame({version = game}) still construct a gen1_faithful battle; tests explicitly exercise GBA rules",
+    "fresh_save_ruleset_probe": "Isolated command stack retains older gen1_faithful default; combined fork already fixes it via #162. Repeated fresh FireRed/Emerald probes select gen3_emerald and the 926-check existing regression suite passes.",
     "hosted_workflows": 9,
     "hosted_ci": "action_required",
     "dedicated_run": 40179851767,
@@ -2847,6 +2846,7 @@
       "tmp/held-damage-qa/held-formatted.json",
       "tmp/held-damage-qa/imported-complete.log",
       "tmp/held-damage-qa/accepted-evidence.json"
-    ]
+    ],
+    "native_defaults_existing_fix_pr": 162
   }
 }
