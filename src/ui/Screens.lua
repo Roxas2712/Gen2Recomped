@@ -12,6 +12,7 @@ local Screens = {}
 local BUILTIN = {
   ManagerState = "src.mods.ManagerState",
   Gen2StartMenu = "src.ui.StartMenu",
+  Gen2SummaryMenu = "src.ui.SummaryMenu",
 }
 
 local cache = {}
