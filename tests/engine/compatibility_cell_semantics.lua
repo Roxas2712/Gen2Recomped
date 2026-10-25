@@ -47,4 +47,9 @@ em.seed = function(category) return category == 'TALL_GRASS' and 123 or 456 end
 T.eq(em.fromCell(0, 0, MB.TALL_GRASS, 'route'), 123, 'replacement seed bypasses fixed rows')
 em.seed = seed
 T.eq(em.fromCell(0, 0, MB.TALL_GRASS, 'route'), 0x18, 'restoring extension functions restores dispatch')
+local Class=require('src.compat.gen1.CollisionClass')
+local a=Class.new('rse',{[16]=2});local b=Class.new('rse',{})
+T.eq(a.fromCell(0,0,16,'route'),0x29);T.eq(b.fromCell(0,0,16,'route'),0)
+b.setTileBits({[16]=2});T.eq(b.fromCell(0,0,16,'route'),0x29)
+a.setTileBits(nil);T.eq(a.fromCell(0,0,16,'route'),0);T.eq(b.fromCell(0,0,16,'route'),0x29,'contexts do not share flag state')
 T.finish('compatibility cell semantics')
