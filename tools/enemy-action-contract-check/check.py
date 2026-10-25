@@ -12,6 +12,8 @@ GEN1_REF = "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91"
 
 
 MODES = [
+    (3, 'post_hit_items_command'),
+    (3, 'post_hit_items_execution'),
     (3, 'move_used_pp'),
     (2, 'choices'),
     (3, 'choices'),
@@ -70,6 +72,7 @@ def main():
     if git(source, "rev-parse", "HEAD") != GEN1_REF or git(source, "status", "--porcelain"):
         parser.error(f"Gen1 must be clean at {GEN1_REF}; the checker never patches it")
     paths = [*sorted((host / "examples/portable_enemy_action").glob("*")),
+             *sorted((host / "tests/post_hit_items").glob("*.json")),
              *sorted((host / "tests/enemy_actions").glob("*.lua")), Path(__file__).with_name("worker.lua")]
     report = {"source_ref": GEN1_REF, "host_ref": git(host, "rev-parse", "HEAD"),
               "host_dirty": bool(git(host, "status", "--porcelain")),
