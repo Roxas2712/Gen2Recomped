@@ -25,7 +25,7 @@ ROMs or player saves are included in this repository or its releases.
 | Persistent Gen2 world and menu ownership | 33 ownership and 29 readiness checks; actual V/F6 input and upright menus on OpenGL/Metal | [draft #204](https://github.com/UNDERdecoded/Gen2Recomped/pull/204) |
 | Portable scripts and world actions on persistent worlds | 5,290 composed script checks and 2,778 action checks; independent existing branches also pass | Existing [#98](https://github.com/UNDERdecoded/Gen2Recomped/pull/98), [#94](https://github.com/UNDERdecoded/Gen2Recomped/pull/94) updated |
 
-The current full ROM-free quick suite passes: 261 engine suites, three SDK suites and
+The current full ROM-free quick suite passes: 262 engine suites, three SDK suites and
 B30. Its native clock fixture was updated for the additional startup method;
 the existing independent logic-speed PR retains all 407 passing assertions.
 These checks do not establish complete gameplay, all maps or Windows GPU
@@ -573,3 +573,36 @@ See the [source-bound encounter receipt](qa/native-foundation/johto-native-wild-
 Separate QA builds do not themselves publish a release. The release manifest
 records the exact packaged source and its scoped verification. No parity
 percentage follows from initialization, visible geometry or passing tests.
+
+## Live Gen2 battle data and picture boundary
+
+Source `816126e4` fixes the replacement HUD's level-1/empty-HP fallback. The
+shared screen used to publish itself as `battle`, whose `player` and `enemy`
+are execution wrappers. Gen2 now publishes a stable read-only model backed by
+the actual native Pokemon and party; displayed HP reads the existing native
+`stepHPDrain` clock. Switching replaces no copied model or HP animation. The
+native picture-capture boundary resolves real front/rear art and retains the
+real battler keys for blink, substitute, grow-in and faint effects.
+
+All 304 new native checks pass both in composition and as an independent
+patch on upstream main; unchanged main fails the regression. Native timing,
+multihit HP and API-3 snapshot regressions pass. The exact composition passes
+262 engine suites, three SDK suites and B30. The patch is pushed as
+[draft #223](https://github.com/UNDERdecoded/Gen2Recomped/pull/223).
+
+In actual imported Crystal on OpenGL/VSync 0, the unchanged supplied mod now
+displays Cyndaquil level 100 with its real 196/196 HP and Swinub level 23.
+Two actual wild encounters, one entered from each selected field camera,
+reach the native menu, accept physical RUN input and return with five-step
+encounter grace. First/Third are selected before entering each fight; V does
+not switch the field camera during battle. Native no-mod battle actors/HUD,
+RUN and return remain correct. This uses the supported classic random
+encounter option and does not accept default visible-only contacts.
+
+**Staged Pokemon actors are still absent.** The mod gates picture-hook
+installation on the missing native Gen2 `Chrome` module. The generated
+VoxelScene upvalue limit is also still open. The picture API unit checks do
+not establish full mod actor presentation. The next work is the genuine
+native menu-chrome contract, followed by another unchanged-mod GPU run.
+The existing release is unchanged. The [source-bound receipt](qa/native-foundation/johto-native-battle-view.json)
+records this partial result and the failed initial camera-test assumption.
