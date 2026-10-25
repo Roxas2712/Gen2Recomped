@@ -867,6 +867,7 @@ function CacheFs.dataFs()
   dataFsCache = {
     -- reads and enumeration: every home at once
     getInfo = mounted(function(...) return love.filesystem.getInfo(...) end),
+    getRealDirectory = mounted(function(...) return love.filesystem.getRealDirectory(...) end),
     getDirectoryItems = mounted(function(...) return love.filesystem.getDirectoryItems(...) end),
     read = mounted(function(...) return love.filesystem.read(...) end),
     load = mounted(function(...) return love.filesystem.load(...) end),
