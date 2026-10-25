@@ -1923,6 +1923,7 @@ function Data:seedDefaults()
     seedTrainerPartyAlias(self.trainers, "OPP_RIVAL3",
       { "TERRY_438", "TERRY_439", "TERRY_440" })
   end
+  if require("src.core.GameVersion").isGen3() then require("src.core.Gen3MapNames").publish(self) end
 end
 
 -- The Karate Master (FightingDojo.asm) is a text_asm object: his object has

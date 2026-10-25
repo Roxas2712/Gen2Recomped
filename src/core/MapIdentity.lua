@@ -30,6 +30,7 @@ end
 
 
 function Identity.sourceId(data, id)
+  if Version.isGen3() then return require("src.core.Gen3MapNames").sourceId(data, id) end
   if not Version.isGen2() or type(id) ~= "string" then return id end
   local maps = data and data.maps
   if type(maps) ~= "table" then return id end
@@ -49,6 +50,7 @@ end
 -- Only a shared registry record proves that two names address one live map.
 -- Declared source provenance alone may also describe an authored variant.
 function Identity.runtimeId(data, id)
+  if Version.isGen3() then return require("src.core.Gen3MapNames").sourceId(data, id) end
   if not Version.isGen2() or type(id) ~= "string" then return id end
   local maps = data and data.maps
   local def = type(maps) == "table" and maps[id]
@@ -71,6 +73,7 @@ function Identity.aliases(data, id)
   local source = Identity.sourceId(data, id)
   add(source); add(id)
   add(Identity.runtimeId(data, id))
+  if Version.isGen3() then add(require("src.core.Gen3MapNames").canonicalId(data, id)) end
   if Version.isGen2() and type(source) == "string" then
     local name = Identity.normalize(source)
     local maps = data and data.maps
