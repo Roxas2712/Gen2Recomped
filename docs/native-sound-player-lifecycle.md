@@ -9,11 +9,12 @@ M4A player, including a different sound ID or a cached pan/mono variant. It
 retains sources on other players. The current host cache restarts only the
 selected cache key, so sources on the same native player can overlap.
 
-Twelve paired cases cover both FireRed and Emerald. All four workers exit zero
-and preserve their full play traces and every active-output snapshot. Eight
-cases differ: different IDs on one player, pan changes, mono changes and
-replacement of one player while another remains active. Ordinary retriggering
-and independent-player overlap already agree.
+Twenty paired cases cover both FireRed and Emerald. All four workers exit zero
+and preserve their full play traces and every active-output snapshot. Sixteen
+cases differ: different IDs on one player, pan/mono variants, named/native
+entrypoint mixing and reuse of one cached sound on independent players. The
+reference clones the latter so replacement on one player retains the other.
+Ordinary retriggering and different-ID independent-player overlap already agree.
 
 The speaker double observes actual unchanged native audio and actual host M4A
 sources. It retains cached hardware objects across `stopSe`, so native source

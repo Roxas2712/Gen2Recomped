@@ -5,6 +5,7 @@ function M.install(root, native, f)
   local previousAudio, currentTick = love.audio, 0
   local trace, carrier = {}, nil
   local allSources, lastSource = {}, nil
+  local roleIds = {}
   local Audio = native and require("src.core.game3.audio")
   local Source = {}
   Source.__index = Source
@@ -47,6 +48,8 @@ function M.install(root, native, f)
           if r == 0 then
             assert(l ~= 0)
             pan = -64
+          elseif l == r then
+            pan = 0
           else
             assert(l == r / 64, "opponent sound must retain its native stereo gain")
             pan = 63
@@ -100,7 +103,7 @@ function M.install(root, native, f)
     require("src.core.Sound").invalidate()
     carrier = assert(require("src.core.M4ASynth").renderEffect(f.data, f.data.audio.songs.SONG_08D))
     off = f.e.api.events:on("sound.played", function(event)
-      local id = tonumber(event.name:match("^OWNED_NATIVE_(%d+)$"))
+      local id = tonumber(event.name:match("^OWNED_NATIVE_(%d+)$")) or roleIds[event.name]
       if id then
         assert(trace[#trace]).id = id
         assert(lastSource).observed.id = id
@@ -108,6 +111,12 @@ function M.install(root, native, f)
     end)
   end
   return {
+    role = function(id, name)
+      if not native then
+        roleIds[name] = id
+        f.data.audio.sfx[name] = { m4a = id }
+      end
+    end,
     player = function(id, player)
       if native then
         Audio._pack.index.songs[id].player = player
