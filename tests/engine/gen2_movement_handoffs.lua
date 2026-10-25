@@ -8,9 +8,20 @@ local NPC = require("src.world.NPC")
 local Stack = require("src.core.StateStack")
 local Transition = require("src.render.Transition")
 local Sound = require("src.core.Sound")
-local Runtime = require("src.mods.Runtime")
-local originalVersion, oldSound, oldEmit = V.get(), Sound.play, Runtime.emit
+local originalVersion, oldSound = V.get(), Sound.play
 Sound.play = function() end -- audio device only
+local eventProbe=T.sdk.loadMods({"mods/handoff_probe"},{fs=T.sdk.memfs({
+  ["mods/handoff_probe/manifest.json"]='{"id":"handoff_probe","name":"Handoff probe","version":"1.0.0","api":2,"entry":"main.lua"}',
+  ["mods/handoff_probe/main.lua"]=[[
+    local mod=...
+    mod.exports.moves={}
+    mod.events:on("world.boulder_moved",function(ev)
+      mod.exports.moves[#mod.exports.moves+1]=ev
+    end)
+  ]],
+})})
+T.eq(#eventProbe.errors,0,"native boulder observer loads through the public mod API")
+local observed=eventProbe.loader.exports.handoff_probe
 local gameSlot, oldGame
 for i=1,100 do
   local name,value=debug.getupvalue(W.crossConnection,i)
@@ -115,16 +126,19 @@ for _,version in ipairs({"gold","silver","crystal","prism"})do
   w,game,from,dest,put=fixture(version)
   local b=setmetatable({id="HANDOFF_BOULDER",def={index=1,pushable=true},cellX=3,cellY=2,px=48,py=32,moving=false,progress=0,frozen=true,stepFrames=16},{__index=NPC})
   w.npcs={b};w.entities={w.player,b};w.strengthActive=true
-  local moved=0
-  Runtime.emit=function(name,ctx)if name=="world.boulder_moved"then moved=moved+1;T.eq(ctx.x,4,"settled boulder event has native x")end end
+  observed.moves={}
   T.eq(w:tryPushBoulder("right",4,2),false,"remote cell cannot be supplied as faced boulder")
   T.eq(w:tryPushBoulder("right",3,2),true,"native Strength queue accepts adjacent boulder")
   T.eq(w:tryPushBoulder("right",3,2),false,"queued push rejects duplicate handoff")
-  T.eq(moved,0,"push event waits for native completion")
+  T.eq(#observed.moves,0,"push event waits for native completion")
   for _=1,24 do w:updateScriptMoves();b:update(w.map,w.entities)end
   T.eq(b.cellX,4,"real NPC interpolation settles the boulder")
   T.eq(w.player.cellX,2,"pushing player stays in their cell")
-  T.eq(moved,1,"native push completion emits once")
+  T.eq(#observed.moves,1,"public observer receives native push completion once")
+  T.eq(observed.moves[1].x,4,"settled boulder event has native x")
+  T.eq(observed.moves[1].y,2,"settled boulder event has native y")
+  T.eq(observed.moves[1].npcId,b.id,"settled boulder event identifies actual native actor")
+  T.eq(observed.moves[1].mapId,from.id,"settled boulder event identifies actual native map")
   T.eq(#w.scriptMoves,0,"native boulder queue drains")
   T.check(w.dustAnim~=nil,"native boulder completion owns its dust animation")
   -- Both the standing side and destination side must permit the boulder.
@@ -223,6 +237,6 @@ do
  T.eq(w:tryLedgeJump("right"),true,"error cannot leave an admission lock behind")
  T.eq(nested,1,"next valid native handler is admitted once")
 end
-Runtime.emit=oldEmit;Sound.play=oldSound;debug.setupvalue(W.crossConnection,gameSlot,oldGame)
+eventProbe.release();Sound.play=oldSound;debug.setupvalue(W.crossConnection,gameSlot,oldGame)
 debug.setupvalue(W.checkBoulderPush,scriptsSlot,oldScripts);V.set(originalVersion)
 T.finish("native Gen2 special movement handoffs")
