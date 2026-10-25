@@ -67,10 +67,19 @@ function S.status(id, base)
   statusCache[base] = out
   return out
 end
+local function noCall(ctx)
+  -- Native call_moves returns without the move-end script on these failures.
+  -- The outer action still performs its separate after-action item sweep.
+  local frame = ctx.battle._gbaMoveFrame
+  if frame then
+    frame.finished = true
+  end
+  ctx.say(Strings("But, it failed!"))
+end
 function S.pick(ctx)
   local user = ctx.user
   if user.mon.status ~= "SLP" then
-    ctx.say(Strings("But, it failed!"))
+    noCall(ctx)
     return
   end
   local pool = {}
@@ -92,7 +101,7 @@ function S.pick(ctx)
     end
   end
   if #pool == 0 then
-    ctx.say(Strings("But, it failed!"))
+    noCall(ctx)
     return
   end
   return pool[ctx.rng(1, #pool)]
