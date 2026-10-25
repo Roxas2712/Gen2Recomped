@@ -19,7 +19,41 @@ function W.slots(self)
   return out
 end
 function W.open(self)
-  self._bankOverlay={bank=B.list(),left={box=0},right={box=1},page=1,slots=W.slots(self),sprites={}}
+  self._bankOverlay={bank=B.list(),left={box=0},right={box=1},page=1,slots=W.slots(self),sprites={},mode='bank'}
+end
+function W.mode(self,mode)
+  local f=self._bankOverlay;if not f then return end
+  f.mode=mode;f.modePage=0;f.tradeConsent=false;f.tradeFocus=nil;f.tradeChoose=nil
+  f.subScroll=0;f.subMax=0
+  if self._disarmTextInput then self:_disarmTextInput() end
+  if mode=='items' then f.items,f.notice=require('src.storage.BankItems').list()
+  elseif mode=='dex' then
+    local dex,why=require('src.storage.GlobalPokedex').collect(self.ready,f.bank)
+    if dex then f.dex=dex;f.dexRows,f.dexOwned=require('src.storage.GlobalPokedex').rows(dex)
+    else f.notice=why end
+  elseif mode=='trade' or mode=='wonder' then W.trade(self,'profile') end
+end
+function W.trade(self,action,exchange)
+  local f=self._bankOverlay;if not f or f.tradeJob then return end
+  if not require('src.cloud.RetroCloud').signedIn() then f.notice='Register and verify your account to use direct trade or Wonder Trade.';return end
+  if self._storageTask or self._profileApplying then f.notice='Finish the current cloud or mod transfer first.';return end
+  local client=require('src.cloud.BankExchange')
+  if action=='submit' and (not f.tradeSelected or not f.tradeConsent) then f.notice='Choose a Bank copy and confirm what will be shared first.';return end
+  local selected,mode,recipient,reply=f.tradeSelected,f.mode,f.recipient,f.replying
+  f.tradeAction=action
+  f.tradeJob=require('src.cloud.Task').new(function()
+    if action=='profile' then return client.profile()
+    elseif action=='submit' then return client.submit(selected,reply and 'reply' or mode=='wonder' and 'wonder' or 'direct',recipient,reply)
+    elseif action=='receive' then return client.receive(exchange)
+    else return client.change(exchange,action) end
+  end)
+  f.notice=f.tradeJob and 'Connecting to the Bank exchange service...' or 'Background networking is unavailable.'
+end
+function W.close(self)
+  local f=self._bankOverlay
+  if f and f.tradeJob then f.tradeJob:cancel() end
+  self._bankOverlay=nil
+  if self._disarmTextInput then self:_disarmTextInput() end
 end
 function W.select(self,panel,choice)
   local save,why=B.readSave(choice.version,choice.slot);if not save then return nil,why end
@@ -33,7 +67,8 @@ function W.place(self,payload,target,allow)
   local f=self._bankOverlay
   if target.bank then
     local e=payload.entry
-    local id,why=B.deposit(e.mon,e.source.version,e.source.slot,e.source.place,payload.data or B.data(e.source.version))
+    local id,why
+    if B.keep then id,why=B.keep(e) else id,why=B.deposit(e.mon,e.source.version,e.source.slot,e.source.place,payload.data or B.data(e.source.version)) end
     if not id then return nil,why end
     f.bank=B.list();f.notice='Copy kept in the Bank. Source unchanged.';return true
   end
@@ -51,7 +86,7 @@ function W.place(self,payload,target,allow)
     return nil,why
   end
   box[target.slot]=mon;panel.dirty=true;f.adapt=nil
-  f.notice='Copy staged. Save a new slot to keep it; originals stay intact.'
+  f.notice='Copy staged. Save a new slot to keep it; originals stay intact.'..(why and (' '..why) or '')
   return true
 end
 function W.save(self,panelName)
@@ -81,7 +116,7 @@ local function sprite(self,entry,data)
 end
 function W.draw(self)
   local f=self._bankOverlay;if not f then return end
-  local g=love.graphics;local ww,hh=g.getDimensions();local s=math.max(.65,math.min(ww/1050,hh/720,1.2))
+  local g=love.graphics;local ww,hh=g.getDimensions();local s=math.max(.45,math.min(ww/1050,hh/720,1.2))
   local U=self._ui;local font=self.hintFont;local large=self.stateFont or font
   local x,y=16*s,22*s;local w,h=ww-32*s,hh-44*s
   f.rects={};f.cells={}
@@ -97,21 +132,40 @@ function W.draw(self)
   end
   g.push('all');g.setCanvas();g.origin();g.setScissor();g.setShader();g.setBlendMode('alpha')
   col(4,12,22,.82);g.rectangle('fill',0,0,ww,hh)
-  col(228,244,240);g.rectangle('fill',x,y,w,h,16*s,16*s)
-  col(27,92,111);g.rectangle('fill',x,y,w,65*s,16*s,16*s);g.rectangle('fill',x,y+32*s,w,33*s)
+  col(224,239,253);g.rectangle('fill',x,y,w,h,16*s,16*s)
+  for i=0,15 do col(26+i,96+i*2,155+i*3);g.rectangle('fill',x,y+i*4*s,w,5*s) end
+  col(41,145,201);g.rectangle('fill',x,y+62*s,w,3*s)
   text('RETRORECOMPED · POKÉMON BANK',x+18*s,y+15*s,w-160*s,true,{245,255,252})
   button('CLOSE',x+w-110*s,y+15*s,92*s,'close')
-  local top=y+78*s
+  local tabW=(w-36*s)/5
+  for i,mode in ipairs({{'bank','BANK BOXES'},{'items','ITEMS'},{'dex','POKÉDEX'},{'trade','LINK TRADE'},{'wonder','WONDER'}}) do
+    local r=button(mode[2],x+18*s+(i-1)*tabW,y+77*s,tabW-7*s,'mode',{mode=mode[1]});r.pinned=true
+  end
+  local top=y+122*s
   text(f.notice or 'Drag to copy between saves and the Bank. Save copy creates a new slot.',x+18*s,top,w-36*s)
   top=top+34*s
-  local gap=12*s;local cw=(w-36*s-2*gap)/3;local ph=h-(top-y)-76*s
+  local Pages=require('src.import.BankPages')
+  local pageView={x=x+18*s,y=top,width=w-36*s,height=math.max(60*s,h-(top-y)-18*s)}
+  f.pageView=pageView
+  if f.mode and f.mode~='bank' then
+    local contentH=math.max(pageView.height,(f.mode=='trade' or f.mode=='wonder') and 660*s or 290*s)
+    f.subMax=math.max(0,contentH-pageView.height);f.subScroll=math.min(f.subScroll or 0,f.subMax)
+    g.setScissor(pageView.x,pageView.y,pageView.width,pageView.height)
+    Pages.draw(self,f,pageView.x,pageView.y-f.subScroll,pageView.width,contentH,s,button,text,col)
+    g.setScissor();Pages.animation(self,f,x+18*s,top,w-36*s,pageView.height,s)
+    g.pop();return
+  end
+  local infoH=hh>=520 and 132*s or 0
+  local gap=12*s;local cw=(w-36*s-2*gap)/3;local ph=math.max(190*s,h-(top-y)-76*s-infoH)
   local panels={{name='left',title='GAME SAVE A'},{name='bank',title='YOUR BANK'},{name='right',title='GAME SAVE B'}}
   if cw<230*s then
     panels={{name=f.mobilePanel or 'left',title='GAME SAVE'},{name='bank',title='BANK'}};cw=(w-36*s-gap)/2
   end
   local function monCell(entry,data,cx,cy,size,target)
-    col(255,255,255,.88);g.rectangle('fill',cx,cy,size-4*s,size-4*s,5*s,5*s)
-    col(149,189,187,.65);g.rectangle('line',cx,cy,size-4*s,size-4*s,5*s,5*s)
+    col(242,250,255,.96);g.rectangle('fill',cx,cy,size-4*s,size-4*s,7*s,7*s)
+    col(129,178,218,.75);g.rectangle('line',cx,cy,size-4*s,size-4*s,7*s,7*s)
+    col(152,198,228,.3);g.line(cx+size*.2,cy+size*.5,cx+size*.8,cy+size*.5)
+    g.line(cx+size*.5,cy+size*.2,cx+size*.5,cy+size*.8)
     local r={x=cx,y=cy,width=size-4*s,height=size-4*s,target=target,entry=entry,data=data};f.cells[#f.cells+1]=r
     if entry then
       local image=sprite(self,entry,data)
@@ -124,7 +178,8 @@ function W.draw(self)
   end
   for pi,kind in ipairs(panels) do
     local px=x+18*s+(pi-1)*(cw+gap)
-    col(205,231,225);g.rectangle('fill',px,top,cw,ph,10*s,10*s)
+    col(185,215,242);g.rectangle('fill',px,top,cw,ph,11*s,11*s)
+    col(134,184,225,.55);g.rectangle('line',px+1,top+1,cw-2,ph-2,11*s,11*s)
     text(kind.title,px+10*s,top+12*s,cw-20*s,true)
     local gy=top+48*s
     if kind.name=='bank' then
@@ -134,7 +189,7 @@ function W.draw(self)
       button('>',px+cw-42*s,gy,32*s,'bankPage',{delta=1});gy=gy+48*s
       local size=math.min((cw-20*s)/6,(ph-116*s)/5)
       for pos=1,30 do local entry=f.bank[(f.page-1)*30+pos];monCell(entry,nil,px+10*s+((pos-1)%6)*size,gy+math.floor((pos-1)/6)*size,size,{bank=true}) end
-      text(#f.bank..' immutable copies',px+10*s,top+ph-24*s,cw-20*s)
+      text(#f.bank..' Pokémon · originals preserved',px+10*s,top+ph-24*s,cw-20*s)
     else
       local panel=f[kind.name]
       button(panel.label or 'CHOOSE SAVE',px+10*s,gy,cw-20*s,'choose',{panel=kind.name});gy=gy+44*s
@@ -151,15 +206,34 @@ function W.draw(self)
         if panel.box==0 then cols=3;rows=2;size=math.min((cw-20*s)/cols,(ph-174*s)/4) end
         for pos=1,n do
           local mon=box and box[pos]
-          local entry=mon and B.makeEntry(mon,panel.version,panel.slot,panel.box==0 and ('Party '..pos) or ('Box '..panel.box..' / '..pos),panel.data)
+          local entry=mon and B.makeEntry(mon,panel.version,panel.slot,panel.box==0 and ('Party '..pos) or ('Box '..panel.box..' / '..pos),panel.data,panel.save)
           monCell(entry,panel.data,px+10*s+((pos-1)%cols)*size,gy+math.floor((pos-1)/cols)*size,size,{panel=kind.name,slot=pos})
         end
         if panel.dirty then button('SAVE AS NEW SLOT',px+10*s,top+ph-42*s,cw-20*s,'save',{panel=kind.name}) end
-      else text('Choose a save to show its boxes.',px+10*s,gy+14*s,cw-20*s) end
+      else
+        text('Choose a save to show its boxes.',px+10*s,gy+14*s,cw-20*s)
+        require('src.import.LauncherHardware').symbol(self,'gbc',px+cw/2,gy+math.max(74*s,(ph-110*s)/2),math.min(120*s,ph-130*s))
+      end
     end
   end
+  if infoH>0 then
+    local iy=top+ph+12*s;col(246,252,255);g.rectangle('fill',x+18*s,iy,w-36*s,infoH-10*s,10*s,10*s)
+    local payload=f.inspected or f.selected
+    if payload then
+      local entry=payload.entry;local origin=entry.origin or entry.mon.retroBankOrigin or entry.source
+      local image=sprite(self,entry,payload.data)
+      if image then local iw,ih=image:getDimensions();local edge=math.min(iw,ih);local sc=(infoH-26*s)/edge
+        col(255,255,255);g.draw(image,g.newQuad(0,0,edge,edge,iw,ih),x+26*s,iy+8*s,0,sc,sc) end
+      local tx=x+infoH+24*s;local tw=w-infoH-70*s
+      text((entry.mon.nickname or tostring(entry.mon.species))..' · Lv.'..entry.mon.level,tx,iy+10*s,tw,true)
+      text('ORIGIN · '..Versions.info(origin.version or entry.source.version).label..' / '..tostring(origin.slot or '?')..' / '..tostring(origin.place or '?'),tx,iy+39*s,tw)
+      text('SAVE ID · '..tostring(origin.saveId or entry.source.saveId or 'Legacy save')..' · TRAINER ID · '..tostring(origin.trainerId or (entry.mon.ot or {}).id or 'Unknown'),tx,iy+61*s,tw)
+      text('POKÉMON ID · '..tostring(origin.recordId or entry.id or 'Available after deposit'),tx,iy+83*s,tw)
+      text('HELD ITEM · '..tostring(entry.mon.heldItem or entry.mon.retroBankHeld and ('In Item Bank: '..entry.mon.retroBankHeld.canonical) or 'None'),tx,iy+104*s,tw)
+    else text('Select a Pokémon to inspect its origin, trainer, save identity and held item.',x+34*s,iy+26*s,w-68*s,true) end
+  end
   if #panels==2 then button('SAVE A / SAVE B',x+18*s,y+h-56*s,180*s,'mobilePanel') end
-  text('Copies remain local until save sync. Original cartridge images stay on this device.',x+18*s,y+h-24*s,w-36*s)
+  text('Your Pokémon · Your adventures · Bank copies sync through your own account.',x+18*s,y+h-24*s,w-36*s)
   if f.picker then
     col(17,38,49,.96);g.rectangle('fill',x+30*s,top,w-60*s,ph,10*s,10*s)
     text('CHOOSE GAME / SAVE SLOT',x+45*s,top+12*s,w-90*s,true,{236,252,246})
@@ -183,17 +257,21 @@ function W.draw(self)
     col(25,104,124,.94);g.rectangle('fill',mx-36*s,my-28*s,140*s,52*s,8*s,8*s)
     text(f.drag.payload.entry.mon.nickname or tostring(f.drag.payload.entry.mon.species),mx-28*s,my-18*s,125*s,false,{255,255,255})
   end
+  Pages.animation(self,f,x+18*s,top,w-36*s,ph,s)
   g.pop()
 end
 function W.press(self,x,y)
   local f=self._bankOverlay
+  if f.animation then return end
   for i=#(f.rects or {}),1,-1 do local r=f.rects[i]
     if inside(r,x,y) then
+      if f.mode and f.mode~='bank' and not r.pinned and r.action~='close' and not inside(f.pageView,x,y) then return end
       if f.picker and r.action~='pick' and r.action~='pickerPage' and r.action~='cancelPicker' then return end
       if f.adapt and r.action~='adapt' and r.action~='cancelAdapt' then return end
       if r.action=='close' then
         if (f.left.dirty or f.right.dirty) and not f.closeArmed then f.closeArmed=true;f.notice='Unsaved staged copies. Save them first, or press Close again to discard the draft.'
-        else self._bankOverlay=nil end
+        else W.close(self) end
+      elseif require('src.import.BankPages').press(self,W,r) then return
       elseif r.action=='choose' then
         local panel=f[r.panel]
         if panel.dirty then f.notice='Save this draft as a new slot before changing the target.'
@@ -216,7 +294,7 @@ function W.press(self,x,y)
       if f.selected and not cell.entry then
         local ok,why=W.place(self,f.selected,cell.target,false);if not ok then f.notice=why end;f.selected=nil
       elseif cell.entry then
-        f.selected={entry=cell.entry,data=cell.data};f.drag={payload=f.selected,x=x,y=y,startX=x,startY=y}
+        f.selected={entry=cell.entry,data=cell.data};f.inspected=f.selected;f.drag={payload=f.selected,x=x,y=y,startX=x,startY=y}
       end
       return
     end
@@ -241,16 +319,18 @@ function W.install(RI)
   local games=RI._sbGames
   RI._sbGames=function(self,x,y,w,h,...)
     local s=self._s
-    local half=(w-10*s)/2
+    local half=(w-20*s)/3
     local r=self:_chipButton(x,y,'POKÉMON BANK',{w=half,h=44*s,kind='accent'})
     self._bankLibraryButton=r
-    self._saveHistoryLibraryButton=self:_chipButton(x+half+10*s,y,'SAVE HISTORY',{w=half,h=44*s,kind='accent'})
+    self._bankDexLibraryButton=self:_chipButton(x+half+10*s,y,'GLOBAL POKÉDEX',{w=half,h=44*s,kind='accent'})
+    self._saveHistoryLibraryButton=self:_chipButton(x+2*(half+10*s),y,'SAVE HISTORY',{w=half,h=44*s,kind='accent'})
     return 56*s+games(self,x,y+56*s,w,h-56*s,...)
   end
   local press=RI.mousepressed
   RI.mousepressed=function(self,x,y,button,...)
     if self._bankOverlay then if button==1 then local ok,why=pcall(W.press,self,x,y);if not ok then self._bankOverlay.notice=tostring(why) end end;return end
     if self.section=='games' and U.inside(self._bankLibraryButton,x,y) then W.open(self);return end
+    if self.section=='games' and U.inside(self._bankDexLibraryButton,x,y) then W.open(self);W.mode(self,'dex');return end
     return press(self,x,y,button,...)
   end
   local release=RI.mousereleased
@@ -264,14 +344,58 @@ function W.install(RI)
   RI.update=function(self,dt,...)
     local f=self._bankOverlay
     if f and f.drag and not f.drag.touch and love.mouse then f.drag.x,f.drag.y=love.mouse.getPosition() end
+    if f then
+      if f.animation then f.animation.elapsed=f.animation.elapsed+dt;if f.animation.elapsed>=3.6 then f.animation=nil end end
+      if f.tradeJob then
+        local result=f.tradeJob:poll()
+        if result then
+          f.tradeJob=nil;local action=f.tradeAction;f.tradeAction=nil
+          local value=result.kind=='done' and result.first
+          if not value then f.notice=tostring(result.error or result.second or 'Exchange unavailable. Original copies are preserved.')
+          elseif action=='profile' then
+            if type(value.recompiler_id)=='string' and value.recompiler_id:match('^RRC%-%x%x%x%x%x%x%-%x%x%x%x%x%x$') and type(value.exchanges)=='table' then
+              f.tradeProfile=value;f.tradeNext=os.time()+10;f.notice='Your device IDs and exchanges are up to date.'
+            else f.notice='The exchange profile could not be read.' end
+          elseif action=='receive' then
+            f.bank=B.list();f.notice='Received a new Bank companion. Original game saves are preserved.'
+            if not value.alreadyReceived then f.animation={elapsed=0,partner=value.partner,entry=value.entry} end
+            f.tradeNext=0
+          else
+            f.tradeConsent=false;f.replying=nil;f.tradeFocus=nil
+            if self._disarmTextInput then self:_disarmTextInput() end
+            if value.status=='completed' then W.trade(self,'receive',value.id)
+            else f.notice=value.status=='prepared' and 'Reply ready. The sender reviews and confirms both Pokémon.' or value.status=='cancelled' and 'Exchange cancelled. All originals are preserved.' or 'Offer queued. It can be cancelled until the exchange completes.';f.tradeNext=0 end
+          end
+        end
+      elseif (f.mode=='trade' or f.mode=='wonder') and not f.animation and os.time()>=(f.tradeNext or 0) and require('src.cloud.RetroCloud').signedIn() then
+        f.tradeNext=os.time()+10;W.trade(self,'profile')
+      end
+    end
     return update(self,dt,...)
+  end
+  local textInput=RI.textinput
+  RI.textinput=function(self,value,...)
+    local f=self._bankOverlay
+    if f and f.tradeFocus then f.recipient=((f.recipient or '')..value:upper():gsub('[^A-F0-9RC%-]','')):sub(1,17);return end
+    if f then return end
+    return textInput(self,value,...)
   end
   local key=RI.keypressed
   RI.keypressed=function(self,k,...)
     if self._bankOverlay then
       if k=='escape' then
         local f=self._bankOverlay
-        if f.picker then f.picker=nil elseif f.adapt then f.adapt=nil elseif f.left.dirty or f.right.dirty then f.notice='Save staged copies before closing, or use Close twice to discard.' else self._bankOverlay=nil end
+        if f.tradeFocus then f.tradeFocus=nil;if self._disarmTextInput then self:_disarmTextInput() end
+        elseif f.tradeChoose then f.tradeChoose=nil
+        elseif f.picker then f.picker=nil elseif f.adapt then f.adapt=nil elseif f.left.dirty or f.right.dirty then f.notice='Save staged copies before closing, or use Close twice to discard.' else W.close(self) end
+      elseif self._bankOverlay.tradeFocus then
+        local f=self._bankOverlay
+        if k=='backspace' then f.recipient=(f.recipient or ''):sub(1,-2)
+        elseif k=='return' then f.tradeFocus=nil;if self._disarmTextInput then self:_disarmTextInput() end end
+      elseif self._bankOverlay.mode~='bank' then
+        local f=self._bankOverlay
+        if k=='down' or k=='pagedown' then f.subScroll=math.min(f.subMax or 0,(f.subScroll or 0)+60)
+        elseif k=='up' or k=='pageup' then f.subScroll=math.max(0,(f.subScroll or 0)-60) end
       end
       return
     end
@@ -281,6 +405,16 @@ function W.install(RI)
     local original=RI[method]
     RI[method]=function(self,id,x,y,...)
       if self._bankOverlay then
+        local f=self._bankOverlay
+        if f.mode and f.mode~='bank' then
+          if method=='touchpressed' then if not f.pageTouch then f.pageTouch={id=id,y=y,startY=y,startX=x} end
+          elseif method=='touchmoved' then local t=f.pageTouch;if t and t.id==id then
+            t.moved=t.moved or math.abs(y-t.startY)>8 or math.abs(x-t.startX)>8
+            if t.moved then f.subScroll=math.max(0,math.min(f.subMax or 0,(f.subScroll or 0)+t.y-y)) end;t.y=y
+          end
+          else local t=f.pageTouch;if t and t.id==id then f.pageTouch=nil;if not t.moved then W.press(self,x,y) end end end
+          return
+        end
         if method=='touchpressed' then
           if not self._bankOverlay.drag then W.press(self,x,y) end
           if self._bankOverlay and self._bankOverlay.drag then self._bankOverlay.drag.touch=id end
@@ -294,9 +428,13 @@ function W.install(RI)
     end
   end
   local wheel=RI.wheelmoved
-  RI.wheelmoved=function(self,...)
-    if self._bankOverlay then return end
-    return wheel(self,...)
+  RI.wheelmoved=function(self,dx,dy,...)
+    if self._bankOverlay then
+      local f=self._bankOverlay
+      if f.mode~='bank' then f.subScroll=math.max(0,math.min(f.subMax or 0,(f.subScroll or 0)-dy*45)) end
+      return
+    end
+    return wheel(self,dx,dy,...)
   end
 end
 return W
