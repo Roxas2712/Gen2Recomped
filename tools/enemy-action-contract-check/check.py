@@ -87,11 +87,25 @@ def main():
             for backend, root in (("gen1", source), ("gen2", host)):
                 cmd = [args.lua, str(host / "tools/enemy-action-contract-check/worker.lua"),
                        str(host), backend, version, str(api), mode]
-                run = subprocess.run(cmd, cwd=root, text=True, capture_output=True, timeout=60)
+                # This matrix executes thousands of complete scripts per worker.
+                # Retain a real failure on timeout, including partial raw output.
+                timeout = 180 if mode == "post_hit_items_execution" else 60
+                timed_out = None
+                try:
+                    run = subprocess.run(cmd, cwd=root, text=True, capture_output=True, timeout=timeout)
+                except subprocess.TimeoutExpired as error:
+                    def captured(value):
+                        return value.decode("utf-8", errors="replace") if isinstance(value, bytes) else value or ""
+                    timed_out = {"seconds": timeout,
+                                 "stdout_hex": error.stdout.hex() if isinstance(error.stdout, bytes) else None,
+                                 "stderr_hex": error.stderr.hex() if isinstance(error.stderr, bytes) else None}
+                    run = subprocess.CompletedProcess(cmd, 124, captured(error.stdout),
+                                                      captured(error.stderr) + "\nWorker timed out and was terminated.\n")
                 rows = [json.loads(line.removeprefix("ENEMY_ACTION_OBSERVATIONS "))
                         for line in run.stdout.splitlines() if line.startswith("ENEMY_ACTION_OBSERVATIONS ")]
                 report["runs"].append({"backend": backend, "version": version, "api": api, "mode": mode,
-                                       "exit": run.returncode, "stdout": run.stdout, "stderr": run.stderr})
+                                       "exit": run.returncode, "stdout": run.stdout, "stderr": run.stderr,
+                                       "timeout": timed_out})
                 if run.returncode or len(rows) != 1:
                     failed = True
                 else:
