@@ -84,23 +84,15 @@ Game.renderer = {
 
 -- enter() establishes the native module's Game reference and real runner.
 -- Map loading is the ROM/graphics boundary; provide a tiny idle map there.
-local map = {
-  id = "FIX_TOWN",
-  def = { width = 2, height = 2 },
-  blockPatch = {},
-  renderer = {
+local map = require("src.world.Map").new({
+  id = "FIX_TOWN", width = 2, height = 2, blocks = { 0, 0, 0, 0 },
+}, { blockCells = 1, blockTiles = 2 })
+map.renderer = {
     rebuilds = 0,
     rebuild = function(self)
       self.rebuilds = self.rebuilds + 1
     end,
-  },
-  warpAtCell = function()
-    return nil
-  end,
 }
-function map:blockAt(bx, by)
-  return self.blockPatch[by * 2 + bx + 1] or 0
-end
 local world = setmetatable({
   setMap = function(self)
     self.map = map
