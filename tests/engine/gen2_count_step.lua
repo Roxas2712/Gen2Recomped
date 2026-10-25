@@ -191,6 +191,11 @@ for _,version in ipairs({'prism','polishedcrystal'})do
  T.eq(pen.steps,1,'non-vanilla native pen grows once')
  T.eq(g.save.g2BikeSteps,nil,'non-vanilla game is not given a stock bike-shop call counter')
 end
+for _,version in ipairs({'red','firered','emerald'})do
+ V.set(version);local w,g=fixture()
+ g.input={isDown=function()return false end,wasPressed=function()return false end}
+ T.eq(W.onStepComplete(w),nil,version..' retains its legacy native completed-step return contract')
+end
 V.set(original);Sound.play=oldSound;Music.play=oldMusic
 debug.setupvalue(W.onStepComplete,slots.Game[1],slots.Game[2]);debug.setupvalue(W.onStepComplete,slots.mapScripts[1],slots.mapScripts[2])
 T.finish('shared native Gen2 CountStep counters and event priority')
