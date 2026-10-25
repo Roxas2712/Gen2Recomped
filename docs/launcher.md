@@ -443,10 +443,13 @@ In the sidebar layout, the Settings page fills the whole content area and is dra
 ## RetroRecomped library shell (fork)
 
 The fork now opens the library first, with in-place system/ready/favorite filters,
-a Logo Cards checkbox, task-grouped tools, a settings category hub, and
+a Logo Labels checkbox that prints the wordmark onto cartridge labels, task-grouped tools, a settings category hub, and
 Cartridge Studio for custom shells, labels and artwork. The startup includes
-a skippable lightning/logo/guitar sequence; game launch inserts the selected
-cartridge into its matching handheld silhouette before the original boot.
+a skippable 14.4-second lightning/logo/guitar sequence with the complete
+IntroBattle lead phrase. Game launch inserts the selected cartridge into its
+matching handheld silhouette, plays the latch and power cue, lights the power
+LED, forms the logo inside the screen, and flies into that screen before the
+original boot. A native-to-window resolution readout accompanies the camera.
 
 See [implementation and QA](qa/retro-launcher/README.md) and the
 [standalone preview](../tools/launcher_library_preview/README.md). The lower-level

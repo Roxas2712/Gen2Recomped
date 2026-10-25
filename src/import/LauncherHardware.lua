@@ -18,7 +18,7 @@ function Hardware.cartSize(version)
   return 132,164
 end
 
-function Hardware.cartridge(self,version,cx,cy,maxW,maxH,angle)
+function Hardware.cartridge(self,version,cx,cy,maxW,maxH,angle,options)
   local g=love.graphics
   local Library=require('src.import.LauncherLibrary')
   local accent,name=Library.edition(version)
@@ -44,7 +44,8 @@ function Hardware.cartridge(self,version,cx,cy,maxW,maxH,angle)
   color(shade(shell,0.26));g.rectangle('fill',11,labelY,w-22,labelH,5,5)
   color(label);g.rectangle('fill',15,labelY+4,w-30,labelH-8,3,3)
   for i=0,2 do color({255,255,255},0.16);g.line(17,9+i*4,w-18,9+i*4) end
-  local image=design.image
+  local branded=self._settings and self:_settings().launcherLogoCards and not (options and options.customLabel)
+  local image=branded and (self.gen2Logo or self.logo) or design.image
   if image then
     local iw,ih=image:getDimensions()
     local fit=math.min((w-38)/iw,(labelH-20)/ih)
@@ -86,12 +87,25 @@ function Hardware.deviceGeometry(version,cx,cy,s)
 end
 
 function Hardware.screenPoint(geometry)
+  local x,y,w,h=Hardware.screenRect(geometry)
+  return x+w/2,y+h/2,w,h
+end
+
+function Hardware.screenRect(geometry)
   local kind=geometry.kind
   local base=kind=='gba' and 330 or kind=='nds' and 220 or 170
   local s=geometry.w/base
-  local px=kind=='gba' and 165 or kind=='nds' and 110 or 87
-  local py=kind=='gba' and 76 or kind=='nds' and 65 or 76.5
-  return geometry.x+px*s,geometry.y+py*s,(kind=='gba' and 170 or kind=='nds' and 156 or 108)*s
+  local px=kind=='gba' and 80 or kind=='nds' and 32 or 33
+  local py=kind=='gba' and 28 or kind=='nds' and 24 or 35
+  return geometry.x+px*s,geometry.y+py*s,(kind=='gba' and 170 or kind=='nds' and 156 or 108)*s,
+    (kind=='gba' and 96 or kind=='nds' and 82 or 83)*s
+end
+
+function Hardware.nativeResolution(version)
+  local kind=Hardware.kind(version)
+  if kind=='gba' then return 240,160,1 end
+  if kind=='nds' then return 256,192,2 end
+  return 160,144,1
 end
 
 local function dpad(x,y,r)
@@ -100,12 +114,12 @@ local function dpad(x,y,r)
   g.rectangle('fill',x-r*0.34,y-r,r*0.68,r*2,2,2)
   color({255,255,255},0.12);g.line(x-r+2,y-r*0.34+1,x-r*0.34,y-r*0.34+1)
 end
-local function screen(self,x,y,w,h,on,accent)
+local function screen(self,x,y,w,h,on,accent,showLogo)
   local g=love.graphics
   color({13,18,26});g.rectangle('fill',x,y,w,h,5,5)
   color(accent,on and 0.15 or 0.035);g.rectangle('fill',x+3,y+3,w-6,h-6,3,3)
   color({255,255,255},0.045);g.polygon('fill',x+4,y+4,x+w*0.7,y+4,x+4,y+h*0.8)
-  if on then
+  if on and showLogo then
     local logo=self.gen2Logo or self.logo
     if logo then
       local lw,lh=logo:getDimensions();local sc=math.min(w*0.85/lw,h*0.55/lh)
@@ -114,13 +128,15 @@ local function screen(self,x,y,w,h,on,accent)
   end
 end
 
-function Hardware.device(self,version,geometry,connected)
+function Hardware.device(self,version,geometry,connected,effects)
   local g=love.graphics
   local accent=require('src.import.LauncherLibrary').edition(version)
   local x,y,w,h=geometry.x,geometry.y,geometry.w,geometry.h
   local kind=geometry.kind
   local baseW=kind=='gba' and 330 or kind=='nds' and 220 or 170
   local s=w/baseW
+  local powered=effects and effects.powered or (not effects and connected)
+  local showLogo=not effects or effects.logo==true
   g.push('all');g.translate(x,y);g.scale(s)
   local bw,bh=w/s,h/s
   local shell=kind=='gb' and {188,187,174} or kind=='gbc' and {87,72,132} or kind=='gba' and {86,76,139} or {73,81,99}
@@ -131,27 +147,31 @@ function Hardware.device(self,version,geometry,connected)
   color({8,10,17});g.rectangle('fill',bw*0.27,-3,bw*0.46,7,3,3)
   if kind=='gba' then
     color({27,29,43});g.rectangle('fill',67,16,196,125,12,12)
-    screen(self,80,28,170,96,connected,accent)
+    screen(self,80,28,170,96,powered,accent,showLogo)
     dpad(34,78,17)
     color({166,166,185});g.circle('fill',291,62,12);g.circle('fill',272,91,12)
     color({30,34,48});g.ellipse('fill',44,124,8,4);g.ellipse('fill',61,128,8,4)
   elseif kind=='nds' then
     color({21,27,38});g.rectangle('fill',20,14,180,106,9,9)
-    screen(self,32,24,156,82,connected,accent)
+    screen(self,32,24,156,82,powered,accent,showLogo)
     color(shade(shell,0.6));g.rectangle('fill',0,129,220,12,5,5)
     color({21,27,38});g.rectangle('fill',49,151,122,102,8,8)
-    screen(self,56,158,108,88,connected,accent)
+    screen(self,56,158,108,88,powered,accent,showLogo)
     dpad(25,194,14)
     color({27,31,43});for _,p in ipairs({{192,177},{207,192},{177,192},{192,207}}) do g.circle('fill',p[1],p[2],6) end
   else
     color(kind=='gb' and {73,75,82} or {30,34,53});g.rectangle('fill',14,20,142,116,10,10)
-    screen(self,33,35,108,83,connected,kind=='gb' and {158,174,111} or accent)
+    screen(self,33,35,108,83,powered,kind=='gb' and {158,174,111} or accent,showLogo)
     dpad(42,186,19)
     color(kind=='gb' and {139,44,75} or {37,36,49});g.circle('fill',132,172,12);g.circle('fill',110,193,12)
     color({45,46,55});g.rectangle('fill',61,228,19,6,3,3);g.rectangle('fill',87,228,19,6,3,3)
     for i=0,4 do color(shade(shell,0.57));g.line(116+i*7,234,121+i*7,247) end
-    color(connected and {143,240,168} or {68,76,76});g.circle('fill',24,48,2.5)
   end
+  local ledX,ledY=kind=='gba' and 275 or kind=='nds' and 207 or 24,
+    kind=='gba' and 31 or kind=='nds' and 132 or 48
+  local ledColor=kind=='gb' and {255,86,72} or {143,240,168}
+  if powered then color(ledColor,0.17);g.circle('fill',ledX,ledY,7) end
+  color(powered and ledColor or {57,65,65});g.circle('fill',ledX,ledY,2.5)
   g.pop()
 end
 

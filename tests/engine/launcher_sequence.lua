@@ -33,7 +33,8 @@ ui:play('crystal');check(ui.boots==0,'starting insertion does not boot synchrono
 ui:play('crystal');check(ui.boots==0,'double play cannot start another boot')
 ui:wheelmoved();check(ui.clicks==1,'the hidden page cannot scroll during insertion')
 ui:update(0.5);check(ui.boots==0,'partly inserted cartridge cannot boot')
-ui:update(2.0);check(ui.boots==1 and ui.bootVersion=='crystal','completed insertion boots the selected cartridge')
+ui:update(2.0);check(ui.boots==0,'device sound and logo precede the camera handoff')
+ui:update(Sequence.PLAY_DURATION);check(ui.boots==1 and ui.bootVersion=='crystal','completed camera travel boots the selected cartridge')
 ui:update(2);ui:play('crystal');check(ui.boots==1,'handoff is exactly once')
 
 ui=RI.new();ui._launcherSequence=nil;ui:play('crystal');ui:keypressed('escape');ui:update(0.1)
@@ -67,23 +68,48 @@ Sequence.advance(state,0.5);local middle=Sequence.insertion(state)
 Sequence.advance(state,100)
 check(before==0 and middle>before and Sequence.insertion(state)==1,'insertion reaches its slot monotonically')
 local motion=Sequence.new('play','crystal')
-motion.elapsed=motion.duration*0.43
+motion.elapsed=Sequence.LATCH_AT*0.90
 local p,aligned,descent=Sequence.motion(motion)
 check(aligned==1 and descent>0 and descent<1,'final insertion is straight with rotation already settled')
 motion.elapsed=motion.duration*0.50
 check(Sequence.insertion(motion)==1,'cartridge locks before screen/logo effects begin')
 local previousAudio=love.audio
-local latchPlays=0
+local latchPlays,powerPlays,stops=0,0,0
+local audioOrder={}
 love.audio={newSource=function(path)
-  return {setVolume=function() end,stop=function() end,play=function()
+  return {setVolume=function() end,stop=function() stops=stops+1 end,play=function()
+    audioOrder[#audioOrder+1]=path
     if path:find('cartridge_latch',1,true) then latchPlays=latchPlays+1 end
+    if path:find('power_',1,true) then powerPlays=powerPlays+1 end
   end}
 end}
-ui=RI.new();ui._launcherSequence=nil;ui:play('crystal');ui:update(1.3)
+ui=RI.new();ui._launcherSequence=nil;ui:play('crystal');ui:update(Sequence.LATCH_AT)
 check(latchPlays==1 and ui.boots==0,'mechanical click occurs after insertion and before handoff')
-ui:update(0.2);check(latchPlays==1,'the latch click cannot repeat on subsequent frames')
+check(powerPlays==0 and not Sequence.stages(ui._launcherSequence).powered,'latch occurs before the light and power sound')
+ui:update(Sequence.POWER_AT-Sequence.LATCH_AT)
+check(latchPlays==1 and powerPlays==1,'power cue follows the latch exactly once')
+check(audioOrder[2]:find('power_gbc.wav',1,true),'selected hardware determines the power cue')
+local stages=Sequence.stages(ui._launcherSequence)
+check(stages.powered and stages.logo==0 and stages.zoom==0,'power light precedes the screen logo and camera')
+ui:update(0.95)
+check(Sequence.stages(ui._launcherSequence).logo==0,'power cue completes before logo formation')
+ui:update(Sequence.ZOOM_AT-ui._launcherSequence.elapsed)
+stages=Sequence.stages(ui._launcherSequence)
+check(stages.logo==1 and stages.zoom==0,'screen logo completes before camera travel starts')
+ui:update(0.5)
+check(Sequence.stages(ui._launcherSequence).zoom>0 and ui.boots==0,'camera travels before the game handoff')
+check(latchPlays==1 and powerPlays==1,'sounds cannot repeat during the camera move')
 ui:keypressed('escape');ui:update(0)
 check(ui.boots==0,'the post-latch logo reveal can still be cancelled')
+check(stops==2,'cancelling stops latch and device audio sources')
+ui=RI.new();ui:update(Sequence.LATCH_AT+0.1)
+check(latchPlays==1 and powerPlays==1 and Sequence.insertion(ui._launcherSequence)==0,
+  'application intro never inserts a cartridge or plays device sounds')
+local Hardware=require('src.import.LauncherHardware')
+for _,entry in ipairs({{'red',160,144,1},{'crystal',160,144,1},{'emerald',240,160,1},{'heartgold',256,192,2}}) do
+  local rw,rh,screens=Hardware.nativeResolution(entry[1])
+  check(rw==entry[2] and rh==entry[3] and screens==entry[4],'resolution readout follows the selected hardware')
+end
 love.audio=previousAudio
 local Workspace=require('src.import.LauncherWorkspace')
 local settingsRows={

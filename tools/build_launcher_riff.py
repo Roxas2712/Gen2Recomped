@@ -1,6 +1,6 @@
-"""Render the short RetroRecomped guitar intro; no recordings or soundfonts.
+"""Render the complete RetroRecomped guitar intro; no recordings or soundfonts.
 
-The four opening cells follow the IntroBattle motif (Nidorino / Gengar),
+The complete lead phrase follows IntroBattle channel 2 (Nidorino / Gengar),
 arranged for plucked, distorted power chords with original drums and texture.
 Requires numpy only to regenerate; the application plays the bundled WAV.
 """
@@ -9,7 +9,7 @@ import wave
 import numpy as np
 
 RATE = 22050
-DURATION = 6.0
+DURATION = 14.4
 rng = np.random.default_rng(2712)
 mix = np.zeros((int(RATE * DURATION), 2), dtype=np.float64)
 
@@ -21,7 +21,7 @@ def pluck(midi, seconds, detune=0.0, palm=False):
     # Pick position shapes the initial displacement of the string.
     buffer *= np.sin(np.linspace(0, np.pi, delay))
     signal = np.zeros(int(seconds * RATE))
-    decay = 0.976 if palm else 0.995
+    decay = 0.976 if palm else 0.9985
     index = 0
     previous = 0.0
     for i in range(len(signal)):
@@ -46,30 +46,39 @@ def add(signal, start, gain, pan=0.0):
     mix[at:at + count, 1] += signal[:count] * gain * (1 + pan * 0.5)
 
 
-start = 0.62
+start = 0.72  # The original eight-unit opening rest.
 unit = 0.09
-# D D A / D D Bb / D D A / D D C#: the recognizable opening figure.
-notes = [(38, 2), (38, 2), (45, 4), (38, 2), (38, 2), (46, 4),
-         (38, 2), (38, 2), (45, 4), (38, 2), (38, 2), (37, 4)]
+# Full channel-2 phrase from pokered/audio/music/introbattle.asm, transposed
+# for guitar. The sustained bridge and high closing D complete the tune.
+notes = [(38,2),(38,2),(45,4), (38,2),(38,2),(46,4),
+         (38,2),(38,2),(45,4), (38,2),(38,2),(37,4),
+         (38,2),(38,2),(45,4), (38,2),(38,2),(49,4),
+         (50,8),(38,8),(48,8),(36,8),
+         (38,2),(38,2),(45,4), (38,2),(38,2),(46,4),
+         (38,2),(38,2),(48,4), (38,2),(38,2),(49,4),
+         (50,16),(62,16)]
 for pitch, length in notes:
     duration = unit * length
+    root = pitch
+    while root > 46:
+        root -= 12
     for offset, pan, detune in [(0, -0.8, -0.003), (0.012, 0.8, 0.003)]:
-        chord = sum(pluck(pitch + interval, duration + 0.12,
+        chord = sum(pluck(root + interval, duration + 0.30,
                           detune=detune, palm=length == 2) * weight
                     for interval, weight in [(0, 1), (7, 0.65), (12, 0.4)])
         chord = np.tanh(chord * 7.5)
         add(chord, start + offset, 0.15, pan)
-    add(pluck(pitch - 12, duration + 0.10), start, 0.13)
+    add(pluck(root - 12, duration + 0.25), start, 0.13)
     # Lead doubles the original motif an octave above the power-chord root.
     add(np.tanh(pluck(pitch + 12, duration + 0.10) * 4), start, 0.055)
     start += duration
 
-# One resolving D power chord, allowed to ring under the completed logo.
-tail = sum(pluck(pitch, 1.8) * weight for pitch, weight in [(38, 1), (45, .7), (50, .5)])
-add(np.tanh(tail * 5), start, 0.15)
+# Let the closing D ring naturally into the wordmark docking transition.
+tail = sum(pluck(pitch, 2.0) * weight for pitch, weight in [(38, 1), (45, .7), (50, .5)])
+add(np.tanh(tail * 5), start - unit * 16, 0.12)
 
-for beat in range(8):
-    at = 0.62 + beat * 0.36
+for beat in range(36):
+    at = 0.72 + beat * 0.36
     t = np.arange(int(RATE * 0.25)) / RATE
     kick = np.sin(2 * np.pi * (43 * t + 2.0 * (1 - np.exp(-t * 35)))) * np.exp(-t * 19)
     add(kick, at, 0.26)

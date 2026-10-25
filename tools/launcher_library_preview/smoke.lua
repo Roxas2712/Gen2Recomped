@@ -12,10 +12,11 @@ end
 return function(ui,step,boots)
   if step==1 then
     check(ui.section=='games' and ui.gamesView=='consoles','library is the landing page')
+    local initial=ui:_settings().launcherLogoCards==true
     click(ui,ui._sb.logoCards)
-    check(ui:_settings().launcherLogoCards==true,'logo cards checkbox persists its selected mode')
+    check(ui:_settings().launcherLogoCards==not initial,'logo cards checkbox persists its selected mode')
     click(ui,ui._sb.logoCards)
-    check(ui:_settings().launcherLogoCards==false,'the same checkbox restores cartridge cards')
+    check(ui:_settings().launcherLogoCards==initial,'the same checkbox restores the previous label mode')
     click(ui,find(ui._sb.libraryFilters,'filter','ready'))
     check(ui.libraryFilter=='ready','ready filter uses mouse dispatch')
   elseif step==2 then

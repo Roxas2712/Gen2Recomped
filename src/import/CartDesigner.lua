@@ -141,7 +141,7 @@ function Designer.install(RI)
     local previewH=wide and 460*s or 280*s
     paint.surface(x,y,previewW,previewH,16*s,p.link,false)
     paint.label(self,'YOUR CUSTOM CARTRIDGE',x+22*s,y+22*s,p.link)
-    Hardware.cartridge(self,d.version,x+previewW/2,y+previewH*0.53,previewW-64*s,previewH-110*s,-0.16)
+    Hardware.cartridge(self,d.version,x+previewW/2,y+previewH*0.53,previewW-64*s,previewH-110*s,-0.16,{customLabel=true})
     paint.text(self,self.hintFont,Strings('Live preview / saved per game'),x+22*s,y+previewH-35*s,previewW-44*s,p.warning)
     local ex=wide and x+previewW+24*s or x
     local ey=wide and y or y+previewH+20*s

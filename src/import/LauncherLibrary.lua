@@ -207,12 +207,7 @@ function Library.install(RI)
     local hot=self:_hover(r)
     surface(x,y,w,h,12*s,accent,hot)
     local stageH=math.max(40*s,h-88*s)
-    if self:_settings().launcherLogoCards and self.gen2Logo then
-      local logo=self.gen2Logo
-      local lw,lh=logo:getDimensions()
-      local sc=math.min((w-34*s)/lw,(stageH-38*s)/lh)
-      g.setColor(1,1,1,1);g.draw(logo,x+(w-lw*sc)/2,y+(stageH-lh*sc)/2,0,sc,sc)
-    else artwork(self,version,x+w/2,y+stageH/2+4*s,w-42*s,stageH-28*s) end
+    artwork(self,version,x+w/2,y+stageH/2+4*s,w-42*s,stageH-28*s)
     col(P.cardBorder,0.18);g.line(x+16*s,y+stageH,x+w-16*s,y+stageH)
     local short=Sidebar.consoleOf(version):upper()
     label(self,short,x+16*s,y+stageH+10*s,accent)
@@ -292,7 +287,7 @@ function Library.install(RI)
       end
       y=y+math.ceil(#systems/cols)*(70*s+gap)+22*s
       label(self,'THE COLLECTION',x,y)
-      local caption=Strings('LOGO CARDS')
+      local caption=Strings('LOGO LABELS')
       local toggleW=self.hintFont:getWidth(caption)+30*s
       local toggle={x=x+w-toggleW,y=y-4*s,width=toggleW,height=24*s}
       local checked=self:_settings().launcherLogoCards
