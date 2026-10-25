@@ -3115,5 +3115,5 @@
       "oldRawMismatch": 4903
     }
   ],
-  "scope": "Independent decoded-byte oracle; seven native render cases use a headless SoundData boundary, not physical playback."
+  "scope": "Independent decoded-byte oracle; seven linear native render cases use a headless SoundData boundary, not physical playback."
 }
