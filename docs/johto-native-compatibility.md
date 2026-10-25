@@ -25,7 +25,7 @@ ROMs or player saves are included in this repository or its releases.
 | Persistent Gen2 world and menu ownership | 33 ownership and 29 readiness checks; actual V/F6 input and upright menus on OpenGL/Metal | [draft #204](https://github.com/UNDERdecoded/Gen2Recomped/pull/204) |
 | Portable scripts and world actions on persistent worlds | 5,290 composed script checks and 2,778 action checks; independent existing branches also pass | Existing [#98](https://github.com/UNDERdecoded/Gen2Recomped/pull/98), [#94](https://github.com/UNDERdecoded/Gen2Recomped/pull/94) updated |
 
-The current full ROM-free quick suite passes: 250 engine suites, three SDK suites and
+The current full ROM-free quick suite passes: 254 engine suites, three SDK suites and
 B30. Its native clock fixture was updated for the additional startup method;
 the existing independent logic-speed PR retains all 407 passing assertions.
 These checks do not establish complete gameplay, all maps or Windows GPU
@@ -266,13 +266,61 @@ limit, and these visible scenes use its existing fallback. Selected camera
 mode and visible room geometry do not establish complete First/Third avatar
 presentation or continuous camera-relative movement.
 
+## Development: native movement state and body/input phases
+
+Source `29e567b6e38765977a62b185d43b702c37e43886` derives Gen2 movement
+state from the live player's surf/Pikachu flags and the current save's bike
+flag. Low-level state adoption updates those native flags atomically. It does
+not keep a second saved state byte, and no player/save means no observed state.
+
+The native actor/scripted-move/input/player/landing block now runs through
+`stepBody`; clocks, scene runners and camera follow remain in the outer update.
+Actual Gen2 input calls `pollInput` and consumes its world-space `heldDir` in
+native terrain/special/player handlers. Suppressing intent does not fall back
+to raw keys, and remapping does not rotate it twice. Other generations retain
+their input path. Same-tick overlays and battles close movement readiness,
+including a menu opened inside the body phase; the world itself on a legacy
+stack is not treated as an overlay.
+
+The composed quick suite passes 254 engine suites, three SDK suites and B30.
+Independent upstream #204 passes 110 live-state/adoption, 21 input/body/overlay,
+33 world-owner and 29 menu-readiness checks. The actor/body test advances a
+scripted moving player once and preserves the native actor/input/landing order.
+These boundary tests do not establish the complete free-cell landing chain.
+
+No `src.world.gen2.FieldMoves` facade has been advertised or activated yet.
+Terrain permissions, character/sprite contracts, native special handoffs and
+one authoritative free-cell trainer/warp/coord/step-count/encounter chain
+remain open before the supplied continuous camera controls can be accepted.
+The phase source above passes real OpenGL native New Game and normal home,
+Mart and Center transitions with the unmodified supplied mod, in First/Third
+Person, with fresh owned-window proofs. These QA runs explicitly disable
+VSync. The default presentation path also stalls on the earlier accepted
+source; Metal captures for this new phase source are white and fail the
+fresh-frame guard. Neither observation establishes their cause or a successful
+Metal regression check. Windows hardware execution remains open. See the
+[source-bound phase receipt](qa/native-foundation/johto-native-movement-phases.json).
+
+Follow-up production source `4a84c70e9df23a251e1e463429aed380a16b5b36`
+checks real trainer sight at the completed Gen2 landing before later tile work,
+retains the no-party/script/overlay gates, and returns the actual approach
+verdict. A real activatable staircase under that cell is the competing event.
+The same regression across Gold, Silver, Crystal and Prism has 36 failures on
+the preceding upstream branch and passes all 64 checks with the fix. Live
+player collision and grass readers pass 51 checks; independently #207 passes
+its existing 525 collision checks plus these 51. Exact-source GPU acceptance
+of this trainer/terrain follow-up is still open. The published release remains
+the separately accepted `ae8359c0` composition.
+
 ## Open acceptance and concrete failures
 
 - Persistent world ownership is implemented and enables actual camera/menu
   behavior. Broader story, field-action, save and map-lifecycle regressions
   still need acceptance; other generations retain their original stack model.
-- Continuous camera-relative movement lacks the Gen2 `FieldMoves`, `pollInput`
-  and `stepBody` contracts. Native grid walking passing does not cover it.
+- Continuous camera-relative movement is not enabled. Development has live
+  native state and consumed input/body phases; the FieldMoves facade, terrain
+  permissions and complete shared landing chain remain open. Native grid
+  walking and boundary tests do not cover complete continuous movement.
 - The supplied mod's generated `VoxelScene` patch fails compilation with
   `function ... has more than 60 upvalues`. Its exported
   `rendererInstalled` is false even while the fallback voxel pipeline renders.
