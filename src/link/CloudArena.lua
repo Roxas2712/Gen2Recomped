@@ -8,6 +8,7 @@ local function clone(v) local S=require('src.core.SaveSerializer');return S.deco
 function Arena.queue(cup,match,slot)
  local account=Auth.accountId()
  if not Auth.signedIn() or type(cup)~='table' or tostring(cup.account_id)~=account then return nil,'Sign in again before starting a battle.' end
+ if cup.battle_gate~='verified' then return nil,'Online tournament battles require fully verified Bank teams. That verification is not available yet.' end
  if cup.state~='running' or match.state~='ready' or (match.left~=account and match.right~=account) then return nil,'This pairing is not ready for your account.' end
  if match.left~=account and (type(match.room)~='string' or not match.room:match('^[A-Z0-9]+$') or #match.room~=6) then return nil,'The host must open the battle first. Refresh the lobby when their room is ready.' end
  local save,why=require('src.core.SaveData').peekSlot(cup.edition,slot)
