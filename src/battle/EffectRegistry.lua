@@ -371,6 +371,10 @@ function EffectRegistry.runDamaging(battle, ctx, record)
                  animContext = hitCtx }
       table.insert(battle.queue, battle.nextInsert, hitRow)
     end
+    if gba then
+      require("src.battle.Gen3SubstitutePresentation").mark(battle, hitRow, user,
+        tripleKick and 4 - h or nativeMulti and hits - h + 1 or 0)
+    end
     local hadSub = target.substituteHP ~= nil
     local hitDamage = dmg
     if not hadSub then

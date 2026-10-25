@@ -2585,6 +2585,8 @@ function BattleState:updateQueue()
     if self.game.stack:top() ~= self then return true end
     self.waitingUI = nil
   end
+  if self._gbaSubstituteTransition
+      and require("src.battle.Gen3SubstitutePresentation").update(self) then return true end
   -- HOENN'S PARTICLES TICK BEFORE THE QUEUE'S OWN HOLD, and the whole
   -- reason the animations looked broken is that they used to tick after it.
   --
@@ -2704,7 +2706,16 @@ function BattleState:updateQueue()
   end
   if not self.current then
     local item = table.remove(self.queue, 1)
-    if not item then return false end
+    while item and item.gbaSubstituteSpecial do
+      if require("src.battle.Gen3SubstitutePresentation").start(self, item) then return true end
+      item = table.remove(self.queue, 1)
+    end
+    if not item then
+      if self._gbaSubstitutePresentation then
+        require("src.battle.Gen3SubstitutePresentation").reconcile(self)
+      end
+      return false
+    end
     if item.fn then
       self.nextInsert = 0 -- sayNext inserts right after this item
       item.fn()
@@ -8286,6 +8297,7 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
                            attackerPosition = user.position,
                            targetPosition = target and target.position,
                            animContext = animContext }
+      require("src.battle.Gen3SubstitutePresentation").mark(self, self.moveAnimRow, user)
       table.insert(self.queue, self.nextInsert, self.moveAnimRow)
     end
   end
@@ -8496,6 +8508,7 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   self._gbaMoveFrame = frame
   if self._gbaActionFrame then self._gbaActionFrame.moved = true end
   performMove(self, user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
+  require("src.battle.Gen3SubstitutePresentation").finish(self, frame)
   if not frame.finished and not frame.nativeCalled and not frame.suspended then Schedule.moveEnd(self) end
   if frame.called and not frame.nativeCalled and not frame.suspended and frame.move
       and tonumber(frame.move.gen3Effect) ~= 127 and frame.move.effect ~= "BATON_PASS_EFFECT" then
@@ -11397,6 +11410,8 @@ end
 -- to happen where the mon is drawn rather than as a particle laid over it --
 -- which is why it is here and not in Gen3MoveAnim's own draw.
 function BattleState:gen3AnimShake(battler)
+  local substituteX = GameVersion.isGen3() and battler
+    and require("src.battle.Gen3SubstitutePresentation").offset(self, battler) or 0
   -- SINNOH'S ANIMATOR SPEAKS THE SAME THREE METHODS, which is why
   -- it plugs in here rather than bringing a second draw path: a
   -- second one would have none of the grow-in scale, hit shake or
@@ -11408,11 +11423,18 @@ function BattleState:gen3AnimShake(battler)
     return 0, 0
   end
   if not (self.gen3AnimPlaying and self.gen3Anim and battler) then
-    return 0, 0
+    return substituteX, 0
   end
   local ok, dx, dy = pcall(self.gen3Anim.monOffset, self.gen3Anim, battler)
-  if not ok then return 0, 0 end
-  return dx or 0, dy or 0
+  if not ok then return substituteX, 0 end
+  return (dx or 0) + substituteX, dy or 0
+end
+
+function BattleState:substituteVisible(battler)
+  if GameVersion.isGen3() then
+    return require("src.battle.Gen3SubstitutePresentation").showing(self, battler)
+  end
+  return battler and battler.substituteHP
 end
 
 -- ...AND WHICH HBLANK ROW TRANSFORM ITS COPIED BG IS USING.
@@ -11732,7 +11754,7 @@ function BattleState:drawBattlerPicAt(battler, x, y, scale)
   -- copies rather than being hidden behind them
   local ghosts = self:gen3AnimGhosts(battler)
   if ghosts and not battler.fainted and not self:fxFaintActive(battler)
-     and not battler.substituteHP then
+     and not self:substituteVisible(battler) then
     local img = self:battlerPic(battler)
     if img then
       local cr, cg, cb, ca = love.graphics.getColor()
@@ -11746,7 +11768,7 @@ function BattleState:drawBattlerPicAt(battler, x, y, scale)
     end
   end
   local img = self:battlerPic(battler)
-  if battler.substituteHP and not self:fxFaintActive(battler)
+  if self:substituteVisible(battler) and not self:fxFaintActive(battler)
      and not battler.fainted then
     self:drawSubstituteDoll(battler)
     return

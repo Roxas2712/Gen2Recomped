@@ -12,6 +12,8 @@ GEN1_REF = "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91"
 
 
 MODES = [
+    (3, 'substitute_multi_hit'),
+    (3, 'substitute_presentation'),
     (3, 'mirror_move'),
     (3, 'mirror_move_content'),
     (3, 'mirror_move_chained'),

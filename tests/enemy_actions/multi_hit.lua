@@ -66,7 +66,8 @@ function M.fixture(root, backend, version, entry)
     entry
   )
 end
-function M.run(root, backend, version)
+function M.run(root, backend, version, options)
+  options = options or {}
   local native = backend == "gen1"
   local f = M.fixture(root, backend, version)
   local T, Copy = f.T, require("src.mods.Merge").deepCopy
@@ -224,6 +225,9 @@ function M.run(root, backend, version)
               draws, damage, used = {}, {}, {}
               local b = fresh(double, first, second)
               local user, target = at(b, uid), at(b, tid)
+              if options.substitute then
+                user.substituteHP = 400
+              end
               liveUser, liveTarget = user, target
               if kind == "focus_crit" or kind == "focus_scope_crit" or kind == "max_crit" then
                 user.focusEnergy = true
@@ -288,7 +292,9 @@ function M.run(root, backend, version)
               if kind == "accuracy_miss" then
                 def.accuracy = 90
               end
+              local adapter
               if native then
+                adapter = require("src.core.game3.battle.adapter").new(b)
                 local nativeSlot = slot
                 if kind == "called" then
                   nativeSlot = nil
@@ -298,7 +304,7 @@ function M.run(root, backend, version)
                   tid,
                   user.mon.moves[slot],
                   nativeSlot,
-                  require("src.core.game3.battle.adapter").new(b),
+                  adapter,
                   b,
                   {},
                   { called = kind == "called" }
@@ -327,6 +333,26 @@ function M.run(root, backend, version)
                 damage = Copy(damage),
                 used = Copy(used),
               }
+              if options.substitute then
+                local animations = {}
+                for _, event in ipairs(native and adapter:eventsSince(0) or b.queue) do
+                  if
+                    native and (event.kind == "move" or event.kind == "anim") or not native and event.anim
+                  then
+                    local move = not native and f.data.moves[event.anim]
+                    local isMove = native and event.kind == "move" or not native and move ~= nil
+                    animations[#animations + 1] = {
+                      kind = isMove and "move" or "anim",
+                      move = native and (isMove and event.moveId or event.name)
+                        or (isMove and move.index or event.anim),
+                      user = native and event.attackerId or event.attackerPosition,
+                      target = native and event.targetId or event.targetPosition,
+                      turn = native and event.turn or event.animContext and event.animContext.moveTurn or 0,
+                    }
+                  end
+                end
+                rows[#rows].animations = animations
+              end
               if kind == "ordinary" then
                 T.eq(
                   #damage,

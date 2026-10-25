@@ -2,7 +2,11 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "mirror_move_content" then
+if mode == "substitute_multi_hit" then
+  rows = dofile(root .. "/tests/enemy_actions/multi_hit.lua").run(root, backend, version, { substitute = true })
+elseif mode == "substitute_presentation" then
+  rows = dofile(root .. "/tests/enemy_actions/substitute_presentation.lua").run(root, backend, version)
+elseif mode == "mirror_move_content" then
   rows = dofile(root .. "/tests/enemy_actions/mirror_move.lua").content(root, backend, version)
 elseif mode == "mirror_move_chained" then
   rows = dofile(root .. "/tests/enemy_actions/mirror_move.lua").chained(root, backend, version)
