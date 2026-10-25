@@ -8373,7 +8373,7 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   end
   local Schedule = require("src.battle.GbaItemSchedule")
   local parent = self._gbaMoveFrame
-  local frame = {}
+  local frame = { parent = parent }
   if parent then parent.called = true end
   self._gbaMoveFrame = frame
   if self._gbaActionFrame then self._gbaActionFrame.moved = true end

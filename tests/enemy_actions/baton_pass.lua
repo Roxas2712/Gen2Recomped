@@ -215,6 +215,7 @@ function M.run(root, backend, version)
         "spikes1",
         "spikes2",
         "spikes3",
+        "called",
       }) do
         events, draws = {}, {}
         local b = fresh(double)
@@ -280,13 +281,17 @@ function M.run(root, backend, version)
             id,
             id,
             226,
-            1,
+            kind ~= "called" and 1 or nil,
             require("src.core.game3.battle.adapter").new(b),
             b,
-            {}
+            { called = kind == "called" }
           )
         else
-          b:executeAction(user, user, user.curMoves[1])
+          if kind == "called" then
+            b:performMove(user, user, user.curMoves[1], true)
+          else
+            b:executeAction(user, user, user.curMoves[1])
+          end
         end
         local before = { actor = view(at(b, id)), pp = native and old.mon.pp[1] or old.mon.moves[1].pp }
         if interactive and id % 2 == 0 then
@@ -307,7 +312,11 @@ function M.run(root, backend, version)
             require("src.battle.Gen3BatonPass").await(b, pending)
           end
         end
-        T.eq(native and old.mon.pp[1] or old.mon.moves[1].pp, 19, "Baton Pass spends donor PP once")
+        T.eq(
+          native and old.mon.pp[1] or old.mon.moves[1].pp,
+          kind == "called" and 20 or 19,
+          "Baton Pass spends donor PP once; called moves do not spend their own PP"
+        )
         if kind ~= "none" then
           T.check(at(b, id) ~= old, "native Baton Pass replaces its own slot")
           T.eq(at(b, id).stages.attack, 2, "attack stage is inherited")
