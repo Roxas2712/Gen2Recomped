@@ -83,3 +83,10 @@ generic +2/+2/+1 fallback from being applied to LeafGreen or FireRed.
 for all three Gen3 registrations in this contribution, both coin outcomes
 and egg exclusion across 256 steps each. No full story/mobile acceptance
 is implied by this dispatch correction.
+
+A rejected HM replacement now returns to the native summary move chooser.
+The closed chooser previously left the underlying learner non-selectable
+after the refusal. The actual native menu/HM-reader regression covers reopen,
+unavailable-summary fallback, an existing selectable list, retired-screen
+ownership and unchanged moves/PP. Presentation is stubbed in this regression;
+separate real native input/renderer follow-ups remain necessary.
