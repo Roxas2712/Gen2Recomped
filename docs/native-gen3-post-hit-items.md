@@ -36,34 +36,72 @@ Native battle protocol revision is 13; party codec remains 1. The independent
 unchanged-hasher token audit changes only revision 12 to 13, yielding
 `beacb71804a6af34`; legacy digest `e33d251961f2a41d` is retained.
 
-## Validation status
+## Validation
 
-Development checkpoint, before the final complete regression gate:
+Full gate source/test trees: feature `d88be1fc` passes **149/158** engine suites,
+SDK **3/3** and B30. Its exact Counter of **25 inherited FAIL lines in nine
+suites** equals fresh unchanged #244 (`f7c18701`, **146/155**). Combined
+`d9cf080d` passes **267/267**, SDK **3/3**, every quick tier and B30, with zero
+FAIL lines. Subsequent checker, reproduction-tool and documentation changes
+preserve those production and test trees.
 
-- Shared command: 7,488 paired rows, retaining all held reads, public parameters,
-  RNG, activation, first-damage consumption, HP, flinch and animation metadata.
-- Initial actual-script matrix: 13,200 paired rows match for Tackle, Double Slap,
-  Triple Kick, Surf and Sleep Talk. A subsequent matrix also includes Earthquake
-  and must pass before publication.
-- Actual host, guest and spectator: 172 checks pass across FireRed and Emerald,
-  including physical items, a stateful second held read, already-moved targets,
-  skipped PP, complete held/event/RNG traces and completed state hashes.
-- The previously mismatched complete successful Sleep Talk probe now has the same
-  ten ordered held reads in both engines; awake/empty/blocked cases retain 2/2/4.
+The final checker (`80c8bd8e` / combined `f8294625`) passes **160 workers /
+103,868 identical paired enemy/action rows** per runtime, with every worker
+exiting zero and no timeout. Additional held-damage and ordinary-damage
+comparisons pass **2,040 + 6,912** rows: **168 workers / 112,820** selected
+paired observations per runtime.
 
-Failed and superseded fixture observations are retained separately in local QA.
-The first complete run also exposed missing GBA Tackle flags in the older held
-fixture: the source side already supplied 51, while the host side omitted it.
-Supplying the same flags preserves all assertions and passes 5,511 checks. The
-initial eight failures remain recorded. The expanded script worker also hit the
-old 60-second wall-clock limit under concurrent QA. Its bound is now 180 seconds;
-a timeout still fails and retains partial text and exact captured bytes. No
-production fallback or relaxed
-expectation is used to hide the mismatched input.
-The first link probe omitted the owned move's flinch flag; after supplying the
-native-shaped flag, it exposed the real spectator turn-overlap bug. No rows are
-filtered to establish equality. Final baseline, full engine regression, wider
-contract matrix and combined-fork acceptance are still pending at this checkpoint.
+- Shared post-hit command: **7,488 paired rows**, retaining all held reads,
+  public parameters, RNG, activation, first-damage consumption, HP, flinch and
+  animation metadata.
+- Actual scripts: **15,840 paired rows** for Tackle, Double Slap, Triple Kick,
+  Surf, Earthquake and Sleep Talk; single/double actor slots, substitutes,
+  misses/immunity, target/attacker fainting, live item changes and overrides.
+  The exact #244 production differs in **12,032** of these rows. Nothing is
+  filtered from failed or successful comparisons.
+- Actual host/guest/spectator: **172 checks** across both profiles, physical
+  items, stateful canonical reads, already-moved targets, skipped PP, all held,
+  event and RNG traces, and completed state hashes. The old spectator module
+  fails **14** checks in the same test.
+- Strict held scheduling: four API formats, **40 workers / 1,914 paired rows**.
+  Charge-decision contracts: four formats, **64 workers / 1,020 rows**, retaining
+  the feature prerequisite's explicit legacy enemy-PP policy; the combined
+  fork requires raw native-policy parity through existing #162.
+- Fresh full Sleep Talk held-phase probes match every captured payload:
+  **10/2/2/4 reads** for success/awake/empty/blocked, on both profiles and both
+  runtimes. The old successful host trace had eleven.
+- Existing imported-data modes pass. The additional reproduction tool exercises
+  **32 CPU-only scenarios** using actual imported item/move definitions and
+  controlled battlers: physical items, both sides, single/multi-hit and public
+  overrides. These are not graphical or complete-playthrough acceptance.
+- Independent unchanged-hasher token audit, AST-verified formatting,
+  whitespace checks and actionlint pass.
+
+Failed and superseded observations remain separate in local QA. The first link
+fixture omitted its move flag; supplying native-shaped flags exposed the real
+spectator turn-overlap bug. The older held fixture likewise supplied flag 51
+only on its source side. Matching the host input preserves all expectations and
+passes **5,511** checks; the initial eight failures remain recorded. The large
+script worker also hit the old sixty-second wall-clock limit under concurrent
+QA. Its bound is now 180 seconds. A forced-timeout probe proves failure is
+retained with partial text and exact captured bytes, while subsequent comparisons
+complete. Final accepted matrices contain no timeout or nonzero worker.
+
+### Reproduction
+
+Use the pinned maintained LuaJIT `a4c064539ea931274d407e1249b4bb575424a0f4`.
+The shared checker requires a clean read-only Gen1 checkout at the revision above.
+
+```sh
+LUA=/path/to/luajit bash scripts/test.sh --quick
+python3 tools/enemy-action-contract-check/check.py --gen1 /path/to/read-only-gen1 --lua /path/to/luajit --report /tmp/enemy-action-report.json
+/path/to/luajit tests/engine/gen3_post_hit_link.lua
+/path/to/luajit tools/enemy-action-contract-check/imported-post-hit-smoke.lua /path/to/existing/local-cache
+```
+
+The last command needs existing FireRed/Emerald imports; it never creates or
+publishes cartridge data. Source-bound acceptance metadata and raw-report digests
+are in [the QA receipt](qa/native-gen3-post-hit-items.json).
 
 ## Scope
 
