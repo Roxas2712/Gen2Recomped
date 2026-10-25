@@ -28,12 +28,25 @@ return function(game)
   observe=function()
    local ball=b.gen3Ball
    if ball and b.gen3BallPlaying and not seen[ball]then seen[ball]=true;list[#list+1]={ball=ball,side=ball.battler==b.player and'player'or'enemy'}end
-   if ball and ball.phase=='release'and ball.particles and not views[ball.battler]then
-    local g=love.graphics;local c=g.newCanvas(240,160,{dpiscale=1});local depth=g.getStackDepth();local frame=b.frame;local age=ball.frame
-    g.push('all');local ok,why=xpcall(function()g.setCanvas(c);g.origin();g.setShader();g.clear(0,0,0,0);b:draw()end,debug.traceback)
-    while g.getStackDepth()>depth do g.pop()end;if not ok then c:release();error(why)end
-    local data=c:newImageData();assert(love.filesystem.write('native-ball-'..gender..'-'..(ball.battler==b.player and'player'or'enemy')..'.png',data:encode('png')));data:release();c:release()
-    assert(b.frame==frame and ball.frame==age,'Native drawing advanced the actual ball');views[ball.battler]=true
+   if ball and ball.phase=='release'and ball.particles and ball.particles.age>=6 and not views[ball.battler]then
+    local g=love.graphics;local frame=b.frame;local age=ball.frame
+    local prefix='native-ball-'..gender..'-'..(ball.battler==b.player and'player'or'enemy')
+    local function capture(name)
+     local c=g.newCanvas(240,160,{dpiscale=1});local depth=g.getStackDepth()
+     g.push('all');local ok,why=xpcall(function()g.setCanvas(c);g.origin();g.setShader();g.clear(0,0,0,0);b:draw()end,debug.traceback)
+     while g.getStackDepth()>depth do g.pop()end;if not ok then c:release();error(why)end
+     local data=c:newImageData();local bytes=data:getString();assert(love.filesystem.write(prefix..name..'.png',data:encode('png')));data:release();c:release()
+     assert(b.frame==frame and ball.frame==age,'Native drawing advanced the actual ball');return bytes
+    end
+    local positive=capture('')
+    for _,entry in ipairs{{'ball',balls},{'particles',particles}}do
+     local draw=g.draw;local suppressed=0
+     g.draw=function(image,...)if image==entry[2]then suppressed=suppressed+1;return end;return draw(image,...)end
+     local ok,negative=xpcall(function()return capture('-'..entry[1]..'-negative')end,debug.traceback);g.draw=draw;assert(ok,negative)
+     assert(suppressed>0 and positive~=negative,'Actual native '..entry[1]..' texture was invisible')
+     assert(capture('-'..entry[1]..'-restored')==positive,'Native texture did not restore exactly')
+    end
+    views[ball.battler]=true
    end
   end
   local deadline=love.timer.getTime()+45
@@ -46,7 +59,7 @@ return function(game)
   for _,e in ipairs(list)do assert(e.ball:isDone()and e.ball.frame==(e.side=='player'and 39 or 30));frames[e.side]=e.ball.frame end
   assert(list[2].ball.ball==3,'Native ULTRA item-to-sheet map failed')
   observe=function()end
-  cases[#cases+1]={gender=gender,actualBallFrames=frames,realNativeParticles=true,nativeUltraSheet=3,modsDisabled=true,drawNoClockAdvance=true}
+  cases[#cases+1]={gender=gender,actualBallFrames=frames,realNativeParticles=true,visibleBallNegative=true,visibleParticlesNegative=true,restoreExact=true,nativeUltraSheet=3,modsDisabled=true,drawNoClockAdvance=true}
   game.stack:pop()
  end
  assert(love.filesystem.write('edition-result.json',Json.encode({status='pass',edition=edition,cases=cases,ballSource=record.source,physicalIOSDeviceTested=false,fullFeatureParity=false})))
