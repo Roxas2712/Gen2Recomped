@@ -86,7 +86,7 @@ for _,version in ipairs({'gold','silver','crystal'})do
  data.field.fishing[public]={value='authored'}
  T.eq(Fields.mapValue(data,'fishing',public,'value'),'authored','authored exact field entry wins')
  data.map_scripts={spawns={centers={[raw]=true},points={NEW_BARK_TOWN={x=6,y=7}}}}
- data.maps.NEW_BARK_TOWN={id='NEW_BARK_TOWN',environment='TOWN'}
+ data.maps.NEW_BARK_TOWN={id='NEW_BARK_TOWN',environment=1}
  world.map={id='NEW_BARK_TOWN',def=data.maps.NEW_BARK_TOWN}
  world:noteGen2Spawn(public)
  T.eq(save.lastHeal.map,'NEW_BARK_TOWN','actual blackout spawn recognizes canonical Center source')
