@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219, #220, #222, #225 and #226 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219, #220, #222, #225, #226 and #228 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,61 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`c1dac0994aa9fe0d1659e510874065697dca2534`. Its ROM-free run passed
-**246/246 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`4941d8d6c753925ab47180aaa80bf37b665ff7b6`. Its ROM-free run passed
+**249/249 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #228](https://github.com/UNDERdecoded/Gen2Recomped/pull/228) implements
+native GBA Sleep Talk sleep admission, current-slot selection and called move
+dispatch. Zero-PP learned choices, exclusions, Disable/Encore, wake/Early Bird/
+Uproar/Soundproof, named indexless authored moves, spread/controller order,
+caller PP/provenance/bookkeeping and failed-call item phase boundaries are
+covered. Existing party sleep-counter preservation and authored overrides
+remain covered. The feature reuses #121's complete portable effect adapter;
+that prerequisite already exists in this combined branch.
+
+Clean feature runtime `cb6ddfadc2d29b878efcb0eb4f76869dc7b8c16a` passes
+**1,068 focused checks**, native protocol 154 and reused adapter 860 checks.
+Its full result is **130/139 engine suites**, SDK 3/3 and B30. The exact Counter
+of 25 inherited FAIL lines across nine suites equals clean #226+#121 prerequisite
+`63bf2a9b9b856027c27c65ae1031febbb9e5d7e5` (127/136). Their independent fixes
+remain green in this combined runtime (**249/249**).
+
+Both clean runtimes agree with unchanged read-only Gen1 in **116 workers /
+77,668 paired observations**. New modes add 648 command rows and five same-entry
+API-3 authored-content rows per FireRed/Emerald profile. Named registration,
+zero-PP/awake calls, primary/stat-change and patched-Fly handlers execute through
+the real public loaders. Raw RNG bounds/values, recorded events and state are
+retained. Unchanged prerequisite fails 108 command assertions (648/648 rows
+differ) and eight authored assertions (4/5 rows differ), with final fixtures.
+
+Two real link roles complete four menu-driven turns with all paired completed
+hashes/components, learned PP and sleep state equal. Twelve CPU-only scenarios
+with actual FireRed/Emerald imports pass public move/menu submission, repeat
+calls, wake/ordinary move, zero-PP children, empty/forbidden pools, Early Bird
+wake and awake failure. No normal SAVE or ROM/cache/save distribution occurs.
+Command revision 9 refuses revision 8; party codec remains 1. Raw native fixture
+`f1bec52ffc687ea3` is independently audited from #226's unchanged hasher with
+only the explicit revision token changed; other-generation goldens remain.
+
+An extra complete **held-item hook probe still differs**: source empty item zero
+versus an omitted host field, and missing/extra check/damage/flinch reads in a
+valid called attack (10 source / 11 host reads). Failed-call phase counts are
+now correct, but full payload/sequence parity is unresolved. Raw failed probes
+remain; this is not passing evidence for all hook orchestration. Complete
+held/choice-item/canceller and arbitrary child/interactive controllers, other
+profiles, global RNG/selection, graphics and playthroughs remain separate.
+
+All nine #228 workflows await maintainer approval (`action_required`); the
+[dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40176031994)
+has zero jobs. Local acceptance is separate. Attachment hit the existing
+100-artifact identity cap; the regular English Gen2 PR is published. Evidence:
+`tmp/sleep-talk-full-final-accepted.log`, `tmp/sleep-talk-contracts-final-accepted.json`,
+`tmp/sleep-talk-imported-final-accepted.log`, `tmp/sleep-talk-accepted-evidence.json`.
+See [the scoped Sleep Talk contract](native-gen3-sleep-talk.md).
+
+Prior #226 results retain runtime `c1dac0994aa9fe0d1659e510874065697dca2534`
+and its 246/246 engine result:
 
 [PR #226](https://github.com/UNDERdecoded/Gen2Recomped/pull/226) gives native
 GBA Triple Kick an accuracy check and independent critical/damage calculation
