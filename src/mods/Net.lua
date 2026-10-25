@@ -40,7 +40,7 @@ function Net.forMod(loader, mod)
   local api = {}
   function api:available() return Host.canSpawnProcess() and Fetch.available() end
   function api:capabilities()
-    return Host.canSpawnProcess() and {boundedHttpsGet = 1} or {}
+    return Host.canSpawnProcess() and {boundedHttpsGet = 1, maxResponseBytes = require("src.net.AsyncGet").MAX_BYTES} or {}
   end
   function api:get(url, opts)
     local denial = Net.urlDenial(url)
