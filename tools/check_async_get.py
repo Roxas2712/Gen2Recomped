@@ -32,18 +32,19 @@ class Handler(http.server.BaseHTTPRequestHandler):
         try: self.wfile.write(body)
         except (BrokenPipeError,ConnectionResetError): pass
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--love',required=True);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--love',required=True);p.add_argument('--source-root',type=pathlib.Path);args=p.parse_args()
     root=pathlib.Path(__file__).resolve().parents[1]
+    source=(args.source_root or root).resolve()
     executable=pathlib.Path(args.love).resolve()
     token=uuid.uuid4().hex
     identity='oasc-native-http-qa-'+token
     temporary=None
     run=subprocess.run
     # Local participating checkouts use the shared storage leases. Standalone
-    # upstream/Windows CI runs have neither that local manager nor fcntl.
-    if os.name!='nt' and (root/'tools/qa_storage.py').is_file():
+    # upstream/ephemeral CI uses its own isolated temporary project instead.
+    if os.name!='nt' and not os.getenv('GITHUB_ACTIONS') and (root/'tools/qa_storage.py').is_file():
         from qa_storage import qa_source,qa_copy,qa_profile,qa_run
-        qa_source(root);qa_source(executable)
+        qa_source(root);qa_source(source);qa_source(executable)
         project=qa_copy(root/'.local/qa'/('native-http-test-'+token)/'unit')
         profile=(pathlib.Path.home()/'Library/Application Support/LOVE'/identity if os.uname().sysname=='Darwin'
                  else pathlib.Path.home()/'.local/share/love'/identity)
@@ -56,7 +57,7 @@ def main():
     for name in ('src/net/Fetch.lua','src/net/AsyncGet.lua','src/net/get_worker.lua',
                  'src/net/AsyncDownload.lua','src/net/DownloadTransport.lua','src/net/download_worker.lua',
                  'src/mods/Net.lua','src/core/HostShell.lua'):
-        target=project/name;target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(root/name,target)
+        target=project/name;target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(source/name,target)
     for name in ('main.lua','conf.lua'):shutil.copy2(root/'tools/async-get-check'/name,project/name)
     server=http.server.ThreadingHTTPServer(('127.0.0.1',0),Handler)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
