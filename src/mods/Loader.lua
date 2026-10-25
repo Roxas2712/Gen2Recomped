@@ -212,6 +212,16 @@ function Loader:_generation()
   return okG and gen or nil
 end
 
+function Loader:_dependencySpecs(manifest, field)
+  local out = {}
+  for _, spec in ipairs(manifest[field] or {}) do
+    if ModTargets.specApplies(spec, GameVersion.get(), self:_generation()) then
+      out[#out + 1] = spec
+    end
+  end
+  return out
+end
+
 function Loader:_loadState()
   self.disabled = {}
   local options = SaveData.loadOptions(self.fs)
@@ -551,7 +561,7 @@ function Loader:_enforceDependencies()
     changed = false
     for _, id in ipairs(orderedIds(self.mods, isActive)) do
       local mod = self.mods[id]
-      for _, spec in ipairs(mod.manifest.dependencySpecs) do
+      for _, spec in ipairs(self:_dependencySpecs(mod.manifest, "dependencySpecs")) do
         local dep = self.mods[spec.id]
         local reason
         if not dep then
@@ -595,7 +605,7 @@ function Loader:_failCycles()
     stack[#stack + 1] = id
     onStack[id] = true
     local selfEdge = false
-    for _, spec in ipairs(mods[id].manifest.dependencySpecs) do
+    for _, spec in ipairs(self:_dependencySpecs(mods[id].manifest, "dependencySpecs")) do
       local dep = mods[spec.id]
       if spec.id == id then selfEdge = true end
       if dep and isActive(dep) and spec.id ~= id then
@@ -635,7 +645,7 @@ function Loader:_enforceConflicts()
   local doomed = {}
   for _, id in ipairs(orderedIds(self.mods, isActive)) do
     local mod = self.mods[id]
-    for _, spec in ipairs(mod.manifest.conflictSpecs) do
+    for _, spec in ipairs(self:_dependencySpecs(mod.manifest, "conflictSpecs")) do
       local other = self.mods[spec.id]
       if other and isActive(other)
           and (not spec.range
@@ -669,9 +679,12 @@ function Loader:_order()
       dependents[depId][#dependents[depId] + 1] = id
       indegree[id] = indegree[id] + 1
     end
-    for _, spec in ipairs(manifest.dependencySpecs) do edge(spec.id) end
+    for _, spec in ipairs(self:_dependencySpecs(manifest, "dependencySpecs")) do edge(spec.id) end
     -- optional dependencies order without requiring anything
-    for _, spec in ipairs(manifest.optionalSpecs) do edge(spec.id) end
+    for _, spec in ipairs(self:_dependencySpecs(manifest, "optionalSpecs")) do
+      local dep = self.mods[spec.id]
+      if dep and (not spec.range or Semver.satisfies(dep.manifest.version, spec.range)) then edge(spec.id) end
+    end
   end
   local ordered = {}
   local function nextId()

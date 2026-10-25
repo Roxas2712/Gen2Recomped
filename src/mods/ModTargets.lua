@@ -75,6 +75,18 @@ function Targets.supports(manifest, version, generation)
   return false
 end
 
+-- With an exact edition, another edition in the same generation does not
+-- satisfy the scope. A context-free catalogue may inspect all potential edges.
+function Targets.specApplies(spec, version, generation, engineVersion)
+  if spec.games and (version or generation) and not Targets.supports(spec, version, generation) then
+    return false
+  end
+  if spec.game_version then
+    return require("src.mods.Semver").satisfies(engineVersion or require("src.core.Version").engine, spec.game_version)
+  end
+  return true
+end
+
 function Targets.generations(manifest)
   if not manifest or manifest.games == nil then return nil end
   local seen, out, restriction = {}, {}, nil

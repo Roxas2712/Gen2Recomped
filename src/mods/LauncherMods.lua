@@ -62,7 +62,7 @@ local function statusFor(mods, id, enabledSet, enabled, version, options)
   -- bidirectional (this mod's conflicts spec vs an enabled other, and an
   -- enabled other's spec vs this mod), which is exactly the launcher chip.
   if enabled then
-    local r = ManagerState.resolveToggle(mods, id, true, enabledSet)
+    local r = ManagerState.resolveToggle(mods, id, true, enabledSet, version)
     if #r.conflicts > 0 then
       local otherId = r.conflicts[1]
       local other = mods[otherId]
@@ -80,6 +80,7 @@ local function statusFor(mods, id, enabledSet, enabled, version, options)
   -- resolveToggle would cascade-enable a merely-disabled dep rather than flag
   -- it, so the disabled case is judged straight off the manifest here.
   for _, spec in ipairs(m.dependencySpecs or {}) do
+    if ModTargets.specApplies(spec, version) then
     local dep = mods[spec.id]
     if not dep then
       return "warn", "Needs " .. spec.id .. " (not installed)"
@@ -89,8 +90,52 @@ local function statusFor(mods, id, enabledSet, enabled, version, options)
         and not Semver.satisfies(dep.version, spec.range) then
       return "warn", "Needs " .. spec.id .. " " .. spec.range
     end
+    end
   end
   return "ok", "Ready"
+end
+
+-- Normalized source hints are links for review, never automatic installs.
+function LauncherMods.resolveDependencyRepo(id, parent, installed, version)
+  for _, group in ipairs({parent and parent.dependencySpecs or {}, parent and parent.optionalSpecs or {}}) do
+    for _, spec in ipairs(group) do
+      if spec.id == id and spec.github and ModTargets.specApplies(spec, version) then
+        local ok, clean = pcall(Manifest.parseGithub, spec.github)
+        if ok and clean then return clean end
+      end
+    end
+  end
+  local ok, clean = pcall(Manifest.parseGithub, installed and installed.github)
+  return ok and clean or nil
+end
+
+local function dependencyReport(manifest, options, version, byId)
+  local out = {hasIssues=false, targetMod=manifest, deps={}}
+  for _, group in ipairs({{field="dependencySpecs",kind="dependency"},{field="optionalSpecs",kind="optional"}}) do
+    for _, spec in ipairs(manifest and manifest[group.field] or {}) do
+      if ModTargets.specApplies(spec, version) then
+        local dep, status = byId[spec.id], "satisfied"
+        if not dep then status="missing"
+        elseif spec.range and not Semver.satisfies(dep.version,spec.range) then status="incompatible"
+        else
+          local choice = ModGens.active(options and options.mods and options.mods[spec.id], version and require("src.core.GameVersion").generation(version))
+          if choice == false or (choice == nil and dep.experimental) then status="disabled" end
+        end
+        local repo = LauncherMods.resolveDependencyRepo(spec.id,manifest,dep,version)
+        out.deps[#out.deps+1] = {id=spec.id,name=dep and dep.name or spec.id,range=spec.range,
+          kind=group.kind,optional=group.kind=="optional",status=status,installedVersion=dep and dep.version,
+          github=repo,safeUrl=repo and ("https://github.com/"..repo)}
+        if group.kind=="dependency" and status~="satisfied" then out.hasIssues=true end
+      end
+    end
+  end
+  return out
+end
+
+function LauncherMods.checkDependencies(manifest, options, version, installedManifests)
+  local byId = {}
+  for _, installed in ipairs(installedManifests or {}) do byId[installed.id] = installed end
+  return dependencyReport(manifest, options, version, byId)
 end
 
 -- deriveList(manifests, options) -> the panel row list, pure.
@@ -197,6 +242,7 @@ function LauncherMods.deriveList(manifests, options, version)
       forcedGens = forceSet[m.id],
       status = status,
       statusDetail = detail,
+      dependencies = dependencyReport(m, options, version, byId),
       github = m.github,
       -- the creator's donation link, for the card's "Support the creator"
       -- button (Manifest.validate accepts http(s) only)
