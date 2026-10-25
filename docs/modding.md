@@ -33,17 +33,22 @@ GET support; it does not implement POST, arbitrary requests or `mod.job`.
 The internal `src.net.Fetch.download(url, relativeSavePath, options)` API also
 uses background workers. Two file workers accept at most eight active/queued
 jobs; cancelling/releasing cannot evade occupied slots. Transfers stream to a
-private staging file, with 64 KiB buffers. Poll reads metadata/results and
-publishes a successful complete file with one rename (Windows uses
-`MoveFileExW`); it never performs HTTP reads or copies the whole body.
+private staging file, with 64 KiB buffers. Workers validate and publish a
+successful complete file with one rename (Windows uses `MoveFileExW`). Poll
+only drains completion records and coalesced progress channels: it performs
+no HTTP or filesystem IO and never copies the whole body.
 
 The legacy `size`, `userAgent` and `maxSeconds` options remain. Optional
 `accept`, `maxBytes` and `boundedHttpsGet` apply to file transfers too. The
 expected size is exact, including a valid zero-byte HTTP response. File bounds
 default to 64 MiB (or a larger expected size), capped at 512 MiB; timeouts
 default to 60 seconds, capped at 300, including queue time. File cancellation
-retains the legacy terminal `error` / `cancelled` reason. Errors, cancellation,
-release and late worker results never replace or delete the prior destination.
+retains the legacy terminal `error` / `cancelled` reason. Errors or accepted cancellation/release before publication retain the prior
+destination. A short channel transaction orders cancellation against the
+worker's publication claim, with no filesystem IO under its lock. After that
+claim, poll reports `phase = "publishing", cancellable = false`; cancellation
+returns false because publication is already completing. Late results cannot
+revive a request whose cancellation was accepted.
 A running curl may occupy its worker until the next read or bounded timeout;
 shutdown waits for those bounded workers. This desktop file path requires
 LÖVE threads and curl; native mobile download bridges are unchanged at their
@@ -53,6 +58,14 @@ This internal file API does not add a new `mod.fetch:download` method or grant
 mods arbitrary filesystem destinations. VASC uses the existing `mod.fetch:get`
 package protocol; its unchanged downloader/store modules have separate
 [real download evidence](qa/native-background-download.json).
+
+`mod.cache:info(key)` projects actual cached files as `type = "file"`, retaining
+native `key`, `kind`, size/time metadata and error codes. It does not read the
+payload. This allows Gen1-style package consumers to recognize already written
+chunks; the physical `modstorage` namespace and `mod.storage:stat` contract
+remain unchanged. Real native-cache package activation and reload are included
+in the same scoped evidence.
+
 
 ## Choosing mod load order
 

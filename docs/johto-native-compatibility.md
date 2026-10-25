@@ -48,18 +48,23 @@ ROMs or player saves are included in this repository or its releases.
 ## Desktop file downloads (2026-10-25)
 
 `Fetch.download` now streams through bounded background workers. Its first
-poll no longer invokes synchronous HTTP. Exact-size checks, staging and atomic
-publication preserve a previous complete file on failure, timeout or cancel.
+poll no longer invokes HTTP or filesystem IO. Worker-side exact-size checks,
+staging and atomic publication preserve the prior file before publication is
+claimed; a cancellation after that claim is explicitly refused.
 The native `mod.fetch` capability record now supplies its actual maximum
 response size, activating the supplied VASC downloader's bounded receive path.
+The installation-cache adapter also supplies `type = "file"` metadata; without
+that field, the real supplied store rejects written chunks as
+`cache_write_failed`. Native storage keys, namespaces and error codes remain.
 
-Using the unchanged supplied downloader and store modules with the native SDK,
+Using the unchanged supplied downloader/store modules with native SDK fetch
+and the real `ImportAccess` / `Storage` cache API,
 a real HTTPS run downloads `apo.pokemon-hd.g01.dex0141-0151` (24,765,251 bytes),
 verifies all 66 files, activates it and restores its journal into a fresh store
 instance. No private mod code/assets, source paths or cache contents are shipped.
 The source catalog currently supplies eight Gen1 roster packages; that is
 content availability, not a restriction to Gen1 gameplay. Native polling peaks
-at 1.17 ms in this isolated LÖVE12 run. This is data-download/activation
+at 0.27 ms in the native-cache LÖVE12 run. This is data-download/activation
 acceptance, not in-game menu, private Windows-wrapper, all-package or rendering
 acceptance. See [the exact scope and receipt](qa/native-background-download.json).
 
