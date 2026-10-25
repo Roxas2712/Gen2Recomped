@@ -13,9 +13,20 @@ C.UNAVAILABLE = {
   ['src.core.game3.pokemon'] = { 'mystery_dungeon_follower' },
   ['src.core.game3.player'] = { 'mystery_dungeon_follower' },
 }
+-- Concrete host modules and registered providers always take precedence.
+function C.hasProvider(name)
+  if type(name) ~= 'string' then return false end
+  if type(package.loaded[name]) == 'table' or type(package.preload[name]) == 'function' then return true end
+  if package.searchpath then
+    if package.searchpath(name, package.path or '') or package.searchpath(name, package.cpath or '') then return true end
+  end
+  local path = name:gsub('%.', '/') .. '.lua'
+  return love and love.filesystem and love.filesystem.getInfo
+    and love.filesystem.getInfo(path, 'file') ~= nil or false
+end
 function C.unavailable(name)
   local consumers = C.UNAVAILABLE[name]
-  if not consumers then return nil end
+  if not consumers or C.hasProvider(name) then return nil end
   return ('Compatibility module %s is unavailable in this engine; affected mods: %s')
     :format(name, table.concat(consumers, ', '))
 end
