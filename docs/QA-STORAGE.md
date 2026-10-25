@@ -132,7 +132,12 @@ die neuen Prozess- und Platzwächter beim nächsten Start.
 
 Der Agent verwendet eine unabhängig installierte, versionierte Kopie der vier
 kleinen Python-Helfer unter `~/.local/lib/origami-qa-storage/`, ohne Netzwerkzugriff.
-Er hängt nicht vom temporären Implementierungs-Worktree ab. Das rotierende
+Er hängt nicht vom temporären Implementierungs-Worktree ab. Die kleine lokal
+erstellte App `~/Applications/Origami QA Cleanup.app` trägt die gezielte
+macOS-Dokumentenfreigabe; beim ersten Start kann macOS dafür einen Dialog zeigen.
+Es wird kein Festplattenvollzugriff angefordert. Ein erfolgreicher echter
+Hintergrundlauf muss alle registrierten Projektwurzeln lesen können; der Status
+steht unter `~/.cache/origami-qa-storage/maintenance/status.json`. Das rotierende
 Protokoll `~/.cache/origami-qa-storage/maintenance.log` ist mit einer Sicherung auf
 insgesamt ungefähr 4 MiB begrenzt. Das Quell-/Modellarchiv ist dauerhaft;
 einzigartige erhaltene Originaldaten zählen nicht zum löschbaren Cachebudget.
