@@ -1,0 +1,91 @@
+package.path='./?.lua;'..package.path
+love=require('tests.love_stub')
+local files,remote={},{}
+local fs={read=function(p) return files[p] end,write=function(p,b) files[p]=b;return true end,
+ createDirectory=function() return true end,remove=function(p) files[p]=nil;return true end}
+fs.getInfo=function(p)
+ if files[p] then return {type='file',size=#files[p]} end
+ for key in pairs(files) do if key:sub(1,#p+1)==p..'/' then return {type='directory'} end end
+end
+fs.getDirectoryItems=function(p)
+ local names,seen={},{};for key in pairs(files) do if key:sub(1,#p+1)==p..'/' then
+  local name=key:sub(#p+2):match('^[^/]+');if not seen[name] then names[#names+1]=name;seen[name]=true end
+ end end;return names
+end
+love.filesystem=fs
+-- Deterministic fixture digest; production uses LOVE's SHA-256 implementation.
+local function hash(b) local h=5381;for i=1,#b do h=(h*33+b:byte(i))%4294967296 end;return string.rep(('%08x'):format(h),8) end
+love.data={hash=function(_,b) return hash(b) end,encode=function(_,kind,b) return kind=='base64' and ('b64:'..b) or b end,
+ decode=function(_,_,b) assert(b:sub(1,4)=='b64:');return b:sub(5) end}
+local account,allowed='1',true
+package.loaded['src.cloud.RetroCloud']={accountId=function() return account end}
+package.loaded['src.storage.AccountStorage']={storeCheck=function(store) return allowed and store.accountId==account,'Account changed.' end}
+package.loaded['src.core.SaveData']={persistenceFs=function() return fs end}
+package.loaded['src.import.CacheFs']={dataFs=function() return fs end}
+local yields=0;package.loaded['src.cloud.Task']={yield=function() yields=yields+1 end}
+local names={'constants','pokemon','moves','items','maps','trainers','encounters','type_chart'}
+local required={};for _,name in ipairs(names) do required[#required+1]='data/generated/'..name..'.lua' end
+package.loaded['src.import.RomImporter']={cacheContract=function(v) return {marker='fixture-import-'..v,files=required} end}
+local S=require('src.core.SaveSerializer');local C=require('src.storage.GameCache');local V=require('src.core.GameVersion')
+local function seed(v)
+ local prefix=V.info(v).cachePrefix
+ files[prefix..'rom-cache.complete']='fixture-import-'..v..'\n'
+ for _,path in ipairs(required) do files[prefix..path]='return {fixture="'..v..'"}\n' end
+ files[prefix..'assets/generated/fixture.bin']=string.rep('fixture-stream-',100000)
+ files[prefix..'assets/generated/empty.txt']=''
+end
+local n=0;local function check(v,m) assert(v,m);n=n+1 end
+local reads,writes=0,0
+local failBlock,failHead,onRead
+local store={kind='retro',accountId='1',read=function(p)
+ reads=reads+1;if onRead then onRead(p) end
+ if failBlock and p==failBlock then return nil end
+ return remote[p]
+end,write=function(p,b)
+ if failHead and p:find('/heads/',1,true) then return false,'Changed on another device.' end
+ writes=writes+1;remote[p]=b;return true
+end,has=function(p) return remote[p]~=nil end}
+seed('red');files['saves/fixture.lua']='KEEP';C.refresh()
+local id=assert(C.upload(store,'red'))
+local manifestPath='game-cache/manifests/red/'..id..'.lua'
+local manifest=assert(C.decode(remote[manifestPath]))
+check(#manifest.blocks==2 and yields>10,'large imports stream in bounded blocks and yield between work units')
+local head=remote['game-cache/heads/red.lua'];local before=writes
+check(C.upload(store,'red')==id and writes==before,'identical uploads reuse immutable blocks and the published head')
+failHead=true;files['data/generated/maps.lua']='return {fixture="changed"}\n'
+check(not C.upload(store,'red') and remote['game-cache/heads/red.lua']==head,'a concurrent head change preserves the previously published complete game')
+failHead=false
+files={['data/generated/maps.lua']='OLD NATIVE IMPORT',['saves/fixture.lua']='KEEP'}
+C.refresh();failBlock='game-cache/blobs/'..manifest.blocks[2].id..'.lua'
+check(not C.restore(store,'red') and not C.prefix('red') and not files[C.REGISTRY],
+ 'an interrupted transfer cannot publish a partial imported game')
+local cached='launcher/private_games/1/'..id..'/blocks/'..manifest.blocks[1].id..'.lua'
+check(files[cached]~=nil,'completed blocks remain available for a resumable retry')
+failBlock=nil;local reRead=false
+onRead=function(p) if p=='game-cache/blobs/'..manifest.blocks[1].id..'.lua' then reRead=true end end
+check(C.restore(store,'red')==id and not reRead,'retry reuses verified local blocks')
+onRead=nil
+local prefix=C.prefix('red')
+check(prefix and files[prefix..'data/generated/maps.lua']=='return {fixture="red"}\n' and files[prefix..'assets/generated/empty.txt']=='',
+ 'the second device restores identical generated files, including empty files')
+check(files['data/generated/maps.lua']=='OLD NATIVE IMPORT' and files['saves/fixture.lua']=='KEEP',
+ 'restoring activates a new account path and preserves existing imports and saves')
+account='2';check(not C.prefix('red') and not C.identity('red'),'another account cannot inherit the active game identity')
+check(not C.restore(store,'red'),'a mismatched cloud account cannot transfer private games')
+account='1';C.refresh();check(C.identity('red')==id,'the registered game survives an app restart for its owner')
+check(C.detach('red') and not C.prefix('red') and files[prefix..'data/generated/maps.lua']~=nil,'a new local import can detach without deleting the prior private game')
+allowed=false;before=reads;check(not C.upload(store,'red') and reads==before,'unlinked accounts cannot access game-cache cloud objects');allowed=true
+local m=S.decode(remote[manifestPath]);m.files[1].path='../unsafe.lua'
+check(not C.decode(S.encode(m)),'download manifests reject traversal paths')
+check(not C.validateFile('data/generated/maps.lua','return os.execute("never")'),'generated files never execute downloaded Lua')
+seed('red');files['data/generated/maps.lua']='return os.execute("never")';before=writes
+check(not C.upload(store,'red') and writes==before,'unsupported generated code is rejected before any upload')
+local D=require('src.import.DataLiteral');local Writer=require('src.import.LuaWriter')
+local large={nested={}}
+for i=1,2500 do large.nested['key'..i]={text=string.rep('fixture',12),value=i} end
+local split=Writer.encodeSplit(large)
+local limits={bytes=C.MAX_FILE,depth=96,nodes=3000000,string=8*1024*1024,entries=1000000,chunked=true}
+local decoded=assert(D.decode(split,limits))
+check(split:find('(function()',1,true) and decoded.nested.key2499.value==2499,'split generated tables are interpreted as literal data without executing closures')
+check(not D.decode(split:gsub('return __t','os.execute("never");return __t',1),limits),'modified split-table programs fail the fixed grammar')
+print('Private game cache: '..n..' checks passed')

@@ -559,6 +559,8 @@ function SaveData.defaultOptions()
     launcherLogoCards = true,
     launcherCartDesigns = {},
     cartridgeCloudSync = false,
+    gameCacheUpload = false,
+    gameCacheDownload = true,
     launcherAnimations = true,
     launcherIntroSeason = "auto",
     launcherTheme = false,

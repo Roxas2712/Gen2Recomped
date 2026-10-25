@@ -1671,7 +1671,7 @@ function Sidebar.install(RI)
       -- held still while Settings is open (Backdrop.setPaused)
       Backdrop.setPaused(self.section == "settings" or self.settingsOpen == true)
       Backdrop.request(self:_sbBackdropWant(), self:_sbMusicOn())
-      pcall(Backdrop.update, dt, self.workState == "working")
+      pcall(Backdrop.update, dt, self.workState == "working" or self._storageTask~=nil)
     elseif Backdrop.current() then
       Backdrop.stop()
     end
