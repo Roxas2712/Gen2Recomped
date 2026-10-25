@@ -1523,6 +1523,10 @@ local REQUIRED_FILES_GEN3 = {
   -- Absent, NPC.resolveSpriteDef falls through to SPRITE_RED and the whole
   -- region is populated by Kanto -- which is what it was.
   "data/generated/sprites.lua",
+  -- Original object picture order, independent of normalized native poses.
+  -- Older GBA caches re-import automatically through the existing readiness
+  -- check; no mod package or player save needs conversion.
+  "data/generated/gen3_object_sheets.lua",
   -- THE PARTY MENU'S OWN ART, and required for the same reason as the font:
   -- Data no longer blocks `icons` on a Gen 3 cache, so a cache that does not
   -- carry its own resolves to RED'S and every Hoenn species wears a Kanto
