@@ -75,7 +75,7 @@ function M.run(root, backend, version)
   local native = backend == "gen1"
   local f = M.fixture(root, backend, version)
   local T, Copy = f.T, require("src.mods.Merge").deepCopy
-  local rows, draws, damage, used = {}, {}, {}, {}
+  local rows, draws, damage, used, accuracy = {}, {}, {}, {}, {}
   local owner, phase, currentKind, incomingHits
   local off = f.e.api.events:on("battle.damage_dealt", function(e)
     damage[#damage + 1] = {
@@ -101,6 +101,11 @@ function M.run(root, backend, version)
   end)
   local offMove = f.e.api.events:on("battle.move_used", function(e)
     used[#used + 1] = { user = e.user.mon.nickname, target = e.target.mon.nickname, move = e.move.id }
+  end)
+  local offAccuracy = f.e.api.hooks:wrap("battle.accuracy", function(nextAccuracy, ...)
+    accuracy[#accuracy + 1] =
+      { rage = owner and not not owner.rage or false, attack = owner and owner.stages.attack or 0 }
+    return nextAccuracy(...)
   end)
   local function at(b, id)
     return native and b.battlers[id] or b:battlerAt(id)
@@ -220,8 +225,14 @@ function M.run(root, backend, version)
         status = a.mon.status,
       }
     end
-    rows[#rows + 1] =
-      { label = label, field = field, draws = Copy(draws), damage = Copy(damage), used = Copy(used) }
+    rows[#rows + 1] = {
+      label = label,
+      field = field,
+      draws = Copy(draws),
+      damage = Copy(damage),
+      used = Copy(used),
+      accuracy = Copy(accuracy),
+    }
   end
   for _, double in ipairs({ false, true }) do
     for uid = 0, double and 3 or 1 do
@@ -245,7 +256,7 @@ function M.run(root, backend, version)
         }) do
           currentKind = kind
           phase = "producer"
-          draws, damage, used = {}, {}, {}
+          draws, damage, used, accuracy = {}, {}, {}, {}
           local b = fresh(double)
           owner = at(b, uid)
           local foe = at(b, tid)
@@ -343,7 +354,7 @@ function M.run(root, backend, version)
         if double or kind ~= "ally" then
           currentKind = kind
           phase = "producer"
-          draws, damage, used = {}, {}, {}
+          draws, damage, used, accuracy = {}, {}, {}, {}
           local b = fresh(double)
           owner = at(b, uid)
           cast(b, uid, tid, 1)
@@ -423,11 +434,11 @@ function M.run(root, backend, version)
   for _, double in ipairs({ false, true }) do
     for _, choice in ipairs({ "rage", "other", "custom", "encore_rage", "encore_other" }) do
       currentKind, phase = choice, "planning"
-      draws, damage, used = {}, {}, {}
+      draws, damage, used, accuracy = {}, {}, {}, {}
       local b = fresh(double)
-      -- Match the already prepared native turn input; this does not certify
-      -- the earlier global RNG/order orchestration (see the Encore contract).
-      b.randomTurnNumber, b._nativeOrderReady = 65535, true
+      -- Compare actual turn-word preparation with fixed choices. Earlier
+      -- selection/RNG orchestration remains a separate controller boundary.
+      b.randomTurnNumber, b._nativeOrderReady = nil, false
       local chosen = (choice == "rage" or choice == "encore_other") and 99 or choice == "custom" and 700 or 33
       local slot = chosen == 99 and 1 or 4
       local actions = {}
@@ -447,8 +458,13 @@ function M.run(root, backend, version)
           a[native and "expEncoreSlot" or "encoreSlot"] = choice == "encore_rage" and 1 or 4
           a[native and "expEncoreTurns" or "encoreTurns"] = 4
         end
-        actions[id] =
-          { kind = "move", move = chosen, slot = slot, battler = id, target = id % 2 == 0 and id + 1 or id - 1 }
+        actions[id] = {
+          kind = "move",
+          move = chosen,
+          slot = slot,
+          battler = id,
+          target = id % 2 == 0 and id + 1 or id - 1,
+        }
       end
       if native then
         require("src.core.game3.battle.engine").planTurnActions(
@@ -476,7 +492,7 @@ function M.run(root, backend, version)
   end
   for _, kind in ipairs({ "item", "switch", "run" }) do
     currentKind, phase = kind, "nonmove"
-    draws, damage, used = {}, {}, {}
+    draws, damage, used, accuracy = {}, {}, {}, {}
     local b = fresh(false)
     owner = at(b, 0)
     at(b, 0).rage, at(b, 1).rage = true, true
@@ -485,7 +501,7 @@ function M.run(root, backend, version)
       require("src.core.game3.battle.engine").planTurnFromActions(
         b,
         require("src.core.game3.battle.adapter").new(b),
-        { kind = kind, user = "player" },
+        { kind = kind == "item" and "bag" or kind, user = "player" },
         { kind = "move", move = 33, slot = 4, user = "enemy" }
       )
     else
@@ -502,6 +518,7 @@ function M.run(root, backend, version)
   end
   off()
   offMove()
+  offAccuracy()
   f.close()
   return rows
 end

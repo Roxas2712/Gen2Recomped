@@ -196,7 +196,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     end
   end
 
-  if record and record.afterAccuracy then record.afterAccuracy(ctx) end
+  if gba and record and record.gbaAfterAccuracy then record.gbaAfterAccuracy(ctx) end
   if gba then hits = hitCount(ctx, record) end
 
   -- damage per hit
