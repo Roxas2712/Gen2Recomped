@@ -2228,10 +2228,12 @@ for _, name in ipairs({ 'update', 'draw', '_step', 'keypressed', 'keyreleased',
     'writeOptions', 'applyOptions', 'writeSave', '_resolveLogicSpeed',
     'logicSpeed', 'speedLocked', 'zoomStep' }) do
   local key, native = name, Game[name]
-  Game[key] = function(self, ...)
-    local facade = package.loaded['src.core.Game3']
-    if facade and facade._dispatch then return facade._dispatch(key, self, native, ...) end
-    return native(self, ...)
+  if type(native) == 'function' then
+    Game[key] = function(self, ...)
+      local facade = package.loaded['src.core.Game3']
+      if facade and facade._dispatch then return facade._dispatch(key, self, native, ...) end
+      return native(self, ...)
+    end
   end
 end
 
