@@ -28,7 +28,7 @@ actual entry, carrier, slot, message and author. `mail.read` carries the
 entry, message, author and displayed lines once per opening. These native
 capabilities are advertised only for generation 2.
 
-The two focused suites exercise 342 checks through production modules,
+The two focused suites exercise 343 checks through production modules,
 native menu input, the save codec, public SDK, actual coroutine runner and
 synthetic binary ROM decoding. Full quick-tier and packaged GPU acceptance
 must be recorded separately against their exact source commits.
@@ -37,3 +37,20 @@ This is functional PC/mail groundwork, not complete Gen1 engine parity.
 ROM stationery artwork, SRAM mail conversion, complete legacy PC modes,
 all story paths and Windows hardware acceptance remain open. No private
 mod, cartridge data or generated art is included in this change.
+
+The exact composed `6004286e` Windows/macOS preview is qualified on all four
+runtime platforms. Mac ARM with the unchanged supplied Johto package and
+actual Crystal passes 68 checks per OpenGL/Metal backend in selected First
+and Third Person. This includes an imported PC-special operand lowered by
+the real VM, native boot-menu admission and one script resumption, actual
+provider transfers/refusals, summary/dex, the player-PC mailbox, composition,
+reading and a save-codec round trip. Eight fresh OS-window images were
+inspected. See the [source-bound receipt](qa/native-foundation/johto-native-pc-mail.json).
+
+Only the own QA window is activated. Background Metal presentation is not
+accepted, and its deprecation overlay partly obscures the second mail line.
+Raw/truncated PC item labels, large provider margins and native grayscale
+fallback art remain visible. These focused runs do not requalify every
+previous battle/map/follower scenario or establish a complete playthrough.
+The existing `native-preview-20261025.1` assets were refreshed in place;
+the manifest identifies the new binary source while the original tag stays.
