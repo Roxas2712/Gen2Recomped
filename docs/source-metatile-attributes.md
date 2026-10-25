@@ -37,8 +37,35 @@ pre-change version makes the same test fail on absent source bytes/metadata.
 Twelve relevant composed suites pass, covering terrain animation, render data,
 palette refresh, dataset views and all three additional cartridge registrations.
 The frozen final composed fork passes 326/326 engine suites and SDK 3/3.
-This does not constitute a new real-ROM import, GPU run, or full mod acceptance.
+These earlier checks did not constitute a real-ROM import, GPU run, or full mod acceptance.
 
 Run `luajit tests/engine/gen3_source_attributes.lua`. These records are a
 prerequisite for semantic compatibility views; active map/session binding,
 script writes, atlas ownership and unchanged Origami execution remain open.
+
+
+## Source borders, connections and terrain flags
+
+The importer additionally retains actual source border dimensions/bytes and
+ROM-order connections while keeping native borders and grouped connections.
+Unused zero-sized source borders remain unavailable and do not fail native
+import. The actual extractor regression covers both used and unused records.
+Hoenn terrain-flag metadata identifies 240 original bytes by offset and SHA256;
+`Gen3SourceFlags.read` verifies them with the native hash implementation before
+publishing `constants.gen3SourceBehaviorFlags`. Emerald's metadata is included
+here; the separate Ruby/Sapphire contributions provide their own addresses.
+`tools/gen3_source_flags.py` checks the full cartridge SHA1 and pinned public
+source SHA256, parses its flag macros, compares every byte and verifies a
+shifted-range negative control. Only numeric/hash metadata is committed.
+The matching-ELF RS generator additionally checks the exact symbol offset.
+
+GBA markers also add `source-map-views-v1:`; Hoenn markers add
+`source-behavior-flags-v1:`. Existing cartridge-specific marker prefixes remain
+intact. Saves and non-GBA cache markers are unchanged.
+
+In the composed five-edition fork, a CPU-only real LÖVE 12 extractor run matches
+all 2,156 maps / 1,320,112 cells against the pinned original public import
+pipeline, including border dimensions, ordered connections and warps. This
+requires the companion MapViews integration, not this independent import patch
+alone. See `native-map-observations.md` and its receipt for exact scope.
+No GPU/gameplay/full-mod acceptance follows from that data comparison.

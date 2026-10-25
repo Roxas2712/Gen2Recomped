@@ -12843,6 +12843,19 @@ function RomExtractorGen3:extractMapLayouts()
       if secondary then tilesets[secondary] = true end
       local blockPtr = self.rom:pointer(a + 12)
       local borderPtr = self.rom:pointer(a + 8)
+      local borderW, borderH = 2, 2
+      if (self.manifest.metatileAttributes or {}).bytes == 4 then
+        borderW, borderH = self.rom:u8(a + 24), self.rom:u8(a + 25)
+      end
+      local nativeBorder = borderPtr and self:layoutBlocks(borderPtr, 4) or nil
+      -- Unused layout records can declare a zero-sized source border. Keep
+      -- native extraction unchanged and report unavailable source metadata;
+      -- do not turn a compatibility observation into a native import failure.
+      local sourceBorder
+      if borderW > 0 and borderH > 0 and borderPtr and borderPtr + borderW * borderH * 2 <= self.rom.size then
+        sourceBorder = borderW * borderH == 4 and nativeBorder
+          or self:layoutBlocks(borderPtr, borderW * borderH)
+      end
       cells = cells + width * height
       -- COLLISION LIVES ON THE MAP CELL, not on the tileset.
       --
@@ -12876,7 +12889,10 @@ function RomExtractorGen3:extractMapLayouts()
         primaryTileset = primary,
         secondaryTileset = secondary,
         -- the border is always 2x2 metatiles in Emerald
-        border = borderPtr and self:layoutBlocks(borderPtr, 4) or nil,
+        border = nativeBorder,
+        sourceBorder = sourceBorder,
+        sourceBorderWidth = borderW,
+        sourceBorderHeight = borderH,
         blocks = blockPtr and self:layoutBlocks(blockPtr, width * height) or nil,
         source = ("ROM:gMapLayouts[%d]"):format(i),
       }
@@ -13505,7 +13521,7 @@ function RomExtractorGen3:extractMaps()
       local count = rom:u32(connAt)
       local at = rom:pointer(connAt + 4)
       if at and count > 0 and count <= 8 then
-        local byDir = {}
+        local byDir, sourceConnections = {}, {}
         local byDirRows, order = {}, {}
         local any = false
         for i = 0, count - 1 do
@@ -13533,6 +13549,7 @@ function RomExtractorGen3:extractMaps()
           -- way.  `list` carries all of them in ROM order, which is the
           -- order the cartridge searches.
           if dir and to then
+            sourceConnections[#sourceConnections + 1] = { dir = dir, map = to, offset = rom:s32(o + 4) }
             local rows = byDirRows[dir]
             if not rows then
               rows = {}
@@ -13563,6 +13580,7 @@ function RomExtractorGen3:extractMaps()
         end
         if any then
           def.connections = byDir
+          def.sourceConnections = sourceConnections
           connected = connected + 1
         end
       end
@@ -13581,6 +13599,8 @@ function RomExtractorGen3:extractMaps()
       def.collisionCells = layout.collisionCells
       def.elevationCells = layout.elevationCells
       def.border = layout.border
+      def.sourceBorder, def.sourceBorderWidth, def.sourceBorderHeight =
+        layout.sourceBorder, layout.sourceBorderWidth, layout.sourceBorderHeight
       -- Gen 3 has no single border BLOCK -- it has a 2x2 border patch -- so
       -- the def carries its top-left corner for the engine's border fill and
       -- the full patch beside it.
@@ -27579,6 +27599,11 @@ function RomExtractorGen3:extractTilesets()
     palettesInPrimary = self:layoutValue("palettesInPrimary", 6),
     metatileLayers = self:layoutValue("metatileLayers", 2),
   }
+  if self.manifest.metatileBehaviorFlags then
+    local raw, why = require("src.import.Gen3SourceFlags").read(self.rom, self.manifest.metatileBehaviorFlags)
+    assert(raw, why)
+    constants.gen3SourceBehaviorFlags = { version = 1, raw = raw, romSha1 = self.manifest.romSha1 }
+  end
   self._constants = constants
   self:write("constants", constants)
   Logger.info("Gen3 tileset pairs: %d (the unit a metatile actually draws from)",
