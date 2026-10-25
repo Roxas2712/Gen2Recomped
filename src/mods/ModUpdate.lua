@@ -28,6 +28,7 @@ function ModUpdate.pickZipAsset(assets, modId, version)
           name = name,
           url = a.browser_download_url,
           size = tonumber(a.size),
+          sha256 = type(a.digest)=='string' and a.digest:match('^sha256:([a-f0-9]+)$') or nil,
         }
         if prefer and name == prefer then return row end
         if idPrefix and not idPrefixZip
@@ -108,17 +109,18 @@ function ModUpdate.parseRelease(doc, modId)
     return nil, "no tag_name in release"
   end
   local version = stripV(doc.tag_name)
-  if not version:match("^%d+%.%d+%.%d+") then
+  local parsed=require('src.mods.Semver').parse(version)
+  if doc.draft or not parsed or not version:match("^%d+%.%d+%.%d+") then
     return nil, "release tag is not semver-like: " .. tostring(doc.tag_name)
   end
   local triple = version:match("^(%d+%.%d+%.%d+)")
   local zip = ModUpdate.pickZipAsset(doc.assets, modId, triple)
   local body = type(doc.body) == "string" and doc.body or ""
   return {
-    version = triple,
+    version = version,
     tag = tostring(doc.tag_name),
     zip = zip,
-    prerelease = doc.prerelease == true,
+    prerelease = doc.prerelease == true or parsed.pre~=nil,
     name = type(doc.name) == "string" and doc.name or triple,
     body = body,
   }
@@ -147,6 +149,7 @@ function ModUpdate.parseReleases(jsonText, modId, Json)
       local rel = ModUpdate.parseRelease(entry, modId)
       if rel and rel.zip then out[#out + 1] = rel end
     end
+    table.sort(out,function(a,b) return require('src.mods.Semver').compare(a.version,b.version)>0 end)
     return out
   end)
   if not ok then return nil, "could not parse releases: " .. tostring(result) end
@@ -230,6 +233,7 @@ function ModUpdate.writeCache(repo, releases)
           name = rel.zip.name,
           url = rel.zip.url,
           size = rel.zip.size,
+          sha256 = rel.zip.sha256,
         } or nil,
       }
     end

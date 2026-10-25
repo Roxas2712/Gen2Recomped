@@ -25,6 +25,7 @@ end
 
 local Game, EditorApp, Importer, TouchEditor
 local WindowFrame = require("src.render.WindowFrame")
+local RetroOverlay=require('src.ui.RetroOverlay')
 
 local autopilot -- optional scripted-input dev tool (tests/autopilot.lua)
 local driverCo  -- optional frame-driver (POKEPORT_DRIVER=file.lua): a
@@ -361,7 +362,7 @@ local function bootGame(version)
   if love.window and love.window.setTitle then
     local Version = require("src.core.Version")
     love.window.setTitle(Version.title(
-      GameVersion.info().displayName .. " (Gen 1 Recompilation Project)"))
+      "RetroRecomped · " .. GameVersion.info().displayName))
   end
   Game = require("src.core.Game")
   Game:load()
@@ -387,6 +388,7 @@ end
 -- a save row exist only because these opts are passed, and a second
 -- construction that forgot them would quietly drop the editor.
 local function openLauncher(forceImport)
+  if love.window and love.window.setTitle then love.window.setTitle(require('src.core.Version').title()) end
   local RomImporter = require("src.import.RomImporter")
   Importer = RomImporter.new(function(version)
     Importer = nil
@@ -418,6 +420,7 @@ end
 -- the launcher has its own.
 local function returnToLauncher()
   if Importer then return end
+  RetroOverlay.clear()
   pcall(function() require("src.core.Music").stop() end)
   -- The launcher's bottom-screen shelf starts fresh, and its canvas is not
   -- held across a whole play session.
@@ -650,6 +653,7 @@ function love.update(dt)
   if editorMode then return EditorApp.update(dt) end
   if TouchEditor then return TouchEditor.update(dt) end
   if Importer then return Importer:update(dt) end
+  if Game and not autopilot and not driverCo and RetroOverlay.update(Game) then return end
 
   -- Scripted runs (autopilot / POKEPORT_DRIVER) observe and act exactly
   -- once per Game:update, so they must keep a 1:1 relationship with the
@@ -725,6 +729,7 @@ function love.draw()
 
   if not Game then return drawSecondPanel() end
   Game:draw()
+  if not autopilot and not driverCo then RetroOverlay.draw(Game) end
 end
 
 function love.keypressed(key, scancode, isrepeat)
@@ -733,6 +738,7 @@ function love.keypressed(key, scancode, isrepeat)
   if TouchEditor then return TouchEditor.keypressed(key) end
   if Importer then return Importer:keypressed(key) end
   if not Game then return end
+  if RetroOverlay.key(Game,key) then return end
   Game:keypressed(key)
 end
 
@@ -740,6 +746,7 @@ function love.keyreleased(key)
   if editorMode or TouchEditor then return end
   if Importer then return end
   if not Game then return end
+  if RetroOverlay.game then return end
   Game:keyreleased(key)
 end
 
@@ -763,6 +770,7 @@ function love.gamepadpressed(joystick, button)
   end
   if Importer then return Importer:gamepadpressed(joystick, button) end
   if not Game then return end
+  if RetroOverlay.pad(Game,button) then return end
   Game:gamepadpressed(joystick, button)
 end
 
@@ -774,6 +782,7 @@ function love.gamepadreleased(joystick, button)
   end
   if Importer then return Importer:gamepadreleased(joystick, button) end
   if not Game then return end
+  if RetroOverlay.game then return end
   Game:gamepadreleased(joystick, button)
 end
 
@@ -785,6 +794,7 @@ function love.gamepadaxis(joystick, axis, value)
   end
   if Importer then return Importer:gamepadaxis(joystick, axis, value) end
   if not Game then return end
+  if RetroOverlay.game then return end
   Game:gamepadaxis(joystick, axis, value)
 end
 
@@ -799,6 +809,7 @@ function love.joystickpressed(joystick, button)
   end
   if Importer then return Importer:joystickpressed(joystick, button) end
   if not Game then return end
+  if RetroOverlay.game then return end
   Game:joystickpressed(joystick, button)
 end
 
@@ -806,6 +817,7 @@ function love.joystickreleased(joystick, button)
   if editorMode or TouchEditor then return end
   if Importer then return Importer:joystickreleased(joystick, button) end
   if not Game then return end
+  if RetroOverlay.game then return end
   Game:joystickreleased(joystick, button)
 end
 
@@ -819,6 +831,7 @@ function love.joystickaxis(joystick, axis, value)
   end
   if Importer then return Importer:joystickaxis(joystick, axis, value) end
   if not Game then return end
+  if RetroOverlay.game then return end
   Game:joystickaxis(joystick, axis, value)
 end
 
@@ -832,6 +845,7 @@ function love.joystickhat(joystick, hat, direction)
   end
   if Importer then return Importer:joystickhat(joystick, hat, direction) end
   if not Game then return end
+  if RetroOverlay.game then return end
   Game:joystickhat(joystick, hat, direction)
 end
 
@@ -884,6 +898,7 @@ function love.touchpressed(id, x, y, dx, dy, pressure)
   end
   if Importer then return Importer:touchpressed(id,x,y,dx,dy,pressure) end
   if not Game then return end
+  if RetroOverlay.press(Game,x,y) then return end
   Game:touchpressed(id, x, y, dx, dy, pressure)
 end
 
@@ -898,6 +913,7 @@ function love.touchmoved(id, x, y, dx, dy, pressure)
   end
   if Importer then return Importer:touchmoved(id,x,y,dx,dy,pressure) end
   if not Game then return end
+  if RetroOverlay.game then return end
   Game:touchmoved(id, x, y, dx, dy, pressure)
 end
 
@@ -912,6 +928,7 @@ function love.touchreleased(id, x, y, dx, dy, pressure)
   end
   if Importer then return Importer:touchreleased(id,x,y,dx,dy,pressure) end
   if not Game then return end
+  if RetroOverlay.game then return end
   Game:touchreleased(id, x, y, dx, dy, pressure)
 end
 
@@ -923,6 +940,7 @@ function love.wheelmoved(x, y)
   if TouchEditor then return end
   if Importer then return end
   if not Game then return end
+  if RetroOverlay.game then return end
   Game:wheelmoved(x, y)
 end
 
@@ -945,6 +963,8 @@ function love.mousepressed(x, y, button, istouch)
     if istouch and love.system.getOS() == "Android" then return end
     return EditorApp.mousepressed(x, y, button)
   end
+  if Game and button==1 and not istouch and RetroOverlay.press(Game,x,y) then return end
+  if RetroOverlay.game then return end
   if Game and (mouseTouch or Game:hasPointerScreen()) and button == 1 and not istouch then
     Game:touchpressed("mouse", x, y)
   end
@@ -955,10 +975,14 @@ function love.mousereleased(x, y, button, istouch)
     if love.system.getOS() == "Android" then return end
     return TouchEditor.mousereleased(x, y, button)
   end
-  if Importer then return end
+  if Importer then
+    if Importer.mousereleased then return Importer:mousereleased(x,y,button,istouch) end
+    return
+  end
   if editorMode and EditorApp.mousereleased then
     return EditorApp.mousereleased(x, y, button)
   end
+  if RetroOverlay.game then return end
   if mouseTouch then
     if Game and button == 1 then pcall(function() Game:touchreleased("mouse", x, y) end) end
     return
@@ -978,6 +1002,7 @@ function love.mousereleased(x, y, button, istouch)
 end
 
 function love.mousemoved(x, y, dx, dy, istouch)
+  if RetroOverlay.game then return end
   -- FREE-CAMERA LOOK FIRST, and only when one is up: `Game:cameraLook`
   -- answers false on every other map and camera, so the touch path below
   -- keeps every case it had. Warp back to centre after a real look so the
@@ -1009,6 +1034,7 @@ function love.mousemoved(x, y, dx, dy, istouch)
 end
 
 function love.textinput(text)
+  if RetroOverlay.game then return end
   if TouchEditor then return end
   if Importer then return Importer:textinput(text) end
   if editorMode and EditorApp.textinput then
@@ -1095,7 +1121,7 @@ local function minimalErrorScreen(text)
 end
 
 function love.errorhandler(msg)
-  local trace = "gen2recomp error\n\n" .. tostring(msg)
+  local trace = "RetroRecomped error\n\n" .. tostring(msg)
   pcall(function()
     local parts = {
       "---- " .. tostring(os.date and os.date("%Y-%m-%d %H:%M:%S") or "?") .. " ----",
