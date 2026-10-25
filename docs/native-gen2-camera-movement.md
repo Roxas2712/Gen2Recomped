@@ -52,3 +52,24 @@ outside the body phase are not a complete game loop. This is **CPU integration
 acceptance**, not full-package, GPU, all-story or Windows hardware acceptance.
 No supplied mod code/assets or cartridge data are distributed. See the
 [source-bound receipt](qa/native-foundation/johto-native-camera-state.json).
+
+## Full-package GPU movement smoke
+
+At source `62ca106fadebfcca1b262cde05a60a081c10d765`, fresh actual Crystal imports
+with all 27,329 supplied Ver.1.8 files unchanged pass the scoped movement smoke
+on macOS OpenGL/VSync 0 and Metal/VSync 1. Each backend executes 12 actual free
+body ticks in First and Third Person, crosses a logical cell, retains a false
+native grid-moving flag and accepts the real V key callback to change mode.
+Each backend passes 19 driver assertions and two fresh OS-window proofs.
+The images were inspected: they show visible, upright scenery.
+
+The introduction is skipped and a native New Bark Town position is selected
+for this controlled walk. This does not verify normal doors, map boundaries,
+forced terrain with GPU, all story/encounters or Windows. A test-only assumption
+about `npcAt` stopped the first run; the revised test uses native occupancy.
+
+The generated model renderer still reports the separate 60-upvalue compile
+failure. The fallback scene is visible; avatar/occlusion and complete First/
+Third Person visual equivalence are **not accepted** by these proofs. The PR
+remains a development checkpoint pending broader movement/transition tests.
+The existing public release assets are unchanged by this follow-up.
