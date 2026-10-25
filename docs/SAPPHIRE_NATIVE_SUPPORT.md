@@ -237,3 +237,32 @@ independent flag metadata reproduction passes; a new full matching-ELF rebuild
 is not claimed for this metadata-only addition. Existing RS ball/field/item
 metadata and cache revision remain intact; #246 composes its source-metadata
 marker suffix with the cartridge revision.
+
+
+### Two-lap RS stat flourish (v6)
+
+HARDEN and IRON_DEFENSE previously omitted their native stat layer: the shared
+reader required the later games' three laps, whereas the verified RS task
+uses two laps / 64 frames. The reader now chooses the lap signature from the
+actual cartridge header (AXVE/AXPE), retaining all existing task, tile, palette,
+alpha, literal-pool and drift/wrap checks. The compiled wrap immediate is
+ADD124 (the compiler combines -4 and +128); the native sampler is unchanged.
+Only the RS cache marker advances to `rs-stat-flourish-v6:`; the v5 ball and
+earlier field/item corrections remain. A fresh RS import is required.
+
+`tools/rs-stat-flourish-check/check.py --rom <owned-ROM> --elf <matching-ELF>`
+independently compares both full task/step functions with the retail cartridge
+and checks the two-lap C model. `tests/rs_stat_flourish_runtime.lua` checks
+frames 0–63, owner identity, terminal frame 64, the existing 96-frame sampler
+and unchanged non-RS markers. Initial development expected an unfused ADD128;
+the independent retail comparison rejected that assumption before acceptance.
+
+A fresh no-mod native import on macOS LÖVE 12/Metal passes four controlled
+fixtures: both moves on both sides, visible layer-only negatives, exact
+same-frame restores, native draw RNG/save/frame preservation and stop at
+64 frames. The numeric/hash receipt is [`sapphire-stat-flourish-native-v6.json`](sapphire-stat-flourish-native-v6.json). No ROM, ELF, extracted artwork, cache or save
+is committed. This is an animation/import contract check, not a full battle,
+story, all-move or physical-iOS certification. The first Ruby GUI fixture
+passed, but its smoke wrapper failed because the driver used a different
+report filename; the final committed driver and fresh runs use the runner's
+`edition-result.json` contract. Earlier failure records are not reclassified.
