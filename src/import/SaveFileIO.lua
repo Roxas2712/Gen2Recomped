@@ -166,7 +166,7 @@ function SaveFileIO.exportActiveSlot(version)
   local bytes, exportErr = SaveConvert.exportSav(save, version)
   if not bytes then return false, exportErr end
   local slotId = SaveData.activeSlot(version) or "save"
-  local fs = love and love.filesystem
+  local fs = SaveData.persistenceFs()
   if not (fs and fs.write) then return false, "no filesystem available to export to" end
   if fs.createDirectory then fs.createDirectory("exports") end
   local rel = ("exports/gen1recomp-%s-%s.sav"):format(version, slotId)
@@ -178,6 +178,7 @@ function SaveFileIO.exportActiveSlot(version)
     fs.write(rel:gsub("%.sav$", ".dsv"), require("src.save_convert.NdsSave").wrapDesmume(bytes))
   end
   local base = fs.getSaveDirectory and fs.getSaveDirectory() or ""
+  if fs.mapPath then rel=fs.mapPath(rel) end
   if base ~= "" then return true, base .. "/" .. rel end
   return true, rel
 end

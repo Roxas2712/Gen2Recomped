@@ -27,13 +27,13 @@ function M.client()
 end
 
 local function load()
-  if love.filesystem.getInfo(M.FILE) then
-    local ok, t = pcall(require("src.core.SaveSerializer").decode, love.filesystem.read(M.FILE) or "")
+  if require("src.core.SaveData").persistenceFs().getInfo(M.FILE) then
+    local ok, t = pcall(require("src.core.SaveSerializer").decode, require("src.core.SaveData").persistenceFs().read(M.FILE) or "")
     if ok and type(t) == "table" then return t end
   end
   return nil
 end
-local function store(t) love.filesystem.write(M.FILE, require("src.core.SaveSerializer").encode(t)) end
+local function store(t) require("src.core.SaveData").persistenceFs().write(M.FILE, require("src.core.SaveSerializer").encode(t)) end
 
 function M.signedIn() local t = load(); return t ~= nil and t.refresh ~= nil end
 function M.account() local t = load(); return t and t.email or nil end
@@ -62,7 +62,7 @@ function M.accessToken()
                                         refresh_token = t.refresh, scope = M.SCOPE })
   if status == 200 and doc and doc.access_token then return took(t, doc).access end
   if doc and doc.error == "invalid_grant" then
-    love.filesystem.remove(M.FILE)
+    require("src.core.SaveData").persistenceFs().remove(M.FILE)
     return nil, "OneDrive sign-in expired -- sign in again"
   end
   return nil, ("could not refresh the OneDrive sign-in (%s)"):format(tostring(doc and doc.error or status))
@@ -70,7 +70,7 @@ end
 
 -- Microsoft keeps no revocation endpoint for this flow: signing out forgets
 -- the tokens here (and the player can remove the app from their account)
-function M.signOut() love.filesystem.remove(M.FILE) end
+function M.signOut() require("src.core.SaveData").persistenceFs().remove(M.FILE) end
 
 function M.fetchAccount()
   local token = M.accessToken()

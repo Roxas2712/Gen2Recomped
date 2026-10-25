@@ -42,4 +42,9 @@ response.incoming_digest=string.rep('0',64)
 check(not T.receive(exchange) and #B.list()==1,'a fingerprint mismatch never alters the existing Bank')
 local before=#http;files[T.JOURNAL]='broken journal'
 check(not T.submit(entry,'wonder') and #http==before and files[T.JOURNAL]=='broken journal','an unreadable request journal is preserved instead of silently generating a duplicate offer')
+local Policy=require('src.storage.AccountStorage');local oldCheck=Policy.check
+Policy.check=function() return nil,'The active account changed.' end
+before=#http
+check(not T.profile() and #http==before,'account-bound jobs refuse networking before reading a new account token')
+Policy.check=oldCheck
 print('Bank exchange: '..n..' checks passed')

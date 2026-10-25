@@ -40,14 +40,14 @@ check(not B.convert(entry,'gold',bad),'unknown target moves are refused rather t
 local held=S.decode(S.encode(entry));held.mon.heldItem='BERRY';held.canonical.item='BERRY'
 local parked=assert(B.convert(held,'red',data))
 check(not parked.heldItem and parked.retroBankHeld.item=='BERRY','unsupported held items are staged for custody while Gen1 receives a compatible Pokémon')
-check(B.convert(held,'gold',data).heldItem=='BERRY','supported held item survives')
+check(B.convert(held,'gold',data).item=='BERRY','legacy held-item input converts to the native item field')
 local Items=require('src.storage.BankItems')
 local fail=Items.transaction({version='red',party={parked}},function() return nil,'injected save failure' end)
 check(not fail and #Items.list()==0,'a failed save rolls item custody back without consuming the original')
 check(Items.transaction({version='red',party={parked}},function() return 'new-copy' end) and #Items.list()==1,'committing a Gen1 copy keeps its held item in the Item Bank')
 local returnEntry=B.makeEntry(parked,'red','slot2','Party 1',data)
 local returning=assert(B.convert(returnEntry,'gold',data))
-check(returning.heldItem=='BERRY' and returning.retroBankItem,'the associated item is restored when the Pokémon returns to a supported game')
+check(returning.item=='BERRY' and not returning.heldItem and returning.retroBankItem,'the associated item is restored in the native field when the Pokémon returns to a supported game')
 check(Items.transaction({version='gold',party={returning}},function() return 'returned-copy' end),'restoring an item commits its custody assignment with the destination save')
 check(Items.list()[1].state=='assigned','a restored held item cannot also be assigned from available storage')
 assert(Items.transaction({version='red',party={parked}},function() return 'parked-again' end))
@@ -56,7 +56,7 @@ local oldData=B.data;B.data=function() return data end
 local equipped=assert(Items.equip(Items.list()[1].id,otherEntry));B.data=oldData
 check(equipped and Items.list()[1].assignedTo==otherEntry.origin.recordId,'a stored item can be attached to a different Bank Pokémon')
 local withoutItem=assert(B.convert(returnEntry,'gold',data))
-check(not withoutItem.heldItem and not withoutItem.retroBankHeld,'the original Pokémon can return without stealing an item assigned to another monster')
+check(not withoutItem.item and not withoutItem.heldItem and not withoutItem.retroBankHeld,'the original Pokémon can return without stealing an item assigned to another monster')
 local beforeItems=files[Items.FILE]
 local fake={read=function() return 'not a valid item bank' end,write=function() error('invalid remote data must not be overwritten') end}
 check(not Items.sync(fake) and files[Items.FILE]==beforeItems,'invalid remote item records never replace either side')
@@ -96,4 +96,22 @@ check(bankCount==2 and B.sync(store)==bankCount and remote[path]==files[path],'s
 files={};check(B.sync(store)==bankCount and #B.list()==bankCount,'another device can import every full Bank entry')
 local prior=files[path];remote[path]='return {schema=1}'
 check(not B.sync(store) and files[path]==prior,'an invalid cloud copy cannot overwrite a local entry')
+local native=S.decode(S.encode(mon))
+native.item='BERRY';native.ot='Original';native.otId=2712
+native.kasc={moveMemory={'TACKLE'},legacy={edition='gold',serial=7}}
+local nativeEntry=B.makeEntry(native,'gold','native-slot','Party 1',data)
+check(nativeEntry.source.trainerId==2712 and nativeEntry.canonical.item=='BERRY','native OT IDs and held-item identities are collected without treating OT names as tables')
+local gen1=assert(B.convert(nativeEntry,'red',data))
+check(not gen1.item and not gen1.heldItem and gen1.retroBankHeld.item=='BERRY','a native carried item is parked before entering Gen1')
+check(Items.transaction({version='red',party={gen1}},function() return 'native-copy' end),'native-item custody commits with its save copy')
+local roundtrip=assert(B.convert(B.makeEntry(gen1,'red','native-copy','Party 1',data),'gold',data))
+check(roundtrip.item=='BERRY' and not roundtrip.heldItem and roundtrip.otId==2712,'returning native Pokémon regain their associated item and trainer identity')
+check(S.encode(roundtrip.kasc)==S.encode(native.kasc) and native.item=='BERRY','unrecognized mod Lua fields survive both conversions without changing the source')
+local conflict=S.decode(S.encode(nativeEntry));conflict.mon.heldItem='OTHER'
+check(not B.convert(conflict,'gold',data),'conflicting item aliases require explicit resolution')
+for _,none in ipairs({0,false,'','NO_ITEM'}) do
+  local empty=S.decode(S.encode(nativeEntry));empty.mon.item=none
+  local clean=assert(B.convert(empty,'red',data))
+  check(not clean.item and not clean.heldItem and not clean.retroBankHeld,'empty-item sentinels do not create phantom custody records')
+end
 print('Pokémon Bank: '..checks..' checks passed')

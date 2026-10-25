@@ -38,7 +38,7 @@ end
 function A.install(api, loader, readContext, overviewContext, engineRequire, engineCall)
   local storage = require("src.mods.PlaythroughStorage").new(api.id, loader.fs)
   api.storage = {}
-  for _, method in ipairs({ "context", "selected", "read", "write", "readBytes", "writeBytes", "list", "delete" }) do
+  for _, method in ipairs({ "context", "selected", "read", "write", "readBytes", "writeBytes", "list", "delete", "shared" }) do
     local name = method
     api.storage[name] = function(_, ...) return storage[name](storage, ...) end
   end
@@ -209,6 +209,7 @@ function A.install(api, loader, readContext, overviewContext, engineRequire, eng
   }
   local supports = api.supports
   function api:supports(surface, name)
+    if surface=='storage' and name=='shared' then return true end
     if surface == "world" then
       if name == "liveMaps" and gen >= 1 and gen <= 5 then return true end
       if supportedGeneration and SUPPORTED[name] then

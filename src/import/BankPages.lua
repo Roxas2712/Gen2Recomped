@@ -7,7 +7,30 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
   local g=love.graphics;local font=self.hintFont
   local bottom=y+h
   local function line(label,by,big) text(label,x,by,w,big) end
-  if f.mode=='items' then
+  if f.mode=='details' then
+    line('POKÉMON · ORIGIN AND LUA DATA',y,true)
+    local entry=f.inspected and f.inspected.entry
+    if not entry then line('Select a Pokémon in Bank boxes first.',y+42*s)
+    else
+      local origin=entry.origin or entry.mon.retroBankOrigin or entry.source
+      local rows={entry.mon.nickname or tostring(entry.mon.species),'LEVEL · '..tostring(entry.mon.level),
+        'GAME · '..Versions.info(origin.version or entry.source.version).label,
+        'SAVE · '..tostring(origin.slot or entry.source.slot)..' / '..tostring(origin.saveId or entry.source.saveId or 'Legacy save'),
+        'TRAINER ID · '..tostring(origin.trainerId or entry.mon.otId or 'Unknown'),
+        'POKÉMON ID · '..tostring(origin.recordId or entry.id or 'Deposit to allocate'),
+        'ITEM · '..tostring(entry.mon.item or entry.mon.heldItem or entry.mon.retroBankHeld and ('In Item Bank: '..entry.mon.retroBankHeld.canonical) or 'None')}
+      local report=require('src.storage.LuaData').inspect(entry.mon)
+      local fields={};for _,field in ipairs(report.fields) do fields[#fields+1]=field.name..' ('..field.kind..')' end
+      rows[#rows+1]='LUA · '..report.nodes..' data nodes · '..table.concat(fields,', ')
+      local top=y+42*s
+      for _,row in ipairs(rows) do
+        local _,lines=font:getWrap(row,w);g.setFont(font);col(37,68,79);g.printf(row,x,top,w,'left');top=top+#lines*font:getHeight()+12*s
+      end
+      button('COPY POKÉMON ID',x,top,w,'copyPokemonId')
+    end
+  elseif f.mode=='interop' then
+    require('src.import.BankInterchangeWorkspace').draw(self,f,x,y,w,h,s,button,text,col)
+  elseif f.mode=='items' then
     line('ITEM BANK · HELD ITEMS IN SAFEKEEPING',y,true)
     line('Choose an available item, then attach it to a selected Bank Pokémon.',y+32*s)
     local pageSize=math.max(1,math.floor((h-140*s)/(54*s)));local from=(f.modePage or 0)*pageSize+1
@@ -99,6 +122,7 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
 end
 function P.press(self,W,r)
   local f=self._bankOverlay
+  if require('src.import.BankInterchangeWorkspace').press(self,r) then return true end
   if r.action=='mode' then W.mode(self,r.mode)
   elseif r.action=='modePage' or r.action=='tradePage' or r.action=='tradePickPage' then
     local key=r.action=='modePage' and 'modePage' or r.action=='tradePage' and 'tradePage' or 'tradeChoosePage'

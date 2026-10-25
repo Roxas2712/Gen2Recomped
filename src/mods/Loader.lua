@@ -1301,6 +1301,26 @@ function Loader:_api(mod)
   if (mod.manifest.api or 1) >= 3 then
     engineRequire("src.mods.Api3").install(api, loader, readContext, overviewContext, engineRequire, engineCall)
   end
+  -- Data interchange is additive for API 2: KASC and other native mods can
+  -- use the Bank without changing their callback/content formats or storage.
+  if (mod.manifest.api or 1) >= 2 then
+    local bank=engineRequire('src.storage.BankInterop')
+    local handle=engineCall(bank.facade,modId,api.version)
+    api.bank={version=handle.version}
+    for name,method in pairs(handle) do
+      if type(method)=='function' then
+        local call=method
+        api.bank[name]=function(...) return engineCall(call,...) end
+      end
+    end
+    local supports=api.supports
+    if supports then
+      function api:supports(surface,name)
+        if surface=='bank' then return bank.supports(name) end
+        return supports(self,surface,name)
+      end
+    end
+  end
   -- A separately versioned observational handle also survives the API-3
   -- world facade. Never bootstrap Game while a title/headless mod reads it.
   api.renderData = RenderData.new(function()

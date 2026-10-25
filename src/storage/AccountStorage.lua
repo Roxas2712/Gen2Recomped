@@ -2,10 +2,20 @@
 -- remains usable by headless tools without network or account dependencies.
 local P={FILE='storage_account.lua',enabled=false}
 local S=require('src.core.SaveSerializer')
+local tasks=setmetatable({},{__mode='k'})
 local function auth() return require('src.cloud.RetroCloud') end
 local function disk() return require('src.core.SaveData').persistenceFs() end
 local function valid(id) return type(id)=='string' and #id<=20 and id:match('^[1-9][0-9]*$') end
 function P.enable() P.enabled=true end
+function P.scope()
+  -- Pure/headless SDK consumers do not enable RetroRecomped's account policy.
+  -- Constructing a public API must not read cloud credentials or require LOVE.
+  if not P.enabled then return nil end
+  local co=coroutine.running()
+  if co and tasks[co] then return tasks[co] end
+  local a=auth();return a.accountId and a.accountId()
+end
+function P.attachTask(co) tasks[co]=P.scope() or 'guest' end
 function P.owner()
   local bytes=disk().read(P.FILE)
   if not bytes then return nil end
@@ -16,12 +26,25 @@ end
 function P.check()
   if not P.enabled then return true end
   local a=auth();local id=a.accountId and a.accountId()
+  local scope=P.scope()
+  if scope and scope~=id then return nil,'The account changed during this operation. Existing records were preserved.' end
   if not valid(id) then return nil,'Register or sign in and confirm your email before using saves or the Bank.' end
   local owner,why=P.owner()
   if why then return nil,why end
   if not owner then return nil,'Link the local saves and Bank to your confirmed account first.' end
   if owner~=id then return nil,'These local saves and Bank belong to another account. Sign in with that account; no files were reassigned.' end
   return true
+end
+function P.profileChanged(self)
+  self._settingsCache=nil;self._settingsRowCache=nil;self._gameSlotRows=nil
+  local id=P.scope();local bank=self._bankOverlay
+  if bank and bank.accountId~=id then
+    if bank.tradeJob then bank.tradeJob:cancel();bank.tradeJob=nil end
+    if bank.accountId then self._profileBankDrafts=self._profileBankDrafts or {};self._profileBankDrafts[bank.accountId]=bank end
+    self._bankOverlay=nil
+  end
+  if self._saveHistoryOverlay then require('src.import.SaveHistoryWorkspace').close(self) end
+  if self._refreshSlots then for _,v in ipairs(require('src.core.GameVersion').ORDER) do if self.ready and self.ready[v] then self:_refreshSlots(v) end end end
 end
 function P.bind()
   local a=auth();local id=a.accountId and a.accountId()

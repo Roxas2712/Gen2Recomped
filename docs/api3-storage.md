@@ -3,9 +3,13 @@
 API 3 uses the Gen1Recomp public `mod.storage` contract: data-only records and
 opaque bytes belong to a mod, a game version and an opaque playthrough identity.
 The handle contains only `context`, `selected`, `read`, `write`, `readBytes`,
-`writeBytes`, `list` and `delete`; private paths and mutable engine objects are
+`writeBytes`, `list`, `delete` and the RetroRecomped `shared` extension; private paths and mutable engine objects are
 not exposed. The transactional implementation follows the pinned Gen1Recomp
 `Storage.lua` at `79ea62f45fb2ea8f65d081a109431e4eb1bbdb36`.
+
+For account-shared Vaults, Lua-field inventory and Bank-copy exchange, see
+[Bank interchange](api3-bank-interchange.md). The shared extension has its own
+version, limits and recovery rules and does not change playthrough storage.
 
 ```lua
 local mod = ...

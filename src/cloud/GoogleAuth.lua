@@ -51,15 +51,15 @@ end
 -- ------------------------------------------------------------- tokens
 
 local function load()
-  if love.filesystem.getInfo(G.FILE) then
-    local ok, t = pcall(require("src.core.SaveSerializer").decode, love.filesystem.read(G.FILE) or "")
+  if require("src.core.SaveData").persistenceFs().getInfo(G.FILE) then
+    local ok, t = pcall(require("src.core.SaveSerializer").decode, require("src.core.SaveData").persistenceFs().read(G.FILE) or "")
     if ok and type(t) == "table" then return t end
   end
   return nil
 end
 
 local function store(t)
-  love.filesystem.write(G.FILE, require("src.core.SaveSerializer").encode(t))
+  require("src.core.SaveData").persistenceFs().write(G.FILE, require("src.core.SaveSerializer").encode(t))
 end
 
 function G.signedIn() local t = load(); return t ~= nil and t.refresh ~= nil end
@@ -89,7 +89,7 @@ function G.accessToken()
   }))
   if status == 200 and doc and doc.access_token then return took(t, doc, client).access end
   if doc and doc.error == "invalid_grant" then
-    love.filesystem.remove(G.FILE)
+    require("src.core.SaveData").persistenceFs().remove(G.FILE)
     return nil, "Google sign-in expired -- sign in again"
   end
   return nil, ("could not refresh the Google sign-in (%s)"):format(tostring(doc and doc.error or status))
@@ -103,7 +103,7 @@ function G.signOut()
       body = Http.form({ token = t.refresh }),
     })
   end
-  love.filesystem.remove(G.FILE)
+  require("src.core.SaveData").persistenceFs().remove(G.FILE)
 end
 
 -- the signed-in account's address (Drive's about.get), remembered for display

@@ -24,6 +24,7 @@ function T.device()
   local ok,why=write(T.DEVICE,{schema=1,id=id});return ok and id or nil,why
 end
 function T.request(method,path,body)
+  local permitted,problem=require('src.storage.AccountStorage').check();if not permitted then return nil,problem end
   local token,why=Auth.accessToken();if not token then return nil,why end
   if type(path)~='string' or not path:match('^/bank/[%w/%-]+$') then return nil,'Invalid Bank endpoint.' end
   local device,err=T.device();if not device then return nil,err end

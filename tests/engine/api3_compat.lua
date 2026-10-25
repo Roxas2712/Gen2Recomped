@@ -95,6 +95,13 @@ for _, api in ipairs({ 1, 2 }) do
   T.eq(m.contentFormat, "native", "legacy content native")
   T.eq(m.callbackFormat, "native", "legacy callbacks native")
   T.eq(m.scriptFormat, "native", "legacy scripts native")
+  if api==1 then T.eq(m.bank,nil,'API 1 retains its original surface')
+  else
+    T.eq(m.bank.version,1,'API 2 gets the separately versioned Bank facade')
+    T.check(m:supports('bank','previewLegacy') and not m:supports('bank','execute'),'API 2 reports only supported Bank data methods')
+    T.check(m.bank:inspect({kasc={memory={'TACKLE'}}}).serializable,'API 2 can inventory Lua records without LOVE or Game')
+    T.eq(m.contentFormat,'native','using Bank data does not switch API 2 content formats')
+  end
 end
 do
   local m, loader, attach =
@@ -129,6 +136,9 @@ end
 do
   local m, loader, attach, probes = boot(3, nil, true)
   T.eq(probes(), 0, "entry does not resolve Game")
+  T.eq(m.bank.version,1,'API 3 exposes the same Bank interchange version')
+  T.check(m:supports('storage','shared') and m:supports('bank','inspect'),'API 3 reports shared storage and Bank capabilities')
+  T.check(m.bank:inspect({kasc={lineage=7}}).serializable and probes()==0,'Bank inspection never constructs a game or asks for cloud credentials')
   local world, battle = m.world, m.battle
   T.eq(type(world), "table", "world facade exists before Game")
   T.eq(type(world.party), "function", "early world method callable")

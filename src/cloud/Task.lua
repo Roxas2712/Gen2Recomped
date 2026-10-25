@@ -16,6 +16,8 @@ function T.new(fn)
  end
  T.reap()
  local self=setmetatable({co=coroutine.create(fn)},T)
+ local policy=package.loaded['src.storage.AccountStorage']
+ if policy and policy.enabled then policy.attachTask(self.co) end
  Http.async[self.co]=true
  return self
 end

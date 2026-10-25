@@ -1,12 +1,20 @@
 """Run the ROM-free launcher contract without starting LOVE or importing games."""
 from pathlib import Path
+import argparse
 import json
 import shutil
 import sys
 from qa_storage import qa_source, qa_run
 
 root = Path(__file__).resolve().parents[1]
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--legacy-bank-source', type=Path,
+                    help='Optional trusted KASC source directory; pure model/store only, no game or user saves.')
+args = parser.parse_args()
 qa_source(root)
+if args.legacy_bank_source:
+    args.legacy_bank_source = args.legacy_bank_source.resolve()
+    qa_source(args.legacy_bank_source)
 runtime = shutil.which('luajit')
 if not runtime:
     raise SystemExit('LuaJIT is required for the headless launcher contract.')
@@ -21,7 +29,9 @@ syntax = ['main.lua', 'conf.lua', 'src/cloud/Http.lua', 'src/cloud/RetroCloud.lu
           'src/import/ResumeWorkspace.lua', 'src/import/SaveHistoryWorkspace.lua', 'src/mods/ModProfiles.lua',
           'src/import/LauncherModProfiles.lua', 'src/mods/LauncherMods.lua', 'src/storage/BankItems.lua',
           'src/storage/GlobalPokedex.lua', 'src/cloud/BankExchange.lua', 'src/import/BankPages.lua', 'src/import/BankWorkspace.lua',
-          'src/import/ImageBounds.lua', 'src/storage/AccountStorage.lua']
+          'src/import/ImageBounds.lua', 'src/storage/AccountStorage.lua', 'src/storage/ProfileFs.lua',
+          'src/storage/LuaData.lua', 'src/storage/BankInterop.lua', 'src/mods/SharedStorage.lua',
+          'src/mods/Api3.lua', 'src/mods/PlaythroughStorage.lua', 'src/import/BankInterchangeWorkspace.lua']
 source = '\n'.join('assert(loadfile(' + json.dumps(path) + '))' for path in syntax)
 qa_run([runtime, '-e', source], cwd=root, check=True)
 suites = '''launcher_sequence cart_designer launcher_seasons launcher_community
@@ -30,6 +40,10 @@ retro_overlay cloud_running_slot developer_account developer_workspace native_ac
 account_workspace private_http developer_projects mod_profile_recovery retro_overlay_main
 window_frame window_frame_async portable_input_hooks touch_orientation_bug633
 save_resume resume_workspace save_resume_capture save_resume_slot save_history_workspace launcher_audio_handoff bank_exchange'''.split()
-suites.extend(['native_preview','account_storage'])
+suites.extend(['native_preview','account_storage','account_profiles','bank_interop',
+               'api3_storage_transactions','api3_playthrough_storage','bank_portrait','api3_compat'])
 for suite in suites:
-    qa_run([runtime, str(root / 'tests/engine' / (suite + '.lua'))], cwd=root, check=True)
+    command = [runtime, str(root / 'tests/engine' / (suite + '.lua'))]
+    if suite == 'bank_interop' and args.legacy_bank_source:
+        command.append(str(args.legacy_bank_source))
+    qa_run(command, cwd=root, check=True)

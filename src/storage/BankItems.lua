@@ -45,9 +45,10 @@ function M.list()
   table.sort(out,function(a,b) return a.id<b.id end);return out
 end
 local function update(inventory,mon)
+  local carried,problem=require('src.storage.PokemonBank').held(mon);if problem then return nil,problem end
   local held=mon.retroBankHeld
   local owner=mon.retroBankOrigin and mon.retroBankOrigin.recordId
-  if held and not mon.heldItem then
+  if held and not carried then
     if not id(held.id) or not id(held.owner) then return nil,'Invalid held-item custody record.' end
     local old=inventory.items[held.id]
     if old and old.state=='assigned' and old.assignedTo~=owner then return nil,'This item is assigned to another Pokémon.' end
@@ -57,7 +58,7 @@ local function update(inventory,mon)
     inventory.items[held.id]=row
   end
   local attached=mon.retroBankItem
-  if attached and mon.heldItem then
+  if attached and carried then
     local old=inventory.items[attached]
     if not old and mon.retroBankItemRecord and mon.retroBankItemRecord.id==attached then
       old=clone(mon.retroBankItemRecord);old.id=nil;old.state='available';old.revision=1
@@ -96,7 +97,9 @@ function M.equip(itemId,entry)
   local inventory,why=M.load();if not inventory then return nil,why end
   local item=inventory.items[itemId]
   if not item or item.state~='available' then return nil,'Choose an available item.' end
-  if entry.mon.heldItem then return nil,'This Pokémon already holds an item.' end
+  local carried,problem=require('src.storage.PokemonBank').held(entry.mon)
+  if problem then return nil,problem end
+  if carried then return nil,'This Pokémon already holds an item.' end
   local B=require('src.storage.PokemonBank');local data,err=B.data(entry.source.version)
   if not data then return nil,err end
   if require('src.core.GameVersion').generation(entry.source.version)==1 then return nil,'Move this Pokémon to a game with held items before equipping it.' end
@@ -107,7 +110,8 @@ function M.equip(itemId,entry)
   end
   if not found then return nil,'This item is unavailable in the Pokémon’s source game.' end
   local copy=clone(entry);copy.id=nil
-  copy.mon.heldItem=found;copy.mon.retroBankItem=itemId;copy.mon.retroBankHeld=nil
+  copy.mon.item=found;copy.mon.heldItem=nil
+  copy.mon.retroBankItem=itemId;copy.mon.retroBankHeld=nil
   copy.mon.retroBankOrigin=clone(copy.origin or copy.mon.retroBankOrigin)
   copy.canonical.item=item.canonical
   return M.transaction({version=entry.source.version,party={copy.mon}},function() return B.keep(copy) end)

@@ -15,7 +15,7 @@ local function job(self,purpose,fn)
 end
 function W.open(self,after)
   if self._developerOverlay then require('src.import.DeveloperWorkspace').close(self) end
-  self._accountOverlay={mode=Auth.signedIn() and 'account' or 'login',after=after,email='',name='',password='',confirmation='',code='',repositories={''},rects={},scroll=0}
+  self._accountOverlay={mode=Auth.signedIn() and 'account' or 'login',after=after,email='',name='',password='',confirmation='',code='',repositories={''},rects={},scroll=0,accountAtOpen=Auth.accountId and Auth.accountId()}
   job(self,Auth.signedIn() and 'devices' or 'policy',Auth.signedIn() and A.devices or A.policy)
 end
 function W.close(self)
@@ -23,6 +23,7 @@ function W.close(self)
   self._accountOverlay=nil
 end
 local function connected(self,f)
+  if Auth.accountId and Auth.accountId()~=f.accountAtOpen then require('src.storage.AccountStorage').profileChanged(self) end
   -- Connecting an account never silently enables uploads or downloads.
   local settings=self:_settings();settings.cloudAutoSync=f.cloudSync==true
   if self._saveSettings then self:_saveSettings() end
@@ -74,7 +75,7 @@ function W.action(self,id)
   elseif id:match('^revoke:') then
     local device=f.devices and f.devices[tonumber(id:sub(8))]
     if device then job(self,'revoke',function() local doc,why=A.revoke(device.id);if doc and device.current then Auth.expire() end;return doc,why end) end
-  elseif id=='signout' then job(self,'signout',function() Auth.signOut();return {ok=true} end)
+  elseif id=='signout' or id=='switchAccount' then job(self,'signout',function() Auth.signOut();return {ok=true} end)
   elseif id=='developer' then W.close(self);self:_openDeveloper()
   elseif id=='browse' then W.close(self);self.findLoaded=false;self:_refreshFind(true)
   end
@@ -89,10 +90,11 @@ function W.tick(self)
   elseif purpose=='devices' then
     f.devices=doc.devices;f.notice=nil
     local storage=require('src.storage.AccountStorage')
+    if Auth.accountId and Auth.accountId()~=f.accountAtOpen then storage.profileChanged(self);f.accountAtOpen=Auth.accountId() end
     if storage.enabled and (f.after=='bank' or f.after=='bankDex' or f.after=='history' or f.after=='storage' or type(f.after)=='table' and f.after.kind=='play') and storage.check() then local after=f.after;W.close(self);storage.resume(self,after) end
   elseif purpose=='resend' then f.notice=doc.message or 'A fresh code was requested. Check your email.'
   elseif purpose=='signout' or purpose=='revoke' then
-    if not Auth.signedIn() then f.mode='login';f.devices=nil;f.notice='This device is disconnected.'
+    if not Auth.signedIn() then require('src.storage.AccountStorage').profileChanged(self);f.mode='login';f.devices=nil;f.notice='This device is disconnected. Sign in with another account to use its separate local profile.'
     else job(self,'devices',A.devices) end
   elseif doc.state=='connected' then connected(self,f)
   elseif doc.state=='password_reset' then f.mode='login';f.challenge=nil;f.notice='Password updated. Sign in with your new password.';f.scroll=0
@@ -154,19 +156,21 @@ function W.draw(self)
     row('BACK','back')
   elseif f.mode=='account' then
     paragraph('Connected as '..tostring(Auth.account()),true)
+    paragraph('ACCOUNT PROFILE · '..tostring(Auth.accountId and Auth.accountId() or 'Updating identity')..' · Saves, Bank and mod choices are kept separately for each account.')
     paragraph('The same account connects your mods, developer projects and optional cloud storage.')
     local storage=require('src.storage.AccountStorage');local permitted,why=storage.check()
     if storage.enabled and not permitted then
       paragraph(why)
       local owner,recovery=storage.owner()
       if not owner and not recovery then
-        check('Assign existing local saves and Bank to this account. Originals stay on this device; this does not enable cloud uploads.','storageConsent')
+        check('Create or link this account’s local save and Bank profile. Existing data stay intact and other accounts stay separate. This does not enable cloud uploads.','storageConsent')
         row('LINK SAVES & BANK TO MY ACCOUNT','linkStorage')
       end
     end
     row('BROWSE MODS','browse');row('MOD DEVELOPER · MY REPOSITORIES','developer');row('REFRESH CONNECTED DEVICES','devices')
     for i,d in ipairs(f.devices or {}) do paragraph(tostring(d.label)..(d.current and ' · THIS DEVICE' or ''));paragraph('Expires '..tostring(d.expires_at));row('DISCONNECT DEVICE','revoke:'..i) end
     row('SIGN OUT ON THIS DEVICE','signout')
+    row('USE ANOTHER ACCOUNT / LOCAL PROFILE','switchAccount')
   else
     paragraph('One account for RetroRecomped and ModCompass. Signing in links this device. Your password is never saved here.')
     if f.after=='bank' or f.after=='bankDex' then paragraph('The Pokémon Bank, Item Bank and global Pokédex require a registered account with confirmed email. After confirmation you return directly to the Bank.') end
