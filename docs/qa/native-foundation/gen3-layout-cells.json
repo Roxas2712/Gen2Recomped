@@ -1,0 +1,329 @@
+{
+  "schema": 1,
+  "sourceCommit": "5aa63a2d3cf54d3ed03d4878b9b1a858e3581fce",
+  "originalGame3MapLifecycleModuleImplemented": false,
+  "cpu": {
+    "sourceCommit": "5aa63a2d3cf54d3ed03d4878b9b1a858e3581fce",
+    "nativeGridAndVMChecks": 246,
+    "engineSuites": 267,
+    "sdkSuites": 3,
+    "B30Passed": true,
+    "quickLogSha256": "0811ab97d7555ec4a5ee82a81a7dd54b4c24f86238b0b04cd6b8ef227ac3fb2f"
+  },
+  "upstream": {
+    "number": 231,
+    "head": "ed5e02e5a55f0dca9ba06ab1d6c2afe7a21ae81e",
+    "base": "13af468b97dc37015d14ad5c71d7f067c3ee810d",
+    "independentChecks": 246,
+    "precedingSourceDemonstratesSameArtworkAndRestoreBugs": true,
+    "negativeLogSha256": "8b367f65e5b2df7b38f20c308295f825afcd16528a35c57646a58dad6f2eae65"
+  },
+  "package": {
+    "sourceCommit": "5aa63a2d3cf54d3ed03d4878b9b1a858e3581fce",
+    "runtimeCommit": "937eb3b21f973607ab080aa26b7ef2a6b3b2b663",
+    "payloadSha256": "5220b1e8d7de0a97fc8229f2c6cb84090aa52df64acc90b7d120565d9e825473",
+    "identicalPlatformPayloads": true,
+    "sourceFilesCompared": 1033,
+    "allPackagedSrcFilesMatchCommittedSourceExceptDeclaredEngineStamp": true,
+    "previewEntryPointsMatchSource": true,
+    "windowsPE64AndEmbeddedPayload": true,
+    "windowsAMD64DLLs": 11,
+    "macArchiveExtractedPayloadAndStrictSignature": true,
+    "windowsHardwareExecuted": false,
+    "published": false
+  },
+  "cache": {
+    "consumerSource": "5aa63a2d3cf54d3ed03d4878b9b1a858e3581fce",
+    "games": [
+      {
+        "edition": "firered",
+        "files": 3120,
+        "cacheTreeSha256": "56d9ca84b5fe95689120f833fbd15078a21aa5050feb57a903798c2fed20a7df",
+        "sourceCacheProducerCommit": "8afbf4221b3fcd4db6dda31cbeab3f07cb536cca",
+        "importerUnchanged": true,
+        "onlyAssetsDataMarkerCloned": true,
+        "saveCopied": false
+      },
+      {
+        "edition": "emerald",
+        "files": 3951,
+        "cacheTreeSha256": "e5fa107d350f70c2ad961485881637874c50ee6b96b3f41602f7d8a36955c416",
+        "sourceCacheProducerCommit": "8afbf4221b3fcd4db6dda31cbeab3f07cb536cca",
+        "importerUnchanged": true,
+        "onlyAssetsDataMarkerCloned": true,
+        "saveCopied": false
+      }
+    ]
+  },
+  "stockSootopolisLayoutDifference": {
+    "coll": 28,
+    "elev": 1,
+    "permissionOnly": 0,
+    "art": 645
+  },
+  "runs": [
+    {
+      "edition": "firered",
+      "gpu": {
+        "renderer": "Metal",
+        "api": "2.1",
+        "vendor": "",
+        "device": "Apple M3"
+      },
+      "vsync": 1,
+      "nativeChecks": 19,
+      "initialMap": "MAP_G04_N01",
+      "headerLayout": 2,
+      "sourceCell": {
+        "x": 7,
+        "baseMid": 69,
+        "alternateMid": 8,
+        "elevation": 3,
+        "collision": 0,
+        "y": 6
+      },
+      "stock": null,
+      "driverSha256": "5ec6b6e7d965cec8450366a01ef720a889b96a97c3fffcb17b90e2eebc9ed23b",
+      "logSha256": "205ddfb610a67c89762adf8cf0fff991ddc86b07cac0127e6dddaba7f02e1cdb",
+      "proofs": [
+        {
+          "phase": "initial-map",
+          "sha256": "34375a4b31e5b223de7e50a4f893406007715be7f9e4490576c37f5fea3fee13",
+          "freshFrameStamp": 9,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "second-map",
+          "sha256": "874f821640d177e3febb3ccb9379a2c937103e441c20f92dab94d038d2806305",
+          "freshFrameStamp": 9,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "resized",
+          "sha256": "68381620dfa2f93e8567db6e10fa45f1b5122b823b096344dbc299ff3e58a10f",
+          "freshFrameStamp": 8,
+          "minimumStamp": 1,
+          "centralColours": 40,
+          "attempts": 1
+        },
+        {
+          "phase": "map-return",
+          "sha256": "2d29bde45f801ca861617454c1905ccc020f6f4eaa9218f6dbfca75b948e1cb7",
+          "freshFrameStamp": 8,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        }
+      ]
+    },
+    {
+      "edition": "firered",
+      "gpu": {
+        "renderer": "OpenGL",
+        "vendor": "Apple",
+        "api": "4.1 Metal - 89.4",
+        "device": "Apple M3"
+      },
+      "vsync": 1,
+      "nativeChecks": 19,
+      "initialMap": "MAP_G04_N01",
+      "headerLayout": 2,
+      "sourceCell": {
+        "baseMid": 69,
+        "alternateMid": 8,
+        "elevation": 3,
+        "collision": 0,
+        "x": 7,
+        "y": 6
+      },
+      "stock": null,
+      "driverSha256": "45a56a0eeccb88720f5cf3478bc879612aaa6f768eafa9c6b31ef4f606acbcab",
+      "logSha256": "465ea7379e51841e64e21ae4b36fcfde49dc106af4a0544d1505037af0aa7fca",
+      "proofs": [
+        {
+          "phase": "initial-map",
+          "sha256": "77efab0f898b27339af2197ea5c07615aafd41f049f055782c472bddacc719c0",
+          "freshFrameStamp": 10,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "second-map",
+          "sha256": "874f821640d177e3febb3ccb9379a2c937103e441c20f92dab94d038d2806305",
+          "freshFrameStamp": 9,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "resized",
+          "sha256": "465fbdee3cd5ce7a0846c74a129af4633ac06846b6b376c3d74ada588a0ed201",
+          "freshFrameStamp": 10,
+          "minimumStamp": 1,
+          "centralColours": 40,
+          "attempts": 1
+        },
+        {
+          "phase": "map-return",
+          "sha256": "86954ef6058dea023088418a678e8211f55200a5ef96c5bdaa68ebaf519ef899",
+          "freshFrameStamp": 8,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        }
+      ]
+    },
+    {
+      "edition": "emerald",
+      "gpu": {
+        "renderer": "Metal",
+        "device": "Apple M3",
+        "api": "2.1",
+        "vendor": ""
+      },
+      "vsync": 1,
+      "nativeChecks": 27,
+      "initialMap": "MAP_G25_N40",
+      "headerLayout": 237,
+      "sourceCell": {
+        "x": 3,
+        "y": 2,
+        "collision": 0,
+        "baseMid": 532,
+        "alternateMid": 513,
+        "elevation": 3
+      },
+      "stock": {
+        "alternateLayout": 357,
+        "x": 27,
+        "cells": 3600,
+        "map": "MAP_G00_N07",
+        "y": 22,
+        "baseLayout": 8
+      },
+      "driverSha256": "45a56a0eeccb88720f5cf3478bc879612aaa6f768eafa9c6b31ef4f606acbcab",
+      "logSha256": "57bffd1d73ccfb6c230461152124a3f7deb3aeb1512c83681030401e0f4f4d68",
+      "proofs": [
+        {
+          "phase": "initial-map",
+          "sha256": "06e08b2aef92af87472233da1d2053feb7ed771a266676aa80d35277405bd583",
+          "freshFrameStamp": 7,
+          "minimumStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        },
+        {
+          "phase": "second-map",
+          "sha256": "d3e48a8ab544d07b7a7ac58093917e3d3d93ac23df657935cdc542551ff7e71b",
+          "freshFrameStamp": 7,
+          "minimumStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        },
+        {
+          "phase": "resized",
+          "sha256": "21dfe3d0757005479f9e07c56cd2afa7933999bfc1f7d808bb9c6d6adcf98608",
+          "freshFrameStamp": 6,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "map-return",
+          "sha256": "d4d93b909515dff4cb85b6a4cb2600f047b36ec368a2438268d2857aa3c765f1",
+          "freshFrameStamp": 7,
+          "minimumStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        }
+      ]
+    },
+    {
+      "edition": "emerald",
+      "gpu": {
+        "api": "4.1 Metal - 89.4",
+        "renderer": "OpenGL",
+        "device": "Apple M3",
+        "vendor": "Apple"
+      },
+      "vsync": 1,
+      "nativeChecks": 27,
+      "initialMap": "MAP_G25_N40",
+      "headerLayout": 237,
+      "sourceCell": {
+        "alternateMid": 513,
+        "collision": 0,
+        "x": 3,
+        "y": 2,
+        "elevation": 3,
+        "baseMid": 532
+      },
+      "stock": {
+        "baseLayout": 8,
+        "alternateLayout": 357,
+        "x": 27,
+        "cells": 3600,
+        "y": 22,
+        "map": "MAP_G00_N07"
+      },
+      "driverSha256": "45a56a0eeccb88720f5cf3478bc879612aaa6f768eafa9c6b31ef4f606acbcab",
+      "logSha256": "b3146ca10019a9213e14b0cc84aceb0ff009b307f6dd1bc2a2dccad1ea177be7",
+      "proofs": [
+        {
+          "phase": "initial-map",
+          "sha256": "20d5694d88f278703468897ae9a7cc4593af117a43ef922c7c0f732dd46016b0",
+          "freshFrameStamp": 9,
+          "minimumStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        },
+        {
+          "phase": "second-map",
+          "sha256": "12a2a065bdda99aea6bc7b48a5a17d3c96868ddfbdd0c22ed44ce9a0b38a6b07",
+          "freshFrameStamp": 9,
+          "minimumStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        },
+        {
+          "phase": "resized",
+          "sha256": "823552b1ba78244e447b8b74b704ef2ffd3ffe68696112ea1e060cf2b0cc4dc6",
+          "freshFrameStamp": 10,
+          "minimumStamp": 1,
+          "centralColours": 35,
+          "attempts": 1
+        },
+        {
+          "phase": "map-return",
+          "sha256": "536be8b804c96c02360577094a0b740e59633ef5fa5f715d89783a756a583352",
+          "freshFrameStamp": 10,
+          "minimumStamp": 1,
+          "centralColours": 23,
+          "attempts": 1
+        }
+      ]
+    }
+  ],
+  "scope": [
+    "Separate native no-mod test instances, fresh unsaved starting maps; introduction bypassed",
+    "GPU tile samples use actual native TileRenderer and independently selected source metatile pixels",
+    "Real native layout commands, same-art collision/elevation changes, native start menu in FireRed and native return warp",
+    "Sootopolis base/alternate/restored comparisons cover all 3600 live cell triples on both renderers",
+    "The phase named resized shows stock Sootopolis or the FireRed menu; no window-resize acceptance",
+    "Native QA key edges and explicit map/command entry, not story progression or physical keyboard tests",
+    "Only same-sized native layout grids are implemented here; broader map lifecycle and tileset/dimension changes remain open",
+    "Original OASC still lacks src.core.game3.map on this fork; no full OASC or First/Third renderer acceptance",
+    "The supplied mods, protected Gen1/player instances and existing public release are unchanged",
+    "QA packages are not published; Windows hardware execution remains untested"
+  ],
+  "preservedAttempts": [
+    "First VM fixture lacked the actual RomExtractorGen3 source tag; corrected test fixture",
+    "First standalone archive requested examples absent from upstream main; corrected export harness",
+    "Initial Emerald GPU driver incorrectly required a changed land cell: stock changes are mainly water. Replaced with an actual nearby stable land viewpoint; product source unchanged. Failed run and two initial window proofs retained."
+  ]
+}

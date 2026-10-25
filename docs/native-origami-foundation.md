@@ -57,6 +57,13 @@ and its engine PRs remain the implementation target; no mod port was resumed.
 Base: `13af468b97dc37015d14ad5c71d7f067c3ee810d` (main, v0.8.45).
 Development branch: `codex/native-origami-foundation`. This is not a release.
 
+The [native Gen3 grid follow-up](native-gen3-layout-cells.md) corrects
+same-art collision/elevation changes and restoration of the original layout.
+The actual Gen3 VM and both games pass separate native Metal/OpenGL checks;
+Sootopolis additionally verifies all 3,600 cells against its real alternate
+and restored layouts. This supplies a correct native grid owner for the
+remaining map interface, without advertising that interface as implemented.
+
 ## Integrated engine contracts
 
 | Capability | Source branch / commit | Current scope |
