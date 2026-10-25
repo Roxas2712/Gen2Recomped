@@ -117,5 +117,29 @@
   },
   "romOrExtractedArtIncluded": false,
   "fullFeatureParity": false,
-  "physicalIOSDeviceTested": false
+  "physicalIOSDeviceTested": false,
+  "independentRawCartridgePNGCheck": {
+    "status": "pass",
+    "edition": "ruby",
+    "identity": "gen2recomp-qa-ruby-20261025144844471309",
+    "cartridgeSHA1": "f28b6ffc97847e94a6c21a63cacf633ee5c8df1e",
+    "art": [
+      {
+        "file": "balls.png",
+        "sha256": "8d3bef7f1ef0c4192d66b7cfccd0d713688693d6af429bbb999ef3ebed0e1389",
+        "width": 48,
+        "height": 192,
+        "cartridgeDecodedRGBAExact": true,
+        "opaquePixels": 4632
+      },
+      {
+        "file": "ball_particles.png",
+        "sha256": "996e0ec6c032501bade50d92b79f8810dada1a57111bde78c20041f49cdc825a",
+        "width": 64,
+        "height": 8,
+        "cartridgeDecodedRGBAExact": true,
+        "opaquePixels": 160
+      }
+    ]
+  }
 }
