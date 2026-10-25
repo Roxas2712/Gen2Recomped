@@ -130,3 +130,11 @@ and count, and `rs-item-effects-layout-v2:` forces affected imports to rebuild.
 against all 163 entries / 441 raw effect fields, Potion/Protein/Rare Candy
 sentinels and a failing old-address negative control. No ROM or derived
 assets are written. This does not certify every item menu or full story.
+
+All Gen3 editions now dispatch completed walking steps to the existing native
+`Gen3Friendship.step`, once per step. This prevents the generic older
++2/+2/+1 fallback from being applied to Sapphire. The independent regression
+`tests/gen3_walking_friendship.lua` runs the actual controller branch for each
+available Gen3 registration, both coin outcomes and an egg across 256 steps
+each (all five in the combined sibling QA candidate). This narrow step
+correction is not a full friendship/story acceptance.
