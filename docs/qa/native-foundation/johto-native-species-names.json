@@ -1,0 +1,183 @@
+{
+  "scope": "Native GSC symbolic species identity, sprite resolution and actual ambient renderer/pose bindings; not complete per-species on-screen art, native story or full Gen1 parity acceptance",
+  "sourceCommit": "b9aa8f2ed4833584060322224e37c736858356f5",
+  "forkMergeCommit": "7a5816179a0e13e9fc211ec7c70883604adfa4b1",
+  "qualificationRun": 40228056490,
+  "payloadSha256": "cbf9105220403560c6646396c04adbaa06542f01f72201cd276c362c8a03ac67",
+  "focusedChecks": 145,
+  "engineSuites": 367,
+  "sdkSuites": 3,
+  "allQuickTiersPassedInCi": true,
+  "ciRun": 40228039073,
+  "imagesInspected": 8,
+  "testSetup": "Owned QA introduction/map/one-party staging; unchanged supplied Johto package and read-only Crystal Rev0. OpenGL uses a reused owned candidate cache; Metal imports in a fresh owned profile. Individual actors may be outside the camera frustum. Native named-query/actual sprite/pose assertions provide art-binding checks.",
+  "runs": [
+    {
+      "backend": "opengl",
+      "checks": 85,
+      "freshOsWindows": 4,
+      "phases": [
+        {
+          "map": "CHERRYGROVE_CITY",
+          "camera": "third",
+          "ambientSpecies": [],
+          "resolvedQueries": [
+            "EEVEE",
+            "GROWLITHE",
+            "SLOWPOKE",
+            "SPECIES_133",
+            "SPECIES_149",
+            "SPECIES_152",
+            "SPECIES_187"
+          ]
+        },
+        {
+          "map": "VIOLET_CITY",
+          "camera": "first",
+          "ambientSpecies": [],
+          "resolvedQueries": [
+            "EEVEE",
+            "GROWLITHE",
+            "SLOWPOKE",
+            "SPECIES_133",
+            "SPECIES_149",
+            "SPECIES_152",
+            "SPECIES_187"
+          ]
+        },
+        {
+          "map": "VIOLET_POKECENTER_1F",
+          "camera": "third",
+          "ambientSpecies": [
+            "EEVEE",
+            "EEVEE"
+          ],
+          "resolvedQueries": [
+            "EEVEE",
+            "GROWLITHE",
+            "SLOWPOKE",
+            "SPECIES_133",
+            "SPECIES_149",
+            "SPECIES_152",
+            "SPECIES_187"
+          ]
+        },
+        {
+          "map": "VIOLET_POKECENTER_1F",
+          "camera": "first",
+          "ambientSpecies": [
+            "CLEFAIRY",
+            "SLOWPOKE"
+          ],
+          "resolvedQueries": [
+            "EEVEE",
+            "GROWLITHE",
+            "SLOWPOKE",
+            "SPECIES_133",
+            "SPECIES_149",
+            "SPECIES_152",
+            "SPECIES_187"
+          ]
+        }
+      ],
+      "modFilesVerified": 27329,
+      "modSourceUnmodified": true,
+      "resultSha256": "eff4d769bf9662507e6aee07ed6b7956985ecbe280eaf0ca8a81192795f98e3c",
+      "verificationSha256": "aa323985e7db3db0ef54fb0f494bd3b097a5a5958b900882a43cc08f1320d7f4"
+    },
+    {
+      "backend": "metal",
+      "checks": 77,
+      "freshOsWindows": 4,
+      "phases": [
+        {
+          "map": "CHERRYGROVE_CITY",
+          "camera": "third",
+          "ambientSpecies": [],
+          "resolvedQueries": [
+            "EEVEE",
+            "GROWLITHE",
+            "SLOWPOKE",
+            "SPECIES_133",
+            "SPECIES_149",
+            "SPECIES_152",
+            "SPECIES_187"
+          ]
+        },
+        {
+          "map": "VIOLET_CITY",
+          "camera": "first",
+          "ambientSpecies": [],
+          "resolvedQueries": [
+            "EEVEE",
+            "GROWLITHE",
+            "SLOWPOKE",
+            "SPECIES_133",
+            "SPECIES_149",
+            "SPECIES_152",
+            "SPECIES_187"
+          ]
+        },
+        {
+          "map": "VIOLET_POKECENTER_1F",
+          "camera": "third",
+          "ambientSpecies": [
+            "CLEFAIRY"
+          ],
+          "resolvedQueries": [
+            "EEVEE",
+            "GROWLITHE",
+            "SLOWPOKE",
+            "SPECIES_133",
+            "SPECIES_149",
+            "SPECIES_152",
+            "SPECIES_187"
+          ]
+        },
+        {
+          "map": "VIOLET_POKECENTER_1F",
+          "camera": "first",
+          "ambientSpecies": [
+            "GROWLITHE"
+          ],
+          "resolvedQueries": [
+            "EEVEE",
+            "GROWLITHE",
+            "SLOWPOKE",
+            "SPECIES_133",
+            "SPECIES_149",
+            "SPECIES_152",
+            "SPECIES_187"
+          ]
+        }
+      ],
+      "modFilesVerified": 27329,
+      "modSourceUnmodified": true,
+      "resultSha256": "952e67d7f57ad922b12ae6f9268e4f84660a74dcf1274628ae5959417eb0d3b1",
+      "verificationSha256": "41c266aaa94aab240da9f5c049fd6d05d0fa48ede741533338ad48f804b822a2"
+    }
+  ],
+  "remaining": [
+    "The supplied optional full-colour runtime PNGs are absent; native grayscale front-image fallbacks remain at source resolution.",
+    "Metal deprecation warnings still cover the lower edge in some windows.",
+    "Native story, full field-action protocols, PC/mail/capture, ordinary visible encounters and complete model/effect parity remain unaccepted.",
+    "Windows/Intel Mac actual hardware GPU gameplay is not established by runtime qualification."
+  ],
+  "upstreamPr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/261",
+  "upstreamValidation": "Based directly on13af468b; focused130/130. Frozen baseline64/74 versusfeature65/75 engine suites: identical ten failing suites and every reported assertion; SDK3/3 both. Fork GPU results do not qualify the uncomposed upstream branch.",
+  "releasePublished": true,
+  "releaseUrl": "https://github.com/Roxas2712/Gen2Recomped/releases/tag/native-preview-20261025.1",
+  "release": {
+    "tag": "native-preview-20261025.1",
+    "tagUnchanged": true,
+    "remoteAssetsVerified": true,
+    "sha256": {
+      "Gen2Recomped-NativePreview.love": "cbf9105220403560c6646396c04adbaa06542f01f72201cd276c362c8a03ac67",
+      "Gen2Recomped-NativePreview-20261025.1-macos.zip": "acd0d3c80fc619c825cb1e06d620b481e4ed8f369f7c68206465ee8196fcd601",
+      "Gen2Recomped-NativePreview-20261025.1-windows.zip": "27ec0d98c162a272de8b65184319993e4238158b35dc746d93b57de566f2eb88",
+      "build-manifest.json": "45437d26bbc86b5cf8120487f59611bf8f5117287ed0e4898bf8a413727b1ee1",
+      "README-Testrelease.txt": "6ee4093185fb26c3c994288d202d24c29a80cac6c2352beef81bdd80d6187a2f",
+      "SHA256SUMS.txt": "6a7ed2d6dcea9dea61c90f406aec04e8bb58c0b0c0deab60cbe57056045472d2"
+    }
+  }
+}

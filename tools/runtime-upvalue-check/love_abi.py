@@ -133,12 +133,15 @@ def main():
         results.append({'variant': label, 'capacity': minimum, 'checks': closure['checks'],
                         'librarySha256': digest(target), 'identity': identity})
         print('LOVE_ABI_QUALIFIED', label, minimum, flush=True)
+    sys.path.insert(0, str(ROOT / 'tools'))
+    from qualify_native_jobs import qualify as qualify_jobs
+    native_jobs = qualify_jobs(executable, output / 'native-jobs', run, profile)
     report = {'passed': True, 'experimental': True, 'platform': host, 'machine': platform.machine(),
               'baseLoveCommit': '937eb3b21f973607ab080aa26b7ef2a6b3b2b663',
               'originalArchiveSha256': expected, 'originalLibrarySha256': original,
               'inputCandidateLibrarySha256': digest(library), 'qualificationSha256': digest(qualification),
               'scope': 'headless LOVE12 boot, closure/JIT/GC/bytecode, FFI callback and thread VM; not GPU/gameplay',
-              'variants': results}
+              'variants': results, 'nativeModWorkers': native_jobs}
     (output / 'report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(report), flush=True)
 
