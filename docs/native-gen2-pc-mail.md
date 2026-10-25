@@ -17,7 +17,7 @@ identifies compose/script. Item recognition uses imported semantic keys.
 The primary pointer contracts are in pret/pokegold and pret/pokecrystal,
 engine/overworld/scripting.asm (Script_givepokemail/Script_checkpokemail).
 
-Validation: 207 PC/mail/codec checks and 69 binary ROM/actual runner/public
+Validation: 208 PC/mail/codec checks and 69 binary ROM/actual runner/public
 SDK checks pass. The current upstream baseline also has existing suite
 failures; comparative engine/SDK results are recorded in the PR.
 
