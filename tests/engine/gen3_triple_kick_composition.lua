@@ -1,7 +1,7 @@
 package.path = "./?.lua;./?/init.lua;" .. package.path
 local T = require("tests.modkit")
 for _, version in ipairs({ "firered", "emerald" }) do
-  for _, mode in ipairs({ "delegate", "count", "full", "damage", "fallback" }) do
+  for _, mode in ipairs({ "delegate", "count", "full", "damage", "neverMiss", "fallback" }) do
     local entry
     if mode ~= "fallback" then
       entry = [[return function(mod)
@@ -9,6 +9,7 @@ for _, version in ipairs({ "firered", "emerald" }) do
         local count = base.hitCount
         mod.exports.counts, mod.exports.hits = 0, 0
         ]] .. (mode == "full" and 'base = {kind="full", hitCount=count}' or "") .. [[
+        ]] .. (mode == "neverMiss" and "base.neverMiss = true" or "") .. [[
         base.hitCount = function(ctx)
           mod.exports.counts = mod.exports.counts + 1
           ]] .. (mode == "count" and "return 2" or "return count(ctx)") .. [[
@@ -54,7 +55,11 @@ for _, version in ipairs({ "firered", "emerald" }) do
         accuracy = accuracy + 1
       end
     end
-    T.eq(accuracy, mode == "full" and 1 or #hits, "complete authored scripts own their accuracy policy")
+    T.eq(
+      accuracy,
+      mode == "neverMiss" and 0 or mode == "full" and 1 or #hits,
+      "complete authored scripts own their accuracy policy"
+    )
     if mode == "delegate" or mode == "count" or mode == "fallback" then
       T.check(hits[1] < hits[2], "native delegation retains increasing kick power")
     elseif mode == "full" then

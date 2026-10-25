@@ -306,7 +306,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     -- Unlike ordinary multi-hit moves, each reached native kick checks
     -- accuracy again before its critical/damage opcodes. A later miss ends
     -- the script quietly; already landed kicks still reach move-end (Rage).
-    if tripleKick and h > 1 then
+    if tripleKick and h > 1 and (nativeAccuracy or not neverMiss and not alwaysHits) then
       local hit = battle:accuracyRoll(move, user, target, accuracyRaw)
       if not hit then break end
     end
