@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219, #220 and #222 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219, #220, #222 and #225 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,56 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`1a20cb1f104972c46c756ba6a55e814fc27619c8`. Its ROM-free run passed
-**240/240 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`e1a9295e57c1545ec69deec2c4541a4da193b7b6`. Its ROM-free run passed
+**243/243 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #225](https://github.com/UNDERdecoded/Gen2Recomped/pull/225) replaces
+the default GBA legacy Rage controller with native flag/lifecycle behavior.
+Every separately selected Rage spends PP and leaves the menu actionable.
+Attack builds once at a completed qualifying incoming move, before item reads;
+Substitute/Endure, caps, ally/self/residual exclusions and later immunity are
+covered. Actual effective move choices/Encore and committed non-move replies
+clear Rage before stale boosts; native double choices are selected once.
+AI STATUS2, offered-command invalidation and active link hashes include Rage.
+
+The feature reuses #188's native AI/order prerequisite, already in this combined
+branch. Clean #222+#188 prerequisite `fa5cb30ec4050980dc940e2181d6943a9de669b4`
+passes 120/129 engine suites. Feature runtime
+`03c4a841ee327d232ca504a1ae5df1c5159064b6` passes **796 focused checks** and
+**123/132 engine suites**, SDK 3/3 and B30. The exact Counter of all 25 inherited
+FAIL lines across nine suites matches that prerequisite. Their independent
+repairs remain green in this combined branch.
+
+Both clean runtimes match unchanged read-only Gen1 in **104 workers / 75,210
+paired observations**, with 357 new Rage rows per profile. Every bounded RNG
+call/value, accuracy-hook state, move/hit event and battler observation remains
+recorded. Move planning includes actual word preparation with fixed choices;
+non-move replies use the same explicitly prepared input boundary. Earlier/global
+selection/RNG and all controller timing are not certified.
+
+Four real linked turns agree in all completed hashes/components, PP and Attack
+stages. Four CPU-only tests with actual FireRed/Emerald imports pass public
+FIGHT/move input, repeated Rage (20 to 18 PP), alternative Tackle and the actual
+spent-item reply pipeline. The unchanged prerequisite fails all four checks of
+the same public selector/delegated native continuation; raw negatives remain.
+Native command revision is 7; party codec remains 1. The raw native fixture hash
+`dcc938191b0bb075` was audited with the unchanged #222 hasher and only the
+explicit revision token changed. Older-generation goldens were not reblessed.
+
+All nine #225 workflows require maintainer approval (`action_required`); the
+[dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40169752030)
+has zero jobs. Local acceptance is separate. The app's 100-artifact cap prevents
+another card; the regular PR is published and linked. Evidence:
+`tmp/rage-full-accepted.log`, `tmp/rage-contracts-accepted.json`,
+`tmp/rage-imported-accepted.log` and `tmp/rage-accepted-evidence.json`.
+Host content composition is separate: an extra synthetic Gen1 GBA probe cannot
+retrieve `RAGE_EFFECT`; its raw failure is retained for a catalog/fixture audit.
+This does not assert cross-engine effect-catalog/delegation equality. See
+[the scoped Rage contract](native-gen3-rage.md).
+
+Prior #222 results retain runtime `1a20cb1f104972c46c756ba6a55e814fc27619c8`
+and its 240/240 engine result:
 
 [PR #222](https://github.com/UNDERdecoded/Gen2Recomped/pull/222) corrects
 ordinary GBA multi-hit effects 29/44/77. Accuracy precedes the native hit-count

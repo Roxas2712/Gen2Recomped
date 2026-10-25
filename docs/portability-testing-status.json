@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "1a20cb1f104972c46c756ba6a55e814fc27619c8",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/222",
-  "feature_ref": "1d958bca394b280f91f5977785128dcc9c26fd98",
+  "runtime_ref": "e1a9295e57c1545ec69deec2c4541a4da193b7b6",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/225",
+  "feature_ref": "8e543618bc3a6ec9e0c6d8f1f31f9e12b5259f2e",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 240,
-  "engine_suites_total": 240,
+  "engine_suites_passed": 243,
+  "engine_suites_total": 243,
   "sdk_suites_passed": 3,
   "sdk_suites_total": 3,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 100,
-  "cross_engine_paired_observations": 74496,
+  "cross_engine_worker_runs": 104,
+  "cross_engine_paired_observations": 75210,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All eight #222 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
+  "hosted_ci": "All nine #225 workflows await maintainer approval (action_required); dedicated contract workflow has zero jobs; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Selected actual public GBA enemy-action and native command/data contracts, now including ordinary multi-hit execution and exact critical RNG bounds, against clean read-only Gen1 at documented input-state boundaries; not complete selection/RNG orchestration or full gameplay/animation/ability/item parity",
+  "cross_engine_scope": "Selected actual public GBA enemy-action and native command/data contracts, now including Rage activation, move-end boosts and actual planner cleanup, against clean read-only Gen1 at documented input-state boundaries; not complete catalogs/selection/RNG orchestration or full gameplay/animation/ability/item parity",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -163,7 +163,7 @@
     "jobs": 0
   },
   "enemy_pp_full_suite_runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
-  "feature_tested_ref": "00e67c40abcb224ff693e4f543a4d018014edf73",
+  "feature_tested_ref": "03c4a841ee327d232ca504a1ae5df1c5159064b6",
   "caught_marker_native_checks_passed": 2078,
   "caught_marker_renderer_checks_passed": 840,
   "caught_marker_import_checks_passed": 216,
@@ -2612,6 +2612,61 @@
       "tmp/multi-hit-contracts-accepted.json",
       "tmp/multi-hit-imported.log",
       "tmp/multi-hit-accepted-evidence.json"
+    ]
+  },
+  "native_rage": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/225",
+    "feature_ref": "8e543618bc3a6ec9e0c6d8f1f31f9e12b5259f2e",
+    "feature_tested_ref": "03c4a841ee327d232ca504a1ae5df1c5159064b6",
+    "runtime_ref": "e1a9295e57c1545ec69deec2c4541a4da193b7b6",
+    "prerequisites": [
+      222,
+      188
+    ],
+    "clean_prerequisite_ref": "fa5cb30ec4050980dc940e2181d6943a9de669b4",
+    "prerequisite_engine_suites": "120/129",
+    "focused_checks_passed": 796,
+    "native_command_planning_lifecycle_checks": 584,
+    "host_public_composition_reply_legacy_checks": 122,
+    "link_compatibility_checks": 90,
+    "cross_engine_workers": 104,
+    "paired_observations": 75210,
+    "new_observations_per_profile": 357,
+    "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_unchanged": true,
+    "native_command_revision": 7,
+    "native_party_revision": 1,
+    "native_fixture_digest": "dcc938191b0bb075",
+    "prior_fixture_digest": "a7db0874db78aec0",
+    "hash_audit": "Unchanged #222 hasher with only explicit command revision 6 to 7; older-generation goldens unchanged",
+    "feature_engine_suites_passed": 123,
+    "feature_engine_suites_total": 132,
+    "inherited_failing_suites": 9,
+    "inherited_fail_lines": 25,
+    "exact_fail_counter_equal": true,
+    "combined_engine_suites_passed": 243,
+    "combined_engine_suites_total": 243,
+    "sdk_suites": "3/3",
+    "b30": "passed",
+    "planning_boundary": "Move planner includes actual turn-word preparation with fixed choices; non-move reply starts with same explicitly prepared word. Earlier/global selection/RNG/controller timing not certified; original planner differences retained.",
+    "negative_control": "Unchanged #222+#188 prerequisite fails four public-selector/delegated-native continuation checks: missing native Rage, legacy controller, one PP spent across two uses and a locked menu. Raw output retained.",
+    "native_imported_smoke_games": [
+      "firered",
+      "emerald"
+    ],
+    "native_imported_smoke_scenarios": 4,
+    "native_scope": "CPU-only actual imports, public FIGHT/move submission, repeated Rage PP 20 to 18, independent Tackle and committed item-reply pipeline. Item scenario starts at spent-item callback; metadata retained with controlled valid hit rolls. No normal SAVE/distributed ROM/cache/save data; no rendering/full-playthrough claim.",
+    "content_probe_boundary": "Host builtin overrides/delegation tested separately. Extra synthetic Gen1 GBA lookup of RAGE_EFFECT fails; raw report retained, catalog/fixture audit required before claiming cross-engine catalog/delegation equality.",
+    "hosted_workflows": 9,
+    "hosted_conclusion": "action_required",
+    "contract_run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40169752030",
+    "hosted_jobs": 0,
+    "attachment": "App artifact identity cap of 100 reached; regular PR published and linked",
+    "proof": [
+      "tmp/rage-full-accepted.log",
+      "tmp/rage-contracts-accepted.json",
+      "tmp/rage-imported-accepted.log",
+      "tmp/rage-accepted-evidence.json"
     ]
   }
 }
