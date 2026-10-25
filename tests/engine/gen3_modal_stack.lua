@@ -102,6 +102,9 @@ end
 do
  local stack,ui=setup('firered');local world={isOverworld=true,isOpaque=true};stack:push(world)
  local calls={};ui.push('one',{isMenu=true,handleInput=function(input)T.eq(input,Game.input,'native input object');calls[#calls+1]='input';ui.pop('one')end,update=function()calls[#calls+1]='stale'end})
+ local width,height=stack:top():uiSize()
+ T.eq(width,240,'legacy GBA menu requests native width');T.eq(height,160,'legacy GBA menu requests native height')
+ T.eq(Game.nativeSurfaceInStack(stack),stack:top(),'legacy menu owns the real native surface')
  stack:update(1/60);T.same(calls,{'input'},'a popped input owner never updates afterward')
  ui.push('one',{});ui.push('two',{});T.eq(ui.pop('one'),true,'named removal reaches lower native UI')
  T.eq(ui.top().id,'two','named removal preserves actual top');T.eq(ui.depth(),1,'only named UI removed')

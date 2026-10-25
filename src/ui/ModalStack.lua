@@ -174,6 +174,10 @@ function methods:push(id, widget, options)
   local game = self.owner
   local plane = self
   local state = { game = game, nativeModalId = id, nativeModalWidget = widget }
+  -- These modules draw in GBA coordinates. Without a native surface request
+  -- Game would centre them as 160x144 Game Boy overlays and clip the right edge.
+  function state:uiSize() return 240, 160 end
+  function state:wantsFillScale() return true end
   -- Legacy native menu modules use dot callbacks; StateStack uses methods.
   function state:update(dt)
     if widget.handleInput then widget.handleInput(game.input) end
