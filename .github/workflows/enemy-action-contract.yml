@@ -22,6 +22,8 @@ on:
       - 'tests/engine/gen3_battle_protocol.lua'
       - 'tests/engine/gen3_party_codec.lua'
       - 'tests/engine/gen3_party_transport.lua'
+      - 'tests/engine/gen3_lock_on.lua'
+      - 'tests/engine/gen3_lock_on_link.lua'
       - 'tools/enemy-action-contract-check/**'
   push:
     branches: [main, dev]

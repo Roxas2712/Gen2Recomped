@@ -188,6 +188,9 @@ function Handshake.checkCompat(localHello, remoteHello)
   if localHello.nativePartyRevision ~= remoteHello.nativePartyRevision then
     return "refused", "native_party_codec_mismatch"
   end
+  if localHello.nativeBattleRevision ~= remoteHello.nativeBattleRevision then
+    return "subset", "native_rules_mismatch"
+  end
   if remoteHello.fingerprint == localHello.fingerprint then
     return "full", nil
   end

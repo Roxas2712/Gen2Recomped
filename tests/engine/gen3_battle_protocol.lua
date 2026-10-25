@@ -4,9 +4,9 @@ local V, F, H =
   require("src.core.GameVersion"), require("src.link.Fingerprint"), require("src.link.Handshake")
 local Copy = require("src.mods.Merge").deepCopy
 local data, before = T.fixtures.fresh(), V.get()
--- Legacy hash audited against #214; native hash is #215 plus [native_gba_party]1.
+-- Legacy hash audited against #214; native hash is #216 with command revision 2.
 local LEGACY = "e33d251961f2a41d"
-local NATIVE = "2fd444270c3d90db"
+local NATIVE = "cf73a8e083fb8a54"
 for _, version in ipairs({ "red", "firered", "gold", "emerald", "diamond", "firered", "black" }) do
   V.set(version)
   local gba = V.isGen3()
@@ -15,7 +15,7 @@ for _, version in ipairs({ "red", "firered", "gold", "emerald", "diamond", "fire
     gba and NATIVE or LEGACY,
     "runtime command revision participates in cached fingerprints"
   )
-  T.eq(F.nativeBattleRevision(), gba and 1 or nil, "only GBA advertises the new command revision")
+  T.eq(F.nativeBattleRevision(), gba and 2 or nil, "only GBA advertises the new command revision")
   local game = { data = data, save = { player = { name = "RULES" } } }
   local current = H.hello(game, "battle")
   local legacy = Copy(current)

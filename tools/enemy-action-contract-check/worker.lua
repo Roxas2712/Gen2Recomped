@@ -2,7 +2,9 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "party_codec_hooks" then
+if mode == "lock_on" then
+  rows = dofile(root .. "/tests/enemy_actions/lock_on.lua").run(root, backend, version)
+elseif mode == "party_codec_hooks" then
   rows = dofile(root .. "/tests/enemy_actions/party_codec_hooks.lua").run(root, backend, version)
 elseif mode == "party_codec" then
   rows = dofile(root .. "/tests/enemy_actions/party_codec.lua").run(root, backend, version)

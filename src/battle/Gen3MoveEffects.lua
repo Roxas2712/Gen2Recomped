@@ -323,9 +323,21 @@ P.ENCORE_EFFECT = function(battle, user, target)
 end
 ACC.ENCORE_EFFECT = true
 
--- LOCK-ON / MIND READER: the user's next move cannot miss.
-P.LOCK_ON_EFFECT = function(battle, user, target)
-  user.lockedOn = target
+-- LOCK-ON / MIND READER: native GBA owns a target timer; older games keep
+-- the existing next-move pointer.
+P.LOCK_ON_EFFECT = function(battle, user, target, move)
+  if require("src.core.GameVersion").isGen3() then
+    if (target.substituteHP or 0) > 0 then return { Strings("But, it failed!") } end
+    local hit, reason = battle:accuracyRoll(move, user, target)
+    if not hit then
+      if reason == "absorbed" then return {} end
+      if reason == "protected" then return { Strings("%s\nprotected itself!", displayName(target)) } end
+      return { Strings("%s's\nattack missed!", displayName(user)) }
+    end
+    require("src.battle.Gen3LockOn").mark(battle, user, target)
+  else
+    user.lockedOn = target
+  end
   return { Strings("%s took aim\nat %s!", displayName(user),
                    displayName(target)) }
 end

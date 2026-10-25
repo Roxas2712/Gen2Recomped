@@ -126,7 +126,8 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   -- cartridge marks PROTECT-affected is stopped, which is the second use the
   -- extracted flags byte is put to; a move with no flags recorded (every Gen
   -- 1 and Gen 2 one) is treated as affected, which is that generation's rule.
-  local lockedOHKO = record and record.gbaOHKO and user.lockedOn == target
+  local lockedOHKO = record and record.gbaOHKO
+    and require("src.battle.Gen3LockOn").active(battle, user, target)
   if target.protecting and (not gba or target ~= user) and move.protectAffected ~= false and not lockedOHKO then
     battle:cancelMoveAnim()
     if record and record.onProtect and record.onProtect(ctx) then return end
