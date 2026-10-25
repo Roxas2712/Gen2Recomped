@@ -24,6 +24,7 @@
 
 local Logger = require("src.core.Logger")
 local MapScripts = require("src.script.MapScripts")
+local MapIdentity = require("src.core.MapIdentity")
 local Gen2Flags = require("src.script.Gen2Flags")
 require("src.script.Gen2Commands")
 require("src.script.Gen2Specials")
@@ -2585,7 +2586,7 @@ end
 -- out and Kurt walks in; without it the map's story simply never advances.
 function Gen2ScriptVM.afterBattleRows(data, mapId, objIndex)
   local pool = store(data)
-  local entry = pool and pool.maps and pool.maps[mapId]
+  local entry = pool and MapIdentity.lookup(data, pool.maps, mapId)
   local label = entry and entry.objectAfter and entry.objectAfter[objIndex]
   if not label then return nil end
   local ok, rows = pcall(Gen2ScriptVM.compile, data, label)
@@ -2612,7 +2613,7 @@ Gen2ScriptVM.mapScenes = Gen2ScriptVM.mapScenes or {}
 -- the callbacks that may have just rewritten it.  Returns true when one was
 -- queued.
 function Gen2ScriptVM.runMapScene(game, overworld, mapId)
-  local scenes = Gen2ScriptVM.mapScenes[mapId]
+  local scenes = MapIdentity.lookup(game and game.data, Gen2ScriptVM.mapScenes, mapId)
   if not (scenes and game and overworld) then return false end
   local Gen2Commands = require("src.script.Gen2Commands")
   local scene = Gen2Commands.getScene(game.save, mapId, game.data)

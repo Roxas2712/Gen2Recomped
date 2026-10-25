@@ -67,6 +67,32 @@ T.eq(Identity.lookup(data,{A=false,C=9},'A'),false,'false values remain explicit
 T.eq(Identity.normalize('PLAYERS_HOUSE1_F'),'PLAYERS_HOUSE_1F','existing floor spelling preserved')
 T.eq(Identity.normalize('ROUTE29'),'ROUTE_29','existing route spelling preserved')
 T.eq(Identity.normalize('ROCK_TUNNEL_B1_F'),'ROCK_TUNNEL_B1F','existing basement spelling preserved')
+-- Real VM registration, compilation and deferred dispatch must share the
+-- same source identity as saved scenes; no synthetic compiled row stubs.
+local VM=require('src.script.Gen2ScriptVM')
+local native='PLAYERS_HOUSE1_F';local alias='PLAYERS_HOUSE_1F'
+local scripts={AFTER={{'setval',42},{'end'}},SCENE0={{'setval',10},{'end'}},SCENE1={{'setval',20},{'end'}}}
+local vmData={maps={[native]={id=native,objects={}},[alias]={id=alias,sourceId=native,objects={}}},
+ map_scripts={source='RomExtractorGen2',scripts=scripts,maps={[native]={objectAfter={[1]='AFTER'},scenes={'SCENE0','SCENE1'}}}}}
+T.eq(VM.register(vmData,'scenes'),1,'actual native scene registration')
+local expected=VM.compile(vmData,'AFTER')
+T.check(type(expected)=='table' and #expected>0,'actual trainer continuation compiles')
+T.eq(VM.afterBattleRows(vmData,alias,1),expected,'canonical map retains native post-trainer script')
+T.eq(VM.afterBattleRows(vmData,alias,9),nil,'unknown object cannot borrow another continuation')
+local queued={};local world={queueScript=function(_,rows,extra)queued[#queued+1]={rows=rows,extra=extra}end}
+local game={data=vmData,save={g2Scenes={[native]=1}}}
+T.eq(VM.runMapScene(game,world,alias),true,'actual deferred scene dispatch resolves canonical map')
+T.eq(queued[1] and queued[1].rows,VM.compile(vmData,'SCENE1'),'native saved scene chooses correct compiled script')
+T.eq(queued[1] and queued[1].extra.mapId,alias,'requested runtime context retained')
+T.eq(VM.runMapScene(nil,world,alias),false,'missing game cannot dispatch scene')
+local own={{'g2_set_var',99}}
+VM.mapScenes[alias]={own}
+game.save.g2Scenes[native]=0
+T.eq(VM.runMapScene(game,world,alias),true,'explicit canonical scene entry remains authoritative')
+T.eq(queued[#queued].rows,own,'exact canonical override wins over native fallback')
+VM.mapScenes[alias]=nil
+vmData.map_scripts.maps[alias]=false
+T.eq(VM.afterBattleRows(vmData,alias,1),nil,'explicit disabled canonical trainer entry does not inherit')
 Music.play, os.date = originalPlay, originalDate
 Version.set(initialVersion)
 T.finish('native Gen2 map source identity and storage joins')
