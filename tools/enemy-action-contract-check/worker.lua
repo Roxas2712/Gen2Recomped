@@ -2,7 +2,15 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "nature_power_chained" then
+if mode == "assist_held" then
+  rows = dofile(root .. "/tests/enemy_actions/assist.lua").held(root, backend, version)
+elseif mode == "assist_failed_callers" then
+  rows = dofile(root .. "/tests/enemy_actions/assist.lua").failedCallers(root, backend, version)
+elseif mode == "assist_content" then
+  rows = dofile(root .. "/tests/enemy_actions/assist.lua").content(root, backend, version)
+elseif mode == "assist" then
+  rows = dofile(root .. "/tests/enemy_actions/assist.lua").run(root, backend, version)
+elseif mode == "nature_power_chained" then
   rows = dofile(root .. "/tests/enemy_actions/nature_power.lua").chained(root, backend, version)
 elseif mode == "nature_power_content" then
   rows = dofile(root .. "/tests/enemy_actions/nature_power.lua").content(root, backend, version)
@@ -17,11 +25,13 @@ elseif mode == "move_used_pp" then
 elseif mode == "choice_band_call_failure" then
   rows = dofile(root .. "/tests/enemy_actions/choice_call_failure.lua").run(root, backend, version)
 elseif mode == "choice_band_baton" then
-  rows = dofile(root .. "/tests/enemy_actions/baton_pass.lua").run(root, backend, version, { choiceBand = true })
+  rows =
+    dofile(root .. "/tests/enemy_actions/baton_pass.lua").run(root, backend, version, { choiceBand = true })
 elseif mode == "choice_band_content" then
   rows = dofile(root .. "/tests/enemy_actions/choice_content.lua").run(root, backend, version)
 elseif mode == "choice_band_calls" then
-  rows = dofile(root .. "/tests/enemy_actions/sleep_talk.lua").run(root, backend, version, { choiceBand = true })
+  rows =
+    dofile(root .. "/tests/enemy_actions/sleep_talk.lua").run(root, backend, version, { choiceBand = true })
 elseif mode == "choice_band_wild" then
   rows = dofile(root .. "/tests/enemy_actions/choice_wild.lua").run(root, backend, version)
 elseif mode == "choice_band_planning" then
@@ -53,7 +63,12 @@ elseif mode == "party_codec_hooks" then
 elseif mode == "party_codec" then
   rows = dofile(root .. "/tests/enemy_actions/party_codec.lua").run(root, backend, version)
 elseif mode == "secondary" or mode == "secondary_execution" then
-  rows = dofile(root .. "/tests/enemy_actions/secondary.lua").run(root, backend, version, mode == "secondary_execution")
+  rows = dofile(root .. "/tests/enemy_actions/secondary.lua").run(
+    root,
+    backend,
+    version,
+    mode == "secondary_execution"
+  )
 elseif mode == "accuracy_execution" then
   rows = dofile(root .. "/tests/enemy_actions/accuracy.lua").run(root, backend, version, true)
 elseif mode == "accuracy" then
