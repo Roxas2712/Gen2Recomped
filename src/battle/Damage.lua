@@ -82,7 +82,7 @@ Damage.stageOf = stageOf
 -- ruleset that sets critStages cannot just tune the Gen 1 numbers.
 local CRIT_STAGE_DEN = { [0] = 16, 8, 4, 3, 2 }
 
-function Damage.critRoll(ruleset, attacker, moveId, rng, highCrit, data)
+function Damage.critRoll(ruleset, attacker, moveId, rng, highCrit, data, battle)
   rng = rng or love.math.random
   if highCrit == nil then highCrit = HIGH_CRIT[moveId] end
 
@@ -102,14 +102,8 @@ function Damage.critRoll(ruleset, attacker, moveId, rng, highCrit, data)
   end
 
   if ruleset.critStages then
-    local stage = 0
-    if highCrit then stage = stage + 1 end
-    if attacker.focusEnergy then stage = stage + 2 end
-    if attacker.critStage then stage = stage + attacker.critStage end
-    -- SCOPE LENS is +1 for anybody; LUCKY PUNCH and STICK are +2 and are
-    -- dead weight on anything that is not a CHANSEY or a FARFETCH'D
-    stage = stage + HoldItems.critStages(attacker)
-    local den = CRIT_STAGE_DEN[math.max(0, math.min(4, stage))] or 16
+    local stage = require("src.battle.Gen3Critical").stage(battle, attacker, highCrit)
+    local den = CRIT_STAGE_DEN[stage] or 16
     return rng(1, den) == 1
   end
   local function shl(x) return math.min(255, x * 2) end
@@ -266,21 +260,27 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
     crit = false
   end
   if crit == nil then
+    local high = opts.highCrit
+    if high == nil then high = move.highCrit end
     if Runtime.wantsHook("battle.crit") then
+      local gba = opts.battle and require("src.core.GameVersion").isGen3()
+      local stageHigh = high
+      if stageHigh == nil then stageHigh = HIGH_CRIT[move.id] end
       crit = Runtime.call("battle.crit", function(c)
-        return Damage.critRoll(c.ruleset, c.attacker, c.moveId, c.rng, c.highCrit, c.data)
-      end, { ruleset = ruleset, attacker = attacker, moveId = move.id,
+        return require("src.battle.Gen3Critical").roll(c.battle, Damage.critRoll,
+          c.ruleset, c.attacker, c.moveId, c.rng, c.highCrit, c.data)
+      end, { battle = opts.battle, target = defender, ruleset = ruleset, attacker = attacker, moveId = move.id,
              rng = rng,
-             highCrit = opts.highCrit ~= nil and opts.highCrit
-                        or move.highCrit,
+             highCrit = high,
+             moveNum = gba and tonumber(move.index or move.numId) or nil,
+             stage = gba and require("src.battle.Gen3Critical").stage(opts.battle, attacker, stageHigh) or nil,
              data = opts.data })
     else
       -- the record's highCrit (BLAZE KICK, POISON TAIL, the Hoenn moves whose
       -- crit rate is part of the EFFECT rather than a move-record field)
       -- wins over the move's own, which in turn wins over the id table
-      local high = move.highCrit
-      if opts.highCrit ~= nil then high = opts.highCrit end
-      crit = Damage.critRoll(ruleset, attacker, move.id, rng, high, opts.data)
+      crit = require("src.battle.Gen3Critical").roll(opts.battle, Damage.critRoll,
+        ruleset, attacker, move.id, rng, high, opts.data)
     end
   end
 

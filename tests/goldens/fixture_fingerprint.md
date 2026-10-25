@@ -72,3 +72,10 @@ from 1 to 2. Audited fixture digest `d518411055f17444` becomes
 `e4d28f474c15cd8b`). Restoring revision 1 restores the prior full digest;
 all six other populated sections remain unchanged. See
 `docs/native-gba-beat-up-side-parties.md`.
+
+Native critical guards change scripted Beat Up's policy and increment
+`BEAT_UP_EFFECT.rev` from 2 to 3. Audited fixture digest
+`fdbfa30b20cbbaef` becomes `a000e3862d11a73a`; only `move_effects` changes
+(`e4d28f474c15cd8b` to `cca86e08b893522c`). Restoring revision 2 restores
+the former digest. The other six populated sections remain unchanged. See
+`docs/native-gba-critical-context.md`.

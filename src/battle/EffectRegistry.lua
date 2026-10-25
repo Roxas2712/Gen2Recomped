@@ -368,12 +368,23 @@ function EffectRegistry.runDamaging(battle, ctx, record)
         or (record and record.chooseDamage) or not require("src.core.GameVersion").isGen3()) then
       local eventCritical = info.crit
       if info.gbaBeatUp then eventCritical = false end
+      local gba = require("src.core.GameVersion").isGen3()
+      local eventKind
+      if info.gbaBeatUp then eventKind = "special"
+      elseif gba then
+        local physical = info.physical
+        if physical == nil then physical = not require("src.battle.Damage").isSpecial(move.type) end
+        eventKind = physical and "physical" or "special"
+      end
       Runtime.emit("battle.damage_dealt", {
         battle = battle, user = user, target = target, move = move,
         damage = dealt, crit = eventCritical, typeMult = info.eventTypeMult or info.typeMult,
-        substitute = (info.gbaSetDamage or info.gbaBeatUp) and hadSub or nil,
-        kind = info.gbaBeatUp and "special" or nil,
+        substitute = (gba or info.gbaSetDamage or info.gbaBeatUp) and hadSub or nil,
+        kind = eventKind,
       })
+    end
+    if battle.firstBattle then
+      require("src.battle.Gen3Critical").noteHit(battle, user, target, dealt, hadSub)
     end
     if hadSub and not target.substituteHP and not info.gbaBeatUp then
       -- AttackSubstitute: breaking the substitute ends a multi-hit move
