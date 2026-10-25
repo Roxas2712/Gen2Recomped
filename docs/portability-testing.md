@@ -2,7 +2,7 @@
 
 The fork's `codex/portability-testing` branch combines the public API, native
 hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219, #220, #222 and #225 (excluding unrelated #138). It is for testing the
+#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219, #220, #222, #225 and #226 (excluding unrelated #138). It is for testing the
 combined changes before upstream reviews and merges individual PRs. Upstream
 `main` is separate; cartridge-support PRs from other work remain separate.
 
@@ -12,9 +12,56 @@ are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
 The combined runtime tested for this snapshot is
-`e1a9295e57c1545ec69deec2c4541a4da193b7b6`. Its ROM-free run passed
-**243/243 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
+`c1dac0994aa9fe0d1659e510874065697dca2534`. Its ROM-free run passed
+**246/246 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
 Subsequent status commits do not change production code.
+
+[PR #226](https://github.com/UNDERdecoded/Gen2Recomped/pull/226) gives native
+GBA Triple Kick an accuracy check and independent critical/damage calculation
+for each reached kick, assigning power 10/20/30. Public damage wrappers see and
+can change the assigned `ctx.opts.power`. Native continuation handles misses,
+protection/hidden/immunity, Substitute, Endure, Focus Band and sleep/faint;
+Rage runs once at the completed move boundary. Authored count/damage/full/
+never-miss policy and shared static records remain covered separately.
+
+Clean feature runtime `10a5c325a7852c6e8f7fea1502fafd9cfdc4a393` passes
+**2,220 focused checks** and **126/135 engine suites**, SDK 3/3 and B30.
+The exact Counter of 25 inherited FAIL lines across nine suites equals freshly
+retested clean #225 (123/132). Their independent repairs remain green in this
+combined runtime (**246/246**). Both clean runtimes agree with unchanged,
+read-only Gen1 in **108 workers / 76,362 paired observations**. The new mode
+contributes 576 complete rows per profile, including every possible missed
+kick, public power-hook edits, real live lifecycle changes and Rage. All
+bounded RNG calls/values, hook/event observations and battler state remain.
+
+Two actual link roles complete three turns with every paired completed
+hash/component and learned PP equal. Twelve CPU-only scenarios using actual
+FireRed/Emerald imports pass public submission and completed turn/menu:
+ordinary/miss1/miss2/miss3, Substitute break and a faster enemy actually using
+Endure. Unchanged #225 fails 240 assertions; 396/576 complete FireRed rows
+differ with the exact accepted fixture. Initial/negative failures remain.
+Command revision 8 refuses revision 7; party codec stays 1. Native fixture hash
+`b9ec4e8a94f4ba6e` is independently audited from the unchanged #225 hasher with
+only the revision token changed. Other-generation goldens are unchanged.
+
+The earlier missing `RAGE_EFFECT` probe is resolved: pinned Gen1 seeds no GBA
+native move-effect records, while Gen2 exposes its builtin records. A minimal
+authored primary record registers through both public loaders. Native builtin
+capture/delegation is not certified as a shared catalog contract. No Gen1
+modification or publication is needed or performed. Broader catalogs, Sleep
+Talk/other controllers, Ruby/Sapphire scheduling and global RNG/selection or
+full-playthrough parity remain separate work.
+
+All nine #226 workflows await maintainer approval (`action_required`); the
+[dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40171310953)
+has zero jobs. Local acceptance is separate. The app's 100-artifact cap prevents
+another attachment; the regular English PR is published. Evidence:
+`tmp/triple-kick-full-accepted.log`, `tmp/triple-kick-contracts-accepted.json`,
+`tmp/triple-kick-imported-accepted.log`, `tmp/triple-kick-accepted-evidence.json`.
+See [the scoped native Triple Kick contract](native-gen3-triple-kick.md).
+
+Prior #225 results retain runtime `e1a9295e57c1545ec69deec2c4541a4da193b7b6`
+and its 243/243 engine result:
 
 [PR #225](https://github.com/UNDERdecoded/Gen2Recomped/pull/225) replaces
 the default GBA legacy Rage controller with native flag/lifecycle behavior.
