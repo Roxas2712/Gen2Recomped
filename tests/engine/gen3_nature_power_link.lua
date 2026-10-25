@@ -6,7 +6,7 @@ for _, version in ipairs({ "firered", "emerald" }) do
   local current = H.hello(f.game, "battle")
   local old = Copy(current)
   old.nativeBattleRevision = 13
-  T.eq(current.nativeBattleRevision, 14, "Nature Power commands advertise revision fourteen")
+  T.check(current.nativeBattleRevision >= 14, "Nature Power commands advertise at least revision fourteen")
   T.eq(H.checkCompat(current, old), "subset", "old command order cannot admit lockstep")
   for _, host in ipairs({ false, true }) do
     local state = setmetatable(

@@ -12,6 +12,10 @@ GEN1_REF = "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91"
 
 
 MODES = [
+    (3, 'assist'),
+    (3, 'assist_content'),
+    (3, 'assist_held'),
+    (3, 'assist_failed_callers'),
     (3, 'nature_power'),
     (3, 'nature_power_content'),
     (3, 'nature_power_chained'),

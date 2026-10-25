@@ -8314,6 +8314,9 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
       self:sayNext(self:romText("_MoveNoPPText", "No PP left for\nthis move!"))
       return
     end
+    if record and record.gbaAssist and self._gbaMoveFrame then
+      self._gbaMoveFrame.assistPool = require("src.battle.Gen3Assist").pool(self, user)
+    end
     if not (record and record.gbaNaturePower) then moveInst = nativePP.reduce() end
   end
 
@@ -8334,7 +8337,7 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
     local pick = record.callsMove(ctx)
     if not pick and record.gbaNativeChoiceCaller == record.callsMove then
       local frame = self._gbaMoveFrame
-      if frame then frame.finished = true end
+      if frame then frame.finished, frame.nativeNoHistory = true, true end
     end
     -- Mirror Move never plays its own anim (MetronomePickMove does;
     -- MirrorMoveCopyMove only reloads the copied move or prints fail)
@@ -8342,10 +8345,11 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
       self:cancelMoveAnim()
     end
     if pick then
-      if record.gbaNaturePower and GameVersion.isGen3() then require("src.battle.Gen3NaturePower").call(ctx, pick)
+      if record.gbaAssist and GameVersion.isGen3() then require("src.battle.Gen3Assist").call(ctx, pick)
+      elseif record.gbaNaturePower and GameVersion.isGen3() then require("src.battle.Gen3NaturePower").call(ctx, pick)
       elseif record.gbaSleepTalk then require("src.battle.Gen3SleepTalk").call(ctx, pick)
       elseif record.gbaNativeChoiceCaller and record.gbaNativeChoiceCaller == record.callsMove then
-        require("src.battle.Gen3ChoiceBand").call(ctx, pick, target)
+        require("src.battle.Gen3CalledMove").call(ctx, pick)
       else self:performMove(user, target, { id = pick, pp = 1 }, true) end
     end
     return

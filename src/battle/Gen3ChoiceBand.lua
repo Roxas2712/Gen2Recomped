@@ -156,7 +156,7 @@ function C.call(ctx, pick, target, suppressAnimation, spreadContinuation, ppSlot
     error(err, 0)
   end
   ctx.user = parent and parent.user or ctx.user
-  local chained = call.frame and call.frame.nativeCalled or false
+  local chained = call.frame and (call.frame.nativeCalled or call.frame.nativeNoHistory) or false
   if not chained then ctx.user.lastMove = ctx.move.id end
   return chained
 end
