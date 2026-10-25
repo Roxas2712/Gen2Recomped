@@ -35,6 +35,8 @@ function M.tick(self)
     state.stage='resolve'
   end
   if state.stage=='resolve' then
+    if state.retryAt and love.timer.getTime()<state.retryAt then return end
+    state.retryAt=nil
     local wanted=state.plan.downloads[state.cursor]
     if not wanted then state.stage='backup';return end
     local entry=state.byRepo[wanted.repo:lower()]
@@ -44,6 +46,7 @@ function M.tick(self)
       state.job=Task.new(function()
         local query={version=wanted.version};if wanted.tag then query.tag=wanted.tag end
         local code,bytes=Http.request('GET',entry.resolveUrl..'/latest?'..Http.form(query),{headers={Accept='application/json'}})
+        if code==429 then return {rateLimited=true} end
         if code~=200 then return nil,'Repository check failed ('..tostring(code or 'offline')..').' end
         return Json.decode(bytes)
       end)
@@ -51,6 +54,13 @@ function M.tick(self)
     end
     local result=state.job:poll();if not result then return end
     state.job=nil
+    if result.kind=='done' and type(result.first)=='table' and result.first.rateLimited then
+      state.retryCount=(state.retryCount or 0)+1
+      if state.retryCount>3 then stop(self,'ModCompass is busy. Try again later; installed packages are unchanged.');return end
+      state.retryAt=love.timer.getTime()+65
+      message(self,'ModCompass request limit reached. Retrying in 65 seconds; you can cancel the transfer.',true);return
+    end
+    state.retryCount=0
     if result.kind~='done' or not Community.resolve(entry,result.first) or entry.id~=wanted.id then stop(self,'Repository identity could not be verified for '..wanted.id..'.');return end
     local release
     for _,row in ipairs(result.first.releases or {}) do if row.version==wanted.version and (not wanted.tag or row.tag==wanted.tag) then release=row;break end end
@@ -207,6 +217,7 @@ function M.install(RI)
       self._profileCancelRect=nil
       if not state then return original(self,x,y,w,h,...) end
       local s=self._s;local label='MOD PROFILE · '..state.stage:upper()..' · '..(state.title or '')
+      if state.retryAt then label=label..' · RETRY IN '..math.max(0,math.ceil(state.retryAt-love.timer.getTime()))..'s' end
       if state.total then label=label..string.format(' · %.1f / %.1f MB',(state.bytes or 0)/1048576,state.total/1048576) end
       love.graphics.setFont(self.hintFont);RI._ui.col(RI.palette().link)
       love.graphics.printf(label,x,y,math.max(60,w-110*s),'left')

@@ -94,4 +94,17 @@ check(changedSave._profileApplying.plan.resume.generation==1,'the save generatio
 for _=1,30 do if changedSave._profileApplying.stage=='backup' then break end;changedSave:update(0) end
 save.fingerprint='changed';sequence={};accepted=false;changedSave:update(0)
 check(not changedSave._profileApplying and #sequence==0 and not accepted,'a save changed during download is refused before any mod backup or replacement')
+plan.resume=nil;local clock=0;love.timer.getTime=function() return clock end
+local requestCount=0
+package.loaded['src.cloud.Http'].request=function(_,url)
+ requested[#requested+1]=url;requestCount=requestCount+1
+ if requestCount==1 then return 429,{} end
+ return 200,docs[url]
+end
+local limited=ui();sequence={};limited:_communityApplyProfile(plan)
+limited:update(0)
+check(limited._profileApplying and limited._profileApplying.retryAt==65 and #sequence==0,'a temporary source rate limit pauses without changing or redownloading installed mods')
+limited:update(0);check(requestCount==1,'a retry delay never blocks the UI or hammers the source endpoint')
+clock=65;drain(limited)
+check(not limited._profileApplying and requestCount==3,'a staged profile resumes after the source cooldown')
 print('Launcher mod profiles: '..n..' checks passed')
