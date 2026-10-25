@@ -1525,6 +1525,7 @@ function Loader:load(data)
   ModSeams.unwindAll()
   self.baseData = data
   require("src.core.Gen2SpeciesNames").publish(data)
+  require("src.pokemon.Gen2Mail").load(data)
   require("src.mods.TextContent").prepare(self, data)
   -- every registry folds against the pristine view of its Data target;
   -- resolution is lazy so optional namespaces may appear later

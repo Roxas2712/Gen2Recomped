@@ -171,7 +171,7 @@ PlayerPC.toss = toss
 
 function PlayerPC.new(game)
   game.save.pcItems = game.save.pcItems or {}
-  return Menu.new(game, {
+  local items={
     -- keepOpen so B in the item lists returns here instead of dropping the
     -- whole PC session (players_pc.asm re-shows the PC menu); same pattern
     -- as BoxMenu's rows
@@ -181,7 +181,13 @@ function PlayerPC.new(game)
     { label = Strings("LOG OFF") },
     -- silent PC session (BIT_NO_MENU_BUTTON_SOUND); players_pc.asm
     -- PlayersPCMenu TextBoxBorder (0,0) b=8 c=14 → 16x10
-  }, { tx = 0, ty = 0, tw = 16, th = 10, noSound = true })
+  }
+  if require("src.core.GameVersion").isGen2() then
+    table.insert(items,#items,{label=Strings("MAILBOX"),keepOpen=true,onSelect=function()
+      game.stack:push(require("src.ui.Gen2MailboxMenu").new(game))
+    end})
+  end
+  return Menu.new(game,items,{tx=0,ty=0,tw=16,th=#items*2+2,noSound=true})
 end
 
 return PlayerPC
