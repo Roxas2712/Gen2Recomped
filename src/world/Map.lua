@@ -11,6 +11,16 @@ local Map = {}
 Map.__index = Map
 local GameVersion = require("src.core.GameVersion")
 
+-- A layout observes the same native writes, including ordinary script writes.
+function Map:noteGridChange()
+  self.gridRevision = (self.gridRevision or 0) + 1
+  if self._layoutProjection then self._layoutProjection:syncOverrides() end
+end
+
+function Map:gen3Layout()
+  return require("src.core.game3.layout_native").fromMap(self)
+end
+
 -- A GEN 3 LAYOUT KEEPS ITS METATILE GRID AS A PACKED BYTE STRING.
 --
 -- Emerald has 324,579 metatile cells across its 441 layouts and each one is a
@@ -610,6 +620,8 @@ function Map.isSmashable(objDef)
 end
 
 function Map:blockAt(bx, by)
+  local outside = self.layoutOutside and self.layoutOutside[bx .. ":" .. by]
+  if outside then return outside.mid end
   if bx < 0 or by < 0 or bx >= self.def.width or by >= self.def.height then
     return self.def.borderBlock
   end
@@ -759,6 +771,8 @@ end
 -- standing at -- and 15 is the "under a bridge" marker.  That is why the
 -- rule below is a mismatch test and not an equality test.
 function Map:cellElevation(cx, cy)
+  local outside = self.layoutOutside and self.layoutOutside[cx .. ":" .. cy]
+  if outside then return outside.elev end
   local cells = self.def.elevationCells
   if not cells then return nil end
   if cx < 0 or cy < 0 or cx >= self.widthCells or cy >= self.heightCells then
@@ -1002,7 +1016,6 @@ function Map:setBlock(bx, by, block, impassable)
   end
   local i = by * self.def.width + bx + 1
   self.blockPatch[i] = block
-  self.gridRevision = (self.gridRevision or 0) + 1
   -- THE PICTURE HAS TO CATCH UP, and on the cartridge it always does: an
   -- ON_LOAD callback runs while the map is still being built, so the six
   -- metatiles that close a Regi chamber are simply what gets drawn.  Here the
@@ -1043,6 +1056,7 @@ function Map:setBlock(bx, by, block, impassable)
     self.shutCells = self.shutCells or {}
     self.shutCells[bx .. ":" .. by] = impassable or nil
   end
+  self:noteGridChange()
 end
 
 -- ...and putting one back the way it was.  `setBlock` overwrites a cell for
@@ -1059,7 +1073,7 @@ function Map:clearBlock(bx, by)
   if self.collisionPatch then self.collisionPatch[i] = nil end
   if self.elevationPatch then self.elevationPatch[i] = nil end
   if self.shutCells then self.shutCells[bx .. ":" .. by] = nil end
-  self.gridRevision = (self.gridRevision or 0) + 1
+  self:noteGridChange()
   self.blocksDirty = true
 end
 
@@ -1078,12 +1092,14 @@ function Map:setCellShut(cx, cy, shut)
   self.collisionPatch = self.collisionPatch or {}
   self.shutCells[cx .. ":" .. cy] = shut and true or nil
   self.collisionPatch[cy * self.def.width + cx + 1] = shut and 1 or 0
-  self.gridRevision = (self.gridRevision or 0) + 1
+  self:noteGridChange()
   return true
 end
 
 -- What the collision bits say about a cell, with any runtime change applied.
 function Map:cellCollision(cx, cy)
+  local outside = self.layoutOutside and self.layoutOutside[cx .. ":" .. cy]
+  if outside then return outside.coll end
   local cells = self.def.collisionCells
   if cx < 0 or cy < 0 or cx >= self.def.width or cy >= self.def.height then
     return cells and 1 or 0
@@ -1103,14 +1119,16 @@ end
 function Map:clearBlockPatches()
   self.gen3LayoutOverride = nil
   if next(self.blockPatch) == nil and next(self.collisionPatch) == nil
-      and next(self.elevationPatch) == nil and next(self.shutCells) == nil then
+      and next(self.elevationPatch) == nil and next(self.shutCells) == nil
+      and not (self.layoutOutside and next(self.layoutOutside)) then
     return false
   end
   self.blockPatch = {}
   self.collisionPatch = {}
   self.elevationPatch = {}
   self.shutCells = {}
-  self.gridRevision = (self.gridRevision or 0) + 1
+  self.layoutOutside = nil
+  self:noteGridChange()
   self.blocksDirty = nil
   return true
 end
@@ -1257,7 +1275,7 @@ function Map:setGen3Cells(rows)
     end
   end
   if changed > 0 then
-    self.gridRevision = (self.gridRevision or 0) + 1
+    self:noteGridChange()
     self.blocksDirty = true
   end
   return changed
