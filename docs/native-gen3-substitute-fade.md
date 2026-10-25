@@ -1,6 +1,6 @@
-# Native GBA Substitute fade — development checkpoint
+# Native GBA Substitute fade
 
-This branch extends Focus Band presentation at `f4ef88f0`. Native damage
+This controller extends Focus Band presentation. Native damage
 queues `SUBSTITUTE_FADE` before the break message and preserves the visible
 doll while logical protection is removed. Actual playback executes the native
 three-callback alpha decrement, white palette ramp, copied-background lifetime,
@@ -19,7 +19,7 @@ the complete battler wrapper applies its live alpha. Color and blend mode are
 restored after drawing. CPU graphics doubles exercise actual drawing methods;
 no GPU application or normal save/cache is opened.
 
-Evidence before the frozen regression run:
+Controller evidence:
 
 - **288 paired fade inputs / 23,488 tick states**, every captured field equal
   through the unchanged reference sequencer/VM and actual host battle queue.
@@ -36,9 +36,10 @@ Evidence before the frozen regression run:
   picture coordinates; Emerald uses owned data through the virtual cache.
   The corrected fixture explicitly validates each edition's expected input.
 
-The reference is read-only at
-`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`. Full command-matrix and complete
-regression gates remain pending at this checkpoint. Broader Mirror Move
-history/link/import/public-submit gates and native protocol review still
-precede final publication and playable-branch integration. This is neither a
-GPU scene-parity claim nor an accepted PR.
+The frozen fade runtime completes 162/171 engine suites, SDK 3/3 and B30,
+with exactly the same 25 inherited FAIL lines as fresh #258. Its complete
+32-worker matrix passes 14,528 paired cases; the later history extension
+passes 14,816. Native revision 17 and linked/imported qualification are
+documented in `native-gen3-mirror-move.md`. The reference is read-only at
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`. CPU state/draw results are not
+a final GPU scene-parity claim.
