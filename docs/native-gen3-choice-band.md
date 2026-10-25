@@ -26,7 +26,45 @@ command rather than inheriting the native caller's early return.
 
 Choice identity participates in GBA link state and public-intent staleness.
 The native command revision is 11; the party codec remains 1. The independent
-revision-token fingerprint audit and updated native golden are still pending.
+revision-token audit reproduces `3e2986da83083f86` using the unchanged #230
+hasher and only revision 10 -> 11; older-generation digests remain unchanged.
+
+GBA Struggle skips STAB and the type chart while retaining its normal base,
+critical and random-damage commands. The new planned-execution comparison
+exposed this existing damage gap, including excess recoil.
+
+Real link simulations run held scans and planner/speed reads in canonical
+host/guest order. The initial item-entry batch waits for both send-outs;
+later individual switches keep their normal entry command. Host, guest and
+the actual spectator compare complete ordered held traces, including entry,
+priority, damage, move-end and residual calls. A stateful damage override
+depends on all earlier reads. No payloads are filtered from this comparison.
+
+## Development evidence
+
+Before final fixture formatting, focused comparisons pass against the clean,
+unchanged Gen1 reference: 80 move-end rows, 180 selection-mask/manual rows,
+228 planned/executed rows and 288 ordinary-wild selection/planning rows.
+The planner rows retain all recorded RNG calls, events, HP, learned moves,
+current/replaced PP and complete planner held payloads. Their execution phase
+does not record the full held-script trace; the separate command and link
+probes have their explicitly different boundaries.
+
+Public Loader snapshots/submission, stale offers and the actual keyboard /
+message queue refusal return pass 134 assertions. Actual host/guest/spectator
+menus and two completed turns pass 86 assertions, with all captured held
+reads and peer state components equal. Final formatted reruns, full suites,
+negative controls, more caller/switch coverage and import acceptance are
+still required. These are development results, not PR acceptance.
+
+Retained local evidence lives under `tmp/choice-band-qa/`: failed
+`planning-first`, `planning-unbound-fixed`, `wild-first`, `public-first`,
+`link-first`, `link-canonical-order` and `link-spectator-first` probes;
+passing `selection-fixed`, `planning-struggle-fixed`, `wild-input-fixed`,
+`public-helper-fixed`, `link-canonical-all-phases`,
+`link-spectator-input-fixed` and `hash-audit` results. Early planner/wild/UI
+fixture errors and genuine runtime mismatches are kept separately in those
+raw outputs. Initial full link traces failed even when turn hashes matched.
 
 ## Required validation before a PR
 
@@ -49,4 +87,4 @@ revision-token fingerprint audit and updated native golden are still pending.
 - Run imported-data scenarios, scoped AST-verified formatting and actionlint.
   Publish a regular English Gen2 PR only after acceptance; Gen1 stays read-only.
 
-No runtime or contract test has yet been run for this development branch.
+No complete feature/combined acceptance or PR publication is claimed yet.

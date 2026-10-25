@@ -471,6 +471,9 @@ end
 function HeldItems.onEntry(battle, holder)
   if not (battle and isAlive(holder)) then return false end
   if require("src.core.GameVersion").isGen3() then
+    if battle._gbaInitialItemEntries then
+      return require("src.battle.GbaItemSchedule").initialLinkEntry(battle, holder)
+    end
     return battle:holdItemTrigger(holder, "entry")
   end
   -- PLATINUM'S AMULET COIN counts on EITHER side: battle_lib.c's

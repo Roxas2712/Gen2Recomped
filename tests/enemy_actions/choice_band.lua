@@ -1,7 +1,7 @@
 -- Controlled native-shaped inputs. The source engine and its handlers remain
 -- unchanged; all mounted item/move tables belong to this fixture.
 local M = {}
-local NUMBERS = { TACKLE = 33, SCRATCH = 10, STRUGGLE = 165, SLEEP_TALK = 214, BATON_PASS = 226 }
+local NUMBERS = { TACKLE = 33, SCRATCH = 10, FLY = 19, STRUGGLE = 165, SLEEP_TALK = 214, BATON_PASS = 226 }
 function M.fixture(root, backend, version)
   local native = backend == "gen1"
   local f = dofile(root .. "/tests/enemy_actions/fixture.lua").new(
@@ -114,6 +114,50 @@ function M.fixture(root, backend, version)
   end
   function f.moveId(name)
     return native and NUMBERS[name] or f.ids[name]
+  end
+  function f.at(b, id)
+    return native and b.battlers[id] or b:battlerAt(id)
+  end
+  function f.field(double)
+    local b = f.fresh("TACKLE").battle
+    b.double = double
+    if not native then
+      b:syncSides()
+    end
+    if double then
+      local Copy = require("src.mods.Merge").deepCopy
+      for id = 2, 3 do
+        local mon = Copy(f.at(b, id % 2).mon)
+        if native then
+          b.battlers[id] = require("src.core.game3.battle.state").makeBattler(
+            mon,
+            id % 2 == 0 and "player" or "enemy",
+            { id = id, partyIndex = 2 }
+          )
+        else
+          b:placeBattler(id, require("src.battle.BattleState").makeBattler(f.data, mon, id % 2 == 0))
+        end
+      end
+    end
+    if not native then
+      b:syncSides()
+    end
+    for id = 0, double and 3 or 1 do
+      local a = f.at(b, id)
+      a.mon.nickname, a.mon.hp = "P" .. id, 400
+      f.moves(a, { "TACKLE", "SCRATCH", "SLEEP_TALK", "STRUGGLE" })
+      f.hold(a, nil)
+      if native then
+        a.mon.maxHp, a.type1, a.type2, a.ability, a.mon.ability = 400, 0, 0, 0, 0
+        a.mon.attack, a.mon.defense, a.mon.spAtk, a.mon.spDef, a.mon.speed = 50, 50, 50, 50, 100 - id * 10
+      else
+        a.curTypes, a.abilityOverride, a.mon.stats.hp = { "NORMAL" }, false, 400
+        a.curStats.attack, a.curStats.defense, a.curStats.spatk, a.curStats.spdef = 50, 50, 50, 50
+        a.curStats.speed = 100 - id * 10
+      end
+    end
+    b.phase, b.queue, b.current = "moveSelect", {}, nil
+    return b
   end
   return f
 end

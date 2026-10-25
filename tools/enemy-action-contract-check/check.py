@@ -11,6 +11,43 @@ import sys
 GEN1_REF = "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91"
 
 
+MODES = [
+    (2, 'choices'),
+    (3, 'choices'),
+    (3, 'arguments'),
+    (3, 'records'),
+    (3, 'targets'),
+    (3, 'follow_me'),
+    (3, 'helping_hand'),
+    (3, 'spit_up'),
+    (3, 'beat_up'),
+    (3, 'beat_up_content'),
+    (3, 'beat_up_adjustment'),
+    (3, 'beat_up_side_party'),
+    (3, 'critical_context'),
+    (3, 'constrained_party'),
+    (3, 'accuracy'),
+    (3, 'accuracy_execution'),
+    (3, 'secondary'),
+    (3, 'secondary_execution'),
+    (3, 'party_codec'),
+    (3, 'party_codec_hooks'),
+    (3, 'lock_on'),
+    (3, 'baton_pass'),
+    (3, 'encore'),
+    (3, 'disable'),
+    (3, 'multi_hit'),
+    (3, 'rage'),
+    (3, 'triple_kick'),
+    (3, 'sleep_talk'),
+    (3, 'sleep_talk_content'),
+    (3, 'choice_band_command'),
+    (3, 'choice_band_selection'),
+    (3, 'choice_band_planning'),
+    (3, 'choice_band_wild'),
+]
+
+
 def git(root, *args):
     return subprocess.check_output(["git", "-C", str(root), *args], text=True).strip()
 
@@ -21,6 +58,8 @@ def main():
     parser.add_argument("--gen2", type=Path, default=Path(__file__).resolve().parents[2])
     parser.add_argument("--lua", default=os.environ.get("LUA", "luajit"))
     parser.add_argument("--report", required=True, type=Path)
+    parser.add_argument("--mode", action="append", choices=sorted({name for _, name in MODES}),
+                        help="Run selected modes; omission runs every contract")
     args = parser.parse_args()
     source, host = args.gen1.resolve(), args.gen2.resolve()
     if git(source, "rev-parse", "HEAD") != GEN1_REF or git(source, "status", "--porcelain"):
@@ -33,7 +72,9 @@ def main():
                                  for p in paths}, "runs": [], "comparisons": []}
     failed = False
     for version in ("firered", "emerald"):
-        for api, mode in ((2, "choices"), (3, "choices"), (3, "arguments"), (3, "records"), (3, "targets"), (3, "follow_me"), (3, "helping_hand"), (3, "spit_up"), (3, "beat_up"), (3, "beat_up_content"), (3, "beat_up_adjustment"), (3, "beat_up_side_party"), (3, "critical_context"), (3, "constrained_party"), (3, "accuracy"), (3, "accuracy_execution"), (3, "secondary"), (3, "secondary_execution"), (3, "party_codec"), (3, "party_codec_hooks"), (3, "lock_on"), (3, "baton_pass"), (3, "encore"), (3, "disable"), (3, "multi_hit"), (3, "rage"), (3, "triple_kick"), (3, "sleep_talk"), (3, "sleep_talk_content")):
+        for api, mode in MODES:
+            if args.mode and mode not in args.mode:
+                continue
             values = {}
             for backend, root in (("gen1", source), ("gen2", host)):
                 cmd = [args.lua, str(host / "tools/enemy-action-contract-check/worker.lua"),

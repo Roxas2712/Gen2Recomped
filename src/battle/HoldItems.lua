@@ -49,8 +49,15 @@ end
 -- no name for comes back as a number and matches no rule below, which is
 -- the same silence an unknown ability gets.
 local function nativeEffect(battler, native)
-  if type(native) == "table" then return native.effect, native.parameter, HoldItems.defOf(battler) end
-  local def = HoldItems.defOf(battler)
+  local def, item = HoldItems.defOf(battler)
+  -- The native Choice Band entry is intrinsic (ITEM_HOLD[186]); mutable
+  -- descriptive metadata cannot remove it. Public hook substitutions still
+  -- run below, and item ids in other generations keep their existing reader.
+  if require("src.core.GameVersion").isGen3()
+      and (tonumber(item) or tonumber(def and def.index)) == 186 then
+    return "CHOICE_BAND", 0, def
+  end
+  if type(native) == "table" then return native.effect, native.parameter, def end
   if not def then return nil end
   local effect,param=require('src.inventory.PolishedBerries').held(def,battler.mon)
   if effect then return effect,param,def end
