@@ -65,3 +65,10 @@ digest `397df21576af62f1` becomes `d518411055f17444`; only `move_effects`
 changes (`c62807cde682a669` to `f45a80ce5e45ef42`). Removing the revision
 restores the former full digest. Other sections and mutation checks remain
 unchanged. See `docs/native-gba-beat-up.md`.
+
+Beat Up's native joined side-party execution increments `BEAT_UP_EFFECT.rev`
+from 1 to 2. Audited fixture digest `d518411055f17444` becomes
+`fdbfa30b20cbbaef`; only `move_effects` changes (`f45a80ce5e45ef42` to
+`e4d28f474c15cd8b`). Restoring revision 1 restores the prior full digest;
+all six other populated sections remain unchanged. See
+`docs/native-gba-beat-up-side-parties.md`.
