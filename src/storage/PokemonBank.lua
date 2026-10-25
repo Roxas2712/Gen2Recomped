@@ -54,7 +54,7 @@ function B.readSave(version,slot)
 end
 local function cacheTable(version,name)
   local Cache=require('src.import.CacheFs');local previous=Cache.prefix
-  Cache.prefix=Versions.VERSIONS[version].cachePrefix
+  Cache.prefix=Versions.cachePrefix(version)
   local ok,bytes=pcall(Cache.read,'data/generated/'..name..'.lua');Cache.prefix=previous
   if not ok or type(bytes)~='string' then return nil end
   local chunk=loadstring(bytes,'@bank-rom-'..version..'-'..name)
@@ -64,13 +64,14 @@ end
 local datasets={}
 function B.data(version)
   if not Versions.VERSIONS[version] then return nil,'Unknown game.' end
-  if datasets[version] then return datasets[version] end
+  local cacheKey=version..':'..Versions.cachePrefix(version)
+  if datasets[cacheKey] then return datasets[cacheKey] end
   local data={}
   for _,name in ipairs({'pokemon','moves','items','constants','save_layout'}) do data[name]=cacheTable(version,name) end
   if not data.pokemon or not data.moves then return nil,'Import this game before using its Bank.' end
   data.items=data.items or {};data.constants=data.constants or {}
   local Records=require('src.pokemon.SpeciesRecords');Records.species(data.pokemon);Records.constants(data.constants)
-  datasets[version]=data;return data
+  datasets[cacheKey]=data;return data
 end
 local function canonical(mon,data)
   local def=data.pokemon[mon.species] or {}
@@ -170,7 +171,12 @@ function B.convert(entry,version,data,allowAdaptation)
   end
   if not def then return nil,'Species '..tostring(original)..' is unavailable in this game.' end
   local systemEncounter=entry.origin and entry.origin.kind=='retrorecomp_wonder'
-  if systemEncounter then
+  local gift=entry.origin and entry.origin.kind=='retrorecomp_gift'
+  if gift then
+    local reward,why=require('src.storage.GiftReward').build(entry,mon.species,data,version)
+    if not reward then return nil,why end
+    mon=reward
+  elseif systemEncounter then
     local reward,why=require('src.storage.WonderReward').build(entry,mon.species,data)
     if not reward then return nil,why end
     mon=reward
@@ -220,7 +226,7 @@ function B.convert(entry,version,data,allowAdaptation)
   local modern=Stats.isGen3(def)
   local adapt=modern~=(type(mon.ivs)=='table')
   if adapt and not allowAdaptation then return nil,'This copy needs IV/DV and training adaptation for the destination generation.' end
-  local note=heldNote or systemEncounter and 'System Wonder Trade encounter · OT RetroRecomp · native learnset and deterministic genetics.' or nil
+  local note=heldNote or gift and 'Gift code reward · OT RetroRecomp · deterministic genetics and edition-specific data.' or systemEncounter and 'System Wonder Trade encounter · OT RetroRecomp · native learnset and deterministic genetics.' or nil
   if adapt then
     note=(note and note..' ' or '')..'IV/DV and training adapted; nature and ability follow the destination. The original remains in your Bank.'
     if modern then

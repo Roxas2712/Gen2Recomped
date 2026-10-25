@@ -20,6 +20,11 @@ check(not R.open() and R.signedIn(),'service downtime keeps the same device cred
 status=401;body='{}'
 check(not R.open() and not R.signedIn() and not files[R.FILE],'server revocation removes the invalid device credential')
 assert(R.acceptConnection({access_token=token,expires_in=3600,email='fixture@example.test',account_id='17'}))
+local newer=string.rep('b',64)
+assert(R.acceptConnection({access_token=newer,expires_in=3600,email='second@example.test',account_id='18'}))
+R.expire(token)
+check(R.signedIn() and R.accountId()=='18','late revocation of an old token cannot disconnect a newer login')
+check(not R.acceptAccount({account_id='17',email='wrong@example.test'}) and R.accountId()=='18','a mismatched account response cannot reassign stored device credentials')
 status=200;R.signOut()
 check(not fresh().signedIn() and not files[R.FILE],'explicit sign-out remains signed out after restarting')
 print('Persistent device session: '..n..' checks passed')

@@ -51,7 +51,9 @@ local function registry()
  return r or {schema=1,accounts={}}
 end
 function C.refresh()
- C.active={};C.account=account();local r=registry();local rows=r and r.accounts[C.account or ''] or {}
+ C.active={};C.account=account()
+ if type(C.account)~='string' or not C.account:match('^[1-9][0-9]*$') then return end
+ local r=registry();local rows=r and r.accounts[C.account] or {}
  for v,id in pairs(rows or {}) do
   if Versions.VERSIONS[v] and digest(id) then
    local root='launcher/private_games/'..C.account..'/'..id..'/'
@@ -60,7 +62,7 @@ function C.refresh()
   end
  end
 end
-function C.prefix(version) return C.account==account() and C.active and C.active[version] and C.active[version].root end
+function C.prefix(version) return C.account~=nil and C.account==account() and C.active and C.active[version] and C.active[version].root end
 function C.identity(version) return C.prefix(version) and C.active[version].id end
 function C.detach(version)
  local r,why=registry();if not r then return nil,why end

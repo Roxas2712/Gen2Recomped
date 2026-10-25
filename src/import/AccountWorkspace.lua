@@ -6,19 +6,50 @@ local function inputMode(f,id)
   f.focus=id
   if love.keyboard and love.keyboard.setTextInput then love.keyboard.setTextInput(id~=nil) end
 end
-local function clearSecrets(f) f.password='';f.confirmation='';f.code='' end
+local function clearSecrets(f) f.password='';f.confirmation='';f.code='';f.giftCode='';f.rolePassword='';f.createdGift=nil end
 local function job(self,purpose,fn)
   local f=self._accountOverlay;if f.job then return end
   local task,why=Task.new(fn);f.job=task;f.purpose=purpose
   f.notice=task and 'Connecting securely...' or tostring(why)
   inputMode(f,nil)
 end
+local function devices()
+  local doc,why=A.devices()
+  if doc and A.profile then doc.profile,doc.profileError=A.profile() end
+  return doc,why
+end
+local function avatarImage(bytes)
+  if type(bytes)~='string' or #bytes>2*1024*1024 or not require('src.import.ImageBounds').allowed(bytes,2048) then return nil,'Choose a PNG, JPEG or WebP up to 2048 pixels and 2 MB.' end
+  local ok,image=pcall(function()
+    local pixels=love.image.newImageData(love.filesystem.newFileData(bytes,'profile-image.png'))
+    local w,h=pixels:getDimensions();if w>2048 or h>2048 then error('Choose an image up to 2048 pixels per side.',0) end
+    local image=love.graphics.newImage(pixels);image:setFilter('linear','linear');return image
+  end)
+  return ok and image or nil,not ok and tostring(image) or nil
+end
+function W.avatarBytes(self,bytes)
+  local f=self._accountOverlay
+  if not f or f.mode~='account' or not Auth.signedIn() then return end
+  local image,why=avatarImage(bytes);if not image then f.notice=why;return end
+  f.avatarImage=image;f.avatarBytes=bytes;f.avatarRights=false;f.notice='Image preview is local. Confirm the image rights and save to use it on your other devices.'
+  return true
+end
+local function profile(self,doc)
+  local f=self._accountOverlay;f.profile=doc;f.nickname=doc.name;f.friendTag=doc.friend_tag;f.profileName=doc.name;f.avatarBytes=nil;f.avatarRights=false;f.avatarImage=nil
+  if type(doc.avatar)=='table' and type(doc.avatar.image_base64)=='string' then
+    local ok,bytes=pcall(love.data.decode,'string','base64',doc.avatar.image_base64)
+    if ok then
+      local digest=love.data.encode('string','hex',love.data.hash('sha256',bytes))
+      if digest==doc.avatar.sha256 then f.avatarImage=avatarImage(bytes) end
+    end
+  end
+end
 function W.open(self,after)
   if self._developerOverlay then require('src.import.DeveloperWorkspace').close(self) end
   local choice=type(after)=='table' and after.storagePrompt and not (Auth.accountId and Auth.accountId())
   self._accountOverlay={mode=choice and 'storage_choice' or Auth.signedIn() and 'account' or 'login',after=after,email='',name='',password='',confirmation='',code='',repositories={''},restore=true,rects={},scroll=0,accountAtOpen=Auth.accountId and Auth.accountId()}
   if choice then return end
-  job(self,Auth.signedIn() and 'devices' or 'policy',Auth.signedIn() and A.devices or A.policy)
+  job(self,Auth.signedIn() and 'devices' or 'policy',Auth.signedIn() and devices or A.policy)
 end
 function W.close(self)
   local f=self._accountOverlay;if f then if f.job then f.job:cancel() end;clearSecrets(f);f.challenge=nil;inputMode(f,nil) end
@@ -84,7 +115,57 @@ function W.action(self,id)
     elseif f.challenge then local challenge,code=f.challenge,f.code;job(self,'auth',function() return A.complete(challenge,code) end);clearSecrets(f) end
   elseif id=='resend' and f.challenge then local challenge=f.challenge;job(self,'resend',function() return A.resend(challenge) end)
   elseif id=='operator' and f.policy and f.policy.operator_url=='https://pokexpert.de/impressum' then love.system.openURL(f.policy.operator_url)
-  elseif id=='devices' then job(self,'devices',A.devices)
+  elseif id=='chooseAvatar' then
+    local path=self._ui.chooseFileByExt({'png','jpg','jpeg','webp'},'profile image')
+    if not path then f.notice='Drop a PNG, JPEG or WebP here to preview your profile image.';return end
+    local file=io.open(path,'rb');if not file then f.notice='The profile image could not be read.';return end
+    local bytes=file:read(2*1024*1024+1);file:close();W.avatarBytes(self,bytes)
+  elseif id=='saveProfile' then
+    if f.avatarBytes and not f.avatarRights then f.notice='Confirm your image rights before uploading.';return end
+    local payload={name=f.profileName}
+    if f.avatarBytes then payload.image_base64=love.data.encode('string','base64',f.avatarBytes);payload.avatar_rights=true end
+    job(self,'profile',function() return A.profile(payload) end)
+  elseif id=='resetAvatar' then job(self,'profile',function() return A.profile({reset_avatar=true}) end)
+  elseif id=='roles' then f.mode='roles';f.scroll=0;f.roleTarget='';f.roleChoice='retro_admin';f.roleReason=''
+  elseif id=='roleChoice' then f.roleChoice=f.roleChoice=='retro_admin' and 'retro_superuser' or f.roleChoice=='retro_superuser' and 'player' or 'retro_admin'
+  elseif id=='saveRole' then
+    local payload={friend_tag=f.roleTarget,role=f.roleChoice,password=f.rolePassword,reason=f.roleReason};f.rolePassword=''
+    job(self,'roles',function() return A.grantRole(payload) end)
+  elseif id=='gifts' then f.mode='gifts';f.scroll=0;f.giftEdition=f.giftEdition or 'crystal';job(self,'gifts',A.gifts)
+  elseif id=='giftEdition' then
+    local versions=require('src.core.GameVersion').ORDER;local at=1
+    for i,v in ipairs(versions) do if v==f.giftEdition then at=i end end
+    repeat at=at%#versions+1 until versions[at]~='prism' and versions[at]~='polishedcrystal'
+    f.giftEdition=versions[at]
+  elseif id=='redeemGift' then
+    local code,edition=f.giftCode or '',f.giftEdition or 'crystal';f.giftCode=''
+    job(self,'giftReceived',function() return require('src.cloud.GiftCodes').redeem(code,edition) end)
+  elseif id:match('^restoreGift:') then
+    local receipt=f.gifts and f.gifts.receipts[tonumber(id:match(':(%d+)$'))]
+    if receipt then job(self,'giftReceived',function() return require('src.cloud.GiftCodes').keep(receipt) end) end
+  elseif id=='newGift' then f.createdGift=nil;f.giftEgg=false;f.giftShiny=false;f.mode='giftAdmin';f.giftTitle='';f.giftLimit='';f.giftDex='25';f.giftLevel='5';f.giftMoves='';f.giftSelected={crystal=true};f.scroll=0
+  elseif id:match('^giftFor:') then local version=id:sub(9);f.giftSelected[version]=not f.giftSelected[version]
+  elseif id=='copyGiftCode' and f.createdGift and love.system.setClipboardText then love.system.setClipboardText(f.createdGift.code);f.notice='Gift code copied.'
+  elseif id=='createGift' then
+    local editions={};for _,v in ipairs(require('src.core.GameVersion').ORDER) do if (f.giftSelected or {})[v] then editions[#editions+1]=v end end
+    local moves={};for move in (f.giftMoves or ''):upper():gmatch('[A-Z0-9]+') do moves[#moves+1]=move end
+    local payload={title=f.giftTitle,editions=editions,dex=tonumber(f.giftDex),level=tonumber(f.giftLevel),egg=f.giftEgg==true,shiny=f.giftShiny==true,moves=moves,redemption_limit=tonumber(f.giftLimit)}
+    job(self,'giftCreated',function() return A.createGift(payload) end)
+  elseif id:match('^giftActive:') then
+    local campaign=f.gifts and f.gifts.campaigns[tonumber(id:match(':(%d+)$'))]
+    if campaign then job(self,'giftActive',function() return A.activateGift(campaign.id,not campaign.active) end) end
+  elseif id=='friends' then f.mode='friends';f.scroll=0;job(self,'friends',A.friends)
+  elseif id=='findFriend' then local tag=f.friendQuery or '';job(self,'findFriend',function() return A.findPlayer(tag) end)
+  elseif id=='addFriend' then local player=f.friendQuery or '';job(self,'friends',function() return A.addFriend(player) end)
+  elseif id:match('^friendAccept:') or id:match('^friendRemove:') then
+    local peer=id:match(':(.+)$');local accept=id:match('^friendAccept:')~=nil
+    job(self,'friends',function() return A.friendAction(peer,accept) end)
+  elseif id=='online' or id=='onlineNext' or id=='onlinePrevious' then
+    f.mode='online';f.scroll=0
+    f.onlinePage=math.max(1,(f.onlinePage or 1)+(id=='onlineNext' and 1 or id=='onlinePrevious' and -1 or 0))
+    local page=f.onlinePage;job(self,'online',function() return A.online(page) end)
+  elseif id=='account' then f.mode='account';f.scroll=0;job(self,'devices',devices)
+  elseif id=='devices' then job(self,'devices',devices)
   elseif id=='sync' then W.close(self);self:_storageSync()
   elseif id=='linkStorage' then
     if not f.storageConsent then f.notice='Confirm that these local saves and Bank should belong to this account first.';return end
@@ -105,16 +186,27 @@ function W.tick(self)
   local purpose=f.purpose;f.job=nil
   if r.kind~='done' or not r.first then f.notice=tostring(r.second or r.error or 'Account unavailable.');return end
   local doc=r.first
-  if purpose=='policy' then f.policy=doc;f.notice=nil
+  if purpose=='roles' then f.notice='Permissions saved · '..tostring(doc.permissions and doc.permissions.role)..'. The protected operator keeps their role.'
+  elseif purpose=='gifts' then f.gifts=doc;f.notice=nil
+  elseif purpose=='giftReceived' then f.notice=(doc.alreadyRedeemed and 'Already claimed · ' or 'Gift in your Bank · ')..tostring(doc.title)..'. The same gift can be restored on your other devices.'
+  elseif purpose=='giftCreated' then f.createdGift=doc;f.notice='Gift code created. Copy it now; the plaintext code is not kept in the campaign list.'
+  elseif purpose=='giftActive' then job(self,'gifts',A.gifts)
+  elseif purpose=='profile' then profile(self,doc);f.notice='Profile saved for all your devices. Custom avatars stay private until their public review is complete.'
+  elseif purpose=='findFriend' then f.foundFriend=doc;f.notice='Player found: '..tostring(doc.friend_tag)..'. Send a friend request to connect.'
+  elseif purpose=='friends' then f.social=doc;require('src.cloud.Presence').accept(doc);f.notice=nil
+  elseif purpose=='online' then f.online=doc;f.notice=nil
+  elseif purpose=='policy' then f.policy=doc;f.notice=nil
   elseif purpose=='devices' then
-    f.devices=doc.devices;f.notice=nil
+    if not Auth.signedIn() then f.mode='login';f.devices=nil;f.profile=nil;f.avatarImage=nil;f.notice='This device was disconnected. Sign in again.';return end
+    f.devices=doc.devices;f.nickname=doc.name;f.permissions=doc.permissions;f.notice=doc.profileError
+    if doc.profile then profile(self,doc.profile) end
     local storage=require('src.storage.AccountStorage')
     if Auth.accountId and Auth.accountId()~=f.accountAtOpen then storage.profileChanged(self);f.accountAtOpen=Auth.accountId() end
     if storage.enabled and (f.after=='bank' or f.after=='bankDex' or f.after=='history' or f.after=='storage' or type(f.after)=='table' and f.after.kind=='play') and storage.check() then local after=f.after;W.close(self);storage.resume(self,after) end
   elseif purpose=='resend' then f.notice=doc.message or 'A fresh code was requested. Check your email.'
   elseif purpose=='signout' or purpose=='revoke' then
     if not Auth.signedIn() then require('src.storage.AccountStorage').profileChanged(self);f.mode='login';f.devices=nil;f.notice='This device is disconnected. Sign in with another account to use its separate local profile.'
-    else job(self,'devices',A.devices) end
+    else job(self,'devices',devices) end
   elseif doc.state=='connected' then connected(self,f)
   elseif doc.state=='password_reset' then f.mode='login';f.challenge=nil;f.notice='Password updated. Sign in with your new password.';f.scroll=0
   elseif doc.state=='mfa_code' then
@@ -182,8 +274,95 @@ function W.draw(self)
   elseif f.document then
     local d=f.policy[f.document];if d then paragraph(d.title,true);paragraph(d.text);paragraph('Version '..f.policy.version);row('OPERATOR CONTACT >','operator') end
     row('BACK','back')
+  elseif f.mode=='roles' then
+    paragraph('PROFILE PERMISSIONS · SUPERUSER',true)
+    paragraph('These permissions apply to RetroRecomped. The original operator is protected from demotion. ModCompass staff permissions keep their separate management.')
+    field('Player’s complete friend tag','roleTarget');row('ROLE · '..tostring(f.roleChoice):upper()..' · CHANGE','roleChoice')
+    field('Reason · at least 15 characters','roleReason');field('Confirm your account password','rolePassword',true)
+    row('SAVE PERMISSIONS','saveRole');row('MY ACCOUNT','account')
+  elseif f.mode=='gifts' or f.mode=='giftAdmin' then
+    paragraph(f.mode=='giftAdmin' and 'CREATE A GIFT CODE · STAFF' or 'GIFT CODES',true)
+    paragraph('Gen 1: Pokémon and special moves. Gen 2–5: Pokémon, shiny gifts and eggs. A code is claimed once per account across all your devices. Gifts are stored in your Bank; local saves stay intact.')
+    if f.mode=='giftAdmin' then
+      if f.createdGift then
+        paragraph('NEW CODE · '..f.createdGift.code,true);paragraph('Keep or share this code now. It is shown only in this creation result.')
+        row('COPY GIFT CODE','copyGiftCode');row('BACK TO MY GIFTS','gifts')
+      else
+        field('Gift title','giftTitle');field('National Pokédex number','giftDex');field('Level · eggs use the destination’s hatch level','giftLevel')
+        check('Egg · unavailable for Gen 1','giftEgg');check('Shiny · unavailable for Gen 1','giftShiny')
+        field('Special moves · comma-separated names, e.g. FLY, SURF. Leave empty for native starting moves.','giftMoves')
+        field('Maximum accounts · empty means unlimited','giftLimit')
+        paragraph('SUPPORTED EDITIONS',true)
+        for _,version in ipairs(require('src.core.GameVersion').ORDER) do if version~='prism' and version~='polishedcrystal' then
+          row(((f.giftSelected or {})[version] and '[x] ' or '[ ] ')..require('src.core.GameVersion').info(version).displayName,'giftFor:'..version)
+        end end
+        row('CREATE GIFT CODE','createGift');row('CANCEL','gifts')
+      end
+    else
+      field('Gift code','giftCode');row('EDITION · '..tostring(f.giftEdition or 'crystal'):upper()..' · CHANGE','giftEdition')
+      row('REDEEM TO MY BANK','redeemGift');row('REFRESH MY GIFTS','gifts');row('MY ACCOUNT','account')
+      for i,receipt in ipairs((f.gifts or {}).receipts or {}) do
+        paragraph(receipt.title..' · #'..receipt.dex..(receipt.egg and ' · EGG' or '')..(receipt.shiny and ' · SHINY' or ''))
+        row('RESTORE THIS GIFT TO MY BANK','restoreGift:'..i)
+      end
+      if f.gifts and f.gifts.manage then
+        row('STAFF · CREATE A GIFT CODE','newGift')
+        for i,campaign in ipairs(f.gifts.campaigns or {}) do
+          paragraph(campaign.title..' · '..campaign.redeemed..' claimed · '..table.concat(campaign.editions,', '))
+          row(campaign.active and 'DISABLE THIS CODE' or 'ENABLE THIS CODE','giftActive:'..i)
+        end
+      end
+    end
+  elseif f.mode=='friends' then
+    paragraph('FRIENDS & REQUESTS',true)
+    paragraph('One friend list for your account, shared by all your devices. Search the complete friend tag, such as Trainer#4821. A Recompiler ID also works for requests. Only accepted friends see your online status.')
+    field('Friend tag or Recompiler ID','friendQuery');row('SEARCH FRIEND TAG','findFriend')
+    if f.foundFriend then paragraph('FOUND · '..f.foundFriend.friend_tag) end
+    row('SEND FRIEND REQUEST','addFriend')
+    row('REFRESH FRIENDS','friends');row('MY ACCOUNT','account')
+    local social=require('src.cloud.Presence').read() or f.social or {}
+    local fresh=os.time()-(social._receivedAt or 0)<=120
+    paragraph('FRIENDS · '..#(social.friends or {}),true)
+    for _,peer in ipairs(social.friends or {}) do
+      paragraph(tostring(peer.friend_tag or peer.nickname)..(not fresh and ' · STATUS UNAVAILABLE' or peer.online and ' · ONLINE' or ' · OFFLINE'))
+      row('REMOVE FRIEND','friendRemove:'..peer.account_id)
+    end
+    if #(social.friends or {})==0 then paragraph('Your accepted friends appear here. Requests need the other player’s confirmation.') end
+    paragraph('FRIEND REQUESTS · '..#(social.incoming or {}),true)
+    for _,peer in ipairs(social.incoming or {}) do paragraph(peer.nickname);row('ACCEPT REQUEST','friendAccept:'..peer.account_id);row('DECLINE REQUEST','friendRemove:'..peer.account_id) end
+    for _,peer in ipairs(social.outgoing or {}) do paragraph('WAITING · '..peer.nickname);row('CANCEL REQUEST','friendRemove:'..peer.account_id) end
+    if social.permissions and social.permissions.view_online then row('STAFF · ONLINE PLAYERS & STATISTICS','online') end
+  elseif f.mode=='online' then
+    paragraph('ONLINE PLAYERS · STAFF',true)
+    local online=f.online or {}
+    paragraph(tostring(online.online_count or 0)..' online · '..tostring(online.registered_count or 0)..' registered · '..tostring(online.verified_count or 0)..' email confirmed')
+    paragraph('Players are counted once across all their devices. Status expires two minutes after the last response.')
+    row('REFRESH ONLINE LIST','online')
+    for _,peer in ipairs(online.online or {}) do paragraph(peer.nickname..' · '..peer.account_id) end
+    if (online.page or 1)>1 then row('PREVIOUS PAGE','onlinePrevious') end
+    if (online.page or 1)*(online.per_page or 50)<(online.online_count or 0) then row('NEXT PAGE','onlineNext') end
+    row('FRIENDS','friends');row('MY ACCOUNT','account')
   elseif f.mode=='account' then
-    paragraph('Connected as '..tostring(Auth.account()),true)
+    paragraph(tostring(f.nickname or Auth.nickname and Auth.nickname() or Auth.account()),true)
+    paragraph('Connected as '..tostring(Auth.account()))
+    if f.friendTag then paragraph('MY FRIEND TAG · '..f.friendTag,true) end
+    if f.avatarImage then
+      local iw,ih=f.avatarImage:getDimensions();local size=100*s
+      g.setScissor(x+width/2-size/2,math.max(v.y,top),size,math.max(0,math.min(top+size,v.y+v.height)-math.max(v.y,top)))
+      local fit=math.max(size/iw,size/ih);g.setColor(1,1,1,1)
+      g.draw(f.avatarImage,x+width/2-iw*fit/2,top+(size-ih*fit)/2,0,fit,fit)
+      g.setScissor(v.x,v.y,v.width,v.height);top=top+size+18*s
+    elseif f.profile then
+      paragraph('MODCOMPASS AVATAR · '..tostring(f.profile.avatar_preset)..' / '..tostring(f.profile.avatar_color))
+    end
+    if f.profile then
+      field('Nickname · shared with ModCompass','profileName')
+      row('CHOOSE MY PROFILE IMAGE','chooseAvatar')
+      if f.avatarBytes then check('I have the rights to use this image for my account and allow its storage in ModCompass.','avatarRights') end
+      row('SAVE MY GLOBAL PROFILE','saveProfile')
+      if f.profile.avatar then row('REMOVE MY CUSTOM PROFILE IMAGE','resetAvatar') end
+      if f.profile.avatar_pending then paragraph('Your image is already available on your own devices. Public display follows the ModCompass image review.') end
+    end
     paragraph('ACCOUNT PROFILE · '..tostring(Auth.accountId and Auth.accountId() or 'Updating identity')..' · Saves, Bank and mod choices are kept separately for each account.')
     paragraph('The same account connects your mods, developer projects, custom cartridge artwork and optional cloud storage.')
     row('SYNC MY SAVES & CUSTOM CARTRIDGES','sync')
@@ -196,6 +375,9 @@ function W.draw(self)
         row('LINK SAVES & BANK TO MY ACCOUNT','linkStorage')
       end
     end
+    row('FRIENDS & FRIEND REQUESTS','friends');row('GIFT CODES & MY GIFTS','gifts')
+    if f.permissions and f.permissions.view_online then row('STAFF · ONLINE PLAYERS & STATISTICS','online') end
+    if f.permissions and f.permissions.manage_roles then row('SUPERUSER · PROFILE PERMISSIONS','roles') end
     row('BROWSE MODS','browse');row('MOD DEVELOPER · MY REPOSITORIES','developer');row('REFRESH CONNECTED DEVICES','devices')
     paragraph('You stay signed in on this device until you sign out, change your password or disconnect it from your account. Offline periods keep your login.')
     for i,d in ipairs(f.devices or {}) do paragraph(tostring(d.label)..(d.current and ' · THIS DEVICE' or ''));paragraph(d.expires_at and ('Expires '..tostring(d.expires_at)) or 'Signed in until disconnected');row('DISCONNECT DEVICE','revoke:'..i) end
@@ -301,6 +483,12 @@ function W.install(RI)
     elseif b=='a' then local f=self._accountOverlay;local r=f.rects[f.padIndex or 1];if r then W.action(self,r.id) end end
   end
   for _,name in ipairs({'mousereleased','mousemoved'}) do local original=RI[name];RI[name]=function(self,...) if self._accountOverlay then return end;if original then return original(self,...) end end end
+  local dropped=RI.filedropped;RI.filedropped=function(self,file,...)
+    local f=self._accountOverlay
+    if not f or f.mode~='account' or not Auth.signedIn() then if dropped then return dropped(self,file,...) end;return end
+    local ok,bytes=pcall(function() file:open('r');local b=file:read(2*1024*1024+1);file:close();return b end)
+    if ok then W.avatarBytes(self,bytes) else f.notice='The profile image could not be read.' end
+  end
   local play=RI.play;RI.play=function(self,...) if self._accountOverlay then W.close(self) end;return play(self,...) end
 end
 return W

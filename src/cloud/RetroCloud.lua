@@ -4,6 +4,7 @@ local Json=require('src.link.Json')
 local Serializer=require('src.core.SaveSerializer')
 local R={FILE='cloud_retro.lua',API='https://pokexpert.de/api/cloud/v1'}
 local function load()
+  if not (love and love.filesystem and love.filesystem.read) then return nil end
   local bytes=love.filesystem.read(R.FILE)
   if not bytes then return nil end
   local ok,value=pcall(Serializer.decode,bytes)
@@ -16,7 +17,7 @@ local function request(method,path,body,token,headers)
   if token then headers.Authorization='Bearer '..token end
   if type(body)=='table' then headers['Content-Type']='application/json';body=Json.encode(body) end
   local code,bytes=Http.request(method,R.API..path,{body=body,headers=headers,sensitive=true})
-  if code==401 and token then R.expire() end
+  if code==401 and token then R.expire(token) end
   return code,bytes
 end
 local function document(method,path,body,token,headers)
@@ -31,12 +32,15 @@ end
 function R.signedIn() return load()~=nil end
 function R.account() local value=load();return value and value.email end
 function R.accountId() local value=load();return value and value.accountId end
+function R.nickname() local value=load();return value and (value.name or value.email) end
 function R.acceptAccount(doc)
   local value=load()
   if not value or type(doc.account_id)~='string' or #doc.account_id>20 or not doc.account_id:match('^[1-9][0-9]*$') then return nil,'Account identity unavailable. Sign in again.' end
+  if value.accountId and value.accountId~=doc.account_id then return nil,'Account identity changed. Sign in again.' end
   value.accountId=doc.account_id
   if type(doc.email)=='string' then value.email=doc.email end
   if type(doc.name)=='string' then value.name=doc.name end
+  if type(doc.friend_tag)=='string' then value.friendTag=doc.friend_tag end
   return save(value)
 end
 function R.acceptConnection(doc)
@@ -77,14 +81,17 @@ function R.poll(flow)
   return 'failed','Device connection failed ('..tostring(status or 'offline')..').'
 end
 function R.cancel() end
-function R.expire() love.filesystem.remove(R.FILE) end
+function R.expire(expected)
+  local current=load()
+  if not expected or current and current.access==expected then love.filesystem.remove(R.FILE) end
+end
 function R.signOut()
   local value=load()
   if value then
     local status=request('POST','/logout',{},value.access)
     if status~=200 and status~=401 then error('Cloud sign-out unavailable. Please try again when online.',0) end
   end
-  love.filesystem.remove(R.FILE)
+  if value then R.expire(value.access) end
 end
 
 function R.open()
