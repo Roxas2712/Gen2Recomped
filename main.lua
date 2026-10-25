@@ -379,6 +379,7 @@ local function bootGame(version)
   -- from love.update's loop, so the in-engine one must stay at 1 or the
   -- two would compound (10x10 = 100 steps per observation).
   Game.speedOverride = (autopilot or driverCo) and 1 or speedOverride
+  require('src.link.CloudArena').consume(Game)
 end
 
 -- THE LAUNCHER, BUILT IN ONE PLACE.
