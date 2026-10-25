@@ -371,6 +371,18 @@ function PokegearMenu:current()
   return self.cards[self.index]
 end
 
+-- Source renderers observe the selected native card. Keep one cursor:
+-- falling back to a separate cardIndex leaves them drawing the clock while
+-- native input and callbacks are already operating the radio.
+function PokegearMenu:card()
+  return self:current()
+end
+
+function PokegearMenu:cardLabel(card)
+  card = card or self:current()
+  return card and Strings(card.label or card.id) or ""
+end
+
 -- The registered phone numbers, newest id last.
 --
 -- Gen2 keeps two halves of this and the card used to read neither: which ids
@@ -444,6 +456,33 @@ function PokegearMenu:stationList()
   return list
 end
 
+-- Read-only presentation of the existing native tuner, not a second tuner
+-- or a reproduction of the cartridge's complete radio show state machine.
+function PokegearMenu:stations()
+  if not require("src.core.GameVersion").isGen2() then return {} end
+  local rows = self:stationList()
+  for _, row in ipairs(rows) do
+    row.station = row.id
+    row.frequency = ("%04.1f"):format(((row.knob or 0) + 2) / 4)
+  end
+  return rows
+end
+
+function PokegearMenu:currentStation()
+  return self:stations()[self.station]
+end
+
+function PokegearMenu:syncRadioView(station)
+  if not require("src.core.GameVersion").isGen2() or not station then
+    self.radio = nil
+    return
+  end
+  local view = self.radio
+  if not view or view.station ~= station.id then view = {}; self.radio = view end
+  local lines, line = station.lines or {}, self.radioLine or 1
+  view.station, view.top, view.bottom = station.id, lines[line] or "", lines[line + 1] or ""
+end
+
 function PokegearMenu:update(dt)
   self.blink = (self.blink + dt) % 1
   -- A call in progress owns the card: PokegearPhone_MakePhoneCall does not
@@ -461,6 +500,7 @@ function PokegearMenu:update(dt)
   end
   local input = self.game.input
   if input:wasPressed("b") then
+    self.radio = nil
     Sound.play(self.game.data, "Press_AB")
     self.game.stack:pop()
     if self.onCancel then self.onCancel() end
@@ -492,7 +532,7 @@ function PokegearMenu:update(dt)
       return
     end
   end
-  if card.id ~= "RADIO" then self._radioTuned=nil end
+  if card.id ~= "RADIO" then self._radioTuned=nil;self.radio=nil end
   if card.id == "RADIO" then
     local stations = self:stationList()
     local n = #stations
@@ -526,6 +566,7 @@ function PokegearMenu:update(dt)
       self.radioLine=1
       require("src.world.Gen2Radio").notify(self.game.data,st.id,st.knob,"pokegear")
     end
+    self:syncRadioView(st)
     if st and st.flute then
       self.game.save.g2RadioChannel = "POKE_FLUTE"
       self.game.save.g2MapMusic = "MUSIC_POKE_FLUTE_CHANNEL"
@@ -933,6 +974,18 @@ function PokegearMenu:draw()
     self:drawClock()
   end
   love.graphics.setColor(1, 1, 1, 1)
+end
+
+-- Native presentation keeps its original canvas. A replacement of this
+-- optional drawer opts a skin into window-resolution composition.
+local classicDraw = PokegearMenu.draw
+local function drawWidescreen(self,width,height)
+  return require('src.render.ScreenSpaceUI').classic(function()classicDraw(self)end,
+    require('src.render.Renderer'),width,height)
+end
+PokegearMenu.drawWidescreen = drawWidescreen
+function PokegearMenu:drawsWidescreen()
+  return self.drawWidescreen ~= drawWidescreen
 end
 
 return PokegearMenu
