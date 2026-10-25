@@ -69,6 +69,7 @@ ModCompat.ALIASES = {
   ["src.core.gen2.Boxes"] = "src.pokemon.Gen2Boxes",
   ["src.core.gen2.Mail"] = "src.pokemon.Gen2Mail",
   ["src.ui.gen2.BoxMenu"] = "src.ui.BoxMenu",
+  ["src.ui.gen2.MapRadio"] = "src.ui.Gen2MapRadio",
   ["src.core.gen2.BugContest"] = "src.world.BugContest",
   ["src.core.gen2.ItemEffects"] = "src.inventory.ItemEffects",
   ["src.core.gen2.Save"] = "src.core.SaveData",
