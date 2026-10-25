@@ -3,10 +3,11 @@
 ## Worker threads
 
 Mods using `love.thread` may declare `"compute"` in their manifest's
-`permissions` array. This matches the Gen1 mod contract and uses the bundled
-LÖVE thread/channel API. It is separate from a `mod.job` background-job API;
-declaring `compute` does not grant or implement that service. Unknown
-permissions still fail strict API-2/API-3 manifest validation.
+`permissions` array for the bundled LÖVE thread/channel API.
+The separate `"background"` permission enables the scoped `mod.job` service
+with cancellation and transactional cache output; see
+[native background jobs](mod-native-jobs.md). Unknown permissions still fail
+strict API-2/API-3 manifest validation.
 
 ## Background HTTP GET
 

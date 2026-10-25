@@ -33,6 +33,7 @@ local InputControl = require("src.mods.InputControl")
 local BattleSnapshots = require("src.mods.BattleSnapshots")
 local UIActions = require("src.mods.UIActions")
 local Net = require("src.mods.Net")
+local Job = require("src.mods.Job")
 local ModGens = require("src.mods.ModGens")
 local ModTargets = require("src.mods.ModTargets")
 local ModSeams = require("src.mods.ModSeams")
@@ -1236,6 +1237,7 @@ function Loader:_api(mod)
       return data
     end)
   api.packs = require("src.mods.AssetPacks").new(mod.manifest, loader.fs)
+  api.job = Job.forMod(loader, mod, api.cache)
   -- Capture the host selected for this API, as with generation/gameVersion.
   -- Probing must not instantiate mod.world/mod.game or register callbacks.
   function api:supports(surface, name)
@@ -1383,6 +1385,7 @@ end
 -- entry chunk; a later failure (script validation) purges every registry.
 function Loader:_rollback(modId)
   Net.releaseAll(self, modId)
+  Job.releaseAll(self, modId)
   self.inputControl:retire(modId)
   Api3WildBattle.cancelAll(self, modId)
   Api3NPC.cancelAll(self, modId)
@@ -1502,6 +1505,7 @@ local function stampAudioOwners(data, name, registry)
 end
 
 function Loader:load(data)
+  Job.releaseAll(self)
   InputControl.closeAll()
   self.inputControl = InputControl.new()
   local viewport = package.loaded["src.render.GameViewport"]
@@ -1883,6 +1887,7 @@ end
 -- and the next Play loaded every mod on top of what the last one left.
 function Loader.teardown()
   Net.unloadAll()
+  Job.unloadAll()
   InputControl.closeAll()
   local viewport = package.loaded["src.render.GameViewport"]
   if viewport then viewport.reset() end
