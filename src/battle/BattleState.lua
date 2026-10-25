@@ -7980,6 +7980,7 @@ function BattleState:statusInterrupt(user, target, move)
   end
   local canMove, msgs, selfHit, reason = Status.beforeMove(user, self.rng, self, move)
   for _, m in ipairs(msgs) do self:sayStatusMsg(user, m) end
+  if reason == "gen3_sleep" or reason == "gen3_flinch" then user.lastMove = nil end
   if reason == "gen3_disabled" then
     require("src.battle.Gen3Disable").cancel(user)
     return true
@@ -8017,7 +8018,7 @@ function BattleState:statusInterrupt(user, target, move)
   -- while one is going on, on either side.
   if (self.player and self.player.uproarTurns)
      or (self.enemy and self.enemy.uproarTurns) then
-    if user.mon.status == "SLP" then
+    if user.mon.status == "SLP" and (not GameVersion.isGen3() or Abilities.of(user) ~= "SOUNDPROOF") then
       user.mon.status = nil
       self:sayNext(Strings("%s woke up in\nthe UPROAR!", displayName(user)))
     end
@@ -8231,6 +8232,7 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
     moveInst.pp = math.max(0, moveInst.pp - cost)
   end
 
+  if record and record.gbaSleepTalk and user.mon.status == "SLP" then self:statusOnomatopoeia(user, "sleep") end
   self.moveAnimRow = nil
   if not (user.thrashTurns and moveInst == user.thrashMove and user.thrashAnnounced) then
     self:sayNext(self:romText("_ItemUseText001", "%s\nused %s!", displayName(user), move.name))
@@ -8276,7 +8278,8 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
       self:cancelMoveAnim()
     end
     if pick then
-      self:performMove(user, target, { id = pick, pp = 1 }, true)
+      if record.gbaSleepTalk then require("src.battle.Gen3SleepTalk").call(ctx, pick)
+      else self:performMove(user, target, { id = pick, pp = 1 }, true) end
     end
     return
   end
@@ -8380,7 +8383,8 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
       local picked = user.callsMoveId
       user.callsMoveId = nil
       for _, m in ipairs(msgs) do self:sayNext(m) end
-      self:performMove(user, target, { id = picked, pp = 1 }, true)
+      if ctx.gbaSleepTalk then require("src.battle.Gen3SleepTalk").call(ctx, picked)
+      else self:performMove(user, target, { id = picked, pp = 1 }, true) end
       return
     end
     -- Gen 1 status/stat effects animate only when they take effect
