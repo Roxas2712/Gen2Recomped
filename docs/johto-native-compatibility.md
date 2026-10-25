@@ -18,7 +18,8 @@ Normal Mart/Center entry/exit and Cherrygrove/Route 29 connection tests now pass
 cameras. Other story transitions, forced-terrain GPU tests and full visuals
 remain open. See the
 [contract and exact limits](native-gen2-camera-movement.md). The currently
-published download/cache fix remains bound to release source `321019ae`.
+published `20261025.1` preview remains bound to source `0780731e`; it still
+contains the official stock runtime.
 
 Apple Silicon now follows the desktop performance policy instead of being
 misclassified as a low-end ARM handheld. Fresh full-package Crystal profiles
@@ -26,18 +27,21 @@ on OpenGL and Metal use the mod's MEDIUM default; physical NATIVE resolution
 and 2X AA are exercised in both selected cameras. See the
 [quality measurements and remaining visual limits](native-apple-silicon-quality.md).
 
-An isolated arm64 LuaJIT capacity experiment now compiles and initializes the
-unchanged generated renderer extension on OpenGL and Metal in both selected
-cameras. The stock runtime still rejects it. The experimental runtime also
-passes the 343 engine suites, three SDK suites, high-index closure/GC/debug/
-bytecode checks and C API capture checks through 120 upvalues. Its reproducible
-arm64 build also passes the copied LÖVE host's thread/FFI ABI gate. With that
-host, the normal Mart/Center and Cherrygrove/Route 29 transition matrix passes
-213 assertions and four fresh window proofs per backend in both selected
-cameras, requiring the renderer extension to be installed. Some First Person
-frames still contain black-and-white objects. This is not
-distributed runtime acceptance: Windows, Intel/universal macOS and complete
-renderer/gameplay parity remain open. See the
+The experimental LuaJIT compiles and initializes the unchanged generated
+renderer extension; the stock runtime still rejects it. Native Linux x64,
+Windows x64, Intel Mac and ARM Mac stock/extended capacity, C API and engine
+gates now pass. Windows and both Mac architectures also pass copied LÖVE
+host/thread/FFI checks. Source-bound components produce checked Windows and
+signed universal Mac package candidates from `f7a86975`, with identical engine
+payloads. Mac minimum OS is 11.0.0. On Mac ARM, the actual packaged sources and
+universal runtime pass 213 assertions, 12 normal transitions, four menu checks
+and four window proofs per OpenGL/Metal backend in First and Third Person.
+The generated renderer must be installed; originals remain unchanged. The
+release entry points are replaced only in owned QA copies to prevent using a
+real release profile. Some frames still contain unusual objects, and Metal
+shows deprecated-shader warnings. These candidates are not yet published;
+complete renderer/gameplay, Windows/Intel GPU and long-session acceptance
+remain open. See the
 [reproducible probes](../tools/runtime-upvalue-check/README.md) and
 [exact experiment receipt](qa/native-foundation/johto-native-runtime-upvalues.json).
 

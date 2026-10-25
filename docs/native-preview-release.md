@@ -7,9 +7,12 @@ fork's pre-release, extract into a new folder and start its launcher:
 - macOS: the preview app or `Metal-Test.command`; `OpenGL-Test.command`
   selects OpenGL. The app is ad-hoc signed, without Apple notarization.
 
-Both ZIPs contain an identical engine payload and the official LOVE 12
-revision `937eb3b21f973607ab080aa26b7ef2a6b3b2b663`. No separate runtime
-installation is needed. The `.love` download requires that LOVE 12 runtime.
+Both ZIPs contain an identical engine payload and use official LOVE 12
+revision `937eb3b21f973607ab080aa26b7ef2a6b3b2b663` as their base. No separate
+runtime installation is needed for the ZIPs. Check `build-manifest.json` for
+the exact Lua runtime: extended builds record `qualifiedRuntime` and include
+qualification receipts. Their standalone `.love` requires that extended
+runtime; a stock LOVE installation still has the 60-upvalue limit.
 
 Import your own supported ROMs and save files. ROMs, extracted game caches,
 account credentials, save files and mod packages are not supplied. The preview
@@ -23,16 +26,26 @@ repository linking, mod browsing/downloads, cloud saves and Pokemon Bank.
 Mod version and generation requirements still apply. Save-bound compatibility
 review can restore known packages or continue from a separate slot copy.
 Exact mid-battle execution snapshots and seamless device handoff remain in
-development. The extended-upvalue LuaJIT candidate is not bundled: mods which
-exceed the official runtime's limits can still fail to load. This pre-release
-does not establish full-game 3D or universal mod compatibility.
+development. The published `20261025.1` build does not bundle the extended
+LuaJIT candidate, so mods exceeding the official capacity can still fail to
+load. Qualification and packaging changes below prepare subsequent builds;
+they do not retroactively change existing downloads or establish full-game
+3D or universal mod compatibility.
 
 ## Publishing
 
 Run **RetroRecomped intermediate pre-release** on the selected `main` commit
 with a fresh `YYYYMMDD.N` release identifier and the engine `X.Y.Z` version.
-The workflow runs ROM-free launcher contracts, builds on a hosted macOS runner,
-checks runtime digests and payload parity, and publishes a **pre-release**.
+The workflow runs ROM-free launcher contracts, then calls the native runtime
+qualification workflow at the same commit. Linux x64, Windows x64, Intel Mac
+and ARM Mac must all pass stock/extended closure, C API and engine checks.
+Windows and both Mac jobs also exercise the actual pinned LOVE host, its
+thread VM and FFI. The component job verifies receipt/source/hash bindings and
+combines both qualified Mac slices. The packaging job consumes those exact
+components, signs the Mac app, checks runtime digests and payload parity, and
+publishes a **pre-release**. Any missing or mismatched component fails the
+build instead of falling back to stock. Mac minimum OS is derived from the
+actual Mach-O load commands and recorded in the package and manifest.
 It does not start a game or alter the stable latest release.
 
 `tools/package_native_release.py` invokes the existing isolated builder for
@@ -52,13 +65,13 @@ camera/movement and Apple Silicon tier changes. It still bundles the official
 runtime with the 60-upvalue limit: the supplied generated renderer extension
 cannot fully initialize there. A source PR alone cannot change that runtime.
 
-The separate experimental arm64 host passes normal Mart/Center doors, native
-menus and Cherrygrove/Route 29 connections in First and Third Person on OpenGL
-and Metal: 213 assertions, 12 transitions and four fresh window proofs per
-backend. This evidence is bound to the earlier tested source revisions in
-[the runtime receipt](qa/native-foundation/johto-native-runtime-upvalues.json),
-not a full gameplay acceptance of every later launcher/save change. Some
-black-and-white objects remain visible. Complete model/effect/battle/story,
-long-session, Windows GPU and final cross-architecture packaging checks remain
-open. These results support a limited experimental Mac play test, not a claim
-that the public preview is fully playable with VASC4Gen2.
+The separate experimental host passes normal Mart/Center doors, native menus
+and Cherrygrove/Route 29 connections in First and Third Person on OpenGL and
+Metal: 213 assertions, 12 transitions and four fresh window proofs per backend.
+Source-bound qualification, packaging and GPU evidence, with the precise QA
+bootstrap scope, is recorded in
+[the runtime receipt](qa/native-foundation/johto-native-runtime-upvalues.json).
+Some black-and-white objects remain visible. Complete model/effect/battle/story,
+long-session and Windows GPU checks remain open. These results support a
+limited experimental Mac play test; the published stock preview still cannot
+initialize the full generated renderer.
