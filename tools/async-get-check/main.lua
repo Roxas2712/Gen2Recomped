@@ -58,7 +58,7 @@ function love.run()
       logs:release(h)
       logs,send=reporter('log_redirect','/redirect-post')
       h=assert(send(nil,'fixed destination'));reply=await(logs,h)
-      check(reply.status=='error' and reply.body==nil and reply.httpStatus==307,'POST cannot change its declared endpoint via redirect')
+      check(reply.status=='error' and reply.body==nil and reply.httpStatus==307,'POST cannot change its declared endpoint via redirect: '..tostring(reply.status)..' HTTP '..tostring(reply.httpStatus))
       logs:release(h)
     end
     check(not denied:available(), 'network permission required')

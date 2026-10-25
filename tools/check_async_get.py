@@ -9,14 +9,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
         body=self.rfile.read(length)
         self.server.posts.append(dict(path=self.path,body=body,agent=self.headers.get('User-Agent'),mime=self.headers.get('Content-Type')))
         if self.path=='/redirect-post':
-            self.send_response(307);self.send_header('Location','/forbidden-post-target');self.end_headers();return
+            self.send_response(307);self.send_header('Location','/forbidden-post-target');self.send_header('Content-Length','0');self.end_headers();return
         self.send_response(200);self.send_header('Content-Length','18');self.end_headers();self.wfile.write(b'private reply body')
     def do_GET(self):
         path=self.path.split('?')[0]
         if path=='/slow': time.sleep(1.25)
         if path=='/missing': self.send_error(404); return
         if path=='/redirect':
-            self.send_response(302);self.send_header('Location','/binary');self.end_headers();return
+            self.send_response(302);self.send_header('Location','/binary');self.send_header('Content-Length','0');self.end_headers();return
         if path=='/empty':
             self.send_response(204);self.send_header('Content-Length','0');self.end_headers();return
         if path=='/stream':
