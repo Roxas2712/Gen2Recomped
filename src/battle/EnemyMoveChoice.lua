@@ -7,6 +7,7 @@ local nativeViews = setmetatable({}, { __mode = "k" })
 local publicReferences = setmetatable({}, { __mode = "k" })
 local slots = setmetatable({}, { __mode = "k" })
 local pendingSelections = setmetatable({}, { __mode = "k" })
+local portableViews = setmetatable({}, { __mode = "k" })
 local function shallow(row)
   local out = {}
   for k, v in pairs(row) do
@@ -116,6 +117,9 @@ end
 function M.nativeView(action)
   return nativeViews[action]
 end
+function M.markPortable(action)
+  portableViews[action] = true
+end
 function M.rememberReference(action, key, public, native)
   local refs = publicReferences[action]
   if not refs then
@@ -178,7 +182,7 @@ end
 function M.normalize(data, battler, value, delegated, captured)
   if captured and value == delegated then
     if captured.owner == battler and same(value, captured.before) then
-      if captured.originalSlot then
+      if captured.originalSlot and not portableViews[value] then
         -- Existing API-1/2 callbacks retain their native slot handle. Keep
         -- selection-only fields private until planning/execution consumes it.
         pendingSelections[captured.originalSlot] = shallow(captured.raw)

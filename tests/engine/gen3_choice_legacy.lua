@@ -23,7 +23,12 @@ for _, version in ipairs({ "firered", "emerald" }) do
       return false
     end)
     local action = b:enemyAction(user)
-    T.eq(action, user.curMoves[1], "forwarding retains the actual legacy learned-slot handle")
+    if mode[1] < 3 then
+      T.eq(action, user.curMoves[1], "forwarding retains the actual legacy learned-slot handle")
+    else
+      T.neq(action, user.curMoves[1], "API-3 retains its separate native action and positional target")
+      T.eq(action.target, 2, "API-3 exposes the positional target before execution")
+    end
     T.same(user.curMoves[1], before, "native target/scores never enter party move records")
     local planned = require("src.battle.Gen3ChoiceBand").plan(b, user, action)
     T.eq(planned.target, 2, "private native target survives forwarding and planning")
