@@ -118,6 +118,7 @@ function C.enrich(self)
     end
   end
 end
+local function updateCacheKey(mod) return mod.github:lower()..'#'..mod.id end
 function C.pumpUpdates(self)
   local task=self._communityUpdateJob
   if task then
@@ -126,18 +127,19 @@ function C.pumpUpdates(self)
       self._communityUpdateJob=nil
       local mod=self._communityUpdating;self._communityUpdating=nil
       if mod then
-        local releases=result.kind=='done' and result.first
-        if releases then
-          Update.writeCache(mod.github,releases)
-          for _,row in ipairs(self.mods or {}) do
-            if row.github and row.github:lower()==mod.github:lower() and row.updateCheck~=false then
+        for _,row in ipairs(self.mods or {}) do
+          if row.github and row.github:lower()==mod.github:lower() and row.updateCheck~=false then
+            local releases,why
+            if result.kind=='done' and result.first then releases,why=Update.parseReleases(result.first,row.id) end
+            if releases then
+              Update.writeCache(updateCacheKey(row),releases)
               local status,best=Update.statusFor(row.version,releases)
               self.modUpdateInfo[row.id]={status=status,best=best,latest=best and best.version,releases=releases,checkedAt=os.time()}
+            else
+              local info=self.modUpdateInfo[row.id] or {status='error'}
+              info.err=tostring(result.error or result.second or why);self.modUpdateInfo[row.id]=info
             end
           end
-        else
-          local info=self.modUpdateInfo[mod.id] or {status='error'}
-          info.err=tostring(result.error or result.second);self.modUpdateInfo[mod.id]=info
         end
       end
     end
@@ -147,7 +149,7 @@ function C.pumpUpdates(self)
       local task,why=Task.new(function()
         local body,why=get(Update.apiReleasesUrl(mod.github))
         if not body then return nil,why end
-        return Update.parseReleases(body,mod.id)
+        return body
       end)
       self._communityUpdateJob=task
       if not task then
@@ -344,7 +346,7 @@ function C.install(RI)
     local queued={}
     for _,mod in ipairs(self.mods or {}) do
       if mod.github and mod.updateCheck~=false and mod.github:match('^[%w_.%-]+/[%w_.%-]+$') then
-        local cached=Update.readCache(mod.github)
+        local cached=Update.readCache(updateCacheKey(mod))
         if cached then
           local status,best=Update.statusFor(mod.version,cached.releases)
           self.modUpdateInfo[mod.id]={status=status,best=best,latest=best and best.version,releases=cached.releases,checkedAt=cached.checkedAt}

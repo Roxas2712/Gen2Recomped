@@ -104,12 +104,14 @@ Index.readCache,Index.writeCache,Index.cacheFresh=oldRead,oldWrite,oldFresh
 ui.mods={{id='first',github='Author/Shared',version='1.0.0'},{id='second',github='author/shared',version='1.0.0'}}
 ui:_syncModUpdateInfo(true)
 check(#ui._communityUpdateQueue==1,'startup checks each repository once even when several mods share it')
-response=Json.encode({{tag_name='v2.0.0',assets={{name='first-2.0.0.zip',browser_download_url='https://github.com/Author/Shared/releases/download/v2.0.0/first-2.0.0.zip'}}}})
+response=Json.encode({{tag_name='v2.0.0',assets={{name='first-2.0.0.zip',browser_download_url='https://github.com/Author/Shared/releases/download/v2.0.0/first-2.0.0.zip'},
+  {name='second-2.0.0.zip',browser_download_url='https://github.com/Author/Shared/releases/download/v2.0.0/second-2.0.0.zip'}}}})
 C.backgroundUpdates()
 local pending=ui._communityUpdateJob
 ui:play('red')
 check(ui.launched and ui._communityUpdateJob==pending,'starting a game preserves the public repository check')
 C.backgroundUpdates()
 check(ui.modUpdateInfo.first.status=='available' and ui.modUpdateInfo.second.status=='available','background completion updates every installed mod from the same repository')
+check(ui.modUpdateInfo.first.best.zip.name=='first-2.0.0.zip' and ui.modUpdateInfo.second.best.zip.name=='second-2.0.0.zip','a shared repository still selects and caches the correct ZIP for each individual mod')
 check(not C._updateOwner,'completed startup checks release their old launcher instance')
 print('Launcher community: '..checks..' checks passed')
