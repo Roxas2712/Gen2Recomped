@@ -30,6 +30,7 @@ function M.run(root, backend, version)
     for id = 0, double and 3 or 1 do
       for _, kind in ipairs({
         "bound",
+        "forced_status",
         "unbound",
         "same_move",
         "empty_item",
@@ -53,7 +54,7 @@ function M.run(root, backend, version)
         local user, targetId = f.at(b, id), id % 2 == 0 and id + 1 or id - 1
         local target = f.at(b, targetId)
         if kind ~= "unbound" then
-          user.choicedMove = 33
+          user.choicedMove = kind == "forced_status" and 214 or 33
         end
         local item = 186
         if kind == "empty_item" or kind == "empty_override" then

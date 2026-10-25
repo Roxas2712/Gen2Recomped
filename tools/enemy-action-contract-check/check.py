@@ -45,6 +45,9 @@ MODES = [
     (3, 'choice_band_selection'),
     (3, 'choice_band_planning'),
     (3, 'choice_band_wild'),
+    (3, 'choice_band_calls'),
+    (3, 'choice_band_content'),
+    (3, 'choice_band_baton'),
 ]
 
 

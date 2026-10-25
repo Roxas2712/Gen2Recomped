@@ -81,6 +81,7 @@ function C.plan(battle, user, action)
   if not V.isGen3() then
     return action
   end
+  action = action and Choices.resolveSelection(action)
   if not (user and action) or action.special or action.kind and action.kind ~= "move" then
     return action
   end
@@ -103,9 +104,7 @@ function C.plan(battle, user, action)
     local forced, index = learned(battle, user, user.choicedMove)
     if forced and (tonumber(forced.pp) or 1) > 0 then
       local out = Choices.withMove(action, forced.id, forced, index)
-      if battle:isDouble() then
-        out.targetType = tonumber(definition(battle, forced).target) or 0
-      end
+      out.targetType = tonumber(definition(battle, forced).target) or 0
       planned[out] = { index = index, id = forced.id }
       return out
     end
@@ -113,6 +112,7 @@ function C.plan(battle, user, action)
   return action
 end
 function C.execution(user, action)
+  action = Choices.resolveSelection(action)
   local plan = planned[action]
   if plan then
     local slot = (user.curMoves or user.mon.moves or {})[plan.index]

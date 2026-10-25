@@ -214,6 +214,10 @@ local function moveReason(b, actor, slot, move)
   end
   if require("src.core.GameVersion").isGen3() then
     local why = require("src.battle.Gen3MoveSelection").manualReason(b, actor, move, slot)
+    if why == "disabled" then return "move is disabled" end
+    if why == "pp" then return "move has no PP" end
+    if why == "taunt" then return "move is blocked by Taunt" end
+    if why == "torment" then return "move is blocked by Torment" end
     return why and ("move is blocked by native GBA rules: " .. why) or nil
   end
   if require("src.battle.Gen3Disable").blocked(actor, move, slot) then

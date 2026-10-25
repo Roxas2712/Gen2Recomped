@@ -2,14 +2,15 @@
 -- unchanged; all mounted item/move tables belong to this fixture.
 local M = {}
 local NUMBERS = { TACKLE = 33, SCRATCH = 10, FLY = 19, STRUGGLE = 165, SLEEP_TALK = 214, BATON_PASS = 226 }
-function M.fixture(root, backend, version)
+function M.fixture(root, backend, version, options)
+  options = options or {}
   local native = backend == "gen1"
   local f = dofile(root .. "/tests/enemy_actions/fixture.lua").new(
     root,
     backend,
     version,
-    3,
-    "unified",
+    options.api or 3,
+    options.format or "unified",
     function(data, _, ids, rom, names)
       for _, row in ipairs({
         { 214, "SLEEP_TALK", 97, "SLEEP_TALK_EFFECT", 0, 1 },
@@ -81,7 +82,8 @@ function M.fixture(root, backend, version)
         data.constants.generation = 3
         data.pokemon.CHARMANDER.types, data.pokemon.CHARMANDER.abilities = { "NORMAL" }, {}
       end
-    end
+    end,
+    options.entry
   )
   if native then
     local Items = require("src.core.game3.items_data")
