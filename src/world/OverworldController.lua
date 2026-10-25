@@ -12725,6 +12725,12 @@ function OverworldState:tryCoordScript()
   if not GameVersion.isGen2() or not (p and map and mapScripts and self.runner
       and Game and Game.data and Game.save) or p.moving or self:busy() then return false end
   self:noteCellChange()
+  -- A completed later phase retires this landing even when its script only
+  -- changes the scene. Idle/script-end re-asks must not run backwards through
+  -- coord events; actual scripted movement still gets a fresh cell serial.
+  local Steps = require("src.world.Gen2StepEvents")
+  if Steps.matches(self.gen2StepVisit,self,Game)
+     or Steps.matches(self.gen2EncounterVisit,self,Game) then return false end
   local old = self.gen2CoordVisit
   if old and old.mapId == map.id and old.save == Game.save
      and old.data == Game.data and old.serial == self.cellSerial then return false end
@@ -13067,7 +13073,8 @@ function OverworldState:countStep()
   if self:busy() then return true end -- an actual script/overlay already owns this frame
   self:noteCellChange()
   local Steps=require("src.world.Gen2StepEvents")
-  if Steps.matches(self.gen2CoordVisit,self,Game) then return true end
+  if Steps.matches(self.gen2CoordVisit,self,Game)
+     or Steps.matches(self.gen2EncounterVisit,self,Game) then return true end
   if Steps.matches(self.gen2StepVisit,self,Game) then return self.gen2StepVisit.blocked end
   local visit=Steps.visit(self,Game);self.gen2StepVisit=visit
   local function stop()visit.blocked=true;return true end
