@@ -89,11 +89,14 @@ for _, spec in ipairs({
   T.eq(screen.text, "AB", "the initial name is editable")
   press(screen, "b")
   T.eq(screen.text, "A", "B deletes one initial glyph")
-  screen.row, screen.col = 1, 2
+  screen.row, screen.col = 0, 1
   press(screen, "a")
   T.eq(screen.text, "AB", "native keyboard input updates the public text")
-  -- Native START confirms; Gen2Recomped may reuse its own keyboard layout.
+  -- Gen2 START parks on END; only A on END completes the entry.
   press(screen, "start")
+  T.eq(calls, 0, "START does not complete Gen2 name entry")
+  T.eq(screen:cursorCharacter(), "END", "START selects the native END target")
+  press(screen, "a")
   T.eq(calls, 1, "completion calls the caller once")
   T.eq(result, "AB", "completion returns the edited name")
   T.eq(game.stack:top(), parent, "completion preserves the parent state")
@@ -117,10 +120,11 @@ T.eq(screen.prompt, "LOCALIZED?", "explicit localized prompt survives")
 T.eq(screen.monName, "FIXMON", "the nickname header is retained")
 press(screen, "a")
 T.eq(screen.text, "Ä", "the public grid hook supplies a Unicode glyph")
-screen.row, screen.col = 1, 2
+screen.row, screen.col = 0, 1
 press(screen, "a")
 T.eq(screen.text, "ÄB", "the name limit counts glyphs rather than bytes")
 press(screen, "start")
+press(screen, "a")
 T.eq(result, "ÄB", "Unicode completion keeps the full glyph")
 T.eq(game.stack:top(), screen, "an observing callback does not implicitly close the screen")
 press(screen, "b")
@@ -140,6 +144,8 @@ local ordinary = Screens.push(game, "NamingScreen", {
   end,
 })
 press(ordinary, "start")
+T.eq(game.stack:top(), ordinary, "native START selects END before completion")
+press(ordinary, "a")
 T.eq(game.stack:top(), parent, "ordinary screen closes exactly once")
 
 -- A registry override remains authoritative for the compatibility ID.
