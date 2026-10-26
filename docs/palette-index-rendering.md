@@ -147,11 +147,11 @@ pack renderer. Neither file differs from the baseline. The stock fixture
 runner stops there; a separate diagnostic executed every remaining worker
 against the authenticated fixture bytes so later failures were not hidden.
 
-**T0 is implemented; the required acceptance gate is not green.** Keep its PR
-in draft and stop before T1. Repairing this Gen 3 compatibility/fixture mismatch
-inside the palette migration would cross X5. Resolve it separately or obtain
-an explicit scope decision before continuing. The RG8 decision is recorded
-above, but no index-rendering implementation/default change is included here.
+This was the original T0 blocker. Separate PR #127 corrects native follower
+ownership and fixture admission; all 17 authenticated fixture runs now pass.
+The palette stages depend on that correction rather than changing Gen 3
+inside the palette migration. The original T0 report preserves its measured
+baseline and failure without rewriting the historical evidence.
 No real-scene or voxel screenshot acceptance, map-transition timing improvement,
 or zero-bake migration result is claimed.
 
@@ -173,6 +173,27 @@ The runner intentionally exits nonzero for the baseline fixture failure; it
 does not waive or relabel a failed check. The existing native GPU host needs
 LÖVE 12 and its usual guarded `BATTLE_SOURCE_ENGINE`, `BATTLE_SOURCE_REPORT`,
 `POKEPORT_IDENTITY` and backend environment.
+
+## T1: load-time index derivation
+
+`PaletteIndex.fromImageData(source)` derives a private RG8 ImageData and caches
+it weakly by decoded source identity. R stores shade index 0..3 divided by 255;
+G preserves the original 8-bit alpha. Alpha zero canonicalizes the index to 0.
+This uses the existing shader's strict red-channel cutoffs .83/.5/.17, not RGB
+distance or rounding to the nearest shade. The authored source is untouched.
+Nothing in the engine uses the result yet; no texture/default/hook change.
+
+RGBA8 sources use a LuaJIT FFI byte loop. Other formats/runtimes use getPixel
+and setPixel. Call `invalidate(source)` after mutating source pixels, or
+`invalidate()` at an asset-generation boundary. Invalidating does not release
+ImageData already returned to another caller. The cache does not retain the
+source image through its derived value.
+
+`tools/palette-index-render/derive-check.lua` exhausts all 256 red byte values
+and all 256 alpha byte values, compares FFI and portable results byte-for-byte,
+tests strict floating boundaries, source immutability, identity reuse,
+invalidation and weak ownership. These are derivation checks; real scene
+rendering remains unchanged until subsequent stages.
 
 <!-- palette-inventory:start -->
 ### Reproducible source references

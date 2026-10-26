@@ -19,16 +19,19 @@ def main():
     parser.add_argument('--lua', type=Path, required=True, help='LuaJIT CLI executable')
     parser.add_argument('--reference', type=Path, required=True)
     parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--native-love', type=Path, help='LÖVE 12 runtime for the existing native GPU regression')
     args = parser.parse_args()
     for path in (ROOT, args.love, args.lua, args.reference):
         qa_source(path.resolve())
+    if args.native_love:
+        qa_source(args.native_love.resolve())
     out = args.out.resolve()
     qa_cache(out)
     out.mkdir(parents=True, exist_ok=True)
     adapter = args.lua.resolve()
     env = dict(os.environ)
     watched = [ROOT / p for p in ('src/core/FrameProfile.lua', 'src/render/SpriteRenderer.lua',
-               'src/render/TileRenderer.lua', 'tools/palette-index-render/host/main.lua')]
+               'src/render/TileRenderer.lua', 'src/render/PaletteIndex.lua', 'tools/palette-index-render/host/main.lua')]
     hashes = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in watched}
     results = []
 
@@ -48,6 +51,7 @@ def main():
         run(name, [str(adapter), 'tests/engine/' + name + '.lua'])
     run('mod_examples', [str(adapter), 'tests/mod_examples_tests.lua'])
     run('gen3_palette_index', [str(adapter), 'tools/gen3_palette_index_check.lua'])
+    run('index_derive', [str(adapter), 'tools/palette-index-render/derive-check.lua'])
     run('api3', [sys.executable, 'tools/api3-contract-check/check.py', '--gen1',
                 str(args.reference.resolve()), '--lua', str(adapter), '--report', str(out / 'api3.json')])
     run('external_fixtures', [sys.executable, 'tools/check_external_mod_fixtures.py',
@@ -61,10 +65,21 @@ def main():
     }, timeout=90)
     gpu_rows = [line.removeprefix('PALETTE_INDEX_GPU_RESULT ') for line in gpu.stdout.splitlines()
                 if line.startswith('PALETTE_INDEX_GPU_RESULT ')]
+    native = None
+    if args.native_love:
+        native_identity = identity + '-native'
+        qa_profile(Path.home() / 'Library/Application Support/LOVE' / native_identity)
+        run('native_gpu', [str(args.native_love.resolve()), str(ROOT / 'tools/performance-rendering/host')], {
+            'POKEPORT_IDENTITY': native_identity, 'POKEPORT_GRAPHICS_BACKEND': 'metal',
+            'BATTLE_SOURCE_ENGINE': str(ROOT), 'BATTLE_SOURCE_REPORT': str(out / 'native-gpu.json'),
+        }, timeout=90)
+        if (out / 'native-gpu.json').is_file():
+            native = json.loads((out / 'native-gpu.json').read_text())
     stable = all(hashlib.sha256(p.read_bytes()).hexdigest() == hashes[str(p.relative_to(ROOT))] for p in watched)
     report = {'passed': all(r['exit'] == 0 for r in results) and stable and len(gpu_rows) == 1,
               'sourceSha256': hashes, 'sourceStable': stable, 'results': results,
               'gpu': json.loads(gpu_rows[0]) if len(gpu_rows) == 1 else None,
+              'nativeGpu': native,
               'realSceneAcceptance': False, 'playerProfilesUsed': False}
     (out / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
     return 0 if report['passed'] else 1
