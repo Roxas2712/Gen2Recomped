@@ -44,6 +44,9 @@ function M.resolve(game)
     for i = #states, 1, -1 do
       if states[i].isOverworld then world = states[i]; break end
     end
+    -- The physical list can contain overlays only. Its persistent world is
+    -- still a real native admission, independently of the convenience pointer.
+    if not world then world=game.stack.worldState end
   elseif not world then
     world = game.overworld
   end
@@ -60,7 +63,10 @@ function M.acceptsInput(game, world, player)
   local owner, current, actor = M.resolve(game)
   if owner ~= game or current ~= world or actor ~= player then return false end
   local states = game.stack and game.stack.states
-  if states and states[#states] ~= world then return false end
+  if type(states)=='table' then
+    local active=type(game.stack.active)=='function' and game.stack:active() or states[#states]
+    if active~=world then return false end
+  end
   return not world.battleActive and not (world.busy and world:busy())
 end
 return M
