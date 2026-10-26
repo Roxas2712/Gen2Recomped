@@ -3,6 +3,7 @@ import contextlib
 import hashlib
 import importlib.util
 import io
+import json
 import os
 from pathlib import Path
 from types import SimpleNamespace
@@ -79,6 +80,29 @@ class TranslationSourceEncodingTests(unittest.TestCase):
         self.assertGreater(len(entries), 100)
         self.assertTrue(any(where.startswith('src/battle/MoveEffects.lua:') for _, where in entries))
         self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), before)
+
+    def test_translation_fills_legacy_and_parameterized_manifest_layouts(self):
+        root, _ = self.source(b'Strings("A valid key")\n')
+        portable = ('{"id":"{{id}}","name":"{{name}}","version":"0.1.0","api":{{api}},'
+                    '"entry":"main.lua",{{games_line}}"profile":"{{profile}}",{{engine_range_line}}'
+                    '"experimental":{{experimental}}}')
+        for label, template in [('legacy', MODKIT.MANIFEST_TEMPLATE), ('parameterized', portable)]:
+            with self.subTest(layout=label):
+                args = SimpleNamespace(id='catalog_' + label, language='Test', dest=str(root / 'output'),
+                                       refresh=False, force=False, base='fixture', quiet=True, json=False)
+                with mock.patch.object(MODKIT, 'resolve_base', return_value='fixture'), \
+                        mock.patch.object(MODKIT, 'dump_dataset', return_value=[]), \
+                        mock.patch.object(MODKIT, 'engine_version', return_value='9.2.1'), \
+                        mock.patch.object(MODKIT, 'MANIFEST_TEMPLATE', template):
+                    self.assertEqual(MODKIT.cmd_translation(args, str(root)), 0)
+                path = root / 'output' / args.id / 'manifest.json'
+                body = path.read_text(encoding='utf-8')
+                self.assertNotIn('{{', body)
+                manifest = json.loads(body)
+                self.assertEqual(manifest['api'], 2)
+                self.assertEqual(manifest['profile'], 'content')
+                self.assertEqual(manifest['game_version'], '>=9.2.1 <10.0.0')
+                self.assertNotIn('games', manifest)
 
 
 if __name__ == '__main__':
