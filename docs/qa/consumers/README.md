@@ -121,3 +121,24 @@ The public formatted driver has identical stripped LuaJIT bytecode to the
 executed original. See the [receipt](../dev-api-attribution.json) for exact
 host/API coverage, baseline failures, negative controls and native graphics
 confirmation. Native confirmation reuses `battle-style-native.lua` unchanged.
+
+
+## Native capture nickname decision
+
+`catch-nickname-native.lua` uses the same isolated native graphics setup with
+`examples/portable_catch_nickname` installed and enabled. Set
+`CATCH_NICKNAME_OUT` to a fresh absolute QA output directory. Use a genuine
+regular Red ROM import into the separate QA identity, disable legacy migration,
+keep audio muted and launch at nice 19 through `qa_storage`. Do not use normal
+player profiles or an embedded `game.love` that overrides the frozen source.
+
+The driver creates in-memory party/PC state and prepared wild battles, then
+uses actual ITEM, bag and Master Ball input. It verifies skip/direct party
+name/direct PC name/forwarded YES and typed A/unsubscribe, exact one-ball spend,
+original recipient identity, captured-event timing and ordinary battle return.
+It also opens the native party menu to show the supplied name. Five captures
+per engine are required and must be inspected. Host-native bag/naming layouts
+are retained; rendered-pixel equality and full playthroughs are not asserted.
+The public formatted driver has identical stripped LuaJIT bytecode to the
+executed original. See the [receipt](../catch-nickname.json) for refs, hashes,
+shared API coverage, retained setup failures and negative controls.

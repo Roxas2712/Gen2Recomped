@@ -17,15 +17,16 @@ authorize publishing upstream Gen1 changes.
 
 ## Current October upstream composition
 
-The current production qualification is `4c9a0a73a897cae8d1610c282756ea88f8c9ee4b`,
+The current production qualification is `70c49224ef5951d0122d8f2795c5c1bbb503b257`,
 which includes upstream `ed5189c2`, [PR #313](https://github.com/UNDERdecoded/Gen2Recomped/pull/313),
 the portable quit hook in [PR #320](https://github.com/UNDERdecoded/Gen2Recomped/pull/320),
 the [portable battle-style decision](https://github.com/UNDERdecoded/Gen2Recomped/pull/322),
-and [accurate dev API import attribution](https://github.com/UNDERdecoded/Gen2Recomped/pull/324).
-It passes **298/298 engine suites**, **4/4 SDK suites** and B30 with zero
-FAIL lines. The source tree is `5c3d3f2efc0640f29f1aa53466e27c8a9c66a8c2`;
-its engine-test tree is `d2d09b918dce3113b795b553a16dbbb035142c4d`.
-The full test tree is `792783a3d952147d597d91cdba9320fb481f434c`.
+[accurate dev API import attribution](https://github.com/UNDERdecoded/Gen2Recomped/pull/324),
+and the [portable capture nickname decision](https://github.com/UNDERdecoded/Gen2Recomped/pull/325).
+It passes **299/299 engine suites**, **4/4 SDK suites** and B30 with zero
+FAIL lines. The source tree is `e8c52f390f854b2c8586cff23cc8a889dede3768`;
+its engine-test tree is `ad646b6c9619363e48549699e83162de5a8e43e3`.
+The full test tree is `b936076d6b0506a3bed62c70eefa12ca5d1d45aa`.
 Later publication changes only record qualification evidence. The earlier
 October qualification and its shared-contract counts below retain their own refs.
 
@@ -83,6 +84,26 @@ The process exits zero, normal inputs stay unchanged and four captures were
 inspected. The independent audit initially rejected missing harness-coverage
 markers after `T.finish`; all twenty modes were rerun with the assertion and
 marker before process exit. See the [attribution receipt](qa/dev-api-attribution.json).
+
+The new Gen1 `catch.nickname` decision runs after successful party/PC
+placement and supports skip, supplied name or native AskName. It preserves
+the original stored-mon identity, new-species dex handling, full-PC refusal,
+caught events and queue completion. Its supplied string uses the reference's
+ten-byte prefix; other generations retain their existing native behavior.
+The feature passes **337/337** checks; this composition passes **341/341**.
+The old upstream code fails **75** new assertions; bypassing the native store
+call site fails **74**, and passing a cloned recipient fails **16**.
+
+The unchanged example on Red/Blue/Yellow completes **12 native workers / 132
+typed paired rows** plus **24 composed-mode workers / 264 rows** against the
+unchanged Gen1 reference. Both actual native Red processes also pass five
+prepared-wild-battle cases using real ITEM/bag/Master Ball input: skip, supplied
+party/PC names, forwarded YES/keyboard/PC naming, and unsubscribe. Exactly one
+ball is spent per catch; the native naming callback updates the original PC
+mon and both processes return normally with identical selected typed outcomes.
+Ten captures were inspected. These are bounded input/capture/identity checks,
+not complete mods/playthroughs, pixel equality or FPS acceptance. Native bag
+and naming presentation differs by host. See the [nickname receipt](qa/catch-nickname.json).
 
 Two merge boundaries retain both behaviors: `screen.render_visible` runs
 inside the native DS supersampling draw loop, and battle completion keeps
