@@ -2544,6 +2544,14 @@ function BattleState:stepHpAnim()
   return require('src.battle.Gen2HpPresentation').step(self)
 end
 
+function BattleState:hudHp(mon, side)
+  return require('src.battle.Gen2HpPresentation').shown(self, mon, side)
+end
+
+function BattleState:hudHpPixels(mon, side)
+  return require('src.battle.Gen2HpPresentation').fill(self, mon, side)
+end
+
 -- AnimateExpBar (engine/battle/experience.asm) creeps the bar to its new
 -- length a pixel at a time with a tick of sound behind it, instead of
 -- redrawing it at the new length; the bar drawing itself off the live exp is
@@ -11358,6 +11366,16 @@ local HudTiles = require("src.render.HudTiles")
 local hudTile = HudTiles.tile
 local drawHPBar = HudTiles.drawHPBar
 
+local function nativeHpPixels(screen, b, side)
+  if GameVersion.isGen2() then
+    -- The public GSC animation owns a 48-pixel bar. Respect a cartridge's
+    -- wider HUD geometry when writing its actual tile row.
+    local pixels = screen:hudHpPixels(b.mon, side)
+    return pixels > 0 and math.max(1, math.floor(pixels
+      * HudTiles.geometry().hpBarTiles / 6)) or 0
+  end
+end
+
 -- CenterMonName: 1-2 letter names print two tiles right, 3-4 one tile.
 -- Counted in glyphs, not bytes: a nickname carrying "é" or "♂" is one
 -- charmap sequence per glyph, and byte length would push it a tile left.
@@ -12381,7 +12399,8 @@ function BattleState:sgbBattlePals()
   local function bar(b)
     if not b then return pals.GREENBAR end
     local hp = b.shownHP or b.mon.hp
-    return pals[PaletteFX.barPalName(hp, b.mon.stats.hp)] or pals.GREENBAR
+    return pals[PaletteFX.barPalName(hp, b.mon.stats.hp,
+      nativeHpPixels(self, b, b.isPlayer and 'player' or 'enemy'))] or pals.GREENBAR
   end
   local function mon(b, placeholder)
     if placeholder or not b then return pals.MEWMON or pals.GREENBAR end
@@ -13023,7 +13042,7 @@ function BattleState:drawHUDs(slide)
     hudTile(0x73, 8, 16)
     drawHPBar(barData, 2, 2,
               { hp = shownHP(self.enemy), stats = self.enemy.mon.stats },
-              nil, grayFill)
+              nil, grayFill, nil, nativeHpPixels(self, self.enemy, 'enemy'))
     hudTile(0x74, 8, 24)
     for i = 2, 9 do hudTile(0x76, i * 8, 24) end
     hudTile(0x78, 80, 24)
@@ -13104,7 +13123,7 @@ function BattleState:drawHUDs(slide)
     end
     drawHPBar(barData, 10, 9,
               { hp = shownHP(self.player), stats = self.player.mon.stats },
-              1, grayFill) -- wHPBarType 1: the $6D cap
+              1, grayFill, nil, nativeHpPixels(self, self.player, 'player')) -- wHPBarType 1: the $6D cap
     Font.draw(("%3d/%3d"):format(shownHP(self.player), self.player.mon.stats.hp), 88, 80)
     -- The block's right edge follows the HP bar: two label tiles from column
     -- 10, then the segments, then the cap -- column 18 with Crystal's
