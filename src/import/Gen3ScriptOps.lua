@@ -70,7 +70,7 @@
 --                                                        (usually a pointer)
 --   *  variable length; see TRAINER_BATTLE_LENGTH
 
-local Gen3ScriptOps = {}
+local Gen3ScriptOps = { CACHE_REVISION = 1 }
 
 Gen3ScriptOps.COMMANDS = {
   { "nop", "" }, { "nop1", "" }, { "end", "" }, { "return", "" }, { "call", "d" },
@@ -119,7 +119,7 @@ Gen3ScriptOps.COMMANDS = {
   { "choosecontestmon", "" }, { "startcontest", "" }, { "showcontestresults", "" },
   { "contestlinktransfer", "" }, { "random", "w" }, { "addmoney", "db" },
   { "removemoney", "db" }, { "checkmoney", "db" }, { "showmoneybox", "bbb" },
-  { "hidemoneybox", "" }, { "updatemoneybox", "" }, { "getpokenewsactive", "w" },
+  { "hidemoneybox", "" }, { "updatemoneybox", "bbb" }, { "getpokenewsactive", "w" },
   { "fadescreen", "b" }, { "fadescreenspeed", "bb" }, { "setflashlevel", "w" },
   { "animateflash", "b" }, { "messageautoscroll", "d" }, { "dofieldeffect", "w" },
   { "setfieldeffectargument", "bw" }, { "waitfieldeffect", "w" }, { "setrespawn", "w" },

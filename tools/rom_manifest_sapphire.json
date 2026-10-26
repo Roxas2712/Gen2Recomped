@@ -1,5 +1,8 @@
 {
   "format": 3,
+  "scriptCommands": {
+    "148": ["hidemoneybox", "bb"]
+  },
   "generation": 3,
   "romBase": 134217728,
   "charmap": {
