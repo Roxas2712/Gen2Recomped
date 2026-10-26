@@ -6,9 +6,17 @@ local S=require('src.core.SaveSerializer')
 local current=S.encode({player={name='Current'},playTime=120})
 local remote=S.encode({player={name='Other device'},playTime=130})
 local writes={}
+local suspendCalls=0
+package.loaded['src.storage.SuspendStore']={sync=function()
+ suspendCalls=suspendCalls+1;return nil,'legacy save has no playthrough identity'
+end}
 package.loaded['src.core.SaveData']={slotDiskPath=function() return '/test/running' end,
  listSlots=function() return {{id='running',name='Current'}} end,createSlot=function() return 'cloud-copy' end,
- writeSlot=function(_,id,value) writes[id]=value;return true end,renameSlot=function() end}
+ writeSlot=function(_,id,value) writes[id]=value;return true end,renameSlot=function() end,
+ peekSlot=function(version,slot)
+  check(version=='red' and slot=='running','suspend preflight inspects the selected running slot')
+  return S.decode(current)
+ end}
 local originalOpen=io.open
 io.open=function(path,mode)
  if path=='/test/running' then return {read=function() return current end,close=function() end} end
@@ -26,5 +34,6 @@ local keys={};C.loadState=function(key) keys[#keys+1]=key;return {device='device
 C.syncOne(store,'red','running',true)
 store.profileScope='retro:two@example.invalid';C.syncOne(store,'red','running',true)
 check(keys[1]~=keys[2],'different ModCompass accounts never reuse one another’s save links')
+check(suspendCalls==0,'legacy saves without a playthrough identity do not sync suspend data')
 io.open=originalOpen
 print('Running-slot cloud: '..n..' checks passed')
