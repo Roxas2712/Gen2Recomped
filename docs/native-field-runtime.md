@@ -145,3 +145,22 @@ real unchanged FireRed run 4c88811768 opens START, finds the original ASCENDANT
 row, invokes its handler and captures the fully drawn original settings.
 Its layout wrapper is attributed to ORIGAMI_ASCENDANT. This does not qualify
 every settings action, other editions or the still-unavailable battle card.
+
+Owned actor presentations now survive collection of temporary source views,
+including an explicitly absent renderer. Native actor removal, cohort changes
+and owner teardown retire them through the existing service. Foreign teardown
+cannot clear another owner's renderer. The old weak-value binding fails 35
+GC assertions; the corrected ownership passes 60 checks on both baselines.
+
+A wrapped source follower also begins as an unpainted logical actor after its
+one native update. Imports and ordinary reads preserve native artwork, and an
+existing owned renderer keeps its owner. This initial admission closes a second
+gap: consumers may cache nil and never make an explicit sprite assignment.
+85 admission checks pass on both baselines, with 90 pool, 916 companion, 20
+object-lifecycle and 3,238 native predicate checks on the fork. The retained
+Sapphire normal-view counterexample shows two avatars before correction; the
+47c240dd72 run shows one after forced GC, while the native follower remains
+admitted with an explicitly absent source renderer. All five actual starting
+rooms have now reached normal/open/third/first views; native 2D passthrough
+remains intentional for Hoenn's normal setting. This is still starting-room
+coverage, not full playthrough or cartridge-feature discovery acceptance.
