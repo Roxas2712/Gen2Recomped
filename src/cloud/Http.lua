@@ -21,9 +21,12 @@
 local H = {}
 H.async=setmetatable({},{__mode='k'})
 
+local tmpSerial=0
 local function tmpPath(tag)
   local dir = love.filesystem.getSaveDirectory()
-  local name = ("http_%s_%d_%d.tmp"):format(tag, os.time(), math.random(1, 1e6))
+  tmpSerial=tmpSerial+1
+  local namespace=tostring(H.tmpNamespace or H):gsub('[^%w]','')
+  local name = ("http_%s_%d_%s_%d.tmp"):format(tag, os.time(), namespace, tmpSerial)
   return dir .. "/" .. name, name
 end
 

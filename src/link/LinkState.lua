@@ -257,7 +257,8 @@ function LinkState:update(dt)
     if self.net.closed and #self.net.inbox == 0
        and not PRE_CONNECT_STAGES[self.stage] and self.stage ~= "addrEntry"
        and self.stage ~= "codeEntry" and self.stage ~= "notice"
-       and self.stage ~= "battleRunning" then
+       and self.stage ~= "battleRunning"
+       and not (self.beforeTradeApply and self.trade and self.trade.stage == "done") then
       self:exitWith(Strings("The link was\nbroken."))
       return
     end
@@ -579,6 +580,7 @@ function LinkState:updateTrade(input)
     return
   end
   if t.stage == "done" then
+    if self.beforeTradeApply and not self:beforeTradeApply(t) then return end
     local sent = t.party[t.myPick]
     local received, evoTo, evoRow = t:apply(self.game)
     -- Autosave the instant the swap commits into game.save.party, matching the
@@ -588,7 +590,9 @@ function LinkState:updateTrade(input)
     -- lives only in memory until a manual START-menu save, so a force-quit
     -- would lose it and a reset would clone the sent mon (#222).  Guarded so
     -- headless LinkBattle-style fake games with no writeSave are unaffected.
-    if self.game.writeSave then self.game:writeSave() end
+    local saved,saveError=true,nil
+    if self.game.writeSave then saved,saveError=self.game:writeSave() end
+    if self.onTradeSaved then self:onTradeSaved(saved,saveError,evoTo) end
     local name = received.nickname or self.game.data.pokemon[received.species].name
     Runtime.emit("link.ended", { reason = "done" })
     self.game.linkSession = nil -- this path pops without exitWith
@@ -625,7 +629,11 @@ function LinkState:updateTrade(input)
               -- evoRow rides along so an item-gated evolution consumes the
               -- METAL COAT / KING'S ROCK / DRAGON SCALE / UP-GRADE it needed
               require("src.pokemon.Evolution").evolve(game, received, evoTo,
-                function() if game.writeSave then game:writeSave() end end,
+                function()
+                  local ok,why=true,nil
+                  if game.writeSave then ok,why=game:writeSave() end
+                  if self.onTradeEvolutionSaved then self:onTradeEvolutionSaved(ok,why) end
+                end,
                 "TRADE", evoRow)
             end
           end))

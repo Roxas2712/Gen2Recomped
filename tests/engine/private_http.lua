@@ -26,4 +26,22 @@ check(configs[1]:find('proto = "=https"',1,true) and not configs[1]:find('locati
 check(#writes==0,'request credentials never enter the filesystem transport')
 check(not H.request('POST','http://pokexpert.de/auth',{sensitive=true,body=password}),'plaintext HTTP refuses credentials')
 check(not H.request('POST','https://pokexpert.de/auth',{sensitive=true,headers={Authorization='token\nother'}}),'injected headers are rejected before starting curl')
+local second=assert(loadfile('src/cloud/Http.lua'))()
+H.tmpNamespace='worker-1';second.tmpNamespace='worker-2'
+local paths={};local results={}
+local oldTime=os.time;os.time=function()return 1234 end
+host.popen=function(command)
+ local status=command:match("'/private/fixture/(http_private_status_[^']+)'")
+ return {write=function(_,config)
+   local out=config:match('output = "/private/fixture/([^"\n]+)"')
+   check(not paths[out] and not paths[status],'concurrent workers own distinct response/status paths even in the same second')
+   paths[out]=true;paths[status]=true
+   results[#results+1]={out=out,status=status}
+   if #results==1 then local c,b=second.request('GET','https://pokexpert.de/test',{sensitive=true});check(c==200 and b=='second','interleaved worker reads its own response') end
+  end,
+  close=function()local r=results[status:find('worker2',1,true) and 2 or 1];write(r.out,status:find('worker2',1,true) and 'second' or 'first');write(r.status,'200')end}
+end
+local c,b=H.request('GET','https://pokexpert.de/test',{sensitive=true})
+check(c==200 and b=='first','first request survives an overlapping private HTTP request')
+os.time=oldTime
 print('Private HTTP: '..n..' checks passed')
