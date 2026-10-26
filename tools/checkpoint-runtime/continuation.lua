@@ -51,7 +51,7 @@ return function(check)
           p.px = p.cellX * 16
         end
         world:stepBody(false)
-        return Serializer.encode(require("src.core.CheckpointActors").capture(game, copy)), love.math.getRandomState()
+        return Serializer.encode(assert(f.checkpoints:capture(game))), love.math.getRandomState()
       end
       for i = 1, 45 do
         step(i)
