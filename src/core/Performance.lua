@@ -79,6 +79,9 @@ Performance.idleStream = true
 -- G9: the Gen 4 live pass meshes the ring of chunks around the view in the
 -- frame's idle time, before the camera reaches them (Gen4Ground:prebuild).
 Performance.gen4ChunkPrebuild = true
+-- W1: a pool of worker threads for the builds that need no GPU
+-- (src/core/BuildWorker.lua); false keeps every build on the main thread.
+Performance.buildWorkers = true
 Performance.GC_PAUSE = 120
 Performance.GC_STEP_MUL = 300
 Performance.GC_BUDGET_SECONDS = 0.0005
