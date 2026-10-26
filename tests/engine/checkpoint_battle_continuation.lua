@@ -32,7 +32,7 @@ local Serializer = require("src.core.SaveSerializer")
 local function copy(v)
   return assert(Serializer.decode(Serializer.encode(v)))
 end
-for _, edition in ipairs({ "red", "gold", "firered", "emerald", "platinum", "heartgold", "black" }) do
+for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
   for _, kind in ipairs({ "wild", "trainer" }) do
     local f = Fixture.boot(edition)
     local game, world, stack = f.game, f.world, f.stack
@@ -71,23 +71,27 @@ for _, edition in ipairs({ "red", "gold", "firered", "emerald", "platinum", "hea
         T.eq(Serializer.encode(assert(f.checkpoints:capture(game))), bytes, "full battle recapture matches")
         T.eq(Serializer.encode(cp), bytes, "caller battle payload detached")
         local function turn()
-        local b=stack:top()
-        game.input.wasPressed=function(_,key)return key=='a'end
-        game.input.pressed=game.input.wasPressed
-        b:chooseMenu('fight');b:chooseMove(1)
-        local ticks=0
-        repeat
-          b:update(1/60);ticks=ticks+1
-        until (b.phase=='menu' and not b.current and #b.queue==0) or ticks>=4000
-        T.check(ticks<4000 and b.phase=='menu', 'actual native turn reaches its next decision')
-        return Serializer.encode(assert(f.checkpoints:capture(game)))
-      end
-      local expected=turn()
-      T.check(f.checkpoints:restore(game,cp),'rewind before comparing native turn continuation')
-      T.check(turn()==expected,'same player intent reproduces the complete next native decision')
-      T.check(f.checkpoints:restore(game,cp),'restore original decision after the continuation proof')
-      fresh=stack:top()
-      local originalRng = fresh.rng
+          local b = stack:top()
+          game.input.wasPressed = function(_, key)
+            return key == "a"
+          end
+          game.input.pressed = game.input.wasPressed
+          b:chooseMenu("fight")
+          b:chooseMove(1)
+          local ticks = 0
+          repeat
+            b:update(1 / 60)
+            ticks = ticks + 1
+          until (b.phase == "menu" and not b.current and #b.queue == 0) or ticks >= 4000
+          T.check(ticks < 4000 and b.phase == "menu", "actual native turn reaches its next decision")
+          return Serializer.encode(assert(f.checkpoints:capture(game)))
+        end
+        local expected = turn()
+        T.check(f.checkpoints:restore(game, cp), "rewind before comparing native turn continuation")
+        T.check(turn() == expected, "same player intent reproduces the complete next native decision")
+        T.check(f.checkpoints:restore(game, cp), "restore original decision after the continuation proof")
+        fresh = stack:top()
+        local originalRng = fresh.rng
         fresh.rng = function()
           return 1
         end

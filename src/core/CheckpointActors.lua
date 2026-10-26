@@ -235,7 +235,7 @@ function A.capture(game, clone)
     assert(not npc.shakeDone and not npc.onDone, "actor has an opaque pending callback")
     local id = npc.id
     assert(not records[id], "duplicate native actor identity")
-    seen[npc],records[id]=id,true
+    seen[npc], records[id] = id, true
     local mapId, index = id:match("^(.*)_obj_(%d+)$")
     assert(mapId and tonumber(index) == npc.def.index and game.data.maps[mapId], "actor home map is unavailable")
     local factory = "npc"
@@ -406,7 +406,7 @@ function A.validate(game, snapshot)
     if map ~= r.map or tonumber(index) ~= r.def.index then
       return false
     end
-    if r.factory == "yellow" and not require("src.core.GameVersion").isYellow() then
+    if r.factory == "yellow" and require("src.core.GameVersion").generation() ~= 1 then
       return false
     end
     if r.g4 and (type(r.g4) ~= "table" or not require("src.world.Gen4MovementTypes").row(r.g4.type, r.g4.family)) then

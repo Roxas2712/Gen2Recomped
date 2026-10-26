@@ -7,7 +7,7 @@ end
 love.math.setRandomState = function() end
 local F = require("tests.checkpoint_fixture")
 local C = require("src.core.CheckpointCallbacks")
-for _, edition in ipairs({ "red", "gold", "firered", "emerald", "platinum", "heartgold", "black" }) do
+for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
   local f = F.boot(edition)
   local game, world, stack = f.game, f.world, f.stack
   local npc = world.npcs[1]

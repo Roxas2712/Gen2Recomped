@@ -76,6 +76,7 @@ function W.begin(game, loaded, runtime, clone)
     Actors.detach(world)
     world:_checkpointRebuild(position)
     replace(loaded,canonical);loaded.options=options
+    if game.mods then game.mods.modSave=loaded.modData or {} end
     if actors then Actors.apply(game, actors, clone) else Spinners.apply(world, spinners) end
 		game.world = world
 		if stack.worldOwner then
