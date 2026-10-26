@@ -11,8 +11,10 @@ function F.tick(O)
  local account=Auth.signedIn() and Auth.accountId() or nil
  if F.account~=account then
   if O.socialJob then O.socialJob:cancel() end
-  F.account=account;O.socialJob=nil;O.socialProfile=nil;O.foundFriend=nil;O.friendQuery='';O.friendTarget=nil;O.socialPreferences=nil
+  require('src.ui.FriendChat').clear(O)
+  F.account=account;O.friendSettings=nil;O.socialJob=nil;O.socialProfile=nil;O.foundFriend=nil;O.friendQuery='';O.friendTarget=nil;O.socialPreferences=nil;O.wager=nil
  end
+ require('src.ui.FriendChat').tick(O)
  if O.socialJob then
   local r=O.socialJob:poll();if not r then return end;O.socialJob=nil
   if r.kind~='done' or not r.first then O.notice=tostring(r.second or r.error or 'Friend request failed.');return end
@@ -20,25 +22,35 @@ function F.tick(O)
   elseif O.socialPurpose=='find' then O.foundFriend=r.first;O.notice='Player found. Send a request to connect.'
   elseif O.socialPurpose=='friend' then require('src.cloud.Presence').accept(r.first);O.notice='Friend list updated.';Play.refresh()
   elseif O.socialPurpose=='preferences' then O.socialPreferences=r.first.preferences;O.notice='Friend privacy settings saved on your account.';Play.refresh(true)
+  elseif O.socialPurpose=='wager' then require('src.ui.FriendWagerMenu').accept(O,r.first);Play.refresh()
   else O.notice='Invitation updated.';Play.refresh() end
  elseif O.page=='friends' and account and not O.socialProfile then job(O,'profile',API.profile) end
 end
 function F.action(O,id)
  if id=='friends' then O.page='friends';O.scroll=0;O.selected=1;O.notice=nil;Play.refresh();F.tick(O);return true end
  if O.page~='friends' then return false end
+ if require('src.ui.FriendChat').action(O,id)then return true end
+ if id=='activityOverlay' or id=='mapMarkers'then
+  local options=O.game.save.options or {};O.game.save.options=options
+  local key=id=='activityOverlay'and'friendActivityOverlay'or'friendMapMarkers'
+  options[key]=id=='mapMarkers'and options[key]==false or id=='activityOverlay'and not options[key]
+  if O.game.writeOptions then O.game:writeOptions()end;return true
+ end
+ if require('src.ui.FriendWagerMenu').action(O,id,job)then return true end
  local settings=Play.read() and Play.read().preferences or O.socialPreferences or {}
- if id=='allRequests' or id=='allVisibility' then
-  local key=id=='allRequests' and 'requests_enabled' or 'visibility_enabled'
+ if id=='allRequests' or id=='allVisibility' or id=='allChat' then
+  local key=id=='allRequests' and 'requests_enabled' or id=='allChat'and'chat_enabled'or'visibility_enabled'
   job(O,'preferences',function()return Play.request('PUT','preferences',{[key]=settings[key]==false})end);return true
  end
  local pref,friend=id:match('^pref:(%a+):(%d+)$')
  if pref then
   local current={};for _,p in ipairs(settings.friends or {}) do if tostring(p.account_id)==friend then current=p;break end end
-  local key=pref=='visible' and 'visible' or 'requests_enabled'
+  local key=pref=='visible' and 'visible' or pref=='chat'and'chat_enabled'or'requests_enabled'
   job(O,'preferences',function()return Play.request('PUT','preferences',{friend_id=tonumber(friend),[key]=current[key]==false})end);return true
  end
- if id=='friendsBack' then O.friendTarget=nil;O.scroll=0;O.selected=1;return true end
- if id=='friendTag' then O.friendFocus=true;if love.keyboard.setTextInput then love.keyboard.setTextInput(true) end;return true end
+ if id=='friendSettings'then O.friendSettings=true;O.scroll=0;O.selected=1;return true end
+ if id=='friendsBack' then O.friendSettings=nil;O.friendTarget=nil;O.scroll=0;O.selected=1;return true end
+ if id=='friendTag' then require('src.ui.TextComposer').open(O,O.friendQuery,function(v)O.friendQuery=v;O.foundFriend=nil end,80);return true end
  if id=='findPlayer' then local tag=O.friendQuery or '';job(O,'find',function()return API.findPlayer(tag)end);return true end
  if id=='requestFriend' and O.foundFriend then local tag=O.foundFriend.friend_tag;job(O,'friend',function()return API.addFriend(tag)end);return true end
  local peer=id:match('^friend:(%d+)$')
@@ -57,9 +69,11 @@ function F.action(O,id)
  return false
 end
 function F.text(O,value)
+ if require('src.ui.TextComposer').text(O,value)then return true end
  if O.page=='friends' and O.friendFocus then O.friendQuery=((O.friendQuery or '')..value:gsub('[%c]','')):sub(1,80);O.foundFriend=nil;return true end
 end
 function F.key(O,key)
+ if require('src.ui.TextComposer').key(O,key)then return true end
  if O.page~='friends' or not O.friendFocus then return false end
  if key=='return' or key=='escape' then O.friendFocus=nil;if love.keyboard.setTextInput then love.keyboard.setTextInput(false) end
  elseif key=='backspace' then O.friendQuery=(O.friendQuery or ''):gsub('[%z\1-\127\194-\244][\128-\191]*$','');O.foundFriend=nil
@@ -68,41 +82,66 @@ function F.key(O,key)
 end
 function F.rows(O)
  if not Auth.signedIn() then return {{id='noop',label='Sign in to play with friends',note='Use My Profile in the library. Local play stays available.'},{id='library',label='Save & open library'}} end
+ if O.chat then return require('src.ui.FriendChat').rows(O)end
+ if O.wager then return require('src.ui.FriendWagerMenu').rows(O)end
  local doc=Play.read() or require('src.cloud.Presence').read() or {}
  local rows={};local function add(id,label,note,avatar)rows[#rows+1]={id=id,label=label,note=note,avatar=avatar}end
  local settings=doc.preferences or O.socialPreferences or {}
- if O.friendTarget then add('friendsBack','‹ All friends') else
+ if O.friendSettings then
+ add('friendsBack','‹ Friends')
  add('allRequests','Incoming invitations · '..(settings.requests_enabled==false and 'OFF' or 'ON'),'Trade, battle and meeting requests from accepted friends only.')
+ add('allChat','Friend chat · '..(settings.chat_enabled==false and'OFF'or'ON'),'Private messages from accepted friends only.')
  add('allVisibility','Mutual map visibility · '..(settings.visibility_enabled==false and 'OFF' or 'ON'),'Up to 5 friends · Accepted meetings only · No effect on the world.')
+ local options=O.game and O.game.save and O.game.save.options or {}
+ add('mapMarkers','Friends on standard / Fly map · '..(options.friendMapMarkers==false and'OFF'or'ON'),'Accepted meetings and verified map locations only.')
+ return rows
+ elseif O.friendTarget then add('friendsBack','‹ All friends') else
  local own=O.socialProfile or doc
  add('noop',own.name or own.nickname or Auth.nickname(),own.friend_tag or 'Loading your friend tag…',{preset=own.avatar_preset,color=own.avatar_color,image=O.socialAvatar})
+ local options=O.game and O.game.save and O.game.save.options or {}
+ add('activityOverlay','Friend activity overlay · '..(options.friendActivityOverlay and 'ON'or'OFF'),'Nickname, edition and shared zone while playing.')
+ add('friendSettings','Privacy & map settings','Control requests, chat and shared locations.')
  end
  for _,i in ipairs(doc.invites or {}) do
+  if (not O.friendTarget or tostring(i.peer)==O.friendTarget) and i.wager and i.state=='accepted' then
+   add('wager:review:'..i.id,'REVIEW ACTIVE WAGER · '..i.nickname,'View the reserved stakes or cancel the unresolved battle.')
+   add('leaveLink:'..i.id,'Cancel wager & return stakes')
+  end
   if (not O.friendTarget or tostring(i.peer)==O.friendTarget) and i.incoming and i.state=='pending' then
-   add('acceptLink:'..i.id,'ACCEPT · '..i.mode:upper()..' · '..i.nickname,i.edition:upper()..' · Your game connects only after you accept.')
+   if i.wager then add('wager:review:'..i.id,'REVIEW STAKES · '..i.nickname,'Agree on money or a specific box Pokémon before the battle.')
+   else add('acceptLink:'..i.id,'ACCEPT · '..i.mode:upper()..' · '..i.nickname,i.edition:upper()..' · Your game connects only after you accept.')end
    add('declineLink:'..i.id,'Decline invitation')
   elseif (not O.friendTarget or tostring(i.peer)==O.friendTarget) and i.mode=='meet' and i.state=='accepted' then add('leaveLink:'..i.id,'LEAVE MEETING · '..i.nickname,'You can see each other on matching maps.')
-  elseif (not O.friendTarget or tostring(i.peer)==O.friendTarget) and i.state=='pending' then add('leaveLink:'..i.id,'CANCEL · '..i.mode:upper()..' · '..i.nickname,'Waiting for your friend to accept.') end
+  elseif (not O.friendTarget or tostring(i.peer)==O.friendTarget) and i.state=='pending' then
+   if i.wager then add('wager:review:'..i.id,'REVIEW STAKES · '..i.nickname,'Both offers must be confirmed.')end
+   add('leaveLink:'..i.id,'CANCEL · '..i.mode:upper()..' · '..i.nickname,'Waiting for your friend to accept.') end
  end
  for _,p in ipairs(not O.friendTarget and doc.incoming or {}) do add('acceptFriend:'..p.account_id,'ACCEPT FRIEND · '..p.nickname);add('removeFriend:'..p.account_id,'Decline friend request') end
  local peers={};for _,p in ipairs(doc.friends or {}) do peers[#peers+1]=p end
  table.sort(peers,function(a,b)if a.online~=b.online then return a.online==true end;return a.nickname<b.nickname end)
  for _,p in ipairs(peers) do
   if not O.friendTarget or O.friendTarget==tostring(p.account_id) then
-  local playing=p.playing or {};local editions={};for _,d in ipairs(playing) do editions[#editions+1]=d.edition:upper() end
+  local playing=p.playing or {};local editions={};for _,d in ipairs(playing) do local edition,zone=require('src.ui.FriendActivity').label(O.game,d);editions[#editions+1]=edition..' · '..zone end
   add('friend:'..p.account_id,p.friend_tag or p.nickname,(p.online and 'ONLINE' or 'OFFLINE')..(#editions>0 and ' · '..table.concat(editions,' / ') or ''),{preset=p.avatar_preset,color=p.avatar_color})
   if O.friendTarget==tostring(p.account_id) then
+   add('chat:'..p.account_id,'CHAT WITH '..p.nickname,'Messages sync across your devices. You can chat while your friend is offline.')
    local pref={};for _,v in ipairs(settings.friends or {}) do if tostring(v.account_id)==tostring(p.account_id) then pref=v;break end end
    for _,d in ipairs(playing) do
-    if d.compatible and d.available then
-     add('invite:meet:'..d.device,'MEET ON THE MAP · '..d.edition:upper(),'Private meeting · Your adventures remain separate.')
+    if d.available then
+     if d.meet_compatible or d.compatible then
+     add('invite:meet:'..d.device,'MEET ON THE MAP · '..d.edition:upper(),'Same generation · Visible on maps with matching paths and exits.')
+     end
+     if d.compatible then
      if d.link_supported~=false then
      add('invite:trade:'..d.device,'TRADE · '..d.edition:upper(),'Native party selection, confirmation and trade animation.')
      add('invite:battle:'..d.device,'FRIEND BATTLE · '..d.edition:upper(),'Unranked · Current party and levels · Adventure save stays intact.')
+     add('wager:new:'..d.device,'BATTLE WITH OPTIONAL STAKES · '..d.edition:upper(),'Choose in-game money or a box Pokémon. Both friends must agree.')
      else add('noop','Native trade & battle are not ready for this edition','Meeting friends is available. Native links currently support Gen 1–3.') end
+     else add('noop','Trade / battle need matching link rules','Map meetings use their own navigation compatibility check.') end
     else add('noop',d.edition:upper()..' · '..(d.available and 'Different edition or link rules' or 'Busy in game'),'Both players must be in the matching overworld.') end
    end
    if #playing==0 then add('noop','Waiting for this friend to open a game') end
+   add('pref:chat:'..p.account_id,'Chat with this friend · '..(pref.chat_enabled==false and'OFF'or'ON'))
    add('pref:requests:'..p.account_id,'Invitations from this friend · '..(pref.requests_enabled==false and 'OFF' or 'ON'))
    add('pref:visible:'..p.account_id,'Mutual map visibility with this friend · '..(pref.visible==false and 'OFF' or 'ON'),'Turning this off hides both figures. Your friendship stays intact.')
   end
@@ -117,8 +156,9 @@ function F.rows(O)
  return rows
 end
 function F.clear(O)
+ require('src.ui.FriendChat').clear(O)
  if O.socialJob then O.socialJob:cancel() end
- O.socialJob=nil;O.friendFocus=nil
+ O.socialJob=nil;O.friendFocus=nil;O.wager=nil
  if love.keyboard and love.keyboard.setTextInput then love.keyboard.setTextInput(false) end
 end
 return F

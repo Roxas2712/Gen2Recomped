@@ -14,7 +14,7 @@ local function job(self,purpose,fn)
   inputMode(f,nil)
 end
 local function friends()
- local doc,why=A.friends()
+ local doc,why=require('src.cloud.Play').request('POST','presence',{available=false})
  if doc and A.request then local prefs=A.request('GET','/play/preferences',nil,true);doc.playPreferences=prefs and prefs.preferences end
  return doc,why
 end
@@ -59,7 +59,7 @@ function W.open(self,after)
   job(self,Auth.signedIn() and 'devices' or 'policy',Auth.signedIn() and devices or A.policy)
 end
 function W.close(self)
-  local f=self._accountOverlay;if f then if f.job then f.job:cancel() end;clearSecrets(f);f.challenge=nil;inputMode(f,nil) end
+  local f=self._accountOverlay;if f then require('src.ui.FriendChat').clear(f);if f.job then f.job:cancel() end;clearSecrets(f);f.challenge=nil;inputMode(f,nil) end
   self._accountOverlay=nil
 end
 local function connected(self,f)
@@ -91,6 +91,8 @@ function W.action(self,id)
   end
   if id=='close' then W.close(self);return end
   if id=='back' and f.document then f.document=nil;f.scroll=0;return end
+  if require('src.ui.FriendChat').action(f,id)then f.mode=f.chat and'friendChat'or'friends';f.scroll=0;return end
+  if f.chat then require('src.ui.FriendChat').clear(f)end
   if f.job then return end
   if id:match('^field:') then inputMode(f,id:sub(7));return end
   inputMode(f,nil)
@@ -175,14 +177,15 @@ function W.action(self,id)
     local campaign=f.gifts and f.gifts.campaigns[tonumber(id:match(':(%d+)$'))]
     if campaign then job(self,'giftActive',function() return A.activateGift(campaign.id,not campaign.active) end) end
   elseif id=='friends' then f.mode='friends';f.scroll=0;job(self,'friends',friends)
-  elseif id=='allPlayRequests' or id=='allPlayVisibility' or id:match('^playPref:') then
+  elseif id=='allPlayRequests' or id=='allPlayVisibility' or id=='allPlayChat' or id:match('^playPref:') then
     local doc=f.social or {};local prefs=doc.playPreferences or {};local payload
     if id=='allPlayRequests' then payload={requests_enabled=prefs.requests_enabled==false}
+    elseif id=='allPlayChat'then payload={chat_enabled=prefs.chat_enabled==false}
     elseif id=='allPlayVisibility' then payload={visibility_enabled=prefs.visibility_enabled==false}
     else
       local key,peer=id:match('^playPref:(%a+):(%d+)$');local current={}
       for _,v in ipairs(prefs.friends or {}) do if tostring(v.account_id)==peer then current=v;break end end
-      local field=key=='visible' and 'visible' or 'requests_enabled';payload={friend_id=tonumber(peer),[field]=current[field]==false}
+      local field=key=='visible' and 'visible' or key=='chat'and'chat_enabled'or'requests_enabled';payload={friend_id=tonumber(peer),[field]=current[field]==false}
     end
     job(self,'playPreferences',function()return require('src.cloud.Play').request('PUT','preferences',payload)end)
   elseif id=='findFriend' then local tag=f.friendQuery or '';job(self,'findFriend',function() return A.findPlayer(tag) end)
@@ -212,7 +215,12 @@ function W.action(self,id)
   end
 end
 function W.tick(self)
-  local f=self._accountOverlay;if not f or not f.job then return end
+  local f=self._accountOverlay;if not f then return end
+  require('src.ui.FriendChat').tick(f)
+  if not f.job and f.mode=='friends'and Auth.signedIn()and not f.focus and not f.composer and love.timer.getTime()>=(f.friendRefresh or 0)then
+    f.friendRefresh=love.timer.getTime()+5;job(self,'friends',friends)
+  end
+  if not f.job then return end
   local r=f.job:poll();if not r then return end
   local purpose=f.purpose;f.job=nil
   if r.kind~='done' or not r.first then f.notice=tostring(r.second or r.error or 'Account unavailable.');return end
@@ -370,9 +378,15 @@ function W.draw(self)
         end
       end
     end
+  elseif f.mode=='friendChat'then
+    for _,r in ipairs(require('src.ui.FriendChat').rows(f))do
+      if r.id=='noop'then paragraph(r.label,true);if r.note then paragraph(r.note)end
+      else row(r.label,r.id);if r.note then paragraph(r.note)end end
+    end
   elseif f.mode=='friends' then
     paragraph('FRIENDS & REQUESTS',true)
     local prefs=(f.social or {}).playPreferences or {}
+    row('FRIEND CHAT · '..(prefs.chat_enabled==false and'OFF'or'ON'),'allPlayChat')
     row('INCOMING GAME INVITATIONS · '..(prefs.requests_enabled==false and 'OFF' or 'ON'),'allPlayRequests')
     row('MUTUAL MAP VISIBILITY · '..(prefs.visibility_enabled==false and 'OFF' or 'ON'),'allPlayVisibility')
     paragraph('Up to five accepted friends can appear as transient figures. They never change your adventure. Meetings need mutual confirmation.')
@@ -389,6 +403,9 @@ function W.draw(self)
       local pref={};for _,v in ipairs(prefs.friends or {}) do if tostring(v.account_id)==tostring(peer.account_id) then pref=v;break end end
       row('INVITATIONS FROM THIS FRIEND · '..(pref.requests_enabled==false and 'OFF' or 'ON'),'playPref:requests:'..peer.account_id)
       row('MAP VISIBILITY WITH THIS FRIEND · '..(pref.visible==false and 'OFF' or 'ON'),'playPref:visible:'..peer.account_id)
+      for _,device in ipairs(peer.playing or {})do local edition,zone=require('src.ui.FriendActivity').label(package.loaded['src.core.Game'],device);paragraph(edition..' · '..zone)end
+      row('CHAT WITH THIS FRIEND · '..(pref.chat_enabled==false and'OFF'or'ON'),'playPref:chat:'..peer.account_id)
+      row('CHAT','chat:'..peer.account_id)
       row('REMOVE FRIEND','friendRemove:'..peer.account_id)
     end
     if #(social.friends or {})==0 then paragraph('Your accepted friends appear here. Requests need the other player’s confirmation.') end
@@ -519,6 +536,7 @@ function W.draw(self)
     g.rectangle('fill',x+width-12*s,v.y+(v.height-th)*f.scroll/f.maxScroll,3*s,th)
   end
   g.pop()
+  require('src.ui.TextComposer').draw(f)
 end
 local function append(f,value)
   if not f.focus then return end
@@ -536,12 +554,15 @@ function W.install(RI)
   local update=RI.update;RI.update=function(self,dt,...) W.tick(self);return update(self,dt,...) end
   local press=RI.mousepressed;RI.mousepressed=function(self,x,y,b,...)
     local f=self._accountOverlay;if not f then return press(self,x,y,b,...) end
-    if b~=1 then return end;f.padActive=false
+    if b~=1 then return end
+    if require('src.ui.TextComposer').press(f,x,y)then return end
+    f.padActive=false
     for _,r in ipairs(f.rects) do if (r.pinned or U.inside(f.viewport,x,y)) and U.inside(r,x,y) then W.action(self,r.id);return end end
     inputMode(f,nil)
   end
   local key=RI.keypressed;RI.keypressed=function(self,k,...)
     local f=self._accountOverlay;if not f then return key(self,k,...) end
+    if require('src.ui.TextComposer').key(f,k)then return end
     if k=='escape' then if f.document then W.action(self,'back') else W.close(self) end
     elseif k=='tab' then W.navigate(self,love.keyboard.isDown('lshift','rshift') and -1 or 1)
     elseif f.focus then
@@ -552,7 +573,7 @@ function W.install(RI)
     elseif k=='up' then W.navigate(self,-1)
     elseif k=='return' or k=='space' then local r=f.rects[f.padIndex or 1];if r then W.action(self,r.id) end end
   end
-  local input=RI.textinput;RI.textinput=function(self,t,...) if self._accountOverlay then append(self._accountOverlay,t);return end;return input(self,t,...) end
+  local input=RI.textinput;RI.textinput=function(self,t,...) if self._accountOverlay then if not require('src.ui.TextComposer').text(self._accountOverlay,t)then append(self._accountOverlay,t)end;return end;return input(self,t,...) end
   local wheel=RI.wheelmoved;RI.wheelmoved=function(self,dx,dy,...) if self._accountOverlay then W.scroll(self,dy);return end;if wheel then return wheel(self,dx,dy,...) end end
   local touch=RI.touchpressed;RI.touchpressed=function(self,id,x,y,...)
     local f=self._accountOverlay;if not f then return touch(self,id,x,y,...) end
@@ -568,6 +589,7 @@ function W.install(RI)
   end
   local pad=RI.gamepadpressed;RI.gamepadpressed=function(self,j,b,...)
     if not self._accountOverlay then return pad(self,j,b,...) end
+    if require('src.ui.TextComposer').pad(self._accountOverlay,b)then return end
     if b=='b' then if self._accountOverlay.document then W.action(self,'back') else W.close(self) end
     elseif b=='dpdown' then W.navigate(self,1) elseif b=='dpup' then W.navigate(self,-1)
     elseif b=='a' then local f=self._accountOverlay;local r=f.rects[f.padIndex or 1];if r then W.action(self,r.id) end end

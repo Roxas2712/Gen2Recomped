@@ -37,7 +37,17 @@ A.PARTS = {
   wingWhirl        = { model = 65, anims = { 67, 66, 68 } },
   wingWhirlShine   = { model = 65, anims = { 69, 70, 71 } },
   wingWhirlFade    = { model = 65, anims = { 72, 73, 74 } },
+  -- ScrCmd_708 <n> (overlay 2 0x022460AC, table ov02_02253264): the Mahogany
+  -- hideout's floor trap going off under the player -- 0 asito_thunder,
+  -- 1 asito_poison, 2 asito_rock (src/world/HgssHideoutFx.lua)
+  trapThunder      = { model = 10, anims = { 11 } },
+  trapPoison       = { model = 3, anims = { 4, 5 } },
+  trapRock         = { model = 6, anims = { 7, 8, 9 } },
 }
+-- ScrCmd_709 (overlay 2 0x022462E8, ov02_02246398): the Persian statues'
+-- alarm, palette 12 (0x20 bytes into BG palette 0), character data 13 and
+-- screen 14 on main BG1, alpha-blended over the field
+A.ALARM_PAL, A.ALARM_CHAR, A.ALARM_SCREEN = 12, 13, 14
 A.LEAVES_BG2 = { 41, 42, 43, 44, 45, 46 }
 A.LEAVES_BG3 = { 47, 48, 49, 50, 51, 52 }
 A.LEAVES_CHAR, A.LEAVES_PAL = 53, 54
@@ -151,6 +161,16 @@ function A.build(x)
     out.alphPanel = type(saved) == "table" and saved.path or saved
   end)
   if not okA then out.alphError = tostring(errA) end
+
+  -- THE HIDEOUT ALARM (ScrCmd_709): the same three loads the Alph panel
+  -- makes -- GXLoadPal(narc 12, main BG, offset 0, 0x20 bytes) into slot 0
+  local okR, errR = pcall(function()
+    local palette = assert(G.paletteAtSlot(assert(G.palette(member(A.ALARM_PAL), true)), 0))
+    local pic = assert(G.compose(assert(G.tilemap(member(A.ALARM_SCREEN))), assert(G.tiles(member(A.ALARM_CHAR))), palette))
+    local saved = assert(x:saveImage("legend/hideout_alarm", pic))
+    out.hideoutAlarm = type(saved) == "table" and saved.path or saved
+  end)
+  if not okR then out.alarmError = tostring(errR) end
 
   return out
 end
