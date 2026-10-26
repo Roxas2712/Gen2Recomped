@@ -63,7 +63,7 @@ local function gen2Locations(game)
         -- draws around -- taken raw, every nest sat 4px right and 12px
         -- below the town it belongs to.
         px = x - 4, py = y - 12, landmark = tonumber(id),
-        region = tonumber(id) >= GEN2_KANTO_FIRST and "kanto" or "johto",
+        region = tonumber(id) >= kantoFirst and "kanto" or "johto",
       }
       byLandmark[tonumber(id)] = loc
       locs[#locs + 1] = loc
