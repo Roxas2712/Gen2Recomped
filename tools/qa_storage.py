@@ -175,6 +175,7 @@ class Storage:
         if profile is not None:
             self._take("imports", profile, True)
             self._begin()
+            self.limit_output(profile, 2 * GIB)
         return original
 
     def _qa_group(self, path, root=None):
@@ -218,6 +219,7 @@ class Storage:
                 entry['ephemeral']=True
                 self._write(key,entry)
         self._begin()
+        self.limit_output(target, 4 * GIB)
         return original
 
     def restore_copy(self, path):
@@ -414,7 +416,8 @@ class Storage:
 
     def check_output_limits(self):
         for path, limit in tuple(self.output_limits.items()):
-            size = sum(info.st_size for _, info in self._walk(path))
+            size = (path.stat().st_size if path.is_file() and not path.is_symlink() else
+                    sum(info.st_size for _, info in self._walk(path)))
             if size > limit:
                 raise RuntimeError('QA output budget exceeded: %s (%.1f / %.1f MiB)' %
                                    (path, size / 1024**2, limit / 1024**2))
@@ -573,6 +576,7 @@ class Storage:
                     process.wait()
                 raise
             result = subprocess.CompletedProcess(process.args, process.returncode, stdout, stderr)
+            self.check_output_limits()
             if check:
                 result.check_returncode()
             return result

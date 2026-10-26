@@ -254,3 +254,9 @@ erfolgreichem Link und zusätzlich alle 15 Minuten nur bekannte `codeNNN.o`-/
 bleiben erhalten. Ein neuer Fingerprint über dem Budget wird abgelehnt, statt
 ungeprüft alte Quellen oder fertige Bibliotheken zu entfernen. Direkte Aufrufe
 an den Helfern vorbei haben keine laufende Budgetkontrolle.
+
+QA-Profile und einzeln registrierte Testkopien erhalten ebenfalls laufende
+Budgets: 2 GiB je QA-Profil, 4 GiB je Testkopie. Auch ein kurzer erfolgreicher
+`qa_run` wird nach dem Kindende auf Überschreitung geprüft. Die laufende Kontrolle
+ist zeitgesteuert; das Einlesen sehr großer Verzeichnisbäume verlängert das
+Prüfintervall. Sie ersetzt keine harte Dateisystemquote.
