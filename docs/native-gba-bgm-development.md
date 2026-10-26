@@ -1,8 +1,9 @@
-# Native GBA background music: development checkpoint
+# Native GBA background music: historical development checkpoints
 
-This work continues the native-audio series after #289. It is an incomplete
-development checkpoint, not a release qualification or a claim of complete
-music parity. The playable integration branch has not been advanced.
+The current contract and qualification are documented in
+[native GBA music commands](native-gba-bgm.md) and its source-bound receipt.
+The checkpoint results below retain their original scope and counts; they
+record development after #289 and do not establish complete music parity.
 
 The world VM preserves `playbgm`, `savebgm`, `fadedefaultbgm`, `fadenewbgm`,
 `fadeoutbgm` and `fadeinbgm` as native commands. Logical current, map and
@@ -345,14 +346,12 @@ refusing old native semantics and full mirrored synthetic battles. The native
 party codec's **194,540 checks** also pass. This targeted compatibility check
 does not replace the pending complete contract matrix and combined runtime.
 
-## Work still required before a pull request
+## Historical pre-publication gates
 
-- Finish the corrected paired initialized-session teardown/re-entry matrix
-  and its independent raw-observation audit.
-- Broader actual-import coverage, the complete existing contract matrix and
-  a qualified combined runtime.
-- Complete broad regression and integration qualification before advancing
-  the playable branch.
+These checkpoints still required the corrected initialized-session matrix,
+its independent raw audit, broader actual-import checks, the complete
+existing contract matrix and a qualified combined runtime. Their final
+results belong to the current contract/receipt linked above.
 
 Tests start no game, GPU or audio device and write no normal saves/imports.
 No ROM, generated recording or private import is committed. This checkpoint
