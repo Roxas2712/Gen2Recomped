@@ -1,0 +1,8 @@
+{
+  "id": "portable_link_result",
+  "name": "Portable Link Result",
+  "version": "1.0.0",
+  "api": 3,
+  "entry": "main.lua",
+  "games": ["red", "blue", "yellow", "gold", "silver", "crystal", "firered", "leafgreen", "emerald", "ruby", "sapphire"]
+}

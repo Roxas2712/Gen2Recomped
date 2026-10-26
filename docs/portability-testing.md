@@ -11,6 +11,16 @@ reference. Historical results below that use a modified Gen1 reference fork
 are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
+## Latest native link-battle completion
+
+Runtime `afe2c4461def99702a5ccbe1958fdf1653c58838` adds the common
+`link.battle_ended` notification and passes **561/561 engine suites**,
+**4/4 SDK suites** and B30. Eighty typed paired observations agree with the
+clean read-only Red/Gold reference; 1,948 native checks cover eleven GB/GBA
+editions. See [completed link parties](link-battle-ended.md) and the
+[exact-source receipt](qa/link-battle-ended.json). Older checkpoints below
+retain their own source and acceptance scope.
+
 ## Current fork-main integration
 
 The combined regression at `725eb00bdc298d52be51486e52fdff1ed30fcc45` passes
