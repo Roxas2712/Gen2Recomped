@@ -5444,6 +5444,32 @@ function BattleState:enemyAction(battler)
   return self:vanillaEnemyAction(battler)
 end
 
+local function gen2EnemyClassAction(battle)
+  if not GameVersion.isGen2() or not Runtime.wantsHook("battle.enemy_switch_or_item")then
+    return TrainerAI.classAction(battle)
+  end
+  local native,view
+  local choice=Runtime.call("battle.enemy_switch_or_item",function(current)
+    native=TrainerAI.classAction(current)
+    if not native then return false end
+    view={kind=native.special=='aiSwitch' and 'switch' or 'item',
+      index=native.index,item=native.item}
+    return view
+  end,battle)
+  if choice==view then return native end
+  if choice==true then return {special='modEnemyTurn'}end
+  if type(choice)~='table'then return nil end
+  if choice.kind=='switch'then
+    local index=tonumber(choice.index)
+    local mon=index and battle.enemyParty and battle.enemyParty[index]
+    if index and index%1==0 and index~=battle.enemyIndex and mon and (mon.hp or 0)>0 then
+      return {special='aiSwitch',index=index}
+    end
+  elseif choice.kind=='item' and type(choice.item)=='string' and battle.data.items[choice.item]then
+    return {special='aiItem',item=choice.item}
+  end
+end
+
 function BattleState:vanillaEnemyAction(battler)
   battler = battler or self.enemy
   if not battler then return nil end
@@ -5463,7 +5489,7 @@ function BattleState:vanillaEnemyAction(battler)
   -- right-hand slot ask too would have a trainer drink two SUPER POTIONs on
   -- the same Pokemon in the same turn.
   if battler == self.enemy then
-    local classAct = TrainerAI.classAction(self)
+    local classAct = gen2EnemyClassAction(self)
     if classAct then return classAct end
   end
   return TrainerAI.chooseMove(battler, self.rng, self)
@@ -7544,6 +7570,7 @@ function BattleState:executeAction(user, target, action)
   if not (user and user.mon) then return end
   if user.mon.hp <= 0 then return end
   if not action then return end
+  if action.special=='modEnemyTurn'then return end
   -- A SWITCH NEEDS NO TARGET.  Everything else does, and with four on the
   -- field the one it was aimed at can already be off it -- the entry's
   -- target is resolved as the entry runs, and there may be nobody left to
@@ -8899,6 +8926,12 @@ function BattleState:enemyMonFainted()
       local nextName = nextMon.nickname or self.data.pokemon[nextMon.species].name
       local style = tostring((self.game.save.options or {}).battleStyle or "shift")
         :lower()
+      if GameVersion.isGen2() and Runtime.wantsHook("battle.style")then
+        local chosen=Runtime.call("battle.style",function(battle)
+          return tostring((battle.game.save.options or{}).battleStyle or 'shift'):lower()
+        end,self)
+        if chosen=='set' or chosen=='shift'then style=chosen end
+      end
       local partyCount = #self:playerPartyView()
       -- ReplaceFaintedEnemyMon (core.asm:892-896): DrawEnemyPokeballs puts the
       -- foe's party ball row -- and the HUD chrome PlaceEnemyHUDTiles lays
@@ -9013,20 +9046,8 @@ function BattleState:enemyMonFainted()
       end)
       return
     end
-    -- ComputeTrainerReward (0E:58D4) sets wBattleReward = the class's base
-    -- reward byte (TrainerClassAttributes+2) times wCurPartyLevel, the level
-    -- of the LAST mon the party reader loaded.  That is only a QUARTER of the
-    -- payout though: WinTrainerBattle (0F:4F46) then runs `ld c, 4` and adds
-    -- wBattleReward once per iteration -- b of the four quarters through
-    -- .AddMoneyToMom, the remaining c through .AddMoneyToWallet -- so the
-    -- trainer is worth base * level * 4 in total.  b comes from
-    -- wMomSavingMoney & 7 (0 = you keep it all, 3 = she banks all four), and
-    -- is forced to 0 when Mom's account is already maxed.  Nothing here
-    -- models Mom's savings account, which is the `keep it all` branch, so all
-    -- four quarters land in the wallet -- Falkner pays 25 * 9 * 4 = 900 and a
-    -- Sprout Tower sage 8 * 3 * 4 = 96, instead of the 225 and 24 a single
-    -- quarter gives.  Gen1's TrainerBattleVictory has no such split, so the
-    -- multiplier stays on the Gen2 side of the fence.
+    -- Native GSC rewards are four quarters. Their destination is selected
+    -- by Mom's saving bits; Gen2MomShopping applies the per-account cap.
     -- THE LEVEL THE PRIZE IS COUNTED FROM.
     --
     -- Gen 1 and Gen 2 count from the mon that was out when the battle ended.
@@ -9074,7 +9095,9 @@ function BattleState:enemyMonFainted()
       prize = P.prize(self.data, self.trainer, opts)
       if self.trainerB then prize = prize + P.prize(self.data, self.trainerB, opts) end
     end
-    self.game.save.money = self.game.save.money + prize
+    local momAward=require("src.world.Gen2MomShopping").reward(self.game.save,prize)
+    if not momAward then self.game.save.money=self.game.save.money+prize end
+    self.g2MomAward=momAward
     -- Prism's Spurge Bank ATM (event/bank.asm) offers DIRECT DEPOSIT: with it
     -- enabled, a quarter of what you win in battle is routed to the account
     -- instead of the wallet.  The switch lives in the ATM special
@@ -9135,9 +9158,17 @@ function BattleState:enemyMonFainted()
     -- Platinum's font, so a Sinnoh win read "got 円 480". This default is
     -- only reached when the dataset has no `_MoneyForWinningText` of its own,
     -- which is every Gen 3 and Gen 4 cartridge.
-    self:sayNext(self:romText("_MoneyForWinningText",
-      "%s got " .. require("src.core.GameVersion").moneySign() .. "%d\nfor winning!",
-      self.game.save.player.name, prize))
+    local momPool=require("src.world.Gen2MomShopping").pool(self.data)
+    local moneyText=momAward and momPool and momPool.rewardTexts and momPool.rewardTexts[momAward.mode]
+    if moneyText and (self.data.text and self.data.text[moneyText])then
+      local text=self.data.text[moneyText]
+      text=text:gsub("{PLAYER}",function()return self.game.save.player.name end):gsub("{NUM}",tostring(prize))
+      self:sayNext(text)
+    else
+      self:sayNext(self:romText("_MoneyForWinningText",
+        "%s got " .. require("src.core.GameVersion").moneySign() .. "%d\nfor winning!",
+        self.game.save.player.name, prize))
+    end
   end
   self.result = "win"
   self.afterQueue = "finish"
@@ -9860,7 +9891,8 @@ function BattleState:storeCaughtMon()
   -- Ruins of Alph researcher and the dex's UNOWN mode gate on
   local form = require("src.pokemon.Sprites").formIndex(
     game.data.pokemon[species], self.enemy.mon)
-  if dex and type(form)=='number' then
+  local nativeUnown = require("src.pokemon.Gen2Unown")
+  if not nativeUnown.supported() and dex and type(form)=='number' then
     dex.unownForms = dex.unownForms or {}
     if not dex.unownForms[form] then
       dex.unownForms[form] = true
@@ -9888,6 +9920,15 @@ function BattleState:storeCaughtMon()
   local function askCaughtNickname()
     local caught = self.enemy.mon
     local enemyName = self.enemy.name
+    if GameVersion.isGen2() and Runtime.wantsHook("catch.nickname")then
+      local decision=Runtime.call("catch.nickname",function()return true end,caught,
+        {battle=self,name=enemyName,game=game})
+      if decision==false then return end
+      if type(decision)=='string'then
+        if #decision>0 then caught.nickname=decision:sub(1,10)end
+        return
+      end
+    end
     self:uiNext(function()
       return self:askNicknameUI(caught, enemyName)
     end)
@@ -9904,12 +9945,21 @@ function BattleState:storeCaughtMon()
     self.enemy.mon.ball = self.lastBall
   end
   if Party.add(game.save.party, self.enemy.mon) then
+    if nativeUnown.supported() then nativeUnown.registerCatch(game.save, self.enemy.mon, game.data) end
     require('src.pokemon.Gen4PoketchState').remember(game, self.enemy.mon)
     askCaughtNickname()
   else
+    local claimed=GameVersion.isGen2() and Runtime.wantsHook("catch.party_full")
+      and Runtime.call("catch.party_full",function()return false end,
+        {battle=self,mon=self.enemy.mon,name=self.enemy.name,game=game})
+    if claimed then
+      if nativeUnown.supported() then nativeUnown.registerCatch(game.save,self.enemy.mon,game.data) end
+      destination='mod'
+    else
     destination = "box"
     local boxNum = require("src.pokemon.Boxes").deposit(game.save, self.enemy.mon)
     if boxNum then
+      if nativeUnown.supported() then nativeUnown.registerCatch(game.save, self.enemy.mon, game.data) end
       require('src.pokemon.Gen4PoketchState').remember(game, self.enemy.mon)
       askCaughtNickname()
       -- _ItemUseBallText07/08 keyed on EVENT_MET_BILL
@@ -9918,6 +9968,7 @@ function BattleState:storeCaughtMon()
       self:sayNext(Strings("%s was\ntransferred to\n%s!", self.enemy.name, pc))
     else
       self:sayNext(Strings("But every BOX\nis full!"))
+    end
     end
   end
   -- CatchMon copies the species name into wStringBuffer1, which is what the
@@ -10673,6 +10724,11 @@ function BattleState:finish()
   -- (home/overworld.asm:2343-2348)
   require("src.core.Music").restoreMap(self.data)
   self.game.stack:pop()
+  if not self._pokerusDone and not self.demo and not self.pokedudeDemo and self.result=='win'
+      and require('src.pokemon.Gen2Breeding').isVanilla()then
+    self._pokerusDone=true
+    require('src.pokemon.Gen2Pokerus').afterBattle(self.game.save)
+  end
   Runtime.emit("battle.ended", { battle = self, result = self.result or "run" })
   -- Coming back from the battle screen is a fade, not a cut: EnterMap sees
   -- BIT_BATTLE_OVER_OR_BLACKOUT set and runs MapEntryAfterBattle

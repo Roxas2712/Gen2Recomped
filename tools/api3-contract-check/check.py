@@ -9,7 +9,8 @@ import subprocess
 import sys
 import tempfile
 
-GEN1_REF = "79ea62f45fb2ea8f65d081a109431e4eb1bbdb36"
+GEN1_REFS = ("79ea62f45fb2ea8f65d081a109431e4eb1bbdb36",
+             "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91")
 VERSIONS = ("red", "blue", "yellow", "gold", "silver", "crystal", "firered", "emerald")
 
 
@@ -25,8 +26,9 @@ def main():
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
     gen1, gen2 = args.gen1.resolve(), args.gen2.resolve()
-    if git(gen1, "rev-parse", "HEAD") != GEN1_REF:
-        parser.error(f"Gen1 must be pinned to {GEN1_REF}")
+    reference_ref = git(gen1, "rev-parse", "HEAD")
+    if reference_ref not in GEN1_REFS:
+        parser.error("reference must be pinned to one of " + ", ".join(GEN1_REFS))
     if git(gen1, "status", "--porcelain", "--untracked-files=normal"):
         parser.error("Gen1 reference has tracked modifications; use an isolated checkout")
     fixtures = gen2 / "tests" / "api3_contract"
@@ -50,7 +52,7 @@ def main():
                         for path in (scaffold_root / "mods/portable").iterdir()
                         if path.is_file()}
     for version in VERSIONS:
-        for mode in ("normal", "rollback", "scaffold"):
+        for mode in ("normal", "rollback", "scaffold", "warp", "world_edits", "npcs"):
             values = {}
             for backend, engine in (("gen1", gen1), ("gen2", gen2)):
                 source = scaffold_root if mode == "scaffold" else fixtures
@@ -65,7 +67,7 @@ def main():
                 raise RuntimeError(f"contract mismatch for {version}/{mode}: {values}")
             results.append({"version": version, "mode": mode, "result": values["gen1"]})
             print(f"PASS {version}/{mode}: identical mod and public result")
-    report = {"gen1_ref": GEN1_REF, "gen2_ref": git(gen2, "rev-parse", "HEAD"),
+    report = {"gen1_ref": reference_ref, "gen2_ref": git(gen2, "rev-parse", "HEAD"),
               "gen2_tracked_changes": bool(git(gen2, "status", "--porcelain", "--untracked-files=no")),
               "fixture_sha256": manifest, "scaffold_sha256": generated_hashes, "comparisons": results}
     if args.report:

@@ -2,6 +2,9 @@
 -- callable handles but never delegate to a native method with a different contract.
 local Records = require("src.mods.Api3Records")
 local Runtime = require("src.mods.Runtime")
+local Warp = require("src.mods.Api3Warp")
+local Edits = require("src.mods.Api3WorldEdits")
+local NPC = require("src.mods.Api3NPC")
 local copy = require("src.mods.Merge").deepCopy
 local A = {}
 local WORLD = [[overworld current activeBlockAt party canReorderParty reorderParty
@@ -12,7 +15,9 @@ local SUPPORTED = {}
 for name in
   ([[overworld current activeBlockAt party canReorderParty reorderParty
  availableFieldActions useFieldAction canFly flyTo mapOverview effectiveEncounters
- setFlag getFlag liveMaps queueScript]]):gmatch("%S+")
+ setFlag getFlag liveMaps queueScript warpTo toggleObject replaceBlock spawnNpc removeNpc npc]]):gmatch(
+    "%S+"
+  )
 do
   SUPPORTED[name] = true
 end
@@ -84,13 +89,31 @@ function A.install(api, loader, readContext, overviewContext, engineRequire)
     end
     return nativeWorld
   end
+  local warp, licensed, npc
+  if supportedGeneration then
+    warp, licensed = Warp.new(loader, api.id, gen, current, native)
+    npc = NPC.new(loader, api.id, gen, current, native, licensed, engineRequire)
+  end
   local function dispatch(name, ...)
-    if not supportedGeneration or not SUPPORTED[name] then
+    if (not supportedGeneration and not (name == "liveMaps" and gen >= 1 and gen <= 5)) or not SUPPORTED[name] then
       return nil, "unsupported: API 3 world method " .. name
+    end
+    if name == "spawnNpc" or name == "removeNpc" or name == "npc" then
+      return npc(name, ...)
+    end
+    if name == "warpTo" then
+      return warp(...)
+    end
+    local edit = name == "toggleObject" or name == "replaceBlock"
+    if edit and not licensed() then
+      return nil, "world facade is retired"
     end
     local game = current()
     if not game then
       return nil, "no game"
+    end
+    if edit then
+      return Edits.call(game, native(game), gen, engineRequire, name, ...)
     end
     if name == "setFlag" or name == "getFlag" then
       if not game.save then
@@ -136,6 +159,11 @@ function A.install(api, loader, readContext, overviewContext, engineRequire)
     end
     if name == "queueScript" then
       return scripts:queueScript(...)
+    end
+    if name == "liveMaps" then
+      local ow = native(game):overworld()
+      if not (ow and ow.map) then return nil, "no overworld" end
+      return require("src.world.LiveMaps").snapshot(ow)
     end
     local raw = native(game)
     local result = pack(raw[name](raw, ...))
@@ -194,6 +222,7 @@ function A.install(api, loader, readContext, overviewContext, engineRequire)
   local supports = api.supports
   function api:supports(surface, name)
     if surface == "world" then
+      if name == "liveMaps" and gen >= 1 and gen <= 5 then return true end
       if supportedGeneration and SUPPORTED[name] then
         return true
       end

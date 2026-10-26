@@ -1050,6 +1050,9 @@ function Game:_draw()
   -- a world-bg battle keeps the map drawing under whatever it opened, so the
   -- world pass can run for a frame whose CLEAR is still an opaque menu's
   local drawFrom = Game.drawBaseInStack(self.stack, base)
+  local ScreenSpaceUI = require('src.render.ScreenSpaceUI')
+  local windowUI, windowUIIndex = ScreenSpaceUI.select(self.stack,self.stack,drawFrom)
+  local windowUIOverlay = false
   local worldDrawn = self.stack.states[drawFrom] == self.overworld
     and renderVisible(self.stack, self.overworld)
   -- A wide battle holds its 304px surface through every menu or prompt it
@@ -1133,7 +1136,10 @@ function Game:_draw()
       local ownsSurface = wideState
         or (native ~= nil and state == native)
         or Game.wantsThisSurface(state)
-      if renderVisible(self.stack, state) and state.draw then
+      if state == windowUI then
+        if renderVisible(self.stack,state)then love.graphics.clear(0,0,0,0)else windowUI=nil end
+      elseif renderVisible(self.stack,state) and state.draw then
+        if windowUIIndex and i > windowUIIndex then windowUIOverlay = true end
         -- ...and it is centred by ITS OWN size, not by the Game Boy's (see
         -- Game.homeOffset).  classicOffset still gates it: a surface that is
         -- the Game Boy's centres nothing, which is every frame outside a wide
@@ -1222,6 +1228,7 @@ function Game:_draw()
     worldZones = self.overworld:sgbWorldZones()
   end
   local viewport = Renderer:endFrame(zones, worldZones)
+  if windowUI then ScreenSpaceUI.draw(windowUI,Renderer,viewport,zones,windowUIOverlay) end
   -- Persistent tool status is screen-space UI: draw it over the completed
   -- render pipeline with exact playfield/margin geometry, but below mobile
   -- controls. It never becomes an updating game state.
@@ -1574,9 +1581,15 @@ end
 -- menus that used to call love.event.quit for the second case were killing
 -- the process instead, which is only the right answer on a build with no
 -- launcher behind it -- and HostShell decides that, not the menu.
-function Game:returnToLauncher()
+local function quitToLauncherBody()
   require("src.core.Music").stop()
   require("src.core.HostShell").toLauncher()
+end
+function Game:returnToLauncher()
+  if ModRuntime.wantsHook("core.quit_to_launcher") then
+    return ModRuntime.call("core.quit_to_launcher", quitToLauncherBody)
+  end
+  return quitToLauncherBody()
 end
 
 -- Unless an input.key wrapper swallows the event, releases reach Input

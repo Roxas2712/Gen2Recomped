@@ -253,6 +253,19 @@ function Manifest.validate(raw, path)
   local scriptFormat = raw.script_format == nil and defaultFormat or raw.script_format
   assert(scriptFormat == "native" or scriptFormat == "unified", "script_format must be native or unified")
   assert(scriptFormat ~= "unified" or api >= 2, "unified scripts require mod API 2")
+  local forceEnv=raw.force_enable_env
+  assert(forceEnv==nil or type(forceEnv)=='string' and forceEnv~='',
+    'force_enable_env must be a nonempty string')
+
+  local logUrl=raw.log_url
+  if logUrl~=nil then
+    local bad=type(logUrl)~="string" or #logUrl>8192 or logUrl:find("[%z%c%s]")
+      or not logUrl:lower():match("^https://[^/?#]+")
+    if bad or not permissionSet.network then
+      violation(strict,raw.id,bad and "log_url requires a valid HTTPS URL" or 'log_url requires the "network" permission')
+      logUrl=nil
+    end
+  end
 
   local gameVersionOk, gameVersionErr = Semver.validRange(raw.game_version)
   assert(gameVersionOk, ("malformed game_version %q: %s")
@@ -298,6 +311,7 @@ function Manifest.validate(raw, path)
   assert(raw.callback_format ~= "unified" or api >= 2, "callback_format unified requires mod API 2")
 
   local conflicts = mergeConflictLists(raw.conflicts, raw.incompatible)
+  local requiredAssets, optionalAssets = require("src.mods.AssetPacks").parse(raw.required_assets, raw.optional_assets)
 
   -- `support`: where to thank the mod's creator -- a Ko-fi, a Patreon, a
   -- PayPal page. The launcher's mod card turns it into a "Support the
@@ -345,12 +359,16 @@ function Manifest.validate(raw, path)
     affects_link = affectsLink,
     permissions = permissions,
     permissionSet = permissionSet,
+    force_enable_env = forceEnv,
     script_format = scriptFormat,
+    log_url = logUrl,
     options_schema = optionalFile(raw.options_schema, "options_schema"),
     -- Base files the mod needs but cannot ship -- a Stadium 2 cartridge, a
     -- second game's ROM.  Declared here, satisfied by the launcher, read by
     -- the mod out of its own folder (src/mods/ModImports.lua).
     requiredImports = require("src.mods.ModImports").parse(raw),
+    required_assets = requiredAssets,
+    optional_assets = optionalAssets,
     -- Cartridges that must be IMPORTED for this mod to mean anything -- a
     -- different thing from requiredImports above, which is a file the player
     -- hands over and the launcher writes into the mod's folder.

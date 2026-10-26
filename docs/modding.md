@@ -1,5 +1,29 @@
 # Native modding
 
+## Background HTTP GET
+
+A mod declaring `"network"` receives `mod.fetch:get(url, options)`, `:poll(handle)`,
+`:cancel(handle)`, `:release(handle)`, `:available()` and `:capabilities()`.
+Handles belong to their creating mod. Poll returns a detached table with
+`status` (`pending`, `ok`, `error` or `cancelled`), `body`, `err`,
+`receivedBytes` and, when known, `httpStatus`. Always release finished handles.
+Rollback and unload release a mod's requests automatically.
+
+GET transport runs in three LÖVE workers. The engine caps active/queued work at
+16 requests, with four pending requests per mod. `maxSeconds` defaults to 20
+and caps at 30, including queue time; `maxBytes` defaults to 4 MiB and caps at
+16 MiB. `boundedHttpsGet = 1` requires HTTPS throughout redirects. Desktop
+capabilities advertise this constraint. Desktop curl is required; mobile
+bridges are not yet supported by this API. Remote URLs and headers are passed
+through a private curl config file, outside shell syntax.
+
+Cancel discards the result immediately. A curl already executing may occupy
+its worker until its bounded timeout; releasing a handle cannot bypass the
+global worker limit. Shutdown waits for those bounded operations. This adds
+GET support; it does not implement POST, arbitrary requests or `mod.job`.
+The older download-to-file API still performs a synchronous first poll.
+
+
 The modding book lives on the
 [project wiki](https://github.com/bryanthaboi/gen1recomp/wiki).
 
@@ -23,6 +47,9 @@ luajit tools/gen_registry_docs.lua ../gen1recomp.wiki
 The [API-3 entry and cross-engine contracts](api3-portability.md) describe
 using the same manifest and mod source on Gen1Recomp and Gen2Recomped.
 API 3 selects the unified adapters automatically; API 1/2 keep their defaults.
+See [API-3 world warps](api3-warp.md) for validated map transitions and callback lifetime,
+[API-3 object/block edits](api3-world-edits.md) for native visibility and terrain changes,
+and [API-3 NPC actions](api3-npc.md) for runtime actors and movement handles.
 
 ## Feature queries (`mod:supports`)
 
@@ -429,3 +456,9 @@ API-2 mods can select `"content_format": "unified"` to read and edit common
 Pokémon, move, item, trainer and encounter definition shapes. Existing mods
 keep native formats. See [the format, supported operations and limitations](unified-mod-content.md)
 for the manifest guard, generation coverage, symbolic IDs and failure behavior.
+With `network` and a fixed HTTPS `log_url`, `mod:postLog` sends bounded one-way
+diagnostics through the shared workers. See [log reporting](mod-log-reporting.md)
+for payload, ownership and native platform boundaries.
+
+See [portable follower predicate](portable-follower.md) for the native
+`world.follower.spawn` lifecycle hook and its generation/artwork boundaries.

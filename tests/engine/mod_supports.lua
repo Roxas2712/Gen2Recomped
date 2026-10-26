@@ -77,8 +77,10 @@ for _, version in ipairs(GameVersion.ORDER) do
     version .. ': additive native flight interface is reported when installed')
   T.check(yes(api, 'hooks', 'core.logic_speed'),
     version .. ': native speed hook is advertised')
-  T.check(no(api, 'hooks', 'item.use') and no(api, 'events', 'egg.hatched'),
+  T.check(no(api, 'hooks', 'item.use'),
     version .. ': absent Gen1Recomp API-3 features are not advertised')
+  T.eq(yes(api, 'events', 'egg.hatched'), GameVersion.generation(version)==2,
+    version .. ': egg hatch observation follows the native Gen2 producer')
   T.check(yes(api, 'events', 'mod.probe.ready') and yes(api, 'events', 'mod.other.ready'),
     version .. ': namespaced user events do not need a producer installed')
   for _, name in ipairs(Catalog.hooks()) do
