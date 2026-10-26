@@ -121,7 +121,13 @@ function R:view(c,e,mapId)
   end
   local function write(_,key,value)
     assert(valid(),'native object view retired')
-    if boolWrite[key] then
+    if key=='sprite'then
+      assert(value==nil or type(value)=='table'and type(value.draw)=='function','invalid object renderer')
+      local host=require('src.mods.Runtime');local facade=require('src.core.Game3')
+      local who=host.currentMod or facade._callbackOwner();assert(who,'object renderer requires a mod owner')
+      record.extras.sprite=value;record.presentationSet=true;record.presentationOwner=who
+      require('src.compat.gen1.SourceActors').bind(e,record)
+    elseif boolWrite[key] then
       assert(type(value)=='boolean','invalid object boolean'); e[boolWrite[key]]=value
     elseif key=='visible' then
       assert(type(value)=='boolean','invalid object visibility'); e.hidden=not value; e.visible=value

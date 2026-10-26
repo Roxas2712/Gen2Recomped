@@ -2002,7 +2002,11 @@ local function drawCommandMenu(battle)
       local prompt = record and record.prompt
       local chooser = (battle.menuBattler and battle:menuBattler()) or battle.player
       local who = chooser and chooser.name or ""
-      if prompt and prompt[1] and prompt[2] then
+      local quick=package.loaded['src.mods.FeatureOptions']and require('src.battle.QuickItem').label(battle)
+      if quick then
+        Font.draw(fitName(quick,88),w.prompt.textX+dx,w.prompt.row1+dy)
+        Font.draw("L: NEXT R: THROW",w.prompt.textX+dx,w.prompt.row2+dy)
+      elseif prompt and prompt[1] and prompt[2] then
         Font.draw(prompt[1], w.prompt.textX + dx, w.prompt.row1 + dy)
         local second = tostring(prompt[2]):gsub("{MON}", fitName(who, 88))
         Font.draw(second, w.prompt.textX + dx, w.prompt.row2 + dy)

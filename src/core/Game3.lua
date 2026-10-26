@@ -17,7 +17,13 @@ local function pack(...)return {n=select('#',...),...}end
 function G._callbackOwner()return callbackOwner end
 function G._withCallbackOwner(owner,fn,...)
   local previous=callbackOwner;callbackOwner=owner
-  local result=pack(pcall(fn,...));callbackOwner=previous
+  local result=pack(pcall(fn,...))
+  local views=package.loaded['src.compat.gen1.PokemonView']
+  if result[1]and views then
+    local ok,why=pcall(views.flush)
+    if not ok then result={n=2,false,why}end
+  end
+  callbackOwner=previous
   if not result[1]then error(result[2],0)end
   return unpack(result,2,result.n)
 end

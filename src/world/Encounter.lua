@@ -359,6 +359,9 @@ function Encounter.forMap(data, mapDef, mapId, hour, save)
   local def = MapIdentity.lookup(data, all, (mapDef and mapDef.encounters) or mapId)
   if data.constants and data.constants.gen3Layout then
     def=Encounter.gen3Variant(def,save,require('src.core.GameVersion').get())
+    if package.loaded['src.mods.FeatureOptions']then
+      def=require('src.world.EncounterActivity').forMap(data,save,mapDef,mapId,def)
+    end
   end
   if data.field and data.field.gen2Swarms then
     def=require("src.world.Gen2Swarms").forMap(data,save,mapDef,MapIdentity.sourceId(data,mapId),def)
@@ -512,4 +515,19 @@ function Encounter.forMap(data, mapDef, mapId, hour, save)
   return view
 end
 
+-- Guaranteed GBA selection used by the native field move and mod callers.
+-- Eligibility remains with the native map; this only consumes its admitted pool.
+function Encounter.sweetScent(data,save,mapDef,mapId,water,eligible,rng)
+  if not eligible then return nil end
+  local def=Encounter.forMap(data,mapDef,mapId,nil,save)
+  local slots=def and def.grass
+  if water then slots=def and def.water end
+  if not slots then return nil end
+  local roam=require('src.world.Gen3Roamers')
+  if roam.check(data,save,mapId,rng)then
+    local enc=roam.encounterFor(data,save)
+    if enc then return enc,'gen3'end
+  end
+  return Encounter.chooseTable(slots,rng)
+end
 return Encounter

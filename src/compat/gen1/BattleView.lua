@@ -4,6 +4,13 @@
 local Ids=require('src.compat.gen1.BattleIds')
 local Iteration=require('src.compat.gen1.TableIteration')
 local M={}
+local residents=setmetatable({},{__mode="k"})
+function M.nativeMon(view)
+ local d=residents[view];if not d then return nil,false end
+ local e=d.environment
+ if not e.context or not e.valid()then return nil,true end
+ e:flush();return d.entry.raw,true,e.context.game
+end
 local statNames={attack='attack',defense='defense',speed='speed',spAtk='spatk',spDef='spdef',hp='hp'}
 local statusBits={PSN=8,BRN=16,FRZ=32,PAR=64,TOX=128}
 local function status(mon)
@@ -43,6 +50,7 @@ function M.new(game,screen,valid,identifiers)
   local cache=e.caches[kind];if not cache then cache=setmetatable({},{__mode='kv'});e.caches[kind]=cache end
   local existing=cache[raw];if existing then return existing end
   local d={kind=kind,raw=raw};local view={};cache[raw]=view;e.entries[view]=d
+  if kind=="mon"then residents[view]={entry=d,environment=e}end
   setmetatable(view,{__index=function(_,key)
    if d.snapshot then return d.snapshot[key]end
    if not e.context or not e.valid()then return nil end

@@ -49,5 +49,21 @@ function M.tableFor(id)
   end
   return out
 end
+function M.rollSweetScent(id,terrain)
+  local g,w=Native.resolve();if not g or(terrain~='land'and terrain~='water')then return nil end
+  local maps=Map._context(g);local def=maps and maps:definition(id)
+  if not def or def.nativeId~=w.map.id then return nil end
+  local enc,roaming=Encounter.sweetScent(g.data,g.save,w.map.def,w.map.id,terrain=='water',true)
+  if not enc then return nil end
+  local ids=Ids.new(g.data);local out={species=ids:read('pokemon',enc.species),level=enc.level,roamer=roaming~=nil}
+  if roaming then
+    local individual=require('src.world.Gen3Roamers').active(g.save)
+    out.personality=individual.personality
+    if individual.ivs then out.ivs={};for a,b in pairs{hp='hp',atk='attack',def='defense',spe='speed',spa='spatk',spd='spdef'}do out.ivs[a]=individual.ivs[b]end end
+    if(individual.hp or 0)>0 then out.hp=individual.hp end
+    out.status=require('src.compat.gen1.PokemonView').status(individual)
+  end
+  return out
+end
 M.table_for=M.tableFor
 return M

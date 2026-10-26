@@ -37,7 +37,7 @@ for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
   T.raises(function()s.money=0/0 end,'invalid session');T.raises(function()s.x=99 end,'native command owner')
   T.eq(f.player.cellX,4,'source session writes cannot teleport the native actor')
   s.presentation={foo=1};T.eq(native.save.presentation,nil,'presentation extensions stay detached')
-  T.eq(s.party,nil,'a differently shaped native party is never lent as a source party')
+  T.check(type(s.party)=='table'and s.party~=native.save.party,'party is a separate typed observation')
   native.save.playTime={hours=2,mins=2,secs=3,vblanks=15}
   T.eq(Views.seconds(native.save),7323.25);T.eq(R._playTimeAcc,.25)
   T.eq(type(native.save.playTime),'table','old save clocks are observed without normalization writes')

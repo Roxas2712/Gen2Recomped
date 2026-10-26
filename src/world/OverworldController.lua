@@ -5373,6 +5373,8 @@ function OverworldState:scriptRunning()
 end
 
 function OverworldState:busy()
+  local field=package.loaded["src.core.game3.field"]
+  if GameVersion.isGen3()and field and field._locked(Game,self)then return true end
   -- Gen2's world lives below overlays. A movement wrapper runs after the
   -- native body, including a START/A press that just opened a screen: it
   -- must not move behind that new owner on the same tick.
@@ -5385,7 +5387,7 @@ function OverworldState:busy()
   return (self:scriptRunning() or (self.scriptMoves and #self.scriptMoves > 0)
     or self.engaging or self.emote or self.teleportOut or self.whirlSpin
     or self.gen4Waterfall or self.transitioning or self.flyAnim or self.fishing
-    or (self.player and (self.player.stairExit or self.player.inputLocked))
+    or (self.player and (self.player.stairExit or self.player.inputLocked or self.player.fieldMove))
     or (self.pendingScripts and self.pendingScripts[1])) and true or false
 end
 
@@ -7523,6 +7525,11 @@ function OverworldState:tryPcTile(fx, fy)
 end
 
 function OverworldState:interact()
+  local field=package.loaded["src.core.game3.field"]
+  if GameVersion.isGen3()and field then return field._dispatch(Game,self,function()return self:_interactBody()end)end
+  return self:_interactBody()
+end
+function OverworldState:_interactBody()
   local p = self.player
   local fx, fy = p:facingCell()
 
@@ -10522,13 +10529,8 @@ function OverworldState:gen2SweetScentEncounter(deferFailure)
     if contest then enc = BugContest.rollEncounter(Game)
     elseif slots and (GameVersion.isGen3() or (slots.rate or 0) > 0) then
       if GameVersion.isGen3() then
-        local Roam=require("src.world.Gen3Roamers")
-        if Roam.check(Game.data,Game.save,self.map.id,love.math.random) then
-          enc=Roam.encounterFor(Game.data,Game.save)
-          if enc then roamer="gen3" end
-        end
-      end
-      if not enc then enc = Encounter.chooseTable(slots) end
+        enc,roamer=Encounter.sweetScent(Game.data,Game.save,self.map.def,self.map.id,water,true,love.math.random)
+      else enc = Encounter.chooseTable(slots) end
     end
   end
   if not enc then
@@ -14055,7 +14057,10 @@ function OverworldState:onStepComplete()
         local okT, T = pcall(require, "src.import.Gen4Text")
         g4line = okT and T.resolve(Game.data, hgss and 40 or 213, hgss and 65 or 79, Game) or nil
       end
-      Game.stack:push(TextBox.new(Game, g4line or Strings("REPEL's effect\nwore off.")))
+      local again=GameVersion.isGen3()and package.loaded['src.mods.FeatureOptions']and function()
+        require('src.ui.RepelPrompt').show(Game)
+      end or nil
+      Game.stack:push(TextBox.new(Game, g4line or Strings("REPEL's effect\nwore off."),again))
       return
     end
   end
@@ -18133,7 +18138,7 @@ function OverworldState:_worldDrawEntity(e, cam, bgY, freeGround, groundForRise,
       e.spriteOffset and e.spriteOffset.lift, e.spriteOffset and e.spriteOffset.oz)
     -- UNDER the sprite, and lifted by the same terrain rise it is, so a
     -- character on a slope keeps their feet on it.
-    if shadows then
+    if shadows and not e.customSourceActor then
       if depth then
         spriteDepthGround:withSpriteDepth(depth, function()
           shadows:draw(self.map, e, cam.x, cam.y, e == self.player, riseOf(self, e, groundForRise, groundSin, cam))
@@ -19088,7 +19093,15 @@ end
 -- The ordinary path has no extra protected call or compatibility allocation.
 function OverworldState:drawWorld()
   local field=package.loaded["src.core.game3.field_view"]
-  if field and GameVersion.isGen3()then return field._nativeDraw(Game,self,drawWorldBody)end
+  if not GameVersion.isGen3()then return drawWorldBody(self)end
+  local effects=package.loaded["src.core.game3.field_effects"]
+  if effects and effects._hasActorExtensions and effects._hasActorExtensions()then
+    return require('src.compat.gen1.SourceActors').withActors(Game,self,function()
+      if field then return field._nativeDraw(Game,self,drawWorldBody)end
+      return drawWorldBody(self)
+    end)
+  end
+  if field then return field._nativeDraw(Game,self,drawWorldBody)end
   return drawWorldBody(self)
 end
 
