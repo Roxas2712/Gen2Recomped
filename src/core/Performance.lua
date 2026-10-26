@@ -55,6 +55,9 @@ Performance.paletteZoneCache = true
 Performance.audioWorkerOptimization = true
 -- P9: additional LOW presentation caps, pixel-area AUTO and native UI quads.
 Performance.lowTierBudget = true
+-- C1: importers leave a stripped string.dump beside every generated module
+-- and a package searcher loads it ahead of the source (src/core/BytecodeCache).
+Performance.bytecodeCache = true
 Performance.GC_PAUSE = 120
 Performance.GC_STEP_MUL = 300
 Performance.GC_BUDGET_SECONDS = 0.0005
