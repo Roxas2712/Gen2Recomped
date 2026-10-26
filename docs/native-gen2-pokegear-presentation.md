@@ -25,7 +25,20 @@ Graphics state is restored around the window drawer and overlay.
 Focused synthetic tests cover native card navigation, retuning, text
 advancement, borrowed-record isolation, ordinary no-mod behavior, window
 owner selection, overlay ordering and graphics-state isolation. Real
-unchanged-mod GPU acceptance of this correction is still pending.
+unchanged-mod diagnostic acceptance at exact `58332db2` passes 46 checks per
+OpenGL/Metal backend with both selected cameras. All eight OS-window images
+were inspected: wall-radio names are upright and every Pokegear image shows
+RADIO with a sharp window-resolution station/program layout. The Metal
+warning overlay still obscures the lower edge. See the sanitized
+[receipt](qa/native-foundation/johto-native-radio-presentation.json).
+
+Fork PR45 is merged. Its final composed source `4be92945` passes 418/418
+engine suites, SDK 3/3 and all ROM-free quick tiers; source-bound runtime/GPU
+qualification40248573841 and fresh scoped GPU runs are now accepted. Each
+OpenGL/Metal run passes46 checks; all eight final-composed OS images were
+inspected independently. The existing20261025.1 preview was refreshed from
+that exact source, with all six remote asset digests verified. Earlier
+diagnostic acceptance was not substituted for the composed runs.
 
 The earlier exact `e435f5ff` package passed 36 automatic checks per OpenGL
 and Metal backend with actual Crystal and the unchanged Johto package.
@@ -38,4 +51,6 @@ Full radio shows/audio, source phone/map facade completion, ordinary story
 admission and Windows/Intel hardware GPU gameplay remain open. In particular,
 the pre-existing native Snorlax special checks only EXPN; a real native VM
 probe incorrectly returns true without flute music or adjacency. That story
-gate requires a separate audio/ownership correction and is not fixed here.
+gate requires a separate audio/ownership correction and is not fixed by the
+presentation change. The separate [radio-audio change](native-gen2-radio-audio.md)
+addresses actual playback and proximity; its hardware acceptance is pending.

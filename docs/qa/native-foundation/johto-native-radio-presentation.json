@@ -1,0 +1,74 @@
+{
+  "sourceCommit": "4be92945c94e603f7cc582cde23d4702d9610e4a",
+  "referenceCommit": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+  "qualificationRun": 40248573841,
+  "status": "scoped composed presentation accepted and existing preview refreshed",
+  "game": "Crystal Rev0",
+  "engine": "0.8.46",
+  "modApi": 3,
+  "unchangedSuppliedModFiles": 27329,
+  "backends": [
+    "opengl",
+    "metal"
+  ],
+  "checksPerBackend": 46,
+  "cameras": [
+    "first",
+    "third"
+  ],
+  "surfaces": [
+    "native MapRadio special",
+    "native Pokegear radio"
+  ],
+  "imagesInspected": 8,
+  "osImageSha256": [
+    "7b8926294432a0d4839a5aa0661dece5a494d5f0d2f2d90f2e4ff9045b12395d",
+    "629930851cb9aa0a6d35c02df5c8fbbec7254b853c895228ac80a4a4d975af9b",
+    "4a7a7382ebb8486f8901d18c4263ac9135c78abb8cada958dc6a6b7e0d46f2e7",
+    "ede81a589d33103eb1ed48aee35b24d8be6ef251ca75f44465f4dee7c147e7dc",
+    "a3c8116f783947b9949412780c76e6bd7bd3ca44fdf18eb561a923c611c88bb6",
+    "11cc7edc86c18246754eab4794efcccebd92bb4c95492208736b113680b5ffcc",
+    "0a7453ba11b20446f722da45ebcb9871733e17a3682f488b68f690e220e630f8",
+    "ff85648604b1ff3f2aa47a1638cb0e10ff3aa68edb8cc4e780282ee0a6c6bd13"
+  ],
+  "nativeImportedMaps": 388,
+  "nativeImportedScripts": 5038,
+  "scriptDesyncs": 0,
+  "romOriginalUnmodified": true,
+  "modOriginalUnmodified": true,
+  "modCopySourceFilesUnmodified": true,
+  "observations": [
+    "All four wall-radio announcement names are upright.",
+    "All four Pokegear images show RADIO, station list and actual native program text at window resolution.",
+    "Metal deprecation warning overlay obscures the lower edge."
+  ],
+  "staging": "Owned QA intro/map/radio card/camera setup and separate synthetic station-name/event mod.",
+  "exclusions": [
+    "original story admission",
+    "full ROM radio programs and audio",
+    "Snorlax gate",
+    "Windows/Intel GPU gameplay",
+    "complete native Gen1 parity"
+  ],
+  "finalComposedCandidate": {
+    "sourceCommit": "4be92945c94e603f7cc582cde23d4702d9610e4a",
+    "engineSuites": "418/418",
+    "sdkSuites": "3/3",
+    "runtimeGpu": "four-platform runtime qualification and scoped Mac ARM OpenGL/Metal GPU accepted"
+  },
+  "release": {
+    "url": "https://github.com/Roxas2712/Gen2Recomped/releases/tag/native-preview-20261025.1",
+    "sourceCommit": "4be92945c94e603f7cc582cde23d4702d9610e4a",
+    "sixRemoteDigestsVerified": true,
+    "originalTagUnchanged": true,
+    "assets": {
+      "Gen2Recomped-NativePreview.love": "f803a75d709d546d6802705bd3b2faa084e9e2d89a391f0bd0773bc425b1011f",
+      "Gen2Recomped-NativePreview-20261025.1-macos.zip": "eba5f1b67b194e492d79e69c8fee79c99fc45e16377141592b1caeb560991a1d",
+      "Gen2Recomped-NativePreview-20261025.1-windows.zip": "f0d88b4b235f1f0573eeda15d5282f5c47b1d0d0e1c692ffed470f79445069dd",
+      "build-manifest.json": "72efe71bf68c0ecebf96a45a2836743820cdc8b9b17161b884f6bab79c6a4188",
+      "README-Testrelease.txt": "6261c8459bb0890251a74e242b263ada32030a54342e94c2bbd915d4ba7b6b55",
+      "SHA256SUMS.txt": "0b26ad2c2312d5eaef3a45d9ea72049929ed75936b5014b5358e9a72899d5cd2"
+    }
+  },
+  "diagnosticSource": "58332db20a8f5dd6b701231cea9ffad3f8e90532"
+}

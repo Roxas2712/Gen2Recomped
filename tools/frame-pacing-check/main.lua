@@ -1,7 +1,23 @@
 local root = assert(os.getenv("FRAME_PACING_REPO"))
 package.path = root .. "/?.lua;" .. root .. "/?/init.lua;" .. package.path
+function love.errorhandler(message)
+  print(debug.traceback(tostring(message),2))
+  return function()return 1 end
+end
 if os.getenv("FRAME_PACING_GC") == "1" then
   require("tools.frame-pacing-check.gc")
+  return
+end
+if os.getenv("FRAME_PACING_HOT") == "1" then
+  require("tools.frame-pacing-check.hot")
+  return
+end
+if os.getenv("FRAME_PACING_WORLD") == "1" then
+  require("tools.frame-pacing-check.world")
+  return
+end
+if os.getenv("FRAME_PACING_PALETTE") == "1" then
+  require("tools.frame-pacing-check.palette")
   return
 end
 local Cap = require("src.core.FrameCap")
