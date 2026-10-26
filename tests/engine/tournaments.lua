@@ -52,7 +52,9 @@ check(Arena.takeNotice().id==id,'the pairing notice follows the player back to t
 Version.get=oldGet
 local noop=function() end;local W=require('src.import.TournamentWorkspace')
 love.keyboard={setTextInput=noop,isDown=function() return false end};love.system={getClipboardText=function() return '' end}
-local UI={section='tournaments',ready={red=true},_ui={col=noop},_sbGo=function(self,id) self.section=id end}
+local UI={section='tournaments',ready={red=true},_ui={col=function(c)
+ assert(type(c)=='table' and type(c[1])=='number' and type(c[2])=='number' and type(c[3])=='number','launcher colors must be RGB triples')
+end},_sbGo=function(self,id) self.section=id end}
 response={account_id='17',tournaments={},manage=true,total=0}
 W.tick(UI);W.tick(UI);check(UI._tournaments.index.manage,'the account-only workspace loads the tournament catalogue')
 W.action(UI,'create');W.action(UI,'field:title')
