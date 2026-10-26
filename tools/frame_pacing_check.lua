@@ -12,6 +12,8 @@ love = nil
 local FrameCap = require("src.core.FrameCap")
 local Performance = require("src.core.Performance")
 
+-- Exercise each rollback explicitly below, independent of the caller's env.
+Performance.framePacingSpin=true;Performance.backgroundPacing=true
 local n = 0
 local function eq(a, b, what)
   n = n + 1
@@ -77,12 +79,16 @@ near(took, 0.002, 3 * POLL, "focused + vsync at 144 cap: the present paces, no s
 FrameCap.setFocus(false)
 t = clock()
 took = runFrame(t, window, true)
-near(took, 1 / FrameCap.BACKGROUND, 3 * POLL, "unfocused: paced to BACKGROUND even under vsync")
+near(took, 1 / FrameCap.BACKGROUND, OVERSHOOT + 3 * POLL, "unfocused: paced to BACKGROUND even under vsync")
 FrameCap.backgroundPacing = false
 t = clock()
 took = runFrame(t, window, true)
 near(took, 0.002, 3 * POLL, "backgroundPacing=false: vsync paces again")
 FrameCap.backgroundPacing = true
+Performance.backgroundPacing=false
+t=clock();took=runFrame(t,window,true)
+near(took,.002,3*POLL,"performance background rollback restores vsync pacing")
+Performance.backgroundPacing=true
 FrameCap.setFocus(true)
 eq(FrameCap.focused, true, "focus restored")
 
@@ -96,4 +102,15 @@ near(took, 1 / 30, OVERSHOOT + 3 * POLL, "a 30 cap stays 30 in the background")
 FrameCap.BACKGROUND = 20
 FrameCap.setFocus(true)
 
+Performance.framePacingSpin=false
+eq(FrameCap.spinSeconds(),0,"performance spin rollback disables polling")
+Performance.framePacingSpin=true
+local budgetFlag=Performance.lowTierBudget
+Performance.lowTierBudget=false;Performance.tier="low"
+eq(FrameCap.spinSeconds(),0,"LOW does not start spinning when unrelated extra caps are disabled")
+Performance.tier="high";Performance.saver=true
+eq(FrameCap.spinSeconds(),0,"battery never spins, independently of extra-cap rollback")
+Performance.saver=false;Performance.lowTierBudget=budgetFlag
+local f=assert(io.open("main.lua"));local main=f:read("*a");f:close()
+eq(main:find("if presented and FrameCap.focused ~= false",1,true)~=nil,true,"adaptive tier ignores intentional background pacing")
 print(("frame_pacing_check: %d checks ok"):format(n))

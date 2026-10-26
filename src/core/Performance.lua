@@ -47,6 +47,9 @@ local Performance = {}
 -- P2 is independently reversible. Tier rows can reduce the idle budget or
 -- tune the collector without changing the persisted presentation options.
 Performance.gcBudget = true
+-- P10: optional foreground spin and unfocused presentation cap.
+Performance.framePacingSpin = true
+Performance.backgroundPacing = true
 -- P3: cache hot-path dependencies and reuse engine-private presentation data.
 Performance.hotPathHoist = true
 -- P4: independent world-draw closure, list and protection optimization.

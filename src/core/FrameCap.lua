@@ -12,6 +12,7 @@
 -- so it stays safe under the headless test stub.
 
 local FrameCap = {}
+local Performance = require("src.core.Performance")
 
 -- Selectable steps: the normal framerate stops between the floor and the
 -- ceiling.  STEPS[1] == MIN and STEPS[#STEPS] == MAX, so the nearest-step
@@ -55,11 +56,10 @@ function FrameCap.setFocus(f)
 end
 
 local function spinSeconds()
-  if not FrameCap.spinPacing then return 0 end
-  local ok, Performance = pcall(require, "src.core.Performance")
-  if ok and Performance.extraCap and Performance.extraCap("pacingSpin") == false then
-    return 0
-  end
+  if not FrameCap.spinPacing or not Performance.framePacingSpin then return 0 end
+  local caps = Performance.CAPS[Performance.tier] or Performance.CAPS.high
+  if Performance.saver or caps.pacingSpin == false then return 0 end
+  if Performance.extraCap and Performance.extraCap("pacingSpin") == false then return 0 end
   return FrameCap.SPIN_SECONDS
 end
 -- exposed so a check tool can read what the loop would spend
@@ -92,7 +92,7 @@ end
 function FrameCap.pace(timer, window, presented, nextFrame, idleWork)
   local now = timer.getTime()
   local cap = FrameCap.current
-  local background = FrameCap.backgroundPacing and not FrameCap.focused
+  local background = Performance.backgroundPacing and FrameCap.backgroundPacing and not FrameCap.focused
     and FrameCap.BACKGROUND < cap
   if background then cap = FrameCap.BACKGROUND end
   local budget = 1 / cap
