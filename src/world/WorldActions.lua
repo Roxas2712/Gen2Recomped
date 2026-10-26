@@ -88,6 +88,8 @@ local function ready(game, ow)
       return nil, "world is busy"
     end
   end
+  local field=package.loaded["src.core.game3.field"]
+  if GameVersion.isGen3()and field and field._locked(game,ow)then return nil,"world is busy"end
   local player = ow.player
   if player.moving or player.inputLocked or player.stairExit or player.spinning or player.fieldMove then
     return nil, "world is busy"

@@ -610,13 +610,7 @@ function BattleState:sgbPalettes()
   return nil
 end
 
-local Rulesets = {
-  gen1_faithful = require("src.battle.rulesets.gen1_faithful"),
-  gen2_finite_pp = require("src.battle.rulesets.gen2_finite_pp"),
-  modern_clean = require("src.battle.rulesets.modern_clean"),
-  gen3_emerald = require("src.battle.rulesets.gen3_emerald"),
-  gen4_platinum = require("src.battle.rulesets.gen4_platinum"),
-}
+local Rulesets = require('src.battle.Rulesets')
 
 -- the Poké Ball toss chain (TossBallAnimation) plays even with battle
 -- animations off: PlayMoveAnimation jumps to it before checking wOptions
@@ -1396,6 +1390,12 @@ function BattleState.giveWildHeldItem(data, mon, rng, compoundEyes)
 end
 
 function BattleState.newWild(game, species, level, opts)
+  local authored
+  if opts and opts.wildRecord then
+    local why;authored,why=require('src.battle.WildRecord').validate(game.data,opts.wildRecord)
+    assert(authored,why)
+    assert(authored.species==species and authored.level==level,'encounter identity mismatch')
+  end
   local self = newBattle(game, opts)
   self.kind = "wild"
   local playerMon = Party.firstHealthy(game.save.party)
@@ -1465,6 +1465,7 @@ function BattleState.newWild(game, species, level, opts)
   if opts and opts.roamerSeed then
     Pokemon.applySeed(game.data, wild, opts.roamerSeed)
   end
+  if authored then require('src.battle.WildRecord').apply(game.data,wild,authored)end
   self.enemy = makeBattler(game.data, wild, false, nil, self)
   self.caughtMark = require("src.battle.CaughtMarker").caught(game, wild.species)
   require("src.battle.Gen2Wild").initialize(self, opts)
@@ -4372,6 +4373,8 @@ end
 
 function BattleState:update(dt)
   local auxiliary = MenuAuxiliary.request(self)
+  local shortcuts=package.loaded['src.mods.FeatureOptions']and require('src.battle.QuickItem')
+  local quick=shortcuts and shortcuts.request(self)
   self:tickFx()
   -- one sample a second into the fight, while it is still on screen
   self._stadiumReportTicks = (self._stadiumReportTicks or 0) + 1
@@ -4593,6 +4596,7 @@ function BattleState:update(dt)
     -- Capture eligibility before presentation catch-up can hide an unfinished
     -- HP/status drain. Dispatch only at the ordinary player-decision boundary.
     if auxiliary and MenuAuxiliary.dispatch(self, auxiliary) then return end
+    if quick and shortcuts.dispatch(self,quick)then return end
     -- PLATINUM'S ACTION MENU IS NOT A 2x2, and walking it as one is what a
     -- player feels as the cursor jumping about.
     --
