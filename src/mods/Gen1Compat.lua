@@ -5,13 +5,12 @@ local C = {}
 C.ALIASES = {
   ['src.world.gen2.WorldAPI'] = 'src.world.WorldAPI',
   ['src.world.gen2.Follower'] = 'src.world.OptionalFollower',
+  ['src.world.game3.Follower'] = 'src.compat.game3.Follower',
+  ['src.core.game3.pokemon'] = 'src.compat.game3.Pokemon',
+  ['src.core.gen2.Unown'] = 'src.compat.gen2.Unown',
 }
 C.UNAVAILABLE = {
   ['src.import.pmd.Sprite'] = { 'mystery_dungeon_follower' },
-  ['src.world.game3.Follower'] = { 'mystery_dungeon_follower' },
-  ['src.core.gen2.Unown'] = { 'mystery_dungeon_follower' },
-  ['src.core.game3.pokemon'] = { 'mystery_dungeon_follower' },
-  ['src.core.game3.player'] = { 'mystery_dungeon_follower' },
 }
 -- Concrete host modules and registered providers always take precedence.
 function C.hasProvider(name)

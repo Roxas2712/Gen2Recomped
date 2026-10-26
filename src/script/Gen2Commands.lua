@@ -5318,8 +5318,15 @@ function Commands.g2_update_roam_positions(ctx)
       -- rerolls, so a beast never hops onto the route behind you.
       if dest and dest == normalizeMapId(lastMap) then dest = nil end
       if dest then
+        local from=info.mapId
         info.mapId = dest
         info.landmark = LANDMARK_BY_MAP[dest] or mapToLandmark(ctx.game, dest)
+        local Runtime=require('src.mods.Runtime')
+        if dest~=from and Runtime.wants("roamer.moved")then
+          local indices={RAIKOU=1,ENTEI=2,SUICUNE=3}
+          Runtime.emit("roamer.moved",{index=indices[name],slot=info,species=info.species or name,
+            from=from,to=dest,reason='map'})
+        end
       end
     end
   end

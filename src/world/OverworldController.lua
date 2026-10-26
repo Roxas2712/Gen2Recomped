@@ -13181,6 +13181,12 @@ function OverworldState:hatchEgg(hatched)
   elseif GameVersion.isGen3() and Game.save then
     require("src.pokemon.Gen3GameStats").increment(Game.save, 13)      -- GAME_STAT_HATCHED_EGGS
   end
+  local hatchObserver=GameVersion.isGen2() and Runtime.wants("egg.hatched")
+  local originalEgg,eggSlot
+  if hatchObserver then
+    originalEgg=require('src.mods.Merge').deepCopy(hatched)
+    for slot,mon in ipairs(Game.save.party or{})do if mon==hatched then eggSlot=slot;break end end
+  end
   local Pokemon = require("src.pokemon.Pokemon")
   local def = Game.data.pokemon[hatched.species]
   hatched.isEgg = nil
@@ -13212,6 +13218,10 @@ function OverworldState:hatchEgg(hatched)
   local name = def and def.name or hatched.species
   local function finished()
     Runtime.emit("pokemon.egg_hatched", { mon = hatched })
+    if hatchObserver then
+      Runtime.emit("egg.hatched",{mon=hatched,egg=originalEgg,slot=eggSlot,
+        species=originalEgg.species,nickname=hatched.nickname})
+    end
   end
   local hatchText = Strings("Huh?\f%s hatched\nfrom the EGG!", name)
   local askText = gen2 and Strings("Give a nickname to\n%s?", name) or nil
