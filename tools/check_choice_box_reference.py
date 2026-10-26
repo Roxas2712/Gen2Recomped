@@ -33,7 +33,7 @@ def main():
  driver=ROOT/'tools/choice_box_reference_driver.lua'
  report=dict(passed=False,romSha1=digest,playerProfilesUsed=False,hosts={},comparisons=[],
   scope='English Red YES/NO widget over an identical controlled backdrop, through native Game and final renderer; not whole-world or translated-screen parity.')
- for label,repo,revision in(('reference',ref,reference),('before',ROOT,before),('candidate',ROOT,head)):
+ for label,repo,revision in(('reference',ref,reference),('baseline',ROOT,before),('candidate',ROOT,head)):
   run=out/label;qa_cache(run);run.mkdir()
   source=run/'source';qa_copy(source);source.mkdir()
   archive=qa_run(['git','archive',revision],cwd=repo,capture_output=True,check=True).stdout
@@ -58,7 +58,7 @@ def main():
   print('CHOICE_HOST_PASS '+label,flush=True)
  for frame in('yes','no'):
   meta=report['hosts']['reference']['frames'][frame];expected=(out/'reference'/(frame+'.rgba')).read_bytes()
-  for label in('before','candidate'):
+  for label in('baseline','candidate'):
    other=report['hosts'][label]['frames'][frame]
    assert(other['width'],other['height'],other['viewport'])==(meta['width'],meta['height'],meta['viewport']), 'native viewport changed'
    actual=(out/label/(frame+'.rgba')).read_bytes();assert len(actual)==len(expected)
