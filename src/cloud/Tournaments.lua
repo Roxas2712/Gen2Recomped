@@ -15,6 +15,14 @@ function T.request(method,id,action,payload,match)
  if doc and tostring(doc.account_id)~=account then return nil,'The Arena returned another account profile.' end
  return doc,why
 end
+function T.arena(method,payload)
+ if not Auth.signedIn() then return nil,'Sign in to find an online rival.' end
+ if method~='GET' and method~='POST' and method~='DELETE' then return nil,'Invalid Arena request.' end
+ local account=Auth.accountId()
+ local doc,why=A.request(method,'/arena'..(method=='GET' and '' or '/queue'),payload,true)
+ if not Auth.signedIn() or Auth.accountId()~=account or doc and tostring(doc.account_id)~=account then return nil,'The active account changed. Refresh the Arena.' end
+ return doc,why
+end
 function T.prize(receipt)
  if not uuid(receipt) then return nil,'Invalid tournament prize.' end
  local account=Auth.accountId()
