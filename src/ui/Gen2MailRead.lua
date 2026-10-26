@@ -1,5 +1,5 @@
 -- Adapted from Gen1Recomp 535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91.
--- Existing project rights and notices remain applicable; see NOTICE.md.
+-- Existing project rights and Gen1Recomp provenance remain applicable; see LICENSE.MD.
 -- Reading a letter: ReadAnyMail / ReadPartyMonMail (engine/pokemon/mail_2.asm).
 --
 -- The screen is one full-page piece of stationery -- ten of them, one per mail

@@ -1,5 +1,5 @@
 -- Adapted from Gen1Recomp 535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91.
--- Existing project rights and notices remain applicable; see NOTICE.md.
+-- Existing project rights and Gen1Recomp provenance remain applicable; see LICENSE.MD.
 -- ../pokecrystal/engine/events/pokecenter_pc.asm:568
 -- ../pokecrystal/engine/items/switch_items.asm:1
 

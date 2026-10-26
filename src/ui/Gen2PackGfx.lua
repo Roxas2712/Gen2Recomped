@@ -1,5 +1,5 @@
 -- Adapted from Gen1Recomp 535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91.
--- Existing project rights and notices remain applicable; see NOTICE.md.
+-- Existing project rights and Gen1Recomp provenance remain applicable; see LICENSE.MD.
 -- The PACK screen's chrome, drawn from the cart's own tiles.
 --
 -- engine/items/pack.asm builds this screen out of tiles, not rectangles, and

@@ -1,5 +1,5 @@
 -- Adapted from Gen1Recomp 535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91.
--- Existing project rights and notices remain applicable; see NOTICE.md.
+-- Existing project rights and Gen1Recomp provenance remain applicable; see LICENSE.MD.
 -- home/joypad2.asm:16-53 JoypadLowSensitivity (hJoy7 = 1, 30 then 5)
 -- pokegold home/joypad.asm:313-340 JoyTextDelay (hInMenu, 15 then 5)
 

@@ -1,5 +1,5 @@
 -- Adapted from Gen1Recomp 535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91.
--- Existing project rights and notices remain applicable; see NOTICE.md.
+-- Existing project rights and Gen1Recomp provenance remain applicable; see LICENSE.MD.
 -- The strings an ENGINE routine prints, looked up by their pokegold label.
 --
 -- data/generated/text.lua is keyed by "bank:addr", because every string in it

@@ -1,4 +1,5 @@
--- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
+-- Copyright (c) 2026 Roxas2712. See contribution permission:
+-- https://github.com/Roxas2712/Gen2Recomped/blob/7867399c753186778bd4b8816ba37573357e4b40/LICENSE-ROXAS2712.md
 -- Actual native owners, registry construction and the shared save stores.
 package.path='./?.lua;./?/init.lua;'..package.path
 local T=require('tests.modkit')

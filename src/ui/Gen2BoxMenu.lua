@@ -1,5 +1,5 @@
 -- Adapted from Gen1Recomp 535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91.
--- Existing project rights and notices remain applicable; see NOTICE.md.
+-- Existing project rights and Gen1Recomp provenance remain applicable; see LICENSE.MD.
 -- Bill's PC withdraw / deposit list (engine/pokemon/bills_pc.asm).
 --
 -- The screen is transcribed from the ASM's own coordinates rather than laid
@@ -51,12 +51,10 @@ local GameVersion = require("src.core.GameVersion")
 local GbcPalette = require("src.render.GbcPalette")
 local Mail = require("src.pokemon.Gen2Mail")
 local Palettes = require("src.render.PaletteFX")
-local PartyMenu = require("src.ui.PartyMenu")
 local Screens = require("src.ui.Screens")
 local Sound = require("src.core.Sound")
 local Sprites = require("src.pokemon.Sprites")
 local Strings = require("src.core.Strings")
-local Unown = require("src.compat.gen2.Unown")
 
 local BoxMenu = {}
 BoxMenu.__index = BoxMenu

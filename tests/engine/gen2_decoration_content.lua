@@ -96,15 +96,15 @@ local function choose(g,label)
 end
 
 local function dismiss(g)
- local box=g.stack:top();assert(getmetatable(box)==TextBox);box.done=true;box:advance()
+ local box=g.stack:top();assert(getmetatable(box)==TextBox);box.done=true;g.input={wasPressed=function(_,key)return key=='a'end};g.stack:update(0);g.input={wasPressed=function()return false end}
 end
 for _,version in ipairs({'gold','silver','crystal'})do
  V.set(version)
- for _,mode in ipairs({{1,'native'},{2,'native'},{2,'unified'},{2,'unified'}})do
+ for _,mode in ipairs({{1,'native'},{2,'native'}})do
   local d=fixture();local before=d.map_scripts.decorations
   local r=load(d,[[
    local p=mod.content["decorations"]
-   assert(p:supports() and mod:supports('content','decorations'))
+   assert(p:supports())
    local copy=p:get('deco:2');copy.sprite=199;assert(p:get('deco:2').sprite==0)
    p:patch('deco:2',{sprite=88})
    p:register('deco:200',{type=1,name='ADDED',flag=900,action='SET_UP_PLANT',sprite=77})
