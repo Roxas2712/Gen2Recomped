@@ -7,6 +7,7 @@ C.ALIASES = {
   ['src.world.gen2.Follower'] = 'src.world.OptionalFollower',
   ['src.world.game3.Follower'] = 'src.compat.game3.Follower',
   ['src.core.game3.pokemon'] = 'src.compat.game3.Pokemon',
+  ['src.core.game3.player'] = 'src.compat.game3.Player',
   ['src.core.gen2.Unown'] = 'src.compat.gen2.Unown',
 }
 C.UNAVAILABLE = {

@@ -45,7 +45,8 @@ ownership and bounded transport behavior.
 Published sprite packs can be consumed through `src.import.pmd.Sprite` using
 native fixed-frame rendering, row-major quads, timing and mutable anchors.
 Follower, species and Unown query adapters cover the unchanged follower
-consumer. The existing live player facade remains its provider. No ROM reader
+consumer. A concrete live player provider takes precedence; other hosts use
+a small live-field fallback. No ROM reader
 is introduced. Authenticated follower entrypoints, spawn and animation hooks
 run unchanged for Red, Gold, Crystal and FireRed over owned synthetic pack data.
 
