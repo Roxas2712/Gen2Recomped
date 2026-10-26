@@ -2714,7 +2714,11 @@ function BattleState:updateQueuePresentation()
     -- "messages" with nothing on screen for good -- seen once in a long
     -- HGSS playthrough run, at the start of a double battle.
     self.waitingSoundT = (self.waitingSoundT or 0) + 1
-    if src and src.isPlaying and src:isPlaying() and self.waitingSoundT <= 240 then return true end
+    local journal=package.loaded['src.core.SuspendJournal']
+    local function playing()return src and src.isPlaying and src:isPlaying() and true or false end
+    local audible
+    if journal then audible=journal.sample('battle.waitingSound',playing) else audible=playing() end
+    if audible and self.waitingSoundT <= 240 then return true end
     if self.waitingSoundT > 240 then
       require("src.core.Logger").warn("battle: a sound never finished -- stopped waiting after 240 frames")
     end
