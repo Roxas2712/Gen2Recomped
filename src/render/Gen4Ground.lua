@@ -501,6 +501,8 @@ function Gen4Ground.forMap(map, data)
   -- fountains holds nothing.
   self.depthModels = {}
   self.clock = 0
+  -- G9: the frame's idle time meshes the chunks just outside the view
+  pcall(function() require("src.core.IdleStream").register(self:idleService()) end)
   return self
 end
 
@@ -972,11 +974,21 @@ end
 -- have made it three again.
 function Gen4Ground:propMaterials(object, frame)
   if not object then return nil end
+  -- a map def's own script controls (Pastoria Gym's buttons, Gen4PropControl.sync)
+  if self.def and self.def.gen4PropControl ~= self.propControlFrom then
+    require("src.render.Gen4PropControl").sync(self)
+  end
   local records, images = self:animationsFor(object.model, object.archive)
   -- `frame` is the engine clock; the cartridge steps a prop's texture
   -- animation once per FIELD frame (30 Hz), see Gen4PropClock.fieldFrame
   local mats = records and Gen4TexAnim.materials(records,
     require("src.render.Gen4PropClock").fieldFrame(frame), images) or nil
+  -- a script's paused / once-played animations on their own frames
+  -- (Gen4PropControl)
+  if records and self.propControl and self.propControl[object.model] then
+    mats = require("src.render.Gen4PropControl").materials(self, object.model, records,
+      require("src.render.Gen4PropClock").fieldFrame(frame), images) or mats
+  end
   if object.archive == "fldeff" then return mats end
   local slots = self.oneShots
   if not slots then return mats end
@@ -1094,6 +1106,13 @@ function Gen4Ground:animationsFor(index, archive)
   end
   if not self.claimsOnly then add(packed.name and self.animsByName[packed.name]) end
   add(self.animsByProp and self.animsByProp[index])
+  -- ...and what a script has attached though the list holds it back
+  -- (Gen4PropControl: HGSS ScrCmd_710's hideout generators)
+  if self.propControl then
+    for _, record in ipairs(require("src.render.Gen4PropControl").attached(self, index) or {}) do
+      if not seen[record] then seen[record] = true; list = list or {}; list[#list + 1] = record end
+    end
+  end
   if not (list and Gen4TexAnim.animates(list, images)) then return nil end
   return list, images
 end
@@ -1339,7 +1358,7 @@ function Gen4Ground:runtimePropsFor(land)
         if at then
           byLand[at] = byLand[at] or {}
           table.insert(byLand[at], { model = p.model, archive = p.archive, live = p.live, x = mx - cx * unitsPerChunk - half,
-            y = p.y or 0, z = mz - cy * unitsPerChunk - half, rotY = p.rotY, ground = p.ground,
+            y = p.y or 0, z = mz - cy * unitsPerChunk - half, rotY = p.rotY, rotX = p.rotX, ground = p.ground,
             scaleX = p.scale or 1, scaleY = p.scale or 1, scaleZ = p.scale or 1 })
         end
       end
@@ -1352,15 +1371,17 @@ end
 
 -- The healing balls are map props in Platinum, placed relative to the
 -- console, so they participate in the same depth/camera pass as its ROM art.
-function Gen4Ground:setHealingBalls(count, visible)
+-- `machineName` (optional): the machine prop the balls sit on -- Platinum's
+-- Hall of Fame (Gen4FieldScenes) passes pokemon_league_hall_of_fame_machine
+function Gen4Ground:setHealingBalls(count, visible, machineName)
   self.healScreenActive=(count or 0)>0
-  local key = tostring(count or 0) .. ':' .. tostring(visible)
+  local key = tostring(count or 0) .. ':' .. tostring(visible) .. ':' .. tostring(machineName)
   if self.healingPropsKey == key then return end
   self.healingPropsKey, self.healingProps = key, nil
   if count and count > 0 and visible ~= false then
     local A = require('src.import.Gen4Archives')
     local path = '/fielddata/build_model/build_model.narc'
-    local machine = A.find(path, 'pokecenter_healing_machine.nsbmd')
+    local machine = A.find(path, machineName or 'pokecenter_healing_machine.nsbmd')
     local ball = A.find(path, 'pokecenter_healing_machine_mini_pokeball.nsbmd')
     if self.def.cameraFamily == 'hgss' then
       -- PokecenterAnimCreate/Run (HGSS overlay 2): prop 0x24 is the
@@ -1427,6 +1448,20 @@ local function placement(object)
   -- placement, `rotY` in degrees about the vertical). Platinum's records
   -- carry no rotation and have no `rotY`, so their matrix is unchanged.
   local yaw = object.rotY and object.rotY ~= 0 and math.rad(object.rotY) or nil
+  -- A PITCH (`rotX`, degrees), which a script's MapPropManager_LoadOne
+  -- rotation can carry: Sunyshore Gym's upright gears turn about x.
+  -- MTX_Rot33Vec is X then Y (fx_util.c), so the matrix is RotY * RotX.
+  local pitch = object.rotX and object.rotX ~= 0 and math.rad(object.rotX) or nil
+  if pitch then
+    local c, s = math.cos(yaw or 0), math.sin(yaw or 0)
+    local cx, sx_ = math.cos(pitch), math.sin(pitch)
+    return {
+      c * sx,  s * sx_ * sy, s * cx * sz,  object.x or 0,
+      0,       cx * sy,      -sx_ * sz,    object.y or 0,
+      -s * sx, c * sx_ * sy, c * cx * sz,  object.z or 0,
+      0,       0,            0,            1,
+    }
+  end
   if yaw then
     local c, s = math.cos(yaw), math.sin(yaw)
     return {
@@ -1735,6 +1770,84 @@ function Gen4Ground:liveModel(land)
   return model
 end
 
+-- G9 -- THE RING AROUND THE VIEW IS MESHED BEFORE THE CAMERA GETS THERE.
+--
+-- `liveModel` builds a chunk's mesh the first time the live pass sees it, so
+-- a walk that brings a new row of chunks into view meshes them all in that
+-- one frame.  The frame pacer has idle time on every frame before that one
+-- (src/core/IdleStream.lua); this hands it the chunks one cell outside the
+-- last live view, one per call, cheapest first by nothing in particular,
+-- and stops when the slice it was given is shorter than a build has been
+-- costing.  Only while the live cache has room to spare, so prebuilding
+-- never evicts a chunk that is on screen.  Performance.gen4ChunkPrebuild =
+-- false leaves the ring to the live pass, as before.
+Gen4Ground.PREBUILD_HEADROOM = 8
+
+local function prebuildOn()
+  local ok, Performance = pcall(require, "src.core.Performance")
+  return not (ok and type(Performance) == "table" and Performance.gen4ChunkPrebuild == false)
+end
+
+-- the next chunk in the ring that has no mesh yet, or nil
+function Gen4Ground:prebuildCandidate()
+  local view, grid = self.liveView, self.grid
+  if not (view and grid and self.liveModels) then return nil end
+  if not prebuildOn() then return nil end
+  if #(self.liveOrder or {}) > Gen4Ground.LIVE_CACHE - Gen4Ground.PREBUILD_HEADROOM then
+    return nil
+  end
+  local x0, y0, x1, y1 = view[1] - 1, view[2] - 1, view[3] + 1, view[4] + 1
+  local models = self.liveModels
+  for cy = y0, y1 do
+    for cx = x0, x1 do
+      local ring = cy == y0 or cy == y1 or cx == x0 or cx == x1
+      if ring and cx >= 0 and cy >= 0 and cx < grid.width and cy < grid.height then
+        local land = grid.land[cy * grid.width + cx + 1]
+        if land ~= nil and models[land] == nil then return land end
+      end
+    end
+  end
+  return nil
+end
+
+function Gen4Ground:prebuildPending()
+  return self:prebuildCandidate() ~= nil
+end
+
+-- Build ring chunks until the slice runs out.  `seconds` is what the idle
+-- hook can spare; a build is atomic, so one is started only when the last
+-- few have fit in what is left.  Returns the number built.
+function Gen4Ground:prebuild(seconds, clock)
+  clock = clock or self.idleClock or (love and love.timer and love.timer.getTime) or os.clock
+  local deadline = clock() + (seconds or 0)
+  local built = 0
+  while true do
+    local land = self:prebuildCandidate()
+    if land == nil then break end
+    local left = deadline - clock()
+    local cost = self.prebuildCost or 0
+    if left <= cost * 1.25 then break end
+    local t0 = clock()
+    self:liveModel(land)
+    local took = clock() - t0
+    -- a slow running mean, so one heavy chunk does not stop the next three
+    self.prebuildCost = cost > 0 and (cost * 0.7 + took * 0.3) or took
+    built = built + 1
+  end
+  return built
+end
+
+-- the service the idle hook sees; one per ground, weakly held there
+function Gen4Ground:idleService()
+  if self._idleService then return self._idleService end
+  local ground = self
+  self._idleService = {
+    busy = function() return ground:prebuildPending() end,
+    step = function(seconds) return ground:prebuild(seconds) end,
+  }
+  return self._idleService
+end
+
 -- ---------------------------------------------------------------------------
 -- HOW MANY REAL PIXELS THE 3D VIEW GETS
 -- ---------------------------------------------------------------------------
@@ -1982,6 +2095,10 @@ function Gen4Ground:livePass(camX, camY, vw, vh, yCut)
     require("src.render.Gen4DepthFog").begin(self, 1, dist + sinP * datum + cosP * feetRel, LIVE_DEPTH)
   end
   if self.drawAllChunks then x0, y0, x1, y1 = 0, 0, grid.width - 1, grid.height - 1 end
+  -- G9: what the pass covered this frame, for the idle-time prebuild
+  local view = self.liveView
+  if not view then view = {}; self.liveView = view end
+  view[1], view[2], view[3], view[4] = x0, y0, x1, y1
   for cy = y0, y1 do
     for cx = x0, x1 do
       if cx >= 0 and cy >= 0 and cx < grid.width and cy < grid.height then
@@ -2118,6 +2235,11 @@ function Gen4Ground:livePass(camX, camY, vw, vh, yCut)
     local LC = package.loaded["src.world.HgssLegendCutscene"]
     if LC and LC.wing and LC.drawLive then pcall(LC.drawLive, self, left, top, vw, vh) end
   end
+  -- HGSS's hideout floor trap going off (HgssHideoutFx, ScrCmd_708), the same pass
+  if not yCut then
+    local HF = package.loaded["src.world.HgssHideoutFx"]
+    if HF and HF.trap then pcall(HF.drawLive, self, left, top, vw, vh) end
+  end
   -- PLATINUM'S SURF MOUNT (Gen4SurfMount), in with the ground and under the
   -- sprites -- not in the canopy pass, which paints over them
   if not yCut then
@@ -2127,6 +2249,15 @@ function Gen4Ground:livePass(camX, camY, vw, vh, yCut)
     if not okM and not self.mountWarned then
       self.mountWarned = true
       Logger.warn("gen4 surf mount: %s", tostring(errM))
+    end
+  end
+  -- PLATINUM'S GYM FIELD EFFECTS (Gen4GymFx: Hearthome's flashlights,
+  -- Veilstone's bags, Eterna's fountains), in the fog but able to leave it
+  if not yCut and self.def and (self.def.gen4GymFx or self.def.gen4GymFxProvider) then
+    local okG, errG = pcall(function() require("src.world.Gen4GymFx").drawLive(self, left, top, vw, vh) end)
+    if not okG and not self.gymFxWarned then
+      self.gymFxWarned = true
+      Logger.warn("gen4 gym fx: %s", tostring(errG))
     end
   end
   require("src.render.Gen4DepthFog").finish()
@@ -2300,6 +2431,9 @@ vec4 position(mat4 transform_projection, vec4 vertex_position)
 }
 #endif
 #ifdef PIXEL
+// THE FIELD'S DEPTH FOG on a character of the free pass (Gen4DepthFog
+// spriteAt): rgb the fog colour, a the density; 0 for none
+uniform vec4 spriteFog;
 vec4 effect(vec4 colour, Image tex, vec2 uv, vec2 screen)
 {
     vec4 texel = Texel(tex, uv);
@@ -2307,7 +2441,9 @@ vec4 effect(vec4 colour, Image tex, vec2 uv, vec2 screen)
     // character would occlude whatever is behind it -- the same rule the model
     // shader states for a leaf and the sprite shader states for a character.
     if (texel.a < 0.02) { discard; }
-    return texel * colour;
+    vec4 c = texel * colour;
+    c.rgb = mix(c.rgb, spriteFog.rgb, spriteFog.a);
+    return c;
 }
 #endif
 ]]
@@ -2345,11 +2481,16 @@ vec4 position(mat4 transform_projection, vec4 vertex_position)
 }
 #endif
 #ifdef PIXEL
+// THE FIELD'S DEPTH FOG on a character of the free pass (Gen4DepthFog
+// spriteAt): rgb the fog colour, a the density; 0 for none
+uniform vec4 spriteFog;
 vec4 effect(vec4 colour, Image tex, vec2 uv, vec2 screen)
 {
     vec4 texel = Texel(tex, uv);
     if (texel.a < 0.02) { discard; }
-    return texel * colour;
+    vec4 c = texel * colour;
+    c.rgb = mix(c.rgb, spriteFog.rgb, spriteFog.a);
+    return c;
 }
 #endif
 ]]
@@ -2632,6 +2773,11 @@ function Gen4Ground:drawFree(vw, vh)
       end
     end
   end
+  -- HGSS's hideout floor trap (HgssHideoutFx, ScrCmd_708)
+  do
+    local HF = package.loaded["src.world.HgssHideoutFx"]
+    if HF and HF.trap then pcall(HF.drawFree, self, vp) end
+  end
   -- HGSS'S OBSTACLE ANIMATIONS (Gen4FieldFx), with the world's depth
   do
     local okF, errF = pcall(function() require("src.world.Gen4FieldFx").drawFree(self, vp) end)
@@ -2646,6 +2792,14 @@ function Gen4Ground:drawFree(vw, vh)
     if not okM and not self.mountWarned then
       self.mountWarned = true
       Logger.warn("gen4 surf mount: %s", tostring(errM))
+    end
+  end
+  -- PLATINUM'S GYM FIELD EFFECTS (Gen4GymFx), with the world's depth
+  if self.def and (self.def.gen4GymFx or self.def.gen4GymFxProvider) then
+    local okG, errG = pcall(function() require("src.world.Gen4GymFx").drawFree(self, vp) end)
+    if not okG and not self.gymFxWarned then
+      self.gymFxWarned = true
+      Logger.warn("gen4 gym fx: %s", tostring(errG))
     end
   end
   -- THE TARGET STAYS BOUND, and that is the whole of the masking fix.
@@ -2934,7 +3088,9 @@ function Gen4Ground:billboardPlane(x, y, z, vw, vh)
   return { x0, y0, ddx, ddy, d0 }
 end
 
-function Gen4Ground:freeEntity(mapX, mapY, camX, camY, rise, draw, depthLift, pose)
+-- `fogged`: the field's depth fog on it (Gen4DepthFog.spriteAt), for the
+-- characters the live pass fogs too (OverworldController's entity pass)
+function Gen4Ground:freeEntity(mapX, mapY, camX, camY, rise, draw, depthLift, pose, fogged)
   if not self:freeMode() then return false end
   local vw, vh = self.freeW, self.freeH
   if not (vw and vh and draw) then return true end
@@ -2998,6 +3154,25 @@ function Gen4Ground:freeEntity(mapX, mapY, camX, camY, rise, draw, depthLift, po
       g.setDepthMode("lequal", true)
     end
   end
+  -- THE FIELD'S DEPTH FOG ON THE CHARACTER, at its billboard origin's depth
+  -- on this pass's own projection -- what the live pass's tint does
+  -- (Gen4GymFx.spriteFog), here mixed toward the fog's own colour by the
+  -- sprite shader; without one, a dark fog as a tint
+  local fogShader, fogTint
+  if fogged and depth then
+    local fr, fg, fb, fd = require("src.render.Gen4DepthFog").spriteAt(depth)
+    if fd then
+      local cur = mode ~= nil and g.getShader() or nil
+      if cur then
+        cur:send("spriteFog", { fr, fg, fb, fd })
+        fogShader = cur
+      elseif fr + fg + fb < 0.3 then
+        fogTint = { g.getColor() }
+        local k = 1 - fd
+        g.setColor(fogTint[1] * k, fogTint[2] * k, fogTint[3] * k, fogTint[4])
+      end
+    end
+  end
   -- ...AND FACES THE WAY IT IS GOING ON SCREEN: the world step, projected,
   -- turned back by the roll into the sprite's own frame, picks the facing.
   local facer, savedFacing
@@ -3033,6 +3208,8 @@ function Gen4Ground:freeEntity(mapX, mapY, camX, camY, rise, draw, depthLift, po
   draw()
   if dr then g.setColor(dr, dg, db, da) end
   g.pop()
+  if fogShader then fogShader:send("spriteFog", { 0, 0, 0, 0 }) end
+  if fogTint then g.setColor(fogTint[1], fogTint[2], fogTint[3], fogTint[4]) end
   if facer then facer.facing = savedFacing end
   if mode then
     g.setDepthMode(mode, write)
@@ -4942,6 +5119,10 @@ function Gen4Ground:heightAt(tileX, tileY)
 end
 
 function Gen4Ground:release()
+  if self._idleService then
+    pcall(function() require("src.core.IdleStream").unregister(self._idleService) end)
+    self.liveView = nil
+  end
   for _, canvas in pairs(self.baked) do
     if canvas and canvas.release then pcall(canvas.release, canvas) end
   end

@@ -1,5 +1,11 @@
 # Performance and mod compatibility programme
 
+Final concurrent integration: `8e336d45` includes the additional friend/suspend
+and native Gen2 output commits through `fc46bd85`. Its **22/22 affected
+engine suites**, all required compatibility gates and **14,520 native
+checkpoint assertions per LÖVE host** pass. Full-engine **561/561** evidence
+remains pinned to `a6f947a5`; it is not relabeled as a full rerun of this merge.
+
 A1/A2, M1–M8 and P1–P9 are implemented in the composed fork and offered through
 their existing upstream PRs. Existing acceptance repairs are reused.
 
@@ -109,3 +115,28 @@ P1 includes P2 idle GC within the pacing section. P7 replaces 240 legacy static
 casts with 9 static and 240 small dynamic casts in the controlled moving-camera
 Metal scene. P9 world timing does not exercise quad-heavy menus. See
 [full source hashes and all samples](qa/performance-full-game-p1-p9.json).
+
+## Current upstream and fork integration
+
+Upstream `8d5b4387` and concurrent fork `8a362c6c` are integrated. The full
+engine suite passes **561/561** at `a6f947a5`. Subsequent runtime
+`86f9e593` passes **12/12 targeted engine suites**, every SDK/gallery/contract/
+unchanged-fixture gate and **14,520 actual-LÖVE assertions on each of 11.5
+and 12**. Its complete external entrypoint count is **17/17**, using an actual
+native FireRed NPC and checking owned presentation, unchanged callback
+arguments and owner retirement. The full engine count is not relabeled as
+a full rerun of this later revision.
+
+Public M4 `d2551170` passes **168/168 engine suites**, all four other gates
+and **14,520 assertions per native host**. Public P9 `094d8627` passes
+**180/180** and all four other gates. The programme's 19 existing upstream
+PRs are ready and mergeable; the callback-owner integration fix is also
+offered on existing companion draft #327.
+
+Earlier standalone PRs retain explicit dependency boundaries: P3–P5 have
+green engine/SDK suites but lack later acceptance tooling/fixtures; M5–M7
+have green engine/SDK/gallery/contract gates and require the existing
+asset-pack/follower offers for complete external fixture entrypoints. M8
+and P6–P9 pass all five gates. See [exact revisions and outcomes](qa/program-current-upstream.json).
+FrameProfile samples above remain evidence of their recorded revisions;
+this integration does not invent or relabel measurements.
