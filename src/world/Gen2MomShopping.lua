@@ -57,7 +57,7 @@ end
 function M.caller(data)
  local found
  for id,row in pairs(data and data.map_scripts and data.map_scripts.phone or{})do
-  if integer(id,1,255)and type(row)=='table'and(row.class==nil or row.class==0)and row.contactNumber==1 then
+  if integer(id,1,255)and type(row)=='table'and(row.class==nil or row.class==0)and(row.contactNumber or row.trainer)==1 then
    if found then return nil end;found=id
   end
  end

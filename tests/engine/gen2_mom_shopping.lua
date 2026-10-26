@@ -68,6 +68,8 @@ for _,version in ipairs({'gold','silver','crystal'})do
  Mom.openBank(s);Mom.setSaving(s,true)
  T.eq(s.flags.ENGINE_MOM_ACTIVE,true,version..' bank opening reaches native active flag')
  T.eq(s.flags.ENGINE_MOM_SAVING_MONEY,true,version..' bank start reaches native SOME flag')
+ local legacy=data();legacy.map_scripts.phone[3].contactNumber=nil;legacy.map_scripts.phone[3].trainer=1
+ T.eq(Mom.caller(legacy),3,version..' original non-trainer contact byte remains supported')
  local d=data();s=save()
  local bankGame,bankWorld=game(d,s)
  local bank=Runner.new(bankGame,bankWorld);bank:run(assert(require('src.script.Gen2ScriptVM').compile(d,'BANK')))
