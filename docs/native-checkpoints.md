@@ -6,7 +6,7 @@ Every mod API level exposes `mod.checkpoints:inspect(game)`, `capture(game)`,
 includes a named reason; it never substitutes a different game state.
 
 This service is independently implemented using the host's native save,
-controller, actor, script and battle services. It supports the eighteen selectable
+controller, actor, script and battle services. It supports the host’s selectable
 editions through generation 5. A settled player can capture native actors that
 are wandering, partway through a step, repositioned by a script, following the
 player or present in connected maps. Native map patches, actor pools and shared
@@ -62,11 +62,11 @@ real normal save write.
 ## Qualification
 
 Five CPU suites exercise the actual loader, Game, state stack, controllers,
-map cache, party and save services over owned synthetic data. All eighteen
-edition selections are covered, including native static/trainer producers,
+map cache, party and save services over owned synthetic data. All selectable
+edition selections are covered (18 in the fork, 15 in the public host), including native static/trainer producers,
 script suffix execution, malformed payload refusal, partial-apply rollback,
 title resume and ordinary battle-turn continuation. These are runtime/contract
-checks, not eighteen ROM playthroughs.
+checks, not full ROM playthroughs.
 
 `tools/check_native_checkpoint_rng.py` runs actual LÖVE math/RNG on 11.5 and 12.
 It checks all four native stationary-spinner modes for 384 updates in Red/Gold

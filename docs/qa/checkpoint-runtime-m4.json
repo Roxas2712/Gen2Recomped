@@ -627,6 +627,26 @@
           }
         ]
       }
+    ],
+    "editionSelections": [
+      "red",
+      "blue",
+      "yellow",
+      "gold",
+      "silver",
+      "crystal",
+      "firered",
+      "leafgreen",
+      "ruby",
+      "sapphire",
+      "emerald",
+      "platinum",
+      "heartgold",
+      "soulsilver",
+      "black",
+      "white",
+      "prism",
+      "polishedcrystal"
     ]
   },
   "public": {
@@ -1253,6 +1273,23 @@
           }
         ]
       }
+    ],
+    "editionSelections": [
+      "red",
+      "blue",
+      "yellow",
+      "gold",
+      "silver",
+      "crystal",
+      "firered",
+      "emerald",
+      "platinum",
+      "heartgold",
+      "soulsilver",
+      "black",
+      "white",
+      "prism",
+      "polishedcrystal"
     ]
   },
   "reusedPublicRepairs": [
@@ -1266,7 +1303,7 @@
     294
   ],
   "coverageRepair": "The existing RTC behavior suite now spells one actual subscription with a double-quoted literal recognized by its coverage gate; no assertions or native producers were removed.",
-  "scope": "Owned synthetic content and real native controllers/commands/RNG. Eighteen edition selections in CPU suites; eight representative editions at API 1/2/3 in each native host. No GPU or full-story playthrough claim.",
+  "scope": "Owned synthetic content and real native controllers/commands/RNG. All selectable edition selections in CPU suites (18 fork, 15 public host); eight representative editions at API 1/2/3 in each native host. No GPU or full-story playthrough claim.",
   "intentionalRefusals": [
     "link/multiplayer",
     "Safari/ghost/demo/special battles",
