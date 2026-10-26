@@ -715,11 +715,13 @@ function Game:update(dt)
   end
   do
     local close = FrameProfile.section("  update: discord")
+    if Performance.extraCap("discordPresence")~=false then
     if Performance.hotPathHoist then
       local ok, Discord = HotModules.optional("src.core.DiscordPresence")
       if ok and type(Discord) == "table" then pcall(Discord.update, dt) end
     else
       pcall(function() require("src.core.DiscordPresence").update(dt) end)
+    end
     end
     close()
   end
@@ -2139,6 +2141,10 @@ function Game:applyOptions(opts)
   -- default on a normal desktop, and every options.lua predating this
   -- option) clamps nothing, so it is a no-op for the common case.
   local caps = require("src.core.Performance").applyOptions(opts)
+  if Performance.extraCap("discordPresence")==false then
+    local presence=package.loaded["src.core.DiscordPresence"]
+    if presence and presence.update then pcall(presence.update,0)end
+  end
   if not caps.tilt then require("src.render.Tilt").setLevel(0) end
   if not caps.gbcfx then require("src.render.GBCFX").setLevel(0) end
   local Zoom = require("src.render.Zoom")

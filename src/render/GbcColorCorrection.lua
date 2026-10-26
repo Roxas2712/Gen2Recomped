@@ -5,6 +5,7 @@
 local GameVersion = require("src.core.GameVersion")
 local PaletteFX = require("src.render.PaletteFX")
 local Logger = require("src.core.Logger")
+local Performance = require("src.core.Performance")
 
 local Correction = { mode = "off" }
 Correction.MODES = { "off", "accurate", "harsh" }
@@ -112,6 +113,7 @@ local function resources()
 end
 
 function Correction.active()
+  if Performance.extraCap("colorCorrection")==false then return false end
   if failedTarget or Correction.mode == "off" or not GameVersion.isGen2()
       or PaletteFX.monoMode() then return false end
   return resources()
