@@ -95,11 +95,12 @@ owned fixture and Source double described above:
 
 | Main-thread section | Legacy/cold | P6 |
 | --- | ---: | ---: |
-| 8192 stereo PCM frames | 0.256 ms | 0.114 ms |
-| First effect cue | 0.314 ms | 0.030 ms after prewarm |
-| DS update, simulated 512 frames consumed per frame | 0.126 ms | 0.011 ms |
+| 8192 stereo PCM frames | 0.148 ms | 0.065 ms |
+| First effect cue | 0.235 ms | 0.019 ms after prewarm |
+| DS update, simulated 512 frames consumed per frame | 0.089 ms | 0.010 ms |
 
-The native checker passes 358 scoped checks. These values are source-bound to
+The [source-bound validation record](qa/audio-workers-p6.json) retains the native
+report and acceptance summary. The native checker passes 358 scoped checks. These values are source-bound to
 its local report; rerun the checker for another host/build. They exclude actual
 Source-device cost. Interpreted LÖVE 11 keeps `setSample`; a native comparison
 must not be presented as a JIT FFI speedup on that build.
