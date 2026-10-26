@@ -13796,6 +13796,10 @@ function RomExtractorGen3:decodeScriptAt(start, queue)
     -- `specialRemap`, 0-based, -1 for a FireRed-only one, which becomes
     -- 0x1000 + its own index so it can never land on an Emerald handler).
     local remap = self.manifest.specialRemap
+    local sourceSpecial
+    if name == "special" or name == "specialvar" then
+      sourceSpecial = args[name == "special" and 1 or 2]
+    end
     if remap and (name == "special" or name == "specialvar") then
       local slot = name == "special" and 1 or 2
       local raw = args[slot]
@@ -13804,7 +13808,8 @@ function RomExtractorGen3:decodeScriptAt(start, queue)
         args[slot] = (to >= 0) and to or (0x1000 + raw)
       end
     end
-    lines[#lines + 1] = { address = o, op = op, name = name, args = args }
+    lines[#lines + 1] = { address = o, op = op, name = name, args = args, sourceSpecial = sourceSpecial,
+      sourceBytes = rom:sub(o + 1, at - o - 1), sourceSpec = spec }
     o = at
     if Gen3ScriptOps.TERMINATORS[op] then return lines, nil end
     if op == 0x27 and previous and Gen3ScriptOps.WARP_YIELD[previous] then
@@ -18165,7 +18170,7 @@ function RomExtractorGen3:extractMapScripts()
       for i, line in ipairs(lines) do
         local row = { line.name }
         for k = 1, #line.args do row[k + 1] = line.args[k] end
-        rows[i] = row
+        rows[i] = require("src.import.Gen3ScriptInterface").row(line, row)
       end
       scripts[("S%07X"):format(start)] = rows
       if err then failures[#failures + 1] = err end
@@ -18324,6 +18329,8 @@ function RomExtractorGen3:extractMapScripts()
     source = "RomExtractorGen3",
     scripts = scripts,
     movements = movements,          -- filled by extractMovementScripts
+    sourceInterface = require("src.import.Gen3ScriptInterface").header(
+      type(self.version) == "table" and self.version.id or self.version, self.manifest.romSha1),
     -- local ids the map's own scripts spawn; see the note above
     spawned = spawned,
     -- ...and the ones an arrival callback puts BACK, which start on the map

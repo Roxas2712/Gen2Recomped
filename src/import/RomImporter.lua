@@ -1324,6 +1324,7 @@ local function markerFor(version)
   end
   if GameVersion.generation(version) == 3 then
     revision = revision .. "original-object-sheets-v" .. require("src.import.Gen3ObjectSheets").SCHEMA .. ":"
+    revision = revision .. "original-script-interface-v" .. require("src.import.Gen3ScriptInterface").SCHEMA .. ":"
   end
   if GameVersion.generation(version) == 3 then
     revision = revision .. "gba-script-operands-v" .. require("src.import.Gen3ScriptOps").CACHE_REVISION .. ":"
