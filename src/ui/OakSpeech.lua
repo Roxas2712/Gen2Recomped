@@ -494,10 +494,14 @@ function OakSpeech:buildSteps()
 end
 
 function OakSpeech:enter()
+  local version = GameVersion.get()
+  local clockIntro = version == "gold" or version == "silver" or version == "crystal"
+  -- Other introductions retain their original music-before-build ordering.
+  if not clockIntro then Music.play(self.game.data, self.cfg.music or "Music_Routes2") end
   self.answers = {}
   self.steps = self:buildSteps()
   -- The retail clock comes before the professor and his music.
-  if not (self.steps[1] and self.steps[1].kind == "initclock") then
+  if clockIntro and not (self.steps[1] and self.steps[1].kind == "initclock") then
     Music.play(self.game.data, self.cfg.music or "Music_Routes2")
   end
   if Runtime.wants("intro.oak_speech.started") then

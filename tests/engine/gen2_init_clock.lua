@@ -118,6 +118,25 @@ for _,edition in ipairs({'gold','silver','crystal'})do
   require('src.mods.Loader').teardown();loaded.release()
  end
 end
+-- The shared Oak class also serves other editions. Preserve their existing
+-- music-before-build contract rather than changing Gen1 while adding GSC.
+local Music=require('src.core.Music');local play=Music.play;local order
+Music.play=function(...)order[#order+1]='music';return play(...)end
+for _,edition in ipairs({'red','blue','yellow','prism','polishedcrystal','gold','silver','crystal'})do
+ V.set(edition);order={}
+ local native=edition=='gold'or edition=='silver'or edition=='crystal'
+ local speech={game=game(),cfg={},buildSteps=function()
+  order[#order+1]='build';return {{kind=native and'initclock'or'say'}}
+ end,advance=function()order[#order+1]='advance'end}
+ require('src.ui.OakSpeech').enter(speech)
+ T.same(order,native and{'build','advance'}or{'music','build','advance'},edition..' preserves appropriate native music/build ordering')
+ if native then
+  order={};speech.buildSteps=function()order[#order+1]='build';return {{kind='say'}}end
+  require('src.ui.OakSpeech').enter(speech)
+  T.same(order,{'build','music','advance'},edition..' explicit clock removal still starts professor music')
+ end
+end
+Music.play=play
 for _,edition in ipairs({'prism','polishedcrystal'})do
  V.set(edition);T.eq(require('src.ui.OakSpeech').gen2Steps()[1].id,'oak_welcome',edition..' keeps its own introduction')
 end
