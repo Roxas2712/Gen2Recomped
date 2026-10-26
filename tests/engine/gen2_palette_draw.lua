@@ -66,7 +66,7 @@ for _,game in ipairs({'red','gold','silver','crystal'})do
  for _,mode in ipairs(P.MODES)do
   P.setMode(mode);P.setShadeMap({[0]=3,[1]=1,[2]=2,[3]=0})
   local resolved=P.effectiveColors(A)
-  local display=game~='red'and'gbc'or(mode=='classic'and'classic'or((mode=='og'or mode=='og_inv')and'dmg'or'gbc'))
+  local display=mode=='classic'and'classic'or((mode=='og'or mode=='og_inv')and'dmg'or'gbc')
   T.eq(G.mode,display,game..' '..mode..' public mode follows actual native resolution')
   local trueColor=true
   T.eq(not(trueColor and G.mode=='gbc'),display~='gbc',game..' '..mode..' unchanged evolution colour gate preserves true-colour art')
