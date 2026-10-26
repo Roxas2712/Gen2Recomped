@@ -71,7 +71,7 @@ for _, version in ipairs(GameVersion.ORDER) do
   local registries = true
   for name in pairs(Schemas.REGISTRIES) do
     local expected = name == 'rom_text' and (GameVersion.generation(version) == 2 or GameVersion.generation(version) == 3)
-      or (name ~= 'rom_text' and ((name ~= 'held_items' and name ~= 'marts' and name ~= 'radio_channels' and name ~= 'phone_contacts' and name ~= 'apricorns' and name ~= 'landmarks') or GameVersion.generation(version) == 2))
+      or (name ~= 'rom_text' and ((name ~= 'held_items' and name ~= 'marts' and name ~= 'radio_channels' and name ~= 'phone_contacts' and name ~= 'apricorns' and name ~= 'landmarks' and name ~= 'decorations') or GameVersion.generation(version) == 2))
     registries = registries and (expected and yes(api, 'content', name)
       or not expected and no(api, 'content', name))
   end

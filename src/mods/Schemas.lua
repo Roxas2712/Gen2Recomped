@@ -1321,6 +1321,13 @@ R.apricorns = {
   notes="Native Gen2 recipe records bind real Kurt item selection, event flags and ball delivery. A current native Kurt program import and indexed GSC item IDs are required. New recipes preserve the selected native item byte; generated native branches retain original dialogue/day flags/refusal behavior.",
 }
 
+R.decorations = {
+  semantics="record",generations="2",
+  fields={type=f.int(1,6),name=f.str,action=f.opt(f.str),flag=f.int(0,65534),sprite=f.int(0,255)},
+  example='mod.content.decorations:patch("deco:2", {name="CUSTOM"})',
+  notes="Native imported GSC DECO bytes (deco:0..255), ownership event bits, room callbacks and house-PC selection. Action must be a known SET_UP_/PUT_AWAY_ native decoration action. No retail attribute catalogue is bundled. Requires a complete imported native attribute table.",
+}
+
 R.landmarks = {
   semantics="record",generations="2",
   fields={id=f.opt(f.str),name=f.str,x=f.int(0),y=f.int(0),index=f.int(0,255)},

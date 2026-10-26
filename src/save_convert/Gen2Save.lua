@@ -141,6 +141,7 @@ local LAYOUT_GEN2 = {
     numBalls = 0xD5FC, balls = 0xD5FD,
     numPCItems = 0xD616, pcItems = 0xD617,
     pokegearFlags = 0xD67C,
+    decorations = 0xD959, -- wDecoBed; eight bytes, big doll is last
     eventFlags = 0xD7B7, curBox = 0xD8BC, visitedSpawns = 0xD9EE,
     mapGroup = 0xDA00, mapNumber = 0xDA01, yCoord = 0xDA02, xCoord = 0xDA03,
     partyCount = 0xDA22, partySpecies = 0xDA23, partyMons = 0xDA2A,
@@ -268,6 +269,7 @@ local LAYOUT_CRYSTAL = {
     numBalls = 0xD8D7, balls = 0xD8D8,
     numPCItems = 0xD8F1, pcItems = 0xD8F2,
     pokegearFlags = 0xD957,
+    decorations = 0xDC0F, -- wDecoBed, distinct from Gold/Silver
     eventFlags = 0xDA72, curBox = 0xDB72, visitedSpawns = 0xDCA5,
     mapGroup = 0xDCB5, mapNumber = 0xDCB6, yCoord = 0xDCB7, xCoord = 0xDCB8,
     partyCount = 0xDCD7, partySpecies = 0xDCD8, partyMons = 0xDCDF,
@@ -365,6 +367,11 @@ end
 function Gen2Save.setLayout(version)
   applyLayout((type(version) == "table" and version)
               or LAYOUTS[tostring(version)] or LAYOUT_GEN2)
+  -- An unreviewed hack's legacy fallback layout does not prove where its
+  -- decoration bytes live. Explicit custom layouts may name their own run.
+  if type(version)~="table" and version~="gold" and version~="silver" and version~="crystal" then
+    O.decorations=nil
+  end
 end
 
 applyLayout(LAYOUT_GEN2)
@@ -1024,6 +1031,9 @@ end
 -- decode: raw 32768-byte SRAM string -> save.lua-shaped table
 -- ------------------------------------------------------------------
 
+-- Physical WRAM order differs from the public semantic slot order.
+local DECO_SLOTS={"bed","carpet","plant","poster","console","leftOrnament","rightOrnament","bigDoll"}
+
 function Gen2Save.decode(bytes, data)
   assert(#bytes == Gen2Save.SAVE_SIZE, "expected a 32768-byte save")
   assert(charmap, "Gen2Save.setCharmap must be called before decode")
@@ -1059,6 +1069,11 @@ function Gen2Save.decode(bytes, data)
     boxes = {},
     currentBox = 1,
   }
+
+  if O.decorations then
+    save.decorations={}
+    for i,key in ipairs(DECO_SLOTS)do save.decorations[key]=u8(bytes,O.decorations+i-1)end
+  end
 
   -- bag: four pockets folded into one flat inventory
   local bagOrder = {}
@@ -1238,6 +1253,15 @@ function Gen2Save.encode(save, data, template)
   else
     local zero = string.char(0)
     for i = 1, Gen2Save.SAVE_SIZE do buf[i] = zero end
+  end
+
+  if O.decorations and type(save.decorations)=="table"then
+    for i,key in ipairs(DECO_SLOTS)do
+      local value=save.decorations[key]or 0
+      assert(type(value)=="number"and value>=0 and value<=255 and value%1==0,
+        "invalid native decoration byte: "..key)
+      setByte(buf,O.decorations+i-1,value)
+    end
   end
 
   local player = save.player or {}

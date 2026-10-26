@@ -169,7 +169,13 @@ PlayerPC.withdraw = withdraw
 PlayerPC.deposit = deposit
 PlayerPC.toss = toss
 
-function PlayerPC.new(game)
+function PlayerPC.new(game, opts)
+  opts=opts or{}
+  local changed,done=false,false
+  local function finish()
+    if done then return end;done=true
+    if opts.onDone then opts.onDone(changed)end
+  end
   game.save.pcItems = game.save.pcItems or {}
   local items={
     -- keepOpen so B in the item lists returns here instead of dropping the
@@ -178,7 +184,7 @@ function PlayerPC.new(game)
     { label = Strings("WITHDRAW ITEM"), keepOpen = true, onSelect = function() withdraw(game) end },
     { label = Strings("DEPOSIT ITEM"), keepOpen = true, onSelect = function() deposit(game) end },
     { label = Strings("TOSS ITEM"), keepOpen = true, onSelect = function() toss(game) end },
-    { label = Strings("LOG OFF") },
+    { label = Strings("LOG OFF"), onSelect=finish },
     -- silent PC session (BIT_NO_MENU_BUTTON_SOUND); players_pc.asm
     -- PlayersPCMenu TextBoxBorder (0,0) b=8 c=14 → 16x10
   }
@@ -187,7 +193,12 @@ function PlayerPC.new(game)
       game.stack:push(require("src.ui.Gen2MailboxMenu").new(game))
     end})
   end
-  return Menu.new(game,items,{tx=0,ty=0,tw=16,th=#items*2+2,noSound=true})
+  if opts.house and require("src.world.Gen2Decorations").ready(game.data) then
+    table.insert(items,#items,{label=Strings("DECORATION"),keepOpen=true,onSelect=function()
+      require("src.ui.Screens").push(game,"Gen2DecorationMenu",{onDone=function(value)changed=value or changed end})
+    end})
+  end
+  return Menu.new(game,items,{tx=0,ty=0,tw=16,maxVisible=8,noSound=true,onCancel=finish})
 end
 
 return PlayerPC
