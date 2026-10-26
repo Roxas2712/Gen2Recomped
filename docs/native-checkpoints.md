@@ -48,3 +48,14 @@ state stack, save lifecycle and owned synthetic content in Red/Gold, at API
 levels 1/2/3. It does not establish GPU, battle, later-generation or full-story
 acceptance. FrameProfile before/after and ARM timings: not measured. This is an
 additive compatibility service; no performance switch applies.
+
+The composed fork passes 424/424 engine suites, all 3 SDK suites and all quick
+tiers, plus 678 focused checkpoint assertions. `tools/check_native_checkpoint_rng.py`
+exercises the actual host RNG with the native loader/controller/map-cache
+transactions at API 1/2/3 in Red and Gold. LÖVE 11.5 and 12 each pass 444
+assertions: exact 64-value continuation, failed-rebuild RNG/ownership rollback
+and invalid-state refusal before reconstruction. Graphics are substituted and
+content is synthetic; this does not extend qualification to battle, later
+generations, dynamic actors or full gameplay. The launcher uses the shared
+20 GiB QA reserve and owned profiles. An older public stack can provide the
+shared guard with `--qa-tools /path/to/fork/tools`.
