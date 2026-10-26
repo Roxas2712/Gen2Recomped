@@ -17508,7 +17508,7 @@ function OverworldState:_worldRise(e, groundForRise, groundSin, cam)
   return (e.py - cam.y) * (1 - groundSin) + rise
 end
 
-function OverworldState:_worldDrawEntity(e, cam, bgY, freeGround, groundForRise, groundSin, grassColors, spriteDepthGround, shadows, riseOf)
+function OverworldState:_worldDrawEntity(e, cam, bgY, freeGround, groundForRise, groundSin, grassColors, spriteDepthGround, shadows, riseOf, field)
   if not (self.flyAnim and self:hasFlyBird() and e == self.player)
      and not e.hidden and not e.berryVisualEmpty and not plotIsEmpty(e) then
     -- A FREE CAMERA PLACES ITS OWN CHARACTERS.
@@ -17577,13 +17577,15 @@ function OverworldState:_worldDrawEntity(e, cam, bgY, freeGround, groundForRise,
     else
       e:draw(cam.x, cam.y + riseOf(self, e, groundForRise, groundSin, cam))
     end
+    if field and field.actorsOnly then return end
     -- tall grass overdraws the sprite's feet (GB sprite priority);
     -- the overdraw is BG tiles, so it rides the shake offset too
     love.graphics.setColor(1, 1, 1, 1)
     if self.map:isGrassCell(e.cellX, e.cellY) then
       if not self:drawGen3Grass(e.cellX, e.cellY, cam.x, bgY,
                                 self:gen3GrassFrame(e, false)) then
-        self.map.renderer:drawCellBottom(e.cellX, e.cellY, cam.x, bgY)
+        if field then field.tiles:cell(e.cellX,e.cellY,cam,bgY)
+        else self.map.renderer:drawCellBottom(e.cellX, e.cellY, cam.x, bgY)end
         if grassColors then
           self.map.renderer:markCellBottomRedraw(e.cellX, e.cellY,
                                                  cam.x, bgY, grassColors)
@@ -17593,7 +17595,8 @@ function OverworldState:_worldDrawEntity(e, cam, bgY, freeGround, groundForRise,
     if e.targetX and self.map:isGrassCell(e.targetX, e.targetY) then
       if not self:drawGen3Grass(e.targetX, e.targetY, cam.x, bgY,
                                 self:gen3GrassFrame(e, true)) then
-        self.map.renderer:drawCellBottom(e.targetX, e.targetY, cam.x, bgY)
+        if field then field.tiles:cell(e.targetX,e.targetY,cam,bgY)
+        else self.map.renderer:drawCellBottom(e.targetX, e.targetY, cam.x, bgY)end
         if grassColors then
           self.map.renderer:markCellBottomRedraw(e.targetX, e.targetY,
                                                  cam.x, bgY, grassColors)
@@ -17670,7 +17673,7 @@ function OverworldState:_worldEntityLoop(drawEntity, cam, bgY, freeGround, groun
   return onTop
 end
 
-function OverworldState:drawWorld()
+local function drawWorldBody(self, cadenceConsumed)
   -- Dark-map BG shade shift, armed for the whole frame before anything draws.
   -- home/fade.asm's LoadGBPal writes ONE rBGP for the screen, so terrain, the
   -- characters standing on it and any dialog over them darken together (#322);
@@ -17682,7 +17685,7 @@ function OverworldState:drawWorld()
   -- TileRenderer.tick uses wall-clock 60Hz steps so display refresh rate
   -- does not speed or slow the cycle (issue #4).
   local TR = tileRenderer()
-  TR.tick()
+  if not cadenceConsumed then TR.tick()end
   -- let the renderer know whether a spinner puzzle is currently sliding
   -- the player, so it can flicker the arrow tiles between the blur and
   -- static graphic (engine/overworld/spinners.asm LoadSpinnerArrowTiles)
@@ -18509,6 +18512,96 @@ function OverworldState:drawWorld()
   closeFx()
 end
 
+-- A requested source field callback owns precisely the world presentation.
+-- The ordinary path has no extra protected call or compatibility allocation.
+function OverworldState:drawWorld()
+  local field=package.loaded["src.core.game3.field_view"]
+  if field and GameVersion.isGen3()then return field._nativeDraw(Game,self,drawWorldBody)end
+  return drawWorldBody(self)
+end
+
+-- Same native actors and effect bodies as the ordinary world pass, with an
+-- owned source atlas and explicit capture viewport. It cannot step the world.
+function OverworldState:_drawFieldView(field)
+  local cam,vw,vh=field.camera,field.width,field.height
+  local bgY=cam.y+(self.bgShakeY or 0)
+  self.viewW,self.viewH=vw,vh
+  PaletteFX.markTrueColor(0,0,vw,vh)
+  if not field.actorsOnly then
+    love.graphics.setColor(0,0,0,1);love.graphics.rectangle("fill",0,0,vw,vh)
+    field.tiles:draw(false,cam,bgY)
+    if self.g3MirageTower then require("src.world.Gen3MirageTower").drawTower(self,cam)end
+  end
+  local function actor(e,ox,oy,ghost)
+    if not e or e.hidden then return end
+    ox,oy=ox or 0,oy or 0
+    local ac={x=cam.x-ox,y=cam.y-oy}
+    local billboard=field.billboard
+    if billboard then
+      local x,y=(e.px or 0)-ac.x+8,(e.py or 0)-ac.y+16
+      local sx,sy=Tilt.groundPoint(x,y,vw,vh)
+      love.graphics.push();love.graphics.translate(sx-x,sy-y)
+    end
+    if ghost then e:draw(ac.x,ac.y)
+    else self:_worldDrawEntity(e,ac,bgY,nil,nil,1,nil,nil,nil,self._worldRise,field)end
+    if billboard then love.graphics.pop()end
+  end
+  table.sort(self.ghosts,byGhostY);table.sort(self.entities,byEntityY)
+  if not field.skipActors then
+    for _,g in ipairs(self.ghosts)do actor(g.npc,g.ox,g.oy,true)end
+  end
+  if not field.actorsOnly then
+    local reflectors={}
+    if not field.skipActors then
+      for _,e in ipairs(self.entities)do
+        if not e.hidden and e.drawReflection then
+          e.reflects=self:reflectionSearch(e)
+          if e.reflects then e.reflectStill=self:stillReflection(e.reflects);reflectors[#reflectors+1]=e end
+        end
+      end
+    end
+    for _,e in ipairs(reflectors)do e:drawReflection(cam.x,cam.y)end
+    self:drawRipples(cam.x,bgY)
+    local cover={drawReflectionCover=function(_,cx,cy)
+      field.tiles:reflectionCover(cx,cy,cam,bgY)
+    end}
+    self:_worldReflectionCover(reflectors,#reflectors,cover,cam,bgY)
+    self:drawGen3Gates(cam);self:_worldFxSSAnneWake(cam)
+  end
+  local above={}
+  if not field.skipActors then
+    for _,e in ipairs(self.entities)do
+      if self:gen3AboveTopLayer(e)then above[#above+1]=e else actor(e)end
+    end
+  end
+  -- A retained capture callback cannot draw into an unrelated later frame.
+  local open=true
+  local function upper()
+    if not open or field.actorsOnly then return false end
+    field.tiles:draw(true,cam,bgY);return true
+  end
+  if not field.skipActors and field.endUnderActors then
+    local ok,why=pcall(field.endUnderActors,upper)
+    if not ok then open=false;error(why,0)end
+  end
+  local okUpper,whyUpper=pcall(upper);open=false
+  if not okUpper then error(whyUpper,0)end
+  for _,e in ipairs(above)do actor(e)end
+  if not field.actorsOnly then
+    self:_worldFxHeal(cam);self:_worldFxDust(cam);self:_worldFxCutTree(cam);self:_worldFxWater(cam)
+    self:eachEmote(function()self:_worldFxEmote(cam)end)
+    self:_worldFxRadar(cam);self:_worldFxSparkle(cam);self:_worldFxBird(cam);self:_worldFxRod(cam)
+    self:_worldFxSSAnneSmoke(cam)
+  end
+  require("src.core.game3.field_view")._drawFlash(self,field)
+  if not field.actorsOnly then
+    if self.g3MirageTower or self.g3MirageCrumbles then require("src.world.Gen3MirageTower").drawAbove(self,cam)end
+    if self.g3Orb then require("src.world.Gen3ScreenFx").draw(self,cam,vw,vh)end
+    self:drawGen3Decorate(cam)
+  end
+  love.graphics.setColor(1,1,1,1)
+end
+
 -- The cursor the DECORATE row hands the player: the decoration's own
 -- footprint, outlined, blinking, anchored at its bottom-left the way the
 -- save stores it.
@@ -18528,51 +18621,15 @@ function OverworldState:drawGen3Decorate(cam)
   love.graphics.setColor(1, 1, 1, 1)
 end
 
--- THE HOLE, drawn the way the cartridge cuts it: one span a scanline.
---
--- SetFlashScanlineEffectWindowBoundaries fills a per-line table of left/right
--- edges and the hardware window does the rest, so a row-at-a-time fill here is
--- not an approximation of Emerald's circle, it IS Emerald's circle -- and it
--- needs no stencil buffer, which keeps the field draw working on every backend
--- the port runs on.  Two rectangles a row, plus one above and one below.
+-- The player's cell centre remains in world pixels at every viewport size.
+-- Integer scanline geometry is shared with mod-owned field presentations.
 function OverworldState:drawGen3Flash(cam, vw, vh)
-  if not GameVersion.isGen3() then return end
+  if not GameVersion.isGen3() or not self.player then return end
   local Gen3Flash = require("src.world.Gen3Flash")
-  local circle = Gen3Flash.circle(Game, vw, vh)
-  if not (circle and self.player) then return end
-  local radius = tonumber(circle.radius) or 0
-  love.graphics.setColor(0, 0, 0, 1)
-  if radius <= 0 then
-    -- the table's darkest level closes the window completely; the cartridge
-    -- never selects it, but a script may
-    love.graphics.rectangle("fill", 0, 0, vw, vh)
-    love.graphics.setColor(1, 1, 1, 1)
-    return
-  end
-  -- the middle of the player's own cell, which is (120,80) whenever the view
-  -- is the GBA's own 240x160 -- the two numbers the cartridge hard-codes
-  local cx = self.player.px - cam.x + 8
-  local cy = self.player.py - cam.y + 8
-  local top = math.max(0, math.floor(cy - radius))
-  local bottom = math.min(vh, math.ceil(cy + radius))
-  if top > 0 then love.graphics.rectangle("fill", 0, 0, vw, top) end
-  if bottom < vh then
-    love.graphics.rectangle("fill", 0, bottom, vw, vh - bottom)
-  end
-  for y = top, bottom - 1 do
-    local dy = y + 0.5 - cy
-    local half = math.sqrt(math.max(0, radius * radius - dy * dy))
-    local left = cx - half
-    local right = cx + half
-    if left > 0 then
-      love.graphics.rectangle("fill", 0, y, math.min(left, vw), 1)
-    end
-    if right < vw then
-      love.graphics.rectangle("fill", math.max(right, 0), y,
-                              vw - math.max(right, 0), 1)
-    end
-  end
-  love.graphics.setColor(1, 1, 1, 1)
+  local cx = math.floor(self.player.px - cam.x + 8)
+  local cy = math.floor(self.player.py - cam.y + 8)
+  local circle = Gen3Flash.circle(Game, vw, vh, cx, cy)
+  if circle then Gen3Flash.drawMask(circle.radius, vw, vh, cx, cy) end
 end
 
 -- Emerald's healing machine: the monitor over the machine's screen and one
