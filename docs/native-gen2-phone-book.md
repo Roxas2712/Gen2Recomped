@@ -27,8 +27,8 @@ relocated permanent identities and visible slot-ten dispatch. This establishes
 model/VM/UI behavior, not a hardware phone call or original story acceptance.
 The existing content-bridge tests also check ten-slot native consumption.
 
-The public legacy Phone facade, phone.contact_list display hook, full special
-call/rematch contracts, new authored phone scripts/forward references, and
+The display hook is covered separately in [native-gen2-phone-list-hook.md](native-gen2-phone-list-hook.md).
+The public legacy Phone facade, full special call/rematch contracts, new authored phone scripts/forward references, and
 fresh-import/GPU/story acceptance remain open. Full Gen1 parity is unproven.
 
 Original implementation by Roxas2712; existing upstream/third-party rights and
