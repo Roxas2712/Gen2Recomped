@@ -8,6 +8,12 @@ local TextBox = require("src.render.TextBox")
 local InitClock = {}
 InitClock.__index = InitClock
 InitClock.isOpaque = true
+local TEXT = {
+  intro=Strings.source("SET THE CLOCK"), hour=Strings.source("CHOOSE HOUR"),
+  minute=Strings.source("CHOOSE MINUTE"), day=Strings.source("CHOOSE DAY"),
+  confirmHour=Strings.source("CONFIRM HOUR"), confirmMinute=Strings.source("CONFIRM MINUTE"),
+  questionMark=Strings.source("?"), response=Strings.source("\nCLOCK SET"),
+}
 local function value(n, fallback, limit)
   n = tonumber(n)
   if not n or n ~= n or n == math.huge or n == -math.huge then return fallback end
@@ -46,28 +52,28 @@ function InitClock.new(game, opts)
 end
 function InitClock:wantsFillScale() return self.mode ~= "day" end
 function InitClock:question()
-  if self.phase == "intro" then return text(self, "OakTimeWokeUpText", "SET THE CLOCK") end
-  if self.phase == "hour" then return text(self, "OakTimeWhatTimeIsItText", "CHOOSE HOUR") end
-  if self.phase == "minute" then return text(self, "OakTimeHowManyMinutesText", "CHOOSE MINUTE") end
-  if self.phase == "day" then return text(self, "SetDayOfWeek.OakTimeWhatDayIsItText", "CHOOSE DAY") end
+  if self.phase == "intro" then return text(self, "OakTimeWokeUpText", TEXT.intro) end
+  if self.phase == "hour" then return text(self, "OakTimeWhatTimeIsItText", TEXT.hour) end
+  if self.phase == "minute" then return text(self, "OakTimeHowManyMinutesText", TEXT.minute) end
+  if self.phase == "day" then return text(self, "SetDayOfWeek.OakTimeWhatDayIsItText", TEXT.day) end
   if self.phase == "confirm-hour" then
-    return text(self, "OakTimeWhatHoursText", "CONFIRM HOUR") .. "\n"
+    return text(self, "OakTimeWhatHoursText", TEXT.confirmHour) .. "\n"
       .. InitClock.oclockString(self.hour)
-      .. text(self, "OakTimeWhatHoursText.OakTimeHoursQuestionMarkText", "?")
+      .. text(self, "OakTimeWhatHoursText.OakTimeHoursQuestionMarkText", TEXT.questionMark)
   end
   if self.phase == "confirm-minute" then
-    return text(self, "OakTimeWhoaMinutesText", "CONFIRM MINUTE") .. "\n"
+    return text(self, "OakTimeWhoaMinutesText", TEXT.confirmMinute) .. "\n"
       .. Strings("%d min.", self.minute)
-      .. text(self, "OakTimeWhoaMinutesText.OakTimeMinutesQuestionMarkText", "?")
+      .. text(self, "OakTimeWhoaMinutesText.OakTimeMinutesQuestionMarkText", TEXT.questionMark)
   end
   if self.phase == "confirm-day" then
     return Clock.weekdayName(self.day + 1)
-      .. text(self, "SetDayOfWeek.OakTimeIsItText", "?")
+      .. text(self, "SetDayOfWeek.OakTimeIsItText", TEXT.questionMark)
   end
   local response = { soDark="OakTimeSoDarkText", overslept="OakTimeOversleptText", yikes="OakTimeYikesText" }
   if self.phase == "response" then
     return InitClock.timeString(self.hour, self.minute)
-      .. text(self, "OakText_ResponseToSetTime." .. response[InitClock.responseKey(self.hour)], "\nCLOCK SET")
+      .. text(self, "OakText_ResponseToSetTime." .. response[InitClock.responseKey(self.hour)], TEXT.response)
   end
   return ""
 end
