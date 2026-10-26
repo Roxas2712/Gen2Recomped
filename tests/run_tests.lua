@@ -114,6 +114,7 @@ do
         "cont boundary waits for A with contAdvance")
   check(not box.done, "cont wait is not the final done prompt")
   eq(box.lineIndex, 2, "cont wait stays on the finished line until A")
+  for _=1,require("src.core.Timing").TEXT_PRE_ADVANCE do box:update(0)end
   pressed.a = true
   box:update(0)
   pressed.a=false
@@ -2658,7 +2659,7 @@ do
 -- the text-speed cursor clamps at its ends (.pressedLeftInTextSpeed),
 -- MUSIC FILTER cycles OFF/1X/2X/3X, and COLORS / TILT / GBC FX / VIDEO MODE
 -- cycle their display modes.
-do
+(function()
   local OptionsMenu = require("src.ui.OptionsMenu")
   local OInput = require("src.core.Input")
   local PaletteFX = require("src.render.PaletteFX")
@@ -2824,7 +2825,7 @@ do
   require("src.render.TileRenderer").applyOptions(og.save.options)
   VideoMode.applyOptions(og.save.options)
   require("src.core.VSync").applyOptions(og.save.options)
-end
+end)()
 end
 
 -- ------------------------------------------------------------------
