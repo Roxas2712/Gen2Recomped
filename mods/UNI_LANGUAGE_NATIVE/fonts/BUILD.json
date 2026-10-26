@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/notofonts/noto-cjk",
+  "revision": "f8d157532fbfaeda587e826d4cd5b21a49186f7c",
+  "path": "Sans/OTC/NotoSansCJK-Regular.ttc",
+  "sourceSha256": "b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a",
+  "tool": "tools/build_native_language_fonts.py",
+  "license": "SIL Open Font License 1.1; see OFL.txt",
+  "renamedFamily": "AscendantLauncher"
+}

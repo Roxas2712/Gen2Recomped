@@ -1,0 +1,1 @@
+return {["table"]={{"BRN",{["parts"]={{["off"]=384440,["size"]=3}}}},{"FRZ",{["parts"]={{["off"]=236424,["size"]=3}}}},{"PAR",{["parts"]={{["off"]=18353,["size"]=3}}}},{"PSN",{["parts"]={{["off"]=18316,["size"]=3}}}},{"SLP",{["parts"]={{["off"]=384425,["size"]=3}}}}}}

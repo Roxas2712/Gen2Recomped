@@ -12,7 +12,9 @@ The address metadata in `addresses/` derives from Gen1Recomp's matching public
 symbol metadata (GPL-3.0). It contains addresses and extraction descriptions,
 not ROM text, cartridge graphics, saves or compiled language caches.
 
-The mod supplies its original compilers, profiles, fonts, menu and intro assets.
-Those files retain the mod's own GPL and bundled-font/asset notices. Native
-integration reads them through the installed mod and does not bundle private
-cartridge inputs in the engine or the installable ZIP.
+The fork bundles the original compilers, profiles, fonts, menu and intro assets
+under `mods/UNI_LANGUAGE_NATIVE/`. They retain the mod's own GPL and
+bundled-font/asset notices; `SOURCE.json` records source provenance. The native
+entry and manifest are adapted for launcher-owned setup. Font subsets are
+extended from a pinned Noto source under SIL OFL 1.1. Private cartridge inputs
+and generated language caches are never bundled.
