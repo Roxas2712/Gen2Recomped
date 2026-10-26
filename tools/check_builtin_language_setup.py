@@ -22,7 +22,7 @@ def main():
     backup=ROOT.parent/'uni-language-ascendant/backups/local-install-rc10-20261021-160916/pokemon-love2d/german_rom_source/baseroms'
     for p in (ROOT,love,roms,backup):qa_source(p)
     qa_cache(out);out.mkdir(parents=True,exist_ok=True)
-    source=out/'source';qa_copy(source);source.mkdir(exist_ok=True)
+    source=out/'source';qa_copy(source,ephemeral=True);source.mkdir(exist_ok=True)
     for name in ('src','assets','data','mods/UNI_LANGUAGE_NATIVE','tools/save-editor','tools/map-editor'):
         shutil.copytree(ROOT/name,source/name,dirs_exist_ok=True)
     for p in (ROOT/'tools').glob('rom_manifest*.json'):

@@ -13,10 +13,13 @@ def main():
     ap.add_argument('--love',type=Path,required=True);ap.add_argument('--out',type=Path,required=True)
     ap.add_argument('--games',nargs='+',choices=GAMES,default=GAMES)
     ap.add_argument('--rom-dir',type=Path,default=Path.home()/'Downloads')
+    ap.add_argument('--base-rom',type=Path,help='Exact base override for a single-edition/revision check')
     a=ap.parse_args();love=a.love.resolve();out=a.out.resolve();roms=a.rom_dir.resolve()
     oldProfiles={g:Path.home()/'Library/Application Support/LOVE'/('ula-native-qa-'+g)for g in a.games}
     for p in (ROOT,love,roms,*oldProfiles.values()):qa_source(p)
-    qa_cache(out);out.mkdir(parents=True,exist_ok=True);source=out/'source';qa_copy(source);source.mkdir(exist_ok=True)
+    if a.base_rom:
+        assert len(a.games)==1,'A base override requires exactly one edition';qa_source(a.base_rom.resolve())
+    qa_cache(out);out.mkdir(parents=True,exist_ok=True);source=out/'source';qa_copy(source,ephemeral=True);source.mkdir(exist_ok=True)
     for name in ('src','assets','data','mods/UNI_LANGUAGE_NATIVE','tools/save-editor','tools/map-editor'):
         shutil.copytree(ROOT/name,source/name,dirs_exist_ok=True)
     for path in(ROOT/'tools').glob('rom_manifest*.json'):
@@ -56,9 +59,12 @@ love.keyboard.isDown=function()return false end
     for path in roms.iterdir():
         if path.is_file()and path.suffix.lower()in('.gb','.gbc','.gba'):
             inventory[hashlib.sha1(path.read_bytes()).hexdigest()]=path
+    override=None
+    if a.base_rom:
+        override=hashlib.sha1(a.base_rom.read_bytes()).hexdigest();inventory[override]=a.base_rom.resolve()
     tag=time.strftime('%Y%m%d-%H%M%S');runs=[]
     for game in a.games:
-        recipe=next(r for r in recipes if r['game']==game and r['baseSha1']in inventory)
+        recipe=next(r for r in recipes if r['game']==game and r['baseSha1']in inventory and(not override or r['baseSha1']==override))
         base=inventory[recipe['baseSha1']];qa_source(base)
         identity='ula-native-qa-ptbr-'+game+'-'+tag
         profile=Path.home()/'Library/Application Support/LOVE'/identity;qa_profile(profile);profile.mkdir(parents=True,exist_ok=True)

@@ -18,7 +18,7 @@ def main():
         if p.is_file()and p.suffix.lower()in('.gb','.gbc','.gba'):inventory[hashlib.sha1(p.read_bytes()).hexdigest()]=p.resolve()
     for r in recipes:qa_source(inventory[r['baseSha1']])
     qa_cache(out);out.mkdir(parents=True,exist_ok=True)
-    source=out/'source';qa_copy(source);source.mkdir(exist_ok=True)
+    source=out/'source';qa_copy(source,ephemeral=True);source.mkdir(exist_ok=True)
     (source/'Bps.lua').write_bytes((root/'src/translation/Bps.lua').read_bytes())
     lua=source/'roundtrip.lua'
     lua.write_text("local function read(p)local f=assert(io.open(p,'rb'));local b=f:read('*a');f:close();return b end\nlocal B=assert(loadfile(arg[1]))();io.stdout:write(B.apply(read(arg[2]),read(arg[3]),tonumber(arg[4])))\n")
