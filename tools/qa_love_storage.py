@@ -175,7 +175,12 @@ def sweep(storage, *, max_age=86400, limit=2*1024**3, min_age=3600,
                     p.unlink();result['files']+=1;result['logical_bytes']+=info.st_blocks*512
                 result['profiles']+=1
                 # Leave model/saves/keep subtrees and every new file untouched.
-                parents={p for file,_ in plan for p in file.parents if p!=profile and p.is_relative_to(profile)}
+                parents=set()
+                for file,_ in plan:
+                    folder=file.parent
+                    while folder!=profile:
+                        if folder in parents or not folder.is_relative_to(profile):break
+                        parents.add(folder);folder=folder.parent
                 for folder in sorted(parents,key=lambda p:len(p.parts),reverse=True):
                     if folder.is_dir() and not any(folder.iterdir()):folder.rmdir()
         return result
