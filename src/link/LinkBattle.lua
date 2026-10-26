@@ -685,6 +685,12 @@ function LinkBattle.new(game, net, opts)
 
   local baseFinish = self.finish
   self.finish = function(s)
+    if opts.onFinished and not s.arenaReported then
+      s.arenaReported=true
+      local parts=stateSig(s,role,myParty,theirParty)
+      opts.onFinished({result=s.result or 'aborted',turns=s.turnCount or 0,
+        digest=require('src.link.ArenaProof').digest({seed=opts.seed,turns=s.turnCount or 0,state=stateHash(s,role),actives=parts.actives,bench=parts.bench})})
+    end
     if not s.linkEnded then
       s.linkEnded = true
       send({ type = "bye" })

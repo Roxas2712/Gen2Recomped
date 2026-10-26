@@ -145,12 +145,18 @@ for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
   T.eq(game.stack:top(),f.world)
   package.loaded['src.ui.game3.presentation'].notify=oldNotice
   local weak=setmetatable({},{__mode='v'})
-  do
+  -- A lexical block does not end its enclosing Lua activation. Some LuaJIT
+  -- builds keep its dead local slots visible to the collector, so perform
+  -- admission in a returned activation and retain only the native observer.
+  local function completePayload()
     local payload={owned='completed battle payload'};weak[1]=payload
     local callback=(function(value)return function()T.eq(value.owned,'completed battle payload')end end)(payload)
     local completed=Native.new(game,callback,{style=Catalog.new(edition).styles[8]})
     game.stack:push(completed);completed:finish()
+    return completed
   end
+  local completed=completePayload()
+  T.eq(completed.onDone,nil,'completed native state clears its callback')
   collectgarbage('collect');collectgarbage('collect')
   T.eq(weak[1],nil,'retained transition observations release the completed callback payload')
   -- Source-owned teardown is restricted to its own admission and owner.

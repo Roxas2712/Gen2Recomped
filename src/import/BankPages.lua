@@ -2,6 +2,7 @@
 local P={}
 local B=require('src.storage.PokemonBank')
 local Versions=require('src.core.GameVersion')
+local function versionLabel(v) return (Versions.info(v) or {}).label or 'Universal Bank' end
 function P.draw(self,f,x,y,w,h,s,button,text,col)
   if f.mode=='bank' or not f.mode then return false end
   local g=love.graphics;local font=self.hintFont
@@ -14,7 +15,7 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
     else
       local origin=entry.origin or entry.mon.retroBankOrigin or entry.source
       local rows={entry.mon.nickname or tostring(entry.mon.species),'LEVEL · '..tostring(entry.mon.level),
-        'GAME · '..Versions.info(origin.version or entry.source.version).label,
+        'GAME · '..versionLabel(origin.version or entry.source.version),
         'SAVE · '..tostring(origin.slot or entry.source.slot)..' / '..tostring(origin.saveId or entry.source.saveId or 'Legacy save'),
         'TRAINER ID · '..tostring(origin.trainerId or entry.mon.otId or 'Unknown'),
         'POKÉMON ID · '..tostring(origin.recordId or entry.id or 'Deposit to allocate'),
@@ -62,7 +63,7 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
     button('›',x+52*s,bottom-62*s,42*s,'modePage',{delta=1,max=math.max(0,math.ceil(649/pageSize)-1)})
     local row=f.dexSelected and byId[f.dexSelected]
     if row then
-      local sources={};for _,source in pairs(row.sources) do sources[#sources+1]=Versions.info(source.version).label..' / '..source.slot end
+      local sources={};for _,source in pairs(row.sources) do sources[#sources+1]=versionLabel(source.version)..' / '..source.slot end
       table.sort(sources);text(table.concat(sources,' · '),x+112*s,bottom-52*s,w-112*s)
     end
   else
@@ -83,7 +84,7 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
       local pageSize=math.max(1,math.floor((h-210*s)/(45*s)));local from=(f.tradeChoosePage or 0)*pageSize+1
       for i=from,math.min(#f.bank,from+pageSize-1) do
         local entry=f.bank[i]
-        button((entry.mon.nickname or tostring(entry.mon.species))..' · Lv.'..entry.mon.level..' · '..Versions.info(entry.source.version).label,x,top+(i-from)*45*s,w,'tradePick',{entry=entry})
+        button((entry.mon.nickname or tostring(entry.mon.species))..' · Lv.'..entry.mon.level..' · '..versionLabel(entry.source.version),x,top+(i-from)*45*s,w,'tradePick',{entry=entry})
       end
       button('‹',x,bottom-62*s,42*s,'tradePickPage',{delta=-1})
       button('›',x+52*s,bottom-62*s,42*s,'tradePickPage',{delta=1,max=math.max(0,math.ceil(#f.bank/pageSize)-1)})

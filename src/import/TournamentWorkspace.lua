@@ -2,9 +2,11 @@ local W={}
 local Auth=require('src.cloud.RetroCloud')
 local API=require('src.cloud.Tournaments')
 local Task=require('src.cloud.Task')
+local League=require('src.cloud.League')
 local Versions=require('src.core.GameVersion')
 local Art=require('src.import.ArenaPresentation')
 local editions={'red','blue','yellow','gold','silver','crystal','ruby','sapphire','emerald','firered','leafgreen','platinum','heartgold','soulsilver','black','white'}
+local function imported(self) local out={};for _,v in ipairs(editions) do if self.ready[v] then out[#out+1]=v end end;return out end
 local function focus(f,id) f.focus=id;if love.keyboard.setTextInput then love.keyboard.setTextInput(id~=nil) end end
 local function close(self)
  local f=self._tournaments;if f then if f.job then f.job:cancel() end;focus(f,nil) end
@@ -43,7 +45,7 @@ function W.action(self,id)
  if id:match('^field:') then focus(f,id:sub(7));return end
  focus(f,nil)
  if f.form and require('src.import.GiftDesigner').action(f.form,id) then self.pageScroll=0;return end
- if id=='back' then f.cup=nil;f.form=nil;f.choose=nil;f.confirm=nil;self.pageScroll=0;refresh(self)
+ if id=='back' then f.cup=nil;f.form=nil;f.choose=nil;f.confirm=nil;f.leagueOpen=nil;self.pageScroll=0;refresh(self)
  elseif id=='refresh' then refresh(self)
  elseif id=='nextPage' or id=='prevPage' then
   f.page=math.max(1,f.page+(id=='nextPage' and 1 or -1));local page=f.page
@@ -51,6 +53,13 @@ function W.action(self,id)
  elseif id:match('^open:') then
   local key=id:sub(6);self.pageScroll=0;f.choose=nil;f.confirm=nil
   job(self,'cup',function() return API.request('GET',key) end)
+ elseif id=='rankings' then f.leagueOpen=true;self.pageScroll=0
+ elseif id=='joinLeague' or id=='leaveLeague' then local active=id=='joinLeague';job(self,'league',function() return League.request('POST','league/registration',{active=active}) end)
+ elseif id:match('^challenge:') then local uid=tonumber(id:sub(11));local selected=f.selected or 'rookie';local games=imported(self);job(self,'league',function() return League.request('POST','league/challenges',{recipient=uid,format=selected,editions=games}) end)
+ elseif id:match('^acceptChallenge:') or id:match('^declineChallenge:') then
+  local accept=id:match('^acceptChallenge:')~=nil;local key=id:match(':(.+)$');local games=imported(self)
+  job(self,'league',function() return League.request('POST','league/challenges/'..key..'/respond',{accept=accept,editions=games}) end)
+ elseif id:match('^claimEggs:') then local key=id:sub(11);job(self,'eggs',function() return League.claim(key) end)
  elseif id=='giftStudio' then self:_openAccount('giftAdmin')
  elseif id:match('^format:') then f.selected=id:sub(8)
  elseif id:match('^arenaGeneration:') then
@@ -58,7 +67,11 @@ function W.action(self,id)
  elseif id:match('^arenaEdition:') then f.queueEdition=id:sub(14);f.selected=nil
  elseif id=='findRival' then
   local edition=f.queueEdition or 'crystal';local selected=f.selected or 'rookie'
-  job(self,'arena',function() return API.arena('POST',{format=selected,edition=edition}) end)
+  local league=f.index and f.index.arena and f.index.arena.league
+  if league then
+   if not league.registered then f.notice='Join this season before using league Auto-Match.';return end
+   local games=imported(self);job(self,'arena',function() return League.request('POST','auto',{format=selected,editions=games}) end)
+  else job(self,'arena',function() return API.arena('POST',{format=selected,edition=edition}) end) end
  elseif id=='leaveQueue' then job(self,'arena',function() return API.arena('DELETE') end)
  elseif id:match('^preset:') then
   local key=id:sub(8);f.form.format=key~='custom' and key or nil
@@ -109,6 +122,7 @@ function W.action(self,id)
  end
 end
 function W.tick(self)
+ require('src.link.ArenaResults').pump()
  if self.section~='tournaments' then if self._tournaments then close(self) end;return end
  local f=state(self);if not f then self:_sbGo('games');return end
  if f.job then
@@ -123,6 +137,8 @@ function W.tick(self)
     local ok,why=pcall(self.play,self,doc.edition);self._arenaLaunch=nil
     if not ok then require('src.link.CloudArena').cancelPending();f.notice='Battle launch failed: '..tostring(why) end
     return
+   elseif purpose=='league' then f.index=f.index or {arena={}};f.index.arena=f.index.arena or {};f.index.arena.league=doc;f.notice='League profile updated.'
+   elseif purpose=='eggs' then f.notice=tostring(#(doc.kept or {}))..' league eggs stored in your Bank. Compatible editions can receive them; unsupported species stay in the Bank.';f.nextRefresh=0
    elseif purpose=='prize' then f.notice=doc.kind and 'Prize in your account inbox. Open Account > Gift codes to deliver it to a save copy.' or 'Prize restored to your Bank. Open the Bank to copy it to a compatible save.'
    elseif tostring(doc.account_id)~=f.account then f.notice='The account changed. Refresh the Arena.'
    elseif purpose=='arena' then
@@ -133,7 +149,7 @@ function W.tick(self)
   end
  elseif not f.form and not f.confirm and not f.choose and f.index and f.index.arena and f.index.arena.queue and f.index.arena.queue.state=='searching' and os.time()>=(f.nextQueue or 0) then
   local q=f.index.arena.queue;f.nextQueue=os.time()+20
-  job(self,'arena',function() return API.arena('POST',{format=q.format,edition=q.edition}) end)
+  job(self,'arena',function() if q.league then return League.request('POST','auto',{format=q.format,editions=q.editions}) end;return API.arena('POST',{format=q.format,edition=q.edition}) end)
  elseif not f.form and not f.confirm and not f.choose and (not f.index and not f.cup or os.time()>=(f.nextRefresh or 0)) then refresh(self) end
  local n=require('src.link.CloudArena').takeNotice()
  if n and n.account==f.account then f.notice=n.text;f.nextRefresh=os.time()+30;local key=n.id;job(self,'cup',function() return API.request('GET',key) end);f.returnNotice=n.text end
@@ -183,7 +199,7 @@ function W.draw(self,x,y,w,h)
   if c.rules~='' then text(c.rules) end
   text('CHAMPION: '..require('src.import.GiftDesigner').describe(c.prize)..' + Champion achievement',false,P.link)
   text(f.notice)
-  if c.battle_gate~='verified' then text('ONLINE BATTLES LOCKED · Fully verified Bank teams are required. Team verification is still in development. Organizers can run the bracket and confirm community results.',false,P.link) end
+  if c.battle_gate~='native_rules' then text('NATIVE MODULE UNAVAILABLE · Direct league battles currently support generations 1–3. This bracket can still use community results.',false,P.link) else text('BANK PREFLIGHT · Native edition rules and two matching battle reports. Community result buttons do not award season points.',false,P.link) end
   if f.confirm then
    local q=f.confirm;text('CONFIRM '..q.kind:upper(),true,P.ink)
    if q.winner then text('Winner: '..name(q.winner)) end
@@ -210,7 +226,7 @@ function W.draw(self,x,y,w,h)
     if c.entries==0 then button('EDIT RULES & PRIZES','edit') end
     button('CANCEL TOURNAMENT','cancel')
    end
-  elseif c.state=='running' and c.manage then button('CANCEL TOURNAMENT','cancel') end
+  elseif c.state=='running' and (c.manage or c.matchmaking and mine) then button(c.matchmaking and 'CANCEL THIS PAIRING · NO POINTS' or 'CANCEL TOURNAMENT','cancel') end
   y=y+Art.bracket(self,x,y,w,c,names)
   text('LOBBY',true,P.ink)
   for _,p in ipairs(c.players or {}) do text((p.online and '[ON] ONLINE  ' or '[OFF] OFFLINE  ')..(p.ready and 'READY · ' or 'WAITING · ')..p.nickname,false,p.ready and P.link or P.detail) end
@@ -223,8 +239,8 @@ function W.draw(self,x,y,w,h)
    y=y+14*s;text(name(m.left)..'  vs  '..name(m.right),true,P.ink)
    text(m.state:upper()..(m.winner and ' · Winner: '..name(m.winner) or ''))
    if m.can_report then
-    if m.state=='ready' and c.battle_gate=='verified' then
-     text(m.left==f.account and 'You host this pairing. Enter to publish its room.' or (m.room and 'Host room ready · '..m.room or 'Waiting for the host to open the battle.'))
+    if m.state=='ready' and c.battle_gate=='native_rules' then
+     text('Both players enter here. Bank teams are frozen first; the assigned host then opens the relay.')
      button('ENTER LINK BATTLE','fight:'..i)
     end
     button('I WON · CONFIRM RESULT','report:'..i..':'..(m.left==f.account and 'left' or 'right'))
@@ -236,10 +252,45 @@ function W.draw(self,x,y,w,h)
    y=y+18*s
   end
  else
-  y=y+Art.hero(self,x,y,w)
+  if not f.leagueOpen then
+   local heroY=y;y=y+Art.hero(self,x,y,w)
+   f.rects[#f.rects+1]={x=x+w*.72,y=heroY,width=w*.28,height=244*s,id='rankings'}
+  else text('SEASON RANKINGS',true,P.ink) end
   local arena=f.index and f.index.arena
   if arena then
-   y=y+Art.progress(self,x,y,w,arena)
+   local league=arena.league
+   y=y+Art.progress(self,x,y,w,league or arena)
+   if league then
+    text(league.season.title..' · '..league.season.starts_at..' to '..league.season.ends_at..' UTC',false,P.link)
+    text(league.registered and ('REGISTERED · Rank '..tostring(league.rank or '--')..' / '..league.participants) or 'JOIN THIS THREE-MONTH SEASON · Participation is optional')
+    button(league.registered and 'LEAVE THIS SEASON' or 'JOIN THIS THREE-MONTH SEASON',league.registered and 'leaveLeague' or 'joinLeague')
+    button(f.leagueOpen and 'BACK TO CUPS' or 'TROPHY · RANKINGS, CHALLENGES & DAILY EGGS',f.leagueOpen and 'back' or 'rankings')
+    if f.leagueOpen then
+     text(f.notice)
+     text('SEASON RANKINGS · TOP 100',true,P.ink)
+     text('Challenge using the cup selected in the Arena. Accepting is optional; Auto-Match finds other online rivals.')
+     for _,r in ipairs(league.ranking or {}) do
+      text('#'..r.rank..'  '..r.friend_tag..' · '..r.points..' points · '..r.wins..' wins'..(r.online and ' · ONLINE' or ''),false,r.rank<=3 and P.link or P.detail)
+      if league.registered and r.account_id~=f.account then button('CHALLENGE '..r.nickname,'challenge:'..r.account_id) end
+     end
+     if #(league.ranking or {})==0 then text('Be the first player to join this season.') end
+     text('DAILY PODIUM · 3 / 2 / 1 EGGS',true,P.link)
+     text('At each UTC day close: 75% shiny chance per egg · All 1,025 species, including legends. Eggs stay in the Bank until a compatible edition supports them. Generation 1 cannot receive eggs.')
+     text(league.reward_notice)
+     for _,r in ipairs(league.rewards or {}) do
+      text(r.day..' · Rank '..r.rank..' · '..r.eggs..' eggs')
+      button(r.claimed and 'RESTORE THE SAME EGGS' or 'CLAIM DAILY EGGS','claimEggs:'..r.id)
+     end
+     if #(league.rewards or {})==0 then text('Your earned daily eggs will appear here after the UTC day closes.') end
+     text('VOLUNTARY CHALLENGES',true,P.ink)
+     for _,c in ipairs(league.challenges or {}) do
+      text((c.sender==f.account and 'SENT TO #'..c.recipient or 'FROM #'..c.sender)..' · '..c.format:upper()..' · '..c.state:upper())
+      if c.state=='accepted' and c.tournament_id then button('OPEN CHALLENGE','open:'..c.tournament_id)
+      elseif c.recipient==f.account and c.state=='pending' then button('ACCEPT · USE A SHARED IMPORTED EDITION','acceptChallenge:'..c.id);button('DECLINE · NO POINT PENALTY','declineChallenge:'..c.id) end
+     end
+     text(f.notice);button('REFRESH LEAGUE','refresh');return y-top
+    end
+   end
    local q=arena.queue
    if q then
     text(q.tournament_id and 'RIVAL ASSIGNED · YOUR MATCH IS READY' or 'FINDING YOUR NEXT RIVAL',true,P.link)
@@ -267,13 +318,13 @@ function W.draw(self,x,y,w,h)
    for i,c in ipairs(available) do
     local col=(i-1)%cols;local row=math.floor((i-1)/cols);local by=y+row*184*s;local bx=x+col*(cw+gap)
     local cardWidth=(i==#available and col==0 and cols==2) and w or cw
-    Art.format(self,bx,by,cardWidth,c,(arena.points or 0)<c.minimum_points,f.selected==c.id,edition)
+    Art.format(self,bx,by,cardWidth,c,((arena.league or arena).points or 0)<c.minimum_points,f.selected==c.id,edition)
     f.rects[#f.rects+1]={x=bx,y=by,width=cardWidth,height=170*s,id='format:'..c.id}
    end
    y=y+math.ceil(#available/cols)*184*s
-   button('FIND AN ONLINE RIVAL · '..(f.selected or 'rookie'):upper(),'findRival')
-   text('Pairings use the same edition and cup rules. Battle entry requires verified Bank teams; until that is available, this is a community league.')
-   if arena.points_notice then text(arena.points_notice) end
+   button((arena.league and 'AUTO-MATCH · ' or 'FIND AN ONLINE RIVAL · ')..(f.selected or 'rookie'):upper(),'findRival')
+   text('Auto-Match uses shared editions imported on this device. Both players enter a temporary native link battle from the pairing. Completed matching reports award +50 for a win and -25 for a loss.')
+   if not arena.league and arena.points_notice then text(arena.points_notice) end
   end
   button('REFRESH ARENA','refresh')
   if f.index and f.index.manage then button('+ CREATE TOURNAMENT','create');button('STAFF · PRIZE STUDIO','giftStudio') end

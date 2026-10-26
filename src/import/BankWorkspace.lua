@@ -285,7 +285,7 @@ function W.draw(self)
       local tx=x+infoH+24*s;local tw=w-infoH-70*s
       text((entry.mon.nickname or tostring(entry.mon.species))..' · Lv.'..entry.mon.level,tx,iy+10*s,math.max(1,tw-100*s),true)
       button('COPY ID',x+w-120*s,iy+8*s,100*s,'copyPokemonId')
-      text('ORIGIN · '..Versions.info(origin.version or entry.source.version).label..' / '..tostring(origin.slot or '?')..' / '..tostring(origin.place or '?'),tx,iy+39*s,tw)
+      text('ORIGIN · '..((Versions.info(origin.version or entry.source.version) or {}).label or 'Universal Bank')..' / '..tostring(origin.slot or '?')..' / '..tostring(origin.place or '?'),tx,iy+39*s,tw)
       text('SAVE ID · '..tostring(origin.saveId or entry.source.saveId or 'Legacy save')..' · TRAINER ID · '..tostring(origin.trainerId or entry.mon.otId or type(entry.mon.ot)=='table' and entry.mon.ot.id or 'Unknown'),tx,iy+61*s,tw)
       text('POKÉMON ID · '..tostring(origin.recordId or entry.id or 'Available after deposit'),tx,iy+83*s,tw)
       text('HELD ITEM · '..tostring(entry.mon.item or entry.mon.heldItem or entry.mon.retroBankHeld and ('In Item Bank: '..entry.mon.retroBankHeld.canonical) or 'None'),tx,iy+104*s,tw)

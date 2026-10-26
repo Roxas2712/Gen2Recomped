@@ -13,30 +13,40 @@ response={account_id='18'};check(not T.request('GET',id),'another account respon
 signed=false;check(not T.request('GET'),'guests cannot call the Arena API');signed=true
 local save={party={{species='PIKACHU',level=5},{species='PIDGEY',level=5},{species='RATTATA',level=5}},player={name='Fixture'},options={}}
 local Saves=require('src.core.SaveData');Saves.peekSlot=function() return save end
-local cup={id=id,account_id='17',state='running',edition='red',team_size=3,level=50,generation=1,battle_gate='verified',matches={}}
+local cup={id=id,account_id='17',state='running',edition='red',team_size=3,level=50,generation=1,battle_gate='native_rules',matches={}}
 local match={id=matchid,left='17',right='18',state='ready'};cup.matches={match}
 local Arena=require('src.link.CloudArena')
-cup.battle_gate='bank_verification_required';check(not Arena.queue(cup,match,'slot1'),'unverified Bank teams cannot enter online tournament battles');cup.battle_gate='verified'
+cup.battle_gate='bank_verification_required';check(not Arena.queue(cup,match,'slot1'),'unverified Bank teams cannot enter online tournament battles');cup.battle_gate='native_rules'
 check(Arena.queue(cup,match,'slot1'),'an account may choose its assigned host battle and saved team')
 local oldQueue=Arena.queue;match.left='18';match.right='17'
-check(not Arena.queue(cup,match,'slot1'),'a guest waits for the assigned host room');match.room='ABC123'
+check(Arena.queue(cup,match,'slot1'),'both players may enter Bank preflight before the host room exists');match.room='ABC123'
 check(Arena.queue(cup,match,'slot1'),'the guest can join the published six-character room')
 save.party[3].isEgg=true;check(not Arena.queue(cup,match,'slot1'),'an egg cannot enter a battle party');save.party[3].isEgg=nil
 cup.team_size=2;check(not Arena.queue(cup,match,'slot1'),'the chosen party must match the tournament team size');cup.team_size=3
 local returned=0;local originalSave={player={name='Original'},party={}}
 local net={code='ABC123',close=function(self) self.closed=true end,joinOnline=function() return true end,hostOnline=function() return true end,send=function(self,msg) self.hello=msg end}
 package.loaded['src.link.Net']={new=function() return net end}
-package.loaded['src.link.Handshake']={onlineAllowed=function() return true end,hello=function() return {protocol=2} end}
+package.loaded['src.link.Handshake']={onlineAllowed=function() return true end,hello=function() return {protocol=2,fingerprint='fixture'} end}
 local battleState
 package.loaded['src.link.LinkState']={new=function(game) local s={stage='menu',update=function() end,decideCompat=function(self) self.stage='battleOptions' end,startMode=function(self) self.stage='battleWait' end};battleState=s;return s end}
 local Version=require('src.core.GameVersion');local oldGet=Version.get;Version.get=function() return 'red' end
-local game={save=originalSave,writeSave=function() return true end,returnToLauncher=function() returned=returned+1 end,stack={push=function() end}}
+local game={input={wasPressed=function() return false end},save=originalSave,writeSave=function() return true end,returnToLauncher=function() returned=returned+1 end,stack={push=function() end}}
+love.data={hash=function(_,b) local h=5381;for i=1,#b do h=(h*33+b:byte(i))%4294967296 end;return string.rep(('%08x'):format(h),8) end,encode=function(_,_,b) return b end}
+package.loaded['src.link.Protocol']={packParty=function(p) return p end}
+package.loaded['src.link.ArenaTeam']={prepare=function(_,_,party) return {party='fixture'},party.party end}
+local captured
+package.loaded['src.link.ArenaResults']={keep=function(_,_,v) captured=v;return true end,pump=function() end}
+response={account_id='17',battle={id=id,state='ready',seed=42,nonce='fixture',teams={{account='17',party=save.party,digest='own',ticket='own',fingerprint='fixture'},{account='18',party=save.party,digest='peer',ticket='peer',fingerprint='fixture'}}}}
 Arena.queue(cup,match,'slot1');save.party[1].level=99;Arena.consume(game)
+-- A preflight reply reflects the frozen copy, never a subsequent local edit.
+response.battle.teams[1].party=game.save.party;response.battle.teams[2].party=game.save.party
+battleState:update(.1)
 check(game.retroArena and game.save.party[1].level==5 and not game:writeSave(),'the frozen party is isolated from live saves and cannot be written as adventure progress')
 battleState:sendHello(nil);check(net.hello.arena.match==matchid and net.hello.arena.account=='17','the link hello binds the expected pairing and account without sending a login token')
 battleState.peerHello={arena={tournament=id,match=matchid,account='99',edition='red',team_size=3,level=50}}
 battleState:decideCompat('battle',false)
 check(returned==1 and game.save==originalSave and not game.retroArena and net.closed,'a wrong peer closes the room, restores the original save and returns to the launcher')
+check(captured and captured.status=='aborted','leaving a prepared battle persists an abort rather than inventing a winner')
 check(Arena.takeNotice().id==id,'the pairing notice follows the player back to the lobby')
 Version.get=oldGet
 local noop=function() end;local W=require('src.import.TournamentWorkspace')
@@ -99,3 +109,19 @@ UI._tournaments.index.arena.queue={state='searching',format='rookie',edition='cr
 UI._tournaments.nextQueue=0;W.action(UI,'create');W.action(UI,'field:title');W.tick(UI)
 check(not UI._tournaments.job and UI._tournaments.focus=='title','queue polling does not interrupt a staff draft or steal text focus')
 print('Arena draft focus: 1 check passed')
+
+local league={account_id='17',season={id=id,title='Season 1',starts_at='2026-10-26 12:00:00',ends_at='2027-01-26 12:00:00'},registered=true,points=50,rank=1,participants=2,
+ ranking={{account_id='17',rank=1,nickname='Me',friend_tag='Me#1234',points=50,wins=1,online=true},{account_id='18',rank=2,nickname='Peer',friend_tag='Peer#1234',points=-25,wins=0,online=true}},
+ rewards={{id=id,day='2026-10-26',rank=1,eggs=3,claimed=false}},challenges={},worlds_points=1000,shiny_percent=75,win_points=50,loss_points=25,reward_notice='Daily standings and immutable eggs.'}
+UI._tournaments.form=nil;UI._tournaments.focus=nil;UI._tournaments.index.arena={formats=formats,league=league};UI._tournaments.selected='rookie';UI._tournaments.cup=nil
+W.action(UI,'rankings');check(W.draw(UI,0,0,640,640)>0,'the trophy opens a native season standings view')
+local buttons={};for _,r in ipairs(UI._tournaments.rects) do buttons[r.id]=true end
+check(buttons['challenge:18'] and buttons['claimEggs:'..id],'standings expose voluntary rival challenges and durable daily egg claims')
+response={account_id='17',league=league,queue={format='rookie',edition='red',state='searching',league=true,editions={'red'}}}
+W.action(UI,'findRival');W.tick(UI)
+check(sent.path=='/arena/auto' and #sent.payload.editions==1 and sent.payload.editions[1]=='red','Auto-Match advertises only the editions actually imported on this device')
+response=league;W.action(UI,'challenge:18');W.tick(UI)
+check(sent.path=='/arena/league/challenges' and sent.payload.recipient==18,'a leaderboard challenge goes to the selected account through the authenticated service')
+UI._tournaments.index.arena.league.registered=false
+W.action(UI,'findRival');check(not UI._tournaments.job and UI._tournaments.notice:find('Join this season',1,true),'league opt-in is required for Auto-Match without blocking local play')
+print('Season league native workspace: 5 checks passed')
