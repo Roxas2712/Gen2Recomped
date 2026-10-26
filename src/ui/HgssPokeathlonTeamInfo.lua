@@ -39,12 +39,12 @@
 --     (priority 1), BG0 (the header)
 --
 -- STAND-INS, said so:
---   * the picker: the port's party menu in its `select` mode
---     (src/ui/Gen4PartyMenu.lua), so no PC-box Pokemon (the cartridge's
---     ov97_0221E91C / 0221E97C box callbacks are not ported); this panel goes
---     on that menu's second screen, and with no second screen it shows over
---     the menu while SELECT or L is held
---   * "Supreme": the port's course has no Supreme Cup yet, so never shown
+--   * the picker: src/ui/HgssPokeathlonTeamPick.lua (the party, then the PC
+--     boxes, as ov97_0221E91C / 0221E97C hand them over; its own screen art
+--     is a stand-in); this panel goes on the picker's second screen, and with
+--     no second screen it shows over the picker while SELECT or L is held
+--   * "Supreme": the course's `supreme` (the dome script's second byte,
+--     src/script/HgssPokeathlonCommands.lua)
 --   * the OBJ set's sequence 5 (a sparkle, created hidden at the Medals and
 --     never shown by ov97) and 6 are not drawn
 
@@ -139,10 +139,11 @@ end
 
 -- ov97_0221EC14's record for one party Pokemon: the stars' cells per row,
 -- the arrows, the medals
-function M.info(game, mon)
+function M.info(game, mon, noJuice)
   if type(mon) ~= "table" or mon.isEgg or mon.egg then return nil end
   local P = require("src.pokemon.HgssPokeathlonPerformance")
-  local juice = mon.aprijuice
+  -- a boxed Pokemon's juice is zero (ov97_0221E91C)
+  local juice = not noJuice and mon.aprijuice or nil
   local ok, stars, colour, row = pcall(P.stars, game.data, mon, juice)
   local r = { mon = mon, rows = {}, medals = {} }
   if ok and stars and row then
@@ -187,7 +188,7 @@ function M.draw(game, opts)
   g.setColor(1, 1, 1, 1)
   local back = img(art.back)
   if back then g.draw(back, 0, 0) else g.setColor(0.17, 0.62, 0.6, 1); g.rectangle("fill", 0, 0, 256, 192) end
-  local r = opts.mon and M.info(game, opts.mon)
+  local r = opts.mon and M.info(game, opts.mon, opts.noJuice)
   if r then
     g.setColor(1, 1, 1, 1)
     local plate = img(art.plate)
@@ -245,7 +246,8 @@ function M.attach(menu, game, opts)
     return party[i]
   end
   local function panel()
-    M.draw(game, { course = opts.course, supreme = opts.supreme, mon = current() })
+    M.draw(game, { course = opts.course, supreme = opts.supreme, mon = current(),
+                   noJuice = menu.boxPage and menu:boxPage() or nil })
   end
   local function second()
     local ok, SS = pcall(require, "src.ui.SecondScreen")

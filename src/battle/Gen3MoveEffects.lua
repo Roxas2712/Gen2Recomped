@@ -375,6 +375,18 @@ end
 P.SPIKES_EFFECT = function(battle, user, target)
   local side = battle.sideOf and battle:sideOf(target)
   if not side then return { Strings("But, it failed!") } end
+  -- HOENN AND SINNOH STACK THEM: up to three layers (pokeemerald
+  -- Cmd_setspikes / Platinum BtlCmd_TrySpikes: spikesAmount == 3 fails,
+  -- otherwise ++); the arrival hurts maxHP / ((5 - layers) * 2) -- an
+  -- eighth, a sixth, a quarter (BattleState:abilitySwitchIn).  Gen 2 has
+  -- the one layer (pokecrystal SpikesEffect) and keeps `true`.
+  local GameVersion = require("src.core.GameVersion")
+  if GameVersion.isGen3() or GameVersion.isGen4() then
+    local layers = (side.spikes == true) and 1 or (tonumber(side.spikes) or 0)
+    if layers >= 3 then return { Strings("But, it failed!") } end
+    side.spikes = layers + 1
+    return { Strings("SPIKES were\nscattered all around\nthe foe's side!") }
+  end
   if side.spikes then return { Strings("But, it failed!") } end
   side.spikes = true
   return { Strings("SPIKES were\nscattered all around\nthe foe's side!") }
@@ -387,6 +399,8 @@ P.BATON_PASS_EFFECT = function(battle, user, target, move, moveInst)
     require("src.battle.Gen3BatonPass").perform(
       require("src.battle.EffectRegistry").makeCtx(battle,user,target,move,moveInst))
     return {}
+  elseif require("src.core.GameVersion").isGen4() then
+    return require("src.battle.Gen4MoveEffects").batonPass(battle, user)
   end
   user.batonPass = {
     stages = user.stages,

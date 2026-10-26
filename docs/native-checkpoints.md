@@ -80,3 +80,9 @@ See `docs/qa/checkpoint-runtime-m4.json` for exact qualified revisions and gate
 results. `docs/qa/checkpoint-spinners-m4.json` retains the earlier, narrower
 qualification as history. This compatibility service has no performance switch;
 FrameProfile before/after for checkpoint operations: not measured.
+
+The current upstream Gen4 field/side effects, including boolean side keys,
+and the native battler-keyed chosen-action relationships are reconstructed
+as semantic data. Ordinary singles do not require a double-battle position.
+Maps with native dynamic Gen4/Gen5 gym controllers are refused explicitly
+until their mutable controller resources have a qualified reconstruction.

@@ -37,6 +37,20 @@ local function displayName(b)
 end
 EffectRegistry.displayName = displayName
 
+-- Whether PROTECT stops this move.  A Gen 3 record carries the answer
+-- (protectAffected, from the flags byte); a Gen 4 one keeps the cartridge's
+-- own flags byte, whose bit 1 is MOVE_FLAG_CAN_PROTECT -- Feint, the
+-- self-targeting moves and the field moves have it clear.  A move with no
+-- flags recorded (every Gen 1 and Gen 2 one) is affected, that generation's
+-- rule.
+function EffectRegistry.protectAffected(move)
+  if move.protectAffected ~= nil then return move.protectAffected ~= false end
+  if move.gen4Effect ~= nil and tonumber(move.flags) then
+    return math.floor(tonumber(move.flags) / 2) % 2 == 1
+  end
+  return true
+end
+
 -- built once per performMove call; closes over the battle
 function EffectRegistry.makeCtx(battle, user, target, move, moveInst, isCalled)
   local ctx
@@ -139,7 +153,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   -- 1 and Gen 2 one) is treated as affected, which is that generation's rule.
   local lockedOHKO = record and record.gbaOHKO
     and require("src.battle.Gen3LockOn").active(battle, user, target)
-  if target.protecting and (not gba or target ~= user) and move.protectAffected ~= false and not lockedOHKO then
+  if target.protecting and (not gba or target ~= user) and EffectRegistry.protectAffected(move) and not lockedOHKO then
     battle:cancelMoveAnim()
     if record and record.onProtect and record.onProtect(ctx) then return end
     battle:sayNext(Strings("%s\nprotected itself!", displayName(target)))
@@ -150,8 +164,12 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   -- SWIFT_EFFECT before the INVULNERABLE check), and so does SKY UPPERCUT,
   -- which reaches a target in the middle of FLY without being a never-miss
   -- move in any other respect -- hence the second, narrower field.
+  -- (a predicate when the answer depends on where the target went: SURF
+  -- reaches a Pokemon underwater and no other)
+  local reachesHidden = record and record.neverMissInvulnerable
+  if type(reachesHidden) == "function" then reachesHidden = reachesHidden(ctx) end
   if target.invulnerable and not nativeAccuracy and not neverMiss
-     and not (record and record.neverMissInvulnerable) and not lockedOHKO then
+     and not reachesHidden and not lockedOHKO then
     -- Explosion/Selfdestruct still animate on a miss (HandleIfPlayerMoveMissed)
     if not (record and record.explode) then battle:cancelMoveAnim() end
     missBeat(battle, record)

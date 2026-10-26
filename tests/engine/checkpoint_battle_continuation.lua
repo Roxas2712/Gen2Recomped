@@ -43,6 +43,9 @@ for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
     battle.player.mon.hp, battle.player.mon.stats.hp, battle.player.shownHP = 400, 400, 400
     battle.enemy.mon.hp, battle.enemy.mon.stats.hp, battle.enemy.shownHP = 400, 400, 400
     battle.player.stages.attack = 2
+    if require("src.core.GameVersion").generation() == 4 then
+      battle.g4fx = { field = { gravity = 4 }, sides = { [true] = { tailwind = 3 }, [false] = { luckyChant = 2 } } }
+    end
     battle.field.tokens.owned = { turns = 3 }
     battle.sides[1].tokens.owned = { turns = 2 }
     stack.states = { world, battle }
@@ -68,6 +71,11 @@ for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
         T.eq(fresh.player.stages.attack, 2, "volatile stages restored")
         T.eq(fresh.field.sides, fresh.sides, "native field side alias preserved")
         T.eq(fresh.field.tokens.owned.turns, 3, "field tokens restored")
+        if battle.g4fx then
+          T.eq(fresh.g4fx.field.gravity, 4, "native Gen4 field effect rewinds")
+          T.eq(fresh.g4fx.sides[true].tailwind, 3, "boolean-keyed player side rewinds")
+          T.eq(fresh.g4fx.sides[false].luckyChant, 2, "boolean-keyed enemy side rewinds")
+        end
         T.eq(Serializer.encode(assert(f.checkpoints:capture(game))), bytes, "full battle recapture matches")
         T.eq(Serializer.encode(cp), bytes, "caller battle payload detached")
         local function turn()
@@ -84,7 +92,12 @@ for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
             ticks = ticks + 1
           until (b.phase == "menu" and not b.current and #b.queue == 0) or ticks >= 4000
           T.check(ticks < 4000 and b.phase == "menu", "actual native turn reaches its next decision")
-          return Serializer.encode(assert(f.checkpoints:capture(game)))
+          local nextCheckpoint, why, detail = f.checkpoints:capture(game)
+          if not nextCheckpoint then
+            local _, diagnostic = pcall(B.capture, game, b, copy)
+            error(edition .. "/" .. kind .. ": " .. tostring(why) .. ": " .. tostring(detail) .. ": " .. tostring(diagnostic))
+          end
+          return Serializer.encode(nextCheckpoint)
         end
         local expected = turn()
         T.check(f.checkpoints:restore(game, cp), "rewind before comparing native turn continuation")
