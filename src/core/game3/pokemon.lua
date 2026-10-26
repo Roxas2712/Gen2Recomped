@@ -16,7 +16,7 @@ end
 local function context()
   local game=Native.game()
   if not(game and game.data and type(game.data.pokemon)=='table')then release();return end
-  if not current or current.game~=game or current.data~=game.data or current.loader~=game.mods or current.edition~=Version.get()then
+  if not current or current.game~=game or current.data~=game.data or current.loader~=game.mods or current.edition~=Version.get()or not current.ids:valid()then
     release();current={game=game,data=game.data,loader=game.mods,edition=Version.get(),ids=Ids.new(game.data)}
   end
   local host=package.loaded['src.mods.Runtime'];local facade=package.loaded['src.core.Game3']
