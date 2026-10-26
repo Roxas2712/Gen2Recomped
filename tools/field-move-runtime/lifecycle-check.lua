@@ -10,8 +10,8 @@ local strip={width=256,height=80,indexed=string.rep('\1',256*80),palette={}}
 for i=1,16 do strip.palette[i]=i end
 native.data.constants.gen3FieldMovePresentation={schema=1,edition='emerald',romSha1=require('src.core.GameVersion').info('emerald').sha1,strips={outdoors=strip,indoors=strip}}
 local Json=require('src.link.Json');local api=tonumber(os.getenv('SESSION_RUNTIME_API'))or require('src.core.Version').modApi
-local files={};local function mod(id,priority,body)
- files['mods/'..id..'/manifest.json']=Json.encode({id=id,name=id,version='1.0.0',api=api,entry='main.lua',games={'gen3'},priority=priority,permissions={'engine_internals'}})
+local files={};local function mod(id,priority,body,manifestApi)
+ files['mods/'..id..'/manifest.json']=Json.encode({id=id,name=id,version='1.0.0',api=manifestApi or api,entry='main.lua',games={'gen3'},priority=priority,permissions={'engine_internals'}})
  files['mods/'..id..'/main.lua']=body
 end
 mod('move_owner',100,[[local mod=...;local F=require('src.core.game3.field_move_show_mon');local base=F.start
@@ -21,9 +21,17 @@ mod('move_owner',100,[[local mod=...;local F=require('src.core.game3.field_move_
 mod('move_bad',200,[[local F=require('src.core.game3.field_move_show_mon');assert(F.start(1,{pose=true}));F.step=function()error('failed wrapper survived')end;error('intentional move failure')]])
 mod('move_late',300,[[local mod=...;local F=require('src.core.game3.field_move_show_mon');assert(F.start(1,{pose=true}));F.draw=function()error('late wrapper survived')end
  mod.content.map_scripts:register('FIELD_VALIDATION',{scripts={invalid={{'field_intentionally_unknown_command'}}}})
-]])
+]],math.max(2,api))
 local F=require('src.core.game3.field_move_show_mon');local step,draw=F.step,F.draw
-local run=T.sdk.loadMods({'mods/move_owner','mods/move_bad','mods/move_late'},{fs=T.sdk.memfs(files),data=T.fixtures.fresh()})
+local paths={'mods/move_owner','mods/move_bad','mods/move_late'}
+-- Legacy script findings are warnings. Keep that contract while using an
+-- explicitly strict peer to exercise actual late rejection in the mixed set.
+if api==1 then
+ mod('move_warning',400,[[local mod=...;mod.content.map_scripts:register('FIELD_WARNING',{scripts={invalid={{'field_intentionally_unknown_command'}}}})]],1)
+ paths[#paths+1]='mods/move_warning'
+end
+local run=T.sdk.loadMods(paths,{fs=T.sdk.memfs(files),data=T.fixtures.fresh()})
+if api==1 then T.check(run.loader.exports.move_warning~=nil,'legacy validation remains a warning')end
 T.eq(#run.errors,2);T.eq(F.isActive(),false);T.eq(#native.stack.states,1);T.eq(native.overworld.player.fieldMove,nil)
 T.eq(F.step,step);T.eq(F.draw,draw)
 native.mods=run.loader;run.loader.game=native
