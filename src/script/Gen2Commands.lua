@@ -896,6 +896,20 @@ function Gen2Commands.scriptVarValue(ctx, var)
   return 1
 end
 
+function Commands.g2_deco_visibility(ctx)
+  require('src.world.Gen2Decorations').visibility(ctx)
+end
+function Commands.g2_deco_tiles(ctx)
+  require('src.world.Gen2Decorations').tiles(ctx)
+end
+function Commands.g2_deco_description(ctx,kind,allowed)
+  local target,name=require('src.world.Gen2Decorations').description(ctx.game.data,ctx.save,kind)
+  if target and allowed and allowed[target]then
+    if name then setBuffer(ctx.game,3,name)end
+    return target
+  end
+end
+
 -- Script_loadmem (25:$7495): write an immediate byte to a WRAM address.  The
 -- same address-keyed mirror readmem/writemem use -- keyed by the raw
 -- address number exactly as they key it, so a script that pokes a byte here
@@ -1779,6 +1793,19 @@ end
 -- ---------------------------------------------------------------------------
 
 function Commands.g2_warp(ctx, mapId, x, y, facing)
+  if mapId=="NONE" then
+    local ow=ctx.overworld
+    if ow and ow.map and type(ow.reloadMap)=="function"then
+      local map=ow.map.id
+      ctx.afterScript=ctx.afterScript or{}
+      ctx.afterScript[#ctx.afterScript+1]=function()
+        if ow.player and DIRS[facing]then ow.player.facing=DIRS[facing]end
+        ow:reloadMap(map,"native-script")
+      end
+      return math.huge
+    end
+    return
+  end
   if type(mapId) ~= "string" or mapId == "" then return end
   Commands.warp(ctx, mapId, x, y, facing)
 end
