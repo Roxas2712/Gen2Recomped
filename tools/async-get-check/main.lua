@@ -20,6 +20,8 @@ local function await(api, handle)
   end
 end
 function love.load()
+  love.thread.getChannel("download-qa-hold"):clear()
+  love.thread.getChannel("download-qa-entered"):clear()
   Fetch = require('src.net.Fetch'); Net = require('src.mods.Net')
   base = assert(os.getenv('GET_TEST_URL'))
   local newThread = love.thread.newThread
@@ -210,9 +212,16 @@ function love.run()
     Fetch.release(invalidTarget)
     local heldFiles={}
     for i=1,8 do heldFiles[i]=assert(Fetch.download(base..'/slow','downloads/held'..i)) end
+    local entered=love.thread.getChannel("download-qa-entered")
+    local heldAt=love.timer.getTime()
+    while entered:getCount()<2 do
+      check(love.timer.getTime()-heldAt<5,'both real file workers enter the fixture barrier')
+      love.timer.sleep(.005)
+    end
     check(Fetch.download(base..'/slow','downloads/overflow')==nil,'file queue bounded')
     for _, handle in ipairs(heldFiles) do Fetch.cancel(handle);Fetch.release(handle) end
     check(Fetch.download(base..'/slow','downloads/overflow')==nil,'release cannot bypass occupied file workers')
+    love.thread.getChannel("download-qa-hold"):push(true)
     Fetch.shutdown()
     for _, child in ipairs(love.filesystem.getDirectoryItems('net-download')) do
       check(#love.filesystem.getDirectoryItems('net-download/'..child)==0,'shutdown cleans file worker staging data')
@@ -220,6 +229,7 @@ function love.run()
     preserved('late cancellation cannot publish after shutdown')
     print(('async GET and file downloads: %d checks, %d pump ticks PASS'):format(checks,pulses))
   end, debug.traceback)
+  love.thread.getChannel("download-qa-hold"):push(true)
   if not ok then io.stderr:write(tostring(err).."\n");io.stderr:flush(); if Fetch then Fetch.shutdown() end end
   return function() return ok and 0 or 1 end
 end

@@ -1,0 +1,990 @@
+{
+  "version": "1.8.0",
+  "status": "passed-scoped-integration",
+  "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+  "localizedProfiles": 41,
+  "editionCount": 11,
+  "fullStoryPlaythrough": false,
+  "freshLiveProcessRuns": 28,
+  "handoffProcessRuns": 21,
+  "freshLaunchRecoveryProcessRuns": 6,
+  "firstProfileProcessRuns": 1,
+  "successfulLiveHandoffs": 103,
+  "realHealingInteractionsAfterHandoff": 62,
+  "liveSwitchReportSha256": "fbe7fdef4deb64a670e0e206636245a4baae3b2a9f0a3f9a9bff3248f93403cd",
+  "regressionBaseline": {
+    "path": "docs/Regression-Baseline-1.8.json",
+    "sha256": "5e3b60b008132d37b75e05e45ed1f2a0071b20fc4f5f0435ef1bf43c7fafda3f",
+    "runtimePayloadSha256": "33ad3c34b7392ec21bd0591b74bfa016b9f2d6eb6165d8e32e223b81add66557",
+    "isolatedProcessRuns": 113,
+    "referenceRuns": 11,
+    "scope": "The full translation/graphics regression passed on this exact pre-final runtime. Its source hashes are retained. It is not relabelled as 113 new runs of the final runtime."
+  },
+  "finalRuntimeDelta": {
+    "overlay.lua": {
+      "before": "4dfafefcc50e68ad360adc908b71ebd2e4160daaa9b48754805c04969f04b655",
+      "after": "1ce885347b9d753e3c2b05d3f8820fddfa65eba38f4415d132af7ff3c0c9d81c"
+    },
+    "session.lua": {
+      "before": "d8b8fb16a08d2522235b098df0738db32bca206e063d1e086f4e3f92184e9588",
+      "after": "f109c995757ce1145686346422a948c5bdde7fb258a0c26b3103c90ce18272b0"
+    },
+    "session_engine.lua": {
+      "before": "76e6f2b880a691940c566a80ced85bd8ed50a90f7f435fca12679fb541c689fb",
+      "after": "a7eb8e1ef09164522273aef9b64ddb7c2d0744bc8c42bcffbd0caa7a24c6ce14"
+    },
+    "session_menu.lua": {
+      "before": "787cd6e055a159a574d71a519176604207b1e1ad9c111989e3ef955a662160c4",
+      "after": "248e591078b9a6735e752fd21d6f84e33306cbc62779f14456ad0c17028cb387"
+    },
+    "startup.lua": {
+      "before": "cada1b93c5a0cf3033b0fd17bcf2416c56e3459c8f71669d85bd6b76645726ca",
+      "after": "05e0a1bcabd14ee90636c82aaf3c973c6ca19d5dd28610f05a3eb3e5d10ad1b1"
+    }
+  },
+  "finalRuntimeDeltaScope": [
+    "Promote only UNI-LANGUAGE to the shared KASC root while preserving the other host entries",
+    "Clear stale held/queued inputs when entering or leaving the language UI",
+    "Closed startup callbacks delegate correctly through later mod/session wrappers",
+    "Reinstall localized native Gen3 UI consumers after their modules are replaced; keep process-wide readers installed once; drop retired GBA payloads",
+    "Flush retired LuaJIT traces only at the completed language-session boundary",
+    "Fall back to English for an invalid stored menu locale; keep the completed startup locale and re-read current profile before persisting a live change",
+    "Exclude time spent outside the application when recovering an interrupted handoff"
+  ],
+  "checks": [
+    {
+      "game": "red",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 58.831,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "red-bare-all.log",
+      "logSha256": "91084a365fb362cc68dde2811d061e7d548844e9a193ad779ddefa69dd57a9f5",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "es",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "blue",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 82.895,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "blue-bare-all.log",
+      "logSha256": "084d4fb5e690923a2d1be88e7575545f169e3b996ee702736062f3242212c607",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "yellow",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 39.962,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "yellow-bare-all.log",
+      "logSha256": "7183d3bded015d5ef3ab3e63bd864c1167f225b9d9fae1fc918089c404a02455",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "es",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "gold",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 95.845,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "gold-bare-all.log",
+      "logSha256": "e7486dea6e8fda4eef73affd390eea1274b7f29544a216ff4066c6e026a734e6",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "es",
+        "fr",
+        "it",
+        "ko",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "silver",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 87.172,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "silver-bare-all.log",
+      "logSha256": "9ee8519e151fa12d0ffae3ec81d309f6b4f359dff70b76932ecc26c2b6cae830",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "es",
+        "fr",
+        "ko",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "crystal",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 68.604,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "crystal-bare-all.log",
+      "logSha256": "846887772bed76c395f261c3cc2ecc10175ca1b661f7b8c910ff1b1a3e05e09f",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "es",
+        "it",
+        "ja",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "firered",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 59.099,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "firered-bare-all.log",
+      "logSha256": "8b6081ef1a885786290a1c24b9b51ed36ed6bd9b493d5b61ce44d2d1d67b1a64",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b",
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "es",
+        "it",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "leafgreen",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 59.02,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "leafgreen-bare-all.log",
+      "logSha256": "53533dfbb6d8fefe742da77faa6dda82a0f1abe3ca1cfef64ff12ff0a70cb94e",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b",
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "es",
+        "fr",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "ruby",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 46.048,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "ruby-bare-all.log",
+      "logSha256": "57261b2aa92d5dad6751923e1db55361ebae1f014a984b98333764e0ced9c29c",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b",
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "sapphire",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 65.574,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "sapphire-bare-all.log",
+      "logSha256": "1d0d149c9a9d5d1a0b186d80a459e8a9e492c4db9d39fed4bf797f837042e395",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b",
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "emerald",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 138.224,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "emerald-bare-all.log",
+      "logSha256": "f7d0a98fe125a9cb9c7dc7cbeb495e5a4e7c67ef29a48e4700b3e07a6eaaf5ab",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b",
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "es",
+        "fr",
+        "it",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "red",
+      "mods": [
+        "vasc",
+        "kasc"
+      ],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": false,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 438.115,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "red-vasc-kasc.log",
+      "logSha256": "3b5c82e2892c24f10f3f51631bac2e37c6eb89b75f3c6c0e7839e401bd9981b5",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0",
+        "kanto_ascendant": "6.7.16",
+        "VOXEL_ASCENDANT": "3.0.33"
+      },
+      "menuRoute": "Kanto Ascendant\t7"
+    },
+    {
+      "game": "gold",
+      "mods": [
+        "vasc",
+        "kasc"
+      ],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": false,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 66.534,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "gold-vasc-kasc.log",
+      "logSha256": "12262b23595157c2a05a635f1348b70e547555e817062924345e8f0602d5b9d6",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "ko",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0",
+        "kanto_ascendant": "6.7.16",
+        "VOXEL_ASCENDANT": "3.0.33"
+      },
+      "menuRoute": "fallback hub\t2"
+    },
+    {
+      "game": "red",
+      "mods": [
+        "vasc"
+      ],
+      "testOptions": {
+        "nurse": false,
+        "allProfiles": false,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 15.15,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "red-vasc.log",
+      "logSha256": "90257764192dd78f9ced63cab1db57ad8c505e10387e026118e412e8c4bbd4b7",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0",
+        "VOXEL_ASCENDANT": "3.0.33"
+      },
+      "menuRoute": "fallback hub\t3"
+    },
+    {
+      "game": "emerald",
+      "mods": [
+        "origami"
+      ],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": false,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 66.203,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "emerald-origami.log",
+      "logSha256": "af3d3baadeaca2e7025d410b3bc69b4ccae50b9d4d378863fcb471bff32795eb",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b",
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0",
+        "ORIGAMI_ASCENDANT": "1.1.0-rc.4"
+      },
+      "menuRoute": "Origami Ascendant"
+    },
+    {
+      "game": "red",
+      "mods": [],
+      "testOptions": {
+        "nurse": false,
+        "allProfiles": false,
+        "repeatPairs": 0,
+        "recovery": true,
+        "badUI": true,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 8.171,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "red-bare-recovery.log",
+      "logSha256": "3d738b679f9f49ccb024e99374d9dba1b2f2d73b7a95300f379933ca8070369f",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "gold",
+      "mods": [],
+      "testOptions": {
+        "nurse": false,
+        "allProfiles": false,
+        "repeatPairs": 0,
+        "recovery": true,
+        "badUI": true,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 103.483,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "gold-bare-recovery.log",
+      "logSha256": "f044854d2864d9b076b638fbe9cdae240495ebc40e38dd3c1b27365676fdde6e",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "ko",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "emerald",
+      "mods": [],
+      "testOptions": {
+        "nurse": false,
+        "allProfiles": false,
+        "repeatPairs": 0,
+        "recovery": true,
+        "badUI": true,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 30.507,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "emerald-bare-recovery.log",
+      "logSha256": "0296d488a6feb60cdd2dedaa2ef0bacc4978e299a97d5feeb51dcc0993422763",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b",
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "red",
+      "mods": [],
+      "testOptions": {
+        "nurse": false,
+        "allProfiles": false,
+        "repeatPairs": 3,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 13.84,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "red-bare-repeat3.log",
+      "logSha256": "c93f1daed3854a5efa14e9e17653b34f352c297200b34932b4af14b358fa66c2",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en",
+        "de",
+        "en",
+        "de",
+        "en",
+        "de",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "gold",
+      "mods": [],
+      "testOptions": {
+        "nurse": false,
+        "allProfiles": false,
+        "repeatPairs": 3,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 78.329,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "gold-bare-repeat3.log",
+      "logSha256": "f85994bf271fac8c4ddb752f0440dfbc6bd3c41f2ff2eed62cf4cb5683078761",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "ko",
+        "pt-BR",
+        "en",
+        "de",
+        "en",
+        "de",
+        "en",
+        "de",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "emerald",
+      "mods": [],
+      "testOptions": {
+        "nurse": false,
+        "allProfiles": false,
+        "repeatPairs": 3,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 55.593,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "emerald-bare-repeat3.log",
+      "logSha256": "d92c189b4736e7e0776ced9e5e0f6b3128aae3a022831e4de2453cd6cb9b3e21",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b",
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en",
+        "de",
+        "en",
+        "de",
+        "en",
+        "de",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    }
+  ],
+  "freshProcessRecovery": [
+    {
+      "game": "red",
+      "mode": "write",
+      "passed": true,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "driverSha256": "33daa3e11dad34c1b6a95171b8bd077e484614f67e7f327ae724f789890741b3",
+      "log": "red-interrupted-write.log",
+      "logSha256": "08da922ee7e83c4dd559c7f87c0e5c9b622d661ad3c16ad108e708c3ea2b6c2f"
+    },
+    {
+      "game": "red",
+      "mode": "resume",
+      "passed": true,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "driverSha256": "33daa3e11dad34c1b6a95171b8bd077e484614f67e7f327ae724f789890741b3",
+      "log": "red-interrupted-resume.log",
+      "logSha256": "8c8869cc51f47a1c02db898898fd894138fb2d0c306498bbcd616843873742ab"
+    },
+    {
+      "game": "gold",
+      "mode": "write",
+      "passed": true,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "driverSha256": "33daa3e11dad34c1b6a95171b8bd077e484614f67e7f327ae724f789890741b3",
+      "log": "gold-interrupted-write.log",
+      "logSha256": "bb097aa9861dce82b4aeced8c83cb6e4af83680028533873baa34a209628d903"
+    },
+    {
+      "game": "gold",
+      "mode": "resume",
+      "passed": true,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "driverSha256": "33daa3e11dad34c1b6a95171b8bd077e484614f67e7f327ae724f789890741b3",
+      "log": "gold-interrupted-resume.log",
+      "logSha256": "f45391bd2711e52e06bd0de4d67128359544256536e4b79076dd88a0eeaa921f"
+    },
+    {
+      "game": "emerald",
+      "mode": "write",
+      "passed": true,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "driverSha256": "33daa3e11dad34c1b6a95171b8bd077e484614f67e7f327ae724f789890741b3",
+      "log": "emerald-interrupted-write.log",
+      "logSha256": "ac20a6f3b527116e324df64ae13e4f53895eb9d5b74dee72a4fa3174b60c3e6c"
+    },
+    {
+      "game": "emerald",
+      "mode": "resume",
+      "passed": true,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "driverSha256": "33daa3e11dad34c1b6a95171b8bd077e484614f67e7f327ae724f789890741b3",
+      "log": "emerald-interrupted-resume.log",
+      "logSha256": "0e144626e7a9149021cff4adadbb91941e4ed15eabdef92e8ad2082e4c4476d6"
+    }
+  ],
+  "firstProfile": {
+    "passed": true,
+    "exitCode": 0,
+    "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+    "helpersSha256": {
+      "initial_language_profile.lua": "71fe5209bc7136fb2ae355929ba8b088c10eb99287eebf15e386d8524920f649",
+      "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af"
+    },
+    "log": "initial-profile.log",
+    "logSha256": "f230b40db3dcdcfd6f75dfd9f3ce7961eeb9ce5124f35c10566a1821fc139c6b"
+  },
+  "unitChecks": {
+    "pythonTests": 85,
+    "luaGroups": 19,
+    "binaryCacheSuite": true,
+    "allLuaSyntax": true
+  },
+  "unitLogSha256": {
+    "python-tests.log": "3eb55120a9c31a14afb3c73a8f0fd6c9f7684d187377e6984701b60a4bfa30ed",
+    "lua-tests.log": "a56cec6c39d0098d450ad6675f57d899d36ccade262328835b2bf11f12d26131",
+    "syntax.log": "dfcbd284a9373cc0a57dfb2e887e02d12647f32b42cda6ed5726767252adb5ff",
+    "cache-unit.log": "28263c1c25869f742123086b6b628af2ba46cdc0d9498554628f371d2875ee0e",
+    "european-audit.log": "46552e0efa946d42cc22cc54e033be23cd2d3e40859b2b7bd77fd69f6439ec3b",
+    "gba-audit.log": "e135795a187b63e36e2117b967c7c7b4d14458e7e19849c5782a6da4aef53a3e"
+  },
+  "sourceAudits": {
+    "GBEngineUIKeys": 1499,
+    "GBAStaticKeys": 180,
+    "authoredGBAKeysPerLanguage": 245,
+    "missingInAuditedScopes": 0
+  },
+  "limitations": [
+    "Prepared offline saves, not full-story playthroughs",
+    "No Windows/Linux/mobile native file-picker QA",
+    "No two-device or online handoffs; online rooms are blocked",
+    "Only listed Ascendant versions/combinations tested; Red uses the KASC collector, Gold uses the fallback hub with both mods loaded because no KASC menu collector is exposed in that Gen2 session",
+    "No independent native-speaker certification",
+    "Custom GBA nickname glyph rendering across different profile fonts is not certified",
+    "Memory observations include renderer caches and are not process-RSS leak certification"
+  ]
+}

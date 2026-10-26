@@ -771,10 +771,19 @@ local function realFile(rel)
   -- is always present here -- so the absence has to be answered by failing to
   -- open rather than by indexing nil.  Every caller already handles a handle
   -- that will not open; none of them survives an error thrown inside one.
-  local function loveNewFile(path)
+  local function loveOpenFile(path, requestedMode)
     local lfs = love and love.filesystem
-    if not (lfs and type(lfs.newFile) == "function") then return nil end
-    return lfs.newFile(path)
+    if not lfs then return nil end
+    -- LOVE 12 renamed the constructor to openFile and opens immediately.
+    -- Calling its deprecated newFile(path) alias first attempts a READ,
+    -- so a brand-new import staging file could never be created.
+    if type(lfs.openFile) == 'function' then return lfs.openFile(path, requestedMode) end
+    if type(lfs.newFile) ~= 'function' then return nil end
+    local file=lfs.newFile(path)
+    if not file then return nil end
+    local ok,why=file:open(requestedMode)
+    if not ok then return nil,why end
+    return file
   end
 
   function file:open(m)
@@ -783,19 +792,15 @@ local function realFile(rel)
     -- the live root (which is mounted), so a file written before the folder
     -- changed is still readable.  Only writes need the real path.
     if mode == "r" then
-      local lf = loveNewFile(rel)
-      if not lf then return false, "no file" end
-      local ok, err = lf:open("r")
-      if not ok then return false, err end
+      local lf,err = loveOpenFile(rel,"r")
+      if not lf then return false, err or "no file" end
       handle, kind = lf, "love"
       return true
     end
     local root = rawRoot()
     if not root then
-      local lf = loveNewFile(rel)
-      if not lf then return false, "no file" end
-      local ok, err = lf:open(mode)
-      if not ok then return false, err end
+      local lf,err = loveOpenFile(rel,mode)
+      if not lf then return false, err or "no file" end
       handle, kind = lf, "love"
       return true
     end
@@ -1167,7 +1172,7 @@ function CacheFs.installPrefixShim(prefix)
   -- file "did not exist": buildings, sprites and NPCs over the clear colour,
   -- no ground, indoors or out.  docs/switch.md.  newFileData only in its
   -- one-argument (load-from-path) form; with two it is in-memory bytes.
-  for _, name in ipairs({ "newFile", "lines" }) do
+  for _, name in ipairs({ "newFile", "openFile", "lines" }) do
     local real = fs[name]
     if type(real) == "function" then
       fs[name] = function(path, ...) return real(shimRedirect(path), ...) end

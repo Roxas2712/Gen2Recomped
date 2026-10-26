@@ -38,7 +38,8 @@ function Service.enqueueLauncher(options)
 end
 function Service.launcherLookup(source)
  local reviewed=require("src.translation.LauncherCatalog")[Service.launcherTarget or "en"]
- local text=reviewed and reviewed[source] or (Service.launcherCatalog or {})[source] or source
+ local native=require('src.translation.NativeLanguageCatalog')[Service.launcherTarget or 'en']
+ local text=native and native[source] or reviewed and reviewed[source] or (Service.launcherCatalog or {})[source] or source
  -- LÖVE's default launcher face lacks the arrow block on some runtimes.
  -- Keep navigation readable before optional language fonts are downloaded.
  if type(text)=='string' then return (text:gsub('→','>'):gsub('←','<'):gsub('↔','<->'):gsub('↓','v'):gsub('↑','^')) end
@@ -53,9 +54,29 @@ function Service.setLauncher(options)
  Service.launcherCatalog=target~="en" and readCache("launcher","en",target) or {}
  Service.launcherFont=nil
  if target~="en"then
+  local bundled=Languages.bundledFont(target)
   local font=Languages.font(target)
-  if love.filesystem.getInfo("translations/fonts/"..font)then Service.launcherFont="translations/fonts/"..font end
+  if bundled and love.filesystem.getInfo(bundled)then Service.launcherFont=bundled
+  elseif love.filesystem.getInfo("translations/fonts/"..font)then Service.launcherFont="translations/fonts/"..font end
  end
+end
+-- Native-script choices must be readable before any font/model download,
+-- including Japanese/Korean names shown while the launcher is still English.
+function Service.newLauncherFont(height)
+ local font=Service.launcherFont and love.graphics.newFont(Service.launcherFont,height) or love.graphics.newFont(height)
+ if font.setFallbacks then
+  -- All four subsets contain the same character set, with regional shapes.
+  -- One fallback suffices for a Latin primary face; CJK primary faces already
+  -- contain the complete setup text and do not need another four font faces.
+  local path=Languages.bundledFont('ja')
+  if not Languages.bundledFont(Service.launcherTarget) and love.filesystem.getInfo(path) then
+   Service._launcherFallbacks=Service._launcherFallbacks or {}
+   local fallback=Service._launcherFallbacks[height]
+   if not fallback then fallback=love.graphics.newFont(path,height);Service._launcherFallbacks[height]=fallback end
+   font:setFallbacks(fallback)
+  end
+ end
+ return font
 end
 -- ANDROID'S JAVA CALLS, answered for the worker (see worker.lua's bridge).
 -- A request waits one frame so the launcher draws its status first -- the
@@ -168,6 +189,10 @@ end
 function Service.install(data,version,options)
  Service.launcherActive=false
  local target,source=Languages.resolve(options,version)
+ -- Cartridge packs own their prose/fonts for this session; saved machine
+ -- translation preferences still apply to subsequent ordinary sessions.
+ local owner=Service.romLanguageOwner
+ if owner and owner.bus==require('src.mods.Runtime').events and owner.active() then target='original' end
  Service.catalog=target~="original" and readCache(version,source,target) or {}
  Service.language=target
  if not require("src.translation.UnicodeFont").configure(target) then
