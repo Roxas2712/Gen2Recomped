@@ -81,7 +81,11 @@ function love.load()
  require('src.core.SaveData').otherLocations=function()return {}end
  require('src.storage.AccountStorage').enable()
  local ffi=require('ffi');pcall(ffi.cdef,'int PHYSFS_mount(const char*,const char*,int);');local lib=ffi.load(cfg.library)
- assert(lib.PHYSFS_mount(cfg.cache..'/data/generated','data/generated',0)~=0);assert(lib.PHYSFS_mount(cfg.cache..'/assets/generated','assets/generated',0)~=0)
+ if not cfg.privateGameCache then
+  assert(lib.PHYSFS_mount(cfg.cache..'/data/generated','data/generated',0)~=0);assert(lib.PHYSFS_mount(cfg.cache..'/assets/generated','assets/generated',0)~=0)
+ elseif cfg.role=='source' then
+  assert(lib.PHYSFS_mount(cfg.cache,'qa-import',0)~=0)
+ end
  require('src.core.GameVersion').set(cfg.edition)
  Auth=require('src.cloud.RetroCloud');Auth.API=cfg.api;Task=require('src.cloud.Task')
  task('login',function()return require('src.cloud.NativeAccount').login(cfg.email,cfg.password)end)
@@ -96,7 +100,29 @@ function love.update(dt)
  if job then
   local r=job:poll();if not r then return end;job=nil
   if r.kind~='done'or not r.first then return finish(false,r.second or r.error)end
-  if phase=='login'then prepare();return
+  if phase=='login'then
+   if cfg.privateGameCache then
+    task('private-game',function()
+     assert(require('src.storage.AccountStorage').bind())
+     local store=assert(Auth.open());local cache=require('src.storage.GameCache')
+     if cfg.role=='source'then
+      local prefix=require('src.core.GameVersion').cachePrefix(cfg.edition)
+      local function path(p)assert(p:sub(1,#prefix)==prefix);return 'qa-import/'..p:sub(#prefix+1)end
+      local fs={read=function(p)return love.filesystem.read(path(p))end,getInfo=function(p)return love.filesystem.getInfo(path(p))end,
+       getDirectoryItems=function(p)return love.filesystem.getDirectoryItems(path(p))end}
+      local id,why=cache.upload(store,cfg.edition,nil,fs);assert(id,why)
+      -- Use the same private restore path on both profiles for the game boot.
+      local restored,why=cache.restore(store,cfg.edition,id);assert(restored,why);return restored
+     end
+     assert(not love.filesystem.getInfo('data/generated/pokemon.lua'),'Target must start without imported game data')
+     local restored,why=cache.restore(store,cfg.edition);assert(restored,why);return restored
+    end);return
+   end
+   prepare();return
+  elseif phase=='private-game'then
+   local ok,why=require('src.import.CacheFs').mountVersion(cfg.edition);assert(ok,why)
+   assert(require('src.storage.GameCache').prefix(cfg.edition),'Boot must use the account-private restored import')
+   prepare();return
   elseif phase=='upload'then phase='nextturn'
   elseif phase=='download'then
    local saves=require('src.core.SaveData');local slots=saves.listSlots(cfg.edition);assert(#slots==1,'Cloud restored one normal save')
