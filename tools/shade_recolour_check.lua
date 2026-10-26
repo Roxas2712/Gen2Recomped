@@ -20,6 +20,7 @@ local function imageData(w, h)
   function id:getDimensions() return w, h end
   function id:getWidth() return w end
   function id:getHeight() return h end
+  function id:getFormat() return self.format or 'rgba8' end
   function id:getFFIPointer() return buf end
   function id:getPixel(x, y)
     local o = (y * w + x) * 4
@@ -60,17 +61,16 @@ local function obpSample(r, g, b, a, colors)
   return col[1] / 255, col[2] / 255, col[3] / 255, a
 end
 
--- a source that holds every red byte x four alphas x a few g/b patterns
-local W, H = 256, 8
+-- Every red/alpha byte pair, with independent green and blue patterns.
+local W, H = 256, 256
 local src = imageData(W, H)
-local alphas = { 0, 1, 128, 255 }
 for y = 0, H - 1 do
   for x = 0, W - 1 do
     local o = (y * W + x) * 4
     src.buf[o] = x
     src.buf[o + 1] = (x * 7 + y * 31) % 256
     src.buf[o + 2] = (x * 3 + y * 101) % 256
-    src.buf[o + 3] = alphas[(y % 4) + 1]
+    src.buf[o + 3] = y
   end
 end
 local colors = { { 248, 240, 200 }, { 160, 120, 90 }, { 80, 60, 40 }, { 10, 5, 0 } }
@@ -87,7 +87,7 @@ for _, mode in ipairs({ 'tile', 'obp' }) do
       ref:setPixel(x, y, sample(r, g, b, a, colors))
     end
   end
-  check(fast and fast:bytes() == ref:bytes(), mode .. ': every byte equals the loop (256 reds x 4 alphas)')
+  check(fast and fast:bytes() == ref:bytes(), mode .. ': every byte equals the loop (256 reds x 256 alphas)')
 end
 -- no colours: a straight copy in tile mode (recolorSample's own rule)
 do
@@ -145,6 +145,28 @@ do
   Performance.shadeRecolourFfi = false
   check(R.whole(src, colors, 'tile') == nil and R.region(src, out, 0, 0, 4, 4, 0, 0, colors, 'tile') == nil, 'the flag turns the path off')
   Performance.shadeRecolourFfi = true
+end
+
+-- ------------------------------------------------------- 5. the wiring
+do
+  local one,out=imageData(1,1),imageData(1,1)
+  one:setPixel(0,0,1,1,1,1)
+  local untouched=out:bytes()
+  one.format='rgba16'
+  check(R.region(one,out,0,0,1,1,0,0,colors,'tile')==nil,'non-rgba8 source uses the pixel fallback')
+  check(out:bytes()==untouched,'unsupported format leaves destination unchanged')
+  one.format='rgba8';out.format='rgba16f'
+  check(R.region(one,out,0,0,1,1,0,0,colors,'tile')==nil,'non-rgba8 destination uses the pixel fallback')
+  out.format='rgba8'
+  local fractional={{1.75,2,3},{4,5,6},{7,8,9},{10,11,12}}
+  check(R.region(one,out,0,0,1,1,0,0,fractional,'tile')==nil,'fractional palette values retain legacy quantization')
+  check(out:bytes()==untouched,'unsupported palette leaves destination unchanged')
+  local wide=imageData(2,1)
+  check(R.region(wide,out,.5,0,1,1,0,0,colors,'tile')==nil,'fractional coordinates do not reach pointer arithmetic')
+  local reads=0
+  local dynamic=setmetatable({},{__index=function()reads=reads+1;return colors[1]end})
+  check(R.region(one,out,0,0,1,1,0,0,dynamic,'tile')==nil,'dynamic palette lookup retains its original per-pixel behavior')
+  check(reads==0,'fast-path eligibility does not invoke dynamic palette lookups')
 end
 
 -- ------------------------------------------------------- 5. the wiring
