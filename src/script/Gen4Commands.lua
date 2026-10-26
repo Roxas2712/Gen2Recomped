@@ -1177,38 +1177,16 @@ function Commands.g4_gender_message(ctx, male, female, bank)
   return Commands.g4_message(ctx, entry)
 end
 
--- ICIRRUS GYM 0x195 <n>: ride n starts only while its switch group stands
--- as the gate table says (var 0x4001 + group, 0 or 1); then the player
--- goes along the track that starts where they stand to its far end
+-- ICIRRUS GYM 0x195 <n> (ov45 0x21F38C4): while ride n's gate holds (its
+-- switch group's var 0x4001 + group at the table's state) the player is
+-- switched onto the rail under them, and the next press along it rides the
+-- chute to its far end (src/world/Gen5IcirrusGym.lua); a shut gate leaves the
+-- trigger plain floor. A ride is not a map load: the gym's temporary vars and
+-- the arms its switches turned stay as they are.
 function Commands.g4_bw_rail_ride(ctx, n)
   local ow = ctx.overworld
-  local def = ow and ow.map and ow.map.def
-  local p = ow and ow.player
-  if not (def and p and def.gen5RailTracks) then return end
-  local k = math.floor(valueOf(ctx, n) or 0)
-  local gates = def.gen5RailGates or {}
-  local gate = gates[k] or gates[tostring(k)]
-  if gate then
-    local state = (getVar(ctx.save, 0x4001 + gate.group) or 0) ~= 0 and 1 or 0
-    if state ~= gate.state then return end
-  end
-  local best, bestD
-  for _, t in ipairs(def.gen5RailTracks) do
-    local d = math.abs(t.x - p.cellX) + math.abs(t.y - p.cellY)
-    if not bestD or d < bestD then best, bestD = t, d end
-  end
-  if best and bestD <= 2 then
-    -- A RIDE IS NOT A MAP LOAD: the player is carried along the track inside
-    -- the same field, so the gym's temporary vars (its switch groups,
-    -- 0x4001 + a) and the block arms its switches moved stay as they are.
-    -- Reloading the map here ran ClearTempFieldEventData and put every
-    -- switch back after each ride.
-    p.cellX, p.cellY = best.toX, best.toY
-    p.px, p.py = best.toX * 16, best.toY * 16
-    p.moving, p.targetX, p.targetY = false, nil, nil
-    if ow.followCamera then pcall(ow.followCamera, ow) end
-    if ow.refreshStandingOnWarp then pcall(ow.refreshStandingOnWarp, ow) end
-  end
+  if not (ow and ow.map and ow.map.def and ow.player) then return end
+  require("src.world.Gen5IcirrusGym").force(ow, ctx.save, math.floor(valueOf(ctx, n) or 0))
 end
 
 -- BLACK / WHITE 0x0DF <mode, species, var>: 1 if the species is in the
@@ -2440,6 +2418,10 @@ function Commands.g4_move(ctx, id, steps)
       require("src.script.Gen4MoveExec").setStep(entity, ow, action.rate)
       ow:scriptMove(entity, action.dir, (action.tiles or 1) * count,
                     nextStep, entity.g4DirLocked or nil, action.rate)
+    elseif action.kind == "warp" then
+      -- WarpOut / WarpIn: the sprite rising out or dropping in, twenty field
+      -- frames (src/world/Gen4WarpMove.lua)
+      require("src.world.Gen4WarpMove").run(ow, entity, action.dir, nextStep)
     elseif action.kind == "lock" or action.kind == "unlock" then
       -- LockDir / UnlockDir: while set, no step of any list turns the object
       -- (MapObject_SetFacingDirection skips the write) -- a backward shove
@@ -3973,7 +3955,11 @@ function Commands.g4_ecruteak_candle_out(ctx)
   local E = require("src.world.HgssEcruteakGym")
   local g = ctx.save and ctx.save.hgssGymmick
   local ow, npc = ctx.overworld, ctx.npc
-  if not (g and g.kind == "ecruteak" and ow and npc and npc.def) then
+  -- every trainer's shared script asks this after its battle; outside
+  -- Morty's gym ScrCmd_ExtinguishEcruteakGymCandle (scrcmd_c.c) answers on
+  -- the gymmick type alone and does nothing (Clair's five warned each time)
+  if not (g and g.kind == "ecruteak") then return end
+  if not (ow and npc and npc.def) then
     Logger.warn("gen4 ecruteak gym: no candle to put out (gymmick %s, trainer object %s)",
                 tostring(g and g.kind), tostring(npc and npc.def and npc.def.localId))
     return
@@ -4009,6 +3995,112 @@ function Commands.g4_ecruteak_candle_out(ctx)
   runner:yield()
 end
 Commands.meta.g4_ecruteak_candle_out = { blocking = true }
+
+-- WHAT A CONTINUE BUILDS INSTEAD OF RUNNING ON_TRANSITION.
+--
+-- FieldTask_ContinueGame_Normal (pokeheartgold field_warp_tasks.c) and
+-- FieldTask_LoadSavedGameMap (pokeplatinum field_map_change.c) skip the walk
+-- in's sub_02053038 / FieldMapChange_UpdateGameData -- so no InitXGym, no
+-- Save_Gymmick_Clear, no PersistedMapFeatures_Init -- and the field's own
+-- start then builds the room from what the save kept: Gymmick_Init
+-- (field/fieldmap.c) reads the HGSS Gymmick, DynamicMapFeatures_Init the
+-- Platinum feature slot. This is that read, called by setMap on a continue
+-- once the map's objects are up. Answers what it built (for the log).
+function Gen4Commands.restoreOnContinue(ctx)
+  local ow = ctx.overworld
+  local def = ow and ow.map and ow.map.def
+  local save = ctx.save
+  if not (def and save) then return nil end
+  local g = save.hgssGymmick
+  if g and g.kind == "violet" then
+    -- GymmickInit_Violet: the lift where the save says
+    local L = Gen4Commands.VIOLET_LIFT
+    violetLiftAt(ctx, g.violetLift == 1 and L.up or L.down)
+    return "violet lift " .. tostring(g.violetLift)
+  elseif g and g.kind == "azalea" then
+    azaleaPlace(ctx)
+    return "azalea carts"
+  elseif g and g.kind == "ecruteak" then
+    -- GymmickInit_Ecruteak: the fog, a light on each medium whose candle the
+    -- save has lit; a medium whose candle went out keeps SPRITE_ITAKO_, which
+    -- the cartridge's saved object carries (spriteId) and this port's does not
+    local E = require("src.world.HgssEcruteakGym")
+    def.gen4Fog = E.FOG
+    def.gen4PropFollow = ecruteakFollow
+    ow.g4CandleKey, ow.g4CandleDying = nil, nil
+    local data = ctx.game and ctx.game.data
+    for _, npc in ipairs(ow.npcs or {}) do
+      local i = npc.def and E.candleOf(npc.def.localId)
+      if i and g.candles and g.candles[i] and ow.gen4SpriteFor then
+        local sprite, name = ow.gen4SpriteFor(data, E.OUT_SPRITE)
+        if sprite and npc.refreshSprite and npc.def.graphicsId ~= E.OUT_SPRITE then
+          local copy = {}
+          for k, v in pairs(npc.def) do copy[k] = v end
+          copy.sprite, copy.spriteName, copy.graphicsId = sprite, name, E.OUT_SPRITE
+          npc.def = copy
+          pcall(npc.refreshSprite, npc, data)
+        end
+      end
+    end
+    ecruteakFollow(ow)
+    return "ecruteak fog and candles"
+  elseif g and g.kind == "blackthorn" then
+    -- the platforms where the save left them (not InitBlackthornGym's)
+    require("src.world.HgssBlackthornGym").attach(ow, save, true)
+    return "blackthorn platforms"
+  elseif g and g.kind then
+    -- Cianwood's winch, Vermilion's cans, Fuchsia, Viridian: state only
+    return g.kind .. " (state only)"
+  end
+  -- Veilstone Gym's bags and stacks where the save left them
+  local Veilstone = require("src.world.Gen4VeilstoneGym")
+  if Veilstone.isGym(def) and Veilstone.apply(ow, save) then return "veilstone bags and stacks" end
+  -- Hearthome Gym's trainer room as the save dealt it (the doors, the clue)
+  local Hearthome = require("src.world.Gen4HearthomeGym")
+  local DMF = require("src.world.Gen4DynamicMapFeatures")
+  if Hearthome.room(def) and save.gen4MapFeature and DMF.buffer(save, DMF.HEARTHOME_GYM) then
+    local door = Hearthome.apply(ow, save)
+    if door then return "hearthome room, door " .. tostring(door) end
+  end
+  -- Eterna's clock, Canalave's platforms, Sunyshore's gears: each gym's
+  -- DynamicMapFeaturesInit from the slot (src/world/Gen4EternaGym.lua,
+  -- Gen4CanalaveGym.lua, Gen4SunyshoreGym.lua)
+  if save.gen4MapFeature then
+    local Eterna = require("src.world.Gen4EternaGym")
+    if Eterna.isGym(def) and Eterna.apply(ow, save) then return "eterna clock" end
+    local Canalave = require("src.world.Gen4CanalaveGym")
+    if Canalave.isGym(def) and Canalave.apply(ow, save) then return "canalave platforms" end
+    local Sunyshore = require("src.world.Gen4SunyshoreGym")
+    if Sunyshore.roomOf(def) and Sunyshore.apply(ow, save) then return "sunyshore gears" end
+  end
+  -- Pastoria Gym's water floor at the save's level
+  -- (PastoriaGym_DynamicMapFeaturesInit; src/world/Gen4PastoriaGym.lua)
+  local Pastoria = require("src.world.Gen4PastoriaGym")
+  if Pastoria.isGym(def) and Pastoria.apply(def, save) then
+    return "pastoria water at " .. tostring(def.gen4DynamicPlate.height)
+  end
+  -- Platinum's slot: only the platform lift builds anything at field start
+  -- here (PlatformLift_DynamicMapFeaturesInit: the slab at floorID's height)
+  local M = require("src.world.Gen4DynamicMapFeatures")
+  local lift = save.gen4MapFeature and M.buffer(save, M.PLATFORM_LIFT_ROOM)
+  if lift then
+    local Ride = require("src.world.Gen4PlatformLiftRide")
+    local cfg = Ride.CONFIG[tonumber(def.header) or -1]
+    local data = (ctx.game and ctx.game.data) or (package.loaded["src.core.Game"] or {}).data
+    if cfg and lift.floorID then
+      def.gen4PlatformLift = { floor = lift.floorID, header = def.header }
+      Ride.setHeight(def, data, cfg.floors[lift.floorID + 1])
+      return "platform lift at floor " .. tostring(lift.floorID)
+    elseif cfg then
+      -- a save from before floorID was kept: the floor the player stands on
+      local p = ow.player
+      local _, pz = toMatrix(ctx, p and p.cellX, p and p.cellY)
+      lift.floorID = Ride.place(def, data, pz)
+      return "platform lift at floor " .. tostring(lift.floorID) .. " (from the player)"
+    end
+  end
+  return nil
+end
 
 -- APRICORNS (HGSS): the trees, the box and Kurt -- src/world/HgssApricorns.
 local function apricornTreeOf(ctx)
@@ -4739,9 +4831,20 @@ function Commands.g4_start_battle(ctx, enemy1, enemy2, extra)
   -- this is the only place the result arrives.
   ctx.g4Trainer = id
   local opts = { double = (other ~= 0) or rec.doubleBattle or nil }
-  if other ~= 0 and trainers[other] then opts.trainerBKey = other end
+  -- WHICH BATTLE THE TWO IDS MAKE (Encounter_NewVsTrainer; HGSS
+  -- SetupAndStartTrainerBattle is the same test): two DIFFERENT trainers are
+  -- a tag battle -- BATTLE_TYPE_TRAINER_WITH_AI_PARTNER when a partner is
+  -- named, the partner fighting beside the player; the SAME id twice is
+  -- BATTLE_TYPE_TRAINER_DOUBLES, one trainer's own double (the eye script's
+  -- doubles branch passes the pair's ids, which are one id); a lone id is
+  -- BATTLE_TYPE_TRAINER (made a double by the record's own battle type).
+  -- Only the first fields the partner: the other two load the partner's
+  -- record into the DTO and never put it on the field, so an escort walking
+  -- with you fights only beside two different trainers.
+  local tag = other ~= 0 and other ~= id
+  if tag and trainers[other] then opts.trainerBKey = other end
   if extra and extra.canLose then opts.canLose = true end
-  local ally = (extra and extra.ally) or Gen4Commands.escortAlly(ctx)
+  local ally = tag and ((extra and extra.ally) or Gen4Commands.escortAlly(ctx)) or nil
   if ally then opts.ally, opts.double = ally, true end
   Commands.start_battle(ctx, "trainer", id, 1, opts)
 end
@@ -4835,7 +4938,16 @@ end
 -- `startapproachingtrainertask <approachNum>` -- on the cartridge this spawns
 -- the task that walks the trainer up to the player.  Our overworld has already
 -- done the walking by the time any script runs, so there is nothing to start.
-Commands.g4_start_approach = noop
+-- ...EXCEPT FOR THE SECOND OF TWO SEPARATE TRAINERS (VS2), whom the
+-- cartridge's eye script walks up only after the first has spoken: the
+-- overworld puts the pair on `ctx.gen4Approachers` and this walks the slot
+-- that has not come yet (src/world/Gen4TwoTrainers.lua). With no pair on the
+-- context it is still the no-op it was.
+function Commands.g4_start_approach(ctx, approachNum)
+  return require("src.world.Gen4TwoTrainers").startApproach(ctx, approachNum)
+end
+Commands.meta = Commands.meta or {}
+Commands.meta.g4_start_approach = { foreground = true, blocking = true }
 
 -- `checkisapproachingtrainertaskdone <approachNum> <destVar>` -- and this one
 -- is NOT cosmetic.  The C's first branch is
@@ -4867,10 +4979,13 @@ end
 -- trainers or takes them singly and has no third arrangement.  Returning
 -- SINGLES for it would be wrong rather than incomplete, so when the day comes
 -- the scan should set the type and this should read it.
+-- ...and it does now: the VS2 run sets `ctx.gen4ApproachType = 2`
+-- (src/world/Gen4TwoTrainers.lua), which wins over the derivation.
 function Commands.g4_approach_type(ctx, destVar)
   local trainers = ctx.gen4ApproachingTrainers
   local second = trainers and tonumber(trainers[2]) or 0
   local kind = (second ~= 0) and 1 or 0
+  if ctx.gen4ApproachType then kind = ctx.gen4ApproachType end
   if destVar then setVar(ctx.save, destVar, kind) end
   setResult(ctx, kind)
 end
@@ -7656,6 +7771,10 @@ function Commands.g4_platform_lift_ride(ctx)
   local data = (ctx.game and ctx.game.data) or (package.loaded["src.core.Game"] or {}).data
   local step = def and require("src.world.Gen4PlatformLiftRide").trigger(def, data)
   if not step then return end
+  -- PlatformLift_Trigger flips the persisted floorID as the ride starts
+  local M = require("src.world.Gen4DynamicMapFeatures")
+  local b = M.buffer(ctx.save, M.PLATFORM_LIFT_ROOM)
+  if b and def.gen4PlatformLift then b.floorID = def.gen4PlatformLift.floor end
   local runner = ctx.runner
   if not runner then
     repeat until step()
@@ -7777,11 +7896,50 @@ pending("g4_common", "the common-script archive")
 function Commands.g4_map_feature_init(ctx, which, operand)
   local M = require("src.world.Gen4DynamicMapFeatures")
   local save = ctx.save
-  if which == "pastoria" then return M.initForPastoriaGym(save) end
-  if which == "canalave" then return M.initForCanalaveGym(save) end
-  if which == "hearthome" then return M.initForHearthomeGym(save) end
-  if which == "veilstone" then return M.initForVeilstoneGym(save) end
-  if which == "eterna" then return M.initForEternaGym(save) end
+  if which == "pastoria" then
+    -- ...and PastoriaGym_DynamicMapFeaturesInit builds the floor from it
+    -- (src/world/Gen4PastoriaGym.lua)
+    local b = M.initForPastoriaGym(save)
+    local ow = ctx.overworld
+    if b and ow and ow.map then require("src.world.Gen4PastoriaGym").apply(ow.map.def, save) end
+    return b
+  end
+  if which == "canalave" then
+    -- ...and CanalaveGym_DynamicMapFeaturesInit lays the floors and the 24
+    -- platforms out from the fresh bits (src/world/Gen4CanalaveGym.lua)
+    local b = M.initForCanalaveGym(save)
+    if b and ctx.overworld and ctx.overworld.map then
+      require("src.world.Gen4CanalaveGym").apply(ctx.overworld, save)
+    end
+    return b
+  end
+  if which == "hearthome" then
+    -- ...and HearthomeGym_DynamicMapFeaturesInit deals the room from the
+    -- fresh slot: the door that leads on, the clue (src/world/Gen4HearthomeGym.lua)
+    local b = M.initForHearthomeGym(save)
+    if b and ctx.overworld and ctx.overworld.map then
+      require("src.world.Gen4HearthomeGym").apply(ctx.overworld, save)
+    end
+    return b
+  end
+  if which == "veilstone" then
+    -- ...and VeilstoneGym_DynamicMapFeaturesInit lays out the bags and the
+    -- tire stacks (src/world/Gen4VeilstoneGym.lua)
+    local b = M.initForVeilstoneGym(save)
+    if b and ctx.overworld and ctx.overworld.map then
+      require("src.world.Gen4VeilstoneGym").apply(ctx.overworld, save)
+    end
+    return b
+  end
+  if which == "eterna" then
+    -- ...and EternaGym_DynamicMapFeaturesInit reads the clock back from the
+    -- var and poses the hands (src/world/Gen4EternaGym.lua)
+    local b = M.initForEternaGym(save)
+    if b and ctx.overworld and ctx.overworld.map then
+      require("src.world.Gen4EternaGym").apply(ctx.overworld, save)
+    end
+    return b
+  end
   if which == "villa" then return M.initForVilla(save) end
   if which == "distortion" then return M.initForDistortionWorld(save) end
   if which == "platformlift" then
@@ -7790,12 +7948,17 @@ function Commands.g4_map_feature_init(ctx, which, operand)
     local ow = ctx.overworld
     local p = ow and ow.player
     local def = ow and ow.map and ow.map.def
+    local floor
     if def then
       local _, pz = toMatrix(ctx, p and p.cellX, p and p.cellY)
-      require("src.world.Gen4PlatformLiftRide").place(def, (ctx.game and ctx.game.data)
+      floor = require("src.world.Gen4PlatformLiftRide").place(def, (ctx.game and ctx.game.data)
         or (package.loaded["src.core.Game"] or {}).data, pz)
     end
-    return M.initForPlatformLift(save)
+    -- PlatformLiftPersistedData.floorID: the save's copy, which a continue
+    -- builds the lift from (restoreOnContinue)
+    local b = M.initForPlatformLift(save)
+    if b then b.floorID = floor end
+    return b
   end
   if which == "greatmarsh" then return M.initForGreatMarsh(save) end
   if which == "sunyshore" then
@@ -7806,7 +7969,13 @@ function Commands.g4_map_feature_init(ctx, which, operand)
     -- opcode spec is "b"), so it does not go through `valueOf`.
     local player = ctx.overworld and ctx.overworld.player
     local _, pz = toMatrix(ctx, player and player.cellX, player and player.cellY)
-    return M.initForSunyshoreGym(save, math.floor(tonumber(operand) or 0), pz)
+    local b = M.initForSunyshoreGym(save, math.floor(tonumber(operand) or 0), pz)
+    -- ...and SunyshoreGym_DynamicMapFeaturesInit lays the room's gears out
+    -- at that rotation (src/world/Gen4SunyshoreGym.lua)
+    if b and ctx.overworld and ctx.overworld.map then
+      require("src.world.Gen4SunyshoreGym").apply(ctx.overworld, save)
+    end
+    return b
   end
   Logger.warn("gen4 script: no persisted map feature named '%s'", tostring(which))
 end
@@ -7847,7 +8016,47 @@ function Commands.g4_pastoria_button(ctx)
   end
   Logger.debug("gen4 script: Pastoria water level -> %s",
                tostring(M.pastoriaWaterHeight(ctx.save)))
+  -- the water moves to it, a unit a field frame, and the script waits
+  -- (FieldTask_InitCall; src/world/Gen4PastoriaGym.lua)
+  local step = require("src.world.Gen4PastoriaGym").pressStep(ow.map and ow.map.def, ctx.save)
+  if not step then return end
+  local runner = ctx.runner
+  if not runner then
+    repeat until step()
+    return
+  end
+  runner.waitingCheck = step
+  runner:yield()
 end
+Commands.meta.g4_pastoria_button = { blocking = true }
+
+-- VeilstoneGym_HitPunchingBag, run as a field task the field waits on
+-- (src/world/Gen4VeilstoneGym.lua; queued by OverworldState:checkBoulderPush)
+function Commands.g4_veilstone_hit(ctx, dir)
+  local step = require("src.world.Gen4VeilstoneGym").hit(ctx.overworld, dir)
+  if not step then return end
+  local runner = ctx.runner
+  if not runner then
+    repeat until step()
+    return
+  end
+  runner.waitingCheck = step
+  runner:yield()
+end
+Commands.meta.g4_veilstone_hit = { blocking = true }
+
+-- Field_ProcessStep -> CanalaveGym_CheckIfPlayerOnPlatform: the platform the
+-- step ended on moves, carrying the player, as a field task the field waits
+-- on (src/world/Gen4CanalaveGym.lua; queued by OverworldState:onStepComplete)
+function Commands.g4_canalave_ride(ctx)
+  local runner = ctx.runner
+  if not runner then return end
+  local step = require("src.world.Gen4CanalaveGym").ride(ctx.overworld, ctx.save)
+  if not step then return end
+  runner.waitingCheck = step
+  runner:yield()
+end
+Commands.meta.g4_canalave_ride = { blocking = true }
 
 -- `SunyshoreGym_PressButton(fieldSystem, buttonType)` turns the gears, which
 -- is the rotation state the room's collision regions are indexed by.  The
@@ -7862,8 +8071,22 @@ function Commands.g4_sunyshore_gear_button(ctx, buttonType)
                  .. "slot holds %d", M.id(ctx.save))
     return
   end
-  b.pressedButton = math.floor(tonumber(buttonType) or 0)
+  -- the rotation state moves now and the gears turn, the script waiting on
+  -- them (FieldTask_InitCall; src/world/Gen4SunyshoreGym.lua)
+  local step = require("src.world.Gen4SunyshoreGym").press(ctx.overworld, ctx.save, buttonType)
+  if not step then
+    b.pressedButton = math.floor(tonumber(buttonType) or 0)
+    return
+  end
+  local runner = ctx.runner
+  if not runner then
+    repeat until step()
+    return
+  end
+  runner.waitingCheck = step
+  runner:yield()
 end
+Commands.meta.g4_sunyshore_gear_button = { blocking = true }
 
 -- `advanceeternagymclock`.  `ScrCmd_AdvanceEternaGymClock` DISCARDS
 -- `EternaGym_AdvanceClockState`'s result and always returns TRUE, so the
@@ -7883,7 +8106,21 @@ function Commands.g4_eterna_clock_advance(ctx)
   -- own benefit, and it is written anyway because the buffer is cleared every
   -- time another feature takes the slot and the var is not.
   setVar(ctx.save, M.ETERNA_CLOCK_VAR, state)
+  -- ...and FieldTask_EternaGym_AdvanceClockState turns the hands (and, after
+  -- the second and third trainers, stops a fountain and says so), the script
+  -- waiting on it (src/world/Gen4EternaGym.lua)
+  local sweep, after = require("src.world.Gen4EternaGym").advance(ctx.overworld, ctx.save)
+  local runner = ctx.runner
+  if not (sweep and runner) then return end
+  runner.waitingCheck = sweep
+  runner:yield()
+  if after then
+    Commands.show_text(ctx, lineFor(ctx, require("src.world.Gen4EternaGym").TEXT_DROPPED))
+    runner.waitingCheck = after
+    runner:yield()
+  end
 end
+Commands.meta.g4_eterna_clock_advance = { blocking = true }
 
 -- THE GREAT MARSH TRAM -- three commands, none of which had a lowering, and
 -- one of which is the reason this pass happened.
@@ -9953,6 +10190,18 @@ function Commands.g4_clear_game(ctx, vsTrainerRed)
     -- applied again after it and that save written as it stands
     local allowed = require("src.script.ScriptSave").write(ctx, "hall of fame")
     pcall(SaveData.applyPostGameHome, save, boot)
+    -- HGSS (game_clear.c): Location_SetToPlayerRoom(dynamicWarp) +
+    -- SetFlag966, which the next continue walks in at
+    -- (src/world/Gen4HgssContinue.lua); the room is where a new game starts
+    -- (Gen4HgssField, sLocation_PlayerRoom). PLATINUM's is the same pair
+    -- (clear_game.c: special location = sPlayerStartLocation, the house 2F
+    -- at (4,6) facing up; SystemFlag_SetCommunicationClubAccessible, 0x966),
+    -- which FieldTask_LoadSavedGameMap walks in at
+    -- (Gen4BattleTowerCommands.applySpecialLocation)
+    if save.player then
+      require("src.world.Gen4HgssContinue").mark(save, boot.startMap or save.player.map,
+        boot.startX or save.player.x, boot.startY or save.player.y, hgss and "down" or "up")
+    end
     if allowed then pcall(SaveData.save, save) end
   end
   local party = {}
@@ -10018,10 +10267,11 @@ Commands.meta.g4_clear_game = { foreground = true, blocking = true }
 -- the next map load; nothing here did, so after one heal she healed forever,
 -- never reached the Journal branch, and its `setflag 143` (the flag Dawn's
 -- trigger checks) never happened.
-function Gen4Commands.clearTempFieldEventData(save)
+-- (`lastFlag`: Black / White's local flags run to 0x63 -- ov10 0x21589F4)
+function Gen4Commands.clearTempFieldEventData(save, lastFlag)
   if not save then return end
   if save.flags then
-    for id = 0x00, 0x3F do save.flags[("FLAG_G4_%04X"):format(id)] = nil end
+    for id = 0x00, lastFlag or 0x3F do save.flags[("FLAG_G4_%04X"):format(id)] = nil end
   end
   local vars = save.gen4Vars
   if vars then
