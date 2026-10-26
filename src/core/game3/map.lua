@@ -89,10 +89,8 @@ function Map.overscanSlices()
   return out
 end
 function Map.warmRect(margin)
-  local game=gameOwner or currentGame();local states=game and game.stack and game.stack.states
-  local ow
-  if states then for i=#states,1,-1 do if states[i].isOverworld then ow=states[i];break end end
-  elseif game then ow=game.overworld end
+  local game=gameOwner or currentGame()
+  local ow=require('src.compat.gen1.NativeSession').world(game)
   local p=ow and ow.player;if not(p and tonumber(p.cellX)and tonumber(p.cellY))then return nil end
   local field=package.loaded['src.core.game3.field_view'];local display=package.loaded['src.core.game3.display']
   local cols=math.ceil(((field and field._viewW)or(display and display.W)or 240)/16)

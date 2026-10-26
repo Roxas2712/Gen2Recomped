@@ -11,14 +11,7 @@ local function same(a, b)
   for i = 1, #a do if a[i] ~= b[i] then return false end end
   return true
 end
-local function world(game)
-  local states = game.stack and game.stack.states
-  if states then
-    for i = #states, 1, -1 do if states[i].isOverworld then return states[i] end end
-    return nil
-  end
-  return game.overworld and game.overworld.isOverworld and game.overworld or nil
-end
+local world=require('src.compat.gen1.NativeSession').world
 local function kind(mapType)
   local numbers = {NONE=0,TOWN=1,CITY=2,ROUTE=3,UNDERGROUND=4,UNDERWATER=5,OCEAN_ROUTE=6,UNKNOWN=7,INDOOR=8,SECRET_BASE=9}
   mapType = numbers[mapType] or tonumber(mapType) or 0
