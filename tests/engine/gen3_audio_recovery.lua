@@ -26,6 +26,38 @@ for _, version in ipairs({ "firered", "emerald" }) do
     )
     h.close()
   end
+  for _, mode in ipairs({ "missing", "nil", "error" }) do
+    local h = dofile("tests/native_bgm/streams.lua").install(
+      ".",
+      "gen2",
+      version,
+      f,
+      { initialShared = true, queueFailure = mode }
+    )
+    T.eq(Music.current(), "MUS_TITLE", "the incoming failure scenario starts with actual shared file music")
+    f.data.audio.songs.OWNED_BROKEN_SHARED = {}
+    Music.play(f.data, "OWNED_BROKEN_SHARED")
+    T.eq(Music.current(), "MUS_TITLE", "a bad shared mod definition retains its existing playing song")
+    h.start({ { "playbgm", h.ids[2], 0 }, { "end" } })
+    T.eq(Music.nativeSnapshot().song, h.ids[2], "a failed native replacement retains its new logical song")
+    T.eq(Music.current(), nil, "a native replacement releases the previous shared physical label")
+    for _ = 1, 4 do
+      h.update()
+    end
+    for _, source in ipairs(h.state().native.voices) do
+      T.eq(source.playing, false, "failed incoming native output cannot leave shared file audio sounding")
+    end
+    T.eq(#h.state().queues, 0, "failed incoming output never invents a native queue")
+    h.queueDevice(nil)
+    h.start({ { "playbgm", h.ids[3], 0 }, { "end" } })
+    h.update()
+    T.eq(
+      Music.current(),
+      ("SONG_%03X"):format(h.ids[3]),
+      "a later native cue recovers after shared replacement failed"
+    )
+    h.close()
+  end
   local h = dofile("tests/native_bgm/streams.lua").install(".", "gen2", version, f)
   local ff = h.fanfares()
   h.start({ { "playfanfare", ff[1] }, { "end" } })
