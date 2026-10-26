@@ -497,14 +497,20 @@ function PaletteFX.bindGen2Context(def,flashUsed)
 end
 function PaletteFX.setGen2FlashUsed(on)gen2FlashUsed=on==true end
 function PaletteFX.effectiveGen2Tod()return darkWorld and 'DARK'or gen2Tod end
--- A neighbour uses its own header, the native hooked clock and the same Flash
--- presentation state. It must not inherit the current map's forced DAY row.
+-- AUTO neighbours share the entered AUTO scene's presentation override.
+-- A pinned current room/cave has no outdoor clock presentation to share:
+-- neighbouring AUTO maps read the saved RTC instead of its unused hook row.
+local function gen2NeighbourClock()
+  local id=require('src.render.Gen2PaletteContext').id(gen2CurrentDef)
+  if GEN2_MAP_PALETTE_ROW[id] then return PaletteFX.clockDaytime() end
+  return gen2ClockTod
+end
 function PaletteFX.gen2RowFor(def)
   if def~=nil and def==gen2CurrentDef then return PaletteFX.effectiveGen2Tod()end
   local id=require('src.render.Gen2PaletteContext').id(def)
   if id==nil then return PaletteFX.effectiveGen2Tod() end
   if id==4 then return gen2FlashUsed and 'NITE'or 'DARK'end
-  return GEN2_MAP_PALETTE_ROW[id]or gen2ClockTod
+  return GEN2_MAP_PALETTE_ROW[id]or gen2NeighbourClock()
 end
 
 local function gen2RecomputeTod()
@@ -587,7 +593,7 @@ function PaletteFX.daytimeFor(mapDef, hour, flashUsed)
   local id=require('src.render.Gen2PaletteContext').id(mapDef)
   if id~=nil then
     if id==4 then return flashUsed==true and 'NITE'or 'DARK'end
-    return GEN2_MAP_PALETTE_ROW[id]or(hour==nil and gen2CurrentDef and gen2ClockTod)or PaletteFX.clockDaytime(hour)
+    return GEN2_MAP_PALETTE_ROW[id]or(hour==nil and gen2CurrentDef and gen2NeighbourClock())or PaletteFX.clockDaytime(hour)
   end
   -- Darkness wins outright and the clock stops mattering, which is what
   -- .NeedsFlash does: an unlit cave is the DARKNESS row at noon.

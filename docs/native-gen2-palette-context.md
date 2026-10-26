@@ -22,9 +22,10 @@ queries retain their prior live-state fallback. The native renderer uses
 neighbour's own header and the active clock/Flash presentation state. Native
 map entry and Flash update that state; atlas cache keys include the selected
 row. Animated overdraw receives the same selected palette as the static bake.
-An omitted hour uses the entered world's native clock row, including its
-`world.tod` selection; outside an entered context it keeps the host-clock
-fallback. An explicit hour remains authoritative. Mod load/unload and edition
+An omitted hour shares the entered world's `world.tod` selection when
+that scene follows AUTO. From a pinned room/cave, AUTO neighbours instead
+read the saved RTC. Outside an entered context the query reads that RTC
+without inheriting a map presentation override. An explicit hour remains authoritative. Mod load/unload and edition
 changes retire the entered context, so returning to the launcher cannot
 revive a previous world's clock selection.
 

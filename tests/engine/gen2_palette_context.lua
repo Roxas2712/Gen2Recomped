@@ -9,7 +9,8 @@ local W=require('src.world.gen2.World');local TR=require('src.render.TileRendere
 local Context=require('src.render.Gen2PaletteContext');local Assets=require('src.render.Assets')
 local Map=require('src.world.Map');local Loader=require('src.mods.Loader');local Json=require('src.link.Json')
 local saved={mode=P.mode,dark=P.darkWorld(),tod=P.gen2Tod(),palette=P.gen2MapPalette(),map=W.map,game=W.game,worldDark=W.dark,
- image=Assets.image,imageData=Assets.imageData,loveImage=love.image,newImage=love.graphics.newImage}
+ image=Assets.image,imageData=Assets.imageData,loveImage=love.image,newImage=love.graphics.newImage,date=os.date}
+os.date=function(format,...)if format=='%H'then return '20'end;return saved.date(format,...)end
 local slot,oldGame
 for i=1,100 do local name,value=debug.getupvalue(W.setDark,i);if name=='Game'then slot=i;oldGame=value;break end end
 assert(slot)
@@ -86,7 +87,12 @@ for _,version in ipairs({'gold','silver','crystal'})do
  P.setGen2MapPalette(4,d.maps.CAVE)
  T.eq(P.gen2RowFor(d.maps.CAVE),'NITE',version..' current-map query retains actual native presentation overrides')
  T.eq(P.gen2RowFor(d.maps.ROOM),'DAY',version..' neighbour query still uses own header')
- T.eq(P.daytimeFor(d.maps.AUTO,nil,false),'NITE',version..' absent explicit hour follows active native clock even in pinned current map')
+ T.eq(P.daytimeFor(d.maps.AUTO,nil,false),'NITE',version..' absent hour reads RTC outside a pinned current map')
+ P.setGen2Tod('MORN');P.setGen2MapPalette(1,d.maps.ROOM)
+ T.eq(P.gen2RowFor(d.maps.AUTO),'NITE',version..' pinned room cannot pass an unused morning override to outdoor neighbours')
+ P.setGen2MapPalette(0,d.maps.AUTO)
+ T.eq(P.gen2RowFor({mapPalette=0}),'MORN',version..' outdoor neighbours still share current AUTO presentation')
+ P.setGen2Tod('NITE')
  P.setGen2MapPalette(1)
  for id,row in pairs({AUTO='NITE',ROOM='DAY',NIGHT='NITE',MORNING='MORN',CAVE='DARK',UNUSED='NITE',CENTER='DAY'})do
   local def=d.maps[id];local map=Map.new(def,ts)
@@ -153,6 +159,7 @@ for _,version in ipairs({'gold','silver','crystal'})do
  T.eq(P.gen2RowFor(d.maps.CAVE),'DARK',version..' teardown retires Flash presentation state')
 end
 Assets.image,Assets.imageData=saved.image,saved.imageData;love.image=saved.loveImage;love.graphics.newImage=saved.newImage
+os.date=saved.date
 W.map=saved.map;W.game=saved.game;W.dark=saved.worldDark;debug.setupvalue(W.setDark,slot,oldGame)
 P.setMode(saved.mode);P.setGen2MapPalette(saved.palette);P.setGen2Tod(saved.tod);P.setDarkWorld(saved.dark);P.setGen2FlashUsed(false);V.set(original)
 T.finish('native Gen2 map context, roof/special rows, world views and actual CPU atlas bake')
