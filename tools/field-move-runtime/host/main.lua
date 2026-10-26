@@ -27,7 +27,10 @@ function love.load()
  local oldCry=require('src.core.Sound').playCry;require('src.core.Sound').playCry=function()end
  for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
   local raw=file(inputs[edition].path);local sha=love.data.encode('string','hex',love.data.hash('sha1',raw));assert(sha==inputs[edition].sha1)
-  local manifest=J.decode(file(root..'/tools/rom_manifest_'..edition..'.json'))
+  local handle=io.open(root..'/tools/rom_manifest_'..edition..'.json','rb')
+  local manifest
+  if handle then manifest=J.decode(handle:read('*a'));handle:close()
+  else manifest={romSha1=sha}end -- exercise the authenticated legacy-metadata profile
   local art=assert(Art.extract(require('src.import.RomGba').new(raw),manifest,sha,edition));raw=nil
   for _,outside in ipairs({true,false})do for _,pose in ipairs({true,false})do for _,noDuck in ipairs({true,false})do
    Source.release();local f=require('tools.session-runtime.fixture').new(edition);local game=f.game
