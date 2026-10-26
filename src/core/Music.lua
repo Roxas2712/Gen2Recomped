@@ -384,6 +384,12 @@ function Music.play(data, song, loop, ctx)
   end
   -- Native identity changes even when the output device cannot build a Source.
   -- Shared mod music keeps its existing successful-start admission instead.
+  if nativeStream and nativeBgmShared and state.current then
+    -- The native player releases shared mod music before opening its carrier.
+    -- Failure to build that carrier must not leave the previous mod sounding.
+    Music.stop(true)
+    nativeBgmIncomingShared = false
+  end
   if nativeStream then startedNativeSong() end
   local src, loopSrc, isChip, err = startSong(data, def, wantLoop, nativeStream)
   if not src then

@@ -109,8 +109,15 @@ function M.install(root, backend, version, f, options)
         trackEntries = { 0 },
       }
     end
+    if options.initialShared then
+      require("src.core.game3.mod_audio").install({
+        audio = { songs = { MUS_TITLE = { file = "owned-bgm-title.ogg" } } },
+      })
+    end
     assert(audio.playSong(h.ids[1]))
-    assert(audio._bgmLocal and audio._bgmLocal.seq, "actual native sequencer starts")
+    if not options.initialShared then
+      assert(audio._bgmLocal and audio._bgmLocal.seq, "actual native sequencer starts")
+    end
   else
     local bytes = {}
     for i = 1, 32 do
@@ -131,6 +138,10 @@ function M.install(root, backend, version, f, options)
         f.data.audio.mapSongs.OWNED_NATIVE_BGM_MAP = label
       end
       offset = offset + #programs[i]
+    end
+    if options.initialShared then
+      f.data.audio.songs.MUS_TITLE = { file = "owned-bgm-title.ogg" }
+      f.data.audio.mapSongs.OWNED_NATIVE_BGM_MAP = "MUS_TITLE"
     end
     require("src.core.M4ASynth").invalidate()
     Music.playMap(f.data, "OWNED_NATIVE_BGM_MAP", false, false)

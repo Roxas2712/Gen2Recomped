@@ -34,20 +34,20 @@ adapters, VMs, music services and owned audio hardware doubles. No native
 audio method is replaced with a host result. LuaJIT is pinned to
 `a4c064539ea931274d407e1249b4bb575424a0f4`.
 
-- **32 workers / 2,572 complete paired observations**, independently
+- **32 workers / 2,576 complete paired observations**, independently
   compared with JSON booleans distinguished from numeric zero/one.
 - The new BGM contracts contribute **1,970 rows**: 1,844 symbol rows,
   32 command/lifecycle cases with all 81 frames and play traces per case,
   and 94 default-policy cases with all five frames and play traces.
   File cases retain every created source, including stopped sources and
   their actual gains. Another 40 rows cover native fanfare commands and
-  waits; eight rows cover initial missing-output logical state and fade
-  commands, and the remaining 554 rows recheck native cry contracts.
+  waits; twelve rows cover initial missing-output state, fades and replacement
+  of shared file music, and the remaining 554 rows recheck native cry contracts.
 - **80/80** BGM command, **62/62** stream and **7,364/7,364** fanfare engine
-  checks pass, as do **76/76** missing-device and session recovery checks.
+  checks pass, as do **124/124** missing-device and session recovery checks.
   The full feature quick run passes **171/180** engine suites,
-  SDK **3/3** and B30. A fresh preceding development checkpoint `6d264c0d`
-  passes **170/179**;
+  SDK **3/3** and B30. A fresh preceding development checkpoint `dda0fa80`
+  passes **171/180**;
   the exact anchored `FAIL ` line Counters are identical:
   **25 lines / nine inherited failing suites**, with no additions/removals.
 - The changed workflow passes actionlint. New modules and BGM test files
@@ -146,10 +146,14 @@ Suspension cancels the interrupted fanfare before foreground recovery, so a
 failed re-cue cannot revive an old wait. `Game:audioSession` resumes against
 its own dataset, including the delayed retry when the device is still absent.
 
-The **76-check** engine suite exercises cold static factory nil/errors,
+The **124-check** engine suite exercises cold static factory nil/errors,
 successful later replay, SE player ownership, stop/reload cache disposal,
 latched cancellation and the actual mobile Game interruption/retry path.
-The unchanged parent reproduces **36 failures in 76 checks**. The eight
+When a native cue replaces shared mod music, the previous shared source is
+released before constructing the native carrier. A failed native carrier
+cannot leave the previous mod playing. A bad shared mod definition retains
+the existing shared song instead. The unchanged parent reproduces **12
+failures in 124 checks** for the native replacement path. The twelve
 complete paired no-output rows include every observed control state and all
 source inventories. Existing real-sequencer BGM/fanfare comparisons still
 pass with their previously documented waveform and shared-GB limitations.
@@ -163,13 +167,31 @@ it correctly. Cached absence and fresh output are reported separately.
 This metadata check does not establish actual-import playback or native
 waveform parity.
 
+## Actual-import playback follow-up
+
+Four workers run the actual native/host importers, renderers, world adapters
+and VMs over owned FireRed/Emerald ROMs and their existing imported audio
+images. The native audio pack is produced by the unchanged reference's
+production extractor in memory; the host uses its existing image and freshly
+extracted native fanfare metadata. No normal cache is rewritten.
+
+The **eight cases / 688 observed frames** cover native BGM fades, the real
+80-frame level-up fanfare wait, a deferred default map cue and a BGM stop
+during the fanfare. Complete portable BGM/fanfare state, script completion,
+static-source inventories, active BGM gains relative to each backend's
+baseline, and queue/produced/play counters agree. Each case renders audible
+actual-import PCM. All **2,681,636 reference / 2,169,890 host scalar samples**
+are retained separately. Distinct waveforms and rendered tail lengths are
+not treated as equality. The reference fanfare cache is warmed by its own
+renderer for the previously described headless userdata admission limit.
+
 ## Work still required before a pull request
 
-- Native versus mod music ownership when replacing an already-playing
-  source and the incoming source cannot start; additional invalid-device
-  handle and session-transition paths.
-- Public music hook/event timing and context, actual-import regressions,
-  the complete existing contract matrix and a qualified combined runtime.
+- Additional invalid-device handle and session-transition paths.
+- Public music hook/event timing and context: a preliminary unchanged-mod
+  probe still observes native/shared cue differences that require contracts
+  and alignment. Broader actual-import coverage, the complete existing
+  contract matrix and a qualified combined runtime also remain pending.
 - Native command revision and an independent frozen-parent serializer
   audit before compatibility claims or advancing the playable branch.
 
@@ -226,3 +248,16 @@ nice -n 19 /path/to/pinned/luajit \
 
 No normal imports are updated by this probe. Keep the missing-table discovery
 and the fresh extraction results; they describe different input states.
+
+The actual-import playback probe emits all state and PCM, using the same
+backend invocation convention as the owned-stream tools:
+
+```sh
+nice -n 19 /path/to/pinned/luajit \
+  tools/enemy-action-contract-check/imported-native-bgm-smoke.lua \
+  . gen2 firered /path/to/existing/import-root /path/to/owned-firered.gba \
+  > /path/to/imported-firered-host.log
+```
+
+Repeat for Emerald and the clean reference. Admission compares the documented
+control/ownership/queue properties; retain the complete backend PCM outputs.
