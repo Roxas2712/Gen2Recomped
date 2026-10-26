@@ -17,11 +17,13 @@ check(names.maxmcode and names.maxmcode > 512, 'maxmcode above the default 512 K
 check(names.maxrecord and names.maxrecord > 4000, 'maxrecord above the default 4000')
 check(names.maxside and names.maxside > 100, 'maxside above the default 100')
 check(names.maxsnap and names.maxsnap > 500, 'maxsnap above the default 500')
--- the hot loop still compiles after the change: a trace is produced for a
--- plain numeric loop (jit.status reports on; a flush would show as off)
+-- Verify actual trace generation, not merely the enabled status flag.
+local traceutil=require('jit.util')
+jit.flush()
 local acc = 0
 for i = 1, 200000 do acc = acc + (i % 7) end
 check(acc > 0 and jit.status(), 'the JIT is on after tuning')
+check(traceutil.traceinfo(1)~=nil,'the numeric loop produces a compiled trace')
 -- wiring
 local main = assert(io.open('main.lua')):read('*a')
 check(main:find('pcall(function() require("src.core.JitTuning").apply() end)', 1, true) ~= nil, 'main.lua applies it before any module')
@@ -30,6 +32,8 @@ local firstOther = main:find('require("src%.render') or #main
 check(pos < firstOther, 'and before the first engine module is required')
 local worker = assert(io.open('src/core/chip_worker.lua')):read('*a')
 check(worker:find('require("src.core.JitTuning").apply()', 1, true) ~= nil, 'the audio worker applies it too')
+local builds=assert(io.open('src/core/build_worker.lua')):read('*a')
+check(builds:find('require("src.core.JitTuning").apply()',1,true)~=nil,'pure build workers apply the same optional tuning')
 -- the env switch
 local J2 = dofile('src/core/JitTuning.lua')
 local realGetenv = os.getenv
