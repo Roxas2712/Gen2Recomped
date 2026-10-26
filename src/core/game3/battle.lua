@@ -50,8 +50,9 @@ function M.songInfo(st)
 end
 function M.statWindowPhase()
   local c=runtime:active();if not c then return false end
+  local class=c.screen.StatBox;if not class then return false end
   for _,state in ipairs(c.stack.states)do
-    if getmetatable(state)==c.screen.StatBox then return true end
+    if getmetatable(state)==class then return true end
   end
   return false
 end

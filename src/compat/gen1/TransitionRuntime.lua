@@ -85,6 +85,7 @@ end
 function R:current()
   local game=Native.game();if not game then return nil end
   local class=package.loaded['src.render.BattleTransition']
+  if not class then return nil end
   for i=#(game.stack and game.stack.states or{}),1,-1 do
     local state=game.stack.states[i]
     if getmetatable(state)==class and not state.finished then

@@ -31,6 +31,10 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  T.eq(atlas._model.decoder.animationTicks,tick,'metadata does not rewind or advance the live decoder')
  T.eq(A._pairs[f.pair],entry,'unchanged admitted atlas reuses its observation')
  A.invalidate();T.eq(A._pair,nil);T.check(A._pairs[f.pair]~=entry)
+ local retained=setmetatable({atlas},{__mode='v'})
+ N.trim({},0);atlas=nil;collectgarbage('collect')
+ T.eq(retained[1],nil,'metadata cannot retain a trimmed native atlas')
+ T.eq(entry.atlas,nil,'retained observations do not prolong the resource owner')
  local original=package.loaded['src.core.Game'];package.loaded['src.core.Game']=nil
  T.eq(A._pairs[f.pair],nil,'a retired session cannot expose cached metadata')
  package.loaded['src.core.Game']=original

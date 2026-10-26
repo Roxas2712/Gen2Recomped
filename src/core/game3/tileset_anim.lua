@@ -62,7 +62,11 @@ local function entry(name)
  local prior=observed[ts]
  if not prior then
   local edition=require('src.core.GameVersion').get()
-  prior={atlas=ts,rse=edition~='firered'and edition~='leafgreen',banks={}}
+  -- The weak-key cache must not point strongly back to its key. Observing
+  -- metadata cannot keep a trimmed native atlas (or its RGBA samples) alive.
+  local reference=setmetatable({ts},{__mode='v'})
+  prior=setmetatable({rse=edition~='firered'and edition~='leafgreen',banks={}},
+   {__index=function(_,key)if key=='atlas'then return reference[1]end end})
   local water,why=waterBank(ts._model,edition)
   prior.banks.water,prior.unavailableReason=water,why
   observed[ts]=prior

@@ -1,72 +1,40 @@
-# Native field runtime adapters
+# Native field state, audio and display adapters
 
-Source fades observe the actual native script, warp, white-flash and battle
-return states. Field fade requests share the extracted native FadeOverlay,
-its fixed-step clock and whole-window veil. Sixteen palette steps and owned
-holds do not replace native script timing or its abandoned-fade watchdog.
-Unload cancels only the requesting owner's flow and continuation.
+Field consumers observe the admitted native world on FireRed, LeafGreen,
+Emerald, Ruby and Sapphire. Native scripts, transitions, player state and
+resource owners remain responsible for simulation and timing.
 
-Source warp requests enter the existing native admission controller. Map
-identities, bounds, input ownership, arrival bookkeeping and callback lifetime
-remain native. The native transition retains its actual arrival kind while
-active. Revoking a source continuation cannot rewind an admitted native warp.
+Source fades join the native stack and palette task. Warp helpers use native
+destination resolution and native admission; observational destination reads
+do not dispatch the gameplay hook or change a save. Source START menus use
+the native menu stack. Dataset views expose admitted imported data without
+mounting an unrelated cache or another cartridge.
 
-Weather audio follows the existing native weather and frame clock, without
-another weather simulation or gameplay RNG. `field.weather.sound` can claim a
-weather playback request. Native weather uses a separate cached voice from
-scripted/mod effects of the same sequence; removing the wrapper resumes native
-weather on the next field tick. Missing imported sequences have no substitute.
+Sound effects use mod-owned cache variants. Source volume and stop requests
+cannot change an ordinary native script's voice or a different mod's voice.
+Owner retirement and session replacement release those records. The source
+adapter observes the native sound service rather than advancing an audio clock.
 
-`dataset.cache()` reads generated artifacts through the native cache filesystem
-and current cartridge prefix. Readers retire on import, edition, root or session
-replacement. This is read-only access to existing native files, not a second
-importer, hydration path, alternate extraction layout or worker format.
+Healing snapshots and native drawing share one sprite selector. It reads the
+current native task, imported monitor/glow artwork and cartridge offsets;
+it cannot advance the task, play its sound or call its continuation. Snapshot
+coordinates use the native player's 240x160 anchor independently of drawable
+resolution or an external supersampling texture.
 
-The source START adapter opens/closes the real GBA menu and enters its native
-input/draw phases once. Flow cancellation preserves unrelated overlays. Custom
-row callbacks and content-template presentation need additional integration.
+Weather observations read the native active value and imported map header.
+Map-preview observations inspect the real native stack; dismissing a covered
+preview is refused. Missing general door artwork or a missing native door
+producer is reported explicitly. Observations do not create a replacement
+animation task.
 
-Focused checks across FireRed, LeafGreen, Emerald, Ruby and Sapphire pass:
-385 fade, 180 warp, 105 weather, 115 artifact-reader and 90 START-menu checks.
-An API-2 loader/native-world fixture verifies source warps without requiring
-another public API version. The original native warp suite also passes 206 checks.
+The public companion composition includes these prerequisites and qualifies
+its checked-out candidate. See [native companion qualification](native-companion-runtime.md)
+for commands, GPU hosts, unchanged-package probes and the separate optional
+battle-presentation boundary. Earlier draft measurements are superseded by
+the revision-bound completion evidence recorded there.
 
-On the earlier fork baseline, 485/485 engine suites, all three SDK suites and
-B30 pass. The final-main regression is tracked separately. Metal and OpenGL each
-pass 1,364 fade checks with 320 pixel comparisons/readbacks; RGBA8 comparisons
-allow 1.51 channel quanta for factor quantization and final colour rounding.
-
-Unchanged 1.0.9 initializes through the actual Metal/LOVE loader in all five
-editions on synthetic imported data. This does not prove gameplay: the battle
-card still reports a missing palette module, and native field/gameplay, complete
-battle presentation and remaining UI contracts require further qualification.
-
-QA uses disposable profiles, preserved frozen inputs and an 8 GiB reserve.
-Player profiles, private runtime files and game assets are not included.
-
-## Public-host composition
-
-This API-2 offer builds on #328/#327 and their declared native map, player,
-session, modal-stack and rendering prerequisites. The existing native warp
-admission helper is reused internally; it does not advertise another public
-API version. The composed API-2 candidate passes all five focused suites,
-916 companion, 1,466 terrain, 486 collision and nine lifecycle checks plus
-all three SDK suites. Engine results are 100/111 versus 95/106 in the frozen
-reference, with the identical eleven inherited failed suites.
-
-The unchanged-package loading result above belongs to the fork; it is not a
-claim that this standalone public branch accepts or fully runs that package.
-Source SE playback borrows an atomically identified native voice with its own
-cache variant. Gain changes and owner cleanup cannot stop or attenuate another
-playback; replay, unload and session replacement retire the borrow. 145 checks
-cover these boundaries. Source updates do not advance a second audio clock.
-
-The latest real Metal field capture shows a correctly oriented native fallback;
-the paper renderer still encounters additional contracts during scene creation.
-No full 3D, battle, UI or five-edition gameplay acceptance is claimed.
-
-Healing sprite snapshots now reuse the native monitor/ball selection, borrowed
-ROM artwork and cartridge offsets. Native drawing and mod snapshots share that
-selection without stepping the task, sound or continuation. 125 checks cover
-all five editions and the source anchor transform; real scene qualification
-continues separately.
+Managed local starters retain a 20 GiB free reserve, use disposable identities
+and leave player profiles and saves untouched. External runtime code, ROMs
+and private game assets are not part of this contribution. Existing notices
+remain intact; original Roxas2712 contributions use the specific upstream
+permission in [LICENSE-ROXAS2712.md](../LICENSE-ROXAS2712.md).
