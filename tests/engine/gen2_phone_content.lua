@@ -84,6 +84,14 @@ end
 V.set('crystal')
 do
  local d=fixture();local r=load(d,[[local p=mod.content.phone_contacts
+   local row=p:get('PHONE_MOM');row.calleeKey='IN';p:override('PHONE_MOM',row)
+ ]])
+ T.eq(#r.errors,0,'read/edit/write accepts an explicit script key alongside the prior alias')
+ T.eq(d.map_scripts.phone[1].call,'IN','explicit calleeKey owns the effective outgoing script')
+ finish(r)
+end
+do
+ local d=fixture();local r=load(d,[[local p=mod.content.phone_contacts
    p:patch('PHONE_MOM',{callee='IN',caller='OUT',callerTime=7})
  ]])
  T.eq(#r.errors,0,'caller and callee aliases are accepted')
@@ -144,7 +152,6 @@ for _,source in ipairs({
  "p:register('BAD',{name='BAD',index=0})",
  "p:register('BAD',{name='BAD',unknownField=true})",
  "p:register('BAD',{class='YOUNGSTER',member='JOEY1',number=1})",
- "p:register('BAD',{name='BAD',callee='IN',calleeKey='OUT'})",
  "p:patch('PHONE_MOM',{name='FAILED'});error('entry failure')",
 }) do
  local d=fixture();local r=load(d,'local p=mod.content.phone_contacts;'..source)

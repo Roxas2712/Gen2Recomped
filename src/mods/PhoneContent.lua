@@ -193,9 +193,8 @@ function M.api(loader,mod,native,generation)
       for _,direction in ipairs({'callee','caller'}) do
         if payload[direction]~=nil then
           local key=direction..'Key'
-          assert(payload[key]==nil or payload[key]==payload[direction],
-            'phone_contacts: conflicting script aliases')
-          payload[key]=payload[direction];payload[direction]=nil
+          if payload[key]==nil then payload[key]=payload[direction] end
+          payload[direction]=nil
         end
       end
       payload.index=indexFor(registry,assert(mounted[loader]),id,value)
