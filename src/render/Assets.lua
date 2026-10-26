@@ -62,7 +62,10 @@ function Assets.resolve(path)
   if not loader or type(path) ~= "string" then return path end
   if path:sub(1, #GENERATED) ~= GENERATED then return path end
   local hit = resolved[path]
-  if hit ~= nil then return hit end
+  if hit ~= nil then
+    if not (loader.stale and loader:stale()) then return hit end
+    resolved = {}
+  end
   local answer = resolveWalk(loader, path)
   if memoOn() then resolved[path] = answer end
   return answer
@@ -173,6 +176,9 @@ function Assets.installLoader(loader)
       order[#order + 1] = { id = loaded[i].manifest.id, path = loaded[i].path }
     end
     return order
+  end
+  function bridge:stale()
+    return order ~= nil and orderCount ~= #(loader.loaded or {})
   end
   function bridge:derivedPath(rel)
     for _, mod in ipairs(self:overrideOrder()) do
