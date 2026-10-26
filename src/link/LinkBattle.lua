@@ -251,7 +251,7 @@ function LinkBattle.new(game, net, opts)
   -- unrebuildable party is refused above, so it only ever covers a caller
   -- that skipped the handshake.
   local self = BattleState.newWild(game, theirParty[1] and theirParty[1].species
-                                         or "RATTATA", 5)
+                                         or "RATTATA", 5, { fieldWeather = false })
   self.kind = "link"
   self.linkRole = role
   self.net = net
