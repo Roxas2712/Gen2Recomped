@@ -298,6 +298,7 @@ function Manifest.validate(raw, path)
   assert(raw.callback_format ~= "unified" or api >= 2, "callback_format unified requires mod API 2")
 
   local conflicts = mergeConflictLists(raw.conflicts, raw.incompatible)
+  local requiredAssets, optionalAssets = require("src.mods.AssetPacks").parse(raw.required_assets, raw.optional_assets)
 
   -- `support`: where to thank the mod's creator -- a Ko-fi, a Patreon, a
   -- PayPal page. The launcher's mod card turns it into a "Support the
@@ -351,6 +352,8 @@ function Manifest.validate(raw, path)
     -- second game's ROM.  Declared here, satisfied by the launcher, read by
     -- the mod out of its own folder (src/mods/ModImports.lua).
     requiredImports = require("src.mods.ModImports").parse(raw),
+    required_assets = requiredAssets,
+    optional_assets = optionalAssets,
     -- Cartridges that must be IMPORTED for this mod to mean anything -- a
     -- different thing from requiredImports above, which is a file the player
     -- hands over and the launcher writes into the mod's folder.
