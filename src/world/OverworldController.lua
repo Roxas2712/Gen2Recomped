@@ -3534,6 +3534,30 @@ function OverworldState:checkSpecialPhoneCall()
   return true
 end
 
+-- A purchase is already committed at trainer reload. Its original phone
+-- program waits for the trainer's queued dialogue and overlays to finish.
+function OverworldState:checkMomShoppingCall()
+  local pending=self.g2MomCallPending
+  if not pending then return false end
+  if pending.save~=Game.save or pending.data~=Game.data then self.g2MomCallPending=nil;return false end
+  local top=Game.stack and Game.stack.top and Game.stack:top()
+  if top and top~=self then return false end
+  if self.player and(self.player.moving or self.player.targetX)then return false end
+  if self:busy()or self.transitioning or self.pendingScripts and self.pendingScripts[1]then return false end
+  self.g2MomCallPending=nil
+  local purchase=pending.purchase
+  Game.save.g2CurCaller=purchase.caller
+  pcall(function()require("src.core.Sound").play(Game.data,"Call")end)
+  self:queueScript(purchase.script,{phoneCaller=purchase.caller,onDone=function()
+    if Game.save~=pending.save or Game.data~=pending.data then return end
+    Game.save.g2CurCaller=nil
+    require("src.script.Gen2Commands").resetCallDelay(Game.save,math.floor(require("src.core.SaveData").playSeconds(Game.save)/60))
+    pcall(function()require("src.core.Sound").play(Game.data,"Hang_Up")end)
+  end})
+  require("src.script.Gen2Commands").announceIncomingCall(Game.data,purchase.caller)
+  return true
+end
+
 -- CheckPhoneCall (36:$4074): the random incoming call, rolled on every step
 -- the player finishes off a warp tile.  Gen2Commands.rollIncomingCall carries
 -- the ROM's own gating -- the receive-call delay, the one-in-two coin flip, the
@@ -3902,6 +3926,7 @@ function OverworldState:update(dt)
   -- not an event, and the check is two flag reads.
   self:applyForcedBike()
   if not require("src.world.Gen2StepEvents").vanilla() then self:checkSpecialPhoneCall() end
+  self:checkMomShoppingCall()
   self:checkBugContestClock()
   -- world.tick: the per-frame seam for mods that simulate something in the
   -- overworld rather than draw it.
@@ -15042,6 +15067,18 @@ function OverworldState:gen4FieldResumed()
 end
 
 function OverworldState:afterBattle(result, battle)
+  if result=="win" and battle and battle.kind=="trainer" and not battle.linkBattle and not battle.battleTower and
+      not battle.g2MomHandled and require("src.world.Gen2MomShopping").stock()then
+    battle.g2MomHandled=true
+    if not self.g2MomCallPending then
+      local purchase=require("src.world.Gen2MomShopping").tryBuy(Game.data,Game.save,{
+        phoneService=require("src.world.Gen2PhoneService").available(self.map and self.map.def),
+        queued=self.pendingScripts and self.pendingScripts[1]~=nil,
+      })
+      if purchase then self.g2MomCallPending={save=Game.save,data=Game.data,purchase=purchase}end
+    end
+  end
+
   if GameVersion.isGen2() then self:armWildCooldown() end
   self.gen4EncounterAttempts = 0
   -- a battle a script did not start (a wild one, a trainer's sight) comes

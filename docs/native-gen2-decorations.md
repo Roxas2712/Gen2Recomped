@@ -72,7 +72,8 @@ executes the original house-PC/description scripts and room callbacks, and
 round-trips all eight placed bytes. Original ROM hashes are checked unchanged.
 The local font/audio/render harness is used; no visual acceptance is inferred.
 
-Full legacy `Decorations` facade parity, the complete gift/purchase lifecycle,
+Mom’s native shopping caller is covered separately in [native-gen2-mom-shopping.md](native-gen2-mom-shopping.md).
+Full legacy `Decorations` facade parity, the remaining gift lifecycle,
 new graphical acceptance and a full unchanged VASC playthrough remain separate
 open work. Importing the gift-ordinal table alone does not implement those
 callers. The existing preview is not refreshed by this source change.

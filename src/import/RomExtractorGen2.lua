@@ -3350,6 +3350,52 @@ end
 -- Six native bytes per attribute row: kind/name/action/event-word/sprite.
 -- Names immediately follow attributes in stock GSC; that boundary supplies
 -- the row count instead of a copied retail catalogue.
+-- Native Mom tables have eight bytes: two big-endian money triples and
+-- kind/item bytes. End symbols supply counts, never a copied retail list.
+function RomExtractorGen2:gen2MomShopping(pool)
+  if self.version~="gold"and self.version~="silver"and self.version~="crystal"then return nil end
+  local result={complete=false}
+  local ok,why=pcall(function()
+    for role,name in pairs({random="MomItems_1",ladder="MomItems_2"})do
+      local first,last=self:symbol(name),self:symbol(name..".End")
+      assert(first and last and first.bank==last.bank,"missing Mom table bounds")
+      local count=(last.address-first.address)/8
+      assert(count%1==0 and count>0 and count<=255 and first.address>=0x4000 and last.address<=0x8000,"invalid Mom table bounds")
+      local rows={}
+      for i=0,count-1 do
+        local b=self.rom:bytes(first.bank,first.address+i*8,8)
+        local trigger=b[1]*65536+b[2]*256+b[3];local cost=b[4]*65536+b[5]*256+b[6]
+        assert(trigger<=999999 and cost<=999999 and(b[7]==1 or b[7]==2)and b[8]>0 and b[8]<255,"invalid Mom row")
+        rows[#rows+1]={trigger=trigger,cost=cost,kind=b[7],item=b[8]}
+      end
+      result[role]=rows
+    end
+    local at,ram=self:symbol("CheckBalance_MomItem2.check_have_2300"),self:symbol("hMoneyTemp")
+    assert(at and ram,"missing Mom trigger instructions")
+    local b=self.rom:bytes(at.bank,at.address,11)
+    assert(b[1]==0x21 and b[2]+b[3]*256==ram.address and b[4]==0x36 and b[6]==0x23 and
+      b[7]==0x36 and b[9]==0x23 and b[10]==0x36,"unrecognized Mom trigger instructions")
+    result.step=b[5]*65536+b[8]*256+b[11]
+    assert(result.step>0 and result.step<=999999,"invalid Mom trigger amount")
+  end)
+  if not ok then return{complete=false,reason=tostring(why)}end
+  local found={}
+  for role,name in pairs({item="Mom_GetScriptPointer.ItemScript",doll="Mom_GetScriptPointer.DollScript"})do
+    local at=self:symbol(name)
+    if not at or at.address<0x4000 or not self:gen2InRom(at.bank,at.address)then return{complete=false,reason="missing Mom phone program"}end
+    found[role]=at
+  end
+  result.programs={}
+  for role,at in pairs(found)do result.programs[role]=self:gen2QueueScript(at.bank,at.address,pool)end
+  result.rewardTexts={}
+  self._gen2ScriptTexts=self._gen2ScriptTexts or{}
+  for mode,name in pairs({[0]="GotMoneyForWinningText",[1]="SentSomeToMomText",[2]="SentHalfToMomText",[3]="SentAllToMomText"})do
+    local at=self:symbol(name)
+    if at and self:gen2InRom(at.bank,at.address)then result.rewardTexts[mode]=self:gen2RegisterScriptText(at.bank,at.address)end
+  end
+  result.complete=true;return result
+end
+
 function RomExtractorGen2:gen2Decorations()
   if self.version~="gold" and self.version~="silver" and self.version~="crystal" then return nil end
   local info={complete=false,rowsRead=0,defaultsComplete=false,giftsComplete=false}
@@ -9170,6 +9216,7 @@ function RomExtractorGen2:extractMapScripts()  self:beginStage("Gen2 map scripts
   out.marts = self:gen2Marts()
   out.apricornBalls, out.apricornInfo = self:gen2ApricornBalls()
   out.apricornPrograms = self:gen2QueueApricornPrograms(pool)
+  out.momShopping=self:gen2MomShopping(pool)
   out.decorations,out.decorationInfo = self:gen2Decorations()
   out.decorationPrograms = self:gen2QueueDecorationPrograms(pool)
   out.spawns = self:gen2SpawnPoints(maps, keys)

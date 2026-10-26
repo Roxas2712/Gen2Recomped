@@ -2394,16 +2394,18 @@ end
 
 function Commands.g2_bank_of_mom(ctx)
   local save = ctx.save
+  local Mom=require("src.world.Gen2MomShopping")
+  Mom.prepareBank(save)
   -- CheckIfBankInitialized: the first visit opens the account and asks
   if save.g2MomBankOpen == nil then
-    save.g2MomBankOpen = true
+    Mom.openBank(save)
     Commands.ask(ctx, momLine(ctx, "saveMoney",
       "Should I save money for you?"))
     if ctx.lastCheck then
-      save.g2MomSaving = true
+      Mom.setSaving(save,true)
       return momSay(ctx, "startSavingMoney", "OK, I'll save your money.")
     end
-    save.g2MomSaving = false
+    Mom.setSaving(save,false)
     return momSay(ctx, "justDoWhatYouCan", "Just do what you can.")
   end
 
@@ -2468,7 +2470,7 @@ function Commands.g2_bank_of_mom(ctx)
       momSay(ctx, "takenMoney", "Took ¥" .. amount .. ".")
     end)
   elseif choice == 3 then
-    save.g2MomSaving = not save.g2MomSaving
+    Mom.setSaving(save,not save.g2MomSaving)
     if save.g2MomSaving then
       momSay(ctx, "startSavingMoney", "OK, I'll save your money.")
     else
