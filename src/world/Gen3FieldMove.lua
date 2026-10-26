@@ -92,7 +92,9 @@ local function dropSprite(self)
 end
 
 function Gen3FieldMove:uiSize()
-  return require("src.ui.Theme").uiSize()
+  -- The field cut-in has GBA coordinates of its own. A mod's smaller or
+  -- wider dialogue box cannot change this effect's physical screen.
+  return 240,160
 end
 
 -- The two colours the band is drawn in.  The cartridge's own window palette

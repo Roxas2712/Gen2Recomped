@@ -9,6 +9,9 @@ coordinates. The renderer's frame serial prevents the normal UI pass from
 painting the same externally rendered cut-in again. Drawing never advances
 the streak or player-pose clock.
 
+The cut-in retains its own 240x160 GBA surface. A mod's dialogue-box theme
+cannot shrink it to the Game Boy surface or enlarge it to a DS surface.
+
 The native admission owns its front image and resolves actual generated-asset
 overrides. Completion, explicit reset, failed entry and owner retirement
 release it and restore the prior player pose. Covered admissions cannot pop a
