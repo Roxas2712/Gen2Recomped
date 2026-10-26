@@ -130,11 +130,6 @@ do
  for i=4,6 do party[i].hp=0 end
  observe('second stock unlocks',b,actor,id)
  party[3].hp=0;observe('third stock unlocks',b,actor,id)
- if Host then
-  f.T.eq(Host.claim(b,b.player,action),nil,'another battler cannot claim this reservation')
-  f.T.check(Host.claim(b,actor,action)~=nil,'selected item has one native execution reservation')
-  f.T.eq(Host.claim(b,actor,action),nil,'reservation cannot execute twice')
- end
 end
 do
  local b,actor,id=fresh({double=true,right=true,second=true,count=2})

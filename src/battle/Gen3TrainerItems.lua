@@ -67,14 +67,19 @@ function M.effect(battle, key)
 end
 
 local function bags(battle)
-  battle._gen3TrainerItems = battle._gen3TrainerItems or { reservations = {}, nextId = 0 }
+  battle._gen3TrainerItems = battle._gen3TrainerItems or {}
   return battle._gen3TrainerItems
 end
 
 function M.history(battle, context)
   local state = bags(battle)
   local h = state.history
-  if h then return h end
+  if h then
+    for _,slot in ipairs(h.slots) do
+      if battle.gen3ItemsUsed and battle.gen3ItemsUsed[slot.original] then slot.spent=true end
+    end
+    return h
+  end
   h = { slots = {}, count = 0 }
   state.history = h
   local used = battle.gen3ItemsUsed
@@ -82,7 +87,7 @@ function M.history(battle, context)
     local key = battle.trainer and battle.trainer.items and battle.trainer.items[original]
     if itemNumber(battle, key) then
       h.count = h.count + 1
-      h.slots[h.count] = { item = key, original = original, spent = used and used[original] == true or false }
+      h.slots[h.count] = { item = key, original = original, spent = used and not not used[original] or false }
     end
   end
   return h
@@ -93,13 +98,9 @@ local function reserve(battle, context, slot, effect, flags)
   slot.spent = true
   battle.gen3ItemsUsed = battle.gen3ItemsUsed or {}
   battle.gen3ItemsUsed[slot.original] = true
-  local state = bags(battle)
-  state.nextId = state.nextId + 1
-  state.reservations[state.nextId] = { actor = context.actor, owner = context.owner,
-    position = context.position, item = slot.item, effect = effect, executed = false }
   return { special = "aiItem", item = slot.item, slot = slot.original,
     aiItemType = effect.kind, aiItemFlags = flags, battler = context.position,
-    target = context.position, trainerItemReservation = state.nextId }
+    target = context.position }
 end
 
 function M.stocked(battle, actor, key)
@@ -170,19 +171,6 @@ function M.choose(battle, actor)
       end
     end
   end
-end
-
--- Execution may consume this reservation once, for its originally selected
--- actor. Public hook/action adapters still need to define mutation handling.
-function M.claim(battle, actor, action)
-  if type(action) ~= "table" then return nil end
-  local state = battle._gen3TrainerItems
-  local reservation = state and state.reservations[action.trainerItemReservation]
-  if not reservation or reservation.executed or reservation.actor ~= actor then return nil end
-  local context = M.context(battle, actor)
-  if not context or context.owner ~= reservation.owner then return nil end
-  reservation.executed = true
-  return reservation
 end
 
 return M

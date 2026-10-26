@@ -202,11 +202,12 @@ function C.install(loader, api, owner, generation)
         end
         local public = translate(original)
         local called, downstream, publicResult = false, nil, nil
+        local repeatableTrainer = not api3 and generation == 3 and name == "battle.enemy_switch_or_item"
         local active = true
         local function nextPublic(...)
           assert(active, "next is only valid during its hook callback")
           assert(not called or downstream, "next is already running")
-          if not called then
+          if not called or repeatableTrainer then
             local args = select("#", ...) == 0 and public or pack(...)
             local raw = boundary.commit(function()
               return rawArgs(args)
