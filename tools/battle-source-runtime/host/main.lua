@@ -1,6 +1,8 @@
 io.stdout:setvbuf('no')
 local root=assert(os.getenv('BATTLE_SOURCE_ENGINE'))
-package.path=root..'/?.lua;'..root..'/?/init.lua;'..package.path
+-- Keep the absolute frozen engine first when the SDK checks for its Lua
+-- package-path sentinel. Relative fixture IO runs from that same engine.
+package.path=root..'/?.lua;'..root..'/?/init.lua;./?/init.lua;'..package.path
 function love.errorhandler(err)io.stderr:write(debug.traceback(tostring(err),2)..'\n');return function()return 1 end end
 function love.load()
   local T=require('tests.harness').suite('native battle source GPU')
@@ -9,6 +11,8 @@ function love.load()
   local Ui=require('src.core.game3.battle.ui')
   local Bg=require('src.core.game3.battle.bg')
   local baseDraw,uiDraw,bgDraw=Battle.draw,Ui.draw,Bg.draw
+  local nativeBattleSource=debug.getinfo(require('src.battle.BattleState').update,'S').source
+  T.eq(nativeBattleSource,'@'..root..'/src/battle/BattleState.lua','native battle code comes from the frozen engine')
   local renderer,version,vendor,device=g.getRendererInfo()
   local backend=assert(os.getenv('POKEPORT_GRAPHICS_BACKEND'))
   T.check(renderer:lower():find(backend,1,true)~=nil,'requested actual GPU backend')
@@ -94,6 +98,7 @@ function love.load()
     backend=backend,renderer=renderer,version=version,vendor=vendor,device=device,
     playerProfilesUsed=false,gameplayProven=false,originalModLoaded=false,
     syntheticBattlerArt=true,
+    engineRoot=root,nativeBattleSource=nativeBattleSource,
     scope='Actual native BattleState and Gen3Battle draws over synthetic imported Pokemon; five GBA editions. Source/UI/background wrappers and GPU error restoration; no original-mod boot or gameplay claim.'}
   local file=assert(io.open(assert(os.getenv('BATTLE_SOURCE_REPORT')),'w'))
   file:write(require('src.link.Json').encode(report));file:close()
