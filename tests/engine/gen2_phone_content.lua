@@ -34,7 +34,7 @@ for _,version in ipairs({'gold','silver','crystal'}) do
   local d=fixture();local native=d.map_scripts.phone[2]
   local r=load(d,[[
     assert(mod.content.phone_contacts:supports())
-    local p=mod.content.phone_contacts
+    local p=mod.content["phone_contacts"]
     assert(p:get('PHONE_MOM').number==1)
     assert(p:get('PHONE_MOM').map=='PALLET_TOWN')
     assert(p:get('PHONE_MOM').callee=='OUT' and p:get('PHONE_MOM').caller=='IN')
