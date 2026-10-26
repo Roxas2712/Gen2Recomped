@@ -148,7 +148,8 @@ class LiveUse:
                     result = subprocess.run(['ps', 'eww', '-p', pid, '-o', 'command='], text=True, capture_output=True)
                     if result.returncode:continue  # Process may have just exited.
                     env = result.stdout
-                    for key in ('POKEPORT_IDENTITY', 'OA_QA_IDENTITY', 'OASC_IDENTITY', 'LOVE_IDENTITY'):
+                    for key in ('POKEPORT_IDENTITY', 'OA_QA_IDENTITY', 'OASC_IDENTITY', 'LOVE_IDENTITY',
+                                'PORTEMON_IDENTITY','POKEMON_LOVE2D_IDENTITY','GEN2RECOMP_IDENTITY'):
                         match = re.search(r'(?:^|\s)'+key+r'=([^\s]+)', env)
                         if match:self.identities.add(match.group(1))
             result = subprocess.run(['lsof', '-nP', '-Fpn'], text=True, capture_output=True, timeout=30)

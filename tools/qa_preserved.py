@@ -120,7 +120,7 @@ class Vault:
             # A few large source ZIPs can fill gigabytes long before Git's
             # default loose-object COUNT threshold triggers automatic GC.
             if int(counts.get('packs', 0)) > 40:
-                subprocess.run(['git','--git-dir='+str(self.path),'-c','gc.autoDetach=false','gc'],check=True)
+                subprocess.run(['git','--git-dir='+str(self.path),'-c','gc.autoDetach=false','gc','--keep-largest-pack'],check=True)
             elif int(counts.get('size', 0)) > 256*1024:
                 # Pack recent versions without recompressing all historical
                 # sources on every test. The pack-count branch merges later.

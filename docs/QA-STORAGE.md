@@ -204,3 +204,28 @@ Die Hintergrundbereinigung läuft unabhängig davon alle 15 Minuten. Lebende
 Kindprozesse und andere Leser halten ihre Sperren; deshalb erfolgt deren
 Bereinigung erst nach dem letzten Nutzer. Das intakte lokale Quellarchiv hält
 einmalige Code- und Modellstände auch nach Entfernung der Testkopien vor.
+
+## Erzeugte Daten weiterer LÖVE-Testprofile
+
+Der Hintergrundhelfer prüft zusätzlich exakt benannte `portemon-private-<16 Hex>`-
+und `gen2-palette-gpu-…`-Profile sowie die bekannten QA-Identities. Eingeschlossen
+sind die bekannten `isolated-home/Library/Application Support`-Hosts. Spielerprofile
+wie `portemon` und `Gen2Recomp` werden nicht erfasst.
+
+Ausschließlich `<edition>/data/generated` und `assets/generated` sind betroffen;
+HeartGold und SoulSilver sind enthalten. Alte Bestände werden nach 24 Stunden
+oder über einem gemeinsamen 2-GiB-Budget bereinigt, mit mindestens einer Stunde
+Schonzeit. Höchstens 48 Profile beziehungsweise etwa 100.000 Dateien werden je
+Durchgang gesichert, um Dateideskriptoren und Arbeitsspeicher zu begrenzen.
+
+Modelle einschließlich `generated/models`, Quellordner, Git, ROMs, Save-Dateien
+und `.qa-keep`-Unterbäume bleiben an ihrem Ort. Jede zu entfernende reguläre
+Cache-Datei wird vorher bytegenau im bestehenden lokalen Git-Archiv gesichert;
+die Quittung liegt unter `~/.cache/origami-qa-storage/love-receipts/`. Der Pfad im
+Snapshot entspricht dem ursprünglichen Pfad relativ zum Benutzerverzeichnis.
+Aktive Prozesse, gemeinsame Eingabesperren und Import-Aliase verhindern die
+Bereinigung. Ein später neu gestarteter Leser oder veränderte Dateien verhindern
+die Löschung auch nach der Sicherung. Die alte Importbereinigung darf gemischte
+Modell-/Save-Bäume nicht pauschal entfernen.
+
+Regressionen: `python3 -m unittest discover -s tests -p 'qa*storage*test.py'`.

@@ -38,3 +38,9 @@ Spielzweigs die Speicherregeln nicht zurücksetzt. Vor dem ersten `qa_*`-Aufruf
 `qa_storage._storage = qa_storage.Storage(projektwurzel)` mit `atexit`-Freigabe
 initialisieren; als Projektwurzel niemals das Verzeichnis des installierten
 Helfers verwenden. Bestehende Starter mit dieser Initialisierung beibehalten.
+
+LÖVE-Testcachepflege erfolgt über `qa_love_storage.py` im installierten Helfer,
+nicht durch Löschen ganzer Profile. Nur die dokumentierten `data/generated`-/
+`assets/generated`-Pfade sind vorgesehen; auch dort Modelle, Quellordner, Saves
+und ROMs erhalten. Neue private Profile vor Nutzung mit `qa_source` pinnen.
+Einmalige zu entfernende Cachebytes werden im bestehenden Quellarchiv gesichert.
