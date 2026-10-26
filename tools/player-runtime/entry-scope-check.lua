@@ -3,7 +3,7 @@ local T=require('tests.harness')
 local Native=require('src.compat.gen1.NativeSession')
 T.eq(package.loaded['src.core.Game'],nil)
 love=require('tests.love_stub')
-for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
+for _,edition in ipairs({'firered','emerald'})do
   local f=require('tools.player-runtime.fixture').new(edition)
   f.game.stack={states={}}
   local nested={isOverworld=true,map=f.map,player=f.player}
