@@ -38,10 +38,13 @@ Observed macOS/arm64, 60-Hz display, VSync 1, cap 60:
 
 | Backend | Software wait off/on, ms/frame | Present off/on, ms/frame | CPU off/on, ms/frame |
 | --- | ---: | ---: | ---: |
-| LÖVE 11.5 OpenGL | 0.00 / 0.01 | 16.59 / 16.54 | 0.672 / 0.790 |
-| LÖVE 12 Metal | 16.43 / 0.01 | 0.13 / 16.56 | 0.769 / 0.629 |
+| LÖVE 11.5 OpenGL | 0.50 / 0.02 | 15.96 / 16.47 | 0.786 / 0.558 |
+| LÖVE 12 Metal | 0.01 / 0.03 | 16.50 / 16.47 | 1.205 / 1.428 |
 
-Both enabled runs made zero extra sleep calls and stayed near 60 FPS, with no
+These fresh composed-fork measurements used runtime source `c75bb29e`. OpenGL
+software sleep calls fell from 6,716 to zero across 120 measured frames. Metal
+already needed no software sleeps; its short CPU sample increased. No general
+CPU reduction is inferred from these measurements. Both enabled runs made zero extra sleep calls and stayed near 60 FPS, with no
 measured interval exceeding 1.5 display periods. These short blank-window
 checks establish the pacing decision and its profiler scope. They do not
 establish a universal CPU/FPS gain, loaded-world behavior, or handheld results.
