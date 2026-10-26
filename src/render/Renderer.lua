@@ -369,6 +369,7 @@ function Renderer:beginFrame(transparent)
   -- fade in from white after a battle) -- covers the window, not just the
   -- 160x144 letterbox
   self.screenVeil = nil
+  self.nativeTransitionVeil = nil
   -- edge-anchored UI regions, re-declared by their elements each frame
   self.uiAnchors = nil
   -- last frame's trueColor rects and sprite redraws go before anything
@@ -1161,6 +1162,11 @@ local function endFrame(self, zones, worldZones, privateViewport)
       return self:blitCanvas(canvas, sx, sy, zoneList, zoneSx, zoneSy,
                              bx, by, boxX, boxY, boxW, boxH, dpiX, dpiY)
     end
+  end
+
+  local compatibleTransition=package.loaded['src.core.game3.battle_transition']
+  if compatibleTransition and compatibleTransition._compositeWorld then
+    compatibleTransition._compositeWorld(self)
   end
 
   -- A PUBLISHER MAY HAVE FREED ITS CANVAS SINCE IT HANDED IT OVER.
