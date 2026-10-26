@@ -1126,6 +1126,11 @@ function GameVersion.layout(id,versionId)
 end
 
 -- other three generations take.
+function GameVersion.isFRLG(id)
+  id=id or GameVersion.get()
+  return id=="firered" or id=="leafgreen"
+end
+
 function GameVersion.isGen4(id)
   return GameVersion.generation(id) == 4
 end
