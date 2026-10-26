@@ -258,6 +258,90 @@ for _, version in ipairs({ "red", "gold" }) do
 		nativeAnchored, nativeReason = Native.ensureNormalSave(Game, current)
 		T.check(nativeAnchored, "repeated native anchoring is idempotent")
 		T.eq(nativeReason, "already_exists", "repeated native anchoring skips writes")
+
+		-- Native stationary circuits retain both their pose and the next turn.
+		for i, mode in ipairs({ "SPIN_CW", "SPIN_CCW", "SPIN_SLOW", "SPIN_FAST" }) do
+			local map = Game.data.maps[i <= 2 and "FIX_TOWN" or "FIX_ROUTE"]
+			local object = copy(map.objects[1])
+			object.index, object.x = i + 10, 7 + i
+			object.movement, object.range = "SPIN", mode
+			map.objects[#map.objects + 1] = object
+		end
+		Maps.invalidateAll()
+		World:_checkpointRebuild({ map = "FIX_TOWN", x = 2, y = 3, facing = "down" })
+		local spinnerCount = 0
+		for _, actor in pairs(World.npcPool) do
+			if actor.spins then
+				spinnerCount = spinnerCount + 1
+				actor.facing, actor.timer = "left", spinnerCount * 3
+			end
+		end
+		T.eq(spinnerCount, 4, "owned spinner fixtures cover the local and neighbour casts")
+		local spun = assert(checkpoints:capture(Game))
+		local bytes = Serializer.encode(spun)
+		local oldPool, oldNpc = World.npcPool, World.npcs[2]
+		for _, actor in pairs(World.npcPool) do
+			if actor.spins then actor:update(World.map, World.entities) end
+		end
+		T.check(checkpoints:restore(Game, spun), "native stationary spinners reconstruct")
+		T.check(World.npcPool ~= oldPool and World.npcs[2] ~= oldNpc, "spinner reconstruction creates fresh native owners")
+		for id, value in pairs(spun.runtime.spinners) do
+			T.eq(World.npcPool[id].facing, value.facing, "spinner facing rewinds")
+			T.eq(World.npcPool[id].timer, value.timer, "spinner turn timer rewinds")
+		end
+		T.eq(Serializer.encode(spun), bytes, "spinner payload is detached")
+		local function badSpinner(mutator, expected)
+			local invalid = copy(spun)
+			mutator(invalid.runtime.spinners)
+			local saved, pool, map = Game.save, World.npcPool, World.map
+			local accepted, reason = checkpoints:restore(Game, invalid)
+			T.eq(accepted, false, "malformed spinner continuation is refused")
+			T.eq(reason, expected or "invalid_actor_state", "spinner refusal is named")
+			T.eq(Game.save, saved, "spinner refusal preserves the live save")
+			T.eq(World.npcPool, pool, "spinner refusal preserves actor ownership")
+			T.eq(World.map, map, "spinner refusal preserves map ownership")
+		end
+		local spinnerId = next(spun.runtime.spinners)
+		for _, timer in ipairs({ 0, -1, 129, 1.5, "4" }) do
+			badSpinner(function(v) v[spinnerId].timer = timer end)
+		end
+		badSpinner(function(v) v[spinnerId].facing = "diagonal" end)
+		badSpinner(function(v) v[spinnerId].mode = "SPIN_UNKNOWN" end)
+		badSpinner(function(v) v[spinnerId].x = v[spinnerId].x + 1 end)
+		badSpinner(function(v) v[spinnerId].y = "4" end)
+		badSpinner(function(v) v[spinnerId].callback = "not native state" end)
+		badSpinner(function(v) v.ABSENT_obj_12 = copy(v[spinnerId]) end)
+		badSpinner(function(v) v.FIX_TOWN_obj_1 = copy(v[spinnerId]) end)
+		badSpinner(function(v) for id in pairs(v) do v[id] = nil end end)
+		-- Removing one record is well-shaped but cannot reset that native actor.
+		badSpinner(function(v) v[spinnerId] = nil end, "restore_failed")
+		local missing = copy(spun)
+		missing.runtime.spinners = nil
+		local pool, saved, map, state = World.npcPool, Game.save, World.map, randomState
+		local accepted, reason = checkpoints:restore(Game, missing)
+		T.eq(accepted, false, "legacy-shaped payload cannot discard live spinner continuation")
+		T.eq(reason, "restore_failed", "recapture detects a missing continuation")
+		T.eq(World.npcPool, pool, "missing continuation rolls back original actors")
+		T.eq(Game.save, saved, "missing continuation rolls back the save")
+		T.eq(World.map, map, "missing continuation rolls back map ownership")
+		T.eq(randomState, state, "missing continuation rolls back RNG")
+		local rebuild = World._checkpointRebuild
+		World._checkpointRebuild = function(self, ...)
+			rebuild(self, ...)
+			self.npcPool[spinnerId] = nil
+		end
+		accepted, reason = checkpoints:restore(Game, spun)
+		World._checkpointRebuild = rebuild
+		T.eq(accepted, false, "changed reconstructed cast fails closed")
+		T.eq(reason, "restore_failed", "cast mismatch reports transaction failure")
+		T.eq(World.npcPool, pool, "partially applied spinner continuation retains original owners on rollback")
+		T.eq(Maps.load(Game.data, "FIX_TOWN"), map, "partial apply rollback restores cache identity")
+		T.eq(randomState, state, "partial apply rollback restores RNG")
+		Stack.states = { { screenId = "TitleState" } }
+		if Stack.worldOwner then Stack.worldState = nil end
+		T.check(checkpoints:resume(Game, spun), "native title resumes stationary spinner continuation")
+		T.eq(Serializer.encode(assert(checkpoints:capture(Game))), bytes, "title resume fully recaptures spinner state")
+
 		loaded.release()
 	end
 end

@@ -3,6 +3,7 @@
 local Maps = require("src.world.MapLoader")
 local Palette = require("src.render.PaletteFX")
 local V = require("src.core.GameVersion")
+local Spinners = require("src.core.CheckpointSpinners")
 local W = {}
 local active = setmetatable({}, { __mode = "k" })
 local function fields(object)
@@ -30,7 +31,7 @@ function W.available(game)
 		and world
 		and type(world._checkpointRebuild) == "function"
 end
-function W.begin(game, loaded, position)
+function W.begin(game, loaded, position, spinners)
 	assert(W.available(game), "native checkpoint world backend is unavailable")
 	assert(not active[game], "checkpoint reconstruction already active")
 	local world, stack = game.overworld or require("src.world.OverworldController"), assert(game.stack)
@@ -63,6 +64,7 @@ function W.begin(game, loaded, position)
 			game.mods.modSave = loaded.modData or {}
 		end
 		world:_checkpointRebuild(position)
+		Spinners.apply(world, spinners)
 		game.world = world
 		if stack.worldOwner then
 			stack.worldState = world

@@ -5,6 +5,7 @@ local Serializer = require("src.core.SaveSerializer")
 local Version = require("src.core.Version")
 local Runtime = require("src.mods.Runtime")
 local World = require("src.core.CheckpointWorld")
+local Spinners = require("src.core.CheckpointSpinners")
 local C = {}
 local MAX_NODES, MAX_DEPTH = 250000, 64
 
@@ -78,9 +79,8 @@ local ANIMATIONS = {
 	"g3MirageTower",
 	"g3Orb",
 }
--- Until native actor continuations are captured, admit only canonical static
--- actors. A settled player alone does not make wandering or scripted NPC state
--- reconstructible from the saved map definition.
+-- Native stationary spinners carry a qualified semantic continuation. Other
+-- moving/scripted actors still require their own reconstruction backend.
 local function canonicalActors(world)
 	if world.follower or world.strengthActive or world.noWildEncounters then
 		return false
@@ -98,7 +98,7 @@ local function canonicalActors(world)
 			actor.moving
 			or actor.frozen
 			or actor.wanders
-			or actor.spins
+			or ((actor.spins or def.movement == "SPIN") and not Spinners.admit(actor, world))
 			or actor.turns
 			or actor.looksAround
 			or actor.rotates
@@ -109,11 +109,13 @@ local function canonicalActors(world)
 		if
 			actor.cellX ~= def.x
 			or actor.cellY ~= def.y
-			or actor.facing ~= actor.spawnFacing
+			or (not actor.spins and actor.facing ~= actor.spawnFacing)
 			or actor.px ~= actor.cellX * 16
 			or actor.py ~= actor.cellY * 16
 			or actor.fixedFrame ~= def.frame
 			or actor.hidden
+			or actor.shakeFrames or actor.shakeDone or actor.hopFrames
+			or actor.targetX or actor.targetY or actor.marching
 		then
 			return false
 		end
@@ -178,7 +180,7 @@ function C.inspect(game, internal, fs)
 		return refusal("overworld", "unsupported_runtime", "Multiplayer checkpoint reconstruction is unavailable.")
 	end
 	if not canonicalActors(world) then
-		return refusal("overworld", "unsupported_actor_runtime", "Only canonical static native actors are qualified.")
+		return refusal("overworld", "unsupported_actor_runtime", "Only canonical static actors and native stationary spinners are qualified.")
 	end
 	if not World.available(game) then
 		return refusal("overworld", "unsupported_runtime", "This world has no qualified native reconstruction backend.")
@@ -231,6 +233,7 @@ function C.capture(game, internal, fs)
 			},
 			save = save,
 			runtime = {
+				spinners = Spinners.capture(game.overworld),
 				overworld = {
 					map = p.map,
 					x = p.x,
@@ -363,6 +366,9 @@ local function validateData(game, value, fs, resuming)
 	if not validContent(game, save) then
 		return fail("invalid_content", "Checkpoint references unavailable native content.")
 	end
+	if not Spinners.validate(game.data, cp.runtime.spinners) then
+		return fail("invalid_actor_state", "Checkpoint spinner state is invalid or references unavailable native actors.")
+	end
 	if cp.rng ~= nil and (type(cp.rng) ~= "table" or type(cp.rng.love) ~= "string" or cp.rng.love == "") then
 		return fail("invalid_rng", "Checkpoint RNG state is invalid.")
 	end
@@ -390,7 +396,7 @@ local function rebuild(game, cp)
 	local options = game.save.options
 	local loaded = clone(cp.save)
 	loaded.options = options
-	return World.begin(game, loaded, cp.runtime.overworld)
+	return World.begin(game, loaded, cp.runtime.overworld, cp.runtime.spinners)
 end
 local function verify(game, cp, priorRng)
 	restoreRng(cp.rng or priorRng)
