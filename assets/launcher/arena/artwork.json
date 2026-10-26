@@ -1,0 +1,18 @@
+{
+  "tool": "built-in image_gen",
+  "assets": [
+    {
+      "file": "league-stadium.png",
+      "prompt": "Use case: stylized-concept. Asset type: wide 16:9 illustrated backdrop for RetroRecomped monster-battle tournament arena UI. An awe-inspiring Pok\u00e9mon League inspired stadium at twilight, vibrant anime game environment painting, luminous turquoise battlefield lines with a circular center, huge spectator stands, mountain silhouettes and elegant champion towers, warm gold floodlights against deep navy and violet sky. Premium polished videogame key art, atmospheric depth, celebratory energy. Wide composition with clear darker negative space on left half for interface heading; strongest stadium detail on right and lower half. No characters, no lettering, no logos, no watermark. This is background art, not a UI mockup."
+    },
+    {
+      "file": "champion-trophy.png",
+      "prompt": "Use case: stylized-concept. Asset type: transparent cutout trophy for RetroRecomped monster-battle league videogame UI. A magnificent real three-dimensional championship cup in polished warm gold, two dramatic curled wing-shaped handles, sapphire-blue enamel and small violet crystal details, a spherical monster-catching ball-inspired crest at the crown, sturdy elegant dark blue stepped plinth. Premium anime videogame collectible rendered with beautiful metal reflections, readable silhouette, front three-quarter view, the entire trophy visible centered with comfortable margins, no text, no letters, no logo, no environment, no background, genuinely transparent alpha."
+    }
+  ],
+  "reuse": {
+    "trophy_master": "champion-trophy.png",
+    "stadium_master": "league-stadium.png",
+    "usage": "Shared Arena and future cup templates; preserve the trophy alpha channel."
+  }
+}

@@ -1,13 +1,19 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
-local U={}
-local forms={};for n=1,26 do forms[n]=true end
-function U.monLetter(mon)
-  if not mon or (mon.species~='UNOWN' and mon.species~='SPECIES_201' and mon.species~=201)then return nil end
-  local letter=mon.unownLetter
-  if type(letter)=='string'then letter=letter:upper():byte()-64 end
-  if type(letter)=='number' and letter%1==0 and letter>=1 and letter<=26 then return letter end
-  -- The native form selector owns the DV encoding. Its forms table is only
-  -- an availability check; all 26 forms are valid for this query.
-  return require('src.pokemon.Sprites').formIndex({forms=forms},mon)
+-- Reference spellings over the native imported records and native save.
+local Native = require("src.pokemon.Gen2Unown")
+local M = {NUM_UNOWN=Native.NUM_UNOWN, SPECIES="UNOWN", ALPHABET=Native.ALPHABET,
+  name=Native.name, index=Native.index, letterFromDVs=Native.letterFromDVs,
+  dvsForLetter=Native.dvsForLetter, monLetter=Native.monLetter,
+  word=Native.word, formSprite=Native.formSprite,
+  dex=Native.letters, caught=Native.caught, count=Native.count,
+  updateDex=Native.updateDex, registerCatch=Native.registerCatch}
+-- Reference consumers index forms by A..Z; native storage indexes by number.
+-- The public name map is derived on demand; picture records remain native.
+function M.forms(pokemon)
+  local source = Native.forms(pokemon)
+  if not source then return nil end
+  local out = {}
+  for i = 1, 26 do if source[i] then out[Native.name(i)] = source[i] end end
+  return out
 end
-return U
+return M

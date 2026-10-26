@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "status": "scoped acceptance; full parity unproven",
+  "engineSource": "a1008ce933ab3a6784e909f52f61b0fceecc29e8",
+  "ownPullRequest": 80,
+  "mergedCommit": "e5160b54c1c5416d46767b0a5870cbb294a61382",
+  "engineTree": "26118caf5b65c230cb10fec7d06e0831d17f601c",
+  "releaseUrl": "https://github.com/Roxas2712/Gen2Recomped/releases/tag/native-preview-20261025.1",
+  "releaseRefreshedInPlace": true,
+  "remoteAssetsVerified": {
+    "Gen2Recomped-NativePreview.love": "fe457e3ce83fb4bcaf9064363e5771f8f6f6797c32bed77b524376f9aefbdaa0",
+    "Gen2Recomped-NativePreview-20261025.1-macos.zip": "8cb64a4566814bb36f38729a61be3d989bba564940904faa31a281c6a381b6b1",
+    "Gen2Recomped-NativePreview-20261025.1-windows.zip": "9c1bf243d2b6146ec0bee291f57cc667f94441b7f9e5e36e67e88f8e8e72b019",
+    "build-manifest.json": "36b688d3b6231178d948a592b0e9fa6c66780e2dac4d4e105d078afa3b5245fe",
+    "README-Testrelease.txt": "32ed5be8d3703d7940ef7505105424def194c5999910c1e1b754402e3d922da0",
+    "SHA256SUMS.txt": "8987d58058ce58bb1348f9056febe04bb01f31271b3c62e38d8d11ca03404552"
+  },
+  "originalTagUnchanged": true,
+  "engineSuites": [
+    463,
+    463
+  ],
+  "modSdkSuites": [
+    3,
+    3
+  ],
+  "runtimeQualification": {
+    "run": 40297459060,
+    "attempt": 2,
+    "platforms": [
+      "windows-x64",
+      "linux-x64",
+      "macos-x64",
+      "macos-arm64"
+    ],
+    "passed": true,
+    "firstArmAttempt": "No hosted runner acquired; only cancelled job rerun"
+  },
+  "gpu": {
+    "backends": [
+      "opengl",
+      "metal"
+    ],
+    "cameras": [
+      "first",
+      "third"
+    ],
+    "syntheticPixelChecksPerBackend": 196,
+    "unchangedFrontPixelChecksPerBackend": 25344,
+    "unchangedEvolutionPixelChecksPerBackend": 32,
+    "selectedFullModChecksPerBackend": 102,
+    "freshOsWindowImagesInspected": 8,
+    "fullModFilesVerifiedUnchanged": 27329,
+    "romUnchanged": true,
+    "releaseProfileLaunched": false,
+    "staging": "Own QA introduction/map/party/inventory/clock settings; fresh PC and clock-card OS windows; letters have separate GPU captures; front/evolution closure pixel probes use bounded image IO."
+  },
+  "remaining": [
+    "PC art paths bypassing indexed palette drawing can remain grayscale; some item/type labels clip",
+    "Metal unfused QA/.love developer warning overlays",
+    "Full reference GbcPalette mode/custom-ramp/backwards remapping",
+    "Native story RTC setting, DST/SRAM/daily lifecycle",
+    "Complete original-story, models/effects, full mod/gameplay and hardware acceptance",
+    "Performance spikes, save/link interoperability and remaining legacy contracts"
+  ],
+  "newUnownWorkIncluded": false
+}
