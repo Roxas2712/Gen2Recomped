@@ -44,7 +44,7 @@ function W.avatarBytes(self,bytes)
   return true
 end
 local function profile(self,doc)
-  local f=self._accountOverlay;f.profile=doc;f.nickname=doc.name;f.friendTag=doc.friend_tag;f.profileName=doc.name;f.avatarBytes=nil;f.avatarRights=false;f.avatarImage=nil
+  local f=self._accountOverlay;f.profile=doc;f.displayRole=doc.display_role;f.nickname=doc.name;f.friendTag=doc.friend_tag;f.profileName=doc.name;f.avatarBytes=nil;f.avatarRights=false;f.avatarImage=nil
   f.avatarPreset=doc.avatar_preset;f.avatarColor=doc.avatar_color;f.resetAvatar=false
   if type(doc.avatar)=='table' and type(doc.avatar.image_base64)=='string' then
     local ok,bytes=pcall(love.data.decode,'string','base64',doc.avatar.image_base64)
@@ -60,6 +60,8 @@ function W.open(self,after)
   local choice=type(after)=='table' and after.storagePrompt and not (Auth.accountId and Auth.accountId())
   self._accountOverlay={mode=choice and 'storage_choice' or Auth.signedIn() and 'account' or 'login',after=after,email='',name='',password='',confirmation='',code='',repositories={''},restore=true,rects={},scroll=0,accountAtOpen=Auth.accountId and Auth.accountId()}
   if choice then return end
+  local cached,image=require('src.cloud.AccountBadge').read()
+  if cached then local f=self._accountOverlay;f.nickname=cached.name;f.friendTag=cached.friend_tag;f.displayRole=cached.display_role;f.avatarPreset=cached.avatar_preset;f.avatarColor=cached.avatar_color;f.avatarImage=image end
   job(self,Auth.signedIn() and 'devices' or 'policy',Auth.signedIn() and devices or A.policy)
 end
 function W.close(self)
@@ -515,7 +517,7 @@ function W.draw(self)
   elseif f.mode=='account' then
     local Avatar=require('src.ui.ProfileAvatar');local yy=top
     Avatar.draw(f.avatarPreset,f.avatarColor,x+24*s,yy,88*s,f.avatarImage)
-    text(Role.label(f.nickname or Auth.nickname(),{permissions=f.permissions}),x+128*s,yy+8*s,width-170*s,true)
+    text(Role.label(f.nickname or Auth.nickname(),{display_role=f.displayRole,permissions=f.permissions}),x+128*s,yy+8*s,width-170*s,true)
     text(tostring(f.friendTag or 'Loading your friend tag…'),x+128*s,yy+48*s,width-170*s)
     top=yy+106*s
     local presence=require('src.cloud.AccountBadge').presence

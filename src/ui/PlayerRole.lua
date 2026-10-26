@@ -6,6 +6,7 @@ function R.name(person)
   return require('src.translation.Service').launcherLookup('PLAYER')
 end
 function R.label(name,person)
+  if type(person)~='table' or not (person.display_role or person.permissions and person.permissions.role)then return tostring(name or '')end
   return tostring(name or '')..' ['..R.name(person)..']'
 end
 function R.short(person)

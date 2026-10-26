@@ -12,7 +12,7 @@ function B.accept(doc,image)
   local id=Auth.accountId and Auth.accountId()
   if not Auth.signedIn() or not id or type(doc)~='table' or doc.account_id~=id then return end
   if id~=B.account then reset(id)end
-  B.profile={name=doc.name,friend_tag=doc.friend_tag,avatar_preset=doc.avatar_preset,avatar_color=doc.avatar_color}
+  B.profile={name=doc.name,friend_tag=doc.friend_tag,display_role=doc.display_role,avatar_preset=doc.avatar_preset,avatar_color=doc.avatar_color}
   B.image=image or require('src.ui.ProfileAvatar').decode(doc.avatar)
   B.profileAt=os.time()
 end
