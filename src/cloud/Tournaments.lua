@@ -4,7 +4,7 @@ local T={}
 local A=require('src.cloud.NativeAccount')
 local Auth=require('src.cloud.RetroCloud')
 local function uuid(id) return type(id)=='string' and #id==36 and id:match('^[a-f0-9%-]+$') end
-local actions={entry=true,start=true,cancel=true,result=true,resolve=true,room=true}
+local actions={entry=true,start=true,cancel=true,result=true,resolve=true,room=true,battle=true,['battle-result']=true}
 function T.request(method,id,action,payload,match)
  if not Auth.signedIn() then return nil,'Sign in to enter the Arena.' end
  if id and not uuid(id) or match and not uuid(match) or action and not actions[action] then return nil,'Invalid tournament request.' end

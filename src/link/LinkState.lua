@@ -487,6 +487,12 @@ function LinkState:update(dt)
     local msgs = self.net:poll()
     for i, msg in ipairs(msgs) do
       if msg.type == "party" then
+        if self.arenaContext then
+          local a=self.arenaContext
+          if not require('src.link.ArenaProof').same(msg.mons,a.peerParty) or (not self.isHost and (msg.seed~=a.seed or msg.forceLevel~=a.level)) then
+            self:exitWith('The peer team or battle rules changed after preflight.');return
+          end
+        end
         -- the host owns this rule (same as mode); the guest only learns
         -- it here, off the host's own party message
         if not self.isHost then self.forceLevel = msg.forceLevel end
@@ -499,6 +505,7 @@ function LinkState:update(dt)
           verdict = self.verdict,
           strict = Handshake.strict(self.verdict),
           forceLevel = self.forceLevel,
+          onFinished = self.arenaContext and self.arenaContext.onFinished,
         }
         local battle, why
         if self.isHost then
@@ -545,7 +552,7 @@ function LinkState:startMode(mode, isHost)
     self.stage = "battleWait"
     -- the host deals the shared RNG seed for the lockstep simulation
     if isHost then
-      self.linkSeed = love.math.random(1, 2 ^ 30)
+      self.linkSeed = self.arenaContext and self.arenaContext.seed or love.math.random(1, 2 ^ 30)
     end
     self.net:send({ type = "party",
                     mons = Protocol.packParty(self.game.save.party),
