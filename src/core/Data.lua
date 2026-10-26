@@ -1905,6 +1905,7 @@ function Data:seedDefaults()
     self:publishGen2MapMetadata()
     require("src.core.Gen2SpeciesNames").publish(self)
     require("src.pokemon.Gen2Mail").load(self)
+    require("src.compat.gen2.Decorations").useRegistry(self)
     ensureGen2WarpFallbacks(self)
     ensureGen2HomeTextFallbacks(self)
   end
