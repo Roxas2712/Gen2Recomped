@@ -113,6 +113,22 @@ for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
   T.eq(game.stack:top(),cover,'retiring a covered owner preserves the covering native screen')
   game.stack:pop();covered:complete(true)
   T.eq(retiredCallbacks,0,'a covered retired owner cannot complete after the covering screen closes')
+  for _,retirement in ipairs({'release','cancelOwner'})do
+    local weak=setmetatable({},{__mode='v'})
+    local function capture()
+      local payload={owner='retired-capture'};weak[1]=payload
+      Host.currentMod='capture-owner'
+      Source.start(8,{},function()return payload end)
+      local admission=game.stack:top();local held=admission.onDone
+      if retirement=='release'then Source.release();admission:complete(false)
+      else Source.cancelOwner('capture-owner')end
+      Host.currentMod=nil
+      return held
+    end
+    local peer={capture()};collectgarbage('collect')
+    T.eq(type(peer[1]),'function','a peer still retains the continuation wrapper')
+    T.eq(weak[1],nil,'retired source callback captures are released on '..retirement)
+  end
   local customDraws=0
   game.data.transitions={native_peer_style={kind='wipe',frames=2,draw=function()customDraws=customDraws+1 end}}
   local peer=Native.new(game,nil,{style='native_peer_style'});game.stack:push(peer)
