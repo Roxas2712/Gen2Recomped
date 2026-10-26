@@ -20,6 +20,7 @@ local VOLUME = 0.7
 -- step's treble (highgain 0.4^level), so 2X/3X are the 1X filter
 -- applied twice/three times over.
 local volumeScale = 1
+local volumeLevel = 7
 local FILTER_HIGHGAIN = { 0.4, 0.16, 0.064 }
 local filterLevel = 0
 
@@ -39,6 +40,8 @@ local state
 local cryDuck = nil
 local nativeCryLevel, nativeCryHold, nativeCryRestore = 1, 0, false
 local nativeCryFinished
+local nativeBgm, nativeBgmLevel, nativeBgmOutput, nativeBgmContext
+local nativeBgmShared, nativeBgmIncomingShared
 
 -- AUDIO SESSION SUSPEND / RESUME state (mobile interruption: an incoming
 -- call).  Declared up here with the other module state because Music.stop --
@@ -68,8 +71,11 @@ local dsLevel, dsPlayer, dsFade = 1, 1, nil
 
 local function applyVolume(src)
   if not src then return end
-  local vol = VOLUME * volumeScale * dsLevel * dsPlayer
-  vol = vol * nativeCryLevel
+  local native = nativeBgm and require("src.core.GameVersion").isGen3()
+  local option = native and nativeBgmLevel or volumeScale
+  local vol = VOLUME * option * dsLevel * dsPlayer
+  local shared = native and nativeBgm.host.shared()
+  vol = vol * (shared and 1 or nativeCryLevel)
   if cryDuck then vol = vol * cryDuck.scale end
   if Runtime.wantsHook("music.volume") then
     local ctx = {
@@ -78,7 +84,7 @@ local function applyVolume(src)
       onBike = state.onBike,
       surfing = state.surfing,
       fading = state.fade ~= nil,
-      optionScale = volumeScale,
+      optionScale = shared and option or volumeScale,
     }
     local ok, Game = pcall(require, "src.core.Game")
     if ok and Game then
@@ -353,12 +359,22 @@ function Music.play(data, song, loop, ctx)
   song = selectSong(song, ctx)
   -- a hook may silence the cue outright, or swap in a label the dedupe
   -- below has to compare against
-  if not song or song == state.current then return end
+  if not song or song == state.current and not (ctx and ctx.nativeRestart) then return end
   local def = songDef(data, song)
   if not def or state.failed[song] then return end
   local wantLoop = loop ~= false
+  if require("src.core.GameVersion").isGen3() then
+    local ids = require("src.core.Gen3SongIds")
+    local id = ids.resolve(song)
+    nativeBgmIncomingShared = ctx and ctx.nativeShared
+    if nativeBgmIncomingShared == nil then
+      nativeBgmIncomingShared = type(id) == "number" and ids.nameOf(id) == song
+        and not (type(def.tracks) == "table" and #def.tracks > 0)
+    end
+  end
   local src, loopSrc, isChip, err = startSong(data, def, wantLoop)
   if not src then
+    nativeBgmIncomingShared = nil
     state.failed[song] = true
     reportBadDef(data, song, err)
     return
@@ -371,6 +387,10 @@ function Music.play(data, song, loop, ctx)
   state.fade = nil
   -- a new sequence starts at its full level; the player volume stays
   dsLevel, dsFade = 1, nil
+  if nativeBgm and require("src.core.GameVersion").isGen3() then
+    local id = ctx and ctx.nativeSong or tonumber(type(song) == "string" and song:match("^SONG_(%x+)$") or "", 16) or require("src.core.Gen3SongIds").resolve(song)
+    nativeBgm:started(id, true)
+  end
   if loopSrc then
     -- intro plays once, then update() chains to the loop body
     -- (for one-shot jingles the body plays once and doesn't repeat)
@@ -393,6 +413,8 @@ function Music.play(data, song, loop, ctx)
   local previous = state.current
   state.source, state.loopSource, state.chip = src, loopSrc, isChip
   state.current = song
+  nativeBgmShared, nativeBgmIncomingShared = nativeBgmIncomingShared, nil
+  if require("src.core.GameVersion").isGen3() and type(def.tracks) == "table" and #def.tracks > 0 then nativeBgmOutput = true end
   if Runtime.wants("music.started") then
     Runtime.emit("music.started", {
       song = song, previous = previous, chip = isChip,
@@ -406,13 +428,15 @@ function Music.current()
   return state.current
 end
 
-function Music.stop()
+function Music.stop(nativeInternal)
   local previous = state.current
   stopSource(state.source)
   stopSource(state.loopSource)
   require("src.core.ChipAudio").stopMusic()
   state.current, state.source, state.loopSource, state.fade = nil, nil, nil, nil
   state.chip = false
+  nativeBgmShared, nativeBgmIncomingShared = nil, nil
+  if nativeBgm and nativeInternal ~= true then nativeBgm:stopped() end
   state.pendingRestore = nil
   -- An explicit stop outranks a pending resume re-cue: whoever called this
   -- wants silence, and the retry in Music.update fires on a nil state.current
@@ -425,6 +449,8 @@ end
 -- hot reload: forget the failed defs and the playing label so the next cue
 -- re-resolves against the freshly merged registries
 function Music.reload()
+  nativeBgmOutput, nativeBgmContext = nil, nil
+  if nativeBgm then nativeBgm:reset() end
   state.failed = {}
   Music.stop()
 end
@@ -480,6 +506,7 @@ function Music.playMap(data, mapId, onBike, surfing)
     if hour < 4 or hour >= 20 then song = nights[mapId] end
   end
   state.mapSong = song
+  if require("src.core.GameVersion").isGen3() then Music.nativeCommand(data, "map", song) end
   state.onBike = not not onBike
   state.surfing = not not surfing
   local play = effectiveMapSong(data, song)
@@ -593,7 +620,9 @@ function Music.dsLevels() return dsLevel, dsPlayer end
 -- 0-7 music volume (0 mutes), applied to the playing song and the
 -- queued loop body as well as everything played later
 function Music.setVolumeLevel(level)
-  volumeScale = math.max(0, math.min(7, level or 7)) / 7
+  volumeLevel = math.max(0, math.min(7, level or 7))
+  volumeScale = volumeLevel / 7
+  if nativeBgm and require("src.core.GameVersion").isGen3() then nativeBgm:optionChanged() end
   applyVolume(state.source)
   applyVolume(state.loopSource)
 end
@@ -743,6 +772,7 @@ function Music.update(data)
       applyVolume(state.loopSource)
     end
   end
+  if nativeBgm and require("src.core.GameVersion").isGen3() then nativeBgm:update(data) end
   -- distance / indoor muffling mods re-apply volume every frame while
   -- subscribed; otherwise applyVolume only runs on song/option changes
   if Runtime.wantsHook("music.volume") and not state.fade then
@@ -806,4 +836,65 @@ function Music.update(data)
   end
 end
 
+-- Native world commands use numeric identities independently of physical labels.
+function Music.nativeCommand(data, operation, value, keep, context)
+  local Ids = require("src.core.Gen3SongIds")
+  local function number(label)
+    return type(label) == "string" and tonumber(label:match("^SONG_(%x+)$") or "", 16) or Ids.resolve(label)
+  end
+  if not nativeBgm then
+    nativeBgm = require("src.core.Gen3Music").new({
+      version = function() return require("src.core.GameVersion").get() end,
+      master = function() return volumeScale end,
+      sharedLevel = function(factor) return math.max(0, math.min(7, volumeLevel * factor)) / 7 end,
+      level = function(level, apply)
+        nativeBgmLevel = level
+        if apply ~= false then applyVolume(state.source); applyVolume(state.loopSource) end
+      end,
+      outputAvailable = function() return nativeBgmOutput or state.source ~= nil end,
+      nativeOutput = function() return nativeBgmOutput and true or false end,
+      shared = function()
+        if nativeBgmIncomingShared ~= nil then return nativeBgmIncomingShared end
+        return nativeBgmShared and true or false
+      end,
+      fanfare = function() return state.pendingRestore == true or fanfareActive() end,
+      defaultSong = function()
+        if require("src.core.GameVersion").get() == "emerald" then
+          local currentData = nativeBgmContext and nativeBgmContext.game and nativeBgmContext.game.data or data
+          return require("src.core.Gen3MusicPolicy").defaultSong(currentData, nativeBgmContext, nativeBgm.mapSong)
+        end
+        return nativeBgm.mapSong
+      end,
+      stop = function() Music.stop(true) end,
+      play = function(currentData, id, restart)
+        local songs = currentData.audio and currentData.audio.songs or {}
+        local canonical = type(id) == "number" and Ids.nameOf(id) or id
+        local label = canonical and songs[canonical] ~= nil and canonical
+          or type(id) == "number" and ("SONG_%03X"):format(id) or id
+        if not songs[label] then Music.stop(); return end
+        local def = songs[label]
+        local shared = not (type(def.tracks) == "table" and #def.tracks > 0)
+        if shared then Music.stop(true) end
+        Music.play(currentData, label, true, { reason = "gen3", nativeSong = id, nativeRestart = restart, nativeShared = shared })
+      end,
+    })
+    if state.current ~= nil then nativeBgm:started(number(state.current)) end
+    nativeBgm:setMapSong(number(state.mapSong))
+    nativeBgm:refresh()
+  end
+  nativeBgmContext = context
+  if operation == "map" then
+    nativeBgm:setMapSong(number(value))
+  elseif operation == "playbgm" or operation == "fadenewbgm" then
+    if operation == "playbgm" and (keep == 1 or keep == true) then nativeBgm:setSavedSong(value) end
+    return nativeBgm:playSong(data, value)
+  elseif operation == "savebgm" then nativeBgm:setSavedSong(value)
+  elseif operation == "fadeoutbgm" then nativeBgm:fadeOutBgm(4)
+  elseif operation == "fadeinbgm" then nativeBgm:fadeInBgm(data, nativeBgm.mapSong or nativeBgm.savedSong, 4)
+  elseif operation == "fadedefaultbgm" then return nativeBgm:fadeDefaultBgm(data)
+  end
+end
+function Music.nativeSnapshot()
+  return nativeBgm and nativeBgm:snapshot() or nil
+end
 return Music

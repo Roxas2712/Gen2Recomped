@@ -195,6 +195,17 @@ function M.install(native, f, options)
     trace = function()
       return trace
     end,
+    voices = function()
+      local rows = {}
+      for _, voice in ipairs(sources) do
+        rows[#rows + 1] = {
+          file = type(voice.input) == "string" and voice.input or nil,
+          playing = voice:isPlaying(),
+          volume = voice.volume,
+        }
+      end
+      return rows
+    end,
     endSources = function()
       for _, source in ipairs(sources) do
         source:stop()
