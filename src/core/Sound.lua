@@ -264,14 +264,53 @@ end
 -- PlaySoundWaitForCurrent -> WaitForSoundToFinish can poll it
 -- Resolve a cartridge effect by its extracted native name, including effects
 -- that have no shared engine role in audio.sfx.
-function Sound.playNamedEffect(data,name)
-  for id,song in pairs(data and data.audio and data.audio.songs or {}) do
-    if type(song)=="table" and song.sfxName==name and tonumber(song.index) then
-      local src=playPath(data,id,{song=id,m4a=tonumber(song.index)})
-      if src then played("sfx",name) end
-      return src
+-- Native numeric/symbolic sequence aliases must resolve unambiguously.
+function Sound.sequenceKey(data, name)
+  if type(name) ~= "string" and type(name) ~= "number" then return nil end
+  local songs = data and data.audio and data.audio.songs or {}
+  if (type(name) == "string" or type(name) == "number") and (type(songs[name]) == "string" or type(songs[name]) == "table") then
+    return name, songs[name]
+  end
+  local key, found
+  for id, song in pairs(songs) do
+    if type(song) == "table" and (song.sfxName == name or song.musName == name
+       or type(name) == "number" and song.index == name) then
+      if found and found ~= song then return nil, "ambiguous native audio id" end
+      key, found = id, song
     end
   end
+  return key, found
+end
+
+function Sound.playNamedEffect(data, name)
+  local id, song = Sound.sequenceKey(data, name)
+  if not id then return nil end
+  local def = song
+  if type(song) == "table" and tonumber(song.index) and not song.file then
+    def = { song = id, m4a = tonumber(song.index) }
+  end
+  local src = playPath(data, id, def)
+  if src then played("sfx", name) end
+  return src
+end
+
+-- Weather owns a separate native voice: an ambient stop must not cut off a
+-- mod or scripted one-shot of the same cartridge sequence.
+function Sound.playWeatherEffect(data, name, looping)
+  return Runtime.call("field.weather.sound", function(value)
+    local id, song = Sound.sequenceKey(data, value)
+    if not id then return nil end
+    local def = song
+    if type(song) == "table" and tonumber(song.index) and not song.file then
+      def = { song = id, m4a = tonumber(song.index) }
+    end
+    local src = playPath(data, "weather:" .. tostring(id), def)
+    if src then
+      safeAudio("Source:setLooping", src.setLooping, src, looping == true)
+      played("sfx", value)
+    end
+    return src
+  end, name)
 end
 
 function Sound.play(data, name)
