@@ -50,7 +50,9 @@ function love.load()
  end
  -- Compare the ordinary native presentation to its frozen pre-change class.
  Source.release()
- local previousClass=assert(loadfile(assert(os.getenv('FIELD_MOVE_NATIVE_BASELINE'))))()
+ local baseline=assert(loadfile(assert(os.getenv('FIELD_MOVE_NATIVE_BASELINE'))))
+ local loaded={};for k,v in pairs(package.loaded)do if k~='src.core.game3.field_move_show_mon'then loaded[k]=v end end
+ setfenv(baseline,setmetatable({package={loaded=loaded}},{__index=_G}));local previousClass=baseline()
  local classicComparisons=0
  for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
   local f=require('tools.session-runtime.fixture').new(edition);local game=f.game
@@ -60,7 +62,7 @@ function love.load()
    frames[#frames+1]=render(a,function()old:draw()end)
    old:update()
   until game.stack:top()==f.world
-  old.sprite:release()
+  if old.sprite then old.sprite:release()end
   assert(Native.show(game,{species='TEST'}));local state=game.stack:top()
   T.eq(state.effect,nil,'cached inactive facade preserves ordinary native style')
   for tick,expected in ipairs(frames)do
