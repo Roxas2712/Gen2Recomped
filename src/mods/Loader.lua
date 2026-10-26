@@ -1462,7 +1462,7 @@ end
 local function retireCompatibilityMaps()
   for _, name in ipairs({"src.core.game3.runtime", "src.core.Game3",
       "src.core.game3.map", "src.core.game3.player", "src.core.game3.collision", "src.core.game3.objects", "src.core.game3.ow_sprites", "src.core.game3.scripting.space",
-      "src.core.game3.warm", "src.core.game3.asset_stream", "src.core.game3.tileset_native", "src.core.game3.tileset_anim", "src.core.game3.battle_transition"}) do
+      "src.core.game3.warm", "src.core.game3.asset_stream", "src.core.game3.tileset_native", "src.core.game3.tileset_anim", "src.core.game3.battle_transition", "src.core.game3.field_effects"}) do
     local module = package.loaded[name]
     if type(module) == "table" and type(module.release) == "function" then module.release() end
   end

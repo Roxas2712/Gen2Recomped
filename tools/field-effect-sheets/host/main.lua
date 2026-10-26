@@ -11,8 +11,16 @@ function love.load()
  local Assets=require('src.render.Assets');local Host=require('src.mods.Runtime')
  local readbacks,comparisons=0,0
  local function read(canvas)
+  local copy
+  if not canvas:typeOf('Canvas')then
+   copy=g.newCanvas(canvas:getWidth(),canvas:getHeight(),{format='rgba8',dpiscale=1,msaa=0})
+   g.push('all');g.origin();g.setCanvas(copy);g.setShader();g.setScissor();g.setColor(1,1,1,1)
+   g.clear(0,0,0,0);g.setBlendMode('replace','premultiplied');g.draw(canvas,0,0);g.pop()
+   canvas=copy
+  end
   local data=g.readbackTexture and g.readbackTexture(canvas)or canvas:newImageData()
-  local bytes=data:getString();data:release();readbacks=readbacks+1;return bytes
+  local bytes=data:getString();data:release();if copy then copy:release()end
+  readbacks=readbacks+1;return bytes
  end
  local function pixels(w,h,seed)
   local rows={}
