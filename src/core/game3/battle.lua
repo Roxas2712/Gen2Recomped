@@ -11,6 +11,21 @@ local function admitted(c)
 end
 local captures=setmetatable({},{__mode='k'})
 local function serial()local renderer=package.loaded['src.render.Renderer'];return renderer and renderer.frameSerial end
+local function sameTarget(a,b,depth)
+  if a==b then return true end
+  if type(a)~='table'or type(b)~='table'or(depth or 0)>=4 then return false end
+  -- LOVE canvases are userdata; preserve identity for table-based test or
+  -- external wrappers too. Only the MRT binding description is structural.
+  if a.typeOf or b.typeOf then return false end
+  for k,v in pairs(a)do if not sameTarget(v,b[k],(depth or 0)+1)then return false end end
+  for k in pairs(b)do if a[k]==nil then return false end end
+  return true
+end
+local function target(value,depth)
+  if depth==nil then value=love.graphics.getCanvas();depth=0 end
+  if type(value)~='table'or value.typeOf or depth>=4 then return value end
+  local out={};for k,v in pairs(value)do out[k]=target(v,depth+1)end;return out
+end
 local function call(name,...)
   local facade=require('src.core.Game3');local owner=facade._callbackOwner()
   local seams=package.loaded['src.mods.ModSeams']
@@ -56,7 +71,7 @@ function M._captureNative(screen)
     return require('src.core.Game3')._withCallbackOwner(nil,screen._drawNative,screen)
   end)
   if not ok then error(result,0)end
-  if admitted(c)then captures[screen]={serial=serial()}end
+  if admitted(c)then captures[screen]={serial=serial(),target=target()}end
   return true
 end
 function M.abort(result)
@@ -112,7 +127,7 @@ function M._nativeDraw(screen,body)
   local c=runtime:bind(screen);if not c then return body(screen)end
   if Boundary.active('battle.draw')then return Boundary.invoke('battle.draw')end
   local capture=captures[screen];local frame=serial()
-  if capture and(capture.serial~=nil and capture.serial==frame or capture.serial==nil)then
+  if capture and sameTarget(capture.target,target())and(capture.serial~=nil and capture.serial==frame or capture.serial==nil)then
     if capture.serial==nil then captures[screen]=nil end;return true
   end
   local ui=package.loaded['src.core.game3.battle.ui']

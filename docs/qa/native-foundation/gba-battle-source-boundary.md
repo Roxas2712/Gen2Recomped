@@ -19,7 +19,8 @@ This is an incremental presentation and observation bridge over the existing
   an earlier pointer cannot revive that binding. Native method bodies execute
   outside a source callback owner.
 - Explicit battle/UI captures suppress the repeated native screen draw within
-  the same renderer frame. Capturing never advances combat.
+  the same renderer frame and render target. A separate preview target cannot
+  suppress the main screen. Capturing never advances combat.
 - LuaJIT `pairs`/`next` expose typed battle fields, preserving nested typed
   identity. Iterator registry values are weak, so an unused observation cannot
   retain its own weak key through a closure.
