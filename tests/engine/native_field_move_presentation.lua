@@ -22,6 +22,12 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   Source.draw=function(...)draws=draws+1;local a,b=saved.draw(...);saved.draw(...);return a,b end
   local shown,state=Native.show(game,mon,function()completions=completions+1;return 'continued',nil,7 end)
   T.eq(shown,true);T.eq(starts,1,'native entry reaches the existing public start wrapper once')
+  local theme=require('src.ui.Theme');local previousBox=theme.textBox
+  for _,box in ipairs{{tx=0,ty=0,tw=20,th=18},{tx=0,ty=0,tw=32,th=24}}do
+    theme.textBox=box
+    local width,height=state:uiSize();T.eq(width,240,'dialogue themes cannot resize a native field cut-in');T.eq(height,160)
+  end
+  theme.textBox=previousBox
   T.eq(Source.isActive(),true);T.eq(fixture.player.fieldMove,true)
   T.eq(Native.show(game,mon),false,'one native field-move admission cannot overlap another')
   Source.release();T.eq(Source.isActive(),true,'observer teardown preserves an engine-owned field move')
