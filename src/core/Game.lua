@@ -1276,7 +1276,13 @@ function Game:_draw()
   end
   -- 14's render.zones: weather/lighting overlays and custom colorization
   -- recolor or add zones before the blit
-  if ModRuntime.wantsHook("render.zones") then
+  if HotModules.get("src.core.GameVersion").isGen2() then
+    -- CGB colours are already in each native layer. The public zone hook
+    -- owns the completed frame, including Classic's final green ramp.
+    Renderer.gen2FrameManaged = true
+    Renderer.gen2FrameGame = self
+    Renderer.gen2FrameZones = require("src.render.Gen2Presentation").zones(self)
+  elseif ModRuntime.wantsHook("render.zones") then
     zones = ModRuntime.call("render.zones", sameZones, self, zones)
   end
   -- Keyed to whether the map actually DREW, not to whether it is the clear's
@@ -1291,6 +1297,11 @@ function Game:_draw()
   -- Keep shader controls readable even when a local shader paints black.
   local top = activeTop(self.stack)
   Renderer.shaderPresetBypass = top and top.shaderPresetBypass or false
+  if Renderer.gen2FrameManaged and windowUI then
+    Renderer.gen2WindowDraw = function(viewport)
+      ScreenSpaceUI.draw(windowUI,Renderer,viewport,zones,windowUIOverlay)
+    end
+  end
   local viewport, privateViewport
   if Performance.hotPathHoist and not windowUI and Renderer.endFrame == Renderer._nativeEndFrame then
     viewport = Renderer:_endFrameForEngine(zones, worldZones)
@@ -1298,7 +1309,9 @@ function Game:_draw()
   else
     viewport = Renderer:endFrame(zones, worldZones)
   end
-  if windowUI then ScreenSpaceUI.draw(windowUI,Renderer,viewport,zones,windowUIOverlay) end
+  if windowUI and not Renderer.gen2FrameManaged then
+    ScreenSpaceUI.draw(windowUI,Renderer,viewport,zones,windowUIOverlay)
+  end
   -- Persistent tool status is screen-space UI: draw it over the completed
   -- render pipeline with exact playfield/margin geometry, but below mobile
   -- controls. It never becomes an updating game state.
@@ -1546,7 +1559,7 @@ local function keypressedBody(self, key)
         or ow.engaging or ow.emote)))
     if not busy then
       local PaletteFX = require("src.render.PaletteFX")
-      self.save.options.colors = PaletteFX.cycleMode()
+      PaletteFX.writeColorOption(self.save.options, PaletteFX.cycleMode())
       self:writeOptions()
     end
     return

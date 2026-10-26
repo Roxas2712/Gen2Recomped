@@ -47,6 +47,29 @@ PaletteFX.MODE_LABELS = {
   og_inv = "OG INV", gbc_inv = "SGB INV", classic = "CLASSIC",
 }
 PaletteFX.mode = "gbc"
+-- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
+PaletteFX.GEN2_MODES = {"gbc", "og", "classic"}
+local customRamp, customKey = nil, ""
+function PaletteFX.customRamp() return customRamp end
+function PaletteFX.displayKey() return tostring(PaletteFX.mode) .. customKey end
+function PaletteFX.colorModes()
+  return GameVersion.isGen2() and PaletteFX.GEN2_MODES or PaletteFX.MODES
+end
+local function rampKey(ramp)
+  if ramp == nil then return "" end
+  if type(ramp) ~= "table" then return nil end
+  local out = {}
+  for i = 1, 4 do
+    local row = ramp[i]
+    if type(row) ~= "table" then return nil end
+    for c = 1, 3 do
+      local n = row[c]
+      if type(n) ~= "number" or n ~= n or n < 0 or n > 255 then return nil end
+      out[#out + 1] = ("%.17g"):format(n)
+    end
+  end
+  return "#ramp:" .. table.concat(out, ",")
+end
 
 -- ------- dark-cave state (wMapPalOffset)
 --
@@ -404,27 +427,18 @@ end
 -- reported.  SpriteRenderer bakes that OBP0 ramp (PaletteFX.dmgObj) and lets
 -- the zone shader color the result.  RED++ colors sprites through the
 -- usesGbcPack() path in SpriteRenderer instead.
--- Does COLORS currently mean "show me the real hardware colour"?
---
--- Gen2 sheets carry their own CGB OBJ palette (MapObjectPals), and the
--- overworld used to apply it unconditionally -- which made COLORS a no-op out
--- in the world while battle still honoured it.  Gating it here lets the
--- setting mean the same thing everywhere: the two hardware-colour modes wear
--- the ROM's palettes, and the DMG/SGB-flavoured modes fall through to the
--- shade treatment they describe.
--- The four DMG/SGB novelty modes below are shade treatments; everything else
--- means "show me the real colour".  Listing the novelties rather than the
--- hardware modes matters: `gbc` (labelled SGB) is the DEFAULT, and gating it
--- out sent a freshly imported Gen2 game down the shade-remap path -- garish
--- green and cyan terrain with every NPC a black silhouette, because a Gen2
--- tileset has no SGB zone data to colour it with.  Gen2 is a CGB-native game;
--- its own palettes are the sane answer for every mode that is not explicitly
--- asking for a DMG look.
+-- Gen2 BG/OBJ bakes keep the ROM's four indexed entries in every display
+-- mode. Display selection replaces those rows before baking, rather than
+-- falling through to Gen1's zone colourization or its OBJ index lift.
+-- Callers on other generations retain the existing shade-mode gate.
 local GEN2_SHADE_MODES = {
   og = true, og_inv = true, gbc_inv = true, classic = true,
 }
 
 function PaletteFX.usesGen2ObjPal(mode)
+  -- Native Gen2 always retains its original four indexed shades. Falling
+  -- through to Gen1's $D0 OBJ lift loses a shade before the display ramp.
+  if GameVersion.isGen2() then return true end
   mode = mode or PaletteFX.mode
   return not GEN2_SHADE_MODES[mode]
 end
@@ -452,9 +466,8 @@ end
 -- Gen1-era code did -- is why FLASH lit the cave under ADVANCED and did
 -- nothing at all under SGB, the default.
 --
--- The DMG/SGB shade modes are the exception and need no rebuild: there the
--- atlas is the raw sheet and darkness is PaletteFX.setShadeMap, a per-frame
--- register write.
+-- Native Gen2 mono/custom bakes carry the same darkness shift in their
+-- replacement ramp, so FLASH also invalidates/rebuilds those maps.
 function PaletteFX.bakesDarkness()
   if PaletteFX.usesGbcPack() then return true end
   return GameVersion.isGen2() and PaletteFX.usesGen2BgPal()
@@ -1167,54 +1180,85 @@ function PaletteFX.remap(colors, byte)
   return out
 end
 
-function PaletteFX.setMode(mode)
-  local prev = PaletteFX.mode
-  local ok = false
-  for _, m in ipairs(PaletteFX.MODES) do
-    if m == mode then
-      PaletteFX.mode = mode
-      ok = true
-      break
+local function invalidateDisplay()
+  pcall(function() require("src.battle.BattleState").invalidate() end)
+  pcall(function() require("src.render.SpriteRenderer").invalidate() end)
+  pcall(function() require("src.render.TileRenderer").invalidate() end)
+  pcall(function()
+    require("src.world.MapLoader").invalidateAll()
+    local Game = require("src.core.Game")
+    if Game.overworld and Game.overworld.map and Game.overworld.reloadMap then
+      Game.overworld:reloadMap(Game.overworld.map.id, "colors")
     end
+  end)
+end
+local function normalizeMode(mode)
+  if GameVersion.isGen2() then
+    if mode == "dmg" then return "og" end
+    if mode == "custom" then return mode end
   end
-  if not ok then PaletteFX.mode = "gbc" end
-  -- battle pics and overworld sprites bake the active pack into ImageData;
-  -- drop those caches when the pack (or any COLORS mode) changes so the
-  -- next draw re-tints
-  if prev ~= PaletteFX.mode then
-    pcall(function() require("src.battle.BattleState").invalidate() end)
-    pcall(function() require("src.render.SpriteRenderer").invalidate() end)
-    -- RED++'s baked tileset atlas (TileRenderer.getGbcAtlas) is built once
-    -- per loaded map, so a mode toggle needs every cached Map/TileRenderer
-    -- dropped and the currently-visible one rebuilt in place -- otherwise
-    -- the on-screen map keeps its stale (wrong-mode) atlas until the next
-    -- map transition happens to reload it.
-    pcall(function()
-      require("src.world.MapLoader").invalidateAll()
-      local Game = require("src.core.Game")
-      if Game.overworld and Game.overworld.map and Game.overworld.reloadMap then
-        Game.overworld:reloadMap(Game.overworld.map.id, "colors")
-      end
-    end)
+  for _, m in ipairs(PaletteFX.MODES) do
+    if m == mode then return mode end
   end
+  return "gbc"
+end
+-- Set a complete selection atomically: applying persisted mode + ramp must
+-- rebuild the entered map once, never briefly in the previous custom ramp.
+function PaletteFX.setDisplay(mode, ramp)
+  local key = rampKey(ramp)
+  if key == nil then ramp, key = nil, "" end
+  mode = normalizeMode(mode)
+  local changed = mode ~= PaletteFX.mode or ramp ~= customRamp or key ~= customKey
+  PaletteFX.mode, customRamp, customKey = mode, ramp, key
+  if changed then invalidateDisplay() end
+  return mode
+end
+function PaletteFX.setMode(mode)
+  return PaletteFX.setDisplay(mode, customRamp)
+end
+function PaletteFX.setCustomRamp(ramp)
+  PaletteFX.setDisplay(PaletteFX.mode, ramp)
+  return customRamp
 end
 
-function PaletteFX.cycleMode()
+function PaletteFX.cycleMode(delta)
   local cur = PaletteFX.mode or "gbc"
+  if GameVersion.isGen2() and cur == "og_inv" then cur = "og" end
+  local modes = PaletteFX.colorModes()
   local idx = 1
-  for i, m in ipairs(PaletteFX.MODES) do
+  for i, m in ipairs(modes) do
     if m == cur then idx = i; break end
   end
-  PaletteFX.setMode(PaletteFX.MODES[idx % #PaletteFX.MODES + 1])
+  local nextMode = modes[(idx - 1 + (delta or 1)) % #modes + 1]
+  local ramp = customRamp
+  if GameVersion.isGen2() then ramp = nil end
+  PaletteFX.setDisplay(nextMode, ramp)
   return PaletteFX.mode
 end
 
 function PaletteFX.applyOptions(opts)
-  PaletteFX.setMode(opts and opts.colors or "gbc")
+  if GameVersion.isGen2() then
+    local ramp = opts and opts.palette and require("src.render.Palette").ramp(opts.palette)
+    return PaletteFX.setDisplay(opts and (opts.color or opts.colors) or "gbc", ramp)
+  end
+  return PaletteFX.setMode(opts and opts.colors or "gbc")
+end
+function PaletteFX.writeColorOption(opts, mode)
+  opts.colors = mode
+  if GameVersion.isGen2() then
+    opts.color = mode == "og" and "dmg" or mode
+    opts.palette = nil
+  end
+end
+function PaletteFX.presentColors()
+  if GameVersion.isGen2() and PaletteFX.mode == "classic" then return PaletteFX.CLASSIC end
 end
 
 function PaletteFX.modeLabel(mode)
   mode = mode or PaletteFX.mode
+  if GameVersion.isGen2() then
+    return ({gbc="GEN 2", og="DMG", dmg="DMG", classic="CLASSIC", custom="CUSTOM"})[mode] or "GEN 2"
+  end
   -- The GBC hardware mode wears the running game's name: OG RED / OG BLUE
   -- (boot-ROM auto-palette) or OG YELLOW (pokeyellow CGBBasePalettes).
   if mode == "ogred" and GameVersion.isBlue() then return "OG BLUE" end
@@ -1261,17 +1305,29 @@ function PaletteFX.displayColors(c)
   if not c then return nil end
   local mode = PaletteFX.mode or "gbc"
   local out = c
-  if gen2Native() then
+  if GameVersion.isGen3() then
     mode = "gbc"
   end
-  if mode == "og" then
+  if GameVersion.isGen2() and customRamp then return customRamp end
+  if mode == "og" or (GameVersion.isGen2() and mode == "custom") then
     out = PaletteFX.GRAYS
   elseif mode == "og_inv" then
     out = PaletteFX.permute(PaletteFX.GRAYS, INV_MAP)
   elseif mode == "classic" then
-    out = PaletteFX.CLASSIC
+    out = GameVersion.isGen2() and PaletteFX.GRAYS or PaletteFX.CLASSIC
   elseif mode == "gbc_inv" then
     out = PaletteFX.permute(c, INV_MAP)
+  end
+  return out
+end
+-- Static native BG/OBJ bakes resolve the display without a transient BGP.
+-- DARK rows lose their darkness if replaced by a mono/custom ramp; fold the
+-- world shift explicitly only for such replacements. Menus stay independent.
+function PaletteFX.gen2BakeColors(c, dark)
+  local out = PaletteFX.displayColors(c)
+  local mono = PaletteFX.mode == "og" or PaletteFX.mode == "og_inv" or PaletteFX.mode == "classic" or PaletteFX.mode == "custom"
+  if GameVersion.isGen2() and dark and (mono or customRamp) then
+    out = PaletteFX.permute(out, PaletteFX.DARK_BGP)
   end
   return out
 end
@@ -1304,10 +1360,11 @@ local function effectiveSource(c)
     return PaletteFX.effectiveColors(c), 1, 2, 3, 4
   end
   if not c then return nil end
-  local mode = gen2Native() and "gbc" or PaletteFX.mode or "gbc"
+  local mode = GameVersion.isGen3() and "gbc" or PaletteFX.mode or "gbc"
   local reverse = mode == "og_inv" or mode == "gbc_inv"
-  if mode == "og" or mode == "og_inv" then c = PaletteFX.GRAYS
-  elseif mode == "classic" then c = PaletteFX.CLASSIC end
+  if GameVersion.isGen2() and customRamp then c = customRamp; reverse = false
+  elseif mode == "og" or mode == "og_inv" or (GameVersion.isGen2() and mode == "custom") then c = PaletteFX.GRAYS
+  elseif mode == "classic" then c = GameVersion.isGen2() and PaletteFX.GRAYS or PaletteFX.CLASSIC end
   local a, b, d, e = 1, 2, 3, 4
   if shadeMap then a,b,d,e = shadeMap[0]+1,shadeMap[1]+1,shadeMap[2]+1,shadeMap[3]+1 end
   if reverse then a,b,d,e = 5-a,5-b,5-d,5-e end
