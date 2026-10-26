@@ -37,11 +37,12 @@ and was not re-blessed by this update.
 
 ## Current upstream Gen4 effect registrations
 
-Upstream `8d5b4387` adds 53 native Gen4 effect registrations through
-`Gen4MoveEffects` and the existing non-destructive registry merge. Comparing
-canonical fixture surfaces against `ed5189c2` changes only `move_effects`:
-53 additions, no removals, and no changed existing kind/revision records.
-The other six populated sections remain byte-identical. The whole fingerprint
-is now `884a4b379d3e2f83`, and the effect section is `1c01a759e13618d5`.
-The production serializer, digest and all gate mutation assertions remain
-unchanged. These pins acknowledge the new upstream registry surface.
+After integrating `8d5b4387`, the canonical fixture surface differs from
+`44173313` only by 53 new native Gen4 effect registrations. No existing
+record changes or removals occur, and the other six populated sections
+remain byte-identical. The fork's independently qualified GBA revisions
+remain present; its digest therefore differs from the public host's.
+An independent integer FNV-1a implementation confirms the whole digest
+`db02a510ba68bef4` and effect-section digest `59c30db2b705fa16`.
+The complete reviewed canonical input remains pinned alongside every
+section; no production hashing or gate assertions are changed.

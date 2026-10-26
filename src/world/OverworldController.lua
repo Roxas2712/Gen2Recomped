@@ -18573,7 +18573,7 @@ function OverworldState:_worldRise(e, groundForRise, groundSin, cam)
   return (e.py - cam.y) * (1 - groundSin) + rise
 end
 
-function OverworldState:_worldDrawEntity(e, cam, bgY, freeGround, groundForRise, groundSin, grassColors, spriteDepthGround, shadows, riseOf, field)
+function OverworldState:_worldDrawEntity(e, cam, bgY, freeGround, groundForRise, groundSin, grassColors, spriteDepthGround, shadows, riseOf, field, gymFog)
   if not (self.flyAnim and self:hasFlyBird() and e == self.player)
      and not e.hidden and not e.berryVisualEmpty and not plotIsEmpty(e) then
     -- A FREE CAMERA PLACES ITS OWN CHARACTERS.
@@ -18731,7 +18731,7 @@ function OverworldState:_worldReflectionCover(reflectors, count, renderer, cam, 
 end
 
 function OverworldState:_worldEntityLoop(drawEntity, cam, bgY, freeGround, groundForRise,
-                                          groundSin, grassColors, spriteDepthGround, shadows, riseOf, gymFog)
+                                          groundSin, grassColors, spriteDepthGround, shadows, riseOf, field, gymFog)
   local onTop
   for _, e in ipairs(require('src.world.RemotePlayers').entities(self,self.entities)) do
     if self:gen3AboveTopLayer(e) then
@@ -18739,7 +18739,7 @@ function OverworldState:_worldEntityLoop(drawEntity, cam, bgY, freeGround, groun
       onTop[#onTop + 1] = e
     else
       drawEntity(self, e, cam, bgY, freeGround, groundForRise, groundSin,
-                 grassColors, spriteDepthGround, shadows, riseOf, gymFog)
+                 grassColors, spriteDepthGround, shadows, riseOf, nil, gymFog)
     end
   end
   return onTop
@@ -19151,7 +19151,7 @@ local function drawWorldBody(self, cadenceConsumed)
     if not Performance.worldDrawHoist then
       drawEntity = function(_self, e)
         return self:_worldDrawEntity(e, cam, bgY, freeGround, groundForRise, groundSin,
-                                    grassColors, spriteDepthGround, shadows, riseOf, gymFog)
+                                    grassColors, spriteDepthGround, shadows, riseOf, nil, gymFog)
       end
     end
 
@@ -19357,7 +19357,7 @@ local function drawWorldBody(self, cadenceConsumed)
     local closeEntities = FrameProfile.section("  world: entities")
     if Performance.worldDrawHoist then
       local okE, result = pcall(self._worldEntityLoop, self, drawEntity, cam, bgY, freeGround,
-                                groundForRise, groundSin, grassColors, spriteDepthGround, shadows, riseOf, gymFog)
+                                groundForRise, groundSin, grassColors, spriteDepthGround, shadows, riseOf, nil, gymFog)
       if not okE then
         if spriteDepthGround then spriteDepthGround:endSprites(); spriteDepthGround = nil end
         error(result, 0)
@@ -19369,7 +19369,7 @@ local function drawWorldBody(self, cadenceConsumed)
         onTop = onTop or {}
         onTop[#onTop + 1] = e
       else
-        local okE, errE = pcall(drawEntity, self, e, cam, bgY, freeGround, groundForRise, groundSin, grassColors, spriteDepthGround, shadows, riseOf, gymFog)
+        local okE, errE = pcall(drawEntity, self, e, cam, bgY, freeGround, groundForRise, groundSin, grassColors, spriteDepthGround, shadows, riseOf, nil, gymFog)
         if not okE then
           if spriteDepthGround then spriteDepthGround:endSprites(); spriteDepthGround = nil end
           error(errE, 0)
@@ -19425,7 +19425,7 @@ local function drawWorldBody(self, cadenceConsumed)
     end
     closeTiles()
     closeEntities = FrameProfile.section("  world: entities")
-    for _, e in ipairs(onTop or {}) do drawEntity(self, e, cam, bgY, freeGround, groundForRise, groundSin, grassColors, spriteDepthGround, shadows, riseOf, gymFog) end
+    for _, e in ipairs(onTop or {}) do drawEntity(self, e, cam, bgY, freeGround, groundForRise, groundSin, grassColors, spriteDepthGround, shadows, riseOf, nil, gymFog) end
     closeEntities()
 
     local closeFx = FrameProfile.section("  world: FX")
