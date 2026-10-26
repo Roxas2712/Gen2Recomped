@@ -2,7 +2,8 @@
 
 The fork's `codex/portability-testing` branch combines the selected public
 API, native hook, rendering, shader and baseline-test portability series,
-now including native cries (#289) and native music/fanfare commands (#308).
+now including native cries (#289), native music/fanfare commands (#308)
+and Boolean-aware contract comparisons (#309).
 Historical PR-specific acceptance remains below; unrelated #138 and
 cartridge-support work from other branches remain separate. This branch is
 for testing combined changes before upstream reviews and merges individual
@@ -16,8 +17,9 @@ authorize publishing upstream Gen1 changes.
 The qualified production/test runtime is
 `e436fba6228bd6e73a97497107e4a15f61c0d052`: **292/292 engine suites**, SDK
 **3/3**, all quick tiers and B30 pass. Publication/testing metadata edits
-preserve source tree `52e2e3ffc7e8f1145b0edffa16ca3713324bb8d2` and test tree
-`f033a6f7f66579d8322f01536ea16452233f0cf7`.
+preserve source tree `52e2e3ffc7e8f1145b0edffa16ca3713324bb8d2`. The original
+full native test tree is `f033a6f7f66579d8322f01536ea16452233f0cf7`; #309 adds
+one Python tool-regression file and preserves every existing Lua test.
 
 [PR #308](https://github.com/UNDERdecoded/Gen2Recomped/pull/308) retains native
 FireRed/Emerald BGM commands, fanfare timers/waits, native/shared ownership,
@@ -55,6 +57,25 @@ See [the contract/reproduction](native-gba-bgm.md) and
 All ten #308 hosted workflows require maintainer approval
 (`action_required`); the [dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40304523637)
 has zero jobs. Hosted validation is separate from local acceptance.
+
+[PR #309](https://github.com/UNDERdecoded/Gen2Recomped/pull/309) makes the
+complete contract comparison distinguish booleans from numbers at every
+depth. The composed fork passes **13/13 Python tool tests** and an actual
+native CLI smoke (**four workers / 12 complete paired observations**), also
+independently type-checked. Both qualified 268-worker capture sets replay
+successfully through the comparator. The old checker fails all 12 new
+Boolean/number negative cases. These replay results do not represent another
+native engine execution.
+
+The composed checker runtime is `a295d11b0618d8e82a09065f2a30b93917db9fce`.
+Lua source and every existing Lua test remain unchanged from the native
+qualification above. The complete test tree adds only
+`tests/tools/test_contract_observations.py`. See
+[the comparator contract](contract-observation-types.md) and
+[composed source/verification receipt](qa/typed-contract-integration.json).
+All ten #309 hosted workflows also await maintainer approval; its
+[dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40305503119)
+has zero jobs.
 
 ## Historical #258 acceptance
 

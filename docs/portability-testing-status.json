@@ -3198,5 +3198,27 @@
     "full_mod_or_playthrough": false,
     "whole_waveform_parity": false,
     "normal_save_or_import_writes": false
+  },
+  "latest_tool_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/309",
+  "contract_observation_types": {
+    "pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/309",
+    "feature_ref": "a22815fc2631eb34b7d85bc1e002dfb3149a9ac3",
+    "qualified_comparator_ref": "93f0cc5e9b13847b0c180972ea12d617ad7f5e4c",
+    "qualified_combined_ref": "a295d11b0618d8e82a09065f2a30b93917db9fce",
+    "source_tree": "52e2e3ffc7e8f1145b0edffa16ca3713324bb8d2",
+    "native_engine_tests_tree": "a8bae142023263c92ed3a0c518c6d980cb194c1a",
+    "native_original_full_tests_tree": "f033a6f7f66579d8322f01536ea16452233f0cf7",
+    "current_full_tests_tree": "49fceb9bd18e1e3e07fa93b28f0936dac94ad5f4",
+    "only_new_test_path": "tests/tools/test_contract_observations.py",
+    "python_tool_tests_passed": 13,
+    "synthetic_cli_cases": 26,
+    "old_checker_negative_failures": 12,
+    "replayed_capture_sets": 2,
+    "workers_per_capture_set": 268,
+    "paired_observations_per_capture_set": 178264,
+    "new_actual_native_cli_workers": 4,
+    "new_actual_native_cli_paired_observations": 12,
+    "receipt": "docs/qa/typed-contract-integration.json",
+    "hosted_ci": "ten action_required workflows; dedicated40305503119 has zero jobs"
   }
 }
