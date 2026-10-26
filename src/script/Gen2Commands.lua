@@ -2734,12 +2734,9 @@ function Commands.g2_readvar(ctx, var)
   elseif var == 6 then
     ctx.g2Var = countKeys(ctx.save.pokedex and ctx.save.pokedex.seen)
   elseif var == 10 then
-    ctx.g2Var = tonumber(os.date("%H")) or 0
+    ctx.g2Var = require("src.core.Gen2Clock").hour(ctx.save)
   elseif var == 11 then
-    -- g2DayOffset is what mom's SetDayOfWeek picker answered, as a shift off
-    -- the host day, so Arthur still shows up on a real Thursday.
-    ctx.g2Var = ((tonumber(os.date("%w")) or 0)
-      + (ctx.save.g2DayOffset or 0)) % 7
+    ctx.g2Var = require("src.core.Gen2Clock").weekday(ctx.save)
   elseif var == 16 then
     -- BoxFreeSpace counts only the current box, not all available PC slots.
     local Boxes = require("src.pokemon.Boxes")
@@ -2990,7 +2987,8 @@ local WEEKDAYS = {
 -- either way the day still rolls over at real midnight instead of freezing.
 function Commands.g2_set_day_of_week(ctx)
   local game, runner = ctx.game, ctx.runner
-  local host = tonumber(os.date("%w")) or 0
+  local Clock = require("src.core.Gen2Clock")
+  local current = Clock.weekday(ctx.save)
   local picked
   repeat
     Commands.show_text(ctx, "SetDayOfWeek.OakTimeWhatDayIsItText")
@@ -3004,14 +3002,14 @@ function Commands.g2_set_day_of_week(ctx)
     -- no cancel: the ROM's loop watches A only, and onCancel is the only
     -- other path back to runner:resume()
     local menu = require("src.ui.Menu").new(game, items, { cancelable = false })
-    menu.index = host + 1
+    menu.index = current + 1
     menu:clampScroll()
     game.stack:push(menu)
     runner:yield()
     Commands.ask(ctx, Strings(WEEKDAYS[picked + 1])
       .. resolvedText(ctx, "SetDayOfWeek.OakTimeIsItText"))
   until ctx.lastCheck
-  ctx.save.g2DayOffset = (picked - host) % 7
+  Clock.setWeekday(ctx.save, picked)
 end
 
 -- UnownPuzzle (SpecialsPointers row 41).  The chamber scripts run

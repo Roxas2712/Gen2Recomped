@@ -1115,6 +1115,8 @@ function GameVersion.set(id)
   if previous ~= GameVersion.current then
     local palette = package.loaded["src.render.PaletteFX"]
     if palette and palette.clearGen2Context then palette.clearGen2Context() end
+    local clock = package.loaded["src.core.Gen2Clock"]
+    if clock then clock.resetObservations() end
     local decorations = package.loaded["src.compat.gen2.Decorations"]
     if decorations then decorations.useRegistry(nil) end
   end

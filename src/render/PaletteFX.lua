@@ -565,6 +565,10 @@ function PaletteFX.gen2Tod() return gen2Tod end
 -- It must not inherit the live map override, darkness, or atlas bake state.
 function PaletteFX.clockDaytime(hour)
   hour = tonumber(hour)
+  if not hour and GameVersion.isGen2() then
+    local game = package.loaded["src.core.Game"]
+    hour = require("src.core.Gen2Clock").hour(game and game.save)
+  end
   if not hour then hour = tonumber(os.date("%H")) end
   hour = math.floor(hour or 12) % 24
   if hour < 4 then return "NITE" end
