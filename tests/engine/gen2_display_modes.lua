@@ -8,6 +8,8 @@ local TR=require('src.render.TileRenderer');local SR=require('src.render.SpriteR
 local ML=require('src.world.MapLoader');local Assets=require('src.render.Assets')
 local Data=require('src.core.Data');local Game=require('src.core.Game')
 local Battle=require('src.battle.BattleState')
+local assetChanges=0
+Assets.register(function()assetChanges=assetChanges+1 end)
 local A={{255,255,255},{201,53,71},{43,157,89},{0,0,0}}
 local B={{245,239,227},{31,97,193},{167,59,131},{7,13,19}}
 local R={{231,219,207},{181,151,111},{101,67,37},{23,17,11}}
@@ -88,10 +90,12 @@ for _,edition in ipairs({'gold','silver','crystal'})do
   if name=='classic' then T.eq(G.presentColors(),P.CLASSIC,edition..' Classic has one final green ramp')
   else T.eq(G.presentColors(),nil,edition..' mode has no extra green pass '..name)end
  end
- local count=reloads;G.setCustomRamp(R);T.eq(reloads,count,edition..' identical ramp avoids reload')
+ local count=reloads;local assetCount=assetChanges;G.setCustomRamp(R);T.eq(reloads,count,edition..' identical ramp avoids reload')
+ T.eq(assetChanges,assetCount,edition..' identical ramp avoids shared asset churn')
  local oldKey=P.displayKey();R[2][1]=R[2][1]+1;G.setCustomRamp(R)
  T.neq(P.displayKey(),oldKey,edition..' edited ramp changes native cache key')
  T.eq(reloads,count+1,edition..' reapplying edited ramp refreshes current map once')
+ T.eq(assetChanges,assetCount+1,edition..' edited ramp notifies registered external caches once')
  pixels(sprite:resolveImage(),R,0,true,edition..' sprite rebakes edited ramp')
  G.setBgp(0xff)
  pixels(TR.new(ML.load(d,'DISPLAY'),d).image,R,0,false,edition..' transient BGP never baked into atlas')
@@ -103,8 +107,9 @@ for _,edition in ipairs({'gold','silver','crystal'})do
  T.eq(G.cycle(),'classic',edition..' DMG advances to Classic')
  T.eq(G.cycle(),'gbc',edition..' Classic advances to GBC')
  T.eq(G.cycle(-1),'classic',edition..' backward cycle supported')
- count=reloads;G.applyOptions({color='custom',palette='m:80a0c0'})
+ count=reloads;assetCount=assetChanges;G.applyOptions({color='custom',palette='m:80a0c0'})
  T.eq(reloads,count+1,edition..' saved mode and palette applied atomically')
+ T.eq(assetChanges,assetCount+1,edition..' saved mode and palette flush shared assets once')
  T.same(G.customRamp,{{128,160,192},{92,115,138},{49,61,73},{15,19,23}},edition..' saved RGB palette reaches native owner')
  local opts={color='custom',colors='custom',palette='m:80a0c0'}
  P.writeColorOption(opts,P.cycleMode());T.eq(opts.palette,nil,edition..' manual cycle clears saved palette')

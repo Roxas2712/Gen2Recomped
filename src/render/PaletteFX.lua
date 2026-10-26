@@ -1181,11 +1181,15 @@ function PaletteFX.remap(colors, byte)
 end
 
 local function invalidateDisplay()
-  pcall(function() require("src.battle.BattleState").invalidate() end)
-  pcall(function() require("src.render.SpriteRenderer").invalidate() end)
-  pcall(function() require("src.render.TileRenderer").invalidate() end)
+  -- Register native producers before the shared flush. External producers
+  -- subscribe to the same Assets.register bus; private cache calls alone
+  -- leave their atlases stale when a second ramp keeps the same mode ID.
+  for _, name in ipairs({"src.battle.BattleState","src.render.SpriteRenderer",
+                         "src.render.TileRenderer","src.world.MapLoader"}) do
+    pcall(require, name)
+  end
+  require("src.render.Assets").invalidate()
   pcall(function()
-    require("src.world.MapLoader").invalidateAll()
     local Game = require("src.core.Game")
     if Game.overworld and Game.overworld.map and Game.overworld.reloadMap then
       Game.overworld:reloadMap(Game.overworld.map.id, "colors")

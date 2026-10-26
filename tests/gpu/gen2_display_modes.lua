@@ -68,7 +68,8 @@ function M.run()
     end
     P.setDisplay('classic',nil)
     local pixels=scene(true)
-    same(sample(pixels,4,4),color(P.CLASSIC[1]),'native window-space menu included before Classic')
+    same(sample(pixels,w-4,4),color(P.CLASSIC[1]),'native window-space menu included before Classic at top right')
+    same(sample(pixels,w-4,h-4),color(P.CLASSIC[4]),'native final image keeps bottom-right orientation')
     pixels:release()
     local detachZones=bus:wrap('render.zones',function(next,owner,zones)
       zoneCalls=zoneCalls+1

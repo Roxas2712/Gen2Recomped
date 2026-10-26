@@ -21,7 +21,9 @@ operation. Missing custom ramps fall back to grayscale.
 
 `PaletteFX.setDisplay(mode, ramp)` applies a selection atomically. It invalidates
 tile and animation textures, OBJ images, battle images and cached maps, then
-reloads the entered map. Retained battle image references resolve through their
+reloads the entered map. The shared `Assets.register` invalidation bus also
+notifies external texture producers; a second ramp with the same mode ID must
+not leave their baked atlases stale. Retained battle image references resolve through their
 original palette and crop on the next draw. Reapplying an edited ramp table
 also updates its key and invalidates dependent caches. Transient BGP writes do
 not enter static atlas cache keys. Mono/custom world bakes retain cave darkness;
