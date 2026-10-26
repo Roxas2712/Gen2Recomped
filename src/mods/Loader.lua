@@ -1219,6 +1219,8 @@ end
 -- migration it took goes with them.  The journal only exists around an
 -- entry chunk; a later failure (script validation) purges every registry.
 function Loader:_rollback(modId)
+  local stream=package.loaded['src.core.game3.asset_stream']
+  if stream and stream.cancelOwner then pcall(stream.cancelOwner,modId)end
   local move=package.loaded['src.core.game3.field_move_show_mon']
   if move and move.cancelOwner then pcall(move.cancelOwner,modId)end
   for name in pairs(self.journal or self.content) do
@@ -1350,6 +1352,8 @@ function Loader:load(data)
   retireCompatibilityCollision()
   retireBattlePresentation()
   retireFieldEffects()
+  local stream=package.loaded['src.core.game3.asset_stream']
+  if stream and stream.release then stream.release()end
   self.baseData = data
   -- every registry folds against the pristine view of its Data target;
   -- resolution is lazy so optional namespaces may appear later
@@ -1692,6 +1696,8 @@ function Loader.teardown()
   retireCompatibilityCollision()
   retireBattlePresentation()
   retireFieldEffects()
+  local stream=package.loaded['src.core.game3.asset_stream']
+  if stream and stream.release then stream.release()end
   pcall(function()
     Runtime.install(Events.new(), Hooks.new(), nil)
     Runtime.currentMod = nil

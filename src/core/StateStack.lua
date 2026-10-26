@@ -87,6 +87,7 @@ end
 -- settled state; the wants guard keeps the no-listener path allocation-free
 
 function StateStack:push(state, ...)
+  local flows=package.loaded["src.compat.gen1.UiFlow"];if flows then flows.inherit(self,state)end
   table.insert(self.states, state)
   if state.enter then state:enter(...) end
   local depth = #self.states
@@ -202,7 +203,12 @@ end
 -- that wants both puts the motion in animate and calls it from update.
 function StateStack:update(dt)
   local top = self:top()
-  if top and top.update then top:update(dt) end
+  if top and top.update then
+    local flow=top.nativeUiFlow
+    if flow then
+      if flow:valid()then flow:admit(top.update,top,dt)else flow:retire()end
+    else top:update(dt)end
+  end
   for i = self:visibleBase(), #self.states - 1 do
     local state = self.states[i]
     if state.animate then state:animate(dt) end

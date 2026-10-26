@@ -598,10 +598,7 @@ function BattleState:sgbPalettes()
   return nil
 end
 
-local Rulesets = {
-  gen1_faithful = require("src.battle.rulesets.gen1_faithful"),
-  modern_clean = require("src.battle.rulesets.modern_clean"),
-}
+local Rulesets = require('src.battle.Rulesets')
 
 -- the Poké Ball toss chain (TossBallAnimation) plays even with battle
 -- animations off: PlayMoveAnimation jumps to it before checking wOptions
@@ -1366,6 +1363,12 @@ function BattleState.giveWildHeldItem(data, mon, rng, compoundEyes)
 end
 
 function BattleState.newWild(game, species, level, opts)
+  local authored
+  if opts and opts.wildRecord then
+    local why;authored,why=require('src.battle.WildRecord').validate(game.data,opts.wildRecord)
+    assert(authored,why)
+    assert(authored.species==species and authored.level==level,'encounter identity mismatch')
+  end
   local self = newBattle(game)
   self.kind = "wild"
   local playerMon = Party.firstHealthy(game.save.party)
@@ -1430,6 +1433,7 @@ function BattleState.newWild(game, species, level, opts)
   if opts and opts.roamerSeed then
     Pokemon.applySeed(game.data, wild, opts.roamerSeed)
   end
+  if authored then require('src.battle.WildRecord').apply(game.data,wild,authored)end
   self.enemy = makeBattler(game.data, wild, false)
   require("src.battle.Gen2Wild").initialize(self, opts)
   if self.roamer then
@@ -4307,6 +4311,8 @@ function BattleState:updatePresentation(dt)
 end
 
 function BattleState:update(dt)
+  local shortcuts=package.loaded['src.mods.FeatureOptions']and require('src.battle.QuickItem')
+  local quick=shortcuts and shortcuts.request(self)
   self:tickFx()
   -- one sample a second into the fight, while it is still on screen
   self._stadiumReportTicks = (self._stadiumReportTicks or 0) + 1
@@ -4488,6 +4494,7 @@ function BattleState:update(dt)
   end
 
   if self.phase == "menu" then
+    if quick and shortcuts.dispatch(self,quick)then return end
     -- WHO THIS MENU IS FOR, when the left flank is gone.
     --
     -- `self.player` is the left flank, and in a double battle that flank can
