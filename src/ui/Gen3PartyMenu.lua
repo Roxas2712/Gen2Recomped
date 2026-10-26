@@ -1018,6 +1018,38 @@ function Gen3PartyMenu:animateTo(mon, fromHP, onDone)
   self.heal = { mon = mon, from = from, shown = from, onDone = onDone }
 end
 
+function Gen3PartyMenu:confirm()
+  if self.index > #self:party() then
+    if self.hpTransferFrom then
+      self.hpTransferFrom = nil
+      return
+    end
+    -- the CANCEL button VALIDATES when a team is being chosen; everywhere
+    -- else it is the way out
+    if self.chooseOrder then
+      return self:confirmOrder()
+    end
+    return self:close()
+  end
+  self:choose()
+end
+
+function Gen3PartyMenu:cancel()
+  if self.hpTransferFrom then
+    self.hpTransferFrom = nil
+    return
+  end
+  -- B drops a SWITCH that was half-made before it closes the screen
+  if self.switchFrom then
+    self.switchFrom = nil
+    return
+  end
+  if self.chooseOrder then
+    return self:handOrder(nil)
+  end
+  self:close()
+end
+
 function Gen3PartyMenu:update(dt)
   local source=package.loaded['src.ui.game3.party_menu']
   if source then return source._dispatch(self,dt,function()return self:_updateBody(dt)end)end
@@ -1086,20 +1118,9 @@ function Gen3PartyMenu:_inputBody()
       self.index = 1
     end
   elseif input:wasPressed("a") then
-    if self.index > #self:party() then
-      if self.hpTransferFrom then self.hpTransferFrom=nil;return end
-      -- the CANCEL button VALIDATES when a team is being chosen; everywhere
-      -- else it is the way out
-      if self.chooseOrder then return self:confirmOrder() end
-      return self:close()
-    end
-    self:choose()
+    self:confirm()
   elseif input:wasPressed("b") then
-    if self.hpTransferFrom then self.hpTransferFrom=nil;return end
-    -- B drops a SWITCH that was half-made before it closes the screen
-    if self.switchFrom then self.switchFrom = nil return end
-    if self.chooseOrder then return self:handOrder(nil) end
-    self:close()
+    self:cancel()
   end
 end
 

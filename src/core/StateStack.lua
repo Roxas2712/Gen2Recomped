@@ -81,6 +81,7 @@ local deepSaid = {}
 
 function StateStack:init()
   self.states = {}
+  self._modalTracker = nil
 end
 
 -- screen.pushed/popped fire after enter/exit so listeners observe the
@@ -89,6 +90,7 @@ end
 function StateStack:push(state, ...)
   local flows=package.loaded["src.compat.gen1.UiFlow"];if flows then flows.inherit(self,state)end
   table.insert(self.states, state)
+  if self._modalTracker then self._modalTracker:added(state) end
   if state.enter then state:enter(...) end
   local depth = #self.states
   Logger.debug("state stack: push %s (depth %d)",
@@ -169,6 +171,7 @@ end
 function StateStack:restore(state)
   if type(state) ~= "table" then return false end
   table.insert(self.states, state)
+  if self._modalTracker then self._modalTracker:added(state) end
   Logger.warn("state stack: restored %s (depth %d)",
               StateStack.describe(state), #self.states)
   return true
@@ -201,6 +204,17 @@ end
 -- update opens the menu on A, and running that under the menu would open a
 -- second one on the same press) and it must not push, pop or finish. A state
 -- that wants both puts the motion in animate and calls it from update.
+-- Update/covered animation follows native opacity, regardless of rendering.
+-- Hiding a mirrored menu must not animate newly exposed states during logic.
+local function opaqueBase(states, modal)
+  for i = #states, 1, -1 do
+    if modal then
+      if modal:allows(states[i]) and modal:opaque(states[i]) then return i end
+    elseif states[i].isOpaque then return i end
+  end
+  return 1
+end
+
 function StateStack:update(dt)
   local top = self:top()
   if top and top.update then
@@ -209,23 +223,62 @@ function StateStack:update(dt)
       if flow:valid()then flow:admit(top.update,top,dt)else flow:retire()end
     else top:update(dt)end
   end
-  for i = self:visibleBase(), #self.states - 1 do
+  local modal = self._modalTracker
+  if modal and not modal:isCurrent() then modal = nil end
+  for i = opaqueBase(self.states, modal), #self.states - 1 do
     local state = self.states[i]
-    if state.animate then state:animate(dt) end
+    if state.animate and (not modal or modal:allows(state)) then state:animate(dt) end
   end
 end
 
--- index of the lowest state drawn this frame (highest opaque, else 1)
-function StateStack:visibleBase()
+local function visibleByDefault() return true end
+
+-- A pure main-screen predicate: only literal false hides the native state.
+-- Update/input ownership and the stored stack remain unchanged.
+local function modalRenderPlan(self)
+  local modal = self._modalTracker
+  if not modal or not modal:isCurrent() then return end
+  local visible, hooked = {}, Runtime.wantsHook("screen.render_visible")
+  for _, state in ipairs(self.states) do
+    visible[state] = not hooked or Runtime.call("screen.render_visible", visibleByDefault, state) ~= false
+  end
+  return modal:renderPlan(visible)
+end
+
+function StateStack:renderVisible(state, plan)
+  if not state then return false end
+  plan = plan or modalRenderPlan(self)
+  if plan then return plan.visible[state] == true end
+  if not Runtime.wantsHook("screen.render_visible") then return true end
+  return Runtime.call("screen.render_visible", visibleByDefault, state) ~= false
+end
+
+-- index of the lowest state drawn this frame (highest visible opaque, else 1)
+function StateStack:visibleBase(plan)
+  plan = plan or modalRenderPlan(self)
+  if plan then
+    for i = #self.states, 1, -1 do
+      local state = self.states[i]
+      if plan.visible[state] and (state == plan.opaque
+        or not self._modalTracker.records[state] and state.isOpaque) then return i end
+    end
+    return 1
+  end
+  local modal = self._modalTracker
+  if modal and not modal:isCurrent() then modal = nil end
+  if not Runtime.wantsHook("screen.render_visible") then return opaqueBase(self.states, modal) end
   for i = #self.states, 1, -1 do
-    if self.states[i].isOpaque then return i end
+    local state = self.states[i]
+    if self:renderVisible(state) and (modal and modal:opaque(state) or not modal and state.isOpaque) then return i end
   end
   return 1
 end
 
 function StateStack:draw()
-  for i = self:visibleBase(), #self.states do
-    if self.states[i].draw then self.states[i]:draw() end
+  local plan = modalRenderPlan(self)
+  for i = self:visibleBase(plan), #self.states do
+    local state = self.states[i]
+    if self:renderVisible(state, plan) and state.draw then state:draw() end
   end
 end
 
