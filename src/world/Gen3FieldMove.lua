@@ -365,7 +365,7 @@ function Gen3FieldMove:drawBody()
   -- ...and the streaks running through it, which are what make it read as a
   -- sweep rather than a bar
   g.setColor(self.ink[1], self.ink[2], self.ink[3], 0.35)
-  local frame=math.max(0,self.frame-RAISE_FRAMES)
+  local frame=self.frame
   for i = 1, STREAKS do
     local y = BAND_TOP + 3 + (i - 1) * math.floor((BAND_HEIGHT - 6) / STREAKS)
     local len = 40 + (i * 37) % 90
