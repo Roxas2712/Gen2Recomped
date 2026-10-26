@@ -19,6 +19,11 @@ the normal object-load freeze still applies. An explicit palette-query hour
 retains precedence. The existing `world.tod` hook remains a presentation
 override and does not rewrite the saved RTC. A raw scene-clock query uses
 the current native save, independently of a room's forced palette.
+`PokegearMenu:clockParts()` exposes hour/minute/one-based UI weekday from
+the live native world or shared saved clock. The built-in card and external
+presenters use this same getter, retaining authored card-clock overrides.
+This prevents an external presenter from showing its fallback zero clock
+while the internal RTC and built-in text are already correct.
 AUTO neighbours share the effective clock presentation while the entered
 map also follows AUTO. From a pinned room/cave, an AUTO neighbour instead
 uses the saved RTC; that room's unused world-TOD hook is not a neighbour
