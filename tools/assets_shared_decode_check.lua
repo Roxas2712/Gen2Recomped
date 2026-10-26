@@ -41,7 +41,7 @@ local sr = assert(io.open('src/render/SpriteRenderer.lua')):read('*a')
 local _, trFresh = tr:gsub('Assets%.imageData[,(]', '')
 local _, trShared = tr:gsub('Assets%.imageDataShared', '')
 check(trFresh == 0, 'TileRenderer takes no fresh decode any more (' .. trFresh .. ')')
-check(trShared >= 8, 'TileRenderer reads every sheet through the shared decode (' .. trShared .. ')')
+check(trShared >= 10, 'TileRenderer reads every sheet through the shared decode (' .. trShared .. ')')
 check(sr:find('ShadeRecolour.whole(Assets.imageDataShared(path), colors, "obp")', 1, true) ~= nil, 'the OBP FFI pass reads the shared decode')
 check(sr:find('local id = Assets.imageData(path)\n      id:mapPixel(', 1, true) ~= nil, 'the OBP mapPixel fallback, which writes, keeps a fresh one')
 -- nothing in TileRenderer writes into a shared decode

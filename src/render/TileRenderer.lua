@@ -661,7 +661,7 @@ local function getGen2Atlas(key, imagePath, perRow, palMap, palColors,
   if not (love.image and love.image.newImageData) then return nil end
   if gen2AtlasCache[key] ~= nil then return gen2AtlasCache[key] or nil end
   local img = false
-  local ok, src = pcall(Assets.imageData, imagePath)
+  local ok, src = pcall(Assets.imageDataShared, imagePath)   -- read only
   if ok and src then
     local iw, ih = src:getDimensions()
     local total = (iw / 8) * (ih / 8)
@@ -717,7 +717,7 @@ local function getGen2Atlas(key, imagePath, perRow, palMap, palColors,
     -- LoadMapPals does -- so the strip recolors through the same path every
     -- other tile took.
     if roof then
-      local okRoof, sheet = pcall(Assets.imageData, roof.image)
+      local okRoof, sheet = pcall(Assets.imageDataShared, roof.image)   -- read only
       if okRoof and sheet then
         local sw, sh = sheet:getDimensions()
         for n = 0, roof.count - 1 do
