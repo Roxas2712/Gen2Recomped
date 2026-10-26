@@ -192,7 +192,8 @@ local function create(game, mon, onDone, opts)
   end
   local ok,why=pcall(game.stack.push,game.stack,self)
   if not ok then
-    if game.stack.removeAll then game.stack:removeAll({self})else self:exit()end
+    local stack=cohort.stack
+    if stack and stack.removeAll then stack:removeAll({self})else self:exit()end
     return false,why
   end
   if self.entryRejected then self:retire();return false,'native field move start vetoed'end
@@ -283,7 +284,8 @@ end
 function Gen3FieldMove:retire()
   self.done=true;self.cancelled=true;self.completed=false;self.onDone=nil
   if self.discardContinuation then self.discardContinuation()end
-  if self.game.stack and self.game.stack.removeAll then self.game.stack:removeAll({self})end
+  local stack=self.cohort and self.cohort.stack
+  if stack and stack.removeAll then stack:removeAll({self})end
   self:exit()
 end
 function Gen3FieldMove:complete(completed)
