@@ -133,7 +133,7 @@ end
 
 function Gen2AnimPlayer.new(data)
   local anims = data and data.battle_anims or {}
-  return setmetatable({
+  local self = setmetatable({
     data = data,
     anims = anims,
     images = {},
@@ -141,14 +141,19 @@ function Gen2AnimPlayer.new(data)
     warned = {},
     objects = {},
     effects = {},
+    frames = 0,
+    tail = 0,
     -- WideBattle reads these two off the Gen 1 player; keep them defined
     steps = {},
     stepIndex = 1,
     done = true,
   }, Gen2AnimPlayer)
+  self.view = require('src.battle.Gen2AnimView').new(anims, data)
+  return self
 end
 
 function Gen2AnimPlayer:release()
+  if self.view then self.view:release(); self.view = nil end
   for _, img in pairs(self.images) do
     if img and img.release then pcall(img.release, img) end
   end
@@ -237,13 +242,16 @@ local function ballParam(self, opts)
 end
 
 function Gen2AnimPlayer:start(moveId, attackerIsPlayer, opts)
+  if self.presentation then self.presentation.retire() end
+  self.presentation = nil
   self.objects = {}
   self.effects = {}
   self.callStack = {}
-  self.vars = { var = 0, param = 0, loop = nil }
+  self.vars = { var = 0, param = opts and opts.param or 0, loop = nil }
   self.wait = 0
   self.tail = 0
   self.ranFrames = 0
+  self.frames = 0
   self.wobbles = 0
   self.keepSprites = false
   self.keptSprites = nil
@@ -818,6 +826,7 @@ function Gen2AnimPlayer:playCry()
 end
 
 function Gen2AnimPlayer:update()
+  self.frames = (self.frames or 0) + 1
   if self.done then
     if self.tail > 0 then self.tail = self.tail - 1 end
     if self.tail <= 0 and not self.keepSprites then self.objects = {} end
@@ -926,50 +935,42 @@ function Gen2AnimPlayer:finalSprites()
   return self.keptSprites
 end
 
-function Gen2AnimPlayer:drawSprites(objects)
-  local g = love and love.graphics
-  if not g or not objects then return end
-  local shader = require("src.render.PaletteFX").shader()
-  for _, obj in ipairs(objects) do
+-- Project the actual current OAM rows. This is also the input to the native
+-- object renderer; readers never advance frames or own the VM's objects.
+function Gen2AnimPlayer:oam(objects)
+  local out = {}
+  for _, obj in ipairs(objects or self.objects) do
     local set = frameset(self, obj)
     local frame = set and set.frames[obj.frame]
-    -- an oamwait row holds the object in place with nothing drawn
-    local row = frame and frame.oam and self.anims.oam
-                and self.anims.oam[frame.oam]
+    local row = frame and frame.oam and self.anims.oam and self.anims.oam[frame.oam]
     if row then
-      local img = self:sheetImage(obj.def.gfx)
-      local pal = self:paletteFor(obj.def.palette or 0)
-      if img and shader and g.setShader then
-        g.setShader(shader)
-        shader:send("c0", pal[1])
-        shader:send("c1", pal[2])
-        shader:send("c2", pal[3])
-        shader:send("c3", pal[4])
-      end
-      -- BattleAnimOAMUpdate keeps one flip state per object per frame
-      -- ($CA19 = frameFlags XOR obj.oamFlags, masked $E0); it negates the
-      -- sprite offsets and is then XORed into each sprite's own attribute.
       local flip = band(bxor((frame.xflip and 0x20 or 0)
-                             + (frame.yflip and 0x40 or 0),
-                             obj.def.oamFlags or 0), 0xE0)
+                            + (frame.yflip and 0x40 or 0),
+                            obj.def.oamFlags or 0), 0xE0)
       local xf = math.floor(flip / 32) % 2 == 1
       local yf = math.floor(flip / 64) % 2 == 1
+      local palette = obj.def.palette or 0
+      if (obj.fn == 'PokeBall' or obj.fn == 'PokeBallBlocked')
+          and self.opts and self.opts.ballPalette then palette = self.opts.ballPalette end
       for _, sprite in ipairs(row.sprites) do
         local ox = obj.x + obj.xOffset + (xf and -sprite.x - 8 or sprite.x)
         local oy = obj.y + obj.yOffset + (yf and -sprite.y - 8 or sprite.y)
-        local quad = img and self:tileQuad(obj.def.gfx, row.tile + sprite.tile)
-        if quad and ox > 0 and ox < 168 and oy > 0 and oy < 160 then
-          local attr = bxor(sprite.attr, flip)
-          local sx = math.floor(attr / 32) % 2 == 1
-          local sy = math.floor(attr / 64) % 2 == 1
-          g.draw(img, quad,
-                 ox - 8 + (sx and 8 or 0), oy - 16 + (sy and 8 or 0), 0,
-                 sx and -1 or 1, sy and -1 or 1)
+        if ox > 0 and ox < 168 and oy > 0 and oy < 160 then
+          out[#out + 1] = {x=ox, y=oy, tile=row.tile + sprite.tile,
+            attr=bxor(sprite.attr, flip), palette=palette, gfx=obj.def.gfx}
         end
       end
-      if img and shader and g.setShader then g.setShader() end
     end
   end
+  return out
+end
+
+function Gen2AnimPlayer:drawSprites(objects)
+  local View = require('src.battle.Gen2AnimView')
+  self.view = self.view or View.new(self.anims, self.data)
+  self.presentation = self.presentation or View.runner(self)
+  self.presentation.selectObjects(objects)
+  return self.view:drawObjects(self.presentation, self.battle)
 end
 
 return Gen2AnimPlayer
