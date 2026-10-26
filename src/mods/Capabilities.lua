@@ -70,7 +70,7 @@ add("events", "3", "intro.birch_speech.started intro.birch_speech.finished")
 -- Data:applyDefaults selects BirchSpeech on Emerald, Gen3OakSpeechFRLG on
 -- FireRed, and no OakSpeech on Prism. DS imports select their own intros.
 local function nativeVersion(name, version)
-  if name == "unown.unlocked" then
+  if name == "unown.unlocked" or name == "happiness.changed" or name == "pokerus.infected" then
     return version == "gold" or version == "silver" or version == "crystal"
   end
   if name:match("^intro%.birch_speech%.") then return version == "emerald" end
