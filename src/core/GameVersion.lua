@@ -1113,6 +1113,8 @@ function GameVersion.set(id)
   local previous = GameVersion.current
   GameVersion.current = GameVersion.VERSIONS[id] and id or "red"
   if previous ~= GameVersion.current then
+    local palette = package.loaded["src.render.PaletteFX"]
+    if palette and palette.clearGen2Context then palette.clearGen2Context() end
     local decorations = package.loaded["src.compat.gen2.Decorations"]
     if decorations then decorations.useRegistry(nil) end
   end

@@ -22,6 +22,11 @@ queries retain their prior live-state fallback. The native renderer uses
 neighbour's own header and the active clock/Flash presentation state. Native
 map entry and Flash update that state; atlas cache keys include the selected
 row. Animated overdraw receives the same selected palette as the static bake.
+An omitted hour uses the entered world's native clock row, including its
+`world.tod` selection; outside an entered context it keeps the host-clock
+fallback. An explicit hour remains authoritative. Mod load/unload and edition
+changes retire the entered context, so returning to the launcher cannot
+revive a previous world's clock selection.
 
 `PaletteFX.bgSet` accepts the full native dataset or its published
 `gen2Palettes` view. The latter carries a private association with its owner,

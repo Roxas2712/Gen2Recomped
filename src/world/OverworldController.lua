@@ -2524,6 +2524,9 @@ end
 -- modes that do not use the ROM's palettes at all.
 function OverworldState:syncGen2Tod(tod)
   local PaletteFX = require("src.render.PaletteFX")
+  if GameVersion.isGen2() then
+    PaletteFX.bindGen2Context(self.map and self.map.def,Game and Game.save and Game.save.flashLit == true)
+  end
   if not PaletteFX.setGen2Tod(tod) then return end
   if not (GameVersion.isGen2() and PaletteFX.usesGen2BgPal()) then return end
   pcall(function()

@@ -85,6 +85,7 @@ for _,version in ipairs({'gold','silver','crystal'})do
  P.setGen2MapPalette(4,d.maps.CAVE)
  T.eq(P.gen2RowFor(d.maps.CAVE),'NITE',version..' current-map query retains actual native presentation overrides')
  T.eq(P.gen2RowFor(d.maps.ROOM),'DAY',version..' neighbour query still uses own header')
+ T.eq(P.daytimeFor(d.maps.AUTO,nil,false),'NITE',version..' absent explicit hour follows active native clock even in pinned current map')
  P.setGen2MapPalette(1)
  for id,row in pairs({AUTO='NITE',ROOM='DAY',NIGHT='NITE',MORNING='MORN',CAVE='DARK',UNUSED='NITE',CENTER='DAY'})do
   local def=d.maps[id];local map=Map.new(def,ts)
@@ -110,7 +111,7 @@ for _,version in ipairs({'gold','silver','crystal'})do
  d.field.gen2MapPalettes.rules[1].set='CENTER'
  local game={data=d,save={flags={}}};debug.setupvalue(W.setDark,slot,game)
  W.map=Map.new(d.maps.CAVE,ts)
- P.setGen2MapPalette(4)
+ P.setGen2MapPalette(4,d.maps.CAVE)
  -- Keep the actual presentation setter while controlling only reload IO.
  local reload=W.reloadMap;W.reloadMap=function()end
  W:setDark(true)
@@ -145,7 +146,10 @@ for _,version in ipairs({'gold','silver','crystal'})do
  T.eq(row,'DAY',version..' actual loaded public consumer keeps neighbouring room pinned')
  T.same(colors,P.bgSet(d,d.maps.ROOM,'DAY'),version..' loaded consumer uses same native roof selection')
  colors,row=query(W,W.map);T.eq(row,W.daytime,version..' loaded consumer uses actual current bake')
+ W:syncGen2Tod('NITE')
+ T.eq(P.gen2RowFor(d.maps.CAVE),'NITE',version..' native clock sync rebinds canonical Flash after mod reload')
  Loader.teardown();r.release()
+ T.eq(P.gen2RowFor(d.maps.CAVE),'DARK',version..' teardown retires Flash presentation state')
 end
 Assets.image,Assets.imageData=saved.image,saved.imageData;love.image=saved.loveImage;love.graphics.newImage=saved.newImage
 W.map=saved.map;W.game=saved.game;W.dark=saved.worldDark;debug.setupvalue(W.setDark,slot,oldGame)

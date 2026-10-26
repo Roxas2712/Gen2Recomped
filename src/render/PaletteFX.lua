@@ -495,6 +495,10 @@ local GEN2_MAP_PALETTE_ROW = {
 }
 local gen2FlashUsed=false
 local gen2CurrentDef
+function PaletteFX.clearGen2Context()gen2CurrentDef=nil;gen2FlashUsed=false end
+function PaletteFX.bindGen2Context(def,flashUsed)
+  gen2CurrentDef=type(def)=='table'and def or nil;gen2FlashUsed=flashUsed==true
+end
 function PaletteFX.setGen2FlashUsed(on)gen2FlashUsed=on==true end
 function PaletteFX.effectiveGen2Tod()return darkWorld and 'DARK'or gen2Tod end
 -- A neighbour uses its own header, the native hooked clock and the same Flash
@@ -583,7 +587,7 @@ function PaletteFX.daytimeFor(mapDef, hour, flashUsed)
   local id=require('src.render.Gen2PaletteContext').id(mapDef)
   if id~=nil then
     if id==4 then return flashUsed==true and 'NITE'or 'DARK'end
-    return GEN2_MAP_PALETTE_ROW[id]or PaletteFX.clockDaytime(hour)
+    return GEN2_MAP_PALETTE_ROW[id]or(hour==nil and gen2CurrentDef and gen2ClockTod)or PaletteFX.clockDaytime(hour)
   end
   -- Darkness wins outright and the clock stops mattering, which is what
   -- .NeedsFlash does: an unlit cave is the DARKNESS row at noon.
