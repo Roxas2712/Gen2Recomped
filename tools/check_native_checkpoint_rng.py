@@ -21,13 +21,14 @@ def main():
     from qa_storage import Storage
     storage=Storage(root)
     atexit.register(storage.close)
-    qa_source,qa_cache,qa_copy=storage.source,storage.cache,storage.copy
+    qa_source,qa_cache=storage.source,storage.cache
     qa_profile,qa_run=storage.destination,storage.run
     binary=args.love.resolve(strict=True)
     for path in (root,binary):qa_source(path)
     sources={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in (root/'src').rglob('*.lua')}
     output=args.output.resolve()
-    qa_cache(output.parent);qa_copy(output);output.mkdir(parents=True,exist_ok=False)
+    # These are generated reports, not disposable frozen engine copies.
+    qa_cache(output.parent);output.mkdir(parents=True,exist_ok=False)
     identity='oasc-gen2recomp-qa-checkpoint-rng-'+str(time.time_ns())
     qa_profile(Path.home()/'Library/Application Support/LOVE'/identity)
     source=qa_run(['git','rev-parse','HEAD'],cwd=root,check=True,capture_output=True,text=True).stdout.strip()
