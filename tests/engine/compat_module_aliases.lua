@@ -19,7 +19,12 @@ local names=require('src.mods.Gen1Compat')
 for _,pair in ipairs({{'src.world.game3.Follower','src.compat.game3.Follower'},
  {'src.core.game3.pokemon','src.compat.game3.Pokemon'},
  {'src.core.gen2.Unown','src.compat.gen2.Unown'}})do
- T.eq(require(pair[1]),require(pair[2]),'native adapter preserves require identity '..pair[1])
+ local source,adapter=require(pair[1]),require(pair[2])
+ if loadfile(pair[1]:gsub('%.','/')..'.lua')then
+  T.neq(source,adapter,'concrete provider outranks the fallback '..pair[1])
+ else
+  T.eq(source,adapter,'native adapter preserves require identity '..pair[1])
+ end
 end
 
 for name in pairs(names.UNAVAILABLE)do
