@@ -1327,6 +1327,9 @@ function love.run()
 
   local FrameCap = require("src.core.FrameCap")
   local paced = pacingEnabled()
+  -- what the pacer does with the time it would otherwise sleep: the GC
+  -- budget, then queued atlas / sprite builds (src/core/IdleStream.lua)
+  local idleWork = require("src.core.IdleStream").idle(GCFrameBudget.idle)
   -- The deadline the next present() should not beat.  Carried forward one
   -- budget per frame so pacing stays even instead of drifting with the
   -- per-frame sleep-granularity jitter.
@@ -1427,7 +1430,7 @@ function love.run()
     if love.timer then
       if paced then
         local closeSleep = FrameProfile.section("frame pacing: sleep")
-        nextFrame = FrameCap.pace(love.timer, love.window, presented, nextFrame, GCFrameBudget.idle)
+        nextFrame = FrameCap.pace(love.timer, love.window, presented, nextFrame, idleWork)
         closeSleep()
       else
         love.timer.sleep(0.001)
