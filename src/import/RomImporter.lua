@@ -1343,6 +1343,7 @@ local function markerFor(version)
   if version == 'ruby' or version == 'sapphire' then
     revision = revision .. 'rs-transition-classes-v1:'
   end
+  if GameVersion.generation(version)==3 then revision=revision..'gba-field-move-art-v1:'end
   return CACHE_FORMAT .. revision .. GameVersion.info(version).sha1
 end
 

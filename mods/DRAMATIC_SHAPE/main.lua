@@ -78,12 +78,56 @@ mod.V = V
 -- seam and nothing in lib/ reads it.
 _G.__DRAMATIC_SHAPE_V = V
 
+-- C1 (mod half) -- THE BIG TABLES AS BYTECODE, in the save directory.
+--
+-- lib/Structures.lua is 1.6 MB and data/gen3_metatiles.lua 0.6 MB of table
+-- constructors; `load(source)` parses them on every boot (Structures) and on
+-- the first Gen 3 map (gen3_metatiles), seconds on a handheld. The mod's own
+-- files live in a read-only archive, so the compiled form goes beside the
+-- voxel mesh cache instead, keyed by an MD5 of the source: a mod update
+-- changes the digest and the stale dump is simply never consulted. A dump
+-- this VM cannot load (another LuaJIT, plain Lua) fails `load` and the
+-- source is parsed as before; `V.bytecodeCache = false` turns it off.
+local BYTECODE_DIR = "dramatic_shape_voxel_cache/bytecode"
+local BYTECODE_TAG = "VXB1 "
+local function bytecodeTools()
+  if V.bytecodeCache == false then return nil end
+  if not (string.dump and love and love.filesystem and love.data
+          and love.data.hash and love.data.encode) then return nil end
+  return love.filesystem, love.data
+end
+local function cachedChunk(rel, source, name)
+  local fs, data = bytecodeTools()
+  if not fs then return nil end
+  local okH, digest = pcall(function()
+    return data.encode("string", "hex", data.hash("md5", source))
+  end)
+  if not okH or type(digest) ~= "string" then return nil end
+  local path = BYTECODE_DIR .. "/" .. rel:gsub("[/\\]", "_") .. "c"
+  local header = BYTECODE_TAG .. digest .. "\n"
+  local okR, bytes = pcall(fs.read, path)
+  if okR and type(bytes) == "string" and bytes:sub(1, #header) == header then
+    local chunk = load(bytes:sub(#header + 1), name)
+    if chunk then return chunk end
+  end
+  local chunk, err = load(source, name)
+  if not chunk then return nil, err end
+  pcall(function()
+    local okD, dump = pcall(string.dump, chunk, true)
+    if not (okD and type(dump) == "string" and #dump > 0) then return end
+    if fs.createDirectory(BYTECODE_DIR) then fs.write(path, header .. dump) end
+  end)
+  return chunk
+end
+
 local function chunkFor(rel)
   local source = mod:read(rel)
   if not source then
     error(("DRAMATIC_SHAPE: %s is missing -- reinstall the mod"):format(rel), 0)
   end
-  local chunk, err = load(source, "@" .. mod.path .. "/" .. rel)
+  local name = "@" .. mod.path .. "/" .. rel
+  local chunk, err = cachedChunk(rel, source, name)
+  if not chunk then chunk, err = load(source, name) end
   if not chunk then
     error(("DRAMATIC_SHAPE: %s did not compile: %s"):format(rel, tostring(err)), 0)
   end

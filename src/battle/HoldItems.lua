@@ -49,8 +49,17 @@ end
 -- no name for comes back as a number and matches no rule below, which is
 -- the same silence an unknown ability gets.
 local function nativeEffect(battler, native)
-  if type(native) == "table" then return native.effect, native.parameter, HoldItems.defOf(battler) end
-  local def = HoldItems.defOf(battler)
+  local def, item = HoldItems.defOf(battler)
+  -- Native Choice Band, King's Rock and Shell Bell entries are intrinsic; mutable
+  -- descriptive metadata cannot remove it. Public hook substitutions still
+  -- run below, and item ids in other generations keep their existing reader.
+  if require("src.core.GameVersion").isGen3() then
+    local number = tonumber(item) or tonumber(def and def.index)
+    if number == 186 then return "CHOICE_BAND", 0, def end
+    if number == 187 then return "FLINCH", 10, def end
+    if number == 219 then return "SHELL_BELL", 8, def end
+  end
+  if type(native) == "table" then return native.effect, native.parameter, def end
   if not def then return nil end
   -- A Gen-2 held_items definition owns this item's GSC behavior; do not also
   -- dispatch Polished's name-based modern berry in the second item engine.
@@ -69,8 +78,8 @@ function HoldItems.effectOf(battler, trigger, native)
   local effect, param, def = nativeEffect(battler, native)
   if not require("src.mods.Runtime").wantsHook("held_item.trigger") then return effect, param, def end
   local definition = def or HoldItems.defOf(battler)
-  local chosen, amount = require("src.battle.HeldItemRead").read(battler, definition, effect, param or 0, trigger, 3)
-  return chosen, amount, def
+  local chosen, amount, changed = require("src.battle.HeldItemRead").read(battler, definition, effect, param or 0, trigger, 3)
+  return chosen, amount, def, changed
 end
 
 HoldItems.effect = HoldItems.effectOf
@@ -435,9 +444,7 @@ function HoldItems.trigger(battler, when)
              consume = true }
   end
   if effect == "CRITICAL_UP" then
-    if require("src.core.GameVersion").isGen3()
-      and (battler.focusEnergy or battler.expFocusEnergy) then return nil end
-    if mon.hp * divisor > max then return nil end
+    if mon.hp * divisor > max or (gba and (battler.focusEnergy or battler.expFocusEnergy)) then return nil end
     return { kind = "critUp", effect = effect, delta = 2, consume = true }
   end
   return nil

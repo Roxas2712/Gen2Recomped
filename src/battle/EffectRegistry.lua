@@ -90,6 +90,10 @@ function EffectRegistry.makeCtx(battle, user, target, move, moveInst, isCalled)
       return battle:accuracyRoll(move, user, target)
     end,
     callMove = function(moveId)
+      if require("src.core.GameVersion").isGen3() then
+        moveId = require("src.battle.EnemyMoveChoice").resolveMove(battle.data, moveId)
+        if not moveId then return nil end
+      end
       return battle:performMove(user, target, { id = moveId, pp = 1 }, true)
     end,
     side = function(who) return battle:sideOf(who) end,
@@ -154,6 +158,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   local lockedOHKO = record and record.gbaOHKO
     and require("src.battle.Gen3LockOn").active(battle, user, target)
   if target.protecting and (not gba or target ~= user) and EffectRegistry.protectAffected(move) and not lockedOHKO then
+    if gba and battle._gbaMoveFrame then battle._gbaMoveFrame.missed = true end
     battle:cancelMoveAnim()
     if record and record.onProtect and record.onProtect(ctx) then return end
     battle:sayNext(Strings("%s\nprotected itself!", displayName(target)))
@@ -219,6 +224,11 @@ function EffectRegistry.runDamaging(battle, ctx, record)
 
   if gba and record and record.gbaAfterAccuracy then record.gbaAfterAccuracy(ctx) end
   if gba then hits = hitCount(ctx, record) end
+  if gba and user.mon.hp <= 0 and not (record and record.explode) then
+    ctx.gbaNoEffect = true
+    if battle._gbaMoveFrame then battle._gbaMoveFrame.noEffect = true end
+    return
+  end
 
   -- damage per hit
   local dmg, info
@@ -266,6 +276,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     if info.typeMult == 0 and info.ability then battle.arenaOutcome.ability = true end
   end
   if info.typeMult == 0 then
+    if gba and battle._gbaMoveFrame then battle._gbaMoveFrame.noEffect = true end
     -- type immunity zeros damage and sets wMoveMissed in Gen 1, so no anim
     if not (record and record.explode) then battle:cancelMoveAnim() end
     missBeat(battle, record)
@@ -283,6 +294,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     return
   end
   if info.missed then
+    if gba and battle._gbaMoveFrame then battle._gbaMoveFrame.missed = true end
     -- 0.25x floored the damage to zero: the original registers a miss
     if not (record and record.explode) then battle:cancelMoveAnim() end
     missBeat(battle, record)
@@ -377,6 +389,10 @@ function EffectRegistry.runDamaging(battle, ctx, record)
                  animContext = hitCtx }
       table.insert(battle.queue, battle.nextInsert, hitRow)
     end
+    if gba then
+      require("src.battle.Gen3SubstitutePresentation").mark(battle, hitRow, user,
+        tripleKick and 4 - h or nativeMulti and hits - h + 1 or 0)
+    end
     local hadSub = target.substituteHP ~= nil
     local hitDamage = dmg
     if not hadSub then
@@ -391,6 +407,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     local substituteBefore = target.substituteHP
     local dealt, endured = battle:applyDamage(target, hitDamage, true, info.damageAdjustment)
     if (info.gbaSetDamage or info.gbaBeatUp) and substituteBefore then dealt = math.min(dealt, substituteBefore) end
+    if gba then require("src.battle.Gen3PostHitItems").damage(battle, hitDamage, dealt, hadSub) end
     totalDealt = totalDealt + dealt
     if gba and not hadSub and require("src.battle.Damage").isSpecial(move.type) then
       ctx.gbaSpecialHit = true
@@ -540,8 +557,12 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   -- SITRUS BERRY the hit dropped below half goes off immediately rather
   -- than waiting for the end of the turn.
   local gba = require("src.core.GameVersion").isGen3()
-  if gba then require("src.battle.GbaItemSchedule").moveEnd(battle) end
-  if totalDealt > 0 and battle.shellBellDrain then
+  if gba then
+    local frame = battle._gbaMoveFrame
+    if frame then frame.noEffect = ctx.gbaNoEffect end
+    require("src.battle.GbaItemSchedule").moveEnd(battle)
+  end
+  if not gba and totalDealt > 0 and battle.shellBellDrain then
     local flinch = HoldItems.flinchChance(user, move)
     if flinch > 0 and target.mon.hp > 0 and not target.substituteHP
        and (battle.rng or love.math.random)(0, 99) < flinch

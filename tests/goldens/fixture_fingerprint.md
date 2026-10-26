@@ -35,6 +35,51 @@ by section, and then update only reviewed pins. Run the gate again and keep
 the mutation assertions enabled. The ROM-dependent vanilla golden is separate
 and was not re-blessed by this update.
 
+## Native GBA Follow Me (#196)
+
+The intentional `FOLLOW_ME_EFFECT` primary record adds one native registry
+entry. With it the full fixture digest is `128fc071ae7249cd` and the
+`move_effects` section is `7cd0ac0f527968fb`. Removing only that entry
+restores full digest `41e69caf4afa35ab` and section `3bef37494ca4a845`.
+All six other populated section digests stay identical. Only these two pins
+change for this integration; mutation/determinism checks remain enabled.
+
+## Native GBA Helping Hand
+
+The intentional `HELPING_HAND_EFFECT` primary record adds one native registry
+entry. The full digest becomes `032184f68094e9ca`; the `move_effects` section
+changes from `7cd0ac0f527968fb` to `52cc8398513ed12c`. Removing only that entry restores
+the former full digest `128fc071ae7249cd` and effect section. All six other
+populated sections stay identical. Mutation and determinism checks remain enabled.
+
+## Native GBA Spit Up revision
+
+`SPIT_UP_EFFECT.rev = 1` marks its corrected set-damage behavior. The full
+digest becomes `397df21576af62f1`; `move_effects` changes from
+`52cc8398513ed12c` to `c62807cde682a669`. Removing only that record revision
+restores full digest `032184f68094e9ca` and the former effect section. All six
+other populated sections stay identical; no other golden or algorithm changes.
+
+Beat Up party execution increments `BEAT_UP_EFFECT.rev` to 1. Audited fixture
+digest `397df21576af62f1` becomes `d518411055f17444`; only `move_effects`
+changes (`c62807cde682a669` to `f45a80ce5e45ef42`). Removing the revision
+restores the former full digest. Other sections and mutation checks remain
+unchanged. See `docs/native-gba-beat-up.md`.
+
+Beat Up's native joined side-party execution increments `BEAT_UP_EFFECT.rev`
+from 1 to 2. Audited fixture digest `d518411055f17444` becomes
+`fdbfa30b20cbbaef`; only `move_effects` changes (`f45a80ce5e45ef42` to
+`e4d28f474c15cd8b`). Restoring revision 1 restores the prior full digest;
+all six other populated sections remain unchanged. See
+`docs/native-gba-beat-up-side-parties.md`.
+
+Native critical guards change scripted Beat Up's policy and increment
+`BEAT_UP_EFFECT.rev` from 2 to 3. Audited fixture digest
+`fdbfa30b20cbbaef` becomes `a000e3862d11a73a`; only `move_effects` changes
+(`e4d28f474c15cd8b` to `cca86e08b893522c`). Restoring revision 2 restores
+the former digest. The other six populated sections remain unchanged. See
+`docs/native-gba-critical-context.md`.
+
 ## Current upstream Gen4 effect registrations
 
 After integrating `8d5b4387`, the canonical fixture surface differs from

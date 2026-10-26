@@ -30,8 +30,8 @@
 --   as it is being resolved -- bouncing it back, stealing it, forbidding it
 --   -- which needs a resolution step performMove does not have.
 --
---   ASSIST and NATURE POWER call a move chosen from outside the user's own
---   move list (the rest of the party; the terrain), and SECRET POWER's side
+--   ASSIST calls a move from the rest of the party. NATURE POWER now uses
+--   native Gen3NaturePower registration in Gen3Builtins. SECRET POWER's side
 --   effect is chosen the same way.  The terrain half of that is real work
 --   in the world layer, not the battle one.
 --
@@ -56,6 +56,7 @@ local P = Gen3MoveEffects.primary
 local S = Gen3MoveEffects.secondary
 local F = Gen3MoveEffects.full
 local ACC = Gen3MoveEffects.accuracyChecked
+
 
 -- MoveEffects is required lazily inside the callbacks: it requires THIS file
 -- while it is still loading, so a top-level require here would be a cycle.

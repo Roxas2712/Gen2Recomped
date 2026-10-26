@@ -136,6 +136,59 @@ function Gen4Shade.forTemplate(template)
   end
 end
 
+-- uniforms(template) -> { count, dirs, cols, share, up } or nil
+--
+-- THE SAME EQUATION AS `forTemplate`, laid out for a vertex shader.  G2 moves
+-- the multiply off the CPU: with the normal carried as a vertex attribute the
+-- shader evaluates `lit`, the ambient share and the up-anchor per vertex, and
+-- a new light band is a uniform upload rather than a rebuild of every mesh
+-- (Gen4Ground:dropLitModels).  The numbers are the ones `forTemplate` folds
+-- into its closure -- `dirs` and `cols` are the flattened lights, `share` is
+-- k per channel, `up` is lit(0, 1, 0) -- so the two cannot disagree.
+--
+-- Nil for the same template `forTemplate` answers nil for: the caller then
+-- leaves the light uniform at "off" and every vertex multiplies by 1.
+Gen4Shade.MAX_LIGHTS = 4
+
+function Gen4Shade.uniforms(template)
+  if type(template) ~= "table" then return nil end
+  local dirs, cols, count = {}, {}, 0
+  for _, light in pairs(template.lights or {}) do
+    local u, c = light.unit, light.colour
+    if u and c and count < Gen4Shade.MAX_LIGHTS then
+      count = count + 1
+      dirs[count] = { u[1] or 0, u[2] or 0, u[3] or 0 }
+      cols[count] = { (c[1] or 0) / CHANNEL_MAX, (c[2] or 0) / CHANNEL_MAX, (c[3] or 0) / CHANNEL_MAX }
+    end
+  end
+  if count == 0 then return nil end
+  for i = count + 1, Gen4Shade.MAX_LIGHTS do
+    dirs[i], cols[i] = { 0, 0, 0 }, { 0, 0, 0 }
+  end
+  local amb, dif = template.ambient or {}, template.diffuse or {}
+  local function share(i)
+    local a, d = amb[i] or 0, dif[i] or 0
+    if a + d <= 0 then return 1 end
+    return a / (a + d)
+  end
+  local ur, ug, ub = 0, 0, 0
+  for i = 1, count do
+    local v = -dirs[i][2]
+    if v > 0 then
+      ur = ur + v * cols[i][1]
+      ug = ug + v * cols[i][2]
+      ub = ub + v * cols[i][3]
+    end
+  end
+  return {
+    count = count,
+    dirs = dirs,
+    cols = cols,
+    share = { share(1), share(2), share(3) },
+    up = { ur, ug, ub },
+  }
+end
+
 -- forMap(arealight, member, hour, minute) -> shade, template, index
 --
 -- The whole lookup in one call: the member a map's `areaLight` names, the

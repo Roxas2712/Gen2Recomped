@@ -126,6 +126,7 @@ end
 -- settled state; the wants guard keeps the no-listener path allocation-free
 
 function StateStack:push(state, ...)
+  local flows=package.loaded["src.compat.gen1.UiFlow"];if flows then flows.inherit(self,state)end
   if self.worldOwner and state.isOverworld then
     if self.worldState and self.worldState ~= state then self:clearWorld() end
     self.worldState, self.worldOwner.world = state, state
@@ -264,7 +265,12 @@ end
 
 function StateStack:update(dt)
   local top = self:active()
-  if top and top.update then top:update(dt) end
+  if top and top.update then
+    local flow=top.nativeUiFlow
+    if flow then
+      if flow:valid()then flow:admit(top.update,top,dt)else flow:retire()end
+    else top:update(dt)end
+  end
   local modal = self._modalTracker
   if modal and not modal:isCurrent() then modal = nil end
   for i = opaqueBase(self.states, modal), #self.states - 1 do

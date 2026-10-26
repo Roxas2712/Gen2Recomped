@@ -150,6 +150,9 @@ function Intents.context(game, b, top, at)
       for _, key in ipairs(BATTLER_FLAGS) do
         flags[key] = type(actor[key]) == "table" and true or actor[key]
       end
+      if require("src.core.GameVersion").isGen3() then
+        flags.choicedMove, flags.imprison = actor.choicedMove, actor.imprison
+      end
       values.battlers[pos] = flags
       for slot, mv in ipairs(actor.curMoves or {}) do
         refs["move" .. pos .. ":" .. slot] = mv

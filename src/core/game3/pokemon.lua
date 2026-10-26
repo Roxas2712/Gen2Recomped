@@ -16,7 +16,7 @@ end
 local function context()
   local game=Native.game()
   if not(game and game.data and type(game.data.pokemon)=='table')then release();return end
-  if not current or current.game~=game or current.data~=game.data or current.loader~=game.mods or current.edition~=Version.get()then
+  if not current or current.game~=game or current.data~=game.data or current.loader~=game.mods or current.edition~=Version.get()or not current.ids:valid()then
     release();current={game=game,data=game.data,loader=game.mods,edition=Version.get(),ids=Ids.new(game.data)}
   end
   local host=package.loaded['src.mods.Runtime'];local facade=package.loaded['src.core.Game3']
@@ -39,6 +39,29 @@ function P.speciesOf(mon)
   if type(mon)~='table'then return nil end
   local _,key,c=species(mon.species)
   return key and c.ids:read('pokemon',key)
+end
+function P.friendshipOf(mon)
+  if type(mon)~='table'then return 0 end
+  local raw,known=require('src.compat.gen1.SourcePokemon').resident(mon)
+  if known then return raw and(raw.happiness or 0)or 0 end
+  local value=tonumber(mon.friendship or mon.happiness)
+  if value then return value end
+  local row=species(mon.species);return row and(row.friendship or 70)or 0
+end
+function P.setFriendship(mon,value,event,reason)
+  if type(mon)~='table'then return 0 end
+  value=tonumber(value)or 0
+  assert(value==value and math.abs(value)<math.huge,'invalid friendship')
+  value=math.max(0,math.min(255,math.floor(value)))
+  local raw,known=require('src.compat.gen1.SourcePokemon').resident(mon)
+  assert(not known or raw,'native party view retired')
+  local before=P.friendshipOf(mon)
+  if raw then raw.happiness=value else mon.friendship=value;mon.happiness=value end
+  local Host=require('src.mods.Runtime')
+  if before~=value and not P.isEgg(mon)and Host.wants('happiness.changed')then
+    Host.emit('happiness.changed',{mon=raw or mon,event=event,reason=reason or'event',from=before,to=value,delta=value-before})
+  end
+  return value
 end
 function P.name(value)local row=species(value);return row and row.name end
 function P.keyName(value)local row,key=species(value);return row and(row.key or row.id or key)end

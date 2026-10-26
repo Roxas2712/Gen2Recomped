@@ -112,10 +112,12 @@ end
 function Player.drawFlip()
   local g,_,p=owner();return g and math.floor((p.animClock or 0)/16)%2==1 or false
 end
+function Player.startFieldMove(duration,kind)return require("src.compat.gen1.PlayerPose").start(duration,kind)end
 function Player.release()runtime:release()end
 setmetatable(Player,{
   __index=function(_,key)
-    local g,w,p=owner();if not g then return nil end
+    local g,w,p=owner();if key=="running"then return g~=nil and p.running==true end
+    if not g then return nil end
     if direct[key]then return p[direct[key]]end
     if key=='stepFrames'then return p.stepFramesCur or p.stepFrames end
     if key=='biking'then return g.save and g.save.onBike==true end

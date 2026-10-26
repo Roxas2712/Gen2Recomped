@@ -57,6 +57,43 @@ function Methods.chooseMove(self, index)
   self.moveIndex = index
   local mv = moves[self.moveIndex]
   local mvDef = mv and self.data.moves[mv.id]
+  local nativeReason = require("src.battle.Gen3MoveSelection").manualReason(self, chooser, mv, self.moveIndex)
+  if require("src.core.GameVersion").isGen3() and not nativeReason then
+    if Targeting.needsChoice(self, self:choosingBattler(), mvDef) then
+      self.pendingMove = mv
+      self.targetChoices = Targeting.choices(self, self:menuBattler())
+      self.targetIndex, self.phase = 1, "targetSelect"
+    else
+      self:chooseAction(mv)
+    end
+    return true
+  elseif nativeReason then
+    local message
+    if nativeReason == "choice" then
+      local locked
+      for _, def in pairs(self.data.moves) do
+        if require("src.battle.Gen3ChoiceBand").identity(self, def) == chooser.choicedMove then locked = def; break end
+      end
+      local item = require("src.battle.HoldItems").defOf(chooser)
+      message = Strings("%s allows use of\nonly %s!", item and item.name or "CHOICE BAND",
+        locked and locked.name or tostring(chooser.choicedMove))
+    elseif nativeReason == "pp" then
+      message = self:romText("_MoveNoPPText", "No PP left for\nthis move!")
+    elseif nativeReason == "disabled" then
+      message = self:romText("_MoveDisabledText", "The move is\ndisabled!")
+    elseif nativeReason == "taunt" then
+      message = Strings("%s can't use\n%s after the\ntaunt!", chooser.name, mvDef and mvDef.name or mv.id)
+    elseif nativeReason == "torment" then
+      message = Strings("%s can't use the\nsame move twice in\na row due to the\nTORMENT!", chooser.name)
+    elseif nativeReason == "imprison" then
+      message = Strings("%s can't use the\nsealed %s!", chooser.name, mvDef and mvDef.name or mv.id)
+    else
+      message = Strings("That move can't\nbe selected!")
+    end
+    self:say(message)
+    self.phase, self.afterQueue = "messages", "moveSelect"
+    return true
+  end
   if require("src.battle.Gen3Disable").blocked(chooser, mv, self.moveIndex) then
     self:say(self:romText("_MoveDisabledText", "The move is\ndisabled!"))
     self.phase = "messages"
@@ -178,6 +215,14 @@ end
 local function moveReason(b, actor, slot, move)
   if not move or not b.data.moves[move.id] then
     return "invalid move slot"
+  end
+  if require("src.core.GameVersion").isGen3() then
+    local why = require("src.battle.Gen3MoveSelection").manualReason(b, actor, move, slot)
+    if why == "disabled" then return "move is disabled" end
+    if why == "pp" then return "move has no PP" end
+    if why == "taunt" then return "move is blocked by Taunt" end
+    if why == "torment" then return "move is blocked by Torment" end
+    return why and ("move is blocked by native GBA rules: " .. why) or nil
   end
   if require("src.battle.Gen3Disable").blocked(actor, move, slot) then
     return "move is disabled"

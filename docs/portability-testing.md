@@ -1,20 +1,1435 @@
 # Combined mod-portability testing branch
 
-The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188 (excluding unrelated #138). It is for testing the
-combined changes before upstream reviews and merges individual PRs. Upstream
-`main` is separate; cartridge-support PRs from other work remain separate.
+The fork's `main` and playable portability branch now combine the qualified
+mod-portability series with the existing launcher, Arena, cartridge support,
+audio/performance workers and the twenty functional own-fork PRs. Each PR head
+is retained in the merge history. Historical PR-specific results below retain
+their original scope and pinned reference.
 
 **Publication scope: Gen2Recomped only.** Gen1Recomp is a read-only portability
 reference. Historical results below that use a modified Gen1 reference fork
 are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
-The combined runtime tested for this snapshot is
-`aed508c2918a369f1d19e2250eb11635c17bd78f`. Its ROM-free run passed
-**206/206 engine suites**, **3/3 SDK suites** and the Dramatic Shape B30 profile.
-Subsequent status/integration-fixture commits do not change production code.
+## Current fork-main integration
+
+The combined regression at `725eb00bdc298d52be51486e52fdff1ed30fcc45` passes
+**559/559 engine suites**, **4/4 SDK suites** and B30. Ten performance/tool
+checks and eight checkpoint/integration suites also pass. The test inventory
+and individual log hashes are recorded in the
+[integration receipt](qa/fork-main-integration.json).
+
+Runtime `1e11414db8f2c91a747ae29a287f653ad36353f8` additionally preserves concurrent
+fork-main qualification documents and the latest native Gen2 START/save flow
+from #109. This bounded delta passes **13 affected suites** and an isolated
+native Crystal test: first save, refused overwrite, confirmed overwrite and
+loading the saved party, money and resume metadata in a second process. Five
+captures were inspected. The current inventory has 560 engine suites; the
+full regression above predates this final menu delta. The final native menu
+scaling correction also passes eight GPU pixel assertions per backend on
+OpenGL and Metal, independently of a larger presentation-provider UI grid.
+
+The regression runtime passes **twelve real GPU runs** across OpenGL and Metal:
+**4,644 checks and 364 frame comparisons** covering performance rendering,
+native battle source/animation, companion drawing, battle chrome and Gen2
+display composition. Performance meshes compare exactly, including a cached
+draw after an uncached fallback. The Gen2 compositor sheets were inspected.
+Synthetic assets exercise the actual engine drawing paths; they do not prove
+unchanged-mod initialization or every gameplay scene.
+
+The combined integration repairs stale/failed bytecode-cache authority and
+uniform-cache re-entry. The original cache failed ten of fifteen authority
+assertions; the original GPU path differed by 255 in a color channel on both
+backends. Repaired checks pass, with zero channel delta in the performance
+GPU comparisons. Earlier interrupted full runs remain separate from this
+successful durable per-suite regression.
+
+The unchanged Battle Art and Legendary packages also rendered a FULL voxel
+Red scene and exited through native quit at the earlier all-PR composition
+`1e27696e880c7e2f2f33ed2b16e16f166cb85895`: no mod errors, companion disposed,
+frame wrappers reduced from twelve to one. Its optional missing
+`horizon-132-west.png` still uses the package's backdrop fallback. This remains
+a prepared-scene check; no full playthrough, all-mod, physical-handheld FPS,
+exact cartridge UI pixel parity or audible-device acceptance is claimed.
+Seven private VASC support-log issues remain open. New unfinished trainer
+decision work from a separate worktree is excluded.
+
+## Historical October portability-only composition
+
+The historical portability-only qualification was `70c49224ef5951d0122d8f2795c5c1bbb503b257`,
+which includes upstream `ed5189c2`, [PR #313](https://github.com/UNDERdecoded/Gen2Recomped/pull/313),
+the portable quit hook in [PR #320](https://github.com/UNDERdecoded/Gen2Recomped/pull/320),
+the [portable battle-style decision](https://github.com/UNDERdecoded/Gen2Recomped/pull/322),
+[accurate dev API import attribution](https://github.com/UNDERdecoded/Gen2Recomped/pull/324),
+and the [portable capture nickname decision](https://github.com/UNDERdecoded/Gen2Recomped/pull/325).
+It passes **299/299 engine suites**, **4/4 SDK suites** and B30 with zero
+FAIL lines. The source tree is `e8c52f390f854b2c8586cff23cc8a889dede3768`;
+its engine-test tree is `ad646b6c9619363e48549699e83162de5a8e43e3`.
+The full test tree is `b936076d6b0506a3bed62c70eefa12ca5d1d45aa`.
+Later publication changes only record qualification evidence. The earlier
+October qualification and its shared-contract counts below retain their own refs.
+
+The quit hook passes **107/107** standalone targeted checks and **108/108**
+in this composition. The upstream feature base retains its **11 pre-existing
+suite failures**, with all existing failure lines unchanged; this combined
+branch includes the earlier repairs. Shared contracts run 16 native and
+32 combined-mode workers across Red, Gold, FireRed and Emerald, comparing
+40 and 80 typed paired observations respectively. The standalone base has
+API 1/2; this composition also exposes the hook through the prior unified/API-3
+capability catalogs. Actual unchanged Battle Art and Interiors cleanup passes
+29 checks per engine across the two package configurations. The earlier isolated
+native LÖVE quit run renders the full voxel scene, dispatches actual quit,
+disposes the companion, removes 11 frame wrappers and exits zero. This is
+bounded quit acceptance, not a generic unload or full-mod/FPS certification.
+See the [quit qualification receipt](qa/quit-to-launcher.json).
+
+The new `battle.style` producer lets a Gen1 mod choose SHIFT/SET without
+changing the saved option. It retains native live-player/party-count gates;
+this composition also retains the battle-local selected-party view. The
+standalone feature passes **82/82** checks plus the existing **11/11** SHIFT
+text checks; the composed style suite passes **88/88**. Existing upstream
+failures remain exactly **11 suites / 29 FAIL lines**. A control that restores
+only the direct-options call site fails **13 assertions**.
+
+At the earlier `b41271c0` runtime, the same example on Red, Blue and Yellow
+completed **12 native workers / 60
+typed paired observations** and **24 combined-mode workers / 120 observations**
+on the two engines. Three actual LÖVE runs cover an existing Gen2 import and
+fresh regular Red imports on both engines. FIGHT/move input reaches the real
+trainer faint, requested switch dialog, declined offer and next send-out;
+unsubscribe restores the saved SET policy. All processes exit zero, selected
+typed results agree and **12 captures were inspected**. This remains a
+constructed battle/input test, not a playthrough, matching-pixel or FPS claim.
+Native ChoiceBox positions differ; EXP-bar fallback and dev facade-import
+warnings were recorded separately. The latter are corrected below. See the
+[battle-style receipt](qa/battle-style.json).
+
+The dev-loader correction keeps engine-owned API and lazy storage
+construction outside mod import attribution. Actual private/network imports,
+returned mod initializers and declared permissions keep their normal behavior,
+including after an API-factory error. The cold real-loader test passes
+**19/19**, and **20** real serialized-manifest workers pass **380** checks:
+API 1/2 on the feature and API 1/2/3 on the composition, for Red, Gold,
+FireRed and Emerald host selections. These are fixture-backed API-construction
+checks, not complete gameplay acceptance for those editions.
+
+The original baseline fails five new assertions. Controls that disable the
+scanner or leak the engine depth after an error each fail three. All eleven
+old upstream suite failures and their 29 FAIL lines remain identical. A fresh
+native Red import runs the unchanged public battle-style consumer through
+FIGHT, actual SHIFT/SET choice and unsubscribe; all five false startup import
+warnings disappear and the selected typed outcomes match the previous runtime.
+The process exits zero, normal inputs stay unchanged and four captures were
+inspected. The independent audit initially rejected missing harness-coverage
+markers after `T.finish`; all twenty modes were rerun with the assertion and
+marker before process exit. See the [attribution receipt](qa/dev-api-attribution.json).
+
+The new Gen1 `catch.nickname` decision runs after successful party/PC
+placement and supports skip, supplied name or native AskName. It preserves
+the original stored-mon identity, new-species dex handling, full-PC refusal,
+caught events and queue completion. Its supplied string uses the reference's
+ten-byte prefix; other generations retain their existing native behavior.
+The feature passes **337/337** checks; this composition passes **341/341**.
+The old upstream code fails **75** new assertions; bypassing the native store
+call site fails **74**, and passing a cloned recipient fails **16**.
+
+The unchanged example on Red/Blue/Yellow completes **12 native workers / 132
+typed paired rows** plus **24 composed-mode workers / 264 rows** against the
+unchanged Gen1 reference. Both actual native Red processes also pass five
+prepared-wild-battle cases using real ITEM/bag/Master Ball input: skip, supplied
+party/PC names, forwarded YES/keyboard/PC naming, and unsubscribe. Exactly one
+ball is spent per catch; the native naming callback updates the original PC
+mon and both processes return normally with identical selected typed outcomes.
+Ten captures were inspected. These are bounded input/capture/identity checks,
+not complete mods/playthroughs, pixel equality or FPS acceptance. Native bag
+and naming presentation differs by host. See the [nickname receipt](qa/catch-nickname.json).
+
+Two merge boundaries retain both behaviors: `screen.render_visible` runs
+inside the native DS supersampling draw loop, and battle completion keeps
+both the partner-win exemption and the selected party's exhaustion check.
+The focused native probes pass **75/75**. Removing each preserved condition
+fails respectively **3**, **6** and **12** checks. The committed formatted
+probe has identical stripped bytecode to the initially qualified probe.
+
+The unchanged Gen1 reference `535a5ec0` and the earlier October runtime
+`87cada70e7483120f131b716ea6a370d1158127c` completed
+**268 workers / 178,264 complete paired observations** for the selected
+native FireRed/Emerald contracts. Every worker exits zero without timeout
+or native VM diagnostics. An independent audit reparses every raw result,
+checks exact mode/profile/backend coverage and compares complete JSON
+observations with distinct Boolean and number types.
+
+The initial aggregate could not locate reports because its output paths
+were relative to a different working directory. All 11 worker reports were
+relocated without changing their bytes, the failed aggregate was preserved,
+and the recovered manifest passed the independent raw audit. This was an
+artifact-collection failure, not a waiver of worker or comparison failures.
+The earlier integration also retained its one failing string-coverage suite
+before #313 repaired the new fallback texts.
+
+The unchanged Red-targeted QoL mod passes **200/200** unit checks on Gen2.
+Expanded unchanged-consumer acceptance now passes **42/42** native-flow checks
+per engine, including fishing, Surf, actual battle/overlay paths and return.
+Official Battle Art 1.11.2 passes **46/46**, and Battle Art with Legendary
+Interiors TEST20 passes **47/47**, on each engine. Selected typed observations
+agree across engines. Imported Red tables/art and mod packages stay unchanged;
+CPU geometry and hardware doubles do not prove GPU rendering or full mods.
+A subsequent native LÖVE 11.5/M2 acceptance adds five completed runs and 30
+visually inspected captures, including real staged 3D battle and clean camera
+views on both engines; see the linked report for UI/data/art limitations.
+This still does not establish full-mod, animation-frame or FPS acceptance.
+See [unchanged mod acceptance](unchanged-mod-acceptance.md) for precise scope,
+reproducible probes, raw fingerprints, retained failed fixtures and open work.
+
+The tool-only composition at `931143771b654ffd569a2341dc7e53243ede0073` adds
+[PR #315](https://github.com/UNDERdecoded/Gen2Recomped/pull/315), preserves the
+qualified production source and engine-test trees, and passes **20/20 Python
+tool tests**. Its actual **1,498-key** catalog workflow generates valid
+parameterized-template manifests, refreshes a UTF-8 translation, validates
+normally and loads through the real SDK. The fixture's existing strict
+font-dump MK305 warning is retained and is not a passing strict-validation
+claim. Only Python tooling/tests, workflow and documentation changed after
+the production qualification.
+
+See the [composed receipt](qa/upstream-october-integration.json). These are
+new CPU/hardware-double results. Historical GPU/device/boot/UI/storage
+checks below retain their own refs and are not rerun claims for this source.
+Normal save/import writes, new graphics/audio-device execution, complete
+mods, other editions and complete playthroughs remain outside this acceptance.
+The public PRs remain subject to upstream review and hosted-CI approval.
+
+## Historical native-music and comparator qualification
+
+The earlier qualified production/test runtime is
+`e436fba6228bd6e73a97497107e4a15f61c0d052`: **292/292 engine suites**, SDK
+**3/3**, all quick tiers and B30 pass. Publication/testing metadata edits
+preserve source tree `52e2e3ffc7e8f1145b0edffa16ca3713324bb8d2`. The original
+full native test tree is `f033a6f7f66579d8322f01536ea16452233f0cf7`; #309 adds
+one Python tool-regression file and preserves every existing Lua test.
+
+[PR #308](https://github.com/UNDERdecoded/Gen2Recomped/pull/308) retains native
+FireRed/Emerald BGM commands, fanfare timers/waits, native/shared ownership,
+public shared music hooks, options and device recovery. The actual asset
+invalidation bus retires old native map/saved music before the next game/mod
+dataset. Native command revision **20** separates these semantics from
+revision 19; party codec remains **1**.
+
+Each feature/combined runtime passes **268 workers / 178,264 complete paired
+observations** against unchanged read-only Gen1. Every final worker exits
+zero without timeout or native VM diagnostics; independent recursive audits
+reparse raw output and distinguish JSON booleans from numbers. The isolated
+feature passes **174/183** with the exact same **25 FAIL lines / nine
+inherited suites** as its fresh frozen development parent; this combined
+runtime has zero FAIL lines. All expected suites run exactly once.
+
+Combined real-renderer probes pass **18 BGM cases / 1,534 frames**, **12 cold
+fanfare cases / 156 frames**, and **eight actual-import cases / 688 frames**.
+Each runtime's actual initialized-session comparison covers four paired
+scenarios / 36 paired snapshots with retired old Sources, VMs and public
+listeners, plus a working fresh API-3 consumer. Separate audio-service
+re-entry passes eight paired cases. The new 69-check entry/cold regression
+rejects unchanged production with ten exact failures. Initial failed gates
+and deliberately cancelled superseded broad runs are retained.
+
+These are local CPU/hardware-double results. They do not relabel earlier
+native boot/UI/storage runs as new runs. Native synthesizer PCM/baseline
+gains, two shared GB lookahead cases and native queue allocation counts
+remain distinct. Complete map/bike/surf transitions, other editions,
+real-device recovery, complete mods and full playthroughs remain open.
+Older imports missing fanfare timer metadata need reimporting.
+See [the contract/reproduction](native-gba-bgm.md) and
+[source-bound receipt](qa/native-gba-bgm.json).
+
+All ten #308 hosted workflows require maintainer approval
+(`action_required`); the [dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40304523637)
+has zero jobs. Hosted validation is separate from local acceptance.
+
+[PR #309](https://github.com/UNDERdecoded/Gen2Recomped/pull/309) makes the
+complete contract comparison distinguish booleans from numbers at every
+depth. The composed fork passes **13/13 Python tool tests** and an actual
+native CLI smoke (**four workers / 12 complete paired observations**), also
+independently type-checked. Both qualified 268-worker capture sets replay
+successfully through the comparator. The old checker fails all 12 new
+Boolean/number negative cases. These replay results do not represent another
+native engine execution.
+
+The composed checker runtime is `a295d11b0618d8e82a09065f2a30b93917db9fce`.
+Lua source and every existing Lua test remain unchanged from the native
+qualification above. The complete test tree adds only
+`tests/tools/test_contract_observations.py`. See
+[the comparator contract](contract-observation-types.md) and
+[composed source/verification receipt](qa/typed-contract-integration.json).
+All ten #309 hosted workflows also await maintainer approval; its
+[dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40305503119)
+has zero jobs.
+
+## Unchanged QoL mod and SDK path acceptance
+
+[PR #311](https://github.com/UNDERdecoded/Gen2Recomped/pull/311) fixes absolute
+mod-directory resolution in the test SDK. An empty zero-error discovery no
+longer satisfies the new regression: its real disk fixture must execute,
+read its payload and merge its content. Both the standalone feature and this
+combined fork pass **77/77 checks** and **4/4 SDK suites**; the old adapter
+fails 38 targeted checks. Windows path policies use doubles; real filesystem
+checks ran on macOS. The feature's separate legacy developer-tooling suite
+retains three exact parent failures (126/129 on both), recorded in
+[the tooling receipt](qa/modkit-filesystem-paths.json).
+
+The unmodified [Quality of Life mod by unxpected-uxp](https://github.com/unxpected-uxp/pokemon-gen1-recomp-mod-qol/tree/bea982afbc51452fda334e6d0111444a201ad1d7),
+version 1.2.2, pinned at
+`bea982afbc51452fda334e6d0111444a201ad1d7`, passes **200/200** of its own
+checks on the pre-path-fix combined source. Unchanged Gen1 at
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91` passes **199/200**: the mod suite
+expects UP to wrap to CANCEL, whereas the reference's Gen-1 menu defaults
+to no wrapping. No Gen1 or mod source was changed for this difference.
+These unit results retain the mod suite's own world/input/battle doubles.
+
+Separate production-controller probes pass **7/7 on each engine**, with an
+identical typed observation. They use actual imported Red tables and art
+sizes, native map entry and its banner event/drawUI, real input dispatch,
+START opening/closing, and the mod's SELECT field-action popup/cancel with
+ordinary HM badge eligibility. The corrected combined SDK then repeats this
+probe by loading the unchanged mod from its absolute disk directory, rather
+than the earlier memory filesystem. Source, imported data and art hashes
+remain unchanged. These are Red-profile API-2 checks on both engines, not a
+claim that this Red-targeted mod supports Gold or other generations.
+Graphics remain hardware doubles; whole-mod battles, devices and complete
+playthroughs are still open.
+
+The path-fix combined ref is `64df6df1b48e76aeca9ea657ca732efea4af3349`.
+Production source and `tests/engine` retain the native qualification above;
+292 engine suites were not rerun for this test-adapter change. See the
+[composed real-mod receipt](qa/qol-portability-and-sdk-paths.json).
+The single #311 [hosted CI run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40309930095)
+requires maintainer approval and has zero jobs.
+
+The standalone #311 feature was based on upstream `ed5189c2`. Its acceptance
+above predates the current October composition; the new qualification is
+recorded at the top of this document.
+
+## Historical #258 acceptance
+
+[PR #258](https://github.com/UNDERdecoded/Gen2Recomped/pull/258) implements
+native GBA Assist and the same API-3 canonical effect registration/read-back as
+the unchanged reference. Party candidates retain native order and occurrence
+weighting, including active partners, fainted members and zero-PP moves. Parent
+callbacks run before the pool and PP command. Children retain native targeting,
+PP ownership and nested caller history; failed nested Assist/Mirror Move retain
+the previous history. Metronome/Mirror Move use the shared native child targeting.
+
+Each runtime passes **188 workers / 160,724 identical paired enemy/action
+rows**, plus **2,040 held-command** and **6,912 ordinary-damage rows**:
+**196 workers / 169,676 selected paired observations**. The new Assist matrices
+retain **38,712 rows**, including public registered party moves, split trainer
+parties, three held items, move/damage events, raw/public PP, queued animation
+metadata, held callbacks, complete RNG bounds/values and actor/party state.
+Every final worker exits zero without timeout.
+
+Actual linked host/guest/spectator menus pass **120 checks** across two turns
+per profile, all events, paired completed hashes and state components. Existing
+FireRed/Emerald imports pass **160 controlled public-submit scenarios** with
+native/registered Assist, direct party moves and nested Nature Power, zero-PP
+party children, Choice Band and Shell Bell. Their native queue returns to menu.
+These are CPU checks; graphical/full-mod/full-playthrough acceptance remains open.
+
+Four held formats pass strict scheduling (**40 workers / 1,914 rows**); charge
+contracts pass four formats (**64 workers / 1,020 rows**), including raw native
+policy on the combined fork. The isolated feature passes **157/166** engine
+suites with exactly the same **25 FAIL lines / nine suites** as fresh #252
+(**153/162**). The combined runtime has zero FAIL lines. Native command revision
+**15** refuses revision 14; party codec stays **1**. The independent frozen-parent
+serializer audit yields `662d7e5ee823ce82`, retaining legacy `e33d251961f2a41d`.
+The unchanged parent differs in **4,860/6,480** selected full native rows,
+**36/36** failed caller histories and rejects public ASSIST registration.
+
+All ten #258 hosted workflows require maintainer approval (`action_required`);
+the [dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40221142115)
+has zero jobs. Local acceptance is separate. App attachment hit the existing
+100-artifact identity cap. See the [contract and reproduction](native-gen3-assist.md)
+and [source-bound receipt](qa/native-gen3-assist.json). Initial fixture failures,
+incorrect local expectations and superseded RNG/targeting observations remain
+retained. Full catalogs/controllers, broad public-effect overrides, qualification
+of other editions, text-resource/pixel parity and full-mod playthroughs remain open.
+
+## Historical #252 acceptance
+
+[PR #252](https://github.com/UNDERdecoded/Gen2Recomped/pull/252) implements
+native GBA Nature Power and the same API-3 effect registration/read-back as
+the unchanged reference. Its child owns the selected PP slot after public
+subscribers and uses child target/Pressure rules. Native Sleep Talk -> Nature
+Power chains preserve the inner caller's resulting history. Removing an early
+learned slot does not hide later Sleep Talk candidates.
+
+Each runtime passes **172 workers / 122,012 identical paired enemy/action
+rows**, plus **2,040 held-command** and **6,912 ordinary-damage rows**:
+**180 workers / 130,964 paired observations**. Three new 6,048-row matrices
+cover native, public registered and chained callers, including all captured
+held/event/RNG payloads, current/retired PP, actor state and history. Exact #248
+production differs in 5,376 ordinary rows; previous feature production differs
+in 4,032 chained rows. All final workers exit zero with no timeout.
+
+Actual host/guest/spectator completes two native menu turns per profile with
+108 checks, public stateful held steering and every paired hash/component.
+Actual import definitions pass **160 controlled public-submit scenarios** for
+native/registered callers, all ten terrains, direct/Sleep Talk paths, Choice
+Band and Shell Bell. The native result queue returns to its menu; no new
+normal SAVE, graphical playthrough or unchanged full-mod acceptance is claimed.
+
+Four held formats pass strict scheduling (40 workers / 1,914 rows); charge
+contracts pass four formats (64 workers / 1,020 rows), with raw native policy
+on the combined fork. The isolated feature passes 153/162 engine suites and
+retains the exact 25 inherited FAIL lines from fresh #248 (149/158). This
+combined runtime has zero FAIL lines. Native command revision **14** refuses
+revision 13; party codec stays **1**. Independent unchanged-hasher audit yields
+`cb314093f24370e7`, retaining legacy `e33d251961f2a41d`.
+
+All ten #252 hosted workflows require maintainer approval (`action_required`);
+the [dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40215838170)
+has zero jobs. Local acceptance is separate. App attachment hit the existing
+100-artifact identity cap. See the [contract and reproduction](native-gen3-nature-power.md)
+and [source-bound receipt](qa/native-gen3-nature-power.json). Initial failures
+and deliberately interrupted pre-fix batches remain separate. Further special
+callers/catalogs/controllers, broad public-effect overrides, Ruby/Sapphire
+qualification, text-resource/pixel parity and full-mod playthroughs remain open.
+
+## Historical #248 acceptance
+
+[PR #248](https://github.com/UNDERdecoded/Gen2Recomped/pull/248) aligns the
+native shared King's Rock / Shell Bell move-end command. Stateful hooks see
+the same canonical player read, public parameters and RNG order. Shell Bell
+uses first damage, including the FireRed/Emerald substitute convention.
+Spread scripts retain chosen ordering and occupied slots after a faint;
+later ordinary damage stops after attacker fainting. Spectators buffer future
+action pairs until the current command queue finishes.
+
+Both final runtimes pass **160 workers / 103,868 identical paired enemy/action
+rows**, **2,040 held-command rows** and **6,912 ordinary-damage rows**:
+**168 workers / 112,820 paired observations**, with no accepted timeout or
+nonzero worker. New command/script comparisons retain **7,488 + 15,840 rows**;
+exact #244 production differs in 12,032 new rows. Actual host/guest/spectator
+passes 172 checks; the old spectator module fails 14. Full captured Sleep Talk
+held traces agree at **10/2/2/4** reads for both profiles and both runtimes.
+
+All four held formats pass strict scheduling (40 workers / 1,914 rows), and
+charge contracts pass four formats (64 workers / 1,020 rows) with strict raw
+native policy on the combined fork. Existing imported modes and 32 controlled
+physical-item scenarios using actual imported definitions pass. No graphical
+playthrough or complete unchanged-mod acceptance is claimed.
+
+The isolated feature passes 149/158 engine suites, SDK 3/3 and B30; its exact
+Counter of 25 inherited FAIL lines matches fresh #244 (146/155). This combined
+runtime has zero FAIL lines. Native command revision **13** refuses revision
+12; party codec remains **1**. Independent unchanged-hasher token audit yields
+`beacb71804a6af34`, with legacy `e33d251961f2a41d` retained. Initial fixture
+flag failures and a superseded sixty-second worker timeout remain recorded.
+The final checker retains partial timeout bytes and still fails such a worker.
+
+All ten #248 hosted workflows require maintainer approval (`action_required`);
+the [dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40208868136)
+has zero jobs. Local acceptance is separate. App attachment hit the existing
+100-artifact identity cap. See the [contract and reproduction](native-gen3-post-hit-items.md)
+and [source-bound receipt](qa/native-gen3-post-hit-items.json). Ruby/Sapphire
+per-hit scheduling, other special callers such as Nature Power, full native
+catalogs/controllers and graphical playthroughs remain open.
+
+## Historical #244 acceptance
+
+[PR #244](https://github.com/UNDERdecoded/Gen2Recomped/pull/244) aligns native
+GBA `battle.move_used` and the selected-slot PP command. Ordinary events see
+PP before reduction; zero-PP failures still emit but cannot be retroactively
+admitted by a refill or continue through spread targets. Current slot and
+Pressure reads follow callbacks. Native charge decisions precede PP; first
+charge has no event, bypass/sunlight reduce before it, and release spends no
+second PP. Replanned charge copies also release correctly after their last PP.
+
+The final shared fixture retains **408 identical rows** over FireRed/Emerald,
+including public API-3 records, consecutive subscribers, native callback
+changes, all RNG, active HP, current/retired PP, charge and invulnerability.
+The exact prerequisite differs in 360 rows; the prior release implementation
+fails 24 rows. Actual two-turn host/guest/spectator checks retain public event
+PP, stateful held-damage steering, every paired hash and state component.
+
+Both feature and combined pass **152 workers / 80,540 paired enemy/action
+rows**, plus **2,040 held-damage command** and **6,912 ordinary damage rows**:
+**160 workers / 89,492 paired observations**. Strict held-item scheduling
+passes four API formats (**40 workers / 1,914 rows**); charge-decision contracts
+pass four formats (**64 workers / 1,020 rows**) with strict raw native-policy
+parity on the combined branch. Both actual imported-data modes pass. No new
+graphical playthrough or normal SAVE acceptance is claimed.
+
+The isolated feature passes 146/155 engine suites, SDK 3/3 and B30, retaining
+exactly 25 inherited FAIL lines from fresh #241+#161 (144/153). This combined
+runtime has zero FAIL lines. Native command revision **12** refuses revision
+11; party codec stays **1**. The independently audited raw hash is
+`6ce58ced7ffad4d9`; legacy `e33d251961f2a41d` is unchanged.
+
+A complete successful Sleep Talk held-phase probe still has 10 native versus
+11 host reads; awake/empty/blocked remain equal at 2/2/4. King's Rock/Shell Bell
+orchestration, other special callers such as Nature Power, full native
+catalogs/controllers and graphical playthroughs remain open. See the
+[scoped PP/event contract](native-gen3-move-used-pp.md).
+
+All ten #244 hosted workflows require maintainer approval (`action_required`);
+the [dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40201496037)
+has zero jobs. Local acceptance is separate. The regular English PR is
+published from the user's fork; app attachment hit the existing 100-artifact
+identity cap.
+
+## Historical #241 acceptance
+
+[PR #241](https://github.com/UNDERdecoded/Gen2Recomped/pull/241) aligns native
+GBA Choice Band move-end, manual/AI selection, ordinary wild selection,
+forced-slot PP ownership and native/authored caller provenance. Actual public
+snapshots, stale submissions, keyboard/message return, API-1/2 native handles,
+API-3 positional actions and host/guest/spectator held traces are covered.
+Replaced or removed forced PP slots retain native behavior, including Pressure.
+
+Both the clean feature and this combined candidate pass **148 workers /
+80,132 paired enemy/action rows**, **2,040 held-damage command rows** and
+**6,912 ordinary damage rows**: **156 workers / 89,084 paired observations**.
+All four held-item CI formats also pass strict native scheduling (**40 workers /
+1,914 rows**). The removed-slot negative control fails 24 rows with the exact
+old module; the expanded final planning comparison passes all 276 rows.
+Both actual imported FireRed/Emerald modes pass. No new graphical playthrough
+or normal SAVE acceptance is claimed.
+
+The isolated feature passes 143/152 engine suites, SDK 3/3 and B30; its exact
+Counter of 25 inherited FAIL lines matches fresh unchanged #230. The combined
+candidate has zero FAIL lines. Native command revision **11** refuses revision
+10; party codec stays **1**. The independent token audit reproduces
+`3e2986da83083f86` with unchanged legacy digest `e33d251961f2a41d`.
+
+Full native execution parity remains open. A separate 72-row actual-script
+probe retains 48 differences in PP visibility/event admission at
+`battle.move_used`. A complete successful Sleep Talk held-phase probe still
+has 10 native versus 11 host reads; awake/empty/blocked retain equal 2/2/4
+counts. Shared King's Rock/Shell Bell ordering, successful Mirror Move
+history/targets, Metronome catalog/RNG and complete controller/playthrough
+coverage remain separate. See [the scoped contract](native-gen3-choice-band.md).
+
+All nine #241 hosted workflows await maintainer approval (`action_required`);
+the [dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40197434005)
+has zero jobs. The English regular PR is published from the user's fork. App
+attachment was rejected by the existing 100-artifact identity cap.
+
+## Historical #230 acceptance
+
+[PR #230](https://github.com/UNDERdecoded/Gen2Recomped/pull/230) aligns the
+native GBA base-damage held reads and item rounding. Resolve attacker then
+defender once per command, reuse the answers for pre-stage type/stat items,
+retain current species and native ability/stage/power ordering, and expose the
+empty-hand `item = 0` sentinel. Preserve Spit Up's separate sport gating.
+
+The feature passes **10,202 focused checks**, **48 actual-link checks** and
+native protocol 154. Its full result is **132/141 engine suites**, SDK 3/3,
+B30, with the exact same 25 inherited FAIL lines across nine suites as clean
+#228 (130/139). This combined branch passes **251/251**, SDK 3/3 and B30.
+**124 workers / 86,620 paired observations** agree with unchanged read-only
+Gen1: 2,040 new held-command, 6,912 base-damage and 77,668 existing execution
+rows. The unchanged prerequisite fails 2,041 assertions and every one of 1,020
+complete command rows per profile. AST-verified formatting, scoped checks and
+twelve existing CPU-only imported FireRed/Emerald scenarios also pass.
+
+Command revision **10** refuses revision 9; party codec stays **1**. The raw
+native fixture is `3a2adb7fa1caee3b`, independently audited with the unchanged
+#228 hasher and only the revision token changed. Real link tests explicitly
+select GBA rules and compare every completed hash/component and ordered read.
+
+The retained complete valid-attack probe still differs (10 reads on both
+engines): Choice Band check/binding and the shared King's Rock/Shell Bell
+command remain open. Awake/empty/blocked traces now agree completely. A
+separate fresh-save probe reproduces `gen1_faithful` only on the isolated
+command stack. The combined fork already includes [#162](https://github.com/UNDERdecoded/Gen2Recomped/pull/162):
+its AUTO defaults select `gen3_emerald` for fresh FireRed/Emerald saves, and
+the existing 926-check defaults/PP suite passes. No duplicate defaults PR is
+needed. Full badge/controller/catalog,
+graphics and playthrough parity are not established here.
+
+All nine #230 hosted workflows await maintainer approval (`action_required`).
+The [dedicated damage run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40179851767)
+has zero jobs. Local acceptance is separate. The existing 100-artifact identity
+cap rejected attachment; the regular English Gen2 PR is published. See
+[the held damage contract](native-gba-held-damage.md) and
+`tmp/held-damage-qa/accepted-evidence.json` for scope and raw evidence.
+
+## Historical #228 acceptance
+
+[PR #228](https://github.com/UNDERdecoded/Gen2Recomped/pull/228) implements
+native GBA Sleep Talk sleep admission, current-slot selection and called move
+dispatch. Zero-PP learned choices, exclusions, Disable/Encore, wake/Early Bird/
+Uproar/Soundproof, named indexless authored moves, spread/controller order,
+caller PP/provenance/bookkeeping and failed-call item phase boundaries are
+covered. Existing party sleep-counter preservation and authored overrides
+remain covered. The feature reuses #121's complete portable effect adapter;
+that prerequisite already exists in this combined branch.
+
+Clean feature runtime `cb6ddfadc2d29b878efcb0eb4f76869dc7b8c16a` passes
+**1,068 focused checks**, native protocol 154 and reused adapter 860 checks.
+Its full result is **130/139 engine suites**, SDK 3/3 and B30. The exact Counter
+of 25 inherited FAIL lines across nine suites equals clean #226+#121 prerequisite
+`63bf2a9b9b856027c27c65ae1031febbb9e5d7e5` (127/136). Their independent fixes
+remain green in this combined runtime (**249/249**).
+
+Both clean runtimes agree with unchanged read-only Gen1 in **116 workers /
+77,668 paired observations**. New modes add 648 command rows and five same-entry
+API-3 authored-content rows per FireRed/Emerald profile. Named registration,
+zero-PP/awake calls, primary/stat-change and patched-Fly handlers execute through
+the real public loaders. Raw RNG bounds/values, recorded events and state are
+retained. Unchanged prerequisite fails 108 command assertions (648/648 rows
+differ) and eight authored assertions (4/5 rows differ), with final fixtures.
+
+Two real link roles complete four menu-driven turns with all paired completed
+hashes/components, learned PP and sleep state equal. Twelve CPU-only scenarios
+with actual FireRed/Emerald imports pass public move/menu submission, repeat
+calls, wake/ordinary move, zero-PP children, empty/forbidden pools, Early Bird
+wake and awake failure. No normal SAVE or ROM/cache/save distribution occurs.
+Command revision 9 refuses revision 8; party codec remains 1. Raw native fixture
+`f1bec52ffc687ea3` is independently audited from #226's unchanged hasher with
+only the explicit revision token changed; other-generation goldens remain.
+
+At #228, an extra complete **held-item hook probe differed**: source empty item zero
+versus an omitted host field, and missing/extra check/damage/flinch reads in a
+valid called attack (10 source / 11 host reads). Failed-call phase counts are
+now correct, but full payload/sequence parity is unresolved. Raw failed probes
+remain; this is not passing evidence for all hook orchestration. Complete
+held/choice-item/canceller and arbitrary child/interactive controllers, other
+profiles, global RNG/selection, graphics and playthroughs remain separate.
+
+All nine #228 workflows await maintainer approval (`action_required`); the
+[dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40176031994)
+has zero jobs. Local acceptance is separate. Attachment hit the existing
+100-artifact identity cap; the regular English Gen2 PR is published. Evidence:
+`tmp/sleep-talk-full-final-accepted.log`, `tmp/sleep-talk-contracts-final-accepted.json`,
+`tmp/sleep-talk-imported-final-accepted.log`, `tmp/sleep-talk-accepted-evidence.json`.
+See [the scoped Sleep Talk contract](native-gen3-sleep-talk.md).
+
+Prior #226 results retain runtime `c1dac0994aa9fe0d1659e510874065697dca2534`
+and its 246/246 engine result:
+
+[PR #226](https://github.com/UNDERdecoded/Gen2Recomped/pull/226) gives native
+GBA Triple Kick an accuracy check and independent critical/damage calculation
+for each reached kick, assigning power 10/20/30. Public damage wrappers see and
+can change the assigned `ctx.opts.power`. Native continuation handles misses,
+protection/hidden/immunity, Substitute, Endure, Focus Band and sleep/faint;
+Rage runs once at the completed move boundary. Authored count/damage/full/
+never-miss policy and shared static records remain covered separately.
+
+Clean feature runtime `10a5c325a7852c6e8f7fea1502fafd9cfdc4a393` passes
+**2,220 focused checks** and **126/135 engine suites**, SDK 3/3 and B30.
+The exact Counter of 25 inherited FAIL lines across nine suites equals freshly
+retested clean #225 (123/132). Their independent repairs remain green in this
+combined runtime (**246/246**). Both clean runtimes agree with unchanged,
+read-only Gen1 in **108 workers / 76,362 paired observations**. The new mode
+contributes 576 complete rows per profile, including every possible missed
+kick, public power-hook edits, real live lifecycle changes and Rage. All
+bounded RNG calls/values, hook/event observations and battler state remain.
+
+Two actual link roles complete three turns with every paired completed
+hash/component and learned PP equal. Twelve CPU-only scenarios using actual
+FireRed/Emerald imports pass public submission and completed turn/menu:
+ordinary/miss1/miss2/miss3, Substitute break and a faster enemy actually using
+Endure. Unchanged #225 fails 240 assertions; 396/576 complete FireRed rows
+differ with the exact accepted fixture. Initial/negative failures remain.
+Command revision 8 refuses revision 7; party codec stays 1. Native fixture hash
+`b9ec4e8a94f4ba6e` is independently audited from the unchanged #225 hasher with
+only the revision token changed. Other-generation goldens are unchanged.
+
+The earlier missing `RAGE_EFFECT` probe is resolved: pinned Gen1 seeds no GBA
+native move-effect records, while Gen2 exposes its builtin records. A minimal
+authored primary record registers through both public loaders. Native builtin
+capture/delegation is not certified as a shared catalog contract. No Gen1
+modification or publication is needed or performed. Broader catalogs, Sleep
+Talk/other controllers, Ruby/Sapphire scheduling and global RNG/selection or
+full-playthrough parity remain separate work.
+
+All nine #226 workflows await maintainer approval (`action_required`); the
+[dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40171310953)
+has zero jobs. Local acceptance is separate. The app's 100-artifact cap prevents
+another attachment; the regular English PR is published. Evidence:
+`tmp/triple-kick-full-accepted.log`, `tmp/triple-kick-contracts-accepted.json`,
+`tmp/triple-kick-imported-accepted.log`, `tmp/triple-kick-accepted-evidence.json`.
+See [the scoped native Triple Kick contract](native-gen3-triple-kick.md).
+
+Prior #225 results retain runtime `e1a9295e57c1545ec69deec2c4541a4da193b7b6`
+and its 243/243 engine result:
+
+[PR #225](https://github.com/UNDERdecoded/Gen2Recomped/pull/225) replaces
+the default GBA legacy Rage controller with native flag/lifecycle behavior.
+Every separately selected Rage spends PP and leaves the menu actionable.
+Attack builds once at a completed qualifying incoming move, before item reads;
+Substitute/Endure, caps, ally/self/residual exclusions and later immunity are
+covered. Actual effective move choices/Encore and committed non-move replies
+clear Rage before stale boosts; native double choices are selected once.
+AI STATUS2, offered-command invalidation and active link hashes include Rage.
+
+The feature reuses #188's native AI/order prerequisite, already in this combined
+branch. Clean #222+#188 prerequisite `fa5cb30ec4050980dc940e2181d6943a9de669b4`
+passes 120/129 engine suites. Feature runtime
+`03c4a841ee327d232ca504a1ae5df1c5159064b6` passes **796 focused checks** and
+**123/132 engine suites**, SDK 3/3 and B30. The exact Counter of all 25 inherited
+FAIL lines across nine suites matches that prerequisite. Their independent
+repairs remain green in this combined branch.
+
+Both clean runtimes match unchanged read-only Gen1 in **104 workers / 75,210
+paired observations**, with 357 new Rage rows per profile. Every bounded RNG
+call/value, accuracy-hook state, move/hit event and battler observation remains
+recorded. Move planning includes actual word preparation with fixed choices;
+non-move replies use the same explicitly prepared input boundary. Earlier/global
+selection/RNG and all controller timing are not certified.
+
+Four real linked turns agree in all completed hashes/components, PP and Attack
+stages. Four CPU-only tests with actual FireRed/Emerald imports pass public
+FIGHT/move input, repeated Rage (20 to 18 PP), alternative Tackle and the actual
+spent-item reply pipeline. The unchanged prerequisite fails all four checks of
+the same public selector/delegated native continuation; raw negatives remain.
+Native command revision is 7; party codec remains 1. The raw native fixture hash
+`dcc938191b0bb075` was audited with the unchanged #222 hasher and only the
+explicit revision token changed. Older-generation goldens were not reblessed.
+
+All nine #225 workflows require maintainer approval (`action_required`); the
+[dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40169752030)
+has zero jobs. Local acceptance is separate. The app's 100-artifact cap prevents
+another card; the regular PR is published and linked. Evidence:
+`tmp/rage-full-accepted.log`, `tmp/rage-contracts-accepted.json`,
+`tmp/rage-imported-accepted.log` and `tmp/rage-accepted-evidence.json`.
+Host content composition is separate: an extra synthetic Gen1 GBA probe cannot
+retrieve `RAGE_EFFECT`; its raw failure is retained for a catalog/fixture audit.
+This does not assert cross-engine effect-catalog/delegation equality. See
+[the scoped Rage contract](native-gen3-rage.md).
+
+Prior #222 results retain runtime `1a20cb1f104972c46c756ba6a55e814fc27619c8`
+and its 240/240 engine result:
+
+[PR #222](https://github.com/UNDERdecoded/Gen2Recomped/pull/222) corrects
+ordinary GBA multi-hit effects 29/44/77. Accuracy precedes the native hit-count
+opcode, each reached strike calculates damage independently, later strikes
+continue after Substitute, and actual Endure/sleep/faint/immunity conditions
+control continuation. Exact critical RNG bounds are native `0..denominator-1`.
+Public builtin delegation and authored count/damage handlers are preserved;
+scripted Beat Up retains its separate party eligibility and Endure rules.
+
+Clean feature runtime `00e67c40abcb224ff693e4f543a4d018014edf73` passes
+**17,974 focused checks** and **119/128 engine suites**, SDK 3/3 and B30.
+The exact Counter of all 25 inherited FAIL lines across nine suites equals clean
+#220 (116/125). Their independent repairs remain green in this combined branch.
+Both clean runtimes match unchanged read-only Gen1 in **100 workers / 74,496
+paired observations**, including 5,760 new ordinary multi-hit rows per profile.
+Raw RNG bounds/values, every hit event and all battler HP/PP/status/Substitute/
+last-move/stage observations are retained. Public events are detached views;
+continuation probes mutate and assert their owned live fixture battlers.
+
+Two actual link roles complete three turns with every completed hash/component
+and learned PP equal. **18 CPU-only tests with actual FireRed/Emerald imports**
+pass public enemy-action selection and ordinary/Substitute/Endure execution for
+DoubleSlap, Double Kick and Twineedle. Unchanged #220 fails 1,524 assertions;
+5,088/5,760 complete FireRed rows differ from the same unchanged source fixture.
+Raw negatives and the first integration's Beat Up failures remain retained.
+Native command revision 6 refuses older peers; party codec remains 1. The raw
+fixture hash `a7db0874db78aec0` was audited with the unchanged #220 hasher and
+only the explicit revision token changed.
+
+All eight #222 hosted workflows require maintainer approval (`action_required`);
+the [dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40167556778)
+has zero jobs. Local acceptance is separate. The app's 100-artifact cap prevents
+another card; the regular PR remains published and linked. Evidence:
+`tmp/multi-hit-full-accepted.log`, `tmp/multi-hit-contracts-accepted.json`,
+`tmp/multi-hit-imported.log` and `tmp/multi-hit-accepted-evidence.json`.
+See [the scoped ordinary multi-hit contract](native-gen3-multi-hit.md).
+Rage itself, Triple Kick, full Sleep Talk controllers and broader battle/RNG
+parity remain separate work.
+
+Prior #220 results retain runtime `abd621282715d072b421e7b30f3f5c60628d771d`
+and its 237/237 engine result:
+
+[PR #220](https://github.com/UNDERdecoded/Gen2Recomped/pull/220) binds native
+Disable to the last executed learned move with a 2–5-phase residual timer.
+Move eligibility follows identity through reordering/duplicates, including
+public snapshot/submission and native AI predicates. A faster Disable cancels
+the already queued move before PP, confusion and move-used events; called moves
+retain their native bypass. Actual residuals, Bide interruption, switching,
+Baton Pass, builtin delegation and the Disable interactions with Haze/Transform
+are covered. Broader native controllers and Haze/Transform rules remain separate.
+
+Clean feature runtime `55f4301ab6ef190051b1f6d420f22636a61a1809` passes
+**930 focused checks** and **116/125 engine suites**, SDK 3/3 and B30. The exact
+Counter of all 25 inherited FAIL lines across nine suites equals clean #219
+(113/122). Their independent repairs remain green in this combined checkout.
+Both feature and combined runtime match unchanged read-only Gen1 in **96 workers /
+62,976 paired observations**, including 810 new Disable observations per profile.
+Eligibility uses the real native admission checks; Gen1's omitted GBA snapshot
+`disabled` field is not invented or interpreted as false. Every bounded RNG draw,
+HP/PP, learned/last moves, native state and actual move event remains recorded.
+
+Two actual link roles complete three full turns with every paired hash/component
+equal. Four CPU-only tests with actual local FireRed/Emerald imports pass public
+selection/submission, preapplied and same-turn interruption and real residuals.
+Unchanged #219 fails the same public command's identity/duration assertions
+(random slot 2 / eight phases); the raw negative report remains retained.
+Native command revision 5 refuses older peers before party selection; party codec
+stays at 1. The raw native fixture digest `da62fe7b50f40107` was audited with the
+unchanged #219 hasher and only its explicit revision token changed.
+
+All eight #220 workflows require maintainer approval (`action_required`); the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40165934516)
+has zero jobs. Local acceptance is separate. The app's 100-artifact cap prevents
+another attachment; the regular PR is published and linked. Combined evidence:
+`tmp/disable-full.log`, `tmp/disable-contracts.json`, `tmp/disable-imported.log` and
+`tmp/disable-accepted-evidence.json`. See [the scoped Disable contract](native-gen3-disable.md).
+
+Prior #219 results retain runtime `ae385bae803e8a94eb4b2c73e2c1425d1a68868d`
+and its 234/234 engine result:
+
+[PR #219](https://github.com/UNDERdecoded/Gen2Recomped/pull/219) adds native
+Encore move/slot binding, a three-to-six-phase duration draw and actual residual
+expiry on timeout, depleted PP or an edited original slot. It validates native
+last-move exclusions and accepts known authored moves without a cartridge index.
+Planning uses the forced move's priority and retains the selected target; a later
+Encore also changes an already-queued action and recomputes native targets.
+Forced FIGHT now dispatches a real move instance. Called moves, authored handlers
+and older games retain their policies. Planned PP binding survives cancellation
+before execution. Public turn-start events retain the original declaration;
+move-used events report the actual executed move.
+
+The clean feature runtime `6998a429a99dcc94d3f7c8b9a337ddfbcdaea3ba` passes
+**637 focused Encore checks** (480 command/lifecycle, 99 public/queue/authored/
+legacy, 58 actual link/compatibility) and 154 protocol checks. Feature and clean
+combined runtime above match unchanged Gen1 in **92 workers / 61,356 paired
+observations**. The new mode retains 612 complete observations per profile,
+including all battler HP/PP, every bounded RNG call/value, native move/slot/timer
+state and actual public move events/targets. Both real link roles complete three
+native turns with equal paired hashes/components and correct learned-slot PP.
+
+The public-choice/planning cases start from the same explicit prepared Quick
+Claw word. The combined fork's C-validated native controller prepares that word
+earlier than Gen1's standalone command. The original failed report retains the
+extra 0..65535 draw; no compared calls or observations are filtered. This tests
+Encore from a documented input-state boundary and does not certify complete
+selection/RNG orchestration. Global RNG/VBlank scheduling and other native
+state producers/interactions remain additional work.
+
+Full feature regression is 113/122 engine suites, SDK 3/3 and B30. All 25 inherited
+FAIL lines across nine suites match clean #218 exactly (110/119). Their existing
+independent repairs remain green here: **234/234 engine suites**, SDK 3/3 and B30.
+The same public selector on unchanged #218 fails the native duration/slot
+assertions, retaining three phases and no binding; its raw failure is preserved.
+Actual locally imported FireRed/Emerald records pass four CPU-only scenarios:
+public canonical Encore, then public FIGHT or an independently selected move
+through real turn/residual queues. No ROM/cache assets or saves are distributed;
+no normal SAVE, GPU/pixel or full-playthrough acceptance is claimed.
+
+Native command revision 4 prevents older rules from entering full battles.
+The raw fixture changes from `c2a03195bc4588f9` to `8be423c61a4477a2`, independently
+audited with the unchanged #218 hasher and only the explicit revision token.
+Native party revision and non-GBA goldens remain unchanged. All eight hosted
+#219 workflows require maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40164228999)
+has zero jobs. Local acceptance is separate. The app's 100-artifact cap prevents
+another attachment; the regular PR remains published and linked. Evidence is
+retained in `tmp/encore-full-accepted.log`, `tmp/encore-contracts-final.json` and
+`tmp/encore-import-smoke-final.log`. See [the scoped Encore contract](native-gen3-encore.md).
+
+[PR #218](https://github.com/UNDERdecoded/Gen2Recomped/pull/218) implements
+native GBA Baton Pass as a resumable choice and actual switch. Stages and
+native volatiles pass to the chosen party member, switch-in effects run, and
+later queued attacks resolve against the current occupant. Players use the
+actual forced party screen; NPCs use the native type heuristic. Link owners
+send their selected member, spectators consume the same choice, and disconnects
+remain serviced while the picker owns input. Nested called moves defer native
+item phases until selection completes. Ordinary link screens follow live or
+late-installed battle rosters; forced owner-specific pickers retain their own
+party, preserving the existing 4,849 navigation checks.
+
+The clean feature runtime `d5ad56afccca21d107f21b5b561b908fa650e59e` passes
+915 focused checks (654 command, 52 actual party UI, 72 link/spectator/disconnect,
+95 packet/signature/compatibility, 42 authored/called), 154 protocol and 3,002
+existing UI checks. Both that runtime and the clean combined runtime above
+match unchanged Gen1 in **88 workers / 60,132 paired observations**. The new
+mode retains 156 complete observations per profile: actual resolvers/resumption,
+all four slots, PP/HP, every bounded RNG call, stages/volatiles, seed identities,
+public switch events, excluded/reserved members, one/two/three Spikes layers,
+called PP semantics and the actual NPC selector with empty PP. Original failed
+schema-mapping reports remain retained; no source code or compared calls are
+filtered to obtain agreement.
+
+Feature regression is 110/119 engine suites, SDK 3/3 and B30. The exact Counter
+of all 25 inherited FAIL lines across nine suites equals clean prerequisite
+`c27c37a667e8a40613c22506448ab4886fc9b431` (105/114). Their independent repairs
+remain in this branch, which passes **231/231 engine suites**, SDK 3/3 and B30.
+The unchanged prerequisite leaves its donor active after the same public mod
+selector; the first Baton implementation also fails the nested-choice item-phase
+checks. Both negative outputs are retained. Actual imported FireRed/Emerald
+records pass the public canonical selector and actual forced-party/queued-turn
+smoke selecting the third member, on both feature and combined runtimes.
+This is CPU-only, with no distributed ROM/cache assets or saves and no normal
+SAVE, GPU/pixel or full-playthrough claim.
+
+Native command revision 3 prevents older rules from starting a full battle.
+The raw fixture changes from `cf73a8e083fb8a54` to `c2a03195bc4588f9`, independently
+audited with the unchanged #217 hasher and only the explicit revision token.
+Native party revision and non-GBA goldens remain unchanged. All eight hosted
+#218 workflows currently require maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40161166597)
+has zero jobs. Local acceptance is separate. The app's 100-artifact cap prevents
+another attachment; the regular PR remains published and linked. Evidence is
+retained in `tmp/baton-pass-full-accepted.log`, `tmp/baton-pass-contracts-final.json`
+and `tmp/baton-pass-import-smoke-final.log`. See
+[the native Baton Pass contract](native-gen3-baton-pass.md).
+
+[PR #217](https://github.com/UNDERdecoded/Gen2Recomped/pull/217) replaces native
+GBA Lock-On/Mind Reader's one-use attacker pointer with target-owned duration
+and originating side/slot. The actual producer now observes Substitute,
+accuracy, Protect and hidden-target ordering. Repeated queries and actual
+attacks preserve the two-phase timer. Owner replacement clears owned bindings;
+unrelated partner replacement preserves them; ordinary target replacement drops
+them. Both ordinary accuracy and OHKO use the shared native ownership predicate.
+Older-game and authored legacy pointer behavior remains available.
+
+The clean feature `0905dcd005d102c33d31fad12d2082290d76f56c` passes **556 focused
+checks** (492 lifecycle, 64 ownership/link). Feature and clean combined runtime
+above match unchanged Gen1 in **84 workers / 59,820 paired observations**. The
+new 213 rows per profile retain raw timer/side/slot state, HP/PP, every bounded
+RNG call/value and public accuracy/damage/move-event calls. Both moves, all four
+slots, singles/doubles, refresh/ownership transfer, real switches, explicit Baton
+Pass switch entry, repeated real hits and OHKO level/Sturdy/guard paths agree.
+Clean #216 completes all 213 rows but differs in 207 and fails 103 assertions;
+the complete negative output is retained. Full feature regression is 102/111
+engine suites, SDK 3/3 and B30, with the exact same 25 inherited FAIL lines across
+nine suites as #216 (100/109). Their independent repairs remain in this branch.
+
+The integration preserves the existing GBA item/residual scheduler and ticks
+the timer in `gen3BattlerCountersTick`; it does not restore the older monolithic
+counter sweep. Two full seeded link mirrors aim once, then attack, retaining
+one phase on turn one and expiring together on turn two. Every paired completed
+turn hash/component agrees. Active signatures canonicalize owned side/slot to
+host coordinates. Native command revision 2 guards battle entry even when a
+custom fingerprint would otherwise be equal. The raw fixture hash changes from
+`2fd444270c3d90db` to `cf73a8e083fb8a54`, independently audited with the unchanged
+#216 hasher and only the explicit revision token. Non-GBA goldens stay unchanged.
+
+Actual imported FireRed/Emerald records also select canonical `LOCK_ON` through
+the shared public enemy-action consumer, execute two Tackle hits and two real
+end-of-turn sweeps, and retain ownership/duration with only one accuracy-hook
+call before expiring. This is CPU-only with controlled HP; no ROM/cache assets
+or saves are distributed and no live UI/full-playthrough acceptance is claimed.
+All seven hosted #217 workflows await maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40157494497)
+has zero jobs. The 100-artifact attachment cap persists; the regular PR remains
+published and linked. Evidence is retained in `tmp/lock-on-full-accepted.log`,
+`tmp/lock-on-contracts.json` and `tmp/lock-on-import-smoke.log`.
+
+At #217 only the explicit Baton Pass switch entry was covered; PR #218 now
+adds the complete native move/UI choice and link continuation described above.
+Other side/volatile producers, native egg legality and whole-game RNG/VBlank
+scheduling remain separate. See
+[the scoped lifecycle contract](native-gen3-lock-on.md).
+
+[PR #216](https://github.com/UNDERdecoded/Gen2Recomped/pull/216) adds a separate
+versioned GBA party codec. Native PID, six IVs/EVs, selected valid ability slot,
+native nature/stats, trainer/secret identity, PP-Ups and native metadata now
+survive trade/link transport. The old DV codec lost all six checked identity
+fields and changed the negative example's HP maximum from 92 to 67. Auto-level
+now heals GBA HP/status while retaining genotype. The actual trade controller
+files the received mon and its genotype persists across save serialization.
+Both live `gender.roll` calls are retained, including public override and
+metadata-steering policies. Engine ID/stat-key/gender-code mappings are explicit.
+
+The clean feature `b1795a79cb03a4de7171d50db93a39ce49dddd64` passes **194,843
+focused checks** (194,540 codec/hooks and 303 transport/trade/link). Both clean
+feature and combined runtime above match the unchanged source in **80 workers /
+59,394 paired observations**. The new matrices cover all 25 natures, levels
+1/35/100 and forced levels, two species including Shedinja, both ability slots,
+zero/max/mixed investments and three registry ID formats. The previously failed
+ID-schema comparison remains retained; no observations/calls were filtered.
+The full feature run passes 100/109 engine suites, SDK 3/3 and B30. Its exact
+Counter of all 25 inherited FAIL lines across nine suites equals #215 (98/107).
+Their independent repairs remain green in the combined runtime above.
+
+Native party revision 1 is negotiated before both trade and battle exchange;
+older/different codecs are refused in either role. Full GBA fingerprints and
+active/bench signatures include the codec/genotype. The raw fixture hash changes
+from `3a76cc5fce47a5c3` to `2fd444270c3d90db`, independently audited with the
+unchanged #215 hasher and explicit surface token. Non-GBA golden values remain
+unchanged. Two complete seeded link mirrors verify original sender genotype as
+well as every completed paired turn hash/component. A CPU-only smoke on actual
+FireRed/Emerald Poliwag imports also retains genotype/stats and public API-3
+status/personality reads. No ROM/assets/saves are distributed.
+
+All seven hosted #216 workflows await maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40155830700)
+has zero jobs. The chat's 100-artifact cap prevents another attachment; the
+regular PR is published and linked. Evidence is retained in
+`tmp/party-codec-full-accepted.log`, `tmp/party-codec-contracts.json` and
+`tmp/party-codec-import-smoke.log`. This establishes engine-local native packet
+fidelity; it does not assert cross-engine network packet compatibility. Full
+native egg-legality checks, other-generation codecs, timed side/volatile
+producers, global RNG/VBlank and demo controller playback remain separate.
+See [the scoped codec contract](native-gen3-party-codec.md).
+
+[PR #215](https://github.com/UNDERdecoded/Gen2Recomped/pull/215) aligns native
+GBA accuracy and ordinary post-hit chances. The percentage command now shares
+native stage/ability/item arithmetic, all-slot weather suppression, Protect and
+semi-invulnerability guards, guaranteed-hit cases, absorption and the public
+`battle.accuracy` context. Secondary effects retain the native inclusive chance
+boundary, including explicit zero, Serene Grace and draw-before-protection
+ordering. Authored effect handlers keep their policies. Real special Fire hits
+thaw after secondary processing; Substitute hits do not. Strong poison retains
+its native marker through public API-3 views/edits, saves and party transport;
+callback edits update the owning counter transactionally.
+
+The clean feature `a6205dfce1b6d091e758238447db3b25462367f4` passes **68,836
+focused checks** (15,082 accuracy, 53,598 secondary, 156 protocol). Its full run
+passes 98/107 engine suites, SDK 3/3 and B30. The exact Counter of all 25 inherited
+FAIL lines across nine suites matches clean #214 (95/104). Their separate fixes
+remain green in the combined runtime above. Both clean feature and combined
+runtime match the unchanged source in **72 workers / 48,524 paired observations**.
+The checker retains every bounded RNG call/value, callback context, PP, HP,
+stage and status event. Clean pre-secondary `184fdaaa` retains 56 differing
+Thunder execution observations as the negative control; no failures are hidden.
+
+Native GBA command revision 1 and six native move fields enter link hashes;
+runtime-aware cache keys prevent stale cross-game reuse. The audited raw fixture
+changes from `e33d251961f2a41d` to `3a76cc5fce47a5c3`. Non-GBA fingerprints,
+including the combined red golden `a000e3862d11a73a`, stay unchanged. Actual
+handshake/controller tests stop older peers before battle. Two complete seeded
+synthetic link mirrors retain matching turn hashes/components and toxic markers.
+A CPU-only smoke also runs actual imported Thunder through public enemy-action
+and status-event paths in FireRed/Emerald. No imported assets/data are published.
+
+All seven hosted #215 workflows await maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40154632317)
+has zero jobs. The chat's 100-artifact limit prevents another attachment; the
+regular PR is published and linked. Evidence is retained in
+`tmp/native-hit-full-accepted.log`, `tmp/native-hit-contracts.json` and
+`tmp/native-hit-import-smoke.log`. Complete cartridge genetics transport,
+timed Lock-On/side/volatile producers, global RNG/VBlank scheduling and demo
+controller playback remain separate. This does not certify live rendering or
+whole-game acceptance. See [the scoped contract](native-gen3-hit-commands.md).
+
+[PR #214](https://github.com/UNDERdecoded/Gen2Recomped/pull/214) replaces
+midpoint/random-mon construction for native Gen-3 demo presets with a private
+constrained-identity builder. Zero IVs/EVs, nature-adjusted stats, PID-selected
+ability, full PP/HP, native friendship/experience and Poke Ball now agree with
+the unchanged source. `gender.roll` executes only for nature-matching candidate
+PIDs. Cartridge order maps/native indices handle canonical, raw and translated
+registries without English-only lookups. Party construction completes before
+borrowing the real save party, which is restored by reference without edits.
+
+The clean feature `440a5da635dc9737875c38e4ac324ce2343a23ee` passes **209,742
+focused checks**. All **56 workers / 5,574 paired observations** agree on the
+clean combined runtime above; 180 new preset cases per profile include every
+consumed word, final input-stream state and public gender-hook call. The source
+runs its original LCRNG; the host receives an independent equivalent input
+stream. Only engine field/ID schemas are normalized. No observations are
+removed. The old prerequisite fails 1,065 assertions before reaching the missing
+new private factory. The exact Counter of all **25 inherited FAIL lines across
+nine suites** is unchanged: feature 95/104 vs prerequisite 94/103. Their separate
+repairs are already in this combined branch, whose complete run is green.
+
+A CPU-only smoke also creates all nine preset members independently from each
+actual locally imported FireRed/Emerald cache (18 total). This checks the private
+constructor with real imported records; it is not live rendering or full demo
+playback acceptance. Emerald covers the shared Gen-3 data contract; retail
+Teachy TV is FireRed-specific. Whole-game/VBlank RNG scheduling and the subsequent
+demo controller's midpoint battle RNG remain open. The move-effect fingerprint
+is unchanged (`a000e3862d11a73a`). See [the scoped contract](native-gen3-constrained-party.md).
+
+All seven hosted #214 workflows await maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40150160378)
+has zero jobs. Local green checks are separate. The PR attachment was attempted
+but the chat's 100-attachment limit is reached. Evidence is retained in
+`tmp/constrained-party-full-accepted.log`, `tmp/constrained-party-contracts.json`
+and `tmp/constrained-party-import-smoke.json` (private ignored QA outputs).
+
+[PR #212](https://github.com/UNDERdecoded/Gen2Recomped/pull/212) shares
+native GBA critical policy between ordinary damage and Beat Up. First/Wally
+states skip critcalc's draw; Teachy TV consumes it and discards its result.
+Oak's inflicted-damage bit advances after the public hit event. Existing
+script/constructor metadata reaches the policy. Public critical contexts
+carry battle, target, canonical/numeric move IDs and stage, and ordinary GBA
+hit events carry damage kind and Substitute metadata.
+
+Native physical item/current-species stages and the critical cap are covered.
+Lansat uses Focus Energy and is not consumed or stacked when already focused.
+The focused suite passes **3,396/3,396 checks**, including legacy passthrough
+controls. The shared API-3 mod/action/executor matrix matches clean read-only
+Gen1 in **52 isolated workers / 5,214 paired observations** on this runtime.
+The new critical matrix has 27 FireRed and 29 Emerald cases at all four
+positions with ordinary and scripted attacks; see [coverage and limits](native-gba-critical-context.md).
+The clean #210 negative control fails **288 assertions** in its new FireRed cases.
+
+Feature quick acceptance is **92/101** engine suites against **91/100** on
+clean #210. Exact Counters of all **25 inherited FAIL lines across nine
+suites** match, with no additions; SDK 3/3 and B30 pass. This combined branch
+includes the baseline repairs and passes **218/218**, SDK 3/3 and B30 with
+zero FAIL lines. Integration preserves the existing native held-item phase
+guard while adding the alternate Focus Energy marker. Only the audited
+effect fingerprint section changes for `BEAT_UP_EFFECT.rev = 3`; the
+fingerprint gate passes 33/33 checks.
+
+All six hosted #212 workflows await maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40148026770)
+has zero executed jobs. The app's 100-artifact cap prevents another PR card;
+the regular PR is published and linked. Stats are controlled and kind fields
+on the reference/Oak cases are seeded. Full controller playback, constructor
+stat generation, advice/intro/animation behavior, fresh ROM import, raw RNG
+traces and complete gameplay remain separate acceptance surfaces.
+
+Prior #210 results retain runtime
+`f39cc19534737f8f3b764cdd1c1a1d993a96fd6e` and its 217/217 engine result:
+
+[PR #210](https://github.com/UNDERdecoded/Gen2Recomped/pull/210) reads
+Beat Up participants across both native side parties in two-trainer and
+player/ally battles. A private live view preserves trainer-owned replacement
+benches, the battle-scoped player view, upcoming slot replacement and the
+current user's HP/status. Party-array references are captured for the move,
+matching the reference when whole fields are reassigned during a hit callback.
+
+The focused suite passes **1,728/1,728 checks**. Eighteen cases at all four
+positions on FireRed/Emerald use native constructors and actions, including
+status/egg/faint filtering, one or both owners blocked, accuracy-time
+eligibility, callback mutations, live/detached active battlers, Substitute,
+fainting, criticals and variation. The same API-3 consumer and shared fixture
+match clean read-only Gen1 in **48 isolated workers / 4,766 paired
+observations** on this clean combined runtime. The #209 negative control
+fails **58 assertions** in the new FireRed cases.
+
+Feature quick acceptance is **91/100** engine suites against **90/99** on
+clean #209. Exact Counters of the **25 inherited FAIL lines across nine
+suites** match, with no additions; SDK 3/3 and B30 pass. This combined branch
+includes the baseline repairs and passes **217/217**, SDK 3/3 and B30 with
+zero FAIL lines. Raising `BEAT_UP_EFFECT.rev` from 1 to 2 changes only the
+audited effect fingerprint section; all six other populated sections and
+their mutation checks remain unchanged.
+
+All six hosted #210 workflows await maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40145716820)
+has zero executed jobs. The app's 100-artifact cap prevents another PR card;
+the regular PR is published and linked. These constructor/action contracts
+use synthetic imported-shaped parties. Full link/multi-owner controllers,
+arbitrary mid-move ownership reshaping, graphical intros/animations and
+complete gameplay remain separate; see [scope](native-gba-beat-up-side-parties.md).
+
+Prior #209 results retain runtime
+`4d169998e342794802c87b043796ed7c9dfa51e8` and its 216/216 engine result:
+
+[PR #209](https://github.com/UNDERdecoded/Gen2Recomped/pull/209) adds
+cross-engine acceptance for the composition of Beat Up (#206) and native
+held-item adjustment (#182). It adds no new runtime policy. FireRed and
+Emerald roll Focus Band independently after each reached strike's variance,
+including nonlethal hits, Substitute and zero damage under Endure. Earlier
+procs cannot protect later strikes; removal/equipping inside actual public
+hit callbacks and a second move are exercised.
+
+The focused suite passes **1,672/1,672 checks**. The same actual API-3 mod,
+fixture, selected actions and native executor match unchanged read-only Gen1
+in **44 isolated workers / 4,622 paired observations** on this clean runtime.
+Physical Focus Band 196 and imported-shaped item 1196 are covered; parameter
+mutation uses the latter because the reference has built-in metadata for
+physical item IDs. The #206-only negative control fails **56 assertions** in
+the new FireRed cases. See [contract scope](beat-up-held-item-contracts.md).
+
+The test-only feature commit passes **90/99** engine suites compared with
+**89/98** on the clean prerequisite (#206 plus #182). Exact Counters of all
+**25 inherited FAIL lines across nine suites** match, with no additions;
+SDK 3/3 and B30 pass. This combined branch includes the baseline repairs and
+passes **216/216**, SDK 3/3 and B30 with zero FAIL lines. No record revision,
+fingerprint golden or production behavior changes are introduced by the
+contract commit.
+
+The reference's persistent move-local Focus Band state belongs to the
+Ruby/Sapphire policy; these FireRed/Emerald profiles do not select it. All
+six hosted #209 workflows await maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40144832869)
+has zero executed jobs. The app's 100-artifact cap prevents another PR card;
+the regular PR is published and linked. Other scripted executors, joined
+multi-trainer/link parties, Ruby/Sapphire controllers, animations and full
+gameplay remain separate acceptance surfaces.
+
+Prior #206 results retain runtime
+`f6f3bfe95dc70256bea403afc9423bf35c73162b` and its 215/215 engine result:
+
+[PR #206](https://github.com/UNDERdecoded/Gen2Recomped/pull/206) executes
+native GBA Beat Up with each healthy party member's level/species base
+Attack and the active target species' base Defense. It rechecks party
+eligibility during mod callbacks, rolls critical/variation independently,
+applies Helping Hand, continues after breaking Substitute and records the
+last direct strike for special counter memory, including zero under Endure.
+Native event metadata and the absence of ordinary damage/critical callbacks
+are verified. The active/retained species cases seed the native battler
+fields; the full Transform controller is outside this proof.
+
+The focused suite passes **1,330/1,330 checks**. The same API-3 consumer and
+fixture match unchanged read-only Gen1 in **40 isolated workers / 4,486
+paired observations** on the clean combined runtime. The public species
+patch changes actual native strikes. A real canonical `EFFECT_BEAT_UP` patch
+with #121 passes **14/14** composition checks. The clean #203 prerequisite
+fails **168 assertions** in the new FireRed cases; the Endure and active
+species regressions each failed 16 assertions before their fixes.
+
+The final feature quick run passes **88/97** engine suites against **87/96**
+on clean #203. Exact Counters of the **25 inherited FAIL lines across nine
+suites** match, with no additions. SDK 3/3 and B30 pass. This combined branch
+includes the existing repairs and passes **215/215**, SDK 3/3 and B30 with
+zero FAIL lines. Integration preserves the existing damage-adjustment
+argument, GBA Substitute counter guard and battle-scoped party fallback.
+Only the audited effect fingerprint section changes; see
+[the contract and limits](native-gba-beat-up.md).
+
+Both sides use the maintained pinned LuaJIT with JIT enabled. All five
+hosted #206 workflows await maintainer approval; the
+[dedicated contract run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40144144197)
+has zero executed jobs. The app's 100-artifact cap prevents another PR card;
+the regular published PR is linked here. Focus Band's native adjustment
+schedule, joined multi-trainer/link parties, intro/tutorial controllers,
+animation fidelity and full gameplay remain open acceptance surfaces.
+
+Prior #203 results retain runtime
+`ba2d7d11dccc64994e0367158d79f4b0d9f68ef8` and its 214/214 engine result:
+
+[PR #203](https://github.com/UNDERdecoded/Gen2Recomped/pull/203) executes
+native GBA Spit Up through its set-damage path: multiply the calculated base
+including +2, then Helping Hand/STAB/type rounding, without ordinary damage
+or critical callbacks or a variation roll. It corrects consumption on Protect
+and immunity, preserves stock on miss/interruption/absorption, clips Substitute
+hits and retains native set-damage event metadata. Stockpile cap/reuse and
+Swallow interaction are checked through actual actions.
+
+The focused suite passes **8,292/8,292** checks. The same API-3 consumer and
+fixture match unchanged read-only Gen1
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91` in **32 isolated engine workers /
+3,974 paired observations** on clean feature and combined runtimes. Coverage
+includes all four users, counts 0–3, low/wide stats, physical/authored special
+types, STAB/resistance/immunity/Foresight, Helping Hand, interruption and
+selected ability/item/stage/weather/screen combinations. A canonical public
+`SPIT_UP` patch with #121 passes **14/14** real-mod composition checks.
+
+Both sides and the dedicated workflow use JIT-enabled LuaJIT v2.1
+`a4c064539ea931274d407e1249b4bb575424a0f4` (`2.1.1792588164`). The old local
+ARM64 `2.1.1700008891` VM has a JIT-dependent Thick Fat discrepancy in unchanged
+reference code; its original failed report is retained, not filtered or
+claimed green. The Gen2 host's new Spit Up cases also match the pinned
+reference under that older VM. See [runtime and scope](native-gba-spit-up.md).
+
+Feature quick acceptance is **87/96** engine suites versus **86/95** on clean
+#198; exact Counters of all **25 inherited FAIL lines across nine suites**
+match, with no additions. The prerequisite fails 770 new FireRed assertions.
+SDK 3/3 and B30 pass. This combined checkout includes the baseline repairs
+and the audited native record revision; its full run passes **214/214**.
+Only the `move_effects` fingerprint section changes for `SPIT_UP_EFFECT.rev=1`.
+The existing damage-adjustment argument is preserved during integration.
+
+All five hosted workflows await maintainer approval; the
+[dedicated workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40141841786)
+has zero jobs. Local acceptance is separate. The chat attachment limit prevents
+a new PR card; the published PR remains linked here. Full item/ability/badge
+coverage, raw legacy aliases, other set/delayed executors, wider RNG traces,
+called/link controllers, animations and complete gameplay remain separate.
+
+Prior #198 results retain runtime
+`bf67876e473c7881fe2d08935c504fc7a922291c` and its 213/213 engine result:
+
+[PR #198](https://github.com/UNDERdecoded/Gen2Recomped/pull/198) implements
+native GBA Helping Hand (effect 176) and its shared ordinary-damage modifier.
+The current living partner receives nonstacking support until next-turn
+planning; replacement does not inherit it. Critical/STAB/type rounding,
+physical/special/spread attacks, fixed damage and confusion exclusions,
+status/refusal gates, residual lifetime, owned PP and actual priority queues
+are covered by **5,322/5,322** focused checks.
+
+The same API-3 consumer and shared fixture match unchanged read-only Gen1
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91` in **28 engine workers / 1,916 paired
+observations** on feature and combined runtimes. The clean prerequisite fails
+391 assertions in the initial new FireRed matrix. Existing paired GBA base
+and critical-order checks remain green. A real mod's canonical
+`effect = "HELPING_HAND"` patch with #121 passes **12/12** additional checks,
+including a publicly selected right-flank enemy move with supported damage.
+
+Feature quick acceptance is **86/95** engine suites versus **85/94** on clean
+prerequisite `45f5b4e3386f704ab011ca3b6690aaa79f0bc425`. The exact Counter of
+all **25 FAIL lines across nine inherited suites** matches, with no additions;
+SDK 3/3 and B30 pass. Dependencies #196, #178 and #175 remain separately
+published. This combined checkout already contains their baseline repairs,
+updates the former missing-handler assertion and audits the intentional
+fingerprint change in only `move_effects`; its full run passes **213/213**.
+
+All five hosted workflows await maintainer approval; the
+[dedicated workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40139823577)
+has zero jobs. Local acceptance is separate. The chat's attachment limit
+prevents a new PR card; the published PR remains linked here. Dedicated
+set-damage/delayed executors (Spit Up, Beat Up, Future Sight/Doom Desire),
+full ability/held-item ordering, other effect producers, AI scoring,
+called/link moves and full gameplay/RNG parity remain separate surfaces.
+See [native GBA Helping Hand](native-gba-helping-hand.md).
+
+Prior #196 results retain runtime
+`218cf2c9879bf8dd7687491429ca2a427d5eee83` and its 212/212 engine result:
+
+[PR #196](https://github.com/UNDERdecoded/Gen2Recomped/pull/196) implements
+native GBA Follow Me (effect 172) through the ordinary registry, selected
+mod-action targets and actual priority queues. Both sides, successive casters,
+fainting/replacement and Lightning Rod precedence follow the covered native
+reference. State expires at next-turn planning; residual collection keeps it.
+Self/spread policies, imported protection flags and status interruption remain
+authoritative. The focused suite passes **180/180** checks.
+
+The same API-3 consumer matches unchanged read-only Gen1
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91` in **24 engine workers / 354 paired
+observations**, on both feature and combined runtimes. Unchanged #195 fails
+29 new FireRed assertions. An additional real-mod proof of canonical
+`effect = "FOLLOW_ME"` writes with #121 passes **14/14** checks, including
+actual redirected damage and owned PP. No generated contract change is needed.
+
+Feature quick acceptance is **82/91** engine suites versus **80/90** on clean
+#195, with SDK 3/3 and B30 passing. Exact FAIL-line Counters add nothing and
+remove only the two old fingerprint failures; the remaining 25 lines across
+nine inherited suites match. The new handler intentionally changes only the
+`move_effects` fingerprint section. This combined checkout updates that
+section pin and the former missing-handler assertion, retaining all other
+fingerprint sections and mutation checks. Its full run passes **212/212**.
+
+All three hosted workflows await maintainer approval; the
+[dedicated workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40138746937)
+has zero jobs. Local acceptance is separate. The chat's 100-attachment limit
+prevented adding a new PR card; the published PR remains linked here.
+Remaining effect producers, AI scoring, random-target/full RNG parity,
+link/called moves, damage amounts and item/switch/watch actions remain
+separate work. See [native GBA Follow Me](native-gba-follow-me.md).
+
+Prior #195 results retain runtime
+`916661d14a9f45511924f719d4b5524369182672` and its 211/211 engine result:
+
+[PR #195](https://github.com/UNDERdecoded/Gen2Recomped/pull/195) honors a mod's
+positional GBA action target at native execution time. Replaced/absent targets
+resolve through the current slot, explicit choices override stale UI choices,
+and selected self/spread/field policies and active Lightning Rod redirection
+retain the reference's covered local-battle semantics and target order.
+Pressure counts every relevant holder and spends PP once; GBA spread actions
+emit one `battle.move_used`, while actual hits use `battle.damage_dealt`.
+The zero-power default path no longer publishes a spurious zero-damage hit.
+
+The **434/434** new target checks pass, including actual Gen2 double-turn
+queues, event targets/order/cardinality, PP, cached/replaced/absent targets,
+Lightning Rod priority, legacy handles, malformed hints and unchanged random
+selection/RNG against an identical-stats control. All prior move-choice,
+selector and record checks pass. The same consumer matches unchanged read-only
+Gen1 `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91` in **20 isolated engine workers /
+312 paired observations**, on both the feature and combined runtime.
+
+The feature is stacked on #194. Its full quick run retains exactly the same
+**27 FAIL lines across ten inherited suites**, with no new failures; this
+combined branch includes those repairs. All three hosted workflows await
+maintainer approval; the [dedicated workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40136548705)
+has zero jobs. Local acceptance is separate. Follow Me/unported effect
+producers, automatic AI target scoring, full random/native RNG parity, called
+moves, link ordering, damage amounts and item/switch/watch actions remain
+separate work. See [selected target contract](portable-enemy-targets.md).
+
+Prior #194 results retain runtime
+`679b54967922bd8c14907c8c0bc152a2e2e615bc` and its 210/210 engine result:
+
+[PR #194](https://github.com/UNDERdecoded/Gen2Recomped/pull/194) exposes the
+common native GBA move record fields for API 3 inside `battle.enemy_action`
+`next()`: kind, native move reference, slot, user, battler and double targetType.
+The native exhausted fallback retains symbolic `STRUGGLE`. Native and public
+hooks keep their own move-reference representations, including native rewrites;
+legacy API-1/2 views, canonical id edits and detached native actor queries remain
+supported. Metadata stays in weak side tables, without rewriting learned moves.
+
+The **254/254** new record checks, prior **1,252/1,252** move-choice checks and
+**438/438** selector checks pass. Actual `battle.move_used` events prove the
+selected move executes; HP/PP checks verify mutation versus replacement,
+nested references, charge continuation, Struggle and mixed native/public hooks.
+The same consumer matches unchanged read-only Gen1
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91` in **16 isolated engine workers /
+220 paired observations**, on both the feature and combined runtime.
+
+The feature is stacked on #191 and retains the exact **27 FAIL lines across
+ten inherited prerequisite suites**, with no new failures. Their repairs are
+included in this combined branch. All three hosted workflows await maintainer
+approval; the [dedicated workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40134177111)
+has zero jobs. Local acceptance is separate. Scores and selected targets are
+not fabricated; item/switch/watch records, other native fields, damage amounts,
+RNG traces and full gameplay remain separate work. See
+[native move records](portable-enemy-move-records.md).
+
+Prior #191 results retain runtime
+`6bb17f00c9baedc665448254da99641dfe9db64a` and its 209/209 engine result:
+
+[PR #191](https://github.com/UNDERdecoded/Gen2Recomped/pull/191) aligns API-3
+GBA `battle.enemy_action` input selectors with unchanged Gen1. The single
+controller supplies nil; the double controller supplies positional IDs 1/3.
+Nested forwarding and reentrant queries restore each call's selector. Native
+Gen2 callbacks, API 1/2 native and API 2 unified retain their actor contracts.
+A query of the other flank keeps execution/PP ownership with its caller.
+
+The **438/438** focused argument checks and all prior **1,252/1,252** move
+checks pass. Coverage includes actual single/double turn queues, mixed public
+and native hooks, legacy identity, forwarded native choices, and cleanup after
+a fatal native AI error. The public priority integration still passes **32/32**.
+The same consumer matches read-only unchanged Gen1
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91` in **12 isolated engine workers /
+162 paired observations** on both the feature and combined runtime.
+
+The feature is stacked on #190. Its full quick run has exactly the same
+**27 inherited FAIL lines across ten suites** as the clean prerequisite,
+with no new failures; this combined branch includes the baseline repairs.
+All three hosted workflows await maintainer approval; the
+[dedicated workflow](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40132593110)
+has zero jobs. Local acceptance is separate. Native action result fields,
+public item/switch/watch actions, explicit double-target conversion, damage
+amounts, RNG traces and full gameplay remain separate contracts.
+See [API-3 enemy-action arguments](portable-enemy-action-arguments.md).
+
+Prior #190 results retain runtime
+`fbd10fa1288ee9c09ec7823a8e606765278d88e8` and its 208/208 engine result:
+
+[PR #190](https://github.com/UNDERdecoded/Gen2Recomped/pull/190) normalizes public
+GBA `battle.enemy_action` move choices and binds execution PP to the native
+selected slot. Bare names/numbers and new `move`/`id` records execute the
+requested move, preserve learned moves, and handle nil/false fallback.
+The **1,252/1,252** focused checks pass across FireRed/Emerald and API 1 native,
+API 2 native/unified and API 3 unified, including Pressure, Mimic, duplicate
+moves, right-flank ownership, exhausted slots and native charge continuations.
+
+The same public consumer matches unchanged read-only Gen1
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91` in **8 isolated engine runs /
+100 paired execution observations**. Both the feature and combined runtime
+pass. The feature is stacked on #102 and retains exactly its **27 FAIL lines
+across ten baseline suites**, with no new failures; the combined branch includes
+the baseline repairs. [Hosted CI](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40131487598)
+requires maintainer approval and has zero jobs. Local acceptance is separate.
+This verifies move-result selection, owned PP, actual damage occurrence and
+charge outcomes; hook arguments, double target conversion, damage amounts,
+RNG traces and public item/switch/watch actions remain separate contracts.
+See [portable enemy move choices](portable-enemy-move-choices.md).
+
+Prior #189 results retain runtime
+`10421a5125d1289bdcee7b5811957b954013a033` and its 207/207 engine result:
+
+[PR #189](https://github.com/UNDERdecoded/Gen2Recomped/pull/189) prevents
+scalar chosen/rampage target values from aborting an ordinary move queue.
+Its **712/712** focused checks pass for Red, Gold, FireRed and Emerald,
+including actual single/double action execution, fallback targets, native
+handle identity and PP consumption. Valid ally, self, field, fainted-target
+and living rampage-lock behavior is preserved. Run
+`luajit tests/engine/unusable_target_handles.lua`.
+
+The independent feature retains the same **27 FAIL lines across ten existing
+upstream suites**; this combined branch includes their fixes. The
+[hosted #189 CI](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40129207307)
+requires maintainer approval (`action_required`) and has zero executed jobs.
+Local acceptance is separate. No Gen1 code or publication is required.
+
+The in-progress enemy-decision branch additionally verifies the new delegated
+`target=true` controller case with the same Test Mod on both GBA profiles in
+API 3 and API 2/unified, including complete HP/PP/stock/event observations.
+Its larger strict comparison still reports 534 RNG-trace differences from
+the earlier turn-word sampling introduced by #188. Those raw differences
+remain failures; this is not a claim of complete native-controller parity.
+That unfinished hook is still excluded from this combined branch.
+
+Prior #188 results retain runtime
+`aed508c2918a369f1d19e2250eb11635c17bd78f` and its 206/206 engine result:
 
 [PR #188](https://github.com/UNDERdecoded/Gen2Recomped/pull/188) implements
 native GBA AI order prediction and actual turn planning with one shared

@@ -561,7 +561,10 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
   if not opts.typeless then d = require("src.battle.Gen3HelpingHand").damage(attacker, d) end
 
   local mult = 10
-  if not opts.typeless then
+  -- Native GBA Struggle skips only STAB/type calculation. It still uses
+  -- the ordinary base, critical and random-damage commands.
+  local gbaStruggle = gbaBase and (move.id == "STRUGGLE" or tonumber(move.index or move.numId) == 165)
+  if not opts.typeless and not gbaStruggle then
     -- STAB
     local stab = false
     for _, t in ipairs(attacker.curTypes) do

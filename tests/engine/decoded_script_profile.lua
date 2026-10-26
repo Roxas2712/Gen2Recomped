@@ -424,4 +424,75 @@ do
 	T.eq(observed, 9, "Gen-2 post-next sees the completed subroutine state")
 	T.eq(ctx.g2Var, 7, "the caller continues after its decoded call hook closes")
 end
+
+-- A Gen-2 wrapper written against the reference host reads the VM context
+-- fields gen2/Vm.lua:scriptCtx publishes (535a5ec): generation, mapGroup,
+-- mapNumber, mapId, object, kind, scriptKey.  The profile derives them from
+-- the native run without touching the native context.
+do
+	local SDK = require("tests.modkit.sdk")
+	local Json = require("src.link.Json")
+	local Loader = require("src.mods.Loader")
+	Version.set("gold")
+	local fs = SDK.memfs({
+		["options.lua"] = 'return {mods={probe2=true},modCallbackProfiles={probe2="decoded"}}',
+		["mods/probe2/manifest.json"] = Json.encode({
+			id = "probe2",
+			name = "Probe 2",
+			version = "1.0.0",
+			entry = "main.lua",
+		}),
+		["mods/probe2/main.lua"] = [[return function(mod)
+   mod.hooks:wrap('script.command',function(next,ctx,op,args,row)
+     if op=='setval' then
+       mod.exports.seen={generation=ctx.generation,mapGroup=ctx.mapGroup,
+         mapNumber=ctx.mapNumber,mapId=ctx.mapId,object=ctx.object,
+         kind=ctx.kind,scriptKey=ctx.scriptKey,
+         saveShared=ctx.save,nativeMap=ctx.overworld.map.id}
+     end
+     return next(ctx,op,args,row)
+   end)
+ end]],
+	})
+	local data = require("tests.fixtures.upstream_mods.data").fresh()
+	data.maps.MAP_G26_N05 = { id = "MAP_G26_N05", group = 26, number = 5 }
+	local loader = Loader.new({ fs = fs, dev = false })
+	T.eq(loader:load(data), true, "actual Loader accepts a Gen-2 per-mod profile")
+	data.map_scripts = {
+		source = "RomExtractorGen2",
+		scripts = { ["1:4a3f"] = { { "setval", 4 }, { "endall" } } },
+		maps = {},
+	}
+	local g = { data = data, save = { flags = {}, party = {}, gen3Vars = {} }, mods = loader }
+	local world = { map = { id = "MAP_G26_N05", def = data.maps.MAP_G26_N05 } }
+	local r = Runner.new(g, world)
+	local npc = { def = { index = 3 } }
+	local native = r:makeContext({ mapId = "MAP_G26_N05", npc = npc })
+	r:exec(C2.compile(data, "1:4a3f"), native)
+	local seen = loader.exports.probe2.seen
+	T.check(seen ~= nil, "Gen-2 profile wrapper observed the setval command")
+	T.eq(seen.generation, 2, "ctx.generation matches the reference host")
+	T.eq(seen.mapGroup, 26, "ctx.mapGroup comes from the native map definition")
+	T.eq(seen.mapNumber, 5, "ctx.mapNumber comes from the native map definition")
+	T.eq(seen.mapId, "MAP_G26_N05", "ctx.mapId keeps the world label, as the reference host does with hooks.mapId")
+	T.eq(seen.object, 3, "ctx.object is the 1-based map object index of the talked-to NPC")
+	T.eq(seen.kind, "script", "an interaction run reports kind=script")
+	T.eq(seen.scriptKey, "1:4a3f", "ctx.scriptKey is the pool key the run compiled from")
+	T.eq(seen.saveShared, g.save, "native save remains reachable through the public context")
+	T.eq(seen.nativeMap, "MAP_G26_N05", "Gen-2 map identity is never renamed")
+	T.eq(native.generation, nil, "derived fields are not written into the native context")
+	T.eq(native.mapGroup, nil, "derived fields are not written into the native context")
+	T.eq(native.scriptKey, "1:4a3f", "the runner records the pool key once on the native context")
+	T.eq(native.g2Var, 4, "profile observation leaves the native setval effect to the runner")
+
+	-- A map callback run reports kind=callback, and a native value is never
+	-- shadowed by a derived one.
+	loader.exports.probe2.seen = nil
+	local cb = r:makeContext({ mapId = "MAP_G26_N05", mapCallback = true, object = 9 })
+	r:exec(C2.compile(data, "1:4a3f"), cb)
+	seen = loader.exports.probe2.seen
+	T.eq(seen.kind, "callback", "a MAPCALLBACK run reports kind=callback")
+	T.eq(seen.object, 9, "a native object value wins over the derived one")
+	loader:_rollback("probe2")
+end
 T.finish()

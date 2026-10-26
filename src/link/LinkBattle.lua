@@ -166,6 +166,8 @@ local function activeStr(b, role)
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3Encore").signature(b) or "")
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3Disable").signature(b) or "")
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3Rage").signature(b) or "")
+    .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3ChoiceBand").signature(b) or "")
+    .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3MirrorMove").signature(b) or "")
 end
 
 local function benchStr(party)
@@ -254,6 +256,7 @@ function LinkBattle.new(game, net, opts)
                                          or "RATTATA", 5, { fieldWeather = false })
   self.kind = "link"
   self.linkRole = role
+  if require("src.core.GameVersion").isGen3() then self._gbaInitialItemEntries = {} end
   self.net = net
   -- BattleState:update only runs while it's the top of the state
   -- stack, but the player can push PartyMenu/ChoiceBox/NamingScreen on
@@ -436,8 +439,16 @@ function LinkBattle.new(game, net, opts)
       local theirAction = decodeTheirAction(s, theirMsg)
       local selectedMine,selectedTheirs=myAction,theirAction
       if require("src.core.GameVersion").isGen3() then
-        local Encore=require("src.battle.Gen3Encore")
-        myAction,theirAction=Encore.plan(s.player,myAction),Encore.plan(s.enemy,theirAction)
+        local Choice=require("src.battle.Gen3ChoiceBand")
+        -- Held hooks can be stateful. Both simulations query the canonical
+        -- host actor first, as the spectator does, regardless of local side.
+        if role == "host" then
+          myAction = Choice.plan(s,s.player,myAction)
+          theirAction = Choice.plan(s,s.enemy,theirAction)
+        else
+          theirAction = Choice.plan(s,s.enemy,theirAction)
+          myAction = Choice.plan(s,s.player,myAction)
+        end
         local Rage=require("src.battle.Gen3Rage")
         Rage.selected(s,s.player,myAction);Rage.selected(s,s.enemy,theirAction)
       end
@@ -750,6 +761,7 @@ function LinkBattle.newSpectator(game, net, opts)
   local self = BattleState.newWild(game, guestParty[1] and guestParty[1].species
                                          or "RATTATA", 5)
   self.kind = "link" -- exact same visual treatment as a real link battle
+  if require("src.core.GameVersion").isGen3() then self._gbaInitialItemEntries = {} end
   self.spectating = true -- Tournament.lua's marker: don't report a result for this one
   self.net = net
   game.linkNet = net
@@ -850,8 +862,8 @@ function LinkBattle.newSpectator(game, net, opts)
                           and decodeWireAction(s, guestMsg, s.enemy) or nil
       local selectedHost,selectedGuest=hostAction,guestAction
       if require("src.core.GameVersion").isGen3() then
-        local Encore=require("src.battle.Gen3Encore")
-        hostAction,guestAction=Encore.plan(s.player,hostAction),Encore.plan(s.enemy,guestAction)
+        local Choice=require("src.battle.Gen3ChoiceBand")
+        hostAction,guestAction=Choice.plan(s,s.player,hostAction),Choice.plan(s,s.enemy,guestAction)
         local Rage=require("src.battle.Gen3Rage")
         Rage.selected(s,s.player,hostAction);Rage.selected(s,s.enemy,guestAction)
       end
@@ -918,7 +930,7 @@ function LinkBattle.newSpectator(game, net, opts)
     s.afterQueue = "finish"
   end
 
-  self.hostMsg, self.guestMsg = nil, nil
+  local hostActions, guestActions = {}, {}
   local baseUpdate = self.update
   self.update = function(s, dt)
     net:update()
@@ -926,12 +938,8 @@ function LinkBattle.newSpectator(game, net, opts)
       if msg.type == "spectate" then
         local inner = msg.msg
         if inner.type == "action" then
-          if msg.side == "host" then s.hostMsg = inner else s.guestMsg = inner end
-          if s.hostMsg and s.guestMsg then
-            local h, g = s.hostMsg, s.guestMsg
-            s.hostMsg, s.guestMsg = nil, nil
-            resolveSpecTurn(s, h, g)
-          end
+          local pending = msg.side == "host" and hostActions or guestActions
+          pending[#pending + 1] = inner
         elseif inner.type == "baton_pass" then
           require("src.link.Gen3BatonChoice").receive(s, inner, msg.side)
         elseif inner.type == "bye" or inner.type == "forfeit" then
@@ -949,6 +957,13 @@ function LinkBattle.newSpectator(game, net, opts)
     end
     if net.closed and not s.linkEnded and not s.result then
       endSpectate(s)
+    end
+    -- Participants can finish animations before the spectator. Keep later
+    -- actions FIFO and advance the logical turn only after the current queue
+    -- has completed; otherwise its remaining commands observe the next turn.
+    if not s.result and not s.linkEnded and (s.phase == "menu" or s.phase == "waitBoth")
+        and #hostActions > 0 and #guestActions > 0 then
+      resolveSpecTurn(s, table.remove(hostActions, 1), table.remove(guestActions, 1))
     end
     -- same as the real-participant loop: every path that skips baseUpdate
     -- still has to advance the presentational clock, and a spectator sits in

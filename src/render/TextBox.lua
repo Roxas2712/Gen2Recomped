@@ -57,6 +57,8 @@ function TextBox.new(game, text, onDone, opts)
   self.choiceNoSound = opts.noSound
   self.auto = opts.auto
   self.stay = opts.stay
+  self.textSpeed = opts.textSpeed
+  self.allowTextAcceleration = opts.allowTextAcceleration ~= false
   -- A few cartridge screens print through the same text engine without using
   -- the field's framed dialogue window.  Teachy TV is one: teachy_tv.c gives
   -- it a 26x4 raw window at (2,15), fills it with palette colour $C and calls
@@ -465,7 +467,28 @@ function TextBox:advance()
   end
 end
 
+-- Reveal only the current native page; no input, sound or clock is pumped.
+function TextBox:revealPage()
+  while not self.waiting and not self.done do
+    local line=self.shown[#self.shown]
+    for i=self.charIndex+1,#self.codes do line[#line+1]=self.codes[i]end
+    self.charIndex=#self.codes
+    local page=self.pages[self.pageIndex]
+    if self.lineIndex<#page then
+      local nextIdx=self.lineIndex+1
+      local conts=self.pages.contBefore and self.pages.contBefore[self.pageIndex]
+      if conts and conts[nextIdx]then self.waiting=true;self.contAdvance=true
+      else self.lineIndex=nextIdx;self:beginLine()end
+    elseif self.pageIndex<#self.pages then self.waiting=true;self.contAdvance=false
+    else self.done=true end
+  end
+end
 function TextBox:update(dt)
+  local source=package.loaded['src.ui.game3.message']
+  if require('src.core.GameVersion').isGen3()and source then return source._update(self,function()return self:_updateBody(dt)end)end
+  return self:_updateBody(dt)
+end
+function TextBox:_updateBody(dt)
   local input = self.game.input
   self.blink = (self.blink + 1) % 60
   -- A page or CONT advance blocks the whole box while the original's scroll
@@ -584,9 +607,9 @@ function TextBox:update(dt)
   -- typewriter cadence: one character every N frames, N = the OPTION
   -- text speed (TextSpeedOptionData frame delays 1/3/5); holding A/B
   -- prints every frame like the original's held-button fast path
-  local delay = (self.game.save.options and self.game.save.options.textSpeed) or 3
+  local delay = self.textSpeed or (self.game.save.options and self.game.save.options.textSpeed) or 3
   if delay ~= 1 and delay ~= 3 and delay ~= 5 then delay = 3 end
-  if input:isDown("a") or input:isDown("b") then delay = 1 end
+  if self.allowTextAcceleration and (input:isDown("a") or input:isDown("b")) then delay = 1 end
   self.charTimer = (self.charTimer or 0) + 1
   while self.charTimer >= delay do
     self.charTimer = self.charTimer - delay
@@ -643,6 +666,11 @@ function TextBox:uiSize()
 end
 
 function TextBox:draw()
+  local source=package.loaded['src.ui.game3.message']
+  if require('src.core.GameVersion').isGen3()and source then return source._draw(self,function()return self:_drawBody()end)end
+  return self:_drawBody()
+end
+function TextBox:_drawBody()
   if not UIVisibility.bottomVisible(self, true) then return end
   -- The dialogue box belongs against the bottom of the screen, not floating
   -- in the middle of a zoomed-out letterbox.  Declared per frame; the

@@ -331,6 +331,10 @@ end
 
 function TrainerAI.chooseMove(battler, rng, battle)
   rng = rng or love.math.random
+  local nativeMask = battle and require("src.battle.Gen3MoveSelection").aiMask(battle, battler)
+  if nativeMask and require("src.battle.Gen3MoveSelection").ordinaryWild(battle) then
+    return require("src.battle.Gen3MoveSelection").wildMove(battle, battler, nativeMask, rng)
+  end
   -- Gen 1: SelectEnemyMove never consults wEnemyMonPP; Struggle only when
   -- every move slot is missing/disabled (core.asm:2957-2999). Finite-PP
   -- rulesets (including the Gen-2 default) fall back to Struggle when empty.
@@ -340,7 +344,9 @@ function TrainerAI.chooseMove(battler, rng, battle)
   -- move Gravity or Heal Block refuses is never chosen (Gen4MoveEffects)
   local g4 = battle and battle.g4fx and require("src.battle.Gen4MoveEffects")
   for i, mv in ipairs(battler.curMoves) do
-    if not require("src.battle.Gen3Disable").blocked(battler, mv, i) and (unlimited or mv.pp > 0)
+    if ((nativeMask and i <= 4 and not nativeMask[i])
+        or (not nativeMask and not require("src.battle.Gen3Disable").blocked(battler, mv, i)
+          and (unlimited or mv.pp > 0)))
        and not (g4 and g4.menuRefusal(battle, battler, battle.data.moves[mv.id])) then
       table.insert(usable, mv)
     end

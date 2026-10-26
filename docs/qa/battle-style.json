@@ -1,0 +1,454 @@
+{
+  "status": "passed",
+  "feature_ref": "e085157d6f8974593ae4795bee9f056a43cc2d14",
+  "integration_ref": "b41271c084f990ac6d44b536a575eb88868a2075",
+  "upstream_base": "ed5189c247ee7a2ccca666784e21fd4fba8df781",
+  "gen1_readonly_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+  "source_tree": "640f209e476cbbb691fe040c202bc26e99c212e4",
+  "tests_tree": "bcdffcaf90f59903a82205e70fefae8d848d9405",
+  "engine_tests_tree": "912c07afd8eca050be404edb3a129374d5e914d0",
+  "feature_checks": 82,
+  "integration_checks": 88,
+  "existing_shift_prompt_checks": 11,
+  "upstream_existing_failed_suites": [
+    "gate_fingerprint.lua",
+    "gate_meta_coverage.lua",
+    "gate_strings_coverage.lua",
+    "quit_thread_shutdown.lua",
+    "rebind_capture_bug510.lua",
+    "rebind_swap_clear_bug589.lua",
+    "soft_reset_bug563.lua",
+    "tool_mod_hooks.lua",
+    "update_check_tests.lua",
+    "update_tests.lua",
+    "wide_battle_layout.lua"
+  ],
+  "upstream_existing_failure_lines_identical": true,
+  "callsite_negative_failed_assertions": 13,
+  "engine_suites": 297,
+  "sdk_suites": 4,
+  "B30": true,
+  "native_contracts": {
+    "workers": 12,
+    "paired_runs": 6,
+    "paired_typed_observations": 60,
+    "typed_equal": true,
+    "log_sha256": {
+      "gen1-red-1-native": "4dd51b3f41c9a79a538777914efd726964765a8d4410b8a81b3c1a9b0875bdb4",
+      "gen1-red-2-native": "a652eab8d8baeeac89ec397807906674b1dd2bf52de53163010a47094bdf6f59",
+      "gen1-blue-1-native": "a652eab8d8baeeac89ec397807906674b1dd2bf52de53163010a47094bdf6f59",
+      "gen1-blue-2-native": "4dd51b3f41c9a79a538777914efd726964765a8d4410b8a81b3c1a9b0875bdb4",
+      "gen1-yellow-1-native": "4dd51b3f41c9a79a538777914efd726964765a8d4410b8a81b3c1a9b0875bdb4",
+      "gen1-yellow-2-native": "33754c969ecac91696b060d3529c677a4cda44f3eff32430941e4545b10e680d",
+      "gen2-red-1-native": "b115c60797ff4d833c6d9d87461f94119ac881ab47a5bbcf8e0eeffc623abc19",
+      "gen2-red-2-native": "4ae9c361a659001bd667dc04d7053fc769e91043a9881ad39cbbfb6a3fe7c6c3",
+      "gen2-blue-1-native": "95c614c1e6db2d450f8bf0333a80fef97a737e4e391787367faa6ddd6b2c5f89",
+      "gen2-blue-2-native": "0a3da904582ffbb1808b94ed29bfe08710d9c9b7dc8e3e039c79ff7834fed0d0",
+      "gen2-yellow-1-native": "1221ad139386d1b2140f3d779b84fbbda72149153530191845cf69b1bb188837",
+      "gen2-yellow-2-native": "c23df252cd5084b5135e088b0c90a180f35db697a01b594ed63d2fe27a41e69b"
+    }
+  },
+  "unified_contracts": {
+    "workers": 24,
+    "paired_runs": 12,
+    "paired_typed_observations": 120,
+    "typed_equal": true,
+    "log_sha256": {
+      "gen1-red-1-native": "4dd51b3f41c9a79a538777914efd726964765a8d4410b8a81b3c1a9b0875bdb4",
+      "gen1-red-2-native": "4388f852a04ab8423bd99d138dd3b1caec3db6aa0eecc58c13ecac50fefe83d8",
+      "gen1-red-2-unified": "522e2c1fa34ac57608f5c8655ca073e5339747bd7ad819350f81879cc57713dd",
+      "gen1-red-3-unified": "18270ac6276ba84e0799806ef52e17eb30a315847d6283d91b485076d819705e",
+      "gen1-blue-1-native": "a494132571ca73853ec099590ca7f1f0c57d3db724eda56d376a2cecede41ec1",
+      "gen1-blue-2-native": "4dd51b3f41c9a79a538777914efd726964765a8d4410b8a81b3c1a9b0875bdb4",
+      "gen1-blue-2-unified": "a494132571ca73853ec099590ca7f1f0c57d3db724eda56d376a2cecede41ec1",
+      "gen1-blue-3-unified": "33754c969ecac91696b060d3529c677a4cda44f3eff32430941e4545b10e680d",
+      "gen1-yellow-1-native": "f87b3b369ce74a84a9a157884f2b92661632e4ebe8857bca8759f9f03449bd58",
+      "gen1-yellow-2-native": "d3dfa763c2a52fb59a3f2b0d91342415264f91e072216d288a198a697fa8c202",
+      "gen1-yellow-2-unified": "4388f852a04ab8423bd99d138dd3b1caec3db6aa0eecc58c13ecac50fefe83d8",
+      "gen1-yellow-3-unified": "4dd51b3f41c9a79a538777914efd726964765a8d4410b8a81b3c1a9b0875bdb4",
+      "gen2-red-1-native": "bfb284d3068a7a9c51ce49c2c570b4f740244108a9640b9de2e8c7dfedba7e47",
+      "gen2-red-2-native": "e131b9788c1a77ef3fa4bbc106688b2f3a825c40dddfef7fd886c4f0afd6ebf4",
+      "gen2-red-2-unified": "4ed1c5157aa03716f19dcdc581748d530c34d40f4a12f3740bfec46c650558e8",
+      "gen2-red-3-unified": "5fb0d2dfc5184a342f7fe1592070af2d1dd460aafc124a33d5c3caafed47987c",
+      "gen2-blue-1-native": "6875c7ef413323ff7655c31f5ea02b1e8798d3d6d1725b0de08089287964e24e",
+      "gen2-blue-2-native": "ac04e930252110a2107cd88f06a137f6b8a570ca97c079b697709f0e2c7d2040",
+      "gen2-blue-2-unified": "23a2ad7744afbd4d5e67cb5cdc105183f44f32e8521c22b74ef4b410b0035249",
+      "gen2-blue-3-unified": "09b7c020c19ddd734de16c5790c5bf77745c203b6c1b4581a4af03cd6ae19b7c",
+      "gen2-yellow-1-native": "c1c60ad6e283b8fef5049a992a578c389cc1986efd4ed811bd98716a40b12639",
+      "gen2-yellow-2-native": "068ebde010a0049f80a59b4e26dfa8f30948d70fc96d7eef9b1ccb060523c718",
+      "gen2-yellow-2-unified": "d54ce9f0862b61d28cc6f948d6e033598311a8901861dcf63e6a7f84e1b5e1b1",
+      "gen2-yellow-3-unified": "7d80574c5fbbe2540d505dfe54bdcd9e4c53f8f940c89b012c1c9a57f759a277"
+    }
+  },
+  "native_gpu": {
+    "ref": "b41271c084f990ac6d44b536a575eb88868a2075",
+    "metadata": {
+      "renderer": "OpenGL",
+      "gameVersion": "red",
+      "version": "4.1 Metal - 89.4",
+      "love": [
+        11,
+        5,
+        0,
+        "Mysterious Mysteries"
+      ],
+      "vendor": "Apple",
+      "device": "Apple M2"
+    },
+    "result": {
+      "errors": 0,
+      "rows": [
+        {
+          "option": "shift",
+          "mode": "set",
+          "calls": 1,
+          "offers": 0,
+          "partySize": 2,
+          "enemyIndex": 2
+        },
+        {
+          "option": "set",
+          "mode": "shift",
+          "calls": 1,
+          "offers": 1,
+          "partySize": 2,
+          "enemyIndex": 2
+        },
+        {
+          "option": "set",
+          "mode": "unsubscribe",
+          "calls": 0,
+          "offers": 0,
+          "partySize": 2,
+          "enemyIndex": 2
+        }
+      ]
+    },
+    "exit": 0,
+    "captures": {
+      "set-menu.png": {
+        "sha256": "91f56acae5dd1718bce7002d59012faed18abbd874ec4f5621d74908eab863f1",
+        "dimensions": [
+          640,
+          576
+        ]
+      },
+      "shift-choice.png": {
+        "sha256": "e68881db24c4d73fe7d89978010fe9a07b255724a9d848b104a5b5f899c5ee7d",
+        "dimensions": [
+          640,
+          576
+        ]
+      },
+      "shift-menu.png": {
+        "sha256": "95a017b3f337df926597943581f991188dfa98ec986e23b06105f563d33b2aa0",
+        "dimensions": [
+          640,
+          576
+        ]
+      },
+      "unsubscribe-menu.png": {
+        "sha256": "c0a434d3b8645496b453acb28aec8ca98e7697b0ccab264e9cbe185042115de2",
+        "dimensions": [
+          640,
+          576
+        ]
+      }
+    },
+    "log_sha256": "6d249e25bc4bdbec2584393b1313a54e0d2e40820a262392bffe62a223d67f14",
+    "driver_sha256": "02444b2bb7edeb285868fe4cd2dbe8ed2fded325f7f2d30fa19fe84ba532b355",
+    "inputs_unchanged": true,
+    "legacy_migration_disabled": true
+  },
+  "raw_report_sha256": {
+    "battle-style-smoke-20261026c": "ccbb6cac105ed9b0c8e2c59259993b81dfb55798e233134e4e8ec66caf9b9430",
+    "battle-style-feature-full-20261026a": "6b033c7126cbb4c9fe1a3646204468c5df8ca41c8e44b8d2e71b25c7c981ee12",
+    "battle-style-baseline-full-20261026a": "b95dd60e264db25ffec47896cf26b45d92e045574edfd76b23e345e4e0f7929c",
+    "battle-style-contracts-20261026a": "e5d00f83861f6cade7e5534e8355628279667d3b1483c9488fbe75b7b5863e8e",
+    "battle-style-integration-contracts-20261026a": "8bcf3253d4b1e78e227703799b42ba1a12afaabc2aa5d3466377dc55bd448341",
+    "battle-style-integration-full-20261026a": "71942ddff4a9fef3c79942348931d8c4ca5622509e89066352f158f4c0e7de07",
+    "battle-style-native-gpu-20261026d": "8ebb84b0545b5c9717c994baf705a85597e3fcf94d156cc582f496e6ca90add8"
+  },
+  "retained_setup_failures": [
+    "Initial sample entry returned exports instead of assigning mod.exports; external fixture corrected before qualification.",
+    "Two GPU launch preparations rejected unrecognized QA identity prefixes before starting the game.",
+    "The first actual GPU fixture counted the same held ChoiceBox each frame; count now uses overlay identity and retains its 15-frame native answer hold.",
+    "Initial additional Gen1 GPU run reached the ROM-required launcher and never executed the driver; only that QA app was closed. Both engines subsequently passed genuine isolated native ROM imports."
+  ],
+  "limits": [
+    "Gen1-only decision producer, matching reference availability; other generations retain their native policy.",
+    "Actual imported Red constructed trainer battle, FIGHT/move input, SHIFT choice and subsequent send-out; not whole-mod, playthrough, pixel equality or FPS acceptance.",
+    "Other shared/native portability gaps remain open.",
+    "ChoiceBox placement remains each host native layout; screenshots establish conditional offer/return, not pixel equality. Existing Gen2 dev facade-import warnings and EXP-bar placeholder (also present after fresh import) remain separate diagnostics."
+  ],
+  "base_independent_audit_sha256": "4e77d88fc2fd3d91aec9d171ceed2ec81f9c13e5088efd4530990797f9c134d2",
+  "native_gpu_runs": {
+    "gen2_existing_import": {
+      "ref": "b41271c084f990ac6d44b536a575eb88868a2075",
+      "metadata": {
+        "renderer": "OpenGL",
+        "gameVersion": "red",
+        "version": "4.1 Metal - 89.4",
+        "love": [
+          11,
+          5,
+          0,
+          "Mysterious Mysteries"
+        ],
+        "vendor": "Apple",
+        "device": "Apple M2"
+      },
+      "result": {
+        "errors": 0,
+        "rows": [
+          {
+            "option": "shift",
+            "mode": "set",
+            "calls": 1,
+            "offers": 0,
+            "partySize": 2,
+            "enemyIndex": 2
+          },
+          {
+            "option": "set",
+            "mode": "shift",
+            "calls": 1,
+            "offers": 1,
+            "partySize": 2,
+            "enemyIndex": 2
+          },
+          {
+            "option": "set",
+            "mode": "unsubscribe",
+            "calls": 0,
+            "offers": 0,
+            "partySize": 2,
+            "enemyIndex": 2
+          }
+        ]
+      },
+      "exit": 0,
+      "captures": {
+        "set-menu.png": {
+          "sha256": "91f56acae5dd1718bce7002d59012faed18abbd874ec4f5621d74908eab863f1",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "shift-choice.png": {
+          "sha256": "e68881db24c4d73fe7d89978010fe9a07b255724a9d848b104a5b5f899c5ee7d",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "shift-menu.png": {
+          "sha256": "95a017b3f337df926597943581f991188dfa98ec986e23b06105f563d33b2aa0",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "unsubscribe-menu.png": {
+          "sha256": "c0a434d3b8645496b453acb28aec8ca98e7697b0ccab264e9cbe185042115de2",
+          "dimensions": [
+            640,
+            576
+          ]
+        }
+      },
+      "log_sha256": "6d249e25bc4bdbec2584393b1313a54e0d2e40820a262392bffe62a223d67f14",
+      "driver_sha256": "02444b2bb7edeb285868fe4cd2dbe8ed2fded325f7f2d30fa19fe84ba532b355",
+      "report_sha256": "8ebb84b0545b5c9717c994baf705a85597e3fcf94d156cc582f496e6ca90add8",
+      "fresh_native_import": false,
+      "rom_sha256": null,
+      "inputs_unchanged": true,
+      "legacy_migration_disabled": true
+    },
+    "gen1_fresh_import": {
+      "ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+      "metadata": {
+        "version": "4.1 Metal - 89.4",
+        "vendor": "Apple",
+        "gameVersion": "red",
+        "love": [
+          11,
+          5,
+          0,
+          "Mysterious Mysteries"
+        ],
+        "device": "Apple M2",
+        "renderer": "OpenGL"
+      },
+      "result": {
+        "errors": 0,
+        "rows": [
+          {
+            "partySize": 2,
+            "offers": 0,
+            "enemyIndex": 2,
+            "option": "shift",
+            "mode": "set",
+            "calls": 1
+          },
+          {
+            "partySize": 2,
+            "offers": 1,
+            "enemyIndex": 2,
+            "option": "set",
+            "mode": "shift",
+            "calls": 1
+          },
+          {
+            "partySize": 2,
+            "offers": 0,
+            "enemyIndex": 2,
+            "option": "set",
+            "mode": "unsubscribe",
+            "calls": 0
+          }
+        ]
+      },
+      "exit": 0,
+      "captures": {
+        "set-menu.png": {
+          "sha256": "97b3e5f1a31b9d3d6eb2b76fa0649f3a4193bfe73ae576252421412c927de870",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "shift-choice.png": {
+          "sha256": "c6766aeaef4f31c40c0dca7d222a71dff821de57769b6771cb65a772ad1dfe54",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "shift-menu.png": {
+          "sha256": "97b3e5f1a31b9d3d6eb2b76fa0649f3a4193bfe73ae576252421412c927de870",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "unsubscribe-menu.png": {
+          "sha256": "a6b69559167ded15429bd7be5f14c96067cab2090831ecdf90a710f3f6c4991f",
+          "dimensions": [
+            640,
+            576
+          ]
+        }
+      },
+      "log_sha256": "ea060799a4cf615c7ad18f951c0cc81626aa44996051dfa151ad60fb85b7951e",
+      "driver_sha256": "02444b2bb7edeb285868fe4cd2dbe8ed2fded325f7f2d30fa19fe84ba532b355",
+      "report_sha256": "02bc77c884497b4e3b22811f7e72ba32d7210ff9b8bc3e9dfce3e78cbe7ce59b",
+      "fresh_native_import": true,
+      "rom_sha256": "5ca7ba01642a3b27b0cc0b5349b52792795b62d3ed977e98a09390659af96b7b",
+      "inputs_unchanged": true,
+      "legacy_migration_disabled": true
+    },
+    "gen2_fresh_import": {
+      "ref": "b41271c084f990ac6d44b536a575eb88868a2075",
+      "metadata": {
+        "vendor": "Apple",
+        "gameVersion": "red",
+        "love": [
+          11,
+          5,
+          0,
+          "Mysterious Mysteries"
+        ],
+        "renderer": "OpenGL",
+        "version": "4.1 Metal - 89.4",
+        "device": "Apple M2"
+      },
+      "result": {
+        "rows": [
+          {
+            "option": "shift",
+            "partySize": 2,
+            "enemyIndex": 2,
+            "offers": 0,
+            "mode": "set",
+            "calls": 1
+          },
+          {
+            "option": "set",
+            "partySize": 2,
+            "enemyIndex": 2,
+            "offers": 1,
+            "mode": "shift",
+            "calls": 1
+          },
+          {
+            "option": "set",
+            "partySize": 2,
+            "enemyIndex": 2,
+            "offers": 0,
+            "mode": "unsubscribe",
+            "calls": 0
+          }
+        ],
+        "errors": 0
+      },
+      "exit": 0,
+      "captures": {
+        "set-menu.png": {
+          "sha256": "4040864af7fdb2c8dde0724c4f144e64d935767c48e864c1b0727e61d2bbe3b6",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "shift-choice.png": {
+          "sha256": "e68881db24c4d73fe7d89978010fe9a07b255724a9d848b104a5b5f899c5ee7d",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "shift-menu.png": {
+          "sha256": "da4a877195a041ae468ff95bc0cc8d77285ec0eb32f8647a0362009b2e38b066",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "unsubscribe-menu.png": {
+          "sha256": "95a017b3f337df926597943581f991188dfa98ec986e23b06105f563d33b2aa0",
+          "dimensions": [
+            640,
+            576
+          ]
+        }
+      },
+      "log_sha256": "3cff6bf1e2aa5d92120b9908a98557d90885c591fa57cfe1217f21b256ef74e8",
+      "driver_sha256": "02444b2bb7edeb285868fe4cd2dbe8ed2fded325f7f2d30fa19fe84ba532b355",
+      "report_sha256": "b81a6ff2c7a492c8f7b40f664cbb5deb04f22346883b6baad1a135d3e539e40c",
+      "fresh_native_import": true,
+      "rom_sha256": "5ca7ba01642a3b27b0cc0b5349b52792795b62d3ed977e98a09390659af96b7b",
+      "inputs_unchanged": true,
+      "legacy_migration_disabled": true
+    }
+  },
+  "native_gpu_typed_results_identical": true,
+  "native_capture_count": 12,
+  "pull_request": "https://github.com/UNDERdecoded/Gen2Recomped/pull/322",
+  "visually_inspected_capture_count": 12,
+  "publication_scope": "Gen2Recomped only; Gen1 reference unchanged and read-only.",
+  "public_probes": {
+    "battle-style-native.lua": {
+      "sha256": "f2e9044282f65afcbd4773a59feb48afd7e39cf98ef53be3bd160e558af3880b",
+      "executed_original_sha256": "02444b2bb7edeb285868fe4cd2dbe8ed2fded325f7f2d30fa19fe84ba532b355",
+      "stripped_luajit_bytecode_identical": true
+    }
+  },
+  "hosted_ci": {
+    "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40338743202",
+    "conclusion": "action_required",
+    "jobs": 0,
+    "scope": "Requires upstream maintainer approval; no jobs executed. Local qualification is separate."
+  }
+}

@@ -819,6 +819,29 @@ end
 -- THE FIELD, AS THE EFFECT SEES IT: the whole window's frame, zoomed about the
 -- top screen's centre (where the camera's target is), with the motion blur
 -- and the Elite Four's freeze-frame applied. Window-sized.
+-- G6: ONE QUAD PER PURPOSE, RE-AIMED PER DRAW.  The slice, shake and split
+-- effects asked love.graphics.newQuad for every band -- the shake for every
+-- scanline, 192 quads a frame -- and a Quad is a C object with a finalizer.
+-- `Quad:setViewport` takes the source size too, so one quad per purpose
+-- serves every field size the transition is handed.
+local sliceScratch, bannerScratch
+local function sliceQuad(x, y, w, h, sw, sh)
+  if not sliceScratch then
+    sliceScratch = love.graphics.newQuad(x, y, w, h, sw, sh)
+  else
+    sliceScratch:setViewport(x, y, w, h, sw, sh)
+  end
+  return sliceScratch
+end
+local function bannerQuad(x, y, w, h, sw, sh)
+  if not bannerScratch then
+    bannerScratch = love.graphics.newQuad(x, y, w, h, sw, sh)
+  else
+    bannerScratch:setViewport(x, y, w, h, sw, sh)
+  end
+  return bannerScratch
+end
+
 local function fieldPicture(self, source, ww, wh, cx, cy)
   local S = self.S
   local g = love.graphics
@@ -991,7 +1014,7 @@ function Gen4BattleTransition:drawScreen(prog, ww, wh, Sx, Sy, source, ox, oy, v
       for band = floor(y0 / pps), floor(y1 / pps) do
         local top = band * pps
         local off = (band % 2 == 0) and S.slice.x or -S.slice.x
-        local q = g.newQuad(0, oy + top * k, fw, pps * k, fw, fh)
+        local q = sliceQuad(0, oy + top * k, fw, pps * k, fw, fh)
         g.draw(field, q, -off * k, oy + top * k)
       end
     elseif S.shake then
@@ -1000,16 +1023,16 @@ function Gen4BattleTransition:drawScreen(prog, ww, wh, Sx, Sy, source, ox, oy, v
         local e = (sh.pos + y) % 192
         local hofs = sin(sh.inc * e / TURN * 2 * pi) * sh.amp
         if sh.invert and floor(y / sh.invert) % 2 == 1 then hofs = -hofs end
-        local q = g.newQuad(0, oy + y * k, fw, k, fw, fh)
+        local q = sliceQuad(0, oy + y * k, fw, k, fw, fh)
         g.draw(field, q, -trunc(hofs) * k, oy + y * k)
       end
     elseif S.split then
       local X, Y = S.split.x, S.split.y
       if X < 255 and Y < 96 then
         local rx, by = ox + (255 - X) * k, oy + (96 - Y) * k
-        g.draw(field, g.newQuad(0, 0, rx, by, fw, fh), 0, 0)
+        g.draw(field, sliceQuad(0, 0, rx, by, fw, fh), 0, 0)
         local lx, ty = ox + X * k, oy + (96 + Y) * k
-        g.draw(field, g.newQuad(lx, ty, fw - lx, fh - ty, fw, fh), lx, ty)
+        g.draw(field, sliceQuad(lx, ty, fw - lx, fh - ty, fw, fh), lx, ty)
       end
     else
       g.draw(field, 0, 0)
@@ -1040,7 +1063,7 @@ function Gen4BattleTransition:drawScreen(prog, ww, wh, Sx, Sy, source, ox, oy, v
           -- window's own right edge, shows the banner
           local wx = (edge > 0) and (ox + edge * k) or 0
           g.setScissor(wx, oy + y * k, ww - wx, k)
-          local q = g.newQuad(0, line, w, 1, w, im.h)
+          local q = bannerQuad(0, line, w, 1, w, im.h)
           for tile = first, last do
             g.draw(img, q, ox + (tile * w - sx) * k, oy + y * k, 0, k, k)
           end

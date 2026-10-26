@@ -154,8 +154,12 @@ function LuaWriter.write(path, value)
   -- into the game folder (portable installs); it also creates the parent
   -- directories.  See src/import/CacheFs.lua.
   local CacheFs = require("src.import.CacheFs")
-  local ok, err = CacheFs.write(path, LuaWriter.encodeSplit(value))
+  local source = LuaWriter.encodeSplit(value)
+  local ok, err = CacheFs.write(path, source)
   if not ok then error("could not write " .. path .. ": " .. tostring(err)) end
+  -- C1: the compiled form beside it, so the next boot skips the parser.  A
+  -- dump that cannot be made or written is not a failed import.
+  pcall(function() require("src.core.BytecodeCache").writeSidecar(path, source) end)
 end
 
 return LuaWriter

@@ -1,0 +1,396 @@
+{
+  "status": "passed",
+  "upstream_base": "ed5189c247ee7a2ccca666784e21fd4fba8df781",
+  "feature_ref": "1ac2846ef8cbe837f6819b22092f0bcbf0cd328c",
+  "integration_ref": "959a2d78e94f7ae0a3c6ea7a206a6d326c6fb1d6",
+  "gen1_readonly_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+  "source_tree": "2c0bcb7c8d6952258635d52c403aafe5ed5d0113",
+  "tests_tree": "622b42dda4e57b7f644ef5f0814cdc048be44035",
+  "engine_tests_tree": "a83ab4efc4a52b93972bfa5560ef464579db0598",
+  "main_blob": "a939e9628652052f9dffb2cb7ae834de2eb697ea",
+  "feature_targeted_checks": 410,
+  "integration_targeted_checks": 419,
+  "existing_upstream_failed_suites": 11,
+  "existing_failure_lines_identical": true,
+  "baseline_new_failed_assertions": 84,
+  "native_contracts": {
+    "workers": 12,
+    "paired_runs": 6,
+    "paired_complete_typed_rows": 162,
+    "typed_equal": true,
+    "log_sha256": {
+      "gen1-red-1-native": "22c4b999e580de99c0f336bc1a50ef4702ed13d4e893420cfeb9d66fc50f45be",
+      "gen1-red-2-native": "47bfab83e0677ee2fc1fba552ea651056380cb4aa50e05b1d05b866fd2573249",
+      "gen1-blue-1-native": "88b7b2611cbb90904f0fb6e43f0ad8c9eda6c204e09407ef64765b21fc19851b",
+      "gen1-blue-2-native": "a30aee77de0f5f2e5952d7cb6c3e73e3f71b2d186a43b04964ada3ed3c85a368",
+      "gen1-yellow-1-native": "a8e35dfbc1ec1ebd1498625a22673486e304ec49c5365944b3d62a4c21a381bf",
+      "gen1-yellow-2-native": "5c9dc2dfded1989ab440dc00f0613543046d91669a909d78c65c60821be75c60",
+      "gen2-red-1-native": "4a1a9100af29e154fd69b99fedfd189b41c462d774f871bf3be2e8ac99c565df",
+      "gen2-red-2-native": "449d78189e6a094b1a21f0d03b10ec18eb6a062f67c360cde00c6836c200c9fe",
+      "gen2-blue-1-native": "3efd854c179051d6820d99608d7d434841b55c6851b0659d380865206b1e97c3",
+      "gen2-blue-2-native": "bd32e07078ab782ff4ecd7bf89c9ec1646e6e2e858a0b4d80cd56ae5c20cab83",
+      "gen2-yellow-1-native": "ccac0ddccb57276673b02cd9770a15f626496c6814d1949bb12848fe4fd0bc68",
+      "gen2-yellow-2-native": "3248a515ef4757e60d79ee124aac040997906d95a6af987cc3132e3183731cf7"
+    }
+  },
+  "unified_contracts": {
+    "workers": 24,
+    "paired_runs": 12,
+    "paired_complete_typed_rows": 324,
+    "typed_equal": true,
+    "log_sha256": {
+      "gen1-red-1-native": "71a6fb5640973570cc06aa7559987bea7c3b17c8f39dd329b50bf7ffbc8b525d",
+      "gen1-red-2-native": "3fcfef31166605cf02d3aed7ec7fa6c8788bd77d69aaadd4a5fcf7f18ba9818e",
+      "gen1-red-2-unified": "97a407cbe5837c89d2c3dd1c103c79c770fe7362f5442123808cc0f9b136de91",
+      "gen1-red-3-unified": "32672af8a880249f18ab416fe31d93fbce20c02fbff7a48a5283b8d4100d6eb9",
+      "gen1-blue-1-native": "f0c98e95738a8e1b28388417100ce6bb2bad9adf11b733de08a5aacdd3c668c9",
+      "gen1-blue-2-native": "f9f7328c557b0cbffafa612276876462192cca3ab77f55e34159a07e5ac14451",
+      "gen1-blue-2-unified": "810f211fc9f212447a9626a92abc007d5a0e35af7a1126545f34ba4388cf31f9",
+      "gen1-blue-3-unified": "dffe13b1242b309050b39e7cdb0a4671d8fbb7b5d85fad3632ad7a5fe4dd3899",
+      "gen1-yellow-1-native": "5ef31df901bdec5c484bcddea0b0bee9728de1b991bb4c31c686908ee9ae8708",
+      "gen1-yellow-2-native": "81d61726252e89ac6a6c6682175a9974e4219cc0b31bd4be67dded04071e177a",
+      "gen1-yellow-2-unified": "1a594b37193a6389e3658f13daa32982ab9fbbd7657bc466583089ac803303a3",
+      "gen1-yellow-3-unified": "e3258e80ed74bc66015a33b05b6f478c62786ee9b77a4a0e58e84dcd3bc43f36",
+      "gen2-red-1-native": "1be3515eee4856de3bf413abad34fcc1fe93e66ff620cabab89a7695346fe724",
+      "gen2-red-2-native": "e6fe5b35510ca496585fbd21591ababd7278819eb545129694480175c1f1c9b0",
+      "gen2-red-2-unified": "2946ec89374c19b3f845a1e5d746f6f61344d09b646ec1636053ba66189e9229",
+      "gen2-red-3-unified": "fb13ab58791651674963161c35a686e671ba5822b795a31a33d90cb3f6e3d2ea",
+      "gen2-blue-1-native": "db02becce947b94b57eedcd39f800c7ec86aa9b627313667ec4e5e757088f6c1",
+      "gen2-blue-2-native": "7b8f5fb9fdf3f2d9e36c0c62ccba5db1c0431a49f32358473a7c86faee21710a",
+      "gen2-blue-2-unified": "4bd0dd495df8be22efef8d66402f696aef6427f8874535670fc9efb891b2af05",
+      "gen2-blue-3-unified": "dd9d1885c26df134c96fe1b89c5e5ba935a5e25ebe13cc8c2e50aaa2c7754984",
+      "gen2-yellow-1-native": "39c720c2164f26c31d53cf4e6fbfb1658c0352f974b8e0f59659e503e4851194",
+      "gen2-yellow-2-native": "ea891ba0a0be34aa4a9a7dd22a4d1d32dd2128c00fdcb80c2defdbc06ad58ded",
+      "gen2-yellow-2-unified": "8df8355d46673db2a87c77557554074af3403d82496267b136736a1e7c3fd3cd",
+      "gen2-yellow-3-unified": "9f0d6a067266fa59a2ffe0fe5fe65c0b6a29e7cd893c7e5d3f010509e8fd57c5"
+    }
+  },
+  "negative_controls": [
+    {
+      "name": "bypassed_store_hook",
+      "exit": 1,
+      "log_sha256": "5ceaf1f4b2001f8820f430f2e816fd1e17fc0a161e0d0e2c6a9bcf6864d06415",
+      "failed_assertions": 84
+    },
+    {
+      "name": "boolean_only_claim",
+      "exit": 1,
+      "log_sha256": "5faa736d849a0f935053f62588a6ef41ed71dad7883b6f4cdd6b6faaef5e2b0a",
+      "failed_assertions": 24
+    }
+  ],
+  "engine_suites": 300,
+  "sdk_suites": 4,
+  "B30": true,
+  "native_gpu": {
+    "gen2": {
+      "ref": "959a2d78e94f7ae0a3c6ea7a206a6d326c6fb1d6",
+      "exit": 0,
+      "metadata": {
+        "gameVersion": "red",
+        "love": [
+          11,
+          5,
+          0,
+          "Mysterious Mysteries"
+        ],
+        "vendor": "Apple",
+        "version": "4.1 Metal - 89.4",
+        "renderer": "OpenGL",
+        "device": "Apple M2"
+      },
+      "result": {
+        "rows": [
+          {
+            "partySize": 6,
+            "destination": "mod",
+            "questions": 0,
+            "result": "caught",
+            "nickname": false,
+            "ballCount": 1,
+            "tag": "claim",
+            "calls": 1,
+            "custody": 1,
+            "occurrences": 0,
+            "namingScreens": 0
+          },
+          {
+            "partySize": 6,
+            "destination": "mod",
+            "questions": 0,
+            "result": "caught",
+            "nickname": false,
+            "ballCount": 1,
+            "tag": "zero",
+            "calls": 1,
+            "custody": 1,
+            "occurrences": 0,
+            "namingScreens": 0
+          },
+          {
+            "partySize": 6,
+            "destination": "box",
+            "questions": 1,
+            "result": "caught",
+            "nickname": "A",
+            "ballCount": 1,
+            "tag": "fallback",
+            "calls": 1,
+            "custody": 0,
+            "occurrences": 1,
+            "namingScreens": 1
+          },
+          {
+            "partySize": 2,
+            "destination": "party",
+            "questions": 1,
+            "result": "caught",
+            "nickname": false,
+            "ballCount": 1,
+            "tag": "party-room",
+            "calls": 0,
+            "custody": 0,
+            "occurrences": 1,
+            "namingScreens": 0
+          },
+          {
+            "partySize": 6,
+            "destination": "box",
+            "questions": 1,
+            "result": "caught",
+            "nickname": false,
+            "ballCount": 1,
+            "tag": "unsubscribe",
+            "calls": 0,
+            "custody": 0,
+            "occurrences": 1,
+            "namingScreens": 0
+          }
+        ],
+        "errors": 0
+      },
+      "captures": {
+        "battle-bag.png": {
+          "sha256": "f78b7c6b2fc77ca6a9b54129689cc4c839221a47e54d7c31e32c5358a2a5ddbe",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "box-naming-A.png": {
+          "sha256": "aee92b684801f9b2ae06b1e654e7dc579c13b6b6d96e99a4dda325f87d64b698",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "claimed-world.png": {
+          "sha256": "fa4fc0978c7a96953402f8bcfeb73ad4825f8fc2c4200d719e32958a7fb18cbb",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "fallback-question.png": {
+          "sha256": "22424d61d303fad48fc0f148b7bba5e778437a5e45f3a0c7d22cbbe3883e9d0d",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "party-room-question.png": {
+          "sha256": "22424d61d303fad48fc0f148b7bba5e778437a5e45f3a0c7d22cbbe3883e9d0d",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "unsubscribe-question.png": {
+          "sha256": "22424d61d303fad48fc0f148b7bba5e778437a5e45f3a0c7d22cbbe3883e9d0d",
+          "dimensions": [
+            640,
+            576
+          ]
+        }
+      },
+      "driver_sha256": "489ae592791c4de1ac051a369079cf462a2df264789c2c5cdfb045ab03bb40d8",
+      "log_sha256": "eb3622c979b71bec3773cc774763bdcc656b51ec2968dc8595b2ea32ce0695ed",
+      "rom_sha256": "5ca7ba01642a3b27b0cc0b5349b52792795b62d3ed977e98a09390659af96b7b",
+      "inputs_unchanged": true,
+      "regular_native_import": true,
+      "legacy_migration_disabled": true
+    },
+    "gen1": {
+      "ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+      "exit": 0,
+      "metadata": {
+        "renderer": "OpenGL",
+        "gameVersion": "red",
+        "vendor": "Apple",
+        "love": [
+          11,
+          5,
+          0,
+          "Mysterious Mysteries"
+        ],
+        "device": "Apple M2",
+        "version": "4.1 Metal - 89.4"
+      },
+      "result": {
+        "errors": 0,
+        "rows": [
+          {
+            "occurrences": 0,
+            "custody": 1,
+            "destination": "mod",
+            "result": "caught",
+            "partySize": 6,
+            "ballCount": 1,
+            "calls": 1,
+            "namingScreens": 0,
+            "nickname": false,
+            "tag": "claim",
+            "questions": 0
+          },
+          {
+            "occurrences": 0,
+            "custody": 1,
+            "destination": "mod",
+            "result": "caught",
+            "partySize": 6,
+            "ballCount": 1,
+            "calls": 1,
+            "namingScreens": 0,
+            "nickname": false,
+            "tag": "zero",
+            "questions": 0
+          },
+          {
+            "occurrences": 1,
+            "custody": 0,
+            "destination": "box",
+            "result": "caught",
+            "partySize": 6,
+            "ballCount": 1,
+            "calls": 1,
+            "namingScreens": 1,
+            "nickname": "A",
+            "tag": "fallback",
+            "questions": 1
+          },
+          {
+            "occurrences": 1,
+            "custody": 0,
+            "destination": "party",
+            "result": "caught",
+            "partySize": 2,
+            "ballCount": 1,
+            "calls": 0,
+            "namingScreens": 0,
+            "nickname": false,
+            "tag": "party-room",
+            "questions": 1
+          },
+          {
+            "occurrences": 1,
+            "custody": 0,
+            "destination": "box",
+            "result": "caught",
+            "partySize": 6,
+            "ballCount": 1,
+            "calls": 0,
+            "namingScreens": 0,
+            "nickname": false,
+            "tag": "unsubscribe",
+            "questions": 1
+          }
+        ]
+      },
+      "captures": {
+        "battle-bag.png": {
+          "sha256": "33c7545f1457bea80adcf98ae35683e96d80d4c0c316bb64a1c06b015a091497",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "box-naming-A.png": {
+          "sha256": "e474df6d42eadaea155febfc69cf6d15f7decbf41d2d5aa7a5c6e7b76e707ce6",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "claimed-world.png": {
+          "sha256": "fa4fc0978c7a96953402f8bcfeb73ad4825f8fc2c4200d719e32958a7fb18cbb",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "fallback-question.png": {
+          "sha256": "164f81f6cfaa3685c12275f2896cf698488b9f12384ca068c5b284f982539f5c",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "party-room-question.png": {
+          "sha256": "164f81f6cfaa3685c12275f2896cf698488b9f12384ca068c5b284f982539f5c",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "unsubscribe-question.png": {
+          "sha256": "164f81f6cfaa3685c12275f2896cf698488b9f12384ca068c5b284f982539f5c",
+          "dimensions": [
+            640,
+            576
+          ]
+        }
+      },
+      "driver_sha256": "489ae592791c4de1ac051a369079cf462a2df264789c2c5cdfb045ab03bb40d8",
+      "log_sha256": "92b91fdcb74e39ead35bd0165b7c705f96e3494105b17804a5848835ac193922",
+      "rom_sha256": "5ca7ba01642a3b27b0cc0b5349b52792795b62d3ed977e98a09390659af96b7b",
+      "inputs_unchanged": true,
+      "regular_native_import": true,
+      "legacy_migration_disabled": true
+    }
+  },
+  "native_gpu_typed_outcomes_identical": true,
+  "native_capture_count": 12,
+  "raw_report_sha256": {
+    "catch-party-full-feature-full-20261026a": "cfcc863d19a5aba2e84b0ea207f032ae3d879959fd992babaca9b720ca7bbda4",
+    "catch-party-full-baseline-full-20261026a": "50cc444d4bce6dfa67bde062a3a5706e60942b03b4d93db9a4525dd5dd266717",
+    "catch-party-full-native-contracts-20261026a": "2f37f5da6e9680bd9d8b1792ccfa03d248beef461e2bbc61c8fd6fb243a4e7d9",
+    "catch-party-full-composed-contracts-20261026a": "d73f04884590e56c193c559ff19c25f729e6d2005cf71d28e3aa3fc5c3eac85d",
+    "catch-party-full-composed-full-20261026a": "ab29b5f9e492573a4b0ac56e6eeb4633a7766a6b1e4ed95eb1251535bbb6f220",
+    "catch-party-full-negatives-20261026a": "a9e441dbe5fe4f613deb22ee3efd789b040c1686bffb10d3ea7d45fa954448dc",
+    "catch-party-full-gen2-native-gpu-20261026a": "13396d39f89d68deb65d05b4392171fb3af61fddd4baad8737370d79239087df",
+    "catch-party-full-gen1-native-gpu-20261026a": "727f32f169b93931a72d5d352abde14060145b4c5593c25ef275a97f3f27857f"
+  },
+  "retained_fixture_failures": [
+    "First CPU fixture assumed a native PC box existed after a mod claim; fixture now observes its absence. Engine and consumer unchanged."
+  ],
+  "limits": [
+    "Gen1-only native producer; other generations retain native PC behavior.",
+    "Lua truthiness and mod responsibility for custody match reference; no automatic rescue of a claimed mon.",
+    "CPU covers postcapture full PC/new dex/rollback/priority and naming interaction; native graphics uses imported Red prepared wild battles with actual bag/ball/naming input and return.",
+    "Not full-mod/playthrough, rendered-pixel equality, controlled FPS or hardware-audio acceptance."
+  ],
+  "pull_request": "https://github.com/UNDERdecoded/Gen2Recomped/pull/326",
+  "captures_visually_inspected": 12,
+  "no_gen1_writes": true,
+  "public_native_driver": {
+    "sha256": "beb97ac4290b72b241ab59ae6013414226931d38c8658310ce8c5696a53cf320",
+    "executed_original_sha256": "489ae592791c4de1ac051a369079cf462a2df264789c2c5cdfb045ab03bb40d8",
+    "stripped_luajit_bytecode_identical": true
+  },
+  "hosted_ci": {
+    "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40354607637",
+    "conclusion": "action_required",
+    "jobs": 0,
+    "scope": "Requires upstream maintainer approval; no jobs executed. Local qualification is separate."
+  }
+}

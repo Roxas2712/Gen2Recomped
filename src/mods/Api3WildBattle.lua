@@ -2,8 +2,6 @@
 -- Portable scripts may supply a private owned guard and native trainer plan.
 local Runtime = require("src.mods.Runtime")
 local Version = require("src.core.GameVersion")
-local Edits = require("src.mods.Api3WorldEdits")
-local Ids = require("src.mods.UnifiedIds")
 local Party = require("src.pokemon.Party")
 local B = {}
 local pending, observers = {}, setmetatable({}, { __mode = "k" })
@@ -49,7 +47,7 @@ local function observe(loader)
   end, math.huge, "engine:api3_wild_battle")
 end
 function B.new(loader, owner, current, native, licensed, req, ownedReady, ownedNative)
-  local ids = Ids.new(loader)
+  local ids = not ownedNative and require("src.mods.UnifiedIds").new(loader)
   observe(loader)
   return function(species, level, callback)
     if not licensed() then
@@ -63,7 +61,7 @@ function B.new(loader, owner, current, native, licensed, req, ownedReady, ownedN
     if not ow then
       return nil, "no overworld"
     end
-    local ok, reason = (ownedReady or Edits.ready)(game, ow)
+    local ok, reason = (ownedReady or require("src.mods.Api3WorldEdits").ready)(game, ow)
     if not ok then
       return nil, reason
     end
@@ -172,7 +170,7 @@ function B.new(loader, owner, current, native, licensed, req, ownedReady, ownedN
       end
     end
     pending[token] = true
-    local called, accepted, err = pcall(Edits.run, game, function()
+    local called, accepted, err = pcall(require("src.mods.Api3WorldEdits").run, game, function()
       if ownedNative then
         battle = ownedNative.construct(game, key)
       else

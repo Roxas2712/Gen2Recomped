@@ -28,6 +28,8 @@
 
 local Assets = require("src.render.Assets")
 local Logger = require("src.core.Logger")
+local Performance = require("src.core.Performance")
+local Gen4Shade = require("src.render.Gen4Shade")
 -- The pose walk lives with the reader that produced the bytecode.  Requiring
 -- an importer from a renderer is not pretty; having the same walk written
 -- twice and drifting apart would be worse, and this is the walk that decides
@@ -120,6 +122,37 @@ uniform vec2 heightSpread;
 // authored and only spins it to face you.
 attribute vec3 BillboardPivot;
 uniform float billboardYaw;
+// G2 -- THE MAP'S LIGHT, EVALUATED HERE RATHER THAN BAKED INTO THE VERTEX.
+//
+// `LitNormal` is the vertex's normal, or (0, 0, 0) on a vertex the CPU path
+// would have left alone (no light, no normal, a lightmapped shape, a fogged
+// shape).  The uniforms are `Gen4Shade.uniforms(template)`: the flattened
+// lights, the ambient share k per channel and the up-anchor lit(0, 1, 0).
+// The arithmetic is `Gen4Shade.forTemplate` line for line, so a band change
+// is a uniform upload and the meshes stay.  g4LightCount 0 turns it off.
+attribute vec3 LitNormal;
+uniform float g4LightCount;
+uniform vec3 g4LightDir[4];
+uniform vec3 g4LightCol[4];
+uniform vec3 g4Share;
+uniform vec3 g4Up;
+
+vec3 g4Shade(vec3 n)
+{
+    if (g4LightCount < 0.5 || dot(n, n) < 0.25) { return vec3(1.0); }
+    vec3 lit = vec3(0.0);
+    for (int i = 0; i < 4; i++) {
+        if (float(i) < g4LightCount) {
+            float v = -dot(n, g4LightDir[i]);
+            if (v > 0.0) { lit += v * g4LightCol[i]; }
+        }
+    }
+    // channel(v, up, k): 1 where no light reaches from above, else
+    // clamp(k + (1 - k) * v / up, 0, 1)
+    vec3 safeUp = max(g4Up, vec3(1.0e-6));
+    vec3 res = clamp(g4Share + (vec3(1.0) - g4Share) * lit / safeUp, 0.0, 1.0);
+    return mix(res, vec3(1.0), step(g4Up, vec3(0.0)));
+}
 
 vec4 turnToCamera(vec4 v)
 {
@@ -139,6 +172,7 @@ vec4 turnToCamera(vec4 v)
 vec4 position(mat4 transform_projection, vec4 vertex_position)
 {
     vec4 turned = turnToCamera(vertex_position);
+    VaryingColor.rgb *= g4Shade(LitNormal);
     vModelY = turned.y;
     vModelZ = turned.z;
     vec4 p = mvp * turned;
@@ -269,6 +303,37 @@ uniform vec2 heightSpread;
 // authored and only spins it to face you.
 attribute vec3 BillboardPivot;
 uniform float billboardYaw;
+// G2 -- THE MAP'S LIGHT, EVALUATED HERE RATHER THAN BAKED INTO THE VERTEX.
+//
+// `LitNormal` is the vertex's normal, or (0, 0, 0) on a vertex the CPU path
+// would have left alone (no light, no normal, a lightmapped shape, a fogged
+// shape).  The uniforms are `Gen4Shade.uniforms(template)`: the flattened
+// lights, the ambient share k per channel and the up-anchor lit(0, 1, 0).
+// The arithmetic is `Gen4Shade.forTemplate` line for line, so a band change
+// is a uniform upload and the meshes stay.  g4LightCount 0 turns it off.
+attribute vec3 LitNormal;
+uniform float g4LightCount;
+uniform vec3 g4LightDir[4];
+uniform vec3 g4LightCol[4];
+uniform vec3 g4Share;
+uniform vec3 g4Up;
+
+vec3 g4Shade(vec3 n)
+{
+    if (g4LightCount < 0.5 || dot(n, n) < 0.25) { return vec3(1.0); }
+    vec3 lit = vec3(0.0);
+    for (int i = 0; i < 4; i++) {
+        if (float(i) < g4LightCount) {
+            float v = -dot(n, g4LightDir[i]);
+            if (v > 0.0) { lit += v * g4LightCol[i]; }
+        }
+    }
+    // channel(v, up, k): 1 where no light reaches from above, else
+    // clamp(k + (1 - k) * v / up, 0, 1)
+    vec3 safeUp = max(g4Up, vec3(1.0e-6));
+    vec3 res = clamp(g4Share + (vec3(1.0) - g4Share) * lit / safeUp, 0.0, 1.0);
+    return mix(res, vec3(1.0), step(g4Up, vec3(0.0)));
+}
 
 vec4 turnToCamera(vec4 v)
 {
@@ -288,6 +353,7 @@ vec4 turnToCamera(vec4 v)
 vec4 position(mat4 transform_projection, vec4 vertex_position)
 {
     vec4 turned = turnToCamera(vertex_position);
+    VaryingColor.rgb *= g4Shade(LitNormal);
     vec4 p = mvp * turned;
     float s = 1.0 - (turned.y - heightSpread.y) * heightSpread.x;
     if (s < 0.25) { s = 0.25; }
@@ -312,11 +378,69 @@ vec4 effect(vec4 colour, Image tex, vec2 uv, vec2 screen)
 local shader
 local shaderCuts = false
 
+-- G3: ONE UNIFORM UPLOAD PER CHANGE, NOT PER SHAPE.
+--
+-- `Gen4Model:draw` runs once per model and its shape loop once per shape; a
+-- chunk has 13-19 shapes and a frame draws dozens of chunks plus every prop.
+-- Each `shader:send` is a driver call and, on the mobile GL drivers the
+-- handhelds run, usually a pipeline flush as well -- and the pass-constant
+-- values (yCut, zKeep, heightSpread, fog, billboardYaw) and the identity UV
+-- transform were re-sent on every one of them, each time with a fresh Lua
+-- table.  The shader is private to this module (nothing else sends to it),
+-- so the last value handed to each uniform can be remembered here and the
+-- send skipped when it is unchanged.  Scratch tables stand in for the
+-- per-send literals: Shader:send copies at the call, so reusing them is safe.
+--
+-- `Performance.gen4UniformCache = false` restores the unconditional sends.
+local uniformLast, uniformScratch, uniformShader = {}, {}, nil
+
+local function uniformReset(forShader)
+  uniformLast, uniformScratch, uniformShader = {}, {}, forShader
+end
+
+local function uniformScalar(name, value)
+  if uniformLast[name] == value then return end
+  uniformLast[name] = value
+  shader:send(name, value)
+end
+
+-- up to four components, compared and sent through one scratch table per name
+local function uniformVec(name, a, b, c, d)
+  local last = uniformLast[name]
+  if last and last[1] == a and last[2] == b and last[3] == c and last[4] == d then return end
+  if not last then last = {}; uniformLast[name] = last end
+  last[1], last[2], last[3], last[4] = a, b, c, d
+  local out = uniformScratch[name]
+  if not out then out = {}; uniformScratch[name] = out end
+  out[1], out[2], out[3], out[4] = a, b, c, d
+  if d == nil then out[4] = nil end
+  if c == nil then out[3] = nil end
+  shader:send(name, out)
+end
+
+-- a caller-owned sixteen-element table; compared element-wise, copied on change
+local function uniformMatrix(name, m)
+  local last = uniformLast[name]
+  if last then
+    local same = true
+    for i = 1, 16 do
+      if last[i] ~= m[i] then same = false; break end
+    end
+    if same then return end
+  else
+    last = {}; uniformLast[name] = last
+  end
+  for i = 1, 16 do last[i] = m[i] end
+  shader:send(name, m)
+end
+
 local function ensureShader()
   if shader ~= nil then return shader or nil end
   local ok, made = pcall(love.graphics.newShader, require("src.render.ClipSpaceCompat").shader(SHADER))
   if ok and made then
     shader, shaderCuts = made, true
+    uniformReset(shader)
+    Gen4Model._resetLightUpload()
     return shader
   end
   Logger.warn("gen4 model: the mesh shader with the height cut would not "
@@ -331,6 +455,8 @@ local function ensureShader()
     return nil
   end
   shader, shaderCuts = plain, false
+  uniformReset(shader)
+  Gen4Model._resetLightUpload()
   return shader
 end
 
@@ -350,6 +476,22 @@ end
 -- Shader:send takes and converting once here beats converting at every draw.
 local function identity()
   return { 1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1 }
+end
+
+-- The same product written into a caller-owned table: the draw loop below
+-- needs one model-view-projection per shape per frame, and a fresh table for
+-- each was most of the garbage a Gen 4 frame made.
+local function multiplyInto(out, a, b)
+  for row = 0, 3 do
+    for col = 0, 3 do
+      local sum = 0
+      for k = 0, 3 do
+        sum = sum + a[row * 4 + k + 1] * b[k * 4 + col + 1]
+      end
+      out[row * 4 + col + 1] = sum
+    end
+  end
+  return out
 end
 
 local function multiply(a, b)
@@ -498,11 +640,39 @@ local FORMAT = {
   -- Local to this file, so Gen 1/2/3 are untouched: they have their own model
   -- modules and never see this format.
   { "BillboardPivot", "float", 3 },
+  -- G2: THE NORMAL THE LIGHT IS EVALUATED AGAINST, in the vertex shader.
+  -- (0, 0, 0) on a vertex the light must leave alone; see `g4Shade`.
+  { "LitNormal", "float", 3 },
 }
 
 -- A vertex that is not part of a card. Shared rather than built per vertex,
 -- because most of Sinnoh is not a tree.
 local NO_PIVOT = { 0, 0, 0 }
+
+-- G1 -- THE VERTICES AS ONE BUFFER, NOT ONE TABLE EACH.
+--
+-- A chunk has 1,500-3,200 vertices and a map change decodes dozens of chunks
+-- plus every prop; each vertex became a fifteen-element Lua table that
+-- newMesh then read back one field at a time.  With the FFI the same floats
+-- go straight into a ByteData laid out as FORMAT says, and newMesh takes the
+-- buffer whole.  Shapes a joint animation re-poses on the CPU keep the
+-- tables (setVertex reads them back); everything else -- which is nearly
+-- everything -- takes the buffer.  Performance.gen4ByteVertices = false, or
+-- a runtime without the FFI, keeps the tables for every shape.
+local FORMAT_FLOATS = 0
+for _, attr in ipairs(FORMAT) do FORMAT_FLOATS = FORMAT_FLOATS + attr[3] end
+local ffiOk, ffi = pcall(require, "ffi")
+if not ffiOk then ffi = nil end
+local function packedVertices(count)
+  if not (ffi and Performance.gen4ByteVertices and love.data and love.data.newByteData) then
+    return nil
+  end
+  local ok, data = pcall(love.data.newByteData, count * FORMAT_FLOATS * 4)
+  if not ok or not data or not data.getFFIPointer then return nil end
+  local okPtr, ptr = pcall(data.getFFIPointer, data)
+  if not okPtr or ptr == nil then return nil end
+  return data, ffi.cast("float *", ptr)
+end
 
 -- WHICH FACES THE CARTRIDGE AUTHORED TO FACE THE CAMERA.
 --
@@ -1032,13 +1202,13 @@ local function addGrassCards(self, shape, vertices, positions, tileUnits)
     -- The pivot is the card's FOOT, so it turns about where it is planted --
     -- the same rule the trees needed, and for the same reason.
     verts[#verts + 1] =
-      { cx - half, y0, cz, tile.uLo, tile.vHi, 1, 1, 1, 1, cx, cz, 1 }
+      { cx - half, y0, cz, tile.uLo, tile.vHi, 1, 1, 1, 1, cx, cz, 1, 0, 0, 0 }
     verts[#verts + 1] =
-      { cx + half, y0, cz, tile.uHi, tile.vHi, 1, 1, 1, 1, cx, cz, 1 }
+      { cx + half, y0, cz, tile.uHi, tile.vHi, 1, 1, 1, 1, cx, cz, 1, 0, 0, 0 }
     verts[#verts + 1] =
-      { cx + half, y1, cz, tile.uHi, tile.vLo, 1, 1, 1, 1, cx, cz, 1 }
+      { cx + half, y1, cz, tile.uHi, tile.vLo, 1, 1, 1, 1, cx, cz, 1, 0, 0, 0 }
     verts[#verts + 1] =
-      { cx - half, y1, cz, tile.uLo, tile.vLo, 1, 1, 1, 1, cx, cz, 1 }
+      { cx - half, y1, cz, tile.uLo, tile.vLo, 1, 1, 1, 1, cx, cz, 1, 0, 0, 0 }
     map[#map + 1] = base + 1; map[#map + 1] = base + 2; map[#map + 1] = base + 3
     map[#map + 1] = base + 1; map[#map + 1] = base + 3; map[#map + 1] = base + 4
     if cx - half < lo[1] then lo[1] = cx - half end
@@ -1728,13 +1898,13 @@ local function addBackWall(self)
         local ua, ub = uAt(x0), uAt(x1)
         local base = #vertices
         vertices[#vertices + 1] =
-          { x0, a0, z, ua, vAt(row, a0), 1, 1, 1, 1, 0, 0, 0 }
+          { x0, a0, z, ua, vAt(row, a0), 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
         vertices[#vertices + 1] =
-          { x1, b0, z, ub, vAt(row, b0), 1, 1, 1, 1, 0, 0, 0 }
+          { x1, b0, z, ub, vAt(row, b0), 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
         vertices[#vertices + 1] =
-          { x1, b1, z, ub, vAt(row, b1), 1, 1, 1, 1, 0, 0, 0 }
+          { x1, b1, z, ub, vAt(row, b1), 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
         vertices[#vertices + 1] =
-          { x0, a1, z, ua, vAt(row, a1), 1, 1, 1, 1, 0, 0, 0 }
+          { x0, a1, z, ua, vAt(row, a1), 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
         map[#map+1] = base + 1; map[#map+1] = base + 2; map[#map+1] = base + 3
         map[#map+1] = base + 1; map[#map+1] = base + 3; map[#map+1] = base + 4
       end
@@ -1772,10 +1942,10 @@ local function addBackWall(self)
       local ua, ub = split.featLo / tw, split.featHi / tw
       local va, vb = vAt(0, fy0), vAt(0, fy1)
       local base = #vertices
-      vertices[#vertices + 1] = { fx0, fy0, fz, ua, va, 1, 1, 1, 1, 0, 0, 0 }
-      vertices[#vertices + 1] = { fx1, fy0, fz, ub, va, 1, 1, 1, 1, 0, 0, 0 }
-      vertices[#vertices + 1] = { fx1, fy1, fz, ub, vb, 1, 1, 1, 1, 0, 0, 0 }
-      vertices[#vertices + 1] = { fx0, fy1, fz, ua, vb, 1, 1, 1, 1, 0, 0, 0 }
+      vertices[#vertices + 1] = { fx0, fy0, fz, ua, va, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
+      vertices[#vertices + 1] = { fx1, fy0, fz, ub, va, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
+      vertices[#vertices + 1] = { fx1, fy1, fz, ub, vb, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
+      vertices[#vertices + 1] = { fx0, fy1, fz, ua, vb, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
       map[#map+1] = base + 1; map[#map+1] = base + 2; map[#map+1] = base + 3
       map[#map+1] = base + 1; map[#map+1] = base + 3; map[#map+1] = base + 4
     end
@@ -1850,10 +2020,10 @@ local function addGroundShadow(self, path)
   local a = SHADOW_ALPHA_FRACTION
   local y = lo[2] + SHADOW_LIFT
   local vertices = {
-    { lo[1], y, lo[3], 0, 0, 1, 1, 1, a, 0, 0, 0 },
-    { hi[1], y, lo[3], 1, 0, 1, 1, 1, a, 0, 0, 0 },
-    { hi[1], y, hi[3], 1, 1, 1, 1, 1, a, 0, 0, 0 },
-    { lo[1], y, hi[3], 0, 1, 1, 1, 1, a, 0, 0, 0 },
+    { lo[1], y, lo[3], 0, 0, 1, 1, 1, a, 0, 0, 0, 0, 0, 0 },
+    { hi[1], y, lo[3], 1, 0, 1, 1, 1, a, 0, 0, 0, 0, 0, 0 },
+    { hi[1], y, hi[3], 1, 1, 1, 1, 1, a, 0, 0, 0, 0, 0, 0 },
+    { lo[1], y, hi[3], 0, 1, 1, 1, 1, a, 0, 0, 0, 0, 0, 0 },
   }
   local okMesh, mesh =
     pcall(love.graphics.newMesh, FORMAT, vertices, "triangles", "static")
@@ -1919,6 +2089,9 @@ function Gen4Model.new(record)
 
     local count = shape.vertexCount or 0
     local vertices = {}
+    -- G1: the buffer, unless this shape is re-posed per vertex on the CPU
+    local packedData, packed
+    if count > 0 and not shape.matrixSlots then packedData, packed = packedVertices(count) end
     -- Kept alongside, because classifying a card needs the whole triangle and
     -- the loop below sees one vertex at a time.
     -- Also collected for the back-wall cap, which needs the face normals to
@@ -1980,11 +2153,19 @@ function Gen4Model.new(record)
         if (r and r < 255) or (g and g < 255) or (b and b < 255) then unlit = true; break end
       end
     end
+    -- G2: THE LIGHT GOES TO THE SHADER, NOT INTO THE COLOUR.  Exactly the
+    -- vertices the CPU path below would multiply get their normal stored
+    -- instead; every other vertex stores (0, 0, 0) and the shader leaves it
+    -- alone.  The template itself is a uniform (Gen4Model.light), so a new
+    -- band no longer rebuilds this mesh.  `legacyLight` keeps the CPU path.
+    local gpuLight = Performance.gen4GpuLight and shade and lit and not unlit
+                     and not Gen4Model.legacyLight
     for i = 0, count - 1 do
       local at = i * stride
       local r, g, b = shape.vertices:byte(at + 11, at + 13)
       r, g, b = r or 255, g or 255, b or 255
       if litByNormal and shade and lit then r, g, b = 255, 255, 255 end
+      local lnx, lny, lnz = 0, 0, 0
       -- ...not on a shape with no NORMALs (Gen4ModelPack `unlit`):
       -- its vertex colours ARE its lighting
       if shade and lit and not unlit then
@@ -1996,14 +2177,20 @@ function Gen4Model.new(record)
                            s8(shape.vertices, at + 14),
                            s8(shape.vertices, at + 15)
         if nx and ny and nz then
-          local lr, lg, lb = shade(nx, ny, nz)
-          r = r * (lr or 1)
-          g = g * (lg or 1)
-          b = b * (lb or 1)
+          if gpuLight then
+            lnx, lny, lnz = nx, ny, nz
+          else
+            local lr, lg, lb = shade(nx, ny, nz)
+            r = r * (lr or 1)
+            g = g * (lg or 1)
+            b = b * (lb or 1)
+          end
         end
       end
       if fog and not shape.noFog then
         r, g, b = (fog[1] or 0) * 255, (fog[2] or 0) * 255, (fog[3] or 0) * 255
+        -- a fogged vertex is its fog colour and nothing else
+        lnx, lny, lnz = 0, 0, 0
       end
       local x = s16(shape.vertices, at) / FX16 * self.posScale
       local y = s16(shape.vertices, at + 2) / FX16 * self.posScale
@@ -2014,15 +2201,26 @@ function Gen4Model.new(record)
       if x > hi[1] then hi[1] = x end
       if y > hi[2] then hi[2] = y end
       if z > hi[3] then hi[3] = z end
+      local u = s16(shape.vertices, at + 6) / UV_UNITS / tw
+      local v = s16(shape.vertices, at + 8) / UV_UNITS / th
+      if packed then
+        local o = i * FORMAT_FLOATS
+        packed[o], packed[o + 1], packed[o + 2] = x, y, z
+        packed[o + 3], packed[o + 4] = u, v
+        packed[o + 5], packed[o + 6], packed[o + 7], packed[o + 8] = r / 255, g / 255, b / 255, 1
+        packed[o + 9], packed[o + 10], packed[o + 11] = 0, 0, 0
+        packed[o + 12], packed[o + 13], packed[o + 14] = lnx, lny, lnz
+      else
       vertices[i + 1] = {
-        x, y, z,
-        s16(shape.vertices, at + 6) / UV_UNITS / tw,
-        s16(shape.vertices, at + 8) / UV_UNITS / th,
+        x, y, z, u, v,
         -- ...and back to the 0..1 the float attribute wants.
         r / 255, g / 255, b / 255, 1,
         -- filled in below, once the triangles say which vertices are cards
         0, 0, 0,
+        -- G2: the normal the shader lights against, or nothing
+        lnx, lny, lnz,
       }
+      end
       if positions then
         -- the TEXEL coordinate, not the 0..1 one: the strip test compares it
         -- against the texture's own width, so it has to be in texture units.
@@ -2055,8 +2253,14 @@ function Gen4Model.new(record)
         billboardPivots(shape, positions, count, image and tw or nil)
       if cards > 0 then
         for i = 1, count do
-          local v, pv = vertices[i], pivots[i]
-          v[10], v[11], v[12] = pv[1], pv[2], pv[3]
+          local pv = pivots[i]
+          if packed then
+            local o = (i - 1) * FORMAT_FLOATS
+            packed[o + 9], packed[o + 10], packed[o + 11] = pv[1], pv[2], pv[3]
+          else
+            local v = vertices[i]
+            v[10], v[11], v[12] = pv[1], pv[2], pv[3]
+          end
         end
         self.cards = (self.cards or 0) + cards
       end
@@ -2076,7 +2280,7 @@ function Gen4Model.new(record)
                   LEGACY_VERTEX_BYTES)
     end
 
-    if #vertices > 0 then
+    if (packed and count > 0) or #vertices > 0 then
       local map = {}
       for i = 0, (shape.triangleCount or 0) * 3 - 1 do
         local a, b = shape.indices:byte(i * 2 + 1, i * 2 + 2)
@@ -2085,7 +2289,7 @@ function Gen4Model.new(record)
       end
 
       local okMesh, mesh =
-        pcall(love.graphics.newMesh, FORMAT, vertices, "triangles", "static")
+        pcall(love.graphics.newMesh, FORMAT, packed and packedData or vertices, "triangles", "static")
       if okMesh and mesh then
         if #map > 0 then pcall(mesh.setVertexMap, mesh, map) end
         if image then mesh:setTexture(image) end
@@ -2574,6 +2778,46 @@ Gen4Model.legacyLight = (os.getenv and os.getenv("G4OLDLIGHT")) and true or nil
 -- the canopy pass; see `Gen4Ground:livePass`.
 Gen4Model.zKeep = nil
 
+-- G2 -- THE LIGHT THE NEXT DRAWS ARE UNDER, as the map's area-light template.
+--
+-- Set by the ground before each of its passes (Gen4Ground:bindLight); nil for
+-- a screen that has no map.  `uniforms` are `Gen4Shade.uniforms(template)`,
+-- recomputed only when the template object changes, and uploaded only when
+-- that happened since the last draw -- four array uniforms per draw would
+-- cost more than the bake they replace.  A mesh built with no normals (the
+-- CPU-lit path, a UI screen's model, a fogged or lightmapped shape) reads
+-- (0, 0, 0) in `LitNormal` and ignores all of this.
+Gen4Model.light = nil
+local lightTemplate, lightUniforms, lightSent = nil, nil, nil
+local LIGHT_OFF = { 0, 0, 0 }
+
+local function sendLight()
+  if not Performance.gen4GpuLight then return end
+  local template = Gen4Model.light
+  if template ~= lightTemplate then
+    lightTemplate = template
+    lightUniforms = template and Gen4Shade.uniforms(template) or nil
+  end
+  local want = lightUniforms or LIGHT_OFF
+  if lightSent == want then return end
+  if lightUniforms then
+    local u = lightUniforms
+    shader:send("g4LightCount", u.count)
+    shader:send("g4LightDir", u.dirs[1], u.dirs[2], u.dirs[3], u.dirs[4])
+    shader:send("g4LightCol", u.cols[1], u.cols[2], u.cols[3], u.cols[4])
+    shader:send("g4Share", u.share)
+    shader:send("g4Up", u.up)
+  else
+    shader:send("g4LightCount", 0)
+  end
+  lightSent = want
+end
+
+-- a new shader object starts from nothing
+function Gen4Model._resetLightUpload()
+  lightSent = nil
+end
+
 -- `depthCompare` defaults to "less", which is right for every pass that draws
 -- a piece of geometry ONCE.
 --
@@ -2596,6 +2840,7 @@ function Gen4Model:draw(viewProjection, pose, materials, yCut, spread, depthComp
   local pr, pg, pb, pa = g.getColor()
 
   g.setShader(shader)
+  sendLight()
   -- (a translucent draw does not write depth: what is behind it stays seen)
   g.setDepthMode(depthCompare or "less", not Gen4Model.softAlpha)
   -- BACK FACES ARE NOT CULLED, and that is the cartridge's own choice rather
@@ -2606,6 +2851,13 @@ function Gen4Model:draw(viewProjection, pose, materials, yCut, spread, depthComp
   -- overdrawn pixels.
   g.setMeshCullMode("none")
   g.setColor(1, 1, 1, 1)
+  if Performance.gen4UniformCache then
+    return self:_drawCached(g, viewProjection, pose, materials, yCut, spread,
+                            previousShader, mode, write, culling, pr, pg, pb, pa)
+  end
+  -- The unconditional path also changes this shader. Forget values recorded
+  -- by an earlier cached draw before that path can be enabled again.
+  uniformReset(shader)
   if shaderCuts then
     shader:send("yCut", tonumber(yCut) or NO_CUT)
     -- Only meaningful with a cut, and cleared otherwise -- an unset uniform
@@ -2722,6 +2974,105 @@ function Gen4Model:draw(viewProjection, pose, materials, yCut, spread, depthComp
   g.setColor(pr, pg, pb, pa)
   return true
 end
+
+-- G3: the same draw as above with every uniform deduplicated (see
+-- `uniformScalar` and friends at the top of the file) and no per-shape table
+-- allocation.  Ordering, state changes, texture swaps and the restores are
+-- the ones the unconditional draw performs; only the uploads differ.  Kept
+-- as a separate body so `Performance.gen4UniformCache = false` is exactly
+-- the previous code path and not a second reading of it.
+local mvpScratch = {}
+local ZKEEP_NONE = { 1.0e9, -1.0e9 }
+local FOG_NONE = { 0, 0, 0, 0 }
+
+function Gen4Model:_drawCached(g, viewProjection, pose, materials, yCut, spread,
+                               previousShader, mode, write, culling, pr, pg, pb, pa)
+  if uniformShader ~= shader then uniformReset(shader) end
+  if shaderCuts then
+    uniformScalar("yCut", tonumber(yCut) or NO_CUT)
+    local band = yCut and Gen4Model.zKeep or ZKEEP_NONE
+    uniformVec("zKeep", band[1], band[2])
+  end
+  spread = spread or NO_SPREAD
+  uniformVec("heightSpread", spread[1], spread[2])
+  if shaderCuts then
+    local fog = Gen4Model.depthFog
+    local a = fog and fog.a or FOG_NONE
+    uniformVec("depthFogA", a[1], a[2], a[3], a[4])
+    if fog then
+      local b, c = fog.b, fog.c
+      uniformVec("depthFogB", b[1], b[2], b[3], b[4])
+      uniformVec("depthFogC", c[1], c[2], c[3])
+      uniformScalar("depthFogShift", fog.shift or 0)
+    end
+  end
+  uniformScalar("billboardYaw", tonumber(Gen4Model.billboardYaw) or 0)
+  local tint = Gen4Model.drawTint
+  for _, shape in ipairs(self.shapes) do
+    if tint then g.setColor(tint[1], tint[2], tint[3], shapeAlpha(shape) * (tint[4] or 1))
+    else g.setColor(1, 1, 1, shapeAlpha(shape)) end
+    local place = pose[shape.index]
+    local palette = (pose.stacks and pose.stacks[shape.index]) or pose.stack
+    if shape.matrixSlots and palette then
+      for i, v in ipairs(shape.bindVertices) do
+        local slot = shape.matrixSlots:byte(i)
+        local m = palette[slot] or place
+        local x, y, z = v[1], v[2], v[3]
+        if m then
+          x, y, z = m[1] * x + m[2] * y + m[3] * z + m[4],
+                    m[5] * x + m[6] * y + m[7] * z + m[8],
+                    m[9] * x + m[10] * y + m[11] * z + m[12]
+        end
+        shape.mesh:setVertex(i, x, y, z, unpack(v, 4))
+      end
+      place = nil
+    end
+    uniformMatrix("mvp", place and multiplyInto(mvpScratch, viewProjection, place) or viewProjection)
+
+    local state = materials and shape.material and materials[shape.material]
+    if state and state.alpha then
+      local r, gg, b, a0 = g.getColor()
+      g.setColor(r, gg, b, a0 * state.alpha)
+    end
+    local uv = state and state.uv
+    if uv then
+      uniformVec("uvRotScale", uv[1], uv[2], uv[3], uv[4])
+      uniformVec("uvTranslate", uv[5] or 0, uv[6] or 0)
+    else
+      uniformVec("uvRotScale", 1, 0, 0, 1)
+      uniformVec("uvTranslate", 0, 0)
+    end
+
+    local swapped = state and state.image and self:frameImage(state.image)
+    if swapped then shape.mesh:setTexture(swapped) end
+    g.draw(shape.mesh)
+    if swapped then
+      if shape.image then shape.mesh:setTexture(shape.image)
+      else shape.mesh:setTexture() end
+    end
+  end
+
+  g.setMeshCullMode(culling)
+  g.setDepthMode(mode, write)
+  g.setShader(previousShader)
+  g.setColor(pr, pg, pb, pa)
+  return true
+end
+
+-- tools/gen4_uniform_cache_check.lua drives the dedup helpers against a
+-- counting stand-in for the shader.  `bind` points them at that stand-in;
+-- nothing in the engine calls it.
+Gen4Model._uniformProbe = {
+  scalar = uniformScalar,
+  vec = uniformVec,
+  matrix = uniformMatrix,
+  multiplyInto = multiplyInto,
+  multiply = multiply,
+  bind = function(fake)
+    shader = fake
+    uniformReset(fake)
+  end,
+}
 
 -- A canvas that can hold a depth buffer, which an ordinary one cannot.
 --

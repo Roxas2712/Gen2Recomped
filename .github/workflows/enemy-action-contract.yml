@@ -31,6 +31,38 @@ on:
       - 'tests/engine/gen3_rage*.lua'
       - 'tests/engine/gen3_triple_kick*.lua'
       - 'tests/engine/gen3_sleep_talk*.lua'
+      - 'tests/engine/gen3_choice*.lua'
+      - 'tests/engine/gen3_move_used*.lua'
+      - 'tests/engine/gen3_post_hit*.lua'
+      - 'tests/engine/gen3_nature_power*.lua'
+      - 'tests/engine/gen3_assist*.lua'
+      - 'tests/engine/gen3_mirror*.lua'
+      - 'tests/engine/gen3_substitute*.lua'
+      - 'tests/engine/gen3_effect_presentation.lua'
+      - 'tests/engine/gen3_native_sound.lua'
+      - 'tests/engine/gen3_sound_player_lifecycle.lua'
+      - 'tests/engine/gen3_sound_script_waits.lua'
+      - 'tests/engine/gen3_native_cry.lua'
+      - 'tests/engine/gen3_bgm_commands.lua'
+      - 'tests/engine/gen3_bgm_streams.lua'
+      - 'tests/engine/gen3_native_fanfare.lua'
+      - 'tests/engine/gen3_audio_recovery.lua'
+      - 'tests/engine/gen3_music_hooks.lua'
+      - 'tests/engine/gen3_audio_options.lua'
+      - 'tests/engine/gen3_audio_cold.lua'
+      - 'tests/native_bgm/**'
+      - 'tests/native_cry/**'
+      - 'tests/native_sound/**'
+      - 'tests/substitute_art/**'
+      - 'tests/tools/test_gba_substitute_art.py'
+      - 'tests/tools/test_contract_observations.py'
+      - 'tools/gba_substitute_art.py'
+      - 'tools/gen3_discover.py'
+      - 'tools/rom_manifest_firered.json'
+      - 'tools/rom_manifest_emerald.json'
+      - 'tests/post_hit_items/**'
+      - 'tests/held_item/**'
+      - 'tests/charge_required/**'
       - 'tools/enemy-action-contract-check/**'
   push:
     branches: [main, dev]
@@ -60,15 +92,40 @@ jobs:
           path: luajit-runtime
       - name: Build pinned LuaJIT
         run: make -C luajit-runtime -j2
+      - name: Validate contract comparison and owned Substitute import inputs
+        run: nice -n 19 python3 -m unittest discover -s gen2/tests/tools -p 'test_*.py'
       - name: Actual public hook and native move execution
         run: >-
           python3 gen2/tools/enemy-action-contract-check/check.py
           --gen1 gen1-reference --gen2 gen2
           --lua "${{ github.workspace }}/luajit-runtime/src/luajit"
           --report "${{ runner.temp }}/enemy-action-report.json"
+      - name: Initialized game and mod audio session teardown
+        shell: bash
+        run: |
+          for version in firered emerald; do
+            for variant in native shared; do
+              (
+                cd gen1-reference
+                nice -n 19 "${{ github.workspace }}/luajit-runtime/src/luajit" \
+                  "${{ github.workspace }}/gen2/tools/enemy-action-contract-check/native-game-audio-session-smoke.lua" \
+                  "${{ github.workspace }}/gen2" gen1 "$version" "$variant" \
+                  > "${{ runner.temp }}/game-audio-session-$version-$variant-gen1.log" 2>&1
+              )
+              (
+                cd gen2
+                nice -n 19 "${{ github.workspace }}/luajit-runtime/src/luajit" \
+                  tools/enemy-action-contract-check/native-game-audio-session-smoke.lua \
+                  "${{ github.workspace }}/gen2" gen2 "$version" "$variant" \
+                  > "${{ runner.temp }}/game-audio-session-$version-$variant-gen2.log" 2>&1
+              )
+            done
+          done
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: enemy-action-contract-report
-          path: ${{ runner.temp }}/enemy-action-report.json
+          path: |
+            ${{ runner.temp }}/enemy-action-report.json
+            ${{ runner.temp }}/game-audio-session-*.log
           if-no-files-found: error

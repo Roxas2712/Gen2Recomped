@@ -78,9 +78,19 @@ function M.fixture(root, backend, version, entry)
   fixture.nativeRows, fixture.nativeNames = nativeRows, nativeNames
   return fixture
 end
-function M.run(root, backend, version)
+function M.run(root, backend, version, options)
+  options = options or {}
   local native = backend == "gen1"
   local f = M.fixture(root, backend, version)
+  if options.choiceBand and not native then
+    f.data.items.ITEM_186 = {
+      id = "ITEM_186",
+      index = 186,
+      name = "CHOICE BAND",
+      holdEffect = "CHOICE_BAND",
+      holdEffectParam = 0,
+    }
+  end
   local T, Copy = f.T, require("src.mods.Merge").deepCopy
   local rows, draws, used, damage = {}, {}, {}, {}
   local offUsed = f.e.api.events:on("battle.move_used", function(e)
@@ -128,6 +138,7 @@ function M.run(root, backend, version)
         sub = tonumber(a.substituteHP) or 0,
         attack = a.stages.attack or 0,
         rage = not not a.rage,
+        choice = options.choiceBand and a.choicedMove or nil,
       }
     end
     return all
@@ -258,6 +269,12 @@ function M.run(root, backend, version)
             def(701).index = nil
           end
           local user, target = at(b, uid), at(b, tid)
+          if options.choiceBand then
+            user.mon.item = native and 186 or "ITEM_186"
+            if native then
+              user.item = 186
+            end
+          end
           user.mon.status, user.sleepTurns = "SLP", 4
           if kind == "awake" or kind == "called_awake" then
             user.mon.status, user.sleepTurns = nil, nil
@@ -367,6 +384,9 @@ function M.run(root, backend, version)
             T.eq(#used, 2, "Sleep Talk and the chosen move each emit one public event")
             T.eq(native and user.mon.pp[1] or user.curMoves[1].pp, 9, "only the selected caller spends PP")
             T.eq(user.sleepTurns, 3, "nested called execution does not decrement sleep again")
+            if options.choiceBand then
+              T.eq(user.choicedMove, 214, "actual called dispatch binds Sleep Talk rather than its child")
+            end
           end
           if
             banned

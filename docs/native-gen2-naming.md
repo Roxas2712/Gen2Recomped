@@ -35,8 +35,10 @@ that same charmap.
 ROM-free tests cover actual stack/menu input, name types and glyph limits,
 caller/native completion ownership, preset underlay suppression, Gen1
 retention and actual Loader clients through native API1/2 and unified API2/3.
-GPU acceptance and full reference raster/helper parity remain separate:
+The published ed564cb5 fused Mac package passes scoped natural Crystal intro,
+name-choice and keyboard acceptance with unchanged VASC under OpenGL/Metal.
+Full reference raster/helper parity remains separate:
 ROM naming-program/menu-art extraction and exact cursor/header rendering are
 still open. The separate native portrait selector is described in
-`native-gen2-namepick.md`; its exact-source GPU acceptance remains open. This change does not
+`native-gen2-namepick.md`; its natural entry is covered by that scoped package acceptance. This change does not
 establish complete VASC, naming-story, save/link or full Gen1 parity.

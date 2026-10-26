@@ -760,7 +760,8 @@ local function buildRows(game)
       step = function(g, dir)
         local Gen4Ground = require("src.render.Gen4Ground")
         local _, at = Gen4Ground.syncRenderScale(g)
-        local rungs = #Gen4Ground.RENDER_SCALES
+        -- G6: only the rungs the performance tier allows are offered
+        local rungs = math.min(#Gen4Ground.RENDER_SCALES, Gen4Ground.renderScaleCap())
         local by = (tonumber(dir) or 1) < 0 and -1 or 1
         local next_ = (at - 1 + by) % rungs + 1
         g.save.options.gen4RenderScale = next_

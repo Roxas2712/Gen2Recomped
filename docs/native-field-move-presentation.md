@@ -22,16 +22,8 @@ twice or before native completion. Retired callbacks release captured data,
 and cohort references are weak so retained wrappers cannot keep a retired
 save alive. Observer release leaves engine-owned continuations intact.
 
-This is not original cut-in visual/task/audio equivalence. The current native
-band, dimensions and phase lengths are still the existing reconstructed
-presentation, not the original indoors/outdoors streak artwork and window
-tasks. Exact cry modes/ducking, original `_fx` internals and shared band-image
-cache semantics remain open. `noDuck` starts explicitly refuse unsupported
-options; `invalidate` reports that native resources belong to each admission.
-There are no placeholder task tables or additional gameplay clocks.
-
-The focused lifecycle suite covers all five GBA edition identities. The real
-GPU host checks upright asymmetric pictures, repeated/explicit/native draw
-composition, two view sizes, one native clock and borrowed-image preservation.
-Those synthetic checks do not establish original cartridge artwork parity,
-unchanged mod initialization, complete renderer behavior or gameplay.
+The optional cartridge profile, authenticated strip import and supported cry
+options are documented in [native-field-move-runtime.md](native-field-move-runtime.md).
+The ordinary native style is retained without an active observer. Full
+portrait/form/personality handling, complete field task scheduling and the
+unchanged complete renderer/gameplay remain open acceptance work.

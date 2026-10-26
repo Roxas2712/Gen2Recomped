@@ -45,4 +45,79 @@ function R.start(opts)
   return start(loader,owner,current,world,licensed,require,nil,
     require('src.mods.ScriptBattles').nativeTrainer)(opts.trainerId,1,opts.onDone)
 end
+-- Full source encounter records use the same guarded admission as portable
+-- battles; numeric source IDs are converted before the native plan is built.
+function R.startWild(value,encounter,opts)
+  opts=opts or{}
+  if type(opts)~='table'or type(encounter)~='table'then return nil,'invalid wild encounter request'end
+  for key in pairs(opts)do if key~='done'then return nil,'native wild option unavailable: '..tostring(key)end end
+  if opts.done~=nil and type(opts.done)~='function'then return nil,'invalid battle continuation'end
+  local game,why=Native.resolve(value)
+  if not game or game~=Native.game()then return nil,why or'foreign native game'end
+  local host=require('src.mods.Runtime');local facade=require('src.core.Game3')
+  local owner=host.currentMod or facade._callbackOwner()
+  local loader=game.mods;local mod=loader and loader.mods and loader.mods[owner]
+  if not(mod and loader.hooks and loader.hooks.wrap)then return nil,'battle request has no live mod owner'end
+  local data,save,edition=game.data,game.save,Version.get();local ids=Ids.new(data)
+  local fields={species=true,level=true,personality=true,ivs=true,item=true,hp=true,status=true,moves=true,pp=true,roamer=true}
+  local raw={}
+  for key,v in pairs(encounter)do if not fields[key]then return nil,'unsupported encounter field: '..tostring(key)end;raw[key]=v end
+  raw.species=ids:native('pokemon',encounter.species)
+  if encounter.item~=nil then
+    raw.item=encounter.item==0 and false or ids:native('items',encounter.item)
+    if raw.item==nil then return nil,'unknown cartridge held item'end
+  end
+  if encounter.ivs~=nil then
+    if type(encounter.ivs)~='table'then return nil,'invalid encounter IVs'end
+    raw.ivs={}
+    local names={hp='hp',atk='attack',def='defense',spe='speed',spa='spatk',spd='spdef',
+      attack='attack',defense='defense',speed='speed',spatk='spatk',spdef='spdef'}
+    for key,v in pairs(encounter.ivs)do
+      local target=names[key];if not target or raw.ivs[target]~=nil then return nil,'invalid encounter IV name'end
+      raw.ivs[target]=v
+    end
+  end
+  raw.pp=nil
+  if encounter.moves~=nil then
+    if type(encounter.moves)~='table'then return nil,'invalid encounter moves'end
+    raw.moves={}
+    for i,row in ipairs(encounter.moves)do
+      local id=type(row)=='table'and(row.id or row.move or row.moveId)or row
+      local native=ids:native('moves',id)
+      if not native then return nil,'unknown cartridge move'end
+      local pp=type(row)=='table'and row.pp or type(encounter.pp)=='table'and encounter.pp[i]
+      raw.moves[i]={id=native,pp=pp or data.moves[native].pp}
+    end
+    for i in pairs(encounter.moves)do
+      if type(i)~='number'or i%1~=0 or i<1 or i>#raw.moves then return nil,'invalid encounter move slot'end
+    end
+  end
+  local record;record,why=require('src.battle.WildRecord').validate(data,raw)
+  if not record then return nil,why end
+  local roamer
+  if record.roamer then
+    roamer=require('src.world.Gen3Roamers').active(save)
+    if not roamer or roamer.species~=record.species or roamer.level~=record.level
+        or record.personality~=nil and roamer.personality~=record.personality then return nil,'roaming individual changed'end
+    -- A source snapshot cannot overwrite the native roaming individual.
+    record.personality=roamer.personality
+    record.ivs=nil
+    record.hp=nil;record.status=nil
+
+  end
+  local function licensed()
+    return game.mods==loader and game.data==data and game.save==save and Version.get()==edition
+      and loader.mods[owner]==mod and mod.enabled~=false and not mod.failed and ids:valid()
+  end
+  local plan={resolve=function()return record.species end,construct=function(g,key)
+    local options={wildRecord=record}
+    if roamer then options.roamer='gen3';options.roamerSeed=roamer;options.roamerHP=roamer.hp;options.roamerStatus=roamer.status end
+    local battle=require('src.battle.BattleState').newWild(g,key,record.level,options)
+    if save.safari then battle:makeSafari(save.safari)end
+    return battle
+  end}
+  return require('src.mods.Api3WildBattle').new(loader,owner,function()return Native.game()end,
+    function(g)return{overworld=function()return Native.world(g)end}end,licensed,require,nil,plan)(record.species,record.level,opts.done)
+end
+
 return R

@@ -8,6 +8,7 @@
 --   cmd = "play"  { gen, header, allowLoops, audio,
 --                   channelVolumes?, channelPitches? }
 --   cmd = "stop"                                       halt production
+--   cmd = "nativePause" / "nativeResume" { gen }      native BGM ownership
 --   cmd = "channelMix" { volumes, pitches }            per-hw volume/pitch
 --   cmd = "invalidate"                                 drop the bank cache
 --   cmd = "quit"                                        end the thread
@@ -106,6 +107,8 @@ local gen = nil        -- active song generation, or nil when stopped
 local engine = nil     -- the engine producing the current song
 local synth = ChipSynth -- ...and which module built it
 local finished = false -- the current song ran out (non-looping)
+local nativePaused = false
+local nativeEpoch = 0
 local data = nil       -- { audio = <slim audio tables> } for ROM bank/wave reads
 
 local function handle(cmd)
@@ -130,6 +133,8 @@ local function handle(cmd)
     ChipSynth.setStereo(cmd.stereo)
     gen = cmd.gen
     finished = false
+    nativePaused = false
+    nativeEpoch = 0
     engine = nil
     outCh:clear() -- drop any buffers left from the previous song
     data = { audio = cmd.audio }
@@ -152,7 +157,18 @@ local function handle(cmd)
     gen = nil
     engine = nil
     finished = false
+    nativePaused = false
     outCh:clear()
+  elseif cmd.cmd == "nativePause" and cmd.gen == gen then
+    nativePaused = true
+    nativeEpoch = cmd.nativeEpoch or nativeEpoch + 1
+    outCh:clear()
+    if engine then
+      engine.voices = {}
+      for _, track in ipairs(engine.tracks or {}) do track.voices = {} end
+    end
+  elseif cmd.cmd == "nativeResume" and cmd.gen == gen and (cmd.nativeEpoch or nativeEpoch) == nativeEpoch then
+    nativePaused = false
   elseif cmd.cmd == "channelMix" then
     ChipSynth.setStereo(cmd.stereo)
     if cmd.volumes ~= nil then ChipSynth.setChannelVolumes(cmd.volumes) end
@@ -178,16 +194,16 @@ while true do
   end
   if quit then break end
 
-  if engine and not finished and gen and outCh:getCount() < LOOKAHEAD then
-    local activeGen = gen
+  if engine and not finished and not nativePaused and gen and outCh:getCount() < LOOKAHEAD then
+    local activeGen, activeEpoch = gen, nativeEpoch
     local ok, sd = pcall((synth or ChipSynth).soundData, engine, BUF, 2)
     if not ok then
-      outCh:push({ gen = activeGen, error = tostring(sd) })
+      outCh:push({ gen = activeGen, nativeEpoch = activeEpoch, error = tostring(sd) })
       finished = true
     else
-      outCh:push({ gen = activeGen, sd = sd })
+      outCh:push({ gen = activeGen, nativeEpoch = activeEpoch, sd = sd })
       if engine:finished() then
-        outCh:push({ gen = activeGen, done = true })
+        outCh:push({ gen = activeGen, nativeEpoch = activeEpoch, done = true })
         finished = true
       end
     end
