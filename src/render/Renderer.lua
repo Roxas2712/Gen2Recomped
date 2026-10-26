@@ -975,8 +975,12 @@ local function uiPresentation(self, x, y, w, h, sx, sy)
   self.uiPresentation = out
 end
 
-local function endFrame(self, zones, worldZones, privateViewport)
-  GameViewport.setTarget()
+-- The same resolved viewport serves field producers and final composition.
+-- Logical units and drawable pixels remain distinct on high-DPI displays;
+-- no extra target or resampling is needed for a correctly sized override.
+Renderer.scalesWorldOverride = true
+local nativeFrameRects = setmetatable({}, {__mode="k"})
+local function frameRects(self, r)
   local ww, wh, pw, ph, dpiX, dpiY = displayMetrics()
   -- Sp = integer framebuffer pixels per GB pixel;
   -- Sx/Sy = LOVE-unit draw scales (may differ when dpiX ≠ dpiY).
@@ -1004,6 +1008,24 @@ local function endFrame(self, zones, worldZones, privateViewport)
   local uvpw, uvph = uiw * Ux, uih * Uy
   local uox = math.floor((pw - uiw * Up) / 2) / dpiX
   local uoy = math.floor((ph - uih * Up) / 2) / dpiY
+  r = r or {}
+  r.ww,r.wh,r.pw,r.ph,r.dpiX,r.dpiY = ww,wh,pw,ph,dpiX,dpiY
+  r.vx,r.vy,r.cut,r.vux,r.vuy,r.vuw,r.vuh = 0,0,0,0,0,ww,wh
+  r.Sp,r.Sx,r.Sy,r.uiw,r.uih,r.vpw,r.vph,r.ox,r.oy = Sp,Sx,Sy,uiw,uih,vpw,vph,ox,oy
+  r.Up,r.Ux,r.Uy,r.uvpw,r.uvph,r.uox,r.uoy = Up,Ux,Uy,uvpw,uvph,uox,uoy
+  return r
+end
+function Renderer:frameRects()
+  return frameRects(self) -- public snapshots cannot mutate the compositor
+end
+
+local function endFrame(self, zones, worldZones, privateViewport)
+  GameViewport.setTarget()
+  local r = frameRects(self, nativeFrameRects[self])
+  nativeFrameRects[self] = r
+  local ww,wh,pw,ph,dpiX,dpiY = r.ww,r.wh,r.pw,r.ph,r.dpiX,r.dpiY
+  local Sp,Sx,Sy,uiw,uih,vpw,vph,ox,oy = r.Sp,r.Sx,r.Sy,r.uiw,r.uih,r.vpw,r.vph,r.ox,r.oy
+  local Up,Ux,Uy,uvpw,uvph,uox,uoy = r.Up,r.Ux,r.Uy,r.uvpw,r.uvph,r.uox,r.uoy
   uiPresentation(self, uox, uoy, uvpw, uvph, Ux, Uy)
   local GBCFX = gbcFX()
   -- Forced mono/Classic modes still need a whole-screen zone when a state

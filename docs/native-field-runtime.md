@@ -82,3 +82,23 @@ On the refreshed fork main, the current frozen runtime passes 572/572 engine
 suites, Modkit 4/4, B30 and 916 companion checks. Resident animation-pair
 observations retire with their real native atlas cohort and leave the native
 clock unchanged. Legacy named RGBA animation banks remain a separate gap.
+
+The ROM-backed field observation exposed a double canvas conversion: a producer
+that already adapts clip Y for LÖVE 12 was adapted a second time. Complete
+self-converting forwarding wrappers now retain their source. The asymmetric
+GPU regression fails before the fix and passes 348 checks on both Metal and
+OpenGL afterwards; 125 CPU shader and 151 compositor checks also pass.
+
+`Renderer:frameRects()` exposes detached metrics from the same native viewport
+calculation used by composition. Internal composition reuses private scratch;
+callers cannot mutate it. A source field can render at actual drawable size
+and supply its image directly, without a second scaling canvas. The unchanged
+FireRed package now supplies a 1024x768 upright world for a 1024x768 test window.
+121 checks cover resize, distinct DPI axes, native surfaces and composition.
+Normal-camera flat interior artwork is the package's default, while its open
+3D interior remains a separate option. This observation does not qualify that
+option, other rooms, the battle card or complete gameplay.
+
+Missing native classes also cannot match ordinary mod screens through nil
+metatables. Focused admission, field-move, transition, companion and battle
+checks pass (55 / 316 / 308 / 916 / 382).
