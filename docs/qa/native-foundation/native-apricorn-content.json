@@ -1,0 +1,73 @@
+{
+  "status": "Native recipe integration checkpoint; full parity remains open",
+  "sourceCommit": "acd8ea46ab98a1c3651cde82491b1be0175ddee3",
+  "completeGitTree": "89ffc7da14810edff3a45eea6ab533861a721d9d",
+  "ownPullRequest": 67,
+  "engineSuites": {
+    "passed": 444,
+    "total": 444
+  },
+  "sdkSuites": {
+    "passed": 3,
+    "total": 3
+  },
+  "quickTiers": "all passed; ROM-free",
+  "quickLogSha256": "0276e66a6b6431093b7c10cf6e051220b360637d3b35124e23ae5d601f54003c",
+  "focusedChecks": {
+    "actualRecipeRegistryAndVM": 443,
+    "nativeProgramImportAndSignatures": 120,
+    "earlierRecipeTableAndMenu": 216
+  },
+  "nativeCrystalProbe": {
+    "decodedPrograms": 31,
+    "decodedInstructions": 264,
+    "desyncs": 0,
+    "originalRomUnchanged": true,
+    "addedRecipeCount": 1,
+    "confirmedQuantity": 3,
+    "nativeMapReentry": true,
+    "actualDailyReset": true,
+    "actualBagRefusal": true,
+    "actualBallDelivery": true,
+    "completionExactlyOnce": true,
+    "externalTextAudioIOStubbed": true,
+    "gpuTest": false
+  },
+  "upstream": {
+    "pullRequest": "https://github.com/UNDERdecoded/Gen2Recomped/pull/295",
+    "sourceCommit": "e5886cb49b7762c1db1e9de2d3baf2e05b036b8f",
+    "baseCommit": "ed5189c247ee7a2ccca666784e21fd4fba8df781",
+    "baselineEngineSuites": {
+      "passed": 63,
+      "total": 74
+    },
+    "candidateEngineSuites": {
+      "passed": 66,
+      "total": 77
+    },
+    "sdkSuites": {
+      "passed": 3,
+      "total": 3
+    },
+    "sameElevenExistingFailedSuitesAndAssertions": true,
+    "registryChecks": 261,
+    "importerChecks": 120,
+    "recipeTableChecks": 216,
+    "apiScope": "Native API1/2; own fork additionally tests API2/3 unified content and API3 semantic callbacks"
+  },
+  "runtimeQualification": {
+    "run": "https://github.com/Roxas2712/Gen2Recomped/actions/runs/40270319573",
+    "statusAtCheckpoint": "started; outcome recorded independently"
+  },
+  "publicPreview": {
+    "tag": "native-preview-20261025.1",
+    "updatedByThisCheckpoint": false
+  },
+  "limitations": [
+    "Legacy Apricorns facade and complete tree/day lifecycle remain open.",
+    "Full original-story, fresh GPU, long-session and Windows hardware acceptance remain open.",
+    "Actual Gold/Silver ROMs are not qualified by synthetic integration tests.",
+    "Complete Gen1 feature parity remains unproven.",
+    "The Origami port stays paused; protected Gen1/player instances are not used."
+  ]
+}

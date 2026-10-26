@@ -11,6 +11,16 @@ Gen1 stable v0.3.96. Original Gen2 upstream base:
 File-path differences are audit candidates, not missing-feature counts. No
 percentage can be inferred from them or from the number of passing tests.
 
+Native recipe integration candidate: `acd8ea46ab98a1c3651cde82491b1be0175ddee3`
+(PR67). Its frozen tree passes444/444 engine suites, SDK3/3 and all quick
+tiers, including443 recipe/VM checks and120 native program import checks.
+A read-only Crystal probe executes an added recipe through original Kurt
+selection, map reentry, working/day flags, full-bag refusal and three-ball
+collection with one completion event. Upstream PR295 offers native API1/2,
+with exactly the same eleven existing baseline failures. Runtime qualification
+40270319573 is separate and pending; no new release/GPU/story acceptance is
+inferred. See the [native recipe receipt](qa/native-foundation/native-apricorn-content.json).
+
 Current composed preview checkpoint: `4be92945c94e603f7cc582cde23d4702d9610e4a`.
 Native radio records/script lifecycle and window-resolution Pokegear are merged
 as PR39/45. This exact source passes418/418 engine suites, SDK3/3, all quick
@@ -25,8 +35,8 @@ Phone PR53/54/56/57/58 and radio PR48 are merged. Its complete Git tree
 `d38e3ba881b905d3735aa5acb98c4b783f0e9d0a` exactly matches frozen integration
 source `46bfcce15d814ac4349b76a8a41b5370015dadff`, which passes435/435 engine
 suites, SDK3/3 and every ROM-free quick tier, including current P4 main.
-This is ahead of the public preview. Runtime qualification40262481115 is
-pending; no new packaged or GPU acceptance is inferred. See the
+This is ahead of the public preview. Runtime qualification40262481115 and both desktop package checks have since
+passed; this does not establish fresh GPU acceptance for later sources. See the
 [phone/radio checkpoint](qa/native-foundation/native-phone-radio-main.json).
 
 Earlier PC/mail checkpoint: `6004286e4659d993c0ded87a2677247a610a15b8`.
