@@ -47,6 +47,11 @@ def install(roots, *, home=None, load=True, python=None):
             staged.rename(destination)
     interpreter = python or ('/usr/bin/python3' if Path('/usr/bin/python3').exists() else shutil.which('python3'))
     subprocess.run([interpreter, '-c', 'import sys; assert sys.version_info >= (3,9); import qa_storage, qa_maintenance'], cwd=destination, check=True)
+    # QA controllers must retain this policy when their game branch changes.
+    active=destination.parent/'active-tools'
+    if active.exists() and not active.is_symlink():raise ValueError('Retain foreign active-tools directory')
+    pointer=active.with_name('.active-tools-'+str(os.getpid()))
+    pointer.symlink_to(destination.name,target_is_directory=True);pointer.replace(active)
     state = home/'.cache/origami-qa-storage';state.mkdir(parents=True, exist_ok=True)
     plist_path = home/'Library/LaunchAgents'/f'{LABEL}.plist';plist_path.parent.mkdir(parents=True, exist_ok=True)
     arguments=[str(interpreter),str(destination/'qa_maintenance.py'),'--root',str(roots[0])]
