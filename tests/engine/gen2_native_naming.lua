@@ -123,6 +123,20 @@ cursor:drawCursorBox(2,8,1);cursor:drawCursorBox(2,8,1);cursor:drawCursorBox(8,1
 T.eq(quads,2,'cursor quads are retained across frames and target sizes')
 T.eq(draws,18,'letter corners and wide-target edges use the imported sheet')
 love.graphics.newQuad,love.graphics.draw=newQuad,draw
+-- A real external presenter can replace both class draw methods. Preset
+-- ownership must suppress those too, without discarding the presenter once
+-- NEW NAME makes the native keyboard active.
+local oldDraw,oldWide=UI.draw,UI.drawWidescreen
+local presented=0
+UI.draw=function()presented=presented+1 end
+UI.drawWidescreen=function()presented=presented+1 end
+local g=game();local parent={};g.stack:push(parent)
+local s=require('src.ui.NamingScreen').new(g,{presets={'ONE'}});g.stack:push(s)
+s:draw();s:drawWidescreen(800,720);T.eq(presented,0,'external keyboard presenter is suppressed below presets')
+tap(g,g.stack:top(),'a');s:draw();s:drawWidescreen(800,720)
+T.eq(presented,2,'the original external presenter resumes for actual name entry')
+T.eq(rawget(s,'draw'),nil);T.eq(rawget(s,'drawWidescreen'),nil)
+UI.draw,UI.drawWidescreen=oldDraw,oldWide
 Version.set('red')
 T.eq(getmetatable(require('src.ui.NamingScreen').new(game(),{})),require('src.ui.NamingScreen'),'Gen1 retains its own keyboard')
 Version.set(edition);Screens.invalidate()

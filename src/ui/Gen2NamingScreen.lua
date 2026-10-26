@@ -155,13 +155,30 @@ function M.native(game,opts)
   args._popOnDone=true
   return M.new(game,args)
 end
+function M:setChoosing(on)
+  if on then
+    self.choosing=true;self.isOpaque=false
+    -- A presenter may wrap the class draw methods without reading native
+    -- preset state. This owner has no keyboard surface until NEW NAME, so
+    -- suppress drawing on the instance, after constructor decoration.
+    self._presetDrawState={draw=rawget(self,'draw'),wide=rawget(self,'drawWidescreen')}
+    self.draw=function()end;self.drawWidescreen=function()end
+  else
+    self.choosing=nil;self.isOpaque=true
+    local previous=self._presetDrawState
+    if previous then
+      rawset(self,'draw',previous.draw);rawset(self,'drawWidescreen',previous.wide)
+      self._presetDrawState=nil
+    end
+  end
+end
 function M:enter()
   if not(self.presets and #self.presets>0)then return end
-  self.choosing=true;self.isOpaque=false
-  local items={{label=Strings('NEW NAME'),onSelect=function()self.choosing=nil;self.isOpaque=true end}}
+  self:setChoosing(true)
+  local items={{label=Strings('NEW NAME'),onSelect=function()self:setChoosing(false)end}}
   for _,preset in ipairs(self.presets)do
     items[#items+1]={label=preset,onSelect=function()
-      self.text=preset;self:accept()
+      self:setChoosing(false);self.text=preset;self:accept()
     end}
   end
   self.game.stack:push(require('src.ui.Menu').new(self.game,items,{tx=4,ty=0,tw=12,th=#items*2+2,cancelable=false}))

@@ -17,6 +17,9 @@ presenters can observe and draw its actual rows, cursor, text and field size.
 
 Name presets temporarily make the naming screen transparent and suppress its
 keyboard until NEW NAME is chosen; the original parent remains underneath.
+Suppression belongs to the active instance, so class-level external presenters
+cannot draw the inactive keyboard through their wrappers. NEW NAME restores
+the original instance/class presentation methods.
 Native imported sprite and optional menu-art records can supply the header,
 backdrop and retained cursor quads. Mail entry keeps both sixteen-glyph rows
 above its keyboard. Native Oak and rival/name-rater calls carry their actual
@@ -33,8 +36,9 @@ ROM-free tests cover actual stack/menu input, name types and glyph limits,
 caller/native completion ownership, preset underlay suppression, Gen1
 retention and actual Loader clients through native API1/2.
 GPU acceptance and full reference raster/helper parity remain separate:
-ROM naming-program/menu-art extraction, exact cursor/header rendering and the
-separate Gen2 NamePick portrait animation are still open. This change does not
+ROM naming-program/menu-art extraction and exact cursor/header rendering are
+still open. The separate native portrait selector is described in
+`native-gen2-namepick.md`; its exact-source GPU acceptance remains open. This change does not
 establish complete VASC, naming-story, save/link or full Gen1 parity.
 
 This offer includes the shared Gen2 menu chrome already offered in PR #224
