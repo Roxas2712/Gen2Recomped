@@ -6,6 +6,7 @@ local Auth=require('src.cloud.RetroCloud')
 local Task=require('src.cloud.Task')
 local Json=require('src.link.Json')
 local retiring={}
+local BATCH_SIZE=8
 local function now() return love.timer.getTime() end
 function N.new(cup,match,battle,ticket)
  return setmetatable({cup=cup,match=match,battle=battle,ticket=ticket,account=Auth.accountId(),
@@ -41,19 +42,23 @@ function N:exchange()
   if self.hasPeer and doc.peer_online==false and not doc.peer_closed then return self:fail('Your rival disconnected from the Arena.') end
   self.accepted=doc.sent;self.lastSuccess=now();self.peerClosed=doc.peer_closed
   while self.outbox[1] and self.outbox[1].sequence<=doc.sent do table.remove(self.outbox,1) end
-  for _,row in ipairs(doc.messages or {}) do
+  local messages=doc.messages or {}
+  for _,row in ipairs(messages) do
    if row.sequence~=self.received+1 or type(row.body)~='string' or #row.body>32768 then return self:fail('The Arena message stream is out of order.') end
    local message=Json.decode(row.body)
    if type(message)~='table' or type(message.type)~='string' then return self:fail('Invalid Arena battle message.') end
    if #self.inbox>=128 then return self:fail('Too many unread Arena messages.') end
    self.inbox[#self.inbox+1]=message;self.received=row.sequence;self.hasPeer=true
   end
+  -- A full page can still have a tail. Keep fetching until a short page
+  -- proves that the closed peer stream is drained; then flush our final ACK.
+  if self.peerClosed and #messages<BATCH_SIZE then self:close() end
   if self.sentClose and #self.outbox==0 then self.finished=true;return end
  end
  if now()<self.nextPoll then return end
  self.nextPoll=now()+.4
  local batch,total={},0
- for i=1,math.min(8,#self.outbox) do
+ for i=1,math.min(BATCH_SIZE,#self.outbox) do
   local row=self.outbox[i];if total+#row.body>96*1024 then break end
   batch[#batch+1]=row;total=total+#row.body
  end
