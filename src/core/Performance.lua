@@ -72,6 +72,9 @@ Performance.gen4GpuLight = true
 -- G1: Gen 4 model vertices decoded straight into a ByteData through the FFI
 -- rather than a fifteen-element table per vertex (src/render/Gen4Model.lua).
 Performance.gen4ByteVertices = true
+-- H1: the mod hook chain hands results through as varargs and allocates one
+-- closure per link instead of two closures and four tables (src/mods/Hooks).
+Performance.hookLean = true
 Performance.GC_PAUSE = 120
 Performance.GC_STEP_MUL = 300
 Performance.GC_BUDGET_SECONDS = 0.0005
