@@ -1,6 +1,18 @@
 -- Resolve the live owner without bootstrapping Game or keeping a retired world.
 local Version = require('src.core.GameVersion')
 local M = {}
+local entering=setmetatable({},{__mode='k'})
+local unpack=table.unpack or unpack
+local function pack(...)return {n=select('#',...),...}end
+function M.withWorld(game,world,fn,...)
+  local owner,why=M.game(game);assert(owner,why)
+  assert(type(world)=='table'and world.isOverworld and world.map and world.player
+    and owner.data and owner.data.maps and owner.data.maps[world.map.id]==world.map.def,'foreign native world scope')
+  local previous=entering[owner];entering[owner]=world
+  local result=pack(pcall(fn,...));entering[owner]=previous
+  if not result[1]then error(result[2],0)end
+  return unpack(result,2,result.n)
+end
 function M.game(game)
   local explicit = game ~= nil
   local facade = package.loaded['src.core.Game3']
@@ -27,12 +39,12 @@ end
 function M.resolve(game)
   local why;game,why=M.game(game);if not game then return nil,why end
   local states = game.stack and game.stack.states
-  local world
-  if type(states) == 'table' then
+  local world=entering[game]
+  if not world and type(states) == 'table' then
     for i = #states, 1, -1 do
       if states[i].isOverworld then world = states[i]; break end
     end
-  else
+  elseif not world then
     world = game.overworld
   end
   if not (world and world.isOverworld and world.player and world.map) then
