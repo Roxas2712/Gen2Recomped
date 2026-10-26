@@ -235,7 +235,10 @@ local function decode(game, graph, battle)
         for key in pairs(BATTLER_SKIP) do
           t[key] = fresh[key]
         end
-        require("src.battle.HeldItemRead").bind(t, battle)
+        -- The native factory loads this read service on hosts that use it.
+        -- Earlier owners read held items directly and have no separate binder.
+        local itemReads = package.loaded["src.battle.HeldItemRead"]
+        if type(itemReads) == "table" then itemReads.bind(t, battle) end
       end
     end
   end

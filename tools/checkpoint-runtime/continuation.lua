@@ -50,7 +50,7 @@ return function(check)
           p.cellX = 2 + (math.floor(i / 32) % 2)
           p.px = p.cellX * 16
         end
-        world:stepBody(false)
+        world:update(1 / 60)
         return Serializer.encode(assert(f.checkpoints:capture(game))), love.math.getRandomState()
       end
       for i = 1, 45 do
