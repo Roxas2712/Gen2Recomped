@@ -53,14 +53,19 @@ end
 
 -- The run loop owns the deadline and passes back the returned value. Keeping
 -- the original fallback here lets tests exercise the real pacing operation.
-function FrameCap.pace(timer, window, presented, nextFrame)
+function FrameCap.pace(timer, window, presented, nextFrame, idleWork)
   local now = timer.getTime()
-  if FrameCap.vsyncPacing and presented and presentationPaces(window, now) then
-    return now
-  end
   local budget = 1 / FrameCap.current
   nextFrame = nextFrame + budget
+  if FrameCap.vsyncPacing and presented and presentationPaces(window, now) then
+    if idleWork then
+      idleWork(timer, nextFrame)
+      return timer.getTime()
+    end
+    return now
+  end
   if now - nextFrame > budget then nextFrame = now end
+  if idleWork then idleWork(timer, nextFrame) end
   while true do
     local remaining = nextFrame - timer.getTime()
     if remaining <= 0 then break end

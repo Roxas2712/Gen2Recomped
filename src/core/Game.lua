@@ -11,6 +11,8 @@ local GameViewport = require("src.render.GameViewport")
 local SaveData = require("src.core.SaveData")
 local StateStack = require("src.core.StateStack")
 local FrameProfile = require("src.core.FrameProfile")
+local Performance = require("src.core.Performance")
+local GCFrameBudget = require("src.core.GCFrameBudget")
 local TouchControls = require("src.core.TouchControls")
 local ModLoader = require("src.mods.Loader")
 local ModRuntime = require("src.mods.Runtime")
@@ -715,20 +717,14 @@ function Game:update(dt)
     pcall(function() require("src.core.DiscordPresence").update(dt) end)
     close()
   end
-  -- Steady-state memory backstop: advance the incremental collector one
-  -- small step every rendered frame.  The heavy GPU objects are now freed
-  -- explicitly (map eviction, battle exit, canvas/renderer swaps), so this
-  -- only has to keep ordinary Lua-heap garbage (per-frame tables/closures)
-  -- from drifting upward over a long session, and to spread collection out
-  -- so the default lazy schedule never batches it into a visible pause.
-  -- ONE INCREMENTAL GC STEP PER FRAME.  Cheap on a small heap and not
-  -- obviously cheap under a mod that allocates a world's worth of geometry,
-  -- which is exactly the case being measured -- so it is named rather than
-  -- assumed.
+  -- Keep the public Gen3 GC delegation at its original update boundary.
+  -- Ordinary engine collection moves to spare deadline time in love.run.
   if collectgarbage then
     local close = FrameProfile.section("  update: gc step")
     local facade=package.loaded['src.core.Game3']
-    if not(facade and facade._stepGC and facade._stepGC(self))then collectgarbage("step", 1)end
+    local handled = facade and facade._stepGC and facade._stepGC(self)
+    if handled then GCFrameBudget._facadeHandled() end
+    if not handled and not Performance.gcBudget then collectgarbage("step", 1) end
     close()
   end
 end

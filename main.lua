@@ -1290,6 +1290,9 @@ end
 
 function love.run()
   BootTrace.mark("love.run enter")
+  local Performance = require("src.core.Performance")
+  local GCFrameBudget = require("src.core.GCFrameBudget")
+  GCFrameBudget.configure(Performance)
   if love.load then love.load(love.arg.parseGameArguments(arg), arg) end
   BootTrace.mark("love.load returned")
 
@@ -1327,6 +1330,7 @@ function love.run()
 
     -- update dt
     if love.timer then dt = love.timer.step() end
+    GCFrameBudget.beginFrame(Performance)
 
     -- call update and draw
     --
@@ -1397,7 +1401,7 @@ function love.run()
     if love.timer then
       if paced then
         local closeSleep = FrameProfile.section("frame pacing: sleep")
-        nextFrame = FrameCap.pace(love.timer, love.window, presented, nextFrame)
+        nextFrame = FrameCap.pace(love.timer, love.window, presented, nextFrame, GCFrameBudget.idle)
         closeSleep()
       else
         love.timer.sleep(0.001)
