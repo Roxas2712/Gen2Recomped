@@ -1156,6 +1156,15 @@ function GameVersion.isFRLG(id)
   return id == "firered" or id == "leafgreen"
 end
 
+-- Public mod queries use the cartridge's GBA layout family. This describes
+-- the registered version; it does not select another engine or cache/save.
+local gbaLayouts={firered='frlg',leafgreen='frlg',ruby='rse',sapphire='rse',emerald='rse'}
+function GameVersion.layout(id,versionId)
+  if id==GameVersion then id=versionId end
+  local info=GameVersion.info(id)
+  return info and(info.layout or gbaLayouts[info.id])or nil
+end
+
 -- The fourth arm.  Same caveat the Gen 3 one carries and then some: a
 -- predicate is not support, and Gen 4 differs from everything above it in
 -- ways no amount of widening an `isGen2()` reaches -- a filesystem instead of

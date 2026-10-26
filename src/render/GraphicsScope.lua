@@ -1,5 +1,8 @@
 -- Fence a native render seam, including leaked pushes and canvas changes.
 local S = {}
+local current
+-- Opaque lifetime for paired helpers inside a guarded render callback.
+function S.token() return current end
 local unpack = table.unpack or unpack
 local function pack(...)
   return { n = select("#", ...), ... }
@@ -27,7 +30,10 @@ function S.call(fn, ...)
     depth = depth - 1
     return unpack(result, 1, result.n)
   end
+  local parent = current
+  current = {}
   local out = pack(pcall(fn, ...))
+  current = parent
   G.push, G.pop = realPush, realPop
   if before and G.getStackDepth then
     local current = G.getStackDepth()
