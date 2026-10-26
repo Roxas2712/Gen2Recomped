@@ -3,8 +3,8 @@ love=require('tests.love_stub')
 local clock=0;love.timer={getTime=function()return clock end}
 local account='17'
 package.loaded['src.cloud.RetroCloud']={signedIn=function()return true end,accountId=function()return account end}
-local response,problem,requests={},nil,{}
-package.loaded['src.cloud.Tournaments']={request=function(_,_,_,payload)requests[#requests+1]=payload;return response,problem end}
+local response,problem,status,requests={},nil,nil,{}
+package.loaded['src.cloud.Tournaments']={request=function(_,_,_,payload)requests[#requests+1]=payload;return response,problem,status end}
 package.loaded['src.cloud.Task']={new=function(fn)return{poll=function()local a,b=fn();return{kind='done',first=a,second=b}end,cancel=function()end}end}
 local N=require('src.link.CloudNet');local n=N.new('cup','match','battle','ticket')
 n:send({type='hello',name='ME'});local body=n.outbox[1].body
@@ -21,4 +21,22 @@ local switched=N.new('cup','match','battle','ticket');account='18';switched:upda
 assert(switched.closed and switched.error,'switching accounts closes the old battle transport')
 account='17';local gone=N.new('cup','match','battle','ticket');gone.hasPeer=true;clock=5;gone:update();response={battle='battle',sent=0,peer_online=false,messages={}};gone:update()
 assert(gone.closed and gone.error,'a vanished rival ends the connection instead of waiting forever')
-print('Cloud Arena transport: 7 checks passed')
+local departing=N.new('cup','match','battle','ticket');clock=6;departing:update()
+response={battle='battle',sent=0,peer_closed=true,messages={{sequence=1,body='{"type":"bye"}'}}};departing:update()
+assert(departing.closed and departing:poll()[1].type=='bye','a graceful peer exit delivers the final message and closes the battle')
+clock=7;N.pump();response={battle='battle',sent=0,peer_closed=true,messages={}};N.pump()
+assert(departing.finished and requests[#requests].after==1 and requests[#requests].close,'the last peer message is acknowledged before retirement')
+local tail=N.new('cup','match','battle','ticket');clock=8;tail:update()
+local batch={};for i=1,8 do batch[i]={sequence=i,body='{"type":"hash"}'} end
+response={battle='battle',sent=0,peer_closed=true,messages=batch};tail:update()
+assert(not tail.closed and #tail:poll()==8,'a full final page does not close before the remaining messages are fetched')
+clock=9;tail:update();response={battle='battle',sent=0,peer_closed=true,messages={{sequence=9,body='{"type":"bye"}'}}};tail:update()
+assert(tail.closed and tail.received==9 and tail:poll()[1].type=='bye','a closed peer stream is drained across multiple pages')
+local cancelled=N.new('cup','match','battle','ticket');clock=10;cancelled:update()
+response=nil;problem='This battle connection is no longer active.';status=422;cancelled:update()
+assert(cancelled.closed and cancelled.error==problem,'a cancelled pairing ends immediately instead of waiting through transient retries')
+local limited=N.new('cup','match','battle','ticket');clock=11;limited:send({type='action'});limited:update();status=429;limited:update()
+assert(not limited.closed and #limited.outbox==1,'rate limiting preserves the pending action for retry')
+clock=12;limited:update();status=nil;problem=nil;response={battle='battle',sent=1,messages={}};limited:update()
+assert(not limited.closed and #limited.outbox==0,'the same action recovers after a temporary rate limit')
+print('Cloud Arena transport: 14 checks passed')

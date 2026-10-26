@@ -30,13 +30,13 @@ function Arena.consume(game)
  game.save=request.save;game.retroArena=true
  game.writeSave=function() return nil,'Arena parties are temporary. Return to the library to save your adventure.' end
  local state=require('src.link.LinkState').new(game);state.net=require('src.link.Net').new();state.discordCodeSet=true
- local cleaned,reported,battle,own,peer,started,reportError
+ local cleaned,reported,reportedStatus,battle,own,peer,started,reportError
  local elapsed,nextPoll=0,0
  local handshakeAt,peerVerified
  local function report(payload)
   if reported or not battle or not own then return end
   local ok,why=require('src.link.ArenaResults').keep(cup.id,match.id,payload)
-  if ok then reported=true else reportError='Result could not be saved: '..tostring(why) end
+  if ok then reported=true;reportedStatus=payload.status else reportError='Result could not be saved: '..tostring(why) end
  end
  local function clean(message)
   if cleaned then return end;cleaned=true
@@ -44,7 +44,10 @@ function Arena.consume(game)
   if state.arenaTask then state.arenaTask:cancel();state.arenaTask=nil end
   state.net:close();game.linkSession=nil;game.linkNet=nil;game.retroArena=nil
   game.save=originalSave;game.writeSave=write;game.returnToLauncher=back
-  notice={account=account,id=cup.id,text=reportError or message or (reported and 'Battle closed. The two native reports are checked automatically; points require agreement.' or 'Battle closed without a league result.')}
+  local resultMessage=reportedStatus=='complete' and 'Battle finished. Your result is saved; league points and rewards follow when both reports agree.'
+   or reportedStatus=='draw' and 'Battle ended without a winner. No league points or item rewards. Your adventure save was restored.'
+   or 'Battle cancelled. No winner was reported. Your adventure save was restored.'
+  notice={account=account,id=cup.id,text=reportError or message or resultMessage}
  end
  game.returnToLauncher=function(self) clean();return back(self) end
  state.exitWith=function(self,message) clean(message);return back(game) end
