@@ -28,7 +28,7 @@ function P.check()
   local a=auth();local id=a.accountId and a.accountId()
   local scope=P.scope()
   if scope and scope~=id then return nil,'The account changed during this operation. Existing records were preserved.' end
-  if not valid(id) then return nil,'Register or sign in and confirm your email before using saves or the Bank.' end
+  if not valid(id) then return nil,'Register or sign in and confirm your email before using the Bank or cloud saves.' end
   local owner,why=P.owner()
   if why then return nil,why end
   if not owner then return nil,'Link the local saves and Bank to your confirmed account first.' end
