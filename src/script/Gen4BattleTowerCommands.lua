@@ -288,7 +288,7 @@ end
 
 -- `messageseenbanlistspecies <first> <count> ...`: the line that names the
 -- banned species the player has SEEN, `first + how many`
-function Commands.g4_bt_banlist_message(ctx, first, count)
+function Commands.g4_bt_banlist_message(ctx, first, count, bank)
   local game = ctx.game
   local seen = (ctx.save.pokedex and ctx.save.pokedex.seen) or {}
   local names = { tostring(valueOf(ctx, count)) }
@@ -300,6 +300,7 @@ function Commands.g4_bt_banlist_message(ctx, first, count)
   end
   game.stringBuffers = {}
   for i, v in ipairs(names) do game.stringBuffers[i] = v end
+  if bank == "map" then return Commands.g4_message(ctx, (tonumber(first) or 0) + #names - 1) end
   return Commands.g4_message_bank(ctx, 304, (tonumber(first) or 91) + #names - 1)
 end
 
@@ -311,7 +312,7 @@ function Commands.g4_frontier_scene(ctx, scene)
   -- THE SCENES THE FRONTIER ENGINE RUNS (src/ui/Gen4FrontierScene.lua): the
   -- field script waits here until the scene leaves the frontier
   local Scene = require("src.ui.Gen4FrontierScene")
-  if Scene.SCENES[scene] then
+  if Scene.specFor(scene) then
     local runner = ctx.runner
     ctx.game.stack:push(Scene.new(ctx.game, { scene = scene, onExit = function() runner:resume() end }))
     runner:yield()
