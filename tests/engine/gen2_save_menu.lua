@@ -83,12 +83,12 @@ for _,edition in ipairs({'gold','silver','crystal'})do
  g=game(edition);local start=Screens.push(g,'StartMenu');local row
  for i,item in ipairs(start.items)do if item.label=='SAVE' then row=i end end
  T.eq(type(row),'number','native START exposes SAVE')
- start.index=row;tick(g,'a')
+ if start.list then start.list.index=row else start.index=row end;tick(g,'a')
  T.eq(getmetatable(g.stack:top()),UI,'actual START input enters native save screen')
 end
 V.set('red');local g=game('red');local start=Screens.push(g,'StartMenu');local row
 for i,item in ipairs(start.items)do if item.label=='SAVE' then row=i end end
-start.index=row;tick(g,'a');T.eq(getmetatable(g.stack:top()),Box,'Gen1 retains original save dialogue')
+if start.list then start.list.index=row else start.index=row end;tick(g,'a');T.eq(getmetatable(g.stack:top()),Box,'Gen1 retains original save dialogue')
 V.set(original)
 -- This state must enter the real Game writer, retaining its capture and
 -- metadata/resume work rather than calling a bare serializer in production.
