@@ -4,9 +4,9 @@ local V, F, H =
   require("src.core.GameVersion"), require("src.link.Fingerprint"), require("src.link.Handshake")
 local Copy = require("src.mods.Merge").deepCopy
 local data, before = T.fixtures.fresh(), V.get()
--- Legacy hash retained; native hash independently audits revision 17 -> 18 only.
+-- Legacy hash retained; native hash independently audits revision 18 -> 19 only.
 local LEGACY = "e33d251961f2a41d"
-local NATIVE = "c82a14f754706103"
+local NATIVE = "22e453523676534e"
 for _, version in ipairs({ "red", "firered", "gold", "emerald", "diamond", "firered", "black" }) do
   V.set(version)
   local gba = V.isGen3()
@@ -15,7 +15,7 @@ for _, version in ipairs({ "red", "firered", "gold", "emerald", "diamond", "fire
     gba and NATIVE or LEGACY,
     "runtime command revision participates in cached fingerprints"
   )
-  T.eq(F.nativeBattleRevision(), gba and 18 or nil, "only GBA advertises the new command revision")
+  T.eq(F.nativeBattleRevision(), gba and 19 or nil, "only GBA advertises the new command revision")
   local game = { data = data, save = { player = { name = "RULES" } } }
   local current = H.hello(game, "battle")
   local legacy = Copy(current)
@@ -33,14 +33,21 @@ for _, version in ipairs({ "red", "firered", "gold", "emerald", "diamond", "fire
     "legacy unversioned peers remain safe"
   )
   if gba then
+    local previous = Copy(current)
+    previous.nativeBattleRevision, previous.fingerprint = 18, "c82a14f754706103"
+    T.eq(H.checkCompat(current, previous), "subset", "old cry timing cannot admit lockstep")
+    T.eq(H.checkCompat(previous, current), "subset", "cry revision mismatch is symmetric")
+    T.eq(current.nativePartyRevision, 1, "cry controls retain the native party codec")
     for _, host in ipairs({ false, true }) do
-      local state = setmetatable(
-        { game = game, myHello = current, peerHello = legacy },
-        { __index = require("src.link.LinkState") }
-      )
-      state:decideCompat("battle", host)
-      T.eq(state.stage, "notice", "actual link controller stops before battle setup")
-      T.eq(state.noticeExits, true, "mismatched commands cannot start a battle")
+      for _, peer in ipairs({ legacy, previous }) do
+        local state = setmetatable(
+          { game = game, myHello = current, peerHello = peer },
+          { __index = require("src.link.LinkState") }
+        )
+        state:decideCompat("battle", host)
+        T.eq(state.stage, "notice", "actual link controller stops before battle setup")
+        T.eq(state.noticeExits, true, "mismatched commands cannot start a battle")
+      end
     end
     local message = table.concat(H.describe(current, legacy, "subset", "battle"), " ")
     T.check(message:find("engine versions", 1, true) ~= nil, "rule mismatch names the needed engine update")

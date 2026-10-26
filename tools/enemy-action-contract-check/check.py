@@ -13,6 +13,9 @@ GEN1_REF = "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91"
 
 
 MODES = [
+    (3, 'native_cry_lifecycle'),
+    (3, 'native_cry_commands'),
+    (3, 'native_cry_pcm'),
     (3, 'native_sound_script_waits'),
     (3, 'native_sound_lifecycle'),
     (3, 'substitute_fade'),
@@ -93,6 +96,7 @@ def main():
              *sorted((host / "tests/post_hit_items").glob("*.json")),
              *sorted((host / "tests/enemy_actions").glob("*.lua")), Path(__file__).with_name("worker.lua")]
     paths.extend(sorted((host / "tests/native_sound").glob("*.lua")))
+    paths.extend(sorted((host / "tests/native_cry").glob("*.lua")))
     report = {"source_ref": GEN1_REF, "host_ref": git(host, "rev-parse", "HEAD"),
               "host_dirty": bool(git(host, "status", "--porcelain")),
               "fixture_sha256": {str(p.relative_to(host)): hashlib.sha256(p.read_bytes()).hexdigest()

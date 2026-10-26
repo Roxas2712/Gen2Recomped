@@ -15,6 +15,7 @@ local cache = {}
 -- Native M4A players own one live effect each, independently of cached PCM variants.
 local nativePlayers = {}
 local nativeSeWaits = {}
+local nativeCryMono = false
 -- port addition: 0-7 SFX volume from save.options.sfxVol (OptionsMenu),
 -- scaling the 0.8 base every source gets
 local BASE_VOLUME = 0.8
@@ -746,7 +747,7 @@ end
 
 -- returns the source (nil headless) so callers that block on the cry
 -- like the original's PlayCry -> WaitForSoundToFinish can poll it
-function Sound.playCry(data, species, opts)
+local function playLegacyCry(data, species, opts, nativeOverride)
   if not love.audio then return nil end
   -- INTERRUPTION: same cache-poisoning gate as playPath (sessionSuspended)
   if sessionSuspended then return nil end
@@ -780,7 +781,7 @@ function Sound.playCry(data, species, opts)
   end
   -- set every time rather than at build: the cached source outlives a change
   -- of game, and the scale is the loaded cartridge's
-  pcall(src.setVolume, src, volumeFor(key) * cryScale(data))
+  pcall(src.setVolume, src, volumeFor(key) * (nativeOverride and 1 or cryScale(data)))
   -- Interactive Dex playback owns its source; loop/effect settings must never
   -- leak onto the cached cry used by battles, NPC scripts or other menus.
   if opts and opts.isolated and src.clone then
@@ -788,9 +789,40 @@ function Sound.playCry(data, species, opts)
     if ok and copy then src=copy end
   end
   if not restart(src) then return nil end
-  require("src.core.Music").duckForCry(data, src)
+  if not nativeOverride then require("src.core.Music").duckForCry(data, src) end
   played("cry", species, species)
   return src
+end
+
+function Sound.playCry(data, species, opts)
+  if require("src.core.GameVersion").isGen3() then
+    if sessionSuspended then return nil end
+    if type(species) == "number" then
+      species = data and data.constants and data.constants.speciesOrder and data.constants.speciesOrder[species] or species
+    end
+    local src, override = require("src.core.NativeCryPlayer").play(data, species, opts,
+      function() return playLegacyCry(data, species, opts, true) end, volumeScale, nativeCryMono)
+    -- The legacy override already emitted its own event.
+    if src and not override then played("cry", species, species) end
+    return src
+  end
+  return playLegacyCry(data, species, opts)
+end
+
+function Sound.isCryFinished()
+  return require("src.core.NativeCryPlayer").finished()
+end
+
+function Sound.waitCry()
+  return require("src.core.NativeCryPlayer").wait()
+end
+
+function Sound.updateCry()
+  require("src.core.NativeCryPlayer").tick()
+end
+
+function Sound.stopCry()
+  require("src.core.NativeCryPlayer").stop()
 end
 
 -- GROWL/ROAR are the only two moves that play a cry (IsCryMove checks
@@ -958,6 +990,8 @@ end
 -- variants included) or all of them, so the next play re-resolves the def
 function Sound.invalidate(name)
   byNumber = nil
+  local nativeCry = package.loaded["src.core.NativeCryPlayer"]
+  if nativeCry then nativeCry.invalidate(name) end
   local function evict(store, key)
     local src = store[key]
     if src then
@@ -993,6 +1027,8 @@ Assets.register(Sound.invalidate)
 function Sound.suspend()
   if sessionSuspended then return end
   sessionSuspended = true
+  local nativeCry = package.loaded["src.core.NativeCryPlayer"]
+  if nativeCry then nativeCry.invalidate() end
   -- Native effects can sustain and own additional cached voices as well.
   for player, entry in pairs(nativePlayers) do
     safeAudio("Source:stop", entry.src.stop, entry.src)
@@ -1025,6 +1061,7 @@ end
 -- re-apply persisted audio options (Game calls this on boot and after
 -- loading a save)
 function Sound.applyOptions(opts)
+  nativeCryMono = opts and opts.stereo == false or false
   Sound.setVolumeLevel(opts and opts.sfxVol or 7)
   Sound.setPikaVolumeLevel(opts and opts.pikaVol or 7)
 end

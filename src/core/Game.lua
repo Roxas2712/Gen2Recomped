@@ -612,6 +612,7 @@ function Game:update(dt)
     local close = FrameProfile.section("  update: music")
     while self.audioAccum >= step do
       self.audioAccum = self.audioAccum - step
+      require("src.core.Sound").updateCry()
       require("src.core.Music").update(Data)
       require("src.core.Sound").update()
     end

@@ -2,7 +2,13 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "native_sound_script_waits" then
+if mode == "native_cry_lifecycle" then
+  rows = dofile(root .. "/tests/enemy_actions/native_cry_lifecycle.lua").run(root, backend, version)
+elseif mode == "native_cry_commands" then
+  rows = dofile(root .. "/tests/enemy_actions/native_cry_commands.lua").run(root, backend, version)
+elseif mode == "native_cry_pcm" then
+  rows = dofile(root .. "/tests/enemy_actions/native_cry_pcm.lua").run(root, backend, version)
+elseif mode == "native_sound_script_waits" then
   rows = dofile(root .. "/tests/enemy_actions/native_sound_script_waits.lua").run(root, backend, version)
 elseif mode == "native_sound_lifecycle" then
   rows = dofile(root .. "/tests/enemy_actions/native_sound_lifecycle.lua").run(root, backend, version)
