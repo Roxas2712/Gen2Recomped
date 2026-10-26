@@ -22,7 +22,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ('love', 'lua', 'red', 'out'):
         parser.add_argument('--' + name, type=Path, required=True)
+    parser.add_argument('--suite', action='append', default=[], help='run selected legacy suites in isolated states')
     args = parser.parse_args()
+    for suite in args.suite:
+        assert suite.startswith('tests/') and (ROOT / suite).resolve().is_relative_to(ROOT / 'tests')
+        assert (ROOT / suite).is_file()
     love, lua, rom = (p.resolve(strict=True) for p in (args.love, args.lua, args.red))
     for path in (ROOT, love, lua, rom):
         qa_source(path)
@@ -62,15 +66,20 @@ def main():
     for tree in ('data/generated', 'assets/generated'):
         shutil.copytree(profile / tree, source / tree, dirs_exist_ok=True)
     env = {k: v for k, v in env.items() if not k.startswith('POKEPORT_')}
+    codes = []
     with (out / 'suite.log').open('w') as log:
-        result = qa_run([str(lua), 'tests/run_tests.lua'], cwd=source, env=env,
-                        stdout=log, stderr=log, timeout=600)
+        for suite in args.suite or [None]:
+            command = [str(lua), 'tests/run_isolated_suite.lua', suite] if suite else [str(lua), 'tests/run_tests.lua']
+            log.write('RUN ' + str(suite or 'tests/run_tests.lua') + '\n');log.flush()
+            result = qa_run(command, cwd=source, env=env, stdout=log, stderr=log, timeout=1800)
+            codes.append(result.returncode)
+    code = next((c for c in codes if c),0)
     log = (out / 'suite.log').read_text()
     stable = qa_run(['git', 'rev-parse', 'HEAD'], cwd=ROOT, capture_output=True,
                     text=True, check=True).stdout.strip() == head
-    report = dict(passed=result.returncode == 0 and stable, sourceCommit=head, sourceStable=stable,
+    report = dict(passed=code == 0 and stable, sourceCommit=head, sourceStable=stable,
                   romSha1=digest, freshImport=True, playerProfilesUsed=False,
-                  suiteExit=result.returncode, suiteLogSha256=hashlib.sha256(log.encode()).hexdigest(),
+                  suiteExit=code, suites=args.suite or ['tests/run_tests.lua'], suiteLogSha256=hashlib.sha256(log.encode()).hexdigest(),
                   importLogSha256=hashlib.sha256((out / 'import.log').read_bytes()).hexdigest(),
                   verdict=log.strip().splitlines()[-1] if log.strip() else 'missing output')
     (out / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
