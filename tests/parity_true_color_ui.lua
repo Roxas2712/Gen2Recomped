@@ -21,6 +21,17 @@ local TitleState = require("src.ui.TitleState")
 local OakSpeech = require("src.ui.OakSpeech")
 local TradeAnim = require("src.ui.TradeAnim")
 
+-- Imported PNGs live on disk; the generic headless filesystem only contains
+-- in-memory fixture files. Let existence checks see the owned source assets.
+local savedInfo = love.filesystem.getInfo
+love.filesystem.getInfo = function(path)
+  local info = savedInfo(path)
+  if info then return info end
+  if type(path) == "string" and path:match("^assets/") then
+    local file = io.open(path, "rb")
+    if file then file:close();return {type="file"} end
+  end
+end
 local savedCry = Sound.playCry
 Sound.playCry = function() end
 
@@ -91,7 +102,9 @@ local function tradePicture(mon, pic, trueColor)
   check(#rects == 1 and rects[1].x == 112 - left - w
         and rects[1].y == 16 + (7 - math.ceil(h / 8)) * 8
         and rects[1].w == w and rects[1].h == h,
-        "trade reports the transferred true-color sprite rectangle")
+        ("trade reports the transferred true-color sprite rectangle (%s; expected %s,%s,%s,%s)"):format(
+          rects[1] and table.concat({rects[1].x,rects[1].y,rects[1].w,rects[1].h},",") or "missing",
+          112-left-w,16+(7-math.ceil(h/8))*8,w,h))
 end
 tradePicture(trade.sent, trade.sentPic, trade.sentPicTrue)
 tradePicture(trade.received, trade.recvPic, trade.recvPicTrue)
@@ -132,4 +145,5 @@ def.trueColor = savedTrueColor
 raichu.trueColor = savedRaichuTrueColor
 Sound.playCry = savedCry
 PaletteFX.clearTrueColor()
+love.filesystem.getInfo = savedInfo
 S.finish()

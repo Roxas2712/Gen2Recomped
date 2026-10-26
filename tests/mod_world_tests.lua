@@ -737,6 +737,7 @@ local function liveWorld(data)
                              { __index = OW })
   stack.states[1] = state
   game.overworld = state
+  state.runner = require("src.script.ScriptRunner").new(game, state)
   return state, game
 end
 
@@ -822,7 +823,7 @@ do
     -- rate 200/256 per step: no reseed, so the shared RNG stream the rest
     -- of the runner depends on is left exactly where it was
     for _ = 1, 200 do
-      pcall(walker.onStepComplete, walker)
+      assert(pcall(walker.onStepComplete, walker))
       if caught then break end
     end
     check(caught ~= nil, "a wild battle fires on the authored map")
@@ -835,7 +836,7 @@ do
       hooks:wrap("encounter.roll", function() return nil end, 0, "nuzlocke")
       caught = nil
       for _ = 1, 1000 do
-        pcall(walker.onStepComplete, walker)
+        assert(pcall(walker.onStepComplete, walker))
         check(caught == nil, "encounter.roll suppression holds for the whole walk")
       end
     end)

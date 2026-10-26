@@ -3418,7 +3418,7 @@ end
 -- editing a list and forgetting to meant the suite silently never ran.
 -- They are globbed now (21-testing-and-ci §CI).
 --
--- Order still matters: these suites share one process and one Data, and
+-- Order remains stable for readable reports. Each suite owns its process;
 -- the sequence they were chained in is the sequence they are known to
 -- pass in.  So the known order runs first and anything the glob newly
 -- turned up runs after it, alphabetically -- a new suite runs without a
@@ -3553,13 +3553,12 @@ runSuites(orderedGlob("tests/parity_*.lua", {
 -- always been; scripts/test.sh also runs them directly.
 do
   local lua = (arg and arg[-1]) or "luajit"
-  local devnull = package.config:sub(1, 1) == "\\" and "nul" or "/dev/null"
   for _, tier in ipairs({ "tests/run_content_red.lua",
       "tests/run_engine.lua", "tests/run_modkit.lua" }) do
     local handle = io.open(tier, "r")
     if handle then
       handle:close()
-      local status = os.execute(("%q %s > " .. devnull .. " 2>&1"):format(lua, tier))
+      local status = os.execute(("%q %s"):format(lua, tier))
       check(status == 0 or status == true, tier:match("([^/]+)%.lua$") .. " tier")
     end
   end
