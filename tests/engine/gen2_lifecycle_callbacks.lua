@@ -111,6 +111,14 @@ T.eq(last("pokerus.infected").days,1,'de novo countdown is stored before observe
 local start=os.time({year=2026,month=10,day=20,hour=12})
 Virus.poll(contracted,start);T.eq(contracted.party[1].pokerus,0x41,'first clock poll only seeds the clock')
 Virus.poll(contracted,start+86400*2);T.eq(contracted.party[1].pokerus,0x40,'elapsed days cure the actual party byte')
+local shifted={party={{pokerus=0x34}},rtc={anchorTime=start,anchorMinute=1439,
+ anchorDay=2,anchorDate='2026-10-20'}}
+Virus.poll(shifted,start);Virus.poll(shifted,start+120)
+T.eq(shifted.party[1].pokerus,0x33,'infection countdown follows saved midnight while the host is still at noon')
+local Caps=require('src.mods.Capabilities')
+T.eq(Caps.supports('events','happiness.changed','prism'),false,'unimplemented hack friendship is not advertised')
+T.eq(Caps.supports('events','pokerus.infected','polishedcrystal'),false,'unimplemented hack infection is not advertised')
+
 
 local DayCare=require('src.pokemon.DayCare')
 local a=Pokemon.new(data,'FIXMON_A',10,function(n)return n end)

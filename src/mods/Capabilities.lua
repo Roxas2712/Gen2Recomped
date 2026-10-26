@@ -101,8 +101,9 @@ function Capabilities.supports(surface, name, version)
     -- this only promises the bus supports it, never that a producer is present.
     if surface == "events" and name:match("^mod%.[%w_%-]+%..+") then return true end
     local gens = callbacks[surface][name]
-    if name=="unown.unlocked" and version~="gold" and version~="silver" and version~="crystal"then
-      return false,"unown.unlocked has no native producer in "..version
+    if (name=="unown.unlocked" or name=="happiness.changed" or name=="pokerus.infected")
+        and version~="gold" and version~="silver" and version~="crystal"then
+      return false,name.." has no native producer in "..version
     end
     if gens then
       if gens:find(tostring(info.generation), 1, true) and nativeVersion(name, version) then
