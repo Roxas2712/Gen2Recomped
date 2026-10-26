@@ -63,8 +63,10 @@ clock replacement remain native commands. Temporary presentation extensions and
 preview replacements never replace the underlying native save/stack. Persistence
 continues through the existing native services and `mod.save`.
 
-This is not the complete source session schema. Party, bag, storage, dex, numeric
-script stores, complete session enumeration/deep-copy, preview isolation, custom
+Numeric flags and variables now use typed native command-backed views, with
+session/map iteration and detached recursive-copy support; see
+`native-script-state.md`. Party, bag, storage, dex, complete session schemas,
+preview isolation, custom
 boot UI and further field/actor/battle/audio services still need their typed
 adapters. A differently shaped native collection is not exposed under a source
 name. The data facade supplies the prior owned map views; other data schemas need
@@ -87,7 +89,7 @@ These ROM-free checks exercise the actual native Game/StateStack/player phases,
 frame clock/audio/GC ownership, title callbacks with a synthetic disk reader,
 failure/replacement paths, all five editions, other-generation isolation, and
 unchanged SDK consumers sharing callbacks with a native peer. They do not open
-player profiles. Native QA must use the shared 8 GiB free-space guard.
+player profiles. Local fork QA must use the shared 20 GiB free-space guard.
 
 The same callback consumer runs on API 2 and API 3 where supported, selected by
 `SESSION_RUNTIME_API`; its default is the host's actual advertised API level.

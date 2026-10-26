@@ -37,6 +37,8 @@ local Job = require("src.mods.Job")
 local ModGens = require("src.mods.ModGens")
 local ModTargets = require("src.mods.ModTargets")
 local ModSeams = require("src.mods.ModSeams")
+-- Install typed-view iteration before any source/native mod opens a journal.
+require("src.compat.gen1.TableIteration")
 local WorldOverview = require("src.mods.WorldOverview")
 local LoadOrder = require("src.mods.LoadOrder")
 local WorldActions = require("src.world.WorldActions")
@@ -1401,6 +1403,9 @@ end
 -- migration it took goes with them.  The journal only exists around an
 -- entry chunk; a later failure (script validation) purges every registry.
 function Loader:_rollback(modId)
+  -- Restore failed wrappers before any native cleanup iterates registries or
+  -- calls a module the failed entry may have replaced.
+  ModSeams.unwindOwner(modId)
   require('src.mods.Steps').retire(self,modId)
   local facade=package.loaded['src.core.Game3']
   if facade and facade._retireMod then facade._retireMod(modId)end
@@ -1423,9 +1428,10 @@ function Loader:_rollback(modId)
   self.modSave[modId] = nil
   -- Late validation failures retire entry-time wrappers too. Restore those
   -- before invoking an optional resource service a failed entry may wrap.
-  ModSeams.unwindOwner(modId)
   local stream=package.loaded['src.core.game3.asset_stream']
   if stream and stream.cancelOwner then pcall(stream.cancelOwner,modId)end
+  local space=package.loaded['src.core.game3.scripting.space']
+  if space and space.cancelOwner then pcall(space.cancelOwner,modId)end
 end
 
 -- a mod that explicitly swears it stays link-compatible while writing into a
@@ -1534,7 +1540,7 @@ end
 -- any compatibility module on an ordinary native boot.
 local function retireCompatibilityMaps()
   for _, name in ipairs({"src.core.game3.runtime", "src.core.Game3",
-      "src.core.game3.map", "src.core.game3.player", "src.core.game3.collision", "src.core.game3.objects", "src.core.game3.ow_sprites",
+      "src.core.game3.map", "src.core.game3.player", "src.core.game3.collision", "src.core.game3.objects", "src.core.game3.ow_sprites", "src.core.game3.scripting.space",
       "src.core.game3.warm", "src.core.game3.asset_stream", "src.core.game3.tileset_native", "src.core.game3.tileset_anim"}) do
     local module = package.loaded[name]
     if type(module) == "table" and type(module.release) == "function" then module.release() end
