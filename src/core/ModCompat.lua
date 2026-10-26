@@ -68,6 +68,8 @@ ModCompat.ALIASES = {
   -- save-side data
   ["src.core.gen2.Boxes"] = "src.pokemon.Boxes",
   ["src.ui.gen2.MapRadio"] = "src.ui.Gen2MapRadio",
+  -- Explicit signature adapter: native operations take (data, save).
+  ["src.core.gen2.Decorations"] = "src.compat.gen2.Decorations",
   ["src.core.gen2.BugContest"] = "src.world.BugContest",
   ["src.core.gen2.ItemEffects"] = "src.inventory.ItemEffects",
   ["src.core.gen2.Save"] = "src.core.SaveData",

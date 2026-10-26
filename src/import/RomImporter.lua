@@ -1313,6 +1313,7 @@ local function markerFor(version)
     revision = "gen2-field-encounters-v8:gen2-phone-identities-v1:"
     revision = revision .. "gen2-apricorn-table-v1:gen2-apricorn-programs-v1:"
     revision = revision .. "gen2-landmark-identities-v1:"
+    revision = revision .. "gen2-mom-shopping-native-v1:gen2-decorations-native-v1:"
   end
   -- field.tradeArt: the cable-trade movie's tiles out of the ROM
   -- (Gen1TradeArt); without it the trade ran on drawn stand-ins.
