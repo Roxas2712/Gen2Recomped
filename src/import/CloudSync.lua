@@ -476,8 +476,34 @@ function C.restoreVersions(target,versions)
   local store=asStore(target);if not store then return nil,'No cloud account connected.' end
   local key=stateKey(store);local st=C.loadState(key);local result={new=0}
   for _,version in ipairs(versions) do
+    -- Login on an already-used device must refresh linked normal saves too.
+    -- Restore never uploads: a diverged local branch stays in its own slot.
+    for _,slot in ipairs(SaveData.listSlots(version) or {}) do
+      local link=st.links[version] and st.links[version][slot.id]
+      if link then
+        local incoming=store.read(cloudRel(version,link.cloudId))
+        if incoming and isSave(incoming) then
+          local bytes=localBytes(version,slot.id);local remoteH=C.hash(incoming)
+          local localH=bytes and C.hash(bytes)
+          if localH==remoteH then link.hash=remoteH
+          elseif remoteH~=link.hash then
+            if bytes and localH~=link.hash then
+              local id,why=newLocalSlot(version,incoming,(slotLabel(version,slot.id) or slot.id)..' (cloud)')
+              if not id then return nil,why end
+              st.links[version][id]={cloudId=link.cloudId,hash=remoteH}
+              result['kept both']=(result['kept both'] or 0)+1
+            else
+              rotateLocal(version,slot.id)
+              local ok,why=writeLocal(version,slot.id,incoming);if not ok then return nil,why end
+              link.hash=remoteH;result.downloaded=(result.downloaded or 0)+1
+            end
+          end
+        end
+      end
+    end
     local count,problem=C.pullNew(store,st,version);if not count then return nil,problem end
     result.new=result.new+count
+    C.saveState(st,key)
     if store.kind=='retro' then
       for _,slot in ipairs(SaveData.listSlots(version) or {}) do
         local ok,err=syncSuspend(store,version,slot.id)
