@@ -22,7 +22,7 @@ def main():
     storage=Storage(root)
     atexit.register(storage.close)
     qa_source,qa_cache,qa_copy=storage.source,storage.cache,storage.copy
-    qa_profile,qa_run=storage.profile,storage.run
+    qa_profile,qa_run=storage.destination,storage.run
     binary=args.love.resolve(strict=True)
     for path in (root,binary):qa_source(path)
     sources={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in (root/'src').rglob('*.lua')}
