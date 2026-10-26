@@ -39,4 +39,8 @@ local nextid='22222222-2222-4222-8222-222222222222';game.save.party={a};check(J.
 game.save.party={Pokemon.new(data,'FIXMON_C',30)};receipt.before=P.packParty({a})
 J.tick(game);J.tick(game)
 check(game.save.party[1].species=='FIXMON_C' and J.pending() and acks==1,'a changed save is retained for manual recovery rather than overwritten')
+local fs=saves.persistenceFs;saves.persistenceFs=function()error('Guest and launcher frames must not scan account trade storage')end
+check(not J.tick(nil),'launcher frames do not inspect trade journals')
+account=nil;check(not J.tick(game),'guest play never inspects private trade journals')
+saves.persistenceFs=fs
 print('Durable friend trade recovery: '..n..' checks passed')

@@ -283,7 +283,7 @@ function W.draw(self)
   local social=require('src.cloud.Presence').read() or f.social or {}
   local tabs=Auth.signedIn() and not f.document
   if tabs then
-    for i,tab in ipairs({{'account','PROFILE'},{'friends','FRIENDS · '..#(social.incoming or {})},{'accountSettings','CLOUD & DEVICES'}}) do
+    for i,tab in ipairs({{'account','PROFILE'},{'friends','FRIENDS'..(#(social.incoming or {})>0 and ' · '..#social.incoming..' NEW' or '')},{'accountSettings','CLOUD & DEVICES'}}) do
       local tw=(width-48*s)/3;button(tab[2],x+24*s+(i-1)*tw,y+68*s,tw-6*s,tab[1]).pinned=true
     end
   end

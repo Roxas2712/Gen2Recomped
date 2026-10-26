@@ -60,8 +60,17 @@ function J.tick(game)
   if J.job then J.job:cancel() end
   J.account=Auth.accountId();J.job=nil;J.next=nil;J.error=nil
  end
+ if not Auth.signedIn() or not game or not game.save or not game.data then
+  if J.job then J.job:cancel() end
+  J.job=nil;J.jobKey=nil;return false
+ end
  local doc=J.pending(game)
- if not doc or not game or not game.save or not game.data then return false end
+ if not doc then return false end
+ local key=tostring(Auth.accountId())..':'..doc.edition..':'..doc.slot..':'..doc.id
+ if J.jobKey~=key then
+  if J.job then J.job:cancel() end
+  J.job=nil;J.jobKey=key;J.next=nil
+ end
  if require('src.core.GameVersion').get()~=doc.edition or Saves.activeSlot(doc.edition)~=doc.slot then return false end
  -- The active link owns its own commit and animation. Recovery runs on exit.
  if game.linkSession or game.friendTradeAnimating then return false end

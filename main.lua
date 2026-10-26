@@ -422,6 +422,7 @@ end
 local function returnToLauncher()
   if Importer then return end
   RetroOverlay.clear()
+  local friends=package.loaded['src.link.FriendLink'];if friends then friends.tick(nil) end
   pcall(function() require("src.core.Music").stop() end)
   -- The launcher's bottom-screen shelf starts fresh, and its canvas is not
   -- held across a whole play session.
