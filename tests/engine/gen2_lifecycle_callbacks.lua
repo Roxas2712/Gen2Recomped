@@ -152,6 +152,7 @@ state.claim=false;state.nickname=nil
 
 local unownDef=require('src.mods.Merge').deepCopy(data.pokemon.FIXMON_A)
 unownDef.id,unownDef.dex,unownDef.evolutions='SPECIES_201',201,{}
+unownDef.translationSourceName='UNOWN'
 unownDef.forms={};for n=1,26 do unownDef.forms[n]={}end
 data.pokemon.SPECIES_201=unownDef;data.unown_dex={words={'OWN WORD'}}
 local unown=Pokemon.new(data,'SPECIES_201',10,function(n)return n end)
