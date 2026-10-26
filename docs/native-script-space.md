@@ -52,3 +52,21 @@ command lowerings. Full field services, complete session collections, renderer,
 shaders, UI, battle, audio/RTC and all-edition gameplay/coexistence acceptance
 remain required. The immutable full Origami package must be probed again after
 each concrete bridge; module presence is not a claim that the game runs.
+
+## Fork integration evidence
+
+The composed fork passed 422 engine suites, all 3 SDK suites and all quick
+regression tiers. Focused field-scope/ownership checks passed 467 assertions;
+numeric store and session/iteration checks passed 310 and 240 respectively.
+
+Actual five-cartridge extraction covered 24,422 scripts and 164,183 source
+command rows. Additive opcode/payload/special metadata preserved normalized
+native operands and map/event projections, round-tripped through the Lua cache,
+and matched the independently decoded source operands with zero differences.
+The oracle states its edition-specific money-command corrections explicitly.
+These are extraction and command-view checks, not complete gameplay acceptance.
+
+The immutable original 1.0.9 package passes the scripting-space import on all
+five edition identities and next stops at `src.core.game3.battle_transition`.
+Full initialization remains incomplete. The QA runner reserves 20 GiB and uses
+owned profiles; no player profile or save is used.

@@ -29,7 +29,7 @@ function love.load()
   local Bundle=require('src.compat.gen1.ScriptBundle')
   local Disasm=require('src.core.game3.scripting.disasm')
   local common=require('src.core.game3.scripting.opcodes_common')
-  local report={editions={},playerProfilesUsed=false,minimumFreeGiB=8}
+  local report={editions={},playerProfilesUsed=false,minimumFreeGiB=20}
   for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
     V.set(edition)
     local manifest=J.decode(read(engine..'/tools/rom_manifest_'..edition..'.json'))
