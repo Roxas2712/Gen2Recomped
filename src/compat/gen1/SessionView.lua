@@ -4,6 +4,9 @@
 local Native=require('src.compat.gen1.NativeSession')
 local Identity=require('src.compat.gen1.MapIdentity')
 local Version=require('src.core.GameVersion')
+local ScriptStore=require('src.compat.gen1.ScriptStore')
+local ScriptMap=require('src.compat.gen1.ScriptMap')
+local Iteration=require('src.compat.gen1.TableIteration')
 local M={}
 local records=setmetatable({},{__mode='k'})
 local function finite(n)return type(n)=='number'and n==n and math.abs(n)<math.huge end
@@ -23,11 +26,13 @@ function M.new(game)
   if not Identity.lookup(edition,0,0)then return nil,'native source map catalogue unavailable'end
   local binding=Identity.bind(data.maps,edition)
   local record={owner=owner,data=data,save=save,edition=edition,maps=data.maps,clock={}}
+  local scripts=assert(ScriptStore.new(owner))
+  local flags,vars=ScriptMap.new(scripts,'flags'),ScriptMap.new(scripts,'vars')
   local view={}
   function record:valid()
     if self.retired then return false end
-    if Version.get()~=edition or owner.data~=data or owner.save~=save or data.maps~=self.maps then
-      self.retired=true;return false
+    if not scripts:valid()or Version.get()~=edition or owner.data~=data or owner.save~=save or data.maps~=self.maps then
+      self.retired=true;scripts:release();return false
     end
     return true
   end
@@ -49,6 +54,8 @@ function M.new(game)
       local player,world,actor=current();if not player then return nil end
       if key=='version'then return edition end
       if key=='generation'then return 3 end
+      if key=='flags'then return flags end
+      if key=='vars'then return vars end
       if key=='engine'then return 'game3'end
       if key=='map'then return record:map()end
       if key=='x'or key=='y'then return actor and actor[key=='x'and'cellX'or'cellY']or player[key]end
@@ -80,6 +87,8 @@ function M.new(game)
       if key=='money'or key=='coins'then
         assert(finite(value)and value>=0 and value%1==0 and value<4294967296,'invalid session '..key)
         save[key]=value
+      elseif key=='flags'or key=='vars'then
+        ScriptMap.replace(scripts,key,value)
       elseif key=='name'or key=='rivalName'then
         assert(player and type(value)=='string'and#value<=10 and not value:find('%c'),'invalid player name')
         player[key=='name'and'name'or'rival']=value
@@ -101,9 +110,32 @@ function M.new(game)
       end
     end,
   })
+  record.scripts=scripts
+  local fields={'version','generation','engine','map','x','y','facing','name','rivalName','trainerId','gender',
+    'money','coins','modData','meta','options','biking','bikeType','surfing','underwater','elevation',
+    'playTime','flags','vars'}
+  Iteration.register(view,function(state,source)
+    assert(state:valid(),'native session view retired')
+    local out={}
+    -- Include detached presentation fields without recursing through the
+    -- registered iterator. No registry callback captures its own weak key.
+    for k,v in Iteration.rawPairs(source)do out[k]=v end
+    for _,key in ipairs(fields)do
+      local v=source[key]
+      if key=='flags'or key=='vars'then v=Iteration.snapshot(v)
+      elseif key=='playTime'and v then
+        v={hours=v.hours,minutes=v.minutes,seconds=v.seconds,vblanks=v.vblanks}
+      end
+      out[key]=v
+    end
+    return out
+  end,record)
   records[view]=record
   return view,record
 end
 function M.record(view)return records[view]end
-function M.release(view)local record=records[view];if record then record.retired=true end end
+function M.release(view)
+  local record=records[view]
+  if record then record.retired=true;record.scripts:release()end
+end
 return M
