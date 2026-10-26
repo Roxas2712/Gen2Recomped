@@ -168,8 +168,8 @@ local function actions()
       {id='options',label='All game settings',note='Picture · Sound · Controls · Mod options'}}
   end
   local rows={{id='save',label='Save game progress'},
-    {id='suspend',label='Save portable suspend · Beta',note='Qualified Gen 1–2 sessions · No loaded mods · Includes the running battle'},
-    {id='suspendCloud',label='Suspend & upload to cloud'},
+    {id='suspend',label='Save portable suspend · Beta',note='Qualified Gen 1–3 sessions · No loaded mods · Includes the running battle'},
+    {id='suspendCloud',label='Suspend & upload to cloud',note='Sign in on another device, restore cloud saves, then Continue · Same engine build and imported game data required'},
     {id='export',label='Export battery .sav'},{id='cloud',label='Save & upload to cloud'},
     {id='library',label='Choose another game'}}
   if O.exportPath then rows[#rows+1]={id='folder',label='Open exports'} end

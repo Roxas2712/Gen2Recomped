@@ -190,7 +190,11 @@ function C.loadState(kind)
     local other = kind and kind ~= "folder" and C.loadState("folder")
     if other and other.device then st.device = other.device
     else
-      local r = love and love.math and love.math.random or math.random
+      -- A first cloud upload can happen immediately after a battle suspend.
+      -- Device bookkeeping must not consume that battle's next random rolls.
+      local generator = love and love.math and love.math.newRandomGenerator
+        and love.math.newRandomGenerator()
+      local r = generator and function(a, b) return generator:random(a, b) end or math.random
       st.device = ("%04x%04x"):format(r(0, 0xFFFF), r(0, 0xFFFF))
     end
   end
