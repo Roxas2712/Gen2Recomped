@@ -36,29 +36,66 @@ local function cap()
 end
 IdleStream.cap = cap
 
--- services that have something queued; the stream's own registry
+-- the Gen 3 stream, looked up and never loaded
 local function stream()
   return package.loaded["src.core.game3.asset_stream"]
 end
 
+-- G9: ANY OTHER SERVICE WITH WORK TO DO AHEAD OF TIME registers here --
+-- a Gen 4 ground building the chunk meshes just outside the view, say.
+-- A service is { busy = function() -> bool, step = function(seconds) }.
+-- Weakly held, so a map renderer that is dropped takes its service with
+-- it and nobody has to remember to unregister.
+local services = setmetatable({}, { __mode = "k" })
+
+function IdleStream.register(service)
+  if type(service) == "table" and service.busy and service.step then
+    services[service] = true
+  end
+  return service
+end
+
+function IdleStream.unregister(service)
+  services[service] = nil
+end
+
 function IdleStream.busy()
   local S = stream()
-  return S ~= nil and S.busy ~= nil and S.busy() or false
+  if S ~= nil and S.busy ~= nil and S.busy() then return true end
+  for service in pairs(services) do
+    if service.busy() then return true end
+  end
+  return false
 end
 
 -- Spend up to `seconds` of idle time on queued builds.  Returns the slice
 -- actually offered (0 when nothing was queued or the slice was too small).
 function IdleStream.run(timer, deadline)
-  local S = stream()
-  if not S or not S.busy or not S.busy() then return 0 end
   local limit = cap()
   if limit <= 0 then return 0 end
   local now = timer.getTime()
   local slice = deadline - now - IdleStream.MARGIN_SECONDS
   if slice > limit then slice = limit end
   if slice < IdleStream.MIN_SECONDS then return 0 end
-  S.update(slice)
-  return slice
+  -- The tier cap bounds the entire pump, including every registered service.
+  -- Reusing `limit` for each service would grant several full caps per frame.
+  local workDeadline = now + slice
+  local S = stream()
+  local offered = 0
+  if S and S.busy and S.busy() then
+    S.update(slice)
+    offered = slice
+  end
+  -- the registered services share what is left, each told the time it has
+  for service in pairs(services) do
+    local left = workDeadline - timer.getTime()
+    if left < IdleStream.MIN_SECONDS then break end
+    if service.busy() then
+      service.step(left)
+      offered = offered + left
+    end
+  end
+  return offered
 end
 
 -- the pacer's idle hook: the GC budget first (it is tiny and bounded),
