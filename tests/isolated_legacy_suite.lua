@@ -10,4 +10,8 @@ game.stack=require("src.core.StateStack");game.stack:init()
 require("src.render.Font").load(data)
 require("src.battle.TypeChart").load(data)
 assert(arg[1] and arg[1]:match("^tests/[%w_./-]+%.lua$"),"test path required")
-dofile(arg[1])
+local suite = arg[1]
+-- The suite path belongs to this launcher, not to the child suite's argv.
+for i = 1, #arg do arg[i] = arg[i + 1] end
+arg[0] = suite
+dofile(suite)

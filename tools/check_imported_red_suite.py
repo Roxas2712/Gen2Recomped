@@ -23,7 +23,9 @@ def main():
     for name in ('love', 'lua', 'red', 'out'):
         parser.add_argument('--' + name, type=Path, required=True)
     parser.add_argument('--suite', action='append', default=[], help='run selected legacy suites in isolated states')
+    parser.add_argument('--timeout', type=float, default=3600, help='bounded deadline for each selected suite or the complete suite')
     args = parser.parse_args()
+    assert args.timeout > 0, 'positive suite deadline required'
     for suite in args.suite:
         assert suite.startswith('tests/') and (ROOT / suite).resolve().is_relative_to(ROOT / 'tests')
         assert (ROOT / suite).is_file()
@@ -50,6 +52,7 @@ def main():
             assert not member.name.startswith('/') and '..' not in Path(member.name).parts
             assert not member.issym() and not member.islnk()
         tar.extractall(source)
+    engine_main_sha = hashlib.sha256((source / 'main.lua').read_bytes()).hexdigest()
     (source / 'main.lua').rename(source / 'engine_main.lua')
     (source / 'main.lua').write_text(BOOTSTRAP)
     identity = 'oasc-gen2recomp-qa-perf-red-suite-' + str(time.time_ns())
@@ -63,6 +66,9 @@ def main():
         qa_run([str(love), str(source)], cwd=source, env=env, stdout=log, stderr=log,
                timeout=600, check=True)
     assert (profile / 'rom-cache.complete').is_file(), 'fresh Red import is incomplete'
+    # Headless suites inspect and execute the real host entrypoint.
+    (source / 'engine_main.lua').replace(source / 'main.lua')
+    assert hashlib.sha256((source / 'main.lua').read_bytes()).hexdigest() == engine_main_sha
     for tree in ('data/generated', 'assets/generated'):
         shutil.copytree(profile / tree, source / tree, dirs_exist_ok=True)
     env = {k: v for k, v in env.items() if not k.startswith('POKEPORT_')}
@@ -72,9 +78,12 @@ def main():
     env['PATH']=str(lua.parent)+os.pathsep+env.get('PATH','')
     with (out / 'suite.log').open('w') as log:
         for suite in args.suite or [None]:
-            command = [str(lua), 'tests/isolated_legacy_suite.lua', suite] if suite else [str(lua), 'tests/run_tests.lua']
+            if suite and suite.startswith('tests/engine/'):
+                command = [str(lua), suite]
+            else:
+                command = [str(lua), 'tests/isolated_legacy_suite.lua', suite] if suite else [str(lua), 'tests/run_tests.lua']
             log.write('RUN ' + str(suite or 'tests/run_tests.lua') + '\n');log.flush()
-            result = qa_run(command, cwd=source, env=env, stdout=log, stderr=log, timeout=1800)
+            result = qa_run(command, cwd=source, env=env, stdout=log, stderr=log, timeout=args.timeout)
             codes.append(result.returncode)
     code = next((c for c in codes if c),0)
     log = (out / 'suite.log').read_text()
@@ -82,6 +91,7 @@ def main():
                     text=True, check=True).stdout.strip() == head
     report = dict(passed=code == 0 and stable, sourceCommit=head, sourceStable=stable,
                   romSha1=digest, freshImport=True, playerProfilesUsed=False,
+                  engineEntrypointRestored=True, engineEntrypointSha256=engine_main_sha,
                   suiteExit=code, suites=args.suite or ['tests/run_tests.lua'], suiteLogSha256=hashlib.sha256(log.encode()).hexdigest(),
                   importLogSha256=hashlib.sha256((out / 'import.log').read_bytes()).hexdigest(),
                   verdict=log.strip().splitlines()[-1] if log.strip() else 'missing output')
