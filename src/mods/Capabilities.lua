@@ -31,7 +31,7 @@ add("hooks", "12345", [[
 -- does not dispatch battle.overlay, unlike BattleState/Gen3Battle/WideBattle.
 add("hooks", "123", "render.viewport render.window battle.overlay ui.naming.grid ui.party.submenu ui.start_menu.items")
 add("hooks", "12", "ui.pc.items")
-add("hooks", "1", "battle.style catch.nickname")
+add("hooks", "1", "battle.style catch.nickname catch.party_full")
 add("hooks", "12345", "battle.status_hud_visible")
 add("hooks", "123", "pokemon.level_visible ui.party.grid_navigation")
 add("hooks", "123", "world.follower.spawn")

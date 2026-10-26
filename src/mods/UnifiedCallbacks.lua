@@ -20,7 +20,7 @@ C.hooks = names([[
  shiny.roll gender.roll
  held_item.trigger battle.menu_auxiliary battle.move_grid_navigation ui.party.grid_navigation
  battle.field_residual battle.caught_marker_visible battle.charge_required battle.accuracy battle.bottom_ui_visible battle.catch_exp battle.crit battle.damage battle.enemy_action battle.exp_award
- battle.low_health_alarm battle.overlay battle.run battle.style battle.status_hud_visible battle.turn_order catch.nickname catch.rate core.logic_speed core.quit_to_launcher core.update
+ battle.low_health_alarm battle.overlay battle.run battle.style battle.status_hud_visible battle.turn_order catch.nickname catch.party_full catch.rate core.logic_speed core.quit_to_launcher core.update
  encounter.table encounter.fishing encounter.roll encounter.species evolution.check exp.gain fieldmove.eligibility
  input.pointer input.key input.gamepad input.wheel input.step intro.oak_speech.build item.use link.fingerprint map.palette movement.collision movement.speed
  music.select music.volume player.sprite pokemon.icon pokemon.level_visible pokemon.sprite render.compose render.hud
