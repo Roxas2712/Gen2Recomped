@@ -14,6 +14,8 @@ local Performance = require("src.core.Performance")
 local Sound = {}
 
 local cache = {}
+local effectUses = setmetatable({}, { __mode = "k" })
+local effectCapture
 -- Speculative sources share this cache, but remain revocable until first use.
 -- Public definitions and Source objects never acquire private cache fields.
 local warmed, pending = {}, {}
@@ -394,6 +396,9 @@ end
 
 local function playPath(data, key, def, pitch, tempo)
   key = tostring(key)
+  if effectCapture and not effectCapture.source then
+    key = key .. "@borrow:" .. effectCapture.owner
+  end
   if not love.audio or not def then
     return nil
   end
@@ -439,6 +444,9 @@ local function playPath(data, key, def, pitch, tempo)
   if not restart(src) then
     return nil
   end
+  local use = { key = key, player = player }
+  effectUses[src] = use
+  if effectCapture and not effectCapture.source then effectCapture.source, effectCapture.use = src, use end
   if player ~= nil then
     nativePlayers[player] =
       { src = src, id = nativeId, key = key, name = baseKey:match("^([^@]+)") or baseKey }
@@ -478,6 +486,32 @@ function Sound.sequenceKey(data, name)
     end
   end
   return key, found
+end
+
+-- Borrow the first playback atomically. Events may start another effect
+-- before playSe returns; a replaced playback cannot transfer its new owner
+-- to the earlier caller. Borrowed cache variants preserve native voice gain.
+function Sound.borrowEffect(owner, play, ...)
+  local previous = effectCapture
+  local capture = { owner = tostring(owner) }
+  effectCapture = capture
+  local ok, src = pcall(play, ...)
+  effectCapture = previous
+  if not ok then error(src, 0) end
+  local use = capture.use
+  if not use or capture.source ~= src then return src, nil end
+  local function valid()
+    local entry = use.player ~= nil and nativePlayers[use.player]
+    return not sessionSuspended and effectUses[src] == use and cache[use.key] == src
+      and (use.player == nil or entry and entry.src == src and entry.key == use.key)
+  end
+  return src, { valid = valid, level = function()return volumeFor(use.key)end, stop = function()
+    if not valid() then return false end
+    effectUses[src] = nil
+    safeAudio("Source:stop", src.stop, src)
+    forgetNative(src)
+    return true
+  end }
 end
 
 function Sound.playNamedEffect(data, name)

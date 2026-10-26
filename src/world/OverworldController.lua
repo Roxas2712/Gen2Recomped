@@ -9158,6 +9158,7 @@ function OverworldState:weatherName(value)
     return require("src.import.Gen4Weather").nameFor(value)
   end
   local names = (Game.data.constants or {}).gen3WeatherNames
+    or require("src.core.Gen3WeatherIds").names
   local n = tonumber(value)
   return (names and n and names[n]) or nil
 end

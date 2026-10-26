@@ -28,8 +28,8 @@ Ninety boot checks plus 261 player and 642 session checks pass on the refreshed
 fork main (`e5687c08`).
 
 The source START adapter opens/closes the real GBA menu and enters its native
-input/draw phases once. Flow cancellation preserves unrelated overlays. Custom
-row callbacks and content-template presentation need additional integration.
+input/draw phases once. Flow cancellation preserves unrelated overlays. Native row handlers are retained. Source content-template presentation and
+callback lifetime attribution need additional integration.
 
 Focused checks across FireRed, LeafGreen, Emerald, Ruby and Sapphire pass:
 385 fade, 180 warp, 105 weather, 115 artifact-reader and 90 START-menu checks.
@@ -48,3 +48,26 @@ battle presentation and remaining UI contracts require further qualification.
 
 QA uses disposable profiles, preserved frozen inputs and an 8 GiB reserve.
 Player profiles, private runtime files and game assets are not included.
+
+Native startup now keeps checked GBA header aliases on one physical definition.
+A fresh ROM-backed FireRed run reproduced and resolved the former ambiguous
+slot: the native bedroom now resolves as `FR_PLAYERS_HOUSE_2F` without weakening
+the duplicate-slot rejection. Startup checks cover all five editions; the native
+name lifecycle and retained Gen2 world/save-state regressions also pass.
+
+Read-only warp forecasts reuse the native landing rules without invoking the
+committing warp hook. Weather observations share the importer's enum and the
+native cycle stage; editions without extracted cycle records use that same
+native enum. Real preview admission and native Petalburg door-slide observations
+retain their native clocks. Focused checks: 155 field observations, 70 previews,
+75 door observations, 49 startup aliases and 486 collision regressions. General
+cartridge door sheets and source-started door tasks remain unimplemented.
+
+Source SE playback borrows an atomically identified native voice with its own
+cache variant. Gain changes and owner cleanup cannot stop or attenuate another
+playback; replay, unload and session replacement retire the borrow. 145 checks
+cover these boundaries. Source updates do not advance a second audio clock.
+
+The latest real Metal field capture shows a correctly oriented native fallback;
+the paper renderer still encounters additional contracts during scene creation.
+No full 3D, battle, UI or five-edition gameplay acceptance is claimed.
