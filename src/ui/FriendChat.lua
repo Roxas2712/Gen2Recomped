@@ -5,7 +5,7 @@ local Composer=require('src.ui.TextComposer')
 local serial=0
 local function uuid()
  serial=serial+1
- local b=love.data.encode('string','hex',love.data.hash('sha256',tostring(love.timer.getTime())..':'..serial..':'..tostring(Auth.accountId())..':'..love.math.random()))
+ local b=love.data.encode('string','hex',love.data.hash('sha256',tostring(love.timer.getTime())..':'..serial..':'..tostring(Auth.accountId())..':'..tostring({})..':'..os.time()))
  return b:sub(1,8)..'-'..b:sub(9,12)..'-4'..b:sub(14,16)..'-a'..b:sub(18,20)..'-'..b:sub(21,32)
 end
 function C.clear(O)

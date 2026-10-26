@@ -26,6 +26,7 @@ local function mods(game) return game.modStatus and game.modStatus.loaded or {} 
 local function permitted(game)
  if game.linkSession or game.retroArena or game.linkNet and not game.linkNet.closed then return nil,'Online sessions cannot be suspended.' end
  if #mods(game)>0 then return nil,'Suspend is not qualified for loaded mods yet. Normal saves remain available.' end
+ if require('src.core.GameVersion').generation()>2 then return nil,'Portable replay suspend is currently qualified for Gen 1–2 only.' end
  if not require('src.core.CheckpointWorld').available(game) then return nil,'Suspend reconstruction is not qualified for this edition yet.' end
  if not (love and love.math and love.math.getRandomState and love.math.setRandomState and love.data) then return nil,'Portable suspend is unavailable in this runtime.' end
  return true
@@ -79,20 +80,26 @@ local function progress(game)
  local out={};for k,v in pairs(game.save) do if k~='options' then out[k]=v end end
  return copy(out)
 end
-local function projection(value,seen,depth)
+local function projection(value,seen,depth,path)
+ path=path or '$'
  local kind=type(value)
+ if kind=='number'and(value~=value or value==math.huge or value==-math.huge)then return {number=tostring(value)}end
  if kind=='string' or kind=='boolean' or kind=='number' then return value end
  if kind~='table' or depth>12 then return nil end
  if seen[value] then return {reference=seen[value]} end
- local out={};seen.n=(seen.n or 0)+1;seen[value]=seen.n
+ local out={};seen[value]=path
  -- Numeric and named keys only. GPU handles, function upvalues and object
  -- addresses never become portable identities.
  local keys={};for k in pairs(value) do if type(k)=='string' or type(k)=='number' then keys[#keys+1]=k end end
  table.sort(keys,function(a,b)if type(a)~=type(b) then return type(a)<type(b) end;return a<b end)
- for _,k in ipairs(keys) do out[k]=projection(value[k],seen,depth+1) end
+ for _,k in ipairs(keys) do
+  if k~='game'and k~='data'and k~='def'and k~='ruleset'then out[k]=projection(value[k],seen,depth+1,path..'['..type(k)..':'..tostring(k)..']')end
+ end
  return out
 end
-local PRESENTATION={game=true,data=true,def=true,ruleset=true,battle=true,shownHp=true,animPlayer=true,gen3Anim=true,gen4Anim=true,
+-- Native completion owners contain live world/controller references; the
+-- replay rebuilds those owners instead of treating their object graph as data.
+local PRESENTATION={_checkpointContinuation=true,game=true,data=true,def=true,ruleset=true,battle=true,shownHp=true,animPlayer=true,gen3Anim=true,gen4Anim=true,
  sprite=true,picAnim=true,monAnim=true,bgCanvas=true,waveCanvas=true,stadium=true,waitingSound=true,gen4CrySource=true}
 function J.witness(game)
  local states={}
@@ -190,7 +197,7 @@ function J.step(game,dt,run)
  t.ticks=t.ticks+1
  if not t.anchor or t.ticks>=60 then
   local anchor=C.capture(game)
-  if anchor then
+  if anchor and anchor.kind=='overworld' then
    t.anchor=anchor;t.memory=progress(game);t.options=copy(game.save.options or {});t.steps={};t.events=0;t.ticks=0;t.reason=nil
   end
  end

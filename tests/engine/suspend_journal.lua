@@ -54,7 +54,6 @@ local encoded=J.encode(capsule)
 T.check(capsule.witness.states[#capsule.witness.states].kind=='battle','suspend retains an in-battle target rather than normal progress only')
 local originalSave=Game.save
 Stack.states={{screenId='TitleState'}}
-Save.selectedPlaythroughId=function()return 'native-suspend-test'end
 local ok,problem=J.restore(Game,assert(S.decode(encoded)))
 assert(ok,'native continuation replay restores from title: '..tostring(problem))
 T.check(Game.save~=originalSave and Stack:top().isBattleState,'restore reconstructs new native objects')
@@ -67,5 +66,11 @@ local changed=assert(S.decode(encoded));changed.build='other-build'
 T.check(not J.restore(Game,changed),'different engine code is refused before touching the game')
 local wrong=assert(S.decode(encoded));wrong.content='other-world-data'
 T.check(not J.restore(Game,wrong),'different world scripts are refused as well as battle tables')
+local prior=Game.save;local priorBytes=S.encode(prior);local priorRng=love.math.getRandomState()
+Stack.states={{screenId='TitleState'}}
+local corrupt=assert(S.decode(encoded));corrupt.witness.save.money=-1234
+T.check(not J.restore(Game,corrupt),'a replay whose final state differs is rejected')
+T.check(Game.save==prior and S.encode(Game.save)==priorBytes and Stack:top().screenId=='TitleState','failed replay rolls back the original save and screen owners')
+T.eq(love.math.getRandomState(),priorRng,'failed replay preserves the original RNG')
 Game.linkSession=true;T.check(not J.capture(Game),'online sessions cannot be rewound');Game.linkSession=nil
 T.finish('Native suspend journal')

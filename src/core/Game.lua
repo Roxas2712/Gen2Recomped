@@ -325,8 +325,10 @@ function Game:continueGame(loaded, recovered)
     local value,why=store.read(loaded.version,id)
     local slot=SaveData.activeSlot(loaded.version)
     if value and store.matchesNormal(value,loaded.version,slot) then
+      local titleSave=self.save;self.save=loaded
       local resumed,problem=require('src.core.SuspendJournal').restore(self,value)
       if resumed then return true end
+      self.save=titleSave
       self:restoreSave(loaded,recovered)
       local overlay=require('src.ui.RetroOverlay');overlay.open(self)
       overlay.notice='Suspend could not be restored: '..tostring(problem)..' Your normal save was loaded.'
