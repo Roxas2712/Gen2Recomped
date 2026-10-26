@@ -87,6 +87,10 @@ function M.new(api)
     if ts and ts.image and not ts._retired then return true end
     return resolve(name)~=nil
   end
+  function runtime:observePairs()
+    if not session() then return {} end
+    return api._pairs
+  end
   function runtime:pending()return jobs end
   function runtime:prefetch(name,priority)
     local canonical,pair,key=resolve(name);if not canonical then return false,pair end
