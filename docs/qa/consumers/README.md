@@ -142,3 +142,22 @@ are retained; rendered-pixel equality and full playthroughs are not asserted.
 The public formatted driver has identical stripped LuaJIT bytecode to the
 executed original. See the [receipt](../catch-nickname.json) for refs, hashes,
 shared API coverage, retained setup failures and negative controls.
+
+## Party-full catch custody
+
+`catch-party-full-native.lua` runs the unchanged public
+`examples/portable_catch_party_full` consumer through prepared Red wild battles
+on either engine with a regular ROM import. It opens the actual bag, throws
+one Master Ball per case and drains the native catch/transfer/naming queue.
+Five cases cover true/zero custody, PC fallback with native keyboard input,
+a party with room, and unsubscription. `CATCH_PARTY_FULL_OUT` names the existing
+capture directory. A fresh QA identity, disabled legacy migration and a
+non-portable test process are required; it creates only an in-memory save.
+The engine-specific bag/naming presentation is retained. See
+`../catch-party-full.json` for immutable refs and hashes.
+
+The ROM-free public contract `tests/catch_party_full/contract.lua` takes the
+example/fixture root, game version, API number and callback format. Run it
+from each engine checkout so its own modkit, loader, fixtures and native battle
+implementation are used. API 1/2 native work on the standalone feature;
+API 2 unified/API 3 unified use the earlier shared API composition.

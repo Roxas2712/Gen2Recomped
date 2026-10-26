@@ -125,3 +125,35 @@ capture/log hashes, retained failed fixtures and exact limitations.
 See the [compact receipt](qa/unchanged-mod-consumers.json) and
 [reproducible consumer probes](qa/consumers/README.md). The earlier full engine
 and shared API qualification retains its original source/test refs and scope.
+
+
+## Party-full capture custody
+
+[PR #326](https://github.com/UNDERdecoded/Gen2Recomped/pull/326) adds the missing Gen1 `catch.party_full`
+producer. A mod can take responsibility for a catch when the party is full,
+without silently depositing it in a PC. Lua truthiness, native false/nil
+fallback, dex ownership and the `pokemon.caught` destination match the
+reference. The combined runtime also advertises the Gen1 capability and
+passes the payload through the shared callback/API-3 layer. Other generations
+retain their native storage flow.
+
+The standalone regression passes **410** checks;
+the combined regression passes **419**. There
+are 36 shared contract workers and **486 complete paired typed rows** across
+Red/Blue/Yellow, API 1/2 native and the composed API 2/3 unified modes. On the
+original upstream base, 84 new assertions fail; its 11 existing failed suites
+have exactly the same 29 old failure lines. Two mutation controls reject a
+bypassed call site (84 assertions) and Boolean-only claiming (24 assertions).
+
+Both engines also pass the identical native Red input driver and unchanged
+consumer: true/zero mod custody, PC fallback with native nickname `A`, a party
+with room and hook unsubscription. Each spends exactly one ball, preserves the
+original caught mon and returns to the world. Twelve captures were inspected;
+complete typed state results agree. These are functional scene checks, not
+rendered-pixel, full-mod/playthrough, controlled-FPS or hardware-audio acceptance.
+
+The qualified runtime passes **300/300 engine suites**, **4/4 SDK suites** and
+B30. Inputs remain unchanged, normal profiles are isolated and legacy migration
+is disabled. See the [receipt](qa/catch-party-full.json) and public consumer
+probes for exact runtime/test refs, hashes and limitations. The mod is
+responsible for retaining a claimed catch; the engine does not rescue it later.
