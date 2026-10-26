@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check native checkpoint RNG continuation inside an isolated actual LÖVE host."""
 import argparse
+import atexit
 import hashlib
 import json
 import os
@@ -17,7 +18,11 @@ def main():
     args=parser.parse_args()
     root=Path(__file__).resolve().parents[1]
     sys.path.insert(0,str(args.qa_tools or root/'tools'))
-    from qa_storage import qa_source,qa_cache,qa_copy,qa_profile,qa_run
+    from qa_storage import Storage
+    storage=Storage(root)
+    atexit.register(storage.close)
+    qa_source,qa_cache,qa_copy=storage.source,storage.cache,storage.copy
+    qa_profile,qa_run=storage.profile,storage.run
     binary=args.love.resolve(strict=True)
     for path in (root,binary):qa_source(path)
     sources={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in (root/'src').rglob('*.lua')}
