@@ -90,7 +90,9 @@ local function choose(g,label)
    end
   end
  else
-  for i,row in ipairs(menu.items or{})do if row.label==label then menu.index=i;menu:choose();return end end
+  for i,row in ipairs(menu.items or{})do if row.label==label then
+    menu.index=i;local original=g.input.wasPressed;g.input.wasPressed=function(_,key)return key=='a'end
+    g.stack:update(0);g.input.wasPressed=original;return end end
  end
  error('missing menu choice '..label)
 end
