@@ -34,10 +34,11 @@ def profile_scope(path, home):
     return profile if profile.resolve()==profile else None
 
 
-def profiles(home):
+def profiles(home, only=None):
     base=Path(home)/'Library/Application Support/LOVE'
     if not base.is_dir() or base.resolve()!=base:return
-    for outer in base.iterdir():
+    for outer in base.iterdir() if only is None else sorted(only):
+        if outer.parent!=base:continue
         if not outer.is_dir() or outer.is_symlink() or not test_profile(outer.name):continue
         yield outer,outer
         # Known isolated-home QA hosts put their actual profile outside LOVE.
@@ -110,16 +111,17 @@ def cache_rows(profile):
 
 
 def sweep(storage, *, max_age=86400, limit=2*1024**3, min_age=3600,
-          live=None, clock=time.time, wait=False):
+          live=None, clock=time.time, wait=False, only=None):
     """Archive exact cache bytes, then remove idle old data; models/saves stay put."""
     live=live or legacy.LiveUse();home=storage.home
     result=dict(logical_bytes=0,files=0,profiles=0,retained_busy=0)
     with ExitStack() as locks:
-        collector=locks.enter_context((storage.state/'collection.lock').open('a+'))
-        try:fcntl.flock(collector,fcntl.LOCK_EX if wait else fcntl.LOCK_EX|fcntl.LOCK_NB)
-        except BlockingIOError:return result
+        if only is None:
+            collector=locks.enter_context((storage.state/'collection.lock').open('a+'))
+            try:fcntl.flock(collector,fcntl.LOCK_EX if wait else fcntl.LOCK_EX|fcntl.LOCK_NB)
+            except BlockingIOError:return result
         pinned=aliases(storage);inventory=[]
-        for outer,profile in profiles(home):
+        for outer,profile in profiles(home,only=only):
             try:
                 if kept(profile,outer) or any(p.is_relative_to(outer) or outer.is_relative_to(p) for p in pinned):continue
                 with ExitStack() as lease:
