@@ -32,6 +32,7 @@ function View:objPalette(name, battle)
   local index = slots[name] or tonumber(name)
   if index == 0 or index == 1 then
     local mon = battle and battle[index == 0 and 'enemy' or 'player']
+    mon = mon and (mon.mon or mon)
     if mon then
       return PaletteFX.monPal(self.gameData, mon.species, nil,
         require('src.pokemon.Pokemon').isShiny(mon)) or PaletteFX.GRAYS

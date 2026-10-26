@@ -92,6 +92,15 @@ do
   T.eq(s.animPlayer.opts.ballPalette,'TEST_QUEUED_BALL','native bytecode owns the selected thrown palette')
   T.eq(s.animPlayer.opts.ball,'ITEM_FIX_BALL','native inventory item remains unchanged')
   T.eq(s.animPlayer.battle,s.battle,'renderer sees live native battle model')
+  local PaletteFX=require('src.render.PaletteFX')
+  local nativePal=PaletteFX.monPal
+  local observed
+  PaletteFX.monPal=function(_,species)observed=species;return PaletteFX.GRAYS end
+  s.animView:objPalette('PAL_BATTLE_OB_ENEMY',s)
+  T.eq(observed,s.enemy.mon.species,'native battler record resolves its actual Pokemon palette')
+  s.animView:objPalette('PAL_BATTLE_OB_PLAYER',{player=s.player.mon})
+  T.eq(observed,s.player.mon.species,'direct native Pokemon model resolves the same palette owner')
+  PaletteFX.monPal=nativePal
   s.animPlayer:update()
   local layer=s.drawAnimLayer;local layers=0
   s.drawAnimLayer=function(self,...)layers=layers+1;return layer(self,...)end
