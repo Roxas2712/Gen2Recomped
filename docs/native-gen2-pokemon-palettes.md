@@ -17,6 +17,9 @@ palette while preserving texture alpha and drawing tint. `use`, `with`,
 `available`, `resolve`, `color` and `clear` are provided. Keyed drawing makes
 source shade zero transparent. Normal drawing resolves native `PaletteFX`
 display/register state; raw drawing bypasses that resolution.
+The public `mode` read follows that native resolution, so external evolution
+presenters can preserve already coloured art instead of passing it through a
+grayscale-index shader. It does not create another display option.
 
 Scoped drawing restores both the previous shader object and managed palette
 uniforms, including nested calls, callback failures and partial upload errors.
