@@ -362,6 +362,13 @@ class Storage:
     def source(self, path):
         original = Path(path).expanduser()
         resolved = original.resolve()
+        from qa_release_storage import family as release_family
+        if resolved.parent.name=='dist' and release_family(resolved):
+            self._take('release',resolved,False)
+        for parent in (resolved,*resolved.parents):
+            if parent.name in {'ios-release','release-unpacked'} and parent.parent.name=='.local':
+                self._take('release',parent,False)
+                break
         # Import roots often contain one symlink per edition, rather than
         # being a symlink to a single QA profile themselves.
         candidates = [resolved] + [(original / edition).resolve()
