@@ -306,6 +306,10 @@ function Manifest.validate(raw, path)
     end
   end
 
+  local forceEnv=raw.force_enable_env
+  assert(forceEnv==nil or type(forceEnv)=='string' and forceEnv~='',
+    'force_enable_env must be a nonempty string')
+
   local logUrl=raw.log_url
   if logUrl~=nil then
     local bad=type(logUrl)~="string" or #logUrl>8192 or logUrl:find("[%z%c%s]")
@@ -438,6 +442,7 @@ function Manifest.validate(raw, path)
     permissions = permissions,
     permissionSet = permissionSet,
     log_url = logUrl,
+    force_enable_env = forceEnv,
     script_format = scriptFormat,
     options_schema = optionalFile(raw.options_schema, "options_schema"),
     -- Base files the mod needs but cannot ship -- a Stadium 2 cartridge, a

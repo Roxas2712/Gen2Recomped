@@ -8,11 +8,12 @@ end
 function M.fresh()
   local data=require('tests.modkit.fixtures').fresh()
   local seed=data.pokemon.FIXMON_A
-  for index,id in ipairs({'MEW','VENUSAUR','CHARIZARD','BLASTOISE','PIDGEY','RATTATA','SPEAROW','CHARMANDER'}) do
+  for index,id in ipairs({'MEW','VENUSAUR','CHARIZARD','BLASTOISE','PIDGEY','RATTATA','SPEAROW','CHARMANDER','PIKACHU'}) do
     local mon=copy(seed);mon.id=id;mon.name=id;mon.index=index;mon.dex=index
     data.pokemon[id]=mon
   end
   data.pokemon.MEW.dex=151
+  data.pokemon.PIKACHU.dex=25
   for _,id in ipairs({'TACKLE','GROWL','QUICK_ATTACK','CUT','SURF'}) do
     data.moves[id]=copy(data.moves.FIX_TACKLE);data.moves[id].id=id
   end

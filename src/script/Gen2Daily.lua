@@ -120,6 +120,9 @@ function Gen2Daily.poll(save, now)
   if not save then return end
   Gen2Daily.seedInitialObjectFlags(save)
   local today = Clock.dateKey(save, now)
+  if save.g2PokerusDay==nil or save.g2DailyDay~=today then
+    require('src.pokemon.Gen2Pokerus').poll(save,now)
+  end
   if save.g2DailyDay == today then return end
   save.g2DailyDay = today
   Gen2Daily.onNewDay(save)

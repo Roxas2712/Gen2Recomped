@@ -8,7 +8,25 @@ if loadfile('src/world/OptionalFollower.lua') then
 else
  T.raises(function()require('src.world.gen2.Follower')end,'src.world.OptionalFollower','alias identifies an unavailable native follower provider')
 end
+local sourcePlayer=require('src.core.game3.player')
+local fallbackPlayer=require('src.compat.game3.Player')
+if loadfile('src/core/game3/player.lua')then
+ T.neq(sourcePlayer,fallbackPlayer,'concrete live player provider takes precedence over the field fallback')
+else
+ T.eq(sourcePlayer,fallbackPlayer,'host without a concrete player provider receives the live field fallback')
+end
 local names=require('src.mods.Gen1Compat')
+for _,pair in ipairs({{'src.world.game3.Follower','src.compat.game3.Follower'},
+ {'src.core.game3.pokemon','src.compat.game3.Pokemon'},
+ {'src.core.gen2.Unown','src.compat.gen2.Unown'}})do
+ local source,adapter=require(pair[1]),require(pair[2])
+ if loadfile(pair[1]:gsub('%.','/')..'.lua')then
+  T.neq(source,adapter,'concrete provider outranks the fallback '..pair[1])
+ else
+  T.eq(source,adapter,'native adapter preserves require identity '..pair[1])
+ end
+end
+
 for name in pairs(names.UNAVAILABLE)do
  if names.hasProvider(name)then
   local ok,module=pcall(require,name)
@@ -30,10 +48,12 @@ end
 
 local providers=package.loaders or package.searchers
 local provided={marker='native-late-provider'}
-local late=function(name)if name=='src.import.pmd.Sprite'then return function()return provided end end end
+local lateName='src.compat.fixture.LateProvider'
+names.UNAVAILABLE[lateName]={'contract_fixture'}
+local late=function(name)if name==lateName then return function()return provided end end end
 providers[#providers+1]=late
-T.eq(require('src.import.pmd.Sprite'),provided,'late concrete provider outranks the missing-module descriptor')
-T.check(names.hasProvider('src.import.pmd.Sprite'),'loaded provider is recognized')
-T.eq(names.unavailable('src.import.pmd.Sprite'),nil,'loaded provider has no missing-module diagnostic')
-table.remove(providers);package.loaded['src.import.pmd.Sprite']=nil
+T.eq(require(lateName),provided,'late concrete provider outranks the missing-module descriptor')
+T.check(names.hasProvider(lateName),'loaded provider is recognized')
+T.eq(names.unavailable(lateName),nil,'loaded provider has no missing-module diagnostic')
+table.remove(providers);package.loaded[lateName]=nil;names.UNAVAILABLE[lateName]=nil
 T.finish()

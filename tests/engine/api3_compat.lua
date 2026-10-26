@@ -131,8 +131,11 @@ do
   T.check(pcall(function()
     m.events:on("checkpoint.restored", function() end)
   end), "API-2 accepts the additive native checkpoint notification")
-  T.raises(function()
+  T.check(pcall(function()
     m.events:on("intro.boot.copyright", function() end)
+  end), "API-2 accepts the additive native boot notification")
+  T.raises(function()
+    m.events:on("link.battle_ended", function() end)
   end, "unknown unified callback", "other API-3-only callback recognition is unchanged")
 end
 -- Availability must be honest, and a probe cannot construct Game or attach a world.

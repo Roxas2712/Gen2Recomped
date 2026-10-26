@@ -32,6 +32,8 @@ add("hooks", "12345", [[
 add("hooks", "123", "render.viewport render.window battle.overlay ui.naming.grid ui.party.submenu ui.start_menu.items")
 add("hooks", "12", "ui.pc.items")
 add("hooks", "2", "phone.contact_list")
+add("hooks", "2", "breeding.compatibility catch.nickname catch.party_full battle.style battle.enemy_switch_or_item")
+add("hooks", "12345", "core.quit_to_launcher")
 add("hooks", "12345", "battle.status_hud_visible")
 add("hooks", "123", "pokemon.level_visible ui.party.grid_navigation")
 add("hooks", "123", "world.follower.spawn")
@@ -56,7 +58,8 @@ add("events", "12345", [[
   world.object_toggled world.stepped world.tick world.tod_changed world.trainer_engaged
 ]])
 add("events", "2345", "pokemon.egg_hatched")
-add("events", "2", "clock.day_changed mail.read mail.written radio.channel phone.call_received apricorn.converted unown.unlocked")
+add("events", "2", "clock.day_changed mail.read mail.written radio.channel phone.call_received apricorn.converted")
+add("events", "2", "breeding.egg_created egg.hatched happiness.changed pokerus.infected roamer.encountered roamer.moved unown.unlocked bug_contest.scored intro.boot.copyright intro.boot.gamefreak intro.boot.movie intro.boot.movie_ended intro.boot.title")
 add("events", "12", "checkpoint.restored")
 add("events", "12", [[
   intro.oak_speech.answered intro.oak_speech.finished intro.oak_speech.started
@@ -67,7 +70,7 @@ add("events", "3", "intro.birch_speech.started intro.birch_speech.finished")
 -- Data:applyDefaults selects BirchSpeech on Emerald, Gen3OakSpeechFRLG on
 -- FireRed, and no OakSpeech on Prism. DS imports select their own intros.
 local function nativeVersion(name, version)
-  if name == "unown.unlocked" then
+  if name == "unown.unlocked" or name == "happiness.changed" or name == "pokerus.infected" then
     return version == "gold" or version == "silver" or version == "crystal"
   end
   if name:match("^intro%.birch_speech%.") then return version == "emerald" end
