@@ -584,6 +584,14 @@ function TownMap:drawGen2()
     end
   end
 
+
+  if not self.nestSpecies then require('src.ui.FriendActivity').markers(self.game,function(info)
+    local loc=self.byMap[info.id]
+    if not loc then return end
+    if self.mode=='gen2' then if loc.region==self.region then return loc.px,loc.py end
+    elseif self.mode=='grid' then local x,y=markerXY(loc);return x+4,y+4 end
+  end,160,144) end
+
   -- Selection cursor: RED BOX around the selected city (blinks).
   local selected = self.locs[self.sel]
   if selected and selected.region == self.region and self.blink % 16 < 10 then
@@ -649,6 +657,14 @@ function TownMap:draw()
       love.graphics.rectangle("fill", x + 2, y + 2, 4, 4)
       love.graphics.setColor(1, 1, 1, 1)
     end
+
+  if not self.nestSpecies then require('src.ui.FriendActivity').markers(self.game,function(info)
+    local loc=self.byMap[info.id]
+    if not loc then return end
+    if self.mode=='gen2' then if loc.region==self.region then return loc.px,loc.py end
+    elseif self.mode=='grid' then local x,y=markerXY(loc);return x+4,y+4 end
+  end,160,144) end
+
     -- blinking cursor on the selected location.  markerXY is the 8x8 cell's
     -- top-left; the cursor asset is a 16x16 hollow frame centered on its own
     -- (8,8), so draw it -4,-4 to enclose the cell (engine/menus/town_map.asm
