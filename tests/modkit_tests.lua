@@ -313,8 +313,8 @@ console:exec("trace off")
 check(Runtime.wants("fix.anything") == false, "trace off restores wants()")
 
 -- typed input: keys become buffer text, return executes, backtick closes
-console:onKeyPressed("p")
-console:onKeyPressed("p")
+console:onTextInput("p")
+console:onTextInput("p")
 check(console.buffer == "pp", "letter keys append to the buffer")
 console:onKeyPressed("backspace")
 check(console.buffer == "p", "backspace edits the buffer")

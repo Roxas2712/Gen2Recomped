@@ -95,7 +95,10 @@ do
   -- simulate wrap: Up on first item → last
   game.input.wasPressed = function(_, b) return b == "up" end
   list:update(0)
-  check(list.index == 3, "wrap Up on first item lands on last")
+  check(list.index == 4, "wrap Up reaches the classic bag's CANCEL row")
+  game.input.wasPressed = function(_, b) return b == "down" end
+  list:update(0)
+  check(list.index == 1,"Down from the native CANCEL row wraps to the first item")
   unsub()
 end
 
