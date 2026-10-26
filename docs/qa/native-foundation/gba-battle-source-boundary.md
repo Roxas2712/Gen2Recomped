@@ -13,6 +13,16 @@ This is an incremental presentation and observation bridge over the existing
 - Native start notifications, update, UI pump, whole-screen drawing and the
   background pass have independent scopes. Repeated base calls consume each
   native body once. Calls outside an update scope cannot tick combat.
+- Every queued native update/draw rechecks the original admission after source
+  hooks, including the inner UI/background hooks. Save, dataset, loader, stack,
+  edition and imported catalogue replacement retire the old binding; restoring
+  an earlier pointer cannot revive that binding. Native method bodies execute
+  outside a source callback owner.
+- Explicit battle/UI captures suppress the repeated native screen draw within
+  the same renderer frame. Capturing never advances combat.
+- LuaJIT `pairs`/`next` expose typed battle fields, preserving nested typed
+  identity. Iterator registry values are weak, so an unused observation cannot
+  retain its own weak key through a closure.
 - Covered battles remain observable, but cannot update or pop their cover.
   Mod retirement invalidates its source views without cancelling native combat.
   Completed views keep detached observations and reject further native writes.

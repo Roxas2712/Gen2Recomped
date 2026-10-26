@@ -13,6 +13,19 @@ function love.load()
   local backend=assert(os.getenv('POKEPORT_GRAPHICS_BACKEND'))
   T.check(renderer:lower():find(backend,1,true)~=nil,'requested actual GPU backend')
   T.eq(love.filesystem.getIdentity(),os.getenv('POKEPORT_IDENTITY'),'owned QA profile')
+  -- Owned asymmetric art makes battler draws visible; no missing-image
+  -- fallback may stand in for either Pokemon picture in this test.
+  love.filesystem.createDirectory('tests/fixture_data/assets')
+  for side,name in ipairs{'back','front'}do
+    local pixels=love.image.newImageData(64,64)
+    pixels:mapPixel(function(x,y)
+      if x<7 or y<5 or x>56 or y>57 then return 0,0,0,0 end
+      if y<20 and x<37 then return 1,0,91/255,1 end
+      if x>40 and y>35 then return 0,1,125/255,1 end
+      return side==1 and .2 or .7,.3,side==1 and .9 or .1,1
+    end)
+    pixels:encode('png','tests/fixture_data/assets/fixmon_a_'..name..'.png');pixels:release()
+  end
   local readbacks,comparisons=0,0
   local function read(canvas)
     local data=g.readbackTexture and g.readbackTexture(canvas)or canvas:newImageData()
@@ -34,6 +47,7 @@ function love.load()
     b.showPlayerBack,b.showEnemyTrainer=false,false;b.frlgIntro=nil;b.introSlide=0
     local canvas=g.newCanvas(240,160,{format='rgba8',dpiscale=1,msaa=0})
     local baseline=frame(canvas,function()b:_drawNative()end)
+    T.check(baseline:find(string.char(255,0,91,255),1,true)~=nil,'asymmetric fixture pixels reach the native GPU frame')
     local sourceCalls,uiCalls,backgroundCalls=0,0,0
     Battle.draw=function(view,w,h)sourceCalls=sourceCalls+1;T.eq(w,240);T.eq(h,160);return baseDraw(view,w,h)end
     Ui.draw=function(w,h)uiCalls=uiCalls+1;return uiDraw(w,h)end
@@ -54,12 +68,26 @@ function love.load()
     local ok,why=pcall(b.draw,b);T.eq(ok,false);T.check(tostring(why):find('owned GPU callback failure',1,true)~=nil)
     T.eq(g.getCanvas(),bound);if depth then T.eq(g.getStackDepth(),depth)end
     Battle.draw,Ui.draw,Bg.draw=baseDraw,uiDraw,bgDraw
+    local rendererState=require('src.render.Renderer')
+    local captures=0
+    Bg.draw=function(...)captures=captures+1;return bgDraw(...)end
+    rendererState.frameSerial=(rendererState.frameSerial or 0)+1
+    same(frame(canvas,function()baseDraw(game);b:draw()end),baseline,'captured battle keeps native pixels '..edition)
+    T.eq(captures,1,'capture and screen share one native field draw')
+    rendererState.frameSerial=rendererState.frameSerial+1
+    same(frame(canvas,function()uiDraw();b:draw()end),baseline,'UI capture keeps native pixels '..edition)
+    T.eq(captures,2,'UI capture and screen share one native field draw')
+    rendererState.frameSerial=rendererState.frameSerial+1
+    same(frame(canvas,function()b:draw()end),baseline,'next frame draws the native battle again '..edition)
+    T.eq(captures,3,'capture suppression ends at the next renderer frame')
+    Bg.draw=bgDraw
     game.stack:pop();Battle.reset();canvas:release();f.close();require('src.core.Game3').release()
   end
   T.finish()
   local report={passed=true,checks=T.checks,readbacks=readbacks,comparisons=comparisons,
     backend=backend,renderer=renderer,version=version,vendor=vendor,device=device,
     playerProfilesUsed=false,gameplayProven=false,originalModLoaded=false,
+    syntheticBattlerArt=true,
     scope='Actual native BattleState and Gen3Battle draws over synthetic imported Pokemon; five GBA editions. Source/UI/background wrappers and GPU error restoration; no original-mod boot or gameplay claim.'}
   local file=assert(io.open(assert(os.getenv('BATTLE_SOURCE_REPORT')),'w'))
   file:write(require('src.link.Json').encode(report));file:close()

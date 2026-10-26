@@ -2,6 +2,7 @@
 -- Live, typed source observations over one admitted native battle. Views own
 -- their arrays; they never lend the native controller/save under source names.
 local Ids=require('src.compat.gen1.BattleIds')
+local Iteration=require('src.compat.gen1.TableIteration')
 local M={}
 local statNames={attack='attack',defense='defense',speed='speed',spAtk='spatk',spDef='spdef',hp='hp'}
 local statusBits={PSN=8,BRN=16,FRZ=32,PAR=64,TOX=128}
@@ -19,10 +20,10 @@ local stateKeys={'player','enemy','battlers','party','playerParty','enemyParty',
  'link','safari','tutorial','oldManTutorial','pokedude','firstBattle','ghostBattle','kinds','rng'}
 local reserved={}
 for _,key in ipairs(stateKeys)do reserved[key]=true end
-function M.new(game,screen,valid)
+function M.new(game,screen,valid,identifiers)
  local e={context={game=game,screen=screen,data=game.data},entries=setmetatable({},{__mode='k'}),
   caches={},arrays={},valid=valid,retired=false}
- local ids=Ids.new(game.data)
+ local ids=identifiers or Ids.new(game.data)
  local function at(pos)
   local s=e.context and e.context.screen;if not s then return end
   if pos==0 then return s.player elseif pos==1 then return s.enemy end
@@ -67,6 +68,20 @@ function M.new(game,screen,valid)
     rawset(t,key,value)
    else error('native battle '..kind..' '..tostring(key)..' is not directly writable',2)end
   end})
+  -- LuaJIT does not consult __pairs. Keep registry values weak so its
+  -- weak key cannot retain itself through this environment's public view.
+  local observation=setmetatable({environment=e,entry=d},{__mode='v'})
+  Iteration.register(view,function(spec,source)
+   local environment,entry=spec.environment,spec.entry
+   assert(environment and entry,'native battle view retired')
+   local out={};for key,value in Iteration.rawPairs(source)do out[key]=value end
+   if entry.snapshot then for key,value in pairs(entry.snapshot)do out[key]=value end;return out end
+   assert(environment.context and environment.valid(),'native battle view retired')
+   local keys=entry.kind=='state'and stateKeys or entry.kind=='battler'and battlerKeys or entry.kind=='mon'and monKeys
+     or{'attack','defense','speed','spAtk','spDef','accuracy','evasion'}
+   for _,key in ipairs(keys)do out[key]=environment.read(entry,key)end
+   return out
+  end,observation)
   return view
  end
  local function partyIndex(party,mon)for i,value in ipairs(party or{})do if value==mon then return i end end end
@@ -159,6 +174,7 @@ function M.new(game,screen,valid)
    if key=='rng'then return e.rng end
   end
  end
+ e.read=read
  e.view=proxy('state',screen)
  e.rng=function(...)assert(e.context and e.valid(),'native battle RNG retired');return e.context.screen.rng(...)end
  function e:flush()
