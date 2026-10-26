@@ -1,7 +1,6 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Semantic contacts project onto the native numeric book, never onto saves.
 local Merge = require('src.mods.Merge')
-local Identity = require('src.core.MapIdentity')
 local M = {}
 local previous = setmetatable({}, {__mode='k'})
 local mounted = setmetatable({}, {__mode='k'})
@@ -31,7 +30,11 @@ local function mapName(data,row)
   local found
   for id,def in pairs(data.maps or {}) do
     if type(def)=='table' and def.group==row.group and def.number==row.number then
-      local name=Identity.runtimeId(data,id)
+      -- Only shared physical records prove an alias; spelling and provenance
+      -- alone must not collapse two independently authored maps.
+      local name=id
+      if type(def.id)=='string' and type(def.sourceId)=='string'
+          and data.maps[def.id]==def and data.maps[def.sourceId]==def then name=def.id end
       if found and found~=name then return nil end
       found=name
     end
