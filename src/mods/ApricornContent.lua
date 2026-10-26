@@ -41,6 +41,10 @@ local function row(loader,id,value,defer)
   for k in pairs(value)do assert(registry.spec.fields[k],'apricorns: unknown field '..tostring(k))end
   local ok,why=require('src.mods.Schemas').check(registry.spec,'apricorns',id,value,'register')
   assert(ok,why)
+  -- The public schema describes records; native script operands have a
+  -- narrower space (0xffff selects the halfword variable in setevent).
+  assert(value.event<=65534,'apricorns: native event must be 0..65534')
+  assert(value.index<=65535,'apricorns: native recipe index must be 1..65535')
   local function resolve(id)
     if not defer then return nativeItem(loader,id) end
     local found,key=pcall(nativeItem,loader,id)

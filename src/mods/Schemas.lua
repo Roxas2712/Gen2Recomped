@@ -1260,7 +1260,7 @@ R.text_pointers = {
 
 R.decorations = {
   semantics="record",generations="2",
-  fields={type=f.int(1,6),name=f.str,action=f.opt(f.str),flag=f.int(0,65534),sprite=f.int(0,255)},
+  fields={type=f.int(1,6),name=f.str,action=f.opt(f.str),flag=f.int(0),sprite=f.int(0,255)},
   example='mod.content.decorations:patch("deco:2", {name="CUSTOM"})',
   notes="Native imported GSC DECO bytes (deco:0..255), ownership event bits, room callbacks and house-PC selection. Action must be a known SET_UP_/PUT_AWAY_ native decoration action. No retail attribute catalogue is bundled. Requires a complete imported native attribute table.",
 }
@@ -1270,7 +1270,7 @@ R.decorations = {
 R.phone_contacts = {
   semantics = "record", generations = "2",
   fields = {
-    index=f.opt(f.int(1,255)), number=f.opt(f.int(0,255)),
+    index=f.opt(f.int(0,255)), number=f.opt(f.int(0,255)),
     name=f.opt(f.str), class=f.opt(f.str), member=f.opt(f.str),
     map=f.opt(f.id("maps")), rematchEvent=f.opt(f.int(0,2047)),
     calleeTime=f.opt(f.int(0,7)), callerTime=f.opt(f.int(0,7)),
@@ -1282,14 +1282,14 @@ R.phone_contacts = {
 
 R.apricorns = {
   semantics="record", generations="2",
-  fields={apricorn=f.id("items"),ball=f.id("items"),event=f.int(0,65534),index=f.int(1,65535)},
+  fields={apricorn=f.id("items"),ball=f.id("items"),event=f.int(0),index=f.int(1)},
   example='mod.content.apricorns:patch("RED_APRICORN", {ball="ULTRA_BALL"})',
   notes="Native Gen2 recipe records bind real Kurt item selection, event flags and ball delivery. A current native Kurt program import and indexed GSC item IDs are required. New recipes preserve the selected native item byte; generated native branches retain original dialogue/day flags/refusal behavior.",
 }
 
 R.landmarks = {
   semantics="record",generations="2",
-  fields={id=f.opt(f.str),name=f.str,x=f.int(0),y=f.int(0),index=f.int(0,255)},
+  fields={id=f.opt(f.str),name=f.str,x=f.int(0),y=f.int(0),index=f.int(0)},
   example='mod.content.landmarks:patch("LANDMARK_ROUTE_29", {x=80})',
   notes="Native Gen2 town-map records and script landmark names. Coordinates retain native OAM byte units, not tile cells. The index is the map-header byte. Native identities win index collisions; otherwise lexical ID order is deterministic. Imported identity metadata is independent of display names.",
 }

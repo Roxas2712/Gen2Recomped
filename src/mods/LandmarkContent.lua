@@ -30,6 +30,7 @@ local function record(registry,id,value)
  finite(value)
  for key in pairs(value)do assert(registry.spec.fields[key],'landmarks: unknown field '..tostring(key))end
  local ok,why=Schemas.check(registry.spec,'landmarks',id,value,'register');assert(ok,why)
+ assert(index(value.index),'landmarks: native index must be a byte')
  return copy(value)
 end
 function M.prepare(loader,data)

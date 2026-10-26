@@ -33,6 +33,7 @@ local function record(registry,id,value)
  assert(type(value)=='table'and value~=Merge.DELETE,'decorations: expected record')
  for key in pairs(value)do assert(registry.spec.fields[key],'decorations: unknown field '..tostring(key))end
  local ok,why=Schemas.check(registry.spec,'decorations',id,value,'register');assert(ok,why)
+ assert(value.flag<=65534,'decorations: native ownership event must be 0..65534')
  assert(value.action==nil or Native.action(value.action),'decorations: unknown native action')
  return copy(value)
 end

@@ -151,6 +151,7 @@ end
 V.set('crystal')
 for _,bad in ipairs({
  "p:register('BAD',{apricorn='BERRY',ball='BALL_202',event=65535,index=8})",
+ "p:register('BAD',{apricorn='BERRY',ball='BALL_202',event=5000,index=65536})",
  "p:register('BAD',{apricorn='BERRY',ball='BALL_202',event=-1,index=8})",
  "p:register('BAD',{apricorn='BERRY',ball='BALL_202',event=0/0,index=8})",
  "p:register('BAD',{apricorn='BERRY',ball='BALL_202',event=5000,index=math.huge})",
