@@ -126,8 +126,12 @@ ACTIONS[67] = { kind = "none" }   -- warp out: the script's own warp does this
 ACTIONS[68] = { kind = "none" }   -- warp in
 ACTIONS[69] = { kind = "hide" }
 ACTIONS[70] = { kind = "show" }
-ACTIONS[71] = { kind = "none" }   -- lock facing
-ACTIONS[72] = { kind = "none" }   -- unlock facing
+-- LockDir / UnlockDir: MAPOBJECTFLAG_UNK7, which MapObject_SetFacingDirection
+-- (map_object.c) checks before every turn -- a walk, a face, a mark-time.
+-- Read as "none", Mahogany's shop grunt backed off from Dragonite's
+-- Hyper Beam (LockDir, WalkFasterEast 2) turned round and walked away.
+ACTIONS[71] = { kind = "lock" }   -- lock facing
+ACTIONS[72] = { kind = "unlock" } -- unlock facing
 ACTIONS[73] = { kind = "none" }   -- pause animation
 ACTIONS[74] = { kind = "none" }   -- resume animation
 ACTIONS[75] = { kind = "emote", emote = "exclamation" }
