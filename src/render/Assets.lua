@@ -9,6 +9,7 @@
 -- paths it always did.
 
 local Assets = {}
+local Performance = require('src.core.Performance')
 
 -- resolved path -> love Image
 local cache = {}
@@ -53,21 +54,24 @@ local function resolveWalk(loader, path)
 end
 
 local function memoOn()
-  local ok, Performance = pcall(require, "src.core.Performance")
-  return not (ok and type(Performance) == "table" and Performance.assetResolveCache == false)
+  return Performance.assetResolveCache ~= false
 end
 
 function Assets.resolve(path)
   local loader = Assets.loader
   if not loader or type(path) ~= "string" then return path end
   if path:sub(1, #GENERATED) ~= GENERATED then return path end
+  if not memoOn() then
+    if next(resolved) then resolved = {} end
+    return resolveWalk(loader, path)
+  end
   local hit = resolved[path]
   if hit ~= nil then
     if not (loader.stale and loader:stale()) then return hit end
     resolved = {}
   end
   local answer = resolveWalk(loader, path)
-  if memoOn() then resolved[path] = answer end
+  resolved[path] = answer
   return answer
 end
 
@@ -169,13 +173,16 @@ function Assets.installLoader(loader)
   local order, orderCount
   function bridge:overrideOrder()
     local loaded = loader.loaded or {}
-    if order and orderCount == #loaded then return order end
+    local enabled = memoOn()
+    if enabled and order and orderCount == #loaded then return order end
     if order then resolved = {} end
-    order, orderCount = {}, #loaded
+    local built = {}
     for i = #loaded, 1, -1 do
-      order[#order + 1] = { id = loaded[i].manifest.id, path = loaded[i].path }
+      built[#built + 1] = { id = loaded[i].manifest.id, path = loaded[i].path }
     end
-    return order
+    if enabled then order, orderCount = built, #loaded
+    else order, orderCount = nil, nil end
+    return built
   end
   function bridge:stale()
     return order ~= nil and orderCount ~= #(loader.loaded or {})

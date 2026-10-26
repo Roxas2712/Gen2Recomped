@@ -89,4 +89,16 @@ eq(infoCalls, 8, "switch off: every lookup walks (two mods: 2 overrides + 2 deri
 eq(Assets.resolveMemoSize(), 0, "switch off: nothing remembered")
 Performance.assetResolveCache = true
 
+-- Turning the switch off must bypass entries warmed before that change.
+eq(Assets.resolve(C), C, 'warm a generated answer')
+eq(Assets.resolveMemoSize(), 1, 'warm answer is remembered')
+Performance.assetResolveCache = false
+files['mods/low/overrides/sprites/c.png'] = true
+eq(Assets.resolve(C), 'mods/low/overrides/sprites/c.png', 'warm memo is bypassed immediately when disabled')
+eq(Assets.resolveMemoSize(), 0, 'disabling drops old answers')
+files['mods/low/overrides/sprites/c.png'] = nil
+eq(Assets.resolve(C), C, 'disabled lookup sees file changes without a flush')
+Performance.assetResolveCache = true
+eq(Assets.resolve(C), C, 're-enabled lookup does not revive old answers')
+
 print(("asset_resolve_cache_check: %d checks ok"):format(n))
