@@ -337,6 +337,25 @@ local function verify(game, cp, priorRng)
 	assert(equal(verified, cp), "native checkpoint recapture differs")
 end
 
+local function commit(game, token, cp, priorRng)
+	World.commit(game, token)
+	-- Entry scripts stay suppressed. Once committed, select the native map's
+	-- music so title/cross-map reconstruction does not keep the old theme.
+	local ok, message = pcall(function()
+		require("src.core.Music").playMap(
+			game.data,
+			game.overworld.map.id,
+			game.save.onBike,
+			game.overworld.player.surfing
+		)
+	end)
+	restoreRng(cp.rng or priorRng)
+	if not ok then
+		require("src.core.Logger").warn("checkpoint music: %s", tostring(message))
+	end
+	Runtime.emit("checkpoint.restored", { game = game, kind = cp.kind })
+end
+
 function C.restore(game, value, fs)
 	local capability = C.inspect(game, nil, fs)
 	if not capability.canRestore then
@@ -370,8 +389,7 @@ function C.restore(game, value, fs)
 		end
 		return false, "restore_failed", tostring(err)
 	end
-	World.commit(game, token)
-	Runtime.emit("checkpoint.restored", { game = game, kind = cp.kind })
+	commit(game, token, cp, priorRng)
 	return true
 end
 function C.resume(game, value, fs)
@@ -398,8 +416,7 @@ function C.resume(game, value, fs)
 		restoreRng(priorRng)
 		return false, "resume_failed", tostring(err)
 	end
-	World.commit(game, token)
-	Runtime.emit("checkpoint.restored", { game = game, kind = cp.kind })
+	commit(game, token, cp, priorRng)
 	return true
 end
 function C.ensureNormalSave(game, value, fs)

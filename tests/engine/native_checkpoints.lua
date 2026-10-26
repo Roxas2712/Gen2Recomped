@@ -82,7 +82,7 @@ for _, version in ipairs({ "red", "gold" }) do
 		Game.save.modData = { [id] = { quest = 4 }, another_mod = { quest = 9 } }
 		Game.overworld, Game.world, Game.mods = World, World, loaded.loader
 		loaded.loader.game, loaded.loader.modSave = Game, Game.save.modData
-		if version == "gold" then
+		if version == "gold" and Stack.setWorldOwner then
 			Stack:setWorldOwner({ world = World })
 			Stack.worldState, Stack.worldOwner.world = World, World
 		else
