@@ -4,7 +4,7 @@ local T=require('tests.modkit');local Loader=require('src.mods.Loader')
 local V=require('src.core.GameVersion');local previous=V.get();V.set('gold')
 local Json=require('src.link.Json');local Manifest=require('src.mods.Manifest')
 local manifest={id='force_probe',name='Force probe',version='1.0.0',api=2,entry='main.lua',
- games={'gen2'},force_enable_env='OWN_FORCE_ENABLE'}
+ games={'gen2'},generations={2},force_enable_env='OWN_FORCE_ENABLE'}
 T.eq(Manifest.validate(manifest).force_enable_env,'OWN_FORCE_ENABLE','manifest retains the optional variable name')
 local getenv=os.getenv;local enabled
 os.getenv=function(key)if key=='OWN_FORCE_ENABLE'then return enabled end;return getenv(key)end
@@ -24,8 +24,8 @@ end
 enabled='1';local plain=load({noMods=true})
 T.eq(plain.exports.force_probe,nil,'no-mod boot keeps the discovery boundary')
 Loader.teardown()
-manifest.games={'gen3'};local wrong=load()
-T.eq(wrong.exports.force_probe,nil,'force enable cannot bypass the declared game target')
+manifest.games={'gen3'};manifest.generations={3};local wrong=load()
+T.eq(wrong.exports.force_probe,nil,'force enable cannot bypass the declared generation target')
 Loader.teardown()
 os.getenv=getenv;V.set(previous)
 T.finish('manifest force-enable policy through the production Loader')
