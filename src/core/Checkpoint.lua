@@ -6,6 +6,8 @@ local Version = require("src.core.Version")
 local Runtime = require("src.mods.Runtime")
 local World = require("src.core.CheckpointWorld")
 local Spinners = require("src.core.CheckpointSpinners")
+local Actors = require("src.core.CheckpointActors")
+local Battles = require("src.core.CheckpointBattle")
 local C = {}
 local MAX_NODES, MAX_DEPTH = 250000, 64
 
@@ -78,6 +80,8 @@ local ANIMATIONS = {
 	"fadeOverlay",
 	"g3MirageTower",
 	"g3Orb",
+  "hgssFollowTalk",
+  "g2MomCallPending",
 }
 -- Native stationary spinners carry a qualified semantic continuation. Other
 -- moving/scripted actors still require their own reconstruction backend.
@@ -151,25 +155,22 @@ function C.inspect(game, internal, fs)
 	if type(world) ~= "table" or not world.map or not world.player then
 		return refusal("unknown", "not_overworld", "No native overworld is active.")
 	end
-	if top(game) ~= world then
-		local state = top(game)
-		if state and state.isBattleState then
-			return refusal(
-				"battle",
-				"unsupported_battle",
-				"This native battle has no qualified reconstruction backend."
-			)
-		end
-		return refusal("overworld", "screen_busy", "Close the active screen first.")
-	end
+  local active=top(game)
+  local battle=active and active.isBattleState and active
+  if active~=world and not battle then
+    return refusal("overworld", "screen_busy", "Close the active screen first.")
+  end
+  if battle and not pcall(Battles.capture,game,battle,clone) then
+    return refusal("battle", "unsupported_battle", "This battle has no safe native decision continuation.")
+  end
 	if world.transitioning then
 		return refusal("overworld", "transition_busy", "Wait for the map transition.")
 	end
-	if busy(world) then
+	if busy(world) and not battle then
 		return refusal("overworld", "script_busy", "Wait for running or queued scripts.")
 	end
 	for _, name in ipairs(ANIMATIONS) do
-		if world[name] then
+		if world[name] and not (battle and name=="engaging") then
 			return refusal("overworld", "animation_busy", "Wait for the active world animation.")
 		end
 	end
@@ -179,8 +180,8 @@ function C.inspect(game, internal, fs)
 	if game.linkSession or (game.linkNet and not game.linkNet.closed) then
 		return refusal("overworld", "unsupported_runtime", "Multiplayer checkpoint reconstruction is unavailable.")
 	end
-	if not canonicalActors(world) then
-		return refusal("overworld", "unsupported_actor_runtime", "Only canonical static actors and native stationary spinners are qualified.")
+	if not pcall(Actors.capture, game, clone) then
+		return refusal("overworld", "unsupported_actor_runtime", "This actor runtime contains an opaque or unsupported continuation.")
 	end
 	if not World.available(game) then
 		return refusal("overworld", "unsupported_runtime", "This world has no qualified native reconstruction backend.")
@@ -191,7 +192,7 @@ function C.inspect(game, internal, fs)
 	if not SaveData.ensurePlaythroughId(save, fs) then
 		return refusal("overworld", "not_in_playthrough", "No persistent playthrough identity is available.")
 	end
-	return { canCapture = true, canRestore = true, kind = "overworld" }
+	return { canCapture = true, canRestore = true, kind = battle and "battle" or "overworld" }
 end
 local function rng()
 	if love and love.math and love.math.getRandomState then
@@ -233,7 +234,8 @@ function C.capture(game, internal, fs)
 			},
 			save = save,
 			runtime = {
-				spinners = Spinners.capture(game.overworld),
+				actors = Actors.capture(game, clone),
+        battle = capability.kind=="battle" and Battles.capture(game,top(game),clone) or nil,
 				overworld = {
 					map = p.map,
 					x = p.x,
@@ -299,10 +301,7 @@ local function validateData(game, value, fs, resuming)
 	if type(cp) ~= "table" or cp.format ~= 1 then
 		return fail("unsupported_format", "Unsupported checkpoint format.")
 	end
-	if cp.kind == "battle" then
-		return fail("unsupported_battle", "This native battle has no qualified reconstruction backend.")
-	end
-	if cp.kind ~= "overworld" then
+	if cp.kind ~= "overworld" and cp.kind ~= "battle" then
 		return fail("unsupported_kind", "Unsupported checkpoint runtime.")
 	end
 	local id = cp.identity
@@ -363,10 +362,17 @@ local function validateData(game, value, fs, resuming)
 	then
 		return fail("invalid_position", "Runtime and progress positions disagree.")
 	end
+	if cp.kind=="battle" and not Battles.validate(game,cp.runtime.battle,save,cp.runtime.actors) then
+    return fail("invalid_battle_state", "Battle relationships or continuation are invalid.")
+  end
+  if cp.kind=="overworld" and cp.runtime.battle~=nil then return fail("invalid_battle_state", "Unexpected battle continuation.") end
 	if not validContent(game, save) then
 		return fail("invalid_content", "Checkpoint references unavailable native content.")
 	end
-	if not Spinners.validate(game.data, cp.runtime.spinners) then
+	if (cp.runtime.actors and not Actors.validate(game, cp.runtime.actors))
+    or not Spinners.validate(game.data, cp.runtime.spinners)
+    or (cp.runtime.actors and (cp.runtime.actors.player.cellX ~= p.x
+      or cp.runtime.actors.player.cellY ~= p.y or cp.runtime.actors.player.facing ~= p.facing)) then
 		return fail("invalid_actor_state", "Checkpoint spinner state is invalid or references unavailable native actors.")
 	end
 	if cp.rng ~= nil and (type(cp.rng) ~= "table" or type(cp.rng.love) ~= "string" or cp.rng.love == "") then
@@ -396,7 +402,7 @@ local function rebuild(game, cp)
 	local options = game.save.options
 	local loaded = clone(cp.save)
 	loaded.options = options
-	return World.begin(game, loaded, cp.runtime.overworld, cp.runtime.spinners)
+	return World.begin(game, loaded, cp.runtime, clone)
 end
 local function verify(game, cp, priorRng)
 	restoreRng(cp.rng or priorRng)
@@ -405,6 +411,11 @@ local function verify(game, cp, priorRng)
 	if cp.rng == nil then
 		verified.rng = nil
 	end
+  if cp.runtime.actors == nil then
+    assert(canonicalActors(game.overworld), "legacy checkpoint cannot represent this actor runtime")
+    verified.runtime.actors = nil
+    verified.runtime.spinners = Spinners.capture(game.overworld)
+  end
 	assert(equal(verified, cp), "native checkpoint recapture differs")
 end
 
@@ -413,12 +424,13 @@ local function commit(game, token, cp, priorRng)
 	-- Entry scripts stay suppressed. Once committed, select the native map's
 	-- music so title/cross-map reconstruction does not keep the old theme.
 	local ok, message = pcall(function()
-		require("src.core.Music").playMap(
-			game.data,
-			game.overworld.map.id,
-			game.save.onBike,
-			game.overworld.player.surfing
-		)
+    local Music=require("src.core.Music")
+    if cp.kind=="battle" then
+      local battle=top(game)
+      Music.playBattle(game.data,battle.musicKind or battle.kind)
+    else
+      Music.playMap(game.data,game.overworld.map.id,game.save.onBike,game.overworld.player.surfing)
+    end
 	end)
 	restoreRng(cp.rng or priorRng)
 	if not ok then

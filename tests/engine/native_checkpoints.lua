@@ -187,16 +187,15 @@ for _, version in ipairs({ "red", "gold" }) do
 		local npc = assert(World.npcs[1])
 		local originalWanders = npc.wanders
 		npc.wanders = true
-		T.eq(checkpoints:inspect(Game).reason, "unsupported_actor_runtime", "dynamic native actors fail closed")
+		T.check(checkpoints:inspect(Game).canCapture, "native wandering actors have semantic continuations")
 		npc.wanders = originalWanders
 		local originalX = npc.cellX
-		npc.cellX = originalX + 1
-		T.eq(
-			checkpoints:inspect(Game).reason,
-			"unsupported_actor_runtime",
-			"scripted NPC placement is not silently discarded"
-		)
-		npc.cellX = originalX
+		npc.cellX, npc.px = originalX, originalX * 16 + 1
+		npc.px = npc.cellX * 16
+    local placed = assert(checkpoints:capture(Game))
+    T.eq(placed.runtime.actors.records[npc.id].state.cellX, npc.cellX,
+      "scripted NPC placement is included in semantic actor state")
+		npc.cellX, npc.px = originalX, originalX * 16
 		World.player.moving = true
 		T.eq(checkpoints:inspect(Game).reason, "movement_busy", "movement cannot be checkpointed")
 		World.player.moving = false
@@ -222,6 +221,7 @@ for _, version in ipairs({ "red", "gold" }) do
 		T.eq(Game.save.options, options, "resume preserves current options")
 		T.eq(checkpoints:resume(Game, cp), false, "resume outside title is refused")
 		local target = copy(cp)
+    target.runtime.actors = nil
 		target.runtime.overworld.map, target.save.player.map = "FIX_ROUTE", "FIX_ROUTE"
 		T.check(checkpoints:restore(Game, target), "checkpoint reconstructs another installed map")
 		T.eq(World.map.id, "FIX_ROUTE", "native map changes to the checkpoint target")
@@ -278,6 +278,8 @@ for _, version in ipairs({ "red", "gold" }) do
 		end
 		T.eq(spinnerCount, 4, "owned spinner fixtures cover the local and neighbour casts")
 		local spun = assert(checkpoints:capture(Game))
+    spun.runtime.actors = nil
+    spun.runtime.spinners = require("src.core.CheckpointSpinners").capture(World)
 		local bytes = Serializer.encode(spun)
 		local oldPool, oldNpc = World.npcPool, World.npcs[2]
 		for _, actor in pairs(World.npcPool) do
@@ -340,7 +342,10 @@ for _, version in ipairs({ "red", "gold" }) do
 		Stack.states = { { screenId = "TitleState" } }
 		if Stack.worldOwner then Stack.worldState = nil end
 		T.check(checkpoints:resume(Game, spun), "native title resumes stationary spinner continuation")
-		T.eq(Serializer.encode(assert(checkpoints:capture(Game))), bytes, "title resume fully recaptures spinner state")
+		local resumed = assert(checkpoints:capture(Game))
+    resumed.runtime.actors = nil
+    resumed.runtime.spinners = require("src.core.CheckpointSpinners").capture(World)
+    T.eq(Serializer.encode(resumed), bytes, "title resume fully recaptures legacy spinner state")
 
 		loaded.release()
 	end

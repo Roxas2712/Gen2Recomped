@@ -17,6 +17,7 @@ local Strings = require("src.core.Strings")
 
 local unpack = table.unpack or unpack -- LuaJIT (LÖVE) compatibility
 
+local checkpointRuns = setmetatable({}, {__mode="k"})
 local ScriptRunner = {}
 ScriptRunner.__index = ScriptRunner
 
@@ -119,12 +120,14 @@ end
 function ScriptRunner:run(script, extra)
   assert(not self:isRunning(), "script already running")
   local ctx = self:makeContext(extra)
+  local checkpoint = checkpointRuns[self]
   self.ctx = ctx
-  if Runtime.wants("script.started") then
+  if not checkpoint and Runtime.wants("script.started") then
     Runtime.emit("script.started", { ctx = ctx })
   end
   self.co = coroutine.create(function()
-    self:exec(script, ctx)
+    if checkpoint then self:yield() end
+    self:exec(script, ctx, nil, checkpoint and checkpoint.pc)
     if ctx.trainerPreparationCancelled or ctx.scriptCancelled then return end
     -- Commands can defer a game action until the script's own dialogue is
     -- done. start_battle uses this for win-path evolutions, which must not
@@ -172,10 +175,19 @@ function ScriptRunner:run(script, extra)
   self:resume()
 end
 
+-- A data-only battle continuation primes a fresh runner at a suspended yield.
+-- The first command runs only when the reconstructed battle finishes.
+function ScriptRunner:_checkpointRun(script, extra, pc)
+  checkpointRuns[self] = {pc=pc}
+  local ok,why = pcall(self.run,self,script,extra)
+  checkpointRuns[self] = nil
+  if not ok then error(why,0) end
+end
+
 -- Execute a command list.  Supports labels via jump commands: a script is
 -- an array of rows; control commands return a new program counter, as a
 -- row number or a label name.
-function ScriptRunner:exec(script, ctx, admission)
+function ScriptRunner:exec(script, ctx, admission, startRow)
   local Decoded, trace, origin
   local decodedHooks = not admission and Runtime.hooks._decodedHooks
   if decodedHooks and decodedHooks.chains["script.command"] then
@@ -193,7 +205,7 @@ function ScriptRunner:exec(script, ctx, admission)
   end
   local labels = ScriptRunner.scanLabels(script)
   local data = self.game and self.game.data
-  local pc = 1
+  local pc = startRow or 1
   local budget = admission and admission.maxInstructions
   local function step()
     if pc > #script then return end
