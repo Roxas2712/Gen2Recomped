@@ -69,14 +69,15 @@ function VideoMode.apply(mode)
     rememberWindowed()
     local ok = false
     if love.window.getDesktopDimensions and love.window.getMode and love.window.setMode then
-      ok = pcall(function()
-        local dw, dh = love.window.getDesktopDimensions()
+      local called, accepted = pcall(function()
         local _, _, flags = love.window.getMode()
         flags = flags or {}
+        local dw, dh = love.window.getDesktopDimensions(flags.display)
         flags.fullscreen = true
         flags.fullscreentype = "exclusive"
         return love.window.setMode(dw, dh, flags)
       end)
+      ok = called and accepted ~= false
     end
     if not ok then
       -- the compositor's fullscreen is the next best thing, and always works
@@ -87,19 +88,18 @@ function VideoMode.apply(mode)
     -- "desktop" = borderless fullscreen matching the display
     love.window.setFullscreen(true, "desktop")
   else
-    local wasExclusive = love.window.getFullscreen
-      and select(2, love.window.getFullscreen()) == "exclusive"
-    if wasExclusive and windowedSize and love.window.setMode and love.window.getMode then
+    local wasFullscreen = love.window.getFullscreen and love.window.getFullscreen()
+    if wasFullscreen and windowedSize and love.window.setMode and love.window.getMode then
       -- an exclusive mode's size is the desktop's, not the window the
       -- player had: give that one back
-      local okBack = pcall(function()
+      local okBack, accepted = pcall(function()
         local _, _, flags = love.window.getMode()
         flags = flags or {}
         flags.fullscreen = false
         flags.fullscreentype = nil
         return love.window.setMode(windowedSize[1], windowedSize[2], flags)
       end)
-      if okBack then return end
+      if okBack and accepted ~= false then return end
     end
     love.window.setFullscreen(false)
   end

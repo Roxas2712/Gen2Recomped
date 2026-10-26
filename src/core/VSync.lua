@@ -52,12 +52,12 @@ function VSync.apply(mode)
   if VSync.isMobile() then return nil end
   if not (love and love.window and love.window.setVSync) then return nil end
   local want = VSync.value(mode)
-  pcall(love.window.setVSync, want)
+  local accepted = pcall(love.window.setVSync, want)
   if love.window.getVSync then
     local ok, got = pcall(love.window.getVSync)
     if ok then return got end
   end
-  return want
+  return accepted and want or nil
 end
 
 function VSync.applyOptions(opts)

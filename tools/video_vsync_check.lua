@@ -18,6 +18,7 @@ love = {
     setMode = function(w, h, flags)
       calls[#calls + 1] = { "setMode", w, h, flags.fullscreen, flags.fullscreentype }
       if flags.fullscreen and win.refuse then error("no exclusive mode here") end
+      if win.returnFalse then return false end
       win.w, win.h, win.full, win.ftype = w, h, flags.fullscreen or false, flags.fullscreentype
       return true
     end,
@@ -80,10 +81,35 @@ eq(last()[3], "desktop", "borderless is the desktop mode")
 VideoMode.apply("windowed")
 eq(win.full, false, "windowed from borderless")
 
+-- SDL/LÖVE may refuse with false rather than throwing.
+win.returnFalse=true
+VideoMode.apply("exclusive")
+eq(last()[1],"setFullscreen","false setMode result triggers fallback")
+win.returnFalse=false
+VideoMode.apply("windowed")
+eq(win.w,960,"fallback fullscreen restores remembered window width")
+VideoMode.apply("exclusive")
+VideoMode.apply("borderless")
+VideoMode.apply("windowed")
+eq(win.w,960,"exclusive through borderless restores window width")
+eq(win.h,864,"exclusive through borderless restores window height")
+VideoMode.apply("exclusive")
+win.returnFalse=true
+VideoMode.apply("windowed")
+eq(last()[1],"setFullscreen","failed window-size restore still exits fullscreen")
+eq(win.full,false,"failed restore leaves a window")
+win.returnFalse=false
+
 -- vsync is pushed and read back
 eq(VSync.apply("adaptive"), -1, "adaptive applied and read back")
 eq(VSync.applyOptions({ vsync = "off" }), 0, "off applied via options")
 eq(VSync.applyOptions({}), 1, "no option means on")
+
+-- A rejected setter without a read-back must not report success.
+local getter,setter=love.window.getVSync,love.window.setVSync
+love.window.getVSync=nil;love.window.setVSync=function()error("unsupported")end
+eq(VSync.apply("off"),nil,"failed vsync setter without read-back returns no value")
+love.window.getVSync=getter;love.window.setVSync=setter
 
 -- mobile is a no-op
 love.system.getOS = function() return "Android" end
