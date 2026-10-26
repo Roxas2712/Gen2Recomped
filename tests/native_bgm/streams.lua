@@ -6,6 +6,7 @@ function M.install(root, backend, version, f, options)
   local h = dofile(root .. "/tests/native_bgm/fixture.lua").install(root, backend, version, f)
   local Music = require("src.core.Music")
   Music.stop()
+  local soundData = dofile(root .. "/tests/native_bgm/sounddata.lua").install()
   local oldThread, oldQueue = love.thread, love.audio.newQueueableSource
   local voices, tick = {}, 0
   local queueMode = options.queueFailure
@@ -161,6 +162,38 @@ function M.install(root, backend, version, f, options)
   end
   return {
     ids = h.ids,
+    soundData = soundData,
+    invalidateQueues = function()
+      local restore = {}
+      for _, voice in ipairs(voices) do
+        local methods = {}
+        for _, key in ipairs({
+          "getFreeBufferCount",
+          "queue",
+          "isPlaying",
+          "setVolume",
+          "play",
+          "stop",
+          "pause",
+        }) do
+          methods[key] = voice[key]
+          voice[key] = function()
+            error("owned invalidated audio source: " .. key)
+          end
+        end
+        voice.playing = false
+        restore[#restore + 1] = function()
+          for key, value in pairs(methods) do
+            voice[key] = value
+          end
+        end
+      end
+      return function()
+        for _, fn in ipairs(restore) do
+          fn()
+        end
+      end
+    end,
     endFiles = h.hardware.endSources,
     queueDevice = function(mode)
       queueMode = mode
@@ -200,10 +233,6 @@ function M.install(root, backend, version, f, options)
             trackData = { program },
             trackEntries = { 0 },
           }
-          -- Warm the native cache with its actual renderer; headless SoundData
-          -- is a table, while the cold production admission requires userdata.
-          audio._fanfareSd[id] =
-            assert(require("src.core.game3.m4a_player").bakeSong(audio._pack, audio._cache, id))
         else
           f.data.audio.songs[("SONG_%03X"):format(id)] = {
             kind = "fanfare",
@@ -316,6 +345,7 @@ function M.install(root, backend, version, f, options)
     end,
     close = function()
       love.thread, love.audio.newQueueableSource = oldThread, oldQueue
+      soundData.close()
       h.close()
       if not native then
         require("src.core.M4ASynth").invalidate()

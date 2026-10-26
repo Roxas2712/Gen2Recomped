@@ -49,6 +49,7 @@ on:
       - 'tests/engine/gen3_audio_recovery.lua'
       - 'tests/engine/gen3_music_hooks.lua'
       - 'tests/engine/gen3_audio_options.lua'
+      - 'tests/engine/gen3_audio_cold.lua'
       - 'tests/native_bgm/**'
       - 'tests/native_cry/**'
       - 'tests/native_sound/**'
