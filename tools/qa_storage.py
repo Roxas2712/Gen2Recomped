@@ -19,7 +19,7 @@ import sys
 import time
 import threading
 import qa_legacy_storage as legacy
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 
 GIB = 1024 ** 3
 EDITIONS = ("firered", "leafgreen", "emerald", "ruby", "sapphire")
@@ -197,12 +197,18 @@ class Storage:
             self._begin()
         return original
 
-    def copy(self, path):
+    def copy(self, path, *, ephemeral=False):
         original = Path(path)
         target = legacy.identify(self._absolute(original), self.root, self.home)
         if target is None or target.resolve() != target:
             raise ValueError('Only known disposable test-copy layouts are accepted')
         self._take('legacy', target, True)
+        if ephemeral:
+            key=self._key(target)
+            entry=self.held[key][1]
+            if entry is not None and self.held[key][2]:
+                entry['ephemeral']=True
+                self._write(key,entry)
         self._begin()
         return original
 
@@ -565,7 +571,7 @@ class Storage:
         if entry['kind']=='legacy':
             if legacy.kept(path) or self._legacy_live.busy(path):return True
             if any(self._legacy_live.busy(p) for p in legacy.dependencies(path,root,self.home)):return True
-            if entry.get('discovered') and path.exists():
+            if entry.get('discovered') and not entry.get('ephemeral') and path.exists():
                 updated=max([path.stat().st_ctime,*(max(info.st_ctime,info.st_mtime) for _,info in legacy.files(path))])
                 if self.clock()-updated<3600:return True
             return False
@@ -652,18 +658,20 @@ class Storage:
     def _budget(kind):
         return 'testcopies' if kind=='legacy' else kind
 
-    def sweep(self):
+    def sweep(self, *, only=None):
         """Collect idle registered resources under one global, nonblocking GC lock."""
         removed = 0
-        with (self.state / "collection.lock").open("a+") as collector:
-            try:
-                fcntl.flock(collector, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError:
-                return 0
+        # Targeted teardown is independent of global budget accounting. Per-copy
+        # and dependency locks still serialize readers and other collectors.
+        guard=(self.state/'collection.lock').open('a+') if only is None else nullcontext(None)
+        with guard as collector:
+            if collector is not None:
+                try:fcntl.flock(collector, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError:return 0
             self._legacy_live = legacy.LiveUse()
-            self._discover_legacy()
+            if only is None:self._discover_legacy()
             protected_imports = set()
-            for root in self._registered_roots():
+            for root in self._registered_roots() if only is None else ():
                 imports = root / '.local/imports'
                 for alias in (imports, *(imports / edition for edition in QA_EDITIONS)):
                     try:
@@ -673,9 +681,10 @@ class Storage:
                     if profile is not None:
                         protected_imports.add(profile)
             entries = []
-            for file in self.state.glob("*.json"):
+            records=self.state.glob('*.json') if only is None else (self.state/(key+'.json') for key in only)
+            for file in records:
                 key = file.stem
-                if key in self.held:
+                if key in self.held or not file.exists():
                     continue
                 with (self.state / (key + ".lock")).open("a+") as lock:
                     try:
@@ -697,7 +706,7 @@ class Storage:
                       for kind in self.limits if kind != "legacy"}
             for _, key, entry, size in sorted(entries):
                 expired = self.clock() - entry["updated"] >= self.max_age
-                if not (entry["running"] or expired or totals[self._budget(entry["kind"])] > self.limits[self._budget(entry["kind"])]):
+                if not (entry.get('ephemeral') or entry["running"] or expired or totals[self._budget(entry["kind"])] > self.limits[self._budget(entry["kind"])]):
                     continue
                 file = self.state / (key + ".json")
                 with (self.state / (key + ".lock")).open("a+") as lock:
@@ -736,16 +745,18 @@ class Storage:
         if self.closed:
             return
         self.closed = True
+        ephemeral=set()
         try:
             for key, (lock, entry, owned) in self.held.items():
                 if owned:
+                    if entry.get('ephemeral'):ephemeral.add(key)
                     entry.update(updated=self.clock(), running=False)
                     self._write(key, entry)
                 # Closing (not LOCK_UN) preserves leases inherited by a child
                 # that is still alive if an interrupted runner is unwinding.
                 lock.close()
             self.held.clear()
-            if collect:self.sweep()
+            if collect:self.sweep(only=ephemeral) if ephemeral else self.sweep()
         except OSError as error:
             print("[qa-storage] cleanup will retry at the next test:", error,
                   file=sys.stderr)
@@ -819,8 +830,8 @@ def qa_cache(path):
     return _manager().cache(path)
 
 
-def qa_copy(path):
-    return _manager().copy(path)
+def qa_copy(path, *, ephemeral=False):
+    return _manager().copy(path, ephemeral=ephemeral)
 
 
 def qa_profile(path):
