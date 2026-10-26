@@ -6,6 +6,19 @@ local schema={pokemon={'speciesOrder','pokemon'},moves={'moveOrder','moves'},ite
  abilities={'abilityOrder','abilities',1},types={'typeOrder','types',1},trainers={'trainerOrder','trainers'}}
 function M.new(data)
  local indexes={}
+ local constants=data.constants
+ local catalogues={}
+ for kind,spec in pairs(schema)do
+  catalogues[kind]={order=constants and constants[spec[1]],rows=data[spec[2]]or constants and constants[spec[2]]}
+ end
+ local function valid()
+  if data.constants~=constants then return false end
+  for kind,c in pairs(catalogues)do
+   local spec=schema[kind]
+   if (constants and constants[spec[1]])~=c.order or(data[spec[2]]or constants and constants[spec[2]])~=c.rows then return false end
+  end
+  return true
+ end
  local function index(kind)
   if indexes[kind]then return indexes[kind]end
   local spec=assert(schema[kind],'unknown battle identifier kind')
@@ -23,13 +36,16 @@ function M.new(data)
   local result={forward=forward,reverse=reverse,rows=rows};indexes[kind]=result;return result
  end
  return {
+  valid=valid,
   read=function(_,kind,key)
+   if not valid()then return nil end
    if key==nil or key==false then return(kind=='items'or kind=='abilities')and 0 or nil end
    local i=index(kind);local n=i.reverse[key]
    if n~=nil then return n or nil end
    if type(key)=='number'and i.rows[key]then return key end
   end,
   native=function(_,kind,value)
+   if not valid()then return nil end
    if value==nil or value==0 and(kind=='items'or kind=='abilities')then return nil end
    local i=index(kind)
    if type(value)=='number'then return i.forward[value]or nil end
