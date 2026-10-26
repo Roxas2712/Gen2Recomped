@@ -32,7 +32,6 @@
 --                               hook, not one module
 --   src.world.gen2.Follower     PikachuFollower is Yellow's, not a general
 --                               party follower
---   src.ui.gen2.SaveMenu        the save flow is part of StartMenu here
 --   src.ui.gen2.BattleAnimView  Gen2AnimPlayer is a player, not a view
 --   src.battle.UIVisibility     no equivalent
 --   src.ui.PartyPanel           no equivalent
@@ -68,6 +67,7 @@ ModCompat.ALIASES = {
   ["src.core.gen2.Boxes"] = "src.pokemon.Boxes",
   ["src.ui.gen2.NamingScreen"] = "src.ui.Gen2NamingScreen",
   ["src.ui.gen2.NamePick"] = "src.ui.Gen2NamePick",
+  ["src.ui.gen2.SaveMenu"] = "src.ui.Gen2SaveMenu",
   ["src.core.gen2.BugContest"] = "src.world.BugContest",
   ["src.core.gen2.ItemEffects"] = "src.inventory.ItemEffects",
   ["src.core.gen2.Save"] = "src.core.SaveData",
