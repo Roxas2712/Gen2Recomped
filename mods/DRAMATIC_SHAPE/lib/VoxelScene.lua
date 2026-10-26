@@ -23,6 +23,7 @@ local Tier = V.require("Tier")
 local Voxel3D = V.require("Voxel3D")
 local ShadowMap = V.require("ShadowMap")
 local ChunkMesher = V.require("ChunkMesher")
+local WorldShadows = V.require("WorldShadows")
 local SpriteBillboards = V.require("SpriteBillboards")
 local TileShape = V.require("TileShape")
 local Structures = V.require("Structures")
@@ -2435,56 +2436,7 @@ end
 -- Runs BEFORE Voxel3D.beginScene, because canvases do not nest. Grass is
 -- left out on purpose: thousands of tufts would cast a speckle no bigger
 -- than the pixels it lands on, at the cost of the mesh being drawn twice.
-local shadowAnimations={}
-local function castShadows(state, terrain, nbMesh, posed, cx, cy, vw, vh,
-                           atlasFor, water, nbWater, battleCards, battleToken)
-  if not ShadowMap.available() then return end
-  shadowAnimations[1]=TerrainAtlas.shadowStep(state.map)
-  local count=1
-  for i,nb in ipairs(state.neighbors or {})do
-    count=count+1;shadowAnimations[count]=nbMesh[i] and TerrainAtlas.shadowStep(nb.map) or 0
-  end
-  for i=count+1,#shadowAnimations do shadowAnimations[i]=nil end
-  local sig = shadowSignature(terrain, nbMesh, posed, cx, cy, vw, vh, battleToken,shadowAnimations)
-  -- a staged fight's pics move every frame the animation does, and the sun
-  -- has to follow them (VR frames only; see render)
-  if not ShadowMap.stale(sig) then return end
-
-  -- THE SUN DOES NOT HAVE TO FOLLOW EVERY FOOTSTEP.
-  --
-  -- The stamp above is honest and it is also why this pass runs on every
-  -- single frame: it stales on any caster moving, and in a town or a wood
-  -- somebody is always mid-step. Measured standing still in Petalburg
-  -- Woods with nothing left to build: 202 sun passes in 202 rendered
-  -- frames, 53% of VoxelScene.render, to re-record a terrain mesh that had
-  -- not changed by one vertex.
-  --
-  -- So BALANCED rate-limits the CAST half and only the cast half. The
-  -- static half (camera, view, sun angle, first-person head, the meshes
-  -- themselves) still forces a redraw on the frame it changes, because a
-  -- map fitted to last frame's frustum is a wrong shadow rather than a late
-  -- one -- see shadowStaticTerms. What is delayed is strictly "somebody
-  -- took a step", and at the shipped rate of 3 the worst case is a walker's
-  -- own shadow two frames behind their feet, which at walking pace is under
-  -- two world pixels.
-  --
-  -- nil at HIGH -- the branch is skipped entirely and this function behaves
-  -- exactly as it did, redraw for redraw.
-  local hz = Tier.caps().shadowHz
-  if hz and hz > 1 then
-    local st = shadowStaticSignature(terrain, nbMesh, cx, cy, vw, vh,shadowAnimations)
-    shadowStale = shadowStale + 1
-    if ShadowMap.hasFrame() and st == shadowLastStatic and (shadowStale - shadowLastCast) < hz then
-      Perf.count("shadow.throttled")
-      return
-    end
-    shadowLastStatic, shadowLastCast = st, shadowStale
-  end
-
-  Perf.count("shadow.cast")
-  local tSun = Perf.now()
-  if not ShadowMap.begin(cx, cy, vw, vh) then return end
-
+local function drawStaticCasters(state,terrain,nbMesh,atlasFor,water,nbWater)
   ShadowMap.draw(terrain, atlasFor(state.map), nil)
   for i, nb in ipairs(state.neighbors or {}) do
     ShadowMap.draw(nbMesh[i], atlasFor(nb.map),
@@ -2511,6 +2463,8 @@ local function castShadows(state, terrain, nbMesh, posed, cx, cy, vw, vh,
     ShadowMap.draw(ChunkMesher.flowers(nb.map), atlasFor(nb.map),
                    ShadowMap.snug(Mat4.translate(nb.ox, 0, nb.oy)))
   end
+end
+local function drawMovingCasters(state,posed,atlasFor,battleCards)
   -- From here down it is the CAST, marked as such in the map (see
   -- ShadowMap.sprites) so water can decline them: everything the world casts
   -- still shades a lake, a silhouette of somebody standing beside it does
@@ -2557,6 +2511,85 @@ local function castShadows(state, terrain, nbMesh, posed, cx, cy, vw, vh,
     ShadowMap.draw(BattleBillboard.mesh(), card.tex, ShadowMap.snug(card.model))
   end
   ShadowMap.sprites(false)
+
+end
+local function shadowPoseFrame(p)
+  return frameFor(p.sprite.def,viewFacing(p),p.phase,p.flip,p.frame)
+end
+local function castAnchoredShadows(state,terrain,nbMesh,posed,cx,cy,vw,vh,atlasFor,water,nbWater,battleCards,battleToken,animation)
+  if not ShadowMap.dynamicAvailable()then return false end
+  local plan=WorldShadows.prepare(state,terrain,nbMesh,water,nbWater,posed,cx,cy,vw,vh,battleToken,animation,FirstPerson.signature(),atlasFor,shadowPoseFrame)
+  local tSun=Perf.now()
+  if plan.static then
+    if not ShadowMap.begin(cx,cy,vw,vh,plan.bounds)then return false end
+    drawStaticCasters(state,terrain,nbMesh,atlasFor,water,nbWater)
+    ShadowMap.finish(plan.staticToken);WorldShadows.commitStatic()
+    Perf.count("shadow.static.cast")
+  end
+  if plan.dynamic then
+    if not ShadowMap.beginDynamic()then return false end
+    drawMovingCasters(state,posed,atlasFor,battleCards)
+    ShadowMap.finishDynamic();WorldShadows.commitDynamic()
+    Perf.count("shadow.dynamic.cast")
+  end
+  Perf.add("VoxelScene.castShadows",tSun)
+  return true
+end
+local shadowAnimations={}
+local function castShadows(state, terrain, nbMesh, posed, cx, cy, vw, vh,
+                           atlasFor, water, nbWater, battleCards, battleToken)
+  if not ShadowMap.available() then return end
+  shadowAnimations[1]=TerrainAtlas.shadowStep(state.map)
+  local count=1
+  for i,nb in ipairs(state.neighbors or {})do
+    count=count+1;shadowAnimations[count]=nbMesh[i] and TerrainAtlas.shadowStep(nb.map) or 0
+  end
+  for i=count+1,#shadowAnimations do shadowAnimations[i]=nil end
+  if V.shadowWorldAnchor~=false and castAnchoredShadows(state,terrain,nbMesh,posed,cx,cy,vw,vh,
+      atlasFor,water,nbWater,battleCards,battleToken,shadowAnimations)then return end
+  ShadowMap.useLegacy()
+  local sig = shadowSignature(terrain, nbMesh, posed, cx, cy, vw, vh, battleToken,shadowAnimations)
+  -- a staged fight's pics move every frame the animation does, and the sun
+  -- has to follow them (VR frames only; see render)
+  if not ShadowMap.stale(sig) then return end
+
+  -- THE SUN DOES NOT HAVE TO FOLLOW EVERY FOOTSTEP.
+  --
+  -- The stamp above is honest and it is also why this pass runs on every
+  -- single frame: it stales on any caster moving, and in a town or a wood
+  -- somebody is always mid-step. Measured standing still in Petalburg
+  -- Woods with nothing left to build: 202 sun passes in 202 rendered
+  -- frames, 53% of VoxelScene.render, to re-record a terrain mesh that had
+  -- not changed by one vertex.
+  --
+  -- So BALANCED rate-limits the CAST half and only the cast half. The
+  -- static half (camera, view, sun angle, first-person head, the meshes
+  -- themselves) still forces a redraw on the frame it changes, because a
+  -- map fitted to last frame's frustum is a wrong shadow rather than a late
+  -- one -- see shadowStaticTerms. What is delayed is strictly "somebody
+  -- took a step", and at the shipped rate of 3 the worst case is a walker's
+  -- own shadow two frames behind their feet, which at walking pace is under
+  -- two world pixels.
+  --
+  -- nil at HIGH -- the branch is skipped entirely and this function behaves
+  -- exactly as it did, redraw for redraw.
+  local hz = Tier.caps().shadowHz
+  if hz and hz > 1 then
+    local st = shadowStaticSignature(terrain, nbMesh, cx, cy, vw, vh,shadowAnimations)
+    shadowStale = shadowStale + 1
+    if ShadowMap.hasFrame() and st == shadowLastStatic and (shadowStale - shadowLastCast) < hz then
+      Perf.count("shadow.throttled")
+      return
+    end
+    shadowLastStatic, shadowLastCast = st, shadowStale
+  end
+
+  Perf.count("shadow.cast")
+  local tSun = Perf.now()
+  if not ShadowMap.begin(cx, cy, vw, vh) then return end
+
+  drawStaticCasters(state,terrain,nbMesh,atlasFor,water,nbWater)
+  drawMovingCasters(state,posed,atlasFor,battleCards)
 
   ShadowMap.finish(sig)
   if V.numericShadowStamps~=false then shadowFrame.commit() end
