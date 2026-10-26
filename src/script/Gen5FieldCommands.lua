@@ -451,6 +451,17 @@ function M.install(L)
   L.bwdaycarename = function(ins, s) emit(s, { "g4_bw_daycare_name", ins.args[1], ins.args[2] }) end
   L.bwcry = function(ins, s) emit(s, { "g4_play_cry", ins.args[1] }) end
   L.bwcardlevel = L.bwcardlevel or function(ins, s) emit(s, { "g4_bw_card_level", ins.args[1] }) end
+  -- THE EYE SCRIPT'S APPROACH OPS IN A CACHE IMPORTED BEFORE THEY WERE NAMED
+  -- (Gen5ScriptLink 0x080 / 0x081 / 0x083): such a cache keeps them as
+  -- `bw_080` / `bw_081` / `bw_083` WITHOUT their operands. They occur only in
+  -- member 863's S0D51, whose bytes are (Black, read from the ROM)
+  --   @3411 `83 00 10 80`  0x083 0x8010    @3598 `80 00 00 00`  0x080 0
+  --   @3713 / @3717 / @3858 / @3884  0x080 0, 0x080 1, 0x080 0, 0x080 1
+  -- so 0x083's destination is 0x8010 and 0x080's slots come in call order,
+  -- which g4_start_approach does when handed no slot.
+  L.bw_083 = L.bw_083 or function(_, s) emit(s, { "g4_approach_type", 0x8010 }) end
+  L.bw_080 = L.bw_080 or function(_, s) emit(s, { "g4_start_approach" }) end
+  L.bw_081 = L.bw_081 or function() end
 end
 
 return M
