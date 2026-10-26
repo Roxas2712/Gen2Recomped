@@ -676,6 +676,7 @@ function Data:publishGen2MapMetadata()
   for _, def in pairs(self.maps) do
     if type(def) == "table" then
       if def.generation == nil then def.generation = 2 end
+      require("src.render.Gen2PaletteContext").publish(def)
       if def.outdoor == nil then
         local env = def.environment
         if type(env) == "number" and env % 1 == 0 and env >= 1 and env <= 7 then
@@ -747,6 +748,7 @@ function Data:publishGen2Palettes()
   self.gen2Palettes = setmetatable({}, {
     __index = function(_, id) return gen2PaletteRows(tilesets[id]) end,
   })
+  require("src.render.Gen2PaletteContext").bind(self.gen2Palettes, self)
   return true
 end
 

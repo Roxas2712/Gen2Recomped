@@ -493,6 +493,19 @@ local GEN2_TOD_ALIAS = {
 local GEN2_MAP_PALETTE_ROW = {
   [1] = "DAY", [2] = "NITE", [3] = "MORN", [4] = "NITE",
 }
+local gen2FlashUsed=false
+local gen2CurrentDef
+function PaletteFX.setGen2FlashUsed(on)gen2FlashUsed=on==true end
+function PaletteFX.effectiveGen2Tod()return darkWorld and 'DARK'or gen2Tod end
+-- A neighbour uses its own header, the native hooked clock and the same Flash
+-- presentation state. It must not inherit the current map's forced DAY row.
+function PaletteFX.gen2RowFor(def)
+  if def~=nil and def==gen2CurrentDef then return PaletteFX.effectiveGen2Tod()end
+  local id=require('src.render.Gen2PaletteContext').id(def)
+  if id==nil then return PaletteFX.effectiveGen2Tod() end
+  if id==4 then return gen2FlashUsed and 'NITE'or 'DARK'end
+  return GEN2_MAP_PALETTE_ROW[id]or gen2ClockTod
+end
 
 local function gen2RecomputeTod()
   local key = GEN2_MAP_PALETTE_ROW[gen2MapPalette] or gen2ClockTod
@@ -510,7 +523,8 @@ end
 
 -- Called on every map change with the map's PALETTE_* byte (0 = AUTO).
 -- Same contract as setGen2Tod: true means the atlases are stale.
-function PaletteFX.setGen2MapPalette(palette)
+function PaletteFX.setGen2MapPalette(palette, mapDef)
+  gen2CurrentDef=type(mapDef)=='table'and mapDef or nil
   local value = tonumber(palette) or 0
   if value < 0 or value > 7 then value = 0 end
   -- PALETTE_5..7 are unused slots that ReplaceTimeOfDayPals maps to $E4, the
@@ -566,6 +580,11 @@ end
 --              a caller that has no flash flag to offer gets the engine's own
 --              darkWorld state, which already folds in save.flashLit.
 function PaletteFX.daytimeFor(mapDef, hour, flashUsed)
+  local id=require('src.render.Gen2PaletteContext').id(mapDef)
+  if id~=nil then
+    if id==4 then return flashUsed==true and 'NITE'or 'DARK'end
+    return GEN2_MAP_PALETTE_ROW[id]or PaletteFX.clockDaytime(hour)
+  end
   -- Darkness wins outright and the clock stops mattering, which is what
   -- .NeedsFlash does: an unlit cave is the DARKNESS row at noon.
   if flashUsed ~= true and darkWorld then return "DARK" end
@@ -610,9 +629,18 @@ function PaletteFX.bgSet(data, mapDef, daytime)
   end
   if type(rows) ~= "table" then return nil end
 
-  local row = GEN2_TOD_ALIAS[tostring(daytime or ""):upper()] or gen2Tod
+  local row = GEN2_TOD_ALIAS[tostring(daytime or ""):upper()] or PaletteFX.gen2RowFor(mapDef)
   local set = rows[row] or rows.DAY
   if type(set) ~= "table" or set[1] == nil then return nil end
+  local context=require('src.render.Gen2PaletteContext')
+  local owner,bound=context.owner(data)
+  if bound and not owner then return nil end
+  if owner then
+    local _,special=context.special(owner,mapDef,tilesetId,row)
+    if special then set=special end
+    local tileset=owner.tilesets and owner.tilesets[tilesetId]
+    set=context.withRoof(set,context.roof(owner,mapDef,tileset,row))
+  end
   return set, row
 end
 
