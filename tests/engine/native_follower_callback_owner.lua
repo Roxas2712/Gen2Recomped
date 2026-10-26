@@ -14,7 +14,7 @@ local run=T.sdk.loadMods({'mods/follower_owner'},{fs=T.sdk.memfs({
  local F=require('src.compat.game3.Follower')
  local renderer={draw=function()end}
  mod.exports.renderer=renderer
- mod.hooks:wrap('world.follower.spawn',function(_,game,world)
+ mod.hooks:wrap("world.follower.spawn",function(_,game,world)
   mod.exports.seenGame,mod.exports.seenWorld=game,world
   F.current(world).sprite=renderer
   return true
@@ -38,7 +38,7 @@ local world={isOverworld=true,map=require('src.world.Map').new(def,data.tilesets
 Native.data,Native.save,Native.overworld,Native.mods,Native.stack=data,{party={}},world,run.loader,{states={world}}
 local api=run.loader.exports.follower_owner
 T.check(Facade._usesCallbacks('follower_owner'),'follower-only namespace establishes ownership')
-T.eq(run.loader.hooks:call('world.follower.spawn',function()return false end,Native,world),true)
+T.eq(run.loader.hooks:call("world.follower.spawn",function()return false end,Native,world),true)
 T.eq(api.seenGame,Native,'native callback game is not converted')
 T.eq(api.seenWorld,world,'native callback world identity is retained')
 local renderer,owned=Source.renderer(npc)

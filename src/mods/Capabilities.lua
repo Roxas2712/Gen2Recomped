@@ -12,8 +12,8 @@ local function add(surface, generations, names)
   end
 end
 
-add("hooks","123","battle.caught_marker_visible world.follower.spawn")
-add("hooks","12345","battle.menu_auxiliary")
+add("hooks", "123", "battle.caught_marker_visible world.follower.spawn")
+add("hooks", "12345", "battle.menu_auxiliary")
 
 -- Shared simulation, world, input, rendering and lifecycle code. A callback
 -- need not fire on every action (e.g. an always-hit move skips accuracy).
