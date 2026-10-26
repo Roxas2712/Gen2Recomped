@@ -46,6 +46,15 @@ local function retireBattlePresentation()
   if first then error(first,0)end
 end
 
+-- Only an already-loaded field service owns resources. Retire it after
+-- wrapper unwind without importing a compatibility module on ordinary boot.
+local function retireFieldEffects()
+  for _,name in ipairs({'src.core.game3.field_effects','src.core.game3.field_move_show_mon'})do
+    local service=package.loaded[name]
+    if type(service)=='table' and type(service.release)=='function' then service.release()end
+  end
+end
+
 local MOD_STATE_FILE = "mod_state.lua" -- legacy migration only
 
 -- walk a dotted target path without creating anything; the base view a
@@ -1210,6 +1219,8 @@ end
 -- migration it took goes with them.  The journal only exists around an
 -- entry chunk; a later failure (script validation) purges every registry.
 function Loader:_rollback(modId)
+  local move=package.loaded['src.core.game3.field_move_show_mon']
+  if move and move.cancelOwner then pcall(move.cancelOwner,modId)end
   for name in pairs(self.journal or self.content) do
     self.content[name]:rollback(modId)
   end
@@ -1338,6 +1349,7 @@ function Loader:load(data)
   ModSeams.unwindAll()
   retireCompatibilityCollision()
   retireBattlePresentation()
+  retireFieldEffects()
   self.baseData = data
   -- every registry folds against the pristine view of its Data target;
   -- resolution is lazy so optional namespaces may appear later
@@ -1679,6 +1691,7 @@ function Loader.teardown()
   local undone = select(1, ModSeams.unwindAll())
   retireCompatibilityCollision()
   retireBattlePresentation()
+  retireFieldEffects()
   pcall(function()
     Runtime.install(Events.new(), Hooks.new(), nil)
     Runtime.currentMod = nil
