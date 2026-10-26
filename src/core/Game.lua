@@ -2140,9 +2140,16 @@ function Game:restoreSave(loaded, recovered)
   -- A SAVE MADE INSIDE A BATTLE TOWER CHALLENGE ("Rest") continues from the
   -- lobby spot BT_FUNC_SET_COMMUNICATION_CLUB_ACCESSIBLE marked
   -- (FieldTask_LoadSavedGameMap's special location)
+  -- ...which is a WALK IN there, not a continue: SystemFlag_CheckCommunicationClubAccessible
+  -- takes FieldMapChange_UpdateGameData + CreateObjects (ON_TRANSITION and all)
+  local specialLocation = false
   if require("src.core.GameVersion").get() == "platinum" then
-    require("src.script.Gen4BattleTowerCommands").applySpecialLocation(loaded)
+    specialLocation = require("src.script.Gen4BattleTowerCommands").applySpecialLocation(loaded) and true or false
   end
+  -- ...and HeartGold / SoulSilver's: FLAG_UNK_966 (the communication club's
+  -- desk, the Battle Tower, the Hall of Fame) walks in at the dynamic warp
+  -- (pokeheartgold FieldTask_ContinueGame_Normal; src/world/Gen4HgssContinue.lua)
+  if require("src.world.Gen4HgssContinue").apply(loaded) then specialLocation = true end
   -- ...and Emerald's: a SaveGameFrontier save continues in the lobby
   if require("src.core.GameVersion").get() == "emerald" then
     -- Pokemon a Frontier challenge stranded before LoadPlayerParty kept its
@@ -2158,7 +2165,7 @@ function Game:restoreSave(loaded, recovered)
   -- this boot is a CONTINUE, not a walk in: a DS field restores its objects
   -- and temp vars from the save and skips ON_TRANSITION (OverworldController
   -- setMap's gen4Continuing)
-  if self.overworld then self.overworld.continuingSave = true end
+  if self.overworld then self.overworld.continuingSave = not specialLocation end
   self.stack:push(self.overworld, loaded.player.map,
                   loaded.player.x, loaded.player.y, loaded.player.facing)
   -- Platinum's Journal (FieldTask_LoadSavedGameMap): opened first when two
