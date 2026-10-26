@@ -120,3 +120,11 @@ collision and player regressions pass as well. A real manager-driven open-3D
 FireRed bedroom run now renders upright at 1024x768 with one visible player
 and completes a native step. First/third cameras, normal-view actor occlusion
 and complete room/gameplay acceptance remain under investigation.
+
+`step_events.busy()` observes the native field admission after an arrival.
+Native scripts, transitions and screens remain the owners; the adapter stores
+no queue and cannot consume, flush or advance poison, hatch or repel counters.
+617 checks cover all five editions, same-tick screen acquisition, retirement
+and repeated reads, with 261 player and 642 session checks on the fork. The
+composed public baseline passes the same 617 observations and 270 player
+checks. Real first/third movement qualification continues separately.
