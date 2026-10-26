@@ -630,7 +630,8 @@ do
   local game = { data = Data, save = save, stack = stack }
   check(bindGame(OW.trySurf, game), "trySurf binds a test Game")
   check(bindGame(OW.partyKnows, game), "partyKnows binds the same Game")
-  local ow = setmetatable({ player = { facing = "down" } }, { __index = OW })
+  local ow = setmetatable({ map = MapLoader.load(Data, "PALLET_TOWN"),
+    player = { facing = "down" } }, { __index = OW })
   ow.stepForwardOrCrossEdge = function(_, dir) ow.stepped = dir end
 
   local closed = false

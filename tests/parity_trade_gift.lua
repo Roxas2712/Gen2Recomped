@@ -116,9 +116,9 @@ check(not seen[3], "unused CHIKUCHIKU trade (index 3) stays unwired")
 -- === harness: run a talk script headless, recording show_text ids ===
 local shown = {}
 local origShow = Commands.show_text
-Commands.show_text = function(ctx, textId, subs)
+Commands.show_text = function(ctx, textId, subs, opts)
   table.insert(shown, textId)
-  return origShow(ctx, textId, subs)
+  return origShow(ctx, textId, subs, opts)
 end
 
 -- pressFn returns the Input.pressed table for this frame (default: A)

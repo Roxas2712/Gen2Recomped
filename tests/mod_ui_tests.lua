@@ -601,6 +601,19 @@ check(Theme.cursor == 0xAA, "field.theme restyles the cursor glyph")
 Theme.cursor = 0xED
 
 -- ------- branding reads from field.*
+-- The image constructor is a headless recorder; declare only this section's
+-- fixture files as present, as the real title now checks existence first.
+local brandingInfo = love.filesystem.getInfo
+local brandingPaths = {
+  ["assets/logo/pokemon_logo.png"] = true,
+  ["assets/generated/title/pokemon_logo.png"] = true,
+  ["assets/generated/title/red_version.png"] = true,
+  ["mods/x/logo.png"] = true, ["mods/x/ribbon.png"] = true,
+}
+love.filesystem.getInfo = function(path)
+  if brandingPaths[path] then return { type = "file" } end
+  return brandingInfo(path)
+end
 local TitleState = require("src.ui.TitleState")
 local tgame = { data = { field = { title = {
   cycleSpecies = { "MEW" }, music = "My_Song", copyrightText = "HELLO",
@@ -647,6 +660,7 @@ check(title.logo and title.logo.path
 check(title.version and title.version.path
   == "assets/generated/title/red_version.png",
   "the shipped version ribbon loads")
+love.filesystem.getInfo = brandingInfo
 
 -- issue #128: title SGB zones must resolve Blue's LOGO1 (blue ribbon),
 -- not Red's, when the ROM pack carries Blue SuperPalettes.  Color 0 is
