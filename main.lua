@@ -1241,12 +1241,14 @@ end
 function love.quit()
   local jobs=package.loaded['src.mods.Job']
   if editorMode and EditorApp.quit then
-    local abort=EditorApp.quit()
-    if not abort then
-      if jobs then jobs.unloadAll() end
-      WindowFrame.shutdown()
-    end
-    return abort -- return true to abort quit
+    if EditorApp.quit() then return true end -- unsaved editor veto
+  end
+  -- next() retains Gen2's native process exit. A portable launcher mod may
+  -- override the decision; keep workers alive when returning to the launcher.
+  if require("src.core.PlatformHooks").quitToLauncher(function() return false end) then
+    editorMode, EditorApp, TouchEditor = false, nil, nil
+    returnToLauncher()
+    return true
   end
   if jobs then jobs.unloadAll() end
   WindowFrame.shutdown()

@@ -106,9 +106,19 @@ function M.fixture(root, backend, version)
     dofile(root .. "/tests/enemy_actions/fixture.lua").new(root, backend, version, 3, "unified", configure)
   return f
 end
-function M.run(root, backend, version)
+function M.run(root, backend, version, options)
+  options = options or {}
   local native = backend == "gen1"
   local f = M.fixture(root, backend, version)
+  if options.choiceBand and not native then
+    f.data.items.ITEM_186 = {
+      id = "ITEM_186",
+      index = 186,
+      name = "CHOICE BAND",
+      holdEffect = "CHOICE_BAND",
+      holdEffectParam = 0,
+    }
+  end
   local T, Copy, rows = f.T, require("src.mods.Merge").deepCopy, {}
   local events, draws = {}, {}
   local stop = f.e.api.events:on("battle.battler_switched", function(e)
@@ -149,6 +159,12 @@ function M.run(root, backend, version)
     for id = 0, double and 3 or 1 do
       local a = at(b, id)
       a.mon.nickname = "P" .. id
+      if options.choiceBand then
+        a.mon.item = native and 186 or "ITEM_186"
+        if native then
+          a.item = 186
+        end
+      end
       if native then
         a.mon.moves, a.mon.pp, a.mon.maxPp = { 226, 33 }, { 20, 10 }, { 20, 10 }
         a.type1, a.type2, a.ability, a.mon.ability = 0, nil, 0, 0
@@ -197,6 +213,7 @@ function M.run(root, backend, version)
       last = a.lastMove and (native and a.lastMove or f.data.moves[a.lastMove].index),
       disabled = a.disabledTurns or a.expDisabledTurns,
       taunt = a.tauntTurns or a.expTauntedTurns,
+      choice = options.choiceBand and a.choicedMove or nil,
     }
   end
   for _, double in ipairs({ false, true }) do
@@ -321,6 +338,13 @@ function M.run(root, backend, version)
           T.check(at(b, id) ~= old, "native Baton Pass replaces its own slot")
           T.eq(at(b, id).stages.attack, 2, "attack stage is inherited")
           T.eq(at(b, id).stages.defense, -1, "defense stage is inherited")
+        end
+        if options.choiceBand then
+          T.eq(
+            at(b, id).choicedMove,
+            kind == "none" and 226 or nil,
+            "actual successful Baton Pass skips binding; failed Baton Pass binds its own move"
+          )
         end
         rows[#rows + 1] = {
           double = double,

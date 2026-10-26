@@ -1,0 +1,456 @@
+{
+  "status": "passed",
+  "upstream_base": "ed5189c247ee7a2ccca666784e21fd4fba8df781",
+  "feature_ref": "1f9af978ca4935a5df31a90b3d86596748518e58",
+  "integration_ref": "70c49224ef5951d0122d8f2795c5c1bbb503b257",
+  "gen1_readonly_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+  "source_tree": "e8c52f390f854b2c8586cff23cc8a889dede3768",
+  "tests_tree": "b936076d6b0506a3bed62c70eefa12ca5d1d45aa",
+  "engine_tests_tree": "ad646b6c9619363e48549699e83162de5a8e43e3",
+  "main_blob": "a939e9628652052f9dffb2cb7ae834de2eb697ea",
+  "feature_targeted_checks": 337,
+  "integration_targeted_checks": 341,
+  "existing_upstream_failed_suites": 11,
+  "existing_failure_lines_identical": true,
+  "baseline_new_failed_assertions": 75,
+  "native_contracts": {
+    "workers": 12,
+    "paired_runs": 6,
+    "paired_complete_typed_rows": 132,
+    "typed_equal": true,
+    "log_sha256": {
+      "gen1-red-1-native": "6a40b3aa951c04a184214ec96219d758ef45612e8c70528a53eee72db311fede",
+      "gen1-red-2-native": "e13e5cfd3da042d23df7575e560133b5f8f804be4b7bdd6194e74ceea61c513c",
+      "gen1-blue-1-native": "b347fca5ef20d083b34dc99d974363acfd2ff33407ef4b294bbd90f166c887ab",
+      "gen1-blue-2-native": "ba09b87e203c1e5baa79369dc6a4882f06d6ca6403e280b976cc0e51c76dac50",
+      "gen1-yellow-1-native": "8a4eec85dffea0103186585fd1df201015bf49553e80035bcc2fc5c3674e657d",
+      "gen1-yellow-2-native": "f8cb7481a7e28ef4c5a390f4a17ef5e1799633c81fa8257e11d5af785a3ebb4f",
+      "gen2-red-1-native": "39b0e441a8322c5429f012a779439cc8adb19abaf0b2aa69f17f7b82bb7ac72d",
+      "gen2-red-2-native": "f7de18013c031a0b1b8779a3693c43e59ef369e90e27db26d39133aa4c55419f",
+      "gen2-blue-1-native": "8e0ce0f605eec339800b7309138d0cfd11c3bf3abe1842d9d43187df39dff1cc",
+      "gen2-blue-2-native": "cc79d7bb15ae5b2706a30fa8f42118b09c507b13c3d732168110a995892850b8",
+      "gen2-yellow-1-native": "fa28e233170886c57923902985a8a9fca4594021db4b8ba0a6282877e173046c",
+      "gen2-yellow-2-native": "adce98d941e218a207cdd681ebe21ab7f98fdb878ab13ad19a9633caec6ea170"
+    }
+  },
+  "unified_contracts": {
+    "workers": 24,
+    "paired_runs": 12,
+    "paired_complete_typed_rows": 264,
+    "typed_equal": true,
+    "log_sha256": {
+      "gen1-red-1-native": "4b17dcb9b480dbe2953ace419c6c363eed6541d1cfc72866a70539a687757000",
+      "gen1-red-2-native": "127a21f1a8e25accbbb5f3acd4ddba996c212137b073e4db9967de9aa196d31f",
+      "gen1-red-2-unified": "3ad34dba9f795c30416aa39fedac3e03edf046609e167fe280342f7a2b83004b",
+      "gen1-red-3-unified": "cfd96daeccc1550e9a7ba71ee974a491abf14508bcc8273180f86b948e2f9030",
+      "gen1-blue-1-native": "1ee1387fd713badb166e3892a54d5ee8e1eef68f80771be6555d061c05bfff0d",
+      "gen1-blue-2-native": "bdd70aba43977e9c61071be9ac9dff9576acac523a1b6f34243adc58688eb8f1",
+      "gen1-blue-2-unified": "8a4eec85dffea0103186585fd1df201015bf49553e80035bcc2fc5c3674e657d",
+      "gen1-blue-3-unified": "2603aab2f56694949a772bcca61dbef205b6e9380b1b67989446be8b450e7dfb",
+      "gen1-yellow-1-native": "1d4409af85056c4ea74b1e218de97b88b2fb4678a491762f5d9e95f60de1e946",
+      "gen1-yellow-2-native": "236de0d14710b53d25837ef2a53a72c587e8ddbfd9f9719f52ad28a8df8aaa76",
+      "gen1-yellow-2-unified": "f5ac13163b2fce5955b56cbee33ec5d7b9945dfb7524426c74cdf60126f3aeb0",
+      "gen1-yellow-3-unified": "67e0873e0d03d25b2b614b281612fc8e5b4972f59e166a8e2e7b16b5ab601e8e",
+      "gen2-red-1-native": "6342fc2d6eae6e994f7b3138f71e25083c1b3144aa85c30dc19cd8b993bddb57",
+      "gen2-red-2-native": "93e304d4c18d86346f12672868beef7fd472673da1358f0a5f04150984ab851b",
+      "gen2-red-2-unified": "664d94721256a2dce0b6fc492edfe7b7f1d6e98cc105a5438f029395cafcf44e",
+      "gen2-red-3-unified": "346a32803a1c4513503b07d79c7f308cdee3a0da2919dc59f58e8dca4529dc67",
+      "gen2-blue-1-native": "53bb553a2428e0f288e9775b1e263a1b4fd2aab0fc67adfc8253fe15ca76ef7f",
+      "gen2-blue-2-native": "2e996b8cb56e9d6e85edbd75773d2c70940620521fd7535246989c9820acadc6",
+      "gen2-blue-2-unified": "6db0f8df49c9d79d4a0755115c79b26a5db66751c20db937ee5fc7c4e75415fd",
+      "gen2-blue-3-unified": "c36af51a3d4107d93fc2a38d041b50266a60d2af7d2f036934026d966a5ed26d",
+      "gen2-yellow-1-native": "60463758f3094eafc64cdcab4ac22cf09759195ef88f5f418824544a82c0883c",
+      "gen2-yellow-2-native": "93ebc43e89923739cf10eb98702f53b3fb7a085c12bef21bbc623ae61b563d5a",
+      "gen2-yellow-2-unified": "295f1991a6c92973249ea62655719417d87c1ef8407e255f8f48313836438e70",
+      "gen2-yellow-3-unified": "1cb7e1bbbfe8e8c54c21adc51954125af200f9da434d95fb869d6a35e37bd508"
+    }
+  },
+  "negative_controls": [
+    {
+      "name": "bypassed_store_hook",
+      "exit": 1,
+      "failures": [
+        "FAIL forward dispatches once for party (got 0, want 1)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL skip dispatches once for party (got 0, want 1)",
+        "FAIL skip controls actual nickname UI queue (got 1, want 0)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL supplied dispatches once for party (got 0, want 1)",
+        "FAIL supplied reaches stored nickname (got nil, want SCOUT)",
+        "FAIL supplied controls actual nickname UI queue (got 1, want 0)",
+        "FAIL caught event sees supplied name before UI (got nil, want SCOUT)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL ten bytes dispatches once for party (got 0, want 1)",
+        "FAIL ten bytes reaches stored nickname (got nil, want PORTABLE11)",
+        "FAIL ten bytes controls actual nickname UI queue (got 1, want 0)",
+        "FAIL caught event sees supplied name before UI (got nil, want PORTABLE11)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL UTF8 within limit dispatches once for party (got 0, want 1)",
+        "FAIL UTF8 within limit reaches stored nickname (got nil, want Caf\u00e9)",
+        "FAIL UTF8 within limit controls actual nickname UI queue (got 1, want 0)",
+        "FAIL caught event sees supplied name before UI (got nil, want Caf\u00e9)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL empty dispatches once for party (got 0, want 1)",
+        "FAIL empty controls actual nickname UI queue (got 1, want 0)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL true dispatches once for party (got 0, want 1)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL nil dispatches once for party (got 0, want 1)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL zero dispatches once for party (got 0, want 1)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL table dispatches once for party (got 0, want 1)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL error dispatches once for party (got 0, want 1)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL forward dispatches once for box (got 0, want 1)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL skip dispatches once for box (got 0, want 1)",
+        "FAIL skip controls actual nickname UI queue (got 1, want 0)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL supplied dispatches once for box (got 0, want 1)",
+        "FAIL supplied reaches stored nickname (got nil, want SCOUT)",
+        "FAIL supplied controls actual nickname UI queue (got 1, want 0)",
+        "FAIL caught event sees supplied name before UI (got nil, want SCOUT)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL ten bytes dispatches once for box (got 0, want 1)",
+        "FAIL ten bytes reaches stored nickname (got nil, want PORTABLE11)",
+        "FAIL ten bytes controls actual nickname UI queue (got 1, want 0)",
+        "FAIL caught event sees supplied name before UI (got nil, want PORTABLE11)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL UTF8 within limit dispatches once for box (got 0, want 1)",
+        "FAIL UTF8 within limit reaches stored nickname (got nil, want Caf\u00e9)",
+        "FAIL UTF8 within limit controls actual nickname UI queue (got 1, want 0)",
+        "FAIL caught event sees supplied name before UI (got nil, want Caf\u00e9)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL empty dispatches once for box (got 0, want 1)",
+        "FAIL empty controls actual nickname UI queue (got 1, want 0)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL true dispatches once for box (got 0, want 1)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL nil dispatches once for box (got 0, want 1)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL zero dispatches once for box (got 0, want 1)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL table dispatches once for box (got 0, want 1)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL error dispatches once for box (got 0, want 1)",
+        "FAIL native catch dispatched the consumer arguments",
+        "FAIL supplied nickname retains separate new-species dex page (got 2, want 1)",
+        "FAIL native hook receives exactly mon and context (got nil, want 2)",
+        "FAIL native hook receives original PC recipient (got nil, want table: 0x0101357d08)",
+        "FAIL native context preserves battle identity (got nil, want table: 0x0101356240)",
+        "FAIL native context preserves game identity (got nil, want table: 0x0101356010)",
+        "FAIL priority wrapper controls actual party catch (got nil, want PRIORITY)",
+        "FAIL priority wrapper bypasses native naming UI (got 1, want 0)",
+        "FAIL owner removal preserves unrelated wrapper (got nil, want table: 0x01013648e8)"
+      ],
+      "log_sha256": "9158eba213e62084419041c4a54417500ca1e0b2f3fffe6d7b7fbdf275ebfad2"
+    },
+    {
+      "name": "cloned_recipient",
+      "exit": 1,
+      "failures": [
+        "FAIL supplied reaches stored nickname (got nil, want SCOUT)",
+        "FAIL caught event sees supplied name before UI (got nil, want SCOUT)",
+        "FAIL ten bytes reaches stored nickname (got nil, want PORTABLE11)",
+        "FAIL caught event sees supplied name before UI (got nil, want PORTABLE11)",
+        "FAIL UTF8 within limit reaches stored nickname (got nil, want Caf\u00e9)",
+        "FAIL caught event sees supplied name before UI (got nil, want Caf\u00e9)",
+        "FAIL supplied reaches stored nickname (got nil, want SCOUT)",
+        "FAIL caught event sees supplied name before UI (got nil, want SCOUT)",
+        "FAIL ten bytes reaches stored nickname (got nil, want PORTABLE11)",
+        "FAIL caught event sees supplied name before UI (got nil, want PORTABLE11)",
+        "FAIL UTF8 within limit reaches stored nickname (got nil, want Caf\u00e9)",
+        "FAIL caught event sees supplied name before UI (got nil, want Caf\u00e9)",
+        "FAIL deferred native naming still updates original recipient (got nil, want USER)",
+        "FAIL native hook receives original PC recipient (got table: 0x01032b3a40, want table: 0x01032b20b8)",
+        "FAIL priority wrapper controls actual party catch (got nil, want PRIORITY)",
+        "FAIL owner removal preserves unrelated wrapper (got table: 0x01032c3e60, want table: 0x01032c2cf8)"
+      ],
+      "log_sha256": "57cc04abe7270a0cfb9f734b0e0e61a7e106237b02770062a3f53baa0f786695"
+    }
+  ],
+  "engine_suites": 299,
+  "sdk_suites": 4,
+  "B30": true,
+  "native_gpu": {
+    "gen2": {
+      "ref": "70c49224ef5951d0122d8f2795c5c1bbb503b257",
+      "exit": 0,
+      "metadata": {
+        "vendor": "Apple",
+        "device": "Apple M2",
+        "love": [
+          11,
+          5,
+          0,
+          "Mysterious Mysteries"
+        ],
+        "version": "4.1 Metal - 89.4",
+        "renderer": "OpenGL",
+        "gameVersion": "red"
+      },
+      "result": {
+        "errors": 0,
+        "rows": [
+          {
+            "result": "caught",
+            "destination": "party",
+            "calls": 1,
+            "eventNickname": false,
+            "tag": "party-skip",
+            "questions": 0,
+            "namingScreens": 0,
+            "ballCount": 1,
+            "nickname": false
+          },
+          {
+            "result": "caught",
+            "destination": "party",
+            "calls": 1,
+            "eventNickname": "SCOUT",
+            "tag": "party-supplied",
+            "questions": 0,
+            "namingScreens": 0,
+            "ballCount": 1,
+            "nickname": "SCOUT"
+          },
+          {
+            "result": "caught",
+            "destination": "box",
+            "calls": 1,
+            "eventNickname": "BOXSCOUT",
+            "tag": "box-supplied",
+            "questions": 0,
+            "namingScreens": 0,
+            "ballCount": 1,
+            "nickname": "BOXSCOUT"
+          },
+          {
+            "result": "caught",
+            "destination": "box",
+            "calls": 1,
+            "eventNickname": false,
+            "tag": "box-forward",
+            "questions": 1,
+            "namingScreens": 1,
+            "ballCount": 1,
+            "nickname": "A"
+          },
+          {
+            "result": "caught",
+            "destination": "party",
+            "calls": 0,
+            "eventNickname": false,
+            "tag": "unsubscribe",
+            "questions": 1,
+            "namingScreens": 0,
+            "ballCount": 1,
+            "nickname": false
+          }
+        ]
+      },
+      "captures": {
+        "battle-bag.png": {
+          "sha256": "f78b7c6b2fc77ca6a9b54129689cc4c839221a47e54d7c31e32c5358a2a5ddbe",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "box-forward-question.png": {
+          "sha256": "22424d61d303fad48fc0f148b7bba5e778437a5e45f3a0c7d22cbbe3883e9d0d",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "box-naming-A.png": {
+          "sha256": "aee92b684801f9b2ae06b1e654e7dc579c13b6b6d96e99a4dda325f87d64b698",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "party-supplied.png": {
+          "sha256": "e895fbd22d86bb74b4fe89db318e50a25b61f22cc12b8dee285cf861664c143e",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "unsubscribe-question.png": {
+          "sha256": "22424d61d303fad48fc0f148b7bba5e778437a5e45f3a0c7d22cbbe3883e9d0d",
+          "dimensions": [
+            640,
+            576
+          ]
+        }
+      },
+      "driver_sha256": "8b9c8e2436404a3d90cbd02f719881e91d11dc468cc9b079fc26fe3cec8ebeaf",
+      "log_sha256": "e760dee89f0c5f015738c7369ad058c5b1691985d62c0249e5dd796440431ff2",
+      "rom_sha256": "5ca7ba01642a3b27b0cc0b5349b52792795b62d3ed977e98a09390659af96b7b",
+      "inputs_unchanged": true,
+      "regular_native_import": true,
+      "legacy_migration_disabled": true
+    },
+    "gen1": {
+      "ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+      "exit": 0,
+      "metadata": {
+        "vendor": "Apple",
+        "device": "Apple M2",
+        "love": [
+          11,
+          5,
+          0,
+          "Mysterious Mysteries"
+        ],
+        "gameVersion": "red",
+        "renderer": "OpenGL",
+        "version": "4.1 Metal - 89.4"
+      },
+      "result": {
+        "rows": [
+          {
+            "questions": 0,
+            "result": "caught",
+            "nickname": false,
+            "calls": 1,
+            "tag": "party-skip",
+            "destination": "party",
+            "ballCount": 1,
+            "eventNickname": false,
+            "namingScreens": 0
+          },
+          {
+            "questions": 0,
+            "result": "caught",
+            "nickname": "SCOUT",
+            "calls": 1,
+            "tag": "party-supplied",
+            "destination": "party",
+            "ballCount": 1,
+            "eventNickname": "SCOUT",
+            "namingScreens": 0
+          },
+          {
+            "questions": 0,
+            "result": "caught",
+            "nickname": "BOXSCOUT",
+            "calls": 1,
+            "tag": "box-supplied",
+            "destination": "box",
+            "ballCount": 1,
+            "eventNickname": "BOXSCOUT",
+            "namingScreens": 0
+          },
+          {
+            "questions": 1,
+            "result": "caught",
+            "nickname": "A",
+            "calls": 1,
+            "tag": "box-forward",
+            "destination": "box",
+            "ballCount": 1,
+            "eventNickname": false,
+            "namingScreens": 1
+          },
+          {
+            "questions": 1,
+            "result": "caught",
+            "nickname": false,
+            "calls": 0,
+            "tag": "unsubscribe",
+            "destination": "party",
+            "ballCount": 1,
+            "eventNickname": false,
+            "namingScreens": 0
+          }
+        ],
+        "errors": 0
+      },
+      "captures": {
+        "battle-bag.png": {
+          "sha256": "33c7545f1457bea80adcf98ae35683e96d80d4c0c316bb64a1c06b015a091497",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "box-forward-question.png": {
+          "sha256": "164f81f6cfaa3685c12275f2896cf698488b9f12384ca068c5b284f982539f5c",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "box-naming-A.png": {
+          "sha256": "e474df6d42eadaea155febfc69cf6d15f7decbf41d2d5aa7a5c6e7b76e707ce6",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "party-supplied.png": {
+          "sha256": "fb2c0006b011d2bf69e887a99288a20ab7356f67e321275efea5825133523802",
+          "dimensions": [
+            640,
+            576
+          ]
+        },
+        "unsubscribe-question.png": {
+          "sha256": "164f81f6cfaa3685c12275f2896cf698488b9f12384ca068c5b284f982539f5c",
+          "dimensions": [
+            640,
+            576
+          ]
+        }
+      },
+      "driver_sha256": "8b9c8e2436404a3d90cbd02f719881e91d11dc468cc9b079fc26fe3cec8ebeaf",
+      "log_sha256": "aebeb161a8f4c790bc023440f5ebf00ee5a40ab99118f9070dfb2543358165cc",
+      "rom_sha256": "5ca7ba01642a3b27b0cc0b5349b52792795b62d3ed977e98a09390659af96b7b",
+      "inputs_unchanged": true,
+      "regular_native_import": true,
+      "legacy_migration_disabled": true
+    }
+  },
+  "native_gpu_typed_outcomes_identical": true,
+  "native_capture_count": 10,
+  "raw_report_sha256": {
+    "catch-nickname-feature-full-20261026b": "4d73ec1b04cd98594e34a1049a9c0ece875ace095a3de4b7a5aa16ed98fc2cbe",
+    "catch-nickname-baseline-full-20261026a": "68fec0884e76296ac75a058b3c6754e99360d690278866b3d3e2c4384418008a",
+    "catch-nickname-baseline-targeted-20261026a": "6db9dc1b70ff5ec410cf0e9998b1a6b5344699b929aa3993ee55d6bce92d6c9d",
+    "catch-nickname-native-contracts-20261026b": "d00db1cbcdd3a10035f3bd632ec12d3456e5ae96cec3c11e5080ccde58d4ecdf",
+    "catch-nickname-composed-contracts-20261026a": "602f0de0d565b3b70b8e35103978e3bce70944e7c6706a079be08ba28a7b75de",
+    "catch-nickname-composed-full-20261026a": "30eb2b99971e9eccb4fada23f2e75e9d8be19a96ff72099976519136c32f3727",
+    "catch-nickname-negatives-20261026a": "40d7f69efe5efd9f85f3c2c9724aac3a585cae9705a5ffe3f182fc86d3b85afe",
+    "catch-nickname-gen2-native-gpu-20261026b": "5452c674c51dd2561652d8927ba3587edd7807853b80207e22fae94496baedc5",
+    "catch-nickname-gen1-native-gpu-20261026a": "b104ff836a030e8aa6f98d8d7dbe4d6a5492ff85c308787a5424a2ab8d686113"
+  },
+  "retained_fixture_failures": [
+    "First shared reference run used private Boxes.count/capacity methods absent on Gen1; fixture now reads native methods or constants without changing either engine.",
+    "First Gen2 native driver asserted bag presence before the ordinary queued UI push; driver now waits for that actual bag state, engine/mod unchanged."
+  ],
+  "limits": [
+    "Gen1-only catch decision matches reference availability; other generations retain native behavior.",
+    "Reference-compatible ten-byte string prefix; no new glyph-based nickname normalization contract.",
+    "CPU native/unified cases cover party/PC/new dex/full PC/default UI/identity/rollback; graphics uses imported Red prepared wild battles with actual bag/ball/naming inputs and ordinary return.",
+    "Not whole-mod/playthrough, rendered-pixel equality, controlled FPS or hardware-audio acceptance. Native bag/naming presentation remains host-specific."
+  ],
+  "pull_request": "https://github.com/UNDERdecoded/Gen2Recomped/pull/325",
+  "visually_inspected_captures": 10,
+  "publication_scope": "Gen2Recomped only; Gen1 reference unchanged and read-only.",
+  "public_native_driver": {
+    "sha256": "db8be9e2ec09454bc50bf09fb2c534dc53188553c24774dd9e6cd984a2403dfe",
+    "executed_original_sha256": "8b9c8e2436404a3d90cbd02f719881e91d11dc468cc9b079fc26fe3cec8ebeaf",
+    "stripped_luajit_bytecode_identical": true
+  },
+  "hosted_ci": {
+    "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40349736451",
+    "conclusion": "action_required",
+    "jobs": 0,
+    "scope": "Requires upstream maintainer approval; no jobs executed. Local qualification is separate."
+  }
+}

@@ -144,6 +144,7 @@ end
 function R.new(loader, name, generation, api3)
   local portableEnemyAction = api3 and generation == 3 and name == "battle.enemy_action"
   local identityRoll = name == "shiny.roll" or name == "gender.roll"
+  local portableEnemyAction = api3 and generation == 3 and name == "battle.enemy_action"
   local ids = Ids.new(loader)
   local portable = api3 and Api3Records or nil
   local function readStatus(value)
@@ -314,6 +315,7 @@ function R.new(loader, name, generation, api3)
     local out = shallow(raw)
     local nativeAction = portableEnemyAction and kind == "action" and EnemyMoveChoice.nativeView(raw)
     if nativeAction then
+      EnemyMoveChoice.markPortable(raw)
       local def = moveDef(raw.id)
       local number = def and tonumber(def.index or def.numId)
       if not number and type(raw.id) == "number" then number = raw.id end

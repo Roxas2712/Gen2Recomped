@@ -1330,7 +1330,7 @@ function Loader:_api(mod)
       -- Do not pass loader.fs when it is love.filesystem: that always writes
       -- the OS save directory and leaves modstorage/ on internal storage.
       -- Storage.fsOr routes the live LOVE fs through CacheFs.dataFs.
-      if not storage then storage = ModStorage.new(modId, loader.fs) end
+      if not storage then storage = engineCall(ModStorage.new, modId, loader.fs) end
       return storage
     end
     if key ~= "world" then return nil end
@@ -1404,12 +1404,23 @@ function Loader:_loadMod(mod)
   local path = mod.path .. "/" .. mod.manifest.entry
   local chunk, err = self.fs.load(path)
   if not chunk then error(err or ("unable to load " .. path)) end
-  local api = self:_api(mod)
-  -- Each observation family extends the same public handle. Compose them
-  -- before publishing it or running the entry chunk; none replaces terrain.
-  ActorRenderData.install(api, self)
-  FieldEffectRenderData.install(api, self)
-  SurfMountRenderData.install(api, self)
+  -- A mod whose declared base file never arrived loads fine and then does
+  -- nothing, which from the log looks identical to a mod that is simply
+  -- quiet.  Say which file is missing (src/mods/ModImports.lua).
+  do
+    for _, row in ipairs(ModImports.missing(mod.manifest) or {}) do
+      Logger.warn("[%s] needs %s at %s; import it from the mods panel",
+        mod.manifest.id, tostring(row.entry.name), tostring(row.entry.file))
+    end
+  end
+  -- API construction, including every render observation family, is engine-owned.
+  local api = engineCall(function()
+    local constructed = self:_api(mod)
+    ActorRenderData.install(constructed, self)
+    FieldEffectRenderData.install(constructed, self)
+    SurfMountRenderData.install(constructed, self)
+    return constructed
+  end)
   -- KEEP THE API OBJECT, not only its exports.
   --
   -- `self.exports[id]` has always been the mod's published surface, and that is

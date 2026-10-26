@@ -81,6 +81,7 @@ function StatusRegistry.inflict(battle, target, status, opts)
   Runtime.emit("battle.status_inflicted", {
     battle = battle, target = target, status = opts.nativeGbaSecondary and opts.toxic and "TOX" or status, source = opts.source,
   })
+  if status == "PSN" then require("src.battle.Gen3EffectPresentation").queue(battle, target, "POISON") end
       -- Gen II status berries resolve immediately after the condition lands.
       -- Keep the infliction text first, then append the held-item cure line.
       for _, msg in ipairs(HeldItems.onStatus(battle, target)) do

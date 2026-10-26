@@ -84,7 +84,14 @@ function TurnOrder.firstMover(a, aMove, b, bMove, rng, invertTie, battle, data)
   if require("src.core.GameVersion").isGen3() and battle then
     local pa, pb = priority(aMove), priority(bMove)
     local O, C = require("src.battle.Gen3AIOrder"), require("src.battle.Gen3OrderCore")
-    local sa, sb = O.speed(a, battle, true), O.speed(b, battle, true)
+    local sa, sb
+    if invertTie then
+      sb = O.speed(b, battle, true)
+      sa = O.speed(a, battle, true)
+    else
+      sa = O.speed(a, battle, true)
+      sb = O.speed(b, battle, true)
+    end
     if pa ~= pb then return pa > pb end
     if sa ~= sb then return sa > sb end
     return (C.result(sa, sb, function() return rng(0, 1) end) == 0) ~= (invertTie == true)

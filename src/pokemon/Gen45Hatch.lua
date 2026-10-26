@@ -8,6 +8,7 @@
 
 local Strings = require("src.core.Strings")
 local Gen45Hatch = {}
+local Strings = require("src.core.Strings")
 
 Gen45Hatch.LINES = {
   platinum = { oh = { 213, 76 }, hatched = { 357, 0 }, ask = { 357, 1 } },

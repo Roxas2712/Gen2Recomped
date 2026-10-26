@@ -503,6 +503,28 @@ See [contracts, busy-state checks and generation coverage](world-actions-api.md)
 Calls revalidate the live state and preserve native gameplay paths; the
 field-action adapter explicitly refuses unsupported script-driven cases.
 
+## Process quit decision
+
+`core.quit_to_launcher` receives `(next)` once from `love.quit()`, after any
+unsaved-editor veto. `next()` returns the engine's own decision: Gen2 normally
+returns `false` and exits the process. A wrapper can forward that decision,
+return `false` to explicitly exit, or return `true` to request the existing Lua
+launcher. The launcher path tears down the game mods and keeps process workers
+alive. An accepted editor quit continues through ordinary worker shutdown.
+
+This matches Gen1's hook signature while retaining each engine's default.
+Gen1 may return `true` by default during an interactive game. Cleanup code
+must return `next()` when it intends to preserve native behavior. The hook is
+a quit decision, not a general mod-unload event: an internal launcher command
+or loader teardown does not by itself dispatch it. See `examples/portable_quit`.
+
+ROM-free checks: `luajit tests/engine/quit_to_launcher.lua` and
+`luajit tests/engine/quit_to_launcher_routing.lua`. From either engine checkout,
+run `luajit /path/to/Gen2Recomped/tests/quit_to_launcher/contract.lua
+/path/to/Gen2Recomped red 2 native` (one command). The same probe supports API 1
+and API 2 native callbacks; integrations with the shared callback layer can
+also check API 2 unified and API 3 unified callbacks.
+
 ## Support link (`support`)
 
 A mod can add a link where players can thank its creator: a Ko-fi, Patreon or
@@ -558,3 +580,82 @@ GBA contract and the remaining Gold/DS boundaries.
 
 [Portable charge decisions](portable-charge-required.md) document
 `battle.charge_required`, native first-turn/release rules and remaining PP-policy differences.
+
+### Battle style decision (Gen 1)
+
+`battle.style` wraps the native SHIFT/SET choice before a trainer sends out
+its next Pokemon. `function(next, battle)` returns `"shift"` or `"set"`;
+`next(battle)` reads the saved option without modifying it. Other return
+values fall back to the saved choice. The normal party-count and live-active
+Pokemon gates still apply. The decision is not queried after the last enemy
+faints. Gen 2 and later keep their existing native policy; this hook has the
+same Gen-1 availability as the reference engine.
+
+See `examples/portable_battle_style`. ROM-free checks:
+
+```sh
+luajit tests/engine/battle_style.lua
+luajit tests/engine/trainer_shift_prompt_bug565.lua
+```
+
+## Developer import diagnostics
+
+With `POKEPORT_DEV=1`, undeclared private engine or network imports made by
+mod entry code are reported as advisory permission warnings. Engine-owned
+API construction and lazy storage construction do not require a mod to declare
+`engine_internals`. Entry chunks and returned mod initializers retain their
+normal import attribution, including after an API-construction error. The
+supported-import list and manifest permission declarations are unchanged.
+
+ROM-free regression: `luajit tests/engine/mod_api_require_attribution.lua`.
+
+## Capture nickname decision (Gen 1)
+
+`catch.nickname` receives `(next, mon, ctx)` after a caught Pokemon has been
+placed in the party or a PC box. `ctx` carries `battle`, `game` and the display
+`name`. Return `false` to skip naming, a string to supply a nickname directly,
+or `next(mon, ctx)` to keep the native question. Other return values also keep
+the native question. A supplied string uses the reference's first ten bytes;
+an empty string skips the question while retaining the existing name.
+
+The stored Pokemon keeps its original identity. Full PC storage does not
+invoke the decision. Native dex, capture events and subsequent queue completion
+remain in place. Gen 2 and later retain their current naming behavior and do
+not dispatch this Gen-1-only hook, matching reference availability.
+
+See `examples/portable_catch_nickname` and the ROM-free regression:
+`luajit tests/engine/catch_nickname.lua`. The shared probe is
+`tests/catch_nickname/contract.lua`, with fixture root, version, API number and
+callback format arguments. The standalone feature supports API 1/2 native;
+unified/API-3 modes require the earlier shared API layer in the composition.
+## Party-full catch custody (Gen1)
+
+For Red, Blue and Yellow, `catch.party_full` runs after a successful capture
+only when the party is full, before depositing the caught Pokémon in the PC.
+Its one argument is `{ battle, mon, name, game }`, containing the original
+caught Pokémon and its display name. The native default returns `false`.
+
+```lua
+mod.hooks:wrap("catch.party_full", function(next, ctx)
+  if myMode.active then
+    takeCustody(ctx.mon)
+    return true
+  end
+  return next(ctx)
+end)
+```
+
+Any Lua-truthy result (including `0` and `""`) skips the PC and the native
+nickname/transfer UI. The mod must take responsibility for that Pokémon;
+it is in neither the native party nor any native box. `pokemon.caught` still
+fires and reports `destination = "mod"`. Dex ownership and catch completion
+remain native. A false/nil result follows normal PC placement, including the
+full-storage message; a party with room bypasses the hook entirely. Other
+generations retain their native storage flow.
+
+The unchanged public consumer in `examples/portable_catch_party_full` and
+`tests/catch_party_full/contract.lua` can be exercised on either engine:
+`luajit /path/to/this/checkout/tests/catch_party_full/contract.lua /path/to/this/checkout red 2 native`.
+The test harness and fixtures come from the running engine; only the example
+and contract files are shared. This is a Gen1 capture hook, not a generic
+storage replacement for every generation.

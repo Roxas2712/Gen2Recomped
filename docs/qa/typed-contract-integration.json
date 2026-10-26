@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "scope": "Qualified native BGM runtime plus the separately tested Boolean-aware Python comparator. Lua runtime and existing Lua tests unchanged.",
+  "native_qualified_ref": "e436fba6228bd6e73a97497107e4a15f61c0d052",
+  "combined_comparator_qualified_ref": "a295d11b0618d8e82a09065f2a30b93917db9fce",
+  "src_tree": "52e2e3ffc7e8f1145b0edffa16ca3713324bb8d2",
+  "native_engine_tests_tree": "a8bae142023263c92ed3a0c518c6d980cb194c1a",
+  "native_original_full_tests_tree": "f033a6f7f66579d8322f01536ea16452233f0cf7",
+  "current_full_tests_tree": "49fceb9bd18e1e3e07fa93b28f0936dac94ad5f4",
+  "only_new_test_path": "tests/tools/test_contract_observations.py",
+  "all_other_native_qa_paths_preserved": true,
+  "intentional_comparator_workflow_changes": {
+    ".github/workflows/enemy-action-contract.yml": "0b2d22fa739f66f08e71ab1cfc057db167ba5863e68bbe7be5070bc9a72baaf7",
+    "tools/enemy-action-contract-check/check.py": "4a281fd8063f1f8de8e0d95ea0f98a3f3837dec3835aaf4394f0423178f6ca7b"
+  },
+  "python_tool_tests": 13,
+  "python_tool_tests_pass": true,
+  "unit_log_sha256": "79adbed7cafe9fc360674e35962469ddc16dff32886afc7db7232d4a7d507091",
+  "actual_native_cli": {
+    "workers": 4,
+    "paired_observations": 12,
+    "all_workers_exit_zero": true,
+    "complete_typed_observations_equal": true,
+    "independent_audit_sha256": "96fc22e073bdb5a1afb76dc5cf64af9868429cd7369f4f3d5d2a1904d8d49a16",
+    "raw_report_sha256": "84965d088dd1b06545f19e3b4d43ec1b6c3d1d974ba5ed8a06d27260c4b3585e"
+  },
+  "prs": [
+    "https://github.com/UNDERdecoded/Gen2Recomped/pull/308",
+    "https://github.com/UNDERdecoded/Gen2Recomped/pull/309"
+  ],
+  "hosted_ci": "Both PRs have ten action_required workflows; dedicated runs40304523637/40305503119 have zero jobs. Local results are separate."
+}

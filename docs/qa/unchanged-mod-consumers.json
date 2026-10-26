@@ -1,0 +1,322 @@
+{
+  "qualified_runtime_ref": "edfb30feb230d5359540ae6e6fbc33d20dc68b83",
+  "source_tree": "18895e11ac92c7339a51e380c3d164ead374cb35",
+  "engine_tests_tree": "99e534d60fe6c67374b329127e7d5c4f5f9df731",
+  "gen1_reference": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+  "profile": "red",
+  "scope": "Selected unchanged-mod CPU acceptance on actual engine modules, hardware doubles; not real GPU/shader/FPS, full-mod or cross-game acceptance.",
+  "qol": {
+    "id": "quality_of_life",
+    "version": "1.2.2",
+    "source_ref": "bea982afbc51452fda334e6d0111444a201ad1d7",
+    "source": "https://github.com/unxpected-uxp/pokemon-gen1-recomp-mod-qol",
+    "checks_per_engine": 42,
+    "observation": {
+      "shore": {
+        "facing": "down",
+        "fx": 4,
+        "x": 4,
+        "y": 13,
+        "fy": 14
+      },
+      "player": {
+        "y": 13,
+        "surfing": false,
+        "x": 4
+      },
+      "errors": 0,
+      "battle": {
+        "level": 5,
+        "result": "win",
+        "caughtBall": true,
+        "species": "MAGIKARP",
+        "overlayErrors": 0,
+        "blueBar": true,
+        "ppSpent": 1,
+        "expGain": 14
+      },
+      "mapId": "PALLET_TOWN",
+      "fishingComplete": true,
+      "depth": 1
+    },
+    "typed_observations_identical": true,
+    "driver_sha256": "936f9a4dc2bc97231f27d695fe69d8cb82e0c91722de486a697139b04745b9ac",
+    "raw_audit_sha256": "9ea6cb3150f1bb953318d359cce8574bcd1783df0a60797df952bf2f9ac5d381",
+    "runs": [
+      {
+        "backend": "gen1",
+        "exit": 0,
+        "passed": 42,
+        "total": 42,
+        "log_sha256": "c37c59f6d311d912b33d4f143a430f4ad8826b38ff6a3119792be7ade67927b2"
+      },
+      {
+        "backend": "gen2",
+        "exit": 0,
+        "passed": 42,
+        "total": 42,
+        "log_sha256": "683cdbf2826c2713593ba3e04cba5c79f34c6f1d825577906c87262447bff0e4"
+      }
+    ]
+  },
+  "battleart": {
+    "package_receipts": [
+      {
+        "package": "battleart",
+        "url": "https://github.com/absol89/DramaticShapeVoxelMod/releases/download/1.11.2/BATTLE_ART_VOXEL_FORK-1.11.2.zip",
+        "sha256": "627afff8297f838b928b7ea4db9d7ef9dc77fb9ab671844ef2cfea28cbad92bf",
+        "zip_bytes": 58972853,
+        "manifests": [
+          "source/battleart/manifest.json"
+        ]
+      },
+      {
+        "package": "interiors",
+        "url": "https://github.com/ltzLegend/Legendary-Visuals-/releases/download/legendary-2026-09-30-test134/LEGENDARY-INTERIORS-TEST20-ROCKET-HEADQUARTERS.zip",
+        "sha256": "7c5ddb4da8b045e3aee2c2b96a48a6d9238feff362a80cb4c875e1b8efe95366",
+        "zip_bytes": 22474660,
+        "manifests": [
+          "source/interiors/manifest.json"
+        ]
+      }
+    ],
+    "runs": [
+      {
+        "backend": "gen1",
+        "mode": "host",
+        "exit": 0,
+        "passed": 46,
+        "total": 46,
+        "log_sha256": "0da054a947a986438b2a2b9d5760129146c11d9f5987fc43d8cf874ae3c61bae"
+      },
+      {
+        "backend": "gen1",
+        "mode": "combined",
+        "exit": 0,
+        "passed": 47,
+        "total": 47,
+        "log_sha256": "5b663b38026a5589cb36936b6d9d815c2a69911239eb5ce7e7c21b72d70fa0f5"
+      },
+      {
+        "backend": "gen2",
+        "mode": "host",
+        "exit": 0,
+        "passed": 46,
+        "total": 46,
+        "log_sha256": "44e6622921b0b936cab3f915ea0765d4d0d52a76c6130587ea20b3c9073d6d19"
+      },
+      {
+        "backend": "gen2",
+        "mode": "combined",
+        "exit": 0,
+        "passed": 47,
+        "total": 47,
+        "log_sha256": "11b44b0ef24f0b9de871859707711fef4237e98dd71c392cbfe7e0881e818d8a"
+      }
+    ],
+    "typed_observations_identical_by_mode": true,
+    "observations": {
+      "host": {
+        "combined": false,
+        "battle": {
+          "result": "win",
+          "ppSpent": 1,
+          "expGain": 14,
+          "gpuStaged": false
+        },
+        "geometry": [
+          {
+            "indices": 388824,
+            "mapId": "PALLET_TOWN",
+            "mode": "off",
+            "roomMeshes": 0,
+            "roomVertices": 0,
+            "roomShadowDraws": 0,
+            "vertices": 259216,
+            "count": 64804
+          },
+          {
+            "indices": 0,
+            "mapId": "OAKS_LAB",
+            "mode": "off",
+            "roomMeshes": 6,
+            "roomVertices": 29156,
+            "roomShadowDraws": 1,
+            "vertices": 0,
+            "count": 0
+          },
+          {
+            "indices": 912468,
+            "mapId": "PALLET_TOWN",
+            "mode": "auto",
+            "roomMeshes": 0,
+            "roomVertices": 0,
+            "roomShadowDraws": 0,
+            "vertices": 608312,
+            "count": 152078
+          },
+          {
+            "indices": 0,
+            "mapId": "OAKS_LAB",
+            "mode": "auto",
+            "roomMeshes": 6,
+            "roomVertices": 29156,
+            "roomShadowDraws": 1,
+            "vertices": 0,
+            "count": 0
+          },
+          {
+            "indices": 912468,
+            "mapId": "PALLET_TOWN",
+            "mode": "full",
+            "roomMeshes": 0,
+            "roomVertices": 0,
+            "roomShadowDraws": 0,
+            "vertices": 608312,
+            "count": 152078
+          },
+          {
+            "indices": 0,
+            "mapId": "OAKS_LAB",
+            "mode": "full",
+            "roomMeshes": 6,
+            "roomVertices": 29156,
+            "roomShadowDraws": 1,
+            "vertices": 0,
+            "count": 0
+          }
+        ],
+        "version": "1.11.2",
+        "errors": 0,
+        "loaded": true
+      },
+      "combined": {
+        "combined": true,
+        "geometry": [
+          {
+            "roomShadowDraws": 0,
+            "indices": 388824,
+            "mapId": "PALLET_TOWN",
+            "roomMeshes": 0,
+            "mode": "off",
+            "roomVertices": 0,
+            "count": 64804,
+            "vertices": 259216
+          },
+          {
+            "roomShadowDraws": 2,
+            "indices": 612,
+            "mapId": "OAKS_LAB",
+            "roomMeshes": 12,
+            "mode": "off",
+            "roomVertices": 76632,
+            "count": 102,
+            "vertices": 408
+          },
+          {
+            "roomShadowDraws": 0,
+            "indices": 912468,
+            "mapId": "PALLET_TOWN",
+            "roomMeshes": 0,
+            "mode": "auto",
+            "roomVertices": 0,
+            "count": 152078,
+            "vertices": 608312
+          },
+          {
+            "roomShadowDraws": 2,
+            "indices": 612,
+            "mapId": "OAKS_LAB",
+            "roomMeshes": 12,
+            "mode": "auto",
+            "roomVertices": 76632,
+            "count": 102,
+            "vertices": 408
+          },
+          {
+            "roomShadowDraws": 0,
+            "indices": 912468,
+            "mapId": "PALLET_TOWN",
+            "roomMeshes": 0,
+            "mode": "full",
+            "roomVertices": 0,
+            "count": 152078,
+            "vertices": 608312
+          },
+          {
+            "roomShadowDraws": 2,
+            "indices": 612,
+            "mapId": "OAKS_LAB",
+            "roomMeshes": 12,
+            "mode": "full",
+            "roomVertices": 76632,
+            "count": 102,
+            "vertices": 408
+          }
+        ],
+        "battle": {
+          "expGain": 14,
+          "gpuStaged": false,
+          "result": "win",
+          "ppSpent": 1
+        },
+        "loaded": true,
+        "errors": 0,
+        "version": "1.11.2"
+      }
+    },
+    "driver_sha256": "ea3f37f8dd5579343e8d7e94124e03de44da7975e8bf6cea357aca8e73e983f4",
+    "hardware_sha256": "3d2f5552c9c2ca58d0d098cbc24d562f866ae74e3fcbf401df749bce0989c4fc",
+    "pixel_index_sha256": "25c493bc7e6bd530ee737388cf044fd64a9ce0dd42972494a54eaf7a23ab6066",
+    "pixel_fixture_keys": 477,
+    "remaining": [
+      "Controlled reflection/material comparisons, physical controller and FPS/handheld acceptance; selected GPU scenes and native staged battle are now recorded separately.",
+      "Full mod/game acceptance and profiles outside declared Gen1 games.",
+      "The older CPU fixture import lacks idEffects and logs POOF_ANIM/SURF fallbacks; the fresh Gen1 native import contains current animation metadata."
+    ],
+    "negative_evidence_retained": [
+      "Initial harness missing Lua module search path.",
+      "Initial terrain-only checks incorrectly expected dedicated lab geometry in the terrain buffer.",
+      "Absent mesh/FileData/ImageData hardware methods and battle PNG fixtures were corrected in the external harness only."
+    ],
+    "raw_audit_sha256": "e902e8ab7b579f74353044c07cbcc0fad88804809c68ff627a687de1d961d99f"
+  },
+  "published_probes": {
+    "qol-native-water.lua": {
+      "tested_source_sha256": "936f9a4dc2bc97231f27d695fe69d8cb82e0c91722de486a697139b04745b9ac",
+      "published_sha256": "c760ddc2ed1b7e105d515aa04447baa83396919ca252c390dbd1110518625028",
+      "identical_stripped_bytecode": true
+    },
+    "battleart-native.lua": {
+      "tested_source_sha256": "ea3f37f8dd5579343e8d7e94124e03de44da7975e8bf6cea357aca8e73e983f4",
+      "published_sha256": "13dbc2d5587e3482e36382424ea0f12b4f611fe4eaf87c696c643c8a2fd0f9b1",
+      "identical_stripped_bytecode": true
+    },
+    "pixel-hardware.lua": {
+      "tested_source_sha256": "3d2f5552c9c2ca58d0d098cbc24d562f866ae74e3fcbf401df749bce0989c4fc",
+      "published_sha256": "01ccb799517753007ef4807361b6075aad77a4001e77e4fb6054eb463a570b53",
+      "identical_stripped_bytecode": true
+    },
+    "read-only-qol.lua": {
+      "tested_source_sha256": "c6958ff8699dface952077ceaf3f49156971b802fbd6a88dace3f1d5c841823e",
+      "published_sha256": "a78855736137796f8fc307ec9437d093a2ced034a16f4fadeff22d91f69a91f7",
+      "identical_stripped_bytecode": true
+    }
+  },
+  "unchanged_packages_sources_data_assets": true,
+  "normal_save_or_import_writes": false,
+  "gen1_writes_or_publication": false,
+  "production_changes": false,
+  "next": [
+    "Match core.quit_to_launcher decision/cleanup semantics with contract tests.",
+    "Resolve remaining data-format/UI/art differences; expand maps, input, animation and performance acceptance."
+  ],
+  "native_graphics": {
+    "receipt": "docs/qa/battleart-graphics.json",
+    "runtime_ref": "2f55f61d98c01b20efbb3c4eecc0eea6808aaf6b",
+    "completed_runs": 5,
+    "visually_inspected_captures": 30,
+    "staged_battle_verified_both_engines": true,
+    "full_mod_or_fps_acceptance": false
+  }
+}
