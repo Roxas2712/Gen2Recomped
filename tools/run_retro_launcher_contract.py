@@ -43,7 +43,7 @@ source = '\n'.join('assert(loadfile(' + json.dumps(path) + '))' for path in synt
 qa_run([*runtime, '-e', source], cwd=root, check=True)
 suites = '''launcher_sequence cart_designer launcher_seasons launcher_community
 pokemon_bank mod_profiles mod_download bank_workspace launcher_mod_profiles
-retro_overlay cloud_running_slot developer_account developer_workspace native_account
+retro_overlay cloud_running_slot cloud_sync_rng gen3_battle_terrain_init suspend_journal suspend_store suspend_continue developer_account developer_workspace native_account
 account_workspace private_http developer_projects mod_profile_recovery retro_overlay_main
 window_frame window_frame_async portable_input_hooks touch_orientation_bug633
 save_resume resume_workspace save_resume_capture save_resume_slot save_history_workspace launcher_audio_handoff bank_exchange'''.split()

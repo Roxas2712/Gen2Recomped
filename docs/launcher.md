@@ -524,10 +524,24 @@ assets or promises of a free image licence.
 The in-game `RetroOverlay` opens with F1, Guide or the on-screen RETRO button.
 It pauses logic, captures ordinary progress into the existing slot, exports
 battery `.sav`, uploads that slot without replacing it from cloud, and returns
-to Library after saving. These battery saves are **not exact runtime
-savestates**: battle queues, Lua closures and suspended script coroutines need
-an additional persistence implementation before mid-battle device handoff can
-be advertised.
+to Library after saving. Battery saves remain separate from the **portable
+suspend (Beta)** actions. For native, unmodified Gen 1–3 sessions, Suspend &
+upload to cloud stores a bounded journal from a settled overworld checkpoint.
+After account login and cloud restore on the receiving device, Continue
+reconstructs the running battle and its native script continuation. Both
+devices need the exact same engine build and imported game data. No closures,
+VM bytecode or executable save code are transferred. Online sessions and loaded
+mods are refused; recordings are limited to 18,000 logic ticks (five minutes
+at 60 Hz) and 24 MiB. An incompatible or mismatching replay falls back to the
+normal save with an explanation rather than applying a partial battle.
+
+The 2026-10-26 Gen 3 qualification covers Ruby, Sapphire, Emerald, FireRed and
+LeafGreen through a private local HTTPS ModCompass backend and two independent
+fresh macOS profiles/processes per edition. It compares HP, PP, native phases,
+RNG, the next native turn and the script continuation after battle. Emerald
+also passes a handoff during a move animation. Run
+`tools/qualify_cloud_suspend.py --help` for the caller-owned cache/backend
+inputs. These checks do not establish physical mobile or cross-OS handoff.
 
 Manual desktop checks on 2026-10-25 used a separate
 `RetroRecomped-qa-20261025` identity containing extracted game caches, with no

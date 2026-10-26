@@ -110,7 +110,11 @@ end
 local function pixelsOf(image)
   local g = love.graphics
   local w, h = image:getDimensions()
-  local ok, c = pcall(g.newCanvas, w, h)
+  -- dpiscale 1: on a high-DPI window (every phone) a canvas defaults to the
+  -- screen's density, so its ImageData came back ~3x the page each way and
+  -- `smooth` then worked on ~9x the pixels -- the first menu frame cost 72s
+  -- interpreted -- and the quads no longer matched the page
+  local ok, c = pcall(g.newCanvas, w, h, { dpiscale = 1 })
   if not ok then return nil end
   g.push("all")
   g.origin(); g.setScissor(); g.setShader()
@@ -125,9 +129,27 @@ local function pixelsOf(image)
   return data
 end
 
+-- ONLY WHERE THE JIT RUNS. `smooth` is a per-pixel Lua loop over a page
+-- FACTOR^2 times the size, one pass per colour: instant compiled, but
+-- interpreted it takes minutes -- and love-android runs LuaJIT with the
+-- compiler off (iOS forbids it outright). The first smoothed letter is the
+-- Black / White main menu in single-screen play, so on a phone pressing A
+-- on the title froze the game there. Without the JIT the glyphs stay the
+-- cartridge's own 1-pixel ones (Font falls back when this answers nil).
+function H.available()
+  if H.forced ~= nil then return H.forced end
+  local okJ, jitLib = pcall(require, "jit")
+  if not (okJ and type(jitLib) == "table" and jitLib.status) then return false end
+  if not jitLib.status() then return false end
+  local os = love.system and love.system.getOS and love.system.getOS()
+  if os == "Android" or os == "iOS" then return false end
+  return true
+end
+
 -- forPage(page) -> { image, quads } at FACTOR times the page, or nil
 function H.forPage(page)
   if not (page and page.image and page.quads) then return nil end
+  if not H.available() then return nil end
   local hit = cache[page]
   if hit ~= nil then return hit or nil end
   local ok, hd = pcall(function()
