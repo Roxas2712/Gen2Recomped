@@ -69,7 +69,7 @@ local function press(g,key)
 end
 local recipe=[[{apricorn='BERRY',ball='BALL_202',event=5000,index=8}]]
 local source=[[
- local p=mod.content.apricorns
+ local p=mod.content["apricorns"]
  assert(mod:supports('content','apricorns') and mod:supports('events','apricorn.converted'))
  assert(p:get('APRICORN_1').apricorn=='APRICORN_1')
  local v=p:get('APRICORN_1');v.ball='LEAK'
@@ -78,7 +78,7 @@ local source=[[
  p:register('BERRY_RECIPE',]]..recipe..[[)
  p:patch('APRICORN_1',{ball='BALL_202',event=5100,index=1})
  mod.exports.seen={}
- mod.exports.stop=mod.events:on('apricorn.converted',function(e)
+ mod.exports.stop=mod.events:on("apricorn.converted",function(e)
   mod.exports.seen[#mod.exports.seen+1]={apricorn=e.apricorn,ball=e.ball,event=e.event}
   e.apricorn='LEAK';e.ball='LEAK';e.event=123;return false
  end)
@@ -164,7 +164,7 @@ for _,bad in ipairs({
  "p:register('BAD',"..recipe..");error('entry failure')",
 })do
  local d=fixture('crystal');local scripts,rows=d.map_scripts.scripts,d.map_scripts.apricornBalls
- local r=load(d,{{'broken',"local p=mod.content.apricorns;p:patch('APRICORN_1',{event=5100});"..bad}})
+ local r=load(d,{{'broken',"local p=mod.content["apricorns"];p:patch('APRICORN_1',{event=5100});"..bad}})
  T.check(#r.errors>0,'invalid authored recipe is attributed to its owner: '..bad)
  T.eq(d.map_scripts.scripts,scripts,'failed owner cannot leak projected native scripts')
  T.eq(d.map_scripts.apricornBalls,rows,'failed owner rolls back prior valid recipe patches')
@@ -231,7 +231,7 @@ do
 end
 do
  local d=fixture('crystal');local r=load(d,{{'removed',[[mod.content.apricorns:remove('APRICORN_1')
-   mod.exports.count=0;mod.events:on('apricorn.converted',function()mod.exports.count=mod.exports.count+1 end)]]}})
+   mod.exports.count=0;mod.events:on("apricorn.converted",function()mod.exports.count=mod.exports.count+1 end)]]}})
  T.eq(#r.errors,0,'removal projects native membership and pending branches')
  T.eq(#d.map_scripts.apricornBalls,6,'removed recipe cannot be newly selected')
  local g=game(d,{ITEM_111=2});run(g,'PENDING')
@@ -254,7 +254,7 @@ do
 end
 for _,version in ipairs({'red','firered','emerald','heartgold'})do
  V.set(version);local d=fixture('crystal');local scripts,rows=d.map_scripts.scripts,d.map_scripts.apricornBalls
- local r=load(d,{{'isolation',[[local p=mod.content.apricorns;assert(not p:supports())
+ local r=load(d,{{'isolation',[[local p=mod.content["apricorns"];assert(not p:supports())
   assert(p:get('APRICORN_1')==nil);p:register('NO_WRITE',]]..recipe..[[)
   assert(not mod:supports('events','apricorn.converted'))]]}})
  T.eq(#r.errors,0,version..' unsupported handle is readable and reports unavailable')
@@ -268,7 +268,7 @@ do
  local r=load(d,{{'oldcache',"mod.content.apricorns:register('NEW',"..recipe..")"}})
  T.check(#r.errors>0,'old cache reports missing native Kurt bindings to the writing owner')
  finish(r)
- r=load(d,{{'observer',"mod.events:on('apricorn.converted',function()end)"}})
+ r=load(d,{{'observer',"mod.events:on("apricorn.converted",function()end)"}})
  T.eq(#r.errors,0,'an observer alone cannot prevent an older cache from booting')
  finish(r)
 end
