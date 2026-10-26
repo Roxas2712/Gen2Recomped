@@ -54,6 +54,19 @@ function love.load()
     local ok,why=pcall(b.draw,b);T.eq(ok,false);T.check(tostring(why):find('owned GPU callback failure',1,true)~=nil)
     T.eq(g.getCanvas(),bound);if depth then T.eq(g.getStackDepth(),depth)end
     Battle.draw,Ui.draw,Bg.draw=baseDraw,uiDraw,bgDraw
+    local rendererState=require('src.render.Renderer')
+    local captures=0
+    Bg.draw=function(...)captures=captures+1;return bgDraw(...)end
+    rendererState.frameSerial=(rendererState.frameSerial or 0)+1
+    same(frame(canvas,function()baseDraw(game);b:draw()end),baseline,'captured battle keeps native pixels '..edition)
+    T.eq(captures,1,'capture and screen share one native field draw')
+    rendererState.frameSerial=rendererState.frameSerial+1
+    same(frame(canvas,function()uiDraw();b:draw()end),baseline,'UI capture keeps native pixels '..edition)
+    T.eq(captures,2,'UI capture and screen share one native field draw')
+    rendererState.frameSerial=rendererState.frameSerial+1
+    same(frame(canvas,function()b:draw()end),baseline,'next frame draws the native battle again '..edition)
+    T.eq(captures,3,'capture suppression ends at the next renderer frame')
+    Bg.draw=bgDraw
     game.stack:pop();Battle.reset();canvas:release();f.close();require('src.core.Game3').release()
   end
   T.finish()
