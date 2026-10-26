@@ -52,6 +52,10 @@ Official Battle Art 1.11.2 passes **46/46**, and Battle Art with Legendary
 Interiors TEST20 passes **47/47**, on each engine. Selected typed observations
 agree across engines. Imported Red tables/art and mod packages stay unchanged;
 CPU geometry and hardware doubles do not prove GPU rendering or full mods.
+A subsequent native LÖVE 11.5/M2 acceptance adds five completed runs and 30
+visually inspected captures, including real staged 3D battle and clean camera
+views on both engines; see the linked report for UI/data/art limitations.
+This still does not establish full-mod, animation-frame or FPS acceptance.
 See [unchanged mod acceptance](unchanged-mod-acceptance.md) for precise scope,
 reproducible probes, raw fingerprints, retained failed fixtures and open work.
 

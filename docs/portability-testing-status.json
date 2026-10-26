@@ -3434,7 +3434,14 @@
     "battleart_checks_per_engine": 46,
     "battleart_interiors_checks_per_engine": 47,
     "typed_selected_observations_identical": true,
-    "graphics_device_verified": false,
-    "source_and_engine_tests_unchanged": true
+    "graphics_device_verified": true,
+    "source_and_engine_tests_unchanged": true,
+    "native_graphics": {
+      "receipt": "docs/qa/battleart-graphics.json",
+      "completed_runs": 5,
+      "visually_inspected_captures": 30,
+      "selected_red_scenes_and_staged_battle": true,
+      "full_mod_or_fps_acceptance": false
+    }
   }
 }

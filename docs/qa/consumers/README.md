@@ -31,3 +31,28 @@ The formatted public probes have byte-for-byte identical stripped LuaJIT
 bytecode to the successfully executed originals. See the adjacent
 [acceptance receipt](../unchanged-mod-consumers.json) for refs, package SHA-256
 values, raw log fingerprints, exact checks and remaining work.
+
+
+## Native graphics drivers
+
+`battleart-graphics.lua` and `battleart-graphics-battle.lua` run through the
+engine's `POKEPORT_DRIVER` entry in an actual LÖVE 11.5 process. Set
+`BATTLEART_GPU_OUT` to a fresh absolute QA output directory,
+`POKEPORT_VERSION=red`, a new explicitly named QA `POKEPORT_IDENTITY`,
+`POKEPORT_SKIP_LEGACY_MIGRATION=1` and `ALSOFT_DRIVERS=null`. Use a complete
+frozen source tree including `tools/rom_manifest.json`, the verified unchanged
+Battle Art/Interiors package combination and valid native imported Red data.
+Pin all inputs and protect outputs/copies/profiles with `qa_storage` before
+launching at nice 19. Never use normal player identities or portable mode.
+If using a vendor app bundle, make sure an embedded `game.love` does not
+silently replace the supplied source directory. A fresh private ROM import
+must use the engine's regular importer, not a forged completion marker.
+
+The first driver checks OFF/AUTO/FULL terrain, the lab, camera engagement and
+logical free movement. Its doorstep third-person image is diagnostic only.
+The battle driver validates a clear corridor, ready public stage, native
+Fight/Surf/victory/PP/experience and stage release. It uses exported mod library
+bridges and replaces no production engine/mod callback. Its action image does
+not establish visual animation correctness. Inspect captures before claiming
+appearance acceptance; the receipt retains UI, data-format and asset warnings.
+Audio quality, physical controllers and performance remain outside this scope.

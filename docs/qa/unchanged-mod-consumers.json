@@ -270,9 +270,9 @@
     "pixel_index_sha256": "25c493bc7e6bd530ee737388cf044fd64a9ce0dd42972494a54eaf7a23ab6066",
     "pixel_fixture_keys": 477,
     "remaining": [
-      "Actual shaders, depth/reflections/material appearance, free-camera gameplay and FPS on a graphics device.",
+      "Controlled reflection/material comparisons, physical controller and FPS/handheld acceptance; selected GPU scenes and native staged battle are now recorded separately.",
       "Full mod/game acceptance and profiles outside declared Gen1 games.",
-      "The existing imported Gen1 animation setup lacks idEffects and logs fallback warnings for POOF_ANIM/SURF."
+      "The older CPU fixture import lacks idEffects and logs POOF_ANIM/SURF fallbacks; the fresh Gen1 native import contains current animation metadata."
     ],
     "negative_evidence_retained": [
       "Initial harness missing Lua module search path.",
@@ -308,7 +308,15 @@
   "gen1_writes_or_publication": false,
   "production_changes": false,
   "next": [
-    "Graphics-device shader/depth/material/reflection and free-camera acceptance.",
-    "Wider representative maps, complete mods and separately declared game profiles."
-  ]
+    "Match core.quit_to_launcher decision/cleanup semantics with contract tests.",
+    "Resolve remaining data-format/UI/art differences; expand maps, input, animation and performance acceptance."
+  ],
+  "native_graphics": {
+    "receipt": "docs/qa/battleart-graphics.json",
+    "runtime_ref": "2f55f61d98c01b20efbb3c4eecc0eea6808aaf6b",
+    "completed_runs": 5,
+    "visually_inspected_captures": 30,
+    "staged_battle_verified_both_engines": true,
+    "full_mod_or_fps_acceptance": false
+  }
 }
