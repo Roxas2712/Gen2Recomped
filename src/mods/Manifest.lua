@@ -253,6 +253,10 @@ function Manifest.validate(raw, path)
   local scriptFormat = raw.script_format == nil and defaultFormat or raw.script_format
   assert(scriptFormat == "native" or scriptFormat == "unified", "script_format must be native or unified")
   assert(scriptFormat ~= "unified" or api >= 2, "unified scripts require mod API 2")
+  local forceEnv=raw.force_enable_env
+  assert(forceEnv==nil or type(forceEnv)=='string' and forceEnv~='',
+    'force_enable_env must be a nonempty string')
+
   local logUrl=raw.log_url
   if logUrl~=nil then
     local bad=type(logUrl)~="string" or #logUrl>8192 or logUrl:find("[%z%c%s]")
@@ -355,6 +359,7 @@ function Manifest.validate(raw, path)
     affects_link = affectsLink,
     permissions = permissions,
     permissionSet = permissionSet,
+    force_enable_env = forceEnv,
     script_format = scriptFormat,
     log_url = logUrl,
     options_schema = optionalFile(raw.options_schema, "options_schema"),

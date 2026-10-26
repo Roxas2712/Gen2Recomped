@@ -1581,9 +1581,15 @@ end
 -- menus that used to call love.event.quit for the second case were killing
 -- the process instead, which is only the right answer on a build with no
 -- launcher behind it -- and HostShell decides that, not the menu.
-function Game:returnToLauncher()
+local function quitToLauncherBody()
   require("src.core.Music").stop()
   require("src.core.HostShell").toLauncher()
+end
+function Game:returnToLauncher()
+  if ModRuntime.wantsHook("core.quit_to_launcher") then
+    return ModRuntime.call("core.quit_to_launcher", quitToLauncherBody)
+  end
+  return quitToLauncherBody()
 end
 
 -- Unless an input.key wrapper swallows the event, releases reach Input

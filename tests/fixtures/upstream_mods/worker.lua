@@ -20,7 +20,12 @@ local function pack(importer,kind,name,entry)
 end
 pack('lttp','sprites','player',{file='synthetic.png',size=4,width=16,height=24})
 pack('lttp','tiles','kakariko',{file='synthetic.png',size=4,width=1024,height=1024})
-pack('pmd_red','sprites','pikachu',{file='synthetic.png',size=4,width=16,height=24,sprite={dexNumber=25,monsterId=25}})
+local pmdMeta={dexNumber=25,monsterId=25,frameWidth=16,frameHeight=24,frameColumns=1,
+ anchorX=8,anchorY=24,animations={{1,1,1,1,1,1,1,1}},sequences={{{1,2,0,0,0,0,0}}}}
+local pmdBytes=Writer.encode(pmdMeta)
+pack('pmd_red','sprites','pikachu',{file='synthetic.png',size=4,width=16,height=24,frames=1,
+ sprite=pmdMeta,metadata={file='synthetic-meta.lua',size=#pmdBytes}})
+overlay[I.assetPath('pmd_red','sprites','synthetic-meta.lua')]=pmdBytes
 local function remap(path)
  if path==mount then return 'mods/'..fixture end
  if path:sub(1,#mount+1)==mount..'/' then return 'mods/'..fixture..path:sub(#mount+1) end
@@ -90,6 +95,30 @@ if loaded and id=='example_mew_starter' and version=='firered' then
   'unchanged starter event did not produce the requested native gift')
  assert(world.map.id=='MAP_G04_N03','profile renamed the native map')
  functional={species=mon.species,level=mon.level,nickname=mon.nickname,variable=save.gen3Vars[0x4002]}
+end
+if loaded and id=='mystery_dungeon_follower' then
+ local Native=require('src.core.Game')
+ local previous={Native.data,Native.save,Native.overworld}
+ local image=love.graphics.newImage
+ love.graphics.newImage=function(path)
+  if path=='asset_packs/pmd_red/sprites/synthetic.png'then
+   return {getDimensions=function()return 16,24 end,getWidth=function()return 16 end,getHeight=function()return 24 end}
+  end
+  return image(path)
+ end
+ local npc={optionalFollower=true,pikachuFollower=true,px=0,py=0,moving=true}
+ local world={player={px=16,py=0,visible=true},npcs={npc}}
+ local save={party={{species='PIKACHU',hp=10,dvs={attack=0,defense=0,speed=0,special=0}}}}
+ Native.data,Native.save,Native.overworld=data,save,world
+ local count=#loader.errors
+ local spawn=loader.hooks:call('world.follower.spawn',function()return false end,Native,world)
+ assert(spawn and npc.sprite,'unchanged follower did not install its published pack renderer')
+ local stepped=loader.hooks:call('input.step',function(_,dt)return dt end,Native,0.25)
+ assert(stepped==0.25 and npc.sprite.pmdTicks==1,'unchanged follower did not advance its sprite')
+ assert(#loader.errors==count,table.concat(loader.errors,'; '))
+ functional={spawned=true,stepped=true,anchorX=npc.sprite.anchorX,anchorY=npc.sprite.anchorY}
+ love.graphics.newImage=image
+ Native.data,Native.save,Native.overworld=unpack(previous)
 end
 print('FIXTURE_RESULT '..Json.encode({fixture=fixture,version=version,loaded=loaded and true or false,hooks=names,error=errorText,functional=functional}))
 if not loaded then os.exit(1)end

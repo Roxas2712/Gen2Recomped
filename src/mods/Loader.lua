@@ -1499,7 +1499,10 @@ function Loader:load(data)
         tostring(id or "?"))
     end
     for id, mod in pairs(self.mods) do
-      if not self.disabled[id] and mod.manifest.experimental
+      local env=mod.manifest.force_enable_env
+      local forceEnabled=not self.noMods and env and os.getenv(env)=='1'
+      if forceEnabled then self.disabled[id]=nil end
+      if not forceEnabled and not self.disabled[id] and mod.manifest.experimental
           and ModGens.active(modsOpt[id], gen) ~= true then
         self.disabled[id] = true
       end

@@ -121,6 +121,7 @@ function Gen2Daily.poll(save, now)
   Gen2Daily.ensureRoam(save, nil)
   if not save then return end
   Gen2Daily.seedInitialObjectFlags(save)
+  require('src.pokemon.Gen2Pokerus').poll(save,now)
   local today = todayKey(now)
   if save.g2DailyDay == today then return end
   save.g2DailyDay = today

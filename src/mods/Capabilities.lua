@@ -34,6 +34,8 @@ add("hooks", "12", "ui.pc.items")
 add("hooks", "12345", "battle.status_hud_visible")
 add("hooks", "123", "pokemon.level_visible ui.party.grid_navigation")
 add("hooks", "123", "world.follower.spawn")
+add("hooks", "2", "phone.contact_list breeding.compatibility catch.nickname catch.party_full battle.style battle.enemy_switch_or_item")
+add("hooks", "12345", "core.quit_to_launcher")
 add("hooks", "12", "intro.oak_speech.build")
 
 add("events", "12345", [[
@@ -52,6 +54,7 @@ add("events", "12345", [[
 ]])
 add("events", "2345", "pokemon.egg_hatched")
 add("events", "2", "clock.day_changed")
+add("events", "2", "radio.channel phone.call_received apricorn.converted breeding.egg_created egg.hatched happiness.changed pokerus.infected roamer.encountered roamer.moved unown.unlocked bug_contest.scored intro.boot.copyright intro.boot.gamefreak intro.boot.movie intro.boot.movie_ended intro.boot.title")
 add("events", "12", [[
   intro.oak_speech.answered intro.oak_speech.finished intro.oak_speech.started
   intro.oak_speech.step

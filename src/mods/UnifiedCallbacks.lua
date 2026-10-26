@@ -23,12 +23,15 @@ C.hooks = names([[
  input.key input.gamepad input.wheel input.step intro.oak_speech.build link.fingerprint map.palette movement.collision movement.speed
  music.select music.volume player.sprite pokemon.icon pokemon.level_visible pokemon.sprite render.compose render.hud
  render.letterbox render.zones save.new_game save.write screen.render_visible script.command trainer.before_battle trainer.party transition.style
+ phone.contact_list breeding.compatibility catch.nickname catch.party_full battle.style battle.enemy_switch_or_item core.quit_to_launcher
  ui.list_menu ui.naming.grid ui.options.rows ui.party.submenu ui.pc.items ui.start_menu.items
  ui.title_menu.items warp.destination world.follower.spawn world.talk world.tod zoom.range
 ]])
 C.events = names([[
  clock.day_changed
  world.live_maps_preparing world.live_maps_updated
+ radio.channel phone.call_received apricorn.converted breeding.egg_created egg.hatched happiness.changed pokerus.infected roamer.encountered roamer.moved unown.unlocked bug_contest.scored
+ intro.boot.copyright intro.boot.gamefreak intro.boot.movie intro.boot.movie_ended intro.boot.title
  assets.transformed battle.ball_thrown battle.battler_switched battle.damage_dealt battle.ended
  battle.exp_gained battle.fainted battle.move_used battle.started battle.status_inflicted battle.turn_ended
  battle.turn_started discord.join_requested flag.changed game.ready intro.birch_speech.finished
