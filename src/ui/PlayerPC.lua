@@ -171,6 +171,14 @@ PlayerPC.toss = toss
 
 function PlayerPC.new(game, opts)
   opts=opts or{}
+  if require("src.core.GameVersion").isGen2() then
+    local arg={};for key,value in pairs(opts) do arg[key]=value end
+    arg.onClose=opts.onClose or function(changed)
+      game.stack:pop()
+      if opts.onDone then opts.onDone(changed) end
+    end
+    return require("src.ui.Gen2ItemPcMenu").new(game,arg)
+  end
   local changed,done=false,false
   local function finish()
     if done then return end;done=true
