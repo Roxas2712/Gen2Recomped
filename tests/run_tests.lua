@@ -3452,8 +3452,13 @@ end
 local function runSuites(paths)
   for _, path in ipairs(paths) do
     local label = path:match("([^/]+)%.lua$") or path
-    local ok, err = pcall(dofile, path)
-    check(ok, label .. (ok and " suite" or (": " .. tostring(err))))
+    -- Each suite owns singleton modules and may call harness.finish/os.exit.
+    -- A fresh state prevents one suite's stubs and registrations leaking into
+    -- later suites, and keeps an early failure from hiding the remaining ones.
+    local function quote(value) return "'" .. value:gsub("'", "'\"'\"'") .. "'" end
+    local lua = (arg and arg[-1]) or "luajit"
+    local status = os.execute(quote(lua) .. " " .. quote(path))
+    check(status == 0 or status == true, label .. " suite")
   end
 end
 
