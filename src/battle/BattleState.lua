@@ -1241,6 +1241,8 @@ local function newBattle(game)
       local ok, Gen2AnimPlayer = pcall(require, "src.battle.Gen2AnimPlayer")
       if ok then
         self.animPlayer = Gen2AnimPlayer.new(game.data)
+        self.animPlayer.battle = self.battle
+        self.animView = self.animPlayer.view
       end
     else
       local ok, AnimPlayer = pcall(require, "src.battle.AnimPlayer")
@@ -2874,6 +2876,9 @@ function BattleState:updateQueue()
                                    -- ball's item index (wBattleAnimParam)
                                    ballIndex = item.ball
                                      and (self:itemDef(item.ball) or {}).index
+                                     or nil,
+                                   ballPalette = GameVersion.isGen2() and item.ball
+                                     and self:ballPalette((self:itemDef(item.ball) or {}).key or item.ball)
                                      or nil,
                                    ballFlicker = item.ball
                                      and self:ballFlicker(item.ball) or nil }
@@ -6776,6 +6781,21 @@ end
 function BattleState:animationsOn()
   local o = self.game.save.options
   return not o or o.animations ~= false
+end
+
+-- GetBallAnimPal / BallColors. Native item IDs retain their registry key;
+-- the public item spelling selects the palette on the actual queued throw.
+-- Names/order follow Gen1Recomp's Gen2 BattleState and cartridge BallColors.
+local GEN2_BALL_PALETTES = {
+  MASTER_BALL='PAL_BATTLE_OB_GREEN', ULTRA_BALL='PAL_BATTLE_OB_YELLOW',
+  GREAT_BALL='PAL_BATTLE_OB_BLUE', POKE_BALL='PAL_BATTLE_OB_RED',
+  HEAVY_BALL='PAL_BATTLE_OB_GRAY', LEVEL_BALL='PAL_BATTLE_OB_BROWN',
+  LURE_BALL='PAL_BATTLE_OB_BLUE', FAST_BALL='PAL_BATTLE_OB_BLUE',
+  FRIEND_BALL='PAL_BATTLE_OB_YELLOW', MOON_BALL='PAL_BATTLE_OB_GRAY',
+  LOVE_BALL='PAL_BATTLE_OB_RED',
+}
+function BattleState:ballPalette(itemId)
+  return GEN2_BALL_PALETTES[itemId] or 'PAL_BATTLE_OB_GRAY'
 end
 
 -- Drop the announcement-time move-anim row.  Gen 1 queues PlayMoveAnimation

@@ -34,7 +34,6 @@
 --                               party follower
 --   src.ui.gen2.Chrome          no shared window-chrome module
 --   src.ui.gen2.SaveMenu        the save flow is part of StartMenu here
---   src.ui.gen2.BattleAnimView  Gen2AnimPlayer is a player, not a view
 --   src.battle.UIVisibility     no equivalent
 --   src.ui.PartyPanel           no equivalent
 --   src.battle.gen2.Battle      AMBIGUOUS, which is the same as absent here.
@@ -62,6 +61,7 @@ ModCompat.ALIASES = {
   ["src.world.gen2.Player"] = "src.world.Player",
   ["src.world.gen2.World"] = "src.world.OverworldController",
   ["src.world.gen2.Map"] = "src.world.Map",
+  ["src.ui.gen2.BattleAnimView"] = "src.battle.Gen2AnimView",
   ["src.world.gen2.Permissions"] = "src.world.Collision",
   ["src.world.gen2.Palettes"] = "src.render.PaletteFX",
 

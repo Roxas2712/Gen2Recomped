@@ -430,10 +430,12 @@ end
 
 local function currentAnimationSprites(battle)
   if battle.animPlaying and battle.animPlayer then
+    if battle.animPlayer.oam then return battle.animPlayer:oam() end
     local step = battle.animPlayer.steps[battle.animPlayer.stepIndex]
     return step and step.sprites
   end
   if battle.lockedBall and battle.animPlayer then
+    if battle.animPlayer.oam then return battle.animPlayer:oam(battle.lockedBall) end
     return battle.lockedBall
   end
 end
