@@ -300,6 +300,30 @@ pcall(function()
   end
   if IdleStream and IdleStream.register then IdleStream.register(ChunkMesher.idleService()) end
 end)
+-- ...and the two other per-frame pumps, which size their slices from the
+-- same kind of estimate: the Gen 3 engine-sheet prewarm here (needs the
+-- live overworld and dataset, remembered by the update hook below), the
+-- region prebake further down where Prebake is bound.  Guarded the same
+-- way; no-ops without the hook.
+local idleSheets = { state = nil, data = nil }
+V.idleSheets = idleSheets
+-- the registry holds services weakly, so the mod keeps its own references
+V.idleServices = {}
+pcall(function()
+  local IdleStream = package.loaded["src.core.IdleStream"]
+  if not (IdleStream and IdleStream.register) then return end
+  local engineSheets = V.require("EngineSheets")
+  V.idleServices.sheets = IdleStream.register({
+    busy = function()
+      return idleSheets.state ~= nil and type(engineSheets.pending) == "function" and engineSheets.pending()
+    end,
+    step = function(seconds)
+      local state, data = idleSheets.state, idleSheets.data
+      if state and data then pcall(engineSheets.pump, state, data, seconds) end
+      return seconds
+    end,
+  })
+end)
 -- LEDGE TERRACES moves the ground, so every built mesh goes: the disk cache
 -- already keys on it (VoxelDiskCache.shapeSignature), this drops the copies
 -- in memory and the queue, and the world rebuilds around the player.
@@ -495,6 +519,10 @@ mod.content.render_pipelines:register("voxel", {
       local tSheets=Perf.now()
       engineSheets.pump(ow, Game.data, .001)
       Perf.add("EngineSheets.pump",tSheets)
+      -- what the idle-time pump (see the registration above) may resume
+      V.idleSheets.state, V.idleSheets.data = ow, Game.data
+    else
+      V.idleSheets.state, V.idleSheets.data = nil, nil
     end
     pumpPrebake()
   end,
@@ -923,6 +951,22 @@ local Prebake = nil
 do
   local okPre, preMod = pcall(V.require, "VoxelPrebake")
   Prebake = (okPre and type(preMod) == "table" and preMod) or nil
+  -- the region prebake takes the engine's idle slice too, but only when
+  -- the mesher has nothing queued (the rule pumpPrebake keeps)
+  pcall(function()
+    local IdleStream = package.loaded["src.core.IdleStream"]
+    if not (IdleStream and IdleStream.register and Prebake) then return end
+    V.idleServices.prebake = IdleStream.register({
+      busy = function()
+        return Prebake.running()
+          and not (type(ChunkMesher.pending) == "function" and ChunkMesher.pending() > 0)
+      end,
+      step = function(seconds)
+        pcall(Prebake.pump, seconds)
+        return seconds
+      end,
+    })
+  end)
   if not okPre then
     print("[warn] DRAMATIC_SHAPE voxel prebake unavailable: " .. tostring(preMod))
   end

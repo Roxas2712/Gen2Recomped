@@ -35,6 +35,12 @@ check(main:find('IdleStream.register(ChunkMesher.idleService())', 1, true) ~= ni
 check(main:find('pcall(function()\n  local IdleStream = package.loaded["src.core.IdleStream"]', 1, true) ~= nil,
       'registration is behind a pcall and looks the hook up first')
 
+check(main:find('V.idleServices.sheets = IdleStream.register({', 1, true) ~= nil, 'the engine-sheet prewarm is registered and held')
+check(main:find('V.idleServices.prebake = IdleStream.register({', 1, true) ~= nil, 'the region prebake is registered and held')
+check(main:find('V.idleSheets.state, V.idleSheets.data = ow, Game.data', 1, true) ~= nil, 'the update hook remembers what the sheet pump may resume')
+check(main:find('V.idleSheets.state, V.idleSheets.data = nil, nil', 1, true) ~= nil, '...and forgets it off the overworld')
+check(main:find("and not (type(ChunkMesher.pending) == \"function\" and ChunkMesher.pending() > 0)", 1, true) ~= nil, 'prebake yields to queued meshes')
+
 -- behavioural: the same shape through IdleStream
 package.loaded['src.core.game3.asset_stream'] = nil
 local IdleStream = require('src.core.IdleStream')
