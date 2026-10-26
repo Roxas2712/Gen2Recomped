@@ -39,7 +39,11 @@ additional changes have CPU integration evidence; the published binary
 remains the frozen source above. Native save-menu PR109 is a separate draft;
 its earlier `10cf0b7c` checkpoint passes101 focused checks and486/486 suites.
 Real save/reload and unchanged-mod GPU acceptance for that new owner remain
-open. The remaining START/PC menu owners, battle animation/HP seams and
+open. Native START now has a separate class and retains its submenu parent;
+its focused input/lifecycle coverage passes67 checks. Real save presentation
+was rejected after inspection; missing native PC owners still prevent the
+complete resolved presentation watcher from installing. The remaining PC
+menu owners, battle animation/HP seams and
 natural Mom/starter/story/save/link coverage are still part of this ledger.
 
 Historical verified public preview: `a1008ce933ab3a6784e909f52f61b0fceecc29e8`
@@ -63,7 +67,7 @@ SDK3/3, every quick tier and66,288 focused checks including all65,536 DV-byte
 combinations. A private read-only Crystal word-producer/reference check passes80
 assertions. Later main registry-descriptor changes are being composed and
 revalidated separately. At that checkpoint this Unown candidate was not in the a100 preview;
-later preview sources include subsequent integration. full reference Unown API and story/GPU acceptance remain open.
+later preview sources include subsequent integration. Full reference Unown API and story/GPU acceptance remain open.
 See [native Unown state](native-gen2-unown.md).
 
 The older checkpoints below retain their own evidence and limitations. They

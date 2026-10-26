@@ -154,4 +154,11 @@ function M:drawPanel()
   end
 end
 function M:draw() self:drawPanel() end
+-- Native fallback also works when a presentation provider draws in window
+-- coordinates. Keep the world visible around the cartridge-sized panel.
+function M:drawsWidescreen() return false end
+function M:drawWidescreen(width,height)
+  return require('src.render.ScreenSpaceUI').classic(function() self:drawPanel() end,
+    require('src.render.Renderer'),width,height)
+end
 return M
