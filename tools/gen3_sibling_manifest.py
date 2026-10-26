@@ -131,10 +131,6 @@ def main():
     result = mapper.tree(copy.deepcopy(manifest))
     result['romSha1'] = hashlib.sha1(target_rom).hexdigest()
     result['version'] = args.version
-    if args.version in ('ruby', 'sapphire'):
-        # pokeruby ScrCmd_hidemoneybox reads x/y; the later games removed
-        # those reads. This is a command layout, not a relocated address.
-        result.setdefault('scriptCommands', {})['148'] = ['hidemoneybox', 'bb']
     result['romHeader'] = dict(title=target_rom[0xA0:0xAC].decode(), gameCode=target_rom[0xAC:0xB0].decode(),
                                makerCode=target_rom[0xB0:0xB2].decode(), revision=target_rom[0xBC])
     if args.stage_profile:

@@ -3,8 +3,8 @@
 `updatemoneybox` ($95) consumes three bytes (x, y, ignore) in all five GBA
 editions. Treating it as operand-free decodes those bytes as commands.
 `hidemoneybox` ($94) consumes x/y in Ruby/Sapphire, whereas the later games
-removed both reads. Keep the distinction in the paired-edition manifests,
-including sibling-manifest generation. Discovery uses the corrected common
+removed both reads. Resolve this distinction per extractor, without mutating
+the shared command table or duplicating manifests. Discovery uses the corrected common
 update width. Only GBA import markers change; save schemas and files do not.
 
 Primary references:

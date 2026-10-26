@@ -2,15 +2,11 @@ package.path='./?.lua;./?/init.lua;'..package.path
 love=require('tests.love_stub')
 local T=require('tests.harness')
 local Extractor=require('src.import.RomExtractorGen3')
-local Version=require('src.core.GameVersion')
-local Json=require('src.link.Json')
 for _,edition in ipairs({'ruby','emerald','sapphire','firered','leafgreen','ruby','emerald'})do
-  local file=assert(io.open('tools/rom_manifest_'..edition..'.json','rb'))
-  local manifest=Json.decode(file:read('*a'));file:close()
   local rs=edition=='ruby'or edition=='sapphire'
   local raw=string.char(0x94)..(rs and string.char(1,2)or'')
     ..string.char(0x16,0x75,0x40,42,0,0x95,3,4,1,0x16,0x76,0x40,91,0,0x02)
-  local ex=Extractor.new(raw,Version.info(edition),manifest)
+  local ex=Extractor.new(raw,{id=edition},{})
   local lines,why=ex:decodeScriptAt(0)
   T.eq(why,nil);T.eq(#lines,5,'money arguments cannot shift the next command')
   T.eq(lines[1].name,'hidemoneybox');T.eq(#lines[1].args,rs and 2 or 0)
