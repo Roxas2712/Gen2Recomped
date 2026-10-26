@@ -16,6 +16,7 @@ end
 -- This is an audited boundary catalog, not a claim that every game executes
 -- every seam. The source-catalog test requires a decision for each new seam.
 C.hooks = names([[
+ field.weather.sound
  battle.menu_auxiliary battle.move_grid_navigation ui.party.grid_navigation
  battle.accuracy battle.bottom_ui_visible battle.catch_exp battle.crit battle.damage battle.enemy_action battle.exp_award
  battle.low_health_alarm battle.overlay battle.run battle.status_hud_visible battle.turn_order catch.rate core.logic_speed core.update

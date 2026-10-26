@@ -37,6 +37,7 @@ add("hooks", "123", "world.follower.spawn")
 add("hooks", "2", "phone.contact_list breeding.compatibility catch.nickname catch.party_full battle.style battle.enemy_switch_or_item")
 add("hooks", "12345", "core.quit_to_launcher")
 add("hooks", "12", "intro.oak_speech.build")
+add("hooks", "3", "field.weather.sound")
 
 add("events", "12345", [[
   world.live_maps_preparing world.live_maps_updated
