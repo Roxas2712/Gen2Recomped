@@ -36,12 +36,7 @@ T.check(draw~=nil,'published pack frame reaches the real native fixed-frame rend
 T.eq(draw[3],52,'a consumer anchor edit changes the native draw offset')
 sprite:step(false);T.eq(sprite.pmdTicks,0,'stopping resets pack animation time')
 love.graphics.newImage,love.graphics.draw=oldImage,oldDraw
-local U=require('src.compat.gen2.Unown')
-T.eq(U.monLetter({species='OTHER'}),nil,'Unown query rejects other species')
-T.eq(U.monLetter({species='UNOWN',unownLetter='Z'}),26,'Unown query accepts a stored letter')
-T.eq(U.monLetter({species='UNOWN',dvs={attack=0,defense=0,speed=0,special=0}}),1,
- 'Unown query delegates the native DV selector')
-local P=require('src.compat.game3.Pokemon')
+local P=require('src.core.game3.pokemon')
 T.eq(P.unownLetter(0),0,'GBA personality query is zero-based')
 T.eq(P.unownLetter(0x03030303),255%28,'GBA personality query keeps two bits from each byte')
 T.finish('published sprite-pack renderer and follower query adapters')

@@ -34,6 +34,13 @@ local function species(value)
   local key=c.ids:native('pokemon',value)
   return key and c.data.pokemon[key],key,c
 end
+function P.unownLetter(personality)
+  local n=tonumber(personality)or 0
+  assert(n==n and n>=0 and n<=4294967295 and n%1==0,'invalid personality')
+  local value=0
+  for shift=24,0,-8 do value=value*4+math.floor(n/2^shift)%4 end
+  return value%28
+end
 function P.ready()return context()~=nil end
 function P.speciesOf(mon)
   if type(mon)~='table'then return nil end
