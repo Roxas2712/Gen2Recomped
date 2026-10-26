@@ -51,7 +51,7 @@ function A.progress(self,x,y,w,arena)
  label(self,arena.worlds_unlocked and 'BEST OF WORLDS · UNLOCKED' or 'BEST OF WORLDS · '..math.max(0,target-points)..' TO GO',x+w*.50,y+17*s,w*.48-12*s,12*s,{.65,.84,1})
  g.setColor(.13,.18,.27);g.rectangle('fill',x+18*s,y+49*s,w-36*s,8*s,4*s,4*s)
  if points>0 then g.setColor(1,.77,.30);g.rectangle('fill',x+18*s,y+49*s,(w-36*s)*math.min(1,points/target),8*s,4*s,4*s) end
- label(self,'Community results · +'..tostring(arena.win_points or 50)..' win / +'..tostring(arena.loss_points or 10)..' loss · once per opponent / UTC day',x+18*s,y+70*s,w-36*s,11*s,{.63,.71,.83})
+ label(self,(arena.season and 'Native league · +' or 'Community results · +')..tostring(arena.win_points or 50)..' win / '..(arena.season and '-' or '+')..tostring(arena.loss_points or 10)..' loss'..(arena.season and ' · Three-month season' or ' · once per opponent / UTC day'),x+18*s,y+70*s,w-36*s,11*s,{.63,.71,.83})
  g.pop();return h+18*s
 end
 function A.format(self,x,y,w,c,locked,selected,edition)
