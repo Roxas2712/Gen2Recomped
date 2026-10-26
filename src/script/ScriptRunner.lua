@@ -125,7 +125,7 @@ function ScriptRunner:run(script, extra)
   end
   self.co = coroutine.create(function()
     self:exec(script, ctx)
-    if ctx.trainerPreparationCancelled then return end
+    if ctx.trainerPreparationCancelled or ctx.scriptCancelled then return end
     -- Commands can defer a game action until the script's own dialogue is
     -- done. start_battle uses this for win-path evolutions, which must not
     -- be covered by post-battle trainer text.
@@ -175,11 +175,17 @@ end
 -- Execute a command list.  Supports labels via jump commands: a script is
 -- an array of rows; control commands return a new program counter, as a
 -- row number or a label name.
-function ScriptRunner:exec(script, ctx)
+function ScriptRunner:exec(script, ctx, admission)
   local labels = ScriptRunner.scanLabels(script)
   local data = self.game and self.game.data
   local pc = 1
+  local budget = admission and admission.maxInstructions
   while pc <= #script do
+    if budget then
+      if budget <= 0 then error('native script preview instruction budget exhausted', 0) end
+      budget = budget - 1
+    end
+    if ctx.scriptCancelled then return end
     local row = script[pc]
     local name = row[1]
     -- THE ROW THE RUNNER IS STANDING ON, kept so a script that parks and
@@ -198,7 +204,9 @@ function ScriptRunner:exec(script, ctx)
         fn, meta = Gen3Commands[name], nil
       end
     end
-    if not fn then
+    if admission and not admission.commands[name] then
+      pc = pc + 1
+    elseif not fn then
       -- api 2 owned scripts fail loudly; everything else keeps the v1
       -- skip so old content degrades instead of dying
       if ctx.source and ctx.source.strict then
@@ -237,7 +245,7 @@ function ScriptRunner:exec(script, ctx)
       -- scripts still fail loudly, which is what their authors asked for.
       local jump
       local function invoke()
-        if Runtime.wantsHook("script.command") then
+        if not admission and Runtime.wantsHook("script.command") then
           local args = { select(2, unpack(row)) }
           return Runtime.call("script.command", function(hctx, _, hargs)
             return fn(hctx, unpack(hargs))
@@ -286,6 +294,14 @@ function ScriptRunner:cancelTrainerPreparation(ctx, co, silent)
   if self.ctx ~= ctx or self.co ~= co or not co then return false end
   ctx.trainerPreparationCancelled = true
   ctx.lastCheck, ctx.lastBattleResult = false, "cancel"
+  return self:cancelOwned(ctx, co, silent)
+end
+
+-- Cancel only an exact admission. Ordinary field cancellation does not
+-- fabricate a trainer battle result or execute after-script callbacks.
+function ScriptRunner:cancelOwned(ctx, co, silent)
+  if self.ctx ~= ctx or self.co ~= co or not co then return false end
+  ctx.scriptCancelled = true
   self.co, self.waitingFrames, self.waitingCheck = nil, nil, nil
   if silent then return true end
   if ctx.g3Locked and Commands.g3_release then Commands.g3_release(ctx) end
@@ -341,7 +357,7 @@ function ScriptRunner:resume(...)
   end
 end
 
-function ScriptRunner:update()
+local function updateBody(self)
   -- commands that wait on frames re-resume every step while running
   if self:isRunning() and self.waitingFrames then
     self.waitingFrames = self.waitingFrames - 1
@@ -359,6 +375,14 @@ function ScriptRunner:update()
       self:resume(result)
     end
   end
+end
+
+function ScriptRunner:update()
+  local space = package.loaded['src.core.game3.scripting.space']
+  if space and type(space._nativeTick) == 'function' then
+    return space._nativeTick(self, updateBody)
+  end
+  return updateBody(self)
 end
 
 return ScriptRunner
