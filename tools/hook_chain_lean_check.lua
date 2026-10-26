@@ -112,6 +112,17 @@ case("Gen 3 callback facade routes the link", function(h, v)
   return v(function(s) return s end), "x"
 end)
 
+case("profiler toggled inside a link", function(h,v)
+  h:wrap('seam',function(nxt,...)
+    local was=profOn;profOn=not was
+    local result=pack(nxt(...))
+    profOn=was
+    return unpack(result,1,result.n)
+  end,10,'toggle')
+  h:wrap('seam',function(nxt,...)return nxt(...)end,0,'inside')
+  return v(function(a)return a,nil,42 end),SENT
+end)
+
 local function runAll(lean)
   Hooks.lean = lean
   local out = {}

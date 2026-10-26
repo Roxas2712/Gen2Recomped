@@ -66,20 +66,11 @@ end
 
 -- H1 -- THE SAME CHAIN, FEWER TABLES.
 --
--- The walk below (`callClassic`) packs every pcall result into a table and
--- unpacks it again, and creates two closures per link; a seam wrapped nine
--- times (DRAMATIC_SHAPE on render.compose) is some thirty small tables and
--- eighteen closures per frame, on every tier, for the mod to receive the
--- same values it would have got for free.  `callLean` walks the identical
--- chain with the identical rules -- one pcall per link, vanilla at most
--- once, errors attributed, downstream kept, PASS re-raised, per-link
--- profiling -- but hands results through as varargs on the common path and
--- packs only what has to outlive a frame of the recursion: the arguments
--- (once per call) and each link's downstream (so "failed after next" can
--- still return it).  One closure per link, none per call.  Hooks.lean
--- (Performance.hookLean) switches back to the classic walk; both are kept
--- so tools/hook_chain_lean_check.lua can run every case through each and
--- compare.
+-- Pass pcall results as varargs, retaining argument and downstream packs
+-- only where the existing fallback rules need them. Continuation state is
+-- private to each call; timing storage is allocated only for measured links.
+-- Hooks.lean (Performance.hookLean at load) selects the classic walk for
+-- differential checks and rollback. Each mod still gets its own next closure.
 Hooks.lean = true
 do
   local ok, Performance = pcall(require, "src.core.Performance")
@@ -90,17 +81,17 @@ end
 
 -- the error path of one link, shared by the vanilla-threw and link-threw
 -- cases; receives the pcall result as varargs so success costs no table
-local function afterLink(st, index, entry, downstream, started, below, ok, ...)
+local function afterLink(st, index, entry, started, ok, ...)
   if started then
     FrameProfile.add("      hook " .. tostring(st.name) .. " <- "
       .. siteOf(entry),
-      (FrameProfile.now() - started) - below[1])
+      (FrameProfile.now() - started) - st.below[index])
   end
   if ok then return ... end
   local err = ...
   if type(err) == "table" and err[PASS] ~= nil then error(err, 0) end
-  if downstream[1] ~= nil then
-    local d = downstream[1]
+  if st.downstream[index] ~= nil then
+    local d = st.downstream[index]
     Logger.warn("[%s] hook %s failed after next: %s -- downstream result kept",
       tostring(entry.owner or "?"), st.name, tostring(err))
     return unpack(d, 1, d.n)
@@ -128,10 +119,14 @@ local function runLean(st, index)
     return afterVanilla(pcall(st.vanilla, unpack(args, 1, args.n)))
   end
   local entry = chain[index]
-  -- one-slot boxes so the link's closure and afterLink share them without
-  -- a second closure: [1] = the downstream pack, [1] = time spent below
-  local downstream, below = { nil }, { 0 }
+  -- Shared arrays belong to this call, not to its registered entries. They
+  -- retain nested/rewritten argument behavior without two tables per link.
+  st.downstream[index] = nil
   local measuring = FrameProfile.enabled()
+  if measuring then
+    st.below = st.below or {}
+    st.below[index] = 0
+  end
   local function nextFn(...)
     local t0 = measuring and FrameProfile.now() or nil
     local d
@@ -143,18 +138,18 @@ local function runLean(st, index)
       d = pack(runLean(st, index + 1))
       st.args = saved
     end
-    downstream[1] = d
-    if t0 then below[1] = below[1] + (FrameProfile.now() - t0) end
+    st.downstream[index] = d
+    if t0 then st.below[index] = st.below[index] + (FrameProfile.now() - t0) end
     return unpack(d, 1, d.n)
   end
   local started = measuring and FrameProfile.now() or nil
   local args = st.args
   local facade = package.loaded['src.core.Game3']
   if facade and facade._usesCallbacks and facade._usesCallbacks(entry.owner) then
-    return afterLink(st, index, entry, downstream, started, below,
+    return afterLink(st, index, entry, started,
       pcall(facade._invokeHook, entry.owner, entry.callback, nextFn, unpack(args, 1, args.n)))
   end
-  return afterLink(st, index, entry, downstream, started, below,
+  return afterLink(st, index, entry, started,
     pcall(entry.callback, nextFn, unpack(args, 1, args.n)))
 end
 
@@ -169,7 +164,8 @@ function Hooks:callLean(name, vanilla, ...)
   local chain = self.chains[name]
   if not chain or #chain == 0 then return vanilla(...) end
   local st = { chain = chain, name = name, vanilla = vanilla,
-               args = pack(...), ranVanilla = false, run = runLean }
+               args = pack(...), downstream = {},
+               ranVanilla = false, run = runLean }
   return afterChain(pcall(runLean, st, 1))
 end
 

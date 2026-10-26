@@ -72,8 +72,7 @@ Performance.gen4GpuLight = true
 -- G1: Gen 4 model vertices decoded straight into a ByteData through the FFI
 -- rather than a fifteen-element table per vertex (src/render/Gen4Model.lua).
 Performance.gen4ByteVertices = true
--- H1: the mod hook chain hands results through as varargs and allocates one
--- closure per link instead of two closures and four tables (src/mods/Hooks).
+-- H1: pass hook results as varargs and share continuation state per call.
 Performance.hookLean = true
 -- M10: Assets.resolve remembers which file answers a generated path while a
 -- mod set is installed, instead of asking PhysFS once per mod per lookup.
