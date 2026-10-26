@@ -71,22 +71,30 @@ check(#evoRects == 1 and evoRects[1].x == ex and evoRects[1].y == ey
 local trade = TradeAnim.new(game, {
   sent = { species = "PIKACHU" }, received = { species = "RAICHU" },
 })
-check(trade.sentSpriteTrueColor == true,
+check(trade.sentPicTrue == true,
       "trade keeps the sent Pokemon sprite's trueColor flag")
-check(trade.recvSpriteTrueColor == true,
+check(trade.recvPicTrue == true,
       "trade keeps the received Pokemon sprite's trueColor flag")
-local tradeRects = uiRects(function() trade:draw() end)
-check(#tradeRects == 1 and tradeRects[1].x == 56 and tradeRects[1].y == 16
-      and tradeRects[1].w == trade.sentSprite:getWidth()
-      and tradeRects[1].h == trade.sentSprite:getHeight(),
-      "trade reports the sent true-color sprite rectangle")
-trade.phase = "show_enemy"
-local receivedRects = uiRects(function() trade:draw() end)
-check(#receivedRects == 1 and receivedRects[1].x == 56
-      and receivedRects[1].y == 16
-      and receivedRects[1].w == trade.recvSprite:getWidth()
-      and receivedRects[1].h == trade.recvSprite:getHeight(),
-      "trade reports the received true-color sprite rectangle")
+-- Exercise Trade_LoadMonSprite's real BG transfer; merely assigning a phase
+-- no longer populates the hardware tilemaps that the native trade draws.
+local function tradePicture(mon, pic, trueColor)
+  local frame = TradeAnim.new(game, { sent = trade.sent, received = trade.received })
+  local co = coroutine.create(function() frame:loadMonSprite(mon, pic, trueColor) end)
+  for _ = 1, 11 do
+    if coroutine.status(co) == "dead" then break end
+    local ok, err = coroutine.resume(co);assert(ok, err)
+  end
+  local rects = uiRects(function() frame:draw() end)
+  local w, h = pic:getDimensions()
+  -- LoadFlippedFrontSpriteByMonIndex mirrors the centered 7x7-tile slot.
+  local left = math.floor((8 - math.ceil(w / 8)) / 2) * 8
+  check(#rects == 1 and rects[1].x == 112 - left - w
+        and rects[1].y == 16 + (7 - math.ceil(h / 8)) * 8
+        and rects[1].w == w and rects[1].h == h,
+        "trade reports the transferred true-color sprite rectangle")
+end
+tradePicture(trade.sent, trade.sentPic, trade.sentPicTrue)
+tradePicture(trade.received, trade.recvPic, trade.recvPicTrue)
 
 local titleGame = {
   data = { pokemon = Data.pokemon,
