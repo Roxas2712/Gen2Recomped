@@ -48,7 +48,7 @@ audio method is replaced with a host result. LuaJIT is pinned to
 - **80/80** BGM command, **62/62** stream and **7,364/7,364** fanfare engine
   checks pass, as do **124/124** missing-device/session recovery and
   **4,616/4,616** public music hook checks, **102/102** audio option and
-  **51/51** cold cache/invalid-handle checks.
+  **51/51** cold cache/invalid-handle checks at that historical checkpoint.
   The full feature quick run passes **174/183** engine suites,
   SDK **3/3** and B30. A fresh preceding development checkpoint `3f3f473d`
   passes **173/182**;
@@ -298,6 +298,39 @@ backend difference: native cue replacement reuses one reference queue but
 creates a second host queue. Both are stopped after teardown. This probe does
 not establish equal allocation counts or full game/mod-session lifecycle parity.
 
+## Production session entry invalidation
+
+The broader initialized-session probe uncovered a real gap hidden by the old
+fixture's explicit `Music.reload`: the host's actual launcher return stopped
+Sources and detached mod listeners, but the asset invalidation used before
+the next Game did not clear native map/saved music. The unchanged reference's
+game and mounted-session teardown released both. All four host cases failed
+the stricter entry assertion; all four reference cases passed. These failed
+results are retained. The incomplete full feature matrix and feature/combined
+regressions were deliberately cancelled as superseded, not accepted as passes.
+
+Music now subscribes its existing native reload path to the actual asset
+invalidation bus. This retires the native controller when launcher entry or
+mod-loader invalidation changes the dataset; an ordinary playback stop still
+retains its separate semantics. The expanded cold engine suite passes
+**69/69 checks**, including the actual bus, saved/map state, a live VM wait
+and every old static/streaming Source. Broad qualification of this correction
+is pending.
+
+`tools/enemy-action-contract-check/native-game-audio-session-smoke.lua` uses
+the real reference `Game3:reset` and game/mounted-session orchestrator. On the
+host it loads the production main chunk without calling `love.load`, assigns
+its initialized Game upvalue and enters the real `Game:returnToLauncher`,
+launcher teardown and launcher constructor. It then invokes the actual asset
+entry stage before any fixture cleanup can conceal stale state. The same
+public API-3 consumer loads through a fresh Loader. Each subsequent tick must
+leave old Sources stopped, the old VM complete and old listeners detached,
+while the fresh listener and fanfare wait work. Full raw inventories retain
+backend queue-count/gain differences. This is initialized-session teardown and
+loader re-entry coverage, not a complete ROM boot, GPU, device, hot-reload
+screen or arbitrary full-mod/playthrough qualification. The workflow runs
+both music variants on both profiles and retains their raw output.
+
 ## Native command compatibility revision
 
 GBA command revision **20** separates these music and script-wait semantics
@@ -314,8 +347,8 @@ does not replace the pending complete contract matrix and combined runtime.
 
 ## Work still required before a pull request
 
-- Paired full-session teardown/re-entry coverage beyond the host interruption
-  checks above, with old waits and Sources unable to leak into a new session.
+- Finish the corrected paired initialized-session teardown/re-entry matrix
+  and its independent raw-observation audit.
 - Broader actual-import coverage, the complete existing contract matrix and
   a qualified combined runtime.
 - Complete broad regression and integration qualification before advancing
