@@ -70,7 +70,7 @@ for _,game in ipairs({'red','gold','silver','crystal'})do
   T.eq(G.mode,display,game..' '..mode..' public mode follows actual native resolution')
   local trueColor=true
   T.eq(not(trueColor and G.mode=='gbc'),display~='gbc',game..' '..mode..' unchanged evolution colour gate preserves true-colour art')
-  T.same(G.resolve(A),resolved,game..' '..mode..' shares actual native colour/register resolution')
+  T.same(G.resolve(A),P.displayColors(A),game..' '..mode..' resolves mode without consuming the register')
   G.with(A,function()T.same(active.values,normalized(resolved),game..' '..mode..' actual use shares resolved colours')end)
   G.withRaw(A,function()T.same(active.values,normalized(A),game..' '..mode..' raw use bypasses display/register state')end)
   T.same(G.color(A,2),resolved[2],game..' '..mode..' solid colour shares same native row')
