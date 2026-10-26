@@ -96,12 +96,14 @@ for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
   local retired=game.stack:top();Source.release();Host.currentMod=nil
   retired:complete(true)
   T.eq(retiredCallbacks,0,'teardown cannot revive an explicitly source-owned continuation')
+  retiredCallbacks=0
   Host.currentMod='retired-source-owner'
   Source.start(8,{},function()retiredCallbacks=retiredCallbacks+1 end)
   local retiredWrapped=game.stack:top();local retiredBase=retiredWrapped.onDone
   retiredWrapped.onDone=function()return retiredBase()end
   Source.release();Host.currentMod=nil;retiredWrapped:complete(true)
   T.eq(retiredCallbacks,0,'a peer-held source continuation stays retired after observer teardown')
+  retiredCallbacks=0
   Host.currentMod='covered-source-owner'
   Source.start(8,{},function()retiredCallbacks=retiredCallbacks+1 end)
   local covered=game.stack:top();local coveredBase=covered.onDone
