@@ -246,6 +246,15 @@ function Commands.g4_set_var(ctx, id, value)
   syncGraphicsVarObjects(ctx, id)
 end
 
+-- A VALUE THE COMMAND WRITES ITSELF, never read as a var: ScrCmd_530 stores
+-- _020FE4A8[n] (0x6208, 0xF229...) straight into 0x4036 + n, and through
+-- g4_set_var's valueOf every one of them (>= 0x4000) was taken for a var id
+-- and the write came out 0 (Mahogany hideout's generator, scr_seq_0090).
+function Commands.g4_set_var_literal(ctx, id, value)
+  setVar(ctx.save, id, tonumber(value) or 0)
+  syncGraphicsVarObjects(ctx, id)
+end
+
 function Commands.g4_copy_var(ctx, dest, src)
   setVar(ctx.save, dest, valueOf(ctx, src))
   syncGraphicsVarObjects(ctx, dest)
@@ -578,7 +587,10 @@ function Commands.g4_buffer(ctx, slot, kind, value)
     -- answered for all 493 rows.  The entries carry {COLOR} markup, so they go
     -- through the same filter a menu line does.
     local id = math.floor(valueOf(ctx, value) or 0)
-    local label = require("src.import.Gen4Text").label(413, id)
+    -- HeartGold / SoulSilver keep the same rows in bank 238 (msg_0238); their
+    -- 413 is other text
+    local bank = (require("src.import.Gen4ScriptBands").family == "hgss") and 238 or 413
+    local label = require("src.import.Gen4Text").label(bank, id)
     text = data and data.text and data.text[label]
   elseif kind == "tmhmMove" then
     -- `buffertmhmmovename <slot> <item>` -- `Item_MoveForTMHM`, which is a
@@ -704,9 +716,29 @@ end
 -- its configured capacity and has no per-pocket accounting to ask, so the
 -- answer is yes unless the bag is full -- which is what `Bag.add` decides, and
 -- asking it twice would be the only way to be more honest than this.
-function Commands.g4_can_fit_item(ctx, _, _, destVar)
-  if destVar then setVar(ctx.save, destVar, 1) end
-  setResult(ctx, 1)
+--
+-- ...and the bag DOES have that accounting now (Gen 4 pocket sizes, 999 a
+-- stack, 99 in the TM pocket), so "always yes" was wrong where it matters:
+-- Clair's TM59 to a player already holding 99 (D44R0102 / T30GYM0101
+-- GoToIfNoItemSpace) printed "Obtained the TM59!", gave nothing and still
+-- set FLAG_GOT_TM59_FROM_CLAIR. So the answer is Bag.add's own, asked of a
+-- throwaway copy of the inventory: the same rules, nothing written.
+function Commands.g4_can_fit_item(ctx, item, count, destVar)
+  local fits = 1
+  local save = ctx.save
+  if save and save.inventory and item ~= nil then
+    local data = ctx.game and ctx.game.data
+    local id = itemKey(data, valueOf(ctx, item))
+    local n = math.max(valueOf(ctx, count) or 1, 1)
+    local inv, order = {}, {}
+    for k, v in pairs(save.inventory) do inv[k] = v end
+    for i, v in ipairs(save.bagOrder or {}) do order[i] = v end
+    local trial = setmetatable({ inventory = inv, bagOrder = order }, { __index = save })
+    local okA, added = pcall(require("src.inventory.Bag").add, trial, id, n, data)
+    if okA and added == false then fits = 0 end
+  end
+  if destVar then setVar(ctx.save, destVar, fits) end
+  setResult(ctx, fits)
 end
 
 -- ---------------------------------------------------------------------------
@@ -983,7 +1015,13 @@ function Commands.g4_warp(ctx, header, x, z, direction)
   -- at (160, 128). A coordinate past the map's own size is taken back by
   -- its origin.
   local def = data.maps[mapId]
-  if def and def.gen5 and def.width and (wx >= def.width or wz >= def.height) then
+  -- ...and so does PLATINUM'S GREAT MARSH: its six areas are 32 x 32 windows
+  -- of one matrix (D06R0201 at (32, 32) .. D06R0206 at (64, 96)), and the
+  -- gate's desk script (M0129/S0023) sends the player to header 509 at
+  -- (68, 116) -- the marsh's own tile, local (4, 20) of D06R0206. Taken as
+  -- local it stood the player in the void below the map.
+  if def and (def.gen5 or def.originX or def.originY) and def.width
+     and (wx >= def.width or wz >= def.height) then
     wx, wz = wx - (def.originX or 0), wz - (def.originY or 0)
   end
   -- THE DISTORTION WORLD'S FLOORS are this port's maps cut out of the floor's
@@ -1241,13 +1279,14 @@ function Commands.g4_bw_battle_ok(ctx, var)
 end
 
 -- BLACK / WHITE 0x121 <var>: the party members able to battle
+-- BLACK / WHITE 0x121: the PC's EMPTY SLOTS, not the party. Every one of its
+-- six uses reads it that way -- four against 0 (the Box is full), N's Castle
+-- before its dragon goes to the Box, and the Poke Transfer Lab's "make room
+-- for six Pokemon" against 6 -- and counted as healthy party members it told
+-- the lab the PC was full with nothing in it. (The name is kept: the lowering
+-- and the cache both spell it.)
 function Commands.g4_bw_party_able(ctx, var)
-  local Party = require("src.pokemon.Party")
-  local n = 0
-  for _, mon in ipairs((ctx.save and ctx.save.party) or {}) do
-    if (mon.hp or 0) > 0 and not Party.isEgg(mon) then n = n + 1 end
-  end
-  setVar(ctx.save, tonumber(var), n)
+  return Commands.g4_pc_free_slots(ctx, var)
 end
 
 -- BLACK / WHITE 0x245 <mode, arg>: N'S CASTLE'S DRAGON INTO THE PARTY (Z278,
@@ -1726,6 +1765,14 @@ function Commands.g4_hide_object(ctx, id)
   setObjectFlag(ctx, e, true)
 end
 
+-- HGSS's MakeObjectVisible (on) / ScrCmd_374 (off): the object stops being
+-- DRAWN and nothing else -- it stays solid and its event flag is untouched
+-- (MAPOBJECTFLAG_VISIBLE is the hide bit; see Gen4ScriptVM's ScrCmd_374 and
+-- src/world/HgssModelObjects.lua)
+function Commands.g4_object_invisible(ctx, id, on)
+  require("src.world.HgssModelObjects").setInvisible(ctx.overworld, objectById(ctx, id), on)
+end
+
 -- WHICH WAY AN OBJECT FACES, set by a script rather than by its template.
 --
 -- Written to the LIVE actor and to its DEF: the def is what a re-entry to the
@@ -1765,8 +1812,8 @@ function Commands.g4_set_object_movement(ctx, id, movementType)
   if not warnedMovement then
     warnedMovement = true
     Logger.warn("gen4 script: `setobjecteventmovementtype` recorded type %s on "
-                .. "an object, but Gen 4's movement types are not decoded -- "
-                .. "the object keeps the behaviour it spawned with",
+                .. "an object's template -- the live object keeps the type it "
+                .. "spawned with until the map is built again, as on the cartridge",
                 tostring(value))
   end
 end
@@ -1797,6 +1844,7 @@ function Commands.g4_switch_movement(ctx, id, movementType)
   local Follower = require("src.world.Gen4Follower")
   local ow = ctx.overworld
   if value == Follower.FOLLOW_PLAYER or value == Follower.FOLLOW_PARTNER then
+    e.g4Move = nil   -- the follower walks it now, not its old movement type
     Follower.adopt(ctx.save, ow, e)
     return
   end
@@ -1804,10 +1852,10 @@ function Commands.g4_switch_movement(ctx, id, movementType)
   -- following -- Route 201 sends Barry back to LOOK_SOUTH when you insist on
   -- going the wrong way.
   if e.gen4Follower then Follower.release(ctx.save, ow) end
-  -- Everything else is a behaviour this engine does not derive (see the note
-  -- on the template command above), so the number is recorded and the actor
-  -- keeps what it has.
+  -- Everything else is the live object's new movement type, run from its
+  -- first state (MapObject_SwitchMovementType; src/world/Gen4MovementTypes).
   if e.def then e.def.movementType = value end
+  require("src.world.Gen4MovementTypes").switch(e, value)
 end
 
 -- `setobjectflagispersistent <localID>, <flag>` -- MAP_OBJ_STATUS_PERSISTENT,
@@ -1855,9 +1903,32 @@ function Commands.g4_place_object(ctx, id, x, z, dir, height)
   local facing = DIRECTION_OF[valueOf(ctx, dir)]
   if facing then e.facing = facing end
   if e.def then
+    -- ...FOR THIS VISIT ONLY. ScrCmd_MovePersonFacing / SetPosition move the
+    -- live MapObject and leave the zone's event template alone, and the next
+    -- map load reads the templates from ROM again. The def here is the
+    -- shared `data.maps` row, so its own place is kept and put back by
+    -- Gen4Commands.restorePlacedObjects on the next load (setMap); left
+    -- moved, the Dragon's Den Lance and Clair (parked at (51,2)/(53,2))
+    -- stood on the shrine path at (28,34)/(28,33) on every later visit.
+    if e.def.g4PlacedFrom == nil then
+      e.def.g4PlacedFrom = { x = e.def.x, y = e.def.y, direction = e.def.direction,
+                             elevation = e.def.elevation }
+    end
     e.def.x, e.def.y = cx, cy
     if facing then e.def.direction = valueOf(ctx, dir) end
     if height then e.def.elevation = valueOf(ctx, height) end
+  end
+end
+
+-- the templates g4_place_object moved, back where the map has them (a fresh
+-- map load; an in-place reload keeps the scene's places)
+function Gen4Commands.restorePlacedObjects(def)
+  for _, obj in ipairs((def and def.objects) or {}) do
+    local home = obj.g4PlacedFrom
+    if home then
+      obj.x, obj.y, obj.direction, obj.elevation = home.x, home.y, home.direction, home.elevation
+      obj.g4PlacedFrom = nil
+    end
   end
 end
 
@@ -1924,6 +1995,9 @@ function Commands.g4_set_object_pos(ctx, id, x, y)
   e.cellX, e.cellY = toLocal(ctx, valueOf(ctx, x), valueOf(ctx, y))
   e.px, e.py = e.cellX * 16, e.cellY * 16
   if e.def then e.def.x, e.def.y = e.cellX, e.cellY end
+  -- the TEMPLATE's cell, which the cartridge's next spawn takes as the
+  -- movement type's initial cell (MapObject xInitial / zInitial)
+  if e.g4Move then e.g4Move.originX, e.g4Move.originY = e.cellX, e.cellY end
 end
 
 -- ---------------------------------------------------------------------------
@@ -2330,6 +2404,9 @@ function Commands.g4_move(ctx, id, steps)
     if finished then return end
     finished = true
     if entity ~= ow.player then entity.scriptStepLen = nil end
+    -- every cartridge list that locks unlocks again; one cut short (a warp,
+    -- a failed step) must not leave the object unable to turn for good
+    entity.g4DirLocked = nil
     ctx.g4Moving = math.max(0, (ctx.g4Moving or 1) - 1)
     -- The join, if a `waitmovement` is already parked on it.
     if ctx.g4Moving == 0 and ctx.g4MoveJoin then
@@ -2362,16 +2439,21 @@ function Commands.g4_move(ctx, id, steps)
       -- on a normal step and when the list ends (Gen4MoveExec.stepLen).
       require("src.script.Gen4MoveExec").setStep(entity, ow, action.rate)
       ow:scriptMove(entity, action.dir, (action.tiles or 1) * count,
-                    nextStep, nil, action.rate)
+                    nextStep, entity.g4DirLocked or nil, action.rate)
+    elseif action.kind == "lock" or action.kind == "unlock" then
+      -- LockDir / UnlockDir: while set, no step of any list turns the object
+      -- (MapObject_SetFacingDirection skips the write) -- a backward shove
+      entity.g4DirLocked = action.kind == "lock" or nil
+      return nextStep()
     elseif action.kind == "face" then
-      entity.facing = action.dir
+      if not entity.g4DirLocked then entity.facing = action.dir end
       return nextStep()
     elseif action.kind == "spot" then
       -- Marking time: the sprite animates without moving, which a cutscene
       -- uses as a pause with a facing.  One repetition costs one step, so the
       -- beat is the entity's OWN step duration rather than a number picked
       -- here -- `stepFrames`, which the field defaults put at 16.
-      entity.facing = action.dir
+      if not entity.g4DirLocked then entity.facing = action.dir end
       -- The beat is one walk cycle, and the on-spot actions carry the same
       -- five speeds the walking ones do -- a fast mark-time is a short beat.
       ow:scriptPause(entity, math.max(1, math.floor(
@@ -2380,11 +2462,25 @@ function Commands.g4_move(ctx, id, steps)
       -- FIELD FRAMES, not engine ticks: the field runs at 30 a second, so
       -- WAIT_8 is 16 ticks here (Gen4MoveExec.waitTicks)
       ow:scriptPause(entity, require("src.script.Gen4MoveExec").waitTicks(action.frames, count), nextStep)
+    elseif action.kind == "hide" and entity == ow.player
+           and require("src.core.GameVersion").family() == "hgss" then
+      -- THE PLAYER'S SetInvisible IS THE SAME BIT AS ScrCmd_374 / MakeObjectVisible,
+      -- and like theirs it lasts only for this map: the cartridge builds the
+      -- player afresh on every load. Olivine Lighthouse 4F's window
+      -- (scr_seq_D27R0105 000) walks the player out with SetInvisible and
+      -- warps; the ledge outside re-hides them on resume and drops them in
+      -- with WarpIn + ScrCmd_374. Written to `hidden`, 374 never reached it
+      -- and the player stayed invisible for the rest of the lighthouse.
+      require("src.world.HgssModelObjects").setInvisible(ow, entity, true)
+      return nextStep()
     elseif action.kind == "hide" then
       entity.hidden = true
       return nextStep()
     elseif action.kind == "show" then
       entity.hidden = nil
+      if entity == ow.player and entity.gen4Invisible then
+        require("src.world.HgssModelObjects").setInvisible(ow, entity, false)
+      end
       return nextStep()
     elseif action.kind == "emote" then
       -- EMOTE_EXCLAMATION_MARK is 73 of the cartridge's 1,278 steps -- the "!"
@@ -2688,6 +2784,19 @@ function Commands.g4_safari_game(ctx, state)
     ctx.save.safari = nil
   end
 end
+-- `startgreatmarshlookout`: the Great Marsh observatory's binoculars -- five
+-- looks over the marsh and home (src/world/Gen4MarshLookout.lua); the script
+-- waits for them
+function Commands.g4_marsh_lookout(ctx)
+  local runner = ctx.runner
+  local started = require("src.world.Gen4MarshLookout").run(ctx.game, ctx.overworld, function()
+    if runner then runner:resume() end
+  end)
+  if started and runner then runner:yield() end
+end
+Commands.meta = Commands.meta or {}
+Commands.meta.g4_marsh_lookout = { foreground = true, blocking = true }
+
 function Commands.g4_safari_caught(ctx, destVar)
   local st = ctx.save and ctx.save.safari
   local n = st and st.caught or (ctx.save and ctx.save.gen4SafariLastCaught) or 0
@@ -2834,7 +2943,11 @@ local function mapForHeader(data, header)
     index = {}
     for id, def in pairs(data.maps) do
       local h = tonumber(def.header)
-      if h then index[h] = id end
+      -- the alias copy (`sourceId`, Data.lua's `D27R0107` -> `D_27R_0107`)
+      -- never wins over its map, as in the `mapForHeader` above this one:
+      -- `setspeciallocation` sent the Olivine Lighthouse lift to the copy,
+      -- whose scripts no index knows, and Jasmine would not take the potion
+      if h and not (def.sourceId and index[h]) then index[h] = id end
     end
     rawset(data, "_gen4HeaderIndex", index)
   end
@@ -3501,7 +3614,15 @@ function Commands.g4_static_outcome(ctx, destVar)
 end
 -- StaticWildWonOrCaughtCheck: IsBattleResultStaticWildWin, which -- despite
 -- the name -- answers TRUE unless the Pokemon was beaten or caught
-function Commands.g4_static_not_won(ctx, destVar)
+-- ...`<dest>, 1` reads VAR_BATTLE_RESULT (0x4013, BATTLE_OUTCOME_*) instead of
+-- the script's own win flag: a map's ON_LOAD asks that way, from a context
+-- that started no battle (IsBattleResultStaticWildWin: WIN 1 / CAUGHT 4 -> 0)
+function Commands.g4_static_not_won(ctx, destVar, fromVar)
+  if tonumber(fromVar) == 1 then
+    local v = getVar(ctx.save, 0x4013)
+    setVar(ctx.save, destVar, (v == 1 or v == 4) and 0 or 1)
+    return
+  end
   local r = ctx.lastBattleResult
   setVar(ctx.save, destVar, (r == "win" or r == "caught") and 0 or 1)
 end
@@ -5444,6 +5565,17 @@ function Commands.g4_set_blackout_warp(ctx, warpId)
   local save = ctx.save
   if not save then return end
   save.gen4BlackoutWarpId = math.floor(valueOf(ctx, warpId) or 0)
+  -- ...and applied now that the field has the spawn table (Platinum's
+  -- sHealLocations / HGSS's sSpawnMaps, `field.healLocations`): the row's
+  -- blackout half, at the counter facing up, as Gen4Blackout.noteEntry writes
+  local data = ctx.game and ctx.game.data
+  for _, row in ipairs((data and data.field and data.field.healLocations) or {}) do
+    local b = row.blackOut
+    if tonumber(row.index) == save.gen4BlackoutWarpId and b and b.map and b.x and b.y then
+      save.lastHeal = { map = b.map, x = b.x, y = b.y, facing = "up", home = (row.index == 0) or nil }
+      break
+    end
+  end
 end
 
 -- `getitempocket <item> <destVar>` -- `Item_LoadParam(item,
@@ -7277,9 +7409,15 @@ end
 -- DIAMOND 10, PEARL 11, PLATINUM 12. Spear Pillar asks so it knows whether
 -- Dialga or Palkia is yours.
 Gen4Commands.VERSION_PLATINUM = 12
+-- ...and HeartGold / SoulSilver ask it too, on the same enum: the Dragon's Den
+-- elder (D44R0103) tells HeartGold "...Never mind" about Lugia (== 7) and
+-- SoulSilver the Whirl Islands basin -- every HGSS script was being answered
+-- PLATINUM, i.e. "not HeartGold", and took SoulSilver's branch.
+Gen4Commands.VERSION_IDS = { heartgold = 7, soulsilver = 8, diamond = 10, pearl = 11, platinum = 12 }
 
 function Commands.g4_game_version(ctx, destVar)
-  local value = Gen4Commands.VERSION_PLATINUM
+  local value = Gen4Commands.VERSION_IDS[require("src.core.GameVersion").get()]
+    or Gen4Commands.VERSION_PLATINUM
   if destVar then setVar(ctx.save, destVar, value) end
   setResult(ctx, value)
 end
@@ -7422,6 +7560,18 @@ function Commands.g4_floors_above(ctx, destVar)
   local Elevators = elevators()
   local spot = ctx.save and ctx.save.gen4SpecialLocation
   local above
+  -- ...ON HGSS THE SAME SLOT IS ASKED A DIFFERENT QUESTION. Its
+  -- GetDynamicWarpFloorNo is lowered onto this op, but it is
+  -- `MapNumToFloorNo` -- the boarding floor's own number, default 0 -- not
+  -- the floors above it. Answered from Platinum's switch, the Olivine
+  -- Lighthouse car heard "1" from both ends and only ever went down, so the
+  -- light room was never reachable by lift (Gen4HgssFloorNo has the switch).
+  if require("src.core.GameVersion").family() == "hgss" then
+    above = require("src.import.Gen4HgssFloorNo").floorNo(spot and spot.map)
+    if destVar then setVar(ctx.save, destVar, above) end
+    setResult(ctx, above)
+    return
+  end
   if spot and spot.map then
     above = Elevators.floorsAbove(spot.map)
   else
@@ -10109,7 +10259,8 @@ function Commands.g4_rotom_forms_in_save(ctx, heat, wash, frost, fan, mow)
   local save = ctx.save or {}
   for _, mon in ipairs(save.party or {}) do look(mon) end
   for _, slot in ipairs(((save.gen4DayCare or {}).mons) or {}) do look(slot.mon or slot) end
-  for _, box in ipairs(save.boxes or {}) do for _, mon in ipairs(box) do look(mon) end end
+  -- by slot: a box's emptied slots are holes, and ipairs stopped at the first
+  for _, box in ipairs(save.boxes or {}) do for k = 1, 30 do look(box[k]) end end
   for i, dest in ipairs({ heat, wash, frost, fan, mow }) do setVar(save, dest, forms[i] and 1 or 0) end
 end
 -- SetRotomForm <partySlot, moveSlot, unused, form> (Pokemon_SetRotomForm):
@@ -10272,8 +10423,11 @@ function Commands.g4_lottery_winner(ctx, indexVar, digitsVar, inBoxVar, lotteryI
       if d > 0 and pBest < d then pBest, pIdx = d, i - 1 end
     end
   end
+  -- BY SLOT, not ipairs: a box keeps its empty slots as holes (Boxes.used),
+  -- and ipairs stopped at the first one -- every mon after a gap went unread
   for b, box in ipairs(save.boxes or {}) do
-    for k, mon in ipairs(box) do
+    for k = 1, 30 do
+      local mon = box[k]
       if mon and not mon.isEgg then
         local d = lotteryDigits(win, (tonumber(mon.otId) or 0) % 65536)
         if d > 0 and bBest < d then bBest, bIdx = d, (b - 1) * 30 + (k - 1) end
