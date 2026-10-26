@@ -15,7 +15,7 @@ local function current(c)
 end
 function R.new()return setmetatable({records=setmetatable({},{__mode='kv'}),callbacks=setmetatable({},{__mode='k'})},R)end
 function R:bind(state)
-  local c=self.records[state];if c then return current(c)and c or nil end
+  local c=self.records[state];if c then return current(c)and state:valid(false)and c or nil end
   local game=Session.game(state.game);if not(game and state:valid(false))then return nil end
   c={state=state,game=game,data=game.data,save=game.save,mods=game.mods,edition=Version.get(),owner=owner(),sourceStarted=state.sourceOwned==true}
   c.nativeCallback=state.onDone
