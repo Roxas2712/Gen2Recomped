@@ -72,9 +72,58 @@ Performance.gen4GpuLight = true
 -- G1: Gen 4 model vertices decoded straight into a ByteData through the FFI
 -- rather than a fifteen-element table per vertex (src/render/Gen4Model.lua).
 Performance.gen4ByteVertices = true
+-- W0: the frame pacer's idle time pumps the Gen 3 asset stream (atlas and
+-- sprite builds queued by prefetch) instead of sleeping through it
+-- (src/core/IdleStream.lua).
+Performance.idleStream = true
+-- G9: the Gen 4 live pass meshes the ring of chunks around the view in the
+-- frame's idle time, before the camera reaches them (Gen4Ground:prebuild).
+Performance.gen4ChunkPrebuild = true
+-- W1: a pool of worker threads for the builds that need no GPU
+-- (src/core/BuildWorker.lua); false keeps every build on the main thread.
+Performance.buildWorkers = true
 Performance.GC_PAUSE = 120
 Performance.GC_STEP_MUL = 300
 Performance.GC_BUDGET_SECONDS = 0.0005
+
+-- EVERY SWITCH ABOVE FROM THE ENVIRONMENT, for an A/B without an edit.
+--
+--   POKEPORT_PERF="gen3PaletteIndex=0,gcBudget=0"   turn these off
+--   POKEPORT_PERF="all=0"                            the port as it shipped
+--   POKEPORT_PERF="all=0,bytecodeCache=1"            all off but one
+--
+-- Read once at load, before any module copies a flag; a name that is not a
+-- boolean switch here is ignored (and logged by nobody -- this runs under
+-- love.conf, before the logger).  The names are the field names above,
+-- case-sensitive; `all` is every boolean field present at this point.
+-- tools/perf_switch_matrix.sh runs the mod and engine checks once per
+-- switch with it off, which is how "no optimisation changes what a mod
+-- sees" is kept true.
+function Performance.applyEnvironment(spec)
+  spec = spec or (os and os.getenv and os.getenv("POKEPORT_PERF"))
+  if type(spec) ~= "string" or spec == "" then return {} end
+  local applied = {}
+  for item in spec:gmatch("[^,%s]+") do
+    local name, value = item:match("^([%w_]+)=([%w]+)$")
+    value = value and value:lower()
+    if name and (value == "0" or value == "1" or value == "true" or value == "false") then
+      local on = value == "1" or value == "true"
+      if name == "all" then
+        for k, v in pairs(Performance) do
+          if type(v) == "boolean" and k ~= "saver" then
+            Performance[k] = on
+            applied[k] = on
+          end
+        end
+      elseif type(Performance[name]) == "boolean" and name ~= "saver" then
+        Performance[name] = on
+        applied[name] = on
+      end
+    end
+  end
+  return applied
+end
+Performance.applyEnvironment()
 
 -- Option-row order (auto first, then most to least capable).
 Performance.TIERS = { "auto", "high", "balanced", "low" }
@@ -104,6 +153,9 @@ for name, caps in pairs(Performance.CAPS) do
   -- index).  x3 / x4 is nine to sixteen times the fill of the logical view;
   -- a phone or handheld cannot pay that, whatever the OPTIONS row says.
   caps.gen4RenderScaleMax = (name == "high" and 4) or (name == "balanced" and 2) or 1
+  -- W0: the most of a frame's idle time the asset stream may take.  HIGH
+  -- has the time to spare; LOW keeps the sleep it was going to take.
+  caps.streamIdleSeconds = (name == "high" and 0.006) or (name == "balanced" and 0.003) or 0.002
   caps.gcPause = Performance.GC_PAUSE
   caps.gcStepMul = Performance.GC_STEP_MUL
   caps.gcBudgetSeconds = Performance.GC_BUDGET_SECONDS

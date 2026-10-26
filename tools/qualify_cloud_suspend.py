@@ -27,7 +27,7 @@ import urllib.error
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
-EDITIONS = ('ruby', 'sapphire', 'emerald', 'firered', 'leafgreen')
+EDITIONS = ('red', 'blue', 'yellow', 'gold', 'silver', 'crystal', 'ruby', 'sapphire', 'emerald', 'firered', 'leafgreen')
 
 
 def main():
@@ -38,6 +38,9 @@ def main():
     parser.add_argument('--cert', type=Path, required=True)
     parser.add_argument('--key', type=Path, required=True)
     parser.add_argument('--cache', action='append', required=True, metavar='EDITION=PATH')
+    parser.add_argument('--move', choices=['TACKLE','SWIFT'], default='SWIFT', help='SWIFT guarantees damage before suspend without modifying imported move data')
+    parser.add_argument('--trainer', action='store_true', help='Exercise a real imported trainer instead of the wild battle')
+    parser.add_argument('--idle-ticks', type=int, default=0, help='Age the native battle before saving; 108000 ticks = 30 simulated minutes')
     parser.add_argument('--during-animation', action='store_true')
     parser.add_argument('--timeout', type=int, default=180)
     args = parser.parse_args()
@@ -45,7 +48,7 @@ def main():
     for entry in args.cache:
         edition, directory = entry.split('=', 1)
         if edition not in EDITIONS or edition in caches:
-            parser.error('Supply each supported Gen 3 edition at most once')
+            parser.error('Supply each supported edition at most once')
         caches[edition] = Path(directory).expanduser().resolve(strict=True)
     backend = args.backend.resolve(strict=True)
     php, runtime = args.php.resolve(strict=True), args.love_app.resolve(strict=True)
@@ -76,6 +79,7 @@ end
 """)
     source_hashes = {str(p.relative_to(source)): hashlib.sha256(p.read_bytes()).hexdigest()
                      for p in [*sorted((source / 'src').rglob('*.lua')), source / 'main.lua', source / 'conf.lua']}
+    (output / 'source-fingerprints.json').write_text(json.dumps(source_hashes, indent=2) + '\n')
     storage = output / 'backend-storage'
     for name in ('app/private', 'framework/cache/data', 'framework/sessions', 'framework/views', 'logs'):
         (storage / name).mkdir(parents=True, exist_ok=True)
@@ -135,7 +139,7 @@ if(!$u->hasVerifiedEmail())throw new RuntimeException('QA account must have a co
             for role in ('source', 'target'):
                 identity = 'oasc-suspend-qa-' + run_id + '-' + edition + '-' + role
                 qa_profile(profiles / identity)
-                config = dict(edition=edition, role=role, animation=args.during_animation, email=email, password=password, cache=str(cache),
+                config = dict(edition=edition, role=role, animation=args.during_animation, idleTicks=args.idle_ticks, trainer=args.trainer, move=args.move, email=email, password=password, cache=str(cache),
                               api=url + '/api/cloud/v1', library=str(runtime / 'Contents/Frameworks/love.framework/Versions/A/love'),
                               result=str(output / (edition + '-' + role + '.json')),
                               expected=str(output / (edition + '-expected.lua')))
