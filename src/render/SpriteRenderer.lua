@@ -5,6 +5,7 @@
 
 local Assets = require("src.render.Assets")
 local PaletteFX = require("src.render.PaletteFX")
+local ShadeRecolour = require("src.render.ShadeRecolour")
 local GameVersion = require("src.core.GameVersion")
 
 local SpriteRenderer = {}
@@ -56,6 +57,13 @@ local function getObpImage(path, colors, group)
     local img
     if love.image and love.image.newImageData then
       local id = Assets.imageData(path)
+      -- G7: the same bake as one FFI pass (src/render/ShadeRecolour.lua);
+      -- the per-pixel loop below is the fallback and the definition
+      local baked = ShadeRecolour.whole(id, colors, "obp")
+      if baked then
+        img = love.graphics.newImage(baked)
+        if baked.release then baked:release() end
+      else
       id:mapPixel(function(_, _, r, g, b, a)
         if a == 0 then return r, g, b, a end
         if r > 0.83 then return r, g, b, 0 end -- OBJ color 0: always transparent
@@ -63,6 +71,7 @@ local function getObpImage(path, colors, group)
         return col[1] / 255, col[2] / 255, col[3] / 255, a
       end)
       img = love.graphics.newImage(id)
+      end
     else
       img = getImage(path) -- headless stub: no pixel access
     end
