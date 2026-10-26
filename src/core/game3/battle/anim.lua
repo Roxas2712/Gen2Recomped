@@ -75,7 +75,14 @@ local function read(d,id,key)
   if key=='displayHp'then return b.shownHP or b.mon.hp end
   if key=='displayMaxHp'then return b.mon.stats.hp end
   if key=='displayLevel'then return b.mon.level end
-  if key=='displayStatus'then local observed=Coords.battler(d.view,id);return observed and observed.status end
+  if key=='displayStatus'then
+    -- Logical status may already describe a queued future event. The native
+    -- HUD owns the shown ailment; false is its explicit healthy sentinel.
+    local status=b.shownStatus
+    if not status then return false end
+    if status=='SLP'then return 1 end
+    return({PSN=8,BRN=16,FRZ=32,PAR=64,TOX=128})[status]or false
+  end
   if key=='displayExp'then return screen:expFraction(b.mon)end
 end
 function A.idOf(key)
