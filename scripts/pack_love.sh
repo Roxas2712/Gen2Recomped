@@ -245,7 +245,10 @@ for required in main.lua conf.lua src/core/Version.lua \
                 tools/map-editor/ModExport.lua \
                 tools/map-editor/panels/Preview.lua \
                 mods/DRAMATIC_SHAPE/manifest.json \
-                mods/DRAMATIC_SHAPE/main.lua; do
+                mods/DRAMATIC_SHAPE/main.lua \
+                mods/EMERALD_3DS_VOXEL/manifest.json \
+                mods/EMERALD_3DS_VOXEL/main.lua \
+                mods/EMERALD_3DS_VOXEL/bake/bake.py; do
   if [ "$ENGINE_ONLY" -eq 1 ] && [[ "$required" == mods/* ]]; then continue; fi
   [ -e "$STAGE/$required" ] || fail "payload is missing $required"
 done

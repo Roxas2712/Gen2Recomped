@@ -28,10 +28,20 @@ A.PARTS = {
   eyeGlimmer  = { model = 28, anims = { 29, 30, 31 } },
   birdRing    = { model = 34, anims = { 35, 36, 37 } },
   waves       = { model = 38, anims = { 39, 40 } },
+  -- ShowLegendaryWing (overlay 2 0x0224618C): the wing over the player at
+  -- the Tin Tower (0, model 55) and the Whirl Islands (1, model 65), its
+  -- three animation sets from ov02_02253254 / _02253D80 / _02253D84
+  wingTin          = { model = 55, anims = { 57, 56, 58 } },
+  wingTinShine     = { model = 55, anims = { 59, 60, 61 } },
+  wingTinFade      = { model = 55, anims = { 62, 63, 64 } },
+  wingWhirl        = { model = 65, anims = { 67, 66, 68 } },
+  wingWhirlShine   = { model = 65, anims = { 69, 70, 71 } },
+  wingWhirlFade    = { model = 65, anims = { 72, 73, 74 } },
 }
 A.LEAVES_BG2 = { 41, 42, 43, 44, 45, 46 }
 A.LEAVES_BG3 = { 47, 48, 49, 50, 51, 52 }
 A.LEAVES_CHAR, A.LEAVES_PAL = 53, 54
+A.ALPH_PAL, A.ALPH_CHAR, A.ALPH_SCREEN = 15, 16, 17
 
 function A.build(x)
   local G = require("src.import.Gen4Graphics")
@@ -127,6 +137,20 @@ function A.build(x)
     end
   end)
   if not okL then out.leavesError = tostring(err) end
+
+  -- THE RUINS OF ALPH WALL PANEL (ScrCmd_OpenAlphHiddenRoom, overlay 2
+  -- 0x0224686C): palette 15, character data 16, screen 17 on main BG1; the
+  -- inscription (bank 198) is printed over it in the Unown font
+  local okA, errA = pcall(function()
+    -- GXLoadPal(narc 15, main BG, offset 0, 0x20 bytes): the file's first
+    -- sixteen colours, raw and in file order, into slot 0 -- every cell of
+    -- the panel is on palette 0 (the PCMP slot table does not apply)
+    local palette = assert(G.paletteAtSlot(assert(G.palette(member(A.ALPH_PAL), true)), 0))
+    local pic = assert(G.compose(assert(G.tilemap(member(A.ALPH_SCREEN))), assert(G.tiles(member(A.ALPH_CHAR))), palette))
+    local saved = assert(x:saveImage("legend/alph_panel", pic))
+    out.alphPanel = type(saved) == "table" and saved.path or saved
+  end)
+  if not okA then out.alphError = tostring(errA) end
 
   return out
 end
