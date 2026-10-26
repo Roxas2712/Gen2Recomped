@@ -30,5 +30,8 @@ calls; it does not boot a game, open a device or modify a reference checkout.
 The five CLI tests exercise 26 synthetic cases and pass with the correction.
 The unchanged checker fails all 12 Boolean/number drift cases while retaining
 the positive and worker-failure controls. All 13 tool tests, including the
-eight existing Substitute-discovery regressions, pass together. Actual native
-observation replay remains a separate qualification step.
+eight existing Substitute-discovery regressions, pass together. Both independently qualified native capture sets also replay successfully
+through the corrected comparator: 268 workers / 178,264 complete paired
+observations per set. This reparses recorded output rather than executing
+the engines again. The [source-bound receipt](qa/contract-observation-types.json)
+records the checker, capture identities and retained negative controls.
