@@ -3341,6 +3341,7 @@ function OverworldState:update(dt)
   -- already feeds into draw().
   -- the weather's own clock; see drawFieldWeather
   self.weatherFrame = (self.weatherFrame or 0) + 1
+  if GameVersion.isGen3() then require('src.world.Gen3WeatherAudio').update(Game,self) end
   -- ...and the cracked floor's, which runs on the clock rather than on the
   -- steps because that is what makes a step's length decide the fall
   self:tickCrackedFloor()
@@ -14928,6 +14929,7 @@ function OverworldState:startWarpTo(mapId, x, y, facing, onDone, opts)
   self.doorWarp = nil
   local arriveWarp = self.arriveWarp
   self.arriveWarp = nil
+  self.warpArrivalKind = arriveWarp
   local fromId = self.map.id
   local fromSection = self.map.def and self.map.def.regionMapSection
   Game.stack:push(Transition.new(Game, function()
@@ -15085,6 +15087,7 @@ function OverworldState:startWarpTo(mapId, x, y, facing, onDone, opts)
     end
   end, function()
     self.transitioning = false
+    self.warpArrivalKind = nil
     -- THE ARRIVAL IS WHAT GIVES THE CONTROLS BACK.
     --
     -- Reported from play: "Fix the lavaridge gym its bugged When you go
