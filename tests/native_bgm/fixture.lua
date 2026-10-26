@@ -183,10 +183,11 @@ function M.install(root, backend, version, f, options)
     tick = hardware.tick,
     trace = hardware.trace,
     options = function(level)
+      local opts = type(level) == "table" and level or { musicVol = level, sfxVol = 7 }
       if native then
-        audio.applyEngineOptions({ musicVol = level, sfxVol = 7 })
+        audio.applyEngineOptions(opts)
       else
-        Music.applyOptions({ musicVol = level })
+        Music.applyOptions(opts)
       end
     end,
     close = function()

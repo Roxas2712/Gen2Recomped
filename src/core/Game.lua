@@ -1848,7 +1848,7 @@ function Game:applyOptions(opts)
   opts = opts or (self.save and self.save.options) or {}
   local Music = require("src.core.Music")
   local Sound = require("src.core.Sound")
-  if Music.applyOptions then Music.applyOptions(opts) end
+  if Music.applyOptions then Music.applyOptions(opts, self.data or Data) end
   if Sound.applyOptions then Sound.applyOptions(opts) end
   -- EMERALD'S BUTTON MODE, which decides what L and R do.  Applied here
   -- rather than read at the input site so that a mode set on the OPTION
