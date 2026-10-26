@@ -1133,6 +1133,40 @@ function PaletteFX.shadeMap()
   return shadeMap
 end
 
+-- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
+-- Public byte-register access and native frame drawing share one state.
+-- Renderer.beginFrame's existing reset therefore also clears a mod's BGP;
+-- a byte cannot silently survive a menu, map or battle frame.
+PaletteFX.BGP_IDENTITY = 0xe4
+function PaletteFX.bgpShades(byte)
+  byte = byte or PaletteFX.BGP_IDENTITY
+  local out = {}
+  for i = 0, 3 do out[i + 1] = math.floor(byte / 4 ^ i) % 4 end
+  return out
+end
+function PaletteFX.bgp()
+  if not shadeMap then return nil end
+  local byte = 0
+  for i = 0, 3 do byte = byte + shadeMap[i] * 4 ^ i end
+  return byte ~= PaletteFX.BGP_IDENTITY and byte or nil
+end
+function PaletteFX.setBgp(byte)
+  local previous = PaletteFX.bgp()
+  if byte == nil or byte == PaletteFX.BGP_IDENTITY then
+    PaletteFX.setShadeMap(nil)
+  else
+    local shades = PaletteFX.bgpShades(byte)
+    PaletteFX.setShadeMap({[0]=shades[1], shades[2], shades[3], shades[4]})
+  end
+  return previous
+end
+function PaletteFX.remap(colors, byte)
+  if not colors or not byte or byte == PaletteFX.BGP_IDENTITY then return colors end
+  local shades, out = PaletteFX.bgpShades(byte), {}
+  for i = 1, 4 do out[i] = colors[shades[i] + 1] or colors[4] end
+  return out
+end
+
 function PaletteFX.setMode(mode)
   local prev = PaletteFX.mode
   local ok = false
@@ -1221,7 +1255,9 @@ function PaletteFX.paperShade(data)
   return c[1] / 255, c[2] / 255, c[3] / 255
 end
 
-function PaletteFX.effectiveColors(c, invert)
+-- Display selection alone. A caller inspecting the palette must not consume
+-- the register: already-coloured frame remapping takes its own explicit byte.
+function PaletteFX.displayColors(c)
   if not c then return nil end
   local mode = PaletteFX.mode or "gbc"
   local out = c
@@ -1237,6 +1273,11 @@ function PaletteFX.effectiveColors(c, invert)
   elseif mode == "gbc_inv" then
     out = PaletteFX.permute(c, INV_MAP)
   end
+  return out
+end
+function PaletteFX.effectiveColors(c, invert)
+  local out = PaletteFX.displayColors(c)
+  if not out then return nil end
   -- The shade map goes on LAST: rBGP is a hardware register write, so it
   -- composes on top of whatever colors the display mode settled on -- a dark
   -- cave has to read dark in CLASSIC's pea greens and in plain DMG grays too
@@ -1252,12 +1293,14 @@ end
 -- send a 4-color (0-255 RGB) palette to the shade-remap shader, after
 -- applying the active COLORS display mode
 local nativeEffectiveColors, nativePermute = PaletteFX.effectiveColors, PaletteFX.permute
+local nativeDisplayColors = PaletteFX.displayColors
 local _uniforms = setmetatable({}, {__mode="k"})
 local UNIFORM_NAMES = {"c0", "c1", "c2", "c3"}
 
 -- Native upload code resolves rows by index, never by a borrowed public palette.
 local function effectiveSource(c)
-  if PaletteFX.effectiveColors ~= nativeEffectiveColors or PaletteFX.permute ~= nativePermute then
+  if PaletteFX.effectiveColors ~= nativeEffectiveColors or PaletteFX.permute ~= nativePermute
+      or PaletteFX.displayColors ~= nativeDisplayColors then
     return PaletteFX.effectiveColors(c), 1, 2, 3, 4
   end
   if not c then return nil end
@@ -1319,6 +1362,7 @@ PaletteFX._nativeSendColors = PaletteFX.sendColors
 function PaletteFX._beginColorBatch(shader)
   if not Performance.paletteZoneCache or not nativeShader(shader)
      or PaletteFX.effectiveColors ~= nativeEffectiveColors or PaletteFX.permute ~= nativePermute
+     or PaletteFX.displayColors ~= nativeDisplayColors
      or love.graphics.draw ~= nativeDraw or love.graphics.setShader ~= nativeSetShader then return nil end
   local state = uniformState(shader)
   if state.busy then state = {rows={{},{},{},{}}} end
