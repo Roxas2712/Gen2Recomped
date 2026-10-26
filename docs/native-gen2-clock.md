@@ -19,6 +19,10 @@ the normal object-load freeze still applies. An explicit palette-query hour
 retains precedence. The existing `world.tod` hook remains a presentation
 override and does not rewrite the saved RTC. A raw scene-clock query uses
 the current native save, independently of a room's forced palette.
+AUTO neighbours share the effective clock presentation while the entered
+map also follows AUTO. From a pinned room/cave, an AUTO neighbour instead
+uses the saved RTC; that room's unused world-TOD hook is not a neighbour
+palette override. This keeps explicit native/external hour queries aligned.
 
 `clock.day_changed` is produced by actual weekday reads, including the live
 world clock poll. It reports `day`, `previous` and `reason` (`rollover` or
