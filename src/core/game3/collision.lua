@@ -87,7 +87,9 @@ function Collision.resolveWarpDestination(game,warp)
   local g,w=Session.resolve(game)
   if not g or type(warp)~='table'then return nil,'no admitted native warp observation'end
   local maps=Map._context(g);local found
-  for _,def in pairs(maps:definitions())do
+  local definitions,why=maps:definitions()
+  if not definitions then return nil,why end
+  for _,def in pairs(definitions)do
     for _,row in ipairs(def.warps or{})do if row==warp then found=true;break end end
     if found then break end
   end

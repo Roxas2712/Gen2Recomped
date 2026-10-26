@@ -40,7 +40,7 @@ function D.draw(x,y)
 end
 return setmetatable(D,{__index=function(_,key)
  local _,game=context()
- if not game then return nil end
+ if type(game)~='table'then return nil end
  if key=='_manifest'then return game.data.constants and game.data.constants.gen3Doors end
  if key=='SOUND_SLIDING'then return require('src.core.game3.se_ids').resolve('SE_DOOR')end
 end})

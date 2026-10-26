@@ -16,6 +16,8 @@ local function stop(who,id)
   end
 end
 function A.playSe(id,opts)
+  local volume=opts and opts.sourceVolume
+  assert(volume==nil or type(volume)=='number'and volume==volume and volume>=0 and volume<=1,'invalid source volume')
   local g=Native.game();if not g then return false end
   local value=require('src.core.game3.se_ids').resolve(id)
   local who=owner()
@@ -23,10 +25,8 @@ function A.playSe(id,opts)
   if not source then source=Sound.playId(g.data,value)end
   if source and who then
     if not A._seMeta[source]then A._seSources[#A._seSources+1]=source end
-    A._seMeta[source]={owner=who,id=value or id,game=g,data=g.data,save=g.save}
-    local volume=opts and opts.sourceVolume
+    A._seMeta[source]={owner=who,id=value or id,game=g,data=g.data,save=g.save,loader=g.mods}
     if volume~=nil then
-      assert(type(volume)=='number'and volume==volume and volume>=0 and volume<=1,'invalid source volume')
       source:setVolume(volume)
     end
     A._lastSe=source
@@ -51,7 +51,7 @@ A._service={release=function()stop();A._lastSe=nil end,releaseOwner=function(_,w
  poll=function()
   local g=Native.game()
   for _,meta in pairs(A._seMeta)do
-    if g~=meta.game or g.data~=meta.data or g.save~=meta.save then stop(meta.owner)end
+    if g~=meta.game or g.data~=meta.data or g.save~=meta.save or g.mods~=meta.loader then stop(meta.owner)end
   end
  end}
 require('src.core.game3.asset_stream').register(A._service)
