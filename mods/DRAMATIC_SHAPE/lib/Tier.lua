@@ -96,6 +96,10 @@ end
 --              delayed is strictly "somebody took a step", where the error
 --              is at most three frames of a walker's own shadow lagging
 --              their feet by a pixel or two.
+--   shadowTaps how many shadow-map reads a fragment spends: 4 is the 2x2
+--              box filter (a one-pixel soft edge), 1 the bare staircase.
+--              Four dependent texture reads per world fragment are what a
+--              tile GPU pays most for, so BALANCED and LOW take one.
 --   water      the top rung of Water.level(): 2 FULL (the screen-space
 --              march that samples the depth texture twenty-odd times per
 --              water pixel), 1 SKY (the sun, the moon and the sky alone),
@@ -143,13 +147,13 @@ end
 --              Water.planarLevel): what a tier must never do is turn a
 --              player's OWN choice on, and a ceiling cannot.
 local CAPS = {
-  high     = { shadows = true,  shadowRes = nil,  shadowHz = nil,
+  high     = { shadows = true,  shadowRes = nil,  shadowHz = nil, shadowTaps = 4,
                waterRaySteps = 12, waterRayRefine = 3,
                water = nil, waterCast = nil, waterPlanar = nil, aa = nil },
-  balanced = { shadows = true,  shadowRes = 1024, shadowHz = 3,
+  balanced = { shadows = true,  shadowRes = 1024, shadowHz = 3, shadowTaps = 1,
                waterRaySteps = 12, waterRayRefine = 3,
                water = 1,   waterCast = 0,   waterPlanar = 0,   aa = 2 },
-  low      = { shadows = false, shadowRes = 1024, shadowHz = 0,
+  low      = { shadows = false, shadowRes = 1024, shadowHz = 0, shadowTaps = 1,
                waterRaySteps = 12, waterRayRefine = 3,
                water = 0,   waterCast = 0,   waterPlanar = 0,   aa = 0 },
 }
