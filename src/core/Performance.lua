@@ -51,6 +51,8 @@ Performance.hotPathHoist = true
 Performance.worldDrawHoist = true
 -- P5: palette upload batching and cropped zone quads.
 Performance.paletteZoneCache = true
+-- P6: PCM bulk writes, speculative effect prewarming and DS worker transport.
+Performance.audioWorkerOptimization = true
 Performance.GC_PAUSE = 120
 Performance.GC_STEP_MUL = 300
 Performance.GC_BUDGET_SECONDS = 0.0005
