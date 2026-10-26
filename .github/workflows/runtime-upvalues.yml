@@ -6,6 +6,8 @@ on:
       - 'tools/runtime-upvalue-check/**'
       - 'tools/build_native_preview.py'
       - 'tools/package_native_release.py'
+      - 'tools/fetch_love_runtime.py'
+      - 'tests/test_fetch_love_runtime.py'
       - 'tests/test_runtime_component.py'
       - 'tests/test_native_preview.py'
       - 'src/mods/Job*.lua'
@@ -70,11 +72,13 @@ jobs:
           --engine-tests
       - name: Fetch pinned LOVE12 host artifact
         if: matrix.love-artifact != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: >-
-          curl --fail --location --retry 2
+          python engine/tools/fetch_love_runtime.py
+          --artifact "${{ matrix.love-artifact }}"
           --output "${{ runner.temp }}/love-runtime.zip"
-          "https://nightly.link/love2d/love/actions/artifacts/${{ matrix.love-artifact }}.zip"
       - name: Qualify the actual LOVE12 host, thread VM and FFI
         if: matrix.love-artifact != ''
         shell: bash
