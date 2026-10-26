@@ -34,16 +34,18 @@ adapters, VMs, music services and owned audio hardware doubles. No native
 audio method is replaced with a host result. LuaJIT is pinned to
 `a4c064539ea931274d407e1249b4bb575424a0f4`.
 
-- **24 workers / 2,524 complete paired observations**, independently
+- **28 workers / 2,564 complete paired observations**, independently
   compared with JSON booleans distinguished from numeric zero/one.
 - The new BGM contracts contribute **1,970 rows**: 1,844 symbol rows,
   32 command/lifecycle cases with all 81 frames and play traces per case,
   and 94 default-policy cases with all five frames and play traces.
   File cases retain every created source, including stopped sources and
-  their actual gains. The remaining 554 rows recheck native cry contracts.
-- **80/80** BGM command and **62/62** stream engine checks pass. The full
-  feature quick run passes **169/178** engine suites, SDK **3/3** and B30.
-  A fresh preceding development checkpoint `3b46f0c9` passes **168/177**;
+  their actual gains. Another 40 rows cover native fanfare commands and
+  waits; the remaining 554 rows recheck native cry contracts.
+- **80/80** BGM command, **62/62** stream and **7,364/7,364** fanfare engine
+  checks pass. The full feature quick run passes **170/179** engine suites,
+  SDK **3/3** and B30. A fresh preceding development checkpoint `dc9ba1c5`
+  passes **169/178**;
   the exact anchored `FAIL ` line Counters are identical:
   **25 lines / nine inherited failing suites**, with no additions/removals.
 - The changed workflow passes actionlint. New modules and BGM test files
@@ -85,12 +87,49 @@ Named mod M4A definitions remain a host extension: the reference's shared
 mod player does not accept that format. Host tests verify that the extension
 does not incorrectly allocate a native background carrier.
 
+## Native fanfare follow-up
+
+`playfanfare` resolves script variables and begins a native, nonblocking
+fanfare. Its timer reads imported `constants.gen3Fanfares` metadata and native
+song information, including the level-up fallback when a present table does
+not admit the requested song. Missing timer metadata retains the native
+160-frame default. Rendered sound duration does not decide script completion.
+
+The real audio service advances the timer. `waitfanfare` also retains the
+reference's separate **361-poll** script safety limit and latched completion
+callback. Accelerated logic can reach that safety limit before a long
+fanfare's audio timer finishes; both behaviors are compared explicitly.
+New/repeated fanfares, explicit same/different/silent BGM cues, deferred
+defaults and BGM dispatch to a native fanfare preserve their distinct native
+rules. Shared mod music is not paused as though it were a native carrier.
+
+Native fanfare sources use the music option and occupy the declared SE
+player. Repeated cues reuse the cached source; replacement stops the former
+fanfare and the target player's previous sound. The audible tail can outlive
+the native script timer. Fanfare pause clears queued native BGM PCM and
+stops its producer. Worker packets retain a pause epoch so an old packet
+cannot re-enter the resumed source; stale resume commands are ignored.
+
+The fanfare engine suite passes **7,364 checks**, including actual
+`Game`/`FixedStep`/`StateStack` execution at 1x/4x/10x, field ownership,
+public script hooks, completion events, physical map-music restoration,
+the real worker body and controlled worker transport. The audio service
+uses its game instance's dataset, so a correct logical song cannot mask a
+failed physical replay against another dataset. The previous behavior
+reproduced six physical-restoration assertion failures.
+
+The 40 complete fanfare command rows compare unchanged native production
+adapters and VMs. A separate **four-worker / 12-case / 156-frame** comparison
+uses the real native/host renderers and keeps all distinct PCM, source
+inventories, SE queries and queue counters. The reference cache is warmed
+with its own renderer because its cold cache admission requires userdata
+while headless SoundData is a table. This does not claim cold-device or
+whole-waveform parity.
+
 ## Work still required before a pull request
 
 - Native versus mod music ownership across additional no-output and failure
-  paths, plus native fanfare/deferred/default transitions and real-clock
-  fanfare waits. The script fanfare wait still depends on logic-time
-  `save.playTime`, so speed changes are not qualified.
+  paths, cold fanfare cache/device handling and session transitions.
 - Public music hook/event timing and context, actual-import regressions,
   the complete existing contract matrix and a qualified combined runtime.
 - Native command revision and an independent frozen-parent serializer
@@ -110,6 +149,7 @@ nice -n 19 python3 tools/enemy-action-contract-check/check.py \
   --gen1 /path/to/clean/gen1-reference --gen2 . \
   --lua /path/to/pinned/luajit \
   --mode native_bgm_symbols --mode native_bgm_commands --mode native_bgm_policy \
+  --mode native_fanfare_commands \
   --mode native_cry_commands --mode native_cry_lifecycle --mode native_cry_pcm \
   --report /path/to/bgm-development-report.json
 ```
@@ -131,3 +171,7 @@ invoke the tool by absolute path, pass this checkout's absolute path as
 the first argument and change `gen2` to `gen1`. Compare the admitted
 control/queue properties while preserving all backend-specific raw source
 records and PCM; do not report whole raw waveform equality.
+
+The same invocation pattern applies to
+`tools/enemy-action-contract-check/native-fanfare-stream-smoke.lua`, which
+retains the real fanfare renderers' complete outputs and source ownership.

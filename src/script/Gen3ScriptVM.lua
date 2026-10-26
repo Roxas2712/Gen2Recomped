@@ -660,8 +660,7 @@ L.waitse = function(_, s) emit(s, { "g3_wait_se" }) end
 -- Lowered to a blocking play_once, the box only appeared after the whole
 -- rendered song -- trailing silence included -- had run out.
 L.playfanfare = function(ir, s)
-  local song = songLabel(ir[2])
-  if song then emit(s, { "g3_play_fanfare", song, tonumber(ir[2]) }) end
+  emit(s, { "g3_play_fanfare", ir[2] })
 end
 L.waitfanfare = function(_, s) emit(s, { "g3_wait_fanfare" }) end
 for _, operation in ipairs({ "playbgm", "savebgm", "fadedefaultbgm", "fadenewbgm", "fadeoutbgm", "fadeinbgm" }) do

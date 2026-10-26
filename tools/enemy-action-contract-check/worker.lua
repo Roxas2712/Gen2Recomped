@@ -2,7 +2,9 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "native_bgm_policy" then
+if mode == "native_fanfare_commands" then
+  rows = dofile(root .. "/tests/enemy_actions/native_fanfare_commands.lua").run(root, backend, version)
+elseif mode == "native_bgm_policy" then
   rows = dofile(root .. "/tests/enemy_actions/native_bgm_policy.lua").run(root, backend, version)
 elseif mode == "native_bgm_commands" then
   rows = dofile(root .. "/tests/enemy_actions/native_bgm_commands.lua").run(root, backend, version)

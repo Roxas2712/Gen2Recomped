@@ -16,6 +16,8 @@ local cache = {}
 local nativePlayers = {}
 local nativeSeWaits = {}
 local nativeCryMono = false
+local nativeFanfareSource
+local nativeFanfares = setmetatable({}, { __mode = "k" })
 -- port addition: 0-7 SFX volume from save.options.sfxVol (OptionsMenu),
 -- scaling the 0.8 base every source gets
 local BASE_VOLUME = 0.8
@@ -250,6 +252,44 @@ local function forgetNative(src)
       nativePlayers[player] = nil
     end
   end
+end
+
+-- Native fanfares use the music option, occupy their native SE player and
+-- retain their audible tail independently of the script's fanfare timer.
+function Sound.playNativeFanfare(data, info, musicVolume, musicFilter)
+  if sessionSuspended or not (love.audio and data and data.audio and data.audio.gen3) then return nil end
+  if nativeFanfareSource then
+    pcall(nativeFanfareSource.stop, nativeFanfareSource)
+    forgetNative(nativeFanfareSource)
+    nativeFanfareSource = nil
+  end
+  local previous = nativePlayers[info.player]
+  if previous then pcall(previous.src.stop, previous.src); nativePlayers[info.player] = nil end
+  local store = nativeFanfares[data] or { count = 0 }
+  nativeFanfares[data] = store
+  local src = store[info.id]
+  if not src then
+    local song = data.audio.songs and data.audio.songs[("SONG_%03X"):format(info.id)]
+    local ok, sd = pcall(require("src.core.M4ASynth").renderEffect, data, song,
+      { seconds = info.frames / 60 + 4 })
+    if not (ok and sd) then return nil end
+    local made
+    made, src = pcall(love.audio.newSource, sd, "static")
+    if not (made and src) then return nil end
+    if store.count >= 24 then store = { count = 0 }; nativeFanfares[data] = store end
+    store[info.id], store.count = src, store.count + 1
+    local filter = (tonumber(musicFilter) or 0) > 0 and {
+      type = "lowpass", volume = 1, highgain = .4 ^ musicFilter,
+    } or nil
+    if src.setFilter then pcall(src.setFilter, src, filter) end
+  end
+  pcall(src.stop, src)
+  pcall(src.setVolume, src, musicVolume)
+  if not pcall(src.play, src) then return nil end
+  nativeFanfareSource = src
+  local key = ("SONG_%03X"):format(info.id)
+  nativePlayers[info.player] = { src = src, id = info.id, key = key, name = key }
+  return src
 end
 
 local function nativeSeId(data, key)
@@ -1012,6 +1052,16 @@ function Sound.invalidate(name)
   byNumber = nil
   local nativeCry = package.loaded["src.core.NativeCryPlayer"]
   if nativeCry then nativeCry.invalidate(name) end
+  for _, store in pairs(nativeFanfares) do
+    for id, src in pairs(store) do
+      if type(id) == "number" and (not name or name == ("SONG_%03X"):format(id)) then
+        pcall(src.stop, src)
+        forgetNative(src)
+        if nativeFanfareSource == src then nativeFanfareSource = nil end
+        store[id] = nil
+      end
+    end
+  end
   local function evict(store, key)
     local src = store[key]
     if src then

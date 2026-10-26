@@ -13,17 +13,21 @@ function NativeMusic:setLevel(value, apply)
   self.host.level(value, apply)
 end
 function NativeMusic:reset()
+  self.fanfareActive, self.fanfareFrames, self.bgmPaused = false, 0, false
+  self.fanfareRestore, self.fanfareWait = nil, nil
   self.current, self.mapSong, self.savedSong = nil, nil, nil
   self.fadeOut, self.fadeIn, self.deferred = nil, nil, nil
   self.serial = self.serial + 1
   self:setLevel(self.host.master())
 end
 function NativeMusic:stopped()
+  self.fanfareRestore = nil
   self.current, self.fadeOut, self.fadeIn, self.deferred = nil, nil, nil, nil
   self.serial = self.serial + 1
   self:setLevel(self.host.master())
 end
 function NativeMusic:started(id, preparing)
+  self.fanfareActive, self.fanfareFrames, self.bgmPaused, self.fanfareRestore = false, 0, false, nil
   self.current = { id = id }
   self.mapSong = self.mapSong or id
   self.fadeOut, self.fadeIn, self.deferred = nil, nil, nil
@@ -37,17 +41,23 @@ end
 function NativeMusic:setMapSong(value)
   self.mapSong = self:resolve(value)
 end
-function NativeMusic:playSong(data, value)
+function NativeMusic:playSong(data, value, forced)
   local id = self:resolve(value)
   if id == nil or id == 0 or id == 0xFFFF then
     self.host.stop()
     self:stopped()
     return true
   end
-  if self.current and self.current.id == id and not self.fadeOut then
+  if require("src.core.Gen3Fanfare").isSong(data, id) then
+    return self:playFanfare(data, id)
+  end
+  if not forced and self.current and self.current.id == id and not self.fadeOut then
+    if self.fanfareActive then
+      self.deferred = nil
+    end
     return true
   end
-  local restart = self.fadeOut ~= nil
+  local restart = forced or self.fadeOut ~= nil
   self:started(id, true)
   self.host.play(data, id, restart)
   -- Missing output hardware does not erase the native command's logical song.
@@ -56,7 +66,7 @@ function NativeMusic:playSong(data, value)
   return true
 end
 function NativeMusic:currentMapMusic()
-  if self.host.fanfare() and self.deferred ~= nil then
+  if self.fanfareActive and self.deferred ~= nil then
     return self.deferred
   end
   if self.fadeOut then
@@ -107,7 +117,7 @@ function NativeMusic:fadeInBgm(data, value, speed)
 end
 function NativeMusic:fadeOutAndPlay(data, value, speed, fadeIn)
   local id = self:resolve(value)
-  if self.host.fanfare() then
+  if self.fanfareActive then
     self.deferred = id
     return true
   end
@@ -130,10 +140,27 @@ function NativeMusic:fadeDefaultBgm(data)
   return true
 end
 function NativeMusic:update(data)
-  if self.deferred ~= nil and not self.host.fanfare() then
-    local id = self.deferred
-    self.deferred = nil
-    self:playSong(data, id)
+  if self.fanfareActive then
+    self.fanfareFrames = self.fanfareFrames - 1
+    if self.fanfareFrames <= 0 or self.host.suspended() then
+      self.fanfareActive = false
+      local deferred, restore = self.deferred, self.fanfareRestore
+      self.deferred, self.fanfareRestore = nil, nil
+      if deferred ~= nil and deferred ~= self.host.nativeGeneration() then
+        self:playSong(data, deferred, true)
+      elseif self.host.nativeRunning() then
+        self.bgmPaused = false
+        self.host.resumeNative()
+      elseif restore ~= nil then
+        self:playSong(data, restore, true)
+      else
+        self.bgmPaused = false
+      end
+      if self.fanfareWait then
+        self.fanfareWait.done = true
+        self.fanfareWait = nil
+      end
+    end
   end
   local f = self.fadeOut
   if f then
@@ -167,6 +194,43 @@ function NativeMusic:update(data)
       self.fadeIn = nil
     end
   end
+end
+function NativeMusic:playFanfare(data, value)
+  local info = require("src.core.Gen3Fanfare").info(data, value)
+  if not info then
+    return false
+  end
+  if not self.fanfareActive then
+    self.fanfareRestore = self.host.nativeGeneration() or self.current and self.current.id
+    self.deferred, self.bgmPaused = nil, true
+    self.host.pauseNative()
+  end
+  self.fanfareActive, self.fanfareFrames = true, info.frames
+  self.host.stopCry()
+  self.host.playFanfare(data, info)
+  return true
+end
+function NativeMusic:fanfareFinished()
+  return self.host.suspended() or not self.fanfareActive
+end
+function NativeMusic:waitFanfare()
+  if self:fanfareFinished() then
+    return nil
+  end
+  local wait = { polls = 0, done = false }
+  self.fanfareWait = wait
+  return function()
+    wait.polls = wait.polls + 1
+    return wait.polls > 360 or wait.done or self:fanfareFinished()
+  end
+end
+function NativeMusic:fanfareSnapshot()
+  return {
+    active = self.fanfareActive or false,
+    frames = self.fanfareFrames or 0,
+    restore = self.fanfareRestore,
+    paused = self.bgmPaused or false,
+  }
 end
 function NativeMusic:snapshot()
   local function copy(record)

@@ -138,6 +138,92 @@ function M.install(root, backend, version, f, options)
   end
   return {
     ids = h.ids,
+    fanfares = function()
+      f.data.constants = f.data.constants or {}
+      local resolve = native and audio.resolveSong or require("src.core.Gen3SongIds").resolve
+      local ids = { resolve("MUS_LEVEL_UP"), resolve("MUS_OBTAIN_ITEM") }
+      local rows = {
+        LEVEL_UP = { index = ids[1], frames = 4 },
+        ITEM = { index = ids[2], frames = 6 },
+      }
+      f.data.constants.gen3Fanfares = { fanfares = rows }
+      local image = not native and assert(love.filesystem.read("owned-native-bgm-image.bin")) or nil
+      if native then
+        audio._fanfareActive, audio._fanfareFrames, audio._fanfareRestore, audio._bgmPaused =
+          false, 0, nil, false
+        audio._fanfareSource, audio._fanfareSrc, audio._fanfareSd, audio._waitFanfareCb = nil, {}, {}, nil
+        audio._pack.index.fanfares = {}
+      end
+      for i, id in ipairs(ids) do
+        local program = string.char(0xBD, 0, 0xBE, 127, 0xBF, 64, 0xFF, 69 + i * 3, 127, 0xB0, 0xB1)
+        if native then
+          audio._pack.index.fanfares[id] = rows[i == 1 and "LEVEL_UP" or "ITEM"]
+          audio._pack.index.songs[id] = { kind = "fanfare", voicegroupId = 1, player = i + 1 }
+          audio._pack.songCache[id] = {
+            tracks = 1,
+            blocks = 0,
+            priority = 0,
+            reverb = 0,
+            voicegroup = 0,
+            trackData = { program },
+            trackEntries = { 0 },
+          }
+          -- Warm the native cache with its actual renderer; headless SoundData
+          -- is a table, while the cold production admission requires userdata.
+          audio._fanfareSd[id] =
+            assert(require("src.core.game3.m4a_player").bakeSong(audio._pack, audio._cache, id))
+        else
+          f.data.audio.songs[("SONG_%03X"):format(id)] = {
+            kind = "fanfare",
+            index = id,
+            tracks = { #image },
+            voicegroup = 0,
+            player = i + 1,
+          }
+          image = image .. program
+        end
+      end
+      if not native then
+        love.filesystem.write("owned-native-bgm-image.bin", image)
+        require("src.core.M4ASynth").invalidate()
+      end
+      return ids
+    end,
+    fanfareState = function(ids)
+      local Sound = not native and require("src.core.Sound")
+      local state = native
+          and {
+            active = audio._fanfareActive,
+            frames = audio._fanfareFrames,
+            restore = audio._fanfareRestore,
+            paused = audio._bgmPaused,
+          }
+        or Music.nativeFanfareSnapshot()
+      if native then
+        state.finished = audio.isFanfareFinished()
+      else
+        state.finished = Music.nativeFanfareFinished()
+      end
+      local query = function(id)
+        if native then
+          return audio.isSePlaying(id)
+        end
+        return Sound.isSePlaying(f.data, id)
+      end
+      state.se = { any = query(), first = query(ids[1]), second = query(ids[2]) }
+      return state
+    end,
+    value = function(runner)
+      if native then
+        return require("src.core.game3.scripting.flags").getVar(runner.store, runner.ctx, 0x4001)
+      end
+      return require("src.script.Gen3Commands").getVar(f.game.save, 0x4001)
+    end,
+    clear = function()
+      if not native then
+        require("src.script.Gen3Commands").setVar(f.game.save, 0x4001, 0)
+      end
+    end,
     start = h.start,
     options = h.options,
     override = function(kind)

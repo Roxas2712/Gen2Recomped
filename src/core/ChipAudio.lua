@@ -353,6 +353,7 @@ function ChipAudio.playMusic(data, header, allowLoops, synthName, options)
   currentMusic = { source = source, gen = gen, threaded = true,
                    synth = synth, synthName = synthName,
                    nativeBgm = nativeBgm,
+                   nativeEpoch = 0,
                    started = false, finished = false,
                    -- kept so a worker that dies before delivering its first
                    -- buffer can be recovered onto the sync path below
@@ -409,7 +410,7 @@ local function updateThreaded()
     local buf = pendingBuf
     if buf then pendingBuf = nil else buf = outCh:pop() end
     if not buf then break end
-    if buf.gen ~= m.gen then
+    if buf.gen ~= m.gen or m.nativeBgm and (buf.nativeEpoch or 0) ~= (m.nativeEpoch or 0) then
       -- stale buffer from a superseded song: drop it
     elseif buf.done then
       m.finished = true
@@ -447,6 +448,7 @@ end
 function ChipAudio.update()
   local m = currentMusic
   if not m then return end
+  if m.nativePaused then return end
   -- INTERRUPTION: nothing is fed to the device while the OS holds the session
   if sessionSuspended then return end
   if m.threaded then
@@ -461,7 +463,7 @@ end
 -- pause/resume behavior.
 function ChipAudio.ensureMusicPlaying()
   local m = currentMusic
-  if not m or m.finished or musicHeld then return end
+  if not m or m.finished or musicHeld or m.nativePaused then return end
   -- INTERRUPTION: a queue that stopped draining because the OS took the
   -- audio session is not a render stall, and must not be "recovered" by
   -- poking the dead device once every frame of the call
@@ -501,6 +503,36 @@ function ChipAudio.ensureMusicPlaying()
       pcall(m.source.play, m.source)
     end
   end
+end
+
+function ChipAudio.nativeBgmState()
+  local m = currentMusic
+  if not (m and m.nativeBgm) then return nil end
+  return { threaded = m.threaded, paused = m.nativePaused or false, started = m.started }
+end
+
+function ChipAudio.pauseNativeMusic()
+  local m = currentMusic
+  if not (m and m.nativeBgm) or m.nativePaused then return end
+  m.nativePaused = true
+  m.nativeEpoch = (m.nativeEpoch or 0) + 1
+  safeAudio("Source:stop", m.source.stop, m.source)
+  pendingBuf = nil
+  if m.threaded then
+    if outCh then outCh:clear() end
+    cmdCh:push({ cmd = "nativePause", gen = m.gen, nativeEpoch = m.nativeEpoch })
+  elseif m.engine then
+    m.engine.voices = {}
+    for _, track in ipairs(m.engine.tracks or {}) do track.voices = {} end
+  end
+end
+
+function ChipAudio.resumeNativeMusic()
+  local m = currentMusic
+  if not (m and m.nativeBgm) then return end
+  m.nativePaused = false
+  if m.threaded then cmdCh:push({ cmd = "nativeResume", gen = m.gen, nativeEpoch = m.nativeEpoch }) end
+  safeAudio("Source:play", m.source.play, m.source)
 end
 
 -- Silence the song for the length of a fanfare and start whatever was held
