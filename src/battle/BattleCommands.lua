@@ -77,6 +77,10 @@ function Methods.chooseMove(self, index)
     self:say(Strings("%s can't use the\nsame move twice in\na row due to the\nTORMENT!", chooser.name))
     self.phase = "messages"
     self.afterQueue = "menu"
+  elseif self.g4fx and require("src.battle.Gen4MoveEffects").menuRefusal(self,chooser,mvDef) then
+    self:say(require("src.battle.Gen4MoveEffects").menuRefusal(self,chooser,mvDef))
+    self.phase="messages"
+    self.afterQueue="menu"
   elseif mv.pp <= 0 then
     self:say(self:romText("_MoveNoPPText", "No PP left for\nthis move!"))
     self.phase = "messages"
