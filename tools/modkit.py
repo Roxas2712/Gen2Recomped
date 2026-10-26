@@ -50,7 +50,7 @@ LUAJIT = os.environ.get("MODKIT_LUAJIT", "luajit")
 
 IMAGE_EXTS = {".png"}
 ASSET_EXTS = {".png", ".wav", ".bin"}
-ROM_PATCH_EXTS = {".gb", ".gbc", ".ips", ".bps"}
+ROM_PATCH_EXTS = {".gb", ".gbc", ".gba", ".nds", ".ips", ".bps"}
 SKIP_DIRS = {".git", ".modkit", "__pycache__", ".vscode"}
 
 GENERATED_MODULES = [
@@ -945,6 +945,26 @@ class CacheIndex:
                         pass
 
 
+def builtin_cache_sources(repo, mod_dir, manifest):
+    """Repository-owned source pins, never a policy supplied by a mod package."""
+    try:
+        relative = os.path.relpath(os.path.realpath(mod_dir), os.path.realpath(repo)).replace(os.sep, "/")
+        if relative == ".." or relative.startswith("../"):
+            return {}
+        with open(os.path.join(repo, "tools", "modkit_builtin_cache_sources.json"), encoding="utf-8") as handle:
+            policy = json.load(handle)
+        row = policy.get(relative) if isinstance(policy, dict) else None
+        if not isinstance(row, dict) or manifest.get("id") != row.get("manifestId"):
+            return {}
+        permissions = manifest.get("permissions")
+        if not isinstance(permissions, list) or "engine_internals" not in permissions:
+            return {}
+        sources = row.get("sources")
+        return sources if isinstance(sources, dict) else {}
+    except (OSError, ValueError, TypeError):
+        return {}
+
+
 def lint_dir(repo, mod_dir, manifest):
     """MK3xx: the no-ROM-content gate (22-distribution-and-packaging.md)."""
     findings = []
@@ -952,6 +972,7 @@ def lint_dir(repo, mod_dir, manifest):
     transforms_rel = manifest.get("assets_transforms")
     has_transforms = bool(transforms_rel)
     cache = CacheIndex(repo)
+    builtin_sources = builtin_cache_sources(repo, mod_dir, manifest)
     try:
         from PIL import Image
     except ImportError:
@@ -967,14 +988,20 @@ def lint_dir(repo, mod_dir, manifest):
                 "path shadows the player's ROM-derived cache", rel))
             continue
         if ext in (".lua", ".json") and rel != transforms_rel:
-            with open(path, encoding="utf-8", errors="replace") as handle:
-                body = handle.read()
+            with open(path, "rb") as handle:
+                raw_source = handle.read()
+            body = raw_source.decode("utf-8", errors="replace")
             # Use the same Lua lexer as the require scanner. Documentation
             # comments may name a cache file without the mod accessing it;
             # executable string literals (including long strings) stay visible.
             if ext == ".lua":
                 body = strip_lua(body)
-            if "assets/generated/" in body or "data/generated/" in body:
+            # Built-in compiler/binding sources intentionally name virtual or
+            # native cache paths. Exact repository-owned source pins admit only
+            # that reference; generated files and every byte-content gate below
+            # are still checked. Ordinary mods cannot provide their own pins.
+            pinned = ext == ".lua" and builtin_sources.get(rel) == hashlib.sha256(raw_source).hexdigest()
+            if ("assets/generated/" in body or "data/generated/" in body) and not pinned:
                 findings.append(Finding(
                     "MK301", "error",
                     "references the ROM-derived cache; ship your own asset "
