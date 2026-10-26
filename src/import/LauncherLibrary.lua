@@ -129,18 +129,28 @@ function Library.install(RI)
       local lw, lh = logo:getDimensions()
       local sc = math.min(218*s/lw, 62*s/lh, (w-40*s)/lw)
       g.setColor(1,1,1,1)
-      g.draw(logo,x+20*s,y+(h-lh*sc)/2,0,sc,sc)
+      require('src.import.LauncherTheme').drawLogo(logo,x+20*s,y+(h-lh*sc)/2,0,sc,sc)
     end
-    self._headerAccount,self._headerRegister=nil,nil
+    -- These controls belong to the fixed header, outside the page viewport.
+    -- Pin hit-testing and hover too; otherwise scrolling makes them inert.
+    self._headerAccount,self._headerRegister,self._headerAvatar=nil,nil,nil
     local signed=require('src.cloud.RetroCloud').signedIn()
     local bw=math.min(104*s,(w-245*s)/2)
     if bw>60*s then
       local right=x+w-18*s
+      if signed then
+        local size=64*s;local r={x=right-size,y=y+8*s,width=size,height=size,pinned=true}
+        self._headerAvatar=r
+        local profile,image=require('src.cloud.AccountBadge').read();profile=profile or {}
+        col(P.link,self:_hover(r) and .85 or .35);g.rectangle('line',r.x-2*s,r.y-2*s,size+4*s,size+4*s,12*s,12*s)
+        require('src.ui.ProfileAvatar').draw(profile.avatar_preset,profile.avatar_color,r.x,r.y,size,image)
+        right=r.x-12*s
+      end
       if not signed then
-        self._headerRegister=self:_chipButton(right-bw,y+22*s,'REGISTER',{w=bw,h=36*s,kind='accent'})
+        self._headerRegister=self:_chipButton(right-bw,y+22*s,'REGISTER',{w=bw,h=36*s,kind='accent',pinned=true})
         right=right-bw-8*s
       end
-      self._headerAccount=self:_chipButton(right-bw,y+22*s,signed and 'MY ACCOUNT' or 'LOGIN',{w=bw,h=36*s,kind='accent'})
+      self._headerAccount=self:_chipButton(right-bw,y+22*s,signed and 'MY ACCOUNT' or 'LOGIN',{w=bw,h=36*s,kind='accent',pinned=true})
     end
     if w > 950*s then
       label(self, 'YOUR GAMES. YOUR JOURNEY STARTS NOW.', x+278*s, y+34*s)
@@ -183,6 +193,24 @@ function Library.install(RI)
       cy=cy+rowH
     end
     self._sbRail={x=x,y=y,w=w,h=h,compact=compact,navBottom=cy}
+    self._sb.social={}
+    local auth=require('src.cloud.RetroCloud')
+    local social=require('src.cloud.Presence').read()
+    local fresh=social and os.time()-(social._receivedAt or 0)<=120
+    local _,_,counts=require('src.cloud.AccountBadge').read()
+    local friends=0;for _,peer in ipairs(social and social.friends or {})do if peer.online then friends=friends+1 end end
+    local values={counts and tostring(counts.online_count) or '...',fresh and tostring(friends) or '...',fresh and tostring(#(social.incoming or {})) or '...'}
+    local rows={{'PLAYERS ONLINE','players'},{'FRIENDS ONLINE','friends'},{'INBOX','inbox'}}
+    local sy=math.max(cy+10*s,y+h-174*s)
+    if not compact and sy+108*s<=y+h-58*s then
+      for i,item in ipairs(rows)do
+        local r={x=x+12*s,y=sy+(i-1)*36*s,width=w-24*s,height=30*s,pinned=true,id=item[2]}
+        local hot=self:_hover(r);col(P.link,hot and .15 or .06);g.rectangle('fill',r.x,r.y,r.width,r.height,6*s,6*s)
+        text(self,self.warningFont,Strings(item[1]),r.x+8*s,r.y+8*s,r.width-42*s,P.detail)
+        g.setFont(self.hintFont);col(P.link);g.printf(auth.signedIn() and values[i] or '-',r.x+r.width-40*s,r.y+6*s,32*s,'right')
+        self._sb.social[#self._sb.social+1]=r
+      end
+    end
     if not compact and h > 470*s then
       local n,total=0,0
       for _,v in ipairs(Versions.ORDER) do total=total+1; if self.ready[v] then n=n+1 end end
@@ -296,11 +324,18 @@ function Library.install(RI)
 
   local mouse = RI._sbMousepressed
   RI._sbMousepressed = function(self,x,y)
-    if U.inside(self._headerAccount,x,y) then self:_openAccount();return true end
+    if U.inside(self._headerAccount,x,y) or U.inside(self._headerAvatar,x,y) then self:_openAccount();return true end
     if U.inside(self._headerRegister,x,y) then
       self:_openAccount();require('src.import.AccountWorkspace').action(self,'register')
       if self._accountOverlay then self._accountOverlay.mode='register' end
       return true
+    end
+    for _,r in ipairs(self._sb and self._sb.social or {})do
+      if U.inside(r,x,y) then
+        self:_openAccount();if require('src.cloud.RetroCloud').signedIn()then
+          self._accountOverlay.afterView=r.id
+        end;return true
+      end
     end
     if self.section=='games' and U.inside(self._sb.continueSaves,x,y) then
       self:_sbOpenGame(self._sb.continueSaves.version);return true

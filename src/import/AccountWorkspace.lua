@@ -7,7 +7,7 @@ local function inputMode(f,id)
   f.focus=id
   if love.keyboard and love.keyboard.setTextInput then love.keyboard.setTextInput(id~=nil) end
 end
-local function clearSecrets(f) f.password='';f.confirmation='';f.code='';f.giftCode='';f.rolePassword='';f.createdGift=nil end
+local function clearSecrets(f) f.moderationPassword='';f.password='';f.confirmation='';f.code='';f.giftCode='';f.rolePassword='';f.createdGift=nil end
 local function job(self,purpose,fn)
   local f=self._accountOverlay;if f.job then return end
   local task,why=Task.new(fn);f.job=task;f.purpose=purpose
@@ -23,6 +23,7 @@ local function devices()
   local doc,why=A.devices()
   if doc and A.profile then doc.profile,doc.profileError=A.profile() end
   if doc and A.friends then doc.social,doc.socialError=friends() end
+  if doc and A.presence then doc.presence=A.presence() end
   return doc,why
 end
 local function avatarImage(bytes)
@@ -51,6 +52,7 @@ local function profile(self,doc)
       if digest==doc.avatar.sha256 then f.avatarImage=avatarImage(bytes) end
     end
   end
+  require('src.cloud.AccountBadge').accept(doc,f.avatarImage)
 end
 function W.open(self,after)
   if self._developerOverlay then require('src.import.DeveloperWorkspace').close(self) end
@@ -177,6 +179,29 @@ function W.action(self,id)
   elseif id:match('^giftActive:') then
     local campaign=f.gifts and f.gifts.campaigns[tonumber(id:match(':(%d+)$'))]
     if campaign then job(self,'giftActive',function() return A.activateGift(campaign.id,not campaign.active) end) end
+  elseif id=='presenceToggle' then
+    local visible=not (require('src.cloud.AccountBadge').presence or {}).visible
+    job(self,'presence',function()return A.presence({visible=visible})end)
+  elseif id=='players' or id=='playersNext' or id=='playersPrevious' or id=='playersSearch' or id=='playersOnline' then
+    f.mode='players';f.scroll=0
+    if id=='playersOnline' then f.playersOnline=not f.playersOnline end
+    f.playersPage=math.max(1,(id=='playersSearch' and 1 or f.playersPage or 1)+(id=='playersNext' and 1 or id=='playersPrevious' and -1 or 0))
+    local page,query,online=f.playersPage,f.playersQuery or '',f.playersOnline
+    job(self,'players',function()return A.players(page,query,online)end)
+  elseif id:match('^playerFriend:') then
+    local at=tonumber(id:match(':(%d+)$'));local peer=f.players and f.players.players[at]
+    if peer then local tag=peer.friend_tag;job(self,'playerFriend',function()return A.addFriend(tag)end)end
+  elseif id:match('^playerManage:') then
+    local at=tonumber(id:match(':(%d+)$'));local peer=f.players and f.players.players[at]
+    if peer then local key=peer.account_id;f.player=nil;f.mode='playerManage';f.scroll=0;job(self,'player',function()return A.player(key)end)end
+  elseif id=='playerRoles' and f.player then f.roleTarget=f.player.friend_tag;f.mode='roles';f.scroll=0;f.roleChoice='retro_admin';f.roleReason='';f.rolePassword=''
+  elseif id:match('^moderate:') then f.moderationAction=id:sub(10);f.moderationReason='';f.moderationPassword='';f.mode='moderate';f.scroll=0
+  elseif id=='moderationCancel' then f.moderationPassword='';f.moderationReason='';f.moderationAction=nil;f.mode='playerManage';f.scroll=0
+  elseif id=='moderationConfirm' and f.player and f.moderationAction then
+    if #(f.moderationReason or '')<15 then f.notice='Explain the reason in at least 15 characters.';return end
+    local id=f.player.account_id;local payload={action=f.moderationAction,password=f.moderationPassword,reason=f.moderationReason,confirmed=true};f.moderationPassword=''
+    job(self,'moderation',function()return A.player(id,payload)end)
+  elseif id=='inbox' then f.mode='inbox';f.scroll=0;job(self,'friends',friends)
   elseif id=='friends' then f.mode='friends';f.scroll=0;job(self,'friends',friends)
   elseif id=='allPlayRequests' or id=='allPlayVisibility' or id=='allPlayChat' or id:match('^playPref:') then
     local doc=f.social or {};local prefs=doc.playPreferences or {};local payload
@@ -235,14 +260,21 @@ function W.tick(self)
   elseif purpose=='profile' then profile(self,doc);f.notice='Profile saved for all your devices. Custom avatars stay private until their public review is complete.'
   elseif purpose=='findFriend' then f.foundFriend=doc;f.notice='Player found: '..tostring(doc.friend_tag)..'. Send a friend request to connect.'
   elseif purpose=='playPreferences' then f.social=f.social or {};f.social.playPreferences=doc.preferences;require('src.cloud.Play').refresh(true);f.notice='Friend privacy saved for all your devices.'
+  elseif purpose=='presence' then require('src.cloud.AccountBadge').acceptPresence(doc);f.notice='Online visibility saved for all your devices.'
+  elseif purpose=='players' then f.players=doc;f.notice=nil
+  elseif purpose=='player' then f.player=doc;f.notice=nil
+  elseif purpose=='playerFriend' then f.social=doc;require('src.cloud.Presence').accept(doc);f.notice='Friend request sent. The other player must accept it.';f.players=nil;W.action(self,'players')
+  elseif purpose=='moderation' then f.player=doc;f.mode='playerManage';f.scroll=0;f.moderationAction=nil;f.moderationReason='';f.notice='Moderation saved. The action is recorded in the audit log.'
   elseif purpose=='friends' then doc.playPreferences=doc.playPreferences or f.social and f.social.playPreferences;f.social=doc;require('src.cloud.Presence').accept(doc);f.notice=nil
   elseif purpose=='online' then f.online=doc;f.notice=nil
   elseif purpose=='policy' then f.policy=doc;f.notice=nil
   elseif purpose=='devices' then
     if not Auth.signedIn() then f.mode='login';f.devices=nil;f.profile=nil;f.avatarImage=nil;f.notice='This device was disconnected. Sign in again.';return end
+    if doc.presence then require('src.cloud.AccountBadge').acceptPresence(doc.presence) end
     f.devices=doc.devices;f.nickname=doc.name;f.permissions=doc.permissions;f.notice=doc.profileError
     if doc.profile then profile(self,doc.profile) end
     if doc.social then f.social=doc.social;require('src.cloud.Presence').accept(doc.social) end
+    if f.afterView then local view=f.afterView;f.afterView=nil;W.action(self,view);return end
     if f.after=='giftAdmin' then f.after=nil;W.action(self,'newGift');return end
     local storage=require('src.storage.AccountStorage')
     if Auth.accountId and Auth.accountId()~=f.accountAtOpen then storage.profileChanged(self);f.accountAtOpen=Auth.accountId() end
@@ -402,7 +434,7 @@ function W.draw(self)
     local fresh=os.time()-(social._receivedAt or 0)<=120
     paragraph('FRIENDS · '..#(social.friends or {}),true)
     for _,peer in ipairs(social.friends or {}) do
-      paragraph(tostring(peer.friend_tag or peer.nickname)..(not fresh and ' · STATUS UNAVAILABLE' or peer.online and ' · ONLINE' or ' · OFFLINE'))
+      paragraph(tostring(peer.friend_tag or peer.nickname)..(not fresh and ' · STATUS UNAVAILABLE' or peer.online and (peer.status=='away' and ' · AWAY' or ' · ONLINE') or ' · OFFLINE'))
       local pref={};for _,v in ipairs(prefs.friends or {}) do if tostring(v.account_id)==tostring(peer.account_id) then pref=v;break end end
       row('INVITATIONS FROM THIS FRIEND · '..(pref.requests_enabled==false and 'OFF' or 'ON'),'playPref:requests:'..peer.account_id)
       row('MAP VISIBILITY WITH THIS FRIEND · '..(pref.visible==false and 'OFF' or 'ON'),'playPref:visible:'..peer.account_id)
@@ -416,6 +448,50 @@ function W.draw(self)
     for _,peer in ipairs(social.incoming or {}) do paragraph(peer.nickname);row('ACCEPT REQUEST','friendAccept:'..peer.account_id);row('DECLINE REQUEST','friendRemove:'..peer.account_id) end
     for _,peer in ipairs(social.outgoing or {}) do paragraph('WAITING · '..peer.nickname);row('CANCEL REQUEST','friendRemove:'..peer.account_id) end
     if social.permissions and social.permissions.view_online then row('STAFF · ONLINE PLAYERS & STATISTICS','online') end
+  elseif f.mode=='players' then
+    paragraph('PLAYERS',true)
+    paragraph('Browse registered players. Requests become friendships only after the other player accepts. Private contact details stay private.')
+    field('Search nickname','playersQuery');row('SEARCH PLAYERS','playersSearch')
+    row(f.playersOnline and 'SHOW ALL PLAYERS' or 'SHOW ONLINE ONLY','playersOnline')
+    local doc=f.players or {};paragraph(tostring(doc.online_count or '...')..' online · '..tostring(doc.registered_count or '...')..' registered')
+    for i,peer in ipairs(doc.players or {})do
+      paragraph(tostring(peer.friend_tag)..(peer.suspended and ' · BANNED' or peer.online and (peer.status=='away' and ' · AWAY' or ' · ONLINE') or ' · OFFLINE'),true)
+      if peer.invisible then paragraph('INVISIBLE · STAFF VIEW')end
+      if peer.protected then paragraph('PROTECTED OPERATOR')end
+      if peer.relationship=='none' then row('SEND FRIEND REQUEST','playerFriend:'..i)
+      elseif peer.relationship=='incoming' then row('ACCEPT REQUEST','friendAccept:'..peer.account_id)
+      elseif peer.relationship=='outgoing' then paragraph('REQUEST PENDING')
+      elseif peer.relationship=='friends' then row('CHAT','chat:'..peer.account_id)end
+      if doc.staff then row('MANAGE PLAYER','playerManage:'..i)end
+    end
+    if (doc.page or 1)>1 then row('PREVIOUS PAGE','playersPrevious')end
+    if (doc.page or 1)*(doc.per_page or 30)<(doc.total or 0)then row('NEXT PAGE','playersNext')end
+    row('INBOX','inbox');row('MY ACCOUNT','account')
+  elseif f.mode=='playerManage' then
+    local peer=f.player or {};paragraph(tostring(peer.friend_tag or 'Loading player…'),true)
+    paragraph(peer.suspended and 'BANNED' or 'ACCOUNT ACTIVE')
+    paragraph('Cloud objects: '..tostring(peer.cloud_objects or 0)..' · Removed from access: '..tostring(peer.held_objects or 0))
+    if peer.manageable then
+      row(peer.suspended and 'UNBAN PLAYER' or 'BAN PLAYER','moderate:'..(peer.suspended and 'unban' or 'ban'))
+      row(peer.profile_hidden and 'RESTORE PUBLIC PROFILE' or 'HIDE PUBLIC PROFILE','moderate:'..(peer.profile_hidden and 'restore_profile' or 'hide_profile'))
+      row(peer.avatar_hidden and 'RESTORE PUBLIC AVATAR' or 'REMOVE PUBLIC AVATAR','moderate:'..(peer.avatar_hidden and 'restore_avatar' or 'hide_avatar'))
+      row('REMOVE CLOUD CONTENT FROM ACCESS','moderate:quarantine_cloud')
+      if (peer.held_objects or 0)>0 then row('RESTORE REMOVED CLOUD CONTENT','moderate:restore_cloud')end
+      if f.permissions and f.permissions.manage_roles then row('CHANGE PLAYER RIGHTS','playerRoles')end
+    else paragraph(peer.protected and 'PROTECTED OPERATOR · This account cannot be banned, demoted or have its content removed.' or 'This account is outside your moderation permissions.')end
+    row('PLAYERS','players')
+  elseif f.mode=='moderate' then
+    paragraph('CONFIRM MODERATION',true);paragraph(tostring(f.player and f.player.friend_tag));paragraph(tostring(f.moderationAction))
+    paragraph('Banning revokes all device sessions. Removed cloud content is quarantined and can be restored; local device files are not deleted. A reason and your current password are required.')
+    field('Reason (at least 15 characters)','moderationReason');field('Current account password','moderationPassword',true)
+    row('CONFIRM ACTION','moderationConfirm');row('CANCEL','moderationCancel')
+  elseif f.mode=='inbox' then
+    local doc=require('src.cloud.Presence').read() or f.social or {}
+    paragraph('INBOX · FRIEND REQUESTS',true)
+    for _,peer in ipairs(doc.incoming or {})do paragraph(peer.friend_tag or peer.nickname,true);row('ACCEPT REQUEST','friendAccept:'..peer.account_id);row('DECLINE REQUEST','friendRemove:'..peer.account_id)end
+    if #(doc.incoming or {})==0 then paragraph('No pending friend requests.')end
+    for _,peer in ipairs(doc.outgoing or {})do paragraph('WAITING · '..tostring(peer.friend_tag or peer.nickname));row('CANCEL REQUEST','friendRemove:'..peer.account_id)end
+    row('FIND PLAYERS','players');row('FRIENDS','friends')
   elseif f.mode=='online' then
     paragraph('ONLINE PLAYERS · STAFF',true)
     local online=f.online or {}
@@ -431,7 +507,11 @@ function W.draw(self)
     Avatar.draw(f.avatarPreset,f.avatarColor,x+24*s,yy,88*s,f.avatarImage)
     text(tostring(f.nickname or Auth.nickname()),x+128*s,yy+8*s,width-170*s,true)
     text(tostring(f.friendTag or 'Loading your friend tag…'),x+128*s,yy+48*s,width-170*s)
-    top=yy+106*s;row('EDIT NICKNAME & AVATAR','profileEdit');row('COPY MY FRIEND TAG','copyFriendTag')
+    top=yy+106*s
+    local presence=require('src.cloud.AccountBadge').presence
+    if presence then row(presence.visible and 'VISIBLE ONLINE · CLICK TO GO INVISIBLE' or 'INVISIBLE · CLICK TO SHOW ONLINE','presenceToggle')end
+    paragraph('Automatically away after 5 minutes without input. Any input makes you online again. Invisible players appear offline to other players; staff can still see their status.')
+    row('PLAYERS','players');row('INBOX','inbox');row('EDIT NICKNAME & AVATAR','profileEdit');row('COPY MY FRIEND TAG','copyFriendTag')
     local fresh=os.time()-(social._receivedAt or 0)<=120;local online=0
     for _,peer in ipairs(social.friends or {}) do if fresh and peer.online then online=online+1 end end
     paragraph('FRIENDS · '..online..' ONLINE / '..#(social.friends or {})..' TOTAL',true)
@@ -439,7 +519,7 @@ function W.draw(self)
     for i,peer in ipairs(social.friends or {}) do if i<=5 then
       Avatar.draw(peer.avatar_preset,peer.avatar_color,x+24*s,top,42*s)
       text(tostring(peer.friend_tag or peer.nickname),x+80*s,top,width-120*s)
-      text(not fresh and 'STATUS UNAVAILABLE' or peer.online and '● ONLINE' or '○ OFFLINE',x+80*s,top+22*s,width-120*s);top=top+58*s
+      text(not fresh and 'STATUS UNAVAILABLE' or peer.online and (peer.status=='away' and 'AWAY' or 'ONLINE') or '○ OFFLINE',x+80*s,top+22*s,width-120*s);top=top+58*s
     end end
     if #(social.friends or {})==0 then paragraph('Add a friend with their Trainer#1234 tag. Your friends and requests appear here on every device.') end
     row('FIND FRIENDS & MANAGE REQUESTS','friends')
@@ -554,7 +634,9 @@ function W.install(RI)
   local U=RI._ui
   function RI:_openAccount(after) return W.open(self,after) end
   local draw=RI.draw;RI.draw=function(self,...) draw(self,...);W.draw(self) end
-  local update=RI.update;RI.update=function(self,dt,...) W.tick(self);return update(self,dt,...) end
+  local update=RI.update;RI.update=function(self,dt,...)
+    W.tick(self);return update(self,dt,...)
+  end
   local press=RI.mousepressed;RI.mousepressed=function(self,x,y,b,...)
     local f=self._accountOverlay;if not f then return press(self,x,y,b,...) end
     if b~=1 then return end

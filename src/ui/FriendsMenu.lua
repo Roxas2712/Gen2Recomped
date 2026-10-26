@@ -122,7 +122,7 @@ function F.rows(O)
  for _,p in ipairs(peers) do
   if not O.friendTarget or O.friendTarget==tostring(p.account_id) then
   local playing=p.playing or {};local editions={};for _,d in ipairs(playing) do local edition,zone=require('src.ui.FriendActivity').label(O.game,d);editions[#editions+1]=edition..' · '..zone end
-  add('friend:'..p.account_id,p.friend_tag or p.nickname,(p.online and 'ONLINE' or 'OFFLINE')..(#editions>0 and ' · '..table.concat(editions,' / ') or ''),{preset=p.avatar_preset,color=p.avatar_color})
+  add('friend:'..p.account_id,p.friend_tag or p.nickname,(p.online and (p.status=='away' and 'AWAY' or 'ONLINE') or 'OFFLINE')..(#editions>0 and ' · '..table.concat(editions,' / ') or ''),{preset=p.avatar_preset,color=p.avatar_color})
   if O.friendTarget==tostring(p.account_id) then
    add('chat:'..p.account_id,'CHAT WITH '..p.nickname,'Messages sync across your devices. You can chat while your friend is offline.')
    local pref={};for _,v in ipairs(settings.friends or {}) do if tostring(v.account_id)==tostring(p.account_id) then pref=v;break end end

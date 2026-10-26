@@ -57,7 +57,7 @@ function W.action(self,id)
     for i,v in ipairs(languages) do if v[1]==f.language then at=i end end
     at=at%#languages+1;if languages[at][1]=='original' then at=2 end
     f.language=languages[at][1];preview(self,f)
-  elseif id:match('^theme:') then f.theme=id:sub(7);if f.theme=='default' then f.theme=false end;preview(self,f)
+  elseif id:match('^theme:') then f.accent=false;f.theme=id:sub(7);if f.theme=='default' then f.theme=false end;preview(self,f)
   elseif id:match('^accent:') then f.accent=id:sub(8);if f.accent=='default' then f.accent=false end;preview(self,f) end
 end
 function W.scroll(self,dy)
@@ -105,11 +105,13 @@ function W.draw(self)
     label=L(label);local font=self.hintFont;local _,lines=font:getWrap(label,(width or tw)-28*s)
     local bh=math.max(42*s,#lines*font:getHeight()+18*s)
     local r={id=id,x=xx or tx,y=yy or top,width=width or tw,height=bh,pinned=pinned};f.rects[#f.rects+1]=r
-    local selected=(id=='language:'..f.language) or id=='theme:'..(f.theme or 'default') or id=='accent:'..(f.accent or 'default')
+    local selected=(id=='language:'..f.language) or id=='theme:'..(require('src.import.LauncherTheme').resolve(f.theme) or 'default') or id=='accent:'..(f.accent or 'default')
     local focused=f.selected==#f.rects
     U.col(P.link,selected and .24 or focused and .14 or .06);g.rectangle('fill',r.x,r.y,r.width,r.height,8*s,8*s)
     U.col(P.link,selected and 1 or focused and .8 or .3);g.rectangle('line',r.x,r.y,r.width,r.height,8*s,8*s)
     U.col(selected and P.link or P.ink);g.setFont(font);g.printf(label,r.x+14*s,r.y+9*s,r.width-28*s,'center')
+    local themeId=id:match('^theme:(.+)$');local preset=themeId and require('src.import.LauncherTheme').PRESETS[themeId]
+    if preset then U.col(preset.accent.link);g.circle('fill',r.x+18*s,r.y+r.height/2,3*s)end
     if not yy then top=top+bh+10*s end
     return bh
   end
@@ -126,9 +128,13 @@ function W.draw(self)
     button('languageNext',L('More languages')..' · '..L(name))
     para('English and German essentials work immediately. Additional text and languages use the on-device translation service; an initial model download may be needed.')
   elseif f.page==2 then
-    for _,v in ipairs({{'default','RetroRecomped'},{'carbon','Carbon'},{'heather','Violet'},{'abyss','Ocean'},{'ember','Ember'}}) do button('theme:'..v[1],v[2]) end
+    button('theme:default','RetroRecomped')
+    local catalog=require('src.import.LauncherTheme')
+    local cols=tw>=400*s and 2 or 1;local gap=10*s;local cw=(tw-gap*(cols-1))/cols
+    for i,id in ipairs(catalog.PRESET_ORDER)do button('theme:'..id,catalog.PRESETS[id].label,cw,tx+((i-1)%cols)*(cw+gap),top+math.floor((i-1)/cols)*52*s)end
+    top=top+math.ceil(#catalog.PRESET_ORDER/cols)*52*s
     para('Accent color')
-    local choices={{'default','Cyan'},{'mint','Mint'},{'amber','Amber'},{'rose','Rose'}}
+    local choices={{'default','Edition default'},{'mint','Mint'},{'amber','Amber'},{'rose','Rose'}}
     -- Only offer accents present in the shared theme catalog.
     local theme=require('src.import.LauncherTheme')
     for _,v in ipairs(choices) do if v[1]=='default' or theme.ACCENTS[v[1]] then button('accent:'..v[1],v[2]) end end
