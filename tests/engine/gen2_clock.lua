@@ -7,9 +7,11 @@ local Clock = require('src.core.gen2.Clock')
 local P = require('src.render.PaletteFX');local W = require('src.world.OverworldController')
 require('src.script.Gen2Commands');local Commands = require('src.script.Commands');local Loader = require('src.mods.Loader')
 local Json = require('src.link.Json');local Save = require('src.core.SaveData')
-local date = os.date;local host = { hour=13, minute=20, day=2 }
+local date,time = os.date,os.time;local elapsed=0;local baseTime=time()
+os.time=function(value)if value then return time(value)end;return baseTime+elapsed end
+local host = { hour=13, minute=20, day=2 }
 os.date = function(format, now)
- if now then return date(format,now) end
+ if now and now~=os.time() then return date(format,now) end
  if format=='%H' then return tostring(host.hour) end
  if format=='%M' then return tostring(host.minute) end
  if format=='%w' then return tostring(host.day) end
@@ -33,7 +35,7 @@ T.eq(Clock.setTime(false,10,0),false,'no saved state means no write')
 T.eq(Clock.setWeekday({},math.huge),false,'infinite weekday rejected')
 T.eq(Clock.weekdayName(0),nil,'weekday label API is one-based')
 for _,edition in ipairs({'gold','silver','crystal'}) do
- V.set(edition);host.hour=13;host.minute=20;host.day=2
+ V.set(edition);host.hour=13;host.minute=20;host.day=2;elapsed=0
  local save={playTime=0,g2DayOffset=3};local untouched=Json.encode(save)
  T.eq(Clock.hour(save),13,edition..' legacy hour retains host behavior')
  T.eq(Clock.weekday(save),5,edition..' legacy native weekday offset retained')
@@ -45,10 +47,9 @@ for _,edition in ipairs({'gold','silver','crystal'}) do
  T.eq(Clock.weekday(save),6,edition..' weekday is observed immediately')
  T.eq(Clock.isSet(save),true,edition..' explicit clock setting is distinguishable')
  T.eq(save.g2DayOffset,save.rtc.startDay,edition..' old native day readers retain shared offset')
- host.minute=30
+ host.minute=30;elapsed=600
  T.eq(Clock.minutes(save),5,edition..' RTC keeps ticking and wraps at midnight')
- host.day=3
- T.eq(Clock.weekday(save),0,edition..' saved weekday follows RTC weekly rollover')
+ T.eq(Clock.weekday(save),0,edition..' saved weekday rolls over at game midnight before host midnight')
  local round=assert(Save.decode(Save.encode(save)))
  T.eq(Clock.minutes(round),5,edition..' save roundtrip retains RTC minute base')
  T.eq(Clock.weekday(round),0,edition..' save roundtrip retains RTC weekday base')
@@ -115,5 +116,5 @@ for _,edition in ipairs({'gold','silver','crystal'}) do
  end
 end
 nativeGame.save=oldSave;debug.setupvalue(W.timeOfDay,slot,oldGame)
-Clock.resetObservations();os.date=date;V.set(version)
+Clock.resetObservations();os.date=date;os.time=time;V.set(version)
 T.finish('shared native Gen2 saved RTC, actual world/scripts/clock-card and public event')

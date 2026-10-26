@@ -7,12 +7,31 @@ and the native happiness evolution gate.
 The existing `src.core.gen2.Clock` name resolves to this native module.
 `world.hour()`, `world.minute()` and `world.weekday()` read that same save.
 
-`setTime(save, hour, minute)` stores `rtc.startMinute`, an offset from the
-host RTC, rather than a frozen hour. `setWeekday` stores `rtc.startDay` and
-keeps the older native `g2DayOffset` field synchronized. Old saves without
-an RTC base retain their host-hour and existing weekday-offset behavior.
-Read calls never create clock data. Invalid/non-finite writes are rejected.
-The normal native save codec preserves the offsets; play time is separate.
+`setTime(save, hour, minute)` anchors the chosen minute, current game
+weekday and calendar date to elapsed RTC seconds. Hours, weekdays and daily
+calendar identity cross the same in-game midnight, including after a saved
+session has been closed for days. Automatic host DST and time-zone changes do
+not add another hour to a clock the player already set. Explicit system clock
+adjustments still affect the host RTC; this is not a monotonic stopwatch.
+
+The legacy `rtc.startMinute`, `rtc.startDay` and `g2DayOffset` projections are
+retained for older readers. New writes also store `anchorTime`, `anchorMinute`,
+`anchorDay` and `anchorDate` in the same `save.rtc` record. Consumers should use
+the native setters/readers instead of mutating these projections directly.
+`setWeekday` edits the current game weekday without changing elapsed calendar
+age. Editing time reanchors the clock without resetting its current date.
+
+Old saves without the elapsed anchor retain their original host-hour and
+weekday-offset semantics, including their old midnight relationship, until
+the clock is explicitly set. Read calls never create or migrate clock data.
+Invalid/non-finite writes are rejected. The normal native save codec retains
+both formats; elapsed play time is separate.
+
+`calendarDate(save, now)` and `dateKey(save, now)` give native daily and weekly
+services the calendar belonging to that RTC. Daily flags/fruit use and the
+lottery now expire on game midnight and the selected game Friday instead of
+an unrelated host-calendar boundary. The optional timestamp on clock reads
+uses the same snapshot for minute, weekday and calendar queries.
 
 World palettes, object-load period bits and `VAR_HOUR` share the saved hour;
 the normal object-load freeze still applies. An explicit palette-query hour
@@ -32,7 +51,9 @@ palette override. This keeps explicit native/external hour queries aligned.
 `clock.day_changed` is produced by actual weekday reads, including the live
 world clock poll. It reports `day`, `previous` and `reason` (`rollover` or
 `set`). A save's first observation is silent. Observations are per save,
-reentrant-safe, subscription-aware and retired on mod/edition reload.
+reentrant-safe, subscription-aware and retired on mod/edition reload. An
+observed offline whole week still produces one change, even when the weekday
+number is the same; its calendar date is different.
 Native API 1/2 use the existing event dispatch boundary. The native GSC
 producer remains generation-scoped.
 
@@ -41,9 +62,10 @@ are exercised directly in synthetic engine tests, including minute wrap,
 weekly rollover, save roundtrip, RTC-versus-play-time display, the native callback
 path and actual mod loading. Graphics IO alone is replaced for the clock
 card. These checks do not establish a complete original-story clock-setting
-sequence, DST, battery-backed SRAM RTC conversion, all daily scheduling or
-fresh GPU acceptance for this change. Existing daily date keys still use
-host calendar dates; lottery weekday selection now shares the saved weekday.
+sequence, manual DST-setting/check dialogs, battery-backed SRAM RTC
+conversion, all daily services or fresh GPU acceptance for this change.
+Automatic host DST isolation is covered; the original story clock-setting
+screen and remaining manual DST lifecycle still need native implementation.
 
 The public contract is compared with the read-only Gen1Recomp reference;
 the implementation is native fork code. No VASC implementation, private
