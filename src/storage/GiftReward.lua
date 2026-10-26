@@ -12,16 +12,32 @@ function G.build(entry,species,data,version)
  if gen==1 and o.isEgg then return nil,'Generation 1 cannot represent eggs. Keep this gift in your Bank.' end
  local copy=S.decode(S.encode(entry));copy.origin.kind='retrorecomp_wonder';copy.origin.pool=require('src.storage.WonderReward').POOL
  local mon,why=require('src.storage.WonderReward').build(copy,species,data);if not mon then return nil,why end
- local Stats=require('src.pokemon.Stats')
- if o.shiny then
-  if mon.personality then
-   local state=tonumber(o.seed:sub(8,14),16)%2147483646+1
-   local function rng(lo,hi) state=state*48271%2147483647;return lo+state%(hi-lo+1) end
-   mon.personality=Stats.shinyPersonality(mon.personality,mon.otId,rng)
-   mon.nature=((data.constants or {}).natureOrder or {})[mon.personality%25+1]
-  else mon.dvs={attack=14,defense=10,speed=10,special=10,hp=0} end
-  mon.shiny=true;mon.isShiny=true
+ local state=tonumber(o.seed:sub(8,14),16)%2147483646+1
+ local function rng(lo,hi) state=state*48271%2147483647;return lo+state%(hi-lo+1) end
+ local reward=o.reward or {}
+ if reward.preset then
+  local Ev=require('src.pokewalker.WalkerEvents');local ev=Ev.get(reward.preset);local supported=false
+  for _,v in ipairs(ev and ev.games or {}) do if v==version then supported=true end end
+  if not ev or ev.kind~='mon' or not supported then return nil,'This historical template is unavailable in this edition.' end
+  for _,name in ipairs(ev.mon.moves or {}) do
+   local id,problem=require('src.storage.GiftPokemon').nativeKey(data.moves,key(name))
+   if not id then return nil,problem end
+  end
+  for _,name in ipairs({ev.mon.item,ev.mon.ball}) do
+   local id,problem=require('src.storage.GiftPokemon').nativeKey(data.items,key(name))
+   if not id then return nil,problem end
+  end
+  local oldRandom=math.random
+  math.random=function(a,b) if a==nil then return rng(0,2147483646)/2147483647 end;return b and rng(a,b) or rng(1,a) end
+  local ok,built,problem=pcall(Ev.buildMon,data,{player={name='RetroRecomp',id=2712,secretId=0}},ev,version)
+  math.random=oldRandom
+  if not ok or not built then return nil,ok and problem or tostring(built) end
+  local year,month,day=tostring(o.claim_date or '2000-01-01'):match('^(%d%d%d%d)%-(%d%d)%-(%d%d)$')
+  built.metDate={year=tonumber(year),month=tonumber(month),day=tonumber(day)};built.heldItem=built.item
+  return built
  end
+ local edited,problem=require('src.storage.GiftPokemon').apply(mon,entry,data,version,rng)
+ if not edited then return nil,problem end;mon=edited
  if #entry.canonical.moves>0 then
   if #entry.canonical.moves>4 then return nil,'Too many gift moves.' end
   mon.moves={}

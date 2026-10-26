@@ -226,7 +226,7 @@ function B.convert(entry,version,data,allowAdaptation)
   local modern=Stats.isGen3(def)
   local adapt=modern~=(type(mon.ivs)=='table')
   if adapt and not allowAdaptation then return nil,'This copy needs IV/DV and training adaptation for the destination generation.' end
-  local note=heldNote or gift and 'Gift code reward · OT RetroRecomp · deterministic genetics and edition-specific data.' or systemEncounter and 'System Wonder Trade encounter · OT RetroRecomp · native learnset and deterministic genetics.' or nil
+  local note=heldNote or gift and ('Gift code reward · OT '..tostring(mon.ot)..' · edition-specific data; origin retained.') or systemEncounter and 'System Wonder Trade encounter · OT RetroRecomp · native learnset and deterministic genetics.' or nil
   if adapt then
     note=(note and note..' ' or '')..'IV/DV and training adapted; nature and ability follow the destination. The original remains in your Bank.'
     if modern then
