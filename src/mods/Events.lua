@@ -1,5 +1,6 @@
 local Logger = require("src.core.Logger")
 local FrameProfile = require("src.core.FrameProfile")
+local Performance = require('src.core.Performance')
 
 local Events = {}
 Events.__index = Events
@@ -57,7 +58,8 @@ function Events:emit(name, payload)
   -- world.tick) skips the table that way.
   local snapshot = list
   local count = #list
-  if count > 1 then
+  local lean = Performance.eventLean ~= false
+  if not lean or count > 1 then
     snapshot = {}
     for i = 1, count do snapshot[i] = list[i] end
   end
@@ -69,10 +71,14 @@ function Events:emit(name, payload)
     -- lumping them together names the seam instead of the culprit.
     -- E1: the label is built once per subscription, not concatenated on
     -- every emit for a profiler that is usually off.
-    local label = entry.label
-    if label == nil then
+    local owner = entry.owner
+    local cacheable = lean and (owner == nil or type(owner) == 'string')
+    local label = cacheable and entry._profileLabel or nil
+    if label == nil or entry._profileOwner ~= owner or entry._profileName ~= name then
       label = "  mod " .. tostring(entry.owner or "?") .. ": " .. tostring(name)
-      entry.label = label
+      if cacheable then
+        entry._profileLabel,entry._profileOwner,entry._profileName = label,owner,name
+      end
     end
     local close = FrameProfile.section(label)
     local facade = package.loaded['src.core.Game3']

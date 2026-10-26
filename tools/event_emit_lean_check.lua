@@ -13,13 +13,15 @@ package.loaded["src.core.Logger"] = {
   warn = function() end, info = function() end,
 }
 local profOn = false
+local function noop() end -- FrameProfile.section shares this while disabled.
 package.loaded["src.core.FrameProfile"] = {
   section = function(name)
     if profOn then labels[#labels + 1] = name end
-    return function() end
+    return noop
   end,
 }
 local Events = require("src.mods.Events")
+local Performance = require('src.core.Performance')
 local n = 0
 local function eq(a, b, what)
   n = n + 1
@@ -69,7 +71,46 @@ eq(labels[1], "  mod DRAMATIC_SHAPE: world.tick", "label text")
 eq(labels[2], labels[1], "label is the same string each emit")
 profOn = false
 
+-- Compare the switch paths under reentrant registration, removal and owner
+-- changes. Labels for owners with a changing __tostring must remain live.
+local function trace(lean)
+  Performance.eventLean=lean
+  errors,labels={},{};profOn=true
+  local bus,out=Events.new(),{}
+  local offB
+  bus:on('nested',function(value)
+    out[#out+1]='a'..value
+    if value==1 then
+      offB()
+      bus:on('nested',function(v)out[#out+1]='c'..v end,0,'new')
+      bus:emit('nested',2)
+    end
+  end,10,'outer')
+  offB=bus:on('nested',function(v)out[#out+1]='b'..v end,0,'removed')
+  bus:emit('nested',1)
+  bus.listeners.nested[1].owner='renamed'
+  bus:emit('nested',3)
+  local tag='first'
+  local owner=setmetatable({},{__tostring=function()return tag end})
+  bus:on('dynamic',function()end,0,owner)
+  bus:emit('dynamic');tag='second';bus:emit('dynamic')
+  profOn=false
+  return table.concat(out,','),table.concat(labels,'|'),table.concat(errors,'|')
+end
+local ta,la,ea=trace(true)
+local tb,lb,eb=trace(false)
+eq(ta,tb,'reentrant event trace agrees with classic')
+eq(la,lb,'owner/name labels agree with classic after mutation')
+eq(ea,eb,'error attribution agrees with classic')
+eq(ta,'a1,a2,c2,b1,a3,c3','outer dispatch retains its original snapshot')
+Performance.eventLean=true
+
 -- 6. a single-listener emit allocates nothing
+-- Exclude JIT recorder metadata from this Lua-heap measurement: the warmup
+-- and measured loops have different bytecode positions and may record new
+-- traces even after the emitter itself is warm.
+local jitWasOn=jit and jit.status()
+if jitWasOn then jit.off() end
 e = Events.new()
 e:on("world.tick", function(p) return p end, 0, "m1")
 local payload = {}
@@ -78,8 +119,15 @@ collectgarbage("collect"); collectgarbage("stop")
 local before = collectgarbage("count")
 for _ = 1, 10000 do e:emit("world.tick", payload) end
 local used = collectgarbage("count") - before
+Performance.eventLean=false
+local classicBefore=collectgarbage('count')
+for _=1,10000 do e:emit('world.tick',payload)end
+local classicUsed=collectgarbage('count')-classicBefore
+Performance.eventLean=true
 collectgarbage("restart")
+if jitWasOn then jit.on() end
 n = n + 1
 if used > 1 then error(("single-listener emit should not allocate: %.1f KB over 10000 emits"):format(used)) end
+eq(classicUsed>used+100,true,'classic snapshot allocation is observable in the same probe')
 
-print(("event_emit_lean_check: %d checks ok; 10000 single-listener emits: %.1f KB"):format(n, used))
+print(("event_emit_lean_check: %d checks ok; 10000 single-listener emits, JIT off: lean %.1f KB, classic %.1f KB"):format(n, used,classicUsed))
