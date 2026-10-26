@@ -44,6 +44,7 @@ on:
       - 'tests/engine/gen3_sound_script_waits.lua'
       - 'tests/engine/gen3_native_cry.lua'
       - 'tests/engine/gen3_bgm_commands.lua'
+      - 'tests/engine/gen3_bgm_streams.lua'
       - 'tests/native_bgm/**'
       - 'tests/native_cry/**'
       - 'tests/native_sound/**'

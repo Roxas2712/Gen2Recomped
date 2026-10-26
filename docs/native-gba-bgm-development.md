@@ -41,9 +41,10 @@ audio method is replaced with a host result. LuaJIT is pinned to
   and 94 default-policy cases with all five frames and play traces.
   File cases retain every created source, including stopped sources and
   their actual gains. The remaining 554 rows recheck native cry contracts.
-- **80/80** BGM engine checks pass. The full feature quick run passes
-  **168/177** engine suites, SDK **3/3** and B30. A fresh #289 parent run
-  passes **167/176**; the exact anchored `FAIL ` line Counters are identical:
+- **80/80** BGM command and **62/62** stream engine checks pass. The full
+  feature quick run passes **169/178** engine suites, SDK **3/3** and B30.
+  A fresh preceding development checkpoint `3b46f0c9` passes **168/177**;
+  the exact anchored `FAIL ` line Counters are identical:
   **25 lines / nine inherited failing suites**, with no additions/removals.
 - The changed workflow passes actionlint. New modules and BGM test files
   pass StyLua verification. These are local results, not executed hosted CI.
@@ -53,16 +54,43 @@ The earlier development default-policy probe reproduced differences in
 superseded reports remain retained. The corrected implementation passes
 all 94 cases, including live state changes after an earlier default command.
 
+## Native stream follow-up
+
+Native M4A cue construction now leaves an empty, stopped queue. Each
+synchronous native audio service produces one buffer, after applying that
+tick's fade, and then starts playback. A stop on the final fade tick cannot
+produce another buffer. Finite native sequences retain their silent carrier
+until a stop or replacement command. Shared named mod music keeps its
+separate transport; a chip source is started only by its streaming owner.
+
+Worker recovery preserves the native source owned by `Music`, including
+queued PCM and the current fade, both before and after the first worker
+buffer. Stale worker generations cannot enter the queue. The stream engine
+suite passes **62/62 checks**, covering synchronous playback and controlled
+worker-channel failures. The corrected recovery removes six reproduced
+assertion failures; failed and superseded logs remain retained.
+
+A separate real-sequencer comparison runs **four workers / 18 cases /
+1,534 complete observed frames**. All portable BGM control fields, runner
+state, active source counts and gains relative to each backend's retained
+baseline agree. Sixteen native/file cases also have equal queue, produced
+buffer and play counters. Both chip-override cases retain the reference's
+different existing GB lookahead cadence; their complete counter differences
+are recorded, not treated as native-queue parity.
+
+Every produced PCM buffer is retained: **7,929,856 scalar samples** from the
+reference and **8,323,072** from the host. The native synthesizers still
+produce different PCM; this comparison does not establish waveform parity.
+Named mod M4A definitions remain a host extension: the reference's shared
+mod player does not accept that format. Host tests verify that the extension
+does not incorrectly allocate a native background carrier.
+
 ## Work still required before a pull request
 
-- Real native M4A producer startup and queue lifecycle. An actual sequencer
-  probe with owned music bytes reproduces the startup difference on both
-  profiles: the native source starts at the following audio tick, while the
-  host currently starts during cue construction. Full raw PCM buffers and
-  source observations are retained; file-only agreement does not prove
-  native-stream equivalence or whole-synth waveform parity.
-- Native versus mod music ownership across source reuse, no-output and
-  failure paths, plus native fanfare/deferred/default transitions.
+- Native versus mod music ownership across additional no-output and failure
+  paths, plus native fanfare/deferred/default transitions and real-clock
+  fanfare waits. The script fanfare wait still depends on logic-time
+  `save.playTime`, so speed changes are not qualified.
 - Public music hook/event timing and context, actual-import regressions,
   the complete existing contract matrix and a qualified combined runtime.
 - Native command revision and an independent frozen-parent serializer
@@ -89,3 +117,17 @@ nice -n 19 python3 tools/enemy-action-contract-check/check.py \
 Keep every raw worker and failed report. The canonical checker records the
 complete observations; checkpoint qualification additionally performs an
 independent recursive comparison that distinguishes JSON boolean types.
+
+The owned native-stream probe emits the full raw source/PCM inventory:
+
+```sh
+nice -n 19 /path/to/pinned/luajit \
+  tools/enemy-action-contract-check/native-bgm-stream-smoke.lua \
+  . gen2 firered > /path/to/host-native-bgm-streams.log
+```
+
+Repeat with `emerald`. For the reference, run from its clean checkout,
+invoke the tool by absolute path, pass this checkout's absolute path as
+the first argument and change `gen2` to `gen1`. Compare the admitted
+control/queue properties while preserving all backend-specific raw source
+records and PCM; do not report whole raw waveform equality.
