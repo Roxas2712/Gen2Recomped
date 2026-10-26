@@ -56,3 +56,23 @@ reference, with the identical eleven inherited failed suites.
 
 The unchanged-package loading result above belongs to the fork; it is not a
 claim that this standalone public branch accepts or fully runs that package.
+
+Additional source observations reuse native ownership: checked cartridge map
+aliases share one physical definition, warp forecasts avoid committing a warp,
+weather follows the native importer enum and cycle, and previews observe actual
+native admission. Door observations currently cover the native Petalburg slide,
+not general source-started door tasks. Healing snapshots and native drawing
+share the same borrowed ROM-art selection and offsets.
+
+Source audio borrows a distinct cached playback and retires with that playback,
+owner or session. It cannot change another owner's gain or stop its voice.
+Unloaded native UI/field classes cannot admit ordinary mod screens through nil
+metatables. Resident animation observations build on the separate atlas offer;
+they do not implement named RGBA animation banks.
+
+Detached `Renderer:frameRects()` metrics share the native compositor's viewport
+calculation. Source field producers can request the real drawable resolution
+and pass an existing canvas directly to the scaling compositor. Private native
+scratch is reused and is not exposed to callers. Shader conversion is handled
+by the separate orientation offer #193. Complete mod, battle, door and UI
+presentation acceptance remains open.

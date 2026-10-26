@@ -83,6 +83,28 @@ function Collision.warpAt(x,y)
   if not((cell>=0x60 and cell<=0x7f)or warpBehaviors[behavior])then return nil end
   for _,warp in ipairs(def.warps or{})do if warp.x==x and warp.y==y then return warp end end
 end
+function Collision.resolveWarpDestination(value,warp)
+  local game,world=Session.resolve(value)
+  if not(game and type(warp)=='table')then return nil end
+  local Identity=require('src.compat.gen1.MapIdentity')
+  local binding=Identity.bind(game.data.maps,require('src.core.GameVersion').get())
+  local dest=warp.destMap or warp.map
+  local native=type(dest)=='string'and binding:nativeId(dest)
+  if not native and type(dest)=='string'and game.data.maps[dest]then native=dest end
+  if not native and warp.nativeDestination=='MAP_G127_N127'then native=warp.nativeDestination end
+  if not native and tonumber(warp.mapGroup)==127 and tonumber(warp.mapNum)==127 then native='MAP_G127_N127'end
+  if not native and warp.mapGroup~=nil and warp.mapNum~=nil then
+    local canonical=Identity.lookup(require('src.core.GameVersion').get(),warp.mapGroup,warp.mapNum)
+    native=canonical and binding:nativeId(canonical)
+  end
+  if not native then return nil end
+  local index=warp.destWarp or 1
+  if not integer(index)or index<1 then return nil end
+  local id,x,y=require('src.world.Warp').peekDestination(game.data,{destMap=native,destWarp=index},
+    world.lastOutdoor,world.backupWarp,game.save)
+  local canonical=id and binding:legacyId(id)
+  if canonical and integer(x)and integer(y)then return canonical,x,y end
+end
 function Collision.clear()runtime:release()end
 Collision.release=Collision.clear
 setmetatable(Collision,{__index=function(_,key)

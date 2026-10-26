@@ -12,6 +12,8 @@ local Runtime = require("src.mods.Runtime")
 local Sound = {}
 
 local cache = {}
+local effectUses = setmetatable({}, { __mode = "k" })
+local effectCapture
 -- port addition: 0-7 SFX volume from save.options.sfxVol (OptionsMenu),
 -- scaling the 0.8 base every source gets
 local BASE_VOLUME = 0.8
@@ -227,6 +229,7 @@ end
 
 local function playPath(data, key, def, pitch, tempo)
   key = tostring(key)
+  if effectCapture and not effectCapture.source then key = key .. "@borrow:" .. effectCapture.owner end
   if not love.audio or not def then return nil end
   -- INTERRUPTION: building a Source now would fail and cache `false` below,
   -- permanently disabling this effect (see sessionSuspended, case 2)
@@ -245,6 +248,8 @@ local function playPath(data, key, def, pitch, tempo)
     src = s
   end
   if not restart(src) then return nil end
+  local use = { key = key }; effectUses[src] = use
+  if effectCapture and not effectCapture.source then effectCapture.source, effectCapture.use = src, use end
   return src
 end
 
@@ -280,6 +285,29 @@ function Sound.sequenceKey(data, name)
     end
   end
   return key, found
+end
+
+-- Borrow the first playback atomically. Events may start another effect
+-- before playSe returns; a replaced playback cannot transfer its new owner
+-- to the earlier caller. Borrowed cache variants preserve native voice gain.
+function Sound.borrowEffect(owner, play, ...)
+  local previous = effectCapture
+  local capture = { owner = tostring(owner) }
+  effectCapture = capture
+  local ok, src = pcall(play, ...)
+  effectCapture = previous
+  if not ok then error(src, 0) end
+  local use = capture.use
+  if not use or capture.source ~= src then return src, nil end
+  local function valid()
+    return not sessionSuspended and effectUses[src] == use and cache[use.key] == src
+  end
+  return src, { valid = valid, level = function()return volumeFor(use.key)end, stop = function()
+    if not valid() then return false end
+    effectUses[src] = nil
+    safeAudio("Source:stop", src.stop, src)
+    return true
+  end }
 end
 
 function Sound.playNamedEffect(data, name)
