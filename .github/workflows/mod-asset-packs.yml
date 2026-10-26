@@ -6,6 +6,8 @@ on:
       - 'src/import/Importers.lua'
       - 'src/import/CacheFs.lua'
       - 'src/import/LuaWriter.lua'
+      - 'src/import/lttp/**'
+      - 'src/import/snes/**'
       - 'src/import/RomImporter.lua'
       - 'src/mods/AssetPacks.lua'
       - 'src/mods/StreamMD5.lua'
@@ -14,7 +16,10 @@ on:
       - 'src/mods/LauncherMods.lua'
       - 'src/mods/ManagerState.lua'
       - 'tests/engine/asset_pack_contracts.lua'
+      - 'tests/engine/native_pack_producers.lua'
+      - 'tests/pack_sources/**'
       - 'tests/asset_pack_runtime/**'
+      - 'tests/native_pack_runtime/**'
       - '.github/workflows/mod-asset-packs.yml'
   workflow_dispatch:
 permissions:
@@ -27,5 +32,6 @@ jobs:
       - uses: actions/checkout@v7
       - run: sudo apt-get update && sudo apt-get install -y luajit lua5.4
       - run: luajit tests/engine/asset_pack_contracts.lua
+      - run: luajit tests/engine/native_pack_producers.lua
       - name: Check the portable data parser on plain Lua
         run: lua5.4 -e 'local d=require("src.import.PackData");local w=require("src.import.LuaWriter");assert(d.decode(w.encode({1,true,"x"}))[3]=="x");assert(not d.decode("return os.exit()"))'
