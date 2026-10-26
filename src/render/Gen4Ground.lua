@@ -501,6 +501,8 @@ function Gen4Ground.forMap(map, data)
   -- fountains holds nothing.
   self.depthModels = {}
   self.clock = 0
+  -- G9: the frame's idle time meshes the chunks just outside the view
+  pcall(function() require("src.core.IdleStream").register(self:idleService()) end)
   return self
 end
 
@@ -1768,6 +1770,84 @@ function Gen4Ground:liveModel(land)
   return model
 end
 
+-- G9 -- THE RING AROUND THE VIEW IS MESHED BEFORE THE CAMERA GETS THERE.
+--
+-- `liveModel` builds a chunk's mesh the first time the live pass sees it, so
+-- a walk that brings a new row of chunks into view meshes them all in that
+-- one frame.  The frame pacer has idle time on every frame before that one
+-- (src/core/IdleStream.lua); this hands it the chunks one cell outside the
+-- last live view, one per call, cheapest first by nothing in particular,
+-- and stops when the slice it was given is shorter than a build has been
+-- costing.  Only while the live cache has room to spare, so prebuilding
+-- never evicts a chunk that is on screen.  Performance.gen4ChunkPrebuild =
+-- false leaves the ring to the live pass, as before.
+Gen4Ground.PREBUILD_HEADROOM = 8
+
+local function prebuildOn()
+  local ok, Performance = pcall(require, "src.core.Performance")
+  return not (ok and type(Performance) == "table" and Performance.gen4ChunkPrebuild == false)
+end
+
+-- the next chunk in the ring that has no mesh yet, or nil
+function Gen4Ground:prebuildCandidate()
+  local view, grid = self.liveView, self.grid
+  if not (view and grid and self.liveModels) then return nil end
+  if not prebuildOn() then return nil end
+  if #(self.liveOrder or {}) > Gen4Ground.LIVE_CACHE - Gen4Ground.PREBUILD_HEADROOM then
+    return nil
+  end
+  local x0, y0, x1, y1 = view[1] - 1, view[2] - 1, view[3] + 1, view[4] + 1
+  local models = self.liveModels
+  for cy = y0, y1 do
+    for cx = x0, x1 do
+      local ring = cy == y0 or cy == y1 or cx == x0 or cx == x1
+      if ring and cx >= 0 and cy >= 0 and cx < grid.width and cy < grid.height then
+        local land = grid.land[cy * grid.width + cx + 1]
+        if land ~= nil and models[land] == nil then return land end
+      end
+    end
+  end
+  return nil
+end
+
+function Gen4Ground:prebuildPending()
+  return self:prebuildCandidate() ~= nil
+end
+
+-- Build ring chunks until the slice runs out.  `seconds` is what the idle
+-- hook can spare; a build is atomic, so one is started only when the last
+-- few have fit in what is left.  Returns the number built.
+function Gen4Ground:prebuild(seconds, clock)
+  clock = clock or self.idleClock or (love and love.timer and love.timer.getTime) or os.clock
+  local deadline = clock() + (seconds or 0)
+  local built = 0
+  while true do
+    local land = self:prebuildCandidate()
+    if land == nil then break end
+    local left = deadline - clock()
+    local cost = self.prebuildCost or 0
+    if left <= cost * 1.25 then break end
+    local t0 = clock()
+    self:liveModel(land)
+    local took = clock() - t0
+    -- a slow running mean, so one heavy chunk does not stop the next three
+    self.prebuildCost = cost > 0 and (cost * 0.7 + took * 0.3) or took
+    built = built + 1
+  end
+  return built
+end
+
+-- the service the idle hook sees; one per ground, weakly held there
+function Gen4Ground:idleService()
+  if self._idleService then return self._idleService end
+  local ground = self
+  self._idleService = {
+    busy = function() return ground:prebuildPending() end,
+    step = function(seconds) return ground:prebuild(seconds) end,
+  }
+  return self._idleService
+end
+
 -- ---------------------------------------------------------------------------
 -- HOW MANY REAL PIXELS THE 3D VIEW GETS
 -- ---------------------------------------------------------------------------
@@ -2015,6 +2095,10 @@ function Gen4Ground:livePass(camX, camY, vw, vh, yCut)
     require("src.render.Gen4DepthFog").begin(self, 1, dist + sinP * datum + cosP * feetRel, LIVE_DEPTH)
   end
   if self.drawAllChunks then x0, y0, x1, y1 = 0, 0, grid.width - 1, grid.height - 1 end
+  -- G9: what the pass covered this frame, for the idle-time prebuild
+  local view = self.liveView
+  if not view then view = {}; self.liveView = view end
+  view[1], view[2], view[3], view[4] = x0, y0, x1, y1
   for cy = y0, y1 do
     for cx = x0, x1 do
       if cx >= 0 and cy >= 0 and cx < grid.width and cy < grid.height then
@@ -5035,6 +5119,10 @@ function Gen4Ground:heightAt(tileX, tileY)
 end
 
 function Gen4Ground:release()
+  if self._idleService then
+    pcall(function() require("src.core.IdleStream").unregister(self._idleService) end)
+    self.liveView = nil
+  end
   for _, canvas in pairs(self.baked) do
     if canvas and canvas.release then pcall(canvas.release, canvas) end
   end

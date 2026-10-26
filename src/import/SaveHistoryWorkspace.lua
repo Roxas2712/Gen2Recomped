@@ -1,3 +1,4 @@
+local function L(value) return require('src.translation.Service').launcherLookup(value) end
 -- Native save recovery. Every recovery creates a new slot; the selected
 -- source, its backups, active slot and cloud link are never replaced here.
 local W={}
@@ -97,11 +98,13 @@ function W.draw(self)
   local v={x=x+18*s,y=y+76*s,width=w-36*s,height=h-94*s};f.viewport=v
   local top=v.y-f.scroll
   local function paragraph(value,big)
+    value=L(value)
     local font=big and self.stateFont or self.hintFont;g.setFont(font);U.col(big and p.ink or p.detail)
     local _,lines=font:getWrap(value,w-48*s);g.printf(value,x+24*s,top,w-48*s,'left')
     top=top+math.max(1,#lines)*font:getHeight()+14*s
   end
   local function row(label,id)
+    label=L(label)
     local _,lines=self.hintFont:getWrap(label,w-72*s);local height=math.max(44*s,#lines*self.hintFont:getHeight()+22*s)
     local r=self:_chipButton(x+24*s,top,'',{w=w-48*s,h=height,kind='accent'});r.id=id;f.rects[#f.rects+1]=r
     g.setFont(self.hintFont);U.col(p.link);g.printf(label,x+36*s,top+11*s,w-72*s,'left');top=top+height+10*s

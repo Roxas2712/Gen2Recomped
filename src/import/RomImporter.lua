@@ -12015,5 +12015,6 @@ require("src.import.ResumeWorkspace").install(RomImporter)
 require("src.import.SaveHistoryWorkspace").install(RomImporter)
 require("src.storage.AccountStorage").install(RomImporter)
 require("src.import.TournamentWorkspace").install(RomImporter)
+require("src.import.FirstRun").install(RomImporter)
 
 return RomImporter

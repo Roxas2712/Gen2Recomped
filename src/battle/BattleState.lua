@@ -4421,6 +4421,12 @@ function BattleState:update(dt)
   -- Crystal pic animations run off the wall clock like every other battle
   -- pic effect; a Gold/Silver battler has no picAnim and this is a no-op.
   self:updateBattlerPresentation(dt)
+  -- A long GBA animation can outlive its message queue. Keep its display
+  -- clock running while the player chooses, so it can reach a safe native
+  -- checkpoint; the messages branch advances it through updateQueue instead.
+  if self.phase == 'menu' or self.phase == 'moveSelect' or self.phase == 'targetSelect' then
+    self:updateMovePresentation()
+  end
   local input = self.game.input
 
   -- L PUTS THE BOTTOM SCREEN AWAY, AND BRINGS IT BACK.

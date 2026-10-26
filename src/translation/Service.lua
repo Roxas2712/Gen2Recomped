@@ -37,7 +37,12 @@ function Service.enqueueLauncher(options)
  table.insert(Service.queue,1,{version="launcher",options=options})
 end
 function Service.launcherLookup(source)
- return (Service.launcherCatalog or {})[source] or source
+ local reviewed=require("src.translation.LauncherCatalog")[Service.launcherTarget or "en"]
+ local text=reviewed and reviewed[source] or (Service.launcherCatalog or {})[source] or source
+ -- LÖVE's default launcher face lacks the arrow block on some runtimes.
+ -- Keep navigation readable before optional language fonts are downloaded.
+ if type(text)=='string' then return (text:gsub('→','>'):gsub('←','<'):gsub('↔','<->'):gsub('↓','v'):gsub('↑','^')) end
+ return text
 end
 function Service.setLauncher(options)
  Service.launcherActive=true
