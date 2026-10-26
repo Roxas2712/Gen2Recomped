@@ -2,7 +2,18 @@
 -- Indexed image drawing, separate from the LCD post-process in GBCFX.
 -- Palette resolution uses the native display/register state in PaletteFX.
 local Palettes = require("src.render.PaletteFX")
+local Version = require("src.core.GameVersion")
 local M = {}
+-- Consumers use this view to leave already-coloured pictures untouched.
+-- Gen2 currently resolves native ROM colours regardless of the Gen1 mode.
+-- Do not invent a second mutable display setting for the external renderer.
+setmetatable(M, {__index = function(_, key)
+  if key == "mode" then
+    if Version.isGen2() then return "gbc" end
+    if Palettes.mode == "og" or Palettes.mode == "og_inv" then return "dmg" end
+    return Palettes.mode == "classic" and "classic" or "gbc"
+  end
+end})
 local compiler, shaders, failed = nil, {}, {}
 local sent = setmetatable({}, {__mode = "k"})
 local names = {"pal0", "pal1", "pal2", "pal3"}
