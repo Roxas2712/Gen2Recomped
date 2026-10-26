@@ -532,5 +532,15 @@ retain their voices. Native queries/stops, override behavior and cache/device
 cleanup are covered by [the source-bound sound-player contract](native-sound-player-lifecycle.md).
 This follow-up uses native revision 18, with unchanged party codec 1 and legacy
 digests. The earlier Mirror Move receipt remains historical validation of its
-revision-17 foundation. Public sound-event timing and native world-script waits
-remain separate qualification work.
+revision-17 foundation. Public sound-event timing remains separate qualification work; native
+world-script waits are covered by the follow-up below.
+
+## Native GBA world-script sound waits
+
+Native `waitse` now yields on current SE-player state, preserving its latched
+180-tick real-time audio callback and separate 181-poll logic fallback. The
+actual game audio loop services callbacks after logic; field objects and input
+locks are released after the wait, with command hooks and source metadata
+preserved. [The source-bound contract](native-sound-script-waits.md) records
+actual native-controller, game-update and imported-PCM qualification, complete
+retained negative controls and the remaining sound/visual/session limits.
