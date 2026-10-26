@@ -15,14 +15,14 @@ end
 -- Shared simulation, world, input, rendering and lifecycle code. A callback
 -- need not fire on every action (e.g. an always-hit move skips accuracy).
 add("hooks", "12345", [[
-  battle.accuracy battle.catch_exp battle.crit battle.damage battle.enemy_action
-  battle.exp_award battle.low_health_alarm battle.run battle.turn_order catch.rate
+  battle.accuracy battle.bottom_ui_visible battle.catch_exp battle.crit battle.damage battle.enemy_action
+  battle.exp_award battle.low_health_alarm battle.menu_auxiliary battle.move_grid_navigation battle.run battle.turn_order catch.rate core.logic_speed core.update
   encounter.fishing encounter.roll encounter.species evolution.check exp.gain
-  fieldmove.eligibility input.step link.fingerprint map.palette movement.collision
+  fieldmove.eligibility input.key input.gamepad input.wheel input.step link.fingerprint map.palette movement.collision
   movement.speed music.select music.volume player.sprite pokemon.icon pokemon.sprite
-  render.compose render.hud render.letterbox render.zones save.new_game save.write
-  script.command trainer.party transition.style ui.list_menu ui.options.rows
-  ui.title_menu.items warp.destination world.tod zoom.range
+  render.compose render.hud render.letterbox render.zones save.new_game save.write screen.render_visible
+  script.command trainer.before_battle trainer.party transition.style ui.list_menu ui.options.rows
+  ui.title_menu.items warp.destination world.talk world.tod zoom.range
 ]])
 -- Screens have distinct implementations: Screens.lua aliases the DS party,
 -- naming and start menus; those implementations do not call the GB/GBA hooks.
@@ -31,10 +31,13 @@ add("hooks", "12345", [[
 -- does not dispatch battle.overlay, unlike BattleState/Gen3Battle/WideBattle.
 add("hooks", "123", "battle.overlay ui.naming.grid ui.party.submenu ui.start_menu.items")
 add("hooks", "12", "ui.pc.items")
-add("hooks", "45", "battle.status_hud_visible")
+add("hooks", "12345", "battle.status_hud_visible")
+add("hooks", "123", "pokemon.level_visible ui.party.grid_navigation")
+add("hooks", "123", "world.follower.spawn")
 add("hooks", "12", "intro.oak_speech.build")
 
 add("events", "12345", [[
+  world.live_maps_preparing world.live_maps_updated
   assets.transformed battle.ball_thrown battle.battler_switched battle.damage_dealt
   battle.ended battle.exp_gained battle.fainted battle.move_used battle.started
   battle.status_inflicted battle.turn_ended battle.turn_started discord.join_requested

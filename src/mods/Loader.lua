@@ -27,6 +27,7 @@ local Hooks = require("src.mods.Hooks")
 local ModStorage = require("src.mods.Storage")
 local WorldReads = require("src.mods.WorldReads")
 local Runtime = require("src.mods.Runtime")
+local InputControl = require("src.mods.InputControl")
 local BattleSnapshots = require("src.mods.BattleSnapshots")
 local UIActions = require("src.mods.UIActions")
 local ModGens = require("src.mods.ModGens")
@@ -162,6 +163,7 @@ function Loader.new(opts)
     events = Events.new(), hooks = Hooks.new(), _decodedHooks = Hooks.new(), content = {}, assets = {},
     _callbackProfiles = opts and opts.callbackProfiles,
     exports = {}, apis = {}, migrations = {}, order = {},
+    inputControl = InputControl.new(),
     modSave = {}, modOptions = {}, optionSchemas = {},
     optionStatus = {}, imageCache = {},
     fs = (opts and opts.fs) or (love and love.filesystem),
@@ -841,6 +843,16 @@ function Loader.freshness(fs, root)
   return (" (newest file %s, %s)"):format(tostring(newestName), when)
 end
 
+-- Recovery releases holds while keeping the current API usable. Retirement
+-- (rollback/reload/teardown) additionally disables the old API's presses.
+function Loader:releaseModInput(owner)
+  self.inputControl:release(owner)
+end
+
+function Loader:_closeModInput()
+  self.inputControl:close()
+end
+
 function Loader:_api(mod)
   local loader = self
   local modId = mod.manifest.id
@@ -953,6 +965,7 @@ function Loader:_api(mod)
         return loader.events:emit(name, payload)
       end,
     },
+    input = loader.inputControl:api(modId),
     hooks = { wrap = function(_, name, callback, priority)
       return loader.hooks:wrap(name, callback, priority, modId)
     end },
@@ -1309,6 +1322,7 @@ end
 function Loader:_rollback(modId)
   Api3NPC.cancelAll(self, modId)
   Api3Warp.cancelAll(self, modId)
+  self.inputControl:retire(modId)
   PortableScripts.cancelAll(self, modId, "mod rolled back")
   Net.releaseAll(self, modId)
   for name in pairs(self.journal or self.content) do
@@ -1430,6 +1444,8 @@ function Loader:load(data)
   if clock then clock.resetObservations() end
   Api3NPC.cancelAll()
   Api3Warp.cancelAll()
+  InputControl.closeAll()
+  self.inputControl = InputControl.new()
   PortableScripts.cancelAll(nil, nil, "mods reloaded")
   -- A SECOND LOAD IN ONE PROCESS STARTS FROM THE ENGINE, NOT FROM THE LAST
   -- LOAD'S MODS.  EXIT GAME -> launcher -> Play runs every mod's main.lua
@@ -1812,6 +1828,7 @@ function Loader.teardown()
   if clock then clock.resetObservations() end
   Api3NPC.cancelAll()
   Api3Warp.cancelAll()
+  InputControl.closeAll()
   PortableScripts.cancelAll(nil, nil, "mods unloaded")
   require("src.compat.gen2.Decorations").useRegistry(nil)
   Net.unloadAll()

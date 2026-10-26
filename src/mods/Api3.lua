@@ -34,6 +34,12 @@ local function block(gen)
   }
 end
 function A.install(api, loader, readContext, overviewContext, engineRequire)
+  local storage = require("src.mods.PlaythroughStorage").new(api.id, loader.fs)
+  api.storage = {}
+  for _, method in ipairs({ "context", "selected", "read", "write", "readBytes", "writeBytes", "list", "delete" }) do
+    local name = method
+    api.storage[name] = function(_, ...) return storage[name](storage, ...) end
+  end
   local gen = api.generation
   local supportedGeneration = gen >= 1 and gen <= 3
   -- Passthrough registries keep native shapes but expose the same handle metadata.
@@ -89,7 +95,7 @@ function A.install(api, loader, readContext, overviewContext, engineRequire)
     npc = NPC.new(loader, api.id, gen, current, native, licensed, engineRequire)
   end
   local function dispatch(name, ...)
-    if not supportedGeneration or not SUPPORTED[name] then
+    if (not supportedGeneration and not (name == "liveMaps" and gen >= 1 and gen <= 5)) or not SUPPORTED[name] then
       return nil, "unsupported: API 3 world method " .. name
     end
     if name == "spawnNpc" or name == "removeNpc" or name == "npc" then
@@ -154,6 +160,11 @@ function A.install(api, loader, readContext, overviewContext, engineRequire)
     if name == "queueScript" then
       return scripts:queueScript(...)
     end
+    if name == "liveMaps" then
+      local ow = native(game):overworld()
+      if not (ow and ow.map) then return nil, "no overworld" end
+      return require("src.world.LiveMaps").snapshot(ow)
+    end
     local raw = native(game)
     local result = pack(raw[name](raw, ...))
     if name == "party" and type(result[1]) == "table" then
@@ -211,6 +222,7 @@ function A.install(api, loader, readContext, overviewContext, engineRequire)
   local supports = api.supports
   function api:supports(surface, name)
     if surface == "world" then
+      if name == "liveMaps" and gen >= 1 and gen <= 5 then return true end
       if supportedGeneration and SUPPORTED[name] then
         return true
       end

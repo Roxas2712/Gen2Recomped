@@ -86,10 +86,9 @@ them. Availability does not imply the current game state permits the action:
 return `nil, "map carries no elevation"`.
 
 Callback availability follows Gen2Recomped's actual implementation, rather
-than Gen1Recomp's newer catalog. For example, `core.logic_speed`, `item.use`
-and `egg.hatched` have no native call sites here; the hatch event here is
+than Gen1Recomp's newer catalog. For example, `item.use` and `egg.hatched` have no native call sites here; the hatch event here is
 `pokemon.egg_hatched` (Gen 2–5). `battle.status_hud_visible` is available on
-Gen 4–5, `battle.overlay` on Gen 1–3, and the normal start-menu, party-submenu
+Gen 1–5, `battle.overlay` on Gen 1–3, and the normal start-menu, party-submenu
 and naming-grid hooks on Gen 1–3. `ui.pc.items` is available on Gen 1–2.
 Oak-speech callbacks apply to Gen 1–2 except Prism; Birch-speech events apply
 to Emerald. Other versions use their own intros. An event still needs its
@@ -103,6 +102,42 @@ remains unchanged. When adding a native callback or changing screen routing,
 update `src/mods/Capabilities.lua` and the capability tests in the same change.
 
 Additional read-only world summaries: [map overview and encounter queries](world-overview.md).
+
+## Trainer battle preparation
+
+The [portable trainer preparation contract](portable-trainer-preparation.md)
+documents `trainer.before_battle(next, game, context, continueBattle)`, deferred
+native admission, cancellation and battle-local player-party selection.
+
+## NPC conversation hook
+
+The [portable NPC talk contract](portable-world-talk.md) documents
+`world.talk(next, owner, target)`: claim a native NPC conversation or forward
+to the engine, with explicit handle and Gen1 Gold producer boundaries.
+
+## Battle status HUD visibility
+
+The [portable battle status HUD contract](portable-status-hud.md) documents
+`battle.status_hud_visible(next, state)` for GB/GBA status panels and DS
+healthboxes, independently of battle text/menu drawing and native logic.
+
+## Battle bottom UI visibility
+
+The [portable battle bottom UI contract](portable-battle-bottom-ui.md) documents
+`battle.bottom_ui_visible(next, state)` for battle text/menu drawing and
+inherited text/YES-NO overlays, without changing native input/update ownership.
+
+## Per-state main-screen visibility
+
+The [portable screen visibility contract](portable-screen-visibility.md)
+describes `screen.render_visible(next, state)`: hide a native state's main
+render, opacity and palette ownership while keeping its update/input owner.
+
+## Logic speed hook
+
+The [portable logic speed contract](portable-logic-speed.md) documents
+`core.logic_speed(next, game)`, its native speed resolution, hard locks and
+explicit-override precedence for native API 1/2, unified API 2 and API 3.
 
 ## Bulk storage (`mod.storage`)
 
@@ -424,3 +459,6 @@ for the manifest guard, generation coverage, symbolic IDs and failure behavior.
 With `network` and a fixed HTTPS `log_url`, `mod:postLog` sends bounded one-way
 diagnostics through the shared workers. See [log reporting](mod-log-reporting.md)
 for payload, ownership and native platform boundaries.
+
+See [portable follower predicate](portable-follower.md) for the native
+`world.follower.spawn` lifecycle hook and its generation/artwork boundaries.

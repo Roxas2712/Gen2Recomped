@@ -9,6 +9,7 @@
 local Logger = require("src.core.Logger")
 local Assets = require("src.render.Assets")
 local Font = require("src.render.Font")
+local UIVisibility = require("src.battle.UIVisibility")
 local Theme = require("src.ui.Theme")
 local Timing = require("src.core.Timing")
 
@@ -636,6 +637,7 @@ function TextBox:uiSize()
 end
 
 function TextBox:draw()
+  if not UIVisibility.bottomVisible(self, true) then return end
   -- The dialogue box belongs against the bottom of the screen, not floating
   -- in the middle of a zoomed-out letterbox.  Declared per frame; the
   -- renderer blits this region to the screen edge and the rest of the UI

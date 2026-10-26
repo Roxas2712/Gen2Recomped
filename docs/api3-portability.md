@@ -99,7 +99,7 @@ emits nothing. Invalid save stores are refused without overwriting them.
 Gen1 API-3 callback names from the pinned reference are recognized even when
 this engine has no call site for them. Registration is allowed; availability
 still requires a native call site in the selected version. For example,
-`render.output` can be subscribed to but reports unavailable here. Unknown
+`battle.caught_marker_visible` can be subscribed to but reports unavailable here. Unknown
 names remain errors. An accepted subscription is not proof that a feature
 runs. Source-specific engine handles in lifecycle/UI payloads remain native.
 
@@ -156,3 +156,7 @@ or a proof of every exposed native callback's payload. Native action details
 remain covered by the prerequisite PR suites. Extend these shared fixtures
 whenever another API-3 service becomes portable; do not make a failing
 comparison pass by changing only one engine's mod fixture.
+
+The [portable follower predicate](portable-follower.md) controls native companion
+existence on Gen1–3 without replacing a private controller. Artwork remains a
+separate concern; check `mod:supports("hooks", "world.follower.spawn")`.

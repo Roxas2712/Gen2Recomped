@@ -16,17 +16,19 @@ end
 -- This is an audited boundary catalog, not a claim that every game executes
 -- every seam. The source-catalog test requires a decision for each new seam.
 C.hooks = names([[
- battle.accuracy battle.catch_exp battle.crit battle.damage battle.enemy_action battle.exp_award
- battle.low_health_alarm battle.overlay battle.run battle.status_hud_visible battle.turn_order catch.rate
+ battle.menu_auxiliary battle.move_grid_navigation ui.party.grid_navigation
+ battle.accuracy battle.bottom_ui_visible battle.catch_exp battle.crit battle.damage battle.enemy_action battle.exp_award
+ battle.low_health_alarm battle.overlay battle.run battle.status_hud_visible battle.turn_order catch.rate core.logic_speed core.update
  encounter.fishing encounter.roll encounter.species evolution.check exp.gain fieldmove.eligibility
- input.step intro.oak_speech.build link.fingerprint map.palette movement.collision movement.speed
- music.select music.volume player.sprite pokemon.icon pokemon.sprite render.compose render.hud
- render.letterbox render.zones save.new_game save.write script.command trainer.party transition.style
+ input.key input.gamepad input.wheel input.step intro.oak_speech.build link.fingerprint map.palette movement.collision movement.speed
+ music.select music.volume player.sprite pokemon.icon pokemon.level_visible pokemon.sprite render.compose render.hud
+ render.letterbox render.zones save.new_game save.write screen.render_visible script.command trainer.before_battle trainer.party transition.style
  ui.list_menu ui.naming.grid ui.options.rows ui.party.submenu ui.pc.items ui.start_menu.items
- ui.title_menu.items warp.destination world.tod zoom.range
+ ui.title_menu.items warp.destination world.follower.spawn world.talk world.tod zoom.range
 ]])
 C.events = names([[
  clock.day_changed
+ world.live_maps_preparing world.live_maps_updated
  assets.transformed battle.ball_thrown battle.battler_switched battle.damage_dealt battle.ended
  battle.exp_gained battle.fainted battle.move_used battle.started battle.status_inflicted battle.turn_ended
  battle.turn_started discord.join_requested flag.changed game.ready intro.birch_speech.finished
@@ -40,6 +42,12 @@ C.events = names([[
  world.object_toggled world.stepped world.tick world.tod_changed world.trainer_engaged
 ]])
 local positions = {
+  ["world.follower.spawn"] = { false, false },
+  ["ui.party.grid_navigation"] = { false },
+  ["battle.move_grid_navigation"] = { false },
+  ["battle.menu_auxiliary"] = { false, "context" },
+  ["pokemon.level_visible"] = { "mon", "context" },
+  ["trainer.before_battle"] = { false, "context", false },
   ["battle.accuracy"] = { "context" },
   ["battle.damage"] = { "context" },
   ["battle.crit"] = { "context" },

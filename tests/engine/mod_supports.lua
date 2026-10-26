@@ -75,8 +75,9 @@ for _, version in ipairs(GameVersion.ORDER) do
   T.check(registries, version .. ': all API-2 registration surfaces available')
   T.eq(yes(api, 'world', 'flyTo'), type(WorldAPI.flyTo) == 'function',
     version .. ': additive native flight interface is reported when installed')
-  T.check(no(api, 'hooks', 'core.logic_speed')
-      and no(api, 'hooks', 'item.use') and no(api, 'events', 'egg.hatched'),
+  T.check(yes(api, 'hooks', 'core.logic_speed'),
+    version .. ': native speed hook is advertised')
+  T.check(no(api, 'hooks', 'item.use') and no(api, 'events', 'egg.hatched'),
     version .. ': absent Gen1Recomp API-3 features are not advertised')
   T.check(yes(api, 'events', 'mod.probe.ready') and yes(api, 'events', 'mod.other.ready'),
     version .. ': namespaced user events do not need a producer installed')
@@ -169,8 +170,10 @@ T.check(result == nil and reason == 'no overworld' and yes(api, 'world', 'warpTo
 for _, version in ipairs(GameVersion.ORDER) do
   local mod = probe(version)
   local gen = GameVersion.generation(version)
-  T.eq(mod:supports('hooks', 'battle.status_hud_visible'), gen >= 4,
-    version .. ': DS-only HUD seam')
+  T.eq(mod:supports('hooks', 'trainer.before_battle'), true, version .. ': native trainer preparation seam')
+  T.eq(mod:supports('hooks', 'world.talk'), true, version .. ': native NPC talk seam')
+  T.eq(mod:supports('hooks', 'battle.status_hud_visible'), true,
+    version .. ': native GB/GBA/DS HUD seam')
   T.eq(mod:supports('hooks', 'battle.overlay'), gen <= 3,
     version .. ': GB/GBA-only overlay seam')
   T.eq(mod:supports('hooks', 'ui.party.submenu'), gen <= 3,
