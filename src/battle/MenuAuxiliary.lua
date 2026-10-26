@@ -8,6 +8,7 @@ local BUSY = {
   "waitingUI",
   "waitingSound",
   "draining",
+  "hpAnim",
   "animPlaying",
   "growIn",
   "shrinkOut",
