@@ -30,6 +30,44 @@ function M.classic(draw, renderer, width, height)
   G.pop()
   if not ok then error(err,0) end
 end
+-- Gen2's reference renderer paints native overlays on its full-resolution
+-- scene, under a cartridge-grid transform. A drawer that resets origin()
+-- therefore gets real window pixels, not a 160x144 intermediate texture.
+function M.hasNativeStack(stack, scene, first, world)
+  for i=first,#scene.states do
+    local state=scene.states[i]
+    if state and state~=world and visible(stack,state) and type(state.draw)=='function' then return true end
+  end
+  return false
+end
+function M.drawNativeStack(stack, scene, first, world, renderer, viewport, opaque)
+  local G=love.graphics
+  G.push('all');G.origin();G.setShader();G.setScissor();G.setColor(1,1,1,1);G.setBlendMode('alpha')
+  local ok,err=pcall(function()
+    if opaque then G.rectangle('fill',0,0,viewport.width,viewport.height) end
+    M.classic(function()
+      for i=first,#scene.states do
+        local state=scene.states[i]
+        if state and state~=world and visible(stack,state) and type(state.draw)=='function' then
+          G.push('all')
+          -- Declared larger native surfaces retain their own origin. Plain
+          -- GB states stay centred in a parent's expanded surface.
+          if type(state.uiSize)=='function' then
+            local sized,w,h=pcall(state.uiSize,state)
+            if sized and type(w)=='number' and w>0 and type(h)=='number' and h>0 then
+              G.translate((renderer.WIDTH-w)/2,(renderer.HEIGHT-h)/2)
+            end
+          end
+          local drawn,why=pcall(state.draw,state)
+          G.pop()
+          if not drawn then error(why,0) end
+        end
+      end
+    end,renderer,viewport.width,viewport.height)
+  end)
+  G.pop()
+  if not ok then error(err,0) end
+end
 function M.draw(owner, renderer, viewport, zones, overlay)
   local G = love.graphics
   G.push('all')

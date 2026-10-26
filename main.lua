@@ -672,11 +672,11 @@ function love.update(dt)
     local blocked=require('src.cloud.Play').tick(Importer and nil or Game)
     if blocked and Game then
       RetroOverlay.open(Game);RetroOverlay.recoveringTrade=true
-      RetroOverlay.notice=require('src.link.FriendTrade').error or 'Recovering your confirmed trade. Your saved party is protected.'
+      RetroOverlay.notice=require('src.link.FriendTrade').error or require('src.link.FriendWager').error or 'Completing your trade or stake receipt. Your normal adventure is paused.'
       RetroOverlay.update(Game)
       return
     elseif RetroOverlay.recoveringTrade then
-      RetroOverlay.recoveringTrade=nil;RetroOverlay.notice='Your confirmed trade was recovered and saved. Continue playing.'
+      RetroOverlay.recoveringTrade=nil;RetroOverlay.notice='Your trade or stake receipt was processed. Continue playing. Pokémon prizes are in your Bank.'
     end
   end
   local community=package.loaded['src.import.LauncherCommunity']
@@ -761,7 +761,7 @@ function love.draw()
 
   if not Game then return drawSecondPanel() end
   Game:draw()
-  if not autopilot and not driverCo then RetroOverlay.draw(Game) end
+  if not autopilot and not driverCo then require('src.ui.FriendActivity').draw(Game);RetroOverlay.draw(Game);require('src.ui.TextComposer').draw(RetroOverlay) end
 end
 
 function love.keypressed(key, scancode, isrepeat)

@@ -112,6 +112,7 @@ mobile/ios/bundle_id.local
 #exclude mods folder 
 
 /tests/*
+!/tests/native_suspend/
 !/tests/parity_frlg_ship.lua
 !/tests/parity_frlg_warp_allowlist.lua
 !/tests/parity_gen3_type_categories.lua
