@@ -45,12 +45,16 @@ def identify(path, root, home):
             return local/'qa'/parts[1]/'engine'
         if len(parts) >= 3 and parts[0] == 'qa' and parts[2] in {'reference', 'baseline', 'candidate', 'source', 'unit', 'identity-unit-host'}:
             return local/'qa'/parts[1]/parts[2]
+        if len(parts) == 3 and parts[0] == 'qa' and qa_profile(parts[1]) and parts[2] == 'baseline.tar':
+            return path
     if path.parent == root/'dist' and re.fullmatch(r'Origami-Ascendant-Gen2Recomped-[A-Za-z0-9-]+-candidate\.zip', path.name):
         return path
     return None
 
 
 def candidates(root, home):
+    for path in (root/'.local/qa').glob('*/baseline.tar'):
+        if qa_profile(path.parent.name):yield path
     local = root/'.local'
     for name in sorted(BASELINES | RUN_GROUPS):
         yield local/name
@@ -171,6 +175,21 @@ def preserve(path, home, *, active=lambda path: False):
     plan = list(files(path))
     if not plan:return
     root_info = path.lstat()
+    if path.name == 'baseline.tar' and path.is_file():
+        # Store individual archive members as ordinary deduplicated blobs;
+        # archiving the tar itself duplicates hundreds of MB on every run.
+        with Vault(home) as vault:proof = vault.capture_tar(path)
+        if active(path) or kept(path):raise RuntimeError('Archive became active')
+        current=path.lstat()
+        if (current.st_ino,current.st_size,current.st_mtime_ns,current.st_ctime_ns) != (root_info.st_ino,root_info.st_size,root_info.st_mtime_ns,root_info.st_ctime_ns):
+            raise RuntimeError('Archive changed during preservation')
+        receipt=path.parent/'qa-preserved-sources.json'
+        previous=json.loads(receipt.read_text()) if receipt.exists() else {}
+        previous[path.name]=proof
+        temporary=receipt.with_suffix('.'+str(os.getpid())+'.tmp')
+        temporary.write_text(json.dumps(previous,indent=2));temporary.replace(receipt)
+        path.unlink()
+        return
     with tempfile.TemporaryDirectory(prefix='qa-source-preserve-') as tmp:
         source = path
         if path.is_dir():

@@ -41,11 +41,13 @@ def main():
                 checked.append(str(root))
             from qa_love_storage import sweep as sweep_love
             love = sweep_love(storage)
-            reclaimed = love['logical_bytes'] + storage.sweep()
+            from qa_build_storage import sweep as sweep_builds
+            builds = sweep_builds(storage)
+            reclaimed = builds + love['logical_bytes'] + storage.sweep()
             status=state/'maintenance';status.mkdir(exist_ok=True)
             temp=status/'status.tmp'
             temp.write_text(json.dumps(dict(time=time.time(),checked_roots=sorted(checked),
-                reclaimed_logical_bytes=reclaimed,love_cleanup=love,free_bytes=shutil.disk_usage(args.root).free),indent=2))
+                reclaimed_logical_bytes=reclaimed,build_object_cleanup_bytes=builds,love_cleanup=love,free_bytes=shutil.disk_usage(args.root).free),indent=2))
             temp.replace(status/'status.json')
             logger.info('Sweep complete; reclaimed %.1f MiB of logical idle payloads', reclaimed/1024**2)
         return 0

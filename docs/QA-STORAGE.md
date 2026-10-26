@@ -229,3 +229,28 @@ die Löschung auch nach der Sicherung. Die alte Importbereinigung darf gemischte
 Modell-/Save-Bäume nicht pauschal entfernen.
 
 Regressionen: `python3 -m unittest discover -s tests -p 'qa*storage*test.py'`.
+
+
+## Produzenten begrenzen statt Zwischenarchive anhäufen
+
+Archivierte Referenzen mit `qa_extract_archive(git_dir, revision, destination)`
+über eine Pipe entpacken; kein `baseline.tar` pro Lauf schreiben. Alte bekannte
+QA-Zwischenarchive werden mit ihren einzelnen Quell-/Modellbytes im dauerhaften
+Archiv dedupliziert, mit Wiederherstellungsnachweis, bevor sie entfernt werden.
+
+`qa_cache` begrenzt einen Ausgabeordner während des eigenen Kindes auf 4 GiB.
+`qa_limit_output(path, bytes)` ergänzt weitere reine Schreibbudgets; diese
+Funktion erteilt keine Löschberechtigung. Die echte Benutzerumgebung erzwingt
+mindestens 20 GiB frei, auch wenn ein alter Starter 8 GiB anfordert. Ein Budget-
+verstoß stoppt nur den neu gestarteten eigenen Prozessbaum mit sichtbarem Fehler.
+Kontrolle vor Start und während `qa_run`/`qa_popen`, maximal zwei Sekunden zwischen
+Budgetmessungen; keine harte Dateisystemquote, ein Schreibstoß kann überschießen.
+
+X/Y-Backend: vor dem Build `qa_build_storage.prepare(storage, work, sha256)`
+unter `session.lock`, maximal 2 GiB je ROM-Fingerprint / 4 GiB zusammen. Nach
+erfolgreichem Link und zusätzlich alle 15 Minuten nur bekannte `codeNNN.o`-/
+`entries.o`-Zwischenprodukte mit vorhandener C-Quelle entfernen. Laufende Builds,
+`.qa-keep`, C-/Headerquellen, Modelle, ROMs, fertige Bibliotheken und Spielstände
+bleiben erhalten. Ein neuer Fingerprint über dem Budget wird abgelehnt, statt
+ungeprüft alte Quellen oder fertige Bibliotheken zu entfernen. Direkte Aufrufe
+an den Helfern vorbei haben keine laufende Budgetkontrolle.

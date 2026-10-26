@@ -3,10 +3,11 @@ import fcntl
 import hashlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import stat
 import subprocess
 import tempfile
+import tarfile
 import time
 
 
@@ -98,6 +99,46 @@ class Vault:
             rel = path.name if source.is_file() else str(path.relative_to(source))
             records.append('M '+mode+' '+reference+' '+json.dumps('snapshot/'+rel,ensure_ascii=False)+'\n')
             files += 1;logical += size
+        return self._commit(source, records, files, logical)
+
+    def capture_tar(self, source):
+        """Deduplicate an intermediate archive without extracting a disk copy."""
+        records=[];manifest=[];logical=0;seen=set()
+        with tarfile.open(source) as archive:
+            for member in archive:
+                path=PurePosixPath(member.name)
+                if path.is_absolute() or '..' in path.parts or not path.parts or str(path) in seen:
+                    raise ValueError('Unsafe/duplicate intermediate archive member')
+                seen.add(str(path))
+                if member.isdir():continue
+                if not (member.isfile() or member.issym()):
+                    raise ValueError('Unsupported intermediate archive member')
+                if member.issym():
+                    data=os.fsencode(member.linkname);size=len(data);mode='120000'
+                    digest=hashlib.sha1(b'blob '+str(size).encode()+b'\0'+data).hexdigest()
+                else:
+                    size=member.size;data=None;mode='100755' if member.mode&0o111 else '100644'
+                    digest=hashlib.sha1(b'blob '+str(size).encode()+b'\0')
+                    with archive.extractfile(member) as stream:
+                        for chunk in iter(lambda:stream.read(1024*1024),b''):digest.update(chunk)
+                    digest=digest.hexdigest()
+                reference=self.marks.get(digest) or digest
+                if digest not in self.known:
+                    reference=self.mark();self.marks[digest]=reference;self.known.add(digest)
+                    self.send('blob\nmark '+reference+'\ndata '+str(size)+'\n')
+                    if data is not None:self.send(data)
+                    else:
+                        with archive.extractfile(member) as stream:
+                            for chunk in iter(lambda:stream.read(1024*1024),b''):self.send(chunk)
+                    self.send('\n')
+                records.append('M '+mode+' '+reference+' '+json.dumps('snapshot/'+str(path),ensure_ascii=False)+'\n')
+                manifest.append(dict(path=str(path),mode=member.mode,mtime=member.mtime,blob=digest))
+                logical+=size
+        proof=self._commit(source,records,len(manifest),logical)
+        proof['format']='tar-members';proof['members']=manifest
+        return proof
+
+    def _commit(self, source, records, files, logical):
         commit = self.mark()
         message = 'Preserved QA copy: '+str(source)+'\n'
         self.send('commit refs/heads/retained\nmark '+commit+'\ncommitter QA Storage <qa-storage@localhost> '+str(int(time.time()))+' +0000\ndata '+str(len(message.encode()))+'\n'+message)
