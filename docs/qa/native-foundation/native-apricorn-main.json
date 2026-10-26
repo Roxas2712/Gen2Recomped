@@ -1,23 +1,44 @@
 {
-  "status": "Native development checkpoint; full parity remains open",
+  "status": "Historical integration checkpoint; superseded by a verified fallback correction; not release-qualified",
   "sourceCommit": "9abcd876b0420c25d6223d25b840b72eac0904f0",
   "completeGitTree": "c6b4211d54f9c824a0a821a7a5218363bd0e82dc",
-  "engineSuites": {"passed": 439, "total": 439},
-  "sdkSuites": {"passed": 3, "total": 3},
+  "engineSuites": {
+    "passed": 439,
+    "total": 439
+  },
+  "sdkSuites": {
+    "passed": 3,
+    "total": 3
+  },
   "quickTiers": "all passed; ROM-free",
   "scope": "Includes native phone/radio, incoming-event PR60, native apricorn PR63, transition PR55, performance work and upstream major refresh PR61",
   "apricornImplementation": {
     "forkSource": "610f2e141afc11350a0a596970e1bba439b06a4f",
     "forkPullRequest": 63,
-    "forkQuickSuites": {"passed": 438, "total": 438},
-    "focusedChecks": {"passed": 198, "total": 198},
+    "forkQuickSuites": {
+      "passed": 438,
+      "total": 438
+    },
+    "focusedChecks": {
+      "passed": 198,
+      "total": 198
+    },
     "upstreamPullRequest": "https://github.com/UNDERdecoded/Gen2Recomped/pull/295",
     "upstreamSource": "0594d15daa1fada437d8ad3481978664649b4792",
     "upstreamBase": "ed5189c247ee7a2ccca666784e21fd4fba8df781",
-    "upstreamBaselineSuites": {"passed": 63, "total": 74},
-    "upstreamCandidateSuites": {"passed": 64, "total": 75},
+    "upstreamBaselineSuites": {
+      "passed": 63,
+      "total": 74
+    },
+    "upstreamCandidateSuites": {
+      "passed": 64,
+      "total": 75
+    },
     "identicalElevenExistingFailedSuitesAndAssertions": true,
-    "upstreamSdkSuites": {"passed": 3, "total": 3},
+    "upstreamSdkSuites": {
+      "passed": 3,
+      "total": 3
+    },
     "sharedRecipeReaderSha256": "37cd1bd448b915f3db9b3f12036578d586abeac77337ebfa972510039952ac3b",
     "actualCrystalProbe": {
       "sourceCommit": "0594d15daa1fada437d8ad3481978664649b4792",
@@ -30,7 +51,9 @@
   },
   "runtimeQualification": {
     "run": "https://github.com/Roxas2712/Gen2Recomped/actions/runs/40265754962",
-    "statusAtCheckpoint": "in progress"
+    "statusAtCheckpoint": "completed successfully on all four platforms and component assembly",
+    "desktopPackages": "Windows/macOS static checks passed with identical payloads; no game launch acceptance",
+    "releaseEligible": false
   },
   "earlierQualifiedPackages": {
     "sourceCommit": "f027780f78e41142ef78d80d2298398fa794df18",
@@ -46,10 +69,19 @@
     "updatedByThisCheckpoint": false
   },
   "limitations": [
+    "The historical source contains an incorrect legacy fallback order and must not be used as a release candidate; PR65 corrects it.",
     "Complete apricorn registry/facade and authored event/ball-output binding remain open; native scripts retain ball choice and flags.",
     "Complete native daily/tree, phone/radio and remaining Gen1 feature parity remain open.",
     "All prior hardware, Crystal/unchanged Johto and camera receipts retain their exact source scope.",
     "Fresh exact-source GPU, original-story, long-session and Windows hardware acceptance remain open.",
     "The separate Origami port remains paused; protected Gen1/player instances are not used."
-  ]
+  ],
+  "knownHistoricalIssue": {
+    "description": "ROM table import was correct, but the historical-cache fallback was incorrectly reordered. The old oracle did not detect it.",
+    "correctedSource": "1ff0618de2a5ba110035b592a4d0571b4e388612",
+    "mergedPullRequest": 65,
+    "focusedChecks": 216,
+    "allSevenFallbackPositionsAgreeWithActualCrystalTable": true,
+    "scope": "Correction evidence applies to the corrected source, not the historical 9abcd tree."
+  }
 }

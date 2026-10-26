@@ -18,11 +18,17 @@ Latest composed development checkpoint:
 native apricorn producer/selection PR63 are merged alongside native transition
 PR55 and the upstream refresh. The exact complete Git tree passes439/439
 engine suites, SDK3/3 and every ROM-free quick tier. Runtime40265754962 is
-running for this frozen source. Earlier sourcef027 passed all four runtime
+recorded separately for this frozen source (now completed). Earlier sourcef027 passed all four runtime
 platforms and both desktop packages, but that does not qualify this new tree.
 The existing public preview remains source4be; fresh exact-source GPU/story
 acceptance is still open. See the
 [apricorn/integration checkpoint](qa/native-foundation/native-apricorn-main.json).
+This historical source's recipe import was correct, but its old-cache fallback
+order was wrong and its old test oracle missed it. PR65, source1ff0618d,
+corrects that fallback;216 checks and all seven positions of the actual
+Crystal table agree. Runtime40265754962 and static desktop packaging have
+since passed, but the historical9abcd source is superseded and is not a
+release candidate. No fresh GPU/story acceptance follows from packaging.
 
 Current composed preview checkpoint: `4be92945c94e603f7cc582cde23d4702d9610e4a`.
 Native radio records/script lifecycle and window-resolution Pokegear are merged
