@@ -16,6 +16,10 @@ if os.getenv("FRAME_PACING_WORLD") == "1" then
   require("tools.frame-pacing-check.world")
   return
 end
+if os.getenv("FRAME_PACING_PALETTE") == "1" then
+  require("tools.frame-pacing-check.palette")
+  return
+end
 local Cap = require("src.core.FrameCap")
 local Profile = require("src.core.FrameProfile")
 local Json = require("src.link.Json")
