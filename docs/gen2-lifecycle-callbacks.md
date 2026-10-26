@@ -38,7 +38,7 @@ The event runs after the byte is written. This contribution concerns these
 party-byte transitions; it does not claim an audit of all Pokérus consumers.
 
 `force_enable_env` retains a manifest variable name. Only a value of `1`
-overrides a saved disable. Game targeting and no-mod discovery remain in
+overrides a saved disable. Native generation targeting and no-mod discovery remain in
 effect. Existing `log_url` and `mod:postLog` keep their network permission,
 ownership and bounded transport behavior.
 
