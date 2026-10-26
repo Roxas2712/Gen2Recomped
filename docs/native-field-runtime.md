@@ -171,3 +171,8 @@ byte-checked frozen source was covered in three bounded segments (273 + 184 +
 124); the first two 600-second harness expirations remain preserved. No failed
 suite was omitted. The independent palette work started afterwards is outside
 this qualification and remains unpublished pending its own CPU/GPU checks.
+
+
+The indexed-palette adapter now reuses a factored native shader factory with separate native-background and source banks. Native backdrops retain their continuous texture alpha and replace sixteen individual palette uploads with one array upload. Source RGB555 arithmetic, blending, affine/gray resolution and a real cutout shader share this implementation; owner teardown cannot release the native bank. This does not implement animation-pack adoption, another animation VM, or the complete battle presentation protocol.
+
+The fork and composed public baseline each pass 7,771 palette checks and 382 native animation checks; battle admission passes 382 on the fork and 397 on the older public baseline. Metal and OpenGL each pass 1,168 RGBA8 GPU comparisons. The deliberately shared-bank Metal counterexample fails at the intended nested native/source palette comparison. A corrected raw-output measurement uses premultiplied replacement blending; the earlier alpha-multiplying measurement failure is preserved. A new unchanged FireRed run reaches the field and START → ASCENDANT with no loader errors; the battle card now reports the next missing contract, `Ui.takeCommand`, and remains unavailable. None of these checks qualifies full unchanged-mod gameplay.
