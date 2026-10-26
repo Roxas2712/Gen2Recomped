@@ -400,4 +400,28 @@ for _, gen in ipairs({ 2, 3 }) do
 	T.eq(calls, 1, "private tracing does not replay public compiler wrappers")
 	compiler.compile = original
 end
+
+-- The decoded Gen-2 call contract runs its subroutine before post-next code.
+do
+	local g, r, program, _, bus = fixture(2, {
+		ENTRY = { { "scall", "SUB" }, { "setval", 7 }, { "endall" } },
+		SUB = { { "setval", 9 }, { "pause", 2 }, { "end" } },
+	})
+	local observed
+	bus:wrap("script.command", function(next, ctx, op, ir)
+		local result = next(ctx, op, ir)
+		if op == "scall" then
+			observed = ctx.g2Var
+		end
+		return result
+	end)
+	r:run(program)
+	T.eq(observed, nil, "Gen-2 call hook remains suspended with its subroutine")
+	T.eq(r:isRunning(), true, "nested native wait keeps the caller suspended")
+	r:update()
+	r:update()
+	local ctx = r.ctx
+	T.eq(observed, 9, "Gen-2 post-next sees the completed subroutine state")
+	T.eq(ctx.g2Var, 7, "the caller continues after its decoded call hook closes")
+end
 T.finish()

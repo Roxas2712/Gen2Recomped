@@ -29,7 +29,8 @@ named aliases describe the source operation, before native lowering. A single
 source operation may have zero, one or several native rows. `next` runs that
 whole native group; code after `next` observes its native effects. Rewriting an
 opcode or operand recompiles a private overlay using the same native compiler.
-Calls keep their active return addresses. Each loop visit offers the original
+Calls keep their active return addresses. Gen-2 call hooks remain open until
+the called subroutine returns, including across native waits. Each loop visit offers the original
 source operation again, so a previous rewrite or veto cannot rewrite the
 imported source. Vetoes also remove compile-time text state. A retained `next`
 cannot replay a completed operation.

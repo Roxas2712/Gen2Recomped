@@ -300,7 +300,8 @@ function ScriptRunner:exec(script, ctx, admission)
     return
   end
   local overrides, visited = {}, {}
-  while pc <= #script do
+  local dispatch
+  dispatch = function()
     local candidates = trace and trace.starts[pc]
     local command
     for _, candidate in ipairs(candidates or {}) do
@@ -325,8 +326,15 @@ function ScriptRunner:exec(script, ctx, admission)
           pc = command.pc
         end
         local first, after = command.pc, command.after
+        local nestedCall = origin.generation == 2 and (op == "scall" or op == "farscall")
+        local depth = nestedCall and #(ctx.g2Stack or {}) or 0
         positive = after > first
         while pc >= first and pc < after and pc <= #script do step() end
+        -- Gen-2 decoded calls are synchronous: their hook's post-next code
+        -- observes the completed subroutine, including any native suspension.
+        if nestedCall then
+          while pc <= #script and not ctx.scriptCancelled and #(ctx.g2Stack or {}) > depth do dispatch() end
+        end
         completed = true
       end
       local copy = Decoded.copy(Decoded.source(origin, command))
@@ -344,6 +352,9 @@ function ScriptRunner:exec(script, ctx, admission)
       end
       if positive then visited = {} end
     end
+  end
+  while pc <= #script do
+    dispatch()
     if ctx.scriptCancelled then return end
   end
 end
