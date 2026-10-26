@@ -1133,7 +1133,7 @@ function Game:_draw()
       local ownsSurface = wideState
         or (native ~= nil and state == native)
         or Game.wantsThisSurface(state)
-      if state and state.draw then
+      if renderVisible(self.stack, state) and state.draw then
         -- ...and it is centred by ITS OWN size, not by the Game Boy's (see
         -- Game.homeOffset).  classicOffset still gates it: a surface that is
         -- the Game Boy's centres nothing, which is every frame outside a wide
