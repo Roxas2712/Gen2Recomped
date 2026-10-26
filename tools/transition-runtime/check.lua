@@ -81,6 +81,36 @@ for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
   local plain=Native.new(game,function()vanillaCallbacks=vanillaCallbacks+1 end,{})
   game.stack:push(plain);Source.release()
   plain:complete(true);T.eq(vanillaCallbacks,1,'adapter teardown preserves native continuations')
+  local wrappedCallbacks=0
+  local wrapped=Native.new(game,function()wrappedCallbacks=wrappedCallbacks+1 end,{})
+  game.stack:push(wrapped)
+  local wrappedBase=wrapped.onDone
+  wrapped.onDone=function()return wrappedBase()end
+  local heldNative=wrapped.onDone
+  Source.release();wrapped:complete(true)
+  T.eq(wrappedCallbacks,1,'observer teardown preserves a native continuation held by a peer wrapper')
+  heldNative();T.eq(wrappedCallbacks,1,'a retained native wrapper cannot replay its continuation')
+  local retiredCallbacks=0
+  Host.currentMod='retired-source-owner'
+  Source.start(8,{},function()retiredCallbacks=retiredCallbacks+1 end)
+  local retired=game.stack:top();Source.release();Host.currentMod=nil
+  retired:complete(true)
+  T.eq(retiredCallbacks,0,'teardown cannot revive an explicitly source-owned continuation')
+  Host.currentMod='retired-source-owner'
+  Source.start(8,{},function()retiredCallbacks=retiredCallbacks+1 end)
+  local retiredWrapped=game.stack:top();local retiredBase=retiredWrapped.onDone
+  retiredWrapped.onDone=function()return retiredBase()end
+  Source.release();Host.currentMod=nil;retiredWrapped:complete(true)
+  T.eq(retiredCallbacks,0,'a peer-held source continuation stays retired after observer teardown')
+  Host.currentMod='covered-source-owner'
+  Source.start(8,{},function()retiredCallbacks=retiredCallbacks+1 end)
+  local covered=game.stack:top();local coveredBase=covered.onDone
+  covered.onDone=function()return coveredBase()end
+  local cover={};game.stack:push(cover)
+  Source.cancelOwner('covered-source-owner');Host.currentMod=nil
+  T.eq(game.stack:top(),cover,'retiring a covered owner preserves the covering native screen')
+  game.stack:pop();covered:complete(true)
+  T.eq(retiredCallbacks,0,'a covered retired owner cannot complete after the covering screen closes')
   local customDraws=0
   game.data.transitions={native_peer_style={kind='wipe',frames=2,draw=function()customDraws=customDraws+1 end}}
   local peer=Native.new(game,nil,{style='native_peer_style'});game.stack:push(peer)

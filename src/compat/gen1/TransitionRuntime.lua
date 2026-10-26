@@ -20,8 +20,11 @@ local function owner()
   local host=package.loaded['src.mods.Runtime'];local game=package.loaded['src.core.Game3']
   return host and host.currentMod or game and game._callbackOwner and game._callbackOwner()
 end
+local function nativeCohort(c)
+  return c.game.data==c.data and c.game.save==c.save and c.game.mods==c.loader and Version.get()==c.edition
+end
 local function cohort(c)
-  return not c.invalidated and c.game.data==c.data and c.game.save==c.save and c.game.mods==c.loader and Version.get()==c.edition
+  return not c.invalidated and nativeCohort(c)
 end
 local function member(c)
   if c.released or not cohort(c)or c.state.finished then return false end
@@ -47,7 +50,9 @@ function R:drop(c)
 end
 function R:release()
   for _,c in pairs(self.records)do
-    if c.state.onDone==c.installedCallback then c.state.onDone=c.original end
+    if c.state.onDone==c.installedCallback then
+      if c.sourceStarted then c.state.onDone=nil else c.state.onDone=c.original end
+    end
     c.invalidated=true;self:drop(c)
   end
   self.records=setmetatable({},{__mode='kv'});self.last=nil
@@ -71,7 +76,11 @@ function R:bind(state)
   c.continue=function()
     if c.callbackError then error(c.callbackError,0)end
     if c.callbackResult then return unpack(c.callbackResult,1,c.callbackResult.n)end
-    if not cohort(c)or not state.finished or state.phase~='done'then return false,'native transition has not completed'end
+    -- Native peers may retain this wrapper after the observer is retired.
+    -- Preserve the native continuation, but never revive a retired source
+    -- owner's callback or a continuation from another save/loader cohort.
+    if c.cancelled or(c.invalidated and c.sourceStarted)or not nativeCohort(c)
+        or not state.finished or state.phase~='done'then return false,'native transition has not completed'end
     c.callbackResult={n=0}
     local fn=original;original=nil;c.original=nil
     local result=pack(pcall(function()if fn then return fn()end end));fn=nil
@@ -157,8 +166,13 @@ function R:exit(state)
 end
 function R:cancelOwner(who)
   local c=self:current()
-  if c and c.sourceStarted and c.owner==who and c.game.stack:top()==c.state then
-    self:notify(c,false);c.state:complete(false)
+  if c and c.sourceStarted and c.owner==who then
+    c.cancelled=true
+    self:notify(c,false)
+    if c.state.onDone==c.installedCallback then c.state.onDone=nil end
+    -- A foreign screen keeps its stack position. If the old admission is
+    -- uncovered later, its retired continuation remains disabled.
+    if c.game.stack:top()==c.state then c.state:complete(false)end
   end
 end
 function R:drawWorld(c,canvas,w,h)
