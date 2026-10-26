@@ -1610,6 +1610,7 @@ function Loader:load(data)
   self.baseData = data
   require("src.core.Gen2SpeciesNames").publish(data)
   require("src.pokemon.Gen2Mail").load(data)
+  require("src.compat.gen2.Decorations").useRegistry(data)
   require("src.mods.TextContent").prepare(self, data)
   -- every registry folds against the pristine view of its Data target;
   -- resolution is lazy so optional namespaces may appear later
@@ -2005,6 +2006,7 @@ end
 -- boots) ran on a modded engine whose mod instance nothing drives any more,
 -- and the next Play loaded every mod on top of what the last one left.
 function Loader.teardown()
+  require("src.compat.gen2.Decorations").useRegistry(nil)
   require('src.mods.Steps').unloadAll()
   Net.unloadAll()
   Job.unloadAll()
