@@ -16,6 +16,7 @@ end
 -- This is an audited boundary catalog, not a claim that every game executes
 -- every seam. The source-catalog test requires a decision for each new seam.
 C.hooks = names([[
+ phone.contact_list
  battle.accuracy battle.catch_exp battle.crit battle.damage battle.enemy_action battle.exp_award
  battle.low_health_alarm battle.overlay battle.run battle.status_hud_visible battle.turn_order catch.rate
  encounter.fishing encounter.roll encounter.species evolution.check exp.gain fieldmove.eligibility
@@ -26,6 +27,7 @@ C.hooks = names([[
  ui.title_menu.items warp.destination world.tod zoom.range
 ]])
 C.events = names([[
+ apricorn.converted phone.call_received radio.channel
  assets.transformed battle.ball_thrown battle.battler_switched battle.damage_dealt battle.ended
  battle.exp_gained battle.fainted battle.move_used battle.started battle.status_inflicted battle.turn_ended
  battle.turn_started discord.join_requested flag.changed game.ready intro.birch_speech.finished

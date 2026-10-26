@@ -33,6 +33,7 @@ add("hooks", "123", "battle.overlay ui.naming.grid ui.party.submenu ui.start_men
 add("hooks", "12", "ui.pc.items")
 add("hooks", "45", "battle.status_hud_visible")
 add("hooks", "12", "intro.oak_speech.build")
+add("hooks", "2", "phone.contact_list")
 
 add("events", "12345", [[
   assets.transformed battle.ball_thrown battle.battler_switched battle.damage_dealt
@@ -48,6 +49,7 @@ add("events", "12345", [[
   world.object_toggled world.stepped world.tick world.tod_changed world.trainer_engaged
 ]])
 add("events", "2345", "pokemon.egg_hatched")
+add("events", "2", "apricorn.converted phone.call_received radio.channel")
 add("events", "12", [[
   intro.oak_speech.answered intro.oak_speech.finished intro.oak_speech.started
   intro.oak_speech.step
