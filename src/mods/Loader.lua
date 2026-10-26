@@ -1361,6 +1361,14 @@ local function retireCompatibilitySession()
     if type(module)=='table'and type(module.release)=='function'then module.release()end
   end
 end
+-- Retire compatibility scopes after wrapper unwind, without loading them
+-- on ordinary native boots. Map observations may be supplied by another PR.
+local function retireCompatibilityMaps()
+  for _, name in ipairs({"src.core.game3.map", "src.core.game3.player"}) do
+    local module = package.loaded[name]
+    if type(module) == "table" and type(module.release) == "function" then module.release() end
+  end
+end
 
 function Loader:load(data)
   -- A SECOND LOAD IN ONE PROCESS STARTS FROM THE ENGINE, NOT FROM THE LAST
@@ -1375,6 +1383,7 @@ function Loader:load(data)
   local stream=package.loaded['src.core.game3.asset_stream']
   if stream and stream.release then stream.release()end
   retireCompatibilitySession()
+  retireCompatibilityMaps()
   self.baseData = data
   -- every registry folds against the pristine view of its Data target;
   -- resolution is lazy so optional namespaces may appear later
@@ -1720,6 +1729,7 @@ function Loader.teardown()
   local stream=package.loaded['src.core.game3.asset_stream']
   if stream and stream.release then stream.release()end
   retireCompatibilitySession()
+  retireCompatibilityMaps()
   pcall(function()
     Runtime.install(Events.new(), Hooks.new(), nil)
     Runtime.currentMod = nil
