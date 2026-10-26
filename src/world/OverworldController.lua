@@ -18809,7 +18809,7 @@ local function drawWorldBody(self, cadenceConsumed)
     reflectors.busy = true
     local oldReflectors, reflectorCount = reflectors.n, 0
     for _, e in ipairs(self.entities) do
-      if not e.hidden and e.drawReflection then
+      if Performance.extraCap("reflections")~=false and not e.hidden and e.drawReflection then
         e.reflects = self:reflectionSearch(e)
         if e.reflects then
           e.reflectStill = self:stillReflection(e.reflects)
@@ -19227,7 +19227,7 @@ function OverworldState:_drawFieldView(field)
     local reflectors={}
     if not field.skipActors then
       for _,e in ipairs(self.entities)do
-        if not e.hidden and e.drawReflection then
+        if Performance.extraCap("reflections")~=false and not e.hidden and e.drawReflection then
           e.reflects=self:reflectionSearch(e)
           if e.reflects then e.reflectStill=self:stillReflection(e.reflects);reflectors[#reflectors+1]=e end
         end

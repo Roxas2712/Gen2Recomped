@@ -7,7 +7,7 @@ Refused operations return their reason instead of inventing a substitute state.
 
 This implementation is independently written around the native controller and
 save services. It currently admits settled Gen-1/2 overworld control with canonical
-static native actors. Wandering, followers, scripted actor placement, extra actors,
+static native actors and stationary native spinners. Wandering, followers, scripted actor placement, extra actors,
 strength/encounter overrides and multiplayer fail closed until their continuations
 are qualified. Active
 screens, scripts, transitions, movement and effects are refused. Battle and
@@ -49,8 +49,8 @@ levels 1/2/3. It does not establish GPU, battle, later-generation or full-story
 acceptance. FrameProfile before/after and ARM timings: not measured. This is an
 additive compatibility service; no performance switch applies.
 
-The composed fork passes 424/424 engine suites, all 3 SDK suites and all quick
-tiers, plus 678 focused checkpoint assertions. `tools/check_native_checkpoint_rng.py`
+The earlier static-only qualification passed 424/424 engine suites on the
+composed fork, all 3 SDK suites and all quick tiers, plus 678 focused checkpoint assertions. `tools/check_native_checkpoint_rng.py`
 exercises the actual host RNG with the native loader/controller/map-cache
 transactions at API 1/2/3 in Red and Gold. LÖVE 11.5 and 12 each pass 444
 assertions: exact 64-value continuation, failed-rebuild RNG/ownership rollback
@@ -59,3 +59,31 @@ content is synthetic; this does not extend qualification to battle, later
 generations, dynamic actors or full gameplay. The launcher uses the shared
 20 GiB QA reserve and owned profiles. An older public stack can provide the
 shared guard with `--qa-tools /path/to/fork/tools`.
+
+## Stationary spinner continuation (M4 follow-up)
+
+The four native `SPIN_CW`, `SPIN_CCW`, `SPIN_SLOW` and `SPIN_FAST` modes are
+admitted at their installed cells, in the local cast and connected neighbour
+casts. Optional `runtime.spinners` records contain the stable native object ID,
+movement mode, installed cell, facing and remaining turn timer. These are plain
+semantic values; no NPC, sprite, controller or callback is serialized. Static-only
+format-1 records retain their original shape.
+
+Validation binds the records to installed native object definitions and rejects
+unknown fields, malformed directions/timers, changed modes/cells and unknown
+objects. Reconstruction restores the values on newly built native NPCs before
+verification. A missing record, changed visible cast or failed partial apply
+rolls back original actor, map-cache, save and RNG ownership. Legacy static-only
+records cannot silently reset a spinner. Stale pooled spinners outside the live
+local/neighbour casts remain refused. Hooks stay quiet until the existing single
+`checkpoint.restored` event after commit.
+
+The focused CPU suite checks facade access at API 1/2/3, snapshot isolation,
+malformed and missing records, partial-apply rollback and title resume. The native
+LÖVE runner additionally compares every facing/timer and RNG continuation over
+384 updates of all four actual NPC modes, for Red/Gold at all three API levels.
+It uses owned synthetic maps and substituted graphics; it does not qualify a full
+story playthrough, wandering actors, followers, battles or later generations.
+See `docs/qa/checkpoint-spinners-m4.json` for the recorded acceptance and native
+host results. FrameProfile and ARM performance are not measured; this additive
+compatibility work has no performance switch.

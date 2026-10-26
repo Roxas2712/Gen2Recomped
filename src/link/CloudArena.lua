@@ -30,12 +30,13 @@ function Arena.consume(game)
  game.save=request.save;game.retroArena=true
  game.writeSave=function() return nil,'Arena parties are temporary. Return to the library to save your adventure.' end
  local state=require('src.link.LinkState').new(game);state.net=require('src.link.Net').new();state.discordCodeSet=true
- local cleaned,reported,battle,own,peer,started,reportError
+ local cleaned,reported,reportedStatus,battle,own,peer,started,reportError
  local elapsed,nextPoll=0,0
+ local handshakeAt,peerVerified
  local function report(payload)
   if reported or not battle or not own then return end
   local ok,why=require('src.link.ArenaResults').keep(cup.id,match.id,payload)
-  if ok then reported=true else reportError='Result could not be saved: '..tostring(why) end
+  if ok then reported=true;reportedStatus=payload.status else reportError='Result could not be saved: '..tostring(why) end
  end
  local function clean(message)
   if cleaned then return end;cleaned=true
@@ -43,7 +44,10 @@ function Arena.consume(game)
   if state.arenaTask then state.arenaTask:cancel();state.arenaTask=nil end
   state.net:close();game.linkSession=nil;game.linkNet=nil;game.retroArena=nil
   game.save=originalSave;game.writeSave=write;game.returnToLauncher=back
-  notice={account=account,id=cup.id,text=reportError or message or (reported and 'Battle closed. The two native reports are checked automatically; points require agreement.' or 'Battle closed without a league result.')}
+  local resultMessage=reportedStatus=='complete' and 'Battle finished. Your result is saved; league points and rewards follow when both reports agree.'
+   or reportedStatus=='draw' and 'Battle ended without a winner. No league points or item rewards. Your adventure save was restored.'
+   or 'Battle cancelled. No winner was reported. Your adventure save was restored.'
+  notice={account=account,id=cup.id,text=reportError or message or resultMessage}
  end
  game.returnToLauncher=function(self) clean();return back(self) end
  state.exitWith=function(self,message) clean(message);return back(game) end
@@ -76,8 +80,12 @@ function Arena.consume(game)
  end
  local decide=state.decideCompat
  state.decideCompat=function(self,mode,host)
+  -- Arena peers must identify the frozen pairing; never infer a legacy peer
+  -- from LinkState's short LAN grace period while HTTPS is still in flight.
+  if not self.peerHello then return end
   local a=self.peerHello and self.peerHello.arena
   if mode~='battle' or not a or not peer or a.account~=peer.account or a.tournament~=cup.id or a.match~=match.id or a.battle~=battle.id or a.nonce~=battle.nonce or a.digest~=peer.digest or a.ticket~=peer.ticket then return self:exitWith('The other client does not match this frozen tournament pairing.') end
+  peerVerified=true
   decide(self,mode,host)
   if self.stage=='battleOptions' then self.forceLevel=cup.level;self:startMode('battle',true) end
  end
@@ -109,7 +117,10 @@ function Arena.consume(game)
    if elapsed>180 then return self:exitWith('Your rival did not enter in time. Retry from the lobby.') end
    if self.arenaContext and not self.arenaTask then
     local ok
-    if match.left==account then ok=self.net:hostOnline();self.stage='onlineHosting';started=true
+    if battle.transport=='https-v1' then
+     self.net:close();self.net=require('src.link.CloudNet').new(cup.id,match.id,battle.id,own.ticket)
+     self.stage=match.left==account and 'onlineHosting' or 'onlineJoining';started=true;ok=true;handshakeAt=love.timer.getTime()
+    elseif match.left==account then ok=self.net:hostOnline();self.stage='onlineHosting';started=true
     elseif match.room then ok=self.net:joinOnline(nil,match.room);self.stage='onlineJoining';started=true
     elseif elapsed>=nextPoll then nextPoll=elapsed+2;startJob('roomLookup',function() return API.request('GET',cup.id) end);return end
     if started and not ok then return self:exitWith('The battle relay could not connect. Retry from the lobby.') end
@@ -118,6 +129,7 @@ function Arena.consume(game)
    end
    return
   end
+  if not peerVerified and handshakeAt and love.timer.getTime()-handshakeAt>90 then return self:exitWith('Your rival did not complete the Arena handshake. Retry from the lobby.') end
   update(self,dt);if cleaned then return end
   if self.stage=='onlineHosting' and self.net.code and not self.roomPublished and not self.arenaTask then
    local code=self.net.code;startJob('room',function() return API.request('PUT',cup.id,'room',{code=code},match.id) end)

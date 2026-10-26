@@ -413,7 +413,13 @@ local DEPTH_FORMATS = { "depth24", "depth24stencil8", "depth32f", "depth16" }
 local function newDepth(w, h)
   if not (love.graphics and love.graphics.newCanvas) then return nil end
   local c = nil
-  for _, format in ipairs(DEPTH_FORMATS) do
+  local formats=DEPTH_FORMATS
+  local renderer,version
+  if love.graphics.getRendererInfo then renderer,version=love.graphics.getRendererInfo()end
+  if V.renderBudget~=false and ((renderer or ""):find("OpenGL ES",1,true) or (version or ""):find("OpenGL ES",1,true)) then
+    formats={"depth16","depth24","depth24stencil8","depth32f"}
+  end
+  for _, format in ipairs(formats) do
     local ok, made = pcall(love.graphics.newCanvas, w, h,
                            { format = format, readable = true })
     if ok and made then c = made break end

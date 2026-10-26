@@ -81,7 +81,57 @@ local function qualify()
       check(not restored and rebuilds == 0,'actual RNG parser refuses invalid state before rebuilding')
       check(Game.save == saved and World.map == map,'invalid RNG cannot replace native progress')
       check(host.math.getRandomState() == before,'invalid RNG preflight preserves live random state')
-      cases[#cases+1] = {edition=edition,api=api,continuation=true,rollback=true,invalidRngPreflight=true}
+      -- The real native NPC updater, including local and neighbour random
+      -- spinners, must take the same turns after a reconstruction.
+      for i,mode in ipairs({'SPIN_CW','SPIN_CCW','SPIN_SLOW','SPIN_FAST'}) do
+        local map = Game.data.maps[i <= 2 and 'FIX_TOWN' or 'FIX_ROUTE']
+        local object = copy(map.objects[1])
+        object.index,object.x = i+10,7+i
+        object.movement,object.range = 'SPIN',mode
+        map.objects[#map.objects+1] = object
+      end
+      Maps.invalidateAll()
+      World:_checkpointRebuild({map='FIX_TOWN',x=2,y=3,facing='down'})
+      local ids = {}
+      for id,actor in pairs(World.npcPool) do
+        if actor.spins then ids[#ids+1]=id;actor.timer=1 end
+      end
+      table.sort(ids)
+      check(#ids == 4,'all native stationary spinner modes are installed')
+      host.math.setRandomSeed(27981,api)
+      local spin = assert(checkpoints:capture(Game))
+      local function tick()
+        local values = {}
+        for _,id in ipairs(ids) do
+          local actor = World.npcPool[id]
+          local mapId = id:match('^(.*)_obj_%d+$')
+          actor:update(Maps.load(Game.data,mapId),World.entities)
+          values[id] = {facing=actor.facing,timer=actor.timer}
+        end
+        return Serializer.encode(values),host.math.getRandomState()
+      end
+      local future = {}
+      for frame=1,384 do future[frame]={tick()} end
+      check(checkpoints:restore(Game,spin),'native reconstruction restores spinner continuation')
+      for frame=1,384 do
+        local actors,state = tick()
+        check(actors == future[frame][1],'actual spinner continuation frame '..frame)
+        check(state == future[frame][2],'actual spinner RNG continuation frame '..frame)
+      end
+      local pool,save,map,state = World.npcPool,Game.save,World.map,host.math.getRandomState()
+      local rebuild = World._checkpointRebuild
+      World._checkpointRebuild = function(self,...)
+        rebuild(self,...)
+        self.npcPool[ids[1]]=nil
+      end
+      local restored,why = checkpoints:restore(Game,spin)
+      World._checkpointRebuild = rebuild
+      check(not restored and why == 'restore_failed','partial native spinner apply fails closed')
+      check(World.npcPool == pool and Game.save == save and World.map == map,'partial spinner rollback retains native owners')
+      check(Maps.load(Game.data,'FIX_TOWN') == map,'partial spinner rollback retains map cache')
+      check(host.math.getRandomState() == state,'partial spinner rollback retains actual RNG')
+      cases[#cases+1] = {edition=edition,api=api,continuation=true,rollback=true,invalidRngPreflight=true,
+        spinnerModes=4,spinnerFrames=384,spinnerRngContinuation=true,spinnerPartialRollback=true}
     end
   end
   return {passed=true,checks=checks,cases=cases,loveVersion={host.getVersion()},

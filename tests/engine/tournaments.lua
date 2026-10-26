@@ -1,9 +1,9 @@
 package.path='./?.lua;'..package.path
 love=require('tests.love_stub')
 local n=0;local function check(v,m) assert(v,m);n=n+1 end
-local account='17';local signed=true;local response;local sent={}
+local account='17';local signed=true;local response,responseStatus;local sent={}
 package.loaded['src.cloud.RetroCloud']={accountId=function() return account end,signedIn=function() return signed end}
-package.loaded['src.cloud.NativeAccount']={request=function(method,path,payload) sent={method=method,path=path,payload=payload};return response end}
+package.loaded['src.cloud.NativeAccount']={request=function(method,path,payload) sent={method=method,path=path,payload=payload};return response,nil,responseStatus end}
 package.loaded['src.cloud.Task']={new=function(fn) return {poll=function() local a,b=fn();return {kind='done',first=a,second=b} end,cancel=function() end} end}
 local T=require('src.cloud.Tournaments');local id='11111111-1111-4111-8111-111111111111';local matchid='22222222-2222-4222-8222-222222222222'
 response={account_id='17',tournaments={},manage=true}
@@ -11,6 +11,9 @@ check(T.request('GET').account_id=='17' and sent.path=='/tournaments','the Arena
 check(not T.request('GET','../users'),'dynamic tournament IDs cannot escape the route')
 response={account_id='18'};check(not T.request('GET',id),'another account response is rejected')
 signed=false;check(not T.request('GET'),'guests cannot call the Arena API');signed=true
+response=nil;responseStatus=422
+check(select(3,T.request('POST',id,'battle-wire',{},matchid))==422,'the Arena API preserves permanent HTTP rejection status for the transport')
+responseStatus=nil
 local save={party={{species='PIKACHU',level=5},{species='PIDGEY',level=5},{species='RATTATA',level=5}},player={name='Fixture'},options={}}
 local Saves=require('src.core.SaveData');Saves.peekSlot=function() return save end
 local cup={id=id,account_id='17',state='running',edition='red',team_size=3,level=50,generation=1,battle_gate='native_rules',matches={}}
@@ -43,15 +46,28 @@ response.battle.teams[1].party=game.save.party;response.battle.teams[2].party=ga
 battleState:update(.1)
 check(game.retroArena and game.save.party[1].level==5 and not game:writeSave(),'the frozen party is isolated from live saves and cannot be written as adventure progress')
 battleState:sendHello(nil);check(net.hello.arena.match==matchid and net.hello.arena.account=='17','the link hello binds the expected pairing and account without sending a login token')
+battleState.peerHello=nil;battleState:decideCompat('battle',true);check(returned==0,'Arena waits for the actual peer hello instead of treating HTTP latency as an old LAN client')
 battleState.peerHello={arena={tournament=id,match=matchid,account='99',edition='red',team_size=3,level=50}}
 battleState:decideCompat('battle',false)
 check(returned==1 and game.save==originalSave and not game.retroArena and net.closed,'a wrong peer closes the room, restores the original save and returns to the launcher')
 check(captured and captured.status=='aborted','leaving a prepared battle persists an abort rather than inventing a winner')
 check(Arena.takeNotice().id==id,'the pairing notice follows the player back to the lobby')
+local function completionNotice(result)
+ net.closed=false;Arena.queue(cup,match,'slot1');Arena.consume(game)
+ response.battle.teams[1].party=game.save.party;response.battle.teams[2].party=game.save.party
+ battleState:update(.1)
+ if result then battleState.arenaContext.onFinished({result=result,turns=2,digest=string.rep('a',64)}) end
+ game:returnToLauncher();return Arena.takeNotice().text
+end
+check(completionNotice('draw'):find('without a winner',1,true) and captured.status=='draw','draws show that no ranked win or reward is pending')
+check(completionNotice('win'):find('both reports agree',1,true) and captured.status=='complete','a completed result remains visibly pending peer agreement')
+check(completionNotice():find('Battle cancelled',1,true) and captured.status=='aborted','a cancelled battle has a distinct lobby notice')
 Version.get=oldGet
 local noop=function() end;local W=require('src.import.TournamentWorkspace')
 love.keyboard={setTextInput=noop,isDown=function() return false end};love.system={getClipboardText=function() return '' end}
-local UI={section='tournaments',ready={red=true},_ui={col=noop},_sbGo=function(self,id) self.section=id end}
+local UI={section='tournaments',ready={red=true},_ui={col=function(c)
+ assert(type(c)=='table' and type(c[1])=='number' and type(c[2])=='number' and type(c[3])=='number','launcher colors must be RGB triples')
+end},_sbGo=function(self,id) self.section=id end}
 response={account_id='17',tournaments={},manage=true,total=0}
 W.tick(UI);W.tick(UI);check(UI._tournaments.index.manage,'the account-only workspace loads the tournament catalogue')
 W.action(UI,'create');W.action(UI,'field:title')
@@ -125,3 +141,10 @@ check(sent.path=='/arena/league/challenges' and sent.payload.recipient==18,'a le
 UI._tournaments.index.arena.league.registered=false
 W.action(UI,'findRival');check(not UI._tournaments.job and UI._tournaments.notice:find('Join this season',1,true),'league opt-in is required for Auto-Match without blocking local play')
 print('Season league native workspace: 5 checks passed')
+
+love.graphics.ellipse=love.graphics.ellipse or noop
+UI._tournaments.shop={account_id='17',coins=1000,win_coins=100,loss_coins=25,drop_percent=10,notice='Fixture wallet',earnings={},catalogue={{id='LEFTOVERS',title='Leftovers',price=500,generation=2,icon='apple',description='Native held item'}}}
+UI._tournaments.form=nil;UI._tournaments.cup=nil
+check(W.draw(UI,0,0,320,640)>0,'the native Item Shop renders its catalogue on a narrow viewport')
+W.action(UI,'shopBuy:LEFTOVERS');check(UI._tournaments.shopConfirm.id=='LEFTOVERS','choosing a shop item opens a concrete purchase confirmation')
+print('Arena shop workspace: 2 checks passed')
