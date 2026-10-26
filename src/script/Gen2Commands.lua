@@ -2122,7 +2122,7 @@ function Gen2Commands.phoneCallDelay(save)
   return GEN2_CALL_DELAYS[math.min(cycles, #GEN2_CALL_DELAYS - 1) + 1]
 end
 
--- The sample GetAvailableCallers builds, in PHONE_* order.
+-- The sample GetAvailableCallers builds, in saved phone-slot order.
 function Gen2Commands.availableCallers(data, save, mapDef, tod)
   local bit = GEN2_TOD_BIT[tod] or 2
   local out = {}
@@ -2140,6 +2140,16 @@ function Gen2Commands.availableCallers(data, save, mapDef, tod)
     end
   end
   return out
+end
+
+-- ChooseRandomCaller swaps one Random byte's nibbles, masks to five bits,
+-- then takes the remainder against the eligible count. Preserve that exact
+-- mapping and byte consumption rather than drawing a uniform list index.
+function Gen2Commands.chooseRandomCaller(callers, rng)
+  if not callers or #callers == 0 then return nil end
+  local byte = (rng and rng() or math.random(0, 255)) % 256
+  local swapped = (byte % 16) * 16 + math.floor(byte / 16)
+  return callers[(swapped % 32) % #callers + 1]
 end
 
 -- Returns the caller id and its compiled receive script, or nil.  `minutes` is
@@ -2189,7 +2199,7 @@ function Gen2Commands.rollIncomingCall(data, save, mapDef, tod, minutes, entranc
   if math.floor(palette / 16) % 16 ~= 0 then return nil end
   local callers = Gen2Commands.availableCallers(data, save, mapDef, tod)
   if #callers == 0 then return nil end
-  local id = callers[math.random(#callers)]
+  local id = Gen2Commands.chooseRandomCaller(callers)
   local script = Gen2Commands.phoneReceiveScript(data, id)
   if not script then return nil end
   -- InitCallReceiveDelay at the tail of Script_ReceivePhoneCall (36:$42B7):
