@@ -54,6 +54,20 @@ return function(game)
     V.require("DayNight").setting:sync("day")
   end
   U.wait(mode == "voxel" and 1500 or 240)
+  if V then
+    local mesher = V.require("ChunkMesher")
+    local deadline, waited = love.timer.getTime() + 180, 0
+    while
+      mesher.pending() > 0 or not (mesher.peek(game.overworld.map, false) or mesher.peek(game.overworld.map, true))
+    do
+      assert(not mesher.buildFailure(game.overworld.map.id), "native terrain build failed")
+      assert(love.timer.getTime() < deadline, "native terrain did not become quiescent")
+      U.wait(60)
+      waited = waited + 60
+    end
+    report.measurement.readyWaitFrames = waited
+    U.wait(240)
+  end
   local active
   local world, worldUpdate = game.overworld, game.overworld.update
   world.update = function(self, ...)
@@ -161,6 +175,14 @@ return function(game)
       active = nil
       phase.elapsedSeconds = love.timer.getTime() - start
       assert(phase.windows == 2 and #phase.presentMs == 240, "missing measured frames or FrameProfile windows")
+      assert(phase.sections["frame pacing: sleep"], "native pacing path was bypassed")
+      if card == "P7" then
+        assert(
+          phase.sections["    voxel: sun pass"] and phase.sections["    voxel: sun pass"].windows == 2,
+          "shadow measurement reached an unready fallback frame"
+        )
+        assert(next(phase.shadowCasts), "native shadow passes did not execute")
+      end
       for _, row in pairs(phase.sections) do
         row.meanMs = row.sumMs / row.windows
         row.sumMs = nil
