@@ -10064,6 +10064,12 @@ function RomExtractorGen3:extractTrainerSprites()
     if not ok then Logger.warn("gen3 trainer pic %d failed", i) end
   end
 
+  -- Retain the native numeric portrait catalogue for presentation consumers.
+  local constants=self._constants or{}
+  constants.gen3TrainerFront=pathFor
+  self._constants=constants
+  self:write("constants",constants)
+
   -- ...AND THE PATH ONTO EVERY TRAINER ROW.
   --
   -- `pic` is a PATH in this engine: BattleState.trainerPicPath hands it
@@ -32903,7 +32909,17 @@ function RomExtractorGen3:extractBattleWindows()
   end
 
   local constants = self._constants or {}
+  -- Keep additional genuine templates from the identified array. A terminator
+  -- or an invalid row stops the scan; absent windows are never fabricated.
+  local templates={}
+  for id=0,14 do
+    local r=rec(found[0].at+id*8)
+    if not r or r.bg>3 or r.pal>15 or r.left>31 or r.top>63
+       or r.w>30 or r.h>20 then break end
+    templates[id+1]=win(r)
+  end
   constants.gen3BattleWindows = {
+    templates=templates,
     message = win(found[0]),
     prompt = win(found[1]),
     action = win(found[2]),
