@@ -27,6 +27,10 @@ This is an incremental presentation and observation bridge over the existing
   timing is the existing native implementation, not a proof of exact source
   sprite callbacks. They cannot consume combat commands.
 
+Older native controllers without HUD visibility or move-grid query methods
+return an explicit unavailable reason for those observations. This does not
+advertise the complete presentation protocol on that host.
+
 ## Qualification
 
 The focused engine suites cover all five registered GBA editions using

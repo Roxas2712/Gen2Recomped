@@ -60,9 +60,10 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   b:update(1/60);Ui.pump=pump
   T.eq(pump(),nil,'UI calls outside the native input phase cannot tick combat')
   T.eq(Ui.bindState(st),true);T.eq(Ui.bindState({}),false)
-  T.eq(Ui.statusHUDVisible(),b:statusHUDVisible())
-  T.eq(Ui.bottomUIVisible(st),b:bottomUIVisible())
-  T.eq(Ui.moveGridNavigation(),b:moveGridNavigation())
+  for _,method in ipairs{'statusHUDVisible','bottomUIVisible','moveGridNavigation'}do
+    if type(b[method])=='function'then T.eq(Ui[method](),b[method](b))
+    else local value,why=Ui[method]();T.eq(value,nil);T.check(why:find('native UI query unavailable',1,true)~=nil)end
+  end
   T.eq(ticks,1,'two wrapper base calls consume the native tick once')
   T.eq(b.player.mon.moves[1].pp,9,'validated source PP edit reaches the actual native move')
   T.eq(baseUpdate(1/60),nil);T.eq(ticks,1,'direct source update outside native scope has no clock')

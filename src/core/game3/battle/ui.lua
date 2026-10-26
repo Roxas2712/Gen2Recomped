@@ -14,14 +14,17 @@ local function call(name,...)
   end
   return facade._withCallbackOwner(who,Ui[name],...)
 end
-function Ui.statusHUDVisible()
-  local screen=Battle._screen();return screen and screen:statusHUDVisible()or false
+local function query(method,state)
+  local screen=Battle._screen(state);if not screen then return false end
+  if type(screen[method])~='function'then return nil,'native UI query unavailable: '..method end
+  return screen[method](screen)
 end
+function Ui.statusHUDVisible()return query('statusHUDVisible')end
 function Ui.bottomUIVisible(state)
-  local screen=Battle._screen(state);return screen and screen:bottomUIVisible()or false
+  return query('bottomUIVisible',state)
 end
 function Ui.moveGridNavigation()
-  local screen=Battle._screen();return screen and screen:moveGridNavigation()or false
+  return query('moveGridNavigation')
 end
 function Ui.bindState(state)
   if state==nil then
