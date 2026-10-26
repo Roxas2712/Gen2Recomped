@@ -50,3 +50,11 @@ These are prepared completion scenes and shared-contract checks. They do
 not establish real-network reliability, every link mode, physical hardware
 acceptance or complete unchanged-mod gameplay. Engine-wide regression and
 release-package qualification are recorded separately at their exact refs.
+
+The qualified runtime `afe2c4461def99702a5ccbe1958fdf1653c58838` passes
+561/561 engine suites, 4/4 SDK suites and B30. The focused native suite passes
+1,948 checks; launcher, payload and preview-assembly contracts also pass.
+The previous main rejects the new availability/admission control. See the
+[qualification receipt](qa/link-battle-ended.json) for source identities,
+typed observation digests and log/report hashes. Later publication changes
+only record this evidence.
