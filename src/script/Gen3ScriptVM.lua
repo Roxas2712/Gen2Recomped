@@ -807,7 +807,7 @@ end
 
 Gen3ScriptVM.store = store
 
-function Gen3ScriptVM.compile(data, entry, options)
+local function compile(data, entry, options)
   local pool = store(data)
   local scripts = pool and pool.scripts
   if not (scripts and type(entry) == "string" and scripts[entry]) then return nil end
@@ -867,10 +867,16 @@ function Gen3ScriptVM.compile(data, entry, options)
   if options then
     Decoded.finish(out, options.trace)
   else
-    Decoded.origin(out, data, entry, Gen3ScriptVM.compile, 3)
+    Decoded.origin(out, data, entry, compile, 3)
     compiled[scripts][entry] = #out > 0 and out or false
   end
   return #out > 0 and out or nil
+end
+
+-- Keep the public compiler's original two-argument contract. Profile tracing
+-- uses its private compiler reference, including when a mod wraps compile().
+function Gen3ScriptVM.compile(data, entry)
+  return compile(data, entry)
 end
 
 -- ---------------------------------------------------------------------------

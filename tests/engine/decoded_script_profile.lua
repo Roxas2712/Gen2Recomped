@@ -368,4 +368,36 @@ do
 	Commands.g3_setvar = original
 	T.eq(count, 1, "native side effects occur at most once across a swallowed failure")
 end
+
+for _, gen in ipairs({ 2, 3 }) do
+	local compiler = gen == 2 and C2 or C3
+	local g, r, program, _, bus = fixture(
+		gen,
+		{ ENTRY = gen == 2 and { { "setval", 4 }, { "endall" } } or { { "setvar", 0x4070, 4 }, { "end" } } }
+	)
+	T.eq(compiler.compile(g.data, "ENTRY", true), program, "public compiler continues to ignore surplus arguments")
+	local original, calls = compiler.compile, 0
+	compiler.compile = function(data, entry)
+		calls = calls + 1
+		return original(data, entry)
+	end
+	program = compiler.compile(g.data, "ENTRY")
+	bus:wrap("script.command", function(next, ctx, op, ir)
+		if op == "setval" then
+			ir[2] = 7
+		elseif op == "setvar" then
+			ir[3] = 7
+		end
+		return next(ctx, op, ir)
+	end)
+	local ctx = r:makeContext()
+	r:exec(program, ctx)
+	T.eq(
+		gen == 2 and ctx.g2Var or g.save.gen3Vars[0x4070],
+		7,
+		"a transparent public compiler wrapper cannot suppress decoded callbacks"
+	)
+	T.eq(calls, 1, "private tracing does not replay public compiler wrappers")
+	compiler.compile = original
+end
 T.finish()
