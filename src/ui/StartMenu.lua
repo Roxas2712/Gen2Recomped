@@ -83,6 +83,13 @@ function StartMenu.new(game)
   -- below rather than here.
   if not inContest then
   table.insert(items, { label = Strings("SAVE"), onSelect = function()
+    if require('src.core.GameVersion').isGen2() then
+      local screen
+      screen=Screens.push(game,'Gen2SaveMenu',{onDone=function()
+        if game.stack:top()==screen then game.stack:pop() end
+      end})
+      return
+    end
     local TextBox = require("src.render.TextBox")
     local badges = require("src.inventory.Badges").count(game.data, game.save)
     local owned = 0
