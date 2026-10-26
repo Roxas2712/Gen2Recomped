@@ -3457,7 +3457,7 @@ local function runSuites(paths)
     -- later suites, and keeps an early failure from hiding the remaining ones.
     local function quote(value) return "'" .. value:gsub("'", "'\"'\"'") .. "'" end
     local lua = (arg and arg[-1]) or "luajit"
-    local status = os.execute(quote(lua) .. " tests/run_isolated_suite.lua " .. quote(path))
+    local status = os.execute(quote(lua) .. " tests/isolated_legacy_suite.lua " .. quote(path))
     check(status == 0 or status == true, label .. " suite")
   end
 end

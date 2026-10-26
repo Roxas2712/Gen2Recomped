@@ -69,7 +69,7 @@ def main():
     codes = []
     with (out / 'suite.log').open('w') as log:
         for suite in args.suite or [None]:
-            command = [str(lua), 'tests/run_isolated_suite.lua', suite] if suite else [str(lua), 'tests/run_tests.lua']
+            command = [str(lua), 'tests/isolated_legacy_suite.lua', suite] if suite else [str(lua), 'tests/run_tests.lua']
             log.write('RUN ' + str(suite or 'tests/run_tests.lua') + '\n');log.flush()
             result = qa_run(command, cwd=source, env=env, stdout=log, stderr=log, timeout=1800)
             codes.append(result.returncode)
