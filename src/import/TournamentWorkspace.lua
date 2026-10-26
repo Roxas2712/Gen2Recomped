@@ -29,15 +29,19 @@ local function refresh(self)
 end
 local function form(cup)
  local p=cup and cup.prize or {}
- return {id=cup and cup.id,title=cup and cup.title or '',edition=cup and cup.edition or 'crystal',capacity=tostring(cup and cup.capacity or 16),
+ local d={id=cup and cup.id,title=cup and cup.title or '',edition=cup and cup.edition or 'crystal',capacity=tostring(cup and cup.capacity or 16),
   team_size=tostring(cup and cup.team_size or 3),level=tostring(cup and cup.level or 50),rules=cup and cup.rules or '',starts_at=cup and cup.starts_at or '',
   dex=p.dex and tostring(p.dex) or '',prizeLevel=tostring(p.level or 5),egg=p.egg==true,shiny=p.shiny==true,moves=table.concat(p.moves or {},',')}
+ require('src.import.GiftDesigner').init(d,p)
+ if not next(p) then d.giftKind='none' end
+ return d
 end
 function W.action(self,id)
  local f=state(self);if not f then return end
  if f.job then return end
  if id:match('^field:') then focus(f,id:sub(7));return end
  focus(f,nil)
+ if f.form and require('src.import.GiftDesigner').action(f.form,id) then self.pageScroll=0;return end
  if id=='back' then f.cup=nil;f.form=nil;f.choose=nil;f.confirm=nil;self.pageScroll=0;refresh(self)
  elseif id=='refresh' then refresh(self)
  elseif id=='nextPage' or id=='prevPage' then
@@ -46,6 +50,7 @@ function W.action(self,id)
  elseif id:match('^open:') then
   local key=id:sub(6);self.pageScroll=0;f.choose=nil;f.confirm=nil
   job(self,'cup',function() return API.request('GET',key) end)
+ elseif id=='giftStudio' then self:_openAccount('giftAdmin')
  elseif id=='create' then f.form=form();self.pageScroll=0
  elseif id=='edit' then f.form=form(f.cup);self.pageScroll=0
  elseif id=='edition' then local at=1;for i,v in ipairs(editions) do if v==f.form.edition then at=i end end;f.form.edition=editions[at%#editions+1]
@@ -53,12 +58,9 @@ function W.action(self,id)
  elseif id=='saveCup' then
   local d=f.form
   for _,key in ipairs({'capacity','team_size','level','prizeLevel'}) do if not tonumber(d[key]) then f.notice='Enter a number for '..key..'.';return end end
-  if d.dex~='' and not tonumber(d.dex) then f.notice='Enter a valid species number for the prize.';return end
   local payload={title=d.title,edition=d.edition,capacity=tonumber(d.capacity),team_size=tonumber(d.team_size),level=tonumber(d.level),rules=d.rules,starts_at=d.starts_at}
-  if d.dex~='' then
-   local moves={};for move in d.moves:upper():gmatch('[^,%s]+') do moves[#moves+1]=move end
-   payload.prize={dex=tonumber(d.dex),level=tonumber(d.prizeLevel),egg=d.egg,shiny=d.shiny,moves=moves}
-  elseif d.id then payload.clear_prize=true end
+  local reward,why=require('src.import.GiftDesigner').payload(d);if why then f.notice=why;return end
+  if reward then payload.prize=reward elseif d.id then payload.clear_prize=true end
   local key=d.id
   job(self,'saved',function() return API.request(key and 'PATCH' or 'POST',key,nil,payload) end)
  elseif id=='join' or id=='ready' or id=='notready' then
@@ -85,6 +87,12 @@ function W.action(self,id)
  elseif id=='confirm' then
   local key,c=f.cup.id,f.confirm;local payload={winner=c.winner and tonumber(c.winner),reason=c.reason}
   job(self,'changed',function() return API.request('POST',key,c.kind=='report' and 'result' or c.kind,payload,c.match) end)
+ elseif id:match('^copyPrize:') or id:match('^redeemPrize:') then
+  local gift=id:match(':(.+)$')
+  for _,award in ipairs(f.index and f.index.awards or {}) do if award.gift_id==gift then
+   if id:match('^copyPrize:') then love.system.setClipboardText(award.gift_code);f.notice='Private prize code copied.'
+   else local code,edition=award.gift_code,award.edition;job(self,'prize',function() return require('src.cloud.GiftCodes').redeem(code,edition) end) end
+  end end
  elseif id:match('^prize:') then local receipt=id:sub(7);job(self,'prize',function() return API.prize(receipt) end)
  end
 end
@@ -103,7 +111,7 @@ function W.tick(self)
     local ok,why=pcall(self.play,self,doc.edition);self._arenaLaunch=nil
     if not ok then require('src.link.CloudArena').cancelPending();f.notice='Battle launch failed: '..tostring(why) end
     return
-   elseif purpose=='prize' then f.notice='Prize restored to your Bank. Open the Bank to copy it to a compatible save.'
+   elseif purpose=='prize' then f.notice=doc.kind and 'Prize in your account inbox. Open Account > Gift codes to deliver it to a save copy.' or 'Prize restored to your Bank. Open the Bank to copy it to a compatible save.'
    elseif tostring(doc.account_id)~=f.account then f.notice='The account changed. Refresh the Arena.'
    elseif purpose=='index' then f.index=doc;f.notice=doc.verification_notice or ''
    else f.cup=doc;f.confirm=nil;f.choose=nil;if purpose=='saved' then f.form=nil end;f.notice='Results require both players or an organizer decision.' end
@@ -141,9 +149,11 @@ function W.draw(self,x,y,w,h)
   button('BACK','dismiss');field('Title','title',d.title);button('Edition: '..d.edition:upper(),'edition')
   field('Capacity (2–64)','capacity',d.capacity);field('Team size (1–6)','team_size',d.team_size);field('Battle level (1–100)','level',d.level)
   field('Rules shown to all players','rules',d.rules);field('Scheduled start · optional ISO date with timezone','starts_at',d.starts_at)
-  text('CHAMPION’S PRIZE',true,P.link);text('Leave the species blank for an achievement only. Gen 1 supports special Pokémon, but no eggs or shiny setting.')
-  field('National species number','dex',d.dex);field('Prize level','prizeLevel',d.prizeLevel);field('Special moves · optional canonical names, comma-separated','moves',d.moves)
-  button((d.egg and '[x]' or '[ ]')..' Egg','egg');button((d.shiny and '[x]' or '[ ]')..' Shiny','shiny')
+  local tabAt=0
+  require('src.import.GiftDesigner').draw(d,{d.edition},{text=text,row=button,field=function(label,id) field(label,id,d[id]) end,allowNone=true,tab=function(label,id,active)
+   local bw=(w-12*s)/7;button((active and '• ' or '')..label,id,bw,x+tabAt*(bw+2*s),y)
+   tabAt=tabAt+1;if tabAt==7 then y=y+52*s end
+  end})
   button('SAVE TOURNAMENT','saveCup');text(f.notice);return y-top
  end
  if f.cup then
@@ -155,7 +165,7 @@ function W.draw(self,x,y,w,h)
   text(c.team_size..' per team · Level '..c.level..' · Single elimination · Community results')
   if c.starts_at then text('Scheduled: '..c.starts_at..' UTC') end
   if c.rules~='' then text(c.rules) end
-  if c.prize then text('CHAMPION: # '..c.prize.dex..(c.prize.shiny and ' · SHINY' or '')..(c.prize.egg and ' · EGG' or '')..' + Champion achievement',false,P.link) else text('CHAMPION: permanent achievement',false,P.link) end
+  text('CHAMPION: '..require('src.import.GiftDesigner').describe(c.prize)..' + Champion achievement',false,P.link)
   text(f.notice)
   if c.battle_gate~='verified' then text('ONLINE BATTLES LOCKED · Fully verified Bank teams are required. Team verification is still in development. Organizers can run the bracket and confirm community results.',false,P.link) end
   if f.confirm then
@@ -212,11 +222,17 @@ function W.draw(self,x,y,w,h)
   paint.surface(x,y,w,154*s,14*s,P.link,false);trophy(x+w-68*s,y+70*s,35*s)
   local before=y;y=y+18*s;text('THE ARENA',true,P.ink);text('Find your rivals. Earn your place.');text('Cups · Link battles · Champion rewards',false,P.link);y=math.max(y,before+172*s)
   button('REFRESH','refresh')
-  if f.index and f.index.manage then button('+ CREATE TOURNAMENT','create') end
+  if f.index and f.index.manage then button('+ CREATE TOURNAMENT','create');button('STAFF · PRIZE STUDIO','giftStudio') end
   text(f.notice)
   if f.index then
    for _,award in ipairs(f.index.awards or {}) do
     text('★ CHAMPION · '..award.title,true,P.link)
+    if award.gift_code then
+     text('YOUR PRIVATE GIFT CODE · '..award.gift_code,true,P.link)
+     text('For '..award.edition:upper()..'. Only your account can claim this prize.')
+     button('COPY PRIZE CODE','copyPrize:'..award.gift_id)
+     button('REDEEM MY PRIZE','redeemPrize:'..award.gift_id)
+    end
     if award.receipt_id then button('RESTORE MY PRIZE TO BANK','prize:'..award.receipt_id) end
    end
    if #(f.index.tournaments or {})==0 then text('The Arena is ready for its first cup. Organizers can create a tournament with edition rules and a champion prize.') end
