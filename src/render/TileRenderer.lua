@@ -239,7 +239,7 @@ local function getShiftVariants(tilesetImagePath, perRow, tile, colors, gbcKey)
     shiftVariants[key] = false
     return false
   end
-  local id = Assets.imageData(tilesetImagePath)
+  local id = Assets.imageDataShared(tilesetImagePath)   -- read only
   local sx = (tile % perRow) * 8
   local sy = math.floor(tile / perRow) * 8
   local out = {}
@@ -272,7 +272,7 @@ local function getFrameImages(paths, colors, gbcKey)
       if not (colors and love.image and love.image.newImageData) then
         return getImage(path)
       end
-      local id = Assets.imageData(path)
+      local id = Assets.imageDataShared(path)   -- read only
       -- G7
       local out2 = ShadeRecolour.whole(id, colors, "tile")
       if not out2 then
@@ -312,7 +312,7 @@ local function getToggleImage(spec, tilesetImagePath, perRow)
     return false
   end
   if stripData[spec.image] == nil then
-    local ok, id = pcall(Assets.imageData, spec.image)
+    local ok, id = pcall(Assets.imageDataShared, spec.image)
     stripData[spec.image] = ok and id or false
   end
   local strip = stripData[spec.image]
@@ -320,7 +320,7 @@ local function getToggleImage(spec, tilesetImagePath, perRow)
     toggleImages[key] = false
     return false
   end
-  local atlas = Assets.imageData(tilesetImagePath)
+  local atlas = Assets.imageDataShared(tilesetImagePath)   -- read only; pasted FROM
   local clone = love.image.newImageData(atlas:getWidth(), atlas:getHeight())
   clone:paste(atlas, 0, 0, 0, 0, atlas:getWidth(), atlas:getHeight())
   for id, offset in pairs(offsets) do
@@ -366,8 +366,8 @@ local function getAtlasFrames(spec, tilesetImagePath, perRow, colors, gbcKey,
     atlasFrames[key] = false
     return nil
   end
-  local okStrip, strip = pcall(Assets.imageData, spec.image)
-  local okAtlas, atlas = pcall(Assets.imageData, tilesetImagePath)
+  local okStrip, strip = pcall(Assets.imageDataShared, spec.image)
+  local okAtlas, atlas = pcall(Assets.imageDataShared, tilesetImagePath)
   if not (okStrip and strip and okAtlas and atlas) then
     atlasFrames[key] = false
     return nil
@@ -661,7 +661,7 @@ local function getGen2Atlas(key, imagePath, perRow, palMap, palColors,
   if not (love.image and love.image.newImageData) then return nil end
   if gen2AtlasCache[key] ~= nil then return gen2AtlasCache[key] or nil end
   local img = false
-  local ok, src = pcall(Assets.imageData, imagePath)
+  local ok, src = pcall(Assets.imageDataShared, imagePath)   -- read only
   if ok and src then
     local iw, ih = src:getDimensions()
     local total = (iw / 8) * (ih / 8)
@@ -717,7 +717,7 @@ local function getGen2Atlas(key, imagePath, perRow, palMap, palColors,
     -- LoadMapPals does -- so the strip recolors through the same path every
     -- other tile took.
     if roof then
-      local okRoof, sheet = pcall(Assets.imageData, roof.image)
+      local okRoof, sheet = pcall(Assets.imageDataShared, roof.image)   -- read only
       if okRoof and sheet then
         local sw, sh = sheet:getDimensions()
         for n = 0, roof.count - 1 do
@@ -798,7 +798,7 @@ local function getGbcAtlas(imagePath, tilesetId, mapId, perRow, data)
   if love.image and love.image.newImageData then
     local groupColors = PaletteFX.worldGroupColors(data, tilesetId, mapId, nil)
     if groupColors then
-      local src = Assets.imageData(imagePath)
+      local src = Assets.imageDataShared(imagePath)   -- read only
       local iw, ih = src:getDimensions()
       local total = (iw / 8) * (ih / 8)
       local out = love.image.newImageData(iw, ih)
@@ -1912,7 +1912,7 @@ local function getKeyedTile(self, tile)
   if ctx.groupColors and love.image and love.image.newImageData then
     local group = PaletteFX.worldGroupAt(ctx.tilesetId, ctx.mapId, tile)
     local colors = group and ctx.groupColors[group + 1]
-    local src = Assets.imageData(ctx.imagePath)
+    local src = Assets.imageDataShared(ctx.imagePath)   -- read only
     local ox = (tile % ctx.perRow) * 8
     local oy = math.floor(tile / ctx.perRow) * 8
     local out = love.image.newImageData(8, 8)
