@@ -30,6 +30,8 @@
 --   high      everything on -- the historical behavior
 --   balanced  no TILT, no GBC FX (kept: survey zoom, colors, uncapped FPS)
 --   low       no TILT, no GBC FX, no survey zoom, FPS capped
+--   adaptive  PREFER FPS: starts at AUTO's tier, follows the measured frames
+--   battery   PREFER BATTERY: LOW plus a 30 fps ceiling and no spin (A2)
 --
 -- AUTO only chooses the *default* for the current device; every tier is
 -- selectable in OPTIONS, so a heuristic that guesses wrong is one row away
@@ -77,11 +79,12 @@ Performance.GC_STEP_MUL = 300
 Performance.GC_BUDGET_SECONDS = 0.0005
 
 -- Option-row order (auto first, then most to least capable).
-Performance.TIERS = { "auto", "high", "balanced", "low", "adaptive" }
+Performance.TIERS = { "auto", "high", "balanced", "low", "adaptive", "battery" }
 
 Performance.LABELS = {
   auto = "AUTO",
   adaptive = "PREFER FPS",
+  battery = "PREFER BATTERY",
   high = "HIGH",
   balanced = "BALANCED",
   low = "LOW",
@@ -271,6 +274,36 @@ function Performance.detect()
   return "high"
 end
 
+-- A2 -- PREFER BATTERY: LOW, AND THEN SOME, FOR A HANDHELD ON ITS OWN CELL.
+--
+-- Not a fifth concrete tier: every consumer of Performance.tier (the voxel
+-- mod's lib/Tier.lua answers HIGH to a name it does not know) sees "low",
+-- so nothing that scales against the tier has to learn a new word.  What
+-- BATTERY adds is an overlay on LOW's caps -- a 30 fps ceiling (half the
+-- presents, and on a 60 Hz handheld half the GPU wake-ups), no spin in the
+-- pacer, the quarter-rate Gen 3 palette tick, no Discord polling -- and
+-- Performance.saver = true for a module that wants to shed more on its own.
+-- The player's own rows are clamped, never rewritten: turning the tier back
+-- up restores exactly what was set.
+Performance.BATTERY = {
+  fpsMax = 30,
+  pacingSpin = false,
+  gen3PaletteCycle = "quarter",
+  discordPresence = false,
+  gen4RenderScaleMax = 1,
+}
+-- live: true while the stored option is "battery"
+Performance.saver = false
+local batteryCaps
+
+local function mergedBatteryCaps()
+  if batteryCaps then return batteryCaps end
+  batteryCaps = {}
+  for k, v in pairs(Performance.CAPS.low) do batteryCaps[k] = v end
+  for k, v in pairs(Performance.BATTERY) do batteryCaps[k] = v end
+  return batteryCaps
+end
+
 -- Fold a stored option value to a concrete tier, resolving "auto" (and any
 -- hand-edited garbage) through detect().
 function Performance.resolve(value)
@@ -278,6 +311,7 @@ function Performance.resolve(value)
     return value
   end
   if value == "adaptive" then return Performance.adaptiveTier() end
+  if value == "battery" then return "low" end
   return Performance.detect()
 end
 
@@ -304,8 +338,11 @@ end
 -- Called from Game:applyOptions, which clamps the live presentation modules
 -- against the returned caps.
 function Performance.applyOptions(opts)
-  local tier = Performance.resolve(opts and opts.performance)
+  local value = opts and opts.performance
+  local tier = Performance.resolve(value)
   Performance.tier = tier
+  Performance.saver = value == "battery"
+  if Performance.saver then return mergedBatteryCaps() end
   return Performance.CAPS[tier]
 end
 
@@ -326,6 +363,7 @@ end
 -- Added presentation caps use the live tier without changing the stored choices.
 function Performance.extraCap(name)
   if not Performance.lowTierBudget then return nil end
+  if Performance.saver then return mergedBatteryCaps()[name] end
   return (Performance.CAPS[Performance.tier] or Performance.CAPS.high)[name]
 end
 function Performance.paletteTick(tick)
