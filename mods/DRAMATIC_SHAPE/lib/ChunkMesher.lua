@@ -3476,6 +3476,9 @@ end
 
 local runSlice
 function ChunkMesher.pump(covered, foregroundOnly)
+  -- The idle pump must observe this frame's overlay policy even when no
+  -- eligible foreground job exists and the regular pump returns early.
+  ChunkMesher.foregroundOnly = foregroundOnly
   -- GPU retirement is bounded independently and never happens in setLive.
   retired:pump(.001)
   -- A SEAM IS FINISHED WHEN BOTH SIDES HAVE SEEN EACH OTHER.
@@ -3517,7 +3520,6 @@ function ChunkMesher.pump(covered, foregroundOnly)
   local cold = waitingOnAnalysis or (pick.urgent and not (current and (current.full or current.body)))
   local slice = sliceFor(pick.urgent, covered, cold)
   lastSpend = runSlice(pick, started + slice, foregroundOnly, started)
-  ChunkMesher.foregroundOnly = foregroundOnly
 end
 
 -- V9 -- THE ENGINE'S MEASURED IDLE TIME, ON TOP OF THE ESTIMATED SLICE.
