@@ -194,5 +194,6 @@ mobile/ios/bundle_id.local
 !/tests/drivers/native_rom_languages.lua
 !/tests/drivers/native_rom_language_ui.lua
 !/tests/drivers/builtin_language_setup.lua
+!/tests/drivers/ptbr_auto.lua
 !/mods/UNI_LANGUAGE_NATIVE/
 !/mods/UNI_LANGUAGE_NATIVE/**

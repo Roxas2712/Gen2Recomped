@@ -1,0 +1,50 @@
+TRADU-ROMS APRESENTA:                           __
+                                               / /
+                                              /_/
+        ________   ________   __    __     ________   ____  _____   ________   ___      __
+       /  ___  /  /  __   /  /  /  / /    /  _____/  /  _ \/_   /  /  __   /  /   |    / /
+      /  /  / /  /  /  / /  /  /_/ /     /  /       /  / / / / /  /  /  / /  /    |   / /
+     /  /__/ /  /  /  / /  /     /      /  /____   /  / / / / /  /  /  / /  /  /| |  / /
+    / ______/  /  /  / /  /  /\  \     /  _____/  /  / / / / /  /  /  / /  /  / | | / /
+   / /        /  /__/ /  /  /  \  \   /  /____   /  /  \/ / /  /  /__/ /  /  /  | |/ /
+  /_/        /_______/  /__/    \__\ /_______/  /__/     /_/  /_______/  /__/   |___/ 
+    
+                     ___
+                    /__/
+      __________   ___   __         __      __   _________   _________       ________  _________ ®
+     /  ______ /  /  /  / /        / /     / /  /  ______/  /  ____  /      /  ___  / /  ____  /
+    /  /         /  /  / /        / /    / /   /  /        /  /   / /      /  /  / / /  /   / /
+   /  /______   /  /  / /        / /   / /    /  /_____   /  /___/ /      /  /__//  /  /___/ /
+  /_______  /  /  /  / /        / /  / /     /  ______/  /  __   /       /  ___ |  /  __   / 
+  _______/ /  /  /  / /______  / /_/ /      /  /_____   /  /  \  \      /  /__/ / /  /  \  \
+ /________/  /__/  /________/ /____/       /________/  /__/    \__\    /_______/ /__/    \__\
+
+1.4
+
+POKéMON SILVER BR v1.4------
+
+A tradução deste jogo ficou muito boa, melhor que as minhas expectativas. Não teve
+uso de abreviações nos diálogos, e em quase todos menus, só houve necessidade onde
+as limitações físicas do jogo impediam, como alguns menus a princípio não-esticáveis.
+Muitos textos foram expandidos conforme necessitavam para haver um melhor entendimento
+do jogo que será essencial para o prosseguimento do mesmo.
+
+
+NEWS-----------
+
+-v1.4-Alguns gráficos foram realçados e novos erros de digitação consertados.
+
+-v1.3-Consertado alguns erros de digitação e um bug na hora de pegar o navio para ir
+à CIDADE OLIVINE.
+
+BUGS?----------
+
+Caso vocês achem outros bugs, eu quero que me informem pelo(s) e-mail(s):
+lllopes2@zipmail.com.br ou
+r__lopes@hotmail.com
+
+Copyright® 2000-01
+All rights reserved by Nintendo and R_lopes Company--Tradu-roms
+
+OBS: NÃO FOI ENCONTRADO NENHUM BUG NA HORA DE PEGAR A OITAVA INSÍGNIA, PORTANTO, O PROBLEMA
+PODE SER COM SEU EMULADOR E NÃO COM MINHA ROM. USE O KIT EMULAÇÃO FELIZ XP

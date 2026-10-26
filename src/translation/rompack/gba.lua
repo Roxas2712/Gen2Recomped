@@ -233,7 +233,9 @@ function G.apply(data,c,own,compiled)
    end
   end
  end
- for _,key in ipairs({'gen3Screens','gen3FRLGSummary','gen3FRLGPokedex','gen3FRLGRegionMap','gen3FRLGStorage','gen3FRLGNaming','gen3EmeraldNaming','gen3StartMenu','gen3Bag','gen3BagScreen','gen3ItemMenu','gen3ShopMenu','gen3BuyMenu','gen3PCMenu','gen3Options','gen3Multichoice','gen3Daycare','gen3EasyChat','gen3Summary','gen3Pokenav','gen3Keyboard','gen3HallOfFame'})do
+ -- Easy Chat is translated below by stable group/word identity. Its English
+ -- labels must remain intact until the authored vocabulary has been resolved.
+ for _,key in ipairs({'gen3Screens','gen3FRLGSummary','gen3FRLGPokedex','gen3FRLGRegionMap','gen3FRLGStorage','gen3FRLGNaming','gen3EmeraldNaming','gen3StartMenu','gen3Bag','gen3BagScreen','gen3ItemMenu','gen3ShopMenu','gen3BuyMenu','gen3PCMenu','gen3Options','gen3Multichoice','gen3Daycare','gen3Summary','gen3Pokenav','gen3Keyboard','gen3HallOfFame'})do
   local row=data.constants[key];if type(row)=='table'then display(row,false)end
  end
  if data.constants.gen3Summary then
@@ -267,7 +269,7 @@ function G.apply(data,c,own,compiled)
  for _,key in ipairs({'gen3Credits','gen3TradeText','gen3FrontierSpeech','gen3PokedexMenu','gen3StoragePanels','gen3HallOfFame','gen3PartyChoice','gen3FrontierDesk','gen3QuizLady','gen3FavorLady','gen3Storyteller'})do
   display(data.constants[key]or{},false)
  end
- for _,key in ipairs({'gen3Help','gen3HelpSystem','gen3FameChecker','gen3FrontierPass','gen3Decorations','gen3Contests','gen3Pokeblocks','gen3Roulette','gen3Daycare','gen3Trade','gen3EasyChat'})do display(data.constants[key]or{},false)end
+ for _,key in ipairs({'gen3Help','gen3HelpSystem','gen3FameChecker','gen3FrontierPass','gen3Decorations','gen3Contests','gen3Pokeblocks','gen3Roulette','gen3Daycare','gen3Trade'})do display(data.constants[key]or{},false)end
  local headers=data.constants.gen3Pokenav and data.constants.gen3Pokenav.matchCall and data.constants.gen3Pokenav.matchCall.headers
  for _,row in ipairs(headers or{})do if type(row.name)=='string'then row.name=translated(row.name)end end
  report.easyChat=own('@host/gba_catalogs.lua').easyChat(data,c.easyChat,compiled.language,own)
