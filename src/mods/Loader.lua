@@ -35,8 +35,10 @@ Loader.__index = Loader
 -- Only an already-loaded field service owns resources. Retire it after
 -- wrapper unwind without importing a compatibility module on ordinary boot.
 local function retireFieldEffects()
-  local service=package.loaded['src.core.game3.field_effects']
-  if type(service)=='table' and type(service.release)=='function' then service.release()end
+  for _,name in ipairs({'src.core.game3.field_effects','src.core.game3.field_move_show_mon'})do
+    local service=package.loaded[name]
+    if type(service)=='table' and type(service.release)=='function' then service.release()end
+  end
 end
 
 local MOD_STATE_FILE = "mod_state.lua" -- legacy migration only
