@@ -417,10 +417,10 @@ function B.validate(game, snapshot, save, actors)
         "invalid trainer continuation"
       )
     end
+    assert(c.kind ~= "static" or c.onDone ~= nil, "static continuation needs its native completion")
     if actors then
-      for _, id in ipairs({ c.npc, c.onDone and c.onDone.npc }) do
-        assert(actors.records[id], "native continuation actor is absent")
-      end
+      if c.npc then assert(actors.records[c.npc], "native continuation actor is absent") end
+      if c.onDone then assert(actors.records[c.onDone.npc], "native completion actor is absent") end
     end
     if c.kind == "script" then
       assert(require("src.core.CheckpointScript").validate(game, c), "invalid story continuation")

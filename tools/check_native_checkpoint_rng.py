@@ -45,7 +45,7 @@ def main():
     assert all(hashlib.sha256((root/p).read_bytes()).hexdigest()==digest for p,digest in sources.items())
     assert source==qa_run(['git','rev-parse','HEAD'],cwd=root,check=True,capture_output=True,text=True).stdout.strip()
     assert not qa_run(['git','status','--porcelain'],cwd=root,check=True,capture_output=True,text=True).stdout.strip()
-    report.update(sourceCommit=source,sourceSha256=sources,minimumFreeGiB=20,scope='Actual LÖVE RNG, native stationary-spinner continuation and settled GB checkpoint transactions over synthetic content with substituted graphics; no GPU/gameplay/later-generation acceptance.')
+    report.update(sourceCommit=source,sourceSha256=sources,minimumFreeGiB=20,scope='Actual LÖVE RNG and native actor/follower movement plus ordinary battle decision continuation across eight representative editions at API 1/2/3; synthetic content with substituted graphics, no GPU or full-story gameplay acceptance.')
     (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
     print('NATIVE_CHECKPOINT_RNG_PASS',report['loveVersion'],report['checks'])
 
