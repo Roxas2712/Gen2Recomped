@@ -511,3 +511,14 @@ See `examples/portable_battle_style`. ROM-free checks:
 luajit tests/engine/battle_style.lua
 luajit tests/engine/trainer_shift_prompt_bug565.lua
 ```
+
+## Developer import diagnostics
+
+With `POKEPORT_DEV=1`, undeclared private engine or network imports made by
+mod entry code are reported as advisory permission warnings. Engine-owned
+API construction and lazy storage construction do not require a mod to declare
+`engine_internals`. Entry chunks and returned mod initializers retain their
+normal import attribution, including after an API-construction error. The
+supported-import list and manifest permission declarations are unchanged.
+
+ROM-free regression: `luajit tests/engine/mod_api_require_attribution.lua`.

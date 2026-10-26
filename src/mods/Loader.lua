@@ -1225,7 +1225,7 @@ function Loader:_api(mod)
       -- Do not pass loader.fs when it is love.filesystem: that always writes
       -- the OS save directory and leaves modstorage/ on internal storage.
       -- Storage.fsOr routes the live LOVE fs through CacheFs.dataFs.
-      if not storage then storage = ModStorage.new(modId, loader.fs) end
+      if not storage then storage = engineCall(ModStorage.new, modId, loader.fs) end
       return storage
     end
     if key ~= "world" then return nil end
@@ -1284,7 +1284,9 @@ function Loader:_loadMod(mod)
         mod.manifest.id, tostring(row.entry.name), tostring(row.entry.file))
     end
   end
-  local api = ActorRenderData.install(self:_api(mod), self)
+  -- Only API construction is engine-owned. Entry code and returned mod
+  -- initializers still run at the normal permission-scanner depth.
+  local api = ActorRenderData.install(engineCall(self._api, self, mod), self)
   -- KEEP THE API OBJECT, not only its exports.
   --
   -- `self.exports[id]` has always been the mod's published surface, and that is
