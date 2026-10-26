@@ -1323,14 +1323,14 @@ local function markerFor(version)
   if version == "red" or version == "blue" or version == "yellow" then
     revision = "gen1-trade-art-v1:"
   end
-  if GameVersion.generation(version)==3 then revision=revision..'gba-field-move-art-v1:'end
-  if GameVersion.generation(version) == 3 then
-    revision = revision .. "gba-script-operands-v" .. require("src.import.Gen3ScriptOps").CACHE_REVISION .. ":"
+  if GameVersion.generation(version)==3 then
+    revision=revision..'gba-field-move-art-v1:'
+    revision=revision.."gba-script-operands-v"..require("src.import.Gen3ScriptOps").CACHE_REVISION..":"
+    revision=revision.."original-script-interface-v"..require("src.import.Gen3ScriptInterface").SCHEMA..":"
+    revision=revision.."original-object-sheets-v"..require("src.import.Gen3ObjectSheets").SCHEMA..":"
   end
-  if GameVersion.generation(version) == 3 then
-    revision = revision .. "original-script-interface-v" .. require("src.import.Gen3ScriptInterface").SCHEMA .. ":"
-  if version == 'ruby' or version == 'sapphire' then
-    revision = revision .. 'rs-transition-classes-v1:'
+  if version=='ruby' or version=='sapphire' then
+    revision=revision..'rs-transition-classes-v1:' 
   end
   return CACHE_FORMAT .. revision .. GameVersion.info(version).sha1
 end
@@ -1532,6 +1532,10 @@ local REQUIRED_FILES_GEN3 = {
   -- Absent, NPC.resolveSpriteDef falls through to SPRITE_RED and the whole
   -- region is populated by Kanto -- which is what it was.
   "data/generated/sprites.lua",
+  -- Original object picture order, independent of normalized native poses.
+  -- Older GBA caches re-import automatically through the existing readiness
+  -- check; no mod package or player save needs conversion.
+  "data/generated/gen3_object_sheets.lua",
   -- THE PARTY MENU'S OWN ART, and required for the same reason as the font:
   -- Data no longer blocks `icons` on a Gen 3 cache, so a cache that does not
   -- carry its own resolves to RED'S and every Hoenn species wears a Kanto
