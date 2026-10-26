@@ -16,6 +16,7 @@ end
 function Native.invalidate()runtime:release();resetAnimation()end
 function Native.release()runtime:release();Native._cache=nil;resetAnimation()end
 function Native.ready(pair)return type(pair)=='string'and runtime:ready(pair)or false end
+function Native.animationPairs()return runtime:observePairs()end
 function Native.prefetch(pair,priority)
   if type(pair)~='string'then return false end
   return runtime:prefetch(pair,priority)

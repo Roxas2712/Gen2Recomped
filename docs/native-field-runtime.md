@@ -77,3 +77,8 @@ ROM artwork and cartridge offsets. Native drawing and mod snapshots share that
 selection without stepping the task, sound or continuation. 125 checks cover
 all five editions and the source anchor transform; real scene qualification
 continues separately.
+
+On the refreshed fork main, the current frozen runtime passes 572/572 engine
+suites, Modkit 4/4, B30 and 916 companion checks. Resident animation-pair
+observations retire with their real native atlas cohort and leave the native
+clock unchanged. Legacy named RGBA animation banks remain a separate gap.
