@@ -1,100 +1,76 @@
--- The actual native field-move admission owns its clock, pose and picture.
-local Session=require('src.compat.gen1.NativeSession')
+-- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
+-- Source phases over the engine's actual field-move StateStack admission.
+local Runtime=require('src.compat.gen1.FieldMoveRuntime')
 local Boundary=require('src.compat.gen1.ScriptBoundary')
-local Stream=require('src.core.game3.asset_stream')
-local M={}
-local owned=setmetatable({},{__mode='k'})
-local starting
-local function owner()
-  local host=package.loaded['src.mods.Runtime'];local facade=package.loaded['src.core.Game3']
-  return host and host.currentMod or facade and facade._callbackOwner and facade._callbackOwner()
-end
-local function current()
-  local game=Session.game();if not game then return end
-  local class=package.loaded['src.world.Gen3FieldMove'];if not class then return end
-  for i=#(game.stack and game.stack.states or{}),1,-1 do
-    local state=game.stack.states[i]
-    if getmetatable(state)==class and not state.done and not state.cancelled and class.present(state)then return state end
-  end
-end
+local runtime=Runtime.new()
+local S={}
+local observers={}
 local function call(name,...)
-  local facade=package.loaded['src.core.Game3']
-  if facade and facade._withCallbackOwner then
-    local seams=package.loaded['src.mods.ModSeams'];local who
-    for i=#(seams and seams._journal or{}),1,-1 do
-      local change=seams._journal[i]
-      if change.tbl==M and change.key==name and change.after==M[name]then who=change.owner;break end
-    end
-    return facade._withCallbackOwner(who or facade._callbackOwner(),M[name],...)
+  local facade=package.loaded['src.core.Game3'];local seams=package.loaded['src.mods.ModSeams'];local who
+  for i=#(seams and seams._journal or{}),1,-1 do
+    local v=seams._journal[i];if v.tbl==S and v.key==name and v.after==S[name]then who=v.owner;break end
   end
-  return M[name](...)
+  if facade and facade._withCallbackOwner then return facade._withCallbackOwner(who or facade._callbackOwner(),S[name],...)end
+  return S[name](...)
 end
-function M.isActive()return current()~=nil end
-function M.start(mon,opts,onDone)
-  if Boundary.active('showmon.start')then
-    if starting.startConfigured then return true end
-    local ok,why=starting:configure(mon,opts or{},onDone)
-    if not ok then return false,why end
-    starting.startConfigured=true;return Boundary.invoke('showmon.start')
+function S.start(mon,opts,callback)
+  if Boundary.active('field_move.start')then
+    local c=runtime.starting;local ok,why=runtime:configure(c,mon,opts,callback)
+    if ok then Boundary.invoke('field_move.start')end
+    return ok,why
   end
-  local game,why=Session.resolve();if not game then return false,why end
-  if current()then return false,'native field move is busy'end
-  if opts~=nil and type(opts)~='table'then return false,'invalid field move options'end
-  opts=opts or{}
-  if opts.noDuck then return false,'native field-move cry ducking options are not yet available'end
-  if onDone~=nil and type(onDone)~='function'then return false,'invalid field move continuation'end
-  if type(mon)=='number'then mon={species=mon}end
-  if type(mon)~='table'then return false,'invalid field move Pokemon'end
-  local native=require('src.world.Gen3FieldMove')
-  local shown,state=native.show(game,mon,onDone,{pose=opts.pose==true,sourceOwned=true,sourceOwner=owner()})
-  if shown then owned[state]=true end
-  return shown
+  return runtime:start(mon,opts,callback)
 end
-function M.step()return Boundary.invoke('showmon.step')end
-function M.draw()
-  if Boundary.active('showmon.draw')then return Boundary.invoke('showmon.draw')end
-  local state=current();if not state then return false end
-  return state:drawExternal()
+function S.isActive()return runtime:current()~=nil end
+function S.step()return Boundary.invoke('field_move.step')end
+function S.draw()
+  if Boundary.active('field_move.draw')then return Boundary.invoke('field_move.draw')end
+  local c=runtime:current();if not c or not c.state:valid(false)then return false end
+  local result=c.state:drawExternal();c.manualDrawn=not c.state.externalDrawSerial;return result
 end
-function M.reset()
-  local state=current();if not state then return false end
-  local who=owner()
-  if state.sourceOwned and state.sourceOwner and who and who~=state.sourceOwner then return false,'field move belongs to another mod'end
-  return state:cancel()
+function S.reset()return runtime:reset()end
+function S.invalidate()
+  local c=runtime:current();if not c then return true end
+  return c.state:reloadArtwork()
 end
-function M.invalidate()
-  -- There is no shared band-image cache: the native admission owns its
-  -- immutable picture and retires it on exit. Dataset/asset cache ownership
-  -- stays with the existing importer and Assets subsystem.
-  return false,'native field-move resources are owned per admission'
+function S._observeMod(who)if type(who)=='string'then observers[who]=true end end
+function S.release()runtime:release();observers={}end
+function S.cancelOwner(who)observers[who]=nil;return runtime:cancelOwner(who)end
+function S._nativeOptions(game)
+  local host=package.loaded['src.mods.Runtime'];local exports=game.mods and game.mods.exports or{}
+  local active=false
+  for who in pairs(observers)do if exports[who]or host and host.currentMod==who then active=true;break end end
+  if not active then return end
+  local f=package.loaded['src.core.game3.field_effects']
+  if require('src.compat.gen1.NativeSession').game()==game and f and f._cache
+      or game.data.constants and game.data.constants.gen3FieldMovePresentation then return{presentation='cartridge',pose=true}end
 end
-function M.cancelOwner(who)
-  for state in pairs(owned)do if state.sourceOwner==who then state:cancel();owned[state]=nil end end
-end
-function M.release()
-  for state in pairs(owned)do state:cancel()end
-  owned=setmetatable({},{__mode='k'})
-end
-local service={release=M.release,releaseOwner=function(_,who)return M.cancelOwner(who)end,poll=function()
-  for state in pairs(owned)do
-    if not state:cohortCurrent()then state:cancel();owned[state]=nil end
-  end
-end}
-Stream.register(service)
--- Keep the weakly registered service alive with this module.
-M._service=service
-function M._nativeStart(state)
-  if state.sourceOwned then return true end
-  local previous=starting;starting=state
-  local ok,result=pcall(Boundary.dispatch,'showmon.start',function()return true end,function()
-    return call('start',state.mon,{pose=state.player~=nil},state.onDone)
+function S._nativeStart(state)
+  local c=runtime:bind(state);if not c then return end
+  if c.sourceStarted then return true end
+  local previous=runtime.starting;runtime.starting=c
+  local ok,why=pcall(runtime.phase,runtime,c,'start',function()return true end,function()
+    return call('start',state.mon,{pose=state.poseInstalled==true,noDuck=state.options.noDuck},c.continue)
   end)
-  starting=previous;if not ok then error(result,0)end;return result
+  runtime.starting=previous
+  if not ok then error(why,0)end
+  return why
 end
-function M._nativeStep(state,body)
-  return Boundary.dispatch('showmon.step',body,function()return call('step')end)
+function S._nativeStep(state,body)
+  local c=runtime:bind(state);if not c then return body()end
+  c.manualDrawn=false
+  return runtime:phase(c,'step',body,function()return call('step')end)
 end
-function M._nativeDraw(state,body)
-  return Boundary.dispatch('showmon.draw',body,function()return call('draw')end)
+function S._nativeDraw(state,body)
+  local c=runtime:bind(state);if not c then return body()end
+  if c.manualDrawn then c.manualDrawn=false;return true end
+  return runtime:phase(c,'draw',body,function()return call('draw')end)
 end
-return M
+local service={release=S.release,releaseOwner=function(_,who)return S.cancelOwner(who)end,poll=function()
+ local stale={};for state in pairs(runtime.records)do if not state:cohortCurrent()then stale[#stale+1]=state end end
+ for _,state in ipairs(stale)do state:retire()end
+end}
+require('src.core.game3.asset_stream').register(service);S._service=service
+function S._nativeExit(state)runtime:exit(state)end
+setmetatable(S,{__index=function(_,key)if key=='_fx'then return runtime:snapshot()end end})
+return S

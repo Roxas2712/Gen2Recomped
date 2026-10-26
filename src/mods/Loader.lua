@@ -1205,6 +1205,8 @@ end
 -- migration it took goes with them.  The journal only exists around an
 -- entry chunk; a later failure (script validation) purges every registry.
 function Loader:_rollback(modId)
+  local move=package.loaded['src.core.game3.field_move_show_mon']
+  if move and move.cancelOwner then pcall(move.cancelOwner,modId)end
   for name in pairs(self.journal or self.content) do
     self.content[name]:rollback(modId)
   end
