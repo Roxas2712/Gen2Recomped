@@ -3,6 +3,7 @@ local Auth=require('src.cloud.RetroCloud')
 local API=require('src.cloud.Tournaments')
 local Task=require('src.cloud.Task')
 local Versions=require('src.core.GameVersion')
+local Art=require('src.import.ArenaPresentation')
 local editions={'red','blue','yellow','gold','silver','crystal','ruby','sapphire','emerald','firered','leafgreen','platinum','heartgold','soulsilver','black','white'}
 local function focus(f,id) f.focus=id;if love.keyboard.setTextInput then love.keyboard.setTextInput(id~=nil) end end
 local function close(self)
@@ -30,7 +31,7 @@ end
 local function form(cup)
  local p=cup and cup.prize or {}
  local d={id=cup and cup.id,title=cup and cup.title or '',edition=cup and cup.edition or 'crystal',capacity=tostring(cup and cup.capacity or 16),
-  team_size=tostring(cup and cup.team_size or 3),level=tostring(cup and cup.level or 50),rules=cup and cup.rules or '',starts_at=cup and cup.starts_at or '',
+  format=cup and cup.format,team_size=tostring(cup and cup.team_size or 3),level=tostring(cup and cup.level or 50),rules=cup and cup.rules or '',starts_at=cup and cup.starts_at or '',
   dex=p.dex and tostring(p.dex) or '',prizeLevel=tostring(p.level or 5),egg=p.egg==true,shiny=p.shiny==true,moves=table.concat(p.moves or {},',')}
  require('src.import.GiftDesigner').init(d,p)
  if not next(p) then d.giftKind='none' end
@@ -51,6 +52,15 @@ function W.action(self,id)
   local key=id:sub(6);self.pageScroll=0;f.choose=nil;f.confirm=nil
   job(self,'cup',function() return API.request('GET',key) end)
  elseif id=='giftStudio' then self:_openAccount('giftAdmin')
+ elseif id:match('^format:') then f.selected=id:sub(8)
+ elseif id=='queueEdition' then local at=1;for i,v in ipairs(editions) do if v==(f.queueEdition or 'crystal') then at=i end end;f.queueEdition=editions[at%#editions+1]
+ elseif id=='findRival' then
+  local selected,edition=f.selected or 'rookie',f.queueEdition or 'crystal'
+  job(self,'arena',function() return API.arena('POST',{format=selected,edition=edition}) end)
+ elseif id=='leaveQueue' then job(self,'arena',function() return API.arena('DELETE') end)
+ elseif id:match('^preset:') then
+  local key=id:sub(8);f.form.format=key~='custom' and key or nil
+  for _,c in ipairs(f.index and f.index.arena and f.index.arena.formats or {}) do if c.id==key then f.form.team_size=tostring(c.team_size);f.form.level=tostring(c.level);f.form.rules=c.rules;if f.form.title=='' then f.form.title=c.title end end end
  elseif id=='create' then f.form=form();self.pageScroll=0
  elseif id=='edit' then f.form=form(f.cup);self.pageScroll=0
  elseif id=='edition' then local at=1;for i,v in ipairs(editions) do if v==f.form.edition then at=i end end;f.form.edition=editions[at%#editions+1]
@@ -58,7 +68,7 @@ function W.action(self,id)
  elseif id=='saveCup' then
   local d=f.form
   for _,key in ipairs({'capacity','team_size','level','prizeLevel'}) do if not tonumber(d[key]) then f.notice='Enter a number for '..key..'.';return end end
-  local payload={title=d.title,edition=d.edition,capacity=tonumber(d.capacity),team_size=tonumber(d.team_size),level=tonumber(d.level),rules=d.rules,starts_at=d.starts_at}
+  local payload={format=d.format or 'custom',title=d.title,edition=d.edition,capacity=tonumber(d.capacity),team_size=tonumber(d.team_size),level=tonumber(d.level),rules=d.rules,starts_at=d.starts_at}
   local reward,why=require('src.import.GiftDesigner').payload(d);if why then f.notice=why;return end
   if reward then payload.prize=reward elseif d.id then payload.clear_prize=true end
   local key=d.id
@@ -113,10 +123,15 @@ function W.tick(self)
     return
    elseif purpose=='prize' then f.notice=doc.kind and 'Prize in your account inbox. Open Account > Gift codes to deliver it to a save copy.' or 'Prize restored to your Bank. Open the Bank to copy it to a compatible save.'
    elseif tostring(doc.account_id)~=f.account then f.notice='The account changed. Refresh the Arena.'
+   elseif purpose=='arena' then
+    f.index=f.index or {};f.index.arena=doc;f.notice=doc.queue and (doc.queue.tournament_id and 'Rival assigned. Open your pairing below.' or 'Searching for an online rival in this edition...') or 'You left the queue.';f.nextQueue=os.time()+20
    elseif purpose=='index' then f.index=doc;f.notice=doc.verification_notice or ''
    else f.cup=doc;f.confirm=nil;f.choose=nil;if purpose=='saved' then f.form=nil end;f.notice='Results require both players or an organizer decision.' end
    f.nextRefresh=os.time()+20
   end
+ elseif f.index and f.index.arena and f.index.arena.queue and f.index.arena.queue.state=='searching' and os.time()>=(f.nextQueue or 0) then
+  local q=f.index.arena.queue;f.nextQueue=os.time()+20
+  job(self,'arena',function() return API.arena('POST',{format=q.format,edition=q.edition}) end)
  elseif not f.form and not f.confirm and not f.choose and (not f.index and not f.cup or os.time()>=(f.nextRefresh or 0)) then refresh(self) end
  local n=require('src.link.CloudArena').takeNotice()
  if n and n.account==f.account then f.notice=n.text;f.nextRefresh=os.time()+30;local key=n.id;job(self,'cup',function() return API.request('GET',key) end);f.returnNotice=n.text end
@@ -138,15 +153,12 @@ function W.draw(self,x,y,w,h)
  local function field(label,id,value)
   text(label);button((value and value~='' and value or 'Click to enter')..(f.focus==id and ' |' or ''),'field:'..id)
  end
- local function trophy(cx,cy,r)
-  U.col(P.link);g.setLineWidth(2*s);g.rectangle('line',cx-r*.5,cy-r*.6,r,r,5*s,5*s)
-  g.arc('line','open',cx-r*.5,cy-r*.1,r*.4,math.pi/2,math.pi*1.5);g.arc('line','open',cx+r*.5,cy-r*.1,r*.4,-math.pi/2,math.pi/2)
-  g.line(cx,cy+r*.4,cx,cy+r*.8);g.line(cx-r*.5,cy+r*.8,cx+r*.5,cy+r*.8)
- end
  if f.form then
   local d=f.form;text(d.id and 'EDIT TOURNAMENT' or 'CREATE A CUP',true,P.ink)
   text('Community competition · Single elimination · Edition rules · Account-bound prizes')
-  button('BACK','dismiss');field('Title','title',d.title);button('Edition: '..d.edition:upper(),'edition')
+  button('BACK','dismiss')
+  for _,c in ipairs(f.index and f.index.arena and f.index.arena.formats or {}) do button((d.format==c.id and '● ' or '')..c.title..' · '..c.team_size..' Pokémon','preset:'..c.id) end
+  button('Custom rules','preset:custom');field('Title','title',d.title);button('Edition: '..d.edition:upper(),'edition')
   field('Capacity (2–64)','capacity',d.capacity);field('Team size (1–6)','team_size',d.team_size);field('Battle level (1–100)','level',d.level)
   field('Rules shown to all players','rules',d.rules);field('Scheduled start · optional ISO date with timezone','starts_at',d.starts_at)
   local tabAt=0
@@ -160,7 +172,8 @@ function W.draw(self,x,y,w,h)
   local c=f.cup;local names={};local mine
   for _,p in ipairs(c.players or {}) do names[p.id]=p.nickname;if p.id==f.account then mine=p end end
   local function name(id) return id and (names[id] or 'Unavailable player') or 'Awaiting winner' end
-  text(c.title,true,P.ink);text('GEN '..c.generation..' · '..c.edition:upper()..' · '..c.state:upper()..' · '..c.entries..' / '..c.capacity..' players',false,P.link)
+  y=y+Art.hero(self,x,y,w,c.title,'GEN '..c.generation..' · '..c.edition:upper()..' · '..c.team_size..' Pokémon')
+  text('GEN '..c.generation..' · '..c.edition:upper()..' · '..c.state:upper()..' · '..c.entries..' / '..c.capacity..' players',false,P.link)
   button('ALL TOURNAMENTS','back');button('REFRESH LOBBY','refresh')
   text(c.team_size..' per team · Level '..c.level..' · Single elimination · Community results')
   if c.starts_at then text('Scheduled: '..c.starts_at..' UTC') end
@@ -195,8 +208,9 @@ function W.draw(self,x,y,w,h)
     button('CANCEL TOURNAMENT','cancel')
    end
   elseif c.state=='running' and c.manage then button('CANCEL TOURNAMENT','cancel') end
+  y=y+Art.bracket(self,x,y,w,c,names)
   text('LOBBY',true,P.ink)
-  for _,p in ipairs(c.players or {}) do text((p.ready and '● READY  ' or '○ WAITING  ')..p.nickname,false,p.ready and P.link or P.detail) end
+  for _,p in ipairs(c.players or {}) do text((p.online and '● ONLINE  ' or '○ OFFLINE  ')..(p.ready and 'READY · ' or 'WAITING · ')..p.nickname,false,p.ready and P.link or P.detail) end
   local round
   for i,m in ipairs(c.matches or {}) do
    if round~=m.round then round=m.round;y=y+14*s;text('ROUND '..round,true,P.link) end
@@ -219,9 +233,31 @@ function W.draw(self,x,y,w,h)
    y=y+18*s
   end
  else
-  paint.surface(x,y,w,154*s,14*s,P.link,false);trophy(x+w-68*s,y+70*s,35*s)
-  local before=y;y=y+18*s;text('THE ARENA',true,P.ink);text('Find your rivals. Earn your place.');text('Cups · Link battles · Champion rewards',false,P.link);y=math.max(y,before+172*s)
-  button('REFRESH','refresh')
+  y=y+Art.hero(self,x,y,w)
+  local arena=f.index and f.index.arena
+  if arena then
+   y=y+Art.progress(self,x,y,w,arena)
+   local q=arena.queue
+   if q then
+    text(q.tournament_id and 'RIVAL ASSIGNED · YOUR MATCH IS READY' or 'FINDING YOUR NEXT RIVAL',true,P.link)
+    text(q.edition:upper()..' · '..q.format:upper()..' · Online accounts only · One queue across all your devices')
+    if q.tournament_id then button('OPEN ASSIGNED PAIRING','open:'..q.tournament_id) else button('LEAVE MATCHMAKING','leaveQueue') end
+   end
+   text('CHOOSE YOUR CUP',true,P.ink)
+   local cols=w>=620*s and 2 or 1;local gap=14*s;local cw=(w-gap*(cols-1))/cols
+   for i,c in ipairs(arena.formats or {}) do
+    local col=(i-1)%cols;local row=math.floor((i-1)/cols);local by=y+row*184*s;local bx=x+col*(cw+gap)
+    local cardWidth=(i==#arena.formats and col==0 and cols==2) and w or cw
+    Art.format(self,bx,by,cardWidth,c,(arena.points or 0)<c.minimum_points,(f.selected or 'rookie')==c.id)
+    f.rects[#f.rects+1]={x=bx,y=by,width=cardWidth,height=170*s,id='format:'..c.id}
+   end
+   y=y+math.ceil(#(arena.formats or {})/cols)*184*s
+   button('Edition: '..(f.queueEdition or 'crystal'):upper()..' · CLICK TO CHANGE','queueEdition')
+   button('FIND AN ONLINE RIVAL · '..(f.selected or 'rookie'):upper(),'findRival')
+   text('Pairings use the same edition and cup rules. Battle entry requires verified Bank teams; until that is available, this is a community league.')
+   if arena.points_notice then text(arena.points_notice) end
+  end
+  button('REFRESH ARENA','refresh')
   if f.index and f.index.manage then button('+ CREATE TOURNAMENT','create');button('STAFF · PRIZE STUDIO','giftStudio') end
   text(f.notice)
   if f.index then
@@ -237,9 +273,7 @@ function W.draw(self,x,y,w,h)
    end
    if #(f.index.tournaments or {})==0 then text('The Arena is ready for its first cup. Organizers can create a tournament with edition rules and a champion prize.') end
    for _,c in ipairs(f.index.tournaments or {}) do
-    paint.surface(x,y,w,166*s,12*s,P.link,false);y=y+14*s
-    text(c.title,true,P.ink);text('GEN '..c.generation..' · '..c.edition:upper()..' · '..c.team_size..' per team · Lv. '..c.level,false,P.link)
-    text(c.state:upper()..' · '..c.entries..' / '..c.capacity..' players'..(c.prize and ' · Champion prize' or ' · Champion achievement'))
+    y=y+Art.cup(self,x,y,w,c)+8*s
     button('OPEN LOBBY & BRACKET','open:'..c.id);y=y+18*s
    end
    if f.page>1 then button('PREVIOUS PAGE','prevPage') end

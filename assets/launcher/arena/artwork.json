@@ -1,0 +1,13 @@
+{
+  "tool": "built-in image_gen",
+  "assets": [
+    {
+      "file": "league-stadium.png",
+      "prompt": "Wide 16:9 illustrated fantasy monster-battle league stadium at twilight. Vibrant anime game environment, turquoise battlefield, spectator stands, mountains and champion towers, warm gold floodlights with navy and violet sky. Darker left space for UI; detail on right and lower half. No characters, lettering, logos or watermark."
+    },
+    {
+      "file": "champion-trophy.png",
+      "prompt": "Transparent cutout of a magnificent three-dimensional polished gold championship cup, wing-shaped handles, sapphire enamel and violet crystals, spherical monster-catching ball inspired crown, dark blue plinth. Premium anime videogame collectible, metal reflections, full centered silhouette. No text, logo or environment. Transparent alpha."
+    }
+  ]
+}
