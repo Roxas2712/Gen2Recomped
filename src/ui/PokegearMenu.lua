@@ -520,6 +520,16 @@ function PokegearMenu:syncRadioView(station)
   view.station, view.top, view.bottom = station.id, lines[line] or "", lines[line + 1] or ""
 end
 
+function PokegearMenu:exitRadioMusic()
+  local playing = self._radioMusic
+  self._radioMusic = nil
+  require("src.world.Gen2RadioAudio").finish(self.game, playing)
+end
+
+function PokegearMenu:exit()
+  self:exitRadioMusic()
+end
+
 function PokegearMenu:update(dt)
   self.blink = (self.blink + dt) % 1
   -- A call in progress owns the card: PokegearPhone_MakePhoneCall does not
@@ -569,7 +579,10 @@ function PokegearMenu:update(dt)
       return
     end
   end
-  if card.id ~= "RADIO" then self._radioTuned=nil;self.radio=nil end
+  if card.id ~= "RADIO" then
+    self:exitRadioMusic()
+    self._radioTuned=nil;self.radio=nil
+  end
   if card.id == "RADIO" then
     local stations = self:stationList()
     local n = #stations
@@ -601,13 +614,14 @@ function PokegearMenu:update(dt)
     if require("src.core.GameVersion").isGen2() and st and self._radioTuned~=st.id then
       self._radioTuned=st.id
       self.radioLine=1
+      self._radioMusic=require("src.world.Gen2RadioAudio").tune(self.game,st.id)
       require("src.world.Gen2Radio").notify(self.game.data,st.id,st.knob,"pokegear")
     end
-    self:syncRadioView(st)
-    if st and st.flute then
-      self.game.save.g2RadioChannel = "POKE_FLUTE"
-      self.game.save.g2MapMusic = "MUSIC_POKE_FLUTE_CHANNEL"
+    if not st and self._radioTuned then
+      self._radioTuned=nil
+      self._radioMusic=require("src.world.Gen2RadioAudio").tune(self.game,nil)
     end
+    self:syncRadioView(st)
   elseif card.id == "PHONE" then
     local list = self:contacts()
     if self.phoneSubmenu then
