@@ -7,6 +7,20 @@ end
 love.math.setRandomState = function() end
 local F = require("tests.checkpoint_fixture")
 local C = require("src.core.CheckpointCallbacks")
+local B = require("src.core.CheckpointBattle")
+local retired = setmetatable({}, { __mode = "v" })
+local function abandonBattle()
+  local battle = {}
+  local callback = function() return battle end
+  battle.onFinish = callback
+  B.bind(battle, { kind = "script", ctx = { game = { stack = { battle } } } })
+  T.eq(battle.onFinish, callback, "native completion callback identity is unchanged")
+  retired[1] = battle
+end
+abandonBattle()
+collectgarbage("collect")
+collectgarbage("collect")
+T.eq(retired[1], nil, "checkpoint provenance cannot retain retired native battle graphs")
 for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
   local f = F.boot(edition)
   local game, world, stack = f.game, f.world, f.stack
@@ -29,6 +43,7 @@ for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
   world.pushBattle = push
   local battle = stack:top()
   battle.phase, battle.queue, battle.introSlide = "menu", {}, 0
+  collectgarbage("collect")
   local cp, code, detail = f.checkpoints:capture(game)
   T.check(
     cp ~= nil,
@@ -59,6 +74,7 @@ for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
   world.pushBattle = push
   local battle = stack:top()
   battle.phase, battle.queue, battle.introSlide = "menu", {}, 0
+  collectgarbage("collect")
   local cp, code, detail = f.checkpoints:capture(game)
   T.check(cp ~= nil, edition .. " detaches actual static encounter: " .. tostring(code) .. " " .. tostring(detail))
   if cp then

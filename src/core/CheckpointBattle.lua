@@ -2,7 +2,10 @@
 -- Reconstruct native battle decision points from data, preserving relationships
 -- between parties, battlers, sides and field state. No controller is serialized.
 local B = {}
-local owners = setmetatable({}, { __mode = "k" })
+-- Native callbacks and script contexts can point back to their battle. Keep
+-- provenance alive from that owner, never from a registry value that would
+-- root the complete retired battle/coroutine graph on LuaJIT.
+local owners = setmetatable({}, { __mode = "kv" })
 local function names(words)
   local out = {}
   for k in words:gmatch("%S+") do
@@ -270,7 +273,9 @@ local function decision(battle)
   end
 end
 function B.bind(battle, descriptor, callback)
-  owners[battle] = { descriptor = descriptor, callback = callback or battle.onFinish }
+  local owner = { descriptor = descriptor, callback = callback or battle.onFinish }
+  battle._checkpointContinuation = owner
+  owners[battle] = owner
 end
 local function continuation(game, battle, clone)
   if battle.onFinish == nil then
