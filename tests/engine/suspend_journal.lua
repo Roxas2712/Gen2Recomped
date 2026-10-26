@@ -49,6 +49,20 @@ for i=1,1500 do
 end
 T.check(Stack:top().isBattleState,'native script enters the actual shared battle engine')
 T.check(World.runner:isRunning(),'story coroutine is waiting for its battle result')
+-- A device can render a different number of frames from the replay. Nested
+-- sprite caches can also point at a live monster; those references must not
+-- change the canonical paths used for its actual HP, moves and battle stats.
+local battle=Stack:top();local enemy=battle.enemy
+local before=J.encode(J.witness(Game))
+local presentation={enemy._caughtIcon,enemy.picAnim,enemy.monAnim,battle.scrollPx}
+enemy._caughtIcon={mon=enemy.mon};enemy.picAnim={left=8};enemy.monAnim={clock=56}
+battle.scrollPx=8;battle._gen3OamCompositedFrame=408;battle._gen3OamObjectRanks={};battle._gen3OamResidual='inactive'
+T.eq(J.encode(J.witness(Game)),before,'render-only caches and their monster aliases do not change the semantic witness')
+enemy._caughtIcon,enemy.picAnim,enemy.monAnim,battle.scrollPx=unpack(presentation,1,4)
+battle._gen3OamCompositedFrame=nil;battle._gen3OamObjectRanks=nil;battle._gen3OamResidual=nil
+local hp=enemy.mon.hp;enemy.mon.hp=hp-1
+T.check(J.encode(J.witness(Game))~=before,'actual enemy damage still changes the witness')
+enemy.mon.hp=hp
 local capsule,why=J.capture(Game);assert(capsule,why)
 local encoded=J.encode(capsule)
 T.check(capsule.witness.states[#capsule.witness.states].kind=='battle','suspend retains an in-battle target rather than normal progress only')

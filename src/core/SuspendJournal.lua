@@ -26,7 +26,7 @@ local function mods(game) return game.modStatus and game.modStatus.loaded or {} 
 local function permitted(game)
  if game.linkSession or game.retroArena or game.linkNet and not game.linkNet.closed then return nil,'Online sessions cannot be suspended.' end
  if #mods(game)>0 then return nil,'Suspend is not qualified for loaded mods yet. Normal saves remain available.' end
- if require('src.core.GameVersion').generation()>2 then return nil,'Portable replay suspend is currently qualified for Gen 1–2 only.' end
+ if require('src.core.GameVersion').generation()>3 then return nil,'Portable replay suspend is currently qualified for Gen 1–3 only.' end
  if not require('src.core.CheckpointWorld').available(game) then return nil,'Suspend reconstruction is not qualified for this edition yet.' end
  if not (love and love.math and love.math.getRandomState and love.math.setRandomState and love.data) then return nil,'Portable suspend is unavailable in this runtime.' end
  return true
@@ -80,6 +80,7 @@ local function progress(game)
  local out={};for k,v in pairs(game.save) do if k~='options' then out[k]=v end end
  return copy(out)
 end
+local PRESENTATION
 local function projection(value,seen,depth,path)
  path=path or '$'
  local kind=type(value)
@@ -93,14 +94,17 @@ local function projection(value,seen,depth,path)
  local keys={};for k in pairs(value) do if type(k)=='string' or type(k)=='number' then keys[#keys+1]=k end end
  table.sort(keys,function(a,b)if type(a)~=type(b) then return type(a)<type(b) end;return a<b end)
  for _,k in ipairs(keys) do
-  if k~='game'and k~='data'and k~='def'and k~='ruleset'then out[k]=projection(value[k],seen,depth+1,path..'['..type(k)..':'..tostring(k)..']')end
+  if not PRESENTATION[k] then out[k]=projection(value[k],seen,depth+1,path..'['..type(k)..':'..tostring(k)..']')end
  end
  return out
 end
 -- Native completion owners contain live world/controller references; the
 -- replay rebuilds those owners instead of treating their object graph as data.
-local PRESENTATION={_checkpointContinuation=true,game=true,data=true,def=true,ruleset=true,battle=true,shownHp=true,animPlayer=true,gen3Anim=true,gen4Anim=true,
- sprite=true,picAnim=true,monAnim=true,bgCanvas=true,waveCanvas=true,stadium=true,waitingSound=true,gen4CrySource=true}
+PRESENTATION={_checkpointContinuation=true,game=true,data=true,def=true,ruleset=true,battle=true,shownHp=true,animPlayer=true,gen3Anim=true,gen4Anim=true,
+ sprite=true,picAnim=true,monAnim=true,bgCanvas=true,waveCanvas=true,stadium=true,waitingSound=true,gen4CrySource=true,
+ -- Text scroll is consumed by draw(), not the native logic clock. A receiving
+ -- device can draw at a different rate (and replay intentionally never draws).
+ scrollPx=true,_caughtIcon=true,_gen3OamCompositedFrame=true,_gen3OamObjectRanks=true,_gen3OamResidual=true}
 function J.witness(game)
  local states={}
  for _,state in ipairs(game.stack.states or {}) do
