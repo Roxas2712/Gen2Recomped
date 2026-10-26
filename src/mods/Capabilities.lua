@@ -49,6 +49,7 @@ add("events", "12345", [[
   world.object_toggled world.stepped world.tick world.tod_changed world.trainer_engaged
 ]])
 add("events", "2345", "pokemon.egg_hatched")
+add("events", "12", "checkpoint.restored")
 add("events", "12", [[
   intro.oak_speech.answered intro.oak_speech.finished intro.oak_speech.started
   intro.oak_speech.step

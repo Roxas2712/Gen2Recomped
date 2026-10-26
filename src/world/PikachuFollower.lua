@@ -963,4 +963,9 @@ function PikachuFollower.at(ow, cx, cy)
   return nil
 end
 
+local checkpointSpawn = PikachuFollower.onMapEntered
+function PikachuFollower._checkpointSpawn(game, world, opts)
+  return checkpointSpawn(game, world, opts)
+end
+
 return PikachuFollower

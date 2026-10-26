@@ -64,6 +64,7 @@ local function gen3Weather()
   return Gen3WeatherMod
 end
 
+local checkpointSetMap, checkpointQuiet
 local OverworldState = { isOpaque = true, isOverworld = true }
 
 local Game -- set on enter (avoids circular require at load time)
@@ -935,7 +936,7 @@ local DATA_DERIVED = {
   "smokeImg", "emoteImg", "pikaPic",
 }
 
-function OverworldState:enter(mapId, x, y, facing)
+function OverworldState:enter(mapId, x, y, facing, opts)
   Game = require("src.core.Game")
   Game.overworld = self
   -- THE SAVED CAMERA TILT, taken up before the first map is built.
@@ -1012,14 +1013,18 @@ function OverworldState:enter(mapId, x, y, facing)
   self.lastOutdoor = Game.save.lastOutdoor
   -- GSC's wBackupWarp: the warp tile we last stepped through, on any map
   self.backupWarp = Game.save.backupWarp
+  if opts and opts.checkpoint then
+    checkpointSetMap(self, mapId, x, y, facing, {via="boot",checkpoint=true,keepMusic=true})
+  else
   self:setMap(mapId, x, y, facing, { via = "boot" })
+  end
   -- boot/load: derive the flag from the tile the save left us standing on,
   -- like MapEntryAfterBattle's IsPlayerStandingOnWarp, so a game saved on a
   -- door mat can still walk straight back out (issue #378)
   -- Gen2 daily resets also run here so a continued save whose calendar day
   -- already advanced while the game was closed still clears Kurt / trees /
   -- lottery on the first frame in the overworld.
-  if GameVersion.isGen2() and Game.save then
+  if not (opts and opts.checkpoint) and GameVersion.isGen2() and Game.save then
     require("src.script.Gen2Daily").poll(Game.save)
   end
   self:refreshStandingOnWarp()
@@ -1061,7 +1066,7 @@ function OverworldState:stampClosedDoors()
     end
   end
   if stamped then self.map.renderer:rebuild() end
-  if unlocked then require("src.core.Sound").play(Game.data, "Go_Inside") end
+  if unlocked and not checkpointQuiet then require("src.core.Sound").play(Game.data, "Go_Inside") end
 end
 
 function OverworldState:setMap(mapId, x, y, facing, opts)
@@ -1083,7 +1088,7 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   local fromMapId = self.map and self.map.id
   -- the header being left, for Platinum's area sign (which compares names)
   local fromHeader = self.map and self.map.def and self.map.def.header
-  if fromMapId then
+  if fromMapId and not (opts and opts.checkpoint) then
     Runtime.emit("map.exited", { mapId = fromMapId, toMapId = mapId })
   end
   -- ambient choreography is per-map: parallel runners die here, and the
@@ -1344,7 +1349,7 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   -- Wiping the flags on a palette or time-of-day rebuild would put the player
   -- on foot in the middle of the Cycling Road.
   if GameVersion.isGen2() then
-    if not (opts and opts.via == "reload") then
+    if not (opts and (opts.via == "reload" or opts.checkpoint)) then
       self:clearBikeFlags()
     end
   else
@@ -1491,7 +1496,7 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   -- script had walked off stayed gone for the rest of the save.  An internal
   -- reload (a palette/tod atlas rebuild, a `refreshmap`) is not a map load and
   -- must not undo one.
-  if not (opts and opts.via == "reload") then
+  if not (opts and (opts.via == "reload" or opts.checkpoint)) then
     Game.save.g2ObjectToggles = nil
     -- ...and Gen 3's, which is the same idea for the same reason: a
     -- `removeobject` with no event flag behind it lasts as long as the map
@@ -1506,7 +1511,7 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   -- ...matched against the id THIS dataset files the two maps under, which is
   -- "ROUTE34" on a Gold/Silver/Crystal cache rather than "ROUTE_34" -- the
   -- literal below used to miss, so the callback never ran on Route 34 at all.
-  if GameVersion.isGen2() then
+  if GameVersion.isGen2() and not (opts and opts.checkpoint) then
     local DayCare = require("src.pokemon.DayCare")
     if mapId == DayCare.mapId(Game.data, "ROUTE_34")
        or mapId == DayCare.mapId(Game.data, "DAY_CARE") then
@@ -1646,7 +1651,11 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   self:rebuildEntities()
   -- Yellow's companion Pikachu trails the player (never in
   -- self.entities: it does not block movement, pikachu_follow.asm)
+  if opts and opts.checkpoint then
+    require("src.world.PikachuFollower")._checkpointSpawn(Game, self, opts)
+  else
   require("src.world.PikachuFollower").onMapEntered(Game, self, opts)
+  end
   -- ...and Sinnoh's partner, who is a different animal: an escort character
   -- who trails the player AND CROSSES MAP SEAMS WITH THEM.  Barry is marked
   -- MAP_OBJ_STATUS_PERSISTENT on Route 201 and Verity Lakefront's arrival
@@ -1699,6 +1708,12 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   self.bridgeDown = nil
   -- ...and the log that was under, likewise
   self.logSunk = nil
+
+  if opts and opts.checkpoint then
+    self:followCamera()
+    self:rebuildNeighbors()
+    return
+  end
 
   -- forced bike/surf tiles fire the moment the player is placed on the
   -- map, like EnterMap's unconditional CheckForceBikeOrSurf farcall
@@ -1885,6 +1900,8 @@ end
 --
 -- Both halves were read out of the ROM and neither was ever looked at, so no
 -- map in Hoenn announced itself.
+checkpointSetMap = OverworldState.setMap
+
 function OverworldState:updateMapNameSignGen3()
   local previous = self.mapNameSign
   local def = self.map and self.map.def
@@ -2444,8 +2461,12 @@ function OverworldState:setDark(on)
   on = on and true or false
   self.dark = on
   if PaletteFX.setDarkWorld(on) and PaletteFX.bakesDarkness() and self.map then
-    MapLoader.invalidateAll()
-    self:reloadMap(self.map.id, "dark")
+    if checkpointQuiet then
+      self.map.renderer:rebuild()
+    else
+      MapLoader.invalidateAll()
+      self:reloadMap(self.map.id, "dark")
+    end
   end
 end
 
@@ -18651,6 +18672,21 @@ function OverworldState:captureSave(save)
     save.gen4Objects = save.gen4Objects or {}
     save.gen4Objects[self.map.id] = any and here or nil
   end
+end
+
+local checkpointEnter = OverworldState.enter
+function OverworldState:_checkpointRebuild(position)
+  assert(not checkpointQuiet, "nested checkpoint world reconstruction")
+  checkpointQuiet = true
+  -- New native actors/resources are built; old objects stay in the transaction
+  -- owner's private rollback snapshot rather than being mutated in place.
+  for _, key in ipairs(DATA_DERIVED) do self[key] = nil end
+  self.map, self.npcPool, self.tileAnimOverride = nil, nil, nil
+  self.follower, self.followerTrail, self.pikachuTrail, self.cast = nil, nil, nil, nil
+  local ok, why = pcall(checkpointEnter, self, position.map, position.x, position.y,
+                        position.facing, {checkpoint=true})
+  checkpointQuiet = nil
+  if not ok then error(why, 0) end
 end
 
 return OverworldState
