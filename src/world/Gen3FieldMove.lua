@@ -46,11 +46,18 @@ local unpack=table.unpack or unpack
 local function pack(...)return{n=select('#',...),...}end
 local function release(x)if x and x.release then pcall(x.release,x)end end
 local function source()return Version.isGen3()and package.loaded['src.core.game3.field_move_show_mon']end
+local function nativeWorld(game)
+  local session=Version.isGen3()and package.loaded['src.compat.gen1.NativeSession']
+  if session and session.resolve then
+    local owner,world=session.resolve(game);if owner==game then return world end
+    return nil
+  end
+  return game.overworld
+end
 local function valid(self,top)
   if self.done then return false end
   local c=self.cohort;local game=self.game
-  if c and(game.data~=c.data or game.save~=c.save or game.mods~=c.mods or Version.get()~=c.edition
-      or game.stack~=c.stack or game.overworld~=c.world or c.world and c.world.player~=self.actor)then return false end
+  if c and not self:cohortCurrent()then return false end
   local stack=game.stack;local states=stack and stack.states
   if type(states)=='table'then
     local found=false;for _,s in ipairs(states)do if s==self then found=true;break end end
@@ -128,7 +135,9 @@ end
 local function create(game, mon, onDone, opts)
   if not(game and game.stack and game.stack.push)or(onDone~=nil and type(onDone)~='function')then return false end
   for _,state in ipairs(game.stack.states or{})do if getmetatable(state)==Gen3FieldMove and not state.done then return false,'native field move is busy'end end
-  local cohort=setmetatable({data=game.data,save=game.save,mods=game.mods,stack=game.stack,edition=Version.get(),world=game.overworld,actor=game.overworld and game.overworld.player},{__mode='v'})
+  local world=nativeWorld(game)
+  if Version.isGen3()and not world then return false,'no admitted native field world'end
+  local cohort=setmetatable({data=game.data,save=game.save,mods=game.mods,stack=game.stack,edition=Version.get(),world=world,actor=world and world.player,map=world and world.map},{__mode='v'})
   local facade=source()
   opts=opts or(facade and facade._nativeOptions and facade._nativeOptions(game))or{}
   local sprite,path = frontSprite(game, mon)
@@ -143,7 +152,7 @@ local function create(game, mon, onDone, opts)
   self.shade, self.ink = bandColours(game)
   -- THE POSE GOES ON HERE and comes off in finish(), so it is on screen for
   -- exactly as long as the window is -- which is what the cartridge does.
-  local player = game.overworld and game.overworld.player
+  local player = world and world.player
   self.actor=player
   self.cohort=cohort
   if not self:cohortCurrent()then release(sprite);return false,'native field move preparation cohort retired'end
@@ -163,7 +172,7 @@ local function create(game, mon, onDone, opts)
   end
   allocations[self]={front=sprite}
   if opts.presentation=='cartridge'then
-    self.effect=Presentation.new(mon,opts,game)
+    self.effect=Presentation.new(mon,opts,game,world)
     local ok,why=self:reloadArtwork()
     if not ok then self:exit();return false,why end
   end
@@ -183,7 +192,8 @@ local function create(game, mon, onDone, opts)
   end
   local ok,why=pcall(game.stack.push,game.stack,self)
   if not ok then
-    if game.stack.removeAll then game.stack:removeAll({self})else self:exit()end
+    local stack=cohort.stack
+    if stack and stack.removeAll then stack:removeAll({self})else self:exit()end
     return false,why
   end
   if self.entryRejected then self:retire();return false,'native field move start vetoed'end
@@ -199,7 +209,8 @@ end
 function Gen3FieldMove:cohortCurrent()
   local c=self.cohort;local game=self.game
   return c and game.data==c.data and game.save==c.save and game.mods==c.mods and game.stack==c.stack
-    and game.overworld==c.world and(not c.world or c.world.player==c.actor)and Version.get()==c.edition
+    and Version.get()==c.edition and nativeWorld(game)==c.world
+    and(not c.world or c.world.player==c.actor and c.world.map==c.map)
 end
 function Gen3FieldMove:configurePresentation(opts)
   if self.frame~=0 then return false,'field move options belong to admission'end
@@ -273,7 +284,8 @@ end
 function Gen3FieldMove:retire()
   self.done=true;self.cancelled=true;self.completed=false;self.onDone=nil
   if self.discardContinuation then self.discardContinuation()end
-  if self.game.stack and self.game.stack.removeAll then self.game.stack:removeAll({self})end
+  local stack=self.cohort and self.cohort.stack
+  if stack and stack.removeAll then stack:removeAll({self})end
   self:exit()
 end
 function Gen3FieldMove:complete(completed)

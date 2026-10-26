@@ -73,6 +73,13 @@ for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
  state=g.stack:top();g.save={};state:update();T.eq(g.stack:top(),f.world)
  T.eq(calls,3,'a retired save cannot receive the old continuation')
  T.eq(state.done,true)
+ T.eq(Native.show(g,{species='TEST'},function()calls=calls+1 end),true)
+ state=g.stack:top();local admittedStack=g.stack;local foreign={}
+ g.stack=setmetatable({states={foreign}},{__index=require('src.core.StateStack')})
+ T.eq(Source.isActive(),false);state:update()
+ T.eq(g.stack:top(),foreign,'retiring an old admission cannot remove a foreign screen')
+ T.eq(#admittedStack.states,1,'retire the admission from its actual original stack')
+ T.eq(calls,3);g.stack=admittedStack
  -- A public sprite replacement cannot transfer ownership of that image.
  f=fixture(edition);g=f.game
  T.eq(Native.show(g,{species='TEST'},nil,{presentation='cartridge',pose=false}),true)
