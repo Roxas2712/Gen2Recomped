@@ -75,8 +75,8 @@ function A.invalidate()A._visible={};A._current=nil;A._pair=nil;observed=setmeta
 function A.enterMap(pair)return A.bindPair(pair)end
 function A.bindPair(pair,atlas)
  if type(pair)~='string'then return false end
- atlas=atlas or native().get(pair)
- if not atlas or atlas._retired then return false end
+ local owned=native().get(pair)
+ if not owned or owned._retired or atlas~=nil and atlas~=owned then return false end
  A._current=pair;A._pair=pair;A._visible[pair]=true;return true
 end
 function A.unbindPair(pair)A._visible[pair]=nil;if A._pair==pair then A._pair=nil;A._current=nil end end

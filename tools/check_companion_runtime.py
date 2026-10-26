@@ -24,6 +24,8 @@ def main():
     atexit.register(storage.close)
     for source in (engine, Path(__file__).resolve(), *args.love):
         storage.source(source.resolve())
+    if args.qa_tools:
+        storage.source(args.qa_tools.resolve())
     head = storage.run(['git', 'rev-parse', 'HEAD'], cwd=engine, check=True,
                        capture_output=True, text=True).stdout.strip()
     if storage.run(['git', 'status', '--porcelain'], cwd=engine, check=True,

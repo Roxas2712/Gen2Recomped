@@ -20,6 +20,7 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  local tick=atlas._model.decoder.animationTicks
  local bytes=atlas.imageData:getString()
  T.eq(A.bindPair(f.pair),true);T.eq(A._pair,f.pair)
+ T.eq(A.bindPair(f.pair,{}),false,'foreign atlas cannot replace native ownership')
  local entry=assert(A._pairs[f.pair]);local bank=assert(entry.banks.water)
  T.eq(entry.atlas,atlas);T.eq(entry.rse,edition~='firered'and edition~='leafgreen')
  T.eq(bank.frames,2);T.eq(bank.period,14);T.eq(bank.ticks[1],0);T.eq(bank.ticks[2],7)

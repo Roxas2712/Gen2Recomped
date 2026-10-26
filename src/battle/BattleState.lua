@@ -2513,6 +2513,8 @@ function BattleState:stepHPDrain()
         b.draining = nil
         b.drainHold = Timing.hpDrainClosingFrames(b.isPlayer == true) - 1
         busy = true
+      elseif b.drainHold == 0 then
+        b.drainHold = nil -- the closing frame has already been consumed
       end
     end
   end
