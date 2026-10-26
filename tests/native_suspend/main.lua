@@ -1,0 +1,123 @@
+-- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
+-- Real native battle, private HTTPS cloud, two fresh account-bound profiles.
+local cfg,Game,Task,Auth,job,phase,done,expected,anchorError
+local S;local J;local frames=0;local ticks=0;local animationTicks=0
+local function write(file,value)local f=assert(io.open(file,'wb'));f:write(require('src.link.Json').encode(value));f:close()end
+local function summary()
+ local b=Game.stack:active();local p=Game.save.party[1]
+ return {turn=b.turnCount or 0,phase=b.phase,hp=p.hp,enemyHp=b.enemy and b.enemy.mon.hp,pp=p.moves[1].pp,rng=love.math.getRandomState(),species=p.species}
+end
+local function finish(ok,why)
+ if done then return end;done=true
+ write(cfg.result,{ok=ok,edition=cfg.edition,role=cfg.role,phase=phase,reason=tostring(why or ''),ticks=ticks})
+ print('SUSPEND '..cfg.edition..' '..cfg.role..' '..tostring(ok)..' '..tostring(why or''));love.event.quit(ok and 0 or 1)
+end
+function love.errorhandler(why)io.stderr:write(tostring(why)..'\n'..debug.traceback());if cfg then pcall(finish,false,why)end;return function()return 1 end end
+local function task(name,fn)phase=name;job=assert(Task.new(fn))end
+local function suspend()
+ local b=Game.stack:active()
+ assert(b.player.mon.hp<b.player.mon.stats.hp or b.enemy.mon.hp<b.enemy.mon.stats.hp,'Battle has actual damage')
+ assert(Game.save.party[1].moves[1].pp<35,'Battle has spent PP')
+ local kept,why=require('src.storage.SuspendStore').keep(Game);assert(kept,why)
+ expected={witness=S.encodeExact(J.witness(Game)),animation=not not b.gen3AnimPlaying}
+ assert(not cfg.animation or expected.animation,'Requested snapshot must be inside a native move animation')
+ task('upload',function()
+  local store=assert(Auth.open());local result,why=require('src.import.CloudSync').syncOne(store,cfg.edition,'slot1',true);assert(result,why);return result
+ end)
+end
+local function prepare()
+ assert(require('src.storage.AccountStorage').bind())
+ Game=require('src.core.Game');Game.loadWithoutMods=true;Game:load()
+ S=require('src.core.SaveSerializer');J=require('src.core.SuspendJournal')
+ local world=Game.overworld;local update=world.update
+ world.update=function(self,dt)
+  if Game.input:wasPressed('a')and not Game.save.flags.CLOUD_SUSPEND_STARTED then
+   Game.save.flags.CLOUD_SUSPEND_STARTED=true
+   self.runner:run({{'start_battle','wild','MAGIKARP',35},{'set_flag','CLOUD_SUSPEND_RETURNED'}})
+  end
+  return update(self,dt)
+ end
+ if cfg.role=='source'then
+  Game.save.options.textSpeed='fast';Game.save.options.audioMuted=true;Game:applyOptions(Game.save.options)
+  Game.save.party={require('src.pokemon.Pokemon').new(Game.data,'SHUCKLE',35)}
+  local mon=Game.save.party[1];mon.moves={{id='TACKLE',pp=35,maxPP=35}}
+  local p=Game.save.player;world:_checkpointRebuild({map=p.map,x=p.x,y=p.y,facing=p.facing})
+  if Game.stack.worldOwner then Game.stack.worldState=world;Game.stack.worldOwner.world=world;Game.stack.states={}else Game.stack.states={world}end
+  Game.save.flags.CLOUD_SUSPEND_STARTED=nil;Game.save.flags.CLOUD_SUSPEND_RETURNED=nil
+  assert(require('src.core.SaveData').ensurePlaythroughId(Game.save))
+  local save=require('src.core.SaveData');assert(save.writeSlot(cfg.edition,'slot1',Game.save));assert(save.setActiveSlot(cfg.edition,'slot1'));assert(Game:writeSave())
+  phase='anchor'
+ else
+  task('download',function()
+   local store=assert(Auth.open());local result,why=require('src.import.CloudSync').restoreVersions(store,{cfg.edition});assert(result,why);return result
+  end)
+ end
+end
+function love.load()
+ local f=assert(io.open(os.getenv('RETRO_SUSPEND_CONFIG'),'rb'));cfg=require('src.link.Json').decode(f:read('*a'));f:close()
+ love.audio.setVolume(0);love.math.setRandomSeed(cfg.role=='source'and 2712 or 999)
+ require('src.core.SaveIdentity').migrateLegacy=function()return 0 end
+ require('src.core.SaveData').otherLocations=function()return {}end
+ require('src.storage.AccountStorage').enable()
+ local ffi=require('ffi');pcall(ffi.cdef,'int PHYSFS_mount(const char*,const char*,int);');local lib=ffi.load(cfg.library)
+ assert(lib.PHYSFS_mount(cfg.cache..'/data/generated','data/generated',0)~=0);assert(lib.PHYSFS_mount(cfg.cache..'/assets/generated','assets/generated',0)~=0)
+ require('src.core.GameVersion').set(cfg.edition)
+ Auth=require('src.cloud.RetroCloud');Auth.API=cfg.api;Task=require('src.cloud.Task')
+ task('login',function()return require('src.cloud.NativeAccount').login(cfg.email,cfg.password)end)
+end
+local function step(button)
+ Game.input:keyreleased('return');if button then Game.input:keypressed('return')end
+ Game:step(1/60);ticks=ticks+1
+end
+function love.update(dt)
+ if done then return end;frames=frames+1
+ if frames>15000 then return finish(false,'Timed out '..tostring(phase)..' '..tostring(anchorError))end
+ if job then
+  local r=job:poll();if not r then return end;job=nil
+  if r.kind~='done'or not r.first then return finish(false,r.second or r.error)end
+  if phase=='login'then prepare();return
+  elseif phase=='upload'then phase='nextturn'
+  elseif phase=='download'then
+   local saves=require('src.core.SaveData');local slots=saves.listSlots(cfg.edition);assert(#slots==1,'Cloud restored one normal save')
+   assert(saves.setActiveSlot(cfg.edition,slots[1].id));local loaded=assert(saves.load());local id=loaded.meta.playthroughId
+   local capsule=assert(require('src.storage.SuspendStore').read(cfg.edition,id));assert(require('src.storage.SuspendStore').matchesNormal(capsule,cfg.edition,slots[1].id),'Cloud normal-save fingerprint must match')
+   local oracle=assert(io.open(cfg.expected,'rb'));expected=assert(S.decode(oracle:read('*a')));oracle:close()
+   assert(S.encodeExact(capsule.witness)==expected.witness,'Cloud retained the exact battle capsule')
+   Game.stack.states={{screenId='TitleState'}};if Game.stack.worldOwner then Game.stack.worldState=nil end
+   assert(Game:continueGame(loaded));assert(Game.stack:active().isBattleState,'Continue resumed the battle directly: '..tostring(require('src.ui.RetroOverlay').notice))
+   assert(S.encodeExact(J.witness(Game))==expected.witness,'Fresh logged-in profile recreated exact HP, PP, native phases and RNG')
+   assert(not expected.animation or Game.stack:active().gen3AnimPlaying,'Native move animation was reconstructed too')
+   phase='nextturn'
+  end
+ end
+ if phase=='anchor'then
+  step(false)
+  local cap,why=J.capture(Game);anchorError=why
+  if cap then step(true);phase='battle'end
+ elseif phase=='battle'or phase=='animation'or phase=='nextturn'then
+  for _=1,4 do
+   local b=Game.stack:active()
+   if not b.isBattleState then step(true)
+   elseif phase=='animation'and b.gen3AnimPlaying then
+    animationTicks=animationTicks+1
+    if animationTicks>=5 then suspend();return else step(true)end
+   elseif phase~='animation'and b.phase=='menu'and(b.turnCount or 0)>=(phase=='battle'and 1 or 2)then
+    if phase=='battle'then
+     if cfg.animation then phase='animation';step(true)else suspend()end
+    else
+     local result=summary()
+     if cfg.role=='source'then expected.next=result;local f=assert(io.open(cfg.expected,'wb'));f:write(S.encodeExact(expected));f:close();return finish(true,'Uploaded a damaged native battle '..(cfg.animation and 'during a move animation' or 'after turn 1')..'; recorded deterministic turn 2')
+     else
+      assert(S.encodeExact(result)==S.encodeExact(expected.next),'The next native turn must match the original device')
+      b.result='win';b:finish();phase='return'
+     end
+    end
+    return
+   else step(true)end
+  end
+ elseif phase=='return'then
+  step(true)
+  if Game.save.flags.CLOUD_SUSPEND_RETURNED then return finish(true,'Login, cloud download, exact Continue, matching next turn and original story continuation passed')end
+ end
+end
+function love.draw()if Game then Game:draw()end end
