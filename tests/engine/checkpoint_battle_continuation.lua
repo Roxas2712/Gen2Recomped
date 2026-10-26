@@ -43,8 +43,14 @@ for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
     battle.player.mon.hp, battle.player.mon.stats.hp, battle.player.shownHP = 400, 400, 400
     battle.enemy.mon.hp, battle.enemy.mon.stats.hp, battle.enemy.shownHP = 400, 400, 400
     battle.player.stages.attack = 2
+    if require("src.core.GameVersion").generation() == 4 then
+      battle.g4fx = { field = { gravity = 4 }, sides = { [true] = { tailwind = 3 }, [false] = { luckyChant = 2 } } }
+    end
     battle.field.tokens.owned = { turns = 3 }
     battle.sides[1].tokens.owned = { turns = 2 }
+    battle.participants={[game.save.party[1]]=true}
+    battle.leveledUp={[game.save.party[1]]=true}
+    battle:picFxFor(battle.player).minimized=true
     stack.states = { world, battle }
     local cp, code, detail = f.checkpoints:capture(game)
     T.check(
@@ -65,9 +71,17 @@ for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
         T.check(fresh ~= battle, "fresh native battle controller")
         T.eq(fresh.player.mon, game.save.party[1], "party Pokemon identity rebound")
         T.eq(fresh.player.curStats, game.save.party[1].stats, "native stat alias rebound")
+        T.check(fresh.participants[game.save.party[1]],"experience participant is the reconstructed party monster")
+        T.check(fresh.leveledUp[game.save.party[1]],"level-up record is the reconstructed party monster")
+        T.check(fresh.picFx[fresh.player].minimized,"picture effect keeps its reconstructed native battler owner")
         T.eq(fresh.player.stages.attack, 2, "volatile stages restored")
         T.eq(fresh.field.sides, fresh.sides, "native field side alias preserved")
         T.eq(fresh.field.tokens.owned.turns, 3, "field tokens restored")
+        if battle.g4fx then
+          T.eq(fresh.g4fx.field.gravity, 4, "native Gen4 field effect rewinds")
+          T.eq(fresh.g4fx.sides[true].tailwind, 3, "boolean-keyed player side rewinds")
+          T.eq(fresh.g4fx.sides[false].luckyChant, 2, "boolean-keyed enemy side rewinds")
+        end
         T.eq(Serializer.encode(assert(f.checkpoints:capture(game))), bytes, "full battle recapture matches")
         T.eq(Serializer.encode(cp), bytes, "caller battle payload detached")
         local function turn()
@@ -84,13 +98,55 @@ for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
             ticks = ticks + 1
           until (b.phase == "menu" and not b.current and #b.queue == 0) or ticks >= 4000
           T.check(ticks < 4000 and b.phase == "menu", "actual native turn reaches its next decision")
-          return Serializer.encode(assert(f.checkpoints:capture(game)))
+          local nextCheckpoint, why, detail = f.checkpoints:capture(game)
+          if not nextCheckpoint then
+            local _, diagnostic = pcall(B.capture, game, b, copy)
+            error(edition .. "/" .. kind .. ": " .. tostring(why) .. ": " .. tostring(detail) .. ": " .. tostring(diagnostic))
+          end
+          local futureBytes = Serializer.encode(nextCheckpoint)
+          T.check(f.checkpoints:restore(game, nextCheckpoint), "future native action bindings reconstruct")
+          T.eq(Serializer.encode(assert(f.checkpoints:capture(game))), futureBytes,
+            "future decision retains every native action relationship")
+          local choices = package.loaded["src.battle.EnemyMoveChoice"]
+          if choices then
+            for actor, action in pairs(stack:top().turnActions or {}) do
+              if actor ~= "turn" and choices.slot(action) ~= action then
+                local slot = choices.slot(action)
+                local pp = slot.pp
+                action.pp = pp - 1
+                T.eq(slot.pp, pp - 1, "restored action PP writes reach its original learned slot")
+                action.pp = pp
+                local belongs = false
+                for _, move in ipairs(actor.curMoves) do if move == slot then belongs = true end end
+                T.check(belongs, "restored action owns a learned slot of its reconstructed battler")
+              end
+            end
+          end
+          return futureBytes
         end
         local expected = turn()
         T.check(f.checkpoints:restore(game, cp), "rewind before comparing native turn continuation")
         T.check(turn() == expected, "same player intent reproduces the complete next native decision")
         T.check(f.checkpoints:restore(game, cp), "restore original decision after the continuation proof")
         fresh = stack:top()
+        for _,flag in ipairs({'gen3AnimPlaying','gen3BallPlaying','gen4AnimPlaying'})do
+          local prior=fresh[flag];fresh[flag]=true
+          T.eq(f.checkpoints:inspect(game).reason,'unsupported_battle','an open menu cannot anchor an unfinished native animation')
+          fresh[flag]=prior
+        end
+        if edition=='firered'and kind=='wild'then
+          local animation,playing,pressed=fresh.gen3Anim,fresh.gen3AnimPlaying,game.input.wasPressed
+          local ticks,released,turn=0,false,fresh.turnCount
+          game.input.wasPressed=function()return false end
+          fresh.gen3Anim={update=function()ticks=ticks+1 end,isDone=function()return ticks>=3 end,
+            release=function()released=true end}
+          fresh.gen3AnimPlaying=true
+          for _=1,3 do fresh:update(1/60)end
+          T.check(released and not fresh.gen3AnimPlaying,'a native animation finishes while its menu remains open')
+          T.eq(ticks,3,'the open menu advances that animation exactly once per logic tick')
+          T.eq(fresh.turnCount,turn,'finishing display work never starts another combat turn')
+          fresh.gen3Anim,fresh.gen3AnimPlaying,game.input.wasPressed=animation,playing,pressed
+        end
         local originalRng = fresh.rng
         fresh.rng = function()
           return 1

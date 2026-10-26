@@ -5595,6 +5595,12 @@ function RomExtractorGen4:extractIntro()
   end
 
   self:write("gen4_intro", out)
+  -- the Canalave library's television (StartLibraryTV) wears the intro
+  -- set's bezel and scan lines over its own picture: src/import/Gen4LibraryTv.lua
+  do
+    local okT, tv = pcall(function() return require("src.import.Gen4LibraryTv").build(self) end)
+    if okT and tv then self:write("gen4_library_tv", tv) end
+  end
 
   local backdrops, figures = 0, 0
   for _ in pairs(out.backdrops) do backdrops = backdrops + 1 end
@@ -5901,6 +5907,15 @@ function RomExtractorGen4:extractTerrain(names)
     if okFx and fx then self:write("gen4_pt_field_fx", fx)
     else print("gen4_pt_field_fx failed: " .. tostring(fx)) end
   end
+  -- the Spear Pillar cinematic ScrCmd_2FB starts (Gen4SpearPillarArt)
+  do
+    local okSp, sp = pcall(require("src.import.Gen4SpearPillarArt").build, self)
+    if okSp and sp then self:write("gen4_spear_pillar", sp)
+    else print("gen4_spear_pillar failed: " .. tostring(sp)) end
+  end
+  -- the gyms' field-effect flipbooks: Eterna's fountains, Veilstone's
+  -- toppled tires (Gen4GymFxArt)
+  self:gymFxArt()
   self:specialEncounters()
   self:townMap()
   self:areaPopup()
@@ -7156,6 +7171,14 @@ function RomExtractorGen4:extractModels()
     patternFrames = patternWritten,
   }
   return out
+end
+
+-- Platinum's gym field-effect flipbooks (src/import/Gen4GymFxArt.lua); also a
+-- STAGE_ONLY name of its own (`gymFxArt`) for an import into a scratch root
+function RomExtractorGen4:gymFxArt()
+  local ok, fx = pcall(require("src.import.Gen4GymFxArt").build, self)
+  if ok and fx then self:write("gen4_gym_fx", fx)
+  else print("gen4_gym_fx failed: " .. tostring(fx)) end
 end
 
 -- The stages a version runs, by name (Gen4Versions.STAGES). Platinum runs

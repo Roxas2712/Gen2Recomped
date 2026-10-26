@@ -28,3 +28,7 @@ tools/slang-import/licenses/** -text
 # bytes on Windows as well; the native byte-for-byte compatibility gate
 # must not depend on the checkout platform.
 tests/engine/fixtures/wonder_reward.lua text eol=lf
+
+# The SDK path probe compares exact bytes with an LF literal. Its fixture
+# must not gain CRLF during a Windows checkout; reads stay binary.
+"tests/modkit/fixtures/path probe/payload.txt" text eol=lf
