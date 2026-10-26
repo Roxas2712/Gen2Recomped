@@ -1,7 +1,7 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 package.path='./?.lua;./?/init.lua;'..package.path
 local T=require('tests.modkit')
-local Contract=require('tests.api3_contract.warp')
+local Contract=require('tools.native-field.warp-fixture')
 local Warp=require('src.core.game3.warp')
 local Host=require('src.mods.Runtime')
 local Stream=require('src.core.game3.asset_stream')
@@ -9,7 +9,7 @@ local Game3=require('src.core.Game3')
 local saved=package.loaded['src.core.Game']
 for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  Game3.release();Stream.shutdown()
- local f=Contract.fixture('tests/api3_contract','gen2',edition)
+ local f=Contract.new(edition)
  package.loaded['src.core.Game']=f.game;f.game.mods=f.loader
  Host.currentMod='warp'
  T.eq(Warp.isBusy(),false)
@@ -38,9 +38,9 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  T.eq(Warp.request(nil,f.game,f.dest,0,0,'down',{onDone=function()called=called+1 end}),true)
  finish=f.callback;f.game.save={};f:arrive();finish();T.eq(called,1,'save replacement retires callback')
  Stream.shutdown();Game3.release();Host.currentMod=nil
- require('src.mods.Loader').teardown()
+ f:close()
  -- Observe the actual native transition, with map materialization isolated.
- local n=Contract.fixture('tests/api3_contract','gen2',edition)
+ local n=Contract.new(edition)
  package.loaded['src.core.Game']=n.game;n.game.mods=n.loader;Host.currentMod='warp'
  local OW=require('src.world.OverworldController');local restore
  for i=1,100 do
@@ -62,7 +62,7 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   if n.game.stack:top()==transition then transition:update(1/60)end
  end
  T.eq(Warp.isEscalatorActive(),false);T.eq(Warp.isBusy(),false);T.eq(n.ow.warpArrivalKind,nil)
- restore();Stream.shutdown();Game3.release();Host.currentMod=nil;require('src.mods.Loader').teardown()
+ restore();Stream.shutdown();Game3.release();Host.currentMod=nil;n:close()
 end
 package.loaded['src.core.Game']=saved
 T.finish('source warp requests use native admission and owner callback lifetime')
