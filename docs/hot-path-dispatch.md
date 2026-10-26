@@ -37,8 +37,8 @@ Measured on macOS arm64 (milliseconds/frame, switch off → on):
 | --- | ---: | ---: | ---: | ---: |
 | Fork / LÖVE 11.5 OpenGL | 0.16 → 0.21 | 0.166 → 0.218 | 0.787 → 0.919 | 15 → 6 |
 | Fork / LÖVE 12 Metal | 16.36 → 16.38 | 16.373 → 16.383 | 1.134 → 1.026 | 15 → 6 |
-| Public adaptation / LÖVE 11.5 OpenGL | 0.30 → 0.22 | 0.315 → 0.222 | 1.227 → 0.992 | 12 → 5 |
-| Public adaptation / LÖVE 12 Metal | 16.43 → 16.40 | 16.440 → 16.410 | 0.849 → 1.003 | 12 → 5 |
+| Public adaptation on ed5189c2 / LÖVE 11.5 OpenGL | 0.21 → 0.21 | 0.223 → 0.215 | 0.952 → 0.936 | 14 → 5 |
+| Public adaptation on ed5189c2 / LÖVE 12 Metal | 16.44 → 16.44 | 16.455 → 16.449 | 0.844 → 0.831 | 14 → 5 |
 
 Queue submission can absorb GPU/VSync waiting in Metal; these are wall-time
 sections, not isolated GPU durations. The short runs show reduced dependency
