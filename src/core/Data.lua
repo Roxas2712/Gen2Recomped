@@ -183,6 +183,12 @@ local GEN4_PREFIXED = { "gen4_menus", "gen4_graphics", "gen4_intro",
                         -- ...and Platinum's, with its HM cut-in
                         -- (Gen4PtFieldFx: hiden_effect + field_cutin)
                         "gen4_pt_field_fx",
+                        -- the Canalave library TV (Gen4LibraryTv)
+                        "gen4_library_tv",
+                        -- the Spear Pillar cinematic (Gen4SpearPillarArt)
+                        "gen4_spear_pillar",
+                        -- the gyms' field-effect flipbooks (Gen4GymFxArt)
+                        "gen4_gym_fx",
                         -- the name -> archive member hop for `var_0`..`var_f`;
                         -- see the paragraph above for what its absence cost
                         "gen4_overworld",
@@ -313,7 +319,7 @@ local GEN4_PREFIXED = { "gen4_menus", "gen4_graphics", "gen4_intro",
                         "gen5_move_anims", "gen5_particles",
                         -- Black / White's field effects: phenomena, the rod's
                         -- lure, ripples (Gen5FieldEffects, /a/0/7/5)
-                        "gen5_field_effects",
+                        "gen5_field_effects", "gen5_gym_fx",
                         -- the field start menu's icons in both palettes and
                         -- their swell/wiggle animations (Gen4StartMenuArt).
                         "gen4_start_menu_art", "gen4_start_menu_ink",

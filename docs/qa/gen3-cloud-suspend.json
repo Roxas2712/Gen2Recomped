@@ -1,0 +1,139 @@
+{
+  "schema": 1,
+  "date": "2026-10-26",
+  "host": "macOS, L\u00d6VE 12 nightly 20260920",
+  "backend": "Private local Laravel ModCompass API over trusted localhost HTTPS; isolated SQLite and encrypted object storage; fake confirmed accounts only",
+  "qualifiedEditions": [
+    "ruby",
+    "sapphire",
+    "firered",
+    "leafgreen",
+    "emerald"
+  ],
+  "checks": [
+    "Actual login in each fresh process/profile",
+    "Normal save and battle capsule uploaded and downloaded through the production API client",
+    "Continue reconstructs exact battle HP, PP, native phase and RNG",
+    "The next native turn matches the original process",
+    "Finishing the reconstructed battle continues its original native script command"
+  ],
+  "menuHandoff": [
+    {
+      "ok": true,
+      "edition": "ruby",
+      "role": "source",
+      "reason": "Uploaded a damaged native battle after turn 1; recorded deterministic turn 2",
+      "ticks": 885,
+      "phase": "nextturn"
+    },
+    {
+      "role": "target",
+      "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed",
+      "ticks": 309,
+      "phase": "return",
+      "ok": true,
+      "edition": "ruby"
+    },
+    {
+      "edition": "sapphire",
+      "phase": "nextturn",
+      "ok": true,
+      "ticks": 885,
+      "reason": "Uploaded a damaged native battle after turn 1; recorded deterministic turn 2",
+      "role": "source"
+    },
+    {
+      "edition": "sapphire",
+      "role": "target",
+      "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed",
+      "ticks": 309,
+      "phase": "return",
+      "ok": true
+    },
+    {
+      "ticks": 908,
+      "phase": "nextturn",
+      "ok": true,
+      "edition": "firered",
+      "role": "source",
+      "reason": "Uploaded a damaged native battle after turn 1; recorded deterministic turn 2"
+    },
+    {
+      "edition": "firered",
+      "role": "target",
+      "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed",
+      "ticks": 330,
+      "phase": "return",
+      "ok": true
+    },
+    {
+      "ticks": 908,
+      "phase": "nextturn",
+      "ok": true,
+      "edition": "leafgreen",
+      "role": "source",
+      "reason": "Uploaded a damaged native battle after turn 1; recorded deterministic turn 2"
+    },
+    {
+      "ok": true,
+      "phase": "return",
+      "edition": "leafgreen",
+      "role": "target",
+      "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed",
+      "ticks": 330
+    },
+    {
+      "edition": "emerald",
+      "role": "source",
+      "reason": "Uploaded a damaged native battle after turn 1; recorded deterministic turn 2",
+      "ticks": 892,
+      "phase": "nextturn",
+      "ok": true
+    },
+    {
+      "ok": true,
+      "edition": "emerald",
+      "role": "target",
+      "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed",
+      "ticks": 309,
+      "phase": "return"
+    }
+  ],
+  "duringMoveAnimation": [
+    {
+      "role": "source",
+      "phase": "nextturn",
+      "ok": true,
+      "ticks": 892,
+      "reason": "Uploaded a damaged native battle during a move animation; recorded deterministic turn 2",
+      "edition": "emerald"
+    },
+    {
+      "edition": "emerald",
+      "role": "target",
+      "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed",
+      "phase": "return",
+      "ticks": 266,
+      "ok": true
+    }
+  ],
+  "engineSourceSha256": {
+    "src/core/SuspendJournal.lua": "ffd87e8974ce6a7a4d120e623584829656cd193f2e628cd9d4836325ba7fd2af",
+    "src/battle/BattleState.lua": "6f86fe42a20a1267e8d57b65f68c20aa443991ecb0019fe8b1f7c102088b7113",
+    "src/import/CloudSync.lua": "8d06ebf0882dc8e8356bc67696523bafb84bcd28241482df8c0a7f5818c2cd2a",
+    "src/core/Game.lua": "d475f264ff40ca00c0e780a1de4b5e174716bac42e99428c6d0e85b1a85cccf3",
+    "src/core/Checkpoint.lua": "d87f6d627205ab31efce71a96d367e06d481ea7cbe3a55349c40f24e019be7bf",
+    "src/core/CheckpointWorld.lua": "93dfdd59305262dd1a6e7aacb0e18c5641fd6af66804b78df7ea132bb786a2fe",
+    "src/storage/SuspendStore.lua": "3dc64bdf727608dc13319f68cb8703f632449d5fd892e6b8a27532f4cc3f39a9"
+  },
+  "driverSha256": {
+    "menu": "363cf076ee956510fbf7db92a9baadac315219113e2cfc5ca76ba769a3b56d66",
+    "duringAnimation": "fd79c7c52dec652754da50cb42437e97fa3ea4e1068ecece3675897a9ddcd3c4"
+  },
+  "limitations": [
+    "Two processes/profiles on one Mac, not two physical devices or cross-OS proof",
+    "Native unmodified sessions only; live online sessions cannot be suspended",
+    "Requires exact engine build and matching imported content on both devices",
+    "Journal bounded to 18000 logic ticks, 180000 observations and 24 MiB"
+  ]
+}
