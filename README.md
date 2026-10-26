@@ -397,9 +397,11 @@ and persist in `options.lua`.
 
 **OPTIONS → PERFORMANCE** scales the port's optional extras for weaker
 hardware: **HIGH** (everything on), **BALANCED** (no 3D tilt or GBC FX),
-**LOW** (also no survey zoom, FPS capped), or **AUTO** — the default, which
+**LOW** (also no survey zoom, FPS capped), **AUTO** — the default, which
 picks a tier from your device (ARM handhelds → LOW, phones → BALANCED,
-normal desktops → HIGH, unchanged). It only scales presentation; the
+normal desktops → HIGH, unchanged) — or **PREFER FPS**, which starts where
+AUTO would and steps the tier down or back up from the frame rate it
+actually measures. It only scales presentation; the
 fixed-step game logic is identical on every tier, and a lower tier hides
 your tilt/zoom/GBC-FX preferences without forgetting them. Details in
 [docs/new-features.md](docs/new-features.md#performance-tier-low-end-devices).
