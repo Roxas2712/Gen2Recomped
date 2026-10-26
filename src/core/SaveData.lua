@@ -1026,7 +1026,8 @@ function SaveData.summary(save, data)
     caught = caught,
     hours = math.floor(seconds / 3600),
     minutes = math.floor(seconds / 60) % 60,
-    map = save.position and save.position.map or (type(spawn) == "table" and spawn.map or spawn),
+    map = save.player and save.player.map or (save.position and save.position.map)
+      or (type(spawn) == "table" and spawn.map or spawn),
   }
 end
 
