@@ -1,5 +1,16 @@
 # Unchanged mod acceptance on both engines
 
+The later own-fork integration is recorded in the
+[fork-main receipt](qa/fork-main-integration.json). It combines all twenty
+functional own-fork PR heads, qualifies 559 engine suites plus four SDK suites
+and B30 at the pinned regression ref, and separately checks the subsequent
+native Gen2 START/save delta with thirteen affected suites and a real isolated
+Crystal save/restart. Twelve GPU runs pass on OpenGL/Metal (4,644 checks,
+364 comparisons). The unchanged Battle Art/Legendary prepared-scene run is
+pinned separately to its earlier all-PR composition. These observations do
+not certify a full playthrough, every mod, exact UI pixels or controlled FPS.
+Historical feature receipts below retain their own refs and limitations.
+
 The runtime source from `edfb30feb230d5359540ae6e6fbc33d20dc68b83` passes the
 following **selected Red-profile CPU checks** against unchanged Gen1Recomp
 `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`. No engine or mod production code

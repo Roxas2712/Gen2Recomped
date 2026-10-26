@@ -1,23 +1,60 @@
 # Combined mod-portability testing branch
 
-The fork's `codex/portability-testing` branch combines the selected public
-API, native hook, rendering, shader and baseline-test portability series,
-now including native cries (#289), native music/fanfare commands (#308)
-and Boolean-aware contract comparisons (#309), absolute SDK mod paths (#311),
-native fallback translations (#313) and complete catalog generation (#315).
-Historical PR-specific acceptance remains below; unrelated #138 and
-cartridge-support work from other branches remain separate. This branch is
-for testing combined changes before upstream reviews and merges individual
-PRs. Upstream and fork `main` remain independently maintained.
+The fork's `main` and playable portability branch now combine the qualified
+mod-portability series with the existing launcher, Arena, cartridge support,
+audio/performance workers and the twenty functional own-fork PRs. Each PR head
+is retained in the merge history. Historical PR-specific results below retain
+their original scope and pinned reference.
 
 **Publication scope: Gen2Recomped only.** Gen1Recomp is a read-only portability
 reference. Historical results below that use a modified Gen1 reference fork
 are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
-## Current October upstream composition
+## Current fork-main integration
 
-The current production qualification is `70c49224ef5951d0122d8f2795c5c1bbb503b257`,
+The combined regression at `725eb00bdc298d52be51486e52fdff1ed30fcc45` passes
+**559/559 engine suites**, **4/4 SDK suites** and B30. Ten performance/tool
+checks and eight checkpoint/integration suites also pass. The test inventory
+and individual log hashes are recorded in the
+[integration receipt](qa/fork-main-integration.json).
+
+Runtime `fda01a4cb5de970faf054be917d236e8dce34b74` additionally preserves concurrent
+fork-main qualification documents and the latest native Gen2 START/save flow
+from #109. This bounded delta passes **13 affected suites** and an isolated
+native Crystal test: first save, refused overwrite, confirmed overwrite and
+loading the saved party, money and resume metadata in a second process. Five
+captures were inspected. The current inventory has 560 engine suites; the
+full regression above predates this final menu delta.
+
+The regression runtime passes **twelve real GPU runs** across OpenGL and Metal:
+**4,644 checks and 364 frame comparisons** covering performance rendering,
+native battle source/animation, companion drawing, battle chrome and Gen2
+display composition. Performance meshes compare exactly, including a cached
+draw after an uncached fallback. The Gen2 compositor sheets were inspected.
+Synthetic assets exercise the actual engine drawing paths; they do not prove
+unchanged-mod initialization or every gameplay scene.
+
+The combined integration repairs stale/failed bytecode-cache authority and
+uniform-cache re-entry. The original cache failed ten of fifteen authority
+assertions; the original GPU path differed by 255 in a color channel on both
+backends. Repaired checks pass, with zero channel delta in the performance
+GPU comparisons. Earlier interrupted full runs remain separate from this
+successful durable per-suite regression.
+
+The unchanged Battle Art and Legendary packages also rendered a FULL voxel
+Red scene and exited through native quit at the earlier all-PR composition
+`1e27696e880c7e2f2f33ed2b16e16f166cb85895`: no mod errors, companion disposed,
+frame wrappers reduced from twelve to one. Its optional missing
+`horizon-132-west.png` still uses the package's backdrop fallback. This remains
+a prepared-scene check; no full playthrough, all-mod, physical-handheld FPS,
+exact cartridge UI pixel parity or audible-device acceptance is claimed.
+Seven private VASC support-log issues remain open. New unfinished trainer
+decision work from a separate worktree is excluded.
+
+## Historical October portability-only composition
+
+The historical portability-only qualification was `70c49224ef5951d0122d8f2795c5c1bbb503b257`,
 which includes upstream `ed5189c2`, [PR #313](https://github.com/UNDERdecoded/Gen2Recomped/pull/313),
 the portable quit hook in [PR #320](https://github.com/UNDERdecoded/Gen2Recomped/pull/320),
 the [portable battle-style decision](https://github.com/UNDERdecoded/Gen2Recomped/pull/322),

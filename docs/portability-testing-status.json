@@ -1,10 +1,10 @@
 {
-  "runtime_ref": "959a2d78e94f7ae0a3c6ea7a206a6d326c6fb1d6",
+  "runtime_ref": "fda01a4cb5de970faf054be917d236e8dce34b74",
   "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/326",
   "feature_ref": "1ac2846ef8cbe837f6819b22092f0bcbf0cd328c",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 300,
-  "engine_suites_total": 300,
+  "engine_suites_passed": 559,
+  "engine_suites_total": 559,
   "sdk_suites_passed": 4,
   "sdk_suites_total": 4,
   "b30_profile": "passed",
@@ -3623,5 +3623,57 @@
     "boolean_only_negative_assertions": 24,
     "generation_scope": "Gen1 only, matching reference; other generations retain native storage.",
     "full_mod_or_fps_acceptance": false
+  },
+  "historical_snapshot_before_main_integration": {
+    "runtime_ref": "959a2d78e94f7ae0a3c6ea7a206a6d326c6fb1d6",
+    "engine_suites_passed": 300,
+    "engine_suites_total": 300,
+    "sdk_suites_passed": 4,
+    "sdk_suites_total": 4,
+    "b30_profile": "passed"
+  },
+  "qualification_scope": "Full regression at 725eb00bdc298d52be51486e52fdff1ed30fcc45; later native Gen2 START/save delta qualifies separately with 13 affected suites and an isolated native save/restart run. Current inventory has 560 engine suites; a full 560-suite rerun is not claimed.",
+  "fork_main_integration": {
+    "receipt": "docs/qa/fork-main-integration.json",
+    "runtime_ref": "fda01a4cb5de970faf054be917d236e8dce34b74",
+    "complete_regression_ref": "725eb00bdc298d52be51486e52fdff1ed30fcc45",
+    "engine_suites": 559,
+    "post_regression_delta_suites": 13,
+    "current_engine_inventory": 560,
+    "sdk_suites": 4,
+    "B30": true,
+    "merged_own_prs": [
+      22,
+      25,
+      81,
+      88,
+      91,
+      93,
+      97,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111
+    ],
+    "gpu_runs": 12,
+    "gpu_checks": 4644,
+    "gpu_comparisons": 364,
+    "native_crystal_save_restart": true,
+    "limits": [
+      "Prepared scenes and synthetic-asset GPU tests do not certify every mod or a full playthrough.",
+      "Unchanged Legendary package uses its fallback for missing optional horizon-132-west.png.",
+      "No physical handheld performance or audible-device acceptance is claimed.",
+      "Seven private VASC support-log issues remain open.",
+      "Gen1Recomp remains a read-only reference; this publication targets the own Gen2 fork only."
+    ]
   }
 }
