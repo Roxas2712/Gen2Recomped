@@ -1,10 +1,10 @@
 {
-  "runtime_ref": "87cada70e7483120f131b716ea6a370d1158127c",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/313",
-  "feature_ref": "7a8d4c076d51d648aba146a7f15d62c7e7e145ba",
+  "runtime_ref": "77d0294ce20b83168dfce7461f7854df2d5d3cfb",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/320",
+  "feature_ref": "164c1a2dcd2092fd5ea5f4eabc8599d348076a1b",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 294,
-  "engine_suites_total": 294,
+  "engine_suites_passed": 296,
+  "engine_suites_total": 296,
   "sdk_suites_passed": 4,
   "sdk_suites_total": 4,
   "b30_profile": "passed",
@@ -19,7 +19,12 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "PR313 and PR315 require upstream maintainer approval; local acceptance is separate",
+  "hosted_ci": {
+    "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40334289325",
+    "conclusion": "action_required",
+    "jobs": 0,
+    "scope": "Requires upstream maintainer approval; no jobs executed. Local qualification is separate."
+  },
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -3443,5 +3448,62 @@
       "selected_red_scenes_and_staged_battle": true,
       "full_mod_or_fps_acceptance": false
     }
+  },
+  "historical_snapshot_pre_quit_320": {
+    "runtime_ref": "87cada70e7483120f131b716ea6a370d1158127c",
+    "feature_ref": "7a8d4c076d51d648aba146a7f15d62c7e7e145ba",
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/313",
+    "engine_suites_passed": 294,
+    "engine_suites_total": 294
+  },
+  "quit_to_launcher": {
+    "receipt": "docs/qa/quit-to-launcher.json",
+    "runtime_ref": "77d0294ce20b83168dfce7461f7854df2d5d3cfb",
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/320",
+    "source_tree": "cd897adfaddbd6c17eb1d9e7a51741a5ab186af4",
+    "tests_tree": "4f74be4c778971d72e750628d22447e9496295f2",
+    "main_blob": "a939e9628652052f9dffb2cb7ae834de2eb697ea",
+    "engine_tests_tree": "f5a6451cf67d399ac591ef5669b6329b076cec75",
+    "targeted_feature": "107/107",
+    "targeted_composed": "108/108",
+    "shared_native_workers": 16,
+    "shared_composed_workers": 32,
+    "shared_native_paired_observations": 40,
+    "shared_composed_paired_observations": 80,
+    "typed_observations_identical": true,
+    "actual_package_cleanup_checks_per_engine_across_two_modes": 29,
+    "native_gpu_quit": {
+      "exit": 0,
+      "love": [
+        11,
+        5,
+        0,
+        "Mysterious Mysteries"
+      ],
+      "renderer": {
+        "renderer": "OpenGL",
+        "version": "4.1 Metal - 89.4",
+        "vendor": "Apple",
+        "device": "Apple M2"
+      },
+      "log_sha256": "958a0163d362d1203a0d7bac930e96a6cdb7837eefdd74940b648faaaab5c58b",
+      "driver_sha256": "3e4345736644c61d74da648e522236ab08c80e5c7ca09b02849f508347995068",
+      "capture_sha256": "73d813d9c5f9d7e81de39ac3dc22a824f45142f8da1ad51c968adce2531bd375",
+      "quit_result": {
+        "decision": false,
+        "frameHooksBefore": 12,
+        "frameHooksAfter": 1,
+        "errors": 0,
+        "disposed": true
+      },
+      "legacy_migration_disabled": true,
+      "imports_and_packages_unchanged": true
+    },
+    "upstream_preexisting_failed_suites": 11,
+    "upstream_failure_lines_unchanged": true,
+    "composed_engine": "296/296",
+    "composed_sdk": "4/4",
+    "B30": "passed",
+    "scope": "Actual native quit decision/cleanup on selected unchanged Red Battle Art/Interiors; no generic unload, full-mod or FPS claim."
   }
 }

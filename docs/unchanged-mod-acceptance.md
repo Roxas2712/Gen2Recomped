@@ -87,10 +87,37 @@ controlled FPS, handhelds, all maps, complete mods/playthroughs or every
 Legendary add-on. The tested combination contains Battle Art and Interiors
 TEST20; its declared game scope remains Gen1.
 
-The next focused lifecycle gap is `core.quit_to_launcher`: Battle Art registers
-cleanup through that Gen1 hook, while the Gen2 runtime does not dispatch it.
-It is a quit-decision seam, not a general unload event. A separate change needs
-to preserve Gen2's native exit behavior and test the decision/cleanup contract.
+## Native quit cleanup
+
+[PR #320](https://github.com/UNDERdecoded/Gen2Recomped/pull/320) adds the missing
+`core.quit_to_launcher` decision hook. Qualified combined runtime
+`77d0294ce20b83168dfce7461f7854df2d5d3cfb` preserves Gen2's native exit default,
+editor veto and worker shutdown, while allowing a mod to request the existing
+launcher-return path. It is a quit decision, not a general unload event.
+
+The unchanged Battle Art package, alone and with Interiors, passes **29 checks
+per engine across the two configurations** on Gen1, the standalone Gen2 feature
+and the combined runtime. Its actual companion is disposed, 11 owned frame
+wrappers are removed and repeated cleanup is stable. The previous runtime is
+a negative control and fails because it never dispatches the hook.
+
+A further real LÖVE 11.5/OpenGL 4.1 Metal run on Apple M2 renders the FULL voxel
+Pallet scene, captures one inspected image, then lets the driver finish so
+`main.lua` executes the actual quit path. Cleanup disposes the companion,
+reduces its frame wrappers from 12 to one and the process exits zero with no
+mod errors. It uses a fresh isolated identity, null audio, nice 19 and disables
+legacy migration. Normal inputs and package hashes remain unchanged.
+
+The combined runtime passes **296/296** engine suites, **4/4** SDK suites and
+B30. Shared native and unified/API-3 contracts retain identical typed results.
+The standalone upstream base still has 11 unrelated pre-existing failing
+suites; their failure lines are unchanged. See the
+[quit receipt](qa/quit-to-launcher.json) and public consumer probes.
+
+Remaining acceptance includes other profiles/maps/add-ons, complete mod
+lifetimes, controlled performance and the animation/UI/data limitations above.
+Quit cleanup alone does not certify all GPU-resource disposal or a generic
+unload lifecycle.
 
 See the [native graphics receipt](qa/battleart-graphics.json) for run refs,
 capture/log hashes, retained failed fixtures and exact limitations.

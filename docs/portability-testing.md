@@ -17,11 +17,29 @@ authorize publishing upstream Gen1 changes.
 
 ## Current October upstream composition
 
-The current production qualification is `87cada70e7483120f131b716ea6a370d1158127c`,
-which includes upstream `ed5189c2` and [PR #313](https://github.com/UNDERdecoded/Gen2Recomped/pull/313).
-It passes **294/294 engine suites**, **4/4 SDK suites** and B30 with zero
-FAIL lines. The source tree is `18895e11ac92c7339a51e380c3d164ead374cb35`;
-its engine-test tree is `99e534d60fe6c67374b329127e7d5c4f5f9df731`.
+The current production qualification is `77d0294ce20b83168dfce7461f7854df2d5d3cfb`,
+which includes upstream `ed5189c2`, [PR #313](https://github.com/UNDERdecoded/Gen2Recomped/pull/313)
+and the portable quit hook in [PR #320](https://github.com/UNDERdecoded/Gen2Recomped/pull/320).
+It passes **296/296 engine suites**, **4/4 SDK suites** and B30 with zero
+FAIL lines. The source tree is `cd897adfaddbd6c17eb1d9e7a51741a5ab186af4`;
+its engine-test tree is `f5a6451cf67d399ac591ef5669b6329b076cec75`.
+The full test tree is `4f74be4c778971d72e750628d22447e9496295f2`.
+Later publication changes only record qualification evidence. The earlier
+October qualification and its shared-contract counts below retain their own refs.
+
+The quit hook passes **107/107** standalone targeted checks and **108/108**
+in this composition. The upstream feature base retains its **11 pre-existing
+suite failures**, with all existing failure lines unchanged; this combined
+branch includes the earlier repairs. Shared contracts run 16 native and
+32 combined-mode workers across Red, Gold, FireRed and Emerald, comparing
+40 and 80 typed paired observations respectively. The standalone base has
+API 1/2; this composition also exposes the hook through the prior unified/API-3
+capability catalogs. Actual unchanged Battle Art and Interiors cleanup passes
+29 checks per engine across the two package configurations. An isolated
+native LÖVE process renders the full voxel scene, dispatches actual quit,
+disposes the companion, removes 11 frame wrappers and exits zero. This is
+bounded quit acceptance, not a generic unload or full-mod/FPS certification.
+See the [quit qualification receipt](qa/quit-to-launcher.json).
 
 Two merge boundaries retain both behaviors: `screen.render_visible` runs
 inside the native DS supersampling draw loop, and battle completion keeps

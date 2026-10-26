@@ -56,3 +56,25 @@ bridges and replaces no production engine/mod callback. Its action image does
 not establish visual animation correctness. Inspect captures before claiming
 appearance acceptance; the receipt retains UI, data-format and asset warnings.
 Audio quality, physical controllers and performance remain outside this scope.
+
+
+## Quit cleanup probes
+
+`battleart-quit.lua` takes the verified package-source parent, imported Red
+asset directory, and `host` or `combined`, in that order. It uses the real SDK,
+Loader and quit bridge with hardware/persistence doubles; it checks actual
+CompanionLifecycle cleanup and idempotence. No mod production code is changed.
+
+`battleart-native-quit.lua` uses the same isolated native graphics setup above.
+It renders FULL Pallet terrain, writes `before-native-quit.png`, installs an
+observational wrapper and returns normally. The engine's driver completion
+requests quit; the observer verifies the actual native quit dispatch and
+package cleanup. It does not replace `love.quit` or the package disposer.
+The accepted run exits zero and prints `QUIT_NATIVE_GPU_RESULT` with a false
+exit decision, disposed companion and frame-wrapper count dropping from 12
+to one. Check process completion and inspect the capture. This is not an
+FPS, generic-unload or all-resource-disposal test.
+
+The formatted probes have identical stripped LuaJIT bytecode to the executed
+originals. The [quit receipt](../quit-to-launcher.json) pins original driver,
+log and capture hashes and records standalone/composed scope separately.
