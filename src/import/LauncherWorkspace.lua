@@ -6,6 +6,7 @@ local Sidebar = require('src.import.LauncherSidebar')
 local Library = require('src.import.LauncherLibrary')
 
 Workspace.CATEGORIES = {
+  {id="setup",name="Setup & guide",note="Language, your look and a guided introduction.",icon="news"},
   {id='launcher',name='RetroRecomped',note='Intro seasons, cartridge labels, appearance and game storage.',icon='games'},
   {id='game',name='Picture & sound',note='Display, audio and defaults for every generation.',icon='speaker'},
   {id='controls',name='Controls',note='Configure the on-screen pad and its layout.',icon='games'},

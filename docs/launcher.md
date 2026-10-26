@@ -5,6 +5,43 @@ that runs before `Game:load`. Besides ROM import (see the file's own header)
 it hosts a tabbed shell covering per-game save slots and a mod manager. This
 file documents the runtime model; the visual spec lives separately.
 
+## First start and transfer feedback
+
+`FirstRun` opens once per installation after the startup intro. The five pages
+cover language, a live launcher theme/accent preview, importing games and
+cartridge artwork, local versus cloud saves, and optional native account
+registration/sign-in. Skip and Play locally persist a local-save choice;
+reopening Settings → Setup & guide preserves existing cloud consent. Setup
+completion is saved only after a successful options write. Keyboard,
+controller and tap-versus-scroll touch navigation stay inside the guide.
+
+Reviewed German essentials in `translation/LauncherCatalog.lua` work offline
+and override machine-generated translations. Additional interface text and
+languages retain the on-device translation service. Translate before wrapping
+or ellipsizing text. Arrow glyphs absent from the default LÖVE face have ASCII
+fallbacks; player-entered names are otherwise left unchanged.
+
+`SyncStatus` provides account-scoped, session-only feedback in the Library,
+storage settings and in-game menu. A completed upload is required for the
+Available on your other devices state. Failed, cancelled and conflicting
+transfers retain local copies and expose Retry. Retrying an in-game transfer
+uploads the existing saved copy without creating a different snapshot. Batch
+failures cannot be displayed as a completely successful sync.
+
+Restore on an already-linked device refreshes normal saves before exact
+suspends. Restore never uploads; competing local progress is preserved as a
+separate slot. Private game transfers exclude locally compiled `.luac` files
+and their metadata when validated source `.lua` data exists. Each target
+builds its own bytecode cache. Suspend content fingerprints enumerate the
+selected private import and hash canonical paths, so identical restored data
+has the same identity as a local import.
+
+For an isolated native HTTPS handoff including the actual game transfer, run
+`tools/qualify_cloud_suspend.py --private-game-cache` with the documented
+backend/runtime/certificate/cache arguments. Its second fresh profile starts
+without imported game data and restores it from the account-private API.
+This is a desktop simulation, not physical Android/iOS qualification.
+
 ## Android multi-ROM / mod / save import
 
 On Android, `love.system.pickFile([kind])` opens the Storage Access Framework
