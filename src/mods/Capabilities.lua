@@ -53,7 +53,7 @@ add("events", "12345", [[
   world.object_toggled world.stepped world.tick world.tod_changed world.trainer_engaged
 ]])
 add("events", "2345", "pokemon.egg_hatched")
-add("events", "12", "checkpoint.restored")
+add("events", "12345", "checkpoint.restored")
 add("events", "2", "clock.day_changed")
 add("events", "2", "radio.channel phone.call_received apricorn.converted breeding.egg_created egg.hatched happiness.changed pokerus.infected roamer.encountered roamer.moved unown.unlocked bug_contest.scored intro.boot.copyright intro.boot.gamefreak intro.boot.movie intro.boot.movie_ended intro.boot.title")
 add("events", "12", [[

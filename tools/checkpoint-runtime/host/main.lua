@@ -119,13 +119,11 @@ local function qualify()
         check(state == future[frame][2],'actual spinner RNG continuation frame '..frame)
       end
       local pool,save,map,state = World.npcPool,Game.save,World.map,host.math.getRandomState()
-      local rebuild = World._checkpointRebuild
-      World._checkpointRebuild = function(self,...)
-        rebuild(self,...)
-        self.npcPool[ids[1]]=nil
-      end
+      local Actors=require('src.core.CheckpointActors')
+      local apply=Actors.apply
+      Actors.apply=function(...)apply(...);error('intentional failure after native actor apply')end
       local restored,why = checkpoints:restore(Game,spin)
-      World._checkpointRebuild = rebuild
+      Actors.apply=apply
       check(not restored and why == 'restore_failed','partial native spinner apply fails closed')
       check(World.npcPool == pool and Game.save == save and World.map == map,'partial spinner rollback retains native owners')
       check(Maps.load(Game.data,'FIX_TOWN') == map,'partial spinner rollback retains map cache')
@@ -134,7 +132,8 @@ local function qualify()
         spinnerModes=4,spinnerFrames=384,spinnerRngContinuation=true,spinnerPartialRollback=true}
     end
   end
-  return {passed=true,checks=checks,cases=cases,loveVersion={host.getVersion()},
+  local continuation=dofile(root..'/tools/checkpoint-runtime/continuation.lua')(check)
+  return {passed=true,checks=checks,cases=cases,continuation=continuation,loveVersion={host.getVersion()},
     realLoveMath=true,graphicsSubstituted=true,syntheticContent=true,playerProfilesUsed=false}
 end
 function host.load()
