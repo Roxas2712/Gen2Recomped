@@ -27,9 +27,9 @@ local phrases = {
   ["You don't have enough points!"] = "POOR",
   ["Athlete Pts."] = "POINTS",
   ["%sP"] = "%s:PTS",
-  ["An Egg cannot be transferred."] = "EGG_REFUSAL",
-  ["A Pokémon holding an item cannot\nbe transferred."] = "ITEM_REFUSAL",
-  ["This Pokémon knows a hidden move.\nIt cannot be transferred."] = "HM_REFUSAL",
+  ["An Egg cannot be transferred."] = "NO_EGG",
+  ["A Pokémon holding an item cannot\nbe transferred."] = "NO_ITEM",
+  ["This Pokémon knows a hidden move.\nIt cannot be transferred."] = "NO_HM",
   ["Medals won by\n%s"] = "%s:MEDALS",
 }
 local originalVersion = Version.get()
@@ -95,9 +95,9 @@ for _, tag in ipairs({ "FIRST", "RELOADED" }) do
   game.data.text[Text.label(435, 48)] = nil
   Version.set("black")
   for _, case in ipairs({
-    { { species = 1, isEgg = true }, "EGG_REFUSAL" },
-    { { species = 1, item = 1 }, "ITEM_REFUSAL" },
-    { { species = 1, moves = { { id = 15 } } }, "HM_REFUSAL" },
+    { { species = 1, isEgg = true }, "NO_EGG" },
+    { { species = 1, item = 1 }, "NO_ITEM" },
+    { { species = 1, moves = { { id = 15 } } }, "NO_HM" },
   }) do
     local screen = setmetatable({ game = game, picks = {}, srcData = {} }, Transfer)
     screen:toggle({ raw = case[1] })
