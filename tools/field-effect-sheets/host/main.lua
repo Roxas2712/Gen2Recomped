@@ -10,9 +10,17 @@ function love.load()
  local F=require('src.core.game3.field_effects');local V=require('src.core.GameVersion')
  local Assets=require('src.render.Assets');local Host=require('src.mods.Runtime')
  local readbacks,comparisons=0,0
- local function read(canvas)
-  local data=g.readbackTexture and g.readbackTexture(canvas)or canvas:newImageData()
-  local bytes=data:getString();data:release();readbacks=readbacks+1;return bytes
+ local function read(texture)
+  -- Some native backends cannot read an uploaded Image directly. Stage its
+  -- actual GPU pixels through a render target, preserving all draw state.
+  local w,h=texture:getDimensions()
+  local target=g.newCanvas(w,h,{format='rgba8',dpiscale=1,msaa=0})
+  g.push('all');g.origin();g.setCanvas(target);g.setShader();g.setScissor()
+  g.clear(0,0,0,0);g.setColor(1,1,1,1);g.setBlendMode('replace','premultiplied')
+  g.draw(texture,0,0);g.pop()
+  local data=g.readbackTexture and g.readbackTexture(target)or target:newImageData()
+  local bytes=data:getString();data:release();target:release()
+  readbacks=readbacks+1;return bytes
  end
  local function pixels(w,h,seed)
   local rows={}
