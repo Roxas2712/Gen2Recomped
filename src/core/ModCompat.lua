@@ -71,6 +71,8 @@ ModCompat.ALIASES = {
   ["src.ui.gen2.NamePick"] = "src.ui.Gen2NamePick",
   ["src.ui.gen2.SaveMenu"] = "src.ui.Gen2SaveMenu",
   ["src.core.gen2.Decorations"] = "src.compat.gen2.Decorations",
+  ["src.core.gen2.Clock"] = "src.core.Gen2Clock",
+  ["src.ui.gen2.InitClock"] = "src.ui.Gen2InitClock",
   ["src.core.gen2.BugContest"] = "src.world.BugContest",
   ["src.core.gen2.ItemEffects"] = "src.inventory.ItemEffects",
   ["src.core.gen2.Save"] = "src.core.SaveData",
@@ -102,7 +104,8 @@ ModCompat.ALIASES = {
 
   -- the Gold port splits its Game class per generation; this one does not
   ["src.core.Game2"] = "src.core.Game",
-  ["src.render.GbcPalette"] = "src.render.GBCFX",
+  -- Indexed image palettes and LCD screen effects are different contracts.
+  ["src.render.GbcPalette"] = "src.render.Gen2PaletteDraw",
 }
 
 local seen = {}
