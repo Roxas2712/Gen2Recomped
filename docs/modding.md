@@ -494,3 +494,20 @@ GBA contract and the remaining Gold/DS boundaries.
 
 [Portable charge decisions](portable-charge-required.md) document
 `battle.charge_required`, native first-turn/release rules and remaining PP-policy differences.
+
+### Battle style decision (Gen 1)
+
+`battle.style` wraps the native SHIFT/SET choice before a trainer sends out
+its next Pokemon. `function(next, battle)` returns `"shift"` or `"set"`;
+`next(battle)` reads the saved option without modifying it. Other return
+values fall back to the saved choice. The normal party-count and live-active
+Pokemon gates still apply. The decision is not queried after the last enemy
+faints. Gen 2 and later keep their existing native policy; this hook has the
+same Gen-1 availability as the reference engine.
+
+See `examples/portable_battle_style`. ROM-free checks:
+
+```sh
+luajit tests/engine/battle_style.lua
+luajit tests/engine/trainer_shift_prompt_bug565.lua
+```
