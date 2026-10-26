@@ -472,8 +472,7 @@ function StartMenu:open(id)
 end
 function StartMenu:drawsWidescreen() return false end
 function StartMenu:drawWidescreen(width, height)
-  return require('src.render.ScreenSpaceUI').classic(function() self:draw() end,
-    require('src.render.Renderer'), width, height)
+  return Chrome.withOverlayPanel(width,height,function() self:draw() end)
 end
 
 StartMenu.ITEMS = ITEMS
