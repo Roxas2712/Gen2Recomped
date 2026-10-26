@@ -912,6 +912,12 @@ GameVersion.VERSIONS = {
     experimentalLabel = "ALPHA",
     hasRunning = true,
   },
+  ruby = {
+    id = "ruby", generation = 3, label = "Ruby", displayName = "Pokemon Ruby",
+    launcherName = "Ruby", sha1 = "f28b6ffc97847e94a6c21a63cacf633ee5c8df1e",
+    manifest = "tools/rom_manifest_ruby.json", cachePrefix = "ruby/", saveSuffix = "_ruby",
+    importable = true, experimental = true, experimentalLabel = "ALPHA", hasRunning = true,
+  },
 
   emerald = {
     id = "emerald",
@@ -1091,7 +1097,7 @@ GameVersion.VERSIONS = {
 -- put a Game Boy Advance game behind two Game Boy Color hacks, and broke the
 -- ordering rule tests/polished_crystal_registration_test.lua asserts.
 GameVersion.ORDER = { "red", "blue", "yellow", "gold", "silver", "crystal",
-                      "firered", "leafgreen", "emerald", "platinum",
+                      "firered", "leafgreen", "ruby", "emerald", "platinum",
                       "heartgold", "soulsilver", "black", "white",
                       "prism", "polishedcrystal" }
 
