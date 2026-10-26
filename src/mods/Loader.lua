@@ -36,7 +36,7 @@ Loader.__index = Loader
 -- stream service is available but not yet driven by loader retirement.
 local function retireBattlePresentation()
   local first
-  for _,name in ipairs({'src.core.game3.battle','src.core.game3.pokemon','src.core.game3.mon_anim'})do
+  for _,name in ipairs({'src.core.game3.battle','src.core.game3.battle.anim','src.core.game3.battle.anim_coords','src.core.game3.pokemon','src.core.game3.mon_anim'})do
     local module=package.loaded[name];local service=type(module)=='table'and module._service
     if type(service)=='table'and type(service.release)=='function'then
       local ok,why=pcall(service.release,service)

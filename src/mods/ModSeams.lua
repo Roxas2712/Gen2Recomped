@@ -116,7 +116,7 @@ function ModSeams.open(owner)
     local function require2(name, ...)
       local had = package.loaded[name]
       local result = real(name, ...)
-      if name=='src.core.game3.battle' then
+      if name=='src.core.game3.battle' or type(name)=='string' and name:match('^src%.core%.game3%.battle%.') then
         local facade=package.loaded['src.core.Game3'] or real('src.core.Game3')
         if facade and facade._observeMod then facade._observeMod(owner)end
         local watched=false

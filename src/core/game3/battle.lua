@@ -118,6 +118,9 @@ function M._nativeUpdate(screen,dt,body)
     if ui then return ui._nativeUpdate(screen,dt,native)end
     return native(screen,dt)
   end,function()
+    local anim=package.loaded['src.core.game3.battle.anim']
+    if anim then anim._nativeStep(screen,dt)end
+    if not admitted(c)or c.stack:top()~=screen then return false,'native battle admission retired'end
     local result=call('update',dt,require('src.core.Game3').forNative(c.game))
     if admitted(c)and c.stack:top()==screen then c.views:flush()end
     return result
@@ -159,7 +162,12 @@ function M._nativeField(screen,body)
     return require('src.core.Game3')._withCallbackOwner(nil,body,owner)
   end)
 end
-function M._nativeExit(screen)captures[screen]=nil;runtime:exit(screen)end
+function M._nativeExit(screen)
+  captures[screen]=nil
+  local anim=package.loaded['src.core.game3.battle.anim']
+  if anim then anim._nativeExit(screen)end
+  runtime:exit(screen)
+end
 -- Private typed consumers can resolve a source observation to the same native
 -- admission; callers cannot submit another state or a stale completed view.
 function M._screen(view)
