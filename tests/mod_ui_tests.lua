@@ -281,6 +281,7 @@ local function optGame()
   }
 end
 local om = OptionsMenu.new(optGame())
+local VANILLA_COUNT = #om.rows
 local WANT_IDS = { "stereo", "textSpeed", "animations", "battleStyle", "battleLayout",
                    "ruleset", "musicVol", "sfxVol", "musicFilter", "performance", "colors",
                    "tilt", "gbcfx", "zoom", "voidFill", "videoMode", "fpsCap", "vsync",
@@ -307,8 +308,9 @@ row("ruleset").step(om.game, 1)
 check(om.game.save.options.ruleset == "modern_clean",
   "ruleset row cycles sorted registry ids")
 row("ruleset").step(om.game, 1)
-check(om.game.save.options.ruleset == "gen1_faithful",
-  "hidden rulesets are excluded from the cycle")
+check(om.game.save.options.ruleset == false,"rulesets cycle through AUTO")
+row("ruleset").step(om.game,1)
+check(om.game.save.options.ruleset == "gen1_faithful","hidden rulesets remain excluded after AUTO")
 
 -- stepping parity with the old per-index ladder
 row("textSpeed").step(om.game, 1)
@@ -405,11 +407,11 @@ check(getmetatable(bm) == BindingsMenu,
   "the CONTROLS row opens the rebind list")
 check(bm.screenId == "BindingsMenu",
   "the pushed rebind screen carries its screen id")
-check(#bm.items == 8, "one row per logical button")
+check(#bm.items == 12, "the complete logical pad is visible")
 check(bm.items[1].label == "UP" and bm.items[1].right == "UP/D-UP"
-  and bm.items[5].label == "A" and bm.items[5].right == "Z/A"
-  and bm.items[7].label == "START" and bm.items[7].right == "ESC/START"
-  and bm.items[8].label == "SELECT" and bm.items[8].right == "TAB/BACK",
+  and bm.items[5].label == "A" and bm.items[5].right == "Z/"..require("src.core.GamepadMap").buttonLabel(require("src.core.GamepadMap").defaultPadForAction("a"))
+  and bm.items[9].label == "START" and bm.items[9].right == "ESC/START"
+  and bm.items[10].label == "SELECT" and bm.items[10].right == "TAB/BACK",
   "with no rebind the rows mirror the fixed map, key and pad both (#589)")
 check(cbGame.save.options.bindings == nil,
   "opening the screen alone writes nothing")
@@ -470,7 +472,7 @@ hooks:removeOwner("fixture")
 
 hooks:wrap("ui.options.rows", function() return "nope" end, 0, "bad")
 om = OptionsMenu.new(optGame())
-check(#om.rows == #OptionsMenu.new(optGame()).rows, "a non-table rows result keeps the vanilla rows")
+check(#om.rows == VANILLA_COUNT, "a non-table rows result keeps the vanilla rows")
 hooks:removeOwner("bad")
 
 -- ------- ui.party.submenu
@@ -1197,7 +1199,9 @@ check(uiLoader:load({}) == true, "the uikit fixture loads clean")
 local uiApi = _G.MOD_UI_API
 _G.MOD_UI_API = nil
 check(uiApi ~= nil, "the entry chunk received its api")
-check(uiApi.ui == ModUI, "mod.ui is the toolkit facade")
+for key,value in pairs(ModUI)do
+  check(uiApi.ui[key]==value,"scoped mod.ui retains toolkit member "..key)
+end
 check(uiApi.ui.Theme == Theme, "mod.ui.Theme reaches the theme module")
 check(uiApi.ui.Menu == require("src.ui.Menu"),
   "mod.ui widgets resolve through the loader-built api")
