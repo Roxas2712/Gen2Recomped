@@ -576,11 +576,18 @@ local function gen2PalColors(tileset, row)
   return byTod[row] or byTod.DAY or tileset.palColors
 end
 
+local function gen2DisplayRows(rows, row)
+  if not (rows and require("src.core.GameVersion").isGen2()) then return rows end
+  local out = {}
+  for i, colors in ipairs(rows) do out[i] = PaletteFX.gen2BakeColors(colors, row == "DARK") end
+  return out
+end
+
 -- One atlas per (tileset image, COLORS mode, time of day).  Leaving the mode
 -- out of this key is why switching COLORS did nothing out in the Gen2
 -- overworld: the first bake won and every later mode kept being handed it.
 local function gen2AtlasKey(imagePath, roof, special, row)
-  return imagePath .. "#gen2pal:" .. tostring(PaletteFX.mode) .. ":"
+  return imagePath .. "#gen2pal:" .. PaletteFX.displayKey() .. ":"
     .. tostring(row or PaletteFX.effectiveGen2Tod())
     -- TWO MAPS ON ONE TILESET ARE TWO DIFFERENT PICTURES once the roof is in
     -- it.  Violet and Azalea share TilesetJohto1 and wear different roofs, so
@@ -744,6 +751,7 @@ function TileRenderer.gen2AtlasFor(tileset)
   if not (tileset.palMap and #tileset.palMap > 0) then return nil end
   if not PaletteFX.usesGen2BgPal() then return nil end
   local colors = gen2PalColors(tileset)
+  colors = gen2DisplayRows(colors, PaletteFX.effectiveGen2Tod())
   if not (colors and #colors > 0) then return nil end
   local perRow = tileset.tilesPerRow
   if not perRow or perRow < 1 then return nil end
@@ -1343,6 +1351,7 @@ function TileRenderer.new(map, data)
     -- tileset would otherwise overwrite each other's roof.
     local roof = gen2RoofFor(map, data,gen2Row)
     gen2Colors=require('src.render.Gen2PaletteContext').withRoof(gen2Colors,roof)
+    gen2Colors=gen2DisplayRows(gen2Colors,gen2Row)
     local key = gen2AtlasKey(map.tileset.image, roof, specialKey,gen2Row)
     local gen2img = getGen2Atlas(key, map.tileset.image, map.tileset.tilesPerRow,
                                  map.tileset.palMap, gen2Colors,

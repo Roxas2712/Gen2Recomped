@@ -1,21 +1,23 @@
--- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
+-- Copyright (c) 2026 Roxas2712. See contribution permission:
+-- https://github.com/Roxas2712/Gen2Recomped/blob/7867399c753186778bd4b8816ba37573357e4b40/LICENSE-ROXAS2712.md
 -- Indexed image drawing, separate from the LCD post-process in GBCFX.
 -- Palette resolution uses the native display/register state in PaletteFX.
 local Palettes = require("src.render.PaletteFX")
 local Version = require("src.core.GameVersion")
 local M = {}
--- Consumers use this view to leave already-coloured pictures untouched.
--- Gen2 currently resolves native ROM colours regardless of the Gen1 mode.
--- Do not invent a second mutable display setting for the external renderer.
+-- Display state belongs to the same owner as the native map/OBJ/pic bakes.
 setmetatable(M, {__index = function(_, key)
   if key == "mode" then
-    if Version.isGen2() then return "gbc" end
+    if Version.isGen2() and Palettes.mode == "custom" then return "custom" end
     if Palettes.mode == "og" or Palettes.mode == "og_inv" then return "dmg" end
     return Palettes.mode == "classic" and "classic" or "gbc"
   end
   if key == "bgp" then return Palettes.bgp() end
+  if key == "customRamp" then return Palettes.customRamp() end
 end, __newindex = function(self, key, value)
   if key == "bgp" then Palettes.setBgp(value)
+  elseif key == "mode" then M.setMode(value)
+  elseif key == "customRamp" then Palettes.setCustomRamp(value)
   else rawset(self, key, value) end
 end})
 local compiler, shaders, failed = nil, {}, {}
@@ -106,6 +108,19 @@ M.BGP_IDENTITY = Palettes.BGP_IDENTITY
 M.bgpShades = Palettes.bgpShades
 M.remap = Palettes.remap
 M.setBgp = Palettes.setBgp
+M.MODES = {"gbc", "dmg", "classic"}
+M.MODE_LABELS = {gbc="GEN 2", dmg="DMG", classic="CLASSIC", custom="CUSTOM"}
+M.CUSTOM_MODE = "custom"
+M.setCustomRamp = Palettes.setCustomRamp
+M.presentColors = Palettes.presentColors
+function M.setMode(mode)
+  if mode~="gbc" and mode~="dmg" and mode~="classic" and mode~="custom" then mode="gbc" end
+  Palettes.setMode(mode)
+  return M.mode
+end
+function M.cycle(delta) Palettes.cycleMode(delta); return M.mode end
+function M.applyOptions(opts) Palettes.applyOptions(opts); return M.mode end
+function M.modeLabel(mode) return M.MODE_LABELS[mode or M.mode] or "GEN 2" end
 function M.resolve(colors) return Palettes.displayColors(colors) end
 function M.color(colors, index)
   local palette = Palettes.effectiveColors(colors or Palettes.GRAYS)

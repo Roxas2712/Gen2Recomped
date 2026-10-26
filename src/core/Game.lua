@@ -1171,7 +1171,11 @@ function Game:_draw()
   end
   -- 14's render.zones: weather/lighting overlays and custom colorization
   -- recolor or add zones before the blit
-  if ModRuntime.wantsHook("render.zones") then
+  if require("src.core.GameVersion").isGen2() then
+    Renderer.gen2FrameManaged = true
+    Renderer.gen2FrameGame = self
+    Renderer.gen2FrameZones = require("src.render.Gen2Presentation").zones(self)
+  elseif ModRuntime.wantsHook("render.zones") then
     zones = ModRuntime.call("render.zones", sameZones, self, zones)
   end
   -- Keyed to whether the map actually DREW, not to whether it is the clear's
@@ -1408,7 +1412,7 @@ function Game:keypressed(key)
         or ow.engaging or ow.emote)))
     if not busy then
       local PaletteFX = require("src.render.PaletteFX")
-      self.save.options.colors = PaletteFX.cycleMode()
+      PaletteFX.writeColorOption(self.save.options, PaletteFX.cycleMode())
       self:writeOptions()
     end
     return
