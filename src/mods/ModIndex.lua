@@ -527,6 +527,7 @@ function ModIndex.writeCache(feed, index)
     opts.modIndexCache[feed] = {
       checkedAt = os.time(),
       generatedAt = index.generatedAt,
+      week = index.week,
       categories = index.categories,
       mods = index.mods,
     }

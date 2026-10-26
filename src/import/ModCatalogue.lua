@@ -171,7 +171,7 @@ function M.install(RI)
     else
     for gen=0,5 do
       local label=gen==0 and 'All generations' or ('Gen '..gen)
-      local bw=self.hintFont:getWidth(label)+22*s
+      local bw=self.hintFont:getWidth(L(label))+22*s
       if gx+bw>x+w then gx=x;y=y+40*s end
       local r=action('generation',label,gx,y,bw)
       r.generation=gen>0 and gen or nil
@@ -187,7 +187,7 @@ function M.install(RI)
       else actions={{'categories','Categories',120},{'options','More…',92}} end
     end
     for _,a in ipairs(actions) do
-      local bw=a[3]*s;if bx+bw>x+w then bx=x;y=y+44*s end
+      local bw=math.min(w,math.max(a[3]*s,self.hintFont:getWidth(L(a[2]))+28*s));if bx+bw>x+w then bx=x;y=y+44*s end
       action(a[1],a[2],bx,y,bw);bx=bx+bw+8*s
     end
     y=y+48*s
@@ -212,7 +212,7 @@ function M.install(RI)
     y=y+chipH+20*s
     end
     local filtered,approximate=self:_findRows();approximate=approximate or 0
-    text(('%d results%s'):format(#filtered,approximate>0 and (' · '..approximate..' similar spelling') or ''),x,y,w,self.hintFont,P.warning);y=y+fh+12*s
+    text(L('%d results'):format(#filtered)..(approximate>0 and (' · '..L('%d similar spelling'):format(approximate)) or ''),x,y,w,self.hintFont,P.warning);y=y+fh+12*s
     local installed,available=M.sections(self.mods,filtered,{query=self.findQuery,category=self.findCategory,generation=self.catalogGeneration})
     -- Placement buttons only open their disclosed destination when clicked.
     -- They cannot install mods, inject code or change the catalogue search.
@@ -242,9 +242,9 @@ function M.install(RI)
     local coverH=cw*.49
     local cardH=coverH+170*s+fh*2
     local function section(title,rows,owned)
-      text(title..'  /  '..#rows,x,y,w,self.stateFont,owned and P.green or P.ink);y=y+self.stateFont:getHeight()+14*s
+      text(L(title)..'  /  '..#rows,x,y,w,self.stateFont,owned and P.green or P.ink);y=y+self.stateFont:getHeight()+14*s
       if #rows==0 then
-        text(owned and 'Your installed mods appear here. Discover your next one below.' or (self._communityFindJob and 'Loading the public catalogue…' or 'No matching mods. Try another search or refresh.'),x,y,w)
+        text(owned and 'Your installed mods appear here. Discover your next one below.' or (self._communityFindJob and 'Loading the public catalogue…' or self.findNotice and not self.findNotice.ok and 'Catalogue unavailable. Retry to load the mod cards.' or 'No matching mods. Try another search or refresh.'),x,y,w)
         y=y+fh+18*s;return
       end
       if owned then
@@ -304,7 +304,8 @@ function M.install(RI)
     section('Installed',installed,true);section('Discover mods',available,false)
     if self.findNotice then
       g.setFont(self.hintFont);U.col(self.findNotice.ok and P.detail or P.red)
-      local _,lines=self.hintFont:getWrap(self.findNotice.text,w);g.printf(self.findNotice.text,x,y,w,'left');y=y+#lines*fh+16*s
+      local message=L(self.findNotice.text);local _,lines=self.hintFont:getWrap(message,w);g.printf(message,x,y,w,'left');y=y+#lines*fh+16*s
+      if not self.findNotice.ok then action('refresh','RETRY CATALOGUE',x,y,math.min(w,260*s));y=y+48*s end
     end
     self._findMax=0;return y-top
   end
