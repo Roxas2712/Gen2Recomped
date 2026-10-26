@@ -43,6 +43,17 @@ Main subsequently gained native frame pacing, so this remains a diagnostic
 source. The newer composition needs its own runtime/GPU acceptance before
 publication. The existing preview still ships presentation source4be92945.
 
+The frame-pacing composition `8c7c4193` passes425/425 engine suites,
+SDK3/3, all quick tiers and four-platform qualification40254388073. Fresh
+Crystal/unchanged Johto runs pass71 checks per backend; all12 OS windows
+were individually inspected. The first private starter was rejected before
+engine_main because its bounded Lua identity pattern retained the previous
+QA name; the corrected pattern was preflighted and both exact-source runs
+completed. See the [paced receipt](qa/native-foundation/johto-native-radio-audio-paced.json).
+Main then gained checkpoint/GC/provider integration in bc5b05a8. That new
+composition needs fresh qualification; none of these diagnostic results
+are extended to it or substituted for public release acceptance.
+
 This change covers station entry/exit and the native story gate. Complete
 ROM-driven show text, timing, schedules, intermediate jingles and music-show
 choices are still open. Device-free tests do not establish audible hardware

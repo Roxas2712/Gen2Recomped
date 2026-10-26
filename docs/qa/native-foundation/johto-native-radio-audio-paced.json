@@ -1,0 +1,131 @@
+{
+  "sourceCommit": "8c7c41939bab9817554b26121dcb2f0ca9c80181",
+  "qualificationRun": 40254388073,
+  "status": "scoped diagnostic accepted; newer main checkpoint/GC composition requires fresh qualification",
+  "sourceEngineSuites": "425/425",
+  "sdkSuites": "3/3",
+  "actualCrystal": true,
+  "unchangedSuppliedModFiles": 27329,
+  "modOriginalUnmodified": true,
+  "modCopySourceFilesUnmodified": true,
+  "romOriginalUnmodified": true,
+  "imagesInspected": 12,
+  "osImageSha256": [
+    "f50a86dc5f4d52ff97a31118231482b6c38587c09fee041cfd657fc5443f7556",
+    "f91688e121a6c25e90d0224ac1b7c72a776a33335d78c43ac90b2dc9b8a9b989",
+    "572dace0ac57d4ecc666d369538f58510a58154b56dfaffa0cb94cbf3df4399e",
+    "e90a1b2fd00cb1ecfb84af9fc9eca44d55998c0631c99d91ef3b7483d2391a26",
+    "1cc16f1443b8df42c24f45f40adccb175d434072f4ef86c5a7d8102c30e0d340",
+    "7e940c668df45983711a04db5911d3ca8c374034821e86cce03dc2a8a152572f",
+    "9aaa9a9abafb49e0095a34f92f3f737b0503cf7da6cd1e4b484aee435f1530a2",
+    "67ea6ab503d39dcfcad46480088eb44ccc53a5d274f77a0d8e5f933e35cbba91",
+    "f2e0477b2ff062b10b622c5a77e180d413d1738485e0ee411968e2dd4abad92f",
+    "38cedbbb1c371efb618e8be40cbbf33d1485ebb7ce656303475b0427520cd1e5",
+    "68f255a1fbac8cb887ddb11b0b356d10e1234c4b0bfaaf411b9057455210ec7e",
+    "c000557f1f1daa6900e76d8d57fc999f5abce16cbf31ccbf0ef4e973d66616a4"
+  ],
+  "backends": [
+    {
+      "backend": "opengl",
+      "checks": 71,
+      "actualAudio": [
+        {
+          "importedOperand": [
+            "special",
+            96,
+            "SnorlaxAwake"
+          ],
+          "camera": "third",
+          "map": "VERMILION_CITY",
+          "fluteSong": "Music_PokeFluteChannel",
+          "deviceSourcePlaying": true,
+          "signalFrames": 22050,
+          "signalPeak": 0.249977111117893,
+          "signalRms": 0.10747208598738195,
+          "wrongCell": [
+            32,
+            8
+          ],
+          "adjacent": [
+            33,
+            8
+          ]
+        },
+        {
+          "importedOperand": [
+            "special",
+            96,
+            "SnorlaxAwake"
+          ],
+          "camera": "first",
+          "map": "VERMILION_CITY",
+          "fluteSong": "Music_PokeFluteChannel",
+          "deviceSourcePlaying": true,
+          "signalFrames": 22050,
+          "signalPeak": 0.249977111117893,
+          "signalRms": 0.10747208598738195,
+          "wrongCell": [
+            32,
+            8
+          ],
+          "adjacent": [
+            33,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "backend": "metal",
+      "checks": 71,
+      "actualAudio": [
+        {
+          "adjacent": [
+            33,
+            8
+          ],
+          "fluteSong": "Music_PokeFluteChannel",
+          "map": "VERMILION_CITY",
+          "signalFrames": 22050,
+          "signalPeak": 0.249977111117893,
+          "signalRms": 0.10747208598738195,
+          "wrongCell": [
+            32,
+            8
+          ],
+          "importedOperand": [
+            "special",
+            96,
+            "SnorlaxAwake"
+          ],
+          "camera": "third",
+          "deviceSourcePlaying": true
+        },
+        {
+          "adjacent": [
+            33,
+            8
+          ],
+          "fluteSong": "Music_PokeFluteChannel",
+          "map": "VERMILION_CITY",
+          "signalFrames": 22050,
+          "signalPeak": 0.249977111117893,
+          "signalRms": 0.10747208598738195,
+          "wrongCell": [
+            32,
+            8
+          ],
+          "importedOperand": [
+            "special",
+            96,
+            "SnorlaxAwake"
+          ],
+          "camera": "first",
+          "deviceSourcePlaying": true
+        }
+      ]
+    }
+  ],
+  "scope": "Actual Crystal and unchanged supplied Johto; staged intro/maps/EXPN/card/cameras. Real device Sources, independently decoded non-silent PCM, imported wall-radio and Snorlax operands, first/third and map ownership after close/change. All twelve OS-window images individually inspected. Metal warning overlays remain. Not manual listening, original story-trigger, full ROM shows, Windows/Intel GPU or full playthrough. Main gained checkpoint/GC/provider code after this source; this is diagnostic, not final composed release acceptance.",
+  "rejectedAttempt": "Old escaped QA profile prefix assertion stopped first start before engine_main; bounded corrected prefix preflight passed, rerun exact source/runtime."
+}
