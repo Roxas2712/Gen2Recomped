@@ -66,8 +66,8 @@ local function ordered(loader,overrideId,overrideRow,defer)
     if a.value.index~=b.value.index then return a.value.index<b.value.index end
     return a.id<b.id
   end)
-  local records={};for i,entry in ipairs(out)do records[i]=entry.value end
-  return records,normalized
+  local records,ids={},{};for i,entry in ipairs(out)do records[i]=entry.value;ids[i]=entry.id end
+  return records,normalized,ids
 end
 function M.validate(loader)
   if loader:_generation()~=2 then return{}end
@@ -94,8 +94,37 @@ function M.prepare(loader,data)
   local history=data and previous[data]
   if history and data.map_scripts==history.pool then
     local pool=history.pool
-    if pool.apricornBalls==history.rows and equal(history.rows,history.rowSnapshot)then
-      pool.apricornBalls=history.beforeRows
+    if pool.apricornBalls==history.rows then
+      -- Undo per record, not per whole array: one external edit must not
+      -- keep every other unchanged recipe owned by the disabled mod alive.
+      local present,replacements,removed,extras={},{},{},{}
+      for _,value in ipairs(history.rows)do present[value]=true end
+      for owned,entry in pairs(history.rowOwners)do
+        if present[owned]then
+          if not equal(owned,entry.snapshot)then
+            if entry.before then replacements[entry.before]=owned
+            else extras[owned]=true end
+          end
+        elseif entry.before then removed[entry.before]=true end
+      end
+      for _,value in ipairs(history.rows)do
+        if not history.rowOwners[value]then
+          local before=type(value)=='table' and history.beforeByItem[value.apricorn]
+          if before and not replacements[before]then
+            replacements[before]=value;removed[before]=nil
+          else extras[value]=true end
+        end
+      end
+      local restored={}
+      for _,value in ipairs(history.beforeRows)do
+        if not removed[value]then restored[#restored+1]=replacements[value] or value end
+      end
+      for _,value in ipairs(history.rows)do
+        if extras[value]then restored[#restored+1]=value end
+      end
+      local pristine=#restored==#history.beforeRows
+      for i,value in ipairs(restored)do if value~=history.beforeRows[i]then pristine=false;break end end
+      pool.apricornBalls=pristine and history.beforeRows or restored
     end
     if pool.scripts==history.scripts then
       for key,value in pairs(history.changed)do
@@ -135,12 +164,17 @@ function M.apply(loader,data)
   assert(desc,state.why)
   local pool=data.map_scripts
   assert(pool and pool.scripts==desc.scripts,'apricorns: native Kurt programs changed during mod load')
-  local recipes,normalized=ordered(loader)
+  local recipes,normalized,ids=ordered(loader)
   -- A removed/rekeyed native recipe stops accepting new work, but an old
   -- event can still deliver its original job unless an active rule claims it.
   local scripts,touched=Programs.project(desc,recipes,desc.base)
   local history={pool=pool,beforeRows=pool.apricornBalls,rows=copy(recipes),
-    rowSnapshot=copy(recipes),beforeScripts=pool.scripts,scripts=scripts,changed={},snapshots={}}
+    beforeByItem={},rowOwners={},beforeScripts=pool.scripts,scripts=scripts,changed={},snapshots={}}
+  for _,value in ipairs(history.beforeRows)do history.beforeByItem[value.apricorn]=value end
+  for i,value in ipairs(history.rows)do
+    local base=state.base[ids[i]]
+    history.rowOwners[value]={snapshot=copy(value),before=base and history.beforeByItem[base.apricorn]}
+  end
   for key in pairs(touched)do history.changed[key]=scripts[key];history.snapshots[key]=copy(scripts[key])end
   -- Keep the folded view in actual native keys after deferred references
   -- resolve. The generic post-merge reference audit reads the same view as
