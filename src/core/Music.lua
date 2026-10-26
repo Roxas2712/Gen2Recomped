@@ -301,7 +301,7 @@ end
 -- Build the new song's sources; the caller only tears the old song down
 -- once this succeeded, so a broken def costs nothing but a log line.
 -- Returns src, loopSrc, isChip -- or nil plus the reason.
-local function startSong(data, def, wantLoop)
+local function startSong(data, def, wantLoop, nativeStream)
   -- A GEN 3 SONG IS NEITHER OF THE TWO SHAPES BELOW, and that is why Hoenn
   -- was silent.  It carries no chip program and no sound file: it carries
   -- track pointers and a voicegroup, and it is played by a sequencer over
@@ -319,7 +319,7 @@ local function startSong(data, def, wantLoop)
     return nil, nil, nil, tostring(src)
   elseif type(def.tracks) == "table" and #def.tracks > 0 then
     local ok, src = pcall(
-      require("src.core.ChipAudio").playMusic, data, def, wantLoop, "m4a")
+      require("src.core.ChipAudio").playMusic, data, def, wantLoop, "m4a", { nativeBgm = nativeStream })
     if ok and src then return src, nil, true end
     return nil, nil, nil, ok and "no source" or tostring(src)
   elseif def.chip or (def.address and def.bank) then
@@ -363,16 +363,16 @@ function Music.play(data, song, loop, ctx)
   local def = songDef(data, song)
   if not def or state.failed[song] then return end
   local wantLoop = loop ~= false
+  local nativeStream = false
   if require("src.core.GameVersion").isGen3() then
-    local ids = require("src.core.Gen3SongIds")
-    local id = ids.resolve(song)
     nativeBgmIncomingShared = ctx and ctx.nativeShared
     if nativeBgmIncomingShared == nil then
-      nativeBgmIncomingShared = type(id) == "number" and ids.nameOf(id) == song
-        and not (type(def.tracks) == "table" and #def.tracks > 0)
+      nativeBgmIncomingShared = not (type(song) == "string" and song:match("^SONG_%x+$")
+        and type(def.tracks) == "table" and #def.tracks > 0)
     end
+    nativeStream = not nativeBgmIncomingShared and type(def.tracks) == "table" and #def.tracks > 0
   end
-  local src, loopSrc, isChip, err = startSong(data, def, wantLoop)
+  local src, loopSrc, isChip, err = startSong(data, def, wantLoop, nativeStream)
   if not src then
     nativeBgmIncomingShared = nil
     state.failed[song] = true
@@ -407,14 +407,15 @@ function Music.play(data, song, loop, ctx)
   -- (update() starts it, like the paused-song resume)
   if fanfareActive() then
     state.fanfareResume = true
-  else
+  elseif not isChip then
     pcall(src.play, src)
   end
   local previous = state.current
   state.source, state.loopSource, state.chip = src, loopSrc, isChip
+  state.nativeStream = nativeStream
   state.current = song
   nativeBgmShared, nativeBgmIncomingShared = nativeBgmIncomingShared, nil
-  if require("src.core.GameVersion").isGen3() and type(def.tracks) == "table" and #def.tracks > 0 then nativeBgmOutput = true end
+  if nativeStream then nativeBgmOutput = true end
   if Runtime.wants("music.started") then
     Runtime.emit("music.started", {
       song = song, previous = previous, chip = isChip,
@@ -435,6 +436,7 @@ function Music.stop(nativeInternal)
   require("src.core.ChipAudio").stopMusic()
   state.current, state.source, state.loopSource, state.fade = nil, nil, nil, nil
   state.chip = false
+  state.nativeStream = false
   nativeBgmShared, nativeBgmIncomingShared = nil, nil
   if nativeBgm and nativeInternal ~= true then nativeBgm:stopped() end
   state.pendingRestore = nil
@@ -757,7 +759,7 @@ function Music.update(data)
       end
     end
   end
-  if state.chip then require("src.core.ChipAudio").update() end
+  if state.chip and not state.nativeStream then require("src.core.ChipAudio").update() end
   if nativeCryHold > 0 then
     nativeCryHold = nativeCryHold - 1
   elseif nativeCryRestore and nativeCryFinished and nativeCryFinished() then
@@ -773,6 +775,7 @@ function Music.update(data)
     end
   end
   if nativeBgm and require("src.core.GameVersion").isGen3() then nativeBgm:update(data) end
+  if state.chip and state.nativeStream then require("src.core.ChipAudio").update() end
   -- distance / indoor muffling mods re-apply volume every frame while
   -- subscribed; otherwise applyVolume only runs on song/option changes
   if Runtime.wantsHook("music.volume") and not state.fade then
@@ -869,11 +872,12 @@ function Music.nativeCommand(data, operation, value, keep, context)
       play = function(currentData, id, restart)
         local songs = currentData.audio and currentData.audio.songs or {}
         local canonical = type(id) == "number" and Ids.nameOf(id) or id
-        local label = canonical and songs[canonical] ~= nil and canonical
+        local override = canonical and songs[canonical] ~= nil
+        local label = override and canonical
           or type(id) == "number" and ("SONG_%03X"):format(id) or id
         if not songs[label] then Music.stop(); return end
         local def = songs[label]
-        local shared = not (type(def.tracks) == "table" and #def.tracks > 0)
+        local shared = override or not (type(def.tracks) == "table" and #def.tracks > 0)
         if shared then Music.stop(true) end
         Music.play(currentData, label, true, { reason = "gen3", nativeSong = id, nativeRestart = restart, nativeShared = shared })
       end,
