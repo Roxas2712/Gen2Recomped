@@ -121,9 +121,12 @@ do
   end)
   Runtime.emit("pokemon.received", { mon = mon })
   T.eq(seen, "poison", "API-2 unified event status unchanged")
-  T.raises(function()
+  T.check(pcall(function()
     m.events:on("checkpoint.restored", function() end)
-  end, "unknown unified callback", "API-2 catalog unchanged")
+  end), "API-2 accepts the additive native checkpoint notification")
+  T.raises(function()
+    m.events:on("intro.boot.copyright", function() end)
+  end, "unknown unified callback", "other API-3-only callback recognition is unchanged")
 end
 -- Availability must be honest, and a probe cannot construct Game or attach a world.
 do
