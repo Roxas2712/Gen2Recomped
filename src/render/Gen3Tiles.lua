@@ -208,7 +208,12 @@ end
 -- the caller draws them either side of the sprites rather than flattening the
 -- two -- flattening is what puts a character on top of a treetop they should
 -- disappear behind.
-function Gen3Tiles:drawLayer(metatile, layer, ox, oy, plot)
+-- `indexed`: hand `plot` the PALETTE and COLOUR INDEX, `plot(x, y, pal, v)`,
+-- instead of the resolved colour.  That is what G5 bakes once: a sheet of
+-- indices never changes under a palette cycle, so a cycle becomes a lookup
+-- through a 256-entry colour table (TileRenderer `gen3Recolour`) rather than
+-- this walk over every metatile again.
+function Gen3Tiles:drawLayer(metatile, layer, ox, oy, plot, indexed)
   local first = (layer - 1) * 4
   if first<0 or first+4>8 or first%1~=0 then return end
   local record,local_ = self:metatileBank(metatile)
@@ -225,7 +230,8 @@ function Gen3Tiles:drawLayer(metatile, layer, ox, oy, plot)
     local flipX=math.floor(word/1024)%2==1
     local flipY=math.floor(word/2048)%2==1
     local pixels = self:tilePixels(tile)
-    local pal = self:palette(math.floor(word/4096)%16)
+    local palIndex = math.floor(word/4096)%16
+    local pal = self:palette(palIndex)
     local tx = ox + (q % 2) * 8
     local ty = oy + math.floor(q / 2) * 8
     for y = 0, 7 do
@@ -235,8 +241,12 @@ function Gen3Tiles:drawLayer(metatile, layer, ox, oy, plot)
         local v = pixels[sy * 8 + sx + 1]
         -- index 0 is transparent on BOTH layers; the backdrop shows through
         if v ~= 0 and pal then
-          local c = pal[v + 1]
-          if c then plot(tx + x, ty + y, c[1], c[2], c[3]) end
+          if indexed then
+            plot(tx + x, ty + y, palIndex, v)
+          else
+            local c = pal[v + 1]
+            if c then plot(tx + x, ty + y, c[1], c[2], c[3]) end
+          end
         end
       end
     end
@@ -525,26 +535,44 @@ end
 -- One metatile into one sheet slot, with the layer rules above.  Separate
 -- from bakeLayer because an animation frame redraws only the metatiles that
 -- move, into slots of their own past the end of the static sheet.
-function Gen3Tiles:bakeMetatileInto(id, layer, slot, plot)
+function Gen3Tiles:bakeMetatileInto(id, layer, slot, plot, indexed)
   local ox, oy = self:sheetOrigin(slot)
   if layer == 1 then
-    self:drawLayer(id, 1, ox, oy, plot)
+    self:drawLayer(id, 1, ox, oy, plot, indexed)
     -- a covered metatile's top half is ground too, so it is composited
     -- into the SAME sheet, over its own bottom half and under everything
     if not self:topIsAbovePlayer(id) then
-      self:drawLayer(id, 2, ox, oy, plot)
+      self:drawLayer(id, 2, ox, oy, plot, indexed)
     end
   elseif self:topIsAbovePlayer(id) then
-    self:drawLayer(id, layer, ox, oy, plot)
+    self:drawLayer(id, layer, ox, oy, plot, indexed)
   end
 end
 
-function Gen3Tiles:bakeLayer(layer, plot)
+function Gen3Tiles:bakeLayer(layer, plot, indexed)
   local count = self:metatileCount()
   for id = 0, count - 1 do
-    self:bakeMetatileInto(id, layer, id, plot)
+    self:bakeMetatileInto(id, layer, id, plot, indexed)
   end
   return count
+end
+
+-- G5: THE COLOUR TABLE AN INDEX SHEET RESOLVES THROUGH, under the palettes
+-- as they stand now.  256 entries of four bytes: entry pal * 16 + v is the
+-- colour of index v in palette pal, entry 0 (and every v = 0) transparent.
+-- `pal[v + 1]` absent leaves the entry transparent, as drawLayer would have
+-- plotted nothing.  Rebuilt per recolour: sixteen palettes, not a sheet.
+function Gen3Tiles:colourTable()
+  local floor, char = math.floor, string.char
+  local out = {}
+  for pal = 0, 15 do
+    local p = self:palette(pal)
+    for v = 0, 15 do
+      local c = v ~= 0 and p and p[v + 1] or nil
+      out[pal * 16 + v + 1] = c and char(floor(c[1]), floor(c[2]), floor(c[3]), 255) or "\0\0\0\0"
+    end
+  end
+  return table.concat(out)
 end
 
 

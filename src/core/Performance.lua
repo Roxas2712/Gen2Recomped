@@ -58,6 +58,10 @@ Performance.lowTierBudget = true
 -- C1: importers leave a stripped string.dump beside every generated module
 -- and a package searcher loads it ahead of the source (src/core/BytecodeCache).
 Performance.bytecodeCache = true
+-- G5: Gen 3 tile sheets baked once as palette indices and recoloured through
+-- a 256-entry table in an FFI loop when a palette cycle steps, instead of
+-- re-walking every metatile into a new RGBA sheet (TileRenderer gen3Recolour).
+Performance.gen3PaletteIndex = true
 Performance.GC_PAUSE = 120
 Performance.GC_STEP_MUL = 300
 Performance.GC_BUDGET_SECONDS = 0.0005
