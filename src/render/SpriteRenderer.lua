@@ -6,6 +6,7 @@
 local Assets = require("src.render.Assets")
 local PaletteFX = require("src.render.PaletteFX")
 local GameVersion = require("src.core.GameVersion")
+local FrameProfile = require("src.core.FrameProfile")
 
 local SpriteRenderer = {}
 SpriteRenderer.__index = SpriteRenderer
@@ -63,6 +64,7 @@ local function getObpImage(path, colors, group)
         return col[1] / 255, col[2] / 255, col[3] / 255, a
       end)
       img = love.graphics.newImage(id)
+      FrameProfile.bake("sprites.obp")
     else
       img = getImage(path) -- headless stub: no pixel access
     end

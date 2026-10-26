@@ -35,6 +35,7 @@ local total = {}        -- name -> seconds
 local calls = {}        -- name -> count
 local order = {}        -- first-seen order, so the report reads like the frame
 local windowStart = 0
+local bakes = {}        -- name -> exact count and worst rendered-frame burst
 
 -- How many frames to gather before saying something.  Two seconds at 60fps,
 -- and at 6fps -- the case this exists for -- twenty seconds, which is long
@@ -50,6 +51,7 @@ function FrameProfile.enabled() return on end
 
 function FrameProfile.reset()
   frames, total, calls, order = 0, {}, {}, {}
+  bakes = {}
   windowStart = clock()
 end
 
@@ -137,6 +139,31 @@ function FrameProfile.count(name, n)
   calls[name] = calls[name] + n
 end
 
+-- Palette/image construction is bursty: rounding a single map-load bake to
+-- calls/frame hides it in a 120-frame report. Keep its exact count and peak.
+-- Call after a successful bake, once per output image, never per pixel.
+function FrameProfile.bake(name)
+  if not on then return end
+  local row = bakes[name]
+  if not row then
+    row = { total = 0, currentFrame = 0, peakPerFrame = 0 }
+    bakes[name] = row
+  end
+  row.total = row.total + 1
+  row.currentFrame = row.currentFrame + 1
+  row.peakPerFrame = math.max(row.peakPerFrame, row.currentFrame)
+end
+
+-- Owned snapshot for QA; consumers cannot mutate the live measurement.
+function FrameProfile.bakeCounts()
+  local out = {}
+  for name, row in pairs(bakes) do
+    out[name] = { total = row.total, currentFrame = row.currentFrame,
+                  peakPerFrame = row.peakPerFrame }
+  end
+  return out
+end
+
 -- Wrap a call in a section and hand back whatever it returned.  For the sites
 -- where the body is one expression and an explicit close would need a local.
 function FrameProfile.wrap(name, fn, ...)
@@ -152,6 +179,7 @@ end
 function FrameProfile.frame()
   if not on then return end
   frames = frames + 1
+  for _, row in pairs(bakes) do row.currentFrame = 0 end
   if frames < WINDOW then return end
   local span = clock() - windowStart
   if span <= 0 then span = 1e-9 end
@@ -185,6 +213,14 @@ function FrameProfile.frame()
   end
   Logger.report("  %-34s %7.2f ms/frame  %5.1f%%", "(unmeasured / present / GPU)",
               (span - named) / frames * 1000, (span - named) / span * 100)
+  local bakeNames = {}
+  for name in pairs(bakes) do bakeNames[#bakeNames + 1] = name end
+  table.sort(bakeNames)
+  for _, name in ipairs(bakeNames) do
+    local row = bakes[name]
+    Logger.report("  bake %-29s total=%d  peak=%d/frame  mean=%.3f/frame",
+                  name, row.total, row.peakPerFrame, row.total / frames)
+  end
   Logger.flush()
   FrameProfile.reset()
 end

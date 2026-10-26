@@ -252,6 +252,7 @@ local function getShiftVariants(tilesetImagePath, perRow, tile, colors, gbcKey)
       end
     end
     out[o + 1] = love.graphics.newImage(v)
+    FrameProfile.bake("tiles.shift")
   end
   shiftVariants[key] = out
   return out
@@ -277,7 +278,9 @@ local function getFrameImages(paths, colors, gbcKey)
           out2:setPixel(x, y, r, g, b, a)
         end
       end
-      return love.graphics.newImage(out2)
+      local image = love.graphics.newImage(out2)
+      FrameProfile.bake("tiles.frame")
+      return image
     end)
     if not ok then
       frameImages[key] = false
@@ -326,6 +329,7 @@ local function getToggleImage(spec, tilesetImagePath, perRow)
     end
   end
   local img = love.graphics.newImage(clone)
+  FrameProfile.bake("tiles.toggle")
   toggleImages[key] = img
   return img
 end
@@ -383,6 +387,7 @@ local function getAtlasFrames(spec, tilesetImagePath, perRow, colors, gbcKey,
       end
     end
     out[frame + 1] = love.graphics.newImage(page)
+    FrameProfile.bake("tiles.atlas-frame")
   end
   atlasFrames[key] = out
   return out
@@ -730,6 +735,7 @@ local function getGen2Atlas(key, imagePath, perRow, palMap, palColors,
       end
     end
     img = love.graphics.newImage(out)
+    FrameProfile.bake("tiles.gen2")
   end
   gen2AtlasCache[key] = img
   return img or nil
@@ -865,6 +871,7 @@ local function getGbcAtlas(imagePath, tilesetId, mapId, perRow, data)
         end
       end
       img = love.graphics.newImage(out)
+      FrameProfile.bake("tiles.gbc")
     end
   end
   gbcAtlasCache[key] = img
@@ -1700,6 +1707,7 @@ local function bakeBorderFill(self, block)
   love.graphics.setCanvas()
   love.graphics.pop()
   local img = love.graphics.newImage(canvas:newImageData())
+  FrameProfile.bake("tiles.border")
   img:setWrap("repeat", "repeat")
   img:setFilter("nearest", "nearest")
   self.borderFill = img
@@ -1902,6 +1910,7 @@ local function getKeyedTile(self, tile)
       end
     end
     img = love.graphics.newImage(out)
+    FrameProfile.bake("tiles.keyed")
   end
   self.gbcKeyed[tile] = img
   return img or nil
