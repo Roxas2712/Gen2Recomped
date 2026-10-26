@@ -45,6 +45,8 @@ local Performance = {}
 -- P2 is independently reversible. Tier rows can reduce the idle budget or
 -- tune the collector without changing the persisted presentation options.
 Performance.gcBudget = true
+-- P3: cache hot-path dependencies and reuse engine-private presentation data.
+Performance.hotPathHoist = true
 Performance.GC_PAUSE = 120
 Performance.GC_STEP_MUL = 300
 Performance.GC_BUDGET_SECONDS = 0.0005

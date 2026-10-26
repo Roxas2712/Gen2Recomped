@@ -12,6 +12,7 @@ local StateStack = require("src.core.StateStack")
 local FrameProfile = require("src.core.FrameProfile")
 local Performance = require("src.core.Performance")
 local GCFrameBudget = require("src.core.GCFrameBudget")
+local HotModules = require("src.core.HotModules")
 local TouchControls = require("src.core.TouchControls")
 local ModLoader = require("src.mods.Loader")
 local ModRuntime = require("src.mods.Runtime")
@@ -588,7 +589,7 @@ function Game:updateCameraStick(dt)
 end
 
 function Game:update(dt)
-  require('src.pokemon.Gen4PoketchState').tick(self, dt)
+  HotModules.get('src.pokemon.Gen4PoketchState').tick(self, dt)
   local panel=self.secondScreenPointerOwner
   local top=self.stack and self.stack.top and self.stack:top()
   if panel and panel~=top and panel.updatePresentation then
@@ -614,7 +615,7 @@ function Game:update(dt)
     local close = FrameProfile.section("  update: music")
     while self.audioAccum >= step do
       self.audioAccum = self.audioAccum - step
-      require("src.core.Music").update(Data)
+      HotModules.get("src.core.Music").update(Data)
     end
     close()
   end
@@ -622,19 +623,24 @@ function Game:update(dt)
   -- frame dt (not the fixed logic step) for a smooth ~0.25s glide.
   do
     local close = FrameProfile.section("  update: tilt")
-    require("src.render.Tilt").update(dt)
+    HotModules.get("src.render.Tilt").update(dt)
     close()
   end
   -- mod render pipelines tween on the same real-frame clock, for the same
   -- reason: they are presentational, so fast-forward must not speed them up
   do
     local close = FrameProfile.section("  pipelines: update")
-    require("src.render.Pipelines").update(dt)
+    HotModules.get("src.render.Pipelines").update(dt)
     close()
   end
   do
     local close = FrameProfile.section("  update: discord")
-    pcall(function() require("src.core.DiscordPresence").update(dt) end)
+    if Performance.hotPathHoist then
+      local ok, Discord = HotModules.optional("src.core.DiscordPresence")
+      if ok and type(Discord) == "table" then pcall(Discord.update, dt) end
+    else
+      pcall(function() require("src.core.DiscordPresence").update(dt) end)
+    end
     close()
   end
   -- Keep an already-loaded native GC delegation at its update boundary.
@@ -913,7 +919,7 @@ Game.centerClassicZones = centerClassicZones
 
 function Game:draw()
   local closeDraw = FrameProfile.section("draw: whole frame")
-  local screenLayout=require('src.ui.SecondScreen')
+  local screenLayout=HotModules.get('src.ui.SecondScreen')
   Renderer.splitViewport=nil
   if screenLayout.combined(self) then
     local w,h=love.graphics.getDimensions()
@@ -931,25 +937,25 @@ function Game:draw()
   -- Single-screen generations use the physical Android lower panel as a live
   -- save companion without changing the game's own screen mode.
   do
-    local okC, Companion = pcall(require, "src.ui.SaveCompanion")
+    local okC, Companion = HotModules.optional("src.ui.SaveCompanion")
     if okC and Companion and Companion.tick then pcall(Companion.tick, self) end
   end
 
   do
-    local okSS, SS = pcall(require, "src.ui.SecondScreen")
+    local okSS, SS = HotModules.optional("src.ui.SecondScreen")
     if okSS and SS.mode and (SS.mode(self) == "display" or SS.combined(self))
        and not self.secondScreenDrawnThisFrame then
-      local version = require("src.core.GameVersion").info()
+      local version = HotModules.get("src.core.GameVersion").info()
       local family = version and version.family
       -- THE WATCH ONLY ONCE IT IS ON THE WRIST: Platinum's lower screen shows
       -- the Pokétch after `enablepoketch` (Jubilife) and nothing before; Black
       -- and White's is the C-Gear, not Platinum's watch (not built yet), so
       -- theirs stays blank too
-      local poketchOn = require("src.pokemon.Gen4PoketchState").owned(self.save)
+      local poketchOn = HotModules.get("src.pokemon.Gen4PoketchState").owned(self.save)
       local panelModule = family == "hgss" and "src.ui.HgssFieldPanel"
         or (family ~= "bw" and poketchOn and "src.ui.Gen4Poketch") or nil
       local okP, Poketch = false, nil
-      if panelModule then okP, Poketch = pcall(require, panelModule) end
+      if panelModule then okP, Poketch = HotModules.optional(panelModule) end
       if not panelModule then
         pcall(SS.draw, self, function()
           love.graphics.setColor(0, 0, 0, 1)
@@ -988,7 +994,7 @@ function Game:draw()
   -- has to get out, and because the GPU readback wants the drawing finished.
   -- A no-op in every other mode and on every machine with one screen.
   do
-    local okSS, SS = pcall(require, "src.ui.SecondScreen")
+    local okSS, SS = HotModules.optional("src.ui.SecondScreen")
     if okSS and SS.flush then pcall(SS.flush, self) end
   end
   FrameProfile.frame()
@@ -999,6 +1005,14 @@ end
 -- most want to measure are the ones where something is holding the keyboard.
 function Game:toggleFrameProfile()
   return FrameProfile.toggle()
+end
+
+local function viewportSnapshot(viewport)
+  return {
+    width=viewport.width,height=viewport.height,gameX=viewport.gameX,gameY=viewport.gameY,
+    gameWidth=viewport.gameWidth,gameHeight=viewport.gameHeight,scale=viewport.scale,
+    dpiX=viewport.dpiX,dpiY=viewport.dpiY,
+  }
 end
 
 function Game:_draw()
@@ -1165,11 +1179,18 @@ function Game:_draw()
   if worldDrawn and self.overworld.sgbWorldZones then
     worldZones = self.overworld:sgbWorldZones()
   end
-  local viewport = Renderer:endFrame(zones, worldZones)
+  local viewport, privateViewport
+  if Performance.hotPathHoist and Renderer.endFrame == Renderer._nativeEndFrame then
+    viewport = Renderer:_endFrameForEngine(zones, worldZones)
+    privateViewport = true
+  else
+    viewport = Renderer:endFrame(zones, worldZones)
+  end
   -- Persistent tool status is screen-space UI: draw it over the completed
   -- render pipeline with exact playfield/margin geometry, but below mobile
   -- controls. It never becomes an updating game state.
   if ModRuntime.wantsHook("render.hud") then
+    if privateViewport then viewport = viewportSnapshot(viewport) end
     ModRuntime.call("render.hud", function() end, self, viewport)
   end
   -- on-screen mobile controls: pure screen-space, over the finished frame
