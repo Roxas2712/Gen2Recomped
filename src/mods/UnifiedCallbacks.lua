@@ -30,6 +30,7 @@ C.hooks = names([[
  ui.title_menu.items warp.destination world.follower.spawn world.talk world.tod zoom.range
 ]])
 C.events = names([[
+ unown.unlocked
  clock.day_changed
  apricorn.converted
  phone.call_received

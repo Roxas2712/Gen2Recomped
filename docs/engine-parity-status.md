@@ -13,15 +13,42 @@ major update through fork PR61, preserving the fork's native interfaces.
 File-path differences are audit candidates, not missing-feature counts. No
 percentage can be inferred from them or from the number of passing tests.
 
-Native recipe integration candidate: `acd8ea46ab98a1c3651cde82491b1be0175ddee3`
+Latest verified public preview: `a1008ce933ab3a6784e909f52f61b0fceecc29e8`
+(own PR80, merged as `e5160b54`; identical frozen engine tree). The existing
+`native-preview-20261025.1` Windows/macOS assets were refreshed in place;
+all six remote digests, manifest and release text were verified and the original
+tag retained. This exact source passes463/463 engine suites, SDK3/3, all quick
+tiers and four-platform runtime qualification40297459060 attempt2. Exact-source
+OpenGL/Metal pixel probes cover indexed palette drawing and unchanged native
+front/evolution consumers. The unchanged full supplied Johto package passes102
+selected PC/mail/palette/RTC checks on each backend, in First/Third Person,
+with eight inspected fresh OS images. Setup is staged; complete story/art,
+physical Windows/Intel GPU and full mod/parity acceptance remain open. See the
+[palette drawing receipt](qa/native-foundation/native-gen2-pokemon-palettes.json).
+
+Next native GSC Unown candidate: `9ef5109eef1cecb0e7b5a25b44e2ffb47c9bb75e`
+(own PR82; upstream standalone PR307). It shares native form identity, imported
+words, caught order, actual party/box/gift registration, counter/menu reads and
+one completed-form event. This frozen candidate passes465/465 engine suites,
+SDK3/3, every quick tier and66,288 focused checks including all65,536 DV-byte
+combinations. A private read-only Crystal word-producer/reference check passes80
+assertions. Later main registry-descriptor changes are being composed and
+revalidated separately. This Unown candidate is not included in the public
+preview above; full reference Unown API and story/GPU acceptance remain open.
+See [native Unown state](native-gen2-unown.md).
+
+The older checkpoints below retain their own evidence and limitations. They
+are historical receipts, not claims about every feature in the latest source.
+
+Historical native recipe integration candidate: `acd8ea46ab98a1c3651cde82491b1be0175ddee3`
 (PR67). Its frozen tree passes444/444 engine suites, SDK3/3 and all quick
 tiers, including443 recipe/VM checks and120 native program import checks.
 A read-only Crystal probe executes an added recipe through original Kurt
 selection, map reentry, working/day flags, full-bag refusal and three-ball
 collection with one completion event. Upstream PR295 offers native API1/2,
-with exactly the same eleven existing baseline failures. Runtime qualification
-40270319573 is separate and pending; no new release/GPU/story acceptance is
-inferred. See the [native recipe receipt](qa/native-foundation/native-apricorn-content.json).
+with exactly the same eleven existing baseline failures. At this historical checkpoint, runtime qualification
+40270319573 was recorded separately; no new release/GPU/story acceptance is
+inferred from that receipt. See the [native recipe receipt](qa/native-foundation/native-apricorn-content.json).
 
 Historical composed development checkpoint:
 `9abcd876b0420c25d6223d25b840b72eac0904f0`. Phone incoming-event PR60 and
@@ -30,7 +57,7 @@ PR55 and the upstream refresh. The exact complete Git tree passes439/439
 engine suites, SDK3/3 and every ROM-free quick tier. Runtime40265754962 is
 recorded separately for this frozen source (now completed). Earlier sourcef027 passed all four runtime
 platforms and both desktop packages, but that does not qualify this new tree.
-The existing public preview remains source4be; fresh exact-source GPU/story
+At that historical checkpoint the public preview was source4be; fresh exact-source GPU/story
 acceptance is still open. See the
 [apricorn/integration checkpoint](qa/native-foundation/native-apricorn-main.json).
 This historical source's recipe import was correct, but its old-cache fallback
@@ -40,7 +67,7 @@ Crystal table agree. Runtime40265754962 and static desktop packaging have
 since passed, but the historical9abcd source is superseded and is not a
 release candidate. No fresh GPU/story acceptance follows from packaging.
 
-Current composed preview checkpoint: `4be92945c94e603f7cc582cde23d4702d9610e4a`.
+Historical public preview checkpoint: `4be92945c94e603f7cc582cde23d4702d9610e4a`.
 Native radio records/script lifecycle and window-resolution Pokegear are merged
 as PR39/45. This exact source passes418/418 engine suites, SDK3/3, all quick
 tiers and four-platform runtime qualification40248573841. Fresh real-Crystal /
@@ -49,7 +76,7 @@ inspected OS windows in both selected cameras. All six existing preview
 assets were refreshed and remote digests verified; the original tag is unchanged.
 Metal warning overlays and full radio programs/audio remain open.
 
-Native development main checkpoint: `f027780f78e41142ef78d80d2298398fa794df18`.
+Historical native development checkpoint: `f027780f78e41142ef78d80d2298398fa794df18`.
 Phone PR53/54/56/57/58 and radio PR48 are merged. Its complete Git tree
 `d38e3ba881b905d3735aa5acb98c4b783f0e9d0a` exactly matches frozen integration
 source `46bfcce15d814ac4349b76a8a41b5370015dadff`, which passes435/435 engine
@@ -83,7 +110,7 @@ This checkpoint does not extend older scoped gameplay results to new behavior.
 | Native Gen2 field-action facade and regional map | `FieldMoves` now exposes native GSC flight destinations and visited flags to the actual picker; the retail town-map LZ decoding and Crystal Silver Cave region are corrected. Exact `8ab72ab8` package passes 84 checks per OpenGL/Metal backend: both regional images match an independent real-ROM decoder, eight fresh OS map images inspected across First/Third, two actual flights per backend at exact imported coordinates; see [flight/map receipt](qa/native-foundation/johto-native-town-map.json) | QA intro/map/party/visited/Hall-of-Fame marker are staged. Native story unlock and Hall-of-Fame flag production, badge/party admission, complete cinematic, legacy action context/result protocols, sprite helpers and terrain queries remain open. Existing Metal warning overlays still obscure the lower map edge; cursor/art/UI parity is not complete |
 | Native GSC species-name lookup | Live aliases preserve native rows/IDs; real registry/loader/creation regression145 checks, CI367/367 engine+SDK3/3. Exact `b9aa8f2e` package with unchanged Johto/Crystal: OpenGL85 and Metal77 checks, both cameras outside/Center, actual ambient sprite/pose bindings and eight fresh window proofs; [scoped receipt](qa/native-foundation/johto-native-species-names.json). Fork PR27 merged; standalone upstream PR261 submitted; existing `20261025.1` assets refreshed in place from this exact source | Individual actors may be off-screen in the window proofs. Missing optional full-colour sheets, complete sprite/model/story parity, Metal warnings and Windows/Intel hardware GPU remain open |
 | Native GSC PC/mail and script targets | Fork PR30/32/34/35 merged. Native party/boxes/mail, script gifts/delivery and detached callbacks; actual PC special/boot return, provider transfers and mailbox menus pass 68 checks per OpenGL/Metal backend in both selected cameras. Real Crystal import has 388 maps and 5,038 scripts, zero desyncs; upstream PR264 and PR268 ready for review | Every PC/UI mode, stationery art, SRAM mail conversion, ordinary story admission, friendly item labels and complete art remain open. Metal warnings obscure part of the second letter line; focused-window acceptance does not prove background presentation |
-| Content registries | Native `radio_channels` is merged and the existing preview includes PR39/45. Native `phone_contacts` now binds semantic identities to the actual numeric Pokegear/incoming/VM consumers, with strict validation, stable IDs, reserved holes, rollback and reload ownership; PR53/54 merged. Imported Crystal Buena and both call directions are restored. See [native phone content](native-gen2-phone-content.md) | `apricorns` now binds imported Kurt programs to actual recipe selection, native event/ball delivery and completion observers, with rollback and reload isolation; see [native apricorns](native-gen2-apricorn-selection.md). The legacy Apricorns facade, full tree/day lifecycle and story/GPU acceptance remain open. Native `landmarks` now binds semantic names/coordinates to the actual numeric town-map and script consumers, with edition-specific identity counts and region boundaries; see [native landmarks](native-gen2-landmarks.md). `decorations` still needs native integration. Phone authored scripts/forward references and full legacy facade remain open. Registry-name counts do not measure overall parity |
+| Content registries | Native `radio_channels` is merged and the existing preview includes PR39/45. Native `phone_contacts` now binds semantic identities to the actual numeric Pokegear/incoming/VM consumers, with strict validation, stable IDs, reserved holes, rollback and reload ownership; PR53/54 merged. Imported Crystal Buena and both call directions are restored. See [native phone content](native-gen2-phone-content.md) | `apricorns` now binds imported Kurt programs to actual recipe selection, native event/ball delivery and completion observers, with rollback and reload isolation; see [native apricorns](native-gen2-apricorn-selection.md). The legacy Apricorns facade, full tree/day lifecycle and story/GPU acceptance remain open. Native `landmarks` now binds semantic names/coordinates to the actual numeric town-map and script consumers, with edition-specific identity counts and region boundaries; see [native landmarks](native-gen2-landmarks.md). `decorations` now has native registry/placement integration and an explicit legacy adapter; see [native decorations](native-gen2-decorations.md). Original-story/hardware breadth remains open. Phone authored scripts/forward references and full legacy facade remain open. Registry-name counts do not measure overall parity |
 | Native Gen2 radio music / Snorlax gate | PR48 merged: actual station playback, map-cue ownership and five-cell/native-song gate,167 native Music/input/VM checks across Gold/Silver/Crystal. Upstream PR275 offers the standalone implementation. Merged main is included in the435-suite integration checkpoint | Diagnostic9f, composedd1 and paced8c each have scoped OpenGL/Metal acceptance with twelve inspected OS windows, real flute Sources and non-silent PCM. Later432 has OpenGL acceptance; its last Metal OS capture was correctly rejected as stale while macOS reported a locked screen. None proves hardware acceptance for current main. Full ROM show text/timing/schedules, jingles, music-show choices and original-story acceptance remain open |
 | Native Gen2 phone book and callbacks | PR53/54/56/57/58 merged. Actual native10-slot order/reservations/deletion/scrolling, semantic contacts, detached `phone.contact_list` and native caller-byte selection are implemented. Focused checks:138 import,326 content,277 book,316 hook,5204 selection. Merged main passes435/435 engine suites. Upstream PR285 includes native API1/2 equivalents: sourceb77b27bb passes69/79 versus base13af64/74 with exactly the same ten existing failed suites/assertions, SDK3/3 | Full legacy Phone facade, authored new scripts/forward references, complete special-call/rematch contracts, fresh-import phone GPU/story acceptance and long sessions remain open. Unified API2/3 checks apply to the own fork only. No full phone parity or upstream-green claim |
 | Native incoming phone observation | PR60 merged. Actual random/special controller queues emit `phone.call_received`; native/unified delivery, selected receive programs, completion, authored contact names with retained trainer class, mutations/false returns, outgoing/rejected calls and rollback are covered by499 checks. Sourcef775 passes436/436; upstream PR285 source0fb2ad45 includes native API1/2 equivalents (259 event checks),70/80 versus base13af64/74 with identical ten existing failed suites/assertions | Complete PhoneRing choreography, Mom shopping-call production, full legacy facade, story and hardware acceptance remain open |
