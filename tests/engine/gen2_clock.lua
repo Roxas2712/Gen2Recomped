@@ -86,9 +86,9 @@ for _,edition in ipairs({'gold','silver','crystal'}) do
  for _,mode in ipairs({{1,'native'},{2,'native'},{2,'unified'},{3,'unified'}}) do
   local files={['mods/rtc/manifest.json']=Json.encode({id='rtc',name='Native RTC observer',version='1.0.0',api=mode[1],content_format=mode[2],entry='main.lua',affects_link=false}),
    ['mods/rtc/main.lua']=[[
-    local mod=...;assert(mod:supports('events','clock.day_changed'))
+    local mod=...;assert(mod:supports('events',"clock.day_changed"))
     local Clock=require('src.core.gen2.Clock');mod.exports.events={}
-    mod.exports.stop=mod.events:on('clock.day_changed',function(e)
+    mod.exports.stop=mod.events:on("clock.day_changed",function(e)
      mod.exports.events[#mod.exports.events+1]={day=e.day,previous=e.previous,reason=e.reason}
      assert(Clock.weekday(mod.exports.save)==e.day)
      e.day=99;return false
@@ -116,7 +116,7 @@ for _,edition in ipairs({'gold','silver','crystal'}) do
 end
 for _,edition in ipairs({'red','firered','emerald','heartgold'})do
  V.set(edition)
- T.eq(require('src.mods.Capabilities').supports('events','clock.day_changed',edition),false,edition..' native RTC event not falsely advertised')
+ T.eq(require('src.mods.Capabilities').supports('events',"clock.day_changed",edition),false,edition..' native RTC event not falsely advertised')
 end
 nativeGame.save=oldSave;debug.setupvalue(W.timeOfDay,slot,oldGame)
 Clock.resetObservations();os.date=date;V.set(version)
