@@ -6,7 +6,6 @@ import os
 from pathlib import Path
 import re
 import stat
-import tempfile
 import time
 
 import qa_legacy_storage as legacy
@@ -145,22 +144,16 @@ def sweep(storage, *, max_age=86400, limit=2*1024**3, min_age=3600,
             selected.append((outer,profile,plan));total-=size;files+=len(plan)
         if not selected:return result
         # One snapshot/pack per sweep, rather than thousands of small archives.
-        with tempfile.TemporaryDirectory(prefix='love-preserve-',dir=storage.state) as tmp:
-            stage=Path(tmp)/'snapshot';stage.mkdir()
-            # Validate before any staging hardlink changes a shared inode's ctime.
+        if selected:
+            # Archive the explicit file list directly. Staging hundreds of
+            # thousands of hardlinks needlessly dirties APFS metadata/ctimes.
             for _,_,plan in selected:
                 for p,info in plan:
                     if p.parent.resolve()!=p.parent or signature(p.lstat())!=signature(info):
                         raise RuntimeError('Generated import changed before preservation')
-            for outer,profile,plan in selected:
-                for p,info in plan:
-                    current=p.lstat()
-                    if p.parent.resolve()!=p.parent or (current.st_ino,current.st_size,current.st_mtime_ns)!=(info.st_ino,info.st_size,info.st_mtime_ns):
-                        raise RuntimeError('Generated import changed before preservation')
-                    target=stage/p.relative_to(home);target.parent.mkdir(parents=True,exist_ok=True)
-                    os.link(p,target)
             from qa_preserved import Vault
-            with Vault(home) as vault:proof=vault.capture(stage)
+            with Vault(home) as vault:
+                proof=vault.capture(home,paths=[p for _,_,plan in selected for p,_ in plan])
             receipts=storage.state/'love-receipts';receipts.mkdir(exist_ok=True)
             receipt=receipts/(proof['commit']+'.json');temp=receipt.with_suffix('.tmp')
             temp.write_text(json.dumps(dict(archive=proof,profiles=[str(p) for _,p,_ in selected]),indent=2))
@@ -170,9 +163,7 @@ def sweep(storage, *, max_age=86400, limit=2*1024**3, min_age=3600,
                 if (kept(profile,outer) or live.busy(outer) or live.busy(profile) or
                         any(p.is_relative_to(outer) or outer.is_relative_to(p) for p in pinned)):
                     result['retained_busy']+=1;continue
-                # Linking into the archive staging area changes ctime only.
-                if any((p.lstat().st_ino,p.lstat().st_size,p.lstat().st_mtime_ns)!=
-                       (s.st_ino,s.st_size,s.st_mtime_ns) or p.parent.resolve()!=p.parent for p,s in plan):continue
+                if any(signature(p.lstat())!=signature(s) or p.parent.resolve()!=p.parent for p,s in plan):continue
                 changed_editions={p.relative_to(profile).parts[0] for p,_ in plan}
                 for edition in changed_editions:
                     marker=profile/edition/'rom-cache.complete'

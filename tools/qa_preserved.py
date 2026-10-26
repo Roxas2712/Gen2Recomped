@@ -39,12 +39,15 @@ class Vault:
         self.serial += 1
         return ':'+str(self.serial)
 
-    def capture(self, source):
+    def capture(self, source, *, paths=None):
         source = Path(source)
         records = []
         files = 0
         logical = 0
-        candidates = [source] if source.is_file() or source.is_symlink() else None
+        candidates = ([Path(p) for p in paths] if paths is not None else
+                      [source] if source.is_file() or source.is_symlink() else None)
+        if paths is not None and any('..' in p.parts or not p.is_relative_to(source) or p==source for p in candidates):
+            raise ValueError('Archive file is outside the declared source root')
         if candidates is None:
             candidates = []
             for folder, dirs, names in os.walk(source, followlinks=False):

@@ -84,8 +84,8 @@ class LoveRetention(unittest.TestCase):
     def test_new_reader_after_archive_prevents_deletion(self):
         from qa_preserved import Vault
         p=self.put(self.profile/'heartgold/data/generated/a.lua');capture=Vault.capture;busy=[False]
-        def captured(vault,source):
-            proof=capture(vault,source);busy[0]=True;return proof
+        def captured(vault,source,**options):
+            proof=capture(vault,source,**options);busy[0]=True;return proof
         with patch('qa_preserved.Vault.capture',captured),patch('qa_legacy_storage.LiveUse.busy',side_effect=lambda path:busy[0]):
             self.assertEqual(self.run_gc()['files'],0)
         self.assertTrue(p.exists())
@@ -122,6 +122,23 @@ class LoveRetention(unittest.TestCase):
             result=self.run_gc(only={self.profile})
         self.assertEqual(result['files'],1)
         self.assertFalse(p.exists());self.assertTrue(other.exists())
+
+    def test_direct_archive_does_not_change_source_ctimes_or_capture_unrelated_files(self):
+        from qa_preserved import Vault
+        p=self.put(self.profile/'heartgold/data/generated/a.lua')
+        unrelated=self.put(self.home/'models/unrelated.lua',b'private model')
+        before=p.stat().st_ctime_ns
+        with Vault(self.home) as vault:proof=vault.capture(self.home,paths=[p])
+        self.assertEqual(p.stat().st_ctime_ns,before)
+        tree=subprocess.check_output(['git','--git-dir='+proof['git'],'ls-tree','-r','--name-only',proof['commit']],text=True)
+        self.assertEqual(tree.strip(),'snapshot/'+str(p.relative_to(self.home)))
+        self.assertEqual(unrelated.read_bytes(),b'private model')
+
+    def test_direct_archive_refuses_paths_outside_declared_root(self):
+        from qa_preserved import Vault
+        p=self.put(self.home/'models/original.lua')
+        with Vault(self.home) as vault:
+            with self.assertRaises(ValueError):vault.capture(self.profile,paths=[p])
 
 
 if __name__=='__main__':unittest.main()
