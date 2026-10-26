@@ -13,9 +13,10 @@ response={account_id='18'};check(not T.request('GET',id),'another account respon
 signed=false;check(not T.request('GET'),'guests cannot call the Arena API');signed=true
 local save={party={{species='PIKACHU',level=5},{species='PIDGEY',level=5},{species='RATTATA',level=5}},player={name='Fixture'},options={}}
 local Saves=require('src.core.SaveData');Saves.peekSlot=function() return save end
-local cup={id=id,account_id='17',state='running',edition='red',team_size=3,level=50,generation=1,matches={}}
+local cup={id=id,account_id='17',state='running',edition='red',team_size=3,level=50,generation=1,battle_gate='verified',matches={}}
 local match={id=matchid,left='17',right='18',state='ready'};cup.matches={match}
 local Arena=require('src.link.CloudArena')
+cup.battle_gate='bank_verification_required';check(not Arena.queue(cup,match,'slot1'),'unverified Bank teams cannot enter online tournament battles');cup.battle_gate='verified'
 check(Arena.queue(cup,match,'slot1'),'an account may choose its assigned host battle and saved team')
 local oldQueue=Arena.queue;match.left='18';match.right='17'
 check(not Arena.queue(cup,match,'slot1'),'a guest waits for the assigned host room');match.room='ABC123'
