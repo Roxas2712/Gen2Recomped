@@ -118,4 +118,65 @@ end
 GBA.apply(gd,catalogs,own,{language='pt-BR',profile={game='emerald'}})
 T.eq(chat.groups[1].words[1].id,42,'Easy Chat retains saved word IDs')
 T.eq(chat.groups[1].words[1].enabled,true,'Easy Chat retains word availability')
+-- PT-BR FireRed/LeafGreen expanded the category to 20 bytes and moved both
+-- description pointers. All 386 entries must retain both original pages.
+local Dex=require('src.translation.rompack.gba_dex')
+for _,layout in ipairs({{size=44,category=20,desc=24,second=true},
+                       {size=36,category=12,desc=16,second=true},
+                       {size=32,category=12,desc=16,second=false}})do
+ local fields={POKEDEX_ENTRIES=1024,POKEDEX_ENTRY_SIZE=layout.size,
+  POKEDEX_NAME_LENGTH=layout.category,POKEDEX_TEXT_OFFSET=layout.size==44 and 24 or nil}
+ local pointers={}
+ for index=1,386 do
+  local at=1024+index*layout.size
+  pointers[at+layout.desc]=0x100000+index*16
+  if layout.second then pointers[at+layout.desc+4]=0x200000+index*16 end
+ end
+ local entries=Dex.read(fields,function(at)return pointers[at]end,
+  function(at,limit)assert(limit==layout.category);return 'category:'..at end,
+  function(at,battle,limit)assert(battle==false and limit==4096);return 'ROM:'..at end)
+ T.eq(#entries,386,'every national dex record is decoded')
+ for index=1,386 do
+  T.eq(entries[index].text,'ROM:'..(0x100000+index*16),'profile selects the first original page')
+  T.eq(entries[index].text2,layout.second and 'ROM:'..(0x200000+index*16)or nil,'profile selects the second original page')
+ end
+end
+T.eq(next(Dex.read({},function()error('no table')end)),nil,'absent dex table stays absent')
+-- Display arguments must use the localized record, while gameplay IDs and
+-- nicknames keep their identities. Marker fixtures are not dialogue evidence.
+local Strings=require('src.core.Strings')
+local State=require('src.battle.BattleState')
+local Effects=require('src.battle.MoveEffects')
+local localized={strings={ATTACK='STAT_FROM_ROM'},
+ constants={abilities={DROUGHT={name='ABILITY_FROM_ROM'}}}}
+T.eq(State.abilityLabel('DROUGHT',localized),'ABILITY_FROM_ROM','ability display reads the localized native record')
+T.eq(State.abilityLabel('WATER_ABSORB'),'WATER ABSORB','ordinary English ability label is preserved')
+Strings.load(localized)
+local actor={name='ATTACK',isPlayer=true,stages={}}
+local changed=Effects.changeStage({data=localized},actor,'attack',1,false)
+T.eq(actor.stages.attack,1,'typed display names do not change battle stages')
+T.eq(changed[1],"ATTACK's\nSTAT_FROM_ROM rose!",'only the stat argument is localized; nickname is unchanged')
+local spoken={}
+local state={data=localized,field={},sayNext=function(_,text)spoken[#spoken+1]=text end}
+State.abilitySwitchInEffect(state,{name='DROUGHT',isPlayer=true},
+ {kind='weather',weather='SUN',permanent=true,ability='DROUGHT'})
+T.eq(spoken[1],"DROUGHT's\nABILITY_FROM_ROM!",'actual local ability caller reads the ROM name')
+T.eq(state.field.weather,'SUN','weather gameplay identity remains native')
+Strings.load(nil)
+local UiText=require('src.translation.rompack.ui_text')
+local captions={strings={['LEVEL UP']='LEVEL UP'}}
+UiText.apply(captions,'de',{named={gText_TrainerCardTime='TIME_FROM_ROM'}})
+T.eq(captions.strings['LEVEL UP'],'LEVEL UP','an original German caption is not rewritten as a guessed translation')
+T.eq(captions.strings.TIME,'TIME_FROM_ROM','trainer card duration uses its own source caption')
+T.eq(captions.strings['QUIT GAME'],nil,'missing original wording is not invented')
+T.eq(captions.strings['Choose a POKéMON.'],nil,'absent party source is not guessed')
+local statData={strings={}}
+Battle.apply(statData,{named={['gStatNamesTable[4]']='SPECIAL_ATTACK_FROM_ROM',
+ ['gStatNamesTable[7]']='EVASION_FROM_ROM'}},Plain)
+T.eq(statData.strings['SPCL.ATK'],'SPECIAL_ATTACK_FROM_ROM','native stat spelling resolves the original semantic table slot')
+T.eq(statData.strings.EVADE,'EVASION_FROM_ROM','native evasion spelling uses its original stat ID')
+local baseline={strings={NAME='NAME'}}
+UiText.apply(baseline,'en')
+T.eq(baseline.strings['NAME/'],nil,'English restoration does not alter the baseline catalog')
+T.eq(pcall(require('src.translation.rompack.pc_labels').apply,nil,nil),true,'English baseline without a string catalog restores safely')
 T.finish('native ROM language protocol, ownership, sandbox and rendering')

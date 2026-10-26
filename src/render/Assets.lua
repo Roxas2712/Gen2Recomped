@@ -168,6 +168,30 @@ function Assets.imageData(path)
   return love.image.newImageData(16, 16)
 end
 
+-- G8: THE SAME PIXELS, READ-ONLY, DECODED ONCE.
+--
+-- `Assets.imageData` decodes the PNG on every call because its callers may
+-- write into the result (mapPixel for an OBP variant, the party menu's
+-- tints).  The bakes that only READ -- the water-shift variants ask for the
+-- whole tileset atlas once per animated tile, the RED++ atlas, the toggle
+-- strips, the multi-tile frames -- paid that decode each time.  This answers
+-- the decoded data from a cache instead.  The contract is in the name: a
+-- caller must not paste into, mapPixel over or otherwise change what it
+-- gets back; it may copy from it.  Cleared with the image cache.
+local dataCache = {}
+function Assets.imageDataShared(path)
+  if Performance.assetSharedDecode == false then
+    if next(dataCache) then dataCache = {} end
+    return Assets.imageData(path)
+  end
+  local resolved = Assets.resolve(path)
+  local data = dataCache[resolved]
+  if data then return data end
+  data = Assets.imageData(path)
+  dataCache[resolved] = data
+  return data
+end
+
 function Assets.register(invalidate)
   invalidators[#invalidators + 1] = invalidate
 end
@@ -182,6 +206,7 @@ function Assets.invalidate()
   local dropped = 0
   for _ in pairs(cache) do dropped = dropped + 1 end
   cache = {}
+  dataCache = {}
   resolved = {}
   for _, fn in ipairs(invalidators) do pcall(fn) end
   return dropped

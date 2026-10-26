@@ -29,8 +29,8 @@ tools/slang-import/licenses/** -text
 # must not depend on the checkout platform.
 tests/engine/fixtures/wonder_reward.lua text eol=lf
 
-# The SDK path probe compares exact bytes with an LF literal. Its fixture
-# must not gain CRLF during a Windows checkout; reads stay binary.
+# The selected-mod path probe asserts exact canonical bytes. Keep the fixture
+# LF on Windows; mod:read returns raw bytes without translation.
 "tests/modkit/fixtures/path probe/payload.txt" text eol=lf
 
 # Vendored language profiles and notices retain exact source bytes. Address

@@ -10,6 +10,7 @@ GAMES=('red','blue','yellow','gold','silver','crystal','firered','leafgreen','ru
 
 def runtime_files(mod):
     return sorted(p for p in mod.rglob('*') if p.is_file() and p.parts[len(mod.parts)] not in ('fork','baseroms')
+                  and p.relative_to(mod).parts[:2] != ('hosts','gen2')
                   and p.name not in ('host.lua','HOST-QA.json','HOST-COMPATIBILITY.md')
                   and p.suffix.lower() not in ('.gb','.gbc','.gba','.sav'))
 

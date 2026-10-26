@@ -66,6 +66,8 @@ Performance.gen3PaletteIndex = true
 -- shifts, animation frames, toggles) as FFI region copies instead of
 -- getPixel/setPixel per pixel (src/render/ShadeRecolour.lua).
 Performance.shadeRecolourFfi = true
+-- G8: share PNG decodes only among consumers that do not modify pixels.
+Performance.assetSharedDecode = true
 -- G3: Gen 4 model draw sends a uniform only when its value changed and
 -- allocates no per-shape tables (src/render/Gen4Model.lua:_drawCached).
 Performance.gen4UniformCache = true
@@ -76,6 +78,9 @@ Performance.gen4GpuLight = true
 -- G1: Gen 4 model vertices decoded straight into a ByteData through the FFI
 -- rather than a fifteen-element table per vertex (src/render/Gen4Model.lua).
 Performance.gen4ByteVertices = true
+-- G4: Gen 4 joint animation re-posed in the vertex shader from a per-shape
+-- joint palette instead of setVertex per vertex per frame (Gen4Model).
+Performance.gen4GpuSkin = true
 -- H1: pass hook results as varargs and share continuation state per call.
 Performance.hookLean = true
 -- E1: avoid the single-listener snapshot and cache immutable owner labels.
