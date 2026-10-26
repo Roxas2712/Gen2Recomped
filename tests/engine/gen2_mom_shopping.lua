@@ -68,6 +68,12 @@ for _,version in ipairs({'gold','silver','crystal'})do
  Mom.openBank(s);Mom.setSaving(s,true)
  T.eq(s.flags.ENGINE_MOM_ACTIVE,true,version..' bank opening reaches native active flag')
  T.eq(s.flags.ENGINE_MOM_SAVING_MONEY,true,version..' bank start reaches native SOME flag')
+ local previous=save();previous.g2MomBankOpen=true;previous.g2MomSaving=true
+ Mom.prepareBank(previous)
+ T.eq(previous.flags.ENGINE_MOM_ACTIVE,true,version..' earlier native preview account migrates to active flag')
+ T.eq(previous.flags.ENGINE_MOM_SAVING_MONEY,true,version..' earlier native preview saving choice migrates to native flag')
+ previous.flags.ENGINE_MOM_ACTIVE=false;Mom.prepareBank(previous)
+ T.eq(previous.g2MomBankOpen,nil,version..' explicit native reset overrides legacy open boolean')
  local legacy=data();legacy.map_scripts.phone[3].contactNumber=nil;legacy.map_scripts.phone[3].trainer=1
  T.eq(Mom.caller(legacy),3,version..' original non-trainer contact byte remains supported')
  local d=data();s=save()

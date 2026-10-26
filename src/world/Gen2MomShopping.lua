@@ -18,7 +18,15 @@ function M.mode(save)
 end
 function M.prepareBank(save)
  if not M.stock()then return end
- if save.flags and save.flags.ENGINE_MOM_ACTIVE==true then save.g2MomBankOpen=true end
+ save.flags=save.flags or{}
+ local Flags=require('src.script.Flags')
+ local active=save.flags.ENGINE_MOM_ACTIVE
+ if active==nil and save.g2MomBankOpen==true then Flags.set(save,'ENGINE_MOM_ACTIVE')
+ elseif active==true then save.g2MomBankOpen=true
+ elseif active==false then save.g2MomBankOpen=nil end
+ if save.flags.ENGINE_MOM_SAVING_MONEY==nil and(save.g2MomSaving~=nil or save.g2MomSavingMode~=nil)then
+  if M.mode(save)%2==1 then Flags.set(save,'ENGINE_MOM_SAVING_MONEY')else Flags.clear(save,'ENGINE_MOM_SAVING_MONEY')end
+ end
  save.g2MomSaving=M.mode(save)~=0
 end
 function M.setSaving(save,on)
@@ -39,6 +47,7 @@ end
 -- selected account, not redirected to the other one.
 function M.reward(save,total)
  if not M.stock()or not integer(total,0,0xffffff*4)then return nil end
+ M.prepareBank(save)
  local quarter=math.floor(total/4)
  local mode=money(save.g2MomMoney)<M.MAX_MONEY and M.mode(save)or 0
  local quarters=mode==3 and 4 or mode
