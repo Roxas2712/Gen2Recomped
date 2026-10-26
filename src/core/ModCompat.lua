@@ -70,6 +70,7 @@ ModCompat.ALIASES = {
   ["src.ui.gen2.NamingScreen"] = "src.ui.Gen2NamingScreen",
   ["src.ui.gen2.NamePick"] = "src.ui.Gen2NamePick",
   ["src.ui.gen2.SaveMenu"] = "src.ui.Gen2SaveMenu",
+  ["src.core.gen2.Decorations"] = "src.compat.gen2.Decorations",
   ["src.core.gen2.BugContest"] = "src.world.BugContest",
   ["src.core.gen2.ItemEffects"] = "src.inventory.ItemEffects",
   ["src.core.gen2.Save"] = "src.core.SaveData",
