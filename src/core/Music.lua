@@ -1071,4 +1071,10 @@ end
 function Music.nativeSnapshot()
   return nativeBgm and nativeBgm:snapshot() or nil
 end
+-- The launcher and mod loader invalidate this bus before entering the next
+-- dataset. Stopping a song alone deliberately keeps map/saved music for
+-- ordinary playback, so it cannot retire the native session's controller.
+require("src.render.Assets").register(function()
+  if nativeBgm then Music.reload() end
+end)
 return Music

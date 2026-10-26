@@ -109,6 +109,35 @@ for _, version in ipairs({ "firered", "emerald" }) do
     T.eq(queues[index].playing, false, "old-session native handles cannot resume behind the replacement")
   end
   platform.mobile = mobile
+  local ending = h.start({
+    { "playbgm", h.ids[2], 1 },
+    { "savebgm", h.ids[3] },
+    { "playfanfare", ids[1] },
+    { "waitfanfare" },
+    { "end" },
+  })
+  local endedWait = assert(Music.nativeWaitFanfare())
+  T.eq(Music.nativeSnapshot().savedSong, h.ids[3], "ending session owns a saved native song")
+  T.eq(ending:isRunning(), true, "ending session has a live native audio wait")
+  -- The actual launcher boot and mod reload use this bus; do not call
+  -- Music.reload ourselves and hide a missing production registration.
+  require("src.render.Assets").invalidate()
+  T.eq(Music.nativeSnapshot().song, nil, "asset-entry invalidation retires the native song")
+  T.eq(Music.nativeSnapshot().mapSong, nil, "asset-entry invalidation retires native map ownership")
+  T.eq(Music.nativeSnapshot().savedSong, nil, "asset-entry invalidation retires the old saved song")
+  T.eq(endedWait(), true, "asset-entry invalidation releases the previous session's native wait")
+  ending:update()
+  T.eq(ending:isRunning(), false, "the previous session's actual VM finishes before fresh entry")
+  local retired = h.state()
+  local sourcesStopped, queuesStopped = true, true
+  for _, voice in ipairs(retired.native.voices) do
+    sourcesStopped = sourcesStopped and not voice.playing
+  end
+  for _, queue in ipairs(retired.queues) do
+    queuesStopped = queuesStopped and not queue.playing
+  end
+  T.eq(sourcesStopped, true, "asset-entry invalidation stops every old static source")
+  T.eq(queuesStopped, true, "asset-entry invalidation stops every old streaming source")
   h.close()
   f.close()
 end
