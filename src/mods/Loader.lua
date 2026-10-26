@@ -764,6 +764,9 @@ function Loader:_contentApi(mod, registry, deprecation)
   if registry.name == "radio_channels" then
     return require("src.mods.RadioContent").api(loader,mod,api,loader:_generation())
   end
+  if registry.name == "phone_contacts" then
+    return require("src.mods.PhoneContent").api(loader,mod,api,loader:_generation())
+  end
   return api
 end
 
@@ -1421,6 +1424,7 @@ function Loader:load(data)
   require("src.mods.RadioContent").prepare(self, data)
   -- vanilla content is registrations too, and they land before discovery so
   -- a mod's register collides with the engine's and has to say override
+  require("src.mods.PhoneContent").prepare(self, data)
   require("src.mods.Builtins").install(self.content, data)
   self:_loadState()
   self:_discover()
@@ -1645,6 +1649,7 @@ function Loader:load(data)
       stampAudioOwners(data, name, registry)
     end
   end
+  require("src.mods.PhoneContent").apply(self, data)
   -- dangling f.id references are attributed to the id's last writer;
   -- api 1 mods keep the warning-only compat path
   if data then
