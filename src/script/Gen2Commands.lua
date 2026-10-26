@@ -2096,11 +2096,31 @@ end
 function Gen2Commands.phoneName(data, id)
   local entry = phoneContact(data, id)
   if not entry then return nil end
-  if entry.name then return entry.name, entry.role end
   local best = phoneTrainerDef(data, entry)
+  if entry.name then return entry.name, entry.role or (best and best.name) end
   if not best then return nil end
   local names = best.partyNames
   return (names and names[entry.trainer]) or best.name, best.name
+end
+
+-- Observation of an admitted native incoming call, never of a model-side
+-- candidate. Keep the payload detached from the native row and queued IR.
+function Gen2Commands.announceIncomingCall(data, id, special)
+  local Runtime = require("src.mods.Runtime")
+  if not Runtime.wants("phone.call_received") then return end
+  local row = phoneContact(data, id) or {}
+  local pool = data and data.map_scripts or {}
+  local specialRow = special and pool.specialCalls and pool.specialCalls[special]
+  local key = specialRow and specialRow.script or row.receive
+  local name, className = Gen2Commands.phoneName(data, id)
+  local constants = data and data.constants or {}
+  local class = (constants.trainerClassOrder or {})[row.class]
+  local member = class and (constants.trainerClassMembers or {})[class]
+  local call = {kind="call", direction="incoming", contact=id,
+    class=class, member=member and member[row.trainer], number=row.contactNumber,
+    script=key, scriptKey=key, special=special}
+  Runtime.emit("phone.call_received", {call=call, contact=id,
+    name=name, className=className, special=special, scriptKey=key})
 end
 
 -- The row's second `dba` is the script PhoneCall (36:$4298) runs when the
