@@ -90,6 +90,9 @@ RomRevisions.ACCEPTED = {
   ruby = {
     { sha1 = "f28b6ffc97847e94a6c21a63cacf633ee5c8df1e", code = "AXVE", revision = 0, label = "Pokemon Ruby (USA)" },
   },
+  sapphire = {
+    { sha1 = "3ccbbd45f8553c36463f13b938e833f652b793e4", code = "AXPE", revision = 0, label = "Pokemon Sapphire (USA)" },
+  },
   emerald = {
     { sha1 = "f3ae088181bf583e55daf962a92bb46f4f1d07b7", code = "BPEE", revision = 0,
       label = "Pokemon Emerald (USA, Europe)" },
