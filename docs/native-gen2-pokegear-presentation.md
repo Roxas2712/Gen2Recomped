@@ -34,8 +34,11 @@ warning overlay still obscures the lower edge. See the sanitized
 
 Fork PR45 is merged. Its final composed source `4be92945` passes 418/418
 engine suites, SDK 3/3 and all ROM-free quick tiers; source-bound runtime/GPU
-qualification is in progress. Diagnostic acceptance is not transferred to
-that composition.
+qualification40248573841 and fresh scoped GPU runs are now accepted. Each
+OpenGL/Metal run passes46 checks; all eight final-composed OS images were
+inspected independently. The existing20261025.1 preview was refreshed from
+that exact source, with all six remote asset digests verified. Earlier
+diagnostic acceptance was not substituted for the composed runs.
 
 The earlier exact `e435f5ff` package passed 36 automatic checks per OpenGL
 and Metal backend with actual Crystal and the unchanged Johto package.
