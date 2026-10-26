@@ -72,6 +72,10 @@ Performance.gen4GpuLight = true
 -- G1: Gen 4 model vertices decoded straight into a ByteData through the FFI
 -- rather than a fifteen-element table per vertex (src/render/Gen4Model.lua).
 Performance.gen4ByteVertices = true
+-- W0: the frame pacer's idle time pumps the Gen 3 asset stream (atlas and
+-- sprite builds queued by prefetch) instead of sleeping through it
+-- (src/core/IdleStream.lua).
+Performance.idleStream = true
 Performance.GC_PAUSE = 120
 Performance.GC_STEP_MUL = 300
 Performance.GC_BUDGET_SECONDS = 0.0005
@@ -143,6 +147,9 @@ for name, caps in pairs(Performance.CAPS) do
   -- index).  x3 / x4 is nine to sixteen times the fill of the logical view;
   -- a phone or handheld cannot pay that, whatever the OPTIONS row says.
   caps.gen4RenderScaleMax = (name == "high" and 4) or (name == "balanced" and 2) or 1
+  -- W0: the most of a frame's idle time the asset stream may take.  HIGH
+  -- has the time to spare; LOW keeps the sleep it was going to take.
+  caps.streamIdleSeconds = (name == "high" and 0.006) or (name == "balanced" and 0.003) or 0.002
   caps.gcPause = Performance.GC_PAUSE
   caps.gcStepMul = Performance.GC_STEP_MUL
   caps.gcBudgetSeconds = Performance.GC_BUDGET_SECONDS
