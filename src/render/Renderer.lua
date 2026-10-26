@@ -16,6 +16,8 @@ local Runtime = require("src.mods.Runtime")
 local GbcColorCorrection = require("src.render.GbcColorCorrection")
 local Output = require("src.render.Output")
 local GameViewport = require("src.render.GameViewport")
+local Performance = require("src.core.Performance")
+local HotModules = require("src.core.HotModules")
 
 -- RESOLVED ONCE, NOT EVERY FRAME.  These three were `require`d from inside
 -- beginFrame and endFrame -- three string hashes into package.loaded on every
@@ -313,7 +315,7 @@ function Renderer:worldViewSize()
   -- Gen 1-3 render native border tiles beyond the map. Capping their view
   -- here and enlarging it during presentation silently changes the user's
   -- zoom on every building/route transition and makes small-map zoom inert.
-  if bw and bh and require("src.core.GameVersion").isGen4() then
+  if bw and bh and HotModules.get("src.core.GameVersion").isGen4() then
     local uw, uh = self:uiSize()
     -- Never below the screen the generation was drawn for, so a map at least
     -- that big comes out exactly the size it did before.
@@ -334,7 +336,7 @@ end
 -- keep the projected ground plane covering the receded corners; filling with
 -- it would undo the growth it just asked for.
 function Renderer:worldPresentationScale(sp, pw, ph, vw, vh)
-  if self.worldBoundsW and require("src.core.GameVersion").isGen4() and not Tilt.active() then
+  if self.worldBoundsW and HotModules.get("src.core.GameVersion").isGen4() and not Tilt.active() then
     return math.max(sp, pw / vw, ph / vh)
   end
   return sp
@@ -439,7 +441,7 @@ function Renderer:drawBattleWipe(wipe, ww, wh, ox, oy, vpw, vph, Sx, Sy, source)
   -- required here rather than at the top: BattleTransition reaches the
   -- renderer through game.renderer at draw time, and a module-level require
   -- would put the two files in a load cycle
-  local BattleTransition = require("src.render.BattleTransition")
+  local BattleTransition = HotModules.get("src.render.BattleTransition")
   local order = BattleTransition.gridOrder(wipe.style, cols, rows)
 
   if order then
@@ -852,7 +854,34 @@ end
 -- scissored through the shade-remap shader, later zones on top.
 -- When GBC FX is active the composite is drawn into presentCanvas and
 -- presented through the GBC FX shader as a final pass.
-function Renderer:endFrame(zones, worldZones)
+-- Native blits keep the frame's DPI in explicit arguments, including nested
+-- drawing. The public blitCanvas seam retains its original signature/dispatch.
+function Renderer:_blitAtDpi(dpiX, dpiY, canvas, sx, sy, zoneList, zoneSx, zoneSy,
+                             bx, by, boxX, boxY, boxW, boxH)
+  return self:blitCanvas(canvas, sx, sy, zoneList, zoneSx, zoneSy,
+                        bx, by, boxX, boxY, boxW, boxH, dpiX, dpiY)
+end
+
+local _viewportScratch = {}
+local _uiPresentationOwners = setmetatable({}, {__mode="k"})
+local function viewportResult(private, ww, wh, ox, oy, vpw, vph, scale, dpiX, dpiY)
+  local out = private and _viewportScratch or {}
+  out.width, out.height, out.gameX, out.gameY = ww, wh, ox, oy
+  out.gameWidth, out.gameHeight, out.scale = vpw, vph, scale
+  out.dpiX, out.dpiY = dpiX, dpiY
+  return out
+end
+local function uiPresentation(self, x, y, w, h, sx, sy)
+  local out = _uiPresentationOwners[self]
+  if not Performance.hotPathHoist or not out or self.uiPresentation ~= out then
+    out = {}
+    _uiPresentationOwners[self] = out
+  end
+  out.x, out.y, out.w, out.h, out.scaleX, out.scaleY = x, y, w, h, sx, sy
+  self.uiPresentation = out
+end
+
+local function endFrame(self, zones, worldZones, privateViewport)
   GameViewport.setTarget()
   local ww, wh, pw, ph, dpiX, dpiY = displayMetrics()
   -- Sp = integer framebuffer pixels per GB pixel;
@@ -881,7 +910,7 @@ function Renderer:endFrame(zones, worldZones)
   local uvpw, uvph = uiw * Ux, uih * Uy
   local uox = math.floor((pw - uiw * Up) / 2) / dpiX
   local uoy = math.floor((ph - uih * Up) / 2) / dpiY
-  self.uiPresentation = {x=uox,y=uoy,w=uvpw,h=uvph,scaleX=Ux,scaleY=Uy}
+  uiPresentation(self, uox, uoy, uvpw, uvph, Ux, Uy)
   local GBCFX = gbcFX()
   -- Forced mono/Classic modes still need a whole-screen zone when a state
   -- exposes no SGB packets (raw DMG canvas), so sendColors can remap.
@@ -921,7 +950,7 @@ function Renderer:endFrame(zones, worldZones)
       -- took its Gen 1 branch, with Gen 1's tile geometry, over Gen 3
       -- data.  GameVersion.generation() is the same answer for Gen 1 and
       -- Gen 2 and the right one for Gen 3.
-      generation = require("src.core.GameVersion").generation(),
+      generation = HotModules.get("src.core.GameVersion").generation(),
       worldOverride = self.worldOverride,
       worldOverrideMirrored = self.worldOverrideMirrored,
       worldActive = self.worldActive and true or false,
@@ -929,7 +958,7 @@ function Renderer:endFrame(zones, worldZones)
       ww = ww, wh = wh, pw = pw, ph = ph, ox = ox, oy = oy,
       vpw = vpw, vph = vph, uiw = uiw, uih = uih,
       scale = Sp, Sx = Sx, Sy = Sy, dpiX = dpiX, dpiY = dpiY,
-      secondScreen = require("src.render.SecondScreen"),
+      secondScreen = HotModules.get("src.render.SecondScreen"),
     }
     if Runtime.call("render.compose", function() return false end, self, ctx) == true then
       self.worldActive = false
@@ -938,10 +967,7 @@ function Renderer:endFrame(zones, worldZones)
       self.worldOverride = nil
       self.worldOverrideMirrored = nil
       PaletteFX.setPass(nil)
-      return {
-        width = ww, height = wh, gameX = ox, gameY = oy,
-        gameWidth = vpw, gameHeight = vph, scale = Sp, dpiX = dpiX, dpiY = dpiY,
-      }
+      return viewportResult(privateViewport, ww, wh, ox, oy, vpw, vph, Sp, dpiX, dpiY)
     end
   end
 
@@ -1003,7 +1029,7 @@ function Renderer:endFrame(zones, worldZones)
   -- a visibly brighter border.
   local clearR, clearG, clearB = 0, 0, 0
   if not self.worldActive then
-    local ok, Game = pcall(require, "src.core.Game")
+    local ok, Game = HotModules.optional("src.core.Game")
     local stack = ok and Game and Game.stack
     local base = stack and stack.visibleBase and stack:visibleBase()
     local state = base and stack.states and stack.states[base]
@@ -1046,10 +1072,13 @@ function Renderer:endFrame(zones, worldZones)
 
   -- see Renderer:blitCanvas; bound here to the frame's dpi so the composite
   -- call sites below stay unchanged.
-  local function blit(canvas, sx, sy, zoneList, zoneSx, zoneSy,
-                      bx, by, boxX, boxY, boxW, boxH)
-    return self:blitCanvas(canvas, sx, sy, zoneList, zoneSx, zoneSy,
-                           bx, by, boxX, boxY, boxW, boxH, dpiX, dpiY)
+  local blit = self._blitAtDpi
+  if not Performance.hotPathHoist then
+    blit = function(_self, _dx, _dy, canvas, sx, sy, zoneList, zoneSx, zoneSy,
+                    bx, by, boxX, boxY, boxW, boxH)
+      return self:blitCanvas(canvas, sx, sy, zoneList, zoneSx, zoneSy,
+                             bx, by, boxX, boxY, boxW, boxH, dpiX, dpiY)
+    end
   end
 
   -- A PUBLISHER MAY HAVE FREED ITS CANVAS SINCE IT HANDED IT OVER.
@@ -1140,9 +1169,9 @@ function Renderer:endFrame(zones, worldZones)
       Tilt.active() and self:drawTiltedWorld(worldZones or zones, sx, sy, wox, woy, present)
     if not projected then
       if worldZones then
-        blit(self.worldCanvas, sx, sy, worldZones, sx, sy, wox, woy, 0, 0, ww, wh)
+        blit(self, dpiX, dpiY, self.worldCanvas, sx, sy, worldZones, sx, sy, wox, woy, 0, 0, ww, wh)
       else
-        blit(self.worldCanvas, sx, sy, zones, Sx, Sy, wox, woy, 0, 0, ww, wh)
+        blit(self, dpiX, dpiY, self.worldCanvas, sx, sy, zones, Sx, Sy, wox, woy, 0, 0, ww, wh)
       end
       -- OBP-baked overworld sprites replay on top of the zone pass (GBC
       -- mode per-object coloring; see PaletteFX.markSpriteRedraw).  Grass
@@ -1259,7 +1288,7 @@ function Renderer:endFrame(zones, worldZones)
     -- it wants the whole window rather than a fixed box in the middle of one.
     -- The bag, the party menu, the mart, the Pokenav, the title and the battle
     -- all say so; the overworld does not, so the map is still never bled.
-    local okGame, GameMod = pcall(require, "src.core.Game")
+    local okGame, GameMod = HotModules.optional("src.core.Game")
     local fills = okGame and GameMod
                   and GameMod.fillScaleInStack(GameMod.stack) or false
     -- ...AND NOT A BATTLE.
@@ -1300,12 +1329,12 @@ function Renderer:endFrame(zones, worldZones)
        and not GameMod.edgeBleedAllowedInStack(GameMod.stack) then
       fills = false
     end
-    if fills and require("src.core.GameVersion").isGen3() then
+    if fills and HotModules.get("src.core.GameVersion").isGen3() then
       self:bleedEdges(self.canvas, Ux, Uy, uox, uoy, ww, wh)
     end
     local uiSource=self.uiOverride or self.canvas
     local uiFactor=uiSource:getWidth()/uiw
-    blit(uiSource, Ux/uiFactor, Uy/uiFactor, zones, Ux, Uy, uox, uoy, uox, uoy, uvpw, uvph)
+    blit(self, dpiX, dpiY, uiSource, Ux/uiFactor, Uy/uiFactor, zones, Ux, Uy, uox, uoy, uox, uoy, uvpw, uvph)
   else
     local rest = { { uox, uoy, uvpw, uvph } }
     local placed = {}
@@ -1327,7 +1356,7 @@ function Renderer:endFrame(zones, worldZones)
     -- desktop it IS the window: love.window.getSafeArea is absent or returns
     -- the full surface, so rect() answers 0, 0, ww, wh and every number below
     -- is what it has always been.  Which is exactly why only mobile saw this.
-    local sax, say, saw, sah = require("src.core.SafeArea").rect()
+    local sax, say, saw, sah = HotModules.get("src.core.SafeArea").rect()
     if self.splitViewport then
       saw=math.max(0,math.min(saw,ww-sax));sah=math.max(0,math.min(sah,wh-say))
     end
@@ -1355,13 +1384,13 @@ function Renderer:endFrame(zones, worldZones)
       rest = subtractRect(rest, uox + a.x * Ux, uoy + a.y * Uy, dw, dh)
     end
     for _, r in ipairs(rest) do
-      blit(self.canvas, Ux, Uy, zones, Ux, Uy, uox, uoy, r[1], r[2], r[3], r[4])
+      blit(self, dpiX, dpiY, self.canvas, Ux, Uy, zones, Ux, Uy, uox, uoy, r[1], r[2], r[3], r[4])
     end
     for _, p in ipairs(placed) do
       -- shift the draw origin so canvas pixel (a.x, a.y) lands on (dx, dy).
       -- The zone scissors are computed from the same origin, so an SGB
       -- region travels with the element instead of staying in the letterbox.
-      blit(self.canvas, Ux, Uy, zones, Ux, Uy,
+      blit(self, dpiX, dpiY, self.canvas, Ux, Uy, zones, Ux, Uy,
            p.dx - p.a.x * Ux, p.dy - p.a.y * Uy, p.dx, p.dy, p.dw, p.dh)
     end
   end
@@ -1371,7 +1400,7 @@ function Renderer:endFrame(zones, worldZones)
   -- origin and scale it used, so a queued rect covers exactly the pixels it
   -- replaces -- and UNDER the wipe and veil below, which are screen-wide
   -- effects that on hardware nothing escapes.
-  require("src.render.NativeOverlay").flush(uox, uoy, Ux, Uy)
+  HotModules.get("src.render.NativeOverlay").flush(uox, uoy, Ux, Uy)
 
   -- The battle wipe covers the whole surface, letterbox included, so it goes
   -- over the finished composite rather than under the UI blit.  On hardware
@@ -1429,7 +1458,7 @@ function Renderer:endFrame(zones, worldZones)
       canvas = composed, width = ww, height = wh,
       gameX = ox, gameY = oy, gameWidth = vpw, gameHeight = vph,
       scale = Sp, dpiX = dpiX, dpiY = dpiY,
-      generation = require("src.core.GameVersion").generation(),
+      generation = HotModules.get("src.core.GameVersion").generation(),
     })
     if not outputHandled then
       closePresent = FrameProfile.section("  renderer: present pipeline")
@@ -1449,13 +1478,17 @@ function Renderer:endFrame(zones, worldZones)
   self.worldOverride = nil
   self.worldOverrideMirrored = nil
   PaletteFX.setPass(nil)
-  return {
-    width = ww, height = wh,
-    gameX = ox, gameY = oy,
-    gameWidth = vpw, gameHeight = vph,
-    scale = Sp,
-    dpiX = dpiX, dpiY = dpiY,
-  }
+  return viewportResult(privateViewport, ww, wh, ox, oy, vpw, vph, Sp, dpiX, dpiY)
+end
+
+-- Public callers (including wrappers installed by mods) always receive a new
+-- record. Only the unwrapped native path may borrow the private result.
+function Renderer:endFrame(zones, worldZones)
+  return endFrame(self, zones, worldZones, false)
+end
+Renderer._nativeEndFrame = Renderer.endFrame
+function Renderer:_endFrameForEngine(zones, worldZones)
+  return endFrame(self, zones, worldZones, Performance.hotPathHoist)
 end
 
 return Renderer
