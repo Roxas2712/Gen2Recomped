@@ -78,6 +78,65 @@ local ANIMATIONS = {
 	"g3MirageTower",
 	"g3Orb",
 }
+-- Until native actor continuations are captured, admit only canonical static
+-- actors. A settled player alone does not make wandering or scripted NPC state
+-- reconstructible from the saved map definition.
+local function canonicalActors(world)
+	if world.follower or world.strengthActive or world.noWildEncounters then
+		return false
+	end
+	local known = {}
+	local function admit(actor)
+		if known[actor] then
+			return true
+		end
+		local def = actor and actor.def
+		if not def or getmetatable(actor) ~= package.loaded["src.world.NPC"] then
+			return false
+		end
+		if
+			actor.moving
+			or actor.frozen
+			or actor.wanders
+			or actor.spins
+			or actor.turns
+			or actor.looksAround
+			or actor.rotates
+			or actor.sequence
+		then
+			return false
+		end
+		if
+			actor.cellX ~= def.x
+			or actor.cellY ~= def.y
+			or actor.facing ~= actor.spawnFacing
+			or actor.px ~= actor.cellX * 16
+			or actor.py ~= actor.cellY * 16
+			or actor.fixedFrame ~= def.frame
+			or actor.hidden
+		then
+			return false
+		end
+		known[actor] = true
+		return true
+	end
+	for _, actor in pairs(world.npcPool or {}) do
+		if not admit(actor) then
+			return false
+		end
+	end
+	for _, actor in ipairs(world.npcs or {}) do
+		if not admit(actor) then
+			return false
+		end
+	end
+	for _, actor in ipairs(world.entities or {}) do
+		if actor ~= world.player and not known[actor] then
+			return false
+		end
+	end
+	return true
+end
 function C.inspect(game, internal, fs)
 	local save = game and game.save
 	if type(save) ~= "table" or type(save.version) ~= "string" then
@@ -114,6 +173,12 @@ function C.inspect(game, internal, fs)
 	end
 	if world.player.moving or world.player.spinning or world.player.jumping then
 		return refusal("overworld", "movement_busy", "Wait for player movement.")
+	end
+	if game.linkSession or (game.linkNet and not game.linkNet.closed) then
+		return refusal("overworld", "unsupported_runtime", "Multiplayer checkpoint reconstruction is unavailable.")
+	end
+	if not canonicalActors(world) then
+		return refusal("overworld", "unsupported_actor_runtime", "Only canonical static native actors are qualified.")
 	end
 	if not World.available(game) then
 		return refusal("overworld", "unsupported_runtime", "This world has no qualified native reconstruction backend.")

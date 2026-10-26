@@ -6,7 +6,10 @@ All mod API levels expose `mod.checkpoints:inspect(game)`, `capture(game)`,
 Refused operations return their reason instead of inventing a substitute state.
 
 This implementation is independently written around the native controller and
-save services. It currently admits settled Gen-1/2 overworld control. Active
+save services. It currently admits settled Gen-1/2 overworld control with canonical
+static native actors. Wandering, followers, scripted actor placement, extra actors,
+strength/encounter overrides and multiplayer fail closed until their continuations
+are qualified. Active
 screens, scripts, transitions, movement and effects are refused. Battle and
 later-generation reconstruction are **not qualified**; inspect reports
 `unsupported_battle` or `unsupported_runtime`. Providing the facade does not
