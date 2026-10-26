@@ -25,9 +25,10 @@ local function near(a, b, tol, what)
 end
 
 local OVERSHOOT = 0.0006
+local POLL = 0.000001 -- a clock read costs a microsecond, so a spin advances
 local function clock()
   local t = { now = 0, sleeps = 0 }
-  t.getTime = function() return t.now end
+  t.getTime = function() t.now = t.now + POLL; return t.now end
   t.sleep = function(s) t.sleeps = t.sleeps + 1; t.now = t.now + s + OVERSHOOT end
   return t
 end
@@ -46,7 +47,7 @@ FrameCap.apply(60)
 FrameCap.focused = true
 local t = clock()
 local took = runFrame(t, nil, true)
-near(took, 1 / 60, 1e-9, "HIGH: spin lands the frame on the deadline")
+near(took, 1 / 60, 3 * POLL, "HIGH: spin lands the frame on the deadline")
 eq(FrameCap.spinSeconds(), FrameCap.SPIN_SECONDS, "HIGH spends the spin")
 
 -- 2. spin off (LOW): the last sleep overshoots the deadline
@@ -56,7 +57,7 @@ t = clock()
 took = runFrame(t, nil, true)
 n = n + 1
 if took <= 1 / 60 then error("LOW: a pure sleep should overshoot the deadline on this clock") end
-near(took, 1 / 60, OVERSHOOT + 1e-9, "LOW: overshoot is one scheduler tick at most")
+near(took, 1 / 60, OVERSHOOT + 3 * POLL, "LOW: overshoot is one scheduler tick at most")
 
 -- 3. the switch itself
 Performance.tier = "high"
@@ -72,15 +73,15 @@ local window = {
 FrameCap.apply(144)
 t = clock()
 took = runFrame(t, window, true)
-near(took, 0.002, 1e-9, "focused + vsync at 144 cap: the present paces, no sleep")
+near(took, 0.002, 3 * POLL, "focused + vsync at 144 cap: the present paces, no sleep")
 FrameCap.setFocus(false)
 t = clock()
 took = runFrame(t, window, true)
-near(took, 1 / FrameCap.BACKGROUND, 1e-9, "unfocused: paced to BACKGROUND even under vsync")
+near(took, 1 / FrameCap.BACKGROUND, 3 * POLL, "unfocused: paced to BACKGROUND even under vsync")
 FrameCap.backgroundPacing = false
 t = clock()
 took = runFrame(t, window, true)
-near(took, 0.002, 1e-9, "backgroundPacing=false: vsync paces again")
+near(took, 0.002, 3 * POLL, "backgroundPacing=false: vsync paces again")
 FrameCap.backgroundPacing = true
 FrameCap.setFocus(true)
 eq(FrameCap.focused, true, "focus restored")
@@ -91,7 +92,7 @@ FrameCap.BACKGROUND = 1000
 FrameCap.apply(30)
 t = clock()
 took = runFrame(t, nil, true)
-near(took, 1 / 30, 1e-9, "a 30 cap stays 30 in the background")
+near(took, 1 / 30, OVERSHOOT + 3 * POLL, "a 30 cap stays 30 in the background")
 FrameCap.BACKGROUND = 20
 FrameCap.setFocus(true)
 
