@@ -110,7 +110,15 @@ return function(mod)
   local saved=prefs:read('preferences/'..version..'.txt')
   local ok,err=xpcall(function()
    install(id)
-   if persist then assert(prefs:write('preferences/'..version..'.txt',id))end
+   if persist then
+    assert(prefs:write('preferences/'..version..'.txt',id))
+    if mod.exports.sessionBoot then
+     assert(require('src.translation.NativeLanguages').select(version,id))
+     for _,options in ipairs({game.options,game.save and game.save.options}) do if options then
+      options.nativeLanguages=options.nativeLanguages or {};options.nativeLanguages[version]=id
+     end end
+    end
+   end
   end,debug.traceback)
   if not ok then
    if persist then pcall(prefs.write,prefs,'preferences/'..version..'.txt',saved or previous)end
@@ -140,6 +148,12 @@ return function(mod)
   session:attach(game)
  end)
  initial=own('startup.lua')(mod,version,own)
+ if mod.exports.sessionBoot then
+  local options=require('src.core.SaveData').loadOptions()
+  if options.nativeLanguages and options.nativeLanguages[version] then
+   initial=require('src.translation.NativeLanguages').chosen(options,version)
+  end
+ end
  Service.__ulaStartup=mod.exports.startup
  mod.exports.hostChangeLanguage=function(id)
   local ok,why=apply(id,false)

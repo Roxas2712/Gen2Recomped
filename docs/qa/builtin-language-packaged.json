@@ -1,0 +1,6 @@
+{
+  "passed": true,
+  "scope": "Actual fused macOS app, built-in pack, copied owned Gold QA guest profile and exact input sources; no installed language ZIP. Native render, language round trips, failure rollback and progress preservation.",
+  "logSha256": "3eafe6302b39d473fae54341f47bb9ecdf41d3a2f1033dfc09f2bb342265086c",
+  "payloadSha256": "2de84d80670a71d18287fb6436bf4f50bdc6f67b90426052baf2a7ddfed787d2"
+}

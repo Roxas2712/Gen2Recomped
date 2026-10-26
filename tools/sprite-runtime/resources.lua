@@ -30,8 +30,15 @@ function M.run(T,read,asset)
     T.eq(S.get(-1),nil);T.eq(S.get(0/0),nil);T.eq(S.get(65536),nil);T.eq(S.get(999),nil)
     -- Source queue work is cooperative, and cancelled work is never published.
     T.eq(S.prefetch(1,4),true);T.eq(S._stream.pending[1],true)
+    local pending=S._stream.pending
+    T.eq(type(pending),'table','public pending remains a detached boolean snapshot')
+    for _,value in pairs(pending)do T.eq(value,true,'pending cannot lend native job/context records')end
+    pending[1]=nil
+    T.eq(S._stream.pending[1],true,'mutating the public snapshot cannot cancel native work')
+    T.eq(Stream.busy(),true,'the registered native owner still advertises queued work to the idle pump')
     S._stream:step(0);T.eq(S._loaded[1],nil)
     S._stream:retain({[0]=true});T.eq(S._stream.pending[1],nil);T.eq(S._loaded[1],nil)
+    T.eq(Stream.busy(),false,'native cancellation releases the idle pump without changing the public protocol')
     S.prefetch(1,4);local steps=0
     while S._stream.pending[1]do S._stream:step(0);steps=steps+1;assert(steps<100)end
     T.check(steps>2,'data, texture and quad preparation use separate slices')

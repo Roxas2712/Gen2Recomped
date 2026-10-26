@@ -57,8 +57,8 @@ def main():
     parser.add_argument("--output", type=Path, required=True,
                         help="new disposable candidate directory; never an installation")
     parser.add_argument("--engine-tests", action="store_true")
-    parser.add_argument("--engine-timeout", type=positive_seconds, default=900,
-                        help="seconds allowed for each complete engine tier run (default: 900)")
+    parser.add_argument("--engine-timeout", type=positive_seconds, default=2400,
+                        help="seconds allowed for each complete engine tier run (default: 2400)")
     args = parser.parse_args()
     source, output = args.luajit_source.resolve(), args.output.resolve()
     engine_paths = ("main.lua", "conf.lua", "src", "assets", "data", "tests")
@@ -168,6 +168,8 @@ def main():
                 shell = Path(git(source, "--exec-path")).parents[2] / "bin/bash.exe"
                 if not shell.is_file():
                     raise RuntimeError("Git for Windows Bash is required for engine tiers")
+            # Both complete quick-tier runs are required. The growing native
+            # suite exceeds 15 minutes on the hosted Intel runner.
             text = command(label + "-engine", [shell, "scripts/test.sh", "--quick"],
                            ROOT, engine_env, args.engine_timeout)
             match = re.search(r"engine: (\d+)/(\d+) suites passed", text)

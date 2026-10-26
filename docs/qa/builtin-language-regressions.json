@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "nativeSetupChecks": 149,
+  "nativeProtocolChecks": 82,
+  "scope": "Scoped native-language and launcher regression suites, mod SDK and clean real-ROM Gold/Emerald paths. No Asian real-ROM gameplay certification.",
+  "suites": [
+    "native_language_setup",
+    "rom_language_pack",
+    "first_run",
+    "launcher_locale",
+    "native_cache_openfile",
+    "native_language_import_publication",
+    "native_cache_file_info",
+    "mod_preflight",
+    "mod_supports",
+    "game_cache",
+    "modkit"
+  ],
+  "broaderEngineRun": {
+    "complete": false,
+    "reason": "360-second runner limit; targeted suites above completed separately."
+  }
+}

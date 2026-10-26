@@ -5,9 +5,17 @@
 return function(original)
  return function(mod)
   local path='baseroms/.uni-language-profile';local key='language-profile/v1.txt'
-  local proxy=setmetatable({read=function(_,relative)
+  local proxy=setmetatable({path=mod.languageManifest and mod.languageManifest.path or mod.path,read=function(_,relative)
    local bytes=mod:read(relative)
-   if relative==path then return bytes or mod.cache:read(key)end
+   if relative==path then
+    local saved=bytes or mod.cache:read(key)
+    if not saved and mod.exports.sessionBoot then
+     local o=require('src.core.SaveData').loadOptions()
+     local id=require('src.translation.NativeLanguages').canonical(o.launcherLanguage)
+     return 'ULA1\npreferences/notice.txt=accepted\npreferences/ascendant-intro-v1.txt=seen\npreferences/ui-language.txt='..id..'\n'
+    end
+    return saved
+   end
    return bytes
   end},{__index=mod})
   local prefs=original(proxy)
