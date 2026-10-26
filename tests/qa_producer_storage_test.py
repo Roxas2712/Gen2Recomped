@@ -35,6 +35,19 @@ class Producers(unittest.TestCase):
             self.storage.run([sys.executable,'-c','open(sys.argv[1],"w").close()',str(marker)])
         self.assertFalse(marker.exists())
 
+    def test_short_successful_writer_still_reports_budget_failure(self):
+        output=self.root/'build';output.mkdir();self.storage.limit_output(output,100)
+        with self.assertRaisesRegex(RuntimeError,'output budget exceeded'):
+            self.storage.run([sys.executable,'-c','import sys;open(sys.argv[1],"wb").write(b"x"*200)',str(output/'part.o')])
+
+    def test_qa_profiles_and_copies_register_live_budgets(self):
+        with patch('qa_legacy_storage.LiveUse.busy',return_value=False):
+            profile=self.home/'Library/Application Support/LOVE/oasc-unit-qa-123'
+            self.storage.destination(profile)
+            copied=self.root/'.local/qa/probe/candidate';self.storage.copy(copied)
+        self.assertEqual(self.storage.output_limits[profile],2*GIB)
+        self.assertEqual(self.storage.output_limits[copied],4*GIB)
+
     def test_running_producer_stops_on_budget_without_removing_sources(self):
         output=self.root/'build';output.mkdir();source=self.root/'model.obj';source.write_bytes(b'model')
         self.storage.limit_output(output,100)
