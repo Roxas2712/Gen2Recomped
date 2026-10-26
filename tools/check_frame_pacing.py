@@ -17,6 +17,7 @@ def main():
     workload = parser.add_mutually_exclusive_group()
     workload.add_argument('--gc', action='store_true', help='compare fixed-step GC with the P2 idle budget')
     workload.add_argument('--hot-path', action='store_true', help='compare actual native update/draw dependency dispatch')
+    workload.add_argument('--world-draw', action='store_true', help='compare native world entity/FX dispatch over synthetic content')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(args.qa_tools or root / 'tools'))
@@ -34,6 +35,11 @@ def main():
     if args.hot_path:
         files += ('src/core/Game.lua', 'src/core/HotModules.lua', 'src/core/Performance.lua',
                   'src/render/Renderer.lua', 'src/render/PaletteFX.lua', 'tools/frame-pacing-check/hot.lua')
+    if args.world_draw:
+        files += ('src/core/Game.lua', 'src/core/Performance.lua', 'src/core/HotModules.lua',
+                  'src/world/OverworldController.lua', 'src/render/Renderer.lua',
+                  'src/render/PaletteFX.lua', 'src/render/Pipelines.lua',
+                  'tests/world_draw/fixture.lua', 'tools/frame-pacing-check/world.lua')
     hashes = {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in files}
     source = qa_run(['git', 'rev-parse', 'HEAD'], cwd=root, text=True,
                     capture_output=True, check=True).stdout.strip()
@@ -45,10 +51,11 @@ def main():
                     cwd=root, env=dict(os.environ, POKEPORT_IDENTITY=identity,
                                        FRAME_PACING_REPO=str(root), FRAME_PACING_QA_GUARDED='1',
                                        FRAME_PACING_GC='1' if args.gc else '0',
-                                       FRAME_PACING_HOT='1' if args.hot_path else '0'),
+                                       FRAME_PACING_HOT='1' if args.hot_path else '0',
+                                       FRAME_PACING_WORLD='1' if args.world_draw else '0'),
                     capture_output=True, text=True, timeout=90)
     args.report.with_suffix('.log').write_text(result.stdout + result.stderr)
-    prefix = 'P3_NATIVE_RESULT ' if args.hot_path else 'P2_NATIVE_RESULT ' if args.gc else 'P1_NATIVE_RESULT '
+    prefix = 'P4_NATIVE_RESULT ' if args.world_draw else 'P3_NATIVE_RESULT ' if args.hot_path else 'P2_NATIVE_RESULT ' if args.gc else 'P1_NATIVE_RESULT '
     records = [line.removeprefix(prefix) for line in result.stdout.splitlines() if line.startswith(prefix)]
     if result.returncode or len(records) != 1:
         raise RuntimeError('native pacing probe failed; see ' + str(args.report.with_suffix('.log')))
