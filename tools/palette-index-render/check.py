@@ -31,7 +31,8 @@ def main():
     adapter = args.lua.resolve()
     env = dict(os.environ)
     watched = [ROOT / p for p in ('src/core/FrameProfile.lua', 'src/render/SpriteRenderer.lua',
-               'src/render/TileRenderer.lua', 'src/render/PaletteIndex.lua', 'tools/palette-index-render/host/main.lua')]
+               'src/render/TileRenderer.lua', 'src/render/PaletteIndex.lua', 'src/render/PaletteFX.lua',
+               'src/core/Performance.lua', 'tools/palette-index-render/host/main.lua', 'tools/palette-index-render/host/lut.lua')]
     hashes = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in watched}
     results = []
 
@@ -75,6 +76,12 @@ def main():
         }, timeout=90)
         if (out / 'native-gpu.json').is_file():
             native = json.loads((out / 'native-gpu.json').read_text())
+        metal_identity = identity + '-index-metal'
+        qa_profile(Path.home() / 'Library/Application Support/LOVE' / metal_identity)
+        run('palette_gpu_metal', [str(args.native_love.resolve()), str(Path(__file__).parent / 'host')], {
+            'POKEPORT_IDENTITY': metal_identity, 'POKEPORT_GRAPHICS_BACKEND': 'metal',
+            'PALETTE_INDEX_QA_GUARDED': '1', 'PALETTE_INDEX_QA_ROOT': str(ROOT),
+        }, timeout=90)
     stable = all(hashlib.sha256(p.read_bytes()).hexdigest() == hashes[str(p.relative_to(ROOT))] for p in watched)
     report = {'passed': all(r['exit'] == 0 for r in results) and stable and len(gpu_rows) == 1,
               'sourceSha256': hashes, 'sourceStable': stable, 'results': results,

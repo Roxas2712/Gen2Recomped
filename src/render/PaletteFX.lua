@@ -219,6 +219,13 @@ function PaletteFX.shader()
   return shader or nil
 end
 
+-- Separate private-texture path. Existing public RGBA shader contracts stay
+-- intact; unsupported runtimes/generations continue to use the legacy path.
+function PaletteFX.indexShader()
+  if not Performance.paletteIndexRendering or GameVersion.generation() > 2 then return nil end
+  return require('src.render.PaletteIndex').shader()
+end
+
 -- Shade-remap variant that also keys shade 0 (DMG white / lightest gray)
 -- to transparent -- the GB OBJ-to-BG priority trick.  Tilt mode's upright
 -- pass uses it for tall-grass feet overdraw: the patch must be colorized

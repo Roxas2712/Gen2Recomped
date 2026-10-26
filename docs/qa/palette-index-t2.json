@@ -1,0 +1,185 @@
+{
+  "passed": true,
+  "sourceSha256": {
+    "src/core/FrameProfile.lua": "a77f611e802db46556f70009c227cabab279db54cec0163a4bbe415c96e0f940",
+    "src/render/SpriteRenderer.lua": "9e4685111fb8b0ad7a84b66d74121750e5768a0710b645dc653c0f44caabfd77",
+    "src/render/TileRenderer.lua": "6896c604ff44a272b3d0475e2f195263a721f7983ec24266b22af4c8f9290f63",
+    "src/render/PaletteIndex.lua": "50800773e6fcd7795f07dc9702e71aeb61e97ce5e3a4e1814417464940e55806",
+    "src/render/PaletteFX.lua": "fbf994c03247e30e7c136030480c6713e34f39c022b711932d604f3b268133d7",
+    "src/core/Performance.lua": "8cae5116fc0c982a8e68c76ebff326cf234c5aad5d86502ce0a17810e40936b1",
+    "tools/palette-index-render/host/main.lua": "905545a522ee00eb641981594c15a6ab424e48f95c6c0593c3595e93dff55e6c",
+    "tools/palette-index-render/host/lut.lua": "fd0d6a524b1d612075d346467fdabd6e4f0d31f93535c336eef60fac1cda19af",
+    "tools/palette-index-render/host/conf.lua": "9e94c26523d6f6e4bb90841ea137df6ffbcb1edc20e14db9cf7fb069c79d2e21"
+  },
+  "sourceStable": true,
+  "results": [
+    {
+      "name": "inventory",
+      "exit": 0,
+      "logSha256": "3bd3cca5c75d5f3148ad6217fac7664c590d0e553b114d368d5b214bc42fc272"
+    },
+    {
+      "name": "palette_bake_profile",
+      "exit": 0,
+      "logSha256": "114bedd4fe54427a6a43a2074d691d2cc51c3ae8a4b99e94e034fd5f07783dcd"
+    },
+    {
+      "name": "gen2_display_modes",
+      "exit": 0,
+      "logSha256": "50940508d58fdd3b4d850fde35e0080dc51cae754d4270418fb495558bf8c321"
+    },
+    {
+      "name": "gen2_palette_context",
+      "exit": 0,
+      "logSha256": "90b08e37925d6f172b1bd991c57431c328b80cd1a822237028148eecfffa6926"
+    },
+    {
+      "name": "palette_zone_cache",
+      "exit": 0,
+      "logSha256": "1584212f58e10a10da347d3854caa140b6c9283d27dfb0e59a08883f02d108de"
+    },
+    {
+      "name": "mod_examples",
+      "exit": 0,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "gen3_palette_index",
+      "exit": 0,
+      "logSha256": "59143b5b01c91a30f185513ecc2203f64f8a85fad2fbca39b0db219e0944adfa"
+    },
+    {
+      "name": "index_derive",
+      "exit": 0,
+      "logSha256": "4b39062a62e7bf66418430fb13511f6c7aa47f5d8813e4f4cc8af1a788bceb82"
+    },
+    {
+      "name": "api3",
+      "exit": 0,
+      "logSha256": "01aa4f6230d3de5eb33bc89202daac8668706368ce0c6bb6803ada556eaedb1d"
+    },
+    {
+      "name": "external_fixtures",
+      "exit": 0,
+      "logSha256": "c9de67c6b358ac28f98c6562c7219e078c4fbdef68ad122238936e949ad0dffe"
+    },
+    {
+      "name": "palette_gpu",
+      "exit": 0,
+      "logSha256": "2e0e61c2083742a43f61b47d2c51f266ba4dedf3abb5d2ae27018d46b7ab86b9"
+    },
+    {
+      "name": "native_gpu",
+      "exit": 0,
+      "logSha256": "18bd2316d68de7ec0456af3dcb48c280c3d72de78ba344295cfc8d24e81b7e88"
+    }
+  ],
+  "gpu": {
+    "checks": 3162,
+    "passed": true,
+    "byteDifferences": 0,
+    "bakes": {
+      "sprites.obp": {
+        "currentFrame": 2,
+        "total": 2,
+        "peakPerFrame": 2
+      },
+      "tiles.gen2": {
+        "currentFrame": 2,
+        "total": 2,
+        "peakPerFrame": 2
+      }
+    },
+    "syntheticPixels": true,
+    "realSceneAcceptance": false,
+    "playerProfilesUsed": false,
+    "lut": {
+      "maxByteDelta": 0,
+      "comparisons": 6,
+      "lutBytes": 256
+    },
+    "renderer": "OpenGL",
+    "vendor": "Apple",
+    "device": "Apple M2",
+    "version": "4.1 Metal - 89.4"
+  },
+  "nativeGpu": {
+    "playerProfilesUsed": false,
+    "version": "2.1",
+    "checks": 77,
+    "comparisons": 12,
+    "renderer": "Metal",
+    "vendor": "",
+    "device": "Apple M2",
+    "passed": true,
+    "maxByteDelta": 0,
+    "backend": "metal",
+    "syntheticGeometry": true,
+    "physicalHandheld": false
+  },
+  "realSceneAcceptance": false,
+  "playerProfilesUsed": false,
+  "stage": "T2",
+  "date": "2026-10-26",
+  "indexRenderingEnabled": false,
+  "gpuByBackend": {
+    "opengl": {
+      "realSceneAcceptance": false,
+      "playerProfilesUsed": false,
+      "lut": {
+        "lutBytes": 256,
+        "comparisons": 6,
+        "maxByteDelta": 0
+      },
+      "version": "4.1 Metal - 89.4",
+      "renderer": "OpenGL",
+      "vendor": "Apple",
+      "device": "Apple M2",
+      "checks": 3166,
+      "passed": true,
+      "byteDifferences": 0,
+      "bakes": {
+        "tiles.gen2": {
+          "total": 2,
+          "currentFrame": 2,
+          "peakPerFrame": 2
+        },
+        "sprites.obp": {
+          "total": 2,
+          "currentFrame": 2,
+          "peakPerFrame": 2
+        }
+      },
+      "syntheticPixels": true
+    },
+    "metal": {
+      "checks": 3166,
+      "renderer": "Metal",
+      "vendor": "",
+      "device": "Apple M2",
+      "lut": {
+        "maxByteDelta": 0,
+        "comparisons": 6,
+        "lutBytes": 256
+      },
+      "syntheticPixels": true,
+      "realSceneAcceptance": false,
+      "passed": true,
+      "version": "2.1",
+      "bakes": {
+        "tiles.gen2": {
+          "currentFrame": 2,
+          "total": 2,
+          "peakPerFrame": 2
+        },
+        "sprites.obp": {
+          "currentFrame": 2,
+          "total": 2,
+          "peakPerFrame": 2
+        }
+      },
+      "playerProfilesUsed": false,
+      "byteDifferences": 0
+    }
+  }
+}

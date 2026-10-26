@@ -75,10 +75,11 @@ function love.load()
   check(on == off, 'profiler off/on GPU readbacks are byte identical')
   Profile.setEnabled(false)
   local renderer, version, vendor, device = g.getRendererInfo()
+  local lutReport=assert(loadfile(root..'/tools/palette-index-render/host/lut.lua'))()(check)
   print('PALETTE_INDEX_GPU_RESULT ' .. require('src.link.Json').encode({
     passed=true, checks=checks, byteDifferences=0, bakes=counts,
     renderer=renderer, version=version, vendor=vendor, device=device,
-    syntheticPixels=true, realSceneAcceptance=false, playerProfilesUsed=false,
+    syntheticPixels=true, realSceneAcceptance=false, playerProfilesUsed=false,lut=lutReport,
   }))
   canvas:release(); plain:release(); source:release()
   alphaSource:release()

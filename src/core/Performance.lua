@@ -41,6 +41,8 @@
 -- tests, the same way src/core/GameVersion.lua does.
 
 local Performance = {}
+-- Gen 1/2 index textures remain opt-in until the full scene/voxel gate passes.
+Performance.paletteIndexRendering = false
 
 -- P2 is independently reversible. Tier rows can reduce the idle budget or
 -- tune the collector without changing the persisted presentation options.
