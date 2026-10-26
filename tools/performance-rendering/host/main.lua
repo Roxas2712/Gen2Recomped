@@ -57,8 +57,16 @@ function love.load()
   end
  end
  P.gen4ByteVertices=true;P.gen4GpuLight=true
+ P.gen4GpuSkin=false
  local skinned=assert(M.new(record(Shade.forTemplate(templates[1]),true)));models[#models+1]=skinned
  check(skinned.shapes[1].bindVertices and #skinned.shapes[1].bindVertices==3,'CPU-skinned shape retains table vertices')
+ check(skinned.shapes[1].gpuSkin==nil,'CPU-skinned shape carries no joint palette')
+ P.gen4GpuSkin=true
+ local gpuSkinned=assert(M.new(record(Shade.forTemplate(templates[1]),true)));models[#models+1]=gpuSkinned
+ check(gpuSkinned.shapes[1].gpuSkin and #gpuSkinned.shapes[1].gpuSkin.slots==1 and gpuSkinned.shapes[1].gpuSkin.slots[1]==0,'GPU-skinned shape maps its one slot to joint 0')
+ check(gpuSkinned.shapes[1].bindVertices==nil,'GPU-skinned shape keeps no table vertices')
+ local pose=gpuSkinned:restPose();local palette=(pose.stacks and pose.stacks[1])or pose.stack
+ check(gpuSkinned:draw({1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},pose)==true,'GPU-skinned shape draws through the joint palette')
  check(M.cutsHeight(),'full native height-cut shader compiled')
  local V={};local libs={}
  V.require=function(name)

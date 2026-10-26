@@ -72,6 +72,9 @@ Performance.gen4GpuLight = true
 -- G1: Gen 4 model vertices decoded straight into a ByteData through the FFI
 -- rather than a fifteen-element table per vertex (src/render/Gen4Model.lua).
 Performance.gen4ByteVertices = true
+-- G4: Gen 4 joint animation re-posed in the vertex shader from a per-shape
+-- joint palette instead of setVertex per vertex per frame (Gen4Model).
+Performance.gen4GpuSkin = true
 Performance.GC_PAUSE = 120
 Performance.GC_STEP_MUL = 300
 Performance.GC_BUDGET_SECONDS = 0.0005
