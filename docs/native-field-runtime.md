@@ -56,3 +56,17 @@ reference, with the identical eleven inherited failed suites.
 
 The unchanged-package loading result above belongs to the fork; it is not a
 claim that this standalone public branch accepts or fully runs that package.
+Source SE playback borrows an atomically identified native voice with its own
+cache variant. Gain changes and owner cleanup cannot stop or attenuate another
+playback; replay, unload and session replacement retire the borrow. 145 checks
+cover these boundaries. Source updates do not advance a second audio clock.
+
+The latest real Metal field capture shows a correctly oriented native fallback;
+the paper renderer still encounters additional contracts during scene creation.
+No full 3D, battle, UI or five-edition gameplay acceptance is claimed.
+
+Healing sprite snapshots now reuse the native monitor/ball selection, borrowed
+ROM artwork and cartridge offsets. Native drawing and mod snapshots share that
+selection without stepping the task, sound or continuation. 125 checks cover
+all five editions and the source anchor transform; real scene qualification
+continues separately.

@@ -1337,7 +1337,7 @@ local function markerFor(version)
   -- v6 adds the cartridge's two-lap MetallicShine task to HARDEN/IRON DEFENSE.
   -- Keep the v5 ball-art corrections; only fresh native extraction supplies
   -- the RS-owned flourish image and 64-frame record.
-  if version == "ruby" or version == "sapphire" then revision = revision .. "rs-stat-flourish-v6:" end
+  if version == "ruby" or version == "sapphire" then revision = revision .. "rs-item-menu-v4:rs-stat-flourish-v6:" end
   -- Keep original behavior IDs alongside the existing native normalization.
   -- Only GBA caches lack this additional source contract; saves are unchanged.
   if GameVersion.isGen3(version) then revision = revision .. "source-metatile-attrs-v1:source-map-views-v1:" end
