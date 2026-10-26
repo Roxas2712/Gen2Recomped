@@ -72,6 +72,9 @@ Performance.gen4GpuLight = true
 -- G1: Gen 4 model vertices decoded straight into a ByteData through the FFI
 -- rather than a fifteen-element table per vertex (src/render/Gen4Model.lua).
 Performance.gen4ByteVertices = true
+-- M10: Assets.resolve remembers which file answers a generated path while a
+-- mod set is installed, instead of asking PhysFS once per mod per lookup.
+Performance.assetResolveCache = true
 -- W0: the frame pacer's idle time pumps the Gen 3 asset stream (atlas and
 -- sprite builds queued by prefetch) instead of sleeping through it
 -- (src/core/IdleStream.lua).
