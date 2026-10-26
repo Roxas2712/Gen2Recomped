@@ -61,3 +61,15 @@ This is display work toward Gen1 parity. It does not establish complete UI
 raster parity, a full unchanged-mod playthrough, save/link acceptance, hardware
 performance or full engine parity. The fork's existing rights/provenance notices
 remain applicable; see `NOTICE.md`.
+
+## Published acceptance checkpoint
+
+The in-place preview update at `ed564cb5`/PR97 passes485/485 engine suites,
+253 native compositor GPU checks per backend, four-platform runtime
+qualification40353017055 and78 real Crystal/unchanged-VASC checks per
+backend. The actual fused Mac package and its NativePreview entry are used
+in isolated test homes; twelve own-window phases per backend prove two
+fresh frames each. Natural clock/Oak/naming reaches the original first room
+in both cameras. Full story/save/link, Windows/Intel-Mac GPU, exact reference
+raster and complete feature parity remain open. Later main integration and
+the draft save-menu owner have separate evidence in engine-parity-status.md.

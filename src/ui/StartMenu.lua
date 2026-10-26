@@ -17,6 +17,9 @@ local StartMenu = {}
 local function sameItems(_, items) return items end
 
 function StartMenu.new(game)
+  if require("src.core.GameVersion").isGen2() then
+    return require("src.ui.Gen2StartMenu").new(game)
+  end
   local flags = game.save.flags or {}
   local items = {}
 
