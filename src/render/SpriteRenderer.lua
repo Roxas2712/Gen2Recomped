@@ -56,14 +56,16 @@ local function getObpImage(path, colors, group)
   if not obpCache[key] then
     local img
     if love.image and love.image.newImageData then
-      local id = Assets.imageData(path)
       -- G7: the same bake as one FFI pass (src/render/ShadeRecolour.lua);
-      -- the per-pixel loop below is the fallback and the definition
-      local baked = ShadeRecolour.whole(id, colors, "obp")
+      -- the per-pixel loop below is the fallback and the definition.  The
+      -- pass only reads, so it takes the shared decode; the loop writes
+      -- into its input and takes a fresh one.
+      local baked = ShadeRecolour.whole(Assets.imageDataShared(path), colors, "obp")
       if baked then
         img = love.graphics.newImage(baked)
         if baked.release then baked:release() end
       else
+      local id = Assets.imageData(path)
       id:mapPixel(function(_, _, r, g, b, a)
         if a == 0 then return r, g, b, a end
         if r > 0.83 then return r, g, b, 0 end -- OBJ color 0: always transparent
