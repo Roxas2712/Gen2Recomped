@@ -117,11 +117,27 @@ function M.install(RI)
   RI._sbModToolbar=function(self,...) if self._catalogManage then return toolbar(self,...) end;return 0 end
   local selectTab=RI._selectTab
   RI._selectTab=function(self,tab,...)
-    if tab=='mods' and not self._catalogManage then tab='find' end
+    if tab=='mods' and not require('src.cloud.RetroCloud').signedIn() then self._catalogManage=true
+    elseif tab=='mods' and not self._catalogManage then tab='find' end
     return selectTab(self,tab,...)
   end
   local function draw(self,x,y,w,h,paged)
     if self._catalogManage and self.tab=='mods' then return legacy(self,x,y,w,h,paged) end
+    if not require('src.cloud.RetroCloud').signedIn() then
+      local s,P,g=self._s,RI.palette(),love.graphics
+      self._catalogActions={};self._communityLinks={};self._communityWeekRect=nil
+      self.findInstallRects={};self.findDetailRects={};self.findRepoRects={};self.findSearchRect=nil
+      self._findDetails=nil;self._findSearchFocus=false
+      local top=y;g.setFont(self.stateFont or self.hintFont);U.col(P.ink)
+      g.printf('YOUR LOCAL MODS. YOUR CHOICE.',x,y,w,'left');y=y+46*s
+      g.setFont(self.hintFont);U.col(P.detail)
+      local message='Play and manually import compatible mod ZIPs without an account. Existing mods can receive updates from their saved GitHub repositories. Sign in or register to browse and install new mods online; this links this device to your ModCompass account.'
+      local _,lines=self.hintFont:getWrap(message,w);g.printf(message,x,y,w,'left');y=y+math.max(1,#lines)*self.hintFont:getHeight()+20*s
+      for _,row in ipairs({{'account','SIGN IN / REGISTER · OPEN MOD BROWSER'},{'manage','INSTALLED MODS · IMPORT ZIP / FOLDER'}}) do
+        local r=self:_chipButton(x,y,row[2],{w=w,h=44*s,kind='accent'});r.action=row[1];self._catalogActions[#self._catalogActions+1]=r;y=y+54*s
+      end
+      return y-top
+    end
     self:_ensureMods();self:_ensureFind()
     self._catalogActions={};self._communityLinks={};self._communityWeekRect=nil
     self.findInstallRects={};self.findDetailRects={};self.findRepoRects={};self.findSourceRemoveRects={};self.findCatRects={}
@@ -320,7 +336,7 @@ function M.install(RI)
       if self._sb and U.inside(self._sb.modsInstalled,x,y) then self._catalogManage=true end
       if not self._catalogManage then
         for _,r in ipairs(self._catalogActions or {}) do if U.inside(r,x,y) then
-          if r.action=='account' then self:_openAccount()
+          if r.action=='account' then self:_openAccount('browse')
           elseif r.action=='developer' then self:_openDeveloper('developer')
           elseif r.action=='manage' then self._catalogManage=true;self:_selectTab('mods');self.pageScroll=0
           elseif r.action=='refresh' then self:_refreshFind(true);self:_syncModUpdateInfo(true)

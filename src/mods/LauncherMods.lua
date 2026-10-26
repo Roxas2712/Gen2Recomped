@@ -259,7 +259,7 @@ function LauncherMods.deriveList(manifests, options, version)
       status = status,
       statusDetail = detail,
       dependencies = dependencyReport(m, options, version, byId),
-      github = m.github,
+      github = require('src.mods.ModAccess').repository(m, options),
       -- the creator's donation link, for the card's "Support the creator"
       -- button (Manifest.validate accepts http(s) only)
       support = m.support,
@@ -1218,6 +1218,18 @@ end
 function LauncherMods.installZip(source, opts)
   local ok, result, err, version = pcall(LauncherMods._installZipInner, source, opts)
   if not ok then return nil, "import failed: " .. tostring(result) end
+  if result then
+    pcall(function()
+      local folder=LauncherMods.folderFor(err)
+      local bytes=folder and love.filesystem.read(folder.."/manifest.json")
+      local manifest=bytes and decodeManifest(bytes,folder)
+      if manifest and manifest.github and manifest.updateCheck~=false then
+        local options=SaveData.loadOptions();options.modInstallSources=options.modInstallSources or {}
+        options.modInstallSources[err]={repo=manifest.github,version=version,source='manifest'}
+        SaveData.saveOptions(options)
+      end
+    end)
+  end
   return result, err, version
 end
 
