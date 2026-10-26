@@ -115,7 +115,7 @@ function S:toggle(e)
   if #self.picks >= T().MONS then return end
   if not e.walker then
     local why = T().refusal(self.srcData, e.raw)
-    if why then return self:say(refusal(why)) end
+    if why then return self:say(Strings(REFUSE[why] or "This Pokémon cannot be transferred.")) end
   end
   self.picks[#self.picks + 1] = e
   if #self.picks == T().MONS then

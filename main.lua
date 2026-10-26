@@ -1286,7 +1286,6 @@ function love.quit()
   if package.loaded["src.net.Fetch"] then
     pcall(package.loaded["src.net.Fetch"].shutdown)
   end
-  WindowFrame.shutdown()
 end
 
 function love.filedropped(file)
