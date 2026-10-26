@@ -80,7 +80,13 @@ function love.load()
     rendererState.frameSerial=rendererState.frameSerial+1
     same(frame(canvas,function()b:draw()end),baseline,'next frame draws the native battle again '..edition)
     T.eq(captures,3,'capture suppression ends at the next renderer frame')
-    Bg.draw=bgDraw
+    rendererState.frameSerial=rendererState.frameSerial+1
+    local preview=g.newCanvas(240,160,{format='rgba8',dpiscale=1,msaa=0})
+    same(frame(canvas,function()
+      g.setCanvas(preview);baseDraw(game);g.setCanvas(canvas);b:draw()
+    end),baseline,'offscreen capture cannot suppress the main battle surface '..edition)
+    T.eq(captures,5,'different render targets each receive their own native field pass')
+    preview:release();Bg.draw=bgDraw
     game.stack:pop();Battle.reset();canvas:release();f.close();require('src.core.Game3').release()
   end
   T.finish()
