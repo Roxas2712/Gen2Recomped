@@ -176,13 +176,31 @@ local function encode(game, root)
     if seen[v] then
       return { node = seen[v] }
     end
-    assert(getmetatable(v) == nil, "opaque battle state")
+    local actionSlot
+    if getmetatable(v) ~= nil then
+      -- Only the native PP-slot owner can authenticate this action view.
+      -- Its existing factory reconstructs the binding; no metatable is saved.
+      local choices = package.loaded["src.battle.EnemyMoveChoice"]
+      if type(choices) == "table" and choices.slot and choices.withMove then
+        local selected = choices.slot(v)
+        if selected ~= v then
+          assert(not choices.nativeView(v), "delegated action metadata is opaque")
+          for key in pairs(v) do
+            local _, _, reference = choices.publicReference(v, key)
+            assert(not reference, "delegated action references are opaque")
+          end
+          actionSlot = selected
+        end
+      end
+      assert(actionSlot, "opaque battle state")
+    end
     assert(#nodes < 20000, "battle continuation exceeds node limit")
     local id = #nodes + 1
     seen[v] = id
     local battler = v.mon and v.curMoves and type(v.isPlayer) == "boolean"
-    local node = { kind = battler and "battler" or "data", entries = {} }
+    local node = { kind = battler and "battler" or actionSlot and "moveAction" or "data", entries = {} }
     nodes[id] = node
+    if actionSlot then node.slot = value(actionSlot) end
     for _, key in ipairs(keys(v)) do
       if not (battler and BATTLER_SKIP[key]) then
         node.entries[#node.entries + 1] = { key = key, value = value(v[key]) }
@@ -217,12 +235,34 @@ local function decode(game, graph, battle)
     return v.scalar
   end
   for i, node in ipairs(graph.nodes) do
-    assert(node.kind == "data" or node.kind == "battler", "invalid semantic node")
+    assert(node.kind == "data" or node.kind == "battler" or node.kind == "moveAction", "invalid semantic node")
     assert(type(node.entries) == "table", "invalid semantic entries")
     for _, entry in ipairs(node.entries) do
       assert(type(entry.key) == "string" or type(entry.key) == "number" or type(entry.key) == "boolean", "invalid semantic key")
+      assert(node.kind ~= "moveAction" or entry.key ~= "pp", "native action PP must come from its slot")
       assert(tables[i][entry.key] == nil, "duplicate semantic key")
       tables[i][entry.key] = value(entry.value)
+    end
+  end
+  local rebound = false
+  for i, node in ipairs(graph.nodes) do
+    if node.kind == "moveAction" then
+      local choices = package.loaded["src.battle.EnemyMoveChoice"]
+      assert(type(choices) == "table" and choices.withMove, "native action factory is unavailable")
+      local action, slot = tables[i], value(node.slot)
+      assert(type(slot) == "table" and type(slot.pp) == "number" and action.id ~= nil,
+        "invalid native action PP slot")
+      tables[i] = choices.withMove(action, action.id, slot, action.slot)
+      rebound = true
+    end
+  end
+  if rebound then
+    -- Resolve every graph edge again after allocating the authenticated native
+    -- views, so aliases point at the new view rather than a temporary table.
+    for i, node in ipairs(graph.nodes) do
+      for _, entry in ipairs(node.entries) do
+        rawset(tables[i], entry.key, value(entry.value))
+      end
     end
   end
   local state = value(graph.root)
@@ -331,6 +371,13 @@ local function nativeActions(record)
     local position = actionPosition(actor)
     assert(row.position == position, "native action position differs")
     assert(not positions[position] and type(row.action) == "table", "duplicate or invalid native action")
+    local choices = package.loaded["src.battle.EnemyMoveChoice"]
+    local slot = type(choices) == "table" and choices.slot and choices.slot(row.action)
+    if slot and slot ~= row.action then
+      local belongs = false
+      for _, move in ipairs(actor.curMoves) do if move == slot then belongs = true end end
+      assert(belongs, "native action PP slot belongs to another battler")
+    end
     positions[position] = true
     out[actor] = row.action
   end

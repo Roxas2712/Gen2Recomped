@@ -97,7 +97,26 @@ for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
             local _, diagnostic = pcall(B.capture, game, b, copy)
             error(edition .. "/" .. kind .. ": " .. tostring(why) .. ": " .. tostring(detail) .. ": " .. tostring(diagnostic))
           end
-          return Serializer.encode(nextCheckpoint)
+          local futureBytes = Serializer.encode(nextCheckpoint)
+          T.check(f.checkpoints:restore(game, nextCheckpoint), "future native action bindings reconstruct")
+          T.eq(Serializer.encode(assert(f.checkpoints:capture(game))), futureBytes,
+            "future decision retains every native action relationship")
+          local choices = package.loaded["src.battle.EnemyMoveChoice"]
+          if choices then
+            for actor, action in pairs(stack:top().turnActions or {}) do
+              if actor ~= "turn" and choices.slot(action) ~= action then
+                local slot = choices.slot(action)
+                local pp = slot.pp
+                action.pp = pp - 1
+                T.eq(slot.pp, pp - 1, "restored action PP writes reach its original learned slot")
+                action.pp = pp
+                local belongs = false
+                for _, move in ipairs(actor.curMoves) do if move == slot then belongs = true end end
+                T.check(belongs, "restored action owns a learned slot of its reconstructed battler")
+              end
+            end
+          end
+          return futureBytes
         end
         local expected = turn()
         T.check(f.checkpoints:restore(game, cp), "rewind before comparing native turn continuation")

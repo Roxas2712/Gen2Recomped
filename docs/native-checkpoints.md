@@ -86,3 +86,10 @@ and the native battler-keyed chosen-action relationships are reconstructed
 as semantic data. Ordinary singles do not require a double-battle position.
 Maps with native dynamic Gen4/Gen5 gym controllers are refused explicitly
 until their mutable controller resources have a qualified reconstruction.
+
+On hosts with native PP-bound move actions, checkpoint reconstruction uses
+the existing action owner's slot query and move factory. It retains learned
+slot identity and PP read/write behavior without saving a metatable.
+Delegated action metadata/references outside that qualified factory boundary
+remain refused. Future-decision tests now restore a post-turn checkpoint
+and check the learned-slot alias as well as complete recapture equality.
