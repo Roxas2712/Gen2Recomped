@@ -66,7 +66,7 @@ ModCompat.ALIASES = {
   -- save-side data
   ["src.core.gen2.Boxes"] = "src.pokemon.Gen2Boxes",
   ["src.core.gen2.Mail"] = "src.pokemon.Gen2Mail",
-  ["src.ui.gen2.BoxMenu"] = "src.ui.BoxMenu",
+  ["src.ui.gen2.BoxMenu"] = "src.ui.Gen2BoxMenu",
   ["src.ui.gen2.NamingScreen"] = "src.ui.Gen2NamingScreen",
   ["src.ui.gen2.NamePick"] = "src.ui.Gen2NamePick",
   ["src.ui.gen2.SaveMenu"] = "src.ui.Gen2SaveMenu",
@@ -90,6 +90,12 @@ ModCompat.ALIASES = {
 
   -- menus.  The Gold port names two of these differently rather than
   -- namespacing them, so both spellings land on the one implementation.
+  ["src.ui.gen2.PcMenu"] = "src.ui.Gen2PcMenu",
+  ["src.ui.gen2.CenterPcMenu"] = "src.ui.Gen2CenterPcMenu",
+  ["src.ui.gen2.ItemPcMenu"] = "src.ui.Gen2ItemPcMenu",
+  ["src.ui.gen2.MailboxMenu"] = "src.ui.Gen2MailboxMenu",
+  ["src.ui.gen2.DecorationMenu"] = "src.ui.Gen2DecorationMenu",
+  ["src.ui.gen2.MailRead"] = "src.ui.Gen2MailRead",
   ["src.ui.gen2.StartMenu"] = "src.ui.Gen2StartMenu",
   ["src.ui.gen2.OptionsMenu"] = "src.ui.OptionsMenu",
   ["src.ui.gen2.PartyMenu"] = "src.ui.PartyMenu",
@@ -97,7 +103,7 @@ ModCompat.ALIASES = {
   ["src.ui.gen2.SummaryMenu"] = "src.ui.SummaryMenu",
   ["src.ui.gen2.TrainerCard"] = "src.ui.TrainerCard",
   ["src.ui.gen2.Pokegear"] = "src.ui.PokegearMenu",
-  ["src.ui.gen2.PackMenu"] = "src.ui.BagMenu",
+  ["src.ui.gen2.PackMenu"] = "src.ui.Gen2PackMenu",
   ["src.menu.PartyMenu"] = "src.ui.PartyMenu",
   ["src.ui.PartyScreen"] = "src.ui.PartyMenu",
   ["src.ui.party.PartyScreen"] = "src.ui.PartyMenu",

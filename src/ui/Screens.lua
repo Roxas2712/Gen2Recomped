@@ -555,7 +555,7 @@ function Screens.get(game, id)
   return resolve(game, id)
 end
 
-local function pushWith(game, id, ...)
+local function buildWith(game, id, ...)
   local factory = resolve(game, id)
   local inst
   if factory.__modOwned then
@@ -582,24 +582,31 @@ local function pushWith(game, id, ...)
     inst = factory.new(game, ...)
   end
   inst.screenId = inst.screenId or id
-  game.stack:push(inst)
   return inst
 end
 
-function Screens.push(game, id, ...)
+function Screens.build(game, id, ...)
   -- A POSITIONAL alias keeps every argument, because its screen is not an
   -- options-table screen -- MoveLearnMenu takes (mon, moveId, onDone) and
   -- dropping the last two would open it with nothing to teach.
   if Screens.positionalAlias(id) then
     local resolvedId = Screens.resolveId(game, id, ...)
-    return pushWith(game, resolvedId, ...)
+    return buildWith(game, resolvedId, ...)
   end
   -- Otherwise only the FIRST argument decides: every other screen in the
   -- alias table takes one options table and nothing else, and a caller
   -- passing more is by that fact not talking to one of them.
   local resolvedId, resolvedArg = Screens.resolveId(game, id, ...)
-  if resolvedId ~= id then return pushWith(game, resolvedId, resolvedArg) end
-  return pushWith(game, id, ...)
+  if resolvedId ~= id then return buildWith(game, resolvedId, resolvedArg) end
+  return buildWith(game, id, ...)
+end
+
+-- Embedded screens use the identical factory/registry/error policy without
+-- changing stack ownership or emitting a premature screen.pushed event.
+function Screens.push(game, id, ...)
+  local inst = Screens.build(game, id, ...)
+  game.stack:push(inst)
+  return inst
 end
 
 function Screens.invalidate()

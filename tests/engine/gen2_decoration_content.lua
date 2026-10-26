@@ -60,20 +60,51 @@ local function run(g,label)
 end
 local function choose(g,label)
  local menu=g.stack:top()
- for i,row in ipairs(menu.items)do if row.label==label then menu.index=i;g.input={wasPressed=function(_,key)return key=='a'end};g.stack:update(0)
- g.input={wasPressed=function()return false end};return end end
+ -- Drive the native house PC boot message before selecting a row. It owns
+ -- its typewriter rather than a separate generic TextBox on the stack.
+ for _=1,3000 do
+  if not menu.message then break end
+  local original=g.input.wasPressed
+  g.input.wasPressed=function(_,key)return key=='a'end
+  menu:update(1/60);g.input.wasPressed=original
+ end
+ if menu.entries then
+  for i,row in ipairs(menu.entries)do
+   if row.label==label then menu.index=i;menu:choose();return end
+  end
+ elseif menu.categories then
+  if menu.mode=='items'then
+   local leave=label=='EXIT'
+   for _,category in ipairs(menu.categories)do if category.label==label then leave=true end end
+   if leave then
+    local original=g.input.wasPressed;g.input.wasPressed=function(_,key)return key=='b'end
+    menu:update(1/60);g.input.wasPressed=original
+   end
+  end
+  if menu.mode=='category'then
+   if label=='EXIT'then menu:finish();return end
+   for _,category in ipairs(menu.categories)do if category.label==label then menu:openCategory(category);return end end
+  else
+   for _,id in ipairs(menu.rows or{})do
+    if menu:rowName(id)==label then menu:chooseRow(id);return end
+   end
+  end
+ else
+  for i,row in ipairs(menu.items or{})do if row.label==label then menu.index=i;menu:choose();return end end
+ end
  error('missing menu choice '..label)
 end
+
 local function dismiss(g)
- local box=g.stack:top();assert(getmetatable(box)==TextBox);box.done=true;g.input={wasPressed=function(_,key)return key=='a'end};g.stack:update(0);g.input={wasPressed=function()return false end}
+ local box=g.stack:top();assert(getmetatable(box)==TextBox);box.done=true;box:advance()
 end
 for _,version in ipairs({'gold','silver','crystal'})do
  V.set(version)
- for _,mode in ipairs({{1,'native'},{2,'native'}})do
+ for _,mode in ipairs({{1,'native'},{2,'native'},{2,'unified'},{2,'unified'}})do
   local d=fixture();local before=d.map_scripts.decorations
   local r=load(d,[[
    local p=mod.content["decorations"]
-   assert(p:supports())
+   assert(p:supports() and mod:supports('content','decorations'))
    local copy=p:get('deco:2');copy.sprite=199;assert(p:get('deco:2').sprite==0)
    p:patch('deco:2',{sprite=88})
    p:register('deco:200',{type=1,name='ADDED',flag=900,action='SET_UP_PLANT',sprite=77})
@@ -142,7 +173,7 @@ for _,version in ipairs({'gold','silver','crystal'})do
  T.eq(g.save.decorations.rightOrnament,5,version..' actual native side menu commits right doll')
  choose(g,'EXIT')
  T.check(pc:isRunning(),version..' leaving decoration submenu does not resume PC script')
- choose(g,'LOG OFF')
+ choose(g,'TURN OFF')
  T.eq(pc:isRunning(),false,version..' LOG OFF completes actual native PC script')
  T.eq(pc.ctx.g2Var,1,version..' changed bit returns after menu closes')
  T.eq(g.overworld.reloaded,1,version..' native NONE warp reloads exactly once')
@@ -152,7 +183,7 @@ for _,version in ipairs({'gold','silver','crystal'})do
  g.data.map_scripts.scripts.FACE={{'warpfacing',3,'NONE',0,0,0},{'end'}}
  g.overworld.player.facing='down';run(g,'FACE')
  T.eq(g.overworld.player.facing,'right',version..' native NONE warpfacing applies its explicit direction')
- g=game(fixture());pc=run(g,'PC');g.input={wasPressed=function(_,key)return key=='b'end};g.stack:update(0)
+ g=game(fixture());pc=run(g,'PC');choose(g,'TURN OFF')
  T.eq(pc.ctx.g2Var,0,version..' PC cancellation returns unchanged')
  T.eq(g.overworld.reloaded,0,version..' PC cancellation cannot reload')
 end
