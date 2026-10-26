@@ -3542,6 +3542,7 @@ function OverworldState:checkMomShoppingCall()
   if pending.save~=Game.save or pending.data~=Game.data then self.g2MomCallPending=nil;return false end
   local top=Game.stack and Game.stack.top and Game.stack:top()
   if top and top~=self then return false end
+  if self.player and(self.player.moving or self.player.targetX)then return false end
   if self:busy()or self.transitioning or self.pendingScripts and self.pendingScripts[1]then return false end
   self.g2MomCallPending=nil
   local purchase=pending.purchase

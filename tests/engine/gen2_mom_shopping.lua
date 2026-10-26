@@ -155,7 +155,9 @@ for _,version in ipairs({'gold','silver','crystal'})do
  w:afterBattle('win',battle);T.eq(s.g2MomMoney,130,version..' repeated callback cannot buy twice')
  w.pendingScripts={{script={{'end'}}}}
  T.eq(w:checkMomShoppingCall(),false,version..' trainer after-dialogue queue keeps phone waiting')
- w.pendingScripts={};g.stack:push({name='dialogue'})
+ w.pendingScripts={};w.player.moving=true
+ T.eq(w:checkMomShoppingCall(),false,version..' native phone does not interrupt a partial movement')
+ w.player.moving=false;g.stack:push({name='dialogue'})
  T.eq(w:checkMomShoppingCall(),false,version..' actual overlay owner keeps phone waiting')
  g.stack:pop();T.eq(w:checkMomShoppingCall(),true,version..' idle native world queues original doll script')
  T.eq(s.g2CurCaller,3,version..' deferred native call sets actual caller')
