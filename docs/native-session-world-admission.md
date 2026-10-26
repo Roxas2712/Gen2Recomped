@@ -12,8 +12,8 @@ required. A modern empty stack cannot revive an unadmitted `game.overworld`
 pointer. Legacy tool hosts without a physical state list keep their explicit
 world fallback.
 
-The five-edition regression reproduces 50 failures before the correction and
-passes 150 checks afterwards. It uses the actual native StateStack and player
+The initial five-edition regression reproduced 50 failed assertions. The
+expanded suite passes 150 checks. It uses the actual native StateStack and player
 with synthetic map data, including native field-move entry/retirement over a
 persistent world, covering UI, stale datasets and failed entry scopes. This
 does not establish original mod initialization, full rendering or gameplay.
