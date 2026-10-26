@@ -46,6 +46,23 @@ function W.action(self,id)
  focus(f,nil)
  if f.form and require('src.import.GiftDesigner').action(f.form,id) then self.pageScroll=0;return end
  if id=='back' then f.cup=nil;f.form=nil;f.choose=nil;f.confirm=nil;f.leagueOpen=nil;self.pageScroll=0;refresh(self)
+ elseif id=='shop' then self.pageScroll=0;job(self,'shop',function() return require('src.cloud.ArenaShop').request('GET') end)
+ elseif id=='shopBack' then f.shop=nil;f.shopConfirm=nil;self.pageScroll=0;refresh(self)
+ elseif id=='shopEdition' then
+  local at=1;for i,v in ipairs(editions) do if v==(f.shopEdition or 'crystal') then at=i end end;f.shopEdition=editions[at%#editions+1];f.shopConfirm=nil
+ elseif id:match('^shopBuy:') then
+  for _,row in ipairs(f.shop and f.shop.catalogue or {}) do if row.id==id:sub(9) then
+   if Versions.generation(f.shopEdition or 'crystal')<row.generation then f.notice='This edition has no compatible held-item slot.'
+   elseif f.shop.coins<row.price then f.notice='Earn more Liga Coins before buying this item.'
+   else f.shopConfirm=row;self.pageScroll=0 end
+  end end
+ elseif id=='shopCancel' then f.shopConfirm=nil
+ elseif id=='shopConfirm' or id=='shopRetry' then
+  local order=id=='shopRetry' and f.shopPending;local row=f.shopConfirm
+  if order or row then local item=order and order.item or row.id;local edition=order and order.edition or f.shopEdition or 'crystal'
+   job(self,'shop',function() return require('src.cloud.ArenaShop').purchase(item,edition) end)
+  end
+ elseif id=='shopCollect' then job(self,'shop',function() return require('src.cloud.ArenaShop').collect() end)
  elseif id=='refresh' then refresh(self)
  elseif id=='nextPage' or id=='prevPage' then
   f.page=math.max(1,f.page+(id=='nextPage' and 1 or -1));local page=f.page
@@ -132,7 +149,9 @@ function W.tick(self)
    if f.account~=Auth.accountId() or not Auth.signedIn() then close(self);return end
    if result.kind~='done' or not result.first then f.notice=tostring(result.error or result.second or 'The Arena is unavailable. Try Refresh.');f.nextRefresh=os.time()+30;return end
    local doc=result.first
-   if purpose=='launch' then
+   if purpose=='shop' then
+    f.shop=doc;f.shopConfirm=nil;f.shopPending=require('src.cloud.ArenaShop').pending();f.notice=doc.collected and (tostring(doc.collected)..' account items reconciled with your Item Bank.') or doc.order and 'Purchase saved to your account. Collect into Item Bank to equip it.' or 'Wallet and purchases updated.';f.nextRefresh=os.time()+60;return
+   elseif purpose=='launch' then
     f.choose=nil;self._arenaLaunch=true
     local ok,why=pcall(self.play,self,doc.edition);self._arenaLaunch=nil
     if not ok then require('src.link.CloudArena').cancelPending();f.notice='Battle launch failed: '..tostring(why) end
@@ -147,10 +166,10 @@ function W.tick(self)
    else f.cup=doc;f.confirm=nil;f.choose=nil;if purpose=='saved' then f.form=nil end;f.notice='Results require both players or an organizer decision.' end
    f.nextRefresh=os.time()+20
   end
- elseif not f.form and not f.confirm and not f.choose and f.index and f.index.arena and f.index.arena.queue and f.index.arena.queue.state=='searching' and os.time()>=(f.nextQueue or 0) then
+ elseif not f.shop and not f.form and not f.confirm and not f.choose and f.index and f.index.arena and f.index.arena.queue and f.index.arena.queue.state=='searching' and os.time()>=(f.nextQueue or 0) then
   local q=f.index.arena.queue;f.nextQueue=os.time()+20
   job(self,'arena',function() if q.league then return League.request('POST','auto',{format=q.format,editions=q.editions}) end;return API.arena('POST',{format=q.format,edition=q.edition}) end)
- elseif not f.form and not f.confirm and not f.choose and (not f.index and not f.cup or os.time()>=(f.nextRefresh or 0)) then refresh(self) end
+ elseif not f.shop and not f.form and not f.confirm and not f.choose and (not f.index and not f.cup or os.time()>=(f.nextRefresh or 0)) then refresh(self) end
  local n=require('src.link.CloudArena').takeNotice()
  if n and n.account==f.account then f.notice=n.text;f.nextRefresh=os.time()+30;local key=n.id;job(self,'cup',function() return API.request('GET',key) end);f.returnNotice=n.text end
  if f.returnNotice and not f.job then f.notice=f.returnNotice;f.returnNotice=nil end
@@ -160,9 +179,9 @@ function W.draw(self,x,y,w,h)
  local U,P,g,s=self._ui,self.palette(),love.graphics,self._s
  local paint=require('src.import.LauncherLibrary').paint
  local top=y;f.rects={}
- local function text(value,big,color)
+ local function text(value,big,color,inset)
   value=tostring(value or '');local font=big and self.stateFont or self.hintFont
-  local _,lines=font:getWrap(value,w-28*s);g.setFont(font);U.col(color or P.detail);g.printf(value,x+14*s,y,w-28*s,'left');y=y+math.max(1,#lines)*font:getHeight()+12*s
+  local pad=(inset or 0);local _,lines=font:getWrap(value,w-28*s-pad);g.setFont(font);U.col(color or P.detail);g.printf(value,x+14*s+pad,y,w-28*s-pad,'left');y=y+math.max(1,#lines)*font:getHeight()+12*s
  end
  local function button(label,id,bw,bx,by)
   local r=self:_chipButton(bx or x,by or y,label,{w=bw or w,h=38*s,kind='accent'});r.id=id;f.rects[#f.rects+1]=r
@@ -170,6 +189,9 @@ function W.draw(self,x,y,w,h)
  end
  local function field(label,id,value)
   text(label);button((value and value~='' and value or 'Click to enter')..(f.focus==id and ' |' or ''),'field:'..id)
+ end
+ if f.shop then
+  require('src.import.ArenaShopView').draw(self,f,x,function()return y end,w,text,button);return y-top
  end
  if f.form then
   local d=f.form;text(d.id and 'EDIT TOURNAMENT' or 'CREATE A CUP',true,P.ink)
@@ -240,7 +262,7 @@ function W.draw(self,x,y,w,h)
    text(m.state:upper()..(m.winner and ' · Winner: '..name(m.winner) or ''))
    if m.can_report then
     if m.state=='ready' and c.battle_gate=='native_rules' then
-     text('Both players enter here. Bank teams are frozen first; the assigned host then opens the relay.')
+     text('Both players enter here. Your frozen Bank teams connect through the account cloud; no room code is needed.')
      button('ENTER LINK BATTLE','fight:'..i)
     end
     button('I WON · CONFIRM RESULT','report:'..i..':'..(m.left==f.account and 'left' or 'right'))
@@ -264,6 +286,7 @@ function W.draw(self,x,y,w,h)
     text(league.season.title..' · '..league.season.starts_at..' to '..league.season.ends_at..' UTC',false,P.link)
     text(league.registered and ('REGISTERED · Rank '..tostring(league.rank or '--')..' / '..league.participants) or 'JOIN THIS THREE-MONTH SEASON · Participation is optional')
     button(league.registered and 'LEAVE THIS SEASON' or 'JOIN THIS THREE-MONTH SEASON',league.registered and 'leaveLeague' or 'joinLeague')
+    button('LIGA COINS · ITEM SHOP & BATTLE DROPS','shop')
     button(f.leagueOpen and 'BACK TO CUPS' or 'TROPHY · RANKINGS, CHALLENGES & DAILY EGGS',f.leagueOpen and 'back' or 'rankings')
     if f.leagueOpen then
      text(f.notice)

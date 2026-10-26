@@ -23,7 +23,7 @@ local function call(method,path,payload,authorized)
         local e=doc.errors[key];if type(e)=='table' and type(e[1])=='string' then return nil,e[1]:sub(1,300) end
       end
     end
-    return nil,type(doc.message)=='string' and doc.message:sub(1,300) or ('Account request failed ('..tostring(code or 'offline')..').')
+    return nil,type(doc.message)=='string' and doc.message:sub(1,300) or ('Account request failed ('..tostring(code or 'offline')..').'),code
   end
   if doc.state=='connected' then
     local saved,why=Auth.acceptConnection(doc);if not saved then return nil,why end

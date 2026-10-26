@@ -115,3 +115,14 @@ for _,none in ipairs({0,false,'','NO_ITEM'}) do
   check(not clean.item and not clean.heldItem and not clean.retroBankHeld,'empty-item sentinels do not create phantom custody records')
 end
 print('Pokémon Bank: '..checks..' checks passed')
+
+-- Restoring a shop receipt may never make an assigned item available again.
+package.loaded['src.cloud.RetroCloud']={accountId=function()return '17'end}
+package.loaded['src.storage.AccountStorage']={check=function()return true end}
+local grant={id='11111111-1111-4111-a111-111111111111',account_id='17',item='LEFTOVERS',edition='crystal',source='shop'}
+local grantId=assert(Items.acceptArena(grant));local inventory=assert(Items.load())
+inventory.items[grantId].state='assigned';inventory.items[grantId].assignedTo=string.rep('a',64)
+files[Items.FILE]=S.encode(inventory)
+check(Items.acceptArena(grant)==grantId and Items.load().items[grantId].state=='assigned','an account receipt restores the same item without resetting custody')
+grant.account_id='18';check(not Items.acceptArena(grant),'a shop receipt for another account is refused')
+print('Arena Item Bank receipts: 2 checks passed')
