@@ -32,6 +32,7 @@ end
 function D.calc(attacker,defender,moveId,opts)
  opts=opts or{}
  local _,g=Source.resolve(attacker.mon or attacker);local ids=Ids.new(g.data)
+ require('src.battle.TypeChart').load(g.data)
  local key=assert(ids:native('moves',moveId),'unknown cartridge move')
  local move={};for k,v in pairs(g.data.moves[key])do move[k]=v end;move.id=key
  if opts.power~=nil then assert(type(opts.power)=='number'and opts.power>=0,'invalid move power');move.power=opts.power end
