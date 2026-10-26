@@ -3474,6 +3474,7 @@ local function nextJob(foregroundOnly)
   return best,false
 end
 
+local runSlice
 function ChunkMesher.pump(covered, foregroundOnly)
   -- GPU retirement is bounded independently and never happens in setLive.
   retired:pump(.001)
@@ -3515,7 +3516,52 @@ function ChunkMesher.pump(covered, foregroundOnly)
   local current = cache[pick.id]
   local cold = waitingOnAnalysis or (pick.urgent and not (current and (current.full or current.body)))
   local slice = sliceFor(pick.urgent, covered, cold)
-  local deadline = started + slice
+  lastSpend = runSlice(pick, started + slice, foregroundOnly, started)
+  ChunkMesher.foregroundOnly = foregroundOnly
+end
+
+-- V9 -- THE ENGINE'S MEASURED IDLE TIME, ON TOP OF THE ESTIMATED SLICE.
+--
+-- `pump` above runs inside the frame and sizes its slice from an ESTIMATE
+-- of the frame's headroom.  The engine's pacer knows the real number: once
+-- the frame is presented it has the time left to the deadline, and
+-- src/core/IdleStream.lua hands that to registered services.  This is the
+-- service: the same job loop, with a slice the host measured instead of
+-- one this module guessed, so a desktop that finishes its frame in 4 ms
+-- spends the other 12 on the neighbours instead of sleeping through them.
+-- The in-frame pump is unchanged; `lastSpend` gains what was spent here so
+-- its headroom estimate stays honest.  A host without the idle hook never
+-- calls this.  `ChunkMesher.idlePump = false` turns it off.
+ChunkMesher.idlePump = true
+
+function ChunkMesher.pumpIdle(seconds)
+  if not ChunkMesher.idlePump then return 0 end
+  seconds = tonumber(seconds) or 0
+  if seconds <= 0 or #jobs == 0 then return 0 end
+  local pick = nextJob(ChunkMesher.foregroundOnly)
+  if not pick then return 0 end
+  local started = clock()
+  local spent = runSlice(pick, started + seconds, ChunkMesher.foregroundOnly, started)
+  lastSpend = lastSpend + spent
+  return spent
+end
+
+-- the service the idle hook sees: busy while a job is queued, step = the
+-- slice the host measured
+local idleService
+function ChunkMesher.idleService()
+  if idleService then return idleService end
+  idleService = {
+    busy = function() return ChunkMesher.idlePump and #jobs > 0 end,
+    step = function(seconds) return ChunkMesher.pumpIdle(seconds) end,
+  }
+  return idleService
+end
+
+-- the job loop shared by the in-frame pump and the idle pump: resume the
+-- picked job until the deadline, moving on to the next when one finishes;
+-- returns the seconds spent
+function runSlice(pick, deadline, foregroundOnly, started)
   while pick do
     if not pick.co then
       pick.startedAt=clock()
@@ -3533,16 +3579,14 @@ function ChunkMesher.pump(covered, foregroundOnly)
     elseif coroutine.status(pick.co) == "dead" then
       finishJob(pick, true)
     else
-      lastSpend = clock() - started
-      return   -- slice spent mid-build; resume next frame
+      return clock() - started   -- slice spent mid-build; resume next pump
     end
     if clock() >= deadline or #jobs == 0 then
-      lastSpend = clock() - started
-      return
+      return clock() - started
     end
     pick = nextJob(foregroundOnly)
   end
-  lastSpend = clock() - started
+  return clock() - started
 end
 
 -- Meshes for `map`, built SYNCHRONOUSLY on first use -- the historical

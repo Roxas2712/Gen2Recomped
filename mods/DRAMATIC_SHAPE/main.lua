@@ -289,6 +289,17 @@ local VoxelScene = V.require("VoxelScene")
 local NativeGen4 = V.require('NativeGen4')
 local TiltShift = V.require("TiltShift")
 local ChunkMesher = V.require("ChunkMesher")
+-- V9: a host with an idle hook (src/core/IdleStream) hands the mesher the
+-- time the frame pacer measured after present; a host without one never
+-- calls it and the in-frame pump below is all there is
+pcall(function()
+  local IdleStream = package.loaded["src.core.IdleStream"]
+  if not IdleStream then
+    local ok, m = pcall(require, "src.core.IdleStream")
+    IdleStream = ok and m or nil
+  end
+  if IdleStream and IdleStream.register then IdleStream.register(ChunkMesher.idleService()) end
+end)
 -- LEDGE TERRACES moves the ground, so every built mesh goes: the disk cache
 -- already keys on it (VoxelDiskCache.shapeSignature), this drops the copies
 -- in memory and the queue, and the world rebuilds around the player.
