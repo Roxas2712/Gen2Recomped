@@ -4,7 +4,12 @@ local M = {}
 local origins = setmetatable({}, { __mode = "k" })
 
 function M.origin(rows, data, entry, compile, generation)
-	origins[rows] = { data = data, entry = entry, compile = compile, generation = generation }
+	origins[rows] = {
+		data = setmetatable({ data, data.map_scripts.scripts }, { __mode = "v" }),
+		entry = entry,
+		compile = compile,
+		generation = generation,
+	}
 end
 function M.trace()
 	return { commands = {}, byKey = {}, owners = {}, labels = {}, returns = {}, returnKeys = {} }
@@ -52,10 +57,18 @@ function M.finish(rows, t)
 	end
 end
 function M.prepare(rows)
-	local origin = origins[rows]
-	if not origin then
+	local stored = origins[rows]
+	if not stored then
 		return
 	end
+	local data = assert(stored.data[1], "decoded script source dataset has been retired")
+	assert(
+		data.map_scripts and data.map_scripts.scripts == stored.data[2],
+		"decoded script source cohort has been retired"
+	)
+	-- Only an executing script borrows a strong source reference. The weak-key
+	-- compiler cache and this provenance table must not keep each other alive.
+	local origin = { data = data, entry = stored.entry, compile = stored.compile, generation = stored.generation }
 	local trace = M.trace()
 	local result = origin.compile(origin.data, origin.entry, { trace = trace })
 	assert(M.same(result, rows), "decoded profile requires an unmodified native compiled script")

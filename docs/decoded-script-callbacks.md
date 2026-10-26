@@ -20,6 +20,8 @@ Native subscribers retain their existing bus, names, operand arrays, ordering
 and context. The original compiled script table remains identical until a mod
 actually changes a decoded operation. Compiler provenance and tracing stay in
 private side tables; no scratch records are placed in public script rows.
+Provenance holds weak source references: retained rows cannot keep a retired
+dataset alive, and replaced source pools explicitly retire their old provenance.
 
 The profile presents `(next, ctx, op, row)` for Gen 3 and
 `(next, ctx, op, args, cmd)` for Gen 2. Numeric operand slots and the supported

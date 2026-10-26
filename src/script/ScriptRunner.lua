@@ -300,7 +300,7 @@ function ScriptRunner:exec(script, ctx)
     else
       visited[command.key] = true
       local positive = command.after > command.pc
-      local ran, active = false, true
+      local ran, active, completed = false, true, false
       local function vanilla(hctx, op, ir)
         assert(active, "decoded next is only valid during its callback")
         assert(not ran, "decoded command already executed")
@@ -315,11 +315,13 @@ function ScriptRunner:exec(script, ctx)
         local first, after = command.pc, command.after
         positive = after > first
         while pc >= first and pc < after and pc <= #script do step() end
+        completed = true
       end
       local copy = Decoded.copy(Decoded.source(origin, command))
       local ok, err = pcall(decodedHooks.call, decodedHooks, "script.command", vanilla, ctx, copy[1], copy)
       active = false
       if not ok then error(err, 0) end
+      assert(not ran or completed, "decoded native command did not complete; downstream failure cannot be swallowed")
       if not ran then
         -- Suppress compile-time state as well (loadword/text fusion), once for
         -- this visit. The next visit still offers the original source opcode.
