@@ -39,9 +39,46 @@ Crystal Rev0 table probe finds seven complete rows, agrees with an independent
 byte decoder and leaves the original ROM unchanged. It is not a full import,
 GPU, original-story or Gold/Silver actual-ROM acceptance claim.
 
-The complete `apricorns` registry and legacy Apricorns facade, authored recipe
-events/ball-output binding, complete native daily/tree lifecycle and original
-story/hardware acceptance remain open. Full Gen1 parity is unproven.
+The `apricorns` registry now projects authored recipe records into the actual
+decoded native Kurt programs. The importer queues four named roots and their
+reachable scripts; incomplete or home-bank bindings are unavailable rather
+than guessed. An additional stock-GSC cache revision requires that import.
+The adapter derives each base recipe's event from its native selection and
+collection branches, rather than assuming an event/colour order. For example:
+
+```lua
+mod.content.apricorns:patch("RED_APRICORN", {ball="ULTRA_BALL"})
+```
+
+All fields are `apricorn`, `ball`, `event` and `index`, as in the reference
+registry. Items must resolve to real indexed GSC item bytes. Additional recipes
+can use previously indexed native items and new word-sized events, excluding
+the `$ffff` indirect-event sentinel. The selector still returns the real item
+byte; it is never replaced with a fabricated seven-colour ordinal. Actual
+native membership and event-dispatch branches, including overlapping roots,
+consume the resulting table. Working/day flags, quantity, dialogue and
+full-bag refusal stay in native scripts. Removed/rekeyed recipes stop new
+jobs while unclaimed original pending events retain their original output.
+
+The observational `apricorn.converted` event is emitted only after a native
+gift succeeds and its real event is cleared. API1/2 callbacks retain native
+item IDs. The fork separately tests its API3 semantic callback boundary. It cannot veto or redirect
+the gift. Recipe record views use semantic IDs through upstream API1/2 native content. The fork also tests its API2/3
+unified content modes; those additional APIs are not imported by this PR. Later item registrations resolve before
+projection; invalid owners and affected consumers roll back before any native
+script mutation. Unload restores unchanged owned rows/scripts, preserving
+external edits. A new script table invalidates the VM's compiled-root cache.
+
+Synthetic integration checks cover actual Loader, VM, Menu, daily resets,
+bag operations, observers, invalid/forward references, removal, unload and
+generation isolation. A private read-only Crystal Rev0 probe also decodes
+31 reachable native programs (264 instructions, zero desyncs), registers an
+eighth recipe and executes the native selection, map reentry, working branch,
+daily reset, full-bag refusal, three-ball delivery and exactly-once completion.
+Only external text/audio IO is substituted; the original ROM is unchanged.
+These checks do not establish full GPU/story or Gold/Silver actual-ROM
+acceptance. The legacy Apricorns facade, full native daily/tree lifecycle and
+remaining Gen1 feature parity remain open.
 
 Behavior was checked against the read-only Gen1 reference
 `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91` and primary disassembly sources:

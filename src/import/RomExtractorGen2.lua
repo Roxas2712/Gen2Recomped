@@ -3344,6 +3344,21 @@ function RomExtractorGen2:gen2ApricornBalls()
   end
 end
 
+function RomExtractorGen2:gen2QueueApricornPrograms(pool)
+  if self.version~="gold" and self.version~="silver" and self.version~="crystal" then return nil end
+  local symbols={ask="Kurt1.AskApricorn",pending="Kurt1.GotLureBall",
+    gave="Kurt1.GaveKurtApricorns",cancel="Kurt1.Cancel"}
+  local found={}
+  for role,name in pairs(symbols)do
+    local at=self:symbol(name)
+    if not at or at.address<0x4000 or not self:gen2InRom(at.bank,at.address) then return nil end
+    found[role]=at
+  end
+  local out={}
+  for role,at in pairs(found)do out[role]=self:gen2QueueScript(at.bank,at.address,pool)end
+  return out
+end
+
 -- Marts is a dw pointer table; each mart is `db count`, the item ids, `db -1`.
 -- The table ends where its own first entry starts.
 function RomExtractorGen2:gen2Marts()
@@ -8920,6 +8935,7 @@ function RomExtractorGen2:extractMapScripts()  self:beginStage("Gen2 map scripts
   out.stds = self:gen2QueueStdScripts(pool)
   out.marts = self:gen2Marts()
   out.apricornBalls, out.apricornInfo = self:gen2ApricornBalls()
+  out.apricornPrograms = self:gen2QueueApricornPrograms(pool)
   out.spawns = self:gen2SpawnPoints(maps, keys)
   -- extractField runs after this stage and needs both of these: GSC has no
   -- Fly-warp list of its own, because Fly lands on the SPAWN POINT of the

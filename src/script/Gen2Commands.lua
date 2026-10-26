@@ -896,6 +896,13 @@ function Gen2Commands.scriptVarValue(ctx, var)
   return 1
 end
 
+function Commands.g2_apricorn_converted(ctx,apricorn,ball,event)
+  local Runtime=require("src.mods.Runtime")
+  if Runtime.wants("apricorn.converted")then
+    Runtime.emit("apricorn.converted",{apricorn=apricorn,ball=ball,event=event})
+  end
+end
+
 -- Script_loadmem (25:$7495): write an immediate byte to a WRAM address.  The
 -- same address-keyed mirror readmem/writemem use -- keyed by the raw
 -- address number exactly as they key it, so a script that pokes a byte here
