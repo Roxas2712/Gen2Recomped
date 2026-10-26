@@ -20,5 +20,4 @@ Gen2ScriptVM and ScriptRunner in Gold/Silver/Crystal. This does not establish
 complete radio/phone parity, a hardware call or original-story acceptance.
 
 Original contributions by Roxas2712; existing reference, upstream and
-third-party rights and credits remain applicable. See NOTICE.md and
-LICENSE-ROXAS2712.md.
+third-party rights and credits remain applicable. See the [specific PR contribution permission and credits](https://github.com/Roxas2712/Gen2Recomped/blob/7867399c753186778bd4b8816ba37573357e4b40/LICENSE-ROXAS2712.md).

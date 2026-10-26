@@ -1,4 +1,4 @@
--- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
+-- Copyright (c) 2026 Roxas2712. See the PR contribution permission in docs/native-gen2-phone-call-selection.md.
 package.path='./?.lua;./?/init.lua;'..package.path
 local T=require('tests.modkit')
 local Calls=require('src.script.Gen2Commands')
