@@ -65,7 +65,9 @@ card. These checks do not establish a complete original-story clock-setting
 sequence, manual DST-setting/check dialogs, battery-backed SRAM RTC
 conversion, all daily services or fresh GPU acceptance for this change.
 Automatic host DST isolation is covered; the original story clock-setting
-screen and remaining manual DST lifecycle still need native implementation.
+screen now has a native implementation described in
+[native-gen2-init-clock.md](native-gen2-init-clock.md); fresh original-story/GPU
+acceptance and the remaining manual DST lifecycle are separately gated.
 
 The public contract is compared with the read-only Gen1Recomp reference;
 the implementation is native fork code. No VASC implementation, private
