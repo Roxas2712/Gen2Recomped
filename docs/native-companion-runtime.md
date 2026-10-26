@@ -112,3 +112,23 @@ support or a complete playthrough of every edition.
 Existing source copyright and licence notices remain in place. Original
 contributions offered by Roxas2712 use the specific upstream permission in
 [LICENSE-ROXAS2712.md](../LICENSE-ROXAS2712.md).
+
+## Completion evidence
+
+Public runtime `79c37058` passes **194/194 engine suites**, **3/3 SDK suites**,
+the gallery, all **200 API-3 comparisons / 400 isolated loader runs** and
+**14/14 unchanged external fixture entrypoints**. Each supported GPU host
+passes **575 assertions, 30 pixel comparisons and 100 readbacks**: LÖVE 11.5
+OpenGL and LÖVE 12 Metal/OpenGL. The unchanged external 1.0.9 package
+initializes on all five editions on each of those three hosts.
+
+Disposable FireRed and Emerald ROM imports additionally exercise a staged
+native field, resident party edits, dialogue, field damage, wild battle, a
+native move, battle return and mod unload. The external field renderer stays
+active after the battle. FireRed is bound to `79c37058`; Emerald is bound to
+`df85f6d0`. These are admission/action flows, not complete playthroughs or
+performance benchmarks. The optional alternate battle card uses the native
+fallback described above.
+
+[Machine-readable revision-bound evidence](qa/native-companion-completion.json)
+records the individual scopes and outcomes.
