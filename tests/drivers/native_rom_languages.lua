@@ -24,6 +24,7 @@ return function(game)
   assert(e.session:importBytes(bytes),'Native launcher import rejected the exact language ROM')
   assert(api.imports:info(version..'_de').sha1==input.sha1,'Native reimport changed the source identity')
   assert(not api:info('fork/main.lua'),'QA mod still ships the separate conversion backend')
+  assert(not api:info('hosts/gen2/main.lua'),'QA mod still ships the legacy Gen2 conversion backend')
   local mon
   for _,row in pairs(game.data.pokemon) do if row.name=='BISASAM' then mon=row;break end end
   assert(mon,'Native species names were not localized')
