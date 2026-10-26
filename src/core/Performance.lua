@@ -65,6 +65,10 @@ Performance.gen3PaletteIndex = true
 -- G3: Gen 4 model draw sends a uniform only when its value changed and
 -- allocates no per-shape tables (src/render/Gen4Model.lua:_drawCached).
 Performance.gen4UniformCache = true
+-- G2: Gen 4 area light evaluated in the vertex shader from a per-vertex
+-- normal, so a new light band uploads a uniform instead of rebuilding every
+-- lit mesh (src/render/Gen4Model.lua `g4Shade`, Gen4Ground:lightBandChanged).
+Performance.gen4GpuLight = true
 Performance.GC_PAUSE = 120
 Performance.GC_STEP_MUL = 300
 Performance.GC_BUDGET_SECONDS = 0.0005
