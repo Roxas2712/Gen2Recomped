@@ -1320,6 +1320,12 @@ function Loader:_rollback(modId)
   self.optionStatus[modId] = nil
   self.migrations[modId] = nil
   self.modSave[modId] = nil
+  local stream=package.loaded['src.core.game3.asset_stream']
+  if stream and stream.cancelOwner then pcall(stream.cancelOwner,modId)end
+  local space=package.loaded['src.core.game3.scripting.space']
+  if space and space.cancelOwner then pcall(space.cancelOwner,modId)end
+  local transition=package.loaded['src.core.game3.battle_transition']
+  if transition and transition.cancelOwner then pcall(transition.cancelOwner,modId)end
 end
 
 -- a mod that explicitly swears it stays link-compatible while writing into a
@@ -1465,6 +1471,18 @@ local function retireCompatibilityObjects()
   local objects = package.loaded["src.core.game3.objects"]
   if type(objects) == "table" and type(objects.release) == "function" then objects.release() end
 end
+-- Optional sprite resources own no native game state. Do not load a
+-- compatibility module or Game just to retire a previous resource cohort.
+local function retireSpriteResources()
+  local sprites=package.loaded['src.core.game3.ow_sprites']
+  if sprites and type(sprites.release)=='function' then sprites.release()end
+  local space=package.loaded['src.core.game3.scripting.space']
+  if space and type(space.release)=='function'then space.release()end
+  local transition=package.loaded['src.core.game3.battle_transition']
+  if transition and type(transition.release)=='function'then transition.release()end
+  local effects=package.loaded['src.core.game3.field_effects']
+  if effects and type(effects.release)=='function'then effects.release()end
+end
 
 function Loader:load(data)
   InputControl.closeAll()
@@ -1485,6 +1503,7 @@ function Loader:load(data)
   retireCompatibilityMaps()
   retireCompatibilityAtlases()
   retireCompatibilityObjects()
+  retireSpriteResources()
   self.baseData = data
   -- every registry folds against the pristine view of its Data target;
   -- resolution is lazy so optional namespaces may appear later
@@ -1835,6 +1854,7 @@ function Loader.teardown()
   retireCompatibilityMaps()
   retireCompatibilityAtlases()
   retireCompatibilityObjects()
+  retireSpriteResources()
   pcall(function()
     Runtime.install(Events.new(), Hooks.new(), nil)
     Runtime.currentMod = nil
