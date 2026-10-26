@@ -184,7 +184,7 @@ function BoxMenu.new(game, opts)
   self.onClose = opts.onClose or opts.onCancel or function() game.stack:pop() end
   local data = game and game.data or {}
   self.pokemon = opts.pokemon or data.pokemon
-  self.palettes = opts.palettes or data.gen2Palettes
+  self.palettes = opts.palettes or data.gen2Palettes or data
   -- EggPic has no data.pokemon row; it rides menu_gfx.eggHatch, and ICON_EGG
   -- stands in for a cache built before the extractor learned it.
   self.menuGfx = opts.menuGfx or data.gen2MenuGfx
@@ -400,7 +400,7 @@ end
 
 -- engine/pokemon/bills_pc.asm:397-411: failed withdraw stays on the submenu.
 function BoxMenu:doWithdraw()
-  local ok, result = Boxes.withdraw(self.save, self.boxIndex, self.index)
+  local ok, result = Boxes.withdraw(self.save, self.boxIndex, self.index, self.game and self.game.data)
   if not ok then
     -- engine/pokemon/bills_pc.asm:1845
     self:playRefusalSfx("Sfx_Wrong")

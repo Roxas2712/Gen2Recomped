@@ -192,7 +192,7 @@ function PackMenu.new(game, opts)
   -- Bag.order / Bag.move read `.items` off an injectable data table, and the
   -- one this screen draws from is not always the Data singleton.
   self.bagData = setmetatable({ items = self.items }, {__index=game and game.data or {}})
-  self.world = opts.world or (game and game.overworld)
+  self.world = opts.world or (self.save == (game and game.save) and game.overworld) or {}
   self.onChoose = opts.onChoose
   self.onClose = opts.onClose or opts.onCancel or function() game.stack:pop() end
   -- DepositSellPack rather than the PACK's own UseItem: a chooser must not run
@@ -422,10 +422,10 @@ end
 function PackMenu:exitToField()
   self:storeCursor()
   local stack = self.game and self.game.stack
-  if stack and stack.clear then
-    stack:clear()
+  if stack and stack.pop and stack.top then
+    while stack:top() and stack:top() ~= self.game.overworld do stack:pop() end
     -- ../pokecrystal/home/map.asm:1927-1940
-    local world = self.game.world
+    local world = self.game.overworld
     if world and world.exitMenusFade and not world.mapSetup then
       world:exitMenusFade()
     end
