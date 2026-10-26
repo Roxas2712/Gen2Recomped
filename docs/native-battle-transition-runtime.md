@@ -14,8 +14,9 @@ There is no copied task scheduler, simulation, palette timer or audio loop.
 Registered native style selection and foreground draws remain authoritative.
 The enum/selection catalogue distinguishes FRLG, Emerald and RS, including
 RS's shorter enum, class ordinals, class-based exceptions and level equality.
-The RS inherited Emerald class profile is corrected both during import and
-when reading an old cache; explicit authored profiles remain unchanged.
+The inherited Emerald class profile is corrected during RS import. An RS-only
+cache revision transparently rebuilds old imports. Runtime profile reads stay
+authoritative, including deliberately authored Emerald-shaped profiles.
 See https://github.com/pret/pokeruby/blob/master/include/constants/trainers.h.
 
 For existing geometric native styles, an owned copy of the current world

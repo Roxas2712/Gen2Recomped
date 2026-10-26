@@ -1029,8 +1029,7 @@ local function gen3Style(ctx)
   if ctx.trainer then
     local class = tonumber(ctx.trainerClass)
     local opponent = tonumber(ctx.trainerId)
-    local classes = require('src.import.Gen3TransitionProfile').classes(
-      require('src.core.GameVersion').get(), record.trainerClasses)
+    local classes = record.trainerClasses or {}
     local function isOneOf(list)
       for _, v in ipairs(list or {}) do if class == v then return true end end
       return false

@@ -19,13 +19,16 @@ for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
       names={[4]='pokeballsTrail',[8]='slice',[9]='whiteBarsFade',[12]='sidney',[16]='champion'},
       trainerClasses={eliteFour=31,champion=38},eliteFour={SIDNEY=12},championTransition=16}
     game.data.constants.gen3BattleTransitions=record
-    local elite=Native.new(game,nil,{trainer=true,trainerClass=24,trainerName='SIDNEY'})
-    T.eq(elite.style,'g3_mugshot','existing RS cache routes its actual Elite Four class')
-    local ordinary=Native.new(game,nil,{trainer=true,trainerClass=31,weaker=true})
-    T.eq(ordinary.style,'g3_pokeballsTrail','RS class31 does not inherit the Emerald Elite Four role')
     local imported=require('src.import.Gen3TransitionProfile').classes(edition,record.trainerClasses)
     T.eq(imported.eliteFour,24);T.eq(imported.champion,32)
     T.eq(record.trainerClasses.eliteFour,31,'runtime fallback cannot rewrite a borrowed native profile')
+    record.trainerClasses=imported
+    local elite=Native.new(game,nil,{trainer=true,trainerClass=24,trainerName='SIDNEY'})
+    T.eq(elite.style,'g3_mugshot','corrected RS import routes its actual Elite Four class')
+    local ordinary=Native.new(game,nil,{trainer=true,trainerClass=31,weaker=true})
+    T.eq(ordinary.style,'g3_pokeballsTrail','RS class31 does not inherit the Emerald Elite Four role')
+    record.trainerClasses={eliteFour=31,champion=38}
+    T.eq(Native.new(game,nil,{trainer=true,trainerClass=31}).style,'g3_mugshot','an authored Emerald-shaped profile remains authoritative at runtime')
     local custom={eliteFour=99,champion=100}
     T.eq(require('src.import.Gen3TransitionProfile').classes(edition,custom),custom,'authored profiles retain their chosen ordinals')
     game.data.constants.gen3BattleTransitions=nil
