@@ -78,3 +78,25 @@ FPS, generic-unload or all-resource-disposal test.
 The formatted probes have identical stripped LuaJIT bytecode to the executed
 originals. The [quit receipt](../quit-to-launcher.json) pins original driver,
 log and capture hashes and records standalone/composed scope separately.
+
+
+## Native battle-style decision
+
+`battle-style-native.lua` uses `POKEPORT_DRIVER` and the same isolated native
+setup above with `examples/portable_battle_style` installed and enabled. Set
+`BATTLE_STYLE_OUT` to a fresh absolute QA output directory. This driver needs
+no Battle Art package. On Gen1, use a genuine regular ROM import into the QA
+identity; loose generated data alone can leave the host in its ROM-required
+launcher without executing the driver. Keep legacy migration disabled, audio
+muted and the process at nice 19. Protect all inputs/copies/profiles with
+`qa_storage` and keep normal saves/imports unchanged.
+
+The driver constructs an in-memory trainer battle with a prepared one-HP lead,
+then uses actual FIGHT/move input and the native result/ChoiceBox/send-out
+queues. It checks forced SET, forced SHIFT with B/NO, and unsubscribe while
+leaving the saved preference unchanged. Each ChoiceBox instance is counted
+once across its normal answer hold. Four screenshots per run and a zero exit
+are required. Three accepted runs have identical typed decisions/queue results;
+the images retain each engine's native UI placement. This is not a complete
+playthrough, artwork/pixel equality or FPS test. The formatted public driver
+has identical stripped LuaJIT bytecode to the executed original.

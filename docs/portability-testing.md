@@ -17,13 +17,14 @@ authorize publishing upstream Gen1 changes.
 
 ## Current October upstream composition
 
-The current production qualification is `77d0294ce20b83168dfce7461f7854df2d5d3cfb`,
-which includes upstream `ed5189c2`, [PR #313](https://github.com/UNDERdecoded/Gen2Recomped/pull/313)
-and the portable quit hook in [PR #320](https://github.com/UNDERdecoded/Gen2Recomped/pull/320).
-It passes **296/296 engine suites**, **4/4 SDK suites** and B30 with zero
-FAIL lines. The source tree is `cd897adfaddbd6c17eb1d9e7a51741a5ab186af4`;
-its engine-test tree is `f5a6451cf67d399ac591ef5669b6329b076cec75`.
-The full test tree is `4f74be4c778971d72e750628d22447e9496295f2`.
+The current production qualification is `b41271c084f990ac6d44b536a575eb88868a2075`,
+which includes upstream `ed5189c2`, [PR #313](https://github.com/UNDERdecoded/Gen2Recomped/pull/313),
+the portable quit hook in [PR #320](https://github.com/UNDERdecoded/Gen2Recomped/pull/320),
+and the [portable battle-style decision](https://github.com/UNDERdecoded/Gen2Recomped/pull/322).
+It passes **297/297 engine suites**, **4/4 SDK suites** and B30 with zero
+FAIL lines. The source tree is `640f209e476cbbb691fe040c202bc26e99c212e4`;
+its engine-test tree is `912c07afd8eca050be404edb3a129374d5e914d0`.
+The full test tree is `bcdffcaf90f59903a82205e70fefae8d848d9405`.
 Later publication changes only record qualification evidence. The earlier
 October qualification and its shared-contract counts below retain their own refs.
 
@@ -35,11 +36,30 @@ branch includes the earlier repairs. Shared contracts run 16 native and
 40 and 80 typed paired observations respectively. The standalone base has
 API 1/2; this composition also exposes the hook through the prior unified/API-3
 capability catalogs. Actual unchanged Battle Art and Interiors cleanup passes
-29 checks per engine across the two package configurations. An isolated
-native LÖVE process renders the full voxel scene, dispatches actual quit,
+29 checks per engine across the two package configurations. The earlier isolated
+native LÖVE quit run renders the full voxel scene, dispatches actual quit,
 disposes the companion, removes 11 frame wrappers and exits zero. This is
 bounded quit acceptance, not a generic unload or full-mod/FPS certification.
 See the [quit qualification receipt](qa/quit-to-launcher.json).
+
+The new `battle.style` producer lets a Gen1 mod choose SHIFT/SET without
+changing the saved option. It retains native live-player/party-count gates;
+this composition also retains the battle-local selected-party view. The
+standalone feature passes **82/82** checks plus the existing **11/11** SHIFT
+text checks; the composed style suite passes **88/88**. Existing upstream
+failures remain exactly **11 suites / 29 FAIL lines**. A control that restores
+only the direct-options call site fails **13 assertions**.
+
+The same example on Red, Blue and Yellow completes **12 native workers / 60
+typed paired observations** and **24 combined-mode workers / 120 observations**
+on the two engines. Three actual LÖVE runs cover an existing Gen2 import and
+fresh regular Red imports on both engines. FIGHT/move input reaches the real
+trainer faint, requested switch dialog, declined offer and next send-out;
+unsubscribe restores the saved SET policy. All processes exit zero, selected
+typed results agree and **12 captures were inspected**. This remains a
+constructed battle/input test, not a playthrough, matching-pixel or FPS claim.
+Native ChoiceBox positions differ; EXP-bar fallback and dev facade-import
+warnings remain separate work. See the [battle-style receipt](qa/battle-style.json).
 
 Two merge boundaries retain both behaviors: `screen.render_visible` runs
 inside the native DS supersampling draw loop, and battle completion keeps
@@ -48,7 +68,8 @@ The focused native probes pass **75/75**. Removing each preserved condition
 fails respectively **3**, **6** and **12** checks. The committed formatted
 probe has identical stripped bytecode to the initially qualified probe.
 
-The unchanged Gen1 reference `535a5ec0` and the new runtime complete
+The unchanged Gen1 reference `535a5ec0` and the earlier October runtime
+`87cada70e7483120f131b716ea6a370d1158127c` completed
 **268 workers / 178,264 complete paired observations** for the selected
 native FireRed/Emerald contracts. Every worker exits zero without timeout
 or native VM diagnostics. An independent audit reparses every raw result,
