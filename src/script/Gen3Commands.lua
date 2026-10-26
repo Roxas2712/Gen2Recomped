@@ -3211,6 +3211,10 @@ function Commands.g3_wait_se(ctx)
   ctx.runner:yield()
 end
 
+function Commands.g3_bgm(ctx, operation, song, keep)
+  return require("src.core.Music").nativeCommand(ctx.game.data, operation, song, keep, ctx)
+end
+
 function Commands.g3_play_cry(ctx, species, mode)
   local raw = valueOf(ctx, species)
   require("src.core.Sound").playCry(ctx.game.data, Gen3Commands.speciesId(ctx.game.data, raw),
