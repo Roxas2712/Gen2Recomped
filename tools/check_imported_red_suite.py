@@ -67,6 +67,9 @@ def main():
         shutil.copytree(profile / tree, source / tree, dirs_exist_ok=True)
     env = {k: v for k, v in env.items() if not k.startswith('POKEPORT_')}
     codes = []
+    env['MODKIT_LUAJIT']=str(lua)
+    env['LUA']=str(lua)
+    env['PATH']=str(lua.parent)+os.pathsep+env.get('PATH','')
     with (out / 'suite.log').open('w') as log:
         for suite in args.suite or [None]:
             command = [str(lua), 'tests/isolated_legacy_suite.lua', suite] if suite else [str(lua), 'tests/run_tests.lua']
