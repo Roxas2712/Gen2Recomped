@@ -67,7 +67,7 @@ return function(mod)
     game.data.tokens['ULA_GENDER_'..code]=function(g)return choices[g.save.player.gender=='female'and'female'or'male']end
    end end
   end
-  own('@host/ui_text.lua').apply(game.data,id)
+  own('@host/ui_text.lua').apply(game.data,id,result and result.catalogs)
   own('@host/pc_labels.lua').apply(game.data.strings,result and result.catalogs.fork_pc_labels)
   if V.generation()==2 then own('@host/world_palettes.lua').apply(game.data,own('@host/gbc_roof_colors.lua'))end
   if V.generation()==2 then own('@host/ui_layout.lua').hud(game.data.font)end
