@@ -7,6 +7,10 @@ local rows = {}
 for _, case in ipairs({ "native-wait", "deferred-default", "replacement", "repeat", "new-bgm", "stop-bgm" }) do
   local h = dofile(root .. "/tests/native_bgm/streams.lua").install(root, backend, version, f)
   local ids = h.fanfares()
+  assert(h.soundData.staticInputs == 0, "fanfare setup must not prewarm a static source")
+  if native then
+    assert(next(require("src.core.game3.audio")._fanfareSd) == nil, "native SoundData cache starts cold")
+  end
   h.clear()
   h.update()
   local script = {}
@@ -21,6 +25,7 @@ for _, case in ipairs({ "native-wait", "deferred-default", "replacement", "repea
   script[#script + 1] = { "setvar", 0x4001, 1 }
   script[#script + 1] = { "end" }
   local runner = h.start(script)
+  assert(h.soundData.staticInputs > 0, "public cold fanfare must create a source from userdata PCM")
   local frames, completed = {}, nil
   for tick = 0, 12 do
     h.tick(tick)
@@ -55,7 +60,13 @@ for _, case in ipairs({ "native-wait", "deferred-default", "replacement", "repea
     frames[#frames + 1] = state
     h.update()
   end
-  rows[#rows + 1] = { case = case, completed = completed, frames = frames, trace = h.trace() }
+  rows[#rows + 1] = {
+    case = case,
+    completed = completed,
+    frames = frames,
+    trace = h.trace(),
+    coldFanfareSource = true,
+  }
   h.close()
 end
 f.close()

@@ -55,12 +55,6 @@ for _, case in ipairs({ "native-fade", "native-wait", "deferred-default", "stop-
   if native then
     Audio._pack, Audio._cache, Audio._ready = pack, cache, true
     Audio._fanfareSd, Audio._fanfareSrc = {}, {}
-    for _, id in ipairs(ids) do
-      local entry = assert(pack.index.fanfares[id])
-      -- Use the native renderer to warm its cache: headless SoundData is a
-      -- table, while the production cold cache accepts userdata only.
-      Audio._fanfareSd[id] = assert(Player.bakeSong(pack, cache, id, { maxSec = entry.frames / 60 + 4 }))
-    end
   else
     local audio = dofile(cacheRoot .. "/" .. version .. "/data/generated/audio.lua")
     audio.gen3.file, audio.programPrefix = "owned-imported-native-bgm.bin", nil
@@ -87,6 +81,9 @@ for _, case in ipairs({ "native-fade", "native-wait", "deferred-default", "stop-
     script[#script + 1] = { "end" }
   end
   local runner = h.start(script)
+  if case ~= "native-fade" then
+    assert(h.soundData.staticInputs > 0, "actual-import cold fanfare must admit userdata PCM")
+  end
   local frames, completed = {}, nil
   for tick = 0, 85 do
     h.tick(tick)
@@ -107,7 +104,13 @@ for _, case in ipairs({ "native-fade", "native-wait", "deferred-default", "stop-
     h.update()
   end
   assert(completed ~= nil and not runner:isRunning(), "imported native script must complete")
-  rows[#rows + 1] = { case = case, completed = completed, frames = frames, trace = h.trace() }
+  rows[#rows + 1] = {
+    case = case,
+    completed = completed,
+    frames = frames,
+    trace = h.trace(),
+    coldFanfareSource = case ~= "native-fade",
+  }
   h.close()
 end
 f.close()

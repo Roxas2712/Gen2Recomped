@@ -34,7 +34,7 @@ adapters, VMs, music services and owned audio hardware doubles. No native
 audio method is replaced with a host result. LuaJIT is pinned to
 `a4c064539ea931274d407e1249b4bb575424a0f4`.
 
-- **36 workers / 2,622 complete paired observations**, independently
+- **40 workers / 2,648 complete paired observations**, independently
   compared with JSON booleans distinguished from numeric zero/one.
 - The new BGM contracts contribute **1,970 rows**: 1,844 symbol rows,
   32 command/lifecycle cases with all 81 frames and play traces per case,
@@ -42,14 +42,16 @@ audio method is replaced with a host result. LuaJIT is pinned to
   File cases retain every created source, including stopped sources and
   their actual gains. Another 40 rows cover native fanfare commands and
   waits; twelve rows cover initial missing-output state, fades and replacement
-  of shared file music, 46 rows cover public music hooks and events, and the
-  remaining 554 rows recheck native cry contracts.
+  of shared file music, 46 rows cover public music hooks and events, 26 rows
+  cover audio options/reentrant world actions, and the remaining 554 rows
+  recheck native cry contracts.
 - **80/80** BGM command, **62/62** stream and **7,364/7,364** fanfare engine
   checks pass, as do **124/124** missing-device/session recovery and
-  **4,616/4,616** public music hook checks.
-  The full feature quick run passes **172/181** engine suites,
-  SDK **3/3** and B30. A fresh preceding development checkpoint `a29c4158`
-  passes **171/180**;
+  **4,616/4,616** public music hook checks, **102/102** audio option and
+  **51/51** cold cache/invalid-handle checks.
+  The full feature quick run passes **174/183** engine suites,
+  SDK **3/3** and B30. A fresh preceding development checkpoint `3f3f473d`
+  passes **173/182**;
   the exact anchored `FAIL ` line Counters are identical:
   **25 lines / nine inherited failing suites**, with no additions/removals.
 - The changed workflow passes actionlint. New modules and BGM test files
@@ -125,10 +127,10 @@ reproduced six physical-restoration assertion failures.
 The 40 complete fanfare command rows compare unchanged native production
 adapters and VMs. A separate **four-worker / 12-case / 156-frame** comparison
 uses the real native/host renderers and keeps all distinct PCM, source
-inventories, SE queries and queue counters. The reference cache is warmed
-with its own renderer because its cold cache admission requires userdata
-while headless SoundData is a table. This does not claim cold-device or
-whole-waveform parity.
+inventories, SE queries and queue counters. The earlier checkpoint warmed
+the reference cache to accommodate table-backed headless SoundData. The cold
+admission follow-up below removes that workaround. This does not claim
+whole-waveform parity or real-device qualification.
 
 ## Missing output and session follow-up
 
@@ -184,8 +186,8 @@ static-source inventories, active BGM gains relative to each backend's
 baseline, and queue/produced/play counters agree. Each case renders audible
 actual-import PCM. All **2,681,636 reference / 2,169,890 host scalar samples**
 are retained separately. Distinct waveforms and rendered tail lengths are
-not treated as equality. The reference fanfare cache is warmed by its own
-renderer for the previously described headless userdata admission limit.
+not treated as equality. The cold admission follow-up below also removes
+the earlier actual-import probe's reference-cache prewarming.
 
 ## Public music hook follow-up
 
@@ -255,10 +257,51 @@ zero. Complete callback contexts, results, controller state, Sources and
 boolean platform policies are retained. This does not claim every audio
 option or arbitrary mod callback combination is qualified.
 
+## Cold cache admission and invalidated handles
+
+The stream hardware fixture now returns LuaJIT userdata-shaped SoundData
+with the headless sample store behind it. Both engines still execute their
+unchanged production renderers. Only the hardware constructors are wrapped;
+the CPU Source retains the complete backing PCM for observation. The fixture
+restores both constructors when closed and requires the same LuaJIT runtime
+as the engine and CI.
+
+Owned and actual-import fanfare probes no longer call `bakeSong` to populate
+the reference cache. Public native script dispatch must render cold PCM and
+create an actual static Source from userdata. Assertions reject prewarmed
+SoundData or a missing static constructor call. The **12 owned cases / 156
+frames** and **eight imported cases / 688 frames** retain all source records
+and distinct rendered PCM. BGM stream regressions still cover **18 cases /
+1,534 frames**, including the documented two GB lookahead differences.
+
+`tests/engine/gen3_audio_cold.lua` passes **51 checks**. It verifies sample
+preservation, cold public fanfare/wait dispatch, same-session Source reuse,
+new Sources after reload, cached static playback failure/recovery and SE
+queries against a refusing handle. The real host Game interruption path
+survives native streaming handles whose audio methods all raise, an unavailable
+foreground replacement and a later retry using that Game's dataset. Old
+handles cannot restart behind the replacement stream. These tests qualify
+the existing production implementation; this follow-up changes QA, not
+runtime behavior.
+
+Cold SoundData/Source admission is not a claim of a cold ROM/sample-decoder
+cache, real-device recovery or cross-engine full-session teardown parity.
+The host interruption test and the paired native audio contracts have distinct
+scopes. The existing native gain/PCM differences also remain recorded.
+
+A separate owned audio-service teardown/re-entry probe compares native and
+shared music, each with and without a fanfare, on both profiles. Portable
+song/map/save state, static Sources, SE queries and VM completion agree.
+It also observes every new audio tick and asserts that every old static and
+queue Source stays stopped. Its complete hardware inventories retain a
+backend difference: native cue replacement reuses one reference queue but
+creates a second host queue. Both are stopped after teardown. This probe does
+not establish equal allocation counts or full game/mod-session lifecycle parity.
+
 ## Work still required before a pull request
 
-- Invalid-device handle and cold session-transition coverage, followed by
-  remaining audio options and callback combinations beyond the cases above.
+- Paired full-session teardown/re-entry coverage beyond the host interruption
+  checks above, with old waits and Sources unable to leak into a new session.
 - Broader actual-import coverage, the complete existing contract matrix and
   a qualified combined runtime.
 - Native command revision and an independent frozen-parent serializer
@@ -331,3 +374,18 @@ nice -n 19 /path/to/pinned/luajit \
 
 Repeat for Emerald and the clean reference. Admission compares the documented
 control/ownership/queue properties; retain the complete backend PCM outputs.
+
+The owned audio-service teardown probe needs no ROM and retains the complete
+old Source inventories, including the documented allocation-count difference:
+
+```sh
+nice -n 19 /path/to/pinned/luajit \
+  tools/enemy-action-contract-check/native-audio-session-smoke.lua \
+  . gen2 firered > /path/to/session-firered-host.log
+```
+
+Use the same reference/host invocation convention and repeat for Emerald.
+Compare portable song/map/save state, VM completion and static Sources while
+retaining the different native queue inventories. Every old Source must stay
+stopped throughout re-entry. These are owned audio-service transitions, not
+full game/mod-session lifecycle qualification.
