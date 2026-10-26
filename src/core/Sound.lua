@@ -108,6 +108,7 @@ local nativeSeWaits = {}
 local nativeCryMono = false
 local nativeFanfareSource
 local nativeFanfares = setmetatable({}, { __mode = "k" })
+local crySignatures = {}
 -- port addition: 0-7 SFX volume from save.options.sfxVol (OptionsMenu),
 -- scaling the 0.8 base every source gets
 local BASE_VOLUME = 0.8
@@ -183,14 +184,10 @@ local function isPikaKey(key)
     and require("src.core.GameVersion").isYellow()
 end
 
--- A CRY IS NOT A SOUND EFFECT AT FULL TILT.
---
--- Reported from play: "the pokemon cries theyre seeming a little loud and
--- obnoxious not matching emeralds presentation of them".  On the cartridge a
--- cry sounds at CRY_VOLUME out of the mixer's 256 -- well under half -- and
--- the song ducks underneath it.  Both numbers are read off the ROM at import
--- (RomExtractorGen3:extractCryVolume, five agreeing PlayCry sites) and
--- arrive as constants.gen3Cry; a cache without them changes nothing.
+-- Legacy trim for uncompressed/custom cry renderers. Retail compressed cries
+-- now include the cartridge's 7-bit VOL and integer DirectSound channel/master
+-- gains in their PCM; applying the historical /256 trim again would double it.
+-- BGM ducking is a separate 85/256 music operation.
 local function cryScale(data)
   local c = data and data.constants and data.constants.gen3Cry
   local volume = c and tonumber(c.volume)
@@ -933,11 +930,11 @@ function Sound.update(data)
   end
 end
 
-local function newCrySource(data, species, def)
+local function newCrySource(data, species, def, options)
   -- A GEN 3 CRY names a recording rather than a chip program, so there is no
   -- base chain to resolve and no header to look up: the index IS the def.
   if type(def) == "table" and def.m4a then
-    local ok, s = pcall(require("src.core.ChipAudio").newCry, data, species, def)
+    local ok, s = pcall(require("src.core.ChipAudio").newCry, data, species, def, options)
     if not ok then return nil, tostring(s) end
     if not s then return nil, "no source" end
     return s
@@ -1007,12 +1004,27 @@ local function playLegacyCry(data, species, opts, nativeOverride)
     def = cries and mon and cries[mon.translationSourceName or mon.name]
   end
   if not def then return nil end
+  local gen3 = type(def)=="table" and def.m4a~=nil and data.audio.gen3
+    and require("src.core.M4ASynth").crySupports(data,def.m4a)
+  local options
+  if gen3 then
+    opts=opts or {}
+    options={mode=opts.mode,pan=opts.pan,cryVolume=opts.volume,mono=opts.mono,
+      edition=require("src.core.GameVersion").get()}
+  end
   local key = "cry:" .. tostring(species)
-  useWarm(data, key, "cry", resolveCry(data, def, 0))
+  if gen3 then
+    local signature=table.concat({tostring(data.audio),tostring(data.audio.gen3.file),
+      tostring(data.audio.programPrefix),tostring(def),tostring(options.edition),
+      tostring(options.mode or 0),tostring(options.pan or 0),tostring(options.cryVolume),tostring(options.mono)},":")
+    if crySignatures[key]~=signature then Sound.invalidate(key);crySignatures[key]=signature end
+  else
+    useWarm(data, key, "cry", resolveCry(data, def, 0))
+  end
   local src = cache[key]
   if src == false then return nil end
   if not src then
-    local s, err = newCrySource(data, species, def)
+    local s, err = newCrySource(data, species, def, options)
     if not s then
       cache[key] = false
       reportBadDef("cry", tostring(species),
@@ -1025,7 +1037,7 @@ local function playLegacyCry(data, species, opts, nativeOverride)
   end
   -- set every time rather than at build: the cached source outlives a change
   -- of game, and the scale is the loaded cartridge's
-  pcall(src.setVolume, src, volumeFor(key) * (nativeOverride and 1 or cryScale(data)))
+  pcall(src.setVolume, src, volumeFor(key) * ((nativeOverride or gen3) and 1 or cryScale(data)))
   -- Interactive Dex playback owns its source; loop/effect settings must never
   -- leak onto the cached cry used by battles, NPC scripts or other menus.
   if opts and opts.isolated and src.clone then
@@ -1033,7 +1045,9 @@ local function playLegacyCry(data, species, opts, nativeOverride)
     if ok and copy then src=copy end
   end
   if not restart(src) then return nil end
-  if not nativeOverride then require("src.core.Music").duckForCry(data, src) end
+  if not nativeOverride and not(gen3 and opts and (opts.noDuck or opts.mode==1 or(opts.release and opts.multi)))then
+    require("src.core.Music").duckForCry(data, src)
+  end
   played("cry", species, species)
   return src
 end
@@ -1252,6 +1266,8 @@ function Sound.invalidate(name)
   local nativeCry = package.loaded["src.core.NativeCryPlayer"]
   if nativeCry then nativeCry.invalidate(name) end
   Sound.invalidateNativeFanfares(name)
+  if not name or tostring(name):sub(1,4)~="cry:" then local m=package.loaded["src.core.M4ASynth"];if m and m.effectPrep then m.effectPrep.reset()end end
+  if name then crySignatures[name]=nil else crySignatures={} end
   local function evict(store, key)
     local src = store[key]
     if src then
@@ -1295,6 +1311,7 @@ function Sound.suspend()
     safeAudio("Source:stop", entry.src.stop, entry.src)
     nativePlayers[player] = nil
   end
+  local m=package.loaded["src.core.M4ASynth"];if m and m.effectPrep then m.effectPrep.suspend()end
   -- A LOOPING source (the low-health siren, the link tournament theme) is the
   -- only kind that is still sounding when the call arrives.  Ask it to stop
   -- while the device may still take the call, and forget it, so its owner's
@@ -1316,6 +1333,7 @@ end
 function Sound.resume()
   if not sessionSuspended then return end
   sessionSuspended = false
+  local m=package.loaded["src.core.M4ASynth"];if m and m.effectPrep then m.effectPrep.resume()end
   Sound.invalidate()
 end
 

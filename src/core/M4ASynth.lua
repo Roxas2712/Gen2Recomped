@@ -56,6 +56,8 @@
 -- ---------------------------------------------------------------------------
 
 local M4A = {}
+M4A.cryPCMVersion = 1
+M4A.cryModesVersion = 2
 
 local SAMPLE_RATE = 44100
 M4A.SAMPLE_RATE = SAMPLE_RATE
@@ -962,12 +964,24 @@ function M4A.renderNativeCry(data, index, options)
   return sound, info, params
 end
 
+function M4A.crySupports(data,index)
+  local audio=data and data.audio
+  if not(audio and audio.gen3 and audio.gen3Cries)then return false end
+  local _,handled=require("src.core.Gen3CryPCM").describe(loadImage(audio),audio.gen3.base or 0,audio.gen3Cries,index)
+  return handled
+end
+
 function M4A.renderCry(data, index, options)
   options = options or {}
   local audio = (data and data.audio) or {}
   local gen3 = audio.gen3 or {}
   local cries = audio.gen3Cries or {}
   if not (cries.table and index) then return nil end
+  -- Retail cries are GFDPCM, not signed PCM. Keep the existing gain/Source
+  -- contract; decode their own blocks before resampling, never ROM neighbours.
+  local decoded, handled = require("src.core.Gen3CryPCM").render(
+    loadImage(audio), gen3.base or 0, cries, index, options)
+  if handled then return decoded end
   local engine = setmetatable({
     image = loadImage(audio),
     base = gen3.base or 0,
@@ -1067,4 +1081,5 @@ function M4A.soundData(engine, samples, channels)
   return require('src.core.AudioPcm').render(engine,samples,channels,SAMPLE_RATE)
 end
 
+require("src.core.Gen3AudioPrep").install(M4A)
 return M4A

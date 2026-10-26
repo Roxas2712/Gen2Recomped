@@ -859,7 +859,7 @@ function ChipAudio.newM4AEffect(data, def)
   return love.audio.newSource(sd, "static")
 end
 
-function ChipAudio.newCry(data, species, resolved)
+function ChipAudio.newCry(data, species, resolved, options)
   local cry = resolved or (data.audio.cries and data.audio.cries[species])
   if not cry then return nil end
   -- A GEN 3 CRY IS A RECORDING, not a chip program with a pitch shift: it
@@ -867,7 +867,7 @@ function ChipAudio.newCry(data, species, resolved)
   -- sampler next door.  Same seam, same Source, different generation.
   if cry.m4a then
     effectFallback("sampled cry")
-    local sd = synthFor("m4a").renderCry(data, cry.m4a)
+    local sd = synthFor("m4a").renderCry(data, cry.m4a, options)
     if not sd then return nil end
     return love.audio.newSource(sd, "static")
   end

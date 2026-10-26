@@ -668,6 +668,19 @@ function Game:updateCameraStick(dt)
 end
 
 function Game:update(dt)
+  -- Cooperative preparation is the fallback when worker preparation is disabled.
+  local m=package.loaded["src.core.M4ASynth"]
+  if m and m.effectPrep and self.data and Performance.audioWorkerOptimization == false then
+    local top=self.stack and self.stack.top and self.stack:top()
+    local parties={}
+    if top and top.data==self.data and top.player then parties[#parties+1]={top.player.mon}end
+    if top and top.data==self.data then
+      parties[#parties+1]=top.enemy and {top.enemy.mon}or {}
+      parties[#parties+1]=top.enemyParty or {}
+    end
+    parties[#parties+1]=self.save and self.save.party or {}
+    m.effectPrep.plan(self.data,parties);m.effectPrep.step(.002)
+  end
   HotModules.get('src.pokemon.Gen4PoketchState').tick(self, dt)
   local panel=self.secondScreenPointerOwner
   local top=self.stack and self.stack.top and activeTop(self.stack)
