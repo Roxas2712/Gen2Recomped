@@ -82,6 +82,14 @@ def main():
             assert not entry.issym() and not entry.islnk(), "Frozen inputs must not alias player data"
         tar.extractall(source)
     (source / "main.lua").rename(source / "engine_main.lua")
+    # Scripted runs normally bypass software pacing. Enable its existing native
+    # body in this frozen test copy so P1 and P2 are actually exercised.
+    entry = source / "engine_main.lua"
+    text = entry.read_text()
+    marker = 'if os.getenv("POKEPORT_DRIVER") then return false end'
+    assert text.count(marker) == 1, "Unknown native pacing admission gate"
+    entry.write_text(text.replace(marker,
+        'if os.getenv("POKEPORT_DRIVER") and os.getenv("PERF_NATIVE_PACING") ~= "1" then return false end'))
     (source / "main.lua").write_text(BOOTSTRAP)
     env = {k: v for k, v in os.environ.items()
            if not k.startswith(("POKEPORT_", "PERF_", "PALETTE_GPU_"))}
@@ -89,6 +97,7 @@ def main():
                POKEPORT_GRAPHICS_BACKEND=args.backend, PERF_BACKEND=args.backend,
                POKEPORT_NO_BOOT_REPORT="1", POKEPORT_NO_DISCORD="1",
                POKEPORT_NOTIFY_ONLY_UPDATES="1", POKEPORT_TOUCH="0",
+               PERF_NATIVE_PACING="1",
                PERF_MAP=args.map, PERF_X=str(args.x), PERF_Y=str(args.y))
     print("Fresh owned performance run:", run, flush=True)
 
@@ -102,7 +111,9 @@ def main():
     print("Fresh import passed", flush=True)
     report = dict(schema=1, sourceCommit=head, romSha1=digest, backend=args.backend,
                   sourceSha256=hashes, driverSha256=hashlib.sha256(driver.read_bytes()).hexdigest(),
-                  minimumFreeGiB=20, games={}, freshIdentity=True, legacyMigrationBypassed=True)
+                  minimumFreeGiB=20, games={}, freshIdentity=True, legacyMigrationBypassed=True,
+                  testAdaptations=["Enable existing native pacing for the driver in the frozen copy",
+                                   "Quarter-pixel camera pan during P7; native update and draw remain active"])
     for mode, count in (("native", 14), ("voxel", 4)):
         out = run / mode
         out.mkdir()
