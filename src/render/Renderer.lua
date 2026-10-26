@@ -18,6 +18,7 @@ local Output = require("src.render.Output")
 local GameViewport = require("src.render.GameViewport")
 local Performance = require("src.core.Performance")
 local HotModules = require("src.core.HotModules")
+local Gen2Presentation = require("src.render.Gen2Presentation")
 
 -- RESOLVED ONCE, NOT EVERY FRAME.  These three were `require`d from inside
 -- beginFrame and endFrame -- three string hashes into package.loaded on every
@@ -130,6 +131,7 @@ local function displayMetrics()
 end
 
 function Renderer:init()
+  Gen2Presentation.reset()
   GameViewport.reset()
   -- 160x144 real pixels, never DPI-scaled: see src/render/PixelCanvas.lua
   -- (#208).  Every canvas below is sized in framebuffer pixels for the same
@@ -344,6 +346,8 @@ end
 
 -- transparent: the world pass shows through (UI pass draws overlays only)
 function Renderer:beginFrame(transparent)
+  self.gen2FrameManaged, self.gen2FrameGame, self.gen2FrameZones = nil, nil, nil
+  self.gen2WindowDraw = nil
   self.frameSerial=(self.frameSerial or 0)+1
   -- a frame that ends early -- a state that returns before endFrame, an error
   -- caught upstream -- must not leak a queued native-resolution draw into the
@@ -827,6 +831,12 @@ function Renderer:blitCanvas(canvas, sx, sy, zoneList, zoneSx, zoneSy,
   closeBlit()
 end
 
+-- Complete CGB frame zones have already resolved their display ramp. Unlike
+-- layer palette zones, this public blit must not resolve Classic back to gray.
+function Renderer:blitZones(canvas, zones, w, h)
+  return Gen2Presentation.blit(canvas, zones, w, h)
+end
+
 -- THE BARS, FILLED WITH THE EDGE THEY FRAME.
 --
 -- Asked for directly: "for all gen3 menus take the outside border 1px and
@@ -1013,7 +1023,7 @@ local function endFrame(self, zones, worldZones, privateViewport)
   -- stacked Game Boy screens, or driving one onto a second physical display.
   -- The mod returns true to take over the whole window; anything else (or no
   -- mod wrapping the hook) falls through to the normal composite below.
-  if Runtime.wantsHook("render.compose") then
+  if not self.gen2FrameManaged and Runtime.wantsHook("render.compose") then
     local ctx = {
       renderer = self,
       worldCanvas = self.worldCanvas, uiCanvas = self.canvas,
@@ -1071,6 +1081,9 @@ local function endFrame(self, zones, worldZones, privateViewport)
   local needPresent = GBCFX.active() or GbcColorCorrection.active() or Pipelines.wantsPresent()
                       or (ShaderPresets:active() and not self.shaderPresetBypass)
                       or battleNeedsSource or hasOutputHook
+                      or (self.gen2FrameManaged and (self.gen2WindowDraw
+                        or (type(self.gen2FrameZones)=="table" and self.gen2FrameZones[1])
+                        or Runtime.wantsHook("render.compose")))
   local present = nil
   if needPresent then
     if not self.presentCanvas or self.presentCanvas:getWidth() ~= ww
@@ -1495,6 +1508,13 @@ local function endFrame(self, zones, worldZones, privateViewport)
   -- over the finished composite rather than under the UI blit.  On hardware
   -- it is the tilemap being overwritten -- there is nothing it does not cover.
   local battleSource = nil
+  -- Window-space Gen2 menus are part of the same native CGB frame. Include
+  -- them before a transition, Classic tint, compose hook or output observer;
+  -- drawing them afterward leaves grayscale menus over a green scene.
+  if self.gen2FrameManaged and self.gen2WindowDraw then
+    self.gen2WindowDraw(viewportResult(false, ww, wh, ox, oy, vpw, vph, Sp, dpiX, dpiY))
+  end
+
   if battleNeedsSource and present then
     -- Snapshot the untouched finished frame into a second screen-sized canvas.
     -- `present` is the current render target here, so sampling it directly in
@@ -1539,25 +1559,51 @@ local function endFrame(self, zones, worldZones, privateViewport)
   if present then
     local closePresent = FrameProfile.section("  renderer: present pipeline")
     GameViewport.setTarget()
-    local corrected = GbcColorCorrection.apply(present)
-    local composed = Pipelines.present(corrected,
-      { width = ww, height = wh, scale = Sp, dpi = dpiY, dpiX = dpiX, dpiY = dpiY }) or corrected
-    closePresent()
-    local outputHandled = hasOutputHook and Output.draw({
-      canvas = composed, width = ww, height = wh,
-      gameX = ox, gameY = oy, gameWidth = vpw, gameHeight = vph,
-      scale = Sp, dpiX = dpiX, dpiY = dpiY,
-      generation = HotModules.get("src.core.GameVersion").generation(),
-    })
-    if not outputHandled then
-      closePresent = FrameProfile.section("  renderer: present pipeline")
-      if not self.shaderPresetBypass then composed = ShaderPresets:apply(composed, Sp) end
-      if GBCFX.active() then
-        GBCFX.present(composed, Sp)
-      else
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(composed, 0, 0)
+    local compositionHandled = false
+    if self.gen2FrameManaged and Runtime.wantsHook("render.compose") then
+      local ctx = {
+        renderer=self, game=self.gen2FrameGame,
+        worldCanvas=present, uiCanvas=present, sceneCanvas=present,
+        worldActive=self.worldActive and true or false, generation=2,
+        zones=self.gen2FrameZones, worldZones=nil,
+        ww=ww, wh=wh, pw=pw, ph=ph, ox=ox, oy=oy,
+        vpw=vpw, vph=vph, uiw=uiw, uih=uih,
+        scale=Sp, Sx=Sx, Sy=Sy, dpiX=dpiX, dpiY=dpiY,
+        secondScreen=HotModules.get("src.render.SecondScreen"),
+      }
+      love.graphics.push("all")
+      local ok,value=xpcall(function()
+        return Runtime.call("render.compose",function()return false end,self,ctx)==true
+      end,debug.traceback)
+      love.graphics.pop()
+      if not ok then error(value,0) end
+      compositionHandled=value
+    end
+    if not compositionHandled then
+      local source = self.gen2FrameManaged
+        and Gen2Presentation.apply(present,self.gen2FrameZones,ww,wh) or present
+      local corrected = GbcColorCorrection.apply(source)
+      local composed = Pipelines.present(corrected,
+        { width = ww, height = wh, scale = Sp, dpi = dpiY, dpiX = dpiX, dpiY = dpiY }) or corrected
+      closePresent()
+      local outputHandled = hasOutputHook and Output.draw({
+        canvas = composed, width = ww, height = wh,
+        gameX = ox, gameY = oy, gameWidth = vpw, gameHeight = vph,
+        scale = Sp, dpiX = dpiX, dpiY = dpiY,
+        generation = HotModules.get("src.core.GameVersion").generation(),
+      })
+      if not outputHandled then
+        closePresent = FrameProfile.section("  renderer: present pipeline")
+        if not self.shaderPresetBypass then composed = ShaderPresets:apply(composed, Sp) end
+        if GBCFX.active() then
+          GBCFX.present(composed, Sp)
+        else
+          love.graphics.setColor(1, 1, 1, 1)
+          love.graphics.draw(composed, 0, 0)
+        end
+        closePresent()
       end
+    else
       closePresent()
     end
   end
