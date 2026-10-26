@@ -22,8 +22,9 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  b.player.shownStatus='PSN';T.eq(present.displayStatus,8);b.player.mon.status=nil;T.eq(present.displayStatus,8,'shown ailment survives logical cure until the native queue displays it')
  b.player.shownStatus=false;T.eq(present.displayStatus,false)
  T.eq(Chrome.layout(),(edition=='ruby'or edition=='sapphire')and'rs'or edition=='emerald'and'emerald'or'frlg')
- local w=Chrome.window(0);T.eq(w.x,16);T.eq(w.y,120);T.eq(w.w,26);w.left=999;T.eq(c.gen3BattleWindows.message.left,2)
- local x,y,width,narrow=Chrome.textOrigin(3);T.eq(x,8);T.eq(y,121);T.eq(width,64);T.eq(narrow,true)
+ local printerInset=(edition=='firered'or edition=='leafgreen')and 2 or 0
+ local w=Chrome.window(0);T.eq(w.x,16+printerInset,'native message printer X');T.eq(w.y,120+printerInset,'native message printer Y');T.eq(w.w,26);w.left=999;T.eq(c.gen3BattleWindows.message.left,2)
+ local x,y,width,narrow=Chrome.textOrigin(3);T.eq(x,8);T.eq(y,121+printerInset,'native move printer Y plus public baseline');T.eq(width,64);T.eq(narrow,true)
  T.eq(Chrome.window(14),nil,'unimported windows are not fabricated')
  local originalWidth=b.gen3SurfaceWidth;b.gen3SurfaceWidth=function()return 320 end
  T.eq(Chrome.window(2).x,16*8+80,'action text follows the native right edge')

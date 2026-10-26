@@ -12,7 +12,8 @@
 -- source as `<name>.luac`, and a `package` searcher ahead of LÖVE's own tries
 -- the dump before the source.  The source stays authoritative:
 --
---   * a dump older than its source is ignored (the modtime says so);
+--   * a dump older than its source is ignored; a content signature also binds
+--     equal-timestamp source/compiled bytes, and a missing source is never replaced;
 --   * a dump the running VM cannot load -- another LuaJIT, plain Lua, a
 --     truncated file -- fails `load` and the source is used, once per boot
 --     with a log line;
@@ -44,26 +45,39 @@ function M.dump(source, chunkname)
   return bytes
 end
 
--- Called by LuaWriter after the source landed.  Never raises: a missing dump
--- is a slower boot, not a failed import.
-function M.writeSidecar(path, source)
-  if not enabled() then return false end
-  if not path:match("%.lua$") then return false end
-  local bytes = M.dump(source, "@" .. path)
-  if not bytes then return false end
-  local CacheFs = require("src.import.CacheFs")
-  local ok = pcall(CacheFs.write, path .. M.SUFFIX, bytes)
-  return ok and true or false
+-- Bind source and bytecode together. Filesystem timestamps can be equal
+-- after a source rewrite and a failed optional cache write.
+local function signature(source, bytes)
+  if love and love.data and love.data.hash then
+    return "BC1 sha256\n" .. love.data.hash("sha256", source .. "\0" .. bytes)
+  end
+  local hash = require("src.mods.StreamMD5").new()
+  return "BC1 md5\n" .. hash:update(source):update("\0"):update(bytes):final()
 end
 
--- Is `luacPath` a usable stand-in for `luaPath`?  `info` is love.filesystem's
--- getInfo (or a shim's), so the modtime rule is the same on every platform.
+-- Optional sidecars never make a successful source import fail. Publish the
+-- signature last so an interrupted write cannot bless an old compiled chunk.
+function M.writeSidecar(path, source)
+  local ok, written = pcall(function()
+    if not enabled() or type(path) ~= "string" or not path:match("%.lua$") then return false end
+    local bytes = M.dump(source, "@" .. path)
+    if not bytes then return false end
+    local stamp = signature(source, bytes)
+    local CacheFs = require("src.import.CacheFs")
+    if not CacheFs.write(path .. M.SUFFIX, bytes) then return false end
+    return CacheFs.write(path .. M.SUFFIX .. ".meta", stamp) == true
+  end)
+  return ok and written == true
+end
+
 local function fresh(info, luaPath, luacPath)
-  local c = info(luacPath, "file")
-  if not c then return false end
-  local s = info(luaPath, "file")
-  if s and s.modtime and c.modtime and c.modtime < s.modtime then return false end
-  return true
+  local ok, result = pcall(function()
+    local c, s = info(luacPath, "file"), info(luaPath, "file")
+    if not c or not s then return false end
+    if s.modtime and c.modtime and c.modtime < s.modtime then return false end
+    return true
+  end)
+  return ok and result == true
 end
 M.fresh = fresh
 
@@ -82,12 +96,19 @@ end
 -- CacheFs shim (which reads the cache itself) can take the same decision.
 function M.loadSidecar(luaPath, read, info)
   if not enabled() then return nil end
-  local luacPath = luaPath .. M.SUFFIX
-  if not fresh(info, luaPath, luacPath) then return nil end
-  local bytes = read(luacPath)
-  if type(bytes) ~= "string" or #bytes == 0 then return nil end
-  local chunk, err = (loadstring or load)(bytes, "@" .. luacPath)
-  if not chunk then warnOnce(luacPath, err); return nil end
+  local ok, chunk, why = pcall(function()
+    local luacPath = luaPath .. M.SUFFIX
+    if not fresh(info, luaPath, luacPath) then return nil end
+    local bytes, source, stamp = read(luacPath), read(luaPath), read(luacPath .. ".meta")
+    if type(bytes) ~= "string" or #bytes == 0 or type(source) ~= "string" then return nil end
+    if stamp ~= signature(source, bytes) then return nil end
+    return (loadstring or load)(bytes, "@" .. luacPath)
+  end)
+  if not ok then warnOnce(tostring(luaPath), chunk); return nil end
+  if not chunk then
+    if why then warnOnce(luaPath, why) end
+    return nil
+  end
   M.hits = (M.hits or 0) + 1
   return chunk
 end
