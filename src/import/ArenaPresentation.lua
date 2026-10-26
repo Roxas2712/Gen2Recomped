@@ -65,6 +65,7 @@ function A.format(self,x,y,w,c,locked,selected,edition)
  label(self,c.title,x+18*s,y+40*s,w-112*s,20*s,{1,.97,.91})
  label(self,c.team_size..' Pokémon · Lv. '..c.level..' · Singles',x+18*s,y+77*s,w-36*s,12*s,{.78,.85,.94})
  label(self,c.rule_summary or ((c.legendary or c.id=='champion' or c.id=='worlds') and 'Legends allowed · No duplicate species' or 'No legends · No duplicate species'),x+18*s,y+100*s,w-36*s,11*s,{.62,.73,.86})
+ if c.rule_summary then label(self,c.legendary and 'Legends allowed · No duplicate species' or 'No legends · No duplicate species',x+18*s,y+118*s,w-36*s,10*s,{.62,.73,.86}) end
  label(self,locked and ('LOCKED · '..c.minimum_points..' POINTS') or (selected and 'SELECTED · READY TO FIND A RIVAL' or 'SELECT CUP >'),x+18*s,y+137*s,w-36*s,11*s,col)
  g.setColor(col[1],col[2],col[3],selected and .95 or .32);g.setLineWidth(selected and 2*s or s);g.rectangle('line',x,y,w,h,12*s,12*s);g.pop()
  return h

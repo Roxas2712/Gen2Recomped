@@ -249,11 +249,11 @@ function W.draw(self,x,y,w,h)
    local edition=f.queueEdition or 'crystal';local generation=Versions.generation(edition)
    text('CHOOSE YOUR GAME · GEN '..generation..' / '..edition:upper(),true,P.ink)
    local gw=(w-16*s)/5
-   for gen=1,5 do button((gen==generation and '● ' or '')..'GEN '..gen,'arenaGeneration:'..gen,gw,x+(gen-1)*(gw+4*s),y) end;y=y+46*s
+   for gen=1,5 do button((gen==generation and '*' or '')..(w<520*s and 'G' or 'GEN ')..gen,'arenaGeneration:'..gen,gw,x+(gen-1)*(gw+4*s),y) end;y=y+46*s
    local choices={};for _,v in ipairs(editions) do if Versions.generation(v)==generation then choices[#choices+1]=v end end
    local ew=(w-4*s*(#choices-1))/#choices
    local short={sapphire='SAPPH.',emerald='EMER.',firered='F.RED',leafgreen='L.GREEN',platinum='PLAT.',heartgold='H.GOLD',soulsilver='S.SILV'}
-   for i,v in ipairs(choices) do button((v==edition and '● ' or '')..(ew<100*s and short[v] or v:upper()),'arenaEdition:'..v,ew,x+(i-1)*(ew+4*s),y) end;y=y+52*s
+   for i,v in ipairs(choices) do button((v==edition and '*' or '')..(ew<100*s and short[v] or v:upper()),'arenaEdition:'..v,ew,x+(i-1)*(ew+4*s),y) end;y=y+52*s
    text('CUPS FOR '..edition:upper(),true,P.ink)
    local available={};local hasRegional=false
    for _,c in ipairs(arena.formats or {}) do if c.generation==generation then hasRegional=true end end
