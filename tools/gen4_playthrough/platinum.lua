@@ -102,6 +102,132 @@ local function fullTeam(move)
   end
 end
 
+-- HMs the story would have taught by now, given to the lead behind the move
+-- its battles use (slot 1 is never touched): { [slot] = move id }
+local function hmMoves(list)
+  return function(r)
+    local lead = r:party()[1]
+    if not lead then return end
+    lead.moves = lead.moves or {}
+    for slot, id in pairs(list) do lead.moves[slot] = { id = id, pp = 20 } end
+  end
+end
+
+-- WALKING A GYM BY A SEARCHED ROUTE (Canalave, Sunyshore, Victory Road): the
+-- step kinds below, installed on the runner instance by a "do" step so the
+-- runner itself is untouched.
+--   { "route", parts }  one step at a time, each done once the player stands
+--       on its cell and all is still (a ride, a battle on the way waited
+--       out). `parts` are run-length strings ("U7L8": up 7, left 8) and
+--       explicit { dir, x, z } steps for a step that ends somewhere else (a
+--       platform ride). A trainer who walked up and stays where the battle
+--       left them is gone round on the planner.
+--   { "act", dir, x, z }   face dir, A (a field move's YES), until carried to
+--       (x, z): Rock Climb, Surf, Waterfall
+--   { "smash", dir, x, z } the rock at (x, z) broken (A, YES)
+--   { "push", dir, x, z }  the boulder ahead pushed on to (x, z), Strength
+--       called up first when it is not active
+local ROUTE_DIRS = { U = { "up", 0, -1 }, D = { "down", 0, 1 }, L = { "left", -1, 0 }, R = { "right", 1, 0 } }
+local function expandRoute(parts, x, z)
+  local out = {}
+  for _, p in ipairs(parts) do
+    if type(p) == "table" then
+      out[#out + 1] = p
+      x, z = p[2], p[3]
+    else
+      for letter, n in p:gmatch("([UDLR])(%d*)") do
+        local d = ROUTE_DIRS[letter]
+        for _ = 1, tonumber(n) or 1 do
+          x, z = x + d[2], z + d[3]
+          out[#out + 1] = { d[1], x, z }
+        end
+      end
+    end
+  end
+  return out
+end
+local function routeSteps() return { "do", function(r)
+  if r.ptRoutes then return end
+  r.ptRoutes = true
+  local orig = r.runStep
+  local function objAt(self, x, z)
+    for _, n in ipairs(self.ow.npcs or {}) do
+      if n.cellX == x and n.cellY == z and not n.hidden then return n end
+    end
+  end
+  local function waitBusy(self)
+    local busy, why = self:busy()
+    if not busy then return false end
+    -- let go once a step is under way: a key still held when it lands would
+    -- start the next one before the ride / battle could
+    self.held = nil
+    if why ~= "moving" and why ~= "moves" then
+      local _, key = self:busyInput()
+      self.key = key
+    end
+    return true
+  end
+  r.runStep = function(self, s)
+    local kind = s[1]
+    if kind == "route" then
+      if not s.list then s.list, s.i = expandRoute(s[2], self:pos()), 1 end
+      local e = s.list[s.i]
+      if not e then s.list = nil return true end
+      if waitBusy(self) then return false end
+      local x, y = self:pos()
+      if x == e[2] and y == e[3] then
+        s.i, s.t = s.i + 1, 0
+        self.held = nil
+        if not s.list[s.i] then s.list = nil return true end
+        return false
+      end
+      s.t = (s.t or 0) + 1
+      if s.t > 4000 then
+        return nil, ("route step %d (%s to %d,%d) never arrived; at %d,%d"):format(s.i, e[1], e[2], e[3], x, y)
+      end
+      if s.t > 90 then
+        local o = objAt(self, e[2], e[3])
+        while o and not o.passable and s.list[s.i + 1] do
+          s.i = s.i + 1
+          e = s.list[s.i]
+          o = objAt(self, e[2], e[3])
+        end
+        if self:walkTo(e[2], e[3]) == true then s.t = 0 end
+        return false
+      end
+      self.held = e[1]
+      return false
+    end
+    if kind == "act" or kind == "smash" or kind == "push" then
+      if waitBusy(self) then return false end
+      local x, y = self:pos()
+      if kind == "act" and x == s[3] and y == s[4] then self.held = nil s.t = nil return true end
+      if kind == "smash" and not objAt(self, s[3], s[4]) then self.held = nil s.t = nil return true end
+      if kind == "push" then
+        local o = objAt(self, s[3], s[4])
+        if o and not o.moving then self.held = nil s.t = nil return true end
+      end
+      s.t = (s.t or 0) + 1
+      if s.t > 6000 then return nil, ("%s %s at %d,%d never happened"):format(kind, s[2], s[3], s[4]) end
+      if self.ow.player.facing ~= s[2] then self.held = s[2] return false end
+      if kind == "push" and self.ow.strengthActive then self.held = s[2] return false end
+      self.held = nil
+      if (s.t % 20) == 0 then self.key = "a" end
+      return false
+    end
+    return orig(self, s)
+  end
+end } end
+
+-- the SET battle style for a beat (a player's own option: no "will you
+-- switch?" offer between the gym's battles), and back after it
+local function battleStyle(style) return { "do", function(r)
+  local o = r.game.save.options or {}
+  r.game.save.options = o
+  if style then r.ptStyle = o.battleStyle o.battleStyle = style
+  else o.battleStyle = r.ptStyle end
+end } end
+
 -- SANDGEM (scripts_sandgem_town.s): the counterpart's coord trigger at the
 -- west edge (x 4, y 10..15 while VAR_SANDGEM_TOWN_STATE 0x4071 == 0) leads
 -- the player into the lab (0x4071 = 1, Warp); the lab's frame table
@@ -275,8 +401,21 @@ B[#B + 1] = { name = "eterna: cynthia's cut",
 
 -- Eterna Gym (C04GYM0101): Gardenia (person 1), the Forest Badge, TM86
 -- (FLAG_RECEIVED_GARDENIA_TM86 0x74). Grass types: Flamethrower.
-B[#B + 1] = { name = "gardenia",
-  steps = { { "do", trainUpWith(53) }, { "teleport", "C04GYM0101", 11, 6, "up" }, { "talk", 1 },
+-- THE FLOWER CLOCK, WALKED (src/world/Gen4EternaGym.lua): from the door the
+-- clock's hands wall everything but Lass Caroline (14,22); each trainer
+-- beaten turns the clock (AdvanceEternaGymClock) and opens the next one's
+-- way -- the hour hand jumped at (11,18), then at (6,13) (the right fountain
+-- dry), then at (11,8) (the left one too) -- to Gardenia.
+local function clockAt(n) return function(r) return r:var(0x404B) >= n and not r:busy() end end
+B[#B + 1] = { name = "gardenia", budget = 60000,
+  steps = { { "do", trainUpWith(53) }, { "teleport", "C04GYM0101", 11, 26, "up" },
+            { "walkto", 13, 22 }, { "face", "right" }, { "press", "a" }, { "until", clockAt(1), 30000 },
+            { "walkto", 11, 19 }, { "step", "up", 1 }, { "until", function(r) return not r:busy() end, 600 },
+            { "walkto", 20, 18 }, { "face", "up" }, { "press", "a" }, { "until", clockAt(2), 30000 },
+            { "walkto", 7, 13 }, { "step", "left", 1 }, { "until", function(r) return not r:busy() end, 600 },
+            { "walkto", 2, 8 }, { "face", "up" }, { "press", "a" }, { "until", clockAt(3), 30000 },
+            { "walkto", 11, 9 }, { "step", "up", 1 }, { "until", function(r) return not r:busy() end, 600 },
+            { "walkto", 11, 4 }, { "face", "up" }, { "press", "a" },
             { "until", flag(0x74), 60000 } },
   expect = flag(0x74), why = "flag 0x74 (Forest Badge, TM86)", expectBudget = 12000 }
 
@@ -327,12 +466,28 @@ B[#B + 1] = { name = "hearthome: fantina at the contest hall",
   expect = function(r) return r:flag(0x18D) and r:var(0x40F7) >= 1 end, why = "flag 0x18D, 0x40F7 >= 1",
   expectBudget = 8000 }
 
--- Hearthome Gym's leader room (C05GYM0104): Fantina (person 0), the Relic
--- Badge, TM65 (FLAG_RECEIVED_FANTINA_TM65 0x7D);
+-- HEARTHOME GYM, WALKED (src/world/Gen4HearthomeGym.lua): each trainer room
+-- is dealt afresh on entry -- one door of its row leads on, the others back
+-- to the entrance, and the hint on the floor shows which. The player goes to
+-- the hint and through the door it names (the one warp left leading on).
+-- Then the leader room (C05GYM0104): Fantina (person 0), the Relic Badge,
+-- TM65 (FLAG_RECEIVED_FANTINA_TM65 0x7D);
 -- VAR_ROUTE_209_GATE_TO_HEARTHOME_CITY_STATE 0x407B = 1. Ghost types: Crunch.
-B[#B + 1] = { name = "fantina",
-  steps = { { "do", trainUpWith(242) }, { "teleport", "C05GYM0104", 4, 12, "up" }, { "talk", 0 },
-            { "until", flag(0x7D), 60000 } },
+local function hearthomeClue()
+  local walk = { "walkto", 0, 0 }
+  return { "do", function(r)
+    local M = require("src.world.Gen4DynamicMapFeatures")
+    local b = M.buffer(r.game.save, M.HEARTHOME_GYM)
+    walk[2], walk[3] = b.clueX, b.clueZ
+  end }, walk
+end
+local fantina = { { "do", trainUpWith(242) }, { "teleport", "C05GYM0101", 4, 7, "up" }, { "warpto", "C05GYM0102" } }
+for _, s in ipairs({ hearthomeClue() }) do fantina[#fantina + 1] = s end
+fantina[#fantina + 1] = { "warpto", "C05GYM0103" }
+for _, s in ipairs({ hearthomeClue() }) do fantina[#fantina + 1] = s end
+for _, s in ipairs({ { "warpto", "C05GYM0104" }, { "talk", 0 }, { "until", flag(0x7D), 60000 } }) do fantina[#fantina + 1] = s end
+B[#B + 1] = { name = "fantina", budget = 60000,
+  steps = fantina,
   expect = function(r) return r:flag(0x7D) and r:var(0x407B) >= 1 end, why = "flag 0x7D (Relic Badge, TM65), 0x407B >= 1",
   expectBudget = 12000 }
 
@@ -358,12 +513,30 @@ B[#B + 1] = { name = "veilstone: crasher wake",
             { "until", varGe(0x40F5, 1), 30000 } },
   expect = varGe(0x40F5, 1), why = "0x40F5 >= 1", expectBudget = 8000 }
 
--- Veilstone Gym (C07GYM0101): Maylene (person 0), the Cobble Badge, TM60
--- (FLAG_RECEIVED_MAYLENE_TM60 0x9D); VAR_VEILSTONE_CITY_COUNTERPART_NEEDS_HELP_STATE
--- 0x411A = 1. Fighting types: Psychic.
-B[#B + 1] = { name = "maylene",
-  steps = { { "do", trainUpWith(94) }, { "teleport", "C07GYM0101", 12, 6, "up" }, { "talk", 0 },
-            { "until", flag(0x9D), 60000 } },
+-- VEILSTONE GYM, WALKED (src/world/Gen4VeilstoneGym.lua): the punching bags
+-- are pushed (walked against) to knock the tire stacks over; these thirteen
+-- pushes, from the door, open the way (an offline search over the gym's own
+-- tables, the bag at each stand-point pushed the way given). Then Maylene
+-- (person 0), the Cobble Badge, TM60 (FLAG_RECEIVED_MAYLENE_TM60 0x9D);
+-- VAR_VEILSTONE_CITY_COUNTERPART_NEEDS_HELP_STATE 0x411A = 1. Fighting types:
+-- Psychic.
+local VEILSTONE_PUSHES = {
+  { 14, 26, "right" }, { 20, 18, "up" }, { 17, 10, "left" }, { 14, 10, "left" }, { 8, 21, "up" },
+  { 9, 17, "left" }, { 3, 16, "down" }, { 4, 23, "up" }, { 3, 9, "down" }, { 3, 12, "right" },
+  { 2, 14, "right" }, { 7, 7, "right" }, { 10, 7, "right" }, { 12, 5 },
+}
+local maylene = { { "do", trainUpWith(94) }, { "teleport", "C07GYM0101", 12, 29, "up" } }
+for _, m in ipairs(VEILSTONE_PUSHES) do
+  maylene[#maylene + 1] = { "walkto", m[1], m[2] }
+  if m[3] then
+    maylene[#maylene + 1] = { "hold", m[3], 30, ["until"] = function(r) return r:busy() end }
+    maylene[#maylene + 1] = { "until", function(r) return not r:busy() end, 3000 }
+  end
+end
+maylene[#maylene + 1] = { "talk", 0 }
+maylene[#maylene + 1] = { "until", flag(0x9D), 60000 }
+B[#B + 1] = { name = "maylene", budget = 60000,
+  steps = maylene,
   expect = function(r) return r:flag(0x9D) and r:var(0x411A) >= 1 end, why = "flag 0x9D (Cobble Badge, TM60), 0x411A >= 1",
   expectBudget = 12000 }
 
@@ -395,11 +568,35 @@ B[#B + 1] = { name = "pastoria: barry",
             { "until", varGe(0x407C, 2), 60000 } },
   expect = varGe(0x407C, 2), why = "0x407C >= 2 (Barry beaten)", expectBudget = 8000 }
 
--- Pastoria Gym (C06GYM0101): Crasher Wake (person 0), the Fen Badge, TM55
--- (FLAG_RECEIVED_WAKE_TM55 0x9C), 0x407C = 3. Water types: Thunderbolt.
-B[#B + 1] = { name = "crasher wake",
-  steps = { { "do", trainUpWith(412, 80) }, { "teleport", "C06GYM0101", 13, 6, "up" }, { "talk", 0 },
-            { "until", flag(0x9C), 60000 } },
+-- PASTORIA GYM, WALKED (src/world/Gen4PastoriaGym.lua): the water floor
+-- rises and falls with the button last stood on, and the H/M/L gates open at
+-- one level each. The turns of the way an offline search found from the door,
+-- a third number where a button is pressed (orange 0, green 32, blue 64).
+-- Then Crasher Wake (person 0), the Fen Badge, TM55 (FLAG_RECEIVED_WAKE_TM55
+-- 0x9C), 0x407C = 3. Water types: Thunderbolt.
+local PASTORIA_WAY = {
+  { 13, 26 }, { 5, 26 }, { 5, 34 }, { 3, 34, 0 }, { 3, 33 }, { 7, 33 }, { 7, 28 }, { 16, 28 },
+  { 16, 22 }, { 13, 22 }, { 13, 9 }, { 17, 9, 32 }, { 17, 11 }, { 14, 11 }, { 14, 14 }, { 15, 14 },
+  { 15, 15 }, { 16, 15 }, { 16, 20 }, { 5, 20 }, { 5, 24 }, { 9, 24, 64 }, { 6, 24 }, { 6, 34 },
+  { 14, 34 }, { 14, 33 }, { 19, 33 }, { 19, 26 }, { 20, 26 }, { 20, 13 }, { 19, 13, 32 }, { 19, 16 },
+  { 21, 16 }, { 21, 31 }, { 23, 31, 0 }, { 23, 7 }, { 7, 7 }, { 7, 16 }, { 5, 16 }, { 5, 9 },
+  { 4, 9 }, { 4, 6 }, { 3, 6, 64 }, { 3, 9 }, { 13, 9 }, { 13, 5 },
+}
+local wake = { { "do", trainUpWith(412, 80) }, { "teleport", "C06GYM0101", 13, 41, "up" } }
+for _, m in ipairs(PASTORIA_WAY) do
+  wake[#wake + 1] = { "walkto", m[1], m[2] }
+  if m[3] then
+    local level = m[3]
+    wake[#wake + 1] = { "until", function(r)
+      local p = r.ow.map.def.gen4DynamicPlate
+      return not r:busy() and p ~= nil and p.height == level
+    end, 3000 }
+  end
+end
+wake[#wake + 1] = { "talk", 0 }
+wake[#wake + 1] = { "until", flag(0x9C), 60000 }
+B[#B + 1] = { name = "crasher wake", budget = 60000,
+  steps = wake,
   expect = function(r) return r:flag(0x9C) and r:var(0x407C) >= 3 end, why = "flag 0x9C (Fen Badge, TM55), 0x407C >= 3",
   expectBudget = 12000 }
 
@@ -448,9 +645,10 @@ B[#B + 1] = { name = "celestic: the grunt",
 
 -- the cave (T05R0501): the painting (bg 1 at (9,2)), the elder and Cyrus --
 -- the battle, HM03 Surf; VAR_CELESTIC_TOWN_STATE 0x4074 = 1. Dark/Poison/
--- Flying: Thunderbolt.
+-- Flying: Thunderbolt -- on Mewtwo at 100: the starter at 75 lost this
+-- battle on some runs (the lead fainted, the beat ran out of time).
 B[#B + 1] = { name = "celestic: cyrus at the painting",
-  steps = { { "do", trainUpWith(85) }, { "teleport", "T05R0501", 9, 5, "up" }, { "sign", 1 },
+  steps = { { "do", strong(85) }, { "teleport", "T05R0501", 9, 5, "up" }, { "sign", 1 },
             { "until", varGe(0x4074, 1), 60000 } },
   expect = function(r) return r:var(0x4074) >= 1 and r:flag(0xA7) end, why = "0x4074 >= 1, flag 0xA7",
   expectBudget = 12000 }
@@ -479,9 +677,23 @@ B[#B + 1] = { name = "canalave: barry on the bridge",
 
 -- Canalave Gym (C02GYM0101): Byron (person 4), the Mine Badge, TM91
 -- (FLAG_RECEIVED_BYRON_TM91 0x92), 0x4078 = 2. Steel types: Earthquake.
-B[#B + 1] = { name = "byron",
-  steps = { { "do", strong(89) }, { "teleport", "C02GYM0101", 16, 6, "up" }, { "talk", 4 },
-            { "until", flag(0x92), 60000 } },
+-- THE PLATFORMS, RIDDEN (src/world/Gen4CanalaveGym.lua): an offline search
+-- of the gym (the 24 platforms' bits, the four floors' collision tables)
+-- gives 13 rides from the door to Byron on the fourth floor; walked here
+-- step by step, each ride where the search put it. Psychic leads (Byron's
+-- Bronzor floats over Earthquake).
+local CANALAVE_ROUTE = { "U7L8U3R10U2R2UR3", { "right", 24, 13 }, "D2R5D6", { "down", 29, 22 }, "D4L3UL4U3",
+  { "left", 21, 22 }, "L2", { "left", 11, 22 }, "L2UL7D5R2", { "right", 5, 26 }, "U2L3U", { "up", 2, 19 },
+  "U7R2U8R5", { "right", 14, 4 }, "R4", { "right", 22, 4 }, "R2D2R2D9", { "down", 26, 22 }, "D2R3U",
+  { "up", 29, 16 }, "U6", { "up", 29, 9 }, "U5L3DL3D4R", { "right", 25, 9 }, "L8", { "left", 16, 9 }, "U5" }
+-- ...and back down to the door after the badge (the same search from Byron's
+-- floor and the bits the climb left: five rides)
+local CANALAVE_BACK = { "R2", { "right", 26, 4 }, "R2DRD", { "down", 29, 23 }, "D3L2", { "left", 5, 26 }, "L2ULU",
+  { "up", 2, 12 }, "U3R4", { "right", 7, 9 }, "D17R9" }
+B[#B + 1] = { name = "byron", budget = 60000,
+  steps = { { "do", fullTeam(94) }, battleStyle("set"), routeSteps(), { "teleport", "C02GYM0101", 16, 26, "up" },
+            { "route", CANALAVE_ROUTE }, { "face", "up" }, { "press", "a" },
+            { "until", flag(0x92), 60000 }, { "route", CANALAVE_BACK }, battleStyle(nil) },
   expect = function(r) return r:flag(0x92) and r:var(0x4078) >= 2 end, why = "flag 0x92 (Mine Badge, TM91), 0x4078 >= 2",
   expectBudget = 12000 }
 
@@ -534,20 +746,52 @@ B[#B + 1] = { name = "mars at lake verity",
   expect = function(r) return r:flag(0xBA) and r:var(0x40D3) >= 1 end, why = "flag 0xBA, 0x40D3 >= 1",
   expectBudget = 12000 }
 
--- Snowpoint Gym (C09GYM0101): Candice (person 0, past the snowballs), the
--- Icicle Badge, TM72 (FLAG_RECEIVED_CANDICE_TM72 0x9E). Ice: Flamethrower.
-B[#B + 1] = { name = "candice",
-  steps = { { "do", strong(53) }, { "teleport", "C09GYM0101", 11, 6, "up" }, { "talk", 0 },
-            { "until", flag(0x9E), 60000 } },
+-- SNOWPOINT GYM, WALKED (src/world/Gen4IceSlide.lua): the ice slides, the
+-- ramps give speed and take it, a climb without speed slides back one tile,
+-- and a slide with speed smashes the snowballs. Each move is one step in the
+-- pad's direction and then hands off until the slide is over; the cell the
+-- player should then be standing on is the move's own (an offline search of
+-- the gym under the same rule).
+-- Then Candice (person 0), the Icicle Badge, TM72 (FLAG_RECEIVED_CANDICE_TM72
+-- 0x9E). Ice: Flamethrower.
+local SNOWPOINT_MOVES = {
+  { "up", 11, 26 }, { "left", 10, 26 }, { "left", 1, 26 }, { "up", 1, 8 },
+  { "up", 1, 3 }, { "right", 5, 3 }, { "down", 5, 11 }, { "right", 16, 11 },
+  { "left", 7, 11 }, { "down", 7, 14 }, { "right", 13, 14 }, { "right", 15, 14 },
+  { "down", 15, 16 }, { "left", 9, 16 }, { "left", 7, 16 }, { "down", 7, 19 },
+  { "left", 6, 19 }, { "left", 4, 19 }, { "down", 4, 22 }, { "left", 3, 22 },
+  { "left", 2, 22 }, { "left", 1, 22 }, { "up", 1, 8 }, { "right", 19, 8 },
+  { "left", 4, 8 }, { "down", 4, 22 }, { "right", 11, 22 }, { "up", 11, 20 },
+  { "up", 11, 17 }, { "up", 11, 13 }, { "up", 11, 10 }, { "up", 11, 7 },
+  { "up", 11, 5 },
+}
+local candice = { { "do", strong(53) }, { "teleport", "C09GYM0101", 11, 27, "up" } }
+for _, m in ipairs(SNOWPOINT_MOVES) do
+  candice[#candice + 1] = { "step", m[1], 1 }
+  candice[#candice + 1] = { "until", function(r) return not r:busy() and not r.ow.iceSlide end, 4000 }
+  candice[#candice + 1] = { "do", function(r)
+    local x, y = r:pos()
+    if x ~= m[2] or y ~= m[3] then r:say("  snowpoint: a slide ended at (%d,%d), not (%d,%d)", x, y, m[2], m[3]) end
+  end }
+end
+candice[#candice + 1] = { "talk", 0 }
+candice[#candice + 1] = { "until", flag(0x9E), 60000 }
+B[#B + 1] = { name = "candice", budget = 60000,
+  steps = candice,
   expect = flag(0x9E), why = "flag 0x9E (Icicle Badge, TM72)", expectBudget = 12000 }
 
 -- Acuity Lakefront (L03) coord 1 (22..23,52 while VAR_ACUITY_LAKEFRONT_STATE
 -- 0x4084 == 0): Barry on the way up, 0x4084 = 1; then up the Rock Climb wall
--- (teleported past) into Lake Acuity (D29R0102), whose frame table
--- (VAR_LAKE_ACUITY_STATE 0x40D3 == 1) is Jupiter taking Uxie: 0x40D3 = 2
+-- (22,46..49) -- A at its foot, YES -- into Lake Acuity (D29R0102), whose
+-- frame table (VAR_LAKE_ACUITY_STATE 0x40D3 == 1) is Jupiter taking Uxie:
+-- 0x40D3 = 2. A CHEAT, said as one: the run never fetches HM08, so the lead
+-- is given Rock Climb in its last slot (the battles use the first).
 B[#B + 1] = { name = "lake acuity: jupiter",
   steps = { { "teleport", "L03", 22, 54, "up" }, { "activecoord" }, { "until", varGe(0x4084, 1), 20000 },
-            { "teleport", "L03", 20, 39, "up" }, { "warpto", "D29R0102" },
+            { "do", hmMoves({ [4] = 431 }) },
+            { "walkto", 22, 50 }, { "face", "up" }, { "press", "a" }, { "mash", 120 },
+            { "until", function(r) local _, y = r:pos() return y <= 45 and not r:busy() end, 3000 },
+            { "warpto", "D29R0102" },
             { "until", varGe(0x40D3, 2), 40000 } },
   expect = varGe(0x40D3, 2), why = "0x40D3 >= 2 (Uxie taken)", expectBudget = 8000 }
 
@@ -569,11 +813,26 @@ B[#B + 1] = { name = "the galactic hq door",
   expect = function(r) return r:flag(0x10E) and r:var(0x411F) >= 4 end, why = "flag 0x10E, 0x411F >= 4",
   expectBudget = 8000 }
 
--- the Hall (D26R0109) coord 1 (20,12..13 while VAR_GALACTIC_HQ_HALL_STATE
--- 0x408E == 0): Cyrus's speech, 0x408E = 1. (The locked doors and the
--- Galactic Key are teleported past.)
-B[#B + 1] = { name = "galactic hq: cyrus's speech",
-  steps = { { "teleport", "D26R0109", 23, 12, "left" }, { "activecoord" },
+-- THE HQ, WALKED: from the warehouse into B2F, up through B1F to 1F, round
+-- the warp panels ((39,3) -> (32,3), (36,8) -> (1,8); 2F's (1,3) -> (17,5))
+-- and back down into B2F's key room for the Galactic Key (the ball, person
+-- 5); the key on B2F's door (14,8) out of the key room, out through the
+-- warehouse, in at the front door, the key on 1F's
+-- locked door (22,18), the stairs (19,14) to 2F and (29,13) to the Hall.
+-- The Hall (D26R0109) coord 1 (20,12..13 while VAR_GALACTIC_HQ_HALL_STATE
+-- 0x408E == 0): Cyrus's speech, 0x408E = 1. The HQ's grunts are fought on
+-- the way (the Mewtwo at 100 with Thunderbolt, as for Cyrus next).
+B[#B + 1] = { name = "galactic hq: cyrus's speech", budget = 80000,
+  steps = { { "do", strong(85) }, { "warpto", "D26R0106" }, { "warpto", "D26R0105" }, { "warpto", "D26R0101" },
+            { "panel", 39, 3 }, { "panel", 36, 8 }, { "warpto", "D26R0102", 4, 3 }, { "panel", 1, 3 },
+            { "warpto", "D26R0101", 24, 3 }, { "warpto", "D26R0106", 11, 3 },
+            { "talk", 5 }, { "mash", 300 },
+            -- the key room's only other way out is B2F's own locked door
+            { "walkto", 14, 9 }, { "face", "up" }, { "press", "a" }, { "mash", 300 },
+            { "warpto", "C07R0301" }, { "warpto", "C07" }, { "warpto", "D26R0101", 45, 13 },
+            { "walkto", 22, 19 }, { "face", "up" }, { "press", "a" }, { "mash", 300 },
+            { "warpto", "D26R0102", 19, 14 }, { "warpto", "D26R0109", 29, 13 },
+            { "activecoord" },
             { "until", varGe(0x408E, 1), 30000 } },
   expect = varGe(0x408E, 1), why = "0x408E >= 1", expectBudget = 8000 }
 
@@ -596,12 +855,43 @@ B[#B + 1] = { name = "galactic hq: saturn and the lake trio",
   expect = function(r) return r:flag(0x97D) and r:var(0x40A9) >= 1 end, why = "flag 0x97D (the trio freed), 0x40A9 >= 1",
   expectBudget = 12000 }
 
--- SPEAR PILLAR (D05R0114; the climb up Mt. Coronet is teleported past).
--- Coord 1 (31,48 while VAR_SPEAR_PILLAR_STATE 0x4098 == 0): two grunts, a
--- double battle (two able Pokémon needed), 0x4098 = 1
-B[#B + 1] = { name = "spear pillar: the grunts",
-  steps = { { "do", fullTeam(57) }, { "teleport", "D05R0114", 31, 51, "up" }, { "activecoord" },
-            { "until", varGe(0x4098, 1), 60000 } },
+-- MT. CORONET, CLIMBED, from the 1F South door to Spear Pillar: 2F's
+-- Strength boulder (14,45) pushed down its column, Looker's scene (coord at
+-- (11,24..26), VAR_MT_CORONET_2F_STATE 0x40A9 -> 2), the blasted cave
+-- painting (7,23) up to (7,12), 3F, outside in the snow: Rock Climb up
+-- (31,22..20), 4F's Rock Climb (7,16..13), outside north's sideways one
+-- (44..40,22), 4F room 3, 5F, 6F. A CHEAT, said as one: the lead is given
+-- Strength, Rock Smash and Rock Climb behind its first move.
+-- SPEAR PILLAR (D05R0114). Coord 1 (31,48 while VAR_SPEAR_PILLAR_STATE
+-- 0x4098 == 0): two grunts, a double battle (two able Pokémon needed),
+-- 0x4098 = 1
+local function climbTo(dir, done)
+  return { "face", dir }, { "press", "a" }, { "mash", 120 },
+         { "until", function(r) return done(r) and not r:busy() end, 3000 }
+end
+local coronet = { { "do", strong() }, { "do", hmMoves({ [2] = 70, [3] = 249, [4] = 431 }) },
+  { "teleport", "D05R0101", 25, 4, "up" }, { "warpto", "D05R0102" },
+  { "walkto", 14, 44 }, { "hold", "down", 6 }, { "mash", 40 },
+  { "until", function(r) return r.ow.strengthActive and not r:busy() end, 3000 },
+  -- held again after anything that stops it (a wild battle mid-push ran a
+  -- single hold out of time with the boulder two cells short)
+  { "hold", "down", 900, ["until"] = function(r) local _, y = r:pos() return y >= 49 end },
+  { "until", function(r) return not r:busy() end, 6000 },
+  { "hold", "down", 900, ["until"] = function(r) local _, y = r:pos() return y >= 49 end },
+  { "until", function(r) return not r:busy() end, 6000 },
+  { "hold", "down", 900, ["until"] = function(r) local _, y = r:pos() return y >= 49 end },
+  { "activecoord" }, { "until", varGe(0x40A9, 2), 20000 },
+  { "panel", 7, 23 }, { "warpto", "D05R0103", 11, 4 }, { "warpto", "D05R0105" }, { "walkto", 31, 23 } }
+for _, s in ipairs({ climbTo("up", function(r) local _, y = r:pos() return y <= 19 end) }) do coronet[#coronet + 1] = s end
+for _, s in ipairs({ { "warpto", "D05R0106" }, { "walkto", 7, 17 } }) do coronet[#coronet + 1] = s end
+for _, s in ipairs({ climbTo("up", function(r) local _, y = r:pos() return y <= 12 end) }) do coronet[#coronet + 1] = s end
+for _, s in ipairs({ { "warpto", "D05R0104" }, { "walkto", 45, 22 } }) do coronet[#coronet + 1] = s end
+for _, s in ipairs({ climbTo("left", function(r) local x = r:pos() return x <= 39 end) }) do coronet[#coronet + 1] = s end
+for _, s in ipairs({ { "warpto", "D05R0107" }, { "warpto", "D05R0108" }, { "warpto", "D05R0109" },
+                     { "warpto", "D05R0114" }, { "do", fullTeam(57) }, { "walkto", 31, 51 }, { "activecoord" },
+                     { "until", varGe(0x4098, 1), 60000 } }) do coronet[#coronet + 1] = s end
+B[#B + 1] = { name = "spear pillar: the grunts", budget = 120000,
+  steps = coronet,
   expect = varGe(0x4098, 1), why = "0x4098 >= 1", expectBudget = 12000 }
 
 -- coord 2 (30..32,32 while 0x4098 == 1): Mars and Jupiter, a tag battle with
@@ -624,22 +914,163 @@ B[#B + 1] = { name = "into the distortion world",
   expect = function(r) return r:map() == "D34R0101" and r:var(0x4055) >= 1 end, why = "in D34R0101, 0x4055 >= 1",
   expectBudget = 8000 }
 
--- THE DISTORTION WORLD (ov9_02249960.c; src/world/Gen4DistPlatforms.lua) IS
--- NOT WALKED. Its floors move the player on the 3D surface walker
--- (Gen4DistSurface), which the runner's breadth-first planner
--- (Collision.canMove over cells) cannot plan across -- "no path" from 1F's
--- arrival (33,30) to the slab's tile event at (40,289,52), cell (19,42) here.
--- A CHEAT, said as one: the run is put where the cartridge leaves it after
--- Giratina's portal -- VAR_DISTORTION_WORLD_PROGRESS 0x4055 = 14,
--- VAR_EXITED_DISTORTION_WORLD_STATE 0x40AA = 1, at Sendoff Spring (D17R0101)
--- -- and Sendoff Spring's frame table (0x40AA == 1) is the real Cynthia
--- scene: 0x40AA = 2, VAR_SANDGEM_TOWN_LAB_STATE 0x40A6 = 2,
--- FLAG_SPEAR_PILLAR_IS_DISTORTED 0x132 cleared.
-local function setVar(r, id, v) require("src.script.Gen4Commands").setVar(r.game.save, id, v) end
-B[#B + 1] = { name = "sendoff spring: out of the distortion world",
-  steps = { { "do", function(r) setVar(r, 0x4055, 14); setVar(r, 0x40AA, 1) end },
-            { "teleport", "D17R0101", 32, 18, "down" },
-            { "until", varGe(0x40AA, 2), 30000 } },
+-- THE DISTORTION WORLD (ov9_02249960.c; src/world/Gen4DistPlatforms.lua),
+-- WALKED: 1F's arrival to Giratina's portal on real input. The floors are
+-- crossed with the runner's `dwwalk` (tools/gen4_playthrough/dw_planner.lua:
+-- the double jumps, the jump points onto walls and ceilings, the platforms'
+-- own grids), and every story point is the cartridge's own -- the tile events
+-- (HandleEventAt), the lifts, the rafts, the waterfall, the boulder puzzle,
+-- the scripts. The way, with pret's numbers (sMapEvents*, world tiles; cells
+-- are the floor's map cells):
+--   1F    the slab (40,289,52): 0x4055 = 2; the lift at (19,44) to B1F
+--   B1F   Cynthia's frame script (3), Mesprit's event (4); the lift (33,10)
+--   B2F   rafts 1, 9, 10, 11, 12, 6 and platform 17 (events 1, 11, 13, 15,
+--         17, 21, 9) over both levels to the lift's island; the lift (50,31)
+--   B3F   Cyrus (65,193,41): 6; lift 4 (49,22) straight to B5F
+--   B5F   Uxie's and Mesprit's boulders down their holes (Strength)
+--   B4F   by lifts round to the east; Surf the pool, the east wall, the
+--         ceiling; Surf again and ride the waterfall down (EVENT_CMD_CASCADE)
+--   B5F   Azelf's boulder down its hole; Surf, ride the waterfall back up
+--   B4F   back to the lift (38,36); B3F lift 4 again; B5F lift 2 (30,33)
+--   B6F   the three boulders into their pits; Cynthia: 7; the lift (29,48)
+--   B7F   the frame script (8), Cynthia and Cyrus (84..86,65,76): 9; Cyrus's
+--         battle: 10; the teleport north of (89,65,57)
+--   room  z 24, 23, 17, 14 (11, 12, 13); Giratina's battle (14); the portal
+-- Two things the run's own state needs, said as such: the lead learns
+-- Strength (HM04 is the player's since "iron island"; the six Mewtwo do not
+-- know it), and the battle style is SET (a player's option: no "switch?"
+-- offers for the runner's A to walk into a party menu).
+local function dwBit(i)        -- a Distortion World puzzle flag is clear
+  return function() return math.floor(require("src.world.Gen4DistPlatforms").puzzleFlags() / 2 ^ i) % 2 == 0 end
+end
+local function dwIdle() return { "until", function(r) return not r:busy() end, 20000 } end
+local function notOn(id) return function(r) return r:map() ~= id end end
+local function onMap(id) return function(r) return r:map() == id end end
+local function npcAt(localId, x, y)
+  return function(r)
+    for _, n in ipairs(r.ow.npcs or {}) do
+      local lid = n.localId or (n.def and n.def.localId)
+      if lid == localId and not n.hidden and not n.moving and n.cellX == x and n.cellY == y then return true end
+    end
+    return false
+  end
+end
+local DW = {}
+local function dw(list) for _, s in ipairs(list) do DW[#DW + 1] = s end end
+-- walk onto a tile event's tile and let it run (done once HandleEventAt has
+-- started one: the event carries the player off the tile it was asked for)
+local function dwEvent(goal)
+  local mark = 0
+  local function P() return require("src.world.Gen4DistPlatforms") end
+  return { { "do", function()
+             local Pl = P()
+             if not Pl.ptCounted then
+               Pl.ptCounted = true
+               local orig = Pl.onPosition
+               Pl.onPosition = function(...)
+                 local ok = orig(...)
+                 if ok then Pl.ptEvents = (Pl.ptEvents or 0) + 1 end
+                 return ok
+               end
+             end
+             mark = Pl.ptEvents or 0
+           end },
+           { "dwwalk", goal, done = function() return (P().ptEvents or 0) > mark end },
+           { "until", function(r) return not r.ow.dwEvent and not r:busy() end, 6000 } }
+end
+local function lift(cell, from) return { { "dwwalk", { cell = cell }, done = notOn(from) }, { "until", notOn(from), 3000 } } end
+local function surf(dir) return { { "hold", dir, 6 }, { "mash", 40 }, { "press", "a" }, { "mash", 240 } } end
+-- Strength on the boulder ahead (A on the rhythm: the boulder's script,
+-- YES, its lines -- unless this visit has it already)
+local function arm(dir)
+  return { { "hold", dir, 6 }, { "mash", 30 },
+           { "until", function(r) return r.ow.strengthActive and not r:busy() end, 3000 } }
+end
+-- ...and push until the boulder's puzzle flag clears
+local function push(dir, bit)
+  local out = arm(dir)
+  out[#out + 1] = { "hold", dir, 900, ["until"] = dwBit(bit) }
+  out[#out + 1] = dwIdle()
+  return out
+end
+dw({ { "do", function(r)
+       local lead = r:party()[1]
+       if lead and lead.moves and not (type(lead.moves[4]) == "table" and lead.moves[4].id == 70) then
+         local mv = {}
+         for k, v in pairs(type(lead.moves[4]) == "table" and lead.moves[4] or {}) do mv[k] = v end
+         mv.id, mv.pp = 70, 15
+         lead.moves[4] = mv
+       end
+       r.game.save.options = r.game.save.options or {}
+       r.game.save.options.battleStyle = "set"
+     end } })
+-- 1F
+dw({ { "dwwalk", { cell = { 19, 42 } } }, { "until", varGe(0x4055, 2), 6000 }, dwIdle() })
+dw(lift({ 19, 44 }, "D34R0101"))
+-- B1F
+dw({ { "until", varGe(0x4055, 3), 6000 }, dwIdle() })
+dw(lift({ 33, 10 }, "D34R0102"))
+-- B2F
+for _, g in ipairs({ { cell = { 18, 36 } }, { tile = { 35, 233, 15 } }, { tile = { 51, 233, 15 } }, { tile = { 65, 233, 17 } },
+                     { tile = { 63, 233, 45 } }, { tile = { 49, 233, 36 } }, { cell = { 36, 31 } } }) do
+  dw(dwEvent(g))
+end
+dw(lift({ 50, 31 }, "D34R0103"))
+-- B3F
+dw(dwEvent({ tile = { 65, 193, 41 } }))
+dw({ { "until", varGe(0x4055, 6), 6000 }, dwIdle() })
+dw(lift({ 49, 22 }, "D34R0104"))
+-- B5F, the west: Uxie's boulder (local id 130, flag 2) and Mesprit's (128, flag 0)
+dw({ { "dwwalk", { cell = { 29, 21 } } } }); dw(push("down", 2))
+dw({ { "dwwalk", { cell = { 17, 34 } } } }); dw(push("right", 0))
+-- round to B4F's east side
+dw(lift({ 21, 43 }, "D34R0107")); dw(lift({ 22, 28 }, "D34R0105")); dw(lift({ 48, 49 }, "D34R0104"))
+-- B4F: Surf, the wall, the ceiling, Surf, the waterfall down
+dw({ { "dwwalk", { cell = { 35, 26 } } } }); dw(surf("up"))
+dw({ { "dwwalk", { cell = { 40, 22 } } }, { "dwwalk", { tile = { 101, 170, 70 } } } }); dw(surf("up"))
+dw({ { "dwwalk", { tile = { 104, 170, 77 } } }, { "hold", "right", 3000, ["until"] = onMap("D34R0107") },
+     { "until", function(r) return not r.ow.dwCascade and not r:busy() end, 3000 } })
+-- B5F, the east: Azelf's boulder (129, flag 1); back up the waterfall
+dw({ { "dwwalk", { cell = { 42, 33 } } } }); dw(push("left", 1))
+dw({ { "dwwalk", { cell = { 44, 33 } } } }); dw(surf("right"))
+dw({ { "dwwalk", { cell = { 47, 43 } } }, { "hold", "right", 3000, ["until"] = onMap("D34R0105") },
+     { "until", function(r) return not r.ow.dwCascade and not r:busy() end, 3000 },
+     { "dwwalk", { tile = { 101, 170, 70 } } }, { "dwwalk", { cell = { 38, 22 } } } }); dw(surf("left"))
+dw({ { "dwwalk", { cell = { 35, 26 } } } })
+dw(lift({ 38, 36 }, "D34R0105")); dw(lift({ 49, 22 }, "D34R0104")); dw(lift({ 30, 33 }, "D34R0107"))
+-- B6F: Uxie's pit (29,22), Azelf's (40,30), Mesprit's (12,29) -- the boulders'
+-- outside flags 5, 4, 3 -- then Cynthia (local id 134 at 29,42)
+dw({ { "dwwalk", { cell = { 30, 17 } } } }); dw(arm("down"))
+dw({ { "hold", "down", 900, ["until"] = npcAt(130, 30, 22) }, dwIdle(),
+     { "dwwalk", { cell = { 31, 22 } } }, { "hold", "left", 900, ["until"] = dwBit(5) }, dwIdle(),
+     { "dwwalk", { cell = { 43, 29 } } }, { "hold", "left", 900, ["until"] = npcAt(129, 40, 29) }, dwIdle(),
+     { "dwwalk", { cell = { 40, 28 } } }, { "hold", "down", 900, ["until"] = dwBit(4) }, dwIdle(),
+     { "dwwalk", { cell = { 20, 30 } } }, { "hold", "left", 1500, ["until"] = npcAt(128, 12, 30) }, dwIdle(),
+     { "dwwalk", { cell = { 12, 31 } } }, { "hold", "up", 900, ["until"] = dwBit(3) }, dwIdle(),
+     { "dwwalk", { cell = { 29, 41 } } }, { "hold", "down", 6 }, { "mash", 30 }, { "press", "a" },
+     { "until", varGe(0x4055, 7), 3000 }, dwIdle() })
+dw(lift({ 29, 48 }, "D34R0108"))
+-- B7F: Cynthia and Cyrus; Cyrus (local id 129 at 11,42); the teleport
+dw({ { "until", varGe(0x4055, 8), 3000 }, dwIdle() })
+dw(dwEvent({ cell = { 11, 44 } }))
+dw({ { "until", varGe(0x4055, 9), 3000 }, dwIdle(),
+     { "dwwalk", { cell = { 11, 43 } } }, { "hold", "up", 6 }, { "mash", 30 }, { "press", "a" },
+     { "until", varGe(0x4055, 10), 30000 }, dwIdle(),
+     { "dwwalk", { cell = { 15, 25 } } }, { "hold", "up", 3000, ["until"] = onMap("D34R0110") }, dwIdle() })
+-- the Giratina room: its four tile events walked, Giratina's battle, the portal
+dw({ { "dwwalk", { tile = { 15, 1, 24 } } }, dwIdle(), { "dwwalk", { tile = { 15, 1, 23 } } }, dwIdle(),
+     { "dwwalk", { tile = { 15, 1, 17 } } }, dwIdle(), { "dwwalk", { tile = { 15, 1, 14 } } }, dwIdle(),
+     { "until", varGe(0x4055, 13), 6000 }, dwIdle(),
+     { "hold", "up", 6 }, { "mash", 30 }, { "press", "a" },
+     { "until", varGe(0x4055, 14), 40000 }, dwIdle(),
+     { "answers", { 1 } }, { "hold", "up", 6 }, { "mash", 30 }, { "press", "a" },
+     { "until", onMap("D17R0101"), 6000 } })
+-- ...and out at Sendoff Spring (D17R0101) with VAR_EXITED_DISTORTION_WORLD_STATE
+-- 0x40AA = 1, whose frame table (0x40AA == 1) is Cynthia's scene: 0x40AA = 2,
+-- VAR_SANDGEM_TOWN_LAB_STATE 0x40A6 = 2, FLAG_SPEAR_PILLAR_IS_DISTORTED 0x132
+-- cleared
+dw({ { "until", varGe(0x40AA, 2), 30000 } })
+B[#B + 1] = { name = "the distortion world, walked to sendoff spring", steps = DW, budget = 250000,
   expect = function(r) return r:var(0x40AA) >= 2 and r:var(0x40A6) >= 2 and not r:flag(0x132) end,
   why = "0x40AA >= 2, 0x40A6 >= 2, flag 0x132 clear", expectBudget = 8000 }
 
@@ -669,12 +1100,20 @@ B[#B + 1] = { name = "sunyshore: volkner at the lighthouse",
             { "teleport", "C08", 13, 15, "up" }, { "talk", 18 }, { "until", flag(0x239), 30000 } },
   expect = function(r) return r:flag(0x162) and r:flag(0x239) end, why = "flags 0x162, 0x239", expectBudget = 8000 }
 
--- Sunyshore Gym's last room (C08GYM0103; the gear puzzles teleported past):
+-- Sunyshore Gym's last room (C08GYM0103; reached through the gear rooms):
 -- Volkner (person 0), the Beacon Badge, TM57 (FLAG_RECEIVED_VOLKNER_TM57
 -- 0xB6), 0x407E = 2. Electric types: Earthquake.
-B[#B + 1] = { name = "volkner",
-  steps = { { "do", strong(89) }, { "teleport", "C08GYM0103", 11, 6, "up" }, { "talk", 0 },
-            { "until", flag(0xB6), 60000 } },
+-- THE GEARS, TURNED (src/world/Gen4SunyshoreGym.lua): each room walked by
+-- an offline search under the gears' collision -- room 1 presses its east
+-- and west hubs, room 2 its bottom hub three times and both top (reverse)
+-- hubs, room 3 a bottom (double) hub twice -- in by the door, out by the far
+-- one, to Volkner.
+B[#B + 1] = { name = "volkner", budget = 60000,
+  steps = { { "do", fullTeam(89) }, battleStyle("set"), routeSteps(), { "teleport", "C08GYM0101", 8, 14, "up" },
+            { "route", { "U6R5D3L5U3L5R5U5" } }, { "warpto", "C08GYM0102" },
+            { "route", { "U5L3U3LRUDR5D7L8U4LU12R3DRD3R5D5R3DRU11L6" } }, { "warpto", "C08GYM0103" },
+            { "route", { "U7R5D3L5U3L5D6L3U3LU17R9" } }, { "face", "up" }, { "press", "a" },
+            { "until", flag(0xB6), 60000 }, battleStyle(nil) },
   expect = function(r) return r:flag(0xB6) and r:var(0x407E) >= 2 end, why = "flag 0xB6 (Beacon Badge, TM57), 0x407E >= 2",
   expectBudget = 12000 }
 
@@ -686,14 +1125,78 @@ B[#B + 1] = { name = "sunyshore: jasmine's waterfall",
   expect = function(r) return r:flag(0x9A) and r:var(0x407E) >= 3 end, why = "flag 0x9A (HM07), 0x407E >= 3",
   expectBudget = 8000 }
 
--- THE POKEMON LEAGUE (Route 223 and Victory Road teleported past). The north
--- Pokémon Center (C10R0101) coord 1 (10..12,4 while VAR_RIVAL_BEAT_SUNYSHORE_GYM
--- 0x40EF == 0): Barry's last battle, 0x40EF = 1; the guard (person 0) at the
--- door then steps aside: FLAG_POKEMON_LEAGUE_DOOR_GUARD_MOVED_AWAY 0xAF
-B[#B + 1] = { name = "the league: barry",
-  steps = { { "do", fullTeam(57) }, { "teleport", "C10R0101", 11, 7, "up" }, { "activecoord" },
-            { "until", varGe(0x40EF, 1), 60000 },
-            { "talk", 0 }, { "until", flag(0xAF), 20000 } },
+-- ROUTE 223, SURFED: from Sunyshore's north shore (21,1), three seas joined
+-- by SHALLOW_WATER shoals -- ashore at (17,49), down the shoal to (10,49) and
+-- Surf again, ashore on the west shoal (4,49), Surf from (5,40), the strip
+-- (9,28..25), Surf on -- into the League's south water and up its waterfall
+-- (Waterfall, (15,61) -> (15,59)), to Victory Road's door. The route's
+-- swimmers are fought by the six Mewtwo leading with Psychic; CHEATS, said
+-- as such: the lead is given Surf and Waterfall
+-- in its last two slots, and a Max Repel's 250 steps keep the wild Pokemon
+-- off (on a run with Surf first, one wild battle here felled three Mewtwo;
+-- not looked into -- the battle is not what this beat tests). Victory Road
+-- is walked (below), and the League's falls after it.
+-- THE POKEMON LEAGUE. The north Pokémon Center (C10R0101) coord 1 (10..12,4
+-- while VAR_RIVAL_BEAT_SUNYSHORE_GYM 0x40EF == 0): Barry's last battle,
+-- 0x40EF = 1; the guard (person 0) at the door then steps aside:
+-- FLAG_POKEMON_LEAGUE_DOOR_GUARD_MOVED_AWAY 0xAF
+local function surfOn(dir)
+  return { "face", dir }, { "press", "a" }, { "mash", 200 },
+         { "until", function(r) return r.ow.player.surfing and not r:busy() end, 3000 }
+end
+local league = { { "do", fullTeam(94) }, { "do", hmMoves({ [3] = 57, [4] = 127 }) },
+                 { "do", function(r) r.game.save.repelSteps = 250 end },
+                 { "teleport", "C08", 21, 1, "left" } }
+local function add(list) for _, s in ipairs(list) do league[#league + 1] = s end end
+add({ surfOn("left") }); add({ { "walkedge", "up" }, { "swimto", 17, 50 }, { "step", "up", 1 }, { "walkto", 10, 49 } })
+add({ surfOn("down") }); add({ { "swimto", 3, 49 }, { "step", "right", 1 }, { "walkto", 5, 40 } })
+add({ surfOn("up") }); add({ { "swimto", 9, 29 }, { "step", "up", 1 }, { "walkto", 9, 25 } })
+add({ surfOn("up") }); add({ { "swimto", 15, 0 }, { "walkedge", "up" }, { "swimto", 15, 61 } })
+add({ { "face", "up" }, { "press", "a" }, { "mash", 200 },
+      { "until", function(r) local _, y = r:pos() return y <= 59 and not r:busy() end, 4000 },
+      { "walkto", 15, 56 }, { "warpto", "D09R0101" } })
+-- VICTORY ROAD, WALKED: 1F's Rock Climb down, the stairs at (4,37); 2F's
+-- Rock Smash rocks and Strength boulders (an offline search: three rocks,
+-- six pushes) to the stairs at (23,26); 1F again, Rock Climb down to the
+-- B1F stairs (42,41); B1F by Surf and the Waterfall to the stairs (3,22);
+-- 1F's north part, Rock Climb up, the bridge, out at (34,6). The HMs ride on
+-- the sixth and fifth Mewtwo; Ice Beam leads (Psychic Valencia's Absol is
+-- immune to Psychic).
+add({ { "do", fullTeam(58) }, { "do", function(r)
+        local party = r:party()
+        party[6].moves = { { id = 70, pp = 15 }, { id = 249, pp = 15 }, { id = 431, pp = 20 }, { id = 58, pp = 20 } }
+        party[5].moves = { { id = 57, pp = 15 }, { id = 127, pp = 15 }, { id = 58, pp = 20 } }
+        r.game.save.repelSteps = 250
+      end }, battleStyle("set"), routeSteps(), { "walkto", 15, 77 },
+      { "route", { "U15R16UR2U13R3" } }, { "act", "down", 36, 53 }, { "route", { "DL11D2L12U13L4U6L4" } },
+      { "warpto", "D09R0102", 4, 37 },
+      { "route", { "DL3DL" } }, { "smash", "down", 16, 19 }, { "route", { "D3RD6" } }, { "push", "down", 17, 29 },
+      { "route", { "D" } }, { "push", "left", 15, 28 }, { "route", { "L" } }, { "push", "down", 16, 30 },
+      { "route", { "DLD2L10" } }, { "push", "down", 5, 33 }, { "route", { "DL2D2R" } }, { "smash", "right", 5, 34 },
+      { "route", { "R" } }, { "push", "up", 5, 32 }, { "route", { "UR4D2" } }, { "smash", "down", 9, 36 },
+      { "route", { "D2R2UR10DR" } }, { "push", "right", 24, 37 }, { "route", { "RU7LU4" } },
+      { "warpto", "D09R0101", 23, 26 },
+      { "route", { "DR15" } }, { "act", "down", 22, 53 }, { "route", { "L5U11R14UR10" } },
+      { "warpto", "D09R0103", 42, 41 },
+      { "route", { "UR11U3" } }, { "act", "up", 15, 34 }, { "route", { "U4R3U" } }, { "act", "up", 18, 28 },
+      { "route", { "U6R2U8R4U3" } }, { "act", "up", 24, 9 }, { "route", { "U4L14" } }, { "act", "left", 9, 5 },
+      { "route", { "L4D17L" } },
+      { "warpto", "D09R0101", 3, 22 },
+      { "route", { "L12D13R9" } }, { "act", "up", 38, 32 }, { "route", { "U26L3" } },
+      { "warpto", "C10" },
+      -- out at (21,38) below the League's falls: Surf from (15,28), up the
+      -- Waterfall (row 25), across, ashore at (15,19) by the north Pokemon Center
+      { "walkto", 15, 28 }, { "face", "up" }, { "press", "a" }, { "mash", 200 },
+      { "until", function(r) return r.ow.player.surfing and not r:busy() end, 3000 },
+      { "swimto", 15, 26 }, { "face", "up" }, { "press", "a" }, { "mash", 200 },
+      { "until", function(r) local _, y = r:pos() return y <= 24 and not r:busy() end, 4000 },
+      { "swimto", 15, 20 }, { "step", "up", 1 }, battleStyle(nil) })
+add({ { "do", fullTeam(57) }, { "warpto", "C10R0101" }, { "walkto", 11, 7 }, { "face", "up" }, { "activecoord" },
+
+      { "until", varGe(0x40EF, 1), 60000 },
+      { "talk", 0 }, { "until", flag(0xAF), 20000 } })
+B[#B + 1] = { name = "the league: barry", budget = 100000,
+  steps = league,
   expect = function(r) return r:var(0x40EF) >= 1 and r:flag(0xAF) end, why = "0x40EF >= 1, flag 0xAF",
   expectBudget = 12000 }
 

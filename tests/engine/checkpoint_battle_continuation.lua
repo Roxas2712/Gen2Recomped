@@ -43,6 +43,9 @@ for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
     battle.player.mon.hp, battle.player.mon.stats.hp, battle.player.shownHP = 400, 400, 400
     battle.enemy.mon.hp, battle.enemy.mon.stats.hp, battle.enemy.shownHP = 400, 400, 400
     battle.player.stages.attack = 2
+    if require("src.core.GameVersion").generation() == 4 then
+      battle.g4fx = { field = { gravity = 4 }, sides = { [true] = { tailwind = 3 }, [false] = { luckyChant = 2 } } }
+    end
     battle.field.tokens.owned = { turns = 3 }
     battle.sides[1].tokens.owned = { turns = 2 }
     stack.states = { world, battle }
@@ -68,6 +71,11 @@ for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
         T.eq(fresh.player.stages.attack, 2, "volatile stages restored")
         T.eq(fresh.field.sides, fresh.sides, "native field side alias preserved")
         T.eq(fresh.field.tokens.owned.turns, 3, "field tokens restored")
+        if battle.g4fx then
+          T.eq(fresh.g4fx.field.gravity, 4, "native Gen4 field effect rewinds")
+          T.eq(fresh.g4fx.sides[true].tailwind, 3, "boolean-keyed player side rewinds")
+          T.eq(fresh.g4fx.sides[false].luckyChant, 2, "boolean-keyed enemy side rewinds")
+        end
         T.eq(Serializer.encode(assert(f.checkpoints:capture(game))), bytes, "full battle recapture matches")
         T.eq(Serializer.encode(cp), bytes, "caller battle payload detached")
         local function turn()
@@ -84,7 +92,31 @@ for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
             ticks = ticks + 1
           until (b.phase == "menu" and not b.current and #b.queue == 0) or ticks >= 4000
           T.check(ticks < 4000 and b.phase == "menu", "actual native turn reaches its next decision")
-          return Serializer.encode(assert(f.checkpoints:capture(game)))
+          local nextCheckpoint, why, detail = f.checkpoints:capture(game)
+          if not nextCheckpoint then
+            local _, diagnostic = pcall(B.capture, game, b, copy)
+            error(edition .. "/" .. kind .. ": " .. tostring(why) .. ": " .. tostring(detail) .. ": " .. tostring(diagnostic))
+          end
+          local futureBytes = Serializer.encode(nextCheckpoint)
+          T.check(f.checkpoints:restore(game, nextCheckpoint), "future native action bindings reconstruct")
+          T.eq(Serializer.encode(assert(f.checkpoints:capture(game))), futureBytes,
+            "future decision retains every native action relationship")
+          local choices = package.loaded["src.battle.EnemyMoveChoice"]
+          if choices then
+            for actor, action in pairs(stack:top().turnActions or {}) do
+              if actor ~= "turn" and choices.slot(action) ~= action then
+                local slot = choices.slot(action)
+                local pp = slot.pp
+                action.pp = pp - 1
+                T.eq(slot.pp, pp - 1, "restored action PP writes reach its original learned slot")
+                action.pp = pp
+                local belongs = false
+                for _, move in ipairs(actor.curMoves) do if move == slot then belongs = true end end
+                T.check(belongs, "restored action owns a learned slot of its reconstructed battler")
+              end
+            end
+          end
+          return futureBytes
         end
         local expected = turn()
         T.check(f.checkpoints:restore(game, cp), "rewind before comparing native turn continuation")

@@ -67,6 +67,10 @@ eq(IdleStream.run(timer, 0.012), 0, "no stream loaded, no slice")
 eq(package.loaded["src.core.game3.asset_stream"], nil, "...and it was not loaded by the pump")
 
 -- 9. the real stream: busy() and update(budget)
+-- The stream subtracts actual elapsed wall time before offering each slice.
+-- Freeze that clock for an exact hand-off assertion; os.clock() makes the
+-- old 1 ns tolerance race the execution of this test itself.
+love = { timer = timer }
 local S = require("src.core.game3.asset_stream")
 local jobs, steps = {}, {}
 S.register({ pending = function() return jobs end, step = function(_, budget) steps[#steps + 1] = budget end })

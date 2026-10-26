@@ -679,6 +679,15 @@ function Gen3RegionMap:drawFireRed()
   if icon and self.iconAt and not self.area and (self.playerPage or "kanto") == self.page then
     g.draw(icon, 8 * self.iconAt.x + 28, 8 * self.iconAt.y + 28)
   end
+
+  if not self.area then require('src.ui.FriendActivity').markers(self.game,function(info)
+    local sec=tonumber(info.def.regionMapSection)
+    local grid=self.frlg.sections[self.page] and self.frlg.sections[self.page][1]
+    for y=1,FRLG_H do for x=1,FRLG_W do
+      if grid and grid[y] and grid[y][x]==sec then return x*8+24,y*8+24 end
+    end end
+  end,240,160)end
+
   -- the SWITCH button, once the Sevii pages are earned
   if self:frlgCanSwitch() then
     g.setColor(0, 0, 0, 0.55)
@@ -858,6 +867,14 @@ function Gen3RegionMap:draw()
       end
     end
   end
+
+
+  if not self.area then require('src.ui.FriendActivity').markers(self.game,function(info)
+    local sec=tonumber(info.def.regionMapSection)
+    for _,place in ipairs(self.places)do if place.section==sec then
+      return at(ox+(place.x+place.w/2)*CELL,oy+(place.y+place.h/2)*CELL)
+    end end
+  end,w,h)end
 
   -- THE CURSOR.  Four corner brackets around whatever section it is on --
   -- which is the cartridge's own sprite, quartered, because its art is four

@@ -319,6 +319,22 @@ end
 
 function Game:continueGame(loaded, recovered)
   if not loaded then return self:newGame() end
+  local id=loaded.meta and loaded.meta.playthroughId
+  local store=require('src.storage.SuspendStore')
+  if store.has(loaded.version,id) then
+    local value,why=store.read(loaded.version,id)
+    local slot=SaveData.activeSlot(loaded.version)
+    if value and store.matchesNormal(value,loaded.version,slot) then
+      local titleSave=self.save;self.save=loaded
+      local resumed,problem=require('src.core.SuspendJournal').restore(self,value)
+      if resumed then return true end
+      self.save=titleSave
+      self:restoreSave(loaded,recovered)
+      local overlay=require('src.ui.RetroOverlay');overlay.open(self)
+      overlay.notice='Suspend could not be restored: '..tostring(problem)..' Your normal save was loaded.'
+      return true
+    elseif not value then Logger.warn('suspend unavailable: %s',tostring(why)) end
+  end
   return self:restoreSave(loaded, recovered)
 end
 
@@ -351,6 +367,7 @@ end
 -- unsaved progress discarded.  TitleState:enter restarts the title
 -- theme; stop() keeps the map song from bleeding over in the meantime.
 function Game:returnToTitle()
+  local suspend=package.loaded['src.core.SuspendJournal'];if suspend then suspend.clear(self) end
   require("src.core.Music").stop()
   while self.stack:top() do self.stack:pop() end
   if self.stack.clearWorld then self.stack:clearWorld() end
@@ -419,7 +436,7 @@ function Game:_step(dt)
   if compatibility and compatibility._fixedBoundary
       and compatibility._fixedBoundary(self, dt) == false then return end
   local closeStep = FrameProfile.section("  logic: stack:update")
-  self.stack:update(dt)
+  require('src.core.SuspendJournal').step(self,dt,function()self.stack:update(dt)end)
   closeStep()
   -- play time for the trainer card / save screen.  A save written by an older
   -- build carries the broken-down { hours, minutes, ... } form, which would
@@ -1128,6 +1145,9 @@ function Game:_draw()
   local ScreenSpaceUI = HotModules.get('src.render.ScreenSpaceUI')
   local windowUI, windowUIIndex = ScreenSpaceUI.select(self.stack, scene, drawFrom)
   local windowUIOverlay = false
+  local nativeWindowOverlays = windowUI and HotModules.get("src.core.GameVersion").isGen2()
+  local nativeWindowStack = not windowUI and HotModules.get('src.core.GameVersion').isGen2()
+    and ScreenSpaceUI.hasNativeStack(self.stack,scene,drawFrom,self.overworld)
   local worldDrawn = scene.states[drawFrom] == self.overworld
     and renderVisible(self.stack, self.overworld)
   -- A wide battle holds its 304px surface through every menu or prompt it
@@ -1211,7 +1231,13 @@ function Game:_draw()
       local ownsSurface = wideState
         or (native ~= nil and state == native)
         or Game.wantsThisSurface(state)
-      if state == windowUI then
+      if nativeWindowOverlays and windowUIIndex and i>windowUIIndex then
+        if renderVisible(self.stack,state) and state.draw then windowUIOverlay=true end
+      elseif nativeWindowStack and state~=self.overworld then
+        -- Paint this native state once at output resolution below. Keeping
+        -- its controller on the native stack does not require rasterising
+        -- vector menus and text through the cartridge-sized canvas.
+      elseif state == windowUI then
         -- Keep the world pass, but discard cartridge-sized furniture below a
         -- window-resolution owner. The remaining canvas holds its overlays.
         love.graphics.clear(0,0,0,0)
@@ -1313,9 +1339,14 @@ function Game:_draw()
   -- Keep shader controls readable even when a local shader paints black.
   local top = activeTop(self.stack)
   Renderer.shaderPresetBypass = top and top.shaderPresetBypass or false
-  if Renderer.gen2FrameManaged and windowUI then
+  if Renderer.gen2FrameManaged and (windowUI or nativeWindowStack) then
     Renderer.gen2WindowDraw = function(viewport)
-      ScreenSpaceUI.draw(windowUI,Renderer,viewport,zones,windowUIOverlay)
+      if windowUI then
+        ScreenSpaceUI.draw(windowUI,Renderer,viewport,zones,false)
+        if windowUIOverlay then ScreenSpaceUI.drawNativeStack(self.stack,scene,windowUIIndex+1,
+          self.overworld,Renderer,viewport,false) end
+      else ScreenSpaceUI.drawNativeStack(self.stack,scene,drawFrom,self.overworld,
+        Renderer,viewport,not worldDrawn) end
     end
   end
   local viewport, privateViewport
@@ -1532,6 +1563,7 @@ local function keypressedBody(self, key)
   if key == "f11" then return self:toggleFrameProfile() end
   if key == "f10" then return self:toggleModManager() end
   if self.stack and activeTop(self.stack) and activeTop(self.stack).onKeyPressed then
+    local journal=package.loaded['src.core.SuspendJournal'];if journal then journal.invalidate(self,'Direct screen input changed the session. Reach a settled overworld before suspending.') end
     activeTop(self.stack):onKeyPressed(key)
     return
   end
@@ -1673,6 +1705,7 @@ end
 function Game:textinput(text)
   local top = self.stack and activeTop(self.stack)
   if top and top.onTextInput then
+    local journal=package.loaded['src.core.SuspendJournal'];if journal then journal.invalidate(self,'Text entry changed the session. Reach a settled overworld before suspending.') end
     top:onTextInput(text)
   end
 end
@@ -1966,7 +1999,10 @@ local function offerPointer(self, method, id, x, y)
         tostring(screen.name or 'a screen'),tostring(claimed))
       return false
     end
-    if claimed==true and method=='touchpressed' then self.pointerOwners[id]=screen end
+    if claimed==true then
+      local journal=package.loaded['src.core.SuspendJournal'];if journal then journal.invalidate(self,'Direct touch-screen interaction changed the session. Reach a settled overworld before suspending.') end
+      if method=='touchpressed' then self.pointerOwners[id]=screen end
+    end
     return claimed==true
   end
   if captured then
@@ -2090,6 +2126,7 @@ end
 -- Capture the live world state into the save table and persist it.
 -- Options are flushed to options.lua as part of SaveData.save.
 function Game:writeSave()
+  local journal=package.loaded['src.core.SuspendJournal'];if journal then journal.invalidate(self,'Normal progress changed. Reach a settled overworld before suspending.') end
   -- Tool sessions can be deliberately ephemeral. Give them one narrow veto
   -- before captureSave mutates the snapshot or any progress bytes reach disk.
   if ModRuntime.call("save.write", function() return true end, self) == false then
@@ -2098,6 +2135,8 @@ function Game:writeSave()
   if self.overworld and self.overworld.captureSave then
     self.overworld:captureSave(self.save)
   end
+  -- Shared cloud journals bind to this save's durable playthrough identity.
+  SaveData.ensurePlaythroughId(self.save)
   -- stamp here so the save.writing payload carries the exact meta the
   -- file gets; mods snapshot runtime state into their namespace now
   self.save.meta = SaveData.buildMeta(
@@ -2120,6 +2159,7 @@ end
 -- Persist options.lua only (Options menu / hotkeys 2-5).  Keeps settings
 -- across New Game without touching the progress save.
 function Game:writeOptions()
+  local suspend=package.loaded['src.core.SuspendJournal'];if suspend then suspend.invalidate(self,'Settings changed. Reach a settled overworld before suspending.') end
   if not (self.save and self.save.options) then return end
   -- The generation this playthrough belongs to, so a row it overrides is
   -- written back into that override rather than over everyone else's shared
@@ -2264,9 +2304,16 @@ function Game:restoreSave(loaded, recovered)
   -- A SAVE MADE INSIDE A BATTLE TOWER CHALLENGE ("Rest") continues from the
   -- lobby spot BT_FUNC_SET_COMMUNICATION_CLUB_ACCESSIBLE marked
   -- (FieldTask_LoadSavedGameMap's special location)
+  -- ...which is a WALK IN there, not a continue: SystemFlag_CheckCommunicationClubAccessible
+  -- takes FieldMapChange_UpdateGameData + CreateObjects (ON_TRANSITION and all)
+  local specialLocation = false
   if require("src.core.GameVersion").get() == "platinum" then
-    require("src.script.Gen4BattleTowerCommands").applySpecialLocation(loaded)
+    specialLocation = require("src.script.Gen4BattleTowerCommands").applySpecialLocation(loaded) and true or false
   end
+  -- ...and HeartGold / SoulSilver's: FLAG_UNK_966 (the communication club's
+  -- desk, the Battle Tower, the Hall of Fame) walks in at the dynamic warp
+  -- (pokeheartgold FieldTask_ContinueGame_Normal; src/world/Gen4HgssContinue.lua)
+  if require("src.world.Gen4HgssContinue").apply(loaded) then specialLocation = true end
   -- ...and Emerald's: a SaveGameFrontier save continues in the lobby
   if require("src.core.GameVersion").get() == "emerald" then
     -- Pokemon a Frontier challenge stranded before LoadPlayerParty kept its
@@ -2283,7 +2330,7 @@ function Game:restoreSave(loaded, recovered)
   -- this boot is a CONTINUE, not a walk in: a DS field restores its objects
   -- and temp vars from the save and skips ON_TRANSITION (OverworldController
   -- setMap's gen4Continuing)
-  if self.overworld then self.overworld.continuingSave = true end
+  if self.overworld then self.overworld.continuingSave = not specialLocation end
   self.stack:push(self.overworld, loaded.player.map,
                   loaded.player.x, loaded.player.y, loaded.player.facing)
   -- Platinum's Journal (FieldTask_LoadSavedGameMap): opened first when two
