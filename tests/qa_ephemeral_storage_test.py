@@ -77,4 +77,26 @@ raise RuntimeError('test assertion failed')
         s._write(key,record);self.manager().sweep(only={key})
         self.assertFalse((p/'main.lua').exists())
 
+    def test_archived_host_resumes_with_exact_code_models_links_and_saved_game(self):
+        s=self.manager();p=self.candidate(s)
+        external=self.home/'external-model';external.write_bytes(b'original')
+        (p/'external').symlink_to(external);(p/'main.lua').chmod(0o755)
+        s.close();self.assertFalse((p/'main.lua').exists())
+        reader=self.manager();self.assertEqual(reader.restore_copy(p),p)
+        self.assertEqual((p/'main.lua').read_bytes(),b'unique code')
+        self.assertTrue((p/'main.lua').stat().st_mode&0o100)
+        self.assertEqual((p/'model.bin').read_bytes(),b'unique model')
+        self.assertEqual(os.readlink(p/'external'),str(external))
+        self.assertEqual((p/'saves/player.sav').read_bytes(),b'player save')
+        other=self.manager();other.source(p/'main.lua')
+        reader.close();self.assertTrue((p/'main.lua').exists())
+        other.close();self.assertFalse((p/'main.lua').exists());self.assertEqual(external.read_bytes(),b'original')
+
+    def test_restore_never_overwrites_newer_model_files(self):
+        s=self.manager();p=self.candidate(s);s.close()
+        (p/'model.bin').write_bytes(b'newer model')
+        with self.assertRaisesRegex(ValueError,'newer host file'):self.manager().restore_copy(p)
+        self.assertEqual((p/'model.bin').read_bytes(),b'newer model')
+        self.assertFalse((p/'main.lua').exists())
+
 if __name__=='__main__':unittest.main()
