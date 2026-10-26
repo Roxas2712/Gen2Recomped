@@ -1200,6 +1200,13 @@ local function newBattle(game, opts)
   local self = setmetatable({}, BattleState)
   self.game = game
   self.data = game.data
+  -- Terrain also selects Nature Power/Camouflage. Resolve it on the native
+  -- logic boundary, so a headless suspend replay has the same field before
+  -- either device draws its first backdrop/platforms.
+  if GameVersion.isGen3() then
+    self.gen3Terrain = Gen3Battle.terrainFor(game)
+    self.gen3Scene = Gen3Battle.sceneFor(game) or false
+  end
   -- Native combat keeps battler wrappers; the Gen2 screen contract exposes
   -- the actual Pokemon through a live model view. No copied party/HP state.
   if GameVersion.isGen2() then Gen2BattleView.bind(self) else self.battle = self end
@@ -4414,6 +4421,12 @@ function BattleState:update(dt)
   -- Crystal pic animations run off the wall clock like every other battle
   -- pic effect; a Gold/Silver battler has no picAnim and this is a no-op.
   self:updateBattlerPresentation(dt)
+  -- A long GBA animation can outlive its message queue. Keep its display
+  -- clock running while the player chooses, so it can reach a safe native
+  -- checkpoint; the messages branch advances it through updateQueue instead.
+  if self.phase == 'menu' or self.phase == 'moveSelect' or self.phase == 'targetSelect' then
+    self:updateMovePresentation()
+  end
   local input = self.game.input
 
   -- L PUTS THE BOTTOM SCREEN AWAY, AND BRINGS IT BACK.

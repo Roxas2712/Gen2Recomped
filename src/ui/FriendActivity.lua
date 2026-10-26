@@ -53,7 +53,7 @@ function A.markers(game,locate,width,height)
  for _,r in ipairs(A.locations(game))do
   local x,y=locate(r.location)
   if x and y and x>=2 and y>=12 and x<=width-2 and y<=height-12 then
-   local name=tostring(r.friend.nickname or r.friend.friend_tag):gsub('[%c]','')
+   local name=require('src.ui.PlayerRole').label(r.friend.nickname or r.friend.friend_tag,r.friend):gsub('[%c]','')
    while Font.width(name)>math.min(width-8,104) and #name>0 do name=name:gsub('[%z\1-\127\194-\244][\128-\191]*$','') end
    local w=Font.width(name)+4;local lx=math.max(2,math.min(width-w-2,x-w/2));local ly=math.max(9,y-13)
    for _,old in ipairs(labels)do if lx<old.x+old.w and lx+w>old.x and math.abs(ly-old.y)<10 then ly=math.min(height-20,old.y+10)end end
@@ -71,7 +71,7 @@ function A.draw(game)
  local doc=require('src.cloud.Play').read();local lines={}
  for _,p in ipairs(doc and doc.friends or {})do
   for _,d in ipairs(p.playing or {})do
-   local edition,zone=A.label(game,d);lines[#lines+1]=tostring(p.nickname)..' · '..edition..' · '..zone;break
+   local edition,zone=A.label(game,d);lines[#lines+1]=require('src.ui.PlayerRole').label(p.nickname,p)..' · '..edition..' · '..zone;break
   end
   if #lines>=5 then break end
  end

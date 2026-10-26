@@ -1,7 +1,7 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Rebuild native continuations by deterministic replay from a qualified world
 -- checkpoint. No function, coroutine, VM bytecode or executable save is stored.
-local J={MAX_STEPS=18000,MAX_EVENTS=180000,MAX_BYTES=24*1024*1024}
+local J={MAX_BYTES=24*1024*1024,BATTLE_CHECKPOINT_TICKS=600}
 local S=require('src.core.SaveSerializer')
 local C=require('src.core.Checkpoint')
 local tracks=setmetatable({},{__mode='k'})
@@ -26,7 +26,7 @@ local function mods(game) return game.modStatus and game.modStatus.loaded or {} 
 local function permitted(game)
  if game.linkSession or game.retroArena or game.linkNet and not game.linkNet.closed then return nil,'Online sessions cannot be suspended.' end
  if #mods(game)>0 then return nil,'Suspend is not qualified for loaded mods yet. Normal saves remain available.' end
- if require('src.core.GameVersion').generation()>2 then return nil,'Portable replay suspend is currently qualified for Gen 1–2 only.' end
+ if require('src.core.GameVersion').generation()>3 then return nil,'Portable replay suspend is currently qualified for Gen 1–3 only.' end
  if not require('src.core.CheckpointWorld').available(game) then return nil,'Suspend reconstruction is not qualified for this edition yet.' end
  if not (love and love.math and love.math.getRandomState and love.math.setRandomState and love.data) then return nil,'Portable suspend is unavailable in this runtime.' end
  return true
@@ -55,12 +55,18 @@ end
 local contentCache=setmetatable({},{__mode='k'})
 function J.content(game)
  if J.contentId then return J.contentId end
- local version=game.save.version;local old=contentCache[game.data]
- if old and old.version==version then return old.value end
+ local version=game.save.version
+ local cache=require('src.import.CacheFs')
+ -- Prefix shims redirect reads, but directory enumeration is deliberately
+ -- unchanged. Enumerate the actual selected import and hash logical paths so
+ -- a local import and its private cloud copy have the same identity.
+ local prefix=cache.activePrefixShim and cache.activePrefixShim() or ''
+ local old=contentCache[game.data]
+ if old and old.version==version and old.prefix==prefix then return old.value end
  local files={}
  local function visit(path)
-  for _,name in ipairs(love.filesystem.getDirectoryItems(path)or{})do
-   local file=path..'/'..name;local info=love.filesystem.getInfo(file)
+  for _,name in ipairs(love.filesystem.getDirectoryItems(prefix..path)or{})do
+   local file=path..'/'..name;local info=love.filesystem.getInfo(prefix..file)
    if info and info.type=='directory'then visit(file)
    elseif name:match('%.lua$')then files[#files+1]=file end
   end
@@ -68,8 +74,8 @@ function J.content(game)
  visit('data/generated');table.sort(files)
  assert(#files>0,'Imported suspend data is unavailable')
  local out={require('src.link.Handshake').hello(game,'battle').fingerprint}
- for _,file in ipairs(files)do out[#out+1]=file..'\0'..hash(assert(love.filesystem.read(file)))end
- local value=hash(table.concat(out,'\n'));contentCache[game.data]={version=version,value=value};return value
+ for _,file in ipairs(files)do out[#out+1]=file..'\0'..hash(assert(love.filesystem.read(prefix..file)))end
+ local value=hash(table.concat(out,'\n'));contentCache[game.data]={version=version,prefix=prefix,value=value};return value
 end
 
 local function input(game)
@@ -80,6 +86,16 @@ local function progress(game)
  local out={};for k,v in pairs(game.save) do if k~='options' then out[k]=v end end
  return copy(out)
 end
+-- Battle checkpoints bind live battlers and PP slots to the reconstructed
+-- save party. Restore memory in place so those native aliases remain intact.
+local function restoreMemory(target,source)
+ for k in pairs(target)do if source[k]==nil then target[k]=nil end end
+ for k,v in pairs(source)do
+  if type(v)=='table'and type(target[k])=='table'then restoreMemory(target[k],v)
+  else target[k]=v end
+ end
+end
+local PRESENTATION
 local function projection(value,seen,depth,path)
  path=path or '$'
  local kind=type(value)
@@ -93,20 +109,26 @@ local function projection(value,seen,depth,path)
  local keys={};for k in pairs(value) do if type(k)=='string' or type(k)=='number' then keys[#keys+1]=k end end
  table.sort(keys,function(a,b)if type(a)~=type(b) then return type(a)<type(b) end;return a<b end)
  for _,k in ipairs(keys) do
-  if k~='game'and k~='data'and k~='def'and k~='ruleset'then out[k]=projection(value[k],seen,depth+1,path..'['..type(k)..':'..tostring(k)..']')end
+  if not PRESENTATION[k] then out[k]=projection(value[k],seen,depth+1,path..'['..type(k)..':'..tostring(k)..']')end
  end
  return out
 end
 -- Native completion owners contain live world/controller references; the
 -- replay rebuilds those owners instead of treating their object graph as data.
-local PRESENTATION={_checkpointContinuation=true,game=true,data=true,def=true,ruleset=true,battle=true,shownHp=true,animPlayer=true,gen3Anim=true,gen4Anim=true,
- sprite=true,picAnim=true,monAnim=true,bgCanvas=true,waveCanvas=true,stadium=true,waitingSound=true,gen4CrySource=true}
+PRESENTATION={_checkpointContinuation=true,game=true,data=true,def=true,ruleset=true,battle=true,shownHp=true,animPlayer=true,gen3Anim=true,gen4Anim=true,
+ sprite=true,picAnim=true,monAnim=true,bgCanvas=true,waveCanvas=true,waveQuad=true,colorFxReady=true,stadium=true,waitingSound=true,gen4CrySource=true,
+ -- Text scroll is consumed by draw(), not the native logic clock. A receiving
+ -- device can draw at a different rate (and replay intentionally never draws).
+ scrollPx=true,_caughtIcon=true,_gen3OamCompositedFrame=true,_gen3OamObjectRanks=true,_gen3OamResidual=true}
+PRESENTATION.playerBackPic=true;PRESENTATION.trainerPic=true;PRESENTATION.trainerPicB=true;PRESENTATION.backThrow=true
+PRESENTATION.trainer=true
 function J.witness(game)
  local states={}
  for _,state in ipairs(game.stack.states or {}) do
   if state.isBattleState then
    local fields={}
    for k,v in pairs(state) do if not PRESENTATION[k] then fields[k]=v end end
+   fields.trainerName=state.trainer and state.trainer.name or nil
    states[#states+1]={kind='battle',runtime=projection(fields,{},0)}
   else
    states[#states+1]={kind=require('src.core.StateStack').describe(state),phase=state.phase,index=state.index,frame=state.frame}
@@ -188,6 +210,13 @@ local function observed(frame,replay,run)
  if replay then assert(a.cursor==#a.events,'Suspend replay omitted recorded observations') end
  return a.blocked
 end
+local function establish(game,t)
+ local anchor=C.capture(game)
+ if not anchor or(anchor.kind~='overworld'and anchor.kind~='battle')then return false end
+ t.anchor=anchor;t.memory=progress(game);t.options=copy(game.save.options or {})
+ t.steps={};t.events=0;t.ticks=0;t.reason=nil
+ return true
+end
 function J.step(game,dt,run)
  if active and active.replay then return run() end
  local t=tracks[game]
@@ -195,16 +224,15 @@ function J.step(game,dt,run)
  local allowed,why=permitted(game)
  if not allowed then t.anchor=nil;t.reason=why;return run() end
  t.ticks=t.ticks+1
- if not t.anchor or t.ticks>=60 then
-  local anchor=C.capture(game)
-  if anchor and anchor.kind=='overworld' then
-   t.anchor=anchor;t.memory=progress(game);t.options=copy(game.save.options or {});t.steps={};t.events=0;t.ticks=0;t.reason=nil
-  end
+ local state=game.stack:top()
+ local decision=state and state.isBattleState and (state.phase=='menu'or state.phase=='moveSelect'or state.phase=='targetSelect')and state
+ local entered=decision and t.decision~=decision;t.decision=decision
+ local interval=state and state.isBattleState and J.BATTLE_CHECKPOINT_TICKS or 60
+ if not t.anchor or t.ticks>=interval or entered then
+  t.ticks=0
+  establish(game,t)
  end
  if not t.anchor then t.reason=t.reason or 'Reach a settled overworld to establish a suspend checkpoint.';return run() end
- if #t.steps>=J.MAX_STEPS or t.events>=J.MAX_EVENTS then
-  J.invalidate(game,'Reach a settled overworld before suspending this longer scene.');return run()
- end
  local frame={dt=dt,input=input(game),rng=love.math.getRandomState(),events={}}
  local ok,err=pcall(observed,frame,false,run)
  if not ok then
@@ -218,6 +246,10 @@ end
 function J.capture(game)
  local ok,why=permitted(game);if not ok then return nil,why end
  local t=tracks[game]
+ if not t or t.save~=game.save then t={save=game.save,ticks=0};tracks[game]=t end
+ -- A save requested at a native decision can start directly at that decision;
+ -- even a settings write need not wait for another gameplay tick to rebase.
+ establish(game,t)
  if not t or not t.anchor or t.save~=game.save then return nil,t and t.reason or 'No qualified suspend checkpoint is available yet.' end
  local report=require('src.storage.SaveResume').capture(game.save.version,mods(game),game.save.options or {})
  local got,content=pcall(J.content,game);if not got then return nil,'Could not verify imported suspend data: '..tostring(content)end
@@ -229,8 +261,10 @@ function J.capture(game)
 end
 function J.restore(game,value)
  local ok,why=permitted(game);if not ok then return nil,why end
- if type(value)~='table' or value.schema~=1 or type(value.steps)~='table' or #value.steps>J.MAX_STEPS
+ if type(value)~='table' or value.schema~=1 or type(value.steps)~='table'
   or value.edition~=game.save.version or value.build~=J.build() then return nil,'This suspend needs the same edition and exact engine build.' end
+ local encoded,bytes=pcall(S.encodeExact,value)
+ if not encoded or #bytes>J.MAX_BYTES then return nil,'Suspend exceeds the portable storage limit.' end
  if type(value.memory)~='table' or value.memory.version~=value.edition or type(value.memory.meta)~='table'
   or type(value.anchor)~='table' or type(value.anchor.identity)~='table' or value.memory.meta.playthroughId~=value.anchor.identity.playthroughId then return nil,'Suspend playthrough identity is inconsistent.' end
  local got,content=pcall(J.content,game)
@@ -241,12 +275,11 @@ function J.restore(game,value)
   -- intentionally still hold the last written position (and nil flags).
   -- Keep the reconstructed world, but restore the original memory exactly.
   local memory=copy(value.memory)
-  for k in pairs(game.save) do game.save[k]=nil end
-  for k,v in pairs(memory) do game.save[k]=v end
+  restoreMemory(game.save,memory)
   game.save.options=copy(value.options)
   for _,frame in ipairs(value.steps) do
    assert(type(frame.dt)=='number' and frame.dt>0 and frame.dt<=.1 and type(frame.events)=='table','Invalid suspend frame')
-   count=count+#frame.events;assert(count<=J.MAX_EVENTS,'Suspend observation limit exceeded')
+   count=count+#frame.events
    game.input.state=copy(frame.input.state);game.input.pressed=copy(frame.input.pressed);game.input.sources=copy(frame.input.sources)
    love.math.setRandomState(frame.rng)
    observed(frame,true,function()

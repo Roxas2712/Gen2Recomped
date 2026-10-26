@@ -5781,7 +5781,9 @@ function RomImporter:draw()
     if link.url==DONATE_URL then paypalLink=link
     else footerLinks[#footerLinks+1]=link end
   end
+  local retroCredits=Strings('Gen2Recomped · Created and led by UNDERdecoded (Cedric), with the Gen2Recomped contributors\nRetroRecomped fork · Fork lead, launcher, cloud & integrations: Roxas2712\nGen1Recomp foundation · bryanthaboi / BOIS CLUB GAMES & contributors')
   local creditH = self.hintFont:getHeight()
+  if self.sidebarMode then local _,lines=self.hintFont:getWrap(retroCredits,appW-2*padH);creditH=math.max(1,#lines)*self.hintFont:getHeight() end
   local donateH = self.hintFont:getHeight() + 10 * s
   local chipsH = (#footerLinks > 0) and (8 * s + donateH) or 0
   local footerH = 10 * s + bcgDH + 6 * s + warningH + 8 * s + creditH + chipsH + 12 * s
@@ -6270,7 +6272,7 @@ function RomImporter:draw()
     self.donateButtons,self.donateButton={},nil
     love.graphics.setFont(self.hintFont)
     col(PAL.detail,.7)
-    love.graphics.printf('RetroRecomped  /  Engine: '..credit.by,appX+padH,footerTop+12*s,appW-2*padH,'center')
+    love.graphics.printf(retroCredits,appX+padH,footerTop+12*s,appW-2*padH,'center')
   else
   local bcgX, bcgY = appX + (appW - bcgDW) / 2, footerTop + 10 * s
   local warningY = bcgY + bcgDH + 6 * s
@@ -9165,6 +9167,7 @@ function RomImporter:_settingValue(entry)
     return self:_settingsGeneration() or false
   elseif entry.scope == "launcher" then
     local v = opts[entry.row.id]
+    if entry.row.id=="launcherTheme" then v=require("src.import.LauncherTheme").resolve(v) end
     if v == nil or v == false then return false end
     return v
   elseif entry.scope == "game" and entry.gen then
@@ -9213,6 +9216,7 @@ function RomImporter:_setSettingValue(entry, value)
     return
   elseif entry.scope == "launcher" then
     opts[entry.row.id] = value or false
+    if entry.row.id=="launcherTheme" then opts.launcherAccent=false end
     -- Repaint immediately.  A theme row that only takes effect on the next
     -- launch is one a player steps through four times looking for a preview.
     pcall(RomImporter.applyTheme, opts)
@@ -12015,5 +12019,6 @@ require("src.import.ResumeWorkspace").install(RomImporter)
 require("src.import.SaveHistoryWorkspace").install(RomImporter)
 require("src.storage.AccountStorage").install(RomImporter)
 require("src.import.TournamentWorkspace").install(RomImporter)
+require("src.import.FirstRun").install(RomImporter)
 
 return RomImporter

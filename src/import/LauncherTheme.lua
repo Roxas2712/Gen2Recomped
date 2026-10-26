@@ -28,138 +28,34 @@ local LauncherTheme = {}
 -- id -> the palette keys it replaces.  Every preset names the same keys so
 -- that switching between two of them cannot leave one key behind from the
 -- other; DEFAULT is the absence of a preset rather than an entry here.
+-- Edition presets keep the same quiet charcoal surfaces. Color identifies
+-- actions and the brand, rather than tinting every text and panel differently.
+local function edition(label, accent, hover)
+  return {label=label, note="Charcoal surfaces, neutral text and one edition accent. The logo follows your accent.",
+    accent={link=accent,hover=hover}, colors={
+      bgTop={25,28,34},bgBot={11,13,18},slotBg={20,24,31},
+      cardBlue={25,30,39},cardRed={25,30,39},cardGold={25,30,39},
+      cardBorder={85,96,112},ink={241,243,247},heading={248,249,252},
+      detail={208,215,224},warning={163,175,191},labelGray={163,175,191},modDot={174,185,200},
+    }}
+end
 LauncherTheme.PRESETS = {
-  slate = {
-    label = "SLATE",
-    note = "Cooler and flatter, less blue in the ground.",
-    colors = {
-      bgTop      = { 38, 44, 56 },
-      bgBot      = { 14, 16, 21 },
-      cardBlue   = { 26, 30, 38 },
-      cardRed    = { 33, 26, 30 },
-      cardGold   = { 36, 32, 22 },
-      slotBg     = { 20, 23, 30 },
-      cardBorder = { 128, 140, 160 },
-      detail     = { 216, 222, 232 },
-      warning    = { 186, 194, 208 },
-      labelGray  = { 174, 184, 198 },
-      modDot     = { 190, 200, 214 },
-    },
-  },
-  carbon = {
-    label = "CARBON",
-    note = "Near-black, for an OLED screen or a dark room.",
-    colors = {
-      bgTop      = { 18, 18, 20 },
-      bgBot      = { 5, 5, 6 },
-      cardBlue   = { 18, 18, 21 },
-      cardRed    = { 24, 16, 18 },
-      cardGold   = { 26, 22, 12 },
-      slotBg     = { 12, 12, 14 },
-      cardBorder = { 110, 112, 120 },
-      detail     = { 208, 210, 216 },
-      warning    = { 156, 158, 166 },
-      labelGray  = { 140, 142, 150 },
-      modDot     = { 158, 160, 168 },
-    },
-  },
-  heather = {
-    label = "HEATHER",
-    note = "Deep violet, warmer than the navy.",
-    colors = {
-      bgTop      = { 46, 30, 72 },
-      bgBot      = { 15, 8, 28 },
-      cardBlue   = { 28, 18, 46 },
-      cardRed    = { 34, 16, 34 },
-      cardGold   = { 40, 28, 16 },
-      slotBg     = { 20, 12, 36 },
-      cardBorder = { 158, 128, 220 },
-      detail     = { 216, 202, 238 },
-      warning    = { 178, 162, 206 },
-      labelGray  = { 166, 148, 200 },
-      modDot     = { 186, 166, 224 },
-    },
-  },
-  ember = {
-    label = "EMBER",
-    note = "Warm and low, like a room lit by a fire.",
-    colors = {
-      bgTop      = { 58, 28, 24 },
-      bgBot      = { 18, 8, 7 },
-      cardBlue   = { 36, 20, 18 },
-      cardRed    = { 42, 18, 18 },
-      cardGold   = { 44, 28, 14 },
-      slotBg     = { 26, 13, 11 },
-      cardBorder = { 210, 140, 118 },
-      detail     = { 236, 212, 204 },
-      warning    = { 198, 168, 158 },
-      labelGray  = { 188, 154, 142 },
-      modDot     = { 206, 170, 156 },
-    },
-  },
-  abyss = {
-    label = "ABYSS",
-    note = "Deep teal, cold and very dark.",
-    colors = {
-      bgTop      = { 12, 48, 58 },
-      bgBot      = { 3, 12, 16 },
-      cardBlue   = { 10, 30, 38 },
-      cardRed    = { 28, 18, 24 },
-      cardGold   = { 30, 30, 14 },
-      slotBg     = { 7, 22, 28 },
-      cardBorder = { 108, 178, 196 },
-      detail     = { 212, 232, 238 },
-      warning    = { 176, 202, 212 },
-      labelGray  = { 164, 194, 204 },
-      modDot     = { 182, 210, 220 },
-    },
-  },
-  dusk = {
-    label = "DUSK",
-    note = "Indigo going to rose, the last of the light.",
-    colors = {
-      bgTop      = { 66, 36, 58 },
-      bgBot      = { 10, 10, 26 },
-      cardBlue   = { 30, 22, 44 },
-      cardRed    = { 40, 20, 34 },
-      cardGold   = { 44, 30, 20 },
-      slotBg     = { 20, 15, 34 },
-      cardBorder = { 196, 140, 180 },
-      detail     = { 238, 220, 234 },
-      warning    = { 208, 186, 204 },
-      labelGray  = { 198, 174, 194 },
-      modDot     = { 214, 188, 210 },
-    },
-  },
-  moss = {
-    label = "MOSS",
-    note = "Dark green, the colour of a Game Boy screen in shade.",
-    colors = {
-      bgTop      = { 20, 50, 38 },
-      bgBot      = { 5, 16, 12 },
-      cardBlue   = { 14, 32, 25 },
-      cardRed    = { 30, 20, 18 },
-      cardGold   = { 32, 30, 12 },
-      slotBg     = { 10, 24, 18 },
-      cardBorder = { 120, 186, 150 },
-      detail     = { 212, 232, 220 },
-      warning    = { 180, 206, 190 },
-      labelGray  = { 168, 196, 180 },
-      modDot     = { 184, 212, 196 },
-    },
-  },
+  heartgold=edition("HeartGold",{234,189,94},{255,225,163}),
+  pureyellow=edition("PureYellow",{239,213,105},{255,238,172}),
+  rubyred=edition("RubyRed",{241,125,134},{255,189,194}),
+  sapphireblue=edition("SapphireBlue",{126,172,239},{186,212,255}),
+  emeraldgreen=edition("EmeraldGreen",{106,206,164},{174,237,209}),
+  soulsilver=edition("SoulSilver",{188,204,228},{229,237,250}),
+  crystalcyan=edition("CrystalClear",{117,210,224},{184,238,247}),
+  platinum=edition("PlatinumGlow",{181,169,216},{223,215,245}),
+  obsidianblack=edition("ObsidianBlack",{159,177,207},{208,222,245}),
+  pearlwhite=edition("PearlWhite",{230,222,210},{255,247,235}),
 }
-
--- Preset order for the stepper.  A map has no order and a settings row that
--- reshuffles itself between launches is a settings row nobody can find twice.
---
--- DEFAULT -- the launcher's own navy -- is the `false` at the head of
--- presetValues() and is deliberately NOT repeated here under a name of its
--- own: a stepper with two entries that paint the same thing is one a player
--- steps through twice looking for the difference.
-LauncherTheme.PRESET_ORDER = {
-  "slate", "carbon", "heather", "moss", "ember", "abyss", "dusk",
-}
+LauncherTheme.PRESET_ORDER = {"heartgold","pureyellow","rubyred","sapphireblue","emeraldgreen","soulsilver","crystalcyan","platinum","obsidianblack","pearlwhite"}
+-- Keep saved choices readable across upgrades without adding duplicate presets.
+LauncherTheme.ALIASES={slate="soulsilver",carbon="obsidianblack",heather="platinum",moss="emeraldgreen",ember="rubyred",abyss="sapphireblue",dusk="platinum"}
+for old,id in pairs(LauncherTheme.ALIASES)do LauncherTheme.PRESETS[old]=LauncherTheme.PRESETS[id] end
+function LauncherTheme.resolve(id)return LauncherTheme.ALIASES[id] or id end
 
 -- EVERY GROUND HERE IS DARK, and that is a decision rather than an omission.
 -- The launcher's cards are translucent fills over the ground, its button
@@ -196,7 +92,7 @@ LauncherTheme.ACCENT_ORDER = {
 -- colour rather than as a setting that only repaints the links.  Low, because
 -- the accents are far brighter than the ground and anything above about a
 -- quarter stops being a tint and starts being a wash.
-LauncherTheme.GLOW_MIX = 0.22
+LauncherTheme.GLOW_MIX = 0.035
 
 -- Rounded to whole channel values: the result is a colour, and the launcher
 -- keys its cached background mesh on those numbers with %d -- which is a
@@ -303,7 +199,7 @@ LauncherTheme.TEXT_ORDER = {
 }
 
 -- The keys any preset is allowed to touch, so a malformed entry cannot repaint
--- the Play button or a cartridge chip.  Built from the union of the presets
+-- cartridge chips. Primary actions follow the chosen accent. Built from the union of the presets
 -- above rather than written out twice.
 local THEMED_KEYS = {}
 for _, preset in pairs(LauncherTheme.PRESETS) do
@@ -312,6 +208,9 @@ end
 for _, family in pairs(LauncherTheme.TEXTS) do
   for key in pairs(family.colors or {}) do THEMED_KEYS[key] = true end
 end
+THEMED_KEYS.playTop=true
+THEMED_KEYS.playBot=true
+THEMED_KEYS.playInk=true
 THEMED_KEYS.link = true
 THEMED_KEYS.linkHover = true
 -- The bright point of the background gradient.  Derived rather than declared:
@@ -320,6 +219,7 @@ THEMED_KEYS.linkHover = true
 THEMED_KEYS.bgGlow = true
 
 local baseline = nil
+local logoAccent, logoShader
 
 local function copyTriple(rgb)
   return { rgb[1], rgb[2], rgb[3] }
@@ -401,8 +301,10 @@ function LauncherTheme.apply(pal, themeId, accentId, textId)
       end
     end
   end
-  local accent = accentId and LauncherTheme.ACCENTS[accentId]
+  local accent = (accentId and LauncherTheme.ACCENTS[accentId]) or (preset and preset.accent)
+  logoAccent=accent and {accent.link[1]/255,accent.link[2]/255,accent.link[3]/255} or nil
   if accent then
+    pal.playTop=copyTriple(accent.link);pal.playBot=mix(accent.link,{0,0,0},0.16);pal.playInk={12,18,26}
     pal.link = copyTriple(accent.link)
     pal.linkHover = copyTriple(accent.hover)
   end
@@ -428,9 +330,10 @@ function LauncherTheme.fromOptions(opts)
   local theme, accent, text = nil, nil, nil
   if type(opts) == "table" then
     local t = opts.launcherTheme
-    if type(t) == "string" and LauncherTheme.PRESETS[t] then theme = t end
+    if type(t) == "string" and LauncherTheme.PRESETS[t] then theme = LauncherTheme.resolve(t) end
     local a = opts.launcherAccent
     if type(a) == "string" and LauncherTheme.ACCENTS[a] then accent = a end
+    if LauncherTheme.ALIASES[t] then accent=nil end
     local x = opts.launcherText
     if type(x) == "string" and LauncherTheme.TEXTS[x] then text = x end
   end
@@ -455,6 +358,29 @@ function LauncherTheme.textValues()
   local out = { false }
   for _, id in ipairs(LauncherTheme.TEXT_ORDER) do out[#out + 1] = id end
   return out
+end
+
+-- Recolor the existing brand art at draw time; keep alpha, dark outlines and
+-- bright highlights. Never overwrite source images or tint imported cartridges.
+function LauncherTheme.drawLogo(image,...)
+  local g=love.graphics
+  if not logoAccent or not g.newShader or not g.setShader then return g.draw(image,...) end
+  if logoShader==nil then
+    local ok,value=pcall(g.newShader,[[
+      extern vec3 editionAccent;
+      vec4 effect(vec4 color, Image tex, vec2 uv, vec2 screen) {
+        vec4 pixel=Texel(tex,uv);
+        float light=dot(pixel.rgb,vec3(0.2126,0.7152,0.0722));
+        vec3 body=editionAccent*mix(0.13,1.0,smoothstep(0.03,0.68,light));
+        body=mix(body,vec3(1.0),smoothstep(0.64,1.0,light)*0.8);
+        return vec4(body,pixel.a)*color;
+      }
+    ]]);logoShader=ok and value or false
+  end
+  if not logoShader then return g.draw(image,...)end
+  local previous=g.getShader and g.getShader()
+  logoShader:send('editionAccent',logoAccent);g.setShader(logoShader)
+  g.draw(image,...);g.setShader(previous)
 end
 
 return LauncherTheme

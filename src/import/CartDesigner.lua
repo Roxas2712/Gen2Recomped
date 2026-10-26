@@ -233,7 +233,7 @@ function Designer.install(RI)
       g.setFont(self.hintFont);U.col(p.detail);g.printf(rights,x,yy,w,'left')
       local _,lines=self.hintFont:getWrap(rights,w);yy=yy+#lines*self.hintFont:getHeight()+16*s
       control('source','VIEW IMAGE SOURCE ↗',yy);self._cartControls[#self._cartControls].value=source.page;yy=yy+52*s
-      control('consent',d.originalConsent and '✓ I HAVE CHECKED MY PERMITTED USE' or '□ I HAVE CHECKED MY PERMITTED USE',yy);yy=yy+52*s
+      control('consent',d.originalConsent and '[x] I HAVE CHECKED MY PERMITTED USE' or '[ ] I HAVE CHECKED MY PERMITTED USE',yy);yy=yy+52*s
       if self._cartDownload then control('cancelDownload','CANCEL DOWNLOAD',yy);yy=yy+52*s
       elseif d.originalConsent then
         control('downloadOriginal','CONFIRM & DOWNLOAD ORIGINAL',yy,'accent');yy=yy+52*s
@@ -298,7 +298,7 @@ function Designer.install(RI)
         local rights='Source: '..reference.publisher..' · '..tostring(reference.credit or 'see source')..'. Served by '..reference.delivery..'. Original image bytes; no added compression. Artwork belongs to its respective rights holders, including Nintendo, Game Freak and Creatures. Downloading does not grant a reuse licence. The image is stored only on this device.'
         g.setFont(self.hintFont);U.col(p.detail);g.printf(rights,ex,ey,ew,'left')
         local _,lines=self.hintFont:getWrap(rights,ew);ey=ey+#lines*self.hintFont:getHeight()+14*s
-        control('consent',nil,self:_chipButton(ex,ey,d.originalConsent and '✓ I HAVE CHECKED MY PERMITTED USE' or '□ I HAVE CHECKED MY PERMITTED USE',{w=ew,h=38*s}));ey=ey+48*s
+        control('consent',nil,self:_chipButton(ex,ey,d.originalConsent and '[x] I HAVE CHECKED MY PERMITTED USE' or '[ ] I HAVE CHECKED MY PERMITTED USE',{w=ew,h=38*s}));ey=ey+48*s
         if d.originalConsent then control('downloadOriginal',nil,self:_chipButton(ex,ey,'CONFIRM & DOWNLOAD',{w=ew,h=42*s,kind='accent'}));ey=ey+54*s end
       end
       local source=self:_glassyButton(ex,ey,ew,38*s,'Original cartridge: image source ↗',self.hintFont,true)
