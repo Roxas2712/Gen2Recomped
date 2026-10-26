@@ -11,6 +11,7 @@ local bases={}
 local bootLeases=setmetatable({},{__mode='k'})
 local mouseBodies=setmetatable({},{__mode='k'})
 local callbackOwners={}
+local actorCallbackOwners={}
 local callbackOwner
 local unpack=table.unpack or unpack
 local function pack(...)return {n=select('#',...),...}end
@@ -208,10 +209,12 @@ function G.release()
   for view,e in pairs(entries)do e.retired=true;if e.session then Views.release(e.session)end end
   owners=setmetatable({},{__mode='k'})
   callbackOwners={}
+  actorCallbackOwners={}
 end
+function G._observeActorMod(owner)if type(owner)=='string'then actorCallbackOwners[owner]=true end end
 function G._observeMod(owner)if type(owner)=='string'then callbackOwners[owner]=true end end
-function G._retireMod(owner)callbackOwners[owner]=nil end
-function G._usesCallbacks(owner)return callbackOwners[owner]==true and Version.generation()==3 end
+function G._retireMod(owner)callbackOwners[owner]=nil;actorCallbackOwners[owner]=nil end
+function G._usesCallbacks(owner)return (callbackOwners[owner]==true or actorCallbackOwners[owner]==true) and Version.generation()==3 end
 local function callbackGame(owner)
   if not callbackOwners[owner]or Version.generation()~=3 then return end
   local native=package.loaded['src.core.Game'];if type(native)~='table'then return end
@@ -243,7 +246,12 @@ function G._invokeEvent(owner,name,callback,payload)
 end
 function G._invokeHook(owner,callback,nextFn,...)
   local native,view=callbackGame(owner)
-  if not view then return callback(nextFn,...)end
+  if not view then
+    -- Native callback handles stay native. Only resource attribution changes;
+    -- downstream native work must execute outside this mod's ownership scope.
+    local function nextNative(...)return G._withCallbackOwner(nil,nextFn,...)end
+    return G._withCallbackOwner(owner,callback,nextNative,...)
+  end
   local function public(values)
     for i=1,values.n do if values[i]==native then values[i]=view end end
     return values
