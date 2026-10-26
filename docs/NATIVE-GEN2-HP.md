@@ -18,8 +18,7 @@ their native owners. Gen1 and Gen3 retain their existing drain path.
 `tests/engine/gen2_hp_presentation.lua` exercises the real shared battle class,
 queue dispatch, multi-hit floors, healing, fainting, fractional display steps,
 invalid writes, callback failure cleanup, battler replacement and the other
-generations' unchanged path. `gen2_battle_live_view.lua` continues to check the
-native screen/model boundary. These tests do not prove full mod playability,
+generations' unchanged path. These tests do not prove full mod playability,
 move animation or capture rendering; those require separate implementation
 and gameplay acceptance. This upstream contribution binds the HP view directly
 in the native constructor; the fork's additional live battle-model and sprite

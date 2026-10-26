@@ -2470,6 +2470,7 @@ end
 --
 -- Returns true while animating.
 function BattleState:stepHPDrain()
+  -- GSC has its own short/long pixel loop and public display callback.
   if GameVersion.isGen2() then return require('src.battle.Gen2HpPresentation').drain(self) end
   local busy = false
   for _, b in activeBattlers(self) do
