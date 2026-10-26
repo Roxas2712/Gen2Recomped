@@ -14,15 +14,9 @@ function M.new(root, backend, version, api, format, noMod, failing)
   end
   local mf = Json.decode(files["mods/portable_caught_marker/manifest.json"])
   mf.api, mf.callback_format, mf.gen2compat = api, format, api < 3 and true or nil
+  -- Negative capability cases explicitly target the edition under test.
+  mf.games = { version }
   files["mods/portable_caught_marker/manifest.json"] = Json.encode(mf)
-  -- Negative capability cases explicitly opt this fixture into the tested game.
-  -- The distributed package's edition claim remains unchanged.
-  if backend == "gen2" and not require("src.mods.ModTargets").supports(
-      require("src.mods.Manifest").validate(mf), version) then
-    files["options.lua"] = require("src.core.SaveData").encode({
-      modsGames = { portable_caught_marker = { [version] = true } },
-    })
-  end
   if failing then
     files["mods/portable_caught_marker/main.lua"] = files["mods/portable_caught_marker/main.lua"]
       .. '\nerror("intentional marker entry rollback")'
