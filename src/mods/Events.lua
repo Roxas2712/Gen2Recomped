@@ -1,5 +1,6 @@
 local Logger = require("src.core.Logger")
 local FrameProfile = require("src.core.FrameProfile")
+local Performance = require('src.core.Performance')
 
 local Events = {}
 Events.__index = Events
@@ -15,8 +16,16 @@ function Events:on(name, callback, priority, owner)
   local list = self.listeners[name] or {}
   self.listeners[name] = list
   local entry = { callback = callback, priority = priority or 0, owner = owner }
-  list[#list + 1] = entry
-  table.sort(list, function(a, b) return a.priority > b.priority end)
+  -- Stable priority insertion: equally ranked listeners run in subscription
+  -- order. Re-sorting with a priority-only comparator permuted existing peers
+  -- whenever another listener joined, allowing an earlier generic decorator
+  -- to overwrite a later screen-specific one after a settled screen push.
+  local index = #list + 1
+  while index > 1 and list[index - 1].priority < entry.priority do
+    list[index] = list[index - 1]
+    index = index - 1
+  end
+  list[index] = entry
   return function()
     for i, candidate in ipairs(list) do
       if candidate == entry then table.remove(list, i) break end
@@ -50,14 +59,36 @@ function Events:emit(name, payload)
   -- dispatch over a snapshot: a listener may retire itself or a sibling
   -- mid-emit (once, or the closure on() returns), and table.remove on the
   -- live list shifts the entries ipairs has not reached yet
-  local snapshot = {}
-  for i = 1, #list do snapshot[i] = list[i] end
-  for _, entry in ipairs(snapshot) do
+  --
+  -- E1: a list of one needs no copy -- the only entry that can retire
+  -- mid-emit is the one already running, and the loop is past it.  Every
+  -- per-frame event with a single subscriber (the usual case for
+  -- world.tick) skips the table that way.
+  local snapshot = list
+  local count = #list
+  local lean = Performance.eventLean ~= false
+  if not lean or count > 1 then
+    snapshot = {}
+    for i = 1, count do snapshot[i] = list[i] end
+  end
+  for i = 1, count do
+    local entry = snapshot[i]
+    if entry == nil then break end
     -- ATTRIBUTED TO THE MOD, not to "events": an engine event fired once a
     -- frame with three listeners on it is three different owners' code, and
     -- lumping them together names the seam instead of the culprit.
-    local close = FrameProfile.section(
-      "  mod " .. tostring(entry.owner or "?") .. ": " .. tostring(name))
+    -- E1: the label is built once per subscription, not concatenated on
+    -- every emit for a profiler that is usually off.
+    local owner = entry.owner
+    local cacheable = lean and (owner == nil or type(owner) == 'string')
+    local label = cacheable and entry._profileLabel or nil
+    if label == nil or entry._profileOwner ~= owner or entry._profileName ~= name then
+      label = "  mod " .. tostring(entry.owner or "?") .. ": " .. tostring(name)
+      if cacheable then
+        entry._profileLabel,entry._profileOwner,entry._profileName = label,owner,name
+      end
+    end
+    local close = FrameProfile.section(label)
     local facade = package.loaded['src.core.Game3']
     local ok, err
     if facade and facade._usesCallbacks and facade._usesCallbacks(entry.owner) then

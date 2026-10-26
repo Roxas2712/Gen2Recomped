@@ -1,0 +1,918 @@
+{
+  "passed": true,
+  "sourceStable": true,
+  "sourceSha256": "8368f63e8ab7aa3e5a7f5adb6893f794d62f625e4f7dc48e09a4b190af50b6e5",
+  "commit": "a4b72e3b4bc024accff18b4112058db8f3df656b",
+  "results": [
+    {
+      "name": "tools/gen4_packed_vertices_check.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.05673249999999985,
+      "logSha256": "d762f579aa9c85f49ea798dd8f85322b306e1a0e0ef814a961e0a9ebd87e5946"
+    },
+    {
+      "name": "tools/gen4_gpu_light_check.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.03245720799999985,
+      "logSha256": "21d3ee2b92b66df88f2d65fed463a661f70918f7f4d5685317866c24f35b7b78"
+    },
+    {
+      "name": "tests/engine/native_account.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.016788790999999748,
+      "logSha256": "0cdad9c57d05ada32f3332dd6917e9e1df67759bc1ca43998df3caf3ecdb3e80"
+    },
+    {
+      "name": "tests/engine/native_atlas_palettes.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.10801362499999989,
+      "logSha256": "9acf4f747066b19d05e08f85a9004d66219ada67c11676a9e1679a2fcc4d60ab"
+    },
+    {
+      "name": "tests/engine/native_atlas_pixels.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.287773375,
+      "logSha256": "06416508d91d35c20de16fb03b00dd18713a636346f79b8733b3cc4163749ae2"
+    },
+    {
+      "name": "tests/engine/native_atlas_resources.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.9842302500000004,
+      "logSha256": "b155c0b1fa0bd859a2b0dbacea58aa640cef0d3495a65de9c5f006b988faedfa"
+    },
+    {
+      "name": "tests/engine/native_battle_animation.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.3809250420000003,
+      "logSha256": "9d4ed63ce131ae86eb57c4de7c0bfbbefb487a0ca0207a1b5a531add23b941ec"
+    },
+    {
+      "name": "tests/engine/native_battle_chrome.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.24982616700000015,
+      "logSha256": "28d5bbbde9453599a9cfc492fbb7220daa88588f38ffacfe98079af30a7d1237"
+    },
+    {
+      "name": "tests/engine/native_battle_ownership.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.3444937079999999,
+      "logSha256": "8aa606e10c114baeb9d563d8f6061482b5cb193a700a37e1f3b91910d0af7215"
+    },
+    {
+      "name": "tests/engine/native_battle_session.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.33126591699999963,
+      "logSha256": "a9e7c1c87c8516d10776721076fcacd95d5ebe8f2ecd01d59c7ea1746d38dc8b"
+    },
+    {
+      "name": "tests/engine/native_battle_source_lifecycle.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.37996924999999937,
+      "logSha256": "927f4879933ec154fbb274a9a254876d86791e92ef9ba52d95251ad6185225cb"
+    },
+    {
+      "name": "tests/engine/native_cache_file_info.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.09635320800000002,
+      "logSha256": "59ed15109d2b3e70d500b384199e8e6637e8a941f9f0f7df623be37b56aa1fa2"
+    },
+    {
+      "name": "tests/engine/native_checkpoints.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 1.2765224579999996,
+      "logSha256": "10444f762162fda517f82dfaf4deb8eeb9e362b974134938485e0220e49dc882"
+    },
+    {
+      "name": "tests/engine/native_companion_runtime.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.42361658400000035,
+      "logSha256": "c01ece6aa319cb18bebbfa05cd57a05ea64aee02d508d60b5e655099a33bbeb3"
+    },
+    {
+      "name": "tests/engine/native_companion_terrain.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.171606916,
+      "logSha256": "55c62dc2b620a5983c37c46c39d0490d6bb6d17a0d4907cb22282a6dd17dd7f1"
+    },
+    {
+      "name": "tests/engine/native_companion_terrain_lifecycle.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.29179900000000103,
+      "logSha256": "319b591da229a0e7486f02afa402e404f5f087fdc66f1a25b9f95acd312a3947"
+    },
+    {
+      "name": "tests/engine/native_entry_world_scope.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.15178016700000008,
+      "logSha256": "264bbc65a7c4ba8c715c39516bdbedf414f926e55ada24f53100a3faabb80a5b"
+    },
+    {
+      "name": "tests/engine/native_fallback_strings.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.3152906249999994,
+      "logSha256": "d9d7b1f530fc5bb828b580eb61d1d09807788fb17592ac11008c545bb8f3844b"
+    },
+    {
+      "name": "tests/engine/native_field_collision.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.2078159579999994,
+      "logSha256": "bcd1df032eb52c888ee9a39d65c89e6f620c9a1a34c335de81271c3b077aeebc"
+    },
+    {
+      "name": "tests/engine/native_field_effect_sheets.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.19752087500000037,
+      "logSha256": "82bb1929096f8a0fba8837c8357da467a4d490da512338337a7b1d4b76dedc2d"
+    },
+    {
+      "name": "tests/engine/native_field_move_audio.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.026218374999999128,
+      "logSha256": "b6fdc63df36b6647c7682bb8d692e95402e2bb77ba38b6bb14cac21e43aa6715"
+    },
+    {
+      "name": "tests/engine/native_field_move_lifecycle.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.3569508750000008,
+      "logSha256": "b31e0517ea4f474000f934d280eafe953f892fe173f77a5cc5283ad04daa1d09"
+    },
+    {
+      "name": "tests/engine/native_field_move_presentation.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.4297017089999997,
+      "logSha256": "84987697fdca29ff2160f4f1d0f1ef064cde902274249da44015c29298e33808"
+    },
+    {
+      "name": "tests/engine/native_field_move_runtime.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.31532083299999947,
+      "logSha256": "036f3aeb713c560a4efed76167d9c4e715e4f3d25718811b93d59c2f05ab192a"
+    },
+    {
+      "name": "tests/engine/native_field_view.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 1.7948646670000006,
+      "logSha256": "f1ff795fe3bacd96995cbc8e7c041ac3e0e9d1fc0288e604549cb089c70bcd98"
+    },
+    {
+      "name": "tests/engine/native_flash_window.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.019007084000000063,
+      "logSha256": "10a6feafb9b088f0f59b0f1849ec647eb6fc682f05388639ebe60b50fe6557d9"
+    },
+    {
+      "name": "tests/engine/native_follower_callback_owner.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.2744142089999997,
+      "logSha256": "c352b8c85a7293922e2c6e4d4a3b222eb383f36354a4eea1e9bd089ed06151b7"
+    },
+    {
+      "name": "tests/engine/native_foundation.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.6374044579999989,
+      "logSha256": "3d6cc73cba0338ebcb08d8c663916b955d8730e138539f86f60ed578210965a3"
+    },
+    {
+      "name": "tests/engine/native_host_services.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.21292220800000017,
+      "logSha256": "ec694cc584fb9a9e0ebe6c424c3421ca31367c5093aee0766f107cd0319e28a9"
+    },
+    {
+      "name": "tests/engine/native_jobs.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.13097958300000023,
+      "logSha256": "9f69d8c2eab70af38063663e25df2e57a588bf49a4ee2cf66e5b453895f6b2d8"
+    },
+    {
+      "name": "tests/engine/native_map_world_admission.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.11782866600000119,
+      "logSha256": "e8f2eb409e57627b0e50e18caa910ffcdabcc24cfccdcf8d922fd41bd18d1979"
+    },
+    {
+      "name": "tests/engine/native_mod_seams.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.40383829099999957,
+      "logSha256": "38684ac118017bebefa490e5d338306b2f63c764a53d71a77cee44f68a75f5d5"
+    },
+    {
+      "name": "tests/engine/native_mon_animation_source.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.12694579099999892,
+      "logSha256": "93167cafdbdff7882bbd373460f649161f21f08bde6769976cf12d2f838c18bd"
+    },
+    {
+      "name": "tests/engine/native_object_lifecycle.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.35915787500000107,
+      "logSha256": "88fe382cdd16a1352ec80da089486d56eb4312999a60392a82d89b828a1abf3b"
+    },
+    {
+      "name": "tests/engine/native_object_sheets.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.12113916699999905,
+      "logSha256": "4100d0434634f5dc5fc16831eaf9a7651121e1274e191d3b605ca3899b22781a"
+    },
+    {
+      "name": "tests/engine/native_object_views.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.22115458400000065,
+      "logSha256": "00a3df64739f1cc0c8e73ace7ead11e3ed24cc3ab4bfeff1ca2322d02141e44a"
+    },
+    {
+      "name": "tests/engine/native_pack_producers.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.2914864579999996,
+      "logSha256": "86d2abf8880c834cd890f1ca1c46b4a37e6155ed1de818b5fb54566dc1e61609"
+    },
+    {
+      "name": "tests/engine/native_player_runtime.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.1780042910000006,
+      "logSha256": "969dd4ec4e5db12acd3ed2257124313504432a51196af8e1d0227b38d1a795eb"
+    },
+    {
+      "name": "tests/engine/native_pokemon_source.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.11851983300000057,
+      "logSha256": "9f64d33b3b3ad14014676be80da9943e9fd5e59b5a9fd70f8d3933a8ea81bb82"
+    },
+    {
+      "name": "tests/engine/native_preview.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.011946500000000526,
+      "logSha256": "28882e95d8ec101c7a54d0905598100771abc122fac8d7245035ca8793da9e4b"
+    },
+    {
+      "name": "tests/engine/native_script_session.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.3654565830000003,
+      "logSha256": "c1b09b2adc67fc9a9cd3f1bed8915c19b5cc38e25a96bf706f274cd112841ceb"
+    },
+    {
+      "name": "tests/engine/native_script_space.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.3883085839999989,
+      "logSha256": "7aff8c18c9fc5f6f3d7299d9718b3158df3bcdd0576613ac1ac2d51d35e858b4"
+    },
+    {
+      "name": "tests/engine/native_script_store.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.2412731249999993,
+      "logSha256": "0ef1a44382a92d41a76fc32cd01d7a6af0efd32464127a81b0227267cf2e55e8"
+    },
+    {
+      "name": "tests/engine/native_session_callbacks.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.35447791700000053,
+      "logSha256": "162b4dff0ac42a9bff98aa65108e9393b6e556e6b116bd90192c963c625057e7"
+    },
+    {
+      "name": "tests/engine/native_session_dispatch.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.16992920800000277,
+      "logSha256": "a7a35c964e5bfaac27b0205d7a0e13eb4f57768ec7ed9124adcfdf089b0950f2"
+    },
+    {
+      "name": "tests/engine/native_session_persistent_world.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.22322383300000226,
+      "logSha256": "b303714f83291c3fad0e3c68c7cd61fd6d2b41d7bc353088f27c8ff421f22a82"
+    },
+    {
+      "name": "tests/engine/native_session_runtime.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.25792487499999694,
+      "logSha256": "cbb2bcbe38ada98a7b6238733ade329c15acc60d0198e04a787d887f766351c9"
+    },
+    {
+      "name": "tests/engine/native_source_warm.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.09491008400000212,
+      "logSha256": "48fccd34b382c4bc3977cd6396b5b5f776695842ce6346edb673ffeb782c8ac6"
+    },
+    {
+      "name": "tests/engine/native_sprite_cache.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.05201687500000318,
+      "logSha256": "e97f7c37404046d414ea02a0abda709060ef913329072abf81191e086f9cb81e"
+    },
+    {
+      "name": "tests/engine/native_sprite_lifecycle.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.44728429200000264,
+      "logSha256": "7e8a48daa249b5c28da1922126929a125c16d4ba2166f1527bad9515828596cd"
+    },
+    {
+      "name": "tests/engine/native_sprite_resources.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.5007671659999993,
+      "logSha256": "1a16b82b8ff8bb514e8f905de4d582c5cee6a77513146b7cbb2edfb1dbd209a4"
+    },
+    {
+      "name": "tests/engine/native_state_selection.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.06823470799999853,
+      "logSha256": "630952dba7b707253457621e5def30b07543ae744ba12134668a58ac92ba1898"
+    },
+    {
+      "name": "tests/engine/native_steps.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.2793757499999998,
+      "logSha256": "2ba40e8fec92085d812103d5c0d83fd32479b5d8093f057574933ebe1131d3f3"
+    },
+    {
+      "name": "tests/engine/native_transition_runtime.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.2843201250000007,
+      "logSha256": "8afc8403fc161b25cf4a9aad0408d2a87b1a6f7295b25560c7a67051a3e275dc"
+    },
+    {
+      "name": "tests/engine/native_version_layout.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.01562016600000149,
+      "logSha256": "4c20aa6341bbd0269cb00f832ef8d4e5861e7e3e693a81cc64e8e573e45d92d1"
+    },
+    {
+      "name": "list-switches",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.01024320799999856,
+      "logSha256": "9454156ad68ddd044f82d6d9712f69410ad3caee6e70fd14588dc68aece17a76"
+    },
+    {
+      "name": "defaults:tests/engine/gate_hooks.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 1.2762695420000014,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "defaults:tests/mod_examples_tests.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 1.0669471250000022,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "defaults:tests/engine/performance_tiers.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.016558333999999064,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "all-on:tests/engine/gate_hooks.lua",
+      "spec": "all=1",
+      "exit": 0,
+      "wallSeconds": 0.9978444999999994,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "all-on:tests/mod_examples_tests.lua",
+      "spec": "all=1",
+      "exit": 0,
+      "wallSeconds": 1.5669996250000011,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "all-on:tests/engine/performance_tiers.lua",
+      "spec": "all=1",
+      "exit": 0,
+      "wallSeconds": 0.016632833000002734,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "assetResolveCache=0:tests/engine/gate_hooks.lua",
+      "spec": "assetResolveCache=0",
+      "exit": 0,
+      "wallSeconds": 1.0824714160000006,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "assetResolveCache=0:tests/mod_examples_tests.lua",
+      "spec": "assetResolveCache=0",
+      "exit": 0,
+      "wallSeconds": 0.9233875420000004,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "assetResolveCache=0:tests/engine/performance_tiers.lua",
+      "spec": "assetResolveCache=0",
+      "exit": 0,
+      "wallSeconds": 0.01546166700000029,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "assetSharedDecode=0:tests/engine/gate_hooks.lua",
+      "spec": "assetSharedDecode=0",
+      "exit": 0,
+      "wallSeconds": 0.9489770419999992,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "assetSharedDecode=0:tests/mod_examples_tests.lua",
+      "spec": "assetSharedDecode=0",
+      "exit": 0,
+      "wallSeconds": 1.0629880410000005,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "assetSharedDecode=0:tests/engine/performance_tiers.lua",
+      "spec": "assetSharedDecode=0",
+      "exit": 0,
+      "wallSeconds": 0.019033790999998246,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "audioWorkerOptimization=0:tests/engine/gate_hooks.lua",
+      "spec": "audioWorkerOptimization=0",
+      "exit": 0,
+      "wallSeconds": 1.0370347090000003,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "audioWorkerOptimization=0:tests/mod_examples_tests.lua",
+      "spec": "audioWorkerOptimization=0",
+      "exit": 0,
+      "wallSeconds": 1.190711167,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "audioWorkerOptimization=0:tests/engine/performance_tiers.lua",
+      "spec": "audioWorkerOptimization=0",
+      "exit": 0,
+      "wallSeconds": 0.010643083999998026,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "buildWorkers=0:tests/engine/gate_hooks.lua",
+      "spec": "buildWorkers=0",
+      "exit": 0,
+      "wallSeconds": 1.810703666000002,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "buildWorkers=0:tests/mod_examples_tests.lua",
+      "spec": "buildWorkers=0",
+      "exit": 0,
+      "wallSeconds": 1.5072123750000017,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "buildWorkers=0:tests/engine/performance_tiers.lua",
+      "spec": "buildWorkers=0",
+      "exit": 0,
+      "wallSeconds": 0.01053424999999919,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "bytecodeCache=0:tests/engine/gate_hooks.lua",
+      "spec": "bytecodeCache=0",
+      "exit": 0,
+      "wallSeconds": 1.1529686249999997,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "bytecodeCache=0:tests/mod_examples_tests.lua",
+      "spec": "bytecodeCache=0",
+      "exit": 0,
+      "wallSeconds": 1.1246215829999997,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "bytecodeCache=0:tests/engine/performance_tiers.lua",
+      "spec": "bytecodeCache=0",
+      "exit": 0,
+      "wallSeconds": 0.009941458000000125,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "eventLean=0:tests/engine/gate_hooks.lua",
+      "spec": "eventLean=0",
+      "exit": 0,
+      "wallSeconds": 1.000737082999997,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "eventLean=0:tests/mod_examples_tests.lua",
+      "spec": "eventLean=0",
+      "exit": 0,
+      "wallSeconds": 1.315194292000001,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "eventLean=0:tests/engine/performance_tiers.lua",
+      "spec": "eventLean=0",
+      "exit": 0,
+      "wallSeconds": 0.011680167000001518,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "gcBudget=0:tests/engine/gate_hooks.lua",
+      "spec": "gcBudget=0",
+      "exit": 0,
+      "wallSeconds": 1.7066676249999944,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "gcBudget=0:tests/mod_examples_tests.lua",
+      "spec": "gcBudget=0",
+      "exit": 0,
+      "wallSeconds": 2.1231644590000016,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "gcBudget=0:tests/engine/performance_tiers.lua",
+      "spec": "gcBudget=0",
+      "exit": 0,
+      "wallSeconds": 0.033832832999998175,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "gen3PaletteIndex=0:tests/engine/gate_hooks.lua",
+      "spec": "gen3PaletteIndex=0",
+      "exit": 0,
+      "wallSeconds": 3.141916333999994,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "gen3PaletteIndex=0:tests/mod_examples_tests.lua",
+      "spec": "gen3PaletteIndex=0",
+      "exit": 0,
+      "wallSeconds": 1.9555476250000012,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "gen3PaletteIndex=0:tests/engine/performance_tiers.lua",
+      "spec": "gen3PaletteIndex=0",
+      "exit": 0,
+      "wallSeconds": 0.021782250000001113,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "gen4ByteVertices=0:tests/engine/gate_hooks.lua",
+      "spec": "gen4ByteVertices=0",
+      "exit": 0,
+      "wallSeconds": 2.866564541999999,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "gen4ByteVertices=0:tests/mod_examples_tests.lua",
+      "spec": "gen4ByteVertices=0",
+      "exit": 0,
+      "wallSeconds": 1.6309735829999994,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "gen4ByteVertices=0:tests/engine/performance_tiers.lua",
+      "spec": "gen4ByteVertices=0",
+      "exit": 0,
+      "wallSeconds": 0.015564874999995482,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "gen4ChunkPrebuild=0:tests/engine/gate_hooks.lua",
+      "spec": "gen4ChunkPrebuild=0",
+      "exit": 0,
+      "wallSeconds": 2.565155500000003,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "gen4ChunkPrebuild=0:tests/mod_examples_tests.lua",
+      "spec": "gen4ChunkPrebuild=0",
+      "exit": 0,
+      "wallSeconds": 2.5598078330000007,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "gen4ChunkPrebuild=0:tests/engine/performance_tiers.lua",
+      "spec": "gen4ChunkPrebuild=0",
+      "exit": 0,
+      "wallSeconds": 0.030640791000003276,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "gen4GpuLight=0:tests/engine/gate_hooks.lua",
+      "spec": "gen4GpuLight=0",
+      "exit": 0,
+      "wallSeconds": 3.6665587090000002,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "gen4GpuLight=0:tests/mod_examples_tests.lua",
+      "spec": "gen4GpuLight=0",
+      "exit": 0,
+      "wallSeconds": 2.6478944159999998,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "gen4GpuLight=0:tests/engine/performance_tiers.lua",
+      "spec": "gen4GpuLight=0",
+      "exit": 0,
+      "wallSeconds": 0.058137667000004,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "gen4GpuSkin=0:tests/engine/gate_hooks.lua",
+      "spec": "gen4GpuSkin=0",
+      "exit": 0,
+      "wallSeconds": 1.3750334169999974,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "gen4GpuSkin=0:tests/mod_examples_tests.lua",
+      "spec": "gen4GpuSkin=0",
+      "exit": 0,
+      "wallSeconds": 1.8313675830000022,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "gen4GpuSkin=0:tests/engine/performance_tiers.lua",
+      "spec": "gen4GpuSkin=0",
+      "exit": 0,
+      "wallSeconds": 0.010461292000002231,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "gen4UniformCache=0:tests/engine/gate_hooks.lua",
+      "spec": "gen4UniformCache=0",
+      "exit": 0,
+      "wallSeconds": 1.095905000000002,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "gen4UniformCache=0:tests/mod_examples_tests.lua",
+      "spec": "gen4UniformCache=0",
+      "exit": 0,
+      "wallSeconds": 1.0716178750000012,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "gen4UniformCache=0:tests/engine/performance_tiers.lua",
+      "spec": "gen4UniformCache=0",
+      "exit": 0,
+      "wallSeconds": 0.009190916000008542,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "hookLean=0:tests/engine/gate_hooks.lua",
+      "spec": "hookLean=0",
+      "exit": 0,
+      "wallSeconds": 1.04824275,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "hookLean=0:tests/mod_examples_tests.lua",
+      "spec": "hookLean=0",
+      "exit": 0,
+      "wallSeconds": 1.1105375839999994,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "hookLean=0:tests/engine/performance_tiers.lua",
+      "spec": "hookLean=0",
+      "exit": 0,
+      "wallSeconds": 0.014348792000006938,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "hotPathHoist=0:tests/engine/gate_hooks.lua",
+      "spec": "hotPathHoist=0",
+      "exit": 0,
+      "wallSeconds": 0.9278559589999986,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "hotPathHoist=0:tests/mod_examples_tests.lua",
+      "spec": "hotPathHoist=0",
+      "exit": 0,
+      "wallSeconds": 1.1022053330000006,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "hotPathHoist=0:tests/engine/performance_tiers.lua",
+      "spec": "hotPathHoist=0",
+      "exit": 0,
+      "wallSeconds": 0.012368417000004683,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "idleStream=0:tests/engine/gate_hooks.lua",
+      "spec": "idleStream=0",
+      "exit": 0,
+      "wallSeconds": 1.1376570420000007,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "idleStream=0:tests/mod_examples_tests.lua",
+      "spec": "idleStream=0",
+      "exit": 0,
+      "wallSeconds": 1.3794594999999958,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "idleStream=0:tests/engine/performance_tiers.lua",
+      "spec": "idleStream=0",
+      "exit": 0,
+      "wallSeconds": 0.014009791000006544,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "lowTierBudget=0:tests/engine/gate_hooks.lua",
+      "spec": "lowTierBudget=0",
+      "exit": 0,
+      "wallSeconds": 0.8624378330000013,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "lowTierBudget=0:tests/mod_examples_tests.lua",
+      "spec": "lowTierBudget=0",
+      "exit": 0,
+      "wallSeconds": 2.0463920840000043,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "lowTierBudget=0:tests/engine/performance_tiers.lua",
+      "spec": "lowTierBudget=0",
+      "exit": 0,
+      "wallSeconds": 0.016636625000003846,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "paletteZoneCache=0:tests/engine/gate_hooks.lua",
+      "spec": "paletteZoneCache=0",
+      "exit": 0,
+      "wallSeconds": 1.118661375000002,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "paletteZoneCache=0:tests/mod_examples_tests.lua",
+      "spec": "paletteZoneCache=0",
+      "exit": 0,
+      "wallSeconds": 0.9243708750000081,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "paletteZoneCache=0:tests/engine/performance_tiers.lua",
+      "spec": "paletteZoneCache=0",
+      "exit": 0,
+      "wallSeconds": 0.012712582999995448,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "shadeRecolourFfi=0:tests/engine/gate_hooks.lua",
+      "spec": "shadeRecolourFfi=0",
+      "exit": 0,
+      "wallSeconds": 0.9502055410000025,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "shadeRecolourFfi=0:tests/mod_examples_tests.lua",
+      "spec": "shadeRecolourFfi=0",
+      "exit": 0,
+      "wallSeconds": 0.9121224579999989,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "shadeRecolourFfi=0:tests/engine/performance_tiers.lua",
+      "spec": "shadeRecolourFfi=0",
+      "exit": 0,
+      "wallSeconds": 0.006372208000001933,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "worldDrawHoist=0:tests/engine/gate_hooks.lua",
+      "spec": "worldDrawHoist=0",
+      "exit": 0,
+      "wallSeconds": 0.9423866249999975,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "worldDrawHoist=0:tests/mod_examples_tests.lua",
+      "spec": "worldDrawHoist=0",
+      "exit": 0,
+      "wallSeconds": 1.0756202080000037,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "worldDrawHoist=0:tests/engine/performance_tiers.lua",
+      "spec": "worldDrawHoist=0",
+      "exit": 0,
+      "wallSeconds": 0.012708375000002547,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "all-off:tests/engine/gate_hooks.lua",
+      "spec": "all=0",
+      "exit": 0,
+      "wallSeconds": 0.7458287500000012,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "all-off:tests/mod_examples_tests.lua",
+      "spec": "all=0",
+      "exit": 0,
+      "wallSeconds": 0.8592101249999899,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "all-off:tests/engine/performance_tiers.lua",
+      "spec": "all=0",
+      "exit": 0,
+      "wallSeconds": 0.011445082999998135,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "tests/mod_examples_tests.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.8710211660000056,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "tests/engine/gate_hooks.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 1.0494704999999982,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "api3",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 91.61218774999999,
+      "logSha256": "01aa4f6230d3de5eb33bc89202daac8668706368ce0c6bb6803ada556eaedb1d"
+    },
+    {
+      "name": "external-fixtures",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 8.080003790999996,
+      "logSha256": "c9de67c6b358ac28f98c6562c7219e078c4fbdef68ad122238936e949ad0dffe"
+    },
+    {
+      "name": "rendering-host",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.7956535419999966,
+      "logSha256": "bb692aa1e35ef39c0acb31b903b761e244034323fdc7b916a3f275489aae1a53"
+    }
+  ]
+}

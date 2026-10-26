@@ -136,3 +136,16 @@ signedIn=false;ui:update(0)
 check(not ui._communityDownload and installs==0,'a new online install cannot finish after sign-out through the guest update exception')
 D.start=oldStart;L.list=oldList;L.installFromRelease=oldInstall
 print('Launcher community: '..checks..' checks passed')
+
+-- A Task timeout terminates the coroutine before its HTTP fallback can run.
+-- The last valid metadata must already be visible before the worker starts.
+signedIn=true;options.modCompassEnabled=true
+Index.writeCache(C.FEED,parsed);ui.findIndex=nil
+local Tasks=require('src.cloud.Task');local taskNew=Tasks.new
+Tasks.new=function()return {cancel=function()end,poll=function()return {kind='error',error='Fixture timeout'}end}end
+ui:_refreshFind(true)
+check(#ui.findIndex.mods==1 and ui.findIndex.mods[1].title==parsed.mods[1].title,'cached mod cards are immediately available while a forced refresh is pending')
+ui:update(0)
+check(#ui.findIndex.mods==1 and not ui.findNotice.ok and ui.findNotice.text:find('saved catalogue',1,true),'worker timeouts retain catalogue cards and explain retry instead of reporting an empty search')
+Tasks.new=taskNew
+print('Catalogue timeout recovery: 2 checks passed')

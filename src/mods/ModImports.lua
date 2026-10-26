@@ -726,6 +726,15 @@ local function incoming(path)
 end
 
 local function publish(f,from,to)
+  -- A fresh ZIP need not contain baseroms/ (cartridge inputs are private).
+  -- Staging has its own directory; prepare the declared destination before
+  -- the atomic rename, including the shared bank's first publication.
+  local parent=to:match('^(.*)/[^/]+$')
+  if parent and f.createDirectory then
+    local called,made,why=pcall(f.createDirectory,parent)
+    if not called then return nil,tostring(made) end
+    if not made then return nil,why or 'could not create import destination' end
+  end
   if f.rename then return f.rename(from,to) end
   local source=require("src.core.SaveSafety").realPath(f,from)
   local target=require("src.core.SaveSafety").realPath(f,to)

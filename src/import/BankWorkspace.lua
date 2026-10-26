@@ -1,3 +1,4 @@
+local function L(value) return require('src.translation.Service').launcherLookup(value) end
 -- Native-resolution Bank workspace. Dragging stages copies; only Save copy
 -- writes a new target slot. Neither source files nor occupied cells are replaced.
 local W={}
@@ -144,7 +145,7 @@ function W.draw(self)
   local function col(r,b,c,a) g.setColor(r/255,b/255,c/255,a or 1) end
   local function text(value,tx,ty,width,big,ink)
     local fn=big and large or font;g.setFont(fn);if ink then col(ink[1],ink[2],ink[3]) else col(37,68,79) end
-    g.print(U.ellipsize(fn,tostring(value),width),tx,ty)
+    g.print(U.ellipsize(fn,L(tostring(value)),width),tx,ty)
   end
   local function button(label,bx,by,bw,action,fields)
     local r=fields or {};r.x=bx;r.y=by;r.width=bw;r.height=buttonH;r.action=action;f.rects[#f.rects+1]=r

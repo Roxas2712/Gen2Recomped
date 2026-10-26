@@ -41,6 +41,10 @@ Runtime.currentMod='good';local shared=S.get(0)
 Runtime.currentMod='bad';T.eq(S.get(0),shared);S.prefetch(1)
 for _=1,6 do S._stream:step(0)end
 T.eq(S._stream.pending[1],true)
+T.eq(type(S._stream.pending),'table','public pending remains a table view')
+local pendingView=S._stream.pending;pendingView[1]=false
+T.eq(S._stream.pending[1],true,'public pending view cannot mutate the native queue')
+T.eq(Stream.busy(),true,'idle stream observes private sprite jobs without replacing the public view')
 Stream.cancelOwner('bad');T.eq(S._stream.pending[1],nil);T.eq(S.get(0),base,'another consumer retains a shared resident sprite')
 Runtime.currentMod='good';Stream.cancelOwner('good');Runtime.currentMod=nil
 -- Derived resources and allocations displaced from a public cache are still

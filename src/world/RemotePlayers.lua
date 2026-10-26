@@ -51,7 +51,7 @@ local function draw(self,cx,cy)
  self.sprite:draw(self.px,self.py,cx,cy,self.facing,self.phase or 0,false)
  if not R.font then R.font=g.newFont(8);if R.font.setFilter then R.font:setFilter('nearest','nearest') end end
  g.setFont(R.font)
- local name=shortName(self.nickname);local w=R.font:getWidth(name)+8
+ local name=shortName(self.nickname)..require('src.ui.PlayerRole').short(self);local w=R.font:getWidth(name)+8
  local x=math.floor(self.px-cx+8-w/2);local y=math.floor(self.py-cy-(self.labelHeight or 8)-15)
  local height=12
  if package.loaded['src.render.PaletteFX'] then require('src.render.PaletteFX').markTrueColor(x-1,y-1,w+2,height+5) end
@@ -68,9 +68,12 @@ function R.actors(world)
  local cache=worlds[world]
  if not cache or cache.account~=doc.account_id then cache={account=doc.account_id,actors={}};worlds[world]=cache end
  local result,seen={},{};local time=love.timer.getTime()
+ local navigation=require('src.world.FriendMap').describe(world)
  for _,v in ipairs(doc.visitors or {}) do
   local id=tostring(v.account_id);local pos=v.position
-  if #result<R.MAX_VISIBLE and not seen[id] and visible(doc,id) and pos and pos.map==tostring(world.map.id)
+  local matching=pos and ((pos.navigation or navigation) and require('src.world.FriendMap').same(pos.navigation,navigation)
+   or not pos.navigation and not navigation and pos.map==tostring(world.map.id))
+  if #result<R.MAX_VISIBLE and not seen[id] and visible(doc,id) and matching
    and type(pos.x)=='number' and type(pos.y)=='number' and pos.x==pos.x and pos.y==pos.y and pos.x>=0 and pos.y>=0 and pos.x<=32768 and pos.y<=32768 then
    seen[id]=true
    local actor=cache.actors[id]
@@ -91,7 +94,7 @@ function R.actors(world)
     actor.phase=(math.abs(dx)+math.abs(dy)>1) and math.floor(time*8)%2 or 0
     actor.cellX=math.floor((actor.px+8)/16);actor.cellY=math.floor((actor.py+8)/16)
     actor.facing=({up=true,down=true,left=true,right=true})[pos.facing] and pos.facing or 'down'
-    actor.nickname=v.nickname;result[#result+1]=actor
+    actor.nickname=v.nickname;actor.display_role=v.display_role;result[#result+1]=actor
    end
   end
  end

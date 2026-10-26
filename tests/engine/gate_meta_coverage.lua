@@ -114,7 +114,6 @@ local DEBT = {
   ["hook:ui.pc.items"] = "M8",
 
   ["event:link.connected"] = "M12",
-  ["event:link.ended"] = "M12",
   ["event:player.warped"] = "M5",
   ["event:pokemon.evolved"] = "M7",
   ["event:pokemon.level_up"] = "M7",

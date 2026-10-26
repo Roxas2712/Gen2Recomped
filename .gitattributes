@@ -28,3 +28,11 @@ tools/slang-import/licenses/** -text
 # bytes on Windows as well; the native byte-for-byte compatibility gate
 # must not depend on the checkout platform.
 tests/engine/fixtures/wonder_reward.lua text eol=lf
+
+# The selected-mod path probe asserts exact canonical bytes. Keep the fixture
+# LF on Windows; mod:read returns raw bytes without translation.
+"tests/modkit/fixtures/path probe/payload.txt" text eol=lf
+
+# Vendored language profiles and notices retain exact source bytes. Address
+# tables include intentional trailing tab-separated empty fields.
+mods/UNI_LANGUAGE_NATIVE/** -text -whitespace

@@ -761,6 +761,15 @@ function X:extractMoveAnims()
   elseif not okM then print("Gen5MoveAnimData failed: " .. tostring(anims)) end
 end
 
+-- THE GYM GIMMICK MODELS (src/import/Gen5GymFxArt.lua): curtains, bookcase,
+-- honey walls, coaster, lifts, cannons, dragons (STAGE_ONLY can name this
+-- one: extractGymFx)
+function X:extractGymFx()
+  local okG, gym = pcall(require("src.import.Gen5GymFxArt").build, self)
+  if okG and gym then self:write("gen5_gym_fx", gym)
+  elseif not okG then print("Gen5GymFxArt failed: " .. tostring(gym)) end
+end
+
 function X:run()
   self:extractConstants()
   self:extractScripts()
@@ -777,6 +786,7 @@ function X:run()
   self:extractBattleSprites()
   self:extractBootScreens()
   self:extractMoveAnims()
+  self:extractGymFx()
   local skipped = {}
   for _, name in ipairs(X.ALL_STAGES) do
     local done = false

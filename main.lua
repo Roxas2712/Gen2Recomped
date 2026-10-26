@@ -668,15 +668,16 @@ function love.update(dt)
   -- is the code that just died.
   if bootReport then return end
   require('src.cloud.Presence').tick()
+  require('src.cloud.AccountBadge').tick()
   if not autopilot and not driverCo and not editorMode and not TouchEditor then
     local blocked=require('src.cloud.Play').tick(Importer and nil or Game)
     if blocked and Game then
       RetroOverlay.open(Game);RetroOverlay.recoveringTrade=true
-      RetroOverlay.notice=require('src.link.FriendTrade').error or 'Recovering your confirmed trade. Your saved party is protected.'
+      RetroOverlay.notice=require('src.link.FriendTrade').error or require('src.link.FriendWager').error or 'Completing your trade or stake receipt. Your normal adventure is paused.'
       RetroOverlay.update(Game)
       return
     elseif RetroOverlay.recoveringTrade then
-      RetroOverlay.recoveringTrade=nil;RetroOverlay.notice='Your confirmed trade was recovered and saved. Continue playing.'
+      RetroOverlay.recoveringTrade=nil;RetroOverlay.notice='Your trade or stake receipt was processed. Continue playing. Pokémon prizes are in your Bank.'
     end
   end
   local community=package.loaded['src.import.LauncherCommunity']
@@ -761,10 +762,11 @@ function love.draw()
 
   if not Game then return drawSecondPanel() end
   Game:draw()
-  if not autopilot and not driverCo then RetroOverlay.draw(Game) end
+  if not autopilot and not driverCo then require('src.ui.FriendActivity').draw(Game);RetroOverlay.draw(Game);require('src.ui.TextComposer').draw(RetroOverlay) end
 end
 
 function love.keypressed(key, scancode, isrepeat)
+  require('src.cloud.AccountBadge').activity()
   if bootReport then return dismissBootReport() end
   if editorMode then return EditorApp.keypressed(key) end
   if TouchEditor then return TouchEditor.keypressed(key) end
@@ -793,6 +795,7 @@ end
 -- already solves this with a virtual cursor (RomImporter:_activatePadCursor);
 -- the editor now has the same one, and these forwards are what feed it.
 function love.gamepadpressed(joystick, button)
+  require('src.cloud.AccountBadge').activity()
   -- and the dismissal that matters on the Switch.
   if bootReport then return dismissBootReport() end
   if TouchEditor then return end
@@ -819,6 +822,7 @@ function love.gamepadreleased(joystick, button)
 end
 
 function love.gamepadaxis(joystick, axis, value)
+  if math.abs(value)>0.25 then require('src.cloud.AccountBadge').activity() end
   if TouchEditor then return end
   if editorMode then
     if EditorApp.gamepadaxis then return EditorApp.gamepadaxis(axis, value) end
@@ -914,6 +918,7 @@ function love.visible(v)
 end
 
 function love.touchpressed(id, x, y, dx, dy, pressure)
+  require('src.cloud.AccountBadge').activity()
   -- The dismissal that matters on a phone: there is no keyboard behind this.
   if bootReport then return dismissBootReport() end
   -- Android supplies both the pointer coordinates and pinch contacts here;
@@ -1071,6 +1076,7 @@ end
 -- its touch synthesis, without also reporting that synthesis as a second
 -- source touch event. Editors/importers and physical touch keep their owners.
 function love.mousepressed(x, y, button, istouch)
+  require('src.cloud.AccountBadge').activity()
   local facade=package.loaded['src.core.Game3']
   if Game and not(bootReport or editorMode or Importer or TouchEditor or istouch)
       and facade and facade._pointer then
@@ -1087,6 +1093,7 @@ function love.mousereleased(x, y, button, istouch)
   return nativeMouseReleased(x,y,button,istouch)
 end
 function love.mousemoved(x, y, dx, dy, istouch)
+  if math.abs(dx)+math.abs(dy)>2 then require('src.cloud.AccountBadge').activity() end
   local facade=package.loaded['src.core.Game3']
   if Game and not(bootReport or editorMode or Importer or TouchEditor or istouch or Game.lookWarping)
       and facade and facade._pointer then
@@ -1096,6 +1103,7 @@ function love.mousemoved(x, y, dx, dy, istouch)
 end
 
 function love.textinput(text)
+  require('src.cloud.AccountBadge').activity()
   if RetroOverlay.game then require('src.ui.FriendsMenu').text(RetroOverlay,text);return end
   if TouchEditor then return end
   if Importer then return Importer:textinput(text) end
@@ -1327,6 +1335,9 @@ function love.run()
 
   local FrameCap = require("src.core.FrameCap")
   local paced = pacingEnabled()
+  -- what the pacer does with the time it would otherwise sleep: the GC
+  -- budget, then queued atlas / sprite builds (src/core/IdleStream.lua)
+  local idleWork = require("src.core.IdleStream").idle(GCFrameBudget.idle)
   -- The deadline the next present() should not beat.  Carried forward one
   -- budget per frame so pacing stays even instead of drifting with the
   -- per-frame sleep-granularity jitter.
@@ -1427,7 +1438,7 @@ function love.run()
     if love.timer then
       if paced then
         local closeSleep = FrameProfile.section("frame pacing: sleep")
-        nextFrame = FrameCap.pace(love.timer, love.window, presented, nextFrame, GCFrameBudget.idle)
+        nextFrame = FrameCap.pace(love.timer, love.window, presented, nextFrame, idleWork)
         closeSleep()
       else
         love.timer.sleep(0.001)

@@ -48,7 +48,7 @@ add("events", "12345", [[
   assets.transformed battle.ball_thrown battle.battler_switched battle.damage_dealt
   battle.ended battle.exp_gained battle.fainted battle.move_used battle.started
   battle.status_inflicted battle.turn_ended battle.turn_started discord.join_requested
-  flag.changed game.ready link.connected link.desync link.ended map.entered map.exited
+  flag.changed game.ready link.connected link.desync link.ended link.battle_ended map.entered map.exited
   map.reloaded mod.option_action mod.options_changed mods.loaded music.started
   music.stopped player.warped pokemon.before_give pokemon.caught pokemon.evolved
   pokemon.level_up pokemon.move_learned pokemon.received save.created save.loaded

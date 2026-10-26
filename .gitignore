@@ -112,6 +112,8 @@ mobile/ios/bundle_id.local
 #exclude mods folder 
 
 /tests/*
+!/tests/test_fetch_love_runtime.py
+!/tests/native_suspend/
 !/tests/parity_frlg_ship.lua
 !/tests/parity_frlg_warp_allowlist.lua
 !/tests/parity_gen3_type_categories.lua
@@ -188,3 +190,10 @@ mobile/ios/bundle_id.local
 !/tests/fixtures/upstream_mods/
 !/tests/fixtures/legacy_npc_controls/
 !/tests/engine/
+!/tests/drivers/
+/tests/drivers/*
+!/tests/drivers/native_rom_languages.lua
+!/tests/drivers/native_rom_language_ui.lua
+!/tests/drivers/builtin_language_setup.lua
+!/mods/UNI_LANGUAGE_NATIVE/
+!/mods/UNI_LANGUAGE_NATIVE/**
