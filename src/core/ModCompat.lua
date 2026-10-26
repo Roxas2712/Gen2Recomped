@@ -98,7 +98,8 @@ ModCompat.ALIASES = {
 
   -- the Gold port splits its Game class per generation; this one does not
   ["src.core.Game2"] = "src.core.Game",
-  ["src.render.GbcPalette"] = "src.render.GBCFX",
+  -- Indexed image palettes and LCD screen effects are different contracts.
+  ["src.render.GbcPalette"] = "src.render.Gen2PaletteDraw",
 }
 
 local seen = {}

@@ -839,6 +839,10 @@ function PaletteFX.monPal(data, species, transformed, shiny)
     return p.palettes.GRAYMON
         or (data and data.palettes and data.palettes.palettes.GRAYMON)
   end
+  if GameVersion.isGen2() then
+    local native = require("src.render.Gen2PokemonPalettes").native(data, species, shiny)
+    if native then return native end
+  end
   local def = data and data.pokemon and data.pokemon[species]
   if shiny and def and def.shinyPalette then
     local pal = p.palettes[def.shinyPalette]
@@ -878,6 +882,12 @@ function PaletteFX.monPal(data, species, transformed, shiny)
     end
   end
   return nil
+end
+
+-- Legacy external Gen2 consumers ask the published palette view directly.
+-- Resolve the same native row as monPal and return fresh RGB values.
+function PaletteFX.monColors(data, species, shiny)
+  return require("src.render.Gen2PokemonPalettes").colors(data, species, shiny)
 end
 
 -- palette name a species currently resolves to (for image-cache keys)
