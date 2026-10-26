@@ -7880,6 +7880,8 @@ function OverworldState:interact()
     interacted(self, fx, fy, "bookshelf")
     return
   end
+  -- A friend never steals an interaction from a real world object.
+  if require('src.world.RemotePlayers').interact(self,fx,fy) then return end
   interacted(self, fx, fy, "none")
 end
 
@@ -18354,7 +18356,7 @@ end
 function OverworldState:_worldEntityLoop(drawEntity, cam, bgY, freeGround, groundForRise,
                                           groundSin, grassColors, spriteDepthGround, shadows, riseOf)
   local onTop
-  for _, e in ipairs(self.entities) do
+  for _, e in ipairs(require('src.world.RemotePlayers').entities(self,self.entities)) do
     if self:gen3AboveTopLayer(e) then
       onTop = onTop or {}
       onTop[#onTop + 1] = e
@@ -18981,7 +18983,7 @@ local function drawWorldBody(self, cadenceConsumed)
       end
       onTop = result
     else
-    for _, e in ipairs(self.entities) do
+    for _, e in ipairs(require('src.world.RemotePlayers').entities(self,self.entities)) do
       if self:gen3AboveTopLayer(e) then
         onTop = onTop or {}
         onTop[#onTop + 1] = e
@@ -19098,7 +19100,7 @@ local function drawWorldBody(self, cadenceConsumed)
     for _, g in ipairs(self.ghosts) do
       items[#items + 1] = { y = g.npc.py + g.oy + 16, kind = "ghost", g = g }
     end
-    for _, e in ipairs(self.entities) do
+    for _, e in ipairs(require('src.world.RemotePlayers').entities(self,self.entities)) do
       if not (self.flyAnim and self:hasFlyBird() and e == self.player) then
         items[#items + 1] = { y = e.py + 16, kind = "entity", e = e }
       end
@@ -19265,7 +19267,7 @@ function OverworldState:_drawFieldView(field)
   end
   local above={}
   if not field.skipActors then
-    for _,e in ipairs(self.entities)do
+    for _,e in ipairs(require('src.world.RemotePlayers').entities(self,self.entities))do
       if self:gen3AboveTopLayer(e)then above[#above+1]=e else actor(e)end
     end
   end
