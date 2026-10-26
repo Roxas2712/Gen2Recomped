@@ -1,10 +1,10 @@
 {
-  "runtime_ref": "b41271c084f990ac6d44b536a575eb88868a2075",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/322",
-  "feature_ref": "e085157d6f8974593ae4795bee9f056a43cc2d14",
+  "runtime_ref": "4c9a0a73a897cae8d1610c282756ea88f8c9ee4b",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/324",
+  "feature_ref": "370190ae69c996556477dc9c60e9e649204c4507",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 297,
-  "engine_suites_total": 297,
+  "engine_suites_passed": 298,
+  "engine_suites_total": 298,
   "sdk_suites_passed": 4,
   "sdk_suites_total": 4,
   "b30_profile": "passed",
@@ -20,7 +20,7 @@
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
   "hosted_ci": {
-    "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40338743202",
+    "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40342972874",
     "conclusion": "action_required",
     "jobs": 0,
     "scope": "Requires upstream maintainer approval; no jobs executed. Local qualification is separate."
@@ -3536,5 +3536,32 @@
     "callsite_negative_failed_assertions": 13,
     "native_generation_scope": "Gen1, matching reference; other generations keep native policy.",
     "complete_mod_or_playthrough_or_fps_acceptance": false
+  },
+  "historical_snapshot_pre_dev_api_attribution": {
+    "runtime_ref": "b41271c084f990ac6d44b536a575eb88868a2075",
+    "feature_ref": "e085157d6f8974593ae4795bee9f056a43cc2d14",
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/322",
+    "engine_suites_passed": 297,
+    "engine_suites_total": 297
+  },
+  "dev_api_attribution": {
+    "receipt": "docs/qa/dev-api-attribution.json",
+    "source_tree": "5c3d3f2efc0640f29f1aa53466e27c8a9c66a8c2",
+    "tests_tree": "792783a3d952147d597d91cdba9320fb481f434c",
+    "engine_tests_tree": "d2d09b918dce3113b795b553a16dbbb035142c4d",
+    "targeted_checks": 19,
+    "mode_workers": 20,
+    "mode_checks": 380,
+    "native_false_warnings_before": 5,
+    "native_false_warnings_after": 0,
+    "actual_internal_and_network_warnings_retained": true,
+    "api_factory_failure_scope_restored": true,
+    "negative_control_failures_each": 3,
+    "upstream_existing_failed_suites": 11,
+    "upstream_existing_failure_lines_identical": true,
+    "native_gpu_exit": 0,
+    "captures_inspected": 4,
+    "native_selected_typed_behavior_unchanged": true,
+    "full_mod_or_fps_acceptance": false
   }
 }

@@ -1,0 +1,274 @@
+{
+  "status": "passed",
+  "upstream_base": "ed5189c247ee7a2ccca666784e21fd4fba8df781",
+  "feature_ref": "370190ae69c996556477dc9c60e9e649204c4507",
+  "integration_ref": "4c9a0a73a897cae8d1610c282756ea88f8c9ee4b",
+  "source_tree": "5c3d3f2efc0640f29f1aa53466e27c8a9c66a8c2",
+  "tests_tree": "792783a3d952147d597d91cdba9320fb481f434c",
+  "engine_tests_tree": "d2d09b918dce3113b795b553a16dbbb035142c4d",
+  "main_blob": "a939e9628652052f9dffb2cb7ae834de2eb697ea",
+  "targeted_checks_per_worker": 19,
+  "mode_workers": 20,
+  "mode_checks": 380,
+  "mode_coverage": [
+    {
+      "host": "feature",
+      "version": "emerald",
+      "api": 1
+    },
+    {
+      "host": "feature",
+      "version": "emerald",
+      "api": 2
+    },
+    {
+      "host": "feature",
+      "version": "firered",
+      "api": 1
+    },
+    {
+      "host": "feature",
+      "version": "firered",
+      "api": 2
+    },
+    {
+      "host": "feature",
+      "version": "gold",
+      "api": 1
+    },
+    {
+      "host": "feature",
+      "version": "gold",
+      "api": 2
+    },
+    {
+      "host": "feature",
+      "version": "red",
+      "api": 1
+    },
+    {
+      "host": "feature",
+      "version": "red",
+      "api": 2
+    },
+    {
+      "host": "integration",
+      "version": "emerald",
+      "api": 1
+    },
+    {
+      "host": "integration",
+      "version": "emerald",
+      "api": 2
+    },
+    {
+      "host": "integration",
+      "version": "emerald",
+      "api": 3
+    },
+    {
+      "host": "integration",
+      "version": "firered",
+      "api": 1
+    },
+    {
+      "host": "integration",
+      "version": "firered",
+      "api": 2
+    },
+    {
+      "host": "integration",
+      "version": "firered",
+      "api": 3
+    },
+    {
+      "host": "integration",
+      "version": "gold",
+      "api": 1
+    },
+    {
+      "host": "integration",
+      "version": "gold",
+      "api": 2
+    },
+    {
+      "host": "integration",
+      "version": "gold",
+      "api": 3
+    },
+    {
+      "host": "integration",
+      "version": "red",
+      "api": 1
+    },
+    {
+      "host": "integration",
+      "version": "red",
+      "api": 2
+    },
+    {
+      "host": "integration",
+      "version": "red",
+      "api": 3
+    }
+  ],
+  "expected_warning_result": {
+    "publicWarnings": 0,
+    "privateWarnings": 1,
+    "networkWarnings": 1,
+    "initializerWarnings": 1
+  },
+  "existing_upstream_failed_suites": 11,
+  "existing_upstream_failure_lines_identical": true,
+  "baseline_new_failed_assertions": 5,
+  "negative_controls": [
+    {
+      "name": "disabled_scanner",
+      "exit": 1,
+      "failures": [
+        "FAIL actual private mod import still warns exactly once (got 0, want 1)",
+        "FAIL actual missing network import still warns (got 0, want 1)",
+        "FAIL returned mod initializer retains attribution (got 0, want 1)"
+      ],
+      "log_sha256": "f93fc95ef163112d7c656464861c54b28d09ca8d7228a25d4900ba5f56adae87"
+    },
+    {
+      "name": "leaked_scope",
+      "exit": 1,
+      "failures": [
+        "FAIL actual private mod import still warns exactly once (got 0, want 1)",
+        "FAIL actual missing network import still warns (got 0, want 1)",
+        "FAIL returned mod initializer retains attribution (got 0, want 1)"
+      ],
+      "log_sha256": "0eaed024a88c6a9d866c339622f05e7f4a0671833b644f4c9848e94294d31b7e"
+    }
+  ],
+  "engine_suites": 298,
+  "sdk_suites": 4,
+  "B30": true,
+  "native_gpu": {
+    "ref": "4c9a0a73a897cae8d1610c282756ea88f8c9ee4b",
+    "exit": 0,
+    "metadata": {
+      "renderer": "OpenGL",
+      "gameVersion": "red",
+      "device": "Apple M2",
+      "vendor": "Apple",
+      "version": "4.1 Metal - 89.4",
+      "love": [
+        11,
+        5,
+        0,
+        "Mysterious Mysteries"
+      ]
+    },
+    "before_false_warnings": [
+      "src.mods.MartContent",
+      "src.core.GameVersion",
+      "src.mods.HeldItemContent",
+      "src.mods.RomTextContent",
+      "src.import.CacheFs"
+    ],
+    "after_false_warnings": [],
+    "typed_behavior_identical_to_before": true,
+    "driver_unchanged": true,
+    "same_native_rom_hash": true,
+    "rom_sha256": "5ca7ba01642a3b27b0cc0b5349b52792795b62d3ed977e98a09390659af96b7b",
+    "driver_sha256": "02444b2bb7edeb285868fe4cd2dbe8ed2fded325f7f2d30fa19fe84ba532b355",
+    "log_sha256": "65952710c928d32bb19c6aef931c7714eac421b9697c87b5547b5ef5a76bf714",
+    "before_log_sha256": "3cff6bf1e2aa5d92120b9908a98557d90885c591fa57cfe1217f21b256ef74e8",
+    "captures": {
+      "set-menu.png": {
+        "sha256": "4040864af7fdb2c8dde0724c4f144e64d935767c48e864c1b0727e61d2bbe3b6",
+        "dimensions": [
+          640,
+          576
+        ]
+      },
+      "shift-choice.png": {
+        "sha256": "e68881db24c4d73fe7d89978010fe9a07b255724a9d848b104a5b5f899c5ee7d",
+        "dimensions": [
+          640,
+          576
+        ]
+      },
+      "shift-menu.png": {
+        "sha256": "8e47f74fc0e57250ded43d3829f82d7a28508fd3419bd2bd75c5c17c3616149a",
+        "dimensions": [
+          640,
+          576
+        ]
+      },
+      "unsubscribe-menu.png": {
+        "sha256": "95a017b3f337df926597943581f991188dfa98ec986e23b06105f563d33b2aa0",
+        "dimensions": [
+          640,
+          576
+        ]
+      }
+    },
+    "result": {
+      "errors": 0,
+      "rows": [
+        {
+          "offers": 0,
+          "option": "shift",
+          "calls": 1,
+          "partySize": 2,
+          "mode": "set",
+          "enemyIndex": 2
+        },
+        {
+          "offers": 1,
+          "option": "set",
+          "calls": 1,
+          "partySize": 2,
+          "mode": "shift",
+          "enemyIndex": 2
+        },
+        {
+          "offers": 0,
+          "option": "set",
+          "calls": 0,
+          "partySize": 2,
+          "mode": "unsubscribe",
+          "enemyIndex": 2
+        }
+      ]
+    },
+    "legacy_migration_disabled": true,
+    "normal_inputs_unchanged": true
+  },
+  "raw_report_sha256": {
+    "dev-api-attribution-feature-targeted-20261026a": "22efead6086eb8690579e218fa8e0838e6e7610af5e96b79cd1201324163d359",
+    "dev-api-attribution-feature-full-20261026a": "9260a936e85585c458f764d64d41d6cc6ec54930cc9fd7e2b6eeec51081b8baf",
+    "dev-api-attribution-baseline-full-20261026a": "ee4b7ca7d1c6b56f3e6ec96efe8cca767588be9ad8afb73d27ff9f40cfd156ad",
+    "dev-api-attribution-integration-targeted-20261026a": "271c4f10f04c21903ce0a8c726d76c5ffc158ce04d8740f4b92fbd4734b4cfec",
+    "dev-api-attribution-integration-full-20261026a": "f10133b9e748c4e68b703a536cb6005e582d62cec46dc37663422d9299c2e168",
+    "dev-api-attribution-modes-20261026b": "1a79ecb0ad60c86939ac1f5e3507e59c33fe9e93103d1f15c3b69d97e7678f11",
+    "dev-api-attribution-negatives-20261026a": "3d73c06c1907a79895b461977b052c54454b387f2ffabd5c5be308480b631181",
+    "dev-api-attribution-native-gpu-20261026a": "43855210137470ccac017cbf8cdfb14165491aab10c1844ba2c291dfcabb622d",
+    "battle-style-gen2-fresh-gpu-20261026a": "b81a6ff2c7a492c8f7b40f664cbb5deb04f22346883b6baad1a135d3e539e40c"
+  },
+  "retained_verifier_failure": "Initial mode harness placed its own coverage marker after T.finish, which exits the process. Independent audit rejected missing markers; move marker/assertions before finish and rerun all modes without changing engine/tests.",
+  "limits": [
+    "Developer attribution warnings are advisory; permission declarations and supported-import policy stay unchanged.",
+    "CPU modes verify real serialized manifests through real dev Loader with in-memory filesystems; not full-game/data-format acceptance for those editions.",
+    "Native imported Red constructed trainer/input/dialog test; not complete mods/playthroughs, pixel equality, FPS or hardware audio acceptance.",
+    "Known EXP-bar fallback and optional imported-module diagnostics remain separate."
+  ],
+  "pull_request": "https://github.com/UNDERdecoded/Gen2Recomped/pull/324",
+  "visually_inspected_capture_count": 4,
+  "publication_scope": "Gen2Recomped only; unchanged Gen1 is a read-only reference.",
+  "public_mode_driver": {
+    "sha256": "5a0f4ab390a3d1bb30ac45df3021e8ba7c3993f5a7684111eed2b4b5742a4c9c",
+    "executed_original_sha256": "5949fd09603e4c7c414bce6d76e57d6d23a5060b674a8d33bfb91234faeeb4f7",
+    "stripped_luajit_bytecode_identical": true
+  },
+  "hosted_ci": {
+    "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40342972874",
+    "conclusion": "action_required",
+    "jobs": 0,
+    "scope": "Requires upstream maintainer approval; no jobs executed. Local qualification is separate."
+  }
+}

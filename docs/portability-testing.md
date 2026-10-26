@@ -17,14 +17,15 @@ authorize publishing upstream Gen1 changes.
 
 ## Current October upstream composition
 
-The current production qualification is `b41271c084f990ac6d44b536a575eb88868a2075`,
+The current production qualification is `4c9a0a73a897cae8d1610c282756ea88f8c9ee4b`,
 which includes upstream `ed5189c2`, [PR #313](https://github.com/UNDERdecoded/Gen2Recomped/pull/313),
 the portable quit hook in [PR #320](https://github.com/UNDERdecoded/Gen2Recomped/pull/320),
-and the [portable battle-style decision](https://github.com/UNDERdecoded/Gen2Recomped/pull/322).
-It passes **297/297 engine suites**, **4/4 SDK suites** and B30 with zero
-FAIL lines. The source tree is `640f209e476cbbb691fe040c202bc26e99c212e4`;
-its engine-test tree is `912c07afd8eca050be404edb3a129374d5e914d0`.
-The full test tree is `bcdffcaf90f59903a82205e70fefae8d848d9405`.
+the [portable battle-style decision](https://github.com/UNDERdecoded/Gen2Recomped/pull/322),
+and [accurate dev API import attribution](https://github.com/UNDERdecoded/Gen2Recomped/pull/324).
+It passes **298/298 engine suites**, **4/4 SDK suites** and B30 with zero
+FAIL lines. The source tree is `5c3d3f2efc0640f29f1aa53466e27c8a9c66a8c2`;
+its engine-test tree is `d2d09b918dce3113b795b553a16dbbb035142c4d`.
+The full test tree is `792783a3d952147d597d91cdba9320fb481f434c`.
 Later publication changes only record qualification evidence. The earlier
 October qualification and its shared-contract counts below retain their own refs.
 
@@ -50,7 +51,8 @@ text checks; the composed style suite passes **88/88**. Existing upstream
 failures remain exactly **11 suites / 29 FAIL lines**. A control that restores
 only the direct-options call site fails **13 assertions**.
 
-The same example on Red, Blue and Yellow completes **12 native workers / 60
+At the earlier `b41271c0` runtime, the same example on Red, Blue and Yellow
+completed **12 native workers / 60
 typed paired observations** and **24 combined-mode workers / 120 observations**
 on the two engines. Three actual LÖVE runs cover an existing Gen2 import and
 fresh regular Red imports on both engines. FIGHT/move input reaches the real
@@ -59,7 +61,28 @@ unsubscribe restores the saved SET policy. All processes exit zero, selected
 typed results agree and **12 captures were inspected**. This remains a
 constructed battle/input test, not a playthrough, matching-pixel or FPS claim.
 Native ChoiceBox positions differ; EXP-bar fallback and dev facade-import
-warnings remain separate work. See the [battle-style receipt](qa/battle-style.json).
+warnings were recorded separately. The latter are corrected below. See the
+[battle-style receipt](qa/battle-style.json).
+
+The dev-loader correction keeps engine-owned API and lazy storage
+construction outside mod import attribution. Actual private/network imports,
+returned mod initializers and declared permissions keep their normal behavior,
+including after an API-factory error. The cold real-loader test passes
+**19/19**, and **20** real serialized-manifest workers pass **380** checks:
+API 1/2 on the feature and API 1/2/3 on the composition, for Red, Gold,
+FireRed and Emerald host selections. These are fixture-backed API-construction
+checks, not complete gameplay acceptance for those editions.
+
+The original baseline fails five new assertions. Controls that disable the
+scanner or leak the engine depth after an error each fail three. All eleven
+old upstream suite failures and their 29 FAIL lines remain identical. A fresh
+native Red import runs the unchanged public battle-style consumer through
+FIGHT, actual SHIFT/SET choice and unsubscribe; all five false startup import
+warnings disappear and the selected typed outcomes match the previous runtime.
+The process exits zero, normal inputs stay unchanged and four captures were
+inspected. The independent audit initially rejected missing harness-coverage
+markers after `T.finish`; all twenty modes were rerun with the assertion and
+marker before process exit. See the [attribution receipt](qa/dev-api-attribution.json).
 
 Two merge boundaries retain both behaviors: `screen.render_visible` runs
 inside the native DS supersampling draw loop, and battle completion keeps

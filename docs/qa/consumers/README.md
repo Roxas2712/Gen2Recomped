@@ -100,3 +100,24 @@ are required. Three accepted runs have identical typed decisions/queue results;
 the images retain each engine's native UI placement. This is not a complete
 playthrough, artwork/pixel equality or FPS test. The formatted public driver
 has identical stripped LuaJIT bytecode to the executed original.
+
+
+## Cold dev-loader API modes
+
+`dev-api-attribution-modes.lua` runs the engine's real
+`tests/engine/mod_api_require_attribution.lua` with an API number, host-version
+key and fixture-root path. From a composed engine checkout:
+
+```sh
+luajit docs/qa/consumers/dev-api-attribution-modes.lua 3 red .
+```
+
+The standalone upstream feature supports API 1/2; API 3 needs the earlier
+shared API series in the composed branch. The harness parameterizes the six
+actual serialized mod manifests, keeps the production loader/dev shim intact,
+and checks coverage before the engine test's `T.finish` exits. All filesystem
+activity stays in memory. Run via a `qa_storage`-guarded launcher at nice 19.
+The public formatted driver has identical stripped LuaJIT bytecode to the
+executed original. See the [receipt](../dev-api-attribution.json) for exact
+host/API coverage, baseline failures, negative controls and native graphics
+confirmation. Native confirmation reuses `battle-style-native.lua` unchanged.
