@@ -5,8 +5,8 @@
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
   "engine_suites_passed": 292,
   "engine_suites_total": 292,
-  "sdk_suites_passed": 3,
-  "sdk_suites_total": 3,
+  "sdk_suites_passed": 4,
+  "sdk_suites_total": 4,
   "b30_profile": "passed",
   "cross_engine_worker_runs": 268,
   "cross_engine_paired_observations": 178264,
@@ -3199,7 +3199,7 @@
     "whole_waveform_parity": false,
     "normal_save_or_import_writes": false
   },
-  "latest_tool_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/309",
+  "latest_tool_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/311",
   "contract_observation_types": {
     "pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/309",
     "feature_ref": "a22815fc2631eb34b7d85bc1e002dfb3149a9ac3",
@@ -3220,5 +3220,108 @@
     "new_actual_native_cli_paired_observations": 12,
     "receipt": "docs/qa/typed-contract-integration.json",
     "hosted_ci": "ten action_required workflows; dedicated40305503119 has zero jobs"
+  },
+  "modkit_absolute_paths": {
+    "pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/311",
+    "feature_ref": "462409e3364054770a7d1bdaa573672f8dc2c2f1",
+    "qualified_combined_ref": "64df6df1b48e76aeca9ea657ca732efea4af3349",
+    "source_tree": "52e2e3ffc7e8f1145b0edffa16ca3713324bb8d2",
+    "engine_tests_tree": "a8bae142023263c92ed3a0c518c6d980cb194c1a",
+    "current_full_tests_tree": "c7c4197cdc65011e461c598a7d0a0171fe73fb24",
+    "targeted_checks_passed": 77,
+    "sdk_suites_passed": 4,
+    "sdk_suites_total": 4,
+    "old_adapter_failed_checks": 38,
+    "production_source_changed": false,
+    "upstream_base": "ed5189c247ee7a2ccca666784e21fd4fba8df781",
+    "upstream_update_integrated_into_playable": false,
+    "hosted_ci": "one ci workflow action_required; run40309930095 has zero jobs",
+    "combined_raw_log_sha256": {
+      "unchanged-parent-negative": "89fc784f47b2bb3117d26a664118f19c775e2216b8f4f4efd6ced4ad993e01a5",
+      "targeted": "fb390b46f87f629bf73e83515c6d60618d7cc50e7b8725c182300565221fd5a2",
+      "sdk": "fbbc5b6bf587b0e142ee65ca3ac832e3a551672e4d48d29db4d235506b71659c"
+    }
+  },
+  "real_mod_qol": {
+    "mod_id": "quality_of_life",
+    "mod_version": "1.2.2",
+    "mod_ref": "bea982afbc51452fda334e6d0111444a201ad1d7",
+    "mod_source_changed": false,
+    "manifest_api": 2,
+    "profile": "red",
+    "source_engine_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "original_host_ref": "d0cf8c533b6015d02a46e1a85bbbd6da1a3abb58",
+    "qualified_disk_host_ref": "64df6df1b48e76aeca9ea657ca732efea4af3349",
+    "unit_checks": {
+      "gen1": "199/200",
+      "gen2": "200/200"
+    },
+    "native_checks_per_engine": 7,
+    "original_native_observations": {
+      "gen1": {
+        "fieldFirst": "FLY",
+        "depth": 1,
+        "player": {
+          "x": 5,
+          "y": 6
+        },
+        "errors": 0,
+        "mapId": "PALLET_TOWN",
+        "banner": true
+      },
+      "gen2": {
+        "player": {
+          "y": 6,
+          "x": 5
+        },
+        "depth": 1,
+        "mapId": "PALLET_TOWN",
+        "errors": 0,
+        "banner": true,
+        "fieldFirst": "FLY"
+      }
+    },
+    "disk_host_observation": {
+      "errors": 0,
+      "depth": 1,
+      "player": {
+        "y": 6,
+        "x": 5
+      },
+      "mapId": "PALLET_TOWN",
+      "banner": true,
+      "fieldFirst": "FLY"
+    },
+    "typed_json_equal": true,
+    "mod_files_sha256": {
+      ".github/workflows/release.yml": "b9468d547a760a8cfda9b6f7b4fda4d7feb1f056609c4892c4b54f413389de63",
+      ".gitignore": "3967ba6a2ae3ebaa544ac87c31e0b8d68f7791c60337f056c8ad606fb41541ab",
+      "CHANGELOG.md": "0a5956c4df12d838e2f15143a70afcb5a06fe58841bbcdd78fc27e6f874cad9e",
+      "README.md": "12fe25ee7c8fb85f7dac8119898ca69852f434ac9763c7875c3b43dae428716e",
+      "images/battle.gif": "052da65444e0718013e435e547d2b1c3c313d822251c812259545b9e3862ad18",
+      "images/battle_normal.gif": "d21de597902e271e2ced1a3fd66804ea62a25602ecb652ced1b63ee7d84c894c",
+      "images/battle_wide.gif": "fe68f5d99a6314aaa2ceddbd82ab9d4e600b606a9b96c704b4a7fb64ea3f3981",
+      "images/cover.png": "bd546a35d23c51dba093c02ccc33b13600e1973b3f80ccdafa9824395c244720",
+      "images/menu.gif": "4644601d00c6be1ec18e5aa0c990176f8f25300e6b9b38bed75d2286f6de293f",
+      "images/qol_easy_interactions.gif": "d64bf4cd8cb700174a9eace23377e7802958a2ecaf930f8e15449d7081d71cb3",
+      "images/qol_location_banners.gif": "28fce6f7aac9523a9e0ce82147808df3876c1e52db80c37b601419102d6fbfc9",
+      "main.lua": "b490c8c20195576a4e929e63fb4baec91fbd26164264e61c8031e6dbd2993839",
+      "manifest.json": "3ec5f53a065f5a38ff2280a9736eb80054a5ac00f09ebed22d59d6a372054321",
+      "qol_battle_overlays.lua": "adf20e55927c15c1423feca51e8266c45274c4cf4ecc1c4f1f89a75e7634a4b3",
+      "qol_controller_compat.lua": "77480181d7fa618c264e683e94466552038e2dae546ce8404f9842eb85ac682f",
+      "qol_feature_caught_indicator.lua": "16f51e371f636de5253ebf27a0df7ca8885206c2366ce53133cc67ec9237280c",
+      "qol_feature_easy_interactions.lua": "6e8d501b8a9e0c25e3c8f2061724396545e005164b599afcb0af03ee83be02b2",
+      "qol_feature_location_banners.lua": "d6603c9bb41ee9bef63bafbfc4097464c651148175e25c998cf28e66d1e86a58",
+      "qol_feature_xp_bar.lua": "6e73fb84b9a178b4e334edefe38af80272ef71a088319df9ebe2e4f81578c833",
+      "qol_options.lua": "7c955a4e0365f4e45d3266cdbf07797db2b2e5c9468c3451a44c629305c0dcfd",
+      "tests/quality_of_life_test.lua": "3fc8562849f2f483d838ca7006bfd6287ef04a4637d82f47f40c79c689c7d0b7",
+      "transforms.lua": "a98eeb4d94eb4375a9fd411c966ffc411e2a26aa1013d011162e5ee12e370b5b"
+    },
+    "data_and_art_read_only_and_unchanged": true,
+    "hardware": "love_stub; generated PNG dimensions only; explicit rectangle-glyph capability on both engines",
+    "unit_known_difference": "Gen1 Menu defaults to noWrap for generation 1; the unchanged mod suite assumes UP wraps to CANCEL.",
+    "disk_log_sha256": "ee86007a4de5555f1cfd2261c971b6d5f3c5d54af5e9b98e108ef15f698d104e",
+    "scope": "Unchanged Red-targeted API-2 mod under both engines. Selected production world/map/START/SELECT/menu/drawUI paths. Suite world/input/battle doubles remain in unit results. No Gold/other-generation, whole-battle, real GPU/audio-device or full-playthrough claim.",
+    "source_url": "https://github.com/unxpected-uxp/pokemon-gen1-recomp-mod-qol/tree/bea982afbc51452fda334e6d0111444a201ad1d7"
   }
 }

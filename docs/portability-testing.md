@@ -3,7 +3,7 @@
 The fork's `codex/portability-testing` branch combines the selected public
 API, native hook, rendering, shader and baseline-test portability series,
 now including native cries (#289), native music/fanfare commands (#308)
-and Boolean-aware contract comparisons (#309).
+and Boolean-aware contract comparisons (#309), plus absolute SDK mod paths (#311).
 Historical PR-specific acceptance remains below; unrelated #138 and
 cartridge-support work from other branches remain separate. This branch is
 for testing combined changes before upstream reviews and merges individual
@@ -76,6 +76,51 @@ qualification above. The complete test tree adds only
 All ten #309 hosted workflows also await maintainer approval; its
 [dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40305503119)
 has zero jobs.
+
+## Unchanged QoL mod and SDK path acceptance
+
+[PR #311](https://github.com/UNDERdecoded/Gen2Recomped/pull/311) fixes absolute
+mod-directory resolution in the test SDK. An empty zero-error discovery no
+longer satisfies the new regression: its real disk fixture must execute,
+read its payload and merge its content. Both the standalone feature and this
+combined fork pass **77/77 checks** and **4/4 SDK suites**; the old adapter
+fails 38 targeted checks. Windows path policies use doubles; real filesystem
+checks ran on macOS. The feature's separate legacy developer-tooling suite
+retains three exact parent failures (126/129 on both), recorded in
+[the tooling receipt](qa/modkit-filesystem-paths.json).
+
+The unmodified [Quality of Life mod by unxpected-uxp](https://github.com/unxpected-uxp/pokemon-gen1-recomp-mod-qol/tree/bea982afbc51452fda334e6d0111444a201ad1d7),
+version 1.2.2, pinned at
+`bea982afbc51452fda334e6d0111444a201ad1d7`, passes **200/200** of its own
+checks on the pre-path-fix combined source. Unchanged Gen1 at
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91` passes **199/200**: the mod suite
+expects UP to wrap to CANCEL, whereas the reference's Gen-1 menu defaults
+to no wrapping. No Gen1 or mod source was changed for this difference.
+These unit results retain the mod suite's own world/input/battle doubles.
+
+Separate production-controller probes pass **7/7 on each engine**, with an
+identical typed observation. They use actual imported Red tables and art
+sizes, native map entry and its banner event/drawUI, real input dispatch,
+START opening/closing, and the mod's SELECT field-action popup/cancel with
+ordinary HM badge eligibility. The corrected combined SDK then repeats this
+probe by loading the unchanged mod from its absolute disk directory, rather
+than the earlier memory filesystem. Source, imported data and art hashes
+remain unchanged. These are Red-profile API-2 checks on both engines, not a
+claim that this Red-targeted mod supports Gold or other generations.
+Graphics remain hardware doubles; whole-mod battles, devices and complete
+playthroughs are still open.
+
+The path-fix combined ref is `64df6df1b48e76aeca9ea657ca732efea4af3349`.
+Production source and `tests/engine` retain the native qualification above;
+292 engine suites were not rerun for this test-adapter change. See the
+[composed real-mod receipt](qa/qol-portability-and-sdk-paths.json).
+The single #311 [hosted CI run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40309930095)
+requires maintainer approval and has zero jobs.
+
+The standalone #311 feature is based on upstream `ed5189c2`. That new upstream
+update has not been merged into this playable branch; this branch continues
+to qualify the previously composed runtime while that larger integration
+is assessed separately.
 
 ## Historical #258 acceptance
 
