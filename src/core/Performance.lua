@@ -83,6 +83,10 @@ for name, caps in pairs(Performance.CAPS) do
   caps.gen3PaletteCycle = name=="low" and "quarter" or "full"
   caps.reflections = name~="low"
   caps.discordPresence = name~="low"
+  -- G6: the Gen 4 free-camera supersample a tier may ask for (RENDER_SCALES
+  -- index).  x3 / x4 is nine to sixteen times the fill of the logical view;
+  -- a phone or handheld cannot pay that, whatever the OPTIONS row says.
+  caps.gen4RenderScaleMax = (name == "high" and 4) or (name == "balanced" and 2) or 1
   caps.gcPause = Performance.GC_PAUSE
   caps.gcStepMul = Performance.GC_STEP_MUL
   caps.gcBudgetSeconds = Performance.GC_BUDGET_SECONDS
