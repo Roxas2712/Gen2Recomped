@@ -60,10 +60,7 @@ function R.resolve(data,channel,map,tod)
     local _,id=R.channelRecord(data,channel)
     if id then return id end
   else
-    local maps=data and data.maps or {}
-    local pallet=maps.PALLET_TOWN
-    local boundary=tonumber(pallet and pallet.landmark)
-      or (require("src.core.GameVersion").get()=="crystal" and 0x2f or 0x2e)
+    local boundary=require("src.world.Gen2Landmarks").kantoStart(data)
     if tonumber(map and map.landmark) and tonumber(map.landmark)>=boundary then
       return R.stationName(data,"PLACES_AND_PEOPLE") and "PLACES_AND_PEOPLE"
     end

@@ -40,7 +40,6 @@ end
 -- record carries the landmark id it belongs to. Gold/Silver's fallback
 -- boundary is $2e; Crystal inserts the Battle Tower and starts Kanto at $2f.
 -- Prefer the active cartridge's imported Pallet header below.
-local GEN2_KANTO_FIRST = 0x2E
 
 local function gen2Locations(game)
   local tm = (game.data.field or {}).townMap
@@ -50,11 +49,7 @@ local function gen2Locations(game)
   -- Crystal inserts the Battle Tower landmark before Silver Cave. The
   -- native Pallet header is the first Kanto landmark on the active cartridge;
   -- the old Gold-only $2e boundary misclassified Crystal's Silver Cave.
-  local kantoFirst = GEN2_KANTO_FIRST
-  if require("src.world.Gen2Fly").supported() then
-    local pallet = game.data.maps and game.data.maps.PALLET_TOWN
-    kantoFirst = tonumber(pallet and pallet.landmark) or kantoFirst
-  end
+  local kantoFirst = require("src.world.Gen2Landmarks").kantoStart(game.data)
   local byLandmark, locs = {}, {}
   for id, e in pairs(tm.landmarks) do
     local x, y = tonumber(e and e.x), tonumber(e and e.y)
