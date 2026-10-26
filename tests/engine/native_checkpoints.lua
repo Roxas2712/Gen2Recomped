@@ -184,6 +184,19 @@ for _, version in ipairs({ "red", "gold" }) do
 		T.eq(randomState, "checkpoint-rng-A", "failed reconstruction restores RNG")
 		T.eq(#exports.events, 1, "rollback emits no committed event")
 
+		local npc = assert(World.npcs[1])
+		local originalWanders = npc.wanders
+		npc.wanders = true
+		T.eq(checkpoints:inspect(Game).reason, "unsupported_actor_runtime", "dynamic native actors fail closed")
+		npc.wanders = originalWanders
+		local originalX = npc.cellX
+		npc.cellX = originalX + 1
+		T.eq(
+			checkpoints:inspect(Game).reason,
+			"unsupported_actor_runtime",
+			"scripted NPC placement is not silently discarded"
+		)
+		npc.cellX = originalX
 		World.player.moving = true
 		T.eq(checkpoints:inspect(Game).reason, "movement_busy", "movement cannot be checkpointed")
 		World.player.moving = false
