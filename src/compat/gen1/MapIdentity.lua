@@ -47,9 +47,29 @@ function Identity.bind(maps, edition)
   assert(type(maps) == "table", "map identity binding needs data.maps")
   assert(index(edition), "unsupported Gen1 map edition")
   local native, ambiguous = {}, {}
+  local function equal(a,b,seen,top)
+    if a==b then return true end
+    if type(a)~='table'or type(b)~='table'then return false end
+    seen=seen or{};if seen[a]==b then return true end;seen[a]=b
+    for k,v in pairs(a)do
+      if not(top and(k=='id'or k=='sourceId'))and not equal(v,b[k],seen)then return false end
+    end
+    for k,v in pairs(b)do
+      if not(top and(k=='id'or k=='sourceId'))and a[k]==nil then return false end
+    end
+    return true
+  end
+  local function generatedAlias(key,def)
+    local source=def.sourceId;local original=type(source)=='string'and maps[source]
+    return type(original)=='table'and original~=def and original.id==source and def.id==key
+      and require('src.core.MapIdentity').normalize(source)==key and equal(def,original,nil,true)
+  end
   for key, def in pairs(maps) do
     local s = type(def) == "table" and slot(def.group, def.number)
-    if s and type(key) == "string" then
+    -- Data's generic spelling aliases are shallow copies with sourceId.
+    -- Only an unchanged, correctly spelled copy is an alias, not a second
+    -- cartridge room. Authored variants continue to make the slot ambiguous.
+    if s and type(key) == "string" and not generatedAlias(key,def) then
       local prior = native[s]
       if prior and prior.def ~= def then ambiguous[s] = true
       elseif not prior or key == def.id then native[s] = { key = key, def = def } end
