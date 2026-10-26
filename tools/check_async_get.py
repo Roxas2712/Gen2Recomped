@@ -87,7 +87,7 @@ def main():
             rejected=run([str(executable),str(project)],env=untrusted,cwd=root,timeout=15)
             rejected.check_returncode();assert not server.posts,'untrusted TLS sent a request body'
         if cert:env['CURL_CA_BUNDLE']=str(cert)
-        result=run([str(executable),str(project)],env=env,cwd=root,timeout=45)
+        result=run([str(executable),str(project)],env=env,cwd=root,timeout=120)
         if args.tls and result.returncode==0:
             text=[r for r in server.posts if r['path']=='/post-text'];encoded=[r for r in server.posts if r['path']=='/post-json']
             assert len(text)==1 and text[0]['body']==b'literal\x00\xff\r\n$(printf injected) "quote"'

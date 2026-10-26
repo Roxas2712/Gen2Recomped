@@ -246,7 +246,12 @@ function G._invokeEvent(owner,name,callback,payload)
 end
 function G._invokeHook(owner,callback,nextFn,...)
   local native,view=callbackGame(owner)
-  if not view then return G._withCallbackOwner(owner,callback,nextFn,...)end
+  if not view then
+    -- Native callback handles stay native. Only resource attribution changes;
+    -- downstream native work must execute outside this mod's ownership scope.
+    local function nextNative(...)return G._withCallbackOwner(nil,nextFn,...)end
+    return G._withCallbackOwner(owner,callback,nextNative,...)
+  end
   local function public(values)
     for i=1,values.n do if values[i]==native then values[i]=view end end
     return values
