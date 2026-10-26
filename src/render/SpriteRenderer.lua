@@ -60,7 +60,8 @@ local function getObpImage(path, colors, group)
       -- the per-pixel loop below is the fallback and the definition.  The
       -- pass only reads, so it takes the shared decode; the loop writes
       -- into its input and takes a fresh one.
-      local baked = ShadeRecolour.whole(Assets.imageDataShared(path), colors, "obp")
+      local baked = ShadeRecolour.available()
+        and ShadeRecolour.whole(Assets.imageDataShared(path), colors, "obp")
       if baked then
         img = love.graphics.newImage(baked)
         if baked.release then baked:release() end

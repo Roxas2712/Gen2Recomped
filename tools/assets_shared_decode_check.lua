@@ -14,7 +14,8 @@ local decodes = 0
 love.image = love.image or {}
 function love.image.newImageData(a, b)
   decodes = decodes + 1
-  return { id = decodes, getDimensions = function() return 8, 8 end, getWidth = function() return 8 end, getHeight = function() return 8 end }
+  return { id = decodes, getDimensions = function() return 8, 8 end, getWidth = function() return 8 end, getHeight = function() return 8 end,
+    mapPixel=function(self)self.written=true end }
 end
 
 local PASS, FAIL = 0, 0
@@ -35,6 +36,27 @@ check(f1 ~= f2 and f1 ~= a1, 'imageData stays fresh per call and never hands out
 Assets.invalidate()
 local a3 = Assets.imageDataShared('assets/generated/tilesets/probe.png')
 check(a3 ~= a1, 'invalidate drops the shared decode with the image cache')
+local Performance=require('src.core.Performance')
+Performance.assetSharedDecode=false
+local off1=Assets.imageDataShared('assets/generated/tilesets/probe.png')
+local off2=Assets.imageDataShared('assets/generated/tilesets/probe.png')
+check(off1~=off2 and off1~=a3,'disabled sharing bypasses a warmed decode')
+Performance.assetSharedDecode=true
+local on=Assets.imageDataShared('assets/generated/tilesets/probe.png')
+check(on~=a3 and on~=off1 and on~=off2,'re-enabling does not revive stale decoded data')
+check(Assets.imageDataShared('assets/generated/tilesets/probe.png')==on,'re-enabled sharing reuses the new decode')
+do
+  local S=require('src.render.SpriteRenderer')
+  local oldImage=love.graphics.newImage
+  love.graphics.newImage=function(data)return {data=data}end
+  local oldFlag=Performance.shadeRecolourFfi
+  Performance.shadeRecolourFfi=false
+  local before=decodes
+  local image=S.obpImage('assets/generated/sprites/fresh-probe.png',{{255,255,255},{170,170,170},{85,85,85},{0,0,0}},'fresh-probe')
+  check(image and image.data.written,'disabled FFI executes the original in-place pixel bake')
+  check(decodes==before+1,'disabled FFI decodes once without an unused shared read')
+  Performance.shadeRecolourFfi=oldFlag;love.graphics.newImage=oldImage
+end
 
 local tr = assert(io.open('src/render/TileRenderer.lua')):read('*a')
 local sr = assert(io.open('src/render/SpriteRenderer.lua')):read('*a')

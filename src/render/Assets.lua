@@ -147,6 +147,10 @@ end
 -- gets back; it may copy from it.  Cleared with the image cache.
 local dataCache = {}
 function Assets.imageDataShared(path)
+  if Performance.assetSharedDecode == false then
+    if next(dataCache) then dataCache = {} end
+    return Assets.imageData(path)
+  end
   local resolved = Assets.resolve(path)
   local data = dataCache[resolved]
   if data then return data end

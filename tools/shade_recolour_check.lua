@@ -173,7 +173,9 @@ end
 do
   local tr = assert(io.open('src/render/TileRenderer.lua')):read('*a')
   local sr = assert(io.open('src/render/SpriteRenderer.lua')):read('*a')
-  check(sr:find('local baked = ShadeRecolour.whole(id, colors, "obp")', 1, true) ~= nil, 'OBP sprite variants take the FFI pass')
+  check(sr:find('ShadeRecolour.whole(id, colors, "obp")', 1, true) ~= nil
+    or sr:find('ShadeRecolour.whole(Assets.imageDataShared(path), colors, "obp")', 1, true) ~= nil,
+    'OBP sprite variants take the FFI pass from a fresh or shared source')
   check(sr:find('id:mapPixel(function(_, _, r, g, b, a)', 1, true) ~= nil, 'and keep mapPixel as the fallback')
   check(tr:find('local v = ShadeRecolour.shiftedTile(id, sx, sy, o, colors)', 1, true) ~= nil, 'water shifts take the FFI pass')
   check(tr:find('local out2 = ShadeRecolour.whole(id, colors, "tile")', 1, true) ~= nil, 'animation frames take it')
