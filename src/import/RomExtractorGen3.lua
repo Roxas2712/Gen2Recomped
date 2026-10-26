@@ -55,7 +55,7 @@ RomExtractorGen3.__index = RomExtractorGen3
 -- The progress denominator.  Kept honest with the two stage lists below: a
 -- mismatch does not break anything, it just makes the bar lie, which is the
 -- kind of small wrongness that survives for months.
-local STAGE_COUNT = 95
+local STAGE_COUNT -- assigned from the completed stage lists below
 
 -- ---------------------------------------------------------------------------
 -- The stage tables below are keyed to Emerald's ROM.  A sibling cartridge
@@ -10064,6 +10064,12 @@ function RomExtractorGen3:extractTrainerSprites()
     if not ok then Logger.warn("gen3 trainer pic %d failed", i) end
   end
 
+  -- Retain the native numeric portrait catalogue for presentation consumers.
+  local constants=self._constants or{}
+  constants.gen3TrainerFront=pathFor
+  self._constants=constants
+  self:write("constants",constants)
+
   -- ...AND THE PATH ONTO EVERY TRAINER ROW.
   --
   -- `pic` is a PATH in this engine: BattleState.trainerPicPath hands it
@@ -12152,6 +12158,14 @@ end
 
 function RomExtractorGen3:extractFieldEffects()
   self:beginStage("Gen3 field effects")
+  local ok,digest=pcall(require('src.import.RomVerification').sha1,self.rom.data)
+  local edition=type(self.version)=='table'and self.version.id or self.version
+  local artwork,why=require('src.import.Gen3FieldMoveArt').extract(self.rom,self.manifest,ok and digest or nil,edition,self.checkpoint)
+  local constants=self._constants or{}
+  constants.gen3FieldMovePresentation=artwork
+  self._constants=constants
+  if not artwork then Logger.warn('gen3 field move artwork unavailable: %s',tostring(why))end
+  self:write('constants',constants)
   local heal, howMany, distinct = self:fieldEffectRoles()
   if not heal or howMany ~= 1 then
     Logger.warn("gen3 field effects: %d of the region's %d effect ids sit in "
@@ -32895,7 +32909,17 @@ function RomExtractorGen3:extractBattleWindows()
   end
 
   local constants = self._constants or {}
+  -- Keep additional genuine templates from the identified array. A terminator
+  -- or an invalid row stops the scan; absent windows are never fabricated.
+  local templates={}
+  for id=0,14 do
+    local r=rec(found[0].at+id*8)
+    if not r or r.bg>3 or r.pal>15 or r.left>31 or r.top>63
+       or r.w>30 or r.h>20 then break end
+    templates[id+1]=win(r)
+  end
   constants.gen3BattleWindows = {
+    templates=templates,
     message = win(found[0]),
     prompt = win(found[1]),
     action = win(found[2]),
@@ -34849,12 +34873,9 @@ end
 -- twentieth of a second and four seconds long.  A run of pointers into music
 -- would fail that immediately.
 --
--- WHICH SPECIES GETS WHICH is arithmetic, not a table: the cartridge's
--- species list has twenty-five dead slots in the middle of it (the same ones
--- the animation stage finds), and the cries are numbered over the species
--- that are really there.  So a species' cry is its position among the REAL
--- species -- and the dead slots, which the game can still be made to ask
--- about, borrow UNOWN's.
+-- The native species-to-cry control table reorders all Hoenn species. It is
+-- not the species' position after removing old Unown slots. The verified
+-- native mapping also gives the old Unown slots their shared recording.
 -- ---------------------------------------------------------------------------
 
 local GEN3_CRY_STRIDE = 12
@@ -34946,28 +34967,17 @@ function RomExtractorGen3:extractCries()
   end
   local found = pairs_[1]
 
-  -- which species are really there: the dead slots have no cry of their own
-  local hole = {}
-  for i = GEN3_ANIM_HOLE_FIRST, GEN3_ANIM_HOLE_LAST do hole[i] = true end
-
   local cries, written, longest = {}, 0, 0
-  local cryId, unownId = 0, nil
+  local CrySpecies = require("src.core.NativeCrySpecies")
   for i, id in ipairs(order) do
-    if not hole[i] then
-      if id == "UNOWN" then unownId = cryId end
+    local cryId = CrySpecies.index(i)
+    if cryId and cryId < found.count then
       local _, seconds = sampleAt(found.at + cryId * GEN3_CRY_STRIDE)
-      if cryId < found.count and seconds then
+      if seconds then
         cries[id] = { m4a = cryId, seconds = seconds }
         written = written + 1
         if seconds > longest then longest = seconds end
       end
-      cryId = cryId + 1
-    end
-  end
-  -- the dead slots borrow UNOWN's, which is what the cartridge does with them
-  if unownId then
-    for i, id in ipairs(order) do
-      if hole[i] and not cries[id] then cries[id] = { m4a = unownId } end
     end
   end
 
@@ -34983,6 +34993,7 @@ function RomExtractorGen3:extractCries()
     reverse = found.reverse,
     count = found.count,
     species = written,
+    mapping = "native-species-v1",
     source = ("ROM:%07X and its mirror at %07X, %d cries")
              :format(found.at, found.reverse, found.count),
   }
@@ -59158,7 +59169,7 @@ end
 RomExtractorGen3.ASSET_STAGES = {
   "extractAudioImage", "extractFanfares",
   "extractSongNames", "extractSfxNames", "extractEncounterMusic",
-  "extractSprites", "extractTrainerSprites", "extractIntroSprites",
+  "extractSprites", "extractSubstituteArt", "extractTrainerSprites", "extractIntroSprites",
   "extractMonIcons", "extractBattleBackgrounds", "extractBattleScenes",
   "extractSummaryScreen",
   "extractPlayerBackPic",
@@ -59199,6 +59210,14 @@ RomExtractorGen3.ASSET_STAGES = {
   "extractTradeScene",
   "extractSummaryPresentation",
 }
+
+STAGE_COUNT = #RomExtractorGen3.DATA_STAGES + #RomExtractorGen3.ASSET_STAGES
+
+function RomExtractorGen3:extractSubstituteArt()
+  self:beginStage("Gen3 Substitute art")
+  local record, why = require("src.import.Gen3SubstituteArt").extract(self)
+  if not record then Logger.warn("gen3: %s", why) end
+end
 
 -- STAGE: the in-game trade sequence's art -- the wireless GBA, the signal
 -- rings, the platform, the balls, the link mon and every palette and table

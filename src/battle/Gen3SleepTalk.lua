@@ -83,11 +83,9 @@ function S.pick(ctx)
     return
   end
   local pool = {}
-  for slot, inst in ipairs(user.curMoves or user.mon.moves or {}) do
-    if slot > 4 then
-      break
-    end
-    local move = ctx.data.moves[inst.id]
+  for slot = 1, 4 do
+    local inst = (user.curMoves or user.mon.moves or {})[slot]
+    local move = inst and ctx.data.moves[inst.id]
     local n = number(move)
     if
       move
@@ -107,32 +105,7 @@ function S.pick(ctx)
   return pool[ctx.rng(1, #pool)]
 end
 function S.call(ctx, pick)
-  local b, user = ctx.battle, ctx.user
-  local move = ctx.data.moves[pick]
-  if not move then
-    return
-  end
-  local targets
-  if b:isDouble() and tonumber(move.target) == 32 then
-    -- The native all-other-battlers script uses controller slot order,
-    -- independent of speed and the generic foes-then-ally convenience list.
-    targets = {}
-    local order = b.linkRole == "guest" and { 1, 0, 3, 2 } or { 0, 1, 2, 3 }
-    for _, id in ipairs(order) do
-      local target = b:battlerAt(id)
-      if target and target ~= user and target.mon.hp > 0 then
-        targets[#targets + 1] = target
-      end
-    end
-  elseif b:isDouble() then
-    targets = require("src.battle.Gen3Encore").targets(b, user, move)
-  else
-    targets = { tonumber(move.target) == 16 and user or b:defaultTargetFor(user) }
-  end
-  for i, target in ipairs(targets) do
-    b:performMove(user, target, { id = pick, pp = 1 }, true, i > 1, i > 1)
-  end
-  user.lastMove = ctx.move.id
+  return require("src.battle.Gen3CalledMove").call(ctx, pick)
 end
 function S.run(ctx)
   if ctx.user.mon.status == "SLP" then

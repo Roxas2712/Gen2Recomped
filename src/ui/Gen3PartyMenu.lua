@@ -901,6 +901,9 @@ function Gen3PartyMenu:handOff(mon)
 end
 
 function Gen3PartyMenu:runAction(action, mon, row)
+  if action=='source_field_move'then
+    return require('src.ui.game3.party_menu')._fieldAction(self,mon,row)
+  end
   self.submenu = nil
   -- Handle hook-injected entries with onSelect callbacks
   if not action and row and row.onSelect then
@@ -1067,6 +1070,11 @@ function Gen3PartyMenu:gridNavigation()
 end
 
 function Gen3PartyMenu:update(dt)
+  local source=package.loaded['src.ui.game3.party_menu']
+  if source then return source._dispatch(self,dt,function()return self:_updateBody(dt)end)end
+  return self:_updateBody(dt)
+end
+function Gen3PartyMenu:_updateBody(dt)
   if self.onUpdate then self.onUpdate(self); if self.closed then return end end
   -- RECONSTRUCTED: every icon bounces, all the time, on the same beat.  On
   -- the cartridge each one is an OBJ with its own callback; here it is one
@@ -1094,6 +1102,11 @@ function Gen3PartyMenu:update(dt)
   self.scriptTick = (self.scriptTick or 0) + 1
   if self.script then self.script(self) end
   if self.noInput then return end
+  local source=package.loaded['src.ui.game3.party_menu']
+  if source then return source._input(self,function()return self:_inputBody()end)end
+  return self:_inputBody()
+end
+function Gen3PartyMenu:_inputBody()
   local input = self.game.input
 
   -- the pick's own submenu takes the stick while it is up

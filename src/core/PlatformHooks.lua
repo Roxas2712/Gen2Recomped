@@ -13,4 +13,8 @@ function PlatformHooks.update(game, dt)
   return Runtime.call("core.update", vanillaUpdate, game, dt)
 end
 
+function PlatformHooks.quitToLauncher(vanilla)
+  return Runtime.call("core.quit_to_launcher", vanilla)
+end
+
 return PlatformHooks

@@ -9,6 +9,7 @@ local ScriptMap=require('src.compat.gen1.ScriptMap')
 local Iteration=require('src.compat.gen1.TableIteration')
 local M={}
 local records=setmetatable({},{__mode='k'})
+local stores=setmetatable({},{__mode='k'})
 local function finite(n)return type(n)=='number'and n==n and math.abs(n)<math.huge end
 function M.seconds(save)
   local value=save and save.playTime
@@ -29,13 +30,16 @@ function M.new(game)
   local scripts=assert(ScriptStore.new(owner))
   local flags,vars=ScriptMap.new(scripts,'flags'),ScriptMap.new(scripts,'vars')
   local view={}
+  local bag,dex,party={},{},{}
+  stores[bag]={record=record,kind='bag'};stores[dex]={record=record,kind='dex'}
   function record:valid()
     if self.retired then return false end
     if not scripts:valid()or Version.get()~=edition or owner.data~=data or owner.save~=save or data.maps~=self.maps then
-      self.retired=true;scripts:release();return false
+      self.retired=true;scripts:release();if self.mons then self.mons:release()end;return false
     end
     return true
   end
+  record.mons=require('src.compat.gen1.PokemonView').new(owner,function()return record:valid()end)
   function record:seconds()return M.seconds(save)end
   function record:world()
     if not self:valid()then return end
@@ -57,6 +61,19 @@ function M.new(game)
       if key=='flags'then return flags end
       if key=='vars'then return vars end
       if key=='engine'then return 'game3'end
+      if key=='bag'then return bag end
+      if key=='dex'then return dex end
+      if key=='party'then
+        local count=#(save.party or{})
+        for i,m in ipairs(save.party or{})do party[i]=record.mons:view(m)end
+        for i=#party,count+1,-1 do party[i]=nil end
+        return party
+      end
+      if key=='secretId'then return player.secretId or player.sid or 0 end
+      if key=='safari'then
+        local out;if save.safari then out={};for k,v in pairs(save.safari)do if type(v)~='table'then out[k]=v end end end
+        return out
+      end
       if key=='map'then return record:map()end
       if key=='x'or key=='y'then return actor and actor[key=='x'and'cellX'or'cellY']or player[key]end
       if key=='facing'then return actor and actor.facing or player.facing end
@@ -98,7 +115,7 @@ function M.new(game)
         assert(player and finite(value)and value>=0 and value<=65535 and value%1==0,'invalid native trainer id');player.id=value
       elseif key=='biking'then
         assert(type(value)=='boolean','invalid bike state');save.onBike=value
-      elseif key=='map'or key=='x'or key=='y'or key=='facing'or key=='elevation'or key=='surfing'
+      elseif key=='party'or key=='bag'or key=='dex'or key=='secretId'or key=='safari'or key=='map'or key=='x'or key=='y'or key=='facing'or key=='elevation'or key=='surfing'
           or key=='version'or key=='generation'or key=='engine'or key=='options'or key=='modData'or key=='meta'
           or key=='playTime'or key=='playtime'or key=='hours'or key=='minutes'or key=='seconds'
           or key=='playTimeHours'or key=='playTimeMinutes'or key=='playTimeSeconds'then
@@ -112,7 +129,7 @@ function M.new(game)
   })
   record.scripts=scripts
   local fields={'version','generation','engine','map','x','y','facing','name','rivalName','trainerId','gender',
-    'money','coins','modData','meta','options','biking','bikeType','surfing','underwater','elevation',
+    'party','bag','dex','secretId','safari','money','coins','modData','meta','options','biking','bikeType','surfing','underwater','elevation',
     'playTime','flags','vars'}
   Iteration.register(view,function(state,source)
     assert(state:valid(),'native session view retired')
@@ -136,6 +153,11 @@ end
 function M.record(view)return records[view]end
 function M.release(view)
   local record=records[view]
-  if record then record.retired=true;record.scripts:release()end
+  if record then record.retired=true;record.scripts:release();if record.mons then record.mons:release()end end
 end
+function M.store(value,kind)
+  local entry=stores[value]
+  if entry and entry.kind==kind and entry.record:valid()then return entry.record.owner,entry.record.save end
+end
+
 return M

@@ -59,6 +59,22 @@ game launch. The accepted imports match all 425 FireRed and 518 Emerald maps,
 with zero unknown slots. This is an imported-record check, not a live warp,
 renderer, collision or player-save test. Use fresh QA identities for gameplay.
 
+## Gen 2 script.command context
+
+A mod on the decoded callback profile that wraps `script.command` under Gold,
+Silver or Crystal receives the context fields the reference host's Gen 2 VM
+publishes (`src/script/gen2/Vm.lua:scriptCtx` at `535a5ec`): `generation`
+(2), `mapGroup` / `mapNumber` (from the native map definition), `mapId` (the
+world label, as the reference host reports with `hooks.mapId`), `object` (the
+1-based map object index of the NPC the run hangs off, hLastTalked), `kind`
+(`"script"`, or `"callback"` for a MAPCALLBACK run) and `scriptKey` (the
+`"<bank>:<addr>"` pool key the run compiled from). `src/mods/DecodedCallbacks.lua`
+derives them read-only from the native run; a value the native context already
+carries is never shadowed, and nothing is written back. `vm` is not provided:
+it is a reference-host internal no gallery mod reads. The hand-transcription
+row extras `stay` / `hold` are not cart data and are not synthesised.
+`tests/engine/decoded_script_profile.lua` covers the contract.
+
 ## Remaining boundaries
 
 The next map boundary must preserve current-map ownership, layout cells and

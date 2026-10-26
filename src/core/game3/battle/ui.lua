@@ -38,9 +38,7 @@ local function draw(w,h)
   local bw,bh=screen:uiSize()
   if w~=nil and w~=bw or h~=nil and h~=bh then return false,'UI capture must use the native battle surface'end
   if Boundary.active('battle.ui.draw')then return Boundary.invoke('battle.ui.draw')end
-  local ok,result=Scope.call(screen._drawNative,screen)
-  if not ok then error(result,0)end
-  return true
+  return Battle._captureNative(screen)
 end
 Ui.draw=draw
 function Ui._nativeDraw(screen,body)

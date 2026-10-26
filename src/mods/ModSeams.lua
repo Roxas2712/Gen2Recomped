@@ -120,10 +120,14 @@ function ModSeams.open(owner)
     local function require2(name, ...)
       local had = package.loaded[name]
       local result = real(name, ...)
+      if name=='src.core.game3.field_move_show_mon'and type(result)=='table'and result._observeMod then
+        result._observeMod(owner)
+      end
       -- Importing the distinct GBA game/runtime namespace declares that
       -- this owner's game-bearing callbacks use that facade. No manifest
       -- rewrite or mod-id-specific conversion is needed.
-      if name == 'src.core.Game3' or name == 'src.core.game3.runtime' then
+      if name == 'src.core.Game3' or name == 'src.core.game3.runtime' or name == 'src.core.game3.battle' or name == 'src.core.game3.battle_bridge'
+          or type(name)=='string' and name:match('^src%.core%.game3%.battle%.') then
         local facade = package.loaded['src.core.Game3'] or real('src.core.Game3')
         if facade and facade._observeMod then facade._observeMod(owner) end
         if type(facade)=='table' and not seen[facade] and not fresh[facade] then

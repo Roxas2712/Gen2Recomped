@@ -6,6 +6,8 @@ local M = {}
 local nativeViews = setmetatable({}, { __mode = "k" })
 local publicReferences = setmetatable({}, { __mode = "k" })
 local slots = setmetatable({}, { __mode = "k" })
+local pendingSelections = setmetatable({}, { __mode = "k" })
+local portableViews = setmetatable({}, { __mode = "k" })
 local function shallow(row)
   local out = {}
   for k, v in pairs(row) do
@@ -61,6 +63,7 @@ local function resolve(data, ref)
   end
   return found, row
 end
+M.resolveMove = resolve
 local function bind(action, slot)
   slots[action] = slot
   action.pp = nil
@@ -82,20 +85,40 @@ end
 function M.slot(action)
   return slots[action] or action
 end
-function M.withMove(action, id)
+function M.withMove(action, id, forcedSlot, forcedIndex)
   local copy = shallow(action)
   copy.id = id
   if nativeViews[action] then
     nativeViews[copy] = shallow(nativeViews[action])
+    if forcedIndex then
+      nativeViews[copy].slot = forcedIndex
+    end
+  end
+  if forcedIndex then
+    copy.slot = forcedIndex
   end
   publicReferences[copy] = publicReferences[action]
-  return bind(copy, M.slot(action))
+  return bind(copy, forcedSlot or M.slot(action))
+end
+function M.resolveSelection(action)
+  if type(action) ~= "table" then
+    return action
+  end
+  local selected = pendingSelections[action]
+  pendingSelections[action] = nil
+  if selected and selected.id == action.id then
+    return M.withMove(selected, selected.id, action, selected.slot)
+  end
+  return action
 end
 function M.exhausted(action)
   return slots[action] ~= nil and action.pp <= 0
 end
 function M.nativeView(action)
   return nativeViews[action]
+end
+function M.markPortable(action)
+  portableViews[action] = true
 end
 function M.rememberReference(action, key, public, native)
   local refs = publicReferences[action]
@@ -140,10 +163,18 @@ function M.delegate(battle, battler, action)
     return describe(action)
   end
   for i, slot in ipairs(battler.curMoves or {}) do
-    if action == slot then
+    -- Native wild selection already returns a separate PP-bound action.
+    -- A delegated edit must retain that selected slot, just like a raw slot.
+    if M.slot(action) == slot then
       local copy = shallow(action)
       copy.slot = i
-      return describe(copy), { raw = action, before = shallow(copy), owner = battler }
+      return describe(copy),
+        {
+          raw = action,
+          before = shallow(copy),
+          owner = battler,
+          originalSlot = action ~= slot and slot or nil,
+        }
     end
   end
   return describe(action)
@@ -151,6 +182,12 @@ end
 function M.normalize(data, battler, value, delegated, captured)
   if captured and value == delegated then
     if captured.owner == battler and same(value, captured.before) then
+      if captured.originalSlot and not portableViews[value] then
+        -- Existing API-1/2 callbacks retain their native slot handle. Keep
+        -- selection-only fields private until planning/execution consumes it.
+        pendingSelections[captured.originalSlot] = shallow(captured.raw)
+        return captured.originalSlot
+      end
       return captured.raw
     end
     local id = resolve(data, value.move or value.id)

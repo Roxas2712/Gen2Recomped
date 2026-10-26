@@ -7,6 +7,13 @@ local service=Runtime.new()
 local F={}
 Stream.register(service)
 Assets.register(function()service:invalidate()end)
+function F.collectActors(actors,camX,camY)
+  local boundary=require('src.compat.gen1.ScriptBoundary')
+  if boundary.active('field.collectActors')then return boundary.invoke('field.collectActors')end
+  return require('src.compat.gen1.SourceActors').collect(actors)
+end
+local baseCollect=F.collectActors
+function F._hasActorExtensions()return F.collectActors~=baseCollect end
 function F.install(cache)return service:install(cache)end
 function F.invalidate()service:invalidate()end
 function F.release()service:release()end

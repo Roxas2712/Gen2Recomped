@@ -23,6 +23,7 @@ jobs:
       - name: Check native move navigation dispatch and SDK contracts
         run: |
           luajit tests/engine/battle_grid_navigation.lua
+          luajit tests/gen3_battle_ui_contract.lua
           luajit tests/engine/battle_auxiliary.lua
           luajit tests/engine/trainer_preparation.lua
           luajit tests/engine/trainer_preparation_native.lua

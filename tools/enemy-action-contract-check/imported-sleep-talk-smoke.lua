@@ -1,6 +1,7 @@
 package.path = "./?.lua;./?/init.lua;" .. package.path
 local T = require("tests.modkit")
 local cacheRoot = assert(arg[1], "pass the local Gen2Recomp cache root")
+local choiceBand = arg[2] == "--choice-band"
 local rows = {}
 for _, version in ipairs({ "firered", "emerald" }) do
   for _, mode in ipairs({ "repeat", "zero_pp", "empty", "forbidden", "early_wake", "awake" }) do
@@ -17,7 +18,9 @@ for _, version in ipairs({ "firered", "emerald" }) do
     end
     local f = require("tests.enemy_actions.fixture").new(".", "gen2", version, 3, "unified", configure)
     T.link.prepare(f.data)
+    f.game.save.options.ruleset = "gen3_emerald"
     local b = f.fresh("TACKLE", { enemy = true }).battle
+    assert(b.ruleset.baseDamageStyle == "gba", "imported scenario requires the actual GBA ruleset")
     b:syncSides()
     local function id(n)
       return assert(f.data.constants.moveOrder[n])
@@ -39,6 +42,16 @@ for _, version in ipairs({ "firered", "emerald" }) do
     b.enemy.mon.moves = { { id = id(33), pp = f.data.moves[id(33)].pp } }
     b.enemy.curMoves = b.enemy.mon.moves
     b.player.mon.nickname, b.enemy.mon.nickname = "PLAYER", "FOE"
+    if choiceBand then
+      local item
+      for key, def in pairs(f.data.items) do
+        if type(def) == "table" and tonumber(def.index) == 186 then
+          item = key
+          break
+        end
+      end
+      b.player.mon.item = assert(item, "imported physical Choice Band must exist")
+    end
     b.player.mon.status, b.player.sleepTurns = "SLP", 4
     if mode == "awake" then
       b.player.mon.status, b.player.sleepTurns = nil, nil
@@ -82,6 +95,9 @@ for _, version in ipairs({ "firered", "emerald" }) do
     end
     local turns = mode == "repeat" and 4 or 1
     for turn = 1, turns do
+      if choiceBand and turn == 4 then
+        b.player.mon.item = nil
+      end
       if turn > 1 then
         submit({ kind = "menu", choice = "fight" })
       end
@@ -125,6 +141,12 @@ for _, version in ipairs({ "firered", "emerald" }) do
       assert(b.player.mon.status == nil and b.player.sleepTurns == nil)
     end
     assert(b._gbaMoveFrame == nil, "nested dispatcher restores its frame")
+    if choiceBand then
+      assert(
+        b.player.choicedMove == ((mode == "repeat" or mode == "zero_pp") and 214 or nil),
+        "actual imported caller binds only after its completed move-end command"
+      )
+    end
     rows[#rows + 1] = {
       version = version,
       mode = mode,
@@ -136,6 +158,8 @@ for _, version in ipairs({ "firered", "emerald" }) do
       childPP = moves[2].pp,
       status = b.player.mon.status,
       sleep = b.player.sleepTurns,
+      choiceBand = choiceBand or nil,
+      choice = b.player.choicedMove,
     }
     off()
     f.close()

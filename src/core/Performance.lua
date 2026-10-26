@@ -55,6 +55,23 @@ Performance.paletteZoneCache = true
 Performance.audioWorkerOptimization = true
 -- P9: additional LOW presentation caps, pixel-area AUTO and native UI quads.
 Performance.lowTierBudget = true
+-- C1: importers leave a stripped string.dump beside every generated module
+-- and a package searcher loads it ahead of the source (src/core/BytecodeCache).
+Performance.bytecodeCache = true
+-- G5: Gen 3 tile sheets baked once as palette indices and recoloured through
+-- a 256-entry table in an FFI loop when a palette cycle steps, instead of
+-- re-walking every metatile into a new RGBA sheet (TileRenderer gen3Recolour).
+Performance.gen3PaletteIndex = true
+-- G3: Gen 4 model draw sends a uniform only when its value changed and
+-- allocates no per-shape tables (src/render/Gen4Model.lua:_drawCached).
+Performance.gen4UniformCache = true
+-- G2: Gen 4 area light evaluated in the vertex shader from a per-vertex
+-- normal, so a new light band uploads a uniform instead of rebuilding every
+-- lit mesh (src/render/Gen4Model.lua `g4Shade`, Gen4Ground:lightBandChanged).
+Performance.gen4GpuLight = true
+-- G1: Gen 4 model vertices decoded straight into a ByteData through the FFI
+-- rather than a fifteen-element table per vertex (src/render/Gen4Model.lua).
+Performance.gen4ByteVertices = true
 Performance.GC_PAUSE = 120
 Performance.GC_STEP_MUL = 300
 Performance.GC_BUDGET_SECONDS = 0.0005
@@ -83,6 +100,10 @@ for name, caps in pairs(Performance.CAPS) do
   caps.gen3PaletteCycle = name=="low" and "quarter" or "full"
   caps.reflections = name~="low"
   caps.discordPresence = name~="low"
+  -- G6: the Gen 4 free-camera supersample a tier may ask for (RENDER_SCALES
+  -- index).  x3 / x4 is nine to sixteen times the fill of the logical view;
+  -- a phone or handheld cannot pay that, whatever the OPTIONS row says.
+  caps.gen4RenderScaleMax = (name == "high" and 4) or (name == "balanced" and 2) or 1
   caps.gcPause = Performance.GC_PAUSE
   caps.gcStepMul = Performance.GC_STEP_MUL
   caps.gcBudgetSeconds = Performance.GC_BUDGET_SECONDS

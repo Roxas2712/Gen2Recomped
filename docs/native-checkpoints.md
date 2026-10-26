@@ -1,89 +1,82 @@
 # Native checkpoint facade
 
-All mod API levels expose `mod.checkpoints:inspect(game)`, `capture(game)`,
+Every mod API level exposes `mod.checkpoints:inspect(game)`, `capture(game)`,
 `restore(game, checkpoint)`, `resume(game, checkpoint)` and
-`ensureNormalSave(game, checkpoint)`. Call `inspect` before offering a capture.
-Refused operations return their reason instead of inventing a substitute state.
+`ensureNormalSave(game, checkpoint)`. Inspect before offering a capture. A refusal
+includes a named reason; it never substitutes a different game state.
 
-This implementation is independently written around the native controller and
-save services. It currently admits settled Gen-1/2 overworld control with canonical
-static native actors and stationary native spinners. Wandering, followers, scripted actor placement, extra actors,
-strength/encounter overrides and multiplayer fail closed until their continuations
-are qualified. Active
-screens, scripts, transitions, movement and effects are refused. Battle and
-later-generation reconstruction are **not qualified**; inspect reports
-`unsupported_battle` or `unsupported_runtime`. Providing the facade does not
-establish complete checkpoint compatibility for every consumer.
+This service is independently implemented using the host's native save,
+controller, actor, script and battle services. It supports the host’s selectable
+editions through generation 5. A settled player can capture native actors that
+are wandering, partway through a step, repositioned by a script, following the
+player or present in connected maps. Native map patches, actor pools and shared
+follower trails retain their semantic state and relationships.
 
-Format 1 is detached plain data: `kind = "overworld"`, `identity` containing
-`engineVersion`, `gameVersion`, `playthroughId`, canonical `save` progress,
-`runtime.overworld = {map, x, y, facing, surfing}`, and `rng.love`. Do not store
-controller objects or functions in it. Global options are excluded. Legacy
-overworld records without RNG remain readable and retain the current RNG.
+Ordinary single-player wild and trainer battles admit a player decision in
+`menu`, `moveSelect` or `targetSelect` after queued actions, messages, animation
+and introductions have finished. Battlers, party/stat aliases, field and side
+tokens, volatile state, cursors and the native RNG resume together. Native wild,
+trainer and static-encounter completion operations resolve fresh actor owners.
+A built-in data-only `start_battle` row can resume through a fresh ScriptRunner
+at its following row, including its native completion. The old coroutine and
+closures are never restored or serialized.
 
-Restore validates identity, installed content, coordinates, data shape and RNG
-encoding before reconstruction. It builds fresh native maps and actors under a
-private transaction, suppresses normal entry/load events, then compares a full
-recapture. A failed build restores the original save, controller fields, player,
-map cache, palette, stack ownership and RNG. Existing objects/resources remain
-owned by the rollback snapshot until commit. Checkpoints never contain those
-private transaction tokens.
+Link/multiplayer, Safari, ghost, demonstration and special battle modes, forced
+actions, concurrent scripts, opaque callbacks/custom RNG, native VM call stacks,
+active transitions and unqualified effects are deliberate refusal boundaries.
+An arbitrary function or mod-owned controller cannot be inferred from its data.
+This contract does not promise capture at every instant of a story or battle.
 
-Saved mod progress in `save.modData` rewinds with progress. The mod-save service
-is rebound to it. Current options and unknown mod-owned controller fields retain
-their identity; separately persisted mod storage is not rewound. Only a committed
-restore/resume emits `checkpoint.restored` with `{game, kind}`. Mods can refresh
-runtime references from that event.
+## Data and ownership
 
-`resume` requires the native title and its existing selected playthrough. It
-preserves the original title state if reconstruction fails and never writes
-normal progress. `ensureNormalSave` is separate: it verifies the exact current
-checkpoint, returns `true, "already_exists"` without changing existing progress,
-or uses the real game's normal save lifecycle to create the first save. A
-conflicting destination is refused. Injected test filesystems support reads and
-existing-save checks; they cannot redirect the real game's normal write.
+Format 1 is detached plain data: identity contains `engineVersion`, `gameVersion`
+and `playthroughId`; `save` contains canonical progress; `runtime.overworld`
+contains `{map, x, y, facing, surfing}`; `rng.love` contains the host RNG encoding.
+Current snapshots add `runtime.actors` and optionally `runtime.battle` with a
+validated semantic data graph and a native continuation descriptor. No engine
+object, sprite, GPU resource, function or private transaction token is public
+checkpoint data. Legacy static/spinner format-1 records remain readable under
+their original admission rules. Legacy records without RNG retain the current RNG.
 
-CPU qualification uses the real loader, Game singleton, controller, map cache,
-state stack, save lifecycle and owned synthetic content in Red/Gold, at API
-levels 1/2/3. It does not establish GPU, battle, later-generation or full-story
-acceptance. FrameProfile before/after and ARM timings: not measured. This is an
-additive compatibility service; no performance switch applies.
+Restore validates identity, installed content, coordinates, actor and battle
+relationships, continuation owners and RNG before reconstruction. It creates
+fresh native resources in a private transaction, suppresses ordinary entry/load
+events and verifies a full recapture. Normal map entry cannot erase canonical
+checkpoint progress. Failed reconstruction restores the original save, actors,
+controller fields, map cache, palettes, stack ownership and both RNG services.
+Old resources remain owned by rollback until commit.
 
-The earlier static-only qualification passed 424/424 engine suites on the
-composed fork, all 3 SDK suites and all quick tiers, plus 678 focused checkpoint assertions. `tools/check_native_checkpoint_rng.py`
-exercises the actual host RNG with the native loader/controller/map-cache
-transactions at API 1/2/3 in Red and Gold. LÖVE 11.5 and 12 each pass 444
-assertions: exact 64-value continuation, failed-rebuild RNG/ownership rollback
-and invalid-state refusal before reconstruction. Graphics are substituted and
-content is synthetic; this does not extend qualification to battle, later
-generations, dynamic actors or full gameplay. The launcher uses the shared
-20 GiB QA reserve and owned profiles. An older public stack can provide the
-shared guard with `--qa-tools /path/to/fork/tools`.
+Saved `modData` rewinds and the mod-save service is rebound to it. Current global
+and per-mod options retain their live identity; separately persisted mod storage
+does not rewind. Unknown mod-owned world fields remain owned by their mods.
+Other runtime references/caches are not saved; mods must refresh them on the
+single committed `checkpoint.restored` event with `{game, kind}`.
 
-## Stationary spinner continuation (M4 follow-up)
+`resume` requires the native title and selected playthrough. Failure preserves
+the title; resume never writes normal progress. `ensureNormalSave` separately
+verifies the current checkpoint, returns `true, "already_exists"` for an existing
+save, or uses the real normal save lifecycle for the first save. A conflicting
+destination is refused. Injected read-only test filesystems cannot redirect a
+real normal save write.
 
-The four native `SPIN_CW`, `SPIN_CCW`, `SPIN_SLOW` and `SPIN_FAST` modes are
-admitted at their installed cells, in the local cast and connected neighbour
-casts. Optional `runtime.spinners` records contain the stable native object ID,
-movement mode, installed cell, facing and remaining turn timer. These are plain
-semantic values; no NPC, sprite, controller or callback is serialized. Static-only
-format-1 records retain their original shape.
+## Qualification
 
-Validation binds the records to installed native object definitions and rejects
-unknown fields, malformed directions/timers, changed modes/cells and unknown
-objects. Reconstruction restores the values on newly built native NPCs before
-verification. A missing record, changed visible cast or failed partial apply
-rolls back original actor, map-cache, save and RNG ownership. Legacy static-only
-records cannot silently reset a spinner. Stale pooled spinners outside the live
-local/neighbour casts remain refused. Hooks stay quiet until the existing single
-`checkpoint.restored` event after commit.
+Five CPU suites exercise the actual loader, Game, state stack, controllers,
+map cache, party and save services over owned synthetic data. All selectable
+edition selections are covered (18 in the fork, 15 in the public host), including native static/trainer producers,
+script suffix execution, malformed payload refusal, partial-apply rollback,
+title resume and ordinary battle-turn continuation. These are runtime/contract
+checks, not full ROM playthroughs.
 
-The focused CPU suite checks facade access at API 1/2/3, snapshot isolation,
-malformed and missing records, partial-apply rollback and title resume. The native
-LÖVE runner additionally compares every facing/timer and RNG continuation over
-384 updates of all four actual NPC modes, for Red/Gold at all three API levels.
-It uses owned synthetic maps and substituted graphics; it does not qualify a full
-story playthrough, wandering actors, followers, battles or later generations.
-See `docs/qa/checkpoint-spinners-m4.json` for the recorded acceptance and native
-host results. FrameProfile and ARM performance are not measured; this additive
-compatibility work has no performance switch.
+`tools/check_native_checkpoint_rng.py` runs actual LÖVE math/RNG on 11.5 and 12.
+It checks all four native stationary-spinner modes for 384 updates in Red/Gold
+at API 1/2/3, plus 192 complete native world updates and two actual battle turns
+in eight representative editions at every API level. Every future checkpoint
+and RNG value must match after restore. Each host performs 14,520 assertions.
+Graphics are substituted; GPU and full-story acceptance are outside this test.
+An older public checkout can supply the shared storage guard with `--qa-tools`.
+
+See `docs/qa/checkpoint-runtime-m4.json` for exact qualified revisions and gate
+results. `docs/qa/checkpoint-spinners-m4.json` retains the earlier, narrower
+qualification as history. This compatibility service has no performance switch;
+FrameProfile before/after for checkpoint operations: not measured.

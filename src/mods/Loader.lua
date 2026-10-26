@@ -1330,7 +1330,7 @@ function Loader:_api(mod)
       -- Do not pass loader.fs when it is love.filesystem: that always writes
       -- the OS save directory and leaves modstorage/ on internal storage.
       -- Storage.fsOr routes the live LOVE fs through CacheFs.dataFs.
-      if not storage then storage = ModStorage.new(modId, loader.fs) end
+      if not storage then storage = engineCall(ModStorage.new, modId, loader.fs) end
       return storage
     end
     if key ~= "world" then return nil end
@@ -1404,12 +1404,23 @@ function Loader:_loadMod(mod)
   local path = mod.path .. "/" .. mod.manifest.entry
   local chunk, err = self.fs.load(path)
   if not chunk then error(err or ("unable to load " .. path)) end
-  local api = self:_api(mod)
-  -- Each observation family extends the same public handle. Compose them
-  -- before publishing it or running the entry chunk; none replaces terrain.
-  ActorRenderData.install(api, self)
-  FieldEffectRenderData.install(api, self)
-  SurfMountRenderData.install(api, self)
+  -- A mod whose declared base file never arrived loads fine and then does
+  -- nothing, which from the log looks identical to a mod that is simply
+  -- quiet.  Say which file is missing (src/mods/ModImports.lua).
+  do
+    for _, row in ipairs(ModImports.missing(mod.manifest) or {}) do
+      Logger.warn("[%s] needs %s at %s; import it from the mods panel",
+        mod.manifest.id, tostring(row.entry.name), tostring(row.entry.file))
+    end
+  end
+  -- API construction, including every render observation family, is engine-owned.
+  local api = engineCall(function()
+    local constructed = self:_api(mod)
+    ActorRenderData.install(constructed, self)
+    FieldEffectRenderData.install(constructed, self)
+    SurfMountRenderData.install(constructed, self)
+    return constructed
+  end)
   -- KEEP THE API OBJECT, not only its exports.
   --
   -- `self.exports[id]` has always been the mod's published surface, and that is
@@ -1472,6 +1483,8 @@ function Loader:_rollback(modId)
   if space and space.cancelOwner then pcall(space.cancelOwner,modId)end
   local transition=package.loaded['src.core.game3.battle_transition']
   if transition and transition.cancelOwner then pcall(transition.cancelOwner,modId)end
+  local move=package.loaded['src.core.game3.field_move_show_mon']
+  if move and move.cancelOwner then pcall(move.cancelOwner,modId)end
 end
 
 -- a mod that explicitly swears it stays link-compatible while writing into a
@@ -1581,7 +1594,7 @@ end
 local function retireCompatibilityMaps()
   for _, name in ipairs({"src.core.game3.runtime", "src.core.Game3",
       "src.core.game3.map", "src.core.game3.player", "src.core.game3.collision", "src.core.game3.objects", "src.core.game3.ow_sprites", "src.core.game3.scripting.space",
-      "src.core.game3.warm", "src.core.game3.asset_stream", "src.core.game3.tileset_native", "src.core.game3.tileset_anim", "src.core.game3.battle_transition"}) do
+      "src.core.game3.warm", "src.core.game3.asset_stream", "src.core.game3.tileset_native", "src.core.game3.tileset_anim", "src.core.game3.battle_transition", "src.core.game3.field_effects", "src.core.game3.field_move_show_mon"}) do
     local module = package.loaded[name]
     if type(module) == "table" and type(module.release) == "function" then module.release() end
   end

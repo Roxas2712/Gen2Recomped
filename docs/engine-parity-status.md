@@ -13,7 +13,40 @@ major update through fork PR61, preserving the fork's native interfaces.
 File-path differences are audit candidates, not missing-feature counts. No
 percentage can be inferred from them or from the number of passing tests.
 
-Latest verified public preview: `a1008ce933ab3a6784e909f52f61b0fceecc29e8`
+Current public preview: `ed564cb54fb42f1ea5c977ceb38fe883f3ceae07`, merged
+as fork PR97 (`c79921ff`, identical tree `a7122aa5`). The existing
+`native-preview-20261025.1` Windows/macOS assets were updated in place. All
+six served hashes, binary manifest, release text and unchanged original tag
+were verified. This source passes485/485 engine suites, SDK3/3 and all quick
+tiers; exact-source runtime qualification40353017055 passes all four targets
+and hosted component assembly. Native display/composition GPU probes pass253
+checks on each of OpenGL and Metal.
+
+The unmodified fused Mac package passes78 natural Crystal/unchanged full-VASC
+checks per backend, including clock/Oak/name entry and the original initial
+room, five display selections and First/Third Person. Twelve inspected own
+OS-window phases per backend each require two increasing frame stamps. ROM,
+mod, payload and runtime bytes are verified unchanged. True-colour mod art
+retains its RGB contract in DMG/custom; Classic colours the completed scene.
+The hosted Mac HTTP job was cancelled before acquiring a runner; the same
+workflow command passes locally with the byte-verified official LOVE11.5
+runtime:1935 checks plus TLS POST coverage. This is not a green-hosted-CI,
+full story/save/link, physical Windows/Intel-Mac GPU or full-parity claim.
+
+Subsequent main integration `d9865fed` (tree `d539ed67`), including the
+independent friend features, passes489/489 engine suites and SDK3/3. Its
+additional changes have CPU integration evidence; the published binary
+remains the frozen source above. Native save-menu PR109 is a separate draft;
+its earlier `10cf0b7c` checkpoint passes101 focused checks and486/486 suites.
+Real save/reload and unchanged-mod GPU acceptance for that new owner remain
+open. Native START now has a separate class and retains its submenu parent;
+its focused input/lifecycle coverage passes67 checks. Real save presentation
+was rejected after inspection; missing native PC owners still prevent the
+complete resolved presentation watcher from installing. The remaining PC
+menu owners, battle animation/HP seams and
+natural Mom/starter/story/save/link coverage are still part of this ledger.
+
+Historical verified public preview: `a1008ce933ab3a6784e909f52f61b0fceecc29e8`
 (own PR80, merged as `e5160b54`; identical frozen engine tree). The existing
 `native-preview-20261025.1` Windows/macOS assets were refreshed in place;
 all six remote digests, manifest and release text were verified and the original
@@ -26,15 +59,15 @@ with eight inspected fresh OS images. Setup is staged; complete story/art,
 physical Windows/Intel GPU and full mod/parity acceptance remain open. See the
 [palette drawing receipt](qa/native-foundation/native-gen2-pokemon-palettes.json).
 
-Next native GSC Unown candidate: `9ef5109eef1cecb0e7b5a25b44e2ffb47c9bb75e`
+Historical native GSC Unown candidate: `9ef5109eef1cecb0e7b5a25b44e2ffb47c9bb75e`
 (own PR82; upstream standalone PR307). It shares native form identity, imported
 words, caught order, actual party/box/gift registration, counter/menu reads and
 one completed-form event. This frozen candidate passes465/465 engine suites,
 SDK3/3, every quick tier and66,288 focused checks including all65,536 DV-byte
 combinations. A private read-only Crystal word-producer/reference check passes80
 assertions. Later main registry-descriptor changes are being composed and
-revalidated separately. This Unown candidate is not included in the public
-preview above; full reference Unown API and story/GPU acceptance remain open.
+revalidated separately. At that checkpoint this Unown candidate was not in the a100 preview;
+later preview sources include subsequent integration. Full reference Unown API and story/GPU acceptance remain open.
 See [native Unown state](native-gen2-unown.md).
 
 The older checkpoints below retain their own evidence and limitations. They

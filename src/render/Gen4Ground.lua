@@ -35,6 +35,7 @@
 local Assets = require("src.render.Assets")
 local Gen4Model = require("src.render.Gen4Model")
 local Logger = require("src.core.Logger")
+local Performance = require("src.core.Performance")
 local Gen4TexAnim = require("src.render.Gen4TexAnim")
 local Gen4Camera = require("src.render.Gen4Camera")
 local Gen4Shade = require("src.render.Gen4Shade")
@@ -637,6 +638,8 @@ function Gen4Ground:applyLight()
     Gen4Shade.forMap(self.arealight, self.lightMember, now.hour, now.min)
   self.shade = shade
   self.lightBand = index or 0
+  -- G2: the template itself, for the shader (Gen4Ground:bindLight)
+  self.lightTemplate = template
 
   -- THE SKY'S OWN SIGNAL, and deliberately NOT derived from the band.
   --
@@ -672,6 +675,25 @@ function Gen4Ground:applyLight()
                   .. "draws unlit, which looks flat however correct the camera is",
                   tostring(self.def and self.def.id), tostring(self.lightMember))
     end
+  end
+end
+
+-- G2: SAY WHICH LIGHT THE NEXT DRAWS ARE UNDER.  Called at the top of every
+-- pass that draws this ground's models; the model module uploads the light
+-- only when it actually changed.  With the light in the shader a new band
+-- invalidates the BAKES (a canvas is a picture drawn under the old light)
+-- and nothing else -- see `lightBandChanged`.
+function Gen4Ground:bindLight()
+  Gen4Model.light = self.lightTemplate
+end
+
+-- What a new light band costs: every lit mesh when the light is baked into
+-- the vertex colours, only the bake canvases when the shader evaluates it.
+function Gen4Ground:lightBandChanged()
+  if Performance.gen4GpuLight and not Gen4Model.legacyLight then
+    self:dropBakes()
+  else
+    self:dropLitModels()
   end
 end
 
@@ -1755,9 +1777,19 @@ Gen4Ground.RENDER_SCALES = { 1, 2, 3, 4 }
 -- this that it closes for the camera tilt.
 Gen4Ground.renderScaleIndex = 1
 
+-- G6: the rung the live performance tier allows, or every rung when no tier
+-- has been resolved yet (a pre-boot tool, the headless suite)
+function Gen4Ground.renderScaleCap()
+  local tier = Performance.tier
+  local caps = tier and Performance.CAPS[tier]
+  return caps and caps.gen4RenderScaleMax or #Gen4Ground.RENDER_SCALES
+end
+
 function Gen4Ground.setRenderScale(index)
   index = tonumber(index) or 1
   if not Gen4Ground.RENDER_SCALES[index] then index = 1 end
+  local cap = Gen4Ground.renderScaleCap()
+  if index > cap then index = cap end
   Gen4Ground.renderScaleIndex = index
   return Gen4Ground.RENDER_SCALES[index]
 end
@@ -1774,6 +1806,10 @@ function Gen4Ground.syncRenderScale(game)
   local o = game and game.save and game.save.options
   local index = o and tonumber(o.gen4RenderScale) or nil
   if index and Gen4Ground.RENDER_SCALES[index] then
+    -- G6: clamped to what the performance tier allows; the stored option is
+    -- left alone, so a stronger tier later honours it again
+    local cap = Gen4Ground.renderScaleCap()
+    if index > cap then index = cap end
     Gen4Ground.renderScaleIndex = index
   end
   return Gen4Ground.renderScale(), Gen4Ground.renderScaleIndex
@@ -1887,6 +1923,7 @@ function Gen4Ground:canopyCut(camX, camY, vw, vh)
 end
 
 function Gen4Ground:livePass(camX, camY, vw, vh, yCut)
+  self:bindLight()
   local grid = self.grid
   if not grid then return 0 end
   local px = self.chunkPx
@@ -2465,6 +2502,7 @@ function Gen4Ground:drawSky(view, vw, vh)
 end
 
 function Gen4Ground:drawFree(vw, vh)
+  self:bindLight()
   local view = self.view3d
   local grid = self.grid
   if not (view and grid) then return false end
@@ -3455,6 +3493,7 @@ function Gen4Ground:bake(land)
   g.setCanvas({ colour, depthstencil = depth })
   g.clear(0, 0, 0, 0, true, true)
   local view = self.view
+  self:bindLight()
   model:draw(view)
 
   -- ...AND THE PAINTED GROUND, if this map has any.
@@ -3740,6 +3779,7 @@ function Gen4Ground:endFree()
 end
 
 function Gen4Ground:drawCanopy(camX, camY, vw, vh)
+  self:bindLight()
   -- AN OPEN FREE PASS IS CLOSED BEFORE ANY GUARD CAN RETURN.
   --
   -- This used to sit below the `noDepth` guard and after the free-mode
@@ -4020,6 +4060,7 @@ end
 
 -- draw(camX, camY, vw, vh) -- the chunks the camera can see, in map pixels.
 function Gen4Ground:draw(camX, camY, vw, vh)
+  self:bindLight()
   -- A FREE PASS LEFT OPEN BY THE PREVIOUS FRAME IS CLOSED HERE.
   --
   -- `drawCanopy` closes it in the ordinary run, but a frame that returned
@@ -4052,7 +4093,7 @@ function Gen4Ground:draw(camX, camY, vw, vh)
     self.lightCheck = 0
     local band = self.lightBand
     self:applyLight()
-    if self.lightBand ~= band then self:dropLitModels() end
+    if self.lightBand ~= band then self:lightBandChanged() end
   end
   self.budget = Gen4Ground.BAKES_PER_FRAME
   -- One tick a frame, which is the clock every animation in this cartridge is

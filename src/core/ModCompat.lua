@@ -27,7 +27,6 @@
 -- Deliberately ABSENT, because this engine has no equivalent module and the
 -- honest answer is "not found":
 --
---   src.ui.gen2.SaveMenu        the save flow is part of StartMenu here
 --   src.ui.gen2.BattleAnimView  Gen2AnimPlayer is a player, not a view
 --   src.battle.UIVisibility     no equivalent
 --   src.ui.PartyPanel           no equivalent
@@ -71,6 +70,7 @@ ModCompat.ALIASES = {
   ["src.ui.gen2.InitClock"] = "src.ui.Gen2InitClock",
   ["src.ui.gen2.NamingScreen"] = "src.ui.Gen2NamingScreen",
   ["src.ui.gen2.NamePick"] = "src.ui.Gen2NamePick",
+  ["src.ui.gen2.SaveMenu"] = "src.ui.Gen2SaveMenu",
   ["src.core.gen2.Unown"] = "src.compat.gen2.Unown",
   ["src.core.gen2.Mail"] = "src.pokemon.Gen2Mail",
   -- The legacy signature is translated explicitly; the native module takes
@@ -95,7 +95,7 @@ ModCompat.ALIASES = {
 
   -- menus.  The Gold port names two of these differently rather than
   -- namespacing them, so both spellings land on the one implementation.
-  ["src.ui.gen2.StartMenu"] = "src.ui.StartMenu",
+  ["src.ui.gen2.StartMenu"] = "src.ui.Gen2StartMenu",
   ["src.ui.gen2.OptionsMenu"] = "src.ui.OptionsMenu",
   ["src.ui.gen2.PartyMenu"] = "src.ui.PartyMenu",
   ["src.ui.gen2.PokedexMenu"] = "src.ui.PokedexMenu",

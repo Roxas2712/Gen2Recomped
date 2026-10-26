@@ -35,16 +35,17 @@ def main():
     assert not qa_run(['git','status','--porcelain'],cwd=root,check=True,capture_output=True,text=True).stdout.strip()
     result=qa_run([str(binary),str(root/'tools/checkpoint-runtime/host')],cwd=root,
       env=dict(os.environ,POKEPORT_IDENTITY=identity,CHECKPOINT_ENGINE=str(root),CHECKPOINT_REPORT=str(output/'result.json')),
-      capture_output=True,text=True,timeout=120)
+      capture_output=True,text=True,timeout=240)
     (output/'run.log').write_text(result.stdout+result.stderr)
     result.check_returncode()
     report=json.loads((output/'result.json').read_text())
     assert report['passed'] and report['realLoveMath'] and len(report['cases'])==6
     assert all(c['spinnerModes']==4 and c['spinnerFrames']==384 and c['spinnerRngContinuation'] and c['spinnerPartialRollback'] for c in report['cases'])
+    assert len(report['continuation'])==24 and all(c['actorUpdates']==192 and c['actorRng'] and c['battleTurns']==2 for c in report['continuation'])
     assert all(hashlib.sha256((root/p).read_bytes()).hexdigest()==digest for p,digest in sources.items())
     assert source==qa_run(['git','rev-parse','HEAD'],cwd=root,check=True,capture_output=True,text=True).stdout.strip()
     assert not qa_run(['git','status','--porcelain'],cwd=root,check=True,capture_output=True,text=True).stdout.strip()
-    report.update(sourceCommit=source,sourceSha256=sources,minimumFreeGiB=20,scope='Actual LÖVE RNG, native stationary-spinner continuation and settled GB checkpoint transactions over synthetic content with substituted graphics; no GPU/gameplay/later-generation acceptance.')
+    report.update(sourceCommit=source,sourceSha256=sources,minimumFreeGiB=20,scope='Actual LÖVE RNG and native actor/follower movement plus ordinary battle decision continuation across eight representative editions at API 1/2/3; synthetic content with substituted graphics, no GPU or full-story gameplay acceptance.')
     (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
     print('NATIVE_CHECKPOINT_RNG_PASS',report['loveVersion'],report['checks'])
 

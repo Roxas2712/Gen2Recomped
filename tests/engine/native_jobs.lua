@@ -137,13 +137,26 @@ do
   T.eq(extract(source:gsub('\r\n','\n'):gsub('\n','\r\n')),hook,'quit regression reads Windows CRLF checkouts')
   for _,veto in ipairs({true,false}) do
     local stopped,closed=0,0
+    local decisions,walkers,traces=0,0,0
     local env={love={},editorMode=true,EditorApp={quit=function()return veto end},
       WindowFrame={shutdown=function()closed=closed+1 end},
+      walkerTick=function()walkers=walkers+1 end,
+      BootTrace={finish=function()traces=traces+1 end},pcall=pcall,
+      require=function(name)
+        if name=='src.core.PlatformHooks' then return {quitToLauncher=function(next)
+          decisions=decisions+1;return next()
+        end} end
+        assert(name=='src.core.DiscordPresence','unexpected quit dependency')
+        return {shutdown=function()end}
+      end,
       package={loaded={['src.mods.Job']={unloadAll=function()stopped=stopped+1 end}}}}
     local chunk=assert(loadstring(hook,'@main.lua:love.quit'));setfenv(chunk,env);chunk()
-    T.eq(env.love.quit(),veto,'editor quit preserves veto result')
+    T.eq(env.love.quit(),veto and true or nil,'editor veto or native exit result is preserved')
     T.eq(stopped,veto and 0 or 1,'only accepted editor quit stops mod jobs')
     T.eq(closed,veto and 0 or 1,'only accepted editor quit closes the window')
+    T.eq(decisions,veto and 0 or 1,'only accepted editor quit reaches launcher decision')
+    T.eq(walkers,veto and 0 or 1,'only accepted editor quit flushes walker state')
+    T.eq(traces,veto and 0 or 1,'only accepted editor quit finishes trace')
   end
 end
 T.finish('Native job data and cache transactions')

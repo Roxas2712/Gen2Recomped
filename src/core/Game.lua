@@ -683,6 +683,19 @@ function Game:updateCameraStick(dt)
 end
 
 function Game:update(dt)
+  -- Cooperative preparation is the fallback when worker preparation is disabled.
+  local m=package.loaded["src.core.M4ASynth"]
+  if m and m.effectPrep and self.data and Performance.audioWorkerOptimization == false then
+    local top=self.stack and self.stack.top and self.stack:top()
+    local parties={}
+    if top and top.data==self.data and top.player then parties[#parties+1]={top.player.mon}end
+    if top and top.data==self.data then
+      parties[#parties+1]=top.enemy and {top.enemy.mon}or {}
+      parties[#parties+1]=top.enemyParty or {}
+    end
+    parties[#parties+1]=self.save and self.save.party or {}
+    m.effectPrep.plan(self.data,parties);m.effectPrep.step(.002)
+  end
   HotModules.get('src.pokemon.Gen4PoketchState').tick(self, dt)
   local panel=self.secondScreenPointerOwner
   local top=self.stack and self.stack.top and activeTop(self.stack)
@@ -710,7 +723,8 @@ function Game:update(dt)
     local close = FrameProfile.section("  update: music")
     while self.audioAccum >= step do
       self.audioAccum = self.audioAccum - step
-      HotModules.get("src.core.Music").update(Data)
+      require("src.core.Sound").updateCry()
+      HotModules.get("src.core.Music").update(self.data or Data)
     end
     close()
   end
@@ -1293,7 +1307,13 @@ function Game:_draw()
   end
   -- 14's render.zones: weather/lighting overlays and custom colorization
   -- recolor or add zones before the blit
-  if ModRuntime.wantsHook("render.zones") then
+  if HotModules.get("src.core.GameVersion").isGen2() then
+    -- CGB colours are already in each native layer. The public zone hook
+    -- owns the completed frame, including Classic's final green ramp.
+    Renderer.gen2FrameManaged = true
+    Renderer.gen2FrameGame = self
+    Renderer.gen2FrameZones = require("src.render.Gen2Presentation").zones(self)
+  elseif ModRuntime.wantsHook("render.zones") then
     zones = ModRuntime.call("render.zones", sameZones, self, zones)
   end
   -- Keyed to whether the map actually DREW, not to whether it is the clear's
@@ -1308,6 +1328,11 @@ function Game:_draw()
   -- Keep shader controls readable even when a local shader paints black.
   local top = activeTop(self.stack)
   Renderer.shaderPresetBypass = top and top.shaderPresetBypass or false
+  if Renderer.gen2FrameManaged and windowUI then
+    Renderer.gen2WindowDraw = function(viewport)
+      ScreenSpaceUI.draw(windowUI,Renderer,viewport,zones,windowUIOverlay)
+    end
+  end
   local viewport, privateViewport
   if Performance.hotPathHoist and not windowUI and Renderer.endFrame == Renderer._nativeEndFrame then
     viewport = Renderer:_endFrameForEngine(zones, worldZones)
@@ -1315,7 +1340,9 @@ function Game:_draw()
   else
     viewport = Renderer:endFrame(zones, worldZones)
   end
-  if windowUI then ScreenSpaceUI.draw(windowUI,Renderer,viewport,zones,windowUIOverlay) end
+  if windowUI and not Renderer.gen2FrameManaged then
+    ScreenSpaceUI.draw(windowUI,Renderer,viewport,zones,windowUIOverlay)
+  end
   -- Persistent tool status is screen-space UI: draw it over the completed
   -- render pipeline with exact playfield/margin geometry, but below mobile
   -- controls. It never becomes an updating game state.
@@ -1564,7 +1591,7 @@ local function keypressedBody(self, key)
         or ow.engaging or ow.emote)))
     if not busy then
       local PaletteFX = require("src.render.PaletteFX")
-      self.save.options.colors = PaletteFX.cycleMode()
+      PaletteFX.writeColorOption(self.save.options, PaletteFX.cycleMode())
       self:writeOptions()
     end
     return
@@ -1896,7 +1923,7 @@ function Game:audioSession(active, why)
     if not self.audioSuspended then return end
     self.audioSuspended = false
     Logger.info("audio session: %s regained -- rebuilding audio", why)
-    Music.resume(Data)
+    Music.resume(self.data or Data)
     -- The app was parked inside SDL's event loop for the whole call, so the
     -- first love.timer.step() after it returns the LENGTH OF THE CALL.
     -- FixedStep already clamps its accumulator (FixedStep.maxAccum, 0.25s =
@@ -2131,7 +2158,7 @@ function Game:applyOptions(opts)
   opts = opts or (self.save and self.save.options) or {}
   local Music = require("src.core.Music")
   local Sound = require("src.core.Sound")
-  if Music.applyOptions then Music.applyOptions(opts) end
+  if Music.applyOptions then Music.applyOptions(opts, self.data or Data) end
   if Sound.applyOptions then Sound.applyOptions(opts) end
   -- EMERALD'S BUTTON MODE, which decides what L and R do.  Applied here
   -- rather than read at the input site so that a mode set on the OPTION

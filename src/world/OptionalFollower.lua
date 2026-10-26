@@ -48,6 +48,11 @@ local function remove(world)
   end
   world.follower, world.cast = nil, nil
 end
+function F.reset(world)
+  if not world then return false end
+  remove(world);world.followerTrail,world.pikachuTrail=nil,nil
+  return true
+end
 local function spawn(game, world, opts, viaMapLoad)
   local keep = opts and (opts.keepFollower or opts.keepPikachu)
   if keep then
@@ -92,6 +97,11 @@ local function spawn(game, world, opts, viaMapLoad)
   world.follower, world.cast = npc, nil
   world.followerTrail = { x = p.cellX, y = p.cellY }
   world.pikachuTrail = world.followerTrail
+end
+
+function F._checkpointCreate(game, world)
+  spawn(game, world, nil, true)
+  return world.follower
 end
 
 function F.onMapEntered(game, world, opts, viaMapLoad)

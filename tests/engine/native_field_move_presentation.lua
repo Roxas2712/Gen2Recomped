@@ -14,6 +14,9 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   local game=fixture.game;local stack=game.stack
   game.data.pokemon={[1]={name='TEST',spriteFront='assets/generated/field-mon.png'}}
   imageFile('assets/generated/field-mon.png',16,16,string.rep(string.char(17,31,47,255),256))
+  local strip={width=256,height=80,indexed=string.rep('\1',256*80),palette={}}
+  for i=1,16 do strip.palette[i]=i end
+  game.data.constants.gen3FieldMovePresentation={schema=1,edition=edition,romSha1=require('src.core.GameVersion').info(edition).sha1,strips={outdoors=strip,indoors=strip}}
   local completions=0
   local mon={species=1}
   local starts,steps,draws=0,0,0
@@ -124,7 +127,7 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   state=stack:top();local completedCallback=state.onDone
   state:finish();T.eq(type(completedCallback()),'table')
   Source.cancelOwner('completed-owner');T.eq(completedCallback(),false,'retired source callbacks cannot replay cached results')
-  T.eq(Source.start(1,{noDuck=true}),false,'unimplemented cry options are not silently accepted')
+  T.eq(Source.start(1,{noDuck=true}),true,'cry options use the authenticated native profile');Source.reset()
   T.eq(Source.start({},{}),false,'missing real picture cannot create a fake successful effect')
 end
 Source.release();T.finish('native field-move admission, one clock, explicit draw and continuation lifetime')

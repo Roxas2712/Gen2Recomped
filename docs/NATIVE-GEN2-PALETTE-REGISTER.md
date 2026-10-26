@@ -56,10 +56,10 @@ through public and native shaders, including the optimized native upload path,
 OBJ preservation, unrelated RGB, alpha and tint. Run `run()` from an isolated
 LÖVE host separately on each backend. It requires no cartridge or private mod.
 
-This change does not implement full Gen1 display parity. Native Gen2 still needs
-the DMG/Classic/custom display selections, their cached tile/sprite/battle
-invalidation and option persistence. Those require the real rendering owners;
-adding setters that only change a public mode string would not implement them.
+This register change alone does not establish full Gen1 display parity. See
+`NATIVE-GEN2-DISPLAY.md` for the native display-selection and cache/presentation
+owners. Full unchanged-mod story/save/link acceptance and wider engine parity
+remain separate requirements.
 
 The public method protocol follows the Gen1Recomp reference interface. Existing
 Gen1Recomp and upstream credits and licences remain applicable; see `NOTICE.md`.

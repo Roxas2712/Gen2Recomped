@@ -167,9 +167,10 @@ end
 
 Chrome.clipTo = clipTo
 
-function Chrome.withPanel(winW, winH, r, g, b, drawFn, scale)
+-- Draw the native 20x18 panel without painting over its live surroundings.
+-- Its grid is independent of any higher-resolution presentation provider.
+function Chrome.withOverlayPanel(winW, winH, drawFn, scale)
   local G = love.graphics
-  Chrome.letterbox(winW, winH, r, g, b)
   scale = scale or Chrome.fitScale(winW, winH)
   local ox, oy = Chrome.fitOrigin(winW, winH, scale)
   G.push("all")
@@ -179,6 +180,11 @@ function Chrome.withPanel(winW, winH, r, g, b, drawFn, scale)
   local ok, err = pcall(drawFn)
   G.pop()
   if not ok then error(err, 0) end
+end
+
+function Chrome.withPanel(winW, winH, r, g, b, drawFn, scale)
+  Chrome.letterbox(winW, winH, r, g, b)
+  return Chrome.withOverlayPanel(winW, winH, drawFn, scale)
 end
 
 function Chrome.withClip(drawFn)

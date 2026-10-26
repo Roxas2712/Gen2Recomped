@@ -144,8 +144,12 @@ end
 function R.new(loader, name, generation, api3)
   local portableEnemyAction = api3 and generation == 3 and name == "battle.enemy_action"
   local identityRoll = name == "shiny.roll" or name == "gender.roll"
+  local portableEnemyAction = api3 and generation == 3 and name == "battle.enemy_action"
   local ids = Ids.new(loader)
-  local portable = api3 and Api3Records or nil
+  -- This additive notification shares the reference's short-status Pokemon
+  -- records on both unified API 2 and API 3. Older API-2 callbacks keep their
+  -- existing long-status contract.
+  local portable = (api3 or name == "link.battle_ended") and Api3Records or nil
   local function readStatus(value)
     if portable then
       return portable.status(value)
@@ -314,6 +318,7 @@ function R.new(loader, name, generation, api3)
     local out = shallow(raw)
     local nativeAction = portableEnemyAction and kind == "action" and EnemyMoveChoice.nativeView(raw)
     if nativeAction then
+      EnemyMoveChoice.markPortable(raw)
       local def = moveDef(raw.id)
       local number = def and tonumber(def.index or def.numId)
       if not number and type(raw.id) == "number" then number = raw.id end
@@ -326,6 +331,7 @@ function R.new(loader, name, generation, api3)
     end
     for k, v in pairs(raw) do
       local role = recordRoles[k]
+      if name == "link.battle_ended" and (k == "myParty" or k == "theirParty") then role = "party" end
       if (name=="mail.read" or name=="mail.written") and k=="entry" then role="mail" end
       if identityRoll and k == "def" then role = "identitySpecies" end
       if identityRoll and (k == "dvs" or k == "ivs") then role = "context" end

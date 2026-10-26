@@ -1,0 +1,448 @@
+{
+  "status": "passed",
+  "runs": {
+    "gen1_smoke": {
+      "ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+      "log_sha256": "ec30b3eacf29bde61742855821e73dd219f9b3ee03bf6afc67c40631f9e108fb",
+      "driver_sha256": "5ab94f72a6836a95b4e1c64a37ee23205f78cb75446cfbc3dc71004bf4245ca2",
+      "renderer": {
+        "renderer": "OpenGL",
+        "version": "4.1 Metal - 89.4",
+        "vendor": "Apple",
+        "device": "Apple M2",
+        "love": [
+          11,
+          5,
+          0,
+          "Mysterious Mysteries"
+        ],
+        "gameVersion": "red"
+      },
+      "exit": 0,
+      "captures": {
+        "first-person-full.png": {
+          "sha256": "3db2c7f41138c5d4fd9635423d183a14910377fbfee85c37582b1e56e9090455",
+          "bytes": 294890,
+          "width": 640,
+          "height": 576
+        },
+        "oak-lab-full.png": {
+          "sha256": "2799c8856a8ef672cf0b712cb9e9e7acadf2440aac0aa800a68ef49eb83f65f6",
+          "bytes": 335485,
+          "width": 640,
+          "height": 576
+        },
+        "pallet-auto.png": {
+          "sha256": "8c9a3c76fbee73022a8a0c8e98ddc42831798d101ab4765c148dfef524d30fcd",
+          "bytes": 704539,
+          "width": 640,
+          "height": 576
+        },
+        "pallet-full.png": {
+          "sha256": "b1f7c82969892ec3fbffaeb5ceac9a64ffe856efa13b50e51c60841fb277236e",
+          "bytes": 704920,
+          "width": 640,
+          "height": 576
+        },
+        "pallet-off.png": {
+          "sha256": "6ea621f776a71e9b556d922325bc59beb7bdcbf99220282681d25666bc09e00a",
+          "bytes": 71790,
+          "width": 640,
+          "height": 576
+        },
+        "third-person-full.png": {
+          "sha256": "2c3e954fb92638deed6c3985a720f8a30270e0f477b2fba9509447c20a6e102a",
+          "bytes": 173420,
+          "width": 640,
+          "height": 576
+        }
+      },
+      "result": {
+        "profiles": [
+          {
+            "voxel": true,
+            "map": "PALLET_TOWN",
+            "mode": "off",
+            "readyFrames": 120
+          },
+          {
+            "voxel": true,
+            "map": "PALLET_TOWN",
+            "mode": "auto",
+            "readyFrames": 446
+          },
+          {
+            "voxel": true,
+            "map": "PALLET_TOWN",
+            "mode": "full",
+            "readyFrames": 590
+          }
+        ],
+        "firstPerson": true,
+        "thirdPerson": true,
+        "voxel": true,
+        "errors": 0,
+        "freeMove": true,
+        "loaded": true
+      },
+      "imports_and_packages_unchanged": true
+    },
+    "gen2_smoke": {
+      "ref": "2f55f61d98c01b20efbb3c4eecc0eea6808aaf6b",
+      "log_sha256": "89e735b6520238c3d15bdd860361d8605381663e801168e7f6b45d6301757f0b",
+      "driver_sha256": "d06a67963ff9302c664acf199ea274c138762a3dc3ba7a320d1a7b91e5871e6c",
+      "renderer": {
+        "renderer": "OpenGL",
+        "version": "4.1 Metal - 89.4",
+        "vendor": "Apple",
+        "device": "Apple M2",
+        "love": [
+          11,
+          5,
+          0,
+          "Mysterious Mysteries"
+        ],
+        "gameVersion": "red"
+      },
+      "exit": 0,
+      "captures": {
+        "first-person-full.png": {
+          "sha256": "65c0774e49a2e61f1a5a7456fb3659859171de8ca7466fd7c70748065d709543",
+          "bytes": 350129,
+          "width": 640,
+          "height": 576
+        },
+        "oak-lab-full.png": {
+          "sha256": "fff2c523c39391c6bba85377a9455c1ecd116298715d62ddd2a9b11e68db9965",
+          "bytes": 333847,
+          "width": 640,
+          "height": 576
+        },
+        "pallet-auto.png": {
+          "sha256": "93b3555ddc69451501906899b923678cea31d6e6918ee09177a467cbfba46f7d",
+          "bytes": 704431,
+          "width": 640,
+          "height": 576
+        },
+        "pallet-full.png": {
+          "sha256": "95730cdaa2babd54ef50165bf901eff4287f9fd1f479402a84bca9242ce1a41f",
+          "bytes": 703354,
+          "width": 640,
+          "height": 576
+        },
+        "pallet-off.png": {
+          "sha256": "43440eb6031b22f7d74d42a0d787fe9cac37c8fe0024e27572c09264bd6e7f0e",
+          "bytes": 66102,
+          "width": 640,
+          "height": 576
+        },
+        "third-person-full.png": {
+          "sha256": "7c57f2c59dbb233d1c38d25369949866fc33aca371ca44ee1a8c524df1414b88",
+          "bytes": 163712,
+          "width": 640,
+          "height": 576
+        }
+      },
+      "result": {
+        "voxel": true,
+        "errors": 0,
+        "freeMove": true,
+        "thirdPerson": true,
+        "firstPerson": true,
+        "profiles": [
+          {
+            "readyFrames": 120,
+            "voxel": true,
+            "mode": "off",
+            "map": "PALLET_TOWN"
+          },
+          {
+            "readyFrames": 283,
+            "voxel": true,
+            "mode": "auto",
+            "map": "PALLET_TOWN"
+          },
+          {
+            "readyFrames": 293,
+            "voxel": true,
+            "mode": "full",
+            "map": "PALLET_TOWN"
+          }
+        ],
+        "loaded": true
+      },
+      "imports_and_packages_unchanged": true
+    },
+    "gen1_battle": {
+      "ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+      "log_sha256": "1ca92e35210b72aa9f2493b245d087c15c576b59c36f4a95db53844697529754",
+      "driver_sha256": "a05e80e65490b3ed89ff37a4c5afc78e6882f5a09196f206aec7c4dfac43b23a",
+      "renderer": {
+        "renderer": "OpenGL",
+        "version": "4.1 Metal - 89.4",
+        "vendor": "Apple",
+        "device": "Apple M2",
+        "love": [
+          11,
+          5,
+          0,
+          "Mysterious Mysteries"
+        ],
+        "gameVersion": "red"
+      },
+      "exit": 0,
+      "captures": {
+        "first-person-open.png": {
+          "sha256": "c21189ffa3b9df9420e21c206d0d1950ff9db6f07ebfde339f7c3acc5058ec95",
+          "bytes": 380694,
+          "width": 640,
+          "height": 576
+        },
+        "returned-world.png": {
+          "sha256": "473011e323b5a31bcdc678a958483cf685dd141a7592b1ab70e9d41b6209d927",
+          "bytes": 639493,
+          "width": 640,
+          "height": 576
+        },
+        "staged-battle-action.png": {
+          "sha256": "456a8d4c102396f34e059cce619fce54195b1d7fc62a3b75e1a493dab9a8dfff",
+          "bytes": 295850,
+          "width": 640,
+          "height": 576
+        },
+        "staged-battle-menu.png": {
+          "sha256": "b9a4944648628e102901ab79283c170c52e2f20b24185974dc9e6058eb7bee86",
+          "bytes": 297725,
+          "width": 640,
+          "height": 576
+        },
+        "staged-battle-moves.png": {
+          "sha256": "97ee9ada8f384349e7ceab38229faeea82345511830907223398a6de5faba8bb",
+          "bytes": 253704,
+          "width": 640,
+          "height": 576
+        },
+        "third-person-open.png": {
+          "sha256": "d3bd5a3fe3d2c08880f81a54b3ada0d46227c1c6d7e53d1347e49ca979dd147d",
+          "bytes": 396366,
+          "width": 640,
+          "height": 576
+        }
+      },
+      "result": {
+        "thirdPerson": true,
+        "cameraLocation": [
+          9,
+          7
+        ],
+        "battle": {
+          "result": "win",
+          "ppSpent": 1,
+          "expGain": 14,
+          "returnedWorld": true,
+          "stageReleased": true,
+          "staged": true,
+          "ready": true
+        },
+        "loaded": true,
+        "voxel": true,
+        "errors": 0,
+        "firstPerson": true
+      },
+      "imports_and_packages_unchanged": true
+    },
+    "gen2_battle": {
+      "ref": "2f55f61d98c01b20efbb3c4eecc0eea6808aaf6b",
+      "log_sha256": "6d16f54d1fb02182e9e7ac208101988631219246f7a94b57f12c42e4e71496cc",
+      "driver_sha256": "a05e80e65490b3ed89ff37a4c5afc78e6882f5a09196f206aec7c4dfac43b23a",
+      "renderer": {
+        "renderer": "OpenGL",
+        "version": "4.1 Metal - 89.4",
+        "vendor": "Apple",
+        "device": "Apple M2",
+        "love": [
+          11,
+          5,
+          0,
+          "Mysterious Mysteries"
+        ],
+        "gameVersion": "red"
+      },
+      "exit": 0,
+      "captures": {
+        "first-person-open.png": {
+          "sha256": "522c262a37c285999daf1e2cf4e4adab50789c961a5a0adc06b536c842707c2c",
+          "bytes": 380612,
+          "width": 640,
+          "height": 576
+        },
+        "returned-world.png": {
+          "sha256": "fef0ea6b93ab8b99515ac6b62c344ec4db632f63a4243a15ccd58164b8e30ef6",
+          "bytes": 639510,
+          "width": 640,
+          "height": 576
+        },
+        "staged-battle-action.png": {
+          "sha256": "e3881223ea8e55ef558bd53a88c81540987beb4ba9090b7af4dd35d607dbc1be",
+          "bytes": 296798,
+          "width": 640,
+          "height": 576
+        },
+        "staged-battle-menu.png": {
+          "sha256": "7d42683e6ec4f6873c4b2b4b46b102640d1c9d8b1f1510ab3d6f52376e52a558",
+          "bytes": 298218,
+          "width": 640,
+          "height": 576
+        },
+        "staged-battle-moves.png": {
+          "sha256": "64049854ec996cd70fcefd06c9c39e11745f3a59534adbb384f746d4f9fc528b",
+          "bytes": 254169,
+          "width": 640,
+          "height": 576
+        },
+        "third-person-open.png": {
+          "sha256": "93c175106913cdeb203f4b45efb4d54adf241ec08c8d74129e90ae8e4c68afd7",
+          "bytes": 396284,
+          "width": 640,
+          "height": 576
+        }
+      },
+      "result": {
+        "loaded": true,
+        "cameraLocation": [
+          9,
+          7
+        ],
+        "battle": {
+          "returnedWorld": true,
+          "ppSpent": 1,
+          "expGain": 14,
+          "result": "win",
+          "stageReleased": true,
+          "ready": true,
+          "staged": true
+        },
+        "errors": 0,
+        "thirdPerson": true,
+        "voxel": true,
+        "firstPerson": true
+      },
+      "imports_and_packages_unchanged": true
+    },
+    "gen2_battle_native_import": {
+      "ref": "2f55f61d98c01b20efbb3c4eecc0eea6808aaf6b",
+      "log_sha256": "5cec30d690ca6d181318db4cccd1c9b701f673f3a4d67fe8e992e65ce93a7405",
+      "driver_sha256": "a05e80e65490b3ed89ff37a4c5afc78e6882f5a09196f206aec7c4dfac43b23a",
+      "renderer": {
+        "renderer": "OpenGL",
+        "version": "4.1 Metal - 89.4",
+        "vendor": "Apple",
+        "device": "Apple M2",
+        "love": [
+          11,
+          5,
+          0,
+          "Mysterious Mysteries"
+        ],
+        "gameVersion": "red"
+      },
+      "exit": 0,
+      "captures": {
+        "first-person-open.png": {
+          "sha256": "be5f9fc94ac2274d833c92c438b6409a81e91d1e4d198be8177c849187982fa7",
+          "bytes": 380661,
+          "width": 640,
+          "height": 576
+        },
+        "returned-world.png": {
+          "sha256": "a26f040dff38022d0928fb98079702f7e48541441ba881b2f4f688be45ed9be8",
+          "bytes": 634988,
+          "width": 640,
+          "height": 576
+        },
+        "staged-battle-action.png": {
+          "sha256": "161af0a7f379228682597fcd3941d62c31a3173296d2f2cc15eb80ffe499d77f",
+          "bytes": 297881,
+          "width": 640,
+          "height": 576
+        },
+        "staged-battle-menu.png": {
+          "sha256": "71820c784c0da8a9cdddc064432ba4bce450d61b1740416e6281197d53630c62",
+          "bytes": 297719,
+          "width": 640,
+          "height": 576
+        },
+        "staged-battle-moves.png": {
+          "sha256": "53fd5d4d5061e9fa98e6ec3e334e0268cafa0653d49e187d554273d810e27c3c",
+          "bytes": 253936,
+          "width": 640,
+          "height": 576
+        },
+        "third-person-open.png": {
+          "sha256": "d2d0424556ea5e27bb9f7cf4a97fe299354aecbd7de5255873f7de58e7dcb338",
+          "bytes": 396314,
+          "width": 640,
+          "height": 576
+        }
+      },
+      "result": {
+        "thirdPerson": true,
+        "cameraLocation": [
+          9,
+          7
+        ],
+        "battle": {
+          "result": "win",
+          "ppSpent": 1,
+          "ready": true,
+          "returnedWorld": true,
+          "stageReleased": true,
+          "expGain": 14,
+          "staged": true
+        },
+        "errors": 0,
+        "loaded": true,
+        "voxel": true,
+        "firstPerson": true
+      },
+      "imports_and_packages_unchanged": true
+    }
+  },
+  "typed_battle_observations_identical": true,
+  "normal_save_or_import_writes": false,
+  "production_changes": false,
+  "pixel_equality_claimed": false,
+  "graphics_fps_acceptance": false,
+  "published_probes": {
+    "battleart-graphics.lua": {
+      "tested_source_sha256": "5ab94f72a6836a95b4e1c64a37ee23205f78cb75446cfbc3dc71004bf4245ca2",
+      "published_sha256": "c9c34d16c2f99a08ae9a6545d5b31c9db014b19654d05247b5d6f1e0c4ded17e",
+      "identical_stripped_bytecode": true
+    },
+    "battleart-graphics-battle.lua": {
+      "tested_source_sha256": "a05e80e65490b3ed89ff37a4c5afc78e6882f5a09196f206aec7c4dfac43b23a",
+      "published_sha256": "f67f52ccfa439f5554bf7d5c7c4f9d8ce1d5355b6dc798a305f36956e103d1d9",
+      "identical_stripped_bytecode": true
+    }
+  },
+  "raw_audit_sha256": "aea0a27a0654337cc87c791effb29e79f77c3f49c65c3520dd2b01c13e18a220",
+  "visually_inspected_captures": 30,
+  "visual_scope": "Selected Red outdoor/interior scenes, clear first/third-person camera corridor, staged battle menus and return; not pixel equality or Surf animation-frame acceptance.",
+  "retained_diagnostics": [
+    "The first vendor runtime still contained a historical embedded shader self-test; that run does not count as target-mod acceptance.",
+    "An early driver identity assertion incorrectly used Lua pattern matching; the profile itself remained private.",
+    "Gen1 required additional current import outputs and full tools metadata in the source snapshot; a regular ROM import supplied them.",
+    "Gen1 does not expose the Gen2-only freshSave test helper; the shared external driver now calls the native save constructor.",
+    "The doorstep camera hits a wall on both engines. A second blocked-cell fixture is relocated by Gen1 but retained by Gen2; it does not establish a camera regression. Final camera checks use the same verified walkable corridor.",
+    "Gen2 renders a PROMPT marker from the newer Gen1 export as text. It does not occur with the native Gen2 import; generated datasets are not interchangeable.",
+    "Gen2 copied legacy files into its private QA identities during native startup. Drivers construct fresh in-memory saves. No legacy-source writes are performed; future launchers must set POKEPORT_SKIP_LEGACY_MIGRATION=1."
+  ],
+  "limitations": [
+    "The package reports a missing optional Legendary panorama and uses its built-in fallback.",
+    "Gen2 logs a missing exp_bar image placeholder on the Red path, including with its own import.",
+    "Selected Gen1 move-menu labels differ. There is no full battle-UI or rendered-pixel equivalence claim.",
+    "The action captures land between visible text/effect frames; move execution is verified by native outcome and PP/experience, not by a certified Surf animation image.",
+    "No controlled FPS, handheld, complete game/mod, all-map, all-Legendary-package or undeclared game-profile acceptance.",
+    "The core.quit_to_launcher hook is present in the Gen1 reference and used for Battle Art cleanup, but is absent from the Gen2 runtime. That lifecycle gap is not covered by scene success."
+  ]
+}

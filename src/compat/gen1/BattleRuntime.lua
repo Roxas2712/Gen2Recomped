@@ -4,6 +4,7 @@
 local Native=require('src.compat.gen1.NativeSession')
 local Version=require('src.core.GameVersion')
 local Views=require('src.compat.gen1.BattleView')
+local Ids=require('src.compat.gen1.BattleIds')
 local R={};R.__index=R
 local function owner()
   local host=package.loaded['src.mods.Runtime'];local facade=package.loaded['src.core.Game3']
@@ -11,7 +12,7 @@ local function owner()
 end
 local function cohort(c)
   return c.game.data==c.data and c.game.save==c.save and c.game.mods==c.loader
-    and c.game.stack==c.stack and Version.get()==c.edition
+    and c.game.stack==c.stack and Version.get()==c.edition and c.ids:valid()
 end
 local function member(c)
   if c.retired or not cohort(c)then return false end
@@ -29,6 +30,7 @@ function R:retire(c,completed)
     self.lastSession=setmetatable({c.game,c.data,c.save,c.stack,c.loader},{__mode='v'})
     self.lastEdition=c.edition
   end
+  c.game,c.screen,c.data,c.save,c.stack,c.loader,c.ids=nil,nil,nil,nil,nil,nil,nil
 end
 function R:bind(screen)
   local game=screen and Native.game(screen.game)
@@ -36,10 +38,10 @@ function R:bind(screen)
   local c=self.records[screen]
   if c and member(c)then local who=owner();if who then c.users[who]=true end;return c end
   if c then self:retire(c,false)end
-  c={screen=screen,game=game,data=game.data,save=game.save,stack=game.stack,loader=game.mods,edition=Version.get(),users={}}
+  c={screen=screen,game=game,data=game.data,save=game.save,stack=game.stack,loader=game.mods,edition=Version.get(),users={},ids=Ids.new(game.data)}
   if not member(c)then return end
   if self.current and self.current~=c then self:retire(self.current,false)end
-  c.views=Views.new(game,screen,function()return member(c)end)
+  c.views=Views.new(game,screen,function()return member(c)end,c.ids)
   local who=owner();if who then c.users[who]=true end
   self.records[screen]=c;self.current=c;self.last=nil
   return c

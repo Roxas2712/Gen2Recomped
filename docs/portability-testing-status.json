@@ -1,15 +1,15 @@
 {
-  "runtime_ref": "aed508c2918a369f1d19e2250eb11635c17bd78f",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/188",
-  "feature_ref": "6178ae1f3329fc53a66d7ba08cd8fa2deb43bff9",
+  "runtime_ref": "afe2c4461def99702a5ccbe1958fdf1653c58838",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/326",
+  "feature_ref": "1ac2846ef8cbe837f6819b22092f0bcbf0cd328c",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 206,
-  "engine_suites_total": 206,
-  "sdk_suites_passed": 3,
-  "sdk_suites_total": 3,
+  "engine_suites_passed": 561,
+  "engine_suites_total": 561,
+  "sdk_suites_passed": 4,
+  "sdk_suites_total": 4,
   "b30_profile": "passed",
-  "cross_engine_worker_runs": 4,
-  "cross_engine_paired_observations": 4272,
+  "cross_engine_worker_runs": 304,
+  "cross_engine_paired_observations": 178750,
   "native_love_version": "11.5",
   "native_boot_smoke_games": [
     "red",
@@ -19,7 +19,12 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "Both #188 workflows await maintainer approval (action_required); dedicated workflow has zero jobs; local acceptance is separate",
+  "hosted_ci": {
+    "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40354607637",
+    "conclusion": "action_required",
+    "jobs": 0,
+    "scope": "Requires upstream maintainer approval; no jobs executed. Local qualification is separate."
+  },
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -76,7 +81,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Historical native GBA attacking-move comparison; current order validation uses original pinned native C, not a modified Gen1 reference",
+  "cross_engine_scope": "CPU/hardware-double upstream composition, selected native FireRed/Emerald contracts, DS visibility/party-finish boundaries, unchanged Red QoL source and actual imported Red tables/art dimensions. Historical GPU/device/native boot/UI/storage evidence retains its own refs. No new graphics/audio-device launch, normal SAVE/import writes, complete graphical/gameplay or whole-mod/other-edition acceptance.",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -156,14 +161,14 @@
   },
   "enemy_pp_negative_controls": "Strict raw-policy checker and public/native observer both reject the unchanged #161 host for Gold PP discrepancy",
   "charge_required_original_full_suite_runtime_ref": "6a1238a7c42b09fbd9694149b35146d17bb9b720",
-  "hosted_ci_workflow_count": 33,
+  "hosted_ci_workflow_count": 9,
   "enemy_pp_hosted_ci": {
     "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40046010257",
     "conclusion": "action_required",
     "jobs": 0
   },
   "enemy_pp_full_suite_runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
-  "feature_tested_ref": "ae3c8925dc364447120ae9167cd2bb107fb6d8a3",
+  "feature_tested_ref": "e4fd1372c6a4a0abf7936c7b97d5ec97ecec80ee",
   "caught_marker_native_checks_passed": 2078,
   "caught_marker_renderer_checks_passed": 840,
   "caught_marker_import_checks_passed": 216,
@@ -1354,5 +1359,2341 @@
       ],
       "scope": "Reachability/handler availability from read-only extraction only, not proof of every predicate, complete native scoring or controller semantics; no generated cartridge assets committed"
     }
+  },
+  "unusable_target_handles": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/189",
+    "feature_ref": "1a9c9df9db022ef1b3edfd7a15085b4ced48944f",
+    "combined_runtime_ref": "10421a5125d1289bdcee7b5811957b954013a033",
+    "focused_checks_passed": 712,
+    "games": [
+      "red",
+      "gold",
+      "firered",
+      "emerald"
+    ],
+    "combined_engine_suites_passed": 207,
+    "combined_engine_suites_total": 207,
+    "sdk_suites_passed": 3,
+    "b30_profile": "passed",
+    "feature_baseline": {
+      "engine_suites_passed": 65,
+      "engine_suites_total": 75,
+      "failure_lines": 27,
+      "all_failure_lines_match_upstream": true,
+      "new_failures": 0
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40129207307",
+      "jobs": 0
+    },
+    "scope": "Actual CPU battle queues and native helper invariants; no new graphical or complete controller parity claim"
+  },
+  "enemy_decision_development_status": {
+    "included_in_combined_branch": false,
+    "read_only_reference_ref": "fb7b0366efcb85e703e9e6d5a8a24d01456a109b",
+    "paired_observations_per_api_mode": 1101,
+    "strict_differences_per_api_mode": 534,
+    "strict_result": "failed; every difference is the additional initial native turn-word RNG call; raw records retained",
+    "new_target_case_matches": true,
+    "target_case_profiles": [
+      "firered",
+      "emerald"
+    ],
+    "target_case_host_modes": [
+      "API 3 unified",
+      "API 2 unified"
+    ],
+    "reference_publication_allowed": false
+  },
+  "enemy_move_choices": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/190",
+    "feature_ref": "64068911a5b48a9332b69428b4b12f159036649a",
+    "prerequisite_pr": 102,
+    "combined_runtime_ref": "fbd10fa1288ee9c09ec7823a8e606765278d88e8",
+    "focused_checks_passed": 1252,
+    "combined_engine_suites_passed": 208,
+    "combined_engine_suites_total": 208,
+    "source_reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_modified": false,
+    "games": [
+      "firered",
+      "emerald"
+    ],
+    "cross_engine_worker_runs": 8,
+    "cross_engine_paired_observations": 100,
+    "paired_result": "passed",
+    "feature_baseline": {
+      "prerequisite_ref": "69c3474958ec09b48b91b55ff8cfd0ed15501d46",
+      "engine_suites_passed": 77,
+      "engine_suites_total": 87,
+      "failure_lines": 27,
+      "exact_failure_counter_matches_prerequisite": true,
+      "new_failures": 0
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40131487598",
+      "jobs": 0
+    },
+    "scope": "Public GBA move choices and native execution/PP ownership; hook argument parity, public item/switch/watch records, explicit double-target conversion, damage amounts and RNG traces remain separate"
+  },
+  "enemy_action_arguments": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/191",
+    "feature_ref": "206052fb3b901d343017dac6212ef818ec13b05f",
+    "prerequisite_pr": 190,
+    "combined_runtime_ref": "6bb17f00c9baedc665448254da99641dfe9db64a",
+    "focused_checks_passed": 438,
+    "existing_move_checks_passed": 1252,
+    "public_priority_checks_passed": 32,
+    "combined_engine_suites_passed": 209,
+    "combined_engine_suites_total": 209,
+    "source_reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_modified": false,
+    "games": [
+      "firered",
+      "emerald"
+    ],
+    "cross_engine_worker_runs": 12,
+    "cross_engine_paired_observations": 162,
+    "paired_result": "passed",
+    "feature_baseline": {
+      "prerequisite_ref": "64068911a5b48a9332b69428b4b12f159036649a",
+      "engine_suites_passed": 78,
+      "engine_suites_total": 88,
+      "prerequisite_engine_suites_passed": 77,
+      "prerequisite_engine_suites_total": 87,
+      "failure_lines": 27,
+      "exact_failure_counter_matches_prerequisite": true,
+      "new_failures": 0
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40132593110",
+      "jobs": 0
+    },
+    "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
+    "scope": "API-3 GBA positional/default selectors, real controller queues, native/legacy argument identity, nested/reentrant/error context and caller PP ownership; native output fields and public item/switch/watch/target conversion remain separate"
+  },
+  "enemy_move_records": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/194",
+    "feature_ref": "3f01f29e47c191eb1da1f0b80ab68eace8d1b035",
+    "prerequisite_pr": 191,
+    "combined_runtime_ref": "679b54967922bd8c14907c8c0bc152a2e2e615bc",
+    "focused_checks_passed": 254,
+    "existing_move_checks_passed": 1252,
+    "existing_argument_checks_passed": 438,
+    "combined_engine_suites_passed": 210,
+    "combined_engine_suites_total": 210,
+    "source_reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_modified": false,
+    "games": [
+      "firered",
+      "emerald"
+    ],
+    "cross_engine_worker_runs": 16,
+    "cross_engine_paired_observations": 220,
+    "paired_result": "passed",
+    "feature_baseline": {
+      "prerequisite_ref": "206052fb3b901d343017dac6212ef818ec13b05f",
+      "engine_suites_passed": 79,
+      "engine_suites_total": 89,
+      "prerequisite_engine_suites_passed": 78,
+      "prerequisite_engine_suites_total": 88,
+      "failure_lines": 27,
+      "exact_failure_counter_matches_prerequisite": true,
+      "new_failures": 0
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40134177111",
+      "jobs": 0
+    },
+    "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
+    "scope": "API-3 GBA native move records, authored and mixed-native reference forms, event-proven move execution, PP, charge and Struggle; scores, chosen targets and item/switch/watch actions remain separate"
+  },
+  "enemy_action_targets": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/195",
+    "feature_ref": "f84dfb5664d28f47b763e4cf701be1cb5c82556a",
+    "prerequisite_pr": 194,
+    "combined_runtime_ref": "916661d14a9f45511924f719d4b5524369182672",
+    "focused_checks_passed": 434,
+    "existing_move_checks_passed": 1252,
+    "existing_argument_checks_passed": 438,
+    "existing_record_checks_passed": 254,
+    "combined_engine_suites_passed": 211,
+    "combined_engine_suites_total": 211,
+    "source_reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_modified": false,
+    "games": [
+      "firered",
+      "emerald"
+    ],
+    "cross_engine_worker_runs": 20,
+    "cross_engine_paired_observations": 312,
+    "paired_result": "passed",
+    "feature_baseline": {
+      "prerequisite_ref": "3f01f29e47c191eb1da1f0b80ab68eace8d1b035",
+      "engine_suites_passed": 80,
+      "engine_suites_total": 90,
+      "prerequisite_engine_suites_passed": 79,
+      "prerequisite_engine_suites_total": 89,
+      "failure_lines": 27,
+      "exact_failure_counter_matches_prerequisite": true,
+      "new_failures": 0
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40136548705",
+      "jobs": 0
+    },
+    "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
+    "scope": "Local GBA selected action targets, slot replacement/absence, actual queue/hit events, Pressure, Lightning Rod order and legacy/malformed hints; not full effects, AI scoring, RNG, link, called-move or item/switch/watch parity"
+  },
+  "native_gba_follow_me": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/196",
+    "feature_ref": "8052c7916b12d57c425ce2fc92e6aa2ca3f9acc4",
+    "prerequisite_pr": 195,
+    "canonical_effect_composition_pr": 121,
+    "combined_runtime_ref": "218cf2c9879bf8dd7687491429ca2a427d5eee83",
+    "focused_checks_passed": 180,
+    "public_effect_composition_checks_passed": 14,
+    "source_reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_modified": false,
+    "games": [
+      "firered",
+      "emerald"
+    ],
+    "cross_engine_worker_runs": 24,
+    "cross_engine_paired_observations": 354,
+    "paired_result": "passed",
+    "combined_engine_suites_passed": 212,
+    "combined_engine_suites_total": 212,
+    "prerequisite_negative_control_failed_assertions": 29,
+    "feature_baseline": {
+      "prerequisite_ref": "f84dfb5664d28f47b763e4cf701be1cb5c82556a",
+      "engine_suites_passed": 82,
+      "engine_suites_total": 91,
+      "prerequisite_engine_suites_passed": 80,
+      "prerequisite_engine_suites_total": 90,
+      "failure_lines": 25,
+      "prerequisite_failure_lines": 27,
+      "new_failure_lines": 0,
+      "removed_failure_lines": "Only two reviewed stale fingerprint failures; exact remaining Counter matches",
+      "existing_failure_suites": 9
+    },
+    "fingerprint": {
+      "before": "41e69caf4afa35ab",
+      "after": "128fc071ae7249cd",
+      "changed_section": "move_effects",
+      "section_before": "3bef37494ca4a845",
+      "section_after": "7cd0ac0f527968fb",
+      "other_six_populated_sections": "unchanged",
+      "single_entry_removal_restores_prerequisite": true
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40138746937",
+      "jobs": 0
+    },
+    "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
+    "scope": "Native GBA producer, current-position selected redirection, both sides, live/fainted Lightning Rod precedence, ordinary status/PP/priority, residual and next-planning lifetime; synthetic imported-shaped data, no full gameplay/RNG/link/called-move/damage-amount parity claim"
+  },
+  "native_gba_helping_hand": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/198",
+    "feature_ref": "f09b570eaaef1fb8bb48b58fe20f501869a5edd8",
+    "prerequisite_prs": [
+      196,
+      178,
+      175
+    ],
+    "prerequisite_ref": "45f5b4e3386f704ab011ca3b6690aaa79f0bc425",
+    "canonical_effect_composition_pr": 121,
+    "combined_runtime_ref": "bf67876e473c7881fe2d08935c504fc7a922291c",
+    "focused_checks_passed": 5322,
+    "public_effect_composition_checks_passed": 12,
+    "source_reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_modified": false,
+    "games": [
+      "firered",
+      "emerald"
+    ],
+    "cross_engine_worker_runs": 28,
+    "cross_engine_paired_observations": 1916,
+    "paired_result": "passed",
+    "combined_engine_suites_passed": 213,
+    "combined_engine_suites_total": 213,
+    "prerequisite_negative_control_failed_assertions": 391,
+    "prior_base_damage_comparison": "passed on clean final feature",
+    "prior_critical_order_comparison": "passed on clean final feature",
+    "feature_baseline": {
+      "engine_suites_passed": 86,
+      "engine_suites_total": 95,
+      "prerequisite_engine_suites_passed": 85,
+      "prerequisite_engine_suites_total": 94,
+      "failure_lines": 25,
+      "exact_failure_counter_matches_prerequisite": true,
+      "new_failure_lines": 0,
+      "existing_failure_suites": 9
+    },
+    "fingerprint": {
+      "before": "128fc071ae7249cd",
+      "after": "032184f68094e9ca",
+      "changed_section": "move_effects",
+      "section_before": "7cd0ac0f527968fb",
+      "section_after": "52cc8398513ed12c",
+      "other_six_populated_sections": "unchanged",
+      "single_entry_removal_restores_prerequisite": true
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "workflow_count": 5,
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40139823577",
+      "jobs": 0
+    },
+    "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
+    "scope": "Native GBA producer and shared ordinary damage path, actual public choices/events and numeric damage, rounding/critical/type/spread, fixed/confusion exclusions, gates, lifetime, replacement, real priority queues and PP; dedicated set-damage/delayed executors and full gameplay/RNG/held-item/ability parity remain separate"
+  },
+  "native_gba_spit_up": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/203",
+    "feature_ref": "8c7df4d7dff206b8a88ba9a9a819c6128b311a91",
+    "prerequisite_pr": 198,
+    "prerequisite_ref": "f09b570eaaef1fb8bb48b58fe20f501869a5edd8",
+    "canonical_effect_composition_pr": 121,
+    "combined_runtime_ref": "ba2d7d11dccc64994e0367158d79f4b0d9f68ef8",
+    "focused_checks_passed": 8292,
+    "public_effect_composition_checks_passed": 14,
+    "source_reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_modified": false,
+    "games": [
+      "firered",
+      "emerald"
+    ],
+    "cross_engine_worker_runs": 32,
+    "cross_engine_paired_observations": 3974,
+    "paired_result": "passed",
+    "combined_engine_suites_passed": 214,
+    "combined_engine_suites_total": 214,
+    "prerequisite_negative_control_failed_assertions": 770,
+    "feature_baseline": {
+      "engine_suites_passed": 87,
+      "engine_suites_total": 96,
+      "prerequisite_engine_suites_passed": 86,
+      "prerequisite_engine_suites_total": 95,
+      "failure_lines": 25,
+      "exact_failure_counter_matches_prerequisite": true,
+      "new_failure_lines": 0,
+      "existing_failure_suites": 9
+    },
+    "vm": {
+      "official_luajit_ref": "a4c064539ea931274d407e1249b4bb575424a0f4",
+      "version": "2.1.1792588164",
+      "jit_enabled": true,
+      "older_local_arm64_vm": "2.1.1700008891",
+      "older_reference_result": "JIT-dependent Thick Fat divergence; failing report preserved separately, no reference patch or observation filter",
+      "older_host_against_pinned_reference": "All new Spit Up observations match for FireRed/Emerald"
+    },
+    "fingerprint": {
+      "before": "032184f68094e9ca",
+      "after": "397df21576af62f1",
+      "changed_record": "SPIT_UP_EFFECT.rev = 1",
+      "changed_section": "move_effects",
+      "section_before": "52cc8398513ed12c",
+      "section_after": "c62807cde682a669",
+      "other_six_populated_sections": "unchanged",
+      "single_revision_removal_restores_prerequisite": true
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "workflow_count": 5,
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40141841786",
+      "jobs": 0
+    },
+    "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
+    "scope": "Native Stockpile/Spit Up set-damage path, real selected actions/events/numbers/operative counters/PP/callbacks; synthetic imported-shaped sessions, raw stale reference alias equality and full ability/item/badge/animation/gameplay/RNG parity not claimed"
+  },
+  "native_gba_beat_up": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/206",
+    "feature_ref": "92ade2b2cf72238e3594cf46f5c670ef857ac2a3",
+    "prerequisite_pr": 203,
+    "prerequisite_ref": "8c7df4d7dff206b8a88ba9a9a819c6128b311a91",
+    "canonical_effect_composition_pr": 121,
+    "canonical_effect_id": "EFFECT_BEAT_UP",
+    "combined_runtime_ref": "f6f3bfe95dc70256bea403afc9423bf35c73162b",
+    "focused_checks_passed": 1330,
+    "public_effect_composition_checks_passed": 14,
+    "source_reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_modified": false,
+    "games": [
+      "firered",
+      "emerald"
+    ],
+    "cross_engine_worker_runs": 40,
+    "cross_engine_paired_observations": 4486,
+    "paired_result": "passed",
+    "combined_engine_suites_passed": 215,
+    "combined_engine_suites_total": 215,
+    "combined_failure_lines": 0,
+    "prerequisite_negative_control_failed_assertions": 168,
+    "endure_negative_regression_failed_assertions": 16,
+    "active_species_negative_regression_failed_assertions": 16,
+    "feature_baseline": {
+      "engine_suites_passed": 88,
+      "engine_suites_total": 97,
+      "prerequisite_engine_suites_passed": 87,
+      "prerequisite_engine_suites_total": 96,
+      "failure_lines": 25,
+      "exact_failure_counter_matches_prerequisite": true,
+      "new_failure_lines": 0,
+      "existing_failure_suites": 9
+    },
+    "vm": {
+      "official_luajit_ref": "a4c064539ea931274d407e1249b4bb575424a0f4",
+      "version": "2.1.1792588164",
+      "jit_enabled": true
+    },
+    "fingerprint": {
+      "before": "397df21576af62f1",
+      "after": "d518411055f17444",
+      "changed_record": "BEAT_UP_EFFECT.rev = 1",
+      "changed_section": "move_effects",
+      "section_before": "c62807cde682a669",
+      "section_after": "f45a80ce5e45ef42",
+      "other_six_populated_sections": "unchanged",
+      "single_revision_removal_restores_prerequisite": true
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "workflow_count": 5,
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40144144197",
+      "jobs": 0
+    },
+    "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
+    "scope": "Native party/base/level damage, per-hit critical/variation and Helping Hand, live callbacks, active target species fields, events/PP/Substitute/Endure/last-strike memory; synthetic imported-shaped sessions; full Transform/controller, held-item schedule, joined multi-trainer/link parties, animation/gameplay and raw RNG-trace parity remain separate"
+  },
+  "native_gba_beat_up_held_item_contracts": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/209",
+    "feature_ref": "03d68a41d2d25f3b51920655fa29c9602c3f11ca",
+    "prerequisite_prs": [
+      206,
+      182
+    ],
+    "composed_prerequisite_ref": "45220e4413ecbf8a70eb2021f5810ad4fca6f04b",
+    "combined_runtime_ref": "4d169998e342794802c87b043796ed7c9dfa51e8",
+    "runtime_policy_changes": false,
+    "focused_checks_passed": 1672,
+    "source_reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_modified": false,
+    "games": [
+      "firered",
+      "emerald"
+    ],
+    "physical_item_id": 196,
+    "imported_shaped_item_id": 1196,
+    "cross_engine_worker_runs": 44,
+    "cross_engine_paired_observations": 4622,
+    "paired_result": "passed",
+    "combined_engine_suites_passed": 216,
+    "combined_engine_suites_total": 216,
+    "combined_failure_lines": 0,
+    "negative_control_without_182_failed_assertions": 56,
+    "feature_baseline": {
+      "engine_suites_passed": 90,
+      "engine_suites_total": 99,
+      "prerequisite_engine_suites_passed": 89,
+      "prerequisite_engine_suites_total": 98,
+      "failure_lines": 25,
+      "exact_failure_counter_matches_prerequisite": true,
+      "new_failure_lines": 0,
+      "existing_failure_suites": 9
+    },
+    "vm": {
+      "official_luajit_ref": "a4c064539ea931274d407e1249b4bb575424a0f4",
+      "version": "2.1.1792588164",
+      "jit_enabled": true
+    },
+    "fingerprint": {
+      "changed": false,
+      "fixture_digest": "d518411055f17444"
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "workflow_count": 6,
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40144832869",
+      "jobs": 0
+    },
+    "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
+    "scope": "Test-only acceptance for #206 plus #182: physical/custom metadata, strict/zero chance, per-strike Focus Band RNG, nonlethal/Substitute/Endure, callback removal/equipping, subsequent move, public events/PP/counter memory. Full raw RNG trace, other scripted executors, joined multi-trainer/link, Ruby/Sapphire controllers and complete gameplay remain separate"
+  },
+  "native_gba_beat_up_side_parties": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/210",
+    "feature_ref": "c2a1a032eab21646d025b8b9704b6553507e1a01",
+    "prerequisite_pr": 209,
+    "prerequisite_ref": "03d68a41d2d25f3b51920655fa29c9602c3f11ca",
+    "combined_runtime_ref": "f39cc19534737f8f3b764cdd1c1a1d993a96fd6e",
+    "focused_checks_passed": 1728,
+    "source_reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_modified": false,
+    "games": [
+      "firered",
+      "emerald"
+    ],
+    "cases_per_position": 18,
+    "positions": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "constructors": "Gen1 State.new ownership halves; Gen2 newTrainer/setAlly/addOpponentTrainer/sendOutSecondPair with prebuilt members",
+    "cross_engine_worker_runs": 48,
+    "cross_engine_paired_observations": 4766,
+    "paired_result": "passed",
+    "combined_engine_suites_passed": 217,
+    "combined_engine_suites_total": 217,
+    "combined_failure_lines": 0,
+    "negative_control_failed_assertions": 58,
+    "feature_baseline": {
+      "engine_suites_passed": 91,
+      "engine_suites_total": 100,
+      "prerequisite_engine_suites_passed": 90,
+      "prerequisite_engine_suites_total": 99,
+      "failure_lines": 25,
+      "exact_failure_counter_matches_prerequisite": true,
+      "new_failure_lines": 0,
+      "existing_failure_suites": 9
+    },
+    "vm": {
+      "official_luajit_ref": "a4c064539ea931274d407e1249b4bb575424a0f4",
+      "version": "2.1.1792588164",
+      "jit_enabled": true
+    },
+    "fingerprint": {
+      "before": "d518411055f17444",
+      "after": "fdbfa30b20cbbaef",
+      "changed_record": "BEAT_UP_EFFECT.rev = 2",
+      "changed_section": "move_effects",
+      "section_before": "f45a80ce5e45ef42",
+      "section_after": "e4d28f474c15cd8b",
+      "other_six_populated_sections": "unchanged",
+      "revision_1_restores_prerequisite": true
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "workflow_count": 6,
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40145716820",
+      "jobs": 0
+    },
+    "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
+    "scope": "Native joined side-party reads with independent ownership benches; actual constructor/actions and synthetic prebuilt parties; scoped view/detached active mon seeded explicitly. Full raw RNG traces, arbitrary mid-move ownership reshaping, full link/multi-owner controllers, animations and complete gameplay remain separate"
+  },
+  "native_gba_critical_context": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/212",
+    "feature_ref": "d2d1f3b7b56493505df147fb5083d68ba78f46d7",
+    "prerequisite_pr": 210,
+    "prerequisite_ref": "c2a1a032eab21646d025b8b9704b6553507e1a01",
+    "combined_runtime_ref": "b298c7188bd731dc65d191cceea1456f555dca50",
+    "focused_checks_passed": 3396,
+    "source_reference_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_modified": false,
+    "games": [
+      "firered",
+      "emerald"
+    ],
+    "new_cases": {
+      "firered": 27,
+      "emerald": 29
+    },
+    "positions": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "attacks": [
+      "ordinary",
+      "scripted Beat Up"
+    ],
+    "shared_critical_fields": [
+      "battle",
+      "target",
+      "moveId",
+      "moveNum",
+      "stage"
+    ],
+    "shared_hit_fields": [
+      "kind",
+      "substitute"
+    ],
+    "cross_engine_worker_runs": 52,
+    "cross_engine_paired_observations": 5214,
+    "paired_result": "passed",
+    "combined_engine_suites_passed": 218,
+    "combined_engine_suites_total": 218,
+    "combined_failure_lines": 0,
+    "negative_control_failed_assertions": 288,
+    "feature_baseline": {
+      "engine_suites_passed": 92,
+      "engine_suites_total": 101,
+      "prerequisite_engine_suites_passed": 91,
+      "prerequisite_engine_suites_total": 100,
+      "failure_lines": 25,
+      "exact_failure_counter_matches_prerequisite": true,
+      "new_failure_lines": 0,
+      "existing_failure_suites": 9
+    },
+    "vm": {
+      "official_luajit_ref": "a4c064539ea931274d407e1249b4bb575424a0f4",
+      "version": "2.1.1792588164",
+      "jit_enabled": true
+    },
+    "fingerprint": {
+      "before": "fdbfa30b20cbbaef",
+      "after": "a000e3862d11a73a",
+      "changed_record": "BEAT_UP_EFFECT.rev = 3",
+      "changed_section": "move_effects",
+      "section_before": "e4d28f474c15cd8b",
+      "section_after": "cca86e08b893522c",
+      "other_six_populated_sections": "unchanged",
+      "revision_2_restores_prerequisite": true
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "workflow_count": 6,
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40148026770",
+      "jobs": 0
+    },
+    "chat_attachment": "App rejected attachment because the chat already has 100 artifact identities; PR remains published and linked",
+    "scope": "Native critical guards/draw order, hook context/overrides and hit metadata, physical item/current-species stages, Lansat producer; actual Gen2 script/constructors with controlled stats and reference kind/Oak fields seeded. Full controller/constructor stat/advice/intro/animation, fresh ROM/raw RNG/link/gameplay acceptance remains separate"
+  },
+  "native_gen3_constrained_party": {
+    "feature_pr": 214,
+    "feature_ref": "440a5da635dc9737875c38e4ac324ce2343a23ee",
+    "combined_runtime_ref": "a238391bfed65ac554260eb61d64acf95182f598",
+    "prerequisites": [
+      212,
+      169
+    ],
+    "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_unchanged": true,
+    "focused_checks_passed": 209742,
+    "new_paired_presets_per_profile": 180,
+    "profiles": [
+      "firered",
+      "emerald"
+    ],
+    "shared_worker_runs": 56,
+    "shared_paired_observations": 5574,
+    "all_observations_equal": true,
+    "feature_engine_suites_passed": 95,
+    "feature_engine_suites_total": 104,
+    "baseline_ref": "2515a38241089c3b9bd78b1cbb53b61fd4a3b61d",
+    "baseline_engine_suites_passed": 94,
+    "baseline_engine_suites_total": 103,
+    "inherited_fail_lines": 25,
+    "inherited_failing_suites": 9,
+    "exact_failure_counter_equal": true,
+    "negative_control_failed_assertions": 1065,
+    "negative_control_followup": "clean prerequisite then lacks the new private factory; the failing log is retained",
+    "imported_cache_smoke": {
+      "profiles": [
+        {
+          "constructorWords": 622,
+          "passed": true,
+          "version": "firered",
+          "created": 9
+        },
+        {
+          "constructorWords": 868,
+          "passed": true,
+          "version": "emerald",
+          "created": 9
+        }
+      ],
+      "runtime": "a238391bfed65ac554260eb61d64acf95182f598",
+      "scope": "CPU-only private native preset creation with actual local imports; no rendering or full playback"
+    },
+    "combined_engine_suites_passed": 219,
+    "combined_engine_suites_total": 219,
+    "sdk_suites": "3/3",
+    "b30": "passed",
+    "fingerprint_changed": false,
+    "fingerprint": "a000e3862d11a73a",
+    "hosted_ci": {
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40150160378",
+      "conclusion": "action_required",
+      "jobs": 0,
+      "workflow_runs": 7
+    },
+    "chat_attachment": "attempted; thread attachment identity count exceeds 100",
+    "remaining_scope": [
+      "Whole-game RNG and VBlank scheduling",
+      "Subsequent demo midpoint battle RNG and controller playback",
+      "Live UI and full tutorial playthrough"
+    ],
+    "proof": [
+      "tmp/constrained-party-full-accepted.log",
+      "tmp/constrained-party-contracts.json",
+      "tmp/constrained-party-import-smoke.json"
+    ]
+  },
+  "native_gba_hit_commands": {
+    "feature_pr": 215,
+    "feature_ref": "a6205dfce1b6d091e758238447db3b25462367f4",
+    "combined_runtime_ref": "4a2f0d15de9820e897f6dfe895e204b3737a15d6",
+    "prerequisites": [
+      214,
+      212,
+      169
+    ],
+    "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_unchanged": true,
+    "focused_checks": {
+      "accuracy": 15082,
+      "secondary": 53598,
+      "protocol": 156,
+      "total": 68836
+    },
+    "shared_worker_runs": 72,
+    "shared_paired_observations": 48524,
+    "all_observations_equal": true,
+    "feature_engine_suites_passed": 98,
+    "feature_engine_suites_total": 107,
+    "baseline_ref": "440a5da635dc9737875c38e4ac324ce2343a23ee",
+    "baseline_engine_suites_passed": 95,
+    "baseline_engine_suites_total": 104,
+    "inherited_fail_lines": 25,
+    "inherited_failing_suites": 9,
+    "exact_failure_counter_equal": true,
+    "negative_control": {
+      "ref": "184fdaaaf10db458065533d30522bdef34ec7377",
+      "differing_thunder_execution_observations": 56,
+      "failing_reports_retained": true
+    },
+    "native_command_revision": 1,
+    "native_move_fields": [
+      "index",
+      "gen3Effect",
+      "secondaryChance",
+      "target",
+      "flags",
+      "protectAffected"
+    ],
+    "raw_fixture_legacy_fingerprint": "e33d251961f2a41d",
+    "raw_fixture_native_fingerprint": "3a76cc5fce47a5c3",
+    "combined_non_gba_fingerprint": "a000e3862d11a73a",
+    "goldens_reblessed": false,
+    "synthetic_complete_link_mirrors": 2,
+    "link_scope": "Current native runtime/marker agreement and older-peer refusal; not full cartridge party genetics certification",
+    "imported_cache_smoke": {
+      "runtime": "4a2f0d15de9820e897f6dfe895e204b3737a15d6",
+      "profiles": [
+        {
+          "version": "firered",
+          "chance": 30,
+          "passed": true,
+          "hp": 962,
+          "draws": [
+            [
+              0,
+              65535
+            ],
+            [
+              1,
+              100
+            ],
+            [
+              85,
+              100
+            ],
+            [
+              0,
+              99
+            ]
+          ],
+          "moveIndex": 87,
+          "event": "PAR",
+          "effect": 152
+        },
+        {
+          "version": "emerald",
+          "chance": 30,
+          "passed": true,
+          "hp": 966,
+          "draws": [
+            [
+              0,
+              65535
+            ],
+            [
+              1,
+              100
+            ],
+            [
+              85,
+              100
+            ],
+            [
+              0,
+              99
+            ]
+          ],
+          "moveIndex": 87,
+          "event": "PAR",
+          "effect": 152
+        }
+      ],
+      "scope": "CPU-only actual imported Thunder through public enemy-action and status event; controlled HP; no rendering/full playthrough"
+    },
+    "combined_engine_suites_passed": 222,
+    "combined_engine_suites_total": 222,
+    "sdk_suites": "3/3",
+    "b30": "passed",
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "workflow_runs": 7,
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40154632317",
+      "jobs": 0
+    },
+    "chat_attachment": "attempted; thread attachment identity count exceeds 100",
+    "remaining_scope": [
+      "Full native cartridge party genetics transport",
+      "Timed Lock-On and side/volatile state producers",
+      "Whole-game RNG and VBlank scheduling",
+      "Demo midpoint RNG and controller playback",
+      "Live UI and full playthrough acceptance"
+    ],
+    "proof": [
+      "tmp/native-hit-full-accepted.log",
+      "tmp/native-hit-contracts.json",
+      "tmp/native-hit-import-smoke.log"
+    ]
+  },
+  "native_gba_party_codec": {
+    "feature_pr": 216,
+    "feature_ref": "b1795a79cb03a4de7171d50db93a39ce49dddd64",
+    "combined_runtime_ref": "abeaf23461ee80e95a7ff0f9cfd98bb5e5075062",
+    "prerequisite": 215,
+    "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_unchanged": true,
+    "codec_revision": 1,
+    "focused_checks": {
+      "codec_and_hooks": 194540,
+      "transport_trade_link": 303,
+      "total": 194843
+    },
+    "shared_worker_runs": 80,
+    "shared_paired_observations": 59394,
+    "all_observations_equal": true,
+    "codec_cases_per_profile": 5400,
+    "gender_hook_cases_per_profile": 35,
+    "public_gender_hook_policies": [
+      "none",
+      "delegate",
+      "female",
+      "invalid",
+      "threshold"
+    ],
+    "feature_engine_suites_passed": 100,
+    "feature_engine_suites_total": 109,
+    "baseline_ref": "a6205dfce1b6d091e758238447db3b25462367f4",
+    "baseline_engine_suites_passed": 98,
+    "baseline_engine_suites_total": 107,
+    "inherited_fail_lines": 25,
+    "inherited_failing_suites": 9,
+    "exact_failure_counter_equal": true,
+    "negative_control": {
+      "lost_fields": [
+        "personality",
+        "ivs",
+        "evs",
+        "nature",
+        "abilitySlot",
+        "otSecretId"
+      ],
+      "expected_hp_max": 92,
+      "old_hp_max": 67,
+      "failing_report_retained": true
+    },
+    "full_seeded_link_mirrors": 2,
+    "sender_genotype_checked": true,
+    "all_paired_turn_hashes_and_components_equal": true,
+    "strict_packet_refusals": true,
+    "actual_trade_application_and_save_roundtrip": true,
+    "raw_fixture_prior_hash": "3a76cc5fce47a5c3",
+    "raw_fixture_codec_hash": "2fd444270c3d90db",
+    "hash_audit": "Unchanged #215 hasher plus explicit [native_gba_party]1 surface token",
+    "non_gba_golden_changed": false,
+    "combined_engine_suites_passed": 224,
+    "combined_engine_suites_total": 224,
+    "sdk_suites": "3/3",
+    "b30": "passed",
+    "imported_cache_smoke": {
+      "runtime": "abeaf23461ee80e95a7ff0f9cfd98bb5e5075062",
+      "profiles": [
+        {
+          "passed": true,
+          "speciesIndex": 60,
+          "version": "firered",
+          "publicStatus": "TOX",
+          "abilitySlot": 2,
+          "stats": {
+            "hp": 92,
+            "attack": 47,
+            "defense": 33,
+            "speed": 85,
+            "spatk": 35,
+            "spdef": 35,
+            "special": 35
+          }
+        },
+        {
+          "passed": true,
+          "speciesIndex": 60,
+          "version": "emerald",
+          "publicStatus": "TOX",
+          "abilitySlot": 2,
+          "stats": {
+            "hp": 92,
+            "attack": 47,
+            "defense": 33,
+            "speed": 85,
+            "spatk": 35,
+            "spdef": 35,
+            "special": 35
+          }
+        }
+      ],
+      "scope": "CPU-only actual imported Poliwag identity/stats/PP and public API reads; no live UI/full playthrough"
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "workflow_runs": 7,
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40155830700",
+      "jobs": 0
+    },
+    "chat_attachment": "attempted; thread attachment identity count exceeds 100",
+    "remaining_scope": [
+      "Cross-engine network packet compatibility is not asserted",
+      "Full native egg-legality checks",
+      "Other-generation codecs",
+      "Timed side and volatile state producers",
+      "Whole-game RNG and VBlank scheduling",
+      "Demo midpoint RNG and controller playback",
+      "Live UI and full playthrough acceptance"
+    ],
+    "proof": [
+      "tmp/party-codec-full-accepted.log",
+      "tmp/party-codec-contracts.json",
+      "tmp/party-codec-import-smoke.log"
+    ]
+  },
+  "native_gba_lock_on": {
+    "feature_pr": 217,
+    "feature_ref": "0905dcd005d102c33d31fad12d2082290d76f56c",
+    "combined_runtime_ref": "244d2367da28e6205611fc79c5fd16093315d451",
+    "prerequisite": 216,
+    "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_unchanged": true,
+    "native_command_revision": 2,
+    "focused_checks": {
+      "lifecycle": 492,
+      "ownership_link": 64,
+      "total": 556
+    },
+    "shared_worker_runs": 84,
+    "shared_paired_observations": 59820,
+    "all_observations_equal": true,
+    "new_cases_per_profile": 213,
+    "profiles": [
+      "firered",
+      "emerald"
+    ],
+    "all_four_actor_slots": true,
+    "full_seeded_native_link_mirrors": 2,
+    "all_paired_turn_hashes_and_components_equal": true,
+    "feature_engine_suites_passed": 102,
+    "feature_engine_suites_total": 111,
+    "baseline_ref": "b1795a79cb03a4de7171d50db93a39ce49dddd64",
+    "baseline_engine_suites_passed": 100,
+    "baseline_engine_suites_total": 109,
+    "inherited_fail_lines": 25,
+    "inherited_failing_suites": 9,
+    "exact_failure_counter_equal": true,
+    "negative_control": {
+      "completed_observations": 213,
+      "differing_observations": 207,
+      "failed_assertions": 103,
+      "full_output_retained": true
+    },
+    "integration": "Preserve existing GBA item/residual scheduling; tick in gen3BattlerCountersTick instead of restoring the monolithic counter loop",
+    "raw_fixture_prior_hash": "2fd444270c3d90db",
+    "raw_fixture_revision_2_hash": "cf73a8e083fb8a54",
+    "hash_audit": "Unchanged #216 hasher; only native command revision token 1 to 2 changes",
+    "non_gba_golden_changed": false,
+    "combined_engine_suites_passed": 226,
+    "combined_engine_suites_total": 226,
+    "sdk_suites": "3/3",
+    "b30": "passed",
+    "imported_cache_smoke": {
+      "runtime": "244d2367da28e6205611fc79c5fd16093315d451",
+      "profiles": [
+        {
+          "hp": 964,
+          "effect": 94,
+          "accuracyHooks": 1,
+          "version": "firered",
+          "draws": [
+            [
+              0,
+              65535
+            ],
+            [
+              1,
+              100
+            ],
+            [
+              85,
+              100
+            ],
+            [
+              85,
+              100
+            ]
+          ],
+          "passed": true,
+          "moveIndex": 199
+        },
+        {
+          "hp": 976,
+          "effect": 94,
+          "accuracyHooks": 1,
+          "version": "emerald",
+          "draws": [
+            [
+              0,
+              65535
+            ],
+            [
+              1,
+              100
+            ],
+            [
+              85,
+              100
+            ],
+            [
+              85,
+              100
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "passed": true,
+          "moveIndex": 199
+        }
+      ],
+      "scope": "CPU-only actual imported canonical Lock-On selection, two real Tackle hits and two end-of-turn sweeps; controlled HP; no live UI/full playthrough"
+    },
+    "hosted_ci": {
+      "conclusion": "action_required",
+      "workflow_runs": 7,
+      "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40157494497",
+      "jobs": 0
+    },
+    "chat_attachment": "attempted; thread attachment identity count exceeds 100",
+    "remaining_scope": [
+      "Full Baton Pass move and UI chooser lifecycle; explicit switch entry already tested",
+      "Other side and volatile state producers",
+      "Native egg-legality validation",
+      "Whole-game RNG and VBlank scheduling",
+      "Live UI and full playthrough acceptance"
+    ],
+    "proof": [
+      "tmp/lock-on-full-accepted.log",
+      "tmp/lock-on-contracts.json",
+      "tmp/lock-on-import-smoke.log"
+    ]
+  },
+  "native_baton_pass": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/218",
+    "feature_ref": "e8d65156d62605c52203c88a6f3f9c82e2f67e42",
+    "feature_tested_ref": "d5ad56afccca21d107f21b5b561b908fa650e59e",
+    "runtime_ref": "86b12d7b7a816a2782ba5cfba804b103630eda5b",
+    "focused_checks_passed": 915,
+    "command_checks_passed": 654,
+    "party_ui_checks_passed": 52,
+    "link_spectator_disconnect_checks_passed": 72,
+    "packet_signature_compatibility_checks_passed": 95,
+    "authored_called_checks_passed": 42,
+    "cross_engine_workers": 88,
+    "paired_observations": 60132,
+    "new_observations_per_profile": 156,
+    "native_command_revision": 3,
+    "native_fixture_digest": "c2a03195bc4588f9",
+    "native_party_revision": 1,
+    "feature_engine_suites_passed": 110,
+    "feature_engine_suites_total": 119,
+    "inherited_failing_suites": 9,
+    "exact_fail_counter_equal": true,
+    "inherited_fail_lines": 25,
+    "combined_engine_suites_passed": 231,
+    "combined_engine_suites_total": 231,
+    "native_imported_smoke_games": [
+      "firered",
+      "emerald"
+    ],
+    "native_scope": "CPU-only actual imported records; public canonical enemy selector, actual forced party screen and queued turn selecting the third member; no normal SAVE, GPU/pixel/full-playthrough claim",
+    "negative_controls": [
+      "Clean prerequisite keeps the donor active after the same public selector",
+      "Initial Baton implementation runs item phases before nested selection completes"
+    ],
+    "hosted_workflows": 8,
+    "hosted_conclusion": "action_required",
+    "contract_run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40161166597",
+    "hosted_jobs": 0,
+    "attachment": "App artifact identity cap of 100 reached; PR published and linked"
+  },
+  "native_encore": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/219",
+    "feature_ref": "313eb7a1841844aad124e1c60088dcdd20755574",
+    "feature_tested_ref": "6998a429a99dcc94d3f7c8b9a337ddfbcdaea3ba",
+    "runtime_ref": "ae385bae803e8a94eb4b2c73e2c1425d1a68868d",
+    "focused_checks_passed": 637,
+    "command_lifecycle_checks": 480,
+    "public_queue_authored_legacy_checks": 99,
+    "link_compatibility_checks": 58,
+    "native_protocol_checks": 154,
+    "cross_engine_workers": 92,
+    "paired_observations": 61356,
+    "new_observations_per_profile": 612,
+    "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "native_command_revision": 4,
+    "native_fixture_digest": "8be423c61a4477a2",
+    "native_party_revision": 1,
+    "feature_engine_suites_passed": 113,
+    "feature_engine_suites_total": 122,
+    "inherited_failing_suites": 9,
+    "inherited_fail_lines": 25,
+    "exact_fail_counter_equal": true,
+    "combined_engine_suites_passed": 234,
+    "combined_engine_suites_total": 234,
+    "prepared_input_boundary": "Public choice/planning cases receive the same explicit prepared Quick Claw word. The combined C-validated order controller prepares it earlier than Gen1 standalone commands; original extra-draw mismatch retained. No calls/observations filtered; complete selection/RNG orchestration remains open.",
+    "native_imported_smoke_games": [
+      "firered",
+      "emerald"
+    ],
+    "native_imported_smoke_scenarios": 4,
+    "native_scope": "CPU-only real imported Encore, public canonical enemy selector and FIGHT or alternative-move intent through actual turn/residual queues; no normal SAVE or distributed ROM/cache/save data; no GPU/pixel/full-playthrough claim",
+    "declared_action_event": "battle.turn_started retains original declaration; battle.move_used names the actual forced move",
+    "planned_pp_binding": "retained if Encore is cancelled after planning",
+    "negative_control": "Unchanged #218 returns 3 instead of 6 phases and no original slot; both failing assertions/raw state retained",
+    "hosted_workflows": 8,
+    "hosted_conclusion": "action_required",
+    "contract_run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40164228999",
+    "hosted_jobs": 0,
+    "attachment": "App artifact identity cap of 100 reached; regular PR remains published and linked"
+  },
+  "native_disable": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/220",
+    "feature_ref": "6a3a3155bb2d3433a8c587333d11870ed10f60eb",
+    "feature_tested_ref": "55f4301ab6ef190051b1f6d420f22636a61a1809",
+    "runtime_ref": "abd621282715d072b421e7b30f3f5c60628d771d",
+    "focused_checks_passed": 930,
+    "command_lifecycle_checks": 768,
+    "public_delegation_switch_checks": 108,
+    "link_compatibility_checks": 54,
+    "cross_engine_workers": 96,
+    "paired_observations": 62976,
+    "new_observations_per_profile": 810,
+    "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_unchanged": true,
+    "native_command_revision": 5,
+    "native_fixture_digest": "da62fe7b50f40107",
+    "native_party_revision": 1,
+    "prior_fixture_digest": "8be423c61a4477a2",
+    "hash_audit": "Unchanged #219 hasher with only explicit command revision token 4 to 5; no older-generation golden reblessed",
+    "feature_engine_suites_passed": 116,
+    "feature_engine_suites_total": 125,
+    "inherited_failing_suites": 9,
+    "inherited_fail_lines": 25,
+    "exact_fail_counter_equal": true,
+    "combined_engine_suites_passed": 237,
+    "combined_engine_suites_total": 237,
+    "sdk_suites": "3/3",
+    "b30": "passed",
+    "eligibility_boundary": "Actual Gen1 native Commands.selectionError vs host BattleCommands.reason; source GBA snapshot omitted disabled is not treated as false",
+    "native_imported_smoke_games": [
+      "firered",
+      "emerald"
+    ],
+    "native_imported_smoke_scenarios": 4,
+    "native_scope": "CPU-only actual imports, canonical public enemy selector, preapplied/same-turn Disable and public move submission through full turn/result queues and residuals; real imported accuracy retained with controlled valid hit roll; no normal SAVE or distributed ROM/cache/save data; no GPU/pixel/full-playthrough claim",
+    "negative_control": "Unchanged #219 public command returns random slot 2/duration 8; both new assertions fail, raw report retained",
+    "hosted_workflows": 8,
+    "hosted_conclusion": "action_required",
+    "contract_run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40165934516",
+    "hosted_jobs": 0,
+    "attachment": "App artifact identity cap of 100 reached; regular PR published and linked",
+    "proof": [
+      "tmp/disable-full.log",
+      "tmp/disable-contracts.json",
+      "tmp/disable-imported.log",
+      "tmp/disable-accepted-evidence.json"
+    ]
+  },
+  "native_ordinary_multi_hit": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/222",
+    "feature_ref": "1d958bca394b280f91f5977785128dcc9c26fd98",
+    "feature_tested_ref": "00e67c40abcb224ff693e4f543a4d018014edf73",
+    "runtime_ref": "1a20cb1f104972c46c756ba6a55e814fc27619c8",
+    "focused_checks_passed": 17974,
+    "native_command_checks": 17856,
+    "composition_caller_legacy_checks": 68,
+    "link_compatibility_checks": 50,
+    "cross_engine_workers": 100,
+    "paired_observations": 74496,
+    "new_observations_per_profile": 5760,
+    "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_unchanged": true,
+    "ordinary_effects": [
+      29,
+      44,
+      77
+    ],
+    "native_command_revision": 6,
+    "native_party_revision": 1,
+    "native_fixture_digest": "a7db0874db78aec0",
+    "prior_fixture_digest": "da62fe7b50f40107",
+    "hash_audit": "Unchanged #220 hasher with only explicit native command revision 5 to 6; older-generation goldens unchanged",
+    "native_crit_rng": "0..denominator-1 == 0; raw bounds/values retained for all critical stages",
+    "feature_engine_suites_passed": 119,
+    "feature_engine_suites_total": 128,
+    "inherited_failing_suites": 9,
+    "inherited_fail_lines": 25,
+    "exact_fail_counter_equal": true,
+    "combined_engine_suites_passed": 240,
+    "combined_engine_suites_total": 240,
+    "sdk_suites": "3/3",
+    "b30": "passed",
+    "negative_control": {
+      "baseline_ref": "6a3a3155bb2d3433a8c587333d11870ed10f60eb",
+      "failed_assertions": 1524,
+      "complete_observations": 5760,
+      "differing_observations": 5088,
+      "same_source_fixture_sha256": true,
+      "raw_outputs_retained": true
+    },
+    "initial_regression": "Ordinary termination first interrupted scripted Beat Up; original failed full log and eight differing runs retained. Accepted runtime preserves all existing Beat Up contracts.",
+    "event_boundary": "Public event views are detached; controlled fixture mutations target live battlers and are asserted, not claimed as event-view write-through",
+    "sleep_talk_boundary": "Actual nested dispatcher tested after caller selection; full Sleep Talk selection/status-controller parity remains outside scope",
+    "native_imported_smoke_games": [
+      "firered",
+      "emerald"
+    ],
+    "native_imported_smoke_scenarios": 18,
+    "native_scope": "CPU-only actual imported DoubleSlap/Double Kick/Twineedle via canonical public enemy selector, ordinary/breaking Substitute/Endure. Accuracy/type/power/PP preserved with controlled valid accuracy roll. No normal SAVE/distributed ROM/cache/save data; no GPU/full-playthrough claim",
+    "hosted_workflows": 8,
+    "hosted_conclusion": "action_required",
+    "contract_run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40167556778",
+    "hosted_jobs": 0,
+    "attachment": "App artifact identity cap of 100 reached; regular PR published and linked",
+    "remaining": [
+      "Native Rage production and lifecycle",
+      "Triple Kick accuracy/power script",
+      "Ruby/Sapphire per-hit move-end scheduling",
+      "Full Sleep Talk selection/status controller",
+      "Complete ability and broader battle-controller parity",
+      "Whole-game RNG/VBlank and full playthroughs"
+    ],
+    "proof": [
+      "tmp/multi-hit-full-accepted.log",
+      "tmp/multi-hit-contracts-accepted.json",
+      "tmp/multi-hit-imported.log",
+      "tmp/multi-hit-accepted-evidence.json"
+    ]
+  },
+  "native_rage": {
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/225",
+    "feature_ref": "8e543618bc3a6ec9e0c6d8f1f31f9e12b5259f2e",
+    "feature_tested_ref": "03c4a841ee327d232ca504a1ae5df1c5159064b6",
+    "runtime_ref": "e1a9295e57c1545ec69deec2c4541a4da193b7b6",
+    "prerequisites": [
+      222,
+      188
+    ],
+    "clean_prerequisite_ref": "fa5cb30ec4050980dc940e2181d6943a9de669b4",
+    "prerequisite_engine_suites": "120/129",
+    "focused_checks_passed": 796,
+    "native_command_planning_lifecycle_checks": 584,
+    "host_public_composition_reply_legacy_checks": 122,
+    "link_compatibility_checks": 90,
+    "cross_engine_workers": 104,
+    "paired_observations": 75210,
+    "new_observations_per_profile": 357,
+    "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_unchanged": true,
+    "native_command_revision": 7,
+    "native_party_revision": 1,
+    "native_fixture_digest": "dcc938191b0bb075",
+    "prior_fixture_digest": "a7db0874db78aec0",
+    "hash_audit": "Unchanged #222 hasher with only explicit command revision 6 to 7; older-generation goldens unchanged",
+    "feature_engine_suites_passed": 123,
+    "feature_engine_suites_total": 132,
+    "inherited_failing_suites": 9,
+    "inherited_fail_lines": 25,
+    "exact_fail_counter_equal": true,
+    "combined_engine_suites_passed": 243,
+    "combined_engine_suites_total": 243,
+    "sdk_suites": "3/3",
+    "b30": "passed",
+    "planning_boundary": "Move planner includes actual turn-word preparation with fixed choices; non-move reply starts with same explicitly prepared word. Earlier/global selection/RNG/controller timing not certified; original planner differences retained.",
+    "negative_control": "Unchanged #222+#188 prerequisite fails four public-selector/delegated-native continuation checks: missing native Rage, legacy controller, one PP spent across two uses and a locked menu. Raw output retained.",
+    "native_imported_smoke_games": [
+      "firered",
+      "emerald"
+    ],
+    "native_imported_smoke_scenarios": 4,
+    "native_scope": "CPU-only actual imports, public FIGHT/move submission, repeated Rage PP 20 to 18, independent Tackle and committed item-reply pipeline. Item scenario starts at spent-item callback; metadata retained with controlled valid hit rolls. No normal SAVE/distributed ROM/cache/save data; no rendering/full-playthrough claim.",
+    "content_probe_boundary": "Host builtin overrides/delegation tested separately. Extra synthetic Gen1 GBA lookup of RAGE_EFFECT fails; raw report retained, catalog/fixture audit required before claiming cross-engine catalog/delegation equality.",
+    "hosted_workflows": 9,
+    "hosted_conclusion": "action_required",
+    "contract_run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40169752030",
+    "hosted_jobs": 0,
+    "attachment": "App artifact identity cap of 100 reached; regular PR published and linked",
+    "proof": [
+      "tmp/rage-full-accepted.log",
+      "tmp/rage-contracts-accepted.json",
+      "tmp/rage-imported-accepted.log",
+      "tmp/rage-accepted-evidence.json"
+    ]
+  },
+  "native_triple_kick": {
+    "pr": 226,
+    "feature_ref": "ecd2c0cc8efbe1301b19bc289858e952dfbc2f95",
+    "feature_runtime_ref": "10a5c325a7852c6e8f7fea1502fafd9cfdc4a393",
+    "combined_runtime_ref": "c1dac0994aa9fe0d1659e510874065697dca2534",
+    "prerequisite": 225,
+    "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "focused_checks": 2220,
+    "command_hook_lifecycle_checks": 2100,
+    "host_composition_checks": 70,
+    "actual_link_checks": 50,
+    "protocol_checks": 154,
+    "cross_engine_workers": 108,
+    "paired_observations": 76362,
+    "new_rows_per_profile": 576,
+    "native_command_revision": 8,
+    "native_party_revision": 1,
+    "raw_native_hash": "b9ec4e8a94f4ba6e",
+    "previous_raw_native_hash": "dcc938191b0bb075",
+    "hash_audit": "Unchanged #225 hasher with only explicit command revision token 7 to 8; other-generation goldens unchanged",
+    "feature_engine_suites_passed": 126,
+    "feature_engine_suites_total": 135,
+    "baseline_engine_suites_passed": 123,
+    "baseline_engine_suites_total": 132,
+    "inherited_fail_lines": 25,
+    "inherited_failing_suites": 9,
+    "exact_fail_counter_equal": true,
+    "combined_engine_suites_passed": 246,
+    "combined_engine_suites_total": 246,
+    "sdk_suites": "3/3",
+    "b30": "passed",
+    "negative_failure_assertions": 240,
+    "negative_different_rows": 396,
+    "negative_total_rows": 576,
+    "actual_imported_scenarios": 12,
+    "actual_imported_scope": "Public move submission and completed turn/menu for ordinary/miss1/miss2/miss3/Substitute break and actual faster enemy Endure, FireRed/Emerald; unchanged extracted metadata and controlled valid RNG; no normal SAVE or distributed ROM/cache/save data",
+    "catalog_audit": "Pinned Gen1 GBA seeds only types/growth/evolution; RAGE_EFFECT and TRIPLE_KICK_EFFECT absent, present in Gen2. Same minimal authored primary record registers through both public loaders; builtin capture/delegation is host-only validation",
+    "scope": "Native effect 104 per-kick 10/20/30 and accuracy/critical/damage; public opts.power delegation/edit; continuation/Rage boundary; authored full/count/damage/neverMiss policies; not full Sleep Talk/other controllers, Ruby/Sapphire scheduling, global RNG/selection orchestration, complete catalogs, rendering or full playthrough parity",
+    "hosted_workflows": 9,
+    "hosted_ci": "action_required",
+    "dedicated_run": 40171310953,
+    "dedicated_jobs": 0,
+    "artifact_attachment": "Rejected by existing 100-artifact identity cap; regular PR published",
+    "evidence": [
+      "tmp/triple-kick-full-accepted.log",
+      "tmp/triple-kick-contracts-accepted.json",
+      "tmp/triple-kick-imported-accepted.log",
+      "tmp/triple-kick-accepted-evidence.json"
+    ]
+  },
+  "native_sleep_talk": {
+    "pr": 228,
+    "feature_ref": "491d3a2f0b997f8f5c801ebcd12524e70ba5cf54",
+    "feature_runtime_ref": "cb6ddfadc2d29b878efcb0eb4f76869dc7b8c16a",
+    "combined_runtime_ref": "4941d8d6c753925ab47180aaa80bf37b665ff7b6",
+    "prerequisites": [
+      226,
+      121
+    ],
+    "prerequisite_ref": "63bf2a9b9b856027c27c65ae1031febbb9e5d7e5",
+    "prerequisite_scope": "Clean #226 plus reused #121 production effect adapter and current harness assertions; #121 already integrated in combined branch, not duplicated",
+    "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "focused_checks": 1068,
+    "command_and_public_authored_checks": 846,
+    "composition_status_failure_legacy_checks": 162,
+    "actual_link_checks": 60,
+    "protocol_checks": 154,
+    "reused_effect_adapter_checks": 860,
+    "cross_engine_workers": 116,
+    "paired_observations": 77668,
+    "new_command_rows_per_profile": 648,
+    "new_authored_rows_per_profile": 5,
+    "native_command_revision": 9,
+    "native_party_revision": 1,
+    "raw_native_hash": "f1bec52ffc687ea3",
+    "previous_raw_native_hash": "b9ec4e8a94f4ba6e",
+    "hash_audit": "Unchanged #226 hasher with only explicit command revision token 8 to 9; other-generation goldens unchanged",
+    "feature_engine_suites_passed": 130,
+    "feature_engine_suites_total": 139,
+    "baseline_engine_suites_passed": 127,
+    "baseline_engine_suites_total": 136,
+    "inherited_fail_lines": 25,
+    "inherited_failing_suites": 9,
+    "exact_fail_counter_equal": true,
+    "combined_engine_suites_passed": 249,
+    "combined_engine_suites_total": 249,
+    "sdk_suites": "3/3",
+    "b30": "passed",
+    "negative_command_failure_assertions": 108,
+    "negative_command_different_rows": 648,
+    "negative_command_total_rows": 648,
+    "negative_authored_failure_assertions": 8,
+    "negative_authored_different_rows": 4,
+    "negative_authored_total_rows": 5,
+    "actual_imported_scenarios": 12,
+    "actual_imported_scope": "Actual local FireRed/Emerald imported data, public move/menu submission and completed turns for repeated calls/wake-independent move, zero-PP children, empty/forbidden pools, Early Bird wake and awake failure; unchanged extracted metadata; no normal SAVE or ROM/cache/save distribution",
+    "authored_scope": "Identical API-3 named move/effect entry with no fixed numeric index; primary/stat-change, secondary, patched-Fly, zero-PP and awake handlers; actual source merged rows/registries mounted by owned in-memory fixture and restored, no source file changes",
+    "complete_held_item_probe_equal": false,
+    "held_item_probe_remaining": [
+      "Empty source item is numeric zero while host omits field",
+      "Valid called attack has missing/extra check/damage/flinch reads, 10 source and 11 host; full payload/sequence parity unresolved"
+    ],
+    "failed_call_phase_counts": "Awake/empty now two reads each on both engines; blocked ordinary action four each; raw payload difference remains",
+    "remaining_scope": "Complete held/choice-item and canceller orchestration including Truant/freeze/recharge, arbitrary child/interactive controller timing, Ruby/Sapphire scheduling, full catalogs/global RNG/selection, graphics/playthroughs; host builtin capture/party counter preservation are scoped host checks",
+    "hosted_workflows": 9,
+    "hosted_ci": "action_required",
+    "dedicated_run": 40176031994,
+    "dedicated_jobs": 0,
+    "artifact_attachment": "Rejected by existing 100-artifact identity cap; regular PR published",
+    "evidence": [
+      "tmp/sleep-talk-full-final-accepted.log",
+      "tmp/sleep-talk-contracts-final-accepted.json",
+      "tmp/sleep-talk-imported-final-accepted.log",
+      "tmp/sleep-talk-accepted-evidence.json"
+    ],
+    "snapshot_scope": "Historical #228 acceptance; current held-command follow-up is native_held_damage (#230)"
+  },
+  "native_held_damage": {
+    "pr": 230,
+    "feature_runtime_ref": "9ad4f6ab90524eda893d0d6dbfb6f12ab71f9e9f",
+    "feature_ref": "2fbfd30c1710b7ad7bc70fc44ea73ec32fa68a94",
+    "combined_runtime_ref": "7a681ca8b81be0e77d3447ff3069459cda0bb974",
+    "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_read_only": true,
+    "focused_checks": 10202,
+    "actual_link_checks": 48,
+    "feature_protocol_checks": 154,
+    "cross_engine_workers": 124,
+    "paired_observations": 86620,
+    "held_command_rows": 2040,
+    "ordinary_base_rows": 6912,
+    "existing_execution_rows": 77668,
+    "native_command_revision": 10,
+    "native_party_revision": 1,
+    "raw_native_hash": "3a2adb7fa1caee3b",
+    "previous_raw_native_hash": "f1bec52ffc687ea3",
+    "hash_audit": "Unchanged #228 hasher with only revision 9 -> 10; older-generation goldens unchanged",
+    "feature_engine_suites_passed": 132,
+    "feature_engine_suites_total": 141,
+    "baseline_engine_suites_passed": 130,
+    "baseline_engine_suites_total": 139,
+    "baseline_ref": "491d3a2f0b997f8f5c801ebcd12524e70ba5cf54",
+    "inherited_fail_lines": 25,
+    "inherited_failing_suites": 9,
+    "exact_fail_counter_equal": true,
+    "combined_engine_suites_passed": 251,
+    "combined_engine_suites_total": 251,
+    "sdk_suites": "3/3",
+    "b30": "passed",
+    "negative_assertion_failures_per_profile": 2041,
+    "negative_rows_different_per_profile": 1020,
+    "negative_rows_total_per_profile": 1020,
+    "actual_imported_scenarios": 12,
+    "actual_imported_scope": "Existing imported FireRed/Emerald Sleep Talk public-menu regression scenarios; not full item catalog certification; no normal SAVE or asset distribution",
+    "full_held_script_trace_equal": false,
+    "full_trace_source_reads": 10,
+    "full_trace_host_reads": 10,
+    "failed_call_traces_equal": true,
+    "remaining": [
+      "Choice Band check/binding",
+      "Shared Kings Rock/Shell Bell command",
+      "Full badge/controller/catalog/playthrough coverage"
+    ],
+    "fresh_save_ruleset_probe": "Isolated command stack retains older gen1_faithful default; combined fork already fixes it via #162. Repeated fresh FireRed/Emerald probes select gen3_emerald and the 926-check existing regression suite passes.",
+    "hosted_workflows": 9,
+    "hosted_ci": "action_required",
+    "dedicated_run": 40179851767,
+    "dedicated_jobs": 0,
+    "artifact_attachment": "Rejected by existing 100-artifact identity cap; regular English PR is published",
+    "evidence": [
+      "tmp/held-damage-qa/full-complete.log",
+      "tmp/held-damage-qa/enemy-complete.json",
+      "tmp/held-damage-qa/held-complete.json",
+      "tmp/held-damage-qa/base-complete.json",
+      "tmp/held-damage-qa/held-formatted.json",
+      "tmp/held-damage-qa/imported-complete.log",
+      "tmp/held-damage-qa/accepted-evidence.json"
+    ],
+    "native_defaults_existing_fix_pr": 162
+  },
+  "native_choice_band": {
+    "pr": 241,
+    "feature_ref": "3ff39407073022beaf54628c3e0a0828ed2b10a8",
+    "feature_tested_ref": "60d5a6fe",
+    "feature_runtime_ref": "137d775b48864ab440276b8a7f4d5b32fbae15fa",
+    "combined_tested_ref": "83346a1907a7baae942faa47364a07e4a4d57b70",
+    "combined_runtime_ref": "bdd07012",
+    "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "source_read_only": true,
+    "enemy_workers": 148,
+    "enemy_paired_rows": 80132,
+    "held_damage_command_rows": 2040,
+    "ordinary_damage_rows": 6912,
+    "aggregate_workers": 156,
+    "aggregate_paired_rows": 89084,
+    "held_item_strict_formats": [
+      "api1-native",
+      "api2-native",
+      "api2-unified",
+      "api3-unified"
+    ],
+    "held_item_strict_workers": 40,
+    "held_item_strict_paired_rows": 1914,
+    "planning_rows": 276,
+    "removed_slot_negative_rows": 24,
+    "feature_engine_passed": 143,
+    "feature_engine_total": 152,
+    "parent_engine_passed": 132,
+    "parent_engine_total": 141,
+    "inherited_fail_lines": 25,
+    "exact_fail_counter_equal": true,
+    "combined_engine_passed": 262,
+    "combined_engine_total": 262,
+    "combined_fail_lines": 0,
+    "sdk": "3/3",
+    "b30": "passed",
+    "native_command_revision": 11,
+    "native_party_revision": 1,
+    "raw_native_hash": "3e2986da83083f86",
+    "legacy_hash": "e33d251961f2a41d",
+    "actual_imported_modes": [
+      "existing-sleep-talk",
+      "choice-band"
+    ],
+    "actual_imported_scope": "CPU-only actual FireRed/Emerald imported data, explicit GBA rules, constructed parties/public menus; no normal SAVE, graphics or playthrough certification",
+    "full_held_script_equal": false,
+    "full_trace_source_reads": 10,
+    "full_trace_host_reads": 11,
+    "pp_event_probe_rows": 72,
+    "pp_event_probe_different_rows": 48,
+    "remaining": [
+      "PP visibility/event admission at battle.move_used",
+      "Shared Kings Rock/Shell Bell command",
+      "Successful Mirror Move history/target selection",
+      "Metronome catalog/RNG",
+      "Other native controllers/catalogs/global RNG/graphics/playthrough parity"
+    ],
+    "hosted_workflows": 9,
+    "hosted_ci": "action_required",
+    "dedicated_run": 40197434005,
+    "dedicated_jobs": 0,
+    "chat_attachment": "Rejected: existing 100-artifact identity cap",
+    "evidence": [
+      "tmp/choice-band-qa/batch-final-60d5.json",
+      "tmp/choice-band-qa/batch-final-8334.json",
+      "tmp/choice-band-qa/removed-slot-negative-and-fix.json",
+      "tmp/choice-band-qa/held-strict-final-summary.json",
+      "tmp/choice-band-qa/full-phase-final-60d5.json",
+      "tmp/choice-band-qa/pp-event-order-native-called-diagnostic.json"
+    ],
+    "pp_event_probe_resolved_by": "https://github.com/UNDERdecoded/Gen2Recomped/pull/244"
+  },
+  "native_move_used_pp": {
+    "pr": 244,
+    "prerequisite_prs": [
+      241,
+      161
+    ],
+    "feature_ref": "f7c18701a1241e168c404f7db82bb54ae1fe6f5b",
+    "feature_runtime_ref": "05927b85d01d9b230abadb9d309541da2d6d0df3",
+    "combined_runtime_ref": "b70f28ef071b019c88829b30488dcd7f6eba086e",
+    "baseline_ref": "167f6c91",
+    "feature_engine_passed": 146,
+    "feature_engine_total": 155,
+    "baseline_engine_passed": 144,
+    "baseline_engine_total": 153,
+    "inherited_fail_lines": 25,
+    "exact_parent_fail_counter_equal": true,
+    "combined_engine_passed": 264,
+    "combined_engine_total": 264,
+    "combined_fail_lines": 0,
+    "sdk": "3/3",
+    "b30": "passed",
+    "enemy_workers": 152,
+    "enemy_rows": 80540,
+    "held_damage_rows": 2040,
+    "ordinary_damage_rows": 6912,
+    "aggregate_workers": 160,
+    "aggregate_rows": 89492,
+    "held_strict_workers": 40,
+    "held_strict_rows": 1914,
+    "charge_workers": 64,
+    "charge_rows": 1020,
+    "combined_charge_native_policy_strict": true,
+    "feature_charge_policy": "Existing prerequisite legacy policy preserved; combined AUTO already fixed by #162",
+    "new_rows": 408,
+    "negative_parent_different_rows": 360,
+    "negative_prior_release_different_rows": 24,
+    "actual_link_checks": 84,
+    "consecutive_public_event_subscribers": 2,
+    "native_command_revision": 12,
+    "party_revision": 1,
+    "native_hash": "6ce58ced7ffad4d9",
+    "legacy_hash": "e33d251961f2a41d",
+    "source_refs": [
+      "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+      "79ea62f45fb2ea8f65d081a109431e4eb1bbdb36"
+    ],
+    "source_read_only": true,
+    "imported_modes": [
+      "existing-sleep-talk",
+      "choice-band"
+    ],
+    "imported_scope": "CPU-only actual local FireRed/Emerald data, explicit GBA rules and public menus; no normal SAVE, asset distribution or graphical playthrough claim",
+    "full_sleep_talk_held_phase_equal": false,
+    "full_phase_source_reads": 10,
+    "full_phase_host_reads": 11,
+    "remaining": [
+      "Kings Rock/Shell Bell command orchestration",
+      "Other native special command boundaries/callers such as Nature Power",
+      "Full catalogs/controllers, graphics and playthrough parity"
+    ],
+    "hosted_ci": "action_required",
+    "hosted_workflows": 10,
+    "dedicated_run": 40201496037,
+    "dedicated_jobs": 0,
+    "artifact_attachment": "Rejected by existing 100-artifact identity cap",
+    "evidence": [
+      "tmp/move-used-pp-qa/batch-final-0592.json",
+      "tmp/move-used-pp-qa/batch-final-release-final.json",
+      "tmp/move-used-pp-qa/zero-release-negative-and-fix.json",
+      "tmp/move-used-pp-qa/hash-audit.log",
+      "tmp/move-used-pp-qa/full-phase-final.json"
+    ],
+    "historical_acceptance": true,
+    "superseded_by": "https://github.com/UNDERdecoded/Gen2Recomped/pull/248"
+  },
+  "native_post_hit_items": {
+    "pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/248",
+    "feature_gate_ref": "d88be1fc42df80756dfc7daa918b7d5c77e80004",
+    "feature_oracle_ref": "80c8bd8e4d2e403b94679f6e9283d616d77f5007",
+    "combined_gate_ref": "d9cf080d676eccefa861b8ecc93de621782dd5a6",
+    "combined_oracle_ref": "f829462500c6dc2035fd06739f2e2cc95495df2f",
+    "enemy_action_workers": 160,
+    "enemy_action_rows": 103868,
+    "new_command_rows": 7488,
+    "new_script_rows": 15840,
+    "native_command_revision": 13,
+    "party_codec_revision": 1,
+    "raw_digest": "beacb71804a6af34",
+    "legacy_digest": "e33d251961f2a41d",
+    "old_execution_different_rows": 12032,
+    "linked_role_checks": 172,
+    "old_spectator_failed_checks": 14,
+    "full_sleep_talk_held_phase_equal": true,
+    "full_sleep_talk_held_phase_reads": {
+      "success": 10,
+      "awake": 2,
+      "empty": 2,
+      "blocked": 4
+    },
+    "imported_controlled_scenarios": 32,
+    "accepted_timeout_workers": 0,
+    "failed_and_timeout_observations_retained": true,
+    "remaining": [
+      "Ruby/Sapphire per-hit scheduling",
+      "Other special native callers including Nature Power",
+      "Full catalogs/controllers",
+      "Graphical playthrough and unchanged full-mod acceptance"
+    ],
+    "historical_acceptance": true,
+    "superseded_by": "https://github.com/UNDERdecoded/Gen2Recomped/pull/252"
+  },
+  "native_nature_power": {
+    "pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/252",
+    "feature_runtime_ref": "0536521ea23e41af8c206961a266db96f5ff6eb1",
+    "combined_runtime_ref": "0ed0602be9019102a06f4df3ee22480bca1d800f",
+    "enemy_action_workers": 172,
+    "enemy_action_rows": 122012,
+    "native_rows": 6048,
+    "public_content_rows": 6048,
+    "chained_rows": 6048,
+    "old_prerequisite_different_rows": 5376,
+    "previous_chained_different_rows": 4032,
+    "native_command_revision": 14,
+    "party_codec_revision": 1,
+    "raw_digest": "cb314093f24370e7",
+    "legacy_digest": "e33d251961f2a41d",
+    "actual_linked_role_checks": 108,
+    "actual_import_controlled_public_submit_scenarios": 160,
+    "accepted_timeout_workers": 0,
+    "raw_failed_and_interrupted_observations_retained": true,
+    "remaining": [
+      "Additional special callers, catalogs and controllers",
+      "Broader public-effect overrides",
+      "Ruby/Sapphire-specific qualification",
+      "Native text-resource and pixel parity",
+      "Unchanged full-mod and complete graphical playthrough acceptance"
+    ]
+  },
+  "native_assist": {
+    "feature": {
+      "runtime_ref": "dc7e13c22eb297fa345b4e92f7a9d5a5a01b8ecd",
+      "engine": "157/166",
+      "fail_counter_lines": 25,
+      "sdk": "3/3",
+      "oracle_workers": 188,
+      "oracle_rows": 160724,
+      "selected_paired_workers": 196,
+      "selected_paired_rows": 169676,
+      "new_assist_rows": {
+        "assist": 13440,
+        "assist_content": 13680,
+        "assist_held": 11520,
+        "assist_failed_callers": 72
+      },
+      "strict_contracts": {
+        "held-item": {
+          "workers": 40,
+          "rows": 1914
+        },
+        "charge-required": {
+          "workers": 64,
+          "rows": 1020
+        }
+      },
+      "imported_scenarios": {
+        "imported-assist": 80,
+        "imported-assist-nested": 80
+      },
+      "oracle_sha256": "b9959b60be923020b9ed42baef3f19dc8af48039fe6abed8da2b94b39629ccab",
+      "full_gate_sha256": "91a20b9ad104feb74c60ffaefa913803644b3691cb67245a5863bdfa68d901f9"
+    },
+    "combined": {
+      "runtime_ref": "5e384409322e98dfd292716b9c97d2bdcdf9936e",
+      "engine": "275/275",
+      "fail_counter_lines": 0,
+      "sdk": "3/3",
+      "oracle_workers": 188,
+      "oracle_rows": 160724,
+      "selected_paired_workers": 196,
+      "selected_paired_rows": 169676,
+      "new_assist_rows": {
+        "assist": 13440,
+        "assist_content": 13680,
+        "assist_held": 11520,
+        "assist_failed_callers": 72
+      },
+      "strict_contracts": {
+        "held-item": {
+          "workers": 40,
+          "rows": 1914
+        },
+        "charge-required": {
+          "workers": 64,
+          "rows": 1020
+        }
+      },
+      "imported_scenarios": {
+        "imported-assist": 80,
+        "imported-assist-nested": 80
+      },
+      "oracle_sha256": "08131511b25504d4371855de52d314610c1cc5020df4ed252cedb9279ef306f4",
+      "full_gate_sha256": "b2119bb37065b4d59eda6181e005903bd6edb0eb7702223e4ba20a577b2cf29d"
+    },
+    "reference": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "prerequisite_ref": "812ec1f2354d4f98a5f4ebff15876120743ea7a9",
+    "native_command_revision": 15,
+    "party_codec_revision": 1,
+    "native_digest": "662d7e5ee823ce82",
+    "legacy_digest": "e33d251961f2a41d",
+    "old_parent_negative": {
+      "native_rows": 6480,
+      "native_different": 4860,
+      "failed_caller_rows": 36,
+      "failed_history_different": 36
+    },
+    "old_public_registration": "unsupported: effect has no native handler: ASSIST",
+    "native_linked_checks": 120,
+    "assist_direct_checks": 60846,
+    "assist_public_checks": 27482,
+    "assist_failed_caller_checks": 506,
+    "independent_hash_audit_sha256": "8925ad25ff57739b2ddd91486ff95e1c9542922902cf642586af91a8411bbbbc",
+    "frozen_parent_serializer_sha256": "688baad34c546f3c6fb77727e6f2e10ba1a72fb30067323d75f6a3307b93a048",
+    "raw_failed_and_superseded_evidence_retained": true,
+    "scope": "Selected native GBA Assist/party/PP/history/targeting contracts and API-3 registration; owned native-shaped definitions plus separate actual-import CPU menu scenarios; no whole-catalog, graphical, full-mod or full-playthrough acceptance",
+    "negative_evidence_sha256": {
+      "animations-and-failed.json": "2139a0a918383cb089e18958b90038b5ef1b38a477253667025cf845e2b9cd8a",
+      "parent-native-negative.log": "7960e5db4b9061f3bc5b48fe9cf4ee45f463272d9dc92b6a60e8e7efc469fd4e",
+      "parent-failed-callers-negative.log": "04241920b057c3ce7684704915b72764e73179ee4f75f042f4e28dcf8f0ba8e1",
+      "parent-public-negative.log": "5225ec67f4ceefb099a0423f18432e30395d2e8baf278bde33f65844ce1dd4eb"
+    },
+    "pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/258",
+    "feature_ref": "5c71253f37466b49f56f0b7eb77ed4e7da65c7a3",
+    "dedicated_run": 40221142115,
+    "hosted_workflow_count": 10,
+    "hosted_workflow_conclusion": "action_required",
+    "hosted_dedicated_job_count": 0
+  },
+  "historical_snapshot_258": {
+    "runtime_ref": "5e384409322e98dfd292716b9c97d2bdcdf9936e",
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/258",
+    "feature_ref": "5c71253f37466b49f56f0b7eb77ed4e7da65c7a3",
+    "feature_tested_ref": "9ad4f6ab90524eda893d0d6dbfb6f12ab71f9e9f",
+    "engine_suites_passed": 275,
+    "engine_suites_total": 275,
+    "sdk_suites_passed": 3,
+    "sdk_suites_total": 3,
+    "b30_profile": "passed",
+    "cross_engine_worker_runs": 196,
+    "cross_engine_paired_observations": 169676,
+    "cross_engine_scope": "Selected public/native GBA contracts, now including native and API-3 registered Assist, weighted side-party candidates, PP/caller history, native child target/RNG ordering and linked roles; other callers/catalogs/controllers, broad content overrides and full-mod/graphical playthroughs remain open.",
+    "hosted_ci": "All ten #258 workflows require maintainer approval (action_required); dedicated run 40221142115 has zero jobs; local acceptance is separate"
+  },
+  "native_bgm": {
+    "pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/308",
+    "receipt": "docs/qa/native-gba-bgm.json",
+    "qualified_runtime_ref": "e436fba6228bd6e73a97497107e4a15f61c0d052",
+    "source_tree": "52e2e3ffc7e8f1145b0edffa16ca3713324bb8d2",
+    "test_tree": "f033a6f7f66579d8322f01536ea16452233f0cf7",
+    "native_command_revision": 20,
+    "party_codec_revision": 1,
+    "native_digest": "43fe7ea27b438e0e",
+    "workers_per_runtime": 268,
+    "paired_observations_per_runtime": 178264,
+    "initialized_session_paired_cases_per_runtime": 4,
+    "initialized_session_paired_snapshots_per_runtime": 36,
+    "combined_bgm_cases": 18,
+    "combined_bgm_frames": 1534,
+    "combined_cold_fanfare_cases": 12,
+    "combined_cold_fanfare_frames": 156,
+    "combined_actual_import_cases": 8,
+    "combined_actual_import_frames": 688,
+    "cold_and_entry_checks_passed": 69,
+    "negative_unchanged_parent_failures": 10,
+    "hosted_workflows": "action_required",
+    "full_mod_or_playthrough": false,
+    "whole_waveform_parity": false,
+    "normal_save_or_import_writes": false
+  },
+  "latest_tool_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/315",
+  "contract_observation_types": {
+    "pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/309",
+    "feature_ref": "a22815fc2631eb34b7d85bc1e002dfb3149a9ac3",
+    "qualified_comparator_ref": "93f0cc5e9b13847b0c180972ea12d617ad7f5e4c",
+    "qualified_combined_ref": "a295d11b0618d8e82a09065f2a30b93917db9fce",
+    "source_tree": "52e2e3ffc7e8f1145b0edffa16ca3713324bb8d2",
+    "native_engine_tests_tree": "a8bae142023263c92ed3a0c518c6d980cb194c1a",
+    "native_original_full_tests_tree": "f033a6f7f66579d8322f01536ea16452233f0cf7",
+    "current_full_tests_tree": "49fceb9bd18e1e3e07fa93b28f0936dac94ad5f4",
+    "only_new_test_path": "tests/tools/test_contract_observations.py",
+    "python_tool_tests_passed": 13,
+    "synthetic_cli_cases": 26,
+    "old_checker_negative_failures": 12,
+    "replayed_capture_sets": 2,
+    "workers_per_capture_set": 268,
+    "paired_observations_per_capture_set": 178264,
+    "new_actual_native_cli_workers": 4,
+    "new_actual_native_cli_paired_observations": 12,
+    "receipt": "docs/qa/typed-contract-integration.json",
+    "hosted_ci": "ten action_required workflows; dedicated40305503119 has zero jobs"
+  },
+  "modkit_absolute_paths": {
+    "pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/311",
+    "feature_ref": "462409e3364054770a7d1bdaa573672f8dc2c2f1",
+    "qualified_combined_ref": "64df6df1b48e76aeca9ea657ca732efea4af3349",
+    "source_tree": "52e2e3ffc7e8f1145b0edffa16ca3713324bb8d2",
+    "engine_tests_tree": "a8bae142023263c92ed3a0c518c6d980cb194c1a",
+    "current_full_tests_tree": "c7c4197cdc65011e461c598a7d0a0171fe73fb24",
+    "targeted_checks_passed": 77,
+    "sdk_suites_passed": 4,
+    "sdk_suites_total": 4,
+    "old_adapter_failed_checks": 38,
+    "production_source_changed": false,
+    "upstream_base": "ed5189c247ee7a2ccca666784e21fd4fba8df781",
+    "upstream_update_integrated_into_playable": false,
+    "hosted_ci": "one ci workflow action_required; run40309930095 has zero jobs",
+    "combined_raw_log_sha256": {
+      "unchanged-parent-negative": "89fc784f47b2bb3117d26a664118f19c775e2216b8f4f4efd6ced4ad993e01a5",
+      "targeted": "fb390b46f87f629bf73e83515c6d60618d7cc50e7b8725c182300565221fd5a2",
+      "sdk": "fbbc5b6bf587b0e142ee65ca3ac832e3a551672e4d48d29db4d235506b71659c"
+    }
+  },
+  "real_mod_qol": {
+    "mod_id": "quality_of_life",
+    "mod_version": "1.2.2",
+    "mod_ref": "bea982afbc51452fda334e6d0111444a201ad1d7",
+    "mod_source_changed": false,
+    "manifest_api": 2,
+    "profile": "red",
+    "source_engine_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "original_host_ref": "d0cf8c533b6015d02a46e1a85bbbd6da1a3abb58",
+    "qualified_disk_host_ref": "64df6df1b48e76aeca9ea657ca732efea4af3349",
+    "unit_checks": {
+      "gen1": "199/200",
+      "gen2": "200/200"
+    },
+    "native_checks_per_engine": 7,
+    "original_native_observations": {
+      "gen1": {
+        "fieldFirst": "FLY",
+        "depth": 1,
+        "player": {
+          "x": 5,
+          "y": 6
+        },
+        "errors": 0,
+        "mapId": "PALLET_TOWN",
+        "banner": true
+      },
+      "gen2": {
+        "player": {
+          "y": 6,
+          "x": 5
+        },
+        "depth": 1,
+        "mapId": "PALLET_TOWN",
+        "errors": 0,
+        "banner": true,
+        "fieldFirst": "FLY"
+      }
+    },
+    "disk_host_observation": {
+      "errors": 0,
+      "depth": 1,
+      "player": {
+        "y": 6,
+        "x": 5
+      },
+      "mapId": "PALLET_TOWN",
+      "banner": true,
+      "fieldFirst": "FLY"
+    },
+    "typed_json_equal": true,
+    "mod_files_sha256": {
+      ".github/workflows/release.yml": "b9468d547a760a8cfda9b6f7b4fda4d7feb1f056609c4892c4b54f413389de63",
+      ".gitignore": "3967ba6a2ae3ebaa544ac87c31e0b8d68f7791c60337f056c8ad606fb41541ab",
+      "CHANGELOG.md": "0a5956c4df12d838e2f15143a70afcb5a06fe58841bbcdd78fc27e6f874cad9e",
+      "README.md": "12fe25ee7c8fb85f7dac8119898ca69852f434ac9763c7875c3b43dae428716e",
+      "images/battle.gif": "052da65444e0718013e435e547d2b1c3c313d822251c812259545b9e3862ad18",
+      "images/battle_normal.gif": "d21de597902e271e2ced1a3fd66804ea62a25602ecb652ced1b63ee7d84c894c",
+      "images/battle_wide.gif": "fe68f5d99a6314aaa2ceddbd82ab9d4e600b606a9b96c704b4a7fb64ea3f3981",
+      "images/cover.png": "bd546a35d23c51dba093c02ccc33b13600e1973b3f80ccdafa9824395c244720",
+      "images/menu.gif": "4644601d00c6be1ec18e5aa0c990176f8f25300e6b9b38bed75d2286f6de293f",
+      "images/qol_easy_interactions.gif": "d64bf4cd8cb700174a9eace23377e7802958a2ecaf930f8e15449d7081d71cb3",
+      "images/qol_location_banners.gif": "28fce6f7aac9523a9e0ce82147808df3876c1e52db80c37b601419102d6fbfc9",
+      "main.lua": "b490c8c20195576a4e929e63fb4baec91fbd26164264e61c8031e6dbd2993839",
+      "manifest.json": "3ec5f53a065f5a38ff2280a9736eb80054a5ac00f09ebed22d59d6a372054321",
+      "qol_battle_overlays.lua": "adf20e55927c15c1423feca51e8266c45274c4cf4ecc1c4f1f89a75e7634a4b3",
+      "qol_controller_compat.lua": "77480181d7fa618c264e683e94466552038e2dae546ce8404f9842eb85ac682f",
+      "qol_feature_caught_indicator.lua": "16f51e371f636de5253ebf27a0df7ca8885206c2366ce53133cc67ec9237280c",
+      "qol_feature_easy_interactions.lua": "6e8d501b8a9e0c25e3c8f2061724396545e005164b599afcb0af03ee83be02b2",
+      "qol_feature_location_banners.lua": "d6603c9bb41ee9bef63bafbfc4097464c651148175e25c998cf28e66d1e86a58",
+      "qol_feature_xp_bar.lua": "6e73fb84b9a178b4e334edefe38af80272ef71a088319df9ebe2e4f81578c833",
+      "qol_options.lua": "7c955a4e0365f4e45d3266cdbf07797db2b2e5c9468c3451a44c629305c0dcfd",
+      "tests/quality_of_life_test.lua": "3fc8562849f2f483d838ca7006bfd6287ef04a4637d82f47f40c79c689c7d0b7",
+      "transforms.lua": "a98eeb4d94eb4375a9fd411c966ffc411e2a26aa1013d011162e5ee12e370b5b"
+    },
+    "data_and_art_read_only_and_unchanged": true,
+    "hardware": "love_stub; generated PNG dimensions only; explicit rectangle-glyph capability on both engines",
+    "unit_known_difference": "Gen1 Menu defaults to noWrap for generation 1; the unchanged mod suite assumes UP wraps to CANCEL.",
+    "disk_log_sha256": "ee86007a4de5555f1cfd2261c971b6d5f3c5d54af5e9b98e108ef15f698d104e",
+    "scope": "Unchanged Red-targeted API-2 mod under both engines. Selected production world/map/START/SELECT/menu/drawUI paths. Suite world/input/battle doubles remain in unit results. No Gold/other-generation, whole-battle, real GPU/audio-device or full-playthrough claim.",
+    "source_url": "https://github.com/unxpected-uxp/pokemon-gen1-recomp-mod-qol/tree/bea982afbc51452fda334e6d0111444a201ad1d7",
+    "expanded_native": {
+      "receipt": "docs/qa/unchanged-mod-consumers.json",
+      "checks_per_engine": 42,
+      "qualified_ref": "edfb30feb230d5359540ae6e6fbc33d20dc68b83",
+      "battle_and_surf_cpu_paths": true,
+      "graphics_device_verified": false
+    }
+  },
+  "historical_snapshot_311": {
+    "runtime_ref": "e436fba6228bd6e73a97497107e4a15f61c0d052",
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/308",
+    "feature_ref": "c74372204bd00f52b42acf9ee54b296fc99fb77b",
+    "feature_tested_ref": "540dc5472deeec21f79ff66cba2d8f4056dcf592",
+    "engine_suites_passed": 292,
+    "engine_suites_total": 292,
+    "sdk_suites_passed": 4,
+    "sdk_suites_total": 4,
+    "cross_engine_worker_runs": 268,
+    "cross_engine_paired_observations": 178264,
+    "cross_engine_scope": "Selected public/native FireRed/Emerald contracts including native music commands, timers/waits, shared music hooks/options and initialized-session retirement. Complete raw observations independently type-checked. Historical native boot/UI/storage evidence retains its own refs; whole-mod/gameplay/device/waveform parity remains open.",
+    "hosted_ci": "All ten #308 workflows require maintainer approval (action_required); dedicated run40304523637 has zero jobs; local acceptance is separate"
+  },
+  "upstream_october_integration": {
+    "status": "verified",
+    "upstream_ref": "ed5189c247ee7a2ccca666784e21fd4fba8df781",
+    "previous_playable_ref": "6fefc5d5743f9b084c0ebbfeb97100bd1f8e0455",
+    "qualified_runtime_ref": "87cada70e7483120f131b716ea6a370d1158127c",
+    "qualified_tool_ref": "931143771b654ffd569a2341dc7e53243ede0073",
+    "source_tree": "18895e11ac92c7339a51e380c3d164ead374cb35",
+    "engine_tests_tree": "99e534d60fe6c67374b329127e7d5c4f5f9df731",
+    "composed_tests_tree": "84699d413ecda6e31ffeb0088b898bc331dd2876",
+    "production_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/313",
+    "tool_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/315",
+    "engine": "294/294",
+    "sdk": "4/4",
+    "b30": "passed",
+    "python_tool_tests": "20/20",
+    "cross_engine_workers": 268,
+    "complete_typed_paired_observations": 178264,
+    "all_workers_zero_without_timeout_or_native_vm_diagnostics": true,
+    "independent_raw_audit": true,
+    "merge_composition": {
+      "conflicts": [
+        "Game drawStates: preserve screen.render_visible inside native SuperSample",
+        "BattleState.finish: preserve partner-win exemption and scoped party exhaustion"
+      ],
+      "native_boundary_checks": 75,
+      "test_formatting_bytecode_identical": true,
+      "negative_controls": {
+        "without-draw-predicate": 3,
+        "without-partner-win": 6,
+        "without-scoped-exhaustion": 12
+      }
+    },
+    "real_mod_qol": {
+      "mod_ref": "bea982afbc51452fda334e6d0111444a201ad1d7",
+      "source_url": "https://github.com/unxpected-uxp/pokemon-gen1-recomp-mod-qol/tree/bea982afbc51452fda334e6d0111444a201ad1d7",
+      "mod_source_changed": false,
+      "profile": "red",
+      "unit_checks": "200/200",
+      "native_controller_checks": 7,
+      "observation": {
+        "errors": 0,
+        "banner": true,
+        "mapId": "PALLET_TOWN",
+        "player": {
+          "y": 6,
+          "x": 5
+        },
+        "depth": 1,
+        "fieldFirst": "FLY"
+      },
+      "typed_equal_to_unchanged_gen1": true,
+      "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+      "data_and_art_read_only_and_unchanged": true
+    },
+    "catalog": {
+      "keys": 1498,
+      "actual_parameterized_manifest": "valid API-2 JSON with existing engine range",
+      "generate_refresh_normal_validation_sdk": "passed",
+      "utf8_translation_preserved": true,
+      "strict_fixture_font_check": "Known MK305 missing imported font dump; preserved, not counted as passing"
+    },
+    "aggregation_recovery": {
+      "original_aggregate_exit": 1,
+      "cause": "Parent used a relative output directory; worker cwd was the host checkout.",
+      "original_summary_sha256": "25cdde5d44d922df9c1c6d537841dd09d82ef862df099bfc0f9cdb2b9e2412b3",
+      "reports_relocated_byte_exact": 11,
+      "source_worker_reports_edited": false,
+      "original_failed_summary_preserved": true,
+      "recovered_summary_sha256": "9f7a481fcf7f09ffa6ae6166d9f8d0a292d6591d0cb51d85115b05d0a0699610"
+    },
+    "evidence_sha256": {
+      "quick_log": "8564a42bf3e683351aab4c020b428ab3870dcad67f50228a191f091bbdb0039d",
+      "raw_audit": "61ed6252ae58f0627e9e03ffc873d9b66ff4ac541d1b8fa93a040609b27193e0",
+      "boundaries": "1617b268919b37748b0ad7ef554a3134e525ee739dc655efc38f2d2d76626b7b",
+      "boundary_negatives": "dd507625db71ead5509e44cb2b79a2cc18cac167c1df8697e0f9e2a08c3947d9",
+      "python_tools": "c96be088af1068cdad7c70ad7d9504babc80e7838623a9775cece794590da2cf",
+      "qol_unit": "20a322769a99e54084e270de783b1fd08d00cac6052b8ff14d27b6233fd7aa30",
+      "qol_native": "6759587e71777bb5ebc449109ce3431551fcd1dd00526c4b5b6c4095e88b3813"
+    },
+    "scope": "CPU/hardware-double upstream composition, selected native FireRed/Emerald contracts, DS visibility/party-finish boundaries, unchanged Red QoL source and actual imported Red tables/art dimensions. Historical GPU/device/native boot/UI/storage evidence retains its own refs. No new graphics/audio-device launch, normal SAVE/import writes, complete graphical/gameplay or whole-mod/other-edition acceptance."
+  },
+  "unchanged_mod_consumers": {
+    "receipt": "docs/qa/unchanged-mod-consumers.json",
+    "qualified_ref": "edfb30feb230d5359540ae6e6fbc33d20dc68b83",
+    "profile": "red",
+    "qol_checks_per_engine": 42,
+    "battleart_checks_per_engine": 46,
+    "battleart_interiors_checks_per_engine": 47,
+    "typed_selected_observations_identical": true,
+    "graphics_device_verified": true,
+    "source_and_engine_tests_unchanged": true,
+    "native_graphics": {
+      "receipt": "docs/qa/battleart-graphics.json",
+      "completed_runs": 5,
+      "visually_inspected_captures": 30,
+      "selected_red_scenes_and_staged_battle": true,
+      "full_mod_or_fps_acceptance": false
+    }
+  },
+  "historical_snapshot_pre_quit_320": {
+    "runtime_ref": "87cada70e7483120f131b716ea6a370d1158127c",
+    "feature_ref": "7a8d4c076d51d648aba146a7f15d62c7e7e145ba",
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/313",
+    "engine_suites_passed": 294,
+    "engine_suites_total": 294
+  },
+  "quit_to_launcher": {
+    "receipt": "docs/qa/quit-to-launcher.json",
+    "runtime_ref": "77d0294ce20b83168dfce7461f7854df2d5d3cfb",
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/320",
+    "source_tree": "cd897adfaddbd6c17eb1d9e7a51741a5ab186af4",
+    "tests_tree": "4f74be4c778971d72e750628d22447e9496295f2",
+    "main_blob": "a939e9628652052f9dffb2cb7ae834de2eb697ea",
+    "engine_tests_tree": "f5a6451cf67d399ac591ef5669b6329b076cec75",
+    "targeted_feature": "107/107",
+    "targeted_composed": "108/108",
+    "shared_native_workers": 16,
+    "shared_composed_workers": 32,
+    "shared_native_paired_observations": 40,
+    "shared_composed_paired_observations": 80,
+    "typed_observations_identical": true,
+    "actual_package_cleanup_checks_per_engine_across_two_modes": 29,
+    "native_gpu_quit": {
+      "exit": 0,
+      "love": [
+        11,
+        5,
+        0,
+        "Mysterious Mysteries"
+      ],
+      "renderer": {
+        "renderer": "OpenGL",
+        "version": "4.1 Metal - 89.4",
+        "vendor": "Apple",
+        "device": "Apple M2"
+      },
+      "log_sha256": "958a0163d362d1203a0d7bac930e96a6cdb7837eefdd74940b648faaaab5c58b",
+      "driver_sha256": "3e4345736644c61d74da648e522236ab08c80e5c7ca09b02849f508347995068",
+      "capture_sha256": "73d813d9c5f9d7e81de39ac3dc22a824f45142f8da1ad51c968adce2531bd375",
+      "quit_result": {
+        "decision": false,
+        "frameHooksBefore": 12,
+        "frameHooksAfter": 1,
+        "errors": 0,
+        "disposed": true
+      },
+      "legacy_migration_disabled": true,
+      "imports_and_packages_unchanged": true
+    },
+    "upstream_preexisting_failed_suites": 11,
+    "upstream_failure_lines_unchanged": true,
+    "composed_engine": "296/296",
+    "composed_sdk": "4/4",
+    "B30": "passed",
+    "scope": "Actual native quit decision/cleanup on selected unchanged Red Battle Art/Interiors; no generic unload, full-mod or FPS claim."
+  },
+  "historical_snapshot_pre_battle_style": {
+    "runtime_ref": "77d0294ce20b83168dfce7461f7854df2d5d3cfb",
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/320",
+    "feature_ref": "164c1a2dcd2092fd5ea5f4eabc8599d348076a1b",
+    "engine_suites_passed": 296,
+    "engine_suites_total": 296
+  },
+  "battle_style": {
+    "receipt": "docs/qa/battle-style.json",
+    "qualified_runtime_ref": "b41271c084f990ac6d44b536a575eb88868a2075",
+    "source_tree": "640f209e476cbbb691fe040c202bc26e99c212e4",
+    "tests_tree": "bcdffcaf90f59903a82205e70fefae8d848d9405",
+    "engine_tests_tree": "912c07afd8eca050be404edb3a129374d5e914d0",
+    "feature_checks": 82,
+    "composed_checks": 88,
+    "existing_shift_prompt_checks": 11,
+    "native_shared_workers": 12,
+    "native_paired_observations": 60,
+    "unified_shared_workers": 24,
+    "unified_paired_observations": 120,
+    "typed_observations_identical": true,
+    "native_gpu_runs": 3,
+    "visually_inspected_captures": 12,
+    "fresh_native_import_on_both_engines": true,
+    "native_gpu_results_typed_identical": true,
+    "upstream_preexisting_failed_suites": 11,
+    "upstream_failure_lines_identical": true,
+    "callsite_negative_failed_assertions": 13,
+    "native_generation_scope": "Gen1, matching reference; other generations keep native policy.",
+    "complete_mod_or_playthrough_or_fps_acceptance": false
+  },
+  "historical_snapshot_pre_dev_api_attribution": {
+    "runtime_ref": "b41271c084f990ac6d44b536a575eb88868a2075",
+    "feature_ref": "e085157d6f8974593ae4795bee9f056a43cc2d14",
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/322",
+    "engine_suites_passed": 297,
+    "engine_suites_total": 297
+  },
+  "dev_api_attribution": {
+    "receipt": "docs/qa/dev-api-attribution.json",
+    "source_tree": "5c3d3f2efc0640f29f1aa53466e27c8a9c66a8c2",
+    "tests_tree": "792783a3d952147d597d91cdba9320fb481f434c",
+    "engine_tests_tree": "d2d09b918dce3113b795b553a16dbbb035142c4d",
+    "targeted_checks": 19,
+    "mode_workers": 20,
+    "mode_checks": 380,
+    "native_false_warnings_before": 5,
+    "native_false_warnings_after": 0,
+    "actual_internal_and_network_warnings_retained": true,
+    "api_factory_failure_scope_restored": true,
+    "negative_control_failures_each": 3,
+    "upstream_existing_failed_suites": 11,
+    "upstream_existing_failure_lines_identical": true,
+    "native_gpu_exit": 0,
+    "captures_inspected": 4,
+    "native_selected_typed_behavior_unchanged": true,
+    "full_mod_or_fps_acceptance": false
+  },
+  "historical_snapshot_pre_catch_nickname": {
+    "runtime_ref": "4c9a0a73a897cae8d1610c282756ea88f8c9ee4b",
+    "feature_ref": "370190ae69c996556477dc9c60e9e649204c4507",
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/324",
+    "engine_suites_passed": 298,
+    "engine_suites_total": 298
+  },
+  "catch_nickname": {
+    "receipt": "docs/qa/catch-nickname.json",
+    "source_tree": "e8c52f390f854b2c8586cff23cc8a889dede3768",
+    "tests_tree": "b936076d6b0506a3bed62c70eefa12ca5d1d45aa",
+    "engine_tests_tree": "ad646b6c9619363e48549699e83162de5a8e43e3",
+    "feature_targeted_checks": 337,
+    "composed_targeted_checks": 341,
+    "native_shared_workers": 12,
+    "native_typed_paired_rows": 132,
+    "unified_shared_workers": 24,
+    "unified_typed_paired_rows": 264,
+    "native_gpu_runs": 2,
+    "captures_inspected": 10,
+    "native_gpu_typed_outcomes_identical": true,
+    "native_ball_spend_per_catch": 1,
+    "upstream_existing_failed_suites": 11,
+    "upstream_existing_failure_lines_identical": true,
+    "baseline_new_failed_assertions": 75,
+    "bypassed_callsite_negative_assertions": 74,
+    "cloned_recipient_negative_assertions": 16,
+    "generation_scope": "Gen1-only, matching reference; other generations keep native naming behavior.",
+    "full_mod_or_fps_acceptance": false
+  },
+  "historical_snapshot_pre_catch_party_full": {
+    "runtime_ref": "70c49224ef5951d0122d8f2795c5c1bbb503b257",
+    "feature_ref": "1f9af978ca4935a5df31a90b3d86596748518e58",
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/325",
+    "engine_suites_passed": 299,
+    "engine_suites_total": 299
+  },
+  "catch_party_full": {
+    "receipt": "docs/qa/catch-party-full.json",
+    "source_tree": "2c0bcb7c8d6952258635d52c403aafe5ed5d0113",
+    "tests_tree": "622b42dda4e57b7f644ef5f0814cdc048be44035",
+    "engine_tests_tree": "a83ab4efc4a52b93972bfa5560ef464579db0598",
+    "feature_targeted_checks": 410,
+    "integration_targeted_checks": 419,
+    "baseline_new_failed_assertions": 84,
+    "native_shared_workers": 12,
+    "native_typed_paired_rows": 162,
+    "unified_shared_workers": 24,
+    "unified_typed_paired_rows": 324,
+    "native_gpu_runs": 2,
+    "captures_inspected": 12,
+    "native_gpu_typed_outcomes_identical": true,
+    "native_ball_spend_per_catch": 1,
+    "upstream_existing_failed_suites": 11,
+    "upstream_existing_failure_lines_identical": true,
+    "bypassed_callsite_negative_assertions": 84,
+    "boolean_only_negative_assertions": 24,
+    "generation_scope": "Gen1 only, matching reference; other generations retain native storage.",
+    "full_mod_or_fps_acceptance": false
+  },
+  "historical_snapshot_before_main_integration": {
+    "runtime_ref": "959a2d78e94f7ae0a3c6ea7a206a6d326c6fb1d6",
+    "engine_suites_passed": 300,
+    "engine_suites_total": 300,
+    "sdk_suites_passed": 4,
+    "sdk_suites_total": 4,
+    "b30_profile": "passed"
+  },
+  "qualification_scope": "Full 561-suite regression of the exact link-battle completion runtime; earlier feature/GPU receipts retain their pinned historical source.",
+  "fork_main_integration": {
+    "receipt": "docs/qa/fork-main-integration.json",
+    "runtime_ref": "1e11414db8f2c91a747ae29a287f653ad36353f8",
+    "complete_regression_ref": "725eb00bdc298d52be51486e52fdff1ed30fcc45",
+    "engine_suites": 559,
+    "post_regression_delta_suites": 13,
+    "current_engine_inventory": 560,
+    "sdk_suites": 4,
+    "B30": true,
+    "merged_own_prs": [
+      22,
+      25,
+      81,
+      88,
+      91,
+      93,
+      97,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111
+    ],
+    "gpu_runs": 12,
+    "gpu_checks": 4644,
+    "gpu_comparisons": 364,
+    "native_crystal_save_restart": true,
+    "limits": [
+      "Prepared scenes and synthetic-asset GPU tests do not certify every mod or a full playthrough.",
+      "Unchanged Legendary package uses its fallback for missing optional horizon-132-west.png.",
+      "No physical handheld performance or audible-device acceptance is claimed.",
+      "Seven private VASC support-log issues remain open.",
+      "Gen1Recomp remains a read-only reference; this publication targets the own Gen2 fork only."
+    ],
+    "final_menu_overlay_gpu_runs": 2,
+    "final_menu_overlay_gpu_checks": 16
+  },
+  "historical_before_link_battle_ended": {
+    "runtime_ref": "1e11414db8f2c91a747ae29a287f653ad36353f8",
+    "engine_suites_passed": 559,
+    "engine_suites_total": 559,
+    "sdk_suites_passed": 4,
+    "sdk_suites_total": 4,
+    "b30_profile": "passed"
+  },
+  "link_battle_ended": {
+    "receipt": "docs/qa/link-battle-ended.json",
+    "runtime_ref": "afe2c4461def99702a5ccbe1958fdf1653c58838",
+    "native_checks": 1948,
+    "typed_paired_observations": 80,
+    "reference_readonly": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "full_engine_suites": 561,
+    "SDK": 4,
+    "B30": true
   }
 }

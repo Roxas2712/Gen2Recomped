@@ -318,7 +318,8 @@ local function frameOf(win, fallback)
   return {
     tx = math.max(0, left - 1), ty = math.max(0, top - 1),
     tw = math.floor(win.width) + 2, th = math.floor(win.height) + 2,
-    textX = left * 8, row1 = top * 8, row2 = top * 8 + 16,
+    textX = left * 8, row1 = top * 8 + (GameVersion.isFRLG() and 2 or 0),
+    row2 = top * 8 + 16 + (GameVersion.isFRLG() and 2 or 0),
     cols = math.floor(win.width),
   }
 end
@@ -360,9 +361,14 @@ function Gen3Battle.windows(battle)
   -- that edge; the prompt starts on tile 0 and the four move slots sit
   -- against the left, so neither moves at all.
   local msg = frameOf(rec.message, nil)
+  local prompt = frameOf(rec.prompt, message)
+  if GameVersion.isFRLG() then
+    if msg then msg.textX = msg.textX + 2 end
+    if rec.prompt and prompt then prompt.textX = prompt.textX + 2 end
+  end
   return {
     message = msg and spanBox(msg, battle) or message,
-    prompt = frameOf(rec.prompt, message),
+    prompt = prompt,
     action = shiftBox(frameOf(rec.action, message), battle),
     moves = moves,
   }
@@ -381,9 +387,9 @@ function Gen3Battle.strip(battle)
   return spanBox({
     tx = math.max(0, left - 1), ty = math.max(0, top - 1),
     tw = w + 2, th = h + 2,
-    textX = left * 8,
-    row1 = top * 8,
-    row2 = top * 8 + 16,
+    textX = left * 8 + (GameVersion.isFRLG() and 2 or 0),
+    row1 = top * 8 + (GameVersion.isFRLG() and 2 or 0),
+    row2 = top * 8 + 16 + (GameVersion.isFRLG() and 2 or 0),
     cols = w,
   }, battle)
 end
@@ -935,7 +941,7 @@ local function drawCaughtMarker(battle, battler, x, y)
   end
 end
 
-local function drawStatusPanel(battle, battler, x, y, player)
+local function drawStatusPanelBody(battle, battler, x, y, player)
   local record = hudRecord(battle)
   local images = record and record.images or {}
   local panel = hudImage(player and images.player or images.opponent)
@@ -1242,6 +1248,16 @@ end
 --
 -- AND THE FOE'S ROW IS A TRAINER'S ONLY.  A wild battle has no party to show,
 -- so BattleIntroDrawPartySummaryScreens raises the player's alone.
+-- Expose the same native painter to source healthbox captures.
+Gen3Battle.drawStatusPanel=drawStatusPanelBody
+local function drawStatusPanel(battle,battler,x,y,player)
+  local source=package.loaded['src.core.game3.battle.healthbox']
+  if source then return source._nativeDraw(battle,battler,x,y,player,function()
+    return drawStatusPanelBody(battle,battler,x,y,player)
+  end)end
+  return drawStatusPanelBody(battle,battler,x,y,player)
+end
+
 local function summaryRecord(battle)
   local record = hudRecord(battle)
   local summary = record and record.partySummary
@@ -1475,6 +1491,26 @@ local function healthboxAt(battle, key, panel, fx, fy)
     if okH and type(got) == "number" then h = got end
   end
   return Gen3Battle.hudPlace(constants, which, h, Gen3Battle.extra(battle))
+end
+
+-- Geometry comes from the same panel images and placement records as HUDs.
+function Gen3Battle.healthboxGeometry(battle,id)
+  local player=id%2==0
+  local record=hudRecord(battle);local images=record and record.images or{}
+  local key=player and 'player' or 'opponent'
+  if id>=2 then key=key..'Doubles' end
+  local image=hudImage(images[key]or images[player and 'player'or'opponent'])
+  local h=image and image:getHeight()or 32
+  if battle:isDouble()then
+    local keys={[0]='playerLeft','opponentLeft','playerRight','opponentRight'}
+    local c=battle.data.constants.gen3BattlerCoords
+    local pos=c and c.healthbox and c.healthbox[keys[id]]
+    if not pos then return nil,'native double healthbox placement unavailable'end
+    return pos.x-32+(player and Gen3Battle.extra(battle)or 0),pos.y-math.floor(h/2),h
+  end
+  if id>=2 then return nil,'absent single-battle slot'end
+  local x,y=healthboxAt(battle,player and 'singlesPlayer'or'singlesOpponent',image)
+  return x,y,h
 end
 
 local function drawHUDs(battle, slide)
@@ -1820,7 +1856,7 @@ end
 
 -- Draws the panel and answers whether it did, so a caller can fall back to
 -- its own drawn box on a cache that has none.
-local function drawPanel(battle, which)
+local function drawPanelBody(battle, which)
   local img, record = panelImage(battle, which)
   if not img then return false end
   love.graphics.setColor(1, 1, 1, 1)
@@ -1829,6 +1865,14 @@ local function drawPanel(battle, which)
     love.graphics.draw(img, 0, y)
   end
   return true
+end
+
+-- Source panel wrappers run inside this existing native drawing phase.
+Gen3Battle.drawPanel=drawPanelBody
+local function drawPanel(battle,which)
+  local source=package.loaded['src.ui.game3.battle_chrome']
+  if source then return source._panel(battle,which,function()return drawPanelBody(battle,which)end)end
+  return drawPanelBody(battle,which)
 end
 
 -- THE TEXT IS PRINTED TWICE.  Every string in a Gen 3 battle is a foreground
@@ -1845,6 +1889,8 @@ local function paintPair(battle, key)
   if not row then return nil, nil end
   return norm(row.foreground), norm(row.shadow)
 end
+
+Gen3Battle.textColors=paintPair
 
 -- ...ONCE, THROUGH THE PAGE'S OWN TWO TONES.
 --
@@ -1886,6 +1932,13 @@ end
 -- The selection arrow: the cartridge's own two tiles when the import has
 -- them, and the font's marker when it does not.
 local function drawArrow(battle, x, y)
+  -- FRLG Menu_InitCursor prints gText_SelectorArrow2 (0xEF) from FONT_NORMAL.
+  -- The old ripped textbox tile includes its opaque paper/teal background,
+  -- which becomes a white rectangle when a mod replaces the panel skin.
+  if GameVersion.isFRLG() then
+    Font.drawCode(0xEF, x, y)
+    return
+  end
   local record = Gen3Battle.textbox(battle)
   local path = record and record.images and record.images.cursor
   if type(path) == "string" then
@@ -2002,7 +2055,11 @@ local function drawCommandMenu(battle)
       local prompt = record and record.prompt
       local chooser = (battle.menuBattler and battle:menuBattler()) or battle.player
       local who = chooser and chooser.name or ""
-      if prompt and prompt[1] and prompt[2] then
+      local quick=package.loaded['src.mods.FeatureOptions']and require('src.battle.QuickItem').label(battle)
+      if quick then
+        Font.draw(fitName(quick,88),w.prompt.textX+dx,w.prompt.row1+dy)
+        Font.draw("L: NEXT R: THROW",w.prompt.textX+dx,w.prompt.row2+dy)
+      elseif prompt and prompt[1] and prompt[2] then
         Font.draw(prompt[1], w.prompt.textX + dx, w.prompt.row1 + dy)
         local second = tostring(prompt[2]):gsub("{MON}", fitName(who, 88))
         Font.draw(second, w.prompt.textX + dx, w.prompt.row2 + dy)
@@ -2061,8 +2118,22 @@ local function drawMoveDetails(battle, move, panelDrawn)
   local maxPP = def.pp + (move.ppUps or 0) * math.floor(def.pp / 5)
   local x = (tx + 1) * 8
   shadowed(battle, "menu", function(dx, dy)
-    Font.draw(("PP %2d/%2d"):format(move.pp or 0, maxPP), x + dx, s.row1 + dy)
-    Font.draw(fitName(TypeChart.displayName(def.type), 56), x + dx, s.row2 + dy)
+    if GameVersion.isFRLG() then
+      local small = Font.pushFace("small")
+      local ok, err = pcall(Font.draw, "PP", x + dx, s.row1 + dy)
+      if small then Font.popFace() end
+      if not ok then error(err) end
+      Font.draw(("%2d/%2d"):format(move.pp or 0, maxPP), x + 34 + dx, s.row1 + dy)
+      small = Font.pushFace("small")
+      ok, err = pcall(function()
+        Font.draw(fitName(TypeChart.displayName(def.type), 56), x + dx, s.row2 + dy)
+      end)
+      if small then Font.popFace() end
+      if not ok then error(err) end
+    else
+      Font.draw(("PP %2d/%2d"):format(move.pp or 0, maxPP), x + dx, s.row1 + dy)
+      Font.draw(fitName(TypeChart.displayName(def.type), 56), x + dx, s.row2 + dy)
+    end
   end)
 end
 
@@ -2091,6 +2162,10 @@ local function drawMoveGrid(battle, moves, selected)
     return { textX = s.textX + (col == 0 and 8 or 88),
              row1 = s.row1 + row * 16 }
   end
+  -- FireRed's MoveSelectionDisplayMoveNames uses FONT_SMALL. Measure in
+  -- that same face: fitting in normal and drawing small still truncates names.
+  local small = GameVersion.isFRLG() and Font.pushFace("small")
+  local ok, err = pcall(function()
   shadowed(battle, "menu", function(dx, dy)
     for i, move in ipairs(moves or {}) do
       local slot = slotAt(i)
@@ -2099,6 +2174,9 @@ local function drawMoveGrid(battle, moves, selected)
                 slot.textX + dx, slot.row1 + dy)
     end
   end)
+  end)
+  if small then Font.popFace() end
+  if not ok then error(err) end
   local chosen = slotAt(selected)
   drawArrow(battle, chosen.textX - 8, chosen.row1)
   drawMoveDetails(battle, moves and moves[selected], panelDrawn)

@@ -18,6 +18,7 @@ Usage:
 """
 import argparse
 import collections, hashlib, json, sys
+from gen3_field_move_profiles import field_move_profile
 from gen3_palette_profiles import profile_for_sha1
 
 BASE = 0x08000000
@@ -486,6 +487,16 @@ def verify_charmap(rom, f):
 
 def discover(rom):
     f = Finder(rom)
+    from gba_substitute_art import discover as discover_substitute_art
+    try:
+        substitute = discover_substitute_art(rom, lz77_at)
+        for part, name in (("palette", "gSubstituteDollPal"),
+                           ("front", "gSubstituteDollFrontGfx"),
+                           ("back", "gSubstituteDollBackGfx")):
+            f.record(name, substitute[part],
+                     "verified Substitute DMA loader at %08X" % substitute["loaderPool"])
+    except ValueError as error:
+        f.miss("Substitute art", str(error))
 
     # ------------------------------------------------------------ names ----
     sp = f.names('gSpeciesNames', 'BULBASAUR', 1, 11, NUM_SPECIES)
@@ -5454,6 +5465,7 @@ def main():
         # This field is deliberately source-pinned and exact-hash gated,
         # rather than a structural guess about callback side effects.
         'terrainPalettePrograms': profile_for_sha1(sha1),
+        'fieldMoveStreaks': field_move_profile(sha1),
         'romHeader': {'title': data[0xA0:0xAC].decode('ascii', 'replace'),
                       'gameCode': code, 'makerCode': data[0xB0:0xB2].decode('ascii'),
                       'revision': data[0xBC]},

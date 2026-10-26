@@ -51,6 +51,7 @@
 local Strings = require("src.core.Strings")
 local Font = require("src.render.Font")
 local T = require("src.import.Gen4Text")
+local Strings = require("src.core.Strings")
 
 local M = {}
 

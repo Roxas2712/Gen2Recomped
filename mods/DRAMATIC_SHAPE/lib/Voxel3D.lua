@@ -239,6 +239,16 @@ local SHADER = [[
     float edge = smoothstep(0.0, 0.06, min(e.x, e.y));
     if (edge <= 0.0) return 1.0;
     float z = p.z - sunBias;
+#ifdef SUN_ONE_TAP
+    // V6: BALANCED reads the map once. The 2x2 box filter below is the
+    // one-pixel soft edge; on a tile GPU it is also four dependent reads
+    // on every fragment of the world, and a handheld would rather have the
+    // staircase. Scaled by four so the normalisation below is unchanged.
+    float lit = 4.0 * step(z, sunDepth(p.xy));
+    if (sunDynamicActive > 0.5) {
+      lit = min(lit, 4.0 * step(z, sunDynamicDepth(p.xy)));
+    }
+#else
     float lit = step(z, sunDepth(p.xy + sunTexel * vec2(-0.5, -0.5)))
               + step(z, sunDepth(p.xy + sunTexel * vec2( 0.5, -0.5)))
               + step(z, sunDepth(p.xy + sunTexel * vec2(-0.5,  0.5)))
@@ -250,6 +260,7 @@ local SHADER = [[
                    + step(z, sunDynamicDepth(p.xy + sunDynamicTexel * vec2( 0.5,  0.5)));
       lit = min(lit, moving);
     }
+#endif
     return 1.0 - sunDark * edge * (1.0 - lit * 0.25);
   }
 
@@ -473,13 +484,19 @@ end
 -- one rather than losing the whole 3D pass.
 function Voxel3D.shader(grid,instanced)
   grid = grid and true or false
+  -- V6: the tier picks the shadow filter; a variant per answer, so a tier
+  -- change simply binds the other program and the uniform cache
+  -- (ShaderState, keyed by shader) starts clean for it
+  local oneTap = (V.require("Tier").caps().shadowTaps or 4) <= 1
   local key=instanced and (grid and "stamp-grid" or "stamp") or grid
+  if oneTap then key = tostring(key) .. "-1tap" end
   if shaders[key] == nil then
     if grid and not derivativesOK() then
       shaders[key] = false
     else
       local src = grid and ("#define VOXEL_GRID 1\n" .. SHADER) or SHADER
       if instanced then src="#define STAMP_INSTANCES 1\n"..src end
+      if oneTap then src="#define SUN_ONE_TAP 1\n"..src end
       local ok, sh = pcall(love.graphics.newShader, V.require("GraphicsCompat").shader(src))
       shaders[key] = ok and sh or false
     end
