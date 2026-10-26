@@ -41,6 +41,12 @@ the caller explicitly supplies one. The output includes per-step logs, a
 source/tool/library hash report and separate licensed stock/extended artifacts.
 These are qualification artifacts, not a replacement installation or a release.
 
+Command output is written directly to each step's log, including partial output
+on a timeout. A timeout or nonzero exit still fails qualification. The default
+engine budget is 900 seconds per variant; `--engine-timeout` can increase it
+without changing the test set. The Intel macOS CI runner allows 1800 seconds
+per complete engine run and 75 minutes for the job, including both variants.
+
 On Windows the builder explicitly selects MSVC's linker and Git for Windows
 Bash, avoiding the unrelated Git Unix `link` utility and System32's WSL
 launcher. Shared fixture source paths accept Windows separators, and tests
