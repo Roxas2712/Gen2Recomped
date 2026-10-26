@@ -3180,10 +3180,8 @@ function Commands.g3_fade_screen(ctx, mode)
   end
 end
 
--- sound.c sFanfares: how many frames WaitFanfare holds for each jingle.  The
--- rendered song can run far past this (its tail is silence), so the frame
--- count is the cartridge's answer to "is the fanfare over".  Keyed by
--- FireRed's song numbers; another cartridge waits for the song itself.
+-- Retained legacy export for consumers using FireRed's numeric timers.
+-- Native playback and waits resolve per-version metadata through Gen3Fanfare.
 Gen3Commands.FRLG_FANFARE_FRAMES = {
   [256] = 160, [257] = 80, [258] = 160, [259] = 220, [260] = 340,
   [261] = 220, [262] = 120, [268] = 250, [269] = 150, [270] = 180,

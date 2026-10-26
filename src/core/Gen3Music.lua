@@ -13,12 +13,19 @@ function NativeMusic:setLevel(value, apply)
   self.host.level(value, apply)
 end
 function NativeMusic:reset()
-  self.fanfareActive, self.fanfareFrames, self.bgmPaused = false, 0, false
-  self.fanfareRestore, self.fanfareWait = nil, nil
+  self:cancelFanfare()
   self.current, self.mapSong, self.savedSong = nil, nil, nil
   self.fadeOut, self.fadeIn, self.deferred = nil, nil, nil
   self.serial = self.serial + 1
   self:setLevel(self.host.master())
+end
+function NativeMusic:cancelFanfare()
+  self.fanfareActive, self.fanfareFrames, self.bgmPaused = false, 0, false
+  self.fanfareRestore, self.deferred = nil, nil
+  if self.fanfareWait then
+    self.fanfareWait.done = true
+    self.fanfareWait = nil
+  end
 end
 function NativeMusic:stopped()
   self.fanfareRestore = nil

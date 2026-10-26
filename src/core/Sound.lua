@@ -1028,10 +1028,7 @@ end
 
 -- hot reload / jukebox A-B: drop one key's sources (its pitch-tempo
 -- variants included) or all of them, so the next play re-resolves the def
-function Sound.invalidate(name)
-  byNumber = nil
-  local nativeCry = package.loaded["src.core.NativeCryPlayer"]
-  if nativeCry then nativeCry.invalidate(name) end
+function Sound.invalidateNativeFanfares(name)
   for _, store in pairs(nativeFanfares) do
     for id, src in pairs(store) do
       if type(id) == "number" and (not name or name == ("SONG_%03X"):format(id)) then
@@ -1042,6 +1039,14 @@ function Sound.invalidate(name)
       end
     end
   end
+  if not name then nativeFanfares = setmetatable({}, { __mode = "k" }) end
+end
+
+function Sound.invalidate(name)
+  byNumber = nil
+  local nativeCry = package.loaded["src.core.NativeCryPlayer"]
+  if nativeCry then nativeCry.invalidate(name) end
+  Sound.invalidateNativeFanfares(name)
   local function evict(store, key)
     local src = store[key]
     if src then

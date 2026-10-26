@@ -8,6 +8,7 @@ function M.install(root, backend, version, f, options)
   Music.stop()
   local oldThread, oldQueue = love.thread, love.audio.newQueueableSource
   local voices, tick = {}, 0
+  local queueMode = options.queueFailure
   love.thread = nil
   local Queue = {}
   Queue.__index = Queue
@@ -41,7 +42,13 @@ function M.install(root, backend, version, f, options)
     end
     self.buffers[#self.buffers + 1] = { tick = tick, rate = sd:getSampleRate(), samples = samples }
   end
-  love.audio.newQueueableSource = function(rate, bits, channels, capacity)
+  local function queueBuilder(rate, bits, channels, capacity)
+    if queueMode == "error" then
+      error("owned queue device unavailable")
+    end
+    if queueMode == "nil" then
+      return nil
+    end
     local voice = setmetatable({
       rate = rate,
       bits = bits,
@@ -53,6 +60,11 @@ function M.install(root, backend, version, f, options)
     }, Queue)
     voices[#voices + 1] = voice
     return voice
+  end
+  if queueMode == "missing" then
+    love.audio.newQueueableSource = nil
+  else
+    love.audio.newQueueableSource = queueBuilder
   end
   local programs = {}
   for i = 1, 3 do
@@ -138,6 +150,14 @@ function M.install(root, backend, version, f, options)
   end
   return {
     ids = h.ids,
+    queueDevice = function(mode)
+      queueMode = mode
+      if mode == "missing" then
+        love.audio.newQueueableSource = nil
+      else
+        love.audio.newQueueableSource = queueBuilder
+      end
+    end,
     fanfares = function()
       f.data.constants = f.data.constants or {}
       local resolve = native and audio.resolveSong or require("src.core.Gen3SongIds").resolve
