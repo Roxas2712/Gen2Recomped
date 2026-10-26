@@ -298,14 +298,28 @@ backend difference: native cue replacement reuses one reference queue but
 creates a second host queue. Both are stopped after teardown. This probe does
 not establish equal allocation counts or full game/mod-session lifecycle parity.
 
+## Native command compatibility revision
+
+GBA command revision **20** separates these music and script-wait semantics
+from revision 19. The party codec stays at revision **1**. The frozen parent
+`4994a41c` serializer independently predicts the new native digest
+`43fe7ea27b438e0e` by changing only `[native_gba_commands]19` to
+`[native_gba_commands]20`; the current complete surface must equal that
+derived string. Red, Gold, Diamond and Black keep `e33d251961f2a41d`.
+
+The protocol suite passes **175 checks**, including both link-controller roles
+refusing old native semantics and full mirrored synthetic battles. The native
+party codec's **194,540 checks** also pass. This targeted compatibility check
+does not replace the pending complete contract matrix and combined runtime.
+
 ## Work still required before a pull request
 
 - Paired full-session teardown/re-entry coverage beyond the host interruption
   checks above, with old waits and Sources unable to leak into a new session.
 - Broader actual-import coverage, the complete existing contract matrix and
   a qualified combined runtime.
-- Native command revision and an independent frozen-parent serializer
-  audit before compatibility claims or advancing the playable branch.
+- Complete broad regression and integration qualification before advancing
+  the playable branch.
 
 Tests start no game, GPU or audio device and write no normal saves/imports.
 No ROM, generated recording or private import is committed. This checkpoint
@@ -389,3 +403,11 @@ Compare portable song/map/save state, VM completion and static Sources while
 retaining the different native queue inventories. Every old Source must stay
 stopped throughout re-entry. These are owned audio-service transitions, not
 full game/mod-session lifecycle qualification.
+
+For the independent protocol audit, use a clean frozen parent at `4994a41c`:
+
+```sh
+nice -n 19 /path/to/pinned/luajit \
+  tools/enemy-action-contract-check/native-protocol-audit.lua \
+  /path/to/frozen-parent/src/link/Fingerprint.lua
+```

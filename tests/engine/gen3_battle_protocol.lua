@@ -4,9 +4,9 @@ local V, F, H =
   require("src.core.GameVersion"), require("src.link.Fingerprint"), require("src.link.Handshake")
 local Copy = require("src.mods.Merge").deepCopy
 local data, before = T.fixtures.fresh(), V.get()
--- Legacy hash retained; native hash independently audits revision 18 -> 19 only.
+-- Legacy hash retained; native hash independently audits revision 19 -> 20 only.
 local LEGACY = "e33d251961f2a41d"
-local NATIVE = "22e453523676534e"
+local NATIVE = "43fe7ea27b438e0e"
 for _, version in ipairs({ "red", "firered", "gold", "emerald", "diamond", "firered", "black" }) do
   V.set(version)
   local gba = V.isGen3()
@@ -15,7 +15,7 @@ for _, version in ipairs({ "red", "firered", "gold", "emerald", "diamond", "fire
     gba and NATIVE or LEGACY,
     "runtime command revision participates in cached fingerprints"
   )
-  T.eq(F.nativeBattleRevision(), gba and 19 or nil, "only GBA advertises the new command revision")
+  T.eq(F.nativeBattleRevision(), gba and 20 or nil, "only GBA advertises the new command revision")
   local game = { data = data, save = { player = { name = "RULES" } } }
   local current = H.hello(game, "battle")
   local legacy = Copy(current)
@@ -34,10 +34,10 @@ for _, version in ipairs({ "red", "firered", "gold", "emerald", "diamond", "fire
   )
   if gba then
     local previous = Copy(current)
-    previous.nativeBattleRevision, previous.fingerprint = 18, "c82a14f754706103"
-    T.eq(H.checkCompat(current, previous), "subset", "old cry timing cannot admit lockstep")
-    T.eq(H.checkCompat(previous, current), "subset", "cry revision mismatch is symmetric")
-    T.eq(current.nativePartyRevision, 1, "cry controls retain the native party codec")
+    previous.nativeBattleRevision, previous.fingerprint = 19, "22e453523676534e"
+    T.eq(H.checkCompat(current, previous), "subset", "previous native music rules cannot admit lockstep")
+    T.eq(H.checkCompat(previous, current), "subset", "native command revision mismatch is symmetric")
+    T.eq(current.nativePartyRevision, 1, "music commands retain the native party codec")
     for _, host in ipairs({ false, true }) do
       for _, peer in ipairs({ legacy, previous }) do
         local state = setmetatable(
