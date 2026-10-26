@@ -13,7 +13,7 @@ major update through fork PR61, preserving the fork's native interfaces.
 File-path differences are audit candidates, not missing-feature counts. No
 percentage can be inferred from them or from the number of passing tests.
 
-Latest composed development checkpoint:
+Historical composed development checkpoint:
 `9abcd876b0420c25d6223d25b840b72eac0904f0`. Phone incoming-event PR60 and
 native apricorn producer/selection PR63 are merged alongside native transition
 PR55 and the upstream refresh. The exact complete Git tree passes439/439
