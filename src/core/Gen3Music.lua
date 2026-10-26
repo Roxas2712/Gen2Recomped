@@ -120,6 +120,9 @@ end
 function NativeMusic:fadeInBgm(data, value, speed)
   self:playSong(data, value)
   self.fadeIn = { t = 0, dur = 16 * (tonumber(speed) or 4) / 60 }
+  if self.host.shared() then
+    self.host.sharedLevel(0)
+  end
   self:setLevel(0)
 end
 function NativeMusic:fadeOutAndPlay(data, value, speed, fadeIn)

@@ -224,10 +224,41 @@ loads the actual engine class, supplies world data and restores the module
 entry afterwards; no reference engine method is replaced. Separate rendered
 BGM/fanfare and actual-import regressions retain their waveform limitations.
 
+## Audio options and reentrant music hooks
+
+Native and shared music now retain independent volume and mode state. The
+native master becomes live before shared `music.volume` callbacks run, so a
+world cue, fade or fanfare started inside a callback receives the new option.
+`external_only` mutes actual native and shared music Sources without discarding
+playback ownership; `game_only` disables system mixing and `both` enables it.
+Platform calls are protected, deduplicated after success and retried after
+an unavailable backend. No audio device is started by the tests.
+
+Missing native options retain the reference's native defaults, while missing
+shared options retain the generic player's existing trim and mode. These
+defaults can issue two distinct system-mixing policy changes in one options
+application; the contract preserves their order. Applying native-only options
+does not overwrite the independent legacy player's trim. `Game:applyOptions`
+binds its actual dataset, including newly registered mod audio before its
+first cue, rather than relying on a previous music command's dataset.
+Shared fade-ins set their independent trim to zero immediately; the existing
+world-command regression catches an audible full-volume first frame.
+
+The `native_bgm_options` contract compares **26 complete scenarios / 364
+observed frames** across FireRed and Emerald, including mode transitions,
+omitted options, early mod registration and reentrant native/shared/fanfare
+actions. `tests/engine/gen3_audio_options.lua` adds **102 checks**, including
+the real Game options path, cross-generation trim preservation and platform
+API failure/recovery. The complete unchanged parent `fb48ae31` differs in
+all **26/26** scenarios using the current fixtures; all four workers exit
+zero. Complete callback contexts, results, controller state, Sources and
+boolean platform policies are retained. This does not claim every audio
+option or arbitrary mod callback combination is qualified.
+
 ## Work still required before a pull request
 
-- Further audio option, reentrant callback, invalid-device handle and cold
-  session-transition coverage.
+- Invalid-device handle and cold session-transition coverage, followed by
+  remaining audio options and callback combinations beyond the cases above.
 - Broader actual-import coverage, the complete existing contract matrix and
   a qualified combined runtime.
 - Native command revision and an independent frozen-parent serializer
@@ -248,7 +279,7 @@ nice -n 19 python3 tools/enemy-action-contract-check/check.py \
   --lua /path/to/pinned/luajit \
   --mode native_bgm_symbols --mode native_bgm_commands --mode native_bgm_policy \
   --mode native_fanfare_commands --mode native_bgm_devices \
-  --mode native_bgm_hooks \
+  --mode native_bgm_hooks --mode native_bgm_options \
   --mode native_cry_commands --mode native_cry_lifecycle --mode native_cry_pcm \
   --report /path/to/bgm-development-report.json
 ```

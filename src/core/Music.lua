@@ -21,6 +21,8 @@ local VOLUME = 0.7
 -- applied twice/three times over.
 local volumeScale = 1
 local volumeLevel = 7
+local nativeVolumeScale = 1
+local audioMode, sharedAudioMode = "both", "both"
 local FILTER_HIGHGAIN = { 0.4, 0.16, 0.064 }
 local filterLevel = 0
 
@@ -43,6 +45,20 @@ local nativeCryFinished
 local nativeBgm, nativeBgmLevel, nativeBgmOutput, nativeBgmContext
 local nativeBgmShared, nativeBgmIncomingShared
 local sharedStoredLevel = volumeLevel
+local nativeModAudio = false
+local nativeAudioData
+local function hasSharedAudio(audio)
+  audio = audio or {}
+  for label in pairs(audio.songs or {}) do
+    if type(label) == "string" and not label:match("^SONG_%x+$") then return true end
+  end
+  for _, owners in pairs(audio._owners or {}) do
+    if type(owners) == "table" then
+      for _, owner in pairs(owners) do if owner and owner ~= "base" then return true end end
+    end
+  end
+  return false
+end
 -- Native world music has its own map/bike state. Shared mod music exposes
 -- the generic music service's context, as the native mod bridge does.
 local sharedHookState = { onBike = false, surfing = false }
@@ -90,9 +106,10 @@ local dsLevel, dsPlayer, dsFade = 1, 1, nil
 local function applyVolume(src)
   if not src then return end
   local native = nativeBgm and require("src.core.GameVersion").isGen3()
-  local option = native and nativeBgmLevel or volumeScale
-  local vol = VOLUME * option * dsLevel * dsPlayer
   local shared = native and nativeBgm.host.shared()
+  local option = shared and (sharedAudioMode == "external_only" and 0
+    or math.max(0, math.min(7, sharedStoredLevel)) / 7) or native and nativeBgmLevel or volumeScale
+  local vol = VOLUME * option * dsLevel * dsPlayer
   vol = vol * (shared and 1 or nativeCryLevel)
   if cryDuck then vol = vol * cryDuck.scale end
   if sharedMusicSource() and Runtime.wantsHook("music.volume") then
@@ -115,10 +132,21 @@ local function applyVolume(src)
       end
     end
     vol = Runtime.call("music.volume", function(v) return v end, vol, ctx)
-    vol = tonumber(vol) or (VOLUME * volumeScale)
+    vol = tonumber(vol) or (VOLUME * (shared and option or volumeScale))
     if vol < 0 then vol = 0 end
   end
   pcall(src.setVolume, src, vol)
+end
+
+local function applySharedLevel(level)
+  if level ~= nil then sharedStoredLevel = level end
+  volumeScale = sharedAudioMode == "external_only" and 0
+    or math.max(0, math.min(7, sharedStoredLevel)) / 7
+  -- The shared service owns no Source while native music is playing.
+  if not state.nativeStream then
+    applyVolume(state.source)
+    applyVolume(state.loopSource)
+  end
 end
 
 -- Source:setFilter needs OpenAL EFX; the pcall degrades to unfiltered
@@ -483,7 +511,6 @@ function Music.stop(nativeInternal)
   state.chip = false
   state.nativeStream = false
   nativeBgmShared, nativeBgmIncomingShared = nil, nil
-  sharedStoredLevel = volumeLevel
   if nativeInternal ~= true then
     if nativeBgm then nativeBgm:cancelFanfare(); nativeBgm:stopped() end
     require("src.core.Sound").invalidateNativeFanfares()
@@ -494,6 +521,9 @@ function Music.stop(nativeInternal)
   resumeRetry = nil
   if previous and not nativeStream and Runtime.wants("music.stopped") then
     Runtime.emit("music.stopped", { song = previous })
+  end
+  if previous and not nativeStream and require("src.core.GameVersion").isGen3() then
+    applySharedLevel(volumeLevel)
   end
 end
 
@@ -684,11 +714,24 @@ function Music.dsLevels() return dsLevel, dsPlayer end
 function Music.setVolumeLevel(level)
   volumeLevel = math.max(0, math.min(7, level or 7))
   sharedStoredLevel = volumeLevel
-  volumeScale = volumeLevel / 7
+  volumeScale = sharedAudioMode == "external_only" and 0 or volumeLevel / 7
+  nativeVolumeScale = audioMode == "external_only" and 0 or volumeLevel / 7
   if nativeBgm and require("src.core.GameVersion").isGen3() then nativeBgm:optionChanged(false) end
   applyVolume(state.source)
   applyVolume(state.loopSource)
 end
+
+function Music.setAudioMode(mode)
+  sharedAudioMode = mode or "both"
+  require("src.audio.AudioMix").set(sharedAudioMode ~= "game_only")
+  if require("src.core.GameVersion").isGen3() then
+    applySharedLevel(sharedStoredLevel)
+  else
+    audioMode = sharedAudioMode
+    Music.setVolumeLevel(volumeLevel)
+  end
+end
+function Music.audioMode() return sharedAudioMode end
 
 -- music low-pass filter level, 0 (OFF) to 3
 function Music.setFilterLevel(level)
@@ -699,14 +742,27 @@ end
 
 -- re-apply persisted audio options (Game calls this on boot and after
 -- loading a save)
-function Music.applyOptions(opts)
+function Music.applyOptions(opts, data)
   require("src.core.ChipAudio").setStereo(opts and opts.stereo)
-  -- The shared native mod bridge reapplies its stored level before the new
-  -- option, preserving both public volume-hook calls and their contexts.
-  if nativeBgm and require("src.core.GameVersion").isGen3() and nativeBgmShared then
-    Music.setVolumeLevel(sharedStoredLevel)
+  if require("src.core.GameVersion").isGen3() then
+    if data and data.audio then nativeAudioData = data.audio end
+    nativeModAudio = hasSharedAudio(nativeAudioData)
+    -- Native options become live before invoking shared hooks. Reentrant
+    -- world actions must see the new native master, not the old shared trim.
+    audioMode = opts and opts.audioMode or "both"
+    volumeLevel = math.max(0, math.min(7, tonumber(opts and opts.musicVol) or 7))
+    nativeVolumeScale = audioMode == "external_only" and 0 or volumeLevel / 7
+    require("src.audio.AudioMix").set(audioMode ~= "game_only")
+    if nativeModAudio then
+      Music.setAudioMode(opts and opts.audioMode or sharedAudioMode)
+      applySharedLevel(opts and opts.musicVol or sharedStoredLevel or 7)
+    end
+    if nativeBgm then nativeBgm:optionChanged(false) end
+    if state.nativeStream then applyVolume(state.source); applyVolume(state.loopSource) end
+  else
+    Music.setAudioMode(opts and opts.audioMode or sharedAudioMode)
+    Music.setVolumeLevel(opts and opts.musicVol or volumeLevel or 7)
   end
-  Music.setVolumeLevel(opts and opts.musicVol or 7)
   Music.setFilterLevel(opts and opts.musicFilter or 0)
 end
 
@@ -922,13 +978,16 @@ function Music.nativeCommand(data, operation, value, keep, context)
   local function number(label)
     return type(label) == "string" and tonumber(label:match("^SONG_(%x+)$") or "", 16) or Ids.resolve(label)
   end
+  nativeAudioData = data and data.audio
+  nativeModAudio = hasSharedAudio(nativeAudioData)
   if not nativeBgm then
     nativeBgm = require("src.core.Gen3Music").new({
       version = function() return require("src.core.GameVersion").get() end,
-      master = function() return volumeScale end,
+      master = function() return nativeVolumeScale end,
       sharedLevel = function(factor)
         sharedStoredLevel = math.max(0, math.min(7, volumeLevel * factor))
-        return sharedStoredLevel / 7
+        volumeScale = sharedAudioMode == "external_only" and 0 or sharedStoredLevel / 7
+        return volumeScale
       end,
       level = function(level, apply)
         nativeBgmLevel = level
@@ -948,12 +1007,12 @@ function Music.nativeCommand(data, operation, value, keep, context)
       end,
       pauseNative = function() require("src.core.ChipAudio").pauseNativeMusic() end,
       resumeNative = function()
-        nativeBgm:setLevel(volumeScale)
+        nativeBgm:setLevel(nativeVolumeScale)
         require("src.core.ChipAudio").resumeNativeMusic()
       end,
       stopCry = function() require("src.core.Sound").stopCry() end,
       playFanfare = function(currentData, info)
-        require("src.core.Sound").playNativeFanfare(currentData, info, volumeScale, filterLevel)
+        require("src.core.Sound").playNativeFanfare(currentData, info, nativeVolumeScale, filterLevel)
       end,
       defaultSong = function()
         if require("src.core.GameVersion").get() == "emerald" then
