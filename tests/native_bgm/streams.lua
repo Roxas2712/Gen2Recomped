@@ -161,6 +161,7 @@ function M.install(root, backend, version, f, options)
   end
   return {
     ids = h.ids,
+    endFiles = h.hardware.endSources,
     queueDevice = function(mode)
       queueMode = mode
       if mode == "missing" then

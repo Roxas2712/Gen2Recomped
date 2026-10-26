@@ -42,6 +42,24 @@ local nativeCryLevel, nativeCryHold, nativeCryRestore = 1, 0, false
 local nativeCryFinished
 local nativeBgm, nativeBgmLevel, nativeBgmOutput, nativeBgmContext
 local nativeBgmShared, nativeBgmIncomingShared
+local sharedStoredLevel = volumeLevel
+-- Native world music has its own map/bike state. Shared mod music exposes
+-- the generic music service's context, as the native mod bridge does.
+local sharedHookState = { onBike = false, surfing = false }
+local function musicHookState()
+  if nativeBgm and require("src.core.GameVersion").isGen3() then return sharedHookState end
+  return state
+end
+local function sharedMusicSource()
+  if nativeBgm and require("src.core.GameVersion").isGen3() then
+    if nativeBgmIncomingShared ~= nil then return nativeBgmIncomingShared end
+    return not state.nativeStream
+  end
+  return true
+end
+local function nativeSharedPlayback()
+  return nativeBgm and require("src.core.GameVersion").isGen3() and nativeBgm.host.shared()
+end
 
 -- AUDIO SESSION SUSPEND / RESUME state (mobile interruption: an incoming
 -- call).  Declared up here with the other module state because Music.stop --
@@ -77,17 +95,18 @@ local function applyVolume(src)
   local shared = native and nativeBgm.host.shared()
   vol = vol * (shared and 1 or nativeCryLevel)
   if cryDuck then vol = vol * cryDuck.scale end
-  if Runtime.wantsHook("music.volume") then
+  if sharedMusicSource() and Runtime.wantsHook("music.volume") then
+    local fields = musicHookState()
     local ctx = {
       song = state.current,
-      mapSong = state.mapSong,
-      onBike = state.onBike,
-      surfing = state.surfing,
+      mapSong = fields.mapSong,
+      onBike = fields.onBike,
+      surfing = fields.surfing,
       fading = state.fade ~= nil,
       optionScale = shared and option or volumeScale,
     }
-    local ok, Game = pcall(require, "src.core.Game")
-    if ok and Game then
+    local Game = package.loaded["src.core.Game"]
+    if type(Game) == "table" then
       local ow = Game.overworld
       if ow and ow.player then
         ctx.x, ctx.y = ow.player.cellX, ow.player.cellY
@@ -166,7 +185,7 @@ function Music.nativeCryStarted(params, options, finished)
   elseif params.mode ~= 1 and options.noDuck ~= true then
     nativeCryLevel, nativeCryHold, nativeCryRestore, changed = 85 / 256, 2, true, true
   end
-  if changed and not state.fade then
+  if changed and not state.fade and not nativeSharedPlayback() then
     applyVolume(state.source)
     applyVolume(state.loopSource)
   end
@@ -174,7 +193,7 @@ end
 
 function Music.nativeCryStopped()
   nativeCryLevel, nativeCryHold, nativeCryRestore = 1, 0, false
-  if not state.fade then applyVolume(state.source); applyVolume(state.loopSource) end
+  if not state.fade and not nativeSharedPlayback() then applyVolume(state.source); applyVolume(state.loopSource) end
 end
 
 function Music.nativeCryMixSnapshot()
@@ -340,13 +359,15 @@ end
 -- the single choke point every song choice passes through, so one hook
 -- covers map themes, battle themes, jingles and scene music
 local function selectSong(song, ctx)
+  if ctx and ctx.selected then return song end
   if not Runtime.wantsHook("music.select") then return song end
+  local fields = musicHookState()
   return Runtime.call("music.select", function(chosen) return chosen end, song, {
     reason = ctx and ctx.reason or "direct",
     mapId = ctx and ctx.mapId,
-    mapSong = state.mapSong,
-    onBike = state.onBike,
-    surfing = state.surfing,
+    mapSong = fields.mapSong,
+    onBike = fields.onBike,
+    surfing = fields.surfing,
     kind = ctx and ctx.kind,
     battleKind = ctx and ctx.kind,
     trainerId = ctx and ctx.trainerId,
@@ -356,7 +377,12 @@ end
 function Music.play(data, song, loop, ctx)
   if not song then return end
   if not love.audio then return end -- headless test stub
-  song = selectSong(song, ctx)
+  local gen3 = require("src.core.GameVersion").isGen3()
+  local requested = gen3 and songDef(data, song)
+  local nativeCue = gen3 and (ctx and ctx.nativeShared == false
+    or (not (ctx and ctx.nativeShared) and type(song) == "string" and song:match("^SONG_%x+$")
+      and type(requested) == "table" and type(requested.tracks) == "table" and #requested.tracks > 0))
+  if not nativeCue then song = selectSong(song, ctx) end
   -- a hook may silence the cue outright, or swap in a label the dedupe
   -- below has to compare against
   if not song or song == state.current and not (ctx and ctx.nativeRestart) then return end
@@ -434,7 +460,7 @@ function Music.play(data, song, loop, ctx)
   state.current = song
   nativeBgmShared, nativeBgmIncomingShared = nativeBgmIncomingShared, nil
   if nativeStream then nativeBgmOutput = true end
-  if Runtime.wants("music.started") then
+  if not nativeStream and Runtime.wants("music.started") then
     Runtime.emit("music.started", {
       song = song, previous = previous, chip = isChip,
       reason = ctx and ctx.reason or "direct",
@@ -449,6 +475,7 @@ end
 
 function Music.stop(nativeInternal)
   local previous = state.current
+  local nativeStream = state.nativeStream and require("src.core.GameVersion").isGen3()
   stopSource(state.source)
   stopSource(state.loopSource)
   require("src.core.ChipAudio").stopMusic()
@@ -456,6 +483,7 @@ function Music.stop(nativeInternal)
   state.chip = false
   state.nativeStream = false
   nativeBgmShared, nativeBgmIncomingShared = nil, nil
+  sharedStoredLevel = volumeLevel
   if nativeInternal ~= true then
     if nativeBgm then nativeBgm:cancelFanfare(); nativeBgm:stopped() end
     require("src.core.Sound").invalidateNativeFanfares()
@@ -464,7 +492,7 @@ function Music.stop(nativeInternal)
   -- An explicit stop outranks a pending resume re-cue: whoever called this
   -- wants silence, and the retry in Music.update fires on a nil state.current
   resumeRetry = nil
-  if previous and Runtime.wants("music.stopped") then
+  if previous and not nativeStream and Runtime.wants("music.stopped") then
     Runtime.emit("music.stopped", { song = previous })
   end
 end
@@ -532,6 +560,9 @@ function Music.playMap(data, mapId, onBike, surfing)
   if require("src.core.GameVersion").isGen3() then Music.nativeCommand(data, "map", song) end
   state.onBike = not not onBike
   state.surfing = not not surfing
+  if not require("src.core.GameVersion").isGen3() then
+    sharedHookState.mapSong, sharedHookState.onBike, sharedHookState.surfing = song, state.onBike, state.surfing
+  end
   local play = effectiveMapSong(data, song)
   -- FieldBGM_PlayForMapHeader starts the map's BGM at its full level, so a
   -- script's fade-out does not carry silence onto a map with the same song
@@ -540,7 +571,13 @@ function Music.playMap(data, mapId, onBike, surfing)
     applyVolume(state.source)
     applyVolume(state.loopSource)
   end
-  if play then Music.play(data, play, nil, { reason = "map", mapId = mapId }) end
+  if play then
+    if require("src.core.GameVersion").isGen3() then
+      Music.nativeCommand(data, "mapcue", play)
+    else
+      Music.play(data, play, nil, { reason = "map", mapId = mapId })
+    end
+  end
 end
 
 -- toggle the surf override mid-map (starting/ending a surf)
@@ -548,12 +585,14 @@ end
 -- for Surf), without restarting a map song that is already right
 function Music.setBike(data, onBike)
   state.onBike = not not onBike
+  if not require("src.core.GameVersion").isGen3() then sharedHookState.onBike = state.onBike end
   local play = effectiveMapSong(data, state.mapSong)
   if play then Music.play(data, play, nil, { reason = "map" }) end
 end
 
 function Music.setSurfing(data, surfing)
   state.surfing = not not surfing
+  if not require("src.core.GameVersion").isGen3() then sharedHookState.surfing = state.surfing end
   local play = effectiveMapSong(data, state.mapSong)
   if play then Music.play(data, play, nil, { reason = "map" }) end
 end
@@ -644,8 +683,9 @@ function Music.dsLevels() return dsLevel, dsPlayer end
 -- queued loop body as well as everything played later
 function Music.setVolumeLevel(level)
   volumeLevel = math.max(0, math.min(7, level or 7))
+  sharedStoredLevel = volumeLevel
   volumeScale = volumeLevel / 7
-  if nativeBgm and require("src.core.GameVersion").isGen3() then nativeBgm:optionChanged() end
+  if nativeBgm and require("src.core.GameVersion").isGen3() then nativeBgm:optionChanged(false) end
   applyVolume(state.source)
   applyVolume(state.loopSource)
 end
@@ -661,6 +701,11 @@ end
 -- loading a save)
 function Music.applyOptions(opts)
   require("src.core.ChipAudio").setStereo(opts and opts.stereo)
+  -- The shared native mod bridge reapplies its stored level before the new
+  -- option, preserving both public volume-hook calls and their contexts.
+  if nativeBgm and require("src.core.GameVersion").isGen3() and nativeBgmShared then
+    Music.setVolumeLevel(sharedStoredLevel)
+  end
   Music.setVolumeLevel(opts and opts.musicVol or 7)
   Music.setFilterLevel(opts and opts.musicFilter or 0)
 end
@@ -753,51 +798,7 @@ local function sourceStopped(src)
   return ok and not playing
 end
 
--- call once per frame: chains a finished intro into its loop body and
--- restores the map theme after a one-shot jingle
-function Music.update(data)
-  if data and data.audio and data.audio.ndsArchive then require("src.audio.NitroAudio").update() end
-  -- INTERRUPTION: the OS holds the audio session (an incoming call), every
-  -- Source we had is gone, and Music.resume is what rebuilds them.  Nothing
-  -- in here is worth doing against a device that is not there -- and the
-  -- ChipAudio.update on the next line is the call that crashed.
-  if sessionSuspended then return end
-  -- The other half of the same case: the re-cue in Music.resume can land
-  -- before the OS has handed the audio device back, and nothing else re-cues
-  -- a map theme that never stopped being the map theme.  So the retry is
-  -- ticked here, on the once-a-frame clock, and only while NOTHING is
-  -- playing -- if the resume took, or the player crossed a seam and the new
-  -- map cued its own theme, this must not fight it.
-  if resumeRetry then
-    if state.current ~= nil or resumeRetry.left <= 0 then
-      resumeRetry = nil
-    else
-      resumeRetry.wait = resumeRetry.wait - 1
-      if resumeRetry.wait <= 0 then
-        resumeRetry.wait = RESUME_RETRY_FRAMES
-        resumeRetry.left = resumeRetry.left - 1
-        state.failed[resumeRetry.song] = nil
-        Music.play(data, resumeRetry.song, true, { reason = "resume" })
-      end
-    end
-  end
-  if state.chip and not state.nativeStream then require("src.core.ChipAudio").update() end
-  if nativeCryHold > 0 then
-    nativeCryHold = nativeCryHold - 1
-  elseif nativeCryRestore and nativeCryFinished and nativeCryFinished() then
-    nativeCryRestore, nativeCryLevel = false, 1
-    if not state.fade then applyVolume(state.source); applyVolume(state.loopSource) end
-  end
-  -- restore the song's level once the cry that ducked it has finished
-  if cryDuck and not cryDuckActive() then
-    cryDuck = nil
-    if not state.fade then
-      applyVolume(state.source)
-      applyVolume(state.loopSource)
-    end
-  end
-  if nativeBgm and require("src.core.GameVersion").isGen3() then nativeBgm:update(data) end
-  if state.chip and state.nativeStream then require("src.core.ChipAudio").update() end
+local function updateSharedPlayback(data)
   -- distance / indoor muffling mods re-apply volume every frame while
   -- subscribed; otherwise applyVolume only runs on song/option changes
   if Runtime.wantsHook("music.volume") and not state.fade then
@@ -861,6 +862,60 @@ function Music.update(data)
   end
 end
 
+-- call once per frame: chains a finished intro into its loop body and
+-- restores the map theme after a one-shot jingle
+function Music.update(data)
+  if data and data.audio and data.audio.ndsArchive then require("src.audio.NitroAudio").update() end
+  -- INTERRUPTION: the OS holds the audio session (an incoming call), every
+  -- Source we had is gone, and Music.resume is what rebuilds them.  Nothing
+  -- in here is worth doing against a device that is not there -- and the
+  -- ChipAudio.update on the next line is the call that crashed.
+  if sessionSuspended then return end
+  -- The other half of the same case: the re-cue in Music.resume can land
+  -- before the OS has handed the audio device back, and nothing else re-cues
+  -- a map theme that never stopped being the map theme.  So the retry is
+  -- ticked here, on the once-a-frame clock, and only while NOTHING is
+  -- playing -- if the resume took, or the player crossed a seam and the new
+  -- map cued its own theme, this must not fight it.
+  if resumeRetry then
+    if state.current ~= nil or resumeRetry.left <= 0 then
+      resumeRetry = nil
+    else
+      resumeRetry.wait = resumeRetry.wait - 1
+      if resumeRetry.wait <= 0 then
+        resumeRetry.wait = RESUME_RETRY_FRAMES
+        resumeRetry.left = resumeRetry.left - 1
+        state.failed[resumeRetry.song] = nil
+        Music.play(data, resumeRetry.song, true, { reason = "resume" })
+      end
+    end
+  end
+  if state.chip and not state.nativeStream then require("src.core.ChipAudio").update() end
+  local nativeService = nativeBgm and require("src.core.GameVersion").isGen3()
+  if nativeService and nativeBgmShared then updateSharedPlayback(data) end
+  if nativeCryHold > 0 then
+    nativeCryHold = nativeCryHold - 1
+  elseif nativeCryRestore and nativeCryFinished and nativeCryFinished() then
+    nativeCryRestore, nativeCryLevel = false, 1
+    if not state.fade and not nativeSharedPlayback() then applyVolume(state.source); applyVolume(state.loopSource) end
+  end
+  -- restore the song's level once the cry that ducked it has finished
+  if cryDuck and not cryDuckActive() then
+    cryDuck = nil
+    if not state.fade then
+      applyVolume(state.source)
+      applyVolume(state.loopSource)
+    end
+  end
+  if nativeBgm and require("src.core.GameVersion").isGen3() then nativeBgm:update(data) end
+  if state.chip and state.nativeStream then require("src.core.ChipAudio").update() end
+  if not nativeService then
+    updateSharedPlayback(data)
+  elseif state.chip and state.nativeStream then
+    require("src.core.ChipAudio").ensureMusicPlaying()
+  end
+end
+
 -- Native world commands use numeric identities independently of physical labels.
 function Music.nativeCommand(data, operation, value, keep, context)
   local Ids = require("src.core.Gen3SongIds")
@@ -871,7 +926,10 @@ function Music.nativeCommand(data, operation, value, keep, context)
     nativeBgm = require("src.core.Gen3Music").new({
       version = function() return require("src.core.GameVersion").get() end,
       master = function() return volumeScale end,
-      sharedLevel = function(factor) return math.max(0, math.min(7, volumeLevel * factor)) / 7 end,
+      sharedLevel = function(factor)
+        sharedStoredLevel = math.max(0, math.min(7, volumeLevel * factor))
+        return sharedStoredLevel / 7
+      end,
       level = function(level, apply)
         nativeBgmLevel = level
         if apply ~= false then applyVolume(state.source); applyVolume(state.loopSource) end
@@ -925,6 +983,10 @@ function Music.nativeCommand(data, operation, value, keep, context)
   nativeBgmContext = context
   if operation == "map" then
     nativeBgm:setMapSong(number(value))
+  elseif operation == "mapcue" then
+    local id = number(value)
+    if nativeBgm.fanfareActive then nativeBgm.deferred = id; return true end
+    return nativeBgm:playSong(data, id)
   elseif operation == "playfanfare" then return nativeBgm:playFanfare(data, value)
   elseif operation == "playbgm" or operation == "fadenewbgm" then
     if operation == "playbgm" and (keep == 1 or keep == true) then nativeBgm:setSavedSong(value) end

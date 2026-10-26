@@ -34,7 +34,7 @@ adapters, VMs, music services and owned audio hardware doubles. No native
 audio method is replaced with a host result. LuaJIT is pinned to
 `a4c064539ea931274d407e1249b4bb575424a0f4`.
 
-- **32 workers / 2,576 complete paired observations**, independently
+- **36 workers / 2,622 complete paired observations**, independently
   compared with JSON booleans distinguished from numeric zero/one.
 - The new BGM contracts contribute **1,970 rows**: 1,844 symbol rows,
   32 command/lifecycle cases with all 81 frames and play traces per case,
@@ -42,11 +42,13 @@ audio method is replaced with a host result. LuaJIT is pinned to
   File cases retain every created source, including stopped sources and
   their actual gains. Another 40 rows cover native fanfare commands and
   waits; twelve rows cover initial missing-output state, fades and replacement
-  of shared file music, and the remaining 554 rows recheck native cry contracts.
+  of shared file music, 46 rows cover public music hooks and events, and the
+  remaining 554 rows recheck native cry contracts.
 - **80/80** BGM command, **62/62** stream and **7,364/7,364** fanfare engine
-  checks pass, as do **124/124** missing-device and session recovery checks.
-  The full feature quick run passes **171/180** engine suites,
-  SDK **3/3** and B30. A fresh preceding development checkpoint `dda0fa80`
+  checks pass, as do **124/124** missing-device/session recovery and
+  **4,616/4,616** public music hook checks.
+  The full feature quick run passes **172/181** engine suites,
+  SDK **3/3** and B30. A fresh preceding development checkpoint `a29c4158`
   passes **171/180**;
   the exact anchored `FAIL ` line Counters are identical:
   **25 lines / nine inherited failing suites**, with no additions/removals.
@@ -185,13 +187,49 @@ are retained separately. Distinct waveforms and rendered tail lengths are
 not treated as equality. The reference fanfare cache is warmed by its own
 renderer for the previously described headless userdata admission limit.
 
+## Public music hook follow-up
+
+The generic music service now receives the same admission as the reference's
+native mod bridge: named shared mod music enters `music.select`,
+`music.volume`, `music.started` and `music.stopped`; native M4A carriers
+retain their separate native route. A shared selector cannot replace or
+silence a native carrier. Shared overrides still support selection, nil
+silencing and volume changes on their actual Sources.
+
+Shared hook contexts carry the generic player's map/bike/surf state rather
+than a native `SONG_*` identity. The engine world's location and time of day
+are included when that actual engine context is present. Map cues use the
+native selection/ownership path and defer while a native fanfare owns the
+clock. They produce the shared bridge's `gen3` reason instead of a second
+map-specific callback shape.
+
+The shared audio service runs before the native timer/fade service, matching
+the reference's order. Options reapply the previous shared level before the
+new value, including the previous fractional level during a fade. A completed
+fanfare observes the old shared volume before its stop/select/start events.
+Native cry start, completion and explicit stop do not introduce additional
+shared volume callbacks.
+
+The **46 complete cases / 736 observed frames** cover both profiles, unchanged
+and modifying wrappers, file failures, options during fades, source replacement,
+intro/loop chaining, exact map cues, map changes during fanfares and native
+world cry commands rendering real owned PCM. The engine suite passes **4,616
+checks**. The complete unchanged parent `a29c4158` differs in all **46/46**
+cases using the same current fixtures; every parent/reference worker exits
+zero, and the reference observations agree with the corrected run.
+
+An early location fixture accidentally obtained a read-only mod facade on
+FireRed. Its failure is retained as superseded evidence. The final fixture
+loads the actual engine class, supplies world data and restores the module
+entry afterwards; no reference engine method is replaced. Separate rendered
+BGM/fanfare and actual-import regressions retain their waveform limitations.
+
 ## Work still required before a pull request
 
-- Additional invalid-device handle and session-transition paths.
-- Public music hook/event timing and context: a preliminary unchanged-mod
-  probe still observes native/shared cue differences that require contracts
-  and alignment. Broader actual-import coverage, the complete existing
-  contract matrix and a qualified combined runtime also remain pending.
+- Further audio option, reentrant callback, invalid-device handle and cold
+  session-transition coverage.
+- Broader actual-import coverage, the complete existing contract matrix and
+  a qualified combined runtime.
 - Native command revision and an independent frozen-parent serializer
   audit before compatibility claims or advancing the playable branch.
 
@@ -210,6 +248,7 @@ nice -n 19 python3 tools/enemy-action-contract-check/check.py \
   --lua /path/to/pinned/luajit \
   --mode native_bgm_symbols --mode native_bgm_commands --mode native_bgm_policy \
   --mode native_fanfare_commands --mode native_bgm_devices \
+  --mode native_bgm_hooks \
   --mode native_cry_commands --mode native_cry_lifecycle --mode native_cry_pcm \
   --report /path/to/bgm-development-report.json
 ```
