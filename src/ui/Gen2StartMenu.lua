@@ -465,8 +465,9 @@ function StartMenu:open(id)
     end})
     return saving
   end
-  local target = {pokedex='PokedexMenu', pokemon='PartyMenu', pack='BagMenu',
+  local target = {pokedex='PokedexMenu', pokemon='PartyMenu', pack='Gen2PackMenu',
     pokegear='PokegearMenu', status='TrainerCard', option='OptionsMenu', mods='ManagerState'}
+  if id == 'pack' then return Screens.push(game, target[id]) end
   if target[id] then return Screens.push(game, target[id], {onCancel=function() end}) end
   if id == 'exit' then return self:close() end
 end

@@ -14,8 +14,14 @@ end
 local commands, results, quit = ...
 local gate = love.thread.getChannel("download-qa-hold")
 local entered = love.thread.getChannel("download-qa-entered")
+local firstFile = true
 local proxy = { demand = function()
   local job = commands:demand()
+  if type(job) == "table" and firstFile and job.dest == "downloads/target.bin" then
+    firstFile = false
+    love.thread.getChannel("download-qa-start-entered"):push(job.id)
+    while not love.thread.getChannel("download-qa-start"):peek() do love.timer.sleep(.001) end
+  end
   if type(job) == "table" and job.dest:match("^downloads/held%d+$") then
     entered:push(job.id)
     while not gate:peek() do love.timer.sleep(.001) end
