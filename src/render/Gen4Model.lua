@@ -28,6 +28,8 @@
 
 local Assets = require("src.render.Assets")
 local Logger = require("src.core.Logger")
+local Performance = require("src.core.Performance")
+local Gen4Shade = require("src.render.Gen4Shade")
 -- The pose walk lives with the reader that produced the bytecode.  Requiring
 -- an importer from a renderer is not pretty; having the same walk written
 -- twice and drifting apart would be worse, and this is the walk that decides
@@ -120,6 +122,37 @@ uniform vec2 heightSpread;
 // authored and only spins it to face you.
 attribute vec3 BillboardPivot;
 uniform float billboardYaw;
+// G2 -- THE MAP'S LIGHT, EVALUATED HERE RATHER THAN BAKED INTO THE VERTEX.
+//
+// `LitNormal` is the vertex's normal, or (0, 0, 0) on a vertex the CPU path
+// would have left alone (no light, no normal, a lightmapped shape, a fogged
+// shape).  The uniforms are `Gen4Shade.uniforms(template)`: the flattened
+// lights, the ambient share k per channel and the up-anchor lit(0, 1, 0).
+// The arithmetic is `Gen4Shade.forTemplate` line for line, so a band change
+// is a uniform upload and the meshes stay.  g4LightCount 0 turns it off.
+attribute vec3 LitNormal;
+uniform float g4LightCount;
+uniform vec3 g4LightDir[4];
+uniform vec3 g4LightCol[4];
+uniform vec3 g4Share;
+uniform vec3 g4Up;
+
+vec3 g4Shade(vec3 n)
+{
+    if (g4LightCount < 0.5 || dot(n, n) < 0.25) { return vec3(1.0); }
+    vec3 lit = vec3(0.0);
+    for (int i = 0; i < 4; i++) {
+        if (float(i) < g4LightCount) {
+            float v = -dot(n, g4LightDir[i]);
+            if (v > 0.0) { lit += v * g4LightCol[i]; }
+        }
+    }
+    // channel(v, up, k): 1 where no light reaches from above, else
+    // clamp(k + (1 - k) * v / up, 0, 1)
+    vec3 safeUp = max(g4Up, vec3(1.0e-6));
+    vec3 res = clamp(g4Share + (vec3(1.0) - g4Share) * lit / safeUp, 0.0, 1.0);
+    return mix(res, vec3(1.0), step(g4Up, vec3(0.0)));
+}
 
 vec4 turnToCamera(vec4 v)
 {
@@ -139,6 +172,7 @@ vec4 turnToCamera(vec4 v)
 vec4 position(mat4 transform_projection, vec4 vertex_position)
 {
     vec4 turned = turnToCamera(vertex_position);
+    VaryingColor.rgb *= g4Shade(LitNormal);
     vModelY = turned.y;
     vModelZ = turned.z;
     vec4 p = mvp * turned;
@@ -260,6 +294,37 @@ uniform vec2 heightSpread;
 // authored and only spins it to face you.
 attribute vec3 BillboardPivot;
 uniform float billboardYaw;
+// G2 -- THE MAP'S LIGHT, EVALUATED HERE RATHER THAN BAKED INTO THE VERTEX.
+//
+// `LitNormal` is the vertex's normal, or (0, 0, 0) on a vertex the CPU path
+// would have left alone (no light, no normal, a lightmapped shape, a fogged
+// shape).  The uniforms are `Gen4Shade.uniforms(template)`: the flattened
+// lights, the ambient share k per channel and the up-anchor lit(0, 1, 0).
+// The arithmetic is `Gen4Shade.forTemplate` line for line, so a band change
+// is a uniform upload and the meshes stay.  g4LightCount 0 turns it off.
+attribute vec3 LitNormal;
+uniform float g4LightCount;
+uniform vec3 g4LightDir[4];
+uniform vec3 g4LightCol[4];
+uniform vec3 g4Share;
+uniform vec3 g4Up;
+
+vec3 g4Shade(vec3 n)
+{
+    if (g4LightCount < 0.5 || dot(n, n) < 0.25) { return vec3(1.0); }
+    vec3 lit = vec3(0.0);
+    for (int i = 0; i < 4; i++) {
+        if (float(i) < g4LightCount) {
+            float v = -dot(n, g4LightDir[i]);
+            if (v > 0.0) { lit += v * g4LightCol[i]; }
+        }
+    }
+    // channel(v, up, k): 1 where no light reaches from above, else
+    // clamp(k + (1 - k) * v / up, 0, 1)
+    vec3 safeUp = max(g4Up, vec3(1.0e-6));
+    vec3 res = clamp(g4Share + (vec3(1.0) - g4Share) * lit / safeUp, 0.0, 1.0);
+    return mix(res, vec3(1.0), step(g4Up, vec3(0.0)));
+}
 
 vec4 turnToCamera(vec4 v)
 {
@@ -279,6 +344,7 @@ vec4 turnToCamera(vec4 v)
 vec4 position(mat4 transform_projection, vec4 vertex_position)
 {
     vec4 turned = turnToCamera(vertex_position);
+    VaryingColor.rgb *= g4Shade(LitNormal);
     vec4 p = mvp * turned;
     float s = 1.0 - (turned.y - heightSpread.y) * heightSpread.x;
     if (s < 0.25) { s = 0.25; }
@@ -308,6 +374,7 @@ local function ensureShader()
   local ok, made = pcall(love.graphics.newShader, require("src.render.ClipSpaceCompat").shader(SHADER))
   if ok and made then
     shader, shaderCuts = made, true
+    Gen4Model._resetLightUpload()
     return shader
   end
   Logger.warn("gen4 model: the mesh shader with the height cut would not "
@@ -322,6 +389,7 @@ local function ensureShader()
     return nil
   end
   shader, shaderCuts = plain, false
+  Gen4Model._resetLightUpload()
   return shader
 end
 
@@ -489,6 +557,9 @@ local FORMAT = {
   -- Local to this file, so Gen 1/2/3 are untouched: they have their own model
   -- modules and never see this format.
   { "BillboardPivot", "float", 3 },
+  -- G2: THE NORMAL THE LIGHT IS EVALUATED AGAINST, in the vertex shader.
+  -- (0, 0, 0) on a vertex the light must leave alone; see `g4Shade`.
+  { "LitNormal", "float", 3 },
 }
 
 -- A vertex that is not part of a card. Shared rather than built per vertex,
@@ -1023,13 +1094,13 @@ local function addGrassCards(self, shape, vertices, positions, tileUnits)
     -- The pivot is the card's FOOT, so it turns about where it is planted --
     -- the same rule the trees needed, and for the same reason.
     verts[#verts + 1] =
-      { cx - half, y0, cz, tile.uLo, tile.vHi, 1, 1, 1, 1, cx, cz, 1 }
+      { cx - half, y0, cz, tile.uLo, tile.vHi, 1, 1, 1, 1, cx, cz, 1, 0, 0, 0 }
     verts[#verts + 1] =
-      { cx + half, y0, cz, tile.uHi, tile.vHi, 1, 1, 1, 1, cx, cz, 1 }
+      { cx + half, y0, cz, tile.uHi, tile.vHi, 1, 1, 1, 1, cx, cz, 1, 0, 0, 0 }
     verts[#verts + 1] =
-      { cx + half, y1, cz, tile.uHi, tile.vLo, 1, 1, 1, 1, cx, cz, 1 }
+      { cx + half, y1, cz, tile.uHi, tile.vLo, 1, 1, 1, 1, cx, cz, 1, 0, 0, 0 }
     verts[#verts + 1] =
-      { cx - half, y1, cz, tile.uLo, tile.vLo, 1, 1, 1, 1, cx, cz, 1 }
+      { cx - half, y1, cz, tile.uLo, tile.vLo, 1, 1, 1, 1, cx, cz, 1, 0, 0, 0 }
     map[#map + 1] = base + 1; map[#map + 1] = base + 2; map[#map + 1] = base + 3
     map[#map + 1] = base + 1; map[#map + 1] = base + 3; map[#map + 1] = base + 4
     if cx - half < lo[1] then lo[1] = cx - half end
@@ -1719,13 +1790,13 @@ local function addBackWall(self)
         local ua, ub = uAt(x0), uAt(x1)
         local base = #vertices
         vertices[#vertices + 1] =
-          { x0, a0, z, ua, vAt(row, a0), 1, 1, 1, 1, 0, 0, 0 }
+          { x0, a0, z, ua, vAt(row, a0), 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
         vertices[#vertices + 1] =
-          { x1, b0, z, ub, vAt(row, b0), 1, 1, 1, 1, 0, 0, 0 }
+          { x1, b0, z, ub, vAt(row, b0), 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
         vertices[#vertices + 1] =
-          { x1, b1, z, ub, vAt(row, b1), 1, 1, 1, 1, 0, 0, 0 }
+          { x1, b1, z, ub, vAt(row, b1), 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
         vertices[#vertices + 1] =
-          { x0, a1, z, ua, vAt(row, a1), 1, 1, 1, 1, 0, 0, 0 }
+          { x0, a1, z, ua, vAt(row, a1), 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
         map[#map+1] = base + 1; map[#map+1] = base + 2; map[#map+1] = base + 3
         map[#map+1] = base + 1; map[#map+1] = base + 3; map[#map+1] = base + 4
       end
@@ -1763,10 +1834,10 @@ local function addBackWall(self)
       local ua, ub = split.featLo / tw, split.featHi / tw
       local va, vb = vAt(0, fy0), vAt(0, fy1)
       local base = #vertices
-      vertices[#vertices + 1] = { fx0, fy0, fz, ua, va, 1, 1, 1, 1, 0, 0, 0 }
-      vertices[#vertices + 1] = { fx1, fy0, fz, ub, va, 1, 1, 1, 1, 0, 0, 0 }
-      vertices[#vertices + 1] = { fx1, fy1, fz, ub, vb, 1, 1, 1, 1, 0, 0, 0 }
-      vertices[#vertices + 1] = { fx0, fy1, fz, ua, vb, 1, 1, 1, 1, 0, 0, 0 }
+      vertices[#vertices + 1] = { fx0, fy0, fz, ua, va, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
+      vertices[#vertices + 1] = { fx1, fy0, fz, ub, va, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
+      vertices[#vertices + 1] = { fx1, fy1, fz, ub, vb, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
+      vertices[#vertices + 1] = { fx0, fy1, fz, ua, vb, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
       map[#map+1] = base + 1; map[#map+1] = base + 2; map[#map+1] = base + 3
       map[#map+1] = base + 1; map[#map+1] = base + 3; map[#map+1] = base + 4
     end
@@ -1841,10 +1912,10 @@ local function addGroundShadow(self, path)
   local a = SHADOW_ALPHA_FRACTION
   local y = lo[2] + SHADOW_LIFT
   local vertices = {
-    { lo[1], y, lo[3], 0, 0, 1, 1, 1, a, 0, 0, 0 },
-    { hi[1], y, lo[3], 1, 0, 1, 1, 1, a, 0, 0, 0 },
-    { hi[1], y, hi[3], 1, 1, 1, 1, 1, a, 0, 0, 0 },
-    { lo[1], y, hi[3], 0, 1, 1, 1, 1, a, 0, 0, 0 },
+    { lo[1], y, lo[3], 0, 0, 1, 1, 1, a, 0, 0, 0, 0, 0, 0 },
+    { hi[1], y, lo[3], 1, 0, 1, 1, 1, a, 0, 0, 0, 0, 0, 0 },
+    { hi[1], y, hi[3], 1, 1, 1, 1, 1, a, 0, 0, 0, 0, 0, 0 },
+    { lo[1], y, hi[3], 0, 1, 1, 1, 1, a, 0, 0, 0, 0, 0, 0 },
   }
   local okMesh, mesh =
     pcall(love.graphics.newMesh, FORMAT, vertices, "triangles", "static")
@@ -1971,11 +2042,19 @@ function Gen4Model.new(record)
         if (r and r < 255) or (g and g < 255) or (b and b < 255) then unlit = true; break end
       end
     end
+    -- G2: THE LIGHT GOES TO THE SHADER, NOT INTO THE COLOUR.  Exactly the
+    -- vertices the CPU path below would multiply get their normal stored
+    -- instead; every other vertex stores (0, 0, 0) and the shader leaves it
+    -- alone.  The template itself is a uniform (Gen4Model.light), so a new
+    -- band no longer rebuilds this mesh.  `legacyLight` keeps the CPU path.
+    local gpuLight = Performance.gen4GpuLight and shade and lit and not unlit
+                     and not Gen4Model.legacyLight
     for i = 0, count - 1 do
       local at = i * stride
       local r, g, b = shape.vertices:byte(at + 11, at + 13)
       r, g, b = r or 255, g or 255, b or 255
       if litByNormal and shade and lit then r, g, b = 255, 255, 255 end
+      local lnx, lny, lnz = 0, 0, 0
       -- ...not on a shape with no NORMALs (Gen4ModelPack `unlit`):
       -- its vertex colours ARE its lighting
       if shade and lit and not unlit then
@@ -1987,14 +2066,20 @@ function Gen4Model.new(record)
                            s8(shape.vertices, at + 14),
                            s8(shape.vertices, at + 15)
         if nx and ny and nz then
-          local lr, lg, lb = shade(nx, ny, nz)
-          r = r * (lr or 1)
-          g = g * (lg or 1)
-          b = b * (lb or 1)
+          if gpuLight then
+            lnx, lny, lnz = nx, ny, nz
+          else
+            local lr, lg, lb = shade(nx, ny, nz)
+            r = r * (lr or 1)
+            g = g * (lg or 1)
+            b = b * (lb or 1)
+          end
         end
       end
       if fog and not shape.noFog then
         r, g, b = (fog[1] or 0) * 255, (fog[2] or 0) * 255, (fog[3] or 0) * 255
+        -- a fogged vertex is its fog colour and nothing else
+        lnx, lny, lnz = 0, 0, 0
       end
       local x = s16(shape.vertices, at) / FX16 * self.posScale
       local y = s16(shape.vertices, at + 2) / FX16 * self.posScale
@@ -2013,6 +2098,8 @@ function Gen4Model.new(record)
         r / 255, g / 255, b / 255, 1,
         -- filled in below, once the triangles say which vertices are cards
         0, 0, 0,
+        -- G2: the normal the shader lights against, or nothing
+        lnx, lny, lnz,
       }
       if positions then
         -- the TEXEL coordinate, not the 0..1 one: the strip test compares it
@@ -2565,6 +2652,46 @@ Gen4Model.legacyLight = (os.getenv and os.getenv("G4OLDLIGHT")) and true or nil
 -- the canopy pass; see `Gen4Ground:livePass`.
 Gen4Model.zKeep = nil
 
+-- G2 -- THE LIGHT THE NEXT DRAWS ARE UNDER, as the map's area-light template.
+--
+-- Set by the ground before each of its passes (Gen4Ground:bindLight); nil for
+-- a screen that has no map.  `uniforms` are `Gen4Shade.uniforms(template)`,
+-- recomputed only when the template object changes, and uploaded only when
+-- that happened since the last draw -- four array uniforms per draw would
+-- cost more than the bake they replace.  A mesh built with no normals (the
+-- CPU-lit path, a UI screen's model, a fogged or lightmapped shape) reads
+-- (0, 0, 0) in `LitNormal` and ignores all of this.
+Gen4Model.light = nil
+local lightTemplate, lightUniforms, lightSent = nil, nil, nil
+local LIGHT_OFF = { 0, 0, 0 }
+
+local function sendLight()
+  if not Performance.gen4GpuLight then return end
+  local template = Gen4Model.light
+  if template ~= lightTemplate then
+    lightTemplate = template
+    lightUniforms = template and Gen4Shade.uniforms(template) or nil
+  end
+  local want = lightUniforms or LIGHT_OFF
+  if lightSent == want then return end
+  if lightUniforms then
+    local u = lightUniforms
+    shader:send("g4LightCount", u.count)
+    shader:send("g4LightDir", u.dirs[1], u.dirs[2], u.dirs[3], u.dirs[4])
+    shader:send("g4LightCol", u.cols[1], u.cols[2], u.cols[3], u.cols[4])
+    shader:send("g4Share", u.share)
+    shader:send("g4Up", u.up)
+  else
+    shader:send("g4LightCount", 0)
+  end
+  lightSent = want
+end
+
+-- a new shader object starts from nothing
+function Gen4Model._resetLightUpload()
+  lightSent = nil
+end
+
 -- `depthCompare` defaults to "less", which is right for every pass that draws
 -- a piece of geometry ONCE.
 --
@@ -2587,6 +2714,7 @@ function Gen4Model:draw(viewProjection, pose, materials, yCut, spread, depthComp
   local pr, pg, pb, pa = g.getColor()
 
   g.setShader(shader)
+  sendLight()
   g.setDepthMode(depthCompare or "less", true)
   -- BACK FACES ARE NOT CULLED, and that is the cartridge's own choice rather
   -- than laziness: a DS polygon carries its own front/back flags in its
