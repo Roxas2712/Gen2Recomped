@@ -1328,6 +1328,7 @@ local function markerFor(version)
   end
   if GameVersion.generation(version) == 3 then
     revision = revision .. "gba-script-operands-v" .. require("src.import.Gen3ScriptOps").CACHE_REVISION .. ":"
+    revision = revision .. 'gba-field-move-art-v1:'
   end
   if version == 'ruby' or version == 'sapphire' then
     revision = revision .. 'rs-transition-classes-v1:'
