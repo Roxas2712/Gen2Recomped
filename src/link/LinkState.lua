@@ -520,6 +520,7 @@ function LinkState:update(dt)
           return
         end
         self.game.stack:push(battle)
+        self.battle = battle
         self.stage = "battleRunning"
         for j = #msgs, i + 1, -1 do
           table.insert(self.net.inbox, 1, msgs[j])
@@ -530,6 +531,19 @@ function LinkState:update(dt)
 
   elseif self.stage == "battleRunning" then
     if self.game.stack:top() == self then
+      -- Cable battles use disposable parties. Publish their final wounds and
+      -- PP before the link owner unwinds; the adventure party never fought.
+      local battle = self.battle
+      self.battle = nil
+      if battle and Runtime.wants("link.battle_ended") then
+        Runtime.emit("link.battle_ended", {
+          result = battle.result or "ended",
+          myParty = battle.playerParty,
+          theirParty = battle.enemyParty,
+          peerName = self.peerName,
+          role = self.isHost and "host" or "guest",
+        })
+      end
       self:exitWith(nil) -- battle finished
     end
   end

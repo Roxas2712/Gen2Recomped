@@ -1,0 +1,159 @@
+{
+  "schema": 1,
+  "date": "2026-10-26",
+  "passed": true,
+  "scope": "Actual imported-data native ScriptRunner battles; private local HTTPS ModCompass API; independent fresh macOS L\u00d6VE processes/profiles per source and target; fake confirmed accounts and isolated SQLite/object storage only",
+  "qualifiedEditions": [
+    "emerald",
+    "firered",
+    "leafgreen",
+    "ruby",
+    "sapphire"
+  ],
+  "elapsedLimitRemoved": true,
+  "recordedFrameAndEventExpiryRemoved": true,
+  "payloadBudgetBytes": 25165824,
+  "checks": [
+    "Battle remains active beyond the former 18000-tick cutoff",
+    "Rolling native decision checkpoints compact prior history",
+    "Cloud capsule saved during a native move animation",
+    "Fresh target login restores normal save plus exact suspend",
+    "Continue matches HP, PP, native phase and RNG",
+    "The following native turn matches the source process",
+    "Ending the reconstructed battle resumes its original native script"
+  ],
+  "probes": [
+    {
+      "capture": {
+        "idleTicks": 108000,
+        "anchor": "battle",
+        "tailSteps": 43,
+        "bytes": 337095,
+        "kind": "wild"
+      },
+      "ok": true,
+      "ticks": 108892,
+      "edition": "emerald",
+      "phase": "nextturn",
+      "role": "source",
+      "reason": "Uploaded a damaged native battle during a move animation; recorded deterministic turn 2"
+    },
+    {
+      "role": "target",
+      "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed",
+      "ok": true,
+      "ticks": 266,
+      "edition": "emerald",
+      "phase": "return"
+    },
+    {
+      "reason": "Uploaded a damaged native battle during a move animation; recorded deterministic turn 2",
+      "capture": {
+        "kind": "trainer",
+        "idleTicks": 20040,
+        "anchor": "battle",
+        "tailSteps": 283,
+        "bytes": 408470
+      },
+      "ok": true,
+      "ticks": 21016,
+      "edition": "ruby",
+      "phase": "nextturn",
+      "role": "source"
+    },
+    {
+      "ok": true,
+      "ticks": 213,
+      "edition": "ruby",
+      "phase": "return",
+      "role": "target",
+      "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed"
+    },
+    {
+      "ticks": 21016,
+      "phase": "nextturn",
+      "role": "source",
+      "reason": "Uploaded a damaged native battle during a move animation; recorded deterministic turn 2",
+      "capture": {
+        "tailSteps": 283,
+        "bytes": 408518,
+        "kind": "trainer",
+        "idleTicks": 20040,
+        "anchor": "battle"
+      },
+      "edition": "sapphire",
+      "ok": true
+    },
+    {
+      "phase": "return",
+      "role": "target",
+      "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed",
+      "ticks": 213,
+      "ok": true,
+      "edition": "sapphire"
+    },
+    {
+      "ok": true,
+      "phase": "nextturn",
+      "ticks": 20952,
+      "edition": "firered",
+      "role": "source",
+      "reason": "Uploaded a damaged native battle during a move animation; recorded deterministic turn 2",
+      "capture": {
+        "idleTicks": 20040,
+        "tailSteps": 319,
+        "anchor": "battle",
+        "kind": "trainer",
+        "bytes": 404613
+      }
+    },
+    {
+      "phase": "return",
+      "ok": true,
+      "ticks": 207,
+      "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed",
+      "edition": "firered",
+      "role": "target"
+    },
+    {
+      "phase": "nextturn",
+      "role": "source",
+      "reason": "Uploaded a damaged native battle during a move animation; recorded deterministic turn 2",
+      "capture": {
+        "tailSteps": 319,
+        "bytes": 404880,
+        "kind": "trainer",
+        "idleTicks": 20040,
+        "anchor": "battle"
+      },
+      "ticks": 20972,
+      "ok": true,
+      "edition": "leafgreen"
+    },
+    {
+      "ticks": 207,
+      "ok": true,
+      "phase": "return",
+      "edition": "leafgreen",
+      "role": "target",
+      "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed"
+    }
+  ],
+  "sourceSha256": {
+    "src/core/SuspendJournal.lua": "af122037f925f6416a82f3fb2e0bb7f84369c521a0562d4838145b34b12a5aec",
+    "src/core/CheckpointBattle.lua": "c7d47e1cd22ea270565932725ae353fd9903f3fc8d519f248c92910085d66237",
+    "src/battle/BattleState.lua": "24c77cd32eed6c26ee7dd65e41bc7c08309b829f1038198c596b88f137fe7ac5",
+    "src/core/Game.lua": "d475f264ff40ca00c0e780a1de4b5e174716bac42e99428c6d0e85b1a85cccf3",
+    "src/core/Checkpoint.lua": "d87f6d627205ab31efce71a96d367e06d481ea7cbe3a55349c40f24e019be7bf",
+    "src/core/CheckpointWorld.lua": "93dfdd59305262dd1a6e7aacb0e18c5641fd6af66804b78df7ea132bb786a2fe",
+    "src/storage/SuspendStore.lua": "3dc64bdf727608dc13319f68cb8703f632449d5fd892e6b8a27532f4cc3f39a9",
+    "src/import/CloudSync.lua": "8d06ebf0882dc8e8356bc67696523bafb84bcd28241482df8c0a7f5818c2cd2a"
+  },
+  "driverSha256": "397e89214395fd40c38c318d9fe146b5cae985fb4999670d26a63dc58be0705a",
+  "limitations": [
+    "Not physical mobile-device or cross-OS proof",
+    "Unmodified qualified native sessions only; no live online sessions",
+    "Matching exact engine build and imported content required",
+    "24 MiB payload/integrity budget remains a byte budget, not a gameplay timer"
+  ]
+}

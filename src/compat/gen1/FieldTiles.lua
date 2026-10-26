@@ -60,6 +60,14 @@ function Tiles:prepare(game,cam,w,h)
     if ts~=prior or not ts or ts._retired then changed=true;break end
   end
   if changed then
+    -- W0: the neighbours' tilesets go on the stream now, at a low priority,
+    -- so the frame's idle time has them built before the seam is crossed.
+    -- A pair already built or already queued is a table lookup here.
+    for _,edge in ipairs(neighbors)do
+      local l=edge.def and edge.def.midLayout
+      local p=(l and l.pair)or(edge.def and edge.def.pair)
+      if p and not self.atlases[p]then Native.prefetch(p,5)end
+    end
     local cells,pairsUsed={},{}
     for cy=y,y+rows-1 do for cx=x,x+cols-1 do
       local mid,pair=sample(cx,cy);pair=pair or def.pair or layout.pair
