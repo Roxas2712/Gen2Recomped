@@ -275,10 +275,11 @@ L.ALIASES = {
   -- the message by the player's gender (Burgh's "your name is..." 3 / 4)
   [0x069] = { "bwspawnobject", "wwwwww" },
   [0x048] = { "gendermsgbox", "bbwwwww", { 3, 4 } },
-  -- Castelia Gym (overlay 38): 0x18C <gate var> animates one wall or
-  -- trainer pop-out, 0x18F <eight vars> lays the walls out from the switch
-  -- vars on entry. Both are presentation only -- the switch scripts set
-  -- their own vars and the walls are walked through (Gen5Field).
+  -- Castelia Gym (overlay 38): 0x18C <n> is switch n's press (and its saved
+  -- word), 0x18D <n> a press that may open a wall, 0x18F <eight vars> lays
+  -- the walls out on entry (overlay 37). Lowered as nothing: the switch
+  -- scripts set their own vars, and src/world/Gen5CasteliaGym.lua opens the
+  -- walls from them and keeps the saved words.
   [0x18C] = { "noop", "w" }, [0x18F] = { "noop", "wwwwwwww" },
   -- (0x18D / 0x18E <gate var>: the same overlay's other two animations)
   [0x18D] = { "noop", "w" }, [0x18E] = { "noop", "w" },
@@ -407,6 +408,12 @@ L.ALIASES = {
   [0x1A2] = { "bwe4lift", "w" },
   [0x196] = { "bwdragoninit", "" }, [0x19A] = { "bwdragonflip", "ww" },
   [0x199] = { "bwdragonsettle", "w" }, [0x197] = { "noop", "ww" }, [0x198] = { "noop", "w" },
+  -- THE GYMS' ANIMATIONS (src/script/Gen5GymFxCommands.lua, drawn by
+  -- src/world/Gen5GymFx.lua): 0x185 <n> Nacrene's bookcase, 0x187 / 0x189
+  -- <switch> Striaton's floor switch down / up, 0x188 <row> its curtain --
+  -- each parks the script until its animation ends
+  [0x185] = { "bwgymop", "w" }, [0x187] = { "bwgymop", "w" }, [0x188] = { "bwgymop", "w" },
+  [0x189] = { "bwgymop", "w" },
   [0x0D8] = { "bwcondition", "ww" },
   -- 0x121 <var, 5>: how many of the party can battle (not an egg, not
   -- fainted) -- the legendary's "able to battle" test in N's Castle (Z278,
@@ -494,7 +501,18 @@ L.ALIASES = {
   [0x095] = { "settrainerflag", "w" }, [0x096] = { "cleartrainerflag", "w" },
   [0x097] = { "bwtrainerbeaten", "ww" }, [0x092] = { "bwtrainerafter", "ww" },
   [0x08A] = { "checkistrainerdoublebattle", "ww", { 2 } },
-  [0x08B] = { "noop", "w" },
+  -- 0x08B <trainer>: Platinum's playtrainerencounterbgm (READ FROM CODE,
+  -- Black ov10 command table at file 0x1B4CC -> ov21 0x21AEC40): one
+  -- var-or-value (0x2159B10), the trainer record's byte 1, its class
+  -- (ARM9 0x202A230 field 1), looked up in ARM9 0x2029E20's { u16 class,
+  -- u16 seq } rows at 0x020A75A8 (Gen4BattleMusic.eyes; a class it does not
+  -- name gets 0x45A, SEQ_BGM_EYE_01), and handed to the field as a BGM-change
+  -- event the script waits on (0x2029AF4 -> ov10 0x215897C). Twelve sites:
+  -- member 863's talk path (`08B 8020`), eye paths (`8027` single, `8029`
+  -- double, `802C` then `802D` -- the SECOND trainer's theme, after the first
+  -- has spoken -- for two separate trainers), and scripted fights in members
+  -- 126 (67, 69), 242 (274 x2), 642 (18 x2) and 658 (46).
+  [0x08B] = { "playtrainerencounterbgm", "w" },
   [0x088] = { "gettrainermessagetypes", "www" },
   [0x087] = { "printtrainerdialogue", "www", { 1, 2 } },
   [0x066] = { "bwobjectmovement", "ww" }, [0x073] = { "noop", "ww" },
@@ -579,6 +597,18 @@ L.ALIASES = {
   -- getapproachingtrainerid -- and 0x082 <which, dest> its object
   [0x07F] = { "getapproachingtrainerid", "ww" },
   [0x082] = { "bwapproachobject", "ww" },
+  -- ...and the rest of that path (member 863 S0D51, the script 0xE20 that
+  -- ov21 0x21AE930 starts; used nowhere else in the cartridge):
+  --   0x083 <dest>   the approach type, slot 0's eye record +0x14 (ov21
+  --        0x21AE9CC): 0 single, 1 a same-id double, 2 two separate
+  --        trainers (VS2) -- Platinum's getapproachingtrainertype
+  --   0x080 <which>  start that slot's approach task (ov21 0x21AE948 ->
+  --        0x21AE454) -- Platinum's startapproachingtrainertask
+  --   0x081          wait for both slots' tasks (ov21 0x21AE994); the port's
+  --        0x080 already blocks until its walk is done (Gen4TwoTrainers)
+  [0x083] = { "getapproachingtrainertype", "w" },
+  [0x080] = { "startapproachingtrainertask", "w" },
+  [0x081] = { "noop", "" },
   -- THE MOVE DELETER (member 859; src/script/Gen5FieldCommands.lua):
   -- `109 8025 8022 8020 0`, `10A 8023 8020 8022`, `10B 8020 8022`
   [0x109] = { "bwforgetmenu", "wwww" },

@@ -1,10 +1,10 @@
 {
-  "runtime_ref": "1e11414db8f2c91a747ae29a287f653ad36353f8",
+  "runtime_ref": "afe2c4461def99702a5ccbe1958fdf1653c58838",
   "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/326",
   "feature_ref": "1ac2846ef8cbe837f6819b22092f0bcbf0cd328c",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 559,
-  "engine_suites_total": 559,
+  "engine_suites_passed": 561,
+  "engine_suites_total": 561,
   "sdk_suites_passed": 4,
   "sdk_suites_total": 4,
   "b30_profile": "passed",
@@ -3632,7 +3632,7 @@
     "sdk_suites_total": 4,
     "b30_profile": "passed"
   },
-  "qualification_scope": "Full regression at 725eb00bdc298d52be51486e52fdff1ed30fcc45; later native Gen2 START/save delta qualifies separately with 13 affected suites and an isolated native save/restart run. Current inventory has 560 engine suites; a full 560-suite rerun is not claimed.",
+  "qualification_scope": "Full 561-suite regression of the exact link-battle completion runtime; earlier feature/GPU receipts retain their pinned historical source.",
   "fork_main_integration": {
     "receipt": "docs/qa/fork-main-integration.json",
     "runtime_ref": "1e11414db8f2c91a747ae29a287f653ad36353f8",
@@ -3677,5 +3677,23 @@
     ],
     "final_menu_overlay_gpu_runs": 2,
     "final_menu_overlay_gpu_checks": 16
+  },
+  "historical_before_link_battle_ended": {
+    "runtime_ref": "1e11414db8f2c91a747ae29a287f653ad36353f8",
+    "engine_suites_passed": 559,
+    "engine_suites_total": 559,
+    "sdk_suites_passed": 4,
+    "sdk_suites_total": 4,
+    "b30_profile": "passed"
+  },
+  "link_battle_ended": {
+    "receipt": "docs/qa/link-battle-ended.json",
+    "runtime_ref": "afe2c4461def99702a5ccbe1958fdf1653c58838",
+    "native_checks": 1948,
+    "typed_paired_observations": 80,
+    "reference_readonly": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "full_engine_suites": 561,
+    "SDK": 4,
+    "B30": true
   }
 }
