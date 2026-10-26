@@ -799,10 +799,10 @@ function PokegearMenu:drawClock()
   self:text("SWITCH", 13, 1)
 
   local save = self.game.save
-  local t = math.floor(require("src.core.SaveData").playSeconds(save))
-  local hour = math.floor(t / 3600) % 24
-  local minute = math.floor(t / 60) % 60
-  local day = DAYS[(math.floor(t / 86400) % 7) + 1]
+  local Clock = require("src.core.Gen2Clock")
+  local minutes = Clock.minutes(save)
+  local hour, minute = math.floor(minutes / 60), minutes % 60
+  local day = Clock.weekdayName(Clock.weekday(save) + 1)
   local display = hour % 12
   if display == 0 then display = 12 end
   self:text(day, 6, 6)

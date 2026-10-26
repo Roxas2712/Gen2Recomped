@@ -32,6 +32,7 @@ local Runtime = require("src.mods.Runtime")
 local Screens = require("src.ui.Screens")
 local ScriptRunner = require("src.script.ScriptRunner")
 local GameVersion = require("src.core.GameVersion")
+local Gen2Clock = require("src.core.Gen2Clock")
 local Gen2Environment = require("src.core.Gen2Environment")
 local Tilt = require("src.render.Tilt")
 local TextBox = require("src.render.TextBox")
@@ -477,7 +478,7 @@ local function objectTodBit()
   local ow = Game and Game.overworld
   local bit = ow and tonumber(ow.objectTodBit)
   if bit then return bit end
-  local period = todPeriodAt(tonumber(os.date("%H")) or 12)
+  local period = todPeriodAt(Gen2Clock.hour(GameVersion.isGen2() and Game and Game.save or nil))
   if period and tonumber(period.bit) then return tonumber(period.bit) end
   return TOD_BITS[objectTimeOfDay()] or TOD_BITS.DAY
 end
@@ -2497,7 +2498,7 @@ local function sameTod(tod) return tod end
 -- < 4 NITE, < 10 MORN, < 18 DAY, else NITE.  Gen 1 has no clock at all, so
 -- only Gen 2 consults the host one.
 local function clockTimeOfDay()
-  local hour = tonumber(os.date("%H")) or 12
+  local hour = Gen2Clock.hour(GameVersion.isGen2() and Game and Game.save or nil)
   if hour < 4 then return "NITE" end
   if hour < 10 then return "MORNING" end
   if hour < 18 then return "DAY" end
@@ -2510,7 +2511,7 @@ OverworldState.clockTimeOfDay = clockTimeOfDay
 
 -- The cartridge's MAPOBJECT_TIMEOFDAY bit for the hour on the clock right now.
 function OverworldState.clockTimeOfDayBit()
-  local period = todPeriodAt(tonumber(os.date("%H")) or 12)
+  local period = todPeriodAt(Gen2Clock.hour(GameVersion.isGen2() and Game and Game.save or nil))
   return (period and tonumber(period.bit)) or TOD_BITS.DAY
 end
 
@@ -2536,6 +2537,7 @@ function OverworldState:syncGen2Tod(tod)
 end
 
 function OverworldState:timeOfDay()
+  if GameVersion.isGen2() then Gen2Clock.weekday(Game and Game.save) end
   local tod = GameVersion.isGen2() and clockTimeOfDay() or (self.tod or "DAY")
   if not Runtime.wantsHook("world.tod") then
     if tod ~= self.tod then
@@ -2571,6 +2573,12 @@ function OverworldState:timeOfDay()
   self:syncGen2Tod(self.tod)
   return self.tod
 end
+
+-- Legacy callers and native scripts read the same saved RTC offset. Both
+-- dot and colon calls are observational; no cached second clock on World.
+function OverworldState.hour() return Gen2Clock.hour(GameVersion.isGen2() and Game and Game.save or nil) end
+function OverworldState.minute() return Gen2Clock.minute(GameVersion.isGen2() and Game and Game.save or nil) end
+function OverworldState.weekday() return Gen2Clock.weekday(GameVersion.isGen2() and Game and Game.save or nil) end
 
 function OverworldState:paletteNameFor(map)
   local palettes = FieldDefaults.field(Game.data, "palettes")
