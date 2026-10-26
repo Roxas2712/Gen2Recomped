@@ -95,6 +95,7 @@ local function spawn(game, world, opts, viaMapLoad)
 end
 
 function F.onMapEntered(game, world, opts, viaMapLoad)
+  if opts and opts.checkpoint then return end
   if not (world and world.map and world.player) then
     return
   end

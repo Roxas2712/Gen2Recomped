@@ -56,6 +56,7 @@ add("events", "12345", [[
 ]])
 add("events", "2345", "pokemon.egg_hatched")
 add("events", "2", "mail.read mail.written")
+add("events", "12", "checkpoint.restored")
 add("events", "12", [[
   intro.oak_speech.answered intro.oak_speech.finished intro.oak_speech.started
   intro.oak_speech.step
