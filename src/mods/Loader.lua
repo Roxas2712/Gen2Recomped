@@ -1321,6 +1321,7 @@ function Loader:load(data)
   -- wraps and flags the previous load put on engine tables come off first.
   ModSeams.unwindAll()
   self.baseData = data
+  require("src.compat.gen2.Decorations").useRegistry(data)
   -- every registry folds against the pristine view of its Data target;
   -- resolution is lazy so optional namespaces may appear later
   for _, registry in pairs(self.content) do
@@ -1660,6 +1661,7 @@ end
 -- boots) ran on a modded engine whose mod instance nothing drives any more,
 -- and the next Play loaded every mod on top of what the last one left.
 function Loader.teardown()
+  require("src.compat.gen2.Decorations").useRegistry(nil)
   local undone = select(1, ModSeams.unwindAll())
   pcall(function()
     Runtime.install(Events.new(), Hooks.new(), nil)

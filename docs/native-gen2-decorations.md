@@ -57,6 +57,44 @@ the imported template intact; invalid placed bytes fail instead of wrapping.
 Unreviewed hack layouts receive neither guessed retail tables nor guessed
 save offsets.
 
+## Legacy module contract
+
+`require("src.core.gen2.Decorations")` resolves to a signature adapter, not
+directly to `src.world.Gen2Decorations`. It exposes `state(save)`,
+`attributes(id)`, `name(id, monName)`, `idFor(id)`, `idForFlag(ordinal)`,
+`registerInto(registry, data, owner)`, ownership/gift methods,
+`ownedCategories(events)`, `rows(events, category)`, `apply(state, id, side,
+monName)`, `clearOtherSide`, `visibility`, `tiles` and `posterVisible`.
+The action/slot/description constants retain the legacy shapes. `ATTRIBUTES`,
+`CATEGORIES` and `NOTHING_TO_CHOOSE` are read projections of the current
+native dataset. Attribute rows remain the actual native records; registering
+them into another registry passes copies.
+
+Data initialization and Loader entry bind the current native dataset. Reads
+follow subsequent registry folding and rollback. Teardown or an edition
+change retires the binding. Before a complete import, the facade returns no
+catalogue/defaults instead of fabricating retail content. Removed records do
+not fall back to a second catalogue. Both numeric bytes and numeric-string
+bytes resolve and placements store numbers.
+
+Ownership accepts the legacy numeric `events:get/set` protocol or a native
+save directly. `events(save)` supplies a numeric view backed by the same
+canonical flags used by scripts and SRAM, with no parallel bitfield. That
+view expires on rebinding/unload. Cancel/header rows cannot grant event zero.
+Categories are rebuilt from native action identities; added rows participate
+and removed headers are not invented. Existing empty placement is preserved.
+
+`apply` follows the legacy two-result contract `(changed, pages)` and does
+not check ownership; the menu owns that check. Ornament side cancellation
+does nothing, and `clearOtherSide` remains a separate operation for these
+callers. The pages use the actual imported feedback text and buffers 3/4,
+including authored replacements and explicit script-text removal. The native
+PC and facade share placement planning and tile/object layout routines; the
+PC still commits after feedback closes. A valid block zero and wrapped
+carpet offsets retain native behavior rather than the old facade's filter.
+This adapter does not turn a detached external event bitfield into the live
+world, nor does wrapping a facade method patch every native module method.
+
 ## Evidence and remaining scope
 
 ROM-free tests exercise actual importers, Loader, native script compiler and
@@ -72,8 +110,13 @@ executes the original house-PC/description scripts and room callbacks, and
 round-trips all eight placed bytes. Original ROM hashes are checked unchanged.
 The local font/audio/render harness is used; no visual acceptance is inferred.
 
+The public-module tests load a synthetic mod through the actual Loader,
+change and remove records, grant ownership, place decorations and execute
+the native room callback VM. They verify feedback pages, byte identity,
+retirement on reload/edition changes, and rollback without a second catalogue.
+
 Mom’s native shopping caller is covered separately in [native-gen2-mom-shopping.md](native-gen2-mom-shopping.md).
-Full legacy `Decorations` facade parity, the remaining gift lifecycle,
+The remaining gift lifecycle, legacy MomShopping/phone contracts,
 new graphical acceptance and a full unchanged VASC playthrough remain separate
 open work. Importing the gift-ordinal table alone does not implement those
 callers. The existing preview is not refreshed by this source change.
