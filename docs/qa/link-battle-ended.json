@@ -1,0 +1,189 @@
+{
+  "status": "passed",
+  "runtime_ref": "afe2c4461def99702a5ccbe1958fdf1653c58838",
+  "base_main": "e5687c08040f6d490f5f2f78a2290162363425fb",
+  "publication_target": "Roxas2712/Gen2Recomped",
+  "source_tree": "7cf762831c7c6fe27c52963c4403372e2f647814",
+  "tests_tree": "9673543af34f9ea1a1057ce67a4a18f68e723004",
+  "tools_tree": "dec1b72ed4cd02df2a92066de533da3b9461ed4f",
+  "changed_files": [
+    "docs/link-battle-ended.md",
+    "examples/portable_link_result/main.lua",
+    "examples/portable_link_result/manifest.json",
+    "src/link/LinkState.lua",
+    "src/mods/CallbackRecords.lua",
+    "src/mods/Capabilities.lua",
+    "src/mods/UnifiedCallbacks.lua",
+    "tests/engine/api3_compat.lua",
+    "tests/engine/gate_meta_coverage.lua",
+    "tests/engine/link_battle_ended.lua",
+    "tests/link_result/cases.lua",
+    "tests/link_result/fixture.lua",
+    "tests/link_result/worker.lua"
+  ],
+  "engine_suites": 561,
+  "sdk_suites": 4,
+  "B30": true,
+  "native_completion_checks": 1948,
+  "shared_contract_workers": 16,
+  "typed_paired_observations": 80,
+  "reference_readonly_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+  "scope": "Real LinkState admission, native teardown and session return using synthetic parties. Common Red/Gold consumers run unchanged against both engines; own native tests cover eleven GB/GBA editions.",
+  "limits": [
+    "Prepared completion scenes, not full battles over a real network or physical hardware.",
+    "Separate tournament-controller and spectator paths are unchanged.",
+    "This feature does not establish complete mod/gameplay parity."
+  ],
+  "retained_setup_findings": [
+    "The native reference wraps loopback transports in its own Session; the shared fixture now uses that existing owner.",
+    "Earlier API-2 unified comparison exposed PSN versus poison. The new event now matches PSN on both engines while existing API-2 callbacks retain their older contract.",
+    "Local packaging checks require Python 3.11+ and LuaJIT on PATH; final checks use bundled Python 3.12.14."
+  ],
+  "raw_report_sha256": {
+    "link-result-full-20261026a": "535f0f795b581153625e74480c06398fc5c0ae1571dc7367265687cc7574a16b",
+    "link-result-focus-20261026d": "5aa1f1ef88b40b84139952593529c9464cd661b8034554eba9c6c08d72a3e155",
+    "link-result-contract-20261026d": "fcc905ebae8ea49bc623cc0db6d88a8e76a4d3651ac10d5cd877adac517554d2",
+    "link-result-release-contract-20261026b": "f4f48f586add92d82be769a91f4c2c167ea4600187fbc41a9ca4c551ad9ff132",
+    "link-result-baseline-negative-20261026b": "adff4684be18b062800835b6aa5b3ea869aad07cb1fc1e5bead89bdc16c712b3"
+  },
+  "focused_checks": [
+    {
+      "name": "link_battle_ended",
+      "path": "tests/engine/link_battle_ended.lua",
+      "exit": 0,
+      "failures": [],
+      "log_sha256": "582e5f1e9a4214c00fdee62569b1a53d4ce10cf18db7bcdfa1427c9fd130c2d9"
+    },
+    {
+      "name": "api3_compat",
+      "path": "tests/engine/api3_compat.lua",
+      "exit": 0,
+      "failures": [],
+      "log_sha256": "ec64b94c8a8b2e7cefda6cd867d9e3ff317e39a646404f6c163e77bf6d6db97f"
+    },
+    {
+      "name": "gate_meta_coverage",
+      "path": "tests/engine/gate_meta_coverage.lua",
+      "exit": 0,
+      "failures": [],
+      "log_sha256": "85cf447f5fddcf775a91180941bf52f474677e04a19317adb15f88b18e8fedb1"
+    },
+    {
+      "name": "gate_events",
+      "path": "tests/engine/gate_events.lua",
+      "exit": 0,
+      "failures": [],
+      "log_sha256": "e6276d5c55cd4cabf67a45b934d8bea32836b80a7c71957321d90b1170f7f55a"
+    },
+    {
+      "name": "arena_battle_proof",
+      "path": "tests/engine/arena_battle_proof.lua",
+      "exit": 0,
+      "failures": [],
+      "log_sha256": "558afeabd16bfa1b3b3ae3409724cf60ea3e878387eadf6a42d2387ade19b886"
+    },
+    {
+      "name": "tournaments",
+      "path": "tests/engine/tournaments.lua",
+      "exit": 0,
+      "failures": [],
+      "log_sha256": "16bd091f64188990b9aafc1fc57d759ceeb2b57e41ac193849260ec25f38d0ce"
+    }
+  ],
+  "release_contracts": [
+    {
+      "name": "run_retro_launcher_contract",
+      "path": "tools/run_retro_launcher_contract.py",
+      "exit": 0,
+      "failures": [],
+      "log_sha256": "a2547bd1a15f01c6d3c6b32102ba4c6314612edd4a0f91ce97b73a5efa88d95f"
+    },
+    {
+      "name": "game_payload_test",
+      "path": "tests/game_payload_test.py",
+      "exit": 0,
+      "failures": [],
+      "log_sha256": "f038698da3c5c7b5a9aa1f5c3ad550025f08cbb4354c5eb5f42486ab18f9906e"
+    },
+    {
+      "name": "native_release_test",
+      "path": "tests/native_release_test.py",
+      "exit": 0,
+      "failures": [],
+      "log_sha256": "dda55be13b7acf69abd673ef2c7e91771b0483e4e21f70a890ecb862505ecd61"
+    },
+    {
+      "name": " -m unittest discover -s tests -p test_native_preview",
+      "path": " -m unittest discover -s tests -p test_native_preview.py",
+      "exit": 0,
+      "failures": [],
+      "log_sha256": "975726313d74dd76077a03e1d1001d29449cd6d837cd5dd69c78153ba500f67b"
+    }
+  ],
+  "baseline_negative": {
+    "status": "terminal",
+    "ref": "e5687c08040f6d490f5f2f78a2290162363425fb",
+    "runs": [
+      {
+        "name": "link_battle_ended",
+        "path": "tests/engine/link_battle_ended.lua",
+        "exit": 1,
+        "failures": [
+          "FAIL completed native link parties are advertised (got false, want true)"
+        ],
+        "log_sha256": "d5b18647f03502e8c10eef35232d82742a9eabfbd14ab31ed908b46ac68b63d4"
+      }
+    ],
+    "passed": false
+  },
+  "shared_contract": [
+    {
+      "case": "red-1-native",
+      "equal": true,
+      "observations": 10,
+      "typed_observations_sha256": "a3b215b0642c37bc7a489760930b162a9319b86708bc3c60d2ecee1e8708a023"
+    },
+    {
+      "case": "red-2-native",
+      "equal": true,
+      "observations": 10,
+      "typed_observations_sha256": "a3b215b0642c37bc7a489760930b162a9319b86708bc3c60d2ecee1e8708a023"
+    },
+    {
+      "case": "red-2-unified",
+      "equal": true,
+      "observations": 10,
+      "typed_observations_sha256": "a3b215b0642c37bc7a489760930b162a9319b86708bc3c60d2ecee1e8708a023"
+    },
+    {
+      "case": "red-3-unified",
+      "equal": true,
+      "observations": 10,
+      "typed_observations_sha256": "a3b215b0642c37bc7a489760930b162a9319b86708bc3c60d2ecee1e8708a023"
+    },
+    {
+      "case": "gold-1-native",
+      "equal": true,
+      "observations": 10,
+      "typed_observations_sha256": "a3b215b0642c37bc7a489760930b162a9319b86708bc3c60d2ecee1e8708a023"
+    },
+    {
+      "case": "gold-2-native",
+      "equal": true,
+      "observations": 10,
+      "typed_observations_sha256": "a3b215b0642c37bc7a489760930b162a9319b86708bc3c60d2ecee1e8708a023"
+    },
+    {
+      "case": "gold-2-unified",
+      "equal": true,
+      "observations": 10,
+      "typed_observations_sha256": "a3b215b0642c37bc7a489760930b162a9319b86708bc3c60d2ecee1e8708a023"
+    },
+    {
+      "case": "gold-3-unified",
+      "equal": true,
+      "observations": 10,
+      "typed_observations_sha256": "a3b215b0642c37bc7a489760930b162a9319b86708bc3c60d2ecee1e8708a023"
+    }
+  ]
+}
