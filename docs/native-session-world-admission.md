@@ -17,3 +17,10 @@ passes 150 checks afterwards. It uses the actual native StateStack and player
 with synthetic map data, including native field-move entry/retirement over a
 persistent world, covering UI, stale datasets and failed entry scopes. This
 does not establish original mod initialization, full rendering or gameplay.
+
+The manual `tools/session-runtime/persistent-world-check.lua` requires the
+native persistent-world StateStack protocol, the session fixture and native
+field-move presentation. The current upstream API-2 prerequisite composition
+does not yet provide that StateStack protocol. Its ordinary physical-stack
+path is qualified separately; the 150 persistent-world checks above refer
+to the composed native fork, not that older host.
