@@ -489,8 +489,11 @@ do
     for i = 1, 10 do s[i] = { level = 5, species = "TANGELA" } end
     return s
   end)() } }
-  -- rollEncounter needs no Game: it reads the def it is handed and the map
-  -- id off self, which is what keeps the hot path free of a Data lookup
+  -- Native encounter rules inspect the party even when no mod wraps the roll.
+  -- Bind this fixture's complete game instead of the earlier palette-only stub.
+  check(bindGame(OW.rollEncounter, {
+    data = data, save = require("src.core.SaveData").newGame(),
+  }), "rollEncounter binds the fixture party context")
   local state = setmetatable({ map = MapLoader.load(data, "PALLET_TOWN") },
     { __index = OW })
 
