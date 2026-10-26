@@ -18245,7 +18245,7 @@ function OverworldState:drawWorld()
     reflectors.busy = true
     local oldReflectors, reflectorCount = reflectors.n, 0
     for _, e in ipairs(self.entities) do
-      if not e.hidden and e.drawReflection then
+      if Performance.extraCap("reflections")~=false and not e.hidden and e.drawReflection then
         e.reflects = self:reflectionSearch(e)
         if e.reflects then
           e.reflectStill = self:stillReflection(e.reflects)
@@ -18620,6 +18620,7 @@ function OverworldState:drawWorld()
   self:drawGen3Decorate(cam)
   closeFx()
 end
+
 
 -- The cursor the DECORATE row hands the player: the decoration's own
 -- footprint, outlined, blinking, anchored at its bottom-left the way the

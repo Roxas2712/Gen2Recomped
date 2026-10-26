@@ -13,6 +13,8 @@ local Assets = require("src.render.Assets")
 local Logger = require("src.core.Logger")
 local Probe = require("src.core.Probe")
 local PaletteFX = require("src.render.PaletteFX")
+local Performance = require("src.core.Performance")
+local performancePaletteTicks=setmetatable({}, {__mode="k"})
 
 local TileRenderer = {}
 TileRenderer.__index = TileRenderer
@@ -1181,7 +1183,7 @@ function TileRenderer.gen3SheetsFor(tilesetDef, data, layout)
   }, layout)
   -- Legacy records have no paletteCycles: their original bake stays intact.
   if primary.paletteCycles ~= nil or (tiles.secondary and tiles.secondary.paletteCycles ~= nil) then
-    tiles:setPaletteTicks(animFrame)
+    tiles:setPaletteTicks(Performance.paletteTick(animFrame))
   end
 
   -- ---- WHAT MOVES, AND WHERE ITS OTHER PICTURES GO ------------------------
@@ -1337,7 +1339,10 @@ function TileRenderer:syncGen3Palettes()
   if not tiles or (tiles.primary.paletteCycles == nil
     and (not tiles.secondary or tiles.secondary.paletteCycles == nil)
     and not tiles.paletteState) then return end
-  local changed = tiles:setPaletteTicks(animFrame)
+  local tick=Performance.paletteTick(animFrame)
+  if performancePaletteTicks[record]==tick then return end
+  performancePaletteTicks[record]=tick
+  local changed = tiles:setPaletteTicks(tick)
   if changed and record.recolor then
     record.recolor()
     record.paletteRevision = (record.paletteRevision or 0) + 1

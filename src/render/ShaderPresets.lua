@@ -3,6 +3,7 @@
 local Json = require("src.link.Json")
 local Graph = require("src.render.ShaderGraph")
 local Logger = require("src.core.Logger")
+local Performance = require("src.core.Performance")
 local Presets = {}
 Presets.__index = Presets
 local ROOT, MAX_JSON, MAX_SOURCE = "shader-presets", 16384, 65536
@@ -220,6 +221,7 @@ function Presets:off()
   self.error = nil
 end
 function Presets:active()
+  if Performance.extraCap("shaderPresets")==false then return false end
   return self.shader ~= nil or self.graph ~= nil
 end
 function Presets:activate(id, params)
@@ -353,6 +355,7 @@ function Presets:setParameter(opts, id, n)
   return nil, "unknown parameter"
 end
 function Presets:apply(input, pixelScale)
+  if Performance.extraCap("shaderPresets")==false then return input end
   if self.graph then
     if self.graph:owns(input) then
       return input

@@ -8,6 +8,7 @@
 
 local Logger = require("src.core.Logger")
 local Assets = require("src.render.Assets")
+local UiQuad = require("src.render.UiQuad")
 local Font = require("src.render.Font")
 local UIVisibility = require("src.battle.UIVisibility")
 local Theme = require("src.ui.Theme")
@@ -719,7 +720,7 @@ function TextBox:draw()
       local seq = { 0, 1, 2, 1 }
       local frame = math.min(frames - 1, seq[math.floor(self.blink / 9) % 4 + 1])
       local iw, ih = self.promptArrowImage:getDimensions()
-      local quad = love.graphics.newQuad(frame * fw, 0, fw, fh, iw, ih)
+      local quad = UiQuad.get(self,"prompt",self.promptArrowImage,frame * fw,0,fw,fh,iw,ih)
       love.graphics.setColor(1, 1, 1, 1)
       love.graphics.draw(self.promptArrowImage, quad, lastPen, lastY)
     end
