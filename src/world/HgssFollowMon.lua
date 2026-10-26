@@ -159,6 +159,9 @@ end
 -- Called from OverworldState:setMap after the map's cast is stood up.
 function F.onMapEntered(game, ow)
   if not (ow and ow.map and F.active(game)) then return end
+  -- the map's own Pokemon objects draw from these same sheets: give a cache
+  -- imported without their sides the partner's layout (HgssPartnerFacings)
+  require("src.world.HgssPartnerFacings").stamp(game.data)
   remove(ow)
   ow.hgssFollowTrail, ow.hgssFollowPending, ow.hgssFollowTalk = nil, nil, nil
   local save = game.save or {}
@@ -305,6 +308,13 @@ function F.command(game, ow, op, a, b)
     end
   elseif op == "reset" then
     if npc then
+      -- sub_020659CC puts it down on its grid coords, which the cartridge
+      -- advances when a step STARTS: mid-step that is the tile it was walking
+      -- onto, not the one it left (here cellX only moves when a step ends).
+      -- Every Ilex Forest stick patch runs this as the player lands on it.
+      if npc.moving and npc.targetX and npc.targetY then
+        npc.cellX, npc.cellY = npc.targetX, npc.targetY
+      end
       npc.moving, npc.goalX, npc.goalY = false, nil, nil
       npc.targetX, npc.targetY, npc.progress = nil, nil, 0
       npc.px, npc.py = npc.cellX * 16, npc.cellY * 16

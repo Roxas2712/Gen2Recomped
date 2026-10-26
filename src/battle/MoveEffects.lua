@@ -20,6 +20,17 @@ local HeldItems = require("src.battle.HeldItems")
 local Weather = require("src.battle.Weather")
 local GameVersion = require("src.core.GameVersion")
 
+-- the moves a Gen 4 Metronome never calls, by number (Counter, Mimic,
+-- Metronome, Mirror Move, Transform, Struggle, Sketch, Thief, Protect,
+-- Destiny Bond, Detect, Endure, Sleep Talk, Mirror Coat, Focus Punch,
+-- Follow Me, Nature Power, Helping Hand, Trick, Assist, Snatch, Covet,
+-- Feint, Me First, Copycat, Switcheroo, Chatter)
+local GEN4_NO_METRONOME = {}
+for _, id in ipairs({ 68, 102, 118, 119, 144, 165, 166, 168, 182, 194, 197, 203, 214, 243,
+                      264, 266, 267, 270, 271, 274, 289, 343, 364, 382, 383, 415, 448 }) do
+  GEN4_NO_METRONOME[id] = true
+end
+
 local MoveEffects = {}
 
 -- pokered's <USER>/<TARGET> text macros print "Enemy " before the
@@ -828,6 +839,19 @@ MoveEffects.full = {
   METRONOME_EFFECT = {
     callsMove = function(ctx)
       local order = ctx.data.constants.moveOrder
+      -- GEN 4 keys moves by number, and HeartGold / SoulSilver's cache has no
+      -- moveOrder: the pool is every numbered move, less the ones Metronome
+      -- never calls (sMetronomeBannedMoves -- Gen 5's list below 468)
+      if not order or type(order[1]) == "number" then
+        local pool = {}
+        for id, d in pairs(ctx.data.moves) do
+          if type(id) == "number" and id >= 1 and id <= 467 and type(d) == "table" and not GEN4_NO_METRONOME[id] then
+            pool[#pool + 1] = id
+          end
+        end
+        table.sort(pool)
+        return pool[ctx.rng(1, #pool)]
+      end
       local pick
       repeat
         pick = order[ctx.rng(1, #order)]
