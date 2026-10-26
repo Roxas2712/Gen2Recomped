@@ -9,7 +9,6 @@ C.ALIASES = {
 C.UNAVAILABLE = {
   ['src.import.pmd.Sprite'] = { 'mystery_dungeon_follower' },
   ['src.world.game3.Follower'] = { 'mystery_dungeon_follower' },
-  ['src.core.gen2.Unown'] = { 'mystery_dungeon_follower' },
   ['src.core.game3.pokemon'] = { 'mystery_dungeon_follower' },
   ['src.core.game3.player'] = { 'mystery_dungeon_follower' },
 }
