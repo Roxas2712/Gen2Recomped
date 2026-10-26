@@ -53,9 +53,11 @@ function W.action(self,id)
   job(self,'cup',function() return API.request('GET',key) end)
  elseif id=='giftStudio' then self:_openAccount('giftAdmin')
  elseif id:match('^format:') then f.selected=id:sub(8)
- elseif id=='queueEdition' then local at=1;for i,v in ipairs(editions) do if v==(f.queueEdition or 'crystal') then at=i end end;f.queueEdition=editions[at%#editions+1]
+ elseif id:match('^arenaGeneration:') then
+  local gen=tonumber(id:match(':(%d+)$'));f.queueEdition=({[1]='red',[2]='crystal',[3]='emerald',[4]='platinum',[5]='black'})[gen] or 'crystal';f.selected=nil
+ elseif id:match('^arenaEdition:') then f.queueEdition=id:sub(14);f.selected=nil
  elseif id=='findRival' then
-  local selected,edition=f.selected or 'rookie',f.queueEdition or 'crystal'
+  local edition=f.queueEdition or 'crystal';local selected=f.selected or 'rookie'
   job(self,'arena',function() return API.arena('POST',{format=selected,edition=edition}) end)
  elseif id=='leaveQueue' then job(self,'arena',function() return API.arena('DELETE') end)
  elseif id:match('^preset:') then
@@ -63,7 +65,7 @@ function W.action(self,id)
   for _,c in ipairs(f.index and f.index.arena and f.index.arena.formats or {}) do if c.id==key then f.form.team_size=tostring(c.team_size);f.form.level=tostring(c.level);f.form.rules=c.rules;if f.form.title=='' then f.form.title=c.title end end end
  elseif id=='create' then f.form=form();self.pageScroll=0
  elseif id=='edit' then f.form=form(f.cup);self.pageScroll=0
- elseif id=='edition' then local at=1;for i,v in ipairs(editions) do if v==f.form.edition then at=i end end;f.form.edition=editions[at%#editions+1]
+ elseif id=='edition' then local at=1;for i,v in ipairs(editions) do if v==f.form.edition then at=i end end;f.form.edition=editions[at%#editions+1];f.form.format=nil
  elseif id=='egg' or id=='shiny' then f.form[id]=not f.form[id]
  elseif id=='saveCup' then
   local d=f.form
@@ -156,9 +158,10 @@ function W.draw(self,x,y,w,h)
  if f.form then
   local d=f.form;text(d.id and 'EDIT TOURNAMENT' or 'CREATE A CUP',true,P.ink)
   text('Community competition · Single elimination · Edition rules · Account-bound prizes')
-  button('BACK','dismiss')
-  for _,c in ipairs(f.index and f.index.arena and f.index.arena.formats or {}) do button((d.format==c.id and '● ' or '')..c.title..' · '..c.team_size..' Pokémon','preset:'..c.id) end
-  button('Custom rules','preset:custom');field('Title','title',d.title);button('Edition: '..d.edition:upper(),'edition')
+  button('BACK','dismiss');button('Edition: '..d.edition:upper(),'edition')
+  local regional=false;for _,c in ipairs(f.index and f.index.arena and f.index.arena.formats or {}) do if c.generation==Versions.generation(d.edition) then regional=true end end
+  for _,c in ipairs(f.index and f.index.arena and f.index.arena.formats or {}) do if c.generation==Versions.generation(d.edition) or c.id=='worlds' or not regional and not c.generation then button((d.format==c.id and '● ' or '')..c.title..' · '..c.team_size..' Pokémon','preset:'..c.id) end end
+  button('Custom rules','preset:custom');field('Title','title',d.title)
   field('Capacity (2–64)','capacity',d.capacity);field('Team size (1–6)','team_size',d.team_size);field('Battle level (1–100)','level',d.level)
   field('Rules shown to all players','rules',d.rules);field('Scheduled start · optional ISO date with timezone','starts_at',d.starts_at)
   local tabAt=0
@@ -243,16 +246,31 @@ function W.draw(self,x,y,w,h)
     text(q.edition:upper()..' · '..q.format:upper()..' · Online accounts only · One queue across all your devices')
     if q.tournament_id then button('OPEN ASSIGNED PAIRING','open:'..q.tournament_id) else button('LEAVE MATCHMAKING','leaveQueue') end
    end
-   text('CHOOSE YOUR CUP',true,P.ink)
+   local edition=f.queueEdition or 'crystal';local generation=Versions.generation(edition)
+   text('CHOOSE YOUR GAME · GEN '..generation..' / '..edition:upper(),true,P.ink)
+   local gw=(w-16*s)/5
+   for gen=1,5 do button((gen==generation and '● ' or '')..'GEN '..gen,'arenaGeneration:'..gen,gw,x+(gen-1)*(gw+4*s),y) end;y=y+46*s
+   local choices={};for _,v in ipairs(editions) do if Versions.generation(v)==generation then choices[#choices+1]=v end end
+   local ew=(w-4*s*(#choices-1))/#choices
+   local short={sapphire='SAPPH.',emerald='EMER.',firered='F.RED',leafgreen='L.GREEN',platinum='PLAT.',heartgold='H.GOLD',soulsilver='S.SILV'}
+   for i,v in ipairs(choices) do button((v==edition and '● ' or '')..(ew<100*s and short[v] or v:upper()),'arenaEdition:'..v,ew,x+(i-1)*(ew+4*s),y) end;y=y+52*s
+   text('CUPS FOR '..edition:upper(),true,P.ink)
+   local available={};local hasRegional=false
+   for _,c in ipairs(arena.formats or {}) do if c.generation==generation then hasRegional=true end end
+   for _,c in ipairs(arena.formats or {}) do
+    if c.generation==generation or c.id=='worlds' or not hasRegional and not c.generation then available[#available+1]=c end
+   end
+   table.sort(available,function(a,b) if a.id=='worlds' then return false elseif b.id=='worlds' then return true end;return a.team_size<b.team_size end)
+   local valid=false;for _,c in ipairs(available) do if c.id==f.selected then valid=true end end
+   if not valid and available[1] then f.selected=available[1].id end
    local cols=w>=620*s and 2 or 1;local gap=14*s;local cw=(w-gap*(cols-1))/cols
-   for i,c in ipairs(arena.formats or {}) do
+   for i,c in ipairs(available) do
     local col=(i-1)%cols;local row=math.floor((i-1)/cols);local by=y+row*184*s;local bx=x+col*(cw+gap)
-    local cardWidth=(i==#arena.formats and col==0 and cols==2) and w or cw
-    Art.format(self,bx,by,cardWidth,c,(arena.points or 0)<c.minimum_points,(f.selected or 'rookie')==c.id)
+    local cardWidth=(i==#available and col==0 and cols==2) and w or cw
+    Art.format(self,bx,by,cardWidth,c,(arena.points or 0)<c.minimum_points,f.selected==c.id,edition)
     f.rects[#f.rects+1]={x=bx,y=by,width=cardWidth,height=170*s,id='format:'..c.id}
    end
-   y=y+math.ceil(#(arena.formats or {})/cols)*184*s
-   button('Edition: '..(f.queueEdition or 'crystal'):upper()..' · CLICK TO CHANGE','queueEdition')
+   y=y+math.ceil(#available/cols)*184*s
    button('FIND AN ONLINE RIVAL · '..(f.selected or 'rookie'):upper(),'findRival')
    text('Pairings use the same edition and cup rules. Battle entry requires verified Bank teams; until that is available, this is a community league.')
    if arena.points_notice then text(arena.points_notice) end
