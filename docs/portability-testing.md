@@ -19,13 +19,15 @@ checks and eight checkpoint/integration suites also pass. The test inventory
 and individual log hashes are recorded in the
 [integration receipt](qa/fork-main-integration.json).
 
-Runtime `fda01a4cb5de970faf054be917d236e8dce34b74` additionally preserves concurrent
+Runtime `1e11414db8f2c91a747ae29a287f653ad36353f8` additionally preserves concurrent
 fork-main qualification documents and the latest native Gen2 START/save flow
 from #109. This bounded delta passes **13 affected suites** and an isolated
 native Crystal test: first save, refused overwrite, confirmed overwrite and
 loading the saved party, money and resume metadata in a second process. Five
 captures were inspected. The current inventory has 560 engine suites; the
-full regression above predates this final menu delta.
+full regression above predates this final menu delta. The final native menu
+scaling correction also passes eight GPU pixel assertions per backend on
+OpenGL and Metal, independently of a larger presentation-provider UI grid.
 
 The regression runtime passes **twelve real GPU runs** across OpenGL and Metal:
 **4,644 checks and 364 frame comparisons** covering performance rendering,

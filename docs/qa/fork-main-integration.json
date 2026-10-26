@@ -1,13 +1,13 @@
 {
   "status": "passed",
   "publication_target": "Roxas2712/Gen2Recomped:main",
-  "runtime_ref": "fda01a4cb5de970faf054be917d236e8dce34b74",
+  "runtime_ref": "1e11414db8f2c91a747ae29a287f653ad36353f8",
   "complete_regression_ref": "725eb00bdc298d52be51486e52fdff1ed30fcc45",
   "complete_engine_suites": 559,
   "sdk_suites": 4,
   "B30": true,
   "post_regression_delta_suites": 13,
-  "post_regression_scope": "The later current PR #109 adds native Gen2 START routing/typer and save panel composition. Thirteen affected suites and a fresh native Crystal save/restart test qualify this delta. The full 559-suite regression and twelve GPU runs retain their exact earlier reference.",
+  "post_regression_scope": "The later current PR #109 adds native Gen2 START routing/typer and save panel composition. Thirteen affected suites and a fresh native Crystal save/restart test qualify this delta. The full 559-suite regression and twelve GPU runs retain their exact earlier reference. The final PR #109 grid correction additionally passes eight real GPU pixel assertions per backend on OpenGL and Metal.",
   "merged_pull_requests": [
     {
       "number": 22,
@@ -96,7 +96,7 @@
     },
     {
       "number": 109,
-      "head": "8aecd330c4ecf5e3c8ffa837f06e9435a904683d",
+      "head": "cc1f24ac48028abd13afd7654a1068eadc4c14f5",
       "url": "https://github.com/Roxas2712/Gen2Recomped/pull/109"
     },
     {
@@ -112,8 +112,8 @@
   ],
   "concurrent_main_preserved": "44173313f8a67cc2f0b96076f9d1fbb95d0a22c6",
   "trees": {
-    "src": "4eaeeed3b717a1d1084ed376d3d3e87b062b6b45",
-    "tests": "d6c00529d7c4196386d0fd8f51729fea36996cfe",
+    "src": "25c28239015d5e14e72da3de8941a281a6254e87",
+    "tests": "67b2e037283e7df9f48cffa5a834c2343713e574",
     "tools": "dec1b72ed4cd02df2a92066de533da3b9461ed4f",
     "main.lua": "259b6a88545cddeab780fa0da14268bb2ddb424d",
     "conf.lua": "63e543d1399fb85974ddd0ae8c5017a5108d87b8"
@@ -5919,7 +5919,7 @@
   },
   "publication_delta": {
     "status": "terminal",
-    "ref": "fda01a4cb5de970faf054be917d236e8dce34b74",
+    "ref": "1e11414db8f2c91a747ae29a287f653ad36353f8",
     "runs": [
       {
         "name": "gen2_start_menu",
@@ -6289,8 +6289,8 @@
   "native_crystal_save": {
     "status": "terminal",
     "backend": "gen2",
-    "ref": "fda01a4cb5de970faf054be917d236e8dce34b74",
-    "executable_sha256": "ecc79f8b13f54af742d8b386bbeafec0231681d49eae18705937d9c1537569c2",
+    "ref": "1e11414db8f2c91a747ae29a287f653ad36353f8",
+    "executable_sha256": "faa8114c04ddde60d557a6335651e595cbf19d4e7bb3957a7e62e817bbd83a02",
     "driver_sha256": "9a326d305488040632462fdf0f68fe83f4fbe157bb33b8ba9661f7a673fb14d9",
     "configuration_only_overlay_sha256": "75f9f58bd0d268efbe2c9de9a54fb0eb222e4edf94df752322bdb61691825005",
     "source_configuration_sha256": "b0a7590d05d192c455921841facbb08c2ec86ba3a26e135562fc68836bc56fc9",
@@ -6300,7 +6300,7 @@
     "source_main_sha256": "66fc344eedcb858b4b04bafbb6e832bfa2dd8eac626860c1f875fff9bc555973",
     "stdout_overlay_main_sha256": "2b0880d969c96926c49e7d3d910885defd037c0f298d919d978c920e39fe3ec3",
     "exit": 0,
-    "log_sha256": "70db1d0d8e615e04da80224de15a640f0159eb7d651794547dd52cbc3d94fb43",
+    "log_sha256": "bcd366c3ec331e466ac9e989e64e8966a47d6a00ec67f5adb3fdc5e7ff93cecb",
     "captures": [
       "first-save-complete.png",
       "new-save-prompt.png",
@@ -6310,55 +6310,55 @@
     ],
     "results": [
       {
-        "map": "PLAYERS_HOUSE_2F",
-        "party": 1,
-        "writes": 2,
-        "initialSave": true,
-        "overwriteRefused": true,
         "overwriteSaved": true,
-        "errors": 0,
-        "metadata": true,
+        "writes": 2,
         "phase": "prepare",
-        "money": 888
+        "money": 888,
+        "metadata": true,
+        "errors": 0,
+        "overwriteRefused": true,
+        "party": 1,
+        "initialSave": true,
+        "map": "PLAYERS_HOUSE_2F"
       },
       {
-        "reloaded": true,
-        "party": 1,
+        "money": 888,
+        "phase": "verify",
         "errors": 0,
         "metadata": true,
+        "party": 1,
         "map": "PLAYERS_HOUSE_2F",
-        "phase": "verify",
-        "money": 888
+        "reloaded": true
       }
     ],
     "metadata": [
       {
-        "device": "Apple M2",
         "version": "4.1 Metal - 89.4",
+        "device": "Apple M2",
+        "vendor": "Apple",
+        "phase": "prepare",
+        "gameVersion": "crystal",
+        "renderer": "OpenGL",
         "love": [
           11,
           5,
           0,
           "Mysterious Mysteries"
-        ],
-        "gameVersion": "crystal",
-        "renderer": "OpenGL",
-        "phase": "prepare",
-        "vendor": "Apple"
+        ]
       },
       {
-        "version": "4.1 Metal - 89.4",
-        "vendor": "Apple",
-        "device": "Apple M2",
         "gameVersion": "crystal",
+        "phase": "verify",
         "love": [
           11,
           5,
           0,
           "Mysterious Mysteries"
         ],
+        "vendor": "Apple",
+        "device": "Apple M2",
         "renderer": "OpenGL",
-        "phase": "verify"
+        "version": "4.1 Metal - 89.4"
       }
     ],
     "phase_exits": [
@@ -6479,9 +6479,10 @@
     "final-main-tools-20261026a": "81add2acae7bfefe4c964923016d8a504cf966a6cc194cbc65f7332138d9ab77",
     "final-main-checkpoint-20261026a": "00845fd14207b71423f02c132f7ac531c03fb3a7632aedd8d12e6796e16a5591",
     "final-main-gpu-20261026a": "61a93d0c676da3d8cc24d26eef323bc28d1ae6873f23b2f065174169e8eea8fd",
-    "final-main-publication-delta-20261026b": "bd8f3f75cb0c49de5e32bc7f0e5d1a851b22110eaae8842fa2eca3eec3e7e713",
-    "final-main-native-save-20261026e": "2b47f141c244863e70d668c34005e5fc4333d8a198ab3b507a5547a1e7a551c7",
-    "functional-prs-battleart-gpu-20261026a": "87b7a62a7781cb9a0ca50997f15ff6a9f11af4dac97fb881b306bf2c74d125e5"
+    "final-main-publication-delta-20261026c": "4d5c4605f5418368532105bb6973670fe1cd9e5fdcb1323f17fb70be4252a423",
+    "final-main-native-save-20261026f": "0b9462e4baa89d5816b7b9bad9c9eda2d326b444f9dfe183124a83db97b631c5",
+    "functional-prs-battleart-gpu-20261026a": "87b7a62a7781cb9a0ca50997f15ff6a9f11af4dac97fb881b306bf2c74d125e5",
+    "final-main-menu-overlay-gpu-20261026a": "9b656e0d022ef15d6ac42db6c7136eb69f6e07cd6494ad2287e683a3e071f978"
   },
   "integration_repairs": [
     "Translated transfer refusal lookup and extracted quit fixture retained launcher behavior; duplicate window shutdown removed.",
@@ -6501,6 +6502,55 @@
     "Seven private VASC support-log issues remain open.",
     "Gen1Recomp remains a read-only reference; this publication targets the own Gen2 fork only."
   ],
+  "final_menu_overlay_gpu": {
+    "status": "terminal",
+    "ref": "1e11414db8f2c91a747ae29a287f653ad36353f8",
+    "executable_sha256": "5ca7cc8749ab8d40ab73fbd74a20b9686fafa47c0a8408da6eaacd319b60c24e",
+    "source_tree": "25c28239015d5e14e72da3de8941a281a6254e87",
+    "tests_tree": "67b2e037283e7df9f48cffa5a834c2343713e574",
+    "tools_tree": "dec1b72ed4cd02df2a92066de533da3b9461ed4f",
+    "private_driver_sha256": {
+      "perf": "2fd2c5911aa38a2d788e08d6457d0ee4646a1ec5616de7276029b1f8188d325d",
+      "display": "01447f38aeb8fb6c40ca1663b860f4bf2618a71f1744f632dfc74041f142484e"
+    },
+    "runs": [
+      {
+        "name": "gen2-menu-overlay-opengl",
+        "exit": 0,
+        "log_sha256": "13052d855b7ea1bba3a29fbe3009ed331a1d549f3fb7f6c8b89145ec198e39cf",
+        "passed": true,
+        "proof": {
+          "checks": 8,
+          "scope": "Real GPU native START/SAVE window fallback pixels with a larger provider UI grid",
+          "version": "4.1 Metal - 89.4",
+          "passed": true,
+          "renderer": "OpenGL",
+          "vendor": "Apple",
+          "device": "Apple M2",
+          "backend": "opengl",
+          "playerProfilesUsed": false
+        }
+      },
+      {
+        "name": "gen2-menu-overlay-metal",
+        "exit": 0,
+        "log_sha256": "13052d855b7ea1bba3a29fbe3009ed331a1d549f3fb7f6c8b89145ec198e39cf",
+        "passed": true,
+        "proof": {
+          "passed": true,
+          "scope": "Real GPU native START/SAVE window fallback pixels with a larger provider UI grid",
+          "checks": 8,
+          "renderer": "Metal",
+          "version": "2.1",
+          "device": "Apple M2",
+          "backend": "metal",
+          "playerProfilesUsed": false,
+          "vendor": ""
+        }
+      }
+    ],
+    "passed": true
+  },
   "gen2_compositor_captures": {
     "gen2-display-opengl.json.png": {
       "sha256": "6b33404154443deca48f10ea9d522a0677318df4d80e32c67d24311c62812a9f",
