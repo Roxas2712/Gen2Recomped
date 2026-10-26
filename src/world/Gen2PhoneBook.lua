@@ -1,4 +1,4 @@
--- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
+-- Copyright (c) 2026 Roxas2712. See the offered PR contribution permission in docs/native-gen2-phone-book.md.
 -- Native ten-byte order beside the existing numeric registration set. Reads
 -- retain legacy overflow entries; no save or contact ID is renumbered.
 local M = { SIZE=10 }

@@ -1,4 +1,4 @@
--- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
+-- Copyright (c) 2026 Roxas2712. See the offered PR contribution permission in docs/native-gen2-phone-book.md.
 package.path='./?.lua;./?/init.lua;'..package.path
 local T=require('tests.modkit')
 local V=require('src.core.GameVersion');local original=V.get()
