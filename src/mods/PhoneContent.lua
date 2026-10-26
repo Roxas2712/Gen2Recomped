@@ -165,12 +165,17 @@ function M.api(loader,mod,native,generation)
   local registry=loader.content.phone_contacts;local available=generation==2
   local reason=not available and 'unsupported: phone_contacts has no native target in this dataset' or nil
   local out={available=available,supports=function() return available,reason end}
-  function out:get(id) if not available then return nil,reason end;return copy(native:get(id)) end
+  local function view(row)
+    row=copy(row)
+    if row then row.callee=row.calleeKey or row.callee;row.caller=row.callerKey or row.caller end
+    return row
+  end
+  function out:get(id) if not available then return nil,reason end;return view(native:get(id)) end
   function out:has(id) return self:get(id)~=nil end
   function out:each()
     if not available then return function() end end
     local nextRow=native:each()
-    return function() local id,row=nextRow();return id,copy(row) end
+    return function() local id,row=nextRow();return id,view(row) end
   end
   for _,verb in ipairs({'register','override','patch','remove'}) do
     out[verb]=function(_,id,value)

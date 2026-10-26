@@ -33,10 +33,11 @@ for _,version in ipairs({'gold','silver','crystal'}) do
  for _,mode in ipairs({{1,'native'},{2,'native'},{2,'unified'},{3,'unified'}}) do
   local d=fixture();local native=d.map_scripts.phone[2]
   local r=load(d,[[
-    assert(mod:supports('content','phone_contacts'))
+    assert(mod:supports('content',"phone_contacts"))
     local p=mod.content.phone_contacts
     assert(p:get('PHONE_MOM').number==1)
     assert(p:get('PHONE_MOM').map=='PALLET_TOWN')
+    assert(p:get('PHONE_MOM').callee=='OUT' and p:get('PHONE_MOM').caller=='IN')
     assert(p:get('PHONE_JOEY').class=='YOUNGSTER')
     assert(p:get('PHONE_JOEY').member=='JOEY1')
     local row=p:get('PHONE_MOM');row.name='LEAK'
@@ -88,6 +89,9 @@ do
  T.eq(#r.errors,0,'caller and callee aliases are accepted')
  T.eq(d.map_scripts.phone[1].call,'IN','callee alias replaces previous outgoing key')
  T.eq(d.map_scripts.phone[1].receive,'OUT','caller alias replaces previous incoming key')
+ local p=r.loader.exports.phone.api.content.phone_contacts
+ T.eq(p:get('PHONE_MOM').callee,'IN','public callee alias reflects the effective native key')
+ T.eq(p:get('PHONE_MOM').caller,'OUT','public caller alias reflects the effective native key')
  finish(r)
 end
 do
