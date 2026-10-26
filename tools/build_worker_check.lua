@@ -23,12 +23,14 @@ local function channel()
     pop = function() if head > #q then return nil end local v = q[head]; head = head + 1; return v end,
     demand = function(self) return self:pop() end,
     size = function() return #q - head + 1 end,
+    clear = function() q,head={},1 end,
   }
 end
 local channels = {}
 local started = {}
 love = {
   thread = {
+    newChannel = channel,
     getChannel = function(name) channels[name] = channels[name] or channel(); return channels[name] end,
     newThread = function(script) return { start = function(_, ...) started[#started + 1] = { script, ... } end } end,
   },
@@ -61,12 +63,12 @@ check(BuildWorker.count() == 1, 'LOW: one worker whatever the cores')
 Performance.tier = 'high'
 
 -- the round trip
-local jobs = love.thread.getChannel(BuildWorker.JOBS_CHANNEL)
-local results = love.thread.getChannel(BuildWorker.RESULTS_CHANNEL)
+local jobs,results
 local got, errs = {}, {}
 local id = BuildWorker.submit('echo', 'chunk-7', 21,
   function(result, key) got[#got + 1] = { result, key } end,
   function(err, key) errs[#errs + 1] = { err, key } end)
+jobs,results=started[1][2],started[1][3]
 check(id ~= nil, 'submit returns an id')
 check(BuildWorker.running() == 3, 'the first submit started the pool')
 check(#started == 3 and started[1][1] == BuildWorker.SCRIPT, 'each worker runs the thread script')
@@ -77,6 +79,10 @@ check(BuildWorker.poll() == 1, 'poll delivered it')
 check(#got == 1 and got[1][1].doubled == 42 and got[1][1].kind == 'echo' and got[1][2] == 'chunk-7',
       'the callback got the result and the key')
 check(BuildWorker.pending() == 0, 'nothing pending after delivery')
+Performance.buildWorkers=false
+check(BuildWorker.submit('echo','disabled',1)==nil,'switch off refuses work in an already running pool')
+check(BuildWorker.pending()==0,'disabled submission creates no pending callback')
+Performance.buildWorkers=true
 
 -- a handler that throws reaches onError
 BuildWorker.submit('echo', 'bad', 'boom', function() got[#got + 1] = 'wrong' end,
@@ -120,7 +126,7 @@ check(r.ok == false and r.error:find('no run'), 'a handler without run() answers
 BuildWorker.shutdown()
 check(jobs:size() == 3, 'shutdown queued three stop sentinels')
 check(BuildWorker.running() == 0 and BuildWorker.pending() == 0, 'shutdown cleared the pool')
-for _ = 1, 3 do jobs:pop() end
+local retiredJobs=jobs
 
 -- not available: the switch, no love.thread, a spawn that fails
 Performance.buildWorkers = false
@@ -143,10 +149,20 @@ package.loaded['src.core.game3.asset_stream'] = nil
 local IdleStream = require('src.core.IdleStream')
 got = {}
 BuildWorker.submit('echo', 'idle', 5, function(r) got[#got + 1] = r end)
+jobs,results=started[#started][2],started[#started][3]
+check(jobs~=retiredJobs,'restarted pool has its own job channel')
+check(retiredJobs:size()==3,'old stop sentinels cannot reach the restarted pool')
 Loop.serve(jobs, results, 1)
 local timer = { getTime = function() return 0 end }
 IdleStream.run(timer, 0.0001)   -- too short a slice for any stream work
 check(#got == 1 and got[1].doubled == 10, 'IdleStream.run polled the pool even with no slice to spend')
+Performance.tier='low'
+BuildWorker.submit('echo','low',2,function(r)got[#got+1]=r end)
+check(BuildWorker.running()==1,'idle pool adopts LOW on the next submission')
+jobs,results=started[#started][2],started[#started][3]
+Loop.serve(jobs,results,1);BuildWorker.poll()
+check(got[#got].doubled==4,'tier change preserves the submitted callback')
+BuildWorker.shutdown()
 
 print(('build_worker_check: %d passed, %d failed'):format(PASS, FAIL))
 if FAIL > 0 then os.exit(1) end

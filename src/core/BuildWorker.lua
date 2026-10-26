@@ -32,6 +32,7 @@ BuildWorker.SCRIPT = "src/core/build_worker.lua"
 
 local handlers = {}     -- kind -> module name
 local threads = nil     -- started workers, or nil before the first submit
+local poolTarget
 local jobsChannel, resultsChannel
 local pending = {}      -- id -> { kind, key, onDone, onError, submittedAt }
 local pendingCount = 0
@@ -72,25 +73,33 @@ function BuildWorker.available()
   local P = performance()
   if P and P.buildWorkers == false then return false end
   return love ~= nil and love.thread ~= nil and love.thread.newThread ~= nil
-    and love.thread.getChannel ~= nil
+    and love.thread.newChannel ~= nil
 end
 
 -- the thread factory, swappable by a check tool
-function BuildWorker._spawn(jobsName, resultsName)
+function BuildWorker._spawn(jobs, results)
   local thread = love.thread.newThread(BuildWorker.SCRIPT)
-  thread:start(jobsName, resultsName)
+  if thread:start(jobs, results) == false then return nil end
   return thread
 end
 
 local function start()
-  if threads then return true end
   if not BuildWorker.available() then return false end
-  jobsChannel = love.thread.getChannel(BuildWorker.JOBS_CHANNEL)
-  resultsChannel = love.thread.getChannel(BuildWorker.RESULTS_CHANNEL)
+  if threads then
+    if poolTarget == BuildWorker.count() or pendingCount > 0 then return true end
+    -- Apply a changed tier when the pool is idle, without losing callbacks.
+    BuildWorker.shutdown()
+  end
+  if not BuildWorker.available() then return false end
+  -- Each pool owns its channels. A restart must never consume an older
+  -- pool's queued stop sentinels or let an old worker steal its new jobs.
+  jobsChannel = love.thread.newChannel()
+  resultsChannel = love.thread.newChannel()
   threads = {}
   local want = BuildWorker.count()
+  poolTarget = want
   for i = 1, want do
-    local ok, thread = pcall(BuildWorker._spawn, BuildWorker.JOBS_CHANNEL, BuildWorker.RESULTS_CHANNEL)
+    local ok, thread = pcall(BuildWorker._spawn, jobsChannel, resultsChannel)
     if ok and thread then threads[#threads + 1] = thread end
   end
   if #threads == 0 then
@@ -160,9 +169,12 @@ end
 -- needs one builds it synchronously.
 function BuildWorker.shutdown()
   if threads and jobsChannel then
+    jobsChannel:clear()
     for _ = 1, #threads do jobsChannel:push(false) end
   end
   threads = nil
+  poolTarget = nil
+  jobsChannel, resultsChannel = nil, nil
   pending = {}
   pendingCount = 0
   failed = false

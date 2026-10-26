@@ -11,4 +11,4 @@ require("love.filesystem")
 require("love.timer")
 local jobs, results = ...
 local Loop = require("src.core.build_worker_loop")
-Loop.serve(love.thread.getChannel(jobs), love.thread.getChannel(results))
+Loop.serve(jobs, results)
