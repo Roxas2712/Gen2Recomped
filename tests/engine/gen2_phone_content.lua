@@ -62,7 +62,9 @@ for _,version in ipairs({'gold','silver','crystal'}) do
   if index then
     local game={data=d,save={g2Phone={[index]=true}},overworld={}}
     local gear=setmetatable({game=game},{__index=Gear})
-    T.eq(#gear:contacts(),1,label..' actual native saved phone book sees addition')
+    T.eq(#gear:contacts(),10,label..' actual native phone book preserves ten physical slots')
+    T.eq(gear:contacts()[1].id,index,label..' registered addition occupies the first native slot')
+    T.eq(gear:contacts()[2].id,0,label..' unused native slot cannot invent a callable contact')
     for _,direction in ipairs({'call','receive'}) do
       local rows=direction=='call' and C.phoneCallScript(d,index) or C.phoneReceiveScript(d,index)
       T.check(rows~=nil,label..' '..direction..' compiles through native VM')

@@ -2128,8 +2128,8 @@ function Gen2Commands.availableCallers(data, save, mapDef, tod)
   local out = {}
   local group = mapDef and tonumber(mapDef.group)
   local number = mapDef and tonumber(mapDef.number)
-  for id, registered in pairs(phoneList(save)) do
-    if registered and type(id) == "number" then
+  for _, id in ipairs(require("src.world.Gen2PhoneBook").contacts(save)) do
+    if id ~= 0 then
       local entry = phoneContact(data, id)
       local mask = entry and tonumber(entry.receiveTime) or 0
       -- `and [hl]` on the mask, then the map compare
@@ -2139,7 +2139,6 @@ function Gen2Commands.availableCallers(data, save, mapDef, tod)
       end
     end
   end
-  table.sort(out)
   return out
 end
 
@@ -2720,39 +2719,25 @@ end
 -- Phone_FindOpenSlot (36:$402D) fails when none of them is free.  That cap is
 -- the whole point of the ".PhoneFull" branch every phone trainer carries -- an
 -- uncapped list can never reach it.
-local GEN2_PHONE_SLOTS = 10
-
-local function phoneListCount(save)
-  local n = 0
-  for _, registered in pairs(phoneList(save)) do
-    if registered then n = n + 1 end
-  end
-  return n
-end
-
 -- AddPhoneNumber (36:$4000): carry means "not added" -- either the id is
--- already in the list or there is no free slot.
-local function addPhoneNumber(save, id)
-  local list = phoneList(save)
-  if list[id] then return false end
-  if phoneListCount(save) >= GEN2_PHONE_SLOTS then return false end
-  list[id] = true
-  return true
+-- already in the list or there is no unreserved slot. Keep the same ordered
+-- native book for the script verbs and Pokegear; the set remains compatible.
+local function addPhoneNumber(ctx, id)
+  return require("src.world.Gen2PhoneBook").add(
+    ctx.data or (ctx.game and ctx.game.data), ctx.save, id)
 end
 
 function Commands.g2_cellnum(ctx, id, add)
   if type(id) ~= "number" then return end
   if add then
-    ctx.lastCheck = addPhoneNumber(ctx.save, id)
+    ctx.lastCheck = addPhoneNumber(ctx, id)
   else
-    local list = phoneList(ctx.save)
-    ctx.lastCheck = list[id] == true
-    list[id] = nil
+    ctx.lastCheck = require("src.world.Gen2PhoneBook").remove(ctx.save, id)
   end
 end
 
 function Commands.g2_check_cellnum(ctx, id)
-  ctx.lastCheck = phoneList(ctx.save)[id] == true
+  ctx.lastCheck = require("src.world.Gen2PhoneBook").has(ctx.save, id)
   ctx.g2Var = ctx.lastCheck and 1 or 0
 end
 
@@ -2783,7 +2768,7 @@ function Commands.g2_ask_cellnum(ctx, id, textId)
     ctx.g2Var = 2
     return
   end
-  if addPhoneNumber(ctx.save, id) then
+  if addPhoneNumber(ctx, id) then
     ctx.g2Var = 0
   else
     ctx.g2Var = 1
