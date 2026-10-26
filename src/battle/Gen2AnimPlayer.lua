@@ -133,6 +133,7 @@ end
 
 function Gen2AnimPlayer.new(data)
   local anims = data and data.battle_anims or {}
+  require('src.battle.Gen2AnimationIds').install(anims)
   local self = setmetatable({
     data = data,
     anims = anims,
@@ -196,6 +197,7 @@ local GEN1_BALL_ANIMS = {
 function Gen2AnimPlayer:scriptFor(moveId)
   local anims = self.anims
   local id = anims.moveAnims and anims.moveAnims[moveId]
+    or anims.ids and anims.ids[moveId]
   if not id then
     local alias = GEN1_BALL_ANIMS[moveId]
     if alias == false then return nil end
