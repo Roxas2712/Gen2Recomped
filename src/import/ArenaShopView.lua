@@ -12,7 +12,7 @@ end
 function V.draw(self,f,x,y,w,text,button)
  local s,g=self._s,love.graphics;local doc=f.shop
  text('THE ARENA EXCHANGE',true,self.palette().ink)
- text(tostring(doc.coins)..' LIGA COINS',true,{1,.79,.32})
+ text(tostring(doc.coins)..' LIGA COINS',true,'#f5c462')
  text('+'..doc.win_coins..' per win / +'..doc.loss_coins..' per loss · '..doc.drop_percent..'% winner item-drop chance')
  text(doc.notice);button('BACK TO THE ARENA','shopBack');button('REFRESH WALLET & PURCHASES','shop')
  local edition=f.shopEdition or 'crystal'
@@ -28,7 +28,7 @@ function V.draw(self,f,x,y,w,text,button)
    local supported=require('src.core.GameVersion').generation(edition)>=row.generation
    -- The item art is drawn in native UI units and remains sharp at any DPI.
    local at=y();local h=145*s;local p=require('src.import.LauncherLibrary').paint
-   p.surface(x,at,w,h,12*s,supported and {1,.79,.32} or self.palette().detail,false)
+   p.surface(x,at,w,h,12*s,supported and '#f5c462' or self.palette().detail,false)
    icon(row.icon,x+42*s,at+43*s,s)
    text(row.title..' · '..row.price..' COINS',true,supported and self.palette().ink or self.palette().detail,80*s)
    text('GEN '..row.generation..'+ · '..row.description,false,nil,80*s)
