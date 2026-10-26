@@ -5,6 +5,8 @@ local Saves=require('src.core.SaveData')
 local Versions=require('src.core.GameVersion')
 local Task=require('src.cloud.Task')
 local Speed=require('src.core.GameSpeed')
+local Sync=require('src.storage.SyncStatus')
+local function L(value) return require('src.translation.Service').launcherLookup(value) end
 local function inside(r,x,y) return r and x>=r.x and y>=r.y and x<=r.x+r.width and y<=r.y+r.height end
 local function reset(game)
   if game.input and game.input.reset then game.input:reset() end
@@ -14,7 +16,7 @@ end
 function O.open(game)
   if not game or O.game then return end
   O.game=game;O.selected=1;O.notice=nil;O.confirm=nil;O.rects={};O.exportPath=nil
-  O.page='home';O.scroll=0;O.options=nil;O.touch=nil;reset(game)
+  O.page='home';O.scroll=0;O.options=nil;O.touch=nil;O.retry=nil;reset(game)
   if love.mouse then
     if love.mouse.setRelativeMode then pcall(love.mouse.setRelativeMode,false) end
     if love.mouse.setGrabbed then pcall(love.mouse.setGrabbed,false) end
@@ -43,15 +45,27 @@ local function save(game)
   if not game.save or not game.save.player or not canSave(game) then return nil,'Start or continue a game before saving.' end
   local ran,ok,why=pcall(game.writeSave,game)
   if not ran or not ok then return nil,'Save failed: '..tostring(why or ok) end
+  Sync.set('local',Versions.get(),Saves.activeSlot(Versions.get()))
   return true
+end
+local function transfer(version,slot)
+  local why
+  O.retry={version=version,slot=slot}
+  O.job,why=Task.new(function()
+    local store,err=require('src.cloud.RetroCloud').open();if not store then return nil,err end
+    return require('src.import.CloudSync').syncOne(store,version,slot,true)
+  end)
+  Sync.set(O.job and 'uploading' or 'error',version,slot,why)
+  O.notice=O.job and 'Uploading normal save and portable suspend…' or tostring(why)
 end
 function O.action(id)
   local game=O.game;if not game then return end
   if O.job then
-    if id=='cancel' then O.job:cancel();O.job=nil;O.notice='Upload stopped. Your local save is kept.' end
+    if id=='cancel' then O.job:cancel();O.job=nil;O.notice='Upload stopped. Your local save is kept.';Sync.set('cancelled',O.retry and O.retry.version,O.retry and O.retry.slot) end
     return
   end
   if (id=='friends' or O.page=='friends') and require('src.ui.FriendsMenu').action(O,id) then return end
+  if id=='retryCloud' and O.retry then transfer(O.retry.version,O.retry.slot);return end
   if id=='resume' then O.close();return end
   if id=='home' or id=='saves' or id=='options' then
     O.page=id;O.scroll=0;O.selected=1;O.rects={};O.notice=nil
@@ -93,13 +107,10 @@ function O.action(id)
   if id=='suspend' or id=='suspendCloud' then
     local ok,why=require('src.storage.SuspendStore').keep(game)
     if not ok then O.notice=tostring(why);return end
+    Sync.set('local',Versions.get(),Saves.activeSlot(Versions.get()))
     if id=='suspend' then O.notice='Portable suspend saved locally. Continue resumes it with this exact engine build.';return end
     local version=Versions.get();local slot=Saves.activeSlot(version)
-    O.job,why=Task.new(function()
-      local store,err=require('src.cloud.RetroCloud').open();if not store then return nil,err end
-      return require('src.import.CloudSync').syncOne(store,version,slot,true)
-    end)
-    O.notice=O.job and 'Uploading normal save and portable suspend…' or tostring(why)
+    transfer(version,slot)
     return
   end
   if id=='folder' then
@@ -129,11 +140,7 @@ function O.action(id)
     O.clear();game:returnToLauncher()
   elseif id=='cloud' then
     local slot=Saves.activeSlot(version)
-    O.job,why=Task.new(function()
-      local store,err=require('src.cloud.RetroCloud').open();if not store then return nil,err end
-      return require('src.import.CloudSync').syncOne(store,version,slot,true)
-    end)
-    O.notice=O.job and 'Uploading this save to your ModCompass account...' or tostring(why)
+    transfer(version,slot)
   end
 end
 function O.update(game)
@@ -141,7 +148,12 @@ function O.update(game)
   if O.game and O.game~=game then O.clear() end
   if O.job then
     local result=O.job:poll()
-    if result then O.job=nil;O.notice=result.kind=='done' and result.first and ('Cloud: '..result.first..'.') or ('Upload paused: '..tostring(result.error or result.second)) end
+    if result then
+      O.job=nil
+      local entry=Sync.result(result.kind=='done' and result.first,result.error or result.second,O.retry and O.retry.version,O.retry and O.retry.slot)
+      O.notice=Sync.describe(entry)..(entry.detail and (' · '..L(entry.detail)) or '')
+      if entry.state=='available' then O.retry=nil end
+    end
   end
   if O.game and (O.page=='friends' or O.socialJob) then require('src.ui.FriendsMenu').tick(O) end
   return O.game~=nil
@@ -172,6 +184,7 @@ local function actions()
     {id='suspendCloud',label='Suspend & upload to cloud',note='Sign in on another device, restore cloud saves, then Continue · Same engine build and imported game data required'},
     {id='export',label='Export battery .sav'},{id='cloud',label='Save & upload to cloud'},
     {id='library',label='Choose another game'}}
+  if O.retry then table.insert(rows,1,{id='retryCloud',label='Retry cloud upload',note='Uploads the saved copy again. Your local progress stays intact.'}) end
   if O.exportPath then rows[#rows+1]={id='folder',label='Open exports'} end
   return rows
 end
@@ -232,7 +245,7 @@ function O.draw(game)
   if g.setColorMask then g.setColorMask(true,true,true,true) end
   O.handle={x=ww-142*s,y=10*s,width=132*s,height=36*s}
   local function text(value,x,y,w,big)
-    g.setFont(big and O.titleFont or O.font);g.printf(value,x,y,w,'left')
+    g.setFont(big and O.titleFont or O.font);g.printf(L(value),x,y,w,'left')
   end
   if not O.game then
     g.setColor(.025,.045,.08,.80);g.rectangle('fill',O.handle.x,O.handle.y,O.handle.width,O.handle.height,8,8)
@@ -260,7 +273,9 @@ function O.draw(game)
   end
   local view={x=x+18*s,y=y+132*s,width=w-36*s,height=math.max(1,h-218*s)};O.viewport=view
   g.setScissor(view.x,view.y,view.width,view.height)
-  for i,row in ipairs(rows) do
+  for i,source in ipairs(rows) do
+    local row={};for k,v in pairs(source) do row[k]=v end
+    row.label=L(row.label);if row.note then row.note=L(row.note) end
     local noteLines=1
     if row.note and O.font.getWrap then local _,lines=O.font:getWrap(row.note,w-(72+(row.avatar and 58 or 0))*s);noteLines=math.max(1,#lines) end
     local step=math.max((row.large and 88 or row.note and 66 or 52)*s,row.note and (row.large and 52 or 38)*s+noteLines*O.font:getHeight()+12*s or 0)

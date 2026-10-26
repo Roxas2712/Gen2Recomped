@@ -1,3 +1,4 @@
+local function L(value) return require('src.translation.Service').launcherLookup(value) end
 -- Bank subpages share the native box workspace, not browser windows.
 local P={}
 local B=require('src.storage.PokemonBank')
@@ -25,7 +26,7 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
       rows[#rows+1]='LUA · '..report.nodes..' data nodes · '..table.concat(fields,', ')
       local top=y+42*s
       for _,row in ipairs(rows) do
-        local _,lines=font:getWrap(row,w);g.setFont(font);col(37,68,79);g.printf(row,x,top,w,'left');top=top+#lines*font:getHeight()+12*s
+        row=L(row);local _,lines=font:getWrap(row,w);g.setFont(font);col(37,68,79);g.printf(row,x,top,w,'left');top=top+#lines*font:getHeight()+12*s
       end
       button('COPY POKÉMON ID',x,top,w,'copyPokemonId')
     end
@@ -98,7 +99,7 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
     elseif f.replying then text('Reply to the selected incoming offer.',x,top,w);top=top+30*s end
     local notice='Share this Bank copy, including nickname, trainer and origin information, with the other player. Original saves and Bank archives remain intact.'
     if wonder then notice=notice..' Up to 30 active offers per account, including eggs. Results unlock after at least 10 minutes; after 6 hours without a partner you receive a random native Gen 1–5 encounter with OT RetroRecomp.' end
-    local _,lines=font:getWrap(notice,w);g.setFont(font);col(43,76,103);g.printf(notice,x,top,w,'left');top=top+#lines*font:getHeight()+10*s
+    notice=L(notice);local _,lines=font:getWrap(notice,w);g.setFont(font);col(43,76,103);g.printf(notice,x,top,w,'left');top=top+#lines*font:getHeight()+10*s
     button(f.tradeConsent and '✓ I AGREE TO SHARE THIS COPY' or '□ I AGREE TO SHARE THIS COPY',x,top,w,'tradeConsent');top=top+45*s
     local half=(w-10*s)/2
     button(f.tradeJob and 'WORKING...' or f.replying and 'SEND REPLY' or wonder and 'ENTER WONDER TRADE' or 'CREATE TRADE OFFER',x,top,half,'tradeSubmit')

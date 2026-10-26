@@ -1,3 +1,4 @@
+local function L(value) return require('src.translation.Service').launcherLookup(value) end
 local W={}
 local Saves=require('src.core.SaveData')
 local Resume=require('src.storage.SaveResume')
@@ -94,17 +95,19 @@ function W.draw(self)
   g.setColor(.015,.025,.05,.96);g.rectangle('fill',0,0,ww,hh)
   g.setColor(.06,.09,.14,1);g.rectangle('fill',x,y,width,height,14*s,14*s)
   local function text(value,tx,ty,w,big)
-    g.setFont(big and self.stateFont or self.hintFont);U.col(big and p.ink or p.detail);g.printf(value,tx,ty,w,'left')
+    g.setFont(big and self.stateFont or self.hintFont);U.col(big and p.ink or p.detail);g.printf(L(value),tx,ty,w,'left')
   end
   text('CONTINUE ON THIS DEVICE',x+24*s,y+20*s,width-145*s,true)
   local close=self:_chipButton(x+width-108*s,y+18*s,'BACK',{w=84*s,h=38*s,kind='accent'});close.id='close';close.pinned=true;f.rects[1]=close
   local v={x=x+18*s,y=y+76*s,width=width-36*s,height=height-94*s};f.viewport=v
   local top=v.y-f.scroll
   local function paragraph(value,big)
+    value=L(value)
     local font=big and self.stateFont or self.hintFont;local _,lines=font:getWrap(value,width-48*s)
     text(value,x+24*s,top,width-48*s,big);top=top+math.max(1,#lines)*font:getHeight()+16*s
   end
   local function row(label,id)
+    label=L(label)
     local _,lines=self.hintFont:getWrap(label,width-72*s);local h=math.max(38*s,#lines*self.hintFont:getHeight()+20*s)
     local r=self:_chipButton(x+24*s,top,'',{w=width-48*s,h=h,kind='accent'});r.id=id;f.rects[#f.rects+1]=r
     text(label,x+36*s,top+10*s,width-72*s);top=top+h+12*s
