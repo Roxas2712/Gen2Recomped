@@ -33,7 +33,7 @@ failed encounters and repeated movie completion do not announce new work.
 Pokérus previously existed only as a saved byte. Native GSC battle wins now
 perform the party infection/spread transition, including the Goldenrod gate,
 the rare de novo roll, cured immunity and the four-day spread stop. Daily
-polling seeds its own stamp and advances counters by elapsed calendar days.
+polling seeds its own stamp and advances counters by the saved RTC calendar.
 The event runs after the byte is written. This contribution concerns these
 party-byte transitions; it does not claim an audit of all Pokérus consumers.
 

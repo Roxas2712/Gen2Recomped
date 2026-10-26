@@ -39,7 +39,7 @@ love.graphics.newImage,love.graphics.draw=oldImage,oldDraw
 local U=require('src.compat.gen2.Unown')
 T.eq(U.monLetter({species='OTHER'}),nil,'Unown query rejects other species')
 T.eq(U.monLetter({species='UNOWN',unownLetter='Z'}),26,'Unown query accepts a stored letter')
-T.eq(U.monLetter({species='SPECIES_201',dvs={attack=0,defense=0,speed=0,special=0}}),1,
+T.eq(U.monLetter({species='UNOWN',dvs={attack=0,defense=0,speed=0,special=0}}),1,
  'Unown query delegates the native DV selector')
 local P=require('src.compat.game3.Pokemon')
 T.eq(P.unownLetter(0),0,'GBA personality query is zero-based')

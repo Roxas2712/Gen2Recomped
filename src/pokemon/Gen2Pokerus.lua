@@ -55,8 +55,9 @@ function P.advance(party,days)
   end
 end
 local monthDays={0,31,59,90,120,151,181,212,243,273,304,334}
-local function day(now)
-  local date=os.date('*t',now)
+local function day(save,now)
+  local Clock=require('src.core.Gen2Clock')
+  local date=Clock.calendarDate and Clock.calendarDate(save,now)or os.date('*t',now)
   local y=date.year-1
   local ordinal=365*y+math.floor(y/4)-math.floor(y/100)+math.floor(y/400)
     +monthDays[date.month]+date.day
@@ -65,7 +66,7 @@ local function day(now)
 end
 function P.poll(save,now)
   if not save or not require('src.pokemon.Gen2Breeding').isVanilla()then return end
-  local today=day(now)
+  local today=day(save,now)
   local previous=save.g2PokerusDay
   save.g2PokerusDay=today
   if type(previous)~='number' or previous==today then return end
