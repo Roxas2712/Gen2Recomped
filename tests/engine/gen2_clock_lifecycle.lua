@@ -83,7 +83,7 @@ for _,edition in ipairs({'gold','silver','crystal'})do
    ['mods/day/main.lua']=[[
     local mod=...;mod.exports.events={}
     local Clock=require('src.core.gen2.Clock')
-    mod.events:on('clock.day_changed',function(e)
+    mod.events:on("clock.day_changed",function(e)
      mod.exports.events[#mod.exports.events+1]={day=e.day,previous=e.previous,reason=e.reason}
      assert(Clock.weekday(mod.exports.save)==e.day)
      e.day=99
