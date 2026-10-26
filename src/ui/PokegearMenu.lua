@@ -5,6 +5,7 @@ local Theme = require("src.ui.Theme")
 local Screens = require("src.ui.Screens")
 local Sound = require("src.core.Sound")
 local Strings = require("src.core.Strings")
+local Runtime = require("src.mods.Runtime")
 
 local PokegearMenu = {}
 PokegearMenu.__index = PokegearMenu
@@ -404,10 +405,31 @@ function PokegearMenu:contacts()
   if require("src.core.GameVersion").isGen2() then
     local Book = require("src.world.Gen2PhoneBook")
     local Calls = require("src.script.Gen2Commands")
+    local slots = Book.contacts(save)
+    if Runtime.wantsHook("phone.contact_list") then
+      -- Save is an opaque native handle; the display list is detached. The
+      -- incoming selector continues to use the unhooked physical book.
+      local shown = Runtime.call("phone.contact_list", function(_, list) return list end,
+        save, Book.contacts(save))
+      if type(shown) == "table" and #shown == Book.SIZE then
+        slots = {}
+        for i = 1, Book.SIZE do
+          local value = shown[i]
+          local id = (type(value) == "number" or type(value) == "string") and tonumber(value)
+          slots[i] = id and id % 1 == 0 and id >= 1 and id <= 255
+            and Calls.phoneContact(data, id) and id or 0
+        end
+      end
+    end
+    local physical = Book.contacts(save)
     local permanent, out = Book.permanent(data), {}
-    for slot, id in ipairs(Book.contacts(save)) do
+    for displaySlot, id in ipairs(slots) do
       local name = Calls.phoneName(data,id)
-      out[slot] = { id=name and id or 0, slot=slot, name=name or "----------",
+      local slot = id == 0 and displaySlot or nil
+      if id ~= 0 then
+        for i, nativeId in ipairs(physical) do if nativeId == id then slot = i; break end end
+      end
+      out[displaySlot] = { id=name and id or 0, slot=slot, name=name or "----------",
         permanent=permanent[id] == true }
     end
     return out
@@ -555,7 +577,9 @@ function PokegearMenu:update(dt)
         self.callText = nil
         if entry and deleting then
           if require("src.core.GameVersion").isGen2() then
-            require("src.world.Gen2PhoneBook").deleteAt(self.game.save, entry.slot)
+            local Book = require("src.world.Gen2PhoneBook")
+            if entry.slot then Book.deleteAt(self.game.save, entry.slot)
+            else Book.remove(self.game.save, entry.id) end
           else
             require("src.script.Gen2Commands").phoneList(self.game.save)[entry.id] = nil
           end
