@@ -111,3 +111,12 @@ extension fields cannot disguise another NPC as a follower. The new regression
 fails 25 assertions before correction and passes 90 checks afterwards. Object,
 lifecycle, companion and native predicate regressions also pass. Complete
 avatar/room presentation remains subject to the ongoing real-frame checks.
+
+The source forced-terrain query now classifies existing semantic behaviors for
+all five GBA editions, including Hoenn-specific IDs and FRLG spin arrows. It
+does not construct a game or install a second movement controller. 1,367
+classifier checks pass on both the current fork and composed API-2 baseline;
+collision and player regressions pass as well. A real manager-driven open-3D
+FireRed bedroom run now renders upright at 1024x768 with one visible player
+and completes a native step. First/third cameras, normal-view actor occlusion
+and complete room/gameplay acceptance remain under investigation.
