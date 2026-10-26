@@ -3654,6 +3654,7 @@ function RomImporter:startData(data, displayName, sourcePath, verified)
     if not ok then error("could not finish the private cache: " .. tostring(writeError)) end
     require('src.import.ImportRecovery').finish()
     self.ready[version] = true
+    if self._nativeLanguageImported then self:_nativeLanguageImported(version,data,actualHash) end
     -- Imported art and previously missing species records may now exist.
     for _,name in ipairs({"src.pokewalker.WalkerArt","src.pokewalker.WalkerCourses"})do
       local module=package.loaded[name]
@@ -5608,7 +5609,7 @@ function RomImporter:draw()
     self.fontKey = fontKey
     local function f(px)
       px=math.max(8,math.floor(px+0.5))
-      return launcherFont and love.graphics.newFont(launcherFont,px) or love.graphics.newFont(px)
+      return require('src.translation.Service').newLauncherFont(px)
     end
     self.headFont     = f(19 * s)
     self.detailFont   = f(14 * s)
@@ -12020,5 +12021,6 @@ require("src.import.SaveHistoryWorkspace").install(RomImporter)
 require("src.storage.AccountStorage").install(RomImporter)
 require("src.import.TournamentWorkspace").install(RomImporter)
 require("src.import.FirstRun").install(RomImporter)
+require("src.import.NativeLanguageSetup").install(RomImporter)
 
 return RomImporter

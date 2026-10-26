@@ -560,6 +560,11 @@ local function discover()
   return out
 end
 
+-- The launcher's native features resolve inputs against the loader's winner.
+function LauncherMods.manifest(id)
+  for _,manifest in ipairs(discover()) do if manifest.id==id then return manifest end end
+end
+
 -- WHAT THE PANEL SHOULD SAY ABOUT COPIES IT IS NOT USING: every copy of a mod
 -- that was found and will not load (an older version beside a newer one, the
 -- other home's copy, a zip in mods/), one line each, from the last listing.

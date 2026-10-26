@@ -56,7 +56,10 @@ function P.inspect(manifests,options,version,fs)
         if budget.listed>20000 or budget.exhausted then incomplete('Static directory inspection limit reached.');return end
         if name~='.' and name~='..' and not name:find('/',1,true) and not name:find('\\',1,true) then
           local file=path..'/'..name;local info=fs.getInfo(file)
-          if info and info.type=='directory' then scan(file,depth+1)
+          local nativeData=m.id=='german_rom_source' and m.path=='mods/UNI_LANGUAGE_NATIVE'
+          local relevant=not nativeData or require('src.translation.NativeLanguages').sourceRelevant(file:sub(#m.path+2),version)
+          if not relevant then -- other editions' cartridge address metadata
+          elseif info and info.type=='directory' then scan(file,depth+1)
           elseif info and (name:lower():match('%.lua$') or file==m.path..'/'..m.entry) then
             budget.files=budget.files+1
             if budget.files>4096 or info.size and info.size>4*1024*1024 then incomplete('Lua source exceeds the static scan budget: '..file);return end

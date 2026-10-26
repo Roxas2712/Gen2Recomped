@@ -1,5 +1,58 @@
 # Native ROM language packs
 
+The fork now includes Uni-Language at `mods/UNI_LANGUAGE_NATIVE/`. Users do
+not install a separate ZIP. The shared packer includes this component even
+with `--engine-only`; other bundled mods retain their existing build rules.
+The package contains profile code and licensed fonts/assets, never private
+ROMs, player saves or compiled cartridge caches. `SOURCE.json` records the
+vendored source and the adapted entry/manifest; font provenance is in
+`fonts/BUILD.json` and `fonts/OFL.txt`.
+
+On first launch the existing setup guide asks for the launcher language.
+That choice becomes the default offer for cartridge language, separately
+from machine translation. A completed US import offers its corresponding
+language profile, lists the precise revision, SHA-1 and file size, and opens
+the standard native import picker for that one prerequisite. Wrong inputs
+leave the previous language unchanged. A GBA US import automatically retains
+its validated English source in the private import store, avoiding a second
+base-ROM selection. Older imports can supply this base once from the same
+dialog. Import batches finish before any language offer opens.
+
+Users can continue in English, change the choice under Settings > Game
+language > Game language (ROM), or use F8 while playing. A confirmed choice
+persists per edition; it does not modify normal game saves or enable machine
+translation. The built-in pack skips the standalone mod's extra pre-title
+setup. Static preflight still checks shared executable code and all language
+data relevant to the selected edition, rather than exhausting the scan
+budget on the other ten editions' unused address tables.
+
+The launcher setup, language-acquisition dialog and fonts include Japanese,
+Korean, Simplified Chinese and Traditional Chinese. Further launcher screens
+retain the existing translation-service fallback. Menu-language support does
+not imply a cartridge profile for every game: Japanese currently targets
+Crystal, Korean Gold/Silver. Chinese has menu support but no bundled game
+profile. The Japanese/Korean game profiles retain their preview notices.
+German profiles cover all eleven supported original editions; European and
+Brazilian Portuguese availability follows the exact bundled catalog.
+PT-BR menu text is available without an extra ROM. The present PT-BR game
+profiles still read their listed fan-translated source ROM; authored
+supplements do not replace that input. This integration does not yet apply
+third-party translation patches automatically to the English base.
+
+Additional acceptance tests:
+
+```
+luajit tests/engine/native_language_setup.lua
+python3 tools/check_builtin_language_setup.py --love /path/to/love \
+  --out .local/qa/builtin-language-setup
+```
+
+This runner starts with clean guest profiles, renders all four CJK setup
+choices without downloading fonts, imports actual US Gold/Emerald and the
+matching German sources, then boots the built-in pack and exercises native
+language round trips, failure rollback and live progress preservation.
+It does not qualify Japanese/Korean gameplay without their actual ROM inputs.
+
 The fork exposes `mod.localization` and the capability
 `mod:supports("localization", "rom-language-v1")`. Capability discovery is lazy:
 it does not construct Game, read a cartridge, load graphics or register a pack.
