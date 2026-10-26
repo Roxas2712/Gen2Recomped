@@ -96,6 +96,7 @@ function Game:load()
   require("src.core.Gen2MapNames").publish(Data)
   if require("src.core.GameVersion").isGen3() then require("src.core.Gen3MapNames").publish(Data) end
   require("src.core.Gen2Environment").publish(Data)
+  require("src.core.Gen2EncounterViews").publish(Data)
   -- Re-derive the Gen 2 palette view over the MERGED tileset table.  A
   -- mod that adds or replaces a tileset adds or replaces its colours with
   -- it, and the view is only useful to a 3D pipeline if it covers those
