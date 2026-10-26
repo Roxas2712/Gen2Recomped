@@ -47,7 +47,7 @@ local function ground(w, h, view)
   return g
 end
 
--- 1. the ring: view (2,2)-(3,3) in a 6x6 grid -> ring is 16 cells
+-- 1. the ring: view (2,2)-(3,3) in a 6x6 grid -> ring is 12 cells
 do
   local g = ground(6, 6, { 2, 2, 3, 3 })
   local seen = {}
@@ -57,7 +57,7 @@ do
     seen[#seen + 1] = land
     g.liveModels[land] = { }
   end
-  check(#seen == 16, '16 ring cells around a 2x2 view (' .. #seen .. ')')
+  check(#seen == 12, '12 ring cells around a 2x2 view (' .. #seen .. ')')
   local inView = false
   for _, id in ipairs(seen) do
     local cx, cy = (id - 1) % 6, math.floor((id - 1) / 6)
@@ -94,7 +94,7 @@ do
   built = g:prebuild(0.0005)
   check(built == 0, 'a slice shorter than the cost builds nothing')
   built = g:prebuild(1)
-  check(built == 13 and not g:prebuildPending(), 'a long slice finishes the ring and the service goes quiet')
+  check(built == 9 and not g:prebuildPending(), 'a long slice finishes the ring and the service goes quiet')
 end
 
 -- 5. a full live cache stops the prebuild (never evict what is on screen)
@@ -141,6 +141,34 @@ do
   check(#g.built > 0 and #g.built <= 6, 'the service built within a 6 ms cap (' .. #g.built .. ')')
   IdleStream.unregister(g:idleService())
   check(not IdleStream.busy(), 'unregistered: the pump is quiet')
+end
+
+-- Every service shares ONE tier budget, also when the caller has a much
+-- longer idle window. The old per-service cap could spend 12 ms on HIGH.
+do
+  local IdleStream = require('src.core.IdleStream')
+  Performance.tier = 'high'
+  local now, offered = 0, {}
+  local function service()
+    return {busy=function()return true end,step=function(seconds)
+      offered[#offered+1]=seconds
+      now=now+math.min(.004,seconds)
+    end}
+  end
+  local a,b=service(),service()
+  IdleStream.register(a);IdleStream.register(b)
+  IdleStream.run({getTime=function()return now end},.100)
+  check(math.abs(now-.006)<1e-9,'two services share the 6 ms total cap')
+  check(#offered==2 and math.abs(offered[2]-.002)<1e-9,'second service receives only the remaining 2 ms')
+  IdleStream.unregister(a);IdleStream.unregister(b)
+  now,offered=0,{}
+  package.loaded['src.core.game3.asset_stream']={busy=function()return true end,
+    update=function()now=now+.004 end}
+  IdleStream.register(a)
+  IdleStream.run({getTime=function()return now end},.100)
+  check(math.abs(now-.006)<1e-9,'Gen 3 stream and registered service share the tier cap')
+  check(#offered==1 and math.abs(offered[1]-.002)<1e-9,'stream work is deducted before the next service')
+  IdleStream.unregister(a);package.loaded['src.core.game3.asset_stream']=nil
 end
 
 print(('gen4_chunk_prebuild_check: %d passed, %d failed'):format(PASS, FAIL))
