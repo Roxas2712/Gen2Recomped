@@ -10,7 +10,8 @@ receive program or change the saved caller.
 The notification follows the read-only reference's PhoneRing.script boundary
 at `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`:
 `call`, `contact`, `name`, `className`, `special` and `scriptKey`.
-Names come from the actual native contact/trainer roster. The detached call
+Names come from the actual native contact/trainer roster or authored contact
+name. Renaming a trainer contact preserves its actual trainer-class label. The detached call
 descriptor has incoming direction, native numeric contact ID and actual
 script key; canonical trainer class/member metadata is included when known.
 This engine retains native extracted script keys rather than inventing
