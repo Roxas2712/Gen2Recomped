@@ -32,11 +32,16 @@ map change. Setup explicitly stages introduction, maps, EXPN and radio card.
 Metal warning overlays remain. See the sanitized
 [receipt](qa/native-foundation/johto-native-radio-audio.json).
 
-The current main integrations are preserved in composed `d1bd32eb`, which
-passes424/424 engine suites, SDK3/3 and all quick tiers. Its source-bound
-qualification40251541022 and fresh GPU acceptance remain pending. The existing
-preview currently ships the earlier presentation source4be92945; diagnostic
-radio-audio acceptance is not substituted for the composed release checks.
+Composed `d1bd32eb` passes424/424 engine suites, SDK3/3 and all quick tiers.
+Qualification40251541022 attempt2 passes all four platforms and packaging.
+Fresh actual Crystal/unchanged Johto GPU checks pass71 per backend and all
+12 OS-window images were individually inspected; see the separate
+[composed receipt](qa/native-foundation/johto-native-radio-audio-composed.json).
+The first Intel attempt failed fetching its host through a transient DNS
+error; its engine checks passed and the same-source retry completed.
+Main subsequently gained native frame pacing, so this remains a diagnostic
+source. The newer composition needs its own runtime/GPU acceptance before
+publication. The existing preview still ships presentation source4be92945.
 
 This change covers station entry/exit and the native story gate. Complete
 ROM-driven show text, timing, schedules, intermediate jingles and music-show
