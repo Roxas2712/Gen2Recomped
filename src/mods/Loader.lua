@@ -1326,6 +1326,8 @@ local function retireSpriteResources()
   if space and type(space.release)=='function'then space.release()end
   local transition=package.loaded['src.core.game3.battle_transition']
   if transition and type(transition.release)=='function'then transition.release()end
+  local effects=package.loaded['src.core.game3.field_effects']
+  if effects and type(effects.release)=='function'then effects.release()end
 end
 
 function Loader:load(data)
