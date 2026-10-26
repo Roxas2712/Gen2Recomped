@@ -6,7 +6,7 @@ local S=require('src.core.SaveSerializer')
 local current=S.encode({player={name='Current'},playTime=120})
 local remote=S.encode({player={name='Other device'},playTime=130})
 local writes={}
-package.loaded['src.core.SaveData']={slotDiskPath=function() return '/test/running' end,
+package.loaded['src.core.SaveData']={peekSlot=function()return nil end,slotDiskPath=function() return '/test/running' end,
  listSlots=function() return {{id='running',name='Current'}} end,createSlot=function() return 'cloud-copy' end,
  writeSlot=function(_,id,value) writes[id]=value;return true end,renameSlot=function() end}
 local originalOpen=io.open

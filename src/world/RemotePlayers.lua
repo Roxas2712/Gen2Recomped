@@ -68,9 +68,12 @@ function R.actors(world)
  local cache=worlds[world]
  if not cache or cache.account~=doc.account_id then cache={account=doc.account_id,actors={}};worlds[world]=cache end
  local result,seen={},{};local time=love.timer.getTime()
+ local navigation=require('src.world.FriendMap').describe(world)
  for _,v in ipairs(doc.visitors or {}) do
   local id=tostring(v.account_id);local pos=v.position
-  if #result<R.MAX_VISIBLE and not seen[id] and visible(doc,id) and pos and pos.map==tostring(world.map.id)
+  local matching=pos and ((pos.navigation or navigation) and require('src.world.FriendMap').same(pos.navigation,navigation)
+   or not pos.navigation and not navigation and pos.map==tostring(world.map.id))
+  if #result<R.MAX_VISIBLE and not seen[id] and visible(doc,id) and matching
    and type(pos.x)=='number' and type(pos.y)=='number' and pos.x==pos.x and pos.y==pos.y and pos.x>=0 and pos.y>=0 and pos.x<=32768 and pos.y<=32768 then
    seen[id]=true
    local actor=cache.actors[id]

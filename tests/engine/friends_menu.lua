@@ -19,7 +19,7 @@ check(found['pref:visible:2'] and found['pref:requests:2'],'each accepted friend
 check(found['invite:battle:11111111-1111-4111-8111-111111111111'] and found['invite:trade:11111111-1111-4111-8111-111111111111'],'talk menu offers edition-specific native battles and trades')
 F.action(O,'pref:visible:2');F.tick(O);check(sent[3].friend_id==2 and sent[3].visible==false,'excluding a friend targets the account, rather than an ephemeral device')
 F.action(O,'declineLink:22222222-2222-4222-8222-222222222222');F.tick(O);check(sent[3].accept==false,'decline cannot accidentally accept an incoming request')
-F.action(O,'friendTag');F.text(O,'Jörg');F.key(O,'backspace');check(O.friendQuery=='Jör','friend search preserves Unicode while editing')
+F.action(O,'friendTag');F.text(O,'Jörg');F.key(O,'backspace');F.key(O,'return');check(O.friendQuery=='Jör','friend search preserves Unicode while editing')
 O.socialJob={cancel=function()Cancelled=true end};F.clear(O);check(Cancelled and not O.friendFocus,'closing owns and cancels pending UI work and text input')
 signed=false;rows=F.rows(O);check(#rows==2 and rows[2].id=='library','guests keep local play and receive a clear optional sign-in entry')
 print('Native friends menu: '..n..' checks passed')
