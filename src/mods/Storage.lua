@@ -21,6 +21,7 @@
 local SaveSerializer = require("src.core.SaveSerializer")
 local SaveData = require("src.core.SaveData")
 local GameVersion = require("src.core.GameVersion")
+local PlaythroughStorage = require("src.mods.PlaythroughStorage")
 
 local Storage = {}
 Storage.__index = Storage
@@ -88,7 +89,7 @@ end
 -- byte methods keep their original per-mod root and signatures.
 function Storage:selected(game)
   if not self._playthroughStorage then
-    self._playthroughStorage = require("src.mods.PlaythroughStorage").new(self.modId, self.fs)
+    self._playthroughStorage = PlaythroughStorage.new(self.modId, self.fs)
   end
   return self._playthroughStorage:selected(game)
 end
