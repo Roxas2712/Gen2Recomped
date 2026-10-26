@@ -422,6 +422,7 @@ end
 local function returnToLauncher()
   if Importer then return end
   RetroOverlay.clear()
+  local friends=package.loaded['src.link.FriendLink'];if friends then friends.tick(nil) end
   pcall(function() require("src.core.Music").stop() end)
   -- The launcher's bottom-screen shelf starts fresh, and its canvas is not
   -- held across a whole play session.
@@ -667,6 +668,17 @@ function love.update(dt)
   -- is the code that just died.
   if bootReport then return end
   require('src.cloud.Presence').tick()
+  if not autopilot and not driverCo and not editorMode and not TouchEditor then
+    local blocked=require('src.cloud.Play').tick(Importer and nil or Game)
+    if blocked and Game then
+      RetroOverlay.open(Game);RetroOverlay.recoveringTrade=true
+      RetroOverlay.notice=require('src.link.FriendTrade').error or 'Recovering your confirmed trade. Your saved party is protected.'
+      RetroOverlay.update(Game)
+      return
+    elseif RetroOverlay.recoveringTrade then
+      RetroOverlay.recoveringTrade=nil;RetroOverlay.notice='Your confirmed trade was recovered and saved. Continue playing.'
+    end
+  end
   local community=package.loaded['src.import.LauncherCommunity']
   if community then community.backgroundUpdates() end
   walkerTick("tick", dt)
@@ -1084,7 +1096,7 @@ function love.mousemoved(x, y, dx, dy, istouch)
 end
 
 function love.textinput(text)
-  if RetroOverlay.game then return end
+  if RetroOverlay.game then require('src.ui.FriendsMenu').text(RetroOverlay,text);return end
   if TouchEditor then return end
   if Importer then return Importer:textinput(text) end
   if editorMode and EditorApp.textinput then

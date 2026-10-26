@@ -8,10 +8,10 @@ local Json=require('src.link.Json')
 local retiring={}
 local BATCH_SIZE=8
 local function now() return love.timer.getTime() end
-function N.new(cup,match,battle,ticket)
+function N.new(cup,match,battle,ticket,request)
  return setmetatable({cup=cup,match=match,battle=battle,ticket=ticket,account=Auth.accountId(),
   paired=true,mode='cloudArena',inbox={},outbox={},sequence=0,received=0,accepted=0,
-  nextPoll=0,lastSuccess=now(),closed=false},N)
+  nextPoll=0,lastSuccess=now(),closed=false,request=request},N)
 end
 function N:send(message)
  if self.closed then return end
@@ -71,7 +71,9 @@ function N:exchange()
  local cup,match=self.cup,self.match
  self.sentClose=closing
  self.job=Task.new(function()
-  local doc,why,status=require('src.cloud.Tournaments').request('POST',cup,'battle-wire',payload,match)
+  local doc,why,status
+  if self.request then doc,why,status=self.request(payload)
+  else doc,why,status=require('src.cloud.Tournaments').request('POST',cup,'battle-wire',payload,match) end
   if doc then return doc end
   return nil,{message=why,status=status}
  end)
