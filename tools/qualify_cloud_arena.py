@@ -52,7 +52,7 @@ def main():
     qa_cache(output)
     output.mkdir(parents=True, mode=0o700)
     source = output / 'source'
-    qa_copy(source)
+    qa_copy(source, ephemeral=True)
     source.mkdir()
     shutil.copytree(ROOT / 'src', source / 'src')
     for name in ('assets', 'data', 'tools'):

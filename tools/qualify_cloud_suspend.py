@@ -66,7 +66,7 @@ def main():
     output.mkdir(parents=True)
     output.chmod(0o700)
     source = output / 'source'
-    qa_copy(source)
+    qa_copy(source, ephemeral=True)
     source.mkdir()
     shutil.copytree(ROOT / 'src', source / 'src')
     for name in ('assets', 'data', 'tests', 'tools'):

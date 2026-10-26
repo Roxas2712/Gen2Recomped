@@ -303,6 +303,103 @@
       "assertions": 1578,
       "passed": true,
       "scope": "Local isolated Laravel feature suites; native reports, rewards, tournament access, gifts, bank exchange, friends, presence, cloud authorization and operator protection."
+    },
+    "afterMainIntegration": {
+      "integratedMain": "7ecfdd05a82040a4d0216e7f88583ade1d4d3207",
+      "suspend": {
+        "passed": true,
+        "results": [
+          {
+            "edition": "emerald",
+            "role": "source",
+            "reason": "Uploaded a damaged native battle during a move animation; recorded deterministic turn 2",
+            "capture": {
+              "tailSteps": 313,
+              "anchor": "battle",
+              "kind": "trainer",
+              "idleTicks": 0,
+              "bytes": 444573
+            },
+            "ok": true,
+            "ticks": 1023,
+            "phase": "nextturn"
+          },
+          {
+            "role": "target",
+            "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed",
+            "ok": true,
+            "ticks": 230,
+            "edition": "emerald",
+            "phase": "return"
+          }
+        ],
+        "scope": "Two independent fresh macOS processes/profiles, real imported data and native battle, private local HTTPS API; no physical or cross-OS proof"
+      },
+      "arena": {
+        "passed": true,
+        "results": [
+          {
+            "edition": "emerald",
+            "scenario": "recovery",
+            "battle_state": "complete",
+            "points": {
+              "left": 50,
+              "right": -25
+            },
+            "wallets": {
+              "left": 100,
+              "right": 25
+            },
+            "results": [
+              {
+                "cancelled": false,
+                "frames": 7650,
+                "reason": "Native battle recovered from a lost committed response and both reports completed.",
+                "proof": {
+                  "digest": "3822721c28fbc9dfa7081e0d8f89eca471ea26141c48cd6e021327db8b45a517",
+                  "status": "complete",
+                  "winner": 1,
+                  "turns": 5
+                },
+                "battleSeen": true,
+                "faultInjected": true,
+                "phase": "verify-report",
+                "edition": "emerald",
+                "role": "left",
+                "cloudTransport": true,
+                "adventureRestored": true,
+                "saveFileUnchanged": true,
+                "scenario": "recovery",
+                "blockedRetries": 2,
+                "ok": true
+              },
+              {
+                "battleSeen": true,
+                "reason": "Native battle recovered from a lost committed response and both reports completed.",
+                "edition": "emerald",
+                "role": "right",
+                "cloudTransport": true,
+                "adventureRestored": true,
+                "saveFileUnchanged": true,
+                "scenario": "recovery",
+                "blockedRetries": 0,
+                "ok": true,
+                "cancelled": false,
+                "faultInjected": false,
+                "frames": 7976,
+                "phase": "verify-report",
+                "proof": {
+                  "winner": 1,
+                  "status": "complete",
+                  "turns": 5,
+                  "digest": "3822721c28fbc9dfa7081e0d8f89eca471ea26141c48cd6e021327db8b45a517"
+                }
+              }
+            ]
+          }
+        ],
+        "scope": "Independent macOS client profiles and private local HTTPS; no physical or cross-OS proof; peer-attested results, no independent server replay"
+      }
     }
   }
 }
