@@ -53,6 +53,27 @@ function Collision.isWater(x,y)
   local g,w=Session.resolve()
   return g~=nil and integer(x)and integer(y)and w.map:inBounds(x,y)and w.map:isWaterCell(x,y)or false
 end
+function Collision.isGrass(x,y)
+  local g,w=Session.resolve()
+  return g~=nil and integer(x)and integer(y)and w.map:inBounds(x,y)and w.map:isGrassCell(x,y)or false
+end
+function Collision.nextElevation(def,at,x,y,px,py)
+  local g=Session.resolve();local maps=g and Map._context(g)
+  if not(maps and maps:isOwned(def)and maps:definition(def.id)==def and integer(x)and integer(y))then
+    return at,nil
+  end
+  return require('src.world.Map').elevationTransition(at,
+    Collision.elevationOn(def,x,y),Collision.elevationOn(def,px,py))
+end
+function Collision.ledgeLanding(game,x,y,dir)
+  local g,w=Session.resolve(game)
+  if not(g and integer(x)and integer(y)and w.map:inBounds(x,y))then return nil end
+  local _,fx,fy,distance=require('src.world.Ledge').approach(w.map,g.data,x,y,dir)
+  if not fx then return nil end
+  local delta=require('src.world.Collision').DELTA[dir]
+  local lx,ly=x+delta[1]*(distance or 2),y+delta[2]*(distance or 2)
+  if w.map:inBounds(lx,ly)then return lx,ly end
+end
 function Collision.isWarpMetatileBehavior(behavior)
   return type(behavior)=='number'and((behavior>=0x60 and behavior<=0x6f)or behavior==0x71 or warpBehaviors[behavior]==true)or false
 end

@@ -5565,48 +5565,6 @@ function OverworldState:startWaterAnim(cx, cy, onDone)
   self.waterAnim = { x = cx, y = cy, frames = 40, total = 40, onDone = onDone }
 end
 
--- TWO VOCABULARIES FOR THE SAME FOUR DIRECTIONS, and they never met.
---
--- The tileset's ledge table names its directions the way the CARTRIDGE does:
--- MB_JUMP_EAST, MB_JUMP_SOUTH -- so the extracted table reads
--- `[0x3B] = "south"`.  Movement here names them the way the PLAYER'S INPUT
--- does: up, down, left, right.  The test below compared one against the other
--- and, of course, never matched -- and then took the early return that says
--- "a dataset that names its ledges by behaviour has said all it has to say",
--- so it did not fall through to anything either.
---
--- The result was the exact bug the table was added to fix, still standing
--- with the table in place: every ledge in Hoenn a wall, no route down off any
--- terrace in the region.  Both halves were right on their own and the join
--- was never driven.
---
--- So the join is one function, and it accepts either word.  A dataset or a
--- mod may say "north" or "up" and mean the same thing.
-local LEDGE_DIRECTIONS = {
-  north = "up", south = "down", west = "left", east = "right",
-  up = "up", down = "down", left = "left", right = "right",
-}
-
-local function ledgeDirection(word)
-  return word and LEDGE_DIRECTIONS[word] or nil
-end
-
--- The eight Gen 3 ledge behaviours, by the direction you must be walking to
--- take them (metatile_behaviors.h). The four diagonals are listed under the
--- axis a cardinal input can satisfy: Emerald lets a diagonal ledge be entered
--- from either of its two components, and up/down is the one this engine's
--- movement can express.
-local GEN3_LEDGE_BEHAVIOURS = {
-  [0x38] = "right",   -- MB_JUMP_EAST
-  [0x39] = "left",    -- MB_JUMP_WEST
-  [0x3A] = "up",      -- MB_JUMP_NORTH
-  [0x3B] = "down",    -- MB_JUMP_SOUTH
-  [0x3C] = "up",      -- MB_JUMP_NORTHEAST
-  [0x3D] = "up",      -- MB_JUMP_NORTHWEST
-  [0x3E] = "down",    -- MB_JUMP_SOUTHEAST
-  [0x3F] = "down",    -- MB_JUMP_SOUTHWEST
-}
-
 -- Ledge hops (data/tilesets/ledge_tiles.asm): standing tile + ledge tile
 -- in front + matching input direction -> jump two cells.
 function OverworldState:checkLedgeHop(dir)
@@ -5617,57 +5575,13 @@ function OverworldState:checkLedgeHop(dir)
   if not self.map:inBounds(fx, fy) then return false end
   local front = self.map:cellTile(fx, fy)
 
-  -- A GEN 3 LEDGE IS A PROPERTY OF THE TILE IN FRONT, not of a pair.
-  --
-  -- Gen 1 and Gen 2 decide a hop from (tile you stand on, tile in front,
-  -- direction) because their tilesets have no room to say more.  Gen 3 says
-  -- it outright: the metatile's behaviour byte IS "you jump this, eastward".
-  -- Nothing derived a pair table for Hoenn, so field.ledges was empty and
-  -- every ledge in the region was simply a wall -- there was no route down
-  -- off any terrace in the game.
-  --
-  -- cellBehaviour rather than cellTile because a ledge is blocked, and
-  -- cellTile answers $FF for anything blocked.
-  --
-  -- ...AND NOTHING EVER SUPPLIED THE TABLE. `field.ledgeBehaviours` is read
-  -- here and written nowhere: no importer produces it and no dataset ships
-  -- one, so `byBehaviour` was nil on every map in the game and Hoenn fell
-  -- through to the pair tables below -- which are Gen 1 and Gen 2 rows keyed
-  -- by tile id, and match nothing on a Gen 3 pair. Every ledge in Hoenn was
-  -- a wall you could not hop.
-  --
-  -- The cartridge's own answer is a fixed run of eight behaviour bytes
-  -- (metatile_behaviors.h, MB_JUMP_EAST through MB_JUMP_SOUTHWEST), so it is
-  -- stated here rather than derived. A dataset that ships its own table
-  -- still wins; this only fills the gap. Gated on the pair shape -- 2x2
-  -- tiles to a metatile, one collision cell -- because those byte values
-  -- mean something else entirely in Kanto and Johto.
-  local byBehaviour = self.map.tileset and self.map.tileset.ledgeBehaviours
-    or Game.data.field and Game.data.field.ledgeBehaviours
-  if not byBehaviour then
-    local ts = self.map.tileset
-    if ts and tonumber(ts.blockTiles) == 2 and tonumber(ts.blockCells) == 1
-       and ts.collision then
-      byBehaviour = GEN3_LEDGE_BEHAVIOURS
+  local handled, x, y, distance, silent = require("src.world.Ledge").approach(
+    self.map, Game.data, p.cellX, p.cellY, dir)
+  if handled then
+    if x then
+      if distance then return self:startLedgeHop(dir, x, y, distance, silent) end
+      return self:startLedgeHop(dir, x, y)
     end
-  end
-  if byBehaviour then
-    local behaviour = self.map:cellBehaviour(fx, fy)
-    if behaviour and ledgeDirection(byBehaviour[behaviour]) == dir then
-      -- PLATINUM'S DOUBLE JUMP, the Distortion World's: `JUMP_*_TWICE`
-      -- (0x5A..0x5D) plays MOVEMENT_ACTION_JUMP_DISTORTION_WORLD_*, which
-      -- moves 2 units a frame for 24 frames -- THREE tiles, against an
-      -- ordinary ledge's 16 frames and two -- and passes SEQ_NONE, so it is
-      -- silent (pokeplatinum src/unk_020655F4.c). All 224 such tiles are in
-      -- the D34 rooms; taken as ordinary ledges they landed a tile short.
-      if (self.map.def and self.map.def.generation) == 4
-         and behaviour >= 0x5A and behaviour <= 0x5D then
-        return self:startLedgeHop(dir, fx, fy, 3, true)
-      end
-      return self:startLedgeHop(dir, fx, fy)
-    end
-    -- a dataset that names its ledges by behaviour has said all it has to
-    -- say; the pair tables below are the older generations' answer
     return false
   end
   if self:gen2LedgeAllows(standing, dir) then

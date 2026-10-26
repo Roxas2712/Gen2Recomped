@@ -286,10 +286,24 @@ local gen4Views = setmetatable({}, { __mode = "k" })
 -- and what shape they arrive in.  Gen 1, 2 and 3 fall through it unchanged:
 -- they have no `map.encounters`, so the id is still `mapId`, and no
 -- `grassRate`, so the table is returned exactly as it was.
+local gen3WildSetVar={firered=0x4024,leafgreen=0x4024,emerald=0x403e}
+-- Alternate GBA wild headers use the live native script variable, not RNG.
+-- Header zero is the base table; an out-of-range script value resets to it.
+function Encounter.gen3Variant(def,save,edition)
+  if not(type(def)=='table'and type(def.alternates)=='table')then return def end
+  local key=gen3WildSetVar[edition]
+  local n=key and save and save.gen3Vars and save.gen3Vars[key]
+  if type(n)=='number'and n%1==0 and n>=1 and n<=#def.alternates then return def.alternates[n]end
+  return def
+end
+
 function Encounter.forMap(data, mapDef, mapId, hour, save)
   local all = data and data.encounters
   if not all then return nil end
   local def = all[(mapDef and mapDef.encounters) or mapId]
+  if data.constants and data.constants.gen3Layout then
+    def=Encounter.gen3Variant(def,save,require('src.core.GameVersion').get())
+  end
   if data.field and data.field.gen2Swarms then
     def=require("src.world.Gen2Swarms").forMap(data,save,mapDef,mapId,def)
   end
