@@ -6,7 +6,8 @@ local fn=assert(source:match('(function Game:writeSave%(%)%s.-)\n%-%- Persist op
 local stamp={schema=1,version='red',mods={}}
 local saved,allowed=true,true
 local captures,emitted=0,0
-local data={buildMeta=function(_,prior) return {format=4,mods={},playthroughId=prior.playthroughId} end,
+local data={ensurePlaythroughId=function(value)check(value.meta.playthroughId=='same-adventure','the writer ensures the durable identity before stamping metadata');return value.meta.playthroughId end,
+ buildMeta=function(_,prior) return {format=4,mods={},playthroughId=prior.playthroughId} end,
  loadOptions=function() return {secret='KEEP LOCAL'} end,save=function(value) saved=value;return true end}
 local runtime={call=function() return allowed end,wants=function() return true end,emit=function(_,payload) emitted=emitted+1;check(payload.meta.resume==stamp or payload.meta.resume.schema==0,'save hooks observe the requirements that will be persisted') end}
 package.loaded['src.storage.SaveResume']={capture=function(version,loaded,options)

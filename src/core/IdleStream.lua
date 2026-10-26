@@ -77,6 +77,9 @@ function IdleStream.run(timer, deadline)
   local slice = deadline - now - IdleStream.MARGIN_SECONDS
   if slice > limit then slice = limit end
   if slice < IdleStream.MIN_SECONDS then return 0 end
+  -- The tier cap bounds the entire pump, including every registered service.
+  -- Reusing `limit` for each service would grant several full caps per frame.
+  local workDeadline = now + slice
   local S = stream()
   local offered = 0
   if S and S.busy and S.busy() then
@@ -85,9 +88,8 @@ function IdleStream.run(timer, deadline)
   end
   -- the registered services share what is left, each told the time it has
   for service in pairs(services) do
-    local left = deadline - timer.getTime() - IdleStream.MARGIN_SECONDS
+    local left = workDeadline - timer.getTime()
     if left < IdleStream.MIN_SECONDS then break end
-    if left > limit then left = limit end
     if service.busy() then
       service.step(left)
       offered = offered + left

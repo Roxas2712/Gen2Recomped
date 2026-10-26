@@ -79,3 +79,15 @@ Native critical guards change scripted Beat Up's policy and increment
 (`e4d28f474c15cd8b` to `cca86e08b893522c`). Restoring revision 2 restores
 the former digest. The other six populated sections remain unchanged. See
 `docs/native-gba-critical-context.md`.
+
+## Current upstream Gen4 effect registrations
+
+After integrating `8d5b4387`, the canonical fixture surface differs from
+`44173313` only by 53 new native Gen4 effect registrations. No existing
+record changes or removals occur, and the other six populated sections
+remain byte-identical. The fork's independently qualified GBA revisions
+remain present; its digest therefore differs from the public host's.
+An independent integer FNV-1a implementation confirms the whole digest
+`db02a510ba68bef4` and effect-section digest `59c30db2b705fa16`.
+The complete reviewed canonical input remains pinned alongside every
+section; no production hashing or gate assertions are changed.
