@@ -71,3 +71,9 @@ cover these boundaries. Source updates do not advance a second audio clock.
 The latest real Metal field capture shows a correctly oriented native fallback;
 the paper renderer still encounters additional contracts during scene creation.
 No full 3D, battle, UI or five-edition gameplay acceptance is claimed.
+
+Healing sprite snapshots now reuse the native monitor/ball selection, borrowed
+ROM artwork and cartridge offsets. Native drawing and mod snapshots share that
+selection without stepping the task, sound or continuation. 125 checks cover
+all five editions and the source anchor transform; real scene qualification
+continues separately.
