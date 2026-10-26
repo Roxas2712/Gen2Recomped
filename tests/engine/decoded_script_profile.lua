@@ -213,7 +213,12 @@ do
 	Version.set("gold")
 	local files = {
 		["options.lua"] = "return {mods={probe=true}}",
-		["mods/probe/manifest.json"] = Json.encode({ id = "probe", name = "Probe", version = "1.0.0", entry = "main.lua" }),
+		["mods/probe/manifest.json"] = Json.encode({
+			id = "probe",
+			name = "Probe",
+			version = "1.0.0",
+			entry = "main.lua",
+		}),
 		["mods/probe/main.lua"] = [=[return function(mod)
    mod.hooks:wrap('script.command',function(next,ctx,op,args,cmd)
     if op=='setval' then
@@ -263,7 +268,12 @@ do
 	d.constants.speciesOrder = { [4] = "CHARMANDER", [151] = "MEW" }
 	local files = {
 		["options.lua"] = 'return {mods={probe=true},modCallbackProfiles={probe="decoded"}}',
-		["mods/probe/manifest.json"] = Json.encode({ id = "probe", name = "Probe", version = "1.0.0", entry = "main.lua" }),
+		["mods/probe/manifest.json"] = Json.encode({
+			id = "probe",
+			name = "Probe",
+			version = "1.0.0",
+			entry = "main.lua",
+		}),
 		["mods/probe/main.lua"] = [=[return function(mod)
    mod.events:on('pokemon.before_give',function(gift)
     assert(gift.speciesId==4)
@@ -311,5 +321,51 @@ do
 	T.eq(r:isRunning(), false, "native updates finish the profiled delay")
 	T.same(phases, { "before", "after" }, "post-next executes exactly once after resumption")
 	T.eq(g.save.gen3Vars[0x4050], 9, "native continuation executes after resumption")
+end
+
+-- Provenance must not keep a retired dataset alive through the compiler cache.
+local weak, retained
+local function retired(keepRows)
+	local g, r, program = fixture(3, { ENTRY = { { "setvar", 0x4060, 1 }, { "end" } } })
+	local refs = setmetatable({ g.data, program }, { __mode = "v" })
+	return refs, keepRows and program or nil
+end
+weak = retired(false)
+collectgarbage("collect")
+collectgarbage("collect")
+T.eq(weak[1], nil, "private provenance releases an unowned dataset")
+T.eq(weak[2], nil, "private provenance releases an unowned compiled program")
+weak, retained = retired(true)
+collectgarbage("collect")
+collectgarbage("collect")
+T.eq(weak[1], nil, "a retained native row list cannot retain the entire source dataset")
+T.raises(function()
+	Decoded.prepare(retained)
+end, "retired", "decoded execution refuses a retired source cohort")
+
+do
+	local g, r, program = fixture(3, { ENTRY = { { "setvar", 0x4060, 1 }, { "end" } } })
+	g.data.map_scripts = { source = "RomExtractorGen3", scripts = { ENTRY = { { "end" } } }, maps = {} }
+	T.raises(function()
+		Decoded.prepare(program)
+	end, "retired", "a replaced source pool retires old compiled provenance")
+end
+-- Swallowing an error below next cannot retry partial native side effects.
+do
+	local g, r, program, _, bus = fixture(3, { ENTRY = { { "setvar", 0x4060, 1 }, { "end" } } })
+	local Commands = require("src.script.Commands")
+	local original, count = Commands.g3_setvar, 0
+	Commands.g3_setvar = function()
+		count = count + 1
+		error("owned native failure")
+	end
+	bus:wrap("script.command", function(next, ctx, op, ir)
+		pcall(next, ctx, op, ir)
+	end)
+	T.raises(function()
+		r:exec(program, r:makeContext({ source = { strict = true } }))
+	end, "did not complete", "a mod cannot swallow a failing native group and restart it")
+	Commands.g3_setvar = original
+	T.eq(count, 1, "native side effects occur at most once across a swallowed failure")
 end
 T.finish()
