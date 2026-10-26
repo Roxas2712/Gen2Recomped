@@ -5,6 +5,7 @@ import hashlib
 import shutil
 import subprocess
 import tempfile
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -29,9 +30,16 @@ def fetch_runtime(artifact, destination):
             # gh uses the caller's existing authentication. No token is placed
             # in a URL, command argument, archive, or diagnostic output.
             provider = 'github-api'
-            with pending.open('wb') as output:
-                subprocess.run(['gh', 'api', f'repos/love2d/love/actions/artifacts/{artifact}/zip'],
-                               stdout=output, stderr=subprocess.PIPE, check=True, timeout=120)
+            for attempt in range(3):
+                try:
+                    with pending.open('wb') as output:
+                        subprocess.run(['gh', 'api', f'repos/love2d/love/actions/artifacts/{artifact}/zip'],
+                                       stdout=output, stderr=subprocess.PIPE, check=True, timeout=120)
+                    break
+                except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError):
+                    if attempt == 2:
+                        raise
+                    time.sleep(attempt + 1)
         with pending.open('rb') as stream:
             actual = hashlib.file_digest(stream, 'sha256').hexdigest()
         if actual != runtime['sha256']:

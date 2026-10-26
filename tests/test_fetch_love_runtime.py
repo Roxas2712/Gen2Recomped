@@ -22,6 +22,9 @@ class OfficialHostDownload(unittest.TestCase):
             'id': 123, 'sha256': hashlib.sha256(self.data).hexdigest()}})
         self.pin.start()
         self.addCleanup(self.pin.stop)
+        sleeping = patch.object(fetch.time, 'sleep')
+        sleeping.start()
+        self.addCleanup(sleeping.stop)
 
     def test_primary_requires_exact_pinned_bytes(self):
         with patch.object(fetch.urllib.request, 'urlopen', return_value=io.BytesIO(self.data)), \
@@ -57,11 +60,26 @@ class OfficialHostDownload(unittest.TestCase):
 
     def test_failed_fallback_leaves_no_partial_output(self):
         with patch.object(fetch.urllib.request, 'urlopen', side_effect=urllib.error.URLError('offline')), \
-             patch.object(fetch.subprocess, 'run', side_effect=subprocess.CalledProcessError(1, ['gh'])):
+             patch.object(fetch.subprocess, 'run', side_effect=subprocess.CalledProcessError(1, ['gh'])) as fallback:
             with self.assertRaises(subprocess.CalledProcessError):
                 fetch.fetch_runtime(123, self.target)
         self.assertFalse(self.target.exists())
         self.assertEqual(list(self.target.parent.iterdir()), [])
+        self.assertEqual(fallback.call_count, 3)
+
+    def test_transient_api_failure_is_retried_with_truncated_partial_bytes(self):
+        calls = []
+        def github(command, **kwargs):
+            calls.append(command)
+            if len(calls) == 1:
+                kwargs['stdout'].write(b'partial response')
+                raise subprocess.CalledProcessError(1, command)
+            kwargs['stdout'].write(self.data)
+        with patch.object(fetch.urllib.request, 'urlopen', side_effect=urllib.error.URLError('offline')), \
+             patch.object(fetch.subprocess, 'run', side_effect=github):
+            self.assertEqual(fetch.fetch_runtime(123, self.target), 'github-api')
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(self.target.read_bytes(), self.data)
 
     def test_unpinned_artifact_is_rejected_before_network(self):
         with patch.object(fetch.urllib.request, 'urlopen') as network:
