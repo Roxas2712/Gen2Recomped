@@ -105,7 +105,7 @@ function Overview.encounters(game, ow, context, mapId, terrain, opts)
     end
     if GameVersion.isGen2() then
       if not daytime then
-        hour = tonumber(os.date("%H")) or 12
+        hour = require("src.core.Gen2Clock").hour(game.save)
         daytime = hour < 4 and "NITE" or hour < 10 and "MORNING" or hour < 18 and "DAY" or "NITE"
       end
     else

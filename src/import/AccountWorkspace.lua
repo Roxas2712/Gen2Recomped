@@ -87,6 +87,7 @@ function W.action(self,id)
   if f.job then return end
   if id:match('^field:') then inputMode(f,id:sub(7));return end
   inputMode(f,nil)
+  if f.mode=='giftAdmin' and require('src.import.GiftDesigner').action(f,id) then f.scroll=0;return end
   if id=='cloud' then
     f.mode='login';f.cloudSync=true;f.scroll=0
     if not f.policy then job(self,'policy',A.policy) end
@@ -142,14 +143,20 @@ function W.action(self,id)
     job(self,'giftReceived',function() return require('src.cloud.GiftCodes').redeem(code,edition) end)
   elseif id:match('^restoreGift:') then
     local receipt=f.gifts and f.gifts.receipts[tonumber(id:match(':(%d+)$'))]
-    if receipt then job(self,'giftReceived',function() return require('src.cloud.GiftCodes').keep(receipt) end) end
-  elseif id=='newGift' then f.createdGift=nil;f.giftEgg=false;f.giftShiny=false;f.mode='giftAdmin';f.giftTitle='';f.giftLimit='';f.giftDex='25';f.giftLevel='5';f.giftMoves='';f.giftSelected={crystal=true};f.scroll=0
+    if receipt then
+      if receipt.kind=='item' or receipt.kind=='event' then f.giftDelivery=receipt;f.mode='giftDelivery';f.scroll=0
+      else job(self,'giftReceived',function() return require('src.cloud.GiftCodes').keep(receipt) end) end
+    end
+  elseif id:match('^giftDeliver:') then
+    local index=tonumber(id:match(':(%d+)$'));local slot=f.giftSlots and f.giftSlots[index];local receipt=f.giftDelivery
+    if slot and receipt then job(self,'giftDelivered',function() return require('src.storage.GiftItems').deliver(receipt,slot.version,slot.slot) end) end
+  elseif id=='newGift' then f.createdGift=nil;f.mode='giftAdmin';f.giftTitle='';f.giftLimit='';f.giftSelected={crystal=true};f.scroll=0;require('src.import.GiftDesigner').init(f)
   elseif id:match('^giftFor:') then local version=id:sub(9);f.giftSelected[version]=not f.giftSelected[version]
   elseif id=='copyGiftCode' and f.createdGift and love.system.setClipboardText then love.system.setClipboardText(f.createdGift.code);f.notice='Gift code copied.'
   elseif id=='createGift' then
     local editions={};for _,v in ipairs(require('src.core.GameVersion').ORDER) do if (f.giftSelected or {})[v] then editions[#editions+1]=v end end
-    local moves={};for move in (f.giftMoves or ''):upper():gmatch('[A-Z0-9]+') do moves[#moves+1]=move end
-    local payload={title=f.giftTitle,editions=editions,dex=tonumber(f.giftDex),level=tonumber(f.giftLevel),egg=f.giftEgg==true,shiny=f.giftShiny==true,moves=moves,redemption_limit=tonumber(f.giftLimit)}
+    local reward,why=require('src.import.GiftDesigner').payload(f);if not reward then f.notice=why or 'Choose a reward.';return end
+    local payload=reward;payload.title=f.giftTitle;payload.editions=editions;payload.redemption_limit=tonumber(f.giftLimit)
     job(self,'giftCreated',function() return A.createGift(payload) end)
   elseif id:match('^giftActive:') then
     local campaign=f.gifts and f.gifts.campaigns[tonumber(id:match(':(%d+)$'))]
@@ -189,7 +196,8 @@ function W.tick(self)
   local doc=r.first
   if purpose=='roles' then f.notice='Permissions saved · '..tostring(doc.permissions and doc.permissions.role)..'. The protected operator keeps their role.'
   elseif purpose=='gifts' then f.gifts=doc;f.notice=nil
-  elseif purpose=='giftReceived' then f.notice=(doc.alreadyRedeemed and 'Already claimed · ' or 'Gift in your Bank · ')..tostring(doc.title)..'. The same gift can be restored on your other devices.'
+  elseif purpose=='giftDelivered' then f.mode='gifts';f.notice='Prize delivered to a new save copy. Select that copy to continue playing.'
+  elseif purpose=='giftReceived' then f.giftDelivery=doc.kind and doc.receipt or nil;if doc.kind then f.mode='giftDelivery';f.scroll=0 end;f.notice=(doc.alreadyRedeemed and 'Already claimed · ' or (doc.kind and 'Gift in your account inbox · ' or 'Gift in your Bank · '))..tostring(doc.title)..'. The same gift can be restored on your other devices.'
   elseif purpose=='giftCreated' then f.createdGift=doc;f.notice='Gift code created. Copy it now; the plaintext code is not kept in the campaign list.'
   elseif purpose=='giftActive' then job(self,'gifts',A.gifts)
   elseif purpose=='profile' then profile(self,doc);f.notice='Profile saved for all your devices. Custom avatars stay private until their public review is complete.'
@@ -201,6 +209,7 @@ function W.tick(self)
     if not Auth.signedIn() then f.mode='login';f.devices=nil;f.profile=nil;f.avatarImage=nil;f.notice='This device was disconnected. Sign in again.';return end
     f.devices=doc.devices;f.nickname=doc.name;f.permissions=doc.permissions;f.notice=doc.profileError
     if doc.profile then profile(self,doc.profile) end
+    if f.after=='giftAdmin' then f.after=nil;W.action(self,'newGift');return end
     local storage=require('src.storage.AccountStorage')
     if Auth.accountId and Auth.accountId()~=f.accountAtOpen then storage.profileChanged(self);f.accountAtOpen=Auth.accountId() end
     if storage.enabled and (f.after=='bank' or f.after=='bankDex' or f.after=='history' or f.after=='storage' or type(f.after)=='table' and f.after.kind=='play') and storage.check() then local after=f.after;W.close(self);storage.resume(self,after) end
@@ -244,7 +253,7 @@ function W.draw(self)
   local function button(label,bx,by,bw,id)
     local r=self:_chipButton(bx,by,label,{w=bw,h=38*s,kind='accent'});r.id=id;f.rects[#f.rects+1]=r;return r
   end
-  text('RETRORECOMPED · YOUR ACCOUNT',x+24*s,y+20*s,width-150*s,true)
+  text(f.mode=='giftAdmin' and 'RETRORECOMPED · PRIZE STUDIO' or 'RETRORECOMPED · YOUR ACCOUNT',x+24*s,y+20*s,width-150*s,true)
   button('CLOSE',x+width-108*s,y+18*s,84*s,'close').pinned=true
   local v={x=x+18*s,y=y+76*s,width=width-36*s,height=height-94*s};f.viewport=v
   local top=v.y-f.scroll
@@ -281,17 +290,31 @@ function W.draw(self)
     field('Player’s complete friend tag','roleTarget');row('ROLE · '..tostring(f.roleChoice):upper()..' · CHANGE','roleChoice')
     field('Reason · at least 15 characters','roleReason');field('Confirm your account password','rolePassword',true)
     row('SAVE PERMISSIONS','saveRole');row('MY ACCOUNT','account')
+  elseif f.mode=='giftDelivery' then
+    paragraph('DELIVER ITEM / EVENT PRIZE',true);paragraph(f.giftDelivery.title);paragraph('Choose a save from the prize edition. A new save copy is created; the original is preserved.')
+    f.giftSlots=require('src.import.BankWorkspace').slots(self)
+    for i,slot in ipairs(f.giftSlots) do if slot.version==f.giftDelivery.edition then row(slot.label,'giftDeliver:'..i) end end
+    if #f.giftSlots==0 then paragraph('Create or import a save in this edition first.') end
+    row('MY GIFTS','gifts')
   elseif f.mode=='gifts' or f.mode=='giftAdmin' then
     paragraph(f.mode=='giftAdmin' and 'CREATE A GIFT CODE · STAFF' or 'GIFT CODES',true)
-    paragraph('Gen 1: Pokémon and special moves. Gen 2–5: Pokémon, shiny gifts and eggs. A code is claimed once per account across all your devices. Gifts are stored in your Bank; local saves stay intact.')
+    paragraph('Pokémon, items and edition-specific event unlocks. Gen 1 has no eggs or shiny setting. A code is claimed once per account across all your devices. Gifts are stored in your Bank; local saves stay intact.')
     if f.mode=='giftAdmin' then
       if f.createdGift then
         paragraph('NEW CODE · '..f.createdGift.code,true);paragraph('Keep or share this code now. It is shown only in this creation result.')
         row('COPY GIFT CODE','copyGiftCode');row('BACK TO MY GIFTS','gifts')
       else
-        field('Gift title','giftTitle');field('National Pokédex number','giftDex');field('Level · eggs use the destination’s hatch level','giftLevel')
-        check('Egg · unavailable for Gen 1','giftEgg');check('Shiny · unavailable for Gen 1','giftShiny')
-        field('Special moves · comma-separated names, e.g. FLY, SURF. Leave empty for native starting moves.','giftMoves')
+        field('Gift title','giftTitle')
+        local editions={};for _,v in ipairs(require('src.core.GameVersion').ORDER) do if (f.giftSelected or {})[v] then editions[#editions+1]=v end end
+        local tabAt=0
+        require('src.import.GiftDesigner').draw(f,editions,{text=paragraph,row=row,field=field,tab=function(label,id,active)
+          local bw=(width-60*s)/7;button((active and '• ' or '')..label,x+24*s+tabAt*(bw+2*s),top,bw,id)
+          tabAt=tabAt+1;if tabAt==7 then top=top+54*s end
+        end,choices=function(choices)
+          local bw=(width-58*s)/#choices
+          for i,choice in ipairs(choices) do button((choice[3] and '• ' or '')..choice[1],x+24*s+(i-1)*(bw+2*s),top,bw,choice[2]) end
+          top=top+54*s
+        end})
         field('Maximum accounts · empty means unlimited','giftLimit')
         paragraph('SUPPORTED EDITIONS',true)
         for _,version in ipairs(require('src.core.GameVersion').ORDER) do if version~='prism' and version~='polishedcrystal' then
@@ -303,8 +326,8 @@ function W.draw(self)
       field('Gift code','giftCode');row('EDITION · '..tostring(f.giftEdition or 'crystal'):upper()..' · CHANGE','giftEdition')
       row('REDEEM TO MY BANK','redeemGift');row('REFRESH MY GIFTS','gifts');row('MY ACCOUNT','account')
       for i,receipt in ipairs((f.gifts or {}).receipts or {}) do
-        paragraph(receipt.title..' · #'..receipt.dex..(receipt.egg and ' · EGG' or '')..(receipt.shiny and ' · SHINY' or ''))
-        row('RESTORE THIS GIFT TO MY BANK','restoreGift:'..i)
+        paragraph(receipt.title..' · '..require('src.import.GiftDesigner').describe(receipt.reward or receipt))
+        row((receipt.kind=='item' or receipt.kind=='event') and 'DELIVER TO A SAVE COPY' or 'RESTORE THIS GIFT TO MY BANK','restoreGift:'..i)
       end
       if f.gifts and f.gifts.manage then
         row('STAFF · CREATE A GIFT CODE','newGift')
