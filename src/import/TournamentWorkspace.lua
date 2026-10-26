@@ -160,7 +160,7 @@ function W.draw(self,x,y,w,h)
   text('Community competition · Single elimination · Edition rules · Account-bound prizes')
   button('BACK','dismiss');button('Edition: '..d.edition:upper(),'edition')
   local regional=false;for _,c in ipairs(f.index and f.index.arena and f.index.arena.formats or {}) do if c.generation==Versions.generation(d.edition) then regional=true end end
-  for _,c in ipairs(f.index and f.index.arena and f.index.arena.formats or {}) do if c.generation==Versions.generation(d.edition) or c.id=='worlds' or not regional and not c.generation then button((d.format==c.id and '● ' or '')..c.title..' · '..c.team_size..' Pokémon','preset:'..c.id) end end
+  for _,c in ipairs(f.index and f.index.arena and f.index.arena.formats or {}) do if c.generation==Versions.generation(d.edition) or c.id=='worlds' or not regional and not c.generation then button((d.format==c.id and '* ' or '')..c.title..' · '..c.team_size..' Pokémon','preset:'..c.id) end end
   button('Custom rules','preset:custom');field('Title','title',d.title)
   field('Capacity (2–64)','capacity',d.capacity);field('Team size (1–6)','team_size',d.team_size);field('Battle level (1–100)','level',d.level)
   field('Rules shown to all players','rules',d.rules);field('Scheduled start · optional ISO date with timezone','starts_at',d.starts_at)
@@ -213,7 +213,7 @@ function W.draw(self,x,y,w,h)
   elseif c.state=='running' and c.manage then button('CANCEL TOURNAMENT','cancel') end
   y=y+Art.bracket(self,x,y,w,c,names)
   text('LOBBY',true,P.ink)
-  for _,p in ipairs(c.players or {}) do text((p.online and '● ONLINE  ' or '○ OFFLINE  ')..(p.ready and 'READY · ' or 'WAITING · ')..p.nickname,false,p.ready and P.link or P.detail) end
+  for _,p in ipairs(c.players or {}) do text((p.online and '[ON] ONLINE  ' or '[OFF] OFFLINE  ')..(p.ready and 'READY · ' or 'WAITING · ')..p.nickname,false,p.ready and P.link or P.detail) end
   local round
   for i,m in ipairs(c.matches or {}) do
    if round~=m.round then round=m.round;y=y+14*s;text('ROUND '..round,true,P.link) end

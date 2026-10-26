@@ -94,8 +94,8 @@ function A.bracket(self,x,y,w,c,names)
     local bx=x+((i-1)%cols)*(width+12*s);local by=cy+math.floor((i-1)/cols)*60*s
     g.setColor(.07,.11,.19);g.rectangle('fill',bx,by,width,48*s,6*s,6*s)
     local function name(id) return id and (names[id] or 'Player') or 'Awaiting winner' end
-    label(self,(m.winner==m.left and '★ ' or '')..name(m.left),bx+8*s,by+6*s,width-16*s,11*s,{.85,.9,1})
-    label(self,(m.winner==m.right and '★ ' or '')..name(m.right),bx+8*s,by+28*s,width-16*s,11*s,{.66,.77,.91})
+    label(self,(m.winner==m.left and 'WIN · ' or '')..name(m.left),bx+8*s,by+6*s,width-16*s,11*s,{.85,.9,1})
+    label(self,(m.winner==m.right and 'WIN · ' or '')..name(m.right),bx+8*s,by+28*s,width-16*s,11*s,{.66,.77,.91})
    end
    cy=cy+math.ceil(#(rounds[r] or {})/cols)*60*s+16*s
   end
@@ -113,8 +113,8 @@ function A.bracket(self,x,y,w,c,names)
    g.setColor(.07,.11,.19);g.rectangle('fill',bx,by,cw,48*s,6*s,6*s)
    g.setColor(m.winner and 1 or .30,m.winner and .77 or .45,m.winner and .36 or .67,.8);g.rectangle('line',bx,by,cw,48*s,6*s,6*s)
    local function name(id) return id and (names[id] or 'Player') or 'Awaiting winner' end
-   label(self,(m.winner==m.left and '★ ' or '')..name(m.left),bx+8*s,by+6*s,cw-16*s,11*s,{.85,.9,1})
-   label(self,(m.winner==m.right and '★ ' or '')..name(m.right),bx+8*s,by+28*s,cw-16*s,11*s,{.66,.77,.91})
+   label(self,(m.winner==m.left and 'WIN · ' or '')..name(m.left),bx+8*s,by+6*s,cw-16*s,11*s,{.85,.9,1})
+   label(self,(m.winner==m.right and 'WIN · ' or '')..name(m.right),bx+8*s,by+28*s,cw-16*s,11*s,{.66,.77,.91})
   end
  end
  g.pop();return h+12*s
