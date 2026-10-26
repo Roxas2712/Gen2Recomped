@@ -8,6 +8,13 @@ if loadfile('src/world/OptionalFollower.lua') then
 else
  T.raises(function()require('src.world.gen2.Follower')end,'src.world.OptionalFollower','alias identifies an unavailable native follower provider')
 end
+local sourcePlayer=require('src.core.game3.player')
+local fallbackPlayer=require('src.compat.game3.Player')
+if loadfile('src/core/game3/player.lua')then
+ T.neq(sourcePlayer,fallbackPlayer,'concrete live player provider takes precedence over the field fallback')
+else
+ T.eq(sourcePlayer,fallbackPlayer,'host without a concrete player provider receives the live field fallback')
+end
 local names=require('src.mods.Gen1Compat')
 for _,pair in ipairs({{'src.world.game3.Follower','src.compat.game3.Follower'},
  {'src.core.game3.pokemon','src.compat.game3.Pokemon'},
