@@ -797,6 +797,18 @@ HANDLERS.mon = function(save, data, ev, version)
   return true, where
 end
 
+-- Account gift delivery uses the same native handlers without a Walker purchase.
+-- Callers operate on an isolated save draft and commit only after success.
+function Ev.deliverGift(save, data, id, version)
+  local ev = byId[id]
+  if not ev or ev.kind ~= "key" or not has(ev.games, version) then
+    return nil, "This event is unavailable in the selected edition."
+  end
+  local fn = HANDLERS[ev.handler]
+  if not fn then return nil, "This event handler is unavailable." end
+  return fn(save, data, ev, version)
+end
+
 -- Deliver every pending event into a loaded save. Returns the number handed
 -- over (nil when there was nothing).
 function Ev.apply(save, data)
