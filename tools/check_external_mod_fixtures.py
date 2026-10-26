@@ -46,7 +46,8 @@ def main():
             for name, digest in fixture['files'].items():
                 if hashlib.sha256((shipped / name).read_bytes()).hexdigest() != digest:
                     raise RuntimeError('shipped gallery bytes differ: ' + fixture['path'] + '/' + name)
-        versions = ('red', 'firered') if fixture['path'] == 'example_mew_starter' else ('red',)
+        versions = (('red', 'firered') if fixture['path'] == 'example_mew_starter' else
+                    ('red', 'gold', 'crystal', 'firered') if fixture['path'] == 'mystery_dungeon_follower' else ('red',))
         for version in versions:
             run = qa_run([args.lua, str(root / 'tests/fixtures/upstream_mods/worker.lua'),
                           str(reference), fixture['path'], version], cwd=root,
