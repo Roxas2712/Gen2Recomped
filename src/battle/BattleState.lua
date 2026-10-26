@@ -1256,6 +1256,7 @@ local function newBattle(game, opts)
         self.animPlayer = Gen2AnimPlayer.new(game.data)
         self.animPlayer.battle = self.battle
         self.animView = self.animPlayer.view
+        self.anims = self.animPlayer.anims
       end
     else
       local ok, AnimPlayer = pcall(require, "src.battle.AnimPlayer")
@@ -2804,12 +2805,19 @@ function BattleState:updateQueue()
       -- again.  Dig/Fly's charge hide and a genuinely invulnerable battler
       -- are the two that must survive, same as in resetPicFx.
       self:restoreHiddenPics()
+      if GameVersion.isGen2() then
+        if self:startPendingAfterAnim() then return true end
+        if not self.animPlayer.keepSprites then self.anim = nil end
+      end
       -- the target's hit blink + damage sound follow the animation
       -- (pokered plays them after PlayMoveAnimation returns)
       if self.pendingHit then
-        self:applyHitFx(self.pendingHit)
+        if not (GameVersion.isGen2() and self.afterAnimPlayed) then
+          self:applyHitFx(self.pendingHit)
+        end
         self.pendingHit = nil
       end
+      if GameVersion.isGen2() then self.afterAnimPlayed = nil end
     end
     return true
   end
@@ -2946,9 +2954,7 @@ function BattleState:updateQueue()
           self.waitFrames = math.max(self.waitFrames or 0,
                                      self.gen3Anim.total or 0)
         elseif self.animPlayer then
-          local ok, started = pcall(self.animPlayer.start, self.animPlayer,
-                           item.anim, item.attackerIsPlayer,
-                           (item.shakes or item.ball)
+          local opts = (item.shakes or item.ball)
                              and { shakes = item.shakes, ball = item.ball,
                                    caught = item.caught,
                                    -- Gen 2's toss script branches on the
@@ -2961,7 +2967,21 @@ function BattleState:updateQueue()
                                      or nil,
                                    ballFlicker = item.ball
                                      and self:ballFlicker(item.ball) or nil }
-                             or nil)
+                             or nil
+          local ok, started
+          if GameVersion.isGen2() then
+            if mdef and not BALL_ANIMS[item.anim] then
+              ok, started = pcall(self.animForMove, self, item.anim,
+                item.attackerIsPlayer and 'player' or 'enemy',
+                item.animParam, item.effectiveness, item.afterAnim)
+            else
+              ok, started = pcall(require('src.battle.Gen2MovePresentation').start,
+                self, item.anim, item.attackerIsPlayer, opts)
+            end
+          else
+            ok, started = pcall(self.animPlayer.start, self.animPlayer,
+              item.anim, item.attackerIsPlayer, opts)
+          end
           -- a player that reports no data for the move (Gen 2 returns
           -- false) falls through to the single-sound path below
           self.animPlaying = ok and started ~= false
@@ -3030,11 +3050,13 @@ function BattleState:updateQueue()
         -- plays each row's MoveSoundTable entry with its pitch/tempo
         -- modifiers); which side the pic effects target follows the
         -- attacker (hWhoseTurn)
-        self.animName = item.anim
-        self.animAttackerIsPlayer = item.attackerIsPlayer
-        self:resetPicFx()
-        for _, ev in ipairs(self.animPlayer:pollEffects()) do
-          self:applyAnimEffect(ev) -- frame-0 rows (first sound/effect)
+        if not GameVersion.isGen2() then
+          self.animName = item.anim
+          self.animAttackerIsPlayer = item.attackerIsPlayer
+          self:resetPicFx()
+          for _, ev in ipairs(self.animPlayer:pollEffects()) do
+            self:applyAnimEffect(ev) -- frame-0 rows (first sound/effect)
+          end
         end
         self.pendingHit = item.hit
       else
@@ -13500,6 +13522,7 @@ function BattleState:drawClassic()
   end
 end
 
+require('src.battle.Gen2MovePresentation').install(BattleState)
 Gen2BattleView.install(BattleState, {
   load = getImage,
   palette = monPalette,

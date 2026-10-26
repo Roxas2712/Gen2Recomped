@@ -92,7 +92,7 @@ function View.runner(player)
       if obj.fn == 'PokeBallBlocked' then fn = 'BATTLE_ANIM_FUNC_POKEBALL_BLOCKED' end
       structs[#structs+1] = {index=obj.index,func=fn,jt=obj.state}
     end
-    return {frames=player.frames or 0,var=player.vars and player.vars.var or 0,
+    return {animId=player.moveId,frames=player.frames or 0,var=player.vars and player.vars.var or 0,
       stopped=player:isDone(),keepSprites=player.keepSprites,
       objects={structs=structs}, oam=player:oam(selected)}
   end
