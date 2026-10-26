@@ -24,6 +24,7 @@ def main():
     parser.add_argument('--check', action='append', default=[])
     parser.add_argument('--matrix', action='store_true')
     parser.add_argument('--compat', action='store_true')
+    parser.add_argument('--native', action='store_true', help='include every native engine suite')
     args = parser.parse_args()
     root = args.root.resolve()
     runtime = shutil.which(args.lua)
@@ -72,7 +73,9 @@ def main():
             print(log[-4000:], flush=True)
         return code, log
 
-    for check in args.check:
+    if args.native:
+        args.check += [str(p.relative_to(root)) for p in sorted((root / 'tests/engine').glob('native_*.lua'))]
+    for check in dict.fromkeys(args.check):
         run(check, [lua, check])
     if args.matrix:
         code, output = run('list-switches', [lua, '-e', '''

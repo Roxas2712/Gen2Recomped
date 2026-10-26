@@ -2,6 +2,9 @@
 -- Reconstruct native battle decision points from data, preserving relationships
 -- between parties, battlers, sides and field state. No controller is serialized.
 local B = {}
+-- Vanilla boot can use BattleState's built-in registry without a merged mod
+-- registry on game.data. Resolve the same native rulesets on both sides.
+local function rulesets(game)return game.data.rulesets or require('src.battle.Rulesets')end
 -- Native callbacks and script contexts can point back to their battle. Keep
 -- provenance alive from that owner, never from a registry value that would
 -- root the complete retired battle/coroutine graph on LuaJIT.
@@ -14,7 +17,7 @@ local function names(words)
   return out
 end
 local FIELDS = names([[
-g4fx g4PrevMove g4TrickRoomResort turnActions
+g4fx g4PrevMove g4TrickRoomResort turnActions backWalkOff
 Abilities AllyAI AnimPlayer BattleCommands BattleState CatchTutorialDemo Catching CaughtMarker
 Damage EffectRegistry EnemyActionContext EnemyMoveChoice Experience FieldResiduals GbaItemSchedule
 Gen2AnimPlayer Gen2BattleView Gen2Wild Gen3AI Gen3AIAttackingMoves Gen3AIItemKnowledge
@@ -106,12 +109,13 @@ waitKind waitReload waitingSound waitingSoundT waitingUI wallyTutorial warned wa
 weather what whiteout wideRegion wildFoesStanding wishHeal wishTurns wobbles wordAt work x xAccuracy
 y yield z
 ]])
-local BATTLER_SKIP = names("def badgeBoosts statuses items natures sprite picAnim monAnim")
+local ART = names("bgCanvas waveCanvas waveQuad colorFxReady scrollPx _gen3OamCompositedFrame _gen3OamObjectRanks _gen3OamResidual")
+local BATTLER_SKIP = names("def badgeBoosts statuses items natures sprite picAnim monAnim _caughtIcon")
 local DATA = names("rulesets pokemon moves statuses items constants type_chart trainers move_effects")
-local function keys(t)
+local function keys(t,path)
   local out = {}
   for key in pairs(t) do
-    assert(type(key) == "string" or type(key) == "number" or type(key) == "boolean", "semantic state has an object key")
+    assert(type(key) == "string" or type(key) == "number" or type(key) == "boolean", "semantic state has an object key: "..tostring(path))
     out[#out + 1] = key
   end
   table.sort(out, function(a, b)
@@ -164,10 +168,11 @@ end
 local function encode(game, root)
   local known = anchors(game)
   local nodes, seen = {}, {}
-  local function value(v)
+  local function value(v,path)
+    path=path or 'battle'
     local kind = type(v)
     if kind ~= "table" then
-      assert(kind == "string" or kind == "number" or kind == "boolean", "opaque battle continuation")
+      assert(kind == "string" or kind == "number" or kind == "boolean", "opaque battle continuation: "..path)
       return { scalar = v }
     end
     if known[v] then
@@ -192,7 +197,7 @@ local function encode(game, root)
           actionSlot = selected
         end
       end
-      assert(actionSlot, "opaque battle state")
+      assert(actionSlot, "opaque battle state: "..path)
     end
     assert(#nodes < 20000, "battle continuation exceeds node limit")
     local id = #nodes + 1
@@ -201,9 +206,9 @@ local function encode(game, root)
     local node = { kind = battler and "battler" or actionSlot and "moveAction" or "data", entries = {} }
     nodes[id] = node
     if actionSlot then node.slot = value(actionSlot) end
-    for _, key in ipairs(keys(v)) do
+    for _, key in ipairs(keys(v,path)) do
       if not (battler and BATTLER_SKIP[key]) then
-        node.entries[#node.entries + 1] = { key = key, value = value(v[key]) }
+        node.entries[#node.entries + 1] = { key = key, value = value(v[key],path..'.'..tostring(key)) }
       end
     end
     return { node = id }
@@ -300,7 +305,9 @@ local function decision(battle)
     assert(not battle[key], "special battle has no qualified continuation")
   end
   assert(
-    not battle.current and not battle.animPlaying and not battle.hpDraining and not battle.expDraining,
+    not battle.current and not battle.animPlaying and not battle.gen3AnimPlaying
+      and not battle.gen3BallPlaying and not battle.gen4AnimPlaying
+      and not battle.hpDraining and not battle.expDraining,
     "battle animation or message is active"
   )
   assert(type(battle.queue) == "table" and next(battle.queue) == nil, "battle action queue is active")
@@ -383,6 +390,54 @@ local function nativeActions(record)
   end
   return out
 end
+-- Native experience sets use live party monsters as keys; picture effects
+-- use battlers. Persist these authenticated relationships as ordered rows,
+-- never object addresses or arbitrary executable/metatable keys.
+local function partySet(save,set)
+  if not set then return nil end
+  local slots,found={},0
+  for i,mon in ipairs(save.party or {})do if set[mon]then assert(set[mon]==true,'invalid experience participant');slots[#slots+1]=i;found=found+1 end end
+  local count=0;for _ in pairs(set)do count=count+1 end
+  assert(count==found,'experience participant is outside the save party')
+  return {schema=1,slots=slots}
+end
+local function nativePartySet(save,record)
+  if not record or record.schema==nil then return record end -- legacy empty sets
+  assert(record.schema==1 and type(record.slots)=='table','invalid experience set')
+  local set={}
+  for _,slot in ipairs(record.slots)do
+    assert(type(slot)=='number'and slot%1==0,'invalid experience slot')
+    local mon=assert(save.party[slot],'experience participant is unavailable')
+    assert(not set[mon],'duplicate experience participant');set[mon]=true
+  end
+  return set
+end
+local function pictureRows(battle)
+  if not battle.picFx then return nil end
+  local rows={}
+  for _,key in ipairs({'player','enemy','player2','enemy2'})do
+    local actor=battle[key]
+    if actor and battle.picFx[actor]then rows[#rows+1]={actor=actor,effect=battle.picFx[actor]}end
+  end
+  return {schema=1,rows=rows}
+end
+local function nativePictures(state,record)
+  if not record or record.schema==nil then return record end
+  assert(record.schema==1 and type(record.rows)=='table','invalid battle picture relationships')
+  local out={}
+  for _,row in ipairs(record.rows)do
+    local actor=row.actor
+    assert(actor and(actor==state.player or actor==state.enemy or actor==state.player2 or actor==state.enemy2)
+      and type(row.effect)=='table'and not out[actor],'invalid battle picture owner')
+    out[actor]=row.effect
+  end
+  return out
+end
+local function nativeRelations(save,state)
+  state.participants=nativePartySet(save,state.participants)
+  state.leveledUp=nativePartySet(save,state.leveledUp)
+  state.picFx=nativePictures(state,state.picFx)
+end
 function B.capture(game, battle, clone)
   decision(battle)
   local world = game.overworld
@@ -395,13 +450,16 @@ function B.capture(game, battle, clone)
   end
   local state = {}
   for key in pairs(FIELDS) do
-    if rawget(battle, key) ~= nil then
+    if not ART[key] and rawget(battle, key) ~= nil then
       state[key] = battle[key]
     end
   end
   state.turnActions = actionRows(battle.turnActions)
+  state.participants=partySet(game.save,battle.participants)
+  state.leveledUp=partySet(game.save,battle.leveledUp)
+  state.picFx=pictureRows(battle)
   local ruleset
-  for key, v in pairs(game.data.rulesets or {}) do
+  for key, v in pairs(rulesets(game)) do
     if v == battle.ruleset then
       ruleset = key
       break
@@ -419,11 +477,12 @@ end
 function B.validate(game, snapshot, save, actors)
   local ok = pcall(function()
     assert(
-      type(snapshot) == "table" and snapshot.schema == 1 and game.data.rulesets[snapshot.ruleset],
+      type(snapshot) == "table" and snapshot.schema == 1 and rulesets(game)[snapshot.ruleset],
       "invalid battle payload"
     )
     local view = { data = game.data, save = save }
     local s = decode(view, snapshot.graph)
+    nativeRelations(save,s)
     nativeActions(s.turnActions)
     for key in pairs(s) do
       assert(FIELDS[key], "unknown native battle field")
@@ -434,7 +493,8 @@ function B.validate(game, snapshot, save, actors)
       assert(not s[key], "special battle state is not reconstructible")
     end
     assert(
-      type(s.queue) == "table" and next(s.queue) == nil and not s.current and not s.animPlaying,
+      type(s.queue) == "table" and next(s.queue) == nil and not s.current and not s.animPlaying
+        and not s.gen3AnimPlaying and not s.gen3BallPlaying and not s.gen4AnimPlaying,
       "battle actions or messages are active"
     )
     for _, key in ipairs({ "menuIndex", "moveIndex", "frame", "enemyIndex", "partyIndex" }) do
@@ -531,6 +591,7 @@ function B.apply(game, snapshot, clone)
   snapshot = clone(snapshot)
   local battle = require("src.battle.BattleState")._checkpointNew(game)
   local state = decode(game, snapshot.graph, battle)
+  nativeRelations(game.save,state)
   state.turnActions = nativeActions(state.turnActions)
   for key in pairs(FIELDS) do
     if rawget(battle, key) ~= nil then
@@ -540,7 +601,7 @@ function B.apply(game, snapshot, clone)
   for key, v in pairs(state) do
     battle[key] = v
   end
-  battle.ruleset = assert(game.data.rulesets[snapshot.ruleset])
+  battle.ruleset = assert(rulesets(game)[snapshot.ruleset])
   battle._checkpointTrainerName = snapshot.trainerName
   battle:_checkpointArt()
   local c = snapshot.continuation
