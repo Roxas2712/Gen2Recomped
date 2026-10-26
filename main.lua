@@ -893,6 +893,8 @@ end
 -- unfocused, so reset input on either transition rather than trust it.
 function love.focus(f)
   if bootReport then return end
+  -- the run loop presents an unfocused window at a trickle (FrameCap)
+  require("src.core.FrameCap").setFocus(f)
   -- a phone stops the frames in the background: the walker credits the gap
   walkerTick("focus", f)
   if editorMode or TouchEditor then return end

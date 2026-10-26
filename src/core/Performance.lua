@@ -104,6 +104,10 @@ for name, caps in pairs(Performance.CAPS) do
   -- index).  x3 / x4 is nine to sixteen times the fill of the logical view;
   -- a phone or handheld cannot pay that, whatever the OPTIONS row says.
   caps.gen4RenderScaleMax = (name == "high" and 4) or (name == "balanced" and 2) or 1
+  -- P10: spin the last stretch of the frame budget instead of sleeping it
+  -- (src/core/FrameCap.lua).  A core's worth of polling per frame is cheap
+  -- on a desktop and a battery on a handheld.
+  caps.pacingSpin = name == "high"
   caps.gcPause = Performance.GC_PAUSE
   caps.gcStepMul = Performance.GC_STEP_MUL
   caps.gcBudgetSeconds = Performance.GC_BUDGET_SECONDS

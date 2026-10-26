@@ -28,6 +28,42 @@ FrameCap.current = FrameCap.DEFAULT
 -- P1 rollback switch. Each frame still falls back to software pacing when
 -- there was no present, VSync is off, or the display rate is unavailable.
 FrameCap.vsyncPacing = true
+
+-- P10a: the last stretch before the deadline is spun, not slept.  A 1 ms
+-- sleep is a request, not a promise -- the scheduler returns the thread
+-- somewhere between 1 and 2 ms later on Windows and Linux, which is the
+-- jitter a software-paced 120 fps shows as an uneven cadence.  Sleeping
+-- only until SPIN_SECONDS before the deadline and then polling the clock
+-- lands the present within a few microseconds.  Costs that much CPU per
+-- frame, so only the HIGH tier spends it (Performance.CAPS.pacingSpin);
+-- a handheld keeps the sleep.  Set spinSeconds to 0 to turn it off.
+FrameCap.spinPacing = true
+FrameCap.SPIN_SECONDS = 0.0015
+
+-- P10b: an unfocused desktop window presents at BACKGROUND fps instead of
+-- the full cap.  Logic is fixed-step off dt and catches up on each of the
+-- fewer frames, so nothing in the game runs slower -- it only stops
+-- burning the GPU and a core on a window nobody is looking at (the
+-- "alt-tabbed and the fans are still on" case).  love.focus feeds
+-- FrameCap.setFocus; mobile already stops the frames in the background.
+FrameCap.backgroundPacing = true
+FrameCap.BACKGROUND = 20
+FrameCap.focused = true
+
+function FrameCap.setFocus(f)
+  FrameCap.focused = f and true or false
+end
+
+local function spinSeconds()
+  if not FrameCap.spinPacing then return 0 end
+  local ok, Performance = pcall(require, "src.core.Performance")
+  if ok and Performance.extraCap and Performance.extraCap("pacingSpin") == false then
+    return 0
+  end
+  return FrameCap.SPIN_SECONDS
+end
+-- exposed so a check tool can read what the loop would spend
+FrameCap.spinSeconds = spinSeconds
 local _refreshWindow, _refreshVsync, _refreshAt, _refreshRate
 local REFRESH_POLL_SECONDS = 1
 
@@ -55,9 +91,16 @@ end
 -- the original fallback here lets tests exercise the real pacing operation.
 function FrameCap.pace(timer, window, presented, nextFrame, idleWork)
   local now = timer.getTime()
-  local budget = 1 / FrameCap.current
+  local cap = FrameCap.current
+  local background = FrameCap.backgroundPacing and not FrameCap.focused
+    and FrameCap.BACKGROUND < cap
+  if background then cap = FrameCap.BACKGROUND end
+  local budget = 1 / cap
   nextFrame = nextFrame + budget
-  if FrameCap.vsyncPacing and presented and presentationPaces(window, now) then
+  -- a vsync'd present paces by itself -- unless the window is in the
+  -- background, where the display's rate is more than it should get
+  if not background and FrameCap.vsyncPacing and presented
+      and presentationPaces(window, now) then
     if idleWork then
       idleWork(timer, nextFrame)
       return timer.getTime()
@@ -66,10 +109,15 @@ function FrameCap.pace(timer, window, presented, nextFrame, idleWork)
   end
   if now - nextFrame > budget then nextFrame = now end
   if idleWork then idleWork(timer, nextFrame) end
+  local spin = background and 0 or spinSeconds()
   while true do
     local remaining = nextFrame - timer.getTime()
     if remaining <= 0 then break end
-    timer.sleep(remaining < 0.001 and remaining or 0.001)
+    if remaining > spin then
+      local nap = remaining - spin
+      timer.sleep(nap < 0.001 and nap or 0.001)
+    end
+    -- inside the spin window: poll the clock
   end
   return nextFrame
 end
