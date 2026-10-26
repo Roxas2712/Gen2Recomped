@@ -1,21 +1,62 @@
 # Combined mod-portability testing branch
 
-The fork's `codex/portability-testing` branch combines the public API, native
-hook, rendering, shader and baseline test fixes prepared in Gen2Recomped PRs
-#88–182, #184–185 and #188–191, #194–196, #198, #203, #206, #209, #210, #212, #214, #215, #216, #217, #218, #219, #220, #222, #225, #226, #228, #230, #241, #244, #248, #252 and #258 (excluding unrelated #138). It is for testing the
-combined changes before upstream reviews and merges individual PRs. Upstream
-`main` is separate; cartridge-support PRs from other work remain separate.
+The fork's `codex/portability-testing` branch combines the selected public
+API, native hook, rendering, shader and baseline-test portability series,
+now including native cries (#289) and native music/fanfare commands (#308).
+Historical PR-specific acceptance remains below; unrelated #138 and
+cartridge-support work from other branches remain separate. This branch is
+for testing combined changes before upstream reviews and merges individual
+PRs. Upstream and fork `main` remain independently maintained.
 
 **Publication scope: Gen2Recomped only.** Gen1Recomp is a read-only portability
 reference. Historical results below that use a modified Gen1 reference fork
 are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
-The combined production/test/tool runtime for this snapshot is
-`5e384409322e98dfd292716b9c97d2bdcdf9936e`. It passes **275/275 engine
-suites**, **3/3 SDK suites**, all quick tiers and B30. Later publication edits
-preserve those trees. This testing branch remains separate from the
-independently maintained fork `main`.
+The qualified production/test runtime is
+`e436fba6228bd6e73a97497107e4a15f61c0d052`: **292/292 engine suites**, SDK
+**3/3**, all quick tiers and B30 pass. Publication/testing metadata edits
+preserve source tree `52e2e3ffc7e8f1145b0edffa16ca3713324bb8d2` and test tree
+`f033a6f7f66579d8322f01536ea16452233f0cf7`.
+
+[PR #308](https://github.com/UNDERdecoded/Gen2Recomped/pull/308) retains native
+FireRed/Emerald BGM commands, fanfare timers/waits, native/shared ownership,
+public shared music hooks, options and device recovery. The actual asset
+invalidation bus retires old native map/saved music before the next game/mod
+dataset. Native command revision **20** separates these semantics from
+revision 19; party codec remains **1**.
+
+Each feature/combined runtime passes **268 workers / 178,264 complete paired
+observations** against unchanged read-only Gen1. Every final worker exits
+zero without timeout or native VM diagnostics; independent recursive audits
+reparse raw output and distinguish JSON booleans from numbers. The isolated
+feature passes **174/183** with the exact same **25 FAIL lines / nine
+inherited suites** as its fresh frozen development parent; this combined
+runtime has zero FAIL lines. All expected suites run exactly once.
+
+Combined real-renderer probes pass **18 BGM cases / 1,534 frames**, **12 cold
+fanfare cases / 156 frames**, and **eight actual-import cases / 688 frames**.
+Each runtime's actual initialized-session comparison covers four paired
+scenarios / 36 paired snapshots with retired old Sources, VMs and public
+listeners, plus a working fresh API-3 consumer. Separate audio-service
+re-entry passes eight paired cases. The new 69-check entry/cold regression
+rejects unchanged production with ten exact failures. Initial failed gates
+and deliberately cancelled superseded broad runs are retained.
+
+These are local CPU/hardware-double results. They do not relabel earlier
+native boot/UI/storage runs as new runs. Native synthesizer PCM/baseline
+gains, two shared GB lookahead cases and native queue allocation counts
+remain distinct. Complete map/bike/surf transitions, other editions,
+real-device recovery, complete mods and full playthroughs remain open.
+Older imports missing fanfare timer metadata need reimporting.
+See [the contract/reproduction](native-gba-bgm.md) and
+[source-bound receipt](qa/native-gba-bgm.json).
+
+All ten #308 hosted workflows require maintainer approval
+(`action_required`); the [dedicated run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40304523637)
+has zero jobs. Hosted validation is separate from local acceptance.
+
+## Historical #258 acceptance
 
 [PR #258](https://github.com/UNDERdecoded/Gen2Recomped/pull/258) implements
 native GBA Assist and the same API-3 canonical effect registration/read-back as
