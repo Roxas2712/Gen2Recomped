@@ -159,18 +159,19 @@ end
 function InitClock:sgbPalettes()
   local P = require("src.render.PaletteFX")
   if self.isOpaque then return { P.trueColorZone(0, 0, 19, 17) } end
-  return { P.trueColorZone(1, 4, 18, 9), P.trueColorZone(0, 12, 19, 17) }
+  return { P.trueColorZone(1, 4, 18, 11), P.trueColorZone(0, 12, 19, 17) }
 end
 function InitClock:draw()
   local G = love.graphics
   G.setColor(1, 1, 1, 1)
   if self.isOpaque then G.rectangle("fill", 0, 0, 160, 144) end
-  Font.drawBox(1, 4, 18, 6)
-  local shown = self:display() or InitClock.timeString(self.hour, self.minute)
+  Font.drawBox(1, 4, 18, 8)
+  local picker = self:display()
+  local shown = picker or InitClock.timeString(self.hour, self.minute)
   Font.draw(shown, 16, 48)
-  Font.draw(Strings("UP/DOWN: CHANGE"), 16, 64)
-  Font.draw(Strings("A: CONFIRM"), 16, 80)
-  if self:display() then
+  if picker then
+    Font.draw(Strings("UP/DOWN: CHANGE"), 16, 64)
+    Font.draw(Strings("A: CONFIRM"), 16, 80)
     Font.drawBox(0, 12, 20, 6)
     Font.draw(self:question(), 8, 105)
   end
