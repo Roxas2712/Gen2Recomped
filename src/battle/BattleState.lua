@@ -53,6 +53,8 @@ local TEXT_AREA_ROWS = { 112, 128 }
 local BattleState = {}
 BattleState.__index = BattleState
 BattleState.isOpaque = true
+-- Native source observations identify this admitted controller directly.
+BattleState.isBattleState = true
 
 -- pokered prints the battle lines itself (engine/battle/core.asm and the
 -- move-effect banks), and the importer extracts every one of them, so the
@@ -389,6 +391,13 @@ end
 -- change.  Only the battle surface is affected; the overworld is unchanged.
 function BattleState:wantsFillScale()
   local options = self.game and self.game.save and self.game.save.options
+  -- SINGLE-SCREEN DS BATTLES FILL unless the player chose a size: they are
+  -- drawn supersampled (src/render/SuperSample.lua), so a fractional fit no
+  -- longer costs even pixels, and the panel under them (Gen4Battle.PANEL_H)
+  -- would otherwise knock the whole-number letterbox down a step
+  if (options == nil or options.battleFit == nil) and Gen4Battle.singlePanel(self) then
+    return true
+  end
   return options and options.battleFit == "fill" or false
 end
 
@@ -567,7 +576,9 @@ function BattleState:uiSize()
   -- 512x256 with the visible half 256x192, and the platform and battler
   -- positions are absolute pixels on that.
   if self:gen4Layout() then
-    return self:gen4SurfaceWidth(), Gen4Battle.HEIGHT
+    -- ...plus the single-screen panel under it (Gen4Battle.PANEL_H)
+    local panel = Gen4Battle.singlePanel(self) and Gen4Battle.PANEL_H or 0
+    return self:gen4SurfaceWidth(), Gen4Battle.HEIGHT + panel
   end
   return 160, 144
 end
@@ -2584,11 +2595,9 @@ function BattleState:beginMsgLine()
   self.shown[#self.shown + 1] = {}
 end
 
-function BattleState:updateQueue()
-  if self.waitingUI then
-    if self.game.stack:top() ~= self then return true end
-    self.waitingUI = nil
-  end
+-- Only display controllers live here. Command holds, HP awards, turn rows
+-- and completion remain in updateQueue, even while a mod holds presentation.
+function BattleState:updateMovePresentation()
   -- HOENN'S PARTICLES TICK BEFORE THE QUEUE'S OWN HOLD, and the whole
   -- reason the animations looked broken is that they used to tick after it.
   --
@@ -2639,11 +2648,16 @@ function BattleState:updateQueue()
       if not anim.caught then self.gen3Ball = nil end
     end
   end
+end
+
+-- Display-only waits and bar completion. Returning idle grants no command;
+-- only updateQueue may consume a battle row after this gate.
+function BattleState:updateQueuePresentation()
+  self:updateMovePresentation()
+  local source = GameVersion.isGen3() and package.loaded['src.core.game3.battle.anim']
+  if source and source._holdsNativeQueue(self) then return true end
   -- a queued hold (faint slide, hit blink) counts down before the next row
-  if self.waitFrames and self.waitFrames > 0 then
-    self.waitFrames = self.waitFrames - 1
-    return true
-  end
+  if self:stepPresentationWait() then return true end
   -- WaitForSoundToFinish (home/delay.asm:15-20) blocks until the sfx has
   -- actually stopped sounding, which is how the original gives a sound its
   -- own clear window instead of letting the next beat play over it
@@ -2673,6 +2687,15 @@ function BattleState:updateQueue()
     if self:stepExpBar() then return true end
     self.expFilling = nil
   end
+  return false
+end
+
+function BattleState:updateQueue()
+  if self.waitingUI then
+    if self.game.stack:top() ~= self then return true end
+    self.waitingUI = nil
+  end
+  if self:updateQueuePresentation() then return true end
   if self.animPlaying then
     self.animPlayer:update()
     if self.animPlayer.pollEffects and self.applyAnimEffect then
@@ -3682,6 +3705,13 @@ function BattleState:enter()
   end
   self.playerBackPic = getImage(backPath,backPalette,backTrueColor)
   self.showPlayerBack = self.playerBackPic ~= nil
+  -- THE DS THROW (Gen4BackThrow / Gen5TrainerPics.backThrow): the strip the
+  -- back plays at the send-out, found by the still's own path
+  do
+    local throws = ((self.data or {}).gen4_trainer_sprites or {}).backThrows
+    self.dsBackThrowRec = type(throws) == "table" and backPath and throws[backPath] or nil
+    self.dsThrow = nil
+  end
   -- ...AND THE OTHER THREE FRAMES OF THAT SHEET (#407).  The single pic is
   -- still what the placement and the scale are measured from; the strip is
   -- only ever the texture the throw draws out of.
@@ -4254,6 +4284,28 @@ function BattleState:touchpressed(_, px, py)
   end
   return true
 end
+function BattleState:updateBattlerPresentation(dt)
+  for _, b in activeBattlers(self) do
+    if b and b.picAnim then b.picAnim:update(dt) end
+    if b and b.monAnim then b.monAnim:update(dt) end
+  end
+end
+
+function BattleState:stepPresentationWait()
+  if self.waitFrames and self.waitFrames > 0 then
+    self.waitFrames = self.waitFrames - 1
+    return true
+  end
+  return false
+end
+
+-- Advance an ending/pose hold without executing battle commands or input.
+function BattleState:updatePresentation(dt)
+  self:tickFx()
+  self:updateBattlerPresentation(dt)
+  self:updateQueuePresentation()
+end
+
 function BattleState:update(dt)
   self:tickFx()
   -- one sample a second into the fight, while it is still on screen
@@ -4261,10 +4313,7 @@ function BattleState:update(dt)
   if self._stadiumReportTicks == 60 then self:reportStadiumBattle("mid") end
   -- Crystal pic animations run off the wall clock like every other battle
   -- pic effect; a Gold/Silver battler has no picAnim and this is a no-op.
-  for _, b in activeBattlers(self) do
-    if b and b.picAnim then b.picAnim:update(dt) end
-    if b and b.monAnim then b.monAnim:update(dt) end
-  end
+  self:updateBattlerPresentation(dt)
   local input = self.game.input
 
   -- L PUTS THE BOTTOM SCREEN AWAY, AND BRINGS IT BACK.
@@ -4404,6 +4453,7 @@ function BattleState:update(dt)
     if dir then
       self.menuIndex, self.gen4MenuColumn =
         Gen4Battle.actionMove(self.menuIndex, dir, self.gen4MenuColumn)
+      if self.palPark then require("src.battle.Gen4PalParkBattle").skipRow(self, dir) end
     end
     if input:wasPressed("a") then
       self:safariAction(({ "ball", "bait", "rock", "run" })[self.menuIndex])
@@ -7142,12 +7192,30 @@ function BattleState:gen4SendOut(battler)
   local mon = battler.mon
   local name = Gen4Battle.ballThrowFor(mon and (mon.ball or mon.pokeball))
 
-  self.gen4Ball = Gen4BallAnim.new({
-    ball = name,
-    mode = "release",
-    side = "player",
-    to = { x = pos.x, y = pos.y },
-  })
+  local function release()
+    self.gen4Ball = Gen4BallAnim.new({
+      ball = name,
+      mode = "release",
+      side = "player",
+      to = { x = pos.x, y = pos.y },
+    })
+  end
+  -- THE DS TRAINER THROWS IT FIRST: the back plays its send-out (wind-up,
+  -- throw, follow-through) and the ball leaves at the throw's release; the back
+  -- slides off when the throw is done (BattleState:update, `dsThrow`)
+  local rec = self.dsBackThrowRec
+  if rec and self.showPlayerBack and not self:isDouble() then
+    self.dsThrow = { rec = rec, tick = 0 }
+    self.nextInsert = (self.nextInsert or 0) + 1
+    table.insert(self.queue, self.nextInsert, { wait = rec.release })
+    self.nextInsert = self.nextInsert + 1
+    table.insert(self.queue, self.nextInsert, { fn = function()
+      release()
+      table.insert(self.queue, 1, { wait = self.gen4Ball:estimate() })
+    end })
+    return true
+  end
+  release()
   -- The trainer has thrown it, so the back pic goes now rather than staying up
   -- behind the Pokemon it just released.
   if self.showPlayerBack then
@@ -7379,6 +7447,17 @@ function BattleState:updateFx()
   -- the walk, so the two counters are one thing and are stepped together.
   if self.backThrow and self.backThrow.playing then
     self.backThrow.tick = self.backThrow.tick + 1
+  end
+  -- the DS send-out throw (gen4SendOut): when it is done, the back slides off
+  if self.dsThrow then
+    self.dsThrow.tick = self.dsThrow.tick + 1
+    if self.dsThrow.tick >= (self.dsThrow.rec.total or 0) then
+      self.dsThrow = nil
+      if self.showPlayerBack then
+        self.showPlayerBack = false
+        self:slidePic("back")
+      end
+    end
   end
   if self.backWalkOff and self.backWalkOff > 0 then
     self.backWalkOff = self.backWalkOff - 1
@@ -9499,6 +9578,8 @@ end
 -- where each one is in the cartridge. The player's command, then the wild
 -- Pokemon's own: flee, or watch carefully.
 function BattleState:gen4SafariAction(choice)
+  -- PAL PARK'S CATCHING SHOW (src/battle/Gen4PalParkBattle.lua)
+  if self.palPark then return require("src.battle.Gen4PalParkBattle").action(self, choice) end
   local G = require("src.battle.Gen4Safari")
   local st, sf = self.safari, self.gen4Safari
   local function line(id, fallback, ...)
@@ -10681,7 +10762,11 @@ function BattleState:finish()
   -- here it did not, so say so rather than silently papering over it.
   -- The old-man / PROF.OAK demo also skips it: the party never fought
   -- (Yellow's Pallet intro runs before the player owns a mon at all).
+  -- A tag battle's partner can win it alone after the player's side has
+  -- fainted: the cartridge calls that a win (the Battle Tower's multi rooms
+  -- go on, the partner heals in the field), so it stands.
   if self.result ~= "lose" and not self.demo and not self.pokedudeDemo
+     and not (self.ally and self.result == "win")
      and not Party.firstHealthy(self.game.save.party) then
     Logger.warn("battle finished %s with no healthy party; forcing blackout",
                 tostring(self.result))
@@ -12662,7 +12747,15 @@ end
 function BattleState:draw()
   if self:wideLayout() then return WideBattle.draw(self) end
   if self:gen3Layout() then return Gen3Battle.draw(self) end
-  if self:gen4Layout() then return Gen4Battle.draw(self) end
+  if self:gen4Layout() then
+    -- SINGLE-SCREEN PLAY (the second screen off or stowed): the one picture is
+    -- the whole window, so it is drawn at the window's scale with smoothed
+    -- letters (src/render/SuperSample.lua) instead of blown up afterwards
+    if not Gen4Battle.bottomScreenUp(self.game) then
+      return require("src.render.SuperSample").draw(self.game, self, function() Gen4Battle.draw(self) end)
+    end
+    return Gen4Battle.draw(self)
+  end
   return self:drawClassic()
 end
 
@@ -12792,6 +12885,59 @@ function BattleState:drawClassic()
   -- the vanilla link is a no-op so an empty chain costs nothing.
   if Runtime.wantsHook("battle.overlay") then
     Runtime.call("battle.overlay", function() end, self)
+  end
+end
+
+-- Source wrappers observe the real GBA owner. Unrequested modules and other
+-- generations keep the direct native path; there is no additional clock.
+do
+  local update, draw, field, exit, enter = BattleState.update, BattleState.draw,
+    BattleState.drawBattleField, BattleState.exit, BattleState.enter
+  local Clock = require('src.battle.PresentationClock')
+  for _, name in ipairs{'tickFx','updateBattlerPresentation','updateMovePresentation',
+                        'stepHPDrain','stepExpBar','stepPresentationWait','updateQueuePresentation'} do
+    local body = BattleState[name]
+    BattleState[name] = function(self, ...)
+      return Clock.once(self, name, body, ...)
+    end
+  end
+  BattleState._drawNative = draw
+  local battlerDraw = BattleState.drawBattlerPic
+  function BattleState:drawBattlerPic(battler, ...)
+    local anim = GameVersion.isGen3() and package.loaded['src.core.game3.battle.anim']
+    if anim then return anim._drawBattler(self, battler, battlerDraw, ...) end
+    return battlerDraw(self, battler, ...)
+  end
+  function BattleState:enter()
+    enter(self)
+    local source = GameVersion.isGen3() and package.loaded['src.core.game3.battle']
+    if source then return source._nativeEnter(self) end
+  end
+  function BattleState:update(dt)
+    local source = GameVersion.isGen3() and package.loaded['src.core.game3.battle']
+    local anim = source and package.loaded['src.core.game3.battle.anim']
+    if anim then
+      return Clock.run(self, dt, function()
+        return source._nativeUpdate(self, dt, update)
+      end)
+    end
+    if source then return source._nativeUpdate(self, dt, update) end
+    return update(self, dt)
+  end
+  function BattleState:draw()
+    local source = GameVersion.isGen3() and package.loaded['src.core.game3.battle']
+    if source then return source._nativeDraw(self, draw) end
+    return draw(self)
+  end
+  function BattleState:drawBattleField()
+    local source = GameVersion.isGen3() and package.loaded['src.core.game3.battle']
+    if source then return source._nativeField(self, field) end
+    return field(self)
+  end
+  function BattleState:exit()
+    local source = package.loaded['src.core.game3.battle']
+    if source then source._nativeExit(self) end
+    return exit(self)
   end
 end
 
