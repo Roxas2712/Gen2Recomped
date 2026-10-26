@@ -8,7 +8,15 @@ local names = { sleep = "SLP", poison = "PSN", toxic = "TOX", burn = "BRN",
   freeze = "FRZ", paralysis = "PAR", paralyze = "PAR" }
 
 function M.apply(battle, actor, item)
-  if not item or not Items.context(battle, actor) then return false end
+  if not item or not actor or not actor.mon then return false end
+  local position = actor.position
+  if position == nil then
+    if actor == battle.player then position = 0
+    elseif actor == battle.enemy then position = 1 end
+  end
+  -- A mod can redirect its original native result to another present actor.
+  -- Item-stock admission stays tied to the original opposing controller.
+  if position == nil or not battle.battlerAt or battle:battlerAt(position) ~= actor then return false end
   -- Enemy item use ends these move-specific effects, independently of the
   -- item's effect bytes. Rollout uses a separate native counter.
   local ramp = actor.rampMove and battle.data.moves and battle.data.moves[actor.rampMove]
@@ -32,7 +40,7 @@ function M.apply(battle, actor, item)
   raise("speed", e[2] % 16)
   raise("accuracy", math.floor(e[3] / 16))
   raise("spatk", e[3] % 16)
-  local side = battle.sides and battle.sides[2]
+  local side = battle.sides and battle.sides[actor.isPlayer and 1 or 2]
   if bit(e[4], 128) and side and (tonumber(side.gen3MistTurns) or 0) == 0 then
     side.gen3MistTurns = 5
   end

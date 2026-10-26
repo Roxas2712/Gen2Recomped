@@ -59,6 +59,8 @@ function C.run(root, backend, version)
     {"mist not refreshed",501,{mist=2},{mist=2}},
     {"double right recipient",13,{right=true,hp=10},{hp=30,leftHp=200}},
     {"two-trainer right recipient",13,{right=true,second=true,hp=10},{hp=30,leftHp=200}},
+    {"redirected player recipient",13,{player=true,hp=10},{hp=30,playerHp=30,leftHp=200}},
+    {"redirected player mist",501,{player=true,hp=10},{mist=5,playerHp=10,leftHp=200}},
     {"live item program",13,{hp=10,mutate=true},{hp=60}},
     {"item clears move effects",508,{fury=true,destiny=true,grudge=true},{fury=0,destiny=false,grudge=false}},
     {"item preserves Rollout",508,{rollout=true},{rollout=4}},
@@ -86,9 +88,9 @@ function C.run(root, backend, version)
         end
       end
     end
-    local id = opts.right and 3 or 1
+    local id = opts.player and 0 or opts.right and 3 or 1
     local actor = backend == "gen1" and require("src.core.game3.battle.state").battler(b,id) or b:battlerAt(id)
-    b.player.mon.hp = 400; b.enemy.mon.hp = opts.right and 200 or 400
+    b.player.mon.hp = 400; b.enemy.mon.hp = (opts.right or opts.player) and 200 or 400
     actor.mon.hp, actor.mon.maxHp = opts.hp or 10, opts.maxHp or 400
     actor.mon.stats = actor.mon.stats or {}; actor.mon.stats.hp = actor.mon.maxHp
     actor.mon.status, actor.status = opts.status, opts.status
@@ -99,12 +101,13 @@ function C.run(root, backend, version)
     if backend == "gen1" then
       actor.confusionTurns, actor.expNightmare, actor.expInfatuated = opts.confusion, opts.nightmare, opts.infatuated
       actor.expGrudge, actor.expFuryCutter, actor.expRollout = opts.grudge, opts.fury and 4 or 0, opts.rollout and 4 or 0
-      b.enemySide.expMistTurns = opts.mist or 0
+      local side = opts.player and b.playerSide or b.enemySide
+      side.expMistTurns = opts.mist or 0
     else
       actor.confusedTurns, actor.nightmare, actor.infatuated = opts.confusion, opts.nightmare, opts.infatuated
       actor.grudge = opts.grudge
       actor.rampMove, actor.rampRun = opts.fury and "MOVE_210" or opts.rollout and "ROLLOUT" or nil, (opts.fury or opts.rollout) and 4 or nil
-      b.sides[2].gen3MistTurns = opts.mist or 0
+      b.sides[opts.player and 1 or 2].gen3MistTurns = opts.mist or 0
     end
     local action
     if opts.mutate then
@@ -127,8 +130,8 @@ function C.run(root, backend, version)
       destiny=flag(actor.destinyBond),grudge=flag(backend=="gen1" and actor.expGrudge or actor.grudge),
       fury=backend=="gen1" and (actor.expFuryCutter or 0) or (actor.rampMove=="MOVE_210" and actor.rampRun or 0),
       rollout=backend=="gen1" and (actor.expRollout or 0) or (actor.rampMove=="ROLLOUT" and actor.rampRun or 0),
-      mist=backend=="gen1" and b.enemySide.expMistTurns or b.sides[2].gen3MistTurns,
-      leftHp=opts.right and b.enemy.mon.hp or false,playerHp=b.player.mon.hp,
+      mist=backend=="gen1" and (opts.player and b.playerSide or b.enemySide).expMistTurns or b.sides[opts.player and 1 or 2].gen3MistTurns,
+      leftHp=(opts.right or opts.player) and b.enemy.mon.hp or false,playerHp=b.player.mon.hp,
       stages={actor.stages.attack,actor.stages.defense,actor.stages.speed,actor.stages.accuracy,actor.stages.spAtk or actor.stages.spatk}}
     local expected = {label=label,hp=opts.hp or 10,status=opts.status or false,confusion=opts.confusion or 0,
       toxic=opts.status=="TOX" and 3 or 0,sleep=opts.status=="SLP" and 2 or 0,focus=false,
