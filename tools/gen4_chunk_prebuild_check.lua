@@ -36,7 +36,7 @@ local function ground(w, h, view)
   }, { __index = Gen4Ground })
   g.buildSeconds = 0.001
   g.now = 0
-  g.clock = function() return g.now end
+  g.idleClock = function() return g.now end
   function g:liveModel(id)
     self.now = self.now + self.buildSeconds
     self.liveModels[id] = { id = id }
@@ -88,12 +88,12 @@ end
 -- 4. prebuild spends the slice and stops when the next build will not fit
 do
   local g = ground(6, 6, { 2, 2, 3, 3 })
-  local built = g:prebuild(0.0035, g.clock)
+  local built = g:prebuild(0.0035)
   check(built == 3, 'a 3.5 ms slice at 1 ms a build builds 3 (' .. built .. ')')
   check(g.prebuildCost and g.prebuildCost > 0, 'the running cost is recorded')
-  built = g:prebuild(0.0005, g.clock)
+  built = g:prebuild(0.0005)
   check(built == 0, 'a slice shorter than the cost builds nothing')
-  built = g:prebuild(1, g.clock)
+  built = g:prebuild(1)
   check(built == 13 and not g:prebuildPending(), 'a long slice finishes the ring and the service goes quiet')
 end
 
@@ -129,7 +129,13 @@ do
   Performance.tier = 'high'
   local timer = { now = 0 }
   function timer.getTime() return timer.now end
-  g.clock = function() return timer.now end
+  g.idleClock = function() return timer.now end
+  function g:liveModel(id)
+    timer.now = timer.now + 0.001
+    self.liveModels[id] = { id = id }; self.liveOrder[#self.liveOrder + 1] = id
+    self.built[#self.built + 1] = id
+    return self.liveModels[id]
+  end
   local offered = IdleStream.run(timer, 0.010)
   check(offered > 0, 'the pump offered the service a slice')
   check(#g.built > 0 and #g.built <= 6, 'the service built within a 6 ms cap (' .. #g.built .. ')')

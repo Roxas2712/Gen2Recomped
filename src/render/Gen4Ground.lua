@@ -1785,7 +1785,7 @@ end
 -- hook can spare; a build is atomic, so one is started only when the last
 -- few have fit in what is left.  Returns the number built.
 function Gen4Ground:prebuild(seconds, clock)
-  clock = clock or (love and love.timer and love.timer.getTime) or os.clock
+  clock = clock or self.idleClock or (love and love.timer and love.timer.getTime) or os.clock
   local deadline = clock() + (seconds or 0)
   local built = 0
   while true do
