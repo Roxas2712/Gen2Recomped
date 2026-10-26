@@ -3,19 +3,26 @@ local Http=require('src.cloud.Http')
 local Json=require('src.link.Json')
 local Serializer=require('src.core.SaveSerializer')
 local R={FILE='cloud_retro.lua',API='https://pokexpert.de/api/cloud/v1'}
+local revoked={}
 local function load()
+  if not (love and love.filesystem and love.filesystem.read) then return nil end
   local bytes=love.filesystem.read(R.FILE)
   if not bytes then return nil end
   local ok,value=pcall(Serializer.decode,bytes)
-  if ok and type(value)=='table' and type(value.access)=='string'
-    and value.access:match('^[a-f0-9]+$') and #value.access==64 then return value end
+  if ok and type(value)=='table' then
+    local token=type(value.access)=='string' and value.access:match('^[a-f0-9]+$') and #value.access==64
+    local identity=value.revoked==true and type(value.accountId)=='string' and #value.accountId<=20 and value.accountId:match('^[1-9][0-9]*$')
+    if token or identity then return value end
+  end
 end
 local function request(method,path,body,token,headers)
   headers=headers or {}
   headers.Accept='application/json'
   if token then headers.Authorization='Bearer '..token end
   if type(body)=='table' then headers['Content-Type']='application/json';body=Json.encode(body) end
-  return Http.request(method,R.API..path,{body=body,headers=headers,sensitive=true})
+  local code,bytes=Http.request(method,R.API..path,{body=body,headers=headers,sensitive=true})
+  if code==401 and token then R.expire(token) end
+  return code,bytes
 end
 local function document(method,path,body,token,headers)
   return Http.json(request(method,path,body,token,headers))
@@ -24,14 +31,20 @@ local function save(value)
   local Safety=require('src.core.SaveSafety')
   return Safety.atomicWrite(love.filesystem,R.FILE,Serializer.encode(value),{decode=Safety.decodeAny})
 end
-function R.signedIn() local value=load();return value and (tonumber(value.expires) or 0)>os.time() or false end
+-- Device credentials survive restarts and offline periods. Only the service
+-- can revoke them; the old expiry field is retained for older builds.
+function R.signedIn() local value=load();return value~=nil and value.access~=nil and not value.revoked and not revoked[value.access] end
 function R.account() local value=load();return value and value.email end
 function R.accountId() local value=load();return value and value.accountId end
+function R.nickname() local value=load();return value and (value.name or value.email) end
 function R.acceptAccount(doc)
   local value=load()
   if not value or type(doc.account_id)~='string' or #doc.account_id>20 or not doc.account_id:match('^[1-9][0-9]*$') then return nil,'Account identity unavailable. Sign in again.' end
+  if value.accountId and value.accountId~=doc.account_id then return nil,'Account identity changed. Sign in again.' end
   value.accountId=doc.account_id
   if type(doc.email)=='string' then value.email=doc.email end
+  if type(doc.name)=='string' then value.name=doc.name end
+  if type(doc.friend_tag)=='string' then value.friendTag=doc.friend_tag end
   return save(value)
 end
 function R.acceptConnection(doc)
@@ -39,13 +52,13 @@ function R.acceptConnection(doc)
     or not doc.access_token:match('^[a-f0-9]+$') or type(doc.expires_in)~='number'
     or doc.expires_in<120 or doc.expires_in>90*86400 or type(doc.email)~='string' then return nil,'Invalid device connection.' end
   local accountId=type(doc.account_id)=='string' and #doc.account_id<=20 and doc.account_id:match('^[1-9][0-9]*$') and doc.account_id or nil
-  local ok,why=save({access=doc.access_token,expires=os.time()+doc.expires_in-60,email=doc.email,accountId=accountId})
+  local ok,why=save({access=doc.access_token,expires=os.time()+doc.expires_in-60,email=doc.email,accountId=accountId,name=type(doc.name)=='string' and doc.name or nil})
   if not ok then return nil,'Could not store the device connection: '..tostring(why) end
   return true
 end
 function R.accessToken()
   local value=load()
-  if value and (tonumber(value.expires) or 0)>os.time() then return value.access end
+  if value and value.access and not value.revoked and not revoked[value.access] then return value.access end
   return nil,'Connect this device to your ModCompass account in Cloud saves.'
 end
 function R.begin()
@@ -72,14 +85,26 @@ function R.poll(flow)
   return 'failed','Device connection failed ('..tostring(status or 'offline')..').'
 end
 function R.cancel() end
-function R.expire() love.filesystem.remove(R.FILE) end
+function R.expire(expected)
+  local current=load()
+  if not current or expected and current.access~=expected then return end
+  if current.access then revoked[current.access]=true end
+  -- Revoking online access must not change a running game's save namespace.
+  -- Only explicit sign-out forgets the local account profile as well.
+  if current.accountId then
+    current.access=nil;current.expires=nil;current.revoked=true
+    return save(current)
+  end
+  return love.filesystem.remove(R.FILE)
+end
 function R.signOut()
   local value=load()
-  if value then
+  if value and value.access then
     local status=request('POST','/logout',{},value.access)
     if status~=200 and status~=401 then error('Cloud sign-out unavailable. Please try again when online.',0) end
   end
-  love.filesystem.remove(R.FILE)
+  local current=load()
+  if value and current and current.accountId==value.accountId and (current.access==value.access or current.revoked) then love.filesystem.remove(R.FILE) end
 end
 
 function R.open()
@@ -94,7 +119,8 @@ function R.open()
   for _,object in ipairs(doc.objects) do
     if type(object.path)=='string' and type(object.revision)=='string' then revisions[object.path]=object.revision end
   end
-  local store={kind='retro',label='RetroRecomped Cloud',accountId=accountId,profileScope='retro:'..tostring(email or ''):lower()}
+  local store={kind='retro',label='RetroRecomped Cloud',accountId=accountId,profileScope='retro:'..tostring(email or ''):lower(),storage=doc.storage}
+  function store.has(path) return revisions[path]~=nil end
   function store.list(directory)
     local prefix=directory..'/'
     local result={}

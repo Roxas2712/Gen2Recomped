@@ -14,6 +14,21 @@ for _,source in ipairs({vertex, '#pragma language glsl3\n'..vertex..'\n'..pixel,
  local actual,changed=C.source(source);T.eq(changed,true,'real position adapted');T.check(actual:find(source,1,true)~=nil,'source bytes retained')
  local again,twice=C.source(actual);T.eq(again,actual,'adaptation idempotent');T.eq(twice,false)
 end
+for _,marker in ipairs({'POKEPORT_NATIVE_CLIP_SPACE','POKEPORT_LEGACY_CLIP_SPACE_ADAPTED'})do
+ for _,value in ipairs({0,1,false,'0'})do
+  local actual,changed=C.source(vertex,{defines={[marker]=value}})
+  T.eq(actual,vertex,'named compiler marker preserves source identity');T.eq(changed,false)
+ end
+ local actual,changed=C.source(vertex,{defines={marker}})
+ T.eq(actual,vertex,'array compiler marker preserves source');T.eq(changed,false)
+ for _,defines in ipairs({{[marker..'_EXTRA']=1},{marker..'_EXTRA'},{OTHER=marker}})do
+  local _,changed=C.source(vertex,{defines=defines});T.eq(changed,true,'unrelated compiler definition is not a marker')
+ end
+ local _,changed=C.source('#define '..marker..'_EXTRA 1\n'..vertex)
+ T.eq(changed,true,'underscore suffix is part of GLSL identifier')
+end
+local poison=setmetatable({},{__index=function()error('option metatable must not execute')end})
+T.eq(select(2,C.source(vertex,poison)),true,'compatibility inspection does not execute option metatable')
 local savedLove=love
 local shader,canvas,stack=nil,nil,{}
 local creations,validations,sends={},{},{}
@@ -34,7 +49,8 @@ function g.pop()local s=table.remove(stack);canvas,shader=s[1],s[2]end
 love={graphics=g,getVersion=function()return 11,5,0 end}
 T.eq(C.install(),false,'LOVE11 left untouched')
 love.getVersion=function()return 12,0,0 end
-love.filesystem={getInfo=function(p)return p=='legacy.glsl'and{}or nil end,read=function()return vertex end}
+local reads=0
+love.filesystem={getInfo=function(p)return p=='legacy.glsl'and{}or nil end,read=function()reads=reads+1;return vertex end}
 T.eq(C.install(),true);T.eq(C.install(),false,'installed once')
 local options={defines={TEST=1}};local a=g.newShader(vertex,options)
 T.eq(a.b,options,'compile options passed by identity');T.eq(#sends,1);T.eq(sends[1][3],1,'backbuffer factor')
@@ -49,5 +65,17 @@ local f=g.newShader('legacy.glsl');T.check(f.a:find('pokeportLegacyCanvasY',1,tr
 local missing=g.newShader('missing.glsl');T.eq(missing.a,'missing.glsl','missing file left for runtime error')
 local ok,msg=g.validateShader(true,pixel,vertex,options);T.eq(ok,true);T.eq(msg,'compiler message');T.eq(validations[1][1],true);T.eq(validations[1][4],options)
 T.check(validations[1][3]:find('pokeportLegacyCanvasY',1,true)~=nil,'validation uses same source')
+for _,defines in ipairs({{POKEPORT_NATIVE_CLIP_SPACE=1},{POKEPORT_NATIVE_CLIP_SPACE=false},{'POKEPORT_NATIVE_CLIP_SPACE'}})do
+ local nativeOptions={defines=defines};local n=#sends
+ local native=g.newShader(vertex,nativeOptions)
+ T.eq(native.a,vertex,'native compile source bytes unchanged');T.eq(native.b,nativeOptions,'native compile options retain identity');T.eq(#sends,n,'native compile has no compatibility uniform')
+ local split=g.newShader(pixel,vertex,nativeOptions)
+ T.eq(split.a,pixel);T.eq(split.b,vertex);T.eq(split.c,nativeOptions,'split shader options retain identity')
+ local beforeReads=reads;local fromFile=g.newShader('legacy.glsl',nativeOptions)
+ T.eq(fromFile.a,'legacy.glsl','native shader file delegated without a redundant read')
+ T.eq(reads,beforeReads,'native compile avoids extra file IO')
+ g.validateShader(true,pixel,vertex,nativeOptions)
+ local last=validations[#validations];T.eq(last[2],pixel);T.eq(last[3],vertex);T.eq(last[4],nativeOptions,'validator retains native compile options')
+end
 love=savedLove
 T.finish('legacy shader compatibility')

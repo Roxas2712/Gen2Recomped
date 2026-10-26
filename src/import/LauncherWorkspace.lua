@@ -24,7 +24,7 @@ function Workspace.filterRows(rows, category)
     local selected = category=='game' and (entry.scope=='game' or entry.scope=='settingsGen' or action=='clearGenOverrides')
       or category=='controls' and (entry.scope=='touch' or action=='touchLayout')
       or category=='mods' and entry.scope=='mod'
-      or category=='cloud' and (currentSection and (currentSection.label=='CLOUD SAVES' or currentSection.label=='YOUR STORAGE'))
+      or category=='cloud' and (currentSection and (currentSection.cloud or currentSection.label=='CLOUD SAVES' or currentSection.label=='YOUR STORAGE'))
       or category=='language' and (entry.scope=='translation' or action=='translateGame' or entry.kind=='progress')
     if selected and entry.kind~='section' then
       if section then result[#result+1]=section;section=nil end
@@ -144,6 +144,7 @@ function Workspace.install(RI)
   RI._cycleTab=function(self,delta,...)
     if not self.sidebarMode then return cycle(self,delta,...) end
     local order={'games','walker','mods','tools','news','settings'}
+    if require('src.cloud.RetroCloud').signedIn() then table.insert(order,3,'tournaments') end
     local index=1
     for i,id in ipairs(order) do if id==self.section then index=i end end
     self:_sbGo(order[((index-1+delta)%#order)+1])

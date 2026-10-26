@@ -2,6 +2,7 @@
 from pathlib import Path
 import argparse
 import json
+import os
 import shutil
 import sys
 from qa_storage import qa_source, qa_run
@@ -16,11 +17,17 @@ if args.legacy_bank_source:
     args.legacy_bank_source = args.legacy_bank_source.resolve()
     qa_source(args.legacy_bank_source)
 runtime = shutil.which('luajit')
-if not runtime:
-    raise SystemExit('LuaJIT is required for the headless launcher contract.')
-qa_source(runtime)
+if runtime:
+    qa_source(runtime)
+    runtime = [runtime]
+elif os.environ.get('RETRO_QA_LUA_LIBRARY'):
+    qa_source(Path(os.environ['RETRO_QA_LUA_LIBRARY']))
+    qa_source(sys.executable)
+    runtime = [sys.executable, str(root / 'tools/run_lua_check.py')]
+else:
+    raise SystemExit('LuaJIT or RETRO_QA_LUA_LIBRARY is required for the headless launcher contract.')
 syntax = ['main.lua', 'conf.lua', 'src/cloud/Http.lua', 'src/cloud/RetroCloud.lua',
-          'src/cloud/NativeAccount.lua', 'src/cloud/DeveloperProjects.lua',
+          'src/cloud/NativeAccount.lua', 'src/cloud/Tournaments.lua', 'src/link/CloudArena.lua', 'src/import/TournamentWorkspace.lua', 'src/cloud/Task.lua', 'src/cloud/Presence.lua', 'src/cloud/GiftCodes.lua', 'src/storage/GiftReward.lua', 'src/import/DataLiteral.lua', 'src/import/CloudSync.lua', 'src/import/CacheFs.lua', 'src/storage/GameCache.lua', 'src/cloud/DeveloperProjects.lua',
           'src/import/AccountWorkspace.lua', 'src/import/DeveloperWorkspace.lua', 'src/import/LauncherCobblemon.lua', 'src/storage/CartridgeCloud.lua', 'src/storage/WonderReward.lua',
           'src/import/LauncherStorage.lua', 'src/import/LauncherSidebar.lua', 'src/import/CartridgeDownload.lua',
           'src/import/cartridge_download_worker.lua', 'src/core/Music.lua', 'src/core/Sound.lua',
@@ -33,7 +40,7 @@ syntax = ['main.lua', 'conf.lua', 'src/cloud/Http.lua', 'src/cloud/RetroCloud.lu
           'src/storage/LuaData.lua', 'src/storage/BankInterop.lua', 'src/mods/SharedStorage.lua',
           'src/mods/Api3.lua', 'src/mods/PlaythroughStorage.lua', 'src/import/BankInterchangeWorkspace.lua']
 source = '\n'.join('assert(loadfile(' + json.dumps(path) + '))' for path in syntax)
-qa_run([runtime, '-e', source], cwd=root, check=True)
+qa_run([*runtime, '-e', source], cwd=root, check=True)
 suites = '''launcher_sequence cart_designer launcher_seasons launcher_community
 pokemon_bank mod_profiles mod_download bank_workspace launcher_mod_profiles
 retro_overlay cloud_running_slot developer_account developer_workspace native_account
@@ -41,9 +48,9 @@ account_workspace private_http developer_projects mod_profile_recovery retro_ove
 window_frame window_frame_async portable_input_hooks touch_orientation_bug633
 save_resume resume_workspace save_resume_capture save_resume_slot save_history_workspace launcher_audio_handoff bank_exchange'''.split()
 suites.extend(['native_preview','account_storage','account_profiles','bank_interop',
-               'api3_storage_transactions','api3_playthrough_storage','bank_portrait','api3_compat','mod_catalogue','mod_preflight','launcher_presentation','cartridge_batch','launcher_cobblemon','cartridge_cloud','wonder_reward'])
+               'api3_storage_transactions','api3_playthrough_storage','bank_portrait','api3_compat','mod_catalogue','mod_preflight','launcher_presentation','cartridge_batch','launcher_cobblemon','cartridge_cloud','wonder_reward','game_cache','device_session','gift_codes','presence','tournaments'])
 for suite in suites:
-    command = [runtime, str(root / 'tests/engine' / (suite + '.lua'))]
+    command = [*runtime, str(root / 'tests/engine' / (suite + '.lua'))]
     if suite == 'bank_interop' and args.legacy_bank_source:
         command.append(str(args.legacy_bank_source))
     qa_run(command, cwd=root, check=True)

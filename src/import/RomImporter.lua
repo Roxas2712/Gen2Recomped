@@ -1317,6 +1317,15 @@ local function markerFor(version)
   -- RS now carries its own action tables as well as field geometry. Rebuild these
   -- caches; retain the earlier 36-byte dex and item-effect corrections.
   if version == "ruby" or version == "sapphire" then revision = "rs-item-menu-v4:" end
+  -- Keep original behavior IDs alongside the existing native normalization.
+  -- Only GBA caches lack this additional source contract; saves are unchanged.
+  if GameVersion.isGen3(version) then revision = revision .. "source-metatile-attrs-v1:source-map-views-v1:" end
+  if version == "emerald" or version == "ruby" or version == "sapphire" then
+    revision = revision .. "source-behavior-flags-v1:"
+  end
+  if GameVersion.generation(version) == 3 then
+    revision = revision .. "original-object-sheets-v" .. require("src.import.Gen3ObjectSheets").SCHEMA .. ":"
+  end
   return CACHE_FORMAT .. revision .. GameVersion.info(version).sha1
 end
 
@@ -1518,6 +1527,10 @@ local REQUIRED_FILES_GEN3 = {
   -- Absent, NPC.resolveSpriteDef falls through to SPRITE_RED and the whole
   -- region is populated by Kanto -- which is what it was.
   "data/generated/sprites.lua",
+  -- Original object picture order, independent of normalized native poses.
+  -- Older GBA caches re-import automatically through the existing readiness
+  -- check; no mod package or player save needs conversion.
+  "data/generated/gen3_object_sheets.lua",
   -- THE PARTY MENU'S OWN ART, and required for the same reason as the font:
   -- Data no longer blocks `icons` on a Gen 3 cache, so a cache that does not
   -- carry its own resolves to RED'S and every Hoenn species wears a Kanto
@@ -1713,6 +1726,13 @@ function RomImporter.datasetContract(version)
   end
   table.sort(modules)
   return { marker = markerFor(version), modules = modules }
+end
+
+-- Private cache transfer covers every supported cartridge, independently of
+-- the deliberately narrower mod-facing dataset inspection API above.
+function RomImporter.cacheContract(version)
+  if not GameVersion.info(version) then return nil end
+  return {marker=markerFor(version),files=requiredFiles(version)}
 end
 
 local function gen2TilesetRegistryLooksValid(version)
@@ -3361,6 +3381,7 @@ end
 -- the cartridge itself and read ranges out of it on demand.
 function RomImporter:startData(data, displayName, sourcePath, verified)
   if self.workState == "working" then return end
+  if self._storageTask then self.settingsNotice='Finish or cancel the cloud transfer before importing a game.';return end
   self:_acknowledgeInterruptedImport()
   if not verified and type(data)=='string' then
     if self:_beginRomProbe(data,sourcePath,displayName) then return end
@@ -3415,6 +3436,12 @@ function RomImporter:startData(data, displayName, sourcePath, verified)
   -- (a dropped cart is routed by SHA-1 regardless of which tab was showing).
   if GameVersion.VERSIONS[self.tab] then
     self.tab = version
+  end
+  local privateCache=package.loaded['src.storage.GameCache']
+  if privateCache and privateCache.prefix(version) then
+    require('src.import.LauncherBackdrop').stop()
+    local detached,why=privateCache.detach(version)
+    if not detached then self:setError(tostring(why),version);return end
   end
   self.importing = version
   self.workState = "working"
@@ -11964,5 +11991,6 @@ require("src.import.AccountWorkspace").install(RomImporter)
 require("src.import.ResumeWorkspace").install(RomImporter)
 require("src.import.SaveHistoryWorkspace").install(RomImporter)
 require("src.storage.AccountStorage").install(RomImporter)
+require("src.import.TournamentWorkspace").install(RomImporter)
 
 return RomImporter

@@ -34,7 +34,7 @@ function T.request(method,path,body)
   local bytes
   if body then headers['Content-Type']='application/json';bytes=Json.encode(body) end
   local status,result=require('src.cloud.Http').request(method,Auth.API..path,{headers=headers,body=bytes,sensitive=true})
-  if status==401 and Auth.expire then Auth.expire() end
+  if status==401 and Auth.expire then Auth.expire(token) end
   if type(result)~='string' or #result>2*1024*1024 then return nil,'Bank response unavailable.' end
   local ok,value=pcall(Json.decode,result)
   if status~=200 or not ok or type(value)~='table' then return nil,ok and type(value)=='table' and value.message or ('Bank request failed ('..tostring(status or 'offline')..').') end

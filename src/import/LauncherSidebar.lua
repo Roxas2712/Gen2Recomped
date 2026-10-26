@@ -38,6 +38,7 @@ Sidebar.SECTIONS = {
   { id = "mods",     label = "Mods" },
   { id = "tools",    label = "Tools" },
   { id = "settings", label = "Settings" },
+  { id = "tournaments", label = "Tournaments", account = true },
 }
 
 -- CONSOLES, derived from the game registry rather than listed per game: the
@@ -374,6 +375,7 @@ function Sidebar.install(RI)
 
   function RI:_sbGo(section)
     if self.section == section and section ~= "games" and section ~= "tools" then return end
+    if section == "tournaments" and not require("src.cloud.RetroCloud").signedIn() then return end
     self.section = section
     self.pageScroll = 0
     self._modSearchFocus = false
@@ -459,6 +461,11 @@ function Sidebar.install(RI)
       local q = r * 0.85
       g.rectangle("line", cx - q, cy - q, q * 0.9, q * 0.9); g.rectangle("line", cx + q * 0.1, cy - q, q * 0.9, q * 0.9)
       g.rectangle("line", cx - q, cy + q * 0.1, q * 0.9, q * 0.9); g.rectangle("fill", cx + q * 0.1, cy + q * 0.1, q * 0.9, q * 0.9)
+    elseif kind == "tournaments" then
+      g.rectangle("line",cx-r*.55,cy-r*.8,r*1.1,r,2*s,2*s)
+      g.arc("line","open",cx-r*.55,cy-r*.35,r*.45,math.pi/2,math.pi*1.5)
+      g.arc("line","open",cx+r*.55,cy-r*.35,r*.45,-math.pi/2,math.pi/2)
+      g.line(cx,cy+r*.2,cx,cy+r*.8);g.line(cx-r*.5,cy+r*.8,cx+r*.5,cy+r*.8)
     elseif kind == "tools" then
       g.line(cx - r * 0.7, cy + r * 0.7, cx + r * 0.25, cy - r * 0.25)
       g.circle("line", cx + r * 0.45, cy - r * 0.45, r * 0.42)
@@ -1671,7 +1678,7 @@ function Sidebar.install(RI)
       -- held still while Settings is open (Backdrop.setPaused)
       Backdrop.setPaused(self.section == "settings" or self.settingsOpen == true)
       Backdrop.request(self:_sbBackdropWant(), self:_sbMusicOn())
-      pcall(Backdrop.update, dt, self.workState == "working")
+      pcall(Backdrop.update, dt, self.workState == "working" or self._storageTask~=nil)
     elseif Backdrop.current() then
       Backdrop.stop()
     end

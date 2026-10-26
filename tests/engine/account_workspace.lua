@@ -68,4 +68,27 @@ check(cancelled and not UI._accountOverlay and f.password=='' and resumed=='red'
 check(writes==1 and options.launcherSaveStorageChoice=='local' and options.cloudAutoSync==false,
   'declining cloud persists a local-only choice without enabling uploads')
 storage.resume=previousResume;SaveData.loadOptions,SaveData.saveOptions=previousLoad,previousSave
+signed=true
+local auth=package.loaded['src.cloud.RetroCloud'];auth.accountId=function() return '17' end
+local native=package.loaded['src.cloud.NativeAccount']
+native.profile=function(payload)
+  if payload then sent=payload end
+  return {account_id='17',name=payload and payload.name or 'Fixture',friend_tag='Fixture#4821',avatar_preset='leaf',avatar_color='forest'}
+end
+native.friends=function() return {account_id='17',friends={},incoming={},outgoing={}} end
+native.findPlayer=function(tag) sent=tag;return {friend_tag=tag,account_id='18'} end
+native.createGift=function(payload) sent=payload;return {id='11111111-1111-4111-8111-111111111111',code='TEST-CODE-1234-5678'} end
+native.gifts=function() return {receipts={},campaigns={},manage=true} end
+W.open(UI);W.tick(UI);f=UI._accountOverlay
+check(f.nickname=='Fixture' and f.friendTag=='Fixture#4821','the native account displays the shared ModCompass nickname and friend tag')
+f.profileName='UpdatedFixture';W.action(UI,'saveProfile');W.tick(UI)
+check(sent.name=='UpdatedFixture','nickname changes use the shared profile endpoint')
+W.action(UI,'friends');W.tick(UI);f.friendQuery='Other#4821';W.action(UI,'findFriend');W.tick(UI)
+check(sent=='Other#4821' and f.foundFriend.friend_tag=='Other#4821','exact friend tags can be searched inside the launcher')
+W.action(UI,'gifts');W.tick(UI);W.action(UI,'newGift');f.giftTitle='Flying companion';f.giftMoves='FLY';f.giftSelected={red=true}
+W.action(UI,'createGift');W.tick(UI)
+check(sent.editions[1]=='red' and sent.moves[1]=='FLY' and not sent.egg and not sent.shiny,'Gen 1 event gift creation sends the chosen edition and special move without egg or shiny defaults')
+check(f.createdGift.code=='TEST-CODE-1234-5678','the generated code is shown in the creation result')
+W.draw(UI);f.rolePassword='private-role-confirmation';W.close(UI)
+check(not f.createdGift and f.rolePassword=='','closing clears generated codes and the role confirmation password')
 print('Account workspace: '..n..' checks passed')

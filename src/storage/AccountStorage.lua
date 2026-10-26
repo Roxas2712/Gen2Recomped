@@ -46,6 +46,9 @@ function P.saveCheck()
   return true
 end
 function P.profileChanged(self)
+  local backdrop=package.loaded['src.import.LauncherBackdrop'];if backdrop and backdrop.stop then backdrop.stop() end
+  local cache=package.loaded['src.storage.GameCache'];if cache then cache.refresh() end
+  if cache and self._recheckReady then self:_recheckReady() end
   self._settingsCache=nil;self._settingsRowCache=nil;self._gameSlotRows=nil
   local id=P.scope();local bank=self._bankOverlay
   if bank and bank.accountId~=id then

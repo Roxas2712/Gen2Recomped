@@ -1293,6 +1293,14 @@ R.text_pointers = {
 
 -- ------- persistence
 
+R.radio_channels = {
+  semantics = "record", target = "gen2RadioChannels", generations = "2",
+  fields = { channel=f.opt(f.int(0,255)), name=f.opt(f.str) },
+  write=function(target,registry)require("src.mods.RadioContent").write(target,registry)end,
+  example='mod.content.radio_channels:register("PIRATE_RADIO", { channel=9, name="PIRATE RADIO" })',
+  notes="Gen2 only. Station identities are shared by native wall radios and Pokegear. Channel 0 remains regional/time-dependent; positive channel numbers must be unique. Names are authored display text. Full ROM show-state/audio reproduction is separate.",
+}
+
 -- compose, keyed by the owning mod id: the runner walks each owner's chain
 -- in semver order against the versions recorded in the save
 R.migrations = {
