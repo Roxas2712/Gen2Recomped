@@ -3322,7 +3322,14 @@
     "unit_known_difference": "Gen1 Menu defaults to noWrap for generation 1; the unchanged mod suite assumes UP wraps to CANCEL.",
     "disk_log_sha256": "ee86007a4de5555f1cfd2261c971b6d5f3c5d54af5e9b98e108ef15f698d104e",
     "scope": "Unchanged Red-targeted API-2 mod under both engines. Selected production world/map/START/SELECT/menu/drawUI paths. Suite world/input/battle doubles remain in unit results. No Gold/other-generation, whole-battle, real GPU/audio-device or full-playthrough claim.",
-    "source_url": "https://github.com/unxpected-uxp/pokemon-gen1-recomp-mod-qol/tree/bea982afbc51452fda334e6d0111444a201ad1d7"
+    "source_url": "https://github.com/unxpected-uxp/pokemon-gen1-recomp-mod-qol/tree/bea982afbc51452fda334e6d0111444a201ad1d7",
+    "expanded_native": {
+      "receipt": "docs/qa/unchanged-mod-consumers.json",
+      "checks_per_engine": 42,
+      "qualified_ref": "edfb30feb230d5359540ae6e6fbc33d20dc68b83",
+      "battle_and_surf_cpu_paths": true,
+      "graphics_device_verified": false
+    }
   },
   "historical_snapshot_311": {
     "runtime_ref": "e436fba6228bd6e73a97497107e4a15f61c0d052",
@@ -3418,5 +3425,16 @@
       "qol_native": "6759587e71777bb5ebc449109ce3431551fcd1dd00526c4b5b6c4095e88b3813"
     },
     "scope": "CPU/hardware-double upstream composition, selected native FireRed/Emerald contracts, DS visibility/party-finish boundaries, unchanged Red QoL source and actual imported Red tables/art dimensions. Historical GPU/device/native boot/UI/storage evidence retains its own refs. No new graphics/audio-device launch, normal SAVE/import writes, complete graphical/gameplay or whole-mod/other-edition acceptance."
+  },
+  "unchanged_mod_consumers": {
+    "receipt": "docs/qa/unchanged-mod-consumers.json",
+    "qualified_ref": "edfb30feb230d5359540ae6e6fbc33d20dc68b83",
+    "profile": "red",
+    "qol_checks_per_engine": 42,
+    "battleart_checks_per_engine": 46,
+    "battleart_interiors_checks_per_engine": 47,
+    "typed_selected_observations_identical": true,
+    "graphics_device_verified": false,
+    "source_and_engine_tests_unchanged": true
   }
 }

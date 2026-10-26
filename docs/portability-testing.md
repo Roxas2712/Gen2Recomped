@@ -45,11 +45,15 @@ artifact-collection failure, not a waiver of worker or comparison failures.
 The earlier integration also retained its one failing string-coverage suite
 before #313 repaired the new fallback texts.
 
-The unchanged Red-targeted QoL mod again passes **200/200** unit checks and
-**7/7** production-controller checks on this runtime, with an observation
-identical to the unchanged Gen1 probe. Actual imported Red tables and art
-sizes are read-only; graphics remain hardware doubles. This is selected Red
-acceptance, not whole-mod battles, Gold support or a full playthrough.
+The unchanged Red-targeted QoL mod passes **200/200** unit checks on Gen2.
+Expanded unchanged-consumer acceptance now passes **42/42** native-flow checks
+per engine, including fishing, Surf, actual battle/overlay paths and return.
+Official Battle Art 1.11.2 passes **46/46**, and Battle Art with Legendary
+Interiors TEST20 passes **47/47**, on each engine. Selected typed observations
+agree across engines. Imported Red tables/art and mod packages stay unchanged;
+CPU geometry and hardware doubles do not prove GPU rendering or full mods.
+See [unchanged mod acceptance](unchanged-mod-acceptance.md) for precise scope,
+reproducible probes, raw fingerprints, retained failed fixtures and open work.
 
 The tool-only composition at `931143771b654ffd569a2341dc7e53243ede0073` adds
 [PR #315](https://github.com/UNDERdecoded/Gen2Recomped/pull/315), preserves the
