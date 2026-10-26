@@ -68,3 +68,8 @@ source effect timing/art parity and physical target acceptance remain open.
 
 The last unchanged-package loader probe advances beyond battle, Pokemon,
 motion and UI imports to the missing `src.core.game3.battle.anim` interface.
+
+Older native hosts also retire already-loaded battle, Pokemon-picture and
+motion services at loader unwind, even when their stream service is not yet
+driven by loader retirement. This releases observations and owned pictures;
+it does not pop or finish the actual native battle.

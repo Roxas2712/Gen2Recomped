@@ -48,7 +48,7 @@ require('src.render.Renderer').frameSerial=51
 state:draw();T.eq(draws,1);T.eq(owner.draws,1)
 require('src.mods.Loader').teardown()
 T.eq(S.update,owner.baseUpdate);T.eq(S.draw,owner.baseDraw)
-T.eq(G._usesCallbacks('battle_owner'),false);T.raises(function()old.player.mon.hp=1 end,'retired')
+T.eq(G._usesCallbacks('battle_owner'),false);T.raises(function()old.player.mon.hp=1 end,'retired','loader teardown retires held battle observations')
 T.eq(native.stack:top(),state,'observer teardown cannot abort a native admission')
 T.eq(native.save.party,rawParty,'observer teardown leaves native party ownership intact')
 state:update(1/60);T.eq(ticks,2);T.eq(owner.ticks,1,'unwound wrapper is no longer driven')
