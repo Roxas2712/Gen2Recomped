@@ -138,6 +138,29 @@ function R.standingY(map, mover)
 end
 
 -- true when `mover` may not step onto (tx, ty) for the height between them
+-- BLACK / WHITE'S FLOORS. Reported from play (the Dreamyard): you walk
+-- through the wall off the raised floor, and up the stairs without rising.
+-- The zone's heights are the imported flat values (`def.gen4HeightEdits`, a
+-- tile not listed being the ground at 0) and its stairs and hills are the
+-- slope tiles (`def.gen5SlopeTiles`); the same 20-unit step is a wall unless
+-- one end is a slope -- which is how a flight of stairs joins two floors.
+R.GEN5_MOVING = { [121] = true }
+function R.gen5Blocks(map, mover, tx, ty)
+  local def = map and map.def
+  if not (def and def.gen5 and mover and mover.cellX) then return false end
+  if def.gen5NoGrid then return false end
+  -- Drayden's gym (zone 121): its walkways are raised and lowered by the gym's
+  -- own code (Gen5DragonGym), not by fixed heights -- the zones the importer
+  -- keeps the layers of apart (Gen5Field.LAYERS_APART)
+  if R.GEN5_MOVING[tonumber(def.header) or -1] then return false end
+  local slopes = def.gen5SlopeTiles or {}
+  local fk, tk = mover.cellX .. "," .. mover.cellY, tx .. "," .. ty
+  if slopes[fk] or slopes[tk] then return false end
+  local edits = def.gen4HeightEdits or {}
+  local here, ahead = tonumber(edits[fk]) or 0, tonumber(edits[tk]) or 0
+  return math.abs(ahead - here) >= R.MAX_STEP
+end
+
 function R.blocks(map, mover, tx, ty)
   if not R.applies(map) or not mover then return false end
   local here = R.standingY(map, mover)

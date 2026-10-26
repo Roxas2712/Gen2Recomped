@@ -162,7 +162,30 @@ function R:forcedSwitchKey()
   if type(top) == "table" and top.forceSwitch and type(top.index) == "number" and top.party then
     local okP, party = pcall(top.party, top)
     local mon = okP and type(party) == "table" and party[top.index]
-    if mon and (tonumber(mon.hp) or 0) > 0 then return false end
+    -- in a double the other live one may already be out ("already in battle!")
+    local out = false
+    local b = top.battle
+    if mon and type(b) == "table" and type(b.battlerAt) == "function" then
+      for p = 0, 3 do
+        local okB, who = pcall(b.battlerAt, b, p)
+        if okB and type(who) == "table" and who.mon == mon then out = true end
+      end
+    end
+    if mon and (tonumber(mon.hp) or 0) > 0 and not out then return false end
+    -- nobody left to send in (a lone lead at the "switch?" offer, or every
+    -- live one already out): B backs out instead of circling the grid
+    local usable = false
+    for _, m in ipairs((okP and type(party) == "table" and party) or {}) do
+      local isOut = false
+      if type(b) == "table" and type(b.battlerAt) == "function" then
+        for p = 0, 3 do
+          local okB, who = pcall(b.battlerAt, b, p)
+          if okB and type(who) == "table" and who.mon == m then isOut = true end
+        end
+      end
+      if (tonumber(m.hp) or 0) > 0 and not m.isEgg and not isOut then usable = true end
+    end
+    if not usable then return true, (self.t % 12 == 0) and "b" or nil end
     -- on a fainted one or on CANCEL (the menu is a two-column grid, so with
     -- two members "down" from the first is CANCEL): try each way in turn
     local dirs = { "right", "down", "left", "up" }
@@ -191,8 +214,23 @@ function R:blockedMoveKey()
   end
   local blocked = chooser.disabledSlot == b.moveIndex or (tonumber(mv.pp) or 1) <= 0
     or blocks("tauntBlocks") or blocks("tormentBlocks")
+  -- a move that does no damage while one that does still has PP: a long run
+  -- spends Surf and Recover, and Safeguard forever never ends Misty's battle
+  if not blocked and mvDef and (tonumber(mvDef.power) or 0) <= 0 then
+    for i, other in ipairs(moves) do
+      local def = b.data and b.data.moves and b.data.moves[other.id]
+      if i ~= b.moveIndex and def and (tonumber(def.power) or 0) > 0 and (tonumber(other.pp) or 0) > 0
+         and chooser.disabledSlot ~= i then
+        blocked = true
+        break
+      end
+    end
+  end
   if not blocked then return nil end
-  return (self.t % 12 == 0) and "down" or false
+  -- the moves are a 2x2 grid: "down" alone from a dead bottom-left move
+  -- (Recover at 0 PP under Surf at 0 PP) goes nowhere, so try each way
+  local dirs = { "down", "right", "up", "left" }
+  return (self.t % 12 == 0) and dirs[math.floor(self.t / 12) % 4 + 1] or false
 end
 
 -- the A rhythm while the game talks
@@ -633,6 +671,8 @@ function R:runStep(s)
     return ok
   end
   if kind == "talk" or kind == "sign" then
+    -- `unless = fn`: already done (a retry after a wanderer was caught)
+    if s.unless and s.unless(self) and self.talkPhase == nil then return true end
     local tx, ty, facing
     if kind == "talk" then
       for _, n in ipairs(self.ow.npcs or {}) do
@@ -657,6 +697,19 @@ function R:runStep(s)
     end
     self.talkSpot = self.talkSpot or adjacentFree(self, tx, ty)
     local spot = self.talkSpot
+    -- `avoidTriggers = true`: walk round armed coordinate triggers on the way
+    -- (Jubilife's Looker strip at x 60 pushes the player back while a
+    -- wandering clown is chased past it)
+    if s.avoidTriggers then
+      self.avoid = {}
+      for _, c in ipairs(def.coordEvents or {}) do
+        if c.var and self:var(c.var) == (c.value or 0) then
+          for yy = c.y, c.y + (c.height or 1) - 1 do
+            for xx = c.x, c.x + (c.width or 1) - 1 do self.avoid[xx * 4096 + yy] = true end
+          end
+        end
+      end
+    end
     if self.talkPhase == nil then
       local ok, why = self:walkTo(spot[1], spot[2])
       if ok == "blocked" then ok, why = nil, "blocked" end
