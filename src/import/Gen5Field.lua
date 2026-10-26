@@ -696,10 +696,9 @@ function F.build(x, save)
   end
   report.sprites, report.npcs, report.npcsWithSprite = spriteCount, npcs, placed
   -- CASTELIA GYM'S HONEY WALLS (zone 29's seven sprite-0 objects, script
-  -- 2000): the player pushes straight through them -- overlay 38 animates
-  -- the wax, nothing stops the step -- so they are made passable. (The
-  -- floor switches beside them are coord events; 0x18C pops the hidden
-  -- trainer out.)
+  -- 2000): made passable, because the wall's own rule is not the object's --
+  -- its centre lets the player through once its switches are down
+  -- (src/world/Gen5CasteliaGym.lua, overlays 37 and 38).
   for _, def in pairs(maps) do
     if def.header == 29 then
       for _, o in ipairs(def.objects or {}) do if o.gen5Gimmick then o.passable = true end end

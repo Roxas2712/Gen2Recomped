@@ -90,6 +90,18 @@ function O.action(id)
     return
   end
   if id=='cancel' then O.confirm=nil;return end
+  if id=='suspend' or id=='suspendCloud' then
+    local ok,why=require('src.storage.SuspendStore').keep(game)
+    if not ok then O.notice=tostring(why);return end
+    if id=='suspend' then O.notice='Portable suspend saved locally. Continue resumes it with this exact engine build.';return end
+    local version=Versions.get();local slot=Saves.activeSlot(version)
+    O.job,why=Task.new(function()
+      local store,err=require('src.cloud.RetroCloud').open();if not store then return nil,err end
+      return require('src.import.CloudSync').syncOne(store,version,slot,true)
+    end)
+    O.notice=O.job and 'Uploading normal save and portable suspend…' or tostring(why)
+    return
+  end
   if id=='folder' then
     local path=O.exportPath;local dir=path and path:match('^(.*)[/\\][^/\\]+$')
     if dir then love.system.openURL('file://'..dir) end
@@ -156,6 +168,8 @@ local function actions()
       {id='options',label='All game settings',note='Picture · Sound · Controls · Mod options'}}
   end
   local rows={{id='save',label='Save game progress'},
+    {id='suspend',label='Save portable suspend · Beta',note='Qualified Gen 1–3 sessions · No loaded mods · Includes the running battle'},
+    {id='suspendCloud',label='Suspend & upload to cloud',note='Sign in on another device, restore cloud saves, then Continue · Same engine build and imported game data required'},
     {id='export',label='Export battery .sav'},{id='cloud',label='Save & upload to cloud'},
     {id='library',label='Choose another game'}}
   if O.exportPath then rows[#rows+1]={id='folder',label='Open exports'} end
@@ -176,6 +190,7 @@ function O.key(game,key)
   return true
 end
 function O.pad(game,button)
+  if require('src.ui.TextComposer').pad(O,button)then return true end
   if button=='guide' then if O.game then O.close() else O.open(game) end;return true end
   if not O.game then return false end
   local key=({dpup='up',dpdown='down',dpleft='left',dpright='right',a='return',b='escape',start='escape'})[button]
@@ -183,6 +198,7 @@ function O.pad(game,button)
   return true
 end
 function O.press(game,x,y)
+  if require('src.ui.TextComposer').press(O,x,y)then return true end
   if not O.game then if inside(O.handle,x,y) then O.open(game);return true end;return false end
   for _,row in ipairs(O.rects or {}) do if (row.pinned or inside(O.viewport,x,y)) and inside(row,x,y) then O.action(row.id);break end end
   return true
@@ -271,7 +287,7 @@ function O.draw(game)
   O.followSelection=false
   O.maxScroll=math.max(0,top+layoutScroll-view.y-view.height);O.scroll=math.min(nextScroll,O.maxScroll)
   g.setScissor()
-  g.setColor(.61,.74,.83,1);text(O.notice or (O.page=='options' and 'Change options with ← / →. Your choices are saved immediately.' or 'Normal saves keep game progress. Exact mid-battle savestates are still in development.'),x+24*s,y+h-74*s,w-48*s)
+  g.setColor(.61,.74,.83,1);text(O.notice or (O.page=='friends' and 'Select a friend to chat, meet, trade or battle. Location sharing follows your privacy settings.' or O.page=='options' and 'Change options with ← / →. Your choices are saved immediately.' or 'Normal saves and portable suspend are separate. Suspend support is qualified per edition and runtime.'),x+24*s,y+h-74*s,w-48*s)
   g.pop()
 end
 return O

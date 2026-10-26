@@ -75,6 +75,7 @@ native.profile=function(payload)
   if payload then sent=payload end
   return {account_id='17',name=payload and payload.name or 'Fixture',friend_tag='Fixture#4821',avatar_preset='leaf',avatar_color='forest'}
 end
+native.request=function()return {account_id='17',friends={},incoming={},outgoing={}}end
 native.friends=function() return {account_id='17',friends={},incoming={},outgoing={}} end
 native.findPlayer=function(tag) sent=tag;return {friend_tag=tag,account_id='18'} end
 native.createGift=function(payload) sent=payload;return {id='11111111-1111-4111-8111-111111111111',code='TEST-CODE-1234-5678'} end

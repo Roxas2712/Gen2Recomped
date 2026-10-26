@@ -9,11 +9,14 @@ local SaveSerializer = {}
 
 -- ------- writer
 
-local function serialize(v, indent)
+local function serialize(v, indent, exact)
   indent = indent or 0
   local pad = string.rep("  ", indent)
   local t = type(v)
-  if t == "number" or t == "boolean" then
+  if t == "number" and exact then
+    assert(v==v and v~=math.huge and v~=-math.huge, 'cannot serialize nonfinite number')
+    return ("%.17g"):format(v)
+  elseif t == "number" or t == "boolean" then
     return tostring(v)
   elseif t == "string" then
     return string.format("%q", v)
@@ -32,9 +35,9 @@ local function serialize(v, indent)
       if type(k) == "string" and k:match("^[%a_][%w_]*$") then
         key = k
       else
-        key = "[" .. serialize(k) .. "]"
+        key = "[" .. serialize(k, nil, exact) .. "]"
       end
-      table.insert(parts, pad .. "  " .. key .. " = " .. serialize(v[k], indent + 1))
+      table.insert(parts, pad .. "  " .. key .. " = " .. serialize(v[k], indent + 1, exact))
     end
     return "{\n" .. table.concat(parts, ",\n") .. ",\n" .. pad .. "}"
   end
@@ -43,6 +46,12 @@ end
 
 function SaveSerializer.encode(data)
   return "return " .. serialize(data) .. "\n"
+end
+
+-- Runtime journals need binary64 round trips for frame deltas and counters.
+-- Normal saves retain their existing byte representation and cloud digests.
+function SaveSerializer.encodeExact(data)
+  return "return " .. serialize(data, nil, true) .. "\n"
 end
 
 -- ------- reader
