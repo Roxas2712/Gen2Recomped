@@ -14,6 +14,7 @@ local function names(words)
   return out
 end
 local FIELDS = names([[
+g4fx g4PrevMove g4TrickRoomResort turnActions
 Abilities AllyAI AnimPlayer BattleCommands BattleState CatchTutorialDemo Catching CaughtMarker
 Damage EffectRegistry EnemyActionContext EnemyMoveChoice Experience FieldResiduals GbaItemSchedule
 Gen2AnimPlayer Gen2BattleView Gen2Wild Gen3AI Gen3AIAttackingMoves Gen3AIItemKnowledge
@@ -110,11 +111,12 @@ local DATA = names("rulesets pokemon moves statuses items constants type_chart t
 local function keys(t)
   local out = {}
   for key in pairs(t) do
-    assert(type(key) == "string" or type(key) == "number", "semantic state has an object key")
+    assert(type(key) == "string" or type(key) == "number" or type(key) == "boolean", "semantic state has an object key")
     out[#out + 1] = key
   end
   table.sort(out, function(a, b)
     if type(a) == type(b) then
+      if type(a) == "boolean" then return not a and b end
       return a < b
     end
     return type(a) < type(b)
@@ -218,7 +220,7 @@ local function decode(game, graph, battle)
     assert(node.kind == "data" or node.kind == "battler", "invalid semantic node")
     assert(type(node.entries) == "table", "invalid semantic entries")
     for _, entry in ipairs(node.entries) do
-      assert(type(entry.key) == "string" or type(entry.key) == "number", "invalid semantic key")
+      assert(type(entry.key) == "string" or type(entry.key) == "number" or type(entry.key) == "boolean", "invalid semantic key")
       assert(tables[i][entry.key] == nil, "duplicate semantic key")
       tables[i][entry.key] = value(entry.value)
     end
@@ -295,6 +297,38 @@ local function continuation(game, battle, clone)
   record.onDone = require("src.core.CheckpointCallbacks").capture(owner.descriptor.onDone, clone)
   return clone(record)
 end
+-- Native turnActions uses battlers as dictionary keys. Encode that one
+-- relationship explicitly; arbitrary object-keyed mod tables remain refused.
+local function actionRows(actions)
+  if not actions then return nil end
+  local out = { schema = 1, turn = actions.turn, rows = {} }
+  for actor, action in pairs(actions) do
+    if actor ~= "turn" then
+      assert(type(actor) == "table" and actor.mon and actor.curMoves
+        and type(actor.position) == "number", "opaque native action owner")
+      out.rows[#out.rows + 1] = { actor = actor, action = action }
+    end
+  end
+  table.sort(out.rows, function(a, b) return a.actor.position < b.actor.position end)
+  return out
+end
+local function nativeActions(record)
+  if not record then return nil end
+  assert(record.schema == 1 and type(record.rows) == "table", "invalid native action relationships")
+  assert(record.turn == nil or (type(record.turn) == "number" and record.turn >= 0
+    and record.turn % 1 == 0), "invalid native action turn")
+  local out, positions = { turn = record.turn }, {}
+  for _, row in ipairs(record.rows) do
+    local actor = row.actor
+    assert(type(actor) == "table" and actor.mon and actor.curMoves
+      and type(actor.isPlayer) == "boolean" and type(actor.position) == "number",
+      "invalid native action owner")
+    assert(not positions[actor.position] and type(row.action) == "table", "duplicate or invalid native action")
+    positions[actor.position] = true
+    out[actor] = row.action
+  end
+  return out
+end
 function B.capture(game, battle, clone)
   decision(battle)
   local world = game.overworld
@@ -311,6 +345,7 @@ function B.capture(game, battle, clone)
       state[key] = battle[key]
     end
   end
+  state.turnActions = actionRows(battle.turnActions)
   local ruleset
   for key, v in pairs(game.data.rulesets or {}) do
     if v == battle.ruleset then
@@ -335,6 +370,7 @@ function B.validate(game, snapshot, save, actors)
     )
     local view = { data = game.data, save = save }
     local s = decode(view, snapshot.graph)
+    nativeActions(s.turnActions)
     for key in pairs(s) do
       assert(FIELDS[key], "unknown native battle field")
     end
@@ -441,6 +477,7 @@ function B.apply(game, snapshot, clone)
   snapshot = clone(snapshot)
   local battle = require("src.battle.BattleState")._checkpointNew(game)
   local state = decode(game, snapshot.graph, battle)
+  state.turnActions = nativeActions(state.turnActions)
   for key in pairs(FIELDS) do
     if rawget(battle, key) ~= nil then
       battle[key] = nil

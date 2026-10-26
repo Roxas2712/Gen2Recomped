@@ -180,6 +180,15 @@ function C.inspect(game, internal, fs)
 	if game.linkSession or (game.linkNet and not game.linkNet.closed) then
 		return refusal("overworld", "unsupported_runtime", "Multiplayer checkpoint reconstruction is unavailable.")
 	end
+  local mapDef = world.map.def or {}
+  for _, name in ipairs({ "gen4DynamicPlate", "gen4Canalave", "gen4EternaClock",
+    "gen4HearthomeWarps", "gen4PastoriaGates", "gen4SunyshoreAngles",
+    "gen4VeilstoneHooked", "gen4GymFx", "gen4PropControl", "gen5IcirrusIce",
+    "gen5RailLayers" }) do
+    if mapDef[name] then
+      return refusal("overworld", "unsupported_runtime", "This native dynamic-map controller is not a qualified checkpoint continuation.")
+    end
+  end
 	if not pcall(Actors.capture, game, clone) then
 		return refusal("overworld", "unsupported_actor_runtime", "This actor runtime contains an opaque or unsupported continuation.")
 	end
