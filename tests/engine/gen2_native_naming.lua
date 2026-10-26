@@ -16,6 +16,18 @@ T.eq(Font.split('<MN>')[1].code,0xd2,'MN follows its actual active font')
 T.eq(Font.width('<PK>'),Font.width('PK'),'measurement uses the same ligature as drawing')
 data.font.charmap[#data.font.charmap+1]={seq='<PK>',code=0xd3}
 Font.load(data);T.eq(Font.split('<PK>')[1].code,0xd3,'authored bracket glyph retains precedence')
+local preview=UI.new(nil,{initial='AB'})
+T.eq(preview.text,'AB','constructing a public preview does not require a live game')
+T.eq(preview:characterAt(0,0),'A');preview:update();T.eq(preview.clock,1)
+-- Mail entry must keep both sixteen-glyph rows above its keyboard.
+local entry=UI.new({data=data},{type='box',maxLength=32})
+entry.mailMode=true;entry.text=string.rep('X',32)
+local drawn={};local draw=Font.draw
+Font.draw=function(text,x,y)drawn[#drawn+1]={text,x,y}end
+entry:drawEntry(5,4);Font.draw=draw
+T.eq(#drawn,32);T.eq(drawn[1][2],8);T.eq(drawn[16][2],128)
+T.eq(drawn[17][2],8);T.eq(drawn[17][3],36)
+for _,p in ipairs(drawn)do T.check(p[2]>=8 and p[2]+8<=152 and p[3]+8<=entry:keyboardTop()*8,'native mail glyph fits above keyboard')end
 local function game()
  local g={data=data,save={player={gender='girl'}}}
  g.stack=setmetatable({},{__index=require('src.core.StateStack')});g.stack:init()
@@ -72,6 +84,19 @@ for _,v in ipairs({'gold','silver','crystal'})do
  s:draw();T.eq(keyboard,1,'NEW NAME activates the native keyboard')
  tap(g,s,'a');tap(g,s,'start');tap(g,s,'a');T.eq(g.stack:top(),parent)
  UI.drawPanel=old
+ -- Actual Oak name-step dispatch retains its semantic role even when a
+ -- mod changes the player field length to the usual box-name length.
+ for _,who in ipairs({'player','rival'})do
+  local g=game();local parent={};g.stack:push(parent);local advanced=0
+  local speech={game=g,nameLen=8,recordAnswer=function()end,advance=function()advanced=advanced+1 end}
+  require('src.ui.OakSpeech').runStep(speech,{kind='name',who=who,presets={}})
+  local own=g.stack:top();T.eq(getmetatable(own),UI)
+  T.eq(own.kind,UI.TYPES[who],'native Oak passes the actual naming role')
+  T.eq(own.isBox,false,'eight-letter player/rival fields do not become box keyboards')
+  tap(g,own,'a');tap(g,own,'start');tap(g,own,'a')
+  T.eq(g.save.player[who=='rival'and'rival'or'name'],'A')
+  T.eq(advanced,1);T.eq(g.stack:top(),parent)
+ end
  for _,api in ipairs({{1,'native'},{2,'native'},{2,'unified'},{3,'unified'}})do
   local files={['mods/naming/manifest.json']=Json.encode({id='naming',name='Native name client',version='1.0.0',api=api[1],content_format=api[2],entry='main.lua',affects_link=false}),
    ['mods/naming/main.lua']=[[
@@ -86,6 +111,17 @@ for _,v in ipairs({'gold','silver','crystal'})do
   require('src.mods.Loader').teardown();loaded.release()
  end
 end
+-- Imported cursor sheets are actually used and their quads are retained.
+local cursor=UI.new(nil,{})
+cursor.tiles.cursor={getDimensions=function()return 8,16 end}
+local newQuad,draw=love.graphics.newQuad,love.graphics.draw
+local quads,draws=0,0
+love.graphics.newQuad=function(...)quads=quads+1;return newQuad(...)end
+love.graphics.draw=function(image,...)T.eq(image,cursor.tiles.cursor);draws=draws+1 end
+cursor:drawCursorBox(2,8,1);cursor:drawCursorBox(2,8,1);cursor:drawCursorBox(8,16,5)
+T.eq(quads,2,'cursor quads are retained across frames and target sizes')
+T.eq(draws,18,'letter corners and wide-target edges use the imported sheet')
+love.graphics.newQuad,love.graphics.draw=newQuad,draw
 Version.set('red')
 T.eq(getmetatable(require('src.ui.NamingScreen').new(game(),{})),require('src.ui.NamingScreen'),'Gen1 retains its own keyboard')
 Version.set(edition);Screens.invalidate()

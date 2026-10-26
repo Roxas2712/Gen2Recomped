@@ -57,7 +57,7 @@ end
 local boards={ normal={board(false,false),board(true,false)},box={board(false,true),board(true,true)} }
 local function sameGrid(grid)return grid end
 function M:rows()
-  local data=self.game.data or {}
+  local data=self.game and self.game.data or {}
   local authored=data.gen2Naming and data.gen2Naming[self.isBox and 'box' or 'normal']
   local base=authored and authored[self.lower and 2 or 1] or boards[self.isBox and 'box' or 'normal'][self.lower and 2 or 1]
   if Runtime.wantsHook('ui.naming.grid')then
@@ -115,14 +115,14 @@ end
 function M.new(game,opts)
   opts=opts or {};local kind=M.TYPES[opts.type or 'player']or M.TYPES.player
   local self=setmetatable({game=game,kind=kind,glyphs={},maxLength=limit(opts.maxLength,kind.maxLength),
-    prompt=opts.prompt or Strings(kind.prompt),gender=opts.gender or (game.save and game.save.player and game.save.player.gender),
+    prompt=opts.prompt or Strings(kind.prompt),gender=opts.gender or (game and game.save and game.save.player and game.save.player.gender),
     isBox=opts.isBox or kind.isBox or false,lower=false,row=0,col=0,clock=0,
     onDone=opts.onDone,onCancel=opts.onCancel,mon=opts.mon,monName=opts.monName,
     presets=opts.presets,default=opts.default,_popOnDone=opts._popOnDone==true,
     iconColors=opts.iconColors,palette=opts.palette,
   },M)
   self.text=opts.initial or ''
-  local data=game.data or {}
+  local data=game and game.data or {}
   self.gfx=opts.menuGfx or data.gen2MenuGfx
   if self.gfx and self.gfx.naming then self.gfx=self.gfx.naming end
   self.tiles={}
@@ -148,7 +148,8 @@ end
 function M.native(game,opts)
   opts=opts or {};local args={}
   for k,v in pairs(opts)do args[k]=v end
-  args.type=args.type or (args.kind=='mon' and 'nickname')or args.kind or (tonumber(args.maxLen)==10 and 'nickname')or 'player'
+  args.type=args.type or (args.kind=='mon' and 'nickname')or args.kind
+    or (tonumber(args.maxLen)==10 and 'nickname')or (tonumber(args.maxLen)==8 and 'box')or 'player'
   args.prompt=args.prompt or args.title;args.maxLength=args.maxLength or args.maxLen
   args._popOnDone=true
   return M.new(game,args)
@@ -207,8 +208,12 @@ function M:drawBackdrop()
   local G=love.graphics;local p=self:paperColor();G.setColor(p[1]/255,p[2]/255,p[3]/255,1)
   G.rectangle('fill',0,0,160,144)
   if self.tiles.border then
-    G.setColor(1,1,1,1)
-    for y=0,17 do for x=0,19 do G.draw(self.tiles.border,x*8,y*8)end end
+    local function draw()
+      G.setColor(1,1,1,1)
+      for y=0,17 do for x=0,19 do G.draw(self.tiles.border,x*8,y*8)end end
+    end
+    local Pal=require('src.render.Gen2PaletteDraw')
+    if self.palette and Pal.available()then Pal.with(self.palette,draw)else draw()end
   end
 end
 function M:clearPanel(tx,ty,tw,th)
@@ -218,18 +223,43 @@ end
 function M:drawEntry(tx,ty)
   for i=1,self.maxLength do
     local col=(i-1)%16;local row=math.floor((i-1)/16)
-    Font.draw(self.glyphs[i]or '-',(tx+col)*8,(ty+row*2)*8)
+    local x,y=(tx+col)*8,(ty+row*2)*8
+    if self.mailMode then x,y=8+col*8,24+row*12 end
+    Font.draw(self.glyphs[i]or '-',x,y)
   end
 end
 function M:cursorTile()
   if self:onBottomRow()then return 2+(self:bottomTarget()-1)*6,self:keyboardTop()+self:bottomRow()*2,5 end
   return 2+self.col*2,self:keyboardTop()+self.row*2,1
 end
-function M:drawCursorBox(tx,ty,width)Chrome.cursor(tx-1,ty)end
+function M:drawCursorTile(quad,x,y,flipX,flipY)
+  love.graphics.draw(self.tiles.cursor,quad,x,y,0,flipX and -1 or 1,flipY and -1 or 1,flipX and 8 or 0,flipY and 8 or 0)
+end
+function M:drawCursorBox(tx,ty,width)
+  local G=love.graphics;local image=self.tiles.cursor
+  if not image then Chrome.cursor(tx-1,ty);return end
+  local w,h=image:getDimensions()
+  if w<8 or h<8 then Chrome.cursor(tx-1,ty);return end
+  if not self.cursorQuads then
+    self.cursorQuads={corner=G.newQuad(0,0,8,8,w,h),edge=G.newQuad(0,h>=16 and 8 or 0,8,8,w,h)}
+  end
+  G.setColor(1,1,1,1)
+  local x,y=tx*8,ty*8;local corner,edge=self.cursorQuads.corner,self.cursorQuads.edge
+  local right=x+math.max(0,(width or 1)-1)*8
+  self:drawCursorTile(corner,x-1,y-1,false,false);self:drawCursorTile(corner,right,y-1,true,false)
+  self:drawCursorTile(corner,x-1,y,false,true);self:drawCursorTile(corner,right,y,true,true)
+  for col=1,(width or 1)-2 do
+    self:drawCursorTile(edge,x+col*8,y-1,false,false);self:drawCursorTile(edge,x+col*8,y,false,true)
+  end
+end
 function M:drawPanel()
-  self:drawBackdrop();self:clearPanel(1,1,18,self.isBox and 4 or 6)
+  self:drawBackdrop();self:clearPanel(1,1,18,self.mailMode and 5 or self.isBox and 4 or 6)
   self:clearPanel(1,self:keyboardTop(),18,self.isBox and 9 or 7);self:clearPanel(1,16,18,1)
-  Chrome.printThrough(Strings(self.prompt),5,2,self.palette)
+  if self.monName then
+    Chrome.printThrough(Strings("%s'S",self.monName),5,2,self.palette)
+    Chrome.printThrough(Strings(self.prompt),5,4,self.palette)
+  else Chrome.printThrough(Strings(self.prompt),5,2,self.palette)end
+  local gender=self:genderGlyph();if gender then Chrome.printThrough(gender,1,2,self.palette)end
   self:drawEntry(5,self.isBox and 4 or 6)
   if self.iconImage then
     local G=love.graphics;local w,h=self.iconImage:getDimensions()
@@ -245,8 +275,10 @@ function M:drawPanel()
     if ch~=''and ch~=' 'then Chrome.printThrough(Strings(ch),ci*2,self:keyboardTop()+(ri-1)*2,self.palette)end
   end end
   local labels={self.lower and Strings('UPPER')or Strings('lower'),Strings('DEL'),Strings('END')}
-  for i,label in ipairs(labels)do Chrome.printThrough(label,2+(i-1)*6,self:keyboardTop()+self:bottomRow()*2,self.palette)end
-  self:drawCursorBox(self:cursorTile())
+  for i,label in ipairs(labels)do Chrome.printThrough(label,i==1 and 2 or 3+(i-1)*6,self:keyboardTop()+self:bottomRow()*2,self.palette)end
+  local function cursor()self:drawCursorBox(self:cursorTile())end
+  local Pal=require('src.render.Gen2PaletteDraw')
+  if self.palette and Pal.available()then Pal.with(self.palette,cursor)else cursor()end
 end
 function M:draw()if not self.choosing then self:drawPanel()end end
 function M:drawWidescreen(w,h)

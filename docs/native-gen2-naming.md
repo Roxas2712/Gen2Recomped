@@ -17,8 +17,10 @@ presenters can observe and draw its actual rows, cursor, text and field size.
 
 Name presets temporarily make the naming screen transparent and suppress its
 keyboard until NEW NAME is chosen; the original parent remains underneath.
-Native imported sprite and optional menu-art records can supply the header and
-backdrop. Default board data is an engine fallback; a `data.gen2Naming` record
+Native imported sprite and optional menu-art records can supply the header,
+backdrop and retained cursor quads. Mail entry keeps both sixteen-glyph rows
+above its keyboard. Native Oak and rival/name-rater calls carry their actual
+player/rival/Pokemon role instead of inferring it from a field length. Default board data is an engine fallback; a `data.gen2Naming` record
 can supply normal/box upper/lower rows. `ui.naming.grid` retains its public
 context and can replace those rows.
 
