@@ -1311,6 +1311,7 @@ local function markerFor(version)
   -- v8: field.gen2TradeAnim, GSC's own trade movie art (Gen2TradeArt).
   if version == "gold" or version == "silver" or version == "crystal" then
     revision = "gen2-field-encounters-v8:gen2-phone-identities-v1:"
+    revision = revision .. "gen2-apricorn-table-v1:gen2-apricorn-programs-v1:"
   end
   -- field.tradeArt: the cable-trade movie's tiles out of the ROM
   -- (Gen1TradeArt); without it the trade ran on drawn stand-ins.
