@@ -96,7 +96,7 @@ check(C.videoUrl({id='1zapYKShrtQ',url='https://attacker.test'})=='https://www.y
 check(not C.videoUrl({id='../bad'}),'invalid video IDs never become external links')
 signedIn=false;local beforeRequests=requests;ui:_refreshFind(true)
 ui:update(0)
-check(not ui._findNeedsLogin and ui.findIndex and #ui.findIndex.mods==1,'guests can browse cached catalogue entries without linking an account')
+check(ui._findNeedsLogin and ui.findIndex and #ui.findIndex.mods==0 and requests==beforeRequests,'guest browsing is gated before cached metadata or network requests are used')
 local account=false;ui._openAccount=function() account=true end
 ui:_findConfirmInstall(card)
 check(account and not ui._communityLatestJob,'installing still requires the native account login before a download begins')
@@ -117,4 +117,22 @@ C.backgroundUpdates()
 check(ui.modUpdateInfo.first.status=='available' and ui.modUpdateInfo.second.status=='available','background completion updates every installed mod from the same repository')
 check(ui.modUpdateInfo.first.best.zip.name=='first-2.0.0.zip' and ui.modUpdateInfo.second.best.zip.name=='second-2.0.0.zip','a shared repository still selects and caches the correct ZIP for each individual mod')
 check(not C._updateOwner,'completed startup checks release their old launcher instance')
+local L=require('src.mods.LauncherMods');local oldList,oldInstall=L.list,L.installFromRelease
+local installed={{id='first',github='Author/Shared',version='1.0.0'}}
+local sourceScans=0
+L.list=function() sourceScans=sourceScans+1;return installed end
+local D=require('src.mods.ModDownload');local oldStart=D.start;local starts,cancelled,installs=0,0,0
+D.start=function() starts=starts+1;return {cancel=function() cancelled=cancelled+1 end,poll=function() return {kind='progress',bytes=0} end} end
+L.installFromRelease=function() installs=installs+1;return true,'2.0.0' end
+ui.mods=installed;signedIn=false;account=false
+ui:_confirmModUpdate('first',release('2.0.0','Author/Shared'))
+check(ui._communityDownload and starts==1 and not account,'guest update buttons start a direct download for a real installed mod without opening login')
+ui:update(0);ui:update(0)
+check(sourceScans==1,'guest downloads do not scan every installed manifest on every progress frame')
+installed[1].github='Other/Project';ui._communityDownload.phase='install';ui._communityDownload.path='downloads/fixture.zip';ui:update(0)
+check(not ui._communityDownload and cancelled==1 and installs==0,'repository identity is checked again before replacement and a changed source cancels safely')
+signedIn=true;ui:_communityStartDownload('new-mod',release('2.0.0','Author/Shared'),'New mod','Author/Shared')
+signedIn=false;ui:update(0)
+check(not ui._communityDownload and installs==0,'a new online install cannot finish after sign-out through the guest update exception')
+D.start=oldStart;L.list=oldList;L.installFromRelease=oldInstall
 print('Launcher community: '..checks..' checks passed')

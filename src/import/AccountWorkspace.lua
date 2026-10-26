@@ -280,7 +280,7 @@ function W.draw(self)
     paragraph('Play without an account. Saves stay on this device and survive app updates. Cloud saves are optional and let you continue on another device after signing in.')
     row('PLAY WITHOUT AN ACCOUNT · SAVE LOCALLY','local')
     row('I WANT CLOUD SAVES · SIGN IN / REGISTER','cloud')
-    paragraph('Bank, trading and mod installation require a confirmed account. Public mod browsing and local play do not.')
+    paragraph('Bank, trading and new online mod installation require a confirmed account. Local play, manual mod imports and updates to installed mods do not. Browsing and installing new online mods require sign-in.')
   elseif f.document then
     local d=f.policy[f.document];if d then paragraph(d.title,true);paragraph(d.text);paragraph('Version '..f.policy.version);row('OPERATOR CONTACT >','operator') end
     row('BACK','back')
@@ -298,7 +298,7 @@ function W.draw(self)
     row('MY GIFTS','gifts')
   elseif f.mode=='gifts' or f.mode=='giftAdmin' then
     paragraph(f.mode=='giftAdmin' and 'CREATE A GIFT CODE · STAFF' or 'GIFT CODES',true)
-    paragraph('Pokémon, items and edition-specific event unlocks. Gen 1 has no eggs or shiny setting. A code is claimed once per account across all your devices. Gifts are stored in your Bank; local saves stay intact.')
+    paragraph('Pokémon, items and edition-specific event unlocks. Gen 1 has no eggs or shiny setting. A code is claimed once per account across all your devices. Pokémon stay in your Bank; items and event unlocks stay in your account inbox. Local saves stay intact.')
     if f.mode=='giftAdmin' then
       if f.createdGift then
         paragraph('NEW CODE · '..f.createdGift.code,true);paragraph('Keep or share this code now. It is shown only in this creation result.')

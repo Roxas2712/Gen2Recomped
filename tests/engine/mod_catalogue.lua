@@ -1,5 +1,7 @@
 package.path='./?.lua;'..package.path
 love=require('tests.love_stub')
+local signed=true
+package.loaded['src.cloud.RetroCloud']={signedIn=function() return signed end}
 local M=require('src.import.ModCatalogue')
 local Search=require('src.mods.ModSearch')
 local checks=0
@@ -65,7 +67,7 @@ local ui=setmetatable({_s=1,hintFont=font,stateFont=font,warningFont=font,sectio
 ui:update(0);ui:update(0)
 check(ui.updateChecks==1 and ui.forced,'app startup forces one repository update sweep rather than every frame')
 local height=ui:_drawFindPanel(10,0,1100,900,true)
-check(height>900 and #ui._catalogActions>3,'the public catalogue renders without a login or installed mods')
+check(height>900 and #ui._catalogActions>3,'the signed-in catalogue renders without installed mods')
 local count=imageCalls
 check(count<30,'off-screen cards do not start image or repository jobs')
 ui:_drawFindPanel(10,-700,1100,900,true)
@@ -84,4 +86,11 @@ for _,r in ipairs(ui._catalogActions) do
 end
 check(firstCover and firstCover.y<500,'portrait toolbar leaves the catalogue visible without expanding every filter')
 ui._catalogManage=true;ui:_selectTab('mods');check(ui.tab=='mods' and ui:_drawModsPanel()==123 and ui.managed,'load order, import and enable controls remain available')
+signed=false;ui._catalogManage=false;ui:_selectTab('mods')
+check(ui.tab=='mods' and ui._catalogManage and ui:_drawModsPanel()==123,'guests opening Mods land directly on installed mods and manual import controls')
+ui._catalogManage=false;ui.tab='find';local beforeImages=imageCalls
+ui:_drawFindPanel(10,0,320,812,true)
+check(imageCalls==beforeImages and #ui._catalogActions==2,'guest browser shows only login and manual-import choices without requesting previews')
+local manage=ui._catalogActions[2];ui:_sbMousepressed(manage.x+1,manage.y+1)
+check(ui._catalogManage and ui.tab=='mods','manual imports remain reachable without an account prompt')
 print('Mod catalogue: '..checks..' checks passed')
