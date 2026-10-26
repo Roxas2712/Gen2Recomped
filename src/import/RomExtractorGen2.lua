@@ -3347,6 +3347,133 @@ function RomExtractorGen2:gen2ApricornBalls()
   end
 end
 
+-- Six native bytes per attribute row: kind/name/action/event-word/sprite.
+-- Names immediately follow attributes in stock GSC; that boundary supplies
+-- the row count instead of a copied retail catalogue.
+function RomExtractorGen2:gen2Decorations()
+  if self.version~="gold" and self.version~="silver" and self.version~="crystal" then return nil end
+  local info={complete=false,rowsRead=0,defaultsComplete=false,giftsComplete=false}
+  local attr,names=self:symbol("DecorationAttributes"),self:symbol("DecorationNames")
+  local function fail(why)info.reason=why;return {},info end
+  if not attr or not names then return fail("missing decoration table symbols")end
+  local count=(names.address-attr.address)/6
+  if attr.bank~=names.bank or count%1~=0 or count<1 or count>256 or
+      attr.address<0x4000 or names.address>0x8000 then return fail("invalid decoration table boundary")end
+  local Native=require("src.world.Gen2Decorations")
+  local ok,rows=pcall(function()
+    local raw,maxName={},0
+    for i=0,count-1 do
+      local r=self.rom:bytes(attr.bank,attr.address+i*6,6)
+      assert(r[1]>=1 and r[1]<=6,"invalid decoration kind")
+      assert(r[3]==0 or Native.actionName(r[3]),"invalid decoration action")
+      assert(r[4]+r[5]*256<65535,"indirect decoration event")
+      raw[i]=r;if r[1]<=3 then maxName=math.max(maxName,r[2])end
+    end
+    local charmap=self:readSourceTable("charmap")
+    local words,pc={},names.address
+    for i=0,maxName do
+      local bytes,ended={},false
+      for _=1,128 do
+        assert(pc<0x8000,"decoration name crosses bank")
+        local b=self.rom:byte(names.bank,pc);pc=pc+1
+        if b==0x50 then ended=true;break end
+        bytes[#bytes+1]=b
+      end
+      assert(ended,"unterminated decoration name")
+      words[i]=self:gen2GlyphBytes(bytes,charmap)
+    end
+    local pokemon=self:symbol("PokemonNames")
+    local out={}
+    for i=0,count-1 do
+      local r=raw[i];local name=words[r[2]]
+      if r[1]>=4 then
+        assert(pokemon and r[2]>=1,"missing decoration species name")
+        local address=pokemon.address+(r[2]-1)*10
+        assert(address>=0x4000 and address+10<=0x8000,"decoration species name crosses bank")
+        local bytes={}
+        for n=0,9 do local b=self.rom:byte(pokemon.bank,address+n);if b==0x50 then break end;bytes[#bytes+1]=b end
+        name=self:gen2GlyphBytes(bytes,charmap)
+        info.species=info.species or{};info.sourceNames=info.sourceNames or{}
+        info.species[i]=string.format("SPECIES_%03d",r[2]);info.sourceNames[i]=name
+      end
+      assert(type(name)=="string" and name~="","missing decoration name")
+      out[i]={type=r[1],name=name,action=Native.actionName(r[3]),flag=r[4]+r[5]*256,sprite=r[6]}
+    end
+    return out
+  end)
+  if not ok then return fail(tostring(rows))end
+  local init=self:symbol("InitDecorations")
+  if init then
+    local valid,bytes=pcall(self.rom.bytes,self.rom,init.bank,init.address,11)
+    if valid and bytes[1]==0x3e and bytes[3]==0xea and bytes[6]==0x3e and bytes[8]==0xea and bytes[11]==0xc9 and
+        rows[bytes[2]] and rows[bytes[2]].action=="SET_UP_BED" and rows[bytes[7]] and rows[bytes[7]].action=="SET_UP_POSTER" then
+      local bed,poster=self:symbol("wDecoBed"),self:symbol("wDecoPoster")
+      if bed and poster and bytes[4]+bytes[5]*256==bed.address and bytes[9]+bytes[10]*256==poster.address then
+        info.defaults={bed=bytes[2],poster=bytes[7]};info.defaultsComplete=true
+      end
+    end
+  end
+  local gifts=self:symbol("DecorationIDs")
+  if gifts then
+    local valid,list=pcall(function()
+      local out={}
+      for n=0,255 do
+        assert(gifts.address+n<0x8000,"decoration gift table crosses bank")
+        local id=self.rom:byte(gifts.bank,gifts.address+n)
+        if id==255 then return out end
+        assert(rows[id] and Native.action(rows[id].action) and not Native.action(rows[id].action).put,"invalid gift decoration")
+        out[#out+1]=id
+      end
+      error("unterminated decoration gift table")
+    end)
+    if valid then info.gifts=list;info.giftsComplete=true end
+  end
+  info.complete=true;info.rowsRead=count
+  return rows,info
+end
+
+function RomExtractorGen2:gen2QueueDecorationPrograms(pool)
+  if self.version~="gold" and self.version~="silver" and self.version~="crystal" then return nil end
+  local roles={ornament="DecorationDesc_OrnamentOrConsole.OrnamentConsoleScript",
+    big="DecorationDesc_GiantOrnament.BigDollScript",null="DecorationDesc_NullPoster"}
+  local found={}
+  for role,name in pairs(roles)do
+    local at=self:symbol(name)
+    if not at or at.address<0x4000 or not self:gen2InRom(at.bank,at.address)then return nil end
+    found[role]=at
+  end
+  local pointers=self:symbol("DecorationDesc_PosterPointers")
+  if not pointers then return nil end
+  local ok,posters=pcall(function()
+    local out={}
+    for n=0,255 do
+      local pc=pointers.address+n*3;assert(pc<0x8000,"poster pointers cross bank")
+      local id=self.rom:byte(pointers.bank,pc)
+      if id==255 then return out end
+      assert(pc+2<0x8000,"truncated poster pointer")
+      local address=self.rom:word(pointers.bank,pc+1)
+      assert(address>=0x4000 and self:gen2InRom(pointers.bank,address)and not out[id],"invalid poster pointer")
+      out[id]={bank=pointers.bank,address=address}
+    end
+    error("unterminated poster pointers")
+  end)
+  if not ok then return nil end
+  local out={posters={},texts={}}
+  self._gen2ScriptTexts=self._gen2ScriptTexts or{}
+  for role,name in pairs({put="PutAwayTheDecoText",empty="NothingToPutAwayText",
+      setup="SetUpTheDecoText",replace="PutAwayAndSetUpText",same="AlreadySetUpText",
+      noChoice="PopulateDecoCategoryMenu.NothingToChooseText",
+      sideSetup="WhichSidePutOnText",sidePut="WhichSidePutAwayText"})do
+    local at=self:symbol(name)
+    if at and self:gen2InRom(at.bank,at.address)then
+      out.texts[role]=self:gen2RegisterScriptText(at.bank,at.address)
+    end
+  end
+  for role,at in pairs(found)do out[role]=self:gen2QueueScript(at.bank,at.address,pool)end
+  for id,at in pairs(posters)do out.posters[id]=self:gen2QueueScript(at.bank,at.address,pool)end
+  return out
+end
+
 function RomExtractorGen2:gen2QueueApricornPrograms(pool)
   if self.version~="gold" and self.version~="silver" and self.version~="crystal" then return nil end
   local symbols={ask="Kurt1.AskApricorn",pending="Kurt1.GotLureBall",
@@ -8260,7 +8387,10 @@ function RomExtractorGen2:gen2ResolveScriptMapIds(maps, keys, pool)
       if slot and type(row[slot]) == "number" and type(row[slot + 1]) == "number" then
         local entry = mapIndex[row[slot] * 256 + row[slot + 1]]
         local key = entry and keyByLabel[entry.label]
-        if key then
+        if (row[1]=="warp"or row[1]=="warpfacing") and row[slot]==0 and row[slot+1]==0 and
+            (self.version=="gold"or self.version=="silver"or self.version=="crystal")then
+          row[slot]="NONE";row[slot+1]=0
+        elseif key then
           row[slot] = key
           row[slot + 1] = 0
         end
@@ -9040,6 +9170,8 @@ function RomExtractorGen2:extractMapScripts()  self:beginStage("Gen2 map scripts
   out.marts = self:gen2Marts()
   out.apricornBalls, out.apricornInfo = self:gen2ApricornBalls()
   out.apricornPrograms = self:gen2QueueApricornPrograms(pool)
+  out.decorations,out.decorationInfo = self:gen2Decorations()
+  out.decorationPrograms = self:gen2QueueDecorationPrograms(pool)
   out.spawns = self:gen2SpawnPoints(maps, keys)
   -- extractField runs after this stage and needs both of these: GSC has no
   -- Fly-warp list of its own, because Fly lands on the SPAWN POINT of the
