@@ -4,10 +4,14 @@ local C = {}
 function C.run(root, backend, version)
 local Fixture=dofile(root..'/tests/charge_required/fixture.lua')
 local definitions={
- {13,'POTION',{0,0,0,0,4,0,20}}, {19,'FULL RESTORE',{0,0,0,63,4,0,255}},
- {20,'MAX POTION',{0,0,0,0,4,0,255}}, {23,'FULL HEAL',{0,0,0,63,0,0}},
- {500,'X ATTACK',{1,0,0,0,0,0}}, {501,'GUARD SPEC',{0,0,0,128,0,0}},
- {502,'MIXED HEAL',{0,0,0,0,7,0,1,2,50}}, {503,'UNRECOGNIZED',{0,0,0,0,0,0}},
+ {13,'POTION',{0,0,0,0,4,0,20},{heal=true,amount=20}},
+ {19,'FULL RESTORE',{0,0,0,63,4,0,255},{heal=true,amount='all',cureAll=true}},
+ {20,'MAX POTION',{0,0,0,0,4,0,255},{heal=true,amount='all'}},
+ {23,'FULL HEAL',{0,0,0,63,0,0},{cureAll=true}},
+ {500,'X ATTACK',{1,0,0,0,0,0},{battle=true}}, {501,'GUARD SPEC',{0,0,0,128,0,0},{mist=true}},
+ -- The existing parsed view has one amount; native HP still uses byte nine.
+ {502,'MIXED HEAL',{0,0,0,0,7,0,1,2,50},{ev='attack',heal=true,amount=1}},
+ {503,'UNRECOGNIZED',{0,0,0,0,0,0},{}},
 }
 local f=Fixture.new(root,backend,version,3,'unified',true,false,'portable_enemy_action',function(data)
  if backend=='gen1'then
@@ -16,7 +20,8 @@ local f=Fixture.new(root,backend,version,3,'unified',true,false,'portable_enemy_
   data.constants.generation=3;data.constants.gen3ItemEffects={}
   for _,row in ipairs(definitions)do
    local id=('ITEM_%03d'):format(row[1]);data.items[id]={id=id,index=row[1],name=row[2]}
-   data.constants.gen3ItemEffects[id]={bytes=row[3]}
+   local record={bytes=row[3]};for k,v in pairs(row[4])do record[k]=v end
+   data.constants.gen3ItemEffects[id]=record
   end
  end
 end)
@@ -75,6 +80,12 @@ local expected={
  ['right owner can reserve shared first trainer stock']={13,2,0,{0,0,0,0}}, ['spent shared stock stays spent']={0,0,0,{0,0,0,0}},
 }
 local function observe(label,b,actor,id,forced)
+ local originalItems=backend=='gen1'and b.trainerItems or b.trainer.items
+ local originalFirst=originalItems[1]
+ if Host and label=='quarter heal'then
+  local legacy=require('src.battle.TrainerAI').gen3ItemAction(b)
+  f.T.check(legacy and legacy.item==key(13),'legacy native selector sees the same usable potion')
+ end
  local action
  if backend=='gen1'then action=forced and Native.useStocked(b,id,forced)or not forced and Native.shouldUseItem(b,id)
  else action=forced and Host.stocked(b,actor,key(forced))or not forced and Host.choose(b,actor)end
@@ -91,6 +102,10 @@ local function observe(label,b,actor,id,forced)
  f.T.eq(row.kind,want[2],label..': native AI item type')
  f.T.eq(row.flags,want[3],label..': native AI item flags')
  f.T.same(row.stock,want[4],label..': remaining opposing stock')
+ f.T.eq(originalItems[1],originalFirst,label..': pristine trainer items stay unchanged')
+ if Host and label=='quarter heal'then
+  f.T.eq(require('src.battle.TrainerAI').gen3ItemAction(b),nil,'legacy selector observes the spent native stock')
+ end
  rows[#rows+1]=row
  return action,row
 end
@@ -114,6 +129,7 @@ do
  observe('second stock unlocks',b,actor,id)
  party[3].hp=0;observe('third stock unlocks',b,actor,id)
  if Host then
+  f.T.eq(Host.claim(b,b.player,action),nil,'another battler cannot claim this reservation')
   f.T.check(Host.claim(b,actor,action)~=nil,'selected item has one native execution reservation')
   f.T.eq(Host.claim(b,actor,action),nil,'reservation cannot execute twice')
  end
