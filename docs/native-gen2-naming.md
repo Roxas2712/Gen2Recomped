@@ -17,8 +17,10 @@ presenters can observe and draw its actual rows, cursor, text and field size.
 
 Name presets temporarily make the naming screen transparent and suppress its
 keyboard until NEW NAME is chosen; the original parent remains underneath.
-Native imported sprite and optional menu-art records can supply the header and
-backdrop. Default board data is an engine fallback; a `data.gen2Naming` record
+Native imported sprite and optional menu-art records can supply the header,
+backdrop and retained cursor quads. Mail entry keeps both sixteen-glyph rows
+above its keyboard. Native Oak and rival/name-rater calls carry their actual
+player/rival/Pokemon role instead of inferring it from a field length. Default board data is an engine fallback; a `data.gen2Naming` record
 can supply normal/box upper/lower rows. `ui.naming.grid` retains its public
 context and can replace those rows.
 
@@ -29,13 +31,14 @@ that same charmap.
 
 ROM-free tests cover actual stack/menu input, name types and glyph limits,
 caller/native completion ownership, preset underlay suppression, Gen1
-retention and actual Loader clients through native API1/2. The own-fork composition additionally tests unified API2/3.
+retention and actual Loader clients through native API1/2.
 GPU acceptance and full reference raster/helper parity remain separate:
 ROM naming-program/menu-art extraction, exact cursor/header rendering and the
 separate Gen2 NamePick portrait animation are still open. This change does not
 establish complete VASC, naming-story, save/link or full Gen1 parity.
 
-This standalone offer includes the shared native menu chrome already offered
-in PR #224 and the indexed palette drawer already offered in PR #202. It
-requires neither of those PR branches to have been merged. Original Gen1
-renderer provenance and applicable existing rights remain intact.
+This offer includes the shared Gen2 menu chrome already offered in PR #224
+and indexed palette drawer from PR #202 so its native screen can run without
+either branch having merged. Existing Gen1 provenance and license notices are
+preserved. Original contributions are offered under the specific permission at
+https://github.com/Roxas2712/Gen2Recomped/blob/7867399c753186778bd4b8816ba37573357e4b40/LICENSE-ROXAS2712.md.

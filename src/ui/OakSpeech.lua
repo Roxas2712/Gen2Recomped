@@ -692,6 +692,7 @@ function OakSpeech:runStep(step)
                      step.presetsFallback or { "RED" })
     require("src.ui.Screens").push(self.game, "NamingScreen", {
       title = step.title or (who == "rival" and "HIS NAME?" or Strings("YOUR NAME?")),
+      kind = who == "rival" and "rival" or "player",
       presets = presets,
       maxLen = step.maxLen or self.nameLen,
       onDone = function(name)
