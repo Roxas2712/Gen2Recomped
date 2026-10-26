@@ -3,7 +3,7 @@
   "date": "2026-10-26",
   "upstream": "8d5b4387420cc1fdcadf58ad4ca78a7d8596e41d",
   "fork": {
-    "head": "86f9e5935baa5bbb7531c0ab880be3008d0cffc5",
+    "head": "8e336d459619d26f7099825248a655f2d5385940",
     "exitCodes": {
       "engine": 0,
       "modkit": 0,
@@ -46,7 +46,7 @@
       "prism",
       "polishedcrystal"
     ],
-    "engineScope": "Full suite at the exact baseline below; twelve targeted engine suites after the subsequent native link-result and follower-resource integration. No full-suite rerun is claimed for the later revision.",
+    "engineScope": "Full suite at a6f947a5; 22 affected engine suites and every required compatibility gate at the final concurrent integration.",
     "fullEngineBaseline": {
       "head": "a6f947a5f9f9e836fafd4f57dae961a631e4193c",
       "exitCodes": {
@@ -58,9 +58,9 @@
       }
     },
     "targetedEngineSuites": {
-      "sourceCommit": "86f9e5935baa5bbb7531c0ab880be3008d0cffc5",
-      "passed": 12,
-      "total": 12,
+      "sourceCommit": "8e336d459619d26f7099825248a655f2d5385940",
+      "passed": 22,
+      "total": 22,
       "exitCodes": {
         "link_battle_ended": 0,
         "api3_compat": 0,
@@ -73,7 +73,17 @@
         "checkpoint_battle_continuation": 0,
         "native_follower_callback_owner": 0,
         "native_session_callbacks": 0,
-        "native_companion_runtime": 0
+        "native_companion_runtime": 0,
+        "suspend_continue": 0,
+        "suspend_journal": 0,
+        "suspend_store": 0,
+        "screen_space_ui": 0,
+        "friend_wager": 0,
+        "friend_activity": 0,
+        "friend_chat": 0,
+        "friend_maps": 0,
+        "account_workspace": 0,
+        "friends_menu": 0
       }
     }
   },
@@ -471,6 +481,40 @@
         "total": 120
       },
       "scope": "Preparation/early dependency host. Engine/SDK pass; raw exit codes retain inherited gallery/tooling gaps. Complete unchanged-fixture acceptance is qualified on the composed M8/P9 stack."
+    }
+  },
+  "finalConcurrentIntegration": {
+    "incoming": "fc46bd85c919b6faef1c470597397d7ef02b96bb",
+    "head": "8e336d459619d26f7099825248a655f2d5385940",
+    "fullEngineBaseline": "a6f947a5f9f9e836fafd4f57dae961a631e4193c",
+    "scope": "Twenty-two targeted engine suites after integrating the separately qualified native link-result, suspend/friends and Gen2 menu publication, plus every required SDK/gallery/contract/unchanged-fixture gate. Full engine qualification is recorded at its exact baseline revision.",
+    "exitCodes": {
+      "link_battle_ended": 0,
+      "api3_compat": 0,
+      "gate_meta_coverage": 0,
+      "mod_supports": 0,
+      "unified_mod_callbacks": 0,
+      "gate_fingerprint": 0,
+      "gate_hooks": 0,
+      "gate_events": 0,
+      "checkpoint_battle_continuation": 0,
+      "native_follower_callback_owner": 0,
+      "native_session_callbacks": 0,
+      "native_companion_runtime": 0,
+      "suspend_continue": 0,
+      "suspend_journal": 0,
+      "suspend_store": 0,
+      "screen_space_ui": 0,
+      "friend_wager": 0,
+      "friend_activity": 0,
+      "friend_chat": 0,
+      "friend_maps": 0,
+      "account_workspace": 0,
+      "friends_menu": 0,
+      "modkit": 0,
+      "gallery": 0,
+      "api3": 0,
+      "fixtures": 0
     }
   }
 }

@@ -1,5 +1,11 @@
 # Performance and mod compatibility programme
 
+Final concurrent integration: `8e336d45` includes the additional friend/suspend
+and native Gen2 output commits through `fc46bd85`. Its **22/22 affected
+engine suites**, all required compatibility gates and **14,520 native
+checkpoint assertions per LÖVE host** pass. Full-engine **561/561** evidence
+remains pinned to `a6f947a5`; it is not relabeled as a full rerun of this merge.
+
 A1/A2, M1–M8 and P1–P9 are implemented in the composed fork and offered through
 their existing upstream PRs. Existing acceptance repairs are reused.
 
