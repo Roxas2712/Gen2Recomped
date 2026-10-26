@@ -31,6 +31,11 @@ eq(P.GC_PAUSE, 120, "a number field is never written")
 eq(next(applied), nil, "nothing applied for garbage")
 eq(next(P.applyEnvironment("")), nil, "empty spec applies nothing")
 eq(next(P.applyEnvironment(nil)), nil, "nil spec (no env) applies nothing")
+P.gcBudget = true
+eq(next(P.applyEnvironment("gcBudget=treu")), nil, "misspelled booleans are ignored")
+eq(P.gcBudget, true, "invalid boolean cannot switch a feature off")
+P.applyEnvironment("gcBudget=FALSE")
+eq(P.gcBudget, false, "case-insensitive boolean")
 
 for k, v in pairs(saved) do P[k] = v end
 print(("perf_env_check: %d checks ok"):format(n))

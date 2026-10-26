@@ -94,9 +94,10 @@ function Performance.applyEnvironment(spec)
   if type(spec) ~= "string" or spec == "" then return {} end
   local applied = {}
   for item in spec:gmatch("[^,%s]+") do
-    local name, value = item:match("^([%w_]+)=([01truefalsTRUEFALS]+)$")
-    if name then
-      local on = value == "1" or value:lower() == "true"
+    local name, value = item:match("^([%w_]+)=([%w]+)$")
+    value = value and value:lower()
+    if name and (value == "0" or value == "1" or value == "true" or value == "false") then
+      local on = value == "1" or value == "true"
       if name == "all" then
         for k, v in pairs(Performance) do
           if type(v) == "boolean" and k ~= "saver" then

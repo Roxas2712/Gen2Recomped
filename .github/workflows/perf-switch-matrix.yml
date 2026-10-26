@@ -6,6 +6,7 @@ on:
       - 'src/mods/**'
       - 'src/render/**'
       - 'tools/perf_switch_matrix.sh'
+      - 'tools/performance_qualification.py'
       - '.github/workflows/perf-switch-matrix.yml'
   workflow_dispatch:
 permissions:
