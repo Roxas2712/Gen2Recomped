@@ -66,6 +66,8 @@ Performance.gen3PaletteIndex = true
 -- shifts, animation frames, toggles) as FFI region copies instead of
 -- getPixel/setPixel per pixel (src/render/ShadeRecolour.lua).
 Performance.shadeRecolourFfi = true
+-- G8: share PNG decodes only among consumers that do not modify pixels.
+Performance.assetSharedDecode = true
 -- G3: Gen 4 model draw sends a uniform only when its value changed and
 -- allocates no per-shape tables (src/render/Gen4Model.lua:_drawCached).
 Performance.gen4UniformCache = true
