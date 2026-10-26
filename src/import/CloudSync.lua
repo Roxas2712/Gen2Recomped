@@ -418,6 +418,14 @@ end
 
 -- every slot of these versions, then whatever is new in the cloud; a summary.
 -- `target` is a sync folder's path or an open store (GoogleDrive.open())
+local function syncSuspend(store,version,slot,pushOnly)
+  if store.kind~='retro' then return true end
+  local save=SaveData.peekSlot(version,slot)
+  local id=save and save.meta and save.meta.playthroughId
+  if not id then return true end
+  local result,why=require('src.storage.SuspendStore').sync(store,version,id,pushOnly)
+  return result,why
+end
 function C.syncVersions(target, versions)
   local permitted,why=require('src.storage.AccountStorage').storeCheck(target);if not permitted then return nil,why end
   local store = asStore(target)
@@ -433,6 +441,12 @@ function C.syncVersions(target, versions)
     end
     local count,why=C.pullNew(store, st, v);if not count then return nil,why end
     tally.new = tally.new + count
+    if store.kind=='retro' then
+      for _,slot in ipairs(SaveData.listSlots(v) or {}) do
+        local ok,err=syncSuspend(store,v,slot.id)
+        if not ok then tally.failed=tally.failed+1;tally.suspendNotice=err end
+      end
+    end
   end
   C.saveState(st, key)
   return tally
@@ -446,6 +460,10 @@ function C.syncOne(target, version, slotId, pushOnly)
   local st = C.loadState(key)
   local what, why = C.syncSlot(store, st, version, slotId, pushOnly)
   C.saveState(st, key)
+  if what then
+    local ok,err=syncSuspend(store,version,slotId,pushOnly)
+    if not ok then return nil,'Normal save synced; suspend needs attention: '..tostring(err) end
+  end
   return what, why
 end
 
@@ -456,6 +474,12 @@ function C.restoreVersions(target,versions)
   for _,version in ipairs(versions) do
     local count,problem=C.pullNew(store,st,version);if not count then return nil,problem end
     result.new=result.new+count
+    if store.kind=='retro' then
+      for _,slot in ipairs(SaveData.listSlots(version) or {}) do
+        local ok,err=syncSuspend(store,version,slot.id)
+        if not ok then return nil,'Normal saves restored; suspend needs attention: '..tostring(err) end
+      end
+    end
   end
   C.saveState(st,key);return result
 end

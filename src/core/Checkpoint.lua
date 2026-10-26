@@ -484,7 +484,7 @@ function C.restore(game, value, fs)
 	commit(game, token, cp, priorRng)
 	return true
 end
-function C.resume(game, value, fs)
+local function resume(game, value, fs, continuation)
 	if not atTitle(game) then
 		return false, "not_at_title", "Resume requires the native title screen."
 	end
@@ -500,6 +500,7 @@ function C.resume(game, value, fs)
 	local ok, err = pcall(function()
 		token = rebuild(game, cp)
 		verify(game, cp, priorRng)
+		if continuation then continuation() end
 	end)
 	if not ok then
 		if token then
@@ -508,8 +509,21 @@ function C.resume(game, value, fs)
 		restoreRng(priorRng)
 		return false, "resume_failed", tostring(err)
 	end
-	commit(game, token, cp, priorRng)
+	if continuation then
+		-- Replay has advanced beyond the anchor, including its RNG and music.
+		-- Committing must not rewind either to the earlier overworld checkpoint.
+		World.commit(game, token)
+	else
+		commit(game, token, cp, priorRng)
+	end
 	return true
+end
+function C.resume(game, value, fs) return resume(game, value, fs) end
+-- Engine-private continuation: only locally authored replay code is passed
+-- here. The checkpoint parser never accepts Lua functions or bytecode.
+function C.resumeReplay(game, value, continuation, fs)
+	assert(type(continuation)=='function', 'native replay continuation required')
+	return resume(game, value, fs, continuation)
 end
 function C.ensureNormalSave(game, value, fs)
 	local cp, code, message = validate(game, value, fs)
