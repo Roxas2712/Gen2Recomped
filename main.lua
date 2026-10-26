@@ -14,6 +14,8 @@
 --     opens the editor on that slot's file, and restores the launcher when
 --     the editor's Close button is pressed (openEditor / closeEditor below)
 
+-- J1: the JIT's trace limits, raised before the first module compiles a loop
+pcall(function() require("src.core.JitTuning").apply() end)
 local editorMode = os.getenv("POKEPORT_EDITOR") == "1" or POKEPORT_EDITOR_MODE == true
 
 -- The pinned engine preview is a separate test channel. Stable self-update
@@ -672,11 +674,11 @@ function love.update(dt)
     local blocked=require('src.cloud.Play').tick(Importer and nil or Game)
     if blocked and Game then
       RetroOverlay.open(Game);RetroOverlay.recoveringTrade=true
-      RetroOverlay.notice=require('src.link.FriendTrade').error or 'Recovering your confirmed trade. Your saved party is protected.'
+      RetroOverlay.notice=require('src.link.FriendTrade').error or require('src.link.FriendWager').error or 'Completing your trade or stake receipt. Your normal adventure is paused.'
       RetroOverlay.update(Game)
       return
     elseif RetroOverlay.recoveringTrade then
-      RetroOverlay.recoveringTrade=nil;RetroOverlay.notice='Your confirmed trade was recovered and saved. Continue playing.'
+      RetroOverlay.recoveringTrade=nil;RetroOverlay.notice='Your trade or stake receipt was processed. Continue playing. Pokémon prizes are in your Bank.'
     end
   end
   local community=package.loaded['src.import.LauncherCommunity']
@@ -761,7 +763,7 @@ function love.draw()
 
   if not Game then return drawSecondPanel() end
   Game:draw()
-  if not autopilot and not driverCo then RetroOverlay.draw(Game) end
+  if not autopilot and not driverCo then require('src.ui.FriendActivity').draw(Game);RetroOverlay.draw(Game);require('src.ui.TextComposer').draw(RetroOverlay) end
 end
 
 function love.keypressed(key, scancode, isrepeat)
@@ -1327,6 +1329,9 @@ function love.run()
 
   local FrameCap = require("src.core.FrameCap")
   local paced = pacingEnabled()
+  -- what the pacer does with the time it would otherwise sleep: the GC
+  -- budget, then queued atlas / sprite builds (src/core/IdleStream.lua)
+  local idleWork = require("src.core.IdleStream").idle(GCFrameBudget.idle)
   -- The deadline the next present() should not beat.  Carried forward one
   -- budget per frame so pacing stays even instead of drifting with the
   -- per-frame sleep-granularity jitter.
@@ -1443,7 +1448,7 @@ function love.run()
     if love.timer then
       if paced then
         local closeSleep = FrameProfile.section("frame pacing: sleep")
-        nextFrame = FrameCap.pace(love.timer, love.window, presented, nextFrame, GCFrameBudget.idle)
+        nextFrame = FrameCap.pace(love.timer, love.window, presented, nextFrame, idleWork)
         closeSleep()
       else
         love.timer.sleep(0.001)
