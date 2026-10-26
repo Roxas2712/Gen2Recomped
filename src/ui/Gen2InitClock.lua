@@ -57,14 +57,16 @@ function InitClock:question()
   if self.phase == "minute" then return text(self, "OakTimeHowManyMinutesText", TEXT.minute) end
   if self.phase == "day" then return text(self, "SetDayOfWeek.OakTimeWhatDayIsItText", TEXT.day) end
   if self.phase == "confirm-hour" then
-    return text(self, "OakTimeWhatHoursText", TEXT.confirmHour) .. "\n"
-      .. InitClock.oclockString(self.hour)
-      .. text(self, "OakTimeWhatHoursText.OakTimeHoursQuestionMarkText", TEXT.questionMark)
+    local lines = { text(self, "OakTimeWhatHoursText", TEXT.confirmHour),
+      InitClock.oclockString(self.hour)
+        .. text(self, "OakTimeWhatHoursText.OakTimeHoursQuestionMarkText", TEXT.questionMark) }
+    return table.concat(lines, "\n")
   end
   if self.phase == "confirm-minute" then
-    return text(self, "OakTimeWhoaMinutesText", TEXT.confirmMinute) .. "\n"
-      .. Strings("%d min.", self.minute)
-      .. text(self, "OakTimeWhoaMinutesText.OakTimeMinutesQuestionMarkText", TEXT.questionMark)
+    local lines = { text(self, "OakTimeWhoaMinutesText", TEXT.confirmMinute),
+      Strings("%d min.", self.minute)
+        .. text(self, "OakTimeWhoaMinutesText.OakTimeMinutesQuestionMarkText", TEXT.questionMark) }
+    return table.concat(lines, "\n")
   end
   if self.phase == "confirm-day" then
     return Clock.weekdayName(self.day + 1)
