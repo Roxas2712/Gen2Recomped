@@ -3,10 +3,32 @@
 ## Worker threads
 
 Mods using `love.thread` may declare `"compute"` in their manifest's
-`permissions` array. This matches the Gen1 mod contract and uses the bundled
+`permissions` array. This uses the bundled
 LÖVE thread/channel API. It is separate from a `mod.job` background-job API;
 declaring `compute` does not grant or implement that service. Unknown
 permissions still fail strict API-2/API-3 manifest validation.
+## Background HTTP GET
+
+A mod declaring `"network"` receives `mod.fetch:get(url, options)`, `:poll(handle)`,
+`:cancel(handle)`, `:release(handle)`, `:available()` and `:capabilities()`.
+Handles belong to their creating mod. Poll returns a detached table with
+`status` (`pending`, `ok`, `error` or `cancelled`), `body`, `err`,
+`receivedBytes` and, when known, `httpStatus`. Always release finished handles.
+Rollback and unload release a mod's requests automatically.
+
+GET transport runs in three LÖVE workers. The engine caps active/queued work at
+16 requests, with four pending requests per mod. `maxSeconds` defaults to 20
+and caps at 30, including queue time; `maxBytes` defaults to 4 MiB and caps at
+16 MiB. `boundedHttpsGet = 1` requires HTTPS throughout redirects. Desktop
+capabilities advertise this constraint. Desktop curl is required; mobile
+bridges are not yet supported by this API. Remote URLs and headers are passed
+through a private curl config file, outside shell syntax.
+
+Cancel discards the result immediately. A curl already executing may occupy
+its worker until its bounded timeout; releasing a handle cannot bypass the
+global worker limit. Shutdown waits for those bounded operations. This adds
+GET support; it does not implement POST, arbitrary requests or `mod.job`.
+The older download-to-file API still performs a synchronous first poll.
 
 
 The modding book lives on the
@@ -414,3 +436,6 @@ API-2 mods can select `"content_format": "unified"` to read and edit common
 Pokémon, move, item, trainer and encounter definition shapes. Existing mods
 keep native formats. See [the format, supported operations and limitations](unified-mod-content.md)
 for the manifest guard, generation coverage, symbolic IDs and failure behavior.
+With `network` and a fixed HTTPS `log_url`, `mod:postLog` sends bounded one-way
+diagnostics through the shared workers. See [log reporting](mod-log-reporting.md)
+for payload, ownership and native platform boundaries.

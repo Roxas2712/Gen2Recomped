@@ -20,7 +20,12 @@ local function pack(importer,kind,name,entry)
 end
 pack('lttp','sprites','player',{file='synthetic.png',size=4,width=16,height=24})
 pack('lttp','tiles','kakariko',{file='synthetic.png',size=4,width=1024,height=1024})
-pack('pmd_red','sprites','pikachu',{file='synthetic.png',size=4,width=16,height=24,sprite={dexNumber=25,monsterId=25}})
+local pmdMeta={dexNumber=25,monsterId=25,frameWidth=16,frameHeight=24,frameColumns=1,
+ anchorX=8,anchorY=24,animations={{1,1,1,1,1,1,1,1}},sequences={{{1,2,0,0,0,0,0}}}}
+local pmdBytes=Writer.encode(pmdMeta)
+pack('pmd_red','sprites','pikachu',{file='synthetic.png',size=4,width=16,height=24,frames=1,
+ sprite=pmdMeta,metadata={file='synthetic-meta.lua',size=#pmdBytes}})
+overlay[I.assetPath('pmd_red','sprites','synthetic-meta.lua')]=pmdBytes
 local function remap(path)
  if path==mount then return 'mods/'..fixture end
  if path:sub(1,#mount+1)==mount..'/' then return 'mods/'..fixture..path:sub(#mount+1) end

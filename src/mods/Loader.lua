@@ -12,6 +12,7 @@ local Version = require("src.core.Version")
 local Assets = require("src.render.Assets")
 local ModUI = require("src.ui.ModUI")
 local PortableScripts = require("src.mods.PortableScripts")
+local Net = require("src.mods.Net")
 local AssetTransform = require("src.mods.AssetTransform")
 local Manifest = require("src.mods.Manifest")
 local Merge = require("src.mods.Merge")
@@ -975,6 +976,7 @@ function Loader:_api(mod)
     -- Per-mod action/revision state, with the existing lazy widget builders.
     -- Reading the facade early must not construct Game or a native screen.
     ui = UIActions.new(function() return loader:_game(true) end, loader, ModUI),
+    fetch = Net.forMod(loader, mod),
     -- namespaced per mod; M11 backs these with save.modData /
     -- options.modOptions, the shape mods compile against is already final
     save = {
@@ -1190,6 +1192,7 @@ function Loader:_api(mod)
     return Capabilities.supports(surface, name, hostId)
   end
   api.packs = require("src.mods.AssetPacks").new(mod.manifest, loader.fs)
+  api.postLog = Net.logReporter(loader,mod)
   -- mod.world / mod.game / mod.storage all materialize on first touch, for
   -- the same reason: a headless load must not drag the world stack in.
   -- Battle capability queries can also be installed before Game exists.
@@ -1320,6 +1323,7 @@ function Loader:_rollback(modId)
   if facade and facade._retireMod then facade._retireMod(modId)end
   self.inputControl:retire(modId)
   PortableScripts.cancelAll(self, modId, "mod rolled back")
+  Net.releaseAll(self, modId)
   for name in pairs(self.journal or self.content) do
     self.content[name]:rollback(modId)
   end
@@ -1856,6 +1860,7 @@ function Loader.teardown()
   notifyCompatibilitySession()
   InputControl.closeAll()
   PortableScripts.cancelAll(nil, nil, "mods unloaded")
+  Net.unloadAll()
   local undone = select(1, ModSeams.unwindAll())
   retireCompatibilityCollision()
   retireBattlePresentation()
