@@ -4,13 +4,14 @@
 local Art=require('src.import.Gen3FieldMoveArt')
 local M={}
 local OUTDOORS={TOWN=true,CITY=true,ROUTE=true,UNDERWATER=true,OCEAN_ROUTE=true,[1]=true,[2]=true,[3]=true,[5]=true,[6]=true}
-function M.outdoors(game)
-  local map=game.overworld and game.overworld.map
+function M.outdoors(game,world)
+  world=world or game.overworld
+  local map=world and world.map
   return OUTDOORS[map and map.def and map.def.mapType]==true
 end
-function M.new(mon,opts,game)
+function M.new(mon,opts,game,world)
   return{species=mon.species,personality=mon.personality,noDuck=opts.noDuck==true,
-    outdoors=M.outdoors(game),phase=opts.pose and'pose'or 1,posed=opts.pose==true,
+    outdoors=M.outdoors(game,world),phase=opts.pose and'pose'or 1,posed=opts.pose==true,
     poseWait=24,hofs=0,winL=240,winT=80,winB=81,revealed=0,cleared=0}
 end
 function M.advance(fx,cry)
