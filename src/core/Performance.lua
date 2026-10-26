@@ -86,6 +86,45 @@ Performance.GC_PAUSE = 120
 Performance.GC_STEP_MUL = 300
 Performance.GC_BUDGET_SECONDS = 0.0005
 
+-- EVERY SWITCH ABOVE FROM THE ENVIRONMENT, for an A/B without an edit.
+--
+--   POKEPORT_PERF="gen3PaletteIndex=0,gcBudget=0"   turn these off
+--   POKEPORT_PERF="all=0"                            the port as it shipped
+--   POKEPORT_PERF="all=0,bytecodeCache=1"            all off but one
+--
+-- Read once at load, before any module copies a flag; a name that is not a
+-- boolean switch here is ignored (and logged by nobody -- this runs under
+-- love.conf, before the logger).  The names are the field names above,
+-- case-sensitive; `all` is every boolean field present at this point.
+-- tools/perf_switch_matrix.sh runs the mod and engine checks once per
+-- switch with it off, which is how "no optimisation changes what a mod
+-- sees" is kept true.
+function Performance.applyEnvironment(spec)
+  spec = spec or (os and os.getenv and os.getenv("POKEPORT_PERF"))
+  if type(spec) ~= "string" or spec == "" then return {} end
+  local applied = {}
+  for item in spec:gmatch("[^,%s]+") do
+    local name, value = item:match("^([%w_]+)=([%w]+)$")
+    value = value and value:lower()
+    if name and (value == "0" or value == "1" or value == "true" or value == "false") then
+      local on = value == "1" or value == "true"
+      if name == "all" then
+        for k, v in pairs(Performance) do
+          if type(v) == "boolean" and k ~= "saver" then
+            Performance[k] = on
+            applied[k] = on
+          end
+        end
+      elseif type(Performance[name]) == "boolean" and name ~= "saver" then
+        Performance[name] = on
+        applied[name] = on
+      end
+    end
+  end
+  return applied
+end
+Performance.applyEnvironment()
+
 -- Option-row order (auto first, then most to least capable).
 Performance.TIERS = { "auto", "high", "balanced", "low" }
 

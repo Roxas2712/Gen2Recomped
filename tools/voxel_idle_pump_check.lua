@@ -66,5 +66,20 @@ check(not IdleStream.busy(), 'jobs drained: quiet again')
 IdleStream.unregister(service)
 Performance.tier = 'high'
 
+-- Execute the actual mesher pump with no queued geometry. Its early return
+-- must still publish the current foreground policy to the idle pump.
+do
+  local mesher = assert(loadfile('mods/DRAMATIC_SHAPE/lib/ChunkMesher.lua'))({
+    require=function(name)
+      if name=='RetireQueue' then return {new=function()return {pump=function()end}end} end
+      return {}
+    end,
+  })
+  mesher.pump(false,true)
+  check(mesher.foregroundOnly==true,'empty regular pump publishes foreground-only policy')
+  mesher.pump(false,false)
+  check(mesher.foregroundOnly==false,'empty regular pump clears foreground-only policy')
+end
+
 print(('voxel_idle_pump_check: %d passed, %d failed'):format(PASS, FAIL))
 if FAIL > 0 then os.exit(1) end

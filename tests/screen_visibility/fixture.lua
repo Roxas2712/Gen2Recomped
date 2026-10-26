@@ -50,12 +50,17 @@ function M.new(root, backend, version, api, format, noMod)
   Renderer.uiSize = function()
     return width, height
   end
-  Renderer.beginFrame = function(_, world)
+  Renderer.beginFrame = function(self, world)
     clearWorld = world
+    self.gen2WindowDraw=nil;self.gen2FrameManaged=false
   end
-  Renderer.endFrame = function(_, z, wz)
+  Renderer.endFrame = function(self, z, wz)
     zones, worldZones = z, wz
-    return {}
+    local viewport={width=640,height=576,gameX=0,gameY=0,scale=4,dpiX=1,dpiY=1}
+    -- Match the real compositor's deferred Gen2 UI pass. Visibility and
+    -- ordering assertions below remain unchanged across every generation.
+    if self.gen2FrameManaged and self.gen2WindowDraw then self.gen2WindowDraw(viewport) end
+    return viewport
   end
   Touch.draw = function() end
   local Input = require("src.core.Input")
