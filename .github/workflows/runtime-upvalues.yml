@@ -7,6 +7,7 @@ on:
       - 'tools/build_native_preview.py'
       - 'tools/package_native_release.py'
       - 'tests/test_runtime_component.py'
+      - 'tests/test_runtime_qualification.py'
       - 'tests/test_native_preview.py'
       - 'src/mods/Job*.lua'
       - 'src/mods/job_worker.lua'
@@ -36,12 +37,14 @@ jobs:
             label: macos-x64
             love-artifact: '12513712494'
             library: libluajit.so
+            engine-timeout: 1800
+            job-timeout: 75
           - runner: macos-15
             label: macos-arm64
             love-artifact: '12513712494'
             library: libluajit.so
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 25
+    timeout-minutes: ${{ matrix.job-timeout || 25 }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -59,6 +62,9 @@ jobs:
         if: runner.os == 'Windows'
         with:
           arch: x64
+      - name: Verify qualification logging and failure handling
+        shell: bash
+        run: python -m unittest discover -s engine/tests -p test_runtime_qualification.py -v
       - name: Build both runtimes and qualify closures, C API and engine
         shell: bash
         run: >-
@@ -66,6 +72,7 @@ jobs:
           --luajit-source runtime-source
           --output "${{ runner.temp }}/runtime-capacity/candidate"
           --engine-tests
+          --engine-timeout ${{ matrix.engine-timeout || 900 }}
       - name: Fetch pinned LOVE12 host artifact
         if: matrix.love-artifact != ''
         shell: bash
