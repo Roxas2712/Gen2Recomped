@@ -900,6 +900,22 @@ local function levelAt(battle, battler, x, y, text)
   end
 end
 
+-- Native imports carry tile 70 of the healthbox elements. Older caches use
+-- the existing Pokédex marker, the same fallback as the reference renderer.
+local function drawCaughtMarker(battle, battler, x, y)
+  if not require("src.battle.CaughtMarker").gbaVisible(battle, battler) then return end
+  local record = hudRecord(battle)
+  local path = record and record.images and record.images.caught
+  local function exists(p) return p and Assets.exists(Assets.resolve(p)) end
+  if not exists(path) then
+    path = require("src.core.GameVersion").isFRLG()
+      and "assets/generated/pokedex_frlg/caught.png" or "assets/generated/ui/pokedex/caught_ball.png"
+  end
+  if not exists(path) then return end
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.draw(Assets.image(path), x + 8, y + 16)
+end
+
 local function drawStatusPanelBody(battle, battler, x, y, player)
   local record = hudRecord(battle)
   local images = record and record.images or {}
@@ -913,6 +929,7 @@ local function drawStatusPanelBody(battle, battler, x, y, player)
     Font.drawBox(tx, ty, tw, th)
     love.graphics.setColor(0, 0, 0, 1)
     Font.draw(fitName(battler.name, 56), x + 8, y + 8)
+    if not player then drawCaughtMarker(battle, battler, x, y) end
     levelAt(battle, battler, x + tw * 8 - 40, y + 8)
     if player then
       Font.draw(("%3d/%3d"):format(shownHP(battler), battler.mon.stats.hp),
@@ -923,6 +940,7 @@ local function drawStatusPanelBody(battle, battler, x, y, player)
 
   love.graphics.setColor(1, 1, 1, 1)
   love.graphics.draw(panel, x, y)
+  if not player then drawCaughtMarker(battle, battler, x, y) end
 
   -- THE SMALL FACE, which is what the cartridge sets a healthbox in.
   --

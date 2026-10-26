@@ -19,6 +19,7 @@ local HoldItems = require("src.battle.HoldItems")
 local Experience = require("src.battle.Experience")
 local HeldItems = require("src.battle.HeldItems")
 local Font = require("src.render.Font")
+local MenuAuxiliary = require("src.battle.MenuAuxiliary")
 local Logger = require("src.core.Logger")
 local MoveEffects = require("src.battle.MoveEffects")
 local Party = require("src.pokemon.Party")
@@ -361,6 +362,26 @@ end
 -- its RIGHT.  Left and right then did nothing at all, because a vertical list
 -- has no use for them.  The fix is one clause, not new maths: the grid this
 -- layout already draws is the grid it should navigate.
+function BattleState:caughtMarkerVisible(battler)
+  return require("src.battle.CaughtMarker").visible(self, battler)
+end
+
+local caughtBallQuads = setmetatable({}, { __mode = "k" })
+function BattleState:drawCaughtBall(x, y)
+  local Assets = require("src.render.Assets")
+  local path = "assets/generated/battle/balls.png"
+  if not Assets.exists(Assets.resolve(path)) then return false end
+  local image = Assets.image(path)
+  local quad = caughtBallQuads[image]
+  if not quad then
+    quad = love.graphics.newQuad(0, 0, 8, 8, image:getDimensions())
+    caughtBallQuads[image] = quad
+  end
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.draw(image, quad, x, y)
+  return true
+end
+
 function BattleState:moveGridNavigate(index, count, input)
   if not (self:isWideBattleLayout() or self:gen3Layout()
           or self:gen4Layout()) then
@@ -1438,6 +1459,7 @@ function BattleState.newWild(game, species, level, opts)
   end
   if authored then require('src.battle.WildRecord').apply(game.data,wild,authored)end
   self.enemy = makeBattler(game.data, wild, false)
+  self.caughtMark = require("src.battle.CaughtMarker").caught(game, wild.species)
   require("src.battle.Gen2Wild").initialize(self, opts)
   if self.roamer then
     local kept = math.floor(tonumber(opts.roamerHP) or 0)
@@ -4333,6 +4355,7 @@ end
 function BattleState:update(dt)
   local shortcuts=package.loaded['src.mods.FeatureOptions']and require('src.battle.QuickItem')
   local quick=shortcuts and shortcuts.request(self)
+  local auxiliary = MenuAuxiliary.request(self)
   self:tickFx()
   -- one sample a second into the fight, while it is still on screen
   self._stadiumReportTicks = (self._stadiumReportTicks or 0) + 1
@@ -4550,6 +4573,9 @@ function BattleState:update(dt)
       self:resolveTurn(locked)
       return
     end
+    -- Capture eligibility before presentation catch-up can hide an unfinished
+    -- HP/status drain. Dispatch only at the ordinary player-decision boundary.
+    if auxiliary and MenuAuxiliary.dispatch(self, auxiliary) then return end
     -- PLATINUM'S ACTION MENU IS NOT A 2x2, and walking it as one is what a
     -- player feels as the cursor jumping about.
     --
@@ -12448,7 +12474,16 @@ function BattleState:drawHUDs(slide)
       love.graphics.translate(hudShake, 0)
     end
     love.graphics.setColor(0, 0, 0, 1)
-    Font.draw(self.enemy.name, nameX(1, self.enemy.name), 0)
+    local enemyNameX = nameX(1, self.enemy.name)
+    local enemyNameWidth = Font.draw(self.enemy.name, enemyNameX, 0)
+    if self:caughtMarkerVisible() then
+      if require("src.core.GameVersion").isGen2() then
+        hudTile(0x5d, 8, 8)
+      else
+        self:drawCaughtBall(enemyNameX + enemyNameWidth, 0)
+      end
+      love.graphics.setColor(0, 0, 0, 1)
+    end
     if self.enemy.shownStatus then
       Font.draw(self:statusLabel({ status = self.enemy.shownStatus }), 40, 8)
     else
