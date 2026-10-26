@@ -640,6 +640,31 @@ local FORMAT = {
 -- because most of Sinnoh is not a tree.
 local NO_PIVOT = { 0, 0, 0 }
 
+-- G1 -- THE VERTICES AS ONE BUFFER, NOT ONE TABLE EACH.
+--
+-- A chunk has 1,500-3,200 vertices and a map change decodes dozens of chunks
+-- plus every prop; each vertex became a fifteen-element Lua table that
+-- newMesh then read back one field at a time.  With the FFI the same floats
+-- go straight into a ByteData laid out as FORMAT says, and newMesh takes the
+-- buffer whole.  Shapes a joint animation re-poses on the CPU keep the
+-- tables (setVertex reads them back); everything else -- which is nearly
+-- everything -- takes the buffer.  Performance.gen4ByteVertices = false, or
+-- a runtime without the FFI, keeps the tables for every shape.
+local FORMAT_FLOATS = 0
+for _, attr in ipairs(FORMAT) do FORMAT_FLOATS = FORMAT_FLOATS + attr[3] end
+local ffiOk, ffi = pcall(require, "ffi")
+if not ffiOk then ffi = nil end
+local function packedVertices(count)
+  if not (ffi and Performance.gen4ByteVertices and love.data and love.data.newByteData) then
+    return nil
+  end
+  local ok, data = pcall(love.data.newByteData, count * FORMAT_FLOATS * 4)
+  if not ok or not data or not data.getFFIPointer then return nil end
+  local okPtr, ptr = pcall(data.getFFIPointer, data)
+  if not okPtr or ptr == nil then return nil end
+  return data, ffi.cast("float *", ptr)
+end
+
 -- WHICH FACES THE CARTRIDGE AUTHORED TO FACE THE CAMERA.
 --
 -- Platinum builds a tree as a flat quad leaning back toward its fixed camera,
@@ -2055,6 +2080,9 @@ function Gen4Model.new(record)
 
     local count = shape.vertexCount or 0
     local vertices = {}
+    -- G1: the buffer, unless this shape is re-posed per vertex on the CPU
+    local packedData, packed
+    if count > 0 and not shape.matrixSlots then packedData, packed = packedVertices(count) end
     -- Kept alongside, because classifying a card needs the whole triangle and
     -- the loop below sees one vertex at a time.
     -- Also collected for the back-wall cap, which needs the face normals to
@@ -2164,10 +2192,18 @@ function Gen4Model.new(record)
       if x > hi[1] then hi[1] = x end
       if y > hi[2] then hi[2] = y end
       if z > hi[3] then hi[3] = z end
+      local u = s16(shape.vertices, at + 6) / UV_UNITS / tw
+      local v = s16(shape.vertices, at + 8) / UV_UNITS / th
+      if packed then
+        local o = i * FORMAT_FLOATS
+        packed[o], packed[o + 1], packed[o + 2] = x, y, z
+        packed[o + 3], packed[o + 4] = u, v
+        packed[o + 5], packed[o + 6], packed[o + 7], packed[o + 8] = r / 255, g / 255, b / 255, 1
+        packed[o + 9], packed[o + 10], packed[o + 11] = 0, 0, 0
+        packed[o + 12], packed[o + 13], packed[o + 14] = lnx, lny, lnz
+      else
       vertices[i + 1] = {
-        x, y, z,
-        s16(shape.vertices, at + 6) / UV_UNITS / tw,
-        s16(shape.vertices, at + 8) / UV_UNITS / th,
+        x, y, z, u, v,
         -- ...and back to the 0..1 the float attribute wants.
         r / 255, g / 255, b / 255, 1,
         -- filled in below, once the triangles say which vertices are cards
@@ -2175,6 +2211,7 @@ function Gen4Model.new(record)
         -- G2: the normal the shader lights against, or nothing
         lnx, lny, lnz,
       }
+      end
       if positions then
         -- the TEXEL coordinate, not the 0..1 one: the strip test compares it
         -- against the texture's own width, so it has to be in texture units.
@@ -2207,8 +2244,14 @@ function Gen4Model.new(record)
         billboardPivots(shape, positions, count, image and tw or nil)
       if cards > 0 then
         for i = 1, count do
-          local v, pv = vertices[i], pivots[i]
-          v[10], v[11], v[12] = pv[1], pv[2], pv[3]
+          local pv = pivots[i]
+          if packed then
+            local o = (i - 1) * FORMAT_FLOATS
+            packed[o + 9], packed[o + 10], packed[o + 11] = pv[1], pv[2], pv[3]
+          else
+            local v = vertices[i]
+            v[10], v[11], v[12] = pv[1], pv[2], pv[3]
+          end
         end
         self.cards = (self.cards or 0) + cards
       end
@@ -2228,7 +2271,7 @@ function Gen4Model.new(record)
                   LEGACY_VERTEX_BYTES)
     end
 
-    if #vertices > 0 then
+    if (packed and count > 0) or #vertices > 0 then
       local map = {}
       for i = 0, (shape.triangleCount or 0) * 3 - 1 do
         local a, b = shape.indices:byte(i * 2 + 1, i * 2 + 2)
@@ -2237,7 +2280,7 @@ function Gen4Model.new(record)
       end
 
       local okMesh, mesh =
-        pcall(love.graphics.newMesh, FORMAT, vertices, "triangles", "static")
+        pcall(love.graphics.newMesh, FORMAT, packed and packedData or vertices, "triangles", "static")
       if okMesh and mesh then
         if #map > 0 then pcall(mesh.setVertexMap, mesh, map) end
         if image then mesh:setTexture(image) end
