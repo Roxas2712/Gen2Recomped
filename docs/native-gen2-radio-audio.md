@@ -22,6 +22,22 @@ cells, wrong-cell refusal, real wall-radio suspension/return, retuning,
 failed audio, close, battle restoration, map replacement, external music
 ownership, mod-selected audio and generation isolation.
 
+Diagnostic exact source `9f2b6f4d` passes four-platform runtime qualification
+40249447920. Actual Crystal and the unchanged full supplied Johto package pass
+71 checks per OpenGL/Metal backend, both selected field cameras, with twelve
+OS-window images inspected. Real device Sources play the imported flute; an
+independent half-second decode is non-silent. The actual imported Snorlax
+operand returns correctly at the adjacent/wrong cells, after close and after
+map change. Setup explicitly stages introduction, maps, EXPN and radio card.
+Metal warning overlays remain. See the sanitized
+[receipt](qa/native-foundation/johto-native-radio-audio.json).
+
+The current main integrations are preserved in composed `d1bd32eb`, which
+passes424/424 engine suites, SDK3/3 and all quick tiers. Its source-bound
+qualification40251541022 and fresh GPU acceptance remain pending. The existing
+preview currently ships the earlier presentation source4be92945; diagnostic
+radio-audio acceptance is not substituted for the composed release checks.
+
 This change covers station entry/exit and the native story gate. Complete
 ROM-driven show text, timing, schedules, intermediate jingles and music-show
 choices are still open. Device-free tests do not establish audible hardware
