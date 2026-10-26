@@ -3,7 +3,8 @@
 The fork's `codex/portability-testing` branch combines the selected public
 API, native hook, rendering, shader and baseline-test portability series,
 now including native cries (#289), native music/fanfare commands (#308)
-and Boolean-aware contract comparisons (#309), plus absolute SDK mod paths (#311).
+and Boolean-aware contract comparisons (#309), absolute SDK mod paths (#311),
+native fallback translations (#313) and complete catalog generation (#315).
 Historical PR-specific acceptance remains below; unrelated #138 and
 cartridge-support work from other branches remain separate. This branch is
 for testing combined changes before upstream reviews and merges individual
@@ -14,7 +15,62 @@ reference. Historical results below that use a modified Gen1 reference fork
 are not proof of parity with unchanged upstream Gen1. They do not require or
 authorize publishing upstream Gen1 changes.
 
-The qualified production/test runtime is
+## Current October upstream composition
+
+The current production qualification is `87cada70e7483120f131b716ea6a370d1158127c`,
+which includes upstream `ed5189c2` and [PR #313](https://github.com/UNDERdecoded/Gen2Recomped/pull/313).
+It passes **294/294 engine suites**, **4/4 SDK suites** and B30 with zero
+FAIL lines. The source tree is `18895e11ac92c7339a51e380c3d164ead374cb35`;
+its engine-test tree is `99e534d60fe6c67374b329127e7d5c4f5f9df731`.
+
+Two merge boundaries retain both behaviors: `screen.render_visible` runs
+inside the native DS supersampling draw loop, and battle completion keeps
+both the partner-win exemption and the selected party's exhaustion check.
+The focused native probes pass **75/75**. Removing each preserved condition
+fails respectively **3**, **6** and **12** checks. The committed formatted
+probe has identical stripped bytecode to the initially qualified probe.
+
+The unchanged Gen1 reference `535a5ec0` and the new runtime complete
+**268 workers / 178,264 complete paired observations** for the selected
+native FireRed/Emerald contracts. Every worker exits zero without timeout
+or native VM diagnostics. An independent audit reparses every raw result,
+checks exact mode/profile/backend coverage and compares complete JSON
+observations with distinct Boolean and number types.
+
+The initial aggregate could not locate reports because its output paths
+were relative to a different working directory. All 11 worker reports were
+relocated without changing their bytes, the failed aggregate was preserved,
+and the recovered manifest passed the independent raw audit. This was an
+artifact-collection failure, not a waiver of worker or comparison failures.
+The earlier integration also retained its one failing string-coverage suite
+before #313 repaired the new fallback texts.
+
+The unchanged Red-targeted QoL mod again passes **200/200** unit checks and
+**7/7** production-controller checks on this runtime, with an observation
+identical to the unchanged Gen1 probe. Actual imported Red tables and art
+sizes are read-only; graphics remain hardware doubles. This is selected Red
+acceptance, not whole-mod battles, Gold support or a full playthrough.
+
+The tool-only composition at `931143771b654ffd569a2341dc7e53243ede0073` adds
+[PR #315](https://github.com/UNDERdecoded/Gen2Recomped/pull/315), preserves the
+qualified production source and engine-test trees, and passes **20/20 Python
+tool tests**. Its actual **1,498-key** catalog workflow generates valid
+parameterized-template manifests, refreshes a UTF-8 translation, validates
+normally and loads through the real SDK. The fixture's existing strict
+font-dump MK305 warning is retained and is not a passing strict-validation
+claim. Only Python tooling/tests, workflow and documentation changed after
+the production qualification.
+
+See the [composed receipt](qa/upstream-october-integration.json). These are
+new CPU/hardware-double results. Historical GPU/device/boot/UI/storage
+checks below retain their own refs and are not rerun claims for this source.
+Normal save/import writes, new graphics/audio-device execution, complete
+mods, other editions and complete playthroughs remain outside this acceptance.
+The public PRs remain subject to upstream review and hosted-CI approval.
+
+## Historical native-music and comparator qualification
+
+The earlier qualified production/test runtime is
 `e436fba6228bd6e73a97497107e4a15f61c0d052`: **292/292 engine suites**, SDK
 **3/3**, all quick tiers and B30 pass. Publication/testing metadata edits
 preserve source tree `52e2e3ffc7e8f1145b0edffa16ca3713324bb8d2`. The original
@@ -117,10 +173,9 @@ Production source and `tests/engine` retain the native qualification above;
 The single #311 [hosted CI run](https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40309930095)
 requires maintainer approval and has zero jobs.
 
-The standalone #311 feature is based on upstream `ed5189c2`. That new upstream
-update has not been merged into this playable branch; this branch continues
-to qualify the previously composed runtime while that larger integration
-is assessed separately.
+The standalone #311 feature was based on upstream `ed5189c2`. Its acceptance
+above predates the current October composition; the new qualification is
+recorded at the top of this document.
 
 ## Historical #258 acceptance
 

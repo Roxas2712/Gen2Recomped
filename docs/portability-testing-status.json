@@ -1,10 +1,10 @@
 {
-  "runtime_ref": "e436fba6228bd6e73a97497107e4a15f61c0d052",
-  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/308",
-  "feature_ref": "c74372204bd00f52b42acf9ee54b296fc99fb77b",
+  "runtime_ref": "87cada70e7483120f131b716ea6a370d1158127c",
+  "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/313",
+  "feature_ref": "7a8d4c076d51d648aba146a7f15d62c7e7e145ba",
   "gen1_contract_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
-  "engine_suites_passed": 292,
-  "engine_suites_total": 292,
+  "engine_suites_passed": 294,
+  "engine_suites_total": 294,
   "sdk_suites_passed": 4,
   "sdk_suites_total": 4,
   "b30_profile": "passed",
@@ -19,7 +19,7 @@
   ],
   "native_boot_scope": "Intro, title and New Game world/introduction; no complete playthrough claim",
   "upstream_integration": "PR series remains subject to upstream review",
-  "hosted_ci": "All ten #308 workflows require maintainer approval (action_required); dedicated run40304523637 has zero jobs; local acceptance is separate",
+  "hosted_ci": "PR313 and PR315 require upstream maintainer approval; local acceptance is separate",
   "battle_grid_native_checks_passed": 6426,
   "party_grid_native_checks_passed": 4849,
   "native_party_smoke_games": [
@@ -76,7 +76,7 @@
   "item_use_generation_boundary": "GB UI dispatch and GBA field triple have separate native producers; Gold has no reference producer and DS remains unavailable",
   "follower_full_suite_runtime_ref": "318a1bae110afd5a5ee892674b2e61dda9def98d",
   "item_use_full_suite_runtime_ref": "6775eabe22d77d89abd09d8ed4101c16b90a96b1",
-  "cross_engine_scope": "Selected public/native FireRed/Emerald contracts including native music commands, timers/waits, shared music hooks/options and initialized-session retirement. Complete raw observations independently type-checked. Historical native boot/UI/storage evidence retains its own refs; whole-mod/gameplay/device/waveform parity remains open.",
+  "cross_engine_scope": "CPU/hardware-double upstream composition, selected native FireRed/Emerald contracts, DS visibility/party-finish boundaries, unchanged Red QoL source and actual imported Red tables/art dimensions. Historical GPU/device/native boot/UI/storage evidence retains its own refs. No new graphics/audio-device launch, normal SAVE/import writes, complete graphical/gameplay or whole-mod/other-edition acceptance.",
   "gba_item_use_native_checks_passed": 1286,
   "native_gba_item_use_smoke_games": [
     "firered",
@@ -163,7 +163,7 @@
     "jobs": 0
   },
   "enemy_pp_full_suite_runtime_ref": "3a944cc7c0e455c094596aa83315150b249f8bbd",
-  "feature_tested_ref": "540dc5472deeec21f79ff66cba2d8f4056dcf592",
+  "feature_tested_ref": "e4fd1372c6a4a0abf7936c7b97d5ec97ecec80ee",
   "caught_marker_native_checks_passed": 2078,
   "caught_marker_renderer_checks_passed": 840,
   "caught_marker_import_checks_passed": 216,
@@ -3199,7 +3199,7 @@
     "whole_waveform_parity": false,
     "normal_save_or_import_writes": false
   },
-  "latest_tool_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/311",
+  "latest_tool_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/315",
   "contract_observation_types": {
     "pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/309",
     "feature_ref": "a22815fc2631eb34b7d85bc1e002dfb3149a9ac3",
@@ -3323,5 +3323,100 @@
     "disk_log_sha256": "ee86007a4de5555f1cfd2261c971b6d5f3c5d54af5e9b98e108ef15f698d104e",
     "scope": "Unchanged Red-targeted API-2 mod under both engines. Selected production world/map/START/SELECT/menu/drawUI paths. Suite world/input/battle doubles remain in unit results. No Gold/other-generation, whole-battle, real GPU/audio-device or full-playthrough claim.",
     "source_url": "https://github.com/unxpected-uxp/pokemon-gen1-recomp-mod-qol/tree/bea982afbc51452fda334e6d0111444a201ad1d7"
+  },
+  "historical_snapshot_311": {
+    "runtime_ref": "e436fba6228bd6e73a97497107e4a15f61c0d052",
+    "feature_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/308",
+    "feature_ref": "c74372204bd00f52b42acf9ee54b296fc99fb77b",
+    "feature_tested_ref": "540dc5472deeec21f79ff66cba2d8f4056dcf592",
+    "engine_suites_passed": 292,
+    "engine_suites_total": 292,
+    "sdk_suites_passed": 4,
+    "sdk_suites_total": 4,
+    "cross_engine_worker_runs": 268,
+    "cross_engine_paired_observations": 178264,
+    "cross_engine_scope": "Selected public/native FireRed/Emerald contracts including native music commands, timers/waits, shared music hooks/options and initialized-session retirement. Complete raw observations independently type-checked. Historical native boot/UI/storage evidence retains its own refs; whole-mod/gameplay/device/waveform parity remains open.",
+    "hosted_ci": "All ten #308 workflows require maintainer approval (action_required); dedicated run40304523637 has zero jobs; local acceptance is separate"
+  },
+  "upstream_october_integration": {
+    "status": "verified",
+    "upstream_ref": "ed5189c247ee7a2ccca666784e21fd4fba8df781",
+    "previous_playable_ref": "6fefc5d5743f9b084c0ebbfeb97100bd1f8e0455",
+    "qualified_runtime_ref": "87cada70e7483120f131b716ea6a370d1158127c",
+    "qualified_tool_ref": "931143771b654ffd569a2341dc7e53243ede0073",
+    "source_tree": "18895e11ac92c7339a51e380c3d164ead374cb35",
+    "engine_tests_tree": "99e534d60fe6c67374b329127e7d5c4f5f9df731",
+    "composed_tests_tree": "84699d413ecda6e31ffeb0088b898bc331dd2876",
+    "production_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/313",
+    "tool_pr": "https://github.com/UNDERdecoded/Gen2Recomped/pull/315",
+    "engine": "294/294",
+    "sdk": "4/4",
+    "b30": "passed",
+    "python_tool_tests": "20/20",
+    "cross_engine_workers": 268,
+    "complete_typed_paired_observations": 178264,
+    "all_workers_zero_without_timeout_or_native_vm_diagnostics": true,
+    "independent_raw_audit": true,
+    "merge_composition": {
+      "conflicts": [
+        "Game drawStates: preserve screen.render_visible inside native SuperSample",
+        "BattleState.finish: preserve partner-win exemption and scoped party exhaustion"
+      ],
+      "native_boundary_checks": 75,
+      "test_formatting_bytecode_identical": true,
+      "negative_controls": {
+        "without-draw-predicate": 3,
+        "without-partner-win": 6,
+        "without-scoped-exhaustion": 12
+      }
+    },
+    "real_mod_qol": {
+      "mod_ref": "bea982afbc51452fda334e6d0111444a201ad1d7",
+      "source_url": "https://github.com/unxpected-uxp/pokemon-gen1-recomp-mod-qol/tree/bea982afbc51452fda334e6d0111444a201ad1d7",
+      "mod_source_changed": false,
+      "profile": "red",
+      "unit_checks": "200/200",
+      "native_controller_checks": 7,
+      "observation": {
+        "errors": 0,
+        "banner": true,
+        "mapId": "PALLET_TOWN",
+        "player": {
+          "y": 6,
+          "x": 5
+        },
+        "depth": 1,
+        "fieldFirst": "FLY"
+      },
+      "typed_equal_to_unchanged_gen1": true,
+      "source_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+      "data_and_art_read_only_and_unchanged": true
+    },
+    "catalog": {
+      "keys": 1498,
+      "actual_parameterized_manifest": "valid API-2 JSON with existing engine range",
+      "generate_refresh_normal_validation_sdk": "passed",
+      "utf8_translation_preserved": true,
+      "strict_fixture_font_check": "Known MK305 missing imported font dump; preserved, not counted as passing"
+    },
+    "aggregation_recovery": {
+      "original_aggregate_exit": 1,
+      "cause": "Parent used a relative output directory; worker cwd was the host checkout.",
+      "original_summary_sha256": "25cdde5d44d922df9c1c6d537841dd09d82ef862df099bfc0f9cdb2b9e2412b3",
+      "reports_relocated_byte_exact": 11,
+      "source_worker_reports_edited": false,
+      "original_failed_summary_preserved": true,
+      "recovered_summary_sha256": "9f7a481fcf7f09ffa6ae6166d9f8d0a292d6591d0cb51d85115b05d0a0699610"
+    },
+    "evidence_sha256": {
+      "quick_log": "8564a42bf3e683351aab4c020b428ab3870dcad67f50228a191f091bbdb0039d",
+      "raw_audit": "61ed6252ae58f0627e9e03ffc873d9b66ff4ac541d1b8fa93a040609b27193e0",
+      "boundaries": "1617b268919b37748b0ad7ef554a3134e525ee739dc655efc38f2d2d76626b7b",
+      "boundary_negatives": "dd507625db71ead5509e44cb2b79a2cc18cac167c1df8697e0f9e2a08c3947d9",
+      "python_tools": "c96be088af1068cdad7c70ad7d9504babc80e7838623a9775cece794590da2cf",
+      "qol_unit": "20a322769a99e54084e270de783b1fd08d00cac6052b8ff14d27b6233fd7aa30",
+      "qol_native": "6759587e71777bb5ebc449109ce3431551fcd1dd00526c4b5b6c4095e88b3813"
+    },
+    "scope": "CPU/hardware-double upstream composition, selected native FireRed/Emerald contracts, DS visibility/party-finish boundaries, unchanged Red QoL source and actual imported Red tables/art dimensions. Historical GPU/device/native boot/UI/storage evidence retains its own refs. No new graphics/audio-device launch, normal SAVE/import writes, complete graphical/gameplay or whole-mod/other-edition acceptance."
   }
 }
