@@ -73,7 +73,7 @@ function M.formSprite(pokemon, letter, back)
   return form and form.spriteFront or def.spriteFront
 end
 function M.monLetter(mon, data)
-  if type(mon) ~= "table" or mon.isEgg then return nil end
+  if type(mon) ~= "table" or require("src.pokemon.Party").isEgg(mon) then return nil end
   data = M.liveData(data)
   local def = data and data.pokemon and data.pokemon[mon.species]
   if def then

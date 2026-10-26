@@ -130,6 +130,7 @@ end
 T.eq(U.letterFromDVs(nil),nil,'missing DVs are not letter A')
 T.eq(U.letterFromDVs({attack=math.huge}),nil,'invalid DVs cannot reach renderer')
 T.eq(U.registerCatch({}, {species='UNOWN',isEgg=true,dvs=U.dvsForLetter(1)}),false,'egg has no caught form')
+T.eq(U.registerCatch({}, {species='UNOWN',eggSteps=3,dvs=U.dvsForLetter(1)}),false,'native egg counter also prevents registration when an old flag is missing')
 for _,broken in ipairs({{pokedex=false},{pokedex='bad'},{pokedex={unownForms='bad'}}})do
  local bytes=Json.encode(broken);T.eq(U.updateDex(broken,1),false,'malformed native state refuses a write')
  T.eq(Json.encode(broken),bytes,'refused malformed-state write is atomic')
