@@ -61,7 +61,7 @@ for _,version in ipairs({'gold','silver','crystal'}) do
  T.eq(draws(),1,version..' failed coin flip consumes no caller-choice byte')
  T.eq(s.g2CallCycles,1,version..' failed coin flip still consumes timer expiry')
  draws=randomBytes({0});s=save()
- T.eq(Calls.rollIncomingCall(data,s,{phoneService=false},'DAY',30,false),nil,version..' missing service suppresses choice')
+ T.eq(Calls.rollIncomingCall(data,s,{phoneService=false,mapPalette=0x10},'DAY',30,false),nil,version..' missing service suppresses choice')
  T.eq(draws(),1,version..' missing service consumes no caller-choice byte')
  draws=randomBytes({0});s=save();s.g2Phone={};s.g2PhoneSlots={}
  T.eq(Calls.rollIncomingCall(data,s,map,'DAY',30,false),nil,version..' empty native book suppresses choice')
