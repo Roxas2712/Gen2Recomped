@@ -62,6 +62,12 @@ Performance.bytecodeCache = true
 -- a 256-entry table in an FFI loop when a palette cycle steps, instead of
 -- re-walking every metatile into a new RGBA sheet (TileRenderer gen3Recolour).
 Performance.gen3PaletteIndex = true
+-- G7: the Gen 1/2 shade bakes (OBP sprite variants, RED++ atlas, water
+-- shifts, animation frames, toggles) as FFI region copies instead of
+-- getPixel/setPixel per pixel (src/render/ShadeRecolour.lua).
+Performance.shadeRecolourFfi = true
+-- G8: share PNG decodes only among consumers that do not modify pixels.
+Performance.assetSharedDecode = true
 -- G3: Gen 4 model draw sends a uniform only when its value changed and
 -- allocates no per-shape tables (src/render/Gen4Model.lua:_drawCached).
 Performance.gen4UniformCache = true
@@ -72,8 +78,13 @@ Performance.gen4GpuLight = true
 -- G1: Gen 4 model vertices decoded straight into a ByteData through the FFI
 -- rather than a fifteen-element table per vertex (src/render/Gen4Model.lua).
 Performance.gen4ByteVertices = true
+-- G4: Gen 4 joint animation re-posed in the vertex shader from a per-shape
+-- joint palette instead of setVertex per vertex per frame (Gen4Model).
+Performance.gen4GpuSkin = true
 -- H1: pass hook results as varargs and share continuation state per call.
 Performance.hookLean = true
+-- E1: avoid the single-listener snapshot and cache immutable owner labels.
+Performance.eventLean = true
 -- M10: Assets.resolve remembers which file answers a generated path while a
 -- mod set is installed, instead of asking PhysFS once per mod per lookup.
 Performance.assetResolveCache = true

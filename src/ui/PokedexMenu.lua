@@ -50,7 +50,9 @@ local function nationalOrder(game)
     if def.dex then byDex[def.dex] = def.id end
   end
   local out = {}
-  for n = 1, constants.dexSize or 151 do out[n] = byDex[n] end
+  for n = 1, constants.dexSize or 151 do
+    if byDex[n] then out[#out + 1] = byDex[n] end
+  end
   return out
 end
 
@@ -148,7 +150,7 @@ function PokedexMenu.new(game, opts)
       -- def.dex already is
       local prefix = ""
       if not gen2 then
-        prefix = (numFmt .. " "):format(n)
+        prefix = (numFmt .. " "):format(def.dex or n)
       elseif mode == PokedexMenu.MODE_OLD then
         prefix = (numFmt .. " "):format(def.dex or n)
       end

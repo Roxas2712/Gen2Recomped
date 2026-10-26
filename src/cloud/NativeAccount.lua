@@ -57,6 +57,18 @@ function A.activateGift(id,active)
   if type(id)~='string' or #id~=36 or not id:match('^[a-f0-9%-]+$') then return nil,'Invalid gift.' end
   return call('PATCH','/gifts/'..id,{active=active},true)
 end
+function A.presence(payload) return call('POST','/community/presence',payload or {},true) end
+function A.playerCounts() return call('GET','/community/counts',nil,true) end
+function A.players(page,search,online)
+  local url='/community/players?page='..math.max(1,math.floor(tonumber(page) or 1))
+  if search and search~='' then url=url..'&search='..(search:gsub('[^%w_.~-]',function(c)return ('%%%02X'):format(c:byte())end)) end
+  if online then url=url..'&online=1' end
+  return call('GET',url,nil,true)
+end
+function A.player(id,payload)
+  if type(id)~='string' or not id:match('^[1-9][0-9]*$') then return nil,'Invalid player.' end
+  return call(payload and 'POST' or 'GET','/community/players/'..id..(payload and '/moderate' or ''),payload,true)
+end
 function A.friends() return call('GET','/community/friends',nil,true) end
 function A.findPlayer(tag) return call('POST','/community/find-player',{friend_tag=tag},true) end
 function A.addFriend(player) return call('POST','/community/friends',{player=player},true) end

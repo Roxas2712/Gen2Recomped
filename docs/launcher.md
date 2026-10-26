@@ -15,6 +15,15 @@ reopening Settings → Setup & guide preserves existing cloud consent. Setup
 completion is saved only after a successful options write. Keyboard,
 controller and tap-versus-scroll touch navigation stay inside the guide.
 
+The selected locale also becomes the default native-cartridge language offer.
+`NativeLanguageSetup` waits for a completed US import (or first Play), shows
+edition-specific availability and exact source prerequisites, and uses the
+normal native file picker. GBA imports retain their exact English base
+automatically. No separate Uni-Language ZIP is required; its profiles ship
+under `mods/UNI_LANGUAGE_NATIVE/`. Settings > Game language > Game language
+(ROM) reopens the choice. See [native ROM language packs](native-rom-language-packs.md)
+for per-language coverage, preview limits and validation.
+
 Reviewed German essentials in `translation/LauncherCatalog.lua` work offline
 and override machine-generated translations. Additional interface text and
 languages retain the on-device translation service. Translate before wrapping

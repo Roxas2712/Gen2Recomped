@@ -35,6 +35,7 @@ function W.finish(self,after)
   -- Persist one complete choice atomically; failed writes leave the guide open.
   local o={};for k,v in pairs(self:_settings()) do o[k]=v end
   o.launcherLanguage=f.language;o.launcherTheme=f.theme;o.launcherAccent=f.accent;o.launcherSetupVersion=W.VERSION
+  o.nativeLanguageDefault=require('src.translation.NativeLanguages').canonical(f.language)
   if not o.launcherSaveStorageChoice then o.launcherSaveStorageChoice='local';o.cloudAutoSync=false end
   local ran,ok=pcall(Saves.saveOptions,o)
   if not ran or not ok then f.notice='Your preferences could not be saved. Please try again.';return end
@@ -57,7 +58,7 @@ function W.action(self,id)
     for i,v in ipairs(languages) do if v[1]==f.language then at=i end end
     at=at%#languages+1;if languages[at][1]=='original' then at=2 end
     f.language=languages[at][1];preview(self,f)
-  elseif id:match('^theme:') then f.theme=id:sub(7);if f.theme=='default' then f.theme=false end;preview(self,f)
+  elseif id:match('^theme:') then f.accent=false;f.theme=id:sub(7);if f.theme=='default' then f.theme=false end;preview(self,f)
   elseif id:match('^accent:') then f.accent=id:sub(8);if f.accent=='default' then f.accent=false end;preview(self,f) end
 end
 function W.scroll(self,dy)
@@ -105,30 +106,37 @@ function W.draw(self)
     label=L(label);local font=self.hintFont;local _,lines=font:getWrap(label,(width or tw)-28*s)
     local bh=math.max(42*s,#lines*font:getHeight()+18*s)
     local r={id=id,x=xx or tx,y=yy or top,width=width or tw,height=bh,pinned=pinned};f.rects[#f.rects+1]=r
-    local selected=(id=='language:'..f.language) or id=='theme:'..(f.theme or 'default') or id=='accent:'..(f.accent or 'default')
+    local selected=(id=='language:'..f.language) or id=='theme:'..(require('src.import.LauncherTheme').resolve(f.theme) or 'default') or id=='accent:'..(f.accent or 'default')
     local focused=f.selected==#f.rects
     U.col(P.link,selected and .24 or focused and .14 or .06);g.rectangle('fill',r.x,r.y,r.width,r.height,8*s,8*s)
     U.col(P.link,selected and 1 or focused and .8 or .3);g.rectangle('line',r.x,r.y,r.width,r.height,8*s,8*s)
     U.col(selected and P.link or P.ink);g.setFont(font);g.printf(label,r.x+14*s,r.y+9*s,r.width-28*s,'center')
+    local themeId=id:match('^theme:(.+)$');local preset=themeId and require('src.import.LauncherTheme').PRESETS[themeId]
+    if preset then U.col(preset.accent.link);g.circle('fill',r.x+18*s,r.y+r.height/2,3*s)end
     if not yy then top=top+bh+10*s end
     return bh
   end
   para(page.body)
   if f.page==1 then
-    local langs={{'en','English'},{'de','Deutsch'},{'fr','Français'},{'es','Español'},{'it','Italiano'},{'nl','Nederlands'}}
+    local langs={{'en','English'},{'de','Deutsch'},{'fr','Français'},{'es','Español'},{'it','Italiano'},{'pb','Português (Brasil)'},
+      {'ja','日本語'},{'ko','한국어'},{'zh','简体中文'},{'zh-Hant','繁體中文'}}
     local cw=(tw-10*s)/2
     for i,item in ipairs(langs) do
       local yy=top+math.floor((i-1)/2)*52*s
       button('language:'..item[1],item[2],cw,tx+((i-1)%2)*(cw+10*s),yy)
     end
-    top=top+3*52*s
+    top=top+math.ceil(#langs/2)*52*s
     local name=f.language;for _,v in ipairs(require('src.translation.Languages')) do if v[1]==name then name=v[2];break end end
     button('languageNext',L('More languages')..' · '..L(name))
-    para('English and German essentials work immediately. Additional text and languages use the on-device translation service; an initial model download may be needed.')
+    para('Built-in game languages use your own matching language ROM. Japanese: Crystal. Korean: Gold and Silver. Additional launcher text can use on-device translation; a model download may be needed.')
   elseif f.page==2 then
-    for _,v in ipairs({{'default','RetroRecomped'},{'carbon','Carbon'},{'heather','Violet'},{'abyss','Ocean'},{'ember','Ember'}}) do button('theme:'..v[1],v[2]) end
+    button('theme:default','RetroRecomped')
+    local catalog=require('src.import.LauncherTheme')
+    local cols=tw>=400*s and 2 or 1;local gap=10*s;local cw=(tw-gap*(cols-1))/cols
+    for i,id in ipairs(catalog.PRESET_ORDER)do button('theme:'..id,catalog.PRESETS[id].label,cw,tx+((i-1)%cols)*(cw+gap),top+math.floor((i-1)/cols)*52*s)end
+    top=top+math.ceil(#catalog.PRESET_ORDER/cols)*52*s
     para('Accent color')
-    local choices={{'default','Cyan'},{'mint','Mint'},{'amber','Amber'},{'rose','Rose'}}
+    local choices={{'default','Edition default'},{'mint','Mint'},{'amber','Amber'},{'rose','Rose'}}
     -- Only offer accents present in the shared theme catalog.
     local theme=require('src.import.LauncherTheme')
     for _,v in ipairs(choices) do if v[1]=='default' or theme.ACCENTS[v[1]] then button('accent:'..v[1],v[2]) end end
