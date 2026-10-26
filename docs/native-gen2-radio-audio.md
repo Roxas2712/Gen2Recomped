@@ -30,5 +30,5 @@ a complete playthrough. Exact-source runtime/GPU qualification is required
 before inclusion in the existing preview.
 
 Original implementation by Roxas2712; existing upstream/third-party credits
-and licenses remain applicable. See `NOTICE.md` and
-`LICENSE-ROXAS2712.md`.
+and licenses remain applicable. Specific contribution permission and required credits:
+<https://github.com/Roxas2712/Gen2Recomped/blob/7867399c753186778bd4b8816ba37573357e4b40/LICENSE-ROXAS2712.md>.
