@@ -30,6 +30,7 @@ C.hooks = names([[
  ui.title_menu.items warp.destination world.follower.spawn world.talk world.tod zoom.range
 ]])
 C.events = names([[
+ apricorn.converted
  phone.call_received
  checkpoint.restored world.live_maps_preparing world.live_maps_updated
  assets.transformed battle.ball_thrown battle.battler_switched battle.damage_dealt battle.ended

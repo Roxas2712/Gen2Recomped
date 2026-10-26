@@ -1314,6 +1314,13 @@ R.phone_contacts = {
   notes="Gen2 native numeric phone book. Existing indices and reserved holes remain fixed; new contacts append at 1..255. Caller/callee keys must name existing native imported scripts, not Gen1 bytecode. New authored scripts, forward script/map references and the legacy Phone facade are separate work.",
 }
 
+R.apricorns = {
+  semantics="record", generations="2",
+  fields={apricorn=f.id("items"),ball=f.id("items"),event=f.int(0,65534),index=f.int(1,65535)},
+  example='mod.content.apricorns:patch("RED_APRICORN", {ball="ULTRA_BALL"})',
+  notes="Native Gen2 recipe records bind real Kurt item selection, event flags and ball delivery. A current native Kurt program import and indexed GSC item IDs are required. New recipes preserve the selected native item byte; generated native branches retain original dialogue/day flags/refusal behavior.",
+}
+
 -- compose, keyed by the owning mod id: the runner walks each owner's chain
 -- in semver order against the versions recorded in the save
 R.migrations = {
