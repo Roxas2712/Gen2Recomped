@@ -11,6 +11,9 @@ local MapLoader = require("src.world.MapLoader")
 local MapIdentity = require("src.core.MapIdentity")
 local Gen3Elevation = require("src.world.Gen3Elevation")
 local Runtime = require("src.mods.Runtime")
+local NpcControls = require("src.world.NpcControls")
+local Collision = require("src.world.Collision")
+local Version = require("src.core.GameVersion")
 local WorldOverview = require("src.mods.WorldOverview")
 local MapOverview = require("src.world.MapOverview")
 local Reads = require("src.mods.WorldReads")
@@ -419,6 +422,79 @@ function Handle:elevation()
   return self.npc.gen3Elevation
 end
 
+-- New immediate controls retain the legacy handle and its existing methods.
+-- A retained handle cannot apply these controls to a later native cohort.
+local function npcCoordinate(v)
+  return type(v) == "number" and v == v and v >= 0 and v <= 1000000 and v % 1 == 0
+end
+local function control(handle, name, a, b, c)
+  local context = handle._controlContext
+  local api, game, ow, actor = context[1], context[2], context[3], context[4]
+  if
+    not ow.map
+    or handle.ow ~= ow
+    or handle.npc ~= actor
+    or api.game ~= game
+    or game.data ~= context[5]
+    or game.save ~= context[6]
+    or Version.get() ~= context[8]
+    or api:overworld() ~= ow
+    or ow.map ~= context[7]
+    or ow.map.id ~= context[10]
+    or game.overworld ~= context[11]
+    or api._npcAlive and (not api._npcAlive() or Runtime.hooks ~= context[9])
+  then
+    return nil, "NPC handle is stale"
+  end
+  local found = false
+  for _, candidate in ipairs(ow.npcs or {}) do
+    if candidate == actor then
+      found = true
+      break
+    end
+  end
+  if not found then
+    return nil, "NPC handle is stale"
+  end
+  if name == "stepNow" or name == "canStep" then
+    if not Collision.DELTA[a] then
+      return nil, "invalid direction"
+    end
+  end
+  if name == "placeAt" then
+    if not npcCoordinate(a) or not npcCoordinate(b) or c ~= nil and not Collision.DELTA[c] then
+      return nil, "invalid coordinates"
+    end
+  end
+  if name == "canStep" then
+    return NpcControls.canStep(actor, ow.map, ow.cast or ow.entities, a)
+  end
+  if name == "isMoving" then
+    return NpcControls.isMoving(actor)
+  end
+  if name == "setAppearance" then
+    return NpcControls.setAppearance(actor, game, a)
+  end
+  if name == "setPassable" then
+    return NpcControls.setPassable(actor, not not a)
+  end
+  return NpcControls[name](actor, a, b, c)
+end
+for _, method in ipairs({ "stepNow", "canStep", "placeAt", "isMoving", "setPassable", "setAppearance" }) do
+  local name = method
+  Handle[name] = function(self, ...)
+    local previous = Runtime.currentMod
+    Runtime.currentMod = nil
+    local result = { pcall(control, self, name, ...) }
+    Runtime.currentMod = previous
+    if not result[1] then
+      local ok, message = pcall(tostring, result[2])
+      return nil, "NPC operation failed: " .. (ok and message or "unprintable error")
+    end
+    return result[2], result[3]
+  end
+end
+
 function WorldAPI:npc(mapId, indexOrName)
   local ow = self:overworld()
   if not ow then return nil, NO_OVERWORLD end
@@ -426,7 +502,9 @@ function WorldAPI:npc(mapId, indexOrName)
   for _, npc in ipairs(ow.npcs or {}) do
     if npc.def.index == indexOrName or npc.def.name == indexOrName
        or npc.id == indexOrName then
-      return setmetatable({ ow = ow, npc = npc, id = npc.id }, Handle)
+      return setmetatable({ ow = ow, npc = npc, id = npc.id,
+        _controlContext = { self, self.game, ow, npc, self.game.data, self.game.save,
+          ow.map, Version.get(), Runtime.hooks, ow.map and ow.map.id, self.game.overworld } }, Handle)
     end
   end
   return nil, "no such object: " .. tostring(indexOrName)

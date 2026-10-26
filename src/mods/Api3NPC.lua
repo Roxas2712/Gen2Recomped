@@ -2,7 +2,7 @@
 local Runtime = require("src.mods.Runtime")
 local Version = require("src.core.GameVersion")
 local Edits = require("src.mods.Api3WorldEdits")
-local Collision = require("src.world.Collision")
+local Controls = require("src.world.NpcControls")
 local copy = require("src.mods.Merge").deepCopy
 local N = {}
 local services = setmetatable({}, { __mode = "k" })
@@ -382,7 +382,7 @@ function N.new(loader, owner, gen, current, native, licensed, req)
         return npc.cellX, npc.cellY
       end
       if name == "isMoving" then
-        return not not npc.moving
+        return Controls.isMoving(npc)
       end
       if name == "canStep" or name == "stepNow" or name == "face" or name == "scriptMove" then
         if not dirs[a] then
@@ -390,7 +390,7 @@ function N.new(loader, owner, gen, current, native, licensed, req)
         end
       end
       if name == "canStep" then
-        return not not Collision.canMove(onMap, peers or {}, npc, a)
+        return Controls.canStep(npc, onMap, peers, a)
       end
       if
         name == "scriptMove" and (b ~= nil and not integer(b, 1, 1024) or c ~= nil and type(c) ~= "function")
@@ -432,32 +432,13 @@ function N.new(loader, owner, gen, current, native, licensed, req)
         elseif name == "face" then
           npc.facing = a
         elseif name == "stepNow" then
-          if npc.moving then
-            return nil, "already moving"
-          end
-          npc.facing = a
-          npc.targetX, npc.targetY = Collision.target(npc.cellX, npc.cellY, a)
-          npc.moving, npc.progress = true, 0
+          return Controls.stepNow(npc, a)
         elseif name == "placeAt" then
-          npc.moving, npc.marching, npc.progress = false, false, 0
-          npc.targetX, npc.targetY = nil, nil
-          npc.cellX, npc.cellY, npc.px, npc.py = a, b, a * 16, b * 16
-          if c then
-            npc.facing = c
-          end
+          return Controls.placeAt(npc, a, b, c)
         elseif name == "setPassable" then
-          npc.passable = a
+          return Controls.setPassable(npc, a)
         elseif name == "setAppearance" then
-          if not sprite(game, a) then
-            return nil, "unknown sprite: " .. a
-          end
-          local proxy = { id = npc.id, def = copy(npc.def) }
-          proxy.def.sprite = a
-          proxy.def.graphicsId, proxy.def.graphics, proxy.def.graphicsVar, proxy.def.varSprite =
-            nil, nil, nil, nil
-          req("src.world.NPC").refreshSprite(proxy, game.data)
-          npc.def, npc.sprite, npc.appearance = proxy.def, proxy.sprite, a
-          npc.big = proxy.sprite and proxy.sprite.big or false
+          return Controls.setAppearance(npc, game, a, req)
         end
         return true
       end)

@@ -186,4 +186,5 @@ mobile/ios/bundle_id.local
 !/tests/fixtures/
 /tests/fixtures/*
 !/tests/fixtures/upstream_mods/
+!/tests/fixtures/legacy_npc_controls/
 !/tests/engine/

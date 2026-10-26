@@ -1339,6 +1339,10 @@ function Loader:_api(mod)
     local module = game and engineRequire("src.world.WorldAPI")
     if not module then return nil end
     world = module.new(game, modId, readContext)
+    world._npcAlive = function()
+      return loader.mods[modId] == mod and loader.apis[modId] == api
+        and loader.exports[modId] ~= nil and isActive(mod)
+    end
     world.overviewContext = overviewContext
     return world
   end }, api, loader, mod.manifest))
