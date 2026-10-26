@@ -10,7 +10,7 @@ import shutil
 import subprocess
 import tempfile
 
-FILES = ('qa_storage.py', 'qa_legacy_storage.py', 'qa_preserved.py', 'qa_maintenance.py', 'qa_love_storage.py')
+FILES = ('qa_storage.py', 'qa_legacy_storage.py', 'qa_preserved.py', 'qa_maintenance.py', 'qa_love_storage.py', 'qa_build_storage.py')
 LABEL = 'com.maarten.origami-qa-cleanup'
 
 

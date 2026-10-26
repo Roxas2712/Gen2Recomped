@@ -48,7 +48,12 @@ class Storage:
         temp.replace(pointer)
         self.limits = {"imports": import_limit, "geometry": geometry_limit,
                        "testcopies": copy_limit, "legacy": copy_limit, "ula": ula_limit}
+        # Controllers in other branches used to override the machine reserve.
+        # Isolated fixture homes may still test small/zero thresholds.
+        if home is None or self.home == Path.home().resolve():
+            min_free = max(min_free, 20 * GIB)
         self.max_age, self.min_free, self.clock = max_age, min_free, clock
+        self.output_limits = {}
         self.held = {}
         self.lease_info = {}
         self.inherited = set()
@@ -197,6 +202,7 @@ class Storage:
             candidate = legacy.identify(group/'engine', self.root, self.home)
             if candidate is not None:self._take('legacy', candidate, True)
             self._begin()
+            self.limit_output(group, 4 * GIB)
         return original
 
     def copy(self, path, *, ephemeral=False):
@@ -398,6 +404,39 @@ class Storage:
                                "the safety reserve is %.1f GiB" %
                                (free / GIB, self.min_free / GIB))
 
+    def limit_output(self, path, max_bytes):
+        """Bound a producer's output without granting any deletion permission."""
+        path = self._absolute(path)
+        if max_bytes <= 0:raise ValueError('Output budget must be positive')
+        self.output_limits[path] = int(max_bytes)
+        self.check_output_limits()
+        return path
+
+    def check_output_limits(self):
+        for path, limit in tuple(self.output_limits.items()):
+            size = sum(info.st_size for _, info in self._walk(path))
+            if size > limit:
+                raise RuntimeError('QA output budget exceeded: %s (%.1f / %.1f MiB)' %
+                                   (path, size / 1024**2, limit / 1024**2))
+
+    def extract_archive(self, repository, revision, destination):
+        """Extract a Git tree through a bounded pipe; never leave baseline.tar."""
+        self.source(repository)
+        destination = Path(destination)
+        destination.mkdir(parents=True, exist_ok=True)
+        process = self.popen(['git', '--git-dir='+str(repository), 'archive', revision],
+                             stdout=subprocess.PIPE)
+        raw = getattr(process, 'process', process)
+        try:
+            with tarfile.open(fileobj=process.stdout, mode='r|') as archive:
+                archive.extractall(destination, filter='data')
+            code = process.wait()
+            if code:raise subprocess.CalledProcessError(code, process.args)
+        finally:
+            process.stdout.close()
+            if raw.poll() is None:
+                raw.kill();raw.wait()
+
     def _prepare(self, args, kwargs):
         env = kwargs.get("env")
         if env is None:
@@ -422,6 +461,7 @@ class Storage:
             if env.get(key):
                 self.cache(Path(env[key]))
         self._begin()
+        self.check_output_limits()
         # Keep leases alive through shells/exec and if the runner is killed.
         inherited = set(kwargs.pop("pass_fds", ()))
         inherited.update(lock.fileno() for lock, _, _ in self.held.values())
@@ -447,15 +487,25 @@ class Storage:
         process._qa_own_group = own_group
         process._qa_inherited_group = inherited_group
         process._qa_disk_full = False
-        if _watch and self.min_free:
+        if _watch and (self.min_free or self.output_limits):
             def watch():
+                next_budget = time.monotonic()
                 while process.poll() is None:
                     try:
                         process.wait(timeout=.5)
                     except subprocess.TimeoutExpired:
+                        reason = None
                         if shutil.disk_usage(self.root)[2] < self.min_free:
+                            reason = 'free-disk safety reserve reached'
+                        elif time.monotonic() >= next_budget:
+                            next_budget = time.monotonic() + 2
+                            try:self.check_output_limits()
+                            except RuntimeError as error:reason = str(error)
+                            except OSError:pass  # A producer may rename its files.
+                        if reason:
                             process._qa_disk_full = True
-                            print("[qa-storage] stopping this QA job: free-disk reserve reached",
+                            process._qa_stop_reason = reason
+                            print("[qa-storage] stopping this QA job: "+reason,
                                   file=sys.stderr)
                             try:
                                 if own_group or inherited_group:
@@ -482,6 +532,7 @@ class Storage:
                 raise ValueError("capture_output conflicts with stdout/stderr")
             kwargs.update(stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         deadline = time.monotonic() + timeout if timeout is not None else None
+        next_budget = time.monotonic()
         with self.popen(*args, _watch=False, **kwargs) as process:
             own_group = process._qa_own_group
             inherited_group = process._qa_inherited_group
@@ -493,6 +544,9 @@ class Storage:
                         break
                     except subprocess.TimeoutExpired:
                         data = None
+                        if time.monotonic() >= next_budget:
+                            next_budget = time.monotonic() + 2
+                            self.check_output_limits()
                         if deadline is not None and time.monotonic() >= deadline:
                             if own_group:
                                 os.killpg(process.pid, signal.SIGKILL)
@@ -866,7 +920,8 @@ class GuardedProcess:
 
     def _check(self):
         if self.process._qa_disk_full:
-            raise RuntimeError("QA stopped: the free-disk safety reserve was reached")
+            raise RuntimeError("QA stopped: " + getattr(self.process, '_qa_stop_reason',
+                               'the free-disk safety reserve was reached'))
 
     def poll(self):
         self._check()
@@ -946,6 +1001,14 @@ def qa_run(*args, **kwargs):
 
 def qa_popen(*args, **kwargs):
     return _manager().popen(*args, **kwargs)
+
+
+def qa_limit_output(path, max_bytes):
+    return _manager().limit_output(path, max_bytes)
+
+
+def qa_extract_archive(repository, revision, destination):
+    return _manager().extract_archive(repository, revision, destination)
 
 
 if __name__ == '__main__':
