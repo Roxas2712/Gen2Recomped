@@ -10,10 +10,10 @@ function T.request(method,id,action,payload,match)
  if id and not uuid(id) or match and not uuid(match) or action and not actions[action] then return nil,'Invalid tournament request.' end
  local path='/tournaments'..(id and '/'..id or '')..(match and '/matches/'..match or '')..(action and '/'..action or '')
  local account=Auth.accountId()
- local doc,why=A.request(method,path,payload,true)
+ local doc,why,status=A.request(method,path,payload,true)
  if not Auth.signedIn() or Auth.accountId()~=account then return nil,'The active account changed. Refresh the Arena.' end
  if doc and tostring(doc.account_id)~=account then return nil,'The Arena returned another account profile.' end
- return doc,why
+ return doc,why,status
 end
 function T.arena(method,payload)
  if not Auth.signedIn() then return nil,'Sign in to find an online rival.' end

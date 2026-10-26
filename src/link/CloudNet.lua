@@ -33,6 +33,10 @@ function N:exchange()
   if not response then return end
   self.job=nil
   if response.kind~='done' or not response.first then
+   local failure=response.second
+   if type(failure)=='table' and type(failure.status)=='number' and failure.status>=400 and failure.status<500 and failure.status~=408 and failure.status~=429 then
+    return self:fail(failure.message or 'This Arena connection is no longer active. Reopen the lobby.')
+   end
    self.nextPoll=now()+1
    if now()-self.lastSuccess>45 then self:fail('The Arena connection stopped answering. No result was invented.') end
    return
@@ -66,7 +70,11 @@ function N:exchange()
  local payload={battle=self.battle,ticket=self.ticket,after=self.received,messages=batch,close=closing}
  local cup,match=self.cup,self.match
  self.sentClose=closing
- self.job=Task.new(function() return require('src.cloud.Tournaments').request('POST',cup,'battle-wire',payload,match) end)
+ self.job=Task.new(function()
+  local doc,why,status=require('src.cloud.Tournaments').request('POST',cup,'battle-wire',payload,match)
+  if doc then return doc end
+  return nil,{message=why,status=status}
+ end)
  if not self.job then self:fail('Background Arena networking is unavailable.') end
 end
 function N:update() if not self.closed then self:exchange() end end
