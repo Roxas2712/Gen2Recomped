@@ -1127,8 +1127,8 @@ function Game:_draw()
     end
   end
   local baseState = self.stack.states[drawFrom]
-  local SuperSample = require("src.render.SuperSample")
-  if not worldDrawn and baseState and require("src.core.GameVersion").isNds()
+  local SuperSample = HotModules.get("src.render.SuperSample")
+  if not worldDrawn and baseState and HotModules.get("src.core.GameVersion").isNds()
      and SuperSample.singleScreen(self) and not SuperSample.active then
     SuperSample.draw(self, self.stack:top(), drawStates)
   else
