@@ -49,6 +49,14 @@ for i=1,1500 do
 end
 T.check(Stack:top().isBattleState,'native script enters the actual shared battle engine')
 T.check(World.runner:isRunning(),'story coroutine is waiting for its battle result')
+local cp,code,detail=require('src.core.Checkpoint').capture(Game)
+if not cp then local ok,why=pcall(require('src.core.CheckpointBattle').capture,Game,Stack:top(),function(v)return assert(S.decode(S.encodeExact(v)))end);error(tostring(detail)..' / '..tostring(why))end
+-- Remain inside the same battle beyond the former 18,000-tick cutoff.
+-- Rolling native decision checkpoints must compact history, not discard it.
+for _=1,20040 do step()end
+local long,reason=J.capture(Game);assert(long,reason)
+T.eq(long.anchor.kind,'battle','a long battle establishes its own native checkpoint')
+T.check(#long.steps<=J.BATTLE_CHECKPOINT_TICKS,'a long battle retains only the tail since its latest decision checkpoint')
 -- A device can render a different number of frames from the replay. Nested
 -- sprite caches can also point at a live monster; those references must not
 -- change the canonical paths used for its actual HP, moves and battle stats.
@@ -72,6 +80,9 @@ local ok,problem=J.restore(Game,assert(S.decode(encoded)))
 assert(ok,'native continuation replay restores from title: '..tostring(problem))
 T.check(Game.save~=originalSave and Stack:top().isBattleState,'restore reconstructs new native objects')
 T.check(World.runner:isRunning(),'waiting story coroutine is reconstructed without serializing Lua code')
+T.check(Stack:top().player.mon==Game.save.party[1],'restored battle stays bound to the actual save party')
+T.check(Stack:top().player.curMoves==Game.save.party[1].moves,'restored PP slots remain live save references')
+T.check(Stack:top().participants[Game.save.party[1]],'experience participants bind to the restored party too')
 T.eq(S.encode(J.witness(Game)),S.encode(capsule.witness),'reconstructed battle, progress, RNG and native phases match')
 local battle=Stack:top();battle.result='win';battle:finish()
 for _=1,300 do if Game.save.flags.SUSPEND_STORY_CONTINUED then break end;Game.stack:update(1/60)end

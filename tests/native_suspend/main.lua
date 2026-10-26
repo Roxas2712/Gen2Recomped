@@ -1,7 +1,7 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Real native battle, private HTTPS cloud, two fresh account-bound profiles.
 local cfg,Game,Task,Auth,job,phase,done,expected,anchorError
-local S;local J;local frames=0;local ticks=0;local animationTicks=0
+local S;local J;local initialPP;local frames=0;local ticks=0;local animationTicks=0;local idleTicks=0;local captureInfo
 local function write(file,value)local f=assert(io.open(file,'wb'));f:write(require('src.link.Json').encode(value));f:close()end
 local function summary()
  local b=Game.stack:active();local p=Game.save.party[1]
@@ -9,7 +9,7 @@ local function summary()
 end
 local function finish(ok,why)
  if done then return end;done=true
- write(cfg.result,{ok=ok,edition=cfg.edition,role=cfg.role,phase=phase,reason=tostring(why or ''),ticks=ticks})
+ write(cfg.result,{ok=ok,edition=cfg.edition,role=cfg.role,phase=phase,reason=tostring(why or ''),ticks=ticks,capture=captureInfo})
  print('SUSPEND '..cfg.edition..' '..cfg.role..' '..tostring(ok)..' '..tostring(why or''));love.event.quit(ok and 0 or 1)
 end
 function love.errorhandler(why)io.stderr:write(tostring(why)..'\n'..debug.traceback());if cfg then pcall(finish,false,why)end;return function()return 1 end end
@@ -17,7 +17,14 @@ local function task(name,fn)phase=name;job=assert(Task.new(fn))end
 local function suspend()
  local b=Game.stack:active()
  assert(b.player.mon.hp<b.player.mon.stats.hp or b.enemy.mon.hp<b.enemy.mon.stats.hp,'Battle has actual damage')
- assert(Game.save.party[1].moves[1].pp<35,'Battle has spent PP')
+ assert(Game.save.party[1].moves[1].pp<initialPP,'Battle has spent PP')
+ local capsule,why=J.capture(Game);assert(capsule,why)
+ if (cfg.idleTicks or 0)>0 then
+  local _,code,detail=require('src.core.Checkpoint').capture(Game)
+  assert(capsule.anchor.kind=='battle','Long battle must rebase on a native battle checkpoint: '..tostring(detail or code))
+  assert(#capsule.steps<=J.BATTLE_CHECKPOINT_TICKS+120,'Long battle must not replay its entire history')
+ end
+ captureInfo={kind=b.kind,anchor=capsule.anchor.kind,tailSteps=#capsule.steps,bytes=#J.encode(capsule),idleTicks=idleTicks}
  local kept,why=require('src.storage.SuspendStore').keep(Game);assert(kept,why)
  expected={witness=S.encodeExact(J.witness(Game)),animation=not not b.gen3AnimPlaying}
  assert(not cfg.animation or expected.animation,'Requested snapshot must be inside a native move animation')
@@ -29,18 +36,32 @@ local function prepare()
  assert(require('src.storage.AccountStorage').bind())
  Game=require('src.core.Game');Game.loadWithoutMods=true;Game:load()
  S=require('src.core.SaveSerializer');J=require('src.core.SuspendJournal')
+ initialPP=assert(Game.data.moves[cfg.move or'SWIFT']).pp
+ local trainer
+ if cfg.trainer then
+  local highest=-1
+  for id,record in pairs(Game.data.trainers or {})do
+   for index,party in ipairs(record.parties or {})do
+    local first=party[1]
+    if first and first.species=='MAGIKARP'and(first.level or 0)>highest then
+     highest=first.level;trainer={id=id,index=index}
+    end
+   end
+  end
+  assert(trainer,'A native Magikarp trainer is required for the trainer probe')
+ end
  local world=Game.overworld;local update=world.update
  world.update=function(self,dt)
   if Game.input:wasPressed('a')and not Game.save.flags.CLOUD_SUSPEND_STARTED then
    Game.save.flags.CLOUD_SUSPEND_STARTED=true
-   self.runner:run({{'start_battle','wild','MAGIKARP',35},{'set_flag','CLOUD_SUSPEND_RETURNED'}})
+   self.runner:run({{'start_battle',trainer and'trainer'or'wild',trainer and trainer.id or'MAGIKARP',trainer and trainer.index or 35},{'set_flag','CLOUD_SUSPEND_RETURNED'}})
   end
   return update(self,dt)
  end
  if cfg.role=='source'then
   Game.save.options.textSpeed='fast';Game.save.options.audioMuted=true;Game:applyOptions(Game.save.options)
-  Game.save.party={require('src.pokemon.Pokemon').new(Game.data,'SHUCKLE',35)}
-  local mon=Game.save.party[1];mon.moves={{id='TACKLE',pp=35,maxPP=35}}
+  Game.save.party={require('src.pokemon.Pokemon').new(Game.data,require('src.core.GameVersion').generation()==1 and'ONIX'or'SHUCKLE',35)}
+  local mon=Game.save.party[1];mon.moves={{id=cfg.move or'SWIFT',pp=initialPP,maxPP=initialPP}}
   local p=Game.save.player;world:_checkpointRebuild({map=p.map,x=p.x,y=p.y,facing=p.facing})
   if Game.stack.worldOwner then Game.stack.worldState=world;Game.stack.worldOwner.world=world;Game.stack.states={}else Game.stack.states={world}end
   Game.save.flags.CLOUD_SUSPEND_STARTED=nil;Game.save.flags.CLOUD_SUSPEND_RETURNED=nil
@@ -71,7 +92,7 @@ local function step(button)
 end
 function love.update(dt)
  if done then return end;frames=frames+1
- if frames>15000 then return finish(false,'Timed out '..tostring(phase)..' '..tostring(anchorError))end
+ if frames>15000+(cfg.idleTicks or 0)then return finish(false,'Timed out '..tostring(phase)..' '..tostring(anchorError))end
  if job then
   local r=job:poll();if not r then return end;job=nil
   if r.kind~='done'or not r.first then return finish(false,r.second or r.error)end
@@ -98,6 +119,13 @@ function love.update(dt)
   for _=1,4 do
    local b=Game.stack:active()
    if not b.isBattleState then step(true)
+   elseif phase=='battle'and b.phase=='menu'and(b.turnCount or 0)>=1 and b.gen3AnimPlaying then step(false)
+   elseif phase=='battle'and b.phase=='menu'and(b.turnCount or 0)>=1 and idleTicks<(cfg.idleTicks or 0)then
+    if idleTicks==0 then
+     local cp,code,detail=require('src.core.Checkpoint').capture(Game)
+     if not cp then local ok,why=pcall(require('src.core.CheckpointBattle').capture,Game,b,function(v)return assert(S.decode(S.encodeExact(v)))end);error(tostring(detail)..' / '..tostring(why))end
+    end
+    idleTicks=idleTicks+1;step(false)
    elseif phase=='animation'and b.gen3AnimPlaying then
     animationTicks=animationTicks+1
     if animationTicks>=5 then suspend();return else step(true)end
