@@ -1266,6 +1266,17 @@ function Loader:_api(mod)
       return supports(self, surface, name)
     end
   end
+  -- Read-only dataset views use the same native service at every API level.
+  -- Construction stays lazy and does not instantiate Game or import a ROM.
+  api.datasets = {
+    open = function(_, version)
+      if not loader.datasetViews then
+        local Views = engineRequire("src.mods.DatasetViews")
+        loader.datasetViews = Views.new(loader.fs, engineRequire, engineCall)
+      end
+      return loader.datasetViews:open(version)
+    end,
+  }
   local world, storage
   local overviewContext = WorldOverview.install(api, loader)
   local readContext = WorldReads.context(loader)
