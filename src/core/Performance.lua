@@ -49,6 +49,8 @@ Performance.gcBudget = true
 Performance.hotPathHoist = true
 -- P4: independent world-draw closure, list and protection optimization.
 Performance.worldDrawHoist = true
+-- P5: palette upload batching and cropped zone quads.
+Performance.paletteZoneCache = true
 Performance.GC_PAUSE = 120
 Performance.GC_STEP_MUL = 300
 Performance.GC_BUDGET_SECONDS = 0.0005

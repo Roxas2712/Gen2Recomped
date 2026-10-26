@@ -705,6 +705,76 @@ local function withTrueColor(zoneList, pass)
   return merged
 end
 
+-- Cropped zone geometry is equivalent only on a native nearest-filtered,
+-- pixel-density-matched, untransformed target. Public unusual layouts keep
+-- their established scissor path (including flips and anisotropic DPI).
+local rasterMajor = love and love.getVersion and love.getVersion() or 11
+local function wholePixel(value)
+  return math.abs(value - math.floor(value + 0.5)) <= 1e-7
+end
+local function truncate(value)
+  return value < 0 and math.ceil(value) or math.floor(value)
+end
+local function zonePixelSpan(first, last, density)
+  local lo,hi = math.floor(first*density),math.ceil(last*density)
+  if rasterMajor < 12 then
+    -- The 11.x Lua API truncates logical scissor arguments before DPI conversion.
+    local left = truncate(truncate((lo+0.5)/density)*density)
+    local width = truncate(truncate((hi-lo+0.5)/density)*density)
+    return left/density,(left+width)/density
+  end
+  -- 12.x rounds float scissor values. This path is used only for power-of-two
+  -- DPI so the existing half-pixel padding is exactly representable.
+  return (lo+1)/density,(hi+2)/density
+end
+local function zoneQuad(self, canvas, sx, sy, bx, by, dpiX, dpiY)
+  if not Performance.paletteZoneCache or type(canvas) ~= "userdata" or not canvas.typeOf
+     or not (canvas:typeOf("Canvas") or canvas:typeOf("Texture"))
+     or sx <= 0 or sy <= 0 then return nil end
+  if not canvas.getDPIScale or canvas:getDPIScale() ~= 1 then return nil end
+  if not canvas.getFilter or canvas:getFilter() ~= "nearest" then return nil end
+  local g = love.graphics
+  if not (g.newQuad and g.transformPoint) then return nil end
+  local target = g.getCanvas()
+  if target and type(target) ~= "userdata" then return nil end
+  local density = target and target.getDPIScale and target:getDPIScale() or g.getDPIScale()
+  if math.abs(density - (dpiX or 1)) > 1e-7 or math.abs(density - (dpiY or 1)) > 1e-7 then return nil end
+  -- Fractional magnification/origins can put sample centres exactly on a
+  -- texel boundary. Cropping then changes floating-point tie rounding.
+  if not (wholePixel(sx*density) and wholePixel(sy*density)
+          and wholePixel(bx*density) and wholePixel(by*density)) then return nil end
+  if rasterMajor >= 12 and density ~= 1 and density ~= 2 and density ~= 4 then return nil end
+  local x0,y0 = g.transformPoint(0,0)
+  local xx,xy = g.transformPoint(1,0)
+  local yx,yy = g.transformPoint(0,1)
+  if x0 ~= 0 or y0 ~= 0 or xx ~= 1 or xy ~= 0 or yx ~= 0 or yy ~= 1 then return nil end
+  local quad = self._zoneQuad
+  if not quad then
+    local w,h = canvas:getDimensions()
+    quad = g.newQuad(0,0,w,h,w,h)
+    self._zoneQuad = quad
+  end
+  return quad
+end
+function Renderer:_drawZoneQuad(quad, canvas, sx, sy, zoneSx, zoneSy, bx, by,
+                                boxX, boxY, boxW, boxH, dpiX, dpiY, z)
+  local x,y = bx + z.x*zoneSx, by + z.y*zoneSy
+  local x2,y2 = math.min(x+z.w*zoneSx,boxX+boxW),math.min(y+z.h*zoneSy,boxY+boxH)
+  x,y = math.max(x,boxX),math.max(y,boxY)
+  if x2 <= x or y2 <= y then return false end
+  dpiX,dpiY = dpiX or 1,dpiY or 1
+  -- The old scissor rounds starts down and ends up in physical pixels.
+  x,x2 = zonePixelSpan(x,x2,dpiX)
+  y,y2 = zonePixelSpan(y,y2,dpiY)
+  local cw,ch = canvas:getDimensions()
+  local qx,qy = math.max(0,(x-bx)/sx),math.max(0,(y-by)/sy)
+  local qx2,qy2 = math.min(cw,(x2-bx)/sx),math.min(ch,(y2-by)/sy)
+  if qx2 <= qx or qy2 <= qy then return false end
+  quad:setViewport(qx,qy,qx2-qx,qy2-qy,cw,ch)
+  love.graphics.draw(canvas,quad,bx+qx*sx,by+qy*sy,0,sx,sy)
+  return true
+end
+
 -- Palette-correct blit of `canvas` at (sx, sy) LOVE-unit scales into origin
 -- (bx, by), scissored to the (boxX, boxY, boxW, boxH) screen rect.  zoneSx/
 -- zoneSy convert zone coords (canvas-space) into screen units.  Public so a
@@ -721,9 +791,14 @@ function Renderer:blitCanvas(canvas, sx, sy, zoneList, zoneSx, zoneSy,
     return
   end
   love.graphics.setShader(shader)
+  local colorBatch = PaletteFX.sendColors == PaletteFX._nativeSendColors
+    and PaletteFX._beginColorBatch(shader) or nil
   -- a colors == false zone is the trueColor opt-out: its rect draws with
   -- no shader at all.  Nothing sets one without a mod, so a vanilla zone
   -- list never toggles and issues exactly the calls it always did.
+  local quad = zoneSx > 0 and zoneSy > 0 and boxX >= 0 and boxY >= 0
+    and zoneQuad(self, canvas, sx, sy, bx, by, dpiX, dpiY) or nil
+  if quad then love.graphics.setScissor() end
   local bare = false
   for _, z in ipairs(zoneList) do
     local plain = z.colors == false
@@ -731,8 +806,14 @@ function Renderer:blitCanvas(canvas, sx, sy, zoneList, zoneSx, zoneSy,
       bare = plain
       love.graphics.setShader(not plain and shader or nil)
     end
-    if not plain then PaletteFX.sendColors(shader, z.colors) end
-    if scissorClamped(bx + z.x * zoneSx, by + z.y * zoneSy,
+    if not plain then
+      if colorBatch then PaletteFX._sendColorsInBatch(shader, z.colors, colorBatch)
+      else PaletteFX.sendColors(shader, z.colors) end
+    end
+    if quad then
+      self:_drawZoneQuad(quad, canvas, sx, sy, zoneSx, zoneSy, bx, by,
+                         boxX, boxY, boxW, boxH, dpiX, dpiY, z)
+    elseif scissorClamped(bx + z.x * zoneSx, by + z.y * zoneSy,
                       z.w * zoneSx, z.h * zoneSy,
                       boxX, boxY, boxW, boxH, dpiX, dpiY) then
       love.graphics.draw(canvas, bx, by, 0, sx, sy)
@@ -740,6 +821,7 @@ function Renderer:blitCanvas(canvas, sx, sy, zoneList, zoneSx, zoneSy,
   end
   love.graphics.setScissor()
   love.graphics.setShader()
+  PaletteFX._endColorBatch(colorBatch)
   closeBlit()
 end
 
