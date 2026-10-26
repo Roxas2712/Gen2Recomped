@@ -847,6 +847,9 @@ function Loader:_contentApi(mod, registry, deprecation)
   if registry.name == "apricorns" then
     return require("src.mods.ApricornContent").api(loader,mod,api,loader:_generation())
   end
+  if registry.name == "landmarks" then
+    return require("src.mods.LandmarkContent").api(loader,mod,api,loader:_generation())
+  end
   return api
 end
 
@@ -1611,6 +1614,7 @@ function Loader:load(data)
   require("src.mods.RadioContent").prepare(self, data)
   require("src.mods.PhoneContent").prepare(self, data)
   require("src.mods.ApricornContent").prepare(self, data)
+  require("src.mods.LandmarkContent").prepare(self, data)
   -- vanilla content is registrations too, and they land before discovery so
   -- a mod's register collides with the engine's and has to say override
   require("src.mods.Builtins").install(self.content, data)
@@ -1875,6 +1879,7 @@ function Loader:load(data)
   require("src.mods.MartContent").apply(self, data)
   require("src.mods.PhoneContent").apply(self, data)
   require("src.mods.ApricornContent").apply(self, data)
+  require("src.mods.LandmarkContent").apply(self, data)
   require("src.mods.RomTextContent").apply(self, data)
   -- dangling f.id references are attributed to the id's last writer;
   -- api 1 mods keep the warning-only compat path
