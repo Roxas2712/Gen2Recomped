@@ -50,14 +50,31 @@ function Events:emit(name, payload)
   -- dispatch over a snapshot: a listener may retire itself or a sibling
   -- mid-emit (once, or the closure on() returns), and table.remove on the
   -- live list shifts the entries ipairs has not reached yet
-  local snapshot = {}
-  for i = 1, #list do snapshot[i] = list[i] end
-  for _, entry in ipairs(snapshot) do
+  --
+  -- E1: a list of one needs no copy -- the only entry that can retire
+  -- mid-emit is the one already running, and the loop is past it.  Every
+  -- per-frame event with a single subscriber (the usual case for
+  -- world.tick) skips the table that way.
+  local snapshot = list
+  local count = #list
+  if count > 1 then
+    snapshot = {}
+    for i = 1, count do snapshot[i] = list[i] end
+  end
+  for i = 1, count do
+    local entry = snapshot[i]
+    if entry == nil then break end
     -- ATTRIBUTED TO THE MOD, not to "events": an engine event fired once a
     -- frame with three listeners on it is three different owners' code, and
     -- lumping them together names the seam instead of the culprit.
-    local close = FrameProfile.section(
-      "  mod " .. tostring(entry.owner or "?") .. ": " .. tostring(name))
+    -- E1: the label is built once per subscription, not concatenated on
+    -- every emit for a profiler that is usually off.
+    local label = entry.label
+    if label == nil then
+      label = "  mod " .. tostring(entry.owner or "?") .. ": " .. tostring(name)
+      entry.label = label
+    end
+    local close = FrameProfile.section(label)
     local facade = package.loaded['src.core.Game3']
     local ok, err
     if facade and facade._usesCallbacks and facade._usesCallbacks(entry.owner) then
