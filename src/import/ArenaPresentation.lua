@@ -54,17 +54,18 @@ function A.progress(self,x,y,w,arena)
  label(self,'Community results · +'..tostring(arena.win_points or 50)..' win / +'..tostring(arena.loss_points or 10)..' loss · once per opponent / UTC day',x+18*s,y+70*s,w-36*s,11*s,{.63,.71,.83})
  g.pop();return h+18*s
 end
-function A.format(self,x,y,w,c,locked,selected)
+function A.format(self,x,y,w,c,locked,selected,edition)
  local s,g=self._s,love.graphics;local h=170*s;local col=colors[c.color] or colors.teal
  g.push('all');g.setColor(.065,.095,.16);g.rectangle('fill',x,y,w,h,12*s,12*s)
  art('league-stadium',x+w*.48,y,w*.52,h,true,locked and .17 or .42)
  g.setColor(.04,.06,.12,.53);g.rectangle('fill',x,y,w,h,12*s,12*s)
  art('champion-trophy',x+w-86*s,y+16*s,72*s,85*s,false,locked and .35 or .9)
  g.setColor(unpack(col));g.rectangle('fill',x,y+16*s,3*s,h-32*s,2*s,2*s)
- label(self,c.id=='worlds' and 'THE ULTIMATE STAGE' or 'LEAGUE CUP  /  '..c.team_size..'v'..c.team_size,x+18*s,y+17*s,w-110*s,10*s,col)
+ label(self,edition and ('GEN '..require('src.core.GameVersion').generation(edition)..' / '..edition:upper()..' / '..c.team_size..'v'..c.team_size) or 'LEAGUE CUP / '..c.team_size..'v'..c.team_size,x+18*s,y+17*s,w-110*s,10*s,col)
  label(self,c.title,x+18*s,y+40*s,w-112*s,20*s,{1,.97,.91})
  label(self,c.team_size..' Pokémon · Lv. '..c.level..' · Singles',x+18*s,y+77*s,w-36*s,12*s,{.78,.85,.94})
- label(self,(c.id=='champion' or c.id=='worlds') and 'Legends allowed · No duplicate species' or 'No legends · No duplicate species',x+18*s,y+100*s,w-36*s,11*s,{.62,.73,.86})
+ label(self,c.rule_summary or ((c.legendary or c.id=='champion' or c.id=='worlds') and 'Legends allowed · No duplicate species' or 'No legends · No duplicate species'),x+18*s,y+100*s,w-36*s,11*s,{.62,.73,.86})
+ if c.rule_summary then label(self,c.legendary and 'Legends allowed · No duplicate species' or 'No legends · No duplicate species',x+18*s,y+118*s,w-36*s,10*s,{.62,.73,.86}) end
  label(self,locked and ('LOCKED · '..c.minimum_points..' POINTS') or (selected and 'SELECTED · READY TO FIND A RIVAL' or 'SELECT CUP >'),x+18*s,y+137*s,w-36*s,11*s,col)
  g.setColor(col[1],col[2],col[3],selected and .95 or .32);g.setLineWidth(selected and 2*s or s);g.rectangle('line',x,y,w,h,12*s,12*s);g.pop()
  return h
@@ -93,8 +94,8 @@ function A.bracket(self,x,y,w,c,names)
     local bx=x+((i-1)%cols)*(width+12*s);local by=cy+math.floor((i-1)/cols)*60*s
     g.setColor(.07,.11,.19);g.rectangle('fill',bx,by,width,48*s,6*s,6*s)
     local function name(id) return id and (names[id] or 'Player') or 'Awaiting winner' end
-    label(self,(m.winner==m.left and '★ ' or '')..name(m.left),bx+8*s,by+6*s,width-16*s,11*s,{.85,.9,1})
-    label(self,(m.winner==m.right and '★ ' or '')..name(m.right),bx+8*s,by+28*s,width-16*s,11*s,{.66,.77,.91})
+    label(self,(m.winner==m.left and 'WIN · ' or '')..name(m.left),bx+8*s,by+6*s,width-16*s,11*s,{.85,.9,1})
+    label(self,(m.winner==m.right and 'WIN · ' or '')..name(m.right),bx+8*s,by+28*s,width-16*s,11*s,{.66,.77,.91})
    end
    cy=cy+math.ceil(#(rounds[r] or {})/cols)*60*s+16*s
   end
@@ -112,8 +113,8 @@ function A.bracket(self,x,y,w,c,names)
    g.setColor(.07,.11,.19);g.rectangle('fill',bx,by,cw,48*s,6*s,6*s)
    g.setColor(m.winner and 1 or .30,m.winner and .77 or .45,m.winner and .36 or .67,.8);g.rectangle('line',bx,by,cw,48*s,6*s,6*s)
    local function name(id) return id and (names[id] or 'Player') or 'Awaiting winner' end
-   label(self,(m.winner==m.left and '★ ' or '')..name(m.left),bx+8*s,by+6*s,cw-16*s,11*s,{.85,.9,1})
-   label(self,(m.winner==m.right and '★ ' or '')..name(m.right),bx+8*s,by+28*s,cw-16*s,11*s,{.66,.77,.91})
+   label(self,(m.winner==m.left and 'WIN · ' or '')..name(m.left),bx+8*s,by+6*s,cw-16*s,11*s,{.85,.9,1})
+   label(self,(m.winner==m.right and 'WIN · ' or '')..name(m.right),bx+8*s,by+28*s,cw-16*s,11*s,{.66,.77,.91})
   end
  end
  g.pop();return h+12*s

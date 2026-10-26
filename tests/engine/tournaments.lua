@@ -80,3 +80,22 @@ UI._tournaments.index.arena.formats=formats;W.action(UI,'preset:worlds')
 check(UI._tournaments.form.team_size=='6' and UI._tournaments.form.level=='100','staff cup presets apply their team size and level')
 response={account_id='18'};check(not T.arena('GET'),'league responses for another account are discarded')
 print('Arena league workspace: 6 checks passed')
+response={account_id='17',tournaments={},total=0,arena={points=0,worlds_points=1000,formats={
+ {id='worlds',title='Best of Worlds',team_size=6,level=100,color='gold',minimum_points=1000},
+ {id='kanto_boulder',title='Kanto Boulder Cup',generation=1,team_size=3,level=30,minimum_points=0},
+ {id='johto_sprout',title='Johto Sprout Cup',generation=2,team_size=3,level=20,minimum_points=0}}}}
+UI._tournaments.form=nil;UI._tournaments.index=response
+local drawn={};local oldPrintf=love.graphics.printf;love.graphics.printf=function(t,...) drawn[#drawn+1]=t;return oldPrintf(t,...) end
+W.action(UI,'arenaGeneration:1');check(W.draw(UI,0,0,320,640)>0 and UI._tournaments.selected=='kanto_boulder','a narrow layout selects a matching regional cup before the locked Worlds card')
+local visible={};for _,r in ipairs(UI._tournaments.rects) do visible[r.id]=true end
+check(visible['format:kanto_boulder'] and not visible['format:johto_sprout'],'generation selection excludes cups for other generations')
+local editionPrinted=false;for _,t in ipairs(drawn) do if t:find('GEN 1 / RED / 3v3',1,true) then editionPrinted=true end end
+check(editionPrinted,'each cup card prints its exact generation and edition')
+W.action(UI,'arenaEdition:blue');check(UI._tournaments.queueEdition=='blue','the selected edition has a direct native button')
+love.graphics.printf=oldPrintf
+print('Regional cup catalogue: 4 checks passed')
+
+UI._tournaments.index.arena.queue={state='searching',format='rookie',edition='crystal'}
+UI._tournaments.nextQueue=0;W.action(UI,'create');W.action(UI,'field:title');W.tick(UI)
+check(not UI._tournaments.job and UI._tournaments.focus=='title','queue polling does not interrupt a staff draft or steal text focus')
+print('Arena draft focus: 1 check passed')
