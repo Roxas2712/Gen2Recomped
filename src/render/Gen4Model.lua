@@ -28,6 +28,7 @@
 
 local Assets = require("src.render.Assets")
 local Logger = require("src.core.Logger")
+local Performance = require("src.core.Performance")
 -- The pose walk lives with the reader that produced the bytecode.  Requiring
 -- an importer from a renderer is not pretty; having the same walk written
 -- twice and drifting apart would be worse, and this is the walk that decides
@@ -303,11 +304,68 @@ vec4 effect(vec4 colour, Image tex, vec2 uv, vec2 screen)
 local shader
 local shaderCuts = false
 
+-- G3: ONE UNIFORM UPLOAD PER CHANGE, NOT PER SHAPE.
+--
+-- `Gen4Model:draw` runs once per model and its shape loop once per shape; a
+-- chunk has 13-19 shapes and a frame draws dozens of chunks plus every prop.
+-- Each `shader:send` is a driver call and, on the mobile GL drivers the
+-- handhelds run, usually a pipeline flush as well -- and the pass-constant
+-- values (yCut, zKeep, heightSpread, fog, billboardYaw) and the identity UV
+-- transform were re-sent on every one of them, each time with a fresh Lua
+-- table.  The shader is private to this module (nothing else sends to it),
+-- so the last value handed to each uniform can be remembered here and the
+-- send skipped when it is unchanged.  Scratch tables stand in for the
+-- per-send literals: Shader:send copies at the call, so reusing them is safe.
+--
+-- `Performance.gen4UniformCache = false` restores the unconditional sends.
+local uniformLast, uniformScratch, uniformShader = {}, {}, nil
+
+local function uniformReset(forShader)
+  uniformLast, uniformScratch, uniformShader = {}, {}, forShader
+end
+
+local function uniformScalar(name, value)
+  if uniformLast[name] == value then return end
+  uniformLast[name] = value
+  shader:send(name, value)
+end
+
+-- up to four components, compared and sent through one scratch table per name
+local function uniformVec(name, a, b, c, d)
+  local last = uniformLast[name]
+  if last and last[1] == a and last[2] == b and last[3] == c and last[4] == d then return end
+  if not last then last = {}; uniformLast[name] = last end
+  last[1], last[2], last[3], last[4] = a, b, c, d
+  local out = uniformScratch[name]
+  if not out then out = {}; uniformScratch[name] = out end
+  out[1], out[2], out[3], out[4] = a, b, c, d
+  if d == nil then out[4] = nil end
+  if c == nil then out[3] = nil end
+  shader:send(name, out)
+end
+
+-- a caller-owned sixteen-element table; compared element-wise, copied on change
+local function uniformMatrix(name, m)
+  local last = uniformLast[name]
+  if last then
+    local same = true
+    for i = 1, 16 do
+      if last[i] ~= m[i] then same = false; break end
+    end
+    if same then return end
+  else
+    last = {}; uniformLast[name] = last
+  end
+  for i = 1, 16 do last[i] = m[i] end
+  shader:send(name, m)
+end
+
 local function ensureShader()
   if shader ~= nil then return shader or nil end
   local ok, made = pcall(love.graphics.newShader, require("src.render.ClipSpaceCompat").shader(SHADER))
   if ok and made then
     shader, shaderCuts = made, true
+    uniformReset(shader)
     return shader
   end
   Logger.warn("gen4 model: the mesh shader with the height cut would not "
@@ -322,6 +380,7 @@ local function ensureShader()
     return nil
   end
   shader, shaderCuts = plain, false
+  uniformReset(shader)
   return shader
 end
 
@@ -341,6 +400,22 @@ end
 -- Shader:send takes and converting once here beats converting at every draw.
 local function identity()
   return { 1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1 }
+end
+
+-- The same product written into a caller-owned table: the draw loop below
+-- needs one model-view-projection per shape per frame, and a fresh table for
+-- each was most of the garbage a Gen 4 frame made.
+local function multiplyInto(out, a, b)
+  for row = 0, 3 do
+    for col = 0, 3 do
+      local sum = 0
+      for k = 0, 3 do
+        sum = sum + a[row * 4 + k + 1] * b[k * 4 + col + 1]
+      end
+      out[row * 4 + col + 1] = sum
+    end
+  end
+  return out
 end
 
 local function multiply(a, b)
@@ -2596,6 +2671,10 @@ function Gen4Model:draw(viewProjection, pose, materials, yCut, spread, depthComp
   -- overdrawn pixels.
   g.setMeshCullMode("none")
   g.setColor(1, 1, 1, 1)
+  if Performance.gen4UniformCache then
+    return self:_drawCached(g, viewProjection, pose, materials, yCut, spread,
+                            previousShader, mode, write, culling, pr, pg, pb, pa)
+  end
   if shaderCuts then
     shader:send("yCut", tonumber(yCut) or NO_CUT)
     -- Only meaningful with a cut, and cleared otherwise -- an unset uniform
@@ -2710,6 +2789,105 @@ function Gen4Model:draw(viewProjection, pose, materials, yCut, spread, depthComp
   g.setColor(pr, pg, pb, pa)
   return true
 end
+
+-- G3: the same draw as above with every uniform deduplicated (see
+-- `uniformScalar` and friends at the top of the file) and no per-shape table
+-- allocation.  Ordering, state changes, texture swaps and the restores are
+-- the ones the unconditional draw performs; only the uploads differ.  Kept
+-- as a separate body so `Performance.gen4UniformCache = false` is exactly
+-- the previous code path and not a second reading of it.
+local mvpScratch = {}
+local ZKEEP_NONE = { 1.0e9, -1.0e9 }
+local FOG_NONE = { 0, 0, 0, 0 }
+
+function Gen4Model:_drawCached(g, viewProjection, pose, materials, yCut, spread,
+                               previousShader, mode, write, culling, pr, pg, pb, pa)
+  if uniformShader ~= shader then uniformReset(shader) end
+  if shaderCuts then
+    uniformScalar("yCut", tonumber(yCut) or NO_CUT)
+    local band = yCut and Gen4Model.zKeep or ZKEEP_NONE
+    uniformVec("zKeep", band[1], band[2])
+  end
+  spread = spread or NO_SPREAD
+  uniformVec("heightSpread", spread[1], spread[2])
+  if shaderCuts then
+    local fog = Gen4Model.depthFog
+    local a = fog and fog.a or FOG_NONE
+    uniformVec("depthFogA", a[1], a[2], a[3], a[4])
+    if fog then
+      local b, c = fog.b, fog.c
+      uniformVec("depthFogB", b[1], b[2], b[3], b[4])
+      uniformVec("depthFogC", c[1], c[2], c[3])
+      uniformScalar("depthFogShift", fog.shift or 0)
+    end
+  end
+  uniformScalar("billboardYaw", tonumber(Gen4Model.billboardYaw) or 0)
+  local tint = Gen4Model.drawTint
+  for _, shape in ipairs(self.shapes) do
+    if tint then g.setColor(tint[1], tint[2], tint[3], shapeAlpha(shape) * (tint[4] or 1))
+    else g.setColor(1, 1, 1, shapeAlpha(shape)) end
+    local place = pose[shape.index]
+    local palette = (pose.stacks and pose.stacks[shape.index]) or pose.stack
+    if shape.matrixSlots and palette then
+      for i, v in ipairs(shape.bindVertices) do
+        local slot = shape.matrixSlots:byte(i)
+        local m = palette[slot] or place
+        local x, y, z = v[1], v[2], v[3]
+        if m then
+          x, y, z = m[1] * x + m[2] * y + m[3] * z + m[4],
+                    m[5] * x + m[6] * y + m[7] * z + m[8],
+                    m[9] * x + m[10] * y + m[11] * z + m[12]
+        end
+        shape.mesh:setVertex(i, x, y, z, unpack(v, 4))
+      end
+      place = nil
+    end
+    uniformMatrix("mvp", place and multiplyInto(mvpScratch, viewProjection, place) or viewProjection)
+
+    local state = materials and shape.material and materials[shape.material]
+    if state and state.alpha then
+      local r, gg, b, a0 = g.getColor()
+      g.setColor(r, gg, b, a0 * state.alpha)
+    end
+    local uv = state and state.uv
+    if uv then
+      uniformVec("uvRotScale", uv[1], uv[2], uv[3], uv[4])
+      uniformVec("uvTranslate", uv[5] or 0, uv[6] or 0)
+    else
+      uniformVec("uvRotScale", 1, 0, 0, 1)
+      uniformVec("uvTranslate", 0, 0)
+    end
+
+    local swapped = state and state.image and self:frameImage(state.image)
+    if swapped then shape.mesh:setTexture(swapped) end
+    g.draw(shape.mesh)
+    if swapped then
+      if shape.image then shape.mesh:setTexture(shape.image)
+      else shape.mesh:setTexture() end
+    end
+  end
+
+  g.setMeshCullMode(culling)
+  g.setDepthMode(mode, write)
+  g.setShader(previousShader)
+  g.setColor(pr, pg, pb, pa)
+  return true
+end
+
+-- tools/gen4_uniform_cache_check.lua drives the dedup helpers against a
+-- counting stand-in for the shader.  `bind` points them at that stand-in;
+-- nothing in the engine calls it.
+Gen4Model._uniformProbe = {
+  scalar = uniformScalar,
+  vec = uniformVec,
+  matrix = uniformMatrix,
+  multiplyInto = multiplyInto,
+  multiply = multiply,
+  bind = function(fake)
+    shader = fake
+    uniformReset(fake)
+  end,
+}
 
 -- A canvas that can hold a depth buffer, which an ordinary one cannot.
 --
