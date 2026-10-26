@@ -92,7 +92,12 @@ for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
             ticks = ticks + 1
           until (b.phase == "menu" and not b.current and #b.queue == 0) or ticks >= 4000
           T.check(ticks < 4000 and b.phase == "menu", "actual native turn reaches its next decision")
-          return Serializer.encode(assert(f.checkpoints:capture(game)))
+          local nextCheckpoint, why, detail = f.checkpoints:capture(game)
+          if not nextCheckpoint then
+            local _, diagnostic = pcall(B.capture, game, b, copy)
+            error(edition .. "/" .. kind .. ": " .. tostring(why) .. ": " .. tostring(detail) .. ": " .. tostring(diagnostic))
+          end
+          return Serializer.encode(nextCheckpoint)
         end
         local expected = turn()
         T.check(f.checkpoints:restore(game, cp), "rewind before comparing native turn continuation")

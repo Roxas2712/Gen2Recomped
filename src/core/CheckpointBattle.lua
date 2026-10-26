@@ -299,17 +299,25 @@ local function continuation(game, battle, clone)
 end
 -- Native turnActions uses battlers as dictionary keys. Encode that one
 -- relationship explicitly; arbitrary object-keyed mod tables remain refused.
+local function actionPosition(actor)
+  assert(type(actor) == "table" and actor.mon and actor.curMoves
+    and type(actor.isPlayer) == "boolean", "opaque native action owner")
+  -- Ordinary singles do not populate the optional double-battle position.
+  local position = actor.position
+  if position == nil then position = actor.isPlayer and 0 or 1 end
+  assert(type(position) == "number" and position % 1 == 0 and position >= 0 and position <= 3,
+    "invalid native action position")
+  return position
+end
 local function actionRows(actions)
   if not actions then return nil end
   local out = { schema = 1, turn = actions.turn, rows = {} }
   for actor, action in pairs(actions) do
     if actor ~= "turn" then
-      assert(type(actor) == "table" and actor.mon and actor.curMoves
-        and type(actor.position) == "number", "opaque native action owner")
-      out.rows[#out.rows + 1] = { actor = actor, action = action }
+      out.rows[#out.rows + 1] = { actor = actor, action = action, position = actionPosition(actor) }
     end
   end
-  table.sort(out.rows, function(a, b) return a.actor.position < b.actor.position end)
+  table.sort(out.rows, function(a, b) return a.position < b.position end)
   return out
 end
 local function nativeActions(record)
@@ -320,11 +328,10 @@ local function nativeActions(record)
   local out, positions = { turn = record.turn }, {}
   for _, row in ipairs(record.rows) do
     local actor = row.actor
-    assert(type(actor) == "table" and actor.mon and actor.curMoves
-      and type(actor.isPlayer) == "boolean" and type(actor.position) == "number",
-      "invalid native action owner")
-    assert(not positions[actor.position] and type(row.action) == "table", "duplicate or invalid native action")
-    positions[actor.position] = true
+    local position = actionPosition(actor)
+    assert(row.position == position, "native action position differs")
+    assert(not positions[position] and type(row.action) == "table", "duplicate or invalid native action")
+    positions[position] = true
     out[actor] = row.action
   end
   return out
