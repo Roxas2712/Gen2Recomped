@@ -138,6 +138,11 @@ for _,broken in ipairs({{pokedex=false},{pokedex='bad'},{pokedex={unownForms='ba
 end
 T.eq(U.word(1,{unown_dex=false}),nil,'malformed imported word record is unavailable')
 Game.data={pokemon={}};T.eq(U.word(1),nil,'data reload does not revive old imported words')
+for _,other in ipairs({'prism','polishedcrystal','red','firered','heartgold'})do
+ V.set(other)
+ T.eq(require('src.mods.Capabilities').supports('events',"unown.unlocked",other),false,other..' has no false native GSC form-event promise')
+ T.eq(U.updateDex({},1),false,other..' existing form model remains unchanged')
+end
 V.set('red');local save={};T.eq(U.updateDex(save,1),false,'native GSC save writes are generation gated')
 T.same(save,{},'unsupported game is not mutated')
 Game.data=originalData;V.set(previous)
