@@ -87,6 +87,21 @@ def git(root, *args):
     return subprocess.check_output(["git", "-C", str(root), *args], text=True).strip()
 
 
+def same_observations(left, right):
+    """Compare JSON values without Python's Boolean/number coercion."""
+    if isinstance(left, bool) or isinstance(right, bool):
+        return type(left) is bool and type(right) is bool and left == right
+    if isinstance(left, dict):
+        return (isinstance(right, dict) and left.keys() == right.keys()
+                and all(same_observations(value, right[key]) for key, value in left.items()))
+    if isinstance(left, list):
+        return (isinstance(right, list) and len(left) == len(right)
+                and all(same_observations(a, b) for a, b in zip(left, right)))
+    if isinstance(left, (int, float)):
+        return isinstance(right, (int, float)) and left == right
+    return type(left) is type(right) and left == right
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--gen1", required=True, type=Path)
@@ -151,7 +166,7 @@ def main():
                     failed = True
                 else:
                     values[backend] = rows[0]
-            equal = len(values) == 2 and values["gen1"] == values["gen2"]
+            equal = len(values) == 2 and same_observations(values["gen1"], values["gen2"])
             failed |= not equal
             report["comparisons"].append({"version": version, "api": api, "mode": mode, "equal": equal,
                                            "observations": values})
