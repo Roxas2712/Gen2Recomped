@@ -5676,12 +5676,13 @@ function BattleState:vanillaEnemyAction(battler)
     local brain = self.trainer.brain or (class and class.brain)
     if brain then return brain(self, battler) end
   end
-  -- CLASS AI MAY SPEND THE TURN ON AN ITEM OR A SWITCH -- but a trainer has
-  -- one bag and one bench, not one per slot, so it is asked once, for the
-  -- slot the whole of TrainerAI already reads (`battle.enemy`).  Letting the
-  -- right-hand slot ask too would have a trainer drink two SUPER POTIONs on
-  -- the same Pokemon in the same turn.
-  if battler == self.enemy then
+  -- The GBA hook keeps one opposing bag while selecting for the actual
+  -- controller position. The older class path retains its left-slot policy.
+  if GameVersion.isGen3() and self.kind=="trainer" and self.trainer
+      and Runtime.wantsHook("battle.enemy_switch_or_item") then
+    local action=require("src.battle.Gen3TrainerController").plan(self,battler)
+    if action then return action end
+  elseif battler == self.enemy then
     local classAct = gen2EnemyClassAction(self)
     if classAct then return classAct end
   end
@@ -6126,6 +6127,38 @@ function BattleState:switchPlayerInto(pos, newMon)
   -- ABILITYEFFECT_ON_SWITCHIN, after the send-out and its cry: an
   -- INTIMIDATE drops the foe's attack now, before the free move below
   self:actNext(function() self:abilitySwitchIn(incoming) end)
+  return incoming
+end
+
+-- Trainer commands address a position and its own bench, including the
+-- right-hand trainer's separate party. The left aliases stay in place.
+function BattleState:switchTrainerInto(pos,index)
+  if pos~=1 and pos~=3 then return nil end
+  local party=self:benchFor(false,pos)
+  local mon=party[index]
+  local previous=self:battlerAt(pos)
+  if not previous or not mon or (mon.hp or 0)<=0 or Party.isEgg(mon)then return nil end
+  for _,other in ipairs({1,3})do
+    local current=self:battlerAt(other)
+    if current and current.mon==mon then return nil end
+  end
+  self:restoreMimicked(previous)
+  local incoming=makeBattler(self.data,mon,false,nil,self)
+  if pos==1 then self.enemyIndex=index
+  elseif self.enemyPartyB then self.enemyIndexB=index
+  else self.enemyIndexRight=index end
+  self:placeBattler(pos,incoming)
+  for _,foe in ipairs(foesOf(self,incoming))do clearTrapping(foe)end
+  self:syncSides()
+  Runtime.emit("battle.battler_switched",{battle=self,side=self.sides[2],battler=incoming,previous=previous})
+  self:abilitySwitchOut(previous)
+  markSeen(self.game,mon.species,mon)
+  local trainer=pos==3 and self.trainerB or self.trainer
+  local label=trainer and trainer.name or self:trainerLabel_()
+  self:sayNext(Strings("%s with-\ndrew %s!",label,previous.name))
+  self:sayNext(Strings("%s sent\nout %s!",label,incoming.name))
+  HeldItems.onEntry(self,incoming)
+  self:actNext(function()self:abilitySwitchIn(incoming)end)
   return incoming
 end
 
@@ -7931,6 +7964,9 @@ function BattleState:executeAction(user, target, action)
   -- faint cases are already covered by the HP guard below (#441)
   if self.result then return end
   if not (user and user.mon) then return end
+  if GameVersion.isGen3() and action and action.gen3TrainerAction then
+    return require("src.battle.Gen3TrainerController").execute(self,user,action)
+  end
   if GameVersion.isGen3() then
     if user.position ~= nil and self:battlerAt(user.position) ~= user then return end
     if target and target.position ~= nil and self:battlerAt(target.position) ~= target then

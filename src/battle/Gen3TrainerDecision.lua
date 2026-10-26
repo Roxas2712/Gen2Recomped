@@ -5,7 +5,6 @@ local Items = require("src.battle.Gen3TrainerItems")
 local Party = require("src.pokemon.Party")
 local Runtime = require("src.mods.Runtime")
 local M = {}
-local origins = setmetatable({}, {__mode="k"})
 local function position(battle, actor)
   return actor == battle.enemy and 1 or actor == battle.player and 0 or actor and actor.position
 end
@@ -71,7 +70,6 @@ local function view(battle, actor, selected)
   elseif selected.special=="aiSwitch" then
     result={kind="switch",slot=selected.portableSlot or selected.index,user="enemy",battler=id}
   else return nil end
-  origins[result]={selection=selected,position=id}
   return result
 end
 
@@ -105,7 +103,4 @@ function M.call(battle, actor, vanilla)
   end
 end
 
--- Kept outside the public table: a mod is free to mutate the native result's
--- fields without manufacturing an execution reservation for a new request.
-function M.origin(result) return origins[result] end
 return M
