@@ -44,3 +44,21 @@ observations. Full original palette/audio tasks, foreground/UI-owned world
 effect composition, arbitrary source effect authoring, all custom renderer
 paths, five-edition battle/gameplay and full mod-coexistence acceptance remain
 required. Package loading past this module alone is not a gameplay result.
+
+## Composed fork checks
+
+The current fork passes 273 lifecycle/ownership checks and 425/425 engine
+suites, all 3 SDK suites and every quick tier. Independent original selection
+checks cover 23,760 five-edition cases with zero differences. OpenGL and Metal
+each pass 1,741 assertions, 780 pixel comparisons and 1,892 readbacks for the
+existing native geometric styles at 240x160, 320x200 and 480x320, including
+orientation negatives and borrowed-resource preservation.
+
+Observer teardown now preserves an engine continuation retained by a peer
+wrapper and still prevents replay. Explicit source-owned callbacks remain
+retired, including peer-held wrappers and admissions covered by another native
+screen. These regressions failed in all five editions before the correction.
+
+The immutable original package passes this module and next stops at
+`src.core.game3.field_effects` in all five edition identities. Initialization
+and gameplay remain incomplete. QA uses owned profiles and a 20 GiB reserve.
