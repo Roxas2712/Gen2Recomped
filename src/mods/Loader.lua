@@ -844,6 +844,9 @@ function Loader:_contentApi(mod, registry, deprecation)
   if registry.name == "phone_contacts" then
     return require("src.mods.PhoneContent").api(loader,mod,api,loader:_generation())
   end
+  if registry.name == "apricorns" then
+    return require("src.mods.ApricornContent").api(loader,mod,api,loader:_generation())
+  end
   return api
 end
 
@@ -1607,6 +1610,7 @@ function Loader:load(data)
   require("src.mods.RomTextContent").prepare(self, data)
   require("src.mods.RadioContent").prepare(self, data)
   require("src.mods.PhoneContent").prepare(self, data)
+  require("src.mods.ApricornContent").prepare(self, data)
   -- vanilla content is registrations too, and they land before discovery so
   -- a mod's register collides with the engine's and has to say override
   require("src.mods.Builtins").install(self.content, data)
@@ -1784,6 +1788,27 @@ function Loader:load(data)
   -- the commands registry is final once every entry chunk has run, so
   -- each map_scripts contribution's rows can be judged before they merge
   self:_validateScripts()
+  -- Resolve recipe/item forward references against all surviving entries,
+  -- before any native script projection or data merge. Repeat after owner
+  -- rollback so another recipe cannot retain an item supplied by a failed mod.
+  for _=1,#self.order+1 do
+    local problems=require("src.mods.ApricornContent").validate(self)
+    local failed=false
+    for _,problem in ipairs(problems)do
+      local mod=problem.owner and self.mods[problem.owner]
+      if mod and not mod.failed then self:_fail(mod,"failed",problem.message);failed=true end
+    end
+    if not failed then break end
+    self:_enforceDependencies()
+    for i=#self.loaded,1,-1 do
+      local mod=self.loaded[i]
+      if mod.failed then self:_rollback(mod.manifest.id);table.remove(self.loaded,i)end
+    end
+    for i=#self.order,1,-1 do
+      local mod=self.mods[self.order[i]]
+      if mod and mod.failed then table.remove(self.order,i)end
+    end
+  end
   -- merge: fold every touched id from its pristine base value and write it
   -- home, creating the Data namespace when the base modules never shipped
   -- one.  A registry nobody wrote to -- engine included -- is skipped, so
@@ -1849,6 +1874,7 @@ function Loader:load(data)
   require("src.mods.HeldItemContent").apply(self, data)
   require("src.mods.MartContent").apply(self, data)
   require("src.mods.PhoneContent").apply(self, data)
+  require("src.mods.ApricornContent").apply(self, data)
   require("src.mods.RomTextContent").apply(self, data)
   -- dangling f.id references are attributed to the id's last writer;
   -- api 1 mods keep the warning-only compat path
