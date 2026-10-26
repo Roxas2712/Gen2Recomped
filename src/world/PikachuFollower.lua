@@ -200,7 +200,11 @@ function PikachuFollower.onMapEntered(game, ow, opts)
   -- Pikachu off the normal trailing loop.  A new map instance ends it.
   ow.pikachuBillsScene = nil
   remove(ow)
+  if opts and opts.checkpoint then
+    if not shouldSpawn(game, ow) then return end
+  else
   if not ModRuntime.call("world.follower.spawn", shouldSpawn, game, ow) then return end
+  end
   -- opts.keepPikachu is the follower a connection crossing kept alive:
   -- LoadMapHeader's connection path sets wPikachuSpawnState = 2 and bit 4
   -- of wPikachuOverworldStateFlags, so SchedulePikachuSpawnForAfterText
@@ -976,6 +980,11 @@ function PikachuFollower.at(ow, cx, cy)
     return npc
   end
   return nil
+end
+
+local checkpointSpawn = PikachuFollower.onMapEntered
+function PikachuFollower._checkpointSpawn(game, world, opts)
+  return checkpointSpawn(game, world, opts)
 end
 
 return PikachuFollower

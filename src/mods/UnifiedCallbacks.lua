@@ -29,7 +29,7 @@ C.hooks = names([[
  ui.title_menu.items warp.destination world.follower.spawn world.talk world.tod zoom.range
 ]])
 C.events = names([[
- world.live_maps_preparing world.live_maps_updated
+ checkpoint.restored world.live_maps_preparing world.live_maps_updated
  assets.transformed battle.ball_thrown battle.battler_switched battle.damage_dealt battle.ended
  battle.exp_gained battle.fainted battle.move_used battle.started battle.status_inflicted battle.turn_ended
  battle.turn_started discord.join_requested flag.changed game.ready intro.birch_speech.finished
@@ -90,7 +90,7 @@ local results = {
 -- These payloads are engine handles, repair flows or UI objects, not record
 -- notifications. In particular, game.ready has a forwarding metatable.
 local nativeEvents = names([[
- game.ready save.created save.loaded save.loading save.writing mods.loaded
+ checkpoint.restored game.ready save.created save.loaded save.loading save.writing mods.loaded
  screen.popped screen.pushed intro.birch_speech.finished intro.birch_speech.started
  intro.oak_speech.answered intro.oak_speech.finished intro.oak_speech.started intro.oak_speech.step
  mod.option_action mod.options_changed

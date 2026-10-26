@@ -1279,6 +1279,18 @@ function Loader:_api(mod)
       return loader.datasetViews:open(version)
     end,
   }
+  -- Every API level sees the same data-only checkpoint facade. Backend loads
+  -- and native reconstruction run under the engine's permission attribution.
+  api.checkpoints = {}
+  for _, method in ipairs({ "inspect", "capture", "restore", "resume", "ensureNormalSave" }) do
+    local name = method
+    api.checkpoints[name] = function(_, ...)
+      if not loader.checkpoints then
+        loader.checkpoints = engineRequire("src.core.Checkpoint").new(loader.fs)
+      end
+      return engineCall(loader.checkpoints[name], loader.checkpoints, ...)
+    end
+  end
   local world, storage
   local overviewContext = WorldOverview.install(api, loader)
   local readContext = WorldReads.context(loader)
