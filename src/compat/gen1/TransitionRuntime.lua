@@ -73,7 +73,8 @@ function R:bind(state)
     if c.callbackResult then return unpack(c.callbackResult,1,c.callbackResult.n)end
     if not cohort(c)or not state.finished or state.phase~='done'then return false,'native transition has not completed'end
     c.callbackResult={n=0}
-    local result=pack(pcall(function()if original then return original()end end))
+    local fn=original;original=nil;c.original=nil
+    local result=pack(pcall(function()if fn then return fn()end end));fn=nil
     if not result[1]then c.callbackError=result[2];error(result[2],0)end
     c.callbackResult={n=result.n-1};for i=2,result.n do c.callbackResult[i-1]=result[i]end
     return unpack(c.callbackResult,1,c.callbackResult.n)
