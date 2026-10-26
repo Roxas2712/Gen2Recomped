@@ -35,6 +35,8 @@ function love.load()
  check(love.filesystem.getIdentity():match('^oasc%-gen2recomp%-qa%-'), 'foreign QA profile')
  local renderer,version,vendor,device=g.getRendererInfo()
  print('PALETTE_GPU_BACKEND',renderer,version,vendor,device)
+ local limits=g.getSystemLimits();local keys={};for key in pairs(limits)do keys[#keys+1]=key end;table.sort(keys)
+ for _,key in ipairs(keys)do print('GPU_LIMIT',key,limits[key])end
  check(renderer:lower():find(assert(os.getenv('POKEPORT_GRAPHICS_BACKEND')),1,true)~=nil,'requested backend was not used')
  local data=love.image.newImageData(16,6,'rgba8');local alpha={0,.25,.49,.5,.75,1}
  local normalized,packed={},{ }
