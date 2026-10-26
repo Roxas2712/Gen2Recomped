@@ -81,7 +81,7 @@ function NativeMusic:currentMapMusic()
   end
   return self.current and self.current.id or 0
 end
-function NativeMusic:refresh()
+function NativeMusic:refresh(apply)
   local level = self.host.master()
   if self.fadeOut then
     local f = self.fadeOut
@@ -91,15 +91,15 @@ function NativeMusic:refresh()
     local u = math.min(1, self.fadeIn.t / math.max(self.fadeIn.dur, 0.01))
     level = self.host.shared() and self.host.sharedLevel(u) or level * u
   end
-  self:setLevel(level)
+  self:setLevel(level, apply)
 end
-function NativeMusic:optionChanged()
+function NativeMusic:optionChanged(apply)
   -- A shared file override receives its ordinary option update first; the
   -- next native audio service reapplies its fade. Native streams retain start.
   if self.host.shared() then
-    self:setLevel(self.host.master())
+    self:setLevel(self.host.master(), apply)
   else
-    self:refresh()
+    self:refresh(apply)
   end
 end
 function NativeMusic:fadeOutBgm(speed)
