@@ -22,9 +22,29 @@ function F.at(_,x,y)
  local npc=F.current();if npc and not npc.moving and npc.cellX==x and npc.cellY==y then return npc end
 end
 function F.update()return require('src.compat.gen1.ScriptBoundary').invoke('follower.update')end
+local nativeUpdate=F.update
+local unpack=table.unpack or unpack
+local function pack(...)return{n=select('#',...),...}end
 function F._dispatch(game,world,body)
- return require('src.compat.gen1.ScriptBoundary').dispatch('follower.update',body,function(...)
-  return require('src.compat.gen1.SourceCall').call(F,'update',...)
+ local Call=require('src.compat.gen1.SourceCall')
+ local function advance()
+  local result=pack(body())
+  -- A wrapped source follower starts as an unpainted logical actor. Native
+  -- consumers retain their normal artwork; merely reading the facade cannot
+  -- hide it. Existing owned renderers also keep their installing owner.
+  local who=F.update~=nativeUpdate and Call.owner(F,'update')
+  local actor=who and Native.current(world)
+  if actor then
+   local _,assigned=require('src.compat.gen1.SourceActors').renderer(actor)
+   if not assigned then
+    local view=F.current(world)
+    if view then require('src.core.Game3')._withCallbackOwner(who,function()view.sprite=nil end)end
+   end
+  end
+  return unpack(result,1,result.n)
+ end
+ return require('src.compat.gen1.ScriptBoundary').dispatch('follower.update',advance,function(...)
+  return Call.call(F,'update',...)
  end,require('src.core.Game3').forNative(game))
 end
 return F
