@@ -16,6 +16,7 @@ end
 -- This is an audited boundary catalog, not a claim that every game executes
 -- every seam. The source-catalog test requires a decision for each new seam.
 C.hooks = names([[
+ battle.caught_marker_visible battle.menu_auxiliary world.follower.spawn
  battle.accuracy battle.catch_exp battle.crit battle.damage battle.enemy_action battle.exp_award
  battle.low_health_alarm battle.overlay battle.run battle.status_hud_visible battle.turn_order catch.rate core.logic_speed core.update
  encounter.fishing encounter.roll encounter.species evolution.check exp.gain fieldmove.eligibility
@@ -40,6 +41,9 @@ C.events = names([[
  world.object_toggled world.stepped world.tick world.tod_changed world.trainer_engaged
 ]])
 local positions = {
+  ["world.follower.spawn"]={false,false},
+  ["battle.caught_marker_visible"]={"context"},
+  ["battle.menu_auxiliary"]={false,"context"},
   ["battle.accuracy"] = { "context" },
   ["battle.damage"] = { "context" },
   ["battle.crit"] = { "context" },
