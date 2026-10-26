@@ -20,8 +20,13 @@ function M.new(game,opts)
   -- initialize Pokegear cards, roaming encounters or its portrait sheets.
   self.gear=setmetatable({game=game},{__index=Gear})
   for _,row in ipairs(self.gear:stationList())do if row.id==self.station then self.program=row;break end end
+  if self.station then self.music=require("src.world.Gen2RadioAudio").tune(game,self.station)end
   Radio.notify(game.data,self.station,channel,"map_radio")
   return self
+end
+function M:exit()
+  local playing=self.music;self.music=nil
+  require("src.world.Gen2RadioAudio").finish(self.game,playing)
 end
 function M:name()return self.station and Radio.stationName(self.game.data,self.station)end
 function M:resolveStation(channel)

@@ -1,0 +1,39 @@
+{
+  "status": "ROM-free development checkpoint; full parity remains open",
+  "mainSourceCommit": "f027780f78e41142ef78d80d2298398fa794df18",
+  "frozenTestSourceCommit": "46bfcce15d814ac4349b76a8a41b5370015dadff",
+  "identicalCompleteGitTree": "d38e3ba881b905d3735aa5acb98c4b783f0e9d0a",
+  "mergedForkPullRequests": [48, 53, 54, 56, 57, 58],
+  "engineSuites": {"passed": 435, "total": 435},
+  "sdkSuites": {"passed": 3, "total": 3},
+  "quickTiers": "all passed; ROM-free synthetic regressions",
+  "upstreamPhone": {
+    "pullRequest": "https://github.com/UNDERdecoded/Gen2Recomped/pull/285",
+    "candidate": "b77b27bb5ce20ab3c4b7fde11cfb8a3d65a3fe07",
+    "baseline": "13af468b97dc37015d14ad5c71d7f067c3ee810d",
+    "candidateSuites": {"passed": 69, "total": 79},
+    "baselineSuites": {"passed": 64, "total": 74},
+    "identicalExistingFailedSuitesAndAssertions": true,
+    "sdkSuites": {"passed": 3, "total": 3},
+    "nativeHookChecks": 178,
+    "callerSelectionChecks": 5204,
+    "scope": "Native API1/2; not upstream-green or a latest-upstream composition claim"
+  },
+  "runtimeQualification": {
+    "run": "https://github.com/Roxas2712/Gen2Recomped/actions/runs/40262481115",
+    "statusAtCheckpoint": "pending"
+  },
+  "publicPreview": {
+    "tag": "native-preview-20261025.1",
+    "payloadSourceCommit": "4be92945c94e603f7cc582cde23d4702d9610e4a",
+    "includesThisCheckpoint": false
+  },
+  "limitations": [
+    "No packaged or hardware acceptance follows from the complete-tree quick-test equivalence.",
+    "Previous OpenGL/Metal, actual Crystal/unchanged Johto receipts retain their exact source scope.",
+    "Complete legacy Phone facade, authored phone scripts/forward references and full special-call/rematch semantics remain open.",
+    "Complete ROM radio shows/text/timing/schedules and intermediate audio cues remain open.",
+    "Full story, long-session and physical Windows/Intel GPU acceptance remain open.",
+    "The separate Origami port remains paused; protected Gen1/player profiles are not used."
+  ]
+}

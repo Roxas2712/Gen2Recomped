@@ -1,0 +1,131 @@
+{
+  "sourceCommit": "d1bd32eb08680651dac8c28ffa807726f2f101bf",
+  "qualificationRun": 40251541022,
+  "qualificationAttempt": 2,
+  "status": "scoped diagnostic accepted; newer main pacing composition requires fresh qualification",
+  "sourceEngineSuites": "424/424",
+  "sdkSuites": "3/3",
+  "actualCrystal": true,
+  "unchangedSuppliedModFiles": 27329,
+  "modOriginalUnmodified": true,
+  "modCopySourceFilesUnmodified": true,
+  "romOriginalUnmodified": true,
+  "imagesInspected": 12,
+  "osImageSha256": [
+    "0dfaa9f490340d282e23b6763395177bfedb4d8a56d453ce1b2cbe92f30263cb",
+    "a1ef0ce6f526dd3d8437a15e97c90ef3ca674f30ea84dba857fa5d5b1408d547",
+    "e2e46921cff27339b9b0c655030b70d6ac74b5f994bbf32431471720a0e04d24",
+    "d792facd4472f165e6691600aceabd71e7efd60f91a88fd11e24bcd682d3d6e6",
+    "5fbccdef6ef1add36ef8500418e6792784675a31e6528cb26c5305c9082e5aef",
+    "fe45a7a6674e90aab18b3a9e76c6bf3db5f22da7035d29c9eb30f588dfa77c9f",
+    "6acac29a62a633038bb7fae1bb786474cc58ff9f655d1c62026b85fe0a13b3e9",
+    "05bfc259fe1af83ea720771410fbfb352533b1231e81d2f5afc2b7c8f73ff220",
+    "0855103ec5b50b48972e3c962555cae5765e350ede74f9cc5f26765a3adcb2c2",
+    "e101195a4b73963412b191812cddbd059a357934837598d943a248b428d1e2ac",
+    "6f978d170ff1184a9919f8b283e7d437b7967dda8ba17f5e7c187d3fba5057e9",
+    "2fd92d424231320a735cd89f02355b8d8f573977306bcfe1d1eafcff0df2224f"
+  ],
+  "backends": [
+    {
+      "backend": "opengl",
+      "checks": 71,
+      "actualAudio": [
+        {
+          "camera": "third",
+          "signalRms": 0.10747208598738195,
+          "wrongCell": [
+            32,
+            8
+          ],
+          "importedOperand": [
+            "special",
+            96,
+            "SnorlaxAwake"
+          ],
+          "adjacent": [
+            33,
+            8
+          ],
+          "signalPeak": 0.249977111117893,
+          "deviceSourcePlaying": true,
+          "fluteSong": "Music_PokeFluteChannel",
+          "map": "VERMILION_CITY",
+          "signalFrames": 22050
+        },
+        {
+          "camera": "first",
+          "signalRms": 0.10747208598738195,
+          "wrongCell": [
+            32,
+            8
+          ],
+          "importedOperand": [
+            "special",
+            96,
+            "SnorlaxAwake"
+          ],
+          "adjacent": [
+            33,
+            8
+          ],
+          "signalPeak": 0.249977111117893,
+          "deviceSourcePlaying": true,
+          "fluteSong": "Music_PokeFluteChannel",
+          "map": "VERMILION_CITY",
+          "signalFrames": 22050
+        }
+      ]
+    },
+    {
+      "backend": "metal",
+      "checks": 71,
+      "actualAudio": [
+        {
+          "adjacent": [
+            33,
+            8
+          ],
+          "camera": "third",
+          "fluteSong": "Music_PokeFluteChannel",
+          "deviceSourcePlaying": true,
+          "signalFrames": 22050,
+          "signalPeak": 0.249977111117893,
+          "signalRms": 0.10747208598738195,
+          "wrongCell": [
+            32,
+            8
+          ],
+          "importedOperand": [
+            "special",
+            96,
+            "SnorlaxAwake"
+          ],
+          "map": "VERMILION_CITY"
+        },
+        {
+          "adjacent": [
+            33,
+            8
+          ],
+          "camera": "first",
+          "fluteSong": "Music_PokeFluteChannel",
+          "deviceSourcePlaying": true,
+          "signalFrames": 22050,
+          "signalPeak": 0.249977111117893,
+          "signalRms": 0.10747208598738195,
+          "wrongCell": [
+            32,
+            8
+          ],
+          "importedOperand": [
+            "special",
+            96,
+            "SnorlaxAwake"
+          ],
+          "map": "VERMILION_CITY"
+        }
+      ]
+    }
+  ],
+  "scope": "Actual Crystal and unchanged supplied Johto; staged intro/maps/EXPN/card/cameras. Real device Sources and non-silent independent PCM, imported radio and Snorlax operands, first/third and ownership after close/map change. All twelve OS-window images individually inspected. Metal warning overlay remains. Not manual listening, original story-trigger, full show programs, Windows/Intel GPU or full playthrough. Current main gained frame pacing; this source is diagnostic, not final release qualification."
+}

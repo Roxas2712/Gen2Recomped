@@ -2164,14 +2164,14 @@ function Gen2Commands.phoneCallDelay(save)
   return GEN2_CALL_DELAYS[math.min(cycles, #GEN2_CALL_DELAYS - 1) + 1]
 end
 
--- The sample GetAvailableCallers builds, in PHONE_* order.
+-- The sample GetAvailableCallers builds, in saved phone-slot order.
 function Gen2Commands.availableCallers(data, save, mapDef, tod)
   local bit = GEN2_TOD_BIT[tod] or 2
   local out = {}
   local group = mapDef and tonumber(mapDef.group)
   local number = mapDef and tonumber(mapDef.number)
-  for id, registered in pairs(phoneList(save)) do
-    if registered and type(id) == "number" then
+  for _, id in ipairs(require("src.world.Gen2PhoneBook").contacts(save)) do
+    if id ~= 0 then
       local entry = phoneContact(data, id)
       local mask = entry and tonumber(entry.receiveTime) or 0
       -- `and [hl]` on the mask, then the map compare
@@ -2181,8 +2181,17 @@ function Gen2Commands.availableCallers(data, save, mapDef, tod)
       end
     end
   end
-  table.sort(out)
   return out
+end
+
+-- ChooseRandomCaller swaps one Random byte's nibbles, masks to five bits,
+-- then takes the remainder against the eligible count. Preserve that exact
+-- mapping and byte consumption rather than drawing a uniform list index.
+function Gen2Commands.chooseRandomCaller(callers, rng)
+  if not callers or #callers == 0 then return nil end
+  local byte = (rng and rng() or math.random(0, 255)) % 256
+  local swapped = (byte % 16) * 16 + math.floor(byte / 16)
+  return callers[(swapped % 32) % #callers + 1]
 end
 
 -- Returns the caller id and its compiled receive script, or nil.  `minutes` is
@@ -2231,7 +2240,7 @@ function Gen2Commands.rollIncomingCall(data, save, mapDef, tod, minutes, entranc
   if not require("src.world.Gen2PhoneService").available(mapDef) then return nil end
   local callers = Gen2Commands.availableCallers(data, save, mapDef, tod)
   if #callers == 0 then return nil end
-  local id = callers[math.random(#callers)]
+  local id = Gen2Commands.chooseRandomCaller(callers)
   local script = Gen2Commands.phoneReceiveScript(data, id)
   if not script then return nil end
   -- InitCallReceiveDelay at the tail of Script_ReceivePhoneCall (36:$42B7):
@@ -2761,39 +2770,25 @@ end
 -- Phone_FindOpenSlot (36:$402D) fails when none of them is free.  That cap is
 -- the whole point of the ".PhoneFull" branch every phone trainer carries -- an
 -- uncapped list can never reach it.
-local GEN2_PHONE_SLOTS = 10
-
-local function phoneListCount(save)
-  local n = 0
-  for _, registered in pairs(phoneList(save)) do
-    if registered then n = n + 1 end
-  end
-  return n
-end
-
 -- AddPhoneNumber (36:$4000): carry means "not added" -- either the id is
--- already in the list or there is no free slot.
-local function addPhoneNumber(save, id)
-  local list = phoneList(save)
-  if list[id] then return false end
-  if phoneListCount(save) >= GEN2_PHONE_SLOTS then return false end
-  list[id] = true
-  return true
+-- already in the list or there is no unreserved slot. Keep the same ordered
+-- native book for the script verbs and Pokegear; the set remains compatible.
+local function addPhoneNumber(ctx, id)
+  return require("src.world.Gen2PhoneBook").add(
+    ctx.data or (ctx.game and ctx.game.data), ctx.save, id)
 end
 
 function Commands.g2_cellnum(ctx, id, add)
   if type(id) ~= "number" then return end
   if add then
-    ctx.lastCheck = addPhoneNumber(ctx.save, id)
+    ctx.lastCheck = addPhoneNumber(ctx, id)
   else
-    local list = phoneList(ctx.save)
-    ctx.lastCheck = list[id] == true
-    list[id] = nil
+    ctx.lastCheck = require("src.world.Gen2PhoneBook").remove(ctx.save, id)
   end
 end
 
 function Commands.g2_check_cellnum(ctx, id)
-  ctx.lastCheck = phoneList(ctx.save)[id] == true
+  ctx.lastCheck = require("src.world.Gen2PhoneBook").has(ctx.save, id)
   ctx.g2Var = ctx.lastCheck and 1 or 0
 end
 
@@ -2824,7 +2819,7 @@ function Commands.g2_ask_cellnum(ctx, id, textId)
     ctx.g2Var = 2
     return
   end
-  if addPhoneNumber(ctx.save, id) then
+  if addPhoneNumber(ctx, id) then
     ctx.g2Var = 0
   else
     ctx.g2Var = 1
@@ -4854,19 +4849,14 @@ function Commands.g2_magnet_train(ctx)
 end
 
 -- `special SnorlaxAwake` ($5F).  ROM checks wMapMusic == MUSIC_POKE_FLUTE_CHANNEL.
--- That channel is only unlocked with the EXPN Card from Lavender Radio Tower
--- (ENGINE_EXPN_CARD / event flag row $03).  Gen2 has no usable Poké Flute item
--- in normal play; matching ITEM_056 as "flute" was a false positive.
+-- The EXPN Card unlocks the tuner; owning it alone does not wake Snorlax.
+-- Admission reads actual playback and the native local cell, not stale save
+-- hints or globally rebased rendering coordinates.
 function Commands.g2_snorlax_awake(ctx)
-  local save = ctx.save
-  local flags = save.flags or {}
-  local Gen2Flags = require("src.script.Gen2Flags")
-  local expnKey = Gen2Flags.engineFlag(3) -- EVENT_GOT_EXPN_CARD
-  local hasExpn = flags[expnKey] == true
-    or flags.EVENT_GOT_EXPN_CARD == true
-    or flags.ENGINE_EXPN_CARD == true
-  ctx.lastCheck = hasExpn and true or false
-  ctx.g2Var = hasExpn and 1 or 0
+  local awake = require("src.world.Gen2RadioAudio").snorlaxAwake(
+    ctx.overworld and ctx.overworld.player)
+  ctx.lastCheck = awake
+  ctx.g2Var = awake and 1 or 0
 end
 
 -- ---------------------------------------------------------------------------
