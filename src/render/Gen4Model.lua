@@ -2845,6 +2845,9 @@ function Gen4Model:draw(viewProjection, pose, materials, yCut, spread, depthComp
     return self:_drawCached(g, viewProjection, pose, materials, yCut, spread,
                             previousShader, mode, write, culling, pr, pg, pb, pa)
   end
+  -- The unconditional path also changes this shader. Forget values recorded
+  -- by an earlier cached draw before that path can be enabled again.
+  uniformReset(shader)
   if shaderCuts then
     shader:send("yCut", tonumber(yCut) or NO_CUT)
     -- Only meaningful with a cut, and cleared otherwise -- an unset uniform
