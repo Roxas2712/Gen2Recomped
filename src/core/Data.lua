@@ -8,6 +8,8 @@
 -- optional source-tree developer build.
 
 local Logger = require("src.core.Logger")
+-- C1: generated modules load from their bytecode sidecars when present
+pcall(function() require("src.core.BytecodeCache").install() end)
 
 local Data = {}
 
