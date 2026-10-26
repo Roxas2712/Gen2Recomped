@@ -244,6 +244,10 @@ end
 setmetatable(OverworldState, {
   __index = function(world, key)
     if key == "playerState" then return world:movementState() end
+    if (key == "daytime" or key == "flashUsed") and GameVersion.isGen2() and world.map then
+      if key == "daytime" then return PaletteFX.effectiveGen2Tod() end
+      if key == "flashUsed" then return Game and Game.save and Game.save.flashLit == true or false end
+    end
   end,
   __newindex = function(world, key, value)
     if key == "playerState" and GameVersion.isGen2() then
@@ -354,6 +358,8 @@ local function isDarkMap(mapId)
     -- ReplaceTimeOfDayPals sends down .NeedsFlash.  Reading Gen1's pokered
     -- list here matched nothing, so Dark Cave and the Whirl Islands were lit.
     local def = Game.data.maps[mapId]
+    local palette=require('src.render.Gen2PaletteContext').id(def)
+    if palette~=nil then return palette==4 end
     local dark = Game.data.field.gen2DarkMaps
     if (def and dark and dark[def.label]) == true then return true end
     -- Fallback when gen2DarkMaps was not extracted (stale cache): maps
@@ -1368,7 +1374,8 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   -- and the Ruins of Alph chambers taking the NITE row after 6pm.
   if GameVersion.isGen2() then
     local paletteDef = Game.data.maps[mapId]
-    if PaletteFX.setGen2MapPalette(paletteDef and paletteDef.mapPalette or 0)
+    PaletteFX.setGen2FlashUsed(Game.save.flashLit == true)
+    if PaletteFX.setGen2MapPalette(require('src.render.Gen2PaletteContext').id(paletteDef) or 0,paletteDef)
        and PaletteFX.usesGen2BgPal() then
       MapLoader.invalidateAll()
     end
@@ -2517,6 +2524,9 @@ end
 -- modes that do not use the ROM's palettes at all.
 function OverworldState:syncGen2Tod(tod)
   local PaletteFX = require("src.render.PaletteFX")
+  if GameVersion.isGen2() then
+    PaletteFX.bindGen2Context(self.map and self.map.def,Game and Game.save and Game.save.flashLit == true)
+  end
   if not PaletteFX.setGen2Tod(tod) then return end
   if not (GameVersion.isGen2() and PaletteFX.usesGen2BgPal()) then return end
   pcall(function()
@@ -2564,7 +2574,10 @@ end
 
 function OverworldState:paletteNameFor(map)
   local palettes = FieldDefaults.field(Game.data, "palettes")
-  local name = map.def.palette or paletteLookup(palettes, map.id, map.def.tileset)
+  -- Gen2's PALETTE_* identity is not a Gen1/SGB colour-pack name.
+  local authored = map.def.palette
+  if GameVersion.isGen2() and type(authored)=='string'and authored:match('^PALETTE_')then authored=nil end
+  local name = authored or paletteLookup(palettes, map.id, map.def.tileset)
   if not name then
     -- Interiors inherit the outdoor map they sit in. Before the player has
     -- been outdoors at all, that is wLastMap's zero-fill -- map 0,
@@ -2692,6 +2705,7 @@ end
 function OverworldState:setDark(on)
   on = on and true or false
   self.dark = on
+  if GameVersion.isGen2() then PaletteFX.setGen2FlashUsed(Game and Game.save and Game.save.flashLit == true) end
   if PaletteFX.setDarkWorld(on) and PaletteFX.bakesDarkness() and self.map then
     if checkpointQuiet then
       self.map.renderer:rebuild()

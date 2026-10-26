@@ -1590,6 +1590,8 @@ local function notifyCompatibilityReset()
 end
 
 function Loader:load(data)
+  local paletteContext=package.loaded["src.render.PaletteFX"]
+  if paletteContext and paletteContext.clearGen2Context then paletteContext.clearGen2Context()end
   require('src.mods.Steps').retire(self)
   Job.releaseAll(self)
   InputControl.closeAll()
@@ -2006,6 +2008,8 @@ end
 -- boots) ran on a modded engine whose mod instance nothing drives any more,
 -- and the next Play loaded every mod on top of what the last one left.
 function Loader.teardown()
+  local paletteContext=package.loaded["src.render.PaletteFX"]
+  if paletteContext and paletteContext.clearGen2Context then paletteContext.clearGen2Context()end
   require("src.compat.gen2.Decorations").useRegistry(nil)
   require('src.mods.Steps').unloadAll()
   Net.unloadAll()
