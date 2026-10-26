@@ -17,6 +17,17 @@ function Hp.pixels(hp, maximum)
   if divisor>=256 then product=math.floor(product/4);divisor=math.max(1,math.floor(divisor/4))end
   return math.min(48,math.max(1,math.floor(product/divisor)))
 end
+function Hp.shown(screen, mon, side)
+  local shown=screen.shownHp and screen.shownHp[side]
+  if shown~=nil then return shown end
+  return mon and mon.hp or 0
+end
+function Hp.fill(screen, mon, side)
+  local anim=screen.hpAnim
+  if anim and anim.side==side and anim.bar then return anim.bar.px end
+  local maximum=mon and (mon.maxHp or mon.stats and mon.stats.hp) or 0
+  return Hp.pixels(Hp.shown(screen,mon,side),maximum)
+end
 local function newBar(from,to,maximum)
   -- A wide presentation may have left a fractional value when its owner
   -- changed. The cartridge loop advances integers and must still terminate.
@@ -98,6 +109,13 @@ function Hp.drain(screen)
   local ok,why=pcall(screen.stepHpAnim,screen)
   admissions[screen]=nil
   if not ok then error(why,0)end
+  local anim=screen.hpAnim
+  if anim==active.anim and anim.bar and anim.bar.hp~=b.shownHP then
+    -- A wider HUD decorated this beat after (or instead of) native stepping.
+    -- Its display number is authoritative for presentation. Discard the old
+    -- pixel cursor so returning to the cartridge HUD cannot jump backward.
+    anim.bar,anim.hold=nil,nil
+  end
   -- A decorator cannot release a queued damage beat before its display has
   -- reached that beat's authoritative stop. No second timer or damage loop.
   if b.shownHP==goal and screen.hpAnim==nil then pending[screen]=nil;return false end

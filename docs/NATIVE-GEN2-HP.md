@@ -24,6 +24,20 @@ and gameplay acceptance. This upstream contribution binds the HP view directly
 in the native constructor; the fork's additional live battle-model and sprite
 capture view is a separate integration. The HP regression stands on its own.
 
+`hudHp` and `hudHpPixels` expose the displayed number and the independent
+animated pixel cursor. Both native HUD tile output and its color-zone selection
+read that cursor, including short-loop frames whose HP number repeats. Party
+and summary bars use GSC's high-HP byte division and half-HP green boundary;
+explicit imported hack geometry and other generations retain their defaults.
+Changing between a wider decorated HUD and the native step discards a stale
+pixel cursor, so returning to the native HUD cannot reverse displayed damage.
+
+`gen2_hp_pixels.lua` checks actual native HUD tile output, palette boundaries
+and display-owner handoff. `tests/gpu/gen2_hp_pixels.lua` reads actual GPU pixels
+from the native queue and tile renderer using a generated test atlas in Gold,
+Silver and Crystal, with color and grayscale output. It does not establish
+whole-mod or final OS-window acceptance.
+
 Pixel stepping adapts Gen1Recomp's `src/battle/gen2/HpBar.lua` and
 `src/ui/gen2/BattleState.lua`. Existing upstream and Gen1Recomp rights and
 credits remain applicable; see `NOTICE.md`. Native-owner integration and
