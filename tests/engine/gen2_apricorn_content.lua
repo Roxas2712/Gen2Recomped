@@ -250,6 +250,18 @@ do
  finish(r);local clean=load(d)
  T.eq(d.map_scripts.scripts[label],external,'reload preserves an externally edited generated label')
  T.eq(d.map_scripts.apricornBalls[1].ball,'ITEM_201','reload preserves externally edited native rows')
+ T.eq(#d.map_scripts.apricornBalls,7,'one external edit cannot retain unchanged mod-only recipes on unload')
+ T.eq(d.map_scripts.apricornBalls[2].event,nil,'unload restores unchanged original records beside external edits')
+ finish(clean)
+end
+do
+ local d=fixture('crystal');local r=load(d,{{'recipes',source}})
+ local added=d.map_scripts.apricornBalls[8];added.ball='ITEM_201'
+ table.remove(d.map_scripts.apricornBalls,2)
+ finish(r);local clean=load(d)
+ T.eq(#d.map_scripts.apricornBalls,7,'unload preserves external deletion and an externally edited addition')
+ T.eq(d.map_scripts.apricornBalls[1].event,nil,'other authored edits still retire beside an external deletion')
+ T.eq(d.map_scripts.apricornBalls[7],added,'external edit gives the added native record independent ownership')
  finish(clean)
 end
 for _,version in ipairs({'red','firered','emerald','heartgold'})do
