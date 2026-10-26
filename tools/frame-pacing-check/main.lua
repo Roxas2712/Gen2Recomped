@@ -1,5 +1,9 @@
 local root = assert(os.getenv("FRAME_PACING_REPO"))
 package.path = root .. "/?.lua;" .. root .. "/?/init.lua;" .. package.path
+if os.getenv("FRAME_PACING_GC") == "1" then
+  require("tools.frame-pacing-check.gc")
+  return
+end
 local Cap = require("src.core.FrameCap")
 local Profile = require("src.core.FrameProfile")
 local Json = require("src.link.Json")

@@ -10,6 +10,8 @@ local Renderer = require("src.render.Renderer")
 local SaveData = require("src.core.SaveData")
 local StateStack = require("src.core.StateStack")
 local FrameProfile = require("src.core.FrameProfile")
+local Performance = require("src.core.Performance")
+local GCFrameBudget = require("src.core.GCFrameBudget")
 local TouchControls = require("src.core.TouchControls")
 local ModLoader = require("src.mods.Loader")
 local ModRuntime = require("src.mods.Runtime")
@@ -635,19 +637,11 @@ function Game:update(dt)
     pcall(function() require("src.core.DiscordPresence").update(dt) end)
     close()
   end
-  -- Steady-state memory backstop: advance the incremental collector one
-  -- small step every rendered frame.  The heavy GPU objects are now freed
-  -- explicitly (map eviction, battle exit, canvas/renderer swaps), so this
-  -- only has to keep ordinary Lua-heap garbage (per-frame tables/closures)
-  -- from drifting upward over a long session, and to spread collection out
-  -- so the default lazy schedule never batches it into a visible pause.
-  -- ONE INCREMENTAL GC STEP PER FRAME.  Cheap on a small heap and not
-  -- obviously cheap under a mod that allocates a world's worth of geometry,
-  -- which is exactly the case being measured -- so it is named rather than
-  -- assumed.
+  -- Ordinary engine collection moves to spare deadline time in love.run.
+  -- P2 disabled retains the original native update step.
   if collectgarbage then
     local close = FrameProfile.section("  update: gc step")
-    collectgarbage("step", 1)
+    if not Performance.gcBudget then collectgarbage("step", 1) end
     close()
   end
 end
