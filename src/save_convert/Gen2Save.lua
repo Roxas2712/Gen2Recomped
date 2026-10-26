@@ -141,6 +141,7 @@ local LAYOUT_GEN2 = {
     numBalls = 0xD5FC, balls = 0xD5FD,
     numPCItems = 0xD616, pcItems = 0xD617,
     pokegearFlags = 0xD67C,
+    momMoney=0xD576,momSaving=0xD579,momWhich=0xD961,momSet=0xD962,momTrigger=0xD963,
     decorations = 0xD959, -- wDecoBed; eight bytes, big doll is last
     eventFlags = 0xD7B7, curBox = 0xD8BC, visitedSpawns = 0xD9EE,
     mapGroup = 0xDA00, mapNumber = 0xDA01, yCoord = 0xDA02, xCoord = 0xDA03,
@@ -269,6 +270,7 @@ local LAYOUT_CRYSTAL = {
     numBalls = 0xD8D7, balls = 0xD8D8,
     numPCItems = 0xD8F1, pcItems = 0xD8F2,
     pokegearFlags = 0xD957,
+    momMoney=0xD851,momSaving=0xD854,momWhich=0xDC17,momSet=0xDC18,momTrigger=0xDC19,
     decorations = 0xDC0F, -- wDecoBed, distinct from Gold/Silver
     eventFlags = 0xDA72, curBox = 0xDB72, visitedSpawns = 0xDCA5,
     mapGroup = 0xDCB5, mapNumber = 0xDCB6, yCoord = 0xDCB7, xCoord = 0xDCB8,
@@ -371,6 +373,7 @@ function Gen2Save.setLayout(version)
   -- decoration bytes live. Explicit custom layouts may name their own run.
   if type(version)~="table" and version~="gold" and version~="silver" and version~="crystal" then
     O.decorations=nil
+    O.momMoney=nil;O.momSaving=nil;O.momWhich=nil;O.momSet=nil;O.momTrigger=nil
   end
 end
 
@@ -1130,6 +1133,18 @@ function Gen2Save.decode(bytes, data)
     end
   end
 
+  if O.momMoney then
+    save.g2MomMoney=u24be(bytes,O.momMoney)
+    local mode=u8(bytes,O.momSaving)
+    save.g2MomSavingMode=mode%8
+    save.g2MomSaving=save.g2MomSavingMode~=0
+    save.g2MomBankOpen=hasBit(mode,7)or nil
+    save.flags.ENGINE_MOM_SAVING_MONEY=hasBit(mode,0)
+    save.flags.ENGINE_MOM_ACTIVE=hasBit(mode,7)
+    save.g2MomShopping={whichItem=u8(bytes,O.momWhich),whichSet=u8(bytes,O.momSet),
+      triggerBalance=u24be(bytes,O.momTrigger)}
+  end
+
   -- wVisitedSpawns -> the FLY list.  HasVisitedSpawn tests bit [spawn id];
   -- this port spells the same set save.visited[mapId] (src/ui/TownMap.lua),
   -- so without this an imported save could not fly anywhere.
@@ -1317,6 +1332,30 @@ function Gen2Save.encode(save, data, template)
         setByte(buf, off, withBit(cur and cur:byte() or 0, bitIndex,
                                   save.flags[engineFlagName(row.row)] and true or false))
       end
+    end
+  end
+
+  if O.momMoney then
+    local function nativeNumber(value,limit,label)
+      assert(type(value)=="number"and value%1==0 and value>=0 and value<=limit,"invalid native Mom "..label)
+      return value
+    end
+    if save.g2MomMoney~=nil then setU24be(buf,O.momMoney,nativeNumber(save.g2MomMoney,999999,"balance"))end
+    local value=buf[O.momSaving+1]:byte()
+    if save.g2MomSavingMode~=nil or save.g2MomSaving~=nil then
+      local mode=save.g2MomSavingMode~=nil and nativeNumber(save.g2MomSavingMode,7,"saving mode")or(save.g2MomSaving and 1 or 0)
+      if save.flags and save.flags.ENGINE_MOM_SAVING_MONEY~=nil then
+        mode=mode-mode%2+(save.flags.ENGINE_MOM_SAVING_MONEY and 1 or 0)
+      end
+      value=value-value%8+mode
+    end
+    if save.g2MomBankOpen~=nil then value=withBit(value,7,save.g2MomBankOpen==true)end
+    setByte(buf,O.momSaving,value)
+    if type(save.g2MomShopping)=="table"then
+      local state=save.g2MomShopping
+      setByte(buf,O.momWhich,nativeNumber(state.whichItem,255,"ladder index"))
+      setByte(buf,O.momSet,nativeNumber(state.whichSet or 0,255,"random row"))
+      setU24be(buf,O.momTrigger,nativeNumber(state.triggerBalance,999999,"random threshold"))
     end
   end
 
