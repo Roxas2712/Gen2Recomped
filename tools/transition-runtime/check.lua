@@ -96,6 +96,15 @@ for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
   T.eq(survived,1,'a failed presentation notification cannot strand native battle continuation')
   T.eq(game.stack:top(),f.world)
   package.loaded['src.ui.game3.presentation'].notify=oldNotice
+  local weak=setmetatable({},{__mode='v'})
+  do
+    local payload={owned='completed battle payload'};weak[1]=payload
+    local callback=(function(value)return function()T.eq(value.owned,'completed battle payload')end end)(payload)
+    local completed=Native.new(game,callback,{style=Catalog.new(edition).styles[8]})
+    game.stack:push(completed);completed:finish()
+  end
+  collectgarbage('collect');collectgarbage('collect')
+  T.eq(weak[1],nil,'retained transition observations release the completed callback payload')
   -- Source-owned teardown is restricted to its own admission and owner.
   Host.currentMod='transition-owner';Source.start(8,{},function()error('cancelled source callback ran')end)
   Host.currentMod='transition-peer';Source.cancelOwner('transition-peer');T.eq(Source.isActive(),true)
