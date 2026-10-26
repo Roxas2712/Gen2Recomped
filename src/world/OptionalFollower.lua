@@ -94,6 +94,11 @@ local function spawn(game, world, opts, viaMapLoad)
   world.pikachuTrail = world.followerTrail
 end
 
+function F._checkpointCreate(game, world)
+  spawn(game, world, nil, true)
+  return world.follower
+end
+
 function F.onMapEntered(game, world, opts, viaMapLoad)
   if opts and opts.checkpoint then return end
   if not (world and world.map and world.player) then

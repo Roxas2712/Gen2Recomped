@@ -1179,6 +1179,7 @@ end
 BattleState.markOwned = markOwned
 BattleState.StatBox = StatBox -- the level-up stat window (PrintStatsBox)
 
+local checkpointRng = setmetatable({}, {__mode="k"})
 local function newBattle(game, opts)
   local self = setmetatable({}, BattleState)
   self.game = game
@@ -1212,6 +1213,7 @@ local function newBattle(game, opts)
     self.ruleset = rulesets.gen5_bw
   end
   self.rng = function(a, b) return love.math.random(a, b) end
+  checkpointRng[self] = self.rng
   -- side/field substrate: vanilla writes nothing here, but every battle
   -- carries the stable shape mods hang screens/hazards/tokens on
   self.sides = {
@@ -1339,6 +1341,20 @@ local function newBattle(game, opts)
   self.moveIndex = 1
   self.frame = 0
   return self
+end
+
+-- Private factories restore native resources without entry hooks or intro effects.
+BattleState._checkpointNew = newBattle
+function BattleState._checkpointOwnsRng(battle) return checkpointRng[battle] == battle.rng end
+function BattleState:_checkpointArt()
+  if self.oppClass then
+    local def = assert(self.data.trainers[self.oppClass])
+    self.trainer = setmetatable({name=self._checkpointTrainerName or def.name},{__index=def})
+    self.trainerPic = getImage(BattleState.trainerPicPath(self.data,self.trainer,self.oppClass,self.partyIndex),
+      BattleState.trainerPalette(self.data,self.trainer),self.trainer.trueColor)
+  end
+  self._checkpointTrainerName=nil
+  self.isOpaque=self:bgMode()~="world"
 end
 
 -- opts.hooked: rod encounter, announced with _HookedMonAttackedText

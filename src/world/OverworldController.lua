@@ -1669,7 +1669,7 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   -- clear after the spawn would leave the stale placement standing for one
   -- more visit -- which for this report is the visit the player is in.
   if GameVersion.isGen3() and Game and Game.save
-     and Game.save.gen3ObjectHomes
+     and Game.save.gen3ObjectHomes and not (opts and opts.checkpoint)
      and (fromMapId ~= mapId or (opts and opts.via == "boot")) then
     Game.save.gen3ObjectHomes[mapId] = nil
   end
@@ -1743,6 +1743,7 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   -- the player walked in, while ON_TRANSITION re-armed the sticks for the
   -- bird at (25,62). An in-place reload keeps them (its pool survives).
   if GameVersion.isGen4() and Game and Game.save and not self.gen4Continuing
+     and not (opts and opts.checkpoint)
      and not (opts and opts.via == "reload") then
     Game.save.gen4Objects = nil
     -- ...and the templates a SetPosition moved last visit are the zone's own
@@ -1894,9 +1895,11 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   -- carries one signpost and nothing else.  This is where he is stood back up.
   -- After rebuildEntities, so the map's own cast is already there to be
   -- adopted when the map owns a real object for him.
+  if not (opts and opts.checkpoint) then
   require("src.world.Gen4Follower").onMapEntered(Game, self)
   -- HGSS's walking Pokemon (src/world/HgssFollowMon.lua)
   require("src.world.HgssFollowMon").onMapEntered(Game, self)
+  end
 
   -- opts.keepMusic: the Oak-escort warp keeps MUSIC_MEET_PROF_OAK
   -- playing into the lab (BIT_NO_MAP_MUSIC in wStatusFlags7);
@@ -6961,6 +6964,7 @@ function OverworldState:castLine(enc)
         battle:makeSafari(Game.save.safari)
       end
       battle.onFinish = function(result) self:afterBattle(result, battle) end
+  require("src.core.CheckpointBattle").bind(battle, {kind="world"})
       self:pushBattle(battle)
     end))
   end))
@@ -10655,6 +10659,7 @@ function OverworldState:gen2SweetScentEncounter(deferFailure)
     battle:makeSafari(Game.save.safari)
   end
   battle.onFinish = function(result) self:afterBattle(result, battle) end
+  require("src.core.CheckpointBattle").bind(battle, {kind="world"})
   self:pushBattle(battle)
   return true
 end
@@ -10896,6 +10901,7 @@ function OverworldState:gen2Headbutt(fx, fy)
     local battle = BattleState.newWild(Game, pick.species, pick.level,
       { tree = true, timeOfDay = self:timeOfDay() })
     battle.onFinish = function(result) self:afterBattle(result, battle) end
+  require("src.core.CheckpointBattle").bind(battle, {kind="world"})
     self:pushBattle(battle)
   end)
 end
@@ -11408,6 +11414,7 @@ function OverworldState:talkTo(npc)
   -- moved.
   if npc.facePlayer and not GameVersion.isGen4() then npc:facePlayer(self.player) end
   local unfreeze = function() npc.frozen = false end
+  require("src.core.CheckpointCallbacks").bind(unfreeze,{npc=npc.id})
   local d = npc.def
 
   -- hand-ported scripts always win -- except an undefeated ROM trainer,
@@ -11998,6 +12005,25 @@ end
 OverworldState.prepareTrainerBattle = require("src.battle.TrainerPreparation").prepare
 
 -- Run the pre-battle text -> battle -> won text -> flags sequence.
+function OverworldState:_checkpointTrainerFinished(battle,npc,header,d,onDone,result)
+      if result == "win" then
+        Game.save.defeatedTrainers[npc.id] = true
+        if header and header.event then
+          Game.save.flags[header.event] = true
+        end
+        -- checkVictoryRewards pushes the badge/prize box and starts the map's
+        -- onVictory script UNDER whatever runs next, so the player still sees
+        -- EndBattle (now inside the battle), then the reward, then AfterBattle
+        self:checkVictoryRewards(d.trainerClass, d.trainerParty)
+        self:afterBattle(result, battle)
+        self:runGen2AfterBattle(d.index)
+        if onDone then onDone() end
+      else
+        self:afterBattle(result, battle)
+        if onDone then onDone() end
+      end
+end
+
 function OverworldState:engageTrainer(npc, onDone)
   local d = npc.def
   Runtime.emit("world.trainer_engaged", { npc = npc, trainerClass = d.trainerClass,
@@ -12036,23 +12062,10 @@ function OverworldState:engageTrainer(npc, onDone)
     -- text, while TextBox expanded the {PLAYER}/{RIVAL} tokens itself.
     battle.endBattleText = wonText and TextBox.substitute(Game, wonText) or nil
     battle.onFinish = function(result)
-      if result == "win" then
-        Game.save.defeatedTrainers[npc.id] = true
-        if header and header.event then
-          Game.save.flags[header.event] = true
-        end
-        -- checkVictoryRewards pushes the badge/prize box and starts the map's
-        -- onVictory script UNDER whatever runs next, so the player still sees
-        -- EndBattle (now inside the battle), then the reward, then AfterBattle
-        self:checkVictoryRewards(d.trainerClass, d.trainerParty)
-        self:afterBattle(result, battle)
-        self:runGen2AfterBattle(d.index)
-        if onDone then onDone() end
-      else
-        self:afterBattle(result, battle)
-        if onDone then onDone() end
-      end
+      return self:_checkpointTrainerFinished(battle,npc,header,d,onDone,result)
     end
+    require("src.core.CheckpointBattle").bind(battle,
+      {kind="trainer",npc=npc.id,event=header and header.event,onDone=onDone})
     self:pushBattle(battle)
   end
   Game.stack:push(TextBox.new(Game, battleText, function()
@@ -12629,10 +12642,10 @@ function OverworldState:startTrainerApproach(npc, dist, partner)
       self.engaging = false
       return
     end
-    self:engageTrainer(npc, function()
+    self:engageTrainer(npc, require("src.core.CheckpointCallbacks").bind(function()
       npc.frozen = false
       self.engaging = false
-    end)
+    end,{npc=npc.id,clearEngaging=true}))
   end
   -- the "!" bubble pause before the walk-up (EmotionBubble holds the
   -- world for 60 frames, engine/overworld/emotion_bubbles.asm)
@@ -14214,6 +14227,7 @@ function OverworldState:tryWildEncounter()
       local battle = BattleState.newWild(Game, wild.species, wild.level)
       battle:makeBugContest()
       battle.onFinish = function(result) self:afterBattle(result, battle) end
+  require("src.core.CheckpointBattle").bind(battle, {kind="world"})
       self:pushBattle(battle)
     end
     return wild ~= nil
@@ -14459,6 +14473,7 @@ function OverworldState:tryWildEncounter()
       if not self:gen4EscortWild(battle, onWater, land) then return false end
     end
     battle.onFinish = function(result) self:afterBattle(result, battle) end
+  require("src.core.CheckpointBattle").bind(battle, {kind="world"})
     self:pushBattle(battle)
     return true
   end
@@ -15086,6 +15101,7 @@ function OverworldState:gen4RadarEncounter(encDef)
     { shiny = enc.shiny, nature = enc.nature, gender = enc.gender })
   battle.gen4RadarBattle = true
   battle.onFinish = function(result) self:afterBattle(result, battle) end
+  require("src.core.CheckpointBattle").bind(battle, {kind="world"})
   self:pushBattle(battle)
   return true
 end

@@ -60,7 +60,7 @@ add("events", "12345", [[
 add("events", "2345", "pokemon.egg_hatched")
 add("events", "2", "clock.day_changed mail.read mail.written radio.channel phone.call_received apricorn.converted")
 add("events", "2", "breeding.egg_created egg.hatched happiness.changed pokerus.infected roamer.encountered roamer.moved unown.unlocked bug_contest.scored intro.boot.copyright intro.boot.gamefreak intro.boot.movie intro.boot.movie_ended intro.boot.title")
-add("events", "12", "checkpoint.restored")
+add("events", "12345", "checkpoint.restored")
 add("events", "12", [[
   intro.oak_speech.answered intro.oak_speech.finished intro.oak_speech.started
   intro.oak_speech.step
