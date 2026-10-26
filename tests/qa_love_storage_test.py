@@ -114,5 +114,14 @@ class LoveRetention(unittest.TestCase):
         self.assertEqual(self.run_gc()['profiles'],5)
         self.assertFalse(any(p.exists() for p in paths))
 
+    def test_targeted_cleanup_uses_profile_locks_without_waiting_for_global_scan(self):
+        p=self.put(self.profile/'heartgold/data/generated/a.lua')
+        other=self.put(self.base/'ula-other-qa/ruby/data/generated/b.lua')
+        with (self.storage.state/'collection.lock').open('a+') as lock:
+            fcntl.flock(lock,fcntl.LOCK_EX)
+            result=self.run_gc(only={self.profile})
+        self.assertEqual(result['files'],1)
+        self.assertFalse(p.exists());self.assertTrue(other.exists())
+
 
 if __name__=='__main__':unittest.main()
