@@ -5781,7 +5781,7 @@ function RomImporter:draw()
     if link.url==DONATE_URL then paypalLink=link
     else footerLinks[#footerLinks+1]=link end
   end
-  local retroCredits=Strings('RetroRecomped · Project lead, launcher, cloud & integration: Roxas2712\nGen 2 engine: UNDERdecoded (Cedric) & contributors · Gen 1 foundation: bryanthaboi / BOIS CLUB GAMES')
+  local retroCredits=Strings('Gen2Recomped · Created and led by UNDERdecoded (Cedric), with the Gen2Recomped contributors\nRetroRecomped fork · Fork lead, launcher, cloud & integrations: Roxas2712\nGen1Recomp foundation · bryanthaboi / BOIS CLUB GAMES & contributors')
   local creditH = self.hintFont:getHeight()
   if self.sidebarMode then local _,lines=self.hintFont:getWrap(retroCredits,appW-2*padH);creditH=math.max(1,#lines)*self.hintFont:getHeight() end
   local donateH = self.hintFont:getHeight() + 10 * s

@@ -51,7 +51,7 @@ local function draw(self,cx,cy)
  self.sprite:draw(self.px,self.py,cx,cy,self.facing,self.phase or 0,false)
  if not R.font then R.font=g.newFont(8);if R.font.setFilter then R.font:setFilter('nearest','nearest') end end
  g.setFont(R.font)
- local name=shortName(self.nickname);local w=R.font:getWidth(name)+8
+ local name=shortName(self.nickname)..require('src.ui.PlayerRole').short(self);local w=R.font:getWidth(name)+8
  local x=math.floor(self.px-cx+8-w/2);local y=math.floor(self.py-cy-(self.labelHeight or 8)-15)
  local height=12
  if package.loaded['src.render.PaletteFX'] then require('src.render.PaletteFX').markTrueColor(x-1,y-1,w+2,height+5) end
@@ -94,7 +94,7 @@ function R.actors(world)
     actor.phase=(math.abs(dx)+math.abs(dy)>1) and math.floor(time*8)%2 or 0
     actor.cellX=math.floor((actor.px+8)/16);actor.cellY=math.floor((actor.py+8)/16)
     actor.facing=({up=true,down=true,left=true,right=true})[pos.facing] and pos.facing or 'down'
-    actor.nickname=v.nickname;result[#result+1]=actor
+    actor.nickname=v.nickname;actor.display_role=v.display_role;result[#result+1]=actor
    end
   end
  end

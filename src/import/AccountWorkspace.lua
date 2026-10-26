@@ -1,5 +1,6 @@
 local function L(value) return require('src.translation.Service').launcherLookup(value) end
 local W={}
+local Role=require('src.ui.PlayerRole')
 local A=require('src.cloud.NativeAccount')
 local Auth=require('src.cloud.RetroCloud')
 local Task=require('src.cloud.Task')
@@ -179,6 +180,7 @@ function W.action(self,id)
   elseif id:match('^giftActive:') then
     local campaign=f.gifts and f.gifts.campaigns[tonumber(id:match(':(%d+)$'))]
     if campaign then job(self,'giftActive',function() return A.activateGift(campaign.id,not campaign.active) end) end
+  elseif id=='roleGuide' then f.mode='roleGuide';f.scroll=0;f.notice=nil
   elseif id=='presenceToggle' then
     local visible=not (require('src.cloud.AccountBadge').presence or {}).visible
     job(self,'presence',function()return A.presence({visible=visible})end)
@@ -434,7 +436,7 @@ function W.draw(self)
     local fresh=os.time()-(social._receivedAt or 0)<=120
     paragraph('FRIENDS · '..#(social.friends or {}),true)
     for _,peer in ipairs(social.friends or {}) do
-      paragraph(tostring(peer.friend_tag or peer.nickname)..(not fresh and ' · STATUS UNAVAILABLE' or peer.online and (peer.status=='away' and ' · AWAY' or ' · ONLINE') or ' · OFFLINE'))
+      paragraph(Role.label(peer.friend_tag or peer.nickname,peer)..(not fresh and ' · STATUS UNAVAILABLE' or peer.online and (peer.status=='away' and ' · AWAY' or ' · ONLINE') or ' · OFFLINE'))
       local pref={};for _,v in ipairs(prefs.friends or {}) do if tostring(v.account_id)==tostring(peer.account_id) then pref=v;break end end
       row('INVITATIONS FROM THIS FRIEND · '..(pref.requests_enabled==false and 'OFF' or 'ON'),'playPref:requests:'..peer.account_id)
       row('MAP VISIBILITY WITH THIS FRIEND · '..(pref.visible==false and 'OFF' or 'ON'),'playPref:visible:'..peer.account_id)
@@ -445,9 +447,17 @@ function W.draw(self)
     end
     if #(social.friends or {})==0 then paragraph('Your accepted friends appear here. Requests need the other player’s confirmation.') end
     paragraph('FRIEND REQUESTS · '..#(social.incoming or {}),true)
-    for _,peer in ipairs(social.incoming or {}) do paragraph(peer.nickname);row('ACCEPT REQUEST','friendAccept:'..peer.account_id);row('DECLINE REQUEST','friendRemove:'..peer.account_id) end
-    for _,peer in ipairs(social.outgoing or {}) do paragraph('WAITING · '..peer.nickname);row('CANCEL REQUEST','friendRemove:'..peer.account_id) end
+    for _,peer in ipairs(social.incoming or {}) do paragraph(Role.label(peer.nickname,peer));row('ACCEPT REQUEST','friendAccept:'..peer.account_id);row('DECLINE REQUEST','friendRemove:'..peer.account_id) end
+    for _,peer in ipairs(social.outgoing or {}) do paragraph('WAITING · '..Role.label(peer.nickname,peer));row('CANCEL REQUEST','friendRemove:'..peer.account_id) end
     if social.permissions and social.permissions.view_online then row('STAFF · ONLINE PLAYERS & STATISTICS','online') end
+  elseif f.mode=='roleGuide' then
+    paragraph('ROLES & PERMISSIONS',true)
+    paragraph('PLAYER · Local play needs no account. Verified accounts can use friends, cloud storage and online features.')
+    paragraph('ADMIN · Organizes cups and prizes, manages regular players, bans and restores accounts, and quarantines or restores cloud content. Cannot grant roles or moderate staff.')
+    paragraph('SUPERUSER · Admin permissions plus granting or revoking native Admin and Superuser roles, and moderating other unprotected staff accounts.')
+    paragraph('PROTECTED OPERATOR · Starscream89 cannot be banned, removed, demoted or have cloud content quarantined. Protection belongs to the account across devices.')
+    paragraph('Staff can see invisible online status. Reasons and current-password confirmation are required for moderation. Actions are audited; cloud removal is recoverable.')
+    row('MY ACCOUNT','account')
   elseif f.mode=='players' then
     paragraph('PLAYERS',true)
     paragraph('Browse registered players. Requests become friendships only after the other player accepts. Private contact details stay private.')
@@ -455,7 +465,7 @@ function W.draw(self)
     row(f.playersOnline and 'SHOW ALL PLAYERS' or 'SHOW ONLINE ONLY','playersOnline')
     local doc=f.players or {};paragraph(tostring(doc.online_count or '...')..' online · '..tostring(doc.registered_count or '...')..' registered')
     for i,peer in ipairs(doc.players or {})do
-      paragraph(tostring(peer.friend_tag)..(peer.suspended and ' · BANNED' or peer.online and (peer.status=='away' and ' · AWAY' or ' · ONLINE') or ' · OFFLINE'),true)
+      paragraph(Role.label(peer.friend_tag,peer)..(peer.suspended and ' · BANNED' or peer.online and (peer.status=='away' and ' · AWAY' or ' · ONLINE') or ' · OFFLINE'),true)
       if peer.invisible then paragraph('INVISIBLE · STAFF VIEW')end
       if peer.protected then paragraph('PROTECTED OPERATOR')end
       if peer.relationship=='none' then row('SEND FRIEND REQUEST','playerFriend:'..i)
@@ -488,7 +498,7 @@ function W.draw(self)
   elseif f.mode=='inbox' then
     local doc=require('src.cloud.Presence').read() or f.social or {}
     paragraph('INBOX · FRIEND REQUESTS',true)
-    for _,peer in ipairs(doc.incoming or {})do paragraph(peer.friend_tag or peer.nickname,true);row('ACCEPT REQUEST','friendAccept:'..peer.account_id);row('DECLINE REQUEST','friendRemove:'..peer.account_id)end
+    for _,peer in ipairs(doc.incoming or {})do paragraph(Role.label(peer.friend_tag or peer.nickname,peer),true);row('ACCEPT REQUEST','friendAccept:'..peer.account_id);row('DECLINE REQUEST','friendRemove:'..peer.account_id)end
     if #(doc.incoming or {})==0 then paragraph('No pending friend requests.')end
     for _,peer in ipairs(doc.outgoing or {})do paragraph('WAITING · '..tostring(peer.friend_tag or peer.nickname));row('CANCEL REQUEST','friendRemove:'..peer.account_id)end
     row('FIND PLAYERS','players');row('FRIENDS','friends')
@@ -498,27 +508,27 @@ function W.draw(self)
     paragraph(tostring(online.online_count or 0)..' online · '..tostring(online.registered_count or 0)..' registered · '..tostring(online.verified_count or 0)..' email confirmed')
     paragraph('Players are counted once across all their devices. Status expires two minutes after the last response.')
     row('REFRESH ONLINE LIST','online')
-    for _,peer in ipairs(online.online or {}) do paragraph(peer.nickname..' · '..peer.account_id) end
+    for _,peer in ipairs(online.online or {}) do paragraph(Role.label(peer.nickname,peer)..' · '..peer.account_id) end
     if (online.page or 1)>1 then row('PREVIOUS PAGE','onlinePrevious') end
     if (online.page or 1)*(online.per_page or 50)<(online.online_count or 0) then row('NEXT PAGE','onlineNext') end
     row('FRIENDS','friends');row('MY ACCOUNT','account')
   elseif f.mode=='account' then
     local Avatar=require('src.ui.ProfileAvatar');local yy=top
     Avatar.draw(f.avatarPreset,f.avatarColor,x+24*s,yy,88*s,f.avatarImage)
-    text(tostring(f.nickname or Auth.nickname()),x+128*s,yy+8*s,width-170*s,true)
+    text(Role.label(f.nickname or Auth.nickname(),{permissions=f.permissions}),x+128*s,yy+8*s,width-170*s,true)
     text(tostring(f.friendTag or 'Loading your friend tag…'),x+128*s,yy+48*s,width-170*s)
     top=yy+106*s
     local presence=require('src.cloud.AccountBadge').presence
     if presence then row(presence.visible and 'VISIBLE ONLINE · CLICK TO GO INVISIBLE' or 'INVISIBLE · CLICK TO SHOW ONLINE','presenceToggle')end
     paragraph('Automatically away after 5 minutes without input. Any input makes you online again. Invisible players appear offline to other players; staff can still see their status.')
-    row('PLAYERS','players');row('INBOX','inbox');row('EDIT NICKNAME & AVATAR','profileEdit');row('COPY MY FRIEND TAG','copyFriendTag')
+    row('PLAYERS','players');row('INBOX','inbox');row('ROLES & PERMISSIONS','roleGuide');row('EDIT NICKNAME & AVATAR','profileEdit');row('COPY MY FRIEND TAG','copyFriendTag')
     local fresh=os.time()-(social._receivedAt or 0)<=120;local online=0
     for _,peer in ipairs(social.friends or {}) do if fresh and peer.online then online=online+1 end end
     paragraph('FRIENDS · '..online..' ONLINE / '..#(social.friends or {})..' TOTAL',true)
     if #(social.incoming or {})>0 then row(#social.incoming..' NEW FRIEND REQUESTS','friends') end
     for i,peer in ipairs(social.friends or {}) do if i<=5 then
       Avatar.draw(peer.avatar_preset,peer.avatar_color,x+24*s,top,42*s)
-      text(tostring(peer.friend_tag or peer.nickname),x+80*s,top,width-120*s)
+      text(Role.label(peer.friend_tag or peer.nickname,peer),x+80*s,top,width-120*s)
       text(not fresh and 'STATUS UNAVAILABLE' or peer.online and (peer.status=='away' and 'AWAY' or 'ONLINE') or '○ OFFLINE',x+80*s,top+22*s,width-120*s);top=top+58*s
     end end
     if #(social.friends or {})==0 then paragraph('Add a friend with their Trainer#1234 tag. Your friends and requests appear here on every device.') end

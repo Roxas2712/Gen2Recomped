@@ -271,7 +271,7 @@ function W.draw(self,x,y,w,h)
   elseif c.state=='running' and (c.manage or c.matchmaking and mine) then button(c.matchmaking and 'CANCEL THIS PAIRING · NO POINTS' or 'CANCEL TOURNAMENT','cancel') end
   y=y+Art.bracket(self,x,y,w,c,names)
   text('LOBBY',true,P.ink)
-  for _,p in ipairs(c.players or {}) do text((p.online and '[ON] ONLINE  ' or '[OFF] OFFLINE  ')..(p.ready and 'READY · ' or 'WAITING · ')..p.nickname,false,p.ready and P.link or P.detail) end
+  for _,p in ipairs(c.players or {}) do text((p.online and '[ON] ONLINE  ' or '[OFF] OFFLINE  ')..(p.ready and 'READY · ' or 'WAITING · ')..require('src.ui.PlayerRole').label(p.nickname,p),false,p.ready and P.link or P.detail) end
   local round
   for i,m in ipairs(c.matches or {}) do
    if round~=m.round then round=m.round;y=y+14*s;text('ROUND '..round,true,P.link) end
