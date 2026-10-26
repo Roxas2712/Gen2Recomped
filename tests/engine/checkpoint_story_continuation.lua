@@ -10,7 +10,7 @@ love.math.setRandomState = function(v)
 end
 local Fixture = require("tests.checkpoint_fixture")
 local Serializer = require("src.core.SaveSerializer")
-for _, edition in ipairs({ "red", "gold", "firered", "emerald", "platinum", "heartgold", "black" }) do
+for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
   for _, api in ipairs({ 1, 2, 3 }) do
     local f = Fixture.boot(edition, api)
     local game, world, stack = f.game, f.world, f.stack
@@ -50,7 +50,7 @@ for _, edition in ipairs({ "red", "gold", "firered", "emerald", "platinum", "hea
         T.check(world.runner ~= oldRunner, "native coroutine owner is reconstructed")
         T.eq(world.runner.ctx.npc, world.npcs[1], "native context resolves actor by stable identity")
         T.eq(game.save.flags.OWNED_AFTER, nil, "restore runs no suffix commands")
-        T.check(Serializer.encode(assert(f.checkpoints:capture(game)))==bytes, "story decision fully recaptures")
+        T.check(Serializer.encode(assert(f.checkpoints:capture(game))) == bytes, "story decision fully recaptures")
         local fresh = stack:top()
         stack.states = { world }
         fresh.onFinish("run")

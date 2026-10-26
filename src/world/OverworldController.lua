@@ -10374,6 +10374,7 @@ function OverworldState:gen4SweetScent()
   local battle=require('src.battle.BattleState').newWild(Game,enc.species,enc.level,
     {nature=enc.nature,gender=enc.gender})
   battle.onFinish=function(result) self:afterBattle(result,battle) end
+  require("src.core.CheckpointBattle").bind(battle,{kind="world"})
   self:pushBattle(battle)
 end
 
@@ -11183,18 +11184,9 @@ function OverworldState:talkTo(npc)
     Game.stack:push(TextBox.new(Game, text, function()
       local battle = BattleState.newWild(Game, d.pokemon, d.level)
       battle.onFinish = function(result)
-        if result ~= "lose" and result ~= "run" then
-          Game.save.defeatedTrainers[npc.id] = true
-          for i, n in ipairs(self.npcs) do
-            if n == npc then table.remove(self.npcs, i) break end
-          end
-          for i, e in ipairs(self.entities) do
-            if e == npc then table.remove(self.entities, i) break end
-          end
-        end
-        self:afterBattle(result, battle)
-        unfreeze()
+        return self:_checkpointStaticFinished(battle,npc,unfreeze,result)
       end
+      require("src.core.CheckpointBattle").bind(battle,{kind="static",npc=npc.id,onDone=unfreeze})
       self:pushBattle(battle)
     end))
     return
@@ -11703,6 +11695,20 @@ function OverworldState:_checkpointTrainerFinished(battle,npc,header,d,onDone,re
         self:afterBattle(result, battle)
         if onDone then onDone() end
       end
+end
+
+function OverworldState:_checkpointStaticFinished(battle,npc,unfreeze,result)
+        if result ~= "lose" and result ~= "run" then
+          Game.save.defeatedTrainers[npc.id] = true
+          for i, n in ipairs(self.npcs) do
+            if n == npc then table.remove(self.npcs, i) break end
+          end
+          for i, e in ipairs(self.entities) do
+            if e == npc then table.remove(self.entities, i) break end
+          end
+        end
+        self:afterBattle(result, battle)
+        unfreeze()
 end
 
 function OverworldState:engageTrainer(npc, onDone)

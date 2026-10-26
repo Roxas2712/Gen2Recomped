@@ -319,7 +319,7 @@ function B.capture(game, battle, clone)
     continuation = continuation(game, battle, clone),
   })
 end
-function B.validate(game, snapshot, save)
+function B.validate(game, snapshot, save, actors)
   local ok = pcall(function()
     assert(
       type(snapshot) == "table" and snapshot.schema == 1 and game.data.rulesets[snapshot.ruleset],
@@ -407,14 +407,20 @@ function B.validate(game, snapshot, save)
     end
     local c = snapshot.continuation
     assert(
-      type(c) == "table" and (c.kind == "none" or c.kind == "world" or c.kind == "script" or c.kind == "trainer"),
+      type(c) == "table"
+        and (c.kind == "none" or c.kind == "world" or c.kind == "script" or c.kind == "trainer" or c.kind == "static"),
       "invalid native completion"
     )
-    if c.kind == "trainer" then
+    if c.kind == "trainer" or c.kind == "static" then
       assert(
         type(c.npc) == "string" and require("src.core.CheckpointCallbacks").valid(c.onDone),
         "invalid trainer continuation"
       )
+    end
+    if actors then
+      for _, id in ipairs({ c.npc, c.onDone and c.onDone.npc }) do
+        assert(actors.records[id], "native continuation actor is absent")
+      end
     end
     if c.kind == "script" then
       assert(require("src.core.CheckpointScript").validate(game, c), "invalid story continuation")
@@ -443,6 +449,14 @@ function B.apply(game, snapshot, clone)
     battle.onFinish = function(result)
       game.overworld:afterBattle(result, battle)
     end
+  elseif c.kind == "static" then
+    local callbacks = require("src.core.CheckpointCallbacks")
+    local npc = callbacks.actor(game.overworld, c.npc)
+    local done = callbacks.build(game.overworld, c.onDone)
+    battle.onFinish = function(result)
+      game.overworld:_checkpointStaticFinished(battle, npc, done, result)
+    end
+    B.bind(battle, { kind = "static", npc = c.npc, onDone = done }, battle.onFinish)
   elseif c.kind == "trainer" then
     local callbacks = require("src.core.CheckpointCallbacks")
     local npc = callbacks.actor(game.overworld, c.npc)
@@ -454,7 +468,7 @@ function B.apply(game, snapshot, clone)
   elseif c.kind == "script" then
     require("src.core.CheckpointScript").apply(game, battle, c)
   end
-  if c.kind ~= "none" and c.kind ~= "script" and c.kind ~= "trainer" then
+  if c.kind ~= "none" and c.kind ~= "script" and c.kind ~= "trainer" and c.kind ~= "static" then
     B.bind(battle, c, battle.onFinish)
   end
   return battle

@@ -362,7 +362,7 @@ local function validateData(game, value, fs, resuming)
 	then
 		return fail("invalid_position", "Runtime and progress positions disagree.")
 	end
-	if cp.kind=="battle" and not Battles.validate(game,cp.runtime.battle,save) then
+	if cp.kind=="battle" and not Battles.validate(game,cp.runtime.battle,save,cp.runtime.actors) then
     return fail("invalid_battle_state", "Battle relationships or continuation are invalid.")
   end
   if cp.kind=="overworld" and cp.runtime.battle~=nil then return fail("invalid_battle_state", "Unexpected battle continuation.") end

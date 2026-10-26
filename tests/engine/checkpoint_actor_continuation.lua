@@ -15,7 +15,7 @@ local Maps = require("src.world.MapLoader")
 local function copy(v)
   return assert(Serializer.decode(Serializer.encode(v)))
 end
-for _, edition in ipairs({ "red", "yellow", "gold", "firered", "emerald", "platinum", "heartgold", "black" }) do
+for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
   local f = F.boot(edition)
   local world, game = f.world, f.game
   local npc = world.npcs[1]
