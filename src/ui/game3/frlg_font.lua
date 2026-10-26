@@ -14,6 +14,27 @@ local function face(opts,fn)
   if not ok then error(value,0)end
   return value
 end
+-- IDs come from the current native charmap, including relocated/Unicode
+-- glyphs. Faces select the native shape and advance without a second atlas.
+function F.glyphId(text)
+ return Font.encode(tostring(text or''))[1]or Font.encode(' ')[1]or 0x7F
+end
+function F.advance(code,opts)
+ return face(opts,function()return Font.advanceOf(code)end)
+end
+function F.drawGlyph(code,x,y,opts)
+ opts=opts or{}
+ local ok,value=Scope.call(function()return face(opts,function()
+  local colors=opts.colors or F.COLOR.NORMAL
+  local toned=Font.beginTwoTone(opts.color or colors.fg or F.COLOR.NORMAL.fg,colors.shadow or F.COLOR.NORMAL.shadow)
+  local good,advance=pcall(function()Font.drawCode(code,x,y);return Font.advanceOf(code)end)
+  if toned then Font.endTwoTone()end
+  if not good then error(advance,0)end
+  return advance
+ end)end)
+ if not ok then error(value,0)end
+ return value
+end
 function F.measure(text,opts)
   return face(opts,function()
     local max=0

@@ -37,6 +37,29 @@ function M.show(opts)
  if not ok then flow:retire();error(state,0)end
  flow:push(state);flows[flow]=true;return state
 end
+-- Layout wrappers read the same live native menu that will be painted.
+local layoutState
+function M.contentTemplate()
+ local state=layoutState or current()
+ return state and state:nativeContentTemplate()or nil
+end
+local nativeTemplate=M.contentTemplate
+local function finite(n)return type(n)=='number'and n==n and math.abs(n)<math.huge and n%1==0 end
+function M._contentTemplate(state)
+ local fallback=state:nativeContentTemplate()
+ if M.contentTemplate==nativeTemplate then return fallback end
+ local prior=layoutState;layoutState=state
+ local ok,value=pcall(Call.call,M,'contentTemplate')
+ layoutState=prior
+ if ok and type(value)=='table'then
+  local l,t,w,h=value.left or value.tilemapLeft,value.top or value.tilemapTop,value.width or value.w,value.height or value.h
+  if finite(l)and finite(t)and finite(w)and finite(h)and l>=0 and t>=0 and w>0 and h>0 and l+w<=30 and t+h<=128 then
+   return{left=l,top=t,width=w,height=h,tilemapLeft=l,tilemapTop=t,w=w,h=h}
+  end
+ end
+ require('src.core.Logger').warn('source START layout unavailable; keeping native content rectangle (%s)',tostring(value))
+ return fallback
+end
 local function update()return Boundary.invoke('start_menu.update')end
 local function draw()return Boundary.invoke('start_menu.draw')end
 M.update,M.draw=update,draw
@@ -70,4 +93,10 @@ return setmetatable(M,{__index=function(_,key)
  local state=current()
  if key=='open'then return state~=nil end
  if key=='cursor'then return state and state.index end
+ if key=='_game'then return state and require('src.core.Game3').forNative(state.game)end
+ if key=='ENTRIES'then
+  local out={}
+  for i,row in ipairs(state and state.rows or{})do out[i]={id=row.id or row.key,label=row.label}end
+  return out
+ end
 end})

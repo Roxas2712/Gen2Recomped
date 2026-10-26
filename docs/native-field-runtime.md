@@ -97,7 +97,7 @@ FireRed package now supplies a 1024x768 upright world for a 1024x768 test window
 121 checks cover resize, distinct DPI axes, native surfaces and composition.
 Normal-camera flat interior artwork is the package's default, while its open
 3D interior remains a separate option. This observation does not qualify that
-option, other rooms, the battle card or complete gameplay.
+option, other rooms, the battle card or complete gameplay (later camera observations follow below).
 
 Missing native classes also cannot match ordinary mod screens through nil
 metatables. Focused admission, field-move, transition, companion and battle
@@ -118,8 +118,10 @@ does not construct a game or install a second movement controller. 1,367
 classifier checks pass on both the current fork and composed API-2 baseline;
 collision and player regressions pass as well. A real manager-driven open-3D
 FireRed bedroom run now renders upright at 1024x768 with one visible player
-and completes a native step. First/third cameras, normal-view actor occlusion
-and complete room/gameplay acceptance remain under investigation.
+and completes a native step. A later same-session run covers normal, open,
+third and first in that bedroom without a runtime error. Normal and third
+show one visible player; first hides its own sprite intentionally. The third
+view completes a native cell arrival. Full room/gameplay acceptance is open.
 
 `step_events.busy()` observes the native field admission after an arrival.
 Native scripts, transitions and screens remain the owners; the adapter stores
@@ -128,3 +130,18 @@ no queue and cannot consume, flush or advance poison, hatch or repel counters.
 and repeated reads, with 261 player and 642 session checks on the fork. The
 composed public baseline passes the same 617 observations and 270 player
 checks. Real first/third movement qualification continues separately.
+
+START content rectangles now feed the native skin and source layout wrappers
+from the same geometry. Native row keys retain dispatch while source entries
+expose detached IDs/labels and the live Game3 facade. Unmodified menus retain
+their original geometry; invalid/erroring layouts fall back to that rectangle.
+The source window helper shares native cursor spacing and frame drawing.
+
+Source glyph queries and single-glyph painting use the existing native
+charmap, proportional faces and two-tone shader. Reloaded/relocated glyphs
+are observed immediately; draw errors restore the native face and graphics
+state. On both baselines, 226 layout, 90 menu and 115 glyph checks pass. The
+real unchanged FireRed run 4c88811768 opens START, finds the original ASCENDANT
+row, invokes its handler and captures the fully drawn original settings.
+Its layout wrapper is attributed to ORIGAMI_ASCENDANT. This does not qualify
+every settings action, other editions or the still-unavailable battle card.
