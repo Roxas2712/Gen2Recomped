@@ -526,13 +526,18 @@ It pauses logic, captures ordinary progress into the existing slot, exports
 battery `.sav`, uploads that slot without replacing it from cloud, and returns
 to Library after saving. Battery saves remain separate from the **portable
 suspend (Beta)** actions. For native, unmodified Gen 1–3 sessions, Suspend &
-upload to cloud stores a bounded journal from a settled overworld checkpoint.
+upload to cloud stores rolling native overworld/battle checkpoints and the
+short journal tail since the latest checkpoint. Native battle decisions
+establish fresh anchors, including when saving from an already open menu.
+There is no elapsed-playtime or battle-duration cutoff. Long battles do not
+require replaying their entire history; a later move animation resumes from
+the latest battle checkpoint plus its recorded native continuation.
 After account login and cloud restore on the receiving device, Continue
 reconstructs the running battle and its native script continuation. Both
 devices need the exact same engine build and imported game data. No closures,
 VM bytecode or executable save code are transferred. Online sessions and loaded
-mods are refused; recordings are limited to 18,000 logic ticks (five minutes
-at 60 Hz) and 24 MiB. An incompatible or mismatching replay falls back to the
+mods are refused. The 24 MiB payload validation/storage budget remains; it is
+not a timer. An incompatible or mismatching replay falls back to the
 normal save with an explanation rather than applying a partial battle.
 
 The 2026-10-26 Gen 3 qualification covers Ruby, Sapphire, Emerald, FireRed and

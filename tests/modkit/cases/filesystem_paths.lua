@@ -40,12 +40,14 @@ T.eq(type(fs.load(absolute .. "/main.lua")), "function", "absolute entry file co
 -- Exercise every path-taking operation under both platform policies without
 -- requiring a Windows host or writing into the immutable fixture.
 local oldOpen, oldLoad, oldList, oldWindows = io.open, loadfile, FsIo.listDir, FsIo.isWindows
-local seen, written
-io.open = function(path)
+local seen, written, seenMode
+local rawBytes = "bytes\r\n\0raw\n"
+io.open = function(path, mode)
   seen = path
+  seenMode = mode
   return {
     read = function()
-      return "bytes"
+      return rawBytes
     end,
     close = function() end,
     write = function(_, body)
@@ -83,8 +85,12 @@ local ok, err = pcall(function()
     local adapter = FsIo.new("test-root")
     for _, op in ipairs({ "read", "write", "getInfo", "load", "getDirectoryItems" }) do
       seen = nil
-      adapter[op](case[2], "written bytes")
+      local result = adapter[op](case[2], "written bytes")
       T.eq(seen, case[3], op .. " resolves " .. case[2])
+      if op == "read" then
+        T.eq(result, rawBytes, "read preserves CRLF and binary bytes")
+        T.eq(seenMode, "rb", "read opens the selected path in binary mode")
+      end
     end
   end
   T.eq(written, "written bytes", "write forwards bytes unchanged")
