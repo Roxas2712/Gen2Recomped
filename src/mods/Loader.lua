@@ -1446,6 +1446,15 @@ end
 -- on ordinary native boots. Map observations may be supplied by another PR.
 local function retireCompatibilityMaps()
   for _, name in ipairs({"src.core.game3.map", "src.core.game3.player"}) do
+    local module=package.loaded[name]
+    if type(module)=="table" and type(module.release)=="function" then module.release() end
+  end
+end
+-- Release only already-loaded compatibility resources, after mod wrappers
+-- unwind. These scopes own their buffers and never borrow native sheets.
+local function retireCompatibilityAtlases()
+  for _, name in ipairs({"src.core.game3.warm", "src.core.game3.asset_stream",
+      "src.core.game3.tileset_native", "src.core.game3.tileset_anim"}) do
     local module = package.loaded[name]
     if type(module) == "table" and type(module.release) == "function" then module.release() end
   end
@@ -1468,6 +1477,7 @@ function Loader:load(data)
   if stream and stream.release then stream.release()end
   retireCompatibilitySession()
   retireCompatibilityMaps()
+  retireCompatibilityAtlases()
   self.baseData = data
   -- every registry folds against the pristine view of its Data target;
   -- resolution is lazy so optional namespaces may appear later
@@ -1816,6 +1826,7 @@ function Loader.teardown()
   if stream and stream.release then stream.release()end
   retireCompatibilitySession()
   retireCompatibilityMaps()
+  retireCompatibilityAtlases()
   pcall(function()
     Runtime.install(Events.new(), Hooks.new(), nil)
     Runtime.currentMod = nil
