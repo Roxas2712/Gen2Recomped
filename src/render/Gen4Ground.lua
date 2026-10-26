@@ -35,6 +35,7 @@
 local Assets = require("src.render.Assets")
 local Gen4Model = require("src.render.Gen4Model")
 local Logger = require("src.core.Logger")
+local Performance = require("src.core.Performance")
 local Gen4TexAnim = require("src.render.Gen4TexAnim")
 local Gen4Camera = require("src.render.Gen4Camera")
 local Gen4Shade = require("src.render.Gen4Shade")
@@ -1755,9 +1756,19 @@ Gen4Ground.RENDER_SCALES = { 1, 2, 3, 4 }
 -- this that it closes for the camera tilt.
 Gen4Ground.renderScaleIndex = 1
 
+-- G6: the rung the live performance tier allows, or every rung when no tier
+-- has been resolved yet (a pre-boot tool, the headless suite)
+function Gen4Ground.renderScaleCap()
+  local tier = Performance.tier
+  local caps = tier and Performance.CAPS[tier]
+  return caps and caps.gen4RenderScaleMax or #Gen4Ground.RENDER_SCALES
+end
+
 function Gen4Ground.setRenderScale(index)
   index = tonumber(index) or 1
   if not Gen4Ground.RENDER_SCALES[index] then index = 1 end
+  local cap = Gen4Ground.renderScaleCap()
+  if index > cap then index = cap end
   Gen4Ground.renderScaleIndex = index
   return Gen4Ground.RENDER_SCALES[index]
 end
@@ -1774,6 +1785,10 @@ function Gen4Ground.syncRenderScale(game)
   local o = game and game.save and game.save.options
   local index = o and tonumber(o.gen4RenderScale) or nil
   if index and Gen4Ground.RENDER_SCALES[index] then
+    -- G6: clamped to what the performance tier allows; the stored option is
+    -- left alone, so a stronger tier later honours it again
+    local cap = Gen4Ground.renderScaleCap()
+    if index > cap then index = cap end
     Gen4Ground.renderScaleIndex = index
   end
   return Gen4Ground.renderScale(), Gen4Ground.renderScaleIndex

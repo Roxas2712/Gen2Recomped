@@ -42,6 +42,17 @@ V.WIND_X = { [0] = -4, -6, -8, -10 }
 V.WIND_Y = { [0] = 2, 4, 2, 4 }
 
 local function rng(n) return love.math.random(0, n - 1) end
+-- G6: the BG2 layer and ash quads were made anew every frame; one quad,
+-- re-aimed with setViewport, serves both (the layer textures are 256x256).
+local layerScratch
+local function layerQuad(x, y, w, h)
+  if not layerScratch then
+    layerScratch = love.graphics.newQuad(x, y, w, h, 256, 256)
+  else
+    layerScratch:setViewport(x, y, w, h, 256, 256)
+  end
+  return layerScratch
+end
 V.rng = rng
 
 local function Game() return package.loaded["src.core.Game"] end
@@ -484,7 +495,7 @@ function V.draw(w, h)
     local img = image(rec.blizzardLayer)
     if img then
       local n = st.bg
-      local q = g.newQuad(2 * n - left / s, -n, w / s, h / s, 256, 256)
+      local q = layerQuad(2 * n - left / s, -n, w / s, h / s)
       g.draw(img, q, 0, 0, 0, s, s)
     end
   end
@@ -492,7 +503,7 @@ function V.draw(w, h)
   if cfg.ash and (st.state == 3) and not st.stopping then
     local img = image(rec.ashLayer)
     if img then
-      local q = g.newQuad((st.ashX or 0) - left / s, -math.floor((st.ashY or 0) / 5), w / s, h / s, 256, 256)
+      local q = layerQuad((st.ashX or 0) - left / s, -math.floor((st.ashY or 0) / 5), w / s, h / s)
       g.draw(img, q, 0, 0, 0, s, s)
     end
   end
