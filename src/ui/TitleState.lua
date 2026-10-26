@@ -115,7 +115,9 @@ local CYCLE_FRAMES = 240 -- the original waits ~4s between picks
 
 local function tryImage(path)
   if not path then return nil end
-  local ok, img = pcall(love.graphics.newImage, path)
+  local Assets=require('src.render.Assets')
+  if not Assets.exists(Assets.resolve(path)) then return nil end
+  local ok, img = pcall(Assets.image, path)
   return ok and img or nil
 end
 
