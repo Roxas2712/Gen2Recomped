@@ -36,6 +36,16 @@ next-gen Pokéwalker with minigames and a Watt Shop), a **Map Editor**, a
 dual-screen support for the DS games, and touch controls. See
 [What's New](#whats-new) for the tour.
 
+**Built-in Uni-Language:** choose your launcher language during first setup.
+After importing a supported US cartridge, the launcher offers matching game
+language profiles and asks for the exact additional source ROM when needed.
+No separate language-mod download or Gen2 conversion is required. Japanese
+currently targets Crystal; Korean targets Gold/Silver. Chinese is available
+for setup/menu text, without a bundled Chinese game profile. Brazilian
+Portuguese menus need no additional ROM; the current PT-BR game profiles
+still require their listed fan-translation source. See the
+[native language guide](docs/native-rom-language-packs.md).
+
 > [!CAUTION]
 > **Neither this project nor Gen1Recomp is affiliated with the website
 > `gen1recomp[.]com`.** That site is not run by either project and was not

@@ -700,18 +700,11 @@ local function pcRows(ctx, finish)
 end
 
 function Commands.g2_pokemon_center_pc(ctx)
-  -- PC_CheckPartyForPokemon: a player with no party gets nothing at all
-  if #(ctx.save.party or {}) == 0 then return answer(ctx, 0) end
-  local runner = ctx.runner
-  local done
-  local function finish()
-    if done then return end
-    done = true
-    runner:resume()
-  end
-  require("src.ui.Screens").push(ctx.game, "Menu", pcRows(ctx, finish), {
-    tx = 0, ty = 0, tw = 16, noSound = true, onCancel = finish,
-  })
+  local runner, done = ctx.runner, false
+  require("src.ui.Screens").push(ctx.game, "Gen2CenterPcMenu", {onClose=function()
+    if done then return end;done=true
+    ctx.game.stack:pop();runner:resume()
+  end})
   runner:yield()
   answer(ctx, 0)
 end

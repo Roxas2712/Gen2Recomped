@@ -9,4 +9,23 @@ package.loaded["src.net.DownloadPublish"] = function(source, target)
   if target:sub(-18) == "/delay-publish.bin" then love.timer.sleep(.25) end
   return publish(source, target)
 end
-assert(love.filesystem.load("src/net/download_worker.lua"))(...)
+-- Hold the bounded-queue fixture before the real worker reads cancellation.
+-- A wall-clock HTTP delay can expire while a busy CI host deschedules main.
+local commands, results, quit = ...
+local gate = love.thread.getChannel("download-qa-hold")
+local entered = love.thread.getChannel("download-qa-entered")
+local firstFile = true
+local proxy = { demand = function()
+  local job = commands:demand()
+  if type(job) == "table" and firstFile and job.dest == "downloads/target.bin" then
+    firstFile = false
+    love.thread.getChannel("download-qa-start-entered"):push(job.id)
+    while not love.thread.getChannel("download-qa-start"):peek() do love.timer.sleep(.001) end
+  end
+  if type(job) == "table" and job.dest:match("^downloads/held%d+$") then
+    entered:push(job.id)
+    while not gate:peek() do love.timer.sleep(.001) end
+  end
+  return job
+end }
+assert(love.filesystem.load("src/net/download_worker.lua"))(proxy, results, quit)

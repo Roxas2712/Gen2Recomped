@@ -23,7 +23,34 @@ Assets.loader = nil
 
 local GENERATED = "assets/generated/"
 
+-- Session-owned language files. The provider owns its tables; switching or
+-- retiring a loader drops their visibility without patching LOVE's constructors.
+local languageLayers={}
+function Assets.languageLayer(owner,layer,active)
+  for i=#languageLayers,1,-1 do
+    if languageLayers[i].owner==owner or not languageLayers[i].active() then table.remove(languageLayers,i) end
+  end
+  languageLayers[#languageLayers+1]={owner=owner,layer=layer,active=active}
+end
+local function languageFile(path)
+  if type(path)~='string' then return end
+  for i=#languageLayers,1,-1 do
+    local row=languageLayers[i]
+    if row.active() then
+      local layer=row.layer
+      local resolved=layer.paths and layer.paths[path] or path
+      local bytes=layer.files and layer.files[resolved]
+      if bytes then return bytes,resolved end
+    end
+  end
+end
+local function imageSource(path)
+  local bytes=languageFile(path)
+  return bytes and love.data.newByteData(bytes) or path
+end
+
 local function exists(path)
+  if languageFile(path) then return true end
   local fs = love and love.filesystem
   if not (fs and fs.getInfo) then return false end
   return fs.getInfo(path) ~= nil
@@ -58,6 +85,8 @@ local function memoOn()
 end
 
 function Assets.resolve(path)
+  local _,localized=languageFile(path)
+  if localized then return localized end
   local loader = Assets.loader
   if not loader or type(path) ~= "string" then return path end
   if path:sub(1, #GENERATED) ~= GENERATED then return path end
@@ -102,7 +131,11 @@ end
 -- here propagates out of SpriteRenderer.new -> NPC.new -> the map build and
 -- takes the whole map load down.
 local function loadImage(resolved)
-  local ok, image = pcall(love.graphics.newImage, resolved)
+  local ok, image = pcall(function()
+    local bytes=languageFile(resolved)
+    if bytes then return love.graphics.newImage(love.image.newImageData(love.data.newByteData(bytes))) end
+    return love.graphics.newImage(resolved)
+  end)
   if ok then return image end
   local Logger = require("src.core.Logger")
   Logger.warn("assets: missing image '%s' (using placeholder)", tostring(resolved))
@@ -126,13 +159,37 @@ end
 -- Same rule as Assets.image: a missing path degrades instead of raising.
 function Assets.imageData(path)
   local resolved = Assets.resolve(path)
-  local ok, data = pcall(love.image.newImageData, resolved)
+  local ok, data = pcall(love.image.newImageData, imageSource(resolved))
   if ok then return data end
   local Logger = require("src.core.Logger")
   Logger.warn("assets: missing image data '%s' (using placeholder)", tostring(resolved))
   local fellBack, placeholder = pcall(love.image.newImageData, Assets.resolve(MISSING_IMAGE))
   if fellBack then return placeholder end
   return love.image.newImageData(16, 16)
+end
+
+-- G8: THE SAME PIXELS, READ-ONLY, DECODED ONCE.
+--
+-- `Assets.imageData` decodes the PNG on every call because its callers may
+-- write into the result (mapPixel for an OBP variant, the party menu's
+-- tints).  The bakes that only READ -- the water-shift variants ask for the
+-- whole tileset atlas once per animated tile, the RED++ atlas, the toggle
+-- strips, the multi-tile frames -- paid that decode each time.  This answers
+-- the decoded data from a cache instead.  The contract is in the name: a
+-- caller must not paste into, mapPixel over or otherwise change what it
+-- gets back; it may copy from it.  Cleared with the image cache.
+local dataCache = {}
+function Assets.imageDataShared(path)
+  if Performance.assetSharedDecode == false then
+    if next(dataCache) then dataCache = {} end
+    return Assets.imageData(path)
+  end
+  local resolved = Assets.resolve(path)
+  local data = dataCache[resolved]
+  if data then return data end
+  data = Assets.imageData(path)
+  dataCache[resolved] = data
+  return data
 end
 
 function Assets.register(invalidate)
@@ -149,6 +206,7 @@ function Assets.invalidate()
   local dropped = 0
   for _ in pairs(cache) do dropped = dropped + 1 end
   cache = {}
+  dataCache = {}
   resolved = {}
   for _, fn in ipairs(invalidators) do pcall(fn) end
   return dropped
