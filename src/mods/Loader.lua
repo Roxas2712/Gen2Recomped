@@ -1483,6 +1483,8 @@ function Loader:_rollback(modId)
   if space and space.cancelOwner then pcall(space.cancelOwner,modId)end
   local transition=package.loaded['src.core.game3.battle_transition']
   if transition and transition.cancelOwner then pcall(transition.cancelOwner,modId)end
+  local move=package.loaded['src.core.game3.field_move_show_mon']
+  if move and move.cancelOwner then pcall(move.cancelOwner,modId)end
 end
 
 -- a mod that explicitly swears it stays link-compatible while writing into a
@@ -1592,7 +1594,7 @@ end
 local function retireCompatibilityMaps()
   for _, name in ipairs({"src.core.game3.runtime", "src.core.Game3",
       "src.core.game3.map", "src.core.game3.player", "src.core.game3.collision", "src.core.game3.objects", "src.core.game3.ow_sprites", "src.core.game3.scripting.space",
-      "src.core.game3.warm", "src.core.game3.asset_stream", "src.core.game3.tileset_native", "src.core.game3.tileset_anim", "src.core.game3.battle_transition"}) do
+      "src.core.game3.warm", "src.core.game3.asset_stream", "src.core.game3.tileset_native", "src.core.game3.tileset_anim", "src.core.game3.battle_transition", "src.core.game3.field_effects", "src.core.game3.field_move_show_mon"}) do
     local module = package.loaded[name]
     if type(module) == "table" and type(module.release) == "function" then module.release() end
   end

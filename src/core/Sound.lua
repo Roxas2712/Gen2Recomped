@@ -1037,7 +1037,12 @@ local function playLegacyCry(data, species, opts, nativeOverride)
   end
   -- set every time rather than at build: the cached source outlives a change
   -- of game, and the scale is the loaded cartridge's
-  pcall(src.setVolume, src, volumeFor(key) * ((nativeOverride or gen3) and 1 or cryScale(data)))
+  local scale=(nativeOverride or gen3) and 1 or cryScale(data)
+  if not(nativeOverride or gen3) and opts and type(opts.volume)=='number'and opts.volume==opts.volume and opts.volume>=0 and opts.volume<=256 then
+    local unit=data.constants and data.constants.gen3Cry and tonumber(data.constants.gen3Cry.scale)or 256
+    if unit and unit>0 then scale=opts.volume/unit end
+  end
+  pcall(src.setVolume, src, volumeFor(key) * scale)
   -- Interactive Dex playback owns its source; loop/effect settings must never
   -- leak onto the cached cry used by battles, NPC scripts or other menus.
   if opts and opts.isolated and src.clone then
@@ -1045,8 +1050,8 @@ local function playLegacyCry(data, species, opts, nativeOverride)
     if ok and copy then src=copy end
   end
   if not restart(src) then return nil end
-  if not nativeOverride and not(gen3 and opts and (opts.noDuck or opts.mode==1 or(opts.release and opts.multi)))then
-    require("src.core.Music").duckForCry(data, src)
+  if not nativeOverride and not(gen3 and opts and (opts.mode==1 or(opts.release and opts.multi)))then
+    require("src.core.Music").duckForCry(data, src, opts and opts.noDuck==true)
   end
   played("cry", species, species)
   return src

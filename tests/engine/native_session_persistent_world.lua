@@ -2,6 +2,8 @@
 package.path='./?.lua;./?/init.lua;'..package.path
 local T=require('tests.modkit')
 local Session=require('src.compat.gen1.NativeSession')
+local _,imageFile=require('tools.sprite-runtime.cpu-gpu').install(love)
+imageFile('assets/generated/persistent-world-fixture.png',16,16,string.rep('\255',16*16*4))
 for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   local fixture=require('tools.session-runtime.fixture').new(edition)
   local game,world,player=fixture.game,fixture.world,fixture.player
@@ -23,6 +25,9 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   T.eq(Session.acceptsInput(game,world,player),false,'a covering native UI still owns input')
   stack:pop();T.eq(Session.acceptsInput(game,world,player),true)
   game.data.pokemon={[1]={spriteFront='assets/generated/persistent-world-fixture.png'}}
+  local strip={width=256,height=80,indexed=string.rep('\1',256*80),palette={}}
+  for i=1,16 do strip.palette[i]=i end
+  game.data.constants.gen3FieldMovePresentation={schema=1,edition=edition,romSha1=require('src.core.GameVersion').info(edition).sha1,strips={outdoors=strip,indoors=strip}}
   local show=require('src.core.game3.field_move_show_mon')
   T.eq(show.start(1,{pose=true}),true,'native field-move requests reach an admitted persistent world')
   T.eq(stack.worldState,world);T.eq(#stack.states,1)
@@ -31,6 +36,9 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   T.eq(Session.acceptsInput(game,world,player),true,'retiring a native cut-in returns input to the persistent world')
   game.overworld={isOverworld=true,player={},map=fixture.map}
   T.eq(select(2,Session.resolve()),world,'an unadmitted convenience pointer cannot replace the native world')
+  T.eq(show.start(1,{pose=true}),true,'field move uses the admitted world under an unrelated convenience view')
+  T.eq(player.fieldMove,true);T.eq(game.overworld.player.fieldMove,nil)
+  T.eq(stack:top().actor,player);show.reset();T.eq(player.fieldMove,nil)
   game.overworld=world
   local original=game.data
   game.data={maps={TEST={}},constants={}}
