@@ -11562,6 +11562,12 @@ function OverworldState:openPC(onDone)
   if GameVersion.isGen3() then
     return self:openGen3PC(onDone)
   end
+  if GameVersion.isGen2() then
+    return Screens.push(Game, "Gen2CenterPcMenu", {onClose=function()
+      Game.stack:pop()
+      if onDone then onDone() end
+    end})
+  end
   require("src.core.Sound").play(Game.data, "Turn_On_PC")
   local Menu = require("src.ui.Menu")
   local done = onDone or function() end
