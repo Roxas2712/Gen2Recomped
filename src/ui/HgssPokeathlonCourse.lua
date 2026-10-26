@@ -66,9 +66,13 @@ local function nick(m, game)
   return (def and def.name) or m.name or tostring(m.species)
 end
 
--- opts: course (0..9), onDone({ quit, score, points, bonus })
+-- opts: course (0..9), supreme (the args byte 0xF: the Supreme Cup
+-- receptionist's `Pokeathlon 0, 1` -- scr_seq_0167_001, shown once
+-- FLAG_HIDE_POKEATHLON_SUPREME_CUP_RECEPTIONIST is cleared), link (args
+-- mode, byte 1), onDone({ quit, score, points, bonus })
 function C.new(game, opts)
-  local self = setmetatable({ game = game, course = opts.course or 0, onDone = opts.onDone, t = 0 }, C)
+  local self = setmetatable({ game = game, course = opts.course or 0, onDone = opts.onDone, t = 0,
+                              supreme = opts.supreme and true or false, link = opts.link and true or false }, C)
   local tables = game.data.gen4_hgss_pokeathlon
   self.events = (tables and tables.courses and tables.courses[self.course]) or C.COURSE_EVENTS[self.course] or { 0, 1, 6 }
   self.player = ((game.save or {}).player or {}).name or "PLAYER"
@@ -83,12 +87,15 @@ function C:uiSize() return 256, 192 end
 
 -- the three computer teams (ov96_021E860C / 021E8484): for a single course c
 -- three different opponents of 5c+1..5c+5 (the Master Course 26..50; the
--- Supreme Cup would add 50), each with its three species and its name (bank
--- 310); their Pokemon perform at their species' base stars
+-- Supreme Cup adds 50 to each -- ov96_021E8484 hands ov96_021E860C the args
+-- byte 0xF, and _021E86C4 adds 0x32 to every pick), each with its three
+-- species and its name (bank 310); their Pokemon perform at their species'
+-- base stars
 function C:pickRivals(opponents)
   if type(opponents) ~= "table" then return end
   local first, count = self.course * 5 + 1, 5
   if self.course >= 5 then first, count = 26, 25 end
+  if self.supreme then first = first + 50 end
   local pool = {}
   for i = 0, count - 1 do pool[#pool + 1] = first + i end
   local rnd = love and love.math and love.math.random or math.random
@@ -98,6 +105,9 @@ function C:pickRivals(opponents)
     local o = opponents[id]
     if o then
       self.teams[t].id = id
+      -- the record's last byte (ov96_021E8448): the team's own line in the
+      -- opening, bank 311 #group (ov96_021EE908)
+      self.teams[t].group = o.group
       self.teams[t].name = name(self.game, 310, o.name)
       self.teams[t].mons = {}
       for j = 1, 3 do self.teams[t].mons[j] = { species = o.species[j], form = 0 } end
@@ -131,31 +141,94 @@ end
 function C:pickTeam()
   local game = self.game
   self.team = {}
-  local PM = require("src.ui.Gen4PartyMenu")
-  -- overlay 97's panel (the cursor's Pokemon: stars, Medals) on the other
-  -- screen: src/ui/HgssPokeathlonTeamInfo.lua
-  local menu = (PM.new(game, { select = {
-    count = 3, maxLevel = 100, banlist = false, unique = false,
-    onDone = function(slots)
-      if not slots then return self:finish(true) end
-      local party = (game.save or {}).party or {}
-      for _, slot in ipairs(slots) do self.team[#self.team + 1] = party[slot] end
+  -- THE PARTY AND THE PC BOXES (arm9 sub_020932E0 / 02093440, opened by
+  -- overlay 97 on box 0x12 = the party): src/ui/HgssPokeathlonTeamPick.lua
+  local menu = require("src.ui.HgssPokeathlonTeamPick").new(game, {
+    count = 3, course = self.course, supreme = self.supreme,
+    onDone = function(mons)
+      if not mons then return self:finish(true) end
+      for _, m in ipairs(mons) do self.team[#self.team + 1] = m end
       if #self.team < 3 then return self:finish(true) end
       self:opening()
     end,
-  } }))
-  require("src.ui.HgssPokeathlonTeamInfo").attach(menu, game, { course = self.course })
+  })
+  -- overlay 97's panel (the cursor's Pokemon: stars, Medals, "Supreme") on
+  -- the other screen: src/ui/HgssPokeathlonTeamInfo.lua
+  require("src.ui.HgssPokeathlonTeamInfo").attach(menu, game, { course = self.course, supreme = self.supreme })
   game.stack:push(menu)
 end
 
 
+-- THE TEAMS' LEVEL AND GROUP (ov96_021ED8DC at the opening, solo: the
+-- player's team by ov96_021EE0AC, each computer team by ov96_021EE1D8):
+-- a computer team's entry is { the opponent record's group byte, level << 24 }
+-- with level = clamp((sum over its three Pokemon of (stars + 5)) / 3 - 8,
+-- 0, 12), the stars its course record's five (the species' base, 0..4); the
+-- player's level is the rank of the record block's B00 + 0x70 (ScrCmd_724's
+-- 11) against ov96_0221B058 (ov96_021EDF5C).
+--
+-- READ, NOT GUESSED: THE LEVEL IS NOT AN EVENT AI'S. Its only reader is
+-- ov96_021ED8A4, called once, from the opening's team introduction
+-- (ov96_021EB730): the crowd's cheer as a team is named, SE 0x8DC below
+-- level 5 and 0x8DD from 5, pitched by ov96_0221B088[level]. The group's
+-- readers (ov96_021ED838) are the same introduction: a computer team's own
+-- line, bank 311 #group, before its name (state 5, ov96_021EE908). The ten
+-- events' copy-area records (+0x28 / +0xF0) are rewritten by each event's
+-- own per-frame exchange; none of their rival AIs reads either value.
+C.RANK = { 11, 26, 51, 101, 201, 501, 1001, 2001, 5001, 10001, 20001, 50001 }   -- ov96_0221B058
+C.CHEER_PITCH = { [0] = -64, -32, 0, 32, 64, 96, -32, -16, 0, 16, 32, 48, 64 }   -- ov96_0221B088
+C.CHEER_LOW, C.CHEER_HIGH = 0x8DC, 0x8DD
+
+-- ov96_021EE1D8's level for a computer team's three Pokemon
+function C.rivalLevel(game, mons)
+  local P = require("src.pokemon.HgssPokeathlonPerformance")
+  local sum = 0
+  for j = 1, 3 do
+    local row = mons and mons[j] and P.row(game.data, mons[j])
+    local s = 0
+    if row then for i = 0, 4 do s = s + (tonumber(row.base[i]) or 0) end end
+    sum = sum + s + 5
+  end
+  local level = math.floor(sum / 3) - 8
+  if level > 12 then level = 12 elseif level < 0 then level = 0 end
+  return level
+end
+
+-- ov96_021EDF5C over B00 + 0x70: the first rank step above it
+function C.playerLevel(save)
+  local v = require("src.ui.HgssPokeathlonDataView").field(save, 0x70)
+  for i, step in ipairs(C.RANK) do
+    if step > v then return i - 1 end
+  end
+  return #C.RANK
+end
+
+-- the introduction's cheer: PlaySE_SetPitch(level < 5 and 0x8DC or 0x8DD,
+-- ov96_0221B088[level]); the pitch is NitroAudio's 64ths of a semitone
+function C:cheer(level)
+  level = math.max(0, math.min(12, math.floor(tonumber(level) or 0)))
+  local id = level < 5 and C.CHEER_LOW or C.CHEER_HIGH
+  local pitch = 2 ^ ((C.CHEER_PITCH[level] or 0) / 768)
+  local ok, Sound = pcall(require, "src.core.Sound")
+  if ok and Sound.playSe then pcall(Sound.playSe, self.game.data, id, { pitch = pitch }) end
+  return id, pitch
+end
+
 function C:opening()
-  self:say(0, "", name(self.game, NAMES, self.course))
+  -- #0 prints the course with {STRVAR_4 1 0 0}: slot 0 (it read empty)
+  self:say(0, name(self.game, NAMES, self.course))
+  self.teams[1].level = C.playerLevel(self.game.save or {})
   self:say(1, self.player, nick(self.team[1], self.game), nick(self.team[2], self.game), nick(self.team[3], self.game))
+  self.queue[#self.queue] = { text = self.queue[#self.queue], cheer = self.teams[1].level }
   for t = 2, 4 do
     local tm = self.teams[t]
     if tm.mons then
+      tm.level = C.rivalLevel(self.game, tm.mons)
+      -- the team's own line (bank 311 #group), then its name to the cheer
+      local line = tm.group and require("src.import.Gen4Text").resolve(self.game.data, 311, tm.group, self.game)
+      if line and line ~= "" then self.queue[#self.queue + 1] = line end
       self:say(1, tm.name or "", nick(tm.mons[1], self.game), nick(tm.mons[2], self.game), nick(tm.mons[3], self.game))
+      self.queue[#self.queue] = { text = self.queue[#self.queue], cheer = tm.level }
     end
   end
   self:say(2)
@@ -371,6 +444,10 @@ function C:update()
   if not self.started then return self:start() end
   if self.phase == "talk" then
     local line = table.remove(self.queue, 1)
+    if type(line) == "table" then
+      if line.cheer then self:cheer(line.cheer) end
+      line = line.text
+    end
     if line then
       self.phase = "wait"
       local clean = line:gsub("{[^}]*}", "")

@@ -188,6 +188,16 @@ function BagMenu.throwBall(game,battle,id,close)
   return true
 end
 local function useOn(game, battle, id, target, list, moveIndex, picker)
+  -- PLATINUM / HGSS: EMBARGO keeps the bag off a battler under it -- refused
+  -- with its line, the item kept and the turn not spent (battle_bag.c
+  -- TryUseItem, battle_party.c PartyUseItemScreen; Gen4MoveEffects)
+  if battle and battle.g4fx then
+    local why = require("src.battle.Gen4MoveEffects").embargoRefusal(battle, target, id)
+    if why then
+      showMessages(game, { why }, function() if picker then picker:close() end end)
+      return
+    end
+  end
   -- HGSS: the party screen's own msg_0300 line for the item (src/ui/Gen4PartyText.lua)
   local PartyText = require("src.ui.Gen4PartyText")
   local g4Before = (not battle and target) and PartyText.snapshot(game, target) or nil
