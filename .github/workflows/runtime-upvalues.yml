@@ -41,7 +41,9 @@ jobs:
             love-artifact: '12513712494'
             library: libluajit.so
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 25
+    # Two complete engine runs, each bounded at 40 minutes, plus both runtime
+    # builds and the actual LOVE host checks. No tier is skipped on slow hosts.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v7
         with:

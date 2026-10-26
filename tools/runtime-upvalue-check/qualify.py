@@ -74,8 +74,17 @@ def main():
               "variants": []}
 
     def command(label, argv, cwd, env=None, timeout=180):
-        result = run([str(value) for value in argv], cwd=cwd, env=env,
-                     capture_output=True, text=True, timeout=timeout)
+        try:
+            result = run([str(value) for value in argv], cwd=cwd, env=env,
+                         capture_output=True, text=True, timeout=timeout)
+        except subprocess.TimeoutExpired as exc:
+            # Retain the last completed assertions for a bounded slow-runner
+            # failure instead of uploading an empty diagnostic artifact.
+            def decoded(value):
+                return value.decode("utf-8", errors="replace") if isinstance(value, bytes) else value or ""
+            (output / (label + ".log")).write_text(
+                decoded(exc.stdout) + decoded(exc.stderr), encoding="utf-8")
+            raise
         (output / (label + ".log")).write_text(result.stdout + result.stderr, encoding="utf-8")
         if result.returncode:
             print((result.stdout + result.stderr)[-6000:], flush=True)
@@ -147,7 +156,9 @@ def main():
                 shell = Path(git(source, "--exec-path")).parents[2] / "bin/bash.exe"
                 if not shell.is_file():
                     raise RuntimeError("Git for Windows Bash is required for engine tiers")
-            text = command(label + "-engine", [shell, "scripts/test.sh", "--quick"], ROOT, engine_env, 900)
+            # Both complete quick-tier runs are required. The growing native
+            # suite exceeds 15 minutes on the hosted Intel runner.
+            text = command(label + "-engine", [shell, "scripts/test.sh", "--quick"], ROOT, engine_env, 2400)
             match = re.search(r"engine: (\d+)/(\d+) suites passed", text)
             if not match or match[1] != match[2] or "ALL TIERS PASSED" not in text:
                 raise RuntimeError("engine quick tiers did not all pass")

@@ -53,6 +53,11 @@ Windows x64, Intel macOS and arm64 macOS using explicit
 Both variants must pass the closure/C API checks and the engine's quick tiers;
 the workflow does not publish a GitHub release.
 
+Each complete engine quick-tier run has a 40-minute bound; the matrix job
+allows 90 minutes for both variants, builds and host checks. This accommodates
+the hosted Intel runner without reducing the required assertions. A timeout
+still fails qualification and retains its partial per-step log for diagnosis.
+
 On Windows and both macOS architectures, `love_abi.py` additionally checks the
 candidate inside a separate copy of the actual pinned LÖVE12 host. It verifies
 the official artifact's SHA-256 before extraction, requires the passing engine
