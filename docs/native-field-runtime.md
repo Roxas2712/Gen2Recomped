@@ -164,3 +164,10 @@ admitted with an explicitly absent source renderer. All five actual starting
 rooms have now reached normal/open/third/first views; native 2D passthrough
 remains intentional for Hoenn's normal setting. This is still starting-room
 coverage, not full playthrough or cartridge-feature discovery acceptance.
+
+The published field/UI sources at 33fc7b10 pass the refreshed native regression:
+581/581 engine suites, Modkit 4/4, B30 and 916 companion checks. The same
+byte-checked frozen source was covered in three bounded segments (273 + 184 +
+124); the first two 600-second harness expirations remain preserved. No failed
+suite was omitted. The independent palette work started afterwards is outside
+this qualification and remains unpublished pending its own CPU/GPU checks.
