@@ -38,8 +38,9 @@ def main():
     digest = hashlib.sha1(rom.read_bytes()).hexdigest()
     admission = 'assert(require("src.core.GameVersion").acceptsSha1("red",' + json.dumps(digest) + '))'
     qa_run([str(lua), '-e', admission], cwd=ROOT, capture_output=True, text=True, check=True)
-    folders = ('main.lua', 'conf.lua', 'src', 'assets', 'data', 'tests', 'tools', 'mods/examples')
-    archive = qa_run(['git', 'archive', head, *folders], cwd=ROOT, capture_output=True, check=True).stdout
+    # Source-inspection suites read scripts, mobile manifests, docs and shipped
+    # mods as well as runtime code. Freeze the complete committed repository.
+    archive = qa_run(['git', 'archive', head], cwd=ROOT, capture_output=True, check=True).stdout
     with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
         for member in tar.getmembers():
             assert not member.name.startswith('/') and '..' not in Path(member.name).parts
