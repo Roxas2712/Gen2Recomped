@@ -13368,6 +13368,12 @@ do
     if anim then return anim._drawBattler(self, battler, battlerDraw, ...) end
     return battlerDraw(self, battler, ...)
   end
+  local chooseAction=BattleState.chooseAction
+  function BattleState:chooseAction(action)
+    local ui=GameVersion.isGen3() and package.loaded['src.core.game3.battle.ui']
+    if ui then return ui._nativeCommand(self,action,chooseAction) end
+    return chooseAction(self,action)
+  end
   function BattleState:enter()
     enter(self)
     local source = GameVersion.isGen3() and package.loaded['src.core.game3.battle']
