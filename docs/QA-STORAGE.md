@@ -260,3 +260,23 @@ Budgets: 2 GiB je QA-Profil, 4 GiB je Testkopie. Auch ein kurzer erfolgreicher
 `qa_run` wird nach dem Kindende auf Überschreitung geprüft. Die laufende Kontrolle
 ist zeitgesteuert; das Einlesen sehr großer Verzeichnisbäume verlängert das
 Prüfintervall. Sie ersetzt keine harte Dateisystemquote.
+
+
+## Alte Releaseausgaben automatisch pflegen
+
+`qa_release_storage.py` pflegt bekannte `dist/Origami-Ascendant-*`-Pakete sowie
+`.local/release-unpacked/Origami-Ascendant-*`, `.local/ios-release/game.love`,
+`game-final.love` und `native-executable`. Pro Paketfamilie bleiben der neueste
+Stand und die höchste explizite Gen2-Version erhalten; macOS, iOS, API3-Mod,
+Gen2-Engine und Gen2-Mod sind getrennte Familien. Unbekannte Pakete und
+Laufzeit-Eingaben bleiben erhalten. Nur mindestens 24 Stunden unveränderte
+ältere Ausgaben bereinigen, alle 15 Minuten über den bestehenden Helfer.
+
+Vor Entfernen ältere ZIP-/LÖVE-Mitglieder direkt und dedupliziert im Quellarchiv
+sichern, entpackte Dateien ebenso; Wiederherstellungsnachweise liegen in
+`~/.cache/origami-qa-storage/release-receipts/`. Quellen und Modelle bleiben
+bytegenau im Archiv erhalten. Ganze Pakete mit ROMs/Saves nicht entfernen;
+Saves in gemischten entpackten Ordnern vor Ort behalten. Keep-Marker, echte
+Git-Checkouts, Symlinks und aktive Eingaben schützen. Releasepakete und
+entpackte Releaseeingaben vor Nutzung mit `qa_source` sperren; fremde Leser
+blockieren die Bereinigung über denselben nichtblockierenden Dateilock.

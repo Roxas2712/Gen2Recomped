@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 import tarfile
 import time
+import zipfile
 
 
 class Vault:
@@ -136,6 +137,36 @@ class Vault:
                 logical+=size
         proof=self._commit(source,records,len(manifest),logical)
         proof['format']='tar-members';proof['members']=manifest
+        return proof
+
+    def capture_zip(self, source):
+        """Keep archive member bytes once, without extracting temporary copies."""
+        records=[];manifest=[];logical=0;seen=set()
+        with zipfile.ZipFile(source) as archive:
+            for member in archive.infolist():
+                path=PurePosixPath(member.filename)
+                if path.is_absolute() or '..' in path.parts or '\\' in member.filename or not path.parts or str(path) in seen:
+                    raise ValueError('Unsafe/duplicate release archive member')
+                seen.add(str(path))
+                if member.is_dir():continue
+                mode=member.external_attr>>16
+                if mode and stat.S_IFMT(mode) not in (0,stat.S_IFREG,stat.S_IFLNK):raise ValueError('Unsupported archive member')
+                size=member.file_size;digest=hashlib.sha1(b'blob '+str(size).encode()+b'\0')
+                with archive.open(member) as stream:
+                    for chunk in iter(lambda:stream.read(1024*1024),b''):digest.update(chunk)
+                digest=digest.hexdigest();reference=self.marks.get(digest) or digest
+                if digest not in self.known:
+                    reference=self.mark();self.marks[digest]=reference;self.known.add(digest)
+                    self.send('blob\nmark '+reference+'\ndata '+str(size)+'\n')
+                    with archive.open(member) as stream:
+                        for chunk in iter(lambda:stream.read(1024*1024),b''):self.send(chunk)
+                    self.send('\n')
+                gitmode='120000' if stat.S_ISLNK(mode) else '100755' if mode&0o111 else '100644'
+                records.append('M '+gitmode+' '+reference+' '+json.dumps('snapshot/'+str(path),ensure_ascii=False)+'\n')
+                manifest.append(dict(path=str(path),mode=mode,date_time=member.date_time,blob=digest))
+                logical+=size
+        proof=self._commit(source,records,len(manifest),logical)
+        proof.update(format='zip-members',members=manifest)
         return proof
 
     def _commit(self, source, records, files, logical):
