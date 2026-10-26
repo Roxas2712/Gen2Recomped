@@ -836,6 +836,9 @@ function Loader:_contentApi(mod, registry, deprecation)
   if registry.name == "items" then
     return require("src.mods.HeldItemContent").itemApi(loader, api, loader:_generation())
   end
+  if registry.name == "radio_channels" then
+    return require("src.mods.RadioContent").api(loader,mod,api,loader:_generation())
+  end
   return api
 end
 
@@ -1236,6 +1239,7 @@ function Loader:_api(mod)
       end
       return data
     end)
+  api.postLog = Net.logReporter(loader,mod)
   api.packs = require("src.mods.AssetPacks").new(mod.manifest, loader.fs)
   require('src.mods.HostServices').install(loader,mod,api)
   api.job = Job.forMod(loader, mod, api.cache)
@@ -1417,6 +1421,11 @@ function Loader:_rollback(modId)
   self.optionStatus[modId] = nil
   self.migrations[modId] = nil
   self.modSave[modId] = nil
+  -- Late validation failures retire entry-time wrappers too. Restore those
+  -- before invoking an optional resource service a failed entry may wrap.
+  ModSeams.unwindOwner(modId)
+  local stream=package.loaded['src.core.game3.asset_stream']
+  if stream and stream.cancelOwner then pcall(stream.cancelOwner,modId)end
 end
 
 -- a mod that explicitly swears it stays link-compatible while writing into a
@@ -1525,7 +1534,7 @@ end
 -- any compatibility module on an ordinary native boot.
 local function retireCompatibilityMaps()
   for _, name in ipairs({"src.core.game3.runtime", "src.core.Game3",
-      "src.core.game3.map", "src.core.game3.player", "src.core.game3.collision", "src.core.game3.objects",
+      "src.core.game3.map", "src.core.game3.player", "src.core.game3.collision", "src.core.game3.objects", "src.core.game3.ow_sprites",
       "src.core.game3.warm", "src.core.game3.asset_stream", "src.core.game3.tileset_native", "src.core.game3.tileset_anim"}) do
     local module = package.loaded[name]
     if type(module) == "table" and type(module.release) == "function" then module.release() end
@@ -1573,6 +1582,7 @@ function Loader:load(data)
   require("src.mods.HeldItemContent").prepare(self, data)
   require("src.mods.MartContent").prepare(self, data)
   require("src.mods.RomTextContent").prepare(self, data)
+  require("src.mods.RadioContent").prepare(self, data)
   -- vanilla content is registrations too, and they land before discovery so
   -- a mod's register collides with the engine's and has to say override
   require("src.mods.Builtins").install(self.content, data)
@@ -1732,7 +1742,6 @@ function Loader:load(data)
       Runtime.currentMod = nil
       if not success then
         self:_rollback(modId)
-        ModSeams.unwindOwner(modId)
       end
       self.journal = nil
       if success then

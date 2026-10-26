@@ -137,6 +137,7 @@ function Sequence.install(RI)
         end
       end
       if state.cancelled or done then
+        if state.cancelled and state.kind=='play' then require('src.link.CloudArena').cancelPending() end
         self._launcherSequence = nil
         if self._introSound then self._introSound:stop();self._introSound=nil end
         if self._latchSound then self._latchSound:stop();self._latchSound=nil end

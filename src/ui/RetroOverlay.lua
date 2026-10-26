@@ -32,6 +32,7 @@ function O.clear()
   O.job=nil;O.game=nil;O.confirm=nil;O.rects={};O.handle=nil
 end
 local function canSave(game)
+  if game.retroArena then return false end
   for _,state in ipairs(game.stack and game.stack.states or {}) do if state==game.overworld or state.isOverworld then return true end end
   return false
 end

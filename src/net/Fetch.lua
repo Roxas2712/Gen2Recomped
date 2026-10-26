@@ -17,6 +17,7 @@ function Fetch.download(url, dest, options)
   return start(Download, "download", url, dest, options)
 end
 function Fetch.get(url, options) return start(Get, "get", url, options) end
+function Fetch.postLog(url, body, options) return start(Get, "postLog", url, body, options) end
 function Fetch.poll(id)
   local job = jobs[id]
   if not job then return {status = "error", err = "invalid job handle"} end

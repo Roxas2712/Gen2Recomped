@@ -144,6 +144,7 @@ function Workspace.install(RI)
   RI._cycleTab=function(self,delta,...)
     if not self.sidebarMode then return cycle(self,delta,...) end
     local order={'games','walker','mods','tools','news','settings'}
+    if require('src.cloud.RetroCloud').signedIn() then table.insert(order,3,'tournaments') end
     local index=1
     for i,id in ipairs(order) do if id==self.section then index=i end end
     self:_sbGo(order[((index-1+delta)%#order)+1])

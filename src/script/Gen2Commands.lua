@@ -5022,7 +5022,14 @@ function Commands.g2_town_map(ctx)
 end
 
 function Commands.g2_map_radio(ctx)
-  ctx.lastCheck = true
+  local done=false
+  local radio=require("src.ui.Gen2MapRadio").new(ctx.game,{channel=ctx.g2Var or 0,onDone=function()
+    if done then return end
+    done=true;ctx.runner:resume()
+  end})
+  if not radio.station then return end
+  ctx.game.stack:push(radio)
+  ctx.runner:yield()
 end
 
 function Commands.g2_check_pokerus(ctx)

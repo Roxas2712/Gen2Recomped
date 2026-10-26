@@ -19,7 +19,7 @@ local function call(method,path,payload,authorized)
     if authorized and code==401 then Auth.expire(credential) end
     if not code or code>=500 then return nil,'Account service unavailable. Please try again.' end
     if type(doc.errors)=='table' then
-      for _,key in ipairs({'email','name','password','repositories','repository','terms_version','terms_accepted','privacy_acknowledged','developer_rights_accepted','image_base64','avatar','avatar_rights','artwork_rights_accepted','credit','alt','code','player','editions','dex','level','moves','starts_at','ends_at'}) do
+      for _,key in ipairs({'email','name','password','repositories','repository','terms_version','terms_accepted','privacy_acknowledged','developer_rights_accepted','image_base64','avatar','avatar_rights','artwork_rights_accepted','credit','alt','code','player','editions','dex','level','moves','starts_at','ends_at','title','edition','capacity','team_size','level','rules','verification','winner','reason','prize.dex','prize.level','prize.egg','prize.shiny'}) do
         local e=doc.errors[key];if type(e)=='table' and type(e[1])=='string' then return nil,e[1]:sub(1,300) end
       end
     end

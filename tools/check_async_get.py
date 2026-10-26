@@ -1,14 +1,22 @@
 #!/usr/bin/env python3
 """Exercise real LOVE worker HTTP against only a task-owned loopback server."""
-import argparse, http.server, os, pathlib, subprocess, threading, time, tempfile, shutil, uuid
+import argparse, http.server, os, pathlib, subprocess, threading, time, tempfile, shutil, uuid, ssl, json
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *args): pass
+    def do_POST(self):
+        length=int(self.headers.get('Content-Length','0'))
+        if length>512*1024:self.send_error(413);return
+        body=self.rfile.read(length)
+        self.server.posts.append(dict(path=self.path,body=body,agent=self.headers.get('User-Agent'),mime=self.headers.get('Content-Type')))
+        if self.path=='/redirect-post':
+            self.send_response(307);self.send_header('Location','/forbidden-post-target');self.send_header('Content-Length','0');self.end_headers();return
+        self.send_response(200);self.send_header('Content-Length','18');self.end_headers();self.wfile.write(b'private reply body')
     def do_GET(self):
         path=self.path.split('?')[0]
         if path=='/slow': time.sleep(1.25)
         if path=='/missing': self.send_error(404); return
         if path=='/redirect':
-            self.send_response(302);self.send_header('Location','/binary');self.end_headers();return
+            self.send_response(302);self.send_header('Location','/binary');self.send_header('Content-Length','0');self.end_headers();return
         if path=='/empty':
             self.send_response(204);self.send_header('Content-Length','0');self.end_headers();return
         if path=='/stream':
@@ -32,7 +40,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
         try: self.wfile.write(body)
         except (BrokenPipeError,ConnectionResetError,ConnectionAbortedError): pass
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--love',required=True);p.add_argument('--source-root',type=pathlib.Path);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--love',required=True);p.add_argument('--source-root',type=pathlib.Path)
+    p.add_argument('--tls',action='store_true',help='also exercise fixed-destination POST against an owned TLS fixture')
+    args=p.parse_args()
     root=pathlib.Path(__file__).resolve().parents[1]
     source=(args.source_root or root).resolve()
     executable=pathlib.Path(args.love).resolve()
@@ -54,16 +64,38 @@ def main():
     else:
         temporary=tempfile.TemporaryDirectory(prefix='gen2recomp-get-check-')
         project=pathlib.Path(temporary.name)
-    for name in ('src/net/Fetch.lua','src/net/AsyncGet.lua','src/net/get_worker.lua',
+    for name in ('src/net/Fetch.lua','src/net/AsyncGet.lua','src/net/get_worker.lua','src/net/BoundedHttp.lua','src/link/Json.lua','src/mods/LogReport.lua',
                  'src/net/AsyncDownload.lua','src/net/DownloadTransport.lua','src/net/DownloadPublish.lua','src/net/download_worker.lua',
                  'src/mods/Net.lua','src/core/HostShell.lua'):
         target=project/name;target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(source/name,target)
     for name in ('main.lua','conf.lua','download_test_worker.lua'):shutil.copy2(root/'tools/async-get-check'/name,project/name)
-    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),Handler)
+    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),Handler);server.posts=[]
+    cert=None
+    if args.tls:
+        config=project/'tls.cnf';cert=project/'tls.crt';key=project/'tls.key'
+        config.write_text('[req]\ndistinguished_name=dn\nx509_extensions=ext\nprompt=no\n[dn]\nCN=localhost\n[ext]\nsubjectAltName=IP:127.0.0.1,DNS:localhost\n')
+        result=run(['openssl','req','-x509','-newkey','rsa:2048','-nodes','-days','2','-config',str(config),'-keyout',str(key),'-out',str(cert)],capture_output=True,text=True,timeout=30)
+        result.check_returncode();key.chmod(0o600)
+        context=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER);context.load_cert_chain(cert,key)
+        server.socket=context.wrap_socket(server.socket,server_side=True)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
-        env=os.environ.copy();env.update(GET_TEST_IDENTITY=identity,GET_TEST_URL=f'http://127.0.0.1:{server.server_port}')
+        env=os.environ.copy();env.update(GET_TEST_IDENTITY=identity,GET_TEST_URL=f'{"https" if args.tls else "http"}://127.0.0.1:{server.server_port}')
+        if cert:
+            untrusted=dict(env,GET_TEST_UNTRUSTED='1')
+            untrusted.pop('CURL_CA_BUNDLE',None)
+            rejected=run([str(executable),str(project)],env=untrusted,cwd=root,timeout=15)
+            rejected.check_returncode();assert not server.posts,'untrusted TLS sent a request body'
+        if cert:env['CURL_CA_BUNDLE']=str(cert)
         result=run([str(executable),str(project)],env=env,cwd=root,timeout=45)
+        if args.tls and result.returncode==0:
+            text=[r for r in server.posts if r['path']=='/post-text'];encoded=[r for r in server.posts if r['path']=='/post-json']
+            assert len(text)==1 and text[0]['body']==b'literal\x00\xff\r\n$(printf injected) "quote"'
+            assert text[0]['agent']=='gen2recomp-mod/log_text' and text[0]['mime']=='text/plain; charset=utf-8'
+            assert len(encoded)==1
+            envelope=json.loads(encoded[0]['body']);assert envelope['mod']=='log_json' and envelope['body']=='\0'*65536 and envelope['format']=='json'
+            assert not any(r['path']=='/forbidden-post-target' for r in server.posts),'POST followed a redirect'
+            print('TLS POST: exact raw bytes, JSON envelope, identity and redirect refusal PASS',flush=True)
         return result.returncode
     finally:
         server.shutdown();server.server_close()

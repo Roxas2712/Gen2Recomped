@@ -318,9 +318,10 @@ function PokegearMenu:drawModeArrow()
   love.graphics.setColor(1, 1, 1, 1)
 end
 
-function PokegearMenu:text(str, tx, ty)
+function PokegearMenu:text(str, tx, ty, literal)
   love.graphics.setColor(0, 0, 0, 1)
-  Font.draw(Strings(tostring(str or "")), tx * 8, ty * 8)
+  local text=tostring(str or "")
+  Font.draw(literal and text or Strings(text), tx * 8, ty * 8)
   love.graphics.setColor(1, 1, 1, 1)
 end
 
@@ -427,6 +428,9 @@ function PokegearMenu:contacts()
 end
 
 function PokegearMenu:stationList()
+  if require("src.core.GameVersion").isGen2() then
+    return require("src.world.Gen2Radio").gearList(self.game.data,self.game.save,STATIONS,hasExpn(self.game.save))
+  end
   local list = {}
   for _, st in ipairs(STATIONS) do list[#list + 1] = st end
   if hasExpn(self.game.save) then
@@ -488,9 +492,11 @@ function PokegearMenu:update(dt)
       return
     end
   end
+  if card.id ~= "RADIO" then self._radioTuned=nil end
   if card.id == "RADIO" then
     local stations = self:stationList()
     local n = #stations
+    self.station = math.max(1, math.min(self.station, n))
     if input:wasPressed("up") then
       -- pret: up winds knob toward higher frequencies (clamp, no wrap)
       if self.station < n then
@@ -515,6 +521,11 @@ function PokegearMenu:update(dt)
       end
     end
     local st = stations[self.station]
+    if require("src.core.GameVersion").isGen2() and st and self._radioTuned~=st.id then
+      self._radioTuned=st.id
+      self.radioLine=1
+      require("src.world.Gen2Radio").notify(self.game.data,st.id,st.knob,"pokegear")
+    end
     if st and st.flute then
       self.game.save.g2RadioChannel = "POKE_FLUTE"
       self.game.save.g2MapMusic = "MUSIC_POKE_FLUTE_CHANNEL"
@@ -724,7 +735,7 @@ function PokegearMenu:drawRadio()
 
   -- Station name at (2,9) — UpdateRadioStation
   if st and st.name then
-    self:text(st.name, 2, 9)
+    self:text(st.name, 2, 9, st.nameLiteral)
   end
 
   -- Tuning knob marker (SPRITE_ANIM_OBJ_RADIO_TUNING_KNOB)
