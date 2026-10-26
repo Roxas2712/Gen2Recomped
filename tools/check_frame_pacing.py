@@ -5,7 +5,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import subprocess
 import sys
 import time
 
@@ -25,6 +24,14 @@ def main():
         parser.error('QA storage guard is required; provide --qa-tools')
     qa_source(root)
     qa_source(args.love.resolve())
+    files = ('main.lua', 'src/core/FrameCap.lua', 'src/core/FrameProfile.lua',
+             'tools/frame-pacing-check/main.lua', 'tools/frame-pacing-check/conf.lua')
+    if args.gc:
+        files += ('src/core/Performance.lua', 'src/core/GCFrameBudget.lua', 'src/core/Game.lua',
+                  'tools/frame-pacing-check/gc.lua')
+    hashes = {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in files}
+    source = qa_run(['git', 'rev-parse', 'HEAD'], cwd=root, text=True,
+                    capture_output=True, check=True).stdout.strip()
     qa_cache(args.report.parent)
     args.report.parent.mkdir(parents=True, exist_ok=True)
     identity = 'oasc-gen2recomp-qa-frame-pacing-' + str(time.time_ns())
@@ -40,13 +47,15 @@ def main():
     if result.returncode or len(records) != 1:
         raise RuntimeError('native pacing probe failed; see ' + str(args.report.with_suffix('.log')))
     report = json.loads(records[0])
-    report['source'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
-    files = ('main.lua', 'src/core/FrameCap.lua', 'src/core/FrameProfile.lua',
-             'tools/frame-pacing-check/main.lua', 'tools/frame-pacing-check/conf.lua')
-    if args.gc:
-        files += ('src/core/Performance.lua', 'src/core/GCFrameBudget.lua', 'src/core/Game.lua',
-                  'tools/frame-pacing-check/gc.lua')
-    report['sha256'] = {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in files}
+    if any(hashlib.sha256((root / name).read_bytes()).hexdigest() != digest for name, digest in hashes.items()):
+        raise RuntimeError('Measured source changed during the pacing probe')
+    if qa_run(['git', 'rev-parse', 'HEAD'], cwd=root, text=True,
+              capture_output=True, check=True).stdout.strip() != source:
+        raise RuntimeError('Measured commit changed during the pacing probe')
+    report['source'] = source
+    report['sha256'] = hashes
+    report['minimumFreeGiB'] = 20
+    report['playerProfilesUsed'] = False
     args.report.write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report, indent=2))
 
