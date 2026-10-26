@@ -183,6 +183,13 @@ function ScriptRunner:exec(script, ctx, admission)
     local prepared
     prepared, trace, origin = Decoded.prepare(script)
     script = prepared or script
+    -- The pool key this run was compiled from ("<bank>:<addr>" for a Gen 2
+    -- cart script) is what the reference host reports as ctx.scriptKey to a
+    -- script.command wrapper.  Only the decoded profile reads it, and only
+    -- when the native context does not already carry one.
+    if origin and ctx.scriptKey == nil and type(origin.entry) == "string" then
+      ctx.scriptKey = origin.entry
+    end
   end
   local labels = ScriptRunner.scanLabels(script)
   local data = self.game and self.game.data
