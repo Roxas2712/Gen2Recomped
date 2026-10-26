@@ -3211,6 +3211,19 @@ function Commands.g3_wait_se(ctx)
   ctx.runner:yield()
 end
 
+function Commands.g3_play_cry(ctx, species, mode)
+  local raw = valueOf(ctx, species)
+  require("src.core.Sound").playCry(ctx.game.data, Gen3Commands.speciesId(ctx.game.data, raw),
+    { nativeSpecies = raw, mode = valueOf(ctx, mode), mono = ctx.save.options and ctx.save.options.stereo == false })
+end
+
+function Commands.g3_wait_cry(ctx)
+  local Sound = require("src.core.Sound")
+  if Sound.isCryFinished() then return end
+  ctx.runner.waitingCheck = Sound.waitCry()
+  ctx.runner:yield()
+end
+
 function Commands.g3_wait_fanfare(ctx)
   local fanfare = ctx.g3Fanfare
   if not fanfare then return end

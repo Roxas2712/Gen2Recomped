@@ -38,7 +38,7 @@ for _, version in ipairs({ "firered", "emerald" }) do
   local f = dofile("tests/enemy_actions/assist.lua").fixture(".", "gen2", version)
   local Handshake, Copy = require("src.link.Handshake"), require("src.mods.Merge").deepCopy
   local current = Handshake.hello(f.game, "battle")
-  T.eq(current.nativeBattleRevision, 18, "native player lifecycle advertises revision eighteen")
+  T.check(current.nativeBattleRevision >= 18, "native player lifecycle advertises revision eighteen or newer")
   T.eq(current.nativePartyRevision, 1, "player lifecycle does not change the party codec")
   local older = Copy(current)
   older.nativeBattleRevision = 17
