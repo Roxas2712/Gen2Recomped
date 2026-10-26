@@ -21,10 +21,10 @@ function love.load()
  local templates={{lights={{unit={.4,-.8,.2},colour={31,22,13}}},ambient={8,11,5},diffuse={23,20,26}},
  {lights={{unit={-.6,-.3,.4},colour={17,9,31}}},ambient={4,6,12},diffuse={27,25,19}}}
  local canvas,depth=M.newTarget(96,96);check(canvas and depth,'real Gen4 target and depth canvas')
- local function frame(model,template,cached,matrix)
+ local function frame(model,template,cached,matrix,pose)
   P.gen4UniformCache=cached;M.light=template
   g.push('all');g.setCanvas({canvas,depthstencil=depth});g.origin();g.setShader();g.setColor(1,1,1,1);g.clear(0,0,0,0,0,1)
-  check(model:draw(matrix or I),'actual Gen4 mesh draw');g.setCanvas();g.pop()
+  check(model:draw(matrix or I,pose),'actual Gen4 mesh draw');g.setCanvas();g.pop()
   local data=g.readbackTexture(canvas);local bytes=data:getString();data:release();return bytes
  end
  local function compare(a,b,why,tolerance)
@@ -57,8 +57,41 @@ function love.load()
   end
  end
  P.gen4ByteVertices=true;P.gen4GpuLight=true
+ P.gen4GpuSkin=false
  local skinned=assert(M.new(record(Shade.forTemplate(templates[1]),true)));models[#models+1]=skinned
  check(skinned.shapes[1].bindVertices and #skinned.shapes[1].bindVertices==3,'CPU-skinned shape retains table vertices')
+ check(skinned.shapes[1].gpuSkin==nil,'CPU-skinned shape carries no joint palette')
+ P.gen4GpuSkin=true
+ local gpuSkinned=assert(M.new(record(Shade.forTemplate(templates[1]),true)));models[#models+1]=gpuSkinned
+ check(gpuSkinned.shapes[1].gpuSkin and #gpuSkinned.shapes[1].gpuSkin.slots==1 and gpuSkinned.shapes[1].gpuSkin.slots[1]==0,'GPU-skinned shape maps its one slot to joint 0')
+ check(gpuSkinned.shapes[1].bindVertices==nil,'GPU-skinned shape keeps no table vertices')
+ local function translated(x,y)
+  local m={unpack(I)};m[4]=x;m[8]=y;return m
+ end
+ local function skinPair(cpu,gpu,pose,label)
+  for _,cached in ipairs{false,true}do
+   local baseline=frame(cpu,templates[1],cached,nil,pose)
+   compare(frame(gpu,templates[1],cached,nil,pose),baseline,label..' cache='..tostring(cached))
+  end
+ end
+ skinPair(skinned,gpuSkinned,{[1]=I,stack={[0]=I}},'identity joint')
+ skinPair(skinned,gpuSkinned,{[1]=I,stack={[0]=translated(.125,-.0625)}},'translated joint')
+ skinPair(skinned,gpuSkinned,{[1]=translated(-.125,.0625),stack={}},'missing joint uses shape placement')
+ -- Sparse cartridge slot numbers must map to the correct dense GPU indices.
+ local sparse=record(Shade.forTemplate(templates[1]),true)
+ sparse.shapes[1].matrixSlots=string.char(2,7,2)
+ P.gen4GpuSkin=false;local sparseCpu=assert(M.new(sparse));models[#models+1]=sparseCpu
+ P.gen4GpuSkin=true;local sparseGpu=assert(M.new(sparse));models[#models+1]=sparseGpu
+ check(sparseGpu.shapes[1].gpuSkin.slots[1]==2 and sparseGpu.shapes[1].gpuSkin.slots[2]==7,'sparse joint slots retain their source mapping')
+ skinPair(sparseCpu,sparseGpu,{[1]=I,stacks={[1]={[2]=translated(.125,0),[7]=translated(-.125,.0625)}}},'distinct sparse joints')
+ skinPair(sparseCpu,sparseGpu,{[1]=translated(.0625,-.125),stack={[2]=I}},'sparse missing joint fallback')
+ -- More than sixteen source slots retain the CPU path and its original data.
+ local overflow=record(Shade.forTemplate(templates[1]),true);local shape=overflow.shapes[1]
+ local rows,slots={},{}
+ for n=0,16 do rows[#rows+1]=shape.vertices:sub(1,16);slots[#slots+1]=string.char(n) end
+ shape.vertices=table.concat(rows);shape.matrixSlots=table.concat(slots);shape.vertexCount=17
+ local overflowModel=assert(M.new(overflow));models[#models+1]=overflowModel
+ check(overflowModel.shapes[1].gpuSkin==nil and #overflowModel.shapes[1].bindVertices==17,'joint palette overflow retains CPU skinning')
  check(M.cutsHeight(),'full native height-cut shader compiled')
  local V={};local libs={}
  V.require=function(name)

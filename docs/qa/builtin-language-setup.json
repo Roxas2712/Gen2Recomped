@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "runs": [
+    {
+      "game": "gold",
+      "passed": true,
+      "logSha256": "5d382ce93803b46b1aa39e10666530382825b291a94ff0a8de7ea62b312f6948"
+    },
+    {
+      "game": "emerald",
+      "passed": true,
+      "logSha256": "f6c51199695a460a93af9976758a2345d3ec1489a38e824c903d23786b6ec549"
+    }
+  ],
+  "engineLuaSha256": "bfebba16fd269b7911716f8f0ff7074dd26196861e5963b9f1df5f04c01544e7",
+  "bundledPayloadSha256": "d18ccb4f12f6191214ae95292c8c3328e91e4107634e6a2f43b93eb431762571",
+  "scope": "Clean profile. Built-in payload, no language ZIP. First-run locale/font checks, actual US import, exact language-source acquisition/rejection, boot, native game round trips and progress preservation. Asian cartridge gameplay requires separate real-ROM qualification."
+}

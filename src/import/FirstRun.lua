@@ -35,6 +35,7 @@ function W.finish(self,after)
   -- Persist one complete choice atomically; failed writes leave the guide open.
   local o={};for k,v in pairs(self:_settings()) do o[k]=v end
   o.launcherLanguage=f.language;o.launcherTheme=f.theme;o.launcherAccent=f.accent;o.launcherSetupVersion=W.VERSION
+  o.nativeLanguageDefault=require('src.translation.NativeLanguages').canonical(f.language)
   if not o.launcherSaveStorageChoice then o.launcherSaveStorageChoice='local';o.cloudAutoSync=false end
   local ran,ok=pcall(Saves.saveOptions,o)
   if not ran or not ok then f.notice='Your preferences could not be saved. Please try again.';return end
@@ -117,16 +118,17 @@ function W.draw(self)
   end
   para(page.body)
   if f.page==1 then
-    local langs={{'en','English'},{'de','Deutsch'},{'fr','Français'},{'es','Español'},{'it','Italiano'},{'nl','Nederlands'}}
+    local langs={{'en','English'},{'de','Deutsch'},{'fr','Français'},{'es','Español'},{'it','Italiano'},{'pb','Português (Brasil)'},
+      {'ja','日本語'},{'ko','한국어'},{'zh','简体中文'},{'zh-Hant','繁體中文'}}
     local cw=(tw-10*s)/2
     for i,item in ipairs(langs) do
       local yy=top+math.floor((i-1)/2)*52*s
       button('language:'..item[1],item[2],cw,tx+((i-1)%2)*(cw+10*s),yy)
     end
-    top=top+3*52*s
+    top=top+math.ceil(#langs/2)*52*s
     local name=f.language;for _,v in ipairs(require('src.translation.Languages')) do if v[1]==name then name=v[2];break end end
     button('languageNext',L('More languages')..' · '..L(name))
-    para('English and German essentials work immediately. Additional text and languages use the on-device translation service; an initial model download may be needed.')
+    para('Built-in game languages use your own matching language ROM. Japanese: Crystal. Korean: Gold and Silver. Additional launcher text can use on-device translation; a model download may be needed.')
   elseif f.page==2 then
     button('theme:default','RetroRecomped')
     local catalog=require('src.import.LauncherTheme')

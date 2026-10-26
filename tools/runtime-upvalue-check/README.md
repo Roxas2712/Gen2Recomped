@@ -43,9 +43,9 @@ These are qualification artifacts, not a replacement installation or a release.
 
 Command output is written directly to each step's log, including partial output
 on a timeout. A timeout or nonzero exit still fails qualification. The default
-engine budget is 900 seconds per variant; `--engine-timeout` can increase it
-without changing the test set. The Intel macOS CI runner allows 1800 seconds
-per complete engine run and 75 minutes for the job, including both variants.
+engine budget is 2400 seconds per variant; `--engine-timeout` can change this
+positive bound without changing the test set. CI allows 90 minutes for the
+job, including both complete variants, builds and actual host checks.
 
 On Windows the builder explicitly selects MSVC's linker and Git for Windows
 Bash, avoiding the unrelated Git Unix `link` utility and System32's WSL
@@ -58,6 +58,11 @@ Windows x64, Intel macOS and arm64 macOS using explicit
 [GitHub runner labels](https://github.com/actions/runner-images#available-images).
 Both variants must pass the closure/C API checks and the engine's quick tiers;
 the workflow does not publish a GitHub release.
+
+Each complete engine quick-tier run has a 40-minute bound; the matrix job
+allows 90 minutes for both variants, builds and host checks. This accommodates
+the hosted Intel runner without reducing the required assertions. A timeout
+still fails qualification and retains its partial per-step log for diagnosis.
 
 On Windows and both macOS architectures, `love_abi.py` additionally checks the
 candidate inside a separate copy of the actual pinned LÖVE12 host. It verifies
