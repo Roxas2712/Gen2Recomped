@@ -158,7 +158,8 @@ function Loader.new(opts)
   end
   local self = setmetatable({
     mods = {}, loaded = {}, errors = {}, initialized = false,
-    events = Events.new(), hooks = Hooks.new(), content = {}, assets = {},
+    events = Events.new(), hooks = Hooks.new(), _decodedHooks = Hooks.new(), content = {}, assets = {},
+    _callbackProfiles = opts and opts.callbackProfiles,
     exports = {}, apis = {}, migrations = {}, order = {},
     modSave = {}, modOptions = {}, optionSchemas = {},
     optionStatus = {}, imageCache = {},
@@ -202,6 +203,7 @@ function Loader:_loadState()
   end
   -- mod.options reads through this; M11 owns writing it back
   self.modOptions = options.modOptions or {}
+  self._callbackProfiles = self._callbackProfiles or options.modCallbackProfiles or {}
   -- Migrate the original prototype manager's separate state file into the
   -- normal persistent options file once.  New Game never resets options.
   if next(options.mods or {}) == nil and self.fs.getInfo
@@ -1012,6 +1014,13 @@ function Loader:_api(mod)
     },
   }
   self.exports[modId] = api.exports
+  local callbackProfile = self._callbackProfiles and self._callbackProfiles[modId]
+  assert(callbackProfile == nil or callbackProfile == "native" or callbackProfile == "decoded",
+    "unknown callback profile for " .. modId)
+  if callbackProfile == "decoded" then
+    assert(api.callbackFormat == "native", "decoded profile cannot be combined with unified callbacks")
+    engineRequire("src.mods.DecodedCallbacks").install(loader, api, modId, hostGen)
+  end
   if api.callbackFormat == "unified" then
     engineRequire("src.mods.UnifiedCallbacks").install(loader, api, modId, hostGen)
   end
@@ -1272,6 +1281,7 @@ function Loader:_rollback(modId)
   end
   self.events:removeOwner(modId)
   self.hooks:removeOwner(modId)
+  self._decodedHooks:removeOwner(modId)
   self.exports[modId] = nil
   self.optionSchemas[modId] = nil
   self.optionStatus[modId] = nil
@@ -1524,6 +1534,7 @@ function Loader:load(data)
   end)
   -- engine call sites reach these buses -- and this error feed, for failures
   -- that only surface at play time -- through Runtime from here on
+  self.hooks._decodedHooks = self._decodedHooks
   Runtime.install(self.events, self.hooks, self.errors)
   self:_validate()
   local ordered = self:_resolve()

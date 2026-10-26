@@ -23,6 +23,10 @@ concurrency:
 jobs:
   compare:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        reference: [79ea62f45fb2ea8f65d081a109431e4eb1bbdb36, 535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -35,7 +39,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: bryanthaboi/gen1recomp
-          ref: 79ea62f45fb2ea8f65d081a109431e4eb1bbdb36
+          ref: ${{ matrix.reference }}
           path: gen1-reference
           sparse-checkout: |
             src
@@ -51,6 +55,6 @@ jobs:
           --report "${{ runner.temp }}/api3-report.json"
       - uses: actions/upload-artifact@v7
         with:
-          name: api3-contract-report
+          name: api3-contract-report-${{ matrix.reference }}
           path: ${{ runner.temp }}/api3-report.json
           if-no-files-found: error
