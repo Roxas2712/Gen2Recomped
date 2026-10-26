@@ -24,7 +24,9 @@ function M.run()
     for _,edition in ipairs({'gold','silver','crystal'})do
       Version.set(edition)
       for _,mode in ipairs({'gbc','dmg','custom'})do
-        if mode=='custom'then Palette.setDisplay(mode,custom)else Palette.setMode(mode)end
+        -- Each case owns both settings: setMode intentionally retains a saved
+        -- custom ramp, which would leak the previous edition's custom case.
+        Palette.setDisplay(mode,mode=='custom'and custom or nil)
         local expected=mode=='gbc'and colors or mode=='custom'and custom or Palette.GRAYS
         for _,enemy in ipairs({false,true})do for _,flip in ipairs({0,32,64,96})do
           local xf,yf=flip%64>=32,flip>=64
