@@ -63,7 +63,9 @@ for _,version in ipairs({'gold','silver','crystal'})do
  T.eq(bounds.complete,false,version..' pair cannot cross a cartridge bank boundary')
  T.eq(#bad,0,version..' bank-boundary failure has no invented pair')
  local fallback=A.rows({})
- T.eq(fallback[3].apricorn,'ITEM_101',version..' historical stock cache retains yellow-before-green native order')
+ for i,id in ipairs({85,89,92,93,97,99,101})do
+  T.eq(fallback[i].apricorn,string.format('ITEM_%03d',id),version..' historical fallback retains native cartridge item order at slot'..i)
+ end
  T.eq(fallback[3].ball,nil,version..' historical fallback does not invent missing ball mappings')
  local marker=markerFor(version)
  T.check(marker:find('gen2%-apricorn%-table%-v1:')~=nil,version..' stock native cache records the recipe import format')
