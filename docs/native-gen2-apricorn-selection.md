@@ -8,10 +8,11 @@ and cannot cross a cartridge bank boundary. The map-script output includes
 recipe records and completeness metadata. Stock Gold/Silver/Crystal cache
 markers require reimport; other edition markers are unchanged.
 
-Kurt's actual native special now consumes this imported order. The old fixed
-item-ID order put several colours in the wrong positions. Historical stock
-caches retain selection until reimport in native red/blue/yellow/green/white/
-black/pink order, without fabricating their missing ball mappings.
+Kurt's actual native special now consumes the imported order, including
+cartridge-specific table changes. Historical stock caches retain the original
+native item order85/89/92/93/97/99/101 until reimport, without fabricating their
+missing ball mappings. The earlier colour-based fallback reordering was
+incorrect and is corrected here; the ROM-table import itself was unaffected.
 
 Gold/Silver take one apricorn without opening a quantity menu. Crystal asks
 for quantity, including a one-item stack; cancelling quantity returns to the
@@ -27,7 +28,7 @@ script branches, event/working flags, daily resets and ball choice remain
 script-owned. This does not add a competing Kurt job model or rewrite a ROM
 script's ball operand merely because its selection table contains a pair.
 
-Validation:198 synthetic checks use actual importer/map-script serialization,
+Validation:216 synthetic checks use actual importer/map-script serialization,
 Gen2ScriptVM, ScriptRunner, StateStack, Menu input and Bag operations. They
 cover order/bounds, malformed data, cache readiness, Gold/Silver single-item
 handover, Crystal confirmation/reselection/cancellation/scrolling and a real
