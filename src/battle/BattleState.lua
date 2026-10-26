@@ -13409,6 +13409,7 @@ function BattleState:drawBattleField()
 end
 
 function BattleState:drawClassic()
+  if GameVersion.isGen2() then return self:drawScene() end
   -- AskName: ClearSprites + wild ClearScreenArea -- white field under the
   -- nickname TextBox / YES/NO (naming_screen.asm); overlays draw on top.
   if self.blankForAskName then
@@ -13523,6 +13524,7 @@ function BattleState:drawClassic()
 end
 
 require('src.battle.Gen2MovePresentation').install(BattleState)
+require('src.battle.Gen2BattleScene').install(BattleState)
 Gen2BattleView.install(BattleState, {
   load = getImage,
   palette = monPalette,

@@ -465,7 +465,7 @@ local function drawAnimationLayer(battle)
 end
 
 -- The whole 304x144 composition for one frame.
-function WideBattle.draw(battle)
+local function drawPanel(battle,withObjects)
   local g = love.graphics
   -- The field is the display mode's paper.  Under a forced-mono mode the
   -- whole surface is remapped downstream (WideBattle.zones), so the field
@@ -521,9 +521,20 @@ function WideBattle.draw(battle)
     g.pop()
   end
   shaken(function() drawHUDs(battle, slide) end)
-  drawAnimationLayer(battle)
+  if withObjects then drawAnimationLayer(battle) end
   shaken(function() drawTextArea(battle) end)
 
+end
+
+function WideBattle.draw(battle)
+  if require('src.core.GameVersion').isGen2() then
+    return battle:drawScene(function()
+      battle:drawSceneBody(function()drawPanel(battle,false)end,
+        function()drawAnimationLayer(battle)end,WideBattle.WIDTH,WideBattle.HEIGHT)
+    end)
+  end
+  drawPanel(battle,true)
+  local g,fx=love.graphics,battle.fx
   if fx and fx.flash and fx.flash > 0 and battle.frame % 4 < 2 then
     g.setColor(1, 1, 1, 0.85)
     g.rectangle("fill", 0, 0, WideBattle.WIDTH, WideBattle.HEIGHT)
