@@ -52,7 +52,9 @@ local TOWN_PALS = {
 }
 local function oldPaletteNameFor(def, lastOutdoorId)
   local ts, id = def.tileset, def.id
-  if ts == "CEMETERY" then return "GRAYMON"
+  -- The fork's native HOUSE palette is an explicit tileset default.
+  if ts == "HOUSE" then return "HOUSE"
+  elseif ts == "CEMETERY" then return "GRAYMON"
   elseif ts == "CAVERN" then return "CAVE"
   elseif id == "LORELEIS_ROOM" then return "PALLET"
   elseif id == "BRUNOS_ROOM" then return "CAVE"
