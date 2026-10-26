@@ -13,6 +13,7 @@ GEN1_REF = "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91"
 
 
 MODES = [
+    (3, 'native_fanfare_commands'),
     (3, 'native_bgm_commands'),
     (3, 'native_bgm_policy'),
     (3, 'native_bgm_symbols'),

@@ -861,6 +861,21 @@ function Music.nativeCommand(data, operation, value, keep, context)
         return nativeBgmShared and true or false
       end,
       fanfare = function() return state.pendingRestore == true or fanfareActive() end,
+      suspended = function() return sessionSuspended end,
+      nativeRunning = function() return require("src.core.ChipAudio").nativeBgmState() ~= nil end,
+      nativeGeneration = function()
+        local playback = require("src.core.ChipAudio").nativeBgmState()
+        return playback and playback.threaded and nativeBgm.current and nativeBgm.current.id or nil
+      end,
+      pauseNative = function() require("src.core.ChipAudio").pauseNativeMusic() end,
+      resumeNative = function()
+        nativeBgm:setLevel(volumeScale)
+        require("src.core.ChipAudio").resumeNativeMusic()
+      end,
+      stopCry = function() require("src.core.Sound").stopCry() end,
+      playFanfare = function(currentData, info)
+        require("src.core.Sound").playNativeFanfare(currentData, info, volumeScale, filterLevel)
+      end,
       defaultSong = function()
         if require("src.core.GameVersion").get() == "emerald" then
           local currentData = nativeBgmContext and nativeBgmContext.game and nativeBgmContext.game.data or data
@@ -889,6 +904,7 @@ function Music.nativeCommand(data, operation, value, keep, context)
   nativeBgmContext = context
   if operation == "map" then
     nativeBgm:setMapSong(number(value))
+  elseif operation == "playfanfare" then return nativeBgm:playFanfare(data, value)
   elseif operation == "playbgm" or operation == "fadenewbgm" then
     if operation == "playbgm" and (keep == 1 or keep == true) then nativeBgm:setSavedSong(value) end
     return nativeBgm:playSong(data, value)
@@ -897,6 +913,18 @@ function Music.nativeCommand(data, operation, value, keep, context)
   elseif operation == "fadeinbgm" then nativeBgm:fadeInBgm(data, nativeBgm.mapSong or nativeBgm.savedSong, 4)
   elseif operation == "fadedefaultbgm" then return nativeBgm:fadeDefaultBgm(data)
   end
+end
+function Music.nativeFanfare(data, value, context)
+  return Music.nativeCommand(data, "playfanfare", value, nil, context)
+end
+function Music.nativeWaitFanfare()
+  return nativeBgm and nativeBgm:waitFanfare() or nil
+end
+function Music.nativeFanfareFinished()
+  return not nativeBgm or nativeBgm:fanfareFinished()
+end
+function Music.nativeFanfareSnapshot()
+  return nativeBgm and nativeBgm:fanfareSnapshot() or { active = false, frames = 0, paused = false }
 end
 function Music.nativeSnapshot()
   return nativeBgm and nativeBgm:snapshot() or nil

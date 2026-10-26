@@ -3191,17 +3191,9 @@ Gen3Commands.FRLG_FANFARE_FRAMES = {
 }
 
 function Commands.g3_play_fanfare(ctx, song, number)
-  local Music = require("src.core.Music")
-  if not Music.playOnce(ctx.game.data, song) then
-    ctx.g3Fanfare = nil
-    return
-  end
-  local frames
-  if require("src.core.GameVersion").get() == "firered" then
-    frames = Gen3Commands.FRLG_FANFARE_FRAMES[tonumber(number) or -1]
-  end
-  ctx.g3Fanfare = { started = (ctx.game.save and ctx.game.save.playTime) or 0,
-                    seconds = frames and frames / 60 or nil }
+  local hex = type(song) == "string" and song:match("^SONG_(%x+)$")
+  local id = number or hex and tonumber(hex, 16) or song
+  return require("src.core.Music").nativeFanfare(ctx.game.data, valueOf(ctx, id), ctx)
 end
 
 function Commands.g3_wait_se(ctx)
@@ -3229,26 +3221,10 @@ function Commands.g3_wait_cry(ctx)
 end
 
 function Commands.g3_wait_fanfare(ctx)
-  local fanfare = ctx.g3Fanfare
-  if not fanfare then return end
-  local Music = require("src.core.Music")
-  local function over()
-    if not Music.oneShotPlaying() then return true end
-    -- game time (save.playTime steps 1/60 per logic frame), not wall time
-    local now = (ctx.game.save and ctx.game.save.playTime) or 0
-    if fanfare.seconds and now - fanfare.started >= fanfare.seconds then
-      -- the jingle's audible part is done; bring the map theme back now
-      -- rather than after the rendered tail
-      pcall(Music.restoreMap, ctx.game.data)
-      return true
-    end
-    return false
-  end
-  ctx.g3Fanfare = nil
-  if over() then return end
-  local runner = ctx.runner
-  runner.waitingCheck = function() return over() end
-  runner:yield()
+  local wait = require("src.core.Music").nativeWaitFanfare()
+  if not wait then return end
+  ctx.runner.waitingCheck = wait
+  ctx.runner:yield()
 end
 
 function Commands.g3_wait_state(ctx)
