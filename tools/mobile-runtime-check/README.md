@@ -40,3 +40,37 @@ qualification. Switch needs a rebuilt runtime and target execution. These
 build artifacts establish neither full platform parity nor original-mod
 startup, rendering or gameplay acceptance. Local QA uses the shared 20 GiB
 reserve and owned output leases.
+
+## Actual Android app-host gate
+
+`qualify_android_love.py build` copies the tracked, fully materialized Android
+source into one owned QA directory, selects x86-64 there and builds two distinct
+test APKs through the existing Gradle/LÖVE/JNI project. Each uses the exact
+stock-60 or extended-120 archive and matching headers from a candidate receipt.
+The source checkout and normal application runtime are preserved. A fresh
+application ID and provider authority prevent overlap with an installed game.
+Only the small ROM-free payload is embedded; no mod, cartridge or player save
+is copied.
+
+```sh
+python3 tools/mobile-runtime-check/qualify_android_love.py build \
+  --build /path/to/android-runtime/candidate \
+  --output .local/qa/android-love-build/candidate
+python3 tools/mobile-runtime-check/qualify_android_love.py run \
+  --serial emulator-5554 --build .local/qa/android-love-build/candidate \
+  --output .local/qa/android-love-run/candidate
+```
+
+The build needs the pinned SDK/NDK, JDK 17 and a complete Android checkout.
+The run refuses physical devices and existing app installations. It installs
+only its fresh test apps on an explicit emulator, checks interpreter/JIT,
+closure/debug/bytecode/GC behavior inside the real LÖVE 11.5 host, calls an FFI
+callback, executes a separate LÖVE thread VM and verifies filesystem bindings.
+Reports are written inside each test app's private directory; only installations
+created by that invocation are stopped and uninstalled. Candidate, APK and
+source hashes bind the evidence to the actual built inputs.
+
+The `Android LÖVE runtime host` workflow performs this x86-64 acceptance gate.
+Its result must be inspected before claiming host qualification. Reports keep
+release selection disabled: ARM/32-bit and physical devices, rendering, input,
+full original-mod gameplay, iOS and Switch still require their own acceptance.
