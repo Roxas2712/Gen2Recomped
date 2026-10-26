@@ -15,6 +15,13 @@
 --   { "talkany", { ids } }      the same for the first of them who is shown
 --   { "sign", n }               walk in front of sign n, face it, press A
 --   { "step", "dir", n }        hold a direction until n cells are walked
+--   { "dwwalk", goal, done = fn }  a Distortion World floor: walk (hops, jump
+--                               points, walls and ceilings -- dw_planner.lua)
+--                               to goal { cell = {x, y} } or { tile = {x, y, z} };
+--                               with `done`, keep going until fn(r) is true
+--   { "hold", "dir", ticks, until = fn }  hold a direction (pressing nothing
+--                               else) for ticks, or until fn(r): a Strength
+--                               push, a waterfall, a turn to face water
 --   { "face", "dir" }           turn without walking
 --   { "press", "key" }          one press
 --   { "mash", ticks }           press A every few ticks for that long
@@ -22,6 +29,11 @@
 --   { "teleport", "MAP", x, y, facing }   travel between beats
 --   { "do", fn }                run fn(r) once (a cheat, a log line)
 --   { "answers", { n, ... } }   the next menus are answered with these rows
+--   { "swimto", x, y }          walkto over water only (a surfer the planner
+--                               would otherwise land on the first shoal)
+--   { "panel", x, y }           step onto the warp at (x, y) of THIS map (a
+--                               warp panel: Galactic HQ's), other warps
+--                               avoided; done once it has carried the player
 --
 -- While the game is BUSY -- a script running, a text box, a menu, a battle --
 -- the runner presses A on a rhythm (START on a naming screen, B for "give it
@@ -72,6 +84,11 @@ function R:busy()
   -- a trainer's "!" and walk-up freeze the player (HGSS's emote now runs the
   -- cartridge's 74 ticks): standing still then is not being blocked
   if ow.emote or ow.engaging or (ow.extraEmotes and #ow.extraEmotes > 0) then return true, "engage" end
+  -- a Distortion World event, lift or waterfall owns the field like a script
+  -- (Gen4DistPlatforms.fieldTask): a held direction then is not a step
+  local DWP = package.loaded["src.world.Gen4DistPlatforms"]
+  if DWP and DWP.fieldTask and DWP.fieldTask(ow) then return true, "dw task" end
+  if ow.dwAnim then return true, "moving" end
   return false
 end
 local function stateName(st)
@@ -106,6 +123,13 @@ function R:nextBeat()
   self.beat = self.beat + 1
   self.stepAt, self.beatT, self.stepT, self.stuck = 1, 0, 0, 0
   self.expectT = nil
+  -- a talk left half done goes with its beat: HGSS's "champion lance" picks
+  -- the cell below Lance, his scene runs to the Hall of Fame, and its
+  -- `unless` (or the beat's own pass) ends the talk before it reaches A.
+  -- The leftover (6,7, up) was then the spot beat 46's talk walked to on
+  -- Olivine's port (P01R0101), pressing A at nobody -- the seaman at (7,9)
+  -- never spoke, and only an unbroken run (not RESUME) carried it that far
+  self.talkSpot, self.talkPhase, self.talkTries, self.talkMap = nil, nil, nil, nil
   local b = self.beats[self.beat]
   if not b then
     self.done = true
@@ -186,10 +210,22 @@ function R:forcedSwitchKey()
       if (tonumber(m.hp) or 0) > 0 and not m.isEgg and not isOut then usable = true end
     end
     if not usable then return true, (self.t % 12 == 0) and "b" or nil end
-    -- on a fainted one or on CANCEL (the menu is a two-column grid, so with
-    -- two members "down" from the first is CANCEL): try each way in turn
-    local dirs = { "right", "down", "left", "up" }
-    return true, (self.t % 12 == 0) and dirs[math.floor(self.t / 12) % 4 + 1] or nil
+    -- on a fainted one, the one already out, or on CANCEL: RIGHT. Both Gen 4
+    -- party grids (Gen4PartyMenu.NAV, Gen4BattleParty.PARTY_CURSOR) send
+    -- RIGHT round a ring -- 1, 2, ... 6, CANCEL, 1 -- skipping empty slots,
+    -- so it reaches every member. Taking each way in turn did not: started
+    -- on "down" from the lead it circled 3 -> 2 -> CANCEL -> 1 for good, and
+    -- Blue's SHIFT offer (members 2 and 3 fainted, 4..6 never visited) and
+    -- one of Misty's resumes stalled there until the beat ran out. A screen
+    -- whose RIGHT goes nowhere (a one-column list) gets DOWN instead.
+    if self.t % 12 ~= 0 then return true, nil end
+    local dir = "right"
+    if self.switchCursor and self.switchCursor.top == top and self.switchCursor.index == top.index
+       and self.switchCursor.dir == "right" then
+      dir = "down"
+    end
+    self.switchCursor = { top = top, index = top.index, dir = dir }
+    return true, dir
   end
   return false
 end
@@ -425,6 +461,46 @@ function R:runStep(s)
     self.held = s[2]
     return false
   end
+  if kind == "hold" then
+    if s["until"] and s["until"](self) then return true end
+    if self.stepT > (s[3] or 30) then return true end
+    self.held = s[2]
+    return false
+  end
+  if kind == "dwwalk" then
+    if s.done and s.done(self) then self.dwNoPath = nil return true end
+    local DP = require("tools.gen4_playthrough.dw_planner")
+    local key, _, from, how = DP.plan(self.ow, s[2])
+    if key == "here" then
+      if not s.done then self.dwNoPath = nil return true end
+      return false
+    end
+    if not key then
+      -- a moment with no way (a raft still settling, a lift just landed) is
+      -- not yet a failure
+      self.dwNoPath = (self.dwNoPath or 0) + 1
+      if self.dwNoPath > 90 then
+        self.dwNoPath = nil
+        local g = s[2].cell or s[2].tile
+        return nil, "no Distortion World path to " .. table.concat(g, ",")
+      end
+      return false
+    end
+    self.dwNoPath = 0
+    if self.stepT > (s.budget or 30000) then return nil, "Distortion World walk ran out of time" end
+    -- A DOUBLE JUMP IS TAKEN FACING IT (checkLedgeHop asks only a player
+    -- already facing that way); a held key from another facing turns and
+    -- walks onto the jump tile instead.  So: tap to turn, let go, then hold.
+    if how == "hop" and self.ow.player.facing ~= key then
+      if (self.dwTurnT or 0) < self.stepT - 4 then
+        self.dwTurnT = self.stepT
+        self.held = DP.keyFor(self.ow, from, key)
+      end
+      return false
+    end
+    self.held = DP.keyFor(self.ow, from, key)
+    return false
+  end
   local def = self.ow.map and self.ow.map.def or {}
   if kind == "walkto" then
     local ok, why = self:walkTo(s[2], s[3])
@@ -569,6 +645,47 @@ function R:runStep(s)
     if ok == true then self.acTarget = nil return true end
     return false
   end
+  if kind == "swimto" then
+    -- every cell that is not water is a wall to this walk (Route 223's
+    -- shoals are SHALLOW_WATER, walkable ground: a plain walkto lands there
+    -- and leaves the player on foot with no way on)
+    local map = self.ow.map
+    if not s.avoidSet or s.avoidMap ~= map then
+      s.avoidSet, s.avoidMap = {}, map
+      for yy = 0, map.def.height - 1 do
+        for xx = 0, map.def.width - 1 do
+          if not (map.isWaterCell and map:isWaterCell(xx, yy)) then s.avoidSet[xx * 4096 + yy] = true end
+        end
+      end
+    end
+    self.avoid = s.avoidSet
+    local ok, why = self:walkTo(s[2], s[3])
+    if ok == "blocked" then return false end
+    if ok then s.avoidSet, s.avoidMap = nil, nil end
+    return ok, why
+  end
+  if kind == "panel" then
+    -- a warp into the same map: `warpto` is done the moment the map matches,
+    -- so a panel is its own step -- walk onto it (leaning on it if it waits
+    -- for a step) and finish once the player is somewhere else
+    local px, py = self:pos()
+    if self.stepT == 1 then s.fromMap, s.lastX, s.lastY = self:map(), px, py end
+    if self:map() ~= s.fromMap or math.abs(px - s.lastX) + math.abs(py - s.lastY) > 1 then return true end
+    s.lastX, s.lastY = px, py
+    if self.stepT > 6000 then return nil, ("panel (%d,%d) never carried the player"):format(s[2], s[3]) end
+    self.avoid = {}
+    for _, w in ipairs(def.warps or {}) do
+      if not (w.x == s[2] and w.y == s[3]) then self.avoid[w.x * 4096 + w.y] = true end
+    end
+    if px == s[2] and py == s[3] then
+      local order = { "up", "right", "left", "down" }
+      self.held = order[math.floor(self.stepT / 20) % 4 + 1]
+      return false
+    end
+    local ok, why = self:walkTo(s[2], s[3])
+    if ok == nil then return nil, why end
+    return false
+  end
   if kind == "walkedge" then
     self.edgeFrom = self.edgeFrom or self:map()
     if self:map() ~= self.edgeFrom then self.edgeFrom = nil return true end
@@ -672,7 +789,19 @@ function R:runStep(s)
   end
   if kind == "talk" or kind == "sign" then
     -- `unless = fn`: already done (a retry after a wanderer was caught)
-    if s.unless and s.unless(self) and self.talkPhase == nil then return true end
+    if s.unless and s.unless(self) and self.talkPhase == nil then
+      -- the spot it had picked on the way is not the next talk's
+      self.talkSpot, self.talkTries, self.talkMap = nil, nil, nil
+      return true
+    end
+    -- a talk whose own scene took the player off the map (the champion's
+    -- Hall of Fame ends in the player's room) has done its work
+    if self.talkPhase ~= nil and self.talkMap and self:map() ~= self.talkMap then
+      self.talkMap = nil
+      self.talkSpot, self.talkPhase, self.talkTries = nil, nil, nil
+      return true
+    end
+    if self.talkPhase == nil then self.talkMap = self:map() end
     local tx, ty, facing
     if kind == "talk" then
       for _, n in ipairs(self.ow.npcs or {}) do
@@ -806,7 +935,7 @@ function R:tick(i, game, ow, planStep)
   if s then
     local walking = s[1] == "walkto" or s[1] == "warpto" or s[1] == "coord" or s[1] == "talk"
       or s[1] == "sign" or s[1] == "step" or s[1] == "activecoord" or s[1] == "walkedge" or s[1] == "talkto"
-      or s[1] == "talkany"
+      or s[1] == "talkany" or s[1] == "dwwalk" or s[1] == "panel" or s[1] == "swimto"
     if self:busy() and (walking or s[1] == "face") then
       if s[1] == "activecoord" and self.acTarget then
         local x, y = self:pos()
