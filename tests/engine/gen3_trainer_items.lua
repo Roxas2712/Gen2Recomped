@@ -3,6 +3,6 @@
 package.path = "./?.lua;./?/init.lua;" .. package.path
 for _, version in ipairs({ "firered", "leafgreen", "ruby", "sapphire", "emerald" }) do
   local rows = dofile("tests/gen3_trainer_items/cases.lua").run(".", "gen2", version)
-  require("tests.modkit").eq(#rows, 22, version .. " exercises every native item case")
+  require("tests.modkit").eq(#rows, 23, version .. " exercises every native item case")
 end
 require("tests.modkit").finish("native GBA trainer item selection and stock")

@@ -9,7 +9,7 @@ local definitions={
  {20,'MAX POTION',{0,0,0,0,4,0,255},{heal=true,amount='all'}},
  {23,'FULL HEAL',{0,0,0,63,0,0},{cureAll=true}},
  {500,'X ATTACK',{1,0,0,0,0,0},{battle=true}}, {501,'GUARD SPEC',{0,0,0,128,0,0},{mist=true}},
- -- The existing parsed view has one amount; native HP still uses byte nine.
+ -- Distinguish the first parameter from the later HP-looking parameter.
  {502,'MIXED HEAL',{0,0,0,0,7,0,1,2,50},{ev='attack',heal=true,amount=1}},
  {503,'UNRECOGNIZED',{0,0,0,0,0,0},{}},
 }
@@ -73,6 +73,7 @@ local expected={
  ['toxic cure']={23,3,16,{0,0,0,0}}, ['X item first turn']={500,4,1,{0,0,0,0}},
  ['X item later turn']={0,0,0,{500,0,0,0}}, ['mist first turn']={501,5,0,{0,0,0,0}},
  ['mist already active']={0,0,0,{501,0,0,0}}, ['mixed HP parameter']={502,2,0,{0,0,0,0}},
+ ['mixed HP threshold']={502,2,0,{0,0,0,0}},
  ['unrecognized stops bag scan']={0,0,0,{503,13,0,0}}, ['shared doubles right recipient']={13,2,0,{0,0,0,0}},
  ['two opponents share first bag']={13,2,0,{0,0,0,0}}, ['first available stock']={13,2,0,{0,13,13,0}},
  ['later stock locked by full bench']={0,0,0,{0,13,13,0}}, ['second stock unlocks']={13,2,0,{0,0,13,0}},
@@ -116,6 +117,7 @@ local cases={
  {'toxic cure',{items={23},hp=400,status='TOX'}}, {'X item first turn',{items={500},hp=400}},
  {'X item later turn',{items={500},hp=400,later=true}}, {'mist first turn',{items={501},hp=400}},
  {'mist already active',{items={501},hp=400,mist=2}}, {'mixed HP parameter',{items={502},hp=345}},
+ {'mixed HP threshold',{items={502},hp=390}},
  {'unrecognized stops bag scan',{items={503,13}}}, {'shared doubles right recipient',{double=true,right=true,count=2}},
  {'two opponents share first bag',{double=true,right=true,second=true,count=2}},
 }

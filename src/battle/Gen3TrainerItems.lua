@@ -52,8 +52,10 @@ function M.effect(battle, key)
     if type(value) ~= "number" or value % 1 ~= 0 or value < 0 or value > 255 then return nil end
     e[i] = value
   end
-  -- The two EV parameters precede the HP parameter in GetItemEffectParamOffset.
-  e.hp = bit(e[5], 4) and (e[7 + e[5] % 2 + math.floor(e[5] / 2) % 2] or 0) or 0
+  -- The reference GBA producer reads the first parameter for HP, including
+  -- mixed EV/HP programs. Selection and execution must observe that same
+  -- native value rather than infer an offset from the parsed item flags.
+  e.hp = bit(e[5], 4) and (e[7] or 0) or 0
   local T = M.TYPE
   if itemNumber(battle, key) == 19 then e.kind = T.FULL_RESTORE
   elseif bit(e[5], 4) then e.kind = T.HEAL_HP
