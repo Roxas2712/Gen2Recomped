@@ -1459,6 +1459,12 @@ local function retireCompatibilityAtlases()
     if type(module) == "table" and type(module.release) == "function" then module.release() end
   end
 end
+-- Retire owned object views after source wrappers have been unwound.
+-- Querying teardown must not import a compatibility world on native boots.
+local function retireCompatibilityObjects()
+  local objects = package.loaded["src.core.game3.objects"]
+  if type(objects) == "table" and type(objects.release) == "function" then objects.release() end
+end
 
 function Loader:load(data)
   InputControl.closeAll()
@@ -1478,6 +1484,7 @@ function Loader:load(data)
   retireCompatibilitySession()
   retireCompatibilityMaps()
   retireCompatibilityAtlases()
+  retireCompatibilityObjects()
   self.baseData = data
   -- every registry folds against the pristine view of its Data target;
   -- resolution is lazy so optional namespaces may appear later
@@ -1827,6 +1834,7 @@ function Loader.teardown()
   retireCompatibilitySession()
   retireCompatibilityMaps()
   retireCompatibilityAtlases()
+  retireCompatibilityObjects()
   pcall(function()
     Runtime.install(Events.new(), Hooks.new(), nil)
     Runtime.currentMod = nil
