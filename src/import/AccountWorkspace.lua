@@ -13,9 +13,15 @@ local function job(self,purpose,fn)
   f.notice=task and 'Connecting securely...' or tostring(why)
   inputMode(f,nil)
 end
+local function friends()
+ local doc,why=A.friends()
+ if doc and A.request then local prefs=A.request('GET','/play/preferences',nil,true);doc.playPreferences=prefs and prefs.preferences end
+ return doc,why
+end
 local function devices()
   local doc,why=A.devices()
   if doc and A.profile then doc.profile,doc.profileError=A.profile() end
+  if doc and A.friends then doc.social,doc.socialError=friends() end
   return doc,why
 end
 local function avatarImage(bytes)
@@ -29,13 +35,14 @@ local function avatarImage(bytes)
 end
 function W.avatarBytes(self,bytes)
   local f=self._accountOverlay
-  if not f or f.mode~='account' or not Auth.signedIn() then return end
+  if not f or (f.mode~='account' and f.mode~='profileEdit') or not Auth.signedIn() then return end
   local image,why=avatarImage(bytes);if not image then f.notice=why;return end
-  f.avatarImage=image;f.avatarBytes=bytes;f.avatarRights=false;f.notice='Image preview is local. Confirm the image rights and save to use it on your other devices.'
+  f.avatarImage=image;f.avatarBytes=bytes;f.avatarRights=false;f.resetAvatar=false;f.notice='Image preview is local. Confirm the image rights and save to use it on your other devices.'
   return true
 end
 local function profile(self,doc)
   local f=self._accountOverlay;f.profile=doc;f.nickname=doc.name;f.friendTag=doc.friend_tag;f.profileName=doc.name;f.avatarBytes=nil;f.avatarRights=false;f.avatarImage=nil
+  f.avatarPreset=doc.avatar_preset;f.avatarColor=doc.avatar_color;f.resetAvatar=false
   if type(doc.avatar)=='table' and type(doc.avatar.image_base64)=='string' then
     local ok,bytes=pcall(love.data.decode,'string','base64',doc.avatar.image_base64)
     if ok then
@@ -123,10 +130,16 @@ function W.action(self,id)
     local bytes=file:read(2*1024*1024+1);file:close();W.avatarBytes(self,bytes)
   elseif id=='saveProfile' then
     if f.avatarBytes and not f.avatarRights then f.notice='Confirm your image rights before uploading.';return end
-    local payload={name=f.profileName}
+    local payload={name=f.profileName,avatar_preset=f.avatarPreset,avatar_color=f.avatarColor}
+    if f.resetAvatar then payload.reset_avatar=true end
     if f.avatarBytes then payload.image_base64=love.data.encode('string','base64',f.avatarBytes);payload.avatar_rights=true end
     job(self,'profile',function() return A.profile(payload) end)
   elseif id=='resetAvatar' then job(self,'profile',function() return A.profile({reset_avatar=true}) end)
+  elseif id=='profileEdit' or id=='accountSettings' then f.mode=id;f.scroll=0;f.notice=nil
+  elseif id=='copyFriendTag' and f.friendTag and love.system.setClipboardText then love.system.setClipboardText(f.friendTag);f.notice='Friend tag copied.'
+  elseif id:match('^avatarPreset:') then f.avatarPreset=id:sub(14);f.avatarImage=nil;f.avatarBytes=nil;f.avatarRights=false;f.resetAvatar=true
+  elseif id=='avatarColor' then
+    local colors=require('src.ui.ProfileAvatar').colors;local at=1;for i,c in ipairs(colors) do if c==f.avatarColor then at=i end end;f.avatarColor=colors[at%#colors+1]
   elseif id=='roles' then f.mode='roles';f.scroll=0;f.roleTarget='';f.roleChoice='retro_admin';f.roleReason=''
   elseif id=='roleChoice' then f.roleChoice=f.roleChoice=='retro_admin' and 'retro_superuser' or f.roleChoice=='retro_superuser' and 'player' or 'retro_admin'
   elseif id=='saveRole' then
@@ -161,7 +174,17 @@ function W.action(self,id)
   elseif id:match('^giftActive:') then
     local campaign=f.gifts and f.gifts.campaigns[tonumber(id:match(':(%d+)$'))]
     if campaign then job(self,'giftActive',function() return A.activateGift(campaign.id,not campaign.active) end) end
-  elseif id=='friends' then f.mode='friends';f.scroll=0;job(self,'friends',A.friends)
+  elseif id=='friends' then f.mode='friends';f.scroll=0;job(self,'friends',friends)
+  elseif id=='allPlayRequests' or id=='allPlayVisibility' or id:match('^playPref:') then
+    local doc=f.social or {};local prefs=doc.playPreferences or {};local payload
+    if id=='allPlayRequests' then payload={requests_enabled=prefs.requests_enabled==false}
+    elseif id=='allPlayVisibility' then payload={visibility_enabled=prefs.visibility_enabled==false}
+    else
+      local key,peer=id:match('^playPref:(%a+):(%d+)$');local current={}
+      for _,v in ipairs(prefs.friends or {}) do if tostring(v.account_id)==peer then current=v;break end end
+      local field=key=='visible' and 'visible' or 'requests_enabled';payload={friend_id=tonumber(peer),[field]=current[field]==false}
+    end
+    job(self,'playPreferences',function()return require('src.cloud.Play').request('PUT','preferences',payload)end)
   elseif id=='findFriend' then local tag=f.friendQuery or '';job(self,'findFriend',function() return A.findPlayer(tag) end)
   elseif id=='addFriend' then local player=f.friendQuery or '';job(self,'friends',function() return A.addFriend(player) end)
   elseif id:match('^friendAccept:') or id:match('^friendRemove:') then
@@ -202,13 +225,15 @@ function W.tick(self)
   elseif purpose=='giftActive' then job(self,'gifts',A.gifts)
   elseif purpose=='profile' then profile(self,doc);f.notice='Profile saved for all your devices. Custom avatars stay private until their public review is complete.'
   elseif purpose=='findFriend' then f.foundFriend=doc;f.notice='Player found: '..tostring(doc.friend_tag)..'. Send a friend request to connect.'
-  elseif purpose=='friends' then f.social=doc;require('src.cloud.Presence').accept(doc);f.notice=nil
+  elseif purpose=='playPreferences' then f.social=f.social or {};f.social.playPreferences=doc.preferences;require('src.cloud.Play').refresh(true);f.notice='Friend privacy saved for all your devices.'
+  elseif purpose=='friends' then doc.playPreferences=doc.playPreferences or f.social and f.social.playPreferences;f.social=doc;require('src.cloud.Presence').accept(doc);f.notice=nil
   elseif purpose=='online' then f.online=doc;f.notice=nil
   elseif purpose=='policy' then f.policy=doc;f.notice=nil
   elseif purpose=='devices' then
     if not Auth.signedIn() then f.mode='login';f.devices=nil;f.profile=nil;f.avatarImage=nil;f.notice='This device was disconnected. Sign in again.';return end
     f.devices=doc.devices;f.nickname=doc.name;f.permissions=doc.permissions;f.notice=doc.profileError
     if doc.profile then profile(self,doc.profile) end
+    if doc.social then f.social=doc.social;require('src.cloud.Presence').accept(doc.social) end
     if f.after=='giftAdmin' then f.after=nil;W.action(self,'newGift');return end
     local storage=require('src.storage.AccountStorage')
     if Auth.accountId and Auth.accountId()~=f.accountAtOpen then storage.profileChanged(self);f.accountAtOpen=Auth.accountId() end
@@ -253,9 +278,17 @@ function W.draw(self)
   local function button(label,bx,by,bw,id)
     local r=self:_chipButton(bx,by,label,{w=bw,h=38*s,kind='accent'});r.id=id;f.rects[#f.rects+1]=r;return r
   end
-  text(f.mode=='giftAdmin' and 'RETRORECOMPED · PRIZE STUDIO' or 'RETRORECOMPED · YOUR ACCOUNT',x+24*s,y+20*s,width-150*s,true)
+  text(f.mode=='giftAdmin' and 'RETRORECOMPED · PRIZE STUDIO' or 'RETRORECOMPED · MY PROFILE',x+24*s,y+20*s,width-150*s,true)
   button('CLOSE',x+width-108*s,y+18*s,84*s,'close').pinned=true
-  local v={x=x+18*s,y=y+76*s,width=width-36*s,height=height-94*s};f.viewport=v
+  local social=require('src.cloud.Presence').read() or f.social or {}
+  local tabs=Auth.signedIn() and not f.document
+  if tabs then
+    for i,tab in ipairs({{'account','PROFILE'},{'friends','FRIENDS · '..#(social.incoming or {})},{'accountSettings','CLOUD & DEVICES'}}) do
+      local tw=(width-48*s)/3;button(tab[2],x+24*s+(i-1)*tw,y+68*s,tw-6*s,tab[1]).pinned=true
+    end
+  end
+  local offset=tabs and 124 or 76
+  local v={x=x+18*s,y=y+offset*s,width=width-36*s,height=height-(offset+18)*s};f.viewport=v
   local top=v.y-f.scroll
   local function paragraph(value,big)
     local font=big and self.stateFont or self.hintFont;local _,lines=font:getWrap(value,width-48*s)
@@ -339,6 +372,10 @@ function W.draw(self)
     end
   elseif f.mode=='friends' then
     paragraph('FRIENDS & REQUESTS',true)
+    local prefs=(f.social or {}).playPreferences or {}
+    row('INCOMING GAME INVITATIONS · '..(prefs.requests_enabled==false and 'OFF' or 'ON'),'allPlayRequests')
+    row('MUTUAL MAP VISIBILITY · '..(prefs.visibility_enabled==false and 'OFF' or 'ON'),'allPlayVisibility')
+    paragraph('Up to five accepted friends can appear as transient figures. They never change your adventure. Meetings need mutual confirmation.')
     paragraph('One friend list for your account, shared by all your devices. Search the complete friend tag, such as Trainer#4821. A Recompiler ID also works for requests. Only accepted friends see your online status.')
     field('Friend tag or Recompiler ID','friendQuery');row('SEARCH FRIEND TAG','findFriend')
     if f.foundFriend then paragraph('FOUND · '..f.foundFriend.friend_tag) end
@@ -349,6 +386,9 @@ function W.draw(self)
     paragraph('FRIENDS · '..#(social.friends or {}),true)
     for _,peer in ipairs(social.friends or {}) do
       paragraph(tostring(peer.friend_tag or peer.nickname)..(not fresh and ' · STATUS UNAVAILABLE' or peer.online and ' · ONLINE' or ' · OFFLINE'))
+      local pref={};for _,v in ipairs(prefs.friends or {}) do if tostring(v.account_id)==tostring(peer.account_id) then pref=v;break end end
+      row('INVITATIONS FROM THIS FRIEND · '..(pref.requests_enabled==false and 'OFF' or 'ON'),'playPref:requests:'..peer.account_id)
+      row('MAP VISIBILITY WITH THIS FRIEND · '..(pref.visible==false and 'OFF' or 'ON'),'playPref:visible:'..peer.account_id)
       row('REMOVE FRIEND','friendRemove:'..peer.account_id)
     end
     if #(social.friends or {})==0 then paragraph('Your accepted friends appear here. Requests need the other player’s confirmation.') end
@@ -367,6 +407,25 @@ function W.draw(self)
     if (online.page or 1)*(online.per_page or 50)<(online.online_count or 0) then row('NEXT PAGE','onlineNext') end
     row('FRIENDS','friends');row('MY ACCOUNT','account')
   elseif f.mode=='account' then
+    local Avatar=require('src.ui.ProfileAvatar');local yy=top
+    Avatar.draw(f.avatarPreset,f.avatarColor,x+24*s,yy,88*s,f.avatarImage)
+    text(tostring(f.nickname or Auth.nickname()),x+128*s,yy+8*s,width-170*s,true)
+    text(tostring(f.friendTag or 'Loading your friend tag…'),x+128*s,yy+48*s,width-170*s)
+    top=yy+106*s;row('EDIT NICKNAME & AVATAR','profileEdit');row('COPY MY FRIEND TAG','copyFriendTag')
+    local fresh=os.time()-(social._receivedAt or 0)<=120;local online=0
+    for _,peer in ipairs(social.friends or {}) do if fresh and peer.online then online=online+1 end end
+    paragraph('FRIENDS · '..online..' ONLINE / '..#(social.friends or {})..' TOTAL',true)
+    if #(social.incoming or {})>0 then row(#social.incoming..' NEW FRIEND REQUESTS','friends') end
+    for i,peer in ipairs(social.friends or {}) do if i<=5 then
+      Avatar.draw(peer.avatar_preset,peer.avatar_color,x+24*s,top,42*s)
+      text(tostring(peer.friend_tag or peer.nickname),x+80*s,top,width-120*s)
+      text(not fresh and 'STATUS UNAVAILABLE' or peer.online and '● ONLINE' or '○ OFFLINE',x+80*s,top+22*s,width-120*s);top=top+58*s
+    end end
+    if #(social.friends or {})==0 then paragraph('Add a friend with their Trainer#1234 tag. Your friends and requests appear here on every device.') end
+    row('FIND FRIENDS & MANAGE REQUESTS','friends')
+    if f.permissions and f.permissions.view_online then row('STAFF · WHO IS ONLINE & PLAYER COUNTS','online') end
+    row('MY GIFTS','gifts')
+  elseif f.mode=='profileEdit' then
     paragraph(tostring(f.nickname or Auth.nickname and Auth.nickname() or Auth.account()),true)
     paragraph('Connected as '..tostring(Auth.account()))
     if f.friendTag then paragraph('MY FRIEND TAG · '..f.friendTag,true) end
@@ -376,17 +435,21 @@ function W.draw(self)
       local fit=math.max(size/iw,size/ih);g.setColor(1,1,1,1)
       g.draw(f.avatarImage,x+width/2-iw*fit/2,top+(size-ih*fit)/2,0,fit,fit)
       g.setScissor(v.x,v.y,v.width,v.height);top=top+size+18*s
-    elseif f.profile then
-      paragraph('MODCOMPASS AVATAR · '..tostring(f.profile.avatar_preset)..' / '..tostring(f.profile.avatar_color))
+    else
+      require('src.ui.ProfileAvatar').draw(f.avatarPreset,f.avatarColor,x+24*s,top,100*s);top=top+118*s
     end
     if f.profile then
       field('Nickname · shared with ModCompass','profileName')
+      for _,preset in ipairs(require('src.ui.ProfileAvatar').presets) do row((f.avatarPreset==preset and '● ' or '')..preset:upper(),'avatarPreset:'..preset) end
+      row('AVATAR COLOR · '..tostring(f.avatarColor):upper()..' · CHANGE','avatarColor')
       row('CHOOSE MY PROFILE IMAGE','chooseAvatar')
       if f.avatarBytes then check('I have the rights to use this image for my account and allow its storage in ModCompass.','avatarRights') end
       row('SAVE MY GLOBAL PROFILE','saveProfile')
       if f.profile.avatar then row('REMOVE MY CUSTOM PROFILE IMAGE','resetAvatar') end
       if f.profile.avatar_pending then paragraph('Your image is already available on your own devices. Public display follows the ModCompass image review.') end
     end
+    row('BACK TO MY PROFILE','account')
+  elseif f.mode=='accountSettings' then
     paragraph('ACCOUNT PROFILE · '..tostring(Auth.accountId and Auth.accountId() or 'Updating identity')..' · Saves, Bank and mod choices are kept separately for each account.')
     paragraph('The same account connects your mods, developer projects, custom cartridge artwork and optional cloud storage.')
     row('SYNC MY SAVES & CUSTOM CARTRIDGES','sync')
@@ -512,7 +575,7 @@ function W.install(RI)
   for _,name in ipairs({'mousereleased','mousemoved'}) do local original=RI[name];RI[name]=function(self,...) if self._accountOverlay then return end;if original then return original(self,...) end end end
   local dropped=RI.filedropped;RI.filedropped=function(self,file,...)
     local f=self._accountOverlay
-    if not f or f.mode~='account' or not Auth.signedIn() then if dropped then return dropped(self,file,...) end;return end
+    if not f or (f.mode~='account' and f.mode~='profileEdit') or not Auth.signedIn() then if dropped then return dropped(self,file,...) end;return end
     local ok,bytes=pcall(function() file:open('r');local b=file:read(2*1024*1024+1);file:close();return b end)
     if ok then W.avatarBytes(self,bytes) else f.notice='The profile image could not be read.' end
   end

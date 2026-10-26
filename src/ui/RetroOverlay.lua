@@ -24,15 +24,18 @@ function O.open(game)
 end
 function O.close()
   if O.job then O.notice='Wait for the upload, or cancel it first.';return end
+  local friends=package.loaded['src.ui.FriendsMenu'];if friends then friends.clear(O) end
   local game=O.game;O.game=nil;O.confirm=nil;O.rects={}
   if game then reset(game) end
 end
 function O.clear()
+  local friends=package.loaded['src.ui.FriendsMenu'];if friends then friends.clear(O) end
   if O.job then O.job:cancel() end
   O.job=nil;O.game=nil;O.confirm=nil;O.rects={};O.handle=nil
 end
 local function canSave(game)
-  if game.retroArena then return false end
+  if game.retroArena or game.linkSession then return false end
+  if game.stack and game.stack.worldState==game.overworld and game.overworld then return true end
   for _,state in ipairs(game.stack and game.stack.states or {}) do if state==game.overworld or state.isOverworld then return true end end
   return false
 end
@@ -48,6 +51,7 @@ function O.action(id)
     if id=='cancel' then O.job:cancel();O.job=nil;O.notice='Upload stopped. Your local save is kept.' end
     return
   end
+  if (id=='friends' or O.page=='friends') and require('src.ui.FriendsMenu').action(O,id) then return end
   if id=='resume' then O.close();return end
   if id=='home' or id=='saves' or id=='options' then
     O.page=id;O.scroll=0;O.selected=1;O.rects={};O.notice=nil
@@ -127,11 +131,13 @@ function O.update(game)
     local result=O.job:poll()
     if result then O.job=nil;O.notice=result.kind=='done' and result.first and ('Cloud: '..result.first..'.') or ('Upload paused: '..tostring(result.error or result.second)) end
   end
+  if O.game and (O.page=='friends' or O.socialJob) then require('src.ui.FriendsMenu').tick(O) end
   return O.game~=nil
 end
 local function actions()
   if O.job then return {{id='cancel',label='Cancel upload'}} end
   if O.confirm then return {{id='library',label='Save & open library'},{id='cancel',label='Stay in this game'}} end
+  if O.page=='friends' then return require('src.ui.FriendsMenu').rows(O) end
   if O.page=='options' then
     local rows={}
     for i,row in ipairs(O.options or {}) do
@@ -143,6 +149,7 @@ local function actions()
   if O.page=='home' then
     local opts=O.game.save.options or {}
     return {{id='resume',label='Continue playing',note='Return to your adventure'},
+      {id='friends',label='FRIENDS',note='Online friends · Meet on maps · Trade · Unranked battles'},
       {id='saves',label='SAVES & CLOUD',note='Save progress · Export .sav · Change game',large=true},
       {id='speed',minus='slower',label='Game speed',value=Speed.levelLabel(opts.speed)},
       {id='mute',label='Game audio',value=opts.audioMuted and 'MUTED' or 'ON'},
@@ -159,6 +166,7 @@ function O.key(game,key)
   if key=='f1' then if O.game then O.close() else O.open(game) end;return true end
   if key=='escape' and not O.game then O.open(game);return true end
   if not O.game then return false end
+  if O.page=='friends' and require('src.ui.FriendsMenu').key(O,key) then return true end
   if key=='escape' then if O.confirm then O.confirm=nil elseif O.page~='home' then O.action('home') else O.close() end
   elseif key=='up' then O.selected=math.max(1,(O.selected or 1)-1)
   elseif key=='down' then O.selected=math.min(#actions(),(O.selected or 1)+1)
@@ -199,7 +207,7 @@ end
 function O.draw(game)
   local g=love.graphics;local ww,hh=g.getDimensions()
   local s=math.max(.65,math.min(ww/1050,hh/720,1.35))
-  O.font=O.font or g.newFont(16);O.titleFont=O.titleFont or g.newFont(25)
+  if O.fontScale~=s then O.fontScale=s;O.font=g.newFont(math.max(10,math.floor(16*s)));O.titleFont=g.newFont(math.max(16,math.floor(25*s))) end
   g.push('all');g.setCanvas();g.origin();g.setShader();g.setScissor();g.setBlendMode('alpha')
   -- Game/post-process passes can leave depth, stencil or channel masks set.
   -- The OS-window menu must own a clean screen-space state on every path.
@@ -213,6 +221,12 @@ function O.draw(game)
   if not O.game then
     g.setColor(.025,.045,.08,.80);g.rectangle('fill',O.handle.x,O.handle.y,O.handle.width,O.handle.height,8,8)
     g.setColor(.42,.90,1,1);text('RETRO · ESC',O.handle.x+10*s,O.handle.y+7*s,O.handle.width-12*s)
+    local Play=package.loaded['src.cloud.Play'];local doc=Play and Play.read();local count=0
+    for _,i in ipairs(doc and doc.invites or {}) do if i.incoming and i.state=='pending' then count=count+1 end end
+    if count>0 then
+      g.setColor(.85,.22,.28,1);g.circle('fill',O.handle.x+O.handle.width-5*s,O.handle.y+4*s,10*s)
+      g.setColor(1,1,1,1);text(tostring(count),O.handle.x+O.handle.width-10*s,O.handle.y-4*s,24*s)
+    end
     g.pop();return
   end
   g.setColor(.015,.025,.05,.87);g.rectangle('fill',0,0,ww,hh)
@@ -222,8 +236,8 @@ function O.draw(game)
   g.setColor(.74,.78,.85,1);text(Versions.info().displayName..' · PAUSED',x+24*s,y+61*s,w-48*s)
   local rows=actions();local layoutScroll=O.scroll or 0;local nextScroll=layoutScroll;local top=y+134*s-layoutScroll
   O.rects={};O.selected=math.min(O.selected or 1,math.max(1,#rows))
-  for i,tab in ipairs({{'home','QUICK MENU'},{'saves','SAVES & CLOUD'},{'options','SETTINGS'}}) do
-    local tw=(w-48*s)/3;local tx=x+24*s+(i-1)*tw
+  for i,tab in ipairs({{'home','QUICK MENU'},{'saves','SAVES & CLOUD'},{'options','SETTINGS'},{'friends','FRIENDS'}}) do
+    local tw=(w-48*s)/4;local tx=x+24*s+(i-1)*tw
     g.setColor(.1,.2,.27,1);g.rectangle('fill',tx,y+88*s,tw-6*s,32*s,6*s,6*s)
     g.setColor(.65,.9,1,1);text(tab[2],tx+8*s,y+96*s,tw-16*s)
     O.rects[#O.rects+1]={id=tab[1],x=tx,y=y+88*s,width=tw-6*s,height=32*s,pinned=true}
@@ -231,12 +245,16 @@ function O.draw(game)
   local view={x=x+18*s,y=y+132*s,width=w-36*s,height=math.max(1,h-218*s)};O.viewport=view
   g.setScissor(view.x,view.y,view.width,view.height)
   for i,row in ipairs(rows) do
-    local step=(row.large and 88 or row.note and 66 or 52)*s
+    local noteLines=1
+    if row.note and O.font.getWrap then local _,lines=O.font:getWrap(row.note,w-(72+(row.avatar and 58 or 0))*s);noteLines=math.max(1,#lines) end
+    local step=math.max((row.large and 88 or row.note and 66 or 52)*s,row.note and (row.large and 52 or 38)*s+noteLines*O.font:getHeight()+12*s or 0)
     local ry=top;local selected=i==O.selected
     g.setColor(selected and .12 or .08,selected and .26 or .13,selected and .34 or .20,1)
     g.rectangle('fill',x+22*s,ry,w-44*s,step-6*s,7*s,7*s)
-    g.setColor(.88,.95,.99,1);text(row.label,x+36*s,ry+12*s,w-(row.value and 195 or 72)*s,row.large)
-    if row.note then g.setColor(.58,.73,.82,1);text(row.note,x+36*s,ry+(row.large and 50 or 38)*s,w-72*s) end
+    local inset=row.avatar and 58 or 0
+    if row.avatar then require('src.ui.ProfileAvatar').draw(row.avatar.preset,row.avatar.color,x+30*s,ry+7*s,46*s,row.avatar.image) end
+    g.setColor(.88,.95,.99,1);text(row.label,x+(36+inset)*s,ry+12*s,w-(row.value and 195 or 72)*s-inset*s,row.large)
+    if row.note then g.setColor(.58,.73,.82,1);text(row.note,x+(36+inset)*s,ry+(row.large and 50 or 38)*s,w-(72+inset)*s) end
     if row.value then g.setColor(.45,.91,1,1);text(row.value,x+w-148*s,ry+12*s,110*s) end
     O.rects[#O.rects+1]={id=row.id,x=x+22*s,y=ry,width=w-44*s,height=step-6*s}
     if row.minus then O.rects[#O.rects+1]={id=row.minus,x=x+w-192*s,y=ry,width=35*s,height=step-6*s}
