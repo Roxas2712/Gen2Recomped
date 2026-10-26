@@ -183,3 +183,9 @@ wartet nicht auf einen fremden globalen Budgetscan. Datei-/Laufsperren und das
 Archiv-Lock bleiben maßgeblich. Bei unterbrochenen Prozessen oder noch lebenden
 Kindern bleibt die Markierung erhalten; der nächste Lauf beziehungsweise der
 Hintergrundhelfer nimmt die sichere Entfernung nach Freigabe vor.
+
+Zum Fortsetzen eines bereits bereinigten Tests `qa_restore_copy(host)` verwenden:
+Es stellt den exakt gesicherten Host bei Bedarf wieder her, erhält vorhandene
+Spielstände und verweigert das Überschreiben neuerer Dateien. Anschließend
+bleibt der Host als gemeinsam lesbare Eingabe gesperrt und wird nach dem letzten
+Leser wieder bereinigt. Veröffentlichungs-/Buildpakete bleiben davon getrennt.

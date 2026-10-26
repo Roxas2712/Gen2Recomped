@@ -25,3 +25,9 @@ Logs und Nachweise bleiben außerhalb der Kopie. Pakete für spätere Build-/
 Veröffentlichungsschritte verwenden weiter `qa_copy(path)` und `qa_source` für
 aktive Eingaben. Keine Teststarter mit eigener 8-GiB-Reserve ergänzen: 20 GiB
 beibehalten. Details: `docs/QA-STORAGE.md`.
+
+Zum Fortsetzen eines bereits bereinigten Tests `qa_restore_copy(host)` verwenden:
+Es stellt den exakt gesicherten Host bei Bedarf wieder her, erhält vorhandene
+Spielstände und verweigert das Überschreiben neuerer Dateien. Anschließend
+bleibt der Host als gemeinsam lesbare Eingabe gesperrt und wird nach dem letzten
+Leser wieder bereinigt. Veröffentlichungs-/Buildpakete bleiben davon getrennt.

@@ -9,7 +9,7 @@ import fcntl
 import hashlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import signal
 import shutil
@@ -18,6 +18,8 @@ import subprocess
 import sys
 import time
 import threading
+import tarfile
+import tempfile
 import qa_legacy_storage as legacy
 from contextlib import contextmanager, nullcontext
 
@@ -211,6 +213,91 @@ class Storage:
                 self._write(key,entry)
         self._begin()
         return original
+
+    def restore_copy(self, path):
+        """Rehydrate an archived test host without overwriting newer files/saves."""
+        target=self._absolute(path)
+        if legacy.identify(target,self.root,self.home)!=target or target.suffix=='.zip':
+            raise ValueError('Restore only a known directory test host')
+        receipt=target.parent/'qa-preserved-sources.json'
+        if not receipt.exists():
+            if target.is_dir():return self.source(target)
+            raise FileNotFoundError('No preserved test host: '+str(target))
+        proof=json.loads(receipt.read_text())[target.name]
+        vault=self.home/'.local/share/origami-qa-preserved.git'
+        if (Path(proof['git']).resolve()!=vault.resolve() or proof.get('tree')!='snapshot'
+                or re.fullmatch(r'[0-9a-f]{40}',proof.get('commit','')) is None):
+            raise ValueError('Invalid local test-host preservation receipt')
+        if (target/'.git').exists() or target.is_symlink():raise ValueError('Retain source checkout')
+        self.source(target.parent)
+        self.copy(target)
+        target.parent.mkdir(parents=True,exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='.qa-restore-',dir=target.parent) as tmp:
+            staged=Path(tmp);links=[]
+            process=subprocess.Popen(['git','--git-dir='+str(vault),'archive',proof['commit']+':snapshot'],stdout=subprocess.PIPE)
+            try:
+                with tarfile.open(fileobj=process.stdout,mode='r|') as archive:
+                    for member in archive:
+                        rel=PurePosixPath(member.name)
+                        if rel.is_absolute() or '..' in rel.parts:raise ValueError('Unsafe preserved path')
+                        out=staged.joinpath(*rel.parts)
+                        if member.isdir():out.mkdir(parents=True,exist_ok=True)
+                        elif member.isfile():
+                            out.parent.mkdir(parents=True,exist_ok=True)
+                            with archive.extractfile(member) as source,out.open('xb') as dest:shutil.copyfileobj(source,dest,1024*1024)
+                            out.chmod(member.mode&0o777)
+                        elif member.issym():links.append((out,member.linkname))
+                        else:raise ValueError('Unsupported preserved entry')
+                for out,link in links:
+                    out.parent.mkdir(parents=True,exist_ok=True);out.symlink_to(link)
+            finally:
+                process.stdout.close();code=process.wait()
+            if code:raise subprocess.CalledProcessError(code,process.args)
+            plans=[]
+            for folder,dirs,names in os.walk(staged,followlinks=False):
+                folder=Path(folder)
+                for name in list(dirs):
+                    if (folder/name).is_symlink():dirs.remove(name);names.append(name)
+                for name in names:
+                    source=folder/name;dest=target/source.relative_to(staged)
+                    for parent in dest.parents:
+                        if parent==target:break
+                        if parent.is_symlink():raise ValueError('Retain aliased host subtree')
+                    if dest.exists() or dest.is_symlink():
+                        if source.is_symlink() and dest.is_symlink():same=os.readlink(source)==os.readlink(dest)
+                        elif source.is_file() and dest.is_file() and not dest.is_symlink():
+                            def digest(p):
+                                value=hashlib.sha256()
+                                with p.open('rb') as stream:
+                                    for chunk in iter(lambda:stream.read(1024*1024),b''):value.update(chunk)
+                                return value.digest()
+                            same=digest(source)==digest(dest)
+                        else:same=False
+                        if not same:raise ValueError('Retain newer host file: '+str(dest))
+                    else:plans.append((source,dest))
+            created=[]
+            try:
+                target.mkdir(parents=True,exist_ok=True)
+                for source,dest in plans:
+                    dest.parent.mkdir(parents=True,exist_ok=True)
+                    if dest.parent.resolve()!=dest.parent:raise ValueError('Retain aliased host subtree')
+                    if source.is_symlink():dest.symlink_to(os.readlink(source))
+                    else:os.link(source,dest)
+                    info=dest.lstat();created.append((dest,(info.st_ino,info.st_size,info.st_mtime_ns)))
+            except (OSError,ValueError):
+                for dest,expected in reversed(created):
+                    if dest.exists() or dest.is_symlink():
+                        info=dest.lstat()
+                        if (info.st_ino,info.st_size,info.st_mtime_ns)==expected:dest.unlink()
+                raise
+        entry=self.held[self._key(target)][1]
+        entry.update(ephemeral=True,running=False,updated=self.clock())
+        self._write(self._key(target),entry)
+        lock=self.held[self._key(target)][0]
+        # The parent-run reader lease prevents collection while downgrading.
+        fcntl.flock(lock,fcntl.LOCK_SH)
+        self.held[self._key(target)]=(lock,entry,False)
+        return target
 
     def _copy_run(self, path, root=None):
         root = Path(root or self.root)
@@ -748,8 +835,11 @@ class Storage:
         ephemeral=set()
         try:
             for key, (lock, entry, owned) in self.held.items():
+                if entry is None and self.lease_info[key][0]=='legacy':
+                    try:entry=json.loads((self.state/(key+'.json')).read_text())
+                    except (OSError,ValueError):pass
+                if entry and entry.get('ephemeral'):ephemeral.add(key)
                 if owned:
-                    if entry.get('ephemeral'):ephemeral.add(key)
                     entry.update(updated=self.clock(), running=False)
                     self._write(key, entry)
                 # Closing (not LOCK_UN) preserves leases inherited by a child
@@ -832,6 +922,10 @@ def qa_cache(path):
 
 def qa_copy(path, *, ephemeral=False):
     return _manager().copy(path, ephemeral=ephemeral)
+
+
+def qa_restore_copy(path):
+    return _manager().restore_copy(path)
 
 
 def qa_profile(path):
