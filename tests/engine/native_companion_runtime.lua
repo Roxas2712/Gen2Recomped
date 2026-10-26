@@ -209,14 +209,19 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  local movesRow=g.data.pokemon.CHARMELEON;movesRow.learnset={{level=1,move='GROWL'}}
  T.eq(require('src.core.game3.move_learn').relearnableMoves(mon)[1],34)
  local learned,learnDone=nil,0
+ local function chooseTop()
+  local input=g.input;local pressed=input.wasPressed
+  input.wasPressed=function(_,key)return key=='a'end
+  g.stack:update(1/60);input.wasPressed=pressed
+ end
  T.eq(Relearn.show(mon,{onDone=function(ok)learned=ok;learnDone=learnDone+1 end}),true)
- local reminder=g.stack:top();reminder:choose();closeText()
+ chooseTop();closeText()
  T.eq(nativeMon.moves[2].id,'GROWL');T.eq(nativeMon.moves[2].pp,40)
  T.eq(learned,true);T.eq(learnDone,1);T.eq(Relearn.isOpen(),false);T.eq(g.stack:top(),w)
  nativeMon.moves[3]={id='TAIL_WHIP',pp=40};nativeMon.moves[4]={id='SPLASH',pp=40}
  movesRow.learnset={{level=1,move='LEER'}}
  T.eq(Relearn.show(mon,{onDone=function()learnDone=learnDone+1 end}),true)
- g.stack:top():choose();T.eq(getmetatable(g.stack:top()),require('src.render.TextBox'))
+ chooseTop();T.eq(getmetatable(g.stack:top()),require('src.render.TextBox'))
  Stream.cancelOwner('runtime_probe');T.eq(g.stack:top(),w);T.eq(learnDone,1)
  T.eq(nativeMon.moves[4].id,'SPLASH','unloading a reminder cannot replace a native move')
  -- Optional features retain native pools, input guards and consumption.

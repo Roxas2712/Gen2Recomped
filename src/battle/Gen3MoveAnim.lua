@@ -4246,7 +4246,14 @@ local function drawHardwareAlphaImage(g, image, blend, ...)
 end
 Gen3MoveAnim.drawHardwareAlphaImage = drawHardwareAlphaImage
 
-function Gen3MoveAnim:drawEvent(event, battle, Gen3Battle, Assets, pose,
+function Gen3MoveAnim:drawEvent(event,battle,Gen3Battle,Assets,pose,allowSplitBlend)
+  local source=package.loaded['src.core.game3.battle.anim_sprites']
+  if source then return source._drawEvent(self,event,battle,function(...)
+    return self:drawEventBody(...)
+  end,event,battle,Gen3Battle,Assets,pose,allowSplitBlend)end
+  return self:drawEventBody(event,battle,Gen3Battle,Assets,pose,allowSplitBlend)
+end
+function Gen3MoveAnim:drawEventBody(event, battle, Gen3Battle, Assets, pose,
                                 allowSplitBlend)
   pose = pose or self:eventPose(event, battle, Gen3Battle)
   if not pose then return false end
