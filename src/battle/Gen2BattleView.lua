@@ -2,6 +2,7 @@
 -- The screen owns execution, wrappers and presentation clocks; readers of
 -- screen.battle get the actual party Pokemon, including after a queued switch.
 local View = {}
+local Hp = require('src.battle.Gen2HpPresentation')
 
 local function partyOf(screen)
   return screen.playerParty or screen.game.save.party or {}
@@ -41,12 +42,7 @@ function View.bind(screen)
     __index = function(_, key) local read = readers[key]; if read then return read() end end,
     __newindex = function() error("native Gen2 battle view is read-only", 2) end,
   })
-  screen.shownHp = setmetatable({}, {
-    __index = function(_, side)
-      local b = battler(screen, side); return b and b.shownHP
-    end,
-    __newindex = function() error("native Gen2 shown HP is owned by stepHPDrain", 2) end,
-  })
+  Hp.bind(screen)
 end
 
 function View.activeMon(screen, side)

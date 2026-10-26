@@ -2493,6 +2493,7 @@ end
 --
 -- Returns true while animating.
 function BattleState:stepHPDrain()
+  if GameVersion.isGen2() then return require('src.battle.Gen2HpPresentation').drain(self) end
   local busy = false
   for _, b in activeBattlers(self) do
     if b and b.shownHP then
@@ -2536,6 +2537,10 @@ function BattleState:stepHPDrain()
     end
   end
   return busy
+end
+
+function BattleState:stepHpAnim()
+  return require('src.battle.Gen2HpPresentation').step(self)
 end
 
 -- AnimateExpBar (engine/battle/experience.asm) creeps the bar to its new
@@ -2746,6 +2751,7 @@ function BattleState:updateQueuePresentation()
   if self.draining then
     if self:stepHPDrain() then return true end
     self.draining = nil
+    if GameVersion.isGen2() then require('src.battle.Gen2HpPresentation').retire(self) end
     if self.player then self.player.drainFloor = nil end
     if self.enemy then self.enemy.drainFloor = nil end
   end
@@ -2827,6 +2833,7 @@ function BattleState:updateQueue()
     end
     if item.drain then
       self.draining = true
+      if GameVersion.isGen2() then self._gen2HpDrainBattler=item.battler end
       if item.battler then item.battler.drainFloor = item.stopAt end
       return true
     end
