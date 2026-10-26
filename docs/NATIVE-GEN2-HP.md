@@ -23,6 +23,10 @@ native screen/model boundary. These tests do not prove full mod playability,
 move animation or capture rendering; those require separate implementation
 and gameplay acceptance.
 
+This change supplies the native HP owner and displayed-number stepping.
+Forwarding the animation's individual pixel fill into the shared HUD tile
+renderer remains open; it must not be inferred from numeric trace parity.
+
 Pixel stepping adapts Gen1Recomp's `src/battle/gen2/HpBar.lua` and
 `src/ui/gen2/BattleState.lua`. Existing upstream and Gen1Recomp rights and
 credits remain applicable; see `NOTICE.md`. Native-owner integration and
