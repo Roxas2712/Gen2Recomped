@@ -1,0 +1,59 @@
+{
+  "sourceCommit": "58332db20a8f5dd6b701231cea9ffad3f8e90532",
+  "referenceCommit": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+  "qualificationRun": 40246724816,
+  "status": "scoped diagnostic presentation accepted; not published",
+  "game": "Crystal Rev0",
+  "engine": "0.8.46",
+  "modApi": 3,
+  "unchangedSuppliedModFiles": 27329,
+  "backends": [
+    "opengl",
+    "metal"
+  ],
+  "checksPerBackend": 46,
+  "cameras": [
+    "first",
+    "third"
+  ],
+  "surfaces": [
+    "native MapRadio special",
+    "native Pokegear radio"
+  ],
+  "imagesInspected": 8,
+  "osImageSha256": [
+    "0dfaa9f490340d282e23b6763395177bfedb4d8a56d453ce1b2cbe92f30263cb",
+    "a1ef0ce6f526dd3d8437a15e97c90ef3ca674f30ea84dba857fa5d5b1408d547",
+    "80890ad633d0aa3d930ebfdb1b907430be3c83eb5735cfe2d60917cb6df39dbf",
+    "d792facd4472f165e6691600aceabd71e7efd60f91a88fd11e24bcd682d3d6e6",
+    "589b813b06cded0cc530c5c4550ff07f3dc604f416ea67f9fbcfa7a9af566b04",
+    "d757c50d0ffb92fe3d528ee57083d12de3938d847e8c045370c788e8ef8c7a3a",
+    "0ee953f5cc9612aecb91b2f247195d3da479d450b58299cee870535622f85af8",
+    "a37a2aaf7a0f933dfb78b68030660a46c824025e6d199fe3dbe000e5045824d2"
+  ],
+  "nativeImportedMaps": 388,
+  "nativeImportedScripts": 5038,
+  "scriptDesyncs": 0,
+  "romOriginalUnmodified": true,
+  "modOriginalUnmodified": true,
+  "modCopySourceFilesUnmodified": true,
+  "observations": [
+    "All four wall-radio announcement names are upright.",
+    "All four Pokegear images show RADIO, station list and actual native program text at window resolution.",
+    "Metal deprecation warning overlay obscures the lower edge."
+  ],
+  "staging": "Owned QA intro/map/radio card/camera setup and separate synthetic station-name/event mod.",
+  "exclusions": [
+    "original story admission",
+    "full ROM radio programs and audio",
+    "Snorlax gate",
+    "Windows/Intel GPU gameplay",
+    "complete native Gen1 parity"
+  ],
+  "finalComposedCandidate": {
+    "sourceCommit": "4be92945c94e603f7cc582cde23d4702d9610e4a",
+    "engineSuites": "418/418",
+    "sdkSuites": "3/3",
+    "runtimeGpu": "pending; diagnostic acceptance does not transfer"
+  }
+}
