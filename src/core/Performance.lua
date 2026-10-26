@@ -74,6 +74,8 @@ Performance.gen4GpuLight = true
 Performance.gen4ByteVertices = true
 -- H1: pass hook results as varargs and share continuation state per call.
 Performance.hookLean = true
+-- E1: avoid the single-listener snapshot and cache immutable owner labels.
+Performance.eventLean = true
 -- M10: Assets.resolve remembers which file answers a generated path while a
 -- mod set is installed, instead of asking PhysFS once per mod per lookup.
 Performance.assetResolveCache = true
