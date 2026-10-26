@@ -2771,10 +2771,11 @@ function BattleState:updateQueue()
   end
   if not self.current then
     local item = table.remove(self.queue, 1)
-    if not item then return false end
+    if not item then self.nextInsert = nil; return false end
     if item.fn then
       self.nextInsert = 0 -- sayNext inserts right after this item
       item.fn()
+      self.nextInsert = nil
       self.current = nil
       return true
     end

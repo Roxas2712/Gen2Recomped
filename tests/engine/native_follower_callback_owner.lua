@@ -11,7 +11,7 @@ local run=T.sdk.loadMods({'mods/follower_owner'},{fs=T.sdk.memfs({
  ['mods/follower_owner/manifest.json']=[[{"id":"follower_owner","name":"Follower owner","version":"1.0.0","api":2,"entry":"main.lua"}]],
  ['mods/follower_owner/main.lua']=[[
  local mod=...
- local F=require('src.compat.game3.Follower')
+ local F=require('src.world.game3.Follower')
  local renderer={draw=function()end}
  mod.exports.renderer=renderer
  mod.hooks:wrap("world.follower.spawn",function(_,game,world)
