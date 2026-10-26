@@ -53,6 +53,7 @@ function R:release()
     if c.state.onDone==c.installedCallback then
       if c.sourceStarted then c.state.onDone=nil else c.state.onDone=c.original end
     end
+    if c.sourceStarted then c.discardContinuation()end
     c.invalidated=true;self:drop(c)
   end
   self.records=setmetatable({},{__mode='kv'});self.last=nil
@@ -73,6 +74,7 @@ function R:bind(state)
   else for id,style in pairs(c.catalog.styles)do if style==state.style then c.id=id;break end end end
   local original=state.onDone
   c.original=original
+  c.discardContinuation=function()original=nil;c.original=nil end
   c.continue=function()
     if c.callbackError then error(c.callbackError,0)end
     if c.callbackResult then return unpack(c.callbackResult,1,c.callbackResult.n)end
@@ -82,7 +84,7 @@ function R:bind(state)
     if c.cancelled or(c.invalidated and c.sourceStarted)or not nativeCohort(c)
         or not state.finished or state.phase~='done'then return false,'native transition has not completed'end
     c.callbackResult={n=0}
-    local fn=original;original=nil;c.original=nil
+    local fn=original;c.discardContinuation()
     local result=pack(pcall(function()if fn then return fn()end end));fn=nil
     if not result[1]then c.callbackError=result[2];error(result[2],0)end
     c.callbackResult={n=result.n-1};for i=2,result.n do c.callbackResult[i-1]=result[i]end
@@ -168,6 +170,7 @@ function R:cancelOwner(who)
   local c=self:current()
   if c and c.sourceStarted and c.owner==who then
     c.cancelled=true
+    c.discardContinuation()
     self:notify(c,false)
     if c.state.onDone==c.installedCallback then c.state.onDone=nil end
     -- A foreign screen keeps its stack position. If the old admission is
