@@ -1,7 +1,7 @@
 -- Preserve cartridge object sheets in image-table order alongside the native
 -- normalized actor sheets. Compact indexed bytes keep all poses without a
 -- second renderer or a persistent RGBA copy for every object on the cartridge.
-local M={SCHEMA=1}
+local M={SCHEMA=2}
 local dimensions={
   [0]={{8,8},{16,16},{32,32},{64,64}},
   [1]={{16,8},{32,8},{32,16},{64,32}},
@@ -107,13 +107,42 @@ local function decode(raw,w,h,tileRows)
   end
   return table.concat(lines)
 end
+local function avatars(rom,spec)
+  if not spec then return nil end
+  local out={stateFlags={male={},female={}}}
+  local function pair(at)
+    if not at then return nil end
+    assert(range(rom,at,2),'avatar pair outside cartridge')
+    return {male=rom:u8(at),female=rom:u8(at+1)}
+  end
+  for _,kind in ipairs({'player','rival'}) do
+    local count=spec[kind..'_states'] or 0;assert(count<=32,'avatar state limit')
+    if spec[kind] then
+      out[kind]={}
+      for i=0,count-1 do
+        local row=pair(spec[kind]+i*2);row.state=assert(spec.stateNames[i+1],'avatar state name unavailable')
+        out[kind][i+1]=row
+      end
+    end
+  end
+  out.linkFrlg=pair(spec.link_frlg);out.linkRs=pair(spec.link_rs)
+  local n=spec.state_flag_count or 0;assert(n<=32,'avatar flag limit')
+  for g,key in ipairs({'male','female'}) do
+    for i=0,n-1 do
+      local at=spec.state_flags+((g-1)*n+i)*2
+      assert(range(rom,at,2),'avatar flags outside cartridge')
+      out.stateFlags[key][i+1]={gfx=rom:u8(at),flag=rom:u8(at+1)}
+    end
+  end
+  return out
+end
 function M.extract(rom,spec)
   assert(range(rom,spec.gfxTable,spec.count*4),'invalid object graphics table')
   assert(spec.count>=1 and spec.count<=4096,'invalid object graphics count')
   assert(range(rom,spec.paletteTable,8),'invalid object palette table')
   local starts,pals=imageStarts(rom,spec),palettes(rom,spec)
   local result={schema=M.SCHEMA,count=spec.count,edition=spec.edition,romSha1=spec.romSha1,
-    reflectionProfile=spec.reflectionProfile or 'paired',objects={},unavailable={}}
+    reflectionProfile=spec.reflectionProfile or 'paired',avatars=avatars(rom,spec.avatarTables),objects={},unavailable={}}
   for id=0,spec.count-1 do
     local ok,record=pcall(function()
       local info=pointer(rom,spec.gfxTable+id*4)
@@ -165,7 +194,7 @@ end
 local function color(word)
   return string.char(math.floor((word%32)*255/31+.5),math.floor((math.floor(word/32)%32)*255/31+.5),math.floor((math.floor(word/1024)%32)*255/31+.5),255)
 end
-function M.rgba(record,palette)
+function M.rgba(record,palette,checkpoint)
   palette=palette or record.palette
   assert(type(record.indexed)=='string' and #record.indexed==record.width*record.height*record.frameCount,'invalid indexed object sheet')
   local colors={[0]='\0\0\0\0'}; for i=1,15 do colors[i]=color(palette[i] or 0) end
@@ -173,6 +202,7 @@ function M.rgba(record,palette)
   for at=1,#record.indexed,stride do
     local row={}; for x=0,stride-1 do row[x+1]=assert(colors[record.indexed:byte(at+x)],'invalid sprite palette index') end
     rows[#rows+1]=table.concat(row)
+    if checkpoint and #rows%32==0 then checkpoint() end
   end
   return table.concat(rows)
 end

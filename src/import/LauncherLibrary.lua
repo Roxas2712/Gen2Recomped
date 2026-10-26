@@ -158,7 +158,9 @@ function Library.install(RI)
     local rowH = 50*s
     local navigation = {Sidebar.SECTIONS[2], Sidebar.SECTIONS[3], Sidebar.SECTIONS[4],
       Sidebar.SECTIONS[5], Sidebar.SECTIONS[1], Sidebar.SECTIONS[6]}
-    local groups = {[1]='PLAY', [3]='MAKE IT YOURS', [5]='SYSTEM'}
+    if require('src.cloud.RetroCloud').signedIn() then table.insert(navigation,3,Sidebar.SECTIONS[7]) end
+    local extra=#navigation==7 and 1 or 0
+    local groups = {[1]='PLAY', [3+extra]='MAKE IT YOURS', [5+extra]='SYSTEM'}
     for i, sec in ipairs(navigation) do
       if not compact and groups[i] then
         label(self,groups[i],x+22*s,cy+5*s)
