@@ -1329,6 +1329,8 @@ local function markerFor(version)
   end
   if GameVersion.generation(version) == 3 then
     revision = revision .. "original-script-interface-v" .. require("src.import.Gen3ScriptInterface").SCHEMA .. ":"
+  if version == 'ruby' or version == 'sapphire' then
+    revision = revision .. 'rs-transition-classes-v1:'
   end
   return CACHE_FORMAT .. revision .. GameVersion.info(version).sha1
 end
