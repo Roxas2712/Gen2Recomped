@@ -1521,6 +1521,15 @@ function LauncherMods._installZipInner(source, opts)
   if copied and installedRaw then
     copied, copyErr = CacheFs.write(dest .. "/manifest.json", installedRaw)
   end
+  -- Personal import inputs are not part of a distributable mod ZIP. Keep the
+  -- standard baseroms/ namespace on replacement, including its data-only
+  -- profile, while every executable mod file comes from the new archive.
+  if copied and rollbackPath and fs.getInfo(rollbackPath..'/baseroms','directory') then
+    copied,copyErr=copyTree(rollbackPath..'/baseroms',dest..'/baseroms')
+    if copied and not sameFiles(rollbackPath..'/baseroms',dest..'/baseroms') then
+      copied,copyErr=nil,'The retained private imports did not read back whole.'
+    end
+  end
   if not copied then
     removeTree(dest)
     if rollbackPath then

@@ -168,6 +168,10 @@ end
 function Service.install(data,version,options)
  Service.launcherActive=false
  local target,source=Languages.resolve(options,version)
+ -- Cartridge packs own their prose/fonts for this session; saved machine
+ -- translation preferences still apply to subsequent ordinary sessions.
+ local owner=Service.romLanguageOwner
+ if owner and owner.bus==require('src.mods.Runtime').events and owner.active() then target='original' end
  Service.catalog=target~="original" and readCache(version,source,target) or {}
  Service.language=target
  if not require("src.translation.UnicodeFont").configure(target) then

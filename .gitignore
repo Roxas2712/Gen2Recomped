@@ -189,3 +189,7 @@ mobile/ios/bundle_id.local
 !/tests/fixtures/upstream_mods/
 !/tests/fixtures/legacy_npc_controls/
 !/tests/engine/
+!/tests/drivers/
+/tests/drivers/*
+!/tests/drivers/native_rom_languages.lua
+!/tests/drivers/native_rom_language_ui.lua
