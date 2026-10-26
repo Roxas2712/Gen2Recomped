@@ -62,6 +62,9 @@ Performance.bytecodeCache = true
 -- a 256-entry table in an FFI loop when a palette cycle steps, instead of
 -- re-walking every metatile into a new RGBA sheet (TileRenderer gen3Recolour).
 Performance.gen3PaletteIndex = true
+-- G3: Gen 4 model draw sends a uniform only when its value changed and
+-- allocates no per-shape tables (src/render/Gen4Model.lua:_drawCached).
+Performance.gen4UniformCache = true
 Performance.GC_PAUSE = 120
 Performance.GC_STEP_MUL = 300
 Performance.GC_BUDGET_SECONDS = 0.0005
