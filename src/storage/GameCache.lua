@@ -101,11 +101,17 @@ local function capture(version,fs,progress)
    local p=path..'/'..name;local info=fs.getInfo(prefix..p)
    if info and info.type=='directory' then walk(p,depth+1)
    elseif info and (info.type=='file' or info.type==nil) then
+    -- Locally compiled LuaJIT caches are architecture-specific. The checked
+    -- Lua source travels instead; the target builds its own bytecode cache.
+    local source=p:match('^(data/generated/[%w_/%-]+%.lua)c$') or p:match('^(data/generated/[%w_/%-]+%.lua)c%.meta$')
+    local compiled=source and fs.getInfo(prefix..source)
+    if not compiled then
     if not C.path(p) then error('Unsupported imported file: '..p,0) end
     local bytes=fs.read(prefix..p);local ok,why=C.validateFile(p,bytes);if not ok then error(why,0) end
     files[#files+1]={path=p,size=#bytes,sha256=hash(bytes)};total=total+#bytes
     if total>C.MAX_TOTAL or #files>C.MAX_FILES then error('Private game exceeds the transfer limit.',0) end
     tick('Checking '..version..' · '..#files..' files',progress)
+    end
    end
   end
  end

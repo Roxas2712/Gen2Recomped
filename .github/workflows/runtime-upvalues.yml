@@ -9,6 +9,7 @@ on:
       - 'tools/fetch_love_runtime.py'
       - 'tests/test_fetch_love_runtime.py'
       - 'tests/test_runtime_component.py'
+      - 'tests/test_runtime_qualification.py'
       - 'tests/test_native_preview.py'
       - 'src/mods/Job*.lua'
       - 'src/mods/job_worker.lua'
@@ -38,6 +39,8 @@ jobs:
             label: macos-x64
             love-artifact: '12513712494'
             library: libluajit.so
+            engine-timeout: 2400
+            job-timeout: 90
           - runner: macos-15
             label: macos-arm64
             love-artifact: '12513712494'
@@ -45,7 +48,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     # Two complete engine runs, each bounded at 40 minutes, plus both runtime
     # builds and the actual LOVE host checks. No tier is skipped on slow hosts.
-    timeout-minutes: 90
+    timeout-minutes: ${{ matrix.job-timeout || 90 }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -63,6 +66,9 @@ jobs:
         if: runner.os == 'Windows'
         with:
           arch: x64
+      - name: Verify qualification logging and failure handling
+        shell: bash
+        run: python -m unittest discover -s engine/tests -p test_runtime_qualification.py -v
       - name: Verify pinned host download contracts
         shell: bash
         run: python -m unittest discover -s engine/tests -p 'test_fetch_love_runtime.py'
@@ -82,6 +88,7 @@ jobs:
           --luajit-source runtime-source
           --output "${{ runner.temp }}/runtime-capacity/candidate"
           --engine-tests
+          --engine-timeout ${{ matrix.engine-timeout || 2400 }}
       - name: Qualify the actual LOVE12 host, thread VM and FFI
         if: matrix.love-artifact != ''
         shell: bash

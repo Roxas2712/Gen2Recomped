@@ -41,6 +41,12 @@ the caller explicitly supplies one. The output includes per-step logs, a
 source/tool/library hash report and separate licensed stock/extended artifacts.
 These are qualification artifacts, not a replacement installation or a release.
 
+Command output is written directly to each step's log, including partial output
+on a timeout. A timeout or nonzero exit still fails qualification. The default
+engine budget is 2400 seconds per variant; `--engine-timeout` can change this
+positive bound without changing the test set. CI allows 90 minutes for the
+job, including both complete variants, builds and actual host checks.
+
 On Windows the builder explicitly selects MSVC's linker and Git for Windows
 Bash, avoiding the unrelated Git Unix `link` utility and System32's WSL
 launcher. Shared fixture source paths accept Windows separators, and tests
@@ -68,6 +74,15 @@ logs and licensed candidate components are uploaded, not an application or
 game profile. macOS adjusts the copied framework's install name and ad-hoc
 signs and verifies that copied app. This is a host ABI gate, not a GPU or
 gameplay test, nor proof that a universal app has been packaged correctly.
+
+For a pull-request run, the qualified `engineSource` is the checked-out
+synthetic merge commit (`github.sha`). The workflow run's `head_sha` identifies
+the pull-request branch and can describe different engine bytes. Package the
+source named by the reports, after verifying every `engineTree` entry against
+that Git commit. All component architectures must cover the exact packaged
+`main.lua`, `conf.lua`, `src`, `assets` and `data` trees. A green workflow or a
+matching branch name alone is insufficient; do not replace or relax this
+component/source binding when the branch or `main` has advanced.
 
 For an already qualified local macOS library:
 

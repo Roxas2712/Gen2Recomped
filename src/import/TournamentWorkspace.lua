@@ -1,3 +1,4 @@
+local function L(value) return require('src.translation.Service').launcherLookup(value) end
 local W={}
 local Auth=require('src.cloud.RetroCloud')
 local API=require('src.cloud.Tournaments')
@@ -180,7 +181,7 @@ function W.draw(self,x,y,w,h)
  local paint=require('src.import.LauncherLibrary').paint
  local top=y;f.rects={}
  local function text(value,big,color,inset)
-  value=tostring(value or '');local font=big and self.stateFont or self.hintFont
+  value=L(tostring(value or ''));local font=big and self.stateFont or self.hintFont
   local pad=(inset or 0);local _,lines=font:getWrap(value,w-28*s-pad);g.setFont(font);U.col(color or P.detail);g.printf(value,x+14*s+pad,y,w-28*s-pad,'left');y=y+math.max(1,#lines)*font:getHeight()+12*s
  end
  local function button(label,id,bw,bx,by)
