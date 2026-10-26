@@ -1426,6 +1426,8 @@ local function stampAudioOwners(data, name, registry)
 end
 
 function Loader:load(data)
+  local clock = package.loaded["src.core.Gen2Clock"]
+  if clock then clock.resetObservations() end
   Api3NPC.cancelAll()
   Api3Warp.cancelAll()
   PortableScripts.cancelAll(nil, nil, "mods reloaded")
@@ -1806,6 +1808,8 @@ end
 -- boots) ran on a modded engine whose mod instance nothing drives any more,
 -- and the next Play loaded every mod on top of what the last one left.
 function Loader.teardown()
+  local clock = package.loaded["src.core.Gen2Clock"]
+  if clock then clock.resetObservations() end
   Api3NPC.cancelAll()
   Api3Warp.cancelAll()
   PortableScripts.cancelAll(nil, nil, "mods unloaded")

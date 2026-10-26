@@ -45,7 +45,7 @@ end
 
 local function nextFriday(save, now)
   local date = os.date("*t", now)
-  local weekday = (date.wday - 1 + (tonumber(save.g2DayOffset) or 0)) % 7
+  local weekday = require("src.core.Gen2Clock").weekday(save, now)
   local days = (5 - weekday) % 7 -- Match the weekday chosen at Mom's clock.
   if days == 0 then days = 7 end
   -- Calendar arithmetic, rather than seconds, also handles daylight saving.

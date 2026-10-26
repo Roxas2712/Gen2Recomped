@@ -1085,6 +1085,8 @@ function GameVersion.set(id)
   local previous = GameVersion.current
   GameVersion.current = GameVersion.VERSIONS[id] and id or "red"
   if previous ~= GameVersion.current then
+    local clock = package.loaded["src.core.Gen2Clock"]
+    if clock then clock.resetObservations() end
     local decorations = package.loaded["src.compat.gen2.Decorations"]
     if decorations then decorations.useRegistry(nil) end
   end

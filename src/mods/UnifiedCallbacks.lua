@@ -26,6 +26,7 @@ C.hooks = names([[
  ui.title_menu.items warp.destination world.tod zoom.range
 ]])
 C.events = names([[
+ clock.day_changed
  assets.transformed battle.ball_thrown battle.battler_switched battle.damage_dealt battle.ended
  battle.exp_gained battle.fainted battle.move_used battle.started battle.status_inflicted battle.turn_ended
  battle.turn_started discord.join_requested flag.changed game.ready intro.birch_speech.finished
