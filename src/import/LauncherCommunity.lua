@@ -200,10 +200,16 @@ function C.install(RI)
     return remove(self,feed,...)
   end
   function RI:_refreshFind(force)
+    if self._communityFindJob then self._communityFindJob:cancel();self._communityFindJob=nil end
+    if self._communityResolveJob then self._communityResolveJob:cancel();self._communityResolveJob=nil end
+    if not Auth.signedIn() then
+      self._findNeedsLogin=true;self.findLoaded=true;self.findIndex={mods={},categories={}}
+      self._communityResolveQueue={};self._communityQueued={}
+      self.findNotice={ok=false,text='Sign in to browse and install new online mods. Local play, manual imports and updates to installed mods work without an account.'}
+      return
+    end
     self._findNeedsLogin=nil
     self:_refreshFindSources()
-    if self._communityFindJob then self._communityFindJob:cancel() end
-    if self._communityResolveJob then self._communityResolveJob:cancel();self._communityResolveJob=nil end
     self._communityQueued={};self._communityResolveQueue={};self._communityResolving=nil
     self.findLoaded=true
     self.findIndex=self.findIndex or {mods={},categories={}}
@@ -256,12 +262,17 @@ function C.install(RI)
     self.findNotice={text=text,ok=ok};self.modNotice={text=text,ok=ok}
   end
   function RI:_communityStartDownload(id,release,title,repo)
-    if not Auth.signedIn() then if self._openAccount then self:_openAccount() end;return end
+    local guestUpdate=false
+    if not Auth.signedIn() then
+      local permitted,why=require('src.mods.ModAccess').checkUpdate(id,release,repo)
+      if not permitted then notice(self,why,false);return end
+      guestUpdate=true
+    end
     if self._profileApplying or self._profileRecoveryBlocked then notice(self,'Complete or recover the cloud mod profile first.',false);return end
     if self._communityDownload then notice(self,'A mod is already downloading.',false);return end
     local job,why=Download.start(release)
     if not job then notice(self,tostring(why),false);return end
-    self._communityDownload={job=job,id=id,release=release,title=title or id,repo=repo,phase='download',bytes=0}
+    self._communityDownload={job=job,id=id,release=release,title=title or id,repo=repo,phase='download',bytes=0,guestUpdate=guestUpdate}
     notice(self,'Downloading '..(title or id)..' inside RetroRecomped...',true)
   end
   function RI:_findInstall(entry)
@@ -296,6 +307,7 @@ function C.install(RI)
   -- the catalogue. Search and scrolling naturally select the next cards.
   local thumb=RI._findThumb
   RI._findThumb=function(self,entry,...)
+    if not Auth.signedIn() then return nil end
     if entry.catalogueId and not entry._communityResolved and entry.resolveUrl
       and entry.resolveUrl:sub(1,#C.URL+19)==C.URL..'/api/launcher/mods/' then
       self._communityResolveQueue=self._communityResolveQueue or {}
@@ -390,7 +402,7 @@ function C.install(RI)
     RI[method]=function(self,x,y,w,h,...)
       local used=paintLinks(self,x,y,w)
       self._communityGateRect=nil
-      if method=='_drawFindPanel' and self._findNeedsLogin then self:_refreshFind(true) end
+      if method=='_drawFindPanel' and self._findNeedsLogin and Auth.signedIn() then self:_refreshFind(true) end
       local week=require('src.import.LauncherPresentation').week(self)
       self._communityWeekRect=nil
       if week then
@@ -420,6 +432,19 @@ function C.install(RI)
   end
   local update=RI.update
   RI.update=function(self,dt,...)
+    if not Auth.signedIn() then
+      if self._communityFindJob or self._communityResolveJob or self.findIndex and #(self.findIndex.mods or {})>0 then self:_refreshFind() end
+      if self._communityLatestJob then self._communityLatestJob:cancel();self._communityLatestJob=nil;self._communityConfirmPending=nil end
+      for id,job in pairs(self._communityImageJobs or {}) do if job.cancel then job:cancel() end;self._communityImageJobs[id]=nil end
+      local download=self._communityDownload
+      if download and (download.phase=='install' or not download.guestUpdate) then
+        local permitted=require('src.mods.ModAccess').checkUpdate(download.id,download.release,download.repo)
+        if not permitted then
+          if download.phase=='install' and download.path then love.filesystem.remove(download.path) end
+          self:_communityCancelDownload()
+        else download.guestUpdate=true end
+      end
+    end
     require('src.import.LauncherPresentation').update(self)
     Download.reap()
     require('src.import.CartridgeDownload').reap()
@@ -489,7 +514,7 @@ function C.install(RI)
         end
       end
     end)
-    if not self._communityResolveJob and self.section=='mods' and self._communityResolveQueue and #self._communityResolveQueue>0 then
+    if Auth.signedIn() and not self._communityResolveJob and self.section=='mods' and self._communityResolveQueue and #self._communityResolveQueue>0 then
       local entry=table.remove(self._communityResolveQueue,1)
       self._communityResolving=entry
       self._communityResolveJob=Task.new(function() return resolveEntry(entry) end)
