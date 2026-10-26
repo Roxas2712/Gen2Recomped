@@ -79,7 +79,6 @@ local stream={}
 function stream:prefetch(id,priority)return S.prefetch(id,priority)end
 function stream:get(id)return S.get(id)end
 function stream:poll()runtime:poll()end
-function stream:pending()return runtime:pending()end
 function stream:step(budget)runtime:step(budget)end
 function stream:cancel(id)
   if id==nil then runtime:cancelPending();return true end
