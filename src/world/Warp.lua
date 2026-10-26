@@ -435,4 +435,8 @@ function Warp.destination(data, warpDef, lastMap, backupWarp, save)
                       { warp = warpDef, lastMap = lastMap, data = data })
 end
 
+-- Read-only consumers can prepare the same destination without dispatching
+-- the gameplay warp decision hook or taking the transition.
+Warp.observeDestination=resolve
+
 return Warp

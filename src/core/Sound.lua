@@ -294,6 +294,22 @@ function Sound.playNamedEffect(data, name)
   return src
 end
 
+-- A source consumer's environmental voice must not share the cached Source
+-- of a world script, weather controller or another mod.
+function Sound.playOwnedEffect(data, name, owner)
+  assert(type(owner)=="string" and owner~="", "effect owner required")
+  local id,song=Sound.sequenceKey(data,name)
+  if not id then return nil end
+  local def=song
+  if type(song)=="table" and tonumber(song.index) and not song.file then
+    def={song=id,m4a=tonumber(song.index)}
+  end
+  local source=playPath(data,"source:"..#owner..":"..owner..":"..tostring(id),def)
+  if source then played("sfx",name) end
+  return source
+end
+function Sound.isSuspended()return sessionSuspended end
+
 -- Weather owns a separate native voice: an ambient stop must not cut off a
 -- mod or scripted one-shot of the same cartridge sequence.
 function Sound.playWeatherEffect(data, name, looping)

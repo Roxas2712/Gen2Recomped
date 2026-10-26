@@ -83,6 +83,27 @@ function Collision.warpAt(x,y)
   if not((cell>=0x60 and cell<=0x7f)or warpBehaviors[behavior])then return nil end
   for _,warp in ipairs(def.warps or{})do if warp.x==x and warp.y==y then return warp end end
 end
+function Collision.resolveWarpDestination(game,warp)
+  local g,w=Session.resolve(game)
+  if not g or type(warp)~='table'then return nil,'no admitted native warp observation'end
+  local maps=Map._context(g);local found
+  for _,def in pairs(maps:definitions())do
+    for _,row in ipairs(def.warps or{})do if row==warp then found=true;break end end
+    if found then break end
+  end
+  if not found then return nil,'foreign or retired warp observation'end
+  local native={};for k,v in pairs(warp)do native[k]=v end
+  native.destMap=warp.nativeDestination or warp.destMap
+  if not g.data.maps[native.destMap]then
+    local id=require('src.compat.gen1.MapIdentity').bind(g.data.maps,require('src.core.GameVersion').get()):nativeId(native.destMap)
+    if id then native.destMap=id end
+  end
+  local id,x,y=require('src.world.Warp').observeDestination(g.data,native,w.lastOutdoor,w.backupWarp,g.save)
+  if not id then return nil end
+  local def=maps:definition(id)
+  if not def then return nil,'warp destination is not an admitted source map'end
+  return def.id,x,y
+end
 function Collision.clear()runtime:release()end
 Collision.release=Collision.clear
 setmetatable(Collision,{__index=function(_,key)
