@@ -18,7 +18,7 @@ end
 -- every seam. The source-catalog test requires a decision for each new seam.
 C.hooks = names([[
  phone.contact_list breeding.compatibility catch.nickname catch.party_full battle.style battle.enemy_switch_or_item core.quit_to_launcher
- shiny.roll gender.roll
+ shiny.roll gender.roll field.weather.sound
  held_item.trigger battle.menu_auxiliary battle.move_grid_navigation ui.party.grid_navigation
  battle.field_residual battle.caught_marker_visible battle.charge_required battle.accuracy battle.bottom_ui_visible battle.catch_exp battle.crit battle.damage battle.enemy_action battle.exp_award
  battle.low_health_alarm battle.overlay battle.run battle.status_hud_visible battle.turn_order catch.rate core.logic_speed core.update

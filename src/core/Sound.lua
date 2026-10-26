@@ -296,6 +296,25 @@ function Sound.playNamedEffect(data, name)
   return src
 end
 
+-- Weather owns a separate native voice: an ambient stop must not cut off a
+-- mod or scripted one-shot of the same cartridge sequence.
+function Sound.playWeatherEffect(data, name, looping)
+  return Runtime.call("field.weather.sound", function(value)
+    local id, song = Sound.sequenceKey(data, value)
+    if not id then return nil end
+    local def = song
+    if type(song) == "table" and tonumber(song.index) and not song.file then
+      def = { song = id, m4a = tonumber(song.index) }
+    end
+    local src = playPath(data, "weather:" .. tostring(id), def)
+    if src then
+      safeAudio("Source:setLooping", src.setLooping, src, looping == true)
+      played("sfx", value)
+    end
+    return src
+  end, name)
+end
+
 function Sound.play(data, name)
   local sfx = data.audio and data.audio.sfx
   local def = sfx and sfx[name]
