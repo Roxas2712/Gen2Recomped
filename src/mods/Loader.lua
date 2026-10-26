@@ -1212,6 +1212,8 @@ function Loader:_rollback(modId)
   if stream and stream.cancelOwner then pcall(stream.cancelOwner,modId)end
   local space=package.loaded['src.core.game3.scripting.space']
   if space and space.cancelOwner then pcall(space.cancelOwner,modId)end
+  local transition=package.loaded['src.core.game3.battle_transition']
+  if transition and transition.cancelOwner then pcall(transition.cancelOwner,modId)end
 end
 
 -- a mod that explicitly swears it stays link-compatible while writing into a
@@ -1322,6 +1324,8 @@ local function retireSpriteResources()
   if sprites and type(sprites.release)=='function' then sprites.release()end
   local space=package.loaded['src.core.game3.scripting.space']
   if space and type(space.release)=='function'then space.release()end
+  local transition=package.loaded['src.core.game3.battle_transition']
+  if transition and type(transition.release)=='function'then transition.release()end
 end
 
 function Loader:load(data)
