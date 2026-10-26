@@ -1128,6 +1128,9 @@ function Game:_draw()
   local ScreenSpaceUI = HotModules.get('src.render.ScreenSpaceUI')
   local windowUI, windowUIIndex = ScreenSpaceUI.select(self.stack, scene, drawFrom)
   local windowUIOverlay = false
+  local nativeWindowOverlays = windowUI and HotModules.get("src.core.GameVersion").isGen2()
+  local nativeWindowStack = not windowUI and HotModules.get('src.core.GameVersion').isGen2()
+    and ScreenSpaceUI.hasNativeStack(self.stack,scene,drawFrom,self.overworld)
   local worldDrawn = scene.states[drawFrom] == self.overworld
     and renderVisible(self.stack, self.overworld)
   -- A wide battle holds its 304px surface through every menu or prompt it
@@ -1211,7 +1214,13 @@ function Game:_draw()
       local ownsSurface = wideState
         or (native ~= nil and state == native)
         or Game.wantsThisSurface(state)
-      if state == windowUI then
+      if nativeWindowOverlays and windowUIIndex and i>windowUIIndex then
+        if renderVisible(self.stack,state) and state.draw then windowUIOverlay=true end
+      elseif nativeWindowStack and state~=self.overworld then
+        -- Paint this native state once at output resolution below. Keeping
+        -- its controller on the native stack does not require rasterising
+        -- vector menus and text through the cartridge-sized canvas.
+      elseif state == windowUI then
         -- Keep the world pass, but discard cartridge-sized furniture below a
         -- window-resolution owner. The remaining canvas holds its overlays.
         love.graphics.clear(0,0,0,0)
@@ -1313,9 +1322,14 @@ function Game:_draw()
   -- Keep shader controls readable even when a local shader paints black.
   local top = activeTop(self.stack)
   Renderer.shaderPresetBypass = top and top.shaderPresetBypass or false
-  if Renderer.gen2FrameManaged and windowUI then
+  if Renderer.gen2FrameManaged and (windowUI or nativeWindowStack) then
     Renderer.gen2WindowDraw = function(viewport)
-      ScreenSpaceUI.draw(windowUI,Renderer,viewport,zones,windowUIOverlay)
+      if windowUI then
+        ScreenSpaceUI.draw(windowUI,Renderer,viewport,zones,false)
+        if windowUIOverlay then ScreenSpaceUI.drawNativeStack(self.stack,scene,windowUIIndex+1,
+          self.overworld,Renderer,viewport,false) end
+      else ScreenSpaceUI.drawNativeStack(self.stack,scene,drawFrom,self.overworld,
+        Renderer,viewport,not worldDrawn) end
     end
   end
   local viewport, privateViewport
