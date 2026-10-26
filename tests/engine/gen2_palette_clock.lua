@@ -20,7 +20,7 @@ for _,v in ipairs({'gold','silver','crystal'})do
  P.setGen2Tod('MORN');P.setGen2MapPalette(1);P.setDarkWorld(true)
  T.eq(P.clockDaytime(),'NITE',v..' scene RTC query ignores map DAY and darkness')
  T.eq(P.daytimeFor({mapPalette=1},nil,true),'DAY',v..' map override still selects its own row')
- T.eq(P.daytimeFor({mapPalette=1},nil,false),'DARK',v..' native darkness still wins before map override')
+ T.eq(P.daytimeFor({mapPalette=1},nil,false),'DAY',v..' another map does not inherit live cave darkness')
  T.eq(P.gen2Tod(),'DAY',v..' public clock query never changes live bake state')
  local Json=require('src.link.Json');local d=T.fixtures.fresh()
  local files={['mods/clock/manifest.json']=Json.encode({id='clock',name='Clock contract',version='1.0.0',api=2,entry='main.lua',affects_link=false}),
