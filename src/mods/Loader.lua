@@ -1210,6 +1210,8 @@ function Loader:_rollback(modId)
   self.modSave[modId] = nil
   local stream=package.loaded['src.core.game3.asset_stream']
   if stream and stream.cancelOwner then pcall(stream.cancelOwner,modId)end
+  local space=package.loaded['src.core.game3.scripting.space']
+  if space and space.cancelOwner then pcall(space.cancelOwner,modId)end
 end
 
 -- a mod that explicitly swears it stays link-compatible while writing into a
@@ -1318,6 +1320,8 @@ end
 local function retireSpriteResources()
   local sprites=package.loaded['src.core.game3.ow_sprites']
   if sprites and type(sprites.release)=='function' then sprites.release()end
+  local space=package.loaded['src.core.game3.scripting.space']
+  if space and type(space.release)=='function'then space.release()end
 end
 
 function Loader:load(data)
