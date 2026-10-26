@@ -3005,9 +3005,18 @@ end
 local STUCK_WARN_FRAMES = 360        -- six seconds at sixty
 local STUCK_GIVE_UP_FRAMES = 720
 
+local function foregroundOwnsField(world)
+  local stack = Game and Game.stack
+  local top = stack and stack.top and stack:top()
+  return top ~= nil and top ~= world
+end
+
 function OverworldState:watchStuckScript()
   local runner = self.runner
-  if not runner:isRunning() or self.transitioning
+  -- PicBox and FadeOverlay deliberately pump the field while they own the
+  -- foreground. Waiting for their callback is legitimate even though update
+  -- reaches this watchdog; a player may inspect a starter for any duration.
+  if foregroundOwnsField(self) or not runner:isRunning() or self.transitioning
      or runner.waitingFrames or runner.waitingCheck
      or #self.scriptMoves > 0
      or (self.player and self.player.moving)
@@ -4282,7 +4291,7 @@ function OverworldState:update(dt)
     -- it, name the condition that is holding it, once.  Ten seconds is far
     -- past any real cutscene beat in either cartridge and still short enough
     -- that the line is in the log next to whatever the player last did.
-    self.lockedFrames = (self.lockedFrames or 0) + 1
+    self.lockedFrames = foregroundOwnsField(self) and 0 or (self.lockedFrames or 0) + 1
     if self.lockedFrames == 600 then
       local why = {}
       if self.runner:isRunning() then
