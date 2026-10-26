@@ -38,7 +38,8 @@ def main():
     parser.add_argument("--love", type=Path, required=True)
     parser.add_argument("--emerald", type=Path, required=True)
     parser.add_argument("--backend", choices=("opengl", "metal"), required=True)
-    parser.add_argument("--out", type=Path, required=True, help="New output directory")
+    parser.add_argument("--out", type=Path, required=True,
+                        help="New directory under this checkout's .local/qa")
     parser.add_argument("--qa-tools", type=Path, help="Shared qa_storage.py directory")
     parser.add_argument("--map", default="MAP_G00_N15")
     parser.add_argument("--x", type=int, default=10)
