@@ -17983,7 +17983,7 @@ end
 function OverworldState:_worldEntityLoop(drawEntity, cam, bgY, freeGround, groundForRise,
                                           groundSin, grassColors, spriteDepthGround, shadows, riseOf, field, gymFog)
   local onTop
-  for _, e in ipairs(require('src.world.RemotePlayers').entities(self,self.entities)) do
+  for _, e in ipairs(self.entities) do
     if self:gen3AboveTopLayer(e) then
       onTop = onTop or {}
       onTop[#onTop + 1] = e
@@ -18606,7 +18606,7 @@ local function drawWorldBody(self, cadenceConsumed)
     local closeEntities = FrameProfile.section("  world: entities")
     if Performance.worldDrawHoist then
       local okE, result = pcall(self._worldEntityLoop, self, drawEntity, cam, bgY, freeGround,
-                                groundForRise, groundSin, grassColors, spriteDepthGround, shadows, riseOf)
+                                groundForRise, groundSin, grassColors, spriteDepthGround, shadows, riseOf, nil, gymFog)
       if not okE then
         if spriteDepthGround then spriteDepthGround:endSprites(); spriteDepthGround = nil end
         error(result, 0)
@@ -18618,7 +18618,7 @@ local function drawWorldBody(self, cadenceConsumed)
         onTop = onTop or {}
         onTop[#onTop + 1] = e
       else
-        local okE, errE = pcall(drawEntity, self, e, cam, bgY, freeGround, groundForRise, groundSin, grassColors, spriteDepthGround, shadows, riseOf)
+        local okE, errE = pcall(drawEntity, self, e, cam, bgY, freeGround, groundForRise, groundSin, grassColors, spriteDepthGround, shadows, riseOf, nil, gymFog)
         if not okE then
           if spriteDepthGround then spriteDepthGround:endSprites(); spriteDepthGround = nil end
           error(errE, 0)
