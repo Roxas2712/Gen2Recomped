@@ -35,6 +35,13 @@ for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'}) do
   T.eq(Objects._byId[1],v); T.same(Objects._order,{1,2})
   local ids=Objects._order; ids[1]=99; T.same(Objects._order,{1,2},'external lists cannot replace native actors')
   T.same(Objects.listActive(),{1,2}); T.eq(#Objects.forDraw(),2)
+  -- Source-only flags cannot disguise native actors; a real optional
+  -- follower belongs to its separate presentation path, retaining lookup.
+  v.optionalFollower=true;T.eq(a.optionalFollower,nil);T.eq(#Objects.forDraw(),2)
+  b.optionalFollower=true
+  local ordinary=Objects.forDraw();T.eq(#ordinary,1);T.eq(ordinary[1],v)
+  T.eq(Objects.find(2).localId,2);T.eq(#w.entities,3,'draw filtering preserves the native cast')
+  b.optionalFollower=nil;v.optionalFollower=nil;T.eq(#Objects.forDraw(),2)
   T.eq(Objects.at(5,5),v); T.eq(Objects.at(0/0,5),nil)
   T.eq(Objects.blocks(5,5),true); T.eq(Objects.blocks(5,5,1),false)
   T.eq(Objects.blocks(5,5,nil,4),false); T.eq(Objects.blocks(5,5,nil,0),true)

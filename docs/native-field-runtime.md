@@ -102,3 +102,12 @@ option, other rooms, the battle card or complete gameplay.
 Missing native classes also cannot match ordinary mod screens through nil
 metatables. Focused admission, field-move, transition, companion and battle
 checks pass (55 / 316 / 308 / 916 / 382).
+
+A real native step also exposed the optional companion in the ordinary source
+NPC draw pool. Source followers have a separate presentation contract; their
+native actor remains available to lookup and native update/draw lists, while
+ordinary source NPC artwork excludes that actual native follower. Source-only
+extension fields cannot disguise another NPC as a follower. The new regression
+fails 25 assertions before correction and passes 90 checks afterwards. Object,
+lifecycle, companion and native predicate regressions also pass. Complete
+avatar/room presentation remains subject to the ongoing real-frame checks.
