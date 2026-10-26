@@ -13,6 +13,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--love', type=Path, required=True)
     parser.add_argument('--qa-tools', type=Path)
+    parser.add_argument('--npc-controls', action='store_true')
     parser.add_argument('--baseline', required=True, help='local pre-M5 Git commit')
     parser.add_argument('--report', type=Path, required=True)
     args = parser.parse_args()
@@ -27,10 +28,17 @@ def main():
              'src/script/Gen2ScriptVM.lua', 'src/script/Gen3ScriptVM.lua',
              'src/script/Commands.lua', 'src/mods/Loader.lua', 'src/mods/DecodedCallbacks.lua',
              'tools/decoded-profile-check/main.lua', 'tools/decoded-profile-check/conf.lua')
+    if args.npc_controls:
+        files = ('src/world/WorldAPI.lua', 'src/world/NpcControls.lua', 'src/mods/Api3NPC.lua',
+                 'src/mods/Loader.lua', 'tools/decoded-profile-check/main.lua',
+                 'tools/decoded-profile-check/conf.lua', 'tools/decoded-profile-check/npcs.lua',
+                 'tests/fixtures/legacy_npc_controls/mods/legacy/main.lua',
+                 'tests/fixtures/legacy_npc_controls/mods/legacy/manifest.json')
     hashes = {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in files}
     before = qa_run(['git', 'rev-parse', '--verify', args.baseline + '^{commit}'], cwd=root,
                     capture_output=True, text=True, check=True).stdout.strip()
-    blob = qa_run(['git', 'show', before + ':src/script/ScriptRunner.lua'], cwd=root,
+    baseline_path = 'src/world/WorldAPI.lua' if args.npc_controls else 'src/script/ScriptRunner.lua'
+    blob = qa_run(['git', 'show', before + ':' + baseline_path], cwd=root,
                   capture_output=True, check=True).stdout
     baseline = args.report.parent / 'baseline-runner.lua'
     baseline.write_bytes(blob)
@@ -39,16 +47,18 @@ def main():
     result = qa_run([str(args.love.resolve()), str(root / 'tools/decoded-profile-check')],
                     cwd=root, env=dict(os.environ, POKEPORT_IDENTITY=identity,
                                       DECODED_PROFILE_REPO=str(root), DECODED_PROFILE_QA_GUARDED='1',
-                                      DECODED_PROFILE_BASELINE=str(baseline.resolve())),
+                                      DECODED_PROFILE_BASELINE=str(baseline.resolve()),
+                                      NPC_CONTROLS_QA='1' if args.npc_controls else '0'),
                     capture_output=True, text=True, timeout=90)
     args.report.with_suffix('.log').write_text(result.stdout + result.stderr)
-    records = [line[len('M5_NATIVE_RESULT '):] for line in result.stdout.splitlines()
-               if line.startswith('M5_NATIVE_RESULT ')]
+    prefix = 'M6_NATIVE_RESULT ' if args.npc_controls else 'M5_NATIVE_RESULT '
+    records = [line[len(prefix):] for line in result.stdout.splitlines() if line.startswith(prefix)]
     if result.returncode or len(records) != 1:
         raise RuntimeError('native profile probe failed; see ' + str(args.report.with_suffix('.log')))
     if any(hashlib.sha256((root / name).read_bytes()).hexdigest() != digest for name, digest in hashes.items()):
         raise RuntimeError('measured source changed during the probe')
     report = json.loads(records[0])
+    report['baselinePath'] = baseline_path
     report.update(baseline=before, baselineRunnerSha256=hashlib.sha256(blob).hexdigest(),
                   sha256=hashes, minimumFreeGiB=20, playerProfilesUsed=False)
     args.report.write_text(json.dumps(report, indent=2) + '\n')

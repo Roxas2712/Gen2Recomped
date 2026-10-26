@@ -6,6 +6,10 @@ function love.errorhandler(message)
 		return 1
 	end
 end
+if os.getenv('NPC_CONTROLS_QA') == '1' then
+  require('tools.decoded-profile-check.npcs')
+  return
+end
 local Version = require("src.core.GameVersion")
 Version.set("firered")
 local Native = require("src.script.ScriptRunner")
