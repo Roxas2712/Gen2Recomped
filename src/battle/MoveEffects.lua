@@ -66,7 +66,7 @@ local function changeStage(battle, who, stat, delta, fromEnemy)
   if delta < 0
      and require("src.battle.Abilities").refusesStatDrop(who, stat) then
     return { Strings("%s's\n%s\nwon't go lower!", displayName(who),
-                     STAT_LABEL[stat] or tostring(stat)) }
+                     Strings(STAT_LABEL[stat] or tostring(stat))) }
   end
   local cur = who.stages[stat] or 0
   local new = math.max(-6, math.min(6, cur + delta))
@@ -81,13 +81,13 @@ local function changeStage(battle, who, stat, delta, fromEnemy)
   -- _MonsStatsRoseText/_MonsStatsFellText: "X's / STAT rose!"; the
   -- two-stage variants scroll "greatly" onto a third line
   if delta >= 2 then
-    return { Strings("%s's\n%s\ngreatly rose!", displayName(who), STAT_LABEL[stat]) }
+    return { Strings("%s's\n%s\ngreatly rose!", displayName(who), Strings(STAT_LABEL[stat])) }
   elseif delta == 1 then
-    return { Strings("%s's\n%s rose!", displayName(who), STAT_LABEL[stat]) }
+    return { Strings("%s's\n%s rose!", displayName(who), Strings(STAT_LABEL[stat])) }
   elseif delta == -1 then
-    return { Strings("%s's\n%s fell!", displayName(who), STAT_LABEL[stat]) }
+    return { Strings("%s's\n%s fell!", displayName(who), Strings(STAT_LABEL[stat])) }
   end
-  return { Strings("%s's\n%s\ngreatly fell!", displayName(who), STAT_LABEL[stat]) }
+  return { Strings("%s's\n%s\ngreatly fell!", displayName(who), Strings(STAT_LABEL[stat])) }
 end
 MoveEffects.changeStage = changeStage
 
