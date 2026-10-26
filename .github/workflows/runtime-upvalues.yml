@@ -63,13 +63,9 @@ jobs:
         if: runner.os == 'Windows'
         with:
           arch: x64
-      - name: Build both runtimes and qualify closures, C API and engine
+      - name: Verify pinned host download contracts
         shell: bash
-        run: >-
-          python engine/tools/runtime-upvalue-check/qualify.py
-          --luajit-source runtime-source
-          --output "${{ runner.temp }}/runtime-capacity/candidate"
-          --engine-tests
+        run: python -m unittest discover -s engine/tests -p 'test_fetch_love_runtime.py'
       - name: Fetch pinned LOVE12 host artifact
         if: matrix.love-artifact != ''
         env:
@@ -79,6 +75,13 @@ jobs:
           python engine/tools/fetch_love_runtime.py
           --artifact "${{ matrix.love-artifact }}"
           --output "${{ runner.temp }}/love-runtime.zip"
+      - name: Build both runtimes and qualify closures, C API and engine
+        shell: bash
+        run: >-
+          python engine/tools/runtime-upvalue-check/qualify.py
+          --luajit-source runtime-source
+          --output "${{ runner.temp }}/runtime-capacity/candidate"
+          --engine-tests
       - name: Qualify the actual LOVE12 host, thread VM and FFI
         if: matrix.love-artifact != ''
         shell: bash
