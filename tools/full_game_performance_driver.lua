@@ -55,6 +55,25 @@ return function(game)
   end
   U.wait(mode == "voxel" and 1500 or 240)
   local active
+  local world, worldUpdate = game.overworld, game.overworld.update
+  world.update = function(self, ...)
+    worldUpdate(self, ...)
+    if active and active.card == "P7" then
+      -- Keep native simulation/draw, and exercise camera-driven invalidation.
+      self.camera.x = self.camera.x + #active.presentMs * 0.25
+    end
+  end
+  local modPerf, count
+  if V then
+    modPerf = V.require("Perf")
+    count = modPerf.count
+    modPerf.count = function(name, n)
+      if active and name:sub(1, 7) == "shadow." then
+        active.shadowCasts[name] = (active.shadowCasts[name] or 0) + (n or 1)
+      end
+      return count(name, n)
+    end
+  end
   local present = love.graphics.present
   love.graphics.present = function(...)
     local t = love.timer.getTime()
@@ -118,10 +137,21 @@ return function(game)
       setCard(card, on)
       local paced = card == "P1"
       love.window.setVSync(paced and 1 or 0)
+      require("src.core.FrameCap").apply(paced and 60 or 240)
       U.wait(180)
       collectgarbage("collect")
-      active =
-        { card = card, enabled = on, windows = 0, sections = {}, vsync = love.window.getVSync(), presentMs = {}, intervalsMs = {} }
+      active = {
+        card = card,
+        enabled = on,
+        windows = 0,
+        sections = {},
+        vsync = love.window.getVSync(),
+        presentMs = {},
+        intervalsMs = {},
+        fpsCap = require("src.core.FrameCap").current,
+        shadowCasts = {},
+        cameraMotion = card == "P7" and "controlled 0.25 world-pixel pan per update" or "native camera follow",
+      }
       FP.setEnabled(true)
       FP.reset()
       local start = love.timer.getTime()
@@ -164,6 +194,10 @@ return function(game)
     setCard(card, true)
   end
   love.graphics.present = present
+  world.update = worldUpdate
+  if modPerf then
+    modPerf.count = count
+  end
   Logger.report = original
   report.passed = true
   local f = assert(io.open(out .. "/report.json", "w"))
