@@ -230,7 +230,13 @@ end
 -- ever fires for a paired 1v1 room (tournaments signal disconnects through
 -- bracket_update/tournament_over instead), so it's unambiguous here.
 local function handleGenericRelayControl(self, msg)
-  if msg.type == "hosted" then
+  if msg.type == "upgrade_required" then
+    -- Current public relays no longer accept the legacy host/join rooms.
+    -- Treat rejection as terminal instead of silently waiting for a code.
+    self.error = Strings("This relay needs a newer online protocol.")
+    self.closed = true
+    return true
+  elseif msg.type == "hosted" then
     self.code = msg.code
     return true
   elseif msg.type == "paired" then

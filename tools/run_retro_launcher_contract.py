@@ -47,7 +47,7 @@ retro_overlay cloud_running_slot developer_account developer_workspace native_ac
 account_workspace private_http developer_projects mod_profile_recovery retro_overlay_main
 window_frame window_frame_async portable_input_hooks touch_orientation_bug633
 save_resume resume_workspace save_resume_capture save_resume_slot save_history_workspace launcher_audio_handoff bank_exchange'''.split()
-suites.extend(['native_preview','account_storage','account_profiles','bank_interop',
+suites.extend(['relay_rejection','native_preview','account_storage','account_profiles','bank_interop',
                'api3_storage_transactions','api3_playthrough_storage','bank_portrait','api3_compat','mod_catalogue','mod_access','mod_preflight','launcher_presentation','cartridge_batch','launcher_cobblemon','cartridge_cloud','wonder_reward','game_cache','device_session','gift_codes','gift_editor','presence','tournaments','league','arena_battle_proof'])
 for suite in suites:
     command = [*runtime, str(root / 'tests/engine' / (suite + '.lua'))]

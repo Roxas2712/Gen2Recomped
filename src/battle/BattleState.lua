@@ -1179,7 +1179,7 @@ end
 BattleState.markOwned = markOwned
 BattleState.StatBox = StatBox -- the level-up stat window (PrintStatsBox)
 
-local function newBattle(game)
+local function newBattle(game, opts)
   local self = setmetatable({}, BattleState)
   self.game = game
   self.data = game.data
@@ -1325,7 +1325,7 @@ local function newBattle(game)
   -- the same "permanent" DROUGHT and DRIZZLE use, so a move that sets its own
   -- weather still overrides it exactly as the cartridge lets it.
   do
-    local ow = game.overworld
+    local ow = not (opts and opts.fieldWeather == false) and game.overworld
     local weather = ow and ow.battleWeather and ow:battleWeather() or nil
     if weather then
       local Weather = require("src.battle.Weather")
@@ -1374,7 +1374,7 @@ function BattleState.giveWildHeldItem(data, mon, rng, compoundEyes)
 end
 
 function BattleState.newWild(game, species, level, opts)
-  local self = newBattle(game)
+  local self = newBattle(game, opts)
   self.kind = "wild"
   local playerMon = Party.firstHealthy(game.save.party)
   if not playerMon then
