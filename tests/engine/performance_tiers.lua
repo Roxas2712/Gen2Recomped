@@ -153,6 +153,17 @@ do
   T.eq(run(A.upAfter, nil), "high", "...and again, up to AUTO's own answer")
   T.eq(run(A.upAfter * 2, nil), nil, "never above the ceiling AUTO chose")
   T.eq(Performance.observeFrame(budget * 3, budget, now + 1, "high"), nil, "a fixed tier is never judged")
+  -- Leaving PREFER FPS discards partial decision windows. Returning later
+  -- starts at AUTO, rather than counting old misses towards a new step.
+  Performance.applyOptions({performance="adaptive"})
+  run(A.window * 2.2,5)
+  T.eq(Performance.adaptiveTier(),"balanced","adaptive session has stepped down")
+  Performance.applyOptions({performance="high"})
+  Performance.applyOptions({performance="adaptive"})
+  T.eq(Performance.adaptiveTier(),"high","re-entering adaptive starts from AUTO")
+  T.eq(Performance.adaptiveState().frames,0,"old frame samples are discarded")
+  local f=assert(io.open("main.lua"));local main=f:read("*a");f:close()
+  T.check(main:find("if presented and Game and Game.save and Game.save.options and love.timer then",1,true),"only presented frames reach the adaptive observer")
   Performance.resetAdaptive()
   restore()
 end

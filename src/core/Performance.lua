@@ -368,7 +368,11 @@ end
 -- Resolve the tier for these options, record it live, and return its caps.
 -- Called from Game:applyOptions, which clamps the live presentation modules
 -- against the returned caps.
+local adaptiveSelected = false
 function Performance.applyOptions(opts)
+  local selected = opts and opts.performance == "adaptive" or false
+  if selected ~= adaptiveSelected then Performance.resetAdaptive() end
+  adaptiveSelected = selected
   local tier = Performance.resolve(opts and opts.performance)
   Performance.tier = tier
   return Performance.CAPS[tier]

@@ -1412,7 +1412,7 @@ function love.run()
     -- A1: PREFER FPS judges the frame that was just put on screen.  Inert
     -- for every other PERFORMANCE value; a changed tier re-runs the same
     -- clamps the OPTIONS row runs.
-    if Game and Game.save and Game.save.options and love.timer then
+    if presented and Game and Game.save and Game.save.options and love.timer then
       local opts = Game.save.options
       if opts.performance == "adaptive" then
         local stepped = Performance.observeFrame(dt, 1 / (FrameCap.current or 60),
