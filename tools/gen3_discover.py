@@ -10,12 +10,16 @@ shape of the table, or by a string encoded in the cartridge's own charmap --
 and then checked against a fact the table itself has to satisfy.  Nothing here
 is trusted because it is "the address everyone quotes".
 
+The separate terrainPalettePrograms field is an explicitly source-pinned
+callback profile for an exact full ROM hash, not a structural discovery.
+
 Usage:
   python3 gen3_discover.py <emerald.gba> [-o rom_manifest_emerald.json]
 """
 import argparse
 import collections, hashlib, json, sys
 from gen3_field_move_profiles import field_move_profile
+from gen3_palette_profiles import profile_for_sha1
 
 BASE = 0x08000000
 NUM_SPECIES = 412      # named species slots, INCLUDING the 25 unused
@@ -5449,6 +5453,9 @@ def main():
         'version': 'emerald',
         'romSha1': sha1,
         'fieldMoveStreaks': field_move_profile(sha1),
+        # This field is deliberately source-pinned and exact-hash gated,
+        # rather than a structural guess about callback side effects.
+        'terrainPalettePrograms': profile_for_sha1(sha1),
         'romHeader': {'title': data[0xA0:0xAC].decode('ascii', 'replace'),
                       'gameCode': code, 'makerCode': data[0xB0:0xB2].decode('ascii'),
                       'revision': data[0xBC]},
