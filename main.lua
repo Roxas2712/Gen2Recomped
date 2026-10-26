@@ -14,6 +14,8 @@
 --     opens the editor on that slot's file, and restores the launcher when
 --     the editor's Close button is pressed (openEditor / closeEditor below)
 
+-- J1: the JIT's trace limits, raised before the first module compiles a loop
+pcall(function() require("src.core.JitTuning").apply() end)
 local editorMode = os.getenv("POKEPORT_EDITOR") == "1" or POKEPORT_EDITOR_MODE == true
 
 -- The pinned engine preview is a separate test channel. Stable self-update

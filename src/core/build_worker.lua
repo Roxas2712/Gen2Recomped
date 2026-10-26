@@ -4,6 +4,7 @@
 -- for ImageData, love.filesystem to read an archive) are required here,
 -- once, in the worker's own state; love.graphics is never available on a
 -- thread and no handler may ask for it.
+pcall(function() require("src.core.JitTuning").apply() end)
 require("love.thread")
 require("love.data")
 require("love.image")
