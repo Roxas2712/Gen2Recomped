@@ -131,7 +131,7 @@ function W.tick(self)
    else f.cup=doc;f.confirm=nil;f.choose=nil;if purpose=='saved' then f.form=nil end;f.notice='Results require both players or an organizer decision.' end
    f.nextRefresh=os.time()+20
   end
- elseif f.index and f.index.arena and f.index.arena.queue and f.index.arena.queue.state=='searching' and os.time()>=(f.nextQueue or 0) then
+ elseif not f.form and not f.confirm and not f.choose and f.index and f.index.arena and f.index.arena.queue and f.index.arena.queue.state=='searching' and os.time()>=(f.nextQueue or 0) then
   local q=f.index.arena.queue;f.nextQueue=os.time()+20
   job(self,'arena',function() return API.arena('POST',{format=q.format,edition=q.edition}) end)
  elseif not f.form and not f.confirm and not f.choose and (not f.index and not f.cup or os.time()>=(f.nextRefresh or 0)) then refresh(self) end

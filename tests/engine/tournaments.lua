@@ -94,3 +94,8 @@ check(editionPrinted,'each cup card prints its exact generation and edition')
 W.action(UI,'arenaEdition:blue');check(UI._tournaments.queueEdition=='blue','the selected edition has a direct native button')
 love.graphics.printf=oldPrintf
 print('Regional cup catalogue: 4 checks passed')
+
+UI._tournaments.index.arena.queue={state='searching',format='rookie',edition='crystal'}
+UI._tournaments.nextQueue=0;W.action(UI,'create');W.action(UI,'field:title');W.tick(UI)
+check(not UI._tournaments.job and UI._tournaments.focus=='title','queue polling does not interrupt a staff draft or steal text focus')
+print('Arena draft focus: 1 check passed')
