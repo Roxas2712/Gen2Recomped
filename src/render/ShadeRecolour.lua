@@ -27,11 +27,16 @@ local ffiOk, ffi = pcall(require, "ffi")
 if not ffiOk then ffi = nil end
 
 local function pointer(imageData)
-  if not (imageData and imageData.getFFIPointer) then return nil end
+  if not (imageData and imageData.getFFIPointer and imageData.getFormat) then return nil end
+  local formatOk, format = pcall(imageData.getFormat, imageData)
+  if not formatOk or format ~= 'rgba8' then return nil end
   local ok, ptr = pcall(imageData.getFFIPointer, imageData)
   if not ok or ptr == nil then return nil end
-  return ffi.cast("uint8_t *", ptr)
+  local castOk, bytes = pcall(ffi.cast, "uint8_t *", ptr)
+  return castOk and bytes or nil
 end
+
+local function integer(value)return type(value)=='number' and value%1==0 end
 
 function R.available()
   return ffi ~= nil and Performance.shadeRecolourFfi ~= false
@@ -40,11 +45,16 @@ end
 -- The four colours as bytes, index 1..4 for shades 0..3; `false` (no colours)
 -- means "copy the pixels as they are", exactly as recolorSample does.
 local function table4(colors)
-  if not colors then return nil end
+  if type(colors)~='table' or getmetatable(colors)~=nil then return nil end
   local out = {}
   for i = 1, 4 do
     local c = colors[i]
-    out[i] = { math.floor(c[1]), math.floor(c[2]), math.floor(c[3]) }
+    if type(c)~='table' or getmetatable(c)~=nil then return nil end
+    for channel=1,3 do
+      local v=c[channel]
+      if not integer(v) or v<0 or v>255 then return nil end
+    end
+    out[i] = { c[1], c[2], c[3] }
   end
   return out
 end
@@ -61,6 +71,8 @@ end
 -- not fit either image (the caller then runs its own loop).
 function R.region(src, dst, sx, sy, w, h, dx, dy, colors, mode)
   if not R.available() then return nil end
+  if not (integer(sx) and integer(sy) and integer(w) and integer(h)
+      and integer(dx) and integer(dy)) then return nil end
   local sw, sh = src:getDimensions()
   local dw, dh = dst:getDimensions()
   if sx < 0 or sy < 0 or dx < 0 or dy < 0 or w <= 0 or h <= 0
@@ -70,6 +82,9 @@ function R.region(src, dst, sx, sy, w, h, dx, dy, colors, mode)
   local s, d = pointer(src), pointer(dst)
   if not (s and d) then return nil end
   local tab = (mode ~= "copy") and table4(colors) or nil
+  -- Other formats and palette quantization remain with the original pixel
+  -- functions, which preserve their precision and rounding behavior.
+  if mode ~= 'copy' and colors and not tab then return nil end
   if mode ~= "copy" and not tab then mode = "copy" end
   local obp = mode == "obp"
   for y = 0, h - 1 do
