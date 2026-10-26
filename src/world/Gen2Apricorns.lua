@@ -22,8 +22,7 @@ function M.rows(data)
   end
   -- Historical caches have no recipe table. Keep selection available until
   -- reimport; do not invent their missing ball mappings.
-  local version=Version.get()
-  local legacy=stock(version) and {85,89,101,99,93,92,97} or {85,89,92,93,97,99,101}
+  local legacy={85,89,92,93,97,99,101}
   for i,id in ipairs(legacy)do out[i]={index=i,apricorn=string.format('ITEM_%03d',id)}end
   return out
 end
