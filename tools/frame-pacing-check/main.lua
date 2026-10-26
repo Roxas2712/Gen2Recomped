@@ -12,6 +12,10 @@ if os.getenv("FRAME_PACING_HOT") == "1" then
   require("tools.frame-pacing-check.hot")
   return
 end
+if os.getenv("FRAME_PACING_WORLD") == "1" then
+  require("tools.frame-pacing-check.world")
+  return
+end
 local Cap = require("src.core.FrameCap")
 local Profile = require("src.core.FrameProfile")
 local Json = require("src.link.Json")
