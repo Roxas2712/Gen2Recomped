@@ -158,7 +158,6 @@ function M:draw() self:drawPanel() end
 -- coordinates. Keep the world visible around the cartridge-sized panel.
 function M:drawsWidescreen() return false end
 function M:drawWidescreen(width,height)
-  return require('src.render.ScreenSpaceUI').classic(function() self:drawPanel() end,
-    require('src.render.Renderer'),width,height)
+  return Chrome.withOverlayPanel(width,height,function() self:drawPanel() end)
 end
 return M
