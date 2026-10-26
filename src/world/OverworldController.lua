@@ -2104,7 +2104,7 @@ function OverworldState:rebuildNeighbors()
   -- bound resident memory: drop maps behind us that are neither current nor
   -- a drawn neighbor, releasing their window batch / border image / atlas
   MapLoader.trim(keep)
-  LiveMaps.preparing(self)
+  if not checkpointQuiet then LiveMaps.preparing(self) end
 
 
   -- visual-only NPCs on connected maps (survey zoom): same spawn filter
@@ -2146,7 +2146,7 @@ function OverworldState:rebuildNeighbors()
     end
   end
   self.cast = nil
-  LiveMaps.updated(self)
+  if not checkpointQuiet then LiveMaps.updated(self) end
 end
 
 -- ONE CAST, IN EVERY LOADED MAP'S OWN CELLS.
