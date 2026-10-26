@@ -217,12 +217,28 @@ local function verdict(map, entities, mover, dir, tx, ty)
     if not (mover.surfing and map:isWaterCell(tx, ty)) then
       return false, "tile"
     end
+    -- ...but a DS cell's COLLISION BIT stops a surfer too: the cartridge
+    -- tests it before it asks what the water is. Every HGSS whirlpool (0x11,
+    -- all 126 cells) carries it -- the Dragon's Den eddy at (13..15, 36..38)
+    -- was swum straight into without Whirlpool -- as do the tops of the
+    -- waterfalls and the tree rows of the Lake of Rage's flooded wood
+    -- (Gen4Maps.BLOCKED_CELL; the surf check, sub_0205DAA8 -> sub_020549F4,
+    -- runs whatever the player's state).
+    if map.def and map.def.generation == 4 and not map.def.gen5
+       and map.cellTile and map:cellTile(tx, ty) == 255 then
+      return false, "tile"
+    end
   end
   -- A DS MAP'S RAISED FLOORS: a step between grounds 20 units apart is a
   -- wall (src/world/Gen4HeightRule.lua -- Falkner's walkway, every tower,
   -- ledge and platform on both cartridges); nothing off Gen 4
   if map.def and map.def.generation == 4
      and require("src.world.Gen4HeightRule").blocks(map, mover, tx, ty) then
+    return false, "height"
+  end
+  -- ...and Black / White's, off their imported heights and slope tiles
+  if map.def and map.def.gen5
+     and require("src.world.Gen4HeightRule").gen5Blocks(map, mover, tx, ty) then
     return false, "height"
   end
   -- THE OTHER HALF OF A GEN 3 MAP CELL.

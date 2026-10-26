@@ -399,6 +399,13 @@ end
 -- change.  Only the battle surface is affected; the overworld is unchanged.
 function BattleState:wantsFillScale()
   local options = self.game and self.game.save and self.game.save.options
+  -- SINGLE-SCREEN DS BATTLES FILL unless the player chose a size: they are
+  -- drawn supersampled (src/render/SuperSample.lua), so a fractional fit no
+  -- longer costs even pixels, and the panel under them (Gen4Battle.PANEL_H)
+  -- would otherwise knock the whole-number letterbox down a step
+  if (options == nil or options.battleFit == nil) and Gen4Battle.singlePanel(self) then
+    return true
+  end
   return options and options.battleFit == "fill" or false
 end
 
@@ -577,7 +584,9 @@ function BattleState:uiSize()
   -- 512x256 with the visible half 256x192, and the platform and battler
   -- positions are absolute pixels on that.
   if self:gen4Layout() then
-    return self:gen4SurfaceWidth(), Gen4Battle.HEIGHT
+    -- ...plus the single-screen panel under it (Gen4Battle.PANEL_H)
+    local panel = Gen4Battle.singlePanel(self) and Gen4Battle.PANEL_H or 0
+    return self:gen4SurfaceWidth(), Gen4Battle.HEIGHT + panel
   end
   return 160, 144
 end
@@ -3704,6 +3713,13 @@ function BattleState:enter()
   end
   self.playerBackPic = getImage(backPath,backPalette,backTrueColor)
   self.showPlayerBack = self.playerBackPic ~= nil
+  -- THE DS THROW (Gen4BackThrow / Gen5TrainerPics.backThrow): the strip the
+  -- back plays at the send-out, found by the still's own path
+  do
+    local throws = ((self.data or {}).gen4_trainer_sprites or {}).backThrows
+    self.dsBackThrowRec = type(throws) == "table" and backPath and throws[backPath] or nil
+    self.dsThrow = nil
+  end
   -- ...AND THE OTHER THREE FRAMES OF THAT SHEET (#407).  The single pic is
   -- still what the placement and the scale are measured from; the strip is
   -- only ever the texture the throw draws out of.
@@ -4427,6 +4443,7 @@ function BattleState:update(dt)
     if dir then
       self.menuIndex, self.gen4MenuColumn =
         Gen4Battle.actionMove(self.menuIndex, dir, self.gen4MenuColumn)
+      if self.palPark then require("src.battle.Gen4PalParkBattle").skipRow(self, dir) end
     end
     if input:wasPressed("a") then
       self:chooseSafari(({ "ball", "bait", "rock", "run" })[self.menuIndex])
@@ -7062,12 +7079,30 @@ function BattleState:gen4SendOut(battler)
   local mon = battler.mon
   local name = Gen4Battle.ballThrowFor(mon and (mon.ball or mon.pokeball))
 
-  self.gen4Ball = Gen4BallAnim.new({
-    ball = name,
-    mode = "release",
-    side = "player",
-    to = { x = pos.x, y = pos.y },
-  })
+  local function release()
+    self.gen4Ball = Gen4BallAnim.new({
+      ball = name,
+      mode = "release",
+      side = "player",
+      to = { x = pos.x, y = pos.y },
+    })
+  end
+  -- THE DS TRAINER THROWS IT FIRST: the back plays its send-out (wind-up,
+  -- throw, follow-through) and the ball leaves at the throw's release; the back
+  -- slides off when the throw is done (BattleState:update, `dsThrow`)
+  local rec = self.dsBackThrowRec
+  if rec and self.showPlayerBack and not self:isDouble() then
+    self.dsThrow = { rec = rec, tick = 0 }
+    self.nextInsert = (self.nextInsert or 0) + 1
+    table.insert(self.queue, self.nextInsert, { wait = rec.release })
+    self.nextInsert = self.nextInsert + 1
+    table.insert(self.queue, self.nextInsert, { fn = function()
+      release()
+      table.insert(self.queue, 1, { wait = self.gen4Ball:estimate() })
+    end })
+    return true
+  end
+  release()
   -- The trainer has thrown it, so the back pic goes now rather than staying up
   -- behind the Pokemon it just released.
   if self.showPlayerBack then
@@ -7299,6 +7334,17 @@ function BattleState:updateFx()
   -- the walk, so the two counters are one thing and are stepped together.
   if self.backThrow and self.backThrow.playing then
     self.backThrow.tick = self.backThrow.tick + 1
+  end
+  -- the DS send-out throw (gen4SendOut): when it is done, the back slides off
+  if self.dsThrow then
+    self.dsThrow.tick = self.dsThrow.tick + 1
+    if self.dsThrow.tick >= (self.dsThrow.rec.total or 0) then
+      self.dsThrow = nil
+      if self.showPlayerBack then
+        self.showPlayerBack = false
+        self:slidePic("back")
+      end
+    end
   end
   if self.backWalkOff and self.backWalkOff > 0 then
     self.backWalkOff = self.backWalkOff - 1
@@ -9419,6 +9465,8 @@ end
 -- where each one is in the cartridge. The player's command, then the wild
 -- Pokemon's own: flee, or watch carefully.
 function BattleState:gen4SafariAction(choice)
+  -- PAL PARK'S CATCHING SHOW (src/battle/Gen4PalParkBattle.lua)
+  if self.palPark then return require("src.battle.Gen4PalParkBattle").action(self, choice) end
   local G = require("src.battle.Gen4Safari")
   local st, sf = self.safari, self.gen4Safari
   local function line(id, fallback, ...)
@@ -10601,7 +10649,11 @@ function BattleState:finish()
   -- here it did not, so say so rather than silently papering over it.
   -- The old-man / PROF.OAK demo also skips it: the party never fought
   -- (Yellow's Pallet intro runs before the player owns a mon at all).
+  -- A tag battle's partner can win it alone after the player's side has
+  -- fainted: the cartridge calls that a win (the Battle Tower's multi rooms
+  -- go on, the partner heals in the field), so it stands.
   if self.result ~= "lose" and not self.demo and not self.pokedudeDemo
+     and not (self.ally and self.result == "win")
      and not Party.firstHealthy(self:playerPartyView()) then
     Logger.warn("battle finished %s with no healthy party; forcing blackout",
                 tostring(self.result))
@@ -12584,7 +12636,15 @@ end
 function BattleState:draw()
   if self:wideLayout() then return WideBattle.draw(self) end
   if self:gen3Layout() then return Gen3Battle.draw(self) end
-  if self:gen4Layout() then return Gen4Battle.draw(self) end
+  if self:gen4Layout() then
+    -- SINGLE-SCREEN PLAY (the second screen off or stowed): the one picture is
+    -- the whole window, so it is drawn at the window's scale with smoothed
+    -- letters (src/render/SuperSample.lua) instead of blown up afterwards
+    if not Gen4Battle.bottomScreenUp(self.game) then
+      return require("src.render.SuperSample").draw(self.game, self, function() Gen4Battle.draw(self) end)
+    end
+    return Gen4Battle.draw(self)
+  end
   return self:drawClassic()
 end
 
