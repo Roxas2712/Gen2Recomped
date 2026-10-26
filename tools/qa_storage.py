@@ -360,6 +360,9 @@ class Storage:
                                    for edition in QA_EDITIONS
                                    if (original / edition).is_symlink()]
         for candidate in candidates:
+            from qa_love_storage import profile_scope
+            scoped=profile_scope(candidate,self.home)
+            if scoped is not None:self._take('love',scoped,False)
             try:
                 profile = self._profile(candidate)
             except ValueError:
@@ -689,12 +692,13 @@ class Storage:
     def _remove(self, entry):
         path, _ = self._valid(entry)
         if entry["kind"] == "imports":
+            from qa_love_storage import protected
             self._preserve_copies(path,self._mod_targets(path))
             for edition in QA_EDITIONS:
                 cache = path / edition
                 targets = [cache / part for part in ("data/generated", "assets/generated")]
                 safe = [p for p in targets if p.is_dir() and not p.is_symlink()
-                        and p.resolve() == p]
+                        and p.resolve() == p and not protected(p)]
                 if safe:
                     (cache / "rom-cache.complete").unlink(missing_ok=True)
                     for target in safe:
