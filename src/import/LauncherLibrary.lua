@@ -73,7 +73,7 @@ function Library.install(RI)
   local function text(self, font, value, x, y, width, color)
     love.graphics.setFont(font)
     col(color or palette().ink)
-    love.graphics.print(ellipsize(font, value, width), x, y)
+    love.graphics.print(ellipsize(font, Strings(value), width), x, y)
   end
   local function surface(x, y, w, h, radius, accent, hot)
     local P, g = palette(), love.graphics
@@ -286,7 +286,7 @@ function Library.install(RI)
     Sidebar.icon(fav and 'star' or 'starOff',st.x+15*s,st.y+15*s,8*s,s)
     self._sb.stars[#self._sb.stars+1]=st
     if require('src.import.CartridgeSources').get(version) then
-      local ar=self:_chipButton(x+8*s,y+8*s,'ORIGINAL ↓',{w=108*s,h=30*s})
+      local ar=self:_chipButton(x+8*s,y+8*s,'ORIGINAL',{w=108*s,h=30*s})
       ar.version=version
       self._sb.cartArt=self._sb.cartArt or {}
       self._sb.cartArt[#self._sb.cartArt+1]=ar
@@ -337,6 +337,15 @@ function Library.install(RI)
     if self.gamesView~='consoles' and self.gamesView~='list' then return originalGames(self,x,y,w,h) end
     local s,P,g=self._s,palette(),love.graphics
     local top=y
+    local status=require('src.storage.SyncStatus').get()
+    if status then
+      local line=Strings(require('src.storage.SyncStatus').describe(status))
+      local _,lines=self.hintFont:getWrap(line,w-24*s)
+      local sh=math.max(38*s,#lines*self.hintFont:getHeight()+18*s)
+      surface(x,y,w,sh,8*s,status.state=='available' and P.green or P.link,false)
+      g.setFont(self.hintFont);col(status.state=='available' and P.green or P.detail);g.printf(line,x+12*s,y+9*s,w-24*s,'left')
+      y=y+sh+14*s
+    end
     local list
     if self.gamesView=='consoles' then
       y=y+self:_sbContinueCard(x,y,w)

@@ -1,0 +1,400 @@
+{
+  "passed": true,
+  "sourceStable": true,
+  "sourceSha256": "9f03f6632986d0a5a252994438d316ffe0c7db088ee6885a53246337c9a1e581",
+  "commit": "65b34d5a8321a64751ac054fe92e2a1ae7ef55d6",
+  "results": [
+    {
+      "name": "tools/voxel_idle_pump_check.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.023718124999999812,
+      "logSha256": "2353afa58a0b4736e72d045eb5e62b720dd1391c169ed93a46ca28e39c9d184a"
+    },
+    {
+      "name": "tools/idle_stream_check.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.01717566599999998,
+      "logSha256": "df50206990f3780e29825e7093e96e019d96351a7dd83c599a34e9e0b22e6509"
+    },
+    {
+      "name": "tools/gen4_chunk_prebuild_check.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.03253824999999999,
+      "logSha256": "d9b71759bda6c0bbcf4b6ec6967c4f60047afd1b9aac8f235290bb9c65b22c4f"
+    },
+    {
+      "name": "list-switches",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.015747624999999932,
+      "logSha256": "53a5e046235946a3f06e7dc59cb5c1eae98632847bbc23b5a481d75caa5deca7"
+    },
+    {
+      "name": "defaults:tests/engine/gate_hooks.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.9565510829999999,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "defaults:tests/mod_examples_tests.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.9990829580000002,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "defaults:tests/engine/performance_tiers.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.01137658300000055,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "all-on:tests/engine/gate_hooks.lua",
+      "spec": "all=1",
+      "exit": 0,
+      "wallSeconds": 0.9557818749999996,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "all-on:tests/mod_examples_tests.lua",
+      "spec": "all=1",
+      "exit": 0,
+      "wallSeconds": 1.1940416250000006,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "all-on:tests/engine/performance_tiers.lua",
+      "spec": "all=1",
+      "exit": 0,
+      "wallSeconds": 0.011792124999999487,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "audioWorkerOptimization=0:tests/engine/gate_hooks.lua",
+      "spec": "audioWorkerOptimization=0",
+      "exit": 0,
+      "wallSeconds": 1.4604846670000011,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "audioWorkerOptimization=0:tests/mod_examples_tests.lua",
+      "spec": "audioWorkerOptimization=0",
+      "exit": 0,
+      "wallSeconds": 1.4447445000000005,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "audioWorkerOptimization=0:tests/engine/performance_tiers.lua",
+      "spec": "audioWorkerOptimization=0",
+      "exit": 0,
+      "wallSeconds": 0.012305833999999294,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "bytecodeCache=0:tests/engine/gate_hooks.lua",
+      "spec": "bytecodeCache=0",
+      "exit": 0,
+      "wallSeconds": 1.2978682500000005,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "bytecodeCache=0:tests/mod_examples_tests.lua",
+      "spec": "bytecodeCache=0",
+      "exit": 0,
+      "wallSeconds": 0.9450243329999992,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "bytecodeCache=0:tests/engine/performance_tiers.lua",
+      "spec": "bytecodeCache=0",
+      "exit": 0,
+      "wallSeconds": 0.010632624999999507,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "gcBudget=0:tests/engine/gate_hooks.lua",
+      "spec": "gcBudget=0",
+      "exit": 0,
+      "wallSeconds": 1.22530875,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "gcBudget=0:tests/mod_examples_tests.lua",
+      "spec": "gcBudget=0",
+      "exit": 0,
+      "wallSeconds": 0.9935373750000007,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "gcBudget=0:tests/engine/performance_tiers.lua",
+      "spec": "gcBudget=0",
+      "exit": 0,
+      "wallSeconds": 0.00892704199999983,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "gen3PaletteIndex=0:tests/engine/gate_hooks.lua",
+      "spec": "gen3PaletteIndex=0",
+      "exit": 0,
+      "wallSeconds": 0.7737197919999996,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "gen3PaletteIndex=0:tests/mod_examples_tests.lua",
+      "spec": "gen3PaletteIndex=0",
+      "exit": 0,
+      "wallSeconds": 0.9830752500000006,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "gen3PaletteIndex=0:tests/engine/performance_tiers.lua",
+      "spec": "gen3PaletteIndex=0",
+      "exit": 0,
+      "wallSeconds": 0.01476320900000161,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "gen4ByteVertices=0:tests/engine/gate_hooks.lua",
+      "spec": "gen4ByteVertices=0",
+      "exit": 0,
+      "wallSeconds": 1.055519416000001,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "gen4ByteVertices=0:tests/mod_examples_tests.lua",
+      "spec": "gen4ByteVertices=0",
+      "exit": 0,
+      "wallSeconds": 0.9362711249999975,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "gen4ByteVertices=0:tests/engine/performance_tiers.lua",
+      "spec": "gen4ByteVertices=0",
+      "exit": 0,
+      "wallSeconds": 0.00864033299999889,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "gen4ChunkPrebuild=0:tests/engine/gate_hooks.lua",
+      "spec": "gen4ChunkPrebuild=0",
+      "exit": 0,
+      "wallSeconds": 0.8919840830000005,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "gen4ChunkPrebuild=0:tests/mod_examples_tests.lua",
+      "spec": "gen4ChunkPrebuild=0",
+      "exit": 0,
+      "wallSeconds": 0.9364947500000014,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "gen4ChunkPrebuild=0:tests/engine/performance_tiers.lua",
+      "spec": "gen4ChunkPrebuild=0",
+      "exit": 0,
+      "wallSeconds": 0.008803415999999231,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "gen4GpuLight=0:tests/engine/gate_hooks.lua",
+      "spec": "gen4GpuLight=0",
+      "exit": 0,
+      "wallSeconds": 0.8944960000000002,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "gen4GpuLight=0:tests/mod_examples_tests.lua",
+      "spec": "gen4GpuLight=0",
+      "exit": 0,
+      "wallSeconds": 0.7960211249999993,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "gen4GpuLight=0:tests/engine/performance_tiers.lua",
+      "spec": "gen4GpuLight=0",
+      "exit": 0,
+      "wallSeconds": 0.008227249999997355,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "gen4UniformCache=0:tests/engine/gate_hooks.lua",
+      "spec": "gen4UniformCache=0",
+      "exit": 0,
+      "wallSeconds": 0.8008845839999985,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "gen4UniformCache=0:tests/mod_examples_tests.lua",
+      "spec": "gen4UniformCache=0",
+      "exit": 0,
+      "wallSeconds": 0.8836072090000009,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "gen4UniformCache=0:tests/engine/performance_tiers.lua",
+      "spec": "gen4UniformCache=0",
+      "exit": 0,
+      "wallSeconds": 0.01302216699999903,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "hotPathHoist=0:tests/engine/gate_hooks.lua",
+      "spec": "hotPathHoist=0",
+      "exit": 0,
+      "wallSeconds": 0.892290415999998,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "hotPathHoist=0:tests/mod_examples_tests.lua",
+      "spec": "hotPathHoist=0",
+      "exit": 0,
+      "wallSeconds": 0.8309625840000017,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "hotPathHoist=0:tests/engine/performance_tiers.lua",
+      "spec": "hotPathHoist=0",
+      "exit": 0,
+      "wallSeconds": 0.010210875000002062,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "idleStream=0:tests/engine/gate_hooks.lua",
+      "spec": "idleStream=0",
+      "exit": 0,
+      "wallSeconds": 0.760421749999999,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "idleStream=0:tests/mod_examples_tests.lua",
+      "spec": "idleStream=0",
+      "exit": 0,
+      "wallSeconds": 0.777834833,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "idleStream=0:tests/engine/performance_tiers.lua",
+      "spec": "idleStream=0",
+      "exit": 0,
+      "wallSeconds": 0.009434124999998517,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "lowTierBudget=0:tests/engine/gate_hooks.lua",
+      "spec": "lowTierBudget=0",
+      "exit": 0,
+      "wallSeconds": 0.7944176250000012,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "lowTierBudget=0:tests/mod_examples_tests.lua",
+      "spec": "lowTierBudget=0",
+      "exit": 0,
+      "wallSeconds": 0.7470847920000026,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "lowTierBudget=0:tests/engine/performance_tiers.lua",
+      "spec": "lowTierBudget=0",
+      "exit": 0,
+      "wallSeconds": 0.006933833999998029,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "paletteZoneCache=0:tests/engine/gate_hooks.lua",
+      "spec": "paletteZoneCache=0",
+      "exit": 0,
+      "wallSeconds": 0.6849757909999994,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "paletteZoneCache=0:tests/mod_examples_tests.lua",
+      "spec": "paletteZoneCache=0",
+      "exit": 0,
+      "wallSeconds": 0.9702337499999985,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "paletteZoneCache=0:tests/engine/performance_tiers.lua",
+      "spec": "paletteZoneCache=0",
+      "exit": 0,
+      "wallSeconds": 0.008442625000000703,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "worldDrawHoist=0:tests/engine/gate_hooks.lua",
+      "spec": "worldDrawHoist=0",
+      "exit": 0,
+      "wallSeconds": 0.7582119580000004,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "worldDrawHoist=0:tests/mod_examples_tests.lua",
+      "spec": "worldDrawHoist=0",
+      "exit": 0,
+      "wallSeconds": 0.9070774999999998,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "worldDrawHoist=0:tests/engine/performance_tiers.lua",
+      "spec": "worldDrawHoist=0",
+      "exit": 0,
+      "wallSeconds": 0.007569249999999528,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "all-off:tests/engine/gate_hooks.lua",
+      "spec": "all=0",
+      "exit": 0,
+      "wallSeconds": 0.7581372500000043,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "all-off:tests/mod_examples_tests.lua",
+      "spec": "all=0",
+      "exit": 0,
+      "wallSeconds": 0.8048976669999988,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "all-off:tests/engine/performance_tiers.lua",
+      "spec": "all=0",
+      "exit": 0,
+      "wallSeconds": 0.00997950000000003,
+      "logSha256": "80cd3fc6ef7361c2ed880e037312ea333cfdee81c8f187a183664214f1df88a1"
+    },
+    {
+      "name": "tests/mod_examples_tests.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.8118186250000008,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "tests/engine/gate_hooks.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.7287035419999981,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "api3",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 109.50284175,
+      "logSha256": "01aa4f6230d3de5eb33bc89202daac8668706368ce0c6bb6803ada556eaedb1d"
+    },
+    {
+      "name": "external-fixtures",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 9.016699791000008,
+      "logSha256": "c9de67c6b358ac28f98c6562c7219e078c4fbdef68ad122238936e949ad0dffe"
+    }
+  ]
+}

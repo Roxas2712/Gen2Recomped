@@ -2,12 +2,14 @@ local Storage={}
 local SaveData=require('src.core.SaveData')
 local Versions=require('src.core.GameVersion')
 local Task=require('src.cloud.Task')
+local Sync=require('src.storage.SyncStatus')
 function Storage.install(RI)
   local GameCache=require('src.storage.GameCache');GameCache.refresh()
   function RI:_storageSync(version,slot,cartChoice,mode)
     if not require('src.storage.AccountStorage').requireUI(self,'storage') then return end
     if self._storageTask then self.settingsNotice='Cloud sync is already running.';return end
     if self._profileApplying then self.settingsNotice='Finish the mod profile transfer before syncing again.';return end
+    self._storageRetry={version=version,slot=slot,cartChoice=cartChoice,mode=mode}
     local list={}
     for _,v in ipairs(Versions.ORDER) do list[#list+1]=v end
     local mods=self.mods or require('src.mods.LauncherMods').list()
@@ -68,9 +70,10 @@ function Storage.install(RI)
         if not profile then return nil,profileWhy end
         message=message..' · Mod profile: '..profile.kind..'.'
       end
-      return {message=message,profile=profile,games=games}
+      return {message=message,profile=profile,games=games,sync=result}
     end)
     self._storageTask=task;self._storageVersions=list
+    Sync.set(task and 'uploading' or 'error',version,slot,why)
     self.settingsNotice=task and 'Syncing your saves and Pokémon Bank...' or tostring(why)
     self._storageNext=os.time()+300
   end
@@ -79,6 +82,11 @@ function Storage.install(RI)
   local rows=RI._sbCloudRows
   RI._sbCloudRows=function(self,add,...)
     rows(self,add,...)
+    local state=Sync.get()
+    add({kind='section',label='CLOUD STATUS',cloud=true,note=Sync.describe(state)..(state and state.detail and (' · '..state.detail) or '')})
+    if state and (state.state=='error' or state.state=='cancelled' or state.state=='conflict') then
+      add({kind='action',label='RETRY CLOUD SYNC',value='RETRY',action='storageRetry'})
+    end
     add({kind='section',label='YOUR STORAGE',cloud=true,note='Saves, Bank and designs use progress storage. Private imported games have a separate account quota and remain available locally after app updates.'})
     add({kind='option',scope='launcher',label='AUTOMATIC SAVE SYNC',
       note='Sync while the launcher is open. Local play remains available offline.',
@@ -110,6 +118,9 @@ function Storage.install(RI)
   end
   local action=RI._settingsAction
   RI._settingsAction=function(self,entry,...)
+    if entry and entry.action=='storageRetry' then
+      local r=self._storageRetry or {};return self:_storageSync(r.version,r.slot,r.cartChoice,r.mode)
+    end
     if entry and entry.action=='gameCacheUploadNow' then return self:_storageSync(nil,nil,nil,'games-upload') end
     if entry and entry.action=='accountRestoreNow' then return self:_storageSync(nil,nil,nil,'restore') end
     if entry and (entry.action=='cartCloudUpload' or entry.action=='cartCloudRestore') then
@@ -118,6 +129,7 @@ function Storage.install(RI)
     if entry and entry.action=='retroCloudAccount' then self:_openAccount();return end
     if entry and entry.action=='retroCloudCancel' then
       if self._storageTask then self._storageTask:cancel();self._storageTask=nil end
+      Sync.set('cancelled')
       self.settingsNotice='Cloud sync cancelled. Local saves are preserved.';self._settingsRowCache=nil;return
     end
     return action(self,entry,...)
@@ -146,6 +158,7 @@ function Storage.install(RI)
         if result then
           self._storageTask=nil;self._settingsRowCache=nil;self._settingsCache=nil;self._cartStyleCache=nil
           local payload=result.kind=='done' and result.first
+          Sync.result(type(payload)=='table' and (payload.sync or payload) or payload,result.error or result.second)
           self.settingsNotice=type(payload)=='table' and payload.message or payload or ('Cloud sync paused: '..tostring(result.error or result.second))
           if type(payload)=='table' and payload.profile and (payload.profile.kind=='apply' or payload.profile.kind=='conflict') then
             self._modProfilePlan=payload.profile
