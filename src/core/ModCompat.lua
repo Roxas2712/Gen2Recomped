@@ -68,6 +68,9 @@ ModCompat.ALIASES = {
   -- save-side data
   ["src.core.gen2.Boxes"] = "src.pokemon.Gen2Boxes",
   ["src.core.gen2.Mail"] = "src.pokemon.Gen2Mail",
+  -- The legacy signature is translated explicitly; the native module takes
+  -- (data, save) and must not be aliased directly to this spelling.
+  ["src.core.gen2.Decorations"] = "src.compat.gen2.Decorations",
   ["src.ui.gen2.BoxMenu"] = "src.ui.BoxMenu",
   ["src.ui.gen2.MapRadio"] = "src.ui.Gen2MapRadio",
   ["src.core.gen2.BugContest"] = "src.world.BugContest",
