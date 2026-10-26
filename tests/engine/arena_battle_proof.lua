@@ -8,6 +8,10 @@ for _,version in ipairs({'red','crystal','emerald'}) do
  if version=='emerald' then for _,def in pairs(data.pokemon) do def.baseStats.spatk=def.baseStats.special;def.baseStats.spdef=def.baseStats.special;def.evYield={} end end
  require('src.battle.TypeChart').load(data);T.link.prepare(data)
  local ga=T.link.fakeGame(data,'FIXMON_A',{name='HOST',level=50});local gb=T.link.fakeGame(data,'FIXMON_B',{name='GUEST',level=50})
+ -- Direct Arena entry never opens an overworld. Neither peer's adventure
+ -- weather may affect a link battle or dereference an uninitialized world.
+ ga.overworld={battleWeather=function() error('Link battle read host field weather') end}
+ gb.overworld={battleWeather=function() error('Link battle read guest field weather') end}
  local na,nb=require('src.link.Net').loopbackPair();local pa,pb=P.packParty(ga.save.party),P.packParty(gb.save.party)
  local ra,rb;local count=0
  local a=assert(L.newHost(ga,na,{myParty=pa,theirParty=pb,seed=327,strict=true,verdict='full',onFinished=function(r)ra=r;count=count+1 end}))
