@@ -45,4 +45,41 @@ for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
   end
   f.close()
 end
+for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
+  local f = F.boot(edition)
+  local game, world, stack = f.game, f.world, f.stack
+  local npc = world.npcs[1]
+  npc.def.pokemon, npc.def.level = "FIXMON_B", 15
+  local push = world.pushBattle
+  world.pushBattle = function(_, battle) stack.states[#stack.states + 1] = battle end
+  world:talkTo(npc)
+  local text = stack:top()
+  stack.states = { world }
+  text.onDone()
+  world.pushBattle = push
+  local battle = stack:top()
+  battle.phase, battle.queue, battle.introSlide = "menu", {}, 0
+  local cp, code, detail = f.checkpoints:capture(game)
+  T.check(cp ~= nil, edition .. " detaches actual static encounter: " .. tostring(code) .. " " .. tostring(detail))
+  if cp then
+    local Serializer = require("src.core.SaveSerializer")
+    local bad = assert(Serializer.decode(Serializer.encode(cp)))
+    bad.runtime.battle.continuation.onDone = nil
+    local saved = game.save
+    local ok, reason = f.checkpoints:restore(game, bad)
+    T.eq(ok, false, "static completion cannot be omitted")
+    T.eq(reason, "invalid_battle_state", "missing completion is rejected before mutation")
+    T.eq(game.save, saved, "static preflight preserves progress ownership")
+    T.check(f.checkpoints:restore(game, cp), "static native decision reconstructs")
+    local fresh, actor = stack:top(), world.npcs[1]
+    stack.states = { world }
+    fresh.onFinish("win")
+    T.eq(game.save.defeatedTrainers[npc.id], true, "static encounter defeat flag continues")
+    T.eq(actor.frozen, false, "static native completion resolves fresh actor")
+    local found = false
+    for _, n in ipairs(world.npcs) do if n == actor then found = true end end
+    T.eq(found, false, "defeated static encounter leaves native cast")
+  end
+  f.close()
+end
 T.finish("Native trainer checkpoint producer")

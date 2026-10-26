@@ -541,7 +541,8 @@ function A.apply(game, snapshot, clone)
     }) do
       map[key] = values[key]
     end
-    map:noteGridChange()
+    -- Older native map owners rebuild directly without a revision service.
+    if map.noteGridChange then map:noteGridChange() end
     map.gridRevision = values.gridRevision
     map.renderer:rebuild()
   end
