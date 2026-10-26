@@ -1933,7 +1933,7 @@ function Sidebar.install(RI)
       g.print(Strings("From ") .. tostring(meta.source), textX, ty + nLines * self.hintFont:getHeight() + 6 * s)
     end
     local designY=ty+nLines*self.hintFont:getHeight()+(meta and meta.source and (self.hintFont:getHeight()+8*s) or 0)
-    local artLabel=require('src.import.CartridgeSources').get(version) and 'ORIGINAL CARTRIDGE IMAGE ↓' or 'CARTRIDGE ART & DESIGN'
+    local artLabel=require('src.import.CartridgeSources').get(version) and 'ORIGINAL CARTRIDGE IMAGE' or 'CARTRIDGE ART & DESIGN'
     local designWidth=math.min(textW,self.hintFont:getWidth(Strings(artLabel))+24*s)
     self._sb.designCart=self:_chipButton(textX,designY,artLabel,{w=designWidth,h=32*s,kind='accent'})
     self._sb.designCart.version=version

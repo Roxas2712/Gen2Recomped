@@ -26,12 +26,39 @@ def git(source, *args):
     return subprocess.check_output(["git", "-C", str(source), *args], text=True).strip()
 
 
+def run_logged(output, label, argv, cwd, env=None, timeout=180, run=subprocess.run):
+    """Keep partial output even when a command or the CI job times out."""
+    log = output / (label + ".log")
+    print("QUALIFY", label, "timeout=" + str(timeout), flush=True)
+    with log.open("w", encoding="utf-8") as stream:
+        try:
+            result = run([str(value) for value in argv], cwd=cwd, env=env,
+                         stdout=stream, stderr=subprocess.STDOUT, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            print(log.read_text(encoding="utf-8", errors="replace")[-6000:], flush=True)
+            raise
+    text = log.read_text(encoding="utf-8", errors="replace")
+    if result.returncode:
+        print(text[-6000:], flush=True)
+    result.check_returncode()
+    return text
+
+
+def positive_seconds(value):
+    seconds = int(value)
+    if seconds <= 0:
+        raise argparse.ArgumentTypeError("timeout must be a positive number of seconds")
+    return seconds
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--luajit-source", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True,
                         help="new disposable candidate directory; never an installation")
     parser.add_argument("--engine-tests", action="store_true")
+    parser.add_argument("--engine-timeout", type=positive_seconds, default=2400,
+                        help="seconds allowed for each complete engine tier run (default: 2400)")
     args = parser.parse_args()
     source, output = args.luajit_source.resolve(), args.output.resolve()
     engine_paths = ("main.lua", "conf.lua", "src", "assets", "data", "tests")
@@ -74,22 +101,7 @@ def main():
               "variants": []}
 
     def command(label, argv, cwd, env=None, timeout=180):
-        try:
-            result = run([str(value) for value in argv], cwd=cwd, env=env,
-                         capture_output=True, text=True, timeout=timeout)
-        except subprocess.TimeoutExpired as exc:
-            # Retain the last completed assertions for a bounded slow-runner
-            # failure instead of uploading an empty diagnostic artifact.
-            def decoded(value):
-                return value.decode("utf-8", errors="replace") if isinstance(value, bytes) else value or ""
-            (output / (label + ".log")).write_text(
-                decoded(exc.stdout) + decoded(exc.stderr), encoding="utf-8")
-            raise
-        (output / (label + ".log")).write_text(result.stdout + result.stderr, encoding="utf-8")
-        if result.returncode:
-            print((result.stdout + result.stderr)[-6000:], flush=True)
-        result.check_returncode()
-        return result.stdout
+        return run_logged(output, label, argv, cwd, env, timeout, run)
 
     for label, capacity in (("stock", 60), ("extended", 120)):
         build = output / label
@@ -158,7 +170,8 @@ def main():
                     raise RuntimeError("Git for Windows Bash is required for engine tiers")
             # Both complete quick-tier runs are required. The growing native
             # suite exceeds 15 minutes on the hosted Intel runner.
-            text = command(label + "-engine", [shell, "scripts/test.sh", "--quick"], ROOT, engine_env, 2400)
+            text = command(label + "-engine", [shell, "scripts/test.sh", "--quick"],
+                           ROOT, engine_env, args.engine_timeout)
             match = re.search(r"engine: (\d+)/(\d+) suites passed", text)
             if not match or match[1] != match[2] or "ALL TIERS PASSED" not in text:
                 raise RuntimeError("engine quick tiers did not all pass")

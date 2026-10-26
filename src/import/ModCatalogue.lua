@@ -1,3 +1,4 @@
+local function L(value) return require('src.translation.Service').launcherLookup(value) end
 -- Catalogue presentation uses publisher previews when available, and local
 -- category illustrations otherwise. Illustrations never imply gameplay proof.
 local M={}
@@ -148,7 +149,7 @@ function M.install(RI)
     local visibleTop,visibleBottom=clipY or y,clipY and (clipY+clipH) or (y+h)
     local function text(value,xx,yy,width,font,color)
       g.setFont(font or self.hintFont);U.col(color or P.detail)
-      g.print(U.ellipsize(g.getFont(),value,width),xx,yy)
+      g.print(U.ellipsize(g.getFont(),L(value),width),xx,yy)
     end
     local function action(id,label,xx,yy,ww,entry)
       local r=self:_chipButton(xx,yy,label,{w=ww,h=36*s,kind=id=='install' and 'accent' or 'neutral'})

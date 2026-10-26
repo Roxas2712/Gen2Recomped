@@ -1,3 +1,4 @@
+local function L(value) return require('src.translation.Service').launcherLookup(value) end
 local W={}
 local A=require('src.cloud.NativeAccount')
 local Auth=require('src.cloud.RetroCloud')
@@ -281,7 +282,7 @@ function W.draw(self)
   g.setColor(.015,.025,.05,.96);g.rectangle('fill',0,0,ww,hh)
   g.setColor(.06,.09,.14,1);g.rectangle('fill',x,y,width,height,14*s,14*s)
   local function text(value,tx,ty,w,big)
-    g.setFont(big and self.stateFont or self.hintFont);U.col(big and p.ink or p.detail);g.printf(value,tx,ty,w,'left')
+    g.setFont(big and self.stateFont or self.hintFont);U.col(big and p.ink or p.detail);g.printf(L(value),tx,ty,w,'left')
   end
   local function button(label,bx,by,bw,id)
     local r=self:_chipButton(bx,by,label,{w=bw,h=38*s,kind='accent'});r.id=id;f.rects[#f.rects+1]=r;return r
@@ -299,10 +300,12 @@ function W.draw(self)
   local v={x=x+18*s,y=y+offset*s,width=width-36*s,height=height-(offset+18)*s};f.viewport=v
   local top=v.y-f.scroll
   local function paragraph(value,big)
+    value=L(value)
     local font=big and self.stateFont or self.hintFont;local _,lines=font:getWrap(value,width-48*s)
     text(value,x+24*s,top,width-48*s,big);top=top+math.max(1,#lines)*font:getHeight()+16*s
   end
   local function row(label,id)
+    label=L(label)
     local _,lines=self.hintFont:getWrap(label,width-72*s)
     local h=math.max(38*s,#lines*self.hintFont:getHeight()+20*s)
     local r=self:_chipButton(x+24*s,top,'',{w=width-48*s,h=h,kind='accent'});r.id=id;f.rects[#f.rects+1]=r
