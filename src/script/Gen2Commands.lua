@@ -2096,8 +2096,8 @@ end
 function Gen2Commands.phoneName(data, id)
   local entry = phoneContact(data, id)
   if not entry then return nil end
-  if entry.name then return entry.name, entry.role end
   local best = phoneTrainerDef(data, entry)
+  if entry.name then return entry.name, entry.role or (best and best.name) end
   if not best then return nil end
   local names = best.partyNames
   return (names and names[entry.trainer]) or best.name, best.name

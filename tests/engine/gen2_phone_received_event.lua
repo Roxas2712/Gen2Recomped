@@ -43,8 +43,11 @@ local oldRandom=math.random;math.random=function()return 0 end
 for _,version in ipairs({'gold','silver','crystal'})do
  V.set(version)
  for _,mode in ipairs({{1,'native'},{2,'native'},{2,'unified'},{3,'unified'}})do
-  local d=fixture();local r=load(d,[[
+  local d=fixture()
+  T.eq(Calls.phoneName(d,7),'LOCAL JOEY','unmodified contact still reads the actual native roster')
+  local r=load(d,[[
    assert(mod:supports('events',"phone.call_received"));mod.exports.seen={}
+   mod.content.phone_contacts:patch('phone:7',{name='AUTHORED JOEY'})
    mod.exports.stop=mod.events:on("phone.call_received",function(e)
     mod.exports.seen[#mod.exports.seen+1]={contact=e.contact,name=e.name,className=e.className,
      special=e.special,scriptKey=e.scriptKey,call={kind=e.call.kind,contact=e.call.contact,
@@ -59,7 +62,7 @@ for _,version in ipairs({'gold','silver','crystal'})do
   T.eq(#e.seen,1,label..' admitted random call emits exactly once')
   local seen=e.seen[1]
   T.eq(seen.contact,7,label..' notification exposes the selected native contact ID')
-  T.eq(seen.name,'LOCAL JOEY',label..' caller name comes from the native trainer roster')
+  T.eq(seen.name,'AUTHORED JOEY',label..' caller name consumes the actual native content override')
   T.eq(seen.className,'LOCAL CLASS',label..' caller class uses native display text')
   T.eq(seen.special,nil,label..' random call has no fabricated special ID')
   T.eq(seen.scriptKey,'IN',label..' notification names the actual compiled native key')
