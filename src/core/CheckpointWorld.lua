@@ -3,6 +3,8 @@
 local Maps = require("src.world.MapLoader")
 local Palette = require("src.render.PaletteFX")
 local V = require("src.core.GameVersion")
+local Spinners = require("src.core.CheckpointSpinners")
+local Actors = require("src.core.CheckpointActors")
 local W = {}
 local active = setmetatable({}, { __mode = "k" })
 local function fields(object)
@@ -25,12 +27,13 @@ function W.available(game)
 	local world = game and (game.overworld or package.loaded["src.world.OverworldController"])
 	return game == package.loaded["src.core.Game"]
 		and info
-		and info.generation <= 2
+		and info.generation <= 5
 		and game.save.version == V.get()
 		and world
 		and type(world._checkpointRebuild) == "function"
 end
-function W.begin(game, loaded, position)
+function W.begin(game, loaded, runtime, clone)
+  local position,spinners,actors=runtime.overworld,runtime.spinners,runtime.actors
 	assert(W.available(game), "native checkpoint world backend is unavailable")
 	assert(not active[game], "checkpoint reconstruction already active")
 	local world, stack = game.overworld or require("src.world.OverworldController"), assert(game.stack)
@@ -42,6 +45,7 @@ function W.begin(game, loaded, position)
 		controller = world,
 		ownerWorld = stack.worldOwner and stack.worldOwner.world,
 		world = fields(world),
+    movement = require("src.world.Gen4MovementTypes")._checkpointState(),
 		stack = fields(stack),
 		modSave = game.mods and game.mods.modSave,
 		dark = Palette.darkWorld(),
@@ -62,7 +66,18 @@ function W.begin(game, loaded, position)
 		if game.mods then
 			game.mods.modSave = loaded.modData or {}
 		end
-		world:_checkpointRebuild(position)
+
+    -- Enter may derive fresh resources using progress, but must not commit its
+    -- ordinary map-entry resets, journal/fly unlocks, weather or bag changes.
+    local canonical={}
+    for key,value in pairs(loaded) do if key~='options' then canonical[key]=value end end
+    canonical=clone(canonical)
+    local options=loaded.options
+    Actors.detach(world)
+    world:_checkpointRebuild(position)
+    replace(loaded,canonical);loaded.options=options
+    if game.mods then game.mods.modSave=loaded.modData or {} end
+    if actors then Actors.apply(game, actors, clone) else Spinners.apply(world, spinners) end
 		game.world = world
 		if stack.worldOwner then
 			stack.worldState = world
@@ -72,6 +87,9 @@ function W.begin(game, loaded, position)
 			stack.states = { world }
 		end
 		stack._modalTracker, stack._sceneStack = nil, nil
+    if runtime.battle then
+      stack.states[#stack.states+1]=require("src.core.CheckpointBattle").apply(game,runtime.battle,clone)
+    end
 	end)
 	if not ok then
 		W.rollback(game, token)
@@ -97,6 +115,7 @@ function W.rollback(game, token)
 	Palette.setDarkWorld(token.dark)
 	Palette.setGen2MapPalette(token.palette)
 	Palette.setGen2Tod(token.tod)
+	require("src.world.Gen4MovementTypes")._checkpointRollback(token.movement)
 	Maps._checkpointRollback(token.maps)
 	active[game] = nil
 end

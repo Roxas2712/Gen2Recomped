@@ -103,12 +103,11 @@ function S:picked(e)
   for i, p in ipairs(self.picks) do if p == e then return i end end
 end
 
-local function refusal(reason)
-  if reason == "egg" then return Strings("An Egg cannot be transferred.") end
-  if reason == "item" then return Strings("A Pokémon holding an item cannot\nbe transferred.") end
-  if reason == "hm" then return Strings("This Pokémon knows a hidden move.\nIt cannot be transferred.") end
-  return Strings("This Pokémon cannot be transferred.")
-end
+local REFUSE = {
+  egg = Strings.source("An Egg cannot be transferred."),
+  item = Strings.source("A Pokémon holding an item cannot\nbe transferred."),
+  hm = Strings.source("This Pokémon knows a hidden move.\nIt cannot be transferred."),
+}
 
 function S:toggle(e)
   local at = self:picked(e)
@@ -116,7 +115,7 @@ function S:toggle(e)
   if #self.picks >= T().MONS then return end
   if not e.walker then
     local why = T().refusal(self.srcData, e.raw)
-    if why then return self:say(refusal(why)) end
+    if why then return self:say(Strings(REFUSE[why] or "This Pokémon cannot be transferred.")) end
   end
   self.picks[#self.picks + 1] = e
   if #self.picks == T().MONS then

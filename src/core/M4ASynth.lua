@@ -56,6 +56,8 @@
 -- ---------------------------------------------------------------------------
 
 local M4A = {}
+M4A.cryPCMVersion = 1
+M4A.cryModesVersion = 2
 
 local SAMPLE_RATE = 44100
 M4A.SAMPLE_RATE = SAMPLE_RATE
@@ -926,12 +928,60 @@ local CRY_CAP = 5           -- seconds; nothing in the cartridge is close
 -- which sits around a tenth of full scale
 local CRY_GAIN = 0.5
 
+-- Cry recordings carry WaveData.type, including Game Freak DPCM. Keep this
+-- reader separate from sequenced instrument voices and expose decoded input
+-- so the native cry controller can use its own pitch/envelope/mode rules.
+function M4A.nativeCrySample(data, index)
+  local audio = data and data.audio or {}
+  local metadata, gen3 = audio.gen3Cries, audio.gen3
+  index = tonumber(index)
+  if not (metadata and gen3 and metadata.table and index and index == index and index >= 0 and index % 1 == 0) then return nil end
+  if metadata.count and index >= metadata.count then return nil end
+  local image = loadImage(audio)
+  local base = gen3.base or 0
+  local pointer = pointerAt(image, base, metadata.table + index * TONE_BYTES + 4)
+  if not pointer then return nil end
+  local kind, freq, count = u16At(image, base, pointer), u32At(image, base, pointer + 4), u32At(image, base, pointer + 12)
+  if not (kind and freq and count and count > 0 and count <= 4 * 1024 * 1024) then return nil end
+  local size = kind == 1 and math.ceil(count / 64) * 33 or count
+  if kind ~= 0 and kind ~= 1 then return nil end
+  local offset = pointer + WAVE_HEADER - base
+  if offset < 0 or offset + size > #image then return nil end
+  local pcm = image:sub(offset + 1, offset + size)
+  local Cry = require("src.core.NativeCryPcm")
+  if kind == 1 then pcm = Cry.decodeDpcm(pcm, count) end
+  if #pcm ~= count then return nil end
+  return pcm, Cry.waveRate(freq), { index = index, type = kind, samples = count, wave = pointer }
+end
+
+function M4A.renderNativeCry(data, index, options)
+  options = options or {}
+  local pcm, rate = M4A.nativeCrySample(data, index)
+  if not pcm then return nil end
+  local Cry = require("src.core.NativeCryPcm")
+  local params = Cry.params(options.mode, options.version, options.volume)
+  local sound, info = Cry.render(pcm, rate, params, { outRate = SAMPLE_RATE, pan = options.pan, mono = options.mono })
+  return sound, info, params
+end
+
+function M4A.crySupports(data,index)
+  local audio=data and data.audio
+  if not(audio and audio.gen3 and audio.gen3Cries)then return false end
+  local _,handled=require("src.core.Gen3CryPCM").describe(loadImage(audio),audio.gen3.base or 0,audio.gen3Cries,index)
+  return handled
+end
+
 function M4A.renderCry(data, index, options)
   options = options or {}
   local audio = (data and data.audio) or {}
   local gen3 = audio.gen3 or {}
   local cries = audio.gen3Cries or {}
   if not (cries.table and index) then return nil end
+  -- Retail cries are GFDPCM, not signed PCM. Keep the existing gain/Source
+  -- contract; decode their own blocks before resampling, never ROM neighbours.
+  local decoded, handled = require("src.core.Gen3CryPCM").render(
+    loadImage(audio), gen3.base or 0, cries, index, options)
+  if handled then return decoded end
   local engine = setmetatable({
     image = loadImage(audio),
     base = gen3.base or 0,
@@ -962,6 +1012,8 @@ function M4A.renderCry(data, index, options)
   -- OpenAL spatializes a mono Source at the listener and spreads it over
   -- every output the device has
   local result = love.sound.newSoundData(samples, SAMPLE_RATE, 16, 2)
+  local Pcm=require("src.core.AudioPcm")
+  local pointer=Pcm.pointer(result)
   local gain = (options.volume or 1) * CRY_GAIN
   local frame, left = 0, 0
   for i = 0, samples - 1 do
@@ -972,8 +1024,12 @@ function M4A.renderCry(data, index, options)
     frame = frame - 1
     local value = voice:sample() * (voice.env / 255) * gain
     if value > 1 then value = 1 elseif value < -1 then value = -1 end
-    result:setSample(i, 1, value)
-    result:setSample(i, 2, value)
+    if pointer then
+      local sample=Pcm.sample(value);pointer[i*2],pointer[i*2+1]=sample,sample
+    else
+      result:setSample(i, 1, value)
+      result:setSample(i, 2, value)
+    end
     left = value
   end
   local _ = left
@@ -1016,28 +1072,14 @@ function M4A.renderEffect(data, def, options)
   -- and a Source that is mostly silence blocks a caller waiting on it
   local length = math.min(n, audible + math.floor(SAMPLE_RATE * 0.05))
   if length < 64 then return nil end
-  local result = love.sound.newSoundData(length, SAMPLE_RATE, 16, 2)
-  for i = 1, length do
-    result:setSample(i - 1, 1, left[i])
-    result:setSample(i - 1, 2, right[i])
-  end
-  return result
+  return require('src.core.AudioPcm').arrays(left,right,length,SAMPLE_RATE)
 end
 
 -- The same shape ChipSynth hands ChipAudio, so the queueing path does not
 -- have to know which generation it is filling buffers for.
 function M4A.soundData(engine, samples, channels)
-  local result = love.sound.newSoundData(samples, SAMPLE_RATE, 16, channels)
-  for index = 0, samples - 1 do
-    if channels == 2 then
-      local left, right = engine:sampleStereo()
-      result:setSample(index, 1, left)
-      result:setSample(index, 2, right)
-    else
-      result:setSample(index, engine:sample())
-    end
-  end
-  return result
+  return require('src.core.AudioPcm').render(engine,samples,channels,SAMPLE_RATE)
 end
 
+require("src.core.Gen3AudioPrep").install(M4A)
 return M4A

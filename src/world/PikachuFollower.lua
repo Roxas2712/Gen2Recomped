@@ -133,12 +133,14 @@ local function shouldSpawn(game, ow)
   return false
 end
 
+local checkpointFollowers = setmetatable({}, {__mode="k"})
 local function makeFollower(game, ow, x, y, facing)
   local NPC = require("src.world.NPC")
   local npc = NPC.new(game.data, ow.map.id, {
     index = INDEX, name = "PIKACHU_FOLLOWER", sprite = "SPRITE_PIKACHU",
     movement = "STAY", range = "NONE", x = x, y = y,
   })
+  checkpointFollowers[npc] = true
   npc.pikachuFollower = true
   npc.passable = true -- never blocks a step (Collision.occupied)
   npc.facing = facing or "down"
@@ -985,6 +987,9 @@ function PikachuFollower.at(ow, cx, cy)
   end
   return nil
 end
+
+PikachuFollower._checkpointCreate = makeFollower
+function PikachuFollower._checkpointOwns(npc) return checkpointFollowers[npc] == true end
 
 local checkpointSpawn = PikachuFollower.onMapEntered
 function PikachuFollower._checkpointSpawn(game, world, opts)

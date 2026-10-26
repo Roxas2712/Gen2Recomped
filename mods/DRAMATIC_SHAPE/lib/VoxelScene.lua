@@ -23,6 +23,18 @@ local Tier = V.require("Tier")
 local Voxel3D = V.require("Voxel3D")
 local ShadowMap = V.require("ShadowMap")
 local ChunkMesher = V.require("ChunkMesher")
+local WorldShadows = V.require("WorldShadows")
+local WaterBudget = V.require("WaterBudget")
+local neighborMatrices=setmetatable({}, {__mode="k"})
+local function neighborMatrix(nb)
+  if V.renderBudget==false then return Mat4.translate(nb.ox,0,nb.oy)end
+  local entry=neighborMatrices[nb]
+  if not entry or entry.x~=nb.ox or entry.z~=nb.oy then
+    entry={x=nb.ox,z=nb.oy,matrix=Mat4.translate(nb.ox,0,nb.oy)}
+    neighborMatrices[nb]=entry
+  end
+  return entry.matrix
+end
 local SpriteBillboards = V.require("SpriteBillboards")
 local TileShape = V.require("TileShape")
 local Structures = V.require("Structures")
@@ -2185,7 +2197,7 @@ local function drawPlanar(state, terrain, nbMesh, atlasFor, cast,
     Voxel3D.draw(terrain, atlasFor(state.map), nil)
     for i, nb in ipairs(state.neighbors or {}) do
       Voxel3D.draw(nbMesh[i], atlasFor(nb.map),
-                   Mat4.translate(nb.ox, 0, nb.oy))
+                   neighborMatrix(nb))
     end
     -- the bank the water laps at. No camera-ward pull: the pull is a depth
     -- bias aimed at the FRAME's own buffer, to settle grass against the feet
@@ -2195,7 +2207,7 @@ local function drawPlanar(state, terrain, nbMesh, atlasFor, cast,
     Voxel3D.draw(ChunkMesher.grass(state.map), atlasFor(state.map), nil)
     Voxel3D.draw(ChunkMesher.flowers(state.map), atlasFor(state.map), nil)
     for _, nb in ipairs(state.neighbors or {}) do
-      local m = Mat4.translate(nb.ox, 0, nb.oy)
+      local m = neighborMatrix(nb)
       Voxel3D.draw(ChunkMesher.grass(nb.map), atlasFor(nb.map), m)
       Voxel3D.draw(ChunkMesher.flowers(nb.map), atlasFor(nb.map), m)
     end
@@ -2272,12 +2284,14 @@ function VoxelScene.drawWater(draws, cast, planar, planarY)
   local tW = Perf.now()
   -- prepass only under the bend; see the header
   local curved = (Voxel3D.curveK or 0) > 0
-  if curved then
+  local prepass = curved or WaterBudget.enabled()
+  if prepass then
     for _, d in ipairs(draws) do
       Voxel3D.draw(d[1], d[2], d[3])
     end
   end
-  local plain = not curved
+  local plain = not prepass
+  local half, painted
   if Water.enabled() and Voxel3D.depthReadable() then
     -- `cast` only where something will actually LOOK at the mirror. Below
     -- FULL the shader's `rays` is 0 and it never samples reflectTex at all,
@@ -2287,16 +2301,19 @@ function VoxelScene.drawWater(draws, cast, planar, planarY)
     -- draws nobody looked at (see Water.castLevel). With the WATER SPRITES
     -- row ON at FULL this is exactly the `cast` it always was, and the
     -- frame is the frame it always drew.
-    local mirror, depth = Voxel3D.beginWater(Water.reflectCast() and cast
+    local mirror, depth = Voxel3D.beginWater(Water.reflectCast() and not (WaterBudget.enabled() and planar) and cast
                                              or nil)
     local w, h = Voxel3D.size()
+    local pw,ph=w,h
+    if mirror and depth then half,pw,ph=WaterBudget.begin(w,h) end
+    if not half then pw,ph=w,h end
     local ok = mirror and depth and Water.begin({
       reflect = mirror, depth = depth,
       vp = Voxel3D.vp, eye = Voxel3D.eye, curve = { Voxel3D.curveX or 0,
                                                     Voxel3D.curveZ or 0,
                                                     Voxel3D.curveK or 0 },
-      screen = { w, h }, cell = Voxel3D.cell, fov = Voxel3D.fovY,
-      skyEdge = Voxel3D.skyEdge, grid = VoxelGrid.enabled(),
+      screen = { pw, ph }, cell = Voxel3D.cell*pw/w, fov = Voxel3D.fovY,
+      skyEdge = Voxel3D.skyEdge and Voxel3D.skyEdge*ph/h, grid = VoxelGrid.enabled(),
       lookFlat = Voxel3D.lookFlat, descent = Voxel3D.descent,
       -- the mirrored scene, already rendered and already released from its
       -- canvas (see drawPlanar). nil is the answer on every frame the row is
@@ -2310,6 +2327,7 @@ function VoxelScene.drawWater(draws, cast, planar, planarY)
         Water.draw(d[1], d[2], d[3])
       end
       Water.finish()
+      painted = true
       plain = false
     end
     -- Unconditionally, and OUTSIDE the success branch: beginWater unbinds
@@ -2317,7 +2335,11 @@ function VoxelScene.drawWater(draws, cast, planar, planarY)
     -- so a frame that bails halfway through has to be put back together
     -- exactly like one that succeeded -- otherwise every pass after it runs
     -- with no shader and no depth test.
+    WaterBudget.finish()
     Voxel3D.endWater()
+    if half and painted then
+      WaterBudget.composite(draws,Voxel3D.vp,{Voxel3D.curveX or 0,Voxel3D.curveZ or 0,Voxel3D.curveK or 0})
+    end
   end
   -- the fallback flat draw -- unless the curve's prepass already put the
   -- same meshes down, in which case a bailed frame is already whole
@@ -2435,60 +2457,11 @@ end
 -- Runs BEFORE Voxel3D.beginScene, because canvases do not nest. Grass is
 -- left out on purpose: thousands of tufts would cast a speckle no bigger
 -- than the pixels it lands on, at the cost of the mesh being drawn twice.
-local shadowAnimations={}
-local function castShadows(state, terrain, nbMesh, posed, cx, cy, vw, vh,
-                           atlasFor, water, nbWater, battleCards, battleToken)
-  if not ShadowMap.available() then return end
-  shadowAnimations[1]=TerrainAtlas.shadowStep(state.map)
-  local count=1
-  for i,nb in ipairs(state.neighbors or {})do
-    count=count+1;shadowAnimations[count]=nbMesh[i] and TerrainAtlas.shadowStep(nb.map) or 0
-  end
-  for i=count+1,#shadowAnimations do shadowAnimations[i]=nil end
-  local sig = shadowSignature(terrain, nbMesh, posed, cx, cy, vw, vh, battleToken,shadowAnimations)
-  -- a staged fight's pics move every frame the animation does, and the sun
-  -- has to follow them (VR frames only; see render)
-  if not ShadowMap.stale(sig) then return end
-
-  -- THE SUN DOES NOT HAVE TO FOLLOW EVERY FOOTSTEP.
-  --
-  -- The stamp above is honest and it is also why this pass runs on every
-  -- single frame: it stales on any caster moving, and in a town or a wood
-  -- somebody is always mid-step. Measured standing still in Petalburg
-  -- Woods with nothing left to build: 202 sun passes in 202 rendered
-  -- frames, 53% of VoxelScene.render, to re-record a terrain mesh that had
-  -- not changed by one vertex.
-  --
-  -- So BALANCED rate-limits the CAST half and only the cast half. The
-  -- static half (camera, view, sun angle, first-person head, the meshes
-  -- themselves) still forces a redraw on the frame it changes, because a
-  -- map fitted to last frame's frustum is a wrong shadow rather than a late
-  -- one -- see shadowStaticTerms. What is delayed is strictly "somebody
-  -- took a step", and at the shipped rate of 3 the worst case is a walker's
-  -- own shadow two frames behind their feet, which at walking pace is under
-  -- two world pixels.
-  --
-  -- nil at HIGH -- the branch is skipped entirely and this function behaves
-  -- exactly as it did, redraw for redraw.
-  local hz = Tier.caps().shadowHz
-  if hz and hz > 1 then
-    local st = shadowStaticSignature(terrain, nbMesh, cx, cy, vw, vh,shadowAnimations)
-    shadowStale = shadowStale + 1
-    if ShadowMap.hasFrame() and st == shadowLastStatic and (shadowStale - shadowLastCast) < hz then
-      Perf.count("shadow.throttled")
-      return
-    end
-    shadowLastStatic, shadowLastCast = st, shadowStale
-  end
-
-  Perf.count("shadow.cast")
-  local tSun = Perf.now()
-  if not ShadowMap.begin(cx, cy, vw, vh) then return end
-
+local function drawStaticCasters(state,terrain,nbMesh,atlasFor,water,nbWater)
   ShadowMap.draw(terrain, atlasFor(state.map), nil)
   for i, nb in ipairs(state.neighbors or {}) do
     ShadowMap.draw(nbMesh[i], atlasFor(nb.map),
-                   Mat4.translate(nb.ox, 0, nb.oy))
+                   neighborMatrix(nb))
   end
   -- The water surface, which the terrain mesh no longer carries (it is its
   -- own reflective pass now -- see Water). The sun still has to see it, or
@@ -2497,7 +2470,7 @@ local function castShadows(state, terrain, nbMesh, posed, cx, cy, vw, vh,
   ShadowMap.draw(water, atlasFor(state.map), nil)
   for i, nb in ipairs(state.neighbors or {}) do
     ShadowMap.draw(nbWater and nbWater[i], atlasFor(nb.map),
-                   Mat4.translate(nb.ox, 0, nb.oy))
+                   neighborMatrix(nb))
   end
   -- flower billboards live outside the terrain mesh (they draw after the
   -- characters, pulled -- see render), but the sun still sees them: a
@@ -2509,8 +2482,10 @@ local function castShadows(state, terrain, nbMesh, posed, cx, cy, vw, vh,
                  ShadowMap.snug(nil))
   for _, nb in ipairs(state.neighbors or {}) do
     ShadowMap.draw(ChunkMesher.flowers(nb.map), atlasFor(nb.map),
-                   ShadowMap.snug(Mat4.translate(nb.ox, 0, nb.oy)))
+                   ShadowMap.snug(neighborMatrix(nb)))
   end
+end
+local function drawMovingCasters(state,posed,atlasFor,battleCards)
   -- From here down it is the CAST, marked as such in the map (see
   -- ShadowMap.sprites) so water can decline them: everything the world casts
   -- still shades a lake, a silhouette of somebody standing beside it does
@@ -2557,6 +2532,85 @@ local function castShadows(state, terrain, nbMesh, posed, cx, cy, vw, vh,
     ShadowMap.draw(BattleBillboard.mesh(), card.tex, ShadowMap.snug(card.model))
   end
   ShadowMap.sprites(false)
+
+end
+local function shadowPoseFrame(p)
+  return frameFor(p.sprite.def,viewFacing(p),p.phase,p.flip,p.frame)
+end
+local function castAnchoredShadows(state,terrain,nbMesh,posed,cx,cy,vw,vh,atlasFor,water,nbWater,battleCards,battleToken,animation)
+  if not ShadowMap.dynamicAvailable()then return false end
+  local plan=WorldShadows.prepare(state,terrain,nbMesh,water,nbWater,posed,cx,cy,vw,vh,battleToken,animation,FirstPerson.signature(),atlasFor,shadowPoseFrame)
+  local tSun=Perf.now()
+  if plan.static then
+    if not ShadowMap.begin(cx,cy,vw,vh,plan.bounds)then return false end
+    drawStaticCasters(state,terrain,nbMesh,atlasFor,water,nbWater)
+    ShadowMap.finish(plan.staticToken);WorldShadows.commitStatic()
+    Perf.count("shadow.static.cast")
+  end
+  if plan.dynamic then
+    if not ShadowMap.beginDynamic()then return false end
+    drawMovingCasters(state,posed,atlasFor,battleCards)
+    ShadowMap.finishDynamic();WorldShadows.commitDynamic()
+    Perf.count("shadow.dynamic.cast")
+  end
+  Perf.add("VoxelScene.castShadows",tSun)
+  return true
+end
+local shadowAnimations={}
+local function castShadows(state, terrain, nbMesh, posed, cx, cy, vw, vh,
+                           atlasFor, water, nbWater, battleCards, battleToken)
+  if not ShadowMap.available() then return end
+  shadowAnimations[1]=TerrainAtlas.shadowStep(state.map)
+  local count=1
+  for i,nb in ipairs(state.neighbors or {})do
+    count=count+1;shadowAnimations[count]=nbMesh[i] and TerrainAtlas.shadowStep(nb.map) or 0
+  end
+  for i=count+1,#shadowAnimations do shadowAnimations[i]=nil end
+  if V.shadowWorldAnchor~=false and castAnchoredShadows(state,terrain,nbMesh,posed,cx,cy,vw,vh,
+      atlasFor,water,nbWater,battleCards,battleToken,shadowAnimations)then return end
+  ShadowMap.useLegacy()
+  local sig = shadowSignature(terrain, nbMesh, posed, cx, cy, vw, vh, battleToken,shadowAnimations)
+  -- a staged fight's pics move every frame the animation does, and the sun
+  -- has to follow them (VR frames only; see render)
+  if not ShadowMap.stale(sig) then return end
+
+  -- THE SUN DOES NOT HAVE TO FOLLOW EVERY FOOTSTEP.
+  --
+  -- The stamp above is honest and it is also why this pass runs on every
+  -- single frame: it stales on any caster moving, and in a town or a wood
+  -- somebody is always mid-step. Measured standing still in Petalburg
+  -- Woods with nothing left to build: 202 sun passes in 202 rendered
+  -- frames, 53% of VoxelScene.render, to re-record a terrain mesh that had
+  -- not changed by one vertex.
+  --
+  -- So BALANCED rate-limits the CAST half and only the cast half. The
+  -- static half (camera, view, sun angle, first-person head, the meshes
+  -- themselves) still forces a redraw on the frame it changes, because a
+  -- map fitted to last frame's frustum is a wrong shadow rather than a late
+  -- one -- see shadowStaticTerms. What is delayed is strictly "somebody
+  -- took a step", and at the shipped rate of 3 the worst case is a walker's
+  -- own shadow two frames behind their feet, which at walking pace is under
+  -- two world pixels.
+  --
+  -- nil at HIGH -- the branch is skipped entirely and this function behaves
+  -- exactly as it did, redraw for redraw.
+  local hz = Tier.caps().shadowHz
+  if hz and hz > 1 then
+    local st = shadowStaticSignature(terrain, nbMesh, cx, cy, vw, vh,shadowAnimations)
+    shadowStale = shadowStale + 1
+    if ShadowMap.hasFrame() and st == shadowLastStatic and (shadowStale - shadowLastCast) < hz then
+      Perf.count("shadow.throttled")
+      return
+    end
+    shadowLastStatic, shadowLastCast = st, shadowStale
+  end
+
+  Perf.count("shadow.cast")
+  local tSun = Perf.now()
+  if not ShadowMap.begin(cx, cy, vw, vh) then return end
+
+  drawStaticCasters(state,terrain,nbMesh,atlasFor,water,nbWater)
+  drawMovingCasters(state,posed,atlasFor,battleCards)
 
   ShadowMap.finish(sig)
   if V.numericShadowStamps~=false then shadowFrame.commit() end
@@ -2630,7 +2684,9 @@ function VoxelScene.render(state, w, h, vw, vh, paletteFor, eyes)
   local g = VoxelScene.glintStep(glint, cx, cy)
   Voxel3D.glassPhase, Voxel3D.glassGlint = g.phase, g.amp
 
+  local atlasMemo = V.renderBudget~=false and {}
   local function atlasFor(map)
+    if atlasMemo and atlasMemo[map]~=nil then return atlasMemo[map] or nil end
     -- Lua evaluates texture arguments even when draw(nil, texture) returns
     -- immediately. Newly exposed neighbours have no published terrain yet;
     -- preparing their atlas here bypasses the queued build's time slicing.
@@ -2639,7 +2695,9 @@ function VoxelScene.render(state, w, h, vw, vh, paletteFor, eyes)
     if Gen3.mapIsGen3(map) and not (ChunkMesher.peek(map,false) or ChunkMesher.peek(map,true)) then
       return nil
     end
-    return TerrainAtlas.forMap(map, modeColors(paletteFor, map))
+    local image=TerrainAtlas.forMap(map, modeColors(paletteFor, map))
+    if atlasMemo then atlasMemo[map]=image or false end
+    return image
   end
 
   -- sprite palettes only exist in the SGB modes; under RED++ the OBP bake
@@ -2741,7 +2799,7 @@ function VoxelScene.render(state, w, h, vw, vh, paletteFor, eyes)
   Voxel3D.draw(terrain, atlasFor(state.map), nil)
   for i, nb in ipairs(state.neighbors or {}) do
     Voxel3D.draw(nbMesh[i], atlasFor(nb.map),
-                 Mat4.translate(nb.ox, 0, nb.oy))
+                 neighborMatrix(nb))
   end
 
   closeTerrain()
@@ -2838,7 +2896,7 @@ function VoxelScene.render(state, w, h, vw, vh, paletteFor, eyes)
   for i, nb in ipairs(state.neighbors or {}) do
     if nbWater and nbWater[i] then
       waterDraws[#waterDraws + 1] = { nbWater[i], atlasFor(nb.map),
-                                      Mat4.translate(nb.ox, 0, nb.oy) }
+                                      neighborMatrix(nb) }
     end
   end
   if #waterDraws > 0 then
@@ -2948,7 +3006,7 @@ function VoxelScene.render(state, w, h, vw, vh, paletteFor, eyes)
   Voxel3D.draw(ChunkMesher.grass(state.map), atlasFor(state.map), nil, pull)
   for _, nb in ipairs(state.neighbors or {}) do
     Voxel3D.draw(ChunkMesher.grass(nb.map), atlasFor(nb.map),
-                 Mat4.translate(nb.ox, 0, nb.oy), pull)
+                 neighborMatrix(nb), pull)
   end
   -- flower billboards: pulled like the characters and the grass, MINUS
   -- the depth of 8 world pixels along the view (8 sin a -- the camera
@@ -2967,8 +3025,8 @@ function VoxelScene.render(state, w, h, vw, vh, paletteFor, eyes)
                fpull, ShadowMap.snug(nil))
   for _, nb in ipairs(state.neighbors or {}) do
     Voxel3D.draw(ChunkMesher.flowers(nb.map), atlasFor(nb.map),
-                 Mat4.translate(nb.ox, 0, nb.oy), fpull,
-                 ShadowMap.snug(Mat4.translate(nb.ox, 0, nb.oy)))
+                 neighborMatrix(nb), fpull,
+                 ShadowMap.snug(neighborMatrix(nb)))
   end
 
   -- The VR pokedex in the player's left hand, last of all: a prop over

@@ -2,7 +2,86 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local root, backend, version, api, mode = unpack(arg)
 local T = require("tests.modkit")
 local rows
-if mode == "sleep_talk_content" then
+if mode == "native_bgm_options" then
+  rows = dofile(root .. "/tests/enemy_actions/native_bgm_options.lua").run(root, backend, version)
+elseif mode == "native_bgm_hooks" then
+  rows = dofile(root .. "/tests/enemy_actions/native_bgm_hooks.lua").run(root, backend, version)
+elseif mode == "native_bgm_devices" then
+  rows = dofile(root .. "/tests/enemy_actions/native_bgm_devices.lua").run(root, backend, version)
+elseif mode == "native_fanfare_commands" then
+  rows = dofile(root .. "/tests/enemy_actions/native_fanfare_commands.lua").run(root, backend, version)
+elseif mode == "native_bgm_policy" then
+  rows = dofile(root .. "/tests/enemy_actions/native_bgm_policy.lua").run(root, backend, version)
+elseif mode == "native_bgm_commands" then
+  rows = dofile(root .. "/tests/enemy_actions/native_bgm_commands.lua").run(root, backend, version)
+elseif mode == "native_bgm_symbols" then
+  rows = dofile(root .. "/tests/enemy_actions/native_bgm_symbols.lua").run(root, backend, version)
+elseif mode == "native_cry_lifecycle" then
+  rows = dofile(root .. "/tests/enemy_actions/native_cry_lifecycle.lua").run(root, backend, version)
+elseif mode == "native_cry_commands" then
+  rows = dofile(root .. "/tests/enemy_actions/native_cry_commands.lua").run(root, backend, version)
+elseif mode == "native_cry_pcm" then
+  rows = dofile(root .. "/tests/enemy_actions/native_cry_pcm.lua").run(root, backend, version)
+elseif mode == "native_sound_script_waits" then
+  rows = dofile(root .. "/tests/enemy_actions/native_sound_script_waits.lua").run(root, backend, version)
+elseif mode == "native_sound_lifecycle" then
+  rows = dofile(root .. "/tests/enemy_actions/native_sound_lifecycle.lua").run(root, backend, version)
+elseif mode == "substitute_fade" then
+  rows = dofile(root .. "/tests/enemy_actions/substitute_fade.lua").run(root, backend, version)
+elseif mode == "battle_effect_presentation" then
+  rows = dofile(root .. "/tests/enemy_actions/battle_effect_presentation.lua").run(root, backend, version)
+elseif mode == "native_sound_pan" then
+  rows = dofile(root .. "/tests/enemy_actions/native_sound_pan.lua").run(root, backend, version)
+elseif mode == "substitute_multi_hit" then
+  rows =
+    dofile(root .. "/tests/enemy_actions/multi_hit.lua").run(root, backend, version, { substitute = true })
+elseif mode == "substitute_presentation" then
+  rows = dofile(root .. "/tests/enemy_actions/substitute_presentation.lua").run(root, backend, version)
+elseif mode == "mirror_move_content" then
+  rows = dofile(root .. "/tests/enemy_actions/mirror_move.lua").content(root, backend, version)
+elseif mode == "mirror_move_chained" then
+  rows = dofile(root .. "/tests/enemy_actions/mirror_move.lua").chained(root, backend, version)
+elseif mode == "mirror_move" then
+  rows = dofile(root .. "/tests/enemy_actions/mirror_move.lua").run(root, backend, version)
+elseif mode == "assist_held" then
+  rows = dofile(root .. "/tests/enemy_actions/assist.lua").held(root, backend, version)
+elseif mode == "assist_failed_callers" then
+  rows = dofile(root .. "/tests/enemy_actions/assist.lua").failedCallers(root, backend, version)
+elseif mode == "assist_content" then
+  rows = dofile(root .. "/tests/enemy_actions/assist.lua").content(root, backend, version)
+elseif mode == "assist" then
+  rows = dofile(root .. "/tests/enemy_actions/assist.lua").run(root, backend, version)
+elseif mode == "nature_power_chained" then
+  rows = dofile(root .. "/tests/enemy_actions/nature_power.lua").chained(root, backend, version)
+elseif mode == "nature_power_content" then
+  rows = dofile(root .. "/tests/enemy_actions/nature_power.lua").content(root, backend, version)
+elseif mode == "nature_power" then
+  rows = dofile(root .. "/tests/enemy_actions/nature_power.lua").run(root, backend, version)
+elseif mode == "post_hit_items_execution" then
+  rows = dofile(root .. "/tests/enemy_actions/post_hit_items.lua").execution(root, backend, version)
+elseif mode == "post_hit_items_command" then
+  rows = dofile(root .. "/tests/enemy_actions/post_hit_items.lua").command(root, backend, version)
+elseif mode == "move_used_pp" then
+  rows = dofile(root .. "/tests/enemy_actions/move_used_pp.lua").run(root, backend, version)
+elseif mode == "choice_band_call_failure" then
+  rows = dofile(root .. "/tests/enemy_actions/choice_call_failure.lua").run(root, backend, version)
+elseif mode == "choice_band_baton" then
+  rows =
+    dofile(root .. "/tests/enemy_actions/baton_pass.lua").run(root, backend, version, { choiceBand = true })
+elseif mode == "choice_band_content" then
+  rows = dofile(root .. "/tests/enemy_actions/choice_content.lua").run(root, backend, version)
+elseif mode == "choice_band_calls" then
+  rows =
+    dofile(root .. "/tests/enemy_actions/sleep_talk.lua").run(root, backend, version, { choiceBand = true })
+elseif mode == "choice_band_wild" then
+  rows = dofile(root .. "/tests/enemy_actions/choice_wild.lua").run(root, backend, version)
+elseif mode == "choice_band_planning" then
+  rows = dofile(root .. "/tests/enemy_actions/choice_planning.lua").run(root, backend, version)
+elseif mode == "choice_band_selection" then
+  rows = dofile(root .. "/tests/enemy_actions/choice_selection.lua").run(root, backend, version)
+elseif mode == "choice_band_command" then
+  rows = dofile(root .. "/tests/enemy_actions/choice_band.lua").run(root, backend, version)
+elseif mode == "sleep_talk_content" then
   rows = dofile(root .. "/tests/enemy_actions/sleep_talk.lua").content(root, backend, version)
 elseif mode == "sleep_talk" then
   rows = dofile(root .. "/tests/enemy_actions/sleep_talk.lua").run(root, backend, version)
@@ -25,7 +104,12 @@ elseif mode == "party_codec_hooks" then
 elseif mode == "party_codec" then
   rows = dofile(root .. "/tests/enemy_actions/party_codec.lua").run(root, backend, version)
 elseif mode == "secondary" or mode == "secondary_execution" then
-  rows = dofile(root .. "/tests/enemy_actions/secondary.lua").run(root, backend, version, mode == "secondary_execution")
+  rows = dofile(root .. "/tests/enemy_actions/secondary.lua").run(
+    root,
+    backend,
+    version,
+    mode == "secondary_execution"
+  )
 elseif mode == "accuracy_execution" then
   rows = dofile(root .. "/tests/enemy_actions/accuracy.lua").run(root, backend, version, true)
 elseif mode == "accuracy" then

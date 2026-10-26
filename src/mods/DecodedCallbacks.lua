@@ -119,9 +119,49 @@ local function rawOperands(op, ir)
 	end
 	return out, spec
 end
-local function context(ctx)
+-- The reference host's Gen 2 VM hands every `script.command` wrapper a
+-- context carrying `generation`, `mapGroup`/`mapNumber`, `object` (the
+-- 1-based map object the run hangs off, hLastTalked), `kind` ("script" or
+-- "callback") and `scriptKey` ("<bank>:<addr>") next to `mapId`
+-- (gen2/Vm.lua:2293-2326 at 535a5ec).  The native runner context only
+-- carries `mapId` and the live `npc`, so those names are derived here,
+-- read-only, from what the native run already knows.  Nothing is written
+-- back into the native context and an existing native value is never
+-- shadowed.
+local function gen2Fields(ctx, map)
+	local def = map and map.def
+	local group = type(def) == "table" and def.group or nil
+	local number = type(def) == "table" and def.number or nil
+	local npc = ctx.npc
+	local object = type(npc) == "table" and type(npc.def) == "table" and npc.def.index or nil
+	return {
+		generation = 2,
+		mapGroup = group,
+		mapNumber = number,
+		mapId = ctx.mapId or (map and map.id)
+			or (group and string.format("%d:%d", group, number or 0)) or nil,
+		object = object,
+		kind = ctx.mapCallback and "callback" or "script",
+		scriptKey = ctx.scriptKey,
+	}
+end
+local function context(ctx, generation)
 	local world, map = ctx.overworld, ctx.overworld and ctx.overworld.map
 	if not map then
+		if generation == 2 then
+			local public = gen2Fields(ctx, nil)
+			for k in pairs(public) do
+				if ctx[k] ~= nil then
+					public[k] = nil
+				end
+			end
+			return setmetatable(public, {
+				__index = ctx,
+				__newindex = function(_, k, v)
+					ctx[k] = v
+				end,
+			})
+		end
 		return ctx
 	end
 	local data = ctx.game and ctx.game.data
@@ -152,7 +192,15 @@ local function context(ctx)
 			world[k] = v
 		end,
 	})
-	return setmetatable({ overworld = publicWorld }, {
+	local public = { overworld = publicWorld }
+	if generation == 2 then
+		for k, v in pairs(gen2Fields(ctx, map)) do
+			if ctx[k] == nil then
+				public[k] = v
+			end
+		end
+	end
+	return setmetatable(public, {
 		__index = ctx,
 		__newindex = function(_, k, v)
 			ctx[k] = v
@@ -185,7 +233,7 @@ function M.install(loader, api, owner, generation)
 				row[field] = row[i]
 			end
 			local original = copy(row)
-			local public = context(ctx)
+			local public = context(ctx, generation)
 			local args, byteSpec = {}, nil
 			if generation == 2 then
 				args, byteSpec = rawOperands(op, ir)
@@ -258,7 +306,7 @@ function M.install(loader, api, owner, generation)
 		end
 		return register(self, name, function(gift)
 			local view = copy(gift)
-			view.ctx = context(gift.ctx)
+			view.ctx = context(gift.ctx, generation)
 			view.species = ids:read("pokemon", gift.species)
 			local order = gift.ctx.game and gift.ctx.game.data.constants and gift.ctx.game.data.constants.speciesOrder
 				or {}

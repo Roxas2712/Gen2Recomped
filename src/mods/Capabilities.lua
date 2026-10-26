@@ -16,7 +16,7 @@ end
 -- need not fire on every action (e.g. an always-hit move skips accuracy).
 add("hooks", "12345", [[
   battle.accuracy battle.bottom_ui_visible battle.catch_exp battle.crit battle.damage battle.enemy_action
-  battle.exp_award battle.low_health_alarm battle.menu_auxiliary battle.move_grid_navigation battle.run battle.turn_order catch.rate core.logic_speed core.update
+  battle.exp_award battle.low_health_alarm battle.menu_auxiliary battle.move_grid_navigation battle.run battle.turn_order catch.rate core.logic_speed core.quit_to_launcher core.update
   encounter.fishing encounter.roll encounter.species evolution.check exp.gain
   fieldmove.eligibility input.pointer input.key input.gamepad input.wheel input.step link.fingerprint map.palette movement.collision
   movement.speed music.select music.volume player.sprite pokemon.icon pokemon.sprite
@@ -31,9 +31,8 @@ add("hooks", "12345", [[
 -- does not dispatch battle.overlay, unlike BattleState/Gen3Battle/WideBattle.
 add("hooks", "123", "render.viewport render.window battle.overlay ui.naming.grid ui.party.submenu ui.start_menu.items")
 add("hooks", "12", "ui.pc.items")
-add("hooks", "2", "phone.contact_list")
-add("hooks", "2", "breeding.compatibility catch.nickname catch.party_full battle.style battle.enemy_switch_or_item")
-add("hooks", "12345", "core.quit_to_launcher")
+add("hooks", "2", "phone.contact_list breeding.compatibility battle.enemy_switch_or_item")
+add("hooks", "12", "battle.style catch.nickname catch.party_full")
 add("hooks", "12345", "battle.status_hud_visible")
 add("hooks", "123", "pokemon.level_visible ui.party.grid_navigation")
 add("hooks", "123", "world.follower.spawn")
@@ -61,7 +60,7 @@ add("events", "12345", [[
 add("events", "2345", "pokemon.egg_hatched")
 add("events", "2", "clock.day_changed mail.read mail.written radio.channel phone.call_received apricorn.converted")
 add("events", "2", "breeding.egg_created egg.hatched happiness.changed pokerus.infected roamer.encountered roamer.moved unown.unlocked bug_contest.scored intro.boot.copyright intro.boot.gamefreak intro.boot.movie intro.boot.movie_ended intro.boot.title")
-add("events", "12", "checkpoint.restored")
+add("events", "12345", "checkpoint.restored")
 add("events", "12", [[
   intro.oak_speech.answered intro.oak_speech.finished intro.oak_speech.started
   intro.oak_speech.step

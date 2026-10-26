@@ -1135,6 +1135,12 @@ function CacheFs.installPrefixShim(prefix)
       local leaf = name:match("^data%.generated%.(.+)$")
       if not leaf then return nil end
       local path = prefix_ .. "data/generated/" .. leaf:gsub("%.", "/") .. ".lua"
+      -- C1: the bytecode sidecar first, through the same raw read
+      local okB, Bytecode = pcall(require, "src.core.BytecodeCache")
+      if okB and Bytecode then
+        local chunk = Bytecode.loadSidecar(path, shimRealRead, shimRealGetInfo)
+        if chunk then return chunk end
+      end
       local data = shimRealRead(path)
       if type(data) ~= "string" then
         return "\n\tno file '" .. path .. "' (version cache shim)"

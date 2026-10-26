@@ -9,9 +9,106 @@ local Assets = require("src.render.Assets")
 local Logger = require("src.core.Logger")
 local Runtime = require("src.mods.Runtime")
 
+local Performance = require("src.core.Performance")
+
 local Sound = {}
 
 local cache = {}
+-- Speculative sources share this cache, but remain revocable until first use.
+-- Public definitions and Source objects never acquire private cache fields.
+local warmed, pending = {}, {}
+local warmBytes, warmAudio, warmCursor, warmKind = 0, nil, nil, "sfx"
+local WARM_LIMIT = 16 * 1024 * 1024
+local ChipAudio
+local function chipAudio()
+  if not ChipAudio then
+    ChipAudio = require("src.core.ChipAudio")
+  end
+  return ChipAudio
+end
+local function copy(value, seen)
+  if type(value) ~= "table" then
+    assert(
+      type(value) == "nil" or type(value) == "string" or type(value) == "number" or type(value) == "boolean",
+      "custom audio definition requires synchronous fallback"
+    )
+    return value
+  end
+  assert(getmetatable(value) == nil, "custom audio definition requires synchronous fallback")
+  seen = seen or {}
+  assert(not seen[value], "cyclic audio definition requires synchronous fallback")
+  local out = {}
+  seen[value] = out
+  for k, v in pairs(value) do
+    out[k] = copy(v, seen)
+  end
+  seen[value] = nil
+  return out
+end
+local function same(a, b, seen)
+  if a == b then
+    return true
+  end
+  if type(a) ~= "table" or type(b) ~= "table" then
+    return false
+  end
+  seen = seen or {}
+  if seen[a] == b then
+    return true
+  end
+  seen[a] = b
+  for k, v in pairs(a) do
+    if not same(v, b[k], seen) then
+      return false
+    end
+  end
+  for k in pairs(b) do
+    if a[k] == nil then
+      return false
+    end
+  end
+  return true
+end
+local function forgetWarm(key, drop)
+  local row = warmed[key]
+  if not row then
+    return
+  end
+  warmed[key] = nil
+  warmBytes = warmBytes - row.bytes
+  if drop and cache[key] == row.source then
+    cache[key] = nil
+    if row.source.release then
+      pcall(row.source.release, row.source)
+    end
+  end
+end
+local function useWarm(data, key, kind, def, pitch, tempo)
+  local row = warmed[key]
+  if not row then
+    return
+  end
+  local spec = chipAudio().effectSpec(data, kind, def, pitch, tempo)
+  local valid = Performance.audioWorkerOptimization ~= false and same(row.spec, spec)
+  forgetWarm(key, not valid)
+end
+local function resetWarm()
+  for key in pairs(warmed) do
+    forgetWarm(key, true)
+  end
+  pending = {}
+  warmAudio, warmCursor, warmKind = nil, nil, "sfx"
+  if ChipAudio then
+    ChipAudio.cancelEffects()
+  end
+end
+-- Native M4A players own one live effect each, independently of cached PCM variants.
+local nativePlayers = {}
+local nativeSeWaits = {}
+local nativeCryMono = false
+local nativeFanfareSource
+local nativeFanfares = setmetatable({}, { __mode = "k" })
+local crySignatures = {}
 -- port addition: 0-7 SFX volume from save.options.sfxVol (OptionsMenu),
 -- scaling the 0.8 base every source gets
 local BASE_VOLUME = 0.8
@@ -87,14 +184,10 @@ local function isPikaKey(key)
     and require("src.core.GameVersion").isYellow()
 end
 
--- A CRY IS NOT A SOUND EFFECT AT FULL TILT.
---
--- Reported from play: "the pokemon cries theyre seeming a little loud and
--- obnoxious not matching emeralds presentation of them".  On the cartridge a
--- cry sounds at CRY_VOLUME out of the mixer's 256 -- well under half -- and
--- the song ducks underneath it.  Both numbers are read off the ROM at import
--- (RomExtractorGen3:extractCryVolume, five agreeing PlayCry sites) and
--- arrive as constants.gen3Cry; a cache without them changes nothing.
+-- Legacy trim for uncompressed/custom cry renderers. Retail compressed cries
+-- now include the cartridge's 7-bit VOL and integer DirectSound channel/master
+-- gains in their PCM; applying the historical /256 trim again would double it.
+-- BGM ducking is a separate 85/256 music operation.
 local function cryScale(data)
   local c = data and data.constants and data.constants.gen3Cry
   local volume = c and tonumber(c.volume)
@@ -227,14 +320,111 @@ local function newSfxSource(data, key, def, pitch, tempo)
   return newFileSource(def)
 end
 
+local function nativeEffect(data, def)
+  if not require("src.core.GameVersion").isGen3() or type(def) ~= "table" or def.nds ~= nil then
+    return
+  end
+  local id = tonumber(def.m4a)
+  if not id or id ~= id or id < 0 or id > 65535 or id % 1 ~= 0 then
+    return
+  end
+  local song = data and data.audio and data.audio.songs and data.audio.songs[("SONG_%03X"):format(id)]
+  if type(song) ~= "table" then
+    return
+  end
+  return tonumber(song.player) or 1, id
+end
+
+local function forgetNative(src)
+  for player, entry in pairs(nativePlayers) do
+    if entry.src == src then
+      nativePlayers[player] = nil
+    end
+  end
+end
+
+-- Native fanfares use the music option, occupy their native SE player and
+-- retain their audible tail independently of the script's fanfare timer.
+function Sound.playNativeFanfare(data, info, musicVolume, musicFilter)
+  if sessionSuspended or not (love.audio and data and data.audio and data.audio.gen3) then return nil end
+  if nativeFanfareSource then
+    pcall(nativeFanfareSource.stop, nativeFanfareSource)
+    forgetNative(nativeFanfareSource)
+    nativeFanfareSource = nil
+  end
+  local previous = nativePlayers[info.player]
+  if previous then pcall(previous.src.stop, previous.src); nativePlayers[info.player] = nil end
+  local store = nativeFanfares[data] or { count = 0 }
+  nativeFanfares[data] = store
+  local src = store[info.id]
+  if not src then
+    local song = data.audio.songs and data.audio.songs[("SONG_%03X"):format(info.id)]
+    local ok, sd = pcall(require("src.core.M4ASynth").renderEffect, data, song,
+      { seconds = info.frames / 60 + 4 })
+    if not (ok and sd) then return nil end
+    local made
+    made, src = pcall(love.audio.newSource, sd, "static")
+    if not (made and src) then return nil end
+    if store.count >= 24 then store = { count = 0 }; nativeFanfares[data] = store end
+    store[info.id], store.count = src, store.count + 1
+    local filter = (tonumber(musicFilter) or 0) > 0 and {
+      type = "lowpass", volume = 1, highgain = .4 ^ musicFilter,
+    } or nil
+    if src.setFilter then pcall(src.setFilter, src, filter) end
+  end
+  pcall(src.stop, src)
+  pcall(src.setVolume, src, musicVolume)
+  if not pcall(src.play, src) then return nil end
+  nativeFanfareSource = src
+  local key = ("SONG_%03X"):format(info.id)
+  nativePlayers[info.player] = { src = src, id = info.id, key = key, name = key }
+  return src
+end
+
+local function nativeSeId(data, key)
+  local id = tonumber(key)
+  if id and id == id and id >= 0 and id <= 65535 and id % 1 == 0 then return id end
+  local audio = data and data.audio or {}
+  local def = audio.sfx and audio.sfx[key]
+  if type(def) == "table" and tonumber(def.m4a) then return tonumber(def.m4a) end
+  for _, song in pairs(audio.songs or {}) do
+    if type(song) == "table" and (song.sfxName == key or song.id == key) then return tonumber(song.index) end
+  end
+end
+
 local function playPath(data, key, def, pitch, tempo)
   key = tostring(key)
-  if not love.audio or not def then return nil end
+  if not love.audio or not def then
+    return nil
+  end
   -- INTERRUPTION: building a Source now would fail and cache `false` below,
   -- permanently disabling this effect (see sessionSuspended, case 2)
-  if sessionSuspended then return nil end
+  if sessionSuspended then
+    return nil
+  end
+  local baseKey = key
+  local player, nativeId = nativeEffect(data, def)
+  if player ~= nil then
+    local previous = nativePlayers[player]
+    if previous then
+      safeAudio("Source:stop", previous.src.stop, previous.src)
+      nativePlayers[player] = nil
+    end
+    -- A cached PCM variant may still be playing on another native player.
+    -- Keep a separately cached voice rather than rewinding that player's one.
+    local cached = cache[key]
+    for _, entry in pairs(nativePlayers) do
+      if cached and entry.src == cached then
+        key = key .. "@mplay:" .. tostring(player)
+        break
+      end
+    end
+  end
+  useWarm(data, baseKey, "sfx", def, pitch, tempo)
   local src = cache[key]
-  if src == false then return nil end -- known bad, already logged
+  if src == false then
+    return nil
+  end -- known bad, already logged
   if not src then
     local s, err = newSfxSource(data, key, def, pitch, tempo)
     if not s then
@@ -246,7 +436,13 @@ local function playPath(data, key, def, pitch, tempo)
     cache[key] = s
     src = s
   end
-  if not restart(src) then return nil end
+  if not restart(src) then
+    return nil
+  end
+  if player ~= nil then
+    nativePlayers[player] =
+      { src = src, id = nativeId, key = key, name = baseKey:match("^([^@]+)") or baseKey }
+  end
   return src
 end
 
@@ -336,14 +532,15 @@ end
 -- anywhere in the ROM.  So this answers a number, by looking for a role that
 -- already plays it.
 --
--- A number no role covers plays nothing and says nothing: the animation is
--- still right, it is just quieter, and inventing a substitute sound would be
--- worse than silence.
+-- Native GBA numbers without a named role resolve through their imported
+-- song metadata. Explicit pan/mono controls own separate source variants;
+-- other generations retain their existing named-role lookup.
 local byNumber = nil
-function Sound.playId(data, id)
+function Sound.playId(data, id, options)
   id = tonumber(id)
   local sfx = data and data.audio and data.audio.sfx
-  if not (id and sfx) then return end
+  if not id then return end
+  sfx = sfx or {}
   if byNumber == nil or byNumber.__sfx ~= sfx then
     byNumber = { __sfx = sfx }
     for name, def in pairs(sfx) do
@@ -352,6 +549,34 @@ function Sound.playId(data, id)
     end
   end
   local name = byNumber[id]
+  if require("src.core.GameVersion").isGen3() then
+    if id ~= id or id < 0 or id > 65535 or id % 1 ~= 0 then return end
+    local songKey = ("SONG_%03X"):format(id)
+    local song = data and data.audio and data.audio.songs and data.audio.songs[songKey]
+    if song and (not name or type(options) == "table") then
+      name = name or song.sfxName or songKey
+      local def = {}
+      local selected = sfx[name]
+      if selected == false then return end
+      if type(selected) == "string" then
+        def.file = selected
+      else
+        for key, value in pairs(selected or { m4a = id }) do def[key] = value end
+      end
+      options = type(options) == "table" and options or {}
+      if options.pan ~= nil or options.mono ~= nil then
+        def.nativePan = require("src.core.NativeSoundPan").value(options.pan)
+        def.nativeMono = options.mono and true or false
+      end
+      local key = name .. "@native:" .. tostring(def.nativePan) .. ":" .. tostring(def.nativeMono)
+      local src = playPath(data, key, def)
+      if src then
+        if ducks(data, name, def) then require("src.core.Music").duckForFanfare(src) end
+        played("sfx", name)
+      end
+      return src
+    end
+  end
   if not name then return end
   return Sound.play(data, name)
 end
@@ -435,7 +660,7 @@ function Sound.seDef(data, key)
   local direct = nativeDef(sfx[key])
   if direct or type(key) ~= "string" then return direct end
   local base, n = key:match("^(.-)_sseq_(%d+)$")
-  if not base then base = key:match("^(.-)_sseq$"); n = base and 0 end
+  if not base then base = key:match("^(.-)_sseq$")n = base and 0 end
   if not base then return nil end
   n = tonumber(n)
   local anchor = nativeDef(sfx[base])
@@ -478,6 +703,10 @@ end
 --   effect can sound several times at once on separate players; it bypasses
 --   the SE player slots because the caller picked its player itself.
 function Sound.playSe(data, key, opts)
+  if require("src.core.GameVersion").isGen3() then
+    local id = nativeSeId(data, key)
+    return id ~= nil and Sound.playId(data, id, opts) or nil
+  end
   local def = Sound.seDef(data, key)
   if not def then return nil end
   local name = def.name or def.nds
@@ -513,14 +742,64 @@ function Sound.playSe(data, key, opts)
 end
 
 function Sound.isSePlaying(data, key, handle)
+  local V = require("src.core.GameVersion")
+  if V.isGen3() then
+    if sessionSuspended then return false end
+    local id = key ~= nil and nativeSeId(data, key) or nil
+    if key ~= nil and id == nil then return false end
+    for player, entry in pairs(nativePlayers) do
+      if (id ~= nil and entry.id == id) or (key == nil and (V.get() ~= "emerald" or player ~= 3)) then
+        if sounding(entry.src) then return true end
+      end
+    end
+    return false
+  end
   local name = Sound.seName(data, key)
   if name ~= nil and handle ~= nil then name = ("%s#%s"):format(tostring(name), tostring(handle)) end
   return name ~= nil and Sound.isPlaying(name)
 end
 
 function Sound.stopSe(data, key)
+  if require("src.core.GameVersion").isGen3() then
+    local id = key ~= nil and nativeSeId(data, key) or nil
+    if key ~= nil and id == nil then return end
+    for player, entry in pairs(nativePlayers) do
+      if key == nil or entry.id == id then
+        pcall(entry.src.stop, entry.src)
+        nativePlayers[player] = nil
+      end
+    end
+    return
+  end
   local name = Sound.seName(data, key)
   if name ~= nil then Sound.stop(name) end
+end
+
+-- Native world waitse has two clocks: a latched 180-tick audio callback
+-- and a separate 181-poll script fallback. Audio continues at 60 Hz when
+-- logic is accelerated; observing silence here must survive a later sound.
+function Sound.waitSe(data)
+  local wait = { data = data, frames = 180, polls = 0, done = false }
+  nativeSeWaits[#nativeSeWaits + 1] = wait
+  return function()
+    wait.polls = wait.polls + 1
+    return wait.polls > 180 or wait.done or not Sound.isSePlaying(data)
+  end
+end
+
+-- Called once per real-time audio tick, after the frame's logic steps.
+local function updateNativeWaits()
+  if #nativeSeWaits == 0 then return end
+  local pending = {}
+  for _, wait in ipairs(nativeSeWaits) do
+    wait.frames = wait.frames - 1
+    if wait.frames <= 0 or not Sound.isSePlaying(wait.data) then
+      wait.done = true
+    else
+      pending[#pending + 1] = wait
+    end
+  end
+  nativeSeWaits = pending
 end
 
 -- Play a move's sound with its MoveSoundTable pitch/tempo modifiers
@@ -580,11 +859,101 @@ local function resolveCry(data, def, depth)
   }
 end
 
-local function newCrySource(data, species, def)
+-- Poll and schedule one bounded job per frame. No prewarm operation plays a
+-- Source, ducks music, or emits sound.played. A changed def/mix is rechecked
+-- on first use, including in-place edits and derived cry chains.
+function Sound.update(data)
+  updateNativeWaits()
+  if sessionSuspended or not love.audio then
+    return
+  end
+  if Performance.audioWorkerOptimization == false then
+    if warmAudio then
+      resetWarm()
+    end
+    return
+  end
+  local audio = data and data.audio
+  if not audio then
+    return
+  end
+  if warmAudio ~= audio then
+    resetWarm()
+    warmAudio = audio
+  end
+  local chip = chipAudio()
+  local row = chip.pollEffect()
+  while row do
+    local job = pending[row.id]
+    pending[row.id] = nil
+    if job and row.sd and cache[job.key] == nil and warmBytes + row.sd:getSize() <= WARM_LIMIT then
+      local ok, source = pcall(love.audio.newSource, row.sd, "static")
+      if ok and source then
+        safeAudio("Source:setVolume", source.setVolume, source, volumeFor(job.key))
+        cache[job.key] = source
+        warmed[job.key] = { source = source, spec = job.spec, bytes = row.sd:getSize() }
+        warmBytes = warmBytes + row.sd:getSize()
+      end
+    end
+    row = chip.pollEffect()
+  end
+  local count = 0
+  for _ in pairs(pending) do
+    count = count + 1
+  end
+  if count >= 2 or warmBytes >= WARM_LIMIT or warmKind == "done" then
+    return
+  end
+  -- Skip a handful of unsupported/file/already-cached definitions without
+  -- walking an unbounded registry during a frame.
+  for _ = 1, 8 do
+    local defs = audio[warmKind] or {}
+    local ok, name, def = pcall(next, defs, warmCursor)
+    if not ok then
+      warmCursor = nil
+      return
+    end
+    warmCursor = name
+    if not name then
+      if warmKind == "sfx" then
+        warmKind = "cries"
+      else
+        warmKind = "done"
+        return
+      end
+    else
+      local kind = warmKind == "cries" and "cry" or "sfx"
+      local key = kind == "cry" and "cry:" .. tostring(name) or tostring(name)
+      local resolved = kind == "cry" and resolveCry(data, def, 0) or def
+      if
+        cache[key] == nil
+        and type(resolved) == "table"
+        and (kind == "cry" or isChipDef(resolved) or resolved.m4a)
+      then
+        local spec = chip.effectSpec(data, kind, resolved)
+        if spec then
+          local plain, frozen = pcall(copy, spec)
+          if plain then
+            local id = chip.requestEffect(frozen)
+            if id then
+              pending[id] = { key = key, spec = frozen }
+            else
+              -- No worker/capability: playback retains its logged cold path.
+              warmKind = "done"
+            end
+            return
+          end
+        end
+      end
+    end
+  end
+end
+
+local function newCrySource(data, species, def, options)
   -- A GEN 3 CRY names a recording rather than a chip program, so there is no
   -- base chain to resolve and no header to look up: the index IS the def.
   if type(def) == "table" and def.m4a then
-    local ok, s = pcall(require("src.core.ChipAudio").newCry, data, species, def)
+    local ok, s = pcall(require("src.core.ChipAudio").newCry, data, species, def, options)
     if not ok then return nil, tostring(s) end
     if not s then return nil, "no source" end
     return s
@@ -637,7 +1006,7 @@ end
 
 -- returns the source (nil headless) so callers that block on the cry
 -- like the original's PlayCry -> WaitForSoundToFinish can poll it
-function Sound.playCry(data, species, opts)
+local function playLegacyCry(data, species, opts, nativeOverride)
   if not love.audio then return nil end
   -- INTERRUPTION: same cache-poisoning gate as playPath (sessionSuspended)
   if sessionSuspended then return nil end
@@ -654,11 +1023,27 @@ function Sound.playCry(data, species, opts)
     def = cries and mon and cries[mon.translationSourceName or mon.name]
   end
   if not def then return nil end
+  local gen3 = type(def)=="table" and def.m4a~=nil and data.audio.gen3
+    and require("src.core.M4ASynth").crySupports(data,def.m4a)
+  local options
+  if gen3 then
+    opts=opts or {}
+    options={mode=opts.mode,pan=opts.pan,cryVolume=opts.volume,mono=opts.mono,
+      edition=require("src.core.GameVersion").get()}
+  end
   local key = "cry:" .. tostring(species)
+  if gen3 then
+    local signature=table.concat({tostring(data.audio),tostring(data.audio.gen3.file),
+      tostring(data.audio.programPrefix),tostring(def),tostring(options.edition),
+      tostring(options.mode or 0),tostring(options.pan or 0),tostring(options.cryVolume),tostring(options.mono)},":")
+    if crySignatures[key]~=signature then Sound.invalidate(key);crySignatures[key]=signature end
+  else
+    useWarm(data, key, "cry", resolveCry(data, def, 0))
+  end
   local src = cache[key]
   if src == false then return nil end
   if not src then
-    local s, err = newCrySource(data, species, def)
+    local s, err = newCrySource(data, species, def, options)
     if not s then
       cache[key] = false
       reportBadDef("cry", tostring(species),
@@ -671,8 +1056,8 @@ function Sound.playCry(data, species, opts)
   end
   -- set every time rather than at build: the cached source outlives a change
   -- of game, and the scale is the loaded cartridge's
-  local scale=cryScale(data)
-  if opts and type(opts.volume)=='number'and opts.volume==opts.volume and opts.volume>=0 and opts.volume<=256 then
+  local scale=(nativeOverride or gen3) and 1 or cryScale(data)
+  if not(nativeOverride or gen3) and opts and type(opts.volume)=='number'and opts.volume==opts.volume and opts.volume>=0 and opts.volume<=256 then
     local unit=data.constants and data.constants.gen3Cry and tonumber(data.constants.gen3Cry.scale)or 256
     if unit and unit>0 then scale=opts.volume/unit end
   end
@@ -684,9 +1069,42 @@ function Sound.playCry(data, species, opts)
     if ok and copy then src=copy end
   end
   if not restart(src) then return nil end
-  require("src.core.Music").duckForCry(data, src,opts and opts.noDuck==true)
+  if not nativeOverride and not(gen3 and opts and (opts.mode==1 or(opts.release and opts.multi)))then
+    require("src.core.Music").duckForCry(data, src, opts and opts.noDuck==true)
+  end
   played("cry", species, species)
   return src
+end
+
+function Sound.playCry(data, species, opts)
+  if require("src.core.GameVersion").isGen3() then
+    if sessionSuspended then return nil end
+    if type(species) == "number" then
+      species = data and data.constants and data.constants.speciesOrder and data.constants.speciesOrder[species] or species
+    end
+    local src, override = require("src.core.NativeCryPlayer").play(data, species, opts,
+      function() return playLegacyCry(data, species, opts, true) end, volumeScale, nativeCryMono)
+    -- The legacy override already emitted its own event.
+    if src and not override then played("cry", species, species) end
+    return src
+  end
+  return playLegacyCry(data, species, opts)
+end
+
+function Sound.isCryFinished()
+  return require("src.core.NativeCryPlayer").finished()
+end
+
+function Sound.waitCry()
+  return require("src.core.NativeCryPlayer").wait()
+end
+
+function Sound.updateCry()
+  require("src.core.NativeCryPlayer").tick()
+end
+
+function Sound.stopCry()
+  require("src.core.NativeCryPlayer").stop()
 end
 
 -- GROWL/ROAR are the only two moves that play a cry (IsCryMove checks
@@ -717,8 +1135,21 @@ end
 -- .musicLoop polls wChannelSoundIDs+CHAN5 until SFX_SAFARI_ZONE_PA
 -- ends.)  Headless / never-played names read as silent.
 function Sound.isPlaying(name)
-  local src = cache[tostring(name)]
-  if not src then return false end
+  name = tostring(name)
+  if require("src.core.GameVersion").isGen3() then
+    for _, entry in pairs(nativePlayers) do
+      if entry.name == name or entry.key == name then
+        local ok, playing = pcall(entry.src.isPlaying, entry.src)
+        if ok and playing then
+          return true
+        end
+      end
+    end
+  end
+  local src = cache[name]
+  if not src then
+    return false
+  end
   local ok, playing = pcall(src.isPlaying, src)
   return ok and playing or false
 end
@@ -726,15 +1157,28 @@ end
 -- cut a one-shot short (the SFX_STOP_ALL_MUSIC beats around the
 -- elevator shake stop the last collision thud mid-ring)
 function Sound.stop(name)
-  local src = cache[tostring(name)]
-  if src then pcall(src.stop, src) end
+  name = tostring(name)
+  local src = cache[name]
+  if src then
+    pcall(src.stop, src)
+  end
+  if require("src.core.GameVersion").isGen3() then
+    for player, entry in pairs(nativePlayers) do
+      if entry.name == name or entry.key == name then
+        if entry.src ~= src then
+          pcall(entry.src.stop, entry.src)
+        end
+        nativePlayers[player] = nil
+      end
+    end
+  end
 end
 
 function Sound.anyPlaying(kind)
   for key,src in pairs(cache) do
-    local cry=tostring(key):sub(1,4)=='cry:'
-    if src and ((kind=='cry' and cry) or (kind=='sfx' and not cry)) then
-      local ok,playing=pcall(src.isPlaying,src);if ok and playing then return true end
+    local cry=tostring(key):sub(1,4)=="cry:"
+    if src and ((kind=="cry" and cry) or (kind=="sfx" and not cry)) then
+      local ok,playing=pcall(src.isPlaying,src)if ok and playing then return true end
     end
   end
   return false
@@ -826,10 +1270,34 @@ end
 
 -- hot reload / jukebox A-B: drop one key's sources (its pitch-tempo
 -- variants included) or all of them, so the next play re-resolves the def
+function Sound.invalidateNativeFanfares(name)
+  for _, store in pairs(nativeFanfares) do
+    for id, src in pairs(store) do
+      if type(id) == "number" and (not name or name == ("SONG_%03X"):format(id)) then
+        pcall(src.stop, src)
+        forgetNative(src)
+        if nativeFanfareSource == src then nativeFanfareSource = nil end
+        store[id] = nil
+      end
+    end
+  end
+  if not name then nativeFanfares = setmetatable({}, { __mode = "k" }) end
+end
+
 function Sound.invalidate(name)
+  resetWarm()
+  byNumber = nil
+  local nativeCry = package.loaded["src.core.NativeCryPlayer"]
+  if nativeCry then nativeCry.invalidate(name) end
+  Sound.invalidateNativeFanfares(name)
+  if not name or tostring(name):sub(1,4)~="cry:" then local m=package.loaded["src.core.M4ASynth"];if m and m.effectPrep then m.effectPrep.reset()end end
+  if name then crySignatures[name]=nil else crySignatures={} end
   local function evict(store, key)
     local src = store[key]
-    if src then pcall(src.stop, src) end
+    if src then
+      pcall(src.stop, src)
+      forgetNative(src)
+    end
     store[key] = nil
   end
   for _, store in ipairs({ cache, loopCache }) do
@@ -859,6 +1327,15 @@ Assets.register(Sound.invalidate)
 function Sound.suspend()
   if sessionSuspended then return end
   sessionSuspended = true
+  resetWarm()
+  local nativeCry = package.loaded["src.core.NativeCryPlayer"]
+  if nativeCry then nativeCry.invalidate() end
+  -- Native effects can sustain and own additional cached voices as well.
+  for player, entry in pairs(nativePlayers) do
+    safeAudio("Source:stop", entry.src.stop, entry.src)
+    nativePlayers[player] = nil
+  end
+  local m=package.loaded["src.core.M4ASynth"];if m and m.effectPrep then m.effectPrep.suspend()end
   -- A LOOPING source (the low-health siren, the link tournament theme) is the
   -- only kind that is still sounding when the call arrives.  Ask it to stop
   -- while the device may still take the call, and forget it, so its owner's
@@ -880,6 +1357,7 @@ end
 function Sound.resume()
   if not sessionSuspended then return end
   sessionSuspended = false
+  local m=package.loaded["src.core.M4ASynth"];if m and m.effectPrep then m.effectPrep.resume()end
   Sound.invalidate()
 end
 
@@ -887,6 +1365,7 @@ end
 -- loading a save)
 function Sound.applyOptions(opts)
   muted = opts and opts.audioMuted == true or false
+  nativeCryMono = opts and opts.stereo == false or false
   Sound.setVolumeLevel(opts and opts.sfxVol or 7)
   Sound.setPikaVolumeLevel(opts and opts.pikaVol or 7)
 end

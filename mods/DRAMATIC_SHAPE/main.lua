@@ -45,6 +45,9 @@ local mod = ...
 -- passed in as its vararg (`local V = ...`).
 
 local V = { mod = mod, path = mod.path }
+-- P7: independently reversible world-anchored static and 256px actor shadows.
+V.shadowWorldAnchor = true
+V.renderBudget = true
 -- Repeated Gen 3 hulls share immutable GPU meshes where the driver can draw
 -- their offsets per instance. Other drivers keep the expanded vertex path.
 do
@@ -75,12 +78,56 @@ mod.V = V
 -- seam and nothing in lib/ reads it.
 _G.__DRAMATIC_SHAPE_V = V
 
+-- C1 (mod half) -- THE BIG TABLES AS BYTECODE, in the save directory.
+--
+-- lib/Structures.lua is 1.6 MB and data/gen3_metatiles.lua 0.6 MB of table
+-- constructors; `load(source)` parses them on every boot (Structures) and on
+-- the first Gen 3 map (gen3_metatiles), seconds on a handheld. The mod's own
+-- files live in a read-only archive, so the compiled form goes beside the
+-- voxel mesh cache instead, keyed by an MD5 of the source: a mod update
+-- changes the digest and the stale dump is simply never consulted. A dump
+-- this VM cannot load (another LuaJIT, plain Lua) fails `load` and the
+-- source is parsed as before; `V.bytecodeCache = false` turns it off.
+local BYTECODE_DIR = "dramatic_shape_voxel_cache/bytecode"
+local BYTECODE_TAG = "VXB1 "
+local function bytecodeTools()
+  if V.bytecodeCache == false then return nil end
+  if not (string.dump and love and love.filesystem and love.data
+          and love.data.hash and love.data.encode) then return nil end
+  return love.filesystem, love.data
+end
+local function cachedChunk(rel, source, name)
+  local fs, data = bytecodeTools()
+  if not fs then return nil end
+  local okH, digest = pcall(function()
+    return data.encode("string", "hex", data.hash("md5", source))
+  end)
+  if not okH or type(digest) ~= "string" then return nil end
+  local path = BYTECODE_DIR .. "/" .. rel:gsub("[/\\]", "_") .. "c"
+  local header = BYTECODE_TAG .. digest .. "\n"
+  local okR, bytes = pcall(fs.read, path)
+  if okR and type(bytes) == "string" and bytes:sub(1, #header) == header then
+    local chunk = load(bytes:sub(#header + 1), name)
+    if chunk then return chunk end
+  end
+  local chunk, err = load(source, name)
+  if not chunk then return nil, err end
+  pcall(function()
+    local okD, dump = pcall(string.dump, chunk, true)
+    if not (okD and type(dump) == "string" and #dump > 0) then return end
+    if fs.createDirectory(BYTECODE_DIR) then fs.write(path, header .. dump) end
+  end)
+  return chunk
+end
+
 local function chunkFor(rel)
   local source = mod:read(rel)
   if not source then
     error(("DRAMATIC_SHAPE: %s is missing -- reinstall the mod"):format(rel), 0)
   end
-  local chunk, err = load(source, "@" .. mod.path .. "/" .. rel)
+  local name = "@" .. mod.path .. "/" .. rel
+  local chunk, err = cachedChunk(rel, source, name)
+  if not chunk then chunk, err = load(source, name) end
   if not chunk then
     error(("DRAMATIC_SHAPE: %s did not compile: %s"):format(rel, tostring(err)), 0)
   end
@@ -263,6 +310,7 @@ local DayNight = V.require("DayNight")
 local DayTint = V.require("DayTint")
 local Water = V.require("Water")
 local AntiAlias = V.require("AntiAlias")
+local RenderScale = V.require("RenderScale")
 local FirstPerson = V.require("FirstPerson")
 local FreeMove = V.require("FreeMove")
 local CamControl = V.require("CamControl")
@@ -468,7 +516,8 @@ mod.content.render_pipelines:register("voxel", {
     -- these two lines knows: every pass in the frame measures itself in the
     -- canvas it was handed, so the sky's dither, the water's march and the
     -- camera itself all come out the same picture at a higher sample rate.
-    local rw, rh = AntiAlias.expand(sw, sh)
+    local bw, bh = RenderScale.size(sw, sh)
+    local rw, rh = AntiAlias.expand(bw, bh)
     local drawStarted=love.timer.getTime()
     local canvas = VoxelScene.render(ctx.state, rw, rh,
                                      ctx.vw, ctx.vh, ctx.paletteFor)
@@ -489,18 +538,19 @@ mod.content.render_pipelines:register("voxel", {
       ctx.drawFx(function(wx, wy)
                    return Voxel3D.project(wx, Voxel3D.groundY or 0, wy)
                  end,
-                 ctx.scale * AntiAlias.factor())
+                 ctx.scale * AntiAlias.factor() * bw / sw)
       -- the horde's readout rides the same overlay, over the FX: health,
       -- ammunition, the crosshair and the banners, sized in the same
       -- supersampled canvas pixels everything else here is drawn in. A
       -- headset never reaches this line (drawWorld returns the mirror
       -- above) -- lib/VR draws the same HUD onto each eye instead.
-      HordeHud.drawFlat(rw, rh, ctx.scale * AntiAlias.factor())
+      HordeHud.drawFlat(rw, rh, ctx.scale * AntiAlias.factor() * bw / sw)
       Voxel3D.endOverlay()
     end
     -- and back to the window's own size, which is what the engine composites
     -- one canvas pixel to one display pixel.  A pass-through when AA is off.
-    local out = AntiAlias.resolve(canvas, sw, sh, "world")
+    local out = AntiAlias.resolve(canvas, bw, bh, "world")
+    out = RenderScale.present(out, sw, sh)
     -- THE FRAME SEAM.  Perf.frame stamps one whole-frame time per RENDERED
     -- frame and this is the only place in the mod that is reached exactly
     -- once per rendered world frame -- Pipelines calls drawWorld from
@@ -518,6 +568,7 @@ mod.content.render_pipelines:register("voxel", {
     Voxel3D.invalidate()
     OverworldBattle.invalidate()
     AntiAlias.invalidate()
+    RenderScale.invalidate()
     ChunkMesher.invalidate()   -- no map id = every cached mesh
     VR.invalidate()            -- the mirror, and FBO ids of dead canvases
   end,
@@ -754,6 +805,10 @@ local SETTINGS = {
   -- machine it happens to be running on, so it neither sets this nor takes
   -- the row away -- the player decides what their hardware can carry, from
   -- inside FULL like anywhere else.
+  { RenderScale.setting,
+    "Render the world at fewer pixels, then enlarge with nearest filtering. "
+    .. "AUTO uses 2X on mobile and Linux ARM; desktop uses 1X. UI stays at its own resolution.",
+    full = true },
   { AntiAlias.setting,
     "Smooth the stair-stepped edges of the 3D world -- roof ridges, ledge "
     .. "lips, a tree against the sky -- by rendering the diorama larger than "

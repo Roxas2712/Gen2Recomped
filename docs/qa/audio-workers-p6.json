@@ -1,0 +1,139 @@
+{
+  "runtimeCommit": "6c0f250ddc5f29ac11bca1b3eb7fc3703bfbf35c",
+  "native": {
+    "metal": {
+      "scope": "Native SoundData/worker, owned sample programs and Source hardware double; no device playback or cartridge music",
+      "jitEnabled": true,
+      "arch": "arm64",
+      "os": "OS X",
+      "phases": [
+        {
+          "meanMs": 0.2561895833332365,
+          "frames": 120,
+          "mode": "setSample"
+        },
+        {
+          "meanMs": 0.11381180555569692,
+          "frames": 120,
+          "mode": "automatic PCM"
+        },
+        {
+          "meanMs": 0.31417291666659963,
+          "frames": 120,
+          "mode": "cold effect trigger"
+        },
+        {
+          "meanMs": 0.029729166666540387,
+          "frames": 120,
+          "mode": "prewarmed effect trigger"
+        },
+        {
+          "meanMs": 0.12612361111112116,
+          "frames": 120,
+          "mode": "legacy DS update"
+        },
+        {
+          "meanMs": 0.011314930555794689,
+          "frames": 120,
+          "mode": "worker DS update"
+        }
+      ],
+      "renderer": "Metal",
+      "checks": 358,
+      "sha256": {
+        "src/core/AudioPcm.lua": "02f0e7f94f2195e1044b3013762705f7a5e6fb8abf2ee292df2c2965e815848f",
+        "src/core/ChipSynth.lua": "ec359285be3e9bf4b015d2e3a9ff08527793719a489a89bdf2d1c6a0e4bac179",
+        "src/core/M4ASynth.lua": "0d60dcd9cb91a44f40186b9f1eb55c28c400b28960f5a4a21eb19d19c3c10a77",
+        "src/core/chip_worker.lua": "c58df4dc639d4d8427527fc1fac8671014ccadbca81238060183523f723eaf38",
+        "src/core/ChipAudio.lua": "e7e5cde5da08915386269450d822d027d17afab961b0db8e6016010d17717541",
+        "src/core/Sound.lua": "45533f7c8cb9e3339b4f51af3476b89c05515b8bffaa4b4fb480c3ba9cddf5a0",
+        "src/core/Music.lua": "df02d373d35bf9b717b5b7de25161a36d08a1aa38d4dfb37d0d8337d6a51aeca",
+        "src/core/Performance.lua": "a48266756db09dadc90fa161d4c342bdd75c0d1aeba237c82e0bb313ca362f0c",
+        "src/audio/NitroAudio.lua": "1d81f278653ce90e5521d9b89d9a75ad24a9d860927e00e9ce87a715137366cf",
+        "src/audio/NitroTransport.lua": "bc2e6e0f3aae8020bcf06a8d5591f59a03955e05d02b7e355fe02e82ee9fbbd2",
+        "src/audio/NitroSequence.lua": "5a93a96afebe4945e951fe0cd204924f4e350cc1aa8fa8c348774dc69ca1463a",
+        "src/audio/NitroWorker.lua": "6ae969b5bc6171060aee2226a2ea536d6a5223d87ee86be43ed2d46067e8a4ab",
+        "tools/audio-profile-check/NitroFixture.lua": "6b9c147ddfcb0bd33fd401549cc4108a505da362c964851ab703d1a2d839ca67",
+        "tools/audio-profile-check/NitroCheck.lua": "a18c2772663147a5337af334e3b4e61fca98cdfc52898f0d5f034f76cd5a14ce",
+        "tools/audio-profile-check/main.lua": "0a73735704bc199f03bee47be68abc23a711a9ddaa0d1679e24bd7f2b3d1c20f",
+        "tools/audio-profile-check/conf.lua": "58c1fc954bc54b6e07cd13e989ff812bd86d34cdd0df70fcb17d05d50bbcdaa4"
+      },
+      "playerProfilesUsed": false
+    },
+    "openGL": {
+      "checks": 358,
+      "jitEnabled": false,
+      "phases": [
+        {
+          "frames": 120,
+          "meanMs": 1.509032986111151,
+          "mode": "setSample"
+        },
+        {
+          "frames": 120,
+          "meanMs": 1.5133395833334617,
+          "mode": "automatic PCM"
+        },
+        {
+          "frames": 120,
+          "meanMs": 0.7150642361111033,
+          "mode": "cold effect trigger"
+        },
+        {
+          "frames": 120,
+          "meanMs": 0.034674652777688664,
+          "mode": "prewarmed effect trigger"
+        },
+        {
+          "frames": 120,
+          "meanMs": 0.36701284722253646,
+          "mode": "legacy DS update"
+        },
+        {
+          "frames": 120,
+          "meanMs": 0.014419097221877545,
+          "mode": "worker DS update"
+        }
+      ],
+      "renderer": "OpenGL",
+      "os": "OS X",
+      "scope": "Native SoundData/worker, owned sample programs and Source hardware double; no device playback or cartridge music",
+      "arch": "arm64",
+      "sha256": {
+        "src/core/AudioPcm.lua": "02f0e7f94f2195e1044b3013762705f7a5e6fb8abf2ee292df2c2965e815848f",
+        "src/core/ChipSynth.lua": "ec359285be3e9bf4b015d2e3a9ff08527793719a489a89bdf2d1c6a0e4bac179",
+        "src/core/M4ASynth.lua": "0d60dcd9cb91a44f40186b9f1eb55c28c400b28960f5a4a21eb19d19c3c10a77",
+        "src/core/chip_worker.lua": "c58df4dc639d4d8427527fc1fac8671014ccadbca81238060183523f723eaf38",
+        "src/core/ChipAudio.lua": "e7e5cde5da08915386269450d822d027d17afab961b0db8e6016010d17717541",
+        "src/core/Sound.lua": "45533f7c8cb9e3339b4f51af3476b89c05515b8bffaa4b4fb480c3ba9cddf5a0",
+        "src/core/Music.lua": "df02d373d35bf9b717b5b7de25161a36d08a1aa38d4dfb37d0d8337d6a51aeca",
+        "src/core/Performance.lua": "a48266756db09dadc90fa161d4c342bdd75c0d1aeba237c82e0bb313ca362f0c",
+        "src/audio/NitroAudio.lua": "1d81f278653ce90e5521d9b89d9a75ad24a9d860927e00e9ce87a715137366cf",
+        "src/audio/NitroTransport.lua": "bc2e6e0f3aae8020bcf06a8d5591f59a03955e05d02b7e355fe02e82ee9fbbd2",
+        "src/audio/NitroSequence.lua": "5a93a96afebe4945e951fe0cd204924f4e350cc1aa8fa8c348774dc69ca1463a",
+        "src/audio/NitroWorker.lua": "6ae969b5bc6171060aee2226a2ea536d6a5223d87ee86be43ed2d46067e8a4ab",
+        "tools/audio-profile-check/NitroFixture.lua": "6b9c147ddfcb0bd33fd401549cc4108a505da362c964851ab703d1a2d839ca67",
+        "tools/audio-profile-check/NitroCheck.lua": "a18c2772663147a5337af334e3b4e61fca98cdfc52898f0d5f034f76cd5a14ce",
+        "tools/audio-profile-check/main.lua": "0a73735704bc199f03bee47be68abc23a711a9ddaa0d1679e24bd7f2b3d1c20f",
+        "tools/audio-profile-check/conf.lua": "58c1fc954bc54b6e07cd13e989ff812bd86d34cdd0df70fcb17d05d50bbcdaa4"
+      },
+      "playerProfilesUsed": false
+    }
+  },
+  "acceptance": {
+    "engineSuites": 475,
+    "sdkSuites": 3,
+    "galleryChecks": 253,
+    "api3Comparisons": 200,
+    "isolatedApi3Workers": 400,
+    "externalFixtureEntrypoints": 17,
+    "externalFixturePhase": "complete",
+    "exitCodes": {
+      "engine": 0,
+      "sdk": 0,
+      "gallery": 0,
+      "api3": 0,
+      "fixtures": 0
+    }
+  }
+}

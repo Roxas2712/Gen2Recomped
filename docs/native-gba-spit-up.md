@@ -76,7 +76,9 @@ case). Disabling JIT on that old VM removes the discrepancy; the maintained
 VM passes the unfiltered comparison with JIT enabled. The original failing
 report is retained separately under ignored QA output. This is not a claim
 of parity on that older VM, and no source-reference patch or row/value filter
-is used to make the comparison pass.
+is used to make the comparison pass. The Gen2 host also matches every new
+Spit Up observation from the pinned reference when that older VM executes
+the host alone, for both FireRed and Emerald.
 
 Only the reviewed Spit Up record revision changes the fixture fingerprint:
 `032184f68094e9ca` becomes `397df21576af62f1`, and the `move_effects` section

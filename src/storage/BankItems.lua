@@ -116,6 +116,23 @@ function M.equip(itemId,entry)
   copy.canonical.item=item.canonical
   return M.transaction({version=entry.source.version,party={copy.mon}},function() return B.keep(copy) end)
 end
+-- Authenticated shop/drop receipts use one stable ledger identity across devices.
+function M.acceptArena(receipt)
+ local allowed,why=require('src.storage.AccountStorage').check();if not allowed then return nil,why end
+ local account=require('src.cloud.RetroCloud').accountId()
+ if type(receipt)~='table' or receipt.account_id~=account or type(receipt.id)~='string' or #receipt.id~=36
+  or not receipt.id:match('^[a-f0-9%-]+$') or type(receipt.item)~='string' or #receipt.item>32
+  or not receipt.item:match('^[A-Z][A-Z0-9]+$') or not require('src.core.GameVersion').VERSIONS[receipt.edition]
+  or require('src.core.GameVersion').generation(receipt.edition)<2 then return nil,'Invalid account Item Bank receipt.' end
+ local inventory,err=M.load();if not inventory then return nil,err end
+ local key=hash('arena-item|'..account..'|'..receipt.id)
+ if inventory.items[key] then return key end -- Never reset an already assigned item.
+ inventory.items[key]={item=receipt.item,canonical=receipt.item,version=receipt.edition,
+  owner=hash('arena-grant|'..account..'|'..receipt.id),revision=1,state='available',source=receipt.source}
+ local bytes=S.encode(inventory);if not M.decode(bytes) then return nil,'Your Item Bank cannot receive this item.' end
+ disk().createDirectory('bank')
+ local ok,problem=Safety.atomicWrite(disk(),M.FILE,bytes,{decode=M.decode});return ok and key or nil,problem
+end
 function M.sync(store)
   local before=disk().read(M.FILE);local localState,why=M.load();if not localState then return nil,why end
   local remote=store.read(M.FILE)

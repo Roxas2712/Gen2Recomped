@@ -1,0 +1,179 @@
+{
+  "status": "passed",
+  "upstream_base": "ed5189c247ee7a2ccca666784e21fd4fba8df781",
+  "feature_ref": "164c1a2dcd2092fd5ea5f4eabc8599d348076a1b",
+  "integration_ref": "77d0294ce20b83168dfce7461f7854df2d5d3cfb",
+  "source_tree": "cd897adfaddbd6c17eb1d9e7a51741a5ab186af4",
+  "tests_tree": "4f74be4c778971d72e750628d22447e9496295f2",
+  "main_blob": "a939e9628652052f9dffb2cb7ae834de2eb697ea",
+  "gen1_ref": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+  "feature_targeted_checks": 107,
+  "integration_targeted_checks": 108,
+  "preexisting_upstream_failed_suites": 11,
+  "preexisting_upstream_failure_lines_identical": true,
+  "feature_negative_control_failed_assertions": 31,
+  "integration_engine_suites": 296,
+  "integration_sdk_suites": 4,
+  "integration_B30": true,
+  "native_contracts": {
+    "workers": 16,
+    "paired_runs": 8,
+    "paired_typed_observations": 40,
+    "typed_observations_identical": true,
+    "log_sha256": {
+      "gen1-red-1-native": "489df7e4592041de7c68d171b3f2ccb1acc6cca3e431414ccb4f8339d363307d",
+      "gen1-red-2-native": "5416938f024c9a1dab02be1b9304db044e8abf1fda7901006538268d6160f292",
+      "gen1-gold-1-native": "080a574ace782af4defd95de82121868b57608514da784af1fe0d61c539e0816",
+      "gen1-gold-2-native": "9fe150132d976d0b1d18d60f713fbe152d6589d5954c2d6bd132b73a81dd18ca",
+      "gen1-firered-1-native": "e8b14fb1d1887876afd632b72f41add23ce7406d98ca59ebfb4591148ac77827",
+      "gen1-firered-2-native": "69e9c2a6a4e43df6a1e8f692f03b2488e590250401273b91afb740a7d31e4a28",
+      "gen1-emerald-1-native": "08cf7bfe1ddd6f4f02677288bedda1697f14c4085bd943fdcbfeff1b9f46b672",
+      "gen1-emerald-2-native": "9ebfd0802342e713dbe2dd77d682a3cf79d346cb77af9dde1ff64a9a82eace8d",
+      "gen2-red-1-native": "0dc87dc54ce70a1802e4dcace87721dea5b4b2027786b1504043fcca441bb2e5",
+      "gen2-red-2-native": "320a088bee6d6ab84c32291aa9113c5398204b3f50ce67570bf1875cba675e22",
+      "gen2-gold-1-native": "eb93d4e17387691ef92ec8f11f55c8df817b403e62782fb4cf4eeed267eeac19",
+      "gen2-gold-2-native": "8cafdab039a0ebfce46cbf325610cdc166fa112f582bc62d9f964e9108b6d452",
+      "gen2-firered-1-native": "f4e536f56694a6dd815d53a38a97f78b9bcd758b87908c59a8996c3c5b5638fc",
+      "gen2-firered-2-native": "5ecca1a104dd451fdccfc52865e6b3cb51619e9ebf61fcdbcd9294893f334fa6",
+      "gen2-emerald-1-native": "ca00f74520551f485d3ffc4e51d3c2c24774695c876231bfca0ff3426f84a3df",
+      "gen2-emerald-2-native": "c2202b88d94691c519227be1a9fd42e44c86f321c85421b56c9a968ba2b582de"
+    }
+  },
+  "integration_contracts": {
+    "workers": 32,
+    "paired_runs": 16,
+    "paired_typed_observations": 80,
+    "typed_observations_identical": true,
+    "log_sha256": {
+      "gen1-red-1-native": "8c125721a59e7efdc919ec94debea3df9f68f587e6650b3f7ce961bfabf060bb",
+      "gen1-red-2-native": "de09243afa3e411bce14b9e05ff8cf31cec8fe4683da1e5190d69aa8484096ef",
+      "gen1-red-2-unified": "875339c98a9cd5bdca4febadb4cf54f9b4dd51381d93dc886348d1650aa3f52c",
+      "gen1-red-3-unified": "8e3f9cf0cd4dd6603a5e2128fc2aa18909f57821beb3d1a3ba40d9a30acb2017",
+      "gen1-gold-1-native": "d7fcb793818661ad47d6305fc5d161875a871c7d57f96edfb495c12fcef58269",
+      "gen1-gold-2-native": "5507375b52947eed0e6723c21bfcff69143bca23ef4616bc47c6aeeb928315df",
+      "gen1-gold-2-unified": "2ad76b73321144b841c4d02a64404b310f1c83e340b96bb6619bb6d9be88cc47",
+      "gen1-gold-3-unified": "66102924daa4ef996708b8f664152bec1a766bc257785dbacd3ae9397167ebbd",
+      "gen1-firered-1-native": "1b99aaa8ca8d277356decec0f7d48271548bfed1b198af9cd42ff4854fe58272",
+      "gen1-firered-2-native": "fe7db932aeb90a6a0c65630ec9c3f97993e887a44a6be71fd15659bd8d8ee3ba",
+      "gen1-firered-2-unified": "165678bfbd729a4bc8bcda8a5ee0d16ff4bc214a65a4cc161273aa4119af5a8c",
+      "gen1-firered-3-unified": "41bd8eb451e2f08999ed694c1a1df1064c1c40221de1b4832654d7a52d19ad87",
+      "gen1-emerald-1-native": "bc52364c1a1354d40f27a70367685ceae422e9324a62f556a67ca2225d5ec036",
+      "gen1-emerald-2-native": "71184fc70687f481385fe4d9b2328851a176adc57ca943543771fa8b0d232415",
+      "gen1-emerald-2-unified": "01b6d75efdd5d65af565e8bd40fd052aa97680f5b0c6d7a1e67e4d0301d7d130",
+      "gen1-emerald-3-unified": "5fdc536868e046638517855435aaa63890a5c2e1dabbc1832e7231efbf03d840",
+      "gen2-red-1-native": "601bd159983208e2310c46580e16fccdc4591206d2bb32fcc35ca5876db3cd97",
+      "gen2-red-2-native": "06af65af2f175fcde556e741622138be70331590b9164dc0a114fd205804a02d",
+      "gen2-red-2-unified": "6f2955491d564d05c39f867324e7f23c8361a2e226bb033b6b79678f78440f3b",
+      "gen2-red-3-unified": "fcc0375e20336160f1c3257538fcb0ef0be05e9f741fdad10e3375b02c2d0293",
+      "gen2-gold-1-native": "e14edd6024b5b93bcce25e8c631baafb7675d204c57cf44eef7c5e4afd57fda2",
+      "gen2-gold-2-native": "53e91b6f213978a588747f12c63e8188d8f0841a60e3edabb7f5d4e25960ad70",
+      "gen2-gold-2-unified": "b7a51a86bb678cd60867557649263a168baab3f0d50a0b2cad53264d7ea45b1b",
+      "gen2-gold-3-unified": "439e7580b7ff99bbfbab8fe62a15b235a15b92f3250208474aaa17f5b3e3e0ab",
+      "gen2-firered-1-native": "8b8bc6d6d79302d5718ce4570e5d1a5733ac6c4e87396255a9194cc12d8d4291",
+      "gen2-firered-2-native": "12e76db6290cb3f9e2799f106135a23946651aed9e63c3fa7a34f851832ff700",
+      "gen2-firered-2-unified": "30bcdb473ba3f385727bdacfc28c2d1ba806a5f52b716dd4bae4e2bd299c537e",
+      "gen2-firered-3-unified": "dc45c8e98fd3dde694862472dfd0e2880a15bc577e1b134e032861fe6d115e75",
+      "gen2-emerald-1-native": "5293684a9f4a08a2ef998014b3aad5ffacf9215d51639b913f08aea9e15046bb",
+      "gen2-emerald-2-native": "b7e207daf0dd8bda66e0465664d26560c863bb9b702296bd346469dba0a75510",
+      "gen2-emerald-2-unified": "fc6a982e38abd83560e67e98efb559baeb688eebc29dfc647d2d5f6987c7d0fd",
+      "gen2-emerald-3-unified": "7bd54f5a877cce92654bf07b89eedc281123a900e3d7df69b397da428b990089"
+    }
+  },
+  "actual_package_consumer": {
+    "checks_per_host": 29,
+    "positive_hosts": [
+      "gen1",
+      "feature",
+      "integration"
+    ],
+    "typed_results_identical_by_package_mode": true,
+    "removed_frame_hooks": 11,
+    "repeat_cleanup_idempotent": true,
+    "old_playable_negative_control": true,
+    "log_sha256": {
+      "gen1-host": "a1a5b385fec9611be0c07e8d849bbd06162fa43cbb6bec40179f7bbf1fc66e5f",
+      "gen1-combined": "d6ad5c1086d2d4b94bb9e442def872dd7de252d939e975e4e96c8ea1b8a229d3",
+      "feature-host": "b55be3a501228e82555e5fcfd367decb0127e92879afbc57b3e4af0b4a9a44f3",
+      "feature-combined": "409586f4a62bdef5a3394588ffab887152feba1bd708d314b0b7e12bc4c4cb16",
+      "integration-host": "6b91286d45debaf3aa1820a292c49a20c08297c76b05b1f699d5206cccbfef93",
+      "integration-combined": "aa0d665cbf365e606d2be5624d5e48163f640bc12de2b45db0d985ca8f7b5841",
+      "negative-host": "320c6a2a28fc4f908604ffa902d7ba179c3786e9fedddc4c3b3045779c12e5c9",
+      "negative-combined": "de8ba9883cc6e7f1d294b5db678ddb99d9721fff41aacebe0fa4b7d6b9f2dec0"
+    }
+  },
+  "native_gpu_quit": {
+    "exit": 0,
+    "love": [
+      11,
+      5,
+      0,
+      "Mysterious Mysteries"
+    ],
+    "renderer": {
+      "renderer": "OpenGL",
+      "version": "4.1 Metal - 89.4",
+      "vendor": "Apple",
+      "device": "Apple M2"
+    },
+    "log_sha256": "958a0163d362d1203a0d7bac930e96a6cdb7837eefdd74940b648faaaab5c58b",
+    "driver_sha256": "3e4345736644c61d74da648e522236ab08c80e5c7ca09b02849f508347995068",
+    "capture_sha256": "73d813d9c5f9d7e81de39ac3dc22a824f45142f8da1ad51c968adce2531bd375",
+    "quit_result": {
+      "decision": false,
+      "frameHooksBefore": 12,
+      "frameHooksAfter": 1,
+      "errors": 0,
+      "disposed": true
+    },
+    "legacy_migration_disabled": true,
+    "imports_and_packages_unchanged": true
+  },
+  "raw_report_sha256": {
+    "quit-hook-feature-full-20261026b": "1910636e1764bc4bb964f5d17496eca174c8329b85e64fa929029134f1334ed1",
+    "quit-hook-baseline-full-20261026b": "585ebb9c4bbc7fdea3716ec40b0f6da242527824583a5f38f0a8b0c60777b7ec",
+    "quit-hook-negative-20261026b": "2d68e71c67a4cc0cfd2e81d6634aeaf1d6cbc659a2cbd42261c548365eccf16e",
+    "quit-hook-shared-contracts-20261026d": "3033661799232fa0abbed5e8b76a819b59bff7178a73e416f914663b924e0967",
+    "quit-hook-integration-contracts-20261026": "7087e539a5dcb4699f68bf497e4424190bc96bcc6e42a88785168705619d6c72",
+    "quit-hook-integration-full-20261026": "7bb25cabc9ee1fe8ca2d0f6fdbae292872e11218eb6666a26c144910699d5f28",
+    "quit-hook-battleart-consumer-20261026c": "7520a988633eaadbdfb6c4f2df0b81076fe79b0f1a01b9297e2f356e4f4dcefd",
+    "quit-hook-native-gpu-20261026b": "ffc3a7578e34e81609bbf8101f06e2836c6aa9e4d370f971c4accfc2208d8c9e"
+  },
+  "limits": [
+    "Quit decision seam, not generic mod unload.",
+    "Standalone PR uses existing API 1/2 buses; composed integration includes the previously submitted API 2 unified/API 3 capability catalogs.",
+    "Selected unchanged Battle Art/Interiors Red cleanup; not complete-mod, cross-game, audio quality, FPS or all-GPU-resource acceptance."
+  ],
+  "pull_request": "https://github.com/UNDERdecoded/Gen2Recomped/pull/320",
+  "publication_scope": "Gen2Recomped only; Gen1 reference read-only.",
+  "hosted_ci": {
+    "run_url": "https://github.com/UNDERdecoded/Gen2Recomped/actions/runs/40334289325",
+    "conclusion": "action_required",
+    "jobs": 0,
+    "scope": "Requires upstream maintainer approval; no jobs executed. Local qualification is separate."
+  },
+  "preexisting_upstream_failed_suite_names": [
+    "gate_fingerprint",
+    "gate_meta_coverage",
+    "gate_strings_coverage",
+    "quit_thread_shutdown",
+    "rebind_capture_bug510",
+    "rebind_swap_clear_bug589",
+    "soft_reset_bug563",
+    "tool_mod_hooks",
+    "update_check_tests",
+    "update_tests",
+    "wide_battle_layout"
+  ],
+  "public_probes": {
+    "battleart-quit.lua": {
+      "sha256": "7e913f2e9c94ed0691d841c5f002e4f773abbd05c06fd6b860696cb291d2fc93",
+      "executed_original_sha256": "1d830032846b70fe0bf4fd8b131b6e49a1e350ca9a41895334ece02bec8f8fb5",
+      "stripped_luajit_bytecode_identical": true
+    },
+    "battleart-native-quit.lua": {
+      "sha256": "642d801e74ed6c7553090dee32f059502ea1b5202ce13adc72f7ab2d6b891867",
+      "executed_original_sha256": "3e4345736644c61d74da648e522236ab08c80e5c7ca09b02849f508347995068",
+      "stripped_luajit_bytecode_identical": true
+    }
+  }
+}

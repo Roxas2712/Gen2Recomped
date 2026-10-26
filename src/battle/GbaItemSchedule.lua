@@ -7,17 +7,42 @@ function Schedule.battlers(battle)
   for _, b in battle:activeBattlers() do
     list[#list + 1] = b
   end
+  if battle.linkRole == "guest" and #list == 2 and not battle:isDouble() then
+    list[1], list[2] = list[2], list[1]
+  end
   return list
 end
 
-function Schedule.moveEnd(battle)
-  local frame = battle._gbaMoveFrame
+function Schedule.initialLinkEntry(battle, holder)
+  local pending = battle._gbaInitialItemEntries
+  if not pending then
+    return nil
+  end
+  pending[holder] = true
+  if not (pending[battle.player] and pending[battle.enemy]) then
+    return false
+  end
+  battle._gbaInitialItemEntries = nil
+  local activated = false
+  for _, actor in ipairs(Schedule.battlers(battle)) do
+    if battle:holdItemTrigger(actor, "entry") then
+      activated = true
+    end
+  end
+  return activated
+end
+
+function Schedule.moveEnd(battle, completedFrame)
+  local frame = completedFrame or battle._gbaMoveFrame
   if frame then
+    require("src.battle.Gen3ChoiceBand").moveEnd(battle, frame)
     frame.finished = true
   end
   for _, b in ipairs(Schedule.battlers(battle)) do
     battle:holdItemTrigger(b, "moveEnd")
   end
+  require("src.battle.Gen3PostHitItems").run(battle, frame)
+  require("src.battle.Gen3MirrorMove").history(battle, frame)
 end
 
 function Schedule.afterAction(battle)

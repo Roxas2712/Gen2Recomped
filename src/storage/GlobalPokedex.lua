@@ -18,7 +18,7 @@ function D.decode(bytes)
     for key,source in pairs(row.sources) do
       count=count+1
       if count>512 or type(key)~='string' or #key>200 or type(source)~='table'
-        or not Versions.VERSIONS[source.version] or type(source.slot)~='string' or #source.slot>80 then return nil end
+        or not (Versions.VERSIONS[source.version] or source.version=='bank') or type(source.slot)~='string' or #source.slot>80 then return nil end
     end
   end
   return v
@@ -46,7 +46,7 @@ function D.collect(ready,entries)
     row.sources[version..':'..slot]={version=version,slot=slot}
   end
   for _,entry in ipairs(entries or B.list()) do
-    add(entry.canonical.dex,tostring(entry.mon.species),entry.source.version,tostring(entry.source.slot or 'Bank'),true)
+    add(entry.canonical.dex,tostring(entry.mon.species),entry.source.version,tostring(entry.source.slot or 'Bank'),not (entry.mon.isEgg or entry.mon.egg or (tonumber(entry.mon.eggSteps) or 0)>0))
   end
   for _,version in ipairs(Versions.ORDER) do
     if ready[version] then

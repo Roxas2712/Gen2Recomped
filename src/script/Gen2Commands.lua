@@ -2977,45 +2977,21 @@ function Commands.g2_clear_dst(ctx)
   Commands.show_text(ctx, "InitialClearDSTFlag.Text")
 end
 
--- The ROM spins these with the d-pad on a graphical clock-set background;
--- a list menu is the port's equivalent and needs no ROM tiles.  The names
--- are engine text, not ROM strings: SetDayOfWeek.WeekdayStrings is raw
--- charmap data, and the extractor only harvests symbols matching "Text".
-local WEEKDAYS = {
-  "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY",
-}
-
--- `special SetDayOfWeek` ($25), the day picker in mom's clock talk.  The GB
--- has to ask because its RTC has no idea what day it started on; here
--- readvar 11 reads the host clock, which already knows.  So the answer is
--- kept as an OFFSET from the host day rather than as the day itself: the
--- cursor opens on today, a truthful answer stores 0 and changes nothing, and
--- either way the day still rolls over at real midnight instead of freezing.
+-- Native SetDayOfWeek shares the clock-setting screen and RTC owner with
+-- the introduction. The script remains suspended through both selection
+-- and confirmation; declining does not write the save or resume the script.
 function Commands.g2_set_day_of_week(ctx)
   local game, runner = ctx.game, ctx.runner
-  local Clock = require("src.core.Gen2Clock")
-  local current = Clock.weekday(ctx.save)
-  local picked
-  repeat
-    Commands.show_text(ctx, "SetDayOfWeek.OakTimeWhatDayIsItText")
-    local items = {}
-    for index, day in ipairs(WEEKDAYS) do
-      items[index] = {
-        label = Strings(day),
-        onSelect = function() picked = index - 1 runner:resume() end,
-      }
-    end
-    -- no cancel: the ROM's loop watches A only, and onCancel is the only
-    -- other path back to runner:resume()
-    local menu = require("src.ui.Menu").new(game, items, { cancelable = false })
-    menu.index = current + 1
-    menu:clampScroll()
-    game.stack:push(menu)
-    runner:yield()
-    Commands.ask(ctx, Strings(WEEKDAYS[picked + 1])
-      .. resolvedText(ctx, "SetDayOfWeek.OakTimeIsItText"))
-  until ctx.lastCheck
-  Clock.setWeekday(ctx.save, picked)
+  local screen
+  screen = require("src.ui.Gen2InitClock").new(game, { mode="day", save=ctx.save,
+    onDone=function()
+      if game.stack:top() == screen then game.stack:pop() end
+      ctx.lastCheck = true
+      runner:resume()
+    end,
+  })
+  game.stack:push(screen)
+  runner:yield()
 end
 
 -- UnownPuzzle (SpecialsPointers row 41).  The chamber scripts run
@@ -4234,6 +4210,7 @@ function Commands.g2_name_rival(ctx)
   local presets = boot and boot.namePresets and boot.namePresets.rival
   game.stack:push(require("src.ui.NamingScreen").new(game, {
     title = Strings("RIVAL'S NAME?"),
+    kind = "rival",
     maxLen = 7, -- PLAYER_NAME_LENGTH - 1
     -- NamingScreen_InitNameEntry opens the grid blank and confirming nothing
     -- would leave the name empty, so fall back to the canonical one
@@ -4307,7 +4284,7 @@ function Commands.g2_name_rater(ctx)
     or Strings("All right. What\nname should we\vgive it, then?"))
   local chosen
   game.stack:push(require("src.ui.NamingScreen").new(game, {
-    title = Strings("%s's NICKNAME?", nickOf(picked)),
+    title = Strings("NICKNAME?"), kind = "mon", mon = picked,
     maxLen = 10,
     default = nickOf(picked),
     onDone = function(name) chosen = name runner:resume() end,

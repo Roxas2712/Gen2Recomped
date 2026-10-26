@@ -88,7 +88,7 @@ function B.decode(bytes,id)
   if type(bytes)~='string' or #bytes>B.MAX_BYTES then return nil,'Invalid Bank entry size.' end
   local ok,value=pcall(S.decode,bytes)
   if not ok or type(value)~='table' or value.schema~=1 or type(value.source)~='table'
-    or not Versions.VERSIONS[value.source.version] or type(value.mon)~='table'
+    or not (Versions.VERSIONS[value.source.version] or require('src.storage.LeagueEgg').universal(value)) or type(value.mon)~='table'
     or (type(value.mon.species)~='string' and type(value.mon.species)~='number')
     or not integer(value.mon.level,1,100) or type(value.mon.moves)~='table' or #value.mon.moves>4
     or type(value.canonical)~='table' or type(value.canonical.moves)~='table' then return nil,'Invalid Bank entry.' end
@@ -98,7 +98,7 @@ function B.decode(bytes,id)
   if value.origin and (type(value.origin)~='table' or not validId(value.origin.recordId)) then return nil,'Invalid Bank origin.' end
   if value.mon.retroBankOrigin and (type(value.mon.retroBankOrigin)~='table' or not validId(value.mon.retroBankOrigin.recordId)) then return nil,'Invalid Pokémon origin.' end
   for _,origin in ipairs({value.source,value.origin or {},value.mon.retroBankOrigin or {}}) do
-    if origin.version and not Versions.VERSIONS[origin.version] then return nil,'Unknown Bank origin game.' end
+    if origin.version and not Versions.VERSIONS[origin.version] and not (origin.version=='bank' and require('src.storage.LeagueEgg').origin(value)) then return nil,'Unknown Bank origin game.' end
     for _,field in ipairs({'slot','place','saveId'}) do
       if origin[field]~=nil and (type(origin[field])~='string' or #origin[field]>160) then return nil,'Invalid Bank origin details.' end
     end
@@ -172,7 +172,9 @@ function B.convert(entry,version,data,allowAdaptation)
   if not def then return nil,'Species '..tostring(original)..' is unavailable in this game.' end
   local systemEncounter=entry.origin and entry.origin.kind=='retrorecomp_wonder'
   local gift=entry.origin and entry.origin.kind=='retrorecomp_gift'
-  if gift then
+  if entry.source.version=='bank' and require('src.storage.LeagueEgg').universal(entry) then
+    local reward,why=require('src.storage.LeagueEgg').build(entry,mon.species,data,version);if not reward then return nil,why end;mon=reward
+  elseif gift then
     local reward,why=require('src.storage.GiftReward').build(entry,mon.species,data,version)
     if not reward then return nil,why end
     mon=reward

@@ -13,6 +13,8 @@ local Assets = require("src.render.Assets")
 local Logger = require("src.core.Logger")
 local Probe = require("src.core.Probe")
 local PaletteFX = require("src.render.PaletteFX")
+local Performance = require("src.core.Performance")
+local performancePaletteTicks=setmetatable({}, {__mode="k"})
 
 local TileRenderer = {}
 TileRenderer.__index = TileRenderer
@@ -576,12 +578,18 @@ local function gen2PalColors(tileset, row)
   if row=='DARK'then return byTod.DARK or tileset.palColors end
   return byTod[row] or byTod.DAY or tileset.palColors
 end
+local function gen2DisplayRows(rows, row)
+  if not (rows and require("src.core.GameVersion").isGen2()) then return rows end
+  local out = {}
+  for i, colors in ipairs(rows) do out[i] = PaletteFX.gen2BakeColors(colors, row == "DARK") end
+  return out
+end
 
 -- One atlas per (tileset image, COLORS mode, time of day).  Leaving the mode
 -- out of this key is why switching COLORS did nothing out in the Gen2
 -- overworld: the first bake won and every later mode kept being handed it.
 local function gen2AtlasKey(imagePath, roof, special, row)
-  return imagePath .. "#gen2pal:" .. tostring(PaletteFX.mode) .. ":"
+  return imagePath .. "#gen2pal:" .. PaletteFX.displayKey() .. ":"
     .. tostring(row or PaletteFX.effectiveGen2Tod())
     -- TWO MAPS ON ONE TILESET ARE TWO DIFFERENT PICTURES once the roof is in
     -- it.  Violet and Azalea share TilesetJohto1 and wear different roofs, so
@@ -745,6 +753,7 @@ function TileRenderer.gen2AtlasFor(tileset)
   if not (tileset.palMap and #tileset.palMap > 0) then return nil end
   if not PaletteFX.usesGen2BgPal() then return nil end
   local colors = gen2PalColors(tileset)
+  colors = gen2DisplayRows(colors, PaletteFX.effectiveGen2Tod())
   if not (colors and #colors > 0) then return nil end
   local perRow = tileset.tilesPerRow
   if not perRow or perRow < 1 then return nil end
@@ -1071,7 +1080,70 @@ local function pixelCanvas(w, h)
   return plot, finish
 end
 
-local function bakeReflectionCover(record, tiles, statics, frames)
+-- G5 -- THE SHEET AS INDICES, BAKED ONCE; THE COLOURS LOOKED UP PER CYCLE.
+--
+-- A palette cycle (water, waterfalls, flower beds) re-ran the whole metatile
+-- walk above -- every tile of every metatile, every animation frame, both
+-- layers and the reflection cover -- into a new RGBA sheet, millions of Lua
+-- operations per cycle step on the first visit of each palette phase.  What
+-- a cycle changes is sixteen palettes; the sheet's INDICES never move.
+--
+-- So the sheet is baked once as one byte per pixel (palette * 16 + colour,
+-- 0 transparent) and a cycle resolves it through `Gen3Tiles:colourTable()`
+-- (256 colours) in a tight FFI loop straight into the ImageData's bytes.
+-- Same pixels, same images, same LRU cache of finished frames around it;
+-- only the work between "the palette changed" and "the texture is updated"
+-- shrinks from a bake to a copy.  Without the FFI (a runtime that lacks it,
+-- or Performance.gen3PaletteIndex = false) every line below is skipped and
+-- the bake runs as before.
+local ffiOk, ffi = pcall(require, "ffi")
+if not ffiOk then ffi = nil end
+
+local function indexCanvas(w, h)
+  local buf = {}
+  local zero = "\0"
+  for i = 1, w * h do buf[i] = zero end
+  local char = string.char
+  local codes = {}
+  local function plot(x, y, pal, v)
+    if x >= 0 and y >= 0 and x < w and y < h then
+      local code = pal * 16 + v
+      local px = codes[code]
+      if not px then px = char(code); codes[code] = px end
+      buf[y * w + x + 1] = px
+    end
+  end
+  local function finish() return table.concat(buf) end
+  return plot, finish
+end
+
+-- indices (w*h bytes) + colour table (256*4 bytes) -> a fresh rgba8 ImageData
+local function gen3Recolour(indices, w, h, lut)
+  local ok, surface = pcall(love.image.newImageData, w, h, "rgba8")
+  if not ok or not surface or not surface.getFFIPointer then return nil end
+  local okPtr, ptr = pcall(surface.getFFIPointer, surface)
+  if not okPtr or ptr == nil then return nil end
+  local src = ffi.cast("const uint8_t *", indices)
+  -- the table as 256 native words: a byte copy keeps the r, g, b, a order the
+  -- string carries whatever the machine's endianness, and an owned array is
+  -- aligned however the string was
+  local table_ = ffi.new("uint32_t[256]")
+  ffi.copy(table_, lut, 1024)
+  local out = ffi.cast("uint32_t *", ptr)
+  for i = 0, w * h - 1 do
+    out[i] = table_[src[i]]
+  end
+  return surface
+end
+
+local function gen3IndexPath()
+  return ffi ~= nil and Performance.gen3PaletteIndex
+         and love.image and love.image.newImageData ~= nil
+end
+
+-- `indexed`: answer the cover as an index string (plus its size) instead of
+-- an ImageData; see indexCanvas.
+local function bakeReflectionCover(record, tiles, statics, frames, indexed)
   if not (love.image and love.image.newImageData) then return end
   frames = math.max(1, frames or 1)
   local ids = {}
@@ -1087,14 +1159,15 @@ local function bakeReflectionCover(record, tiles, statics, frames)
   local cols = require("src.render.Gen3Tiles").SHEET_COLS
   local w = cols * 16
   local h = math.ceil(#ids * frames / cols) * 16
-  local plot, finish = pixelCanvas(w, h)
+  local plot, finish
+  if indexed then plot, finish = indexCanvas(w, h) else plot, finish = pixelCanvas(w, h) end
   local quads = record.coverQuads or {}
   for f = 0, frames - 1 do
     tiles:setAnimFrame(f)
     for i, id in ipairs(ids) do
       local slot = (i - 1) * frames + f
       local ox, oy = (slot % cols) * 16, math.floor(slot / cols) * 16
-      tiles:drawLayer(id, 2, ox, oy, plot)
+      tiles:drawLayer(id, 2, ox, oy, plot, indexed)
       quads[id] = quads[id] or {}
       if not quads[id][f + 1] then
         quads[id][f + 1] = love.graphics.newQuad(ox, oy, 16, 16, w, h)
@@ -1105,6 +1178,7 @@ local function bakeReflectionCover(record, tiles, statics, frames)
   local surface = finish()
   record.coverQuads = record.coverQuads or quads
   record.coverFrames = frames
+  if indexed then return surface, w * h * 4, w, h end
   return surface,w*h*4
 end
 
@@ -1133,7 +1207,7 @@ function TileRenderer.gen3SheetsFor(tilesetDef, data, layout)
   }, layout)
   -- Legacy records have no paletteCycles: their original bake stays intact.
   if primary.paletteCycles ~= nil or (tiles.secondary and tiles.secondary.paletteCycles ~= nil) then
-    tiles:setPaletteTicks(animFrame)
+    tiles:setPaletteTicks(Performance.paletteTick(animFrame))
   end
 
   -- ---- WHAT MOVES, AND WHERE ITS OTHER PICTURES GO ------------------------
@@ -1169,7 +1243,38 @@ function TileRenderer.gen3SheetsFor(tilesetDef, data, layout)
     end
   end
 
+  -- G5: one walk over the metatiles yields the INDEX sheets; the colours are
+  -- looked up from them here and on every later recolour.  Nil when the
+  -- index path is off or the FFI is missing: the bake below then runs.
+  local index = nil
+  if gen3IndexPath() then
+    index = { w = w, h = h }
+    for layer = 1, 2 do
+      local plot, finish = indexCanvas(w, h)
+      tiles:setAnimFrame(0)
+      tiles:bakeLayer(layer, plot, true)
+      for f = 2, frames do
+        tiles:setAnimFrame(f - 1)
+        for _, id in ipairs(movers) do
+          tiles:bakeMetatileInto(id, layer, slotOf[id][f], plot, true)
+        end
+      end
+      index[layer] = finish()
+    end
+    tiles:setAnimFrame(0)
+  end
+
   local built,initialSurfaces = {},{}
+  if index then
+    local lut = tiles:colourTable()
+    for layer = 1, 2 do
+      initialSurfaces[layer] = gen3Recolour(index[layer], w, h, lut)
+      if not initialSurfaces[layer] then index = nil; break end
+      built[layer] = love.graphics.newImage(initialSurfaces[layer])
+    end
+  end
+  if not index then
+  built,initialSurfaces = {},{}
   for layer = 1, 2 do
     local plot, finish = pixelCanvas(w, h)
     -- the static sheet holds FRAME ZERO, not the tileset's shipped bytes: the
@@ -1187,12 +1292,23 @@ function TileRenderer.gen3SheetsFor(tilesetDef, data, layout)
     built[layer] = love.graphics.newImage(initialSurfaces[layer])
   end
   tiles:setAnimFrame(0)
+  end
 
   local record = { bottom = built[1], top = built[2], width = w, height = h,
                    tiles = tiles, metatiles = statics, slots = slots,
                    animSlots = (frames > 1) and slotOf or nil,
                    animFrames = frames, animStep = tiles:animStep() }
-  local coverData,coverBytes=bakeReflectionCover(record, tiles, statics, frames)
+  local coverData,coverBytes
+  if index then
+    local coverIndex, bytes, cw, ch = bakeReflectionCover(record, tiles, statics, frames, true)
+    if coverIndex then
+      index.cover, index.coverW, index.coverH = coverIndex, cw, ch
+      coverData, coverBytes = gen3Recolour(coverIndex, cw, ch, tiles:colourTable()), bytes
+    end
+    record.gen3Index = index
+  else
+    coverData,coverBytes=bakeReflectionCover(record, tiles, statics, frames)
+  end
   if coverData then record.cover=love.graphics.newImage(coverData) end
   initialSurfaces[3]=coverData
   local pictureBytes=w*h*8+(coverBytes or 0)
@@ -1215,6 +1331,27 @@ function TileRenderer.gen3SheetsFor(tilesetDef, data, layout)
     end
     local surfaces,retained={},false
     local ok,err=xpcall(function()
+      -- G5: indices in hand -- resolve them, no walk
+      local idx = record.gen3Index
+      if idx then
+        local lut = tiles:colourTable()
+        surfaces[1] = gen3Recolour(idx[1], idx.w, idx.h, lut)
+        surfaces[2] = gen3Recolour(idx[2], idx.w, idx.h, lut)
+        if surfaces[1] and surfaces[2] then
+          record.bottom:replacePixels(surfaces[1]); record.top:replacePixels(surfaces[2])
+          if idx.cover and record.cover then
+            surfaces[3] = gen3Recolour(idx.cover, idx.coverW, idx.coverH, lut)
+            if surfaces[3] then record.cover:replacePixels(surfaces[3]) end
+          end
+          if pictureKey then
+            retained = paletteFrames:put(record, pictureKey, surfaces,
+                                         w * h * 8 + (surfaces[3] and idx.coverW * idx.coverH * 4 or 0))
+          end
+          return
+        end
+        -- the FFI surface could not be made: fall through to the bake
+        surfaces = {}
+      end
       for layer, image in ipairs({ record.bottom, record.top }) do
         local plot, finish = pixelCanvas(w, h)
         tiles:setAnimFrame(0)
@@ -1289,7 +1426,10 @@ function TileRenderer:syncGen3Palettes()
   if not tiles or (tiles.primary.paletteCycles == nil
     and (not tiles.secondary or tiles.secondary.paletteCycles == nil)
     and not tiles.paletteState) then return end
-  local changed = tiles:setPaletteTicks(animFrame)
+  local tick=Performance.paletteTick(animFrame)
+  if performancePaletteTicks[record]==tick then return end
+  performancePaletteTicks[record]=tick
+  local changed = tiles:setPaletteTicks(tick)
   if changed and record.recolor then
     record.recolor()
     record.paletteRevision = (record.paletteRevision or 0) + 1
@@ -1426,6 +1566,7 @@ function TileRenderer.new(map, data)
     -- tileset would otherwise overwrite each other's roof.
     local roof = gen2RoofFor(map, data,gen2Row)
     gen2Colors=require('src.render.Gen2PaletteContext').withRoof(gen2Colors,roof)
+    gen2Colors=gen2DisplayRows(gen2Colors,gen2Row)
     local key = gen2AtlasKey(map.tileset.image, roof, specialKey,gen2Row)
     local gen2img = getGen2Atlas(key, map.tileset.image, map.tileset.tilesPerRow,
                                  map.tileset.palMap, gen2Colors,
@@ -2376,5 +2517,14 @@ function TileRenderer.invalidate()
 end
 
 Assets.register(TileRenderer.invalidate)
+
+-- tools/gen3_palette_index_check.lua drives the G5 helpers directly; nothing
+-- in the engine reads this.
+TileRenderer._gen3IndexProbe = {
+  indexCanvas = indexCanvas,
+  pixelCanvas = pixelCanvas,
+  recolour = gen3Recolour,
+  available = gen3IndexPath,
+}
 
 return TileRenderer
