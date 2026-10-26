@@ -55,3 +55,7 @@ playability qualification. Native actor/effect behavior itself continues to be
 owned by the engine. The public integration requires the native draw helpers
 proposed in #291 and the separately published map/atlas/session prerequisites;
 it must not replace missing host ownership with a simulated world.
+
+The public patch also reuses the committed native GraphicsScope guard, which
+is absent from the public base. It fences real graphics state and leaves
+borrowed canvases and images with their native owners.
