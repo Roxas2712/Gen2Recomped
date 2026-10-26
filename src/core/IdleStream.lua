@@ -26,6 +26,9 @@ local IdleStream = {}
 IdleStream.MIN_SECONDS = 0.0004
 -- what the pacer keeps for itself so the pump cannot push a frame late
 IdleStream.MARGIN_SECONDS = 0.0003
+-- worker results delivered per frame at most (each runs a callback that
+-- usually uploads something)
+IdleStream.RESULTS_PER_FRAME = 4
 
 local function cap()
   local ok, Performance = pcall(require, "src.core.Performance")
@@ -71,6 +74,10 @@ end
 -- Spend up to `seconds` of idle time on queued builds.  Returns the slice
 -- actually offered (0 when nothing was queued or the slice was too small).
 function IdleStream.run(timer, deadline)
+  -- W1: finished worker results first -- one channel pop when there are
+  -- none, and a bounded number of callbacks when there are
+  local Workers = package.loaded["src.core.BuildWorker"]
+  if Workers and Workers.poll then Workers.poll(IdleStream.RESULTS_PER_FRAME) end
   local limit = cap()
   if limit <= 0 then return 0 end
   local now = timer.getTime()

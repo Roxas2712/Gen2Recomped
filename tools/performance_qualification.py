@@ -20,6 +20,7 @@ def main():
     parser.add_argument('--out', type=Path)
     parser.add_argument('--reference', type=Path)
     parser.add_argument('--love', type=Path)
+    parser.add_argument('--worker-love', type=Path)
     parser.add_argument('--check', action='append', default=[])
     parser.add_argument('--matrix', action='store_true')
     parser.add_argument('--compat', action='store_true')
@@ -29,7 +30,7 @@ def main():
     if not runtime:
         parser.error('LuaJIT executable not found: ' + args.lua)
     lua = str(Path(runtime).resolve())
-    for path in (root, Path(lua), args.reference, args.love):
+    for path in (root, Path(lua), args.reference, args.love, args.worker_love):
         if path:
             qa_source(path.resolve())
     out = (args.out or root / '.local/qa' / ('performance-' + str(time.time_ns()))).resolve()
@@ -95,6 +96,12 @@ table.sort(t);print(table.concat(t,' '))'''])
                      str(args.reference.resolve()), '--lua', lua, '--report', str(out / 'api3.json')])
         run('external-fixtures', [sys.executable, 'tools/check_external_mod_fixtures.py', '--reference',
                                  str(args.reference.resolve()), '--lua', lua, '--report', str(out / 'fixtures.json')])
+    if args.worker_love:
+        identity='oasc-worker-qa-'+str(time.time_ns())
+        qa_profile(Path.home() / 'Library/Application Support/LOVE' / identity)
+        run('actual-worker-host',[str(args.worker_love.resolve()),str(root / 'tools/build-worker/host')],
+            extra={'POKEPORT_IDENTITY':identity,'POKEPORT_WORKER_QA_GUARDED':'1',
+                   'POKEPORT_WORKER_QA_ROOT':str(root)},timeout=60)
     if args.love:
         identity = 'oasc-perf-qa-' + str(time.time_ns())
         qa_profile(Path.home() / 'Library/Application Support/LOVE' / identity)
