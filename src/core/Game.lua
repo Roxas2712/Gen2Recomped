@@ -637,11 +637,14 @@ function Game:update(dt)
     pcall(function() require("src.core.DiscordPresence").update(dt) end)
     close()
   end
+  -- Keep an already-loaded native GC delegation at its update boundary.
   -- Ordinary engine collection moves to spare deadline time in love.run.
-  -- P2 disabled retains the original native update step.
   if collectgarbage then
     local close = FrameProfile.section("  update: gc step")
-    if not Performance.gcBudget then collectgarbage("step", 1) end
+    local facade = package.loaded["src.core.Game3"]
+    local handled = type(facade) == "table" and type(facade._stepGC) == "function" and facade._stepGC(self)
+    if handled then GCFrameBudget._facadeHandled() end
+    if not handled and not Performance.gcBudget then collectgarbage("step", 1) end
     close()
   end
 end
