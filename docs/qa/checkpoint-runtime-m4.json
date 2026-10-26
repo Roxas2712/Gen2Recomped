@@ -4,7 +4,7 @@
   "date": "2026-10-26",
   "reference": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
   "fork": {
-    "head": "86f9e5935baa5bbb7531c0ab880be3008d0cffc5",
+    "head": "8e336d459619d26f7099825248a655f2d5385940",
     "exitCodes": {
       "engine": 0,
       "modkit": 0,
@@ -29,7 +29,7 @@
     },
     "native": [
       {
-        "sourceCommit": "86f9e5935baa5bbb7531c0ab880be3008d0cffc5",
+        "sourceCommit": "8e336d459619d26f7099825248a655f2d5385940",
         "loveVersion": [
           11,
           5,
@@ -43,293 +43,293 @@
         "syntheticContent": true,
         "cases": [
           {
+            "spinnerRngContinuation": true,
             "api": 1,
+            "spinnerPartialRollback": true,
+            "edition": "red",
             "continuation": true,
             "rollback": true,
             "invalidRngPreflight": true,
             "spinnerModes": 4,
-            "spinnerFrames": 384,
-            "spinnerRngContinuation": true,
-            "spinnerPartialRollback": true,
-            "edition": "red"
+            "spinnerFrames": 384
           },
           {
+            "spinnerRngContinuation": true,
             "api": 2,
+            "spinnerPartialRollback": true,
+            "edition": "red",
             "continuation": true,
             "rollback": true,
             "invalidRngPreflight": true,
             "spinnerModes": 4,
-            "spinnerFrames": 384,
-            "spinnerRngContinuation": true,
-            "spinnerPartialRollback": true,
-            "edition": "red"
+            "spinnerFrames": 384
           },
           {
+            "spinnerRngContinuation": true,
             "api": 3,
+            "spinnerPartialRollback": true,
+            "edition": "red",
             "continuation": true,
             "rollback": true,
             "invalidRngPreflight": true,
             "spinnerModes": 4,
-            "spinnerFrames": 384,
-            "spinnerRngContinuation": true,
-            "spinnerPartialRollback": true,
-            "edition": "red"
+            "spinnerFrames": 384
           },
           {
+            "spinnerRngContinuation": true,
             "api": 1,
+            "spinnerPartialRollback": true,
+            "edition": "gold",
             "continuation": true,
             "rollback": true,
             "invalidRngPreflight": true,
             "spinnerModes": 4,
-            "spinnerFrames": 384,
-            "spinnerRngContinuation": true,
-            "spinnerPartialRollback": true,
-            "edition": "gold"
+            "spinnerFrames": 384
           },
           {
+            "spinnerRngContinuation": true,
             "api": 2,
+            "spinnerPartialRollback": true,
+            "edition": "gold",
             "continuation": true,
             "rollback": true,
             "invalidRngPreflight": true,
             "spinnerModes": 4,
-            "spinnerFrames": 384,
-            "spinnerRngContinuation": true,
-            "spinnerPartialRollback": true,
-            "edition": "gold"
+            "spinnerFrames": 384
           },
           {
+            "spinnerRngContinuation": true,
             "api": 3,
+            "spinnerPartialRollback": true,
+            "edition": "gold",
             "continuation": true,
             "rollback": true,
             "invalidRngPreflight": true,
             "spinnerModes": 4,
-            "spinnerFrames": 384,
-            "spinnerRngContinuation": true,
-            "spinnerPartialRollback": true,
-            "edition": "gold"
+            "spinnerFrames": 384
           }
         ],
         "continuation": [
           {
             "api": 1,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": false,
             "edition": "red",
-            "battleTurns": 2
+            "laterGenerationMovement": false
           },
           {
             "api": 2,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": false,
             "edition": "red",
-            "battleTurns": 2
+            "laterGenerationMovement": false
           },
           {
             "api": 3,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": false,
             "edition": "red",
-            "battleTurns": 2
+            "laterGenerationMovement": false
           },
           {
             "api": 1,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": false,
             "edition": "yellow",
-            "battleTurns": 2
+            "laterGenerationMovement": false
           },
           {
             "api": 2,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": false,
             "edition": "yellow",
-            "battleTurns": 2
+            "laterGenerationMovement": false
           },
           {
             "api": 3,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": false,
             "edition": "yellow",
-            "battleTurns": 2
+            "laterGenerationMovement": false
           },
           {
             "api": 1,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": false,
             "edition": "gold",
-            "battleTurns": 2
+            "laterGenerationMovement": false
           },
           {
             "api": 2,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": false,
             "edition": "gold",
-            "battleTurns": 2
+            "laterGenerationMovement": false
           },
           {
             "api": 3,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": false,
             "edition": "gold",
-            "battleTurns": 2
+            "laterGenerationMovement": false
           },
           {
             "api": 1,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": false,
             "edition": "firered",
-            "battleTurns": 2
+            "laterGenerationMovement": false
           },
           {
             "api": 2,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": false,
             "edition": "firered",
-            "battleTurns": 2
+            "laterGenerationMovement": false
           },
           {
             "api": 3,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": false,
             "edition": "firered",
-            "battleTurns": 2
+            "laterGenerationMovement": false
           },
           {
             "api": 1,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": false,
             "edition": "emerald",
-            "battleTurns": 2
+            "laterGenerationMovement": false
           },
           {
             "api": 2,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": false,
             "edition": "emerald",
-            "battleTurns": 2
+            "laterGenerationMovement": false
           },
           {
             "api": 3,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": false,
             "edition": "emerald",
-            "battleTurns": 2
+            "laterGenerationMovement": false
           },
           {
             "api": 1,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": true,
             "edition": "platinum",
-            "battleTurns": 2
+            "laterGenerationMovement": true
           },
           {
             "api": 2,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": true,
             "edition": "platinum",
-            "battleTurns": 2
+            "laterGenerationMovement": true
           },
           {
             "api": 3,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": true,
             "edition": "platinum",
-            "battleTurns": 2
+            "laterGenerationMovement": true
           },
           {
             "api": 1,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": true,
             "edition": "heartgold",
-            "battleTurns": 2
+            "laterGenerationMovement": true
           },
           {
             "api": 2,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": true,
             "edition": "heartgold",
-            "battleTurns": 2
+            "laterGenerationMovement": true
           },
           {
             "api": 3,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": true,
             "edition": "heartgold",
-            "battleTurns": 2
+            "laterGenerationMovement": true
           },
           {
             "api": 1,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": true,
             "edition": "black",
-            "battleTurns": 2
+            "laterGenerationMovement": true
           },
           {
             "api": 2,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": true,
             "edition": "black",
-            "battleTurns": 2
+            "laterGenerationMovement": true
           },
           {
             "api": 3,
+            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
-            "laterGenerationMovement": true,
             "edition": "black",
-            "battleTurns": 2
+            "laterGenerationMovement": true
           }
         ]
       },
       {
-        "sourceCommit": "86f9e5935baa5bbb7531c0ab880be3008d0cffc5",
+        "sourceCommit": "8e336d459619d26f7099825248a655f2d5385940",
         "loveVersion": [
           12,
           0,
@@ -344,10 +344,10 @@
         "cases": [
           {
             "spinnerFrames": 384,
-            "edition": "red",
+            "spinnerRngContinuation": true,
             "spinnerPartialRollback": true,
             "api": 1,
-            "spinnerRngContinuation": true,
+            "edition": "red",
             "continuation": true,
             "rollback": true,
             "invalidRngPreflight": true,
@@ -355,10 +355,10 @@
           },
           {
             "spinnerFrames": 384,
-            "edition": "red",
+            "spinnerRngContinuation": true,
             "spinnerPartialRollback": true,
             "api": 2,
-            "spinnerRngContinuation": true,
+            "edition": "red",
             "continuation": true,
             "rollback": true,
             "invalidRngPreflight": true,
@@ -366,10 +366,10 @@
           },
           {
             "spinnerFrames": 384,
-            "edition": "red",
+            "spinnerRngContinuation": true,
             "spinnerPartialRollback": true,
             "api": 3,
-            "spinnerRngContinuation": true,
+            "edition": "red",
             "continuation": true,
             "rollback": true,
             "invalidRngPreflight": true,
@@ -377,10 +377,10 @@
           },
           {
             "spinnerFrames": 384,
-            "edition": "gold",
+            "spinnerRngContinuation": true,
             "spinnerPartialRollback": true,
             "api": 1,
-            "spinnerRngContinuation": true,
+            "edition": "gold",
             "continuation": true,
             "rollback": true,
             "invalidRngPreflight": true,
@@ -388,10 +388,10 @@
           },
           {
             "spinnerFrames": 384,
-            "edition": "gold",
+            "spinnerRngContinuation": true,
             "spinnerPartialRollback": true,
             "api": 2,
-            "spinnerRngContinuation": true,
+            "edition": "gold",
             "continuation": true,
             "rollback": true,
             "invalidRngPreflight": true,
@@ -399,10 +399,10 @@
           },
           {
             "spinnerFrames": 384,
-            "edition": "gold",
+            "spinnerRngContinuation": true,
             "spinnerPartialRollback": true,
             "api": 3,
-            "spinnerRngContinuation": true,
+            "edition": "gold",
             "continuation": true,
             "rollback": true,
             "invalidRngPreflight": true,
@@ -411,219 +411,219 @@
         ],
         "continuation": [
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "red",
-            "api": 1,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 1,
             "laterGenerationMovement": false
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "red",
-            "api": 2,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 2,
             "laterGenerationMovement": false
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "red",
-            "api": 3,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 3,
             "laterGenerationMovement": false
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "yellow",
-            "api": 1,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 1,
             "laterGenerationMovement": false
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "yellow",
-            "api": 2,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 2,
             "laterGenerationMovement": false
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "yellow",
-            "api": 3,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 3,
             "laterGenerationMovement": false
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "gold",
-            "api": 1,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 1,
             "laterGenerationMovement": false
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "gold",
-            "api": 2,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 2,
             "laterGenerationMovement": false
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "gold",
-            "api": 3,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 3,
             "laterGenerationMovement": false
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "firered",
-            "api": 1,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 1,
             "laterGenerationMovement": false
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "firered",
-            "api": 2,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 2,
             "laterGenerationMovement": false
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "firered",
-            "api": 3,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 3,
             "laterGenerationMovement": false
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "emerald",
-            "api": 1,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 1,
             "laterGenerationMovement": false
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "emerald",
-            "api": 2,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 2,
             "laterGenerationMovement": false
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "emerald",
-            "api": 3,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 3,
             "laterGenerationMovement": false
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "platinum",
-            "api": 1,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 1,
             "laterGenerationMovement": true
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "platinum",
-            "api": 2,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 2,
             "laterGenerationMovement": true
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "platinum",
-            "api": 3,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 3,
             "laterGenerationMovement": true
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "heartgold",
+            "battleTurns": 2,
             "api": 1,
-            "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
             "laterGenerationMovement": true
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "heartgold",
+            "battleTurns": 2,
             "api": 2,
-            "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
             "laterGenerationMovement": true
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "heartgold",
-            "api": 3,
             "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
+            "api": 3,
             "laterGenerationMovement": true
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "black",
+            "battleTurns": 2,
             "api": 1,
-            "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
             "laterGenerationMovement": true
           },
           {
+            "actorUpdates": 192,
+            "actorRng": true,
+            "nativeFollower": true,
             "edition": "black",
+            "battleTurns": 2,
             "api": 2,
-            "battleTurns": 2,
-            "actorUpdates": 192,
-            "actorRng": true,
-            "nativeFollower": true,
             "laterGenerationMovement": true
           },
           {
-            "edition": "black",
-            "api": 3,
-            "battleTurns": 2,
             "actorUpdates": 192,
             "actorRng": true,
             "nativeFollower": true,
+            "edition": "black",
+            "battleTurns": 2,
+            "api": 3,
             "laterGenerationMovement": true
           }
         ]
@@ -649,7 +649,7 @@
       "prism",
       "polishedcrystal"
     ],
-    "engineScope": "Full suite at the exact baseline below; twelve targeted engine suites after the subsequent native link-result and follower-resource integration. No full-suite rerun is claimed for the later revision.",
+    "engineScope": "Full suite at a6f947a5; 22 targeted engine suites and every required compatibility gate at the final concurrent integration. No full-suite rerun is claimed for the later revision.",
     "fullEngineBaseline": {
       "head": "a6f947a5f9f9e836fafd4f57dae961a631e4193c",
       "exitCodes": {
@@ -661,9 +661,9 @@
       }
     },
     "targetedEngineSuites": {
-      "sourceCommit": "86f9e5935baa5bbb7531c0ab880be3008d0cffc5",
-      "passed": 12,
-      "total": 12,
+      "sourceCommit": "8e336d459619d26f7099825248a655f2d5385940",
+      "passed": 22,
+      "total": 22,
       "exitCodes": {
         "link_battle_ended": 0,
         "api3_compat": 0,
@@ -676,7 +676,17 @@
         "checkpoint_battle_continuation": 0,
         "native_follower_callback_owner": 0,
         "native_session_callbacks": 0,
-        "native_companion_runtime": 0
+        "native_companion_runtime": 0,
+        "suspend_continue": 0,
+        "suspend_journal": 0,
+        "suspend_store": 0,
+        "screen_space_ui": 0,
+        "friend_wager": 0,
+        "friend_activity": 0,
+        "friend_chat": 0,
+        "friend_maps": 0,
+        "account_workspace": 0,
+        "friends_menu": 0
       }
     }
   },
@@ -1347,7 +1357,7 @@
     "delegated move-action metadata/public references outside qualified native factories"
   ],
   "frameProfile": "not measured for checkpoint operations",
-  "integrationNote": "Current upstream and concurrent native fork contributions retained. Full engine qualification is pinned to its exact baseline. Subsequent link/follower integration has twelve targeted engine suites, all SDK/gallery/contract/unchanged-fixture gates and both actual native checkpoint hosts green. The original partial follower fixture exposed the native object/renderer ownership integration gap and was replaced by native constructors without editing external mod bytes.",
+  "integrationNote": "The final merge retains concurrent friend/suspend and native Gen2 output changes. All 22 affected engine suites, every required compatibility gate and both native checkpoint hosts pass at the recorded final runtime. Full-engine evidence remains pinned to its earlier exact source revision.",
   "currentUpstream": "8d5b4387420cc1fdcadf58ad4ca78a7d8596e41d",
-  "concurrentForkIntegrated": "8a362c6c2b1171dc1cc488c20a95355678ea8799"
+  "concurrentForkIntegrated": "fc46bd85c919b6faef1c470597397d7ef02b96bb"
 }
