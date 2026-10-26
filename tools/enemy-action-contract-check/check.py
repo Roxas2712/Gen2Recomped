@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare the same mod's GBA enemy move choices with a clean read-only Gen1 reference."""
+"""Compare portable mod and native runtime contracts with a clean read-only Gen1 reference."""
 import argparse
 import hashlib
 import json
@@ -115,7 +115,7 @@ def main():
                 # These exhaustive matrices resolve thousands of complete scripts.
                 # Keep a bounded three-minute budget for their native work,
                 # including low-priority local runs, rather than a 60s cutoff.
-                timeout = 180 if mode in {"post_hit_items_execution", "assist", "assist_content", "assist_held"} else 60
+                timeout = 180 if mode in {"post_hit_items_execution", "assist", "assist_content", "assist_held", "nature_power"} else 60
                 timed_out = None
                 started = time.monotonic()
                 try:
@@ -147,7 +147,7 @@ def main():
             failed |= not equal
             report["comparisons"].append({"version": version, "api": api, "mode": mode, "equal": equal,
                                            "observations": values})
-            print(f"{'PASS' if equal else 'FAIL'} {version}/API {api}/{mode}: identical public move selections and execution")
+            print(f"{'PASS' if equal else 'FAIL'} {version}/API {api}/{mode}: identical complete contract observations")
     report["passed"] = not failed
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, indent=2) + "\n")
