@@ -164,7 +164,7 @@ for _,bad in ipairs({
  "p:register('BAD',"..recipe..");error('entry failure')",
 })do
  local d=fixture('crystal');local scripts,rows=d.map_scripts.scripts,d.map_scripts.apricornBalls
- local r=load(d,{{'broken',"local p=mod.content["apricorns"];p:patch('APRICORN_1',{event=5100});"..bad}})
+ local r=load(d,{{'broken',"local p=mod.content.apricorns;p:patch('APRICORN_1',{event=5100});"..bad}})
  T.check(#r.errors>0,'invalid authored recipe is attributed to its owner: '..bad)
  T.eq(d.map_scripts.scripts,scripts,'failed owner cannot leak projected native scripts')
  T.eq(d.map_scripts.apricornBalls,rows,'failed owner rolls back prior valid recipe patches')
@@ -268,7 +268,7 @@ do
  local r=load(d,{{'oldcache',"mod.content.apricorns:register('NEW',"..recipe..")"}})
  T.check(#r.errors>0,'old cache reports missing native Kurt bindings to the writing owner')
  finish(r)
- r=load(d,{{'observer',"mod.events:on("apricorn.converted",function()end)"}})
+ r=load(d,{{'observer',"mod.events:on('apricorn.converted',function()end)"}})
  T.eq(#r.errors,0,'an observer alone cannot prevent an older cache from booting')
  finish(r)
 end
