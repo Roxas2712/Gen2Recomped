@@ -12,15 +12,7 @@ local function copy(v)
   if type(v) ~= 'table' then return v end
   local out = {}; for k, value in pairs(v) do out[k] = copy(value) end; return out
 end
-local function overworld(game)
-  local states = game and game.stack and game.stack.states
-  if states then
-    for i=#states,1,-1 do if states[i].isOverworld then return states[i] end end
-    return nil
-  end
-  local ow=game and game.overworld
-  return ow and ow.isOverworld and ow or nil
-end
+local overworld=require('src.compat.gen1.NativeSession').world
 function M.new(getGame, getEdition)
   assert(type(getGame)=='function' and type(getEdition)=='function','native session resolvers required')
   local handle = {}

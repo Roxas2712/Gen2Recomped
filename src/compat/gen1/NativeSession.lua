@@ -36,8 +36,10 @@ function M.data(game)
   end
   return owner,data
 end
-function M.resolve(game)
-  local why;game,why=M.game(game);if not game then return nil,why end
+-- Admission lookup is also used by map readers that can run before a player
+-- is constructed. Edition/data validation stays with each typed consumer.
+function M.world(game)
+  if type(game)~='table'then return nil end
   local states = game.stack and game.stack.states
   local world=entering[game]
   if not world and type(states) == 'table' then
@@ -50,6 +52,11 @@ function M.resolve(game)
   elseif not world then
     world = game.overworld
   end
+  return world and world.isOverworld and world or nil
+end
+function M.resolve(game)
+  local why;game,why=M.game(game);if not game then return nil,why end
+  local world=M.world(game)
   if not (world and world.isOverworld and world.player and world.map) then
     return nil, 'no active native player'
   end
