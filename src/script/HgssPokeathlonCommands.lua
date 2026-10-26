@@ -38,7 +38,10 @@ function Commands.g4_hgss_pokeathlon(ctx, b1, b2, course, quitVar, scoreVar, poi
     if runner then runner:resume() end
   end
   local id = math.floor(tonumber(g.valueOf(ctx, course)) or 0)
-  game.stack:push(require("src.ui.HgssPokeathlonCourse").new(game, { course = id, onDone = answer }))
+  -- b1 = the args mode (link), b2 = the args byte 0xF, the Supreme Cup
+  -- (literal bytes: ScriptReadByte, not vars)
+  game.stack:push(require("src.ui.HgssPokeathlonCourse").new(game, {
+    course = id, link = (tonumber(b1) or 0) ~= 0, supreme = (tonumber(b2) or 0) ~= 0, onDone = answer }))
   if runner then runner:yield() end
 end
 if Commands.meta then Commands.meta.g4_hgss_pokeathlon = { foreground = true, blocking = true } end
