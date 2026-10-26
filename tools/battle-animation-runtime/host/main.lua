@@ -36,7 +36,46 @@ function love.load()
     end)
     assert(ok,why);return read(canvas)
   end
-  local function same(a,b,label)comparisons=comparisons+1;T.eq(a,b,label)end
+  local function same(a,b,label,tolerance)
+    comparisons=comparisons+1
+    if not tolerance then return T.eq(a,b,label)end
+    local error=0
+    for i=1,#a do error=math.max(error,math.abs(a:byte(i)-b:byte(i)))end
+    if error>tolerance then
+      local count=0
+      for i=1,#a,4 do
+        local bad=false;for c=0,3 do if math.abs(a:byte(i+c)-b:byte(i+c))>tolerance then bad=true end end
+        if bad then
+          print('PIXEL_ORACLE_DIFFERENCE',label,((i-1)/4)%160,math.floor((i-1)/4/160),
+            string.format('%d,%d,%d,%d',a:byte(i,i+3)),string.format('%d,%d,%d,%d',b:byte(i,i+3)));count=count+1;if count==4 then break end
+        end
+      end
+      print('MAX_PIXEL_ERROR',error)
+    end
+    T.check(#a==#b and error<=tolerance,label)
+  end
+  -- Independent pixel oracle: inverse-map output pixel centres into the
+  -- already rendered native image, without using graphics transforms.
+  local function remap(bytes,width,height,map,alpha)
+    local rows={}
+    for y=0,height-1 do
+      local row={}
+      for x=0,width-1 do
+        local sx,sy=map(x+.5,y+.5);sx,sy=math.floor(sx),math.floor(sy)
+        local value='\0\0\0\0'
+        if sx>=0 and sx<width and sy>=0 and sy<height then
+          local at=(sy*width+sx)*4+1
+          if alpha then
+            local values={};for c=0,3 do values[c+1]=math.floor(bytes:byte(at+c)*alpha+.5)end
+            value=string.char(unpack(values))
+          else value=bytes:sub(at,at+3)end
+        end
+        row[#row+1]=value
+      end
+      rows[#rows+1]=table.concat(row)
+    end
+    return table.concat(rows)
+  end
   local outerShader=g.newShader('vec4 effect(vec4 c, Image t, vec2 uv, vec2 p) { return Texel(t,uv)*c; }')
   for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
     A.reset();Battle._service.release()
@@ -46,21 +85,27 @@ function love.load()
     b.introSlide=0;b.frlgIntro=nil
     local canvas=g.newCanvas(160,144,{format='rgba8',dpiscale=1,msaa=0})
     local preview=g.newCanvas(160,144,{format='rgba8',dpiscale=1,msaa=0})
+    -- This host bypasses the application's pixel-art graphics setup. Set
+    -- the owned fixture texture explicitly so the independent nearest-pixel
+    -- oracle does not compare against LOVE's default linear interpolation.
+    b:battlerPic(b.player):setFilter('nearest','nearest')
     local function draw()return b:drawBattlerPic(b.player,20,20,1)end
     local baseline=frame(canvas,draw)
     T.check(baseline:find(string.char(255,0,91,255),1,true)~=nil,'real asymmetric art reaches the native draw')
     local p=A.present(0)
     same(frame(canvas,draw),baseline,'observing a pose preserves native pixels '..edition)
-    local expected=frame(canvas,function()g.translate(13,5);draw()end)
+    local expected=remap(baseline,160,144,function(x,y)return x-13,y-5 end)
     p.ox,p.oy=13,5
     same(frame(canvas,draw),expected,'source offsets compose with native sprite draw '..edition)
     T.check(expected~=baseline);p.ox,p.oy=nil,nil
     local img=b:battlerPic(b.player);local w,h=img:getDimensions();local cx,cy=20+w/2,20+h/2
-    expected=frame(canvas,function()
-      g.translate(cx,cy);g.rotate(math.pi/2);g.scale(-.75,.5);g.translate(-cx,-cy);g.setColor(1,1,1,.5);draw()
-    end)
-    p.hFlip,p.rotation,p.scale,p.sx,p.sy,p.alpha=true,math.pi/2,.5,1.5,1,.5
-    same(frame(canvas,draw),expected,'flip, rotation, scale and alpha preserve authored orientation '..edition)
+    expected=remap(baseline,160,144,function(x,y)
+      -- A clockwise quarter turn exchanges axes; the horizontal reflection
+      -- then reverses the vertical axis in output space.
+      return cx-(y-cy),cy-(x-cx)/2
+    end,.5)
+    p.hFlip,p.rotation,p.scale,p.sx,p.sy,p.alpha=true,math.pi/2,.5,2,4,.5
+    same(frame(canvas,draw),expected,'flip, rotation, scale and alpha preserve authored orientation '..edition,1)
     p.hFlip,p.rotation,p.scale,p.sx,p.sy,p.alpha=nil,nil,nil,nil,nil,nil
     same(frame(canvas,draw),baseline,'clearing source overrides restores native pixels '..edition)
     p.visible=false;local hidden=frame(canvas,draw);T.check(hidden~=baseline);T.eq(hidden,string.rep('\0',160*144*4))

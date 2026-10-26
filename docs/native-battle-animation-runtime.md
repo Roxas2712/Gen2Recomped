@@ -27,6 +27,11 @@ reading a native effect never applies it a second time. `shownBattler` carries
 an owned presentation override without replacing the native combatant.
 Replacing the session, save, data or catalogue retires old poses and callbacks.
 
+`GameVersion.layout(id)` also reports the registered GBA family (`frlg` or
+`rse`) so an unchanged field companion probe can recognize the native host.
+It supports current-version and colon queries without changing cache/save
+selection; an explicit registered layout takes precedence.
+
 ## Geometry and screen effects
 
 `anim_coords` exposes authored anchors and ordering for singles and doubles.
