@@ -12,19 +12,25 @@ local function fixture(version,edit)
  local symbols={MomItems_1={1,0x4000},['MomItems_1.End']={1,0x4010},MomItems_2={1,0x4010},['MomItems_2.End']={1,0x4028},
   ['CheckBalance_MomItem2.check_have_2300']={1,0x4100},hMoneyTemp={0,0xff80},
   ['Mom_GetScriptPointer.ItemScript']={1,0x4200},['Mom_GetScriptPointer.DollScript']={1,0x4201},
+  PhoneContacts={1,0x4400},SpecialPhoneCallList={1,0x4418},NonTrainerCallerNames={1,0x4500},
   GotMoneyForWinningText={1,0x4300},SentSomeToMomText={1,0x4301},SentHalfToMomText={1,0x4302},SentAllToMomText={1,0x4303}}
  put(0x4000,string.char(0,0,0,0,0,3,1,17,0,0,0,0,0,5,1,18,
   0,0,100,0,0,20,1,17,0,0,200,0,0,70,2,14,0,1,244,0,0,30,1,18))
  put(0x4100,string.char(0x21,0x80,0xff,0x36,0,0x23,0x36,0,0x23,0x36,17))
  put(0x4200,string.char(0x91,0x91))
+ put(0x440c,string.char(0,1));put(0x4502,string.char(0x10,0x45));put(0x4510,string.char(128,0x50))
  if edit then edit(symbols,put)end
  local e=E.new(raw,version,{symbols=symbols});e._gen2ScriptTexts={}
+ function e:readSourceTable(key)assert(key=='charmap');return{['128']='Q'}end
  return e
 end
 local function pool()return{scripts={},queue={},movements={},instructions=0,desyncs=0,failures=0}end
 for _,version in ipairs({'gold','silver','crystal'})do
  V.set(version);local e=fixture(version);local q=pool();local rows=e:gen2MomShopping(q)
  T.eq(rows.complete,true,version..' actual Mom importer accepts bounded native tables')
+ local phone=e:gen2PhoneContacts(nil)
+ T.eq(phone[1].contactNumber,1,version..' actual non-trainer contact identity survives localized name extraction')
+ T.eq(phone[1].class,0,version..' actual imported Mom contact retains native non-trainer class')
  T.eq(#rows.random,2,version..' random count comes from its end symbol')
  T.eq(#rows.ladder,3,version..' ladder count comes from its end symbol')
  T.eq(rows.ladder[3].trigger,500,version..' money trigger is a big-endian triple')

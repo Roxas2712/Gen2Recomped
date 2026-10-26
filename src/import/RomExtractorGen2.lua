@@ -8669,7 +8669,9 @@ function RomExtractorGen2:gen2PhoneContacts(pool)
       entry = { class = class, trainer = trainer }
     elseif trainer ~= 0 and names[trainer] then
       local name, role = names[trainer]:match("^([^\n\f\v]+)[\n\f\v]%s*(.*)$")
-      entry = { name = (name or names[trainer]):gsub(":$", ""), role = role }
+      -- Keep the non-trainer's native identity; names are localizable.
+      entry = { name = (name or names[trainer]):gsub(":$", ""), role = role,
+                class = 0, contactNumber = trainer }
     end
     -- The contact's OWN map, bytes 3 and 4.  GetAvailableCallers (36:$40DE)
     -- compares it against wMapGroup/wMapNumber and drops the contact from the
