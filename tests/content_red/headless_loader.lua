@@ -1,5 +1,5 @@
--- T3: the shipped example mod, loaded headlessly through the fs seam
--- (21-testing-and-ci acceptance: "loads mods/example_mew_starter under
+-- T3: the committed API 1 content fixture, loaded headlessly through the fs seam
+-- (21-testing-and-ci acceptance: "loads tests/fixtures/content_red_api1 under
 -- plain Lua via the fs seam, asserts zero loader.errors, and asserts the
 -- Mew override merged into Data.pokemon").
 --
@@ -40,12 +40,13 @@ T.eq(Data.pokemon[example.species].spriteBack, example.backSprite,
 -- the sprite files the override points at actually exist, so the mod is
 -- not merely registering a path into the void
 for _, path in ipairs({ example.frontSprite, example.backSprite }) do
-  local handle = io.open(path, "rb")
-  T.check(handle ~= nil, "the overridden sprite exists on disk: " .. path)
-  if handle then handle:close() end
+  local body = run.loader.fs.read(path)
+  T.check(type(body) == "string", "the overridden sprite exists through the IO-backed fs: " .. path)
+  T.check(type(body) == "string" and body:sub(1, 8) == "\137PNG\r\n\26\n",
+          "the fixture sprite has a PNG signature: " .. path)
 end
 
--- an api=1 mod keeps working unchanged: the shipped example predates the
+-- an api=1 mod keeps working unchanged: the original example predates the
 -- v2 manifest and must not need a rewrite
 T.check(run.mod and run.mod.manifest.version ~= nil, "the manifest carries a version")
 
