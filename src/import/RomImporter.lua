@@ -1330,7 +1330,7 @@ local function markerFor(version)
     revision=revision.."original-object-sheets-v"..require("src.import.Gen3ObjectSheets").SCHEMA..":"
   end
   if version=='ruby' or version=='sapphire' then
-    revision=revision..'rs-transition-classes-v1:' 
+    revision=revision..'rs-transition-classes-v1:'
   end
   -- RS now carries its own action tables as well as field geometry. Rebuild these
   -- caches; retain the earlier 36-byte dex and item-effect corrections.
@@ -1338,6 +1338,12 @@ local function markerFor(version)
   -- Keep the v5 ball-art corrections; only fresh native extraction supplies
   -- the RS-owned flourish image and 64-frame record.
   if version == "ruby" or version == "sapphire" then revision = revision .. "rs-stat-flourish-v6:" end
+  -- Keep original behavior IDs alongside the existing native normalization.
+  -- Only GBA caches lack this additional source contract; saves are unchanged.
+  if GameVersion.isGen3(version) then revision = revision .. "source-metatile-attrs-v1:source-map-views-v1:" end
+  if version == "emerald" or version == "ruby" or version == "sapphire" then
+    revision = revision .. "source-behavior-flags-v1:"
+  end
   return CACHE_FORMAT .. revision .. GameVersion.info(version).sha1
 end
 

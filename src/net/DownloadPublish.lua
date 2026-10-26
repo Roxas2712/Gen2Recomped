@@ -22,4 +22,3 @@ return function(source, target)
   end
   return true
 end
-

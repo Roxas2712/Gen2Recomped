@@ -40,38 +40,75 @@ bag/catch transaction. Repel reuse asks before consuming another item.
 Summary details cycle native stats, IVs and EVs without changing the Pokemon.
 Disabling the owner disables these options.
 
-## Qualification and remaining work
+## Observation and retirement boundaries
 
-ROM-free fixtures exercise all five editions, including encounter identity,
-PP validation, lock isolation, native menu navigation, evolution cancellation
-and completion, free-slot learning, and unloading a full-moveset reminder.
-Run `luajit tests/engine/native_companion_runtime.lua`, the engine tier and
-SDK tier. The companion GPU host additionally checks real text pixels and
-nested native shader uniforms on Metal and OpenGL; it extends the native
-battle orientation/effect oracle.
+Field damage queries initialize the native type chart and evaluate supported
+move-effect handlers against detached combatants. Queries cannot spend resident
+PP, change HP, advance scripts or consume the native RNG. Source sound commands
+use separate owned voices; stopping or unloading one mod cannot stop a native
+script's voice or another mod's voice. Read-only warp resolution observes the
+admitted native warp record without firing the gameplay destination hook.
 
-The local unchanged 1.0.9 package now passes its companion-member probe.
-Initialization subsequently requires additional battle/UI presentation
-modules, beginning with `src.ui.game3.battle_chrome`. This change does not
-advertise the complete battle presentation protocol or claim that the whole
-package is playable. Effect-specific field combat, additional UI contracts,
-full package graphics and end-to-end gameplay require further qualification.
+Map previews inspect the actual native stack state and refuse to dismiss a
+covered screen. Weather queries use the native active weather byte or imported
+map header. Terrain animation metadata comes from admitted imported banks and
+source behavior identifiers. A detached decoder samples their original pixels;
+reading metadata never rewinds or advances a live atlas or the native clock.
+Missing native door artwork or a missing door animation producer is reported
+explicitly rather than replaced with a synthetic animation timer.
 
-Local test starters use managed frozen candidates and disposable profiles,
-retain an 8 GiB free-space reserve, and do not read or modify player profiles.
-No private runtime source or game assets are included in this contribution.
+## Qualification
 
-## Public-host composition
+ROM-free fixtures cover FireRed, LeafGreen, Emerald, Ruby and Sapphire. Run:
 
-This draft composes the existing terrain (#318), battle-animation (#317) and
-field-move (#304) offers. The local API-2 qualification retains the previously
-qualified map, player, session, modal-stack and rendering prerequisites in its
-frozen reference; these dependencies must be composed before treating this as
-a standalone runnable change. Internal admission/read helpers do not advertise
-another public API version.
+```sh
+luajit tests/run_engine.lua
+luajit tests/run_modkit.lua
+luajit tests/mod_examples_tests.lua
+```
 
-The composed public candidate passes 916 companion checks, 1,466 terrain
-checks, 486 collision checks, nine API-2 lifecycle checks and three SDK suites.
-Its engine result is 94/105 suites versus 93/104 in the frozen reference, with
-the identical eleven inherited failures. The initial source-member probe is
-not a full package initialization or gameplay acceptance.
+The native companion suites include resident/PP validation, effect-specific
+damage, field locks, owned encounter admission, native menus, evolution and
+move-reminder continuations, sound isolation, warp reads, animation metadata
+and teardown. Callback coverage uses the public SDK and actual native battle
+and follower producers, including callback failures and owner rollback.
+
+The GPU host checks battler orientation, native presentation phases, text ink
+and shadows, nested shader state, image decoding, explicit palette-index
+artwork and blend pixels with independent synthetic artwork:
+
+```sh
+python3 tools/check_companion_runtime.py --love /absolute/path/to/love --backend opengl
+```
+
+LÖVE 12 on macOS additionally supports `--backend metal`. Request only backends
+supported by the supplied build. An optional `--companion-mod /absolute/package`
+checks unchanged external package initialization for all five editions in
+separate processes. The package must export `active` and `rendererInstalled`;
+no selected package, an entry error, or an inactive renderer fails the probe.
+The external package and its artwork are never included in this repository.
+Initialization and synthetic pixel tests do not establish a complete playthrough.
+
+Managed starters pin their sources, freeze committed candidates, retain a
+20 GiB free-space reserve and use disposable profiles. Player profiles and
+player saves are not read or modified.
+
+## Public composition and presentation scope
+
+The public companion branch composes the existing native session, map, player,
+modal, terrain, palette, atlas, script, sprite, field-view, asset-pack, worker
+permission and bounded transport offers. The branch carries these prerequisites
+so its tests run against the checked-out public candidate. Native battle chrome
+and field presentation are included from their existing offers as well.
+
+The supported battle path remains the native battle controller and renderer.
+An external package may request a separate presentation API with additional
+command-taking, task, intro, switch or catch-sequence contracts. Those contracts
+are not advertised here. Its optional alternate battle card can use the native
+fallback while the package's field renderer and native companion services stay
+active. This qualification must not be presented as full alternate battle-card
+support or a complete playthrough of every edition.
+
+Existing source copyright and licence notices remain in place. Original
+contributions offered by Roxas2712 use the specific upstream permission in
+[LICENSE-ROXAS2712.md](../LICENSE-ROXAS2712.md).
