@@ -189,3 +189,18 @@ Es stellt den exakt gesicherten Host bei Bedarf wieder her, erhält vorhandene
 Spielstände und verweigert das Überschreiben neuerer Dateien. Anschließend
 bleibt der Host als gemeinsam lesbare Eingabe gesperrt und wird nach dem letzten
 Leser wieder bereinigt. Veröffentlichungs-/Buildpakete bleiben davon getrennt.
+
+## Installierte Regeln bei Projektwechseln beibehalten
+
+Der Installer aktualisiert den atomaren Verweis
+`~/.local/lib/origami-qa-storage/active-tools` auf das geprüfte Helferpaket.
+Die vorhandenen externen Teststarter stellen diesen Pfad vor die Projektwerkzeuge
+und initialisieren `Storage` ausdrücklich mit ihrer ursprünglichen Projektwurzel.
+Damit bleiben Freigabe am Testende, Wiederherstellung und 20-GiB-Reserve bei einem
+Wechsel des Spielzweigs erhalten. Ein Starter ohne vorhandenes installiertes Paket
+kann weiter die Projektwerkzeuge verwenden.
+
+Die Hintergrundbereinigung läuft unabhängig davon alle 15 Minuten. Lebende
+Kindprozesse und andere Leser halten ihre Sperren; deshalb erfolgt deren
+Bereinigung erst nach dem letzten Nutzer. Das intakte lokale Quellarchiv hält
+einmalige Code- und Modellstände auch nach Entfernung der Testkopien vor.

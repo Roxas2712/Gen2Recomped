@@ -31,3 +31,10 @@ Es stellt den exakt gesicherten Host bei Bedarf wieder her, erhält vorhandene
 Spielstände und verweigert das Überschreiben neuerer Dateien. Anschließend
 bleibt der Host als gemeinsam lesbare Eingabe gesperrt und wird nach dem letzten
 Leser wieder bereinigt. Veröffentlichungs-/Buildpakete bleiben davon getrennt.
+
+Teststarter außerhalb der versionierten Werkzeuge laden bevorzugt den installierten
+Helfer `~/.local/lib/origami-qa-storage/active-tools`, damit ein Wechsel des
+Spielzweigs die Speicherregeln nicht zurücksetzt. Vor dem ersten `qa_*`-Aufruf
+`qa_storage._storage = qa_storage.Storage(projektwurzel)` mit `atexit`-Freigabe
+initialisieren; als Projektwurzel niemals das Verzeichnis des installierten
+Helfers verwenden. Bestehende Starter mit dieser Initialisierung beibehalten.
