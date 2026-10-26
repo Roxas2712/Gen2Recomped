@@ -2633,11 +2633,9 @@ function BattleState:beginMsgLine()
   self.shown[#self.shown + 1] = {}
 end
 
-function BattleState:updateQueue()
-  if self.waitingUI then
-    if self.game.stack:top() ~= self then return true end
-    self.waitingUI = nil
-  end
+-- One display-only step of the existing native queue hold. It cannot consume
+-- commands; updateQueue remains the sole dispatcher after this gate.
+function BattleState:updateQueuePresentation()
   -- HOENN'S PARTICLES TICK BEFORE THE QUEUE'S OWN HOLD, and the whole
   -- reason the animations looked broken is that they used to tick after it.
   --
@@ -2723,6 +2721,15 @@ function BattleState:updateQueue()
     if self:stepExpBar() then return true end
     self.expFilling = nil
   end
+  return false
+end
+
+function BattleState:updateQueue()
+  if self.waitingUI then
+    if self.game.stack:top() ~= self then return true end
+    self.waitingUI = nil
+  end
+  if self:updateQueuePresentation() then return true end
   if self.animPlaying then
     self.animPlayer:update()
     if self.animPlayer.pollEffects and self.applyAnimEffect then
