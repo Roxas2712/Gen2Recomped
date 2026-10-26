@@ -4,6 +4,7 @@
 local Http=require('src.cloud.Http')
 local T={};T.__index=T
 local retired={}
+local workerSerial=0
 local function now() return love.timer.getTime() end
 function T.reap()
  for i=#retired,1,-1 do
@@ -66,7 +67,9 @@ function T:poll()
  local started,why=pcall(function()
   local channel=love.thread.newChannel()
   local thread=love.thread.newThread('src/cloud/http_worker.lua')
-  thread:start({method=a.method,url=a.url,opts=a.opts,packagePath=package.path},channel)
+  workerSerial=workerSerial+1
+  local requestId=tostring(channel)..'_'..workerSerial
+  thread:start({method=a.method,url=a.url,opts=a.opts,packagePath=package.path,requestId=requestId},channel)
   self.worker={thread=thread,channel=channel,deadline=now()+30}
  end)
  if not started then return self:fail('Could not start cloud networking: '..tostring(why)) end
