@@ -24,8 +24,9 @@ function L.start(game,invite)
   if job then job:cancel();job=nil end
   if state.net then state.net:close() end
   if originalSave then game.save=originalSave;game.writeSave=write end
+  require('src.link.FriendWager').closed(game,invite)
   game.linkSession=nil;game.linkNet=nil;L.active=nil
-  if mode~='trade' or not require('src.link.FriendTrade').read(invite.id) then
+  if not invite.wager and (mode~='trade' or not require('src.link.FriendTrade').read(invite.id)) then
    L.retiring=L.retiring or {};L.retiring[#L.retiring+1]={account=account,id=invite.id}
   end
   require('src.cloud.Play').refresh()
@@ -37,7 +38,9 @@ function L.start(game,invite)
   return require('src.cloud.Play').request('POST','invites/'..invite.id..'/wire',payload)
  end)
  state.discordCodeSet=true
- state.arenaContext=mode=='battle' and {seed=invite.seed} or nil
+ state.arenaContext=mode=='battle' and {seed=invite.seed,onFinished=function(result)
+  require('src.link.FriendWager').finished(game,invite,result)
+ end} or nil
  state.sendHello=function(self,selected)
   self.myHello=hello.hello(game,selected);self.myHello.friendLink={id=invite.id,account=account}
   self.net:send(self.myHello)
@@ -126,6 +129,8 @@ function L.tick(game)
   elseif row.job then if row.job:poll() then table.remove(retired,i) end
   else row.job=Task.new(function()return require('src.cloud.Play').request('POST','invites/'..row.id..'/cancel',{})end) end
  end
- return require('src.link.FriendTrade').tick(game)
+ local trades=require('src.link.FriendTrade').tick(game)
+ local wager=require('src.link.FriendWager');local blocked=not trades and wager.tick(game) or false;wager.blocked=blocked
+ return trades or blocked
 end
 return L

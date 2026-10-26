@@ -244,8 +244,9 @@ local function verdict(map, entities, mover, dir, tx, ty)
   -- A MAP'S OWN RULE FIRST, where one is hung on its def (HGSS's
   -- GymmickCheckCollision table -- Clair's platforms over the magma): true
   -- blocks, false is walkable whatever the tile says, nil asks the tile
+  -- (the mover too: Canalave's floor is the one the mover's height is on)
   local gymSays = map.def and map.def.gen4CollisionHook
-                  and map.def.gen4CollisionHook(map, tx, ty)
+                  and map.def.gen4CollisionHook(map, tx, ty, mover)
   if gymSays == true then return false, "tile" end
   if gymSays ~= false and not map:isWalkableCell(tx, ty) then
     if not (mover.surfing and map:isWaterCell(tx, ty)) then
@@ -355,6 +356,10 @@ function Collision.sightBlocked(map, entities, watcher, dir, sx, sy, tx, ty)
   if sideWallBlocked(map, watcher, dir, tx, ty) then return true end
   if not map:inBounds(tx, ty) then return true end
   if not map:isWalkableCell(tx, ty) then return true end
+  -- a gym's own collision (IsPathInterrupted asks the same terrain test the
+  -- watcher's own step would: Sunyshore's gears, Canalave's floors)
+  local gymHook = map.def and not map.def.gen5 and map.def.gen4CollisionHook
+  if gymHook and gymHook(map, tx, ty, watcher) == true then return true end
   if pairBlocked(map, watcher, sx, sy, tx, ty) then return true end
   if map.elevationBlocks and map:elevationBlocks(watcher.elevation, tx, ty) then
     return true
@@ -372,6 +377,32 @@ function Collision.sameElevation(a,b)
   local az=a and (a.elevation or a.gen3Elevation)
   local bz=b and (b.elevation or b.gen3Elevation)
   return az==nil or bz==nil or az==0 or bz==0 or az==bz
+end
+
+-- THE LAST TILE'S HEIGHT, Gen 4 (pokeplatinum trainer_encounter.c
+-- IsPathInterrupted): past the tiles between, the cartridge asks the
+-- player's own tile with the watcher's height -- sub_02063E94(trainer, x,
+-- trainer's y, z) -- and only an OBJECT there within 2 (MapObject y is the
+-- height in 8-unit steps, `|objY - y| < 2`, sub_02063F00) counts as the
+-- player being seen. A player on another floor of the same column (Canalave
+-- Gym's four, a bridge over a path) is not. Heights: the body's own kept one
+-- (a lift rider's, the height rule's), else the plate nearest its event's
+-- y; true when either is unknown.
+local function gen4HeightOf(map, e)
+  if not e then return nil end
+  if e.gen4CanalaveY then return e.gen4CanalaveY end
+  if e.gen4Height and e.gen4HeightMap == map then return e.gen4Height end
+  local HR = require("src.world.Gen4HeightRule")
+  local list = e.cellX and HR.surfaces(map, e.cellX, e.cellY)
+  if not list or #list == 0 then return nil end
+  local d = e.def
+  local y = d and tonumber(d.height or d.elevation) or 0
+  return HR.nearest(list, y)
+end
+function Collision.gen4SightLevel(map, watcher, target)
+  local a, b = gen4HeightOf(map, watcher), gen4HeightOf(map, target)
+  if not (a and b) then return true end
+  return math.abs(math.floor(a / 8) - math.floor(b / 8)) < 2
 end
 
 function Collision.sightPathClear(map, entities, watcher, dir, dist)
