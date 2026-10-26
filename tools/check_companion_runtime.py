@@ -16,6 +16,7 @@ def main():
     parser.add_argument('--love', type=Path, action='append', required=True)
     parser.add_argument('--backend', action='append', choices=('metal', 'opengl'), required=True)
     parser.add_argument('--qa-tools', type=Path, help='Optional managed QA tooling directory')
+    parser.add_argument('--companion-mod', type=Path, help='Optional unchanged external package exporting active and rendererInstalled')
     args = parser.parse_args()
     engine = args.engine.resolve()
     sys.path.insert(0, str((args.qa_tools or engine / 'tools').resolve()))
@@ -26,6 +27,8 @@ def main():
         storage.source(source.resolve())
     if args.qa_tools:
         storage.source(args.qa_tools.resolve())
+    if args.companion_mod:
+        storage.source(args.companion_mod.resolve())
     head = storage.run(['git', 'rev-parse', 'HEAD'], cwd=engine, check=True,
                        capture_output=True, text=True).stdout.strip()
     if storage.run(['git', 'status', '--porcelain'], cwd=engine, check=True,
@@ -64,6 +67,24 @@ def main():
             if not evidence.get('passed') or evidence.get('backend') != backend:
                 raise SystemExit('GPU host did not verify the requested renderer')
             runs.append(dict(binary=str(binary.resolve()), **evidence))
+            if args.companion_mod:
+                for edition in ('firered', 'leafgreen', 'emerald', 'ruby', 'sapphire'):
+                    package_report = out / (name + '-' + edition + '.json')
+                    package_identity = identity + '-' + edition
+                    storage.identity(package_identity)
+                    package_env = dict(env, POKEPORT_IDENTITY=package_identity, COMPANION_EDITION=edition,
+                                       COMPANION_MOD=str(args.companion_mod.resolve()), BATTLE_SOURCE_REPORT=str(package_report))
+                    with (out / (name + '-' + edition + '.log')).open('w') as log:
+                        result = storage.run([str(binary.resolve()), str(source / 'tools/companion-runtime/package-host')],
+                                             cwd=source, env=package_env, stdout=log, stderr=log, timeout=120)
+                    print(name, edition, result.returncode, flush=True)
+                    if result.returncode or not package_report.exists():
+                        print((out / (name + '-' + edition + '.log')).read_text()[-5000:])
+                        raise SystemExit(result.returncode or 1)
+                    package_evidence = json.loads(package_report.read_text())
+                    if not package_evidence.get('passed'):
+                        raise SystemExit('External package initialization did not pass')
+                    runs.append(dict(binary=str(binary.resolve()), **package_evidence))
     (out / 'receipt.json').write_text(json.dumps(dict(head=head, runs=runs), indent=2) + '\n')
     print('PASS', head, out)
 
