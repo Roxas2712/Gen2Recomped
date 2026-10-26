@@ -127,6 +127,16 @@ local function engineRequire(name)
   return module
 end
 
+-- Attribute native facade work to the engine, including deferred dependencies.
+local function engineCall(fn, ...)
+  local function pack(...) return { n = select("#", ...), ... } end
+  devShim.depth = devShim.depth + 1
+  local result = pack(pcall(fn, ...))
+  devShim.depth = devShim.depth - 1
+  if not result[1] then error(result[2], 0) end
+  return (table.unpack or unpack)(result, 2, result.n)
+end
+
 function Loader:_installDevShim()
   for id, mod in pairs(self.mods) do
     devShim.permissions[id] = mod.manifest.permissionSet
