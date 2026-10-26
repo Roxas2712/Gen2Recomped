@@ -4310,6 +4310,115 @@ function BattleState:updatePresentation(dt)
   self:updateQueuePresentation()
 end
 
+-- Native input and borrowed source choices share these same selectors.
+-- Bodies factored from this file's existing native handlers (Cedric); the
+-- public baseline retains its own refusal messages, locks and target rules.
+function BattleState:chooseMenu(choice)
+  -- BattleMenu_Pack `.contest` (core.asm:4990): `ld a, PARK_BALL /
+  -- ld [wCurItem], a / call DoItemEffect`.  No pack, no submenu -- the
+  -- third slot IS the ball, so the item action becomes the throw.
+  if choice == "item" and self.bugContest then
+    self:bugContestBall()
+    return
+  end
+  if choice == "fight" and self.ghost then
+    self:say(Strings("%s is too\nscared to move!", self.player.name))
+    self.phase = "messages"
+    self.afterQueue = "menu"
+    self:act(function()
+      self:executeAction(self.enemy, self.player, self:enemyAction())
+    end)
+    self:act(function() self:endOfTurn() end)
+  elseif choice == "fight" then
+    -- After the menu: own trapping/Bide or foe Wrap skips the move
+    -- list and forces the locked action (core.asm:320-329)
+    local fightLock = self:fightLockedAction(self.player)
+    if fightLock then
+      self:resolveTurn(fightLock)
+      return
+    end
+    local who = self:menuBattler()
+    if not self:playerHasPP(who) then
+      -- _NoMovesLeftText, then Struggle engages
+      self:say(Strings("%s has no\nmoves left!", who.name))
+      self:chooseAction({ id = "STRUGGLE", pp = 1, struggle = true })
+      return
+    end
+    self.phase = "moveSelect"
+    self.moveIndex = math.min(self.moveIndex, #who.curMoves)
+    self.moveSwapIndex = nil
+  elseif choice == "run" then
+    self:tryRun()
+  elseif choice == "item" then
+    self:openItems()
+  else
+    self:openParty()
+  end
+  return true
+end
+function BattleState:chooseMove(index)
+  local chooser=self:menuBattler()
+  local moves=chooser.curMoves
+  self.moveIndex=index
+  local mv = moves[self.moveIndex]
+  local mvDef = mv and self.data.moves[mv.id]
+  if chooser.disabledSlot == self.moveIndex then
+    self:say(self:romText("_MoveDisabledText", "The move is\ndisabled!"))
+    self.phase = "messages"
+    self.afterQueue = "menu"
+  -- TAUNT and TORMENT refuse the move at SELECTION rather than after the
+  -- fact, the way DISABLE already does, so the player is never told to
+  -- pick again for something the game was never going to allow.
+  elseif self.bw and require("src.battle.Gen5MoveRules").moveBlocked(self, chooser, mvDef, true) then
+    -- BLACK AND WHITE: the Choice lock, Imprison, Gravity, Heal Block
+    self:say(require("src.battle.Gen5MoveRules").moveBlocked(self, chooser, mvDef, true))
+    self.phase = "messages"
+    self.afterQueue = "menu"
+  elseif self:tauntBlocks(chooser, mvDef) then
+    self:say(Strings("%s can't use\n%s after the\ntaunt!",
+                     chooser.name, mvDef and mvDef.name or mv.id))
+    self.phase = "messages"
+    self.afterQueue = "menu"
+  elseif self:tormentBlocks(chooser, mvDef) then
+    self:say(Strings("%s can't use the\nsame move twice in\na row due to the\nTORMENT!",
+                     chooser.name))
+    self.phase = "messages"
+    self.afterQueue = "menu"
+  elseif mv.pp <= 0 then
+    self:say(self:romText("_MoveNoPPText", "No PP left for\nthis move!"))
+    self.phase = "messages"
+    self.afterQueue = "menu"
+  elseif Targeting.needsChoice(self, self:choosingBattler(), mvDef) then
+    -- WHICH OF THE TWO, when the move takes one and there are two.
+    --
+    -- Emerald's selector cycles over the legal slots and names the
+    -- candidate; nothing else in the menu changes.  A single battle
+    -- never gets here, because needsChoice answers false whenever there
+    -- is only one thing to aim at -- and on the Game Boy cartridges the
+    -- moves carry no target byte at all, so it answers false for every
+    -- move in the game.
+    self.pendingMove = mv
+    self.targetChoices = Targeting.choices(self, self:menuBattler())
+    self.targetIndex = 1
+    self.phase = "targetSelect"
+  else
+    self:chooseAction(mv)
+  end
+  return true
+end
+function BattleState:chooseTarget(index)
+  local list=self.targetChoices or{}
+  self.targetIndex=index
+  local mv = self.pendingMove
+  local pick = list[self.targetIndex]
+  self.pendingMove, self.targetChoices = nil, nil
+  self.chosenTargets = self.chosenTargets or {}
+  local who = self:menuBattler()
+  if who and who.position then self.chosenTargets[who.position] = pick end
+  self:chooseAction(mv)
+  return true
+end
+
 function BattleState:update(dt)
   local shortcuts=package.loaded['src.mods.FeatureOptions']and require('src.battle.QuickItem')
   local quick=shortcuts and shortcuts.request(self)
@@ -4582,47 +4691,7 @@ function BattleState:update(dt)
       end
     end
     if input:wasPressed("a") then
-      local choice = self:menuActions()[self.menuIndex]
-      -- BattleMenu_Pack `.contest` (core.asm:4990): `ld a, PARK_BALL /
-      -- ld [wCurItem], a / call DoItemEffect`.  No pack, no submenu -- the
-      -- third slot IS the ball, so the item action becomes the throw.
-      if choice == "item" and self.bugContest then
-        self:bugContestBall()
-        return
-      end
-      if choice == "fight" and self.ghost then
-        self:say(Strings("%s is too\nscared to move!", self.player.name))
-        self.phase = "messages"
-        self.afterQueue = "menu"
-        self:act(function()
-          self:executeAction(self.enemy, self.player, self:enemyAction())
-        end)
-        self:act(function() self:endOfTurn() end)
-      elseif choice == "fight" then
-        -- After the menu: own trapping/Bide or foe Wrap skips the move
-        -- list and forces the locked action (core.asm:320-329)
-        local fightLock = self:fightLockedAction(self.player)
-        if fightLock then
-          self:resolveTurn(fightLock)
-          return
-        end
-        local who = self:menuBattler()
-        if not self:playerHasPP(who) then
-          -- _NoMovesLeftText, then Struggle engages
-          self:say(Strings("%s has no\nmoves left!", who.name))
-          self:chooseAction({ id = "STRUGGLE", pp = 1, struggle = true })
-          return
-        end
-        self.phase = "moveSelect"
-        self.moveIndex = math.min(self.moveIndex, #who.curMoves)
-        self.moveSwapIndex = nil
-      elseif choice == "run" then
-        self:tryRun()
-      elseif choice == "item" then
-        self:openItems()
-      else
-        self:openParty()
-      end
+      self:chooseMenu(self:menuActions()[self.menuIndex])
     end
     return
   end
@@ -4656,50 +4725,7 @@ function BattleState:update(dt)
         self.moveSwapIndex = nil
         return
       end
-      local mv = moves[self.moveIndex]
-      local mvDef = mv and self.data.moves[mv.id]
-      if chooser.disabledSlot == self.moveIndex then
-        self:say(self:romText("_MoveDisabledText", "The move is\ndisabled!"))
-        self.phase = "messages"
-        self.afterQueue = "menu"
-      -- TAUNT and TORMENT refuse the move at SELECTION rather than after the
-      -- fact, the way DISABLE already does, so the player is never told to
-      -- pick again for something the game was never going to allow.
-      elseif self.bw and require("src.battle.Gen5MoveRules").moveBlocked(self, chooser, mvDef, true) then
-        -- BLACK AND WHITE: the Choice lock, Imprison, Gravity, Heal Block
-        self:say(require("src.battle.Gen5MoveRules").moveBlocked(self, chooser, mvDef, true))
-        self.phase = "messages"
-        self.afterQueue = "menu"
-      elseif self:tauntBlocks(chooser, mvDef) then
-        self:say(Strings("%s can't use\n%s after the\ntaunt!",
-                         chooser.name, mvDef and mvDef.name or mv.id))
-        self.phase = "messages"
-        self.afterQueue = "menu"
-      elseif self:tormentBlocks(chooser, mvDef) then
-        self:say(Strings("%s can't use the\nsame move twice in\na row due to the\nTORMENT!",
-                         chooser.name))
-        self.phase = "messages"
-        self.afterQueue = "menu"
-      elseif mv.pp <= 0 then
-        self:say(self:romText("_MoveNoPPText", "No PP left for\nthis move!"))
-        self.phase = "messages"
-        self.afterQueue = "menu"
-      elseif Targeting.needsChoice(self, self:choosingBattler(), mvDef) then
-        -- WHICH OF THE TWO, when the move takes one and there are two.
-        --
-        -- Emerald's selector cycles over the legal slots and names the
-        -- candidate; nothing else in the menu changes.  A single battle
-        -- never gets here, because needsChoice answers false whenever there
-        -- is only one thing to aim at -- and on the Game Boy cartridges the
-        -- moves carry no target byte at all, so it answers false for every
-        -- move in the game.
-        self.pendingMove = mv
-        self.targetChoices = Targeting.choices(self, self:menuBattler())
-        self.targetIndex = 1
-        self.phase = "targetSelect"
-      else
-        self:chooseAction(mv)
-      end
+      self:chooseMove(self.moveIndex)
     end
     return
   end
@@ -4720,13 +4746,7 @@ function BattleState:update(dt)
       self.pendingMove, self.targetChoices = nil, nil
       self.phase = "moveSelect"
     elseif input:wasPressed("a") then
-      local mv = self.pendingMove
-      local pick = list[self.targetIndex]
-      self.pendingMove, self.targetChoices = nil, nil
-      self.chosenTargets = self.chosenTargets or {}
-      local who = self:menuBattler()
-      if who and who.position then self.chosenTargets[who.position] = pick end
-      self:chooseAction(mv)
+      self:chooseTarget(self.targetIndex)
     end
     return
   end
@@ -12914,6 +12934,12 @@ do
     local anim = GameVersion.isGen3() and package.loaded['src.core.game3.battle.anim']
     if anim then return anim._drawBattler(self, battler, battlerDraw, ...) end
     return battlerDraw(self, battler, ...)
+  end
+  local chooseAction=BattleState.chooseAction
+  function BattleState:chooseAction(action)
+    local ui=GameVersion.isGen3() and package.loaded['src.core.game3.battle.ui']
+    if ui then return ui._nativeCommand(self,action,chooseAction) end
+    return chooseAction(self,action)
   end
   function BattleState:enter()
     enter(self)
