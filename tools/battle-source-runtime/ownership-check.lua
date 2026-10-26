@@ -46,10 +46,18 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  local monSnap=require('src.compat.gen1.TableIteration').snapshot(current.player.mon)
  T.eq(monSnap.species,4);T.eq(monSnap.hp,state.player.mon.hp)
  monSnap.hp=1;T.neq(state.player.mon.hp,1)
+ local P=require('src.core.game3.pokemon');local Motion=require('src.core.game3.mon_anim')
+ T.eq(P.speciesFromName('CHARMANDER'),4)
+ local moving=assert(Motion.newSprite(4))
  local order=game.data.constants.speciesOrder
  S.update=function()game.data.constants.speciesOrder={};return base.update()end
  state:update(1/60);T.eq(ticks,2,'replaced cartridge identity tables retire a pending native command')
- game.data.constants.speciesOrder=order;S.update=base.update
+ T.eq(Motion.step(moving),false,'a presentation player cannot retain a retired cartridge identity')
+ game.data.pokemon.QA_SPARSE={index=277,name='QA_SPARSE'}
+ game.data.constants.speciesOrder={[4]='CHARMANDER',[277]='QA_SPARSE'}
+ T.eq(P.speciesFromName('QA_SPARSE'),277,'new Pokemon queries rebuild from the current cartridge order')
+ game.data.constants.speciesOrder=order;game.data.pokemon.QA_SPARSE=nil;S.update=base.update
+ T.eq(P.speciesFromName('CHARMANDER'),4)
  T.raises(function()current.player.mon.hp=1 end,'retired')
  Renderer.frameSerial=(Renderer.frameSerial or 0)+1
  T.eq(base.draw(game),true);T.eq(draws,1);T.eq(fields,1)

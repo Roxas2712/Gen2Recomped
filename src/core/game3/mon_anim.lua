@@ -13,11 +13,11 @@ local function owner()
   return host and host.currentMod or facade and facade._callbackOwner()
 end
 local function retire(c)
-  c.game,c.data,c.loader,c.motion,c.pictures=nil,nil,nil,nil,nil;c.stopped=true
+  c.game,c.data,c.loader,c.motion,c.pictures,c.ids=nil,nil,nil,nil,nil,nil;c.stopped=true
 end
 local function valid(c)
   if not c or c.stopped then return false end
-  if Session.game()~=c.game or c.game.data~=c.data or c.game.mods~=c.loader or Version.get()~=c.edition then retire(c);return false end
+  if Session.game()~=c.game or c.game.data~=c.data or c.game.mods~=c.loader or Version.get()~=c.edition or not c.ids:valid()then retire(c);return false end
   return true
 end
 function M.enabled()
@@ -26,10 +26,10 @@ function M.enabled()
 end
 function M.newSprite(species)
   local game=Session.game();if not(game and game.data)then return nil,'no native Pokemon data'end
-  local key=Ids.new(game.data):native('pokemon',species)
+  local ids=Ids.new(game.data);local key=ids:native('pokemon',species)
   if not key then return nil,'unknown cartridge species'end
   local sprite={frames=0}
-  records[sprite]={game=game,data=game.data,loader=game.mods,edition=Version.get(),key=key,owner=owner()}
+  records[sprite]={game=game,data=game.data,loader=game.mods,edition=Version.get(),key=key,owner=owner(),ids=ids}
   return sprite
 end
 function M.summary(sprite,species,oneFrame)
