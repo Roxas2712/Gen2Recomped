@@ -9,6 +9,7 @@ function R.keep(cup,match,payload)
  return require('src.core.SaveSafety').atomicWrite(fs,path,S.encode(doc),{decode=S.decode})
 end
 function R.pump()
+ require('src.link.CloudNet').pump()
  local Auth=require('src.cloud.RetroCloud');if not Auth.signedIn() then if job then job:cancel();job=nil end;return end
  if job then
   if active.account~=Auth.accountId() then job:cancel();job=nil;return end
