@@ -1102,33 +1102,18 @@ local function contributionFor(data, mapId, entry)
       -- came back with the birds where they had run to but the sticks armed
       -- for where they started.
       --
-      -- Still RUN, with its var and flag writes put back when it ends,
-      -- because here the transition is also what stands up engine-side state
-      -- the cartridge keeps elsewhere (a gym's `*gyminit`).  The snapshot is
-      -- taken by an empty entry queued just ahead of it, so it is the state
-      -- the transition itself starts from, after any ON_LOAD before it.
-      local continuing = overworld and overworld.gen4Continuing
+      -- So it is NOT RUN at all.  What the cartridge stands up instead comes
+      -- from the save: a gym's state is the save's Gymmick (HGSS) or
+      -- PersistedMapFeatures (Platinum), which Save_Gymmick_Clear /
+      -- PersistedMapFeatures_Init -- also only on a walk in -- left alone, and
+      -- the field's own init (Gymmick_Init / DynamicMapFeatures_Init) builds
+      -- the room from it.  setMap does that half (Gen4Commands.restoreOnContinue).
+      -- (Black / White's continue skips its type-2 script the same way: ov20
+      -- 0x2183DE4, see OverworldController's gen5Continuing)
+      local continuing = overworld and (overworld.gen4Continuing or overworld.gen5Continuing)
       for i, rows in ipairs(onEnter) do
         if continuing and transitions[i] then
-          local kept
-          queue(overworld, {}, { mapId = mapId, onDone = function()
-            local save = overworld.game and overworld.game.save or require("src.core.Game").save
-            if not save then return end
-            kept = { save = save, vars = {}, flags = {} }
-            for k, v in pairs(save.gen4Vars or {}) do kept.vars[k] = v end
-            for k, v in pairs(save.flags or {}) do kept.flags[k] = v end
-          end })
-          -- NOT a mapCallback: its flag writes are about to be undone, so the
-          -- objects built from the saved flags must not be re-derived by them
-          queue(overworld, rows, { mapId = mapId, onDone = function()
-            if not kept then return end
-            local save = kept.save
-            save.gen4Vars, save.flags = save.gen4Vars or {}, save.flags or {}
-            for k in pairs(save.gen4Vars) do save.gen4Vars[k] = nil end
-            for k, v in pairs(kept.vars) do save.gen4Vars[k] = v end
-            for k in pairs(save.flags) do save.flags[k] = nil end
-            for k, v in pairs(kept.flags) do save.flags[k] = v end
-          end })
+          -- skipped: FieldTask_ContinueGame_Normal / FieldTask_LoadSavedGameMap
         else
           -- a map callback: its SetFlag / ClearFlag may move live objects
           -- (Commands' syncFlagObjects)
@@ -1196,6 +1181,10 @@ local function contributionFor(data, mapId, entry)
         width = math.max(tonumber(where.width) or 1, 1),
         height = math.max(tonumber(where.height) or 1, 1),
         var = where.var, value = where.value, rows = rows,
+        -- (the event itself, whose cell is read at the step: Victory Road's
+        -- gate trigger is moved into the grid when its map is entered,
+        -- src/world/Gen5VictoryRoad.lua)
+        where = where,
       }
     end
   end
@@ -1223,8 +1212,9 @@ local function contributionFor(data, mapId, entry)
       local Quicksand = require("src.world.Gen5Quicksand")
       local sand = Quicksand.onSand(overworld, x, y)
       for i, coord in ipairs(coords) do
-        local inside = x >= coord.x and x < coord.x + coord.width
-                       and y >= coord.y and y < coord.y + coord.height
+        local cx, cy = coord.where.x or coord.x, coord.where.y or coord.y
+        local inside = x >= cx and x < cx + coord.width
+                       and y >= cy and y < cy + coord.height
         if inside and sand and not Quicksand.pitFires(overworld, coord, x, y) then inside = false end
         -- ONLY THE VAR SIDE IS RESOLVED.  `sub_0203CC14` is
         -- `TryGetVar(e.var) == e.value` -- the value is compared RAW, unlike
@@ -1247,8 +1237,9 @@ local function contributionFor(data, mapId, entry)
       -- scene that needs both halves of a sequence to land in order is exactly
       -- where that matters.  Silent unless the player is on a trigger.
       for i, coord in ipairs(coords) do
-        local inside = x >= coord.x and x < coord.x + coord.width
-                       and y >= coord.y and y < coord.y + coord.height
+        local cx, cy = coord.where.x or coord.x, coord.where.y or coord.y
+        local inside = x >= cx and x < cx + coord.width
+                       and y >= cy and y < cy + coord.height
         if inside then
           local got = Gen4Commands.valueOf(ctx, coord.var)
           Logger.debug("gen4 coord: %s (%d,%d) row %d declined -- %s",
@@ -1790,8 +1781,8 @@ L.scrcmd_436 = function(_, s) emit(s, { "g4_noop", "leaving the overworld for an
 -- MultiBattle <partner> <foe 1> <foe 2> <byte> is the tag battle beside Lance
 -- in Platinum's operand order; ScrCmd_530 <n> <on> writes sys_vars.c's
 -- _020FE4A8[n] (or 0) into var 0x4036 + n. ScrCmd_708 (the trap's flash),
--- 709 (the Persian statues' alarm) and 710 (the B2F doors' prop animations)
--- are pictures only.
+-- 709 (the Persian statues' alarm) and 710 (the B3F generators' prop
+-- animations) are src/script/Gen4FieldScenes.lua.
 L.rockettrapbattle = function(ins, s) emit(s, { "g4_start_wild_battle", ins.args[1], ins.args[2] }) end
 L.moveperson = function(ins, s) emit(s, { "g4_set_object_pos", ins.args[1], ins.args[2], ins.args[3] }) end
 L.multibattle = function(ins, s)
@@ -1802,9 +1793,6 @@ L.scrcmd_530 = function(ins, s)
   local n = tonumber(ins.args[1]) or 0
   emit(s, { "g4_set_var_literal", 0x4036 + n, (tonumber(ins.args[2]) or 0) ~= 0 and (magic[n] or 0) or 0 })
 end
-L.scrcmd_708 = function(_, s) emit(s, { "g4_noop", "the rocket trap's flash" }) end
-L.scrcmd_709 = function(_, s) emit(s, { "g4_noop", "the Persian statues' alarm" }) end
-L.scrcmd_710 = function(_, s) emit(s, { "g4_noop", "the hideout doors' prop animations" }) end
 -- LOAN POKEMON (HGSS): Shuckie in Cianwood, Kenya on Route 35
 L.giveloanmon = function(ins, s) emit(s, { "g4_give_loan_mon", ins.args[1], ins.args[2], ins.args[3] }) end
 L.checkreturnloanmon = function(ins, s)
@@ -4030,7 +4018,7 @@ end
 L.stopse = function(ins, s) emit(s, { "g4_stop_sound", ins.args[1] }) end
 -- Canalave's library television and the boat cutscene are both scripted
 -- set-pieces with their own screens; the scripts around them continue.
-L.startlibrarytv = function(_, s) emit(s, { "g4_noop", "the Canalave library TV" }) end
+-- (startlibrarytv: src/script/Gen4FieldScenes.lua)
 L.playboatcutscene = function(_, s) emit(s, { "g4_noop", "the boat cutscene" }) end
 -- `2b5 <map> <x> <z>` is `FieldOverworldState_SetExitLocation` -- where a
 -- dungeon puts you back out. It writes no var; the port's own `lastOutdoor`
@@ -4061,9 +4049,7 @@ end
 -- animation, likewise a picture
 L.hofcredits = function(ins, s) emit(s, { "g4_clear_game", ins.args[1] }) end
 L.halloffameanim = function(_, s) emit(s, { "g4_noop", "the Hall of Fame machine's balls" }) end
-L.playhalloffamehealinganimation = function(_, s)
-  emit(s, { "g4_noop", "the Hall of Fame healing animation" })
-end
+-- (playhalloffamehealinganimation: src/script/Gen4FieldScenes.lua)
 
 -- !! CORRECTED. These two were briefly lowered to the port's `g4_show_object`
 -- and `g4_hide_object` on the reading that `DistWorld_AddMapObjectWithLocalID`
@@ -4120,7 +4106,11 @@ end
 -- to nothing for the reason that applies here too: this port's text boxes
 -- already wait for the button themselves, so a second wait with no box on
 -- screen is a hang rather than a pause.
-L.waitabpadpress = function(_, s) emit(s, { "g4_noop", "a wait for A or B" }) end
+-- (Platinum's ScrCmd_WaitABPadPress is the same ScriptContext_CheckABPress
+-- wait as WaitABPress, so it shares that row: show_text has already held
+-- the Distortion World's "Message / WaitABPadPress / CloseMessage" lines
+-- for A, and under a framed picture the press is still waited for.)
+L.waitabpadpress = function(_, s) emit(s, { "g4_wait_button" }) end
 
 -- THE PLATFORM LIFTS, and why they are NOT a blocker even though they first
 -- looked like one.
@@ -4208,12 +4198,7 @@ L.pokemartseal = function(ins, s) emit(s, { "g4_pokemart", ins.args[1], "seal" }
 
 -- THE LAKE GUARDIAN CONTAINMENT UNITS in the Galactic HQ control room, the
 -- Spear Pillar set-pieces, and the rest -- each read on its own.
-L.initlakeguardiancontainmentunits = function(_, s)
-  emit(s, { "g4_noop", "the lake guardian containment units" })
-end
-L.deactivatelakeguardiancontainmentunits = function(_, s)
-  emit(s, { "g4_noop", "the lake guardian containment units" })
-end
+-- (init / deactivatelakeguardiancontainmentunits: src/script/Gen4FieldScenes.lua)
 -- `ScrCmd_SetHiddenLocation`: a location (var or literal) and an on/off byte.
 -- Was a no-op, so no hidden location could ever be unlocked -- Spring Path,
 -- Seabreak Path and the two moon islands. See Gen4HiddenPaths.
@@ -4376,6 +4361,12 @@ require("src.script.HgssFieldQueries").install(L)
 require("src.script.Gen5FieldCommands").install(L)
 -- Platinum's Jubilife TV rankings machines: src/script/Gen4RankingsMachine.lua
 require("src.script.Gen4RankingsMachine").install(L)
+-- scripted field pictures (the hideout trap / alarm / generators, the lake
+-- guardian containment units, the Hall of Fame machine, the library TV):
+-- src/script/Gen4FieldScenes.lua
+require("src.script.Gen4FieldScenes").install(L)
+-- Platinum's ScrCmd_2FB, the Spear Pillar cinematic: src/script/Gen4SpearPillarScene.lua
+require("src.script.Gen4SpearPillarScene").install(L)
 -- Platinum's scratch-off cards (M0499): src/script/Gen4ScratchOffCommands.lua
 require("src.script.Gen4ScratchOffCommands").install(L)
 -- Platinum's flower-shop Accessories, wall maps, list widths: src/script/Gen4PlatinumFieldApps.lua
@@ -4385,5 +4376,7 @@ require("src.script.HgssPokeathlonCommands").install(L)
 -- HGSS's Pokeathlon Dome counters and the Aprijuice stand (0x2E4 0x2E5 0x2E7
 -- 0x303 0x304 0x342 0x343): src/script/HgssPokeathlonShops.lua
 require("src.script.HgssPokeathlonShops").install(L)
+-- Black / White's gym animations (0x185, 0x187-0x189): src/script/Gen5GymFxCommands.lua
+require("src.script.Gen5GymFxCommands").install(L)
 
 return Gen4ScriptVM
