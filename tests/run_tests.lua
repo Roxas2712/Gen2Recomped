@@ -2751,6 +2751,9 @@ do
   eq(og.save.options.videoMode, "borderless",
      "A cycles VIDEO MODE to BORDERLESS")
   press("a")
+  eq(og.save.options.videoMode, "exclusive",
+     "A cycles VIDEO MODE to EXCLUSIVE")
+  press("a")
   eq(og.save.options.videoMode, "windowed",
      "VIDEO MODE wraps back to WINDOWED")
   press("down")
@@ -2763,7 +2766,15 @@ do
   for _ = 1, #FrameCap.STEPS - 1 do press("a") end
   eq(og.save.options.fpsCap, 60, "MAX FPS wraps back to 60")
   press("down")
-  eq(om.index, 16, "cursor reaches GAME SPEED")
+  eq(om.index, 16, "cursor reaches VSYNC")
+  press("a")
+  eq(og.save.options.vsync, "adaptive", "A cycles VSYNC to ADAPTIVE")
+  press("a")
+  eq(og.save.options.vsync, "off", "A cycles VSYNC to OFF")
+  press("a")
+  eq(og.save.options.vsync, "on", "VSYNC wraps back to ON")
+  press("down")
+  eq(om.index, 17, "cursor reaches GAME SPEED")
   press("a")
   eq(og.save.options.speed, 2, "A cycles GAME SPEED to 2X")
   -- Driven by the level list rather than a literal press count: adding a
@@ -2772,19 +2783,19 @@ do
   for _ = 1, #GameSpeed.LEVELS - 1 do press("a") end
   eq(og.save.options.speed, 1, "GAME SPEED wraps back to NORMAL")
   press("down")
-  eq(om.index, 17, "cursor reaches MODS")
+  eq(om.index, 18, "cursor reaches MODS")
   press("down")
-  eq(om.index, 18, "cursor reaches CONTROLS")
+  eq(om.index, 19, "cursor reaches CONTROLS")
   press("down")
-  eq(om.index, 19, "CANCEL stays the fixed final row")
-  eq(om.scroll, 14, "CANCEL keeps the last option boxes on screen")
+  eq(om.index, 20, "CANCEL stays the fixed final row")
+  eq(om.scroll, 15, "CANCEL keeps the last option boxes on screen")
   om:draw() -- smoke: scrolled layout draws under the headless stub
   press("a")
   check(popped, "A on CANCEL closes the options menu")
   local om2 = OptionsMenu.new(og)
   OInput.pressed = { up = true }; om2:update(1 / 60); OInput.pressed = {}
-  eq(om2.index, 19, "up from the top wraps to CANCEL")
-  eq(om2.scroll, 14, "wrapping to CANCEL scrolls to the tail")
+  eq(om2.index, 20, "up from the top wraps to CANCEL")
+  eq(om2.scroll, 15, "wrapping to CANCEL scrolls to the tail")
   -- headless-safe: no love.audio, setters only update internal state
   require("src.core.Music").applyOptions(og.save.options)
   require("src.core.Sound").applyOptions(og.save.options)
@@ -2794,6 +2805,7 @@ do
   require("src.render.Zoom").applyOptions(og.save.options)
   require("src.render.TileRenderer").applyOptions(og.save.options)
   VideoMode.applyOptions(og.save.options)
+  require("src.core.VSync").applyOptions(og.save.options)
 end
 end
 
