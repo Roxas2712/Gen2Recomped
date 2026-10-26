@@ -135,12 +135,21 @@ do
   T.eq(caps.tilt, false, "battery caps inherit LOW: no tilt")
   T.eq(caps.survey, false, "battery caps inherit LOW: no survey zoom")
   T.eq(caps.pacingSpin, false, "battery caps: no pacer spin")
-  T.eq(Performance.extraCap("fpsMax"), 30, "extraCap reads the battery overlay")
-  T.eq(Performance.extraCap("gen3PaletteCycle"), "quarter", "extraCap: quarter palette tick")
+  T.eq(Performance.caps("battery").fpsMax,30,"caps(battery) agrees with applyOptions")
+  Performance.CAPS.low._qualificationValue=17
+  T.eq(Performance.caps("battery")._qualificationValue,17,"warm overlay sees live LOW cap changes")
+  Performance.CAPS.low._qualificationValue=nil
+  T.eq(Performance.caps("battery")._qualificationValue,nil,"warm overlay forgets removed LOW caps")
+  local fps=Performance.BATTERY.fpsMax
+  Performance.BATTERY.fpsMax=25
+  T.eq(Performance.caps("battery").fpsMax,25,"warm overlay sees battery cap changes")
+  Performance.BATTERY.fpsMax=fps
+  T.eq(Performance.extraCap("fpsMax"), Performance.lowTierBudget and 30 or nil, "extraCap reads the battery overlay")
+  T.eq(Performance.extraCap("gen3PaletteCycle"), Performance.lowTierBudget and "quarter" or nil, "extraCap: quarter palette tick")
   T.eq(Performance.CAPS.low.fpsMax, 60, "the LOW table itself is untouched by the overlay")
   Performance.applyOptions({ performance = "low" })
   T.eq(Performance.saver, false, "leaving battery clears Performance.saver")
-  T.eq(Performance.extraCap("fpsMax"), 60, "extraCap is LOW's own again")
+  T.eq(Performance.extraCap("fpsMax"), Performance.lowTierBudget and 60 or nil, "extraCap is LOW's own again")
 end
 
 -- ---------------------------------------------------------- A1: PREFER FPS
