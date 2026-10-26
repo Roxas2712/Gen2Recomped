@@ -697,12 +697,15 @@ local function getGen2Atlas(key, imagePath, perRow, palMap, palColors,
         colors = palColors[#palColors]
       end
       local ox, oy = (t % perRow) * 8, math.floor(t / perRow) * 8
+      -- G7: the Gen 2 atlas is a whole sheet per map, like the RED++ one
+      if not ShadeRecolour.region(src, out, ox, oy, 8, 8, ox, oy, colors, "tile") then
       for py = 0, 7 do
         for px = 0, 7 do
           local r, g, b, a = src:getPixel(ox + px, oy + py)
           r, g, b, a = recolorSample(r, g, b, a, colors)
           out:setPixel(ox + px, oy + py, r, g, b, a)
         end
+      end
       end
     end
     -- ...and then the map group's roof over the nine tiles the tileset never
@@ -722,12 +725,14 @@ local function getGen2Atlas(key, imagePath, perRow, palMap, palColors,
           if tile < total and (n + 1) * 8 <= sw and sh >= 8 then
             local colors = TileRenderer.gen2TileColors(palMap, palColors, tile)
             local ox, oy = (tile % perRow) * 8, math.floor(tile / perRow) * 8
+            if not ShadeRecolour.region(sheet, out, n * 8, 0, 8, 8, ox, oy, colors, "tile") then
             for py = 0, 7 do
               for px = 0, 7 do
                 local r, g, b, a = sheet:getPixel(n * 8 + px, py)
                 r, g, b, a = recolorSample(r, g, b, a, colors)
                 out:setPixel(ox + px, oy + py, r, g, b, a)
               end
+            end
             end
           end
         end

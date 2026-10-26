@@ -159,6 +159,8 @@ do
   check(tr:find('ShadeRecolour.region(strip, page, sx, sy, 8, 8, dx, dy, tint, "tile")', 1, true) ~= nil, 'atlas frames take it')
   check(tr:find('ShadeRecolour.region(src, out, ox, oy, 8, 8, ox, oy, colors, "tile")', 1, true) ~= nil, 'the RED++ atlas takes it')
   check(tr:find('ShadeRecolour.region(src, out, sxo, syo, 8, 8, dxo, dyo, colors, "tile")', 1, true) ~= nil, 'and its tile aliases')
+  check(select(2, tr:gsub('ShadeRecolour%.region%(src, out, ox, oy, 8, 8, ox, oy, colors, "tile"%)', '')) == 2, 'the Gen 2 atlas takes it too')
+  check(tr:find('ShadeRecolour.region(sheet, out, n * 8, 0, 8, 8, ox, oy, colors, "tile")', 1, true) ~= nil, 'and its roof strip')
   local _, loops = tr:gsub('r, g, b, a = recolorSample%(r, g, b, a, ', '')
   check(loops >= 5, 'every per-pixel loop is still there as the fallback (' .. loops .. ')')
 end
