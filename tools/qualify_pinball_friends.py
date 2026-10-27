@@ -29,14 +29,14 @@ def main():
     profiles={}
     if args.love:
         # conf.lua identities are private to this headless test harness.
-        for name in ('pinball_friends_test','run_pinball_duel_tests','friend_play','cloud_net','friends_menu','account_workspace','header_account'):
+        for name in ('pinball_friends_test','pinball_launcher_test','relay_rejection','run_pinball_duel_tests','friend_play','cloud_net','friends_menu','account_workspace','header_account'):
             identity='oasc-pinball-qa-friends-'+name
             if sys.platform=='darwin':profile=Path.home()/'Library/Application Support/LOVE'/identity
             elif os.name=='nt':profile=Path(os.environ['APPDATA'])/identity
             else:profile=Path(os.getenv('XDG_DATA_HOME',str(Path.home()/'.local/share')))/'love'/identity
             qa.qa_source(profile);profiles[name]=(identity,profile)
     cache=ROOT/'.local/qa/pinball-friends';qa.qa_cache(cache);cache.mkdir(parents=True,exist_ok=True)
-    suites=('tests/pinball_friends_test.lua','tests/run_pinball_duel_tests.lua',
+    suites=('tests/pinball_friends_test.lua','tests/pinball_launcher_test.lua','tests/run_pinball_duel_tests.lua','tests/engine/relay_rejection.lua',
             'tests/engine/friend_play.lua','tests/engine/cloud_net.lua','tests/engine/friends_menu.lua',
             'tests/engine/account_workspace.lua')
     if args.love:suites+=('tests/engine/header_account.lua',)

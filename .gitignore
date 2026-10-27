@@ -210,3 +210,4 @@ mobile/ios/bundle_id.local
 
 !/tests/pinball_friends_test.lua
 !/tests/pinball_frame_driver.lua
+!/tests/pinball_launcher_test.lua

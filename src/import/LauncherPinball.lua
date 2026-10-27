@@ -25,7 +25,11 @@ end
 function M.available()return M.session()~=nil end
 function M.install(RI)
  local U=RI._ui
+ local function cancelConnect(self)
+  if self._pinConnectJob then self._pinConnectJob:cancel();self._pinConnectJob=nil end
+ end
  local function library(self)
+  cancelConnect(self)
   self._pinOpen=false;self._pinButtons={};self.gamesView='consoles';self.pageScroll=0
   if self._pinPreviousTab then self.tab=self._pinPreviousTab;self._pinPreviousTab=nil end
  end
@@ -88,15 +92,18 @@ function M.install(RI)
    end})
  end
  local function online(self,host,relay)
-  local Net=require('src.link.Net');local net=Net.new();local ok
-  if relay then
-   local address=self._pinRelay or '127.0.0.1:7781'
-   if host then ok=net:hostOnline(address)else ok=net:joinOnline(address,self._pinCode or '')end
-  elseif host then ok=net:host(7777)else ok=net:join(self._pinAddress or '127.0.0.1:7777')end
-  if not ok then self._pinNotice=net.error;net:close();return end
-  self._pinNotice=net.address
-  local launched,why=start(self,1,net,host)
-  if not launched then net:close();self._pinNotice=why end
+  if self._pinConnectJob then return end
+  self._pinConnectJob=require('src.cloud.Task').new(function()
+   local net=require('src.link.Net').new();local ok
+   if relay then
+    local address=self._pinRelay or '127.0.0.1:7781'
+    if host then ok=net:hostOnline(address)else ok=net:joinOnline(address,self._pinCode or '')end
+   elseif host then ok=net:host(7777)else ok=net:join(self._pinAddress or '127.0.0.1:7777')end
+   if not ok then local why=net.error;net:close();return nil,why end
+   return net
+  end)
+  self._pinConnectHost=host
+  self._pinNotice=self._pinConnectJob and 'Verbindung wird vorbereitet …'or 'Hintergrundverbindung nicht verfügbar.'
  end
  local textinput=RI.textinput
  RI.textinput=function(self,text,...)
@@ -140,8 +147,19 @@ function M.install(RI)
  RI.draw=function(self,...)if self._pinIntro then self._pinIntro.scene:draw(self._pinIntro.elapsed,love.graphics.getDimensions());self._pinIntro.presented=true;return end;if self._pinPlayer then self._pinPlayer:draw(love.graphics.getDimensions());return end;return draw(self,...)end
  local update=RI.update
  RI.update=function(self,dt,...)
+  if self._pinConnectJob then
+   local result=self._pinConnectJob:poll()
+   if result then
+    self._pinConnectJob=nil
+    if result.kind=='done'and result.first then
+     local net=result.first;self._pinNotice=net.address
+     local launched,why=start(self,1,net,self._pinConnectHost)
+     if not launched then net:close();self._pinNotice=why end
+    else self._pinNotice=tostring(result.second or result.error or 'Verbindung fehlgeschlagen.')end
+   end
+  end
   if self._pinFriends then
-   local available=not(self._pinPlayer or self._pinIntro or self._launcherSequence or self._xyPlayer or self._xyCheck or self.workState=='working' or self._storageTask)
+   local available=not(self._pinConnectJob or self._pinPlayer or self._pinIntro or self._launcherSequence or self._xyPlayer or self._xyCheck or self.workState=='working' or self._storageTask)
    local overlay=self._accountOverlay
    local lobby=self._pinOpen or overlay and(overlay.mode=='friends'or overlay.mode=='inbox')
    local Play=require('src.cloud.Play')
@@ -193,6 +211,7 @@ function M.install(RI)
    self._xyOpen=false;self._pinOpen=true;self.section='games';self.gamesView='game';self.pageScroll=0
    self._pinPreviousTab=self._pinPreviousTab or self.tab;self.tab=version;self.browseConsole='gba';self.browseSeries='pokemon';self._pinIndex=1;return
   end
+  cancelConnect(self)
   return open(self,version,...)
  end
  local content=RI._sbDrawContent
@@ -274,7 +293,7 @@ function M.install(RI)
   edit('Raumcode','_pinCode','')
   button('ONLINE · RAUM ERSTELLEN',function()online(self,true,true)end)
   button('ONLINE · RAUM BEITRETEN',function()online(self,false,true)end)
-  text('Eigener Relay: beide Geräte verbinden sich ausgehend; kein Konto nötig.')
+  text('Eigener Relay: ausgehende Verbindung · aktives ModCompass-Konto nötig.')
   text('Bildfilter, Pixelmaßstab und Schnellstände: Esc im Spiel.')
   text('Spieler 1: Pfeile / X / Z / Enter · Spieler 2: WASD / F / G / Tab')
   text('Controller bleiben ihrem Spieler fest zugeordnet.')
@@ -289,11 +308,12 @@ function M.install(RI)
  local back=RI._sbBack
  RI._sbBack=function(self,...)if self._pinOpen then library(self);return true end;return back(self,...)end
  local go=RI._sbGo
- RI._sbGo=function(self,...)self._pinOpen=false;self._pinButtons={};return go(self,...)end
+ RI._sbGo=function(self,...)cancelConnect(self);self._pinOpen=false;self._pinButtons={};return go(self,...)end
  local backdrop=RI._sbBackdropWant
  RI._sbBackdropWant=function(self,...)if self._pinOpen or self._pinPlayer then return nil end;return backdrop(self,...)end
  local play=RI.play
  RI.play=function(self,...)
+  cancelConnect(self)
   require('src.cloud.Play').clearExternalContext(self)
   if self._pinFriends then self._pinFriends:close()end
   return play(self,...)
