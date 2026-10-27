@@ -41,10 +41,26 @@ function M.apply(list)
     M.applied = false
     return false
   end
+  local defaults = list == nil
   list = list or M.DEFAULT
   if env and env ~= "" and env ~= "1" then
     list = {}
     for item in env:gmatch("[^,%s]+") do list[#list + 1] = item end
+  elseif defaults then
+    -- conf.lua may already own one bounded Apple-silicon code allocation.
+    -- Keep that area and its matching budget while applying the additional
+    -- recorder limits; never restore small-area growth after early setup.
+    local arena = package.loaded["src.core.JitArena"]
+    local status = arena and arena.status
+    if status and status.applied then
+      local owned = {maxtrace=status.maxTraces, sizemcode=status.areaKiB, maxmcode=status.maxCodeKiB}
+      local merged = {}
+      for i, item in ipairs(list) do
+        local key = item:match("^(%w+)=")
+        merged[i] = owned[key] and (key .. "=" .. owned[key]) or item
+      end
+      list = merged
+    end
   end
   local ok = pcall(jit.opt.start, unpack(list))
   M.applied = ok and list or false

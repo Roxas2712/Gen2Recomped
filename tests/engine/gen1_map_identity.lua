@@ -26,6 +26,11 @@ for _, edition in ipairs({ "firered", "leafgreen", "emerald", "ruby", "sapphire"
     end
     T.eq(def.id, key, "native id was never rewritten")
   end
+  local independent=Identity.bind(maps,edition)
+  local originalMethod=binding.nativeId
+  binding.nativeId=function()return 'MODIFIED' end
+  T.eq(independent:nativeId(Names[edition][1][3]),nativeKeys[Names[edition][1][3]],'bindings retain independent methods')
+  binding.nativeId=originalMethod
   local first = Names[edition][1]
   local key = nativeKeys[first[3]]
   local def = maps[key]
@@ -42,10 +47,27 @@ for _, edition in ipairs({ "firered", "leafgreen", "emerald", "ruby", "sapphire"
   local aliases = Identity.bind(maps, edition)
   T.eq(aliases:nativeId(first[3]), key, "same-object aliases prefer actual def.id")
   T.eq(aliases:legacyId("OTHER"), first[3], "same-object alias has same legacy identity")
+  def.id='OTHER'
+  T.eq(Identity.bind(maps,edition):nativeId(first[3]),'OTHER','same-frame preferred alias changes are observed')
+  def.id=key
+  T.eq(Identity.bind(maps,edition):nativeId(first[3]),key,'same-frame identity restoration is observed')
+  maps.OTHER=duplicate
+  T.eq(Identity.bind(maps,edition):nativeId(first[3]),nil,'same-frame added ambiguity is observed')
+  maps.OTHER=nil
+  T.eq(Identity.bind(maps,edition):nativeId(first[3]),key,'same-frame alias deletion removes ambiguity')
   def.group = 255
   T.eq(aliases:nativeId(first[3]), nil, "changed slot retires prior binding")
   T.eq(binding:nativeId("invented"), nil, "unknown mod map is not guessed")
   T.eq(binding:legacyId("invented"), nil, "unknown native map is not guessed")
+end
+do
+  local maps={ROOM={id='ROOM',group=3,number=0}}
+  local binding=Identity.bind(maps,'firered')
+  local weak=setmetatable({maps,binding},{__mode='v'})
+  maps,binding=nil,nil
+  collectgarbage('collect');collectgarbage('collect')
+  T.eq(weak[1],nil,'private index does not retain released map tables')
+  T.eq(weak[2],nil,'private index does not retain released bindings')
 end
 Version.set("gold")
 T.eq(Catalog.isKnown("FR_PALLET_TOWN"), false, "other generations do not acquire Gen3 maps")

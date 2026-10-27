@@ -41,6 +41,7 @@ add("hooks", "23", "held_item.trigger")
 add("hooks", "23", "shiny.roll gender.roll")
 add("hooks", "123", "encounter.table battle.charge_required battle.caught_marker_visible battle.field_residual")
 add("hooks", "12", "intro.oak_speech.build")
+add("hooks", "3", "field.weather.sound")
 
 add("events", "12345", [[
   world.live_maps_preparing world.live_maps_updated

@@ -3767,6 +3767,7 @@ function OverworldState:update(dt)
   -- already feeds into draw().
   -- the weather's own clock; see drawFieldWeather
   self.weatherFrame = (self.weatherFrame or 0) + 1
+  if GameVersion.isGen3() then require('src.world.Gen3WeatherAudio').update(Game,self) end
   -- ...and the cracked floor's, which runs on the clock rather than on the
   -- steps because that is what makes a step's length decide the fall
   self:tickCrackedFloor()
@@ -9369,6 +9370,7 @@ function OverworldState:weatherName(value)
     return require("src.import.Gen4Weather").nameFor(value)
   end
   local names = (Game.data.constants or {}).gen3WeatherNames
+    or require("src.core.Gen3WeatherIds").names
   local n = tonumber(value)
   return (names and n and names[n]) or nil
 end
@@ -15980,6 +15982,7 @@ function OverworldState:startWarpTo(mapId, x, y, facing, onDone, opts)
   self.doorWarp = nil
   local arriveWarp = self.arriveWarp
   self.arriveWarp = nil
+  self.warpArrivalKind = arriveWarp
   local fromId = self.map.id
   local fromSection = self.map.def and self.map.def.regionMapSection
   local transition = Transition.new(Game, function()
@@ -16137,6 +16140,7 @@ function OverworldState:startWarpTo(mapId, x, y, facing, onDone, opts)
     end
   end, function()
     self.transitioning = false
+    self.warpArrivalKind = nil
     -- THE ARRIVAL IS WHAT GIVES THE CONTROLS BACK.
     --
     -- Reported from play: "Fix the lavaridge gym its bugged When you go
@@ -19654,48 +19658,14 @@ end
 -- is the same beat the Game Boy path uses to swap the machine's shades, so the
 -- two generations blink together off one clock.
 function OverworldState:drawGen3Heal(ha, cam)
-  if not GameVersion.isGen3() then return false end
-  local record = (Game.data.constants or {}).gen3HealMachine
-  if not (record and record.monitor and record.glow) then return false end
-  self.gen3HealArt = self.gen3HealArt or {}
-  local art = self.gen3HealArt
-  local function picture(path)
-    if art[path] == nil then
-      local ok, img = pcall(require("src.render.Assets").image, path)
-      art[path] = (ok and img) or false
-    end
-    return art[path] or nil
-  end
-  local ox = math.floor(ha.px - cam.x)
-  local oy = math.floor(ha.py - cam.y)
+  local sprites = require("src.world.Gen3HealingPresentation").snapshot(Game, self, ha)
+  if not sprites then return false end
   love.graphics.setColor(1, 1, 1, 1)
-  local frames = record.monitor.images or {}
-  local frame = frames[(ha.visible == false) and 2 or 1] or frames[1]
-  local monitor = frame and picture(frame)
-  if monitor then
-    love.graphics.draw(monitor, ox + record.monitor.x, oy + record.monitor.y)
+  for _, sprite in ipairs(sprites) do
+    love.graphics.draw(sprite.image, math.floor(ha.px - cam.x) + sprite.x - ha.px,
+                       math.floor(ha.py - cam.y) + sprite.y - ha.py)
   end
-  -- Reported from play: the healing machine's layout looks wrong -- what was
-  -- actually wrong is that a lit ball was invisible rather than misplaced.
-  -- The console art the map tileset already draws bakes in its own row of
-  -- (unlit-looking) LED dots, and this glow sprite is the ROM's own tiny
-  -- 4x4 dot meant to sit exactly over one -- at native size, one more red
-  -- pixel-cluster on top of art that is already mostly red LEDs, it could
-  -- not be told apart from the backdrop it was drawn on. 2x scale and a
-  -- bright gold tint (a lit Poke Ball, not a red LED) makes each one land.
-  local glow = record.glow.image and picture(record.glow.image)
-  if glow then
-    -- NATIVE SIZE AND COLOURS.  An enlarged, gold-tinted ball read better in
-    -- the voxel view but dwarfed the machine in the plain game; the sprite and
-    -- sPokeballCoordOffsets are the cartridge's own and are drawn as such.
-    for i = 1, math.min(ha.lit or 0, #(record.glow.offsets or {})) do
-      local at = record.glow.offsets[i]
-      love.graphics.draw(glow, ox + record.glow.x + at[1],
-                         oy + record.glow.y + at[2])
-    end
-    love.graphics.setColor(1, 1, 1, 1)
-  end
-  return (monitor or glow) ~= nil
+  return #sprites > 0
 end
 
 -- screen-space overlays: drawn to the UI canvas at normal scale

@@ -50,8 +50,9 @@ function M.songInfo(st)
 end
 function M.statWindowPhase()
   local c=runtime:active();if not c then return false end
+  local class=c.screen.StatBox;if not class then return false end
   for _,state in ipairs(c.stack.states)do
-    if getmetatable(state)==c.screen.StatBox then return true end
+    if getmetatable(state)==class then return true end
   end
   return false
 end
@@ -170,6 +171,11 @@ function M._nativeExit(screen)
 end
 -- Private typed consumers can resolve a source observation to the same native
 -- admission; callers cannot submit another state or a stale completed view.
+function M._flushNative(screen)
+  local c=runtime:active()
+  if not c or c.screen~=screen or c.stack:top()~=screen or not admitted(c)then return false end
+  c.views:flush();return true
+end
 function M._screen(view)
   local c=runtime:active()
   if c and(view==nil or view==c.views.view)then return c.screen end

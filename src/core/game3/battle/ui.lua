@@ -23,6 +23,24 @@ end
 function Ui.moveGridNavigation()
   local screen=Battle._screen();return screen and screen:moveGridNavigation()or false
 end
+function Ui.dialogPending()
+ local screen=Battle._screen();if not screen then return false end
+ if screen.current and screen.current.text~=nil then return true end
+ for _,row in ipairs(screen.queue or{})do if row.text~=nil then return true end end
+ return false
+end
+function Ui.busy()
+ local screen=Battle._screen();if not screen then return false end
+ return screen.game.stack:top()~=screen or screen.waitingUI==true
+  or screen.current~=nil or #(screen.queue or{})>0
+  or(screen.waitFrames or 0)>0 or(screen.hitSfxWait or 0)>0
+end
+function Ui.waitingForCommand()
+ local screen=Battle._screen()
+ return screen~=nil and not screen.result and not Ui.busy()
+  and not screen.gen3AnimPlaying and not screen.gen3BallPlaying
+  and(screen.phase=='menu'or screen.phase=='moveSelect'or screen.phase=='targetSelect')or false
+end
 function Ui.bindState(state)
   if state==nil then
     if Battle.isActive()then return false,'cannot unbind an admitted native battle UI'end
@@ -33,6 +51,13 @@ function Ui.bindState(state)
 end
 local function pump()return Boundary.invoke('battle.ui.update')end
 Ui.pump=pump
+local commandPhase=require('src.compat.game3.BattleCommandPhase')
+local takeCommand=commandPhase.take
+Ui.takeCommand=takeCommand
+function Ui._nativeCommand(screen,action,body)
+ if Ui.takeCommand==takeCommand then return body(screen,action)end
+ return commandPhase.dispatch(screen,action,body,function()return call('takeCommand')end)
+end
 local function draw(w,h)
   local screen=Battle._screen();if not screen then return false,'no admitted native battle'end
   local bw,bh=screen:uiSize()
@@ -62,6 +87,21 @@ setmetatable(Ui,{__index=function(_,key)
   if not screen then return nil end
   if key=='_menuIndex'then return screen.menuIndex end
   if key=='_moveIndex'then return screen.moveIndex end
+  if key=='_active'then return screen:choosingSlotNow()end
+  if key=='_swap'then return screen.moveSwapIndex end
   if key=='_mode'then return({menu='menu',moveSelect='moves',mimicSelect='moves',targetSelect='target'})[screen.phase]or'none'end
+end,__newindex=function(t,key,value)
+ if key=='_menuIndex'or key=='_moveIndex'then
+  local screen=Battle._screen()
+  assert(screen and screen.game.stack:top()==screen,'native battle does not own the cursor')
+  local limit,phase
+  if key=='_menuIndex'then limit,phase=#screen:menuActions(),'menu'
+  else local actor=screen:menuBattler();limit,phase=#(actor and actor.curMoves or{}),'moveSelect'end
+  assert(screen.phase==phase,'native battle cursor is not active')
+  assert(type(value)=='number'and value==value and value%1==0 and value>=1 and value<=math.min(4,limit),'invalid native battle cursor')
+  if key=='_menuIndex'then screen.menuIndex=value else screen.moveIndex=value end
+ elseif key=='_st'or key=='_mode'or key=='_active'or key=='_swap'then
+  error('native battle UI observation is read-only: '..key,2)
+ else rawset(t,key,value)end
 end})
 return Ui

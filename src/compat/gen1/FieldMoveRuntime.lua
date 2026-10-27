@@ -42,6 +42,7 @@ end
 function R:current()
   local game=Session.game();if not game then return nil end
   local class=package.loaded['src.world.Gen3FieldMove']
+  if not class then return nil end
   for i=#(game.stack and game.stack.states or{}),1,-1 do
     local state=game.stack.states[i]
     if getmetatable(state)==class and not state.done then return self:bind(state)end
