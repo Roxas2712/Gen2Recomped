@@ -3998,6 +3998,11 @@ function BattleState:enter()
       self:abilitySwitchIn(self.player)
     end })
   end
+  -- GBA captures its opposing bag during Ai.battleStart, before observers.
+  -- Later trainer-class edits configure future fights, not this one's stock.
+  if GameVersion.isGen3() and self.kind == "trainer" then
+    require("src.battle.Gen3TrainerItems").history(self)
+  end
   Runtime.emit("battle.started", {
     battle = self, kind = self:battleKind(),
     trainerId = self.trainer and self.trainer.id,

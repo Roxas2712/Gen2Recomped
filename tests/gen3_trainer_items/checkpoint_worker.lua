@@ -3,6 +3,7 @@
 -- bytes cross that boundary; the consumer never creates the original battle.
 local phase,edition,api,format=arg[1],assert(arg[2]),assert(tonumber(arg[3])),assert(arg[4])
 local mode=arg[5]or'single'
+local stock=arg[7]or'sparse'
 local two=mode=='two-trainer'or mode=='two-trainer-legacy'
 if phase=='produce-baseline' then
  local source=assert(arg[6]);package.preload['src.core.CheckpointBattle']=function()return assert(loadfile(source))()end
@@ -28,13 +29,19 @@ local calls=0
 f.loaded.loader.exports.checkpoint_fixture.api.hooks:wrap('battle.enemy_switch_or_item',function(next,battle)
  calls=calls+1;return next(battle)
 end)
-for _,row in ipairs({{13,{0,0,0,0,4,0,20}},{19,{0,0,0,63,4,0,255}},{501,{0,0,0,128,0,0,0}}})do
+for _,row in ipairs({{13,{0,0,0,0,4,0,20}},{14,{0,0,0,0,4,0,50}},{15,{0,0,0,0,4,0,200}},{19,{0,0,0,63,4,0,255}},{501,{0,0,0,128,0,0,0}}})do
  local key=('ITEM_%03d'):format(row[1]);game.data.items[key]={id=key,index=row[1],name=key}
  game.data.constants.gen3ItemEffects=game.data.constants.gen3ItemEffects or{}
  game.data.constants.gen3ItemEffects[key]={bytes=row[2]}
 end
 local def=game.data.trainers.OPP_FIX_YOUNGSTER
-def.items={[1]='ITEM_013',[3]='ITEM_501',[4]='ITEM_019'}
+local profiles={
+ sparse={[1]='ITEM_013',[3]='ITEM_501',[4]='ITEM_019'},
+ empty={},full={'ITEM_013','ITEM_014','ITEM_015','ITEM_019'},
+ duplicates={'ITEM_013','ITEM_013','ITEM_013','ITEM_013'},
+ depleted={'ITEM_013'},
+}
+def.items={};for slot,item in pairs(assert(profiles[stock],'unknown stock profile'))do def.items[slot]=item end
 if mode~='single' then
  game.save.party[2]=assert(Serializer.decode(Serializer.encode(game.save.party[1])))
  def.doubleBattle=true
@@ -45,6 +52,25 @@ if mode~='single' then
  end
 end
 local expectedCalls=mode=='single'and 1 or 2
+local function stockState(battle,afterFuture)
+ local history=Items.history(battle)
+ local count=stock=='empty'and 0 or stock=='depleted'and 1 or stock=='sparse'and 3 or 4
+ T.eq(history.count,count,'frozen stock count: '..stock)
+ T.eq(#history.slots,count,'all original stock rows retained: '..stock)
+ for i,slot in ipairs(history.slots)do
+  local original=stock=='sparse'and ({1,3,4})[i]or i
+  T.eq(slot.original,original,'original item slot '..i)
+  T.eq(slot.item,profiles[stock][original],'frozen item identity '..i)
+  local spent=i==1 or afterFuture and i==(stock=='sparse'and 3 or 2)
+  -- A second foe can use Guard Spec on turn one in the sparse profile.
+  if stock=='sparse'and i==2 then spent=mode~='single'end
+  T.eq(slot.spent,not not spent,'independent stock spending expectation '..i)
+ end
+end
+local function changeClassStock()
+ if stock=='sparse'then def.items[4]='ITEM_013'
+ else def.items={'ITEM_019','ITEM_019','ITEM_019','ITEM_019'}end
+end
 local function relationships(battle)
  for position=0,3 do
   local actor=battle:battlerAt(position)
@@ -97,29 +123,34 @@ if phase=='produce' or phase=='produce-baseline' then
  end
  battle.enemy.mon.hp,battle.enemy.shownHP=10,10;f.stack.states={f.world,battle}
  turn();T.eq(calls,expectedCalls,'producer used actual trainer hook for each opponent')
- T.eq(Items.history(battle).slots[1].spent,true,'producer consumed first native slot')
+ stockState(battle,false)
  if mode~='single'then
   battle:picFxFor(battle:battlerAt(2)).minimized=true
   battle:picFxFor(battle:battlerAt(3)).minimized=true
  end
  relationships(battle)
- def.items[4]='ITEM_013'
+ changeClassStock()
  local cp,code=f.checkpoints:capture(game);assert(cp,code)
- local future=turn();T.check(future.enemy.mon.hp>300,'uninterrupted native Full Restore healed')
+ local future=turn();stockState(future,true)
+ if stock=='sparse'then T.check(future.enemy.mon.hp>300,'uninterrupted native Full Restore healed')
+ elseif stock=='full'then T.check(future.enemy.mon.hp>50 and future.enemy.mon.hp<100,'second distinct stocked heal used')
+ elseif stock=='duplicates'then T.check(future.enemy.mon.hp>30 and future.enemy.mon.hp<60,'second duplicate heal used')
+ else T.check(future.enemy.mon.hp<40,'empty or exhausted stock does not refill from changed class')end
  local nextCp,why=f.checkpoints:capture(game);assert(nextCp,why)
  print('GBA_CHECKPOINT_PACKET '..Json.encode({checkpoint=Serializer.encode(cp),future=Serializer.encode(nextCp),hp=future.enemy.mon.hp}))
 elseif phase=='consume' then
  local packet=assert(Json.decode(io.read('*a')))
  T.eq(f.stack:top(),f.world,'fresh VM starts in the world, with no original battle')
  T.eq(calls,0,'fresh VM has not selected a trainer item')
- def.items[4]='ITEM_013'
+ changeClassStock()
  local cp=assert(Serializer.decode(packet.checkpoint));local ok,why=f.checkpoints:restore(game,cp)
  T.check(ok,'fresh VM restores actual checkpoint: '..tostring(why))
  if ok then
   local battle=f.stack:top();local cache=rawget(battle,'_gen3TrainerItems')
   T.check(cache~=nil,'serialized stock exists without the original VM')
+  stockState(battle,false)
   relationships(battle)
-  local future=turn();local nextCp,code=f.checkpoints:capture(game);assert(nextCp,code)
+  local future=turn();stockState(future,true);local nextCp,code=f.checkpoints:capture(game);assert(nextCp,code)
   local same=Serializer.encode(nextCp)==packet.future
   T.eq(future.enemy.mon.hp,packet.hp,'fresh VM reproduces native item HP')
   T.check(same,'fresh VM reproduces the complete next checkpoint')
