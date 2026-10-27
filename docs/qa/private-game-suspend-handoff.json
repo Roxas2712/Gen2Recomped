@@ -991,6 +991,126 @@
       "src/pokemon/OriginRecord.lua": "32a9b3295470649226ca18f745e160301097eca7a3421adbab79b800d868d8ca",
       "tools/bank_legality_worker.py": "3f59fd725cd0ff26390b0c8348623fc4760497664692b1e717fcf7b3bfc430e5",
       "tools/legality/Program.cs": "f55f6e510de9a09a7c3fb55b37fb44200bf9c993b398507fba9d1648ea8abdb4"
+    },
+    "afterMainIntegration": {
+      "integratedMain": "5f2c0503dd8d6e2f86701992c2104867f733f4ba",
+      "testedSourceCommit": "679619063b095ce927971c5cb52c44789c6c7e4b",
+      "launcherSuites": 82,
+      "luaSyntaxChecks": 85,
+      "modSuspend": {
+        "passed": true,
+        "results": [
+          {
+            "phase": "nextturn",
+            "ok": true,
+            "ticks": 1023,
+            "edition": "emerald",
+            "role": "source",
+            "reason": "Uploaded a damaged native battle during a move animation; recorded deterministic turn 2",
+            "capture": {
+              "idleTicks": 0,
+              "tailSteps": 313,
+              "anchor": "battle",
+              "kind": "trainer",
+              "bytes": 447296
+            }
+          },
+          {
+            "ok": true,
+            "phase": "return",
+            "ticks": 230,
+            "edition": "emerald",
+            "role": "target",
+            "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed"
+          }
+        ]
+      },
+      "onlineCrystalHandoff": {
+        "passed": true,
+        "results": [
+          {
+            "edition": "crystal",
+            "scenario": "handoff",
+            "battle_state": "complete",
+            "verification": "server_native_replay",
+            "points": {
+              "left": 50,
+              "right": -25
+            },
+            "wallets": {
+              "left": 100,
+              "right": 25
+            },
+            "results": [
+              {
+                "battleSeen": true,
+                "reason": "The fresh device took ownership; the original adventure was restored.",
+                "edition": "crystal",
+                "role": "left",
+                "cloudTransport": true,
+                "adventureRestored": true,
+                "saveFileUnchanged": true,
+                "scenario": "handoff",
+                "blockedRetries": 0,
+                "ok": true,
+                "cancelled": false,
+                "faultInjected": false,
+                "frames": 6390,
+                "phase": "reporting"
+              },
+              {
+                "ok": true,
+                "cancelled": false,
+                "frames": 9984,
+                "reason": "Native battle and both authenticated reports completed.",
+                "proof": {
+                  "digest": "7370c2176de85b5b1e710fc4d43bd678424a9ff7e9346d40e6f5e7e98265893d",
+                  "turns": 6,
+                  "status": "complete",
+                  "winner": 1
+                },
+                "battleSeen": true,
+                "faultInjected": false,
+                "phase": "verify-report",
+                "edition": "crystal",
+                "role": "right",
+                "cloudTransport": true,
+                "adventureRestored": true,
+                "saveFileUnchanged": true,
+                "scenario": "handoff",
+                "blockedRetries": 0
+              },
+              {
+                "ok": true,
+                "cancelled": false,
+                "frames": 4870,
+                "reason": "Native battle and both authenticated reports completed.",
+                "proof": {
+                  "digest": "7370c2176de85b5b1e710fc4d43bd678424a9ff7e9346d40e6f5e7e98265893d",
+                  "status": "complete",
+                  "winner": 1,
+                  "turns": 6
+                },
+                "battleSeen": true,
+                "faultInjected": false,
+                "phase": "verify-report",
+                "edition": "crystal",
+                "role": "left-target",
+                "cloudTransport": true,
+                "adventureRestored": true,
+                "saveFileUnchanged": true,
+                "scenario": "handoff",
+                "blockedRetries": 0
+              }
+            ]
+          }
+        ]
+      },
+      "platinumNativeLoopback": {
+        "passed": true,
+        "proof": ".local/qa/retro-nds-link-1793089468861188000/native.log"
+      },
+      "gbaPartyCodecChecks": 194540
     }
   }
 }
