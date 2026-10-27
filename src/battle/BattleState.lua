@@ -1488,7 +1488,7 @@ function BattleState.newWild(game, species, level, opts)
   if GameVersion.isGen3() then
     self.firstBattle = opts and opts.firstBattle and true or nil
     self.firstBattleKind = opts and opts.firstBattleKind
-      or (self.firstBattle and (GameVersion.get() == "emerald" and "birch" or "oak"))
+      or (self.firstBattle and (not GameVersion.isFRLG() and "birch" or "oak"))
   end
   self.canLose = opts and opts.canLose or nil
   -- ...AND A ROAMER IS THE SAME INDIVIDUAL EVERY TIME.  The cartridge keeps
@@ -1782,6 +1782,7 @@ function BattleState.newTrainer(game, oppClass, partyIndex, opts)
     self.trainer = setmetatable({ name = self.trainer.partyNames[partyIndex or 1] },
                                 { __index = self.trainer })
   end
+  self.trainer=require('src.battle.Gen3TrainerPresentation').view(self.trainer,game.save)
   self.enemyAIMods = self.trainer.aiMods
   local partyDef = self.trainer.parties[partyIndex or 1]
   assert(partyDef, ("trainer %s has no party %s"):format(oppClass, tostring(partyIndex)))
@@ -2246,15 +2247,14 @@ end
 -- to .catch_without_fail (item_effects.asm:243-246), and .FinishTutorial
 -- returns before any of the caught-mon bookkeeping (:501-503).
 --
--- HOENN'S IS THE SAME BATTLE.  BATTLE_TYPE_WALLY_TUTORIAL is Gen 2's shape
--- exactly -- a scripted cursor, one ball, a throw that cannot miss, nothing
--- kept, and the thrower's own Pokemon on the field (Wally is lent a ZIGZAGOON
--- by the script before it starts) -- so the only thing that differs is the
--- name over the menu, and that is a parameter.
+-- RS uses its own Wally controller: two actual Tackle turns, recall, trainer
+-- return and the scripted RS bag. The common demo flag still excludes owned
+-- capture bookkeeping. Other generations retain their existing controllers.
 function BattleState:makeDudeDemo(name)
   self:makeOldManDemo(name or "DUDE")
   self.dudeDemo = true
-  self.wallyTutorial = GameVersion.get() == "emerald" and true or nil
+  self.wallyTutorial = GameVersion.isGen3() and not GameVersion.isFRLG() and true or nil
+  self.rsWally = require("src.battle.Gen3RsWallyTutorial").new(self)
   self.demoBallCount = "x1"
 end
 
@@ -2262,7 +2262,7 @@ end
 -- makeDudeDemo).  Every "is this a demo?" test that is really asking "is the
 -- player's half of the screen empty?" goes through here.
 function BattleState:demoHidesPlayer()
-  return self.demo and not self.dudeDemo
+  return self.demo and not self.dudeDemo or self.rsWally and self.rsWally.hidden
 end
 
 -- Safari Zone battles (engine/battle/core.asm safari sections +
@@ -3338,6 +3338,14 @@ function BattleState:gen3MusicKind()
   local themes = audio and audio.battle
   if not themes then return nil end
   if self.kind == "trainer" and self.trainer then
+    local rs=require('src.battle.Gen3RsBattleMusic')
+    if rs.active()then
+      local kind=rs.trainerKind(self.trainer)
+      self.isGymLeader=kind=='gym'
+      return kind
+    end
+    local native=require('src.battle.Gen3TrainerPresentation').musicKind(self.trainer)
+    if native and themes[native]then self.isGymLeader=native=='gym';return native end
     -- THE RIVAL IS THE ONE YOU DID NOT PICK, and she has her own theme.
     --
     -- Reported from play: "May uses the basic Trainer Theme."  GetBattleBGM
@@ -3354,7 +3362,7 @@ function BattleState:gen3MusicKind()
     -- and gets Wally's exception for free: he is never the rival's name.
     local player = self.game and self.game.save and self.game.save.player
     local rival = player and player.rival
-    if themes.rival and rival and self.trainer.name
+    if not require('src.core.GameVersion').isFRLG() and themes.rival and rival and self.trainer.name
        and tostring(self.trainer.translationSourceName or self.trainer.name):upper() == tostring(rival):upper() then
       self.isGymLeader = false
       return "rival"
@@ -3759,6 +3767,7 @@ function BattleState:battleKind()
 end
 
 function BattleState:enter()
+  if self:gen3Layout()then self.rsBattlePanel=require('src.battle.Gen3RsBattlePanel').new(self)end
   -- Out of useable POKéMON before the battle even starts.  pokered does not
   -- skip the battle: .checkAnyPartyAlive (engine/battle/core.asm:158-162)
   -- runs right after the intro and jumps to HandlePlayerBlackOut, so the
@@ -3987,7 +3996,7 @@ function BattleState:enter()
   -- intro is built linearly, and waitNext's insert point is for rows added
   -- while the queue is already running.
   table.insert(self.queue, { wait = Timing.BATTLE_START_SENDOUT })
-  if not self.safari and not self.demo then
+  if not self.safari and (not self.demo or self.rsWally) then
     -- StartBattle .playerSendOutFirstMon (core.asm:236-240): the back pic
     -- walks off the LEFT edge (SlideTrainerPicOffScreen, hlcoord 1,5,
     -- a = 9 tiles, one tile every 2 frames) BEFORE SendOutMon prints
@@ -4035,7 +4044,7 @@ function BattleState:enter()
   -- GROUDON's sun is up from turn one.  Appended rather than actNext'd:
   -- the intro is built linearly before the queue starts running.  Enemy
   -- first, then the player, which is the order they were sent out in.
-  if not (self.safari or self.demo) then
+  if not self.safari and (not self.demo or self.rsWally) then
     table.insert(self.queue, { fn = function()
       self:abilitySwitchIn(self.enemy)
       self:abilitySwitchIn(self.player)
@@ -4052,6 +4061,7 @@ end
 -- any pop (finish, script teardown) must silence the alarm loop
 -- (end_of_battle.asm clears wLowHealthAlarm when a battle ends)
 function BattleState:exit()
+  if self.rsBattlePanel then self.rsBattlePanel:release();self.rsBattlePanel=nil end
   -- Teachy TV temporarily replaces the player's party exactly like
   -- SavePlayerParty/LoadPlayerParty in teachy_tv.c.  finish() normally
   -- restores it before the pop, but exit is the safety net for a forced state
@@ -4474,6 +4484,11 @@ function BattleState:update(dt)
   if GameVersion.isGen2() and self.phase == "moveSelect" then
     self.phase = MoveSelectionPhase.name()
   end
+  if self.rsWally then self.rsWally:tick()end
+  if self.rsBattlePanel and require('src.battle.Gen3RsBattlePanel').handles(self)and self.scrollPx and self.scrollPx>0 then
+    self.scrollPx=math.max(0,self.scrollPx-2)
+    if self.scrollPx==0 then self.scrollPx=nil end
+  end
   local auxiliary = MenuAuxiliary.request(self)
   local shortcuts=package.loaded['src.mods.FeatureOptions']and require('src.battle.QuickItem')
   local quick=shortcuts and shortcuts.request(self)
@@ -4603,6 +4618,10 @@ function BattleState:update(dt)
     return
   end
 
+  if self.rsWally and (self.phase == "menu" or self.phase == "moveSelect") then
+    self.rsWally:updateMenu()
+    return
+  end
   if self.phase == "menu" and self.demo then
     -- DisplayBattleMenu's old-man branch (core.asm:2018-2050): input is
     -- never read.  The player name is swapped to OLD MAN, then the
@@ -4988,6 +5007,7 @@ function BattleState:gen3TutorialBag()
     local bag
     bag = Gen3BagMenu.new(game, {
       pocket = "BALL",
+      rsTutorial = self.rsWally ~= nil,
       noInput = true,
       rows = { { id = "POKE_BALL", label = Strings("POKé BALL"),
                  qty = tonumber((self.demoBallCount or "x1"):match("%d+")) } },
@@ -5042,12 +5062,21 @@ end
 -- the party or the dex (:568-570).  The "used" line reads OLD MAN
 -- because DisplayBattleMenu swapped wPlayerName (core.asm:2024-2037);
 -- no ball is consumed (.done returns early, :576-578).
+function BattleState:playCaughtCue()
+  local v=GameVersion.get()
+  local ids=(self.data.constants.gen3RsPresentation or {}).songIds
+  if (v=='ruby'or v=='sapphire')and ids and ids.MUS_CAUGHT then
+    return require('src.core.Music').play(self.data,('SONG_%03X'):format(ids.MUS_CAUGHT))
+  end
+  return require('src.core.Sound').play(self.data,'Caught_Mon')
+end
+
 function BattleState:oldManThrow()
   self.phase = "messages"
   self.afterQueue = "finish"
   self.result = "run" -- nothing is kept; wBattleResult only ends the demo
   local DsDemo = require("src.battle.CatchTutorialDemo")
-  self:say(DsDemo.throwText(self) or Strings("%s used\nPOKé BALL!", self.demoName or "OLD MAN"))
+  self:say(self.rsWally and self.rsWally:text("BattleText_TutorialUsed") or DsDemo.throwText(self) or Strings("%s used\nPOKé BALL!", self.demoName or "OLD MAN"))
   self:act(function()
     require("src.core.Sound").play(self.data, "Ball_Toss")
     -- ItemUseBall's beat before the toss chain (like throwBall)
@@ -5055,9 +5084,9 @@ function BattleState:oldManThrow()
     table.insert(self.queue, self.nextInsert, { wait = 20 })
     self:ballChain("TOSS_ANIM", true, 3, "POKE_BALL")
     self:actNext(function()
-      require("src.core.Sound").play(self.data, "Caught_Mon")
+      self:playCaughtCue()
     end)
-    self:sayNext(DsDemo.caughtText(self) or Strings("All right!\n%s was\ncaught!", self.enemy.name))
+    self:sayNext(self.rsWally and self.rsWally:text("BattleText_BallCaught2") or DsDemo.caughtText(self) or Strings("All right!\n%s was\ncaught!", self.enemy.name))
   end)
 end
 
@@ -6093,6 +6122,9 @@ end
 
 -- A switch action: replace the player's mon, enemy gets a free move.
 function BattleState:resolveSwitch(newMon)
+  if require("src.battle.Gen3PartialTrap").refuseSwitch(self,self.player)then
+    self.phase="messages";self.afterQueue="menu";return
+  end
   -- INGRAIN: a Pokemon that has put its roots down does not leave.  Refused
   -- here rather than at the menu so a forced switch is refused too.
   if self.player and self.player.ingrained and self.player.mon.hp > 0 then
@@ -6369,6 +6401,7 @@ end
 -- ability whose effect outlives the battler it belongs to.
 function BattleState:abilitySwitchOut(previous)
   if not (previous and previous.mon) then return end
+  require("src.battle.Gen3PartialTrap").switchOut(self,previous)
   if not Abilities.curesOnSwitchOut(previous) then return end
   if not previous.mon.status then return end
   previous.mon.status = nil
@@ -7707,6 +7740,7 @@ end
 -- player's OWN back animates: the catching tutorial's stand-in is drawn from
 -- field.playerPics and has no strip, and a Game Boy back has no sheet at all.
 function BattleState:gen3BackStrip(backPath)
+  if self.rsWally then return self.rsWally.spec.images.strip,self.rsWally.spec.anim,4 end
   if not self:gen3Layout() then return nil end
   if self.demo or self.oakDemo then return nil end
   local record = self:gen3BackRecord()
@@ -9035,6 +9069,7 @@ end
 function BattleState:onFaint(battler, fieldTerminal)
   if battler.faintQueued then return end
   battler.faintQueued = true
+  require("src.battle.Gen3PartialTrap").switchOut(self,battler)
   -- GRUDGE: the move that did it loses every PP it had.  Asked before
   -- DESTINY BOND, because a Pokemon carrying both spends both.
   if battler.grudge then
@@ -10120,7 +10155,7 @@ function BattleState:safariAction(choice)
       if caught then
         -- ItemUseBallText05's sound_caught_mon: fanfare with the text
         self:actNext(function()
-          require("src.core.Sound").play(self.data, "Caught_Mon")
+          self:playCaughtCue()
         end)
         self:sayNext(Strings("All right!\n%s was\ncaught!", self.enemy.name))
         -- same ItemUseBall .captured flow as a regular ball
@@ -10188,7 +10223,7 @@ function BattleState:gen4SafariAction(choice)
       if caught then
         st.caught = (st.caught or 0) + 1
         self:actNext(function()
-          require("src.core.Sound").play(self.data, "Caught_Mon")
+          self:playCaughtCue()
         end)
         self:sayNext(Strings("All right!\n%s was\ncaught!", foe))
         self:act(function() self:storeCaughtMon() end)
@@ -10307,7 +10342,7 @@ function BattleState:roamerFlees()
   if self.result then return end
   local enemy = self.enemy
   if not (enemy and enemy.mon and enemy.mon.hp > 0) then return end
-  if enemy.trapped then return end
+  if enemy.trapped or require("src.battle.Gen3PartialTrap").active(enemy)then return end
   self:sayNext(self:romText("_WildFledText", "Wild %s\nfled!", enemy.name))
   self:actNext(function()
     require("src.core.Sound").play(self.data, "Run")
@@ -10410,8 +10445,10 @@ function BattleState:tryRun()
   -- inescapable here as it is from the party menu.
   local escaped
   local trapper = Abilities.trapsSwitch(self.enemy, self.player)
-  if Abilities.alwaysFlees(self.player) then
+  if Abilities.alwaysFlees(self.player)or require("src.battle.Gen3PartialTrap").alwaysRuns(self,self.player)then
     escaped = true
+  elseif require("src.battle.Gen3PartialTrap").active(self.player)then
+    escaped=false
   elseif trapper then
     escaped = false
     self:say(Strings("%s's\n%s\nprevents escape!", displayName(self.enemy),
@@ -11106,7 +11143,7 @@ function BattleState:throwBall(ball)
       -- 608-614): the fanfare sounds with the caught message, before
       -- the prompt, not after the text is dismissed
       self:actNext(function()
-        require("src.core.Sound").play(self.data, "Caught_Mon")
+        self:playCaughtCue()
       end)
       self:sayNext(Strings("All right!\n%s was\ncaught!", self.enemy.name))
       self:act(function() self:storeCaughtMon() end)
@@ -11158,7 +11195,7 @@ function BattleState:bugContestBall()
     self:ballChain(self:tossAnimFor("PARK_BALL"), caught, shakes, "PARK_BALL")
     if caught then
       self:actNext(function()
-        require("src.core.Sound").play(self.data, "Caught_Mon")
+        self:playCaughtCue()
       end)
       self:act(function() self:storeContestMon() end)
     else
@@ -11314,6 +11351,8 @@ function BattleState:openParty()
           self:say(self:romText("_NoWillText", "There's no will\nto fight!"))
         elseif self.bw and require("src.battle.Gen5MoveRules").switchRefused(self, mon) then
           -- BLACK AND WHITE: bound, Mean Look, Shadow Tag... (Shed Shell frees)
+        elseif require("src.battle.Gen3PartialTrap").refuseSwitch(self,self:menuBattler())then
+          -- GBA binding still permits moves and items, but prevents a switch.
         elseif self:isDouble() then
           -- A SWITCH IN A DOUBLE IS AN ACTION, NOT AN ANSWER.  The other
           -- three slots still move this turn, so it goes into the same
@@ -11347,6 +11386,11 @@ function BattleState:playVictoryMusic()
   if type(self.musicKind) == "number" then
     local seq = require("src.import.Gen4BattleMusic").victory(self.data, self)
     if seq then require("src.core.Music").playVictory(self.data, seq) return end
+  end
+  local rs=require('src.battle.Gen3RsBattleMusic')
+  if rs.active()then
+    require('src.core.Music').playVictory(self.data,rs.victoryKind(self))
+    return
   end
   local kind = GEN2_VICTORY_KIND[self.musicKind or "wild"]
     or (self.musicKind or "wild")
@@ -11548,6 +11592,9 @@ end
 -- stages (core.asm:6801-6838): 3 frames of the ball tile, 4 frames of
 -- a 3x3 block of the 7x7 pic tiles, 5 frames of 5x5, then full size
 function BattleState:growInScale(battler)
+  if self.rsWally and battler==self.player and self.rsWally.recallFrame then
+    return math.max(0.01,1-self.rsWally.recallFrame/12)
+  end
   local grow = self.growIn
   if not grow or grow.battler ~= battler then return nil end
   local f = grow.frame

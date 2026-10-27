@@ -32,6 +32,9 @@
 -- stays right when it is not.
 
 local Gen3Flash = {}
+-- RS updates its native flash task every other frame. This task phase is
+-- transient; it belongs to neither the save format nor the imported cache.
+local rsPhase = setmetatable({}, { __mode = "k" })
 
 local function record(data)
   local r = (data and data.constants or {}).gen3Flash
@@ -96,6 +99,7 @@ function Gen3Flash.setLevel(game, level)
   save.gen3FlashLevel = level
   -- a snap ends whatever was easing; animateTo re-seeds it straight after
   save.gen3FlashRadius = nil
+  rsPhase[save] = nil
   return level
 end
 
@@ -144,13 +148,34 @@ function Gen3Flash.tick(game)
   local at = save and tonumber(save.gen3FlashRadius)
   if not at then return false end
   local want = Gen3Flash.radiusOf(game.data, Gen3Flash.level(game))
+  local r = record(game.data)
+  local rs = r and r.rsFormat == 1
+  if rs and want then
+    local tick = (rsPhase[save] or 0) + 1
+    rsPhase[save] = tick
+    -- Both native task phases draw the current radius before the second
+    -- phase advances it: 24,24,25,25,...,40,40 for the first gym expansion.
+    if tick == 1 or tick % 2 == 0 then
+      if tick % 2 == 0 and at == want then
+        save.gen3FlashRadius = nil
+        rsPhase[save] = nil
+        return false
+      end
+      return true
+    end
+  end
   if not want or at == want then
     save.gen3FlashRadius = nil
+    rsPhase[save] = nil
     return false
   end
   local step = (want > at) and ANIM_STEP or -ANIM_STEP
   at = at + step
   if (step > 0 and at >= want) or (step < 0 and at <= want) then
+    if rs then
+      save.gen3FlashRadius = want
+      return true
+    end
     save.gen3FlashRadius = nil
     return false
   end
@@ -191,7 +216,7 @@ function Gen3Flash.circle(game, viewW, viewH, centerX, centerY)
     end
   end
   local level = Gen3Flash.level(game)
-  if level <= 0 then return nil end
+  if level <= 0 and not (r.rsFormat == 1 and game.save.gen3FlashRadius) then return nil end
   -- mid-animation the window is wherever the one-pixel step has got to
   local radius = tonumber(game.save and game.save.gen3FlashRadius)
                  or Gen3Flash.radiusOf(game.data, level)

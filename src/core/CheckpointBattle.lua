@@ -104,7 +104,7 @@ statusLabel status_hud_visible status_inflicted statuses step stepCount stepDelt
 steps stockpile style substituteHP surf switchingOut syncShownStatus t tail target targetChoices
 targetIndex targetPosition tasks tauntBlocks tauntTurns terrain textures throw timing to
 tormentBlocks tormented total toxicCounter trainerB trainerLabel trainerPicB transform transformed
-trapped trappingTurns turn turnCount turn_ended turn_order turn_started turnsOut typeSource
+trapped trappingTurns gbaWrapTurns gbaWrapMove gbaWrapSource turn turnCount turn_ended turn_order turn_started turnsOut typeSource
 unsupported uproarTurns usedItem value vars victoryMusicPlayed visible voltTackle wait waitFrames
 waitKind waitReload waitingSound waitingSoundT waitingUI wallyTutorial warned waveCanvas waveQuad
 weather what whiteout wideRegion wildFoesStanding wishHeal wishTurns wobbles wordAt work x xAccuracy

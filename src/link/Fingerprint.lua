@@ -22,9 +22,14 @@ local Fingerprint = {}
 -- even when both peers load byte-identical data. Keep older game digests.
 local function nativeBattleRevision()
   if require('src.core.GameVersion').generation()>=4 then return 'nds-'..require('src.core.GameVersion').generation()..'-1'end
-  return require("src.core.GameVersion").isGen3() and 20 or nil
+  return require("src.core.GameVersion").isGen3() and 23 or nil
 end
 Fingerprint.nativeBattleRevision = nativeBattleRevision
+local function nativeSecondaryRule()
+  local version = require("src.core.GameVersion")
+  if version.isGen3() then return version.get() == "emerald" and "lt" or "le" end
+  return nil
+end
 function Fingerprint.nativePartyRevision()
   if require('src.core.GameVersion').generation()>=4 then return 'nds-'..require('src.core.GameVersion').generation()..'-'..require('src.link.NdsParty').REVISION end
   return require("src.core.GameVersion").isGen3() and require("src.link.Gen3Party").REVISION or nil
@@ -261,6 +266,8 @@ local function surface(data, mods)
   writeLinkFields(out, data)
   local revision = nativeBattleRevision()
   if revision then out[#out + 1] = "[native_gba_commands]" .. revision end
+  local secondaryRule = nativeSecondaryRule()
+  if secondaryRule then out[#out + 1] = "[native_gba_secondary]" .. secondaryRule end
   local partyRevision = Fingerprint.nativePartyRevision()
   if partyRevision then out[#out + 1] = "[native_gba_party]" .. partyRevision end
   out[#out + 1] = "[mods]" .. modKey(mods)
@@ -273,6 +280,7 @@ Fingerprint.surface = surface
 function Fingerprint.compute(data, mods)
   if not data then return digest("") end
   local key = modKey(mods) .. "|native_gba:" .. tostring(nativeBattleRevision())
+    .. "|native_secondary:" .. tostring(nativeSecondaryRule())
     .. "|native_party:" .. tostring(Fingerprint.nativePartyRevision())
   local hit = cache[data]
   if hit and hit.key == key then return hit.value end

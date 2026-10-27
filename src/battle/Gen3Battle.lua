@@ -1495,7 +1495,7 @@ local function drawHUDs(battle, slide)
                              hudImage(images.opponent), 8, 8)
     drawStatusPanel(battle, battle.enemy, x, y, false)
   end
-  if showStatus and not double and not battle.safari and battle.player and not battle.demo
+  if showStatus and not double and not battle.safari and battle.player and (not battle.demo or battle.rsWally and not battle.rsWally.hideHud)
       and not battle.showPlayerBack and slide == 0 then
     local x, y = healthboxAt(battle, "singlesPlayer",
                              hudImage(images.player), 112, 64)
@@ -2201,6 +2201,7 @@ local function drawTargetPrompt(battle)
 end
 
 local function drawTextArea(battle)
+  if battle.rsBattlePanel and battle.rsBattlePanel:draw(battle)then return end
   if battle.phase == "messages" and (battle.current or battle.animPlaying) then
     drawMessageBox(battle)
   elseif battle.phase == "menu" then

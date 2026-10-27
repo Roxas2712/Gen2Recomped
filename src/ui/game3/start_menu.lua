@@ -53,7 +53,7 @@ function M._contentTemplate(state)
  layoutState=prior
  if ok and type(value)=='table'then
   local l,t,w,h=value.left or value.tilemapLeft,value.top or value.tilemapTop,value.width or value.w,value.height or value.h
-  if finite(l)and finite(t)and finite(w)and finite(h)and l>=0 and t>=0 and w>0 and h>0 and l+w<=30 and t+h<=128 then
+  if finite(l)and finite(t)and finite(w)and finite(h)and l>=1 and t>=1 and w>0 and h>0 and l+w<=29 and t+h<=19 then
    return{left=l,top=t,width=w,height=h,tilemapLeft=l,tilemapTop=t,w=w,h=h}
   end
  end
