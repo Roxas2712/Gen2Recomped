@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "sourceStable": true,
+  "sourceSha256": "6aeb786ec3986b480e1930080a88e8901cafc369af6e4e4bee5cd52781af04c9",
+  "commit": "32ecaca37044746ce88a1b4862647b5244627a74",
+  "results": [
+    {
+      "name": "tests/engine/frame_pacing.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.015549541000000389,
+      "logSha256": "e699538de320c305b0005c69cb3caf259d2ed6d6a59299037aebe4d769c859ea"
+    },
+    {
+      "name": "tests/engine/gc_frame_budget.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.015097665999999954,
+      "logSha256": "9f2789362a2c2cdb350b58efe402e08bc3091fe745fc50ea90d3a48d676dede2"
+    },
+    {
+      "name": "tools/frame_pacing_check.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.014228082999999891,
+      "logSha256": "f3c4aad2f41fa6dd59c8f7826487e25524d0cb65c1bce3f378d28db3a2dc690b"
+    }
+  ]
+}

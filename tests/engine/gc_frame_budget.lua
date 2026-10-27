@@ -7,6 +7,8 @@ local function setup(cost)
 	local state = { now = 0, pause = 200, mul = 200, steps = 0, running = true, stepArgs = {}, sleeps = 0 }
 	local timer = {
 		getTime = function()
+			-- Time also advances during the pacer's busy polling window.
+			state.now = state.now + 0.000001
 			return state.now
 		end,
 		sleep = function(dt)

@@ -47,6 +47,9 @@ local Performance = {}
 -- P2 is independently reversible. Tier rows can reduce the idle budget or
 -- tune the collector without changing the persisted presentation options.
 Performance.gcBudget = true
+-- P10: optional foreground spin and unfocused presentation cap.
+Performance.framePacingSpin = true
+Performance.backgroundPacing = true
 -- P3: cache hot-path dependencies and reuse engine-private presentation data.
 Performance.hotPathHoist = true
 -- P4: independent world-draw closure, list and protection optimization.
@@ -263,6 +266,10 @@ for name, caps in pairs(Performance.CAPS) do
   -- index).  x3 / x4 is nine to sixteen times the fill of the logical view;
   -- a phone or handheld cannot pay that, whatever the OPTIONS row says.
   caps.gen4RenderScaleMax = (name == "high" and 4) or (name == "balanced" and 2) or 1
+  -- P10: spin the last stretch of the frame budget instead of sleeping it
+  -- (src/core/FrameCap.lua).  A core's worth of polling per frame is cheap
+  -- on a desktop and a battery on a handheld.
+  caps.pacingSpin = name == "high"
   -- W0: the most of a frame's idle time the asset stream may take.  HIGH
   -- has the time to spare; LOW keeps the sleep it was going to take.
   caps.streamIdleSeconds = (name == "high" and 0.006) or (name == "balanced" and 0.003) or 0.002
