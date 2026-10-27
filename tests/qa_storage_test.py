@@ -40,6 +40,13 @@ class CacheLifecycle(unittest.TestCase):
         path.write_bytes(b"x" * size)
         return path
 
+    def test_budget_walk_tolerates_a_writer_removing_a_temporary_file(self):
+        folder = self.root.resolve()
+        keep = self.payload(folder / "keep.log", 37)
+        with patch("qa_storage.os.walk", return_value=[(str(folder), [], ["arena.sqlite-journal", "keep.log"])]):
+            rows = list(Storage._walk(folder))
+        self.assertEqual([(p, info.st_size) for p, info in rows], [(keep, 37)])
+
     def test_finish_removes_only_generated_imports(self):
         manager = self.manager(import_limit=0)
         profile = manager.destination(self.profile())

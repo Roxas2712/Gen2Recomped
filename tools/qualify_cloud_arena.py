@@ -41,7 +41,7 @@ def main():
     caches = {}
     for entry in args.cache:
         edition, directory = entry.split('=', 1)
-        if edition not in EDITIONS or edition in caches:
+        if edition not in EDITIONS and edition != 'platinum' or edition in caches:
             parser.error('Supply each supported edition at most once')
         caches[edition] = Path(directory).expanduser().resolve(strict=True)
     backend, php, runtime, cert, key = [p.resolve(strict=True) for p in
@@ -86,7 +86,7 @@ end
     worker_token = secrets.token_hex(32)
     worker_release = hashlib.sha256((ROOT / 'src/link/ArenaReplay.lua').read_bytes()).hexdigest()
     env = os.environ | dict(RETRO_ARENA_VERIFICATION_REQUIRED='true' if args.independent_replay else 'false',
-        RETRO_VERIFIER_TOKEN_SHA256=hashlib.sha256(worker_token.encode()).hexdigest(),RETRO_VERIFIER_RELEASE=worker_release, APP_ENV='testing', APP_DEBUG='false',
+        RETRO_NATIVE_DS_EDITIONS='platinum' if 'platinum' in caches else '', RETRO_VERIFIER_TOKEN_SHA256=hashlib.sha256(worker_token.encode()).hexdigest(),RETRO_VERIFIER_RELEASE=worker_release, APP_ENV='testing', APP_DEBUG='false',
         APP_KEY='base64:' + base64.b64encode(secrets.token_bytes(32)).decode(),
         APP_URL=url, LARAVEL_STORAGE_PATH=str(storage), DB_CONNECTION='sqlite',
         DB_DATABASE=str(database), DB_URL='', CACHE_STORE='array', SESSION_DRIVER='array',
