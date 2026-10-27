@@ -329,8 +329,8 @@ Generated with `python3 tools/palette-index-render/inventory.py`. This lists lex
 | `src/ui/ListMenu.lua` | PaletteFX | [16](../src/ui/ListMenu.lua#L16), [279](../src/ui/ListMenu.lua#L279) |
 | `src/ui/NamingScreen.lua` | PaletteFX | [133](../src/ui/NamingScreen.lua#L133), [375](../src/ui/NamingScreen.lua#L375) |
 | `src/ui/OakSpeech.lua` | PaletteFX | [50](../src/ui/OakSpeech.lua#L50), [997](../src/ui/OakSpeech.lua#L997), [1006](../src/ui/OakSpeech.lua#L1006) |
-| `src/ui/OptionsMenu.lua` | TileRenderer | [19](../src/ui/OptionsMenu.lua#L19), [452](../src/ui/OptionsMenu.lua#L452), [456](../src/ui/OptionsMenu.lua#L456), [463](../src/ui/OptionsMenu.lua#L463) |
-| `src/ui/OptionsMenu.lua` | PaletteFX | [13](../src/ui/OptionsMenu.lua#L13), [42](../src/ui/OptionsMenu.lua#L42), [110](../src/ui/OptionsMenu.lua#L110), [111](../src/ui/OptionsMenu.lua#L111), [376](../src/ui/OptionsMenu.lua#L376), [377](../src/ui/OptionsMenu.lua#L377), [382](../src/ui/OptionsMenu.lua#L382), [384](../src/ui/OptionsMenu.lua#L384), [385](../src/ui/OptionsMenu.lua#L385), [386](../src/ui/OptionsMenu.lua#L386) |
+| `src/ui/OptionsMenu.lua` | TileRenderer | [19](../src/ui/OptionsMenu.lua#L19), [453](../src/ui/OptionsMenu.lua#L453), [457](../src/ui/OptionsMenu.lua#L457), [464](../src/ui/OptionsMenu.lua#L464) |
+| `src/ui/OptionsMenu.lua` | PaletteFX | [13](../src/ui/OptionsMenu.lua#L13), [43](../src/ui/OptionsMenu.lua#L43), [111](../src/ui/OptionsMenu.lua#L111), [112](../src/ui/OptionsMenu.lua#L112), [377](../src/ui/OptionsMenu.lua#L377), [378](../src/ui/OptionsMenu.lua#L378), [383](../src/ui/OptionsMenu.lua#L383), [385](../src/ui/OptionsMenu.lua#L385), [386](../src/ui/OptionsMenu.lua#L386), [387](../src/ui/OptionsMenu.lua#L387) |
 | `src/ui/PartyMenu.lua` | PaletteFX | [48](../src/ui/PartyMenu.lua#L48), [180](../src/ui/PartyMenu.lua#L180), [980](../src/ui/PartyMenu.lua#L980), [988](../src/ui/PartyMenu.lua#L988), [989](../src/ui/PartyMenu.lua#L989) |
 | `src/ui/PicBox.lua` | PaletteFX | [166](../src/ui/PicBox.lua#L166) |
 | `src/ui/PokedexMenu.lua` | PaletteFX | [25](../src/ui/PokedexMenu.lua#L25) |
