@@ -445,7 +445,7 @@ function SaveData.defaultOptions()
     -- moves the screen furniture, so it is opt-in.
     -- See Game.dynamicUI, Renderer:setUIAnchor and Renderer:uiScale.
     uiLayout = "centered",
-    ruleset = "gen1_faithful",
+    ruleset = false, -- automatic cartridge default; explicit saved ids remain valid
     -- 0-7 like the GB's NR50 master volume
     musicVol = 7,
     sfxVol = 7,

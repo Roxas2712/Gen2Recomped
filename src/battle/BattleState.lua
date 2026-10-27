@@ -600,6 +600,9 @@ end
 
 local Rulesets = {
   gen1_faithful = require("src.battle.rulesets.gen1_faithful"),
+  gen2_finite_pp = require("src.battle.rulesets.gen2_finite_pp"),
+  gen3_emerald = require("src.battle.rulesets.gen3_emerald"),
+  gen4_platinum = require("src.battle.rulesets.gen4_platinum"),
   modern_clean = require("src.battle.rulesets.modern_clean"),
 }
 
@@ -1205,7 +1208,7 @@ local function newBattle(game)
   -- records on a mod-free boot); an unknown save value falls back to the
   -- default with a notice instead of silently switching behavior
   local rulesets = game.data.rulesets or Rulesets
-  local selected = game.save.options and game.save.options.ruleset
+  local selected = require("src.battle.RulesetDefaults").selection(game)
   -- THE FALLBACK IS THE CARTRIDGE'S, not Kanto's.  It used to read
   -- `constants.defaultRuleset or "gen1_faithful"`, and nothing has ever
   -- written that constant -- so Hoenn fought under Generation One's rules on
