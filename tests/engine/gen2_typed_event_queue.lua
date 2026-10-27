@@ -152,13 +152,13 @@ for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   step()
   T.check(b.current and b.current.gen2SourceEvent==move,'typed row retains source event provenance')
   T.check(b.animPlaying,'actual native animation VM starts at admission')
-  local frames=b.animPlayer.ranFrames
+  local frames=b.animPlayer.ranFrames or 0
   T.eq(#probe.admissions,1,'move has one native admission')
   step()
   T.eq(#probe.admissions,1,'active move typer cannot advance queue observer')
   T.eq(b.animPlayer.ranFrames,frames,'native typer owns time before VM stepping')
   T.check(wait(function()return b.phase=='menu' end),'move line and VM complete without injected A/B')
-  T.check(b.animPlayer.ranFrames>frames,'real native VM clock eventually advances')
+  T.check((b.animPlayer.ranFrames or 0)>frames,'real native VM clock eventually advances')
   T.eq(b.messageTimer,0,'auto line has no independent message hold')
   T.eq(probe.admissions[#probe.admissions] and probe.admissions[#probe.admissions].after,'menu',
     'empty native queue returns the camera to the settled menu phase')
