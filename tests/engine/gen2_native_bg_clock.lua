@@ -57,17 +57,20 @@ for _,edition in ipairs({'gold','silver','crystal'})do
   p:update();p:update()
   if edition=='crystal'then T.eq(p.bg.lyBackup[0x30],0xfe,'real VM drives the signed BODY_SLAM LCD trace')end
   p:release()
-  p=Player.new(data({{op='bgeffect',args={3,0,0,0}},
-    {op='delay',frames=1},{op='incbgeffect',args={3}},
+  p=Player.new(data({{op='bgeffect',args={0x0f,0,0,0}},
+    {op='delay',frames=1},{op='incbgeffect',args={0x0f}},
     {op='bgp',args={0x1ff}},{op='obp0',args={0x18c}},
     {op='obp1',args={0x124}},{op='delay',frames=1},{op='ret'}}))
   p:start('PROBE',true);p:update()
-  local active=p.bg.effects[1];local before=active.jt
+  local active=p.bg.effects[1]
+  T.eq(active.jt,1,'native Teleport initializes its running state')
   p:update()
-  T.eq(active.jt,before+1,'native increment command reaches the actual running effect struct')
+  T.eq(active.func,nil,'increment advances Teleport into its native terminal state')
+  T.eq(p.bg.lcdc,nil,'native terminal state retires its LCD window')
   T.eq(p.bg.obp0,0x8c,'native OBJ0 palette command preserves byte semantics')
   T.eq(p.bg.obp1,0x24,'native OBJ1 palette command preserves byte semantics')
-  -- The WHITE_HUES step owns BGP after its command; use a separate palette-only program.
+  T.eq(p.bg.bgp,0xff,'BG palette write survives a non-palette terminal effect')
+  p:release()
   p=Player.new(data({{op='bgp',args={0x1fc}},{op='delay',frames=1},{op='ret'}}))
   p:start('PROBE',true);p:update();T.eq(p.bg.bgp,0xfc,'native BG palette write reaches the register block')
   p:release()
