@@ -41,7 +41,8 @@ syntax = ['src/link/ArenaReplay.lua','src/ui/PlayerRole.lua','src/cloud/AccountB
           'src/storage/LuaData.lua', 'src/storage/BankInterop.lua', 'src/mods/SharedStorage.lua',
           'src/mods/Api3.lua', 'src/mods/PlaythroughStorage.lua', 'src/import/BankInterchangeWorkspace.lua']
 source = '\n'.join('assert(loadfile(' + json.dumps(path) + '))' for path in syntax)
-qa_run([*runtime, '-e', source], cwd=root, check=True)
+if not os.environ.get('RETRO_QA_LUA_LIBRARY') or shutil.which('luajit'):
+    qa_run([*runtime, '-e', source], cwd=root, check=True)
 suites = '''header_account account_presence launcher_edition_theme first_run sync_status launcher_storage launcher_locale suspend_private_import launcher_sequence cart_designer launcher_seasons launcher_community
 pokemon_bank mod_profiles mod_download bank_workspace launcher_mod_profiles
 retro_overlay cloud_running_slot cloud_sync_rng gen3_battle_terrain_init suspend_journal suspend_store suspend_continue developer_account developer_workspace native_account
@@ -57,9 +58,19 @@ if args.suite:
     if unknown:
         parser.error('Unknown suites: ' + ', '.join(sorted(unknown)))
     suites = list(dict.fromkeys(args.suite))
-for suite in suites:
-    command = [*runtime, str(root / 'tests/engine' / (suite + '.lua'))]
-    if suite == 'bank_interop' and args.legacy_bank_source:
-        command.append(str(args.legacy_bank_source))
+if os.environ.get('RETRO_QA_LUA_LIBRARY') and not shutil.which('luajit'):
+    command = [sys.executable, str(root / 'tools/run_lua_batch.py')]
+    for path in syntax:
+        command.extend(['--syntax', path])
+    for suite in suites:
+        command.extend(['--suite', str(root / 'tests/engine' / (suite + '.lua'))])
+    if args.legacy_bank_source:
+        command.extend(['--legacy-bank-source', str(args.legacy_bank_source)])
     qa_run(command, cwd=root, check=True)
+else:
+    for suite in suites:
+        command = [*runtime, str(root / 'tests/engine' / (suite + '.lua'))]
+        if suite == 'bank_interop' and args.legacy_bank_source:
+            command.append(str(args.legacy_bank_source))
+        qa_run(command, cwd=root, check=True)
 print(json.dumps(dict(passed=True, suites=len(suites), syntaxChecks=len(syntax))), flush=True)
