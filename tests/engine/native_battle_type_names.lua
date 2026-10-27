@@ -31,6 +31,8 @@ for _,edition in ipairs{'firered','leafgreen','ruby','sapphire','emerald'}do
  T.eq(Types.name(0),'Mod catalogue','merged native catalogue is authoritative')
  package.loaded['src.core.Game']={data={constants={typeOrder={'OTHER'},types={OTHER={name='Other dataset'}}}}}
  T.eq(Types.name(0),'Other dataset','a new session cannot reuse retired names')
+ Types._service:releaseOwner('retired_owner');T.eq(Types.name(0),'Other dataset','owner retirement drops only the soft metadata cache')
+ Types._service:release();T.eq(Types.name(0),'Other dataset','native session teardown permits fresh metadata admission')
  Version.set('gold');T.eq(Types.name(0),nil,'another generation keeps its own native service')
 end
 package.loaded['src.core.Game']=before;package.loaded['src.translation.Service']=service

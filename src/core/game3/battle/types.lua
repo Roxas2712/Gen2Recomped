@@ -22,4 +22,7 @@ function M.name(value)
   return service and service.name(name) or name
 end
 
+local function clear()dataset,ids=nil,nil end
+M._service={release=clear,releaseOwner=clear}
+require('src.core.game3.asset_stream').register(M._service)
 return M
