@@ -19,9 +19,13 @@ zero-argument source wrapper during the actual native draw only. Repeated
 base calls share one paint. Outside-phase queries cannot advance input or
 paint another frame. It does not load a second runtime or retain ROM readers.
 
+Progress filtering reads the real native flag keys, current item registry and
+unique caught Kanto dex IDs. HM acquisition flags, map possession and the
+post-Brock basic-term order do not mutate any save state.
+
 This is a bounded presentation prerequisite, not complete retail Help:
 callers currently supply an explicit native context (1..34). Automatic L/R
-activation, progress-dependent question filtering, first-use tutorial state,
+activation, first-use tutorial state,
 audio ducking and every native context transition are still unqualified.
 No global button interception or gameplay flag writes are introduced before
 those owners are integrated. Full map battles, terrariums, OS-window output

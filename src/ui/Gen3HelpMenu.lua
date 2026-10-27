@@ -5,6 +5,7 @@ local Font=require('src.render.Font')
 local Text=require('src.core.game3.rom_text')
 local Rich=require('src.render.Gen3HelpText')
 local List=require('src.ui.ListMenu')
+local Progress=require('src.ui.Gen3HelpProgress')
 local Version=require('src.core.GameVersion')
 local Native=require('src.compat.gen1.NativeSession')
 local H={isOpaque=true};H.__index=H
@@ -61,7 +62,7 @@ function H:choose(item)
   if item.topic==6 then return self:close()end
   self.mainIndex=self.menu.index;self.topic=item.topic;self.level='questions'
   local rows={}
-  for _,id in ipairs(self.facts.contexts[self.contextId][self.topic])do
+  for _,id in ipairs(Progress.items(self.game,self.facts,self.contextId,self.topic))do
    local entry=self.facts.entries[self.topic][id]
    rows[#rows+1]={label=Text.plain(entry.question),key=entry.question,id=id}
   end

@@ -7,6 +7,8 @@ local Version=require('src.core.GameVersion')
 local original=package.loaded['src.core.Game'];local base=Help.draw
 local function fixture(edition)
  local f=require('tools.battle-source-runtime.fixture').new(edition);local game=f.game
+ game.save.flags.FLAG_G3_0820=true;game.save.flags.FLAG_G3_0821=true
+ for _,id in ipairs{0x2CF,0x891,0x895,0x828}do game.save.flags[('FLAG_G3_%04X'):format(id)]=true end
  package.loaded['src.core.Game']=game
  local facts={schema=1,edition=edition,romSha1=Version.info().sha1,
   topics={},entries={},contexts={},topicOrder={4,1,2,3,5,6},topicFlags={},cancel='HelpCancel',
@@ -43,17 +45,17 @@ for _,edition in ipairs{'firered','leafgreen'}do
  T.eq(#game.stack.states,1)
  T.eq(Help.show(game,23),true);T.eq(Help.isOpen(),true);T.eq(Help.show(game,23),false)
  local state=game.stack:top();T.eq(state.level,'main');T.eq(state.menu.items[1].topic,4)
- key('a');T.eq(state.level,'questions');T.eq(state.topic,4);T.eq(#state.menu.items,11)
+ key('down');key('a');T.eq(state.level,'questions');T.eq(state.topic,1);T.eq(#state.menu.items,11)
  for _=1,8 do key('down')end
  T.eq(state.menu.index,9);T.eq(state.menu.scroll,2,'native ListMenu scrolls its actual rows')
  key('a');T.eq(state.level,'answer');key('down');T.eq(state.articleScroll,1)
  key('b');T.eq(state.level,'questions');T.eq(state.menu.index,9);T.eq(world.ticks,0,'Help never updates the field')
- key('b');T.eq(state.level,'main');T.eq(state.menu.index,1)
+ key('b');T.eq(state.level,'main');T.eq(state.menu.index,2)
  local paints=0;state.paint=function()paints=paints+1;return 9 end
  Help.draw=function()base();return base()end
  T.eq(state:draw(),9);T.eq(paints,1,'repeated source bases paint one native modal')
  T.eq(base(),nil,'outside-phase draw cannot repaint')
- local cover={};game.stack:push(cover);state:update(1/60);T.eq(state.menu.index,1)
+ local cover={};game.stack:push(cover);state:update(1/60);T.eq(state.menu.index,2)
  state:draw();T.eq(paints,2,'covered native Help can still be drawn')
  Help.draw=function()game.save={};return base()end
  local before=game.save;T.eq(state:draw(),false);T.eq(paints,2,'replaced save denies native paint')
