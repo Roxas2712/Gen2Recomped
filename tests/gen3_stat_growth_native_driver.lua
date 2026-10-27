@@ -56,6 +56,28 @@ return function(game)
     if game.stack:top()==b and b.phase=='messages'then press('b')else U.wait(1)end
   end
   assert(game.stack:top()==game.overworld,'Stat window failed to resume victory/field')
+  -- The field Rare Candy flow must share these native pages and keep its
+  -- item consumption, move-learning continuation and caller intact.
+  game.save.inventory={RARE_CANDY=1};game.save.bagOrder={'RARE_CANDY'}
+  local bag=require('src.ui.Gen3BagMenu').new(game)
+  game.stack:push(bag);U.wait(30);assert(bag:selected().id=='RARE_CANDY')
+  press('a',30)
+  if game.stack:top()==bag then press('a',30)end
+  assert(game.stack:top().screenId=='Gen3PartyMenu','Candy must ask for an ordinary party target')
+  press('a',30)
+  local candy
+  for _=1,1200 do
+    local top=game.stack:top()
+    if top.native and top.native.scene and top.native.scene.isOpen()then candy=top;break end
+    press('a',12)
+  end
+  assert(candy and mon.level==41 and not game.save.inventory.RARE_CANDY,'Candy stat window/consumption failed')
+  assert(candy.native.scene._oldStats.maxHp<candy.native.scene._newStats.maxHp,'Candy lost its pre-level HP')
+  shot('native-stat-growth-candy-increases');press('a',4)
+  assert(game.stack:top()==candy and candy.native.scene._page==2)
+  shot('native-stat-growth-candy-totals');press('b',12)
+  assert(not candy.native.scene.isOpen()and mon.level==41 and not game.save.inventory.RARE_CANDY)
+  report.nativeCandyPages=true;report.oneCandyConsumed=true
   report.sixNativeStatLabels=#screen.native.spec.labels
   report.actualExpAward=true;report.oldMaxHp=old.maxHp;report.newMaxHp=new.maxHp
   report.twoAcknowledgments=true;report.queueResumedOnce=true;report.drawSaveRngUnchanged=true

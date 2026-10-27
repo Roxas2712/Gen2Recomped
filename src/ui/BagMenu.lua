@@ -779,7 +779,8 @@ local function vanillaUseOn(game, battle, id, target, list, moveIndex, picker, p
                                                extra.afterStats, afterStats))
         else
           local StatBox = require("src.battle.BattleState").StatBox
-          game.stack:push(StatBox.new(game, target, afterStats))
+          game.stack:push(StatBox.new(game,target,afterStats,
+            {old=extra.beforeStats,new=extra.afterStats}))
         end
       end)
       return
