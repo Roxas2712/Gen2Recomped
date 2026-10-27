@@ -22,6 +22,24 @@ T.eq(select('#',e:readText(0,4096,nil,true)),3)
 T.eq(nodes[1].s,'A');T.eq(nodes[2].t,'ext');T.eq(nodes[2].cmd,19);T.eq(nodes[2].args[1],72)
 T.eq(nodes[3].s,'B');T.eq(nodes[4].t,'nl');T.eq(nodes[5].s,'é');T.eq(nodes[6].code,1)
 T.eq(nodes[7].t,'para');T.eq(nodes[9].t,'scroll');T.eq(nodes[#nodes].t,'eos')
+-- Keep both native text-reader ABIs across all cartridge dialects.
+for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
+ local test=reader(source);test.version=edition
+ local a,n=test:readText(0,#source)
+ local b,m,nodes=test:readText(0,#source,nil,{structured=true})
+ T.eq(a,b);T.eq(n,m);T.eq(nodes[2].cmd,19)
+ T.eq(select('#',test:readText(0,#source,nil,{})),2)
+ local name=reader(bytes(0xBB,0xFC,0,0xBC,0xFF));name.version=edition
+ T.eq(name:readText(0,5),nil);T.eq(name:readText(0,5,nil,true),nil)
+ local allowed=edition=='ruby'or edition=='sapphire'
+ local text,used,ir=name:readText(0,5,nil,{structured=true,rsNameEnd=true})
+ T.eq(text,allowed and 'AB'or nil)
+ if allowed then
+  T.eq(used,5);T.eq(ir[2].cmd,0);T.eq(#ir[2].args,0)
+  T.eq(name:readText(0,5,nil,{rsNameEnd=true}),'AB')
+ end
+ for limit=1,4 do T.eq(name:readText(0,limit,nil,{structured=true,rsNameEnd=true}),nil)end
+end
 local widths={1,1,1,3,1,1,0,1,0,0,2,1,1,1,0,2,1,1,1,1,0,0,0,0}
 for cmd,count in ipairs(widths)do
  local encoded={0xBB,0xFC,cmd}
