@@ -13,8 +13,9 @@
   "scope": "BgEffects implementation, arithmetic subset and BG-effect identifier lists only. No launcher, game assets, ROM bytes or player state copied.",
   "modifications": [
     "BgEffects arithmetic dependency uses Gen2AnimMath instead of the full reference object pool.",
-    "A missing jump-table list resolves through edition-specific Gen2BgEffectIds for older native caches."
+    "A missing jump-table list resolves through edition-specific Gen2BgEffectIds for older native caches.",
+    "Existing Gen2AnimPlayer dispatches BG/palette commands and steps the pool from its current VM update; its legacy visual adapter resolves edition-specific IDs by names."
   ],
   "licence": "Gen1Recomp GPLv3 with its Additional Terms, retained in LICENSE.MD. Existing authors retain their rights; Roxas2712 integration changes in these derived files are offered on those applicable terms.",
-  "qualification": "Standalone native BG API and CPU state-machine traces only. Native animation VM / drawing integration and actual client GPU acceptance remain required before merge."
+  "qualification": "CPU native pool, actual SDK entry and native VM clock integration tested. Scanline drawing and battler-picture OAM handoff are not integrated; no GPU/client/release acceptance."
 }
