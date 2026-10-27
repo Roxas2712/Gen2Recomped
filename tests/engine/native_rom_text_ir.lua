@@ -50,11 +50,21 @@ for _,invalid in ipairs{bytes(0xFD),bytes(0xFC),bytes(0xFC,4,1,2),bytes(0xFC,0xF
  T.eq(ok,true,'malformed input is rejected without an out-of-range operand read');T.eq(value,nil)
 end
 T.eq(reader(bytes(0x53,0x54,0xFF)):readText(0,3,nil,true),'PKMN','native ligatures remain native glyphs')
-for _,glyph in ipairs{{0xF8,0,'{A_BUTTON}'},{0xF8,11,'{DPAD_LEFTRIGHT}'},{0xF9,5,'Lv'},{0xF9,6,'PP'},{0xF9,7,'ID'},{0xF9,8,'№'}}do
+for _,glyph in ipairs{{0xF8,0,'{A_BUTTON}'},{0xF8,2,'{L_BUTTON}'},{0xF8,3,'{R_BUTTON}'},
+ {0xF8,4,'{START_BUTTON}'},{0xF8,5,'{SELECT_BUTTON}'},{0xF8,11,'{DPAD_LEFTRIGHT}'},
+ {0xF9,0,'↑'},{0xF9,1,'↓'},{0xF9,2,'←'},{0xF9,3,'→'},{0xF9,4,'+'},
+ {0xF9,5,'Lv'},{0xF9,6,'PP'},{0xF9,7,'ID'},{0xF9,8,'№'},{0xF9,9,'_'},
+ {0xF9,10,'①'},{0xF9,11,'②'},{0xF9,12,'③'},{0xF9,13,'④'},{0xF9,14,'⑤'},
+ {0xF9,15,'⑥'},{0xF9,16,'⑦'},{0xF9,17,'⑧'},{0xF9,18,'⑨'},
+ {0xF9,19,'('},{0xF9,20,')'},{0xF9,21,'◎'},{0xF9,22,'△'},{0xF9,23,'✕'}}do
  local test=reader(bytes(glyph[1],glyph[2],0xFF))
  local value,_,ir=test:readText(0,3,nil,true)
  T.eq(value,glyph[3]);T.eq(ir[1].t,'tag');T.eq(ir[1].code,glyph[2]);T.eq(test:readText(0,1,nil,true),nil)
 end
+for _,code in ipairs{13,255}do
+ T.eq(reader(bytes(0xF8,code,0xFF)):readText(0,3,nil,true),nil,'unknown button control stays rejected')
+end
+T.eq(reader(bytes(0xF9,24,0xFF)):readText(0,3,nil,true),nil,'unsupported extended bank cells stay rejected')
 local dataStages,assetStages=Extractor.DATA_STAGES,Extractor.ASSET_STAGES
 Extractor.DATA_STAGES={'initial','later'};Extractor.ASSET_STAGES={}
 local finish=reader(source);local emitted

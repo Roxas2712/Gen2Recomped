@@ -1,7 +1,7 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Bind existing address metadata to verified cartridge bytes. The cache owns
 -- decoded text and layout operands; no private decoder or ROM is distributed.
-local M={SCHEMA=1,REVISION=3}
+local M={SCHEMA=1,REVISION=4}
 function M.bind(extractor,text,addresses)
  local rows={schema=M.SCHEMA,named={},records={}}
  local count=0
