@@ -24,7 +24,15 @@ local RI={_ui={inside=function()return false end},new=function()return{}end,pale
 for _,key in ipairs{'textinput','keypressed','keyreleased','mousepressed','gamepadpressed','draw','update','_sbGames','_sbOpenGame','_sbDrawContent','_sbOwns','_sbMousepressed','_sbBack','_sbGo','_sbBackdropWant','play'}do RI[key]=noop end
 local animations=false;RI._settings=function()return{launcherAnimations=animations}end
 RI._chipButton=function(_,_,_,label)return{label=label}end
-local M=require('src.import.LauncherPinball');local session={locale='en'};M.session=function()return session end
+local M=require('src.import.LauncherPinball')
+-- Launcher construction also runs during real ROM-free session teardown.
+-- A missing source provider means no prepared Pinball installation.
+local getenv,fs,getSource=os.getenv,love.filesystem,love.filesystem.getSource
+os.getenv=function(key)if key~='ASCENDANT_PINBALL_ROOT'then return getenv(key)end end
+fs.getSource=nil;check(not M.available(),'headless source provider is optional')
+love.filesystem=nil;check(M.session()==nil,'headless filesystem is optional')
+love.filesystem=fs;fs.getSource=getSource;os.getenv=getenv
+local session={locale='en'};M.session=function()return session end
 M.install(RI)
 local ui=setmetatable({_s=1,_pinOpen=true,section='games',_pinLocale='en',ready={}}, {__index=RI})
 local function click(label)
