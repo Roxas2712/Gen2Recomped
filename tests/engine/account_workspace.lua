@@ -98,4 +98,15 @@ check(sent.editions[1]=='red' and sent.moves[1]=='FLY' and not sent.egg and not 
 check(f.createdGift.code=='TEST-CODE-1234-5678','the generated code is shown in the creation result')
 W.draw(UI);f.rolePassword='private-role-confirmation';W.close(UI)
 check(not f.createdGift and f.rolePassword=='','closing clears generated codes and the role confirmation password')
+W.open(UI);W.tick(UI);f=UI._accountOverlay;f.mode='friends'
+local pinId='pinball:accept:11111111-1111-4111-8111-111111111111';local pinAction
+UI._pinFriends={rows=function(_,peer)return peer and {}or{{id=pinId,label='PINBALL ANNEHMEN',note='QA invitation'}}end,
+ action=function(_,id)if id:match('^pinball:')then pinAction=id;return true end;return false end}
+for _,mode in ipairs({'friends','inbox'})do
+ f.mode=mode;W.draw(UI);local found=false
+ for _,rect in ipairs(f.rects)do if rect.id==pinId then found=true end end
+ check(found,'Pinball invitation has a native actionable row in '..mode)
+end
+W.action(UI,pinId);check(pinAction==pinId,'account actions route Pinball to its adapter')
+UI._pinFriends=nil;W.close(UI)
 print('Account workspace: '..n..' checks passed')

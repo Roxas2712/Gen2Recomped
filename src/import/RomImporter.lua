@@ -12104,5 +12104,6 @@ require("src.import.FirstRun").install(RomImporter)
 require("src.import.NativeLanguageSetup").install(RomImporter)
 
 require("src.import.LauncherPokemonXY").install(RomImporter)
+require("src.import.LauncherPinball").install(RomImporter)
 
 return RomImporter

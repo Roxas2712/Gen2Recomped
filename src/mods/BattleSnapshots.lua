@@ -1,5 +1,6 @@
 -- Detached Gen 1-5 snapshots and revision-bound native command admission.
 -- Snapshot building stays data-only; submit validates before native dispatch.
+local BattleQueuePhase = require("src.battle.BattleQueuePhase")
 local MoveSelectionPhase = require("src.battle.MoveSelectionPhase")
 local Ids = require("src.mods.UnifiedIds")
 local Intents = require("src.mods.BattleIntents")
@@ -234,7 +235,7 @@ local function prompt(b, covered, actor)
     return "mimic"
   end
   if
-    b.phase == "messages"
+    BattleQueuePhase.active(b)
     and b.current
     and not b.current.choice
     and ((b.msgWaiting and (b.msgPreWait or 0) <= 0) or (b.msgPrompt and (b.msgPromptWait or 0) <= 0))
@@ -247,7 +248,7 @@ end
 -- Decode only glyphs already revealed by the native message clock. Unknown
 -- glyphs leave the optional visible message unavailable, never reveal ahead.
 local function visibleMessage(battle, covered, data)
-  if covered or battle.phase ~= "messages" or not battle.shown then
+  if covered or not BattleQueuePhase.active(battle) or not battle.shown then
     return nil
   end
   local reverse = {}

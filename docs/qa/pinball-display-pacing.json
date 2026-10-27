@@ -1,0 +1,183 @@
+{
+  "date": "2026-10-27",
+  "scope": "40-second actual L\u00d6VE 12 Metal launcher/player samples on the development Mac; automated input, not all scenes or device certification",
+  "cause": "A frame was removed before native computation, leaving the consumer mailbox empty. A bounded completed-frame FIFO avoids the gap and absorbs completion jitter.",
+  "cases": {
+    "baseline": {
+      "update": {
+        "n": 2401,
+        "mean_ms": 0.1504862557267325,
+        "p95_ms": 0.23870833334171948,
+        "p99_ms": 0.2874583333323244,
+        "max_ms": 0.49595833333881956,
+        "over25": 0,
+        "over50": 0
+      },
+      "unique_native_presents": 1649,
+      "focus_lost_frames": 0,
+      "seconds": 40,
+      "seats": 1,
+      "full_table": false,
+      "native": {
+        "n": 2401,
+        "mean_ms": 3.137347476745574,
+        "p95_ms": 8.689791666661506,
+        "p99_ms": 9.30820833333712,
+        "max_ms": 10.174375000012503,
+        "over25": 0,
+        "over50": 0
+      },
+      "display": {
+        "n": 2401,
+        "mean_ms": 16.666406601416085,
+        "p95_ms": 17.686625000003176,
+        "p99_ms": 18.300916666674993,
+        "max_ms": 28.243666666668332,
+        "over25": 1,
+        "over50": 0
+      },
+      "completed": true
+    },
+    "buffered": {
+      "display": {
+        "n": 2402,
+        "mean_ms": 16.665421610463515,
+        "p95_ms": 17.311333333339007,
+        "p99_ms": 18.163874999991947,
+        "max_ms": 20.08624999999853,
+        "over25": 0,
+        "over50": 0
+      },
+      "unique_native_presents": 2391,
+      "focus_lost_frames": 0,
+      "native": {
+        "n": 2402,
+        "mean_ms": 4.5156952019149506,
+        "p95_ms": 7.432916666658684,
+        "p99_ms": 7.93937499999231,
+        "max_ms": 19.043125000010264,
+        "over25": 0,
+        "over50": 0
+      },
+      "seats": 1,
+      "update": {
+        "n": 2402,
+        "mean_ms": 0.2196710553706257,
+        "p95_ms": 0.2731249999925467,
+        "p99_ms": 0.3272916666645642,
+        "max_ms": 0.560000000000116,
+        "over25": 0,
+        "over50": 0
+      },
+      "full_table": false,
+      "seconds": 40,
+      "completed": true
+    },
+    "fulltable": {
+      "unique_native_presents": 2389,
+      "focus_lost_frames": 0,
+      "seconds": 40,
+      "seats": 1,
+      "full_table": true,
+      "native": {
+        "p95_ms": 10.099375000010014,
+        "p99_ms": 10.380625000003363,
+        "max_ms": 55.687958333329846,
+        "over25": 1,
+        "over50": 1,
+        "n": 2401,
+        "mean_ms": 7.044197695404676
+      },
+      "update": {
+        "p95_ms": 0.23362499999635133,
+        "p99_ms": 0.2888333333324056,
+        "max_ms": 0.4350416666696333,
+        "over25": 0,
+        "over50": 0,
+        "n": 2401,
+        "mean_ms": 0.1708516069693739
+      },
+      "display": {
+        "p95_ms": 16.828624999995156,
+        "p99_ms": 17.71154166666733,
+        "max_ms": 42.789166666665324,
+        "over25": 1,
+        "over50": 0,
+        "n": 2401,
+        "mean_ms": 16.666602492017233
+      },
+      "completed": true
+    },
+    "twoplayer": {
+      "unique_native_presents": 2325,
+      "focus_lost_frames": 0,
+      "native": {
+        "max_ms": 25.311333333334574,
+        "over25": 1,
+        "over50": 0,
+        "n": 2402,
+        "mean_ms": 12.626431255204004,
+        "p95_ms": 18.44487500000014,
+        "p99_ms": 24.74495833333279
+      },
+      "seats": 2,
+      "full_table": true,
+      "seconds": 40,
+      "display": {
+        "max_ms": 43.07666666666776,
+        "over25": 1,
+        "over50": 0,
+        "n": 2402,
+        "mean_ms": 16.66550770191506,
+        "p95_ms": 17.872875000001898,
+        "p99_ms": 18.358250000005683
+      },
+      "update": {
+        "max_ms": 1.9983749999994416,
+        "over25": 0,
+        "over50": 0,
+        "n": 2402,
+        "mean_ms": 0.20199250624497425,
+        "p95_ms": 0.2576250000032587,
+        "p99_ms": 0.4931666666649903
+      },
+      "completed": true
+    },
+    "solo_repeat": {
+      "full_table": false,
+      "passed": true,
+      "update": {
+        "p95_ms": 0.22570833333190876,
+        "p99_ms": 0.2533333333332166,
+        "max_ms": 0.44937499999520014,
+        "over25": 0,
+        "over50": 0,
+        "n": 2402,
+        "mean_ms": 0.18023048501267486
+      },
+      "native": {
+        "p95_ms": 7.186333333329742,
+        "p99_ms": 7.65733333333074,
+        "max_ms": 16.135916666669914,
+        "over25": 0,
+        "over50": 0,
+        "n": 2402,
+        "mean_ms": 4.365184429642063
+      },
+      "display": {
+        "p95_ms": 17.886083333330305,
+        "p99_ms": 18.435208333329456,
+        "max_ms": 42.39604166666666,
+        "over25": 1,
+        "over50": 0,
+        "n": 2402,
+        "mean_ms": 16.666542447266142
+      },
+      "unique_native_presents": 2391,
+      "focus_lost_frames": 0,
+      "seconds": 40,
+      "seats": 1
+    }
+  },
+  "historical_flags": "completed marks a finished measurement, not the thresholds of the subsequently versioned qualification harness."
+}
