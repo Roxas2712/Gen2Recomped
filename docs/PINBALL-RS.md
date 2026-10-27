@@ -102,6 +102,12 @@ contains the client, not the complete ModCompass server application.
 
 ## Display pacing correction
 
+The subsequent full-table row-cache optimization, native-overlay layout
+stabilization and longer displayed qualification are described in
+[Pinball performance investigation](PINBALL-PERFORMANCE.md). Those longer runs
+also measure source-picture holds, which can be hidden by a 60-Hz window.
+The short samples below document the earlier FIFO correction.
+
 The first displayed test reproduced only 41.2 distinct native images per second
 despite a 60-Hz window and a fast native worker. Clearing the frame mailbox
 before native execution caused consumers to miss completed pictures. The worker
@@ -137,8 +143,10 @@ python3 tools/qualify_pinball_frames.py --love /path/to/love --label two --seats
 Run GPU timing samples separately and keep the window focused. The harness uses
 isolated profiles/player files and managed ephemeral hosts; it never writes the
 production solo saves. It measures distinct native frames, not merely window
-refreshes, and fails below 95% of native cadence, p99 above 25 ms, a maximum
-interval above 75 ms, or focus loss. These thresholds are a regression check,
+refreshes, and fails below 95% of native cadence, p99 at or above 25 ms, a maximum
+display or source-picture interval at or above 75 ms, or focus loss. The optional
+`--pause-unfocused` policy pauses and excludes background time, which is recorded
+separately. These thresholds are a regression check,
 not a guarantee of imperceptible stutters.
 
 ## Qualification and outstanding work

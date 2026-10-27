@@ -12,6 +12,7 @@
 #include "self_heal.h"
 #include "presentation.h"
 #include <array>
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <memory>
@@ -21,6 +22,13 @@
 #include <stdexcept>
 #include <cstring>
 #include <unordered_set>
+#include <chrono>
+#ifdef __APPLE__
+#include <mach/mach.h>
+#include <pthread.h>
+#else
+#include <time.h>
+#endif
 
 namespace {
 #ifdef PINBALL_EU_VARIANT
@@ -43,6 +51,17 @@ std::vector<uint8_t> bytes(const char* path) {
  if(!file.read(reinterpret_cast<char*>(result.data()),count))throw std::runtime_error("Input file was truncated");
  return result;
 }
+double thread_seconds() {
+#ifdef __APPLE__
+ thread_basic_info_data_t info{};mach_msg_type_number_t count=THREAD_BASIC_INFO_COUNT;
+ if(thread_info(pthread_mach_thread_np(pthread_self()),THREAD_BASIC_INFO,reinterpret_cast<thread_info_t>(&info),&count)!=KERN_SUCCESS)return 0;
+ return info.user_time.seconds+info.system_time.seconds+(info.user_time.microseconds+info.system_time.microseconds)*1e-6;
+#elif defined(CLOCK_THREAD_CPUTIME_ID)
+ timespec t{};clock_gettime(CLOCK_THREAD_CPUTIME_ID,&t);return t.tv_sec+t.tv_nsec*1e-9;
+#else
+ return 0;
+#endif
+}
 struct Machine {
  gba::GbaBios bios;
  gba::GbaBus bus;
@@ -59,6 +78,8 @@ struct Machine {
  gbarecomp::RuntimeTimingContext timing;
  uint16_t buttons=0;
  bool full_table=false;
+ bool diagnostics=false;
+ std::array<double,4> timings{};
  uint32_t width=240,height=160;
  PinballTableView table_view;
  void picture() {
@@ -69,7 +90,7 @@ struct Machine {
    fallback.resize(ppu.render_bytes());
    ppu.render(fallback.data(),bus.read16(0x04000000),bus.io().raw(),bus.vram_ptr(),bus.oam_ptr(),bus.pal_ptr());rgb=fallback.data();
   }
-  if(full_table&&table_view.render(bus,ppu,rgb,rgba,width,height))return;
+  if(full_table&&table_view.render(bus,ppu,frames,rgba,width,height))return;
   width=w;height=h;
   rgba.resize(static_cast<size_t>(w)*h*4);
   for(size_t i=0;i<static_cast<size_t>(w)*h;i++) {
@@ -115,6 +136,19 @@ void bind(Machine& m) {
 }
 }
 extern "C" {
+// The caller is the single game worker. Foreground animation is latency
+// sensitive; paused/background work must not retain that scheduling class.
+// A negative value only queries the current class for qualification.
+int ascendant_pinball_priority(int foreground) {
+#ifdef __APPLE__
+ if(foreground>=0&&pthread_set_qos_class_self_np(foreground?QOS_CLASS_USER_INTERACTIVE:QOS_CLASS_UTILITY,0)!=0)return 0;
+ qos_class_t current=QOS_CLASS_UNSPECIFIED;
+ if(pthread_get_qos_class_np(pthread_self(),&current,nullptr)!=0)return 0;
+ return static_cast<int>(current);
+#else
+ (void)foreground;return 0;
+#endif
+}
 const char* ascendant_pinball_error(){return error.c_str();}
 const char* ascendant_pinball_coverage(){std::lock_guard<std::mutex> lock(ownership);static std::string report;report=gbarecomp::self_heal_misses_json();return report.c_str();}
 void* ascendant_pinball_open(const char* rom,const char* bios,const char* save) {
@@ -147,6 +181,9 @@ int ascendant_pinball_step(void* handle,uint16_t buttons) {
  Machine* current=nullptr;
  try {
   auto& m=machine(handle);current=&m;bind(m);m.buttons=buttons&1023;m.bus.io().set_keyinput(1023^m.buttons);
+  using Clock=std::chrono::steady_clock;
+  const auto start=m.diagnostics?Clock::now():Clock::time_point{};
+  const double cpu=m.diagnostics?thread_seconds():0;
   const uint64_t before=g_runtime_vblank_starts;
   const uint64_t interp=gbarecomp::self_heal_interpreted_insns();
   uint64_t dispatches=0;
@@ -157,8 +194,11 @@ int ascendant_pinball_step(void* handle,uint16_t buttons) {
    }catch(const gbarecomp::RuntimeDispatchYield&){}
   }
   m.interpreted+=gbarecomp::self_heal_interpreted_insns()-interp;
-  m.calls+=dispatches;capture(m);m.picture();
+  m.calls+=dispatches;capture(m);
+  const auto simulated=m.diagnostics?Clock::now():Clock::time_point{};
+  m.picture();
   m.sample_count=m.bus.audio().drain_sample_block(m.samples.data(),m.samples.size(),m.sample_rate);
+  if(m.diagnostics){const auto end=Clock::now();m.timings={std::chrono::duration<double>(simulated-start).count(),std::chrono::duration<double>(end-simulated).count(),thread_seconds()-cpu,double(gbarecomp::self_heal_interpreted_insns()-interp)};}
   return 1;
  }catch(const std::exception& ex){if(current)capture(*current);error=ex.what();return 0;}
 }
@@ -193,7 +233,7 @@ int ascendant_pinball_state(void* handle,const char* path,int load) {
    timing.pending_cycles=value(36,8);timing.event_budget=static_cast<int64_t>(value(44,8));
    if(value(52,8)!=0)throw std::runtime_error("Unsupported Pinball quick state flags");
    ok=gbarecomp::debug::load_state_bytes(content.data()+64,content.size()-64,context,&error);
-   if(ok){gbarecomp::runtime_restore_timing_context(timing);m->bus.io().set_keyinput(1023^m->buttons);m->bus.audio().discard_playback();m->picture();}
+   if(ok){gbarecomp::runtime_restore_timing_context(timing);m->bus.io().set_keyinput(1023^m->buttons);m->bus.audio().discard_playback();m->table_view.reset_layout();m->picture();}
   }else {
    std::vector<uint8_t> payload;
    ok=gbarecomp::debug::save_state_bytes(&payload,context,&error);
@@ -214,6 +254,16 @@ int ascendant_pinball_state(void* handle,const char* path,int load) {
 }
 uint64_t ascendant_pinball_frame(void* handle){std::lock_guard<std::mutex> lock(ownership);auto* m=static_cast<Machine*>(handle);return machines.count(m)?m->frames:0;}
 uint64_t ascendant_pinball_interpreted(void* handle){std::lock_guard<std::mutex> lock(ownership);auto* m=static_cast<Machine*>(handle);return machines.count(m)?m->interpreted:0;}
+int ascendant_pinball_table_stats(void* handle,uint32_t* reused,uint32_t* rendered) {
+ std::lock_guard<std::mutex> lock(ownership);auto* m=static_cast<Machine*>(handle);
+ if(!machines.count(m)||!reused||!rendered)return 0;
+ *reused=m->table_view.reused_rows;*rendered=m->table_view.rendered_rows;return 1;
+}
+int ascendant_pinball_diagnostics(void* handle,double* values) {
+ std::lock_guard<std::mutex> lock(ownership);auto* m=static_cast<Machine*>(handle);
+ if(!machines.count(m))return 0;
+ m->diagnostics=true;if(values)std::copy(m->timings.begin(),m->timings.end(),values);return 1;
+}
 const char* ascendant_pinball_checkpoint(void* handle) {
  std::lock_guard<std::mutex> lock(ownership);
  auto* m=static_cast<Machine*>(handle);if(!machines.count(m))return nullptr;
