@@ -138,7 +138,7 @@ for _,version in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
 end
 -- Other native party item families must use the same result owner. Their
 -- actual effects, inventory and enemy continuation remain the shared engine's.
-for _,id in ipairs({'FULL_HEAL','REVIVE','ETHER','ELIXER'})do
+for _,id in ipairs({'FULL_HEAL','REVIVE','ETHER','ELIXER','MYSTERYBERRY'})do
   local b,game,step,wait,open=fixture('crystal',id)
   local target=b.player.mon
   target.hp=target.stats.hp;b.player.shownHP=target.hp
@@ -152,8 +152,9 @@ for _,id in ipairs({'FULL_HEAL','REVIVE','ETHER','ELIXER'})do
   local picker=game.stack:top()
   if id=='REVIVE'then step('down')end
   step('a')
-  if id=='ETHER'then
+  if id=='ETHER'or id=='MYSTERYBERRY'then
     T.neq(game.stack:top(),picker,'ETHER opens its real move selector above the same party')
+    T.eq(game.stack:top().screenId,'Gen2MoveDeleter','native ETHER uses the cartridge move-list controller')
     step('b');T.eq(game.stack:top(),picker,'PP move cancel returns to the retained native party')
     T.eq(game.save.inventory[id],1,'PP move cancellation preserves inventory')
     T.eq(target.moves[1].pp,1,'PP move cancellation preserves PP')
