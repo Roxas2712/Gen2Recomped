@@ -2,7 +2,9 @@
 package.path='./?.lua;./?/init.lua;'..package.path
 local T=require('tests.modkit')
 local Assets=require('src.render.Assets')
-local imageData=love.image.newImageData
+local originalImage=love.image
+local imageData=love.image and love.image.newImageData
+love.image=love.image or {}
 local optional='mods/pixel_probe/optional.png'
 local corrupt='mods/pixel_probe/corrupt.png'
 local native='assets/generated/sprites/not-imported.png'
@@ -18,6 +20,7 @@ love.image.newImageData=function(path,...)
   if path==corrupt then error('invalid PNG header')end
   if path==native then error('native generated sheet absent')end
   if path=='assets/generated/sprites/placeholder_sprite.png'then return placeholder end
+  assert(imageData,'unexpected decoder input: '..tostring(path))
   return imageData(path,...)
 end
 local run=T.sdk.loadMods({'mods/pixel_probe'},{data=T.fixtures.fresh(),fs=T.sdk.memfs({
@@ -57,5 +60,6 @@ before=calls[optional]
 T.eq(Assets.imageData(optional),pixel,'mutable pixel reads preserve actual decoded identity')
 T.eq(calls[optional],before+1,'mutable pixel reads are not shared implicitly')
 love.image.newImageData=imageData
+love.image=originalImage
 require('src.mods.Loader').teardown();run.release()
 T.finish('optional pixel decode failure, fallback and retry through real SDK')
