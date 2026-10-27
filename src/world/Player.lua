@@ -920,6 +920,7 @@ end
 
 function Player:pose()
   local px, py = self.px, self.py
+  if GameVersion.isGen2() and self.fishingState then py=py-(self.spriteYOffset or 0) end
   local hopping = false
   -- ledge hops arc (set for 2 cells by the ledge handler); surfing bobs
   if self.hopFrames and self.hopFrames > 0 then

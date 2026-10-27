@@ -1387,6 +1387,11 @@ function BattleState.giveWildHeldItem(data, mon, rng, compoundEyes)
 end
 
 function BattleState.newWild(game, species, level, opts)
+  local prepared
+  if opts and opts.nativeFishingMon then
+    assert(not opts.wildRecord, 'ambiguous native wild individual')
+    prepared=require('src.world.Gen2Fishing').takePrepared(game,opts.nativeFishingMon,species,level)
+  end
   local authored
   if opts and opts.wildRecord then
     local why;authored,why=require('src.battle.WildRecord').validate(game.data,opts.wildRecord)
@@ -1414,7 +1419,7 @@ function BattleState.newWild(game, species, level, opts)
      and game.data.pokemon[species] and game.data.pokemon[species].forms then
     form=require("src.pokemon.PolishedUnown").choose(game.save)
   end
-  local wild = Pokemon.new(game.data, species, level, nil, form)
+  local wild = prepared or Pokemon.new(game.data, species, level, nil, form)
   -- SYNCHRONIZE'S NATURE AND CUTE CHARM'S GENDER, decided with the slot (see
   -- src/world/Gen4WildLead.lua) and applied the cartridge's way: personality
   -- re-drawn until it carries them.
@@ -1428,7 +1433,7 @@ function BattleState.newWild(game, species, level, opts)
   -- without a third field.  147 species in Hoenn name something.
   local compoundEyes = (game.data.constants or {}).gen == 4
     and require("src.world.Gen4WildLead").lead(game.data, game.save).ability == "COMPOUND_EYES"
-  BattleState.giveWildHeldItem(game.data, wild, nil, compoundEyes)
+  if not prepared then BattleState.giveWildHeldItem(game.data, wild, nil, compoundEyes) end
   -- BATTLETYPE_SHINY (`loadvar 3, 7` before the loadwildmon) overwrites the
   -- rolled DVs with the fixed shiny pair; the Lake of Rage Gyarados is the
   -- only encounter in Gold that uses it.

@@ -420,6 +420,19 @@ local function useOn(game, battle, id, target, list, moveIndex, picker)
   end
 
   if result == "fish" then
+    if require('src.core.GameVersion').isGen2() then
+      local ow=game.overworld
+      -- The upstream START menu exits before it opens this native bag.
+      -- Only this bag may waive its own overlay during preflight; SELECT
+      -- cannot steal a foreign screen's input ownership.
+      local ownBag=game.stack:top()==list
+      if ow and require('src.world.Gen2Fishing').canUse(ow,game,id,ownBag) then
+        list:close()
+        return ow:goFishing(id)
+      end
+      showMessages(game,{Strings("OAK: %s!\nThis isn't the\ntime to use that!",save_name(game))})
+      return
+    end
     list:close()
     local ow = game.overworld
     local p = ow and ow.player
