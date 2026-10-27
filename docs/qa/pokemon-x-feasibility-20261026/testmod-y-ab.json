@@ -1,0 +1,25 @@
+{
+  "scope": "Y, 3x, fresh independent QA profiles; standard initial button sequence; English professor introduction; actual native GPU framebuffers",
+  "order": [
+    "off-before",
+    "on",
+    "off-after"
+  ],
+  "frames": 2400,
+  "runs": {
+    "off-before": {
+      "sha256": "229710e9f9560813dc2e28a44bab9904518a010d3018cafddb9264d2afe8f811",
+      "image": "testmod-y-off-before.png"
+    },
+    "on": {
+      "sha256": "b7e453d6298a3ce99e3b79003bfdf6bcd7525e86beca499b39f1a155949f2a91",
+      "image": "testmod-y-on.png"
+    },
+    "off-after": {
+      "sha256": "229710e9f9560813dc2e28a44bab9904518a010d3018cafddb9264d2afe8f811",
+      "image": "testmod-y-off-after.png"
+    }
+  },
+  "off_restored_identical": true,
+  "on_differs": true
+}

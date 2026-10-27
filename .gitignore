@@ -112,6 +112,7 @@ mobile/ios/bundle_id.local
 #exclude mods folder 
 
 /tests/*
+!/tests/pokemon_x_preflight_test.py
 !/tests/test_fetch_love_runtime.py
 !/tests/native_suspend/
 !/tests/native_arena/
@@ -199,3 +200,5 @@ mobile/ios/bundle_id.local
 !/tests/drivers/ptbr_auto.lua
 !/mods/UNI_LANGUAGE_NATIVE/
 !/mods/UNI_LANGUAGE_NATIVE/**
+
+!/tests/pokemon_xy_library_test.py

@@ -781,7 +781,10 @@ end
 
 function love.keyreleased(key)
   if editorMode or TouchEditor then return end
-  if Importer then return end
+  if Importer then
+    if Importer.keyreleased then Importer:keyreleased(key) end
+    return
+  end
   if not Game then return end
   if RetroOverlay.game then return end
   Game:keyreleased(key)
@@ -1264,6 +1267,8 @@ function love.threaderror(thread, errorstring)
 end
 
 function love.quit()
+  local kalos = package.loaded['src.import.PokemonXYNative']
+  if kalos then kalos.shutdown() end
   local jobs=package.loaded['src.mods.Job']
   if editorMode and EditorApp.quit then
     if EditorApp.quit() then return true end -- unsaved editor veto

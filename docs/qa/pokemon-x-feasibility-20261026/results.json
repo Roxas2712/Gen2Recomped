@@ -1,0 +1,62 @@
+{
+  "upstream_revisions": {
+    "zakuro": "e174910de5e7285581b153cbce05543efb135cd5",
+    "3dsrecomp": "cec1270db38411f9c02d3f356fc3ed6c3f007424"
+  },
+  "boot_test": "not_run",
+  "recompilation": "not_run",
+  "host": {
+    "system": "Darwin",
+    "architecture": "arm64",
+    "cargo_available": false,
+    "rustc_available": false,
+    "clang_available": true,
+    "zakuro_available": false,
+    "3dsrecomp_available": false,
+    "free_GiB": 26.336
+  },
+  "input": {
+    "format": "CIA",
+    "bytes": 1807300928,
+    "cia": {
+      "title_id": "0004000000055D00",
+      "contents": [
+        {
+          "index": 0,
+          "id": 0,
+          "present": true,
+          "size": 1801052160,
+          "encrypted": false,
+          "offset": 14656,
+          "tmd_sha256_matches": true
+        },
+        {
+          "index": 1,
+          "id": 1,
+          "present": true,
+          "size": 6234112,
+          "encrypted": false,
+          "offset": 1801066816,
+          "tmd_sha256_matches": true
+        }
+      ],
+      "title_version": 0
+    },
+    "outer_content_encrypted": false,
+    "title_id": "0004000000055D00",
+    "executable_offset": 14656,
+    "product_code": "CTR-P-EKJA",
+    "ncch_no_crypto": false,
+    "ncch_crypto_method": 0,
+    "plaintext_hashes": {
+      "extended_header": false,
+      "exefs_superblock": false,
+      "romfs_superblock": false
+    },
+    "blockers": [
+      "ncch_encrypted_or_damaged"
+    ],
+    "status": "blocked",
+    "sha256": "504cd16e78ee56909681a7449a45fc27d2ce5f8d9a33710977fbf6a99bfb3185"
+  }
+}

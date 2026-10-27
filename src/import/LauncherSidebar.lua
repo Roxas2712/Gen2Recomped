@@ -60,6 +60,7 @@ Sidebar.SERIES = {
 }
 
 function Sidebar.consoleOf(version)
+  if version=="x" or version=="y" then return "3ds" end
   local info = GameVersion.info(version)
   local gen = info and tonumber(info.generation) or 1
   if gen >= 4 then return "nds" end
@@ -91,6 +92,7 @@ end
 Sidebar.metaText = metaText
 
 local function nameOf(v)
+  if v=="x" or v=="y" then return "Pokémon "..v:upper() end
   local info = GameVersion.info(v)
   return info and (info.displayName or info.launcherName) or tostring(v)
 end

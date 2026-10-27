@@ -1,0 +1,69 @@
+diff --git a/crates/zakuro-gpu/src/raster.rs b/crates/zakuro-gpu/src/raster.rs
+index 8ef7682..78935bc 100644
+--- a/crates/zakuro-gpu/src/raster.rs
++++ b/crates/zakuro-gpu/src/raster.rs
+@@ -741,7 +741,11 @@ fn shade_with<T: Send>(
+     inputs: &[[Vec4; shader::INPUT_REGISTERS]],
+     then: impl Fn([Vec4; shader::OUTPUT_REGISTERS]) -> T + Sync,
+ ) -> Vec<T> {
+-    if inputs.len() < PARALLEL_VERTICES {
++    // Native SIMD makes small batches cheaper than handing the entire draw
++    // from the emulation thread into Rayon's pool. Keep cold/interpreted
++    // programs parallel at the existing threshold. Integration by Roxas2712.
++    let minimum = if cfg!(target_os = "macos") && shader::vertices_are_compiled(unit) { 4096 } else { PARALLEL_VERTICES };
++    if inputs.len() < minimum || rayon::current_num_threads() == 1 {
+         return shader::run_vertices(unit, inputs).into_iter().map(then).collect();
+     }
+     // a few chunks a thread, handing out many small ones costs more than
+@@ -2713,6 +2717,30 @@ mod tests {
+     use super::*;
+     use std::collections::HashMap;
+ 
++    #[test]
++    fn vertex_handoff_preserves_bits_and_input_order() {
++        const IDENTITY: u32 = 0x1B << 5 | 0x1B << 14 | 0x1B << 23;
++        for prepared in [false, true] {
++            let mut unit = ShaderUnit::new();
++            unit.descriptors[0] = 0xF | IDENTITY;
++            unit.program[..3].copy_from_slice(&[0x13 << 26, 0x13 << 26 | 1 << 21 | 1 << 12, 0x22 << 26]);
++            if prepared { unit.prepare(); }
++            for count in [511, 512, 513, 4095, 4096, 4097, 16384] {
++                let mut inputs = vec![[shader::ZERO; shader::INPUT_REGISTERS]; count];
++                for (index, input) in inputs.iter_mut().enumerate() {
++                    input[0] = [index as f32, -(index as f32), 0.25, 1.0];
++                    input[1] = [0.5, (index % 17) as f32, 0.75, 1.0];
++                }
++                let expected = shader::run_vertices(&unit, &inputs);
++                let actual = shade_with(&unit, &inputs, |output| output);
++                let bits = |values: Vec<[[f32; 4]; shader::OUTPUT_REGISTERS]>| {
++                    values.into_iter().flatten().flatten().map(f32::to_bits).collect::<Vec<_>>()
++                };
++                assert_eq!(bits(actual), bits(expected), "count={count}, prepared={prepared}");
++            }
++        }
++    }
++
+     /// the varyings picked out of packed attributes one by one, the way
+     /// they were before VertexPlan.
+     fn picked_vertex(map: &OutputMap, attributes: &[Vec4; 16]) -> Vertex {
+diff --git a/crates/zakuro-gpu/src/shader/mod.rs b/crates/zakuro-gpu/src/shader/mod.rs
+index ac6ca45..f616ffd 100644
+--- a/crates/zakuro-gpu/src/shader/mod.rs
++++ b/crates/zakuro-gpu/src/shader/mod.rs
+@@ -607,6 +607,16 @@ impl ShaderUnit {
+     }
+ }
+ 
++/// Whether this unit can already use the native SIMD program. Querying it
++/// starts the usual asynchronous compilation; it never waits for that work.
++pub(crate) fn vertices_are_compiled(unit: &ShaderUnit) -> bool {
++    if log::log_enabled!(target: "zakuro_gpu::shader::nan", log::Level::Trace) { return false; }
++    #[cfg(feature = "jit")]
++    { return unit.decoded.as_ref().and_then(|program| jit::compiled(unit, program)).is_some(); }
++    #[cfg(not(feature = "jit"))]
++    { let _ = unit; false }
++}
++
+ /// runs the vertex shader over many vertices, a batch of them at a time,
+ /// giving what running it on each would give.
+ pub fn run_vertices(unit: &ShaderUnit, inputs: &[[Vec4; INPUT_REGISTERS]]) -> Vec<[Vec4; OUTPUT_REGISTERS]> {

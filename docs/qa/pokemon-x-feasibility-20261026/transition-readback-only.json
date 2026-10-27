@@ -1,0 +1,113 @@
+{
+  "order": "A-B-B-A",
+  "runs": [
+    {
+      "label": "baseline-1",
+      "bridge_sha256": "c5cb2a042e9914d8225d4885b13046811614d4529d1242d22977191de2cd36be",
+      "run": "play-y-1793090698",
+      "transition_seconds": 72.19992800000011,
+      "focused_percent": 100.0,
+      "emulated_hz_including_waits": 59.833854681960254,
+      "native_observed": {
+        "samples": 3443,
+        "mean_ms": 3.7666564042985766,
+        "p95_ms": 9.256,
+        "p99_ms": 10.068,
+        "max_ms": 15.17
+      },
+      "redraw": {
+        "samples": 4143,
+        "mean_ms": 16.671254405020516,
+        "p95_ms": 17.665,
+        "p99_ms": 17.983,
+        "max_ms": 37.178
+      },
+      "native_frames_over_50ms": [],
+      "endpoints_present": true,
+      "fatal": false
+    },
+    {
+      "label": "candidate-1",
+      "bridge_sha256": "2c59f2ed783f6c1f0e1c584789e663228a39eb7448f7207b24d81ab8969e600e",
+      "run": "play-y-1793090789",
+      "transition_seconds": 72.40081700000016,
+      "focused_percent": 100.0,
+      "emulated_hz_including_waits": 59.68164696263014,
+      "native_observed": {
+        "samples": 3547,
+        "mean_ms": 3.5638818720045107,
+        "p95_ms": 7.771,
+        "p99_ms": 9.232,
+        "max_ms": 20.654
+      },
+      "redraw": {
+        "samples": 4143,
+        "mean_ms": 16.675517982138548,
+        "p95_ms": 17.806,
+        "p99_ms": 19.329,
+        "max_ms": 47.576
+      },
+      "native_frames_over_50ms": [],
+      "endpoints_present": true,
+      "fatal": false
+    },
+    {
+      "label": "candidate-2",
+      "bridge_sha256": "2c59f2ed783f6c1f0e1c584789e663228a39eb7448f7207b24d81ab8969e600e",
+      "run": "play-y-1793090879",
+      "transition_seconds": 72.41554100000003,
+      "focused_percent": 100.0,
+      "emulated_hz_including_waits": 59.655702910511955,
+      "native_observed": {
+        "samples": 3390,
+        "mean_ms": 3.8237530973451324,
+        "p95_ms": 9.259,
+        "p99_ms": 9.808,
+        "max_ms": 33.485
+      },
+      "redraw": {
+        "samples": 4152,
+        "mean_ms": 16.667433285163778,
+        "p95_ms": 18.476,
+        "p99_ms": 19.544,
+        "max_ms": 39.121
+      },
+      "native_frames_over_50ms": [],
+      "endpoints_present": true,
+      "fatal": false
+    },
+    {
+      "label": "baseline-2",
+      "bridge_sha256": "c5cb2a042e9914d8225d4885b13046811614d4529d1242d22977191de2cd36be",
+      "run": "play-y-1793090970",
+      "transition_seconds": 72.2173699999999,
+      "focused_percent": 100.0,
+      "emulated_hz_including_waits": 59.819403559005345,
+      "native_observed": {
+        "samples": 3299,
+        "mean_ms": 3.9348378296453475,
+        "p95_ms": 9.797,
+        "p99_ms": 10.301,
+        "max_ms": 11.573
+      },
+      "redraw": {
+        "samples": 4140,
+        "mean_ms": 16.66635048309179,
+        "p95_ms": 18.403,
+        "p99_ms": 19.312,
+        "max_ms": 45.168
+      },
+      "native_frames_over_50ms": [],
+      "endpoints_present": true,
+      "fatal": false
+    }
+  ],
+  "scope": "Y 3x, stereo off, same owned state and standard HID input; three round trips per run",
+  "caveats": [
+    "Not game-rendered FPS; native metrics sample observed completed frames.",
+    "Native observed means worker_ms: native execution/readback plus blank check, image copy and audio enqueue; not Rust CPU time alone.",
+    "QA screenshot intervals excluded from distributions, retained in slow-frame records.",
+    "A passing candidate cannot establish causality if controls also fail to reproduce old hitches.",
+    "No guarantee for later areas, other titles or cold driver/system caches."
+  ]
+}
