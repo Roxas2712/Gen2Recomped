@@ -1,0 +1,2013 @@
+{
+  "passed": true,
+  "sourceCommit": "e353116cf2a1d48f1fdd15de17df6eda14c0227c",
+  "sourceStable": true,
+  "inventoryOnly": false,
+  "referenceMainCommit": "2fdfe77f0cade522d73fdacd6f8b7128e4c265d5",
+  "runtimeMatchesMain": false,
+  "performanceBaseline": true,
+  "freshImports": true,
+  "playerProfilesUsed": false,
+  "originalEntrypointSha256": "f4e4c1cd8733c2fe6fc734f634999fe3cb6a90c3e22b257f7a3f7b6236343622",
+  "hostEntrypointSha256": "6d44d06a11f24d5464d0421b1643cde6dd20e3b54c10588e308d5c1023ab21b2",
+  "testAdaptations": [
+    "Enable existing native pacing in the owned driver host",
+    "Use the interactive PlatformHooks.update and real dt after each driver observation",
+    "Profile selected native calls in the owned copy with argument/return-preserving adapters"
+  ],
+  "separateCaseProfiles": true,
+  "instrumentedFiles": {
+    "src/render/TileRenderer.lua": {
+      "originalSha256": "07b372d2579902f955fe8af9542ddcae19c8edd5092cd848b702ab3169209667",
+      "hostSha256": "b0c28dc401c03eb584245531380e3d9c179ff4f523396db035b222e6874adcd5"
+    },
+    "src/render/Gen4Ground.lua": {
+      "originalSha256": "9e51a7da0d1f96bc915828281b44a1cd197f86fb5a56ddce9c49613cf236f51f",
+      "hostSha256": "76ad5c9b4a2e4acd2c6f479e5b6941a4f679c8c0e8cb133c2f3bbd2528e0d864"
+    },
+    "src/core/Music.lua": {
+      "originalSha256": "663fba80e6f524949d894b7d4af9b54644f4f76d55480ca236032594a5996e23",
+      "hostSha256": "df120e997cf736e5e4f86117405a7ee42d1f03cc2447cad1ead8df75379a3ead"
+    },
+    "mods/DRAMATIC_SHAPE/lib/Structures.lua": {
+      "originalSha256": "c4dc200239c3119bf87a226473ce72fa4b5290ed66fc204801c1b3be06a81781",
+      "hostSha256": "47fb44667cce01e4001bd06b04d6f3b3647572bf13edc61489d856b79b170636"
+    },
+    "mods/DRAMATIC_SHAPE/lib/Gen3.lua": {
+      "originalSha256": "268de6258e4910ee7f4e37eaf665a3a9fc01a4af98d7a09791171996122a473d",
+      "hostSha256": "21d91f41ae373135eb9071bd10baebbdd8163a845a21e2b7a6ce628cbf33d8af"
+    },
+    "mods/DRAMATIC_SHAPE/lib/TerrainAtlas.lua": {
+      "originalSha256": "19f226eb2a05539b43460b2302f4eae3a373dac3f8fb1b9e77f9fe6df82fefc6",
+      "hostSha256": "d170ce33ba5e19da28e3851fcc6d5906700af30c9bd28885f67477a0107daa42"
+    },
+    "mods/DRAMATIC_SHAPE/lib/VoxelDiskCache.lua": {
+      "originalSha256": "c796f3b07839c8d47a93252704fef0ca41179021f4f5a3d71515df7cfdc13315",
+      "hostSha256": "9786ece7b9ea8ec53c8cc3236b23c10f56fd042b13f6413b3dce05410abbf751"
+    },
+    "mods/DRAMATIC_SHAPE/lib/ChunkMesher.lua": {
+      "originalSha256": "c8341ac3eb4774c5d60f342662cf90890fb96b5bf210c4caac77a53d5eb0362e",
+      "hostSha256": "205fbd731d26b9707fa1205620acc52f1b37697cd4a36f9e71dc978e17ba3fcb"
+    }
+  },
+  "hostSyntaxChecked": true,
+  "hardware": {
+    "cpu": "Apple M2",
+    "physicalCores": 8,
+    "logicalCores": 8,
+    "memoryBytes": 17179869184,
+    "gpus": [
+      {
+        "name": "Apple M2",
+        "cores": "10"
+      }
+    ],
+    "panels": [
+      {
+        "name": "Color LCD",
+        "desktopMode": "1710 x 1107 @ 60.00Hz",
+        "backingPixels": "3420 x 2214",
+        "physicalPanelMode": "spdisplays_2880x1864Retina"
+      }
+    ]
+  },
+  "benchmarkControls": {
+    "fpsCap": 160,
+    "seconds": 60,
+    "nativePacing": true,
+    "vsync": 0,
+    "backgroundCapDisabled": true,
+    "randomSeed": 12345
+  },
+  "romSha1": {
+    "emerald": "f3ae088181bf583e55daf962a92bb46f4f1d07b7"
+  },
+  "results": [
+    {
+      "scene": "emerald-route119-voxel",
+      "variant": "voxel-idle-off",
+      "exit": 0,
+      "report": {
+        "loadedMods": [
+          "Gen2Recomped-DramaticShapes"
+        ],
+        "passed": true,
+        "targets": [
+          {
+            "matches": [
+              {
+                "key": "MAP_G00_N34",
+                "keys": [
+                  "allowCycling",
+                  "allowEscaping",
+                  "allowRunning",
+                  "battleScene",
+                  "blockPx",
+                  "blocks",
+                  "border",
+                  "borderBlock",
+                  "cave",
+                  "collisionCells",
+                  "connections",
+                  "coordEvents",
+                  "elevationCells",
+                  "flags",
+                  "group",
+                  "height",
+                  "id",
+                  "layoutId",
+                  "mapScripts",
+                  "mapType",
+                  "music",
+                  "number",
+                  "objects",
+                  "outdoor",
+                  "regionMapSection",
+                  "requiresFlash",
+                  "showMapName",
+                  "signs",
+                  "source",
+                  "sourceBorder",
+                  "sourceBorderHeight",
+                  "sourceBorderWidth",
+                  "sourceConnections",
+                  "tileset",
+                  "warps",
+                  "weather",
+                  "width"
+                ],
+                "runtimeId": "MAP_G00_N34",
+                "fields": {
+                  "mapType": "ROUTE",
+                  "width": 40,
+                  "id": "MAP_G00_N34",
+                  "height": 140
+                }
+              }
+            ],
+            "canonical": "EM_ROUTE119",
+            "name": "ROUTE119",
+            "normalized": "emroute119"
+          }
+        ],
+        "variant": "voxel-idle-off",
+        "voxelPendingAtReady": 5,
+        "edition": "emerald",
+        "voxelSetup": {
+          "inFlightAtStop": 1,
+          "labels": {
+            "    voxel: TerrainAtlas.forMap": {
+              "MAP_G00_N34": {
+                "calls": 18,
+                "totalMs": 5.504249999994215,
+                "maxMs": 3.9717499999980532
+              }
+            },
+            "    voxel: Gen3.prepare": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 15040.886250000001,
+                "maxMs": 15040.886250000001
+              }
+            },
+            "    voxel: VoxelDiskCache.load": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.07712500000067735,
+                "maxMs": 0.07712500000067735,
+                "falseReturns": 1
+              }
+            },
+            "    voxel: Structures.forMap": {
+              "MAP_G00_N34": {
+                "calls": 123,
+                "totalMs": 33651.1428750001,
+                "maxMs": 33650.23954166666
+              }
+            },
+            "    voxel: build grass": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 37339.31883333334,
+                "maxMs": 37339.31883333334
+              }
+            },
+            "    voxel: build flowers": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 26.454166666667334,
+                "maxMs": 26.454166666667334
+              }
+            },
+            "  tiles: syncGen3Palettes": {
+              "<global>": {
+                "calls": 122288,
+                "totalMs": 1364.884041668135,
+                "maxMs": 7.402833333337355
+              }
+            },
+            "    voxel: build figures": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.011166666666895253,
+                "maxMs": 0.011166666666895253
+              }
+            }
+          }
+        },
+        "voxelReadiness": "current full mesh published; background jobs may remain",
+        "runtime": [
+          12,
+          0,
+          0
+        ],
+        "scene": "emerald-route119-voxel",
+        "boot": {
+          "startX": 2,
+          "startY": 2,
+          "playerName": "BRENDAN",
+          "startFacing": "down",
+          "startMoney": 3000,
+          "rivalName": "MAY",
+          "startMap": "MAP_G25_N40",
+          "version": "emerald"
+        },
+        "preparedState": {
+          "partyLevel": 10,
+          "gen3Flags": [
+            82,
+            130,
+            132,
+            301,
+            700,
+            720,
+            723,
+            750,
+            979,
+            2144
+          ],
+          "repelSteps": 10000,
+          "kind": "owned post-starter QA save"
+        },
+        "pixels": [
+          2048,
+          1536
+        ],
+        "measurement": {
+          "frames": 1394,
+          "timing": "present-completion intervals and FrameProfile wall-time sections; GPU submission only, no completion fence",
+          "present": {
+            "maxMs": 2.0450000000096225,
+            "avgMs": 0.5301841224293238
+          },
+          "sections": {
+            "  world pass: voxel": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 13.470891439502898,
+              "maxMsPerFrame": 37.737916666657156
+            },
+            "    voxel: water": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 0.08408192850375044,
+              "maxMsPerFrame": 0.5296250000128566
+            },
+            "update: whole frame": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 27.875244948589174,
+              "maxMsPerFrame": 109.45520833334399
+            },
+            "    voxel: cards": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 2.877352104255955,
+              "maxMsPerFrame": 14.598166666658585
+            },
+            "present (GPU wait / vsync)": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 0.5783168340506217,
+              "maxMsPerFrame": 2.1108749999996235
+            },
+            "      hook input.step <- Gen2Recomped-DramaticShapes @ mods/DRAMATIC_SHAPE/lib/Horde.lua:623": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 0.023317790529572523,
+              "maxMsPerFrame": 0.2862083334491672
+            },
+            "    step: mod input.step": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 0.11164777618327626,
+              "maxMsPerFrame": 2.4638333333371065
+            },
+            "  logic: stack:update": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 25.344688695600485,
+              "maxMsPerFrame": 100.22895833333223
+            },
+            "  step: whole": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 25.56655454925905,
+              "maxMsPerFrame": 102.53966666672909
+            },
+            "      hook world.tod <- Gen2Recomped-DramaticShapes @ mods/DRAMATIC_SHAPE/main.lua:1836": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 0.043205643233662744,
+              "maxMsPerFrame": 0.2617500000212658
+            },
+            "frame pacing: sleep": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 0.018857783357873442,
+              "maxMsPerFrame": 0.07479166666257697
+            },
+            "draw: whole frame": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 14.269970648015635,
+              "maxMsPerFrame": 39.72779166667806
+            },
+            "  update: fixed steps": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 25.598015243902868,
+              "maxMsPerFrame": 102.72754166666687
+            },
+            "  update: tilt": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 0.0050347321855069935,
+              "maxMsPerFrame": 0.24662499998839849
+            },
+            "  update: music": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 0.0661665769975183,
+              "maxMsPerFrame": 0.508791666675279
+            },
+            "    voxel: terrain": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 1.4679740255861626,
+              "maxMsPerFrame": 5.7058333333515066
+            },
+            "  renderer: zone blit": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 0.00320393950212571,
+              "maxMsPerFrame": 0.06354166664834793
+            },
+            "  pipelines: update": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 1.9188226327119113,
+              "maxMsPerFrame": 26.388000000025613
+            },
+            "  update: discord": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 0.007730631275957052,
+              "maxMsPerFrame": 0.17175000002112029
+            },
+            "    voxel: sun pass": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 4.769315817790999,
+              "maxMsPerFrame": 15.87112499998966
+            },
+            "  update: gc step": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 0.0021074545673768416,
+              "maxMsPerFrame": 0.14841666666143283
+            },
+            "  world: FX": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 0.15336621233833678,
+              "maxMsPerFrame": 0.609791666661863
+            },
+            "  update: graphics stack drain": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 0.002219004064902349,
+              "maxMsPerFrame": 0.12404166668034122
+            },
+            "    pipeline: voxel": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 1.890216284074842,
+              "maxMsPerFrame": 26.23795833331144
+            },
+            "    pipeline: tiltshift": {
+              "observedFrames": 1394,
+              "avgMsPerFrame": 0.0053214371113083575,
+              "maxMsPerFrame": 0.17366666668294783
+            }
+          },
+          "seconds": 60.014623833333346,
+          "processCpuSeconds": 65.067975,
+          "processCpuPercent": 108.42019968449743,
+          "frame": {
+            "maxMs": 129.90974999999594,
+            "avgMs": 43.052097441415604
+          },
+          "limitations": [
+            "inclusive sections cannot be summed",
+            "instrumented driver host; no screenshot readback during measurement",
+            "process CPU time includes active worker threads; no GPU utilization or energy measurement"
+          ],
+          "tierTrace": [
+            {
+              "seconds": 0,
+              "focused": true,
+              "tier": "high"
+            }
+          ],
+          "bakes": []
+        },
+        "setup": {
+          "width": 40,
+          "height": 140,
+          "map": "MAP_G00_N34",
+          "connections": {
+            "east": {
+              "map": "MAP_G00_N04",
+              "offset": 0
+            },
+            "south": {
+              "map": "MAP_G00_N33",
+              "offset": -40
+            }
+          },
+          "worldActive": true,
+          "scriptRunning": false,
+          "requested": {
+            "y": 10,
+            "x": 10
+          },
+          "walkable": true,
+          "worldOnTop": true,
+          "player": {
+            "y": 10,
+            "x": 9
+          }
+        },
+        "voxelPendingAtEnd": 5,
+        "voxelDiskAtEnd": {
+          "errors": 0,
+          "misses": 2,
+          "hits": 0,
+          "bytesLoaded": 0
+        },
+        "pacing": {
+          "backgroundPacing": false,
+          "fpsCap": 160,
+          "vsync": 0
+        },
+        "viewport": [
+          1024,
+          768
+        ],
+        "voxelWarmMemory": {
+          "inFlightAtStop": 0,
+          "labels": {
+            "    voxel: Gen3.prepare": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.01445833332525126,
+                "maxMs": 0.01445833332525126
+              }
+            },
+            "    voxel: TerrainAtlas.forMap": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.005791666666254969,
+                "maxMs": 0.005791666666254969
+              }
+            },
+            "    voxel: Structures.forMap": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.004708333335656789,
+                "maxMs": 0.004708333335656789
+              }
+            }
+          }
+        },
+        "voxelDiskAtReady": {
+          "errors": 0,
+          "misses": 1,
+          "hits": 0,
+          "bytesLoaded": 0
+        },
+        "switches": {
+          "idleStream": true,
+          "gen4ChunkPrebuild": true,
+          "voxelIdlePump": false
+        },
+        "gpu": {
+          "vendor": "",
+          "device": "Apple M2",
+          "renderer": "Metal",
+          "api": "2.1"
+        },
+        "inventoryOnly": false,
+        "performanceBaseline": true,
+        "dataKeys": [
+          "_bootKeys",
+          "_gen3MapNames",
+          "_pristineKeys",
+          "ai_classes",
+          "applyMapEditorOverlay",
+          "applyVersionedFieldData",
+          "audio",
+          "balls",
+          "commands",
+          "constants",
+          "encounters",
+          "ensure",
+          "evolution_methods",
+          "field",
+          "font",
+          "gen3_frontier_speech",
+          "gen3_object_sheets",
+          "gen3_trade_art",
+          "growth_rates",
+          "icons",
+          "isGen3Cache",
+          "isGen4Cache",
+          "items",
+          "load",
+          "map_layouts",
+          "map_scripts",
+          "map_tilesets",
+          "maps",
+          "move_effects",
+          "moves",
+          "pokemon",
+          "publishGen2MapMetadata",
+          "publishGen2Palettes",
+          "publishGen2TilesetNames",
+          "reloadGenerated",
+          "render_pipelines",
+          "resolveText",
+          "rulesets",
+          "save_layout",
+          "scenes",
+          "screens",
+          "seedCinnabarGymTrainerHeaders",
+          "seedDefaults",
+          "seedFightingDojoKarateMaster",
+          "songs",
+          "sprites",
+          "statuses",
+          "text",
+          "textEntry",
+          "text_pointers",
+          "tilesets",
+          "tokens",
+          "trainerHeader",
+          "trainers",
+          "transitions",
+          "type_chart",
+          "unloadGenerated"
+        ]
+      }
+    },
+    {
+      "scene": "emerald-route119-voxel",
+      "variant": "voxel-idle-on",
+      "exit": 0,
+      "report": {
+        "passed": true,
+        "loadedMods": [
+          "Gen2Recomped-DramaticShapes"
+        ],
+        "switches": {
+          "idleStream": true,
+          "gen4ChunkPrebuild": true,
+          "voxelIdlePump": true
+        },
+        "voxelPendingAtReady": 5,
+        "voxelDiskAtReady": {
+          "bytesLoaded": 0,
+          "misses": 1,
+          "errors": 0,
+          "hits": 0
+        },
+        "targets": [
+          {
+            "name": "ROUTE119",
+            "canonical": "EM_ROUTE119",
+            "matches": [
+              {
+                "key": "MAP_G00_N34",
+                "runtimeId": "MAP_G00_N34",
+                "keys": [
+                  "allowCycling",
+                  "allowEscaping",
+                  "allowRunning",
+                  "battleScene",
+                  "blockPx",
+                  "blocks",
+                  "border",
+                  "borderBlock",
+                  "cave",
+                  "collisionCells",
+                  "connections",
+                  "coordEvents",
+                  "elevationCells",
+                  "flags",
+                  "group",
+                  "height",
+                  "id",
+                  "layoutId",
+                  "mapScripts",
+                  "mapType",
+                  "music",
+                  "number",
+                  "objects",
+                  "outdoor",
+                  "regionMapSection",
+                  "requiresFlash",
+                  "showMapName",
+                  "signs",
+                  "source",
+                  "sourceBorder",
+                  "sourceBorderHeight",
+                  "sourceBorderWidth",
+                  "sourceConnections",
+                  "tileset",
+                  "warps",
+                  "weather",
+                  "width"
+                ],
+                "fields": {
+                  "mapType": "ROUTE",
+                  "height": 140,
+                  "width": 40,
+                  "id": "MAP_G00_N34"
+                }
+              }
+            ],
+            "normalized": "emroute119"
+          }
+        ],
+        "gpu": {
+          "device": "Apple M2",
+          "vendor": "",
+          "renderer": "Metal",
+          "api": "2.1"
+        },
+        "voxelSetup": {
+          "inFlightAtStop": 1,
+          "labels": {
+            "    voxel: VoxelDiskCache.load": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.09083333333315124,
+                "maxMs": 0.09083333333315124,
+                "falseReturns": 1
+              }
+            },
+            "    voxel: Structures.forMap": {
+              "MAP_G00_N34": {
+                "calls": 67,
+                "totalMs": 25592.56233333343,
+                "maxMs": 25592.238583333332
+              }
+            },
+            "    voxel: build grass": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 27794.43445833334,
+                "maxMs": 27794.43445833334
+              }
+            },
+            "    voxel: TerrainAtlas.forMap": {
+              "MAP_G00_N34": {
+                "calls": 10,
+                "totalMs": 5.4250000000166665,
+                "maxMs": 3.5182916666656183
+              }
+            },
+            "  tiles: syncGen3Palettes": {
+              "<global>": {
+                "calls": 137296,
+                "totalMs": 1812.7285000023567,
+                "maxMs": 6.230833333319197
+              }
+            },
+            "    voxel: build figures": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.017166666665957564,
+                "maxMs": 0.017166666665957564
+              }
+            },
+            "    voxel: build flowers": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 63.79358333332874,
+                "maxMs": 63.79358333332874
+              }
+            },
+            "    voxel: Gen3.prepare": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 5994.319791666668,
+                "maxMs": 5994.319791666668
+              }
+            }
+          }
+        },
+        "voxelReadiness": "current full mesh published; background jobs may remain",
+        "voxelWarmMemory": {
+          "inFlightAtStop": 0,
+          "labels": {
+            "    voxel: Structures.forMap": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.014083333340408899,
+                "maxMs": 0.014083333340408899
+              }
+            },
+            "    voxel: Gen3.prepare": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.026125000019305844,
+                "maxMs": 0.026125000019305844
+              }
+            },
+            "    voxel: TerrainAtlas.forMap": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.007791666661205454,
+                "maxMs": 0.007791666661205454
+              }
+            }
+          }
+        },
+        "preparedState": {
+          "kind": "owned post-starter QA save",
+          "partyLevel": 10,
+          "repelSteps": 10000,
+          "gen3Flags": [
+            82,
+            130,
+            132,
+            301,
+            700,
+            720,
+            723,
+            750,
+            979,
+            2144
+          ]
+        },
+        "viewport": [
+          1024,
+          768
+        ],
+        "pacing": {
+          "vsync": 0,
+          "fpsCap": 160,
+          "backgroundPacing": false
+        },
+        "variant": "voxel-idle-on",
+        "measurement": {
+          "frame": {
+            "maxMs": 182.9326250000065,
+            "avgMs": 12.405916356557093
+          },
+          "timing": "present-completion intervals and FrameProfile wall-time sections; GPU submission only, no completion fence",
+          "frames": 4837,
+          "sections": {
+            "    voxel: build flowers": {
+              "observedFrames": 1,
+              "avgMsPerFrame": 2.5325615045469163e-06,
+              "maxMsPerFrame": 0.012249999997493433
+            },
+            "  renderer: zone blit": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 0.00411271621547502,
+              "maxMsPerFrame": 3.4477083333257497
+            },
+            "draw: whole frame": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 5.692415719109983,
+              "maxMsPerFrame": 55.36845833333359
+            },
+            "  update: music": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 0.02260591103311041,
+              "maxMsPerFrame": 0.5397500000015043
+            },
+            "    voxel: terrain": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 0.4139915150576452,
+              "maxMsPerFrame": 6.678958333338869
+            },
+            "frame pacing: sleep": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 0.04259988973894318,
+              "maxMsPerFrame": 2.8189583333073642
+            },
+            "  pipelines: update": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 1.1376440717385496,
+              "maxMsPerFrame": 35.36254166665742
+            },
+            "  update: discord": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 0.0060453535247472,
+              "maxMsPerFrame": 0.1512083333210512
+            },
+            "      hook input.step <- Gen2Recomped-DramaticShapes @ mods/DRAMATIC_SHAPE/lib/Horde.lua:623": {
+              "observedFrames": 3108,
+              "avgMsPerFrame": 0.006067646957177049,
+              "maxMsPerFrame": 0.4973749999237498
+            },
+            "  update: gc step": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 0.0028061470613043238,
+              "maxMsPerFrame": 0.11079166667116169
+            },
+            "    voxel: sun pass": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 1.5022951898561518,
+              "maxMsPerFrame": 15.68833333331554
+            },
+            "  world: FX": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 0.12140042037046307,
+              "maxMsPerFrame": 9.680583333306458
+            },
+            "      hook world.tod <- Gen2Recomped-DramaticShapes @ mods/DRAMATIC_SHAPE/main.lua:1836": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 0.03776801219710156,
+              "maxMsPerFrame": 1.08341666671663
+            },
+            "    step: mod input.step": {
+              "observedFrames": 3108,
+              "avgMsPerFrame": 0.025186401695385514,
+              "maxMsPerFrame": 3.465541666713534
+            },
+            "  world pass: voxel": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 4.998790357315181,
+              "maxMsPerFrame": 52.78937500000325
+            },
+            "    pipeline: tiltshift": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 0.004669974501974955,
+              "maxMsPerFrame": 0.14483333336556825
+            },
+            "    voxel: cards": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 1.4054368754735045,
+              "maxMsPerFrame": 17.706750000030524
+            },
+            "  update: fixed steps": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 2.069121209771857,
+              "maxMsPerFrame": 139.4916666666859
+            },
+            "  update: tilt": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 0.0031467765832457572,
+              "maxMsPerFrame": 0.4488749999893571
+            },
+            "  update: graphics stack drain": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 0.004200623664653674,
+              "maxMsPerFrame": 0.5077083333162591
+            },
+            "update: whole frame": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 3.4809497536352567,
+              "maxMsPerFrame": 152.3651250000171
+            },
+            "  logic: stack:update": {
+              "observedFrames": 3108,
+              "avgMsPerFrame": 2.011323754393267,
+              "maxMsPerFrame": 133.03612500001805
+            },
+            "    pipeline: voxel": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 1.118725983736372,
+              "maxMsPerFrame": 35.348750000011364
+            },
+            "  step: whole": {
+              "observedFrames": 3108,
+              "avgMsPerFrame": 2.0596305647438764,
+              "maxMsPerFrame": 138.98208333336015
+            },
+            "    voxel: water": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 0.03848958548654169,
+              "maxMsPerFrame": 2.7927916666641295
+            },
+            "  frame pacing: gc budget": {
+              "observedFrames": 212,
+              "avgMsPerFrame": 0.016370692922715226,
+              "maxMsPerFrame": 2.6830833333519877
+            },
+            "    voxel: build figures": {
+              "observedFrames": 1,
+              "avgMsPerFrame": 3.281992974315257e-06,
+              "maxMsPerFrame": 0.015875000016762897
+            },
+            "present (GPU wait / vsync)": {
+              "observedFrames": 4837,
+              "avgMsPerFrame": 0.5721287385431565,
+              "maxMsPerFrame": 13.288833333334082
+            }
+          },
+          "tierTrace": [
+            {
+              "seconds": 0,
+              "focused": true,
+              "tier": "high"
+            }
+          ],
+          "seconds": 60.007417416666655,
+          "processCpuSeconds": 64.15316899999999,
+          "processCpuPercent": 106.90873188983781,
+          "limitations": [
+            "inclusive sections cannot be summed",
+            "instrumented driver host; no screenshot readback during measurement",
+            "process CPU time includes active worker threads; no GPU utilization or energy measurement"
+          ],
+          "present": {
+            "maxMs": 8.30912500002512,
+            "avgMs": 0.5480166167047482
+          },
+          "bakes": []
+        },
+        "boot": {
+          "rivalName": "MAY",
+          "startMap": "MAP_G25_N40",
+          "playerName": "BRENDAN",
+          "startFacing": "down",
+          "startX": 2,
+          "startY": 2,
+          "version": "emerald",
+          "startMoney": 3000
+        },
+        "voxelPendingAtEnd": 5,
+        "voxelDiskAtEnd": {
+          "bytesLoaded": 0,
+          "misses": 3,
+          "errors": 0,
+          "hits": 0
+        },
+        "scene": "emerald-route119-voxel",
+        "dataKeys": [
+          "_bootKeys",
+          "_gen3MapNames",
+          "_pristineKeys",
+          "ai_classes",
+          "applyMapEditorOverlay",
+          "applyVersionedFieldData",
+          "audio",
+          "balls",
+          "commands",
+          "constants",
+          "encounters",
+          "ensure",
+          "evolution_methods",
+          "field",
+          "font",
+          "gen3_frontier_speech",
+          "gen3_object_sheets",
+          "gen3_trade_art",
+          "growth_rates",
+          "icons",
+          "isGen3Cache",
+          "isGen4Cache",
+          "items",
+          "load",
+          "map_layouts",
+          "map_scripts",
+          "map_tilesets",
+          "maps",
+          "move_effects",
+          "moves",
+          "pokemon",
+          "publishGen2MapMetadata",
+          "publishGen2Palettes",
+          "publishGen2TilesetNames",
+          "reloadGenerated",
+          "render_pipelines",
+          "resolveText",
+          "rulesets",
+          "save_layout",
+          "scenes",
+          "screens",
+          "seedCinnabarGymTrainerHeaders",
+          "seedDefaults",
+          "seedFightingDojoKarateMaster",
+          "songs",
+          "sprites",
+          "statuses",
+          "text",
+          "textEntry",
+          "text_pointers",
+          "tilesets",
+          "tokens",
+          "trainerHeader",
+          "trainers",
+          "transitions",
+          "type_chart",
+          "unloadGenerated"
+        ],
+        "setup": {
+          "walkable": true,
+          "player": {
+            "x": 9,
+            "y": 10
+          },
+          "width": 40,
+          "height": 140,
+          "map": "MAP_G00_N34",
+          "scriptRunning": false,
+          "connections": {
+            "east": {
+              "map": "MAP_G00_N04",
+              "offset": 0
+            },
+            "south": {
+              "map": "MAP_G00_N33",
+              "offset": -40
+            }
+          },
+          "requested": {
+            "x": 10,
+            "y": 10
+          },
+          "worldActive": true,
+          "worldOnTop": true
+        },
+        "pixels": [
+          2048,
+          1536
+        ],
+        "edition": "emerald",
+        "runtime": [
+          12,
+          0,
+          0
+        ],
+        "inventoryOnly": false,
+        "performanceBaseline": true
+      }
+    },
+    {
+      "scene": "emerald-route119-voxel",
+      "variant": "voxel-warm-disk",
+      "exit": 0,
+      "report": {
+        "voxelPendingAtEnd": 5,
+        "voxelDiskAtEnd": {
+          "misses": 0,
+          "errors": 0,
+          "hits": 1,
+          "bytesLoaded": 13730112
+        },
+        "passed": true,
+        "performanceBaseline": true,
+        "dataKeys": [
+          "_bootKeys",
+          "_gen3MapNames",
+          "_pristineKeys",
+          "ai_classes",
+          "applyMapEditorOverlay",
+          "applyVersionedFieldData",
+          "audio",
+          "balls",
+          "commands",
+          "constants",
+          "encounters",
+          "ensure",
+          "evolution_methods",
+          "field",
+          "font",
+          "gen3_frontier_speech",
+          "gen3_object_sheets",
+          "gen3_trade_art",
+          "growth_rates",
+          "icons",
+          "isGen3Cache",
+          "isGen4Cache",
+          "items",
+          "load",
+          "map_layouts",
+          "map_scripts",
+          "map_tilesets",
+          "maps",
+          "move_effects",
+          "moves",
+          "pokemon",
+          "publishGen2MapMetadata",
+          "publishGen2Palettes",
+          "publishGen2TilesetNames",
+          "reloadGenerated",
+          "render_pipelines",
+          "resolveText",
+          "rulesets",
+          "save_layout",
+          "scenes",
+          "screens",
+          "seedCinnabarGymTrainerHeaders",
+          "seedDefaults",
+          "seedFightingDojoKarateMaster",
+          "songs",
+          "sprites",
+          "statuses",
+          "text",
+          "textEntry",
+          "text_pointers",
+          "tilesets",
+          "tokens",
+          "trainerHeader",
+          "trainers",
+          "transitions",
+          "type_chart",
+          "unloadGenerated"
+        ],
+        "loadedMods": [
+          "Gen2Recomped-DramaticShapes"
+        ],
+        "pixels": [
+          2048,
+          1536
+        ],
+        "scene": "emerald-route119-voxel",
+        "edition": "emerald",
+        "voxelPendingAtReady": 5,
+        "voxelDiskAtReady": {
+          "misses": 0,
+          "errors": 0,
+          "hits": 1,
+          "bytesLoaded": 13730112
+        },
+        "voxelSetup": {
+          "labels": {
+            "  tiles: syncGen3Palettes": {
+              "<global>": {
+                "calls": 65360,
+                "totalMs": 659.7615416683573,
+                "maxMs": 1.326999999998968
+              }
+            },
+            "    voxel: TerrainAtlas.forMap": {
+              "MAP_G00_N34": {
+                "calls": 6,
+                "totalMs": 8.327791666669526,
+                "maxMs": 6.25512499999914
+              }
+            },
+            "    voxel: Structures.forMap": {
+              "MAP_G00_N34": {
+                "calls": 39,
+                "totalMs": 24586.764625000014,
+                "maxMs": 24586.57520833333
+              }
+            },
+            "    voxel: Gen3.prepare": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 9086.756500000001,
+                "maxMs": 9086.756500000001
+              }
+            },
+            "    voxel: build grass": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 1764.9797083333353,
+                "maxMs": 1764.9797083333353
+              }
+            },
+            "    voxel: VoxelDiskCache.load": {
+              "MAP_G00_N34": {
+                "trueReturns": 1,
+                "calls": 1,
+                "totalMs": 27506.813000000002,
+                "maxMs": 27506.813000000002
+              }
+            },
+            "    voxel: build flowers": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 17.06733333332977,
+                "maxMs": 17.06733333332977
+              }
+            },
+            "    voxel: build figures": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.039833333339345245,
+                "maxMs": 0.039833333339345245
+              }
+            }
+          },
+          "inFlightAtStop": 1
+        },
+        "voxelReadiness": "current full mesh published; background jobs may remain",
+        "measurement": {
+          "frames": 1221,
+          "processCpuPercent": 107.92667389412959,
+          "tierTrace": [
+            {
+              "seconds": 0,
+              "tier": "high",
+              "focused": true
+            }
+          ],
+          "sections": {
+            "  logic: stack:update": {
+              "avgMsPerFrame": 31.213898068523022,
+              "maxMsPerFrame": 99.03720833330709,
+              "observedFrames": 1221
+            },
+            "  renderer: zone blit": {
+              "avgMsPerFrame": 0.0030759964512202752,
+              "maxMsPerFrame": 0.05600000000072214,
+              "observedFrames": 1221
+            },
+            "    voxel: terrain": {
+              "avgMsPerFrame": 1.6943046683047882,
+              "maxMsPerFrame": 4.7582916666470965,
+              "observedFrames": 1221
+            },
+            "update: whole frame": {
+              "avgMsPerFrame": 33.32006401856407,
+              "maxMsPerFrame": 104.74295833333258,
+              "observedFrames": 1221
+            },
+            "    pipeline: voxel": {
+              "avgMsPerFrame": 1.4451196082443751,
+              "maxMsPerFrame": 18.700958333333517,
+              "observedFrames": 1221
+            },
+            "    voxel: sun pass": {
+              "avgMsPerFrame": 4.9038123123122315,
+              "maxMsPerFrame": 20.83174999999926,
+              "observedFrames": 1221
+            },
+            "  world pass: voxel": {
+              "avgMsPerFrame": 14.344027982527685,
+              "maxMsPerFrame": 44.73966666665774,
+              "observedFrames": 1221
+            },
+            "  update: graphics stack drain": {
+              "avgMsPerFrame": 0.002380255254646046,
+              "maxMsPerFrame": 0.08954166666796937,
+              "observedFrames": 1221
+            },
+            "present (GPU wait / vsync)": {
+              "avgMsPerFrame": 0.36110425197953094,
+              "maxMsPerFrame": 1.9387083333342048,
+              "observedFrames": 1221
+            },
+            "  update: fixed steps": {
+              "avgMsPerFrame": 31.49000464100473,
+              "maxMsPerFrame": 101.25729166666275,
+              "observedFrames": 1221
+            },
+            "      hook input.step <- Gen2Recomped-DramaticShapes @ mods/DRAMATIC_SHAPE/lib/Horde.lua:0": {
+              "avgMsPerFrame": 0.030260647010386606,
+              "maxMsPerFrame": 0.3071666666940587,
+              "observedFrames": 1221
+            },
+            "  update: music": {
+              "avgMsPerFrame": 0.06900522113020778,
+              "maxMsPerFrame": 0.5071666666651709,
+              "observedFrames": 1221
+            },
+            "    voxel: water": {
+              "avgMsPerFrame": 0.09346396396366803,
+              "maxMsPerFrame": 5.408250000002113,
+              "observedFrames": 1221
+            },
+            "  update: tilt": {
+              "avgMsPerFrame": 0.004647863773163462,
+              "maxMsPerFrame": 0.062250000013364115,
+              "observedFrames": 1221
+            },
+            "      hook world.tod <- Gen2Recomped-DramaticShapes @ mods/DRAMATIC_SHAPE/main.lua:1836": {
+              "avgMsPerFrame": 0.04854170079195054,
+              "maxMsPerFrame": 0.21870833334958206,
+              "observedFrames": 1221
+            },
+            "    voxel: cards": {
+              "avgMsPerFrame": 3.1873580739834244,
+              "maxMsPerFrame": 13.047374999999306,
+              "observedFrames": 1221
+            },
+            "    step: mod input.step": {
+              "avgMsPerFrame": 0.13583746246216669,
+              "maxMsPerFrame": 7.1955416666753536,
+              "observedFrames": 1221
+            },
+            "draw: whole frame": {
+              "avgMsPerFrame": 15.152165335790313,
+              "maxMsPerFrame": 46.74458333332154,
+              "observedFrames": 1221
+            },
+            "frame pacing: sleep": {
+              "avgMsPerFrame": 0.017996689871887947,
+              "maxMsPerFrame": 0.07949999999823376,
+              "observedFrames": 1221
+            },
+            "  step: whole": {
+              "avgMsPerFrame": 31.4660432364186,
+              "maxMsPerFrame": 101.11720833332072,
+              "observedFrames": 1221
+            },
+            "  pipelines: update": {
+              "avgMsPerFrame": 1.4758850327597777,
+              "maxMsPerFrame": 18.721583333324077,
+              "observedFrames": 1221
+            },
+            "  update: discord": {
+              "avgMsPerFrame": 0.00790274365289118,
+              "maxMsPerFrame": 0.11558333335415227,
+              "observedFrames": 1221
+            },
+            "  world: FX": {
+              "avgMsPerFrame": 0.17597542997541304,
+              "maxMsPerFrame": 0.5737083332917337,
+              "observedFrames": 1221
+            },
+            "  update: gc step": {
+              "avgMsPerFrame": 0.0025260374013229264,
+              "maxMsPerFrame": 0.07675000000517684,
+              "observedFrames": 1221
+            },
+            "    pipeline: tiltshift": {
+              "avgMsPerFrame": 0.0058479047233112305,
+              "maxMsPerFrame": 0.11941666666359652,
+              "observedFrames": 1221
+            }
+          },
+          "bakes": [],
+          "limitations": [
+            "inclusive sections cannot be summed",
+            "instrumented driver host; no screenshot readback during measurement",
+            "process CPU time includes active worker threads; no GPU utilization or energy measurement"
+          ],
+          "timing": "present-completion intervals and FrameProfile wall-time sections; GPU submission only, no completion fence",
+          "processCpuSeconds": 64.77160099999999,
+          "frame": {
+            "maxMs": 132.31462499999935,
+            "avgMs": 49.15188465738466
+          },
+          "seconds": 60.01445116666667,
+          "present": {
+            "maxMs": 1.847958333321742,
+            "avgMs": 0.30718004367977164
+          }
+        },
+        "variant": "voxel-warm-disk",
+        "setup": {
+          "map": "MAP_G00_N34",
+          "width": 40,
+          "height": 140,
+          "worldActive": true,
+          "requested": {
+            "y": 10,
+            "x": 10
+          },
+          "walkable": true,
+          "connections": {
+            "east": {
+              "map": "MAP_G00_N04",
+              "offset": 0
+            },
+            "south": {
+              "map": "MAP_G00_N33",
+              "offset": -40
+            }
+          },
+          "player": {
+            "y": 10,
+            "x": 9
+          },
+          "scriptRunning": false,
+          "worldOnTop": true
+        },
+        "pacing": {
+          "vsync": 0,
+          "fpsCap": 160,
+          "backgroundPacing": false
+        },
+        "switches": {
+          "idleStream": true,
+          "gen4ChunkPrebuild": true,
+          "voxelIdlePump": true
+        },
+        "voxelWarmMemory": {
+          "labels": {
+            "    voxel: TerrainAtlas.forMap": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.008249999993381607,
+                "maxMs": 0.008249999993381607
+              }
+            },
+            "    voxel: Structures.forMap": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.009083333324610976,
+                "maxMs": 0.009083333324610976
+              }
+            },
+            "    voxel: Gen3.prepare": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.182041666661803,
+                "maxMs": 0.182041666661803
+              }
+            }
+          },
+          "inFlightAtStop": 0
+        },
+        "targets": [
+          {
+            "name": "ROUTE119",
+            "canonical": "EM_ROUTE119",
+            "matches": [
+              {
+                "runtimeId": "MAP_G00_N34",
+                "fields": {
+                  "height": 140,
+                  "mapType": "ROUTE",
+                  "id": "MAP_G00_N34",
+                  "width": 40
+                },
+                "key": "MAP_G00_N34",
+                "keys": [
+                  "allowCycling",
+                  "allowEscaping",
+                  "allowRunning",
+                  "battleScene",
+                  "blockPx",
+                  "blocks",
+                  "border",
+                  "borderBlock",
+                  "cave",
+                  "collisionCells",
+                  "connections",
+                  "coordEvents",
+                  "elevationCells",
+                  "flags",
+                  "group",
+                  "height",
+                  "id",
+                  "layoutId",
+                  "mapScripts",
+                  "mapType",
+                  "music",
+                  "number",
+                  "objects",
+                  "outdoor",
+                  "regionMapSection",
+                  "requiresFlash",
+                  "showMapName",
+                  "signs",
+                  "source",
+                  "sourceBorder",
+                  "sourceBorderHeight",
+                  "sourceBorderWidth",
+                  "sourceConnections",
+                  "tileset",
+                  "warps",
+                  "weather",
+                  "width"
+                ]
+              }
+            ],
+            "normalized": "emroute119"
+          }
+        ],
+        "viewport": [
+          1024,
+          768
+        ],
+        "gpu": {
+          "renderer": "Metal",
+          "vendor": "",
+          "api": "2.1",
+          "device": "Apple M2"
+        },
+        "runtime": [
+          12,
+          0,
+          0
+        ],
+        "boot": {
+          "playerName": "BRENDAN",
+          "startMoney": 3000,
+          "version": "emerald",
+          "startFacing": "down",
+          "startMap": "MAP_G25_N40",
+          "rivalName": "MAY",
+          "startX": 2,
+          "startY": 2
+        },
+        "preparedState": {
+          "kind": "owned post-starter QA save",
+          "gen3Flags": [
+            82,
+            130,
+            132,
+            301,
+            700,
+            720,
+            723,
+            750,
+            979,
+            2144
+          ],
+          "partyLevel": 10,
+          "repelSteps": 10000
+        },
+        "inventoryOnly": false
+      }
+    },
+    {
+      "scene": "emerald-route119-voxel",
+      "variant": "adaptive",
+      "exit": 0,
+      "report": {
+        "gpu": {
+          "device": "Apple M2",
+          "api": "2.1",
+          "vendor": "",
+          "renderer": "Metal"
+        },
+        "pixels": [
+          2048,
+          1536
+        ],
+        "voxelPendingAtReady": 5,
+        "voxelDiskAtReady": {
+          "hits": 0,
+          "misses": 1,
+          "bytesLoaded": 0,
+          "errors": 0
+        },
+        "voxelSetup": {
+          "inFlightAtStop": 1,
+          "labels": {
+            "    voxel: Gen3.prepare": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 16990.507333333335,
+                "maxMs": 16990.507333333335
+              }
+            },
+            "    voxel: TerrainAtlas.forMap": {
+              "MAP_G00_N34": {
+                "calls": 5,
+                "totalMs": 4.247874999993684,
+                "maxMs": 3.253666666665822
+              }
+            },
+            "    voxel: VoxelDiskCache.load": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.0921666666684473,
+                "falseReturns": 1,
+                "maxMs": 0.0921666666684473
+              }
+            },
+            "  tiles: syncGen3Palettes": {
+              "<global>": {
+                "calls": 22911,
+                "totalMs": 368.6287083328647,
+                "maxMs": 0.8825833333325761
+              }
+            },
+            "    voxel: build grass": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 8788.887625000005,
+                "maxMs": 8788.887625000005
+              }
+            },
+            "    voxel: build flowers": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 17.238958333336996,
+                "maxMs": 17.238958333336996
+              }
+            },
+            "    voxel: Structures.forMap": {
+              "MAP_G00_N34": {
+                "calls": 32,
+                "totalMs": 8387.675333333333,
+                "maxMs": 8387.465875000004
+              }
+            },
+            "    voxel: build figures": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.014416666672900647,
+                "maxMs": 0.014416666672900647
+              }
+            }
+          }
+        },
+        "voxelReadiness": "current full mesh published; background jobs may remain",
+        "edition": "emerald",
+        "voxelDiskAtEnd": {
+          "hits": 0,
+          "misses": 3,
+          "bytesLoaded": 0,
+          "errors": 0
+        },
+        "preparedState": {
+          "gen3Flags": [
+            82,
+            130,
+            132,
+            301,
+            700,
+            720,
+            723,
+            750,
+            979,
+            2144
+          ],
+          "repelSteps": 10000,
+          "kind": "owned post-starter QA save",
+          "partyLevel": 10
+        },
+        "pacing": {
+          "backgroundPacing": false,
+          "fpsCap": 160,
+          "vsync": 0
+        },
+        "switches": {
+          "voxelIdlePump": true,
+          "idleStream": true,
+          "gen4ChunkPrebuild": true
+        },
+        "measurement": {
+          "processCpuSeconds": 62.262699,
+          "frames": 3410,
+          "limitations": [
+            "inclusive sections cannot be summed",
+            "instrumented driver host; no screenshot readback during measurement",
+            "process CPU time includes active worker threads; no GPU utilization or energy measurement"
+          ],
+          "tierTrace": [
+            {
+              "seconds": 0,
+              "focused": true,
+              "tier": "low"
+            }
+          ],
+          "bakes": [],
+          "seconds": 60.01927108333333,
+          "timing": "present-completion intervals and FrameProfile wall-time sections; GPU submission only, no completion fence",
+          "present": {
+            "maxMs": 5.948583333328372,
+            "avgMs": 0.7247373900294517
+          },
+          "processCpuPercent": 103.73784598875217,
+          "sections": {
+            "update: whole frame": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 7.9093663611924585,
+              "maxMsPerFrame": 68.5567083333325
+            },
+            "    voxel: sun pass": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 0.004357783479785475,
+              "maxMsPerFrame": 0.16287500000089494
+            },
+            "    voxel: terrain": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 0.9549903103617737,
+              "maxMsPerFrame": 5.566583333347808
+            },
+            "  step: whole": {
+              "observedFrames": 2412,
+              "avgMsPerFrame": 6.347625146627409,
+              "maxMsPerFrame": 63.072000000005346
+            },
+            "  renderer: zone blit": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 0.0034201490712439642,
+              "maxMsPerFrame": 0.10208333333139308
+            },
+            "    step: mod input.step": {
+              "observedFrames": 2412,
+              "avgMsPerFrame": 0.04939210654943367,
+              "maxMsPerFrame": 6.781916666668053
+            },
+            "  update: discord": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 0.003978299120221311,
+              "maxMsPerFrame": 1.0178333333428213
+            },
+            "  update: music": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 0.037556830400629015,
+              "maxMsPerFrame": 2.2074166666783412
+            },
+            "  frame pacing: gc budget": {
+              "observedFrames": 104,
+              "avgMsPerFrame": 0.01326913489738614,
+              "maxMsPerFrame": 6.493166666672323
+            },
+            "  update: tilt": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 0.004671737536395185,
+              "maxMsPerFrame": 0.13083333332986058
+            },
+            "  pipelines: update": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 1.2295342986315805,
+              "maxMsPerFrame": 18.587291666669614
+            },
+            "draw: whole frame": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 7.905626588465268,
+              "maxMsPerFrame": 44.27491666668004
+            },
+            "    voxel: water": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 0.0695609359727904,
+              "maxMsPerFrame": 1.2160833333467735
+            },
+            "frame pacing: sleep": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 0.039507074779993066,
+              "maxMsPerFrame": 6.5151666666665164
+            },
+            "  update: graphics stack drain": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 0.003387035679307785,
+              "maxMsPerFrame": 0.23616666666725905
+            },
+            "    voxel: build figures": {
+              "observedFrames": 1,
+              "avgMsPerFrame": 2.1749755607484567e-06,
+              "maxMsPerFrame": 0.007416666662152238
+            },
+            "      hook input.step <- Gen2Recomped-DramaticShapes @ mods/DRAMATIC_SHAPE/lib/Horde.lua:623": {
+              "observedFrames": 2412,
+              "avgMsPerFrame": 0.01015354349932219,
+              "maxMsPerFrame": 0.2807916666682786
+            },
+            "    voxel: cards": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 1.6721337487780041,
+              "maxMsPerFrame": 16.232916666652386
+            },
+            "  logic: stack:update": {
+              "observedFrames": 2412,
+              "avgMsPerFrame": 6.255197201857415,
+              "maxMsPerFrame": 58.4921666666105
+            },
+            "  update: fixed steps": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 6.360367693059666,
+              "maxMsPerFrame": 63.312375000009524
+            },
+            "      hook world.tod <- Gen2Recomped-DramaticShapes @ mods/DRAMATIC_SHAPE/main.lua:1836": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 0.05993451857307555,
+              "maxMsPerFrame": 2.117291666671406
+            },
+            "    pipeline: voxel": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 1.2029695747799891,
+              "maxMsPerFrame": 18.499374999997542
+            },
+            "  world: FX": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 0.16076901270786043,
+              "maxMsPerFrame": 2.2808749999967404
+            },
+            "present (GPU wait / vsync)": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 0.7545814027370343,
+              "maxMsPerFrame": 5.968000000009965
+            },
+            "    pipeline: tiltshift": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 0.006120735581699145,
+              "maxMsPerFrame": 1.1861250000038126
+            },
+            "  world pass: voxel": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 7.146146749755536,
+              "maxMsPerFrame": 42.42383333333066
+            },
+            "    voxel: build flowers": {
+              "observedFrames": 1,
+              "avgMsPerFrame": 2.529325513061657e-06,
+              "maxMsPerFrame": 0.00862499999954025
+            },
+            "  update: gc step": {
+              "observedFrames": 3410,
+              "avgMsPerFrame": 0.003152908113420574,
+              "maxMsPerFrame": 0.16420833333086193
+            }
+          },
+          "frame": {
+            "maxMs": 108.44495833330825,
+            "avgMs": 17.600959261974584
+          }
+        },
+        "viewport": [
+          1024,
+          768
+        ],
+        "scene": "emerald-route119-voxel",
+        "voxelPendingAtEnd": 5,
+        "variant": "adaptive",
+        "voxelWarmMemory": {
+          "inFlightAtStop": 0,
+          "labels": {
+            "    voxel: TerrainAtlas.forMap": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.00845833333684709,
+                "maxMs": 0.00845833333684709
+              }
+            },
+            "    voxel: Structures.forMap": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.015791666669429105,
+                "maxMs": 0.015791666669429105
+              }
+            },
+            "    voxel: Gen3.prepare": {
+              "MAP_G00_N34": {
+                "calls": 1,
+                "totalMs": 0.025833333332059283,
+                "maxMs": 0.025833333332059283
+              }
+            }
+          }
+        },
+        "setup": {
+          "player": {
+            "y": 10,
+            "x": 9
+          },
+          "map": "MAP_G00_N34",
+          "worldActive": true,
+          "width": 40,
+          "height": 140,
+          "connections": {
+            "east": {
+              "offset": 0,
+              "map": "MAP_G00_N04"
+            },
+            "south": {
+              "offset": -40,
+              "map": "MAP_G00_N33"
+            }
+          },
+          "scriptRunning": false,
+          "requested": {
+            "y": 10,
+            "x": 10
+          },
+          "walkable": true,
+          "worldOnTop": true
+        },
+        "targets": [
+          {
+            "matches": [
+              {
+                "key": "EM_ROUTE119",
+                "fields": {
+                  "height": 140,
+                  "width": 40,
+                  "id": "MAP_G00_N34",
+                  "mapType": "ROUTE"
+                },
+                "keys": [
+                  "allowCycling",
+                  "allowEscaping",
+                  "allowRunning",
+                  "battleScene",
+                  "blockPx",
+                  "blocks",
+                  "border",
+                  "borderBlock",
+                  "cave",
+                  "collisionCells",
+                  "connections",
+                  "coordEvents",
+                  "elevationCells",
+                  "flags",
+                  "group",
+                  "height",
+                  "id",
+                  "layoutId",
+                  "mapScripts",
+                  "mapType",
+                  "music",
+                  "number",
+                  "objects",
+                  "outdoor",
+                  "regionMapSection",
+                  "requiresFlash",
+                  "showMapName",
+                  "signs",
+                  "source",
+                  "sourceBorder",
+                  "sourceBorderHeight",
+                  "sourceBorderWidth",
+                  "sourceConnections",
+                  "tileset",
+                  "warps",
+                  "weather",
+                  "width"
+                ],
+                "runtimeId": "MAP_G00_N34"
+              }
+            ],
+            "name": "ROUTE119",
+            "canonical": "EM_ROUTE119",
+            "normalized": "emroute119"
+          }
+        ],
+        "loadedMods": [
+          "Gen2Recomped-DramaticShapes"
+        ],
+        "passed": true,
+        "runtime": [
+          12,
+          0,
+          0
+        ],
+        "inventoryOnly": false,
+        "performanceBaseline": true,
+        "dataKeys": [
+          "_bootKeys",
+          "_gen3MapNames",
+          "_pristineKeys",
+          "ai_classes",
+          "applyMapEditorOverlay",
+          "applyVersionedFieldData",
+          "audio",
+          "balls",
+          "commands",
+          "constants",
+          "encounters",
+          "ensure",
+          "evolution_methods",
+          "field",
+          "font",
+          "gen3_frontier_speech",
+          "gen3_object_sheets",
+          "gen3_trade_art",
+          "growth_rates",
+          "icons",
+          "isGen3Cache",
+          "isGen4Cache",
+          "items",
+          "load",
+          "map_layouts",
+          "map_scripts",
+          "map_tilesets",
+          "maps",
+          "move_effects",
+          "moves",
+          "pokemon",
+          "publishGen2MapMetadata",
+          "publishGen2Palettes",
+          "publishGen2TilesetNames",
+          "reloadGenerated",
+          "render_pipelines",
+          "resolveText",
+          "rulesets",
+          "save_layout",
+          "scenes",
+          "screens",
+          "seedCinnabarGymTrainerHeaders",
+          "seedDefaults",
+          "seedFightingDojoKarateMaster",
+          "songs",
+          "sprites",
+          "statuses",
+          "text",
+          "textEntry",
+          "text_pointers",
+          "tilesets",
+          "tokens",
+          "trainerHeader",
+          "trainers",
+          "transitions",
+          "type_chart",
+          "unloadGenerated"
+        ],
+        "boot": {
+          "startMoney": 3000,
+          "startX": 2,
+          "startY": 2,
+          "startMap": "MAP_G25_N40",
+          "startFacing": "down",
+          "rivalName": "MAY",
+          "playerName": "BRENDAN",
+          "version": "emerald"
+        }
+      }
+    }
+  ]
+}
