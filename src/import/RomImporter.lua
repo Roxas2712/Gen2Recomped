@@ -2065,9 +2065,10 @@ function RomImporter.readyReport(version)
   local missing, gaps = {}, {}
   if GameVersion.generation(version)==3 then
     local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
-    local absent=require('src.import.Gen3StatGrowthAssets').missing(version)
+    local absent=require('src.import.Gen3SafariAssets').missing(version)
+    if #absent==0 then absent=require('src.import.Gen3StatGrowthAssets').missing(version)end
     CacheFs.prefix=savedPrefix
-    if #absent>0 then return{ok=false,missing=absent,why='The native level-up stat window is incomplete.'}end
+    if #absent>0 then return{ok=false,missing=absent,why='The native GBA Safari or level-up data is incomplete.'}end
   end
   if version=='firered'or version=='leafgreen'or version=='emerald'then
     local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)

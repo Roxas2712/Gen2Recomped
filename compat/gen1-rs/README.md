@@ -4,7 +4,7 @@ The shared bridge now also hosts Emerald's original movie and Rayquaza title.
 Twelve additional byte-exact reference sources supply Emerald's own symbols,
 song/species enums, scenery and extractors. Including the original RS main
 menu and the healthbox comparison oracle, the provenance inventory now contains
-179 files. The existing GBA
+181 files. The existing GBA
 machine, PPU and isolated RNG are reused.
 `Gen3EmeraldPresentation` verifies the exact Emerald cartridge, writes four
 complete native manifests and supplies that edition's song and cry identities.
