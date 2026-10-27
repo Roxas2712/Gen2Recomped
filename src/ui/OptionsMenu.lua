@@ -827,9 +827,22 @@ function OptionsMenu:update(dt)
                                        #rows, cancelRow)
 end
 
-function OptionsMenu:draw()
+local function drawPanel(self)
   OptionRows.draw(self.game, self.rows, self.index, self.scroll or 0,
                   "CANCEL", #self.rows + 1)
+end
+
+function OptionsMenu:draw()
+  return drawPanel(self)
+end
+
+-- Expose the actual window-sized presentation seam for Gen2 providers,
+-- retaining the existing native panel as a DPI-aware fallback.
+function OptionsMenu:drawsWidescreen() return GameVersion.isGen2() end
+function OptionsMenu:wantsFillScale() return GameVersion.isGen2() end
+function OptionsMenu:drawWidescreen(width, height)
+  return require("src.ui.Gen2Chrome").withPanel(width, height, 1, 1, 1,
+    function() drawPanel(self) end)
 end
 
 -- see the note above buildRows: the Gen 3 OPTION screen appends these
