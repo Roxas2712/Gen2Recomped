@@ -20,6 +20,8 @@
 
 require("love.thread")
 require("love.timer")
+-- J1: the mixer is the hottest loop in the program; keep its traces
+pcall(function() require("src.core.JitTuning").apply() end)
 require("love.sound")
 require("love.data")
 require("love.filesystem")

@@ -117,8 +117,55 @@ restore()
 T.eq(Performance.cycle("auto", 1), "high", "cycle auto -> high")
 T.eq(Performance.cycle("high", 1), "balanced", "cycle high -> balanced")
 T.eq(Performance.cycle("balanced", 1), "low", "cycle balanced -> low")
-T.eq(Performance.cycle("low", 1), "auto", "cycle low wraps to auto")
-T.eq(Performance.cycle("auto", -1), "low", "cycle back auto -> low")
+T.eq(Performance.cycle("low", 1), "adaptive", "cycle low -> adaptive (PREFER FPS)")
+T.eq(Performance.cycle("adaptive", 1), "auto", "cycle adaptive wraps to auto")
+T.eq(Performance.cycle("auto", -1), "adaptive", "cycle back auto -> adaptive")
 T.eq(Performance.cycle("high", -1), "auto", "cycle back high -> auto")
+
+-- ---------------------------------------------------------- A1: PREFER FPS
+do
+  Performance.resetAdaptive()
+  device("Windows", "x64", 8)
+  T.eq(Performance.resolve("adaptive"), "high", "PREFER FPS starts where AUTO would")
+  T.eq(Performance.label("adaptive"), "PREFER FPS", "label adaptive")
+  local A = Performance.ADAPTIVE
+  local budget, now = 1 / 60, 100
+  local function run(seconds, missEvery)
+    local stepped
+    local frames = math.floor(seconds / budget)
+    for i = 1, frames do
+      local dt = (missEvery and i % missEvery == 0) and budget * 2 or budget
+      now = now + dt
+      stepped = Performance.observeFrame(dt, budget, now, "adaptive") or stepped
+    end
+    return stepped
+  end
+  T.eq(run(A.window * 2.2, 100), nil, "one miss in a hundred changes nothing")
+  T.eq(run(A.window * 1.1, 5), nil, "one bad window does not step down yet")
+  T.eq(run(A.window * 1.1, 5), "balanced", "a second bad window steps HIGH down to BALANCED")
+  T.eq(Performance.tier, "balanced", "the live tier follows")
+  T.eq(run(A.cooldown, 5), nil, "misses during the cooldown are not judged")
+  run(A.window * 2.2, 5)
+  T.eq(Performance.adaptiveTier(), "low", "sustained misses step on down to LOW")
+  run(A.cooldown + 1, nil)
+  T.eq(run(A.upAfter, nil), "balanced", "thirty quiet seconds step back up one tier")
+  run(A.cooldown + 1, nil)
+  T.eq(run(A.upAfter, nil), "high", "...and again, up to AUTO's own answer")
+  T.eq(run(A.upAfter * 2, nil), nil, "never above the ceiling AUTO chose")
+  T.eq(Performance.observeFrame(budget * 3, budget, now + 1, "high"), nil, "a fixed tier is never judged")
+  -- Leaving PREFER FPS discards partial decision windows. Returning later
+  -- starts at AUTO, rather than counting old misses towards a new step.
+  Performance.applyOptions({performance="adaptive"})
+  run(A.window * 2.2,5)
+  T.eq(Performance.adaptiveTier(),"balanced","adaptive session has stepped down")
+  Performance.applyOptions({performance="high"})
+  Performance.applyOptions({performance="adaptive"})
+  T.eq(Performance.adaptiveTier(),"high","re-entering adaptive starts from AUTO")
+  T.eq(Performance.adaptiveState().frames,0,"old frame samples are discarded")
+  local f=assert(io.open("main.lua"));local main=f:read("*a");f:close()
+  T.check(main:find("if presented and Game and Game.save and Game.save.options and love.timer then",1,true),"only presented frames reach the adaptive observer")
+  Performance.resetAdaptive()
+  restore()
+end
 
 T.finish("performance_tiers")
