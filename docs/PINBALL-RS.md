@@ -86,8 +86,10 @@ Two independent transports are provided:
 - An explicitly selected private TCP relay with six-character room codes. Run
   `python3 tools/pinball_relay.py` for localhost tests, or explicitly configure
   its binding/hosting for remote access. The launcher defaults to localhost,
-  and does not silently contact the old public link relay. No relay has been
-  deployed by this change.
+  and does not silently contact the old public link relay. The shared runtime
+  requires an active ModCompass account before TCP relay entry, including a
+  private relay; the check runs asynchronously. No relay has been deployed
+  by this change.
 
 The launcher also includes Pinball actions in the existing ModCompass friends
 and inbox workspace: invite, accept/decline/cancel and automatic joint native
