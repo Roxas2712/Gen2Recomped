@@ -612,9 +612,9 @@ check(PaletteFX.usesGbcPack(), "redpp mode selects the gbc pack")
 local gbc = PaletteFX.gbcPack()
 check(gbc ~= nil and gbc.palettes.BULBASAUR ~= nil,
       "data/palettes_gbc.lua ships per-species pals")
-check(PaletteFX.monPalName({ palettes = nil }, "BULBASAUR") == "BULBASAUR",
+check(PaletteFX.monPalName({ palettes = nil }, "BULBASAUR") == gbc.pokemon.BULBASAUR,
       "RED++ monPalName resolves to the species palette id")
-check(PaletteFX.monPal({ palettes = nil }, "BULBASAUR") == gbc.palettes.BULBASAUR,
+check(PaletteFX.monPal({ palettes = nil }, "BULBASAUR") == gbc.palettes[gbc.pokemon.BULBASAUR],
       "RED++ monPal reads the species colors without a ROM pack")
 check(PaletteFX.pal({ palettes = nil }, "ROUTE") == gbc.palettes.ROUTE,
       "RED++ still has ROUTE (aliased from VIRIDIAN)")
@@ -802,10 +802,9 @@ do
   Renderer:beginWorldPass()
   Renderer:endWorldPass()
   wipe:draw()
-  check(Renderer.battleCascadeProg ~= nil
-        and Renderer.battleCascadeProg > 0
-        and Renderer.battleCascadeProg < 1,
-        "battle wipe publishes mid-progress cascade to the renderer")
+  check(Renderer.battleWipe and Renderer.battleWipe.prog > 0
+        and Renderer.battleWipe.prog < 1 and Renderer.battleWipe.style==wipe.style,
+        "battle wipe publishes native style and mid-progress to the renderer")
   rects = {}
   Renderer:endFrame(nil, fullWorldZones())
   local cascadeTile
@@ -900,7 +899,7 @@ local vanilla = BattleTransition.new({ stack = stack }, nil,
                                      { trainer = true, stronger = true })
 check(vanilla.style == "spiralout",
       "the vanilla 3-bit select is the hook's default (trainer+stronger)")
-check(vanilla.wipeLen == 40, "the selected wipe brings its own length")
+check(vanilla.wipeLen == 120, "the selected wipe brings its own length")
 
 local savedRuntime = { events = Runtime.events, hooks = Runtime.hooks,
                        errors = Runtime.errors }
@@ -913,7 +912,7 @@ hooks:wrap("transition.style", function(nextLink, ctx)
 end, 0, "test")
 local hooked = BattleTransition.new({ stack = stack }, nil, { trainer = true })
 check(hooked.style == "hstripes", "a transition.style hook picks the wipe")
-check(hooked.wipeLen == 24, "the hooked style brings its own length")
+check(hooked.wipeLen == 60, "the hooked style brings its own length")
 check(seenCtx.trainer == true and seenCtx.stronger == nil,
       "the hook receives the selection bits as context")
 

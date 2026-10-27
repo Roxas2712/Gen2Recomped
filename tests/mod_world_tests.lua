@@ -52,7 +52,9 @@ local TOWN_PALS = {
 }
 local function oldPaletteNameFor(def, lastOutdoorId)
   local ts, id = def.tileset, def.id
-  if ts == "CEMETERY" then return "GRAYMON"
+  -- The fork's native HOUSE palette is an explicit tileset default.
+  if ts == "HOUSE" then return "HOUSE"
+  elseif ts == "CEMETERY" then return "GRAYMON"
   elseif ts == "CAVERN" then return "CAVE"
   elseif id == "LORELEIS_ROOM" then return "PALLET"
   elseif id == "BRUNOS_ROOM" then return "CAVE"
@@ -487,8 +489,11 @@ do
     for i = 1, 10 do s[i] = { level = 5, species = "TANGELA" } end
     return s
   end)() } }
-  -- rollEncounter needs no Game: it reads the def it is handed and the map
-  -- id off self, which is what keeps the hot path free of a Data lookup
+  -- Native encounter rules inspect the party even when no mod wraps the roll.
+  -- Bind this fixture's complete game instead of the earlier palette-only stub.
+  check(bindGame(OW.rollEncounter, {
+    data = data, save = require("src.core.SaveData").newGame(),
+  }), "rollEncounter binds the fixture party context")
   local state = setmetatable({ map = MapLoader.load(data, "PALLET_TOWN") },
     { __index = OW })
 
@@ -625,7 +630,9 @@ do
   local game = { data = Data, save = save, stack = stack }
   check(bindGame(OW.trySurf, game), "trySurf binds a test Game")
   check(bindGame(OW.partyKnows, game), "partyKnows binds the same Game")
-  local ow = setmetatable({ player = { facing = "down" } }, { __index = OW })
+  local ow = setmetatable({ map = MapLoader.load(Data, "PALLET_TOWN"),
+    player = { facing = "down", facingCell = function() return 10, 10 end } },
+    { __index = OW })
   ow.stepForwardOrCrossEdge = function(_, dir) ow.stepped = dir end
 
   local closed = false
@@ -730,6 +737,7 @@ local function liveWorld(data)
                              { __index = OW })
   stack.states[1] = state
   game.overworld = state
+  state.runner = require("src.script.ScriptRunner").new(game, state)
   return state, game
 end
 
@@ -815,7 +823,7 @@ do
     -- rate 200/256 per step: no reseed, so the shared RNG stream the rest
     -- of the runner depends on is left exactly where it was
     for _ = 1, 200 do
-      pcall(walker.onStepComplete, walker)
+      assert(pcall(walker.onStepComplete, walker))
       if caught then break end
     end
     check(caught ~= nil, "a wild battle fires on the authored map")
@@ -828,7 +836,7 @@ do
       hooks:wrap("encounter.roll", function() return nil end, 0, "nuzlocke")
       caught = nil
       for _ = 1, 1000 do
-        pcall(walker.onStepComplete, walker)
+        assert(pcall(walker.onStepComplete, walker))
         check(caught == nil, "encounter.roll suppression holds for the whole walk")
       end
     end)

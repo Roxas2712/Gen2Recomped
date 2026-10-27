@@ -47,7 +47,9 @@ end
 -- early press is ignored and the queue drains at a player's pace.
 local function step(battle)
   press.a = true
-  battle:update(1 / 60)
+  local top = battle.game.stack:top()
+  if top and top ~= battle and top.update then top:update(1 / 60)
+  else battle:update(1 / 60) end
   press.a = false
 end
 

@@ -15,8 +15,11 @@ local saved = {
 
 local writes = {}
 love.filesystem.read = function(name)
-  eq(name, "exports/red.sav", "export reads the generated save")
-  return "save-data"
+  if name == "exports/red.sav" then
+    eq(name, "exports/red.sav", "export reads the generated save")
+    return "save-data"
+  end
+  return saved.read(name)
 end
 love.filesystem.write = function(name, data)
   writes[#writes + 1] = { name = name, data = data }

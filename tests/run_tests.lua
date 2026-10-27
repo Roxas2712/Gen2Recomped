@@ -114,9 +114,15 @@ do
         "cont boundary waits for A with contAdvance")
   check(not box.done, "cont wait is not the final done prompt")
   eq(box.lineIndex, 2, "cont wait stays on the finished line until A")
+  for _=1,require("src.core.Timing").TEXT_PRE_ADVANCE do box:update(0)end
   pressed.a = true
   box:update(0)
-  check(not box.waiting and not box.contAdvance, "A clears cont wait")
+  pressed.a=false
+  for _=1,require("src.core.Timing").TEXT_CONT+2 do
+    if not box.waiting then break end
+    box:update(0)
+  end
+  check(not box.waiting and not box.contAdvance, "A clears cont wait after the native advance delay")
   eq(box.lineIndex, 3, "A advances into the cont line")
 end
 
@@ -1133,9 +1139,8 @@ do
   local frames = 0
   while db:stepHPDrain() and frames < 2000 do frames = frames + 1 end
   eq(db.enemy.shownHP, db.enemy.mon.hp, "drain settles on the true HP")
-  local expect = math.ceil(5 / (maxHP / 96))
-  check(math.abs(frames - expect) <= 1,
-        ("drain speed ~2 frames per bar pixel (%d ~ %d)"):format(frames, expect))
+  local expect = require("src.core.Timing").hpDrainFrames(maxHP,db.enemy.mon.hp,maxHP,false)
+  eq(frames,expect,"enemy drain includes pixel steps and the native closing delay")
 
   -- multi-hit count text: player vs enemy variants, always plural
   Game.save.party = { Pokemon.new(Data, "BULBASAUR", 10) }
@@ -2654,7 +2659,7 @@ do
 -- the text-speed cursor clamps at its ends (.pressedLeftInTextSpeed),
 -- MUSIC FILTER cycles OFF/1X/2X/3X, and COLORS / TILT / GBC FX / VIDEO MODE
 -- cycle their display modes.
-do
+(function()
   local OptionsMenu = require("src.ui.OptionsMenu")
   local OInput = require("src.core.Input")
   local PaletteFX = require("src.render.PaletteFX")
@@ -2676,6 +2681,20 @@ do
     om:update(1 / 60)
     OInput.pressed = {}
   end
+  local function rowIndex(id)
+    for i,row in ipairs(om.rows)do if row.id==id then return i end end
+    error("missing options row: "..id)
+  end
+  local function selectRow(id)
+    local target=id=="cancel" and #om.rows+1 or rowIndex(id)
+    for _=1,#om.rows+1 do
+      if om.index==target then return end
+      press("down")
+    end
+    error("option cursor did not reach "..id)
+  end
+  eq(rowIndex("vsync"),rowIndex("fpsCap")+1,"VSYNC follows MAX FPS")
+  eq(rowIndex("speed"),rowIndex("vsync")+1,"GAME SPEED follows VSYNC")
   eq(og.save.options.textSpeed, 3,
      "new saves default to MEDIUM text (InitOptions TEXT_DELAY_MEDIUM)")
   eq(og.save.options.colors, "gbc", "new saves default COLORS to GBC")
@@ -2686,57 +2705,57 @@ do
   eq(og.save.options.videoMode, "windowed",
      "new saves default VIDEO MODE to WINDOWED")
   eq(om.scroll, 0, "options viewport starts at the top")
-  for _ = 1, 3 do press("down") end
-  eq(om.index, 4, "cursor reaches BATTLE LAYOUT")
+  selectRow("battleLayout")
+  eq(om.index, rowIndex("battleLayout"), "cursor reaches BATTLE LAYOUT")
   press("a")
   eq(og.save.options.battleLayout, "wide",
      "A switches the battle screen to the WIDE layout")
   press("a")
   eq(og.save.options.battleLayout, "og", "BATTLE LAYOUT wraps back to OG")
-  for _ = 1, 2 do press("down") end
-  eq(om.index, 6, "cursor reaches MUSIC VOL")
-  eq(om.scroll, 2, "viewport scrolls to keep MUSIC VOL on screen")
+  selectRow("musicVol")
+  eq(om.index, rowIndex("musicVol"), "cursor reaches MUSIC VOL")
+  check(om.index>om.scroll and om.index<=om.scroll+4,"viewport keeps MUSIC VOL on screen")
   press("left")
   eq(og.save.options.musicVol, 6, "left lowers MUSIC VOL")
   press("right")
   eq(og.save.options.musicVol, 7, "right raises MUSIC VOL back")
   press("right")
   eq(og.save.options.musicVol, 7, "MUSIC VOL clamps at 7")
-  press("down"); press("left")
+  selectRow("sfxVol"); press("left")
   eq(og.save.options.sfxVol, 6, "SFX VOL adjusts on its own row")
-  press("down")
+  selectRow("musicFilter")
   for _ = 1, 3 do press("a") end
   eq(og.save.options.musicFilter, 3, "A cycles MUSIC FILTER to 3X")
   press("a")
   eq(og.save.options.musicFilter, 0, "MUSIC FILTER wraps back to OFF")
-  press("down")
-  eq(om.index, 9, "cursor reaches COLORS")
+  selectRow("colors")
+  eq(om.index, rowIndex("colors"), "cursor reaches COLORS")
   press("a")
   for _ = 1, 4 do press("a") end
-  press("down")
-  eq(om.index, 10, "cursor reaches TILT")
+  selectRow("tilt")
+  eq(om.index, rowIndex("tilt"), "cursor reaches TILT")
   press("a")
   eq(og.save.options.tilt, 1, "A cycles TILT to 15")
   eq(Tilt.level, 1, "Tilt level tracks TILT option")
   press("a"); press("a"); press("a")
   eq(og.save.options.tilt, 0, "TILT wraps back to OFF")
-  press("down")
-  eq(om.index, 11, "cursor reaches GBC FX")
+  selectRow("gbcfx")
+  eq(om.index, rowIndex("gbcfx"), "cursor reaches GBC FX")
   press("a")
   eq(og.save.options.gbcfx, 1, "A cycles GBC FX to 1")
   eq(GBCFX.level, 1, "GBCFX level tracks GBC FX option")
   for _ = 1, 4 do press("a") end
   eq(og.save.options.gbcfx, 0, "GBC FX wraps back to OFF")
-  press("down")
-  eq(om.index, 12, "cursor reaches ZOOM")
+  selectRow("zoom")
+  eq(om.index, rowIndex("zoom"), "cursor reaches ZOOM")
   local ZoomOpt = require("src.render.Zoom")
   press("a")
   eq(og.save.options.zoom, 1, "A cycles ZOOM to IN1")
   eq(ZoomOpt.offset, 1, "Zoom.offset tracks ZOOM option")
   press("left")
   eq(og.save.options.zoom, 0, "left steps ZOOM back to FIT")
-  press("down")
-  eq(om.index, 13, "cursor reaches VOID FILL")
+  selectRow("voidFill")
+  eq(om.index, rowIndex("voidFill"), "cursor reaches VOID FILL")
   local TR = require("src.render.TileRenderer")
   press("a")
   eq(og.save.options.voidFill, "water", "A cycles VOID FILL to WATER")
@@ -2745,16 +2764,19 @@ do
   eq(og.save.options.voidFill, "black", "A cycles VOID FILL to BLACK")
   press("a")
   eq(og.save.options.voidFill, "trees", "VOID FILL wraps back to TREES")
-  press("down")
-  eq(om.index, 14, "cursor reaches VIDEO MODE")
+  selectRow("videoMode")
+  eq(om.index, rowIndex("videoMode"), "cursor reaches VIDEO MODE")
   press("a")
   eq(og.save.options.videoMode, "borderless",
      "A cycles VIDEO MODE to BORDERLESS")
   press("a")
+  eq(og.save.options.videoMode, "exclusive",
+     "A cycles VIDEO MODE to EXCLUSIVE")
+  press("a")
   eq(og.save.options.videoMode, "windowed",
      "VIDEO MODE wraps back to WINDOWED")
-  press("down")
-  eq(om.index, 15, "cursor reaches MAX FPS")
+  selectRow("fpsCap")
+  eq(om.index, rowIndex("fpsCap"), "cursor reaches MAX FPS")
   press("a")
   eq(og.save.options.fpsCap, 75, "A cycles MAX FPS up from 60 to 75")
   eq(FrameCap.current, 75, "the live render cap tracks the MAX FPS option")
@@ -2762,8 +2784,16 @@ do
   -- SPEED below: a full loop of #STEPS presses returns to the 60 default.
   for _ = 1, #FrameCap.STEPS - 1 do press("a") end
   eq(og.save.options.fpsCap, 60, "MAX FPS wraps back to 60")
-  press("down")
-  eq(om.index, 16, "cursor reaches GAME SPEED")
+  selectRow("vsync")
+  eq(om.index, rowIndex("vsync"), "cursor reaches VSYNC")
+  press("a")
+  eq(og.save.options.vsync, "adaptive", "A cycles VSYNC to ADAPTIVE")
+  press("a")
+  eq(og.save.options.vsync, "off", "A cycles VSYNC to OFF")
+  press("a")
+  eq(og.save.options.vsync, "on", "VSYNC wraps back to ON")
+  selectRow("speed")
+  eq(om.index, rowIndex("speed"), "cursor reaches GAME SPEED")
   press("a")
   eq(og.save.options.speed, 2, "A cycles GAME SPEED to 2X")
   -- Driven by the level list rather than a literal press count: adding a
@@ -2771,20 +2801,20 @@ do
   -- bug when the cycling is fine and the row is simply one longer.
   for _ = 1, #GameSpeed.LEVELS - 1 do press("a") end
   eq(og.save.options.speed, 1, "GAME SPEED wraps back to NORMAL")
-  press("down")
-  eq(om.index, 17, "cursor reaches MODS")
-  press("down")
-  eq(om.index, 18, "cursor reaches CONTROLS")
-  press("down")
-  eq(om.index, 19, "CANCEL stays the fixed final row")
-  eq(om.scroll, 14, "CANCEL keeps the last option boxes on screen")
+  selectRow("mods")
+  eq(om.index, rowIndex("mods"), "cursor reaches MODS")
+  selectRow("controls")
+  eq(om.index, rowIndex("controls"), "cursor reaches CONTROLS")
+  selectRow("cancel")
+  eq(om.index, #om.rows+1, "CANCEL stays the fixed final row")
+  eq(om.scroll, math.max(0,#om.rows-4), "CANCEL keeps the last option boxes on screen")
   om:draw() -- smoke: scrolled layout draws under the headless stub
   press("a")
   check(popped, "A on CANCEL closes the options menu")
   local om2 = OptionsMenu.new(og)
   OInput.pressed = { up = true }; om2:update(1 / 60); OInput.pressed = {}
-  eq(om2.index, 19, "up from the top wraps to CANCEL")
-  eq(om2.scroll, 14, "wrapping to CANCEL scrolls to the tail")
+  eq(om2.index, #om2.rows+1, "up from the top wraps to CANCEL")
+  eq(om2.scroll, math.max(0,#om2.rows-4), "wrapping to CANCEL scrolls to the tail")
   -- headless-safe: no love.audio, setters only update internal state
   require("src.core.Music").applyOptions(og.save.options)
   require("src.core.Sound").applyOptions(og.save.options)
@@ -2794,7 +2824,8 @@ do
   require("src.render.Zoom").applyOptions(og.save.options)
   require("src.render.TileRenderer").applyOptions(og.save.options)
   VideoMode.applyOptions(og.save.options)
-end
+  require("src.core.VSync").applyOptions(og.save.options)
+end)()
 end
 
 -- ------------------------------------------------------------------
@@ -2851,13 +2882,15 @@ do
   local yes
   local box = ChoiceBox.new(game, function(v) yes = v end)
   box:update(0)
-  eq(yes, true, "ChoiceBox A on YES chooses true")
+  for _=1,require("src.core.Timing").YES_NO_ANSWER do box:update(0)end
+  eq(yes, true, "ChoiceBox A on YES chooses true after its native hold")
 
   game = stubGame({ b = true })
   local no
   box = ChoiceBox.new(game, function(v) no = v end)
   box:update(0)
-  eq(no, false, "ChoiceBox B chooses false")
+  for _=1,require("src.core.Timing").YES_NO_ANSWER do box:update(0)end
+  eq(no, false, "ChoiceBox B chooses false after its native hold")
 end
 end
 
@@ -2896,7 +2929,8 @@ do
   check(qbox ~= qmenu and qbox ~= nil and qbox.pages ~= nil,
         "QUIT pushes a confirmation textbox")
   eq(qbox.pages[1][1], "RETURN TO MAIN", "confirm asks RETURN TO MAIN MENU?")
-  qbox.onDone()
+  qbox:revealPage()
+  qbox:update(0)
   local qchoice = qstack:top()
   check(qchoice ~= qbox and qchoice ~= nil and qchoice.onChoose ~= nil,
         "textbox is followed by a YES/NO choice")
@@ -3384,7 +3418,7 @@ end
 -- editing a list and forgetting to meant the suite silently never ran.
 -- They are globbed now (21-testing-and-ci §CI).
 --
--- Order still matters: these suites share one process and one Data, and
+-- Order remains stable for readable reports. Each suite owns its process;
 -- the sequence they were chained in is the sequence they are known to
 -- pass in.  So the known order runs first and anything the glob newly
 -- turned up runs after it, alphabetically -- a new suite runs without a
@@ -3418,8 +3452,13 @@ end
 local function runSuites(paths)
   for _, path in ipairs(paths) do
     local label = path:match("([^/]+)%.lua$") or path
-    local ok, err = pcall(dofile, path)
-    check(ok, label .. (ok and " suite" or (": " .. tostring(err))))
+    -- Each suite owns singleton modules and may call harness.finish/os.exit.
+    -- A fresh state prevents one suite's stubs and registrations leaking into
+    -- later suites, and keeps an early failure from hiding the remaining ones.
+    local function quote(value) return "'" .. value:gsub("'", "'\"'\"'") .. "'" end
+    local lua = (arg and arg[-1]) or "luajit"
+    local status = os.execute(quote(lua) .. " tests/isolated_legacy_suite.lua " .. quote(path))
+    check(status == 0 or status == true, label .. " suite")
   end
 end
 
@@ -3514,13 +3553,12 @@ runSuites(orderedGlob("tests/parity_*.lua", {
 -- always been; scripts/test.sh also runs them directly.
 do
   local lua = (arg and arg[-1]) or "luajit"
-  local devnull = package.config:sub(1, 1) == "\\" and "nul" or "/dev/null"
   for _, tier in ipairs({ "tests/run_content_red.lua",
       "tests/run_engine.lua", "tests/run_modkit.lua" }) do
     local handle = io.open(tier, "r")
     if handle then
       handle:close()
-      local status = os.execute(("%q %s > " .. devnull .. " 2>&1"):format(lua, tier))
+      local status = os.execute(("%q %s"):format(lua, tier))
       check(status == 0 or status == true, tier:match("([^/]+)%.lua$") .. " tier")
     end
   end

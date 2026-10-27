@@ -118,6 +118,7 @@ local data = fixtureData()
 -- Gen 3 cartridges name several types with the ROM's seven-byte labels
 -- (PSYCHC/ELECTR/FIGHT). The registry rebuild must retain those generated
 -- records; otherwise their moves silently fall back to physical damage.
+data.type_chart.types = data.type_chart.types or Merge.deepCopy(TypeChart.TYPES)
 data.type_chart.types.PSYCHC = {
   id = "PSYCHC", name = "PSYCHC", index = 14, category = "special",
 }

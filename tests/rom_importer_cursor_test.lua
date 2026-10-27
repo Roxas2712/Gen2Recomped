@@ -31,6 +31,7 @@ eq(currentCursor, "arrow", "play restores the arrow cursor before boot")
 -- Android / unsupported cursors must not error.
 booted = nil
 currentCursor = "hand"
+ri._handedOff = nil -- each case starts a new launcher handoff
 ri.android = true
 ri:play("red")
 eq(booted, "red", "android play still boots")
@@ -38,6 +39,7 @@ eq(currentCursor, "hand", "android play leaves the cursor alone")
 
 booted = nil
 currentCursor = "hand"
+ri._handedOff = nil
 ri.android = false
 ri.arrowCursor = nil
 love.mouse.getSystemCursor = function() error("CreateSystemCursor is not currently supported") end
