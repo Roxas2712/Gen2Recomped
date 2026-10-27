@@ -121,8 +121,18 @@ function Net:host(port)
       port, tostring(ok and err or h))
     return false
   end
+  if port == 0 then
+    local addressOK, bound = pcall(function() return h:get_socket_address() end)
+    port = addressOK and tonumber(tostring(bound):match(":(%d+)$")) or nil
+    if not port or port == 0 then
+      pcall(function() h:destroy() end)
+      self.error = "Cannot determine the local link port"
+      return false
+    end
+  end
   self.enetHost = h
   self.mode = "hosting"
+  self.port = port
   self.address = ("%s:%d"):format(Net.lanIP() or "?", port)
   return true
 end

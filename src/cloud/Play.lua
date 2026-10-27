@@ -45,6 +45,7 @@ function P.read()
 end
 function P.refresh(invalidate) P.next=0;if invalidate then P.doc=nil end end
 function P.tick(game)
+ require('src.ui.CenterLobby').tick(game)
  local account=Auth.signedIn() and Auth.accountId() or nil
  if P.account~=account then
   if P.job then P.job:cancel() end

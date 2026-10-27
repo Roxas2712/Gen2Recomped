@@ -40,6 +40,7 @@ syntax = ['src/link/ArenaReplay.lua','src/ui/PlayerRole.lua','src/cloud/AccountB
           'src/import/ImageBounds.lua', 'src/storage/AccountStorage.lua', 'src/storage/ProfileFs.lua',
           'src/storage/LuaData.lua', 'src/storage/BankInterop.lua', 'src/mods/SharedStorage.lua',
           'src/mods/Api3.lua', 'src/mods/PlaythroughStorage.lua', 'src/import/BankInterchangeWorkspace.lua']
+syntax.extend(['src/ui/CenterLobby.lua','src/link/Nearby.lua','src/link/LocalLink.lua','src/link/Net.lua','src/ui/StartMenu.lua','src/world/OverworldController.lua'])
 syntax.extend(['src/translation/Service.lua','src/translation/CommunityCatalog.lua','src/translation/AccountErrors.lua','src/translation/worker.lua'])
 source = '\n'.join('assert(loadfile(' + json.dumps(path) + '))' for path in syntax)
 if not os.environ.get('RETRO_QA_LUA_LIBRARY') or shutil.which('luajit'):
@@ -56,7 +57,7 @@ suites.append('arena_replay')
 suites.append('nds_party_codec')
 suites.append('bank_verification')
 suites.append('origin_records')
-suites.extend(['friend_maps', 'friend_activity', 'friend_chat', 'friend_wager'])
+suites.extend(['friend_maps', 'friend_activity', 'friend_chat', 'friend_wager', 'center_lobby', 'nearby_lobby'])
 if args.suite:
     unknown = set(args.suite) - set(suites)
     if unknown:
