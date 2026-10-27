@@ -16,7 +16,7 @@ function B.root()
   if exists(explicit..'/tools/pokemon_x_backend.py') then return explicit end
   return nil,'The configured 3DS backend folder is missing its import tools.'
  end
- local source=love.filesystem.getSource()
+ local source=love.filesystem.getSource and love.filesystem.getSource()
  if source and exists(source..'/tools/pokemon_x_backend.py')then return source end
  -- Python cannot execute a script inside game.love. Extract only the reviewed
  -- helper sources; game data and binaries are never part of this payload.
