@@ -2286,6 +2286,7 @@ function BattleState:makeSafari(state)
   self.safariCatchRate = self.enemy.def.catchRate
   self.baitFactor = 0
   self.escapeFactor = 0
+  if GameVersion.isGen3() then require("src.battle.Gen3Safari").init(self) end
   -- THE GREAT MARSH'S RULES, not Kanto's: two stage counters starting at 6
   -- (src/battle/Gen4Safari.lua).
   if self:gen4Layout() then
@@ -4752,7 +4753,8 @@ function BattleState:update(dt)
 
   if self.phase == "menu" and self.safari then
     if self.safari.balls <= 0 then
-      self:say(Strings("PA: You're out of\nSAFARI BALLs!\nGame over!"))
+      self:say(self.gen3Safari and require("src.battle.Gen3Safari").text(self,"outOfBalls")
+        or Strings("PA: You're out of\nSAFARI BALLs!\nGame over!"))
       self.phase = BattleQueuePhase.name()
       self.result = "run"
       self.afterQueue = "finish"
@@ -4771,7 +4773,8 @@ function BattleState:update(dt)
     end
     self.menuIndex = row * 2 + col + 1
     if input:wasPressed("a") then
-      self:chooseSafari(({ "ball", "bait", "rock", "run" })[self.menuIndex])
+      self:chooseSafari((self.gen3Safari and require("src.battle.Gen3Safari").actions(self)
+        or { "ball", "bait", "rock", "run" })[self.menuIndex])
     end
     return
   end
@@ -10227,10 +10230,10 @@ end
 -- the escape factor by 1-5 (zeroing bait) -- ItemUseBait/ItemUseRock,
 -- engine/items/item_effects.asm.
 function BattleState:safariAction(choice)
+  if self.gen3Safari then return require("src.battle.Gen3Safari").action(self, choice) end
   if self.gen4Safari then return self:gen4SafariAction(choice) end
   self.phase = BattleQueuePhase.name()
   self.afterQueue = "menu"
-  local st = self.safari
   local playerName = self.game.save.player.name
 
   if choice == "run" then
@@ -10242,32 +10245,7 @@ function BattleState:safariAction(choice)
   end
 
   if choice == "ball" then
-    st.balls = st.balls - 1
-    self:say(Strings("%s used\nSAFARI BALL!", playerName))
-    self:act(function()
-      require("src.core.Sound").play(self.data, "Ball_Toss")
-      self.lastBall = "SAFARI_BALL"
-      local caught, shakes = self:catchAttempt("SAFARI_BALL", self.safariCatchRate)
-      Runtime.emit("battle.ball_thrown", {
-        battle = self, ball = "SAFARI_BALL", caught = caught, shakes = shakes,
-      })
-      -- SAFARI_BALL is neither POKE nor GREAT, so TossBallAnimation
-      -- lands on the ULTRATOSS arc (no flicker: SAFARI_BALL is $08,
-      -- above DoBallTossSpecialEffects's <= ULTRA_BALL check)
-      self:ballChain(self:tossAnimFor("SAFARI_BALL"), caught, shakes, "SAFARI_BALL")
-      if caught then
-        -- ItemUseBallText05's sound_caught_mon: fanfare with the text
-        self:actNext(function()
-          self:playCaughtCue()
-        end)
-        self:sayNext(Strings("All right!\n%s was\ncaught!", self.enemy.name))
-        -- same ItemUseBall .captured flow as a regular ball
-        self:act(function() self:storeCaughtMon() end)
-      else
-        self:sayNext(self:ballMissMessage(shakes))
-        self:act(function() self:safariEnemyTurn() end)
-      end
-    end)
+    self:safariBallAction()
     return
   end
 
@@ -10283,6 +10261,39 @@ function BattleState:safariAction(choice)
     self.baitFactor = 0
   end
   self:act(function() self:safariEnemyTurn() end)
+end
+
+-- Shared catch hooks, animation and storage stay in the host.
+function BattleState:safariBallAction(enemyTurn)
+  local st,playerName=self.safari,self.game.save.player.name
+  st.balls = st.balls - 1
+  if self.gen3Safari then self.gen3Safari.balls=st.balls end
+  self:say(self.gen3Safari and require("src.battle.Gen3Safari").text(self,"used")
+    or Strings("%s used\nSAFARI BALL!", playerName))
+  self:act(function()
+    require("src.core.Sound").play(self.data, "Ball_Toss")
+    self.lastBall = "SAFARI_BALL"
+    local caught, shakes = self:catchAttempt("SAFARI_BALL", self.safariCatchRate)
+    Runtime.emit("battle.ball_thrown", {
+      battle = self, ball = "SAFARI_BALL", caught = caught, shakes = shakes,
+    })
+    -- SAFARI_BALL is neither POKE nor GREAT, so TossBallAnimation
+    -- lands on the ULTRATOSS arc (no flicker: SAFARI_BALL is $08,
+    -- above DoBallTossSpecialEffects's <= ULTRA_BALL check)
+    self:ballChain(self:tossAnimFor("SAFARI_BALL"), caught, shakes, "SAFARI_BALL")
+    if caught then
+      -- ItemUseBallText05's sound_caught_mon: fanfare with the text
+      self:actNext(function()
+        self:playCaughtCue()
+      end)
+      self:sayNext(Strings("All right!\n%s was\ncaught!", self.enemy.name))
+      -- same ItemUseBall .captured flow as a regular ball
+      self:act(function() self:storeCaughtMon() end)
+    else
+      self:sayNext(self:ballMissMessage(shakes))
+      self:act(function() if enemyTurn then enemyTurn()else self:safariEnemyTurn()end end)
+    end
+  end)
 end
 
 -- PLATINUM'S SAFARI TURN -- see src/battle/Gen4Safari.lua for the rules and
@@ -10428,6 +10439,17 @@ function BattleState:safariEnemyTurn()
       self.afterQueue = "finish"
     end
   end)
+end
+
+function BattleState:safariFled(text)
+  self:sayNext(text)
+  self:actNext(function()
+    require("src.core.Sound").play(self.data,"Run")
+    startPicKind(self,self:picFxFor(self.enemy),"slideOff")
+  end)
+  self.nextInsert=(self.nextInsert or 0)+1
+  table.insert(self.queue,self.nextInsert,{wait=24})
+  self.result="run";self.afterQueue="finish"
 end
 
 -- A roaming beast gives you exactly one turn and then it is gone.

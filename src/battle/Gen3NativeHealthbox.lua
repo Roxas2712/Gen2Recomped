@@ -16,6 +16,7 @@ local function context(battle,hud)
   end
   local C={}
   function C.drawPlayerBox(x,y)g.setColor(1,1,1,1);g.draw(Assets.image(hud.images.player),x,y)end
+  C._playerBox=hud.images.player and Assets.image(hud.images.player)
   function C.drawEnemyBox(x,y)g.setColor(1,1,1,1);g.draw(Assets.image(hud.images.opponent),x,y)end
   function C.drawDoublesBox(player,x,y)
     g.setColor(1,1,1,1);g.draw(Assets.image(player and hud.images.playerDoubles or hud.images.opponentDoubles),x,y)
@@ -58,7 +59,7 @@ local function context(battle,hud)
   local profile={id=version,ui={},font={faces={small={}},faceLoader='src.ui.game3.healthbox_font'}}
   -- Caught-marker eligibility remains the host's ordinary hook, called by
   -- Gen3Battle after the compositor; the reference must not call it again.
-  local st={trainer=true,session={game=battle.game},double=battle:isDouble()}
+  local st={trainer=true,session={game=battle.game},double=battle:isDouble(),safari=battle.safari~=nil,safariState=battle.safari}
   local Runtime=require('src.mods.Runtime')
   local packages={loaded={['src.core.game3.profile']={forSession=function()return profile end},
     ['src.core.GameVersion']={current=version},['src.core.game3.battle']={_st=st}}}
@@ -67,7 +68,10 @@ local function context(battle,hud)
     ['src.core.Logger']=require('src.core.Logger'),['src.render.Font']=require('src.render.Font'),
     ['src.core.GameVersion']=require('src.core.GameVersion'),
     ['src.core.game3.battle.state']={displayName=function(b)return b.name end},
-    ['src.core.game3.rom_text']={has=function()return false end},
+    ['src.core.game3.rom_text']={has=function()return false end,plain=function(key)
+      return require('src.battle.Gen3Safari').text(battle,key=='gText_SafariBalls'and'balls'or'left')
+    end},
+    ['src.core.game3.battle.profile']={get=function()return{strings={safariBallsLeft='left'}}end},
     ['src.core.game3.battle.mod_registries']={},['src.core.game3.battle.anim']=A,
     ['src.mods.Runtime']={wantsHook=function(name)
       return name=='pokemon.level_visible'or Runtime.wantsHook(name)
@@ -87,9 +91,9 @@ local function context(battle,hud)
   local load=require('compat.gen1-rs.Loader').new('emerald',bindings)
   return{compositor=load('src.core.game3.battle.healthbox'),state=st}
 end
-function M.draw(battle,battler,x,y,player)
+function M.draw(battle,battler,x,y,player,safari)
   local hud=M.available(battle)
-  if not hud or battle.safari then return false end
+  if not hud or battle.safari and player and not safari then return false end
   if battler.shownStatus then
     local key=battle:statusLabel({status=battler.shownStatus})
     if not hud.status or not hud.status[key]then return false end
@@ -98,6 +102,7 @@ function M.draw(battle,battler,x,y,player)
   if compact and not(hud.images.playerDoubles and hud.images.opponentDoubles)then return false end
   local ctx=battle.nativeHealthbox
   if not ctx then ctx=context(battle,hud);battle.nativeHealthbox=ctx end
+  ctx.state.safari=battle.safari~=nil;ctx.state.safariState=battle.safari
   local gender=require('src.pokemon.DayCare').gender(battle.data,battler.mon)
   local def=battle.data.pokemon[battler.mon.species]
   local mon=battler.mon
@@ -115,5 +120,9 @@ function M.draw(battle,battler,x,y,player)
   end)
   if not ok then error(why,0)end
   return true
+end
+function M.drawSafari(battle,x,y)
+  if not battle.gen3Safari then return false end
+  return M.draw(battle,battle.player,x,y,true,true)
 end
 return M
