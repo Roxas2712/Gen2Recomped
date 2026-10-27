@@ -224,6 +224,9 @@ class Proxy(http.server.BaseHTTPRequestHandler):
             response = error
         with response:
             data = response.read()
+            meter = getattr(self.server, 'traffic_meter', None)
+            if meter is not None:
+                meter.record(self.path.split('?', 1)[0], len(body), len(data), response.code)
             self.send_response(response.code)
             for key in ('Content-Type', 'ETag', 'Cache-Control'):
                 if response.headers.get(key):
