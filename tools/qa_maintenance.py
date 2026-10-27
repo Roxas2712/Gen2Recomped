@@ -45,11 +45,13 @@ def main():
             builds = sweep_builds(storage)
             from qa_release_storage import sweep as sweep_releases
             releases = sweep_releases(storage)
-            reclaimed = releases['allocated_bytes'] + builds + love['logical_bytes'] + storage.sweep()
+            from qa_transient_storage import sweep as sweep_transients
+            transients = sweep_transients(storage)
+            reclaimed = sum(transients.values()) + releases['allocated_bytes'] + builds + love['logical_bytes'] + storage.sweep()
             status=state/'maintenance';status.mkdir(exist_ok=True)
             temp=status/'status.tmp'
             temp.write_text(json.dumps(dict(time=time.time(),checked_roots=sorted(checked),
-                reclaimed_logical_bytes=reclaimed,release_cleanup=releases,build_object_cleanup_bytes=builds,love_cleanup=love,free_bytes=shutil.disk_usage(args.root).free),indent=2))
+                reclaimed_logical_bytes=reclaimed,transient_cleanup=transients,release_cleanup=releases,build_object_cleanup_bytes=builds,love_cleanup=love,free_bytes=shutil.disk_usage(args.root).free),indent=2))
             temp.replace(status/'status.json')
             logger.info('Sweep complete; reclaimed %.1f MiB of logical idle payloads', reclaimed/1024**2)
         return 0
