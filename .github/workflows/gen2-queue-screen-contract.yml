@@ -36,15 +36,8 @@ jobs:
           done
       - name: Native queue, screen and available menu owners
         run: |
-          luajit tests/engine/gen2_battle_queue_view.lua
-          luajit tests/engine/gen2_battle_window.lua
-          luajit tests/engine/gen2_battle_scene.lua
-          luajit tests/engine/wide_battle_shake_bug562.lua
-          luajit tests/engine/gen2_battle_pack.lua
-          luajit tests/engine/gen2_party_item_result.lua
-          luajit tests/engine/screen_space_ui.lua
-          luajit tests/engine/party_live_data.lua
-          luajit tests/engine/gen2_battle_live_view.lua
-          luajit tests/engine/gen2_battle_submenu.lua
-          luajit tests/engine/gen2_summary_contract.lua
-          luajit tests/engine/frlg_battle_gender.lua
+          failed=0
+          for suite in gen2_battle_queue_view gen2_battle_window gen2_battle_scene wide_battle_shake_bug562 gen2_battle_pack gen2_party_item_result screen_space_ui party_live_data gen2_battle_live_view gen2_battle_submenu gen2_summary_contract frlg_battle_gender; do
+            if ! luajit "tests/engine/$suite.lua"; then failed=1; fi
+          done
+          exit "$failed"

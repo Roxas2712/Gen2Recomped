@@ -10056,7 +10056,7 @@ end
 function BattleState:beginPartyItemHeal()
   self.partyItemHealing = true
   self.lowHealthAlarmOn = false
-  Sound.stopLoop("Low_Health_Alarm")
+  require("src.core.Sound").stopLoop("Low_Health_Alarm")
 end
 
 function BattleState:finishPartyItemTurn(itemId, mon)
