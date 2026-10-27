@@ -1,0 +1,29 @@
+{
+  "renderer": "Metal",
+  "vendor": "",
+  "version": "2.1",
+  "passed": true,
+  "byteDifferences": 0,
+  "bakes": {
+    "tiles.gen2": {
+      "currentFrame": 2,
+      "peakPerFrame": 2,
+      "total": 2
+    },
+    "sprites.obp": {
+      "currentFrame": 2,
+      "peakPerFrame": 2,
+      "total": 2
+    }
+  },
+  "syntheticPixels": true,
+  "realSceneAcceptance": false,
+  "playerProfilesUsed": false,
+  "lut": {
+    "comparisons": 6,
+    "lutBytes": 256,
+    "maxByteDelta": 0
+  },
+  "device": "Apple M2",
+  "checks": 3166
+}

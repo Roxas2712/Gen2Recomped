@@ -5,4 +5,5 @@ function love.conf(t)
   t.window.width, t.window.height, t.window.vsync = 192, 160, 0
   t.window.highdpi = false
   t.modules.audio, t.modules.joystick, t.modules.physics = false, false, false
+  if t.graphics then t.graphics.renderers={os.getenv('POKEPORT_GRAPHICS_BACKEND') or 'opengl'} end
 end
