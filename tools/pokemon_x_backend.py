@@ -243,7 +243,7 @@ def execute(args, rom, qa):
             qa.qa_profile(args.qa_profile)
             command = plan[-1]
             command[command.index("--data") + 1] = str(args.qa_profile.resolve())
-        from qa_build_storage import prepare as prepare_build, clean_linked_objects
+        from qa_build_storage import prepare as prepare_build, clean_linked_objects, clean_compiler_duplicates
         if args.action != 'analyze':prepare_build(qa._storage, WORK, build_key)
         if RUNTIME:
             qa._storage.limit_output(WORK/'compiler-cache',512*1024**2)
@@ -286,13 +286,14 @@ def execute(args, rom, qa):
                 process = qa.qa_run(command, cwd=ROOT, env=env)
             if process.returncode:
                 return process.returncode
-            clean_linked_objects(WORK)
         if args.action in ("build", "smoke", "play"):
             if not binary.is_file() or binary.stat().st_size == 0:
                 raise ValueError('The native 3DS build did not produce a game library.')
-            if RUNTIME and not cached:
+            if RUNTIME and (not cached or plan):
                 runtime_bundle.finish(binary, result['sha256'], RUNTIME_ID)
             library.register(edition, rom, result["sha256"], binary)
+            clean_compiler_duplicates(WORK,binary.parent)
+            clean_linked_objects(WORK)
             if args.play_after_import:
                 print(json.dumps({'progress':'Native game prepared. Testing this device …'}), flush=True)
         if args.action == "smoke":

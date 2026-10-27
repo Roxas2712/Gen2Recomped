@@ -122,10 +122,10 @@ class LaunchSequenceTests(unittest.TestCase):
     calls.append(command)
     binary=Path(command[-1])/backend.library_name(preflight.POKEMON_X_USA)
     binary.parent.mkdir(parents=True,exist_ok=True)
-    binary.write_bytes(struct.pack('<IiiI',0xfeedfacf,0x100000c,0,6)+b'\0'*16+b'synthetic game library')
+    binary.write_bytes(struct.pack('<IiiI',0xfeedfacf,0x100000c,0,6)+b'\0'*16+b'synthetic game library'+str(len(calls)).encode())
     return SimpleNamespace(returncode=0)
    qa.qa_run.side_effect=run
-   storage=SimpleNamespace(prepare=Mock(),clean_linked_objects=Mock())
+   storage=SimpleNamespace(prepare=Mock(),clean_linked_objects=Mock(),clean_compiler_duplicates=Mock())
    variables={key:getattr(backend,key) for key in ['ROOT','WORK','CACHE','RUNTIME','RUNTIME_ID','RUNTIME_RELEASE']}
    with patch.multiple(backend,**variables),patch.object(preflight,'ROOT',preflight.ROOT),patch.object(backend.library,'ROOT',backend.library.ROOT),patch.object(backend.library,'WORK',backend.library.WORK),patch.object(backend.library,'RUNTIME_ID',None),patch.object(backend.preflight,'qa_manager',return_value=qa),patch.object(backend.runtime_bundle,'load',return_value=(runtime,metadata)),patch.dict(sys.modules,{'qa_build_storage':storage}):
     argv=['import',str(rom),'--edition','x','--root',str(base/'profile'),'--runtime-root',str(runtime),'--play-after-import']
@@ -138,9 +138,13 @@ class LaunchSequenceTests(unittest.TestCase):
      self.assertIn(metadata['id'],session['profile_key'])
      self.assertEqual(session['driver_manifest'],str(runtime/'vulkan/MoltenVK_icd.json'))
     self.assertEqual(len(calls),1,'complete imports reuse the compiled game')
+    with contextlib.redirect_stdout(io.StringIO()):
+     self.assertEqual(backend.main(['build',str(rom),'--edition','x','--root',str(base/'profile'),'--runtime-root',str(runtime)]),0)
+    self.assertTrue(backend.runtime_bundle.completed(Path(session['library']),rom_hash,metadata['compilation_id']),'a forced rebuild refreshes its completion digest before cached objects are retired')
+    self.assertEqual(len(calls),2)
     binary=Path(session['library']);binary.write_bytes(binary.read_bytes()+b'changed after completion')
     with contextlib.redirect_stdout(io.StringIO()):self.assertEqual(backend.main(argv),0)
-    self.assertEqual(len(calls),2,'changed library bytes force preparation again')
+    self.assertEqual(len(calls),3,'changed library bytes force preparation again')
  def test_library_build_finishes_before_intro_then_game(self):
   from types import SimpleNamespace
   from unittest.mock import Mock
@@ -157,7 +161,7 @@ class LaunchSequenceTests(unittest.TestCase):
     return SimpleNamespace(returncode=0)
    qa.qa_run.side_effect=run
    result={'status':'headers_verified_boot_untested','title_id':preflight.POKEMON_X_USA,'sha256':'a'*64}
-   storage=SimpleNamespace(prepare=Mock(),clean_linked_objects=Mock())
+   storage=SimpleNamespace(prepare=Mock(),clean_linked_objects=Mock(),clean_compiler_duplicates=Mock())
    with patch.object(backend,'WORK',work),patch.object(backend.preflight,'qa_manager',return_value=qa),patch.object(backend.preflight,'inspect',return_value=result),patch.object(backend.library,'register'),patch.dict(sys.modules,{'qa_build_storage':storage}):
     self.assertEqual(backend.main(['play',str(work/'rom'),'--runtime',str(runtime),'--recompiler',str(compiler)]),0)
    self.assertEqual([Path(call.args[0][0]) for call in qa.qa_run.call_args_list],[compiler,intro,runtime])
