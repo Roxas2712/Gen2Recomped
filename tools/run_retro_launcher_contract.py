@@ -52,6 +52,9 @@ save_resume resume_workspace save_resume_capture save_resume_slot save_history_w
 suites.extend(['friends_menu','friend_trade','friend_play','remote_players','arena_shop','cloud_net','relay_rejection','native_preview','account_storage','account_profiles','bank_interop',
                'api3_storage_transactions','api3_playthrough_storage','bank_portrait','api3_compat','mod_catalogue','mod_access','mod_preflight','launcher_presentation','cartridge_batch','launcher_cobblemon','cartridge_cloud','wonder_reward','game_cache','device_session','gift_codes','gift_editor','presence','tournaments','league','arena_battle_proof'])
 suites.append('arena_replay')
+suites.append('nds_party_codec')
+suites.append('bank_verification')
+suites.append('origin_records')
 suites.extend(['friend_maps', 'friend_activity', 'friend_chat', 'friend_wager'])
 if args.suite:
     unknown = set(args.suite) - set(suites)

@@ -119,16 +119,16 @@ function W.action(self,id)
  elseif id=='start' then f.confirm={kind='start'}
  elseif id=='cancel' then f.confirm={kind='cancel',reason=''}
  elseif id=='dismiss' then f.accessForm=nil;f.confirm=nil;f.choose=nil;f.form=nil
- elseif id:match('^fight:') then
+ elseif id:match('^fight:') or id:match('^resumeFight:') then
   local index=tonumber(id:match(':(%d+)$'));local m=f.cup.matches[index]
-  if m and m.state=='ready' then f.choose=index;self.pageScroll=0 end
+  if m and m.state=='ready' then f.choose=index;f.resumeBattle=id:match('^resumeFight:')~=nil;self.pageScroll=0 end
  elseif id:match('^slot:') then
   local slot=id:sub(6);local cup=f.cup;local match=cup.matches[f.choose]
   job(self,'launch',function()
    local fresh,why=API.request('GET',cup.id);if not fresh then return nil,why end
    local current;for _,m in ipairs(fresh.matches or {}) do if m.id==match.id then current=m end end
    if not current then return nil,'This pairing is no longer available.' end
-   local ok,problem=require('src.link.CloudArena').queue(fresh,current,slot)
+   local ok,problem=require('src.link.CloudArena').queue(fresh,current,slot,f.resumeBattle)
    return ok and {edition=cup.edition} or nil,problem
   end)
  elseif id:match('^report:') or id:match('^resolve:') then
@@ -240,7 +240,7 @@ function W.draw(self,x,y,w,h)
   if c.rules~='' then text(c.rules) end
   text('CHAMPION: '..require('src.import.GiftDesigner').describe(c.prize)..' + Champion achievement',false,P.link)
   text(f.notice)
-  if c.battle_gate~='native_rules' then text('NATIVE MODULE UNAVAILABLE · Direct league battles currently support generations 1–3. This bracket can still use community results.',false,P.link) else text('BANK PREFLIGHT · Native edition rules and two matching battle reports. Community result buttons do not award season points.',false,P.link) end
+  if c.battle_gate~='native_rules' then text('NATIVE MODULE UNAVAILABLE · This edition is not enabled by the private battle verifier. This bracket can still use community results.',false,P.link) else text('BANK PREFLIGHT · Native edition rules and two matching battle reports. Community result buttons do not award season points.',false,P.link) end
   if f.confirm then
    local q=f.confirm;text('CONFIRM '..q.kind:upper(),true,P.ink)
    if q.winner then text('Winner: '..name(q.winner)) end
@@ -276,6 +276,7 @@ function W.draw(self,x,y,w,h)
   for i,m in ipairs(c.matches or {}) do
    if round~=m.round then round=m.round;y=y+14*s;text('ROUND '..round,true,P.link) end
    local height=(m.can_report and 244 or 108)*s
+   if m.can_report and m.state=='ready' and c.battle_gate=='native_rules'then height=height+92*s end
    if c.manage and (m.state=='ready' or m.state=='disputed') then height=height+92*s end
    paint.surface(x,y,w,height,12*s,m.state=='disputed' and P.chooseTop or P.link,false)
    y=y+14*s;text(name(m.left)..'  vs  '..name(m.right),true,P.ink)
@@ -284,6 +285,7 @@ function W.draw(self,x,y,w,h)
     if m.state=='ready' and c.battle_gate=='native_rules' then
      text('Both players enter here. Your frozen Bank teams connect through the account cloud; no room code is needed.')
      button('ENTER LINK BATTLE','fight:'..i)
+     button('TAKE OVER RUNNING BATTLE ON THIS DEVICE','resumeFight:'..i)
     end
     button('I WON · CONFIRM RESULT','report:'..i..':'..(m.left==f.account and 'left' or 'right'))
     button('OPPONENT WON · CONFIRM RESULT','report:'..i..':'..(m.left==f.account and 'right' or 'left'))

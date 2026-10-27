@@ -21,10 +21,12 @@ local Fingerprint = {}
 -- Runtime command semantics are part of native GBA lockstep compatibility,
 -- even when both peers load byte-identical data. Keep older game digests.
 local function nativeBattleRevision()
+  if require('src.core.GameVersion').generation()>=4 then return 'nds-'..require('src.core.GameVersion').generation()..'-1'end
   return require("src.core.GameVersion").isGen3() and 20 or nil
 end
 Fingerprint.nativeBattleRevision = nativeBattleRevision
 function Fingerprint.nativePartyRevision()
+  if require('src.core.GameVersion').generation()>=4 then return 'nds-'..require('src.core.GameVersion').generation()..'-'..require('src.link.NdsParty').REVISION end
   return require("src.core.GameVersion").isGen3() and require("src.link.Gen3Party").REVISION or nil
 end
 

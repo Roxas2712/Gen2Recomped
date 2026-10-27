@@ -1273,6 +1273,7 @@ function Loader:_api(mod)
     return Capabilities.supports(surface, name, hostId)
   end
   engineRequire('src.mods.Localization').install(loader, mod, api, engineCall)
+  engineRequire('src.mods.Suspend').install(loader, mod, api)
   -- mod.world / mod.game / mod.storage all materialize on first touch, for
   -- the same reason: a headless load must not drag the world stack in.
   -- Battle capability queries can also be installed before Game exists.
@@ -1472,6 +1473,7 @@ function Loader:_rollback(modId)
   self.hooks:removeOwner(modId)
   self._decodedHooks:removeOwner(modId)
   self.exports[modId] = nil
+  if self.suspendContracts then self.suspendContracts[modId] = nil end
   self.optionSchemas[modId] = nil
   self.optionStatus[modId] = nil
   self.migrations[modId] = nil

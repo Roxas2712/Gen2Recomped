@@ -165,6 +165,34 @@ for _, version in ipairs({ "firered", "emerald" }) do
   T.eq(game.stack:top(), dropped, "disconnect retires the native picker")
   T.eq(dropped._gen3BatonPending, nil, "disconnect clears the pending continuation")
   T.eq(dropped.player.mon.nickname, "H_ALPHA", "disconnect never silently selects the first bench")
+  -- A transfer can arrive while the next accepted turn is waiting for an
+  -- unsubmitted Baton choice. Rebuild the pending native continuation and
+  -- hand input back to its actual owner, instead of replaying forever.
+  local ra=T.link.fakeGame(f.data,'CHARMANDER',{name='HOST',level=30})
+  local rb=T.link.fakeGame(f.data,'CHARMANDER',{name='GUEST',level=30})
+  ra.stack.states=ra.stack.list;rb.stack.states=rb.stack.list
+  local rn,sn=Net.loopbackPair();local fp=require('src.link.Handshake').hello(ra,'battle').fingerprint
+  local action={{sequence=1,body={type='action',kind='move',slot=1}}}
+  local job={schema=1,seed=327,level=30,teams={{account=1,party=pa,fingerprint=fp,messages=action},{account=2,party=pb,fingerprint=fp,messages=action}}}
+  local ar,startA=require('src.link.ArenaResume').rebuild(ra,job,1,rn)
+  local br,startB=require('src.link.ArenaResume').rebuild(rb,job,2,sn)
+  T.check(ar._gen3BatonPending and br._gen3BatonPending,'both devices reconstruct the unfinished native replacement')
+  startA();startB()
+  local selections=0
+  for _=1,30000 do
+    for _,game in ipairs({ra,rb})do
+      f.result.loader.game=game
+      local view=f.e.api.ui:snapshot()
+      if view and view.kind=='party'then
+        intentId=intentId+1;assert(f.e.api.ui:submit({id=intentId,revision=view.revision,kind='select',index=3}));selections=selections+1
+      end
+      Input.pressed={a=true};game.stack:update(1/60)
+    end
+    if ar.localHashes[1]and br.localHashes[1]then break end
+  end
+  T.eq(selections,2,'each transferred participant makes its own real replacement choice exactly once')
+  T.check(ar.localHashes[1]and br.localHashes[1],'the unfinished turn continues after handoff')
+  T.eq(ar.localHashes[1],br.localHashes[1],'resumed Baton choices keep the native turn deterministic')
   f.close()
 end
 T.finish("native Baton Pass link choices and spectator continuation")

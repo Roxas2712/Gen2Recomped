@@ -35,9 +35,10 @@
     "src/storage/SuspendStore.lua": "3dc64bdf727608dc13319f68cb8703f632449d5fd892e6b8a27532f4cc3f39a9"
   },
   "limitations": [
-    "No physical Android or iOS device was available.",
-    "Same engine build and exact imported game data required; native Gen 1\u20133 only; loaded mods and live online sessions are excluded.",
-    "70 launcher suites and 82 Lua syntax checks passed after integrating current main; full private-data handoff ran before the unrelated performance merge."
+    "No physical Android or iOS device was available. Device handoff was simulated with independent macOS processes/profiles and private local HTTPS.",
+    "Exact engine, game data and mod content are required for portable adventure suspend. Each loaded mod must register a bounded data-only portable suspend adapter.",
+    "Gen 5 is deferred at the user’s request. Platinum native loopback was qualified; production DS cups remain disabled until their private replay dataset is available.",
+    "The new bank legality worker is locally qualified but not enabled in production while the private Synology worker cannot be reached. Imported historical captures cannot be cryptographically attested."
   ],
   "postMainMergeNativeSmoke": {
     "passed": true,
@@ -586,7 +587,7 @@
     "limitations": [
       "Official encounter and historical-event legality are not fully verified.",
       "Portable adventure suspend still excludes loaded mods and live online sessions.",
-      "Gen 4\u20135 native online modules remain unavailable."
+      "Gen 4–5 native online modules remain unavailable."
     ],
     "sourceSha256": {
       "src/link/LinkBattle.lua": "b42626f74c5012198f02d8549e021d6d89f5bf2fb219567d6ff92e6060574e1b",
@@ -634,6 +635,482 @@
       "src/import/CloudSync.lua": "9a15a0008dc6467287ff5c22fdae204af5438ee5131b1cd6e303a73ebdc29909",
       "src/storage/GameCache.lua": "3eecf9f8f2919ff32f7430ac1b520e278aee26b56daf57279e066bc7d9df9122",
       "src/storage/SuspendStore.lua": "3dc64bdf727608dc13319f68cb8703f632449d5fd892e6b8a27532f4cc3f39a9"
+    }
+  },
+  "historicalSections": "Sections other than continuationQualification retain earlier evidence; their limitations and hashes describe those earlier builds.",
+  "continuationQualification": {
+    "date": "2026-10-27",
+    "baseCommit": "dd7b0738e8d5d8d2a814cc1e70729df1baa719ee",
+    "scope": "Independent macOS processes/profiles; private local HTTPS. No physical or cross-OS hardware claim.",
+    "modSuspend": {
+      "passed": true,
+      "edition": "emerald",
+      "mods": [
+        "UNI_LANGUAGE_NATIVE",
+        "event-driven isolated QA mod with private adapter state"
+      ],
+      "longBattleResults": [
+        {
+          "reason": "Uploaded a damaged native battle during a move animation; recorded deterministic turn 2",
+          "capture": {
+            "kind": "trainer",
+            "idleTicks": 108000,
+            "anchor": "battle",
+            "tailSteps": 75,
+            "bytes": 383781
+          },
+          "ok": true,
+          "phase": "nextturn",
+          "ticks": 109023,
+          "edition": "emerald",
+          "role": "source"
+        },
+        {
+          "ok": true,
+          "phase": "return",
+          "edition": "emerald",
+          "role": "target",
+          "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed",
+          "ticks": 230
+        }
+      ],
+      "finalSourceResults": [
+        {
+          "ok": true,
+          "phase": "nextturn",
+          "edition": "emerald",
+          "role": "source",
+          "reason": "Uploaded a damaged native battle during a move animation; recorded deterministic turn 2",
+          "capture": {
+            "tailSteps": 313,
+            "anchor": "battle",
+            "kind": "trainer",
+            "idleTicks": 0,
+            "bytes": 447296
+          },
+          "ticks": 1023
+        },
+        {
+          "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed",
+          "ok": true,
+          "phase": "return",
+          "ticks": 230,
+          "edition": "emerald",
+          "role": "target"
+        }
+      ],
+      "contract": "mod.suspend:register({schema=1,capture=...,restore=...}); exact mod order, package/assets digest and schema; bounded plain-data states; missing adapters are refused; native restore failures roll back mod state."
+    },
+    "onlineHandoff": {
+      "passed": true,
+      "scope": "Independent macOS client profiles and private local HTTPS; no physical or cross-OS proof; independent native server replay",
+      "scenarios": [
+        {
+          "edition": "red",
+          "scenario": "handoff",
+          "battle_state": "complete",
+          "verification": "server_native_replay",
+          "points": {
+            "left": -25,
+            "right": 50
+          },
+          "wallets": {
+            "left": 25,
+            "right": 100
+          },
+          "results": [
+            {
+              "cloudTransport": true,
+              "adventureRestored": true,
+              "edition": "red",
+              "scenario": "handoff",
+              "faultInjected": false,
+              "blockedRetries": 0,
+              "ok": true,
+              "cancelled": false,
+              "reason": "The fresh device took ownership; the original adventure was restored.",
+              "frames": 4026,
+              "role": "left",
+              "battleSeen": true,
+              "saveFileUnchanged": true,
+              "phase": "reporting"
+            },
+            {
+              "blockedRetries": 0,
+              "ok": true,
+              "cancelled": false,
+              "role": "right",
+              "cloudTransport": true,
+              "proof": {
+                "status": "complete",
+                "winner": 2,
+                "turns": 12,
+                "digest": "2af408c70953bfec9d5444e72f46b81880bfd0c0dd11b8b00b2e0ed869ce4aed"
+              },
+              "battleSeen": true,
+              "scenario": "handoff",
+              "phase": "verify-report",
+              "edition": "red",
+              "reason": "Native battle and both authenticated reports completed.",
+              "saveFileUnchanged": true,
+              "adventureRestored": true,
+              "frames": 11365,
+              "faultInjected": false
+            },
+            {
+              "phase": "verify-report",
+              "edition": "red",
+              "role": "left-target",
+              "cloudTransport": true,
+              "adventureRestored": true,
+              "saveFileUnchanged": true,
+              "scenario": "handoff",
+              "blockedRetries": 0,
+              "ok": true,
+              "cancelled": false,
+              "faultInjected": false,
+              "frames": 7484,
+              "reason": "Native battle and both authenticated reports completed.",
+              "proof": {
+                "digest": "2af408c70953bfec9d5444e72f46b81880bfd0c0dd11b8b00b2e0ed869ce4aed",
+                "winner": 2,
+                "status": "complete",
+                "turns": 12
+              },
+              "battleSeen": true
+            }
+          ]
+        },
+        {
+          "edition": "crystal",
+          "scenario": "handoff",
+          "battle_state": "complete",
+          "verification": "server_native_replay",
+          "points": {
+            "left": -25,
+            "right": 50
+          },
+          "wallets": {
+            "left": 25,
+            "right": 100
+          },
+          "results": [
+            {
+              "battleSeen": true,
+              "phase": "reporting",
+              "edition": "crystal",
+              "role": "left",
+              "cloudTransport": true,
+              "adventureRestored": true,
+              "saveFileUnchanged": true,
+              "scenario": "handoff",
+              "blockedRetries": 0,
+              "ok": true,
+              "cancelled": false,
+              "faultInjected": false,
+              "frames": 5208,
+              "reason": "The fresh device took ownership; the original adventure was restored."
+            },
+            {
+              "frames": 8420,
+              "proof": {
+                "digest": "5b7baca6fe52345ac061dc717807f077cd933ab56b48bb31c7b686dea3c63662",
+                "turns": 6,
+                "status": "complete",
+                "winner": 4
+              },
+              "battleSeen": true,
+              "adventureRestored": true,
+              "phase": "verify-report",
+              "edition": "crystal",
+              "role": "right",
+              "cloudTransport": true,
+              "saveFileUnchanged": true,
+              "scenario": "handoff",
+              "faultInjected": false,
+              "blockedRetries": 0,
+              "ok": true,
+              "cancelled": false,
+              "reason": "Native battle and both authenticated reports completed."
+            },
+            {
+              "scenario": "handoff",
+              "ok": true,
+              "cancelled": false,
+              "frames": 3819,
+              "blockedRetries": 0,
+              "proof": {
+                "winner": 4,
+                "status": "complete",
+                "turns": 6,
+                "digest": "5b7baca6fe52345ac061dc717807f077cd933ab56b48bb31c7b686dea3c63662"
+              },
+              "battleSeen": true,
+              "faultInjected": false,
+              "phase": "verify-report",
+              "reason": "Native battle and both authenticated reports completed.",
+              "edition": "crystal",
+              "role": "left-target",
+              "cloudTransport": true,
+              "adventureRestored": true,
+              "saveFileUnchanged": true
+            }
+          ]
+        },
+        {
+          "edition": "emerald",
+          "scenario": "handoff",
+          "battle_state": "complete",
+          "verification": "server_native_replay",
+          "points": {
+            "left": -25,
+            "right": 50
+          },
+          "wallets": {
+            "left": 25,
+            "right": 100
+          },
+          "results": [
+            {
+              "cancelled": false,
+              "frames": 4686,
+              "reason": "The fresh device took ownership; the original adventure was restored.",
+              "battleSeen": true,
+              "faultInjected": false,
+              "phase": "reporting",
+              "edition": "emerald",
+              "role": "left",
+              "cloudTransport": true,
+              "adventureRestored": true,
+              "saveFileUnchanged": true,
+              "scenario": "handoff",
+              "blockedRetries": 0,
+              "ok": true
+            },
+            {
+              "ok": true,
+              "cancelled": false,
+              "frames": 8097,
+              "reason": "Native battle and both authenticated reports completed.",
+              "proof": {
+                "turns": 7,
+                "digest": "9689d74cdccadd0048b8aedc2b47f4cabb7a0bb6cf35cb605d6299b040201569",
+                "status": "complete",
+                "winner": 6
+              },
+              "battleSeen": true,
+              "faultInjected": false,
+              "phase": "verify-report",
+              "edition": "emerald",
+              "role": "right",
+              "cloudTransport": true,
+              "adventureRestored": true,
+              "saveFileUnchanged": true,
+              "scenario": "handoff",
+              "blockedRetries": 0
+            },
+            {
+              "ok": true,
+              "cancelled": false,
+              "frames": 3524,
+              "phase": "verify-report",
+              "proof": {
+                "winner": 6,
+                "digest": "9689d74cdccadd0048b8aedc2b47f4cabb7a0bb6cf35cb605d6299b040201569",
+                "turns": 7,
+                "status": "complete"
+              },
+              "battleSeen": true,
+              "edition": "emerald",
+              "role": "left-target",
+              "cloudTransport": true,
+              "adventureRestored": true,
+              "saveFileUnchanged": true,
+              "scenario": "handoff",
+              "reason": "Native battle and both authenticated reports completed.",
+              "faultInjected": false,
+              "blockedRetries": 0
+            }
+          ]
+        }
+      ],
+      "authority": "Authenticated session ownership, server-frozen accepted choices, independent native replay before points and coins. Previous owner is fenced from wire actions and reports.",
+      "additionalChecks": [
+        "Uncommitted Baton Pass replacement reconstruction for either device.",
+        "Native completion during takeover is submitted once after activation.",
+        "Stale source report is safely archived rather than retried forever."
+      ]
+    },
+    "platinum": {
+      "nativeLoopbackPassed": true,
+      "proof": ".local/qa/retro-nds-link-1793084649662754000/native.log",
+      "scope": "Owned Platinum Rev 1 data; actual native LinkBattle host/guest, matching completion proof. Headless loopback, not a production cup or physical DS.",
+      "productionEnabled": false
+    },
+    "bankLegality": {
+      "passed": true,
+      "checker": "PKHeX.Core/26.10.18",
+      "cases": [
+        "Native valid Red Pikachu accepted.",
+        "Native impossible Psychic move rejected.",
+        "Out-of-range PP rejected before codec normalization.",
+        "Private Python to native Lua export to isolated .NET checker passed.",
+        "Backend checks frozen account-owned entry, release, lease, immutable input digest and issued reward receipts.",
+        "Reward genetics regenerated from frozen issuance entry; forged or copied receipt claim rejected.",
+        "DS raw records normalized losslessly into bounded hex after verifying original immutable bytes."
+      ],
+      "captureHistoryVerified": false,
+      "productionWorkerEnabled": false
+    },
+    "tests": {
+      "launcherSuites": 82,
+      "luaSyntaxChecks": 85,
+      "backendTests": 41,
+      "backendAssertions": 864,
+      "nativeArenaReplayChecks": 42,
+      "nativeBatonChecks": 80
+    },
+    "deployment": {
+      "backendScopedFilesVerified": true,
+      "migrationsApplied": 2,
+      "existingArenaReplayRequired": true,
+      "protectedOperatorPreserved": true,
+      "legalityEnabled": false,
+      "platinumCupsEnabled": false,
+      "workerBlocker": "Private Synology SSH banner exchange timed out."
+    },
+    "gen5": "Deferred by the user; remains disabled and unqualified.",
+    "sourceSha256": {
+      "src/core/SuspendJournal.lua": "eace17edf24255c0f3bf1e54d8546d807264ae1dd81ba845119820b651813d54",
+      "src/mods/Suspend.lua": "c9a04edddd74c674bde4ca9a00e5a7a9d044819fda2f704b806586506ecd13e8",
+      "src/link/ArenaResume.lua": "4bb4c9146eba710929921531f1c04ede89d866384284abc27fbfde474d87e825",
+      "src/link/LinkBattle.lua": "8fd51d49365b56a4451cfae3e054efde7dfe3e15fc28c140eb59f6bca08275c6",
+      "src/link/NdsParty.lua": "3e6c8af308abdd4d41bdcf2952b36b83070a94245addf1e38d35f254ebaf9f7c",
+      "src/storage/LegalityRecord.lua": "1681fb9b46660cda24919ba1084fe12e0be775188a0df0149b6a9624b17cd775",
+      "src/storage/RewardVerification.lua": "d1768a603182dc1d06d961d97a8e0680feff64466585c05c96a4a8931b071d89",
+      "src/pokemon/OriginRecord.lua": "32a9b3295470649226ca18f745e160301097eca7a3421adbab79b800d868d8ca",
+      "tools/bank_legality_worker.py": "3f59fd725cd0ff26390b0c8348623fc4760497664692b1e717fcf7b3bfc430e5",
+      "tools/legality/Program.cs": "f55f6e510de9a09a7c3fb55b37fb44200bf9c993b398507fba9d1648ea8abdb4"
+    },
+    "afterMainIntegration": {
+      "integratedMain": "5f2c0503dd8d6e2f86701992c2104867f733f4ba",
+      "testedSourceCommit": "679619063b095ce927971c5cb52c44789c6c7e4b",
+      "launcherSuites": 82,
+      "luaSyntaxChecks": 85,
+      "modSuspend": {
+        "passed": true,
+        "results": [
+          {
+            "phase": "nextturn",
+            "ok": true,
+            "ticks": 1023,
+            "edition": "emerald",
+            "role": "source",
+            "reason": "Uploaded a damaged native battle during a move animation; recorded deterministic turn 2",
+            "capture": {
+              "idleTicks": 0,
+              "tailSteps": 313,
+              "anchor": "battle",
+              "kind": "trainer",
+              "bytes": 447296
+            }
+          },
+          {
+            "ok": true,
+            "phase": "return",
+            "ticks": 230,
+            "edition": "emerald",
+            "role": "target",
+            "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed"
+          }
+        ]
+      },
+      "onlineCrystalHandoff": {
+        "passed": true,
+        "results": [
+          {
+            "edition": "crystal",
+            "scenario": "handoff",
+            "battle_state": "complete",
+            "verification": "server_native_replay",
+            "points": {
+              "left": 50,
+              "right": -25
+            },
+            "wallets": {
+              "left": 100,
+              "right": 25
+            },
+            "results": [
+              {
+                "battleSeen": true,
+                "reason": "The fresh device took ownership; the original adventure was restored.",
+                "edition": "crystal",
+                "role": "left",
+                "cloudTransport": true,
+                "adventureRestored": true,
+                "saveFileUnchanged": true,
+                "scenario": "handoff",
+                "blockedRetries": 0,
+                "ok": true,
+                "cancelled": false,
+                "faultInjected": false,
+                "frames": 6390,
+                "phase": "reporting"
+              },
+              {
+                "ok": true,
+                "cancelled": false,
+                "frames": 9984,
+                "reason": "Native battle and both authenticated reports completed.",
+                "proof": {
+                  "digest": "7370c2176de85b5b1e710fc4d43bd678424a9ff7e9346d40e6f5e7e98265893d",
+                  "turns": 6,
+                  "status": "complete",
+                  "winner": 1
+                },
+                "battleSeen": true,
+                "faultInjected": false,
+                "phase": "verify-report",
+                "edition": "crystal",
+                "role": "right",
+                "cloudTransport": true,
+                "adventureRestored": true,
+                "saveFileUnchanged": true,
+                "scenario": "handoff",
+                "blockedRetries": 0
+              },
+              {
+                "ok": true,
+                "cancelled": false,
+                "frames": 4870,
+                "reason": "Native battle and both authenticated reports completed.",
+                "proof": {
+                  "digest": "7370c2176de85b5b1e710fc4d43bd678424a9ff7e9346d40e6f5e7e98265893d",
+                  "status": "complete",
+                  "winner": 1,
+                  "turns": 6
+                },
+                "battleSeen": true,
+                "faultInjected": false,
+                "phase": "verify-report",
+                "edition": "crystal",
+                "role": "left-target",
+                "cloudTransport": true,
+                "adventureRestored": true,
+                "saveFileUnchanged": true,
+                "scenario": "handoff",
+                "blockedRetries": 0
+              }
+            ]
+          }
+        ]
+      },
+      "platinumNativeLoopback": {
+        "passed": true,
+        "proof": ".local/qa/retro-nds-link-1793089468861188000/native.log"
+      },
+      "gbaPartyCodecChecks": 194540
     }
   }
 }
