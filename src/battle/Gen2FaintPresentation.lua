@@ -57,9 +57,11 @@ function Faint.owns(screen, b)
 end
 
 function Faint.install(Screen)
+  Screen.PLAYER_PIC_TILES = 6
+  Screen.ENEMY_PIC_TILES = 7
   function Screen:faintSlideFrames(side)
     assert(side == 'player' or side == 'enemy', 'invalid native Gen2 faint side')
-    return (side == 'player' and 6 or 7) * 2
+    return (side == 'player' and Screen.PLAYER_PIC_TILES or Screen.ENEMY_PIC_TILES) * 2
   end
   function Screen:faintSink(side)
     local slide = self.faintSlide

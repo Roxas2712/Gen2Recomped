@@ -40,6 +40,26 @@ for _,edition in ipairs({'gold','silver','crystal'})do
       restored.enemy.shownStatus='FRZ'
       T.eq(restored.shownStatus.enemy,'FRZ','restored view is live rather than a copied map')
       T.raises(function()restored.shownStatus.enemy='BRN'end,'owned','restored view retains native status owner')
+      restored.queue,restored.current,restored.phase,restored.afterQueue={},nil,'resolving','menu'
+      restored:push({kind='faint',side='enemy',mon=restored.enemy.mon,text='Fainted!'})
+      for _=1,5 do restored:update(1/60)end
+      T.eq(restored.faintSlide and restored.faintSlide.frames,4,'actual native faint is in flight')
+      local faintCheckpoint,code=f.checkpoints:capture(game)
+      T.check(faintCheckpoint~=nil,'active faint owner captures: '..tostring(code))
+      if faintCheckpoint then
+        local done,reason=f.checkpoints:restore(game,faintCheckpoint)
+        T.check(done,'active faint owner restores: '..tostring(reason))
+        if done then
+          local resumed=game.stack:top()
+          T.eq(resumed.faintSlide.frames,4,'restore retains the actual slide clock')
+          T.eq(resumed.faintSlide.battler,resumed.enemy,'restore rebinds the native battler identity')
+          T.eq(resumed.faintSlide.mon,resumed.enemy.mon,'restore rebinds Pokemon identity')
+          for _=1,10 do resumed:update(1/60)end
+          T.eq(resumed.faintSlide,nil,'resumed native faint completes once')
+          T.check(resumed.current and resumed.current.gen2SourceEvent.kind=='faint',
+            'resumed source event starts text after its own slide')
+        end
+      end
     end
   end
   require('src.mods.Loader').teardown();f.close()
