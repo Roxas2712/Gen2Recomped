@@ -13,8 +13,10 @@ import urllib.parse
 import urllib.error
 
 
-def request(api, token, path, value):
-    url = api.rstrip('/') + '/verifier/jobs/' + path
+def request(api, token, path, value, group='jobs'):
+    if group not in ('jobs', 'bank'):
+        raise ValueError('Unknown private verifier queue')
+    url = api.rstrip('/') + '/verifier/' + group + '/' + path
     if urllib.parse.urlsplit(url).scheme != 'https':
         raise ValueError('The worker requires HTTPS')
     body = json.dumps(value).encode()

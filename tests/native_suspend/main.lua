@@ -36,7 +36,11 @@ local function suspend()
 end
 local function prepare()
  assert(require('src.storage.AccountStorage').bind())
- Game=require('src.core.Game');Game.loadWithoutMods=true;Game:load()
+ Game=require('src.core.Game');Game.loadWithoutMods=not cfg.withMod;Game:load()
+ if cfg.withMod then
+  local loaded={};for _,m in ipairs(Game.modStatus.loaded or{})do loaded[m.id]=true end
+  assert(loaded.qa_suspend_counter and loaded.german_rom_source,'Both native suspend mods must load')
+ end
  S=require('src.core.SaveSerializer');J=require('src.core.SuspendJournal')
  initialPP=assert(Game.data.moves[cfg.move or'SWIFT']).pp
  local trainer

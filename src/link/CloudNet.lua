@@ -22,6 +22,7 @@ function N:send(message)
 end
 function N:poll() local messages=self.inbox;self.inbox={};return messages end
 function N:fail(why)
+ self.transferred=type(why)=='string' and why:find('transferred to another device',1,true)~=nil
  self.error=why;self.closed=true;self.finished=true
  if self.job then self.job:cancel();self.job=nil end
 end

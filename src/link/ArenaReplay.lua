@@ -23,6 +23,7 @@ local function stream(rows)
   end
   return out
 end
+Replay.stream=stream
 function Replay.run(game, job)
   assert(job.schema == 1 and integer(job.seed, 1, 1073741824), 'Invalid replay seed')
   assert(type(job.teams) == 'table' and #job.teams == 2, 'Replay needs exactly two teams')

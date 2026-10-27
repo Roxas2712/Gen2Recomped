@@ -4,6 +4,7 @@
 local J={MAX_BYTES=24*1024*1024,BATTLE_CHECKPOINT_TICKS=600}
 local S=require('src.core.SaveSerializer')
 local C=require('src.core.Checkpoint')
+local ModSuspend=require('src.mods.Suspend')
 local tracks=setmetatable({},{__mode='k'})
 local active
 local unpack=table.unpack or unpack
@@ -25,7 +26,7 @@ end
 local function mods(game) return game.modStatus and game.modStatus.loaded or {} end
 local function permitted(game)
  if game.linkSession or game.retroArena or game.linkNet and not game.linkNet.closed then return nil,'Online sessions cannot be suspended.' end
- if #mods(game)>0 then return nil,'Suspend is not qualified for loaded mods yet. Normal saves remain available.' end
+ local allowed,why=ModSuspend.available(game);if not allowed then return nil,why end
  if require('src.core.GameVersion').generation()>3 then return nil,'Portable replay suspend is currently qualified for Gen 1–3 only.' end
  if not require('src.core.CheckpointWorld').available(game) then return nil,'Suspend reconstruction is not qualified for this edition yet.' end
  if not (love and love.math and love.math.getRandomState and love.math.setRandomState and love.data) then return nil,'Portable suspend is unavailable in this runtime.' end
@@ -135,7 +136,7 @@ function J.witness(game)
   end
  end
  local world=game.overworld;local player=world and world.player
- return {save=progress(game),states=states,world=player and {map=world.map.id,x=player.cellX,y=player.cellY,facing=player.facing},rng=love.math.getRandomState()}
+ return {save=progress(game),states=states,world=player and {map=world.map.id,x=player.cellX,y=player.cellY,facing=player.facing},rng=love.math.getRandomState(),modStates=ModSuspend.capture(game)}
 end
 function J.sample(tag,fn,...)
  local a=active
@@ -213,7 +214,10 @@ end
 local function establish(game,t)
  local anchor=C.capture(game)
  if not anchor or(anchor.kind~='overworld'and anchor.kind~='battle')then return false end
+ local ok,state=pcall(ModSuspend.capture,game)
+ if not ok then t.anchor=nil;t.reason=tostring(state);return false end
  t.anchor=anchor;t.memory=progress(game);t.options=copy(game.save.options or {})
+ t.modStates=state
  t.steps={};t.events=0;t.ticks=0;t.reason=nil
  return true
 end
@@ -253,8 +257,10 @@ function J.capture(game)
  if not t or not t.anchor or t.save~=game.save then return nil,t and t.reason or 'No qualified suspend checkpoint is available yet.' end
  local report=require('src.storage.SaveResume').capture(game.save.version,mods(game),game.save.options or {})
  local got,content=pcall(J.content,game);if not got then return nil,'Could not verify imported suspend data: '..tostring(content)end
+ local valid,extra=pcall(function()return {identity=ModSuspend.identity(game),witness=J.witness(game)}end)
+ if not valid then return nil,'Could not capture mod continuation: '..tostring(extra)end
  local value={schema=1,build=J.build(),edition=game.save.version,anchor=t.anchor,memory=t.memory,options=t.options,steps=t.steps,
-  requirements=report,content=content,witness=J.witness(game)}
+  requirements=report,content=content,witness=extra.witness,modIdentity=extra.identity,modStates=t.modStates}
  local bytes=S.encodeExact(value)
  if #bytes>J.MAX_BYTES then return nil,'Suspend recording is too large. Save normal progress and continue from the overworld.' end
  return S.decode(bytes)
@@ -269,6 +275,10 @@ function J.restore(game,value)
   or type(value.anchor)~='table' or type(value.anchor.identity)~='table' or value.memory.meta.playthroughId~=value.anchor.identity.playthroughId then return nil,'Suspend playthrough identity is inconsistent.' end
  local got,content=pcall(J.content,game)
  if not got or value.content~=content then return nil,'Imported game data differs from this suspend.' end
+ local valid,identity=pcall(ModSuspend.identity,game)
+ if not valid or not same(value.modIdentity or {},identity)then return nil,'Installed mod files, order or suspend schema differ from this suspend.'end
+ local captured,priorMods=pcall(ModSuspend.capture,game)
+ if not captured then return nil,'Could not preserve local mod state: '..tostring(priorMods)end
  local options=game.save.options;local oldInput=input(game);local count=0
  local restored,code,message=C.resumeReplay(game,value.anchor,function()
   -- A normal-save projection records the live position. Native memory can
@@ -277,6 +287,7 @@ function J.restore(game,value)
   local memory=copy(value.memory)
   restoreMemory(game.save,memory)
   game.save.options=copy(value.options)
+  ModSuspend.restore(game,value.modStates or {})
   for _,frame in ipairs(value.steps) do
    assert(type(frame.dt)=='number' and frame.dt>0 and frame.dt<=.1 and type(frame.events)=='table','Invalid suspend frame')
    count=count+#frame.events
@@ -291,11 +302,15 @@ function J.restore(game,value)
   if not same(actual,value.witness) then error('Suspend runtime mismatch: '..tostring((difference(actual,value.witness,'runtime'))),0) end
  end)
  game.input.state=oldInput.state;game.input.pressed=oldInput.pressed;game.input.sources=oldInput.sources
- if not restored then return nil,message or code end
+ if not restored then
+  local rolled,err=pcall(ModSuspend.restore,game,priorMods)
+  if not rolled then return nil,'Mod state rollback failed: '..tostring(err)..'; '..tostring(message or code)end
+  return nil,message or code
+ end
  -- Keep local display/audio preferences, but no input from the other device.
  game.save.options=options;if game.applyOptions then game:applyOptions(options) end
  if game.input.reset then game.input:reset() end
- tracks[game]={save=game.save,anchor=copy(value.anchor),memory=copy(value.memory),options=copy(value.options),steps=copy(value.steps),events=count,ticks=0}
+ tracks[game]={save=game.save,anchor=copy(value.anchor),memory=copy(value.memory),options=copy(value.options),modStates=copy(value.modStates or {}),steps=copy(value.steps),events=count,ticks=0}
  return true
 end
 return J

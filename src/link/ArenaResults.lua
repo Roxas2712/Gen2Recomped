@@ -16,6 +16,13 @@ function R.pump()
   local result=job:poll();if result then
    job=nil;nextTry=os.time()+15
    if result.kind=='done' and result.first and Auth.accountId()==active.account then disk().remove(active.path) end
+   local why=result.second
+   if result.kind=='done'and not result.first and type(why)=='table'and why.status==409 and tostring(why.message):find('transferred to another device',1,true)then
+    local fs=disk();local bytes=fs.read(active.path)
+    local folder=R.DIRECTORY..'-transferred';fs.createDirectory(folder)
+    local archived=bytes and require('src.core.SaveSafety').atomicWrite(fs,folder..'/'..active.battle..'.lua',bytes,{decode=require('src.core.SaveSerializer').decode})
+    if archived then fs.remove(active.path)end
+   end
   end
   return
  end
@@ -25,8 +32,12 @@ function R.pump()
   if name:match('^[a-f0-9%-]+%.lua$') then
    local bytes=disk().read(R.DIRECTORY..'/'..name) or '';local ok,doc=false,nil;if #bytes<=65536 then ok,doc=pcall(S.decode,bytes) end
    if ok and type(doc)=='table' and doc.account==Auth.accountId() and type(doc.payload)=='table' then
-    active={account=doc.account,path=R.DIRECTORY..'/'..name};local data=doc
-    job=require('src.cloud.Task').new(function() return require('src.cloud.Tournaments').request('POST',data.cup,'battle-result',data.payload,data.match) end)
+    active={account=doc.account,path=R.DIRECTORY..'/'..name,battle=doc.payload.battle};local data=doc
+    job=require('src.cloud.Task').new(function()
+     local response,why,status=require('src.cloud.Tournaments').request('POST',data.cup,'battle-result',data.payload,data.match)
+     if response then return response end
+     return nil,{message=why,status=status}
+    end)
     if not job then nextTry=os.time()+15 end;return
    end
   end

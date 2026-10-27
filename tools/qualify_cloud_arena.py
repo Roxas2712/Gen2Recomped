@@ -33,7 +33,7 @@ def main():
     for name in ('backend', 'php', 'love-app', 'cert', 'key'):
         parser.add_argument('--' + name, type=Path, required=True)
     parser.add_argument('--cache', action='append', required=True, metavar='EDITION=PATH')
-    parser.add_argument('--scenario', action='append', choices=['complete', 'recovery', 'abort'])
+    parser.add_argument('--scenario', action='append', choices=['complete', 'recovery', 'abort', 'handoff'])
     parser.add_argument('--independent-replay', action='store_true')
     parser.add_argument('--crypto-library', type=Path)
     parser.add_argument('--timeout', type=int, default=180)
@@ -157,10 +157,12 @@ $people[$role]=['email'=>$u->email,'id'=>(string)$u->id];}echo json_encode($peop
                 match = cup['matches'][0]
                 print('NATIVE_ARENA_START ' + edition + ' ' + scenario, flush=True)
                 case_children = []
-                for role, person in people.items():
+                handoff_ready = output / (edition + '-' + scenario + '-handoff-ready.json')
+                def start_client(role, person):
                     identity = 'oasc-arena-qa-' + run_id + '-' + edition + '-' + scenario + '-' + role
                     qa_profile(Path.home() / 'Library/Application Support/LOVE' / identity)
                     config = dict(api=url + '/api/cloud/v1', edition=edition, role=role, scenario=scenario,
+                        handoffReady=str(handoff_ready),
                         cache=str(cache), cup=cup, match=match, email=person['email'], password=password,
                         result=str(output / (identity + '.json')))
                     config_path = output / (identity + '-config.json')
@@ -176,8 +178,15 @@ $people[$role]=['email'=>$u->email,'id'=>(string)$u->id];}echo json_encode($peop
                             cwd=ROOT, env=child_env, stdout=log, stderr=log)
                     children.append(child)
                     case_children.append((child, Path(config['result'])))
+                for role, person in people.items():
+                    start_client(role, person)
+                target_started = False
                 deadline = time.monotonic() + args.timeout
                 while any(c.poll() is None for c, _ in case_children) and time.monotonic() < deadline:
+                    if scenario == 'handoff' and not target_started and handoff_ready.exists():
+                        start_client('left-target', people['left'])
+                        target_started = True
+                        print('NATIVE_ARENA_NEW_DEVICE ' + edition, flush=True)
                     if args.independent_replay:
                         job = call('POST','/verifier/jobs/claim',{},worker_token)['job']
                         if job:
@@ -210,7 +219,10 @@ $people[$role]=['email'=>$u->email,'id'=>(string)$u->id];}echo json_encode($peop
                 else:
                     assert battle['state'] == 'complete'
                     if args.independent_replay: assert battle['verification'] == 'server_native_replay'
-                    assert pair[0]['proof'] == pair[1]['proof'] and pair[0]['proof']['turns'] > 0
+                    scored = [p for p in pair if p.get('proof')]
+                    assert len(scored) == 2 and scored[0]['proof'] == scored[1]['proof'] and scored[0]['proof']['turns'] > 0
+                    if scenario == 'handoff':
+                        assert target_started and len(pair) == 3 and pair[0].get('proof') is None
                     assert sorted(p['points'] for p in profiles.values()) == [-25, 50]
                     assert all(c > 0 for c in wallets.values())
                 result = dict(edition=edition, scenario=scenario, battle_state=battle['state'],verification=battle['verification'],
