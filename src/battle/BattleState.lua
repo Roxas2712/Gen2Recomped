@@ -37,6 +37,7 @@ local Weather = require("src.battle.Weather")
 local WideBattle = require("src.battle.WideBattle")
 local Gen3Battle = require("src.battle.Gen3Battle")
 local Gen4Battle = require("src.battle.Gen4Battle")
+local Gen2BattleView = require("src.battle.Gen2BattleView")
 local GameVersion = require("src.core.GameVersion")
 
 -- FORWARD-DECLARED, because they are defined next to the other doubles
@@ -1191,7 +1192,7 @@ local function newBattle(game)
   -- that explicit so anything holding "a thing with a .battle" (the party menu
   -- during a switch, mods walking the state stack) can treat the battle screen
   -- and the party menu uniformly instead of special-casing this one screen.
-  self.battle = self
+  if GameVersion.isGen2() then Gen2BattleView.bind(self) else self.battle = self end
   -- BLACK AND WHITE: their move effects named for this engine, their species'
   -- abilities and their ruleset, before the ruleset below is chosen
   -- (src/battle/Gen5MoveEffects.lua; sets self.bw on a BW cache only)
@@ -1350,7 +1351,6 @@ local function newBattle(game)
   self.menuIndex = 1
   self.moveIndex = 1
   self.frame = 0
-  if GameVersion.isGen2() then require('src.battle.Gen2HpPresentation').bind(self) end
   return self
 end
 
@@ -13035,5 +13035,12 @@ function BattleState:drawClassic()
     Runtime.call("battle.overlay", function() end, self)
   end
 end
+
+Gen2BattleView.install(BattleState, {
+  load = getImage,
+  palette = monPalette,
+  path = imagePathOf,
+  trueColor = function(image) local meta = imageMeta[image]; return meta and meta.trueColor or false end,
+})
 
 return BattleState
