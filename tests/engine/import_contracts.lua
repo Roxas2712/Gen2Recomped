@@ -221,6 +221,7 @@ fs.write('mods/native/baseroms/base.bin','abc')
 rows=Launcher.deriveList({m},{mods={}},'red')
 T.eq(rows[1].status,'ok','optional missing file does not block launcher readiness')
 T.eq(rows[1].missingImports[1].entry.id,'extra','optional import is available in existing picker flow')
+T.eq(#rows[1].missingRequiredImports,0,'save admission sees no required import when only the optional picker remains')
 T.check(rows[1].missingImports[1].reason:find('Optional',1,true),'optional picker is clearly labeled')
 CacheFs.dataFs=savedFs
 local savedRoot=CacheFs.root

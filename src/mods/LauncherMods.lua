@@ -200,6 +200,9 @@ function LauncherMods.deriveList(manifests, options, version)
       requiredImports = ModImports.required(m),
       optionalImports = ModImports.optional(m),
       missingOptionalImports = optionalNeeds,
+      -- Keep the combined picker list for the import button, but expose the
+      -- required subset to launch/resume admission independently.
+      missingRequiredImports = needs or {},
       missingImports = needs or optionalNeeds,
       required_assets = m.required_assets,
       optional_assets = m.optional_assets,

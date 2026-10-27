@@ -2107,6 +2107,7 @@ end
 -- entry chunks wrote before any save existed, while NEW GAME and
 -- CONTINUE replace the backing outright.
 function Game:adoptSave(save, seedBuckets)
+  require('src.compat.gen2.SaveFields').bind(save,self.data)
   -- species-name nicknames show in the player's language (see the function)
   pcall(require("src.translation.Service").normalizeNicknames, self.data, save)
   -- Platinum Pokemon made before they carried friendship get their base value

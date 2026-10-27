@@ -78,8 +78,13 @@ function R.assess(save,version,installed,options)
   report.requirements=requirements
   report.engineMismatch=requirements.engine~=Version.engine
   if report.engineMismatch then report.problems[#report.problems+1]='Saved with engine '..requirements.engine..'; this device runs '..Version.engine..'.' end
-  if requirements.saveFormat>Version.saveFormat or requirements.modApi>Version.modApi then
-    report.blocked=true;report.problems[#report.problems+1]='Update RetroRecomped before opening this save.'
+  if requirements.saveFormat>Version.saveFormat then
+    report.blocked=true
+    report.problems[#report.problems+1]='This save requires save format '..requirements.saveFormat..'; this device supports format '..Version.saveFormat..'. Use a compatible engine to open or convert it.'
+  end
+  if requirements.modApi>Version.modApi then
+    report.blocked=true
+    report.problems[#report.problems+1]='This save requires mod API '..requirements.modApi..'; this device supports API '..Version.modApi..'. Use an engine supporting this API.'
   end
   local generation=Games.generation(version)
   local byId={};for _,m in ipairs(installed) do byId[m.id]=m end
@@ -100,7 +105,9 @@ function R.assess(save,version,installed,options)
     if have and (type(have.api)=='number' and have.api>Version.modApi or have.game_version and not Semver.satisfies(Version.engine,have.game_version)) then
       row.status='manual';row.detail='This installed package does not support the current engine.'
     end
-    if have and (have.missingImports and next(have.missingImports) or have.missingGames and next(have.missingGames)) then
+    local missingRequired=have and have.missingRequiredImports
+    if missingRequired==nil and have then missingRequired=have.missingImports end
+    if have and (missingRequired and next(missingRequired) or have.missingGames and next(have.missingGames)) then
       row.status='manual';row.detail='Import this mod’s required local files or games in the mod manager.'
     end
     if unsupported then row.status='manual';row.detail='Enable the generation override manually in Mods if you intend to use it.' end

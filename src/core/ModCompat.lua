@@ -75,6 +75,10 @@ ModCompat.ALIASES = {
   ["src.core.gen2.BugContest"] = "src.world.BugContest",
   ["src.core.gen2.ItemEffects"] = "src.inventory.ItemEffects",
   ["src.core.gen2.Save"] = "src.core.SaveData",
+  ["src.core.gen2.HallOfFame"] = "src.compat.gen2.HallOfFame",
+  ["src.core.gen2.Phone"] = "src.compat.gen2.Phone",
+  ["src.core.gen2.Evolution"] = "src.compat.gen2.Evolution",
+  ["src.battle.gen2.Encounter"] = "src.compat.gen2.Encounter",
 
   -- battle.  Damage is GetDamage/CriticalHitTest/AdjustDamageForMoveType and
   -- MoveEffects is the effect-constant handler table -- one concept each,
@@ -83,7 +87,7 @@ ModCompat.ALIASES = {
   ["src.battle.gen2.Catching"] = "src.battle.Catching",
   ["src.battle.gen2.Damage"] = "src.battle.Damage",
   ["src.battle.gen2.Effects"] = "src.battle.MoveEffects",
-  ["src.battle.gen2.Mon"] = "src.pokemon.Pokemon",
+  ["src.battle.gen2.Mon"] = "src.compat.gen2.Mon",
   ["src.ui.gen2.BattleState"] = "src.battle.BattleState",
   ["src.ui.gen2.Chrome"] = "src.ui.Gen2Chrome",
 
