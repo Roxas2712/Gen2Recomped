@@ -35,7 +35,7 @@ local function fixture(version)
           mod.exports.admissions[#mod.exports.admissions+1]=entry
           local result=advance(screen,...)
           entry.after=screen.phase
-          return result
+          if not mod.exports.dropReturn then return result end
         end
       end
       mod.exports.sounds={}
@@ -129,6 +129,15 @@ for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   T.eq(probe.admissions[1] and probe.admissions[1].after,'finished',
     'queue observer sees native finish on return')
   b.finish=finish;clear()
+  probe.dropReturn=true
+  b:say('Void observer')
+  T.check(wait(function()return b.msgPrompt and (b.msgPromptWait or 0)<=0 end),
+    'void-return admission decorator still allows the native message to type')
+  step('a')
+  T.check(wait(function()return b.phase=='menu' end),
+    'native queue completion does not require an observer return value')
+  T.eq(#b.queue,0,'void-return observer leaves the real queue drained')
+  probe.dropReturn=nil;clear()
 
   b:act(function()b:sayNext('Inserted one');b:sayNext('Inserted two')end)
   b:say('Existing tail')
