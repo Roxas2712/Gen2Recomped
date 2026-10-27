@@ -27,7 +27,7 @@ elif os.environ.get('RETRO_QA_LUA_LIBRARY'):
     runtime = [sys.executable, str(root / 'tools/run_lua_check.py')]
 else:
     raise SystemExit('LuaJIT or RETRO_QA_LUA_LIBRARY is required for the headless launcher contract.')
-syntax = ['src/ui/PlayerRole.lua','src/cloud/AccountBadge.lua','src/import/FirstRun.lua','src/storage/SyncStatus.lua','src/translation/LauncherCatalog.lua','src/cloud/Play.lua','src/link/FriendLink.lua','src/link/FriendTrade.lua','src/ui/FriendsMenu.lua','src/ui/ProfileAvatar.lua','src/world/RemotePlayers.lua','src/cloud/ArenaShop.lua','src/import/ArenaShopView.lua','src/link/CloudNet.lua','src/link/ArenaProof.lua','src/link/ArenaTeam.lua','src/link/ArenaResults.lua','src/link/LinkState.lua','src/link/LinkBattle.lua','src/storage/LeagueEgg.lua','src/cloud/League.lua','main.lua', 'conf.lua', 'src/cloud/Http.lua', 'src/cloud/RetroCloud.lua',
+syntax = ['src/link/ArenaReplay.lua','src/ui/PlayerRole.lua','src/cloud/AccountBadge.lua','src/import/FirstRun.lua','src/storage/SyncStatus.lua','src/translation/LauncherCatalog.lua','src/cloud/Play.lua','src/link/FriendLink.lua','src/link/FriendTrade.lua','src/ui/FriendsMenu.lua','src/ui/ProfileAvatar.lua','src/world/RemotePlayers.lua','src/cloud/ArenaShop.lua','src/import/ArenaShopView.lua','src/link/CloudNet.lua','src/link/ArenaProof.lua','src/link/ArenaTeam.lua','src/link/ArenaResults.lua','src/link/LinkState.lua','src/link/LinkBattle.lua','src/storage/LeagueEgg.lua','src/cloud/League.lua','main.lua', 'conf.lua', 'src/cloud/Http.lua', 'src/cloud/RetroCloud.lua',
           'src/cloud/NativeAccount.lua', 'src/cloud/Tournaments.lua', 'src/link/CloudArena.lua', 'src/import/TournamentWorkspace.lua', 'src/cloud/Task.lua', 'src/cloud/Presence.lua', 'src/cloud/GiftCodes.lua', 'src/storage/GiftReward.lua', 'src/storage/GiftPokemon.lua', 'src/storage/GiftGenerator.lua', 'src/storage/GiftItems.lua', 'src/import/GiftDesigner.lua', 'src/import/DataLiteral.lua', 'src/import/CloudSync.lua', 'src/import/CacheFs.lua', 'src/storage/GameCache.lua', 'src/cloud/DeveloperProjects.lua',
           'src/import/AccountWorkspace.lua', 'src/import/DeveloperWorkspace.lua', 'src/import/LauncherCobblemon.lua', 'src/storage/CartridgeCloud.lua', 'src/storage/WonderReward.lua',
           'src/import/LauncherStorage.lua', 'src/import/LauncherSidebar.lua', 'src/import/CartridgeDownload.lua',
@@ -50,6 +50,7 @@ window_frame window_frame_async portable_input_hooks touch_orientation_bug633
 save_resume resume_workspace save_resume_capture save_resume_slot save_history_workspace launcher_audio_handoff bank_exchange'''.split()
 suites.extend(['friends_menu','friend_trade','friend_play','remote_players','arena_shop','cloud_net','relay_rejection','native_preview','account_storage','account_profiles','bank_interop',
                'api3_storage_transactions','api3_playthrough_storage','bank_portrait','api3_compat','mod_catalogue','mod_access','mod_preflight','launcher_presentation','cartridge_batch','launcher_cobblemon','cartridge_cloud','wonder_reward','game_cache','device_session','gift_codes','gift_editor','presence','tournaments','league','arena_battle_proof'])
+suites.append('arena_replay')
 suites.extend(['friend_maps', 'friend_activity', 'friend_chat', 'friend_wager'])
 if args.suite:
     unknown = set(args.suite) - set(suites)
