@@ -1823,7 +1823,7 @@ function Gen4Model.new(record)
     local tw, th = 1, 1
     if image then tw, th = image:getDimensions() end
 
-    local decoded=Gen4Model.unpack(shape.vertices, {
+    local decoded=Gen4Model.unpack(nil, {
       shape=shape,record=record,posScale=self.posScale,
       textureWidth=tw,textureHeight=th,hasImage=image~=nil,
       formatFloats=FORMAT_FLOATS,flags=Performance,modelFlags=Gen4Model,

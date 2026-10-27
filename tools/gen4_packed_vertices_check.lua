@@ -144,7 +144,7 @@ if ok then
   check(decoded.packed[16]==1,'callback edits to later vertex bytes remain live')
   check(decoded.packed[5]==.5 and decoded.packed[6]==.5,'callback noFog edit applies to the current vertex')
   check(opts.shape==shape and shape.vertices~=originalBytes,'decoder preserves caller identity and callback edits')
-  check(renderer:find('Gen4Model.unpack(shape.vertices,',1,true)~=nil,'new uses the extracted decoder')
+  check(renderer:find('Gen4Model.unpack(nil,',1,true)~=nil,'new reads the live shape through the extracted decoder')
   love=oldLove
 end
 
