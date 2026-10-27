@@ -1,0 +1,110 @@
+{
+  "date": "2026-10-27",
+  "scope": "Professor Sycamore scene, 3x, native frame/readback plus complete lower-screen blank classification; excludes L\u00d6VE upload, display pacing, audio and sustained gameplay",
+  "samples_per_run": 200,
+  "run_order": [
+    "before",
+    "after",
+    "before",
+    "after"
+  ],
+  "results": [
+    {
+      "path": "before",
+      "frames": 200,
+      "scope": "same Professor Sycamore scene, 3x, native step/readback + complete neutral-image check, no L\u00d6VE upload",
+      "step": {
+        "mean_ms": 2.0442200094112195,
+        "p95_ms": 4.037250007968396,
+        "max_ms": 10.302209004294127
+      },
+      "blank": {
+        "mean_ms": 2.3090527196472976,
+        "p95_ms": 2.38470800104551,
+        "max_ms": 2.8302920109126717
+      },
+      "status": {
+        "frames": 2021,
+        "hardware": true,
+        "interpreted": 22893209,
+        "recompiled": 4466874899,
+        "resolution": 3
+      }
+    },
+    {
+      "path": "after",
+      "frames": 200,
+      "scope": "same Professor Sycamore scene, 3x, native step/readback + complete neutral-image check, no L\u00d6VE upload",
+      "step": {
+        "mean_ms": 2.288715860049706,
+        "p95_ms": 4.615083016688004,
+        "max_ms": 6.4464590104762465
+      },
+      "blank": {
+        "mean_ms": 0.003713510523084551,
+        "p95_ms": 0.007124996045604348,
+        "max_ms": 0.015541008906438947
+      },
+      "status": {
+        "emulation_ms": 0.167584,
+        "frames": 2021,
+        "hardware": true,
+        "interpreted": 22893209,
+        "readback_ms": 0.166083,
+        "recompiled": 4466874899,
+        "resolution": 3
+      }
+    },
+    {
+      "path": "before",
+      "frames": 200,
+      "scope": "same Professor Sycamore scene, 3x, native step/readback + complete neutral-image check, no L\u00d6VE upload",
+      "step": {
+        "mean_ms": 1.8842803985171486,
+        "p95_ms": 4.028666997328401,
+        "max_ms": 6.071249983506277
+      },
+      "blank": {
+        "mean_ms": 2.3037237708922476,
+        "p95_ms": 2.4376670189667493,
+        "max_ms": 2.5522499927319586
+      },
+      "status": {
+        "frames": 2021,
+        "hardware": true,
+        "interpreted": 22893209,
+        "recompiled": 4466874899,
+        "resolution": 3
+      }
+    },
+    {
+      "path": "after",
+      "frames": 200,
+      "scope": "same Professor Sycamore scene, 3x, native step/readback + complete neutral-image check, no L\u00d6VE upload",
+      "step": {
+        "mean_ms": 2.4698731406533625,
+        "p95_ms": 5.057541013229638,
+        "max_ms": 7.075583009282127
+      },
+      "blank": {
+        "mean_ms": 0.0037831261579412967,
+        "p95_ms": 0.0069160014390945435,
+        "max_ms": 0.03833300434052944
+      },
+      "status": {
+        "emulation_ms": 0.24449999999999997,
+        "frames": 2021,
+        "hardware": true,
+        "interpreted": 22893209,
+        "readback_ms": 0.18912500000000002,
+        "recompiled": 4466874899,
+        "resolution": 3
+      }
+    }
+  ],
+  "summary": {
+    "before_mean_ms": 4.270638449233957,
+    "after_mean_ms": 2.383042818692047,
+    "reduction_percent": 44.19937798481855
+  }
+}

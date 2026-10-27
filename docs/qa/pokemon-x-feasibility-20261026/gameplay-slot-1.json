@@ -1,0 +1,198 @@
+{
+  "edition": "y",
+  "segments": [
+    {
+      "hitches_over_33ms": 4,
+      "hitches_over_50ms": 2,
+      "hitches_over_100ms": 0,
+      "emulated_frames": 2517,
+      "first_frame": 0,
+      "name": "startup",
+      "presentation": {
+        "p99_ms": 19.113624999999246,
+        "max_ms": 69.37829166666675,
+        "samples": 2572,
+        "mean_ms": 16.693469462804583,
+        "p95_ms": 17.82870833334016
+      },
+      "emulated_hz": 58.62267668934968,
+      "wall_seconds": 42.93560345833335,
+      "start": 0
+    },
+    {
+      "hitches_over_33ms": 0,
+      "hitches_over_50ms": 0,
+      "hitches_over_100ms": 0,
+      "emulated_frames": 3234,
+      "first_frame": 2517,
+      "name": "fresh-german-intro",
+      "presentation": {
+        "p99_ms": 17.51258333332828,
+        "max_ms": 26.31141666665826,
+        "samples": 3295,
+        "mean_ms": 16.66671566767828,
+        "p95_ms": 17.139583333332098
+      },
+      "emulated_hz": 58.8890529627616,
+      "wall_seconds": 54.91682812499998,
+      "start": 42.93560345833335
+    },
+    {
+      "hitches_over_33ms": 1,
+      "hitches_over_50ms": 0,
+      "hitches_over_100ms": 0,
+      "emulated_frames": 5628,
+      "first_frame": 5751,
+      "name": "professor-to-character-creation",
+      "presentation": {
+        "p99_ms": 17.440666666686866,
+        "max_ms": 33.17795833334003,
+        "samples": 5672,
+        "mean_ms": 16.67536504613303,
+        "p95_ms": 17.03087499998901
+      },
+      "emulated_hz": 59.50350067056614,
+      "wall_seconds": 94.58267054166669,
+      "start": 97.85243158333333
+    },
+    {
+      "hitches_over_33ms": 0,
+      "hitches_over_50ms": 0,
+      "hitches_over_100ms": 0,
+      "emulated_frames": 1726,
+      "first_frame": 11379,
+      "name": "native-touch-name-entry",
+      "presentation": {
+        "p99_ms": 17.609874999976682,
+        "max_ms": 24.529333333362047,
+        "samples": 1731,
+        "mean_ms": 16.66662861062968,
+        "p95_ms": 17.028750000008586
+      },
+      "emulated_hz": 59.8268263810117,
+      "wall_seconds": 28.849934125000004,
+      "start": 192.43510212500001
+    },
+    {
+      "hitches_over_33ms": 0,
+      "hitches_over_50ms": 0,
+      "hitches_over_100ms": 0,
+      "emulated_frames": 5066,
+      "first_frame": 13105,
+      "name": "new-game-confirmation-and-cutscene",
+      "presentation": {
+        "p99_ms": 17.456208333328505,
+        "max_ms": 31.41779166668357,
+        "samples": 5108,
+        "mean_ms": 16.66984368474285,
+        "p95_ms": 17.023875000006683
+      },
+      "emulated_hz": 59.495315164025016,
+      "wall_seconds": 85.14956154166663,
+      "start": 221.28503625000002
+    },
+    {
+      "hitches_over_33ms": 1,
+      "hitches_over_50ms": 0,
+      "hitches_over_100ms": 0,
+      "emulated_frames": 4532,
+      "first_frame": 18171,
+      "name": "bedroom-movement",
+      "presentation": {
+        "p99_ms": 17.649541666571622,
+        "max_ms": 34.834041666670146,
+        "samples": 4568,
+        "mean_ms": 16.670246223730366,
+        "p95_ms": 17.015166666624282
+      },
+      "emulated_hz": 59.514363255456544,
+      "wall_seconds": 76.14968475,
+      "start": 306.43459779166665
+    },
+    {
+      "hitches_over_33ms": 1,
+      "hitches_over_50ms": 1,
+      "hitches_over_100ms": 0,
+      "emulated_frames": 5600,
+      "first_frame": 22703,
+      "name": "stairs-to-living-room",
+      "presentation": {
+        "p99_ms": 17.48445833339929,
+        "max_ms": 75.95954166669117,
+        "samples": 5612,
+        "mean_ms": 16.678490125326668,
+        "p95_ms": 17.035000000021228
+      },
+      "emulated_hz": 59.82926016546247,
+      "wall_seconds": 93.59968658333338,
+      "start": 382.58428254166665
+    }
+  ],
+  "resolution": 3,
+  "stereo": "off",
+  "scope": "visible production frontend, native audio queue, standard HID; instrumented QA host",
+  "hitches_over_33_4ms": [
+    {
+      "seconds": "0.0594",
+      "phase": "startup",
+      "dt_ms": "59.127",
+      "emu_frame": "0",
+      "worker_ms": "0.000",
+      "upload_ms": "0.000",
+      "copy_ms": "0.000",
+      "focused": "true"
+    },
+    {
+      "seconds": "0.8224",
+      "phase": "startup",
+      "dt_ms": "69.378",
+      "emu_frame": "6",
+      "worker_ms": "1.406",
+      "upload_ms": "0.001",
+      "copy_ms": "0.002",
+      "focused": "true"
+    },
+    {
+      "seconds": "16.1895",
+      "phase": "startup",
+      "dt_ms": "35.711",
+      "emu_frame": "917",
+      "worker_ms": "5.179",
+      "upload_ms": "0.657",
+      "copy_ms": "0.636",
+      "focused": "true"
+    },
+    {
+      "seconds": "23.1694",
+      "phase": "startup",
+      "dt_ms": "33.878",
+      "emu_frame": "1334",
+      "worker_ms": "4.365",
+      "upload_ms": "0.526",
+      "copy_ms": "0.143",
+      "focused": "true"
+    },
+    {
+      "seconds": "317.3033",
+      "phase": "bedroom-movement",
+      "dt_ms": "34.834",
+      "emu_frame": "18821",
+      "worker_ms": "1.242",
+      "upload_ms": "0.000",
+      "copy_ms": "0.002",
+      "focused": "true"
+    },
+    {
+      "seconds": "382.6602",
+      "phase": "stairs-to-living-room",
+      "dt_ms": "75.960",
+      "emu_frame": "22707",
+      "worker_ms": "1.168",
+      "upload_ms": "0.001",
+      "copy_ms": "0.003",
+      "focused": "true"
+    }
+  ],
+  "scope_note": "First 8-minute slot covers startup, German character/name creation through in-game touch keyboard, bedroom and living-room transition. No battles or outdoors yet. Remaining gameplay qualification pending.",
+  "instrumentation_note": "The single non-startup75.960ms frame at382.6602s immediately follows the explicitly requested first-area-transition PNG capture at382.5843s. It must not be classified as proven gameplay stutter. Future slots tag QA capture/state intervals separately."
+}

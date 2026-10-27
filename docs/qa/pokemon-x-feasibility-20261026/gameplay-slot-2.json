@@ -1,0 +1,317 @@
+{
+  "segments": [
+    {
+      "start": 0,
+      "emulated_frames": 3811,
+      "first_frame": 0,
+      "name": "startup",
+      "presentation": {
+        "samples": 3846,
+        "mean_ms": 16.665493467238687,
+        "p95_ms": 17.593500000003814,
+        "p99_ms": 19.16195833333134,
+        "max_ms": 37.83912500000142
+      },
+      "emulated_hz": 59.45816353613333,
+      "wall_seconds": 64.09548787499999,
+      "hitches_over_100ms": 0,
+      "hitches_over_33ms": 1,
+      "hitches_over_50ms": 0
+    },
+    {
+      "start": 64.09548787499999,
+      "emulated_frames": 3037,
+      "first_frame": 3811,
+      "name": "resume-bedroom-and-mirror",
+      "presentation": {
+        "samples": 3045,
+        "mean_ms": 16.672339928845147,
+        "p95_ms": 17.13291666665384,
+        "p99_ms": 17.48062500001879,
+        "max_ms": 28.678041666665877
+      },
+      "emulated_hz": 59.82200137814828,
+      "wall_seconds": 50.767275083333345,
+      "hitches_over_100ms": 0,
+      "hitches_over_33ms": 0,
+      "hitches_over_50ms": 0
+    },
+    {
+      "start": 114.86276295833333,
+      "emulated_frames": 4644,
+      "first_frame": 6848,
+      "name": "dressed-to-living-room",
+      "presentation": {
+        "samples": 4675,
+        "mean_ms": 16.670087834224567,
+        "p95_ms": 17.185249999982943,
+        "p99_ms": 17.48262499998532,
+        "max_ms": 33.06487500000799
+      },
+      "emulated_hz": 59.58990701403374,
+      "wall_seconds": 77.93266062500003,
+      "hitches_over_100ms": 0,
+      "hitches_over_33ms": 1,
+      "hitches_over_50ms": 0
+    },
+    {
+      "start": 192.79542358333336,
+      "emulated_frames": 4888,
+      "first_frame": 11492,
+      "name": "bedroom-exit-to-ground-floor",
+      "presentation": {
+        "samples": 4901,
+        "mean_ms": 16.666539328708396,
+        "p95_ms": 17.06541666663952,
+        "p99_ms": 17.41295833329559,
+        "max_ms": 34.892208333360486
+      },
+      "emulated_hz": 59.8413060105496,
+      "wall_seconds": 81.68270924999999,
+      "hitches_over_100ms": 0,
+      "hitches_over_33ms": 2,
+      "hitches_over_50ms": 0
+    },
+    {
+      "start": 274.47813283333335,
+      "emulated_frames": 3481,
+      "first_frame": 16380,
+      "name": "living-room-to-outdoors",
+      "presentation": {
+        "samples": 3536,
+        "mean_ms": 16.66654873680239,
+        "p95_ms": 17.08300000007057,
+        "p99_ms": 17.447583333307648,
+        "max_ms": 35.15512499996021
+      },
+      "emulated_hz": 59.06716002837777,
+      "wall_seconds": 58.93291633333337,
+      "hitches_over_100ms": 0,
+      "hitches_over_33ms": 2,
+      "hitches_over_50ms": 0
+    },
+    {
+      "start": 333.4110491666667,
+      "emulated_frames": 3406,
+      "first_frame": 19861,
+      "name": "vaniville-neighbours",
+      "presentation": {
+        "samples": 3386,
+        "mean_ms": 16.666578066548567,
+        "p95_ms": 17.01500000001488,
+        "p99_ms": 17.32275000000527,
+        "max_ms": 33.31945833332384
+      },
+      "emulated_hz": 59.84214306790517,
+      "wall_seconds": 56.916410833333316,
+      "hitches_over_100ms": 0,
+      "hitches_over_33ms": 1,
+      "hitches_over_50ms": 0
+    },
+    {
+      "start": 390.32746000000003,
+      "emulated_frames": 4558,
+      "first_frame": 23267,
+      "name": "vaniville-walking-to-route-1",
+      "presentation": {
+        "samples": 4587,
+        "mean_ms": 16.673935551558753,
+        "p95_ms": 17.10379166667053,
+        "p99_ms": 17.39349999991191,
+        "max_ms": 34.98779166670829
+      },
+      "emulated_hz": 59.59467589232698,
+      "wall_seconds": 76.48334237499995,
+      "hitches_over_100ms": 0,
+      "hitches_over_33ms": 1,
+      "hitches_over_50ms": 0
+    },
+    {
+      "start": 466.810802375,
+      "emulated_frames": 3473,
+      "first_frame": 27825,
+      "name": "vaniville-route1-traversal",
+      "presentation": {
+        "samples": 3481,
+        "mean_ms": 16.676108338121274,
+        "p95_ms": 17.12212500001442,
+        "p99_ms": 17.507125000008728,
+        "max_ms": 85.39100000007238
+      },
+      "emulated_hz": 59.82821588799811,
+      "wall_seconds": 58.04953312500004,
+      "hitches_over_100ms": 0,
+      "hitches_over_33ms": 2,
+      "hitches_over_50ms": 1
+    },
+    {
+      "start": 524.8603355,
+      "emulated_frames": 1880,
+      "first_frame": 31298,
+      "name": "vaniville-main-road-north",
+      "presentation": {
+        "samples": 2259,
+        "mean_ms": 16.673849122030433,
+        "p95_ms": 17.18179166664413,
+        "p99_ms": 18.136416666720834,
+        "max_ms": 33.94408333326737
+      },
+      "emulated_hz": 49.91208945630503,
+      "wall_seconds": 37.66622516666678,
+      "hitches_over_100ms": 0,
+      "hitches_over_33ms": 6,
+      "hitches_over_50ms": 0
+    },
+    {
+      "start": 562.5265606666668,
+      "emulated_frames": 9028,
+      "first_frame": 33178,
+      "name": "route1-gate-crossing",
+      "presentation": {
+        "samples": 9399,
+        "mean_ms": 16.679058707486675,
+        "p95_ms": 17.147916666658602,
+        "p99_ms": 17.52891666671985,
+        "max_ms": 63.50879166677714
+      },
+      "emulated_hz": 57.58884434427302,
+      "wall_seconds": 156.76647279166662,
+      "hitches_over_100ms": 0,
+      "hitches_over_33ms": 3,
+      "hitches_over_50ms": 1
+    }
+  ],
+  "resolution": 3,
+  "stereo": "off",
+  "scope": "visible production frontend, native audio queue, standard HID; instrumented QA host",
+  "edition": "y",
+  "slow_worker_frames_over_50ms": [
+    {
+      "seconds": "0.4795",
+      "phase": "startup",
+      "emu_frame": "1",
+      "worker_ms": "182.569",
+      "copy_ms": "0.456",
+      "upload_ms": "0.586",
+      "qa_instrumentation": "false"
+    },
+    {
+      "seconds": "164.2452",
+      "phase": "dressed-to-living-room",
+      "emu_frame": "9785",
+      "worker_ms": "311.588",
+      "copy_ms": "0.006",
+      "upload_ms": "0.001",
+      "qa_instrumentation": "false"
+    },
+    {
+      "seconds": "294.0946",
+      "phase": "living-room-to-outdoors",
+      "emu_frame": "17506",
+      "worker_ms": "569.232",
+      "copy_ms": "0.009",
+      "upload_ms": "0.001",
+      "qa_instrumentation": "false"
+    },
+    {
+      "seconds": "448.8274",
+      "phase": "vaniville-walking-to-route-1",
+      "emu_frame": "26756",
+      "worker_ms": "145.728",
+      "copy_ms": "0.097",
+      "upload_ms": "0.391",
+      "qa_instrumentation": "false"
+    },
+    {
+      "seconds": "552.7768",
+      "phase": "vaniville-main-road-north",
+      "emu_frame": "32802",
+      "worker_ms": "2721.264",
+      "copy_ms": "3.022",
+      "upload_ms": "0.638",
+      "qa_instrumentation": "false"
+    },
+    {
+      "seconds": "553.1771",
+      "phase": "vaniville-main-road-north",
+      "emu_frame": "32803",
+      "worker_ms": "383.301",
+      "copy_ms": "0.002",
+      "upload_ms": "0.000",
+      "qa_instrumentation": "false"
+    },
+    {
+      "seconds": "565.4766",
+      "phase": "route1-gate-crossing",
+      "emu_frame": "33334",
+      "worker_ms": "75.580",
+      "copy_ms": "0.217",
+      "upload_ms": "0.366",
+      "qa_instrumentation": "false"
+    },
+    {
+      "seconds": "568.1433",
+      "phase": "route1-gate-crossing",
+      "emu_frame": "33484",
+      "worker_ms": "83.156",
+      "copy_ms": "0.101",
+      "upload_ms": "0.393",
+      "qa_instrumentation": "false"
+    },
+    {
+      "seconds": "578.4604",
+      "phase": "route1-gate-crossing",
+      "emu_frame": "34044",
+      "worker_ms": "855.181",
+      "copy_ms": "0.305",
+      "upload_ms": "1.319",
+      "qa_instrumentation": "false"
+    },
+    {
+      "seconds": "581.5270",
+      "phase": "route1-gate-crossing",
+      "emu_frame": "34052",
+      "worker_ms": "595.700",
+      "copy_ms": "0.094",
+      "upload_ms": "0.378",
+      "qa_instrumentation": "false"
+    },
+    {
+      "seconds": "581.8767",
+      "phase": "route1-gate-crossing",
+      "emu_frame": "34054",
+      "worker_ms": "346.680",
+      "copy_ms": "0.190",
+      "upload_ms": "0.409",
+      "qa_instrumentation": "false"
+    },
+    {
+      "seconds": "689.1428",
+      "phase": "route1-gate-crossing",
+      "emu_frame": "40412",
+      "worker_ms": "75.111",
+      "copy_ms": "0.105",
+      "upload_ms": "0.389",
+      "qa_instrumentation": "false"
+    },
+    {
+      "seconds": "689.2094",
+      "phase": "route1-gate-crossing",
+      "emu_frame": "40413",
+      "worker_ms": "56.524",
+      "copy_ms": "0.002",
+      "upload_ms": "0.001",
+      "qa_instrumentation": "false"
+    },
+    {
+      "seconds": "689.5265",
+      "phase": "route1-gate-crossing",
+      "emu_frame": "40422",
+      "worker_ms": "58.373",
+      "copy_ms": "0.102",
+      "upload_ms": "0.363",
+      "qa_instrumentation": "false"
+    }
+  ],
+  "assessment": "Not qualified as consistently smooth: scene/gate transitions include large native-frame stalls despite regular frontend redraws. Battles remain to be tested."
+}

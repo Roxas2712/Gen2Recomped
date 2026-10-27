@@ -17,10 +17,11 @@ local function call(method,path,payload,authorized)
   if not ok or type(doc)~='table' then return nil,'Account service unavailable. Please try again.' end
   if code~=200 and code~=202 then
     if authorized and code==401 then Auth.expire(credential) end
+    if code==503 and doc.message=='The independent legality checker is not available yet.'then return nil,doc.message,code end
     if not code or code>=500 then return nil,'Account service unavailable. Please try again.' end
     if type(doc.errors)=='table' then
       for _,key in ipairs({'friend_id','visible','visibility_enabled','requests_enabled','device','position','fingerprint','email','name','password','repositories','repository','terms_version','terms_accepted','privacy_acknowledged','developer_rights_accepted','image_base64','avatar','avatar_rights','artwork_rights_accepted','credit','alt','code','player','editions','dex','level','moves','starts_at','ends_at','title','edition','capacity','team_size','level','rules','verification','winner','reason','prize.dex','prize.level','prize.egg','prize.shiny'}) do
-        local e=doc.errors[key];if type(e)=='table' and type(e[1])=='string' then return nil,e[1]:sub(1,300),code end
+        local e=doc.errors[key];if type(e)=='table' and type(e[1])=='string' then return nil,require('src.translation.AccountErrors').validation(key,e[1]:sub(1,300)),code end
       end
     end
     return nil,type(doc.message)=='string' and doc.message:sub(1,300) or ('Account request failed ('..tostring(code or 'offline')..').'),code
