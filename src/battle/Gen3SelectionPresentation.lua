@@ -3,6 +3,7 @@
 -- Cartridge reference: pokefirered ce6406d8, battle_main DoBounceEffect /
 -- SpriteCB_BounceEffect / SpriteCB_ShowAsMoveTarget / SpriteCB_BlinkVisible.
 local M={}
+local records=setmetatable({},{__mode='k'})
 local function selection(b)
  if b.phase=='menu' or b.phase=='moveSelect' then return 'choose' end
  if b.phase=='targetSelect' then return 'target' end
@@ -11,7 +12,7 @@ local function target(b)
  return b.phase=='targetSelect' and (b.targetChoices or{})[b.targetIndex or 1] or nil
 end
 local function live(b)
- local c=b._selectionPresentation
+ local c=records[b]
  if c and c.refs[1]==b.data and c.refs[2]==b.game.save then return c end
 end
 local function bind(previous,battler,delta,frame)
@@ -21,9 +22,9 @@ local function bind(previous,battler,delta,frame)
 end
 function M.update(b)
  local mode=selection(b)
- if not mode or not(b.game and b.game.save and b.data and b.menuBattler) then b._selectionPresentation=nil;return end
+ if not mode or not(b.game and b.game.save and b.data and b.menuBattler) then records[b]=nil;return end
  local c=live(b)
- if not c then c={refs=setmetatable({b.data,b.game.save},{__mode='v'})};b._selectionPresentation=c end
+ if not c then c={refs=setmetatable({b.data,b.game.save},{__mode='v'})};records[b]=c end
  local frame=b.frame or 0
  local actor=b:menuBattler();local aimed=target(b)
  c.mon=bind(c.mon,actor,7,frame)
@@ -52,5 +53,13 @@ function M.offset(b,kind,battler)
  -- floating-point trigonometry for the cartridge's signed integer shift.
  if type(value)~='number' then return 0 end
  return math.floor(value/256)+1
+end
+-- Detached diagnostics never expose a battle/data/save reference or feed a
+-- logical checkpoint/journal field. The native owner is weakly scoped.
+function M._snapshot(b)
+ local c=live(b);if not c then return nil end
+ return {monFrom=c.mon and c.mon.from,healthboxDelta=c.hb and c.hb.delta,
+  targetFrom=c.targetFrom,targetPosition=c.target and c.target.position,
+  healthboxPosition=c.hb and c.hb.battler.position}
 end
 return M
