@@ -28,7 +28,7 @@ for _,edition in ipairs({'gold','silver','crystal'})do
  Version.set(edition)
  local s=setmetatable({}, {__index=Stack});s:init()
  local g={stack=s};s:setWorldOwner(g)
- local field=setmetatable({isOverworld=true,runner={isRunning=function()return running end},player={},scriptMoves={}}, {__index=World})
+ local field=setmetatable({isOverworld=true,enter=function()end,runner={isRunning=function()return running end},player={},scriptMoves={}}, {__index=World})
  g.overworld=field;s:push(field);debug.setupvalue(World.busy,slot,g)
  s:push({})
  T.eq(field:busy(),true,edition..' menu still blocks native movement wrappers')
