@@ -1,6 +1,7 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Reconstruct accepted choices from the server archive, then attach a new
 -- device's transport. No HP, RNG or executable client snapshot is trusted.
+local BattleQueuePhase = require("src.battle.BattleQueuePhase")
 local R={}
 function R.rebuild(game,job,account,net,onFinished,yield)
  assert(job.schema==1 and type(job.teams)=='table' and #job.teams==2,'Invalid battle transfer')
@@ -38,7 +39,7 @@ function R.rebuild(game,job,account,net,onFinished,yield)
     if side[2]=='host'then hb=hb+1 else gb=gb+1 end
    end
   end
-  game.input.pressed={a=b.phase=='messages'};game.stack:update(1/60)
+  game.input.pressed={a=BattleQueuePhase.active(b)};game.stack:update(1/60)
   if b._gen3BatonPending and not b._gen3BatonPending.choice and turn>turns then ready=true;break end
   if yield and tick%600==0 then yield()end
  end

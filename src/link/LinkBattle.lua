@@ -14,6 +14,7 @@
 -- boosts don't apply on either side (divergence: Gen 1 famously kept
 -- them in link battles).
 
+local BattleQueuePhase = require("src.battle.BattleQueuePhase")
 local Fingerprint = require("src.link.Fingerprint")
 local Font = require("src.render.Font")
 local Handshake = require("src.link.Handshake")
@@ -285,7 +286,7 @@ function LinkBattle.new(game, net, opts)
     if s.linkEnded then return end
     s.result = "draw"
     s.afterQueue = "finish"
-    s.phase = "messages"
+    s.phase = BattleQueuePhase.name()
     if text then s:say(text) end
   end
 
@@ -296,7 +297,7 @@ function LinkBattle.new(game, net, opts)
     if s.linkEnded then return end
     s.result = result
     s.afterQueue = "finish"
-    s.phase = "messages"
+    s.phase = BattleQueuePhase.name()
     if text then s:say(text) end
   end
 
@@ -416,7 +417,7 @@ function LinkBattle.new(game, net, opts)
       endAsDraw(s, Strings("%s ran from\nthe battle!", who))
       return
     end
-    s.phase = "messages"
+    s.phase = BattleQueuePhase.name()
     s.afterQueue = "linkNext"
     s.turnCount = (s.turnCount or 0) + 1
 
@@ -614,7 +615,7 @@ function LinkBattle.new(game, net, opts)
 
   -- the party menu must offer the clamped link copies
   self.openParty = function(s)
-    s.phase = "messages"
+    s.phase = BattleQueuePhase.name()
     s.afterQueue = "menu"
     s:ui(function()
       return s:buildScreen("PartyMenu", {
@@ -635,7 +636,7 @@ function LinkBattle.new(game, net, opts)
 
   self.openItems = function(s)
     s:say(Strings("Items can't be\nused in a link\nbattle!"))
-    s.phase = "messages"
+    s.phase = BattleQueuePhase.name()
     s.afterQueue = "menu"
   end
 
@@ -724,11 +725,12 @@ function LinkBattle.new(game, net, opts)
       s:tickFx()
       return -- the other side is still choosing
     end
-    if s.phase == "messages" and s.afterQueue == "linkNext" then
+    if BattleQueuePhase.active(s) and s.afterQueue == "linkNext" then
       s:tickFx()
       if not s:updateQueue() then
         s.afterQueue = "menu"
         s.phase = "menu"
+        s:clearQueueMessage()
       end
       return
     end
@@ -848,7 +850,7 @@ function LinkBattle.newSpectator(game, net, opts)
     if s.linkEnded then return end
     s.result = s.result or "ended"
     s.afterQueue = "finish"
-    s.phase = "messages"
+    s.phase = BattleQueuePhase.name()
     if text then s:say(text) end
   end
 
@@ -901,7 +903,7 @@ function LinkBattle.newSpectator(game, net, opts)
       endSpectate(s, "The match ended.")
       return
     end
-    s.phase = "messages"
+    s.phase = BattleQueuePhase.name()
     s.afterQueue = "linkNext"
     s.turnCount = (s.turnCount or 0) + 1
 
@@ -1034,11 +1036,12 @@ function LinkBattle.newSpectator(game, net, opts)
     -- same as the real-participant loop: every path that skips baseUpdate
     -- still has to advance the presentational clock, and a spectator sits in
     -- waitBoth between every single turn
-    if s.phase == "messages" and s.afterQueue == "linkNext" then
+    if BattleQueuePhase.active(s) and s.afterQueue == "linkNext" then
       s:tickFx()
       if not s:updateQueue() then
         s.afterQueue = "waitBoth"
         s.phase = "waitBoth"
+        s:clearQueueMessage()
       end
       return
     end
