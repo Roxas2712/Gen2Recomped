@@ -10,6 +10,27 @@ are still spelled `gen1recomp-X.Y.Z.love`. Neither is true now; the payload
 name is `Gen2Recomped-X.Y.Z.love` and Android downloads through the host
 bridge. The authority for the name is `src/update/Payload.lua`.
 
+## Temporary fork release channel
+
+This fork currently checks `Roxas2712/Gen2Recomped`, configured in
+`src/update/Repository.lua`. The launcher, background check and news fallback
+share that setting; the native Switch OTA mirror is checked against it.
+Existing contributor credits and per-mod update repositories are unchanged.
+
+The release list includes published previews. For `native-preview-YYYYMMDD.N`,
+the checker reads the bounded, same-repository `build-manifest.json` and uses
+its actual engine version. At equal engine versions the preview sequence
+distinguishes builds. Drafts, invalid metadata and engine downgrades are not
+offered. A preview leads to the fork's full downloads, preserving its runtime
+and profile boundary; it is not mounted as a regular payload update. Regular
+semver releases retain the existing checksum and shell-compatibility gates.
+The native Switch OTA asset format and hosts without an HTTPS transport retain
+their existing installation paths. Switching back requires changing the shared
+repository setting and its checked native mirror together.
+
+News caches record their source repository. A cache from the previous upstream
+channel is not shown as current fork news, including when offline.
+
 ## The two capabilities, and why they are separate
 
 Self-update is the conjunction of two facts that have nothing to do with each
