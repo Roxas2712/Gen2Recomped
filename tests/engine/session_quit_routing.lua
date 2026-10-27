@@ -7,7 +7,12 @@ local calls = 0
 Lifecycle.registerProcessShutdown(function() calls = calls + 1 end)
 local file = assert(io.open("main.lua", "rb"))
 local source = file:read("*a"); file:close()
-local quit = assert(source:match("\nfunction love%.quit%(%).-\nend\n"))
+local function extractQuit(text)
+  return assert(text:gsub("\r\n", "\n"):match("\nfunction love%.quit%(%).-\nend\n"))
+end
+local quit = extractQuit(source)
+T.eq(extractQuit(source:gsub("\r\n", "\n"):gsub("\n", "\r\n")), quit,
+  "native quit fixture accepts Windows CRLF checkouts")
 local function attempt(editor, veto)
   calls = 0
   local nativeStops = 0

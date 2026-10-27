@@ -75,7 +75,12 @@ fs.getInfo = function(path, ...)
   return originalInfo(path, ...)
 end
 local f = assert(io.open("main.lua", "rb"));local source = f:read("*a");f:close()
-local closeSource = assert(source:match("\nfunction closeEditor%(%).-\nend\n"))
+local function extractClose(text)
+  return assert(text:gsub("\r\n", "\n"):match("\nfunction closeEditor%(%).-\nend\n"))
+end
+local closeSource = extractClose(source)
+T.eq(extractClose(source:gsub("\r\n", "\n"):gsub("\n", "\r\n")), closeSource,
+  "native editor Close fixture accepts Windows CRLF checkouts")
 for _, failUnload in ipairs({ false, true }) do
   local run = loadProbe("crystal")
   package.loaded.App, package.loaded.FuturePanel = {}, {}
