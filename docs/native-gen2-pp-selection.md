@@ -21,6 +21,12 @@ labels, summary, held-item restoration and link reconstruction use the common
 maximum. Fork-only public records and Bank modules are not present in this
 upstream branch; this adaptation does not invent or claim those interfaces.
 
+Fresh automatic settings select the finite-enemy-PP Gen2 compatibility rule.
+An explicit saved ruleset remains effective, including an intentional Gen1
+unlimited-PP choice. The options row can return to AUTO without reserving a
+string id from mods. Only the enemy PP policy differs from the previous Gen2
+host rule fields; complete Gen2 battle-rule parity remains unproven.
+
 The native move-list and forget-list layouts preserve reference provenance.
 Sound uses the existing imported cue and actual Sound.play service; the
 reference's unavailable Sound.resolve is not introduced.
