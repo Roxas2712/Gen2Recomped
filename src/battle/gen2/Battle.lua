@@ -55,7 +55,9 @@ function Model:endBattle(outcome, details)
   -- extension may carry its own string. Do not narrow the owner's protocol.
   assert(type(outcome) == 'string' and outcome ~= '', 'invalid native Gen2 battle outcome')
   if ended[self] then return false end
-  screen.result = outcome
+  -- Native finish has an event-only fallback when its owner has no result.
+  -- Do not persist that fallback into a link owner's different end protocol.
+  if not (details and details.nativeNotification) then screen.result = outcome end
   screen:restoreMimicked(screen.player)
   screen:restoreMimicked(screen.enemy)
   ended[self] = true

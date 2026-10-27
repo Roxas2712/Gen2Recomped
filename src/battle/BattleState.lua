@@ -11524,7 +11524,7 @@ function BattleState:finish()
     require('src.pokemon.Gen2Pokerus').afterBattle(self.game.save)
   end
   if GameVersion.isGen2() then
-    self.battle:endBattle(self.result or 'run')
+    self.battle:endBattle(self.result or 'run', {nativeNotification=true})
   else
     Runtime.emit("battle.ended", { battle = self, result = self.result or "run" })
   end
