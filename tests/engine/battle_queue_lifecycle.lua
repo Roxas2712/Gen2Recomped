@@ -47,8 +47,11 @@ for _, version in ipairs({ "red", "gold", "silver", "crystal", "firered", "emera
     actor.mon.hp = from - 2
     local frames = 0
     while battle:stepHPDrain() and frames < 1000 do frames = frames + 1 end
-    T.eq(frames, Timing.hpDrainFrames(from, actor.mon.hp, actor.mon.stats.hp,
-      actor.isPlayer == true), version .. " exact native HP timing")
+    -- GSC's long HP loop costs two frames per changed pixel on either side.
+    -- Red and the existing GBA path retain their original side-specific cost.
+    local expected = Version.isGen2() and 4 or
+      Timing.hpDrainFrames(from, actor.mon.hp, actor.mon.stats.hp, actor.isPlayer == true)
+    T.eq(frames, expected, version .. " exact native HP timing")
     T.eq(actor.shownHP, actor.mon.hp, version .. " actual HP caught up")
     T.eq(actor.draining, nil, version .. " drain retired")
     T.eq(actor.drainHold, nil, version .. " completed closing hold retired")

@@ -80,6 +80,7 @@ for _, version in ipairs(Version.ORDER) do
       { owner = b, key = "queue", value = { {} } },
       { owner = b, key = "pendingActions", value = { [0] = { kind = "move" } } },
       { owner = b, key = "animPlaying", value = true },
+      { owner = b, key = "hpAnim", value = {side="enemy",to=b.enemy.mon.hp} },
       { owner = b, key = "waitFrames", value = 1 },
       { owner = b, key = "introSlide", value = 1 },
       { owner = b, key = "waitingUI", value = true },

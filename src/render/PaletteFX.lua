@@ -1115,13 +1115,12 @@ function PaletteFX.spriteObp(spriteDef, seed)
 end
 
 -- GetHPPal (home/hp_pal.asm) on this cartridge's bar.  Crystal's is 48 pixels
--- wide and turns green at 27 and yellow at 10; a cartridge that widened the
+-- wide and turns green at 24 and yellow at 10; a cartridge that widened the
 -- bar moved both, and reading Prism's 56-pixel bar through Crystal's numbers
 -- showed yellow between half and 56% health where the cartridge shows green.
-function PaletteFX.barPalName(hp, maxHp)
+function PaletteFX.barPalName(hp, maxHp, pixels)
   local geo = require("src.render.HudTiles").geometry()
-  local px = maxHp > 0 and math.floor(hp * geo.hpBarTiles * 8 / maxHp) or 0
-  if hp > 0 and px < 1 then px = 1 end
+  local px = pixels ~= nil and pixels or require('src.render.HudTiles').hpPixels(hp, maxHp)
   return px >= geo.hpBarGreenPixels and "GREENBAR"
     or px >= geo.hpBarYellowPixels and "YELLOWBAR" or "REDBAR"
 end
