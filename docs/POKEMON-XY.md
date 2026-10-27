@@ -36,6 +36,13 @@ completion marker records its ROM, compiler identity and library digest;
 interrupted or changed binaries must be rebuilt. Driver updates invalidate the
 device qualification separately from the game compiler cache.
 
+The compiler wrapper suppresses Zig's default generated DWARF with `-g0` while
+retaining the recompiler's `-O2` and precise floating-point flags. This avoids
+large duplicate debug objects in the build and its bounded compiler cache.
+Its wrapper digest participates in the game-build identity. The default is
+two compiler jobs; maintainers may set `RETRO_3DS_BUILD_JOBS` to 1–8 for a
+measured build on their own host. Invalid values fall back to two jobs.
+
 A bare `.love` without the sidecar still supports file import but needs an
 installed backend before playing. Developer overrides are `POKEMON_XY_ROOT`
 (workspace), `POKEMON_XY_RUNTIME_ROOT` (reviewed sidecar), and optionally

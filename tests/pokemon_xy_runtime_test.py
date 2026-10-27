@@ -11,6 +11,7 @@ from unittest.mock import patch
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 import pokemon_xy_runtime as runtime
+from build_pokemon_xy_runtime import compilation_identity
 
 
 class RuntimeTests(unittest.TestCase):
@@ -20,6 +21,12 @@ class RuntimeTests(unittest.TestCase):
  def test_runtime_fingerprint_changes_without_changing_the_rom_identity(self):
   self.assertNotEqual(runtime.fingerprint('a'*64,'b'*64),runtime.fingerprint('a'*64,'c'*64))
   self.assertEqual(runtime.fingerprint('a'*64,None),'a'*64)
+ def test_game_build_identity_includes_effective_compiler_wrapper(self):
+  critical={'bin/3dsrecomp':'compiler','bin/cc':'wrapper-v1','compiler/zig':'zig'}
+  before=compilation_identity(critical,'abi')
+  critical['bin/cc']='wrapper-v2'
+  self.assertNotEqual(before,compilation_identity(critical,'abi'))
+  self.assertNotEqual(compilation_identity(critical,'abi'),compilation_identity(critical,'new-abi'))
  def test_no_cache_hit_until_a_complete_library_is_committed(self):
   binary=self.root/'game.dylib'
   binary.write_bytes(struct.pack('<IiiI',0xfeedfacf,0x100000c,0,6)+b'\0'*16+b'own synthetic fixture')
@@ -49,6 +56,10 @@ class RuntimeTests(unittest.TestCase):
   self.assertEqual(env['CC'],str(root/'bin/cc'))
   self.assertEqual(env['RETRO_3DS_BUILD_JOBS'],'2')
   self.assertEqual(env['ZIG_GLOBAL_CACHE_DIR'],str(work/'compiler-cache/global'))
+ def test_explicit_build_parallelism_is_bounded_and_invalid_values_fall_back(self):
+  for value,expected in [('4','4'),('999','8'),('-1','1'),('invalid','2')]:
+   with patch.dict(os.environ,{'RETRO_3DS_BUILD_JOBS':value}):
+    self.assertEqual(runtime.environment(self.root,self.root/'work')['RETRO_3DS_BUILD_JOBS'],expected)
 
 
 if __name__=='__main__':unittest.main()

@@ -66,10 +66,14 @@ def finish(binary, rom_hash, runtime_id):
 
 def environment(root, work):
     env = dict(os.environ)
+    try:
+        jobs = max(1, min(8, int(env.get('RETRO_3DS_BUILD_JOBS', '2'))))
+    except ValueError:
+        jobs = 2
     env.update(CC=str(root/FILES['cc']), ZIG_LIB_DIR=str(root/'compiler/lib'),
                ZIG_GLOBAL_CACHE_DIR=str(work/'compiler-cache/global'),
                ZIG_LOCAL_CACHE_DIR=str(work/'compiler-cache/local'),
-               RETRO_3DS_BUILD_JOBS='2',
+               RETRO_3DS_BUILD_JOBS=str(jobs),
                RUST_LOG='info,cranelift_jit=warn')
     # Compiler processes use the bundled C toolchain even with a minimal GUI
     # PATH. No shell setup, Homebrew or Xcode installation is required.

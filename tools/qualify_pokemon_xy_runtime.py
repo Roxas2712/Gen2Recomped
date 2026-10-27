@@ -95,8 +95,12 @@ def main():
     for key in ('SDKROOT','DEVELOPER_DIR','PYTHONHOME','PYTHONPATH','DYLD_FALLBACK_LIBRARY_PATH','VK_DRIVER_FILES','VK_ICD_FILENAMES','ZIG_LIB_DIR'):
         env.pop(key,None)
     code=out/'probe.c';code.write_text('#include <stdint.h>\n#include <math.h>\nint retro_probe(int x){return (int)sqrt((double)x*x)+7;}\n')
-    result=qa_run([str(relocated/runtime.FILES['cc']),'-shared','-fPIC','-O2',str(code),'-o',str(out/'probe.dylib')],cwd=out,env=env,capture_output=True,text=True,timeout=240)
+    result=qa_run([str(relocated/runtime.FILES['cc']),'-c','-fPIC','-O2',str(code),'-o',str(out/'probe.o')],cwd=out,env=env,capture_output=True,text=True,timeout=240)
     (out/'compiler.log').write_text(result.stdout+result.stderr);result.check_returncode()
+    sections=qa_run(['/usr/bin/otool','-l',str(out/'probe.o')],cwd=out,capture_output=True,text=True,check=True)
+    assert '__DWARF' not in sections.stdout,'Generated game objects must not contain large debug sections.'
+    result=qa_run([str(relocated/runtime.FILES['cc']),'-shared',str(out/'probe.o'),'-o',str(out/'probe.dylib')],cwd=out,env=env,capture_output=True,text=True,timeout=240)
+    (out/'linker.log').write_text(result.stdout+result.stderr);result.check_returncode()
     assert not (out/'unexpected-sdk.txt').exists(),'The bundled compiler fell back to system developer tools.'
     result=qa_run([str(relocated/runtime.FILES['python']),'-B','-E','-s',str(Path(__file__).resolve()),'--child','--runtime',str(relocated),'--output',str(out)],cwd=out,env=env,capture_output=True,text=True,timeout=120)
     (out/'native.log').write_text(result.stdout+result.stderr);result.check_returncode()
@@ -105,7 +109,7 @@ def main():
     (out/'recompiler.log').write_text(result.stdout+result.stderr)
     assert result.returncode in (0,2) and '3dsrecomp' in result.stdout+result.stderr,'Recompiler command entry did not return its usage.'
     verify(relocated)
-    report.update(passed=True,relocated=True,system_developer_tools_used=False,runtime_id=json.loads((relocated/'runtime.json').read_text())['id'])
+    report.update(passed=True,relocated=True,generated_debug_symbols=False,system_developer_tools_used=False,runtime_id=json.loads((relocated/'runtime.json').read_text())['id'])
     (out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
     print('RUNTIME_QUALIFIED '+str(out),flush=True)
     print(json.dumps(report),flush=True)
