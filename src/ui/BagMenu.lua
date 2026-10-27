@@ -842,12 +842,25 @@ local function pickTargetAndUse(game, battle, id, list, options)
     onCancel = options and options.onCancel,
     -- Native Gen2 keeps the same party owner through its result and
     -- confirmation. Other editions retain their existing field flow.
-    keepOpen = (battle and require("src.core.GameVersion").isGen2())
+    keepOpen = ((battle or wantsMove) and require("src.core.GameVersion").isGen2())
       or ((not battle) and (ItemEffects.healsHP(id)
         or (id == "RARE_CANDY" and require("src.core.GameVersion").isFRLG()))),
     onSwitch = function(mon, picker)
       if not wantsMove then
         useOn(game, battle, id, mon, list, nil, picker)
+        return
+      end
+      if require("src.core.GameVersion").isGen2() then
+        -- RestorePPEffect uses ChooseMoveToDelete's real native four-slot
+        -- window. Cancel drops only this move list and preserves the party.
+        Screens.push(game, "Gen2MoveDeleter", {
+          mon = mon, moves = game.data.moves,
+          onCancel = function() game.stack:pop() end,
+          onChoose = function(slot)
+            game.stack:pop()
+            useOn(game, battle, id, mon, list, slot, picker)
+          end,
+        })
         return
       end
       local rows = {}

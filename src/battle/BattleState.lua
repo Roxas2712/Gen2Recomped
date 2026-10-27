@@ -13448,7 +13448,7 @@ function BattleState:drawTextAreaInner()
         -- the type record's display name (a mod type shows its name, and
         -- PSYCHIC_TYPE prints PSYCHIC like the original)
         Font.draw(def.type and TypeChart.displayName(def.type) or "", 16, 80)
-        local maxPP = def.pp + (sel.ppUps or 0) * math.floor(def.pp / 5)
+        local maxPP = require("src.pokemon.Pokemon").maxPP(def, sel)
         Font.draw(("%2d/%2d"):format(sel.pp, maxPP), 40, 88)
       end
     end

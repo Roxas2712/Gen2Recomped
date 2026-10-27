@@ -154,6 +154,7 @@ for _,id in ipairs({'FULL_HEAL','REVIVE','ETHER','ELIXER'})do
   step('a')
   if id=='ETHER'then
     T.neq(game.stack:top(),picker,'ETHER opens its real move selector above the same party')
+    T.eq(game.stack:top().screenId,'Gen2MoveDeleter','native ETHER uses the cartridge move-list controller')
     step('b');T.eq(game.stack:top(),picker,'PP move cancel returns to the retained native party')
     T.eq(game.save.inventory[id],1,'PP move cancellation preserves inventory')
     T.eq(target.moves[1].pp,1,'PP move cancellation preserves PP')

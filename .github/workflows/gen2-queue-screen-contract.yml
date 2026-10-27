@@ -24,8 +24,11 @@ jobs:
           git archive b4bb770ccba2cf6f05eefb34d9a3c3f531c1ad95 src tests data tools examples | tar -x -C "$baseline"
           cp src/render/NativeScreenOverlay.lua "$baseline/src/render/NativeScreenOverlay.lua"
           cp src/ui/Gen2PartyItemResult.lua "$baseline/src/ui/Gen2PartyItemResult.lua"
+          cp src/ui/Gen2MoveDeleter.lua src/ui/Gen2ForgetMoveList.lua "$baseline/src/ui/"
+          cp src/pokemon/Gen2PP.lua "$baseline/src/pokemon/Gen2PP.lua"
+          cp tests/engine/gen2_pp_selection.lua "$baseline/tests/engine/gen2_pp_selection.lua"
           cp tests/engine/gen2_battle_pack.lua tests/engine/gen2_party_item_result.lua "$baseline/tests/engine/"
-          for suite in gen2_party_item_result gen2_battle_pack; do
+          for suite in gen2_party_item_result gen2_battle_pack gen2_pp_selection; do
             if (cd "$baseline" && luajit "tests/engine/$suite.lua") > "$RUNNER_TEMP/$suite-baseline.log" 2>&1; then
               cat "$RUNNER_TEMP/$suite-baseline.log"
               echo "Previous source unexpectedly passed $suite"
@@ -37,7 +40,7 @@ jobs:
       - name: Native screen, queue, input and current message ownership
         run: |
           failed=0
-          for suite in gen2_battle_queue_view gen2_move_selection gen2_battle_submenu gen2_battle_pack gen2_party_item_result screen_space_ui party_live_data party_grid_navigation gen2_battle_scene gen2_battle_window battle_queue_lifecycle; do
+          for suite in gen2_battle_queue_view gen2_move_selection gen2_battle_submenu gen2_battle_pack gen2_party_item_result gen2_pp_selection screen_space_ui party_live_data party_grid_navigation gen2_battle_scene gen2_battle_window battle_queue_lifecycle; do
             if ! luajit "tests/engine/$suite.lua"; then failed=1; fi
           done
           exit "$failed"
@@ -54,6 +57,14 @@ jobs:
         run: |
           failed=0
           for suite in arena_battle_proof arena_replay link_battle_ended; do
+            if ! luajit "tests/engine/$suite.lua"; then failed=1; fi
+          done
+          exit "$failed"
+      - name: Shared PP readers, callbacks, held items, bank and older edition behavior
+        if: success() || failure()
+        run: |
+          failed=0
+          for suite in item_use_dispatch world_read_api unified_mod_callbacks held_item_contract held_item_authority held_item_content held_item_scheduling pokemon_bank bank_interop bank_verification gen2_summary_contract gen2_battle_live_view gen2_alias_world_reads; do
             if ! luajit "tests/engine/$suite.lua"; then failed=1; fi
           done
           exit "$failed"
