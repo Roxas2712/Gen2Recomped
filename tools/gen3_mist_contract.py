@@ -1,4 +1,4 @@
-"""Compare native GBA Mist or Haze against a clean, read-only Gen1 checkout."""
+"""Compare native GBA field-condition moves against a clean, read-only Gen1 checkout."""
 import argparse
 import hashlib
 import json
@@ -14,15 +14,19 @@ parser.add_argument('--reference-root', type=Path, required=True)
 parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--lua', type=Path, default=shutil.which('luajit'))
 parser.add_argument('--qa-tools-root', type=Path, default=ROOT / 'tools')
-parser.add_argument('--effect', choices=('mist','haze'), default='mist')
+parser.add_argument('--effect', choices=('mist','haze','perish'), default='mist')
 parser.add_argument('--edition', action='append', choices=('firered','leafgreen','ruby','sapphire','emerald'))
-parser.add_argument('--mode', action='append', choices=('single','double-left','double-right','double-right-empty-left','double-left-empty-right'))
+parser.add_argument('--mode', action='append', choices=('single','double-left','double-right','double-right-empty-left','double-left-empty-right','double','empty-left','empty-right'))
 args = parser.parse_args()
 ref = args.reference_root.resolve()
 if not args.lua or not args.lua.is_file():
     parser.error('--lua must select an existing LuaJIT executable')
 if args.output.exists():
     parser.error('--output must be a new directory')
+if args.effect!='perish' and any(mode in ('double','empty-left','empty-right') for mode in args.mode or ()):
+    parser.error('double/empty-left/empty-right are the Perish contract modes')
+if args.effect=='perish' and any(mode not in ('single','double','empty-left','empty-right') for mode in args.mode or ()):
+    parser.error('Perish uses single/double/empty-left/empty-right modes')
 if args.effect=='mist' and any('empty' in mode for mode in args.mode or ()):
     parser.error('empty-flank modes are qualified by the Haze contract only')
 worker = ROOT / ('tests/gen3_' + args.effect + '/worker.lua')
@@ -40,11 +44,15 @@ inputs = [Path(__file__).resolve(), worker, worker.with_name('cases.lua'),
               'src/core/game3/battle/effects/setup.lua')]]
 if (ROOT / 'src/battle/Gen3Haze.lua').is_file():
     inputs.append(ROOT / 'src/battle/Gen3Haze.lua')
+if (ROOT / 'src/battle/Gen3PerishSong.lua').is_file():
+    inputs.append(ROOT / 'src/battle/Gen3PerishSong.lua')
+inputs.extend([ROOT / 'src/battle/GbaItemSchedule.lua', ROOT / 'tests/gen3_perish/cases.lua'])
+inputs.append(args.qa_tools_root / 'qa_storage.py')
 run = subprocess.run
 if os.name != 'nt' and not os.getenv('GITHUB_ACTIONS'):
     sys.path.insert(0, str(args.qa_tools_root.resolve()))
     from qa_storage import qa_source, qa_cache, qa_run
-    for path in [ROOT, ref, args.lua.resolve(), Path(sys.executable), args.qa_tools_root, *inputs]:
+    for path in [ROOT, ref, args.lua.resolve(), Path(sys.executable), args.qa_tools_root]:
         qa_source(path)
     qa_cache(args.output)
     run = qa_run
@@ -65,8 +73,10 @@ report = dict(status='running', inputs=hashes, source=git(ROOT, 'rev-parse', 'HE
               effect=args.effect,
               scope='Native move resolution, registered trainer item controller/execution, '
                     'switching, Intimidate and residual scheduling. Compare Mist duration '
-                    'and stat protection, or native Haze stages and retained state. '
+                    'and stat protection, native Haze stages or Perish whole-field/counter frames. '
                     'No complete damage, UI or whole-mod claim.')
+if args.effect=='perish':
+    report['scope']='Actual native Perish Song effect and residual owners, whole-present-field application, Soundproof, existing counters, substitute and absent flanks. This shared contract does not qualify public builtin delegation, complete menu rounds, checkpoint restoration or link peers; separate engine suites cover those.'
 report_path = args.output / 'report.json'
 
 
@@ -90,6 +100,8 @@ prefix = ['nice', '-n', '19'] if os.name != 'nt' else []
 modes=('single','double-left','double-right')
 if args.effect=='haze':
     modes+=('double-right-empty-left','double-left-empty-right')
+elif args.effect=='perish':
+    modes=('single','double','empty-left','empty-right')
 marker='GBA_' + args.effect.upper() + '_CONTRACT '
 for edition in args.edition or ('firered','leafgreen','ruby','sapphire','emerald'):
     for mode in args.mode or modes:

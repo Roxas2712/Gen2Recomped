@@ -6884,6 +6884,17 @@ function BattleState:endOfTurn()
   -- nothing at all in a single battle, where the faint path fills the slot
   -- itself and there is nothing pending.
   self:fillEmptySlots()
+  if GameVersion.isGen3()and self:isDouble()then
+    -- Residual faints remove their occupants through queued faint/EXP work.
+    -- Keep existing turn-event timing, then fill those newly empty places
+    -- after the queued removals, before the next native decision.
+    for _,actor in activeBattlers(self)do
+      if actor.mon and actor.mon.hp<=0 and actor.faintQueued then
+        self:actNext(function()self:fillEmptySlots()end)
+        break
+      end
+    end
+  end
   -- BATTLE PALACE: the first time a Pokemon is at half HP or below (and
   -- awake), its nature shows (VARIOUS_PALACE_FLAVOR_TEXT)
   if self.palace then
@@ -6994,7 +7005,7 @@ function BattleState:gen3BattlerCountersTick(b, scheduled)
   end
 end
 
-function BattleState:gen3DelayedCountersTick()
+function BattleState:gen3DelayedCountersTick(order)
   -- FUTURE SIGHT and DOOM DESIRE, whose damage was rolled two turns ago and
   -- lands on whoever is standing there now.
   for index, side in ipairs(self.sides or {}) do
@@ -7014,6 +7025,7 @@ function BattleState:gen3DelayedCountersTick()
       end
     end
   end
+  if GameVersion.isGen3()then return require('src.battle.Gen3PerishSong').tick(self,order)end
   -- PERISH SONG last, and both sides together: the counter reaching zero
   -- faints the Pokemon whatever its HP is.
   for _, b in activeBattlers(self) do

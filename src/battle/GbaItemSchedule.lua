@@ -134,7 +134,7 @@ function Schedule.residuals(battle)
   end
   -- The native fainted-action/item sweep precedes delayed attacks and Perish.
   Schedule.afterAction(battle)
-  battle:gen3DelayedCountersTick()
+  battle:gen3DelayedCountersTick(order)
 end
 
 return Schedule

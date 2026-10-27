@@ -9,6 +9,7 @@ function M.record(id, base)
   end
   base = require("src.battle.Gen3Disable").builtin(id, base)
   base = require("src.battle.Gen3Haze").builtin(id, base)
+  base = require("src.battle.Gen3PerishSong").builtin(id, base)
   base = require("src.battle.Gen3Mist").builtin(id, base)
   base = require("src.battle.Gen3MultiHit").builtin(id, base)
   base = require("src.battle.Gen3Rage").builtin(id, base)
