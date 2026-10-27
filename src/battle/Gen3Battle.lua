@@ -1312,10 +1312,10 @@ Gen3Battle.SUMMARY_BALL_FRAMES = 4
 -- twenty-four off the RIGHT of it.  So on a wider surface the foe's row does
 -- not move and the player's moves out by the whole of the extra width, which
 -- is the flip flag this function already reads for the mirroring.
-local function drawSummaryRow(summary, side, party, age, extra)
+local function drawSummaryRow(summary, side, party, age, extra, presentation)
   local edge = side.flip and 0 or math.floor(tonumber(extra) or 0)
   local bar, balls = hudImage(summary.bar), hudImage(summary.balls)
-  if not (bar and balls) then return end
+  if not (bar and balls) then return false end
   local cell = summary.ballSide or 8
   local barW = summary.barWidth or bar:getWidth()
   -- how far in the row has travelled: 0 is fully off its own edge, 1 home
@@ -1323,16 +1323,25 @@ local function drawSummaryRow(summary, side, party, age, extra)
   -- player's lives on the right and enters from the right
   local slide = Gen3Battle.SUMMARY_SLIDE_FRAMES
   local dx = Gen3Battle.summaryRowOffset(summary,side,age)
-  love.graphics.setColor(1, 1, 1, 1)
+  local offsetX,offsetY=0,0
+  local alpha=1
+  if presentation then
+    local anchor=side.barX+(side.flip and barW or edge)
+    offsetX=(presentation.x or anchor)-anchor
+    offsetY=(presentation.y or side.barY)-side.barY
+    dx=presentation.ox==nil and dx or presentation.ox
+    alpha=presentation.alpha or 1
+  end
+  love.graphics.setColor(1, 1, 1, alpha)
   -- the strip, mirrored for the foe: drawn from its far corner with a
   -- negative x scale, which is what ST_OAM_HFLIP does to the four pieces
   if side.flip then
-    love.graphics.draw(bar, side.barX + barW + dx, side.barY, 0, -1, 1)
+    love.graphics.draw(bar, side.barX + barW + dx + offsetX, side.barY + offsetY, 0, -1, 1)
   else
-    love.graphics.draw(bar, side.barX + edge + dx, side.barY)
+    love.graphics.draw(bar, side.barX + edge + dx + offsetX, side.barY + offsetY)
   end
   -- ...and the icons, laid out from the middle of the screen outwards
-  local slots = Gen3Battle.summarySlots(summary, side, party)
+  local slots = presentation and presentation.slots or Gen3Battle.summarySlots(summary, side, party)
   local count = summary.count or 6
   local icons = summary.icons or {}
   local bw, bh = balls:getDimensions()
@@ -1341,15 +1350,19 @@ local function drawSummaryRow(summary, side, party, age, extra)
     -- each icon waits for the bar to land and then for its own turn; with no
     -- age at all (a caller that does not track one) every icon is already down
     local due = slide + (slot - 1) * Gen3Battle.SUMMARY_BALL_FRAMES
-    if column and (age == nil or age >= due) then
+    local hidden=presentation and presentation.ballHidden
+    local show=hidden and not hidden[slot]or not hidden and(age==nil or age>=due)
+    if column and show then
       local quad = love.graphics.newQuad(column * cell, 0, cell, cell,
                                          bw, bh)
+      local ballDx=presentation and presentation.ballOx and(presentation.ballOx[slot]or 0)or dx
       love.graphics.draw(balls, quad,
                          side.ballX + edge
-                           + (slot - 1) * (summary.step or 10) + dx,
-                         side.ballY)
+                           + (slot - 1) * (summary.step or 10) + ballDx + offsetX,
+                         side.ballY + offsetY)
     end
   end
+  return true
 end
 
 -- Both teams when two trainers walked up; see BattleState:foeSummaryParty.
@@ -1382,6 +1395,41 @@ function Gen3Battle.summaryRowOffset(summary,side,age)
   local eased=1-(1-p)*(1-p)
   return(side.flip and -1 or 1)*(1-eased)*(width+16)
 end
+-- Presentation overrides borrow the same row geometry, icon packing and
+-- first-paint stamp as native HUDs. No battle/input clock is advanced here.
+function Gen3Battle.paintPartySummary(battle,player,presentation)
+  local summary,row,party=Gen3Battle.partySummary(battle,player)
+  if not summary then return false end
+  if presentation then
+    assert(type(presentation)=='table','invalid party summary presentation')
+    for _,key in ipairs{'x','y','ox','alpha'}do
+      local v=presentation[key]
+      assert(v==nil or type(v)=='number'and v==v and math.abs(v)<math.huge,'invalid party summary '..key)
+    end
+    assert(presentation.alpha==nil or presentation.alpha>=0 and presentation.alpha<=1,'invalid party summary alpha')
+    assert(not presentation.extended,'extended native party summary unavailable')
+    for _,key in ipairs{'slots','ballHidden','ballOx'}do
+      assert(presentation[key]==nil or type(presentation[key])=='table','invalid party summary '..key)
+    end
+    for i=1,summary.count or 6 do
+      local key=presentation.slots and presentation.slots[i]
+      assert(key==nil or type(key)=='string'and(summary.icons or{})[key]~=nil,'invalid party summary icon')
+      local hidden=presentation.ballHidden and presentation.ballHidden[i]
+      assert(hidden==nil or type(hidden)=='boolean','invalid party summary hidden flag')
+      local offset=presentation.ballOx and presentation.ballOx[i]
+      assert(offset==nil or type(offset)=='number'and offset==offset and math.abs(offset)<math.huge,'invalid party summary ball offset')
+    end
+  end
+  if battle.introBallsFrom==nil then battle.introBallsFrom=battle.frame or 0 end
+  local age=battle.frame and(battle.frame-battle.introBallsFrom)or nil
+  return drawSummaryRow(summary,row,party,age,Gen3Battle.extra(battle),presentation)
+end
+function Gen3Battle.drawPartySummary(battle,player)
+  local draw=function()return Gen3Battle.paintPartySummary(battle,player)end
+  local chrome=package.loaded['src.ui.game3.battle_chrome']
+  if chrome and chrome._nativePartySummary then return chrome._nativePartySummary(battle,player,draw)end
+  return draw()
+end
 local function drawIntroBalls(battle)
   if not battle.introBalls then return end
   if not require("src.core.GameVersion").isGen3() then
@@ -1393,27 +1441,8 @@ local function drawIntroBalls(battle)
                        8)
     return
   end
-  local summary = summaryRecord(battle)
-  if not summary then return end
-  -- WHEN THE ROWS WENT UP, stamped on the first frame they are actually
-  -- drawn rather than on the frame the flag was raised: the flag is set in
-  -- BattleState:enter, while the two silhouettes are still sliding in and
-  -- these rows are not on screen yet, so counting from there would have the
-  -- whole slide happen behind the intro and land the rows already home.
-  if battle.introBallsFrom == nil then
-    battle.introBallsFrom = battle.frame or 0
-  end
-  local age = battle.frame and (battle.frame - battle.introBallsFrom) or nil
-  if battle.enemyParty and summary.opponent
-      and (battle.kind == "trainer" or battle.kind == "link") then
-    drawSummaryRow(summary, summary.opponent, foeRowParty(battle), age,
-                   Gen3Battle.extra(battle))
-  end
-  if summary.player then
-    drawSummaryRow(summary, summary.player,
-                   battle.playerParty or battle.game.save.party, age,
-                   Gen3Battle.extra(battle))
-  end
+  Gen3Battle.drawPartySummary(battle,false)
+  Gen3Battle.drawPartySummary(battle,true)
 end
 
 -- RECONSTRUCTED: the foe's box upper left, the player's lower right, which
