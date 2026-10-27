@@ -8,8 +8,8 @@ Assets.image=function()return{getDimensions=function()return 128,128 end}end
 local function code(cmd,n)return string.char(0xfc,cmd,n)end
 for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  V.set(edition)
- Font.load({font={pages={main={image='QA_FONT',glyphWidth=8,glyphHeight=8,advance=4}},
-  faces={small={image='QA_SMALL',glyphWidth=8,glyphHeight=8,advance=3}},
+ Font.load({font={pages={main={image='QA_FONT',base=0,glyphWidth=8,glyphHeight=8,advance=4}},
+  faces={small={image='QA_SMALL',base=0,glyphWidth=8,glyphHeight=8,advance=3}},
   charmap={{seq='A',code=1},{seq='é',code=2},{seq='<PK>',code=3}}}})
  local rows={};Font.draw=function(g,x,y)rows[#rows+1]={g,x,y};return Font.width(g)end
  local pp=code(0x11,2)..code(0x14,6)..'Aé<PK>'
