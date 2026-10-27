@@ -694,6 +694,11 @@ function Sound.anyPlaying(kind)
   return false
 end
 
+-- Actual native SFX source status, excluding cries and independent loops.
+function Sound.sfxBusy()
+  return Sound.anyPlaying('sfx')
+end
+
 -- Looping sources (the low-health alarm): started/stopped by game
 -- states. ChipAudio generates the two-tone siren used by runtime imports;
 -- legacy data can still provide a looping static source.
