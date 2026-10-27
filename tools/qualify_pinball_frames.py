@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 import shutil
 import sys
+import time
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -22,6 +23,9 @@ def main():
     parser.add_argument('--seconds',type=int,default=40)
     parser.add_argument('--seats',type=int,choices=(1,2),default=1)
     parser.add_argument('--full-table',action='store_true')
+    parser.add_argument('--pause-unfocused',action='store_true',help='Pause and exclude background time instead of failing a long run on focus loss.')
+    parser.add_argument('--field',type=int,choices=(0,1),default=0)
+    parser.add_argument('--locale',choices=('en','fr','de','it','es'),default='en')
     args=parser.parse_args()
     if not re.fullmatch(r'[a-z0-9-]{1,40}',args.label)or not 10<=args.seconds<=600:
         parser.error('Use a lowercase label and 10–600 seconds.')
@@ -63,15 +67,24 @@ def main():
     options='return {launcherSetupVersion=1,launcherAnimations=false,cloudAutoSync=false,launcherSaveStorageChoice="local"}'
     (profile/'profiles/guest').mkdir(parents=True,exist_ok=True)
     for path in (profile/'options.lua',profile/'profiles/guest/options.lua'):path.write_text(options)
+    (profile/'pinball-locale.txt').write_text(args.locale)
     report=cache/'report.json'
     env=dict(os.environ,POKEPORT_IDENTITY=identity,OA_QA_IDENTITY=identity,
         ASCENDANT_PINBALL_ROOT=str(ROOT),ASCENDANT_PINBALL_START='1',ASCENDANT_PINBALL_SEATS=str(args.seats),
-        PINBALL_FRAME_REPORT=str(report),PINBALL_FRAME_SECONDS=str(args.seconds),PINBALL_FRAME_PLAYER=str(player),
+        PINBALL_FRAME_PAUSE_UNFOCUSED='1'if args.pause_unfocused else'0',PINBALL_FRAME_FIELD=str(args.field),PINBALL_FRAME_LOCALE=args.locale,PINBALL_FRAME_REPORT=str(report),PINBALL_FRAME_SECONDS=str(args.seconds),PINBALL_FRAME_PLAYER=str(player),
         PINBALL_FRAME_TABLE='1'if args.full_table else'0')
+    started=time.time()
     with(cache/'run.log').open('w')as log:
-        result=qa.qa_run([str(executable),str(host)],cwd=ROOT,env=env,stdout=log,stderr=log,timeout=args.seconds+90)
-    if report.exists():print(report.read_text())
-    else:print((cache/'run.log').read_text()[-5000:])
+        result=qa.qa_run([str(executable),str(host)],cwd=ROOT,env=env,stdout=log,stderr=log,timeout=args.seconds*3+180)
+    if report.exists()and report.stat().st_mtime>=started:
+        data=json.loads(report.read_text())
+        keys=('passed','seconds','wall_seconds','unique_native_presents','focus_lost_frames','focus_excluded_seconds',
+              'display','source_gap','native','simulation','composition','thread_cpu','rounds','scheduler')
+        print(json.dumps({key:data[key]for key in keys if key in data},indent=2))
+        print('Detailed private report: '+str(report))
+    else:
+        print((cache/'run.log').read_text()[-5000:])
+        return result.returncode or 1
     return result.returncode
 
 if __name__=='__main__':raise SystemExit(main())

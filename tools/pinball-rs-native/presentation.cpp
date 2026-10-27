@@ -1,6 +1,7 @@
 #include "presentation.h"
 #include <algorithm>
 #include <cstring>
+#include <cstdlib>
 namespace {
 uint16_t word(const uint8_t* p){return p[0]|(uint16_t(p[1])<<8);}
 int16_t signed_word(const uint8_t* p){return static_cast<int16_t>(word(p));}
@@ -18,18 +19,80 @@ struct Providers {
 };
 }
 PinballTableView* PinballTableView::rendering_=nullptr;
+PinballTableView::PinballTableView():cache_enabled_(std::getenv("ASCENDANT_PINBALL_REFERENCE_TABLE")==nullptr){}
+bool PinballTableView::unchanged_band(unsigned band,unsigned first,unsigned end,uint16_t display,const uint8_t* palette) {
+ if(!cache_enabled_)return false;
+ dependency_.clear();
+ auto append=[&](const void* p,size_t length){const auto* bytes=static_cast<const uint8_t*>(p);dependency_.insert(dependency_.end(),bytes,bytes+length);};
+ append(palette,2); // backdrop, including fully transparent rows
+ // Host scrolls are zero and the supported board uses regular mode-0 BGs.
+ // Include each referenced map entry and its entire tile; flips and palettes
+ // cannot make a changed texel evade this exact-byte dependency comparison.
+ for(unsigned bg=1;bg<4;bg++) {
+  if(!(display&(0x100<<bg)))continue;
+  const unsigned cnt=word(io_.data()+8+bg*2),size=cnt>>14;
+  const unsigned base=((cnt>>8)&31)*0x800,characters=((cnt>>2)&3)*0x4000;
+  const unsigned rows=(size&2)?64:32,columns=(size&1)?64:32;
+  const unsigned tile_y=(first/8)%rows,block_columns=columns/32;
+  for(unsigned x=0;x<32;x++) {
+   const unsigned block=(x/32)+(tile_y/32)*block_columns;
+   const unsigned off=base+block*0x800+((tile_y%32)*32+x%32)*2;
+   if(off+2>vram_.size())continue;
+   append(vram_.data()+off,2);
+   const unsigned entry=word(vram_.data()+off),length=(cnt&0x80)?64:32;
+   const unsigned tile=characters+(entry&1023)*length;
+   if(tile+length<=vram_.size())append(vram_.data()+tile,length);
+   append(palette+((cnt&0x80)?0:(entry>>12)*32),(cnt&0x80)?512:32);
+  }
+ }
+ constexpr unsigned dimensions[3][4][2]={{{8,8},{16,16},{32,32},{64,64}},{{16,8},{32,8},{32,16},{64,32}},{{8,16},{8,32},{16,32},{32,64}}};
+ for(unsigned id=0;id<128;id++) {
+  if(!authored_[id])continue;
+  const auto* object=oam_.data()+id*8;const unsigned a=word(object),b=word(object+2),attributes=word(object+4),shape=a>>14;
+  if(shape>=3)continue;
+  const bool affine=(a&0x100)!=0;
+  const unsigned height=dimensions[shape][b>>14][1]*((affine&&(a&0x200))?2:1);
+  if(y_[id]>=int(end)||y_[id]+int(height)<=int(first))continue;
+  append(&id,sizeof(id));append(object,6);append(&x_[id],sizeof(int));append(&y_[id],sizeof(int));
+  const unsigned tile_width=dimensions[shape][b>>14][0]/8,tile_height=dimensions[shape][b>>14][1]/8;
+  const bool color256=(a&0x2000)!=0;const unsigned tile_bytes=color256?64:32;
+  for(unsigned tile_y=0;tile_y<tile_height;tile_y++)for(unsigned tile_x=0;tile_x<tile_width;tile_x++) {
+   const unsigned tile=(attributes&1023)+((display&0x40)?(tile_y*tile_width+tile_x)*(color256?2:1):tile_y*32+tile_x*(color256?2:1));
+   const unsigned offset=0x10000+tile*32;
+   if(offset<vram_.size())append(vram_.data()+offset,std::min<size_t>(tile_bytes,vram_.size()-offset));
+  }
+  append(palette+512+(color256?0:(attributes>>12)*32),color256?512:32);
+  if(affine) {
+   const unsigned matrix=((b>>9)&31)*32;
+   for(unsigned component=0;component<4;component++)append(oam_.data()+matrix+component*8+6,2);
+  }
+ }
+ if(bands_valid_[band]&&bands_[band]==dependency_)return true;
+ bands_[band]=dependency_;bands_valid_[band]=true;return false;
+}
 int PinballTableView::tilemap(int bg,int,int,uint16_t*){return bg>=1&&bg<=3?gba::kWsTilemapKeepWrapped:gba::kWsTilemapUnavailable;}
 int PinballTableView::object_x(int i,uint16_t,uint16_t,uint16_t,int* value){if(!rendering_||!rendering_->authored_[i])return 0;*value=rendering_->x_[i];return 1;}
 int PinballTableView::object_y(int i,uint16_t,uint16_t,uint16_t,int* value){if(!rendering_||!rendering_->authored_[i])return 0;*value=rendering_->y_[i];return 1;}
-bool PinballTableView::render(gba::GbaBus& bus,const gba::GbaPpu& canonical,const uint8_t*,
+bool PinballTableView::render(gba::GbaBus& bus,const gba::GbaPpu& canonical,uint64_t native_frame,
  std::vector<uint8_t>& rgba,uint32_t& width,uint32_t& height) {
+ reused_rows=rendered_rows=0;
  constexpr uint32_t main=0x0200B0C0;
  const auto field=bus.read8(main+4),state=bus.read8(main+2);
  const auto display=bus.read16(0x04000000);
  // Menus, bonus boards, pauses and capture/shop overlays retain the complete
  // original viewport until their authored full-table layouts are available.
- if((state!=2&&state!=3)||field>1||bus.read8(main+3)!=1||(display&0x87)||
-    bus.read8(main+0xf)||bus.read16(main+0x28)||bus.read16(main+0x2c))return false;
+ const bool eligible=(state==2||state==3)&&field<=1&&bus.read8(main+3)==1&&!(display&0x87)&&
+    !bus.read8(main+0xf)&&!bus.read16(main+0x28)&&!bus.read16(main+0x2c);
+ // Native banners remain complete and live. Recover the portrait layout only
+ // after half a second of stable gameplay, so blinking flags cannot repeatedly
+ // zoom the whole pane. Repainting the same guest frame never advances this.
+ if(!eligible){if(expanded_once_)stable_frames_=0;last_frame_=native_frame;return false;}
+ if(native_frame!=last_frame_){
+  if(stable_frames_<30)stable_frames_=native_frame==last_frame_+1?std::min(30u,stable_frames_+1):1;
+  last_frame_=native_frame;
+ }
+ if(stable_frames_<30)return false;
+ expanded_once_=true;
  const auto* game=bus.native_code_view(0x02000000,0x1410);
  const auto* upper=bus.native_code_view(0x0200FBB0,0x8000);
  const auto* lower=bus.native_code_view(0x020030A0,0x8000);
@@ -150,13 +213,24 @@ bool PinballTableView::render(gba::GbaBus& bus,const gba::GbaPpu& canonical,cons
  // original HUD is rendered separately below the complete board.
  const uint16_t host_display=(display&~uint16_t(0xe100))|0x1e00;
  const unsigned top=field==0?100:76,board_height=448-top;
+ std::array<uint8_t,18> render_io;
+ put(render_io.data(),host_display);std::memcpy(render_io.data()+2,io_.data()+0xa,6);
+ std::memcpy(render_io.data()+8,io_.data()+0x4c,10);
+ // VCOUNT, DISPSTAT, HUD scrolls and unused affine registers do not affect
+ // these mode-0 host rows. They must not invalidate the board every frame.
+ if(cache_enabled_&&(!global_valid_||cached_field_!=field||cached_io_!=render_io)) {
+  bands_valid_.fill(false);global_valid_=true;cached_field_=field;cached_io_=render_io;
+ }
+ bool reuse=false;
  for(unsigned y=top;y<448;y++) {
   if(y==top||(y&7)==0) {
    const unsigned row=y/8,destination=(row+10)%22;
    std::memcpy(vram_.data()+0x8000+destination*0x400,
     (row<32?upper:lower)+(row%32)*0x400,0x400);
+   reuse=unchanged_band(y/8,y,std::min(448u,(y/8+1)*8),host_display,bus.pal_ptr());
   }
-  surface_->render_presentation_scanline(canonical,y,host_display,io_.data(),vram_.data(),oam_.data(),bus.pal_ptr());
+  if(reuse)++reused_rows;
+  else{surface_->render_presentation_scanline(canonical,y,host_display,io_.data(),vram_.data(),oam_.data(),bus.pal_ptr());++rendered_rows;}
  }
  surface_->mark_framebuffer_latched();rendering_=nullptr;
  width=256;height=board_height+16;rgba.assign(size_t(width)*height*4,0);

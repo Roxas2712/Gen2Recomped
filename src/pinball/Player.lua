@@ -34,7 +34,7 @@ function M.new(session,options)
    content=session.content,field=options.field or 0,frames=18000,seed=0})
  end
  self.thread:start(Json.encode{session=session,channel=self.channel,seats=self.seats,duel=options.duel,
-  field=options.field or 0,frameLimit=18000,full_table=self.settings.full_table,audioSeat=self.settings.audioSeat})
+  field=options.field or 0,frameLimit=18000,full_table=self.settings.full_table,audioSeat=self.settings.audioSeat,diagnostics=options.diagnostics,foreground=love.window.hasFocus()})
  function self:command(msg)if self.thread:isRunning()then self.commands:push(Json.encode(msg))end end
  function self:stop()if self.closing then return end;self.closing=true;if self.duel then self.duel:close()end;self:command{action='quit'};self.sound:stop()end
  function self:dispose()
@@ -45,6 +45,8 @@ function M.new(session,options)
   free(self.sound);free(self.font);free(self.small);free(self.shader)
  end
  function self:update(dt)
+  local focused=love.window.hasFocus()
+  if self.lastForeground~=focused then self.lastForeground=focused;self:command{action='foreground',value=focused}end
   local event=self.events:pop()
   while event do
    local msg=Json.decode(event)
@@ -68,7 +70,7 @@ function M.new(session,options)
     else free(image);image=love.graphics.newImage(data);self.images[i]=image end
     image:setFilter(self.settings.filter=='smooth' and 'linear'or 'nearest');data:release()
    end
-   self.stats=msg.stats;self.frame=msg.frame;self.frameMs=msg.seconds*1000;self.phase=msg.phase
+   self.stats=msg.stats;self.frame=msg.frame;self.frameMs=msg.seconds*1000;self.phase=msg.phase;self.diagnostics=msg.diagnostics
    if self.seats==2 and self.phase=='finished'then
     self.result=self.stats[1].score==self.stats[2].score and 'Unentschieden' or self.stats[1].score>self.stats[2].score and 'Spieler 1 gewinnt' or 'Spieler 2 gewinnt'
    end
