@@ -113,6 +113,10 @@ function M._nativeUpdate(screen,dt,body)
       if not admitted(c)then return false,'native battle admission retired'end
       if c.stack:top()~=screen then return false,'native battle is covered by another state'end
       c.views:flush()
+      local intro=package.loaded['src.core.game3.battle.intro_seq']
+      if intro then
+        return require('src.core.Game3')._withCallbackOwner(nil,intro._nativeUpdate,owner,step,body)
+      end
       return require('src.core.Game3')._withCallbackOwner(nil,body,owner,step)
     end
     local ui=package.loaded['src.core.game3.battle.ui']
