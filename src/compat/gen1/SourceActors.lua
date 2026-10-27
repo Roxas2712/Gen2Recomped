@@ -3,12 +3,26 @@
 local Native=require('src.compat.gen1.NativeSession')
 local Scope=require('src.render.GraphicsScope')
 local M={}
-local bindings=setmetatable({},{__mode='kv'})
+-- An installed presentation is owned even when the mod drops its view.
+-- Retire it explicitly with the native actor/cohort or its installing owner.
+local bindings=setmetatable({},{__mode='k'})
 function M.bind(actor,record)bindings[actor]=record end
+local function retire(actor,record)
+ -- Object views may outlive removal or remain in a VM stack slot. Release
+ -- the installed artwork explicitly; dropping this weak-key binding alone
+ -- leaves it owned by the still-reachable view record until a later GC.
+ record.presentationSet=nil;record.presentationOwner=nil
+ record.extras.sprite=nil;bindings[actor]=nil
+end
+function M.poll()
+ for actor,r in pairs(bindings)do
+  if r.retired or not r.presentationSet or r.view.localId==nil then retire(actor,r) end
+ end
+end
 function M.renderer(actor)
  local r=bindings[actor]
- if not r or r.retired or not r.presentationSet then return nil,false end
- if r.view.localId==nil then return nil,false end
+ if not r then return nil,false end
+ if r.retired or not r.presentationSet or r.view.localId==nil then retire(actor,r);return nil,false end
  return r.extras.sprite,true
 end
 function M.releaseOwner(_,who)
