@@ -6966,24 +6966,42 @@ end
 
 -- Native Gen2 public lifecycle. The ordinary bag and registered-item path
 -- both enter useRod, so presentation wrappers observe the actual decision.
+local fishingService
+local function nativeFishing()
+  local service=require('src.world.Gen2Fishing')
+  if fishingService~=service then
+    require('src.core.game3.asset_stream').register(service)
+    fishingService=service
+  end
+  return service
+end
 function OverworldState.isRod(id, items)
-  return require('src.world.Gen2Fishing').isRod(id, items)
+  return nativeFishing().isRod(id, items)
 end
 function OverworldState:rollFishing(rod)
-  return require('src.world.Gen2Fishing').roll(self, Game, rod, gen2FishingRoll)
+  return nativeFishing().roll(self, Game, rod, gen2FishingRoll)
 end
 function OverworldState:useRod(rod)
-  return require('src.world.Gen2Fishing').use(self, Game, rod)
+  return nativeFishing().use(self, Game, rod)
 end
 function OverworldState:beginFishing(outcome, wild)
-  return require('src.world.Gen2Fishing').begin(self, Game, outcome, wild)
+  return nativeFishing().begin(self, Game, outcome, wild)
 end
 function OverworldState:updateFishing()
   local fishing = package.loaded['src.world.Gen2Fishing']
-  if fishing then return fishing.tick(self, Game) end
+  if fishing then fishing.poll();return fishing.tick(self, Game) end
 end
 function OverworldState:tryFishing(rod)
-  return require('src.world.Gen2Fishing').try(self, Game, rod)
+  return nativeFishing().try(self, Game, rod)
+end
+function OverworldState:_beginFishingBattle(wild)
+  local battle=require('src.battle.BattleState').newWild(Game,wild.species,wild.level,
+    {hooked=true,nativeFishingMon=wild})
+  if self:inSafariGame() then battle:makeSafari(Game.save.safari) end
+  battle.onFinish=function(result)self:afterBattle(result,battle)end
+  require('src.core.CheckpointBattle').bind(battle,{kind='world'})
+  self:pushBattle(battle)
+  return battle
 end
 
 -- field.fishing: `always` hooks that catch every time (the Old Rod),

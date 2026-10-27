@@ -152,7 +152,7 @@ for _,change in ipairs({'save','data','map','player','position','edition','remov
  elseif change=='player'then w.player={cellX=2,cellY=2,facing='right'}
  elseif change=='position'then old.cellX=3
  else Version.set('gold')end
- Fishing.poll();T.eq(w.fishing,nil,change..' retires the cast');T.eq(old.fishingState,nil)
+ require('src.core.game3.asset_stream').poll();T.eq(w.fishing,nil,change..' retires the cast through native services');T.eq(old.fishingState,nil)
  T.eq(pcall(Fishing.takePrepared,g,st.wild,st.wild.species,st.wild.level),false,'retired individual cannot enter battle')
 end
 do
@@ -194,12 +194,12 @@ for _,covered in ipairs({false,true})do
  data.maps[dest.id]=dest;def.connections.east={map=dest.id,offset=1}
  for i=41,80 do ts.collision[i]=0x29 end
  g.save.inventory.ITEM_058=1;g.save.registeredItem='ITEM_058'
- local foreign={name='unrelated screen'};if covered then g.stack:push(foreign)end
+ local foreign={name='unrelated screen'};local foreignSlot=#g.stack.states+1;if covered then g.stack:push(foreign)end
  local use=w.useRod;local calls=0;w.useRod=function(self,rod)calls=calls+1;return use(self,rod)end
  BagMenu.useRegistered(g)
  T.eq(calls,covered and 0 or 1,'registered rod uses native boundary water and respects overlays')
  if covered then
-  T.eq(g.stack.states[1],foreign,'registered item cannot close another screen');T.eq(w.fishing,nil);T.eq(draws,0)
+  T.eq(g.stack.states[foreignSlot],foreign,'registered item cannot close another screen');T.eq(w.fishing,nil);T.eq(draws,0)
  else T.eq(w.fishing.bobber.cellX,6);T.eq(w.fishing.wild.level,7)end
  T.eq(g.save.inventory.ITEM_058,1)
 end
@@ -248,6 +248,22 @@ for _,where in ipairs({'roll','begin','text'})do
  T.eq(w.fishing,nil);T.eq(w.player.fishingState,nil);T.eq(w.player.fishing,nil)
  T.eq(w:useRod('OLD_ROD'),'battle','failed admission releases its lease for the next real action')
 end
+do
+ local w,g=fixture()
+ g.stack.worldOwner=nil;g.stack.worldState=nil;g.stack.states={w}
+ T.eq(w:useRod('OLD_ROD'),'battle','native lifecycle also follows the screen-owned field contract')
+ local player=w.player;g.stack.states={}
+ Fishing.poll();T.eq(w.fishing,nil,'screen-owned field retirement releases the cast')
+ T.eq(player.fishingState,nil)
+end
+do
+ local w,g=fixture();w:useRod('OLD_ROD');w._beginFishingBattle=function()return {enemy={mon={}}}end
+ verdict(w)
+ local box=g.stack:top();box.done=true;box.waiting=false;Input.pressed={a=true}
+ T.eq(pcall(g.stack.update,g.stack,1/60),false,'a fake battle callback cannot report a native handoff')
+ T.eq(w.fishing,nil);T.eq(w.player.fishingState,nil)
+ Input.pressed={}
+end
 for _,edition in ipairs({'red','emerald','firered','platinum','black'})do
  local w=fixture(edition);T.eq(w:useRod('OLD_ROD'),'nowhere','Gen2 public path cannot alter other generations');T.eq(draws,0)
 end
@@ -259,12 +275,12 @@ do
  local loaded=T.sdk.loadMods({'mods/fishing_probe'},{data=data,fs=T.sdk.memfs({
   ['mods/fishing_probe/manifest.json']='{"id":"fishing_probe","name":"Fishing probe","version":"1.0.0","api":2,"entry":"main.lua"}',
   ['mods/fishing_probe/main.lua']=[[
-   local mod=...;mod.exports.calls=0
+   local mod=...;mod.exports.calls=0;mod.exports.reply={species='FIXMON_B',level=19}
    mod.hooks:wrap('encounter.fishing',function(nextFn,rod,map,candidates,ctx)
     mod.exports.calls=mod.exports.calls+1;mod.exports.group=ctx.fishGroup
     mod.exports.candidates=candidates;mod.exports.rod=rod;mod.exports.map=map
     local rolled=nextFn(rod,map,candidates,ctx);mod.exports.native=rolled
-    return {species='FIXMON_B',level=19}
+    return mod.exports.reply
    end)
   ]],
  })})
@@ -275,6 +291,13 @@ do
  T.eq(observed.native.species,'FIXMON_A');T.eq(observed.native.level,12)
  T.eq(wild.species,'FIXMON_B');T.eq(wild.level,19,'hook replacement becomes the actual native individual')
  T.eq(creations,1,'hook never creates a second display Pokemon')
+ for _,reply in ipairs({{species='UNKNOWN_NATIVE_FISH',level=7},{species='FIXMON_B',level=0},
+  {species='FIXMON_B',level=101},{species='FIXMON_B',level=1.5},{level=7}})do
+  observed.reply=reply;draws=0
+  T.eq(pcall(w.useRod,w,'OLD_ROD'),false,'invalid hook encounter cannot acquire a cast')
+  T.eq(draws,2,'invalid encounter fails before drawing native Pokemon DVs')
+  T.eq(w.fishing,nil);T.eq(w.player.fishingState,nil)
+ end
  loaded.release()
 end
 Fishing.release();Pokemon.new=new;love.math.random=random;debug.setupvalue(World.useRod,slot,previousGame);Version.set(before)

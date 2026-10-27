@@ -17,10 +17,16 @@ function M.isRod(id,items)
  return index~=nil and not(def and def.index and def.index~=index)
 end
 local function context(world,game)
- return Version.isGen2() and game and game.overworld==world
+ if not(Version.isGen2() and game and game.overworld==world
   and game.data and game.save and world.map and world.player and game.stack
-  and type(game.stack.top)=='function' and type(game.stack.push)=='function'
-  and (not game.stack.worldOwner or game.stack.worldState==world and game.world==world and game.phase=='play')
+  and type(game.stack.top)=='function' and type(game.stack.push)=='function')then return false end
+ if game.stack.worldOwner then
+  return game.stack.worldState==world and game.world==world and game.phase=='play'
+ end
+ -- The upstream stack keeps the native field among its screens. A retired
+ -- field cannot keep a cast alive merely because game.overworld names it.
+ for _,state in ipairs(game.stack.states or{})do if state==world then return true end end
+ return false
 end
 local function refs(world,game)
  return setmetatable({world=world,game=game,data=game.data,save=game.save,
@@ -78,11 +84,12 @@ local function rollNative(world,game,rod,roll)
    {fishGroup=resolvedGroup or group,data=game.data,maps=game.data.maps,
     encounters=world.encounters,tod=tod,daytime=tod})
  end
- if not enc or not enc.species then return 'nibble' end
- local species=require('src.core.Gen2SpeciesNames').registryId(game.data.pokemon,enc.species)
- assert(game.data.pokemon[species] and type(enc.level)=='number'
+ if enc==nil or enc==false then return 'nibble' end
+ assert(type(enc)=='table' and (type(enc.species)=='string'or type(enc.species)=='number')and type(enc.level)=='number'
   and enc.level%1==0 and enc.level>=1 and enc.level<=100,'invalid native fishing encounter')
- local wild=require('src.pokemon.Pokemon').new(game.data,species,enc.level)
+ -- The native constructor validates/resolves its own edition's species
+ -- identity before drawing DVs. Do not copy a second naming registry here.
+ local wild=require('src.pokemon.Pokemon').new(game.data,enc.species,enc.level)
  require('src.battle.BattleState').giveWildHeldItem(game.data,wild)
  prepared[wild]={refs=refs(world,game),edition=Version.get(),species=wild.species,level=wild.level}
  return 'battle',wild
@@ -123,12 +130,9 @@ function M.cancel(world)
 end
 local function finishBattle(world,game,wild)
  local ok,result=pcall(function()
-  local battle=require('src.battle.BattleState').newWild(game,wild.species,wild.level,
-   {hooked=true,nativeFishingMon=wild})
-  if world:inSafariGame()then battle:makeSafari(game.save.safari)end
-  battle.onFinish=function(result)world:afterBattle(result,battle)end
-  require('src.core.CheckpointBattle').bind(battle,{kind='world'})
-  world:pushBattle(battle)
+  local battle=world:_beginFishingBattle(wild)
+  assert(prepared[wild]==nil and battle and battle.enemy and battle.enemy.mon==wild,
+   'native fishing battle must consume the exact individual')
   return battle
  end)
  prepared[wild]=nil
@@ -232,5 +236,4 @@ function M.release()
  for world,st in pairs(active)do clear(world,st)end
  prepared=setmetatable({},{__mode='k'})
 end
-require('src.core.game3.asset_stream').register(M)
 return M
