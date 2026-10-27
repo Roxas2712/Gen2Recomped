@@ -1,9 +1,16 @@
 local T = require("tests.harness")
 local Cap = require("src.core.FrameCap")
+local POLL_SECONDS = 0.000001
 local function clock(start)
 	local now, sleeps, total = start or 0, 0, 0
 	return {
 		getTime = function()
+			-- A monotonic clock keeps advancing while the pacer polls its
+			-- final spin window, including when no sleep is requested.
+			now = now + POLL_SECONDS
+			return now
+		end,
+		peek = function()
 			return now
 		end,
 		sleep = function(dt)
@@ -69,13 +76,16 @@ Cap.vsyncPacing = true
 timer, w = clock(), window(1, 60)
 local deadline = Cap.pace(timer, w, true, 0)
 w.set(0, 60)
+local carried = deadline
 deadline = Cap.pace(timer, w, true, deadline)
-T.check(math.abs(deadline - 1 / 60) < 1e-9, "turning VSync off resumes the carried software deadline")
+T.check(math.abs(deadline - carried - 1 / 60) < 1e-9, "turning VSync off resumes the carried software deadline")
 timer.advance(1)
 deadline = Cap.pace(timer, w, true, deadline)
-T.eq(deadline, timer.getTime(), "stalls re-anchor instead of accumulating catch-up frames")
+T.check(math.abs(deadline - timer.peek()) <= 2 * POLL_SECONDS,
+	"stalls re-anchor instead of accumulating catch-up frames")
 deadline = Cap.pace(timer, w, true, deadline)
-T.eq(deadline, timer.getTime(), "software pacing resumes after a stall")
+T.check(math.abs(deadline - timer.peek()) <= 2 * POLL_SECONDS,
+	"software pacing resumes after a stall")
 timer, w = clock(), window(1, 60)
 Cap.pace(timer, w, true, 0)
 w.set(1, 144)
