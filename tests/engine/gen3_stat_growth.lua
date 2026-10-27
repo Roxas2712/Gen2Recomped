@@ -39,6 +39,7 @@ for _,version in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
   game.input.wasPressed=function(_,key)return key=='a'end
   local callbacks=0;local screen=Battle.StatBox.new(game,mon,function()callbacks=callbacks+1 end,changes[31])
   game.stack:push(screen);T.check(screen.native~=nil)
+  local w,h=screen:uiSize();T.eq(w,240);T.eq(h,160,'native overlays must not receive the 40px GB centering offset')
   drawn={};screen:draw();local page=table.concat(drawn,' ')
   for _,label in ipairs(labels)do T.check(page:find(label,1,true)~=nil,'six stats include '..label)end
   T.check(page:find('+',1,true)~=nil,'first native page shows increases')

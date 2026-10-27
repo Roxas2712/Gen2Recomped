@@ -38,6 +38,9 @@ return function(game)
     else U.wait(1)end
   end
   assert(screen and screen.native,'Actual EXP award did not open native stats')
+  assert(screen.uiSize,'Native stat overlay must declare its GBA surface')
+  local ox,oy=require('src.core.Game').homeOffset(screen,240,160)
+  assert(ox==0 and oy==0,'Stat overlay inherited the GB centering offset')
   assert(mon.level==40 and screen.native.scene._page==1)
   local old,new=screen.native.scene._oldStats,screen.native.scene._newStats
   assert(old.maxHp<new.maxHp and new.maxHp==mon.stats.hp,'HP gain was not captured before recalculation')

@@ -973,6 +973,10 @@ StatBox.__index = StatBox
 function StatBox.new(game, mon, onDone, change)
   local screen=setmetatable({game=game,mon=mon,onDone=onDone},StatBox)
   if GameVersion.isGen3()then screen.native=require('src.battle.Gen3StatGrowth').new(game,mon,change)end
+  if screen.native then
+    screen.uiSize=function()return 240,160 end
+    screen.wantsFillScale=function()return true end
+  end
   return screen
 end
 
