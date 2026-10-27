@@ -19,19 +19,29 @@ vec4 effect(vec4 color, Image tex, vec2 uv, vec2 screen) {
  return vec4(mixed/31.0,1.0);
 }
 ]]
-function A.new()return setmetatable({},A)end
+function A.new(source)
+ assert(source==nil or type(source)=='string','native GBA shader source must be a string')
+ return setmetatable({shaderSource=source},A)
+end
+function A:program()
+ if not self.shader then self.shader=love.graphics.newShader(self.shaderSource or A.SOURCE)end
+ return self.shader
+end
 function A:release()
  if self.shader then self.shader:release();self.shader=nil end
  if self.snapshot then self.snapshot:release();self.snapshot=nil end
  self.width,self.height=nil,nil
 end
-function A:paint(eva,evb,draw)
+function A:paint(eva,evb,draw,configure)
  assert(type(eva)=='number'and eva%1==0 and eva>=0 and eva<=16,'invalid native GBA source alpha')
  assert(type(evb)=='number'and evb%1==0 and evb>=0 and evb<=16,'invalid native GBA target alpha')
  assert(type(draw)=='function','native GBA alpha painter must be callable')
+ assert(configure==nil or type(configure)=='function','native GBA alpha configuration must be callable')
  local g=love.graphics
  local target=g.getCanvas()
- if type(target)=='table'then target=target[1];if type(target)=='table'then target=target[1]end end
+ if type(target)=='table'and not target.getDimensions then
+  target=target[1];if type(target)=='table'and not target.getDimensions then target=target[1]end
+ end
  if not target then return false,'native GBA alpha requires an owned render surface'end
  local w,h=target:getDimensions();local density=target:getDPIScale()
  local pw,ph=math.floor(w*density+.5),math.floor(h*density+.5)
@@ -47,7 +57,7 @@ function A:paint(eva,evb,draw)
     old:release()
    end
   end
-  if not self.shader then self.shader=g.newShader(A.SOURCE)end
+  self:program()
   local canvas={g.getCanvas()}
   g.push('all')
   g.setCanvas(self.snapshot);g.origin();g.setScissor();g.setShader()
@@ -59,6 +69,7 @@ function A:paint(eva,evb,draw)
   self.shader:send('nativeGbaUnderlay',self.snapshot)
   self.shader:send('nativeGbaSurfacePixels',{pw,ph})
   self.shader:send('nativeGbaCoefficients',{eva,evb})
+  if configure then configure(self.shader)end
   g.setShader(self.shader);g.setColor(1,1,1,1)
   g.setBlendMode('replace','premultiplied')
   draw()
