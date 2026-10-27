@@ -240,14 +240,12 @@ bool PinballTableView::render(gba::GbaBus& bus,const gba::GbaPpu& canonical,uint
   auto* dest=rgba.data()+(size_t(y)*width+x)*4;
   std::memcpy(dest,pixel,3);dest[3]=255;
  }
- // BG0 contains the live score, coins, caught count and reserve balls. Isolate
- // it from the scrolling board instead of copying a repeated camera fragment.
- if(!hud_)hud_=std::make_unique<gba::GbaPpu>();
- std::array<uint8_t,1024> palette;
- std::memcpy(palette.data(),bus.pal_ptr(),palette.size());palette[0]=palette[1]=0;
- for(unsigned y=144;y<160;y++)hud_->render_presentation_scanline(canonical,y,(display&0xff)|0x100,
-  bus.io().raw(),bus.vram_ptr(),bus.oam_ptr(),palette.data());
- hud_->mark_framebuffer_latched();const auto* hud=hud_->latched_framebuffer();
+ // The cartridge switches HUD scroll/window state during scanout. Re-rendering
+ // BG0 with the final bus registers alternates the digits between two poses.
+ // Use the same completed scanlines as the original screen, not a second PPU
+ // pass with registers from another point in the frame. Guest state stays live.
+ if(!canonical.has_latched_framebuffer()||canonical.render_width()!=240||canonical.render_height()!=160)return false;
+ const auto* hud=canonical.latched_framebuffer();
  for(unsigned y=0;y<16;y++)for(unsigned x=0;x<width;x++) {
   auto* dest=rgba.data()+(size_t(y+board_height)*width+x)*4;
   if(x>=8&&x<248)std::memcpy(dest,hud+((y+144)*240+x-8)*3,3);

@@ -18,14 +18,16 @@ local ui={_cartBatch={},_cartImageBytes=function(_,bytes) return {bytes='png-'..
 local n=0;local function check(v,m) assert(v,m);n=n+1 end
 B.start(ui,false);check(not ui._cartBatch.running and requests==0,'one explicit confirmation is required for the entire collection')
 local queue,skipped,bytes=B.plan(options.launcherCartDesigns,function() return true end)
-check(#queue==14 and skipped==2 and bytes>0,'saved custom artwork and custom shells are protected by the initial plan')
+check(#queue==17 and skipped==2 and bytes>0,'saved custom artwork and custom shells are protected by the initial plan')
+local queued=','..table.concat(queue,',')..','
+check(queued:find(',x,',1,true)and queued:find(',y,',1,true)and queued:find(',pinballrs,',1,true),'the original-image batch includes 3DS and Pinball without a native installation')
 B.start(ui,true)
 for i=1,40 do B.tick(ui) end
-check(ui._cartBatch.done==14 and not ui._cartBatch.running and applied==14,'the complete batch applies images without per-cartridge saves or confirmations')
+check(ui._cartBatch.done==17 and not ui._cartBatch.running and applied==17,'the complete batch applies images without per-cartridge saves or confirmations')
 check(options.launcherCartDesigns.red.art=='custom.png' and options.launcherCartDesigns.blue.shell[1]==1,'custom designs survive the batch unchanged')
 check(options.launcherCartDesigns.crystal.artMode=='cartridge' and options.launcherCartDesigns.crystal.originalSha256==Source.get('crystal').sha256,'applied images retain their original source fingerprint and whole-cartridge mode')
 B.start(ui,true);B.tick(ui)
-check(ui._cartBatch.done==0 and requests==14,'a repeated batch skips every already applied image')
+check(ui._cartBatch.done==0 and requests==17,'a repeated batch skips every already applied image')
 options.launcherCartDesigns.silver=nil;B.start(ui,true);B.tick(ui);B.cancel(ui)
 check(cancelled==1 and not ui._cartBatch.running,'cancelling stops the active download and keeps completed images')
 B.start(ui,true);B.tick(ui);owner='17';B.tick(ui)
@@ -48,7 +50,7 @@ versions.ORDER={};for _,v in ipairs(originalOrder)do versions.ORDER[#versions.OR
 versions.ORDER[#versions.ORDER+1]='futureedition'
 Source.get=function(v)if v=='futureedition'then return {sha256=string.rep('f',64),bytes=1234}end;return originalSource(v)end
 package.loaded['src.import.CartridgeBatch']=nil;local nextBuild=require('src.import.CartridgeBatch')
-check(nextBuild.ORDER[#nextBuild.ORDER]=='futureedition','a new supported edition is discovered from the edition/source catalogue')
+check(table.concat(nextBuild.ORDER,','):find('futureedition',1,true),'a new supported edition is discovered from the edition/source catalogue')
 ui._cartBatch=nil;ui._cartAutoChecked=nil;ui._cartAutoPaused=nil;nextBuild.setAutomatic(ui,true);nextBuild.auto(ui)
 for i=1,12 do nextBuild.tick(ui)end
 check(options.launcherCartDesigns.futureedition and options.launcherCartDesigns.futureedition.originalSha256==string.rep('f',64),'the remembered member opt-in automatically loads an added edition')

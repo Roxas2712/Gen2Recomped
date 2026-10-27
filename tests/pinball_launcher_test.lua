@@ -32,6 +32,8 @@ os.getenv=function(key)if key~='ASCENDANT_PINBALL_ROOT'then return getenv(key)en
 fs.getSource=nil;check(not M.available(),'headless source provider is optional')
 love.filesystem=nil;check(M.session()==nil,'headless filesystem is optional')
 love.filesystem=fs;fs.getSource=getSource;os.getenv=getenv
+local ext=require('src.import.LauncherExternalGames')
+check(ext.versions('gba','pokemon')[1]=='pinballrs' and ext.info('pinballrs').experimental,'unprepared Pinball remains visible as an importable beta cartridge')
 local session={locale='en'};M.session=function()return session end
 M.install(RI)
 local ui=setmetatable({_s=1,_pinOpen=true,section='games',_pinLocale='en',ready={}}, {__index=RI})
@@ -52,4 +54,15 @@ reject=false;animations=true;click('ONLINE / LAN · DIREKT HOSTEN');ui:update(.0
 check(ui._launcherSequence and ui._pinPendingNet==lastNet,'animated launch retains pending transport')
 lastNet:close();ui._launcherSequence.onComplete()
 check(started==1 and not ui._pinPlayer,'closed invitation during animation never starts a guest')
+ui._launcherSequence=nil;ui._pinPendingNet=nil;ui._pinOpen=true;ui.section='games'
+M.session=function()return nil end
+ui:_sbDrawContent(0,0,1000,700)
+local importButton,playButton=false,false
+for _,r in ipairs(ui._pinButtons)do importButton=importButton or r.label:find('IMPORT GAME',1,true);playButton=playButton or r.label:find('SPIELEN',1,true)end
+check(importButton and not playButton,'unprepared cartridge exposes import instead of a nonfunctional Play button')
+local callback;love.window.showFileDialog=function(_,fn)callback=fn end
+local imported=0;ui._pinImport=function(_,path)imported=imported+1 end
+ui:_pinChooseImport();callback({});check(imported==0 and not ui._pinPicker,'picker cancellation does not start preparation')
+ui:_pinChooseImport();ui._pinOpen=false;callback({'/tmp/own-pinball.gba'});check(imported==0,'a late file selection cannot import after leaving Pinball')
+ui._pinOpen=true;ui:_pinChooseImport();callback({'/tmp/own-pinball.gba'});check(imported==1,'an active Pinball picker starts import')
 print(checks..' Pinball launcher lifecycle checks passed')

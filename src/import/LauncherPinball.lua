@@ -1,9 +1,9 @@
 -- GBA Pinball library card and shared-window launch, by Roxas2712.
-local M={};local Json=require('src.link.Json')
+local M={};local Json=require('src.link.Json');local Strings=require('src.core.Strings')
 local function read(path)local f=io.open(path,'rb');if not f then return end;local b=f:read('*a');f:close();return b end
 local function exists(path)if type(path)~='string'then return false end;local f=io.open(path,'rb');if not f then return false end;f:close();return true end
 local function sourceRoot()
- return os.getenv('ASCENDANT_PINBALL_ROOT')or(love and love.filesystem and love.filesystem.getSource and love.filesystem.getSource())
+ return require('src.pinball.Backend').root()
 end
 local LANGUAGES={{id='en',name='English · USA'},{id='fr',name='Français · EU',index=1},{id='de',name='Deutsch · EU',index=2},{id='it',name='Italiano · EU',index=3},{id='es',name='Español · EU',index=4}}
 function M.session(locale)
@@ -27,6 +27,30 @@ end
 function M.available()return M.session()~=nil end
 function M.install(RI)
  local U=RI._ui
+ function RI:_pinImport(path)
+  if self._pinJob or self._pinPlayer or self._pinPicker then return end
+  local root=sourceRoot();if not root then self._pinNotice='Pinball import tools are unavailable.';return end
+  self._pinImportChannel=love.thread.newChannel()
+  self._pinJob=love.thread.newThread('src/pinball/import_worker.lua')
+  self._pinNotice='Preparing your Pinball game …'
+  self._pinJob:start({root=root,python=require('src.pinball.Backend').python(),path=path,
+   cmake=os.getenv('ASCENDANT_PINBALL_CMAKE'),ninja=os.getenv('ASCENDANT_PINBALL_NINJA')},self._pinImportChannel)
+ end
+ function RI:_pinChooseImport()
+  if self._pinJob or self._pinPlayer or self._pinPicker then return end
+  if love.window and love.window.showFileDialog then
+   local token={};self._pinPicker=token
+   local ok,why=pcall(love.window.showFileDialog,'openfile',function(files,_,problem)
+    if self._pinPicker~=token then return end;self._pinPicker=nil
+    if not self._pinOpen or self.section~='games'then return end
+    if problem then self._pinNotice=tostring(problem)
+    elseif type(files)=='table'and files[1]then self:_pinImport(files[1])end
+   end,{title='Pokémon Pinball: Ruby & Sapphire',filters={['GBA (.gba)']='gba'},multiselect=false,attachtowindow=true})
+   if not ok then self._pinPicker=nil;self._pinNotice=tostring(why)end
+  else
+   local path=U.chooseFileByExt({'gba'},'Pokémon Pinball: Ruby & Sapphire (.gba)');if path then self:_pinImport(path)end
+  end
+ end
  local function cancelConnect(self)
   if self._pinConnectJob then self._pinConnectJob:cancel();self._pinConnectJob=nil end
  end
@@ -41,7 +65,8 @@ function M.install(RI)
   intro.begin()
  end
  local function intro(self,session,begin)
-  local assets=os.getenv('ASCENDANT_INTRO_ASSETS')or session.intro_assets or(sourceRoot()..'/.local/pokemon-x/intro-assets')
+  local root=sourceRoot();if not root then begin();return end
+  local assets=os.getenv('ASCENDANT_INTRO_ASSETS')or session.intro_assets or(root..'/.local/pokemon-x/intro-assets')
   local ok,scene=pcall(function()
    local make=assert(love.filesystem.load('tools/ascendant-intro/IntroScene.lua'))()
    return make.new(function(path)
@@ -136,7 +161,7 @@ function M.install(RI)
  local new=RI.new
  RI.new=function(...)
   local self=new(...)
-  self._pinLocale=love.filesystem.read('pinball-locale.txt')or 'en'
+  self._pinLocale=love.filesystem.read('pinball-locale.txt')or(self._settings and self:_settings().launcherLanguage)or 'en'
   if not M.session(self._pinLocale)then self._pinLocale='en'end
   friends(self,M.session(self._pinLocale))
   if os.getenv('ASCENDANT_PINBALL_START')then
@@ -149,6 +174,22 @@ function M.install(RI)
  RI.draw=function(self,...)if self._pinIntro then self._pinIntro.scene:draw(self._pinIntro.elapsed,love.graphics.getDimensions());self._pinIntro.presented=true;return end;if self._pinPlayer then self._pinPlayer:draw(love.graphics.getDimensions());return end;return draw(self,...)end
  local update=RI.update
  RI.update=function(self,dt,...)
+  if self._pinJob then
+   local raw=self._pinImportChannel:pop()
+   while raw do
+    local result=Json.decode(raw)
+    if result.progress then self._pinNotice=result.progress
+    else
+     self._pinJob=nil;self._pinNotice=result.ok and(result.data and result.data.notice or 'Pinball game prepared.')or result.error
+     if result.ok then
+      if not M.session(self._pinLocale)then self._pinLocale='en'end
+      friends(self,M.session(self._pinLocale))
+     end
+    end
+    raw=self._pinImportChannel:pop()
+   end
+   if self._pinJob and self._pinJob:getError()then self._pinNotice=self._pinJob:getError();self._pinJob=nil end
+  end
   if self._pinConnectJob then
    local result=self._pinConnectJob:poll()
    if result then
@@ -223,10 +264,10 @@ function M.install(RI)
   if self.section~='games'or not self._pinOpen then return content(self,x,y,w,h,...)end
   local s=self._s;local paint=require('src.import.LauncherLibrary').paint;local top=y
   self._pinButtons={}
-  local function text(t,font,color)paint.text(self,font or self.hintFont,t,x,y,w,color);y=y+32*s end
+  local function text(t,font,color)paint.text(self,font or self.hintFont,Strings(t),x,y,w,color);y=y+32*s end
   local function button(label,action)
    local index=#self._pinButtons+1
-   local r=self:_chipButton(x,y,((self._pinIndex or 1)==index and '› 'or '')..label,{w=math.min(w,340*s),h=38*s,kind='accent'});r.action=action
+   local r=self:_chipButton(x,y,((self._pinIndex or 1)==index and '› 'or '')..Strings(label),{w=math.min(w,340*s),h=38*s,kind='accent'});r.action=action
    self._pinButtons[#self._pinButtons+1]=r;y=y+48*s
    if self._pinFocusNeeded and index==(self._pinIndex or 1)then
     self._pinFocusNeeded=nil
@@ -240,7 +281,7 @@ function M.install(RI)
   local height=180*s
   if self._pinPreview==nil then
    self._pinPreview=false
-   local bytes=read(sourceRoot()..'/.local/pinball-rs/native/preview.png')
+   local root=sourceRoot();local bytes=root and read(root..'/.local/pinball-rs/native/preview.png')
    if bytes then
     local ok,image=pcall(function()
      local data=love.filesystem.newFileData(bytes,'pinball-preview.png')
@@ -257,6 +298,13 @@ function M.install(RI)
    love.graphics.draw(image,x+w*.75-image:getWidth()*scale*.5,y+(height-image:getHeight()*scale)*.5,0,scale,scale)
   end
   y=y+height+20*s
+  button(self._pinJob and 'PREPARING GAME' or 'IMPORT GAME',function()self:_pinChooseImport()end)
+  if not M.available()then
+   text('BETA / ROM REQUIRED',self.hintFont,RI.palette().warning)
+   text('Import your own USA cartridge; add the European cartridge for German, French, Italian or Spanish.')
+   if self._pinNotice then text(self._pinNotice,self.hintFont,RI.palette().warning)end
+   return y-top
+  end
   text('USA-Basis · getrennte Spielstände · Tastatur / Maus / Controller')
   local localeName='English · USA'
   for _,lang in ipairs(LANGUAGES)do if lang.id==self._pinLocale then localeName=lang.name end end
@@ -319,6 +367,14 @@ function M.install(RI)
   require('src.cloud.Play').clearExternalContext(self)
   if self._pinFriends then self._pinFriends:close()end
   return play(self,...)
+ end
+ local dropped=RI.filedropped
+ RI.filedropped=function(self,file,...)
+  if self._pinOpen then
+   local path=file and file.getFilename and file:getFilename()
+   if path and path:lower():match('%.gba$')then self:_pinImport(path);return end
+  end
+  if dropped then return dropped(self,file,...)end
  end
 end
 return M

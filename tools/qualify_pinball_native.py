@@ -31,6 +31,7 @@ def run_child(args):
         fn=getattr(lib,'ascendant_pinball_'+name);fn.restype=result;fn.argtypes=arguments
     machines=[];pictures=[];ram=[];cost=[];reused=rendered=0;states={};max_score=[0,0]
     width,height,a,b=c.c_uint32(),c.c_uint32(),c.c_uint32(),c.c_uint32()
+    hud_checks=0
     timings=c.c_double*4;slow_steps=[]
     try:
         for _ in range(2):
@@ -58,11 +59,23 @@ def run_child(args):
                 pixels=lib.ascendant_pinball_picture(m,c.byref(width),c.byref(height));assert pixels
                 pictures.append([width.value,height.value,hashlib.sha256(c.string_at(pixels,width.value*height.value*4)).hexdigest()])
                 assert lib.ascendant_pinball_table_stats(m,c.byref(a),c.byref(b));reused+=a.value;rendered+=b.value
+                if width.value==256 and n%120==0:
+                    full=c.string_at(pixels,width.value*height.value*4)
+                    expanded=b''.join(full[((height.value-16+y)*256+8)*4:((height.value-16+y)*256+248)*4]for y in range(16))
+                    assert lib.ascendant_pinball_view(m,0)
+                    original=lib.ascendant_pinball_picture(m,c.byref(width),c.byref(height))
+                    assert width.value==240 and height.value==160
+                    original=c.string_at(original,240*160*4)[144*240*4:]
+                    assert expanded==original,'Expanded HUD differs from the completed original scanlines'
+                    hud_checks+=1
+                    assert lib.ascendant_pinball_view(m,1)
                 if n%120==0 or n==args.frames-1:ram.append(lib.ascendant_pinball_checkpoint(m).decode())
             if playing:cost.append(total)
         report={'frames_per_seat':args.frames,'pictures':pictures,'ram':ram,'max_scores':max_score,'states':states,
           'two_guest_mean_ms':statistics.mean(cost),'two_guest_p95_ms':sorted(cost)[int(len(cost)*.95)],
           'two_guest_p99_ms':sorted(cost)[int(len(cost)*.99)],'two_guest_max_ms':max(cost),'reused_rows':reused,'rendered_rows':rendered,'slow_steps':slow_steps}
+        assert hud_checks>0,'No expanded HUD reached for scanline comparison'
+        report['canonical_hud_checks']=hud_checks
         # Exercise the host layout/cache reset as well as the native snapshot.
         # Use a fully expanded board so a stale recovery gate is observable.
         m=machines[0]

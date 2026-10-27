@@ -24,7 +24,7 @@ private:
  unsigned stable_frames_=30;
  bool expanded_once_=false;
  bool unchanged_band(unsigned band,unsigned first,unsigned end,uint16_t display,const uint8_t* palette);
- std::unique_ptr<gba::GbaPpu> surface_,hud_;
+ std::unique_ptr<gba::GbaPpu> surface_;
  std::array<uint8_t,96*1024> vram_{};
  std::array<uint8_t,1024> oam_{};
  std::array<uint8_t,0x60> io_{};

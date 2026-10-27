@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-27",
+  "host": "Apple M2 / macOS 15.8.1",
+  "canonical_hud": {
+    "frames": 120,
+    "mismatched_hud_frames": 0,
+    "original_unique_hud_frames": 32,
+    "expanded_unique_hud_frames": 32
+  },
+  "native_pixel_and_ram_checks": [
+    {
+      "locale": "en",
+      "field": 0,
+      "frames_per_seat": 1500,
+      "compared_images": 3000,
+      "compared_ram_checkpoints": 28,
+      "pixels_equal": true,
+      "ram_equal": true
+    },
+    {
+      "locale": "de",
+      "field": 1,
+      "frames_per_seat": 1500,
+      "compared_images": 3000,
+      "compared_ram_checkpoints": 28,
+      "pixels_equal": true,
+      "ram_equal": true
+    }
+  ],
+  "native_quick_state_replay": {
+    "frames": 40,
+    "passed": true
+  },
+  "member_image_http": {
+    "editions": {
+      "x": {
+        "guest": 401,
+        "member": 200,
+        "original_sha256_verified": true,
+        "bytes": 464468
+      },
+      "y": {
+        "guest": 401,
+        "member": 200,
+        "original_sha256_verified": true,
+        "bytes": 804844
+      },
+      "pinballrs": {
+        "guest": 401,
+        "member": 200,
+        "original_sha256_verified": true,
+        "bytes": 1186451
+      }
+    },
+    "private_images": true,
+    "config_backup_retained": true
+  },
+  "server_tests": {
+    "tests": 5,
+    "assertions": 28,
+    "passed": true
+  },
+  "limitations": [
+    "Native execution includes the declared interpreter fallback.",
+    "The first visible performance sample failed while focus changed and other native tests were running. It is not a smoothness certificate.",
+    "A second focus-pausing display test was stopped after its automated pause UI interfered with manual play. Normal demo payload contains no such driver.",
+    "Live Pinball friend duels still require the server contract; only synthetic client regressions were run here."
+  ],
+  "roms_or_generated_game_libraries_in_app": false
+}

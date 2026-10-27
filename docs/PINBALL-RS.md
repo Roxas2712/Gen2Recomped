@@ -196,3 +196,25 @@ restoration of the original pixels. The native bridge remains experimental until
 broader scene, display and real-controller/network-device qualification are
 completed. RPG-specific map/save editors and RPG Lua gameplay mods are not
 automatically compatible with this separate native backend.
+
+## Packaged launcher and October 27 HUD correction
+
+Pinball remains visible under GBA before native preparation. Its import picker
+accepts the verified USA base and the optional European companion; generated
+libraries, original ROM references and solo data live under the writable
+`pinball-backend` profile directory. A packaged app extracts its reviewed
+builder sources there. Cold Pinball preparation currently requires CMake, Ninja,
+Git and a C++20 compiler on the device. The prepared local demo installation does
+not need these tools to play. No ROM-derived native library is distributed in
+the app.
+
+The expanded table previously re-rendered BG0 with end-of-frame registers. Its
+score strip alternated between two incorrect poses. It now copies the completed
+original HUD scanlines, including their real scanout scroll/window state. A
+120-frame private comparison changed from 120 mismatches to zero; native
+regressions additionally check the strip against the original view in both
+USA/Ruby and German EU/Sapphire gameplay and retain pixel/RAM and snapshot
+replay checks. See `qa/pinball-demo-integration-20261027.json` for the exact scope.
+
+Original X, Y and Pinball cartridge photographs join the existing authenticated
+ModCompass batch and remembered opt-in. Custom designs remain protected.

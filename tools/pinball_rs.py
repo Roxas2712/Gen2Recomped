@@ -48,12 +48,13 @@ def install_library(source,destination):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('action',choices=['prepare','status'])
+    p.add_argument('action',choices=['import','prepare','status'])
     p.add_argument('--rom',type=Path)
     p.add_argument('--eu-rom',type=Path)
     p.add_argument('--bios',type=Path,help='Optional verified 16-KiB replacement or personal BIOS')
     p.add_argument('--cmake',default='cmake')
     p.add_argument('--ninja',default='ninja')
+    p.add_argument('--worker-protocol',action='store_true')
     args=p.parse_args()
     work=ROOT/'.local/pinball-rs'
     config=work/'library.json'
@@ -62,6 +63,31 @@ def main():
         data['ready']=bool(data.get('bridge') and Path(data['bridge']).is_file() and Path(data.get('rom','')).is_file())
         print(json.dumps(data,ensure_ascii=False));return
     if not args.rom:p.error('prepare requires --rom')
+    if args.action=='import':
+        selected=args.rom.expanduser().resolve(strict=True)
+        sha=digest(selected)
+        if (sha,selected.stat().st_size) not in ((USA,8*1024*1024),(EU,16*1024*1024)):
+            raise ValueError('Unsupported cartridge revision; use the matching unmodified dump.')
+        previous=json.loads(config.read_text()) if config.exists() else {}
+        imports=work/'imports.json'
+        pending=json.loads(imports.read_text()) if imports.exists() else {}
+        pending.update({('usa' if sha==USA else 'eu'):str(selected)})
+        work.mkdir(parents=True,exist_ok=True);atomic_json(imports,pending)
+        usa=pending.get('usa') or previous.get('rom')
+        europe=pending.get('eu') or previous.get('eu_rom')
+        if not usa:
+            print(json.dumps({'imported':True,'ready':False,'notice':'European cartridge imported. Add the USA cartridge to prepare the native base.'}));return
+        args.rom=Path(usa);args.eu_rom=Path(europe) if europe else None
+        verify(args.rom,USA,8*1024*1024)
+        if args.eu_rom:verify(args.eu_rom,EU,16*1024*1024)
+        code_hash=hashlib.sha256(b''.join(path.read_bytes()for path in sorted((ROOT/'tools/pinball-rs-native').glob('*'))if path.suffix in {'.cpp','.h'})).hexdigest()[:16]
+        if (previous.get('ready') and '-bridge-'+code_hash+'-bios-' in previous.get('backend','')
+                and Path(previous.get('bridge','')).is_file()
+                and (not args.eu_rom or Path(previous.get('variants',{}).get('eu',{}).get('bridge','')).is_file())):
+            previous['rom']=str(args.rom);previous['eu_rom']=str(args.eu_rom) if args.eu_rom else None
+            if args.eu_rom:previous['variants']['eu']['rom']=str(args.eu_rom)
+            atomic_json(config,previous);print(json.dumps(previous));return
+        args.action='prepare'
     rom=verify(args.rom,USA,8*1024*1024)
     eu=verify(args.eu_rom,EU,16*1024*1024) if args.eu_rom else None
     # Serialize this installation only. Unrelated CPU checks and other games
@@ -140,6 +166,9 @@ def main():
     print(json.dumps(data,ensure_ascii=False))
 
 if __name__=='__main__':
+    result=0
     try:main()
     except (ValueError,RuntimeError,OSError,subprocess.SubprocessError) as ex:
-        print(str(ex),file=sys.stderr);sys.exit(1)
+        print(str(ex),file=sys.stderr);result=1
+    if '--worker-protocol' in sys.argv:print(json.dumps({'backend_result':result}),flush=True)
+    sys.exit(result)

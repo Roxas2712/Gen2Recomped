@@ -1,6 +1,11 @@
 -- Reviewed launcher essentials; no network or translation model required.
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 local catalog={ de={
+ ["Preparing your Pinball game …"]="Dein Pinball-Spiel wird vorbereitet …",
+ ["Pinball game prepared."]="Pinball-Spiel vorbereitet.",
+ ["Pinball import tools are unavailable."]="Die Pinball-Importwerkzeuge sind nicht verfügbar.",
+ ["Import your own USA cartridge; add the European cartridge for German, French, Italian or Spanish."]="Importiere dein eigenes USA-Modul. Ergänze das europäische Modul für Deutsch, Französisch, Italienisch oder Spanisch.",
+ ["European cartridge imported. Add the USA cartridge to prepare the native base."]="Europäisches Modul importiert. Ergänze das USA-Modul, um die native Basis vorzubereiten.",
  ["IMPORT GAME"]="SPIEL IMPORTIEREN",
  ["Native 3DS support included"]="Native 3DS-Unterstützung enthalten",
  ["Preparing your game. The first import can take several minutes."]="Dein Spiel wird vorbereitet. Der erste Import kann mehrere Minuten dauern.",
