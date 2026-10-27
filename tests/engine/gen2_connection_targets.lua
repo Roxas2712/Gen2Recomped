@@ -111,6 +111,9 @@ for _,version in ipairs({"red","emerald","firered","platinum"})do
   local rows=safe(version.." unchanged target",W.computeNeighbors,game.data.maps,from.id,1)
   T.eq(rows and rows[1]and rows[1].id,dest.id,"other generations keep shared destination naming")
   T.eq(safe(version.." unchanged landing",w.connectionLanding,w,"right"),dest,"other generation seam retains its destination")
+  T.eq(safe(version.." unchanged crossing",w.crossConnection,w,"right",from.connections.east),true,"other generations retain native seam interpolation")
+  T.eq(w.mapChanges,1,"other generations materialize one destination")
+  T.eq(w.map.id,dest.id,"other generation crossing ignores unrelated Gen2 metadata")
 end
 debug.setupvalue(W.crossConnection,gameSlot,oldGame)
 V.set(original)
