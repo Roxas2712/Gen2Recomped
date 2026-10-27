@@ -41,9 +41,9 @@ def main():
     suites.append(('syntax', [runtimes[0], '-e', syntax]))
     for suite in ['launcher_sequence', 'pokemon_xy_presentation', 'pokemon_xy_language']:
         suites.append((suite, [runtimes[0], str(ROOT / 'tests/engine' / (suite + '.lua'))]))
-    suites.append(('pokemon_xy_keyboard', [runtimes[1], str(ROOT / 'tests/engine/pokemon_xy_keyboard.lua')]))
+    suites.append(('pokemon_xy_keyboard', [runtimes[1], str(ROOT / 'tests/pokemon_xy/keyboard.lua')]))
     if args.bridge:
-        suites.append(('pokemon_xy_controls', [runtimes[0], str(ROOT / 'tests/engine/pokemon_xy_controls.lua')]))
+        suites.append(('pokemon_xy_controls', [runtimes[0], str(ROOT / 'tests/pokemon_xy/controls.lua')]))
     for name, command in suites:
         result = qa.qa_run(command, cwd=ROOT, env=env, capture_output=True, text=True)
         output = result.stdout + result.stderr

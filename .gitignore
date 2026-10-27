@@ -202,3 +202,4 @@ mobile/ios/bundle_id.local
 !/mods/UNI_LANGUAGE_NATIVE/**
 
 !/tests/pokemon_xy_library_test.py
+!/tests/pokemon_xy/

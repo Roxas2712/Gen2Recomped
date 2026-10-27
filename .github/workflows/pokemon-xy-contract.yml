@@ -9,6 +9,7 @@ on:
       - tools/run_pokemon_xy_contract.py
       - tests/pokemon*test.py
       - tests/engine/pokemon_xy*.lua
+      - tests/pokemon_xy/**
       - tests/engine/launcher_sequence.lua
       - .github/workflows/pokemon-xy-contract.yml
   workflow_dispatch:
