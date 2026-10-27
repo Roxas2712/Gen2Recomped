@@ -6,7 +6,7 @@ local M = {}
 M.groups = {
   {id="group.speed", label=Strings.source("SPEED"), members={"textSpeed","speed"}},
   {id="group.video", label=Strings.source("VIDEO"), members={"videoMode","orientation","faithfulRes","screenPos","fpsCap","vsync","logicClock"}},
-  {id="group.graphics", label=Strings.source("GRAPHICS"), members={"color","colors","uiLetterbox","shaderfx","shaderfx2","frame"}},
+  {id="group.graphics", label=Strings.source("GRAPHICS"), members={"color","colors","gbcColorCorrection","gbcfx","shaderPreset","uiLetterbox","shaderfx","shaderfx2","frame"}},
   {id="group.audio", label=Strings.source("AUDIO"), members={"sound","stereo","musicVol","sfxVol","musicFilter","audioMode"}},
   {id="group.battle", label=Strings.source("BATTLE OPTIONS"), members={"battleScene","battleAnim","animations","battleStyle","battleLayout","battleHud","battleFit","battleBg"}},
   {id="group.extras", label=Strings.source("EXTRAS"), members={"zoom","voidFill","tilt"}},
