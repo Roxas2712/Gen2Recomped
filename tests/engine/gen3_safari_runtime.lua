@@ -21,7 +21,16 @@ for _,v in ipairs({'ruby','sapphire','emerald','firered','leafgreen'})do
     for n=0,124 do s.tables.flavorCompatibility[n]=0 end
   end
   game.data.constants.gen3SafariNative=s
-  T.check(A.valid(s,v));local sf={balls=30,steps=500};b:makeSafari(sf)
+  T.check(A.valid(s,v))
+  local label=s.labels[4];s.labels[4]=nil;T.check(not A.valid(s,v),'missing RUN label rejects the cache');s.labels[4]=label
+  T.check(not A.valid(s,v=='ruby'and'sapphire'or'ruby'),'edition caches cannot cross')
+  if rse then
+    local value=s.tables.flavorCompatibility[124];s.tables.flavorCompatibility[124]=2
+    T.check(not A.valid(s,v),'invalid signed nature preference rejects the cache');s.tables.flavorCompatibility[124]=value
+    local row=s.tables.pkblToEscapeFactor[0];s.tables.pkblToEscapeFactor[0]=nil
+    T.check(not A.valid(s,v),'zero-based table row is required');s.tables.pkblToEscapeFactor[0]=row
+  end
+  local sf={balls=30,steps=500};b:makeSafari(sf)
   T.eq(b.safari,sf);T.eq(b.gen3Safari.edition,v)
   T.same(G.actions(b),rse and{'ball','pokeblock','go_near','run'}or{'ball','bait','rock','run'})
   local draws={};b.rng=function(lo,hi)T.eq(lo,0);T.eq(hi,65535);draws[#draws+1]=1;return 99 end
@@ -56,12 +65,19 @@ for _,v in ipairs({'ruby','sapphire','emerald','firered','leafgreen'})do
   b.phase='menu';b.queue={};b.gen3Safari.escapeFactor=2;b.rng=function()return 99 end
   local rate;function b:catchAttempt(ball,value)T.eq(ball,'SAFARI_BALL');rate=value;return false,0 end
   function b:ballChain()end;function b:ballMissMessage()return'missed'end
-  b:chooseSafari('ball');T.eq(sf.balls,29);T.eq(b.queue[1].text,'used')
+  b:chooseSafari('ball');T.eq(sf.balls,29);T.eq(b.gen3Safari.balls,29);T.eq(b.queue[1].text,'used')
   b.nextInsert=0;b.queue[2].fn();b.nextInsert=nil;T.eq(rate,b.safariCatchRate);T.eq(b.lastBall,'SAFARI_BALL')
   sf.balls=0;b.queue={};G.enemyTurn(b,false);T.eq(b.result,'run');T.eq(b.afterQueue,'finish')
   T.eq(b.queue[1].text,'outOfBalls','last missed ball ends before another flee/reaction')
   b.result=nil;sf.balls=10;b.queue={};b.phase='menu'
   b:chooseSafari('run');T.eq(sf.balls,10);T.eq(b.result,'run');T.eq(b.queue[1].text,'gotAway')
+  -- Full party and PC refuse the throw before spending a ball or RNG.
+  b.result=nil;b.phase='menu';b.queue={};game.save.party={1,2,3,4,5,6}
+  local Boxes=require('src.pokemon.Boxes');game.save.boxes={}
+  for box=1,Boxes.count()do game.save.boxes[box]={};for slot=1,Boxes.capacity()do game.save.boxes[box][slot]={}end end
+  b.rng=function()error('Full PC must not advance RNG')end
+  b:chooseSafari('ball');T.eq(sf.balls,10);T.eq(b.queue[1].text,'boxFull');T.eq(b.afterQueue,'menu')
+  game.save.boxes[1][1]=nil;T.eq(G.full(b),false,'one free native slot permits catching')
   f.close()
 end
 love.filesystem.load=oldLoad
