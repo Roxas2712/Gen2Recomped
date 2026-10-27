@@ -1,6 +1,6 @@
 -- Gen1Recomp's Gen2 option-page vocabulary, backed by native row handlers.
 -- Group ids/order follow reference 535a5ec0 src/ui/gen2/OptionsMenu.lua.
--- Existing project rights and notices remain applicable; see NOTICE.md.
+-- Original reference rights and the existing project licenses remain applicable.
 local Strings = require("src.core.Strings")
 local M = {}
 M.groups = {
