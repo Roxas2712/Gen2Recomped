@@ -73,7 +73,7 @@ all five GBA editions with zero difference and no graphics module in its VM
 integration stages, including 845 assertions. Subsequent private admission
 guards cover replacement source modules and immediate custom-provider replies;
 they do not change the pixel factory or decoded output and have their own
-focused checks. The timing source predates those guards.
+focused checks (849 assertions and five integration stages, all passing). The timing source predates those guards.
 
 [Raw qualification and measurements](qa/gen3-atlas-worker-2026-10-27/qualification.json)
 are retained alongside `coroutine-ownership.json`, `seam-off.json` and `seam-on.json`.
