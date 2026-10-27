@@ -5,6 +5,10 @@ local Battle=require('src.core.game3.battle')
 local Boundary=require('src.compat.gen1.ScriptBoundary')
 local Scope=require('src.render.GraphicsScope')
 local Ui={}
+-- Keep PP thresholds shared with the published native summary renderer.
+function Ui.ppColorIndex(current,maximum)
+ return require('src.ui.Gen3SummaryLayout').ppColor(current,maximum)
+end
 local function call(name,...)
   local facade=require('src.core.Game3');local who=facade._callbackOwner()
   local seams=package.loaded['src.mods.ModSeams']
