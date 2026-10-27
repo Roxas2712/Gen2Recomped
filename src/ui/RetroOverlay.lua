@@ -72,7 +72,7 @@ function O.action(id)
     if id=='options' then
       local ok,menu=pcall(function() return require('src.ui.OptionsMenu').new(game) end)
       O.options=ok and menu.rows or {}
-      if not ok then O.notice='Options could not be opened: '..tostring(menu) end
+      if not ok then O.notice=L('Options could not be opened: ')..tostring(menu) end
     end
     return
   end
@@ -99,7 +99,7 @@ function O.action(id)
       if row.activate then O.close();row.activate(game);return false end
       if row.step then return row.step(game,tonumber(direction)) end
     end)
-    if not ok then O.notice='Setting could not be changed: '..tostring(changed)
+    if not ok then O.notice=L('Setting could not be changed: ')..tostring(changed)
     elseif changed and game.writeOptions then game:writeOptions() end
     return
   end
@@ -262,7 +262,7 @@ function O.draw(game)
   local w=math.min(760*s,ww-30*s);local h=math.min(660*s,hh-30*s);local x=(ww-w)/2;local y=(hh-h)/2
   g.setColor(.065,.09,.14,1);g.rectangle('fill',x,y,w,h,16*s,16*s)
   g.setColor(.45,.91,1,1);text('RETRORECOMPED',x+24*s,y+20*s,w-48*s,true)
-  g.setColor(.74,.78,.85,1);text(Versions.info().displayName..' · PAUSED',x+24*s,y+61*s,w-48*s)
+  g.setColor(.74,.78,.85,1);text(Versions.info().displayName..L(' · PAUSED'),x+24*s,y+61*s,w-48*s)
   local rows=actions();local layoutScroll=O.scroll or 0;local nextScroll=layoutScroll;local top=y+134*s-layoutScroll
   O.rects={};O.selected=math.min(O.selected or 1,math.max(1,#rows))
   for i,tab in ipairs({{'home','QUICK MENU'},{'saves','SAVES & CLOUD'},{'options','SETTINGS'},{'friends','FRIENDS'}}) do

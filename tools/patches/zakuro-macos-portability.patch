@@ -1,0 +1,106 @@
+diff --git a/crates/zakuro-gpu/src/backend/vulkan.rs b/crates/zakuro-gpu/src/backend/vulkan.rs
+index 041fe71..7cfe1a8 100644
+--- a/crates/zakuro-gpu/src/backend/vulkan.rs
++++ b/crates/zakuro-gpu/src/backend/vulkan.rs
+@@ -153,11 +153,13 @@ impl VulkanPresenter {
+             .engine_name(c"Zakuro")
+             .api_version(vk::API_VERSION_1_3);
+ 
+-        let extensions = ash_window::enumerate_required_extensions(display.as_raw())
++        let mut extensions = ash_window::enumerate_required_extensions(display.as_raw())
+             .map_err(vk_fail("querying surface extensions"))?
+             .to_vec();
+ 
++        let portability = crate::portability::instance(&entry, &mut extensions);
+         let instance_info = vk::InstanceCreateInfo::default()
++            .flags(portability)
+             .application_info(&application)
+             .enabled_extension_names(&extensions);
+         let instance = unsafe { entry.create_instance(&instance_info, None) }
+@@ -207,9 +209,11 @@ impl VulkanPresenter {
+                 let queue_info = [vk::DeviceQueueCreateInfo::default()
+                     .queue_family_index(queue_family)
+                     .queue_priorities(&priorities)];
++                let mut extensions = swapchain_extension.to_vec();
++                crate::portability::device(&instance, physical_device, &mut extensions);
+                 let device_info = vk::DeviceCreateInfo::default()
+                     .queue_create_infos(&queue_info)
+-                    .enabled_extension_names(&swapchain_extension);
++                    .enabled_extension_names(&extensions);
+                 unsafe { instance.create_device(physical_device, &device_info, None) }
+                     .map_err(vk_fail("creating the device"))?
+             }
+diff --git a/crates/zakuro-gpu/src/lib.rs b/crates/zakuro-gpu/src/lib.rs
+index b79249c..7b42d23 100644
+--- a/crates/zakuro-gpu/src/lib.rs
++++ b/crates/zakuro-gpu/src/lib.rs
+@@ -4,6 +4,8 @@ pub mod backend;
+ pub mod blend;
+ #[cfg(feature = "vulkan")]
+ mod device;
++#[cfg(feature = "vulkan")]
++mod portability;
+ mod pattern;
+ pub mod proctex;
+ pub mod fog;
+diff --git a/crates/zakuro-gpu/src/raster/hardware.rs b/crates/zakuro-gpu/src/raster/hardware.rs
+index efbbdd7..7b2c9af 100644
+--- a/crates/zakuro-gpu/src/raster/hardware.rs
++++ b/crates/zakuro-gpu/src/raster/hardware.rs
+@@ -5515,6 +5515,7 @@ pub(crate) fn render_device(
+     let queues = [vk::DeviceQueueCreateInfo::default().queue_family_index(family).queue_priorities(&priorities)];
+     let mut extensions = vec![ash::khr::push_descriptor::NAME.as_ptr()];
+     extensions.extend_from_slice(extra);
++    crate::portability::device(instance, physical, &mut extensions);
+     // SAFETY: the physical device came from this instance
+     let supported = unsafe { instance.get_physical_device_features(physical) };
+     let logic_ops = supported.logic_op == vk::TRUE;
+@@ -5603,8 +5604,12 @@ pub(crate) fn own_device() -> Result<SharedDevice, String> {
+     // requirements
+     let entry = unsafe { ash::Entry::load() }.map_err(|e| format!("no Vulkan loader, {e}"))?;
+     let app = vk::ApplicationInfo::default().application_name(c"zakuro").api_version(vk::API_VERSION_1_3);
+-    // SAFETY: a plain instance with no layers or extensions
+-    let instance = unsafe { entry.create_instance(&vk::InstanceCreateInfo::default().application_info(&app), None) }
++    let mut extensions = Vec::new();
++    let portability = crate::portability::instance(&entry, &mut extensions);
++    // SAFETY: the enabled extension names remain alive through creation.
++    let info = vk::InstanceCreateInfo::default().application_info(&app)
++        .flags(portability).enabled_extension_names(&extensions);
++    let instance = unsafe { entry.create_instance(&info, None) }
+         .map_err(vk_error("create an instance"))?;
+     let made = pick(&instance).and_then(|(physical, family)| render_device(&entry, &instance, physical, family, &[]));
+     if made.is_err() {
+diff --git a/crates/zakuro-gpu/src/portability.rs b/crates/zakuro-gpu/src/portability.rs
+new file mode 100644
+index 0000000..14ecb1c
+--- /dev/null
++++ b/crates/zakuro-gpu/src/portability.rs
+@@ -0,0 +1,28 @@
++//! macOS portability support by Roxas2712; retain upstream MIT notices.
++
++use ash::vk;
++use std::ffi::c_char;
++
++pub(crate) fn instance(entry: &ash::Entry, extensions: &mut Vec<*const c_char>) -> vk::InstanceCreateFlags {
++    if cfg!(target_os = "macos") {
++        // SAFETY: querying extensions does not require an instance.
++        let available = unsafe { entry.enumerate_instance_extension_properties(None) }.unwrap_or_default();
++        let name = ash::khr::portability_enumeration::NAME;
++        if available.iter().any(|item| item.extension_name_as_c_str() == Ok(name)) {
++            extensions.push(name.as_ptr());
++            return vk::InstanceCreateFlags::ENUMERATE_PORTABILITY_KHR;
++        }
++    }
++    vk::InstanceCreateFlags::empty()
++}
++
++pub(crate) fn device(instance: &ash::Instance, physical: vk::PhysicalDevice, extensions: &mut Vec<*const c_char>) {
++    if cfg!(target_os = "macos") {
++        // SAFETY: physical belongs to the supplied live instance.
++        let available = unsafe { instance.enumerate_device_extension_properties(physical) }.unwrap_or_default();
++        let name = ash::khr::portability_subset::NAME;
++        if available.iter().any(|item| item.extension_name_as_c_str() == Ok(name)) {
++            extensions.push(name.as_ptr());
++        }
++    }
++}

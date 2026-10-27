@@ -11,6 +11,7 @@ local function decode(bytes)
   if type(bytes)~='string' or #bytes>100000 then return nil end
   local ok,v=pcall(S.decode,bytes)
   if not ok or type(v)~='table' or v.schema~=1 or type(v.designs)~='table' or type(v.logo)~='boolean' then return nil end
+  if v.originals~=nil and(type(v.originals)~='table'or v.originals.consent~=1 or type(v.originals.enabled)~='boolean')then return nil end
   local count=0
   for version,row in pairs(v.designs) do
     count=count+1
@@ -30,6 +31,7 @@ end
 local function assetPath(id,i) return 'profiles/cartridges/assets/'..id..'_'..i..'.lua' end
 function C.capture(options)
   local doc={schema=1,logo=options.launcherLogoCards~=false,designs={}};local images={}
+  if options.launcherOriginalCartridgesConsent==1 then doc.originals={enabled=options.launcherOriginalCartridges==true,consent=1}end
   for version,value in pairs(type(options.launcherCartDesigns)=='table' and options.launcherCartDesigns or {}) do
     if Versions.VERSIONS[version] then
       local style=Designer.normalize(value);local row={style=style};doc.designs[version]=row
@@ -82,9 +84,11 @@ local function restore(store,doc,beforeHash)
   local options=Saves.loadOptions();local current=C.capture(options)
   if not current or hash(S.encode(current))~=beforeHash then return nil,'Cartridges changed during sync. Retry; both versions are preserved.' end
   local disk=Saves.persistenceFs()
-  local ok,why=Safety.atomicWrite(disk,'cloud_sync_cartridges_backup.lua',S.encode({designs=options.launcherCartDesigns or {},logo=options.launcherLogoCards}),{decode=Safety.decodeAny})
+  local ok,why=Safety.atomicWrite(disk,'cloud_sync_cartridges_backup.lua',S.encode({designs=options.launcherCartDesigns or {},logo=options.launcherLogoCards,originals=options.launcherOriginalCartridges,originalsConsent=options.launcherOriginalCartridgesConsent}),{decode=Safety.decodeAny})
   if not ok then return nil,why end
   options.launcherCartDesigns=designs;options.launcherLogoCards=doc.logo
+  options.launcherOriginalCartridges=doc.originals and doc.originals.enabled==true or false
+  options.launcherOriginalCartridgesConsent=doc.originals and 1 or 0
   if not Saves.saveOptions(options) then return nil,'Could not save the cloud cartridge preferences.' end
   return true
 end

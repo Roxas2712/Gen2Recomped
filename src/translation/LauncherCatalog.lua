@@ -1,6 +1,6 @@
 -- Reviewed launcher essentials; no network or translation model required.
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
-return { de={
+local catalog={ de={
  ["Battle finished. Your result is saved. The server verifies the recorded battle before awarding league points and rewards."]="Kampf beendet. Dein Ergebnis ist gespeichert. Der Server prüft den aufgezeichneten Kampf, bevor Ligapunkte und Preise vergeben werden.",
  ["Native link battles use frozen Bank teams and edition rules. League points and rewards remain pending until independent server replay confirms the result. Bank identity and native reconstruction are checked; full official encounter-legality verification is not available yet."]="Native Linkkämpfe verwenden festgelegte Bank-Teams und die Regeln der Edition. Ligapunkte und Preise bleiben ausstehend, bis der Server den Kampf unabhängig nachgerechnet hat. Bank-Identität und native Rekonstruktion werden geprüft. Eine vollständige Prüfung aller offiziellen Fang- und Event-Regeln steht noch aus.",
  ["ACCOUNT PROFILE"]="KONTOPROFIL",
@@ -518,3 +518,9 @@ return { de={
  ["PROTECTED OPERATOR · Starscream89 cannot be banned, removed, demoted or have cloud content quarantined. Protection belongs to the account across devices."]="GESCHÜTZTER BETREIBER · Starscream89 kann nicht gesperrt, entfernt oder herabgestuft werden. Seine Cloud-Inhalte können nicht in Quarantäne versetzt werden. Der Kontoschutz gilt auf allen Geräten.",
  ["Staff can see invisible online status. Reasons and current-password confirmation are required for moderation. Actions are audited; cloud removal is recoverable."]="Das Team sieht auch unsichtbare Online-Status. Moderation erfordert Begründung und aktuelles Passwort. Aktionen werden protokolliert; entfernte Cloud-Inhalte sind wiederherstellbar.",
 }}
+
+for language,rows in pairs(require("src.translation.CommunityCatalog"))do
+ catalog[language]=catalog[language]or{}
+ for key,value in pairs(rows)do catalog[language][key]=value end
+end
+return catalog
