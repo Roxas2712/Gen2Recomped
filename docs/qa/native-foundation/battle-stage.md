@@ -1,0 +1,11 @@
+# Native battle stage observations
+
+The battle presentation reads the stage belonging to the currently admitted native GBA battle. Entry slide/window, trainer portraits, healthbox visibility, party-row animation and the actual ball are observations of existing owners. Queries do not advance the battle, queue, RNG or ball clock. The native painter shares its healthbox/window/party-offset predicates with the observation surface.
+
+Capture and full-stage consumers share the same retained ball handle. Native ball frame, position, identity and visibility are projected once; replacing the ball, leaving combat, replacing the data/save cohort or retiring the source owner invalidates stale handles. Stage tables are read-only and support the existing source iteration contract. This addition does not advertise a complete presentation protocol or implement absent animation effects.
+
+Frozen fork candidate `401092536a` passed syntax and all14 targeted suites: 561 stage, 560 entry, 691 capture, 382 session, 382 animation, 390 command, 170 ball-presentation, 432 task, 1917 ball-art, 585 cutout, 210 UI, 60 Gen2 scene, 366 Gen2 live-view and326 Gen2 summary checks. Stage cases cover all five GBA admissions, live native ball movement, catch/stage identity, trainer identity/offsets, window boundaries, observation-only reads, covering and replaced/retired sessions. The first fixture attempt `2bbfe3af73` incorrectly loaded the catch observer after native request dispatch; its failure is retained.
+
+Actual unchanged private-mod battle entry `b3345e9e75-firered` got past the cutout query and stopped at its wrapper of missing `Anim.stage`. A follow-up actual battle test is running. CPU checks do not establish clean map/terrarium frames, physical-window output, full gameplay or60 FPS. Every test uses an isolated QA profile and20 GiB free-space enforcement; player saves are never used.
+
+Contributions by Roxas2712. Existing native artwork, battle code and third-party rights retain their original provenance. See NOTICE.md and LICENSE-ROXAS2712.md for the specific Cedric / UNDERdecoded integration permission and credit requirements.

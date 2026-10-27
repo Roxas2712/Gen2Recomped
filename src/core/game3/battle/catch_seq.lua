@@ -95,9 +95,7 @@ local function ballView(screen,c,anim)
    if key=='visible'then return false end
    return nil
   end
-  if key=='x'then return a.x+(a.shakeOffset or 0)end
-  if key=='y'then return a.y end
-  if key=='visible'then return not a.done or a.caught end
+  return require('src.compat.gen1.NativeBallObservation').read(refs[1],a,key)
  end,__newindex=function()error('native capture ball observation is read-only',2)end})
  return setmetatable({},{__index=function(_,key)
   if key=='stage'then return stage end

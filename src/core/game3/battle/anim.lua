@@ -7,6 +7,9 @@ local Clock=require('src.battle.PresentationClock')
 local Scope=require('src.render.GraphicsScope')
 local Ids=require('src.compat.gen1.BattleIds')
 local A={Coords=Coords,ENEMY_MON={x=176,y=40},PLAYER_MON={x=72,y=80}}
+function A.stage()
+ return require('src.core.game3.battle.stage').current(require('src.compat.gen1.SourceCall').owner(A,'stage'))
+end
 local current
 local numeric={ox=true,oy=true,alpha=true,scale=true,sx=true,sy=true,rotation=true,
   darken=true,flash=true,displayHp=true,displayMaxHp=true,displayLevel=true,displayExp=true}
