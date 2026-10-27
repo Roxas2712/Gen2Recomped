@@ -4105,6 +4105,7 @@ end
 -- simply stayed gone -- for as long as the opponent took to choose.
 function BattleState:tickFx()
   self.frame = self.frame + 1
+  if GameVersion.isGen3() then require('src.battle.Gen3SelectionPresentation').update(self) end
   self:updateFx()
 end
 
@@ -11495,6 +11496,11 @@ function BattleState:gen3AnimSquash(battler)
 end
 
 function BattleState:drawBattlerPic(battler, x, y, scale)
+  if GameVersion.isGen3() then
+    local selection=require('src.battle.Gen3SelectionPresentation')
+    if selection.hidden(self,battler) then return end
+    y=y+selection.offset(self,'mon',battler)
+  end
   if self:gen3AnimMonBgHidden(battler) then return end
   local angle, rise = self:gen3AnimRotate(battler)
   local sqx, sqy = self:gen3AnimSquash(battler)
