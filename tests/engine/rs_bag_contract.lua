@@ -10,7 +10,10 @@ local bodies,files={},{}
 local toss={}
 for _,key in ipairs({'gOtherText_HowManyToToss','gOtherText_OkayToThrowAwayPrompt',
   'gOtherText_ThrewAwayItem','OtherText_Yes','OtherText_No'})do toss[key]={}end
-bodies['data/generated/constants.lua']=Writer.encode({gen3RsBag={format=1,version='ruby',tossTextIR=toss}})
+local spec={format=1,version='ruby',tossTextIR=toss,machineText={
+  gOtherText_BootedTM='BOOTED TM',gOtherText_BootedHM='BOOTED HM',
+  gOtherText_ContainsMove='CONTAINS {VAR1}'}}
+bodies['data/generated/constants.lua']=Writer.encode({gen3RsBag=spec})
 for _,sub in ipairs({'bag','common_ui','bag_chrome'}) do
   local file='data/generated/gba/rse/'..sub..'/test.png'
   bodies['data/generated/gba/rse/'..sub..'/manifest.lua']=Writer.encode({layout='rs',game='ruby',files={file}})
@@ -19,13 +22,16 @@ end
 Fs.read=function(p)return bodies[p]end
 Fs.exists=function(p)return files[p]end
 T.eq(#Import.missing('ruby'),0,'all native bag resources are ready')
-T.eq(#Import.missing('sapphire'),4,'Ruby assets and text cannot satisfy Sapphire')
+T.eq(#Import.missing('sapphire'),5,'Ruby assets and text cannot satisfy Sapphire')
 files['data/generated/gba/rse/bag/test.png']=nil
 T.eq(#Import.missing('ruby'),1,'missing bag graphics invalidate the cache')
 bodies['data/generated/gba/rse/common_ui/manifest.lua']='return {layout="rs",game="ruby",files={}}'
 T.eq(#Import.missing('ruby'),2,'interrupted empty cursor manifest fails readiness')
 bodies['data/generated/gba/rse/bag_chrome/manifest.lua']='broken lua'
 T.eq(#Import.missing('ruby'),3,'broken window manifest fails readiness')
+spec.machineText.gOtherText_ContainsMove='CONTAINS MOVE'
+bodies['data/generated/constants.lua']=Writer.encode({gen3RsBag=spec})
+T.eq(#Import.missing('ruby'),4,'machine text without its native move placeholder invalidates cache')
 Fs.read,Fs.exists=oldRead,oldExists
 
 local V=require('src.core.GameVersion')

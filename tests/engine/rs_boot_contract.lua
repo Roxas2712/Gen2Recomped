@@ -17,7 +17,9 @@ T.eq(package.loaded['src.core.game3.rng'],nil,'reference RNG never enters host m
 local ar=ruby('src.import.gba.syms').of('ruby')
 local bs=sapphire('src.import.gba.syms').of('sapphire')
 T.check(ar.off('mus_title')~=bs.off('mus_title'),'title songs use distinct native ROM addresses')
-T.check(not pcall(Loader.new,'emerald'),'Emerald cannot select an RS reference')
+local emerald=Loader.new('emerald')
+T.eq(emerald('src.import.gba.versions').BUILD,'emerald','shared Hoenn bridge retains Emerald identity')
+T.check(not pcall(Loader.new,'gold'),'another generation cannot select the Hoenn reference')
 local oldRead,oldExists=Fs.read,Fs.exists
 local bodies,files={},{}
 local manifests={'data/generated/gba/title/manifest.lua',
@@ -29,14 +31,28 @@ for i,path in ipairs(manifests) do
 end
 Fs.read=function(path) return bodies[path] end
 Fs.exists=function(path) return files[path] end
-T.eq(#Bridge.missing('sapphire'),0,'complete own-edition movie/title is ready')
-T.eq(#Bridge.missing('ruby'),3,'another edition cannot satisfy native cache contract')
+-- The aggregate readiness contract now also requires field, audio and menu
+-- metadata. This fixture covers boot art only; absence of the other inputs
+-- must continue to reject the complete cartridge cache.
+T.check(#Bridge.missing('sapphire')>0,'boot art alone cannot satisfy the complete RS cache')
+local bootPaths={}
+for _,path in ipairs(manifests)do bootPaths[path]=true end
+for path in pairs(files)do bootPaths[path]=true end
+local function bootMissing(version)
+  local result={}
+  for _,path in ipairs(Bridge.missing(version))do
+    if bootPaths[path]then result[#result+1]=path end
+  end
+  return result
+end
+T.eq(#bootMissing('sapphire'),0,'complete own-edition movie/title is ready')
+T.eq(#bootMissing('ruby'),3,'another edition cannot satisfy native cache contract')
 files['data/generated/gba/test/1.png']=nil
-T.eq(Bridge.missing('sapphire')[1],'data/generated/gba/test/1.png','lost title art invalidates completed cache')
+T.eq(bootMissing('sapphire')[1],'data/generated/gba/test/1.png','lost title art invalidates completed cache')
 bodies[manifests[2]]='return {layout="rs",game="sapphire",files={}}'
-T.eq(#Bridge.missing('sapphire'),2,'empty movie manifest cannot pass after interrupted import')
+T.eq(#bootMissing('sapphire'),2,'empty movie manifest cannot pass after interrupted import')
 bodies[manifests[3]]='broken Lua source'
-T.eq(#Bridge.missing('sapphire'),3,'invalid manifest is reported without running it')
+T.eq(#bootMissing('sapphire'),3,'invalid manifest is reported without running it')
 local called=false
 Bridge.extract({version='leafgreen',beginStage=function()called=true end})
 T.eq(called,false,'LeafGreen never enters RS import')
