@@ -53,6 +53,7 @@ if type(menu.showItemResult)=='function'then
   T.eq(game.stack:top(),menu,'controller callback alone owns screen lifetime')
  end
  local done=0
+ menu.party[1].stats.hp=19;menu.party[1].hp=19 -- this case requires one-HP native steps
  menu:showItemResult(1,{fromHp=5,toHp=2,auto=true,onDone=function()done=done+1 end})
  for i=1,3 do menu:update(1/60)end
  T.eq(done,0,'auto result still waits for all downward HP steps')

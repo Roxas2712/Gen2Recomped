@@ -21,7 +21,7 @@ for _,version in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
  function game.stack:pop()return table.remove(self.states)end
  mon.moves={{id='FIX_TACKLE',pp=9,ppUps=2},{id='FIX_SCRATCH',pp=3,ppUps=1}}
  local picked,cancelled=0,0
- local menu=Screens.new(game,'Gen2MoveDeleter',{mon=mon,moves=data.moves,
+ local menu=Screens.build(game,'Gen2MoveDeleter',{mon=mon,moves=data.moves,
   onChoose=function(slot)picked=slot end,onCancel=function()cancelled=cancelled+1 end})
  T.eq(menu.mon,mon,version..' screen registry resolves the actual native move controller')
  T.eq(menu.list,mon.moves,'native selector reads the actual party move list')
@@ -48,10 +48,10 @@ for _,version in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   Sound.play=function(actual,name)T.eq(actual,data,'native selection uses actual imported audio');T.eq(name,'Sfx_ReadText2','native selection uses the real cue');cue=cue+1 end
   press('a');press('a');T.eq(picked,2,'selection returns actual move slot once');T.eq(cue,1,'completed selection cannot replay its cue')
   Sound.play=play
-  menu=Screens.new(game,'Gen2MoveDeleter',{mon=mon,onCancel=function()cancelled=cancelled+1 end})
+  menu=Screens.build(game,'Gen2MoveDeleter',{mon=mon,onCancel=function()cancelled=cancelled+1 end})
   game.input.pressed={b=true};menu:update(1/60);menu:update(1/60);game.input.pressed={}
   T.eq(cancelled,1,'native cancel continuation fires exactly once')
-  menu=Screens.new(game,'Gen2MoveDeleter',{mon=mon,layout='forget'})
+  menu=Screens.build(game,'Gen2MoveDeleter',{mon=mon,layout='forget'})
   game.input.pressed={up=true};menu:update(1/60);game.input.pressed={}
   T.eq(menu.row,2,'native forget layout alone wraps upward')
   game.input.pressed={down=true};menu:update(1/60);game.input.pressed={}
