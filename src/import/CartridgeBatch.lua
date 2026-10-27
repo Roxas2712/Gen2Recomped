@@ -99,7 +99,7 @@ function B.tick(self)
   end
   if not f.job then
     if #f.queue==0 then
-      f.running=false;f.notice=('%d images applied · %d designs/already available skipped · %d failed.'):format(f.done,f.skipped,#f.failed)
+      f.running=false;f.notice=require('src.translation.Service').launcherFormat('%d images applied · %d designs/already available skipped · %d failed.',f.done,f.skipped,#f.failed)
     else
       local version=table.remove(f.queue,1);f.current=version
       local job,why=require('src.import.CartridgeDownload').start(version,true);f.job=job
