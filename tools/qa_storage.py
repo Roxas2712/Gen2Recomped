@@ -628,9 +628,7 @@ class Storage:
                 try:
                     info = file.lstat()
                 except FileNotFoundError:
-                    # Active importers can replace generated cache files between
-                    # the directory scan and stat. The next budget poll sees
-                    # their replacements; other I/O errors remain visible.
+                    # Active writers may remove journal/temporary files after os.walk.
                     continue
                 if stat.S_ISREG(info.st_mode):
                     yield file, info
@@ -921,13 +919,17 @@ class Storage:
         if self.closed:
             return
         self.closed = True
-        ephemeral=set()
+        ephemeral=set();finished_profiles=set()
         try:
             for key, (lock, entry, owned) in self.held.items():
                 if entry is None and self.lease_info[key][0]=='legacy':
                     try:entry=json.loads((self.state/(key+'.json')).read_text())
                     except (OSError,ValueError):pass
                 if entry and entry.get('ephemeral'):ephemeral.add(key)
+                if owned and entry and entry['kind']=='imports':
+                    from qa_love_storage import profile_scope
+                    profile=profile_scope(Path(entry['path']),self.home)
+                    if profile is not None:finished_profiles.add(profile)
                 if owned:
                     entry.update(updated=self.clock(), running=False)
                     self._write(key, entry)
@@ -935,8 +937,12 @@ class Storage:
                 # that is still alive if an interrupted runner is unwinding.
                 lock.close()
             self.held.clear()
-            if collect:self.sweep(only=ephemeral) if ephemeral else self.sweep()
-        except OSError as error:
+            if collect:
+                if finished_profiles:
+                    from qa_love_storage import sweep as sweep_love
+                    sweep_love(self,only=finished_profiles,min_age=0,max_age=0,limit=0,meshes_only=True)
+                self.sweep(only=ephemeral) if ephemeral else self.sweep()
+        except (OSError,ValueError,RuntimeError,subprocess.SubprocessError) as error:
             print("[qa-storage] cleanup will retry at the next test:", error,
                   file=sys.stderr)
 

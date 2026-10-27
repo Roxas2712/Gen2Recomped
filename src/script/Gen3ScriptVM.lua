@@ -755,9 +755,15 @@ L.yesnobox = function(_, s)
   emit(s, { "ask", s.lastText })
   emit(s, { "g3_from_yesno" })
 end
-L.multichoice = function(ir, s) emit(s, { "g3_multichoice", ir[4], ir[5] }) end
-L.multichoicedefault = function(ir, s) emit(s, { "g3_multichoice", ir[4], ir[6], ir[5] }) end
-L.multichoicegrid = function(ir, s) emit(s, { "g3_multichoice", ir[4], ir[6] }) end
+L.multichoice = function(ir, s)
+  emit(s, { "g3_multichoice", ir[4], ir[5], 0, {left=ir[2],top=ir[3],cols=1} })
+end
+L.multichoicedefault = function(ir, s)
+  emit(s, { "g3_multichoice", ir[4], ir[6], ir[5], {left=ir[2],top=ir[3],cols=1} })
+end
+L.multichoicegrid = function(ir, s)
+  emit(s, { "g3_multichoice", ir[4], ir[6], 0, {left=ir[2],top=ir[3],cols=ir[5]} })
+end
 L.bufferspeciesname = function(ir, s) emit(s, { "g3_buffer", ir[2], "species", ir[3] }) end
 L.bufferleadmonspeciesname = function(ir, s) emit(s, { "g3_buffer", ir[2], "lead" }) end
 L.bufferpartymonnick = function(ir, s) emit(s, { "g3_buffer", ir[2], "party", ir[3] }) end
@@ -952,7 +958,8 @@ local function contributionFor(data, mapId, entry, mapDef)
     if callback.type == ON_LOAD or callback.type == ON_TRANSITION
        or callback.type == ON_RESUME then
       local rows = Gen3ScriptVM.compile(data, callback.script)
-      if rows then onEnter[#onEnter + 1] = rows end
+      if rows then onEnter[#onEnter + 1] = {rows=rows,
+        setup=callback.type==ON_LOAD or callback.type==ON_TRANSITION}end
     end
   end
   local onWarpIn, onFrame = {}, {}
@@ -973,8 +980,8 @@ local function contributionFor(data, mapId, entry, mapDef)
       -- a fresh visit re-arms the frame table: these closures outlive the
       -- map, and a save loaded into the same map has to be asked again
       for _, g in ipairs(onFrame) do g.armed = nil end
-      for _, rows in ipairs(onEnter) do
-        queue(overworld, rows, { mapId = mapId })
+      for _, entryScript in ipairs(onEnter) do
+        queue(overworld, entryScript.rows, {mapId=mapId,gen3MapSetup=entryScript.setup})
       end
       for _, g in ipairs(onWarpIn) do
         if Gen3Commands.getVar(game.save, g.var) == g.value then

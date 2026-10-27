@@ -125,6 +125,10 @@ function StartMenu.new(game)
     Screens.push(game, "OptionsMenu", { onCancel = reopen })
   end })
 
+  if require('src.ui.CenterLobby').center(game)then
+    table.insert(items,{label=Strings("LINK LOBBY"),onSelect=function()require('src.ui.CenterLobby').open(game)end})
+  end
+
   -- LINK needs a party
   if #game.save.party > 0 and not inContest then
     table.insert(items, { label = Strings("LINK"), onSelect = function()

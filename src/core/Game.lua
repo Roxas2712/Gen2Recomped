@@ -295,10 +295,9 @@ function Game:newGame()
   if newGameScreen == nil and not gen2 then
     newGameScreen = "OakSpeech"
   end
-  -- GSC creates its world after the clock/name introduction. Exposing the
-  -- home map earlier makes preparation clients wait for a destination draw
-  -- while their cover still owns input over that introduction.
-  local deferWorld = gen2 and newGameScreen
+  -- Both native introductions choose player state before the field starts.
+  local deferWorld = (gen2 and newGameScreen) or newGameScreen == "Gen3RsBirchSpeech"
+  if newGameScreen == "Gen3RsBirchSpeech" then self.overworld = nil end
   if not deferWorld then startWorld() end
   if newGameScreen then
     Screens.push(self, newGameScreen, deferWorld and startWorld or function() end)
@@ -1194,10 +1193,10 @@ local function paintResolvedFrame(self, scene, drawFrom, worldBelow, worldDrawn,
         if ox ~= 0 or oy ~= 0 then
           love.graphics.push()
           love.graphics.translate(ox, oy)
-          state:draw()
+          HotModules.get("src.render.NativeScreenOverlay").screen(state)
           love.graphics.pop()
         else
-          state:draw()
+          HotModules.get("src.render.NativeScreenOverlay").screen(state)
         end
       end
     end

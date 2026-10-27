@@ -971,8 +971,8 @@ end
 -- factored out so it is unit-testable with no filesystem: the player name
 -- (nil for an empty slot) and { badges, timeText, dexCount } -- the same
 -- fields the title screen's ContinueInfo derives.  The launcher has no
--- loaded Data, so `version` is what picks Badges' Kanto or Johto+Kanto
--- fallback list; without it a Gold save always summarised as zero badges.
+-- loaded Data, so `version` picks the generation's own badge flags; RS,
+-- Emerald and FRLG each use a different native flag block.
 -- HOW LONG THIS SAVE HAS BEEN PLAYED, IN SECONDS, WHATEVER SHAPE IT IS IN.
 --
 -- Reported from play, on the launcher's save list: "src/core/SaveData.lua:529:

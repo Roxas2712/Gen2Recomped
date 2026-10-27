@@ -22,6 +22,22 @@ T.eq(select('#',e:readText(0,4096,nil,true)),3)
 T.eq(nodes[1].s,'A');T.eq(nodes[2].t,'ext');T.eq(nodes[2].cmd,19);T.eq(nodes[2].args[1],72)
 T.eq(nodes[3].s,'B');T.eq(nodes[4].t,'nl');T.eq(nodes[5].s,'é');T.eq(nodes[6].code,1)
 T.eq(nodes[7].t,'para');T.eq(nodes[9].t,'scroll');T.eq(nodes[#nodes].t,'eos')
+for _,edition in ipairs{'ruby','sapphire'}do
+ local named=reader(bytes(0xBB,0xFC,0,0xBC,0xFF));named.version=edition
+ local options={rsNameEnd=true}
+ local value,consumed=named:readText(0,5,nil,options)
+ T.eq(value,'AB',edition..' native section-name options survive structured-text integration')
+ T.eq(consumed,5)
+ T.eq(select('#',named:readText(0,5,nil,options)),2,'legacy options retain ordinary return arity')
+ local value2,size2,records=named:readText(0,5,nil,true,options)
+ T.eq(value2,value);T.eq(size2,consumed)
+ T.eq(records[2].cmd,0,'explicit structured name reads retain the cartridge separator')
+ T.eq(#records[2].args,0)
+ T.eq(named:readText(0,5,nil,true),nil,'ordinary named-text probes do not widen their dialect')
+ named.version='firered'
+ T.eq(named:readText(0,5,nil,options),nil,'RS name options cannot authorize another cartridge dialect')
+ T.eq(options.rsNameEnd,true,'caller options are not rewritten')
+end
 local widths={1,1,1,3,1,1,0,1,0,0,2,1,1,1,0,2,1,1,1,1,0,0,0,0}
 for cmd,count in ipairs(widths)do
  local encoded={0xBB,0xFC,cmd}
@@ -63,9 +79,26 @@ function finish:initial()
 end
 function finish:later()self._text.TEXT_000000=plain end
 function finish:write(name,value)if name=='text_pointers'then emitted=value end end
+local providers={
+ require('src.import.Gen3RsPresentation'),
+ require('src.import.Gen3EmeraldPresentation'),
+ require('src.import.Gen3StatGrowthAssets'),
+}
+local originalExtract,called={},{}
+local finalPlain=plain..' late native prose'
+for index,provider in ipairs(providers)do
+ originalExtract[index]=provider.extract
+ provider.extract=function(owner)
+  T.eq(owner,finish,'final native extraction uses its original importer')
+  called[#called+1]=index
+  if index==3 then owner._text.TEXT_000000=finalPlain end
+ end
+end
 local completed,why=pcall(finish.run,finish)
+for index,provider in ipairs(providers)do provider.extract=originalExtract[index]end
 Extractor.DATA_STAGES,Extractor.ASSET_STAGES=dataStages,assetStages
-T.eq(completed,true,why);T.eq(emitted.namedIR.records.TEXT_000000.nativePlain,plain,
+T.eq(completed,true,why);T.same(called,{1,2,3},'required native providers finish before IR publication')
+T.eq(emitted.namedIR.records.TEXT_000000.nativePlain,finalPlain,
  'final cache publication snapshots text added by later native stages')
 for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  Version.set(edition);package.loaded['src.translation.Service']=nil

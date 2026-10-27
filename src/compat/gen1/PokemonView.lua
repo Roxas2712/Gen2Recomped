@@ -36,7 +36,7 @@ function M.new(game,valid)
     for i,row in ipairs(d.raw.moves or{})do
       local def=e.data.moves[row.id]
       a.moves[i]=e.ids:read('moves',row.id);a.pp[i]=row.pp;a.baseline[i]=row.pp
-      a.maxPp[i]=(def and def.pp or 0)+math.floor((def and def.pp or 0)/5)*(row.ppUps or 0)
+      a.maxPp[i]=require("src.pokemon.Pokemon").maxPP(def,row)
       a.native[i]=row
     end
     d.arrays=a;return a
@@ -49,7 +49,7 @@ function M.new(game,valid)
       if a and d.raw then
         for i,row in ipairs(a.native)do
           assert(d.raw.moves[i]==row and e.ids:read('moves',row.id)==a.moves[i],'native moves changed during source edit')
-          local def=e.data.moves[row.id];local maximum=def.pp+math.floor(def.pp/5)*(row.ppUps or 0)
+          local def=e.data.moves[row.id];local maximum=require("src.pokemon.Pokemon").maxPP(def,row)
           assert(a.maxPp[i]==maximum,'native maximum PP is read-only')
           assert(uint(a.pp[i],maximum),'invalid native PP')
           assert(a.pp[i]==a.baseline[i]or row.pp==a.baseline[i],'native PP changed during source edit')
@@ -59,7 +59,7 @@ function M.new(game,valid)
         for i,v in pairs(a.moves)do assert(a.native[i]and e.ids:read('moves',a.native[i].id)==v,'native move list is read-only')end
         for i,v in pairs(a.maxPp)do
           local row=a.native[i];local def=row and e.data.moves[row.id]
-          assert(def and v==def.pp+math.floor(def.pp/5)*(row.ppUps or 0),'native maximum PP is read-only')
+          assert(def and v==require("src.pokemon.Pokemon").maxPP(def,row),'native maximum PP is read-only')
         end
         clear[#clear+1]=d
       end

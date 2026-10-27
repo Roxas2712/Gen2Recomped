@@ -66,6 +66,7 @@ local function monSubmenu(game, action, mons, list, onAction)
           --
           Screens.push(game, "Gen3SummaryMenu", {
             mon = mon,
+            context = "box",
             party = mons,
             partyIndex = list.index,
             onMonChange = function(index) setListIndex(list, index) end,

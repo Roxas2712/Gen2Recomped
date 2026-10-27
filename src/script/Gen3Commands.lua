@@ -775,6 +775,8 @@ local startMovement
 
 local function movementSteps(rows)
   local steps = {}
+  local version = require("src.core.GameVersion").get()
+  local rs = version == "ruby" or version == "sapphire"
   local pending, count, pendingRate = nil, 0, 1.0
   local function flush()
     if pending and count > 0 then
@@ -785,6 +787,13 @@ local function movementSteps(rows)
   end
   for _, row in ipairs(rows) do
     local name = row[1]
+    -- RS 0x2D..0x30 are WALK_FASTEST, not the plain walk inferred by old
+    -- caches from their shared step helper. The original action byte is
+    -- retained in every imported row, so existing imports need no rewrite.
+    local action = tonumber(row[2])
+    if rs and action and action >= 0x2D and action <= 0x30 then
+      name = "walk_fastest_" .. ({ "down", "up", "left", "right" })[action - 0x2C]
+    end
     local kind, dir = name:match("^(.-)_(%a+)$")
     if kind and dir and DIRECTIONS4[dir] and MOVE_TILES[kind] then
       local tiles = MOVE_TILES[kind]
@@ -1385,6 +1394,7 @@ function Gen3Commands.objectInvisible(ctx, target, invisible, group, number)
   local npc = ow.npcByIndex and ow:npcByIndex(index)
   if not npc then return end
   npc.hidden = invisible or nil
+  npc.gen3Invisible = invisible or nil
 end
 
 function Commands.g3_object_invisible(ctx, target, group, number)
@@ -1483,7 +1493,10 @@ function Gen3Commands.rememberMovementType(ctx, target, movementType)
 end
 
 function Commands.g3_place_perm(ctx, target, x, y)
-  Commands.g3_place(ctx, target, x, y)
+  -- SetObjEventTemplateCoords writes the template, not the live object.
+  -- Deferred map setup runs after host objects exist, so apply that setup's
+  -- initial position as well. Ordinary/frame scripts retain the live walk.
+  if ctx.gen3MapSetup then Commands.g3_place(ctx, target, x, y)end
   rememberHome(ctx, target, tonumber(x), tonumber(y))
 end
 
@@ -1787,6 +1800,7 @@ function Commands.g3_mart(ctx, listPointer)
   local ok = pcall(function()
     require("src.ui.Gen3ShopMenu").counter(ctx.game, {
       stock = stock,
+      localId=ctx.npc and ctx.npc.def and ctx.npc.def.localId,
       onQuit = function() if runner then runner:resume() end end,
     })
   end)
@@ -2646,6 +2660,14 @@ function Commands.g3_animate_flash(ctx, level)
   local game = ctx.game
   if not game then return end
   require("src.world.Gen3Flash").animateTo(game, valueOf(ctx, level))
+  local version = require("src.core.GameVersion").get()
+  if (version == "ruby" or version == "sapphire") and ctx.runner
+     and game.save.gen3FlashRadius then
+    -- RS's native task re-enables the script after its last scanline update.
+    -- Without this wait, Dewford's following setflashradius snaps it at once.
+    ctx.runner.waitingCheck = function() return game.save.gen3FlashRadius == nil end
+    ctx.runner:yield()
+  end
 end
 
 -- setmaplayoutindex: the same place, redrawn from a different layout.
@@ -3033,6 +3055,21 @@ local function askChoices(ctx, options, opts)
            or (index and index - 1) or fallback)
   end
 
+  local RS=require('src.ui.Gen3RsChoice')
+  if RS.available(game)then
+    game.stack:push(RS.new(game,options,{
+      left=opts.left,top=opts.top,cols=opts.cols,default=opts.default,
+      ignoreB=opts.ignoreB,onAnswer=function(value)
+        if translate then
+          if value==Gen3Commands.MULTI_B_PRESSED then return pick(nil)end
+          return pick(value+1)
+        end
+        answer(value)
+      end}))
+    runner:yield()
+    return
+  end
+
   local items, widest = {}, 0
   for index, label in ipairs(options) do
     if #label > widest then widest = #label end
@@ -3063,7 +3100,7 @@ local function askChoices(ctx, options, opts)
 end
 
 
-function Commands.g3_multichoice(ctx, listId, ignoreB, default)
+function Commands.g3_multichoice(ctx, listId, ignoreB, default, layout)
   local id = tonumber(listId)
   local data = ctx.game and ctx.game.data
   local lists = data and data.constants and data.constants.gen3Multichoice
@@ -3079,7 +3116,9 @@ function Commands.g3_multichoice(ctx, listId, ignoreB, default)
     return
   end
 
-  return askChoices(ctx, options, { ignoreB = ignoreB, default = default })
+  layout=type(layout)=='table'and layout or {}
+  return askChoices(ctx, options, { ignoreB = ignoreB, default = default,
+    left=layout.left,top=layout.top,cols=layout.cols })
 end
 
 -- THE STRING BUFFERS, and the same number-for-a-name mistake three more times.
@@ -4126,6 +4165,11 @@ Gen3Commands.SPECIALS[303] = function(ctx)
     mon.moves = { { id = move, pp = (def and def.pp) or 35,
                     maxPp = (def and def.pp) or 35 } }
   end
+  local version=require('src.core.GameVersion').get()
+  if version=='ruby'or version=='sapphire'then
+    -- PutZigzagoonInPlayerParty explicitly sets MON_DATA_ALT_ABILITY.
+    mon.abilitySlot=2
+  end
   save.party = { mon }
 end
 
@@ -4435,11 +4479,8 @@ end
 -- the cartridge locks the field, runs the car across the mountain as its own
 -- scene, and takes the warp at the end of it.
 --
--- THE SCENE IS NOT HERE, and saying so is better than pretending: what this
--- does is the half that matters, which is arriving.  The ride's own art --
--- the car, the parallax mountain, the two-minute pan -- is a separate piece
--- of work, and a cable car that does not move is still a cable car you can
--- take, while one that does nothing is a wall.
+-- Ruby/Sapphire runs its native art, ride, weather and fade before arriving.
+-- Other editions retain their existing travel handler.
 Gen3Commands.SPECIALS[154] = function(ctx)
   local record = (ctx.game and ctx.game.data and ctx.game.data.constants
                   or {}).gen3CableCar
@@ -4469,6 +4510,25 @@ Gen3Commands.SPECIALS[155] = function(ctx)
     Logger.warn("gen3 cable car: the ride was asked for with no destination "
                 .. "set before it -- the car stays where it is")
     return
+  end
+  local version=require('src.core.GameVersion').get()
+  if version=='ruby'or version=='sapphire'then
+    local Car=require('src.ui.Gen3RsCableCar')
+    if Car.available(ctx.game)then
+      local game,runner,ow=ctx.game,ctx.runner,ctx.overworld
+      assert(game and game.stack and runner and ow,'Native cable car needs an active field script')
+      -- Keep the completed black scene underneath the warp transition. This
+      -- prevents a departing-station flash between the ride and arrival.
+      local scene=Car.new(game,{goingDown=getVar(ctx.save,0x8004)~=0,
+        onDone=function(release)
+          ow:startWarpTo(pending.map,pending.x,pending.y,'down',function()
+            release();runner:resume()
+          end,{fade=false})
+        end})
+      game.stack:push(require('src.render.Transition').new(game,function()game.stack:push(scene)end))
+      runner:yield()
+      return
+    end
   end
   Commands.g3_warp(ctx, pending.group, pending.number, pending.warp,
                    pending.x, pending.y)
@@ -6817,11 +6877,9 @@ end
 -- and turns on these two rocks being the only smashable rocks in the region
 -- whose hide flag is a SAVED one rather than a per-map scratch flag.
 --
--- WHAT IS NOT MODELLED, said out loud: the cartridge guards all of this with
--- FLAG_RUSTURF_TUNNEL_OPENED, and this port cannot yet name that flag.  It
--- costs nothing here, because the only way to reach this function is to smash
--- a rock, and once the tunnel is open both rocks are long gone -- there is
--- nothing left on that map to smash.
+-- The scene's shared exit identifies FLAG_RUSTURF_TUNNEL_OPENED. One rock
+-- may remain after the couple leaves; the native guard keeps breaking it
+-- from rearming the frame table and awarding HM04 a second time.
 Gen3Commands.SPECIALS[300] = function(ctx)
   setVar(ctx.save, VAR_RESULT, 0)
   local data = ctx.game and ctx.game.data
@@ -6830,6 +6888,7 @@ Gen3Commands.SPECIALS[300] = function(ctx)
   local here = ow and ow.map and ow.map.id
   if not (type(rule) == "table" and here and here == rule.map) then return 0 end
   local flags = (ctx.save and ctx.save.flags) or {}
+  if rule.openedFlag and flags[rule.openedFlag] then return 0 end
   for i, flag in ipairs(rule.rocks or {}) do
     if flags[flag] then
       setVar(ctx.save, rule.var, (rule.states or {})[i] or 0)

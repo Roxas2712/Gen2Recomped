@@ -1,6 +1,7 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Reconstruct native battle decision points from data, preserving relationships
 -- between parties, battlers, sides and field state. No controller is serialized.
+local MoveSelectionPhase = require("src.battle.MoveSelectionPhase")
 local B = {}
 -- Vanilla boot can use BattleState's built-in registry without a merged mod
 -- registry on game.data. Resolve the same native rulesets on both sides.
@@ -18,7 +19,7 @@ local function names(words)
 end
 local FIELDS = names([[
 g4fx g4PrevMove g4TrickRoomResort turnActions backWalkOff
-Abilities AllyAI AnimPlayer BattleCommands BattleState CatchTutorialDemo Catching CaughtMarker
+Abilities AllyAI AnimPlayer BattleCommands BattleQueuePhase BattleState CatchTutorialDemo Catching CaughtMarker
 Damage EffectRegistry EnemyActionContext EnemyMoveChoice Experience FieldResiduals GbaItemSchedule
 Gen2AnimPlayer Gen2BattleView Gen2Wild Gen3AI Gen3AIAttackingMoves Gen3AIItemKnowledge
 Gen3AIMoveKnowledge Gen3AIOrder Gen3AIPartyStatus Gen3AIQueries Gen3Accuracy Gen3Arena Gen3BallAnim
@@ -82,7 +83,7 @@ lowHealthAlarmOn low_health_alarm managers markMissed memento menuBattler menuIn
 menu_auxiliary mimicChoice mimicCtx mimicIndex mimicMoves mimicRestores missing mist mode mon
 monAnim monBgSide monBgTimeline monBlend monHidden monPriority monRise monScale monSpriteManager
 monSprites monToSwitchInto monWindowRect move moveAnimRow moveEvent moveId moveIndex moveSwapIndex
-move_grid_navigation move_used msgPreWait msgPrompt msgPromptWait msgWaiting musicKind mustRecharge
+move_grid_navigation move_used message messageTimer msgPreWait msgPrompt msgPromptWait msgWaiting musicKind mustRecharge
 name nextInsert nightmare noCatch noExp noItems noRun oakDemo oakMsgFlags oamGlobalTieResidual
 oamRanks oamY objIndex objects objs onDone onSound onTransform oneWay open oppClass opponentName
 opts orbit overlay p palCache palPark palace palaceLow participants particles partnerOf partyIndex
@@ -103,7 +104,7 @@ statusLabel status_hud_visible status_inflicted statuses step stepCount stepDelt
 steps stockpile style substituteHP surf switchingOut syncShownStatus t tail target targetChoices
 targetIndex targetPosition tasks tauntBlocks tauntTurns terrain textures throw timing to
 tormentBlocks tormented total toxicCounter trainerB trainerLabel trainerPicB transform transformed
-trapped trappingTurns turn turnCount turn_ended turn_order turn_started turnsOut typeSource
+trapped trappingTurns gbaWrapTurns gbaWrapMove gbaWrapSource turn turnCount turn_ended turn_order turn_started turnsOut typeSource
 unsupported uproarTurns usedItem value vars victoryMusicPlayed visible voltTackle wait waitFrames
 waitKind waitReload waitingSound waitingSoundT waitingUI wallyTutorial warned waveCanvas waveQuad
 weather what whiteout wideRegion wildFoesStanding wishHeal wishTurns wobbles wordAt work x xAccuracy
@@ -289,6 +290,8 @@ local function decode(game, graph, battle)
         -- Earlier owners read held items directly and have no separate binder.
         local itemReads = package.loaded["src.battle.HeldItemRead"]
         if type(itemReads) == "table" then itemReads.bind(t, battle) end
+        local modelReads = package.loaded['src.battle.Gen2BattleRead']
+        if type(modelReads) == 'table' then modelReads.bind(t, battle) end
       end
     end
   end
@@ -300,7 +303,7 @@ local EXCLUDED = names(
 )
 local function decision(battle)
   assert(getmetatable(battle) == require("src.battle.BattleState"), "not a native battle")
-  assert(PHASES[battle.phase], "battle is not at a player decision")
+  assert(PHASES[battle.phase] or MoveSelectionPhase.active(battle), "battle is not at a player decision")
   for key in pairs(EXCLUDED) do
     assert(not battle[key], "special battle has no qualified continuation")
   end
@@ -449,8 +452,10 @@ function B.capture(game, battle, clone)
     assert(owner and owner.descriptor.kind == "script", "world script completion is opaque")
   end
   local state = {}
+  local gen2StatusView=require('src.core.GameVersion').isGen2()
   for key in pairs(FIELDS) do
-    if not ART[key] and rawget(battle, key) ~= nil then
+    if not ART[key] and not (key=='shownStatus' and gen2StatusView)
+        and rawget(battle, key) ~= nil then
       state[key] = battle[key]
     end
   end
@@ -487,7 +492,8 @@ function B.validate(game, snapshot, save, actors)
     for key in pairs(s) do
       assert(FIELDS[key], "unknown native battle field")
     end
-    assert(PHASES[s.phase] and (s.kind == "wild" or s.kind == "trainer"), "invalid battle decision")
+    assert((PHASES[s.phase] or MoveSelectionPhase.active(s))
+      and (s.kind == "wild" or s.kind == "trainer"), "invalid battle decision")
     assert(s.player and s.enemy and s.player.mon and s.enemy.mon, "missing native battlers")
     for key in pairs(EXCLUDED) do
       assert(not s[key], "special battle state is not reconstructible")
@@ -593,13 +599,15 @@ function B.apply(game, snapshot, clone)
   local state = decode(game, snapshot.graph, battle)
   nativeRelations(game.save,state)
   state.turnActions = nativeActions(state.turnActions)
+  local gen2StatusView=require('src.core.GameVersion').isGen2()
   for key in pairs(FIELDS) do
-    if rawget(battle, key) ~= nil then
+    if not (key=='shownStatus' and gen2StatusView)
+        and rawget(battle, key) ~= nil then
       battle[key] = nil
     end
   end
   for key, v in pairs(state) do
-    battle[key] = v
+    if not (key=='shownStatus' and gen2StatusView) then battle[key] = v end
   end
   battle.ruleset = assert(rulesets(game)[snapshot.ruleset])
   battle._checkpointTrainerName = snapshot.trainerName

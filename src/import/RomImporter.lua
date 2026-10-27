@@ -1289,7 +1289,7 @@ local function markerFor(version)
   -- sequence's art (extractTradeScene, gen3_trade_art) -- without it special
   -- 257 falls back to the bare swap, so both Gen 3 caches re-import once
   -- Summary presentation v1 adds source controls, type/category sprites and PP colours.
-  if version == "emerald" then revision = "emerald-trade-scene-v3:summary-presentation-v1:" end
+  if version == "emerald" then revision = "emerald-native-boot-v1:emerald-trade-scene-v3:summary-presentation-v1:" end
   if GameVersion.isFRLG(version) then revision = version .. "-trade-scene-v1:summary-presentation-v1:" end
   if version == "polishedcrystal" then revision = "polished-stored-unown-forms-v7:" end
   if version == "prism" then revision = "prism-events-art-v2:" end
@@ -1326,12 +1326,12 @@ local function markerFor(version)
   end
   -- RS now carries its own action tables as well as field geometry. Rebuild these
   -- caches; retain the earlier 36-byte dex and item-effect corrections.
-  if version == "ruby" or version == "sapphire" then revision = "rs-item-menu-v4:" end
+  if version == "ruby" or version == "sapphire" then revision = "rs-item-menu-v4:rs-native-boot-v1:rs-native-bag-v1:rs-native-summary-v1:rs-native-party-v1:rs-native-map-v1:" end
   -- Keep original behavior IDs alongside the existing native normalization.
   -- Only GBA caches lack this additional source contract; saves are unchanged.
   if GameVersion.isGen3(version) then revision = revision .. "source-metatile-attrs-v1:source-map-views-v1:" end
   if version == "emerald" or version == "ruby" or version == "sapphire" then
-    revision = revision .. "source-behavior-flags-v1:"
+    revision = revision .. "source-behavior-flags-v1:rusturf-two-rock-pair-v3:"
   end
   if GameVersion.generation(version) == 3 then
     revision = revision .. "original-object-sheets-v" .. require("src.import.Gen3ObjectSheets").SCHEMA .. ":"
@@ -1342,7 +1342,7 @@ local function markerFor(version)
     revision = revision .. "gba-text-ir-v" .. require("src.import.Gen3TextCatalog").REVISION .. ":"
   end
   if version == 'ruby' or version == 'sapphire' then
-    revision = revision .. 'rs-transition-classes-v1:'
+    revision = revision .. 'rs-transition-classes-v1:rs-native-main-menu-v1:'
   end
   if GameVersion.generation(version)==3 then revision=revision..'gba-field-move-art-v1:'end
   if GameVersion.generation(version)==2 then
@@ -1727,7 +1727,16 @@ local function requiredFiles(version)
   end
   -- Black and White: their own list as the Gen 5 stages arrive (RomExtractorGen5)
   if gen == 5 then return require("src.import.RomExtractorGen5").REQUIRED_FILES end
-  if gen == 3 then return REQUIRED_FILES_GEN3 end
+  if gen == 3 then
+    if version=='ruby'or version=='sapphire'or version=='firered'or version=='leafgreen'then
+      local files={}
+      for _,path in ipairs(REQUIRED_FILES_GEN3)do
+        if path~='data/generated/scenes.lua'and path~='assets/generated/ui/summary_info.png'then files[#files+1]=path end
+      end
+      return files
+    end
+    return REQUIRED_FILES_GEN3
+  end
   if gen == 2 then return REQUIRED_FILES_GEN2 end
   return REQUIRED_FILES_GEN1
 end
@@ -2055,6 +2064,79 @@ function RomImporter.readyReport(version)
   -- KNOWN-ABSENT FILES ARE NOT A REASON TO RUN AGAIN. The import that wrote
   -- this marker already tried, at this cache format, against this ROM.
   local missing, gaps = {}, {}
+  if GameVersion.generation(version)==3 then
+    local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
+    local absent=require('src.import.Gen3StatGrowthAssets').missing(version)
+    CacheFs.prefix=savedPrefix
+    if #absent>0 then return{ok=false,missing=absent,why='The native level-up stat window is incomplete.'}end
+  end
+  if version=='firered'or version=='leafgreen'or version=='emerald'then
+    local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
+    local absent=require('src.import.Gen3NativeHealthboxAssets').missing(version)
+    CacheFs.prefix=savedPrefix
+    if #absent>0 then return{ok=false,missing=absent,why='The native GBA healthbox font is incomplete.'}end
+  end
+  if version=='emerald'then
+    local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
+    local nativeMissing=require('src.import.Gen3EmeraldPresentation').missing()
+    CacheFs.prefix=savedPrefix
+    if #nativeMissing>0 then
+      return {ok=false,missing=nativeMissing,why='The native Emerald presentation is incomplete.'}
+    end
+  end
+  if version=='firered'or version=='leafgreen'then
+    local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
+    local nativeMissing=require('src.import.Gen3FrlgPresentation').missing(version)
+    CacheFs.prefix=savedPrefix
+    if #nativeMissing>0 then
+      return {ok=false,missing=nativeMissing,why='The native FireRed/LeafGreen presentation is incomplete.'}
+    end
+  end
+  if version == 'ruby' or version == 'sapphire' then
+    local savedPrefix=CacheFs.prefix
+    CacheFs.prefix=GameVersion.cachePrefix(version)
+    local nativeMissing=require('src.import.Gen3RsPresentation').missing(version)
+    for _,path in ipairs(require('src.import.Gen3RsBag').missing(version)) do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsSummaryAssets').missing(version)) do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsPartyAssets').missing(version)) do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsMapData').missing(version)) do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsBirchAssets').missing(version))do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsStarterAssets').missing(version))do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsBattlePanelAssets').missing(version))do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsWallyAssets').missing(version))do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsPokenavAssets').missing(version))do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsStorageAssets').missing(version))do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsPokedexAssets').missing(version))do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsShopAssets').missing(version))do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    CacheFs.prefix=savedPrefix
+    if #nativeMissing>0 then
+      return {ok=false, missing=nativeMissing, why='The native Ruby/Sapphire presentation is incomplete.'}
+    end
+  end
   for _, path in ipairs(missingRequiredFiles(version)) do
     if absent[path] then gaps[#gaps + 1] = path else missing[#missing + 1] = path end
   end
@@ -5786,13 +5868,14 @@ function RomImporter:draw()
     if link.url==DONATE_URL then paypalLink=link
     else footerLinks[#footerLinks+1]=link end
   end
-  local retroCredits=Strings('Gen2Recomped · Created and led by UNDERdecoded (Cedric), with the Gen2Recomped contributors\nRetroRecomped fork · Fork lead, launcher, cloud & integrations: Roxas2712\nGen1Recomp foundation · bryanthaboi / BOIS CLUB GAMES & contributors')
+  local retroCredits=Strings('Gen2Recomped · Created and led by UNDERdecoded (Cedric), with the Gen2Recomped contributors\nRetroRecomped fork · Fork lead, launcher, cloud & integrations: Roxas2712\nGen1Recomp foundation · bryanthaboi / BOIS CLUB GAMES & contributors\nBased on the Pokemon Gen 1 Recompilation Project by BOIS CLUB GAMES, LLC\n(https://github.com/bryanthaboi/gen1recomp)')
   local creditH = self.hintFont:getHeight()
   if self.sidebarMode then local _,lines=self.hintFont:getWrap(retroCredits,appW-2*padH);creditH=math.max(1,#lines)*self.hintFont:getHeight() end
   local donateH = self.hintFont:getHeight() + 10 * s
   local chipsH = (#footerLinks > 0) and (8 * s + donateH) or 0
   local footerH = 10 * s + bcgDH + 6 * s + warningH + 8 * s + creditH + chipsH + 12 * s
   if self.sidebarMode then footerH=creditH+26*s end
+  footerH=footerH+2*creditH+10*s
 
   -- Logo: centred over the strip, width clamped, gentle bob + glow pulse.  The
   -- resting metrics fix the tab bar's top so the layout never shifts as it bobs.
@@ -6357,6 +6440,12 @@ function RomImporter:draw()
   end
 
   end -- Classic upstream footer. RetroRecomped keeps a compact engine credit.
+  if not self.sidebarMode then
+    love.graphics.setFont(self.hintFont)
+    col(PAL.detail,.7)
+    love.graphics.printf('Based on the Pokemon Gen 1 Recompilation Project by BOIS CLUB GAMES, LLC\n(https://github.com/bryanthaboi/gen1recomp)',
+      appX+padH,footerTop+footerH-2*creditH-6*s,appW-2*padH,'center')
+  end
 
   -- End of the scrolling column; the logo and the page scrollbar are pinned and
   -- draw outside it.
@@ -12028,5 +12117,6 @@ require("src.import.FirstRun").install(RomImporter)
 require("src.import.NativeLanguageSetup").install(RomImporter)
 
 require("src.import.LauncherPokemonXY").install(RomImporter)
+require("src.import.LauncherPinball").install(RomImporter)
 
 return RomImporter

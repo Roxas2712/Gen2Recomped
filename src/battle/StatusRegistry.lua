@@ -3,6 +3,7 @@
 -- (canInflict) and so does the landing text (onInflict), so a mod status
 -- inflicts through the same path as the vanilla five.
 
+local Gen2Read = require('src.battle.Gen2BattleRead')
 local Runtime = require("src.mods.Runtime")
 local Status = require("src.battle.Status")
 local Strings = require("src.core.Strings")
@@ -36,7 +37,7 @@ function StatusRegistry.inflict(battle, target, status, opts)
   -- paralyze Normals, Fire can't burn Fire, Ice can't freeze Ice)
   if opts.secondary and status ~= "PSN"
      and not nativeGba then
-    for _, t in ipairs(target.curTypes or {}) do
+    for _, t in ipairs(Gen2Read.types(target) or {}) do
       if opts.moveType == t then return {} end
     end
   end

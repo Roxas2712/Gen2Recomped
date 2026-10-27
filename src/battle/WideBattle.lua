@@ -11,6 +11,8 @@
 -- with their status lower right, a full-width message window, a split
 -- prompt/command window, and a 2x2 move menu with an attached PP/type panel.
 
+local BattleQueuePhase = require("src.battle.BattleQueuePhase")
+local MoveSelectionPhase = require("src.battle.MoveSelectionPhase")
 local Font = require("src.render.Font")
 local LevelDisplay = require("src.ui.LevelDisplay")
 local HudTiles = require("src.render.HudTiles")
@@ -340,7 +342,7 @@ local function drawMoveDetails(battle, move)
   if not move then return end
   local def = battle.data.moves[move.id]
   if not def then return end
-  local maxPP = def.pp + (move.ppUps or 0) * math.floor(def.pp / 5)
+  local maxPP = require("src.pokemon.Pokemon").maxPP(def, move)
   love.graphics.setColor(0, 0, 0, 1)
   Font.draw(("PP %2d/%2d"):format(move.pp or 0, maxPP), 232, 112)
   Font.draw(fitName(TypeChart.displayName(def.type), 64), 232, 128)
@@ -375,11 +377,11 @@ end
 
 local function drawTextArea(battle)
   if not UIVisibility.bottomVisible(battle, true) then return end
-  if battle.phase == "messages" and (battle.current or battle.animPlaying) then
+  if BattleQueuePhase.active(battle) and (battle.current or battle.animPlaying) then
     drawMessageBox(battle)
   elseif battle.phase == "menu" then
     drawCommandMenu(battle)
-  elseif battle.phase == "moveSelect" then
+  elseif MoveSelectionPhase.active(battle) then
     drawMoveMenu(battle)
   elseif battle.phase == "mimicSelect" then
     drawMoveGrid(battle, battle.mimicMoves, battle.mimicIndex)

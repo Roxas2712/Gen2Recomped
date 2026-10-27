@@ -61,11 +61,11 @@ local function prepare()
  opts.vsync='off';opts.textSpeed='fast';opts.musicVolume=0;opts.soundVolume=0;opts.masterVolume=0
  Game:applyOptions(opts)
  Game.save.party={}
- for _,species in ipairs({'PIKACHU','PIDGEY','RATTATA'}) do
+ for _,species in ipairs(require('src.core.GameVersion').generation()>=4 and {25,16,19} or {'PIKACHU','PIDGEY','RATTATA'}) do
   local mon=require('src.pokemon.Pokemon').new(Game.data,species,50)
   local found
   for i,m in ipairs(mon.moves) do local d=Game.data.moves[m.id];if d and (tonumber(d.power) or 0)>0 then found=i;break end end
-  assert(found,'Native damaging move: '..species)
+  assert(found,'Native damaging move: '..tostring(species))
   mon.moves[1],mon.moves[found]=mon.moves[found],mon.moves[1]
   Game.save.party[#Game.save.party+1]=mon
  end
@@ -117,6 +117,7 @@ function love.update(dt)
   return
  end
  if phase=='verify-report' then return end
+ if cfg.measureTraffic and Game then require('src.cloud.Presence').tick();require('src.cloud.Play').tick(Game) end
  for _=1,6 do
   frames=frames+1
   local top=Game.stack:top()

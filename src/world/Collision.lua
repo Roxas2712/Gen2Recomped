@@ -133,6 +133,9 @@ end
 -- "no text for Twinleaf Town/nil" came from: pressing A at the door talked to
 -- somebody who was no longer in the game.
 --
+-- Active invisible objects are still present: Route 113's buried trainers,
+-- movement-hidden Kecleon, and Gen3 hideobjectat's invisible Trick Master.
+-- removeobject removes these actors from the live lists separately.
 -- BURIED IS THE EXCEPTION AND IT IS NOT AN EDGE CASE.  Route 113's trainers
 -- are under the ash: invisible and genuinely in the way, and they rise when
 -- they spot you.  `buried` is kept precisely so "a script hid this" can be
@@ -143,7 +146,7 @@ end
 -- `passable = body.passable or body.hidden` -- so this is that rule applied
 -- where it was missing rather than a new one.
 local function entityAbsent(e)
-  return e.hidden and not e.buried
+  return e.hidden and not (e.buried or e.gen3Hidden or e.gen3Invisible)
 end
 Collision.entityAbsent = entityAbsent
 

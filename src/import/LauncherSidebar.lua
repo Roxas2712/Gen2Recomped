@@ -61,7 +61,7 @@ Sidebar.SERIES = {
 
 function Sidebar.consoleOf(version)
   if version=="x" or version=="y" then return "3ds" end
-  local info = GameVersion.info(version)
+  local info = GameVersion.info(version) or require("src.import.LauncherExternalGames").info(version)
   local gen = info and tonumber(info.generation) or 1
   if gen >= 4 then return "nds" end
   if gen == 3 then return "gba" end
@@ -93,7 +93,7 @@ Sidebar.metaText = metaText
 
 local function nameOf(v)
   if v=="x" or v=="y" then return "Pokémon "..v:upper() end
-  local info = GameVersion.info(v)
+  local info = GameVersion.info(v) or require("src.import.LauncherExternalGames").info(v)
   return info and Strings(info.displayName or info.launcherName) or tostring(v)
 end
 Sidebar.nameOf = nameOf
@@ -235,10 +235,11 @@ Sidebar.NEWS_TTL = 6 * 60 * 60
 Sidebar.NEWS_CACHE = "launcher_news.lua"
 
 local function newsUrls()
-  local repo = "UNDERdecoded/Gen2Recomped"
+  local repo = require("src.update.Repository").SLUG
   local ok, Check = pcall(require, "src.update.Check")
   if ok and Check and type(Check.REPO) == "string" then repo = Check.REPO end
   return {
+    repo = repo,
     feed = "https://raw.githubusercontent.com/" .. repo .. "/main/launcher_news.json",
     releases = "https://api.github.com/repos/" .. repo .. "/releases?per_page=6",
     page = "https://github.com/" .. repo .. "/releases",
@@ -305,12 +306,12 @@ function Sidebar.parseReleases(text)
   return out
 end
 
-local function readNewsCache()
+local function readNewsCache(repo)
   if not (love and love.filesystem) then return nil end
   local ok, chunk = pcall(love.filesystem.load, Sidebar.NEWS_CACHE)
   if not ok or not chunk then return nil end
   local okR, t = pcall(chunk)
-  return okR and type(t) == "table" and t or nil
+  return okR and type(t) == "table" and t.repo == repo and t or nil
 end
 
 local function writeNewsCache(t)
@@ -323,7 +324,8 @@ end
 -- fetch both (blocking, so it runs from update one frame after "Loading" was
 -- drawn), keep whatever answered, fall back to the cache when offline
 function Sidebar.fetchNews(force)
-  local cache = readNewsCache()
+  local urls = newsUrls()
+  local cache = readNewsCache(urls.repo)
   if not force and cache and (os.time() - (tonumber(cache.at) or 0)) < Sidebar.NEWS_TTL then
     return cache
   end
@@ -331,7 +333,6 @@ function Sidebar.fetchNews(force)
   if not (HostShell.canFetch and HostShell.canFetch()) then
     return cache or { items = {}, at = 0, offline = true }
   end
-  local urls = newsUrls()
   local items = {}
   local okF, feed = pcall(HostShell.httpGet, urls.feed, "gen2recomp-news")
   if okF and type(feed) == "string" then
@@ -342,7 +343,7 @@ function Sidebar.fetchNews(force)
     for _, it in ipairs(Sidebar.parseReleases(rel)) do items[#items + 1] = it end
   end
   if #items == 0 and cache then cache.stale = true; return cache end
-  local out = { items = items, at = os.time() }
+  local out = { items = items, at = os.time(), repo = urls.repo }
   writeNewsCache(out)
   return out
 end
@@ -761,7 +762,7 @@ function Sidebar.install(RI)
   -- a game tile: name, console, status, favourite star; returns its rect
   function RI:_sbGameTile(version, x, y, w, h)
     local s, P, g = self._s, PAL(), love.graphics
-    local info = GameVersion.info(version)
+    local info = GameVersion.info(version) or require("src.import.LauncherExternalGames").info(version)
     local locked = info == nil or (info.importable == false and not (U.unlockedByEnv and U.unlockedByEnv(version)))
     local ready = (not locked) and self.ready[version]
     local r = { x = x, y = y, width = w, height = h, version = version }
@@ -987,8 +988,11 @@ function Sidebar.install(RI)
   }
 
   function RI:_sbToolUsable(tool, version)
-    local info = GameVersion.info(version)
+    local info = GameVersion.info(version) or require("src.import.LauncherExternalGames").info(version)
     if not info then return false, "unknown game" end
+    if version == 'pinballrs' and not tool.noGame then
+      return false, 'Use the Pinball player menu for this cartridge.'
+    end
     if tool.needsReady or tool.id == "translate" or tool.id == "saveExport" then
       if not self.ready[version] then return false, Strings("import this game first") end
     end
@@ -1788,7 +1792,7 @@ function Sidebar.install(RI)
                        video = "Custom video" }
     -- only games that are imported and can actually run their menu
     for _, v in ipairs(GameVersion.ORDER) do
-      local info = GameVersion.info(v)
+      local info = GameVersion.info(v) or require("src.import.LauncherExternalGames").info(v)
       if self.ready[v] == true and info and info.importable ~= false and not Backdrop.failedFor(v) then
         bgValues[#bgValues + 1] = v; bgLabels[v] = nameOf(v)
       end

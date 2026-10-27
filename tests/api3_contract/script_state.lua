@@ -79,7 +79,7 @@ function M.run(root, backend, version)
     { "set_flag", "mod:failed" },
   }))
   f:drain()
-  assert(f.exports.result().success == true)
+  assert(f.exports.result().success == true, require("src.link.Json").encode(f.exports.result()))
   assert(f.exports.get("mod:passed") == true and f.exports.get("mod:failed") == false)
   local money, coins = f.wallet()
   local report = {

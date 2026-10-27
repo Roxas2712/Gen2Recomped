@@ -20,6 +20,10 @@ ui._mx,ui._my=x,y
 check(ui:_ptIn(r),'hover and pointer navigation agree with the header click target')
 ui:mousepressed(x,y,1)
 check(ui._accountOverlay and ui._accountOverlay.mode=='account','a real launcher click opens the signed-in native profile through every installed input wrapper')
+ui._pinOpen=true;ui._pinIndex=1;ui._pinButtons={{action=function()error('Pinball card captured account input')end}}
+ui:keypressed('down')
+check(ui._pinIndex==1,'Pinball card yields keyboard navigation to the open account workspace')
+ui._pinOpen=false
 require('src.import.AccountWorkspace').close(ui)
 r=ui._headerAvatar;ui:mousepressed(r.x+5,r.y+5,1)
 check(ui._accountOverlay and ui._accountOverlay.mode=='account','the large avatar is another pinned profile entry')

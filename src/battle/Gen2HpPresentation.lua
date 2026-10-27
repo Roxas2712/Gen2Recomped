@@ -5,6 +5,7 @@
 local Hp = {}
 local pending = setmetatable({}, {__mode='k'})
 local admissions = setmetatable({}, {__mode='k'})
+local targets = setmetatable({}, {__mode='k'})
 local function battler(screen, side)
   if side=='player' or side=='enemy' then return screen[side] end
 end
@@ -82,7 +83,14 @@ function Hp.step(screen)
   end
   screen.shownHp[anim.side]=anim.bar.hp;anim.hold=1;return true
 end
-local function goalOf(b)
+function Hp.target(screen,b,goal)
+  assert(finite(goal) and goal>=0 and goal<=b.mon.stats.hp,
+    'invalid native Gen2 displayed HP goal')
+  targets[screen]={battler=b,mon=b.mon,hp=goal}
+end
+local function goalOf(screen,b)
+  local target=targets[screen]
+  if target and target.battler==b and target.mon==b.mon then return target.hp end
   local goal=b.mon.hp
   if b.drainFloor and b.drainFloor>goal and b.shownHP>=b.drainFloor then goal=b.drainFloor end
   return goal
@@ -93,12 +101,12 @@ function Hp.drain(screen)
   for _,candidate in ipairs({'player','enemy'})do
     local b=battler(screen,candidate)
     if b and b.shownHP~=nil and (not selected or b==selected)
-       and (b.shownHP~=goalOf(b) or pending[screen] and pending[screen].battler==b)then
+       and (b.shownHP~=goalOf(screen,b) or pending[screen] and pending[screen].battler==b)then
       side=candidate;break
     end
   end
   if not side then screen.hpAnim=nil;pending[screen]=nil;return false end
-  local b=battler(screen,side);local goal=goalOf(b);local active=pending[screen]
+  local b=battler(screen,side);local goal=goalOf(screen,b);local active=pending[screen]
   if not active or active.battler~=b or active.mon~=b.mon or active.goal~=goal
      or screen.hpAnim~=active.anim then
     local anim={side=side,to=goal}
@@ -122,7 +130,7 @@ function Hp.drain(screen)
   return true
 end
 function Hp.retire(screen)
-  pending[screen],admissions[screen]=nil,nil
+  pending[screen],admissions[screen],targets[screen]=nil,nil,nil
   screen.hpAnim=nil;screen._gen2HpDrainBattler=nil
 end
 return Hp

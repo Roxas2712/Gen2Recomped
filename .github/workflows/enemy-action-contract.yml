@@ -56,6 +56,7 @@ on:
       - 'tests/substitute_art/**'
       - 'tests/tools/test_gba_substitute_art.py'
       - 'tests/tools/test_contract_observations.py'
+      - 'tests/tools/test_cartridge_secondary_oracle.py'
       - 'tools/gba_substitute_art.py'
       - 'tools/gen3_discover.py'
       - 'tools/rom_manifest_firered.json'
@@ -64,6 +65,7 @@ on:
       - 'tests/held_item/**'
       - 'tests/charge_required/**'
       - 'tools/enemy-action-contract-check/**'
+      - 'tools/qa_report_storage.py'
   push:
     branches: [main, dev]
 permissions:
@@ -126,6 +128,6 @@ jobs:
         with:
           name: enemy-action-contract-report
           path: |
-            ${{ runner.temp }}/enemy-action-report.json
+            ${{ runner.temp }}/enemy-action-report.json*
             ${{ runner.temp }}/game-audio-session-*.log
           if-no-files-found: error

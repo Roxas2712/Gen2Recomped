@@ -308,7 +308,7 @@ eq(Check.parseSums(nil, "anything"), nil, "parseSums(nil, target) returns nil wi
 -- ---------------------------------------------------------------------------
 
 eq(Check.releaseUrl(),
-   "https://github.com/UNDERdecoded/Gen2Recomped/releases/latest",
-   "releaseUrl points at the repo's latest release")
+   "https://github.com/Roxas2712/Gen2Recomped/releases",
+   "releaseUrl points at the fork channel including previews")
 
 T.finish("update")

@@ -64,6 +64,7 @@ function O.action(id)
     if id=='cancel' then O.job:cancel();O.job=nil;O.notice='Upload stopped. Your local save is kept.';Sync.set('cancelled',O.retry and O.retry.version,O.retry and O.retry.slot) end
     return
   end
+  if (id=='centerLobby'or O.page=='centerLobby')and require('src.ui.CenterLobby').action(O,id)then return end
   if (id=='friends' or O.page=='friends') and require('src.ui.FriendsMenu').action(O,id) then return end
   if id=='retryCloud' and O.retry then transfer(O.retry.version,O.retry.slot);return end
   if id=='resume' then O.close();return end
@@ -161,6 +162,7 @@ end
 local function actions()
   if O.job then return {{id='cancel',label='Cancel upload'}} end
   if O.confirm then return {{id='library',label='Save & open library'},{id='cancel',label='Stay in this game'}} end
+  if O.page=='centerLobby'then return require('src.ui.CenterLobby').rows(O)end
   if O.page=='friends' then return require('src.ui.FriendsMenu').rows(O) end
   if O.page=='options' then
     local rows={}
@@ -172,12 +174,14 @@ local function actions()
   end
   if O.page=='home' then
     local opts=O.game.save.options or {}
-    return {{id='resume',label='Continue playing',note='Return to your adventure'},
+    local rows={{id='resume',label='Continue playing',note='Return to your adventure'},
       {id='friends',label='FRIENDS',note='Online friends · Meet on maps · Trade · Unranked battles'},
       {id='saves',label='SAVES & CLOUD',note='Save progress · Export .sav · Change game',large=true},
       {id='speed',minus='slower',label='Game speed',value=Speed.levelLabel(opts.speed)},
       {id='mute',label='Game audio',value=opts.audioMuted and 'MUTED' or 'ON'},
       {id='options',label='All game settings',note='Picture · Sound · Controls · Mod options'}}
+    if require('src.ui.CenterLobby').center(O.game)then table.insert(rows,2,{id='centerLobby',label='POKÉMON CENTER · LINK LOBBY',note='Ready friends · Find players · Nearby WLAN'})end
+    return rows
   end
   local rows={{id='save',label='Save game progress'},
     {id='suspend',label='Save portable suspend · Beta',note='Gen 1–3 · Mods need a portable suspend adapter · Includes the running battle'},

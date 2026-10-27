@@ -145,13 +145,15 @@ local POCKET_KEYS = { "ITEM", "BALL", "TM_HM", "BERRY", "KEY_ITEM" }
 -- ...AND IT ASKS FOR THE WIDE SURFACE, like the title and the main menu, so
 -- the margins belong to this screen rather than to whatever is behind it.
 function Gen3BagMenu:uiSize()
+  if self.rs then return 240,160 end
   return gen3Wide().uiSize()
 end
 function Gen3BagMenu:wantsFillScale() return true end
+function Gen3BagMenu:wantsEdgeBleed() return not self.rs end
 
 function Gen3BagMenu:sgbPalettes()
   local P = require("src.render.PaletteFX")
-  local w = select(1, gen3Wide().uiSize())
+  local w = self.rs and 240 or select(1, gen3Wide().uiSize())
   return { P.trueColorZone(0, 0, math.ceil(w / 8) - 1,
                            math.ceil(GBA_H / 8) - 1) }
 end
@@ -188,6 +190,7 @@ function Gen3BagMenu.new(game, opts)
   local self = setmetatable({}, Gen3BagMenu)
   self.game = game
   self.onCancel = opts.onCancel
+  self.onSell = opts.onSell
   -- opened mid-battle: the pick USES the item there and then, against the
   -- fight, rather than opening the field item flow (see choose())
   self.battle = opts.battle
@@ -290,6 +293,9 @@ function Gen3BagMenu.new(game, opts)
   self.scriptRows = opts.rows
   self.script = opts.script
   self.noInput = opts.noInput and true or false
+  self.rsTutorial = opts.rsTutorial and true or false
+  self.rs = not self.pcList and (not self.scriptRows or opts.rsTutorial)
+    and require('src.ui.Gen3RsBagView').available(game)
   self:rebuild()
   return self
 end
@@ -334,6 +340,7 @@ function Gen3BagMenu:drawContentFrame(b, frameIndex)
 end
 
 function Gen3BagMenu:listRows()
+  if self.rs then return 8 end
   local r = self:screen()
   local n = math.floor(tonumber(r.list and r.list.rows) or FALLBACK.list.rows)
   return math.max(1, n)
@@ -378,7 +385,12 @@ function Gen3BagMenu:rebuild()
   end
   local want = self.pockets[self.pocket].key
   local rows = {}
-  for _, id in ipairs(Bag.order(game.save)) do
+  local nativeRows=self.rs and require('src.inventory.Gen3RsInventory').rows(game.save,game.data,want)
+  local ordered={}
+  if nativeRows then
+    for i,row in ipairs(nativeRows)do ordered[i]=row.id end
+  else ordered=Bag.order(game.save)end
+  for i, id in ipairs(ordered) do
     local def = game.data.items and game.data.items[id]
     if pocketOf(def, id) == want then
       rows[#rows + 1] = {
@@ -389,7 +401,8 @@ function Gen3BagMenu:rebuild()
         -- and what Bag.add and Bag.remove write -- so every quantity read
         -- here came back nil and Emerald's bag showed no "x3" against
         -- anything at all.
-        qty = (game.save.inventory or {})[id],
+        qty = nativeRows and nativeRows[i].qty or (game.save.inventory or {})[id],
+        rsSlot = nativeRows and nativeRows[i].slot,
         important = def and (tonumber(def.importance) or 0) ~= 0
           or want == "KEY_ITEM" or nil,
         description = def and (def.description or def.desc),
@@ -575,6 +588,10 @@ end
 
 -- DEPOSIT: the bag's list, the bag's words, the PC's store.
 function Gen3BagMenu:depositItem(id)
+  if self.rs and self.rsPcTransaction then
+    self.rsView=self.rsView or require('src.ui.Gen3RsBagView').new(self)
+    return self.rsView:beginDeposit(id)
+  end
   local game = self.game
   if Gen3BagMenu.isImportant(game, id) then
     Sound.play(game.data, "Press_AB")
@@ -656,6 +673,7 @@ function Gen3BagMenu:choose()
   -- ...and a bag opened AT A COUNTER sells what is picked and stays open, the
   -- way the cartridge's shop flag makes it
   if self.sell then
+    if self.onSell then return self.onSell(row.id,self)end
     return require("src.ui.Gen3ShopMenu").sellItem(self.game, row.id, {
       say = function(text) self:say(text) end,
       refresh = function() self:rebuild() end,
@@ -665,7 +683,7 @@ function Gen3BagMenu:choose()
   -- does not offer to use or toss what was picked
   if self.pick then
     self.game.stack:pop()
-    if self.onPick then self.onPick(row.id) end
+    if self.onPick then self.onPick(row.id,row.rsSlot) end
     return
   end
   -- IN BATTLE there is no USE/TOSS question -- the cartridge does not offer
@@ -716,6 +734,7 @@ function Gen3BagMenu:choose()
   self.game.stack:push(Gen3ItemMenu.new(self.game, {
     entries = entries.entries,
     columns = entries.columns,
+    rsBag = self.rs and self or nil,
     onPick = function(kind) self:act(kind, row.id) end,
   }))
 end
@@ -783,6 +802,7 @@ function Gen3BagMenu:act(kind, id)
   local game = self.game
   local BagMenu = require("src.ui.BagMenu")
   if kind == "use" then
+    if require('src.ui.Gen3RsMailFlow').check(self,id)then return end
     local ok, err = pcall(BagMenu.useItem, game, nil, id, self)
     if not ok then
       Logger.warn("gen3 bag: %s could not be used: %s", tostring(id),
@@ -791,8 +811,10 @@ function Gen3BagMenu:act(kind, id)
     return
   end
   if kind == "give" then
+    if require('src.ui.Gen3RsMailFlow').giveFromBag(self,id)then return end
+    local row=self:selected()
     local ok, err = pcall(BagMenu.giveItem, game, id,
-                          function() self:rebuild() end)
+                          function() self:rebuild() end, {bagSlot=row and row.rsSlot})
     if not ok then
       Logger.warn("gen3 bag: %s could not be given: %s", tostring(id),
                   tostring(err))
@@ -814,6 +836,10 @@ function Gen3BagMenu:act(kind, id)
     return self:toss(id)
   end
   if kind == "checkTag" then
+    local Native=require('src.ui.Gen3RsBerryTag')
+    if Native.available(game)then
+      game.stack:push(Native.new(game,self,id));return
+    end
     -- the BERRY TAG screen is not built yet; the cartridge's own list still
     -- offers it, because hiding an action the cartridge shows would move
     -- everything under it
@@ -827,6 +853,11 @@ end
 -- TOSS: how many, then the cartridge's own question, then its own answer.
 function Gen3BagMenu:toss(id)
   local game = self.game
+  if self.rs and require('src.import.Gen3RsBag').tossReady(game.data.constants.gen3RsBag,
+    require('src.core.GameVersion').get())then
+    self.rsView=self.rsView or require('src.ui.Gen3RsBagView').new(self)
+    return self.rsView:beginToss(id)
+  end
   local def = game.data.items and game.data.items[id]
   local name = (def and def.name) or id
   local QuantityBox = require("src.ui.QuantityBox")
@@ -871,6 +902,7 @@ function Gen3BagMenu:update(dt)
     end
     return
   end
+  if self.rs then return require('src.ui.Gen3RsBagInput').update(self,input) end
   if input:wasPressed("down") then self:moveCursor(1)
   elseif input:wasPressed("up") then self:moveCursor(-1)
   elseif input:wasPressed("right") then self:movePocket(1)
@@ -1045,6 +1077,10 @@ function Gen3BagMenu:itemIcon(id, forcedIndex)
 end
 
 function Gen3BagMenu:draw()
+  if self.rs then
+    self.rsView = self.rsView or require('src.ui.Gen3RsBagView').new(self)
+    return self.rsView:draw()
+  end
   local inset = self.frlg and 0 or math.max(0, math.floor((ROW_PITCH - Font.glyphHeight()) / 2))
   local r = self:screen()
 

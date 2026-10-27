@@ -893,6 +893,11 @@
   ],
   "symbolSource": "Matching pret ELF symbols verified byte-for-byte against the supplied cartridges; tools/gen3_sibling_manifest.py",
   "symbols": {
+    "sBattleTerrainTable": 2420240,
+    "gMenuMessageWindow_Gfx": 4321284,
+    "gSignpostWindow_Gfx": 4654056,
+    "gStdTextWindow_Gfx": 4657960,
+    "gTextWindowPalettes": 4658888,
     "CalculateChecksum": 893308,
     "GetSubstruct": 260434,
     "SetWarpDestination": 349068,
@@ -2291,7 +2296,13 @@
         "COLS": 4,
         "ROWS": 2
       },
-      "STREAK_Y": 3930640
+      "STREAK_Y": 3930640,
+      "SLASH": {
+        "GFX": 3929652,
+        "PAL": 3929956,
+        "COLS": 8,
+        "ROWS": 8
+      }
     },
     "FRLG_CREDITS": {
       "TITLE": 4313044,
@@ -2993,6 +3004,23 @@
       "PAL_BANK": 13,
       "TABLE": 4450340,
       "COUNT": 28
+    },
+    "FRLG_MAIN_MENU": {
+      "TEXT": {
+        "continue": 4282547,
+        "newGame": 4282538,
+        "player": 4306193,
+        "time": 4306200,
+        "pokedex": 4306207,
+        "badges": 4306216
+      },
+      "ARROWS": {
+        "GFX": 4599112,
+        "PAL": 4599080,
+        "COLS": 2,
+        "ROWS": 2
+      },
+      "BOUNCE": 4598908
     }
   },
   "pocketEnum": [

@@ -73,6 +73,8 @@ function Bag.gen4Pockets(data)
 end
 function Bag.stackLimit(id,data)
  data=data or require('src.core.Data')
+ local native=require('src.inventory.Gen3RsInventory').stackLimit(data,id)
+ if native then return native end
  if Bag.gen4Pockets(data) and pocketOf(id,data)~='TM_HM' then return 999 end
  return 99
 end
@@ -95,6 +97,9 @@ end
 
 -- Count slots used by a specific Gen2 pocket.
 function Bag.pocketSlots(save, pocket, data)
+  data=data or require('src.core.Data')
+  local rows=require('src.inventory.Gen3RsInventory').rows(save,data,pocket)
+  if rows then return #rows end
   local n = 0
   for id in pairs(save.inventory) do
     if not isBadge(id) and pocketOf(id, data) == pocket then
@@ -169,6 +174,8 @@ function Bag.add(save, id, qty, data)
   -- "everything is an ITEM", which would count a Poke Ball against the item
   -- pocket's thirty
   data = data or require("src.core.Data")
+  local handled,ok=require('src.inventory.Gen3RsInventory').add(save,data,id,qty or 1)
+  if handled then return ok end
   local inv = save.inventory
   -- INSIDE THE BATTLE PYRAMID the bag is its own ten slots, no pockets
   -- (AddPyramidBagItem; see Gen3BattlePyramid.syncBag)
@@ -278,7 +285,10 @@ function Bag.repairFireRedTMCase(save, data)
 end
 
 -- Remove qty (default 1); clears the slot and its order entry at zero.
-function Bag.remove(save, id, qty)
+function Bag.remove(save, id, qty, data, selection)
+  data=data or require('src.core.Data')
+  local handled,ok=require('src.inventory.Gen3RsInventory').remove(save,data,id,qty or 1,selection)
+  if handled then return ok end
   local inv = save.inventory
   inv[id] = (inv[id] or 0) - (qty or 1)
   if inv[id] <= 0 then
@@ -305,13 +315,28 @@ local function heldItemForm(mon, data)
   end)
 end
 
-function Bag.giveHeld(save, mon, id, data)
+local function rsMail(data,id)
+  local spec=data and data.constants and data.constants.gen3RsBag
+  local d=data and data.items and data.items[id]
+  return type(spec)=='table'and spec.format==1 and(spec.version=='ruby'or spec.version=='sapphire')
+    and d and type(d.index)=='number'and d.index>=121 and d.index<=132
+end
+function Bag.giveHeld(save, mon, id, data, selection)
   if require("src.core.GameVersion").isGen2() and require("src.pokemon.Gen2Mail").monHoldsMail(mon) then
     return nil,"mail"
   end
+  data=data or require('src.core.Data')
+  -- RS stationery must go through the composer; replacing an authored held
+  -- letter needs the explicit mailbox/discard flow, never a bare item swap.
+  if rsMail(data,id)or rsMail(data,mon.item)then return false end
+  local handled,ok,previous=require('src.inventory.Gen3RsInventory').giveHeld(save,data,mon,id,selection)
+  if handled then
+    if not ok then return false end
+    return previous
+  end
   local previous = mon.item
   mon.item = id
-  Bag.remove(save, id, 1)
+  Bag.remove(save, id, 1, data)
   if previous then Bag.add(save, previous, 1, data) end
   heldItemForm(mon, data)
   return previous
@@ -320,13 +345,28 @@ end
 -- TakeItem: nil when the mon holds nothing, or nil + "full" when the pack has
 -- no room for it (the mon keeps holding it).
 function Bag.takeHeld(save, mon, data)
+  data=data or require('src.core.Data')
   if require("src.core.GameVersion").isGen2() and require("src.pokemon.Gen2Mail").monHoldsMail(mon) then
     return nil,"mail"
   end
   local id = mon.item
   if not id then return nil end
+  local legacyMail=rsMail(data,id)
+  if legacyMail then
+    local pool=save.gen3RsMail
+    -- Older host GIVE attached stationery without ever authoring a letter.
+    -- An explicit TAKE may recover that item, but never discard an existing
+    -- record or reinterpret a malformed/foreign mail pool.
+    if pool~=nil then
+      if type(pool)~='table'or pool.format~=1 or pool.version~=data.constants.gen3RsBag.version
+        or type(pool.records)~='table'then return nil,'mail'end
+      local slot=tonumber(mon.mail)
+      if slot and slot~=255 and pool.records[slot+1]~=nil then return nil,'mail'end
+    elseif mon.mail~=nil and mon.mail~=255 then return nil,'mail'end
+  end
   if not Bag.add(save, id, 1, data) then return nil, "full" end
   mon.item = nil
+  if legacyMail then mon.mail=nil;mon.heldItem=nil end
   heldItemForm(mon, data)
   return id
 end

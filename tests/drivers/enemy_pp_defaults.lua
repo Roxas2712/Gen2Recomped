@@ -68,7 +68,7 @@ return function(game)
   for turn = 1, 3 do
     local beforeHP = b.player.mon.hp
     U.tap(game, "a")
-    assert(b.phase == "moveSelect", "native FIGHT input did not open move selection")
+    assert(b.phase == "moveSelect" or b.phase == "moves", "native FIGHT input did not open move selection")
     U.tap(game, "a")
     for _ = 1, 1800 do
       if b.phase == "menu" then

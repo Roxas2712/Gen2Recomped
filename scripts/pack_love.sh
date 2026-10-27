@@ -111,6 +111,7 @@ CONTENT=(
   main.lua
   conf.lua
   src
+  compat
   data
   assets
   mods
@@ -244,6 +245,7 @@ find "$STAGE" -type f \( \
 # build log ("skipping absent mods") and no other sign at all, which is how
 # that lasted.  A contract entry turns it into a failed build.
 for required in main.lua conf.lua src/core/Version.lua \
+                compat/gen1-rs/Loader.lua compat/gen1-frlg/Loader.lua \
                 tools/save-editor/App.lua tools/save-editor/Kit.lua \
                 tools/save-editor/panels/Party.lua \
                 tools/map-editor/MapEdits.lua \

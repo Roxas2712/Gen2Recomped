@@ -16,7 +16,8 @@ local function job(self,purpose,fn)
   inputMode(f,nil)
 end
 local function friends()
- local doc,why=require('src.cloud.Play').request('POST','presence',{available=false})
+ local Play=require('src.cloud.Play')
+ local doc,why=Play.request('POST','presence',Play.context(nil))
  if doc and A.request then local prefs=A.request('GET','/play/preferences',nil,true);doc.playPreferences=prefs and prefs.preferences end
  return doc,why
 end
@@ -86,6 +87,7 @@ local function connected(self,f)
 end
 function W.action(self,id)
   local f=self._accountOverlay;if not f then return end
+  if self._pinFriends and self._pinFriends:action(id)then return end
   if id=='local' and not (Auth.accountId and Auth.accountId()) then
     local settings=require('src.core.SaveData').loadOptions()
     settings.launcherSaveStorageChoice='local';settings.cloudAutoSync=false
@@ -426,6 +428,13 @@ function W.draw(self)
     end
   elseif f.mode=='friends' then
     paragraph('FRIENDS & REQUESTS',true)
+    if self._pinFriends then
+      for _,entry in ipairs(self._pinFriends:rows())do
+        if entry.id=='noop'then paragraph(entry.label)else row(entry.label,entry.id)end
+        if entry.note then paragraph(entry.note)end
+      end
+      if self._pinFriends.notice then paragraph(self._pinFriends.notice)end
+    end
     local prefs=(f.social or {}).playPreferences or {}
     row(L('FRIEND CHAT · ')..(prefs.chat_enabled==false and'OFF'or'ON'),'allPlayChat')
     row(L('INCOMING GAME INVITATIONS · ')..(prefs.requests_enabled==false and 'OFF' or 'ON'),'allPlayRequests')
@@ -441,6 +450,12 @@ function W.draw(self)
     paragraph(L('FRIENDS')..' · '..#(social.friends or {}),true)
     for _,peer in ipairs(social.friends or {}) do
       paragraph(Role.label(peer.friend_tag or peer.nickname,peer)..(not fresh and L(' · STATUS UNAVAILABLE') or peer.online and (peer.status=='away' and L(' · AWAY') or L(' · ONLINE')) or L(' · OFFLINE')))
+      if self._pinFriends then
+        for _,entry in ipairs(self._pinFriends:rows(peer))do
+          if entry.id=='noop'then paragraph(entry.label)else row(entry.label,entry.id)end
+          if entry.note then paragraph(entry.note)end
+        end
+      end
       local pref={};for _,v in ipairs(prefs.friends or {}) do if tostring(v.account_id)==tostring(peer.account_id) then pref=v;break end end
       row(L('INVITATIONS FROM THIS FRIEND · ')..(pref.requests_enabled==false and 'OFF' or 'ON'),'playPref:requests:'..peer.account_id)
       row(L('MAP VISIBILITY WITH THIS FRIEND · ')..(pref.visible==false and 'OFF' or 'ON'),'playPref:visible:'..peer.account_id)
@@ -515,6 +530,13 @@ function W.draw(self)
     row('CONFIRM ACTION','moderationConfirm');row('CANCEL','moderationCancel')
   elseif f.mode=='inbox' then
     local doc=require('src.cloud.Presence').read() or f.social or {}
+    if self._pinFriends then
+      for _,entry in ipairs(self._pinFriends:rows())do
+        if entry.id=='noop'then paragraph(entry.label)else row(entry.label,entry.id)end
+        if entry.note then paragraph(entry.note)end
+      end
+      if self._pinFriends.notice then paragraph(self._pinFriends.notice)end
+    end
     paragraph('INBOX · FRIEND REQUESTS',true)
     for _,peer in ipairs(doc.incoming or {})do paragraph(Role.label(peer.friend_tag or peer.nickname,peer),true);row('ACCEPT REQUEST','friendAccept:'..peer.account_id);row('DECLINE REQUEST','friendRemove:'..peer.account_id)end
     if #(doc.incoming or {})==0 then paragraph('No pending friend requests.')end
