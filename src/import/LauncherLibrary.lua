@@ -18,6 +18,7 @@ local EDITIONS = {
   soulsilver = {{173,195,220}, 'SOUL SILVER'}, black = {{159,165,186}, 'BLACK'},
   white = {{223,221,211}, 'WHITE'},
   x = {{93,181,255}, 'X'}, y = {{245,107,139}, 'Y'},
+  pinballrs = {{221,111,143}, 'PINBALL R/S'},
 }
 local CARD_ACCENTS = {
   platinum={{213,222,237},{234,108,100}},
@@ -214,7 +215,7 @@ function Library.install(RI)
     end
     if not compact and h > 470*s then
       local n,total=0,0
-      for _,v in ipairs(require('src.import.LauncherPokemonXY').versions()) do total=total+1;if self.ready[v] then n=n+1 end end
+      for _,v in ipairs(require('src.import.LauncherExternalGames').versions()) do total=total+1;if self.ready[v] then n=n+1 end end
       for _,v in ipairs(Versions.ORDER) do total=total+1; if self.ready[v] then n=n+1 end end
       local by=y+h-52*s
       col(P.link); g.circle('fill',x+25*s,by+8*s,3*s)
@@ -286,7 +287,7 @@ function Library.install(RI)
   function RI:_sbGameTile(version,x,y,w,h)
     if h < 190 * self._s then return originalTile(self,version,x,y,w,h) end
     local s,P,g=self._s,palette(),love.graphics
-    local info=Versions.info(version) or require("src.import.LauncherPokemonXY").info(version)
+    local info=Versions.info(version) or require("src.import.LauncherExternalGames").info(version)
     local locked=not info or (info.importable==false and not (U.unlockedByEnv and U.unlockedByEnv(version)))
     local ready=not locked and self.ready[version]
     local accent=Library.edition(version)
@@ -406,7 +407,7 @@ function Library.install(RI)
           require('src.import.LauncherHardware').symbol(self,c.id,cx+cw-35*s,cy+35*s,iconH)
         end
         local n,total=0,0
-        for _,v in ipairs(require('src.import.LauncherPokemonXY').versions(c.id or nil)) do total=total+1;if self.ready[v] then n=n+1 end end
+        for _,v in ipairs(require('src.import.LauncherExternalGames').versions(c.id or nil)) do total=total+1;if self.ready[v] then n=n+1 end end
         for _,v in ipairs(Sidebar.gamesFor(c.id or nil)) do total=total+1;if self.ready[v] then n=n+1 end end
         text(self,self.warningFont,Strings('%d / %d ready',n,total),cx+14*s,cy+40*s,cw-(c.id and 70 or 28)*s,P.warning)
         self._sb.consoles[#self._sb.consoles+1]=r
@@ -440,7 +441,7 @@ function Library.install(RI)
       list={}
       local opts=self:_settings()
       local entries=Sidebar.gamesFor(self.libraryConsole or nil)
-      for _,v in ipairs(require('src.import.LauncherPokemonXY').versions(self.libraryConsole or nil)) do entries[#entries+1]=v end
+      for _,v in ipairs(require('src.import.LauncherExternalGames').versions(self.libraryConsole or nil)) do entries[#entries+1]=v end
       for group=1,3 do
         for _,v in ipairs(entries) do
           local fav=Sidebar.isFavorite(opts,v)
@@ -453,7 +454,7 @@ function Library.install(RI)
       end
     else
       list=Sidebar.gamesFor(self.browseConsole,self.browseSeries)
-      for _,v in ipairs(require('src.import.LauncherPokemonXY').versions(self.browseConsole,self.browseSeries)) do list[#list+1]=v end
+      for _,v in ipairs(require('src.import.LauncherExternalGames').versions(self.browseConsole,self.browseSeries)) do list[#list+1]=v end
     end
     if #list==0 then
       text(self,self.stateFont,Strings('No cartridges in this view.'),x,y,w,P.detail)

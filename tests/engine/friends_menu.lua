@@ -21,5 +21,10 @@ F.action(O,'pref:visible:2');F.tick(O);check(sent[3].friend_id==2 and sent[3].vi
 F.action(O,'declineLink:22222222-2222-4222-8222-222222222222');F.tick(O);check(sent[3].accept==false,'decline cannot accidentally accept an incoming request')
 F.action(O,'friendTag');F.text(O,'Jörg');F.key(O,'backspace');F.key(O,'return');check(O.friendQuery=='Jör','friend search preserves Unicode while editing')
 O.socialJob={cancel=function()Cancelled=true end};F.clear(O);check(Cancelled and not O.friendFocus,'closing owns and cancels pending UI work and text input')
+doc.invites[1].mode='pinball';doc.invites[1].edition='pinballrs'
+doc.friends[1].playing[1].edition='pinballrs';O.friendTarget='2'
+found={};for _,r in ipairs(F.rows(O))do found[r.id]=r end
+check(not found['acceptLink:22222222-2222-4222-8222-222222222222'],'RPG menu cannot accept Pinball as a trade or battle')
+check(not found['invite:battle:11111111-1111-4111-8111-111111111111']and not found['invite:trade:11111111-1111-4111-8111-111111111111'],'Pinball device never offers RPG battle or trade actions')
 signed=false;rows=F.rows(O);check(#rows==2 and rows[2].id=='library','guests keep local play and receive a clear optional sign-in entry')
 print('Native friends menu: '..n..' checks passed')
