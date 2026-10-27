@@ -5,6 +5,7 @@ package.path=root..'/?.lua;'..root..'/?/init.lua;'..package.path
 function love.errorhandler(err)print(debug.traceback(tostring(err),2));return function()return 1 end end
 local function read(path)local f=assert(io.open(path,'rb'));local s=f:read('*a');f:close();return s end
 function love.load()
+ assert(love.graphics==nil,'windowless cartridge fixture must not initialize graphics')
  local J=require('src.link.Json');local V=require('src.core.GameVersion')
  local X=require('src.import.RomExtractorGen3');local C=require('src.import.Gen3TextCatalog')
  local inputs=J.decode(read(assert(os.getenv('NATIVE_TEXT_INPUTS'))))
@@ -16,6 +17,7 @@ function love.load()
   local x=X.new(raw,V.info(),manifest)
   local catalog,count=C.extract(x,{})
   assert(catalog,count);assert(count>1000,'named cartridge catalogue is unexpectedly incomplete')
+  assert(catalog.battle and catalog.battle.count>=351,'native battle table is absent')
   local records,controls,placeholders=0,0,0
   for id,row in pairs(catalog.records)do
    records=records+1
@@ -39,9 +41,13 @@ function love.load()
   end
   assert(sample,'no native battle vocabulary found')
   assert(Text.has(sample));assert(type(Text.plain(sample))=='string')
+  local BattleText=require('src.core.game3.battle.battle_text')
+  assert(BattleText.has(13),'native EXP template was not indexed')
+  local expanded=BattleText.get(13,{buff1='QA_MON',buff2='QA_BOOST',buff3=123})
+  assert(expanded:find('QA_MON',1,true)and expanded:find('QA_BOOST',1,true)and expanded:find('123',1,true),'battle buffer namespace was confused with field placeholders')
   local nodes=Text.ir(sample);assert(nodes[#nodes].t=='eos')
   result.editions[edition]={sha1=catalog.romSha1,labels=count,records=records,
-   controls=controls,placeholders=placeholders,cacheBytes=#encoded,roundTrip=true,sample=sample}
+   battle=catalog.battle,battleExpansion=true,controls=controls,placeholders=placeholders,cacheBytes=#encoded,roundTrip=true,sample=sample}
   local Parts=require('src.import.Gen3SummaryParts')
   local spec=manifest.summaryPresentation or Parts.ROMS[Parts.romKey(x.rom)]
   local summary={nativeProfile=spec~=nil,paletteAvailable=false}

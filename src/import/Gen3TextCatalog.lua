@@ -1,7 +1,7 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Bind existing address metadata to verified cartridge bytes. The cache owns
 -- decoded text and layout operands; no private decoder or ROM is distributed.
-local M={SCHEMA=1,REVISION=2}
+local M={SCHEMA=1,REVISION=3}
 function M.bind(extractor,text,addresses)
  local rows={schema=M.SCHEMA,named={},records={}}
  local count=0
@@ -40,6 +40,8 @@ function M.extract(extractor,text)
  local addresses=require('src.import.gba.text_labels.'..edition)
  local rows,count=M.bind(extractor,text,addresses)
  rows.edition=edition;rows.romSha1=digest
- return rows,count
+ local ok,battleCount=require('src.import.Gen3BattleTextCatalog').append(extractor,text,rows)
+ if not ok then return nil,battleCount end
+ return rows,count+battleCount
 end
 return M

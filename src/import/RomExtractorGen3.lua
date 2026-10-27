@@ -478,17 +478,20 @@ function RomExtractorGen3:readText(off, maxBytes, spacers, structured)
       if ir then
         local args = {}
         for n=1,operands do args[n]=self.rom:u8(off+i+1+n) end
-        node({t='ext',cmd=cmd,args=args})
+        node({t='ext',cmd=cmd,args=args,literal=cmd==12 and
+          (map[args[1]]or require('src.import.Gen3TextGlyphs').literal(args[1]))or nil})
       end
       if cmd == 0x0C then
         -- ESCAPE: the operand is a literal byte, control code or not
-        out[#out + 1] = map[self.rom:u8(off + i + 2)] or ""
+        local escaped=self.rom:u8(off+i+2)
+        out[#out + 1] = map[escaped]or ir and require('src.import.Gen3TextGlyphs').literal(escaped)or ""
       elseif spacers and spacers[cmd] then
         out[#out + 1] = spacers[cmd]
       end
       i = i + 2 + operands
     else
       local glyph = map[b]
+      if glyph==nil and ir then glyph=require('src.import.Gen3TextGlyphs').literal(b)end
       if glyph == nil then return nil end
       out[#out + 1] = glyph
       if ir then pending[#pending + 1] = glyph end
