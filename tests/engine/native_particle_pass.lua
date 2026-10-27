@@ -12,7 +12,7 @@ local Sprites=require('src.core.game3.battle.anim_sprites')
 local image,draw=Assets.image,love.graphics.draw
 local original=package.loaded['src.core.Game']
 T.eq(A.drawParticles(0,999),false)
-T.raises(function()A.drawParticles(0/0,99)end,'finite')
+T.raises(function()A.drawParticles(0/0,99)end,'finite','invalid particle bands are rejected')
 T.eq(A.drawParticles(200,0),false)
 for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  local f=require('tools.battle-source-runtime.fixture').new(edition);local game=f.game
@@ -24,6 +24,7 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   events[#events+1]={sheet=tag,at=0,explicitLife=32,target=true,priority=priority,subpriority=sub,x=0,y=0}
  end
  game.data.constants.gen3BattleAnimGfx=gfx
+ game.data.constants.gen3BattlerCoords={singles={{x=72,y=80},{x=176,y=40},{x=48,y=40},{x=112,y=80}},doubles={{x=32,y=80},{x=200,y=40},{x=90,y=88},{x=152,y=32}}}
  game.data.moves.MOVE_033.anim={duration=40,events=events}
  local b=f.fresh('TACKLE').battle;b.enter=false;b:syncSides();game.stack:push(b);b.phase='menu'
  local monImage=love.graphics.newCanvas(64,64)
@@ -40,7 +41,7 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  b.drawPicsLayer=function(_,_,_,_,side)table.insert(trace,side)end
  local frame,scriptFrame=b.frame,anim.frame;local hp=b.enemy.mon.hp;local queue=#b.queue
  local rolls=0;b.rng=function()rolls=rolls+1;return 1 end
- T.eq(Native.drawMoveOamObjects(b,0,0,0),true)
+ local composed,residual=Native.drawMoveOamObjects(b,0,0,0);T.eq(composed,true,'native compositor: '..tostring(residual))
  T.same(trace,{'rear','back','enemy','middle','player','front','near'},'native hardware painter establishes the order')
  local expected=trace;trace={}
  local descriptors=anim.oamEventDescriptors;local samples=0
@@ -60,7 +61,7 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  T.same(trace,{'rear','back','enemy','custom-middle','player','front','near'},'source particle decorators keep the native event slot')
  local canvas=love.graphics.newCanvas(80,80);love.graphics.setCanvas(canvas)
  middle.customDraw=function()love.graphics.push('all');love.graphics.setCanvas(monImage);error('native particle decorator failure')end
- T.raises(function()A.drawParticles(101,199)end,'native particle decorator failure')
+ T.raises(function()A.drawParticles(101,199)end,'native particle decorator failure','decorator errors remain visible')
  T.eq(love.graphics.getCanvas(),canvas,'failed decorators restore the caller target');middle.customDraw=nil
  local save=game.save
  middle.customDraw=function()game.save={};return true end
