@@ -142,12 +142,14 @@ for _,version in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   if supported then T.eq(model:battleStat(model.player,'attack'),source,'Transform uses actual native volatile stat')end
   T.eq(model.player.stats,game.save.party[2].stats,'Transform does not replace saved stats')
   model.player._probeTransient=true
-  b.result='run'
+  b.result=({gold='ended',silver='hostWin',crystal='guestWin',prism='draw',polishedcrystal='run'})[version]
+  local outcome=b.result
   local complete=type(b.completeBattle)=='function'
   T.check(complete,'native Gen2 completion seam exists')
   if complete then
     b:completeBattle()
     T.eq(probe.ended,1,'actual native finish emits one ended event')
+    T.eq(probe.event.result,outcome,'completion retains the native owner string unchanged')
     T.eq(probe.event.battle,b,'existing native consumers retain their screen owner')
     T.eq(probe.event.model,model,'notification also exposes actual live model')
     T.check(probe.cleanAtEvent,'model end decoration cleans before native end notification')
