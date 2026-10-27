@@ -122,8 +122,13 @@ if type(menu.showItemResult)=='function'then
  Overlay.screen(menu)
  T.eq(g.getCanvas(),canvas,'view leaking a canvas cannot steal confirmation output')
  T.same({g.getColor()},{.2,.3,.4,.5},'view tint/push cannot leak into caller')
+ menu.drawWidescreen=menu.draw
+ Overlay.window(menu,1280,960)
+ T.eq(g.getCanvas(),canvas,'window view leaking a canvas cannot steal native feedback')
+ T.same({g.getColor()},{.2,.3,.4,.5},'window view restores tint and leaked pushes')
  Chrome.textbox=function()g.push('all');g.setCanvas(other);error('native result draw failure')end
  T.raises(function()Overlay.screen(menu)end,'native result draw failure','native feedback errors remain observable')
+ T.raises(function()UI.draw(menu,renderer,viewport,nil,false)end,'native result draw failure','window feedback errors remain observable')
  T.eq(g.getCanvas(),canvas,'failed feedback restores actual caller target')
  T.same({g.getColor()},{.2,.3,.4,.5},'failed feedback restores tint and leaked pushes')
  Chrome.print=print;Chrome.textbox=box;Chrome.withOverlayPanel=panel
