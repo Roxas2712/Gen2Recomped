@@ -453,8 +453,10 @@ function B.capture(game, battle, clone)
     assert(owner and owner.descriptor.kind == "script", "world script completion is opaque")
   end
   local state = {}
+  local gen2StatusView=require('src.core.GameVersion').isGen2()
   for key in pairs(FIELDS) do
-    if not ART[key] and rawget(battle, key) ~= nil then
+    if not ART[key] and not (key=='shownStatus' and gen2StatusView)
+        and rawget(battle, key) ~= nil then
       state[key] = battle[key]
     end
   end
@@ -598,13 +600,15 @@ function B.apply(game, snapshot, clone)
   local state = decode(game, snapshot.graph, battle)
   nativeRelations(game.save,state)
   state.turnActions = nativeActions(state.turnActions)
+  local gen2StatusView=require('src.core.GameVersion').isGen2()
   for key in pairs(FIELDS) do
-    if rawget(battle, key) ~= nil then
+    if not (key=='shownStatus' and gen2StatusView)
+        and rawget(battle, key) ~= nil then
       battle[key] = nil
     end
   end
   for key, v in pairs(state) do
-    battle[key] = v
+    if not (key=='shownStatus' and gen2StatusView) then battle[key] = v end
   end
   battle.ruleset = assert(rulesets(game)[snapshot.ruleset])
   battle._checkpointTrainerName = snapshot.trainerName
