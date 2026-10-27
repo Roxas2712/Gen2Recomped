@@ -36,6 +36,7 @@ def main():
     parser.add_argument('--scenario', action='append', choices=['complete', 'recovery', 'abort', 'handoff'])
     parser.add_argument('--independent-replay', action='store_true')
     parser.add_argument('--crypto-library', type=Path)
+    parser.add_argument('--measure-traffic', action='store_true', help='Count API payload bytes and normal presence polling; no headers or account data are retained')
     parser.add_argument('--timeout', type=int, default=180)
     args = parser.parse_args()
     caches = {}
@@ -79,6 +80,9 @@ end
     database.touch(mode=0o600)
     import http.server
     proxy = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Proxy)
+    if args.measure_traffic:
+        from qa_http_traffic import TrafficMeter
+        proxy.traffic_meter = TrafficMeter()
     with socket.socket() as available:
         available.bind(('127.0.0.1', 0))
         backend_port = available.getsockname()[1]
@@ -162,7 +166,7 @@ $people[$role]=['email'=>$u->email,'id'=>(string)$u->id];}echo json_encode($peop
                     identity = 'oasc-arena-qa-' + run_id + '-' + edition + '-' + scenario + '-' + role
                     qa_profile(Path.home() / 'Library/Application Support/LOVE' / identity)
                     config = dict(api=url + '/api/cloud/v1', edition=edition, role=role, scenario=scenario,
-                        handoffReady=str(handoff_ready),
+                        handoffReady=str(handoff_ready), measureTraffic=args.measure_traffic,
                         cache=str(cache), cup=cup, match=match, email=person['email'], password=password,
                         result=str(output / (identity + '.json')))
                     config_path = output / (identity + '-config.json')
@@ -233,6 +237,9 @@ $people[$role]=['email'=>$u->email,'id'=>(string)$u->id];}echo json_encode($peop
         assert all(hashlib.sha256((source / p).read_bytes()).hexdigest() == digest for p, digest in hashes.items())
         report = dict(passed=True, results=results, sourceSha256=hashes,
             scope='Independent macOS client profiles and private local HTTPS; no physical or cross-OS proof; ' + ('independent native server replay' if args.independent_replay else 'peer-attested results'))
+        if args.measure_traffic:
+            report['traffic'] = dict(groups=proxy.traffic_meter.snapshot(), elapsed_seconds=proxy.traffic_meter.elapsed_seconds(),
+                scope='Application request/response bodies, including account setup and background presence. Excludes HTTP headers, TLS/TCP and private game-cache transfers. Verifier HTTP polling is a fixture-only worker path, separate from clients.')
         (output / 'report.json').write_text(json.dumps(report, indent=2))
         print('NATIVE_ARENA_PASS ' + str(output), flush=True)
     finally:
