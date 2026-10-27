@@ -31,7 +31,8 @@ release their native closure and frame references; nested layers during flush
 paint inline. Limits are 64 registered providers and 128 queued layers per frame;
 additional layers paint immediately. Session shutdown drops stale callbacks.
 
-Only `nativeUiStack` and `windowLayers` are advertised. PC, bag, naming, summary,
+Only `nativeUiStack`, `windowLayers` and the separately qualified `frameWidgets`
+are advertised. PC, bag, naming, summary,
 battle paper devices and other themed families need their actual native call
 sites and context projections before their feature flags can become true. This
 foundation deliberately does not enable an experimental theme or claim those
