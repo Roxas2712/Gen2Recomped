@@ -1,0 +1,14 @@
+Recompiled Ascendant startup · integration by Roxas2712
+
+Shared animation source: ASCENDANT_OMEGA_JOHTO_VER_1-2/
+VOXEL_ASCENDANT/integrated/ascendant_startup (local user-owned project).
+IntroScene, VoxelBall and the matching authored asset/audio set
+are reused together. Recompiled uses the bundled Anton font under its
+retained OFL licence. The original Ascendant / by Roxas2712 logo, Lugia
+flight/cry/wind remain in the sequence. The later Omega continuation is omitted.
+The Recompiled prefix shares the original logo's sweep transform.
+
+Private asset inputs remain in .local/pokemon-x/intro-assets, outside Git.
+ASSET-SHA256.json identifies all packaging inputs. Original external asset
+provenance is retained in assets/omega-intro-sources.json. No live model
+loading or image/audio generation occurs at startup.
