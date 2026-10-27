@@ -61,6 +61,14 @@ local function packedColor(value)
  local function channel(n)return(n*8+math.floor(n/4))/255 end
  return{channel(r),channel(g),channel(b),1}
 end
+local function packedPalette(palette)
+ if type(palette)~='table'or #palette~=16 then return end
+ for i=1,16 do
+  local v=palette[i]
+  if type(v)~='number'or v%1~=0 or v<0 or v>65535 then return end
+ end
+ return palette
+end
 function C.textboxColors(fg,shadow)
  local explicit=fg~=nil or shadow~=nil
  fg,shadow=colorIndex(fg==nil and 1 or fg),colorIndex(shadow==nil and 8 or shadow)
@@ -75,12 +83,8 @@ function C.textboxColors(fg,shadow)
  local record
  if rs then record=constants.gen3RsBattlePanel else record=constants.gen3BattleTextbox end
  if rs and not(type(record)=='table'and record.format==1 and record.version==version)then record=nil end
- local palette=type(record)=='table'and record.palette
- if type(palette)=='table'and #palette==16 then
-  local valid=true
-  for i=1,16 do local v=palette[i];if type(v)~='number'or v%1~=0 or v<0 or v>65535 then valid=false;break end end
-  if valid then return colorRecord(packedColor(palette[fg+1]),packedColor(palette[shadow+1]))end
- end
+ local palette=type(record)=='table'and packedPalette(record.palette)
+ if palette then return colorRecord(packedColor(palette[fg+1]),packedColor(palette[shadow+1]))end
  -- Older native imports retain named role colours. They are authoritative
  -- only for that role's exact indices (or the legacy no-argument query).
  local role=not rs and type(record)=='table'and record.text and record.text.message
@@ -97,11 +101,20 @@ function C.manifest()
  local s=owner();if not s then return nil,'no native GBA owner'end
  local c=s.data.constants;local text=Native.textbox(s)
  local copy=require('src.mods.Merge').deepCopy
+ local version=Version.get();local rs=version=='ruby'or version=='sapphire'
+ local textboxPal,windowPal,ppPal
+ if rs then
+  local panel,bag=c.gen3RsBattlePanel,c.gen3RsBag
+  if type(panel)=='table'and panel.format==1 and panel.version==version then textboxPal=packedPalette(panel.palette)end
+  if type(bag)=='table'and bag.format==1 and bag.version==version then windowPal=packedPalette(bag.palette);ppPal=windowPal end
+ elseif Version.generation(version)==3 and text then
+  textboxPal=packedPalette(text.palette);windowPal=packedPalette(text.windowPalette);ppPal=packedPalette(text.ppPalette)
+ end
  local templates={}
  for id=0,14 do local row=C.window(id);if row then templates[id+1]={left=row.left,top=row.top,w=row.w,h=row.h}end end
  return{layout=C.layout()=='frlg'and'frlg'or'rse',assetLayout=C.layout(),
   windows={normal=templates},
-  text=copy(text and text.text or{}),native=true}
+  text=copy(text and text.text or{}),textboxPal=copy(textboxPal),windowTextPal=copy(windowPal),ppTextPal=copy(ppPal),native=true}
 end
 local modes={none='message',menu='action',moves='moves'}
 local painted

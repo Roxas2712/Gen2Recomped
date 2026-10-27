@@ -1319,7 +1319,7 @@ local function markerFor(version)
   end
   if GameVersion.generation(version)==3 then revision=revision..'gba-field-move-art-v1:'end
   if version=='firered'or version=='leafgreen'or version=='emerald'then
-    revision=revision..'gba-textbox-palette-v1:'
+    revision=revision..'gba-textbox-palette-v2:'
   end
   if GameVersion.generation(version)==3 then
     local help=require('src.import.Gen3HelpFacts')
