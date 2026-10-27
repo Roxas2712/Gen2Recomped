@@ -12,7 +12,9 @@ edition and choose **Import game** (`.3ds`, `.cci`, `.cxi`, `.cia`), or drop a
 3DS file onto the library to detect its edition. Import streams the complete
 hash and verifies the decrypted executable/content headers. A wrong edition,
 damaged dump or encrypted content cannot replace an existing entry. Currently
-the supported title IDs are the USA X/Y base games listed in the preflight.
+the supported base-game title IDs are `0004000000055D00` (X) and
+`0004000000055E00` (Y). The archive's region label is not a compatibility check;
+the importer verifies the actual cartridge headers and content hashes.
 The original local file is referenced in place; keep it available at that path.
 Import does not upload it, copy a multi-GB ROM, or mark an unbuilt game playable.
 LÖVE 12 uses its attached asynchronous native file picker for X/Y, so the
@@ -42,6 +44,11 @@ large duplicate debug objects in the build and its bounded compiler cache.
 Its wrapper digest participates in the game-build identity. The default is
 two compiler jobs; maintainers may set `RETRO_3DS_BUILD_JOBS` to 1–8 for a
 measured build on their own host. Invalid values fall back to two jobs.
+After a confirmed link, byte-identical compiler-cache object copies can be
+retired. Zig's local manifests are preserved outside its lookup path first, so
+a subsequent compile cannot resolve a removed cached object. The ROM-free
+`tools/qualify_pokemon_xy_cache.py --runtime <sidecar>` exercises this complete
+compile/link/retire/rebuild cycle with the real bundled compiler.
 
 A bare `.love` without the sidecar still supports file import but needs an
 installed backend before playing. Developer overrides are `POKEMON_XY_ROOT`
@@ -73,8 +80,15 @@ worker also rejected an intentionally non-executable synthetic NCCH file while
 preserving its imported metadata and showing an explicit build error. Worker
 completion uses a terminal protocol record because LuaJIT's process-close
 status alone is insufficient on this host; a missing record fails closed.
-This package has not yet imported and played a genuine X/Y dump. See
-`docs/qa/pokemon-xy-bundle-20261027/runtime-qualification.json` for the test scope.
+Genuine X/Y dumps were subsequently validated and compiled privately with the
+debug-free bundled compiler. Separate instrumented app copies exercised cached
+import through the normal device gate and visible native gameplay: German
+language selection, intro and prologue. The Y run included five minutes of
+native play. No ROM-derived C, native game libraries or private save profiles
+are distributed. This is a bounded first-run test, not a full-game, battle,
+3DS cloud-transfer or online compatibility certificate. See
+`docs/qa/pokemon-xy-bundle-20261027/native-game-qualification.json` for the final
+scope, and the separate runtime/cache reports for ROM-free qualification.
 
 Open `Start-Recompiled-Ascendant.command` for the shared library, or
 `Start-Pokemon-X.command` / `Start-Pokemon-Y.command` for a direct edition
