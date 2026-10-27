@@ -2832,6 +2832,7 @@ function BattleState:updateQueue()
     end
   end
   if self:updateQueuePresentation() then return true end
+  if GameVersion.isGen3() and require('src.battle.Gen3VoiceoverPresentation').gate(self) then return true end
   if self.animPlaying then
     self.animPlayer:update()
     if self.animPlayer.pollEffects and self.applyAnimEffect then
@@ -4337,7 +4338,10 @@ end
 -- simply stayed gone -- for as long as the opponent took to choose.
 function BattleState:tickFx()
   self.frame = self.frame + 1
-  if GameVersion.isGen3() then require('src.battle.Gen3SelectionPresentation').update(self) end
+  if GameVersion.isGen3() then
+    require('src.battle.Gen3SelectionPresentation').update(self)
+    require('src.battle.Gen3VoiceoverPresentation').update(self)
+  end
   self:updateFx()
 end
 
@@ -5180,7 +5184,7 @@ function BattleState:queuePokedudeVoices(indices)
       pd.voiceDone[index] = true
       local text = self:pokedudeVoice(index)
       if type(text) == "string" and text ~= "" then
-        self:say(text)
+        require('src.battle.Gen3VoiceoverPresentation').queue(self,text,pd.lesson=='status'and index==2)
         queued = true
       end
     end
@@ -11491,7 +11495,7 @@ function BattleState:finish()
     local text = index and self:pokedudeVoice(index)
     if type(text) == "string" and text ~= "" then
       pd.voiceDone[index] = true
-      self:say(text)
+      require('src.battle.Gen3VoiceoverPresentation').queue(self,text,false)
       self.phase = BattleQueuePhase.name()
       self.afterQueue = "finish"
       return

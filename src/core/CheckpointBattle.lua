@@ -18,6 +18,7 @@ local function names(words)
   return out
 end
 local FIELDS = names([[
+gen3Voiceover
 g4fx g4PrevMove g4TrickRoomResort turnActions backWalkOff
 Abilities AllyAI AnimPlayer BattleCommands BattleQueuePhase BattleState CatchTutorialDemo Catching CaughtMarker
 Damage EffectRegistry EnemyActionContext EnemyMoveChoice Experience FieldResiduals GbaItemSchedule
@@ -297,7 +298,7 @@ local function decode(game, graph, battle)
 end
 local PHASES = { menu = true, moveSelect = true, targetSelect = true }
 local EXCLUDED = names(
-  "linkBattle safari gen4Safari ghost scopeReveal demo pokedudeDemo bugContest palace arena gen3Frontier battleTower dead result"
+  "linkBattle safari gen4Safari ghost scopeReveal demo pokedudeDemo gen3Voiceover bugContest palace arena gen3Frontier battleTower dead result"
 )
 local function decision(battle)
   assert(getmetatable(battle) == require("src.battle.BattleState"), "not a native battle")

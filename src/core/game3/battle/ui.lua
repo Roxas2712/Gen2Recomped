@@ -6,6 +6,27 @@ local Boundary=require('src.compat.gen1.ScriptBoundary')
 local Scope=require('src.render.GraphicsScope')
 local Ui={}
 function Ui.drawMenuFrames(mode)return require('src.ui.game3.battle_chrome').drawMenuFrames(mode)end
+function Ui.voiceoverDim()
+ local screen=Battle._screen();return screen and require('src.battle.Gen3VoiceoverPresentation').dim(screen)or 0
+end
+function Ui.litHealthboxShown()
+ local screen=Battle._screen();return screen and require('src.battle.Gen3VoiceoverPresentation').lit(screen)or false
+end
+function Ui.moveTypeOf(mon,slot,def)
+ local types=mon and mon.moveTypes
+ if types and types[slot]~=nil then return types[slot]end
+ return def and def.type
+end
+function Ui.ppColorState(current,maximum)
+ current,maximum=tonumber(current)or 0,tonumber(maximum)or 0
+ if current~=current or maximum~=maximum or current==math.huge or maximum==math.huge
+  or current==-math.huge or maximum==-math.huge then return nil,'invalid PP observation'end
+ local palette=require('src.ui.Gen3SummaryLayout').ppColor(current,maximum)
+ return palette==12 and 3 or palette-9
+end
+function Ui.quickBallPrompt()
+ local screen=Battle._screen();return screen and require('src.battle.QuickItem').prompt(screen)or nil
+end
 function Ui.ballQuad(ball,frame)
  return require('src.core.game3.battle.ui_ball_art').quad(ball,frame)
 end

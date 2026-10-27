@@ -8,6 +8,6 @@ This branch includes main `6d2bf2f4` through merge `81e89d2f`. Both native text-
 
 Frozen candidate `8e6c8853cd` passes syntax and all24 targeted suites (25 groups):263 frame checks,639 text/import IR checks,571 stage checks, selection/particle/picture/entry/capture/command/session/UI and RS import/map/boot/panel/cache contracts, plus current Gen2 window/queue/scene/live-view/summary regressions. The initial fixture omitted native font passthrough and RS panel metadata; the next attempt exposed a real nil-versus-false visibility regression. Both failed runs remain retained. Source/test hashes identify the final passing tree.
 
-The actual unchanged-mod map/native/terrarium reprobe is running. No accepted scene frame, physical-window, complete tutorial presentation or60FPS result is claimed by these CPU tests. Tests use isolated QA profiles and20GiB free reserve; player saves remain untouched.
+Actual unchanged-mod run `9e0c34238d-firered` passes frame painting, then stops at missing `Ui.voiceoverDim`; zero accepted scene frames. Exact older public composition `e496cb0ccc` passes all19 groups with the focused shared helper/UI hooks. No accepted scene frame, physical-window, complete tutorial presentation or60FPS result is claimed by these CPU tests. Tests use isolated QA profiles and20GiB free reserve; player saves remain untouched.
 
 Contributions by Roxas2712. Existing native code and third-party rights retain their provenance. See NOTICE.md and LICENSE-ROXAS2712.md for Cedric / UNDERdecoded integration permission and credit requirements.
