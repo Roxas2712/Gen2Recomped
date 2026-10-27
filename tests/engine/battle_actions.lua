@@ -432,7 +432,7 @@ for _, version in ipairs(GameVersion.ORDER) do
   T.eq(send(api, 7, "back"), true, label .. "cancel target")
   T.eq(b.pendingMove, nil, label .. "pending move cleared")
   T.eq(b.targetChoices, nil, label .. "target selector cleared")
-  T.eq(b.phase, "moveSelect", label .. "back to moves")
+  T.eq(b.phase, GameVersion.isGen2() and "moves" or "moveSelect", label .. "back to moves")
   T.eq(send(api, 8, "back"), true, label .. "back to menu")
   T.eq(send(api, 9, "menu", { choice = "fight" }), true, label .. "choose first action")
   T.eq(send(api, 10, "move", { slot = 1 }), true, label .. "select first move")
@@ -459,7 +459,7 @@ for _, version in ipairs(GameVersion.ORDER) do
   b:placeBattler(0, nil)
   T.eq(api:snapshot().active, 2, label .. "missing-left chooser")
   T.eq(send(api, 1, "menu", { choice = "fight" }), true, label .. "right-only FIGHT")
-  T.eq(b.phase, "moveSelect", label .. "right-only moves")
+  T.eq(b.phase, GameVersion.isGen2() and "moves" or "moveSelect", label .. "right-only moves")
   -- Mimic belongs to its queued user, even when that is the right flank.
   b.phase = "mimicSelect"
   local user = b:battlerAt(2)

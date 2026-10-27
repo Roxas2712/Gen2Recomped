@@ -1,6 +1,7 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Rebuild native continuations by deterministic replay from a qualified world
 -- checkpoint. No function, coroutine, VM bytecode or executable save is stored.
+local MoveSelectionPhase = require("src.battle.MoveSelectionPhase")
 local J={MAX_BYTES=24*1024*1024,BATTLE_CHECKPOINT_TICKS=600}
 local S=require('src.core.SaveSerializer')
 local C=require('src.core.Checkpoint')
@@ -229,7 +230,7 @@ function J.step(game,dt,run)
  if not allowed then t.anchor=nil;t.reason=why;return run() end
  t.ticks=t.ticks+1
  local state=game.stack:top()
- local decision=state and state.isBattleState and (state.phase=='menu'or state.phase=='moveSelect'or state.phase=='targetSelect')and state
+ local decision=state and state.isBattleState and (state.phase=='menu'or MoveSelectionPhase.active(state)or state.phase=='targetSelect')and state
  local entered=decision and t.decision~=decision;t.decision=decision
  local interval=state and state.isBattleState and J.BATTLE_CHECKPOINT_TICKS or 60
  if not t.anchor or t.ticks>=interval or entered then

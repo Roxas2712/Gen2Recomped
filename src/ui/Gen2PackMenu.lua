@@ -477,6 +477,18 @@ function PackMenu:useSelected()
     return
   end
   if self.world == (self.game and self.game.overworld) then
+    local fishing=require('src.world.Gen2Fishing')
+    if GameVersion.isGen2() and fishing.isRod(row.id,self.items) then
+      -- The native field still owns scripts/movement while the PACK is up.
+      -- Observe admission without rolling; refuse in place, or close all
+      -- menu owners before calling the same public rod path as SELECT.
+      if not fishing.canUse(self.world,self.game,row.id,true) then
+        self:showMessage(Strings(OAK_THIS_ISNT_THE_TIME))
+        return
+      end
+      self:exitToField()
+      return self.world:useRod(row.id)
+    end
     self.staleRows = true
     local owner = self
     return require("src.ui.BagMenu").useItem(self.game, nil, row.id, {
