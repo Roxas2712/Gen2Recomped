@@ -9,7 +9,7 @@ function G.compile(mod,entry,own,data)
  local baseInfo=assert(mod.imports:info(entry.game..'_en'),'Add the exact English USA 1.0 base ROM in the language menu once for full GBA localization')
  local english=assert(mod.imports:read(entry.game..'_en',0,baseInfo.size))
  local function hash(s)return love.data.encode('string','hex',love.data.hash('string','sha256',s))end
- local paths={'@host/gba.lua','@host/type_badges.lua','@host/gba_catalogs.lua','@host/gba_text.lua','@host/gba_world.lua','@host/gba_resources.lua','@host/gba_relocate.lua','@host/gba_battle.lua','@host/addresses/'..entry.game..'.lua','@host/addresses/'..entry.game..'_assets.lua','@host/addresses/'..entry.game..'_world.lua',entry.profile,entry.assets,entry.world,'compiler.lua','cache_codec.lua','gba/ui.lua','vendor/src/core/game3/scripting/text_ir.lua'}
+ local paths={'@host/gba.lua','@host/gba_dex.lua','@host/type_badges.lua','@host/gba_catalogs.lua','@host/gba_text.lua','@host/gba_world.lua','@host/gba_resources.lua','@host/gba_relocate.lua','@host/gba_battle.lua','@host/addresses/'..entry.game..'.lua','@host/addresses/'..entry.game..'_assets.lua','@host/addresses/'..entry.game..'_world.lua',entry.profile,entry.assets,entry.world,'compiler.lua','cache_codec.lua','gba/ui.lua','vendor/src/core/game3/scripting/text_ir.lua'}
  if entry.glyphsPath then paths[#paths+1]=entry.glyphsPath end
  if entry.authored then paths[#paths+1]=entry.authored end
  if entry.language=='pt-BR'then for _,path in ipairs({'@host/ptbr_graphics.lua','ptbr_pixel_labels.lua','ptbr_world_graphics.lua','ptbr_credits.lua','ptbr_scene_authored.lua','ptbr_easy_chat_words.lua','ptbr_items.lua','ptbr_item_descriptions.lua','ptbr_moves.lua','ptbr_move_descriptions.lua','ptbr_abilities.lua','ptbr_ability_descriptions.lua','ptbr_classes.lua','ptbr_types.lua'})do paths[#paths+1]=path end end
@@ -50,7 +50,7 @@ function G.compile(mod,entry,own,data)
    local row=p.texts[label];local off=addresses[label]
    local raw=label:match('^g3:(%x+)$');if raw then off=tonumber(raw,16)-0x08000000 end
    local nativeId=off and ('TEXT_%06X'):format(off)
-   local namedText=label:match('^gContestEffectDescriptionPointers%[%d+%]$')or label:match('Text_')or label:match('_Text')or label:match('^Text_')or label:match('Names%[')or label:match('NamePointers%[')or label:match('EasyChatGroupName_')
+   local namedText=label:match('^gStatNamesTable%[%d+%]$')or label:match('^gContestEffectDescriptionPointers%[%d+%]$')or label:match('Text_')or label:match('_Text')or label:match('^Text_')or label:match('Names%[')or label:match('NamePointers%[')or label:match('EasyChatGroupName_')
    local memo=label:find('PokeSum_',1,true)or label:find('XNature',1,true)
    local memoSlots=memo and((entry.game=='firered'or entry.game=='leafgreen')and{[0]='NATURE',[1]='LEVEL',[2]='LOCATION'}or{[0]='',[1]='',[2]='NATURE',[3]='LEVEL',[4]='LOCATION',[5]=''})
    local relevant=namedText or nativeId and data.text[nativeId]~=nil
@@ -117,12 +117,7 @@ function G.compile(mod,entry,own,data)
   for index=0,17 do if c.named['gTypeNames['..index..']']then c.types[index]={name=c.named['gTypeNames['..index..']']}end end
   for index,row in pairs(c.moves)do if index>0 and F.MOVE_DESCRIPTIONS then local ptr=pointer(F.MOVE_DESCRIPTIONS+(index-1)*4);if ptr then row.description=decode(ptr,false,2048)end end end
   for index,row in pairs(c.abilities)do if F.ABILITY_DESCRIPTIONS then local ptr=pointer(F.ABILITY_DESCRIPTIONS+index*4);if ptr then row.description=decode(ptr,false,2048)end end end
-  c.dex={}
-  if F.POKEDEX_ENTRIES then for index=1,386 do
-   local at=F.POKEDEX_ENTRIES+index*F.POKEDEX_ENTRY_SIZE
-   local ptr=pointer(at+16);local second=F.POKEDEX_ENTRY_SIZE>=36 and pointer(at+20)
-   c.dex[index]={category=name(at,F.POKEDEX_NAME_LENGTH or 12),text=ptr and decode(ptr,false,4096)or nil,text2=second and decode(second,false,4096)or nil}
-  end end
+  c.dex=own('@host/gba_dex.lua').read(F,pointer,name,decode)
   if entry.language=='pt-BR'then
    c.sceneAuthored=own('ptbr_scene_authored.lua')
    local names=own('ptbr_items.lua');local descriptions=own('ptbr_item_descriptions.lua')
@@ -233,7 +228,9 @@ function G.apply(data,c,own,compiled)
    end
   end
  end
- for _,key in ipairs({'gen3Screens','gen3FRLGSummary','gen3FRLGPokedex','gen3FRLGRegionMap','gen3FRLGStorage','gen3FRLGNaming','gen3EmeraldNaming','gen3StartMenu','gen3Bag','gen3BagScreen','gen3ItemMenu','gen3ShopMenu','gen3BuyMenu','gen3PCMenu','gen3Options','gen3Multichoice','gen3Daycare','gen3EasyChat','gen3Summary','gen3Pokenav','gen3Keyboard','gen3HallOfFame'})do
+ -- Easy Chat is translated below by stable group/word identity. Its English
+ -- labels must remain intact until the authored vocabulary has been resolved.
+ for _,key in ipairs({'gen3Screens','gen3FRLGSummary','gen3FRLGPokedex','gen3FRLGRegionMap','gen3FRLGStorage','gen3FRLGNaming','gen3EmeraldNaming','gen3StartMenu','gen3Bag','gen3BagScreen','gen3ItemMenu','gen3ShopMenu','gen3BuyMenu','gen3PCMenu','gen3Options','gen3Multichoice','gen3Daycare','gen3Summary','gen3Pokenav','gen3Keyboard','gen3HallOfFame'})do
   local row=data.constants[key];if type(row)=='table'then display(row,false)end
  end
  if data.constants.gen3Summary then
@@ -267,7 +264,7 @@ function G.apply(data,c,own,compiled)
  for _,key in ipairs({'gen3Credits','gen3TradeText','gen3FrontierSpeech','gen3PokedexMenu','gen3StoragePanels','gen3HallOfFame','gen3PartyChoice','gen3FrontierDesk','gen3QuizLady','gen3FavorLady','gen3Storyteller'})do
   display(data.constants[key]or{},false)
  end
- for _,key in ipairs({'gen3Help','gen3HelpSystem','gen3FameChecker','gen3FrontierPass','gen3Decorations','gen3Contests','gen3Pokeblocks','gen3Roulette','gen3Daycare','gen3Trade','gen3EasyChat'})do display(data.constants[key]or{},false)end
+ for _,key in ipairs({'gen3Help','gen3HelpSystem','gen3FameChecker','gen3FrontierPass','gen3Decorations','gen3Contests','gen3Pokeblocks','gen3Roulette','gen3Daycare','gen3Trade'})do display(data.constants[key]or{},false)end
  local headers=data.constants.gen3Pokenav and data.constants.gen3Pokenav.matchCall and data.constants.gen3Pokenav.matchCall.headers
  for _,row in ipairs(headers or{})do if type(row.name)=='string'then row.name=translated(row.name)end end
  report.easyChat=own('@host/gba_catalogs.lua').easyChat(data,c.easyChat,compiled.language,own)

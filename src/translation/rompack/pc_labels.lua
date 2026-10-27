@@ -25,6 +25,7 @@ function P.decode(rom,profile,game)
  return s
 end
 function P.apply(strings,labels)
+ if type(strings)~='table'then return end
  for key,value in pairs(labels or{})do if strings[key]==nil then strings[key]=value end end
  -- Asian catalogs already provide the native short RELEASE action. Its
  -- qualified host spelling must use that label, not an English fallback.

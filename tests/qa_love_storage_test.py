@@ -92,9 +92,50 @@ class LoveRetention(unittest.TestCase):
 
     def test_legacy_collector_cannot_remove_models_from_mixed_generated_tree(self):
         p=self.base/'ula-mixed-qa';model=self.put(p/'ruby/data/generated/models/paper.lua')
+        generated=self.put(p/'ruby/data/generated/maps.lua',b'generated map')
+        marker=self.put(p/'ruby/rom-cache.complete',b'complete')
         self.storage._take('imports',p,True)
-        self.storage._remove(dict(kind='imports',path=str(p),root=str(self.root)))
-        self.assertTrue(model.exists())
+        entry=dict(kind='imports',path=str(p),root=str(self.root))
+        self.assertEqual(list(self.storage._files(entry)),[])
+        self.storage._remove(entry)
+        self.assertEqual(model.read_bytes(),b'return { generated=true }')
+        self.assertEqual(generated.read_bytes(),b'generated map')
+        self.assertEqual(marker.read_bytes(),b'complete')
+
+    def test_legacy_collector_can_remove_clean_assets_beside_retained_model_data(self):
+        p=self.base/'ula-mixed-qa';model=self.put(p/'ruby/data/generated/models/paper.lua')
+        image=self.put(p/'ruby/assets/generated/tile.png',b'generated image')
+        marker=self.put(p/'ruby/rom-cache.complete')
+        entry=dict(kind='imports',path=str(p),root=str(self.root))
+        self.assertEqual([file for file,_ in self.storage._files(entry)],[image])
+        self.storage._remove(entry)
+        self.assertTrue(model.exists());self.assertFalse(image.exists()or marker.exists())
+
+    def test_legacy_collector_retains_source_save_and_keep_subtrees(self):
+        for index,relative in enumerate(('src/custom.lua','saves/hero.lua','nested/hero.state.bak','nested/.qa-keep')):
+            with self.subTest(relative=relative):
+                p=self.base/('ula-mixed-qa-'+str(index));retained=self.put(p/'ruby/data/generated'/relative,b'original')
+                marker=self.put(p/'ruby/rom-cache.complete',b'complete')
+                entry=dict(kind='imports',path=str(p),root=str(self.root))
+                self.assertEqual(list(self.storage._files(entry)),[])
+                self.storage._remove(entry)
+                self.assertEqual(retained.read_bytes(),b'original');self.assertEqual(marker.read_bytes(),b'complete')
+
+    def test_exact_legacy_profile_families_share_read_locks_with_the_love_collector(self):
+        for name in ('portemon-private-fedcba9876543210','gen2-palette-gpu-test-gold','ula-reader-qa'):
+            with self.subTest(identity=name):
+                p=self.put(self.base/name/'heartgold/data/generated/a.lua')
+                reader=Storage(self.root,home=self.home,min_free=0)
+                try:
+                    reader.source(p)
+                    self.assertIn(reader._key(self.base/name),reader.held)
+                    self.assertEqual(self.run_gc()['files'],0);self.assertTrue(p.exists())
+                finally:reader.close(collect=False)
+                self.assertEqual(self.run_gc()['files'],1);self.assertFalse(p.exists())
+
+    def test_read_pinning_legacy_profiles_does_not_grant_import_writer_rights(self):
+        self.storage.source(self.profile)
+        with self.assertRaises(ValueError):self.storage.destination(self.profile)
 
     def test_shared_hardlinks_are_archived_and_removed_without_losing_other_files(self):
         a=self.put(self.profile/'heartgold/data/generated/a.lua')

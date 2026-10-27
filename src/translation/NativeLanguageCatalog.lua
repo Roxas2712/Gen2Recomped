@@ -107,4 +107,25 @@ local navKeys={'WELCOME','Choose your language. You can change the launcher and 
  'NEXT','BACK','SET UP LATER','PLAY LOCALLY','More languages','Your look.','Your journey starts here.','SETUP & GUIDE'}
 for id,row in pairs(navigation) do for i,key in ipairs(navKeys) do out[id][key]=row[i] end end
 for id,values in pairs(require('src.translation.SetupCatalog')) do for key,value in pairs(values) do out[id][key]=value end end
+local patchTexts={
+ de={
+  ['Choose a game language below. The requirements for this edition are shown after selection.']='Wähle unten eine Spielsprache. Danach siehst du die Voraussetzungen für diese Edition.',
+  ['From US ROM']='Aus US-ROM erstellbar', ['US ROM needed']='US-ROM benötigt', ['Translation']='Übersetzung',
+  ['Preparing Portuguese…']='Portugiesisch wird vorbereitet…',
+  ['Preparing Portuguese from your US ROM…']='Portugiesisch wird aus deiner US-ROM vorbereitet…',
+  ['Portuguese is created automatically from your US ROM using the included translation patch. No extra PT-BR ROM or patch download is needed.']='Portugiesisch wird mit dem enthaltenen Übersetzungspatch automatisch aus deiner US-ROM erstellt. Du brauchst keine zusätzliche PT-BR-ROM und keinen Patch-Download.',
+  ['Your US ROM is ready. Confirm to create Portuguese automatically.']='Deine US-ROM ist bereit. Bestätige, um Portugiesisch automatisch zu erstellen.',
+  ['Portuguese preparation failed. Your current language is unchanged. Check the US ROM and try again.']='Portugiesisch konnte nicht vorbereitet werden. Deine bisherige Sprache bleibt erhalten. Prüfe die US-ROM und versuche es erneut.',
+ },
+ pb={
+  ['Choose a game language below. The requirements for this edition are shown after selection.']='Escolha abaixo o idioma do jogo. Os requisitos desta edição aparecem após a seleção.',
+  ['From US ROM']='Criar a partir da ROM dos EUA', ['US ROM needed']='ROM dos EUA necessária', ['Translation']='Tradução',
+  ['Preparing Portuguese…']='Preparando português…',
+  ['Preparing Portuguese from your US ROM…']='Preparando português a partir da sua ROM dos EUA…',
+  ['Portuguese is created automatically from your US ROM using the included translation patch. No extra PT-BR ROM or patch download is needed.']='O português é criado automaticamente a partir da sua ROM dos EUA com o patch de tradução incluído. Não é necessária outra ROM PT-BR nem baixar um patch.',
+  ['Your US ROM is ready. Confirm to create Portuguese automatically.']='Sua ROM dos EUA está pronta. Confirme para criar o português automaticamente.',
+  ['Portuguese preparation failed. Your current language is unchanged. Check the US ROM and try again.']='Não foi possível preparar o português. Seu idioma atual foi mantido. Verifique a ROM dos EUA e tente novamente.',
+ },
+}
+for id,values in pairs(patchTexts)do for key,value in pairs(values)do out[id][key]=value end end
 return out

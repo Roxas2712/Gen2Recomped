@@ -85,7 +85,24 @@ Prüfung ohne ROM oder echte Benutzerdaten:
 ```sh
 python3 tests/qa_storage_test.py
 python3 tests/qa_extended_storage_test.py
+python3 -m unittest discover -s tests -p 'qa*storage*test.py'
 ```
+
+Auch ältere, exakt erkannte LÖVE-Testidentities werden durch `qa_source`
+gegen die selektive LÖVE-Bereinigung gesperrt. Das erlaubt ausschließlich
+Lesesperren; daraus entsteht keine Freigabe als Ziel der älteren
+Importbereinigung. Diese entfernt einen erzeugten Daten-/Grafikordner nur,
+wenn er keine Modell-, Quellcode-, Save- oder `.qa-keep`-Teilbäume enthält.
+Geschützte Ordner zählen auch nicht zum löschbaren Importbudget. Unveränderte
+Caches behalten ihre Vollständigkeitsmarkierung; entfernte Cacheteile machen
+ihre Edition ungültig, damit sie beim nächsten Start neu erzeugt wird.
+
+Der Prozess-Sperrtest verwendet den echten Fork-Einstieg `scripts/run.sh` mit
+einem isolierten Ersatz für LÖVE. Er prüft geerbte Dateideskriptoren, die
+Testidentity und die unveränderte Weitergabe von Argumenten einschließlich
+Leerzeichen. Eine `Start.command` aus einem anderen Projekt wird nicht benötigt.
+Die [gesamte Speicher-QA](qa/storage-safety-fixes.json) läuft ohne echte ROMs
+oder Spielerprofile.
 
 ## Vollständige Kopienpflege und regelmäßige Kontrolle
 
@@ -130,7 +147,7 @@ und laufende LÖVE-Identities schützen ältere Leser zusätzlich. Bei fehlender
 Prozessinspektion bleiben die Kopien erhalten. Laufende ältere Starter übernehmen
 die neuen Prozess- und Platzwächter beim nächsten Start.
 
-Der Agent verwendet eine unabhängig installierte, versionierte Kopie der vier
+Der Agent verwendet eine unabhängig installierte, versionierte Kopie der fünf
 kleinen Python-Helfer unter `~/.local/lib/origami-qa-storage/`, ohne Netzwerkzugriff.
 Er hängt nicht vom temporären Implementierungs-Worktree ab. Die kleine lokal
 erstellte App `~/Applications/Origami QA Cleanup.app` trägt die gezielte

@@ -57,6 +57,14 @@ function B.menu(ir,T)
 end
 function B.apply(data,c,T)
  local count=0
+ -- The native battle code spells these labels differently from the GBA
+ -- stat table (SPCL.ATK vs SP. ATK; EVADE vs evasiveness). Bind by stat ID.
+ data.strings=data.strings or{}
+ for source,index in pairs({ATTACK=1,DEFENSE=2,SPEED=3,
+  ['SPCL.ATK']=4,['SPCL.DEF']=5,ACCURACY=6,EVADE=7,EVASION=7})do
+  local value=c.named['gStatNamesTable['..index..']']
+  if type(value)=='string'and value~=''then data.strings[source]=value end
+ end
  local menu=data.constants and data.constants.gen3BattleMenu
  if menu and c.battleMenu then menu.rows=c.battleMenu.rows;menu.columnX=c.battleMenu.columnX end
  if menu and c.named.gText_WhatWillPkmnDo then
