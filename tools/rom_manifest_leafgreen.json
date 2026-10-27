@@ -893,6 +893,7 @@
   ],
   "symbolSource": "Matching pret ELF symbols verified byte-for-byte against the supplied cartridges; tools/gen3_sibling_manifest.py",
   "symbols": {
+    "sBattleTerrainTable": 2420240,
     "gMenuMessageWindow_Gfx": 4321284,
     "gSignpostWindow_Gfx": 4654056,
     "gStdTextWindow_Gfx": 4657960,

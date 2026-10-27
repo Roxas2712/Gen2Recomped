@@ -24,6 +24,13 @@ is a local test and distribution input; it is not the acceptance target.
   HP/EXP elements and all four status-art variants. Both double-battle flanks
   use their compact panels. Shared GBA OAM placement retains the original
   64-by-32 centre vector when a player panel extends to 64 rows.
+- FireRed/LeafGreen/Emerald healthboxes use the pinned native compositor,
+  full original small-font rows, the native extra level glyph (0x105),
+  gender colors and element-tile HP/EXP bars. Emerald's two leading small-font
+  rows are retained rather than cropped by the general menu font path.
+- LeafGreen reads its own 20-row battle-terrain table. Its table starts 36
+  bytes before FireRed's; using the FireRed offset produced 18 malformed
+  scenes and could leave the battlefield white. Readiness rejects that cache.
 - GBA battle medicines retain their battle controller while healing. The
   status badge clears before the cure message, and HP drains precede the
   medicine text instead of opening a field dialogue over the battlefield.
@@ -76,7 +83,7 @@ profile. `tools/run_edition_native.py` and `tools/run_lua_contracts.py` use the
 repository's guarded storage workflow. Cache reuse is allowed only when its
 extraction input hashes match the tested source.
 
-The public main integration's 684 engine suites passed on Linux, as did all
+The RS HUD integration's 690 engine suites passed on Linux, as did all
 four mod-SDK suites, the
 five-edition entry/cursor matrix and FR/LG dialogue-frame checks. The latter
 compare 2,944 pixels per edition with its own cartridge. The final renderer
@@ -113,3 +120,14 @@ frozen source, exit code zero, no importer failure or timeout, no unrecorded
 inputs and no progress after the saved receipt. The original unfinished run
 remains unfinished; the new run must independently verify the full saved state
 through CONTINUE. Crashed, timed-out and unproven runs remain ineligible.
+
+The FR/LG/E native HUD fixtures each cover ten final-render views: levels 1,
+39 and 100, a ten-character nickname, all five statuses, the cure message and
+command menu, and four engine-admitted battlers from an imported double
+trainer. Native Antidote inputs consume exactly one item, clear the shown
+status before the battle message and permit exactly one harmless enemy reply.
+They also verify that drawing changes neither the save nor the gameplay RNG.
+The compositor itself is the pinned source; these fixtures do not claim an
+independent Gen1 pixel comparison or completion of Safari/optional double HP
+number modes. A fresh LeafGreen import composes all 20 terrains at the corrected
+edition address. The full ordinary stories remain open.
