@@ -5,6 +5,13 @@
 local SessionLifecycle = {}
 local processShutdowns = {}
 
+local function releaseAssets()
+  local assets = package.loaded["src.render.Assets"]
+  if assets and type(assets.releaseSession) == "function" then
+    pcall(assets.releaseSession)
+  end
+end
+
 function SessionLifecycle.registerProcessShutdown(fn)
   assert(type(fn) == "function", "process shutdown hook must be a function")
   processShutdowns[#processShutdowns + 1] = fn
@@ -14,6 +21,8 @@ end
 -- buses, wrapper journal, viewport, jobs and compatibility resource holders.
 -- Using that owner also keeps process services alive for the next cartridge.
 function SessionLifecycle.endMountedSession(version)
+  -- Release before loader invalidation drops consumer resource references.
+  releaseAssets()
   require("src.mods.Loader").teardown()
   if version then require("src.import.CacheFs").unmountVersion(version) end
   require("src.core.Data"):unloadGenerated()
@@ -53,6 +62,7 @@ local services = {
 }
 
 function SessionLifecycle.endProcess()
+  releaseAssets()
   local count = #processShutdowns
   for i = 1, count do pcall(processShutdowns[i]) end
   for _, name in ipairs(services) do
