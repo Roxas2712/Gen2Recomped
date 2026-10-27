@@ -38,24 +38,26 @@ conservative. `POKEPORT_SHADER_BRANCHES=0` restores the original compiler path.
 
 ## Native qualification
 
-Frozen native source `6f82c5cb00`, fork main `f8a05682` plus the compatibility
-composition, unchanged private Origami 1.0.9 `ae59c77c`: baseline `a2aac5b097`
-versus native adapter `55614c8cc0`. Both use actual Metal on M3/16 GB, High,
-1024×768 scene/window, active FXAA, render scale one, supersampling off and
-native VSync off. No QA Shader prototype is installed.
+Frozen native source `a5c7462ef0`, committed compiler `4344eb05` on fork main
+`0191734c`, unchanged private Origami 1.0.9 `ae59c77c`: baseline `562ad4a1f9`
+versus default-enabled native adapter `de603b9839`. Both use actual Metal on
+M3/16 GB, High, 1024×768 scene/window, active FXAA, render scale one,
+supersampling off and native VSync off. No QA Shader prototype is installed.
 
-Each row measures 120 ordinary native walking frames, after settling and a
-separate collection/recovery test. Native frame serial increments once per
-sample. The shared hardware lease covers source setup through final cleanup.
-This initial deterministic driver calls the Game update body directly. A
-follow-up through the complete native `PlatformHooks.update` frame owner is
-required before treating these figures as full mod-update measurements.
+The QA input adapter replaces only the deterministic driver's direct Game
+update call in memory with the real `PlatformHooks.update(Game, 1/60)` owner.
+Engine and mod files remain unchanged. The complete outer mod hook chain runs
+exactly once per measured step; native renderer serial also advances once.
+Each view measures 120 ordinary directional-input frames after settling and a
+separate collection/recovery test. The player occupies 17 / 13 / 13 distinct
+native positions in open/Third/First, and scene clocks match across both runs.
+The shared hardware lease covers source setup through final cleanup.
 
 | View | Original mean ms | Adapter mean ms | Adapter p95 ms | Adapter max ms |
 | --- | ---: | ---: | ---: | ---: |
-| open | 5.69 | 5.32 | 6.87 | 9.39 |
-| third | 18.98 | 11.43 | 12.87 | 15.10 |
-| first | 20.02 | 11.86 | 12.83 | 14.12 |
+| open | 6.77 | 6.21 | 10.61 | 12.07 |
+| third | 21.29 | 11.43 | 12.64 | 14.24 |
+| first | 20.07 | 11.85 | 12.89 | 15.65 |
 
 All three complete scene captures are pixel-exact, excluding only the changing
 FPS HUD (`x >= 890 && y < 56`). Twelve actual variants are used, with no
@@ -63,20 +65,26 @@ compiler/replay failures, unsupported values or fallback draws. The original
 failed native integration (`a67197449f`) double-adapted clip space; its failure
 is preserved and corrected through the constructor seam, not an image flip.
 
-Actual GPU fixture `5155a3c3f4` passes 72 checks, including spatial projection,
+Actual default-policy GPU fixtures `586e40dc29` (composed) and `efda7ed3c9`
+(standalone upstream implementation) each pass 73 checks, including spatial projection,
 real Shader identity, multiple/nil returns from a prior owner, partial arrays,
 matrix layout, mutable color inputs, sampler release, raw native stack frames,
 Shader release/GC, Data fallback, source caps and later foreign method ownership.
-The deliberate wrong-branch pixel control is detected. Focused native engine,
+Both the deliberate wrong-branch control and the separate double-projection
+negative `189f31ddff` are detected. Independent public CPU qualification
+`c303516873` passes 38 source / 40 policy / 128 canvas-seam assertions. Focused native engine,
 orientation, JIT, map, follower, options, pacing and Crystal VRAM checks pass in
 the same frozen composition.
 
 These are internal rendering observations while the console is locked. They
 are not OS-window, interactive 60-FPS, outdoor, full-game or all-platform
-acceptance. Cold compilation is synchronous: 7.21 seconds accumulated across
-the twelve first-used variants in this run, outside the steady walking samples.
+acceptance. Cold compilation is synchronous. Initial control `55614c8cc0` accumulated
+7.21 seconds across twelve first-used variants; the full-frame repeat records
+1.92 seconds. Both are outside the steady samples; no cache-cause attribution
+is claimed.
 First-use hitches remain a limitation; there is no asynchronous-compilation
-claim. Player profiles and saves are not used. QA enforces 20 GiB free, above
+claim. The existing overworld-battle Card fails in both baseline and adapter
+runs; this change does not qualify complete battle support. Player profiles and saves are not used. QA enforces 20 GiB free, above
 the requested 8 GiB minimum.
 
 ## Repeating the API fixture
