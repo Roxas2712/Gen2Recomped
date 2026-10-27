@@ -30,6 +30,9 @@ function A.resolve(game,device)
  return {id=id,def=def,name=tostring(name or id):gsub('[%c_]',' ')}
 end
 function A.label(game,device)
+ if device and device.edition=='pinballrs'then
+  return 'Pokémon Pinball: Ruby & Sapphire',device.available and 'Bereit für ein Punkteduell'or 'Pinball beschäftigt'
+ end
  local info=A.resolve(game,device)
  return (Version.info(device.edition) or {}).displayName or tostring(device.edition):upper(),info and info.name or 'Unknown zone'
 end

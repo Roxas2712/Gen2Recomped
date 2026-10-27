@@ -1,0 +1,541 @@
+{
+  "date": "2026-10-27",
+  "machine": {
+    "chip": "Apple M3",
+    "physical_cores": 8,
+    "ram_gib": 16,
+    "display_runtime": "L\u00d6VE 12 / Metal"
+  },
+  "notes": [
+    "Automated distinct flipper inputs; not two physical controllers.",
+    "Foreground gameplay time excludes round preparation/countdown and three warm-up seconds per round.",
+    "Other normal system/background processes remained active.",
+    "A focus-lost 90-second reference run was invalid and excluded.",
+    "The development Mac reported about 7.9 GiB of swap in use before the scheduling experiment; this is not proof of per-stall swap I/O."
+  ],
+  "native_equivalence": {
+    "stable-bands": {
+      "passed": true,
+      "cases": [
+        {
+          "locale": "en",
+          "field": 0,
+          "frames_per_seat": 7200,
+          "compared_images": 14400,
+          "compared_ram_checkpoints": 122,
+          "pixels_equal": true,
+          "ram_equal": true,
+          "reference": {
+            "frames_per_seat": 7200,
+            "max_scores": [
+              83400,
+              1000
+            ],
+            "two_guest_mean_ms": 12.290146484539967,
+            "two_guest_p95_ms": 18.29966699006036,
+            "two_guest_p99_ms": 20.86266700644046,
+            "two_guest_max_ms": 56.52504105819389,
+            "reused_rows": 0,
+            "rendered_rows": 3342540
+          },
+          "cached": {
+            "frames_per_seat": 7200,
+            "max_scores": [
+              83400,
+              1000
+            ],
+            "two_guest_mean_ms": 10.771128090714338,
+            "two_guest_p95_ms": 17.942417005542666,
+            "two_guest_p99_ms": 19.740582967642695,
+            "two_guest_max_ms": 25.65537503687665,
+            "reused_rows": 2291292,
+            "rendered_rows": 1051248
+          }
+        },
+        {
+          "locale": "de",
+          "field": 1,
+          "frames_per_seat": 7200,
+          "compared_images": 14400,
+          "compared_ram_checkpoints": 122,
+          "pixels_equal": true,
+          "ram_equal": true,
+          "reference": {
+            "frames_per_seat": 7200,
+            "max_scores": [
+              24900,
+              19920
+            ],
+            "two_guest_mean_ms": 12.69199751238885,
+            "two_guest_p95_ms": 18.789792025927454,
+            "two_guest_p99_ms": 20.90320806019008,
+            "two_guest_max_ms": 29.883458046242595,
+            "reused_rows": 0,
+            "rendered_rows": 3693216
+          },
+          "cached": {
+            "frames_per_seat": 7200,
+            "max_scores": [
+              24900,
+              19920
+            ],
+            "two_guest_mean_ms": 10.566251031165272,
+            "two_guest_p95_ms": 16.927957942243665,
+            "two_guest_p99_ms": 18.083541945088655,
+            "two_guest_max_ms": 37.669792014639825,
+            "reused_rows": 2823352,
+            "rendered_rows": 869864
+          }
+        }
+      ]
+    },
+    "final-diagnostics": {
+      "passed": true,
+      "cases": [
+        {
+          "locale": "en",
+          "field": 0,
+          "frames_per_seat": 2400,
+          "compared_images": 4800,
+          "compared_ram_checkpoints": 42,
+          "pixels_equal": true,
+          "ram_equal": true,
+          "reference": {
+            "frames_per_seat": 2400,
+            "max_scores": [
+              1000,
+              0
+            ],
+            "two_guest_mean_ms": 13.187664364964974,
+            "two_guest_p95_ms": 18.77887500450015,
+            "two_guest_p99_ms": 19.476083980407566,
+            "two_guest_max_ms": 27.902582951355726,
+            "reused_rows": 0,
+            "rendered_rows": 937512,
+            "quick_state_replay_frames": 40,
+            "quick_state_immediate_picture_equal": true
+          },
+          "cached": {
+            "frames_per_seat": 2400,
+            "max_scores": [
+              1000,
+              0
+            ],
+            "two_guest_mean_ms": 10.552652956873182,
+            "two_guest_p95_ms": 16.61666698055342,
+            "two_guest_p99_ms": 17.53887499216944,
+            "two_guest_max_ms": 24.34129099128768,
+            "reused_rows": 611132,
+            "rendered_rows": 326380,
+            "quick_state_replay_frames": 40,
+            "quick_state_immediate_picture_equal": true
+          }
+        },
+        {
+          "locale": "de",
+          "field": 1,
+          "frames_per_seat": 2400,
+          "compared_images": 4800,
+          "compared_ram_checkpoints": 42,
+          "pixels_equal": true,
+          "ram_equal": true,
+          "reference": {
+            "frames_per_seat": 2400,
+            "max_scores": [
+              500,
+              0
+            ],
+            "two_guest_mean_ms": 14.477057807647954,
+            "two_guest_p95_ms": 21.04770898586139,
+            "two_guest_p99_ms": 23.990708985365927,
+            "two_guest_max_ms": 70.04541700007394,
+            "reused_rows": 0,
+            "rendered_rows": 863040,
+            "quick_state_replay_frames": 40,
+            "quick_state_immediate_picture_equal": true
+          },
+          "cached": {
+            "frames_per_seat": 2400,
+            "max_scores": [
+              500,
+              0
+            ],
+            "two_guest_mean_ms": 11.468403378900291,
+            "two_guest_p95_ms": 18.037208006717265,
+            "two_guest_p99_ms": 30.30120802577585,
+            "two_guest_max_ms": 282.72204200038686,
+            "reused_rows": 606352,
+            "rendered_rows": 256688,
+            "quick_state_replay_frames": 40,
+            "quick_state_immediate_picture_equal": true
+          }
+        }
+      ]
+    }
+  },
+  "display_runs": {
+    "two-ruby-360s": {
+      "seconds": 360.0156754166668,
+      "wall_seconds": 386.2820745833333,
+      "unique_native_presents": 21481,
+      "display": {
+        "over25": 4,
+        "over50": 0,
+        "n": 21599,
+        "mean_ms": 16.66816412989795,
+        "p95_ms": 16.75033333333431,
+        "p99_ms": 17.08658333333446,
+        "max_ms": 38.75362499999824
+      },
+      "source_gap": {
+        "over25": 104,
+        "over50": 5,
+        "n": 21479,
+        "mean_ms": 16.759714412914903,
+        "p95_ms": 16.762958333288225,
+        "p99_ms": 17.71074999999911,
+        "max_ms": 150.04395833335593
+      },
+      "native": {
+        "over25": 16,
+        "over50": 4,
+        "n": 21599,
+        "mean_ms": 10.373920879824379,
+        "p95_ms": 17.07795833332426,
+        "p99_ms": 19.414416666663215,
+        "max_ms": 162.19262499998877
+      },
+      "step": {
+        "over25": 16,
+        "over50": 4,
+        "n": 21599,
+        "mean_ms": 10.323446313100455,
+        "p95_ms": 17.01575000000588,
+        "p99_ms": 19.3235416666937,
+        "max_ms": 162.08066666672494
+      },
+      "image": {
+        "over25": 0,
+        "over50": 0,
+        "n": 21599,
+        "mean_ms": 0.031926553312611204,
+        "p95_ms": 0.05641666672318024,
+        "p99_ms": 0.08520833330294408,
+        "max_ms": 2.87366666663047
+      },
+      "audio": {
+        "over25": 0,
+        "over50": 0,
+        "n": 21599,
+        "mean_ms": 0.005611851242753562,
+        "p95_ms": 0.01208333327440414,
+        "p99_ms": 0.022958333332212533,
+        "max_ms": 0.33887500006812843
+      },
+      "late": {
+        "over25": 30,
+        "over50": 16,
+        "n": 21599,
+        "mean_ms": 0.6919068098298458,
+        "p95_ms": 1.974668945308622,
+        "p99_ms": 3.698065104174475,
+        "max_ms": 50.010999999983596
+      },
+      "rounds": [
+        {
+          "finished": true,
+          "score1": 112800,
+          "elapsed1": 18000,
+          "number": 1,
+          "score2": 71000,
+          "field": 0,
+          "started": 20.95671666666667,
+          "result": "Spieler 1 gewinnt",
+          "elapsed2": 17604
+        },
+        {
+          "field": 0,
+          "elapsed2": 3848,
+          "started": 342.8389597916667,
+          "score1": 8000,
+          "elapsed1": 3848,
+          "number": 2,
+          "score2": 1000
+        }
+      ],
+      "repeated_presents": 118,
+      "skipped_presents": 5,
+      "max_repeat_run": 8,
+      "focus_lost_frames": 0,
+      "cache_rows": {
+        "reused": 7868916,
+        "rendered": 3553140
+      },
+      "assessment": "Passed the older display-only threshold, but fails the stricter source-picture-gap threshold: rare holds up to 150 ms remain."
+    },
+    "two-sapphire-240s-default-priority": {
+      "seconds": 240.01551925000004,
+      "wall_seconds": 243.0147740833333,
+      "unique_native_presents": 14247,
+      "display": {
+        "over50": 0,
+        "n": 14398,
+        "mean_ms": 16.670059637912683,
+        "p95_ms": 16.74150000002328,
+        "p99_ms": 17.823041666666484,
+        "max_ms": 41.101291666667095,
+        "over25": 8
+      },
+      "source_gap": {
+        "over50": 15,
+        "n": 14246,
+        "mean_ms": 16.846752825354514,
+        "p95_ms": 16.76187500000026,
+        "p99_ms": 18.527208333338763,
+        "max_ms": 316.37804166666683,
+        "over25": 104
+      },
+      "native": {
+        "over50": 33,
+        "n": 14398,
+        "mean_ms": 10.076790263115466,
+        "p95_ms": 15.215999999998786,
+        "p99_ms": 21.950583333278928,
+        "max_ms": 317.73816666662924,
+        "over25": 124
+      },
+      "simulation": {
+        "over50": 24,
+        "n": 14398,
+        "mean_ms": 8.671106747951098,
+        "p95_ms": 13.670083,
+        "p99_ms": 17.462417000000002,
+        "max_ms": 195.011625,
+        "over25": 101
+      },
+      "composition": {
+        "over50": 5,
+        "n": 14398,
+        "mean_ms": 1.3483608946381478,
+        "p95_ms": 2.418168,
+        "p99_ms": 3.2899589999999996,
+        "max_ms": 122.625792,
+        "over25": 5
+      },
+      "thread_cpu": {
+        "over50": 0,
+        "n": 14398,
+        "mean_ms": 9.580645228503993,
+        "p95_ms": 15.028999999998405,
+        "p99_ms": 16.07199999999409,
+        "max_ms": 31.335999999999586,
+        "over25": 2
+      },
+      "rounds": [
+        {
+          "score2": 667400,
+          "started": 24.393878791666666,
+          "elapsed2": 14438,
+          "elapsed1": 14438,
+          "number": 1,
+          "score1": 268830,
+          "field": 1
+        }
+      ],
+      "focus_lost_frames": 0,
+      "cache_rows": {
+        "rendered": 2017232,
+        "reused": 6926020
+      },
+      "assessment": "Fails stricter source-picture-gap criterion. Worst native step: 317.74 ms wall, 10.91 ms thread CPU; causes outside active computation are implicated, but this does not distinguish scheduling from paging."
+    },
+    "two-sapphire-240s-foreground-priority": {
+      "passed": true,
+      "seconds": 240.01577458333333,
+      "wall_seconds": 242.99921670833334,
+      "unique_native_presents": 14337,
+      "display": {
+        "over25": 1,
+        "over50": 0,
+        "n": 14401,
+        "mean_ms": 16.666604717843725,
+        "p95_ms": 17.19237500000048,
+        "p99_ms": 18.21437500001366,
+        "max_ms": 38.30166666666557
+      },
+      "source_gap": {
+        "over25": 65,
+        "over50": 0,
+        "n": 14336,
+        "mean_ms": 16.7409699067616,
+        "p95_ms": 17.278708333378745,
+        "p99_ms": 18.399666666653047,
+        "max_ms": 38.30579166666226
+      },
+      "native": {
+        "over25": 0,
+        "over50": 0,
+        "n": 14401,
+        "mean_ms": 9.504492040483289,
+        "p95_ms": 14.950291666650628,
+        "p99_ms": 15.65800000003037,
+        "max_ms": 19.255583333347204
+      },
+      "simulation": {
+        "over25": 0,
+        "over50": 0,
+        "n": 14401,
+        "mean_ms": 8.298832548572967,
+        "p95_ms": 13.517624,
+        "p99_ms": 13.974376,
+        "max_ms": 17.295916000000002
+      },
+      "composition": {
+        "over25": 0,
+        "over50": 0,
+        "n": 14401,
+        "mean_ms": 1.155128706478711,
+        "p95_ms": 2.358292,
+        "p99_ms": 2.8591670000000002,
+        "max_ms": 4.093375
+      },
+      "thread_cpu": {
+        "over25": 0,
+        "over50": 0,
+        "n": 14401,
+        "mean_ms": 9.448984792722628,
+        "p95_ms": 14.884999999992488,
+        "p99_ms": 15.590999999993471,
+        "max_ms": 18.896000000012236
+      },
+      "rounds": [
+        {
+          "score2": 535230,
+          "started": 24.194190375000005,
+          "elapsed2": 14517,
+          "field": 1,
+          "score1": 1425030,
+          "number": 1,
+          "elapsed1": 14517
+        }
+      ],
+      "focus_lost_frames": 0,
+      "cache_rows": {
+        "reused": 6528696,
+        "rendered": 1898964
+      },
+      "scheduler": {
+        "active": 33,
+        "before": 21
+      },
+      "repeated_presents": 64,
+      "skipped_presents": 0,
+      "max_repeat_run": 1,
+      "assessment": "Passes stricter window and source-picture timing thresholds. No source-picture holds over 50 ms in this four-minute repeat; does not certify all future/background conditions."
+    },
+    "solo-original-180s-foreground-priority": {
+      "passed": true,
+      "seconds": 180.0159662083333,
+      "wall_seconds": 183.01592216666666,
+      "unique_native_presents": 10752,
+      "display": {
+        "over25": 3,
+        "over50": 0,
+        "n": 10799,
+        "mean_ms": 16.669688508966843,
+        "p95_ms": 17.9954166666505,
+        "p99_ms": 18.469958333355407,
+        "max_ms": 43.52554166666778
+      },
+      "source_gap": {
+        "over25": 50,
+        "over50": 0,
+        "n": 10751,
+        "mean_ms": 16.742563249930217,
+        "p95_ms": 18.0462499999976,
+        "p99_ms": 18.594708333353083,
+        "max_ms": 43.530166666663206
+      },
+      "native": {
+        "over25": 0,
+        "over50": 0,
+        "n": 10799,
+        "mean_ms": 4.817607143408315,
+        "p95_ms": 9.04466666666437,
+        "p99_ms": 9.725374999959513,
+        "max_ms": 10.669916666671497
+      },
+      "simulation": {
+        "over25": 0,
+        "over50": 0,
+        "n": 10799,
+        "mean_ms": 4.745775811001045,
+        "p95_ms": 8.969084,
+        "p99_ms": 9.656209,
+        "max_ms": 10.576542
+      },
+      "composition": {
+        "over25": 0,
+        "over50": 0,
+        "n": 10799,
+        "mean_ms": 0.04444707611815925,
+        "p95_ms": 0.064709,
+        "p99_ms": 0.07075,
+        "max_ms": 0.093792
+      },
+      "thread_cpu": {
+        "over25": 0,
+        "over50": 0,
+        "n": 10799,
+        "mean_ms": 4.78772571534402,
+        "p95_ms": 9.014999999997997,
+        "p99_ms": 9.698999999999458,
+        "max_ms": 10.64399999999921
+      },
+      "rounds": [
+        {
+          "elapsed1": 11956,
+          "field": 0,
+          "started": 17.538940958333335,
+          "number": 1,
+          "score1": 71600
+        }
+      ],
+      "focus_lost_frames": 0,
+      "cache_rows": {
+        "reused": 0,
+        "rendered": 0
+      },
+      "scheduler": {
+        "active": 33,
+        "before": 21
+      },
+      "repeated_presents": 47,
+      "skipped_presents": 0,
+      "max_repeat_run": 1,
+      "assessment": "Passes stricter window and source-picture timing thresholds. No source-picture holds over 50 ms in this three-minute run; max 43.53 ms. Does not certify all scenes/devices."
+    }
+  },
+  "regressions": {
+    "actual_love_channel_handoffs": 100,
+    "bounded_completed_frame_fifo": 3,
+    "actual_worker_qos_focus_pause_classes": [
+      33,
+      17,
+      33,
+      17,
+      33
+    ],
+    "synthetic_modcompass_checks": 299,
+    "launcher_lifecycle": 7,
+    "duel_checks": 34,
+    "relay_rejection": 4,
+    "relay_account_gate": 8,
+    "friend_play": 18,
+    "cloudnet": 14,
+    "friends_menu": 13,
+    "account_workspace": 28,
+    "header_account_input": 8,
+    "production_modcompass_qualified": false
+  }
+}

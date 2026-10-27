@@ -103,6 +103,11 @@ function F.rows(O)
  add('friendSettings','Privacy & map settings','Control requests, chat and shared locations.')
  end
  for _,i in ipairs(doc.invites or {}) do
+  if i.mode=='pinball' then
+   if i.state=='pending'and(not O.friendTarget or tostring(i.peer)==O.friendTarget)then
+    add('noop','PINBALL · '..tostring(i.nickname),'Open Pokémon Pinball in the library to respond to this invitation.')
+   end
+  else
   if (not O.friendTarget or tostring(i.peer)==O.friendTarget) and i.wager and i.state=='accepted' then
    add('wager:review:'..i.id,'REVIEW ACTIVE WAGER · '..i.nickname,'View the reserved stakes or cancel the unresolved battle.')
    add('leaveLink:'..i.id,'Cancel wager & return stakes')
@@ -115,6 +120,7 @@ function F.rows(O)
   elseif (not O.friendTarget or tostring(i.peer)==O.friendTarget) and i.state=='pending' then
    if i.wager then add('wager:review:'..i.id,'REVIEW STAKES · '..i.nickname,'Both offers must be confirmed.')end
    add('leaveLink:'..i.id,'CANCEL · '..i.mode:upper()..' · '..i.nickname,'Waiting for your friend to accept.') end
+  end
  end
  for _,p in ipairs(not O.friendTarget and doc.incoming or {}) do add('acceptFriend:'..p.account_id,'ACCEPT FRIEND · '..p.nickname);add('removeFriend:'..p.account_id,'Decline friend request') end
  local peers={};for _,p in ipairs(doc.friends or {}) do peers[#peers+1]=p end
@@ -127,7 +133,9 @@ function F.rows(O)
    add('chat:'..p.account_id,'CHAT WITH '..p.nickname,'Messages sync across your devices. You can chat while your friend is offline.')
    local pref={};for _,v in ipairs(settings.friends or {}) do if tostring(v.account_id)==tostring(p.account_id) then pref=v;break end end
    for _,d in ipairs(playing) do
-    if d.available then
+    if d.edition=='pinballrs'then
+     add('noop','POKÉMON PINBALL','Open Pinball in the library to invite this friend to a score duel.')
+    elseif d.available then
      if d.meet_compatible or d.compatible then
      add('invite:meet:'..d.device,'MEET ON THE MAP · '..d.edition:upper(),'Same generation · Visible on maps with matching paths and exits.')
      end

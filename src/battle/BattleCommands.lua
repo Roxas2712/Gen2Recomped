@@ -1,5 +1,6 @@
 -- Native command dispatch shared by BattleState input and mod.battle intents.
 -- Keep gameplay mutations here, after the mod facade's admission checks.
+local BattleQueuePhase = require("src.battle.BattleQueuePhase")
 local MoveSelectionPhase = require("src.battle.MoveSelectionPhase")
 local Strings = require("src.core.Strings")
 local Targeting = require("src.battle.Targeting")
@@ -22,7 +23,7 @@ function Methods.chooseMenu(self, choice)
   end
   if choice == "fight" and self.ghost then
     self:say(Strings("%s is too\nscared to move!", self.player.name))
-    self.phase = "messages"
+    self.phase = BattleQueuePhase.name()
     self.afterQueue = "menu"
     self:act(function()
       self:executeAction(self.enemy, self.player, self:enemyAction())
@@ -98,12 +99,12 @@ function Methods.chooseMove(self, index)
       message = Strings("That move can't\nbe selected!")
     end
     self:say(message)
-    self.phase, self.afterQueue = "messages", "moveSelect"
+    self.phase, self.afterQueue = BattleQueuePhase.name(), "moveSelect"
     return true
   end
   if require("src.battle.Gen3Disable").blocked(chooser, mv, self.moveIndex) then
     self:say(self:romText("_MoveDisabledText", "The move is\ndisabled!"))
-    self.phase = "messages"
+    self.phase = BattleQueuePhase.name()
     self.afterQueue = "menu"
   -- TAUNT and TORMENT refuse the move at SELECTION rather than after the
   -- fact, the way DISABLE already does, so the player is never told to
@@ -111,23 +112,23 @@ function Methods.chooseMove(self, index)
   elseif self.bw and require("src.battle.Gen5MoveRules").moveBlocked(self, chooser, mvDef, true) then
     -- BLACK AND WHITE: the Choice lock, Imprison, Gravity, Heal Block
     self:say(require("src.battle.Gen5MoveRules").moveBlocked(self, chooser, mvDef, true))
-    self.phase = "messages"
+    self.phase = BattleQueuePhase.name()
     self.afterQueue = "menu"
   elseif self:tauntBlocks(chooser, mvDef) then
     self:say(Strings("%s can't use\n%s after the\ntaunt!", chooser.name, mvDef and mvDef.name or mv.id))
-    self.phase = "messages"
+    self.phase = BattleQueuePhase.name()
     self.afterQueue = "menu"
   elseif self:tormentBlocks(chooser, mvDef) then
     self:say(Strings("%s can't use the\nsame move twice in\na row due to the\nTORMENT!", chooser.name))
-    self.phase = "messages"
+    self.phase = BattleQueuePhase.name()
     self.afterQueue = "menu"
   elseif self.g4fx and require("src.battle.Gen4MoveEffects").menuRefusal(self, chooser, mvDef) then
     self:say(require("src.battle.Gen4MoveEffects").menuRefusal(self, chooser, mvDef))
-    self.phase = "messages"
+    self.phase = BattleQueuePhase.name()
     self.afterQueue = "menu"
   elseif mv.pp <= 0 then
     self:say(self:romText("_MoveNoPPText", "No PP left for\nthis move!"))
-    self.phase = "messages"
+    self.phase = BattleQueuePhase.name()
     self.afterQueue = "menu"
   elseif Targeting.needsChoice(self, self:choosingBattler(), mvDef) then
     -- WHICH OF THE TWO, when the move takes one and there are two.
@@ -169,7 +170,7 @@ function Methods.chooseMimic(self, index)
   local pick = moves[self.mimicIndex]
   local ctx = self.mimicCtx
   self.mimicMoves, self.mimicCtx = nil, nil
-  self.phase = "messages"
+  self.phase = BattleQueuePhase.name()
   self.nextInsert = 0 -- the copy's anim + text go to the queue head
   self:applyMimic(ctx.user, ctx.target, ctx.moveInst, pick.slot)
   return true

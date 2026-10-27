@@ -7,7 +7,7 @@ local function shade(rgb,k) return {rgb[1]*k,rgb[2]*k,rgb[3]*k} end
 
 function Hardware.kind(version)
   if version=="x" or version=="y" then return "3ds" end
-  local info=Versions.info(version)
+  local info=Versions.info(version) or require("src.import.LauncherExternalGames").info(version)
   local gen=info and info.generation or 1
   return gen>=4 and 'nds' or gen==3 and 'gba' or gen==2 and 'gbc' or 'gb'
 end
