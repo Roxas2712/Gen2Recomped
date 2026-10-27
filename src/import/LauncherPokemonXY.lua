@@ -250,7 +250,7 @@ function M.install(RI)
      self._xyData=result.data
      if result.edition then self._xyEdition=result.edition end
      local row=result.data and result.data[self._xyEdition] or {}
-     self._xyNotice=Strings(row.imported and not row.ready and 'Game file imported. Prepare the native backend before playing.' or 'Ready.')
+     self._xyNotice=Strings(row.ready and 'Ready to play.' or row.imported and 'Game file imported. Prepare the native backend before playing.' or 'Choose your own 3DS game file to begin.')
      if result.session then receiveSession(self,result.session,result.mode)end
     else self._xyNotice=(result and result.error or 'Unbekannter Backend-Fehler'):sub(-700) end
    elseif self._xyJob:getError() then self._xyNotice=self._xyJob:getError();self._xyJob=nil end
@@ -273,7 +273,7 @@ function M.install(RI)
   local paint=require('src.import.LauncherLibrary').paint
   local text=function(font,t,yy,color)paint.text(self,font,Strings(t),x,yy,w,color)end
   buttons(self)
-  button(self,x,y,165*s,'BACK TO LIBRARY',function()stopPreview(self);self._xyOpen=false;self.pageScroll=0 end)
+  button(self,x,y,165*s,'BACK',function()stopPreview(self);self._xyOpen=false;self.pageScroll=0 end)
   y=y+51*s
   text(self.gameNameFont,'Pokémon '..self._xyEdition:upper(),y);y=y+45*s
   text(self.hintFont,'Recompiled Ascendant · by Roxas2712',y,p.link);y=y+30*s

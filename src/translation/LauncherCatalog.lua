@@ -2,6 +2,8 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 local catalog={ de={
  ["IMPORT GAME"]="SPIEL IMPORTIEREN",
+ ["Ready to play."]="Bereit zum Spielen.",
+ ["Choose your own 3DS game file to begin."]="Wähle deine eigene 3DS-Spieldatei, um zu beginnen.",
  ["Resolution"]="Auflösung",
  ["Screens"]="Bildschirme",
  ["Window usage"]="Fensternutzung",
