@@ -240,7 +240,14 @@
         "qa_love_storage_test.LoveRetention.test_legacy_collector_cannot_remove_models_from_mixed_generated_tree: expected model retention failed",
         "qa_love_storage_test.LoveRetention.test_source_pin_shared_profile_lock_and_alias_are_respected: expected retained file count differed",
         "qa_storage_test.CacheLifecycle.test_actual_shell_launcher_preserves_child_leases: pre-existing Start.command fixture absent from checkout"
-      ]
+      ],
+      "resolution": {
+        "passed": true,
+        "tests": 87,
+        "failures": 0,
+        "errors": 0,
+        "evidence": "storage-safety-fixes.json"
+      }
     }
   },
   "limits": [

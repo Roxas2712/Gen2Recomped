@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-27",
+  "passed": true,
+  "command": "python3 -m unittest discover -s tests -p 'qa*storage*test.py'",
+  "tests": 87,
+  "failures": 0,
+  "errors": 0,
+  "scope": "Temporary homes, isolated QA profiles, real shell launcher with a fake LOVE executable, and an installed maintenance package in a temporary home; no real ROMs or player profiles.",
+  "fixes": [
+    {
+      "originalFailure": "qa_love_storage_test.LoveRetention.test_source_pin_shared_profile_lock_and_alias_are_respected",
+      "cause": "Read-side pinning did not recognize the exact legacy LOVE profile scopes used by the selective collector.",
+      "change": "Borrow the same outer profile lock through profile_scope, without granting legacy profiles writable import registration."
+    },
+    {
+      "originalFailure": "qa_love_storage_test.LoveRetention.test_legacy_collector_cannot_remove_models_from_mixed_generated_tree",
+      "cause": "Whole-directory import accounting/removal bypassed the existing mixed-tree protection.",
+      "change": "Share a protected generated-target iterator between accounting and removal; preserve model/source/save/keep trees and untouched completeness markers."
+    },
+    {
+      "originalFailure": "qa_storage_test.CacheLifecycle.test_actual_shell_launcher_preserves_child_leases",
+      "cause": "Test referred to Start.command, which is absent in this fork.",
+      "change": "Exercise the real scripts/run.sh, asserting inherited descriptors, QA identity and argument forwarding including spaces."
+    }
+  ],
+  "additionalCoverage": [
+    "Legacy and modern read scopes block collection until readers release their shared locks.",
+    "Readonly legacy source pinning cannot grant writer ownership.",
+    "Clean generated assets can be removed alongside protected model data; only then is the completeness marker invalidated.",
+    "Source, save and keep subtrees are tested independently.",
+    "The installed maintenance package includes qa_love_storage.py and passes its isolated startup smoke test."
+  ],
+  "sourceSha256": {
+    "tools/qa_storage.py": "3060b4494c51fbdf353eb3b5914c3850e669782b1dc739ddc4203fe1c5396606",
+    "tools/qa_love_storage.py": "6d4b732d7ec5a94e07e81313381a6952e349943af1022a7fc3a97e6b8b9fc5ac",
+    "tools/install_qa_maintenance.py": "5d425a04d866cae301fe3ebde75bf5eacd39ebcd5c514b11e37ea882c98f9d35",
+    "scripts/run.sh": "a8437b337d07ec1cc79c2b0a6fccbb0f179e626ee15ca3a6600e4f7cf69efe73",
+    "tests/qa_storage_test.py": "5d6d00c7d2c3305312670b1084e629f04eb83b263dae8251f8faaba985630790",
+    "tests/qa_love_storage_test.py": "dbafc3d520029879875899281ee06c09776f46799d947c115177794e5b17b7bf",
+    "tests/qa_legacy_storage_test.py": "1bf5e7ce7cb67910df87beba1ef669b5015c3f90f38aa930e874d296da04d22b"
+  }
+}
