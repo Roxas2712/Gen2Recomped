@@ -16,10 +16,15 @@ for _,version in ipairs{'red','gold','silver','crystal','prism','polishedcrystal
  function stack:pop()return table.remove(self.states)end
  game.stack=stack
  local function press(menu,key)game.input.pressed={[key]=true};menu:update(1/60);game.input.pressed={}end
+ party[1].name='STALE SPECIES NAME';party[1].nickname='EARNED NAME'
  local selected,cancelled
  local menu=PartyMenu.new(game,{battle={},pickOnly=true,onSwitch=function(mon)selected=mon end})
  stack:push(menu)
  T.eq(menu.party,party,version..' presentation reads the real save party')
+ if Version.isGen2()then
+  T.eq(party[1].name,data.pokemon[party[1].species].name,'native Gen2 boundary refreshes the catalog species name')
+  T.eq(party[1].nickname,'EARNED NAME','catalog refresh preserves earned nickname')
+ end
  T.eq(#(menu.party or{}),2,'presentation cannot show an empty team while input selects a mon')
  party[2].hp=1;T.eq(menu.party[2].hp,1,'live HP is not copied or cached')
  press(menu,'down');press(menu,'a')
