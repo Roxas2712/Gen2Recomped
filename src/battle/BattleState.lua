@@ -10535,6 +10535,9 @@ function BattleState:finishPartyItemTurn(itemId, mon)
   end
   self.partyItemHealing = nil
   self:itemUsed({})
+  -- This producer commits the real item turn. Resume that queue explicitly
+  -- after the party owner closes, as the native Gen2 controller does.
+  self.phase = BattleQueuePhase.name()
 end
 
 -- called by BagMenu after an item is used in battle (consumes the turn)
