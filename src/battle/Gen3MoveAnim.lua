@@ -919,7 +919,7 @@ function Gen3MoveAnim:start(moveId, attackerIsPlayer, attackerPosition, targetPo
   -- script's waitforvisualfinish ends at waitLife rather than paying the
   -- generic six-frame presentation tail used for particles.
   if self.surf and self.surf.waitLife then
-    self.total = math.max(duration, self.surf.waitLife)
+    self.total = math.max(duration, (self.surf.at or 0)+self.surf.waitLife)
   end
   -- ACID ARMOR's task lifetime and the one script-frame delay after clear are
   -- fully known, so do not append the generic particle presentation tail.
@@ -2395,7 +2395,7 @@ end
 function Gen3MoveAnim:surfLayer()
   local shape = self.surf
   if not shape then return nil end
-  local frame = self.frame or 0
+  local frame = (self.frame or 0)-(shape.at or 0)
   if frame < 0 or frame >= (shape.life or 134) then return nil end
   -- the task's two arms: which one is chosen is GetBattlerSide(attacker)
   local side = self.attackerIsPlayer and shape.player or shape.opponent
