@@ -459,9 +459,9 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     -- (:3228-3229), which is where the beat before "It's super effective!"
     -- comes from.
     battle:waitNext(Timing.CRIT_OHKO_TEXT)
-    if info.typeMult > 10 then
+    if not info.gbaNativeFixed and info.typeMult > 10 then
       battle:sayNext(Strings("It's super\neffective!"))
-    elseif info.typeMult < 10 then
+    elseif not info.gbaNativeFixed and info.typeMult < 10 then
       battle:sayNext(Strings("It's not very\neffective..."))
     end
     -- GBA's zero-power default script never runs the HP-damage command.

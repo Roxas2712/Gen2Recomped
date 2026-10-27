@@ -5542,10 +5542,20 @@ function BattleState:computeDamage(user, target, move, opts)
     opts.bwBattle = self
   end
   if Runtime.wantsHook("battle.damage") and not (opts and opts.gbaSetDamage) then
-    return Runtime.call("battle.damage", function(c)
-      return Damage.compute(c.ruleset, c.user, c.target, c.move, c.opts)
-    end, { battle = self, ruleset = self.ruleset, user = user,
-           target = target, move = move, opts = opts, rng = self.rng })
+    local fallback
+    local function calculate(c)
+      local d, i = Damage.compute(c.ruleset, c.user, c.target, c.move, c.opts)
+      fallback = i
+      return d, i
+    end
+    local context = { battle = self, ruleset = self.ruleset, user = user,
+      target = target, move = move, opts = opts, rng = self.rng }
+    if not (opts and opts.gbaNativeFixed) then
+      return Runtime.call("battle.damage", calculate, context)
+    end
+    local amount, info = Runtime.call("battle.damage", calculate, context)
+    if type(info) ~= "table" then info = fallback end
+    return amount, info
   end
   return Damage.compute(self.ruleset, user, target, move, opts)
 end
@@ -8850,6 +8860,13 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
       self:sayNext(m)
     end
     self:drainNext() -- REST/RECOVER/SOFTBOILED move the user's bar
+    return
+  end
+  if GameVersion.isGen3() and move.power == 0 and move.fixedDamage == nil
+      and record and record.gbaNativeFixed then
+    -- The native dispatcher selects its status body before accuracy or
+    -- damage calculation when an imported fixed-damage row has zero power.
+    self:sayNext(self:romText("STRINGID_BUTNOTHINGHAPPENED", "But nothing happened!"))
     return
   end
   if move.power == 0 and not (record and record.kind == "full") then

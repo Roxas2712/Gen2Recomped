@@ -4,9 +4,9 @@ local V, F, H =
   require("src.core.GameVersion"), require("src.link.Fingerprint"), require("src.link.Handshake")
 local Copy = require("src.mods.Merge").deepCopy
 local data, before = T.fixtures.fresh(), V.get()
--- Legacy hash retained; native hash independently audits revision 21 -> 22 only.
+-- Legacy hash retained; native hash independently audits revision 22 -> 23 only.
 local LEGACY = "e33d251961f2a41d"
-local NATIVE = "0532b5c0de70029c"
+local NATIVE = "44c5b775413306c1"
 for _, version in ipairs({ "red", "firered", "gold", "emerald", "diamond", "firered", "black" }) do
   V.set(version)
   local gba = V.isGen3()
@@ -15,7 +15,7 @@ for _, version in ipairs({ "red", "firered", "gold", "emerald", "diamond", "fire
     gba and NATIVE or LEGACY,
     "runtime command revision participates in cached fingerprints"
   )
-  T.eq(F.nativeBattleRevision(), gba and 22 or nil, "only GBA advertises the new command revision")
+  T.eq(F.nativeBattleRevision(), gba and 23 or nil, "only GBA advertises the new command revision")
   local game = { data = data, save = { player = { name = "RULES" } } }
   local current = H.hello(game, "battle")
   local legacy = Copy(current)
@@ -34,10 +34,10 @@ for _, version in ipairs({ "red", "firered", "gold", "emerald", "diamond", "fire
   )
   if gba then
     local previous = Copy(current)
-    previous.nativeBattleRevision, previous.fingerprint = 21, "7aae08076971bcc3"
-    T.eq(H.checkCompat(current, previous), "subset", "previous native hit-history rules cannot admit lockstep")
+    previous.nativeBattleRevision, previous.fingerprint = 22, "0532b5c0de70029c"
+    T.eq(H.checkCompat(current, previous), "subset", "previous native fixed-damage rules cannot admit lockstep")
     T.eq(H.checkCompat(previous, current), "subset", "native command revision mismatch is symmetric")
-    T.eq(current.nativePartyRevision, 1, "Hit-history rules retain the native party codec")
+    T.eq(current.nativePartyRevision, 1, "Fixed-damage rules retain the native party codec")
     for _, host in ipairs({ false, true }) do
       for _, peer in ipairs({ legacy, previous }) do
         local state = setmetatable(

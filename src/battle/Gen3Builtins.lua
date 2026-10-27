@@ -7,6 +7,7 @@ function M.record(id, base)
   if id == "NATURE_POWER_EFFECT" and require("src.core.GameVersion").isGen3() then
     return base or require("src.battle.Gen3NaturePower").record()
   end
+  base = require("src.battle.Gen3FixedDamage").builtin(id, base)
   base = require("src.battle.Gen3Disable").builtin(id, base)
   base = require("src.battle.Gen3Haze").builtin(id, base)
   base = require("src.battle.Gen3PerishSong").builtin(id, base)

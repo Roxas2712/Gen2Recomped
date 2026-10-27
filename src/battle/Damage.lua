@@ -228,6 +228,10 @@ end
 function Damage.compute(ruleset, attacker, defender, move, opts)
   opts = opts or {}
   local rng = opts.rng or love.math.random
+  if require("src.core.GameVersion").isGen3() then
+    local fixed = require("src.battle.Gen3FixedDamage")
+    if fixed.native(move) then return fixed.calculate(attacker, defender, move, opts) end
+  end
   -- ...and the same field again, because a STATUS move must not roll damage.
   -- Platinum has 170 of them and every one of them carries its class under the
   -- other name; asking only for `category` here would have sent each one into
