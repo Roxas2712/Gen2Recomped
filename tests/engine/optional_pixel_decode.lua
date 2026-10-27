@@ -77,7 +77,9 @@ T.eq(Assets.image(native),recoveryTexture,'native generated texture keeps its re
 -- Generated and optional requests may resolve to the same underlying path.
 -- A cached native recovery must never make an optional request look valid.
 local loader=Assets.loader
-Assets.loader={overrideOrder=function()return{}end,derivedPath=function()return optional end}
+Assets.loader={overrideOrder=function()return{}end,derivedPath=function(_,rel)
+  if rel=='sprites/optional-alias.png'then return optional end
+end}
 Assets.invalidate()
 local alias='assets/generated/sprites/optional-alias.png'
 T.eq(Assets.image(alias),recoveryTexture,'generated alias can recover at its native owner')
