@@ -10,6 +10,7 @@
 -- bide, recharge, confusion, screens, substitute, transform, ...) is
 -- ported from engine/battle/core.asm; see docs/behavior-porting-notes.md.
 
+local BattleQueuePhase = require("src.battle.BattleQueuePhase")
 local MoveSelectionPhase = require("src.battle.MoveSelectionPhase")
 local Assets = require("src.render.Assets")
 local Catching = require("src.battle.Catching")
@@ -1365,6 +1366,7 @@ local function newBattle(game, opts)
     end
   end
   self.queue = {}
+  if GameVersion.isGen2() then self.messageTimer = 0 end
   self.phase = "intro"
   self.menuIndex = 1
   self.moveIndex = 1
@@ -2625,6 +2627,11 @@ local function shownHP(b)
   return math.floor(shown)
 end
 
+-- The queue owner releases its text before a new native decision.
+function BattleState:clearQueueMessage()
+  if GameVersion.isGen2() then self.message, self.messageTimer = nil, 0 end
+end
+
 -- Parse a battle message into its rendered lines.  The extractor marks
 -- \n = next line and \v = CONT (home/text.asm ContText: draw the blinking
 -- ▼, WaitForTextScrollButtonPress, then ScrollTextUpOneLine); the boosted /
@@ -2636,6 +2643,12 @@ end
 -- instead of drawing it off-screen at y=144 (#216).
 function BattleState:startMessage(item)
   self.current = item
+  if GameVersion.isGen2() then
+    -- The public Gen2 screen carries the current source text. Its hold is
+    -- retired by the SAME native A/B/choice path below; it is no timeout
+    -- and must never consume a second input or advance a second typer.
+    self.message, self.messageTimer = item.text or "", 48
+  end
   self.lines = {}
   self.total = 0
   local text = item.text or ""
@@ -2784,11 +2797,19 @@ function BattleState:updateQueuePresentation()
 end
 
 function BattleState:updateQueue()
+  -- Normalize an older shared-controller checkpoint at its actual owner,
+  -- before consumers observe or draw the next native queue step.
+  if GameVersion.isGen2() and self.phase == "messages" then
+    self.phase = BattleQueuePhase.name()
+    if self.current then
+      self.message, self.messageTimer = self.current.text or "", 48
+    end
+  end
   if self.waitingUI then
     if self.game.stack:top() ~= self then return true end
     self.waitingUI = nil
     if GameVersion.isGen2() and self.phase == "submenu" then
-      self.phase = "messages"
+      self.phase = BattleQueuePhase.name()
     end
   end
   if self:updateQueuePresentation() then return true end
@@ -3165,6 +3186,7 @@ function BattleState:updateQueue()
       self.game.stack:push(ChoiceBox.new(self.game, function(yes)
         local fn = item.choice
         battle.current = nil
+        if GameVersion.isGen2() then battle.messageTimer = 0 end
         fn(yes)
       end))
       return true
@@ -3190,6 +3212,7 @@ function BattleState:updateQueue()
       elseif input:wasPressed("a") or input:wasPressed("b") then
         self.msgPrompt = nil
         self.current = nil
+        if GameVersion.isGen2() then self.messageTimer = 0 end
       end
     end
   end
@@ -4026,7 +4049,7 @@ function BattleState:enter()
     end)
     self:markParticipant()
   end
-  self.phase = "messages"
+  self.phase = BattleQueuePhase.name()
   self.afterQueue = "menu"
   self:syncSides()
   -- THE FIRST SEND-OUT COUNTS TOO.  ABILITYEFFECT_ON_SWITCHIN runs the
@@ -4552,7 +4575,7 @@ function BattleState:update(dt)
     end
   end
 
-  if self.phase == "messages" or (GameVersion.isGen2() and self.phase == "submenu") then
+  if BattleQueuePhase.active(self) or (GameVersion.isGen2() and self.phase == "submenu") then
     -- Nothing queued starts until the silhouettes have finished sliding in:
     -- SlidePlayerAndEnemySilhouettesOnScreen ends with `jpfar
     -- PrintBeginningBattleText` (engine/battle/core.asm:100), so the enemy
@@ -4565,8 +4588,10 @@ function BattleState:update(dt)
     if not self:updateQueue() then
       if self.afterQueue == "menu" then
         self.phase = "menu"
+        self:clearQueueMessage()
       elseif self.afterQueue == "moveSelect" then
         self.phase = MoveSelectionPhase.name()
+        self:clearQueueMessage()
       elseif self.afterQueue == "finish" then
         self:finish()
       end
@@ -4642,7 +4667,7 @@ function BattleState:update(dt)
   if self.phase == "menu" and self.safari then
     if self.safari.balls <= 0 then
       self:say(Strings("PA: You're out of\nSAFARI BALLs!\nGame over!"))
-      self.phase = "messages"
+      self.phase = BattleQueuePhase.name()
       self.result = "run"
       self.afterQueue = "finish"
       return
@@ -4960,7 +4985,7 @@ function BattleState:gen3TutorialBag()
     return true
   end
   if require("src.core.GameVersion").isGen4() then
-    self.phase, self.afterQueue = "messages", "menu"
+    self.phase, self.afterQueue = BattleQueuePhase.name(), "menu"
     self:ui(function()
       local bag = require("src.ui.Gen4BagMenu").new(self.game, { pocket = "POKé BALLS" })
       bag.rows = { { id = 4, label = "POKé BALL", qty = 20 } }
@@ -4982,7 +5007,7 @@ function BattleState:gen3TutorialBag()
     return false
   end
   local game = self.game
-  self.phase = "messages"
+  self.phase = BattleQueuePhase.name()
   self.afterQueue = "menu"
   self:ui(function()
     local bag
@@ -5009,7 +5034,7 @@ function BattleState:openOldManBag()
   if self:gen3TutorialBag() then return end
   local ListMenu = require("src.ui.ListMenu")
   local game = self.game
-  self.phase = "messages"
+  self.phase = BattleQueuePhase.name()
   self.afterQueue = "menu"
   self:ui(function()
     local list
@@ -5043,7 +5068,7 @@ end
 -- because DisplayBattleMenu swapped wPlayerName (core.asm:2024-2037);
 -- no ball is consumed (.done returns early, :576-578).
 function BattleState:oldManThrow()
-  self.phase = "messages"
+  self.phase = BattleQueuePhase.name()
   self.afterQueue = "finish"
   self.result = "run" -- nothing is kept; wBattleResult only ends the demo
   local DsDemo = require("src.battle.CatchTutorialDemo")
@@ -5089,7 +5114,7 @@ function BattleState:queuePokedudeVoices(indices)
   end
   if queued then
     pd.timer = 0
-    self.phase = "messages"
+    self.phase = BattleQueuePhase.name()
     self.afterQueue = "menu"
   end
   return queued
@@ -5277,7 +5302,7 @@ function BattleState:updatePokedudeMenu()
     -- control to the player with the temporary party still installed.
     self.result = self.result or "run"
     self.afterQueue = "finish"
-    self.phase = "messages"
+    self.phase = BattleQueuePhase.name()
     return
   end
 
@@ -5473,7 +5498,7 @@ function BattleState:pokedudeUseAntidote(step)
   local pd = self.pokedudeDemo
   if not pd then return end
   pd.enemyMove = step.enemyMove
-  self.phase = "messages"
+  self.phase = BattleQueuePhase.name()
   self.afterQueue = "menu"
   self:say(Strings("POKé DUDE used\nANTIDOTE!"))
   local result, messages = require("src.inventory.ItemEffects")
@@ -6017,7 +6042,7 @@ function BattleState:resolveTurn(playerAction)
       if move then self._gbaResidualPriority[entry[1].position] = move.priority or 0 end
     end
   end
-  self.phase = "messages"
+  self.phase = BattleQueuePhase.name()
   self.afterQueue = "menu"
   if GameVersion.generation() == 3 then
     self._actionTargetOrder = {}
@@ -6098,11 +6123,11 @@ function BattleState:resolveSwitch(newMon)
   if self.player and self.player.ingrained and self.player.mon.hp > 0 then
     self:say(Strings("%s anchored\nitself with its\nroots!",
                      displayName(self.player)))
-    self.phase = "messages"
+    self.phase = BattleQueuePhase.name()
     self.afterQueue = "menu"
     return
   end
-  self.phase = "messages"
+  self.phase = BattleQueuePhase.name()
   self.afterQueue = "menu"
   -- BLACK AND WHITE: the foe chooses first, and a Pursuit catches the
   -- Pokemon leaving (src/battle/Gen5MoveRules.lua)
@@ -10021,7 +10046,7 @@ end
 -- out with no free enemy move.
 function BattleState:openReplacementMenu()
   local game = self.game
-  self.phase = "messages"
+  self.phase = BattleQueuePhase.name()
   self.afterQueue = "menu"
   local function onSwitch(mon)
     if Party.isEgg(mon) then
@@ -10090,7 +10115,7 @@ end
 -- engine/items/item_effects.asm.
 function BattleState:safariAction(choice)
   if self.gen4Safari then return self:gen4SafariAction(choice) end
-  self.phase = "messages"
+  self.phase = BattleQueuePhase.name()
   self.afterQueue = "menu"
   local st = self.safari
   local playerName = self.game.save.player.name
@@ -10160,7 +10185,7 @@ function BattleState:gen4SafariAction(choice)
   end
   local playerName = self.game.save.player.name
   local foe = self.enemy.name
-  self.phase = "messages"
+  self.phase = BattleQueuePhase.name()
   self.afterQueue = "menu"
 
   if choice == "run" then
@@ -10362,7 +10387,7 @@ end
 
 -- Gen 1 escape formula (engine/battle/core.asm TryRunningFromBattle)
 function BattleState:tryRun()
-  self.phase = "messages"
+  self.phase = BattleQueuePhase.name()
   self.afterQueue = "menu"
   -- A wild battle the script says cannot be escaped.  There is exactly one in
   -- Emerald -- the first -- and the roll is skipped rather than rigged, so a
@@ -10438,7 +10463,7 @@ function BattleState:tryRun()
 end
 
 function BattleState:openItems()
-  self.phase = "messages"
+  self.phase = BattleQueuePhase.name()
   self.afterQueue = "menu"
   -- BATTLE_TYPE_FRONTIER (all but the Pyramid): "Items can't be used now."
   if self.noItems then
@@ -11141,12 +11166,12 @@ function BattleState:bugContestBall()
   -- kept throwing past twenty, so refuse here as well -- one guard for the
   -- last ball of a battle, one for the run.
   if BugContest.ballsLeft(save) <= 0 then
-    self.phase = "messages"
+    self.phase = BattleQueuePhase.name()
     self.afterQueue = "menu"
     self:say(Strings("You have no\nPARK BALLs left!"))
     return
   end
-  self.phase = "messages"
+  self.phase = BattleQueuePhase.name()
   self.afterQueue = "menu"
   BugContest.useBall(save)
   self:say(self:romText("_ItemUseText001", "%s used\n%s!",
@@ -11231,7 +11256,7 @@ function BattleState:storeContestMon()
 end
 
 function BattleState:openParty()
-  self.phase = "messages"
+  self.phase = BattleQueuePhase.name()
   self.afterQueue = "menu"
   self:ui(function()
     return self:buildScreen(Gen4Battle.partyScreenId(self) or "PartyMenu", {
@@ -11366,7 +11391,7 @@ function BattleState:finish()
     if type(text) == "string" and text ~= "" then
       pd.voiceDone[index] = true
       self:say(text)
-      self.phase = "messages"
+      self.phase = BattleQueuePhase.name()
       self.afterQueue = "finish"
       return
     end
@@ -11382,7 +11407,7 @@ function BattleState:finish()
       self.game.save.player.name, self.payDay))
     self.payDay = nil
     self.afterQueue = "finish"
-    self.phase = "messages"
+    self.phase = BattleQueuePhase.name()
     return
   end
   -- Invariant: a battle can never hand the overworld a party with nothing
@@ -13278,7 +13303,7 @@ end
 function BattleState:drawTextAreaInner()
   Font.drawBox(0, 12, 20, 6)
   love.graphics.setColor(0, 0, 0, 1)
-  if self.phase == "messages" and (self.current or self.animPlaying) then
+  if BattleQueuePhase.active(self) and (self.current or self.animPlaying) then
     -- during the move animation self.current is nil but shown still holds
     -- the "used X!" lines; keep drawing them like pokered, whose move
     -- animations only touch sprites and never the textbox tilemap (#296)

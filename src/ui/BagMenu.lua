@@ -2,6 +2,7 @@
 -- opts.battle = BattleState when opened mid-battle (balls throwable,
 -- using an item consumes the turn).
 
+local BattleQueuePhase = require("src.battle.BattleQueuePhase")
 local ItemEffects = require("src.inventory.ItemEffects")
 local ListMenu = require("src.ui.ListMenu")
 local TextBox = require("src.render.TextBox")
@@ -280,7 +281,7 @@ local function vanillaUseOn(game, battle, id, target, list, moveIndex, picker, p
       battle.pokeDollEscape = true
       battle.result = "run"
       battle.afterQueue = "finish"
-      battle.phase = "messages"
+      battle.phase = BattleQueuePhase.name()
     end)
     return
   end
