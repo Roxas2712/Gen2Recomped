@@ -342,7 +342,7 @@ local function drawMoveDetails(battle, move)
   if not move then return end
   local def = battle.data.moves[move.id]
   if not def then return end
-  local maxPP = def.pp + (move.ppUps or 0) * math.floor(def.pp / 5)
+  local maxPP = require("src.pokemon.Pokemon").maxPP(def, move)
   love.graphics.setColor(0, 0, 0, 1)
   Font.draw(("PP %2d/%2d"):format(move.pp or 0, maxPP), 232, 112)
   Font.draw(fitName(TypeChart.displayName(def.type), 64), 232, 128)

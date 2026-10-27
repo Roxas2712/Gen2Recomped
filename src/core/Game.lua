@@ -1193,10 +1193,10 @@ local function paintResolvedFrame(self, scene, drawFrom, worldBelow, worldDrawn,
         if ox ~= 0 or oy ~= 0 then
           love.graphics.push()
           love.graphics.translate(ox, oy)
-          state:draw()
+          HotModules.get("src.render.NativeScreenOverlay").screen(state)
           love.graphics.pop()
         else
-          state:draw()
+          HotModules.get("src.render.NativeScreenOverlay").screen(state)
         end
       end
     end

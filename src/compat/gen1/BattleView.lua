@@ -106,7 +106,7 @@ function M.new(game,screen,valid,identifiers)
    for i,mv in ipairs(mon.moves or{})do
     d.moves[i]=ids:read('moves',mv.id);d.pp[i]=mv.pp;d.baseline[i]=mv.pp
     local def=(e.context.data.moves or{})[mv.id]
-    d.maxPp[i]=def and def.pp and def.pp+math.floor(def.pp/5)*(mv.ppUps or 0)or nil
+    d.maxPp[i]=def and def.pp and require("src.pokemon.Pokemon").maxPP(def,mv)or nil
     d.ids[i]=d.moves[i];d.maximum[i]=d.maxPp[i]
    end
    d.pending=true

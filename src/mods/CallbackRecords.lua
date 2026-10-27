@@ -1,3 +1,4 @@
+local Pokemon = require("src.pokemon.Pokemon")
 local Api3Records = require("src.mods.Api3Records")
 local EnemyMoveChoice = require("src.battle.EnemyMoveChoice")
 -- A call-local transaction. Only known record roles cross this boundary;
@@ -198,11 +199,11 @@ function R.new(loader, name, generation, api3)
     for i, m in ipairs(raw or {}) do
       local id = type(m) == "table" and m.id or m
       local def = moveDef(id)
-      local ups = type(m) == "table" and (m.ppUps or 0) or 0
+      local ups = Pokemon.ppUps(def, m, generation)
       out[i] = {
         id = read("moves", id),
         pp = type(m) == "table" and m.pp or nil,
-        maxPp = def and math.floor((def.pp or 0) + ups * math.floor((def.pp or 0) / 5)) or nil,
+        maxPp = def and Pokemon.maxPP(def, m, generation) or nil,
         ppUps = ups,
       }
     end
@@ -510,7 +511,7 @@ function R.new(loader, name, generation, api3)
       assert(row.id, "move ID is required")
       row.ppUps = integer(m.ppUps or 0, 0, 3, "ppUps")
       local def = moveDef(row.id)
-      local max = def and math.floor((def.pp or 0) + row.ppUps * math.floor((def.pp or 0) / 5)) or 0
+      local max = def and Pokemon.maxPP(def, row, generation) or 0
       row.pp = integer(m.pp, 0, max, "pp")
       out[i] = row
     end

@@ -73,7 +73,7 @@ function PartyMenu:sgbPalettes(game)
       -- RedrawPartyMenu snaps it green when the message prints.  Hold the
       -- starting HP here for exactly that window (#252).
       local hp = mon.hp
-      if self.heal and self.heal.mon == mon then hp = self.heal.from end
+      if self.heal and self.heal.mon == mon and self.heal.from ~= nil then hp = self.heal.from end
       local bar = P.pal(game.data, P.barPalName(hp, mon.stats.hp))
       if bar then
         zones[#zones + 1] = P.zone(bar, 6, i * 2 - 1, 12, i * 2 - 1)
@@ -899,6 +899,10 @@ function PartyMenu:update(dt)
   self.blink = ((self.blink or 0) + 1) % 320
   -- The bar fill owns the menu while it runs: UpdateHPBar2 is a blocking
   -- predef in item_effects.asm, so no button is read until it lands (#252).
+  if self.itemResult then
+    self:updateItemResult(self.game.input)
+    return
+  end
   local heal = self.heal
   if heal then
     heal.shown = math.min(heal.mon.hp,
@@ -1057,7 +1061,9 @@ function PartyMenu:draw()
       -- only .hp and .stats, so a shim table is enough and the real mon is
       -- never mutated for display (#252).
       local shown = mon
-      if self.heal and self.heal.mon == mon then
+      if self.itemResult then
+        shown = { hp = self:shownHpFor(i, mon), stats = mon.stats }
+      elseif self.heal and self.heal.mon == mon then
         shown = { hp = math.floor(self.heal.shown), stats = mon.stats }
       end
       love.graphics.setColor(1, 1, 1, 1)
@@ -1122,4 +1128,5 @@ function PartyMenu:draw()
   love.graphics.setColor(1, 1, 1, 1)
 end
 
+require('src.ui.Gen2PartyItemResult').install(PartyMenu)
 return PartyMenu
