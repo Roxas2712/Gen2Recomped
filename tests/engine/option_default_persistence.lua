@@ -11,6 +11,14 @@ local original=Version.get()
 local function press(game,key)
  game.input.pressed={[key]=true};game.stack:top():update(1/60);game.input.pressed={}
 end
+local function selectOdds(game,root)
+ for _=1,#root.rows+2 do
+  local row=root.rows[root.index]
+  if row and row.id=='shinyOdds'then return root end
+  press(game,'down')
+ end
+ error('native SHINY ODDS row is unreachable')
+end
 for _,edition in ipairs({'red','gold','silver','crystal','emerald'})do
  Version.set(edition)
  local generation=Version.generation()
@@ -28,7 +36,7 @@ for _,edition in ipairs({'red','gold','silver','crystal','emerald'})do
    T.check(type(Save.saveOptions(self.save.options,fs,generation))=='table','native options write succeeds')
   end
   local root=Menu.new(g);g.stack:push(root)
-  local page=assert(root:focusRow('shinyOdds'))
+  local page=selectOdds(g,root)
   T.eq(page:row().value(g),'ALWAYS','actual row starts on stored ALWAYS')
   press(g,'right')
   T.eq(page:row().value(g),'DEFAULT','normal input selects cartridge default')
@@ -45,7 +53,7 @@ for _,edition in ipairs({'red','gold','silver','crystal','emerald'})do
   -- Start another menu from reloaded bytes: Left reaches ALWAYS and A wraps
   -- back to the default through the same native input owner.
   g.save=loaded;g.stack:init();root=Menu.new(g);g.stack:push(root)
-  page=assert(root:focusRow('shinyOdds'));press(g,'left')
+  page=selectOdds(g,root);press(g,'left')
   T.eq(Pokemon.shinyOddsOf({options=Save.optionsFor(edition,fs)}),1,'left from persisted DEFAULT reaches ALWAYS')
   press(g,'a')
   T.eq(Pokemon.shinyOddsOf({options=Save.optionsFor(edition,fs)}),nil,'A also persists the return to DEFAULT')
