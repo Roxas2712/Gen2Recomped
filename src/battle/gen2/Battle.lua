@@ -21,6 +21,9 @@ local function active(screen, mon)
 end
 
 function Model:moveDef(move)
+  -- Older native screens take a move instance; scalar catalog queries belong
+  -- to this model and must not pass an id through that older signature.
+  if type(move) ~= 'table' then return self.data.moves[move] end
   return owner(self):moveDef(move)
 end
 

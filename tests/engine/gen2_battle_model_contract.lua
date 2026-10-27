@@ -94,7 +94,7 @@ for _,version in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   local playerStats,enemyStats=b.player.curStats,b.enemy.curStats
   local partyStats,types=b.player.mon.stats,b.enemy.def.types
   local pp=b.player.curMoves[1].pp
-  local move=b:moveDef('FIX_TACKLE')
+  local move=b:moveDef(b.player.curMoves[1])
   local function damage()
     return b:computeDamage(b.player,b.enemy,move,{forceCrit=false,rng=function(lo,hi)return hi or lo end})
   end
