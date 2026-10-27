@@ -2675,6 +2675,29 @@ end
 
 -- Only display controllers live here. Command holds, HP awards, turn rows
 -- and completion remain in updateQueue, even while a mod holds presentation.
+function BattleState:stepGen3Ball(anim)
+  anim:update()
+  if anim.sound then
+    require("src.core.Sound").playId(self.data, anim.sound)
+  end
+  -- the trainer is gone by the time his Pokemon is out of the ball
+  -- ...unless the trainer's own walk-off is still running (#407): the
+  -- cartridge frees that sprite at the end of the fifty frames, not when
+  -- the ball opens, and cutting it short hides most of the throw
+  if anim.sendOut == "player" and self.showPlayerBack
+      and anim.phase ~= "throw"
+      and not (self.backWalkOff and self.backWalkOff > 0) then
+    self.showPlayerBack = false
+    self:slidePic("back")
+  end
+  if anim:isDone() then
+    self.gen3BallPlaying = false
+    -- a caught Pokemon leaves the ball resting on screen through the text,
+    -- exactly as the Game Boy chain does
+    if not anim.caught then self.gen3Ball = nil end
+  end
+end
+
 function BattleState:updateMovePresentation()
   -- HOENN'S PARTICLES TICK BEFORE THE QUEUE'S OWN HOLD, and the whole
   -- reason the animations looked broken is that they used to tick after it.
@@ -2704,27 +2727,9 @@ function BattleState:updateMovePresentation()
   -- reason: its frames are counted where the hold is counted, or it would
   -- stand still for exactly as long as it is meant to be moving.
   if self.gen3BallPlaying and self.gen3Ball then
-    local anim = self.gen3Ball
-    anim:update()
-    if anim.sound then
-      require("src.core.Sound").playId(self.data, anim.sound)
-    end
-    -- the trainer is gone by the time his Pokemon is out of the ball
-    -- ...unless the trainer's own walk-off is still running (#407): the
-    -- cartridge frees that sprite at the end of the fifty frames, not when
-    -- the ball opens, and cutting it short hides most of the throw
-    if anim.sendOut == "player" and self.showPlayerBack
-        and anim.phase ~= "throw"
-        and not (self.backWalkOff and self.backWalkOff > 0) then
-      self.showPlayerBack = false
-      self:slidePic("back")
-    end
-    if anim:isDone() then
-      self.gen3BallPlaying = false
-      -- a caught Pokemon leaves the ball resting on screen through the text,
-      -- exactly as the Game Boy chain does
-      if not anim.caught then self.gen3Ball = nil end
-    end
+    local capture=GameVersion.isGen3()and package.loaded['src.core.game3.battle.catch_seq']
+    if capture then capture._nativeBallStep(self,self.gen3Ball,BattleState.stepGen3Ball)
+    else self:stepGen3Ball(self.gen3Ball)end
   end
 end
 
@@ -2737,6 +2742,8 @@ function BattleState:updateQueuePresentation()
   if self._gbaEffectPresentation
       and require("src.battle.Gen3EffectPresentation").update(self) then return true end
   self:updateMovePresentation()
+  local capture=GameVersion.isGen3()and package.loaded['src.core.game3.battle.catch_seq']
+  if capture and capture._holdsNativeQueue(self)then return true end
   local source = GameVersion.isGen3() and package.loaded['src.core.game3.battle.anim']
   if source and source._holdsNativeQueue(self) then return true end
   -- a queued hold (faint slide, hit blink) counts down before the next row
@@ -2853,7 +2860,8 @@ function BattleState:updateQueue()
     end
     if item.fn then
       local sequence=GameVersion.isGen3()and package.loaded['src.core.game3.battle.switch_seq']
-      if sequence and item._sourceSwitchStep then
+      if item._sourceCatchStep and GameVersion.isGen3()then sequence=package.loaded['src.core.game3.battle.catch_seq']end
+      if sequence and(item._sourceSwitchStep or item._sourceCatchStep)then
         local consumed=false
         local ok,why=pcall(sequence._nativeStep,self,item,function()
           consumed=true
@@ -4058,6 +4066,8 @@ end
 -- any pop (finish, script teardown) must silence the alarm loop
 -- (end_of_battle.asm clears wLowHealthAlarm when a battle ends)
 function BattleState:exit()
+  local capture=package.loaded['src.core.game3.battle.catch_seq']
+  if capture then capture._nativeRelease(self)end
   local sequence=package.loaded['src.core.game3.battle.switch_seq']
   if sequence then sequence._nativeRelease(self)end
   require('src.battle.Gen3LevelUpStreaks').release(self)
@@ -13629,6 +13639,14 @@ do
     if source then source._nativeExit(self) end
     return exit(self)
   end
+end
+
+-- Source capture callbacks borrow the actual native request builder.
+local throwBallNative=BattleState.throwBall
+function BattleState:throwBall(ball)
+  local source=GameVersion.isGen3()and package.loaded['src.core.game3.battle.catch_seq']
+  if source then return source._nativeBegin(self,throwBallNative,ball)end
+  return throwBallNative(self,ball)
 end
 
 return BattleState
