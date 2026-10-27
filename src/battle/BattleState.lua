@@ -3613,6 +3613,7 @@ function BattleState:placeBattler(pos, battler)
   if battler then
     battler.position = pos
     require("src.battle.HeldItemRead").bind(battler, self)
+    Gen2Read.bind(battler, self)
   end
   if flank == 1 then
     if side == 1 then self.player = battler else self.enemy = battler end
@@ -3740,6 +3741,7 @@ function BattleState:syncSides()
   end
   for _, battler in activeBattlers(self) do
     require("src.battle.HeldItemRead").bind(battler, self)
+    Gen2Read.bind(battler, self)
   end
 end
 

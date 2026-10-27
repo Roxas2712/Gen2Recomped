@@ -137,6 +137,18 @@ for _,version in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   T.neq(b.player,old,'native wrapper really changed')
   probe.scale=1
   -- Native Transform keeps temporary stats on its wrapper, never the save.
+  -- Link/scaffold owners use the public factory without a screen argument,
+  -- then place/synchronize their actual wrappers on the native controller.
+  local placed=Screen.makeBattler(game.data,game.save.party[1],true,nil)
+  b:placeBattler(Screen.POS.PLAYER_LEFT,placed)
+  probe.scale=3
+  T.eq(Read.stats(placed).attack,placed.curStats.attack*3,'native placement binds a public-factory wrapper')
+  local rebound=Screen.makeBattler(game.data,game.save.party[2],true,nil)
+  b.player=rebound
+  b:syncSides()
+  T.eq(Read.stats(rebound).attack,rebound.curStats.attack*3,'native side synchronization binds external wrappers')
+  T.eq(model.player,game.save.party[2],'external native replacement retains live model identity')
+  probe.scale=1
   local source=b.enemy.curStats.attack
   Effects.primary.TRANSFORM_EFFECT(b,b.player,b.enemy)
   if supported then T.eq(model:battleStat(model.player,'attack'),source,'Transform uses actual native volatile stat')end
