@@ -102,3 +102,27 @@ The reviewed full input and its section pin are updated together; the fixture
 digest becomes `a000e3862d11a73a` (previously `41e69caf4afa35ab`).
 The GBA runtime command/party revisions also participate in GBA handshakes;
 peers must run the same integrated engine rather than bypassing compatibility.
+
+
+## Native Red content qualification baseline (2026-10-27)
+
+The imported Red gate retained `227fd737aba15763` from the initial fork
+commit. That value does not match either the initial fork runtime
+`feb559cbe66a9abce0475572aff392246b80b82a` (`b401a4c32c6604af`) or the
+unchanged main runtime `c3b4c864de04976e512454efbdbb992c73dab15a`
+(`60874c75419b3c41`) against the same freshly imported US/EU Red cartridge.
+The original canonical input for the old golden is unavailable.
+
+The private canonical-surface comparison finds identical species, moves,
+type chart, statuses and constants between those two runtimes. Their
+move-effect sections differ: 3,154 versus 8,272 serialized bytes, reflecting
+the engine's expanded native effect registry. The current main surface has
+SHA-256 `56990828f0583bd8f134faeb23ffc2edf2cb010a4a302cd7e235272a0fd96653`.
+
+Re-pin the Red gate to main's existing digest, using the explicit fingerprint
+blessing tool. This qualification repair changes no runtime data, serializer,
+effect registry or current link handshake. The ROM-derived canonical input
+stays private; only its hashes are recorded. A committed API 1 loader fixture
+with synthetic one-pixel PNGs replaces the absent example-mod dependency.
+It still tests real disk discovery, validation, content overrides and asset
+reads through the SDK's IO-backed filesystem.

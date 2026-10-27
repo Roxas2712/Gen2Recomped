@@ -13,6 +13,7 @@ local Assets = require("src.render.Assets")
 local Logger = require("src.core.Logger")
 local Probe = require("src.core.Probe")
 local PaletteFX = require("src.render.PaletteFX")
+local ShadeRecolour = require("src.render.ShadeRecolour")
 local Performance = require("src.core.Performance")
 local performancePaletteTicks=setmetatable({}, {__mode="k"})
 
@@ -238,18 +239,22 @@ local function getShiftVariants(tilesetImagePath, perRow, tile, colors, gbcKey)
     shiftVariants[key] = false
     return false
   end
-  local id = Assets.imageData(tilesetImagePath)
+  local id = Assets.imageDataShared(tilesetImagePath)   -- read only
   local sx = (tile % perRow) * 8
   local sy = math.floor(tile / perRow) * 8
   local out = {}
   for o = 0, 7 do
-    local v = love.image.newImageData(8, 8)
+    -- G7: one FFI region copy per variant; the loop is the fallback
+    local v = ShadeRecolour.shiftedTile(id, sx, sy, o, colors)
+    if not v then
+    v = love.image.newImageData(8, 8)
     for y = 0, 7 do
       for x = 0, 7 do
         local r, g, b, a = id:getPixel(sx + x, sy + y)
         r, g, b, a = recolorSample(r, g, b, a, colors)
         v:setPixel((x + o) % 8, y, r, g, b, a)
       end
+    end
     end
     out[o + 1] = love.graphics.newImage(v)
     FrameProfile.bake("tiles.shift")
@@ -268,15 +273,19 @@ local function getFrameImages(paths, colors, gbcKey)
       if not (colors and love.image and love.image.newImageData) then
         return getImage(path)
       end
-      local id = Assets.imageData(path)
+      local id = Assets.imageDataShared(path)   -- read only
+      -- G7
+      local out2 = ShadeRecolour.whole(id, colors, "tile")
+      if not out2 then
       local w, h = id:getDimensions()
-      local out2 = love.image.newImageData(w, h)
+      out2 = love.image.newImageData(w, h)
       for y = 0, h - 1 do
         for x = 0, w - 1 do
           local r, g, b, a = id:getPixel(x, y)
           r, g, b, a = recolorSample(r, g, b, a, colors)
           out2:setPixel(x, y, r, g, b, a)
         end
+      end
       end
       local image = love.graphics.newImage(out2)
       FrameProfile.bake("tiles.frame")
@@ -306,7 +315,7 @@ local function getToggleImage(spec, tilesetImagePath, perRow)
     return false
   end
   if stripData[spec.image] == nil then
-    local ok, id = pcall(Assets.imageData, spec.image)
+    local ok, id = pcall(Assets.imageDataShared, spec.image)
     stripData[spec.image] = ok and id or false
   end
   local strip = stripData[spec.image]
@@ -314,18 +323,21 @@ local function getToggleImage(spec, tilesetImagePath, perRow)
     toggleImages[key] = false
     return false
   end
-  local atlas = Assets.imageData(tilesetImagePath)
+  local atlas = Assets.imageDataShared(tilesetImagePath)   -- read only; pasted FROM
   local clone = love.image.newImageData(atlas:getWidth(), atlas:getHeight())
   clone:paste(atlas, 0, 0, 0, 0, atlas:getWidth(), atlas:getHeight())
   for id, offset in pairs(offsets) do
     local sx = offset * 8
     local dx = (id % perRow) * 8
     local dy = math.floor(id / perRow) * 8
+    -- G7
+    if not ShadeRecolour.region(strip, clone, sx, 0, 8, 8, dx, dy, nil, "copy") then
     for y = 0, 7 do
       for x = 0, 7 do
         local r, g, b, a = strip:getPixel(sx + x, y)
         clone:setPixel(dx + x, dy + y, r, g, b, a)
       end
+    end
     end
   end
   local img = love.graphics.newImage(clone)
@@ -358,8 +370,8 @@ local function getAtlasFrames(spec, tilesetImagePath, perRow, colors, gbcKey,
     atlasFrames[key] = false
     return nil
   end
-  local okStrip, strip = pcall(Assets.imageData, spec.image)
-  local okAtlas, atlas = pcall(Assets.imageData, tilesetImagePath)
+  local okStrip, strip = pcall(Assets.imageDataShared, spec.image)
+  local okAtlas, atlas = pcall(Assets.imageDataShared, tilesetImagePath)
   if not (okStrip and strip and okAtlas and atlas) then
     atlasFrames[key] = false
     return nil
@@ -377,12 +389,15 @@ local function getAtlasFrames(spec, tilesetImagePath, perRow, colors, gbcKey,
       if colorsFor then tint = colorsFor(id) or colors end
       if sx + 8 <= strip:getWidth() and sy + 8 <= strip:getHeight()
          and dx + 8 <= aw and dy + 8 <= ah then
+        -- G7
+        if not ShadeRecolour.region(strip, page, sx, sy, 8, 8, dx, dy, tint, "tile") then
         for y = 0, 7 do
           for x = 0, 7 do
             local r, g, b, a = strip:getPixel(sx + x, sy + y)
             r, g, b, a = recolorSample(r, g, b, a, tint)
             page:setPixel(dx + x, dy + y, r, g, b, a)
           end
+        end
         end
       end
     end
@@ -651,7 +666,7 @@ local function getGen2Atlas(key, imagePath, perRow, palMap, palColors,
   if not (love.image and love.image.newImageData) then return nil end
   if gen2AtlasCache[key] ~= nil then return gen2AtlasCache[key] or nil end
   local img = false
-  local ok, src = pcall(Assets.imageData, imagePath)
+  local ok, src = pcall(Assets.imageDataShared, imagePath)   -- read only
   if ok and src then
     local iw, ih = src:getDimensions()
     local total = (iw / 8) * (ih / 8)
@@ -687,12 +702,15 @@ local function getGen2Atlas(key, imagePath, perRow, palMap, palColors,
         colors = palColors[#palColors]
       end
       local ox, oy = (t % perRow) * 8, math.floor(t / perRow) * 8
+      -- G7: the Gen 2 atlas is a whole sheet per map, like the RED++ one
+      if not ShadeRecolour.region(src, out, ox, oy, 8, 8, ox, oy, colors, "tile") then
       for py = 0, 7 do
         for px = 0, 7 do
           local r, g, b, a = src:getPixel(ox + px, oy + py)
           r, g, b, a = recolorSample(r, g, b, a, colors)
           out:setPixel(ox + px, oy + py, r, g, b, a)
         end
+      end
       end
     end
     -- ...and then the map group's roof over the nine tiles the tileset never
@@ -704,7 +722,7 @@ local function getGen2Atlas(key, imagePath, perRow, palMap, palColors,
     -- LoadMapPals does -- so the strip recolors through the same path every
     -- other tile took.
     if roof then
-      local okRoof, sheet = pcall(Assets.imageData, roof.image)
+      local okRoof, sheet = pcall(Assets.imageDataShared, roof.image)   -- read only
       if okRoof and sheet then
         local sw, sh = sheet:getDimensions()
         for n = 0, roof.count - 1 do
@@ -712,12 +730,14 @@ local function getGen2Atlas(key, imagePath, perRow, palMap, palColors,
           if tile < total and (n + 1) * 8 <= sw and sh >= 8 then
             local colors = TileRenderer.gen2TileColors(palMap, palColors, tile)
             local ox, oy = (tile % perRow) * 8, math.floor(tile / perRow) * 8
+            if not ShadeRecolour.region(sheet, out, n * 8, 0, 8, 8, ox, oy, colors, "tile") then
             for py = 0, 7 do
               for px = 0, 7 do
                 local r, g, b, a = sheet:getPixel(n * 8 + px, py)
                 r, g, b, a = recolorSample(r, g, b, a, colors)
                 out:setPixel(ox + px, oy + py, r, g, b, a)
               end
+            end
             end
           end
         end
@@ -784,7 +804,7 @@ local function getGbcAtlas(imagePath, tilesetId, mapId, perRow, data)
   if love.image and love.image.newImageData then
     local groupColors = PaletteFX.worldGroupColors(data, tilesetId, mapId, nil)
     if groupColors then
-      local src = Assets.imageData(imagePath)
+      local src = Assets.imageDataShared(imagePath)   -- read only
       local iw, ih = src:getDimensions()
       local total = (iw / 8) * (ih / 8)
       local out = love.image.newImageData(iw, ih)
@@ -842,6 +862,8 @@ local function getGbcAtlas(imagePath, tilesetId, mapId, perRow, data)
           tileColors[t] = colors
         end
         local ox, oy = (t % perRow) * 8, math.floor(t / perRow) * 8
+        -- G7: a whole sheet of these per map change was the RED++ hitch
+        if not ShadeRecolour.region(src, out, ox, oy, 8, 8, ox, oy, colors, "tile") then
         for py = 0, 7 do
           for px = 0, 7 do
             local sx, sy = ox + px, oy + py
@@ -849,6 +871,7 @@ local function getGbcAtlas(imagePath, tilesetId, mapId, perRow, data)
             r, g, b, a = recolorSample(r, g, b, a, colors)
             out:setPixel(sx, sy, r, g, b, a)
           end
+        end
         end
       end
       -- duplicate-tile aliases: bake a copy of a shared tile graphic into
@@ -861,12 +884,14 @@ local function getGbcAtlas(imagePath, tilesetId, mapId, perRow, data)
           local syo = math.floor(al.tile / perRow) * 8
           local dxo = (al.alias % perRow) * 8
           local dyo = math.floor(al.alias / perRow) * 8
+          if not ShadeRecolour.region(src, out, sxo, syo, 8, 8, dxo, dyo, colors, "tile") then
           for py = 0, 7 do
             for px = 0, 7 do
               local r, g, b, a = src:getPixel(sxo + px, syo + py)
               r, g, b, a = recolorSample(r, g, b, a, colors)
               out:setPixel(dxo + px, dyo + py, r, g, b, a)
             end
+          end
           end
         end
       end
@@ -1895,7 +1920,7 @@ local function getKeyedTile(self, tile)
   if ctx.groupColors and love.image and love.image.newImageData then
     local group = PaletteFX.worldGroupAt(ctx.tilesetId, ctx.mapId, tile)
     local colors = group and ctx.groupColors[group + 1]
-    local src = Assets.imageData(ctx.imagePath)
+    local src = Assets.imageDataShared(ctx.imagePath)   -- read only
     local ox = (tile % ctx.perRow) * 8
     local oy = math.floor(tile / ctx.perRow) * 8
     local out = love.image.newImageData(8, 8)

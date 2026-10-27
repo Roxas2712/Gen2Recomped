@@ -97,9 +97,13 @@ function C.sync(store,choice)
   local scope=hash(store.profileScope or store.kind or 'default');local base=state.bases[scope]
   local raw=store.read(C.PATH);local remote=raw and decode(raw)
   if raw and not remote then return nil,'Cloud cartridge preferences are invalid. Local designs are preserved.' end
+  if choice=='download' or choice=='cloud' then
+    if not remote then return 'absent' end
+    choice='cloud'
+  end
   local remoteHash=remote and hash(S.encode(remote));local finalHash=localHash;local result='current'
   if remoteHash~=localHash then
-    if choice=='local' or not remote or base and remoteHash==base then
+    if choice=='local' or choice~='cloud' and (not remote or base and remoteHash==base) then
       local ok,err=publish(store,localDoc,images);if not ok then return nil,err end;result='uploaded'
     elseif choice=='cloud' or base==localHash or not base and next(localDoc.designs)==nil then
       local ok,err=restore(store,remote,localHash);if not ok then return nil,err end

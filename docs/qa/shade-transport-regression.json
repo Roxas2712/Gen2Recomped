@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "regression": "release cannot bypass occupied file workers",
+  "failedCiJob": 121856701406,
+  "correction": "Hold the real file workers at an explicit test-only barrier until the bounded-queue assertion has completed; always release before shutdown.",
+  "runtime": "L\u00d6VE 11.5 macOS",
+  "tls": true,
+  "checks": 1916,
+  "pumpTicks": 775,
+  "exactTlsPostBytes": true,
+  "sourceSha256": {
+    "tools/async-get-check/main.lua": "5b7265a4c9ea43fb6a27339e2c159292a9dbfdd3b6588423f837dd1589515c2d",
+    "tools/async-get-check/download_test_worker.lua": "90d26469707c86a5b39513868a7ecb824726697ae6667ba8971ac5f1d44ac563",
+    "src/net/AsyncDownload.lua": "e4fc65812d3e2f10a42b525831f297ce600ba42a26a772d48bd3060cf3caf6eb",
+    "src/net/download_worker.lua": "c564e6c10d860ac80a1dda00b57f15aab2998c1b20d44a3c9c68634872c3dfa2"
+  }
+}

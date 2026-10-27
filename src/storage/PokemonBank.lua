@@ -300,7 +300,7 @@ end
 B.boxes=boxes
 B.boxMons=mons
 B.shape=shape
-function B.sync(target)
+function B.sync(target,pullOnly)
   local permitted,why=require('src.storage.AccountStorage').storeCheck(target);if not permitted then return nil,why end
   local store=type(target)=='table' and target or require('src.import.CloudSync').folderStore(target)
   local localById={};local disk=fs();disk.createDirectory(B.DIRECTORY)
@@ -320,14 +320,14 @@ function B.sync(target)
       localById[id]=nil;total=total+1
     end
   end
-  for id in pairs(localById) do
+  for id in pairs(pullOnly and {} or localById) do
     local path=B.DIRECTORY..'/'..id..'.lua'
     local ok,why=store.write(path,disk.read(path));if not ok then return nil,why end
     total=total+1
   end
-  local items,why=require('src.storage.BankItems').sync(store);if not items then return nil,why end
-  local dex,err=require('src.storage.GlobalPokedex').sync(store);if not dex then return nil,err end
-  local archives,problem=require('src.storage.BankInterop').sync(store);if not archives then return nil,problem end
+  local items,why=require('src.storage.BankItems').sync(store,pullOnly);if not items then return nil,why end
+  local dex,err=require('src.storage.GlobalPokedex').sync(store,pullOnly);if not dex then return nil,err end
+  local archives,problem=require('src.storage.BankInterop').sync(store,pullOnly);if not archives then return nil,problem end
   return total
 end
 return B

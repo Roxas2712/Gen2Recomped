@@ -1,0 +1,1 @@
+return {["table"]={{"DiplomaCongrats",{["value"]="Parabéns! Este\ndiploma atesta\nque você\ncompletou a\nPOKéDEX."}},{"DiplomaGameFreak",{["value"]="GAME FREAK"}},{"DiplomaPlayTime",{["value"]="TEMPO:"}},{"DiplomaPlayer",{["value"]="Trein."}},{"DiplomaText",{["value"]="Diploma"}}}}

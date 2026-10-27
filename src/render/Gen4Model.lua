@@ -131,6 +131,13 @@ uniform float billboardYaw;
 // The arithmetic is `Gen4Shade.forTemplate` line for line, so a band change
 // is a uniform upload and the meshes stay.  g4LightCount 0 turns it off.
 attribute vec3 LitNormal;
+// G4 -- JOINT ANIMATION ON THE GPU.  `JointSlot` picks one of up to
+// G4_JOINTS matrices a posed model uploads per shape (Gen4Model draw);
+// g4Skinned 0 leaves the vertex where the mesh put it.  The matrices carry
+// the shape's placement too, as the CPU path folded it into the vertices.
+attribute float JointSlot;
+uniform float g4Skinned;
+uniform mat4 g4Joints[16];
 uniform float g4LightCount;
 uniform vec3 g4LightDir[4];
 uniform vec3 g4LightCol[4];
@@ -171,7 +178,9 @@ vec4 turnToCamera(vec4 v)
 }
 vec4 position(mat4 transform_projection, vec4 vertex_position)
 {
-    vec4 turned = turnToCamera(vertex_position);
+    vec4 posed = vertex_position;
+    if (g4Skinned > 0.5) { posed = g4Joints[int(JointSlot + 0.5)] * posed; }
+    vec4 turned = turnToCamera(posed);
     VaryingColor.rgb *= g4Shade(LitNormal);
     vModelY = turned.y;
     vModelZ = turned.z;
@@ -214,6 +223,11 @@ uniform vec3 depthFogC;
 // the density table's shift as Platinum's weather thins it (ov5_021D7534:
 // entry i > s is (i - s) * 4, the rest keep the 4 they last had); 0 = full
 uniform float depthFogShift;
+// the density table's step per entry (0 = the weathers' 4 * i; a gym's own
+// table: Canalave's 2 * i, Hearthome's flat one -- Gen4DepthFog)
+uniform float depthFogStep;
+// 1: keep a translucent texel's alpha (Gen4Model.softAlpha), 0: the cut
+uniform float softAlpha;
 vec4 effect(vec4 colour, Image tex, vec2 uv, vec2 screen)
 {
     if (vModelY <= yCut) { discard; }
@@ -225,7 +239,10 @@ vec4 effect(vec4 colour, Image tex, vec2 uv, vec2 screen)
     // not write depth -- otherwise the hole punched through a leaf or a strap
     // occludes whatever is behind it.  Discarding is what makes that correct
     // rather than merely usually correct.
-    if (texel.a < 0.5) { discard; }
+    // ...unless the caller draws a TRANSLUCENT texture (Gen4Model.softAlpha:
+    // an A3I5 / A5I3 picture whose alpha is its shape -- Hearthome Gym's
+    // flashlight cones), which keeps its alpha and is blended
+    if (texel.a < (softAlpha > 0.5 ? 0.004 : 0.5)) { discard; }
     vec4 c = texel * colour;
     if (depthFogA.x > 0.5) {
         float zn = gl_FragCoord.z * 2.0 - 1.0;
@@ -247,8 +264,9 @@ vec4 effect(vec4 colour, Image tex, vec2 uv, vec2 screen)
         }
         float depth = (dz * 0.5 + 0.5) * 32767.0;
         float e = clamp((depth - depthFogB.z) / depthFogB.w, 0.0, 31.0);
-        float dens = e > depthFogShift ? (e - depthFogShift) * 4.0 / 127.0
-                   : (depthFogShift > 0.0 && e >= 1.0 ? 4.0 / 127.0 : e * 4.0 / 127.0);
+        float k = depthFogStep > 0.0 ? depthFogStep : 4.0;
+        float dens = e > depthFogShift ? (e - depthFogShift) * k / 127.0
+                   : (depthFogShift > 0.0 && e >= 1.0 ? k / 127.0 : e * k / 127.0);
         c.rgb = mix(c.rgb, depthFogC, dens);
     }
     return c;
@@ -303,6 +321,13 @@ uniform float billboardYaw;
 // The arithmetic is `Gen4Shade.forTemplate` line for line, so a band change
 // is a uniform upload and the meshes stay.  g4LightCount 0 turns it off.
 attribute vec3 LitNormal;
+// G4 -- JOINT ANIMATION ON THE GPU.  `JointSlot` picks one of up to
+// G4_JOINTS matrices a posed model uploads per shape (Gen4Model draw);
+// g4Skinned 0 leaves the vertex where the mesh put it.  The matrices carry
+// the shape's placement too, as the CPU path folded it into the vertices.
+attribute float JointSlot;
+uniform float g4Skinned;
+uniform mat4 g4Joints[16];
 uniform float g4LightCount;
 uniform vec3 g4LightDir[4];
 uniform vec3 g4LightCol[4];
@@ -343,7 +368,9 @@ vec4 turnToCamera(vec4 v)
 }
 vec4 position(mat4 transform_projection, vec4 vertex_position)
 {
-    vec4 turned = turnToCamera(vertex_position);
+    vec4 posed = vertex_position;
+    if (g4Skinned > 0.5) { posed = g4Joints[int(JointSlot + 0.5)] * posed; }
+    vec4 turned = turnToCamera(posed);
     VaryingColor.rgb *= g4Shade(LitNormal);
     vec4 p = mvp * turned;
     float s = 1.0 - (turned.y - heightSpread.y) * heightSpread.x;
@@ -468,6 +495,10 @@ end
 local function identity()
   return { 1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1 }
 end
+-- G4: how many joints a shape may restore from on the GPU -- 64 vec4 of
+-- vertex uniforms, a quarter of what the weakest GLES2 part guarantees
+local G4_JOINTS = 16
+local IDENTITY16 = identity()
 
 -- The same product written into a caller-owned table: the draw loop below
 -- needs one model-view-projection per shape per frame, and a fresh table for
@@ -634,6 +665,9 @@ local FORMAT = {
   -- G2: THE NORMAL THE LIGHT IS EVALUATED AGAINST, in the vertex shader.
   -- (0, 0, 0) on a vertex the light must leave alone; see `g4Shade`.
   { "LitNormal", "float", 3 },
+  -- G4: WHICH JOINT MOVES THIS VERTEX, as a dense per-shape index into the
+  -- g4Joints uniform array (0 on every vertex no joint animation re-poses).
+  { "JointSlot", "float", 1 },
 }
 
 -- A vertex that is not part of a card. Shared rather than built per vertex,
@@ -1193,13 +1227,13 @@ local function addGrassCards(self, shape, vertices, positions, tileUnits)
     -- The pivot is the card's FOOT, so it turns about where it is planted --
     -- the same rule the trees needed, and for the same reason.
     verts[#verts + 1] =
-      { cx - half, y0, cz, tile.uLo, tile.vHi, 1, 1, 1, 1, cx, cz, 1, 0, 0, 0 }
+      { cx - half, y0, cz, tile.uLo, tile.vHi, 1, 1, 1, 1, cx, cz, 1, 0, 0, 0, 0 }
     verts[#verts + 1] =
-      { cx + half, y0, cz, tile.uHi, tile.vHi, 1, 1, 1, 1, cx, cz, 1, 0, 0, 0 }
+      { cx + half, y0, cz, tile.uHi, tile.vHi, 1, 1, 1, 1, cx, cz, 1, 0, 0, 0, 0 }
     verts[#verts + 1] =
-      { cx + half, y1, cz, tile.uHi, tile.vLo, 1, 1, 1, 1, cx, cz, 1, 0, 0, 0 }
+      { cx + half, y1, cz, tile.uHi, tile.vLo, 1, 1, 1, 1, cx, cz, 1, 0, 0, 0, 0 }
     verts[#verts + 1] =
-      { cx - half, y1, cz, tile.uLo, tile.vLo, 1, 1, 1, 1, cx, cz, 1, 0, 0, 0 }
+      { cx - half, y1, cz, tile.uLo, tile.vLo, 1, 1, 1, 1, cx, cz, 1, 0, 0, 0, 0 }
     map[#map + 1] = base + 1; map[#map + 1] = base + 2; map[#map + 1] = base + 3
     map[#map + 1] = base + 1; map[#map + 1] = base + 3; map[#map + 1] = base + 4
     if cx - half < lo[1] then lo[1] = cx - half end
@@ -1889,13 +1923,13 @@ local function addBackWall(self)
         local ua, ub = uAt(x0), uAt(x1)
         local base = #vertices
         vertices[#vertices + 1] =
-          { x0, a0, z, ua, vAt(row, a0), 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
+          { x0, a0, z, ua, vAt(row, a0), 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 }
         vertices[#vertices + 1] =
-          { x1, b0, z, ub, vAt(row, b0), 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
+          { x1, b0, z, ub, vAt(row, b0), 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 }
         vertices[#vertices + 1] =
-          { x1, b1, z, ub, vAt(row, b1), 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
+          { x1, b1, z, ub, vAt(row, b1), 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 }
         vertices[#vertices + 1] =
-          { x0, a1, z, ua, vAt(row, a1), 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
+          { x0, a1, z, ua, vAt(row, a1), 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 }
         map[#map+1] = base + 1; map[#map+1] = base + 2; map[#map+1] = base + 3
         map[#map+1] = base + 1; map[#map+1] = base + 3; map[#map+1] = base + 4
       end
@@ -1933,10 +1967,10 @@ local function addBackWall(self)
       local ua, ub = split.featLo / tw, split.featHi / tw
       local va, vb = vAt(0, fy0), vAt(0, fy1)
       local base = #vertices
-      vertices[#vertices + 1] = { fx0, fy0, fz, ua, va, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
-      vertices[#vertices + 1] = { fx1, fy0, fz, ub, va, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
-      vertices[#vertices + 1] = { fx1, fy1, fz, ub, vb, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
-      vertices[#vertices + 1] = { fx0, fy1, fz, ua, vb, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }
+      vertices[#vertices + 1] = { fx0, fy0, fz, ua, va, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 }
+      vertices[#vertices + 1] = { fx1, fy0, fz, ub, va, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 }
+      vertices[#vertices + 1] = { fx1, fy1, fz, ub, vb, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 }
+      vertices[#vertices + 1] = { fx0, fy1, fz, ua, vb, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 }
       map[#map+1] = base + 1; map[#map+1] = base + 2; map[#map+1] = base + 3
       map[#map+1] = base + 1; map[#map+1] = base + 3; map[#map+1] = base + 4
     end
@@ -2011,10 +2045,10 @@ local function addGroundShadow(self, path)
   local a = SHADOW_ALPHA_FRACTION
   local y = lo[2] + SHADOW_LIFT
   local vertices = {
-    { lo[1], y, lo[3], 0, 0, 1, 1, 1, a, 0, 0, 0, 0, 0, 0 },
-    { hi[1], y, lo[3], 1, 0, 1, 1, 1, a, 0, 0, 0, 0, 0, 0 },
-    { hi[1], y, hi[3], 1, 1, 1, 1, 1, a, 0, 0, 0, 0, 0, 0 },
-    { lo[1], y, hi[3], 0, 1, 1, 1, 1, a, 0, 0, 0, 0, 0, 0 },
+    { lo[1], y, lo[3], 0, 0, 1, 1, 1, a, 0, 0, 0, 0, 0, 0, 0 },
+    { hi[1], y, lo[3], 1, 0, 1, 1, 1, a, 0, 0, 0, 0, 0, 0, 0 },
+    { hi[1], y, hi[3], 1, 1, 1, 1, 1, a, 0, 0, 0, 0, 0, 0, 0 },
+    { lo[1], y, hi[3], 0, 1, 1, 1, 1, a, 0, 0, 0, 0, 0, 0, 0 },
   }
   local okMesh, mesh =
     pcall(love.graphics.newMesh, FORMAT, vertices, "triangles", "static")
@@ -2080,9 +2114,27 @@ function Gen4Model.new(record)
 
     local count = shape.vertexCount or 0
     local vertices = {}
+    -- G4: the joints this shape restores from, densely renumbered, so the
+    -- shader indexes a small array rather than the DS's 31-slot stack.  A
+    -- shape that needs more than G4_JOINTS distinct slots stays on the CPU.
+    local gpuSkin = nil
+    if shape.matrixSlots and Performance.gen4GpuSkin and count > 0 then
+      local slots, byteOf, distinct = {}, {}, 0
+      for i = 1, count do
+        local slot = shape.matrixSlots:byte(i)
+        if slot and not byteOf[slot] then
+          distinct = distinct + 1
+          if distinct > G4_JOINTS then gpuSkin = false; break end
+          byteOf[slot] = distinct - 1
+          slots[distinct] = slot
+        end
+      end
+      if gpuSkin == nil and distinct > 0 then gpuSkin = { slots = slots, index = byteOf } end
+    end
+    if gpuSkin == false then gpuSkin = nil end
     -- G1: the buffer, unless this shape is re-posed per vertex on the CPU
     local packedData, packed
-    if count > 0 and not shape.matrixSlots then packedData, packed = packedVertices(count) end
+    if count > 0 and (gpuSkin or not shape.matrixSlots) then packedData, packed = packedVertices(count) end
     -- Kept alongside, because classifying a card needs the whole triangle and
     -- the loop below sees one vertex at a time.
     -- Also collected for the back-wall cap, which needs the face normals to
@@ -2194,6 +2246,8 @@ function Gen4Model.new(record)
       if z > hi[3] then hi[3] = z end
       local u = s16(shape.vertices, at + 6) / UV_UNITS / tw
       local v = s16(shape.vertices, at + 8) / UV_UNITS / th
+      local joint = 0
+      if gpuSkin then joint = gpuSkin.index[shape.matrixSlots:byte(i + 1)] or 0 end
       if packed then
         local o = i * FORMAT_FLOATS
         packed[o], packed[o + 1], packed[o + 2] = x, y, z
@@ -2201,6 +2255,7 @@ function Gen4Model.new(record)
         packed[o + 5], packed[o + 6], packed[o + 7], packed[o + 8] = r / 255, g / 255, b / 255, 1
         packed[o + 9], packed[o + 10], packed[o + 11] = 0, 0, 0
         packed[o + 12], packed[o + 13], packed[o + 14] = lnx, lny, lnz
+        packed[o + 15] = joint
       else
       vertices[i + 1] = {
         x, y, z, u, v,
@@ -2210,6 +2265,8 @@ function Gen4Model.new(record)
         0, 0, 0,
         -- G2: the normal the shader lights against, or nothing
         lnx, lny, lnz,
+        -- G4: the joint, when the shader re-poses this shape
+        joint,
       }
       end
       if positions then
@@ -2530,7 +2587,9 @@ function Gen4Model.new(record)
         self.shapes[#self.shapes + 1] =
           { mesh = mesh, name = shape.name, index = shape.index,
             matrixSlots=shape.matrixSlots,
-            bindVertices=shape.matrixSlots and vertices or nil,
+            -- G4: the shader re-poses this shape; nothing to read back
+            gpuSkin = gpuSkin,
+            bindVertices=(shape.matrixSlots and not gpuSkin) and vertices or nil,
             facing = facing, wallBand = wallBand,
             -- the WALL vertices, for the back wall's silhouette
             outline = record.capBack and positions or nil,
@@ -2780,6 +2839,7 @@ Gen4Model.zKeep = nil
 -- (0, 0, 0) in `LitNormal` and ignores all of this.
 Gen4Model.light = nil
 local lightTemplate, lightUniforms, lightSent = nil, nil, nil
+local jointsSkinned = nil
 local LIGHT_OFF = { 0, 0, 0 }
 
 local function sendLight()
@@ -2807,6 +2867,33 @@ end
 -- a new shader object starts from nothing
 function Gen4Model._resetLightUpload()
   lightSent = nil
+  jointsSkinned = nil
+end
+
+-- G4: upload this shape's joint palette, one matrix per dense slot, the
+-- shape's placement standing in for a slot the pose never wrote (exactly the
+-- `palette[slot] or place` the CPU path applied per vertex).  Sent every
+-- draw of a skinned shape: a posed model changes every frame and there are
+-- few of them.  g4Skinned is deduplicated, since most shapes are not.
+local jointScratch = {}
+for k = 1, G4_JOINTS do jointScratch[k] = identity() end
+local function sendJoints(gpuSkin, palette, place)
+  local slots = gpuSkin.slots
+  for k = 1, G4_JOINTS do
+    local slot = slots[k]
+    local m = slot and (palette[slot] or place) or nil
+    local out = jointScratch[k]
+    if m then
+      for j = 1, 16 do out[j] = m[j] end
+    else
+      for j = 1, 16 do out[j] = IDENTITY16[j] end
+    end
+  end
+  shader:send("g4Joints", unpack(jointScratch, 1, G4_JOINTS))
+  if jointsSkinned ~= true then shader:send("g4Skinned", 1); jointsSkinned = true end
+end
+local function sendUnskinned()
+  if jointsSkinned ~= false then shader:send("g4Skinned", 0); jointsSkinned = false end
 end
 
 -- `depthCompare` defaults to "less", which is right for every pass that draws
@@ -2832,7 +2919,8 @@ function Gen4Model:draw(viewProjection, pose, materials, yCut, spread, depthComp
 
   g.setShader(shader)
   sendLight()
-  g.setDepthMode(depthCompare or "less", true)
+  -- (a translucent draw does not write depth: what is behind it stays seen)
+  g.setDepthMode(depthCompare or "less", not Gen4Model.softAlpha)
   -- BACK FACES ARE NOT CULLED, and that is the cartridge's own choice rather
   -- than laziness: a DS polygon carries its own front/back flags in its
   -- material, plenty of Gen 4 geometry is single-sided sheets meant to be seen
@@ -2865,7 +2953,9 @@ function Gen4Model:draw(viewProjection, pose, materials, yCut, spread, depthComp
       shader:send("depthFogB", fog.b)
       shader:send("depthFogC", fog.c)
       shader:send("depthFogShift", fog.shift or 0)
+      shader:send("depthFogStep", fog.step or 0)
     end
+    shader:send("softAlpha", Gen4Model.softAlpha and 1 or 0)
   end
   -- SENT ON EVERY DRAW, for the reason `yCut` and `heightSpread` are: an unset
   -- uniform reads as zero, and relying on that is how the texture matrix once
@@ -2881,7 +2971,13 @@ function Gen4Model:draw(viewProjection, pose, materials, yCut, spread, depthComp
     else g.setColor(1, 1, 1, shapeAlpha(shape)) end
     local place = pose[shape.index]
     local palette=(pose.stacks and pose.stacks[shape.index]) or pose.stack
-    if shape.matrixSlots and palette then
+    if shape.gpuSkin and palette then
+      sendJoints(shape.gpuSkin, palette, place)
+      place = nil
+    else
+      sendUnskinned()
+    end
+    if shape.matrixSlots and shape.bindVertices and palette then
       -- A display list can restore a different joint for every vertex.
       -- Giratina's tentacles share shapes but use separate matrix slots.
       for i,v in ipairs(shape.bindVertices) do
@@ -3001,7 +3097,13 @@ function Gen4Model:_drawCached(g, viewProjection, pose, materials, yCut, spread,
     else g.setColor(1, 1, 1, shapeAlpha(shape)) end
     local place = pose[shape.index]
     local palette = (pose.stacks and pose.stacks[shape.index]) or pose.stack
-    if shape.matrixSlots and palette then
+    if shape.gpuSkin and palette then
+      sendJoints(shape.gpuSkin, palette, place)
+      place = nil
+    else
+      sendUnskinned()
+    end
+    if shape.matrixSlots and shape.bindVertices and palette then
       for i, v in ipairs(shape.bindVertices) do
         local slot = shape.matrixSlots:byte(i)
         local m = palette[slot] or place

@@ -229,7 +229,7 @@ local function screen(self,x,y,w,h,on,accent,showLogo)
     local logo=self.gen2Logo or self.logo
     if logo then
       local lw,lh=logo:getDimensions();local sc=math.min(w*0.85/lw,h*0.55/lh)
-      g.setColor(1,1,1,0.95);g.draw(logo,x+(w-lw*sc)/2,y+(h-lh*sc)/2,0,sc,sc)
+      g.setColor(1,1,1,0.95);require('src.import.LauncherTheme').drawLogo(logo,x+(w-lw*sc)/2,y+(h-lh*sc)/2,0,sc,sc)
     end
   end
 end

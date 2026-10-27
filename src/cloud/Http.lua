@@ -23,6 +23,8 @@ H.async=setmetatable({},{__mode='k'})
 
 local tmpSerial=0
 local function tmpPath(tag)
+  -- A freshly installed profile may not have written any files yet.
+  love.filesystem.createDirectory("")
   local dir = love.filesystem.getSaveDirectory()
   tmpSerial=tmpSerial+1
   local namespace=tostring(H.tmpNamespace or H):gsub('[^%w]','')

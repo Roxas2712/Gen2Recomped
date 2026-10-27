@@ -6,7 +6,8 @@ local L={
  {"fi","Finnish"},{"el","Greek"},{"ro","Romanian"},{"hu","Hungarian"},
  {"tr","Turkish"},{"nb","Norwegian"},{"bg","Bulgarian"},
  {"sk","Slovak"},{"sl","Slovenian"},{"ca","Catalan"},
- {"uk","Ukrainian"},{"ru","Russian"},{"ja","Japanese"},{"zh","Chinese (Simplified)"}}
+ {"uk","Ukrainian"},{"ru","Russian"},{"ja","日本語"},{"ko","한국어"},
+ {"zh","简体中文"},{"zh-Hant","繁體中文"}}
 function L.choices(inherit)
  local values,labels={},{}
  if inherit then values[1]="inherit";labels.inherit="Use launcher language" end
@@ -37,8 +38,18 @@ function L.romLanguage(version)
  local lang=type(info)=="table" and info.textLanguage
  return type(lang)=="string" and lang or "en"
 end
+function L.bundledFont(target)
+ local family=({ja='jp',ko='kr',zh='sc',['zh-Hans']='sc',['zh-Hant']='tc'})[target]
+ return family and 'mods/UNI_LANGUAGE_NATIVE/fonts/ascendant-'..family..'.otf' or nil
+end
 function L.font(target)
- if target=="ja" or target=="zh" then
+ if target=='ko' then
+  return 'NotoSansCJKkr-Regular.otf','https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/OTF/Korean/NotoSansCJKkr-Regular.otf'
+ end
+ if target=='zh-Hant' then
+  return 'NotoSansCJKtc-Regular.otf','https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/OTF/TraditionalChinese/NotoSansCJKtc-Regular.otf'
+ end
+ if target=="ja" or target=="zh" or target=='zh-Hans' then
   return "NotoSansCJK-Regular.otf","https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/OTF/Japanese/NotoSansCJKjp-Regular.otf"
  end
  return "NotoSans-Regular.ttf","https://raw.githubusercontent.com/notofonts/noto-fonts/main/hinted/ttf/NotoSans/NotoSans-Regular.ttf"
