@@ -43,7 +43,7 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  local battle=f.fresh('TACKLE').battle
  -- The older public calculation owns a one-based RNG and legacy stage inputs;
  -- the current native command owns physical items and a zero-based draw.
- local modern=debug.getinfo(Damage.critRoll,'u').nparams>=8
+ local modern=debug.getinfo(Damage.critRoll,'u').nparams>=7
  for stage=0,4 do
   local user=battle.player;user.focusEnergy=stage>=2
   local extra=(stage==1 or stage==3 or stage==4)and 1 or 0
