@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "sourceCommit": "5bc6856d0a6bcce4acfb78373a35adc16e06a4fc",
+  "sourceStable": true,
+  "romSha1": "ea9bcae617fdf159b045185467ae58b2e4a48b9a",
+  "freshImport": true,
+  "playerProfilesUsed": false,
+  "engineEntrypointRestored": true,
+  "engineEntrypointSha256": "6a9be39d70820f1fa29697bf18e453fe8ca69feba9e29055ee2c95b503e9ed95",
+  "suiteExit": 0,
+  "suites": [
+    "tests/classic_item_box_test.lua",
+    "tests/gen3_summary_test.lua",
+    "tests/engine/core_update.lua",
+    "tests/engine/core_update_routing.lua",
+    "tests/engine/frame_pacing.lua",
+    "tests/engine/host_hide_console_bug606.lua",
+    "tests/content_red/gate_fingerprint.lua",
+    "tests/content_red/headless_loader.lua"
+  ],
+  "suiteLogSha256": "cc36888aa0ad62e672e3a2d07458ff77f318ce9ba3dba4602672b0198ea16721",
+  "importLogSha256": "eb397e143d26345801865694ee4d04611adc1223cf12cc6e8ee33230aeaa0468",
+  "verdict": "12/12 checks passed  (content_red_headless_loader)"
+}

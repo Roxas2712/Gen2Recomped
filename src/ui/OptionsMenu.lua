@@ -20,6 +20,7 @@ local TileRenderer = require("src.render.TileRenderer")
 local GameSpeed = require("src.core.GameSpeed")
 local GameVersion = require("src.core.GameVersion")
 local VideoMode = require("src.core.VideoMode")
+local VSync = require("src.core.VSync")
 local FaithfulRes = require("src.core.FaithfulRes")
 local FrameCap = require("src.core.FrameCap")
 local Performance = require("src.core.Performance")
@@ -502,6 +503,19 @@ local function buildRows(game)
       end },
     -- fast-forward the logic clock only; music and sfx keep their tempo
     -- (src/core/GameSpeed.lua), so this is safe to leave on
+    -- Next to MAX FPS, because the two decide the cadence together: with
+    -- vsync ON the panel paces, OFF the cap does, ADAPTIVE the panel unless
+    -- a frame is late.
+    { id = "vsync", label = Strings("VSYNC"),
+      value = function(g)
+        return Strings(VSync.modeLabel(g.save.options.vsync))
+      end,
+      step = function(g, dir)
+        local o = g.save.options
+        o.vsync = VSync.cycle(o.vsync, dir)
+        VSync.apply(o.vsync)
+        return true
+      end },
     { id = "speed", label = Strings("GAME SPEED"),
       value = function(g)
         return GameSpeed.levelLabel(g.save.options.speed)

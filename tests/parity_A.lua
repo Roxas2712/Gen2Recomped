@@ -228,6 +228,7 @@ do
   local popped = false
   game.stack.pop = function() popped = true end
   local pushedFade
+  game.stack.top = function() return pushedFade end
   game.stack.push = function(_, tb) pushedFade = tb end
   if gbox then gbox.onDone() end
   check(getmetatable(pushedFade) == Transition,
@@ -248,7 +249,8 @@ do
   check(game.save.objectToggles and game.save.objectToggles.VIRIDIAN_GYM
         and game.save.objectToggles.VIRIDIAN_GYM.VIRIDIANGYM_GIOVANNI == false,
         "Giovanni hidden via objectToggles at the fade's midpoint (screen black)")
-  check(not state.doneCalled, "done() withheld until the fade back in finishes")
+  check(state.doneCalled == (pushedFade.framesIn==0),
+        "completion follows the configured native fade-in length")
 
   -- drive through the fade-in; onDone (and the stack pop) fire together
   -- once it completes, matching GBFadeInFromBlack -> TextScriptEnd

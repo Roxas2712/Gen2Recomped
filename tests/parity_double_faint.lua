@@ -34,6 +34,7 @@ local function battleWith(partyHP, result)
     party[i] = { species = "SQUIRTLE", hp = hp, stats = { hp = 20 } }
   end
   return {
+    playerPartyView = BattleState.playerPartyView,
     kind = "wild",
     result = result,
     afterQueue = nil,

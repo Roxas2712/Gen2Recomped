@@ -110,9 +110,9 @@ audit("Celadon EEVEE ball",
 --        its literal-id fallback: the ids are still what we assert on) ===
 local shown = {}
 local origShow = Commands.show_text
-Commands.show_text = function(ctx, textId, subs)
+Commands.show_text = function(ctx, textId, subs, opts)
   shown[#shown + 1] = textId
-  return origShow(ctx, textId, subs)
+  return origShow(ctx, textId, subs, opts)
 end
 
 local function runRows(rows)
