@@ -39,7 +39,8 @@ def verify_payload(path,engine_version=None):
    if p.is_absolute()or '..'in p.parts:raise ValueError('unsafe payload path')
    if p.suffix.lower()in ('.gb','.gbc','.gba','.sav','.srm','.bak'):raise ValueError('private ROM/save content')
    if 'generated'in p.parts or 'baseroms'in p.parts or p.name=='rom-cache.complete':raise ValueError('generated game content')
-   if name.startswith('mods/')or name in ('options.lua','save.lua','cloud_clients.lua'):raise ValueError('non-preview content')
+   builtin=name=='mods/'or name.startswith('mods/UNI_LANGUAGE_NATIVE/')
+   if name.startswith('mods/')and not builtin or name in ('options.lua','save.lua','cloud_clients.lua'):raise ValueError('non-preview content')
   for f in ('main.lua','conf.lua','src/preview/main.lua','src/preview/conf.lua','src/preview/release.json','src/core/NativePreview.lua'):
    if f not in z.namelist():raise ValueError('missing preview entry: '+f)
   if engine_version is not None:
@@ -90,6 +91,8 @@ def main():
  with tempfile.TemporaryDirectory(prefix='native-preview-')as temp:
   work=Path(temp);source=work/'source';source.mkdir()
   paths=['main.lua','conf.lua','src','assets','data','tools','scripts/pack_love.sh','scripts/switch/verify_payload.sh','scripts/macos-entitlements.plist','icons/icon.icns']
+  builtin=bool(subprocess.check_output(['git','ls-tree','--name-only',ref,'mods/UNI_LANGUAGE_NATIVE'],cwd=ROOT,text=True).strip())
+  if builtin:paths.append('mods/UNI_LANGUAGE_NATIVE')
   root_files=subprocess.check_output(['git','ls-tree','--name-only',ref],cwd=ROOT,text=True).splitlines()
   licenses=[name for name in root_files if name.lower()in ('license','license.md','license-roxas2712.md','notice.md')]
   if not licenses:raise ValueError('source revision has no license')
@@ -141,7 +144,7 @@ def main():
     cmd=stage/(backend+'-Test.command');cmd.write_text('#!/bin/sh\ncd "$(dirname "$0")"\nexport POKEPORT_GRAPHICS_BACKEND='+backend.lower()+'\nexec "./Gen2Recomped-NativePreview.app/Contents/MacOS/love" "$@"\n');cmd.chmod(0o755)
    target=out/f'Gen2Recomped-NativePreview-{a.release_id}-macos.zip';subprocess.run(['ditto','-c','-k','--norsrc','--noextattr','--noacl','--keepParent',str(stage),str(target)],check=True)
    verify_mac_archive(target,icon_hash)
-  metadata=dict(engineVersion=a.engine_version,sourceCommit=ref,runtimeCommit=RUNTIME_COMMIT,runtimeArtifact=runtime['id'],runtimeSha256=runtime['sha256'],platform=a.platform,previewIdentity=identity,payloadSha256=sha(payload),archiveSha256=sha(target),archive=target.name,buildVerified=True,launchVerified=False,realDeviceVerified=False,extendedUpvaluesQualified=bool(runtime_override),modsIncluded=False,modsEnabled=True,legacyMigration=False,automaticInstallation=False)
+  metadata=dict(engineVersion=a.engine_version,sourceCommit=ref,runtimeCommit=RUNTIME_COMMIT,runtimeArtifact=runtime['id'],runtimeSha256=runtime['sha256'],platform=a.platform,previewIdentity=identity,payloadSha256=sha(payload),archiveSha256=sha(target),archive=target.name,buildVerified=True,launchVerified=False,realDeviceVerified=False,extendedUpvaluesQualified=bool(runtime_override),modsIncluded=builtin,builtinMods=['UNI_LANGUAGE_NATIVE']if builtin else [],userModsIncluded=False,modsEnabled=True,legacyMigration=False,automaticInstallation=False)
   if runtime_override:metadata['qualifiedRuntime']=runtime_override
   if macos_distribution:metadata['macosDistribution']=macos_distribution
   (out/'build.json').write_text(json.dumps(metadata,indent=2)+'\n');print(json.dumps(metadata))
