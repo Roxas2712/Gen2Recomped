@@ -10008,7 +10008,12 @@ function BattleState:openItems()
         battle = true,
         world = {},
         onChoose = function(id)
-          require("src.ui.BagMenu").useItem(self.game, self, id, pack)
+          -- Close BattlePack before target construction: the actual caller is
+          -- the battle model, not the PACK's boolean eligibility flag.
+          pack:close()
+          require("src.ui.BagMenu").useItem(self.game, self, id, pack, {
+            onCancel = function() self:openItems() end,
+          })
         end,
       })
       return pack

@@ -79,7 +79,25 @@ for _,version in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
     pack=open();step('a') -- native USE row
     if game.stack:top()==pack and pack.submenu then step('a')end
     T.check(game.stack:top()~=pack,'actual USE opens native target selection')
+    local picker=game.stack:top()
+    T.eq(game.stack.states[#game.stack.states-1],b,'target is built directly over the actual native battle')
+    T.eq(picker.battle,b,'target receives the actual battle context')
+    T.eq(pack.closed,true,'native PACK has released its owner before target selection')
+    local pocket=pack.pocketIndex
+    step('b')
+    T.check(wait(function()return game.stack:top()~=b end),'target cancellation reopens native PACK')
+    pack=game.stack:top()
+    T.eq(getmetatable(pack),Pack,'cancel constructs the actual native PACK again')
+    T.eq(pack.pocketIndex,pocket,'cancel preserves the native pocket cursor')
+    T.eq(game.save.inventory.POTION,1,'target cancellation consumes no item')
+    T.eq(b.player.mon.hp,1,'target cancellation changes no HP')
+    T.eq(b.enemy.curMoves[1].pp,enemyPP,'target cancellation grants no enemy action')
+    step('a');if game.stack:top()==pack and pack.submenu then step('a')end
     step('a') -- choose the actual first party Pokemon
+    T.eq(game.stack:top(),b,'successful medicine returns presentation to the native battle, not a field TextBox')
+    local queuedText=false
+    for _,entry in ipairs(b.queue)do if entry.text then queuedText=true end end
+    T.check(queuedText,'actual medicine text is owned by the native battle queue')
     T.check(wait(function()return game.stack:top()==b and b.phase=='menu'end),'actual item turn returns to the battle owner')
     T.eq(game.save.inventory.POTION,nil,'actual healing consumes exactly the owned potion')
     T.check(b.player.mon.hp>1,'actual native item effect heals the chosen party Pokemon')
@@ -87,6 +105,17 @@ for _,version in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
     T.eq(b.enemy.curMoves[1].pp,enemyPP-1,'item use gives the native enemy exactly one action')
     T.eq(game.stack:top(),b,'item/target/message screens leave no orphaned owner')
   end
+end
+for _,version in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
+  local b,game,step,wait,open=fixture(version)
+  b.player.mon.hp=b.player.mon.stats.hp;b.player.shownHP=b.player.mon.hp
+  local enemyPP=b.enemy.curMoves[1].pp
+  local pack=open();step('a');if game.stack:top()==pack and pack.submenu then step('a')end
+  step('a')
+  T.eq(game.stack:top(),b,version..' no-effect medicine uses the actual battle text owner')
+  T.check(wait(function()return game.stack:top()==b and b.phase=='menu'end),'no-effect medicine returns to native commands')
+  T.eq(game.save.inventory.POTION,1,'no-effect medicine preserves inventory')
+  T.eq(b.enemy.curMoves[1].pp,enemyPP,'no-effect medicine grants no enemy action')
 end
 for _,version in ipairs({'red','firered','emerald'})do
   local b,game,step,wait,open=fixture(version)

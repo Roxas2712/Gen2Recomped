@@ -743,7 +743,12 @@ local function useOn(game, battle, id, target, list, moveIndex, picker)
     end
     if battle then
       list:close()
-      showMessages(game, payload, function() battle:itemUsed({}) end)
+      if require("src.core.GameVersion").isGen2() then
+        -- The native battle queue owns this message and its composition.
+        battle:itemUsed(payload)
+      else
+        showMessages(game, payload, function() battle:itemUsed({}) end)
+      end
     else
       showMessages(game, payload, closePicker)
     end
@@ -752,10 +757,16 @@ local function useOn(game, battle, id, target, list, moveIndex, picker)
 
   -- .healingItemNoEffect prints over the still-drawn party menu too, so the
   -- refusal closes the picker the same way (#252)
-  showMessages(game, payload, closePicker) -- failed
+  if battle and require("src.core.GameVersion").isGen2() then
+    closePicker()
+    list:close()
+    for _, message in ipairs(payload or {}) do battle:say(message) end
+  else
+    showMessages(game, payload, closePicker) -- failed
+  end
 end
 
-local function pickTargetAndUse(game, battle, id, list)
+local function pickTargetAndUse(game, battle, id, list, options)
   -- pick a target from the party
   -- the ETHERs and PP UP open the move menu after picking a mon
   -- (ItemUsePPRestore / ItemUsePPUp); the ELIXERs hit every move
@@ -764,6 +775,8 @@ local function pickTargetAndUse(game, battle, id, list)
   local wantsMove = key == "ETHER" or key == "MAX_ETHER" or key == "PP_UP"
   local opts = {
     pickOnly = true,
+    battle = require("src.core.GameVersion").isGen2() and battle or nil,
+    onCancel = options and options.onCancel,
     -- HP medicine animates its bar with the picker still up (#252).  Only
     -- out of battle: the in-battle tail closes the bag list underneath
     -- first, which needs the picker already gone.
@@ -854,7 +867,7 @@ local BAG_TEXT_BOOTED_TM = 58
 local BAG_TEXT_BOOTED_HM = 59
 local BAG_TEXT_CONTAINED = 60
 
-local function useItem(game, battle, id, list)
+local function useItem(game, battle, id, list, options)
   -- HGSS: the Escape Rope / Water Stone at a Ruins of Alph chamber wall
   -- (src/world/HgssAlphChambers.lua) runs the chamber's script instead
   if not battle and game.data and game.data.isGen4Cache
@@ -937,7 +950,7 @@ local function useItem(game, battle, id, list)
           -- which is where "Teach {MOVE} to a POKeMON?" died.
           game.stack:push(TextBox2.new(game, asks, nil, {
             choice = function(yes)
-              if yes then pickTargetAndUse(game, battle, id, list) end
+              if yes then pickTargetAndUse(game, battle, id, list, options) end
             end,
           }))
         end
@@ -947,10 +960,10 @@ local function useItem(game, battle, id, list)
       local booted = def.machine.kind == "HM"
         and "Booted up an HM!" or Strings("Booted up a TM!")
       showMessages(game, { booted, Strings("It contained\n%s!", moveName) },
-        function() pickTargetAndUse(game, battle, id, list) end)
+        function() pickTargetAndUse(game, battle, id, list, options) end)
       return
     end
-    pickTargetAndUse(game, battle, id, list)
+    pickTargetAndUse(game, battle, id, list, options)
   else
     useOn(game, battle, id, nil, list)
   end
