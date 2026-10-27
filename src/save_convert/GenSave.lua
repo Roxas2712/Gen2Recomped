@@ -978,4 +978,13 @@ function GenSave.encode(save, data, template)
   return table.concat(outBuf)
 end
 
+-- A single native party record for isolated legality analysis. Names stay in
+-- their original cartridge encoding; no whole adventure save is disclosed.
+function GenSave.pokemonRecord(mon,data)
+ local cw=GenSave.crosswalks(data);local b={};for i=1,66 do b[i]='\0'end
+ encodeMon(b,0,mon,true,cw)
+ encodeName(b,44,11,mon.ot or '')
+ encodeName(b,55,11,mon.nickname or(cw.speciesDefs[mon.species]or{}).name or '')
+ local bytes=table.concat(b);return bytes:sub(1,44),bytes:sub(45,55),bytes:sub(56,66)
+end
 return GenSave

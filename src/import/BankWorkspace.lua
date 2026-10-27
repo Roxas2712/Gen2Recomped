@@ -66,6 +66,7 @@ function W.trade(self,action,exchange)
   f.notice=f.tradeJob and 'Connecting to the Bank exchange service...' or 'Background networking is unavailable.'
 end
 function W.close(self)
+  if self._bankOverlay and self._bankOverlay.bankCheckJob then self._bankOverlay.bankCheckJob:cancel()end
   local f=self._bankOverlay
   if f and f.tradeJob then f.tradeJob:cancel() end
   self._bankOverlay=nil
@@ -434,12 +435,14 @@ function W.install(RI)
   RI.update=function(self,dt,...)
     local f=self._bankOverlay
     if f and not registered() then
+      if f.bankCheckJob then f.bankCheckJob:cancel();f.bankCheckJob=nil;f.bankCheck=nil end
       if f.tradeJob then f.tradeJob:cancel();f.tradeJob=nil end
       f.drag=nil;f.selected=nil
       return update(self,dt,...)
     end
     if f and f.drag and not f.drag.touch and love.mouse then f.drag.x,f.drag.y=love.mouse.getPosition() end
     if f then
+      require('src.import.BankPages').tick(f)
       if f.animation then f.animation.elapsed=f.animation.elapsed+dt;if f.animation.elapsed>=3.6 then f.animation=nil end end
       if f.tradeJob then
         local result=f.tradeJob:poll()

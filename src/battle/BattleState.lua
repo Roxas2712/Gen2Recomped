@@ -1145,6 +1145,7 @@ BattleState.markSeen = markSeen
 -- A met level of ZERO is not missing data: it is the cartridge's way of
 -- saying HATCHED, and the memo reads it that way.
 local function stampOT(save, mon, met)
+  local fresh=mon.ot==nil and mon.gen3OtName==nil and mon.otName==nil
   save.player.id = save.player.id or math.random(0, 65535)
   mon.ot = mon.ot or save.player.name
   mon.otId = mon.otId or save.player.id
@@ -1164,6 +1165,7 @@ local function stampOT(save, mon, met)
     if mon.metLevel == nil then mon.metLevel = met.level end
     if mon.metLocation == nil then mon.metLocation = met.location end
   end
+  require('src.pokemon.OriginRecord').stamp(save,mon,met,fresh)
 end
 BattleState.stampOT = stampOT
 

@@ -98,4 +98,33 @@ T.check(not J.restore(Game,corrupt),'a replay whose final state differs is rejec
 T.check(Game.save==prior and S.encode(Game.save)==priorBytes and Stack:top().screenId=='TitleState','failed replay rolls back the original save and screen owners')
 T.eq(love.math.getRandomState(),priorRng,'failed replay preserves the original RNG')
 Game.linkSession=true;T.check(not J.capture(Game),'online sessions cannot be rewound');Game.linkSession=nil
+-- A registered mod's closure memory is transported independently of save.modData.
+local MS=require('src.mods.Suspend');local clock=37;local broken=false
+local files={['mods/counter/main.lua']='counter-v1',['mods/counter/manifest.json']='manifest-v1',['mods/counter/art.png']='pixels-v1'}
+local fs={read=function(p)return files[p]end,getInfo=function(p)return files[p] and {type='file',size=#files[p]}end,
+ getDirectoryItems=function()return {'main.lua','manifest.json','art.png'}end}
+love.data.hash=function(_,bytes)return bytes end;love.data.encode=function(_,_,bytes)return bytes end
+Game.mods={mods={counter={path='mods/counter',manifest={id='counter'}}},fs=fs,modSave={}}
+Game.modStatus={loaded={{id='counter',version='1.0.0'}}}
+T.check(not J.capture(Game),'an unregistered closure-state mod remains blocked')
+local api={};MS.install(Game.mods,Game.mods.mods.counter,api)
+api.suspend:register({schema=1,capture=function()return {clock=clock}end,restore=function(s)clock=s.clock;return true end})
+T.check(not pcall(api.suspend.register,api.suspend,{schema=1,capture=function()return {}end,restore=function()end}),'a mod cannot replace its continuation contract mid-session')
+-- Resume the native battle first with no mods, then record its modded continuation.
+Game.modStatus.loaded={};assert(J.restore(Game,assert(S.decode(encoded))))
+Game.modStatus.loaded={{id='counter',version='1.0.0'}};J.clear(Game)
+step()
+local modded=assert(J.capture(Game));T.eq(modded.modStates[1].state.clock,37,'capsule captures private mod closure state')
+clock=92;Stack.states={{screenId='TitleState'}}
+assert(J.restore(Game,modded));T.eq(clock,37,'modded native battle restores closure state')
+local original=files['mods/counter/art.png'];files['mods/counter/art.png']='changed pixels'
+clock=92;Stack.states={{screenId='TitleState'}}
+T.check(not J.restore(Game,modded),'changed mod assets are refused before replay');T.eq(clock,92,'identity refusal leaves local mod memory intact')
+files['mods/counter/art.png']=original
+local bad=assert(S.decode(S.encodeExact(modded)));bad.witness.save.money=-777
+local saveBefore=Game.save
+T.check(not J.restore(Game,bad),'a divergent modded continuation is refused')
+T.eq(clock,92,'failed replay rolls back private mod memory');T.check(Game.save==saveBefore,'failed mod replay preserves original save ownership')
+Game.mods.suspendContracts.counter.capture=function()return {callback=function()end}end
+T.check(not J.capture(Game),'mod code cannot be serialized inside a capsule')
 T.finish('Native suspend journal')
