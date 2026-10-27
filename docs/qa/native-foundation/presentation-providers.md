@@ -37,6 +37,25 @@ sites and context projections before their feature flags can become true. This
 foundation deliberately does not enable an experimental theme or claim those
 families are complete. Other generations keep their existing compositor.
 
-Validation receipts are recorded with the publication after the CPU, owned-output
-Metal/OpenGL and unchanged-mod qualification runs finish. QA uses fresh owned
-profiles, preserves player saves and retains at least 20 GiB free.
+Frozen fork `f4f6a295a7` passes 48 CPU groups, including 538 provider checks.
+Owned-output run `70560fd6d9` passes 1,682 checks across 240 frames on each of
+Metal and OpenGL: five editions, logical widths 240/320, target DPI 1/2, two
+window sizes, fallback/error cases and nested painting. Unchanged-mod run
+`1eb7007342-firered` completes a real trainer, five view changes and native
+move-swap/restore/cancel input with exit 0 and idle cleanup. The older-public
+composition `1dbf66c04e` independently passes 31 CPU groups with the same 538
+provider checks. Its separate owned-output run `461c91ab60` also passes 1,682
+checks across 240 frames on each backend.
+
+Earlier trainer benchmark `58ae54db42-firered`, source `1830bd24b6`, records
+240 readback-free intervals per view averaging about 60 FPS in paper, native
+and terrarium views. Its driver finished, but the wrapper failed in a later
+macOS screen-lock diagnostic timeout. A separate recovery receipt retains
+that failure and the source association; it does not relabel the run accepted.
+The diagnostic starter now records that optional timeout rather than discarding
+native completion metadata.
+
+These checks establish bounded frame and integration behavior, not complete
+family, full-game, all-edition visual, OS-window or sustained performance parity.
+QA uses fresh owned profiles, preserves player saves and retains at least 20 GiB
+free.
