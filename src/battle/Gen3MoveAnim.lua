@@ -4488,4 +4488,18 @@ function Gen3MoveAnim:draw(battle, skipEvents)
   end
 end
 
+-- Source callbacks borrow these exact native phases. Direct source calls
+-- outside the controller cannot start or advance an independent script.
+local startNative,updateNative=Gen3MoveAnim.start,Gen3MoveAnim.update
+function Gen3MoveAnim:start(...)
+  local source=package.loaded['src.core.game3.battle.anim_vm']
+  if source then return source._nativeLaunch(self,startNative,...)end
+  return startNative(self,...)
+end
+function Gen3MoveAnim:update(...)
+  local source=package.loaded['src.core.game3.battle.anim_vm']
+  if source then return source._nativeUpdate(self,updateNative,...)end
+  return updateNative(self,...)
+end
+
 return Gen3MoveAnim
