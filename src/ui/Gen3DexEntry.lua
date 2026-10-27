@@ -126,6 +126,12 @@ end
 
 function Gen3DexEntry.new(game, arg)
   local species, forceOwned = resolveSpecies(arg)
+  local RS = require('src.ui.Gen3RsPokedex')
+  if RS.available(game) then
+    return RS.new(game, {caught=true,species=species,
+      personality=type(arg)=='table'and arg.personality or nil,
+      shiny=type(arg)=='table'and arg.shiny or nil})
+  end
   local FRLG = require("src.ui.Gen3PokedexFRLG")
   if FRLG.record(game) then
     -- FireRed pushes this page for a newly registered species

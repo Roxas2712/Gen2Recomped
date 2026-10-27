@@ -31,15 +31,15 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  local layout=Menu.contentTemplate();layout.width=100;T.eq(Menu.contentTemplate().width,base.width)
  menu:draw()
  T.eq(box[1],base.left-1);T.eq(box[2],base.top-1);T.eq(box[3],base.width+2);T.eq(box[4],base.height+2)
- T.eq(labels[1][2],frlg and base.left*8+Window.CURSOR_WIDTH or base.left*8)
- T.eq(cursor[1],frlg and base.left*8 or(base.left-1)*8+2)
+ T.eq(labels[1][2],base.left*8+Window.CURSOR_WIDTH)
+ T.eq(cursor[1],base.left*8)
  -- An installed source wrapper changes the rectangle the native painter uses.
  Menu.contentTemplate=function()
   local t=template();T.eq(G.native(Menu._game),g);T.eq(t.left,base.left)
-  return Window.template(2,2,12,base.height)
+  return Window.template(2,2,12,math.min(17,base.height))
  end
  labels={};menu:draw();T.eq(box[1],1);T.eq(box[2],1);T.eq(box[3],14)
- T.eq(labels[1][2],frlg and 24 or 16);T.eq(labels[1][3]>=16,true)
+ T.eq(labels[1][2],24);T.eq(labels[1][3]>=16,true)
  -- Invalid returns and wrapper errors preserve the real native geometry.
  for _,value in ipairs{{left=-1,top=1,width=12,height=3},{left=0,top=1,width=0/0,height=3},{left=1,top=1,width=31,height=3},false}do
   Menu.contentTemplate=function()return value end

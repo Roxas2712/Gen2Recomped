@@ -561,6 +561,7 @@ local function status2(b)
   if b.rage then v = v + 0x800000 end
   if b.substituteHP then v = v + 0x1000000 end
   if b.trappingTurns or b.boundTurns then v = v + 0x4000000 end
+  v=v+(tonumber(b.gbaWrapTurns)or 0)*0x2000
   if b.nightmare then v = v + 0x8000000 end
   if b.foresighted then v = v + 0x20000000 end
   if b.tormented then v = v + 0x80000000 end

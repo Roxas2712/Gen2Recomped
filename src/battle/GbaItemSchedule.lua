@@ -118,6 +118,7 @@ function Schedule.residuals(battle)
       if #messages > 0 then
         battle:drainNext()
       end
+      require("src.battle.Gen3PartialTrap").residual(battle,b)
       if seedSource then
         seedSource.destinyBond, seedSource.grudge = nil, nil
         battle:onFaint(seedSource)

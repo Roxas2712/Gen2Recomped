@@ -61,20 +61,25 @@ local function buildItems(game, pocket)
   return items
 end
 
-local function consume(game, id)
-  Bag.remove(game.save, id, 1)
+local function selectedSlot(list,id)
+  local row=list and list.rs and list.selected and list:selected()
+  return row and row.id==id and row.rsSlot or nil
+end
+local function consume(game, id, list)
+  Bag.remove(game.save, id, 1, game.data, selectedSlot(list,id))
 end
 
 local function save_name(game)
   return game.save.player.name
 end
 
-local function showMessages(game, msgs, onDone)
+local function showMessages(game, msgs, onDone, opts)
   if not msgs or #msgs == 0 then
     if onDone then onDone() end
     return
   end
-  game.stack:push(TextBox.new(game, table.concat(msgs, "\f"), onDone))
+  game.stack:push(require('src.inventory.Gen3RsMachineUse').textBox(
+    game, table.concat(msgs, "\f"), onDone, opts))
 end
 
 -- FireRed's Rare Candy result window lives on the party screen and has two
@@ -176,7 +181,7 @@ BagMenu.refreshCount = refreshCount
 -- check makes it a no-op (#252).
 -- Shared with optional command shortcuts. Validate inventory and battle
 -- before consuming; the native throw owns animation, catch and the turn.
-function BagMenu.throwBall(game,battle,id,close)
+function BagMenu.throwBall(game,battle,id,close,list)
   local def=game.data.items[id]
   if not battle or(game.save.inventory[id]or 0)<1 or not ItemEffects.isBall(id,def)then return false end
   if battle.kind=='wild'and battle.wildFoesStanding and battle:wildFoesStanding()>1 then
@@ -184,7 +189,7 @@ function BagMenu.throwBall(game,battle,id,close)
       or Strings("It's no good! It's impossible to aim\nwhen there are two POKéMON!")})
     return false
   end
-  consume(game,id)
+  consume(game,id,list)
   if close then close()end
   battle:throwBall(ItemEffects.alias(id,def))
   return true
@@ -220,6 +225,18 @@ local function vanillaUseOn(game, battle, id, target, list, moveIndex, picker, p
     if prepared.closeBag and list and list.close then list:close() end
     if prepared.action then prepared.action() end
     if prepared.text then showMessages(game, { prepared.text }, closePicker) end
+    return
+  end
+  -- Gen3FieldUse commits a free-slot machine before returning `kept`.
+  -- Present that success once; it must not enter the full-set teach path
+  -- and apply the move or consume the TM again.
+  local RsMachine = require("src.inventory.Gen3RsMachineUse")
+  if prepared and prepared.kind == "tm" and result == "kept"
+     and RsMachine.fromBag(game, battle, id, list) then
+    showMessages(game, payload, function()
+      if picker and game.stack:top() == picker then picker:close() end
+      list:rebuild()
+    end, RsMachine.learnedOptions(game))
     return
   end
   -- BLACK / WHITE's own field uses: the bike, repels, the Dowsing MCHN ...
@@ -270,7 +287,7 @@ local function vanillaUseOn(game, battle, id, target, list, moveIndex, picker, p
   end
 
   if result == "consumed_escape" then -- Poké Doll
-    consume(game, id)
+    consume(game, id, list)
     list:close()
     showMessages(game, payload, function()
       -- ItemUsePokeDoll sets wEscapedFromBattle and never touches
@@ -364,7 +381,7 @@ local function vanillaUseOn(game, battle, id, target, list, moveIndex, picker, p
   -- Honey: taken from the bag and Sweet Scent's lure task run
   if result == "honey" then
     list:close()
-    consume(game, id)
+    consume(game, id, list)
     local ow = game.overworld
     if ow and ow.gen4SweetScent then ow:gen4SweetScent() end
     return
@@ -465,13 +482,19 @@ local function vanillaUseOn(game, battle, id, target, list, moveIndex, picker, p
                               game.save.player.name) })
       return
     end
-    BagMenu.throwBall(game,battle,id,function()list:close()end)
+    BagMenu.throwBall(game,battle,id,function()list:close()end,list)
     return
   end
 
   if result == "learn" or result == "learnkept" then
     local moveId = payload
     local mdef = game.data.moves[moveId]
+    local rs=require('src.inventory.Gen3RsMachineUse').fromBag(game,battle,id,list)
+    local function returnToBag()
+      if not rs then return end
+      if picker and game.stack:top()==picker then picker:close()end
+      list:rebuild()
+    end
     local function teach()
       -- PIKAHAPPY_USEDTMHM on a successful teach (item_effects.asm:2500)
       local function taught()
@@ -484,18 +507,20 @@ local function vanillaUseOn(game, battle, id, target, list, moveIndex, picker, p
         local who = target.nickname or game.data.pokemon[target.species].name
         -- Black / White's own line (src/ui/Gen5MoveLearnMenu.lua), else this one
         showMessages(game, { require("src.ui.Gen5MoveLearnMenu").learnedLine(game, who, mdef.name)
-          or Strings("%s learned\n%s!", who, mdef.name) })
-        if result == "learn" then consume(game, id) end
+          or Strings("%s learned\n%s!", who, mdef.name) },rs and returnToBag or nil,
+          rs and require('src.inventory.Gen3RsMachineUse').learnedOptions(game)or nil)
+        if result == "learn" then consume(game, id, list) end
         taught()
       else
         require("src.ui.Screens").push(game, "MoveLearnMenu", target, moveId,
           function(learned)
-            if learned and result == "learn" then consume(game, id) end
+            if learned and result == "learn" then consume(game, id, list) end
             if learned then taught() end
+            returnToBag()
           end)
       end
     end
-    list:close()
+    if not rs then list:close()end
     if prepared and prepared.payloadIsData and prepared.textChanged then
       showMessages(game, prepared.text and { prepared.text } or nil, teach)
     else
@@ -667,7 +692,7 @@ local function vanillaUseOn(game, battle, id, target, list, moveIndex, picker, p
 
     if allowed and ow.map.id ~= "AGATHAS_ROOM" then
       list:close()
-      consume(game, id)
+      consume(game, id, list)
       -- ESCAPE, carved on the Kabuto chamber wall, is an instruction.  The
       -- cartridge farcalls SpecialKabutoChamber on exactly this branch, before
       -- queueing the used-the-rope script (engine/events/overworld.asm:809);
@@ -690,7 +715,7 @@ local function vanillaUseOn(game, battle, id, target, list, moveIndex, picker, p
   end
 
   if result == "consumed" then
-    if not (prepared and prepared.consumed) then consume(game, id) end
+    if not (prepared and prepared.consumed) then consume(game, id, list) end
     if extra and extra.evolveTo then
       list:close()
       local Evolution = require("src.pokemon.Evolution")
@@ -822,7 +847,8 @@ local function useOn(game, battle, id, target, list, moveIndex, picker)
   if require("src.core.GameVersion").generation() == 3 and not battle then
     local slot
     for i, mon in ipairs(game.save.party or {}) do if mon == target then slot = i break end end
-    local _, _, _, prepared = require("src.inventory.Gen3FieldUse").call(game, id, slot, moveIndex)
+    local _, _, _, prepared = require("src.inventory.Gen3FieldUse").call(game, id, slot, moveIndex,
+      selectedSlot(list,id))
     return vanillaUseOn(game, nil, prepared.id, prepared.target, list, moveIndex, picker, prepared)
   end
   return vanillaUseOn(game, battle, id, target, list, moveIndex, picker)
@@ -841,9 +867,10 @@ local function pickTargetAndUse(game, battle, id, list, options)
     pickOnly = true,
     battle = require("src.core.GameVersion").isGen2() and battle or nil,
     onCancel = options and options.onCancel,
-    -- Native Gen2 keeps the same party owner through its result and
-    -- confirmation. Other editions retain their existing field flow.
+    -- Gen2 keeps the real party through item feedback. The GBA machine
+    -- route also retains its own target until its native use flow completes.
     keepOpen = ((battle or wantsMove) and require("src.core.GameVersion").isGen2())
+      or require('src.inventory.Gen3RsMachineUse').fromBag(game,battle,id,list)
       or ((not battle) and (ItemEffects.healsHP(id)
         or (id == "RARE_CANDY" and require("src.core.GameVersion").isFRLG()))),
     onSwitch = function(mon, picker)
@@ -966,6 +993,9 @@ local function useItem(game, battle, id, list, options)
     -- TMs/HMs boot up and announce their move before the target picker
     -- (ItemUseTMHM: BootedUpTMText / BootedUpHMText + TeachMachineMoveText)
     if def and def.machine then
+      if require('src.inventory.Gen3RsMachineUse').prompt(game,battle,id,list,function()
+        pickTargetAndUse(game,battle,id,list)
+      end)then return end
       local moveDef = game.data.moves[def.machine.move]
       local moveName = moveDef and moveDef.name or def.machine.move
       -- HOENN SAYS IT DIFFERENTLY, and asks.  Emerald's machine flow is
@@ -1089,8 +1119,8 @@ local function handOver(game, mon, id, onChanged, opts)
     if opts and opts.giveHeld then
       changed = opts.giveHeld(mon, id)
     else
-      require("src.inventory.Bag").giveHeld(game.save, mon, id, game.data)
-      changed = true
+      changed = require("src.inventory.Bag").giveHeld(game.save, mon, id, game.data,
+        opts and opts.bagSlot)
     end
     if changed == false then
       showMessages(game, { Strings("No room left to\nstore items.") })
@@ -1132,10 +1162,10 @@ end
 BagMenu.handOver = handOver
 
 -- GSC's GiveItem (pack.asm): pick a party mon, then hand it the item.
-local function giveItem(game, id, onChanged)
+local function giveItem(game, id, onChanged, opts)
   require("src.ui.Screens").push(game, "PartyMenu", {
     pickOnly = true,
-    onSwitch = function(mon) handOver(game, mon, id, onChanged) end,
+    onSwitch = function(mon) handOver(game, mon, id, onChanged, opts) end,
   })
 end
 

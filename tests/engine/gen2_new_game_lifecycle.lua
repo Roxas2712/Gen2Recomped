@@ -40,6 +40,17 @@ for _,edition in ipairs({'gold','silver','crystal'})do
  g=session(false);Game.newGame(g)
  T.eq(g.draws,1,edition..' no-intro datasets retain immediate world creation')
 end
+for _,edition in ipairs({'ruby','sapphire'})do
+ Version.set(edition)
+ local g=session('Gen3RsBirchSpeech');Game.newGame(g)
+ T.eq(g.world,nil,edition..' waits for the native gender/house choice')
+ T.eq(g.draws,0,edition..' does not build the default male home early')
+ g.save.player.gender='girl';g.save.player.map='GIRL_HOME';g.save.player.x=7
+ intro.done();T.eq(g.draws,1,edition..' native Birch callback starts the world once')
+ T.eq(g.world.map.id,'GIRL_HOME',edition..' world uses the selected home')
+ T.eq(g.world.x,7,edition..' world uses the final native spawn')
+ intro.done();T.eq(g.draws,1,edition..' duplicate callback cannot spawn another world')
+end
 Version.set('red');local g=session('OakSpeech');Game.newGame(g)
 T.eq(g.draws,1,'Gen1 retains world beneath its introduction')
 intro.done();T.eq(g.draws,1,'Gen1 callback does not create another world')

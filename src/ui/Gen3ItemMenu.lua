@@ -47,6 +47,12 @@ function Gen3ItemMenu.new(game, opts)
   self.entries = opts.entries or {}
   self.columns = math.max(1, math.floor(tonumber(opts.columns) or 2))
   self.onPick = opts.onPick
+  self.rsBag = opts.rsBag
+  if self.rsBag then
+    self.isOpaque=true
+    self.sgbPalettes=function()return self.rsBag:sgbPalettes()end
+    self.wantsEdgeBleed=function()return false end
+  end
   -- Scripted cartridge tutorials (FireRed's POKé DUDE) drive this exact
   -- context window with synthetic button presses.  Keep that automation on
   -- the real item-action screen rather than drawing a tutorial-only lookalike.
@@ -87,6 +93,15 @@ function Gen3ItemMenu:step(dir)
   local cols, rows = self.columns, self.rows
   local r = math.floor((self.index - 1) / cols)
   local c = (self.index - 1) % cols
+  if self.rsBag then
+    local dr=dir=='up' and -1 or dir=='down' and 1 or 0
+    local dc=dir=='left' and -1 or dir=='right' and 1 or 0
+    local rr,cc=r+dr,c+dc
+    if rr<0 or rr>=rows or cc<0 or cc>=cols then return false end
+    local i=rr*cols+cc+1
+    if i~=self.index and self:pickable(i) then self.index=i return true end
+    return false
+  end
   for _ = 1, math.max(cols, rows) do
     if dir == "up" then r = (r - 1) % rows
     elseif dir == "down" then r = (r + 1) % rows
@@ -140,6 +155,11 @@ function Gen3ItemMenu:keypressed(key)
 end
 
 function Gen3ItemMenu:draw()
+  if self.rsBag then
+    local bag=self.rsBag
+    bag.rsView=bag.rsView or require('src.ui.Gen3RsBagView').new(bag)
+    return bag.rsView:draw(self)
+  end
   love.graphics.setColor(1, 1, 1, 1)
   Font.drawBox(self.tx, self.ty, self.tw, self.th)
   for i, entry in ipairs(self.entries) do
