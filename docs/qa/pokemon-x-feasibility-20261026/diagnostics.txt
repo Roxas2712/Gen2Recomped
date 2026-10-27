@@ -1,0 +1,13 @@
+Historical initial encrypted-input failures; now resolved by a private decrypted working copy.
+Current native X/Y GPU boot succeeds; see README.md for tested scope.
+
+recompiler-analyze
+could not load <original-pokemon-x.cia>, the ExeFS has no .code
+
+zakuro-fs-load
+failed to load <original-pokemon-x.cia>: the RomFS can't be read, the dump is still partly encrypted or damaged: bad magic at 0x0: expected [73, 86, 70, 67], got [212, 224, 151, 167]
+
+zakuro-headless-load
+[2026-10-26T21:49:43Z INFO  zakuro_fs] CIA archive, title 0004000000055D00
+[2026-10-26T21:49:43Z INFO  zakuro_fs] CIA archive, title 0004000000055D00
+zakuro: could not open <original-pokemon-x.cia>, the RomFS can't be read, the dump is still partly encrypted or damaged: bad magic at 0x0: expected [73, 86, 70, 67], got [212, 224, 151, 167]

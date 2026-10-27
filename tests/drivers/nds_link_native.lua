@@ -1,11 +1,15 @@
 package.path='./?.lua;./?/init.lua;'..package.path
-local T=require('tests.modkit');local V=require('src.core.GameVersion');local edition=assert(arg[2]);V.set(edition)
+local T=require('tests.modkit');local V=require('src.core.GameVersion')
+-- The embedded Python loader includes the script at arg[1]; the Lua CLI
+-- places it at arg[0]. Preserve ROM/edition forwarding through both entries.
+local offset=arg[3] and 1 or 0
+local rom,edition=assert(arg[1+offset]),assert(arg[2+offset]);V.set(edition)
 local captured={}
 require('src.import.LuaWriter').write=function(path,value)captured[path:match('([^/]+)%.lua$')]=value;return true end
 require('src.import.CacheFs').write=function()return true end
 local IW=require('src.import.ImageWriter');IW.save=function()return true end;IW.fromRGBA8=function(w,h)return{width=w,height=h}end
 local X=require(V.generation()==4 and'src.import.RomExtractorGen4'or'src.import.RomExtractorGen5')
-local x=assert(X.new(assert(arg[1]),edition))
+local x=assert(X.new(rom,edition))
 if x.runStages then x:runStages({'text','species','moves','items','constants'})else x:run()end
 x:close()
 local data=T.fixtures.fresh();for k,v in pairs(captured)do data[k]=v end

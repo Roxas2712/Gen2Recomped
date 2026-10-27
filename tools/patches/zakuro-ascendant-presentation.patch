@@ -1,0 +1,122 @@
+diff --git a/crates/zakuro-gpu/src/backend/mod.rs b/crates/zakuro-gpu/src/backend/mod.rs
+index e2a2a79..cc5bc69 100644
+--- a/crates/zakuro-gpu/src/backend/mod.rs
++++ b/crates/zakuro-gpu/src/backend/mod.rs
+@@ -103,6 +103,8 @@ pub enum ScreenLayout {
+     BottomOnly,
+     /// the top screen big, the bottom one small at its lower right.
+     LargeTop,
++    /// Fork: the touch screen overlays the lower-right corner of the main view.
++    Overlay,
+ }
+ 
+ /// how the screens' pixels are drawn when scaled to the window.
+@@ -141,7 +143,7 @@ impl ScreenLayout {
+         match self {
+             ScreenLayout::Stacked => (top_width.max(320.0), 480.0),
+             ScreenLayout::SideBySide => (top_width + 320.0, 240.0),
+-            ScreenLayout::TopOnly => (top_width, 240.0),
++            ScreenLayout::TopOnly | ScreenLayout::Overlay => (top_width, 240.0),
+             ScreenLayout::BottomOnly => (320.0, 240.0),
+             ScreenLayout::LargeTop => (top_width + LARGE_TOP_BOTTOM.0 as f32, 240.0),
+         }
+@@ -207,6 +209,15 @@ pub fn layout(window_width: u32, window_height: u32, arrangement: ScreenLayout,
+                 height: 240.0 * small,
+             })
+         }
++        ScreenLayout::Overlay => {
++            let small = scale * 0.4;
++            Some(Viewport {
++                x: offset_x + top_w * scale - 320.0 * small - 6.0 * scale,
++                y: offset_y + 240.0 * scale - 240.0 * small - 6.0 * scale,
++                width: 320.0 * small,
++                height: 240.0 * small,
++            })
++        }
+         ScreenLayout::TopOnly => None,
+         ScreenLayout::BottomOnly => Some(Viewport {
+             x: offset_x,
+diff --git a/crates/zakuro/src/lib.rs b/crates/zakuro/src/lib.rs
+index d47ecb7..a9c63a0 100644
+--- a/crates/zakuro/src/lib.rs
++++ b/crates/zakuro/src/lib.rs
+@@ -743,6 +743,21 @@ impl App {
+                     self.paused = !self.paused;
+                     log::info!("{}", if self.paused { "paused" } else { "resumed" });
+                 }
++                // Fork controls by Roxas2712: always user-selected, no scene guessing.
++                KeyCode::F6 => {
++                    self.settings.layout = if self.settings.layout == settings::Screens::Overlay {
++                        settings::Screens::TopOnly
++                    } else { settings::Screens::Overlay };
++                    self.settings.save();
++                    self.apply_layout();
++                }
++                KeyCode::F7 => {
++                    self.settings.layout = if self.settings.layout == settings::Screens::Stacked {
++                        settings::Screens::TopOnly
++                    } else { settings::Screens::Stacked };
++                    self.settings.save();
++                    self.apply_layout();
++                }
+                 KeyCode::F9 => {
+                     self.settings.layout = self.settings.layout.next();
+                     self.settings.save();
+diff --git a/crates/zakuro/src/menus.rs b/crates/zakuro/src/menus.rs
+index 6366bca..f861b62 100644
+--- a/crates/zakuro/src/menus.rs
++++ b/crates/zakuro/src/menus.rs
+@@ -728,7 +728,7 @@ impl Menus {
+                 ui.add_enabled(stereo, egui::Checkbox::new(&mut settings.swap_eyes, "Swap eyes"))
+                     .on_hover_text("Each eye gets the other's picture, for viewing cross-eyed, glasses worn the other way round, or a monitor whose rows start with the other eye.");
+                 ui.label(
+-                    RichText::new("F9 switches them while playing, F10 between the top and the bottom screen alone.").weak(),
++                    RichText::new("F6 toggles the touch overlay, F7 the gapless dual view. F9 cycles layouts, F10 switches single screens.").weak(),
+                 );
+                 ui.label(RichText::new("The presenter changes the next time Zakuro starts, the 3D with the next game.").weak());
+ 
+diff --git a/crates/zakuro/src/settings.rs b/crates/zakuro/src/settings.rs
+index 1e9b15b..eff0d9a 100644
+--- a/crates/zakuro/src/settings.rs
++++ b/crates/zakuro/src/settings.rs
+@@ -27,10 +27,11 @@ pub enum Screens {
+     TopOnly,
+     BottomOnly,
+     LargeTop,
++    Overlay,
+ }
+ 
+ impl Screens {
+-    pub const ALL: [Screens; 5] = [Screens::Stacked, Screens::SideBySide, Screens::LargeTop, Screens::TopOnly, Screens::BottomOnly];
++    pub const ALL: [Screens; 6] = [Screens::Stacked, Screens::SideBySide, Screens::LargeTop, Screens::Overlay, Screens::TopOnly, Screens::BottomOnly];
+ 
+     pub fn name(self) -> &'static str {
+         match self {
+@@ -39,6 +40,7 @@ impl Screens {
+             Screens::TopOnly => "Top screen only",
+             Screens::BottomOnly => "Bottom screen only",
+             Screens::LargeTop => "Big top screen, small bottom one",
++            Screens::Overlay => "Single screen with touch-menu overlay",
+         }
+     }
+ 
+@@ -49,6 +51,7 @@ impl Screens {
+             Screens::TopOnly => ScreenLayout::TopOnly,
+             Screens::BottomOnly => ScreenLayout::BottomOnly,
+             Screens::LargeTop => ScreenLayout::LargeTop,
++            Screens::Overlay => ScreenLayout::Overlay,
+         }
+     }
+ 
+@@ -611,7 +614,10 @@ fn write(path: &Path, text: &str) -> std::io::Result<()> {
+ /// the system's place for a program's settings.
+ fn path() -> Option<PathBuf> {
+     let var = |name: &str| std::env::var_os(name).filter(|value| !value.is_empty()).map(PathBuf::from);
+-    let dir = if cfg!(windows) {
++    // Fork integration by Roxas2712: private settings without changing HOME.
++    let dir = if let Some(dir) = var("ZAKURO_CONFIG_DIR") {
++        Some(dir)
++    } else if cfg!(windows) {
+         var("APPDATA")
+     } else if cfg!(target_os = "macos") {
+         var("HOME").map(|home| home.join("Library/Application Support"))
