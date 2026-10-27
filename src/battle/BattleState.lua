@@ -7646,7 +7646,7 @@ end
 function BattleState:lowHealthAlarmActive()
   local p = self.player
   if not p or self.safari or self.demo or self.result
-     or self.lowHealthAlarmDisabled then return false end
+     or self.lowHealthAlarmDisabled or self.partyItemHealing then return false end
   if self.showPlayerBack or (self.introSlide or 0) > 0 then return false end
   if p.fainted then return false end
   -- A siren that is ALREADY sounding follows the drawn bar, not the
@@ -10517,6 +10517,24 @@ function BattleState:nonMoveAction()
     if not native then action = self:enemyAction() end
     self:executeAction(self.enemy, self.player, action)
   end
+end
+
+-- Gen2's party item screen owns HealHP_SFX_GFX and its confirmation.
+-- These methods use the existing battlers and turn queue; the effect and
+-- inventory mutation have already happened exactly once in ItemEffects.
+function BattleState:beginPartyItemHeal()
+  self.partyItemHealing = true
+  self.lowHealthAlarmOn = false
+  Sound.stopLoop("Low_Health_Alarm")
+end
+
+function BattleState:finishPartyItemTurn(itemId, mon)
+  if mon and self.player and mon == self.player.mon then
+    self.player.shownHP = mon.hp
+    self.player.drainFloor = nil
+  end
+  self.partyItemHealing = nil
+  self:itemUsed({})
 end
 
 -- called by BagMenu after an item is used in battle (consumes the turn)

@@ -21,6 +21,10 @@ jobs:
           luajit tests/engine/gen2_move_selection.lua
           luajit tests/engine/gen2_battle_submenu.lua
           luajit tests/engine/gen2_battle_pack.lua
+          luajit tests/engine/gen2_party_item_result.lua
+          luajit tests/engine/screen_space_ui.lua
+          luajit tests/engine/party_live_data.lua
+          luajit tests/engine/party_grid_navigation.lua
           luajit tests/engine/gen2_battle_scene.lua
           luajit tests/engine/gen2_battle_window.lua
           luajit tests/engine/battle_queue_lifecycle.lua
