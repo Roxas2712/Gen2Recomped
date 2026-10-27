@@ -169,6 +169,21 @@ return function(game)
       assert(best, "scene has no unoccupied native walkable cell")
       U.teleport(game, selected.runtimeId, best[1], best[2], "up")
     end
+    local atlasDraws=0
+    if spec.atlasBridge then
+      assert(Version.isGen3()and not spec.voxel,'atlas bridge requires the Gen-3 field scene')
+      local field=require('src.core.game3.field_view')
+      local native=field.draw
+      -- Use the production replacement boundary, with the native game,
+      -- actors, map graph and clock. No alternate simulation is installed.
+      field.draw=function(...)
+        atlasDraws=atlasDraws+1
+        local ok,why=native(...)
+        assert(ok,why)
+        return ok,why
+      end
+      report.atlasBridge={enabled=true,kind='production source-field adapter in owned QA host'}
+    end
     U.wait(60)
     ow = assert(game.overworld)
     report.setup = {

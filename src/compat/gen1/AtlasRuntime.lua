@@ -4,6 +4,7 @@ local PairNames=require('src.compat.gen1.PairNames')
 local Version=require('src.core.GameVersion')
 local Pixels=require('src.compat.gen1.AtlasPixels')
 local Upload=require('src.compat.gen1.AtlasUpload')
+local Build=require('src.compat.gen1.AtlasBuild')
 local M={}
 local function same(a,b)
   if not a or#a~=#b then return false end
@@ -43,6 +44,7 @@ function M.new(api)
     end
   end
   local function releaseJob(job)
+    Build.cancel(job._worker);job._worker=nil;job._core=nil
     if job.ts then Upload.release(job.ts)end
     job.co,job.ts=nil,nil
   end
@@ -92,6 +94,7 @@ function M.new(api)
     return api._pairs
   end
   function runtime:pending()return jobs end
+  local advance
   function runtime:prefetch(name,priority)
     local canonical,pair,key=resolve(name);if not canonical then return false,pair end
     local cached=api._pairs[canonical]
@@ -102,20 +105,38 @@ function M.new(api)
     order=order+1
     local job={key=canonical,stamp=key,priority=priority or 5,order=order}
     job.co=coroutine.create(function()
-      local model=Pixels.new(pair,layout,function(stage)coroutine.yield(stage)end)
+      local core=job._core
+      local model
+      if core then model=Pixels.fromCore(core,pair,layout)
+      else model=Pixels.new(pair,layout,function(stage)coroutine.yield(stage)end)end
       local ts={pair=canonical,midToSlot=model.midToSlot,midCount=#model.mids,cols=model.cols,rows=model.rows,
         layered=true,quads={},overQuads={},slotPix={},_model=model,_stamp=key,revision=0}
       job.ts=ts
-      ts.imageData=Upload.data(model.width,model.height,model:rgba(false));coroutine.yield('pixels')
-      ts.overImageData=Upload.data(model.width,model.height,model:rgba(true));coroutine.yield('pixels')
+      ts.imageData=Upload.data(model.width,model.height,(core and core.rgbaUnder or model:rgba(false)));coroutine.yield('pixels')
+      ts.overImageData=Upload.data(model.width,model.height,(core and core.rgbaOver or model:rgba(true)));coroutine.yield('pixels')
       ts.image=Upload.image(ts.imageData);coroutine.yield('texture')
       ts.overImage=Upload.image(ts.overImageData);coroutine.yield('texture')
-      ts.idxBlob,ts.overBlob=model:blob(false),model:blob(true);ts.bgr=model.bgr
+      ts.idxBlob,ts.overBlob=core and core.blobUnder or model:blob(false),core and core.blobOver or model:blob(true);ts.bgr=model.bgr
       return ts
     end)
-    jobs[canonical]=job;return true
+    jobs[canonical]=job
+    job._worker=Build.prepare(pair,layout,function(core)
+      if jobs[canonical]~=job or job._advanced then return end
+      job._worker=nil
+      local resolved,_,fresh=resolve(canonical)
+      if not resolved or jobs[canonical]~=job or not same(fresh,key)then
+        releaseJob(job);if jobs[canonical]==job then jobs[canonical]=nil end;return
+      end
+      job._core=core
+      local result
+      repeat result=advance(job)until result~=false
+    end,function()
+      if jobs[canonical]==job then job._worker=nil end
+    end)
+    return true
   end
-  local function advance(job)
+  advance=function(job)
+    job._advanced=true
     local ok,result=coroutine.resume(job.co)
     if not ok then
       releaseJob(job);jobs[job.key]=nil;return nil,tostring(result)
@@ -131,6 +152,7 @@ function M.new(api)
       else Upload.release(old);owned[old]=nil end
     end
     api._pairs[job.key]=result;owned[result]=true;jobs[job.key]=nil;job.co,job.ts=nil,nil
+    if job._core then Build.published(result);job._core=nil end
     api._gen=api._gen+1;touch(job.key)
     runtime:sweepRetired()
     return result
@@ -142,7 +164,8 @@ function M.new(api)
     repeat
       local chosen
       for _,job in pairs(jobs)do
-        if not chosen or job.priority<chosen.priority or(job.priority==chosen.priority and job.order<chosen.order)then chosen=job end
+        if job._worker and Build.expired(job._worker)then Build.cancel(job._worker);job._worker=nil end
+        if not job._worker and (not chosen or job.priority<chosen.priority or(job.priority==chosen.priority and job.order<chosen.order))then chosen=job end
       end
       if not chosen then break end
       local _,stage=advance(chosen);count=count+1
@@ -194,6 +217,9 @@ function M.new(api)
     if cached and cached.image and same(cached._stamp,key)then touch(canonical);return self:sync(cached)end
     self:prefetch(canonical,0)
     local job=jobs[canonical];if not job then return nil,'native atlas build unavailable'end
+    -- A required atlas retains immediate synchronous admission. The central
+    -- poll owns callbacks; a pending job gets a zero-wait timeout here.
+    Build.cancel(job._worker);job._worker=nil
     local result,why
     repeat result,why=advance(job)until result~=false
     if not result then return nil,why end

@@ -45,6 +45,8 @@ def main():
     for version in ("red", "gold", "emerald", "platinum"):
         parser.add_argument("--" + version, type=Path)
     args = parser.parse_args()
+    if args.atlas_bridge and any(not name.startswith("emerald-") for name in args.scene):
+        parser.error("--atlas-bridge requires Gen-3 scenes")
     if args.seconds < 60:
         parser.error("measurement intervals must be at least 60 real seconds")
     if args.variant and not args.measure:
@@ -221,7 +223,7 @@ end
         scene = SCENES[name]
         for variant in variants:
             spec = dict(scene, name=name, inventory=not args.measure, measure=args.measure,
-                        seconds=args.seconds, fpsCap=args.fps_cap, variant=variant,
+                        seconds=args.seconds, fpsCap=args.fps_cap, variant=variant, atlasBridge=args.atlas_bridge,
                         setupProbe=args.setup_probe or args.walk_probe, walkProbe=args.walk_probe)
             version = spec["version"]
             label = name + ("-" + variant if args.measure else "")
