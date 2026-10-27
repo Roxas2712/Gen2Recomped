@@ -22,6 +22,20 @@ function love.load()
     source:setPixel(x, y, v, v, v, y % 7 == 0 and 0 or 1)
   end end
   local plain = g.newImage(source)
+  local Index = require('src.render.PaletteIndex')
+  local derived = Index.fromImageData(source)
+  check(derived:getFormat() == 'rg8', 'real runtime supports RG8 ImageData')
+  check(#derived:getString() == 16*96*2, 'real RG8 byte layout')
+  for y = 0, 95 do for x = 0, 15 do
+    local _, _, _, a = source:getPixel(x,y)
+    local index, alpha = derived:getPixel(x,y)
+    check(math.floor(index*255+.5) == (a == 0 and 0 or x%4), 'native index derivation')
+    check(alpha == a, 'native source alpha preserved')
+  end end
+  local alphaSource=love.image.newImageData(1,1)
+  alphaSource:setPixel(0,0,2/3,2/3,2/3,128/255)
+  local red,alpha=Index.fromImageData(alphaSource):getPixel(0,0)
+  check(math.floor(red*255+.5)==1 and math.floor(alpha*255+.5)==128,'native partial alpha')
   Assets.image = function() return plain end
   Assets.imageData = function() return source:clone() end
   local colors = {{255, 239, 219}, {191, 47, 83}, {31, 137, 97}, {11, 17, 29}}
@@ -67,5 +81,6 @@ function love.load()
     syntheticPixels=true, realSceneAcceptance=false, playerProfilesUsed=false,
   }))
   canvas:release(); plain:release(); source:release()
+  alphaSource:release()
   love.event.quit(0)
 end
