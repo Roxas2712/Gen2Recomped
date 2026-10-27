@@ -5,6 +5,7 @@ local Game=require('src.core.Game')
 local WorldAPI=require('src.world.WorldAPI')
 local function stack()local s=setmetatable({}, {__index=Stack});s:init();return s end
 local s=stack();local owner={};s:setWorldOwner(owner)
+T.eq(owner.phase,'boot','worldless native owner is not a running play session')
 local entered,exited,updated,worldDraws,overlayDraws=0,0,0,0,0
 local world={isOverworld=true,isOpaque=true,map={id='NEW_BARK_TOWN'},
  enter=function(_,id,x)entered=entered+1;T.eq(id,'NEW_BARK_TOWN','world entry map');T.eq(x,6,'world entry position')end,
@@ -12,6 +13,7 @@ local world={isOverworld=true,isOpaque=true,map={id='NEW_BARK_TOWN'},
 owner.overworld=world;owner.stack=s
 s:push(world,'NEW_BARK_TOWN',6)
 T.eq(owner.world,world,'engine owns live world')
+T.eq(owner.phase,'play','native clients can identify a ready persistent world')
 T.eq(s:top(),nil,'free roam has no overlay')
 T.eq(#s.states,0,'world not stored as a menu')
 T.eq(s:active(),world,'native input still has active world')
@@ -22,6 +24,7 @@ local scene=s:sceneStack();T.eq(scene.states[1],world,'native scene contains wor
 T.eq(scene:visibleBase(),1,'world is scene base');T.eq(Game.ensureStack(owner),false,'empty overlay stack is healthy')
 local overlay={draw=function()overlayDraws=overlayDraws+1 end,update=function()end}
 s:push(overlay);T.eq(s:top(),overlay,'menu owns public stack')
+T.eq(owner.phase,'play','an overlay does not end the underlying play session')
 s:update(1/60);T.eq(updated,1,'menu blocks world input and movement')
 s:draw();T.eq(overlayDraws,1,'overlay rendered once');T.eq(worldDraws,0,'overlay rendering excludes world')
 scene=s:sceneStack();T.eq(#scene.states,2,'native scene contains both layers');T.eq(scene:visibleBase(),1,'transparent menu keeps world below')
@@ -31,7 +34,9 @@ s:pop();s:pop();T.eq(s:top(),nil,'closing menus returns to free roam')
 s:update(1/60);T.eq(updated,2,'world resumes after menu')
 scene=s:sceneStack();T.eq(#scene.states,1,'scene view sheds popped states')
 s:restore(world);T.eq(entered,1,'restoring persistent world never re-enters map')
+T.eq(owner.phase,'play','restoring the existing world republishes play ownership')
 s:clearWorld();T.eq(owner.world,nil,'title/restore can release world')
+T.eq(owner.phase,'boot','title cannot advertise a stale play session')
 T.eq(s:active(),nil,'released world cannot read input');T.eq(exited,1,'world exits exactly once')
 T.eq(WorldAPI.new(owner,'probe'):overworld(),nil,'title cannot expose stale overworld')
 local legacy=stack();legacy:push(world,'NEW_BARK_TOWN',6)
@@ -39,4 +44,14 @@ T.eq(legacy:top(),world,'legacy generations retain original stack contract')
 T.eq(legacy:sceneStack(),legacy,'legacy scene has no adapter')
 legacy:draw();T.eq(worldDraws,1,'legacy stack still draws world normally')
 legacy:pop();T.eq(exited,2,'legacy world exit retained')
+T.eq(legacy.worldOwner,nil,'legacy stack has no new persistent owner')
+local failed=stack();local failedOwner={};failed:setWorldOwner(failedOwner)
+T.raises(function()failed:push({isOverworld=true,enter=function()error('owned-phase-entry-failure')end})end,
+ 'owned-phase-entry-failure','failed world entry remains visible to the caller')
+T.eq(failedOwner.phase,'boot','failed world entry never publishes ready play')
+failed:clearWorld()
+local leaving={isOverworld=true,enter=function()failed:clearWorld()end}
+failed:push(leaving)
+T.eq(failedOwner.world,nil,'entry callback may leave the native world')
+T.eq(failedOwner.phase,'boot','an entry callback leaving the world cannot republish play')
 T.finish('native Gen2 world and overlay ownership')
