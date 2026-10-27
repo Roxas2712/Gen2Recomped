@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "sourceCommit": "05bc6d7f822fee0da393eba61106065b3e1531d3",
+  "sourceStable": true,
+  "romSha1": "ea9bcae617fdf159b045185467ae58b2e4a48b9a",
+  "freshImport": true,
+  "playerProfilesUsed": false,
+  "engineEntrypointRestored": true,
+  "engineEntrypointSha256": "7494d038b7ee32563d9873027cfc0cfac2d98818a3ef33d2c629b0e8005ca435",
+  "suiteExit": 0,
+  "suites": [
+    "tests/run_tests.lua"
+  ],
+  "suiteLogSha256": "4984ea90b60f5342876f3a6f7f44fa910efe5a00d5702cf36a65a4cc6d132b1a",
+  "importLogSha256": "b492fa1f5b7d3324ea2c2a2777c98a69188c15b01e0f6480b749a57573008d15",
+  "verdict": "ALL TESTS PASSED"
+}
