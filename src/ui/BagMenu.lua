@@ -432,6 +432,18 @@ local function vanillaUseOn(game, battle, id, target, list, moveIndex, picker, p
   end
 
   if result == "fish" then
+    if require('src.core.GameVersion').isGen2() then
+      local ow=game.overworld
+      -- The native PACK closes its own overlay before useRod. SELECT has
+      -- no pack owner: retain every unrelated overlay and use the same
+      -- native facing-water query, including connected-map shorelines.
+      if ow and require('src.world.Gen2Fishing').canUse(ow,game,id) then
+        list:close()
+        return ow:goFishing(id)
+      end
+      showMessages(game,{Strings("OAK: %s!\nThis isn't the\ntime to use that!",save_name(game))})
+      return
+    end
     list:close()
     local ow = game.overworld
     local p = ow and ow.player

@@ -3,6 +3,7 @@
 -- Layouts for complete 8x16 native glyphs on the fork's 160x144 surfaces.
 -- State/input handlers stay installed; only drawing and visible row budgets
 -- change. The same metrics drive cursors, scrolling and bounds checks.
+local MoveSelectionPhase = require("src.battle.MoveSelectionPhase")
 local L={}
 function L.partyWindow(index,count)
  local first=math.max(1,math.min(index-3,math.max(1,count-3)))
@@ -233,10 +234,10 @@ function L.install(mod,live)
  wrap('src.battle.BattleState','drawHUDs','battle-hud')
  Battle.drawTextAreaInner=function(self,...)
   if not active()then return bottom(self,...)end
-  if self.phase~='moveSelect'and self.phase~='mimicSelect'then return scoped('battle-bottom',self,bottom,...)end
+  if not MoveSelectionPhase.active(self)and self.phase~='mimicSelect'then return scoped('battle-bottom',self,bottom,...)end
   Font.drawBox(0,8,20,10);love.graphics.setColor(0,0,0,1)
-  local battler=self.phase=='moveSelect'and self:menuBattler()or nil
-  local moves=battler and battler.curMoves or self.mimicMoves or{};local selected=self.phase=='moveSelect'and self.moveIndex or self.mimicIndex
+  local battler=MoveSelectionPhase.active(self)and self:menuBattler()or nil
+  local moves=battler and battler.curMoves or self.mimicMoves or{};local selected=MoveSelectionPhase.active(self)and self.moveIndex or self.mimicIndex
   for i,m in ipairs(moves)do local def=self.data.moves[m.id];local y=56+i*16
    text(def and def.name or m.id,16,y,72);if i==selected then Font.drawCode(0xED,8,y)end
    if self.moveSwapIndex==i and selected~=i then Font.drawCode(0xEC,8,y)end

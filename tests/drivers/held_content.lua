@@ -85,7 +85,7 @@ return function(game)
     end
   end)
   U.tap(game, "a")
-  assert(b.phase == "moveSelect", "native FIGHT missing")
+  assert(b.phase == "moveSelect" or b.phase == "moves", "native FIGHT missing")
   U.tap(game, "a")
   drain(b)
   off()

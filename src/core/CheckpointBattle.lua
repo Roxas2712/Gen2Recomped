@@ -1,6 +1,7 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Reconstruct native battle decision points from data, preserving relationships
 -- between parties, battlers, sides and field state. No controller is serialized.
+local MoveSelectionPhase = require("src.battle.MoveSelectionPhase")
 local B = {}
 -- Vanilla boot can use BattleState's built-in registry without a merged mod
 -- registry on game.data. Resolve the same native rulesets on both sides.
@@ -300,7 +301,7 @@ local EXCLUDED = names(
 )
 local function decision(battle)
   assert(getmetatable(battle) == require("src.battle.BattleState"), "not a native battle")
-  assert(PHASES[battle.phase], "battle is not at a player decision")
+  assert(PHASES[battle.phase] or MoveSelectionPhase.active(battle), "battle is not at a player decision")
   for key in pairs(EXCLUDED) do
     assert(not battle[key], "special battle has no qualified continuation")
   end
@@ -487,7 +488,8 @@ function B.validate(game, snapshot, save, actors)
     for key in pairs(s) do
       assert(FIELDS[key], "unknown native battle field")
     end
-    assert(PHASES[s.phase] and (s.kind == "wild" or s.kind == "trainer"), "invalid battle decision")
+    assert((PHASES[s.phase] or MoveSelectionPhase.active(s))
+      and (s.kind == "wild" or s.kind == "trainer"), "invalid battle decision")
     assert(s.player and s.enemy and s.player.mon and s.enemy.mon, "missing native battlers")
     for key in pairs(EXCLUDED) do
       assert(not s[key], "special battle state is not reconstructible")
