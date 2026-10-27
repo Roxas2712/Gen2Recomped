@@ -95,7 +95,7 @@ function I.commit(preview,confirmed)
   for _,entry in ipairs(checked.entries) do local id,failure=B.keep(entry);if not id then return nil,failure end;ids[#ids+1]=id end
   return {schema=1,provider=checked.provider,entries=ids,itemsPreserved=true,archive=path,copyOnly=true}
 end
-function I.sync(store)
+function I.sync(store,pullOnly)
   local permitted,why=require('src.storage.AccountStorage').storeCheck(store);if not permitted then return nil,why end
   local fs=require('src.core.SaveData').persistenceFs();local directory='bank/interop';local pending={}
   local function valid(bytes,id)
@@ -126,7 +126,7 @@ function I.sync(store)
       pending[id]=nil;count=count+1
     end
   end
-  for id,bytes in pairs(pending) do
+  for id,bytes in pairs(pullOnly and {} or pending) do
     local ok,err=store.write(directory..'/'..id..'.lua',bytes);if not ok then return nil,err end
     count=count+1
   end

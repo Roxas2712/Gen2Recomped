@@ -14,6 +14,11 @@ class Payload(unittest.TestCase):
    for f in ('main.lua','conf.lua','src/preview/main.lua','src/preview/conf.lua','src/preview/release.json','src/core/NativePreview.lua',*extra):z.writestr(f,'test')
   return p
  def test_isolated_payload(self):module.verify_payload(self.archive())
+ def test_bundled_native_language_is_allowed_but_user_mods_and_game_bytes_are_not(self):
+  module.verify_payload(self.archive(('mods/','mods/UNI_LANGUAGE_NATIVE/','mods/UNI_LANGUAGE_NATIVE/main.lua')))
+  for name in ('mods/UNI_LANGUAGE_NATIVE_EXTRA/main.lua','mods/another/main.lua','mods/UNI_LANGUAGE_NATIVE/private.gba','mods/UNI_LANGUAGE_NATIVE/data/generated/secret.lua'):
+   with self.subTest(name=name):
+    with self.assertRaises(ValueError):module.verify_payload(self.archive((name,)))
  def test_rom_save_and_user_data_rejected(self):
   for f in ('dump.GBA','a.gb','a.gbc','a.sav','x.srm','x.bak','options.lua','save.lua','rom-cache.complete','data/generated/map.lua','mods/a/main.lua','cloud_clients.lua'):
    with self.subTest(f=f):
