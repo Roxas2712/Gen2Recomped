@@ -40,6 +40,7 @@ function Bridge.extract(extractor)
   require('src.import.Gen3RsStartMenuFlags').extract(extractor,load)
   require('src.import.Gen3RsStarterAssets').extract(extractor,load,rom,cache)
   require('src.import.Gen3RsBattlePanelAssets').extract(extractor,load,rom,cache)
+  require('src.import.Gen3RsHealthboxAssets').extract(extractor,load,rom,cache)
   require('src.import.Gen3RsPokenavAssets').extract(extractor,load,rom,cache)
   require('src.import.Gen3RsStorageAssets').extract(extractor,load,rom,cache)
   require('src.import.Gen3RsPokedexAssets').extract(extractor,load,rom,cache)
@@ -185,6 +186,7 @@ function Bridge.missing(version)
   for _,path in ipairs(require('src.import.Gen3RsBerryTagAssets').missing(version))do absent[#absent+1]=path end
   for _,path in ipairs(require('src.import.Gen3RsSaveAssets').missing(version))do absent[#absent+1]=path end
   for _,path in ipairs(require('src.import.Gen3RsMainMenuAssets').missing(version))do absent[#absent+1]=path end
+  for _,path in ipairs(require('src.import.Gen3RsHealthboxAssets').missing(version))do absent[#absent+1]=path end
   for _,path in ipairs(require('src.import.Gen3RsItemPcAssets').missing(version))do absent[#absent+1]=path end
   for _,path in ipairs(require('src.import.Gen3RsMailAssets').missing(version))do absent[#absent+1]=path end
   for _,path in ipairs(require('src.import.Gen3RsCableCarAssets').missing(version))do absent[#absent+1]=path end

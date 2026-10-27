@@ -17,8 +17,8 @@ local function resident(st,key,view)
 end
 function H.center(st,id)
  local screen,b=resident(st,id);if not b then return nil end
- local x,y,h=Native.healthboxGeometry(screen,Coords.idOf(id));if not x then return nil end
- return{x=x+32,y=y+math.floor(h/2),x+32,y+math.floor(h/2)}
+ local x,y=Native.healthboxGeometry(screen,Coords.idOf(id));if not x then return nil end
+ return{x=x+32,y=y+16,x+32,y+16}
 end
 local function paint(screen,b,id,opts)
  local x,y=Native.healthboxGeometry(screen,id);if not x then return false end

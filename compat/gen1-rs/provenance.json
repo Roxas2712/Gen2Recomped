@@ -178,7 +178,8 @@
     "src/import/gba/syms/emerald_funcs.lua": "4b23ba57b5b15a5c26a1092da1faecc1641437bb5023f8c074f9a856b8d83489",
     "src/core/game3/constants/emerald/songs.lua": "5fb535fd59a0e946984dc1af7c35dc1736ba88bc6c098cb69ec784b8c481b39b",
     "src/core/game3/constants/emerald/species.lua": "a7f709c63ffdc834960333e326aa786e304b18fef77403bb56549a813452d2e2",
-    "src/ui/game3/rs/main_menu.lua": "2d10e0f97fd8ea9093db229d5e8d37b588158ad528884fafcb6334a049c34d2b"
+    "src/ui/game3/rs/main_menu.lua": "2d10e0f97fd8ea9093db229d5e8d37b588158ad528884fafcb6334a049c34d2b",
+    "src/core/game3/battle/healthbox.lua": "0aa674fbfe87065289d8a915b847969349012bdebd86873e433ae314d3e129bb"
   },
-  "scope": "Exact read-only RS boot, Birch/naming/font, bag, summary, party, map and Wally controller reference; independent host adapters; no launcher, ROMs, saves or generated assets; native RS PokeNav controllers, extraction and markings reference; native RS PC storage reference controllers, chrome, extraction, release and policy; native RS cable-car art extraction, tile layers, ride controller and actor IDs; exact Emerald boot/title, intro scenery and extractors with edition-specific symbols, song/species enums and intro animation names"
+  "scope": "Exact read-only RS boot, Birch/naming/font, bag, summary, party, map and Wally controller reference; independent host adapters; no launcher, ROMs, saves or generated assets; native RS PokeNav controllers, extraction and markings reference; native RS PC storage reference controllers, chrome, extraction, release and policy; native RS cable-car art extraction, tile layers, ride controller and actor IDs; exact Emerald boot/title, intro scenery and extractors with edition-specific symbols, song/species enums and intro animation names; exact healthbox reference for native rendering comparison"
 }

@@ -914,7 +914,9 @@ end
 local function drawStatusPanelBody(battle, battler, x, y, player)
   local record = hudRecord(battle)
   local images = record and record.images or {}
-  local panel = hudImage(player and images.player or images.opponent)
+  local compact=battle.isDouble and battle:isDouble()
+  local key=player and'player'or'opponent'
+  local panel = hudImage(compact and images[key..'Doubles']or images[key])
 
   if not panel then
     -- NO CARTRIDGE PANEL: a cache imported before the stage existed.  The old
@@ -936,6 +938,10 @@ local function drawStatusPanelBody(battle, battler, x, y, player)
   love.graphics.setColor(1, 1, 1, 1)
   love.graphics.draw(panel, x, y)
   if not player then drawCaughtMarker(battle, battler, x, y) end
+
+  if battle.rsBattlePanel and require('src.battle.Gen3RsHealthbox').draw(
+      battle, battler, x, y, player, battle.rsBattlePanel.font,
+      {hp=shownHP(battler)}) then return end
 
   -- THE SMALL FACE, which is what the cartridge sets a healthbox in.
   --
@@ -1420,8 +1426,10 @@ end
 -- are worth nothing -- which is the rule the rest of this layout already
 -- follows for the platforms.
 Gen3Battle.HUD_PLACE_FALLBACK = {
-  opponent = { x = 8, y = 8, height = 32 },
-  player = { x = 112, y = 64, height = 32 },
+  -- Shared native single-battle OAM centres (44,30)/(158,88), with the
+  -- original 64x32 centre-to-corner vector. RS has no Emerald coord table.
+  opponent = { x = 12, y = 14, height = 32 },
+  player = { x = 126, y = 72, height = 64 },
 }
 
 -- ...and where they go once it has been.  `constants` is the dataset's, so
@@ -1449,7 +1457,9 @@ function Gen3Battle.hudPlace(constants, which, height, extra)
   if not pos then return fb.x + d, fb.y end
   -- pos1 is the sprite's CENTRE and a healthbox is two 64-wide sprites side
   -- by side, so the panel's corner is pos1 minus half of the FIRST one
-  return pos.x - 32 + d, pos.y - math.floor((height or fb.height) / 2)
+  -- The original 64x32 OAM object's centre-to-corner vector survives the
+  -- player's extension to 64x64. The extra rows extend below its origin.
+  return pos.x - 32 + d, pos.y - 16
 end
 
 local function healthboxAt(battle, key, panel, fx, fy)
@@ -1468,7 +1478,7 @@ function Gen3Battle.healthboxGeometry(battle,id)
   local player=id%2==0
   local record=hudRecord(battle);local images=record and record.images or{}
   local key=player and 'player' or 'opponent'
-  if id>=2 then key=key..'Doubles' end
+  if battle:isDouble()or id>=2 then key=key..'Doubles' end
   local image=hudImage(images[key]or images[player and 'player'or'opponent'])
   local h=image and image:getHeight()or 32
   if battle:isDouble()then
@@ -1476,7 +1486,7 @@ function Gen3Battle.healthboxGeometry(battle,id)
     local c=battle.data.constants.gen3BattlerCoords
     local pos=c and c.healthbox and c.healthbox[keys[id]]
     if not pos then return nil,'native double healthbox placement unavailable'end
-    return pos.x-32+(player and Gen3Battle.extra(battle)or 0),pos.y-math.floor(h/2),h
+    return pos.x-32+(player and Gen3Battle.extra(battle)or 0),pos.y-16,h
   end
   if id>=2 then return nil,'absent single-battle slot'end
   local x,y=healthboxAt(battle,player and 'singlesPlayer'or'singlesOpponent',image)
@@ -1514,10 +1524,10 @@ local function drawHUDs(battle, slide)
   -- two.
   if showStatus and double and slide == 0 then
     local pairs_ = {
-      { pos = 0, key = "playerLeft",    img = images.player,        player = true },
+      { pos = 0, key = "playerLeft",    img = images.playerDoubles or images.player, player = true },
       { pos = 2, key = "playerRight",   img = images.playerDoubles
                                               or images.player,     player = true },
-      { pos = 1, key = "opponentLeft",  img = images.opponent,      player = false },
+      { pos = 1, key = "opponentLeft",  img = images.opponentDoubles or images.opponent, player = false },
       { pos = 3, key = "opponentRight", img = images.opponentDoubles
                                               or images.opponent,   player = false },
     }
@@ -1584,7 +1594,7 @@ local function drawHUDs(battle, slide)
           -- ride the right edge; opponentLeft and opponentRight are the
           -- left-hand pair (44 and 32) and stay put.
           local edge = row.player and Gen3Battle.extra(battle) or 0
-          local px, py = pos.x - 32 + edge, pos.y - math.floor(h / 2)
+          local px, py = pos.x - 32 + edge, pos.y - 16
           drawStatusPanel(battle, b, px, py, row.player)
           if b == aimed and math.floor((battle.frame or 0) / 8) % 2 == 0 then
             love.graphics.setColor(1, 1, 0.3, 1)
