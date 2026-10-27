@@ -46,4 +46,7 @@ function Q.label(battle)
  local id=Q.selected(battle);local row=id and battle.data.items[id]
  return row and row.name
 end
+function Q.prompt(battle)
+ local label=Q.label(battle);return label and(label..'\nL: NEXT R: THROW')or nil
+end
 return Q
