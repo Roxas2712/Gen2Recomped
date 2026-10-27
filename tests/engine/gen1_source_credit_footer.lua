@@ -2,6 +2,8 @@
 package.path='./?.lua;./?/init.lua;'..package.path
 local T=require('tests.modkit')
 local run=T.sdk.loadNone({data=T.fixtures.fresh(),fs=T.sdk.memfs({})})
+love.system=love.system or {}
+love.system.getOS=function()return 'Unknown'end
 local Importer=require('src.import.RomImporter')
 local g=love.graphics
 local dimensions,printf,setFont=g.getDimensions,g.printf,g.setFont
