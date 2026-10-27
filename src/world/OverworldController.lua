@@ -18906,7 +18906,7 @@ local function drawWorldBody(self, cadenceConsumed)
   -- static graphic (engine/overworld/spinners.asm LoadSpinnerArrowTiles)
   TR.setSpinning(self.player.spinning)
   local cam = self.camera
-  local overlay=Game.stack:top()
+  local overlay=Game.stack and Game.stack:top()
   if overlay and type(overlay.worldCamera)=='function'then
     local x,y=overlay:worldCamera(self)
     if type(x)=='number'and type(y)=='number'then
