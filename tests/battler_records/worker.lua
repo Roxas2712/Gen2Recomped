@@ -10,7 +10,18 @@ local function native(who)return who.mon or who end
 local profiles={'read','unnamed','flat HP','nested HP','flat stat','nested stat','flat PP','nested PP','flat moves replacement','detached stats','flat clear status','nested clear status','conflicting HP aliases','outer snapshot','outer nested post','outer flat post','outer error','faint target'}
 for _,profile in ipairs(profiles)do
  local f=dofile(root..'/tests/charge_required/fixture.lua').new(root,backend,edition,3,'unified',false,false,
-  'portable_enemy_action',function(data,gen)if backend=='gen2'and gen==3 then data.constants.generation=3 end end,
+  'portable_enemy_action',function(data,gen,_,rom)
+   if gen==3 then
+    if backend=='gen2'then
+     data.constants.generation=3
+     local move=assert(data.moves.MOVE_033)
+     assert(move.index==33 and move.effect=='NO_ADDITIONAL_EFFECT','native Tackle fixture identity')
+     -- Match the native script metadata already present in the reference
+     -- ROM fixture. An untagged authored row does not select this opcode.
+     move.gen3Effect,move.secondaryChance,move.target,move.flags=0,0,0,51
+    else assert(rom[33].effect==0 and rom[33].secondaryChance==0,'reference native Tackle metadata')end
+   end
+  end,
   function(files)
    local J=require('src.link.Json');local path='mods/portable_enemy_action/manifest.json';local m=J.decode(files[path]);m.games={'gen1','gen2','gen3'};files[path]=J.encode(m)
    files['mods/portable_enemy_action/main.lua']='return function(mod)mod.exports.api=mod end'

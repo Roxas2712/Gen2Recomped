@@ -69,7 +69,9 @@ QA helper can be selected with `--qa-tools-root` and `--qa-project-root`.
 The standard matrix has 24 isolated workers and 216 paired cases: Red, Gold
 and all five GBA editions, including actual right-hand GBA doubles. A false
 `native_math_equal` or `gba_full_raw_rng_equal` remains visible independently
-of callback success. The retained Red/Gold calculation differences and the
-nonzero/dynamic R/S chance payloads still require native-owner work. The
-calculation/adjustment comparison now requires full raw RNG equality for its
-fixture families; its former trailing-draw exception has been removed.
+of callback success. Native GBA fixtures include the same numeric effect
+metadata on both hosts, including Tackle's zero-effect script. Every GBA raw
+RNG call must match; the former R/S trailing-draw exception is removed from
+both this comparison and the calculation/adjustment comparison. Retained
+Red/Gold calculation differences and nonzero/dynamic R/S chance payloads
+still require separate native-owner work.

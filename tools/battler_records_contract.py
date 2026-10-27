@@ -55,7 +55,7 @@ report = dict(status='running', source=source.decode().strip(), reference_source
               scope='API3 field/alias reads, authored native writes, chained snapshots, failure ownership and '
                     'detached real faint notifications. GBA calculation/HP are also required to match. '
                     'GB/Gold calculation differences are retained separately, not asserted as battle parity. '
-                    'GBA raw RNG is checked independently; only one exactly trailing R/S chance draw is admitted. '
+                    'GBA native fixture metadata and every raw RNG call must match; no missing or trailing draw is admitted. '
                     'No complete native battle, import, whole-mod or gameplay acceptance is claimed.')
 
 def save():
@@ -114,10 +114,7 @@ for edition in a.edition or EDITIONS:
                     pair['native_math_mismatches'].append(left['profile'])
                 if not same(left['rng'], right['rng']):
                     pair['raw_rng_differences'].append(left['profile'])
-                    trailing = (edition in ('ruby', 'sapphire') and len(left['rng']) == len(right['rng']) + 1
-                                and same(left['rng'][:-1], right['rng'])
-                                and same(left['rng'][-1], {'lo': 0, 'hi': 99, 'value': 0}))
-                    if edition in GBA and not trailing:
+                    if edition in GBA:
                         pair['unclassified_gba_rng'].append(left['profile'])
             pair['passed'] = (not pair['callback_mismatches'] and not pair['unclassified_gba_rng']
                               and (edition not in GBA or not pair['native_math_mismatches']))
