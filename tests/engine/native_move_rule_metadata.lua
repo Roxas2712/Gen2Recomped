@@ -39,13 +39,17 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  chance[0]=1;T.eq(Rules.crit.CHANCE[0],16,'returned rule rows are detached')
  T.raises(function()Rules.crit.CHANCE={}end,'read-only')
  local battle=f.fresh('TACKLE').battle
+ -- The older public calculation owns a one-based RNG and legacy stage inputs;
+ -- the current native command owns physical items and a zero-based draw.
+ local modern=debug.getinfo(Damage.critRoll,'u').nparams>=8
  for stage=0,4 do
   local user=battle.player;user.focusEnergy=stage>=2
-  user.item=(stage==1 or stage==3 or stage==4)and 198 or 0
+  local extra=(stage==1 or stage==3 or stage==4)and 1 or 0
+  user.item=modern and extra*198 or 0;user.critStage=modern and 0 or extra
   local high=stage==4;local calls=0;local lo,hi
-  local function rng(a,b)calls=calls+1;lo,hi=a,b;return 0 end
+  local function rng(a,b)calls=calls+1;lo,hi=a,b;return a end
   T.eq(Damage.critRoll({critStages=true},user,key,rng,high,battle.data,battle),true)
-  T.eq(calls,1);T.eq(lo,0);T.eq(hi,Rules.crit.CHANCE[stage]-1,'metadata matches native RNG denominator')
+  T.eq(calls,1);T.eq(lo,modern and 0 or 1);T.eq(hi-lo+1,Rules.crit.CHANCE[stage],'metadata matches native RNG denominator')
  end
  f.close()
 end
