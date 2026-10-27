@@ -3,6 +3,21 @@
 local Names = require("src.compat.gen1.MapNames")
 local Identity = {}
 local indexes = {}
+-- Reuse only the private native slot index. Each bind still returns its own
+-- mutable methods, and every call checks current keys and identity fields.
+-- Weak values avoid retaining a released data set through its definitions.
+local nativeIndexes = setmetatable({}, {__mode='kv'})
+local function unchanged(snapshot, maps, edition)
+  if not snapshot or snapshot.edition~=edition then return false end
+  local count=0
+  for key,def in pairs(maps)do
+    local row=snapshot.rows[key]
+    if not row or row.value~=def then return false end
+    if type(def)=='table'and(row.group~=def.group or row.number~=def.number or row.id~=def.id)then return false end
+    count=count+1
+  end
+  return count==snapshot.count
+end
 
 local function uint(n)
   return type(n) == "number" and n >= 0 and n <= 255 and n % 1 == 0
@@ -46,19 +61,26 @@ end
 function Identity.bind(maps, edition)
   assert(type(maps) == "table", "map identity binding needs data.maps")
   assert(index(edition), "unsupported Gen1 map edition")
-  local native, ambiguous = {}, {}
-  for key, def in pairs(maps) do
-    local s = type(def) == "table" and slot(def.group, def.number)
-    if s and type(key) == "string" then
-      local prior = native[s]
-      if prior and prior.def ~= def then ambiguous[s] = true
-      elseif not prior or key == def.id then native[s] = { key = key, def = def } end
+  local snapshot=nativeIndexes[maps]
+  if not unchanged(snapshot,maps,edition)then
+    snapshot={edition=edition,rows={},count=0,native={},ambiguous={}}
+    for key,def in pairs(maps)do
+      local row={value=def}
+      if type(def)=='table'then row.group,row.number,row.id=def.group,def.number,def.id end
+      snapshot.rows[key]=row;snapshot.count=snapshot.count+1
+      local s=type(def)=='table'and slot(def.group,def.number)
+      if s and type(key)=='string'then
+        local prior=snapshot.native[s]
+        if prior and prior.def~=def then snapshot.ambiguous[s]=true
+        elseif not prior or key==def.id then snapshot.native[s]={key=key,def=def}end
+      end
     end
+    nativeIndexes[maps]=snapshot
   end
   local function record(g, n)
     local s = slot(g, n)
-    if ambiguous[s] then return nil, "ambiguous native map slot" end
-    local row = native[s]
+    if snapshot.ambiguous[s] then return nil, "ambiguous native map slot" end
+    local row = snapshot.native[s]
     if not row then return nil, "native map unavailable" end
     local def = row.def
     if maps[row.key] ~= def or def.group ~= g or def.number ~= n then
