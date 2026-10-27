@@ -64,6 +64,7 @@ on:
       - 'tests/held_item/**'
       - 'tests/charge_required/**'
       - 'tools/enemy-action-contract-check/**'
+      - 'tools/qa_report_storage.py'
   push:
     branches: [main, dev]
 permissions:
@@ -126,6 +127,6 @@ jobs:
         with:
           name: enemy-action-contract-report
           path: |
-            ${{ runner.temp }}/enemy-action-report.json
+            ${{ runner.temp }}/enemy-action-report.json*
             ${{ runner.temp }}/game-audio-session-*.log
           if-no-files-found: error
