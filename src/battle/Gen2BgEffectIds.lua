@@ -1,3 +1,5 @@
+-- Gen1Recomp-derived code: GPLv3 plus Additional Terms; see
+-- compat/gen1-gsc/LICENSE.MD and provenance.json. Existing rights retained.
 -- GSC BG-effect jump-table identifiers from Gen1Recomp's Gold/Silver/Crystal
 -- ROM manifests at535a5ec0, constants.battleBgEffectOrder. Numeric command
 -- arguments retain the cartridge's order; no program or frame is synthesized.

@@ -1,3 +1,5 @@
+-- Gen1Recomp-derived code: GPLv3 plus Additional Terms; see
+-- compat/gen1-gsc/LICENSE.MD and provenance.json. Existing rights retained.
 -- GSC byte arithmetic and sine from Gen1Recomp's AnimObjects/SpriteAnims at
 -- 535a5ec0. Existing source rights/licences remain under NOTICE.md.
 -- This is arithmetic only; the native VM still owns its objects and clock.

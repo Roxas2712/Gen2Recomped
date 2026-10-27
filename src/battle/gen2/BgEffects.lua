@@ -1,6 +1,8 @@
+-- Gen1Recomp-derived code: GPLv3 plus Additional Terms; see
+-- compat/gen1-gsc/LICENSE.MD and provenance.json. Existing rights retained.
 -- Gen1Recomp source: src/battle/gen2/BgEffects.lua at535a5ec0.
 -- Its existing copyrights/licences remain effective (NOTICE.md).
--- Native dependency integration: Roxas2712, LICENSE-ROXAS2712.md.
+-- Native dependency integration: Roxas2712, under the same applicable terms.
 -- The Gen 2 battle-animation BACKGROUND effects.
 --
 -- pokegold engine/battle_anims/bg_effects.asm: five concurrent structs, each
