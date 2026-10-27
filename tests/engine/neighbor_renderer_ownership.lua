@@ -3,7 +3,6 @@ local T=require('tests.harness')
 love=require('tests.love_stub')
 local Version=require('src.core.GameVersion')
 local Loader=require('src.world.MapLoader')
-local Live=require('src.world.LiveMaps')
 local Pipelines=require('src.render.Pipelines')
 local Fixture=require('tests.world_draw.fixture')
 local old=Version.get()
@@ -33,7 +32,7 @@ for _,edition in ipairs({'red','gold','crystal','emerald','firered','platinum'})
   debug.setupvalue(Loader.cached,cacheSlot,{[native.id]=native})
   Pipelines.worldPipeline=function()if declines then return 'source_draw',{ }end end
   Pipelines.drawWorld=function()return nil end
-  T.eq(Live.nativeMap(neighbor,f.game.data),native,'loader retains native renderer ownership')
+  T.eq(Loader.forNeighbor(neighbor,f.game.data),native,'loader retains native renderer ownership')
   local ok,why=pcall(f.world.drawWorld,f.world)
   T.check(ok,edition..' native draw survives '..(declines and'pipeline decline'or'flat draw')..': '..tostring(why))
   T.eq(draws,1,'actual native ground pass draws the resident neighbor once')
@@ -44,9 +43,9 @@ for _,edition in ipairs({'red','gold','crystal','emerald','firered','platinum'})
   f.game.data.maps={[native.id]={id=native.id}}
   local reloads=0
   Loader.load=function(data,id)T.eq(data,f.game.data);T.eq(id,native.id);reloads=reloads+1;return native end
-  T.eq(Live.nativeMap(neighbor,f.game.data),native,'invalidated native renderer is resolved through its actual loader')
+  T.eq(Loader.forNeighbor(neighbor,f.game.data),native,'invalidated native renderer is resolved through its actual loader')
   T.eq(reloads,1,'missing native resource is rebuilt once through loader authority')
-  T.eq(Live.nativeMap({id='CUSTOM',map=view},f.game.data),view,'custom non-native neighbor keeps its own renderer')
+  T.eq(Loader.forNeighbor({id='CUSTOM',map=view},f.game.data),view,'custom non-native neighbor keeps its own renderer')
   Loader.load=load
  end
 end
