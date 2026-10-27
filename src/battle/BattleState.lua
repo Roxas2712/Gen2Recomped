@@ -3025,8 +3025,11 @@ function BattleState:updateQueue()
     return true
   end
   if not self.current then
-    if not self:advanceQueue() then return false end
-    if not self.current then return true end
+    -- Gen1 screen decorators may intentionally return no value. Admission
+    -- is observed through native queue/current state, never a new return ABI.
+    local hadEvent=self.queue[1]~=nil
+    self:advanceQueue()
+    if not self.current then return hadEvent end
   end
   local input = self.game.input
   -- a \v CONT wait holds the box until A/B, then scrolls the next line in
