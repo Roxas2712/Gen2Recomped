@@ -22,6 +22,7 @@ jobs:
           luajit tests/engine/gen2_battle_submenu.lua
           luajit tests/engine/gen2_battle_pack.lua
           luajit tests/engine/gen2_battle_scene.lua
+          luajit tests/engine/gen2_battle_window.lua
           luajit tests/engine/battle_queue_lifecycle.lua
       - name: Public snapshots, dispatch and deterministic continuation
         run: |

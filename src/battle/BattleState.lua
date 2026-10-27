@@ -13594,6 +13594,7 @@ end
 
 require('src.battle.Gen2MovePresentation').install(BattleState)
 require('src.battle.Gen2BattleScene').install(BattleState)
+require('src.battle.Gen2BattleWindow').install(BattleState)
 Gen2BattleView.install(BattleState, {
   load = getImage,
   palette = monPalette,
