@@ -1,0 +1,7 @@
+{
+  "id": "example_mew_starter",
+  "name": "API 1 Content Fixture",
+  "version": "1.0.0",
+  "entry": "main.lua",
+  "description": "Headless loader fixture with synthetic sprite pixels."
+}
