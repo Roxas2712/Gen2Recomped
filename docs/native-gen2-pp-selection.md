@@ -1,6 +1,6 @@
 # Native Gen2 PP selection and maximum
 
-The Gen2 party-target PP route uses the native `Gen2MoveDeleter` screen from
+The Gen2 party-target ETHER, MAX ETHER, MYSTERYBERRY and PP UP route uses the native `Gen2MoveDeleter` screen from
 Gen1Recomp 535a5ec0. It retains the actual party mon and moves. The ordinary
 PP cursor stops at both ends; the native forget layout wraps. Only the
 caller's normal choose/cancel continuation controls stack lifetime. The

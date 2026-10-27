@@ -835,6 +835,7 @@ local function pickTargetAndUse(game, battle, id, list, options)
   local def = game.data.items[id]
   local key = ItemEffects.alias(id, def)
   local wantsMove = key == "ETHER" or key == "MAX_ETHER" or key == "PP_UP"
+    or (key == "MYSTERYBERRY" and require("src.core.GameVersion").isGen2())
     or (key == "PP_MAX" and require("src.core.GameVersion").isGen3())
   local opts = {
     pickOnly = true,

@@ -75,6 +75,10 @@ for _,version in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
  T.eq(result,'consumed','actual ETHER restores a partially depleted native move')
  T.eq(mon.moves[1].pp,61,'actual ETHER caps restoration at61 instead of64')
  T.eq(Effects.use(data,game.save,'ETHER',mon,nil,1),'failed','full native61PP refuses another ETHER')
+ mon.moves[1].pp=58
+ T.eq(Effects.use(data,game.save,'MYSTERYBERRY',mon,nil,1),'consumed','actual MysteryBerry restores the chosen native move')
+ T.eq(mon.moves[1].pp,61,'MysteryBerry also clamps at the native61PP maximum')
+ T.eq(mon.moves[2].pp,0,'single-move PP item cannot restore another slot')
  mon.moves[1].pp=0
  T.eq(Effects.use(data,game.save,'MAX_ETHER',mon,nil,1),'consumed','actual MAX ETHER restores the selected move')
  T.eq(mon.moves[1].pp,61,'actual MAX ETHER uses the same native maximum')
