@@ -190,12 +190,10 @@ end
 function closeEditor()
   local version = editorVersion
   editorMode = false
-  if EditorApp and EditorApp.unload then EditorApp.unload() end
+  require("src.core.SessionLifecycle").endEditorSession({
+    app = EditorApp, version = version,
+  })
   EditorApp = nil
-  if version then
-    require("src.import.CacheFs").unmountVersion(version)
-    require("src.core.Data"):unloadGenerated()
-  end
   editorVersion = nil
   restoreWindow()
   Importer = editorHost
@@ -1303,21 +1301,7 @@ function love.quit()
   -- background workers idle in a loop that only a "quit" command breaks, so
   -- without this the process outlived the window and the next launch re-entered
   -- the dead one instead of starting fresh (#339)
-  if package.loaded["src.core.ChipAudio"] then
-    pcall(package.loaded["src.core.ChipAudio"].shutdown)
-  end
-  if package.loaded["src.update.Check"] then
-    pcall(package.loaded["src.update.Check"].shutdown)
-  end
-  if package.loaded["src.render.ShaderBrowser"] then
-    pcall(package.loaded["src.render.ShaderBrowser"].shutdown)
-  end
-  if package.loaded["src.translation.Service"] then
-    pcall(package.loaded["src.translation.Service"].shutdown)
-  end
-  if package.loaded["src.net.Fetch"] then
-    pcall(package.loaded["src.net.Fetch"].shutdown)
-  end
+  require("src.core.SessionLifecycle").endProcess()
 end
 
 function love.filedropped(file)
