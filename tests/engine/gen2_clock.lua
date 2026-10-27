@@ -7,10 +7,13 @@ local Clock = require('src.core.gen2.Clock')
 local P = require('src.render.PaletteFX');local W = require('src.world.OverworldController')
 require('src.script.Gen2Commands');local Commands = require('src.script.Commands');local Loader = require('src.mods.Loader')
 local Json = require('src.link.Json');local Save = require('src.core.SaveData')
-local date,time = os.date,os.time;local elapsed=0;local baseTime=time()
+local date,time = os.date,os.time;local elapsed=0
+-- Exercise elapsed midnight on every host; never mix virtual and wall dates.
+local baseTime=time({year=2026,month=10,day=26,hour=23,min=55,sec=0})
 os.time=function(value)if value then return time(value)end;return baseTime+elapsed end
 local host = { hour=13, minute=20, day=2 }
 os.date = function(format, now)
+ now=now or os.time()
  if now and now~=os.time() then return date(format,now) end
  if format=='%H' then return tostring(host.hour) end
  if format=='%M' then return tostring(host.minute) end
