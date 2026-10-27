@@ -111,7 +111,7 @@ function M.install(RI)
         local mon=entry.mon
         row((mon.nickname or tostring(mon.species))..' · Lv. '..mon.level,
           Versions.info(entry.source.version).label..' / '..tostring(entry.source.slot)..' / '..tostring(entry.source.place),
-          f.selected[entry.id] and '✓ SELECTED' or 'SELECT','select',{id=entry.id})
+          f.selected[entry.id] and '[x] SELECTED' or 'SELECT','select',{id=entry.id})
       end)
     elseif f.step=='source' or f.step=='target' then
       text(f.step=='source' and 'Choose the source save. No Pokémon will be removed.' or 'Choose a base save. Your copies will appear in a new save slot.')
@@ -120,7 +120,7 @@ function M.install(RI)
     elseif f.step=='sourceMons' then
       local n=0;for _,chosen in pairs(f.chosen) do if chosen then n=n+1 end end
       if n>0 then row('Keep '..n..' copies in the Bank','Your source save remains unchanged.','COPY TO BANK','deposit') end
-      page(f.mons,function(r,i) row((r.mon.nickname or tostring(r.mon.species))..' · Lv. '..r.mon.level,r.place,f.chosen[i] and '✓ SELECTED' or 'SELECT','mon',{index=i}) end)
+      page(f.mons,function(r,i) row((r.mon.nickname or tostring(r.mon.species))..' · Lv. '..r.mon.level,r.place,f.chosen[i] and '[x] SELECTED' or 'SELECT','mon',{index=i}) end)
     elseif f.step=='confirm' then
       local entries=selected(f);local blocked=false;local adaptation=false
       text('Destination: '..Versions.info(f.target.version).label..' / '..f.target.slot..'. Copies go into empty PC slots in a NEW save.')
@@ -131,7 +131,7 @@ function M.install(RI)
       end
       if adaptation then
         text('Generation adaptation changes IV/DV and training values and assigns destination nature/ability. Gender and shininess may change. The Bank retains the exact original.',p.warning)
-        row('Allow generation adaptation','Required for different stat models.',f.adapt and '✓ ALLOWED' or 'OFF','adapt')
+        row('Allow generation adaptation','Required for different stat models.',f.adapt and '[x] ALLOWED' or 'OFF','adapt')
       end
       if not blocked and (not adaptation or f.adapt) then row('Create new save with '..#entries..' copies','Source, base save and Bank entries are preserved.','CREATE COPY','deliver') end
     end

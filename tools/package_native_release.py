@@ -9,10 +9,10 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import urllib.request
 from pathlib import Path
 
 from build_native_preview import RUNTIMES, RUNTIME_COMMIT, verify_payload
+from fetch_love_runtime import fetch_runtime
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -56,9 +56,7 @@ def main():
         work = Path(temporary)
         for platform, runtime in RUNTIMES.items():
             archive = work / (platform + '-runtime.zip')
-            url = 'https://nightly.link/love2d/love/actions/artifacts/' + str(runtime['id']) + '.zip'
-            with urllib.request.urlopen(url, timeout=120) as response, archive.open('wb') as target:
-                shutil.copyfileobj(response, target)
+            fetch_runtime(runtime['id'], archive)
             if digest(archive) != runtime['sha256']:
                 raise ValueError('Official runtime digest mismatch: ' + platform)
             package = work / platform

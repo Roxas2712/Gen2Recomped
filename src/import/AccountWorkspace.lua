@@ -1,4 +1,6 @@
+local function L(value) return require('src.translation.Service').launcherLookup(value) end
 local W={}
+local Role=require('src.ui.PlayerRole')
 local A=require('src.cloud.NativeAccount')
 local Auth=require('src.cloud.RetroCloud')
 local Task=require('src.cloud.Task')
@@ -6,7 +8,7 @@ local function inputMode(f,id)
   f.focus=id
   if love.keyboard and love.keyboard.setTextInput then love.keyboard.setTextInput(id~=nil) end
 end
-local function clearSecrets(f) f.password='';f.confirmation='';f.code='';f.giftCode='';f.rolePassword='';f.createdGift=nil end
+local function clearSecrets(f) f.moderationPassword='';f.password='';f.confirmation='';f.code='';f.giftCode='';f.rolePassword='';f.createdGift=nil end
 local function job(self,purpose,fn)
   local f=self._accountOverlay;if f.job then return end
   local task,why=Task.new(fn);f.job=task;f.purpose=purpose
@@ -14,7 +16,7 @@ local function job(self,purpose,fn)
   inputMode(f,nil)
 end
 local function friends()
- local doc,why=A.friends()
+ local doc,why=require('src.cloud.Play').request('POST','presence',{available=false})
  if doc and A.request then local prefs=A.request('GET','/play/preferences',nil,true);doc.playPreferences=prefs and prefs.preferences end
  return doc,why
 end
@@ -22,6 +24,7 @@ local function devices()
   local doc,why=A.devices()
   if doc and A.profile then doc.profile,doc.profileError=A.profile() end
   if doc and A.friends then doc.social,doc.socialError=friends() end
+  if doc and A.presence then doc.presence=A.presence() end
   return doc,why
 end
 local function avatarImage(bytes)
@@ -41,7 +44,7 @@ function W.avatarBytes(self,bytes)
   return true
 end
 local function profile(self,doc)
-  local f=self._accountOverlay;f.profile=doc;f.nickname=doc.name;f.friendTag=doc.friend_tag;f.profileName=doc.name;f.avatarBytes=nil;f.avatarRights=false;f.avatarImage=nil
+  local f=self._accountOverlay;f.profile=doc;f.displayRole=doc.display_role;f.nickname=doc.name;f.friendTag=doc.friend_tag;f.profileName=doc.name;f.avatarBytes=nil;f.avatarRights=false;f.avatarImage=nil
   f.avatarPreset=doc.avatar_preset;f.avatarColor=doc.avatar_color;f.resetAvatar=false
   if type(doc.avatar)=='table' and type(doc.avatar.image_base64)=='string' then
     local ok,bytes=pcall(love.data.decode,'string','base64',doc.avatar.image_base64)
@@ -50,16 +53,19 @@ local function profile(self,doc)
       if digest==doc.avatar.sha256 then f.avatarImage=avatarImage(bytes) end
     end
   end
+  require('src.cloud.AccountBadge').accept(doc,f.avatarImage)
 end
 function W.open(self,after)
   if self._developerOverlay then require('src.import.DeveloperWorkspace').close(self) end
   local choice=type(after)=='table' and after.storagePrompt and not (Auth.accountId and Auth.accountId())
   self._accountOverlay={mode=choice and 'storage_choice' or Auth.signedIn() and 'account' or 'login',after=after,email='',name='',password='',confirmation='',code='',repositories={''},restore=true,rects={},scroll=0,accountAtOpen=Auth.accountId and Auth.accountId()}
   if choice then return end
+  local cached,image=require('src.cloud.AccountBadge').read()
+  if cached then local f=self._accountOverlay;f.nickname=cached.name;f.friendTag=cached.friend_tag;f.displayRole=cached.display_role;f.avatarPreset=cached.avatar_preset;f.avatarColor=cached.avatar_color;f.avatarImage=image end
   job(self,Auth.signedIn() and 'devices' or 'policy',Auth.signedIn() and devices or A.policy)
 end
 function W.close(self)
-  local f=self._accountOverlay;if f then if f.job then f.job:cancel() end;clearSecrets(f);f.challenge=nil;inputMode(f,nil) end
+  local f=self._accountOverlay;if f then require('src.ui.FriendChat').clear(f);if f.job then f.job:cancel() end;clearSecrets(f);f.challenge=nil;inputMode(f,nil) end
   self._accountOverlay=nil
 end
 local function connected(self,f)
@@ -91,6 +97,8 @@ function W.action(self,id)
   end
   if id=='close' then W.close(self);return end
   if id=='back' and f.document then f.document=nil;f.scroll=0;return end
+  if require('src.ui.FriendChat').action(f,id)then f.mode=f.chat and'friendChat'or'friends';f.scroll=0;return end
+  if f.chat then require('src.ui.FriendChat').clear(f)end
   if f.job then return end
   if id:match('^field:') then inputMode(f,id:sub(7));return end
   inputMode(f,nil)
@@ -135,7 +143,7 @@ function W.action(self,id)
     if f.avatarBytes then payload.image_base64=love.data.encode('string','base64',f.avatarBytes);payload.avatar_rights=true end
     job(self,'profile',function() return A.profile(payload) end)
   elseif id=='resetAvatar' then job(self,'profile',function() return A.profile({reset_avatar=true}) end)
-  elseif id=='profileEdit' or id=='accountSettings' then f.mode=id;f.scroll=0;f.notice=nil
+  elseif id=='profileEdit' or id=='accountSettings' or id=='transferGuide' then f.mode=id;f.scroll=0;f.notice=nil
   elseif id=='copyFriendTag' and f.friendTag and love.system.setClipboardText then love.system.setClipboardText(f.friendTag);f.notice='Friend tag copied.'
   elseif id:match('^avatarPreset:') then f.avatarPreset=id:sub(14);f.avatarImage=nil;f.avatarBytes=nil;f.avatarRights=false;f.resetAvatar=true
   elseif id=='avatarColor' then
@@ -174,15 +182,40 @@ function W.action(self,id)
   elseif id:match('^giftActive:') then
     local campaign=f.gifts and f.gifts.campaigns[tonumber(id:match(':(%d+)$'))]
     if campaign then job(self,'giftActive',function() return A.activateGift(campaign.id,not campaign.active) end) end
+  elseif id=='roleGuide' then f.mode='roleGuide';f.scroll=0;f.notice=nil
+  elseif id=='presenceToggle' then
+    local visible=not (require('src.cloud.AccountBadge').presence or {}).visible
+    job(self,'presence',function()return A.presence({visible=visible})end)
+  elseif id=='players' or id=='playersNext' or id=='playersPrevious' or id=='playersSearch' or id=='playersOnline' then
+    f.mode='players';f.scroll=0
+    if id=='playersOnline' then f.playersOnline=not f.playersOnline end
+    f.playersPage=math.max(1,(id=='playersSearch' and 1 or f.playersPage or 1)+(id=='playersNext' and 1 or id=='playersPrevious' and -1 or 0))
+    local page,query,online=f.playersPage,f.playersQuery or '',f.playersOnline
+    job(self,'players',function()return A.players(page,query,online)end)
+  elseif id:match('^playerFriend:') then
+    local at=tonumber(id:match(':(%d+)$'));local peer=f.players and f.players.players[at]
+    if peer then local tag=peer.friend_tag;job(self,'playerFriend',function()return A.addFriend(tag)end)end
+  elseif id:match('^playerManage:') then
+    local at=tonumber(id:match(':(%d+)$'));local peer=f.players and f.players.players[at]
+    if peer then local key=peer.account_id;f.player=nil;f.mode='playerManage';f.scroll=0;job(self,'player',function()return A.player(key)end)end
+  elseif id=='playerRoles' and f.player then f.roleTarget=f.player.friend_tag;f.mode='roles';f.scroll=0;f.roleChoice='retro_admin';f.roleReason='';f.rolePassword=''
+  elseif id:match('^moderate:') then f.moderationAction=id:sub(10);f.moderationReason='';f.moderationPassword='';f.mode='moderate';f.scroll=0
+  elseif id=='moderationCancel' then f.moderationPassword='';f.moderationReason='';f.moderationAction=nil;f.mode='playerManage';f.scroll=0
+  elseif id=='moderationConfirm' and f.player and f.moderationAction then
+    if #(f.moderationReason or '')<15 then f.notice='Explain the reason in at least 15 characters.';return end
+    local id=f.player.account_id;local payload={action=f.moderationAction,password=f.moderationPassword,reason=f.moderationReason,confirmed=true};f.moderationPassword=''
+    job(self,'moderation',function()return A.player(id,payload)end)
+  elseif id=='inbox' then f.mode='inbox';f.scroll=0;job(self,'friends',friends)
   elseif id=='friends' then f.mode='friends';f.scroll=0;job(self,'friends',friends)
-  elseif id=='allPlayRequests' or id=='allPlayVisibility' or id:match('^playPref:') then
+  elseif id=='allPlayRequests' or id=='allPlayVisibility' or id=='allPlayChat' or id:match('^playPref:') then
     local doc=f.social or {};local prefs=doc.playPreferences or {};local payload
     if id=='allPlayRequests' then payload={requests_enabled=prefs.requests_enabled==false}
+    elseif id=='allPlayChat'then payload={chat_enabled=prefs.chat_enabled==false}
     elseif id=='allPlayVisibility' then payload={visibility_enabled=prefs.visibility_enabled==false}
     else
       local key,peer=id:match('^playPref:(%a+):(%d+)$');local current={}
       for _,v in ipairs(prefs.friends or {}) do if tostring(v.account_id)==peer then current=v;break end end
-      local field=key=='visible' and 'visible' or 'requests_enabled';payload={friend_id=tonumber(peer),[field]=current[field]==false}
+      local field=key=='visible' and 'visible' or key=='chat'and'chat_enabled'or'requests_enabled';payload={friend_id=tonumber(peer),[field]=current[field]==false}
     end
     job(self,'playPreferences',function()return require('src.cloud.Play').request('PUT','preferences',payload)end)
   elseif id=='findFriend' then local tag=f.friendQuery or '';job(self,'findFriend',function() return A.findPlayer(tag) end)
@@ -197,6 +230,8 @@ function W.action(self,id)
   elseif id=='account' then f.mode='account';f.scroll=0;job(self,'devices',devices)
   elseif id=='devices' then job(self,'devices',devices)
   elseif id=='sync' then W.close(self);self:_storageSync()
+  elseif id=='restoreGames' then W.close(self);self:_storageSync(nil,nil,nil,'restore')
+  elseif id=='uploadGames' then W.close(self);self:_storageSync(nil,nil,nil,'games-upload')
   elseif id=='linkStorage' then
     if not f.storageConsent then f.notice='Confirm that these local saves and Bank should belong to this account first.';return end
     local ok,why=require('src.storage.AccountStorage').bind()
@@ -212,7 +247,12 @@ function W.action(self,id)
   end
 end
 function W.tick(self)
-  local f=self._accountOverlay;if not f or not f.job then return end
+  local f=self._accountOverlay;if not f then return end
+  require('src.ui.FriendChat').tick(f)
+  if not f.job and f.mode=='friends'and Auth.signedIn()and not f.focus and not f.composer and love.timer.getTime()>=(f.friendRefresh or 0)then
+    f.friendRefresh=love.timer.getTime()+5;job(self,'friends',friends)
+  end
+  if not f.job then return end
   local r=f.job:poll();if not r then return end
   local purpose=f.purpose;f.job=nil
   if r.kind~='done' or not r.first then f.notice=tostring(r.second or r.error or 'Account unavailable.');return end
@@ -226,14 +266,21 @@ function W.tick(self)
   elseif purpose=='profile' then profile(self,doc);f.notice='Profile saved for all your devices. Custom avatars stay private until their public review is complete.'
   elseif purpose=='findFriend' then f.foundFriend=doc;f.notice='Player found: '..tostring(doc.friend_tag)..'. Send a friend request to connect.'
   elseif purpose=='playPreferences' then f.social=f.social or {};f.social.playPreferences=doc.preferences;require('src.cloud.Play').refresh(true);f.notice='Friend privacy saved for all your devices.'
+  elseif purpose=='presence' then require('src.cloud.AccountBadge').acceptPresence(doc);f.notice='Online visibility saved for all your devices.'
+  elseif purpose=='players' then f.players=doc;f.notice=nil
+  elseif purpose=='player' then f.player=doc;f.notice=nil
+  elseif purpose=='playerFriend' then f.social=doc;require('src.cloud.Presence').accept(doc);f.notice='Friend request sent. The other player must accept it.';f.players=nil;W.action(self,'players')
+  elseif purpose=='moderation' then f.player=doc;f.mode='playerManage';f.scroll=0;f.moderationAction=nil;f.moderationReason='';f.notice='Moderation saved. The action is recorded in the audit log.'
   elseif purpose=='friends' then doc.playPreferences=doc.playPreferences or f.social and f.social.playPreferences;f.social=doc;require('src.cloud.Presence').accept(doc);f.notice=nil
   elseif purpose=='online' then f.online=doc;f.notice=nil
   elseif purpose=='policy' then f.policy=doc;f.notice=nil
   elseif purpose=='devices' then
     if not Auth.signedIn() then f.mode='login';f.devices=nil;f.profile=nil;f.avatarImage=nil;f.notice='This device was disconnected. Sign in again.';return end
+    if doc.presence then require('src.cloud.AccountBadge').acceptPresence(doc.presence) end
     f.devices=doc.devices;f.nickname=doc.name;f.permissions=doc.permissions;f.notice=doc.profileError
     if doc.profile then profile(self,doc.profile) end
     if doc.social then f.social=doc.social;require('src.cloud.Presence').accept(doc.social) end
+    if f.afterView then local view=f.afterView;f.afterView=nil;W.action(self,view);return end
     if f.after=='giftAdmin' then f.after=nil;W.action(self,'newGift');return end
     local storage=require('src.storage.AccountStorage')
     if Auth.accountId and Auth.accountId()~=f.accountAtOpen then storage.profileChanged(self);f.accountAtOpen=Auth.accountId() end
@@ -273,13 +320,13 @@ function W.draw(self)
   g.setColor(.015,.025,.05,.96);g.rectangle('fill',0,0,ww,hh)
   g.setColor(.06,.09,.14,1);g.rectangle('fill',x,y,width,height,14*s,14*s)
   local function text(value,tx,ty,w,big)
-    g.setFont(big and self.stateFont or self.hintFont);U.col(big and p.ink or p.detail);g.printf(value,tx,ty,w,'left')
+    g.setFont(big and self.stateFont or self.hintFont);U.col(big and p.ink or p.detail);g.printf(L(value),tx,ty,w,'left')
   end
   local function button(label,bx,by,bw,id)
     local r=self:_chipButton(bx,by,label,{w=bw,h=38*s,kind='accent'});r.id=id;f.rects[#f.rects+1]=r;return r
   end
-  text(f.mode=='giftAdmin' and 'RETRORECOMPED · PRIZE STUDIO' or 'RETRORECOMPED · MY PROFILE',x+24*s,y+20*s,width-150*s,true)
-  button('CLOSE',x+width-108*s,y+18*s,84*s,'close').pinned=true
+  text(f.mode=='giftAdmin' and 'RETRORECOMPED · PRIZE STUDIO' or 'RETRORECOMPED · MY PROFILE',x+24*s,y+20*s,width-180*s,true)
+  button('CLOSE',x+width-140*s,y+18*s,116*s,'close').pinned=true
   local social=require('src.cloud.Presence').read() or f.social or {}
   local tabs=Auth.signedIn() and not f.document
   if tabs then
@@ -291,10 +338,12 @@ function W.draw(self)
   local v={x=x+18*s,y=y+offset*s,width=width-36*s,height=height-(offset+18)*s};f.viewport=v
   local top=v.y-f.scroll
   local function paragraph(value,big)
+    value=L(value)
     local font=big and self.stateFont or self.hintFont;local _,lines=font:getWrap(value,width-48*s)
     text(value,x+24*s,top,width-48*s,big);top=top+math.max(1,#lines)*font:getHeight()+16*s
   end
   local function row(label,id)
+    label=L(label)
     local _,lines=self.hintFont:getWrap(label,width-72*s)
     local h=math.max(38*s,#lines*self.hintFont:getHeight()+20*s)
     local r=self:_chipButton(x+24*s,top,'',{w=width-48*s,h=h,kind='accent'});r.id=id;f.rects[#f.rects+1]=r
@@ -370,9 +419,15 @@ function W.draw(self)
         end
       end
     end
+  elseif f.mode=='friendChat'then
+    for _,r in ipairs(require('src.ui.FriendChat').rows(f))do
+      if r.id=='noop'then paragraph(r.label,true);if r.note then paragraph(r.note)end
+      else row(r.label,r.id);if r.note then paragraph(r.note)end end
+    end
   elseif f.mode=='friends' then
     paragraph('FRIENDS & REQUESTS',true)
     local prefs=(f.social or {}).playPreferences or {}
+    row('FRIEND CHAT · '..(prefs.chat_enabled==false and'OFF'or'ON'),'allPlayChat')
     row('INCOMING GAME INVITATIONS · '..(prefs.requests_enabled==false and 'OFF' or 'ON'),'allPlayRequests')
     row('MUTUAL MAP VISIBILITY · '..(prefs.visibility_enabled==false and 'OFF' or 'ON'),'allPlayVisibility')
     paragraph('Up to five accepted friends can appear as transient figures. They never change your adventure. Meetings need mutual confirmation.')
@@ -383,43 +438,116 @@ function W.draw(self)
     row('REFRESH FRIENDS','friends');row('MY ACCOUNT','account')
     local social=require('src.cloud.Presence').read() or f.social or {}
     local fresh=os.time()-(social._receivedAt or 0)<=120
-    paragraph('FRIENDS · '..#(social.friends or {}),true)
+    paragraph(L('FRIENDS')..' · '..#(social.friends or {}),true)
     for _,peer in ipairs(social.friends or {}) do
-      paragraph(tostring(peer.friend_tag or peer.nickname)..(not fresh and ' · STATUS UNAVAILABLE' or peer.online and ' · ONLINE' or ' · OFFLINE'))
+      paragraph(Role.label(peer.friend_tag or peer.nickname,peer)..(not fresh and ' · STATUS UNAVAILABLE' or peer.online and (peer.status=='away' and ' · AWAY' or ' · ONLINE') or ' · OFFLINE'))
       local pref={};for _,v in ipairs(prefs.friends or {}) do if tostring(v.account_id)==tostring(peer.account_id) then pref=v;break end end
       row('INVITATIONS FROM THIS FRIEND · '..(pref.requests_enabled==false and 'OFF' or 'ON'),'playPref:requests:'..peer.account_id)
       row('MAP VISIBILITY WITH THIS FRIEND · '..(pref.visible==false and 'OFF' or 'ON'),'playPref:visible:'..peer.account_id)
+      for _,device in ipairs(peer.playing or {})do local edition,zone=require('src.ui.FriendActivity').label(package.loaded['src.core.Game'],device);paragraph(edition..' · '..zone)end
+      row('CHAT WITH THIS FRIEND · '..(pref.chat_enabled==false and'OFF'or'ON'),'playPref:chat:'..peer.account_id)
+      row('CHAT','chat:'..peer.account_id)
       row('REMOVE FRIEND','friendRemove:'..peer.account_id)
     end
     if #(social.friends or {})==0 then paragraph('Your accepted friends appear here. Requests need the other player’s confirmation.') end
     paragraph('FRIEND REQUESTS · '..#(social.incoming or {}),true)
-    for _,peer in ipairs(social.incoming or {}) do paragraph(peer.nickname);row('ACCEPT REQUEST','friendAccept:'..peer.account_id);row('DECLINE REQUEST','friendRemove:'..peer.account_id) end
-    for _,peer in ipairs(social.outgoing or {}) do paragraph('WAITING · '..peer.nickname);row('CANCEL REQUEST','friendRemove:'..peer.account_id) end
+    for _,peer in ipairs(social.incoming or {}) do paragraph(Role.label(peer.nickname,peer));row('ACCEPT REQUEST','friendAccept:'..peer.account_id);row('DECLINE REQUEST','friendRemove:'..peer.account_id) end
+    for _,peer in ipairs(social.outgoing or {}) do paragraph('WAITING · '..Role.label(peer.nickname,peer));row('CANCEL REQUEST','friendRemove:'..peer.account_id) end
     if social.permissions and social.permissions.view_online then row('STAFF · ONLINE PLAYERS & STATISTICS','online') end
+  elseif f.mode=='transferGuide' then
+    paragraph('CONTINUE ON ANOTHER DEVICE',true)
+    paragraph('1 · ON THIS DEVICE',true)
+    paragraph('Upload your own imported games once to your private account cache. This is optional and separate from saves. Other accounts cannot download them.')
+    row('UPLOAD MY IMPORTED GAMES NOW','uploadGames')
+    paragraph('In the game menu, choose Suspend & upload to cloud. Wait until the transfer finishes. Normal saves and exact battle suspends remain separate.')
+    paragraph('2 · ON YOUR OTHER DEVICE',true)
+    paragraph('Use the same app build, sign in to the same account and restore your cloud games and saves. Choose Continue to resume the saved battle.')
+    row('RESTORE MY CLOUD GAMES & SAVES','restoreGames')
+    paragraph('CURRENT SUPPORT',true)
+    paragraph('Exact resume supports native Gen 1–3 sessions. Loaded mods and live online battles are excluded. Newer local progress is preserved; incompatible suspends fall back to your normal save with a notice.')
+    paragraph('Simulated device switching has been tested on separate desktop profiles. Physical Android and iPhone switching still needs device testing.')
+    row('BACK TO MY PROFILE','account')
+  elseif f.mode=='roleGuide' then
+    paragraph('ROLES & PERMISSIONS',true)
+    paragraph('PLAYER · Local play needs no account. Verified accounts can use friends, cloud storage and online features.')
+    paragraph('ADMIN · Organizes cups and prizes, manages regular players, bans and restores accounts, and quarantines or restores cloud content. Cannot grant roles or moderate staff.')
+    paragraph('SUPERUSER · Admin permissions plus granting or revoking native Admin and Superuser roles, and moderating other unprotected staff accounts.')
+    paragraph('PROTECTED OPERATOR · Starscream89 cannot be banned, removed, demoted or have cloud content quarantined. Protection belongs to the account across devices.')
+    paragraph('The operator binding follows a fixed account ID even after a nickname change. Releasing it requires the private recovery key in the server console; ordinary role controls cannot remove it.')
+    paragraph('Staff can see invisible online status. Reasons and current-password confirmation are required for moderation. Actions are audited; cloud removal is recoverable.')
+    row('MY ACCOUNT','account')
+  elseif f.mode=='players' then
+    paragraph('PLAYERS',true)
+    paragraph('Browse registered players. Requests become friendships only after the other player accepts. Private contact details stay private.')
+    field('Search nickname','playersQuery');row('SEARCH PLAYERS','playersSearch')
+    row(f.playersOnline and 'SHOW ALL PLAYERS' or 'SHOW ONLINE ONLY','playersOnline')
+    local doc=f.players or {};paragraph(tostring(doc.online_count or '...')..' online · '..tostring(doc.registered_count or '...')..' registered')
+    for i,peer in ipairs(doc.players or {})do
+      paragraph(Role.label(peer.friend_tag,peer)..(peer.suspended and ' · BANNED' or peer.online and (peer.status=='away' and ' · AWAY' or ' · ONLINE') or ' · OFFLINE'),true)
+      if peer.invisible then paragraph('INVISIBLE · STAFF VIEW')end
+      if peer.protected then paragraph('PROTECTED OPERATOR')end
+      if peer.relationship=='none' then row('SEND FRIEND REQUEST','playerFriend:'..i)
+      elseif peer.relationship=='incoming' then row('ACCEPT REQUEST','friendAccept:'..peer.account_id)
+      elseif peer.relationship=='outgoing' then paragraph('REQUEST PENDING')
+      elseif peer.relationship=='friends' then row('CHAT','chat:'..peer.account_id)end
+      if doc.staff then row('MANAGE PLAYER','playerManage:'..i)end
+    end
+    if (doc.page or 1)>1 then row('PREVIOUS PAGE','playersPrevious')end
+    if (doc.page or 1)*(doc.per_page or 30)<(doc.total or 0)then row('NEXT PAGE','playersNext')end
+    row('INBOX','inbox');row('MY ACCOUNT','account')
+  elseif f.mode=='playerManage' then
+    local peer=f.player or {};paragraph(tostring(peer.friend_tag or 'Loading player…'),true)
+    paragraph(peer.suspended and 'BANNED' or 'ACCOUNT ACTIVE')
+    paragraph('Cloud objects: '..tostring(peer.cloud_objects or 0)..' · Removed from access: '..tostring(peer.held_objects or 0))
+    if peer.manageable then
+      row(peer.suspended and 'UNBAN PLAYER' or 'BAN PLAYER','moderate:'..(peer.suspended and 'unban' or 'ban'))
+      row(peer.profile_hidden and 'RESTORE PUBLIC PROFILE' or 'HIDE PUBLIC PROFILE','moderate:'..(peer.profile_hidden and 'restore_profile' or 'hide_profile'))
+      row(peer.avatar_hidden and 'RESTORE PUBLIC AVATAR' or 'REMOVE PUBLIC AVATAR','moderate:'..(peer.avatar_hidden and 'restore_avatar' or 'hide_avatar'))
+      row('REMOVE CLOUD CONTENT FROM ACCESS','moderate:quarantine_cloud')
+      if (peer.held_objects or 0)>0 then row('RESTORE REMOVED CLOUD CONTENT','moderate:restore_cloud')end
+      if f.permissions and f.permissions.manage_roles then row('CHANGE PLAYER RIGHTS','playerRoles')end
+    else paragraph(peer.protected and 'PROTECTED OPERATOR · This account cannot be banned, demoted or have its content removed.' or 'This account is outside your moderation permissions.')end
+    row('PLAYERS','players')
+  elseif f.mode=='moderate' then
+    paragraph('CONFIRM MODERATION',true);paragraph(tostring(f.player and f.player.friend_tag));paragraph(tostring(f.moderationAction))
+    paragraph('Banning revokes all device sessions. Removed cloud content is quarantined and can be restored; local device files are not deleted. A reason and your current password are required.')
+    field('Reason (at least 15 characters)','moderationReason');field('Current account password','moderationPassword',true)
+    row('CONFIRM ACTION','moderationConfirm');row('CANCEL','moderationCancel')
+  elseif f.mode=='inbox' then
+    local doc=require('src.cloud.Presence').read() or f.social or {}
+    paragraph('INBOX · FRIEND REQUESTS',true)
+    for _,peer in ipairs(doc.incoming or {})do paragraph(Role.label(peer.friend_tag or peer.nickname,peer),true);row('ACCEPT REQUEST','friendAccept:'..peer.account_id);row('DECLINE REQUEST','friendRemove:'..peer.account_id)end
+    if #(doc.incoming or {})==0 then paragraph('No pending friend requests.')end
+    for _,peer in ipairs(doc.outgoing or {})do paragraph('WAITING · '..tostring(peer.friend_tag or peer.nickname));row('CANCEL REQUEST','friendRemove:'..peer.account_id)end
+    row('FIND PLAYERS','players');row('FRIENDS','friends')
   elseif f.mode=='online' then
     paragraph('ONLINE PLAYERS · STAFF',true)
     local online=f.online or {}
     paragraph(tostring(online.online_count or 0)..' online · '..tostring(online.registered_count or 0)..' registered · '..tostring(online.verified_count or 0)..' email confirmed')
     paragraph('Players are counted once across all their devices. Status expires two minutes after the last response.')
     row('REFRESH ONLINE LIST','online')
-    for _,peer in ipairs(online.online or {}) do paragraph(peer.nickname..' · '..peer.account_id) end
+    for _,peer in ipairs(online.online or {}) do paragraph(Role.label(peer.nickname,peer)..' · '..peer.account_id) end
     if (online.page or 1)>1 then row('PREVIOUS PAGE','onlinePrevious') end
     if (online.page or 1)*(online.per_page or 50)<(online.online_count or 0) then row('NEXT PAGE','onlineNext') end
     row('FRIENDS','friends');row('MY ACCOUNT','account')
   elseif f.mode=='account' then
     local Avatar=require('src.ui.ProfileAvatar');local yy=top
     Avatar.draw(f.avatarPreset,f.avatarColor,x+24*s,yy,88*s,f.avatarImage)
-    text(tostring(f.nickname or Auth.nickname()),x+128*s,yy+8*s,width-170*s,true)
+    text(Role.label(f.nickname or Auth.nickname(),{display_role=f.displayRole,permissions=f.permissions}),x+128*s,yy+8*s,width-170*s,true)
     text(tostring(f.friendTag or 'Loading your friend tag…'),x+128*s,yy+48*s,width-170*s)
-    top=yy+106*s;row('EDIT NICKNAME & AVATAR','profileEdit');row('COPY MY FRIEND TAG','copyFriendTag')
+    top=yy+106*s
+    local presence=require('src.cloud.AccountBadge').presence
+    if presence then row(presence.visible and 'VISIBLE ONLINE · CLICK TO GO INVISIBLE' or 'INVISIBLE · CLICK TO SHOW ONLINE','presenceToggle')end
+    paragraph('Automatically away after 5 minutes without input. Any input makes you online again. Invisible players appear offline to other players; staff can still see their status.')
+    row('PLAYERS','players');row('INBOX','inbox');row('ROLES & PERMISSIONS','roleGuide');row('EDIT NICKNAME & AVATAR','profileEdit');row('COPY MY FRIEND TAG','copyFriendTag')
     local fresh=os.time()-(social._receivedAt or 0)<=120;local online=0
     for _,peer in ipairs(social.friends or {}) do if fresh and peer.online then online=online+1 end end
-    paragraph('FRIENDS · '..online..' ONLINE / '..#(social.friends or {})..' TOTAL',true)
+    paragraph(L('FRIENDS')..' · '..online..' '..L('ONLINE')..' / '..#(social.friends or {})..' '..L('TOTAL'),true)
     if #(social.incoming or {})>0 then row(#social.incoming..' NEW FRIEND REQUESTS','friends') end
     for i,peer in ipairs(social.friends or {}) do if i<=5 then
       Avatar.draw(peer.avatar_preset,peer.avatar_color,x+24*s,top,42*s)
-      text(tostring(peer.friend_tag or peer.nickname),x+80*s,top,width-120*s)
-      text(not fresh and 'STATUS UNAVAILABLE' or peer.online and '● ONLINE' or '○ OFFLINE',x+80*s,top+22*s,width-120*s);top=top+58*s
+      text(Role.label(peer.friend_tag or peer.nickname,peer),x+80*s,top,width-120*s)
+      text(not fresh and 'STATUS UNAVAILABLE' or peer.online and (peer.status=='away' and 'AWAY' or 'ONLINE') or '○ OFFLINE',x+80*s,top+22*s,width-120*s);top=top+58*s
     end end
     if #(social.friends or {})==0 then paragraph('Add a friend with their Trainer#1234 tag. Your friends and requests appear here on every device.') end
     row('FIND FRIENDS & MANAGE REQUESTS','friends')
@@ -450,8 +578,10 @@ function W.draw(self)
     end
     row('BACK TO MY PROFILE','account')
   elseif f.mode=='accountSettings' then
-    paragraph('ACCOUNT PROFILE · '..tostring(Auth.accountId and Auth.accountId() or 'Updating identity')..' · Saves, Bank and mod choices are kept separately for each account.')
+    paragraph(L('ACCOUNT PROFILE')..' · '..tostring(Auth.accountId and Auth.accountId() or L('Updating identity')))
+    paragraph('Saves, Bank and mod choices are kept separately for each account.')
     paragraph('The same account connects your mods, developer projects, custom cartridge artwork and optional cloud storage.')
+    row('CONTINUE ON ANOTHER DEVICE · HOW IT WORKS','transferGuide')
     row('SYNC MY SAVES & CUSTOM CARTRIDGES','sync')
     local storage=require('src.storage.AccountStorage');local permitted,why=storage.check()
     if storage.enabled and not permitted then
@@ -519,6 +649,7 @@ function W.draw(self)
     g.rectangle('fill',x+width-12*s,v.y+(v.height-th)*f.scroll/f.maxScroll,3*s,th)
   end
   g.pop()
+  require('src.ui.TextComposer').draw(f)
 end
 local function append(f,value)
   if not f.focus then return end
@@ -533,15 +664,20 @@ function W.install(RI)
   local U=RI._ui
   function RI:_openAccount(after) return W.open(self,after) end
   local draw=RI.draw;RI.draw=function(self,...) draw(self,...);W.draw(self) end
-  local update=RI.update;RI.update=function(self,dt,...) W.tick(self);return update(self,dt,...) end
+  local update=RI.update;RI.update=function(self,dt,...)
+    W.tick(self);return update(self,dt,...)
+  end
   local press=RI.mousepressed;RI.mousepressed=function(self,x,y,b,...)
     local f=self._accountOverlay;if not f then return press(self,x,y,b,...) end
-    if b~=1 then return end;f.padActive=false
+    if b~=1 then return end
+    if require('src.ui.TextComposer').press(f,x,y)then return end
+    f.padActive=false
     for _,r in ipairs(f.rects) do if (r.pinned or U.inside(f.viewport,x,y)) and U.inside(r,x,y) then W.action(self,r.id);return end end
     inputMode(f,nil)
   end
   local key=RI.keypressed;RI.keypressed=function(self,k,...)
     local f=self._accountOverlay;if not f then return key(self,k,...) end
+    if require('src.ui.TextComposer').key(f,k)then return end
     if k=='escape' then if f.document then W.action(self,'back') else W.close(self) end
     elseif k=='tab' then W.navigate(self,love.keyboard.isDown('lshift','rshift') and -1 or 1)
     elseif f.focus then
@@ -552,7 +688,7 @@ function W.install(RI)
     elseif k=='up' then W.navigate(self,-1)
     elseif k=='return' or k=='space' then local r=f.rects[f.padIndex or 1];if r then W.action(self,r.id) end end
   end
-  local input=RI.textinput;RI.textinput=function(self,t,...) if self._accountOverlay then append(self._accountOverlay,t);return end;return input(self,t,...) end
+  local input=RI.textinput;RI.textinput=function(self,t,...) if self._accountOverlay then if not require('src.ui.TextComposer').text(self._accountOverlay,t)then append(self._accountOverlay,t)end;return end;return input(self,t,...) end
   local wheel=RI.wheelmoved;RI.wheelmoved=function(self,dx,dy,...) if self._accountOverlay then W.scroll(self,dy);return end;if wheel then return wheel(self,dx,dy,...) end end
   local touch=RI.touchpressed;RI.touchpressed=function(self,id,x,y,...)
     local f=self._accountOverlay;if not f then return touch(self,id,x,y,...) end
@@ -568,6 +704,7 @@ function W.install(RI)
   end
   local pad=RI.gamepadpressed;RI.gamepadpressed=function(self,j,b,...)
     if not self._accountOverlay then return pad(self,j,b,...) end
+    if require('src.ui.TextComposer').pad(self._accountOverlay,b)then return end
     if b=='b' then if self._accountOverlay.document then W.action(self,'back') else W.close(self) end
     elseif b=='dpdown' then W.navigate(self,1) elseif b=='dpup' then W.navigate(self,-1)
     elseif b=='a' then local f=self._accountOverlay;local r=f.rects[f.padIndex or 1];if r then W.action(self,r.id) end end

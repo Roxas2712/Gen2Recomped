@@ -158,10 +158,10 @@ do
       local inner = line:match('{(.-)}'):gsub('%b()', 'X')
       local n = 0
       for _ in inner:gmatch('[^,]+') do n = n + 1 end
-      if n ~= 15 then short = short + 1; print('  short vertex literal: ' .. line) end
+      if n ~= 16 then short = short + 1; print('  short vertex literal: ' .. line) end
     end
   end
-  check(short == 0, 'every literal vertex matches the fifteen-component format')
+  check(short == 0, 'every literal vertex matches the sixteen-component format')
   local ground = assert(io.open('src/render/Gen4Ground.lua')):read('*a')
   check(ground:find('function Gen4Ground:lightBandChanged()', 1, true) ~= nil, 'the ground routes a band change through lightBandChanged')
   check(ground:find('if self.lightBand ~= band then self:lightBandChanged() end', 1, true) ~= nil,

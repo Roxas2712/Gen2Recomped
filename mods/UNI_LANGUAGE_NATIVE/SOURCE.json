@@ -1,0 +1,2581 @@
+{
+  "repository": "https://github.com/Roxas2712/uni-language-ascendant",
+  "baseRevision": "be83d79e41258f03ff82a7c30e3c86291548d87e",
+  "provenance": "Native working-tree integration, 2026-10-26. GPL-3.0 and retained third-party notices. No ROMs or generated private caches. Entry and manifest adapted for built-in use.",
+  "sourceFiles": [
+    {
+      "path": "ASIAN-PREVIEW.md",
+      "sha256": "9c2e19d74f44887c52c0b1ac423658130481af6dcec272a69c41c8e5cfe7e6e5"
+    },
+    {
+      "path": "ASIAN-QA.json",
+      "sha256": "2bd15d5cae940a851b9dac77b23f4a3237340ce2574baf3b2933d04c0d8b2147"
+    },
+    {
+      "path": "EUROPE-PREVIEW.md",
+      "sha256": "4081a75ddbb23fb604c0e04b5251ab9abc1fc05daec1a5a83af7f60f189194d0"
+    },
+    {
+      "path": "EUROPE-QA.json",
+      "sha256": "4539c75400f5ab5adcff62f16b29deb01d2fbbcc862afdb8b32a72024fdca35b"
+    },
+    {
+      "path": "LICENSE-POLICY.md",
+      "sha256": "dfb2927ca60a3a97e6579adce148ea2e3489d37298bf916fc89753b793a441ca"
+    },
+    {
+      "path": "LICENSE.MD",
+      "sha256": "b369ce45656b3d87453541816fac6982b13e09ea0734ab9cfe61cf3faf5e95ed"
+    },
+    {
+      "path": "LIVE-SWITCH-QA.json",
+      "sha256": "fbe7fdef4deb64a670e0e206636245a4baae3b2a9f0a3f9a9bff3248f93403cd"
+    },
+    {
+      "path": "LIVE-SWITCH.md",
+      "sha256": "95975db9e6209c38ecfc62856d5360a3606c40042306dab8a891917f85bcef3c"
+    },
+    {
+      "path": "MERGE-QA.json",
+      "sha256": "447290720d77128fe7a4bf25095d4b6b0231c8800b4b61d99aacfe4a3aa2592c"
+    },
+    {
+      "path": "MERGED-PREVIEW.md",
+      "sha256": "8ef381795826dae7bf3f506b122617f21eb48e30ff3f9827928ace82bea8fe1b"
+    },
+    {
+      "path": "NATIVE.md",
+      "sha256": "f7f58e018f130facb99aed7c05c8b5e25133c34f979e34d2a8b13bf3da2900b7"
+    },
+    {
+      "path": "PT-BR.html",
+      "sha256": "bd772886c9005b4a9b70cd27e2d942ea57ed2502d4eb2c4dba4d5bf4e75dd9f4"
+    },
+    {
+      "path": "Performance.html",
+      "sha256": "8f004438dac124e6887460d2b319619eed2913f824a6465e721cc4ffd1194c87"
+    },
+    {
+      "path": "README.md",
+      "sha256": "30f09d7525955d8efb3cf9a29e679ec7d17c32c1d489330d70c9b5ca1b60d00e"
+    },
+    {
+      "path": "ROM-Liste.html",
+      "sha256": "fb0902162b07b6df581e03bd98e6d2973f39fa8cb44f20e926991e80720804a5"
+    },
+    {
+      "path": "VENDOR.md",
+      "sha256": "5e2ef176488591b044bd3f0cd4ad26d2bc4098cd159cdf252fd5ec8650f97518"
+    },
+    {
+      "path": "Weitere-Sprachen.html",
+      "sha256": "bc38ba5d72c866e07cb7339d9352eea265c71b4a096d3c6fb8f5c97460dd2bbd"
+    },
+    {
+      "path": "adapters.lua",
+      "sha256": "70fc277cc11c7de6c8ec072060b21b19b1702ecaf662b0ebfba666ccfcfabf43"
+    },
+    {
+      "path": "assets.lua",
+      "sha256": "d3aeb489030d479bfa7aaf5b9672608bbc69b178c7584be21fcdba5fac60cea5"
+    },
+    {
+      "path": "authored.lua",
+      "sha256": "9cec979f940b7928e0fcfdd7f2ff88b2324f6f8058eebcd8d429ddf109f0a619"
+    },
+    {
+      "path": "cache_codec.lua",
+      "sha256": "1f06a1beaba079580cf761d5eca54f16793e1b51d411be13e6214f2432d43e51"
+    },
+    {
+      "path": "catalog.lua",
+      "sha256": "cc1f3933eaf8abadaba8b67a220205fe91046dc84003ea3cffecde50e7293bef"
+    },
+    {
+      "path": "compat.lua",
+      "sha256": "7c9fc923d434f908655e37c1e2b2ca1a363619509ab4ea8f4748682db928345d"
+    },
+    {
+      "path": "compiler.lua",
+      "sha256": "1b83fec1ea8309381a851f1f05e101d731d61b2ca79deb7dce57778aa73e0b2b"
+    },
+    {
+      "path": "extract.lua",
+      "sha256": "bf5d2a74eb92b89dc8bbefda15d23611cf55d3f543e389ec121a7d545f71b347"
+    },
+    {
+      "path": "fonts/OFL.txt",
+      "sha256": "af55b908a0ccf969b7bdd0e6cac6f4866a7ed0d1aeb9c7b29516ca0d24422981"
+    },
+    {
+      "path": "fonts/SOURCE.txt",
+      "sha256": "d556320b7d5a06c32a18cd7ad948f7439a48ae9f332bb4b671582bd90139eb32"
+    },
+    {
+      "path": "fonts/ascendant-jp.otf",
+      "sha256": "1c2f2fa7528800cb4c81ddad544baf48315bc80b76aad43a4f89ea52dfd1ccef"
+    },
+    {
+      "path": "fonts/ascendant-kr.otf",
+      "sha256": "8c7d4a4a69b010b662504fd214e20cd638970998f9e8359e6f74d921618ea32a"
+    },
+    {
+      "path": "fonts/ascendant-sc.otf",
+      "sha256": "4df209aa779fcd6a9bff90e3ce3c64b8d0b953b4f1af0e28938d2660dddbd0ec"
+    },
+    {
+      "path": "fonts/ascendant-tc.otf",
+      "sha256": "7dc3a5c15702c01dc62c03497e8e6cfa92d20f5886633cea12250f8d787fc763"
+    },
+    {
+      "path": "gb/adapters/european.lua",
+      "sha256": "cb13fc038450a9a254d8c6a4e3044d7584dfc4603846bb989f50280c9af65d30"
+    },
+    {
+      "path": "gb/adapters/gen1.lua",
+      "sha256": "82f193273e7525d0a496acfa0acc3749d820c82738cf97d216820bb5c8c3280c"
+    },
+    {
+      "path": "gb/adapters/gen2.lua",
+      "sha256": "11a5cca6bb7a29eb7744b1ec9784a7c9b59114948860be93f15848cbe8532b71"
+    },
+    {
+      "path": "gb/compile.lua",
+      "sha256": "51cc7a952993421272c91481e63c3d3764ca43557ee458b66cd168dee7b388a0"
+    },
+    {
+      "path": "gb/main.lua",
+      "sha256": "76a90d590e0e6af5d303fdbadb8b2a79f0bd95d0d18b1e9f701849c533a29aab"
+    },
+    {
+      "path": "gb/overlay.lua",
+      "sha256": "d9f15b0d7933fbf5f502ea4951cd90da498dfa484e44ef0a77f90f0084904dc9"
+    },
+    {
+      "path": "gb/profiles/blue/assets.lua",
+      "sha256": "751b05b1e4d1ca72be785858806323c3cd6a5596761bf709926c54c126d75ade"
+    },
+    {
+      "path": "gb/profiles/blue/dex_kinds.lua",
+      "sha256": "e3b883fb947021583581b8108815ab3eb588c73ecb58048d0785371cdca28cfa"
+    },
+    {
+      "path": "gb/profiles/blue/dialogue.lua",
+      "sha256": "fd8b7f137e90c6a08d2052ed37cdbf9dd65db6b79d9d1408a1c30f40977aa5a7"
+    },
+    {
+      "path": "gb/profiles/blue/item_names.lua",
+      "sha256": "f70472afbd2978097bda5b445725e187cd0a145c54f6c56a405401f8c4e35a60"
+    },
+    {
+      "path": "gb/profiles/blue/map_names.lua",
+      "sha256": "161ad0934490fd726329b18d58d71c5710cae7353c1378a24bd162ccd38dad15"
+    },
+    {
+      "path": "gb/profiles/blue/mon_names.lua",
+      "sha256": "e92ba65b6a5e8c78df6d99ef98c79d4d4ebfdef65133fdef07103d4e50d80cad"
+    },
+    {
+      "path": "gb/profiles/blue/move_names.lua",
+      "sha256": "062445c77b5e0df5a4845e373b144df1808250e41ff44c4eab12db9ff4f4afc0"
+    },
+    {
+      "path": "gb/profiles/blue/naming.lua",
+      "sha256": "ef5ee78c40450daedafc684276c949fdf1d2d2a82cba75c14b2c5e3dc0dce8e2"
+    },
+    {
+      "path": "gb/profiles/blue/profile.lua",
+      "sha256": "d6251ef67c90d7806bf74844de20900b4300957ee82d530c15f9c5bdc17b390f"
+    },
+    {
+      "path": "gb/profiles/blue/runtime_text.lua",
+      "sha256": "14a653b63ff013946dd2f7ad512c562d745ec005f6fe6d0565259418756042af"
+    },
+    {
+      "path": "gb/profiles/blue/species_names.lua",
+      "sha256": "a1b53313be794b8f97c78c64be692f89f5d2f17fe73fdedbb8b30a3fa225c1b5"
+    },
+    {
+      "path": "gb/profiles/blue/status_labels.lua",
+      "sha256": "9edbd47358325a96ef5d741d30aec3d55dfe981b75404fefadab5f80f7df145d"
+    },
+    {
+      "path": "gb/profiles/blue/strings.lua",
+      "sha256": "fa3bebaefd4788852940a753a6e28413274ecb9fe38246011979aab887b0f188"
+    },
+    {
+      "path": "gb/profiles/blue/trainer_names.lua",
+      "sha256": "e0c750c6d2eb825a9d973b553dbc60b99f5c6be9984e73a192d85978ea40f926"
+    },
+    {
+      "path": "gb/profiles/blue/type_names.lua",
+      "sha256": "b70d2453796832ec6d65bae41faa5fb7cb9df2406893bd3eb72a1baa71f126e4"
+    },
+    {
+      "path": "gb/profiles/blue_ptbr/assets.lua",
+      "sha256": "0315fcc5fadb46c4d496eb24f541f4ef758dc11ca42a6392ad5b709427fad8fb"
+    },
+    {
+      "path": "gb/profiles/blue_ptbr/credits.lua",
+      "sha256": "2d7aee58efe0eb066808055a18b7f4caa4dd08ba7759391468c8304f92436e8b"
+    },
+    {
+      "path": "gb/profiles/blue_ptbr/dex_kinds.lua",
+      "sha256": "3c744616d4bfbb46a4aef9e0a137aee7a0987ed30a2558d8dee0faff61e12409"
+    },
+    {
+      "path": "gb/profiles/blue_ptbr/dex_metrics.lua",
+      "sha256": "16ab75bb6e3766253bb67c8f2ce5246f6edef7025f4dc8f8d3d177f9d8925686"
+    },
+    {
+      "path": "gb/profiles/blue_ptbr/dialogue.lua",
+      "sha256": "640e85fc64efd171ffdc940dd3b4144c78139f31aabd601fe80de9fccca360b6"
+    },
+    {
+      "path": "gb/profiles/blue_ptbr/item_names.lua",
+      "sha256": "30b5c7a56f6524da261d5ece1c4d52c3f04ea5710b3f57183f675c23207057a4"
+    },
+    {
+      "path": "gb/profiles/blue_ptbr/move_names.lua",
+      "sha256": "c0823555d25d9a7c111a8ba0489e5efc52d1de534aedf3e20d449c712f25e3e6"
+    },
+    {
+      "path": "gb/profiles/blue_ptbr/profile.lua",
+      "sha256": "91a23d6b8e6cbd4c24c14e22c6d73bde1cb504dff70fbba94849896f2babf2ea"
+    },
+    {
+      "path": "gb/profiles/blue_ptbr/species_names.lua",
+      "sha256": "569e191271fafc8c968d410b10bd16dd8eb3d7f12c9249fdadba7e157ecd06b8"
+    },
+    {
+      "path": "gb/profiles/blue_ptbr/status_labels.lua",
+      "sha256": "406fb1cbec267b3eb0198ea7df266bbd135a2a948b44a25e1861c8fdac0e9ad8"
+    },
+    {
+      "path": "gb/profiles/blue_ptbr/strings.lua",
+      "sha256": "6b19d08a48f22c0ed5de199ac8ca08e71eccf80d66c2bdedb686eb3f94e3f808"
+    },
+    {
+      "path": "gb/profiles/blue_ptbr/trainer_names.lua",
+      "sha256": "57475b947fa8d02cf0460ada59348818a55272d91e4a0a5889173254b04cfada"
+    },
+    {
+      "path": "gb/profiles/blue_ptbr/type_names.lua",
+      "sha256": "892cc5239b5c4d45b7ffaa2a7b66352b42c731b4b7eade5d14faa413c5611886"
+    },
+    {
+      "path": "gb/profiles/crystal/assets.lua",
+      "sha256": "519f97626ff617ce1f55fa50b16e83b87face4019832c32b008eab4e5f69a15b"
+    },
+    {
+      "path": "gb/profiles/crystal/battle_tower_trainer_names.lua",
+      "sha256": "13e64b0d8744145a673467a808a83e9640cfb7e072f706104918ab2224f17194"
+    },
+    {
+      "path": "gb/profiles/crystal/dex_entries.lua",
+      "sha256": "368f94b5d5b7a1d4579f95c73dd385494098df9a58f35fff0b5ced8a55622078"
+    },
+    {
+      "path": "gb/profiles/crystal/dex_kinds.lua",
+      "sha256": "d90f4c0a9a86809cf71d86fada2cfe7f55f8940df4fd62e0272f97bf02c05989"
+    },
+    {
+      "path": "gb/profiles/crystal/dialogue.lua",
+      "sha256": "f270e152ab8b7d87d5addd2242a4e6170b20d77072d1d96a53fb4054f2299449"
+    },
+    {
+      "path": "gb/profiles/crystal/item_descriptions.lua",
+      "sha256": "5b64c29749cd2def96217cf749dfbf093ff5f795ce680a673257f9fc619e53a1"
+    },
+    {
+      "path": "gb/profiles/crystal/item_names.lua",
+      "sha256": "e2a733a819550a2c22d5ba7a35d1c9405ef3c2ca7d6d0913206b8b90bf49714f"
+    },
+    {
+      "path": "gb/profiles/crystal/landmark_names.lua",
+      "sha256": "f6d57d1b2f2be01054e9484dd3357d4e50a960f0f7c823818bb983e2d84777e2"
+    },
+    {
+      "path": "gb/profiles/crystal/mon_names.lua",
+      "sha256": "142544244f68bb1fd35fca4c959461b6244db9c9930d9e2368914ab7587cf18b"
+    },
+    {
+      "path": "gb/profiles/crystal/move_descriptions.lua",
+      "sha256": "2f434eaad3bbd7060e33626a5cf37fe774ca068018658f57b243e68391952d33"
+    },
+    {
+      "path": "gb/profiles/crystal/move_names.lua",
+      "sha256": "058bf26cd39fc0abb344a705a66f1c1e97e2fc2e60755bee7ef95bd852631ffd"
+    },
+    {
+      "path": "gb/profiles/crystal/oak_speech.lua",
+      "sha256": "33d5e2ea614c1f5a805b9d62b244dde000b737a34aa820af85f2ed6b2b34fa8b"
+    },
+    {
+      "path": "gb/profiles/crystal/player_names.lua",
+      "sha256": "e885bee393d468bbeab4153b51339f0851e44f95b6135ac280bd882baa1e4206"
+    },
+    {
+      "path": "gb/profiles/crystal/pokegear_radio_tilemap.lua",
+      "sha256": "913a1b6637df610a240bef7e67a1946f06be0d65ae3bf4cd1bff6388c63c2769"
+    },
+    {
+      "path": "gb/profiles/crystal/profile.lua",
+      "sha256": "8a996359a2b7219a6880b7a2fc15e9a40ab45c9401e716c44695556dbc7a0f5c"
+    },
+    {
+      "path": "gb/profiles/crystal/rom_text.lua",
+      "sha256": "ad630130690377cae1879c783bf07ff4070b42e90f7c10e05c7bdea2b1bae62a"
+    },
+    {
+      "path": "gb/profiles/crystal/runtime_battle.lua",
+      "sha256": "7625bd89bd173dd826383051578dfb02307a3690ae83336bab14f53e5dd96d88"
+    },
+    {
+      "path": "gb/profiles/crystal/runtime_system.lua",
+      "sha256": "f03d4918d3fc0edbc0a0d80b53519e116b1731582790b9ec55f89e75dd43caa3"
+    },
+    {
+      "path": "gb/profiles/crystal/runtime_ui.lua",
+      "sha256": "42b874827cc73f300853438cde01f364d28f716349dbfe5cf082e9775a9e6560"
+    },
+    {
+      "path": "gb/profiles/crystal/species_names.lua",
+      "sha256": "56fa40d873b9435e7babaa99c3e01d225dd36176bc4b88404696818cfe97b7cf"
+    },
+    {
+      "path": "gb/profiles/crystal/strings.lua",
+      "sha256": "041938b4b361ce2cb61dc3631d821ea07576b6b0dc779309862e3adf7066c9c6"
+    },
+    {
+      "path": "gb/profiles/crystal/trainer_class_names.lua",
+      "sha256": "430362a9253fdbf07ad8aa2b37c6bbdec42f7cd41bb71498b58ddf409a6c8a64"
+    },
+    {
+      "path": "gb/profiles/crystal/trainer_names.lua",
+      "sha256": "0719e13fb6d03bedc240ea9f1d92ea8d38aac1e427f80ab0320a08246ba00fe5"
+    },
+    {
+      "path": "gb/profiles/crystal/type_names.lua",
+      "sha256": "69483849d702619fd67303f8de6190a8f26b2b1899a8f130b796731b81470f1f"
+    },
+    {
+      "path": "gb/profiles/crystal_es/assets.lua",
+      "sha256": "06585d54ded6f998e19e23ff31467979f1d33c59eb0b873d11915b664254d1e6"
+    },
+    {
+      "path": "gb/profiles/crystal_es/dex_entries.lua",
+      "sha256": "5960497be9c2b5195bf8020343eb6ff7cdd4ff89b1de3988e5f664ece9e93922"
+    },
+    {
+      "path": "gb/profiles/crystal_es/dex_metrics.lua",
+      "sha256": "82f2f2364584bc8e4a4ebb9b8347bfdd7b34489a1705403d4ce5ec9203d2330e"
+    },
+    {
+      "path": "gb/profiles/crystal_es/dialogue.lua",
+      "sha256": "1be45a26b52c398f90ef9fe9d22476ed55c6b1db8afe2a7d2747238cb3d48976"
+    },
+    {
+      "path": "gb/profiles/crystal_es/item_descriptions.lua",
+      "sha256": "3fa9b3d9defaef9a05d9eaba7e74e51682dfb241b71ce57c3083efd8eacd464c"
+    },
+    {
+      "path": "gb/profiles/crystal_es/item_names.lua",
+      "sha256": "fc5797d27f269ad7cdef13d448b1bec9f369d8d964d3c7023b66386a0f630907"
+    },
+    {
+      "path": "gb/profiles/crystal_es/landmark_names.lua",
+      "sha256": "234b40cc0f9d1a978b1f07f6fd5f925b91657c558f47ad2f35ede8a24afbfc77"
+    },
+    {
+      "path": "gb/profiles/crystal_es/layouts.lua",
+      "sha256": "55b09df577c8253c569cf7e406972cf089de5291c56bd8fa0196d4f42ea69d30"
+    },
+    {
+      "path": "gb/profiles/crystal_es/mon_names.lua",
+      "sha256": "5ba3c007596158289111ea4de7c9a29badc8db5e1a81bf3473829aba3bc05c33"
+    },
+    {
+      "path": "gb/profiles/crystal_es/move_descriptions.lua",
+      "sha256": "eac522dc5f56bc8b1a3bb038c638c082bfd0136b3796ee40cc5af72912299078"
+    },
+    {
+      "path": "gb/profiles/crystal_es/move_names.lua",
+      "sha256": "ca5bc4664f95c46c33363a59ad2a6a2645509a3381cbff87139605f88c793afe"
+    },
+    {
+      "path": "gb/profiles/crystal_es/profile.lua",
+      "sha256": "c608b01871f99aff8ad07a24c6286466e2b0b01be45f2fc630b06c7f31e16d68"
+    },
+    {
+      "path": "gb/profiles/crystal_es/rom_text.lua",
+      "sha256": "ceff49d968b0964ee5175471a86c38882f6c55697afccb2d0fae0d04b2c6b3e8"
+    },
+    {
+      "path": "gb/profiles/crystal_es/script_strings.lua",
+      "sha256": "38dafc7caa390cbb945158a6664ee86d433e5baebca9c84eab67d5f2ea18db4c"
+    },
+    {
+      "path": "gb/profiles/crystal_es/species_names.lua",
+      "sha256": "2ee92fabd28d83895b9e4b8d974b7f1f5f3e0ed82a76c9d90d66dfcd800ae68e"
+    },
+    {
+      "path": "gb/profiles/crystal_es/status_labels.lua",
+      "sha256": "fdec7fc49d898b235b0eda9e85a1dcda85f867c66ebff35fd36f7ed10169857e"
+    },
+    {
+      "path": "gb/profiles/crystal_es/strings.lua",
+      "sha256": "6b9120930e1d68d1e4b67e751d487c880f019711b76db3fe06cf103a7d97053d"
+    },
+    {
+      "path": "gb/profiles/crystal_es/trainer_class_names.lua",
+      "sha256": "64550dafa4165b4824f867d072a75eb9d6fa68b0f06e0cb827c4d24b489c9b8e"
+    },
+    {
+      "path": "gb/profiles/crystal_es/trainer_names.lua",
+      "sha256": "aa106e487aa21e18535691ebf83f8425ef224a34f087a32a2e9a3eeab2c27ffe"
+    },
+    {
+      "path": "gb/profiles/crystal_es/type_names.lua",
+      "sha256": "3e44fabd35d10b530193c6c0355f1b92a9e10ea25deccab48c4d19f5ea7f7bbc"
+    },
+    {
+      "path": "gb/profiles/crystal_es/world_layout.lua",
+      "sha256": "9188f838915f8ec9c334871a5441a272faedd54e6c7e1f6552f4aece3edc780f"
+    },
+    {
+      "path": "gb/profiles/crystal_it/assets.lua",
+      "sha256": "ccb333f85fef4fb4a2c7532434c5a5c40ac4683698b83ad9548b5d120b3ac0d8"
+    },
+    {
+      "path": "gb/profiles/crystal_it/dex_entries.lua",
+      "sha256": "9525664b5865795863467e634c884efe44d908e7c859496b630da4ce5326f579"
+    },
+    {
+      "path": "gb/profiles/crystal_it/dex_metrics.lua",
+      "sha256": "82f2f2364584bc8e4a4ebb9b8347bfdd7b34489a1705403d4ce5ec9203d2330e"
+    },
+    {
+      "path": "gb/profiles/crystal_it/dialogue.lua",
+      "sha256": "c14c94a685467c4174e3e7ed2fc7b40bfdf5107ac44f2dc64997d67a6892b49a"
+    },
+    {
+      "path": "gb/profiles/crystal_it/item_descriptions.lua",
+      "sha256": "695a57b96a54bf90edf0ca2b7a414b07e8fbb8c6dc68b319620453c031948474"
+    },
+    {
+      "path": "gb/profiles/crystal_it/item_names.lua",
+      "sha256": "d54c4e08e057372a3d711e2bf12c9fc84a35614282c21850d3b8582d7dbf4c54"
+    },
+    {
+      "path": "gb/profiles/crystal_it/landmark_names.lua",
+      "sha256": "15447d6ae11e189d41bdf2dfc0b8c2f813c7143df7c17037072d5441313389f2"
+    },
+    {
+      "path": "gb/profiles/crystal_it/layouts.lua",
+      "sha256": "26b5377a5015cd1c70820f692add2932856501aa2629febd0d6079ac11c440cf"
+    },
+    {
+      "path": "gb/profiles/crystal_it/mon_names.lua",
+      "sha256": "576e8c508875113a17c5c9cfb3dcebe9748a5d610cc10ebff8edf0fed4da544e"
+    },
+    {
+      "path": "gb/profiles/crystal_it/move_descriptions.lua",
+      "sha256": "5c56c6a040c1e3f2c890401ac7685fd829dc3838c2d1093ec1fee2da9e1fa575"
+    },
+    {
+      "path": "gb/profiles/crystal_it/move_names.lua",
+      "sha256": "aac06e8a3853e3428b8bd80af25f4242bc04ccdfda9211049f93374b3a2529d9"
+    },
+    {
+      "path": "gb/profiles/crystal_it/profile.lua",
+      "sha256": "566cf18ef14cc4f53e6a971d9c626e0b912440f9c03f2ff157f83b2e715d2728"
+    },
+    {
+      "path": "gb/profiles/crystal_it/rom_text.lua",
+      "sha256": "8f9a0559bc9f634226b86c07b9675c53279513f79f7aa70eb680980f5bc287e5"
+    },
+    {
+      "path": "gb/profiles/crystal_it/script_strings.lua",
+      "sha256": "12cdb0da6e1a4b089ecd4a54f27d3fd582fd1a314b6b69b8e4fc51fd45d5d39b"
+    },
+    {
+      "path": "gb/profiles/crystal_it/species_names.lua",
+      "sha256": "9501730618b9cd229fc79a14b6882a192e652bfac674cb0d4a794c56f979bb92"
+    },
+    {
+      "path": "gb/profiles/crystal_it/status_labels.lua",
+      "sha256": "304de147a93d6b15523a5f205057ae198cce1ba237aac2b8118b9124c03f9c93"
+    },
+    {
+      "path": "gb/profiles/crystal_it/strings.lua",
+      "sha256": "4a175cc0af41edf9031c93feae066436eb8612837faf396b05d386ccfdce31e6"
+    },
+    {
+      "path": "gb/profiles/crystal_it/trainer_class_names.lua",
+      "sha256": "7d69b7ad030be4cfbb1e0e4aa63119fc91c30a85a4dbaa5851a2760b7df11b6f"
+    },
+    {
+      "path": "gb/profiles/crystal_it/trainer_names.lua",
+      "sha256": "5a6c4b1cdbdbbd57306bc0be09c55fbf749e34eb2bf26fb7f376930ba52eead7"
+    },
+    {
+      "path": "gb/profiles/crystal_it/type_names.lua",
+      "sha256": "a8a9b2938e40968c753f6b3f6d89a75c858130f7fe99084da2ff9be795d1a375"
+    },
+    {
+      "path": "gb/profiles/crystal_it/world_layout.lua",
+      "sha256": "caaa31f1aee041719ec9bf7f0e26fe759e75874c4efeae12495512b2b20413e8"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/assets.lua",
+      "sha256": "e1b0306e7e2aee049612618bda08e80d66390c96804d1db10cf021ec490222ff"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/dex_entries.lua",
+      "sha256": "18dc6d3af8c9dd74551599b0a92966946afc680971485abc3f56218e09561f0a"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/dex_metrics.lua",
+      "sha256": "82f2f2364584bc8e4a4ebb9b8347bfdd7b34489a1705403d4ce5ec9203d2330e"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/dialogue.lua",
+      "sha256": "b7a8f9acda0ede84aaac5dcaa45c676051edf39b6e3bc6a5a7c84932d82675dc"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/font_pages.lua",
+      "sha256": "82eb7147865e872c39ea3d5ed57874e36d0b24a1d108618454c7344913704cc0"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/item_descriptions.lua",
+      "sha256": "697c9c2a13ee6cbb96ffea644d9cbd73e74aa8fd6b6aadcc465aebc7e3532ab7"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/item_names.lua",
+      "sha256": "6af1e4fc83e19b9e3b94080aa96b0a6e69535c52281cd2070fffe4c3ef860be3"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/landmark_names.lua",
+      "sha256": "eff248513086aae9d96479ce17ebed402a444528abc56de2cea00f608d5a52be"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/layouts.lua",
+      "sha256": "3ed44b82ba72ae525370bdd61e2534ddb919b947db428c4a7e1366850e9d3d4d"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/mon_names.lua",
+      "sha256": "6f25cea545cd1c23d2f477399a6ee563eecd7ff4d5ac18acadd2aa99434336dc"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/move_descriptions.lua",
+      "sha256": "7ca583339d44e79498a68c2cd29bd2c86d8090decc52f734a8832423d7360c67"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/move_names.lua",
+      "sha256": "6fe6627dcc9c7a5e78d24db5a088c7418a01322c8ec2c96ff9e259952912f36c"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/profile.lua",
+      "sha256": "b8fccd81f3df995ffdf68e94416e2854246ee75f5ef65ce27069c8d33268fcd7"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/rom_text.lua",
+      "sha256": "681370e9b4c5063757052993d57b553aa3ccc0df1085d42a18bbb0c9edf6533a"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/script_strings.lua",
+      "sha256": "93ba23bf0ca9b77e87f85c4e59741caaa6b18fbb150966a15d10fc7cc75a571f"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/species_names.lua",
+      "sha256": "18e860791e420ddb726b47658fea1c9b66c8a6d6ea543974e3cbc07a1aef97a0"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/status_labels.lua",
+      "sha256": "397f0344501ad29a9b12695c6f9d91e92f90e4c84a46e618ee6c395896bcfa22"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/strings.lua",
+      "sha256": "7fb2f8db9547d05b6dfdc7a7ccf1f286256eaa5db7a382e5e20d551e45c6a7ea"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/text_arguments.lua",
+      "sha256": "367882c8aa6211662cca20d71afee1922622163884774181633cf141eb9bcca3"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/trainer_class_names.lua",
+      "sha256": "76a08a758b2ac8599cb09334599307c583268b274babff1043f2216863526547"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/trainer_names.lua",
+      "sha256": "eee1243fc0c7f55645eef912ae7e0a5da649babbf9979532ca78bc661876f099"
+    },
+    {
+      "path": "gb/profiles/crystal_ja/type_names.lua",
+      "sha256": "5090f4e340088a078efabfbc342ac1c79d5f92d05745f68910ee29b3e1ae14e1"
+    },
+    {
+      "path": "gb/profiles/crystal_ptbr/assets.lua",
+      "sha256": "5f8ddc2b6c0378a9fbb508b12e717a70b9412d0836cf5237f0c0740e4027cf28"
+    },
+    {
+      "path": "gb/profiles/crystal_ptbr/dex_entries.lua",
+      "sha256": "decf086d35a27bf579fdb23df76180691f706202183720006b9e51cadba7cce9"
+    },
+    {
+      "path": "gb/profiles/crystal_ptbr/dialogue.lua",
+      "sha256": "2a769983dc36b097c79bc0b37f0204a8091d58347ee12ec7bea6fa6c81014bde"
+    },
+    {
+      "path": "gb/profiles/crystal_ptbr/item_descriptions.lua",
+      "sha256": "00019e3a212209d47c850f089d2a5dae65e45fb4e548255d7c235692393afc28"
+    },
+    {
+      "path": "gb/profiles/crystal_ptbr/item_names.lua",
+      "sha256": "2d7aeb91c00e7147e932269dfd904a39e91ddcbc679ff9c630b91744332c5b56"
+    },
+    {
+      "path": "gb/profiles/crystal_ptbr/landmark_names.lua",
+      "sha256": "62f2887bccfa63cc640bfa4bdad4fca444971326fd5a22958a0d688d54dcd29d"
+    },
+    {
+      "path": "gb/profiles/crystal_ptbr/move_descriptions.lua",
+      "sha256": "840e443667aa4b7df9df0d41f7a999df81f6db9837c33f7ed3d5b110a4983024"
+    },
+    {
+      "path": "gb/profiles/crystal_ptbr/move_names.lua",
+      "sha256": "18e65135de918e1f90addd40e6594ee2c0f64eaba4859cd31c80fe2efb26694e"
+    },
+    {
+      "path": "gb/profiles/crystal_ptbr/profile.lua",
+      "sha256": "81e0c1ef150cd74c27bee0c203e3a6281f8cc1adef64d9f109ed63f0f7e96c4d"
+    },
+    {
+      "path": "gb/profiles/crystal_ptbr/species_names.lua",
+      "sha256": "384881db286d41113e2b2f2bf3a5e631156e200996dd6abc095692b216fedb00"
+    },
+    {
+      "path": "gb/profiles/crystal_ptbr/status_labels.lua",
+      "sha256": "406fb1cbec267b3eb0198ea7df266bbd135a2a948b44a25e1861c8fdac0e9ad8"
+    },
+    {
+      "path": "gb/profiles/crystal_ptbr/strings.lua",
+      "sha256": "69641749b5a69f2f14bbe5e5a796516ae3ac3964016ef0df87bb772286ceb93e"
+    },
+    {
+      "path": "gb/profiles/crystal_ptbr/trainer_class_names.lua",
+      "sha256": "52279f9773e059d68e086e4d812968fcff333f5f21ed6d4a076b1b013988f885"
+    },
+    {
+      "path": "gb/profiles/crystal_ptbr/type_names.lua",
+      "sha256": "55ea5eb0bb3805480a14462ef72ecb33d666c2c12f14c96f266419554d60afd2"
+    },
+    {
+      "path": "gb/profiles/gold/assets.lua",
+      "sha256": "f291ea949b96d79156b75ccdbcb80d2876d866fba5d32941ed7206005e58b035"
+    },
+    {
+      "path": "gb/profiles/gold/dex_entries.lua",
+      "sha256": "8511926b6acdea9e0f52f75059bb03b2a725efa697c581612f73226323f32743"
+    },
+    {
+      "path": "gb/profiles/gold/dex_kinds.lua",
+      "sha256": "b96c6d7a17f20e454457728cb8768888110f5f4818c6bce0342aaf5c0b7235f6"
+    },
+    {
+      "path": "gb/profiles/gold/dialogue.lua",
+      "sha256": "8147c77508ede45d960a20e4ee9dcfd1a695cead72084da4681345a285b30b13"
+    },
+    {
+      "path": "gb/profiles/gold/item_descriptions.lua",
+      "sha256": "c0b2412d793904c7844f9a2ee84ce218f73341eda6ad847eda164ed97dfeee36"
+    },
+    {
+      "path": "gb/profiles/gold/item_names.lua",
+      "sha256": "35c75596eaf3cd2ffde6f4c503abdc2c8e169e303973ccdae3180259d0441aa6"
+    },
+    {
+      "path": "gb/profiles/gold/landmark_names.lua",
+      "sha256": "7fcb6965a79807d653d234615b9b8c580e4a33615c766033ec9620f1fd27f866"
+    },
+    {
+      "path": "gb/profiles/gold/mon_names.lua",
+      "sha256": "7bc91408f7056adad4e75f06f94e87e4702699d0e4158d5da30eccda5f1af76b"
+    },
+    {
+      "path": "gb/profiles/gold/move_descriptions.lua",
+      "sha256": "1003068c17ffa7824dbd427b3d66a31001cd65b868b9a4ce7817a814c82d1447"
+    },
+    {
+      "path": "gb/profiles/gold/move_names.lua",
+      "sha256": "71bc91369fbf7bf829ed01e5a09e67ecbd22bd8e2c0ef7fe31abd03637e26ca1"
+    },
+    {
+      "path": "gb/profiles/gold/oak_speech.lua",
+      "sha256": "9643cb1a4b760a5986b3af0e9a1523c24a7f548911ea34254538136593856a14"
+    },
+    {
+      "path": "gb/profiles/gold/pokegear_radio_tilemap.lua",
+      "sha256": "913a1b6637df610a240bef7e67a1946f06be0d65ae3bf4cd1bff6388c63c2769"
+    },
+    {
+      "path": "gb/profiles/gold/profile.lua",
+      "sha256": "f686fa0f676940a0e0c5950de4f041f2b1464a3331a7f76de98d9d1a8e5bf453"
+    },
+    {
+      "path": "gb/profiles/gold/runtime_battle.lua",
+      "sha256": "5665d96f04c4f94ec1403d834ee8f9456598af9cfa38eb26f3c4cd41faa271c5"
+    },
+    {
+      "path": "gb/profiles/gold/runtime_system.lua",
+      "sha256": "de7a7768c9b95815cc3b788b3d064ae27d58fa83fde0a4f55bc3e2e39cc7bb8e"
+    },
+    {
+      "path": "gb/profiles/gold/runtime_ui.lua",
+      "sha256": "d6330f0237ce555cf8d5a70f8a43c698f2ed794396cd32a211ff3c06f3c5ea40"
+    },
+    {
+      "path": "gb/profiles/gold/species_names.lua",
+      "sha256": "3662942612604a38249beef3c2fd5c52775f6dfd8aa88f1e1ec92ce530508d24"
+    },
+    {
+      "path": "gb/profiles/gold/strings.lua",
+      "sha256": "10f587317834936118991039d078472bd597e45b1887cb13db040ba64f368e2e"
+    },
+    {
+      "path": "gb/profiles/gold/trainer_class_names.lua",
+      "sha256": "91ab0bd1295a4e898dfd8df0ce4eb31f0a6d8d8ca7c5a157711d626f6c78f1a1"
+    },
+    {
+      "path": "gb/profiles/gold/trainer_names.lua",
+      "sha256": "6aa2f6e7c437a2e0d6a8374555240706f035d9927ed2302b5e625d6048a4ba34"
+    },
+    {
+      "path": "gb/profiles/gold/type_names.lua",
+      "sha256": "58a81f9f1c63c30e4de983320b1e236a66de1a0765a12e79afc1dc42d9793c4e"
+    },
+    {
+      "path": "gb/profiles/gold_es/assets.lua",
+      "sha256": "25875143e39c76d1b0a6ae6e9ef388145d91afa637ad5ff560b1a79f952a2a37"
+    },
+    {
+      "path": "gb/profiles/gold_es/dex_entries.lua",
+      "sha256": "f3ea219109b34612155770002ca1e5400654b822e179f1480c0b5787ac0902dc"
+    },
+    {
+      "path": "gb/profiles/gold_es/dex_metrics.lua",
+      "sha256": "82f2f2364584bc8e4a4ebb9b8347bfdd7b34489a1705403d4ce5ec9203d2330e"
+    },
+    {
+      "path": "gb/profiles/gold_es/dialogue.lua",
+      "sha256": "04c5470a1156fe100653859c22d023e9c5e32acdd6cc4c6f8aa153faee692170"
+    },
+    {
+      "path": "gb/profiles/gold_es/item_descriptions.lua",
+      "sha256": "74c6aecba1a6bafef5730fd0b11d63d9d80a791284f875f6aa46ec9d3d21b1e9"
+    },
+    {
+      "path": "gb/profiles/gold_es/item_names.lua",
+      "sha256": "c2bb74a389b1c36b39f40c92d3779a99222a1112347f5463fad4512ed29ced12"
+    },
+    {
+      "path": "gb/profiles/gold_es/landmark_names.lua",
+      "sha256": "bc6f08949bbefeaa2934d2eacef02ce29c892a4c8fb4a5c19147b3d1737ef710"
+    },
+    {
+      "path": "gb/profiles/gold_es/layouts.lua",
+      "sha256": "fefe94aca851682b318a9f6cf989111918623ca82a2775bad47064cfdf4e1551"
+    },
+    {
+      "path": "gb/profiles/gold_es/mon_names.lua",
+      "sha256": "52a254b4da5c53f3337d12b214ff0afc3c07e0cad8b865f9733ada6322c46d0d"
+    },
+    {
+      "path": "gb/profiles/gold_es/move_descriptions.lua",
+      "sha256": "b755d7828d9c6666e99daf26b9d23e9cc26f79cd8571601b1f9bc3eb3cd364a1"
+    },
+    {
+      "path": "gb/profiles/gold_es/move_names.lua",
+      "sha256": "86c8d2f1dc63ae9cff8d9f5d8223807ddcee990d78795b89dad4f5b42bb18f2e"
+    },
+    {
+      "path": "gb/profiles/gold_es/profile.lua",
+      "sha256": "f0c52478f4067f2c2a1b16eef37d96fb222a5b6c7936b339f8f05c2eb2d8b178"
+    },
+    {
+      "path": "gb/profiles/gold_es/rom_text.lua",
+      "sha256": "75497022723939a43995235d567e8b728037f1def194003cde8b5ee1179cfb72"
+    },
+    {
+      "path": "gb/profiles/gold_es/script_strings.lua",
+      "sha256": "0eeb7ac67d1f9d71493b8ce8ac12d55fcd1d6c40c4a8860b89918c97ea8e66b6"
+    },
+    {
+      "path": "gb/profiles/gold_es/species_names.lua",
+      "sha256": "1bdffc6c794ee1f61f978a317eaa2682ea9e079bad8248d14e7c94ccc0a903ec"
+    },
+    {
+      "path": "gb/profiles/gold_es/status_labels.lua",
+      "sha256": "fdec7fc49d898b235b0eda9e85a1dcda85f867c66ebff35fd36f7ed10169857e"
+    },
+    {
+      "path": "gb/profiles/gold_es/strings.lua",
+      "sha256": "6b9120930e1d68d1e4b67e751d487c880f019711b76db3fe06cf103a7d97053d"
+    },
+    {
+      "path": "gb/profiles/gold_es/trainer_class_names.lua",
+      "sha256": "2d5dfa34f40408fb74ae1f5c2d56e3d0b6f8e2f00453539bf4da13bbe3436877"
+    },
+    {
+      "path": "gb/profiles/gold_es/trainer_names.lua",
+      "sha256": "31744dd1fbddda02850841b853969551e4982f2a6dc0e1957f1d6190862142ef"
+    },
+    {
+      "path": "gb/profiles/gold_es/type_names.lua",
+      "sha256": "4deda9d73ee5cb42813dc8b9f7254a9615e3f49a4e935a0a09cc4c56e0fa5d5a"
+    },
+    {
+      "path": "gb/profiles/gold_fr/assets.lua",
+      "sha256": "f1558df7a06cbc38e7dbe265f667cc2f923c03073a68e56fcb91cd1b9d249001"
+    },
+    {
+      "path": "gb/profiles/gold_fr/dex_entries.lua",
+      "sha256": "812da6cd67bc240b5a0d401f570bff2e347be36e5218121d743262832aa127d0"
+    },
+    {
+      "path": "gb/profiles/gold_fr/dex_metrics.lua",
+      "sha256": "82f2f2364584bc8e4a4ebb9b8347bfdd7b34489a1705403d4ce5ec9203d2330e"
+    },
+    {
+      "path": "gb/profiles/gold_fr/dialogue.lua",
+      "sha256": "d5b4b4d05b1c9d208ade70c646469373ef8df592367e7bf9182ed549ecb5f68a"
+    },
+    {
+      "path": "gb/profiles/gold_fr/item_descriptions.lua",
+      "sha256": "1c9e90267e92b0e7694d760100e0735a6d5f80c65e8037ca915cbdb868d6424b"
+    },
+    {
+      "path": "gb/profiles/gold_fr/item_names.lua",
+      "sha256": "059ef9236678f36b28888279508bb2aebb638afa2a9f80bdc59edca8b1a4e997"
+    },
+    {
+      "path": "gb/profiles/gold_fr/landmark_names.lua",
+      "sha256": "6ce0b40429d277fe8ff7a7435e85ac7a9cec8ea71b9f1e5c8495104c6397d1ed"
+    },
+    {
+      "path": "gb/profiles/gold_fr/layouts.lua",
+      "sha256": "07ef3ff05bbf8623c9ffbac69487161c4c71db0d5507085660364d65a8147195"
+    },
+    {
+      "path": "gb/profiles/gold_fr/mon_names.lua",
+      "sha256": "da92c5a17f6de8918ffc3597583b8daea8a429f87d20f56bc1ab6adc8edf5ce3"
+    },
+    {
+      "path": "gb/profiles/gold_fr/move_descriptions.lua",
+      "sha256": "755e307917fe4a461bc4343133d9bbc8c70c8cce7b40b2d4b75f2cbe7f2ee91b"
+    },
+    {
+      "path": "gb/profiles/gold_fr/move_names.lua",
+      "sha256": "deba539606b3ad27815c5201255ac5e3cf3a94dbc75ceaeece4e1cd71690d818"
+    },
+    {
+      "path": "gb/profiles/gold_fr/profile.lua",
+      "sha256": "bc739eec2ce06860c91abfe0c037ce530bf021049f26d0ef37d72f7f3bfc5479"
+    },
+    {
+      "path": "gb/profiles/gold_fr/rom_text.lua",
+      "sha256": "37f0abae58d2c5524561d745ff4afc1fb10f79c017e097c27fc51e96730057e9"
+    },
+    {
+      "path": "gb/profiles/gold_fr/script_strings.lua",
+      "sha256": "17909bec7e900a27e808938f41e74a40cc427382a44ac22d15e72be6f2cfcf0a"
+    },
+    {
+      "path": "gb/profiles/gold_fr/species_names.lua",
+      "sha256": "fa0bacaa6ff5d9b5087abb9bb435bdf0157b067b782c77776dbe4f648eb14986"
+    },
+    {
+      "path": "gb/profiles/gold_fr/status_labels.lua",
+      "sha256": "9f858eacc3d00624ada2244e40c44014f4b546ebdc79ba4aa245ff4b4baed4a4"
+    },
+    {
+      "path": "gb/profiles/gold_fr/strings.lua",
+      "sha256": "2bac1a8ef8cfbaefe8a089d0f099a7c22263d2f8b3c729befe13c9f057d4a914"
+    },
+    {
+      "path": "gb/profiles/gold_fr/trainer_class_names.lua",
+      "sha256": "d85e828ebfb039388a5e930dea76980f8345578a583b4067d447856b7004abaf"
+    },
+    {
+      "path": "gb/profiles/gold_fr/trainer_names.lua",
+      "sha256": "29659a5baaf1b48b65b8c16b8f688803547f32912c21b60894a43893386c0ca3"
+    },
+    {
+      "path": "gb/profiles/gold_fr/type_names.lua",
+      "sha256": "08d1d3407ef007dcc26763ed8502684e99fe4a7c93c3f3d7cb9684aa0bf1cb84"
+    },
+    {
+      "path": "gb/profiles/gold_it/assets.lua",
+      "sha256": "491bda8104b43a66a572621791866a5daed43a38cf2339043e8f4a6d33abc405"
+    },
+    {
+      "path": "gb/profiles/gold_it/dex_entries.lua",
+      "sha256": "1e5e8b26576aa6da394e1f1cf5a32a129763accf5772f6cdc14da477c37b7adf"
+    },
+    {
+      "path": "gb/profiles/gold_it/dex_metrics.lua",
+      "sha256": "82f2f2364584bc8e4a4ebb9b8347bfdd7b34489a1705403d4ce5ec9203d2330e"
+    },
+    {
+      "path": "gb/profiles/gold_it/dialogue.lua",
+      "sha256": "533603098f1873bd06501dba1d51031021e0b4cc7cb665ade4c61f696484ff8f"
+    },
+    {
+      "path": "gb/profiles/gold_it/item_descriptions.lua",
+      "sha256": "1a21ba50075641dccdf7c9f47c32e466df9c4b78f70f191b3bb53037a7b86c09"
+    },
+    {
+      "path": "gb/profiles/gold_it/item_names.lua",
+      "sha256": "b6b8be66f19ed71e1387ba9fbe9b76a630d602a8a5943207f6dda32b6af40111"
+    },
+    {
+      "path": "gb/profiles/gold_it/landmark_names.lua",
+      "sha256": "4ef35d91a2ffaffd6135a9201766855444b2de542301c89c9ede1db562632e21"
+    },
+    {
+      "path": "gb/profiles/gold_it/layouts.lua",
+      "sha256": "df8b6cc1b8ac10bd511e757093c4a60a6d1b6332c71a75ee8b9f9a3a5a014f74"
+    },
+    {
+      "path": "gb/profiles/gold_it/mon_names.lua",
+      "sha256": "9b24be8f907da48c6999fbd15a41a4191981692ba3f942271c8bd44109b0f090"
+    },
+    {
+      "path": "gb/profiles/gold_it/move_descriptions.lua",
+      "sha256": "4ccbe1897d093e32993dd31343b1df4bb1c2246268a4f75381bdf09cef9911bc"
+    },
+    {
+      "path": "gb/profiles/gold_it/move_names.lua",
+      "sha256": "5ccf504af586609b64e1de4c4699721952a191ba7e24e905a292997bc4438639"
+    },
+    {
+      "path": "gb/profiles/gold_it/profile.lua",
+      "sha256": "6df5b101f87d2f2fa68e11a5e3d765c2be4e82bebf06164638fae892ca54bbfa"
+    },
+    {
+      "path": "gb/profiles/gold_it/rom_text.lua",
+      "sha256": "2cd125cc81752d704b1543b86ec1a22baad5aa54d9c5e5821685e2b94347a0c6"
+    },
+    {
+      "path": "gb/profiles/gold_it/script_strings.lua",
+      "sha256": "9ed7ac967ee3e37faccf05a0e7a0586b11f9d33de90ca2c4f60fa56841e951fd"
+    },
+    {
+      "path": "gb/profiles/gold_it/species_names.lua",
+      "sha256": "44cad9dad98f6a9bad17ccc8372d9aadfede2ce71f23d3aa825ef6b808ef55e9"
+    },
+    {
+      "path": "gb/profiles/gold_it/status_labels.lua",
+      "sha256": "304de147a93d6b15523a5f205057ae198cce1ba237aac2b8118b9124c03f9c93"
+    },
+    {
+      "path": "gb/profiles/gold_it/strings.lua",
+      "sha256": "4a175cc0af41edf9031c93feae066436eb8612837faf396b05d386ccfdce31e6"
+    },
+    {
+      "path": "gb/profiles/gold_it/trainer_class_names.lua",
+      "sha256": "9bddd058e458b9edf43afc65e900fe183c0bf2857439dabe61a3178979664fbf"
+    },
+    {
+      "path": "gb/profiles/gold_it/trainer_names.lua",
+      "sha256": "b2d4afbb3a4fbfa6d996a4996ecfbd5419d8a4b13ec881a91b455f3969f74c1c"
+    },
+    {
+      "path": "gb/profiles/gold_it/type_names.lua",
+      "sha256": "2650b9162ce2b0d598dc1b02f0ca8c3bfd81cd9621131cf944b469c9719756c7"
+    },
+    {
+      "path": "gb/profiles/gold_ko/assets.lua",
+      "sha256": "6964266973a4b9940c4da25fbe07a87ae3cea7026612123045b3db9813c4868e"
+    },
+    {
+      "path": "gb/profiles/gold_ko/dex_entries.lua",
+      "sha256": "2c41aaa1db4b2f64b4249817f16e6f4c089ebf24b6ed0b3c9f5741c67ff37947"
+    },
+    {
+      "path": "gb/profiles/gold_ko/dex_metrics.lua",
+      "sha256": "82f2f2364584bc8e4a4ebb9b8347bfdd7b34489a1705403d4ce5ec9203d2330e"
+    },
+    {
+      "path": "gb/profiles/gold_ko/dialogue.lua",
+      "sha256": "e696496f346026ad2132ec24a76f39bbe9bbf324a61d9f8b9bf19bdcd19d4519"
+    },
+    {
+      "path": "gb/profiles/gold_ko/font_pages.lua",
+      "sha256": "c1b2bdff7704104950a55dbed462e038458b528a76e520fd8717a4d6a576ccdb"
+    },
+    {
+      "path": "gb/profiles/gold_ko/item_descriptions.lua",
+      "sha256": "1ac69dd91290435dda320684acda8a810ec7bffdb65e670ba8d3edace3a490a8"
+    },
+    {
+      "path": "gb/profiles/gold_ko/item_names.lua",
+      "sha256": "6b1e2a224ea15ce5d60947a2d3b830983320e4b7c7d4ec43a6853a4b1fd2ebf8"
+    },
+    {
+      "path": "gb/profiles/gold_ko/landmark_names.lua",
+      "sha256": "9bab46441d80093a491c9c00b5a5afc08aab58cd4afd664b30e8e2fae119a0c0"
+    },
+    {
+      "path": "gb/profiles/gold_ko/layouts.lua",
+      "sha256": "1f4b342ed32cffdafbf786095beba681dcbb8e0d527ea16c43c26d7180d58c82"
+    },
+    {
+      "path": "gb/profiles/gold_ko/mon_names.lua",
+      "sha256": "67177b7209555dfba40219170403ca0fdf82c1f6618fd7985c5a324c91e091aa"
+    },
+    {
+      "path": "gb/profiles/gold_ko/move_descriptions.lua",
+      "sha256": "084d5b19f14912249335ad55faba4dfc1c53ac97b8a070ab1e1b6bfe0e503e82"
+    },
+    {
+      "path": "gb/profiles/gold_ko/move_names.lua",
+      "sha256": "d41e5e5e0e001d4595e0289544b529855ef1d36d0e5197cbcb4cf49369bdba64"
+    },
+    {
+      "path": "gb/profiles/gold_ko/profile.lua",
+      "sha256": "67bc77cea3c0aa4c76866fdb371405703e8017dc513c75085646f390a4770dfc"
+    },
+    {
+      "path": "gb/profiles/gold_ko/rom_text.lua",
+      "sha256": "755aeb5406033479296f4e21078514311a48d80da538375d8d4f676c0f79f2ca"
+    },
+    {
+      "path": "gb/profiles/gold_ko/script_strings.lua",
+      "sha256": "6a8e0f4fa2ef8a985bbab416556bd7e1ef3f8c769155c27b841ebcbb8f8602e8"
+    },
+    {
+      "path": "gb/profiles/gold_ko/species_names.lua",
+      "sha256": "e06fa6eb1f5c1daa7ca3d38a89fe608c5b1b0f5fefb29e7619f3ebd82f7b49b2"
+    },
+    {
+      "path": "gb/profiles/gold_ko/status_labels.lua",
+      "sha256": "ec3b94f85f6ceeefe046794bd5f5806cc85c70b9ae757bf450b3d196f366877c"
+    },
+    {
+      "path": "gb/profiles/gold_ko/strings.lua",
+      "sha256": "324e3ac12dc9782ae8fc837c437f679feb1ea56f568f5f03776a96b5137d1878"
+    },
+    {
+      "path": "gb/profiles/gold_ko/text_arguments.lua",
+      "sha256": "ad6df0433cb44def8dd1162e28d048baffd1b81ba9194725f2666ac3f5eee4b7"
+    },
+    {
+      "path": "gb/profiles/gold_ko/trainer_class_names.lua",
+      "sha256": "5ea7a5c47a96fd52f56b09b1adb750419f576bd9e9cf6903155984bc79b0cfa2"
+    },
+    {
+      "path": "gb/profiles/gold_ko/trainer_names.lua",
+      "sha256": "5b2005cfcc6f678169892b414a3c6903e6a07b340082d822005a6089f71e2937"
+    },
+    {
+      "path": "gb/profiles/gold_ko/type_names.lua",
+      "sha256": "8979b9001aa6063e4570aa72cda6bb8c44c0b0e3ccd907e0fdb5b3167f624323"
+    },
+    {
+      "path": "gb/profiles/gold_ptbr/assets.lua",
+      "sha256": "9f26092140e33d09c899c8f19327dc2f01a0d22c411a7179812612846c142ddc"
+    },
+    {
+      "path": "gb/profiles/gold_ptbr/dex_entries.lua",
+      "sha256": "7f55b1a59ae7720be6bf7add082aa2437914bc1d55f5afa91bf0a38b6e6328e4"
+    },
+    {
+      "path": "gb/profiles/gold_ptbr/dialogue.lua",
+      "sha256": "5c2f2a9fc27ce7fbe14dc009ce864be0aa46b0a019145ac51c43d77e6958d2eb"
+    },
+    {
+      "path": "gb/profiles/gold_ptbr/item_descriptions.lua",
+      "sha256": "e4958b1fa1ef0fea32bef455013c689fca76f6b94d9f6ab692b4f48a345d9ba5"
+    },
+    {
+      "path": "gb/profiles/gold_ptbr/item_names.lua",
+      "sha256": "94a4279f34601da1d9677b060128641e702a276a31f81c1134692b7332870d76"
+    },
+    {
+      "path": "gb/profiles/gold_ptbr/landmark_names.lua",
+      "sha256": "71a495d0f368b6337bd320b74b4d458f63ffa6762bedd517f303be12fc6faec0"
+    },
+    {
+      "path": "gb/profiles/gold_ptbr/move_descriptions.lua",
+      "sha256": "840e443667aa4b7df9df0d41f7a999df81f6db9837c33f7ed3d5b110a4983024"
+    },
+    {
+      "path": "gb/profiles/gold_ptbr/move_names.lua",
+      "sha256": "18e65135de918e1f90addd40e6594ee2c0f64eaba4859cd31c80fe2efb26694e"
+    },
+    {
+      "path": "gb/profiles/gold_ptbr/profile.lua",
+      "sha256": "2e74827f077f90c2b0443c37de26cd5e7e4cb6a9b70e0a70e8650d52902c87e5"
+    },
+    {
+      "path": "gb/profiles/gold_ptbr/species_names.lua",
+      "sha256": "f527ebd72f0dc644f0836da5e40e3a23fb329507de299eaac7706a83670a6946"
+    },
+    {
+      "path": "gb/profiles/gold_ptbr/status_labels.lua",
+      "sha256": "406fb1cbec267b3eb0198ea7df266bbd135a2a948b44a25e1861c8fdac0e9ad8"
+    },
+    {
+      "path": "gb/profiles/gold_ptbr/strings.lua",
+      "sha256": "883d6e290411a6eef4f509265855f930a1af0099235d8e5e80fe718b1dd9c79c"
+    },
+    {
+      "path": "gb/profiles/gold_ptbr/trainer_class_names.lua",
+      "sha256": "d769d6b91c0536b0668017b8c4f6d86f6fc438e770aef1b06672929ff1b581c6"
+    },
+    {
+      "path": "gb/profiles/gold_ptbr/type_names.lua",
+      "sha256": "55ea5eb0bb3805480a14462ef72ecb33d666c2c12f14c96f266419554d60afd2"
+    },
+    {
+      "path": "gb/profiles/red/assets.lua",
+      "sha256": "90465d20ed17a241c296be3a7b2f12df587e2ee71a1422965a2a97e0c42f6928"
+    },
+    {
+      "path": "gb/profiles/red/dex_kinds.lua",
+      "sha256": "e3b883fb947021583581b8108815ab3eb588c73ecb58048d0785371cdca28cfa"
+    },
+    {
+      "path": "gb/profiles/red/dialogue.lua",
+      "sha256": "d6a314835f86b5cffc35e3b484fa3003abde52da8579cf02e48ab36d77725e7e"
+    },
+    {
+      "path": "gb/profiles/red/item_names.lua",
+      "sha256": "f3782a85a29a20ce9b7f5c03db9e4beb0d52b6d9167926b29dfb797ed03dacaa"
+    },
+    {
+      "path": "gb/profiles/red/map_names.lua",
+      "sha256": "161ad0934490fd726329b18d58d71c5710cae7353c1378a24bd162ccd38dad15"
+    },
+    {
+      "path": "gb/profiles/red/mon_names.lua",
+      "sha256": "e92ba65b6a5e8c78df6d99ef98c79d4d4ebfdef65133fdef07103d4e50d80cad"
+    },
+    {
+      "path": "gb/profiles/red/move_names.lua",
+      "sha256": "062445c77b5e0df5a4845e373b144df1808250e41ff44c4eab12db9ff4f4afc0"
+    },
+    {
+      "path": "gb/profiles/red/naming.lua",
+      "sha256": "958128af86719460e2f8821a0dc354307e960e90aed4d2bd0d8eac74ae7a9ad9"
+    },
+    {
+      "path": "gb/profiles/red/profile.lua",
+      "sha256": "3f732e92e7fd0691ca82d9aaf4700b52e80c8517a7f5f24b689f08780bf83b69"
+    },
+    {
+      "path": "gb/profiles/red/runtime_text.lua",
+      "sha256": "14a653b63ff013946dd2f7ad512c562d745ec005f6fe6d0565259418756042af"
+    },
+    {
+      "path": "gb/profiles/red/species_names.lua",
+      "sha256": "a1b53313be794b8f97c78c64be692f89f5d2f17fe73fdedbb8b30a3fa225c1b5"
+    },
+    {
+      "path": "gb/profiles/red/status_labels.lua",
+      "sha256": "9edbd47358325a96ef5d741d30aec3d55dfe981b75404fefadab5f80f7df145d"
+    },
+    {
+      "path": "gb/profiles/red/strings.lua",
+      "sha256": "1eca5a7db8c4ba64a59a4d00fb087252067bbf62d4d1f267a7a0411a693f6850"
+    },
+    {
+      "path": "gb/profiles/red/trainer_names.lua",
+      "sha256": "e0c750c6d2eb825a9d973b553dbc60b99f5c6be9984e73a192d85978ea40f926"
+    },
+    {
+      "path": "gb/profiles/red/type_names.lua",
+      "sha256": "b70d2453796832ec6d65bae41faa5fb7cb9df2406893bd3eb72a1baa71f126e4"
+    },
+    {
+      "path": "gb/profiles/red_es/assets.lua",
+      "sha256": "a6f143843a789339f4642e08c529a94f85ef06af4d8304b67df1a5046f90cd9e"
+    },
+    {
+      "path": "gb/profiles/red_es/dex_kinds.lua",
+      "sha256": "6d70d386c524153b37fa24a0ed2a457c8b2549cb0c1988cdd7ff3332a89aa4c9"
+    },
+    {
+      "path": "gb/profiles/red_es/dex_metrics.lua",
+      "sha256": "faa12b9672baac3e022029afd5fcb66567f891006a71cf80908ccd1fdf63e0ff"
+    },
+    {
+      "path": "gb/profiles/red_es/dialogue.lua",
+      "sha256": "2b714055d5377bc0a450333170e15a0dd84c431235dc1c693736a60d7359fc53"
+    },
+    {
+      "path": "gb/profiles/red_es/item_names.lua",
+      "sha256": "1707b8bcdf62f577123bedd4a67e351457cea36d1e594c582b4853fd3a66ab0e"
+    },
+    {
+      "path": "gb/profiles/red_es/mon_names.lua",
+      "sha256": "d0885d3e701ba9da4798b9c05599beb25c49aa16bc221f555d9bdd3d2a1c6f6c"
+    },
+    {
+      "path": "gb/profiles/red_es/move_names.lua",
+      "sha256": "888472f7e308cd58309aed38ee79d35186a983217cf491bab53f589f7fc6fb31"
+    },
+    {
+      "path": "gb/profiles/red_es/profile.lua",
+      "sha256": "cc8737d50f78e9dee4e4a48551f7ec8b93dafaf03c4746e9dfdbefc561182df6"
+    },
+    {
+      "path": "gb/profiles/red_es/species_names.lua",
+      "sha256": "7cbaf07825d7173b8a04bdc6ee6765b2d9e1cf5c67c8bb876420e940ab901ad5"
+    },
+    {
+      "path": "gb/profiles/red_es/status_labels.lua",
+      "sha256": "fdec7fc49d898b235b0eda9e85a1dcda85f867c66ebff35fd36f7ed10169857e"
+    },
+    {
+      "path": "gb/profiles/red_es/strings.lua",
+      "sha256": "6b9120930e1d68d1e4b67e751d487c880f019711b76db3fe06cf103a7d97053d"
+    },
+    {
+      "path": "gb/profiles/red_es/trainer_names.lua",
+      "sha256": "be46a7b009c3a4d9da00ce48c66d6395b59566bcec1c2f747e069819f2e5c897"
+    },
+    {
+      "path": "gb/profiles/red_es/type_names.lua",
+      "sha256": "a7245629523a96394cadad99d63be14075a783fe39a00392e7635393b3c864e3"
+    },
+    {
+      "path": "gb/profiles/red_ptbr/assets.lua",
+      "sha256": "e88e59bbe2a3b022cf2e4c7bf8deef1bbf475af7052fca736e4fba6ee8c9615e"
+    },
+    {
+      "path": "gb/profiles/red_ptbr/credits.lua",
+      "sha256": "17b1d87fa13d1120447866a214f818d473ccd787353958ea7eeb659859924e04"
+    },
+    {
+      "path": "gb/profiles/red_ptbr/dex_kinds.lua",
+      "sha256": "3c744616d4bfbb46a4aef9e0a137aee7a0987ed30a2558d8dee0faff61e12409"
+    },
+    {
+      "path": "gb/profiles/red_ptbr/dex_metrics.lua",
+      "sha256": "16ab75bb6e3766253bb67c8f2ce5246f6edef7025f4dc8f8d3d177f9d8925686"
+    },
+    {
+      "path": "gb/profiles/red_ptbr/dialogue.lua",
+      "sha256": "640e85fc64efd171ffdc940dd3b4144c78139f31aabd601fe80de9fccca360b6"
+    },
+    {
+      "path": "gb/profiles/red_ptbr/item_names.lua",
+      "sha256": "7c526b89811cff6115663e0fea3f8a4ee70fc71c8cbb8d7ee95daefef8098b78"
+    },
+    {
+      "path": "gb/profiles/red_ptbr/move_names.lua",
+      "sha256": "c0823555d25d9a7c111a8ba0489e5efc52d1de534aedf3e20d449c712f25e3e6"
+    },
+    {
+      "path": "gb/profiles/red_ptbr/profile.lua",
+      "sha256": "c80e4bc0e4b193062f108b70316a9b90c0f8dcc2af69e90b3cb80928ae4e277a"
+    },
+    {
+      "path": "gb/profiles/red_ptbr/species_names.lua",
+      "sha256": "569e191271fafc8c968d410b10bd16dd8eb3d7f12c9249fdadba7e157ecd06b8"
+    },
+    {
+      "path": "gb/profiles/red_ptbr/status_labels.lua",
+      "sha256": "406fb1cbec267b3eb0198ea7df266bbd135a2a948b44a25e1861c8fdac0e9ad8"
+    },
+    {
+      "path": "gb/profiles/red_ptbr/strings.lua",
+      "sha256": "6b19d08a48f22c0ed5de199ac8ca08e71eccf80d66c2bdedb686eb3f94e3f808"
+    },
+    {
+      "path": "gb/profiles/red_ptbr/trainer_names.lua",
+      "sha256": "57475b947fa8d02cf0460ada59348818a55272d91e4a0a5889173254b04cfada"
+    },
+    {
+      "path": "gb/profiles/red_ptbr/type_names.lua",
+      "sha256": "892cc5239b5c4d45b7ffaa2a7b66352b42c731b4b7eade5d14faa413c5611886"
+    },
+    {
+      "path": "gb/profiles/silver/assets.lua",
+      "sha256": "4baa11aee4bbf02845e1ccf9cacfd26a01f8910305027ad79b58914fe15f0a91"
+    },
+    {
+      "path": "gb/profiles/silver/dex_entries.lua",
+      "sha256": "f6bca419fd6aaabb469e8fe0ba787a2cf24ef38d2803305d47234c6820a20f8c"
+    },
+    {
+      "path": "gb/profiles/silver/dex_kinds.lua",
+      "sha256": "1fe8222a70b9399f2660764adb599dbc616272ce1b1e39a1a059c93a99d8f870"
+    },
+    {
+      "path": "gb/profiles/silver/dialogue.lua",
+      "sha256": "a0e128d6111ae688d50d00233485d6607570b185e32a04ef329dbfcccaed60d3"
+    },
+    {
+      "path": "gb/profiles/silver/item_descriptions.lua",
+      "sha256": "c0b2412d793904c7844f9a2ee84ce218f73341eda6ad847eda164ed97dfeee36"
+    },
+    {
+      "path": "gb/profiles/silver/item_names.lua",
+      "sha256": "35c75596eaf3cd2ffde6f4c503abdc2c8e169e303973ccdae3180259d0441aa6"
+    },
+    {
+      "path": "gb/profiles/silver/landmark_names.lua",
+      "sha256": "3056f69add6972df6d4f9378cbad7778c2d1597fefd95342c959c8860c51f831"
+    },
+    {
+      "path": "gb/profiles/silver/mon_names.lua",
+      "sha256": "927a0edb9b6aef4b0b4b06f154710103ca58c43afee6ff5e6441a2ad522a14c9"
+    },
+    {
+      "path": "gb/profiles/silver/move_descriptions.lua",
+      "sha256": "73e89d521a8f762a6cbc522fdbb77abfe7897de1a96c05b18a52381d8c1bc7b5"
+    },
+    {
+      "path": "gb/profiles/silver/move_names.lua",
+      "sha256": "e7f83d326da199e8cfdf061cdecb6f98e19d9838a35eddb6ea16c4dc9d8fe3f8"
+    },
+    {
+      "path": "gb/profiles/silver/oak_speech.lua",
+      "sha256": "9643cb1a4b760a5986b3af0e9a1523c24a7f548911ea34254538136593856a14"
+    },
+    {
+      "path": "gb/profiles/silver/pokegear_radio_tilemap.lua",
+      "sha256": "913a1b6637df610a240bef7e67a1946f06be0d65ae3bf4cd1bff6388c63c2769"
+    },
+    {
+      "path": "gb/profiles/silver/profile.lua",
+      "sha256": "8886fcb4495449704ccdeff0b7f92b29e2096dd698626ce7abcbe644334f172e"
+    },
+    {
+      "path": "gb/profiles/silver/runtime_battle.lua",
+      "sha256": "5665d96f04c4f94ec1403d834ee8f9456598af9cfa38eb26f3c4cd41faa271c5"
+    },
+    {
+      "path": "gb/profiles/silver/runtime_system.lua",
+      "sha256": "de7a7768c9b95815cc3b788b3d064ae27d58fa83fde0a4f55bc3e2e39cc7bb8e"
+    },
+    {
+      "path": "gb/profiles/silver/runtime_ui.lua",
+      "sha256": "d7a1ef6b77329378926c0e73d7056cb8dd167392f4e2411d8e1edc06c158883e"
+    },
+    {
+      "path": "gb/profiles/silver/species_names.lua",
+      "sha256": "44ad77220e2ab15b5f9165026fd480d765c90c13216d29e07a25ac9d6ad02a31"
+    },
+    {
+      "path": "gb/profiles/silver/strings.lua",
+      "sha256": "10f587317834936118991039d078472bd597e45b1887cb13db040ba64f368e2e"
+    },
+    {
+      "path": "gb/profiles/silver/trainer_class_names.lua",
+      "sha256": "91ab0bd1295a4e898dfd8df0ce4eb31f0a6d8d8ca7c5a157711d626f6c78f1a1"
+    },
+    {
+      "path": "gb/profiles/silver/trainer_names.lua",
+      "sha256": "55130341640f39df84a8244f08079cd6f1a9a6a187334bce792d37d16feeb1d4"
+    },
+    {
+      "path": "gb/profiles/silver/type_names.lua",
+      "sha256": "58a81f9f1c63c30e4de983320b1e236a66de1a0765a12e79afc1dc42d9793c4e"
+    },
+    {
+      "path": "gb/profiles/silver_es/assets.lua",
+      "sha256": "4e3e2d0972cd0405095234fb37ea790b056bc5bf9f665cec5d12a61849b38f1e"
+    },
+    {
+      "path": "gb/profiles/silver_es/dex_entries.lua",
+      "sha256": "61d9d241c7a6bbc95c9f091f7de51acdfb569657c367676022bfdbcd99d5f759"
+    },
+    {
+      "path": "gb/profiles/silver_es/dex_metrics.lua",
+      "sha256": "82f2f2364584bc8e4a4ebb9b8347bfdd7b34489a1705403d4ce5ec9203d2330e"
+    },
+    {
+      "path": "gb/profiles/silver_es/dialogue.lua",
+      "sha256": "8bee31f77d35ba7eb960ed0cc4bc6f6a588486b304707c0dcff0753686f12181"
+    },
+    {
+      "path": "gb/profiles/silver_es/item_descriptions.lua",
+      "sha256": "74c6aecba1a6bafef5730fd0b11d63d9d80a791284f875f6aa46ec9d3d21b1e9"
+    },
+    {
+      "path": "gb/profiles/silver_es/item_names.lua",
+      "sha256": "c2bb74a389b1c36b39f40c92d3779a99222a1112347f5463fad4512ed29ced12"
+    },
+    {
+      "path": "gb/profiles/silver_es/landmark_names.lua",
+      "sha256": "bc6f08949bbefeaa2934d2eacef02ce29c892a4c8fb4a5c19147b3d1737ef710"
+    },
+    {
+      "path": "gb/profiles/silver_es/layouts.lua",
+      "sha256": "c718aa70499cbfad304c67801f14a75aac4d5c3b416db8bfcdd1d046d113a9c9"
+    },
+    {
+      "path": "gb/profiles/silver_es/mon_names.lua",
+      "sha256": "6002058c0dbfecb76d071eee9b8485d9df13a12d3b87135bea01c7119eb7400e"
+    },
+    {
+      "path": "gb/profiles/silver_es/move_descriptions.lua",
+      "sha256": "b755d7828d9c6666e99daf26b9d23e9cc26f79cd8571601b1f9bc3eb3cd364a1"
+    },
+    {
+      "path": "gb/profiles/silver_es/move_names.lua",
+      "sha256": "86c8d2f1dc63ae9cff8d9f5d8223807ddcee990d78795b89dad4f5b42bb18f2e"
+    },
+    {
+      "path": "gb/profiles/silver_es/profile.lua",
+      "sha256": "ee373732bd7f1f9fdc29360cd1ebe4444a6ed3c5899173a035dc6e45a869f8b2"
+    },
+    {
+      "path": "gb/profiles/silver_es/rom_text.lua",
+      "sha256": "75497022723939a43995235d567e8b728037f1def194003cde8b5ee1179cfb72"
+    },
+    {
+      "path": "gb/profiles/silver_es/script_strings.lua",
+      "sha256": "0eeb7ac67d1f9d71493b8ce8ac12d55fcd1d6c40c4a8860b89918c97ea8e66b6"
+    },
+    {
+      "path": "gb/profiles/silver_es/species_names.lua",
+      "sha256": "1bdffc6c794ee1f61f978a317eaa2682ea9e079bad8248d14e7c94ccc0a903ec"
+    },
+    {
+      "path": "gb/profiles/silver_es/status_labels.lua",
+      "sha256": "fdec7fc49d898b235b0eda9e85a1dcda85f867c66ebff35fd36f7ed10169857e"
+    },
+    {
+      "path": "gb/profiles/silver_es/strings.lua",
+      "sha256": "6b9120930e1d68d1e4b67e751d487c880f019711b76db3fe06cf103a7d97053d"
+    },
+    {
+      "path": "gb/profiles/silver_es/trainer_class_names.lua",
+      "sha256": "2d5dfa34f40408fb74ae1f5c2d56e3d0b6f8e2f00453539bf4da13bbe3436877"
+    },
+    {
+      "path": "gb/profiles/silver_es/trainer_names.lua",
+      "sha256": "31744dd1fbddda02850841b853969551e4982f2a6dc0e1957f1d6190862142ef"
+    },
+    {
+      "path": "gb/profiles/silver_es/type_names.lua",
+      "sha256": "4deda9d73ee5cb42813dc8b9f7254a9615e3f49a4e935a0a09cc4c56e0fa5d5a"
+    },
+    {
+      "path": "gb/profiles/silver_fr/assets.lua",
+      "sha256": "45030887471f5191d40f39b81efc68e768963521700096a4f939e09bae7c67ea"
+    },
+    {
+      "path": "gb/profiles/silver_fr/dex_entries.lua",
+      "sha256": "a5e203c79caf4da27fe1a4114f71cb904722a9d3c1222f29eb66d200228dde2b"
+    },
+    {
+      "path": "gb/profiles/silver_fr/dex_metrics.lua",
+      "sha256": "82f2f2364584bc8e4a4ebb9b8347bfdd7b34489a1705403d4ce5ec9203d2330e"
+    },
+    {
+      "path": "gb/profiles/silver_fr/dialogue.lua",
+      "sha256": "741be2df2e8099219bd5f05f1a3cb68c003ba97361f7ab73acb2f97c224154f3"
+    },
+    {
+      "path": "gb/profiles/silver_fr/item_descriptions.lua",
+      "sha256": "1c9e90267e92b0e7694d760100e0735a6d5f80c65e8037ca915cbdb868d6424b"
+    },
+    {
+      "path": "gb/profiles/silver_fr/item_names.lua",
+      "sha256": "059ef9236678f36b28888279508bb2aebb638afa2a9f80bdc59edca8b1a4e997"
+    },
+    {
+      "path": "gb/profiles/silver_fr/landmark_names.lua",
+      "sha256": "6ce0b40429d277fe8ff7a7435e85ac7a9cec8ea71b9f1e5c8495104c6397d1ed"
+    },
+    {
+      "path": "gb/profiles/silver_fr/layouts.lua",
+      "sha256": "ea9b24fda99c7fd22d84144e8a5aaeec05cb9bfddb6115eba03c6467609f6eab"
+    },
+    {
+      "path": "gb/profiles/silver_fr/mon_names.lua",
+      "sha256": "223d5c29d63d8dedad092fb0aa9a81f05c90e6a583b6aac92cabeec28e9d5294"
+    },
+    {
+      "path": "gb/profiles/silver_fr/move_descriptions.lua",
+      "sha256": "755e307917fe4a461bc4343133d9bbc8c70c8cce7b40b2d4b75f2cbe7f2ee91b"
+    },
+    {
+      "path": "gb/profiles/silver_fr/move_names.lua",
+      "sha256": "deba539606b3ad27815c5201255ac5e3cf3a94dbc75ceaeece4e1cd71690d818"
+    },
+    {
+      "path": "gb/profiles/silver_fr/profile.lua",
+      "sha256": "59783fa491f9643038f3e70c7b074d3174b91a184f33084f980b9fe3ee19c023"
+    },
+    {
+      "path": "gb/profiles/silver_fr/rom_text.lua",
+      "sha256": "37f0abae58d2c5524561d745ff4afc1fb10f79c017e097c27fc51e96730057e9"
+    },
+    {
+      "path": "gb/profiles/silver_fr/script_strings.lua",
+      "sha256": "17909bec7e900a27e808938f41e74a40cc427382a44ac22d15e72be6f2cfcf0a"
+    },
+    {
+      "path": "gb/profiles/silver_fr/species_names.lua",
+      "sha256": "fa0bacaa6ff5d9b5087abb9bb435bdf0157b067b782c77776dbe4f648eb14986"
+    },
+    {
+      "path": "gb/profiles/silver_fr/status_labels.lua",
+      "sha256": "9f858eacc3d00624ada2244e40c44014f4b546ebdc79ba4aa245ff4b4baed4a4"
+    },
+    {
+      "path": "gb/profiles/silver_fr/strings.lua",
+      "sha256": "2bac1a8ef8cfbaefe8a089d0f099a7c22263d2f8b3c729befe13c9f057d4a914"
+    },
+    {
+      "path": "gb/profiles/silver_fr/trainer_class_names.lua",
+      "sha256": "d85e828ebfb039388a5e930dea76980f8345578a583b4067d447856b7004abaf"
+    },
+    {
+      "path": "gb/profiles/silver_fr/trainer_names.lua",
+      "sha256": "29659a5baaf1b48b65b8c16b8f688803547f32912c21b60894a43893386c0ca3"
+    },
+    {
+      "path": "gb/profiles/silver_fr/type_names.lua",
+      "sha256": "08d1d3407ef007dcc26763ed8502684e99fe4a7c93c3f3d7cb9684aa0bf1cb84"
+    },
+    {
+      "path": "gb/profiles/silver_ko/assets.lua",
+      "sha256": "4765dfa29a24f65f83622bd668d91ac95122a2879a94028785a005004ef67c03"
+    },
+    {
+      "path": "gb/profiles/silver_ko/dex_entries.lua",
+      "sha256": "7d4cb23475cdea7202e16c9ffe16a1e0bf0f86d5f2fc4573ad934f7668335464"
+    },
+    {
+      "path": "gb/profiles/silver_ko/dex_metrics.lua",
+      "sha256": "82f2f2364584bc8e4a4ebb9b8347bfdd7b34489a1705403d4ce5ec9203d2330e"
+    },
+    {
+      "path": "gb/profiles/silver_ko/dialogue.lua",
+      "sha256": "b9f295e54bebfc4be01e233564ed93366187a61d2b225598bfbbe10f4e350a34"
+    },
+    {
+      "path": "gb/profiles/silver_ko/font_pages.lua",
+      "sha256": "c1b2bdff7704104950a55dbed462e038458b528a76e520fd8717a4d6a576ccdb"
+    },
+    {
+      "path": "gb/profiles/silver_ko/item_descriptions.lua",
+      "sha256": "1ac69dd91290435dda320684acda8a810ec7bffdb65e670ba8d3edace3a490a8"
+    },
+    {
+      "path": "gb/profiles/silver_ko/item_names.lua",
+      "sha256": "6b1e2a224ea15ce5d60947a2d3b830983320e4b7c7d4ec43a6853a4b1fd2ebf8"
+    },
+    {
+      "path": "gb/profiles/silver_ko/landmark_names.lua",
+      "sha256": "9bab46441d80093a491c9c00b5a5afc08aab58cd4afd664b30e8e2fae119a0c0"
+    },
+    {
+      "path": "gb/profiles/silver_ko/layouts.lua",
+      "sha256": "1f4b342ed32cffdafbf786095beba681dcbb8e0d527ea16c43c26d7180d58c82"
+    },
+    {
+      "path": "gb/profiles/silver_ko/mon_names.lua",
+      "sha256": "f00687a61fbd626c5f38999e58ce675328c60d008849dc7e71c84d5cd75406d7"
+    },
+    {
+      "path": "gb/profiles/silver_ko/move_descriptions.lua",
+      "sha256": "084d5b19f14912249335ad55faba4dfc1c53ac97b8a070ab1e1b6bfe0e503e82"
+    },
+    {
+      "path": "gb/profiles/silver_ko/move_names.lua",
+      "sha256": "d41e5e5e0e001d4595e0289544b529855ef1d36d0e5197cbcb4cf49369bdba64"
+    },
+    {
+      "path": "gb/profiles/silver_ko/profile.lua",
+      "sha256": "e87657b1a5bb7798f328a6935f87f0d29496adb7ae264cf6539d596a252482c1"
+    },
+    {
+      "path": "gb/profiles/silver_ko/rom_text.lua",
+      "sha256": "755aeb5406033479296f4e21078514311a48d80da538375d8d4f676c0f79f2ca"
+    },
+    {
+      "path": "gb/profiles/silver_ko/script_strings.lua",
+      "sha256": "6a8e0f4fa2ef8a985bbab416556bd7e1ef3f8c769155c27b841ebcbb8f8602e8"
+    },
+    {
+      "path": "gb/profiles/silver_ko/species_names.lua",
+      "sha256": "e06fa6eb1f5c1daa7ca3d38a89fe608c5b1b0f5fefb29e7619f3ebd82f7b49b2"
+    },
+    {
+      "path": "gb/profiles/silver_ko/status_labels.lua",
+      "sha256": "ec3b94f85f6ceeefe046794bd5f5806cc85c70b9ae757bf450b3d196f366877c"
+    },
+    {
+      "path": "gb/profiles/silver_ko/strings.lua",
+      "sha256": "324e3ac12dc9782ae8fc837c437f679feb1ea56f568f5f03776a96b5137d1878"
+    },
+    {
+      "path": "gb/profiles/silver_ko/text_arguments.lua",
+      "sha256": "ad6df0433cb44def8dd1162e28d048baffd1b81ba9194725f2666ac3f5eee4b7"
+    },
+    {
+      "path": "gb/profiles/silver_ko/trainer_class_names.lua",
+      "sha256": "5ea7a5c47a96fd52f56b09b1adb750419f576bd9e9cf6903155984bc79b0cfa2"
+    },
+    {
+      "path": "gb/profiles/silver_ko/trainer_names.lua",
+      "sha256": "5b2005cfcc6f678169892b414a3c6903e6a07b340082d822005a6089f71e2937"
+    },
+    {
+      "path": "gb/profiles/silver_ko/type_names.lua",
+      "sha256": "8979b9001aa6063e4570aa72cda6bb8c44c0b0e3ccd907e0fdb5b3167f624323"
+    },
+    {
+      "path": "gb/profiles/silver_ptbr/assets.lua",
+      "sha256": "bc5bc1c639dda81c8f2c7ed1314721705a5e31418788e41cced432156df7a045"
+    },
+    {
+      "path": "gb/profiles/silver_ptbr/dex_entries.lua",
+      "sha256": "3286e488c55492bf0daeecd7ec8fb1c33e13504ed833e90b6c910ae1c1d39bf0"
+    },
+    {
+      "path": "gb/profiles/silver_ptbr/dialogue.lua",
+      "sha256": "b8caf9fcceebbbbceb7857cc20f853d09df4edf439f109fb08729b36b8b98f3d"
+    },
+    {
+      "path": "gb/profiles/silver_ptbr/item_descriptions.lua",
+      "sha256": "e4958b1fa1ef0fea32bef455013c689fca76f6b94d9f6ab692b4f48a345d9ba5"
+    },
+    {
+      "path": "gb/profiles/silver_ptbr/item_names.lua",
+      "sha256": "461fa3b01c9fadeb33cb4c7a6b2a28e06c68b0da6d39fa4ef2169f751577e457"
+    },
+    {
+      "path": "gb/profiles/silver_ptbr/landmark_names.lua",
+      "sha256": "71a495d0f368b6337bd320b74b4d458f63ffa6762bedd517f303be12fc6faec0"
+    },
+    {
+      "path": "gb/profiles/silver_ptbr/move_descriptions.lua",
+      "sha256": "840e443667aa4b7df9df0d41f7a999df81f6db9837c33f7ed3d5b110a4983024"
+    },
+    {
+      "path": "gb/profiles/silver_ptbr/move_names.lua",
+      "sha256": "18e65135de918e1f90addd40e6594ee2c0f64eaba4859cd31c80fe2efb26694e"
+    },
+    {
+      "path": "gb/profiles/silver_ptbr/profile.lua",
+      "sha256": "cc7113c56326185b7f8165b1d153ca313becdcf24715f88c7b978de17901590e"
+    },
+    {
+      "path": "gb/profiles/silver_ptbr/species_names.lua",
+      "sha256": "f527ebd72f0dc644f0836da5e40e3a23fb329507de299eaac7706a83670a6946"
+    },
+    {
+      "path": "gb/profiles/silver_ptbr/status_labels.lua",
+      "sha256": "406fb1cbec267b3eb0198ea7df266bbd135a2a948b44a25e1861c8fdac0e9ad8"
+    },
+    {
+      "path": "gb/profiles/silver_ptbr/strings.lua",
+      "sha256": "0a496c8ff0606f05bb783799877f462dccdda47091f9273e34d2a9671b0adc72"
+    },
+    {
+      "path": "gb/profiles/silver_ptbr/trainer_class_names.lua",
+      "sha256": "d769d6b91c0536b0668017b8c4f6d86f6fc438e770aef1b06672929ff1b581c6"
+    },
+    {
+      "path": "gb/profiles/silver_ptbr/type_names.lua",
+      "sha256": "55ea5eb0bb3805480a14462ef72ecb33d666c2c12f14c96f266419554d60afd2"
+    },
+    {
+      "path": "gb/profiles/yellow/assets.lua",
+      "sha256": "4a4adfc70cd3d77ff1afb36dccee97239efdc80d424c57b5cd6ca040d012f047"
+    },
+    {
+      "path": "gb/profiles/yellow/dex_kinds.lua",
+      "sha256": "18cc26e21d0ff7889d620baa6991a570b082dbba57f16ffd4932c711f91b5b54"
+    },
+    {
+      "path": "gb/profiles/yellow/dialogue.lua",
+      "sha256": "bfc5f4f359a02d6709c78f52e637617dbd59ba8358cc84ef091d5e2e351fd8e2"
+    },
+    {
+      "path": "gb/profiles/yellow/dialogue_aliases.lua",
+      "sha256": "6ee96cd1b848aaeab4237ab5881c6d6dad03b7d031f9cfb398dda0fcce865351"
+    },
+    {
+      "path": "gb/profiles/yellow/item_names.lua",
+      "sha256": "66f87ab5b357ec88090952a61f13cbf889cc229e9f8f8fe136122e3da09f2204"
+    },
+    {
+      "path": "gb/profiles/yellow/map_names.lua",
+      "sha256": "9bb93c5a660563d491e49f29ec9bd117be08415a7cf784a94994a6d3fddd9aff"
+    },
+    {
+      "path": "gb/profiles/yellow/mon_names.lua",
+      "sha256": "077961c50d65159d6c6e5c6e8fa9be14bbdccaefdf093aee3af260e8320522b7"
+    },
+    {
+      "path": "gb/profiles/yellow/move_names.lua",
+      "sha256": "091262b64c98185260264ce9f4ca424f2ef70085439befde4fc367f7bf005047"
+    },
+    {
+      "path": "gb/profiles/yellow/naming.lua",
+      "sha256": "0bf8467bd929649a499d54e08c57e8ba58db848810d72124aedb1b457be656f0"
+    },
+    {
+      "path": "gb/profiles/yellow/profile.lua",
+      "sha256": "f756c1ddf89f17acc5fe1dca3fcb9fd823e2c1a6a49f25aacc7e2ead33e73d2f"
+    },
+    {
+      "path": "gb/profiles/yellow/runtime_text.lua",
+      "sha256": "b6b705ea62c346b6d0a40a34d728ae5983d2b2ca41fa0b746d12016797509fe7"
+    },
+    {
+      "path": "gb/profiles/yellow/species_names.lua",
+      "sha256": "f9d2612a8acbad2ba1a9e3888149273d4ae6ff300ad0a1f12cea354c96986e58"
+    },
+    {
+      "path": "gb/profiles/yellow/status_labels.lua",
+      "sha256": "b9f6344c050b06734f8f025b66f3bdf2cac7a1c03a9d247132f7556a3f962109"
+    },
+    {
+      "path": "gb/profiles/yellow/strings.lua",
+      "sha256": "a4e748ed0c75bde9ac86f2a67b2235266f15136d5038b462cd89b25d5c1d739a"
+    },
+    {
+      "path": "gb/profiles/yellow/trainer_names.lua",
+      "sha256": "efc8cf3c76e6a4203e09b7028a3512695a48c32cbb217ef5e833f6a4cf19a73b"
+    },
+    {
+      "path": "gb/profiles/yellow/type_names.lua",
+      "sha256": "c76b2f0f4ed2bfb81fffc90ecbe01f26f9a99306c019d0b143eb6bbf960d1f11"
+    },
+    {
+      "path": "gb/profiles/yellow_es/assets.lua",
+      "sha256": "21c957a23ce720e9bbe3fe95365abc777d98e303794d227af699416db6345f40"
+    },
+    {
+      "path": "gb/profiles/yellow_es/dex_kinds.lua",
+      "sha256": "5f49539932538a5b15118d49012456c4eeba3dce92ee411a860c43ab3cd408ff"
+    },
+    {
+      "path": "gb/profiles/yellow_es/dex_metrics.lua",
+      "sha256": "faa12b9672baac3e022029afd5fcb66567f891006a71cf80908ccd1fdf63e0ff"
+    },
+    {
+      "path": "gb/profiles/yellow_es/dialogue.lua",
+      "sha256": "c2960f0a102449e829475f8303a4a5f4c671d758f515931658e3f5dd08de2c53"
+    },
+    {
+      "path": "gb/profiles/yellow_es/item_names.lua",
+      "sha256": "acc627742a6dd8426afb2592eb4e1a20de9749e6e839de3bfd206d6a7e23c8ca"
+    },
+    {
+      "path": "gb/profiles/yellow_es/mon_names.lua",
+      "sha256": "99a74819cc63be1402880703d714d95d722e1af4ef268874ba31b6532b429350"
+    },
+    {
+      "path": "gb/profiles/yellow_es/move_names.lua",
+      "sha256": "373fe9e7f244012f20e3a197bde5c9d3452429097cb7f52787cd38b40763d323"
+    },
+    {
+      "path": "gb/profiles/yellow_es/profile.lua",
+      "sha256": "077d645da33d4abba7e57cacda04c5fbf6ba63bc6447e7426a45911019155c10"
+    },
+    {
+      "path": "gb/profiles/yellow_es/species_names.lua",
+      "sha256": "7774fa05bb3d86d6fc059b0c0e911a8e313b37530407752cceb1b460ebbb2380"
+    },
+    {
+      "path": "gb/profiles/yellow_es/status_labels.lua",
+      "sha256": "fdec7fc49d898b235b0eda9e85a1dcda85f867c66ebff35fd36f7ed10169857e"
+    },
+    {
+      "path": "gb/profiles/yellow_es/strings.lua",
+      "sha256": "6b9120930e1d68d1e4b67e751d487c880f019711b76db3fe06cf103a7d97053d"
+    },
+    {
+      "path": "gb/profiles/yellow_es/trainer_names.lua",
+      "sha256": "e9750f60b79318f86c4e4092ff922ffd5739b61a96cf87552fcd715780611b02"
+    },
+    {
+      "path": "gb/profiles/yellow_es/type_names.lua",
+      "sha256": "d2dc530592f6a1fb23d6fc249ea9ae74ce8fc88f165e286da9c6c38f1cd523a0"
+    },
+    {
+      "path": "gb/profiles/yellow_ptbr/assets.lua",
+      "sha256": "3d121b1428e9c35bb22cb213b42686808e04c6b933ce1091e336c229adbdccd3"
+    },
+    {
+      "path": "gb/profiles/yellow_ptbr/credits.lua",
+      "sha256": "bf46177234ae54f295362ffa9720372a9c89326678bece0808500335297dcc61"
+    },
+    {
+      "path": "gb/profiles/yellow_ptbr/dex_kinds.lua",
+      "sha256": "699bd12cebfe3838bea9fa6c56305d2419c8bdb6921f8726db5cedfcbab67337"
+    },
+    {
+      "path": "gb/profiles/yellow_ptbr/dex_metrics.lua",
+      "sha256": "16ab75bb6e3766253bb67c8f2ce5246f6edef7025f4dc8f8d3d177f9d8925686"
+    },
+    {
+      "path": "gb/profiles/yellow_ptbr/dialogue.lua",
+      "sha256": "39cf92becb9e0ff118261cc2c49ffbbec06d80ea887617c44623fb455c4ade4a"
+    },
+    {
+      "path": "gb/profiles/yellow_ptbr/diploma.lua",
+      "sha256": "ac5d5254a3d33c82e69d12f86b9e5f9ad8d3277a4aec80f110b611a46e72afb7"
+    },
+    {
+      "path": "gb/profiles/yellow_ptbr/diploma_text.lua",
+      "sha256": "7dca417c4c9254069830725b961af1340df578dde8535e46156646016503d474"
+    },
+    {
+      "path": "gb/profiles/yellow_ptbr/item_names.lua",
+      "sha256": "b03ca407d9f935704e4cf9a2a8b3668f18ef5e2727a2c2cfb264d6a66a3c3513"
+    },
+    {
+      "path": "gb/profiles/yellow_ptbr/move_names.lua",
+      "sha256": "c0823555d25d9a7c111a8ba0489e5efc52d1de534aedf3e20d449c712f25e3e6"
+    },
+    {
+      "path": "gb/profiles/yellow_ptbr/profile.lua",
+      "sha256": "68e7fa7cd6b07e0dd03850ff6a4710d1a638b52e6854e695d374619018526971"
+    },
+    {
+      "path": "gb/profiles/yellow_ptbr/species_names.lua",
+      "sha256": "ba7d52fdd1fb4f941adfb0d980203b462130e638ca5d9513268ee93f76ec0893"
+    },
+    {
+      "path": "gb/profiles/yellow_ptbr/status_labels.lua",
+      "sha256": "406fb1cbec267b3eb0198ea7df266bbd135a2a948b44a25e1861c8fdac0e9ad8"
+    },
+    {
+      "path": "gb/profiles/yellow_ptbr/strings.lua",
+      "sha256": "6b19d08a48f22c0ed5de199ac8ca08e71eccf80d66c2bdedb686eb3f94e3f808"
+    },
+    {
+      "path": "gb/profiles/yellow_ptbr/trainer_names.lua",
+      "sha256": "a948eafb1691ce276bcb9e78b774d601908a668bb81e3c7aca02bf4a1f31222e"
+    },
+    {
+      "path": "gb/profiles/yellow_ptbr/type_names.lua",
+      "sha256": "892cc5239b5c4d45b7ffaa2a7b66352b42c731b4b7eade5d14faa413c5611886"
+    },
+    {
+      "path": "gb/runtime/asian_arguments.lua",
+      "sha256": "ecf9c8dffa92881cb9176ab5c3058be2c09c055bd437718faf6f515789bdcf24"
+    },
+    {
+      "path": "gb/runtime/asian_fallback.lua",
+      "sha256": "fab7d311597122cd515c618b39d2cd8996aefbfca32ad181602969cee003e476"
+    },
+    {
+      "path": "gb/runtime/asian_input.lua",
+      "sha256": "5aca68b393dbcd21f44c8783c105f31c203812634c336c0b7c51fec2371de1db"
+    },
+    {
+      "path": "gb/runtime/asian_layout.lua",
+      "sha256": "1942bdd33e198060490fd438f1b011c4a153778c85920ccd74f8a37f5bb9c453"
+    },
+    {
+      "path": "gb/runtime/asian_marquee.lua",
+      "sha256": "bf91ece7dd2d24b9e9748f08e968f71978d1c52f63aa2b8aff3cb082635bdeb6"
+    },
+    {
+      "path": "gb/runtime/blue.lua",
+      "sha256": "9781069e004e818019634ba5825e6202071863fdc69b3c71c55195055b79cc70"
+    },
+    {
+      "path": "gb/runtime/european.lua",
+      "sha256": "2d093201ce28a73cfc6b22bcea20be2edabce9ac611fefa13901f824adba21e2"
+    },
+    {
+      "path": "gb/runtime/gold.lua",
+      "sha256": "def83615b578e39fec9c4ea84771e84d7fc08a0b95fea21da1d277c8a773a572"
+    },
+    {
+      "path": "gb/runtime/ptbr.lua",
+      "sha256": "f75f61b25ee8a91d2cd4c43dafd9ae70c922fa13b972099ecd060d1d6356c0e3"
+    },
+    {
+      "path": "gb/runtime/ptbr_gen2.lua",
+      "sha256": "42b03adc83266635533b0ff682fb1694a1bc2c1850f4e2094db49b210f91c1cc"
+    },
+    {
+      "path": "gb/runtime/red.lua",
+      "sha256": "f092f7d19ae54e82a99a6157f4ae66dc4796850921e54020b8b7c217145f803e"
+    },
+    {
+      "path": "gb/runtime/silver.lua",
+      "sha256": "49ac812b4bdb784022ab62adbf5fb0057308b889d3544696d2959520f9ab2edd"
+    },
+    {
+      "path": "gb/runtime/yellow.lua",
+      "sha256": "b432d3658129ab31d03efd8874a34fb268de2b0c83d9b9c7b9f057a2cebe0d1d"
+    },
+    {
+      "path": "gb/shared/dex_units.lua",
+      "sha256": "be03bc5430957d6efee56668bb99710c0816922003143843e30023a98dbeebb6"
+    },
+    {
+      "path": "gb/shared/gen1/dex_metrics.lua",
+      "sha256": "89b944c1353c92df729b902a700c5a32864d8e84ba02db820ac1895d52b67fe4"
+    },
+    {
+      "path": "gb/shared/gen2/dex_metrics.lua",
+      "sha256": "f5726e67cb478aa829ac162b0c387061148a360ff38f1702d32398efbecdc11a"
+    },
+    {
+      "path": "gb/shared/official_mon_names.lua",
+      "sha256": "52f284fa02af5bb559aad9dcbb2ab76cfe1d25ccaac27c250e99555751bde4c6"
+    },
+    {
+      "path": "gba/policy.lua",
+      "sha256": "2a83583c94b429eb9f6600c79c2618cba59d4a10d0a574a375edf7afac2cff4f"
+    },
+    {
+      "path": "gba/runtime.lua",
+      "sha256": "14e5fbb21572f8d9bada0ad3c268c67f8e9385f96ca8fcb46386ec98f09df461"
+    },
+    {
+      "path": "gba/ui.lua",
+      "sha256": "22c4effe785be496cb9a9e58844aea674c227a81d4f316e16b156b6251addbe0"
+    },
+    {
+      "path": "intro/ASSET-SHA256.json",
+      "sha256": "0fa4bc6d6169b743083ba1c0fd184d2878895184b746c1559cc47822c4bbd504"
+    },
+    {
+      "path": "intro/IntroScene.lua",
+      "sha256": "018586b3405ab0952c3c6c8de9a08a80ab3907152c7e807f3363fb88478c462c"
+    },
+    {
+      "path": "intro/SOURCE.txt",
+      "sha256": "6ff3899c1ada1685543e5078f622e328f055fa55cc026f2c4b838f97b3c04d69"
+    },
+    {
+      "path": "intro/VoxelBall.lua",
+      "sha256": "59200f3b37927d09318e5fe10ea2e589023cc31ae3a971049266e0db4b021e19"
+    },
+    {
+      "path": "intro/assets/ascendant-chime.wav",
+      "sha256": "1bb7db6578152c006d71ca171c8d9fad8a71480698340fcabf9f90671ef0ce0c"
+    },
+    {
+      "path": "intro/assets/ascendant-start.png",
+      "sha256": "52cdf8c06b1b3b8d095ec94a1d7eab8f67c10a70011c3d34d4a029585435ab43"
+    },
+    {
+      "path": "intro/assets/eevee-atlas.png",
+      "sha256": "1fe52380123d70a43dc14fdbba7b9d6434f5be2d34173950f5fdec356f0751d9"
+    },
+    {
+      "path": "intro/assets/mew-atlas.png",
+      "sha256": "d1b5cd1f45013da9d1a82d189bdb7e78545c53216960aadbf79b753f24e3508a"
+    },
+    {
+      "path": "intro/assets/pikachu-atlas.png",
+      "sha256": "6d69a3fb68cf5d8a8ba86ffbe6f7733b4164d01aeb06200152bb5d798295aa0d"
+    },
+    {
+      "path": "intro.lua",
+      "sha256": "8b4c38ec28b47058db4e80ed302941819f7fedd49dc6bcc8abf279276b44cedd"
+    },
+    {
+      "path": "latin_glyphs.lua",
+      "sha256": "c36c30d2071e69a5c5622ad45a58a10ed615f3cad9edebf7eee942a2bb0ebaf4"
+    },
+    {
+      "path": "locales.lua",
+      "sha256": "5e0d3d89dbbb9514c3742a327883886d19a19598b22776e66d1e7b541b0beae9"
+    },
+    {
+      "path": "main.lua",
+      "sha256": "e9f793e1c06b4539dc7b7df310375ff9c4c43ef0fadefbf5cbc1d00a43581cd6"
+    },
+    {
+      "path": "manifest.json",
+      "sha256": "f5db689b61cab5852093458dc996624a984f90ebc5881c0d77d7fd07d41a9bbe"
+    },
+    {
+      "path": "options_schema.lua",
+      "sha256": "dbd889e7477ae2ee1289b203b13f380aff38950bfc477dc1e94f74ca263040d3"
+    },
+    {
+      "path": "overlay.lua",
+      "sha256": "1ce885347b9d753e3c2b05d3f8820fddfa65eba38f4415d132af7ff3c0c9d81c"
+    },
+    {
+      "path": "preferences.lua",
+      "sha256": "fff514f15ff8db5e7b15d335def940baf4b223d9bdb3b1ffadd82bfe79aa3c23"
+    },
+    {
+      "path": "profiles/emerald.lua",
+      "sha256": "64ff166b0896a2324be7fb5b76f20569ef226df91615158258c4d0eeff39e63a"
+    },
+    {
+      "path": "profiles/emerald_assets.lua",
+      "sha256": "ed7ba63cc9e80325ae81800962cdeff4e66a4c76fce2291a26764ab7de199635"
+    },
+    {
+      "path": "profiles/emerald_es.lua",
+      "sha256": "c7fe9177002f837c7b7cb8668d5e3736d6798a4962296b69ef484be19326e886"
+    },
+    {
+      "path": "profiles/emerald_es_assets.lua",
+      "sha256": "a115324f8ba09ceab5f727d85bf63e8769fe0731ef3309e0305ce1de29f84366"
+    },
+    {
+      "path": "profiles/emerald_es_world.lua",
+      "sha256": "55e4e9685336438f9a1fcadb46d533f3b071d69490d8efc6c2c99a3447999775"
+    },
+    {
+      "path": "profiles/emerald_fr.lua",
+      "sha256": "76412ec42ff04bca8fd54cedd14df0d482f0095aee40b9d47d459b2d019ad646"
+    },
+    {
+      "path": "profiles/emerald_fr_assets.lua",
+      "sha256": "9fe405931dc81741b42322381fd57d60eca0056691ab6bb1f156b237baa32a5f"
+    },
+    {
+      "path": "profiles/emerald_fr_world.lua",
+      "sha256": "df5363ef2868cfdf30ff20c963fa905e4c84632b3959d56ca16ed4ce6797f3cd"
+    },
+    {
+      "path": "profiles/emerald_it.lua",
+      "sha256": "cf70a592ce56ede6feca9afe72f70ad649e8b901815457a67e00aded7b26c7aa"
+    },
+    {
+      "path": "profiles/emerald_it_assets.lua",
+      "sha256": "334abc51fddb5978fdc5a932bcb1365f61dda647a7766b2569930f116a5bcf32"
+    },
+    {
+      "path": "profiles/emerald_it_world.lua",
+      "sha256": "48bcff941734d7e0570c3fab4c3ed36dd4cb86145d387894f9d84b8f843c5e92"
+    },
+    {
+      "path": "profiles/emerald_ptbr.lua",
+      "sha256": "7ae49f4471e1971b3d0f0ae313ae90d29baf07197617b3acdeaa8f6398d38d68"
+    },
+    {
+      "path": "profiles/emerald_ptbr_assets.lua",
+      "sha256": "c9dbcd0201e62af335696a2ac427aa28d4a19ebf78ef4405700c96668c4c3f59"
+    },
+    {
+      "path": "profiles/emerald_ptbr_authored.lua",
+      "sha256": "0eba7447c7e595f0dfdc52753bde5c587dedffe75bdb254f77d3a788798dcbd5"
+    },
+    {
+      "path": "profiles/emerald_ptbr_world.lua",
+      "sha256": "2b2e1cab0edbdb2fbfe265cc0babeae2aabf49506170e1f317f250d1282385fb"
+    },
+    {
+      "path": "profiles/emerald_world.lua",
+      "sha256": "ff113d2f30fc93aef6e48ede0d2fc594f12288dc1cb6fcfffd31d3b055b0c65d"
+    },
+    {
+      "path": "profiles/firered.lua",
+      "sha256": "a629fd74d3e4075dbac23ceea76858be42405ecc350ec04158aedc5cfbb37d34"
+    },
+    {
+      "path": "profiles/firered_assets.lua",
+      "sha256": "8f7a5802d5ca6cee2934d6f572c08fbad6e3db069f4f3fb2558e7a83b9a52315"
+    },
+    {
+      "path": "profiles/firered_es.lua",
+      "sha256": "2184910cc951e3d4b744817aa8d1ecdd271670edcd318ece05622d695bd6f9c9"
+    },
+    {
+      "path": "profiles/firered_es_assets.lua",
+      "sha256": "77facf5ce24300a7506265ec5f20ac4d7cfb91affcb98e30b9c3c31900f53ea1"
+    },
+    {
+      "path": "profiles/firered_es_world.lua",
+      "sha256": "05c5494036f8b3ca366cab44cae3841aec35f4a56ec25b0b348507573cf47714"
+    },
+    {
+      "path": "profiles/firered_it.lua",
+      "sha256": "4bf75a1e72d0b9471377058539cb89e4bb0b0e63cace6d8667c74f0e60740776"
+    },
+    {
+      "path": "profiles/firered_it_assets.lua",
+      "sha256": "6fac4898e9343d0bd55afc4fdc7be01881956ad318f602b5db67f5d4bc9215f0"
+    },
+    {
+      "path": "profiles/firered_it_world.lua",
+      "sha256": "ec1f412ee2c4a1feb19e0c2c5198cd913821186729bb060b491a1abb254b20fb"
+    },
+    {
+      "path": "profiles/firered_ptbr/assets.lua",
+      "sha256": "5084dc394821daf612031a0bbf9a1a812ea5ed452781a1340b318c5a3374afbb"
+    },
+    {
+      "path": "profiles/firered_ptbr/authored.lua",
+      "sha256": "71dda26b23a99847b795e424905e760cda8285ee69ca07283294d58baa426359"
+    },
+    {
+      "path": "profiles/firered_ptbr/profile.lua",
+      "sha256": "d1eb06a5398664c481770d42968c20e71fd52337f1cd347f387d54dc0f3c819e"
+    },
+    {
+      "path": "profiles/firered_ptbr/world.lua",
+      "sha256": "28b35a706aee83aa94ad3ba8d315fc649247832aab9a0a66e2cac96c490835ab"
+    },
+    {
+      "path": "profiles/firered_world.lua",
+      "sha256": "b9796b127930ad94c1be373f5f9fd8dc4376a072711211f1b27f14fcc11484c0"
+    },
+    {
+      "path": "profiles/leafgreen.lua",
+      "sha256": "11c7c76cdd626e8cb7cbc4d9b1f7b8478fe3e7c666d16f4b4edf67c8beece49d"
+    },
+    {
+      "path": "profiles/leafgreen_assets.lua",
+      "sha256": "ac63846f7fef557f3d2aa7357dac532350b214488fa873c54f5c314fbf6659cf"
+    },
+    {
+      "path": "profiles/leafgreen_es.lua",
+      "sha256": "c6c2542db1d48c99d736e519c9633b7acee41be505ae14de22a214622194ae89"
+    },
+    {
+      "path": "profiles/leafgreen_es_assets.lua",
+      "sha256": "a314dca281e8bf07f854c683ed901b2b8fa446d615233c0f96397d7e170ecc7b"
+    },
+    {
+      "path": "profiles/leafgreen_es_world.lua",
+      "sha256": "3f2471291dcf25b01bafc341e8a6c9c6080d459940467e535423de0df0c6d1df"
+    },
+    {
+      "path": "profiles/leafgreen_fr.lua",
+      "sha256": "04d76e510e0d1814996ca64e18e84c11d25136ca2ac76bf7529515f0edca33cf"
+    },
+    {
+      "path": "profiles/leafgreen_fr_assets.lua",
+      "sha256": "935ecf438da52437e364c15b13ca088edcc8c61e5bc99ec39bea84d1d56df2bd"
+    },
+    {
+      "path": "profiles/leafgreen_fr_world.lua",
+      "sha256": "cf0f983aa1cf8da7f02758c0900e74ba848b172938eb3c507917c5c96d803c51"
+    },
+    {
+      "path": "profiles/leafgreen_ptbr/assets.lua",
+      "sha256": "4f3957ea6add42ec3320086afa1e20f211c77eee3ae80b3fb79a7d28094870ac"
+    },
+    {
+      "path": "profiles/leafgreen_ptbr/authored.lua",
+      "sha256": "899e7ec2754bc37f9014c125a3ad82a2b8f5766ea7c0e59f6a955b89fafa3f5c"
+    },
+    {
+      "path": "profiles/leafgreen_ptbr/profile.lua",
+      "sha256": "d11d818aecf56d5fb58cde16e4c53c09bd22c77532a1767fcacf0615cbb49614"
+    },
+    {
+      "path": "profiles/leafgreen_ptbr/world.lua",
+      "sha256": "006e84a068deca260c4261c7dfba01744236f5ab36df06ac18e98ee5f816aa7c"
+    },
+    {
+      "path": "profiles/leafgreen_world.lua",
+      "sha256": "08462a3d2fd6c3dbb6ba05388443ce1e52109ca4c4b4cb142b741637324f0bbb"
+    },
+    {
+      "path": "profiles/ruby.lua",
+      "sha256": "162dec26f4665df74a17bca863154a70048e8e52063380cfd846b21b3b808979"
+    },
+    {
+      "path": "profiles/ruby_assets.lua",
+      "sha256": "6e7532b846d58c91af1f39e775a1009a14c23bfcf98852c0ed491b72c06aa6a8"
+    },
+    {
+      "path": "profiles/ruby_ptbr.lua",
+      "sha256": "68cf76430b9984d11ffab3431819be1d0512dcce4c66dd0ebe112bfa4e50e286"
+    },
+    {
+      "path": "profiles/ruby_ptbr_assets.lua",
+      "sha256": "46fe36661f5876bc003d06ae5d2a0347415513788eb22f9dac626d43d5205513"
+    },
+    {
+      "path": "profiles/ruby_ptbr_authored.lua",
+      "sha256": "45a062c66bf891dc6dc70ec3e0d28df3e012cc2e23e46213e239a8105d3ccf74"
+    },
+    {
+      "path": "profiles/ruby_ptbr_world.lua",
+      "sha256": "428a88e3fadc708636153c8ff54e921fb582bc13d53dc36eb99f18bed8787fb7"
+    },
+    {
+      "path": "profiles/ruby_world.lua",
+      "sha256": "ee2d303363adb479c916b7e4947314c6349269db95a52ca4ded36a5cb2e48162"
+    },
+    {
+      "path": "profiles/sapphire.lua",
+      "sha256": "d4aa5391da1f9cac8b4309d9f551fdaf142b6ddb31b547b2fe2b939bb3ea2ee7"
+    },
+    {
+      "path": "profiles/sapphire_assets.lua",
+      "sha256": "a8d5285cf098b60690f8a6c920af46fcdaa315c46045151a116ba4dd3f097ea9"
+    },
+    {
+      "path": "profiles/sapphire_ptbr.lua",
+      "sha256": "02608b12cfa9d72f44cb895bf69d6058c852ea7a1a818ba96afc980a444eed6b"
+    },
+    {
+      "path": "profiles/sapphire_ptbr_authored.lua",
+      "sha256": "7d8d5f4c64bcf1dde0f6a3999f2f5a6c65e62e2a0bb0b6f5bddb6e45ce51f8b8"
+    },
+    {
+      "path": "profiles/sapphire_world.lua",
+      "sha256": "8cd86c9fdc360c205ad4ed12d68b7e1ddf70f82520c1a8478dac2af3ad7190c9"
+    },
+    {
+      "path": "ptbr_abilities.lua",
+      "sha256": "3e4382e5fb646063fa8e4f3bf75ccb993f0b39402a4057beb1ed78a0e322ac18"
+    },
+    {
+      "path": "ptbr_ability_descriptions.lua",
+      "sha256": "80d2e18ef728a8b157a6693beb0c911542faf6afac8155ada245a99abea385d2"
+    },
+    {
+      "path": "ptbr_asset_text.lua",
+      "sha256": "00fc08dab1a5ccae6e2428de2053a70ca7575208b529fc09e75c6fe3c36b308b"
+    },
+    {
+      "path": "ptbr_classes.lua",
+      "sha256": "881a0d0526e064308cb37c0bb0e9dcc2f5030e56e08ee4592e32cf76749afdf4"
+    },
+    {
+      "path": "ptbr_credits.lua",
+      "sha256": "9b83e80630666905f344743654f96e243f12be0d0c80e79c4533e2a14b6187ea"
+    },
+    {
+      "path": "ptbr_easy_chat.lua",
+      "sha256": "303bab109d48ea1ad6e7596799fb35b29c9be9d2ff0c172c4aa738ee77f26eb5"
+    },
+    {
+      "path": "ptbr_easy_chat_ui.lua",
+      "sha256": "7d7577faf75036c9c103a1737c4fec86df8bd9cc786aeeb4c66891cdcf7bd2a2"
+    },
+    {
+      "path": "ptbr_easy_chat_words.lua",
+      "sha256": "128fabfd3b966522a2765e1d2181d6bd4f2be52633077e1ab6b571b4df825c17"
+    },
+    {
+      "path": "ptbr_gender.lua",
+      "sha256": "4bef3898e76be6c383ddbfb15a4ebcfe990b32a94b0be252894dedc8c0eaa7ae"
+    },
+    {
+      "path": "ptbr_graphics.lua",
+      "sha256": "211249c07f3a8bfe50984755a140d74603284491d69c9d7c9da56aada4e9e03c"
+    },
+    {
+      "path": "ptbr_item_descriptions.lua",
+      "sha256": "09e3fdafe3ee3724f5e6bfd07699eeb195218b6bd574c799213e472af53918c9"
+    },
+    {
+      "path": "ptbr_items.lua",
+      "sha256": "b84a1b63a86c776144c4640073022ef01e656fe9dcc3b3df0b82e810c70a5097"
+    },
+    {
+      "path": "ptbr_move_descriptions.lua",
+      "sha256": "69a634d0c5430e3d8b894f2e3d6308295ebf7437db11c0ffc36ee35512b4ebb5"
+    },
+    {
+      "path": "ptbr_moves.lua",
+      "sha256": "6fc6f203db6560d00f8d7655c02dc79dc24dd6ef7cab8e361290886daab2db4e"
+    },
+    {
+      "path": "ptbr_names.lua",
+      "sha256": "a2d4782b3e2fdeeac888591448a6cb64db6e6c1848a710dcb4648d2eeeb6536b"
+    },
+    {
+      "path": "ptbr_pixel_labels.lua",
+      "sha256": "9458ae8d6667b9a4bdf7b8d329f493d9f0aa73e228e5f615ff612a8c26ec63af"
+    },
+    {
+      "path": "ptbr_pokenav.lua",
+      "sha256": "3abafe84d7c15308631b88cad9d1d7d2e38a23a91b33c6a067d1a2c931cf0989"
+    },
+    {
+      "path": "ptbr_pokenav_trainers.lua",
+      "sha256": "0fab8f681e2b4ab31d7ef6103845cb1766d65414194d1942fc614bb5a8dad4a8"
+    },
+    {
+      "path": "ptbr_scene_authored.lua",
+      "sha256": "5d690e48ef3cfbc6268747c40a48121108772add184a7edc2eef1b33e80601eb"
+    },
+    {
+      "path": "ptbr_scene_bindings.lua",
+      "sha256": "9fd24cf4e70c5b972a10fa42620e7317895ada94c3b2931e87726d63fd684719"
+    },
+    {
+      "path": "ptbr_scene_paths.lua",
+      "sha256": "8929093bbff49694c1cb0fcbd025e11ad627d144b9fc8c8cf046c51163d4d23f"
+    },
+    {
+      "path": "ptbr_scene_text.lua",
+      "sha256": "8e2d24b51c4a55a800a5dfeef47f283ada7d621e8c3c1c1366eba93ec36ffb70"
+    },
+    {
+      "path": "ptbr_side_assets.lua",
+      "sha256": "87342767037a86af39b4488899ce1823e5a3621360af8d434e241d1b38eed0d3"
+    },
+    {
+      "path": "ptbr_summary_graphics.lua",
+      "sha256": "2892d17e7822f807e615e99a7fcba3e6dbb7c685813a8a991a6f4c1e46fb473d"
+    },
+    {
+      "path": "ptbr_text_layout.lua",
+      "sha256": "302c33895d154736d465b69b03d24659e340926809812ee4ce8d7588a9cc610c"
+    },
+    {
+      "path": "ptbr_title_graphics.lua",
+      "sha256": "da28effd469e32812c8935c16b3c53d4aa5641c3b0caf711475fc7cb7af20b8c"
+    },
+    {
+      "path": "ptbr_types.lua",
+      "sha256": "cb5abdad6ed8b2482e1790f97eff95522323028189cc8772a2c1075e9a225fb0"
+    },
+    {
+      "path": "ptbr_world_graphics.lua",
+      "sha256": "edd7c27adda6aade7494faf0eee9f9c9e4cb865154a87d37e5c60e51a9358785"
+    },
+    {
+      "path": "rom_requirements.lua",
+      "sha256": "07c877a8b47020ecad29a670e29a6135158048d26026c463a0d4f74483aa78ab"
+    },
+    {
+      "path": "session.lua",
+      "sha256": "f109c995757ce1145686346422a948c5bdde7fb258a0c26b3103c90ce18272b0"
+    },
+    {
+      "path": "session_engine.lua",
+      "sha256": "a7eb8e1ef09164522273aef9b64ddb7c2d0744bc8c42bcffbd0caa7a24c6ce14"
+    },
+    {
+      "path": "session_locales.lua",
+      "sha256": "a265c4a07239cb229526a7bdb703f241c2003fb26f53b24eb237b0a4cbe1c207"
+    },
+    {
+      "path": "session_menu.lua",
+      "sha256": "b568275617a2d2088dff9c2127f08f4d1a320ee0013ea3fb03aa99d8a1ffcbb5"
+    },
+    {
+      "path": "startup.lua",
+      "sha256": "1862a7f40328ec7227ee78c4c4a3626d4ec27ff71b8fa9d11d53c936f08290bd"
+    },
+    {
+      "path": "startup_view.lua",
+      "sha256": "f5c5b0eb343b10de9e17549dd1adf14005eb333dc7eab4a0662f551c72e5bdc8"
+    },
+    {
+      "path": "translate.lua",
+      "sha256": "70062e333caff261932ab132703889d650a2566afe17a43d2f3951fcea944f8a"
+    },
+    {
+      "path": "vendor/index.lua",
+      "sha256": "7af8b76765c204717f69c55c57e320332f5bc38923e3bef1328851a2e7db6c58"
+    },
+    {
+      "path": "vendor/src/core/game3/scripting/text_ir.lua",
+      "sha256": "97289e07956034e5d947fbbdd14d0e9e751d490979be557d0a35c5a1e96a94d5"
+    },
+    {
+      "path": "vendor/src/import/gba/asset_pack.lua",
+      "sha256": "6ef84c137ba2e1fc7b35f28e61b146a252ca518a3b44c0be3713ea281dfd86c0"
+    },
+    {
+      "path": "vendor/src/import/gba/bag_chrome_extract.lua",
+      "sha256": "a043400729aae985ed18fcb35cd3bd520dbe192257b96ab1f3a04d41fde217b2"
+    },
+    {
+      "path": "vendor/src/import/gba/battle_anim_extract.lua",
+      "sha256": "73a10a3756278edaaeb993f4150bb1e63ec3055015fd7ebfab9e1719f83794ee"
+    },
+    {
+      "path": "vendor/src/import/gba/battle_chrome_extract.lua",
+      "sha256": "5514e2c0cdb25b76961ba9858e748b04b98bce6ede1cc67d3c838ab376c56a26"
+    },
+    {
+      "path": "vendor/src/import/gba/bg_bake.lua",
+      "sha256": "e3270494e1714786b5a1e71959e296911486a31c65f0650ef3303da79f32fb82"
+    },
+    {
+      "path": "vendor/src/import/gba/credits_extract.lua",
+      "sha256": "748ad5f8393f17678730b38dc645c62d78fc01043cff42faa976090f009dc423"
+    },
+    {
+      "path": "vendor/src/import/gba/extract_intro.lua",
+      "sha256": "2bfe50ff8d04d918ee4d5ed5db915c9d3806a29a651dcbb84c410d8fc187bf9c"
+    },
+    {
+      "path": "vendor/src/import/gba/lz77.lua",
+      "sha256": "82b185ab85a7d84e123577e76fa2f6c4c4e449c698f3da6ca53a35e8a1e53e94"
+    },
+    {
+      "path": "vendor/src/import/gba/map_sections_extract.lua",
+      "sha256": "4cf619ac76a4e36429664d7da6e2f99c0b26c5e1eceb6c0aa644472ab1e1ff95"
+    },
+    {
+      "path": "vendor/src/import/gba/metatile.lua",
+      "sha256": "14cbc43cb40250e77c44ce2f19d195b25e9976f03442e4867239273cbf882fda"
+    },
+    {
+      "path": "vendor/src/import/gba/native_pack.lua",
+      "sha256": "2f2d4a217eb7ee7535b9812d4eb8f10436e730471aa3d1c47c144cf4fd0757d4"
+    },
+    {
+      "path": "vendor/src/import/gba/online_ui_extract.lua",
+      "sha256": "448bc9594df461e66a0f7f62def2c22f68bec969f906a8340939b899af03bb13"
+    },
+    {
+      "path": "vendor/src/import/gba/party_chrome_extract.lua",
+      "sha256": "f9b24c4cbf94c4c65256c0eaac3abc1dd1fe68055a8524239d05ca31689c96ca"
+    },
+    {
+      "path": "vendor/src/import/gba/pokedex_chrome_extract.lua",
+      "sha256": "09a16a14716ca80163b8c58fc4be55d55b0fae6be800ede6f1abf1b0ea926028"
+    },
+    {
+      "path": "vendor/src/import/gba/pokedex_entries_extract.lua",
+      "sha256": "6af1f36bba45503146084f7728f1ba204d081b29344b4c1e1fc26715f2daa6d9"
+    },
+    {
+      "path": "vendor/src/import/gba/rs/assets.lua",
+      "sha256": "2d24528602def104b92d5ceb445a479e4ee8049abaa995a12476bda6aafccbb1"
+    },
+    {
+      "path": "vendor/src/import/gba/rs/extract_bag.lua",
+      "sha256": "7433bf0fc5a24969713c692b6a5848decb67ba5ca5ad86f84d7615f00c84fd5d"
+    },
+    {
+      "path": "vendor/src/import/gba/rs/extract_common_ui.lua",
+      "sha256": "f34e147dadc98696163f1197190a059334a249e6c0a652f35095e821ca164136"
+    },
+    {
+      "path": "vendor/src/import/gba/rs/extract_credits.lua",
+      "sha256": "67a081dd098378b98c0f0c2d9c8411d396184520550b0f0862709f2e1c0bbd69"
+    },
+    {
+      "path": "vendor/src/import/gba/rs/extract_naming.lua",
+      "sha256": "9b1994168d02714c50b1afba63e9db2d76e835e7286209dc1d80234b581435b7"
+    },
+    {
+      "path": "vendor/src/import/gba/rs/extract_party.lua",
+      "sha256": "73f56aa24e1e7b8e629534c556f58d585a233f749e54803d6d37848aeb65b271"
+    },
+    {
+      "path": "vendor/src/import/gba/rs/extract_pokedex.lua",
+      "sha256": "ba0b3e0f1ced2f8de8939bdb8da02ae20705b74e320aba6a1e810540c1733963"
+    },
+    {
+      "path": "vendor/src/import/gba/rs/extract_pokedex_detail.lua",
+      "sha256": "eb05ea9d642a4799fa730081ffb5934c3934829bb07a043c3d46c4e2a7dab909"
+    },
+    {
+      "path": "vendor/src/import/gba/rs/extract_region_map.lua",
+      "sha256": "e27745d9dceccc071f0b676ab29eb154f3025e302514af030af97e484badf778"
+    },
+    {
+      "path": "vendor/src/import/gba/rs/extract_storage.lua",
+      "sha256": "ccbfea936928f25b12b023334701fed467f2127f0aae842d65f8c10ab9607c42"
+    },
+    {
+      "path": "vendor/src/import/gba/rs/extract_summary.lua",
+      "sha256": "a604796d497d486d1ac849270d80dabbad5374d5444d640f9288f68ab672cc34"
+    },
+    {
+      "path": "vendor/src/import/gba/rs/extract_title.lua",
+      "sha256": "42e75ae325af4125d92a68ec898be3523458c52ceee02313acf1e90fb7790c69"
+    },
+    {
+      "path": "vendor/src/import/gba/rs/extract_trainer_card.lua",
+      "sha256": "ea94d63ec26c42c664ba1b1d680c27acff645c9280d45a841a3653fb2d760ec1"
+    },
+    {
+      "path": "vendor/src/import/gba/rs/scoped_symbols.lua",
+      "sha256": "b3b9bffa861862678ea5ac501a24f7c4b2df1218d144c64a80680869179d8cd1"
+    },
+    {
+      "path": "vendor/src/import/gba/rs/text_chrome_extract.lua",
+      "sha256": "637e46d7575c1c2ce91d319ae8202e883e0e7c5ef17b77ec1948858ce4b792c1"
+    },
+    {
+      "path": "vendor/src/import/gba/rse/bag_chrome_extract.lua",
+      "sha256": "7eed65987f147762f0a3503a2e119d34c6e228bccd7ccb0adfdc8a8d6777ae82"
+    },
+    {
+      "path": "vendor/src/import/gba/rse/boot_gfx.lua",
+      "sha256": "f294273656fe07b05160a8ced8b34ae30d31223fef4590d085be84fb38dd28a4"
+    },
+    {
+      "path": "vendor/src/import/gba/rse/credits_extract.lua",
+      "sha256": "eb8b0ed6285272f77d7483708f3e8018080b9ee04f9f4a7c7828b852a62a6708"
+    },
+    {
+      "path": "vendor/src/import/gba/rse/extract_naming_rse.lua",
+      "sha256": "4467b9c3f4c5ceb990ac6dc273aa6bad94dabb107d89f9e0510cc1e89c851f5c"
+    },
+    {
+      "path": "vendor/src/import/gba/rse/extract_title_rse.lua",
+      "sha256": "d9c0ec9e63f379aa8e0ef8ba77ea36332d2c736f333b68b9d351a78e0fe8c4a7"
+    },
+    {
+      "path": "vendor/src/import/gba/rse/map_sections_extract.lua",
+      "sha256": "3ab411064fac79cab9f055f269683423642af63b177c714fe972847eb66fd5ab"
+    },
+    {
+      "path": "vendor/src/import/gba/rse/pokedex_chrome_extract.lua",
+      "sha256": "b95d97f56bceb1288e25a881074f45597e0ae491dace327c8d344fb33bad3e98"
+    },
+    {
+      "path": "vendor/src/import/gba/rse/shop_chrome_extract.lua",
+      "sha256": "a81587f6c23f8f2e859d38dc3ebb76c9045e83ece38f1919f01f75e0885f372e"
+    },
+    {
+      "path": "vendor/src/import/gba/rse/sprite_gfx.lua",
+      "sha256": "24eacba64204f45c31236d508536dd026095564a60335d1e4da6543fdf9e0833"
+    },
+    {
+      "path": "vendor/src/import/gba/rse/summary_chrome_extract.lua",
+      "sha256": "60c44d4511560390e5c078331e30743eef875fcd69dae131f296bf59f14ce6e1"
+    },
+    {
+      "path": "vendor/src/import/gba/rse/text_chrome_extract.lua",
+      "sha256": "56c234cb8be7c47c04b0c6820e0b5e0cd4383cf652ccbd24bf15ad5670a72343"
+    },
+    {
+      "path": "vendor/src/import/gba/rse/trainer_card_extract.lua",
+      "sha256": "46044528bb66d440e38772d587809bbe65509dc58daeb1ff8f683bd7a7a471ff"
+    },
+    {
+      "path": "vendor/src/import/gba/storage_chrome_extract.lua",
+      "sha256": "b3e54f91551dd529207702bd5a425ef190598b0fbecf5946b0372da8bbd06486"
+    },
+    {
+      "path": "vendor/src/import/gba/summary_chrome_extract.lua",
+      "sha256": "a3a615230083a53bbe45e06e6950b74e2454fe6201a0bf20133b4320702536d6"
+    },
+    {
+      "path": "vendor/src/import/gba/text_chrome_extract.lua",
+      "sha256": "513593426c957cee55da3394afb5e75bc3cf422d1795ff00c1409f0373899256"
+    },
+    {
+      "path": "vendor/src/import/gba/tileset.lua",
+      "sha256": "4234b62ce200e1e1d2331f0836074c1a2c88da2e7f534211190ed5c28b5e63af"
+    },
+    {
+      "path": "world.lua",
+      "sha256": "9bb2e62d7f9721c093c536390ae4705ef0abd774216a966af19f9d417cb592ed"
+    }
+  ],
+  "adaptations": [
+    "main.lua: capability-gated built-in entry; launcher owns first-run setup",
+    "manifest.json: bundled version, all-game no-op dispatch and no independent update check",
+    "fonts/*: extended regional subsets from pinned Noto CJK; see fonts/BUILD.json",
+    "manifest.json: native.1 declares exact US GB/GBC bases and Crystal 1.1 for automatic offline PT-BR; original source hashes remain provenance, not adapted-file digests"
+  ]
+}

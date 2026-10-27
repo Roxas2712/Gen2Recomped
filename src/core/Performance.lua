@@ -30,6 +30,8 @@
 --   high      everything on -- the historical behavior
 --   balanced  no TILT, no GBC FX (kept: survey zoom, colors, uncapped FPS)
 --   low       no TILT, no GBC FX, no survey zoom, FPS capped
+--   adaptive  PREFER FPS: starts at AUTO's tier, follows the measured frames
+--   battery   PREFER BATTERY: LOW plus a 30 fps ceiling and no spin (A2)
 --
 -- AUTO only chooses the *default* for the current device; every tier is
 -- selectable in OPTIONS, so a heuristic that guesses wrong is one row away
@@ -64,6 +66,12 @@ Performance.bytecodeCache = true
 -- a 256-entry table in an FFI loop when a palette cycle steps, instead of
 -- re-walking every metatile into a new RGBA sheet (TileRenderer gen3Recolour).
 Performance.gen3PaletteIndex = true
+-- G7: the Gen 1/2 shade bakes (OBP sprite variants, RED++ atlas, water
+-- shifts, animation frames, toggles) as FFI region copies instead of
+-- getPixel/setPixel per pixel (src/render/ShadeRecolour.lua).
+Performance.shadeRecolourFfi = true
+-- G8: share PNG decodes only among consumers that do not modify pixels.
+Performance.assetSharedDecode = true
 -- G3: Gen 4 model draw sends a uniform only when its value changed and
 -- allocates no per-shape tables (src/render/Gen4Model.lua:_drawCached).
 Performance.gen4UniformCache = true
@@ -74,19 +82,170 @@ Performance.gen4GpuLight = true
 -- G1: Gen 4 model vertices decoded straight into a ByteData through the FFI
 -- rather than a fifteen-element table per vertex (src/render/Gen4Model.lua).
 Performance.gen4ByteVertices = true
+-- G4: Gen 4 joint animation re-posed in the vertex shader from a per-shape
+-- joint palette instead of setVertex per vertex per frame (Gen4Model).
+Performance.gen4GpuSkin = true
+-- H1: pass hook results as varargs and share continuation state per call.
+Performance.hookLean = true
+-- E1: avoid the single-listener snapshot and cache immutable owner labels.
+Performance.eventLean = true
+-- M10: Assets.resolve remembers which file answers a generated path while a
+-- mod set is installed, instead of asking PhysFS once per mod per lookup.
+Performance.assetResolveCache = true
+-- W0: the frame pacer's idle time pumps the Gen 3 asset stream (atlas and
+-- sprite builds queued by prefetch) instead of sleeping through it
+-- (src/core/IdleStream.lua).
+Performance.idleStream = true
+-- G9: the Gen 4 live pass meshes the ring of chunks around the view in the
+-- frame's idle time, before the camera reaches them (Gen4Ground:prebuild).
+Performance.gen4ChunkPrebuild = true
+-- W1: a pool of worker threads for the builds that need no GPU
+-- (src/core/BuildWorker.lua); false keeps every build on the main thread.
+Performance.buildWorkers = true
 Performance.GC_PAUSE = 120
 Performance.GC_STEP_MUL = 300
 Performance.GC_BUDGET_SECONDS = 0.0005
 
+-- EVERY SWITCH ABOVE FROM THE ENVIRONMENT, for an A/B without an edit.
+--
+--   POKEPORT_PERF="gen3PaletteIndex=0,gcBudget=0"   turn these off
+--   POKEPORT_PERF="all=0"                            the port as it shipped
+--   POKEPORT_PERF="all=0,bytecodeCache=1"            all off but one
+--
+-- Read once at load, before any module copies a flag; a name that is not a
+-- boolean switch here is ignored (and logged by nobody -- this runs under
+-- love.conf, before the logger).  The names are the field names above,
+-- case-sensitive; `all` is every boolean field present at this point.
+-- tools/perf_switch_matrix.sh runs the mod and engine checks once per
+-- switch with it off, which is how "no optimisation changes what a mod
+-- sees" is kept true.
+function Performance.applyEnvironment(spec)
+  spec = spec or (os and os.getenv and os.getenv("POKEPORT_PERF"))
+  if type(spec) ~= "string" or spec == "" then return {} end
+  local applied = {}
+  for item in spec:gmatch("[^,%s]+") do
+    local name, value = item:match("^([%w_]+)=([%w]+)$")
+    value = value and value:lower()
+    if name and (value == "0" or value == "1" or value == "true" or value == "false") then
+      local on = value == "1" or value == "true"
+      if name == "all" then
+        for k, v in pairs(Performance) do
+          if type(v) == "boolean" and k ~= "saver" then
+            Performance[k] = on
+            applied[k] = on
+          end
+        end
+      elseif type(Performance[name]) == "boolean" and name ~= "saver" then
+        Performance[name] = on
+        applied[name] = on
+      end
+    end
+  end
+  return applied
+end
+Performance.applyEnvironment()
+
 -- Option-row order (auto first, then most to least capable).
-Performance.TIERS = { "auto", "high", "balanced", "low" }
+Performance.TIERS = { "auto", "high", "balanced", "low", "adaptive", "battery" }
 
 Performance.LABELS = {
   auto = "AUTO",
+  adaptive = "PREFER FPS",
+  battery = "PREFER BATTERY",
   high = "HIGH",
   balanced = "BALANCED",
   low = "LOW",
 }
+
+-- A1 -- PREFER FPS: THE TIER FOLLOWS THE FRAME, NOT THE GUESS.
+--
+-- AUTO reads the hardware once and picks a tier; it cannot know that this
+-- map, this mod set or this battery state is heavier than the last.  PREFER
+-- FPS starts where AUTO would and then watches the frames themselves: a
+-- frame longer than one and a half budgets is a missed one, and when more
+-- than a tenth of them miss over two consecutive three-second windows the
+-- tier steps down (HIGH -> BALANCED -> LOW); when fewer than two in a hundred
+-- miss for thirty seconds it steps back up, never above the tier AUTO chose.
+-- Ten seconds of quiet follow every change so a map load's burst of misses
+-- cannot ratchet the tier to the floor, and the clamps that a tier change
+-- applies (Game:applyOptions) run exactly as they do when the row is turned
+-- by hand -- the stored TILT / GBC FX / ZOOM / MAX FPS choices are untouched
+-- and come back with the tier.
+Performance.ADAPTIVE = {
+  missFactor = 1.5,        -- a frame this many budgets long is a miss
+  window = 3.0,            -- seconds per decision window
+  downRatio = 0.10,        -- misses / frames to step down (two windows running)
+  upRatio = 0.02,          -- misses / frames to allow stepping up
+  upAfter = 30.0,          -- seconds of comfort before stepping up
+  cooldown = 10.0,         -- seconds after a change before judging again
+}
+local ORDER = { high = 1, balanced = 2, low = 3 }
+local BY_RANK = { "high", "balanced", "low" }
+local adaptive = { tier = nil, ceiling = nil, frames = 0, misses = 0,
+                   windowStart = 0, badWindows = 0, comfort = 0, quietUntil = 0 }
+
+-- the tier PREFER FPS is on right now; AUTO's answer until the first judgement
+function Performance.adaptiveTier()
+  if not adaptive.tier then
+    adaptive.ceiling = Performance.detect()
+    adaptive.tier = adaptive.ceiling
+  end
+  return adaptive.tier
+end
+
+-- Called once per presented frame with that frame's dt and the frame budget
+-- in seconds.  Returns the new tier when the judgement changed it, else nil.
+-- Only PREFER FPS judges; every other option value leaves this inert.
+function Performance.observeFrame(dt, budget, now, optionValue)
+  if optionValue ~= "adaptive" then return nil end
+  if not (dt and budget and now) or budget <= 0 then return nil end
+  local A = Performance.ADAPTIVE
+  local tier = Performance.adaptiveTier()
+  if adaptive.windowStart == 0 then adaptive.windowStart = now end
+  adaptive.frames = adaptive.frames + 1
+  if dt > budget * A.missFactor then adaptive.misses = adaptive.misses + 1 end
+  if now - adaptive.windowStart < A.window then return nil end
+  local ratio = adaptive.frames > 0 and (adaptive.misses / adaptive.frames) or 0
+  adaptive.frames, adaptive.misses, adaptive.windowStart = 0, 0, now
+  if now < adaptive.quietUntil then
+    adaptive.badWindows, adaptive.comfort = 0, 0
+    return nil
+  end
+  local changed = nil
+  if ratio > A.downRatio then
+    adaptive.badWindows = adaptive.badWindows + 1
+    adaptive.comfort = 0
+    if adaptive.badWindows >= 2 and ORDER[tier] < #BY_RANK then
+      changed = BY_RANK[ORDER[tier] + 1]
+    end
+  elseif ratio < A.upRatio then
+    adaptive.badWindows = 0
+    adaptive.comfort = adaptive.comfort + A.window
+    if adaptive.comfort >= A.upAfter and ORDER[tier] > ORDER[adaptive.ceiling] then
+      changed = BY_RANK[ORDER[tier] - 1]
+    end
+  else
+    adaptive.badWindows, adaptive.comfort = 0, 0
+  end
+  if changed then
+    adaptive.tier = changed
+    adaptive.badWindows, adaptive.comfort = 0, 0
+    adaptive.quietUntil = now + A.cooldown
+    Performance.tier = changed
+    return changed
+  end
+  return nil
+end
+
+-- the controller's state, for the OPTIONS row and the tests
+function Performance.adaptiveState()
+  return adaptive
+end
+
+function Performance.resetAdaptive()
+  adaptive = { tier = nil, ceiling = nil, frames = 0, misses = 0,
+               windowStart = 0, badWindows = 0, comfort = 0, quietUntil = 0 }
+end
 
 -- What each concrete tier permits.  `auto` is resolved to one of these
 -- before caps are read, so it has no row here.  fpsMax = false means no
@@ -106,6 +265,9 @@ for name, caps in pairs(Performance.CAPS) do
   -- index).  x3 / x4 is nine to sixteen times the fill of the logical view;
   -- a phone or handheld cannot pay that, whatever the OPTIONS row says.
   caps.gen4RenderScaleMax = (name == "high" and 4) or (name == "balanced" and 2) or 1
+  -- W0: the most of a frame's idle time the asset stream may take.  HIGH
+  -- has the time to spare; LOW keeps the sleep it was going to take.
+  caps.streamIdleSeconds = (name == "high" and 0.006) or (name == "balanced" and 0.003) or 0.002
   caps.gcPause = Performance.GC_PAUSE
   caps.gcStepMul = Performance.GC_STEP_MUL
   caps.gcBudgetSeconds = Performance.GC_BUDGET_SECONDS
@@ -182,12 +344,44 @@ function Performance.detect()
   return "high"
 end
 
+-- A2 -- PREFER BATTERY: LOW, AND THEN SOME, FOR A HANDHELD ON ITS OWN CELL.
+--
+-- Not a fifth concrete tier: every consumer of Performance.tier (the voxel
+-- mod's lib/Tier.lua answers HIGH to a name it does not know) sees "low",
+-- so nothing that scales against the tier has to learn a new word.  What
+-- BATTERY adds is an overlay on LOW's caps -- a 30 fps ceiling (half the
+-- presents, and on a 60 Hz handheld half the GPU wake-ups), no spin in the
+-- pacer, the quarter-rate Gen 3 palette tick, no Discord polling -- and
+-- Performance.saver = true for a module that wants to shed more on its own.
+-- The player's own rows are clamped, never rewritten: turning the tier back
+-- up restores exactly what was set.
+Performance.BATTERY = {
+  fpsMax = 30,
+  pacingSpin = false,
+  gen3PaletteCycle = "quarter",
+  discordPresence = false,
+  gen4RenderScaleMax = 1,
+}
+-- live: true while the stored option is "battery"
+Performance.saver = false
+local batteryCaps
+
+local function mergedBatteryCaps()
+  batteryCaps = batteryCaps or {}
+  for k in pairs(batteryCaps) do batteryCaps[k] = nil end
+  for k, v in pairs(Performance.CAPS.low) do batteryCaps[k] = v end
+  for k, v in pairs(Performance.BATTERY) do batteryCaps[k] = v end
+  return batteryCaps
+end
+
 -- Fold a stored option value to a concrete tier, resolving "auto" (and any
 -- hand-edited garbage) through detect().
 function Performance.resolve(value)
   if value == "high" or value == "balanced" or value == "low" then
     return value
   end
+  if value == "adaptive" then return Performance.adaptiveTier() end
+  if value == "battery" then return "low" end
   return Performance.detect()
 end
 
@@ -207,15 +401,23 @@ end
 
 -- Concrete caps for a stored option value (resolving auto).
 function Performance.caps(value)
+  if value == "battery" then return mergedBatteryCaps() end
   return Performance.CAPS[Performance.resolve(value)]
 end
 
 -- Resolve the tier for these options, record it live, and return its caps.
 -- Called from Game:applyOptions, which clamps the live presentation modules
 -- against the returned caps.
+local adaptiveSelected = false
 function Performance.applyOptions(opts)
-  local tier = Performance.resolve(opts and opts.performance)
+  local value = opts and opts.performance
+  local selected = value == "adaptive"
+  if selected ~= adaptiveSelected then Performance.resetAdaptive() end
+  adaptiveSelected = selected
+  local tier = Performance.resolve(value)
   Performance.tier = tier
+  Performance.saver = value == "battery"
+  if Performance.saver then return mergedBatteryCaps() end
   return Performance.CAPS[tier]
 end
 
@@ -236,6 +438,7 @@ end
 -- Added presentation caps use the live tier without changing the stored choices.
 function Performance.extraCap(name)
   if not Performance.lowTierBudget then return nil end
+  if Performance.saver then return mergedBatteryCaps()[name] end
   return (Performance.CAPS[Performance.tier] or Performance.CAPS.high)[name]
 end
 function Performance.paletteTick(tick)

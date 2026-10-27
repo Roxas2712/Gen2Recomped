@@ -1,0 +1,190 @@
+{
+  "passed": true,
+  "romSha1": "ea9bcae617fdf159b045185467ae58b2e4a48b9a",
+  "playerProfilesUsed": false,
+  "hosts": {
+    "reference": {
+      "commit": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+      "frames": {
+        "yes": {
+          "width": 640,
+          "height": 576,
+          "viewport": {
+            "width": 640,
+            "height": 576,
+            "x": 0,
+            "y": 0,
+            "dpiX": 1,
+            "dpiY": 1,
+            "scale": 4
+          },
+          "box": {
+            "tx": 14,
+            "th": 5,
+            "tw": 6,
+            "ty": 7
+          },
+          "selection": 1,
+          "drawSaveUnchanged": true
+        },
+        "no": {
+          "width": 640,
+          "height": 576,
+          "viewport": {
+            "width": 640,
+            "height": 576,
+            "x": 0,
+            "y": 0,
+            "dpiX": 1,
+            "dpiY": 1,
+            "scale": 4
+          },
+          "box": {
+            "tx": 14,
+            "th": 5,
+            "tw": 6,
+            "ty": 7
+          },
+          "selection": 2,
+          "drawSaveUnchanged": true
+        }
+      },
+      "inputReturnPaths": true,
+      "drawSaveUnchanged": true
+    },
+    "baseline": {
+      "commit": "8f19066db78230b9dedc251207a5d0d6d2954321",
+      "frames": {
+        "yes": {
+          "width": 640,
+          "height": 576,
+          "drawSaveUnchanged": true,
+          "viewport": {
+            "width": 640,
+            "height": 576,
+            "x": 0,
+            "y": 0,
+            "dpiY": 1,
+            "scale": 4,
+            "dpiX": 1
+          },
+          "selection": 1,
+          "box": {
+            "tx": 13,
+            "ty": 7,
+            "tw": 7,
+            "th": 6
+          }
+        },
+        "no": {
+          "width": 640,
+          "height": 576,
+          "drawSaveUnchanged": true,
+          "viewport": {
+            "width": 640,
+            "height": 576,
+            "x": 0,
+            "y": 0,
+            "dpiY": 1,
+            "scale": 4,
+            "dpiX": 1
+          },
+          "selection": 2,
+          "box": {
+            "tx": 13,
+            "ty": 7,
+            "tw": 7,
+            "th": 6
+          }
+        }
+      },
+      "inputReturnPaths": true,
+      "drawSaveUnchanged": true
+    },
+    "candidate": {
+      "commit": "513c311867820acf4a6fa99bb6f8b8a792a18e60",
+      "frames": {
+        "no": {
+          "selection": 2,
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "scale": 4,
+            "dpiY": 1,
+            "dpiX": 1,
+            "width": 640,
+            "height": 576
+          },
+          "box": {
+            "ty": 7,
+            "tw": 6,
+            "th": 5,
+            "tx": 14
+          },
+          "drawSaveUnchanged": true,
+          "width": 640,
+          "height": 576
+        },
+        "yes": {
+          "selection": 1,
+          "viewport": {
+            "x": 0,
+            "y": 0,
+            "scale": 4,
+            "dpiY": 1,
+            "dpiX": 1,
+            "width": 640,
+            "height": 576
+          },
+          "box": {
+            "ty": 7,
+            "tw": 6,
+            "th": 5,
+            "tx": 14
+          },
+          "drawSaveUnchanged": true,
+          "width": 640,
+          "height": 576
+        }
+      },
+      "inputReturnPaths": true,
+      "drawSaveUnchanged": true
+    }
+  },
+  "comparisons": [
+    {
+      "host": "baseline",
+      "frame": "yes",
+      "changedPixels": 9568,
+      "maxByteDelta": 239,
+      "referenceSha256": "ca08194da8b0613cdb9f7f532c605ec2bb13a62f3c56b39857092ccd408eafda",
+      "actualSha256": "14a190fd862cb2910307f9b22a47850c15f397fdd2fc95db2b1e80e0abe5939a"
+    },
+    {
+      "host": "candidate",
+      "frame": "yes",
+      "changedPixels": 0,
+      "maxByteDelta": 0,
+      "referenceSha256": "ca08194da8b0613cdb9f7f532c605ec2bb13a62f3c56b39857092ccd408eafda",
+      "actualSha256": "ca08194da8b0613cdb9f7f532c605ec2bb13a62f3c56b39857092ccd408eafda"
+    },
+    {
+      "host": "baseline",
+      "frame": "no",
+      "changedPixels": 9632,
+      "maxByteDelta": 239,
+      "referenceSha256": "963d5782f77cd7d25609c82cf216cfcd4e934d5438e0d803cc0dcc654493969c",
+      "actualSha256": "63e25aaed57afc5ea7a569441d02117f8a77a7b5b152bb845898eeadd8b17db8"
+    },
+    {
+      "host": "candidate",
+      "frame": "no",
+      "changedPixels": 0,
+      "maxByteDelta": 0,
+      "referenceSha256": "963d5782f77cd7d25609c82cf216cfcd4e934d5438e0d803cc0dcc654493969c",
+      "actualSha256": "963d5782f77cd7d25609c82cf216cfcd4e934d5438e0d803cc0dcc654493969c"
+    }
+  ],
+  "scope": "English Red YES/NO widget over an identical controlled backdrop, through native Game and final renderer; not whole-world or translated-screen parity.",
+  "driverSha256": "7ba89e710baf399f2b09f2d4417ac276870ab1e2d994676ec2359c33ec5c35ab"
+}

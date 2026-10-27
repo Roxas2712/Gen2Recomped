@@ -6,6 +6,7 @@
 -- findable instead of silently invisible.
 
 local Logger = require("src.core.Logger")
+local GameVersion = require("src.core.GameVersion")
 
 local Tokens = {}
 
@@ -35,12 +36,12 @@ function Tokens.expand(game, text, handlers)
     local fn = handlers[name]
     if not fn then
       Tokens.warnOnce(name)
-      return token
+      return (GameVersion.isGen1() or GameVersion.isGen2()) and "" or token
     end
     local ok, out = pcall(fn, game, arg ~= "" and arg or nil)
     if not ok then
       Logger.error("token {%s}: %s", name, tostring(out))
-      return token
+      return (GameVersion.isGen1() or GameVersion.isGen2()) and "" or token
     end
     return out or ""
   end))

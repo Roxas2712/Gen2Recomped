@@ -128,8 +128,23 @@ if loaded and id=='mystery_dungeon_follower' then
  end
  local function presentation()
   local source=package.loaded['src.compat.gen1.SourceActors']
-  if source then local renderer,owned=source.renderer(npc);if owned then return renderer end end
+  if source and source.renderer then local renderer,owned=source.renderer(npc);if owned then return renderer end end
   return npc.sprite
+ end
+ local facade=package.loaded['src.core.Game3']
+ local actorOwner=facade and facade._observeActorMod and require('src.core.GameVersion').isGen3()
+ if actorOwner then
+  assert(facade._usesCallbacks(id),'imported follower did not acquire callback ownership')
+  for _,entry in ipairs(loader.hooks.chains['world.follower.spawn'] or {})do
+   if entry.owner==id then
+    local original=entry.callback
+    entry.callback=function(nextFn,gameArg,worldArg)
+     assert(gameArg==Native and worldArg==world,'follower import converted native callback arguments')
+     assert(facade._callbackOwner()==id,'follower callback has no resource owner')
+     return original(nextFn,gameArg,worldArg)
+    end
+   end
+  end
  end
  local count=#loader.errors
  local spawn=loader.hooks:call('world.follower.spawn',function()return false end,Native,world)

@@ -1,0 +1,5 @@
+UI and cartridge-name glyph subsets of Noto Sans CJK Regular, SIL Open Font License 1.1.
+Upstream: https://github.com/notofonts/noto-cjk/tree/f8d157532fbfaeda587e826d4cd5b21a49186f7c/Sans/OTC
+Renamed AscendantLauncher; original copyright and license retained in OFL.txt.
+Pinned input and rebuild instructions: BUILD.json and tools/build_native_language_fonts.py.
+The four regional subsets include the same source character set with Japanese, Korean, Simplified Chinese and Traditional Chinese regional glyph shapes.

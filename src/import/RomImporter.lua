@@ -1248,7 +1248,12 @@ local function markerFor(version)
   -- ds-back-throw-v1 (Platinum, HGSS, Black / White): gen4_trainer_sprites.backThrows,
   -- the player's send-out throw (Gen4BackThrow / Gen5TrainerPics.backThrow); BW's
   -- back also gains the throwing arm cell 0 never had
-  local revision = version == "platinum" and "platinum-scratch-off-v1:platinum-poke-motion-v1:platinum-egg-hatch-v1:platinum-geometry-v17:platinum-field-fx-v1:platinum-effect-pal-v1:ds-back-throw-v1:pal-park-v1:" or ""
+  -- 2026-10-26 re-import tags: platinum-gym-fx-v1 (gen4_gym_fx, Gen4GymFxArt),
+  -- hgss-special-marts-v1 (Gen4HgssSpecialMarts lists), hgss-tmhm-v1 (the
+  -- HGSS sTMHMMoves search -> per-species tmhm), gen5-npc-ranges-v1 (NPC
+  -- wander box at +20/+22), gen5-script-link-v2 (0x08B/0x080/0x081/0x083
+  -- and the gym ops 0x185/0x187-0x189 keep their operands)
+  local revision = version == "platinum" and "platinum-gym-fx-v1:platinum-scratch-off-v1:platinum-poke-motion-v1:platinum-egg-hatch-v1:platinum-geometry-v17:platinum-field-fx-v1:platinum-library-tv-v1:platinum-spear-pillar-v1:platinum-effect-pal-v1:ds-back-throw-v1:pal-park-v1:" or ""
   -- gen5-trades-v5: constants.gen5Trades, gen5_trade_art and the trade
   -- commands' operands in map_scripts (Gen5Trades / Gen5TradeArt)
   -- gen5-starter-v6: gen5_starter_art, the gift box app (Gen5StarterArt)
@@ -1278,7 +1283,8 @@ local function markerFor(version)
   -- gen5-encounter-fx-v4: gen5_encounter_effects (Gen5EncounterEffects): the ee_* wipes of /a/1/2/9, v2 the cave_ci / sand_ci scenes of /a/1/1/5, v3 the cut-ins (Gen5EncounterCutIns) and /a/1/8/0 faces, v4 their SPA particles (Gen5Particles)
   -- gen5-windows-v1: the font record's `frames` (the menu window, /a/0/0/5 tileset 9
   -- palette 3) and the menu cursor glyph (`symbols`, src/import/Gen5Cursor.lua)
-  if version == "black" or version == "white" then revision = "gen5-starter-v6:gen5-moveanim-v2:gen5-facilities-v1:gen5-field-fx-v1:gen5-title-v1:gen5-naming-v1:gen5-maps-v1:gen5-battle-bag-v1:gen5-town-map-v2:gen5-xtransceiver-v1:gen5-shop-art-v1:gen5-windows-v1:ds-back-throw-v1:gen5-encounter-fx-v4:gen5-floor-layers-v2:gen5-money-v12:gen5-egg-moves-v1:gen5-buyer-v1:gen5-egg-hatch-v1:" end
+  -- gen5-gym-fx-v1: gen5_gym_fx (Gen5GymFxArt), the gym gimmicks' models
+  if version == "black" or version == "white" then revision = "gen5-npc-ranges-v1:gen5-script-link-v2:gen5-gym-fx-v1:gen5-starter-v6:gen5-moveanim-v2:gen5-facilities-v1:gen5-field-fx-v1:gen5-title-v1:gen5-naming-v1:gen5-maps-v1:gen5-battle-bag-v1:gen5-town-map-v2:gen5-xtransceiver-v1:gen5-shop-art-v1:gen5-windows-v1:ds-back-throw-v1:gen5-encounter-fx-v4:gen5-floor-layers-v2:gen5-money-v12:gen5-egg-moves-v1:gen5-buyer-v1:gen5-egg-hatch-v1:" end
   -- emerald-trade-scene-v3 / firered-trade-scene-v1: the in-game trade
   -- sequence's art (extractTradeScene, gen3_trade_art) -- without it special
   -- 257 falls back to the bare swap, so both Gen 3 caches re-import once
@@ -1306,7 +1312,7 @@ local function markerFor(version)
   -- table (Gen4HgssBattle.EFFECT_BG_MEMBERS) -- 84 pictures, not 22
   -- hgss-field-fx-v1: gen4_hgss_field_fx (Cut / Rock Smash / Headbutt, /a/1/3/4)
   -- and gen4_hgss_mart_art again (installs updated stage by stage never got it)
-  if version == "heartgold" or version == "soulsilver" then revision = "hgss-athlon-rooms-v1:hgss-athlon-team-v1:hgss-athlon-common-v1:hgss-disc-catch-v1:hgss-lamp-jump-v1:hgss-ring-drop-v1:hgss-snow-throw-v1:hgss-goal-roll-v1:hgss-circle-push-v1:hgss-pennant-v1:hgss-relay-run-v1:hgss-block-smash-v1:hgss-athlon-rivals-v1:hgss-hurdle-dash-v1:hgss-athlon-courses-v1:hgss-athlon-perf-v1:hgss-fly-map-v1:hgss-scratch-off-v1:hgss-legend-wing-v1:hgss-alph-panel-v1:hgss-poke-motion-v1:hgss-egg-hatch-v1:hgss-egg-moves-v1:hgss-gear-dex-v1:hgss-summary-v2:hgss-effect-bg-v1:hgss-field-fx-v1:hgss-pc-anim-v1:ds-back-throw-v1:pal-park-v1:hgss-enc-effects-v1:hgss-frontier-v2:" end
+  if version == "heartgold" or version == "soulsilver" then revision = "hgss-special-marts-v1:hgss-tmhm-v1:hgss-athlon-rooms-v1:hgss-athlon-team-v1:hgss-athlon-common-v1:hgss-disc-catch-v1:hgss-lamp-jump-v1:hgss-ring-drop-v1:hgss-snow-throw-v1:hgss-goal-roll-v1:hgss-circle-push-v1:hgss-pennant-v1:hgss-relay-run-v1:hgss-block-smash-v1:hgss-athlon-rivals-v1:hgss-hurdle-dash-v1:hgss-athlon-courses-v1:hgss-athlon-perf-v1:hgss-fly-map-v1:hgss-scratch-off-v1:hgss-legend-wing-v1:hgss-hideout-fx-v1:hgss-alph-panel-v1:hgss-poke-motion-v1:hgss-egg-hatch-v1:hgss-egg-moves-v1:hgss-gear-dex-v1:hgss-summary-v2:hgss-effect-bg-v1:hgss-field-fx-v1:hgss-pc-anim-v1:ds-back-throw-v1:pal-park-v1:hgss-enc-effects-v1:hgss-frontier-v2:" end
   -- Include version-specific field encounters, sleep, swarm and rate tables.
   -- Only these three caches need rebuilding; other markers remain stable.
   -- v9: retain the map header's phone-service nibble beside its palette.
@@ -3648,6 +3654,7 @@ function RomImporter:startData(data, displayName, sourcePath, verified)
     if not ok then error("could not finish the private cache: " .. tostring(writeError)) end
     require('src.import.ImportRecovery').finish()
     self.ready[version] = true
+    if self._nativeLanguageImported then self:_nativeLanguageImported(version,data,actualHash) end
     -- Imported art and previously missing species records may now exist.
     for _,name in ipairs({"src.pokewalker.WalkerArt","src.pokewalker.WalkerCourses"})do
       local module=package.loaded[name]
@@ -5602,7 +5609,7 @@ function RomImporter:draw()
     self.fontKey = fontKey
     local function f(px)
       px=math.max(8,math.floor(px+0.5))
-      return launcherFont and love.graphics.newFont(launcherFont,px) or love.graphics.newFont(px)
+      return require('src.translation.Service').newLauncherFont(px)
     end
     self.headFont     = f(19 * s)
     self.detailFont   = f(14 * s)
@@ -5775,7 +5782,9 @@ function RomImporter:draw()
     if link.url==DONATE_URL then paypalLink=link
     else footerLinks[#footerLinks+1]=link end
   end
+  local retroCredits=Strings('Gen2Recomped · Created and led by UNDERdecoded (Cedric), with the Gen2Recomped contributors\nRetroRecomped fork · Fork lead, launcher, cloud & integrations: Roxas2712\nGen1Recomp foundation · bryanthaboi / BOIS CLUB GAMES & contributors')
   local creditH = self.hintFont:getHeight()
+  if self.sidebarMode then local _,lines=self.hintFont:getWrap(retroCredits,appW-2*padH);creditH=math.max(1,#lines)*self.hintFont:getHeight() end
   local donateH = self.hintFont:getHeight() + 10 * s
   local chipsH = (#footerLinks > 0) and (8 * s + donateH) or 0
   local footerH = 10 * s + bcgDH + 6 * s + warningH + 8 * s + creditH + chipsH + 12 * s
@@ -6264,7 +6273,7 @@ function RomImporter:draw()
     self.donateButtons,self.donateButton={},nil
     love.graphics.setFont(self.hintFont)
     col(PAL.detail,.7)
-    love.graphics.printf('RetroRecomped  /  Engine: '..credit.by,appX+padH,footerTop+12*s,appW-2*padH,'center')
+    love.graphics.printf(retroCredits,appX+padH,footerTop+12*s,appW-2*padH,'center')
   else
   local bcgX, bcgY = appX + (appW - bcgDW) / 2, footerTop + 10 * s
   local warningY = bcgY + bcgDH + 6 * s
@@ -9159,6 +9168,7 @@ function RomImporter:_settingValue(entry)
     return self:_settingsGeneration() or false
   elseif entry.scope == "launcher" then
     local v = opts[entry.row.id]
+    if entry.row.id=="launcherTheme" then v=require("src.import.LauncherTheme").resolve(v) end
     if v == nil or v == false then return false end
     return v
   elseif entry.scope == "game" and entry.gen then
@@ -9207,6 +9217,7 @@ function RomImporter:_setSettingValue(entry, value)
     return
   elseif entry.scope == "launcher" then
     opts[entry.row.id] = value or false
+    if entry.row.id=="launcherTheme" then opts.launcherAccent=false end
     -- Repaint immediately.  A theme row that only takes effect on the next
     -- launch is one a player steps through four times looking for a preview.
     pcall(RomImporter.applyTheme, opts)
@@ -12009,5 +12020,7 @@ require("src.import.ResumeWorkspace").install(RomImporter)
 require("src.import.SaveHistoryWorkspace").install(RomImporter)
 require("src.storage.AccountStorage").install(RomImporter)
 require("src.import.TournamentWorkspace").install(RomImporter)
+require("src.import.FirstRun").install(RomImporter)
+require("src.import.NativeLanguageSetup").install(RomImporter)
 
 return RomImporter

@@ -308,7 +308,7 @@ function Sequence.install(RI)
         g.push();g.translate(left+lw*sc/2,top+lh*sc/2)
         g.rotate(pose and pose.rotation*(1-dock) or 0)
         local impactScale=1+hit*.018*(1-dock)
-        g.draw(logo,-lw*sc*impactScale/2,-lh*sc*impactScale/2,0,sc*impactScale,sc*impactScale);g.pop()
+        require('src.import.LauncherTheme').drawLogo(logo,-lw*sc*impactScale/2,-lh*sc*impactScale/2,0,sc*impactScale,sc*impactScale);g.pop()
         g.setScissor()
       end
       if seasonal and state.season=='autumn' and not pose.behind then
@@ -365,7 +365,7 @@ function Sequence.install(RI)
           -- The lightning draws the logo across the display before the camera moves.
           g.setScissor(math.max(0,math.floor(lx)),math.max(0,math.floor(ly)),
             math.max(0,math.ceil(lw*sc*cameraScale*stage.logo)),math.max(0,math.ceil(lh*sc*cameraScale)))
-          g.setColor(1,1,1,stage.logo);g.draw(logo,left,top,0,sc,sc)
+          g.setColor(1,1,1,stage.logo);require('src.import.LauncherTheme').drawLogo(logo,left,top,0,sc,sc)
         end
         g.setScissor()
       end

@@ -75,12 +75,19 @@ native.profile=function(payload)
   if payload then sent=payload end
   return {account_id='17',name=payload and payload.name or 'Fixture',friend_tag='Fixture#4821',avatar_preset='leaf',avatar_color='forest'}
 end
+native.request=function()return {account_id='17',friends={},incoming={},outgoing={}}end
 native.friends=function() return {account_id='17',friends={},incoming={},outgoing={}} end
 native.findPlayer=function(tag) sent=tag;return {friend_tag=tag,account_id='18'} end
 native.createGift=function(payload) sent=payload;return {id='11111111-1111-4111-8111-111111111111',code='TEST-CODE-1234-5678'} end
 native.gifts=function() return {receipts={},campaigns={},manage=true} end
 W.open(UI);W.tick(UI);f=UI._accountOverlay
 check(f.nickname=='Fixture' and f.friendTag=='Fixture#4821','the native account displays the shared ModCompass nickname and friend tag')
+W.action(UI,'transferGuide');W.draw(UI)
+check(f.mode=='transferGuide','the device-switch guide is available inside the native account')
+local restoreMode;UI._storageSync=function(_,_,_,_,mode)restoreMode=mode end
+W.action(UI,'restoreGames')
+check(not UI._accountOverlay and restoreMode=='restore','the guide starts an explicit account restore without enabling uploads')
+W.open(UI);W.tick(UI);f=UI._accountOverlay
 f.profileName='UpdatedFixture';W.action(UI,'saveProfile');W.tick(UI)
 check(sent.name=='UpdatedFixture','nickname changes use the shared profile endpoint')
 W.action(UI,'friends');W.tick(UI);f.friendQuery='Other#4821';W.action(UI,'findFriend');W.tick(UI)

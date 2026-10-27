@@ -261,21 +261,27 @@ class CacheLifecycle(unittest.TestCase):
         profile = manager.destination(self.profile())
         self.payload(profile / 'ruby/data/generated/map.lua')
         # Use the real production shell entrypoint, with a fake executable.
-        launcher = TOOLS.parent / 'Start.command'
-        (self.root / 'Start.command').write_bytes(launcher.read_bytes())
-        (self.root / 'Start.command').chmod(0o700)
-        local = self.root / '.local'
-        local.mkdir()
-        fake = self.root / 'fake-love'
-        fake.write_text('#!' + sys.executable + '\nimport os,json\n'
+        launcher = self.root / 'scripts/run.sh'
+        launcher.parent.mkdir()
+        launcher.write_bytes((TOOLS.parent / 'scripts/run.sh').read_bytes())
+        launcher.chmod(0o700)
+        # Resolve only our fake executable through the real launcher's PATH
+        # lookup; never discover or launch the user's installed LÖVE runtime.
+        fake = self.root / 'bin/love'
+        fake.parent.mkdir()
+        fake.write_text('#!' + sys.executable + '\nimport os,json,sys\n'
                         "data=json.loads(os.environ['ORIGAMI_QA_LEASES'])\n"
+                        "assert data['leases']\n"
                         "assert all(os.fstat(x['fd']) for x in data['leases'])\n"
                         "assert os.environ['POKEPORT_IDENTITY']=='oasc-test-qa-fixture'\n"
+                        "assert sys.argv[1:]==[os.environ['QA_LAUNCH_ROOT'],'ruby','argument with spaces']\n"
                         "print('leases-survived-shell')\n")
         fake.chmod(0o700)
-        (local / 'love-path.txt').write_text(str(fake))
-        result = manager.run([str(self.root / 'Start.command'), 'ruby'],
-                             env=dict(os.environ, OA_QA_IDENTITY=profile.name),
+        self.payload(self.root / 'data/generated/maps.lua')
+        result = manager.run([str(launcher), 'ruby', 'argument with spaces'],
+                             env=dict(os.environ, POKEPORT_IDENTITY=profile.name,
+                                      PATH=str(fake.parent)+os.pathsep+os.environ.get('PATH',''),
+                                      QA_LAUNCH_ROOT=str(self.root)),
                              capture_output=True, text=True, check=True, timeout=5)
         self.assertEqual(result.stdout, 'leases-survived-shell\n')
 

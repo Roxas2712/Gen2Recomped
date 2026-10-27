@@ -66,7 +66,7 @@ local function changeStage(battle, who, stat, delta, fromEnemy)
   if delta < 0
      and require("src.battle.Abilities").refusesStatDrop(who, stat) then
     return { Strings("%s's\n%s\nwon't go lower!", displayName(who),
-                     STAT_LABEL[stat] or tostring(stat)) }
+                     Strings(STAT_LABEL[stat] or tostring(stat))) }
   end
   local cur = who.stages[stat] or 0
   local new = math.max(-6, math.min(6, cur + delta))
@@ -81,13 +81,13 @@ local function changeStage(battle, who, stat, delta, fromEnemy)
   -- _MonsStatsRoseText/_MonsStatsFellText: "X's / STAT rose!"; the
   -- two-stage variants scroll "greatly" onto a third line
   if delta >= 2 then
-    return { Strings("%s's\n%s\ngreatly rose!", displayName(who), STAT_LABEL[stat]) }
+    return { Strings("%s's\n%s\ngreatly rose!", displayName(who), Strings(STAT_LABEL[stat])) }
   elseif delta == 1 then
-    return { Strings("%s's\n%s rose!", displayName(who), STAT_LABEL[stat]) }
+    return { Strings("%s's\n%s rose!", displayName(who), Strings(STAT_LABEL[stat])) }
   elseif delta == -1 then
-    return { Strings("%s's\n%s fell!", displayName(who), STAT_LABEL[stat]) }
+    return { Strings("%s's\n%s fell!", displayName(who), Strings(STAT_LABEL[stat])) }
   end
-  return { Strings("%s's\n%s\ngreatly fell!", displayName(who), STAT_LABEL[stat]) }
+  return { Strings("%s's\n%s\ngreatly fell!", displayName(who), Strings(STAT_LABEL[stat])) }
 end
 MoveEffects.changeStage = changeStage
 
@@ -794,6 +794,13 @@ MoveEffects.full = {
     -- Fail paths DelayFrames then print -- no PlayCurrentMoveAnimation.
     perform = function(ctx)
       local battle, user, target, move = ctx.battle, ctx.user, ctx.target, ctx.move
+      -- PLATINUM / HGSS ROAR / WHIRLWIND: subscript_force_switch_or_flee --
+      -- a trainer's Pokemon is dragged out, in a single or a double
+      -- (src/battle/Gen4SwitchOut.lua)
+      if require("src.core.GameVersion").isGen4()
+         and require("src.battle.Gen4SwitchOut").isForceSwitch(move) then
+        return require("src.battle.Gen4SwitchOut").forceOut(ctx)
+      end
       -- SUCTION CUPS is the one thing in Gen 3 that refuses to be blown out.
       -- TELEPORT is the user's own doing and is not covered by it: the
       -- ability holds the TARGET down, not the user.
@@ -1379,6 +1386,19 @@ do
     end
   end
   for id in pairs(Gen3.accuracyChecked or {}) do ACC_CHECKED[id] = true end
+end
+
+-- SINNOH'S OWN EFFECTS (ids 214..276, src/battle/Gen4MoveEffects.lua), merged
+-- the same non-destructive way.  A Gen 4 cache written before these had
+-- names carries the bare effect number; BattleState:effectRecord maps it.
+do
+  local Gen4 = require("src.battle.Gen4MoveEffects")
+  for _, kind in ipairs({ "primary", "secondary", "full" }) do
+    for id, value in pairs(Gen4[kind] or {}) do
+      if MoveEffects[kind][id] == nil then MoveEffects[kind][id] = value end
+    end
+  end
+  for id in pairs(Gen4.accuracyChecked or {}) do ACC_CHECKED[id] = true end
 end
 
 local RECORDS = {}

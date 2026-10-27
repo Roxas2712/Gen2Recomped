@@ -1,0 +1,467 @@
+{
+  "id": "german_rom_source",
+  "name": "Uni-Language · Built-in",
+  "version": "1.9.1-native.1",
+  "api": 2,
+  "entry": "main.lua",
+  "profile": "content",
+  "category": "UI",
+  "games": [
+    "all"
+  ],
+  "game_version": ">=0.0.0-dev <1.0.0",
+  "priority": 50,
+  "permissions": [
+    "engine_internals"
+  ],
+  "description": "Built-in cartridge language profiles. Configure your language in the launcher; supply your own exact source ROM.",
+  "optional_imports": [
+    {
+      "id": "leafgreen_de",
+      "name": "Blattgrün Deutsch 1.0",
+      "description": "SHA-1 0802d1fb185ee3ed48d9a22afb25e66424076dac; Basis: Pokémon LeafGreen (USA / English) 1.0 / Revision 0.",
+      "file": "leafgreen_de.gba",
+      "size": 16777216,
+      "md5": "4dd5e72f942a921d3fe53d21a39f4cba"
+    },
+    {
+      "id": "ruby_de",
+      "name": "Rubin Deutsch 1.0",
+      "description": "SHA-1 1c2a53332382e14dab8815e3a6dd81ad89534050; Basis: Pokémon Ruby (USA / English) 1.0 / Revision 0.",
+      "file": "ruby_de.gba",
+      "size": 16777216,
+      "md5": "1af28ea547d4116dc752c93f7f694239"
+    },
+    {
+      "id": "emerald_de",
+      "name": "Smaragd Deutsch 1.0",
+      "description": "SHA-1 61c2eb2b380b1a75f0c94b767a2d4c26cd7ce4e3; Basis: Pokémon Emerald (USA / English) 1.0 / Revision 0.",
+      "file": "emerald_de.gba",
+      "size": 16777216,
+      "md5": "f793a854654b467211fc32c4062cb183"
+    },
+    {
+      "id": "red_de",
+      "name": "Rot Deutsch 1.0",
+      "description": "SHA-1 87d523fe1a0c548db7c5477b451ddec1eb083c06; Basis: Pokémon Red (USA / English) 1.0 / Revision 0.",
+      "file": "red_de.gb",
+      "size": 1048576,
+      "md5": "8ed0e8d45a81ca34de625d930148a512"
+    },
+    {
+      "id": "blue_de",
+      "name": "Blau Deutsch 1.0",
+      "description": "SHA-1 20e72dc6f41493eee1fdd0cef54214e6c3389688; Basis: Pokémon Blue (USA / English) 1.0 / Revision 0.",
+      "file": "blue_de.gb",
+      "size": 1048576,
+      "md5": "a1ec7f07c7b4251d5fafc50622d546f8"
+    },
+    {
+      "id": "yellow_de",
+      "name": "Gelb Deutsch 1.0",
+      "description": "SHA-1 42f3714eec6eca25200d42461ff08d57c98f6d1d; Basis: Pokémon Yellow (USA / English) 1.0 / Revision 0.",
+      "file": "yellow_de.gb",
+      "size": 1048576,
+      "md5": "e93f10168e3c9b9d18e3ad4a1415e1d0"
+    },
+    {
+      "id": "gold_de",
+      "name": "Gold Deutsch 1.0",
+      "description": "SHA-1 9254195d461ea942eaaa08cc4b83de3cf82aea0d; Basis: Pokémon Gold (USA / English) 1.0 / Revision 0.",
+      "file": "gold_de.gbc",
+      "size": 2097152,
+      "md5": "7542ec9b695d4fe38adfdaaa57364d83"
+    },
+    {
+      "id": "silver_de",
+      "name": "Silber Deutsch 1.0",
+      "description": "SHA-1 8ecc58d621faaedf2a934bd2583d527220df7bb9; Basis: Pokémon Silver (USA / English) 1.0 / Revision 0.",
+      "file": "silver_de.gbc",
+      "size": 2097152,
+      "md5": "f1f013cd591bc4ea77305bbc9f8cbb3c"
+    },
+    {
+      "id": "crystal_de",
+      "name": "Kristall Deutsch 1.0",
+      "description": "SHA-1 accb584293ba056152f1fd908439b019017ff2fe; Basis: Pokémon Crystal (USA / English) 1.0 / Revision 0.",
+      "file": "crystal_de.gbc",
+      "size": 2097152,
+      "md5": "a35c0fa2e3b3d1c1779cd9f2352bc427"
+    },
+    {
+      "id": "firered_de",
+      "name": "Feuerrot Deutsch 1.0",
+      "description": "SHA-1 18a3758ceeef2c77b315144be2c3910d6f1f69fe; Basis: Pokémon FireRed (USA / English) 1.0 / Revision 0.",
+      "file": "firered_de.gba",
+      "md5": "6648a0484a56097ca75d6af87ebce225",
+      "size": 16777216,
+      "required": false
+    },
+    {
+      "id": "sapphire_de",
+      "name": "Saphir Deutsch 1.1",
+      "description": "SHA-1 7e6e034f9cdca6d2c4a270fdb50a94def5883d17; Basis: Pokémon Sapphire (USA / English) 1.0 / Revision 0.",
+      "file": "sapphire_de.gba",
+      "md5": "9d816b369343d39b94af9a8b0ce7f63b",
+      "size": 16777216,
+      "required": false
+    },
+    {
+      "id": "emerald_fr",
+      "name": "Émeraude · Français 1.0",
+      "description": "SHA-1 ca666651374d89ca439007bed54d839eb7bd14d0; Basis: Pokémon Emerald (USA / English) 1.0 / Revision 0.",
+      "file": "emerald_fr.gba",
+      "size": 16777216,
+      "md5": "2c00e335288a96650e34785b5e2a7588"
+    },
+    {
+      "id": "emerald_it",
+      "name": "Smeraldo · Italiano 1.0",
+      "description": "SHA-1 1692db322400c3141c5de2db38469913ceb1f4d4; Basis: Pokémon Emerald (USA / English) 1.0 / Revision 0.",
+      "file": "emerald_it.gba",
+      "size": 16777216,
+      "md5": "c3e85be7372bbd5e43f6334a565968c1"
+    },
+    {
+      "id": "emerald_es",
+      "name": "Esmeralda · Español 1.0",
+      "description": "SHA-1 fe1558a3dcb0360ab558969e09b690888b846dd9; Basis: Pokémon Emerald (USA / English) 1.0 / Revision 0.",
+      "file": "emerald_es.gba",
+      "size": 16777216,
+      "md5": "67b770405f7b87589e0342513b25fe9b"
+    },
+    {
+      "id": "emerald_ptbr",
+      "name": "Emerald PT-BR · Zambrakas 2013-12-08",
+      "description": "SHA-1 18a2b0acdba046c71b8677bb58c9ee7d36f7a91f; Basis: Pokémon Emerald (USA / English) 1.0 / Revision 0.",
+      "file": "emerald_ptbr.gba",
+      "size": 16777216,
+      "md5": "5f91214a7b563c858a94920796817d83"
+    },
+    {
+      "id": "ruby_ptbr",
+      "name": "Ruby PT-BR · OJ Abreu",
+      "description": "SHA-1 90f1464f77c57b4eef45ee07df140d402162eee3; Basis: Pokémon Ruby (USA / English) 1.0 / Revision 0 / Pokémon Sapphire (USA / English) 1.0 / Revision 0.",
+      "file": "ruby_ptbr.gba",
+      "size": 16777216,
+      "md5": "7088f5789736f6fcedc687b385033003"
+    },
+    {
+      "id": "red_ptbr",
+      "name": "Red · Português (Brasil)",
+      "file": "red_ptbr.gbc",
+      "md5": "b002d19d15337b3132637364258605ee",
+      "size": 1048576,
+      "description": "SHA-1 a2a0e2a3d6ef4d5771aa33682d31eaefd03c32ba; Basis: Pokémon Red (USA / English) 1.0 / Revision 0."
+    },
+    {
+      "id": "blue_ptbr",
+      "name": "Blue · Português (Brasil)",
+      "file": "blue_ptbr.gbc",
+      "md5": "64bdddd54bfe775b910ec89a58740031",
+      "size": 1048576,
+      "description": "SHA-1 ec9e33447d9bdbf95c2d57f487e25a57854a1adf; Basis: Pokémon Blue (USA / English) 1.0 / Revision 0."
+    },
+    {
+      "id": "yellow_ptbr",
+      "name": "Yellow · Português (Brasil)",
+      "file": "yellow_ptbr.gbc",
+      "md5": "186578eb92a67f04940a94fd43dd4836",
+      "size": 1048576,
+      "description": "SHA-1 2b94c64b1944fb6866fd0c28149f86c11bc86253; Basis: Pokémon Yellow (USA / English) 1.0 / Revision 0."
+    },
+    {
+      "id": "gold_ptbr",
+      "name": "Gold · Português (Brasil)",
+      "file": "gold_ptbr.gbc",
+      "md5": "a663443555efaf74dfbbf264f12b25bc",
+      "size": 2097152,
+      "description": "SHA-1 652c0208a5c54313e2d3efb336346e59a17cbab6; Basis: Pokémon Gold (USA / English) 1.0 / Revision 0."
+    },
+    {
+      "id": "silver_ptbr",
+      "name": "Silver · Português (Brasil)",
+      "file": "silver_ptbr.gbc",
+      "md5": "7454208311f121e492e6634d13612f25",
+      "size": 2097152,
+      "description": "SHA-1 9d9536f14a1874d27ea9167fdf00b80439204a6d; Basis: Pokémon Silver (USA / English) 1.0 / Revision 0."
+    },
+    {
+      "id": "crystal_ptbr",
+      "name": "Crystal · Português (Brasil)",
+      "file": "crystal_ptbr.gbc",
+      "md5": "56c2dcb22ace6a4de161e1a6699ddefd",
+      "size": 2097152,
+      "description": "SHA-1 e41c519d7ca680facf546fa34b7b00f3149f428f; Basis: Pokémon Crystal (USA / English) 1.0 / Revision 0."
+    },
+    {
+      "id": "firered_ptbr",
+      "name": "Firered · Português (Brasil)",
+      "file": "firered_ptbr.gba",
+      "md5": "dfc02ad742baa5d557dcb0213b0b50dc",
+      "size": 16777216,
+      "description": "SHA-1 51ab6d001412cdc3d6da16fb824ab8084123b1dd; Basis: Pokémon FireRed (USA / English) 1.0 / Revision 0."
+    },
+    {
+      "id": "leafgreen_ptbr",
+      "name": "Leafgreen · Português (Brasil)",
+      "file": "leafgreen_ptbr.gba",
+      "md5": "790d40d042401d1dea843fa7f52e2448",
+      "size": 16777216,
+      "description": "SHA-1 b32c63d5d1454d851cef16699f3ce757798553a2; Basis: Pokémon LeafGreen (USA / English) 1.0 / Revision 0."
+    },
+    {
+      "id": "firered_es",
+      "name": "Firered · Español",
+      "description": "SHA-1 ab8f6bfe0ccdaf41188cd015c8c74c314d02296a; Basis: Pokémon FireRed (USA / English) 1.0 / Revision 0.",
+      "file": "firered_es.gba",
+      "format": "raw",
+      "size": 16777216,
+      "md5": "c629272c5e0111930a240623b6c239f0"
+    },
+    {
+      "id": "leafgreen_es",
+      "name": "Leafgreen · Español",
+      "description": "SHA-1 f9ebee5d228cb695f18ef2ced41630a09fa9eb05; Basis: Pokémon LeafGreen (USA / English) 1.0 / Revision 0.",
+      "file": "leafgreen_es.gba",
+      "format": "raw",
+      "size": 16777216,
+      "md5": "765178ed4d402033ef7ed6b82d059f5a"
+    },
+    {
+      "id": "leafgreen_fr",
+      "name": "Leafgreen · Français",
+      "description": "SHA-1 4b5758c14d0a07b70ef3ef0bd7fa5e7ce6978672; Basis: Pokémon LeafGreen (USA / English) 1.0 / Revision 0.",
+      "file": "leafgreen_fr.gba",
+      "format": "raw",
+      "size": 16777216,
+      "md5": "c5bc831107f459816508b45d9392afc9"
+    },
+    {
+      "id": "firered_it",
+      "name": "Firered · Italiano",
+      "description": "SHA-1 66a9d415205321376b4318534c0dce5f69d28362; Basis: Pokémon FireRed (USA / English) 1.0 / Revision 0.",
+      "file": "firered_it.gba",
+      "format": "raw",
+      "size": 16777216,
+      "md5": "fce3c39e7ba452eddb2279b454b66416"
+    },
+    {
+      "id": "yellow_es",
+      "name": "Yellow · Español",
+      "description": "SHA-1 1dc242039218fba50928d1afb66b70565b6b9daf; Basis: Pokémon Yellow (USA / English) 1.0 / Revision 0.",
+      "file": "yellow_es.gb",
+      "format": "raw",
+      "size": 1048576,
+      "md5": "f0da8b1cff3aab898ecde9dcbda6d817"
+    },
+    {
+      "id": "gold_es",
+      "name": "Gold · Español",
+      "description": "SHA-1 162ea54c6a3cff374642e6dd842f9bffac847e7b; Basis: Pokémon Gold (USA / English) 1.0 / Revision 0.",
+      "file": "gold_es.gbc",
+      "format": "raw",
+      "size": 2097152,
+      "md5": "9462bc81907e38c59acccd739690e6f9"
+    },
+    {
+      "id": "silver_es",
+      "name": "Silver · Español",
+      "description": "SHA-1 05bd978ab2cb104b0aff3f696896e30885203a18; Basis: Pokémon Silver (USA / English) 1.0 / Revision 0.",
+      "file": "silver_es.gbc",
+      "format": "raw",
+      "size": 2097152,
+      "md5": "2d83fb454dd5687a802425c501854dc2"
+    },
+    {
+      "id": "red_es",
+      "name": "Red · Español",
+      "description": "SHA-1 fc17c5b904d551b1b908054ccd1c493f755f832a; Basis: Pokémon Red (USA / English) 1.0 / Revision 0.",
+      "file": "red_es.gb",
+      "format": "raw",
+      "size": 1048576,
+      "md5": "463c241c8721ab1d1da17c91de9f8a32"
+    },
+    {
+      "id": "silver_fr",
+      "name": "Silver · Français",
+      "description": "SHA-1 a4a7e8079b7a53e4d9ef43382bbb1090b9d45d1a; Basis: Pokémon Silver (USA / English) 1.0 / Revision 0.",
+      "file": "silver_fr.gbc",
+      "format": "raw",
+      "size": 2097152,
+      "md5": "72448fe75f534f70cd90469da95ef76f"
+    },
+    {
+      "id": "gold_fr",
+      "name": "Gold · Français",
+      "description": "SHA-1 c147c0d8c2b71b7628a7233436f5c052b5b17081; Basis: Pokémon Gold (USA / English) 1.0 / Revision 0.",
+      "file": "gold_fr.gbc",
+      "format": "raw",
+      "size": 2097152,
+      "md5": "9af19423c5fa3dbe4fdcc78d2bc7d1c0"
+    },
+    {
+      "id": "gold_it",
+      "name": "Gold · Italiano",
+      "description": "SHA-1 032608fe8947b627584a4a0eccc7bf9ad3588426; Basis: Pokémon Gold (USA / English) 1.0 / Revision 0.",
+      "file": "gold_it.gbc",
+      "format": "raw",
+      "size": 2097152,
+      "md5": "89bb59dc49b59b0cd30b7384d9860bb8"
+    },
+    {
+      "id": "crystal_es",
+      "name": "Pokémon Crystal · Español",
+      "description": "SHA-1 889a06fc0bb863666865aa69def0adf97945ac2a; Basis: Pokémon Crystal (USA / English) 1.0 / Revision 0.",
+      "file": "crystal_es.gbc",
+      "format": "raw",
+      "size": 2097152,
+      "md5": "8a626340f6b16ba45c1d4e07f2134875"
+    },
+    {
+      "id": "crystal_it",
+      "name": "Pokémon Crystal · Italiano",
+      "description": "SHA-1 6cee05e5b95beeae74b8365ad18ec4a07a8c4af8; Basis: Pokémon Crystal (USA / English) 1.0 / Revision 0.",
+      "file": "crystal_it.gbc",
+      "format": "raw",
+      "size": 2097152,
+      "md5": "7c513823f65b92a75e29067745839cc8"
+    },
+    {
+      "id": "gold_ko",
+      "name": "Pocket Monsters Geum (Korea)",
+      "file": "gold_ko.gbc",
+      "size": 2097152,
+      "md5": "82bd1d9171e60f147d9eeea13ef07a12",
+      "description": "SHA-1 c0ff3999e1093e1af59ef3eea3f1bfd7c1f18a65; Basis: Pokémon Gold (USA / English) 1.0 / Revision 0."
+    },
+    {
+      "id": "silver_ko",
+      "name": "Pocket Monsters Eun (Korea)",
+      "file": "silver_ko.gbc",
+      "size": 2097152,
+      "md5": "f5e14b069eaddee42735572bd23f7ef8",
+      "description": "SHA-1 cb22d7e03a74dc3a563fde6be8626626b2b392e7; Basis: Pokémon Silver (USA / English) 1.0 / Revision 0."
+    },
+    {
+      "id": "crystal_ja",
+      "name": "Pocket Monsters - Crystal Version (Japan)",
+      "file": "crystal_ja.gbc",
+      "size": 2097152,
+      "md5": "9c3ae66bffb28ea8ed2896822da02992",
+      "description": "SHA-1 95127b901bbce2407daf43cce9f45d4c27ef635d; Basis: Pokémon Crystal (USA / English) 1.0 / Revision 0."
+    },
+    {
+      "id": "firered_en",
+      "name": "firered English base (full Gen2 graphics)",
+      "description": "Exact English USA 1.0 base, retained privately for the Gen2 GBA localization adapter. SHA-1 41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc",
+      "file": "firered_en.gba",
+      "size": 16777216,
+      "md5": "e26ee0d44e809351c8ce2d73c7400cdd"
+    },
+    {
+      "id": "emerald_en",
+      "name": "emerald English base (full Gen2 graphics)",
+      "description": "Exact English USA 1.0 base, retained privately for the Gen2 GBA localization adapter. SHA-1 f3ae088181bf583e55daf962a92bb46f4f1d07b7",
+      "file": "emerald_en.gba",
+      "size": 16777216,
+      "md5": "605b89b67018abcea91e693a4dd25be3"
+    },
+    {
+      "id": "ruby_en",
+      "name": "Ruby English USA 1.0",
+      "description": "Optional English base for native language graphics. SHA-1 f28b6ffc97847e94a6c21a63cacf633ee5c8df1e",
+      "file": "ruby_en.gba",
+      "size": 16777216,
+      "md5": "53d1a2027ab49df34a689faa1fb14726"
+    },
+    {
+      "id": "sapphire_en",
+      "name": "Sapphire English USA 1.0",
+      "description": "Optional English base for native language graphics. SHA-1 3ccbbd45f8553c36463f13b938e833f652b793e4",
+      "file": "sapphire_en.gba",
+      "size": 16777216,
+      "md5": "f34e91399c719812e66e2c828a2e93d7"
+    },
+    {
+      "id": "leafgreen_en",
+      "name": "Leafgreen English USA 1.0",
+      "description": "Optional English base for native language graphics. SHA-1 574fa542ffebb14be69902d1d36f1ec0a4afd71e",
+      "file": "leafgreen_en.gba",
+      "size": 16777216,
+      "md5": "612ca9473451fa42b51d1711031ed5f6"
+    },
+    {
+      "id": "red_en",
+      "name": "Red English USA 1.0",
+      "description": "US source for automatic Portuguese preparation. SHA-1 ea9bcae617fdf159b045185467ae58b2e4a48b9a",
+      "file": "red_en.gbc",
+      "md5": "3d45c1ee9abd5738df46d2bdda8b57dc",
+      "size": 1048576,
+      "required": false
+    },
+    {
+      "id": "blue_en",
+      "name": "Blue English USA 1.0",
+      "description": "US source for automatic Portuguese preparation. SHA-1 d7037c83e1ae5b39bde3c30787637ba1d4c48ce2",
+      "file": "blue_en.gbc",
+      "md5": "50927e843568814f7ed45ec4f944bd8b",
+      "size": 1048576,
+      "required": false
+    },
+    {
+      "id": "yellow_en",
+      "name": "Yellow English USA 1.0",
+      "description": "US source for automatic Portuguese preparation. SHA-1 cc7d03262ebfaf2f06772c1a480c7d9d5f4a38e1",
+      "file": "yellow_en.gbc",
+      "md5": "d9290db87b1f0a23b89f99ee4469e34b",
+      "size": 1048576,
+      "required": false
+    },
+    {
+      "id": "gold_en",
+      "name": "Gold English USA 1.0",
+      "description": "US source for automatic Portuguese preparation. SHA-1 d8b8a3600a465308c9953dfa04f0081c05bdcb94",
+      "file": "gold_en.gbc",
+      "md5": "a6924ce1f9ad2228e1c6580779b23878",
+      "size": 2097152,
+      "required": false
+    },
+    {
+      "id": "silver_en",
+      "name": "Silver English USA 1.0",
+      "description": "US source for automatic Portuguese preparation. SHA-1 49b163f7e57702bc939d642a18f591de55d92dae",
+      "file": "silver_en.gbc",
+      "md5": "2ac166169354e84d0e2d7cf4cb40b312",
+      "size": 2097152,
+      "required": false
+    },
+    {
+      "id": "crystal_en",
+      "name": "Crystal English USA 1.0",
+      "description": "US source for automatic Portuguese preparation. SHA-1 f4cd194bdee0d04ca4eac29e09b8e4e9d818c133",
+      "file": "crystal_en.gbc",
+      "md5": "9f2922b235a5eeb78d65594e82ef5dde",
+      "size": 2097152,
+      "required": false
+    },
+    {
+      "id": "crystal_en_rev1",
+      "name": "Crystal English USA 1.1",
+      "description": "US source for automatic Portuguese preparation. SHA-1 f2f52230b536214ef7c9924f483392993e226cfb",
+      "file": "crystal_en_rev1.gbc",
+      "md5": "301899b8087289a6436b0a241fbbb474",
+      "size": 2097152,
+      "required": false
+    }
+  ],
+  "generations": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "language": true,
+  "updateCheck": false
+}

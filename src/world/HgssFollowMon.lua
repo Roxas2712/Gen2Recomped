@@ -165,12 +165,35 @@ function F.onMapEntered(game, ow)
   remove(ow)
   ow.hgssFollowTrail, ow.hgssFollowPending, ow.hgssFollowTalk = nil, nil, nil
   local save = game.save or {}
-  -- SaveFollowMon's inhibit flag is cleared on every map change
+  -- SaveFollowMon's inhibit flag is cleared on every map change -- by
+  -- sub_02053038, which a continue skips: the saved flag stands then
   local st = state(save)
-  st.inhibit, st.paused, st.recalled = nil, nil, nil
+  if not ow.gen4Continuing then st.inhibit = nil end
+  st.paused, st.recalled = nil, nil
   local mon = F.lead(save)
   if not (mon and F.allowed(game, ow, mon)) then return end
-  spawn(game, ow, mon)
+  local npc = spawn(game, ow, mon)
+  -- A CONTINUE PUTS IT BACK WHERE IT WAS. FieldTask_ContinueGame_Normal
+  -- restores obj_partner_poke with every other object from the save
+  -- (FieldSystem_RestoreMapObjectsFromSave -> LocalMapObject_InitFromSavedMapObject:
+  -- position and facing, the invisible bit cleared by sub_0205E934), and
+  -- FollowMon_ChangeMon then takes it back into its ball only while the
+  -- player bikes or surfs (sub_0206A040) -- it does not wait for a step.
+  -- captureSave files it under F.INDEX like any object. Saved still on the
+  -- player's own tile (it had not come out yet), it waits for the step.
+  local p = ow.player
+  local kept = ow.gen4Continuing and save.gen4Objects and ow.map and save.gen4Objects[ow.map.id]
+  local at = kept and kept[F.INDEX]
+  if npc and at then npc.facing = at.facing or npc.facing end
+  if npc and p and at and at.x and at.y and not (at.x == p.cellX and at.y == p.cellY) then
+    npc.cellX, npc.cellY = at.x, at.y
+    npc.px, npc.py = at.x * 16, at.y * 16
+    ow.hgssFollowTrail = { x = p.cellX, y = p.cellY }
+    if not (save.onBike or p.surfing or st.inhibit) then
+      npc.hidden = false
+      ow.hgssFollowPending = nil
+    end
+  end
 end
 
 local function hiddenNow(game, ow)

@@ -20,6 +20,10 @@ local function await(api, handle)
   end
 end
 function love.load()
+  love.thread.getChannel("download-qa-start"):clear()
+  love.thread.getChannel("download-qa-start-entered"):clear()
+  love.thread.getChannel("download-qa-hold"):clear()
+  love.thread.getChannel("download-qa-entered"):clear()
   Fetch = require('src.net.Fetch'); Net = require('src.mods.Net')
   base = assert(os.getenv('GET_TEST_URL'))
   local newThread = love.thread.newThread
@@ -125,7 +129,19 @@ function love.run()
     oldFile()
     started = love.timer.getTime()
     local fileJob = assert(Fetch.download(base..'/stream', target, {size=262144}))
-    check(love.timer.getTime()-started < .1, 'file transfer starts without waiting for server')
+    -- Cold thread startup depends on the host scheduler. Prove nonblocking
+    -- behavior with a closed worker gate, rather than timing that startup.
+    local startGate = love.thread.getChannel("download-qa-start")
+    local enteredStart = love.thread.getChannel("download-qa-start-entered")
+    local gateAt = love.timer.getTime()
+    while enteredStart:getCount() == 0 do
+      check(love.timer.getTime()-gateAt < 10, 'cold file worker enters the start barrier')
+      check(fileApi:poll(fileJob).status == 'pending', 'caller pumps before transport may begin')
+      pulses = pulses + 1; love.timer.sleep(.005)
+    end
+    check(not startGate:peek(), 'download returned while the transport gate was closed')
+    preserved('gated transport preserves the previous complete destination')
+    startGate:push(true)
     local observedProgress = false
     local pattern = {}; for i=0,255 do pattern[#pattern+1] = string.char(i) end
     pattern = table.concat(pattern)
@@ -210,9 +226,17 @@ function love.run()
     Fetch.release(invalidTarget)
     local heldFiles={}
     for i=1,8 do heldFiles[i]=assert(Fetch.download(base..'/slow','downloads/held'..i)) end
+    local entered=love.thread.getChannel("download-qa-entered")
+    local heldAt=love.timer.getTime()
+    while entered:getCount()<2 do
+      check(love.timer.getTime()-heldAt<5,'both real file workers enter the fixture barrier')
+      love.timer.sleep(.005)
+    end
     check(Fetch.download(base..'/slow','downloads/overflow')==nil,'file queue bounded')
     for _, handle in ipairs(heldFiles) do Fetch.cancel(handle);Fetch.release(handle) end
     check(Fetch.download(base..'/slow','downloads/overflow')==nil,'release cannot bypass occupied file workers')
+    love.thread.getChannel("download-qa-start"):push(true)
+  love.thread.getChannel("download-qa-hold"):push(true)
     Fetch.shutdown()
     for _, child in ipairs(love.filesystem.getDirectoryItems('net-download')) do
       check(#love.filesystem.getDirectoryItems('net-download/'..child)==0,'shutdown cleans file worker staging data')
@@ -220,6 +244,8 @@ function love.run()
     preserved('late cancellation cannot publish after shutdown')
     print(('async GET and file downloads: %d checks, %d pump ticks PASS'):format(checks,pulses))
   end, debug.traceback)
+  love.thread.getChannel("download-qa-start"):push(true)
+  love.thread.getChannel("download-qa-hold"):push(true)
   if not ok then io.stderr:write(tostring(err).."\n");io.stderr:flush(); if Fetch then Fetch.shutdown() end end
   return function() return ok and 0 or 1 end
 end
