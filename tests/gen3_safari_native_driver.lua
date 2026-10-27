@@ -28,6 +28,12 @@ return function(game)
   assert(require('src.import.Gen3SafariAssets').valid(game.data.constants.gen3SafariNative,edition))
   report.labels=game.data.constants.gen3SafariNative.labels
   report.prompt=G.text(b,'prompt');report.initialCatchRate=b.safariCatchRate
+  if edition=='emerald'then
+    local B=require('src.battle.Gen3Battle');local action=B.windows(b).action
+    local width=B.drawSafariLabel(game.data.constants.gen3SafariNative.labels[2],action.textX+56,action.row1)
+    assert(action.textX+56+width<=232,'Native Pokeblock compound word overflows the action panel')
+    report.nativePokeblockWordWidth=width
+  end
   shot('native-safari-action-menu')
   local S=require('src.core.SaveSerializer');local saveBefore=S.encode(game.save);local randomBefore=love.math.getRandomState()
   b:draw();assert(S.encode(game.save)==saveBefore and love.math.getRandomState()==randomBefore)
