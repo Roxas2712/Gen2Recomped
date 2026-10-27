@@ -172,6 +172,7 @@ def main():
     seed = '''
 local settings=os.getenv("PERF_BASELINE_OPTIONS")
 if settings then
+ require('src.storage.AccountStorage').enable()
  local Save=require("src.core.SaveData")
  require("src.core.GameVersion").set(assert(os.getenv("POKEPORT_VERSION")))
  local opts=Save.loadOptions()

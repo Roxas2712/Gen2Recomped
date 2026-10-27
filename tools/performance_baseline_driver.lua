@@ -18,6 +18,15 @@ return function(game)
     viewport = {love.graphics.getDimensions()}, pixels = {love.graphics.getPixelDimensions()},
     targets = {}, dataKeys = {}, boot = {},
   }
+  report.loadedMods={}
+  for _,mod in ipairs(game.mods.loaded or {}) do
+    report.loadedMods[#report.loadedMods+1]=mod.manifest.id
+  end
+  table.sort(report.loadedMods)
+  if spec.voxel and spec.measure then
+    assert(#report.loadedMods==1 and report.loadedMods[1]=='Gen2Recomped-DramaticShapes',
+      'voxel measurement requires only DRAMATIC_SHAPE')
+  end
   for key in pairs(game.data) do report.dataKeys[#report.dataKeys + 1] = tostring(key) end
   table.sort(report.dataKeys)
   local function scalar(value)
