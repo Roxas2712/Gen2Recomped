@@ -51,9 +51,10 @@ movie/title sequences, audio, new-game entry and save/continue. Separate native
 fixtures exercised all-five START and battle fixes, and R/S/E Rusturf reward
 and re-entry behavior.
 
-An ordinary Sapphire playthrough reached four badges, completed the repaired
-Rusturf HM04 scene, returned to Petalburg and saved normally. This is one
-checkpoint, not a full-game acceptance. Complete ordinary stories, endings,
+An ordinary Sapphire playthrough completed the repaired Rusturf HM04 scene,
+returned to Petalburg, defeated Norman and saved the fifth badge and TM42
+normally on the public integration source. This is one checkpoint, not a
+full-game acceptance. Complete ordinary stories, endings,
 postgame systems and the remaining per-edition presentation gaps are still
 open for all five editions. No overall completion percentage is asserted.
 
@@ -64,6 +65,18 @@ Native checks require the player's verified cartridges and an isolated QA
 profile. `tools/run_edition_native.py` and `tools/run_lua_contracts.py` use the
 repository's guarded storage workflow. Cache reuse is allowed only when its
 extraction input hashes match the tested source.
+
+The public integration's 682 engine suites passed, as did the mod-SDK,
+five-edition entry/cursor matrix and FR/LG dialogue-frame checks. The latter
+compare 2,944 pixels per edition with its own cartridge. The final renderer
+guard also passed native RS shop transactions and camera/save immutability.
+
+The pinned Gen1 secondary helper has two documented cartridge-rule gaps.
+The cross-engine checker retains its raw equality result and separately
+audits the corrected expected cartridge behavior; see the
+[secondary oracle](../tools/enemy-action-contract-check/secondary-oracle.md).
+It preserves strict comparisons of damage, RNG, identities and all other
+observations, and does not patch the read-only reference.
 
 The standard `scripts/pack_love.sh` and `scripts/build.sh` include `compat/`;
 normal source builds therefore contain these bridges without requiring a

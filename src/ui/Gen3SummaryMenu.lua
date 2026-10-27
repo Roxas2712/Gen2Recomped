@@ -250,7 +250,9 @@ function Gen3SummaryMenu.new(game, opts)
   if not self.def then
     warnOnce("no species record for %s", tostring(self.mon and self.mon.species))
   end
-  if self.mon and require('src.ui.Gen3RsSummary').available(game) then
+  local rsVersion = require('src.core.GameVersion').get()
+  if self.mon and (rsVersion == 'ruby' or rsVersion == 'sapphire')
+     and require('src.ui.Gen3RsSummary').available(game) then
     self.wantsFillScale=function()return true end
     self.wantsEdgeBleed=function()return false end
     self.sgbPalettes=function()return {require('src.render.PaletteFX').trueColorZone(0,0,29,19)}end
