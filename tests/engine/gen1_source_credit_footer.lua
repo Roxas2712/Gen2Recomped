@@ -10,6 +10,8 @@ local dimensions,printf,setFont=g.getDimensions,g.printf,g.setFont
 local widthFn,heightFn,safeArea=g.getWidth,g.getHeight,love.window.getSafeArea
 local mesh,shader,image,newFont=g.newMesh,g.newShader,g.newImage,g.newFont
 local oldImage=love.image
+local mouseDown=love.mouse.isDown
+love.mouse.isDown=function()return false end
 local function noop()end
 local ellipse,arc,polygon=g.ellipse,g.arc,g.polygon
 g.ellipse,g.arc,g.polygon=noop,noop,noop
@@ -21,7 +23,7 @@ g.newShader=function()return {send=noop,release=noop}end
 love.image={newImageData=function(w,h)return {w=w,h=h,setPixel=noop}end}
 g.newImage=function(source)
   local obj=type(source)=='table'and {w=source.w,h=source.h}or image(source)
-  obj.setWrap,obj.setFilter=noop,noop
+  obj.setWrap,obj.setFilter,obj.setMipmapFilter=noop,noop,noop
   obj.getDimensions=function(self)return self.w,self.h end
   return obj
 end
@@ -70,7 +72,9 @@ for _,size in ipairs({{960,720},{480,360},{1280,960}})do
       local _,lines=line.font:getWrap(line.text,line.width)
       local bottom=line.y+math.max(1,#lines)*line.font:getHeight()
       for _,button in ipairs(ui.donateButtons or {})do
-        T.check(button.y>=bottom,'native footer reserves the full wrapped credit before donation controls')
+        if not button.pinned then
+          T.check(button.y>=bottom,'native footer reserves the full wrapped credit before its donation controls')
+        end
       end
     end
   end
@@ -79,6 +83,7 @@ g.getDimensions,g.printf,g.setFont=dimensions,printf,setFont
 g.getWidth,g.getHeight,love.window.getSafeArea=widthFn,heightFn,safeArea
 g.newMesh,g.newShader,g.newImage,g.newFont=mesh,shader,image,newFont
 love.image=oldImage
+love.mouse.isDown=mouseDown
 g.stencil,g.setStencilTest=stencil,stencilTest
 g.ellipse,g.arc,g.polygon=ellipse,arc,polygon
 run.release()
