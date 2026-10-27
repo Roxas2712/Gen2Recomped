@@ -2,7 +2,7 @@
 -- barrier closes again on the next map load (#258).  scripts/Route23.asm:8 and
 -- scripts/VictoryRoad2F.asm:19 reset the switch events on entry; neither was
 -- ported.  scripts/VictoryRoad1F.asm:14 only ever stamps the OPEN block, but
--- the port's Map:setBlock writes through to the shared Game.data record, so it
+-- the port's The cached Map retains runtime block patches, so the entry script
 -- has to stamp the CLOSED block itself or the barrier stays open all session.
 package.path = "./?.lua;./?/init.lua;" .. package.path
 if not _G.love then _G.love = require("tests.love_stub") end
@@ -54,17 +54,19 @@ check(names3F.VICTORYROAD3F_BOULDER4,
 check(not names2F.VICTORYROAD2F_BOULDER,
       "and nothing is named VICTORYROAD2F_BOULDER (the old, never-matching key)")
 
--- Map:setBlock writes into the shared Game.data record, which is the invariant
--- the both-ways stamp exists for.  Restored immediately: every later suite in
--- this process reads the same table.
+-- Runtime block patches belong to the cached Map; imported definitions stay
+-- immutable. Reusing the map still requires stamping barriers both ways.
 do
   local def = Data.maps.VICTORY_ROAD_1F
   local MapLoader = require("src.world.MapLoader")
   local map = MapLoader.load(Data, "VICTORY_ROAD_1F")
   local before = blockAt("VICTORY_ROAD_1F", 4, 6)
   map:setBlock(4, 6, 0x1D)
-  eq(blockAt("VICTORY_ROAD_1F", 4, 6), 0x1D,
-     "replaceBlock/setBlock writes through to the SHARED map record")
+  eq(map:blockAt(4, 6), 0x1D, "the live map receives the open barrier")
+  eq(MapLoader.load(Data, "VICTORY_ROAD_1F"):blockAt(4, 6), 0x1D,
+     "a cached map retains its runtime barrier patch")
+  eq(blockAt("VICTORY_ROAD_1F", 4, 6), before,
+     "runtime block edits leave the imported map record unchanged")
   map:setBlock(4, 6, before)
   eq(def.blocks[6 * def.width + 4 + 1], 0x25, "restored for the rest of the run")
 end

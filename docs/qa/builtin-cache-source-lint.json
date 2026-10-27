@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "baseCommit": "07d9d7b4e12d28a195d6fc3ffed800171a54d368",
+  "sourcePins": 56,
+  "unitTestsPassed": 8,
+  "lintPassed": [
+    "UNI_LANGUAGE_NATIVE",
+    "DRAMATIC_SHAPE",
+    "EMERALD_3DS_VOXEL"
+  ],
+  "inputSha256": {
+    "tools/modkit_builtin_cache_sources.json": "dcb82236857e5f5c430a2bac3a09c0b589ac6a001356d4a67a4b7208f744aebf",
+    "tools/modkit.py": "b723ea16cad8311720a825e7d57208f91f8c7e5de14036cd89f1c23ef4213420",
+    "tests/test_modkit_cache_comments.py": "398e4b556883b0ce400b292dcd12a1f6ca52464c5f568932e42d15b009f2b0e6"
+  },
+  "limitations": [
+    "Pins apply only to repository-owned Lua source reference findings; all other content gates run.",
+    "No runtime localization or mod-loader behavior changes."
+  ]
+}

@@ -60,7 +60,7 @@ local function completionNotice(result)
  game:returnToLauncher();return Arena.takeNotice().text
 end
 check(completionNotice('draw'):find('without a winner',1,true) and captured.status=='draw','draws show that no ranked win or reward is pending')
-check(completionNotice('win'):find('both reports agree',1,true) and captured.status=='complete','a completed result remains visibly pending peer agreement')
+check(completionNotice('win'):find('server verifies the recorded battle',1,true) and captured.status=='complete','a completed result remains visibly pending independent server verification')
 check(completionNotice():find('Battle cancelled',1,true) and captured.status=='aborted','a cancelled battle has a distinct lobby notice')
 Version.get=oldGet
 local noop=function() end;local W=require('src.import.TournamentWorkspace')

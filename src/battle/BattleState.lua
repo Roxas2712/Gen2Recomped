@@ -1254,6 +1254,9 @@ local function newBattle(game, opts)
       local ok, Gen2AnimPlayer = pcall(require, "src.battle.Gen2AnimPlayer")
       if ok then
         self.animPlayer = Gen2AnimPlayer.new(game.data)
+        self.animPlayer.battle = self.battle
+        self.animView = self.animPlayer.view
+        self.anims = self.animPlayer.anims
       end
     else
       local ok, AnimPlayer = pcall(require, "src.battle.AnimPlayer")
@@ -2493,6 +2496,8 @@ end
 --
 -- Returns true while animating.
 function BattleState:stepHPDrain()
+  -- GSC has its own short/long pixel loop and public display callback.
+  if GameVersion.isGen2() then return require('src.battle.Gen2HpPresentation').drain(self) end
   local busy = false
   for _, b in activeBattlers(self) do
     if b and b.shownHP then
@@ -2536,6 +2541,18 @@ function BattleState:stepHPDrain()
     end
   end
   return busy
+end
+
+function BattleState:stepHpAnim()
+  return require('src.battle.Gen2HpPresentation').step(self)
+end
+
+function BattleState:hudHp(mon, side)
+  return require('src.battle.Gen2HpPresentation').shown(self, mon, side)
+end
+
+function BattleState:hudHpPixels(mon, side)
+  return require('src.battle.Gen2HpPresentation').fill(self, mon, side)
 end
 
 -- AnimateExpBar (engine/battle/experience.asm) creeps the bar to its new
@@ -2746,6 +2763,7 @@ function BattleState:updateQueuePresentation()
   if self.draining then
     if self:stepHPDrain() then return true end
     self.draining = nil
+    if GameVersion.isGen2() then require('src.battle.Gen2HpPresentation').retire(self) end
     if self.player then self.player.drainFloor = nil end
     if self.enemy then self.enemy.drainFloor = nil end
   end
@@ -2787,12 +2805,19 @@ function BattleState:updateQueue()
       -- again.  Dig/Fly's charge hide and a genuinely invulnerable battler
       -- are the two that must survive, same as in resetPicFx.
       self:restoreHiddenPics()
+      if GameVersion.isGen2() then
+        if self:startPendingAfterAnim() then return true end
+        if not self.animPlayer.keepSprites then self.anim = nil end
+      end
       -- the target's hit blink + damage sound follow the animation
       -- (pokered plays them after PlayMoveAnimation returns)
       if self.pendingHit then
-        self:applyHitFx(self.pendingHit)
+        if not (GameVersion.isGen2() and self.afterAnimPlayed) then
+          self:applyHitFx(self.pendingHit)
+        end
         self.pendingHit = nil
       end
+      if GameVersion.isGen2() then self.afterAnimPlayed = nil end
     end
     return true
   end
@@ -2827,6 +2852,7 @@ function BattleState:updateQueue()
     end
     if item.drain then
       self.draining = true
+      if GameVersion.isGen2() then self._gen2HpDrainBattler=item.battler end
       if item.battler then item.battler.drainFloor = item.stopAt end
       return true
     end
@@ -2928,9 +2954,7 @@ function BattleState:updateQueue()
           self.waitFrames = math.max(self.waitFrames or 0,
                                      self.gen3Anim.total or 0)
         elseif self.animPlayer then
-          local ok, started = pcall(self.animPlayer.start, self.animPlayer,
-                           item.anim, item.attackerIsPlayer,
-                           (item.shakes or item.ball)
+          local opts = (item.shakes or item.ball)
                              and { shakes = item.shakes, ball = item.ball,
                                    caught = item.caught,
                                    -- Gen 2's toss script branches on the
@@ -2938,9 +2962,26 @@ function BattleState:updateQueue()
                                    ballIndex = item.ball
                                      and (self:itemDef(item.ball) or {}).index
                                      or nil,
+                                   ballPalette = GameVersion.isGen2() and item.ball
+                                     and self:ballPalette((self:itemDef(item.ball) or {}).key or item.ball)
+                                     or nil,
                                    ballFlicker = item.ball
                                      and self:ballFlicker(item.ball) or nil }
-                             or nil)
+                             or nil
+          local ok, started
+          if GameVersion.isGen2() then
+            if mdef and not BALL_ANIMS[item.anim] then
+              ok, started = pcall(self.animForMove, self, item.anim,
+                item.attackerIsPlayer and 'player' or 'enemy',
+                item.animParam, item.effectiveness, item.afterAnim)
+            else
+              ok, started = pcall(require('src.battle.Gen2MovePresentation').start,
+                self, item.anim, item.attackerIsPlayer, opts)
+            end
+          else
+            ok, started = pcall(self.animPlayer.start, self.animPlayer,
+              item.anim, item.attackerIsPlayer, opts)
+          end
           -- a player that reports no data for the move (Gen 2 returns
           -- false) falls through to the single-sound path below
           self.animPlaying = ok and started ~= false
@@ -3009,11 +3050,13 @@ function BattleState:updateQueue()
         -- plays each row's MoveSoundTable entry with its pitch/tempo
         -- modifiers); which side the pic effects target follows the
         -- attacker (hWhoseTurn)
-        self.animName = item.anim
-        self.animAttackerIsPlayer = item.attackerIsPlayer
-        self:resetPicFx()
-        for _, ev in ipairs(self.animPlayer:pollEffects()) do
-          self:applyAnimEffect(ev) -- frame-0 rows (first sound/effect)
+        if not GameVersion.isGen2() then
+          self.animName = item.anim
+          self.animAttackerIsPlayer = item.attackerIsPlayer
+          self:resetPicFx()
+          for _, ev in ipairs(self.animPlayer:pollEffects()) do
+            self:applyAnimEffect(ev) -- frame-0 rows (first sound/effect)
+          end
         end
         self.pendingHit = item.hit
       else
@@ -6980,6 +7023,21 @@ end
 function BattleState:animationsOn()
   local o = self.game.save.options
   return not o or o.animations ~= false
+end
+
+-- GetBallAnimPal / BallColors. Native item IDs retain their registry key;
+-- the public item spelling selects the palette on the actual queued throw.
+-- Names/order follow Gen1Recomp's Gen2 BattleState and cartridge BallColors.
+local GEN2_BALL_PALETTES = {
+  MASTER_BALL='PAL_BATTLE_OB_GREEN', ULTRA_BALL='PAL_BATTLE_OB_YELLOW',
+  GREAT_BALL='PAL_BATTLE_OB_BLUE', POKE_BALL='PAL_BATTLE_OB_RED',
+  HEAVY_BALL='PAL_BATTLE_OB_GRAY', LEVEL_BALL='PAL_BATTLE_OB_BROWN',
+  LURE_BALL='PAL_BATTLE_OB_BLUE', FAST_BALL='PAL_BATTLE_OB_BLUE',
+  FRIEND_BALL='PAL_BATTLE_OB_YELLOW', MOON_BALL='PAL_BATTLE_OB_GRAY',
+  LOVE_BALL='PAL_BATTLE_OB_RED',
+}
+function BattleState:ballPalette(itemId)
+  return GEN2_BALL_PALETTES[itemId] or 'PAL_BATTLE_OB_GRAY'
 end
 
 -- Drop the announcement-time move-anim row.  Gen 1 queues PlayMoveAnimation
@@ -11353,6 +11411,16 @@ local HudTiles = require("src.render.HudTiles")
 local hudTile = HudTiles.tile
 local drawHPBar = HudTiles.drawHPBar
 
+local function nativeHpPixels(screen, b, side)
+  if GameVersion.isGen2() then
+    -- The public GSC animation owns a 48-pixel bar. Respect a cartridge's
+    -- wider HUD geometry when writing its actual tile row.
+    local pixels = screen:hudHpPixels(b.mon, side)
+    return pixels > 0 and math.max(1, math.floor(pixels
+      * HudTiles.geometry().hpBarTiles / 6)) or 0
+  end
+end
+
 -- CenterMonName: 1-2 letter names print two tiles right, 3-4 one tile.
 -- Counted in glyphs, not bytes: a nickname carrying "é" or "♂" is one
 -- charmap sequence per glyph, and byte length would push it a tile left.
@@ -12376,7 +12444,8 @@ function BattleState:sgbBattlePals()
   local function bar(b)
     if not b then return pals.GREENBAR end
     local hp = b.shownHP or b.mon.hp
-    return pals[PaletteFX.barPalName(hp, b.mon.stats.hp)] or pals.GREENBAR
+    return pals[PaletteFX.barPalName(hp, b.mon.stats.hp,
+      nativeHpPixels(self, b, b.isPlayer and 'player' or 'enemy'))] or pals.GREENBAR
   end
   local function mon(b, placeholder)
     if placeholder or not b then return pals.MEWMON or pals.GREENBAR end
@@ -13018,7 +13087,7 @@ function BattleState:drawHUDs(slide)
     hudTile(0x73, 8, 16)
     drawHPBar(barData, 2, 2,
               { hp = shownHP(self.enemy), stats = self.enemy.mon.stats },
-              nil, grayFill)
+              nil, grayFill, nil, nativeHpPixels(self, self.enemy, 'enemy'))
     hudTile(0x74, 8, 24)
     for i = 2, 9 do hudTile(0x76, i * 8, 24) end
     hudTile(0x78, 80, 24)
@@ -13099,7 +13168,7 @@ function BattleState:drawHUDs(slide)
     end
     drawHPBar(barData, 10, 9,
               { hp = shownHP(self.player), stats = self.player.mon.stats },
-              1, grayFill) -- wHPBarType 1: the $6D cap
+              1, grayFill, nil, nativeHpPixels(self, self.player, 'player')) -- wHPBarType 1: the $6D cap
     Font.draw(("%3d/%3d"):format(shownHP(self.player), self.player.mon.stats.hp), 88, 80)
     -- The block's right edge follows the HP bar: two label tiles from column
     -- 10, then the segments, then the cap -- column 18 with Crystal's
@@ -13343,6 +13412,7 @@ function BattleState:drawBattleField()
 end
 
 function BattleState:drawClassic()
+  if GameVersion.isGen2() then return self:drawScene() end
   -- AskName: ClearSprites + wild ClearScreenArea -- white field under the
   -- nickname TextBox / YES/NO (naming_screen.asm); overlays draw on top.
   if self.blankForAskName then
@@ -13456,6 +13526,8 @@ function BattleState:drawClassic()
   end
 end
 
+require('src.battle.Gen2MovePresentation').install(BattleState)
+require('src.battle.Gen2BattleScene').install(BattleState)
 Gen2BattleView.install(BattleState, {
   load = getImage,
   palette = monPalette,

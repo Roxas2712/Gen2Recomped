@@ -281,44 +281,55 @@ local function optGame()
   }
 end
 local om = OptionsMenu.new(optGame())
-local WANT_IDS = { "textSpeed", "animations", "battleStyle", "battleLayout",
-                   "ruleset", "musicVol", "sfxVol", "musicFilter",
-                   "performance", "colors",
-                   "tilt", "gbcfx", "zoom", "voidFill", "videoMode", "fpsCap",
+local VANILLA_COUNT = #om.rows
+local WANT_IDS = { "stereo", "textSpeed", "animations", "battleStyle", "battleLayout",
+                   "ruleset", "musicVol", "sfxVol", "musicFilter", "performance", "colors",
+                   "tilt", "gbcfx", "zoom", "voidFill", "videoMode", "fpsCap", "vsync",
                    "speed", "mods", "controls" }
-check(#om.rows == #WANT_IDS, "vanilla options row count (plus MODS/CONTROLS)")
-for i, id in ipairs(WANT_IDS) do
-  check(om.rows[i].id == id, "options row order: " .. id)
+local function row(id)
+  for _,record in ipairs(om.rows)do if record.id==id then return record end end
+  error("missing option row: "..id)
+end
+local positions={}
+for i,record in ipairs(om.rows)do
+  check(positions[record.id]==nil,"option ids are unique: "..record.id)
+  positions[record.id]=i
+end
+local last=0
+for _,id in ipairs(WANT_IDS)do
+  check(positions[id] and positions[id]>last,"required option order: "..id)
+  last=positions[id] or last
 end
 
 -- ruleset row cycles the sorted non-hidden registry ids showing name
 om.game.save.options.ruleset = "gen1_faithful"
-check(om.rows[5].value(om.game) == "GEN 1", "ruleset row shows record.name")
-om.rows[5].step(om.game, 1)
+check(row("ruleset").value(om.game) == "GEN 1", "ruleset row shows record.name")
+row("ruleset").step(om.game, 1)
 check(om.game.save.options.ruleset == "modern_clean",
   "ruleset row cycles sorted registry ids")
-om.rows[5].step(om.game, 1)
-check(om.game.save.options.ruleset == "gen1_faithful",
-  "hidden rulesets are excluded from the cycle")
+row("ruleset").step(om.game, 1)
+check(om.game.save.options.ruleset == false,"rulesets cycle through AUTO")
+row("ruleset").step(om.game,1)
+check(om.game.save.options.ruleset == "gen1_faithful","hidden rulesets remain excluded after AUTO")
 
 -- stepping parity with the old per-index ladder
-om.rows[1].step(om.game, 1)
+row("textSpeed").step(om.game, 1)
 check(om.game.save.options.textSpeed == 5, "text speed MEDIUM steps to SLOW")
-om.rows[1].step(om.game, 1)
+row("textSpeed").step(om.game, 1)
 check(om.game.save.options.textSpeed == 1, "then wraps to FAST")
-om.rows[2].step(om.game, 1)
+row("animations").step(om.game, 1)
 check(om.game.save.options.animations == false, "animations toggles off")
-om.rows[3].step(om.game, 1)
+row("battleStyle").step(om.game, 1)
 check(om.game.save.options.battleStyle == "set", "battle style flips to SET")
-check(om.rows[4].value(om.game) == "OG", "battle layout starts on the OG screen")
-om.rows[4].step(om.game, 1)
+check(row("battleLayout").value(om.game) == "OG", "battle layout starts on the OG screen")
+row("battleLayout").step(om.game, 1)
 check(om.game.save.options.battleLayout == "wide", "battle layout flips to WIDE")
-check(om.rows[4].value(om.game) == "WIDE", "the WIDE layout renders its label")
-om.rows[4].step(om.game, 1)
+check(row("battleLayout").value(om.game) == "WIDE", "the WIDE layout renders its label")
+row("battleLayout").step(om.game, 1)
 check(om.game.save.options.battleLayout == "og", "battle layout flips back")
-om.rows[6].step(om.game, -1)
+row("musicVol").step(om.game, -1)
 check(om.game.save.options.musicVol == 6, "music volume steps down")
-for _ = 1, 10 do om.rows[6].step(om.game, -1) end
+for _ = 1, 10 do row("musicVol").step(om.game, -1) end
 check(om.game.save.options.musicVol == 0, "music volume clamps at 0")
 
 -- ZOOM / VOID FILL rows (indices shifted +1 by the PERFORMANCE row spliced
@@ -327,30 +338,30 @@ local Zoom = require("src.render.Zoom")
 local TileRenderer = require("src.render.TileRenderer")
 om.game.save.options.zoom = 0
 Zoom.offset = 0
-check(om.rows[13].value(om.game) == "FIT", "ZOOM row shows FIT at offset 0")
-om.rows[13].step(om.game, 1)
+check(row("zoom").value(om.game) == "FIT", "ZOOM row shows FIT at offset 0")
+row("zoom").step(om.game, 1)
 check(om.game.save.options.zoom == 1 and Zoom.offset == 1,
   "ZOOM row steps to IN1")
-om.rows[14].step(om.game, 1)
+row("voidFill").step(om.game, 1)
 check(om.game.save.options.voidFill == "water"
       and TileRenderer.voidFill == "water",
   "VOID FILL row cycles TREES → WATER")
-om.rows[14].step(om.game, 1)
+row("voidFill").step(om.game, 1)
 check(om.game.save.options.voidFill == "black", "VOID FILL steps to BLACK")
-om.rows[14].step(om.game, 1)
+row("voidFill").step(om.game, 1)
 check(om.game.save.options.voidFill == "trees", "VOID FILL wraps to TREES")
 
 -- the MAX FPS row cycles the render-cap steps and shows the value plain
 om.game.save.options.fpsCap = nil
-check(om.rows[16].value(om.game) == "60",
+check(row("fpsCap").value(om.game) == "60",
   "MAX FPS row defaults to 60 with no saved cap")
-om.rows[16].step(om.game, 1)
+row("fpsCap").step(om.game, 1)
 check(om.game.save.options.fpsCap == 75, "MAX FPS steps up from 60 to 75")
-check(om.rows[16].value(om.game) == "75", "the MAX FPS row renders the cap")
+check(row("fpsCap").value(om.game) == "75", "the MAX FPS row renders the cap")
 om.game.save.options.fpsCap = 160
-om.rows[16].step(om.game, 1)
+row("fpsCap").step(om.game, 1)
 check(om.game.save.options.fpsCap == 30, "MAX FPS wraps past the ceiling to 30")
-om.rows[16].step(om.game, -1)
+row("fpsCap").step(om.game, -1)
 check(om.game.save.options.fpsCap == 160, "MAX FPS wraps back down to the ceiling")
 
 -- ------- FrameCap normalize / cycle (issue #88)
@@ -380,7 +391,7 @@ check(FrameCap.current == 60, "FrameCap.applyOptions defaults a missing key to 6
 -- the MODS row is the manager's discoverable home
 local mgGame = optGame()
 om = OptionsMenu.new(mgGame)
-om.rows[18].activate(mgGame)
+row("mods").activate(mgGame)
 check(getmetatable(mgGame.stack:top()) == ManagerState,
   "the MODS row opens the manager")
 check(mgGame.stack:top().screenId == "ManagerState",
@@ -390,17 +401,17 @@ check(mgGame.stack:top().screenId == "ManagerState",
 local BindingsMenu = require("src.ui.BindingsMenu")
 local cbGame = optGame()
 om = OptionsMenu.new(cbGame)
-om.rows[19].activate(cbGame)
+row("controls").activate(cbGame)
 local bm = cbGame.stack:top()
 check(getmetatable(bm) == BindingsMenu,
   "the CONTROLS row opens the rebind list")
 check(bm.screenId == "BindingsMenu",
   "the pushed rebind screen carries its screen id")
-check(#bm.items == 8, "one row per logical button")
+check(#bm.items == 12, "the complete logical pad is visible")
 check(bm.items[1].label == "UP" and bm.items[1].right == "UP/D-UP"
-  and bm.items[5].label == "A" and bm.items[5].right == "Z/A"
-  and bm.items[7].label == "START" and bm.items[7].right == "ESC/START"
-  and bm.items[8].label == "SELECT" and bm.items[8].right == "TAB/BACK",
+  and bm.items[5].label == "A" and bm.items[5].right == "Z/"..require("src.core.GamepadMap").buttonLabel(require("src.core.GamepadMap").defaultPadForAction("a"))
+  and bm.items[9].label == "START" and bm.items[9].right == "ESC/START"
+  and bm.items[10].label == "SELECT" and bm.items[10].right == "TAB/BACK",
   "with no rebind the rows mirror the fixed map, key and pad both (#589)")
 check(cbGame.save.options.bindings == nil,
   "opening the screen alone writes nothing")
@@ -461,7 +472,7 @@ hooks:removeOwner("fixture")
 
 hooks:wrap("ui.options.rows", function() return "nope" end, 0, "bad")
 om = OptionsMenu.new(optGame())
-check(#om.rows == #WANT_IDS, "a non-table rows result keeps the vanilla rows")
+check(#om.rows == VANILLA_COUNT, "a non-table rows result keeps the vanilla rows")
 hooks:removeOwner("bad")
 
 -- ------- ui.party.submenu
@@ -590,6 +601,19 @@ check(Theme.cursor == 0xAA, "field.theme restyles the cursor glyph")
 Theme.cursor = 0xED
 
 -- ------- branding reads from field.*
+-- The image constructor is a headless recorder; declare only this section's
+-- fixture files as present, as the real title now checks existence first.
+local brandingInfo = love.filesystem.getInfo
+local brandingPaths = {
+  ["assets/logo/pokemon_logo.png"] = true,
+  ["assets/generated/title/pokemon_logo.png"] = true,
+  ["assets/generated/title/red_version.png"] = true,
+  ["mods/x/logo.png"] = true, ["mods/x/ribbon.png"] = true,
+}
+love.filesystem.getInfo = function(path)
+  if brandingPaths[path] then return { type = "file" } end
+  return brandingInfo(path)
+end
 local TitleState = require("src.ui.TitleState")
 local tgame = { data = { field = { title = {
   cycleSpecies = { "MEW" }, music = "My_Song", copyrightText = "HELLO",
@@ -636,6 +660,7 @@ check(title.logo and title.logo.path
 check(title.version and title.version.path
   == "assets/generated/title/red_version.png",
   "the shipped version ribbon loads")
+love.filesystem.getInfo = brandingInfo
 
 -- issue #128: title SGB zones must resolve Blue's LOGO1 (blue ribbon),
 -- not Red's, when the ROM pack carries Blue SuperPalettes.  Color 0 is
@@ -1188,7 +1213,9 @@ check(uiLoader:load({}) == true, "the uikit fixture loads clean")
 local uiApi = _G.MOD_UI_API
 _G.MOD_UI_API = nil
 check(uiApi ~= nil, "the entry chunk received its api")
-check(uiApi.ui == ModUI, "mod.ui is the toolkit facade")
+for key,value in pairs(ModUI)do
+  check(uiApi.ui[key]==value,"scoped mod.ui retains toolkit member "..key)
+end
 check(uiApi.ui.Theme == Theme, "mod.ui.Theme reaches the theme module")
 check(uiApi.ui.Menu == require("src.ui.Menu"),
   "mod.ui widgets resolve through the loader-built api")

@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "sourceCommit": "e041968b8f20326f026300a1f6d7221f01276864",
+  "sourceStable": true,
+  "freshImport": true,
+  "romSha1": "ea9bcae617fdf159b045185467ae58b2e4a48b9a",
+  "playerProfilesUsed": false,
+  "results": [
+    {
+      "name": "tests/content_red/content_facts.lua",
+      "exit": 0,
+      "logSha256": "73584351efb8367d768bc2560415378af3dde04473ecb8f43f32d2c831d96dad"
+    },
+    {
+      "name": "tests/content_red/gate_fingerprint.lua",
+      "exit": 0,
+      "logSha256": "6dd008ad56593ea0e143f8fb0601e9a701e50644e95bc65bad8bd536c98493f4"
+    },
+    {
+      "name": "tests/content_red/headless_loader.lua",
+      "exit": 0,
+      "logSha256": "b1808128e618c35f2d4dede6665689158073b19b6cb161003228fee213e12110"
+    }
+  ]
+}

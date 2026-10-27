@@ -762,7 +762,9 @@ function TradeAnim:drawItem(item, ox, oy)
       local px = x + 56 - left - w
       local py = y + (7 - ht) * 8
       love.graphics.draw(item.img, px + w, py, 0, -1, 1)
-      if item.trueColor then
+      -- drawMap draws both copies of the 256px BG ring. An invisible copy
+      -- must not replace the visible sprite's palette exclusion rectangle.
+      if item.trueColor and px < 160 and py < 144 and px + w > 0 and py + h > 0 then
         self.trueColorRect = { px, py, w, h }
       end
     else

@@ -193,7 +193,7 @@ do
   T.eq(Performance.adaptiveTier(),"high","re-entering adaptive starts from AUTO")
   T.eq(Performance.adaptiveState().frames,0,"old frame samples are discarded")
   local f=assert(io.open("main.lua"));local main=f:read("*a");f:close()
-  T.check(main:find("if presented and Game and Game.save and Game.save.options and love.timer then",1,true),"only presented frames reach the adaptive observer")
+  T.check(main:find("if presented and FrameCap.focused ~= false and Game and Game.save and Game.save.options and love.timer then",1,true),"only presented frames reach the adaptive observer")
   Performance.resetAdaptive()
   restore()
 end

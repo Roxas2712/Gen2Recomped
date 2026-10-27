@@ -34,6 +34,8 @@ def main():
         parser.add_argument('--' + name, type=Path, required=True)
     parser.add_argument('--cache', action='append', required=True, metavar='EDITION=PATH')
     parser.add_argument('--scenario', action='append', choices=['complete', 'recovery', 'abort'])
+    parser.add_argument('--independent-replay', action='store_true')
+    parser.add_argument('--crypto-library', type=Path)
     parser.add_argument('--timeout', type=int, default=180)
     args = parser.parse_args()
     caches = {}
@@ -44,6 +46,10 @@ def main():
         caches[edition] = Path(directory).expanduser().resolve(strict=True)
     backend, php, runtime, cert, key = [p.resolve(strict=True) for p in
         (args.backend, args.php, args.love_app, args.cert, args.key)]
+    if args.independent_replay:
+        assert args.crypto_library and os.environ.get('RETRO_QA_LUA_LIBRARY'), 'Replay needs the crypto and LuaJIT libraries'
+        qa_source(args.crypto_library.resolve(strict=True))
+        qa_source(Path(os.environ['RETRO_QA_LUA_LIBRARY']))
     driver = ROOT / 'tests/native_arena/main.lua'
     for path in (ROOT, backend, php, runtime, cert, key, driver, Path(sys.executable), *caches.values()):
         qa_source(path)
@@ -77,7 +83,10 @@ end
         available.bind(('127.0.0.1', 0))
         backend_port = available.getsockname()[1]
     url = 'https://localhost:' + str(proxy.server_port)
-    env = os.environ | dict(APP_ENV='testing', APP_DEBUG='false',
+    worker_token = secrets.token_hex(32)
+    worker_release = hashlib.sha256((ROOT / 'src/link/ArenaReplay.lua').read_bytes()).hexdigest()
+    env = os.environ | dict(RETRO_ARENA_VERIFICATION_REQUIRED='true' if args.independent_replay else 'false',
+        RETRO_VERIFIER_TOKEN_SHA256=hashlib.sha256(worker_token.encode()).hexdigest(),RETRO_VERIFIER_RELEASE=worker_release, APP_ENV='testing', APP_DEBUG='false',
         APP_KEY='base64:' + base64.b64encode(secrets.token_bytes(32)).decode(),
         APP_URL=url, LARAVEL_STORAGE_PATH=str(storage), DB_CONNECTION='sqlite',
         DB_DATABASE=str(database), DB_URL='', CACHE_STORE='array', SESSION_DRIVER='array',
@@ -169,6 +178,20 @@ $people[$role]=['email'=>$u->email,'id'=>(string)$u->id];}echo json_encode($peop
                     case_children.append((child, Path(config['result'])))
                 deadline = time.monotonic() + args.timeout
                 while any(c.poll() is None for c, _ in case_children) and time.monotonic() < deadline:
+                    if args.independent_replay:
+                        job = call('POST','/verifier/jobs/claim',{},worker_token)['job']
+                        if job:
+                            payload = json.loads(job['input'])
+                            native_input, native_result = output / (job['id']+'-input.json'), output / (job['id']+'-result.json')
+                            native_input.write_text(job['input']);native_input.chmod(0o600)
+                            with (output / 'worker.log').open('ab') as log:
+                                replay = qa_run([sys.executable,str(ROOT/'tools/run_lua_check.py'),str(ROOT/'tools/arena_verifier_host.lua'),str(native_input),str(native_result)],
+                                    cwd=ROOT,env=os.environ|dict(RETRO_VERIFIER_CRYPTO=str(args.crypto_library),POKEPORT_DATA_DIR=str(caches[payload['edition']]/'data/generated')),
+                                    stdout=log,stderr=log)
+                            assert native_result.exists(), 'Native verifier failed; inspect worker.log'
+                            verification = json.loads(native_result.read_text())
+                            print('NATIVE_REPLAY '+json.dumps(verification),flush=True)
+                            call('POST','/verifier/jobs/'+job['id']+'/result',dict(lease=job['lease'],input_digest=job['input_digest'],release=job['release'],result=verification),worker_token)
                     time.sleep(.2)
                 pair = []
                 for child, path in case_children:
@@ -186,17 +209,18 @@ $people[$role]=['email'=>$u->email,'id'=>(string)$u->id];}echo json_encode($peop
                     assert all(p['points'] == 0 for p in profiles.values()) and all(c == 0 for c in wallets.values())
                 else:
                     assert battle['state'] == 'complete'
+                    if args.independent_replay: assert battle['verification'] == 'server_native_replay'
                     assert pair[0]['proof'] == pair[1]['proof'] and pair[0]['proof']['turns'] > 0
                     assert sorted(p['points'] for p in profiles.values()) == [-25, 50]
                     assert all(c > 0 for c in wallets.values())
-                result = dict(edition=edition, scenario=scenario, battle_state=battle['state'],
+                result = dict(edition=edition, scenario=scenario, battle_state=battle['state'],verification=battle['verification'],
                     points={role: p['points'] for role, p in profiles.items()}, wallets=wallets, results=pair)
                 results.append(result)
                 (output / 'results.json').write_text(json.dumps(results, indent=2))
                 print(json.dumps(result), flush=True)
         assert all(hashlib.sha256((source / p).read_bytes()).hexdigest() == digest for p, digest in hashes.items())
         report = dict(passed=True, results=results, sourceSha256=hashes,
-            scope='Independent macOS client profiles and private local HTTPS; no physical or cross-OS proof; peer-attested results, no independent server replay')
+            scope='Independent macOS client profiles and private local HTTPS; no physical or cross-OS proof; ' + ('independent native server replay' if args.independent_replay else 'peer-attested results'))
         (output / 'report.json').write_text(json.dumps(report, indent=2))
         print('NATIVE_ARENA_PASS ' + str(output), flush=True)
     finally:

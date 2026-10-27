@@ -871,9 +871,13 @@ do
 
   game = newGame()
   runner = ScriptRunner.new(game, nil)
-  runner:run({ { "set_field", "mod:x", 1 }, { "set_field", "after", 1 } }, {})
+  runner:run({ { "set_field", "mod:x", 1 }, { "set_field", "after", 1 } }, {source={strict=true}})
   check(game.save.after == nil and game.save.modData == nil,
-    "mod: fields are a script error in engine-owned scripts")
+    "mod: fields abort strict engine-owned scripts")
+  game=newGame();runner=ScriptRunner.new(game,nil)
+  runner:run({{"set_field","mod:x",1},{"set_field","after",1}}, {})
+  check(game.save.after==1 and game.save.modData==nil,
+    "non-strict native scripts report the bad row and continue without a mod bucket")
 
   -- wait_flag: timeout path then flag path
   game = newGame()

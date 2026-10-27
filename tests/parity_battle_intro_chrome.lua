@@ -23,7 +23,8 @@ local Timing = require("src.core.Timing")
 
 -- Silence audio: BattleState reaches both modules through require() at the
 -- call site, so patching the fields here is what the battle ends up calling.
-Sound.playCry = function() end
+local cries = 0
+Sound.playCry = function() cries = cries + 1 end
 Sound.play = function() end
 Sound.playMove = function() end
 Sound.playMoveCry = function() end
@@ -97,10 +98,13 @@ wild:enter()
 eq(wild.introBalls, true, "the wild intro opens the DrawAllPokeballs window")
 -- introBalls is a plain field, not a queue row, so it cannot displace the
 -- wild cry PrintBeginningBattleText plays before PrintText (#303)
-check(wild.queue[1] and wild.queue[1].fn ~= nil,
-      "the cry act is still the first queue row (#303)")
-check(wild.queue[2] and wild.queue[2].text == wild.introText,
-      "the intro text is still the second queue row")
+local firstText
+for i, row in ipairs(wild.queue) do
+  if row.text then firstText = i; break end
+  check(type(row.fn) == "function", "only presentation acts precede the intro text")
+end
+check(firstText and wild.queue[firstText].text == wild.introText,
+      "the intro text is the first printed queue row")
 
 -- let the silhouette slide land so the intro box is genuinely up (the slide
 -- now runs 80 frames at 2px/frame, matching the original ~2px/frame)
@@ -108,6 +112,7 @@ for _ = 1, 85 do wild:update(1 / 60) end
 eq(wild.introSlide or 0, 0, "the silhouette slide has landed")
 eq(wild.introBalls, true, "the window is still open under the intro text")
 eq(currentText(wild), wild.introText, "the intro box is the row on screen")
+eq(cries, 1, "the wild cry plays once before its intro text (#303)")
 
 local ok, err, rows, strings = snapshotHUD(wild)
 check(ok, "drawHUDs runs during the wild intro: " .. tostring(err))

@@ -96,6 +96,7 @@ function Game:load()
   require("src.core.Gen2MapNames").publish(Data)
   if require("src.core.GameVersion").isGen3() then require("src.core.Gen3MapNames").publish(Data) end
   require("src.core.Gen2Environment").publish(Data)
+  require("src.core.Gen2EncounterViews").publish(Data)
   -- Re-derive the Gen 2 palette view over the MERGED tileset table.  A
   -- mod that adds or replaces a tileset adds or replaces its colours with
   -- it, and the view is only useful to a 3D pipeline if it covers those
@@ -281,15 +282,26 @@ function Game:newGame()
   self:adoptSave(self.save)
   ModRuntime.emit("save.created", { save = self.save })
   self:applyOptions(self.save.options)
-  self.stack:push(OverworldState, self.save.player.map,
-                  self.save.player.x, self.save.player.y,
-                  self.save.player.facing)
+  local newSave, worldStarted = self.save, false
+  local function startWorld()
+    if worldStarted or self.save ~= newSave then return end
+    worldStarted = true
+    self.stack:push(OverworldState, newSave.player.map,
+                    newSave.player.x, newSave.player.y,
+                    newSave.player.facing)
+  end
   local newGameScreen = bootScreens(self).newGame
-  if newGameScreen == nil and not require("src.core.GameVersion").isGen2() then
+  local gen2 = require("src.core.GameVersion").isGen2()
+  if newGameScreen == nil and not gen2 then
     newGameScreen = "OakSpeech"
   end
+  -- GSC creates its world after the clock/name introduction. Exposing the
+  -- home map earlier makes preparation clients wait for a destination draw
+  -- while their cover still owns input over that introduction.
+  local deferWorld = gen2 and newGameScreen
+  if not deferWorld then startWorld() end
   if newGameScreen then
-    Screens.push(self, newGameScreen, function() end)
+    Screens.push(self, newGameScreen, deferWorld and startWorld or function() end)
   else
     -- PRISM HAS NO OAK SPEECH, and that is why its character customisation
     -- never appeared.  Data.lua sets boot.screens.newGame = false for any
@@ -2200,6 +2212,8 @@ function Game:applyOptions(opts)
   -- normalizes a nil/garbage cap to the 60 default, so old saves with no
   -- fpsCap key pace at the standard rate (issue #88)
   require("src.core.FrameCap").applyOptions(opts)
+  -- the window's vsync, which the pacer above reads live
+  require("src.core.VSync").applyOptions(opts)
   -- Scale the optional presentation extras to the device's performance
   -- tier.  Every heavy feature was just applied from the stored options
   -- above; here we clamp the *live* state down for a weaker device without

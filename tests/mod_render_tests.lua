@@ -252,8 +252,10 @@ Pipelines.setLevel("boom", 1)
 eq(Pipelines.worldPipeline(), "boom", "the pipeline is eligible before it throws")
 eq(Pipelines.drawWorld("boom", {}), nil,
   "a throwing drawWorld yields nil, so the caller falls back to 2D")
+eq(Pipelines.worldPipeline(), "boom", "one transient failure does not retire a pipeline")
+for _=2,10 do Pipelines.drawWorld("boom",{})end
 eq(Pipelines.worldPipeline(), nil,
-  "a pipeline that threw is retired rather than retried every frame")
+  "ten consecutive failures retire a persistently broken pipeline")
 
 -- the failure has to reach the feed the mod manager shows, named after the
 -- mod that owns it -- a console line alone leaves the player with a world

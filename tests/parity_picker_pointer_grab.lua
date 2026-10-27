@@ -69,7 +69,8 @@ do
     -- the punctuation is the point: `io.popen(` or `io.popen,` is a CALL,
     -- and the prose above it in that file mentions the name twice
     local calls = 0
-    for _ in host:gmatch("io%.popen[,(]") do calls = calls + 1 end
+    local code = host:gsub("%-%-[^\n]*", "")
+    for _ in code:gmatch("io%.popen[,(]") do calls = calls + 1 end
     eq(calls, 1, "and the whole engine holds exactly one io.popen, in "
       .. "HostShell -- which is what makes 'every picker funnels through "
       .. "commandOutput' a statement about all of them")

@@ -1,0 +1,206 @@
+{
+  "date": "2026-10-26",
+  "stage": "T0",
+  "baselineRef": "e5687c08040f6d490f5f2f78a2290162363425fb",
+  "referenceRef": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+  "implemented": true,
+  "acceptancePassed": false,
+  "indexRenderingImplemented": false,
+  "approvedT1Format": "rg8",
+  "playerProfilesUsed": false,
+  "realSceneAcceptance": false,
+  "timingImprovementClaimed": false,
+  "sourceSha256": {
+    "src/core/FrameProfile.lua": "a77f611e802db46556f70009c227cabab279db54cec0163a4bbe415c96e0f940",
+    "src/render/SpriteRenderer.lua": "9e4685111fb8b0ad7a84b66d74121750e5768a0710b645dc653c0f44caabfd77",
+    "src/render/TileRenderer.lua": "6896c604ff44a272b3d0475e2f195263a721f7983ec24266b22af4c8f9290f63",
+    "tests/engine/palette_bake_profile.lua": "f688544a0e349ef69a50179d8becb5878bf979d0d57ffb69bc2cc36574b09b5b",
+    "tools/palette-index-render/check.py": "224f515255f277095b59cf87438201f2b869985f2b4b5f99764abddd12ab988d",
+    "tools/palette-index-render/inventory.py": "1dc6e910f21810d56894ba72a2b98f545b2c2a4fad491c2c19926f8e16617b74",
+    "tools/palette-index-render/host/main.lua": "9ed8035067af1906588faac31da4ec24b33afa54c067b2269d0b9148e13c836d",
+    "tools/palette-index-render/host/conf.lua": "ed5bf9670e418b32270ab8cd6ffe83425a4138d7a57299ada7514ffddb63f1c5"
+  },
+  "suiteResults": [
+    {
+      "name": "inventory",
+      "exit": 0,
+      "logSha256": "3bd3cca5c75d5f3148ad6217fac7664c590d0e553b114d368d5b214bc42fc272"
+    },
+    {
+      "name": "palette_bake_profile",
+      "exit": 0,
+      "logSha256": "114bedd4fe54427a6a43a2074d691d2cc51c3ae8a4b99e94e034fd5f07783dcd"
+    },
+    {
+      "name": "gen2_display_modes",
+      "exit": 0,
+      "logSha256": "50940508d58fdd3b4d850fde35e0080dc51cae754d4270418fb495558bf8c321"
+    },
+    {
+      "name": "gen2_palette_context",
+      "exit": 0,
+      "logSha256": "90b08e37925d6f172b1bd991c57431c328b80cd1a822237028148eecfffa6926"
+    },
+    {
+      "name": "palette_zone_cache",
+      "exit": 0,
+      "logSha256": "1584212f58e10a10da347d3854caa140b6c9283d27dfb0e59a08883f02d108de"
+    },
+    {
+      "name": "mod_examples",
+      "exit": 0,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "gen3_palette_index",
+      "exit": 0,
+      "logSha256": "59143b5b01c91a30f185513ecc2203f64f8a85fad2fbca39b0db219e0944adfa"
+    },
+    {
+      "name": "api3",
+      "exit": 0,
+      "logSha256": "01aa4f6230d3de5eb33bc89202daac8668706368ce0c6bb6803ada556eaedb1d"
+    }
+  ],
+  "paletteGpu": {
+    "device": "Apple M2",
+    "checks": 11,
+    "version": "4.1 Metal - 89.4",
+    "passed": true,
+    "byteDifferences": 0,
+    "bakes": {
+      "tiles.gen2": {
+        "currentFrame": 2,
+        "total": 2,
+        "peakPerFrame": 2
+      },
+      "sprites.obp": {
+        "currentFrame": 2,
+        "total": 2,
+        "peakPerFrame": 2
+      }
+    },
+    "syntheticPixels": true,
+    "realSceneAcceptance": false,
+    "playerProfilesUsed": false,
+    "renderer": "OpenGL",
+    "vendor": "Apple"
+  },
+  "existingNativeGpu": {
+    "passed": true,
+    "maxByteDelta": 0,
+    "backend": "metal",
+    "syntheticGeometry": true,
+    "physicalHandheld": false,
+    "playerProfilesUsed": false,
+    "device": "Apple M2",
+    "version": "2.1",
+    "checks": 77,
+    "renderer": "Metal",
+    "vendor": "",
+    "comparisons": 12
+  },
+  "externalFixtures": {
+    "sourceRef": "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91",
+    "allFixtureBytesAuthenticated": true,
+    "results": [
+      {
+        "fixture": "example_mew_starter",
+        "edition": "red",
+        "exit": 0
+      },
+      {
+        "fixture": "example_mew_starter",
+        "edition": "firered",
+        "exit": 0
+      },
+      {
+        "fixture": "example_lttp_overhaul",
+        "edition": "red",
+        "exit": 0
+      },
+      {
+        "fixture": "mystery_dungeon_follower",
+        "edition": "red",
+        "exit": 0
+      },
+      {
+        "fixture": "mystery_dungeon_follower",
+        "edition": "gold",
+        "exit": 0
+      },
+      {
+        "fixture": "mystery_dungeon_follower",
+        "edition": "crystal",
+        "exit": 0
+      },
+      {
+        "fixture": "mystery_dungeon_follower",
+        "edition": "firered",
+        "exit": 1
+      },
+      {
+        "fixture": "examples/portable_api",
+        "edition": "red",
+        "exit": 0
+      },
+      {
+        "fixture": "examples/gen5_battle_sprites",
+        "edition": "red",
+        "exit": 0
+      },
+      {
+        "fixture": "examples/example_balance_tweaks",
+        "edition": "red",
+        "exit": 0
+      },
+      {
+        "fixture": "examples/example_dexnav",
+        "edition": "red",
+        "exit": 0
+      },
+      {
+        "fixture": "examples/example_jukebox",
+        "edition": "red",
+        "exit": 0
+      },
+      {
+        "fixture": "examples/example_lost_parcel",
+        "edition": "red",
+        "exit": 0
+      },
+      {
+        "fixture": "examples/example_mini_conversion",
+        "edition": "red",
+        "exit": 0
+      },
+      {
+        "fixture": "examples/example_shiny_palette",
+        "edition": "red",
+        "exit": 0
+      },
+      {
+        "fixture": "examples/example_silly_oak",
+        "edition": "red",
+        "exit": 0
+      },
+      {
+        "fixture": "examples/example_weather",
+        "edition": "red",
+        "exit": 0
+      }
+    ]
+  },
+  "baselineFailure": {
+    "fixture": "mystery_dungeon_follower/firered",
+    "exit": 1,
+    "sameOnUnchangedBaseline": true,
+    "unchangedSourceSha256": {
+      "src/compat/game3/Follower.lua": "41818ec4c3f73cece4e2de91b9983510717ecd9dc2d481a086795a4015e92dbc",
+      "tests/fixtures/upstream_mods/worker.lua": "765ddc91aa8ed1dfdd729643e33fe590385eae43159b54e0acf4c41e18079920"
+    },
+    "error": "src/compat/game3/Follower.lua:8: attempt to index field 'def' (a nil value)",
+    "assertion": "tests/fixtures/upstream_mods/worker.lua:115: unchanged follower did not install its published pack renderer",
+    "scopeBoundary": "X5 excludes Gen 3 changes; T1-T7 remain pending the required acceptance gate"
+  }
+}

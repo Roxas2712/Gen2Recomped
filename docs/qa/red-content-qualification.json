@@ -1,0 +1,81 @@
+{
+  "passed": true,
+  "runtimeCommit": "c3b4c864de04976e512454efbdbb992c73dab15a",
+  "freshImportedRedSha1": "ea9bcae617fdf159b045185467ae58b2e4a48b9a",
+  "currentVanillaFingerprint": "60874c75419b3c41",
+  "syntheticSpriteFiles": true,
+  "results": [
+    {
+      "name": "tests/content_red/content_facts.lua",
+      "exit": 0,
+      "logSha256": "73584351efb8367d768bc2560415378af3dde04473ecb8f43f32d2c831d96dad"
+    },
+    {
+      "name": "tests/content_red/gate_fingerprint.lua",
+      "exit": 0,
+      "logSha256": "6dd008ad56593ea0e143f8fb0601e9a701e50644e95bc65bad8bd536c98493f4"
+    },
+    {
+      "name": "tests/content_red/headless_loader.lua",
+      "exit": 0,
+      "logSha256": "b1808128e618c35f2d4dede6665689158073b19b6cb161003228fee213e12110"
+    }
+  ],
+  "fingerprintComparison": [
+    {
+      "label": "baseline",
+      "commit": "c3b4c864de04976e512454efbdbb992c73dab15a",
+      "exit": 0,
+      "result": [
+        "FP_RESULT 60874c75419b3c41"
+      ],
+      "surfaceSha256": "56990828f0583bd8f134faeb23ffc2edf2cb010a4a302cd7e235272a0fd96653"
+    },
+    {
+      "label": "reference",
+      "commit": "feb559cbe66a9abce0475572aff392246b80b82a",
+      "exit": 0,
+      "result": [
+        "FP_RESULT b401a4c32c6604af"
+      ],
+      "surfaceSha256": "06e3857e06c786a56b59f6045ce9458a5084dc9138fa817a8da4c08b1d51352d"
+    }
+  ],
+  "surfaceComparison": {
+    "[pokemon]": {
+      "equal": true,
+      "baselineBytes": 23080,
+      "referenceBytes": 23080
+    },
+    "[moves]": {
+      "equal": true,
+      "baselineBytes": 12368,
+      "referenceBytes": 12368
+    },
+    "[type_chart]": {
+      "equal": true,
+      "baselineBytes": 1636,
+      "referenceBytes": 1636
+    },
+    "[statuses]": {
+      "equal": true,
+      "baselineBytes": 286,
+      "referenceBytes": 286
+    },
+    "[move_effects]": {
+      "equal": false,
+      "baselineBytes": 8272,
+      "referenceBytes": 3154
+    },
+    "[constants]": {
+      "equal": true,
+      "baselineBytes": 46,
+      "referenceBytes": 46
+    },
+    "[mods]": {
+      "equal": true,
+      "baselineBytes": 0,
+      "referenceBytes": 0
+    }
+  }
+}

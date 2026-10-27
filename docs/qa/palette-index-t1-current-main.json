@@ -1,0 +1,113 @@
+{
+  "passed": true,
+  "sourceSha256": {
+    "src/core/FrameProfile.lua": "a77f611e802db46556f70009c227cabab279db54cec0163a4bbe415c96e0f940",
+    "src/render/SpriteRenderer.lua": "7bfe98902880a4ba78956acc1d3314f9539e8f25c28c7cff8aeba1ddf5504863",
+    "src/render/TileRenderer.lua": "07b372d2579902f955fe8af9542ddcae19c8edd5092cd848b702ab3169209667",
+    "src/render/PaletteIndex.lua": "d603c7090967a4a93b0ce8167899f51d90cad5cf46b3a1c72a4c7666390c2c5a",
+    "tools/palette-index-render/host/main.lua": "7fcf19c943a6f0b4cbaf2b4eb3257e6090b8f1256ba2891000f05f2a12ab2187"
+  },
+  "sourceStable": true,
+  "results": [
+    {
+      "name": "inventory",
+      "exit": 0,
+      "logSha256": "3bd3cca5c75d5f3148ad6217fac7664c590d0e553b114d368d5b214bc42fc272"
+    },
+    {
+      "name": "palette_bake_profile",
+      "exit": 0,
+      "logSha256": "114bedd4fe54427a6a43a2074d691d2cc51c3ae8a4b99e94e034fd5f07783dcd"
+    },
+    {
+      "name": "gen2_display_modes",
+      "exit": 0,
+      "logSha256": "50940508d58fdd3b4d850fde35e0080dc51cae754d4270418fb495558bf8c321"
+    },
+    {
+      "name": "gen2_palette_context",
+      "exit": 0,
+      "logSha256": "90b08e37925d6f172b1bd991c57431c328b80cd1a822237028148eecfffa6926"
+    },
+    {
+      "name": "palette_zone_cache",
+      "exit": 0,
+      "logSha256": "1584212f58e10a10da347d3854caa140b6c9283d27dfb0e59a08883f02d108de"
+    },
+    {
+      "name": "mod_examples",
+      "exit": 0,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "gen3_palette_index",
+      "exit": 0,
+      "logSha256": "59143b5b01c91a30f185513ecc2203f64f8a85fad2fbca39b0db219e0944adfa"
+    },
+    {
+      "name": "index_derive",
+      "exit": 0,
+      "logSha256": "4b39062a62e7bf66418430fb13511f6c7aa47f5d8813e4f4cc8af1a788bceb82"
+    },
+    {
+      "name": "api3",
+      "exit": 0,
+      "logSha256": "01aa4f6230d3de5eb33bc89202daac8668706368ce0c6bb6803ada556eaedb1d"
+    },
+    {
+      "name": "external_fixtures",
+      "exit": 0,
+      "logSha256": "c9de67c6b358ac28f98c6562c7219e078c4fbdef68ad122238936e949ad0dffe"
+    },
+    {
+      "name": "palette_gpu",
+      "exit": 0,
+      "logSha256": "35c79a14966f1ad9e14c1ead50242c95a0401bb183fa97da60a7bf90e64197f9"
+    },
+    {
+      "name": "native_gpu",
+      "exit": 0,
+      "logSha256": "bb692aa1e35ef39c0acb31b903b761e244034323fdc7b916a3f275489aae1a53"
+    }
+  ],
+  "gpu": {
+    "checks": 3086,
+    "passed": true,
+    "byteDifferences": 0,
+    "bakes": {
+      "tiles.gen2": {
+        "peakPerFrame": 2,
+        "total": 2,
+        "currentFrame": 2
+      },
+      "sprites.obp": {
+        "peakPerFrame": 2,
+        "total": 2,
+        "currentFrame": 2
+      }
+    },
+    "syntheticPixels": true,
+    "realSceneAcceptance": false,
+    "version": "4.1 Metal - 89.4",
+    "playerProfilesUsed": false,
+    "renderer": "OpenGL",
+    "vendor": "Apple",
+    "device": "Apple M2"
+  },
+  "nativeGpu": {
+    "checks": 132,
+    "comparisons": 22,
+    "device": "Apple M2",
+    "version": "2.1",
+    "passed": true,
+    "maxByteDelta": 0,
+    "backend": "metal",
+    "syntheticGeometry": true,
+    "physicalHandheld": false,
+    "playerProfilesUsed": false,
+    "renderer": "Metal",
+    "vendor": ""
+  },
+  "realSceneAcceptance": false,
+  "playerProfilesUsed": false
+}

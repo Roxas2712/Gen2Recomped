@@ -1,6 +1,8 @@
 -- Reviewed launcher essentials; no network or translation model required.
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 return { de={
+ ["Battle finished. Your result is saved. The server verifies the recorded battle before awarding league points and rewards."]="Kampf beendet. Dein Ergebnis ist gespeichert. Der Server prüft den aufgezeichneten Kampf, bevor Ligapunkte und Preise vergeben werden.",
+ ["Native link battles use frozen Bank teams and edition rules. League points and rewards remain pending until independent server replay confirms the result. Bank identity and native reconstruction are checked; full official encounter-legality verification is not available yet."]="Native Linkkämpfe verwenden festgelegte Bank-Teams und die Regeln der Edition. Ligapunkte und Preise bleiben ausstehend, bis der Server den Kampf unabhängig nachgerechnet hat. Bank-Identität und native Rekonstruktion werden geprüft. Eine vollständige Prüfung aller offiziellen Fang- und Event-Regeln steht noch aus.",
  ["ACCOUNT PROFILE"]="KONTOPROFIL",
  ["Updating identity"]="Konto wird geladen",
  ["ONLINE"]="ONLINE",

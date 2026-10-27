@@ -899,6 +899,8 @@ end
 -- unfocused, so reset input on either transition rather than trust it.
 function love.focus(f)
   if bootReport then return end
+  -- the run loop presents an unfocused window at a trickle (FrameCap)
+  require("src.core.FrameCap").setFocus(f)
   -- a phone stops the frames in the background: the walker credits the gap
   walkerTick("focus", f)
   if editorMode or TouchEditor then return end
@@ -1420,7 +1422,7 @@ function love.run()
     -- A1: PREFER FPS judges the frame that was just put on screen.  Inert
     -- for every other PERFORMANCE value; a changed tier re-runs the same
     -- clamps the OPTIONS row runs.
-    if presented and Game and Game.save and Game.save.options and love.timer then
+    if presented and FrameCap.focused ~= false and Game and Game.save and Game.save.options and love.timer then
       local opts = Game.save.options
       if opts.performance == "adaptive" then
         local stepped = Performance.observeFrame(dt, 1 / (FrameCap.current or 60),
