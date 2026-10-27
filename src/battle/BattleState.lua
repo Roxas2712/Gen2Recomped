@@ -46,6 +46,7 @@ local Gen3Battle = require("src.battle.Gen3Battle")
 local Gen4Battle = require("src.battle.Gen4Battle")
 local Gen2BattleView = require("src.battle.Gen2BattleView")
 local Gen2Read = require('src.battle.Gen2BattleRead')
+local Gen2Queue = require('src.battle.Gen2EventQueue')
 local GameVersion = require("src.core.GameVersion")
 local BattleCommands = require("src.battle.BattleCommands")
 local EnemyMoveChoice = require("src.battle.EnemyMoveChoice")
@@ -2306,6 +2307,7 @@ end
 -- ---------------------------------------------------------------------
 
 function BattleState:say(text)
+  if GameVersion.isGen2() then return self:push({kind='message',text=text}) end
   table.insert(self.queue, { text = text })
 end
 
@@ -2390,6 +2392,9 @@ end
 -- insert message right after the currently-executing queue item (the
 -- counter is reset by updateQueue before each fn item runs)
 function BattleState:sayNext(text)
+  if GameVersion.isGen2() then
+    return Gen2Queue.afterCurrent(self,{kind='message',text=text})
+  end
   self.nextInsert = (self.nextInsert or 0) + 1
   table.insert(self.queue, self.nextInsert, { text = text })
 end
@@ -2648,7 +2653,7 @@ function BattleState:startMessage(item)
     -- The public Gen2 screen carries the current source text. Its hold is
     -- retired by the SAME native A/B/choice path below; it is no timeout
     -- and must never consume a second input or advance a second typer.
-    self.message, self.messageTimer = item.text or "", 48
+    self.message, self.messageTimer = item.text or "", item.gen2Auto and 0 or 48
   end
   self.lines = {}
   self.total = 0
@@ -2750,7 +2755,8 @@ end
 
 -- Display-only waits and bar completion. Returning idle grants no command;
 -- only updateQueue may consume a battle row after this gate.
-function BattleState:updateQueuePresentation()
+function BattleState:updateQueuePresentation(textOnly)
+  if textOnly then return self:stepPresentationWait() end
   if self._gbaSubstituteTransition
       and require("src.battle.Gen3SubstitutePresentation").update(self) then return true end
   if self._gbaEffectPresentation
@@ -2775,8 +2781,10 @@ function BattleState:updateQueuePresentation()
     local function playing()return src and src.isPlaying and src:isPlaying() and true or false end
     local audible
     if journal then audible=journal.sample('battle.waitingSound',playing) else audible=playing() end
-    if audible and self.waitingSoundT <= 240 then return true end
-    if self.waitingSoundT > 240 then
+    local maximum=type(src)=='table' and src.maxWait or 240
+    if audible and self.waitingSoundT <= maximum then return true end
+    if self.waitingSoundT > maximum then
+      if type(src)=='table' and src.onTimeout then src.onTimeout() end
       require("src.core.Logger").warn("battle: a sound never finished -- stopped waiting after 240 frames")
     end
     self.waitingSound, self.waitingSoundT = nil, nil
@@ -2813,8 +2821,9 @@ function BattleState:updateQueue()
       self.phase = BattleQueuePhase.name()
     end
   end
-  if self:updateQueuePresentation() then return true end
-  if self.animPlaying then
+  local typing=Gen2Queue.typing(self)
+  if self:updateQueuePresentation(typing) then return true end
+  if self.animPlaying and not typing then
     self.animPlayer:update()
     if self.animPlayer.pollEffects and self.applyAnimEffect then
       for _, ev in ipairs(self.animPlayer:pollEffects()) do
@@ -2850,7 +2859,7 @@ function BattleState:updateQueue()
         end
         self.pendingHit = nil
       end
-      if GameVersion.isGen2() then self.afterAnimPlayed = nil end
+      if GameVersion.isGen2() and not Gen2Queue.isCurrent(self) then self.afterAnimPlayed = nil end
     end
     return true
   end
@@ -2860,6 +2869,11 @@ function BattleState:updateQueue()
       local controller = item.gbaSubstituteSpecial and "Gen3SubstitutePresentation" or "Gen3EffectPresentation"
       if require("src.battle." .. controller).start(self, item) then return true end
       item = table.remove(self.queue, 1)
+    end
+    while item and item.nativeGen2Event do
+      item=Gen2Queue.activate(self,item)
+      if item==nil then return true end
+      if item==false then item=table.remove(self.queue,1) else break end
     end
     if not item then
       self.nextInsert = nil -- no insertion cursor survives its queue
@@ -3177,6 +3191,17 @@ function BattleState:updateQueue()
     end
   else
     local item = self.current
+    if item and item.gen2Auto then
+      if item.gen2Pause and not item.gen2Paused then
+        item.gen2Paused=true
+        self.waitFrames=item.gen2Pause
+        return true
+      end
+      self.current=nil
+      self.msgPrompt=nil
+      self.messageTimer=0
+      return true
+    end
     -- TrainerAboutToUseText ends in `done` then DisplayTextBoxID: YES/NO
     -- overlays the still-visible "Will … change POKéMON?" page.
     if item and item.choice and not item.choiceOpen then
@@ -8708,7 +8733,11 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
   self.moveAnimRow = nil
   if not (user.thrashTurns and moveInst == user.thrashMove and user.thrashAnnounced) then
     if not chargeRequired then
-      self:sayNext(self:romText("_ItemUseText001", "%s\nused %s!", displayName(user), move.name))
+      local text=self:romText("_ItemUseText001", "%s\nused %s!", displayName(user), move.name)
+      if GameVersion.isGen2() then
+        Gen2Queue.afterCurrent(self,{kind='move',text=text,move=move.id,
+          side=user.isPlayer and 'player' or 'enemy',deferAnim=true})
+      else self:sayNext(text) end
     end
     -- the move's animation plays right after the announcement; the
     -- damage path attaches the target's hit blink to this row so the
@@ -13684,6 +13713,7 @@ Gen2BattleView.install(BattleState, {
   path = imagePathOf,
   trueColor = function(image) local meta = imageMeta[image]; return meta and meta.trueColor or false end,
 })
+Gen2Queue.install(BattleState)
 
 -- Source wrappers observe the real GBA owner. Unrequested modules and other
 -- generations keep the direct native path; there is no additional clock.
