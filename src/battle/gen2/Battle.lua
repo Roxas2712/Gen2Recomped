@@ -52,10 +52,10 @@ end
 -- on the native queue; completeBattle/finish perform its actual screen return.
 -- Existing native event consumers retain the screen in `battle`; the distinct
 -- live model is also provided explicitly. No second save/party snapshot exists.
-local outcomes = { win=true, lose=true, run=true, caught=true, fled=true, draw=true }
 function Model:endBattle(outcome, details)
   local screen = owner(self)
-  assert(outcomes[outcome], 'invalid native Gen2 battle outcome')
+  -- Preserve link/spectator and extension-owned native string outcomes.
+  assert(type(outcome) == 'string' and outcome ~= '', 'invalid native Gen2 battle outcome')
   if ended[self] then return false end
   screen.result = outcome
   screen:restoreMimicked(screen.player)
