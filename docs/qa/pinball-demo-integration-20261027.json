@@ -1,12 +1,6 @@
 {
   "date": "2026-10-27",
   "host": "Apple M2 / macOS 15.8.1",
-  "canonical_hud": {
-    "frames": 120,
-    "mismatched_hud_frames": 0,
-    "original_unique_hud_frames": 32,
-    "expanded_unique_hud_frames": 32
-  },
   "native_pixel_and_ram_checks": [
     {
       "locale": "en",
@@ -72,5 +66,39 @@
     "held_escape_repeats": 20,
     "held_f6_repeats": 20,
     "focus_change_does_not_auto_pause": true
+  },
+  "opaque_hud": {
+    "reason": "The previous canonical-row comparison also preserved unwanted board pixels. The isolated HUD has its own opaque backdrop.",
+    "synthetic_raster_test_passed": true,
+    "stability": {
+      "frames": 120,
+      "mismatched_hud_frames": 120,
+      "original_unique_hud_frames": 37,
+      "expanded_unique_hud_frames": 1,
+      "score_unchanged": true,
+      "score": 1000
+    },
+    "native_cases": [
+      {
+        "locale": "en",
+        "field": 0,
+        "nonblank_frames": 120,
+        "foreground_pixels_min": 517,
+        "foreground_pixels_max": 517,
+        "new_state_exact_picture": true,
+        "legacy_state_loaded": true
+      },
+      {
+        "locale": "de",
+        "field": 1,
+        "nonblank_frames": 120,
+        "foreground_pixels_min": 517,
+        "foreground_pixels_max": 517,
+        "new_state_exact_picture": true,
+        "legacy_state_loaded": true
+      }
+    ],
+    "guest_ram_equal_pre_fix": true,
+    "notices_outside_table": true
   }
 }

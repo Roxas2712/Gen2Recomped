@@ -171,6 +171,7 @@ void* ascendant_pinball_open(const char* rom,const char* bios,const char* save) 
   gbarecomp::runtime_restore_timing_context(m->timing);
   gbarecomp::set_active_bus(&m->bus);gbarecomp::set_active_ppu(&m->ppu);
   runtime_init(&m->bus);
+  m->ppu.set_presentation_observer(&m->table_view);
   gba::bios_hle_set_mode(gba::BiosHleMode::Off);gba::bios_hle_boot_skip(0x08000000);
   if(machines.empty()){gbarecomp::self_heal_reset();gbarecomp::self_heal_set_program_identity("Pokemon Pinball R/S",cartridge_code,rom_sha1);}
   capture(*m);m->picture();active=m.release();machines.insert(active);error.clear();return active;
@@ -227,13 +228,15 @@ int ascendant_pinball_state(void* handle,const char* path,int load) {
    const auto content=bytes(path);
    if(content.size()<64||std::memcmp(content.data(),"APRSTATE",8))throw std::runtime_error("Unsupported Pinball quick state");
    auto value=[&](size_t at,unsigned count){uint64_t v=0;for(unsigned i=0;i<count;i++)v|=uint64_t(content[at+i])<<(i*8);return v;};
-   if(value(8,4)!=1||value(60,4)!=content.size()-64)throw std::runtime_error("Invalid Pinball quick state length/version");
+   const auto flags=value(52,8),payload_size=value(60,4);
+   const size_t host_bytes=flags==1?PinballTableView::hud_bytes:0;
+   if(value(8,4)!=1||flags>1||content.size()!=64+host_bytes+payload_size)throw std::runtime_error("Invalid Pinball quick state length/version");
    gbarecomp::RuntimeTimingContext timing;
    timing.cycles=value(12,8);timing.vblank_starts=value(20,8);timing.yielded_vblank=value(28,8);
    timing.pending_cycles=value(36,8);timing.event_budget=static_cast<int64_t>(value(44,8));
-   if(value(52,8)!=0)throw std::runtime_error("Unsupported Pinball quick state flags");
-   ok=gbarecomp::debug::load_state_bytes(content.data()+64,content.size()-64,context,&error);
-   if(ok){gbarecomp::runtime_restore_timing_context(timing);m->bus.io().set_keyinput(1023^m->buttons);m->bus.audio().discard_playback();m->table_view.reset_layout();m->picture();}
+
+   ok=gbarecomp::debug::load_state_bytes(content.data()+64+host_bytes,payload_size,context,&error);
+   if(ok){gbarecomp::runtime_restore_timing_context(timing);m->bus.io().set_keyinput(1023^m->buttons);m->bus.audio().discard_playback();m->table_view.reset_layout();m->table_view.restored();if(host_bytes)m->table_view.load_hud(content.data()+64);m->picture();}
   }else {
    std::vector<uint8_t> payload;
    ok=gbarecomp::debug::save_state_bytes(&payload,context,&error);
@@ -242,7 +245,8 @@ int ascendant_pinball_state(void* handle,const char* path,int load) {
     std::vector<uint8_t> content{'A','P','R','S','T','A','T','E'};
     auto append=[&](uint64_t v,unsigned count){for(unsigned i=0;i<count;i++)content.push_back(v>>(i*8));};
     append(1,4);append(t.cycles,8);append(t.vblank_starts,8);append(t.yielded_vblank,8);
-    append(t.pending_cycles,8);append(static_cast<uint64_t>(t.event_budget),8);append(0,8);append(payload.size(),4);
+    append(t.pending_cycles,8);append(static_cast<uint64_t>(t.event_budget),8);append(1,8);append(payload.size(),4);
+    const auto hud=m->table_view.save_hud();content.insert(content.end(),hud.begin(),hud.end());
     content.insert(content.end(),payload.begin(),payload.end());
     const std::string pending=std::string(path)+".pending";
     {std::ofstream file(pending,std::ios::binary|std::ios::trunc);if(!file.write(reinterpret_cast<const char*>(content.data()),content.size()))throw std::runtime_error("Quick state could not be written");}

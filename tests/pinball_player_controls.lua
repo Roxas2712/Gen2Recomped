@@ -19,4 +19,8 @@ for _=1,20 do player:keypressed('f6','f6',true)end
 assert(player.settings.full_table,'held F6 must not alternate the table layout')
 love.window.hasFocus=function()return false end;player:update(.016)
 assert(not player.paused,'normal focus changes do not insert an automatic test pause menu')
+local noticeY
+love.graphics.printf=function(text,_,y)if text==player.notice then noticeY=y end end
+player:draw(800,600,false)
+assert(noticeY and noticeY<100,'view notice must stay above the table, away from score digits')
 player:dispose();print('Pinball controls: repeat-safe menu/table and normal focus handling passed')

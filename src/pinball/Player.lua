@@ -116,7 +116,7 @@ function M.new(session,options)
  end
  function self:draw(w,h,preview)
   local g=love.graphics;g.push('all');g.clear(.025,.035,.05);g.setFont(self.font)
-  local header=preview and 0 or 44;local footer=preview and 0 or 38
+  local header=preview and 0 or 72;local footer=preview and 0 or 38
   local gap=self.seats>1 and 12 or 0;local slot=(w-gap*(self.seats-1))/self.seats
   for i=1,self.seats do
    local image=self.images[i];local x=(i-1)*(slot+gap)
@@ -143,7 +143,7 @@ function M.new(session,options)
     g.setFont(self.font);g.setColor(.025,.04,.06,.9);g.rectangle('fill',w*.25,h*.43,w*.5,70,12,12)
     g.setColor(1,1,1);g.printf(self.result or tostring(math.ceil(self.countdown)),w*.25,h*.43+25,w*.5,'center')
    end
-   if self.notice~=''then g.setColor(1,.78,.35);g.printf(self.notice,12,h-60,w-24,'center')end
+   if self.notice~=''then g.setColor(1,.78,.35);g.printf(self.notice,12,44,w-24,'center')end
    if self.paused then
     g.setColor(.02,.03,.05,.94);g.rectangle('fill',w*.15,h*.2,w*.7,h*.6,15,15)
     g.setFont(self.font);g.setColor(.44,.83,.89);g.printf('RECOMPILED ASCENDANT · PINBALL',w*.18,h*.24,w*.64,'center')

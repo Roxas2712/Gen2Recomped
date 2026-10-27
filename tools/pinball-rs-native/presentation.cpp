@@ -20,6 +20,36 @@ struct Providers {
 }
 PinballTableView* PinballTableView::rendering_=nullptr;
 PinballTableView::PinballTableView():cache_enabled_(std::getenv("ASCENDANT_PINBALL_REFERENCE_TABLE")==nullptr){}
+// Render only BG0 with each line's real scroll/VRAM/palette state. Copying the
+// canonical composite also copied the scrolling board through transparent HUD
+// texels; re-rendering BG0 at the frame boundary used the wrong raster registers.
+void PinballTableView::scanline(const gba::GbaPpu& source,uint32_t y,uint16_t display,
+ const uint8_t* io,const uint8_t* vram,const uint8_t* oam,const uint8_t* palette) {
+ if(y==0)hud_rows_.fill(false);
+ if(y<144||y>=160)return;
+ if(!hud_surface_)hud_surface_=std::make_unique<gba::GbaPpu>();
+ std::array<uint8_t,0x60> hud_io;std::memcpy(hud_io.data(),io,hud_io.size());
+ std::array<uint8_t,1024> hud_palette;std::memcpy(hud_palette.data(),palette,hud_palette.size());
+ hud_palette[0]=hud_palette[1]=0; // Opaque host backdrop, never the board.
+ put(hud_io.data()+0x50,0); // Do not blend BG0 with removed board layers.
+ put(hud_io.data()+0x52,0);put(hud_io.data()+0x54,0);
+ const uint16_t hud_display=(display&0xff)|0x100; // keep BG0; no OBJ, BG1-3 or windows
+ hud_surface_->render_presentation_scanline(source,y,hud_display,hud_io.data(),vram,oam,hud_palette.data());
+ hud_rows_[y-144]=true;
+}
+void PinballTableView::frame_ready() {
+ if(!hud_surface_||!std::all_of(hud_rows_.begin(),hud_rows_.end(),[](bool row){return row;}))return;
+ hud_surface_->mark_framebuffer_latched();
+ const auto* strip=hud_surface_->latched_framebuffer()+144*240*3;
+ // A blank BG0 scanout contains no new score. Retain the latest complete
+ // authored strip across these observed presentation gaps. Zero
+ // scores still contain glyphs; genuine changes publish on the next HUD pass.
+ if(std::any_of(strip,strip+hud_bytes,[](uint8_t value){return value!=0;}))
+  std::memcpy(hud_rgb_.data(),strip,hud_bytes);
+}
+void PinballTableView::restored() noexcept {hud_rgb_.fill(0);hud_rows_.fill(false);}
+std::vector<uint8_t> PinballTableView::save_hud() const {return {hud_rgb_.begin(),hud_rgb_.end()};}
+void PinballTableView::load_hud(const uint8_t* bytes) {std::memcpy(hud_rgb_.data(),bytes,hud_bytes);}
 bool PinballTableView::unchanged_band(unsigned band,unsigned first,unsigned end,uint16_t display,const uint8_t* palette) {
  if(!cache_enabled_)return false;
  dependency_.clear();
@@ -240,15 +270,11 @@ bool PinballTableView::render(gba::GbaBus& bus,const gba::GbaPpu& canonical,uint
   auto* dest=rgba.data()+(size_t(y)*width+x)*4;
   std::memcpy(dest,pixel,3);dest[3]=255;
  }
- // The cartridge switches HUD scroll/window state during scanout. Re-rendering
- // BG0 with the final bus registers alternates the digits between two poses.
- // Use the same completed scanlines as the original screen, not a second PPU
- // pass with registers from another point in the frame. Guest state stays live.
- if(!canonical.has_latched_framebuffer()||canonical.render_width()!=240||canonical.render_height()!=160)return false;
- const auto* hud=canonical.latched_framebuffer();
+ // The isolated completed BG0 mirror has an opaque black backdrop. No pixels
+ // from BG1/2/3, table sprites or camera movement can leak into this strip.
  for(unsigned y=0;y<16;y++)for(unsigned x=0;x<width;x++) {
   auto* dest=rgba.data()+(size_t(y+board_height)*width+x)*4;
-  if(x>=8&&x<248)std::memcpy(dest,hud+((y+144)*240+x-8)*3,3);
+  if(x>=8&&x<248)std::memcpy(dest,hud_rgb_.data()+(y*240+x-8)*3,3);
   dest[3]=255;
  }
  return true;

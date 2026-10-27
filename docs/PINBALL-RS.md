@@ -208,13 +208,23 @@ Git and a C++20 compiler on the device. The prepared local demo installation doe
 not need these tools to play. No ROM-derived native library is distributed in
 the app.
 
-The expanded table previously re-rendered BG0 with end-of-frame registers. Its
-score strip alternated between two incorrect poses. It now copies the completed
-original HUD scanlines, including their real scanout scroll/window state. A
-120-frame private comparison changed from 120 mismatches to zero; native
-regressions additionally check the strip against the original view in both
-USA/Ruby and German EU/Sapphire gameplay and retain pixel/RAM and snapshot
-replay checks. See `qa/pinball-demo-integration-20261027.json` for the exact scope.
+The first HUD correction copied completed canonical scanlines. That preserved
+raster timing but also copied scrolling table pixels between the score glyphs;
+comparison with the whole original row was therefore an insufficient oracle.
+The corrected presentation observes the actual scanout and isolates BG0 on an
+opaque black backdrop, excluding every board layer, OBJ and window mask. It
+publishes only complete authored HUD strips and retains the latest one across
+blank BG0 passes. Score changes still publish when the next glyph pass arrives.
+Launcher notices have their own header row and no longer cover the score strip.
+
+Quick states retain the isolated RGB strip in a flagged host extension, alongside
+the unchanged native snapshot. Existing unflagged states still load; their HUD
+is reconstructed by subsequent native scanout. Invalid extension flags/lengths
+are rejected before loading. No host graphics are added to guest RAM or timing.
+The opt-in CMake target `pinball_hud_test` checks synthetic raster inputs without
+a ROM; native qualification additionally checks opaque/nonblank strips, cached
+versus reference pixels/RAM, legacy state loading and exact new-state replay.
+See `qa/pinball-demo-integration-20261027.json` for measured scope.
 
 Original X, Y and Pinball cartridge photographs join the existing authenticated
 ModCompass batch and remembered opt-in. Custom designs remain protected.
