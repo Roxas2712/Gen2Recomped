@@ -183,10 +183,8 @@ local mainSrc = source("main.lua")
 local quitHook = mainSrc:match("\nfunction love%.quit%(%).-\nend\n")
 check(quitHook ~= nil, "love.quit is still a single top-level function")
 quitHook = quitHook or ""
-check(quitHook:find('package.loaded["src.core.ChipAudio"].shutdown', 1, true) ~= nil,
-      "love.quit shuts the chip worker down")
-check(quitHook:find('package.loaded["src.update.Check"].shutdown', 1, true) ~= nil,
-      "love.quit shuts the update worker down")
+check(quitHook:find('require("src.core.SessionLifecycle").endProcess()', 1, true) ~= nil,
+      "love.quit reaches registered and native process shutdowns")
 
 -- The Android half: LOVE keeps the JVM process after the native main returns,
 -- so the quit event exits the process outright.  It has to sit after the
