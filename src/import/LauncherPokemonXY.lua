@@ -297,12 +297,29 @@ function M.install(RI)
  end
  local function buttons(self)self._xyButtons={}end
  function RI:_xyImport(path,detect)
-  if self._xyJob or self._xyPlayer or self._xyCheck then return end
+  if self._xyJob or self._xyPlayer or self._xyCheck or self._xyPicker then return end
   stopPreview(self);self._xyPreviewFailed=nil;self._xyOpen=true;self.section='games';self.pageScroll=0
   local args={path};if detect then args[#args+1]='--detect-edition' end
   local runtime=require('src.import.PokemonXYBackend').runtime()
   if runtime then args[#args+1]='--play-after-import' end
   start(self,'import',args,runtime and 'playing' or nil)
+ end
+ function RI:_xyChooseImport()
+  if self._xyJob or self._xyPlayer or self._xyCheck or self._xyPicker then return end
+  if love.window and love.window.showFileDialog then
+   local token={edition=self._xyEdition};self._xyPicker=token
+   local ok,err=pcall(love.window.showFileDialog,'openfile',function(files,_,dialogError)
+    if self._xyPicker~=token then return end
+    self._xyPicker=nil
+    if not self._xyOpen or self.section~='games' or self._xyEdition~=token.edition then return end
+    if dialogError then self._xyNotice=tostring(dialogError);self._xyNoticeIsError=true;return end
+    if type(files)=='table' and type(files[1])=='string' and files[1]~='' then self:_xyImport(files[1])end
+   end,{title=Strings('IMPORT GAME'),filters={['3DS (.3ds, .cci, .cxi, .cia)']='3ds;cci;cxi;cia'},multiselect=false,attachtowindow=true})
+   if not ok then self._xyPicker=nil;self._xyNotice=tostring(err);self._xyNoticeIsError=true end
+   return
+  end
+  local path=U.chooseFileByExt({'3ds','cci','cxi','cia'},'3DS game (.3ds, .cci, .cxi, .cia)')
+  if path then self:_xyImport(path)end
  end
  local function button(self,x,y,w,label,action)
   local r=self:_chipButton(x,y,Strings(label),{w=w,h=34*self._s,kind='accent'})
@@ -323,11 +340,8 @@ function M.install(RI)
   if require('src.import.PokemonXYBackend').runtime() then
    text(self.hintFont,'Native 3DS support included',y,p.green);y=y+28*s
   end
-  if not self._xyJob and not self._xyCheck then
-   button(self,x,y,math.min(240*s,w),Strings('IMPORT GAME'),function()
-    local path=U.chooseFileByExt({'3ds','cci','cxi','cia'},'3DS game (.3ds, .cci, .cxi, .cia)')
-    if path then self:_xyImport(path)end
-   end)
+  if not self._xyJob and not self._xyCheck and not self._xyPicker then
+   button(self,x,y,math.min(240*s,w),Strings('IMPORT GAME'),function()self:_xyChooseImport()end)
   end
   y=y+44*s
   g.setFont(self.hintFont);U.col(p.detail)

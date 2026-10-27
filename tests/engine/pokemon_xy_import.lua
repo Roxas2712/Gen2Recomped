@@ -55,4 +55,23 @@ check(ui._xyJob==job and ui._xyNotice:find('32 / 487',1,true),'native compilatio
 pending=require('src.link.Json').encode{ok=false,error='Compiler stopped',data={y={imported=true,ready=false}}};ui:update(0)
 check(not ui._xyJob and ui._xyData.y.imported and not ui._xyData.y.ready and ui._xyNoticeIsError,'a failed native build preserves the valid import and reports the error without claiming readiness')
 Backend.runtime=runtime
+local callback,options,dialogs
+dialogs=0
+love.window.showFileDialog=function(kind,done,settings)assert(kind=='openfile');callback=done;options=settings;dialogs=dialogs+1 end
+ui=RI.new();ui._xyEdition='x';ui._xyOpen=true
+count=#jobs;ui:_xyChooseImport()
+check(ui._xyPicker and #jobs==count and options.attachtowindow and not options.multiselect,'native dialog returns without blocking or starting an import')
+ui:_xyChooseImport();ui:_xyImport('/other.cxi')
+check(dialogs==1 and #jobs==count,'an active picker cannot compete with another picker or dropped import')
+callback({})
+check(not ui._xyPicker and #jobs==count,'cancelling the native picker leaves imports unchanged')
+ui:_xyChooseImport();callback({'/own games/X.cxi'})
+check(not ui._xyPicker and jobs[#jobs].data.args[1]=='/own games/X.cxi','native selection reaches the real import worker with its absolute path intact')
+ui._xyJob=nil;ui:_xyChooseImport();ui._xyEdition='y';count=#jobs;callback({'/stale/X.cxi'})
+check(not ui._xyPicker and #jobs==count,'a stale picker cannot import into a different edition')
+ui:_xyChooseImport();callback({},nil,'Picker failed')
+check(not ui._xyPicker and ui._xyNoticeIsError and ui._xyNotice=='Picker failed','native picker failures are visible')
+love.window.showFileDialog=function()error('Dialog unavailable')end
+ui:_xyChooseImport()
+check(not ui._xyPicker and ui._xyNoticeIsError,'a failed dialog launch releases its pending state')
 print('3DS fresh import: '..checks..' checks passed')

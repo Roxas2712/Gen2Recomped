@@ -15,6 +15,9 @@ damaged dump or encrypted content cannot replace an existing entry. Currently
 the supported title IDs are the USA X/Y base games listed in the preflight.
 The original local file is referenced in place; keep it available at that path.
 Import does not upload it, copy a multi-GB ROM, or mark an unbuilt game playable.
+LÖVE 12 uses its attached asynchronous native file picker for X/Y, so the
+launcher keeps updating while the dialog is open. Cancellation changes no
+import; overlapping selections and callbacks for a different edition are ignored.
 
 The bundled **macOS Apple Silicon** demo includes its native bridge, recompiler,
 Python, Zig/Clang, Vulkan Loader and MoltenVK under

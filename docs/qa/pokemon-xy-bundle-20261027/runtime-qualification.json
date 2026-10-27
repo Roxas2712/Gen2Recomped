@@ -15,7 +15,7 @@
   "python_tests": 39,
   "launcher_suites": 85,
   "launcher_syntax_checks": 98,
-  "client_import_checks": 17,
+  "client_import_checks": 24,
   "client_presentation_checks": 9,
   "client_controller_layout_checks": 13,
   "original_game_input_available": false,
@@ -25,5 +25,6 @@
   "bundled_zig_compiler_tests": 56,
   "real_love_worker_invalid_ncch_rejected": true,
   "real_love_worker_preserves_import_after_build_failure": true,
-  "real_love_worker_reports_explicit_build_error": true
+  "real_love_worker_reports_explicit_build_error": true,
+  "native_file_picker_unit_checks": 7
 }
