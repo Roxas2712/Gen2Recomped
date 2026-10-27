@@ -15,12 +15,20 @@ The move-detail frame uses native border glyphs rather than requiring Unicode
 box characters in the imported text font. No consumer or mod patch is used.
 
 The ROM-free `tests/engine/gen2_summary_contract.lua` regression fails on the
-preceding implementation and passes 321 checks across five Gen2 editions,
+preceding implementation and passes 326 checks across five Gen2 editions,
 with shared Red/FireRed/Emerald navigation regressions. Together with the
-existing live battle model, party and FireRed suites, 802 checks pass on this
+existing live-model, party and FireRed suites, 807 checks pass on this
 independently adapted upstream-PR composition. These are source/input
-checks with synthetic fixtures, not GPU, full-client, Windows or release
-acceptance. Existing GPU evidence remains bound to its earlier source.
+checks with synthetic fixtures, not full-client, Windows or release acceptance.
+
+A separate fork-only unchanged-client Metal smoke reached the Team and status/move pages,
+then exposed an unavailable reference-engine sound resolver during the first
+actual move swap. That candidate is rejected. This fork's importer already
+installs the native sound label, so the adapted swap now uses this branch’s existing Sound.play
+path directly. The regression includes a present imported cue even with no
+audio device and fails on the preceding candidate. Visible swap/close/Potion
+acceptance for the correction is still pending; the earlier visible pages do
+not qualify that complete workflow or the new package.
 
 Layout/input provenance: Gen1Recomp `535a5ec0`,
 `src/ui/gen2/SummaryMenu.lua`. Existing author rights and notices remain

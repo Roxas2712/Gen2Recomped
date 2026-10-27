@@ -9,6 +9,9 @@ local old=V.get()
 local function fixture(version)
  V.set(version);Screens.invalidate()
  local data=T.fixtures.fresh();data.constants.gen=V.generation();require('src.render.Font').load(data)
+ -- Imported audio is present in real sessions. Keep the cue in this device-free fixture too.
+ data.audio=data.audio or{};data.audio.sfx=data.audio.sfx or{}
+ data.audio.sfx.Sfx_SwitchPokemon='fixture-native-switch.wav'
  local save=Save.newGame();save.party={Pokemon.new(data,'FIXMON_A',30),Pokemon.new(data,'FIXMON_B',20),Pokemon.new(data,'FIXMON_C',15)}
  for _,mon in ipairs(save.party)do mon.moves={{id='FIX_TACKLE',pp=17,ppUps=2},{id='FIX_SCRATCH',pp=13,ppUps=1}}end
  local input={pressed={}}
@@ -84,7 +87,8 @@ for _,version in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
   press(manager,'a');T.eq(manager.swapFrom,1,'actual A picks up a move slot')
   press(manager,'down');T.eq(manager.moveIndex,2,'actual down chooses the destination')
   press(manager,'right');T.eq(manager.mon,party[1],'held move blocks party switching')
-  press(manager,'a')
+  local swapped,swapError=pcall(press,manager,'a')
+  T.check(swapped,'native move swap with an imported sound cue must not call unavailable audio APIs: '..tostring(swapError))
   T.eq(party[1].moves[1],second,'native swap moves the whole destination slot')
   T.eq(party[1].moves[2],first,'native swap retains original PP and PP-Up record identity')
   T.eq(first.pp,17,'move rearrangement does not restore or spend PP')

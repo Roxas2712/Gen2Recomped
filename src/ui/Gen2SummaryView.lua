@@ -66,7 +66,8 @@ function M.install(Summary)
   function Summary:playSwapSfx()
     local Sound=require('src.core.Sound');local data=self.game.data
     local sfx=data.audio and data.audio.sfx
-    if sfx and sfx[Sound.resolve(data,'Sfx_SwitchPokemon')]then Sound.play(data,'Sfx_SwitchPokemon')end
+    -- The importer already installs native labels and shared-role aliases.
+    if sfx and sfx.Sfx_SwitchPokemon then Sound.play(data,'Sfx_SwitchPokemon')end
   end
   function Summary:tickRepeatSfx()
     if not self.repeatSfx then return false end
