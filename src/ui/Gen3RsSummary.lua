@@ -64,7 +64,7 @@ end
 
 function M.new(host,opts)
   opts=opts or {}
-  local self=setmetatable({host=host,views=setmetatable({},{__mode='k'}),manifests={},quads={},pics={}},M)
+  local self=setmetatable({host=host,views=setmetatable({},{__mode='k'}),manifests={},quads={},pics={},cursorImages={}},M)
   local game,data=host.game,host.game.data
   local spec=assert(data.constants.gen3RsSummary)
   local species,moves,abilities,items={},{},{},{}
@@ -88,13 +88,23 @@ function M.new(host,opts)
     if not self.manifests[sub]then
       local man=readLua('data/generated/gba/'..sub..'/manifest.lua')
       assert(man.layout=='rs' and man.game==spec.version,'Mixed native RS summary cache')
+      local cursor=sub=='rse/summary'and man.sprites and man.sprites.moveSelect
+      if cursor then
+        local source=Assets.imageData(cursor.png)
+        local normalized,pixels,changed=require('src.ui.Gen3RsSummaryCursor').expand(cursor,source)
+        if changed then
+          local sprite=love.graphics.newImage(pixels);sprite:setFilter('nearest','nearest')
+          self.cursorImages[cursor.png]=sprite;man.sprites.moveSelect=normalized;pixels:release()
+        end
+        source:release()
+      end
       self.manifests[sub]=man
     end
     return self.manifests[sub]
   end
   local function image(path)
     assert(Assets.exists(path),'Missing native RS summary image '..tostring(path))
-    return Assets.image(path)
+    return self.cursorImages[path]or Assets.image(path)
   end
   local function view(raw)
     if not raw then return nil end
@@ -290,6 +300,7 @@ function M:draw()
 end
 function M:exit()
   self.closed=true
+  for path,img in pairs(self.cursorImages)do img:release();self.cursorImages[path]=nil end
   if self.cry then self.cry:stop();self.cry=nil end
   if self.scene then self.scene.reset()end
 end
