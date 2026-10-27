@@ -10455,9 +10455,13 @@ function BattleState:openItems()
         battle = true,
         world = {},
         onChoose = function(id)
-          -- Keep the existing native target/effect/turn path. The PACK owns
-          -- browsing and closing, rather than another copy of item effects.
-          require("src.ui.BagMenu").useItem(self.game, self, id, pack)
+          -- GSC dismisses BattlePack before constructing the target picker.
+          -- Its actual parent is the battle model, not the PACK's boolean
+          -- eligibility flag. Cancellation reopens the saved native pocket.
+          pack:close()
+          require("src.ui.BagMenu").useItem(self.game, self, id, pack, {
+            onCancel = function() self:openItems() end,
+          })
         end,
       })
       return pack
