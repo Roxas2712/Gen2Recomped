@@ -231,7 +231,7 @@
     "gMonFrontPicCoords": 2003108,
     "gTrainerFrontPicTable": 2016460,
     "gTrainerFrontPicPaletteTable": 2017124,
-    "gMonIconTable": 3915240,
+    "gMonIconTable": 3915128,
     "gMonIconPaletteIndices": 3916888,
     "gLevelUpLearnsets": 2128728,
     "gEvolutionTable": 2112248,
@@ -279,7 +279,8 @@
     "gStdScripts": 1357548,
     "sWeatherCycleRoute119": 3779356,
     "sWeatherCycleRoute123": 3779360,
-    "sWindowFrames": 3629440
+    "sWindowFrames": 3629440,
+    "gMonIconPaletteTable": 3917328
   },
   "pokedexEntrySize": 36,
   "stageOverrides": {
@@ -1654,7 +1655,7 @@
     300,
     301,
     -1,
-    -1,
+    303,
     304,
     -1,
     -1,
@@ -1893,7 +1894,8 @@
     "333": 331,
     "335": 333,
     "336": 334,
-    "339": 337
+    "339": 337,
+    "303": 301
   },
   "newGame": {
     "spawn": {
@@ -2500,7 +2502,10 @@
       "ScriptRandom": 807516,
       "sub_80835D8": 538072,
       "gMapGroups": 3179800,
-      "EventScript_ResetAllBerryTrees": 1702096
+      "EventScript_ResetAllBerryTrees": 1702096,
+      "gMonIconTable": 3915128,
+      "gMonIconPaletteIndices": 3916888,
+      "gMonIconPaletteTable": 3917328
     },
     "structuralWarnings": [
       "gMonFrontPicTableAnimated  NOT FOUND  no 440-row tagged array of stride 8",
@@ -2521,6 +2526,17 @@
       "save block fields          NOT DERIVED  needs the sector layout and the script command table",
       "gMPlayJumpTableTemplate    NOT FOUND  no loop copying 36 words into the command table"
     ]
+  },
+  "rsMonIcons": {
+    "entries": 440,
+    "palettes": 6,
+    "source": "matching sized RS ELF symbols"
+  },
+  "flash": {
+    "radii": 3779364,
+    "max": 3779376,
+    "flag": 2088,
+    "lit": 1
   },
   "metatileBehaviorFlags": {
     "offset": 3182012,

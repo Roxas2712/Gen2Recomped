@@ -193,6 +193,14 @@ function Gen3RegionMap.new(game, opts)
   }, Gen3RegionMap)
 
   self.targets = self.fly and flyTargets(game) or nil
+  if require('src.ui.Gen3RsRegionMap').available(game,opts)then
+    self.uiSize=function()return 240,160 end
+    self.wantsFillScale=function()return true end
+    self.wantsEdgeBleed=function()return false end
+    self.sgbPalettes=function()return {require('src.render.PaletteFX').trueColorZone(0,0,29,19)}end
+    self.rsNative=require('src.ui.Gen3RsRegionMap').new(self)
+    return self
+  end
 
   -- THE AREA PAGE.  Not a picker: the cartridge's area screen has no cursor
   -- at all -- it lights the places the Pokemon lives and waits for a press.
@@ -370,6 +378,7 @@ function Gen3RegionMap:toggleZoom()
 end
 
 function Gen3RegionMap:update()
+  if self.rsNative then return self.rsNative:update()end
   self.blink = (self.blink + 1) % 60
   self.areaClock = ((self.areaClock or 0) + 1)
                    % (Gen3RegionMap.AREA_CYCLE * math.max(1, #(self.areaPlaces or {})))
@@ -432,6 +441,7 @@ end
 -- ...and the callback stays, forwarding to the same places, so a host that
 -- does deliver key events still works.
 function Gen3RegionMap:keypressed(key)
+  if self.rsNative then return self.rsNative:press(key)end
   if key == "b" then
     Sound.play(self.game.data, "Press_AB")
     return self:close()
@@ -765,6 +775,7 @@ end
 -- DRAWING IT
 -- ---------------------------------------------------------------------------
 function Gen3RegionMap:draw()
+  if self.rsNative then return self.rsNative:draw()end
   if self.frlg then return self:drawFireRed() end
   local w, h = self:uiSize()
   local grid = constants(self.game).gen3RegionMapGrid
@@ -956,6 +967,10 @@ function Gen3RegionMap:draw()
   end
   if faced then Font.popFace() end
   love.graphics.setColor(1, 1, 1, 1)
+end
+
+function Gen3RegionMap:exit()
+  if self.rsNative then self.rsNative:exit()end
 end
 
 return Gen3RegionMap

@@ -94,10 +94,9 @@ function Gen3MoveLearnMenu:moveName()
 end
 
 function Gen3MoveLearnMenu:say(role, onClose, opts)
-  local TextBox = require("src.render.TextBox")
   local text = fill(Gen3MoveLearnMenu.line(self.game, role),
                     self:monName(), self:moveName())
-  self.game.stack:push(TextBox.new(self.game, text, onClose, opts))
+  self.game.stack:push(require('src.inventory.Gen3RsMachineUse').textBox(self.game, text, onClose, opts))
 end
 
 -- "Should a move be deleted and replaced with {move}?" -- one message, and
@@ -212,7 +211,6 @@ function Gen3MoveLearnMenu:update()
 end
 
 function Gen3MoveLearnMenu:finish(learned)
-  local TextBox = require("src.render.TextBox")
   local game = self.game
   self.selecting = false
   game.stack:pop()
@@ -226,9 +224,9 @@ function Gen3MoveLearnMenu:finish(learned)
     text = fill(Gen3MoveLearnMenu.line(game, "didNotLearn"), self:monName(),
                 self:moveName())
   end
-  game.stack:push(TextBox.new(game, text, function()
+  game.stack:push(require('src.inventory.Gen3RsMachineUse').textBox(game, text, function()
     if self.onDone then self.onDone(learned) end
-  end))
+  end,learned and require('src.inventory.Gen3RsMachineUse').learnedOptions(game)or nil))
 end
 
 function Gen3MoveLearnMenu:draw()

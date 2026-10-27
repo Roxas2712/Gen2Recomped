@@ -32,7 +32,10 @@ Gen3IntroFRLG.__index = Gen3IntroFRLG
 Gen3IntroFRLG.isOpaque = true
 
 local W, H = 240, 160
-local FIRE_RED_INTRO = "SONG_144" -- MUS_NEW_GAME_INTRO (0x0144)
+-- Shared FR/LG songs.h identities: the movie has two separate cues.
+-- MUS_NEW_GAME_INTRO (0x144) belongs to Oak's speech, not this movie.
+local GAME_FREAK_CUE = "SONG_141"
+local INTRO_FIGHT_CUE = "SONG_115"
 local WIN_TOP, WIN_BOTTOM = 32, 128
 
 -- gSineTable: sin(i * pi / 128) in 8.8 fixed point
@@ -113,16 +116,9 @@ function Gen3IntroFRLG:sgbPalettes()
 end
 
 function Gen3IntroFRLG:enter()
-  local data = self.game and self.game.data
-  local song = data and Music.special(data, "intro")
-  local songs = data and data.audio and data.audio.songs
-  -- The generic Gen 3 role table uses Emerald's song numbers; FireRed's
-  -- intro is MUS_NEW_GAME_INTRO (0x0144). Keep a valid role override, but
-  -- fall back to FireRed's own ID when that Emerald mapping is absent/stale.
-  if not (song and songs and songs[song]) then song = FIRE_RED_INTRO end
-  if songs and songs[song] then
-    pcall(Music.play, data, song)
-  end
+  -- Copyright/studio and the opening window precede the star's audio cue.
+  -- The generic intro role names INTRO_FIGHT and starts it much too early.
+  Music.stop()
 end
 
 function Gen3IntroFRLG.new(game, onDone)
@@ -445,6 +441,7 @@ function Gen3IntroFRLG:stepGameFreak()
     end
   elseif g.cb == "star" then                                   -- IntroCB_GF_Star
     if g.state == 0 then
+      Music.play(self.game.data, GAME_FREAK_CUE)
       g.sprites[#g.sprites + 1] = { kind = "star", baseX = 248 * 16, baseY = 55 * 16,
                                     x = 248, y = 55, y2 = 0, sinIdx = 0, timer = 0,
                                     seed = 354128453 }
@@ -591,7 +588,10 @@ function Gen3IntroFRLG:stepScene1()
     if s.state == 3 then s.fadeStep = 1 / fadeFrames(-2) end
   elseif s.state == 3 then
     s.fade = math.max(0, s.fade - s.fadeStep)
-    if s.fade <= 0 then s.timer, s.state = 0, 4 end
+    if s.fade <= 0 then
+      Music.play(self.game.data, INTRO_FIGHT_CUE)                -- IntroCB_Scene1 state 3
+      s.timer, s.state = 0, 4
+    end
   else
     s.timer = s.timer + 1
     if s.timer == 20 then s.zooming = true end

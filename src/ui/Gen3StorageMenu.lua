@@ -65,6 +65,8 @@ local MODES = { "withdraw", "deposit", "move" }
 -- question again -- and a screen that took the option and then never called
 -- it back would have parked the script instead.
 function Gen3StorageMenu.new(game, opts)
+  local Native=require('src.ui.Gen3RsStorage')
+  if Native.available(game)then return Native.new(game,opts,true) end
   opts = opts or {}
   local record = Gen3StorageMenu.record(game)
   local Screens = require("src.ui.Screens")

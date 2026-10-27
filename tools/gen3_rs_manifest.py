@@ -129,6 +129,14 @@ def main():
             result['symbols'][name]=at(target_name)
     result['symbols']['gScriptCmdTable']=at('gScriptCmdTable')
     result['symbols']['gStdScripts']=at('gStdScripts')
+    # Structural pointer-run discovery can start 28 entries into RS icons.
+    # Select the actual sized ELF symbol, including egg/Unown form entries.
+    for name in ('gMonIconTable','gMonIconPaletteIndices','gMonIconPaletteTable'):
+        result['symbols'][name]=at(name)
+    assert target.by_name['gMonIconTable'][0]['size']==440*4
+    assert target.by_name['gMonIconPaletteIndices'][0]['size']==440
+    assert target.by_name['gMonIconPaletteTable'][0]['size']==6*8
+    result['rsMonIcons']=dict(entries=440,palettes=6,source='matching sized RS ELF symbols')
     # RS retains two description pointers: 387 entries, 36 bytes each.
     # The matching ELF and raw Bulbasaur dimensions independently check it.
     dex=at('gPokedexEntries')
@@ -274,6 +282,9 @@ def main():
         'PetalburgGymSlideOpenDoors':'PetalburgGymSlideOpenRoomDoors',
         'PetalburgGymOpenDoorsInstantly':'PetalburgGymUnlockRoomDoors'}
     def canonical_special(name):
+        # RS names the tutorial-party builder; Emerald retains its sub_* name.
+        if name == 'PutZigzagoonInPlayerParty':
+            return 303
         root=name.removeprefix('ScrSpecial_')
         candidates={em_names[n] for n in (names.get(name,name),root,'Special_'+root,'Script_'+root) if n in em_names}
         assert len(candidates)<=1,(name,candidates)

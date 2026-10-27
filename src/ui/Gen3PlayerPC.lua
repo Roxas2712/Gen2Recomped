@@ -461,6 +461,8 @@ end
 
 function Gen3PlayerPC.new(game, opts)
   opts = opts or {}
+  local native=require('src.ui.Gen3RsPlayerPC')
+  if native.available(game)then return native.new(game,opts)end
   game.save.pcItems = game.save.pcItems or {}
   local words = Gen3PlayerPC.words(game, "main")
   local constants = (game.data or {}).constants or {}

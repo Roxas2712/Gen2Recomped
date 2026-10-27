@@ -250,6 +250,15 @@ function Gen3SummaryMenu.new(game, opts)
   if not self.def then
     warnOnce("no species record for %s", tostring(self.mon and self.mon.species))
   end
+  local rsVersion = require('src.core.GameVersion').get()
+  if self.mon and (rsVersion == 'ruby' or rsVersion == 'sapphire')
+     and require('src.ui.Gen3RsSummary').available(game) then
+    self.wantsFillScale=function()return true end
+    self.wantsEdgeBleed=function()return false end
+    self.sgbPalettes=function()return {require('src.render.PaletteFX').trueColorZone(0,0,29,19)}end
+    self.rsNative=require('src.ui.Gen3RsSummary').new(self,opts)
+    return self
+  end
   self.pic = nil
   if self.mon then
     local ok, path = pcall(function()
@@ -514,6 +523,7 @@ function Gen3SummaryMenu:moveSelectInput(input)
 end
 
 function Gen3SummaryMenu:update(dt)
+  if self.rsNative then return self.rsNative:update()end
   if self.picAnim then self.picAnim:update(dt) end
   if self.monAnim then self.monAnim:update(dt) end
   local input = self.game.input
@@ -1947,6 +1957,7 @@ function Gen3SummaryMenu:drawFireRed(r)
 end
 
 function Gen3SummaryMenu:draw()
+  if self.rsNative then return self.rsNative:draw()end
   local frlg = Gen3SummaryMenu.frlgRecord(self.game)
   if frlg then return self:drawFireRed(frlg) end
   love.graphics.setColor(0.20, 0.42, 0.36, 1)
@@ -1984,6 +1995,9 @@ function Gen3SummaryMenu:draw()
 end
 
 Gen3SummaryMenu.STAT_ROWS = STAT_ROWS
+function Gen3SummaryMenu:exit()
+  if self.rsNative then self.rsNative:exit()end
+end
 Gen3SummaryMenu.FALLBACK_PAGES = FALLBACK_PAGES
 
 require("src.ui.Gen3SummaryLayout").apply(Gen3SummaryMenu)

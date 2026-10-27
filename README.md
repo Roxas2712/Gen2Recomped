@@ -1,5 +1,18 @@
 # gen2recomp
 
+The fork integrates cartridge-specific presentation for **Ruby, Sapphire,
+FireRed, LeafGreen and Emerald**. Ruby/Sapphire now use their own original
+intro, title, music and menu renderers; FR/LG use their own intro/title and
+edition-specific dialogue windows; Emerald uses its original movie and title.
+The shared GBA runtime also includes the field, inventory and battle fixes
+listed in [GBA integration and verification](docs/gba-authentic-integration.md).
+These editions remain **Alpha**: complete story and postgame acceptance is
+still outstanding.
+
+Based on the Pokemon Gen 1 Recompilation Project by BOIS CLUB GAMES, LLC
+(https://github.com/bryanthaboi/gen1recomp). The pinned presentation sources
+retain their [original licence and provenance](compat/gen1-rs/README.md).
+
 > **Roxas2712 development fork — contributions by Roxas2712.**
 > Upstream: Cedric / UNDERdecoded's Gen2Recomped, based on Gen1Recomp by
 > bryanthaboi / BOIS CLUB GAMES, LLC. Read the [fork ownership notice](NOTICE.md)
@@ -94,6 +107,9 @@ revision) so you know why — see [docs/rom-revisions.md](docs/rom-revisions.md)
 | Crystal (Rev 0) | GBC | Stable | `f4cd194bdee0d04ca4eac29e09b8e4e9d818c133` |
 | Polished Crystal 3.2.3 | GBC | Beta | `6930b48af5844d373e3c9130f26d6dd1084cf4ed` |
 | Prism | GBC | Experimental | `752076692ae3387cf426ce5f51a98c6b60e8df6a` |
+| Ruby (USA) | GBA | Alpha | `f28b6ffc97847e94a6c21a63cacf633ee5c8df1e` |
+| Sapphire (USA) | GBA | Alpha | `3ccbbd45f8553c36463f13b938e833f652b793e4` |
+| LeafGreen (USA, Rev 0) | GBA | Alpha | `574fa542ffebb14be69902d1d36f1ec0a4afd71e` |
 | FireRed (Rev 0) | GBA | Alpha | `41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc` |
 | Emerald | GBA | Alpha | `f3ae088181bf583e55daf962a92bb46f4f1d07b7` |
 | Platinum (Rev 1) | DS | Pre-alpha | `0862ec35b24de5c7e2dcb88c9eea0873110d755c` |
