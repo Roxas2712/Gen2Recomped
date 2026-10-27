@@ -1344,6 +1344,9 @@ local function markerFor(version)
     revision = revision .. 'rs-transition-classes-v1:'
   end
   if GameVersion.generation(version)==3 then revision=revision..'gba-field-move-art-v1:'end
+  if GameVersion.generation(version)==2 then
+    revision=revision..'gen2-vram-layout-v'..require('src.import.Gen2VramLayout').REVISION..':'
+  end
   return CACHE_FORMAT .. revision .. GameVersion.info(version).sha1
 end
 
