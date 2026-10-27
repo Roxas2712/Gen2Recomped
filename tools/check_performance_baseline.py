@@ -30,6 +30,7 @@ SCENES = {
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--love", type=Path, required=True)
+    parser.add_argument("--lua", type=Path, help="LuaJIT for compiling adapted host files before import")
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--scene", choices=sorted(SCENES), action="append", required=True)
     mode = parser.add_mutually_exclusive_group(required=True)
@@ -40,7 +41,7 @@ def main():
     parser.add_argument("--seconds", type=float, default=60)
     parser.add_argument("--backend", choices=("metal", "opengl"), default="metal")
     parser.add_argument("--fps-cap", type=int, choices=(30,60,120,160), default=160)
-    parser.add_argument("--variant", action="append", choices=("default", "idle-off", "idle-on", "voxel-idle-off", "voxel-idle-on", "adaptive"))
+    parser.add_argument("--variant", action="append", choices=("default", "idle-off", "idle-on", "voxel-idle-off", "voxel-idle-on", "voxel-warm-disk", "adaptive"))
     for version in ("red", "gold", "emerald", "platinum"):
         parser.add_argument("--" + version, type=Path)
     args = parser.parse_args()
@@ -55,9 +56,11 @@ def main():
         if args.measure and len(scene.get("names", scene.get("headers", []))) > 1:
             variants = ["idle-off", "idle-on"]
         elif args.measure and scene.get("voxel"):
-            variants = ["voxel-idle-off", "voxel-idle-on", "adaptive"]
+            variants = ["voxel-idle-off", "voxel-idle-on", "voxel-warm-disk", "adaptive"]
         if args.variant:
             variants = [v for v in variants if v in args.variant]
+            if "voxel-warm-disk" in variants and "voxel-idle-on" not in variants:
+                variants.insert(0,"voxel-idle-on")
         if variants:
             planned[name] = variants
     if not planned:
@@ -72,6 +75,9 @@ def main():
         cartridges[version] = path.resolve(strict=True)
     for path in (ROOT, binary, *cartridges.values()):
         qa_source(path)
+    lua = args.lua.resolve(strict=True) if args.lua else None
+    if lua:
+        qa_source(lua)
     out = qa_cache(args.out.resolve())
     out.mkdir(parents=True, exist_ok=False)
     hardware = {}
@@ -128,6 +134,39 @@ def main():
         adaptations = ["Enable existing native pacing in the owned driver host",
                        "Use the interactive PlatformHooks.update and real dt after each driver observation"]
     patched_hash = hashlib.sha256(engine.read_bytes()).hexdigest()
+    instrumented = {}
+    if args.measure:
+        def instrument(relative, replacements, suffix=None):
+            path=source/relative
+            before=path.read_bytes()
+            text=before.decode()
+            for old,new,expected in replacements:
+                assert text.count(old)==expected,(relative,old,text.count(old))
+                text=text.replace(old,new)
+            if suffix:
+                old,new=suffix
+                assert text.rstrip().endswith(old),relative
+                at=text.rindex(old);text=text[:at]+new+text[at+len(old):]
+            text='local BaselineSections=require("tools.performance_baseline_sections")\n'+text
+            path.write_text(text)
+            instrumented[relative]={"originalSha256":hashlib.sha256(before).hexdigest(),
+                                    "hostSha256":hashlib.sha256(path.read_bytes()).hexdigest()}
+        instrument("src/render/TileRenderer.lua",[("self:syncGen3Palettes()",
+            'BaselineSections.call("  tiles: syncGen3Palettes", self.syncGen3Palettes, self)',3)])
+        instrument("src/render/Gen4Ground.lua",[("self:livePass(",
+            'BaselineSections.call("  gen4: live pass", self.livePass, self, ',3)])
+        instrument("src/core/Music.lua",[('require("src.audio.NitroAudio").update()',
+            'BaselineSections.call("  audio: Nitro update", require("src.audio.NitroAudio").update)',1)])
+        if any(SCENES[name].get("voxel") for name in planned):
+            for module,method in (("Structures","forMap"),("Gen3","prepare"),("TerrainAtlas","forMap")):
+                instrument("mods/DRAMATIC_SHAPE/lib/"+module+".lua",[],
+                    ('return '+module,module+'.'+method+'=BaselineSections.wrapSetup("    voxel: '+module+'.'+method+'",'+module+'.'+method+')\nreturn '+module))
+            changes=[]
+            for fn,label,count in (("buildGrassMesh","grass",2),("buildFlowerMesh","flowers",2),("buildFigureMeshes","figures",1)):
+                changes.append(('pcall('+fn+', map)',
+                    'pcall(BaselineSections.call,"    voxel: build '+label+'",'+fn+', map)',count))
+            instrument("mods/DRAMATIC_SHAPE/lib/ChunkMesher.lua",changes)
+        adaptations.append("Profile selected native calls in the owned copy with argument/return-preserving adapters")
     engine.rename(source / "engine_main.lua")
     seed = '''
 local settings=os.getenv("PERF_BASELINE_OPTIONS")
@@ -141,6 +180,12 @@ end
 '''
     bootstrap = BOOTSTRAP.replace('assert(loadfile("engine_main.lua"))()', seed + '\nassert(loadfile("engine_main.lua"))()')
     (source / "main.lua").write_text(bootstrap)
+    if lua:
+        for relative in ("engine_main.lua", "main.lua", *instrumented,
+                         "tools/performance_baseline_driver.lua", "tools/performance_baseline_meter.lua",
+                         "tools/performance_baseline_sections.lua", "tools/performance_baseline_walk.lua"):
+            qa_run([str(lua), "-e", "assert(loadstring(io.read('*a'),"+json.dumps("@"+relative)+"))"],
+                   input=(source/relative).read_text(), capture_output=True, text=True, timeout=30, check=True)
     env = {k: v for k, v in os.environ.items()
            if not k.startswith(("POKEPORT_", "PERF_", "PALETTE_"))}
     env.update(POKEPORT_NO_MODS="1", POKEPORT_NO_BOOT_REPORT="1",
@@ -172,7 +217,10 @@ end
             if args.measure:
                 identity += "-" + label
                 profile = qa_profile(Path.home() / "Library/Application Support/LOVE" / identity)
-                original = Path.home() / "Library/Application Support/LOVE" / profiles[version]
+                seed_identity=profiles[version]
+                if variant=="voxel-warm-disk":
+                    seed_identity+="-"+name+"-voxel-idle-on"
+                original = Path.home() / "Library/Application Support/LOVE" / seed_identity
                 shutil.copytree(original, profile, dirs_exist_ok=True)
             target = out / (label + ".json")
             child = dict(env, POKEPORT_IDENTITY=identity, POKEPORT_VERSION=version,
@@ -201,6 +249,8 @@ end
               "performanceBaseline": args.measure, "freshImports": True, "playerProfilesUsed": False,
               "originalEntrypointSha256": engine_hash, "hostEntrypointSha256": patched_hash,
               "testAdaptations": adaptations, "separateCaseProfiles": args.measure,
+              "instrumentedFiles": instrumented,
+              "hostSyntaxChecked": lua is not None,
               "hardware": hardware,
               "benchmarkControls": {"fpsCap": args.fps_cap, "seconds": args.seconds,
                                     "nativePacing": args.measure, "vsync": 0 if args.measure else None,

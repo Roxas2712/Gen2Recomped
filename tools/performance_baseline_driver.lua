@@ -90,11 +90,13 @@ return function(game)
     game.save.options.pipelines.voxel=spec.voxel and spec.measure and 3 or 0
     game:applyOptions()
     local V=spec.voxel and spec.measure and assert(_G.__DRAMATIC_SHAPE_V,"native mod loader did not admit DRAMATIC_SHAPE")
+    local Sections=require("tools.performance_baseline_sections")
     if V then
       V.require("Water").setting:sync("full")
       V.require("RenderScale").setting:sync(1)
       V.require("DayNight").setting:sync("day")
       V.require("ChunkMesher").idlePump=spec.variant~="voxel-idle-off"
+      Sections.startSetup()
     end
     -- An owned post-starter QA save; game scripts and collision remain native.
     local starters = {red = "BULBASAUR", gold = "CYNDAQUIL", emerald = "TREECKO", platinum = 387}
@@ -191,6 +193,12 @@ return function(game)
           assert(love.timer.getTime()<deadline,"native terrain did not become quiescent")
           U.wait(30)
         until mesher.pending()==0 and (mesher.peek(ow.map,false) or mesher.peek(ow.map,true))
+        report.voxelSetup=Sections.stopSetup()
+        Sections.startSetup()
+        V.require("Structures").forMap(ow.map)
+        V.require("Gen3").prepare(ow.map)
+        V.require("TerrainAtlas").forMap(ow.map)
+        report.voxelWarmMemory=Sections.stopSetup()
       end
       local Cap=require("src.core.FrameCap")
       Cap.backgroundPacing=false -- owned benchmark keeps its cap outside the foreground

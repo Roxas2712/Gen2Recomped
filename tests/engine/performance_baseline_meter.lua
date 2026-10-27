@@ -4,6 +4,28 @@ local nativePresent=function() now=now+0.001;return nil,"native-result" end
 love={timer={getTime=function()return now end},graphics={present=nativePresent}}
 local FP=require("src.core.FrameProfile")
 local section,add=FP.section,FP.add
+local Sections=require("tools.performance_baseline_sections")
+local live={id="NATIVE_MAP"}
+local calls=0
+local wrapped=Sections.wrapSetup("analysis",function(first)
+  T.eq(first,live,"profiling forwards the original argument identity")
+  calls=calls+1;now=now+0.004
+  return nil,live,nil
+end)
+local function checkReturns(...)
+  T.eq(select("#",...),3,"profiling preserves trailing nil return arity")
+  local a,b,c=...
+  T.eq(a,nil,"profiling preserves the leading nil")
+  T.eq(b,live,"profiling returns the original live table")
+  T.eq(c,nil,"profiling preserves the trailing nil")
+end
+checkReturns(wrapped(live))
+Sections.startSetup();checkReturns(wrapped(live))
+local setup=Sections.stopSetup()
+T.eq(calls,2,"profiling never repeats a native call")
+T.eq(setup.analysis.NATIVE_MAP.calls,1,"only the requested setup phase is accumulated")
+T.check(math.abs(setup.analysis.NATIVE_MAP.maxMs-4)<1e-8,"setup wall-time units are milliseconds")
+now=0
 local measure=require("tools.performance_baseline_meter")
 T.check(not pcall(measure,{},59),"short intervals cannot be published as a baseline")
 local co=coroutine.create(function()
