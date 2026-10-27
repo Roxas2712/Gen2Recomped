@@ -38,8 +38,14 @@ return function(game)
   love.graphics.push('all');b:draw();love.graphics.pop()
   assert(S.encode(game.save)==before and love.math.getRandomState()==rng,'Drawing changed gameplay data')
   shot('native-gba-hud-poison-level39-long-name')
-  mon.level=100;U.wait(2);shot('native-gba-hud-level100');mon.level=39
-  report.levelGlyphCodes=require('src.render.Font').encode('Lv')
+  assert(require('src.battle.Gen3NativeHealthbox').available(b),'Native healthbox assets not selected')
+  mon.level=100;U.wait(2);shot('native-gba-hud-level100')
+  mon.level=1;U.wait(2);shot('native-gba-hud-level1');mon.level=39
+  for _,status in ipairs({'PAR','SLP','FRZ','BRN'})do
+    mon.status=status;b.player.shownStatus=status;U.wait(2);shot('native-gba-hud-status-'..status)
+  end
+  mon.status='PSN';b.player.shownStatus='PSN'
+  report.levelGlyphCode=0x105;report.untrimmedNativeSmallFont=true
   press('right');press('a',30);assert(game.stack:top().screenId=='Gen3BagMenu')
   assert(game.stack:top():selected().id=='ANTIDOTE')
   press('a',30);assert(game.stack:top().screenId=='Gen3PartyMenu');press('a',8)
@@ -49,6 +55,25 @@ return function(game)
   shot('native-gba-hud-cured-battle-message');complete()
   assert(b.enemy.curMoves[1].pp==39 and mon.hp==44,'Medicine did not execute exactly one harmless enemy reply')
   shot('native-gba-hud-cured-command-menu')
+  game.stack:pop()
+  game.save.party={mon,require('src.pokemon.Pokemon').new(game.data,'NUMEL',30)}
+  local trainers={}
+  for id,t in pairs(game.data.trainers)do
+    if t.doubleBattle and t.parties and t.parties[1]and #t.parties[1]>=2 then trainers[#trainers+1]=id end
+  end
+  table.sort(trainers);assert(#trainers>0,'No actual double trainer imported')
+  b=require('src.battle.BattleState').newTrainer(game,trainers[1],1)
+  assert(b:isDouble());game.stack:push(b)
+  for _=1,3000 do
+    if b.phase=='menu'and not b.current and #b.queue==0 and not b.showPlayerBack and not b.showEnemyTrainer then break end
+    if b.phase=='messages'then press('b')else U.wait(1)end
+  end
+  assert(b.phase=='menu'and b:battlerAt(2)and b:battlerAt(3),'Native double intro did not admit all four battlers')
+  for id,status in ipairs({'PSN','PAR','BRN','SLP'})do
+    local battler=b:battlerAt(id-1);battler.mon.status=status;battler.shownStatus=status
+  end
+  U.wait(2);shot('native-gba-hud-four-double-panels')
+  report.nativeDoubleTrainer=trainers[1]
   report.nativeOamGeometry=true;report.nativeMedicineQueue=true;report.oneEnemyReply=true
   report.drawSaveAndRngUnchanged=true;report.status='pass';persist()
   print('PASS_NATIVE_GBA_HEALTHBOX_SMOKE',edition);love.event.quit(0)
