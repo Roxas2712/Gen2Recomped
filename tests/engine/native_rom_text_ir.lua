@@ -93,6 +93,7 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  catalog.edition=edition
  T.eq(Text.plain('gText_Greeting'),(plain:gsub('{PLAYER}','NATIVE')))
  T.eq(Text.plain('gText_Greeting',{playerName='SOURCE'}),(plain:gsub('{PLAYER}','SOURCE')))
+ T.eq(Text._expand('{PLAYER}/{VAR1}/{RIVAL}',{stringVars={'BUFFER'}}),'NATIVE/BUFFER/RIVAL')
  data._portableScriptText={gText_Greeting={value='private VM prose'}}
  T.eq(Text.plain('gText_Greeting'),(plain:gsub('{PLAYER}','NATIVE')),'VM text does not replace native prose')
  data._romTextGeneration=3;data.romText={gText_Greeting='Native prose override'}
