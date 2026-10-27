@@ -1503,6 +1503,12 @@ local function drawHUDs(battle, slide)
   local record = hudRecord(battle)
   local images = record and record.images or {}
   local double = battle.isDouble and battle:isDouble()
+  if showStatus and battle.gen3Safari and slide==0 then
+    local x,y=healthboxAt(battle,'singlesPlayer',hudImage(images.safari or images.player),112,64)
+    if battle.rsBattlePanel then
+      require('src.battle.Gen3RsHealthbox').drawSafari(battle,x,y,battle.rsBattlePanel.font)
+    else require('src.battle.Gen3NativeHealthbox').drawSafari(battle,x,y)end
+  end
   if showStatus and not double and battle.enemy and not battle.showEnemyTrainer
       and not battle.enemySendingOut and not battle:growInScale(battle.enemy)
       and slide == 0 and not battle.introBalls and not battle.enemy.fainted then
@@ -1993,11 +1999,40 @@ end
 --
 -- RECONSTRUCTED: the split between the prompt window and the command window.
 
+-- The native Pokeblock word is five joined glyphs, not nine Latin letters.
+-- Font.draw expands brace tags for ordinary host text; the cartridge's
+-- compound glyph must keep its original width in the narrow action column.
+function Gen3Battle.drawSafariLabel(label,x,y)
+  if label~='{POKEBLOCK}'then Font.draw(label,x,y);return Font.width(label)end
+  local pen=x
+  for code=0x55,0x59 do
+    Font.drawCode(code,pen,y);pen=pen+Font.advanceOf(code)
+  end
+  return pen-x
+end
+
 local function drawCommandMenu(battle)
   local col = (battle.menuIndex - 1) % 2
   local row = math.floor((battle.menuIndex - 1) / 2)
   local s = Gen3Battle.strip(battle)
 
+  if battle.gen3Safari then
+    drawPanel(battle,'action')
+    local w=Gen3Battle.windows(battle)
+    shadowed(battle,'message',function(dx,dy)
+      local i=0
+      for line in require('src.battle.Gen3Safari').text(battle,'prompt'):gmatch('[^\n]+')do
+        Font.draw(line,w.prompt.textX+dx,w.prompt.row1+i*16+dy);i=i+1
+      end
+    end)
+    shadowed(battle,'menu',function(dx,dy)
+      for i,label in ipairs(battle.data.constants.gen3SafariNative.labels)do
+        Gen3Battle.drawSafariLabel(label,w.action.textX+((i-1)%2)*56+dx,w.action.row1+math.floor((i-1)/2)*16+dy)
+      end
+    end)
+    drawArrow(battle,w.action.textX-8+col*56,w.action.row1+row*16)
+    return
+  end
   if battle.safari then
     if not drawPanel(battle, "action") then
       Font.drawBox(s.tx, s.ty, s.tw, s.th)

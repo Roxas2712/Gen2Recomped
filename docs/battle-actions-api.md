@@ -40,7 +40,7 @@ rejected. The facade copies accepted input fields before calling native code.
 | `move` | `slot`: 1–4 | Select a current battle move; may enter the native target selector |
 | `target` | `target`: 0–3 | Select a currently offered, occupied positional battler ID |
 | `back` | none | Cancel move selection/reorder or targeting; in a double's second action menu undo the first choice when native B permits it |
-| `safari` | `action`: ball / bait / rock / run | Select a native Safari command; `rock` is Platinum's mud button |
+| `safari` | `action`: ball / bait / rock / pokeblock / go_near / run | Select an edition's native Safari command: Hoenn uses `pokeblock` / `go_near`, Kanto uses `bait` / `rock`; `rock` is Platinum's mud button |
 | `mimic` | `index`: 1–4 | Select a current Mimic **option index**, not the source move slot |
 
 Positions are 0 player-left, 1 opponent-left, 2 player-right, 3 opponent-right.

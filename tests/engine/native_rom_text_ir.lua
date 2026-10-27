@@ -83,6 +83,7 @@ local providers={
  require('src.import.Gen3RsPresentation'),
  require('src.import.Gen3EmeraldPresentation'),
  require('src.import.Gen3StatGrowthAssets'),
+ require('src.import.Gen3SafariAssets'),
 }
 local originalExtract,called={},{}
 local finalPlain=plain..' late native prose'
@@ -91,13 +92,13 @@ for index,provider in ipairs(providers)do
  provider.extract=function(owner)
   T.eq(owner,finish,'final native extraction uses its original importer')
   called[#called+1]=index
-  if index==3 then owner._text.TEXT_000000=finalPlain end
+  if index==#providers then owner._text.TEXT_000000=finalPlain end
  end
 end
 local completed,why=pcall(finish.run,finish)
 for index,provider in ipairs(providers)do provider.extract=originalExtract[index]end
 Extractor.DATA_STAGES,Extractor.ASSET_STAGES=dataStages,assetStages
-T.eq(completed,true,why);T.same(called,{1,2,3},'required native providers finish before IR publication')
+T.eq(completed,true,why);T.same(called,{1,2,3,4},'required native providers finish before IR publication')
 T.eq(emitted.namedIR.records.TEXT_000000.nativePlain,finalPlain,
  'final cache publication snapshots text added by later native stages')
 for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do

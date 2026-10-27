@@ -59481,6 +59481,7 @@ function RomExtractorGen3:run()
   require('src.import.Gen3RsPresentation').extract(self)
   require('src.import.Gen3EmeraldPresentation').extract(self)
   require('src.import.Gen3StatGrowthAssets').extract(self)
+  require('src.import.Gen3SafariAssets').extract(self)
   -- Script and late UI stages can add prose after the initial scan. Snapshot
   -- that final native pool so readers retain its layout IR until an actual
   -- registry edit or removal, including strings the scan initially rejected.

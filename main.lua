@@ -432,6 +432,7 @@ local function returnToLauncher()
   -- The game's mods come off the engine before the launcher (and the plain-
   -- game backdrop it boots) runs on it, and before the next Play loads them
   -- again in this same process (src/mods/Loader.lua Loader.teardown).
+  pcall(function() require("src.render.Assets").releaseSession() end)
   pcall(function() require("src.mods.Loader").teardown() end)
   openLauncher(false)
   -- ...AND WHERE IT ASKED TO LAND (HostShell.requestLauncher): HGSS's CONNECT

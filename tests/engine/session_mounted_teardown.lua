@@ -27,6 +27,10 @@ local function loadProbe(version)
         local mod = ...
         mod.hooks:wrap("core.update", function(nextFn, ...) return nextFn(...) end)
         local Assets = require("src.render.Assets")
+        local events = {}
+        mod.exports.assetEvents = events
+        Assets.register{invalidate=function() events[#events + 1] = "invalidate" end,
+          release=function() events[#events + 1] = "release" end}
         local previous = Assets.exists
         Assets.exists = function(path)
           if path == "session-probe-only" then return true end
@@ -55,7 +59,11 @@ local function clean(version)
 end
 for _, version in ipairs({ "gold", "silver", "crystal", "red", "emerald", "firered" }) do
   local run = loadProbe(version)
+  local events = run.loader.exports.session_probe.assetEvents
+  for i = #events, 1, -1 do events[i] = nil end
   Lifecycle.endMountedSession(version)
+  T.eq(table.concat(events, ","), "release,invalidate",
+    "mounted retirement releases consumer assets before loader invalidation")
   clean(version)
   T.eq(unmounted[#unmounted], version, "correct cartridge read path is unmounted")
   local count = #unmounted

@@ -1026,6 +1026,10 @@
     "1DB67C": 1440144
   },
   "stageOverrides": {
+    "BALLS": {
+   "BONUS": 2426990,
+   "JUMP": 185676
+  },
     "BATTLE_TEXTBOX": {
       "MENU_PALETTE_SETS": [
         [
