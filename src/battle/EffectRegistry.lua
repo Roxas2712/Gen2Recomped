@@ -126,7 +126,7 @@ end
 -- stage keeps its generation's check order and RNG consumption. GBA draws
 -- hit count after accuracy and computes ordinary damage separately per hit;
 -- older generations retain their pre-accuracy count and shared damage roll.
-function EffectRegistry.runDamaging(battle, ctx, record)
+local function runDamaging(battle, ctx, record)
   local user, target = ctx.user, ctx.target
   local move, moveInst = ctx.move, ctx.moveInst
   local neverMiss = record and record.neverMiss
@@ -581,4 +581,17 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   end
 end
 
+-- Optional native observation only; the existing callbacks and damaging
+-- pipeline keep their order, input context, return values and RNG owner.
+function EffectRegistry.callEffect(ctx,phase,fn,...)
+  local source=package.loaded['src.core.game3.battle.effect_ctx']
+  if source and require('src.core.GameVersion').isGen3()then return source._native(ctx,phase,fn,...)end
+  return fn(ctx,...)
+end
+local function damageContext(ctx,battle,record)return runDamaging(battle,ctx,record)end
+function EffectRegistry.runDamaging(battle,ctx,record)
+  local source=package.loaded['src.core.game3.battle.effect_ctx']
+  if source and require('src.core.GameVersion').isGen3()then return source._native(ctx,'damage',damageContext,battle,record)end
+  return runDamaging(battle,ctx,record)
+end
 return EffectRegistry
