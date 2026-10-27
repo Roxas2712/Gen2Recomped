@@ -3,6 +3,7 @@
 local Native=require('src.compat.gen1.NativeSession')
 local Ids=require('src.compat.gen1.BattleIds')
 local P={}
+local function finite(n)return type(n)=='number'and n==n and n~=math.huge and n~=-math.huge end
 -- Base sprite anchors are independent of the current render transform and
 -- animation coordinate overrides. Read the live cartridge record each time;
 -- the returned point is detached so callers cannot edit native layout data.
@@ -13,14 +14,17 @@ function P.battlerCoords(double,id)
   local game,why=Native.game();if not game then return nil,why end
   local constants=game.data and game.data.constants
   local imported=constants and constants.gen3BattlerCoords
-  local layout=imported and(double and imported.doubles or imported.singles)
+  if imported~=nil and type(imported)~='table'then return nil,'invalid native battler coordinates'end
+  local layout
+  if imported then if double then layout=imported.doubles else layout=imported.singles end end
+  if layout~=nil and type(layout)~='table'then return nil,'invalid native battler coordinates'end
   local point=layout and layout[id+1]
-  if not point then
+  if point==nil then
     local coords=require('src.core.game3.battle.anim_coords')
     point=(double and coords.DOUBLES or coords.SINGLES)[id]
   end
-  local x,y=point and(point.x or point[1]),point and(point.y or point[2])
-  local function finite(n)return type(n)=='number'and n==n and n~=math.huge and n~=-math.huge end
+  if type(point)~='table'then return nil,'invalid native battler coordinates'end
+  local x,y=point.x or point[1],point.y or point[2]
   if not finite(x)or not finite(y)then return nil,'invalid native battler coordinates'end
   return{x=x,y=y,[1]=x,[2]=y}
 end

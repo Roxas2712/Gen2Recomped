@@ -28,7 +28,7 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  local frame,queue=b.frame,#b.queue
  local hp,ap=b.player.mon.hp,b.player.mon.moves[1].pp
  local rolls=0;b.rng=function()rolls=rolls+1;return 0 end
- C.setDouble(true);C.setCoordinateOverrides({[0]={x=999,y=998}})
+ C.setDouble(true);C.setCoordinateOverrides({[0]={x=999,y=998,[1]=999,[2]=998}})
  for _=1,3 do for i=0,3 do
   point(P.battlerCoords(false,i),(i+1)*13,(i+1)*17)
   point(P.battlerCoords(true,i),(i+1)*19,(i+1)*23)
@@ -45,10 +45,12 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  end
  T.eq(P.battlerCoords(false,0/0),nil)
  T.eq(P.battlerCoords('double',0),nil)
- for _,bad in ipairs{{x=math.huge,y=2},{x=2,y=0/0},{x='3',y=2},{}}do
+ for _,bad in ipairs{{x=math.huge,y=2},{x=2,y=0/0},{x='3',y=2},{},true,9,'bad',false}do
   constants.gen3BattlerCoords.singles[1]=bad
   local value,why=P.battlerCoords(false,0);T.eq(value,nil);T.eq(why,'invalid native battler coordinates')
  end
+ constants.gen3BattlerCoords.doubles='invalid';T.eq(P.battlerCoords(true,0),nil)
+ constants.gen3BattlerCoords=false;T.eq(P.battlerCoords(false,0),nil)
  T.eq(b.frame,frame);T.eq(#b.queue,queue);T.eq(rolls,0)
  T.eq(b.player.mon.hp,hp);T.eq(b.player.mon.moves[1].pp,ap)
  C._service.release();f.game.stack:pop();f.close();G.release()
