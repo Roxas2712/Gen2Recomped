@@ -773,7 +773,7 @@ function love.keypressed(key, scancode, isrepeat)
   if bootReport then return dismissBootReport() end
   if editorMode then return EditorApp.keypressed(key) end
   if TouchEditor then return TouchEditor.keypressed(key) end
-  if Importer then return Importer:keypressed(key) end
+  if Importer then return Importer:keypressed(key,scancode,isrepeat) end
   if not Game then return end
   if RetroOverlay.key(Game,key) then return end
   Game:keypressed(key)

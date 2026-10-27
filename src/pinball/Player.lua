@@ -1,6 +1,8 @@
 -- Shared-window Pinball player. Contributions by Roxas2712.
 local M={};local live=setmetatable({},{__mode='k'});local serial=0
 local Json=require('src.link.Json')
+local FrameCap=require('src.core.FrameCap')
+local AUDIO_BUFFERS,AUDIO_PREROLL=16,4
 local FILTERS={'pixels','smooth','lcd','scanlines'}
 local DISPLAY_SHADER=[[
 extern vec2 sourceSize;
@@ -26,7 +28,7 @@ function M.new(session,options)
  self.input=require('src.pinball.Input').new(self.seats,love.joystick.getJoysticks())
  self.channel='ascendant.pinball.'..serial..'.'..love.timer.getTime()
  for _,k in ipairs{'commands','frames','audio','events'}do self[k]=love.thread.getChannel(self.channel..'.'..k);self[k]:clear()end
- self.audioRate=32768;self.sound=love.audio.newQueueableSource(self.audioRate,16,1,8);self.sound:setVolume(session.volume or .6)
+ self.audioRate=32768;self.sound=love.audio.newQueueableSource(self.audioRate,16,1,AUDIO_BUFFERS);self.sound:setVolume(session.volume or .6)
  local ok,shader=pcall(love.graphics.newShader,DISPLAY_SHADER);if ok then self.shader=shader end
  self.thread=love.thread.newThread('src/pinball/worker.lua')
  if options.net then
@@ -36,9 +38,9 @@ function M.new(session,options)
  self.thread:start(Json.encode{session=session,channel=self.channel,seats=self.seats,duel=options.duel,
   field=options.field or 0,frameLimit=18000,full_table=self.settings.full_table,audioSeat=self.settings.audioSeat,diagnostics=options.diagnostics,foreground=love.window.hasFocus()})
  function self:command(msg)if self.thread:isRunning()then self.commands:push(Json.encode(msg))end end
- function self:stop()if self.closing then return end;self.closing=true;if self.duel then self.duel:close()end;self:command{action='quit'};self.sound:stop()end
+ function self:stop()if self.closing then return end;self.closing=true;FrameCap.setRealtime(self,false);if self.duel then self.duel:close()end;self:command{action='quit'};self.sound:stop()end
  function self:dispose()
-  live[self]=nil
+  FrameCap.setRealtime(self,false);live[self]=nil
   for _,image in pairs(self.images)do free(image)end
   local msg=self.frames:pop();while msg do for _,data in ipairs(msg.images)do free(data)end;msg=self.frames:pop()end
   local sound=self.audio:pop();while sound do free(sound);sound=self.audio:pop()end
@@ -107,12 +109,16 @@ function M.new(session,options)
    local data=self.audio:pop();if not data then break end
    if data:getSampleRate()~=self.audioRate then
     self.audioRate=data:getSampleRate()
-    self.sound:stop();free(self.sound);self.sound=love.audio.newQueueableSource(data:getSampleRate(),16,1,8);self.sound:setVolume(session.volume or .6)
+    self.sound:stop();free(self.sound);self.sound=love.audio.newQueueableSource(data:getSampleRate(),16,1,AUDIO_BUFFERS);self.audioStarted=false;self.sound:setVolume(session.volume or .6)
    end
    local ok=pcall(self.sound.queue,self.sound,data);data:release()
    if not ok then break end
   end
-  if self.ready and not self.paused and not self.closing and not self.sound:isPlaying()then self.sound:play()end
+  if self.ready and not self.paused and not self.closing and not self.sound:isPlaying()
+   and AUDIO_BUFFERS-self.sound:getFreeBufferCount()>=AUDIO_PREROLL then
+   if self.audioStarted then self.audioRestarts=(self.audioRestarts or 0)+1 end
+   self.sound:play();self.audioStarted=true
+  end
  end
  function self:draw(w,h,preview)
   local g=love.graphics;g.push('all');g.clear(.025,.035,.05);g.setFont(self.font)
@@ -153,8 +159,8 @@ function M.new(session,options)
   g.pop()
  end
  function self:togglePause()
-  self.paused=not self.paused;if not self.duel then self:command{action='pause',value=self.paused}end
-  if self.paused then self.sound:stop()end
+  self.paused=not self.paused;FrameCap.setRealtime(self,not self.paused or self.duel~=nil);if not self.duel then self:command{action='pause',value=self.paused}end
+  if self.paused then self.sound:stop();self.audio:clear();self.audioStarted=false end
  end
  function self:keypressed(key,_,isrepeat)
   if isrepeat then return end
@@ -177,6 +183,6 @@ function M.new(session,options)
  function self:gamepadpressed(pad,key)
   if key=='back'then self:togglePause()else self.input:join(pad)end
  end
- live[self]=true;return self
+ FrameCap.setRealtime(self,true);live[self]=true;return self
 end
 return M

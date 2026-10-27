@@ -21,10 +21,13 @@ local ok,why=pcall(function()
  local defaultPriority=os.getenv('ASCENDANT_PINBALL_DEFAULT_QOS')=='1'
  local initialPriority=hasPriority and workerPriority(-1)or 0
  local priority=initialPriority
+ -- Audio keeps playing across focus changes. Only pause/wait/finish relinquish
+ -- the latency-sensitive class; background utility scheduling starved samples.
  local function schedule(active)
   if hasPriority and not defaultPriority then priority=workerPriority(active and 1 or 0)end
+  if job.diagnostics then emit{event="priority",priority=priority}end
  end
- schedule(foreground)
+ schedule(true)
  for i=1,job.seats or 1 do
   local path=job.duel and '' or job.session.player..'/solo-'..(job.session.locale or 'en')..'-'..i..'.sav'
   local m=lib.ascendant_pinball_open(job.session.rom,job.session.bios,path)
@@ -47,9 +50,9 @@ local ok,why=pcall(function()
    local msg=Json.decode(raw)
    if msg.action=='quit' then close();emit{event='closed'};return end
    if msg.action=='input' then input=msg.buttons end
-   if msg.action=='start' and phase=='waiting'then phase='playing';nextFrame=love.timer.getTime();schedule(foreground and not paused)end
-   if msg.action=='pause' then paused=msg.value;input={0,0};nextFrame=love.timer.getTime();schedule(foreground and not paused and phase~='waiting'and phase~='finished')end
-   if msg.action=='foreground'then foreground=msg.value;schedule(foreground and not paused and phase~='waiting'and phase~='finished')end
+   if msg.action=='start' and phase=='waiting'then phase='playing';nextFrame=love.timer.getTime();schedule(not paused)end
+   if msg.action=='pause' then paused=msg.value;input={0,0};nextFrame=love.timer.getTime();schedule(not paused and phase~='waiting'and phase~='finished')end
+   if msg.action=='foreground'then foreground=msg.value;schedule(not paused and phase~='waiting'and phase~='finished')end
    if msg.action=='view'then
     for _,m in ipairs(handles)do assert(lib.ascendant_pinball_view(m,msg.full_table and 1 or 0)~=0,failure())end
    end

@@ -52,5 +52,38 @@ int main(){
  view.scanline(source,0,0x1f00,io.data(),vram.data(),oam.data(),palette.data());
  view.scanline(source,144,0x1f00,io.data(),vram.data(),oam.data(),palette.data());
  view.frame_ready();assert(view.save_hud()==saved);
- std::puts("Pinball HUD raster: opaque backdrop, per-line scroll, live glyphs, complete-frame latch and restore passed");
+ // A camera-culled bumper must still be reconstructed at its world position.
+ // Synthetic cartridge templates/tiles only: no extracted game data.
+ gba::GbaBus bus;std::vector<uint8_t> rom(8*1024*1024);
+ auto rw=[&](unsigned address,unsigned v){word(rom.data()+address-0x08000000,v);};
+ auto rd=[&](unsigned address,unsigned v){rw(address,v);rw(address+2,v>>16);};
+ constexpr unsigned templates=0x08000400,sprite=0x08000800,table=0x08000900;
+ rd(0x086b155c,templates);rw(0x086b1560,84);rd(templates+62*4,sprite);
+ rw(sprite,6);
+ for(unsigned part=0;part<6;part++){
+  rw(sprite+2+part*8,0x8000);rw(sprite+4+part*8,0x4000+(part%2?0x100f:0));
+  rw(sprite+6+part*8,0x174+(part/2)*8);
+ }
+ std::fill(rom.begin()+0x003c806c,rom.begin()+0x003c806c+512,0x11);
+ bus.set_rom(rom.data(),rom.size());
+ bus.write16(0x04000000,0x1e40);bus.write8(0x0200b0c2,2);bus.write8(0x0200b0c3,1);
+ bus.write32(0x0200b104,table);rd(table,0x0200b3b8+70*0xb8);
+ bus.write16(0x05000202,0x7fff);
+ for(unsigned n=0;n<3;n++){bus.write16(0x02000178+n*4,1250+n*100);bus.write16(0x0200017a+n*4,1270+n*100);}
+ PinballTableView world;std::vector<uint8_t> rgba;uint32_t width,height;
+ assert(world.render(bus,source,1,rgba,width,height));
+ const auto pixel=(23*width+117)*4;
+ assert(rgba[pixel]==255&&rgba[pixel+1]==255&&rgba[pixel+2]==255);
+ // Current group IDs belong to software OAM, not last VBlank's hardware OAM.
+ const unsigned group=0x0200b3b8+58*0xb8,template58=0x08000a00;
+ rd(templates+58*4,template58);rw(template58,1);
+ bus.write16(group,1);bus.write16(group+2,60);bus.write16(group+4,210);
+ bus.write16(group+8,20);bus.write16(group+10,0);bus.write16(group+12,0);
+ bus.write16(0x03005000+20*8,210);bus.write16(0x03005002+20*8,60);bus.write16(0x03005004+20*8,0x174);
+ bus.write16(0x07000000+20*8,0x200); // stale/disabled hardware allocation
+ assert(world.render(bus,source,2,rgba,width,height));
+ const auto active_pixel=(110*width+60)*4;
+ assert(rgba[active_pixel]==255&&rgba[active_pixel+1]==255&&rgba[active_pixel+2]==255);
+ assert(bus.read16(0x07000000+20*8)==0x200); // presentation never patches the guest
+ std::puts("Pinball HUD raster: opaque backdrop, per-line scroll, live glyphs, complete-frame latch, restore and camera-culled/current-frame world sprites passed");
 }

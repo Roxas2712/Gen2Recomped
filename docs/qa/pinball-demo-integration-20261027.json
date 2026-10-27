@@ -100,5 +100,173 @@
     ],
     "guest_ram_equal_pre_fix": true,
     "notices_outside_table": true
+  },
+  "current_frame_sprites": {
+    "synthetic_current_vs_hardware_oam_passed": true,
+    "synthetic_camera_culled_cartridge_assets_passed": true,
+    "private_bumper_visibility": {
+      "checked_frames": 13,
+      "bumper_checks": 39,
+      "all_present": true,
+      "samples": [
+        {
+          "frame": 0,
+          "yellow_bumper_pixels": [
+            38,
+            38,
+            38
+          ]
+        },
+        {
+          "frame": 1,
+          "yellow_bumper_pixels": [
+            38,
+            38,
+            38
+          ]
+        },
+        {
+          "frame": 120,
+          "yellow_bumper_pixels": [
+            38,
+            38,
+            38
+          ]
+        },
+        {
+          "frame": 150,
+          "yellow_bumper_pixels": [
+            38,
+            38,
+            38
+          ]
+        },
+        {
+          "frame": 2,
+          "yellow_bumper_pixels": [
+            38,
+            38,
+            38
+          ]
+        },
+        {
+          "frame": 3,
+          "yellow_bumper_pixels": [
+            38,
+            38,
+            38
+          ]
+        },
+        {
+          "frame": 30,
+          "yellow_bumper_pixels": [
+            38,
+            38,
+            38
+          ]
+        },
+        {
+          "frame": 4,
+          "yellow_bumper_pixels": [
+            38,
+            38,
+            38
+          ]
+        },
+        {
+          "frame": 5,
+          "yellow_bumper_pixels": [
+            38,
+            38,
+            38
+          ]
+        },
+        {
+          "frame": 6,
+          "yellow_bumper_pixels": [
+            38,
+            38,
+            38
+          ]
+        },
+        {
+          "frame": 60,
+          "yellow_bumper_pixels": [
+            38,
+            38,
+            38
+          ]
+        },
+        {
+          "frame": 7,
+          "yellow_bumper_pixels": [
+            38,
+            38,
+            38
+          ]
+        },
+        {
+          "frame": 90,
+          "yellow_bumper_pixels": [
+            38,
+            38,
+            38
+          ]
+        }
+      ]
+    },
+    "reference": "https://github.com/pret/pokepinballrs/tree/33ad42e8f2afca891831f03179820b96a3fdef6a",
+    "guest_ram_equal_pre_fix": true
+  },
+  "real_window_playback": {
+    "passed": false,
+    "seconds": 20.000162166666666,
+    "focus_lost_frames": 167,
+    "allow_background": true,
+    "audio_restarts": 0,
+    "unique_native_presents": 1176,
+    "display": {
+      "n": 1179,
+      "mean_ms": 16.963666348600505,
+      "p95_ms": 17.247499999996307,
+      "p99_ms": 33.268999999997106,
+      "max_ms": 33.6687083333338,
+      "over25": 21,
+      "over50": 0
+    },
+    "source_gap": {
+      "n": 1175,
+      "mean_ms": 17.007255957446798,
+      "p95_ms": 17.255125000001925,
+      "p99_ms": 33.34308333332814,
+      "max_ms": 33.67766666666938,
+      "over25": 24,
+      "over50": 0
+    },
+    "native": {
+      "n": 1179,
+      "mean_ms": 9.65854905286972,
+      "p95_ms": 17.882416666672896,
+      "p99_ms": 19.336375000001738,
+      "max_ms": 20.70404166666151,
+      "over25": 0,
+      "over50": 0
+    },
+    "scheduler": {
+      "active": 33,
+      "before": 21
+    },
+    "strict_failure_reason": "Display p99 exceeds the 25 ms target; no universal smoothness qualification."
+  },
+  "native_worker_priority": {
+    "actual_darwin_test_passed": true,
+    "sequence": [
+      33,
+      33,
+      17,
+      33,
+      17,
+      33
+    ]
   }
 }

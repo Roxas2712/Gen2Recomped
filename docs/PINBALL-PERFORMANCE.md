@@ -116,3 +116,19 @@ three warm-up seconds per round are excluded from active timing. Detailed
 reports remain in ignored QA storage; the launcher and solo saves use isolated
 test profiles. No cartridge bytes, artwork, generated guest code or user saves
 are committed.
+
+## October 27 playback regression follow-up
+
+The background worker's utility priority produced a measured 283 ms wall-time
+step despite only 16 ms of thread CPU time. A running audible game now retains
+its latency-sensitive class across focus loss. Pause and waiting/finished duel
+phases still relinquish it. The actual native worker test observes the sequence
+`33,33,17,33,17,33` on macOS. A native presentation lease separately prevents the
+launcher from reducing the frame/audio consumer to 20 Hz, and the real keyboard
+entry point now forwards repeat flags to Pinball.
+
+The follow-up graphical run kept a stable full-table shape, played at 58.80
+unique images/s and reported zero audio restarts. Display p99 was 33.27 ms,
+maximum 33.67 ms; native steps peaked at 20.70 ms. The strict 25 ms display-p99
+criterion remains unsatisfied. This report does not claim universal smoothness,
+controller/network qualification or a complete playthrough.

@@ -228,3 +228,29 @@ See `qa/pinball-demo-integration-20261027.json` for measured scope.
 
 Original X, Y and Pinball cartridge photographs join the existing authenticated
 ModCompass batch and remembered opt-in. Custom designs remain protected.
+
+## Current-frame world sprites and native playback timing
+
+The full-table adapter now reads the software OAM buffer that owns the current
+sprite-group IDs. The original callback uploads that buffer to hardware OAM only
+after its VBlank wait; mixing current IDs with the older hardware slots assigned
+unrelated or disabled sprites. Camera-culled props also require original ROM
+attributes/tiles. The pinned runtime's `native_code_view` does not expose plain
+8/16 MiB ROM assets, so those reads now use a bounds-checked view of the already
+verified cartridge. Guest OAM, palettes and timing remain untouched.
+The reference was [pret/pokepinballrs](https://github.com/pret/pokepinballrs),
+commit `33ad42e8f2afca891831f03179820b96a3fdef6a`, particularly `util.c` and
+`main.c`; no reference checkout or extracted assets are packaged.
+
+Pinball uses the standard primary Play control before its secondary settings.
+Main keyboard forwarding retains scan codes and repeat flags. Active native
+playback holds a 60 Hz consumer lease even without focus and keeps its worker's
+latency-sensitive scheduling class until pause/wait/finish. Queueable audio uses
+four blocks of preroll with sixteen slots; startup, rate changes and starvation
+recovery refill before playback resumes. Closing or pausing releases the lease.
+
+A 20-second graphical German Ruby test after these changes recorded no audio
+restart, a maximum native step of 20.70 ms and maximum display interval of
+33.67 ms. Its strict smoothness test still failed the 25 ms display-p99 target
+(p99 33.27 ms); this is an improvement over observed 283 ms native stalls, not a
+certificate of perfect 60 FPS. See the scoped QA JSON for all measured results.

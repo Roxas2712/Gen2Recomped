@@ -8,6 +8,14 @@ int16_t signed_word(const uint8_t* p){return static_cast<int16_t>(word(p));}
 int offset_x(uint16_t v){return (v&256)?int(v&511)-512:int(v&511);}
 int offset_y(uint16_t v){return (v&128)?int(v&255)-256:int(v&255);}
 void put(uint8_t* p,uint16_t v){p[0]=v;p[1]=v>>8;}
+// This pinned runtime's native_code_view exposes RAM and mapper-backed code,
+// not ordinary 8/16 MiB cartridge assets. Pinball's verified ROM is contiguous.
+const uint8_t* cartridge_view(const gba::GbaBus& bus,uint32_t address,size_t size){
+ if(address<0x08000000u)return nullptr;
+ const uint64_t offset=uint64_t(address)-0x08000000u;
+ if(!bus.rom_ptr()||offset+size>bus.rom_size())return nullptr;
+ return bus.rom_ptr()+offset;
+}
 // These hooks exist only during composition of the separate host surface.
 // The canonical GBA PPU never sees expanded rows, altered OAM or tile banks.
 struct Providers {
@@ -129,7 +137,12 @@ bool PinballTableView::render(gba::GbaBus& bus,const gba::GbaPpu& canonical,uint
  if(!game||!upper||!lower)return false;
  if(!surface_){surface_=std::make_unique<gba::GbaPpu>();surface_->set_view_margins(0,16,0,288);}
  std::memcpy(vram_.data(),bus.vram_ptr(),vram_.size());
- std::memcpy(oam_.data(),bus.oam_ptr(),oam_.size());
+ // Sprite-group IDs/poses describe the freshly built software OAM buffer.
+ // Hardware OAM is uploaded later by DefaultMainCallback after VBlank wait;
+ // pairing its previous frame with current IDs made actors blink/misassign.
+ const auto* sprite_oam=bus.native_code_view(0x03005000,oam_.size());
+ if(!sprite_oam)return false;
+ std::memcpy(oam_.data(),sprite_oam,oam_.size());
  std::memcpy(io_.data(),bus.io().raw(),io_.size());
  // Board BG1/2/3 share world coordinates. Stream BG3's 22-row hardware ring
  // from the game's two live decompressed buffers for EACH authored world row.
@@ -190,7 +203,7 @@ bool PinballTableView::render(gba::GbaBus& bus,const gba::GbaPpu& canonical,uint
   const auto original=bus.read32(sprites+group*4);
   const auto count=std::min<unsigned>(22,bus.read16(original));
   for(unsigned part=0;part<count;part++) {
-   const auto* item=bus.native_code_view(original+2+part*8,8);
+   const auto* item=cartridge_view(bus,original+2+part*8,8);
    if(!item||(word(item)&0x100))continue; // unauthored affine pose
    unsigned id=0;while(id<128&&authored_[id])id++;if(id==128)return;
    const auto a=word(item),b=word(item+2);
@@ -209,7 +222,7 @@ bool PinballTableView::render(gba::GbaBus& bus,const gba::GbaPpu& canonical,uint
  // Supply those original frames to the HOST copy only; never patch guest VRAM.
  auto tiles=[&](unsigned group,uint32_t source,unsigned tile,unsigned length) {
   if(word(groups+group*0xb8))return;
-  const auto* bytes=bus.native_code_view(source,length);
+  const auto* bytes=cartridge_view(bus,source,length);
   if(bytes&&0x10000+tile*32+length<=vram_.size())std::memcpy(vram_.data()+0x10000+tile*32,bytes,length);
  };
  if(field==0) {

@@ -2,6 +2,7 @@
 local Json=require('src.link.Json')
 local reportPath=assert(os.getenv('PINBALL_FRAME_REPORT'))
 local duration=tonumber(os.getenv('PINBALL_FRAME_SECONDS'))or 40
+local allowBackground=os.getenv('PINBALL_FRAME_ALLOW_BACKGROUND')=='1'
 local pauseUnfocused=os.getenv('PINBALL_FRAME_PAUSE_UNFOCUSED')=='1'
 local excludedFocusSeconds,excludedFocusFrames=0,0
 local shapeChanges,lastShapes={},{}
@@ -28,20 +29,20 @@ local function writeProgress()
 end
 local function writeReport(final)
  local result={seconds=activeSeconds,target_seconds=duration,wall_seconds=started and love.timer.getTime()-started or 0,
- unique_native_presents=unique,focus_lost_frames=focusLost,seats=player and player.seats,
+ unique_native_presents=unique,focus_lost_frames=focusLost,allow_background=allowBackground,audio_restarts=player and(player.audioRestarts or 0)or 0,seats=player and player.seats,
  full_table=os.getenv('PINBALL_FRAME_TABLE')=='1',field=tonumber(os.getenv('PINBALL_FRAME_FIELD'))or 0,
  locale=os.getenv('PINBALL_FRAME_LOCALE')or'en',rounds=rounds,states=states,shapes=images,outliers=outliers,source_outliers=sourceOutliers,native_outliers=nativeOutliers,
  scheduler=player and player.diagnostics and{before=player.diagnostics.priority_before,active=player.diagnostics.priority},
  pause_unfocused=pauseUnfocused,focus_excluded_seconds=excludedFocusSeconds,focus_excluded_frames=excludedFocusFrames,shape_changes=shapeChanges,seat_active_seconds=activeBySeat,seat_unique_presents=uniqueBySeat,cache_rows=cacheRows,repeated_presents=repeated,skipped_presents=skipped,max_repeat_run=maxRepeatRun}
  for k,v in pairs(series)do result[k]=summary(v)end
- result.passed=final and focusLost==0 and unique/math.max(1,activeSeconds)>59.7275*.95
+ result.passed=final and(focusLost==0 or allowBackground) and unique/math.max(1,activeSeconds)>59.7275*.95
   and result.display.p99_ms<25 and result.display.max_ms<75 and result.source_gap.max_ms<75 or false
  local file=assert(io.open(reportPath,'w'));file:write(Json.encode(result));file:close();return result
 end
 Player.new=function(session,options)
  session.player=assert(os.getenv('PINBALL_FRAME_PLAYER'));options.diagnostics=true
  options.field=tonumber(os.getenv('PINBALL_FRAME_FIELD'))or 0
- local p=new(session,options);player=p;previousFrame=nil;lastTick=nil;lastChanged=nil;repeatRun=0;lastShapes={};p.settings.full_table=os.getenv('PINBALL_FRAME_TABLE')=='1';p:command{action='view',full_table=p.settings.full_table}
+ local p=new(session,options);love.window.setTitle('Pinball · Bild- und Tontest · separates Profil');player=p;previousFrame=nil;lastTick=nil;lastChanged=nil;repeatRun=0;lastShapes={};p.settings.full_table=os.getenv('PINBALL_FRAME_TABLE')=='1';p:command{action='view',full_table=p.settings.full_table}
  p.probeRound={field=options.field,number=#rounds+1};rounds[#rounds+1]=p.probeRound
  p.input={buttons=function(_,seat)
   local st=p.stats[seat];local n=st and st.frame or 0

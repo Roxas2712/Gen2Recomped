@@ -10,7 +10,7 @@ function M.session(locale)
  local root=sourceRoot();if not root then return end
  local raw=read(root..'/.local/pinball-rs/library.json');if not raw then return end
  local ok,data=pcall(Json.decode,raw)
- if ok and type(data)=='table'and data.ready and exists(data.bridge) and exists(data.rom)then
+ if ok and type(data)=='table'and data.ready and exists(data.bridge) and exists(data.rom) and exists(data.bios)then
   if locale and locale~='en'then
    local variant=data.variants and data.variants.eu
    if not variant or not exists(variant.bridge)or not exists(variant.rom)then return end
@@ -252,7 +252,7 @@ function M.install(RI)
   self._pinOpen=false;self._pinButtons={}
   if version=='pinballrs'then
    self._xyOpen=false;self._pinOpen=true;self.section='games';self.gamesView='game';self.pageScroll=0
-   self._pinPreviousTab=self._pinPreviousTab or self.tab;self.tab=version;self.browseConsole='gba';self.browseSeries='pokemon';self._pinIndex=1;return
+   self._pinPreviousTab=self._pinPreviousTab or self.tab;self.tab=version;self.browseConsole='gba';self.browseSeries='pokemon';self._pinIndex=M.available()and 2 or 1;return
   end
   cancelConnect(self)
   return open(self,version,...)
@@ -265,19 +265,30 @@ function M.install(RI)
   local s=self._s;local paint=require('src.import.LauncherLibrary').paint;local top=y
   self._pinButtons={}
   local function text(t,font,color)paint.text(self,font or self.hintFont,Strings(t),x,y,w,color);y=y+32*s end
-  local function button(label,action)
-   local index=#self._pinButtons+1
-   local r=self:_chipButton(x,y,((self._pinIndex or 1)==index and '› 'or '')..Strings(label),{w=math.min(w,340*s),h=38*s,kind='accent'});r.action=action
-   self._pinButtons[#self._pinButtons+1]=r;y=y+48*s
+  local function keepVisible(r,index)
    if self._pinFocusNeeded and index==(self._pinIndex or 1)then
     self._pinFocusNeeded=nil
     if r.y<150*s then self.pageScroll=math.max(0,self.pageScroll-(150*s-r.y))
     elseif r.y+r.height>love.graphics.getHeight()-60*s then self.pageScroll=self.pageScroll+r.y+r.height-love.graphics.getHeight()+60*s end
    end
   end
+  local function button(label,action)
+   local index=#self._pinButtons+1
+   local r=self:_chipButton(x,y,((self._pinIndex or 1)==index and '› 'or '')..Strings(label),{w=math.min(w,340*s),h=38*s,kind='accent'});r.action=action
+   self._pinButtons[#self._pinButtons+1]=r;y=y+48*s
+   keepVisible(r,index)
+  end
   button('ZUR BIBLIOTHEK',function()library(self)end)
   text('Pokémon Pinball: Ruby & Sapphire',self.gameNameFont);y=y+12*s
   text('Recompiled Ascendant · by Roxas2712',self.hintFont,RI.palette().link)
+  if M.available()then
+   -- Use the same primary play control as edition pages, before secondary
+   -- import/language/network options and within the initial viewport.
+   self:_playButton(x,y,math.min(w,340*s),44*s,'Pokémon Pinball',true,false)
+   local r=self.playButtonRect;self.playButtonRect=nil
+   if r then r.action=function()start(self,1)end;self._pinButtons[#self._pinButtons+1]=r;keepVisible(r,#self._pinButtons)end
+   y=y+56*s
+  end
   local height=180*s
   if self._pinPreview==nil then
    self._pinPreview=false
@@ -317,7 +328,6 @@ function M.install(RI)
    end
   end)
   button((self._pinField or 0)==0 and 'DUELL-TISCH: RUBY' or 'DUELL-TISCH: SAPPHIRE',function()self._pinField=1-(self._pinField or 0);if self._pinFriends then self._pinFriends.options.field=self._pinField end end)
-  button('SPIELEN',function()start(self,1)end)
   button('LOKAL · 2 SPIELER',function()start(self,2)end)
   button('MODCOMPASS · MIT FREUNDEN',function()
    local Account=require('src.import.AccountWorkspace');Account.open(self)
@@ -363,6 +373,7 @@ function M.install(RI)
  RI._sbBackdropWant=function(self,...)if self._pinOpen or self._pinPlayer then return nil end;return backdrop(self,...)end
  local play=RI.play
  RI.play=function(self,...)
+  if self._pinOpen then return start(self,1)end
   cancelConnect(self)
   require('src.cloud.Play').clearExternalContext(self)
   if self._pinFriends then self._pinFriends:close()end

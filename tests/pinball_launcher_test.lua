@@ -24,6 +24,7 @@ local RI={_ui={inside=function()return false end},new=function()return{}end,pale
 for _,key in ipairs{'textinput','keypressed','keyreleased','mousepressed','gamepadpressed','draw','update','_sbGames','_sbOpenGame','_sbDrawContent','_sbOwns','_sbMousepressed','_sbBack','_sbGo','_sbBackdropWant','play'}do RI[key]=noop end
 local animations=false;RI._settings=function()return{launcherAnimations=animations}end
 RI._chipButton=function(_,_,_,label)return{label=label}end
+RI._playButton=function(self,x,y,w,h)self.playButtonRect={label='SPIELEN',x=x,y=y,width=w,height=h}end
 local M=require('src.import.LauncherPinball')
 -- Launcher construction also runs during real ROM-free session teardown.
 -- A missing source provider means no prepared Pinball installation.
@@ -37,6 +38,11 @@ check(ext.versions('gba','pokemon')[1]=='pinballrs' and ext.info('pinballrs').ex
 local session={locale='en'};M.session=function()return session end
 M.install(RI)
 local ui=setmetatable({_s=1,_pinOpen=true,section='games',_pinLocale='en',ready={}}, {__index=RI})
+ui:_sbOpenGame('pinballrs');ui:_sbDrawContent(0,0,1000,700)
+check(ui._pinButtons[2].label=='SPIELEN'and ui._pinButtons[2].y<180,'standard primary Play precedes artwork and secondary settings')
+check(ui._pinIndex==2,'Enter focuses the primary Play action on a ready cartridge')
+ui.pageScroll=400;ui._pinFocusNeeded=true;ui:_sbDrawContent(0,-400,1000,700)
+check(ui.pageScroll==0,'keyboard focus scrolls the primary Play control back into view')
 local function click(label)
  ui:_sbDrawContent(0,0,1000,700)
  for _,button in ipairs(ui._pinButtons)do if button.label:find(label,1,true)then button.action();return end end
