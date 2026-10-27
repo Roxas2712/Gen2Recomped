@@ -2785,7 +2785,7 @@ function BattleState:updateQueuePresentation(textOnly)
     if audible and self.waitingSoundT <= maximum then return true end
     if self.waitingSoundT > maximum then
       if type(src)=='table' and src.onTimeout then src.onTimeout() end
-      require("src.core.Logger").warn("battle: a sound never finished -- stopped waiting after 240 frames")
+      require("src.core.Logger").warn("battle: a sound never finished -- stopped waiting after %d frames",maximum)
     end
     self.waitingSound, self.waitingSoundT = nil, nil
   end

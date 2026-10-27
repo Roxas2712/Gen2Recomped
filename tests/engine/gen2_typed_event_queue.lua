@@ -165,6 +165,21 @@ for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   T.eq(enemy.mon.status,'PSN','clearing display does not cure a Pokemon')
   T.eq(b.player.mon.hp,ownHP,'typed events leave own HP untouched')
   T.eq(b.player.curMoves[1].pp,pp,'typed presentation cannot spend PP')
+  clear();probe.rows={}
+  enemy.mon.hp,enemy.mon.stats.hp,enemy.mon.status=1000,1000,nil
+  local slot=b.player.curMoves[1];local beforePP=slot.pp
+  b.rng=function(lo)return lo or 0 end
+  b:performMove(b.player,enemy,slot)
+  local announced
+  for _,event in ipairs(probe.rows)do if event.kind=='move'then announced=event;break end end
+  T.check(announced~=nil,'actual native move production reaches decorated push')
+  T.eq(announced and announced.move,slot.id,'actual announcement retains native move identity')
+  T.eq(announced and announced.deferAnim,true,'native move retains its already queued animation owner')
+  local animations=0
+  for _,row in ipairs(b.queue)do if row.anim==slot.id then animations=animations+1 end end
+  T.eq(animations,1,'typed observation cannot queue another native move animation')
+  T.eq(slot.pp,beforePP-1,'actual move still spends native PP once')
+  T.check(enemy.mon.hp<1000,'actual move still applies native damage')
   require('src.mods.Loader').teardown();run.release()
 end
 
@@ -192,7 +207,7 @@ do
   T.eq(#probe.sounds,0,'enqueuing does not play a future sound')
   step()
   T.eq(#probe.sounds,1,'actual native sound event fires at queue admission')
-  T.eq(probe.sounds[1].name,name,'actual native sound uses catalog key')
+  T.eq(probe.sounds[1] and probe.sounds[1].name,name,'actual native sound uses catalog key')
   T.check(Sound.isPlaying(name),'native source really starts')
   for _=1,20 do step('a')end
   T.check(b.current~=nil,'input cannot dismiss a line over its active sound')
@@ -210,7 +225,7 @@ do
   b:push({kind='message',text='Cry',cry=b.player.mon})
   step()
   T.eq(#probe.sounds,n+1,'queued cry goes through actual native sound bus')
-  T.eq(probe.sounds[#probe.sounds].kind,'cry','native cry event retains kind')
+  T.eq(probe.sounds[#probe.sounds] and probe.sounds[#probe.sounds].kind,'cry','native cry event retains kind')
   require('src.mods.Loader').teardown();run.release()
   love.audio=beforeAudio
 end
