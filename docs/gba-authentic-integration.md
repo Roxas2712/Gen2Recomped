@@ -20,6 +20,13 @@ is a local test and distribution input; it is not the acceptance target.
   presentation are not claimed to match the cartridge yet.
 - Shared GBA binding damage, drain accounting, self-stat costs, secondary
   effect protection, native START rendering/paging and cursor retention.
+- Native RS healthbox font-4 rows, level control sequences, gender colors,
+  HP/EXP elements and all four status-art variants. Both double-battle flanks
+  use their compact panels. Shared GBA OAM placement retains the original
+  64-by-32 centre vector when a player panel extends to 64 rows.
+- GBA battle medicines retain their battle controller while healing. The
+  status badge clears before the cure message, and HP drains precede the
+  medicine text instead of opening a field dialogue over the battlefield.
 - Rusturf's native two-rock pair, opened-tunnel guard and one-time HM04 reward.
   Other saved-rock objects cannot disable this puzzle.
 - Edition-local sound-program caches and launcher badge summaries.
@@ -74,6 +81,20 @@ four mod-SDK suites, the
 five-edition entry/cursor matrix and FR/LG dialogue-frame checks. The latter
 compare 2,944 pixels per edition with its own cartridge. The final renderer
 guard also passed native RS shop transactions and camera/save immutability.
+
+Native R/S healthbox comparisons run both compositors through the final
+renderer with the same prepared battlers. Each edition checks nine single
+views with 5,959 opaque cartridge-panel pixels and a four-battler view with
+9,276 pixels. All comparisons have zero differing pixels, allowing at most
+one RGB channel step for final-render quantization. Full captures retain the
+surrounding battlefield; transparent panel pixels are not mistaken for HUD
+content. The cases include levels 1, 39 and 100, a ten-character nickname,
+both genders and every native status. An actual imported double trainer
+supplies the four admitted battlers. Normal bag/party inputs additionally
+verify immediate status clearing, one consumed Antidote, the battle message
+owner and exactly one enemy response per medicine. A Super Potion restores
+44 HP to 94 before its battle text appears. These prepared fixtures do not accept
+an ordinary story or ending.
 
 The pinned Gen1 secondary helper has two documented cartridge-rule gaps.
 The cross-engine checker retains its raw equality result and separately

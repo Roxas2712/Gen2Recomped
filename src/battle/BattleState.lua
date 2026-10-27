@@ -10643,8 +10643,10 @@ function BattleState:itemUsed(messages)
   -- bag cures clear mon.status before the message UI; refresh the HUD
   -- once control returns (pokered DrawHUDsAndHPBars after item use)
   self:syncShownStatus()
+  local nativeGba=GameVersion.isGen3()
+  if nativeGba then table.insert(self.queue, { drain = true }) end
   for _, m in ipairs(messages or {}) do self:say(m) end
-  table.insert(self.queue, { drain = true }) -- potions animate the bar
+  if not nativeGba then table.insert(self.queue, { drain = true }) end
   self:act(self:nonMoveAction())
   self:act(function() self:endOfTurn() end)
 end

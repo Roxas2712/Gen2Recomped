@@ -813,8 +813,8 @@ local function vanillaUseOn(game, battle, id, target, list, moveIndex, picker, p
     end
     if battle then
       list:close()
-      if require("src.core.GameVersion").isGen2() then
-        -- Native Gen2 battle text belongs to this controller's queue. A
+      if require("src.core.GameVersion").isGen2() or require("src.core.GameVersion").isGen3() then
+        -- Native battle text belongs to this controller's queue. A
         -- standalone field TextBox has no battlefield composition owner.
         battle:itemUsed(payload)
       else
