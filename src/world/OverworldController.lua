@@ -12080,10 +12080,7 @@ function OverworldState:cableClubReceptionist(onDone)
       end
       Game:writeSave()
       require("src.core.Sound").play(Game.data, "Save")
-      local ok, LinkState = pcall(require, "src.link.LinkState")
-      if ok and LinkState then
-        Game.stack:push(LinkState.new(Game))
-      end
+      require('src.ui.CenterLobby').open(Game)
       if onDone then onDone() end
     end }))
 end
