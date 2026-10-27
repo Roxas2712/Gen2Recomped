@@ -445,7 +445,20 @@ function PartyMenu.new(game, opts)
   self.noCancel = opts.noCancel
   self.onUpdate = opts.onUpdate
   self.battle = opts.battle
-  self.party = opts.party or (opts.battle and opts.battle.playerParty) -- link copies or trainer selection
+  -- Public renderers and native input must see the same live party. Wild
+  -- battles normally use save.party; playerParty exists only for a scoped
+  -- battle selection (for example a link copy). Leaving this field nil made
+  -- native input work via its fallback while a presentation saw no Pokemon.
+  local battleParty = type(opts.battle) == "table" and opts.battle.playerParty
+  self.party = opts.party or battleParty or (game.save and game.save.party) or {}
+  if require("src.core.GameVersion").isGen2() then
+    -- Gen2's native party boundary refreshes the species-name copy, just as
+    -- its Mon.refreshStats does. Keep nicknames and the actual mon identity.
+    for _, mon in ipairs(self.party) do
+      local def = game.data and game.data.pokemon and game.data.pokemon[mon.species]
+      if def then mon.name = def.name or mon.species end
+    end
+  end
   self.swapFrom = nil
   self.submenu = nil
   self.subIndex = 1

@@ -2787,6 +2787,9 @@ function BattleState:updateQueue()
   if self.waitingUI then
     if self.game.stack:top() ~= self then return true end
     self.waitingUI = nil
+    if GameVersion.isGen2() and self.phase == "submenu" then
+      self.phase = "messages"
+    end
   end
   if self:updateQueuePresentation() then return true end
   if self.animPlaying then
@@ -2855,6 +2858,10 @@ function BattleState:updateQueue()
     end
     if item.ui then
       self.waitingUI = true
+      -- Publish the native Gen2 submenu state before construction: resolved
+      -- screens read their caller here to distinguish battle from field UI.
+      -- The same queue resumes when the child releases the stack.
+      if GameVersion.isGen2() then self.phase = "submenu" end
       self.game.stack:push(item.ui())
       return true
     end
@@ -4545,7 +4552,7 @@ function BattleState:update(dt)
     end
   end
 
-  if self.phase == "messages" then
+  if self.phase == "messages" or (GameVersion.isGen2() and self.phase == "submenu") then
     -- Nothing queued starts until the silhouettes have finished sliding in:
     -- SlidePlayerAndEnemySilhouettesOnScreen ends with `jpfar
     -- PrintBeginningBattleText` (engine/battle/core.asm:100), so the enemy
@@ -10439,6 +10446,22 @@ function BattleState:openItems()
     return
   end
   self:ui(function()
+    if GameVersion.isGen2() then
+      -- Gen2's native PACK has its own pockets, eligibility and cursor store.
+      -- Do not route it through the generic ListMenu bag: presentation clients
+      -- distinguish those surfaces, and the field world must stay unreachable.
+      local pack
+      pack = self:buildScreen("Gen2PackMenu", {
+        battle = true,
+        world = {},
+        onChoose = function(id)
+          -- Keep the existing native target/effect/turn path. The PACK owns
+          -- browsing and closing, rather than another copy of item effects.
+          require("src.ui.BagMenu").useItem(self.game, self, id, pack)
+        end,
+      })
+      return pack
+    end
     return self:buildScreen(Gen4Battle.bagScreenId(self) or "BagMenu", { battle = self })
   end)
 end
