@@ -944,6 +944,11 @@ local function drawStatusPanelBody(battle, battler, x, y, player)
       battle, battler, x, y, player, battle.rsBattlePanel.font,
       {hp=shownHP(battler)}) then return end
 
+  if require('src.battle.Gen3NativeHealthbox').draw(battle,battler,x,y,player)then
+    if not player then drawCaughtMarker(battle,battler,x,y)end
+    return
+  end
+
   -- THE SMALL FACE, which is what the cartridge sets a healthbox in.
   --
   -- The dialogue face is fifteen pixels tall and the panel's cream interior

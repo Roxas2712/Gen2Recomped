@@ -1394,6 +1394,7 @@ function Gen3Commands.objectInvisible(ctx, target, invisible, group, number)
   local npc = ow.npcByIndex and ow:npcByIndex(index)
   if not npc then return end
   npc.hidden = invisible or nil
+  npc.gen3Invisible = invisible or nil
 end
 
 function Commands.g3_object_invisible(ctx, target, group, number)

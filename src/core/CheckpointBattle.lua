@@ -291,6 +291,8 @@ local function decode(game, graph, battle)
         -- Earlier owners read held items directly and have no separate binder.
         local itemReads = package.loaded["src.battle.HeldItemRead"]
         if type(itemReads) == "table" then itemReads.bind(t, battle) end
+        local modelReads = package.loaded['src.battle.Gen2BattleRead']
+        if type(modelReads) == 'table' then modelReads.bind(t, battle) end
       end
     end
   end

@@ -42463,7 +42463,7 @@ function RomExtractorGen3:extractBattleBackgrounds()
   -- full 256 tiles -- so the size test above never matches a row.  Read the
   -- table where pokefirered puts it (sBattleTerrainTable).
   if (self.manifest or {}).frlgItemMenu ~= nil then
-    local FRLG_TABLE = 0x24EE34
+    local FRLG_TABLE = self:symbol('sBattleTerrainTable') or 0x24EE34
     local FRLG_NAMES = {
       "GRASS", "LONG_GRASS", "SAND", "UNDERWATER", "WATER", "POND", "MOUNTAIN",
       "CAVE", "BUILDING", "PLAIN", "LINK", "GYM", "LEADER", "INDOOR_2",
@@ -42494,6 +42494,7 @@ function RomExtractorGen3:extractBattleBackgrounds()
       local constants = self._constants or {}
       constants.gen3BattleTerrain = {
         order = FRLG_NAMES, images = images, paletteSlot = GEN3_TERRAIN_PAL_SLOT,
+        tableAt = FRLG_TABLE,
         source = ("ROM:sBattleTerrainTable %07X, %d rows"):format(FRLG_TABLE, #FRLG_NAMES),
       }
       self._constants = constants
@@ -50626,8 +50627,11 @@ function RomExtractorGen3:extractBattleHud()
     end
   end
 
+  local nativeHealthbox = require('src.import.Gen3NativeHealthboxAssets').extract(
+    self, elements, boxColors, barColors)
   local constants = self._constants or {}
   constants.gen3BattleHud = {
+    native = nativeHealthbox,
     images = images,
     -- WHICH BLOB IS WHICH, kept as data rather than only as filenames: the
     -- bug this fixed was a SELECTION bug, not a drawing one, and the
@@ -59528,6 +59532,7 @@ function RomExtractorGen3:run()
   -- Complete required native boot stages before snapshotting late prose.
   require('src.import.Gen3RsPresentation').extract(self)
   require('src.import.Gen3EmeraldPresentation').extract(self)
+  require('src.import.Gen3StatGrowthAssets').extract(self)
   -- Keep the final native pool, including strings added by late UI stages.
   if self._textPointers and self._textPointers.namedIR then
     for id, row in pairs(self._textPointers.namedIR.records) do

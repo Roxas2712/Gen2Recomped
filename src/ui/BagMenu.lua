@@ -90,9 +90,11 @@ local Gen3LevelUpStats = {}
 Gen3LevelUpStats.__index = Gen3LevelUpStats
 
 function Gen3LevelUpStats.new(game, beforeStats, afterStats, onDone)
-  return setmetatable({ game = game, before = beforeStats or {},
-                        after = afterStats or {}, page = 1,
-                        onDone = onDone }, Gen3LevelUpStats)
+  local screen=setmetatable({game=game,before=beforeStats or{},after=afterStats or{},
+    page=1,onDone=onDone},Gen3LevelUpStats)
+  screen.native=require('src.battle.Gen3StatGrowth').new(game,{stats=screen.after},
+    {old=screen.before,new=screen.after})
+  return screen
 end
 
 function Gen3LevelUpStats:uiSize() return 240, 160 end
@@ -100,7 +102,11 @@ function Gen3LevelUpStats:wantsFillScale() return true end
 
 function Gen3LevelUpStats:update()
   local input = self.game.input
-  if not (input:wasPressed("a") or input:wasPressed("b")) then return end
+  if not (input:wasPressed("a") or input:wasPressed("b")or(self.native and input:wasPressed("start")))then return end
+  if self.native then
+    if not require('src.battle.Gen3StatGrowth').advance(self.native)then self.page=2;return end
+    self.game.stack:pop();if self.onDone then self.onDone()end;return
+  end
   pcall(function() require("src.core.Sound").play(self.game.data, "Press_AB") end)
   if self.page == 1 then
     self.page = 2
@@ -111,6 +117,7 @@ function Gen3LevelUpStats:update()
 end
 
 function Gen3LevelUpStats:draw()
+  if self.native then return require('src.battle.Gen3StatGrowth').draw(self.native)end
   -- AddWindow is 10x11 interior tiles at (19,1); DrawStdFrame adds the one-tile
   -- border, reaching exactly to the GBA screen's right edge.
   Font.drawBox(18, 0, 12, 13)
@@ -772,7 +779,8 @@ local function vanillaUseOn(game, battle, id, target, list, moveIndex, picker, p
                                                extra.afterStats, afterStats))
         else
           local StatBox = require("src.battle.BattleState").StatBox
-          game.stack:push(StatBox.new(game, target, afterStats))
+          game.stack:push(StatBox.new(game,target,afterStats,
+            {old=extra.beforeStats,new=extra.afterStats}))
         end
       end)
       return

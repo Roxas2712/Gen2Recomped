@@ -45,6 +45,7 @@ local WideBattle = require("src.battle.WideBattle")
 local Gen3Battle = require("src.battle.Gen3Battle")
 local Gen4Battle = require("src.battle.Gen4Battle")
 local Gen2BattleView = require("src.battle.Gen2BattleView")
+local Gen2Read = require('src.battle.Gen2BattleRead')
 local GameVersion = require("src.core.GameVersion")
 local BattleCommands = require("src.battle.BattleCommands")
 local EnemyMoveChoice = require("src.battle.EnemyMoveChoice")
@@ -970,21 +971,28 @@ end
 local StatBox = {}
 StatBox.__index = StatBox
 
-function StatBox.new(game, mon, onDone)
-  local state=setmetatable({ game = game, mon = mon, onDone = onDone }, StatBox)
-  if GameVersion.isGen3()then require('src.compat.gen1.NativeModalObservation').capture(state,game)end
-  return state
+function StatBox.new(game, mon, onDone, change)
+  local screen=setmetatable({game=game,mon=mon,onDone=onDone},StatBox)
+  if GameVersion.isGen3()then screen.native=require('src.battle.Gen3StatGrowth').new(game,mon,change)end
+  if screen.native then
+    screen.uiSize=function()return 240,160 end
+    screen.wantsFillScale=function()return true end
+  end
+  if GameVersion.isGen3()then require('src.compat.gen1.NativeModalObservation').capture(screen,game)end
+  return screen
 end
 
 function StatBox:update()
   local input = self.game.input
-  if input:wasPressed("a") or input:wasPressed("b") then
+  if input:wasPressed("a") or input:wasPressed("b")or(self.native and input:wasPressed("start"))then
+    if self.native and not require('src.battle.Gen3StatGrowth').advance(self.native)then return end
     self.game.stack:pop()
     if self.onDone then self.onDone() end
   end
 end
 
 function StatBox:draw()
+  if self.native then return require('src.battle.Gen3StatGrowth').draw(self.native)end
   local s = self.mon.stats
   if s.spatk and s.spdef then
     -- Gen 2's box carries five rows, so it needs a wider frame than the
@@ -1088,7 +1096,7 @@ local function makeBattler(data, mon, isPlayer, save, battle)
     monAnim = (not isPlayer)
       and require("src.pokemon.MonAnim").new(data, mon.species) or nil,
   }
-  return require("src.battle.HeldItemRead").bind(battler, battle)
+  return Gen2Read.bind(require("src.battle.HeldItemRead").bind(battler, battle), battle)
 end
 
 -- LinkBattle builds clamped copies with save=nil (no badge boosts); wild
@@ -3642,6 +3650,7 @@ function BattleState:placeBattler(pos, battler)
   if battler then
     battler.position = pos
     require("src.battle.HeldItemRead").bind(battler, self)
+    Gen2Read.bind(battler, self)
   end
   if flank == 1 then
     if side == 1 then self.player = battler else self.enemy = battler end
@@ -3769,6 +3778,7 @@ function BattleState:syncSides()
   end
   for _, battler in activeBattlers(self) do
     require("src.battle.HeldItemRead").bind(battler, self)
+    Gen2Read.bind(battler, self)
   end
 end
 
@@ -3835,7 +3845,11 @@ function BattleState:enter()
     self.result = "lose"
     self.game.stack:pop()
     require("src.core.Music").restoreMap(self.data)
-    Runtime.emit("battle.ended", { battle = self, result = "lose", skipped = true })
+    if GameVersion.isGen2() then
+      self.battle:endBattle('lose', {skipped=true})
+    else
+      Runtime.emit("battle.ended", { battle = self, result = "lose", skipped = true })
+    end
     local onFinish = self.onFinish
     local function blackedOut()
       if onFinish then onFinish("lose") end
@@ -6371,7 +6385,7 @@ function BattleState:abilitySwitchIn(battler)
   layers = (GameVersion.isGen3() or GameVersion.isGen4()) and math.max(0, math.min(3, math.floor(layers))) or 1
   if side and side.spikes and layers > 0 then
     local grounded = Abilities.of(battler) ~= "LEVITATE"
-    for _, t in ipairs(battler.curTypes or {}) do
+    for _, t in ipairs(Gen2Read.types(battler) or {}) do
       if t == "FLYING" then grounded = false end
     end
     -- PLATINUM / HGSS: subscript_hazards_check decides -- Magic Guard spares
@@ -6583,7 +6597,7 @@ function BattleState:abilityForecast(battler)
   if not (battler and battler.mon and battler.mon.hp > 0) then return false end
   local want = Abilities.forecastType(battler, Weather.current(self))
   if not want then return false end
-  local types = battler.curTypes
+  local types = Gen2Read.types(battler)
   if type(types) == "table" and #types == 1 and types[1] == want then
     return false
   end
@@ -8590,7 +8604,7 @@ function BattleState:applyGen3TransformVisual(user, target, whiteCoeff)
 end
 
 local function battlerHasType(battler, wanted)
-  for _, t in ipairs(battler and battler.curTypes or {}) do
+  for _, t in ipairs(Gen2Read.types(battler) or {}) do
     if t == wanted then return true end
   end
   return false
@@ -9505,7 +9519,7 @@ function BattleState:awardExp(fallen)
     -- from here and creeps to the new length
     local expBefore = self.player and mon == self.player.mon
       and HudTiles.expBarPixels(self.data, mon) or nil
-    local levels, gained = Experience.apply(self.data, mon, foe.def,
+    local levels, gained, growth = Experience.apply(self.data, mon, foe.def,
                                             foe.mon.level, self.kind == "trainer",
                                             split, mon.traded)
     -- Track level-ups for EvolveAfterBattle (OverworldState:afterBattle ->
@@ -9565,7 +9579,7 @@ function BattleState:awardExp(fallen)
       end
       self:uiNext(function()
         require("src.core.Sound").play(game.data, "Level_Up")
-        return StatBox.new(game, mon)
+        return StatBox.new(game,mon,nil,growth and growth[lv])
       end)
       -- After PrintStatsBox, experience.asm reloads the active battler's
       -- wBattleMon and runs DrawHUDsAndHPBars, so its HP bar reflects the
@@ -10383,7 +10397,7 @@ function BattleState:safariEnemyTurn()
     self:sayNext(self:romText("_SafariZoneAngryText", "Wild %s\nis angry!", self.enemy.name))
   end
   self:act(function()
-    local speed = self.enemy.curStats.speed % 256
+    local speed = Gen2Read.stats(self.enemy).speed % 256
     local fled = speed > 127
     local b = (speed * 2) % 256
     if not fled then
@@ -11511,6 +11525,7 @@ function BattleState:playVictoryMusic()
 end
 
 function BattleState:finish()
+  if self._gen2Complete then return end
   local pd = self.pokedudeDemo
   if pd and not pd.finalVoiceQueued then
     pd.finalVoiceQueued = true
@@ -11571,13 +11586,18 @@ function BattleState:finish()
   -- like the overworld reload's PlayDefaultMusicFadeOutCurrent
   -- (home/overworld.asm:2343-2348)
   require("src.core.Music").restoreMap(self.data)
+  if GameVersion.isGen2() then self._gen2Complete = true end
   self.game.stack:pop()
   if not self._pokerusDone and not self.demo and not self.pokedudeDemo and self.result=='win'
       and require('src.pokemon.Gen2Breeding').isVanilla()then
     self._pokerusDone=true
     require('src.pokemon.Gen2Pokerus').afterBattle(self.game.save)
   end
-  Runtime.emit("battle.ended", { battle = self, result = self.result or "run" })
+  if GameVersion.isGen2() then
+    self.battle:endBattle(self.result or 'run', {nativeNotification=true})
+  else
+    Runtime.emit("battle.ended", { battle = self, result = self.result or "run" })
+  end
   -- Coming back from the battle screen is a fade, not a cut: EnterMap sees
   -- BIT_BATTLE_OVER_OR_BLACKOUT set and runs MapEntryAfterBattle
   -- (home/overworld.asm:22, :749-753) = GBFadeInFromWhite.  This is the one

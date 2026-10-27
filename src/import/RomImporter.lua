@@ -2072,6 +2072,18 @@ function RomImporter.readyReport(version)
   -- KNOWN-ABSENT FILES ARE NOT A REASON TO RUN AGAIN. The import that wrote
   -- this marker already tried, at this cache format, against this ROM.
   local missing, gaps = {}, {}
+  if GameVersion.generation(version)==3 then
+    local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
+    local absent=require('src.import.Gen3StatGrowthAssets').missing(version)
+    CacheFs.prefix=savedPrefix
+    if #absent>0 then return{ok=false,missing=absent,why='The native level-up stat window is incomplete.'}end
+  end
+  if version=='firered'or version=='leafgreen'or version=='emerald'then
+    local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
+    local absent=require('src.import.Gen3NativeHealthboxAssets').missing(version)
+    CacheFs.prefix=savedPrefix
+    if #absent>0 then return{ok=false,missing=absent,why='The native GBA healthbox font is incomplete.'}end
+  end
   if version=='emerald'then
     local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
     local nativeMissing=require('src.import.Gen3EmeraldPresentation').missing()
