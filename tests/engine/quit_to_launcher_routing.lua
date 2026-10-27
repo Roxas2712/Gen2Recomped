@@ -55,8 +55,9 @@ for _, name in ipairs(services) do
   oldServices[name] = package.loaded[name]
   package.loaded[name] = { shutdown = count(name) }
 end
+require("src.core.SessionLifecycle").registerProcessShutdown(count("registeredWorker"))
 local function shutdowns(expected, label)
-  for _, name in ipairs({ "walker", "trace", "saveMarkers", unpack(services) }) do
+  for _, name in ipairs({ "walker", "trace", "saveMarkers", "registeredWorker", unpack(services) }) do
     T.eq(counts[name] or 0, expected, label .. ": " .. name)
   end
 end
