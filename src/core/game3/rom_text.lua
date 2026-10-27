@@ -129,10 +129,8 @@ function M.ir(key)
  if nodes and current==value then return Copy(nodes)end
  return stringIR(current)
 end
-function M.plain(key,fill)
- local value,_,game=read(key)
- assert(type(value)=='string','native ROM text is unavailable: '..tostring(key))
- value=translated(value,game);fill=fill or{};assert(type(fill)=='table','native text fill must be a table')
+local function expand(value,game,fill)
+ fill=fill or{};assert(type(fill)=='table','native text fill must be a table')
  local player=game.save and game.save.player or{}
  return(value:gsub('%b{}',function(token)
   local key=token:sub(2,-2)
@@ -144,6 +142,16 @@ function M.plain(key,fill)
   if found==nil and slot and fill.stringVars then found=fill.stringVars[tonumber(slot)]end
   return found==nil and token or tostring(found)
  end))
+end
+function M._expand(value,fill)
+ local game=assert(Native.game(),'native text expansion requires a current session')
+ assert(type(value)=='string','native text expansion requires a string')
+ return expand(value,game,fill)
+end
+function M.plain(key,fill)
+ local value,_,game=read(key)
+ assert(type(value)=='string','native ROM text is unavailable: '..tostring(key))
+ return expand(translated(value,game),game,fill)
 end
 function M.key(label,index)
  assert(type(label)=='string'and type(index)=='number'and index>=0 and index%1==0,'invalid native text table index')

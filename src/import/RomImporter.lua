@@ -1341,6 +1341,8 @@ local function markerFor(version)
     revision = revision .. "gba-script-operands-v" .. require("src.import.Gen3ScriptOps").CACHE_REVISION .. ":"
     revision = revision .. "gba-text-ir-v" .. require("src.import.Gen3TextCatalog").REVISION .. ":"
     revision = revision .. 'gba-visual-task-v' .. require('src.import.Gen3VisualTaskFacts').REVISION .. ':'
+    local help=require('src.import.Gen3HelpFacts')
+    if help.supports(version)then revision=revision..'gba-help-v'..help.REVISION..':'end
     local levelArt=require('src.import.Gen3LevelUpArt')
     if levelArt.supports(version)then revision=revision..'gba-levelup-streaks-v'..levelArt.REVISION..':'end
   end
