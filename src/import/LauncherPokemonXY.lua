@@ -78,6 +78,7 @@ function M.install(RI)
   local fixed=os.getenv('OA_QA_IDENTITY') and tonumber(os.getenv('POKEMON_XY_QA_INTRO_AT'))
   self._xyIntro={scene=scene,elapsed=fixed or 0,fixed=fixed,onComplete=onComplete}
   self._launcherSequence=nil
+  return true
  end
  local new=RI.new
  RI.new=function(...)
@@ -129,7 +130,7 @@ function M.install(RI)
  end
  local settingsAction=RI._settingsAction
  RI._settingsAction=function(self,entry,...)
-  if entry and entry.action=='launcherPreviewIntro' and M.available() then newIntro(self);return end
+  if entry and entry.action=='launcherPreviewIntro' and newIntro(self) then return end
   return settingsAction(self,entry,...)
  end
  local function stopPreview(self)
