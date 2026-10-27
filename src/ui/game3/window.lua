@@ -1,6 +1,9 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Detached tile rectangles and the native menu's actual label/cursor spacing.
 local W={CURSOR_WIDTH=require('src.ui.Gen3StartMenu').CURSOR_WIDTH}
+function W.cursorPx(x,y,opts)
+ return require('src.ui.game3.frlg_font').drawGlyph(require('src.ui.Theme').cursor,x,y,opts)
+end
 function W.template(left,top,width,height,opts)
  return{left=left,top=top,width=width,height=height,tilemapLeft=left,tilemapTop=top,
   w=width,h=height,paletteNum=opts and opts.paletteNum or 15}
