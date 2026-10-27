@@ -2353,12 +2353,12 @@ end
 -- (20/30 and 40/50).  In singles, monbg copies are inserted between the exact
 -- OBJ priority bands: same-priority OBJ wins over BG, while splitbgprio can
 -- promote BG1 from priority 2 to priority 1.
-function Gen3Battle.drawMoveOamObjects(battle, slide, sx, sy)
+function Gen3Battle.moveOamObjects(battle, allowDouble)
   local anim = battle and battle.gen3AnimPlaying and battle.gen3Anim
   if not (anim and anim.oamEventDescriptors) then return false, "inactive" end
   if battle.isDouble then
     local ok, double = pcall(battle.isDouble, battle)
-    if ok and double then return false, "double-battler-slot" end
+    if ok and double and not allowDouble then return false, "double-battler-slot" end
   end
 
   local events, reason = anim:oamEventDescriptors(battle, Gen3Battle)
@@ -2384,6 +2384,12 @@ function Gen3Battle.drawMoveOamObjects(battle, slide, sx, sy)
   if not addBattler(battle.player, "player", 1)
      or not addBattler(battle.enemy, "enemy", 2) then
     return false, "unknown-battler-oam"
+  end
+  if allowDouble and battle.isDouble and battle:isDouble() then
+    if not addBattler(battle:battlerAt(2), "player", 3)
+       or not addBattler(battle:battlerAt(3), "enemy", 4) then
+      return false, "unknown-battler-oam"
+    end
   end
   for _, item in ipairs(events) do
     item.seed = 1000 + (item.index or 0)
@@ -2422,7 +2428,12 @@ function Gen3Battle.drawMoveOamObjects(battle, slide, sx, sy)
     if item.event and anim.oamRanks then anim.oamRanks[item.event] = i end
   end
   battle._gen3OamObjectRanks = previous
+  return objects,copies,anim
+end
 
+function Gen3Battle.drawMoveOamObjects(battle, slide, sx, sy)
+  local objects,copies,anim=Gen3Battle.moveOamObjects(battle,false)
+  if not objects then return false,copies end
   local function drawObject(item)
     if item.kind == "battler" then
       battle:drawPicsLayer(slide, sx, sy, item.side, true)
