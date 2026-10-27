@@ -4,6 +4,17 @@ local T=require('tests.modkit')
 local X=require('src.import.RomExtractorGen3')
 local Image=require('src.import.ImageWriter')
 local Import=require('src.import.RomImporter')
+-- Older public importers expose readiness, before the pure cache descriptor
+-- was added. Exercise their actual marker closure without adding a new API.
+local function cacheMarker(edition)
+ if Import.cacheContract then return Import.cacheContract(edition).marker end
+ for i=1,100 do
+  local name,value=debug.getupvalue(Import.readyReport,i)
+  if not name then break end
+  if name=='markerFor'then return value(edition)end
+ end
+ error('native importer marker owner unavailable')
+end
 local spec=X.BATTLE_TEXTBOX
 local lz,blank=X.lz77ok,Image.blank
 local function zeros(n)local out={};for i=1,n do out[i]=0 end;return out end
@@ -23,11 +34,10 @@ for _,edition in ipairs{'firered','leafgreen','emerald'}do
  local first=result[1];pal[1]=0;T.eq(result[1],first,'raw bytes are detached from the serialized palette')
  pal[#pal]=nil;x._constants={};writes=0;x:extractBattleTextbox()
  T.eq(writes,0,'truncated palette cannot publish indexed metadata');T.eq(x._constants.gen3BattleTextbox,nil)
- T.check(Import.cacheContract(edition).marker:find('gba-textbox-palette-v1:',1,true)~=nil)
+ T.check(cacheMarker(edition):find('gba-textbox-palette-v1:',1,true)~=nil)
 end
 for _,edition in ipairs{'red','crystal','ruby','sapphire','platinum','black'}do
- local contract=Import.cacheContract(edition)
- if contract then T.eq(contract.marker:find('gba-textbox-palette-v1:',1,true),nil,'unaffected edition cache marker')end
+ T.eq(cacheMarker(edition):find('gba-textbox-palette-v1:',1,true),nil,'unaffected edition cache marker')
 end
 X.lz77ok,Image.blank=lz,blank
 T.finish('validated native textbox extraction retains the full raw palette and narrows cache revision')
