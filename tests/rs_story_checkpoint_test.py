@@ -53,6 +53,27 @@ class CheckpointTests(unittest.TestCase):
     def test_failed_run_or_mutated_snapshot(self):
         f=list(self.fixture());f[2]['status']='fail';self.assertRaises(AssertionError,qualify,*f)
         f=list(self.fixture());f[4]['snapshotAfterSaveCommand']['scriptRunning']=True;self.assertRaises(AssertionError,qualify,*f)
+    def clean_exit_fixture(self):
+        f=list(self.fixture());f[2].update(status='fail',exitCode=0,unexpectedImporterRun=False)
+        f[3]['status']='running'
+        return f
+    def test_clean_window_exit_preserves_witnessed_save_without_passing_run(self):
+        f=self.clean_exit_fixture()
+        self.assertTrue(qualify(*f)['naturalStarterAccepted'])
+        self.assertEqual((f[2]['status'],f[3]['status']),('fail','running'))
+    def test_clean_exit_recovery_rejects_crash_timeout_and_importer(self):
+        for key,value in (('exitCode',1),('exitCode',-15),('stoppedOwnChildReason','native QA timeout'),
+                          ('stoppedOwnChildReason','fatal importer error'),('unexpectedImporterRun',True)):
+            f=self.clean_exit_fixture();f[2][key]=value
+            self.assertRaises(AssertionError,qualify,*f)
+        f=self.clean_exit_fixture();f[3]['error']='driver failed';self.assertRaises(AssertionError,qualify,*f)
+    def test_clean_exit_recovery_rejects_unsaved_tail_and_invalid_proof(self):
+        f=self.clean_exit_fixture();f[3]['commands'].append(copy.deepcopy(f[3]['commands'][0]))
+        self.assertRaises(AssertionError,qualify,*f)
+        for key in ('noPartyInjection','noDirectStoryFlagEdits','naturalStarterAccepted'):
+            f=self.clean_exit_fixture();f[3][key]=False;self.assertRaises(AssertionError,qualify,*f)
+        f=self.clean_exit_fixture();f[4]['snapshotAfterSaveCommand']['scriptRunning']=True
+        self.assertRaises(AssertionError,qualify,*f)
     def test_injected_or_unproven_origin(self):
         f=list(self.fixture());f[3]['noPartyInjection']=False;self.assertRaises(AssertionError,qualify,*f)
         f=list(self.fixture());f[3]['continuousOpeningThroughRescueAndNormalLabSave']=False;self.assertRaises(AssertionError,qualify,*f)

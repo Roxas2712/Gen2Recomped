@@ -112,6 +112,9 @@ if args.story_save_source:
     if args.edition in ('ruby','sapphire'):
         from rs_story_checkpoint import qualify
         inherited=qualify(args.edition,prior.name,sv,sr,checkpoint)
+        if sv['status']!='pass':
+            # No unprocessed input may hide progress after the saved tail.
+            assert len(json.loads((prior/'story-commands.json').read_text()))==len(sr['commands'])
     else:
         assert sv['frozenSourceUnchanged']and sv['externalSaveRecoveryDisabled']and sv['allModsDisabled']
         assert sv['status']=='pass'or(sv['status']=='fail'and sv.get('stoppedOwnChildReason')=='native QA timeout')
@@ -141,6 +144,7 @@ if args.story_save_source:
     story={'priorRun':str(prior),'priorVerificationSHA256':digest(prior/'verification.json'),
            'priorResultSHA256':digest(prior/'result.json'),'checkpoint':checkpoint,
            'inherited':inherited,
+           'priorRunCompleted':sv['status']=='pass',
            'runtimeUpgrade':True,'personalSave':False}
 stamp=datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')
 identity='oasc-edition-qa-'+args.edition+'-'+stamp

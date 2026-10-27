@@ -27,7 +27,18 @@ def qualify(edition, name, verification, report, checkpoint):
     assert verification['identity']==checkpoint['profileIdentity']==identity
     assert checkpoint['sourceRun']==name
     assert all(verification[k]is True for k in('frozenSourceUnchanged','externalSaveRecoveryDisabled','allModsDisabled'))
-    assert verification['status']=='pass'and report['status']=='pass'
+    completed = verification['status']=='pass'and report['status']=='pass'
+    # Closing an isolated window after SAVE does not invalidate its saved
+    # bytes. Recover only a clean exit whose complete trace ends at the
+    # witnessed save receipt; never relabel the unfinished run as passed.
+    saved_clean_exit = (
+        verification['status']=='fail'and report['status']=='running'
+        and verification.get('exitCode')==0
+        and not verification.get('stoppedOwnChildReason')
+        and verification.get('unexpectedImporterRun') is False
+        and not report.get('error')
+        and len(report['commands'])==checkpoint['saveMenuCommandRange'][1])
+    assert completed or saved_clean_exit,'Run must finish or exit cleanly at its witnessed SAVE'
     assert checkpoint['personalSave']is False and checkpoint['producedThroughNormalSaveMenu']is True
     relative=checkpoint['saveRelativePath']
     assert relative=='profiles/guest/save_'+edition+'.lua'or re.fullmatch(
