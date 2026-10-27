@@ -14,6 +14,8 @@ The common selector predicate admits the earlier `moveSelect` spelling for
 existing Gen2 continuations. Input, cancel, public command admission, snapshots,
 classic/wide/native translated drawing and portable continuation validation
 share that predicate. The queue's private `afterQueue` token remains stable.
+An earlier Gen2 selector resumes as `moves` at the native update boundary, so
+restored clients also see the public phase on the next rendered frame.
 
 ROM-free regression coverage exercises actual FIGHT input, native move-list ink,
 cursor navigation, cancellation without PP/damage, reopening, actual turn/PP

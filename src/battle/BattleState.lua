@@ -4457,6 +4457,11 @@ function BattleState:updatePresentation(dt)
 end
 
 function BattleState:update(dt)
+  -- Resume earlier shared-engine Gen2 decisions in the public screen phase.
+  -- This is the native update boundary, before rendering or input dispatch.
+  if GameVersion.isGen2() and self.phase == "moveSelect" then
+    self.phase = MoveSelectionPhase.name()
+  end
   local auxiliary = MenuAuxiliary.request(self)
   local shortcuts=package.loaded['src.mods.FeatureOptions']and require('src.battle.QuickItem')
   local quick=shortcuts and shortcuts.request(self)
