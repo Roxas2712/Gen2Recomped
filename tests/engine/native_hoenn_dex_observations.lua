@@ -10,7 +10,7 @@ T.eq(package.loaded['src.core.Game'],original,'Hoenn query import does not const
 T.eq(Dex.active(),nil);T.eq(Dex.isOpen(),false)
 for _,edition in ipairs{'emerald','ruby','sapphire'}do
  local f=require('tools.battle-source-runtime.fixture').new(edition);local game=f.game
- package.loaded['src.core.Game']=game
+ package.loaded['src.core.Game']=game;f.fresh('TACKLE')
  game.save.pokedex={seen={},owned={}};game.save.nationalDex=false
  game.data.constants.gen3HoennDex={native=2,numbers={CHARMANDER=1,QA_EXTRA=2}}
  game.data.pokemon.QA_EXTRA={index=277,dex=252,name='QA EXTRA'}
