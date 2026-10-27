@@ -49,7 +49,7 @@ for _,v in ipairs({'red','blue','yellow','gold','silver','crystal','firered','le
 end
 check(Sources.get('prism')==nil and Sources.get('polishedcrystal')==nil,'ROM hacks never falsely claim an original retail cartridge')
 check(Sources.get('red').page~=Sources.get('blue').page,'edition links do not silently share the wrong artwork')
-check(Sources.get('red').image:find('https://pokexpert.de/launcher/cartridges/v1/',1,true)==1,'downloads use the operator image host rather than the source browser challenge')
+check(Sources.get('red').image:find('https://pokexpert.de/api/cloud/v1/cartridges/',1,true)==1,'downloads use the operator image host rather than the source browser challenge')
 for version,asset in pairs(require('src.import.CartridgeImages')) do
   local reference=Sources.get(version)
   check(reference.sha256==asset.sha256 and #asset.sha256==64 and asset.width<=2048 and asset.height<=2048 and asset.bytes<8*1024*1024,'hosted originals have bounded dimensions and a pinned fingerprint')
@@ -67,3 +67,16 @@ check(Bounds.allowed(header..string.char(0,0,4,0,0,0,4,0),2048),'image dimension
 check(not Bounds.allowed(header..string.char(0,0,255,255,0,0,255,255),2048),'small compressed images cannot request huge decoded canvases')
 check(not Bounds.allowed('\255\216\255',2048),'truncated JPEG marker chains are rejected without raising')
 print('Cartridge designer: '..n..' checks passed')
+
+check(not D.start('red',true),'original downloads require a member before starting a worker')
+local id='17';package.loaded['src.cloud.RetroCloud']={API='https://pokexpert.de/api/cloud/v1',signedIn=function()return true end,accountId=function()return id end,accessToken=function()return 'private-fixture-token' end}
+local request
+package.loaded['src.cloud.Http']={request=function(method,url,opts)request={method=method,url=url,opts=opts};return 200,'original' end}
+package.loaded['src.cloud.Task']={new=function(fn)return {poll=function()local first,second=fn();return {kind='done',first=first,second=second}end,cancel=function()end}end}
+local verify=D.verify;D.verify=function(bytes)return bytes=='original' end
+local download=assert(D.start('red',true));local result=download:poll()
+check(result.bytes=='original'and request.opts.sensitive and request.opts.headers.Authorization=='Bearer private-fixture-token','member artwork uses the private bearer transport')
+check(request.url=='https://pokexpert.de/api/cloud/v1/cartridges/red','artwork has no unauthenticated static fallback')
+local pending=assert(D.start('blue',true));id='18';check(pending:poll().kind=='error','switching accounts fences a pending image download')
+D.verify=verify
+print('Member artwork transport: '..n..' checks passed')

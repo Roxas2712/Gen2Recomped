@@ -35,7 +35,10 @@ local ok,err=xpcall(function()
   emit({kind="status",message="Preparing extracted text on this device"})
   local data={}
   if job.launcher then
-   data.text=require("data.localization.launcher_sources")
+   data.text={};local seen={}
+   local function add(text)if not seen[text]then data.text[#data.text+1]=text;seen[text]=true end end
+   for _,text in ipairs(require("data.localization.launcher_sources"))do add(text)end
+   for text in pairs(require("src.translation.LauncherCatalog").de)do add(text)end
   else
   for _,name in ipairs(require("src.translation.Sources").MODULES)do
    local file=io.open(job.dataDirectory..name..".lua","rb")
@@ -52,6 +55,10 @@ local ok,err=xpcall(function()
    local valid,cache=pcall(Json.decode,bytes)
    if valid and type(cache)=="table" and type(cache.catalog)=="table"then job.cache=cache.catalog end
   end
+  local reviewed=job.launcher and require("src.translation.LauncherCatalog")[job.target]or{}
+  local native=job.launcher and require("src.translation.NativeLanguageCatalog")[job.target]or{}
+  for key,value in pairs(reviewed or{})do job.cache[key]=value end
+  for key,value in pairs(native or{})do job.cache[key]=value end
   local pending={}
   for _,text in ipairs(require("src.translation.Service").stringsIn(data))do if not job.cache[text]then pending[#pending+1]=text end end
   if job.source=="en" and not job.launcher then
