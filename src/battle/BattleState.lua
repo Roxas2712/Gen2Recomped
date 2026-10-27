@@ -10,6 +10,7 @@
 -- bide, recharge, confusion, screens, substitute, transform, ...) is
 -- ported from engine/battle/core.asm; see docs/behavior-porting-notes.md.
 
+local MoveSelectionPhase = require("src.battle.MoveSelectionPhase")
 local Assets = require("src.render.Assets")
 local Catching = require("src.battle.Catching")
 local Damage = require("src.battle.Damage")
@@ -1418,6 +1419,11 @@ function BattleState.giveWildHeldItem(data, mon, rng, compoundEyes)
 end
 
 function BattleState.newWild(game, species, level, opts)
+  local prepared
+  if opts and opts.nativeFishingMon then
+    assert(not opts.wildRecord, 'ambiguous native wild individual')
+    prepared = require('src.world.Gen2Fishing').takePrepared(game, opts.nativeFishingMon, species, level)
+  end
   local authored
   if opts and opts.wildRecord then
     local why;authored,why=require('src.battle.WildRecord').validate(game.data,opts.wildRecord)
@@ -1445,7 +1451,7 @@ function BattleState.newWild(game, species, level, opts)
      and game.data.pokemon[species] and game.data.pokemon[species].forms then
     form=require("src.pokemon.PolishedUnown").choose(game.save)
   end
-  local wild = Pokemon.new(game.data, species, level, nil, form, opts)
+  local wild = prepared or Pokemon.new(game.data, species, level, nil, form, opts)
   -- SYNCHRONIZE'S NATURE AND CUTE CHARM'S GENDER, decided with the slot (see
   -- src/world/Gen4WildLead.lua) and applied the cartridge's way: personality
   -- re-drawn until it carries them.
@@ -1459,7 +1465,7 @@ function BattleState.newWild(game, species, level, opts)
   -- without a third field.  147 species in Hoenn name something.
   local compoundEyes = (game.data.constants or {}).gen == 4
     and require("src.world.Gen4WildLead").lead(game.data, game.save).ability == "COMPOUND_EYES"
-  BattleState.giveWildHeldItem(game.data, wild, nil, compoundEyes)
+  if not prepared then BattleState.giveWildHeldItem(game.data, wild, nil, compoundEyes) end
   -- BATTLETYPE_SHINY (`loadvar 3, 7` before the loadwildmon) overwrites the
   -- rolled DVs with the fixed shiny pair; the Lake of Rage Gyarados is the
   -- only encounter in Gold that uses it.
@@ -4379,7 +4385,7 @@ function BattleState:touchpressed(_, px, py)
   if not (GameVersion.isGen4() or GameVersion.isGen5()) then return false end
   local over
   if self.phase == "menu" then over = "action"
-  elseif self.phase == "moveSelect" then over = "moves"
+  elseif MoveSelectionPhase.active(self) then over = "moves"
   elseif self.phase == "targetSelect" then over = "target"
   else return false end
 
@@ -4456,6 +4462,11 @@ function BattleState:updatePresentation(dt)
 end
 
 function BattleState:update(dt)
+  -- Resume earlier shared-engine Gen2 decisions in the public screen phase.
+  -- This is the native update boundary, before rendering or input dispatch.
+  if GameVersion.isGen2() and self.phase == "moveSelect" then
+    self.phase = MoveSelectionPhase.name()
+  end
   local auxiliary = MenuAuxiliary.request(self)
   local shortcuts=package.loaded['src.mods.FeatureOptions']and require('src.battle.QuickItem')
   local quick=shortcuts and shortcuts.request(self)
@@ -4469,7 +4480,7 @@ function BattleState:update(dt)
   -- A long GBA animation can outlive its message queue. Keep its display
   -- clock running while the player chooses, so it can reach a safe native
   -- checkpoint; the messages branch advances it through updateQueue instead.
-  if self.phase == 'menu' or self.phase == 'moveSelect' or self.phase == 'targetSelect' then
+  if self.phase == 'menu' or MoveSelectionPhase.active(self) or self.phase == 'targetSelect' then
     self:updateMovePresentation()
   end
   local input = self.game.input
@@ -4493,7 +4504,7 @@ function BattleState:update(dt)
   -- cartridges have no second screen and SecondScreen.mode answers "off" for
   -- them regardless, but the gate says so where a reader will look.
   if input and input:wasPressed("l") and self:gen4Layout()
-     and (self.phase == "menu" or self.phase == "moveSelect") then
+     and (self.phase == "menu" or MoveSelectionPhase.active(self)) then
     local okSS, SecondScreen = pcall(require, "src.ui.SecondScreen")
     if okSS and SecondScreen.mode(self.game) ~= "off" then
       SecondScreen.toggleStow(self.game)
@@ -4509,7 +4520,7 @@ function BattleState:update(dt)
   if self.gen4TouchPress then
     self.gen4TouchPress = nil
   elseif input and self:gen4Layout() and not self.gen4CursorActive
-     and (self.phase == "menu" or self.phase == "moveSelect" or self.phase == "targetSelect") then
+     and (self.phase == "menu" or MoveSelectionPhase.active(self) or self.phase == "targetSelect") then
     local presentation = Gen4Battle.menuPresentation(self, self.phase)
     if presentation == "bottom" then
       for _, k in ipairs({ "a", "b", "x", "y", "up", "down", "left", "right" }) do
@@ -4548,7 +4559,7 @@ function BattleState:update(dt)
       if self.afterQueue == "menu" then
         self.phase = "menu"
       elseif self.afterQueue == "moveSelect" then
-        self.phase = "moveSelect"
+        self.phase = MoveSelectionPhase.name()
       elseif self.afterQueue == "finish" then
         self:finish()
       end
@@ -4580,7 +4591,7 @@ function BattleState:update(dt)
     self:updatePokedudeMenu()
     return
   end
-  if self.pokedudeDemo and self.phase == "moveSelect" then
+  if self.pokedudeDemo and MoveSelectionPhase.active(self) then
     self:updatePokedudeMoveSelect()
     return
   end
@@ -4734,7 +4745,7 @@ function BattleState:update(dt)
     return
   end
 
-  if self.phase == "moveSelect" then
+  if MoveSelectionPhase.active(self) then
     local chooser = self:menuBattler()
     local moves = chooser.curMoves
     -- The wide layouts lay the four slots out as a 2x2 grid, so all four
@@ -4772,7 +4783,7 @@ function BattleState:update(dt)
   if self.phase == "targetSelect" then
     local list = self.targetChoices or {}
     if #list <= 1 then
-      self.phase = "moveSelect"
+      self.phase = MoveSelectionPhase.name()
       return
     end
     if input:wasPressed("left") or input:wasPressed("up") then
@@ -5277,7 +5288,7 @@ function BattleState:updatePokedudeMenu()
     self.moveIndex = math.max(1, math.min(step.playerMove or 1,
                                           #self.player.curMoves))
     pd.selectingMove = true
-    self.phase = "moveSelect"
+    self.phase = MoveSelectionPhase.name()
   elseif step.action == "switch" then
     pd.awaiting = true
     self:openPokedudeTarget(step, true)
@@ -5317,6 +5328,7 @@ end
 -- ---------------------------------------------------------------------
 
 function BattleState:moveDef(moveInst)
+  if type(moveInst) ~= "table" then return self.data.moves[moveInst] end
   -- a BW battle's Struggle is the cartridge's own move 165
   return self.data.moves[moveInst.id]
          or (moveInst.struggle and self.bw and self.bw.struggle) or nil
@@ -12743,7 +12755,7 @@ function BattleState:drawPicsLayer(slide, sx, sy, onlySide, skipMenuClip)
   local g = love.graphics
   local clipY = not skipMenuClip and self:bottomUIVisible()
                 and (self.phase == "mimicSelect" and 56
-                     or self.phase == "moveSelect" and 64)
+                     or MoveSelectionPhase.active(self) and 64)
                 or nil
   local clipped, cs1, cs2, cs3, cs4
   if clipY and g.getScissor and g.intersectScissor then
@@ -13212,7 +13224,7 @@ function BattleState:drawTextArea()
   -- The move list and Mimic's copy menu keep the solid paper (see
   -- WORLD_WINDOW_STYLE); everything else in here is the dialogue box and the
   -- battle menu, which are what goes to glass over a world backdrop.
-  local dense = self.phase == "moveSelect" or self.phase == "mimicSelect"
+  local dense = MoveSelectionPhase.active(self) or self.phase == "mimicSelect"
   Font.pushStyle(not dense and self:windowStyle() or nil)
   self:drawTextAreaInner()
   Font.popStyle()
@@ -13322,7 +13334,7 @@ function BattleState:drawTextAreaInner()
       Font.draw(Strings("ITEM"), 80, 128); Font.draw(Strings("RUN"), 128, 128)
       Font.drawCode(0xED, (col == 0 and 72 or 120), 112 + row * 16)
     end
-  elseif self.phase == "moveSelect" then
+  elseif MoveSelectionPhase.active(self) then
     -- pokered MoveSelectionMenu: move list in a box at (4,12) 16x6,
     -- names at column 6 from row 13, cursor at column 5.  PrintMenuItem:
     -- the TYPE/PP box at (0,8) 11x5, with "TYPE/" at (1,9), the type at

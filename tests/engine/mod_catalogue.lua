@@ -93,4 +93,18 @@ ui:_drawFindPanel(10,0,320,812,true)
 check(imageCalls==beforeImages and #ui._catalogActions==2,'guest browser shows only login and manual-import choices without requesting previews')
 local manage=ui._catalogActions[2];ui:_sbMousepressed(manage.x+1,manage.y+1)
 check(ui._catalogManage and ui.tab=='mods','manual imports remain reachable without an account prompt')
+signed=true;ui.account=nil;ui._catalogManage=true;ui.tab='mods'
+ui._sb={modsFind={x=20,y=20,width=160,height=40}}
+ui._catalogActions={{x=20,y=20,width=160,height=40,action='account'}}
+ui:_sbMousepressed(30,30)
+check(not ui.account and ui.tab=='find','switching to Browse consumes the click before stale account controls can receive it')
+ui._sb={};ui.account=nil;ui._catalogManage=false
+love.graphics.getScissor=function()return 0,200,1280,600 end
+ui:_drawFindPanel(10,50,1100,900,true)
+local account;for _,r in ipairs(ui._catalogActions)do if r.action=='account'then account=r end end
+check(account and account.y<200,'regression fixture places the toolbar behind the fixed header')
+ui:_sbMousepressed(account.x+2,account.y+2)
+check(not ui.account,'a clipped account button cannot open a hidden profile while browsing')
+ui:_selectTab('mods')
+check(not ui._catalogActions or #ui._catalogActions==0,'changing catalogue views invalidates the old action geometry immediately')
 print('Mod catalogue: '..checks..' checks passed')

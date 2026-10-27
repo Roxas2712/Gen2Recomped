@@ -19,7 +19,11 @@ local function indexOf(party, mon)
 end
 
 function View.bind(screen)
+  -- Bind once; callers read the current native catalog without copying a
+  -- move, caching a definition, or switching the controller's moveset.
+  local function moveDef(_, move) return screen:moveDef(move) end
   local readers = {
+    moveDef = function() return moveDef end,
     player = function() return screen.player and screen.player.mon end,
     enemy = function() return screen.enemy and screen.enemy.mon end,
     party = function() return partyOf(screen) end,
@@ -62,6 +66,15 @@ end
 -- substitute, faint and grow-in effects, and never replace its native rear.
 function View.install(Screen, images)
   Screen.activeMon = View.activeMon
+
+  -- Older/restored native Pokemon need not carry a stamped gender field.
+  -- Read the existing identity authority rather than changing the live mon
+  -- merely to paint a HUD. It also owns explicit overrides and PID editions.
+  function Screen:genderSymbol(mon)
+    local gender = require("src.pokemon.Pokemon").genderOf(self.data, mon)
+    if gender == "male" then return "\226\153\130" end
+    if gender == "female" then return "\226\153\128" end
+  end
 
   function Screen:pic(mon, back)
     if not mon then return nil end

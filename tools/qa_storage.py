@@ -625,7 +625,11 @@ class Storage:
                 if name_filter is not None and not name_filter(name):
                     continue
                 file = Path(root) / name
-                info = file.lstat()
+                try:
+                    info = file.lstat()
+                except FileNotFoundError:
+                    # Active writers may remove journal/temporary files after os.walk.
+                    continue
                 if stat.S_ISREG(info.st_mode):
                     yield file, info
 
