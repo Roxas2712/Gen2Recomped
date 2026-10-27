@@ -76,7 +76,7 @@ ModCompat.ALIASES = {
   -- The legacy signature is translated explicitly; the native module takes
   -- (data, save) and must not be aliased directly to this spelling.
   ["src.core.gen2.Decorations"] = "src.compat.gen2.Decorations",
-  ["src.ui.gen2.BoxMenu"] = "src.ui.BoxMenu",
+  ["src.ui.gen2.BoxMenu"] = "src.ui.Gen2BoxMenu",
   ["src.ui.gen2.MapRadio"] = "src.ui.Gen2MapRadio",
   ["src.core.gen2.BugContest"] = "src.world.BugContest",
   ["src.core.gen2.ItemEffects"] = "src.inventory.ItemEffects",
@@ -95,6 +95,12 @@ ModCompat.ALIASES = {
 
   -- menus.  The Gold port names two of these differently rather than
   -- namespacing them, so both spellings land on the one implementation.
+  ["src.ui.gen2.PcMenu"] = "src.ui.Gen2PcMenu",
+  ["src.ui.gen2.CenterPcMenu"] = "src.ui.Gen2CenterPcMenu",
+  ["src.ui.gen2.ItemPcMenu"] = "src.ui.Gen2ItemPcMenu",
+  ["src.ui.gen2.MailboxMenu"] = "src.ui.Gen2MailboxMenu",
+  ["src.ui.gen2.DecorationMenu"] = "src.ui.Gen2DecorationMenu",
+  ["src.ui.gen2.MailRead"] = "src.ui.Gen2MailRead",
   ["src.ui.gen2.StartMenu"] = "src.ui.Gen2StartMenu",
   ["src.ui.gen2.OptionsMenu"] = "src.ui.OptionsMenu",
   ["src.ui.gen2.PartyMenu"] = "src.ui.PartyMenu",
@@ -102,7 +108,7 @@ ModCompat.ALIASES = {
   ["src.ui.gen2.SummaryMenu"] = "src.ui.SummaryMenu",
   ["src.ui.gen2.TrainerCard"] = "src.ui.TrainerCard",
   ["src.ui.gen2.Pokegear"] = "src.ui.PokegearMenu",
-  ["src.ui.gen2.PackMenu"] = "src.ui.BagMenu",
+  ["src.ui.gen2.PackMenu"] = "src.ui.Gen2PackMenu",
   ["src.menu.PartyMenu"] = "src.ui.PartyMenu",
   ["src.ui.PartyScreen"] = "src.ui.PartyMenu",
   ["src.ui.party.PartyScreen"] = "src.ui.PartyMenu",

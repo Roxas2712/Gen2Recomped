@@ -9,7 +9,7 @@ import fcntl
 import hashlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import signal
 import shutil
@@ -18,8 +18,11 @@ import subprocess
 import sys
 import time
 import threading
+import tarfile
+import tempfile
 import qa_legacy_storage as legacy
-from contextlib import contextmanager
+import qa_love_storage as love_storage
+from contextlib import contextmanager, nullcontext
 
 GIB = 1024 ** 3
 EDITIONS = ("firered", "leafgreen", "emerald", "ruby", "sapphire")
@@ -197,14 +200,105 @@ class Storage:
             self._begin()
         return original
 
-    def copy(self, path):
+    def copy(self, path, *, ephemeral=False):
         original = Path(path)
         target = legacy.identify(self._absolute(original), self.root, self.home)
         if target is None or target.resolve() != target:
             raise ValueError('Only known disposable test-copy layouts are accepted')
         self._take('legacy', target, True)
+        if ephemeral:
+            key=self._key(target)
+            entry=self.held[key][1]
+            if entry is not None and self.held[key][2]:
+                entry['ephemeral']=True
+                self._write(key,entry)
         self._begin()
         return original
+
+    def restore_copy(self, path):
+        """Rehydrate an archived test host without overwriting newer files/saves."""
+        target=self._absolute(path)
+        if legacy.identify(target,self.root,self.home)!=target or target.suffix=='.zip':
+            raise ValueError('Restore only a known directory test host')
+        receipt=target.parent/'qa-preserved-sources.json'
+        if not receipt.exists():
+            if target.is_dir():return self.source(target)
+            raise FileNotFoundError('No preserved test host: '+str(target))
+        proof=json.loads(receipt.read_text())[target.name]
+        vault=self.home/'.local/share/origami-qa-preserved.git'
+        if (Path(proof['git']).resolve()!=vault.resolve() or proof.get('tree')!='snapshot'
+                or re.fullmatch(r'[0-9a-f]{40}',proof.get('commit','')) is None):
+            raise ValueError('Invalid local test-host preservation receipt')
+        if (target/'.git').exists() or target.is_symlink():raise ValueError('Retain source checkout')
+        self.source(target.parent)
+        self.copy(target)
+        target.parent.mkdir(parents=True,exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='.qa-restore-',dir=target.parent) as tmp:
+            staged=Path(tmp);links=[]
+            process=subprocess.Popen(['git','--git-dir='+str(vault),'archive',proof['commit']+':snapshot'],stdout=subprocess.PIPE)
+            try:
+                with tarfile.open(fileobj=process.stdout,mode='r|') as archive:
+                    for member in archive:
+                        rel=PurePosixPath(member.name)
+                        if rel.is_absolute() or '..' in rel.parts:raise ValueError('Unsafe preserved path')
+                        out=staged.joinpath(*rel.parts)
+                        if member.isdir():out.mkdir(parents=True,exist_ok=True)
+                        elif member.isfile():
+                            out.parent.mkdir(parents=True,exist_ok=True)
+                            with archive.extractfile(member) as source,out.open('xb') as dest:shutil.copyfileobj(source,dest,1024*1024)
+                            out.chmod(member.mode&0o777)
+                        elif member.issym():links.append((out,member.linkname))
+                        else:raise ValueError('Unsupported preserved entry')
+                for out,link in links:
+                    out.parent.mkdir(parents=True,exist_ok=True);out.symlink_to(link)
+            finally:
+                process.stdout.close();code=process.wait()
+            if code:raise subprocess.CalledProcessError(code,process.args)
+            plans=[]
+            for folder,dirs,names in os.walk(staged,followlinks=False):
+                folder=Path(folder)
+                for name in list(dirs):
+                    if (folder/name).is_symlink():dirs.remove(name);names.append(name)
+                for name in names:
+                    source=folder/name;dest=target/source.relative_to(staged)
+                    for parent in dest.parents:
+                        if parent==target:break
+                        if parent.is_symlink():raise ValueError('Retain aliased host subtree')
+                    if dest.exists() or dest.is_symlink():
+                        if source.is_symlink() and dest.is_symlink():same=os.readlink(source)==os.readlink(dest)
+                        elif source.is_file() and dest.is_file() and not dest.is_symlink():
+                            def digest(p):
+                                value=hashlib.sha256()
+                                with p.open('rb') as stream:
+                                    for chunk in iter(lambda:stream.read(1024*1024),b''):value.update(chunk)
+                                return value.digest()
+                            same=digest(source)==digest(dest)
+                        else:same=False
+                        if not same:raise ValueError('Retain newer host file: '+str(dest))
+                    else:plans.append((source,dest))
+            created=[]
+            try:
+                target.mkdir(parents=True,exist_ok=True)
+                for source,dest in plans:
+                    dest.parent.mkdir(parents=True,exist_ok=True)
+                    if dest.parent.resolve()!=dest.parent:raise ValueError('Retain aliased host subtree')
+                    if source.is_symlink():dest.symlink_to(os.readlink(source))
+                    else:os.link(source,dest)
+                    info=dest.lstat();created.append((dest,(info.st_ino,info.st_size,info.st_mtime_ns)))
+            except (OSError,ValueError):
+                for dest,expected in reversed(created):
+                    if dest.exists() or dest.is_symlink():
+                        info=dest.lstat()
+                        if (info.st_ino,info.st_size,info.st_mtime_ns)==expected:dest.unlink()
+                raise
+        entry=self.held[self._key(target)][1]
+        entry.update(ephemeral=True,running=False,updated=self.clock())
+        self._write(self._key(target),entry)
+        lock=self.held[self._key(target)][0]
+        # The parent-run reader lease prevents collection while downgrading.
+        fcntl.flock(lock,fcntl.LOCK_SH)
+        self.held[self._key(target)]=(lock,entry,False)
+        return target
 
     def _copy_run(self, path, root=None):
         root = Path(root or self.root)
@@ -270,7 +364,10 @@ class Storage:
             try:
                 profile = self._profile(candidate)
             except ValueError:
-                profile = None  # Player inputs are never registered for deletion.
+                # The LÖVE collector also owns a few older, exact identity
+                # patterns. Pin their outer scope without granting them the
+                # modern import collector's writable registration rights.
+                profile = love_storage.profile_scope(candidate, self.home)
             if profile is not None:
                 self._take("imports", profile, False)
         for root in set(self._registered_roots()):
@@ -475,8 +572,8 @@ class Storage:
         path, root = self._valid(entry)
         if entry["kind"] == "imports":
             for edition in QA_EDITIONS:
-                for relative in ("data/generated", "assets/generated"):
-                    yield from self._walk(path / edition / relative)
+                for target in self._generated_targets(path / edition):
+                    yield from self._walk(target)
             for target in self._mod_targets(path):yield from self._walk(target)
             return
         if entry['kind']=='ula':
@@ -499,6 +596,18 @@ class Storage:
             if PAYLOAD.fullmatch(file.name) and not any(
                     file.is_relative_to(installed) for installed in protected):
                 yield file, info
+
+    @staticmethod
+    def _generated_targets(cache):
+        # Legacy whole-directory removal must never claim mixed model/source,
+        # save or keep trees. Use the same boundary for budget accounting and
+        # deletion; the selective LÖVE collector can handle their cache leaves.
+        for relative in ("data/generated", "assets/generated"):
+            target = cache / relative
+            if (target.is_dir() and not target.is_symlink()
+                    and target.resolve() == target
+                    and not love_storage.protected(target)):
+                yield target
 
     @staticmethod
     def _mod_targets(profile):
@@ -565,7 +674,7 @@ class Storage:
         if entry['kind']=='legacy':
             if legacy.kept(path) or self._legacy_live.busy(path):return True
             if any(self._legacy_live.busy(p) for p in legacy.dependencies(path,root,self.home)):return True
-            if entry.get('discovered') and path.exists():
+            if entry.get('discovered') and not entry.get('ephemeral') and path.exists():
                 updated=max([path.stat().st_ctime,*(max(info.st_ctime,info.st_mtime) for _,info in legacy.files(path))])
                 if self.clock()-updated<3600:return True
             return False
@@ -599,9 +708,7 @@ class Storage:
             self._preserve_copies(path,self._mod_targets(path))
             for edition in QA_EDITIONS:
                 cache = path / edition
-                targets = [cache / part for part in ("data/generated", "assets/generated")]
-                safe = [p for p in targets if p.is_dir() and not p.is_symlink()
-                        and p.resolve() == p]
+                safe = list(self._generated_targets(cache))
                 if safe:
                     (cache / "rom-cache.complete").unlink(missing_ok=True)
                     for target in safe:
@@ -652,18 +759,20 @@ class Storage:
     def _budget(kind):
         return 'testcopies' if kind=='legacy' else kind
 
-    def sweep(self):
+    def sweep(self, *, only=None):
         """Collect idle registered resources under one global, nonblocking GC lock."""
         removed = 0
-        with (self.state / "collection.lock").open("a+") as collector:
-            try:
-                fcntl.flock(collector, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError:
-                return 0
+        # Targeted teardown is independent of global budget accounting. Per-copy
+        # and dependency locks still serialize readers and other collectors.
+        guard=(self.state/'collection.lock').open('a+') if only is None else nullcontext(None)
+        with guard as collector:
+            if collector is not None:
+                try:fcntl.flock(collector, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError:return 0
             self._legacy_live = legacy.LiveUse()
-            self._discover_legacy()
+            if only is None:self._discover_legacy()
             protected_imports = set()
-            for root in self._registered_roots():
+            for root in self._registered_roots() if only is None else ():
                 imports = root / '.local/imports'
                 for alias in (imports, *(imports / edition for edition in QA_EDITIONS)):
                     try:
@@ -673,9 +782,10 @@ class Storage:
                     if profile is not None:
                         protected_imports.add(profile)
             entries = []
-            for file in self.state.glob("*.json"):
+            records=self.state.glob('*.json') if only is None else (self.state/(key+'.json') for key in only)
+            for file in records:
                 key = file.stem
-                if key in self.held:
+                if key in self.held or not file.exists():
                     continue
                 with (self.state / (key + ".lock")).open("a+") as lock:
                     try:
@@ -697,7 +807,7 @@ class Storage:
                       for kind in self.limits if kind != "legacy"}
             for _, key, entry, size in sorted(entries):
                 expired = self.clock() - entry["updated"] >= self.max_age
-                if not (entry["running"] or expired or totals[self._budget(entry["kind"])] > self.limits[self._budget(entry["kind"])]):
+                if not (entry.get('ephemeral') or entry["running"] or expired or totals[self._budget(entry["kind"])] > self.limits[self._budget(entry["kind"])]):
                     continue
                 file = self.state / (key + ".json")
                 with (self.state / (key + ".lock")).open("a+") as lock:
@@ -736,8 +846,13 @@ class Storage:
         if self.closed:
             return
         self.closed = True
+        ephemeral=set()
         try:
             for key, (lock, entry, owned) in self.held.items():
+                if entry is None and self.lease_info[key][0]=='legacy':
+                    try:entry=json.loads((self.state/(key+'.json')).read_text())
+                    except (OSError,ValueError):pass
+                if entry and entry.get('ephemeral'):ephemeral.add(key)
                 if owned:
                     entry.update(updated=self.clock(), running=False)
                     self._write(key, entry)
@@ -745,7 +860,7 @@ class Storage:
                 # that is still alive if an interrupted runner is unwinding.
                 lock.close()
             self.held.clear()
-            if collect:self.sweep()
+            if collect:self.sweep(only=ephemeral) if ephemeral else self.sweep()
         except OSError as error:
             print("[qa-storage] cleanup will retry at the next test:", error,
                   file=sys.stderr)
@@ -819,8 +934,12 @@ def qa_cache(path):
     return _manager().cache(path)
 
 
-def qa_copy(path):
-    return _manager().copy(path)
+def qa_copy(path, *, ephemeral=False):
+    return _manager().copy(path, ephemeral=ephemeral)
+
+
+def qa_restore_copy(path):
+    return _manager().restore_copy(path)
 
 
 def qa_profile(path):

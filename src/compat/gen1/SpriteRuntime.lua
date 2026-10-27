@@ -226,6 +226,7 @@ function R:advance(job)
   return true
 end
 function R:poll()self:current()end
+function R:pending()return self.jobs end
 function R:step(budget)
   if not self:current()then return end
   local clock=love and love.timer and love.timer.getTime or os.clock

@@ -117,8 +117,85 @@ restore()
 T.eq(Performance.cycle("auto", 1), "high", "cycle auto -> high")
 T.eq(Performance.cycle("high", 1), "balanced", "cycle high -> balanced")
 T.eq(Performance.cycle("balanced", 1), "low", "cycle balanced -> low")
-T.eq(Performance.cycle("low", 1), "auto", "cycle low wraps to auto")
-T.eq(Performance.cycle("auto", -1), "low", "cycle back auto -> low")
+T.eq(Performance.cycle("low", 1), "adaptive", "cycle low -> adaptive (PREFER FPS)")
+T.eq(Performance.cycle("adaptive", 1), "battery", "cycle adaptive -> battery (PREFER BATTERY)")
+T.eq(Performance.cycle("battery", 1), "auto", "cycle battery wraps to auto")
+T.eq(Performance.cycle("auto", -1), "battery", "cycle back auto -> battery")
 T.eq(Performance.cycle("high", -1), "auto", "cycle back high -> auto")
+
+-- ------------------------------------------------------ A2: PREFER BATTERY
+do
+  T.eq(Performance.resolve("battery"), "low", "PREFER BATTERY resolves to LOW for every tier reader")
+  T.eq(Performance.label("battery"), "PREFER BATTERY", "label battery")
+  T.eq(Performance.normalize("battery"), "battery", "normalize keeps battery")
+  local caps = Performance.applyOptions({ performance = "battery" })
+  T.eq(Performance.tier, "low", "applyOptions(battery) records LOW live")
+  T.eq(Performance.saver, true, "applyOptions(battery) raises Performance.saver")
+  T.eq(caps.fpsMax, 30, "battery caps: 30 fps ceiling")
+  T.eq(caps.tilt, false, "battery caps inherit LOW: no tilt")
+  T.eq(caps.survey, false, "battery caps inherit LOW: no survey zoom")
+  T.eq(caps.pacingSpin, false, "battery caps: no pacer spin")
+  T.eq(Performance.caps("battery").fpsMax,30,"caps(battery) agrees with applyOptions")
+  Performance.CAPS.low._qualificationValue=17
+  T.eq(Performance.caps("battery")._qualificationValue,17,"warm overlay sees live LOW cap changes")
+  Performance.CAPS.low._qualificationValue=nil
+  T.eq(Performance.caps("battery")._qualificationValue,nil,"warm overlay forgets removed LOW caps")
+  local fps=Performance.BATTERY.fpsMax
+  Performance.BATTERY.fpsMax=25
+  T.eq(Performance.caps("battery").fpsMax,25,"warm overlay sees battery cap changes")
+  Performance.BATTERY.fpsMax=fps
+  T.eq(Performance.extraCap("fpsMax"), Performance.lowTierBudget and 30 or nil, "extraCap reads the battery overlay")
+  T.eq(Performance.extraCap("gen3PaletteCycle"), Performance.lowTierBudget and "quarter" or nil, "extraCap: quarter palette tick")
+  T.eq(Performance.CAPS.low.fpsMax, 60, "the LOW table itself is untouched by the overlay")
+  Performance.applyOptions({ performance = "low" })
+  T.eq(Performance.saver, false, "leaving battery clears Performance.saver")
+  T.eq(Performance.extraCap("fpsMax"), Performance.lowTierBudget and 60 or nil, "extraCap is LOW's own again")
+end
+
+-- ---------------------------------------------------------- A1: PREFER FPS
+do
+  Performance.resetAdaptive()
+  device("Windows", "x64", 8)
+  T.eq(Performance.resolve("adaptive"), "high", "PREFER FPS starts where AUTO would")
+  T.eq(Performance.label("adaptive"), "PREFER FPS", "label adaptive")
+  local A = Performance.ADAPTIVE
+  local budget, now = 1 / 60, 100
+  local function run(seconds, missEvery)
+    local stepped
+    local frames = math.floor(seconds / budget)
+    for i = 1, frames do
+      local dt = (missEvery and i % missEvery == 0) and budget * 2 or budget
+      now = now + dt
+      stepped = Performance.observeFrame(dt, budget, now, "adaptive") or stepped
+    end
+    return stepped
+  end
+  T.eq(run(A.window * 2.2, 100), nil, "one miss in a hundred changes nothing")
+  T.eq(run(A.window * 1.1, 5), nil, "one bad window does not step down yet")
+  T.eq(run(A.window * 1.1, 5), "balanced", "a second bad window steps HIGH down to BALANCED")
+  T.eq(Performance.tier, "balanced", "the live tier follows")
+  T.eq(run(A.cooldown, 5), nil, "misses during the cooldown are not judged")
+  run(A.window * 2.2, 5)
+  T.eq(Performance.adaptiveTier(), "low", "sustained misses step on down to LOW")
+  run(A.cooldown + 1, nil)
+  T.eq(run(A.upAfter, nil), "balanced", "thirty quiet seconds step back up one tier")
+  run(A.cooldown + 1, nil)
+  T.eq(run(A.upAfter, nil), "high", "...and again, up to AUTO's own answer")
+  T.eq(run(A.upAfter * 2, nil), nil, "never above the ceiling AUTO chose")
+  T.eq(Performance.observeFrame(budget * 3, budget, now + 1, "high"), nil, "a fixed tier is never judged")
+  -- Leaving PREFER FPS discards partial decision windows. Returning later
+  -- starts at AUTO, rather than counting old misses towards a new step.
+  Performance.applyOptions({performance="adaptive"})
+  run(A.window * 2.2,5)
+  T.eq(Performance.adaptiveTier(),"balanced","adaptive session has stepped down")
+  Performance.applyOptions({performance="high"})
+  Performance.applyOptions({performance="adaptive"})
+  T.eq(Performance.adaptiveTier(),"high","re-entering adaptive starts from AUTO")
+  T.eq(Performance.adaptiveState().frames,0,"old frame samples are discarded")
+  local f=assert(io.open("main.lua"));local main=f:read("*a");f:close()
+  T.check(main:find("if presented and Game and Game.save and Game.save.options and love.timer then",1,true),"only presented frames reach the adaptive observer")
+  Performance.resetAdaptive()
+  restore()
+end
 
 T.finish("performance_tiers")

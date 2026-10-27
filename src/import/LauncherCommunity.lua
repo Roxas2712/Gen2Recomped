@@ -215,6 +215,22 @@ function C.install(RI)
     self.findIndex=self.findIndex or {mods={},categories={}}
     self.findNotice={ok=true,text='Loading ModCompass and your mod indexes...'}
     local sourceList=self.findSources
+    -- Publish the last valid catalogue before HTTP I/O. A worker timeout
+    -- cancels its coroutine before cacheIndex can execute its fallback.
+    if #(self.findIndex.mods or {})==0 then
+      local saved={mods={},categories={},stale=true};local seen={};local categories={}
+      for _,source in ipairs(sourceList)do
+        local index=Index.readCache(source.feed)
+        if index then
+          if source.feed==C.FEED then saved.week=index.week end
+          for _,entry in ipairs(index.mods or {})do if not seen[entry.id]then
+            seen[entry.id]=true;entry._source=source.label;entry._base=source.base;saved.mods[#saved.mods+1]=entry
+          end end
+          for _,category in ipairs(Index.categoriesIn(index))do if not categories[category]then categories[category]=true;saved.categories[#saved.categories+1]=category end end
+        end
+      end
+      if #saved.mods>0 then self.findIndex=saved;C.enrich(self)end
+    end
     local task,why=Task.new(function()
       local result={mods={},categories={}}
       local seen,categories={},{}
@@ -234,6 +250,8 @@ function C.install(RI)
             if not categories[category] then categories[category]=true;result.categories[#result.categories+1]=category end
           end
           result.stale=result.stale or index.stale
+          -- A later custom index may be slow; retain each completed source.
+          self.findIndex=result;C.enrich(self)
         else errors[#errors+1]=(source.label or source.feed)..': '..tostring(err) end
       end
       return result,#errors>0 and table.concat(errors,' · ') or nil
@@ -504,7 +522,7 @@ function C.install(RI)
         self.findIndex=result.first;self.findCategory=nil
         self.findNotice=result.second and {ok=false,text=result.second} or {ok=true,text='ModCompass · '..#result.first.mods..' mods. Releases are checked from the original repositories.'}
         C.enrich(self)
-      else self.findNotice={ok=false,text=tostring(result.error or result.second)} end
+      else self.findNotice={ok=false,text=#(self.findIndex and self.findIndex.mods or {})>0 and 'Connection interrupted. Showing the saved catalogue; retry to check for changes.' or 'Catalogue unavailable. Retry to load the mod cards.'} end
     end)
     pump('_communityResolveJob',function(result)
       local entry=self._communityResolving;self._communityResolving=nil

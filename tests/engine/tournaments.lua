@@ -148,3 +148,20 @@ UI._tournaments.form=nil;UI._tournaments.cup=nil
 check(W.draw(UI,0,0,320,640)>0,'the native Item Shop renders its catalogue on a narrow viewport')
 W.action(UI,'shopBuy:LEFTOVERS');check(UI._tournaments.shopConfirm.id=='LEFTOVERS','choosing a shop item opens a concrete purchase confirmation')
 print('Arena shop workspace: 2 checks passed')
+
+-- Staff participation fields use their own draft; they must accept actual
+-- input through the installed keyboard hooks without touching cup rules.
+local RI={new=noop,_openAccount=noop,play=noop,_sbOwns=function()return false end,_sbDrawContent=noop,update=noop,_sbMousepressed=noop,textinput=noop,keypressed=noop}
+W.install(RI)
+local staff=setmetatable({section='tournaments',ready={},_tournaments={account='17',cup={id=id,invite_only=false},index={},rects={}}},{__index=RI})
+W.action(staff,'cupAccess');W.action(staff,'field:accessReason');staff:textinput('Organizer fixture reason')
+check(staff._tournaments.accessReason=='Organizer fixture reason','organizer reason accepts native text input')
+staff:keypressed('backspace');check(staff._tournaments.accessReason=='Organizer fixture reaso','organizer fields support backspace')
+W.action(staff,'field:accessTag');staff:textinput('Peer#1234')
+check(staff._tournaments.accessTag=='Peer#1234','complete friend tag has a separate draft')
+response={account_id='17',id=id,invite_only=true};W.action(staff,'accessMode');W.tick(staff)
+check(sent.path=='/tournaments/'..id..'/access' and sent.payload.invite_only==true,'invitation mode reaches the authenticated cup access endpoint')
+W.action(staff,'access:add');W.tick(staff)
+check(sent.payload.action=='add' and sent.payload.friend_tag=='Peer#1234','adding a player uses their explicit friend tag')
+W.action(staff,'field:accessTag');staff:keypressed('escape');check(staff._tournaments.focus==nil,'leaving participation fields releases the keyboard')
+print('Tournament participation input: 6 checks passed')

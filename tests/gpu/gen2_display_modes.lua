@@ -49,8 +49,12 @@ function M.run()
       P.sendColors(native,A);g.setShader(native);g.draw(image,0,72,0,40,72);g.setShader()
       Renderer.gen2FrameManaged=true;Renderer.gen2FrameGame=game
       Renderer.gen2FrameZones=Present.zones(game)
-      if windowMenu then Renderer.gen2WindowDraw=function()
-        g.setColor(1,1,1,1);g.rectangle('fill',0,0,w,12)
+      if windowMenu then Renderer.gen2WindowDraw=function(viewport)
+        local vector={draw=function()
+          g.origin();g.setColor(1,1,1,1);g.rectangle('fill',0,0,w,12)
+        end}
+        require('src.render.ScreenSpaceUI').drawNativeStack({},
+          {states={vector}},1,nil,Renderer,viewport,false)
       end end
       nativeViewport=Renderer:endFrame(nil,nil)
       g.setCanvas();g.setShader()

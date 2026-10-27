@@ -178,6 +178,18 @@ only in how much eye-candy the renderer is allowed to do.
   so the common case is unchanged. See `src/core/Performance.detect`.
 - AUTO only chooses the *default*; all four tiers are selectable, so a
   wrong guess is one row away from being overridden.
+- **PREFER FPS** starts where AUTO would and then follows the frames
+  themselves: a frame longer than one and a half budgets (`MAX FPS`) is a
+  miss, and when more than a tenth of the frames miss over two consecutive
+  three-second windows the tier steps down (HIGH → BALANCED → LOW); when
+  fewer than two in a hundred miss for thirty seconds it steps back up,
+  never above the tier AUTO chose. Ten quiet seconds follow every change so
+  a map load's burst cannot ratchet it to the floor. Each step runs the same
+  live clamps the row runs when turned by hand, so your stored choices are
+  untouched and return with the tier. It is the setting for a device whose
+  load varies -- a phone on battery, a handheld under a mod -- and for a
+  mod set heavier than AUTO's guess accounts for (`src/core/Performance.lua`,
+  `Performance.observeFrame`).
 - The clamps are applied **live** against your stored options and never
   rewrite them (`Game:applyOptions`), so a lower tier hides your TILT / GBC
   FX / ZOOM without forgetting them -- raising the tier restores exactly

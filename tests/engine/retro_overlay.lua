@@ -57,4 +57,15 @@ love.graphics.setColorMask=function(r,g,b,a) assert(r and g and b and a);mask=ma
 O.draw(game);O.close();O.draw(game)
 check(stencil==2 and depth==2 and mask==2,'both menu and closed handle clear inherited depth, stencil and color masks')
 O.clear()
+O.open(game);game.stack.states={world};O.action('cloud')
+package.loaded['src.import.CloudSync'].syncOne=function()return nil,'Network unavailable'end
+O.update(game)
+check(O.retry and require('src.storage.SyncStatus').get().state=='error','failed uploads retain a retry and cannot claim cloud availability')
+local written=writes
+package.loaded['src.import.CloudSync'].syncOne=function()return 'uploaded'end
+O.action('retryCloud');O.update(game)
+check(writes==written and not O.retry and require('src.storage.SyncStatus').get().state=='available','retry uploads the existing saved copy without writing a different in-game state')
+O.action('cloud');O.action('cancel')
+check(not O.job and O.retry and require('src.storage.SyncStatus').get().state=='cancelled','cancel keeps a local copy and offers an explicit retry')
+O.clear()
 print('Retro overlay: '..n..' checks passed')

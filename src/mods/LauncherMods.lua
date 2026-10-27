@@ -560,6 +560,11 @@ local function discover()
   return out
 end
 
+-- The launcher's native features resolve inputs against the loader's winner.
+function LauncherMods.manifest(id)
+  for _,manifest in ipairs(discover()) do if manifest.id==id then return manifest end end
+end
+
 -- WHAT THE PANEL SHOULD SAY ABOUT COPIES IT IS NOT USING: every copy of a mod
 -- that was found and will not load (an older version beside a newer one, the
 -- other home's copy, a zip in mods/), one line each, from the last listing.
@@ -1520,6 +1525,15 @@ function LauncherMods._installZipInner(source, opts)
   local copied, copyErr = copyTree(root, dest)
   if copied and installedRaw then
     copied, copyErr = CacheFs.write(dest .. "/manifest.json", installedRaw)
+  end
+  -- Personal import inputs are not part of a distributable mod ZIP. Keep the
+  -- standard baseroms/ namespace on replacement, including its data-only
+  -- profile, while every executable mod file comes from the new archive.
+  if copied and rollbackPath and fs.getInfo(rollbackPath..'/baseroms','directory') then
+    copied,copyErr=copyTree(rollbackPath..'/baseroms',dest..'/baseroms')
+    if copied and not sameFiles(rollbackPath..'/baseroms',dest..'/baseroms') then
+      copied,copyErr=nil,'The retained private imports did not read back whole.'
+    end
   end
   if not copied then
     removeTree(dest)

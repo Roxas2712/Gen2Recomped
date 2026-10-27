@@ -1,0 +1,405 @@
+{
+  "passed": true,
+  "scope": "Two independent fresh macOS processes/profiles, real imported data and native battle, private local HTTPS API; no physical or cross-OS proof",
+  "privateGameCache": true,
+  "deviceSimulation": "Two fresh account-bound desktop profiles; target has no imported data before private cloud restore; source process exits before target launch.",
+  "results": [
+    {
+      "ticks": 21063,
+      "phase": "nextturn",
+      "role": "source",
+      "reason": "Uploaded a damaged native battle during a move animation; recorded deterministic turn 2",
+      "capture": {
+        "tailSteps": 315,
+        "bytes": 435297,
+        "kind": "trainer",
+        "idleTicks": 20040,
+        "anchor": "battle"
+      },
+      "edition": "emerald",
+      "ok": true
+    },
+    {
+      "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed",
+      "ok": true,
+      "ticks": 230,
+      "edition": "emerald",
+      "phase": "return",
+      "role": "target"
+    }
+  ],
+  "coreSha256": {
+    "src/core/SuspendJournal.lua": "c5b4a2c4451dd01f8714a1af7f07ca3c47d775143819e18e9599e8be58207e96",
+    "src/storage/GameCache.lua": "3eecf9f8f2919ff32f7430ac1b520e278aee26b56daf57279e066bc7d9df9122",
+    "src/import/CloudSync.lua": "9a15a0008dc6467287ff5c22fdae204af5438ee5131b1cd6e303a73ebdc29909",
+    "src/storage/SuspendStore.lua": "3dc64bdf727608dc13319f68cb8703f632449d5fd892e6b8a27532f4cc3f39a9"
+  },
+  "limitations": [
+    "No physical Android or iOS device was available.",
+    "Same engine build and exact imported game data required; native Gen 1\u20133 only; loaded mods and live online sessions are excluded.",
+    "70 launcher suites and 82 Lua syntax checks passed after integrating current main; full private-data handoff ran before the unrelated performance merge."
+  ],
+  "postMainMergeNativeSmoke": {
+    "passed": true,
+    "results": [
+      {
+        "capture": {
+          "idleTicks": 1,
+          "anchor": "battle",
+          "tailSteps": 314,
+          "bytes": 444826,
+          "kind": "trainer"
+        },
+        "ok": true,
+        "phase": "nextturn",
+        "ticks": 1024,
+        "edition": "emerald",
+        "role": "source",
+        "reason": "Uploaded a damaged native battle during a move animation; recorded deterministic turn 2"
+      },
+      {
+        "ok": true,
+        "ticks": 230,
+        "edition": "emerald",
+        "phase": "return",
+        "role": "target",
+        "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed"
+      }
+    ],
+    "sourceSha256": {
+      "src/core/SuspendJournal.lua": "c5b4a2c4451dd01f8714a1af7f07ca3c47d775143819e18e9599e8be58207e96",
+      "src/storage/GameCache.lua": "3eecf9f8f2919ff32f7430ac1b520e278aee26b56daf57279e066bc7d9df9122",
+      "src/import/CloudSync.lua": "9a15a0008dc6467287ff5c22fdae204af5438ee5131b1cd6e303a73ebdc29909",
+      "src/translation/LauncherCatalog.lua": "ccd2ead05e387d8372c704993e8dae28aa3243bf81c4d5bd829ac791a3118025"
+    }
+  },
+  "currentQualification": {
+    "date": "2026-10-27",
+    "scope": "Separate fresh macOS profiles/processes and private local HTTPS; target starts without imported game data. No physical or cross-OS claim.",
+    "editions": [
+      "blue",
+      "gold",
+      "emerald"
+    ],
+    "results": [
+      {
+        "edition": "blue",
+        "role": "source",
+        "reason": "Uploaded a damaged native battle after turn 1; recorded deterministic turn 2",
+        "capture": {
+          "tailSteps": 0,
+          "anchor": "battle",
+          "kind": "trainer",
+          "idleTicks": 20040,
+          "bytes": 136357
+        },
+        "ok": true,
+        "ticks": 21382,
+        "phase": "nextturn"
+      },
+      {
+        "phase": "return",
+        "role": "target",
+        "ticks": 375,
+        "edition": "blue",
+        "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed",
+        "ok": true
+      },
+      {
+        "reason": "Uploaded a damaged native battle after turn 1; recorded deterministic turn 2",
+        "capture": {
+          "kind": "trainer",
+          "idleTicks": 108000,
+          "anchor": "battle",
+          "tailSteps": 0,
+          "bytes": 204758
+        },
+        "ok": true,
+        "ticks": 109291,
+        "edition": "gold",
+        "phase": "nextturn",
+        "role": "source"
+      },
+      {
+        "edition": "gold",
+        "role": "target",
+        "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed",
+        "ok": true,
+        "ticks": 397,
+        "phase": "return"
+      },
+      {
+        "role": "source",
+        "reason": "Uploaded a damaged native battle during a move animation; recorded deterministic turn 2",
+        "capture": {
+          "anchor": "battle",
+          "kind": "trainer",
+          "idleTicks": 108000,
+          "bytes": 381085,
+          "tailSteps": 75
+        },
+        "ok": true,
+        "ticks": 109023,
+        "edition": "emerald",
+        "phase": "nextturn"
+      },
+      {
+        "ok": true,
+        "phase": "return",
+        "ticks": 230,
+        "edition": "emerald",
+        "role": "target",
+        "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed"
+      }
+    ],
+    "regressions": [
+      "Partial game-cache failure cannot become an available-on-other-devices badge.",
+      "Explicit restore includes Bank, Item Bank, global Pokedex, Legacy archives and cartridge designs without publishing local content.",
+      "Explicit restore overrides disabled automatic game downloads for that request only."
+    ],
+    "nativeArena": {
+      "passed": true,
+      "scope": "Independent macOS client profiles and private local HTTPS; no physical or cross-OS proof; peer-attested results, no independent server replay",
+      "scenarios": [
+        {
+          "edition": "blue",
+          "scenario": "complete",
+          "state": "complete",
+          "points": {
+            "left": 50,
+            "right": -25
+          },
+          "coins": {
+            "left": 100,
+            "right": 25
+          },
+          "bothAdventureSavesUnchanged": true,
+          "matchingCompletionProof": true
+        },
+        {
+          "edition": "blue",
+          "scenario": "recovery",
+          "state": "complete",
+          "points": {
+            "left": -25,
+            "right": 50
+          },
+          "coins": {
+            "left": 25,
+            "right": 100
+          },
+          "bothAdventureSavesUnchanged": true,
+          "matchingCompletionProof": true
+        },
+        {
+          "edition": "blue",
+          "scenario": "abort",
+          "state": "cancelled",
+          "points": {
+            "left": 0,
+            "right": 0
+          },
+          "coins": {
+            "left": 0,
+            "right": 0
+          },
+          "bothAdventureSavesUnchanged": true,
+          "matchingCompletionProof": true
+        },
+        {
+          "edition": "gold",
+          "scenario": "complete",
+          "state": "complete",
+          "points": {
+            "left": 50,
+            "right": -25
+          },
+          "coins": {
+            "left": 100,
+            "right": 25
+          },
+          "bothAdventureSavesUnchanged": true,
+          "matchingCompletionProof": true
+        },
+        {
+          "edition": "gold",
+          "scenario": "recovery",
+          "state": "complete",
+          "points": {
+            "left": -25,
+            "right": 50
+          },
+          "coins": {
+            "left": 25,
+            "right": 100
+          },
+          "bothAdventureSavesUnchanged": true,
+          "matchingCompletionProof": true
+        },
+        {
+          "edition": "gold",
+          "scenario": "abort",
+          "state": "cancelled",
+          "points": {
+            "left": 0,
+            "right": 0
+          },
+          "coins": {
+            "left": 0,
+            "right": 0
+          },
+          "bothAdventureSavesUnchanged": true,
+          "matchingCompletionProof": true
+        },
+        {
+          "edition": "emerald",
+          "scenario": "complete",
+          "state": "complete",
+          "points": {
+            "left": 50,
+            "right": -25
+          },
+          "coins": {
+            "left": 100,
+            "right": 25
+          },
+          "bothAdventureSavesUnchanged": true,
+          "matchingCompletionProof": true
+        },
+        {
+          "edition": "emerald",
+          "scenario": "recovery",
+          "state": "complete",
+          "points": {
+            "left": 50,
+            "right": -25
+          },
+          "coins": {
+            "left": 100,
+            "right": 25
+          },
+          "bothAdventureSavesUnchanged": true,
+          "matchingCompletionProof": true
+        },
+        {
+          "edition": "emerald",
+          "scenario": "abort",
+          "state": "cancelled",
+          "points": {
+            "left": 0,
+            "right": 0
+          },
+          "coins": {
+            "left": 0,
+            "right": 0
+          },
+          "bothAdventureSavesUnchanged": true,
+          "matchingCompletionProof": true
+        }
+      ]
+    },
+    "backendValidation": {
+      "tests": 104,
+      "assertions": 1578,
+      "passed": true,
+      "scope": "Local isolated Laravel feature suites; native reports, rewards, tournament access, gifts, bank exchange, friends, presence, cloud authorization and operator protection."
+    },
+    "afterMainIntegration": {
+      "integratedMain": "7ecfdd05a82040a4d0216e7f88583ade1d4d3207",
+      "suspend": {
+        "passed": true,
+        "results": [
+          {
+            "edition": "emerald",
+            "role": "source",
+            "reason": "Uploaded a damaged native battle during a move animation; recorded deterministic turn 2",
+            "capture": {
+              "tailSteps": 313,
+              "anchor": "battle",
+              "kind": "trainer",
+              "idleTicks": 0,
+              "bytes": 444573
+            },
+            "ok": true,
+            "ticks": 1023,
+            "phase": "nextturn"
+          },
+          {
+            "role": "target",
+            "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed",
+            "ok": true,
+            "ticks": 230,
+            "edition": "emerald",
+            "phase": "return"
+          }
+        ],
+        "scope": "Two independent fresh macOS processes/profiles, real imported data and native battle, private local HTTPS API; no physical or cross-OS proof"
+      },
+      "arena": {
+        "passed": true,
+        "results": [
+          {
+            "edition": "emerald",
+            "scenario": "recovery",
+            "battle_state": "complete",
+            "points": {
+              "left": 50,
+              "right": -25
+            },
+            "wallets": {
+              "left": 100,
+              "right": 25
+            },
+            "results": [
+              {
+                "cancelled": false,
+                "frames": 7650,
+                "reason": "Native battle recovered from a lost committed response and both reports completed.",
+                "proof": {
+                  "digest": "3822721c28fbc9dfa7081e0d8f89eca471ea26141c48cd6e021327db8b45a517",
+                  "status": "complete",
+                  "winner": 1,
+                  "turns": 5
+                },
+                "battleSeen": true,
+                "faultInjected": true,
+                "phase": "verify-report",
+                "edition": "emerald",
+                "role": "left",
+                "cloudTransport": true,
+                "adventureRestored": true,
+                "saveFileUnchanged": true,
+                "scenario": "recovery",
+                "blockedRetries": 2,
+                "ok": true
+              },
+              {
+                "battleSeen": true,
+                "reason": "Native battle recovered from a lost committed response and both reports completed.",
+                "edition": "emerald",
+                "role": "right",
+                "cloudTransport": true,
+                "adventureRestored": true,
+                "saveFileUnchanged": true,
+                "scenario": "recovery",
+                "blockedRetries": 0,
+                "ok": true,
+                "cancelled": false,
+                "faultInjected": false,
+                "frames": 7976,
+                "phase": "verify-report",
+                "proof": {
+                  "winner": 1,
+                  "status": "complete",
+                  "turns": 5,
+                  "digest": "3822721c28fbc9dfa7081e0d8f89eca471ea26141c48cd6e021327db8b45a517"
+                }
+              }
+            ]
+          }
+        ],
+        "scope": "Independent macOS client profiles and private local HTTPS; no physical or cross-OS proof; peer-attested results, no independent server replay"
+      }
+    }
+  }
+}

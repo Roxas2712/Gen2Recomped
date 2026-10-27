@@ -70,6 +70,7 @@ run_tier "Gen3 summary source resources" "$LUA" tests/gen3_summary_parts_test.lu
 run_tier "Gen3 summary presentation" "$LUA" tests/gen3_summary_test.lua
 run_tier "T4 mod-SDK" "$LUA" tests/run_modkit.lua
 run_tier "Classic GB item-list overlay" "$LUA" tests/classic_item_box_test.lua
+run_tier "Native ROM language packs" "$LUA" tests/engine/rom_language_pack.lua
 run_tier "Dramatic Shape B30 profile" "$LUA" tests/dramatic_shape_b30.lua
 
 # The modded-link desync suite (symmetric mod, handshake fail-closed,

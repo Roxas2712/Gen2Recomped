@@ -282,21 +282,36 @@ function PaletteFX.setPass(name)
   currentPass = trueColorRects[name] and name or nil
 end
 
--- THE LIST IS THE POOL.  These are rebuilt from nothing every frame and the
--- count barely moves between frames, so the tables themselves are kept and
--- overwritten: `clearTrueColor` only forgets how many are live, and
--- `markTrueColor` reuses the one already sitting at that index.  Readers walk
--- the list with `for i = 1, count` (trueColorRects returns the count too), so
--- a stale entry past the end is never seen.
+-- Native rendering may reuse private records. Once the public list is read,
+-- it keeps the classic live-array contract, including caller mutations and
+-- retained records that must not be rewritten by a later frame.
 local trueColorCount = {}
+local publicRects = { ui = {}, world = {} }
+local observedRects = {}
+local markOffsetX = 0
 
 function PaletteFX.clearTrueColor()
-  for name in pairs(trueColorRects) do trueColorCount[name] = 0 end
+  for name in pairs(trueColorRects) do
+    trueColorCount[name] = 0
+    local rows = publicRects[name]
+    for i = #rows, 1, -1 do rows[i] = nil end
+  end
+  markOffsetX = 0
+end
+
+function PaletteFX.setMarkOffset(dx)
+  markOffsetX = tonumber(dx) or 0
 end
 
 function PaletteFX.markTrueColor(x, y, w, h)
   local rects = currentPass and trueColorRects[currentPass]
   if not rects or w <= 0 or h <= 0 then return end
+  if currentPass == "ui" then x = x + markOffsetX end
+  if observedRects[currentPass] then
+    local rows = publicRects[currentPass]
+    rows[#rows + 1] = { colors = false, x = x, y = y, w = w, h = h }
+    return
+  end
   local n = (trueColorCount[currentPass] or 0) + 1
   trueColorCount[currentPass] = n
   local rect = rects[n]
@@ -307,7 +322,26 @@ function PaletteFX.markTrueColor(x, y, w, h)
   end
 end
 
-function PaletteFX.trueColorRects(name)
+local function publicTrueColorRects(name)
+  local rows = publicRects[name]
+  if not rows then return {} end
+  if not observedRects[name] then
+    observedRects[name] = true
+    for i = 1, trueColorCount[name] or 0 do
+      local r = trueColorRects[name][i]
+      rows[i] = { colors = r.colors, x = r.x, y = r.y, w = r.w, h = r.h }
+    end
+  end
+  return rows
+end
+PaletteFX.trueColorRects = publicTrueColorRects
+
+function PaletteFX._trueColorRectsForEngine(name)
+  if not Performance.hotPathHoist or PaletteFX.trueColorRects ~= publicTrueColorRects then
+    local rows = PaletteFX.trueColorRects(name)
+    return rows, #rows
+  end
+  if observedRects[name] then return publicRects[name], #publicRects[name] end
   return trueColorRects[name] or EMPTY_RECTS, trueColorCount[name] or 0
 end
 

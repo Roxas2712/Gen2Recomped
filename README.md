@@ -36,6 +36,17 @@ next-gen Pokéwalker with minigames and a Watt Shop), a **Map Editor**, a
 dual-screen support for the DS games, and touch controls. See
 [What's New](#whats-new) for the tour.
 
+**Built-in Uni-Language:** choose your launcher language during first setup.
+After importing a supported US cartridge, the launcher offers matching game
+language profiles and asks for the exact additional source ROM when needed.
+No separate language-mod download or Gen2 conversion is required. Japanese
+currently targets Crystal; Korean targets Gold/Silver. Chinese is available
+for setup/menu text, without a bundled Chinese game profile. Brazilian
+Portuguese game text is prepared offline from the supported US ROM using
+included translation patches, for all eleven editions. No extra PT-BR ROM
+or patch download is required. See the
+[native language guide](docs/native-rom-language-packs.md).
+
 > [!CAUTION]
 > **Neither this project nor Gen1Recomp is affiliated with the website
 > `gen1recomp[.]com`.** That site is not run by either project and was not
@@ -387,9 +398,11 @@ and persist in `options.lua`.
 
 **OPTIONS → PERFORMANCE** scales the port's optional extras for weaker
 hardware: **HIGH** (everything on), **BALANCED** (no 3D tilt or GBC FX),
-**LOW** (also no survey zoom, FPS capped), or **AUTO** — the default, which
+**LOW** (also no survey zoom, FPS capped), **AUTO** — the default, which
 picks a tier from your device (ARM handhelds → LOW, phones → BALANCED,
-normal desktops → HIGH, unchanged). It only scales presentation; the
+normal desktops → HIGH, unchanged) — or **PREFER FPS**, which starts where
+AUTO would and steps the tier down or back up from the frame rate it
+actually measures. It only scales presentation; the
 fixed-step game logic is identical on every tier, and a lower tier hides
 your tilt/zoom/GBC-FX preferences without forgetting them. Details in
 [docs/new-features.md](docs/new-features.md#performance-tier-low-end-devices).

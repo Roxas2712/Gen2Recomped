@@ -16,10 +16,7 @@ local Theme = {
   rows = Renderer.HEIGHT / 8,
   textBox = { tx = 0, ty = 12, tw = 20, th = 6, maxCols = 18 },
   -- InitYesNoTextBoxParameters / AskName: hlcoord 14, 7 (YES_NO_MENU 4x3)
-  -- FireRed's YES/NO menu is one tile farther left and wider than the
-  -- compact Gen1 default; this keeps both labels and the cursor inside the
-  -- framed box on the Poké Flute confirmation.
-  choiceBox = { tx = 13, ty = 7, tw = 7, th = 6 },
+  choiceBox = { tx = 14, ty = 7, tw = 6, th = 5 },
 }
 
 -- THE SURFACE THIS DATASET'S SCREEN FURNITURE NEEDS.
@@ -69,6 +66,11 @@ function Theme.uiSize()
 end
 
 function Theme.load(data)
+  -- Keep the classic public defaults separate from the GBA/DS furniture.
+  -- Reset only these four native dimensions; authored overrides merge below.
+  local native = data and (data.isGen3Cache or data.isGen4Cache or data.isGen5Cache)
+  local box = Theme.choiceBox
+  box.tx, box.ty, box.tw, box.th = native and 13 or 14, 7, native and 7 or 6, native and 6 or 5
   -- Font.load rebuilds its border table, so pick it up here rather than at
   -- require time
   Theme.border = Font.BORDER

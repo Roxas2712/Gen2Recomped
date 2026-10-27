@@ -36,4 +36,32 @@ T.raises(function()UI.draw(parent,renderer,viewport,nil,false)end,'deliberate wi
 T.eq(select(1,love.graphics.getColor()),.2,'failed drawer still restores graphics state')
 local drew=0;UI.classic(function()drew=drew+1 end,renderer,800,720)
 T.eq(drew,1,'classic fallback executes native draw exactly once')
+-- Native Gen2 controllers can draw on the full-size output without a
+-- low-resolution intermediate, while retaining their native stack lifetime.
+trace={};local world={draw=function()trace[#trace+1]='world' end}
+local hidden={draw=function()error('hidden native state drawn')end}
+local output={width=800,height=720}
+local native={draw=function(self)
+ T.eq(love.graphics.getCanvas(),output,'native drawer receives output canvas directly')
+ trace[#trace+1]='native';love.graphics.setColor(0,1,0,1)
+end}
+local front={draw=function()
+ local r=love.graphics.getColor();T.eq(r,1,'preceding native drawer cannot leak its graphics state')
+ trace[#trace+1]='front'
+end}
+scene.states={world,hidden,native,front}
+local filtered={renderVisible=function(_,s)return s~=hidden end}
+T.eq(UI.hasNativeStack(filtered,scene,1,world),true,'visible native stack requests output-resolution drawing')
+T.eq(UI.hasNativeStack(filtered,{states={world,hidden}},1,world),false,'world and mirrored states alone request no UI pass')
+love.graphics.setCanvas(output);love.graphics.setColor(.2,.3,.4,1)
+UI.drawNativeStack(filtered,scene,1,world,renderer,viewport,false)
+T.same(trace,{'native','front'},'world stays single-pass and native stack draw order is retained')
+T.eq(love.graphics.getCanvas(),output,'native pass restores output target')
+T.eq(select(1,love.graphics.getColor()),.2,'native pass restores caller color')
+trace={};UI.drawNativeStack(filtered,scene,4,world,renderer,viewport,false)
+T.same(trace,{'front'},'native overlays above wide owner exclude that owner')
+native.draw=function()love.graphics.setCanvas({});error('native drawer failure')end
+T.raises(function()UI.drawNativeStack(filtered,scene,3,world,renderer,viewport,false)end,'native drawer failure','native errors remain visible')
+T.eq(love.graphics.getCanvas(),output,'failed native drawer restores output target')
+love.graphics.setCanvas()
 T.finish('screen-space UI owner, native overlay ordering and graphics isolation')

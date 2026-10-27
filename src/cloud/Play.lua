@@ -20,10 +20,16 @@ function P.context(game)
  context.fingerprint=P.hello.fingerprint
  local world=game.overworld;local top=game.stack and (game.stack.active and game.stack:active() or game.stack:top())
  local menu=package.loaded['src.ui.RetroOverlay']
- context.available=world~=nil and top==world and not game.linkSession and not game.retroArena and not (menu and menu.job) and not world.transitioning and not (world.runner and world.runner:isRunning()) and #(world.scriptMoves or {})==0 and not (world.player and world.player.inputLocked) and require('src.link.Handshake').onlineAllowed(game)
+ local wager=package.loaded['src.link.FriendWager']
+ context.available=world~=nil and top==world and not game.linkSession and not game.retroArena and not (wager and wager.blocked and not wager.readyInvite) and not (menu and menu.job) and not world.transitioning and not (world.runner and world.runner:isRunning()) and #(world.scriptMoves or {})==0 and not (world.player and world.player.inputLocked) and require('src.link.Handshake').onlineAllowed(game)
+ if world and world.map and world.player then
+  local navigation=require('src.world.FriendMap').describe(world)
+  if navigation then context.zone={map=tostring(world.map.id),navigation=navigation} end
+ end
  if context.available and world.map and world.player then
   local player=world.player
-  context.position={map=tostring(world.map.id),x=player.px,y=player.py,facing=player.facing}
+  context.position={map=tostring(world.map.id),x=player.px,y=player.py,facing=player.facing,
+   navigation=require('src.world.FriendMap').describe(world)}
  end
  return context
 end
@@ -57,11 +63,12 @@ function P.tick(game)
   P.job=Task.new(function() return P.request('POST','presence',ctx) end)
  end
  local doc=P.read()
- if doc and not blocked and P.context(game).available then
+ local wager=package.loaded['src.link.FriendWager']
+ if doc and (not blocked or wager and wager.readyInvite) and P.context(game).available then
   for _,invite in ipairs(doc.invites or {}) do
-   if invite.mode~='meet' and invite.state=='accepted' and not (P.entered and P.entered[invite.id]) then
+   if invite.mode~='meet' and invite.state=='accepted' and (not blocked or wager.readyInvite==invite.id) and not (P.entered and P.entered[invite.id]) then
     local ok,why=require('src.link.FriendLink').start(game,invite)
-    if ok then P.entered=P.entered or {};P.entered[invite.id]=true;break else P.error=why end
+    if ok then P.entered=P.entered or {};P.entered[invite.id]=true;blocked=false;break else P.error=why end
    end
   end
  end

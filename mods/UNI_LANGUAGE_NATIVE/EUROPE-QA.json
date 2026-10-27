@@ -1,0 +1,1794 @@
+{
+  "version": "1.4.3-europe-preview.5",
+  "tested": "2026-10-18",
+  "platform": "macOS / LÖVE",
+  "baseline": "5843925",
+  "engineCommit": "1925fa9f97661f1e2d0922f7c6eb9546d262fd29",
+  "runtimePayloadSha256": "64aefd9e44bbef5637528344ae20f62ffa6f8f5c9ae88b6766582ed663ec4dc5",
+  "unitChecks": [
+    "unit",
+    "startup_unit",
+    "intro_unit",
+    "preferences_unit",
+    "catalog",
+    "european_identities_unit",
+    "gba_policy_unit"
+  ],
+  "liveProfiles": [
+    {
+      "game": "red",
+      "language": "es",
+      "passed": true,
+      "log": "red-es-europe-live.log",
+      "fingerprint": "acd0124110c59386e4ab912e34527cad889d0c6f96cf8b44c3e139125399fe89",
+      "seconds": 11.15,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "yellow",
+      "language": "es",
+      "passed": true,
+      "log": "yellow-es-europe-live.log",
+      "fingerprint": "acd0124110c59386e4ab912e34527cad889d0c6f96cf8b44c3e139125399fe89",
+      "seconds": 10.99,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "gold",
+      "language": "es",
+      "passed": true,
+      "log": "gold-es-europe-live.log",
+      "fingerprint": "acd0124110c59386e4ab912e34527cad889d0c6f96cf8b44c3e139125399fe89",
+      "seconds": 14.15,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "gold",
+      "language": "fr",
+      "passed": true,
+      "log": "gold-fr-europe-live.log",
+      "fingerprint": "acd0124110c59386e4ab912e34527cad889d0c6f96cf8b44c3e139125399fe89",
+      "seconds": 12.47,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "gold",
+      "language": "it",
+      "passed": true,
+      "log": "gold-it-europe-live.log",
+      "fingerprint": "acd0124110c59386e4ab912e34527cad889d0c6f96cf8b44c3e139125399fe89",
+      "seconds": 12.96,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "silver",
+      "language": "es",
+      "passed": true,
+      "log": "silver-es-europe-live.log",
+      "fingerprint": "acd0124110c59386e4ab912e34527cad889d0c6f96cf8b44c3e139125399fe89",
+      "seconds": 13.94,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "silver",
+      "language": "fr",
+      "passed": true,
+      "log": "silver-fr-europe-live.log",
+      "fingerprint": "acd0124110c59386e4ab912e34527cad889d0c6f96cf8b44c3e139125399fe89",
+      "seconds": 14.42,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "crystal",
+      "language": "es",
+      "passed": true,
+      "log": "crystal-es-europe-live.log",
+      "fingerprint": "acd0124110c59386e4ab912e34527cad889d0c6f96cf8b44c3e139125399fe89",
+      "seconds": 14.73,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "crystal",
+      "language": "it",
+      "passed": true,
+      "log": "crystal-it-europe-live.log",
+      "fingerprint": "acd0124110c59386e4ab912e34527cad889d0c6f96cf8b44c3e139125399fe89",
+      "seconds": 14.35,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "firered",
+      "language": "es",
+      "passed": true,
+      "log": "firered-es-europe-live.log",
+      "fingerprint": "acd0124110c59386e4ab912e34527cad889d0c6f96cf8b44c3e139125399fe89",
+      "seconds": 20.32,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "firered",
+      "language": "it",
+      "passed": true,
+      "log": "firered-it-europe-live.log",
+      "fingerprint": "acd0124110c59386e4ab912e34527cad889d0c6f96cf8b44c3e139125399fe89",
+      "seconds": 19.64,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "leafgreen",
+      "language": "es",
+      "passed": true,
+      "log": "leafgreen-es-europe-live.log",
+      "fingerprint": "acd0124110c59386e4ab912e34527cad889d0c6f96cf8b44c3e139125399fe89",
+      "seconds": 22.56,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "leafgreen",
+      "language": "fr",
+      "passed": true,
+      "log": "leafgreen-fr-europe-live.log",
+      "fingerprint": "acd0124110c59386e4ab912e34527cad889d0c6f96cf8b44c3e139125399fe89",
+      "seconds": 21.96,
+      "originVersion": "1.4.3-europe-preview.3"
+    }
+  ],
+  "gbMenuProfiles": [
+    {
+      "game": "red",
+      "language": "es",
+      "passed": true,
+      "log": "red-es-europe-menu.log",
+      "fingerprint": "311d0814d05e8e13e1c7abfffc4b1822d55dd722da3ed21f77c4873f68414a5a",
+      "seconds": 7.29,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "yellow",
+      "language": "es",
+      "passed": true,
+      "log": "yellow-es-europe-menu.log",
+      "fingerprint": "311d0814d05e8e13e1c7abfffc4b1822d55dd722da3ed21f77c4873f68414a5a",
+      "seconds": 7.54,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "gold",
+      "language": "es",
+      "passed": true,
+      "log": "gold-es-europe-menu.log",
+      "fingerprint": "311d0814d05e8e13e1c7abfffc4b1822d55dd722da3ed21f77c4873f68414a5a",
+      "seconds": 17.55,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "gold",
+      "language": "fr",
+      "passed": true,
+      "log": "gold-fr-europe-menu.log",
+      "fingerprint": "311d0814d05e8e13e1c7abfffc4b1822d55dd722da3ed21f77c4873f68414a5a",
+      "seconds": 21.24,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "gold",
+      "language": "it",
+      "passed": true,
+      "log": "gold-it-europe-menu.log",
+      "fingerprint": "311d0814d05e8e13e1c7abfffc4b1822d55dd722da3ed21f77c4873f68414a5a",
+      "seconds": 21.69,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "silver",
+      "language": "es",
+      "passed": true,
+      "log": "silver-es-europe-menu.log",
+      "fingerprint": "311d0814d05e8e13e1c7abfffc4b1822d55dd722da3ed21f77c4873f68414a5a",
+      "seconds": 18.56,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "silver",
+      "language": "fr",
+      "passed": true,
+      "log": "silver-fr-europe-menu.log",
+      "fingerprint": "311d0814d05e8e13e1c7abfffc4b1822d55dd722da3ed21f77c4873f68414a5a",
+      "seconds": 18.0,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "crystal",
+      "language": "es",
+      "passed": true,
+      "log": "crystal-es-europe-menu.log",
+      "fingerprint": "311d0814d05e8e13e1c7abfffc4b1822d55dd722da3ed21f77c4873f68414a5a",
+      "seconds": 16.14,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "crystal",
+      "language": "it",
+      "passed": true,
+      "log": "crystal-it-europe-menu.log",
+      "fingerprint": "311d0814d05e8e13e1c7abfffc4b1822d55dd722da3ed21f77c4873f68414a5a",
+      "seconds": 15.92,
+      "originVersion": "1.4.3-europe-preview.3"
+    }
+  ],
+  "gbCatalogProfiles": [
+    {
+      "game": "red",
+      "language": "es",
+      "passed": true,
+      "log": "red-es-europe-catalog.log",
+      "fingerprint": "4106e235a94280ca02a2cc5f867989eed620ebaf9205654e2285267f7ba88eb5",
+      "seconds": 4.75
+    },
+    {
+      "game": "yellow",
+      "language": "es",
+      "passed": true,
+      "log": "yellow-es-europe-catalog.log",
+      "fingerprint": "4106e235a94280ca02a2cc5f867989eed620ebaf9205654e2285267f7ba88eb5",
+      "seconds": 5.64
+    },
+    {
+      "game": "gold",
+      "language": "es",
+      "passed": true,
+      "log": "gold-es-europe-catalog.log",
+      "fingerprint": "4106e235a94280ca02a2cc5f867989eed620ebaf9205654e2285267f7ba88eb5",
+      "seconds": 6.17
+    },
+    {
+      "game": "gold",
+      "language": "fr",
+      "passed": true,
+      "log": "gold-fr-europe-catalog.log",
+      "fingerprint": "4106e235a94280ca02a2cc5f867989eed620ebaf9205654e2285267f7ba88eb5",
+      "seconds": 4.83
+    },
+    {
+      "game": "gold",
+      "language": "it",
+      "passed": true,
+      "log": "gold-it-europe-catalog.log",
+      "fingerprint": "4106e235a94280ca02a2cc5f867989eed620ebaf9205654e2285267f7ba88eb5",
+      "seconds": 6.55
+    },
+    {
+      "game": "silver",
+      "language": "es",
+      "passed": true,
+      "log": "silver-es-europe-catalog.log",
+      "fingerprint": "4106e235a94280ca02a2cc5f867989eed620ebaf9205654e2285267f7ba88eb5",
+      "seconds": 5.08
+    },
+    {
+      "game": "silver",
+      "language": "fr",
+      "passed": true,
+      "log": "silver-fr-europe-catalog.log",
+      "fingerprint": "4106e235a94280ca02a2cc5f867989eed620ebaf9205654e2285267f7ba88eb5",
+      "seconds": 3.78
+    },
+    {
+      "game": "crystal",
+      "language": "es",
+      "passed": true,
+      "log": "crystal-es-europe-catalog.log",
+      "fingerprint": "4106e235a94280ca02a2cc5f867989eed620ebaf9205654e2285267f7ba88eb5",
+      "seconds": 4.02
+    },
+    {
+      "game": "crystal",
+      "language": "it",
+      "passed": true,
+      "log": "crystal-it-europe-catalog.log",
+      "fingerprint": "4106e235a94280ca02a2cc5f867989eed620ebaf9205654e2285267f7ba88eb5",
+      "seconds": 4.31
+    }
+  ],
+  "gbGameplayProfiles": [
+    {
+      "game": "red",
+      "language": "es",
+      "passed": true,
+      "log": "red-es-europe-gameplay.log",
+      "fingerprint": "cc9e2be6933975e4092101c8f6c8fe8d3a1db73f1e36d43b09646e8d6ca6c29c",
+      "seconds": 13.91,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "yellow",
+      "language": "es",
+      "passed": true,
+      "log": "yellow-es-europe-gameplay.log",
+      "fingerprint": "cc9e2be6933975e4092101c8f6c8fe8d3a1db73f1e36d43b09646e8d6ca6c29c",
+      "seconds": 14.22,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "gold",
+      "language": "es",
+      "passed": true,
+      "log": "gold-es-europe-gameplay.log",
+      "fingerprint": "cc9e2be6933975e4092101c8f6c8fe8d3a1db73f1e36d43b09646e8d6ca6c29c",
+      "seconds": 11.26,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "gold",
+      "language": "fr",
+      "passed": true,
+      "log": "gold-fr-europe-gameplay.log",
+      "fingerprint": "cc9e2be6933975e4092101c8f6c8fe8d3a1db73f1e36d43b09646e8d6ca6c29c",
+      "seconds": 12.2,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "gold",
+      "language": "it",
+      "passed": true,
+      "log": "gold-it-europe-gameplay.log",
+      "fingerprint": "cc9e2be6933975e4092101c8f6c8fe8d3a1db73f1e36d43b09646e8d6ca6c29c",
+      "seconds": 11.31,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "silver",
+      "language": "es",
+      "passed": true,
+      "log": "silver-es-europe-gameplay.log",
+      "fingerprint": "cc9e2be6933975e4092101c8f6c8fe8d3a1db73f1e36d43b09646e8d6ca6c29c",
+      "seconds": 11.78,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "silver",
+      "language": "fr",
+      "passed": true,
+      "log": "silver-fr-europe-gameplay.log",
+      "fingerprint": "cc9e2be6933975e4092101c8f6c8fe8d3a1db73f1e36d43b09646e8d6ca6c29c",
+      "seconds": 11.61,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "crystal",
+      "language": "es",
+      "passed": true,
+      "log": "crystal-es-europe-gameplay.log",
+      "fingerprint": "cc9e2be6933975e4092101c8f6c8fe8d3a1db73f1e36d43b09646e8d6ca6c29c",
+      "seconds": 12.12,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "crystal",
+      "language": "it",
+      "passed": true,
+      "log": "crystal-it-europe-gameplay.log",
+      "fingerprint": "cc9e2be6933975e4092101c8f6c8fe8d3a1db73f1e36d43b09646e8d6ca6c29c",
+      "seconds": 11.38,
+      "originVersion": "1.4.3-europe-preview.3"
+    }
+  ],
+  "gbLocalLinkProfiles": [
+    {
+      "game": "red",
+      "language": "es",
+      "passed": true,
+      "log": "red-es-europe-link.log",
+      "fingerprint": "04426b1eeaaad0b5ecc2f8e1f890c4346b3fd3eb1254ad13a925c66aecbd4c22",
+      "seconds": 3.02,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "yellow",
+      "language": "es",
+      "passed": true,
+      "log": "yellow-es-europe-link.log",
+      "fingerprint": "04426b1eeaaad0b5ecc2f8e1f890c4346b3fd3eb1254ad13a925c66aecbd4c22",
+      "seconds": 3.02,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "gold",
+      "language": "es",
+      "passed": true,
+      "log": "gold-es-europe-link.log",
+      "fingerprint": "04426b1eeaaad0b5ecc2f8e1f890c4346b3fd3eb1254ad13a925c66aecbd4c22",
+      "seconds": 2.92,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "gold",
+      "language": "fr",
+      "passed": true,
+      "log": "gold-fr-europe-link.log",
+      "fingerprint": "04426b1eeaaad0b5ecc2f8e1f890c4346b3fd3eb1254ad13a925c66aecbd4c22",
+      "seconds": 3.66,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "gold",
+      "language": "it",
+      "passed": true,
+      "log": "gold-it-europe-link.log",
+      "fingerprint": "04426b1eeaaad0b5ecc2f8e1f890c4346b3fd3eb1254ad13a925c66aecbd4c22",
+      "seconds": 5.43,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "silver",
+      "language": "es",
+      "passed": true,
+      "log": "silver-es-europe-link.log",
+      "fingerprint": "04426b1eeaaad0b5ecc2f8e1f890c4346b3fd3eb1254ad13a925c66aecbd4c22",
+      "seconds": 2.85,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "silver",
+      "language": "fr",
+      "passed": true,
+      "log": "silver-fr-europe-link.log",
+      "fingerprint": "04426b1eeaaad0b5ecc2f8e1f890c4346b3fd3eb1254ad13a925c66aecbd4c22",
+      "seconds": 4.83,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "crystal",
+      "language": "es",
+      "passed": true,
+      "log": "crystal-es-europe-link.log",
+      "fingerprint": "04426b1eeaaad0b5ecc2f8e1f890c4346b3fd3eb1254ad13a925c66aecbd4c22",
+      "seconds": 2.97,
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "crystal",
+      "language": "it",
+      "passed": true,
+      "log": "crystal-it-europe-link.log",
+      "fingerprint": "04426b1eeaaad0b5ecc2f8e1f890c4346b3fd3eb1254ad13a925c66aecbd4c22",
+      "seconds": 2.73,
+      "originVersion": "1.4.3-europe-preview.3"
+    }
+  ],
+  "processRestartChecks": [
+    {
+      "game": "red",
+      "mode": "english",
+      "passed": true,
+      "log": "red-europe-english.log",
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "yellow",
+      "mode": "english",
+      "passed": true,
+      "log": "yellow-europe-english.log",
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "gold",
+      "mode": "english",
+      "passed": true,
+      "log": "gold-europe-english.log",
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "silver",
+      "mode": "english",
+      "passed": true,
+      "log": "silver-europe-english.log",
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "crystal",
+      "mode": "english",
+      "passed": true,
+      "log": "crystal-europe-english.log",
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "red",
+      "mode": "disabled",
+      "passed": true,
+      "log": "red-europe-disabled.log",
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "yellow",
+      "mode": "disabled",
+      "passed": true,
+      "log": "yellow-europe-disabled.log",
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "gold",
+      "mode": "disabled",
+      "passed": true,
+      "log": "gold-europe-disabled.log",
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "silver",
+      "mode": "disabled",
+      "passed": true,
+      "log": "silver-europe-disabled.log",
+      "originVersion": "1.4.3-europe-preview.3"
+    },
+    {
+      "game": "crystal",
+      "mode": "disabled",
+      "passed": true,
+      "log": "crystal-europe-disabled.log",
+      "originVersion": "1.4.3-europe-preview.3"
+    }
+  ],
+  "translationReview": {
+    "method": "Complete AI editorial pass; no independent native-speaker certification",
+    "keysPerLanguage": 1520,
+    "languages": [
+      "es",
+      "fr",
+      "it"
+    ],
+    "staticEngineKeysAudited": 1499,
+    "missingAuditedKeys": 0,
+    "sourceLayer": "translations/european/gb-ui-overrides.tsv"
+  },
+  "additionalChecks": {
+    "uiCatalog": {
+      "passed": true,
+      "keysPerLanguage": 1520,
+      "profileCount": 9,
+      "checks": [
+        "all compiled strings match reviewed source",
+        "printf/brace/control identities",
+        "exact whitespace padding",
+        "fixed field geometry",
+        "actual raster glyphs and TextBox pagination",
+        "native Gen2 descriptions and 251 Pokedex entries",
+        "fixed and composed radio lines"
+      ]
+    },
+    "graphicsRoundtrip": {
+      "passed": true,
+      "profiles": 7,
+      "images": 339,
+      "checks": [
+        "every RGBA pixel",
+        "tile flips",
+        "transparent color zero",
+        "image dimensions",
+        "native credits and diploma art"
+      ]
+    },
+    "gbaCompletion": {
+      "passed": true,
+      "profiles": 12,
+      "coldAndWarmRuns": 24,
+      "englishAndDisabledRestarts": 10,
+      "languages": [
+        "de",
+        "es",
+        "fr",
+        "it"
+      ],
+      "keysPerLanguage": 245,
+      "staticEngineKeysAudited": 180,
+      "missingAuditedKeys": 0,
+      "nativeRegistryMissingKeys": 0,
+      "editorialMethod": "AI editorial review plus reuse of reviewed shared UI; no independent native-speaker sign-off",
+      "sourceLayer": [
+        "translations/gba/ui-extra.tsv",
+        "translations/gba/ui-common-de.tsv"
+      ],
+      "checks": [
+        "actual raster glyphs and offscreen drawing",
+        "printf formatting with accented names",
+        "actual Message/TextIR pagination",
+        "fixed wonder-card and control-hint geometry",
+        "dynamic options and binding labels",
+        "settings SPEED versus Pokemon SPEED meaning",
+        "every native credit row versus regional ROM pointer data",
+        "native credit proper-name identity",
+        "script item buffers with variable operands and all three destinations",
+        "Pokemon Jump prize names",
+        "event-bus wrapper guard",
+        "unchanged species battle stats",
+        "normal save/load and custom nickname preservation",
+        "cold compilation and warm cache replay",
+        "English and disabled process restarts"
+      ]
+    }
+  },
+  "graphicsRecipes": {
+    "gold_es": 79,
+    "gold_fr": 79,
+    "gold_it": 79,
+    "silver_es": 79,
+    "silver_fr": 79,
+    "crystal_es": 85,
+    "crystal_it": 85
+  },
+  "gbGameplayChecks": [
+    "real nurse healing and status cure",
+    "wild battle input through win callback",
+    "normal save writer and reload",
+    "persisted native NPC/gift identities",
+    "saved player/nickname/custom box name protection",
+    "native diploma render and credits completion"
+  ],
+  "gameplaySpeed": "4X for full matrix; selected setup checks also ran at 1X",
+  "localLinkScope": "Two genuine ENet endpoints on localhost; handshake, accented names, strict mon rebuild, and all 64 native NPC trade records. No public relay or full two-device link battle tested.",
+  "nativeIdentities": {
+    "npcTradeRows": 64,
+    "gen2ShuckleProfiles": 7,
+    "crystalOddEggProfiles": 2,
+    "gen2SpearowScriptProfiles": 7,
+    "gen1TrainerOTProfiles": 2
+  },
+  "limitations": [
+    "No independent native-speaker sign-off",
+    "No complete manual playthrough or exhaustive battle/special-event coverage",
+    "Windows/Linux not run",
+    "No public relay or full two-device link battle",
+    "PT-BR development not merged",
+    "Source audit is bounded: no claim that all dynamic, debug, launcher or unvisited engine paths are free of English."
+  ],
+  "privateInputs": "No ROMs, saves, extracted image files or compilation caches are included in the ZIP.",
+  "carriedForward": {
+    "version": "1.4.3-europe-preview.4",
+    "commit": "ed95763",
+    "tested": "2026-10-18",
+    "checks": [
+      "liveProfiles",
+      "gbMenuProfiles",
+      "gbGameplayProfiles",
+      "gbLocalLinkProfiles",
+      "processRestartChecks",
+      "graphicsRoundtrip"
+    ],
+    "engineCodeAndNativeROMRecipesUnchanged": true,
+    "authoredCatalogCellsChanged": 5,
+    "note": "Broader earlier GB scene/gameplay/link checks are historical. Current catalog/font checks cover all nine EU GB profiles; current GBA results are listed separately. No complete playthroughs were run."
+  },
+  "gbaCompletionProfiles": [
+    {
+      "game": "firered",
+      "language": "de",
+      "mode": "cold",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "firered-de-gba-cold.log",
+      "seconds": 15.32,
+      "coverage": {
+        "authored": [],
+        "retainedProperNames": [],
+        "covered": 9066,
+        "translated": 9063,
+        "language": "de",
+        "cacheKey": "3f5cb3e76d43e0dd8e3d73afe7d5c7bd5ccf4f86800fc66ef858fb0668b1021f",
+        "mode": "cold",
+        "nativeStringOverrides": 8,
+        "game": "firered",
+        "uiKeys": 245,
+        "inapplicable": [
+          "sPluralTxt",
+          "sText_IES",
+          "sText_S"
+        ],
+        "total": 9066,
+        "missing": [],
+        "creditRows": 43
+      }
+    },
+    {
+      "game": "firered",
+      "language": "de",
+      "mode": "warm",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "firered-de-gba-warm.log",
+      "seconds": 10.39,
+      "coverage": {
+        "retainedProperNames": [],
+        "mode": "warm",
+        "authored": [],
+        "covered": 9066,
+        "cacheKey": "3f5cb3e76d43e0dd8e3d73afe7d5c7bd5ccf4f86800fc66ef858fb0668b1021f",
+        "game": "firered",
+        "total": 9066,
+        "creditRows": 43,
+        "language": "de",
+        "nativeStringOverrides": 8,
+        "missing": [],
+        "translated": 9063,
+        "inapplicable": [
+          "sPluralTxt",
+          "sText_IES",
+          "sText_S"
+        ],
+        "uiKeys": 245
+      }
+    },
+    {
+      "game": "firered",
+      "language": "es",
+      "mode": "cold",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "firered-es-gba-cold.log",
+      "seconds": 13.6,
+      "coverage": {
+        "missing": [],
+        "mode": "cold",
+        "creditRows": 43,
+        "nativeStringOverrides": 5,
+        "retainedProperNames": [],
+        "total": 9066,
+        "language": "es",
+        "authored": [],
+        "translated": 9063,
+        "covered": 9066,
+        "inapplicable": [
+          "sPluralTxt",
+          "sText_IES",
+          "sText_S"
+        ],
+        "cacheKey": "782f28f58c56cb204f742a9894c8709d2a74416f8608be19f7f6c9a640b2079c",
+        "uiKeys": 245,
+        "game": "firered"
+      }
+    },
+    {
+      "game": "firered",
+      "language": "es",
+      "mode": "warm",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "firered-es-gba-warm.log",
+      "seconds": 9.55,
+      "coverage": {
+        "game": "firered",
+        "translated": 9063,
+        "cacheKey": "782f28f58c56cb204f742a9894c8709d2a74416f8608be19f7f6c9a640b2079c",
+        "creditRows": 43,
+        "mode": "warm",
+        "missing": [],
+        "nativeStringOverrides": 5,
+        "uiKeys": 245,
+        "total": 9066,
+        "inapplicable": [
+          "sPluralTxt",
+          "sText_IES",
+          "sText_S"
+        ],
+        "authored": [],
+        "retainedProperNames": [],
+        "covered": 9066,
+        "language": "es"
+      }
+    },
+    {
+      "game": "firered",
+      "language": "it",
+      "mode": "cold",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "firered-it-gba-cold.log",
+      "seconds": 21.57,
+      "coverage": {
+        "cacheKey": "ec92f326dbbcafb02609686c002acf3fedec4b0157238de4f53e01c7902f7797",
+        "creditRows": 43,
+        "inapplicable": [
+          "sPluralTxt",
+          "sText_IES",
+          "sText_S"
+        ],
+        "uiKeys": 245,
+        "translated": 9063,
+        "missing": [],
+        "authored": [],
+        "retainedProperNames": [],
+        "covered": 9066,
+        "language": "it",
+        "mode": "cold",
+        "nativeStringOverrides": 8,
+        "total": 9066,
+        "game": "firered"
+      }
+    },
+    {
+      "game": "firered",
+      "language": "it",
+      "mode": "warm",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "firered-it-gba-warm.log",
+      "seconds": 6.59,
+      "coverage": {
+        "authored": [],
+        "covered": 9066,
+        "total": 9066,
+        "language": "it",
+        "inapplicable": [
+          "sPluralTxt",
+          "sText_IES",
+          "sText_S"
+        ],
+        "creditRows": 43,
+        "mode": "warm",
+        "retainedProperNames": [],
+        "nativeStringOverrides": 8,
+        "uiKeys": 245,
+        "translated": 9063,
+        "missing": [],
+        "game": "firered",
+        "cacheKey": "ec92f326dbbcafb02609686c002acf3fedec4b0157238de4f53e01c7902f7797"
+      }
+    },
+    {
+      "game": "leafgreen",
+      "language": "de",
+      "mode": "cold",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "leafgreen-de-gba-cold.log",
+      "seconds": 8.95,
+      "coverage": {
+        "language": "de",
+        "cacheKey": "574c09af71bef01142ff55d23b51e0963e4d195005a8bd57266fa6dd91b48cf6",
+        "inapplicable": [
+          "sPluralTxt",
+          "sText_IES",
+          "sText_S"
+        ],
+        "nativeStringOverrides": 8,
+        "creditRows": 43,
+        "missing": [],
+        "mode": "cold",
+        "uiKeys": 245,
+        "translated": 9063,
+        "covered": 9066,
+        "total": 9066,
+        "game": "leafgreen",
+        "authored": [],
+        "retainedProperNames": []
+      }
+    },
+    {
+      "game": "leafgreen",
+      "language": "de",
+      "mode": "warm",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "leafgreen-de-gba-warm.log",
+      "seconds": 7.9,
+      "coverage": {
+        "uiKeys": 245,
+        "nativeStringOverrides": 8,
+        "mode": "warm",
+        "translated": 9063,
+        "game": "leafgreen",
+        "retainedProperNames": [],
+        "cacheKey": "574c09af71bef01142ff55d23b51e0963e4d195005a8bd57266fa6dd91b48cf6",
+        "authored": [],
+        "covered": 9066,
+        "creditRows": 43,
+        "total": 9066,
+        "missing": [],
+        "inapplicable": [
+          "sPluralTxt",
+          "sText_IES",
+          "sText_S"
+        ],
+        "language": "de"
+      }
+    },
+    {
+      "game": "leafgreen",
+      "language": "es",
+      "mode": "cold",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "leafgreen-es-gba-cold.log",
+      "seconds": 12.97,
+      "coverage": {
+        "total": 9066,
+        "mode": "cold",
+        "uiKeys": 245,
+        "nativeStringOverrides": 5,
+        "inapplicable": [
+          "sPluralTxt",
+          "sText_IES",
+          "sText_S"
+        ],
+        "creditRows": 43,
+        "game": "leafgreen",
+        "language": "es",
+        "authored": [],
+        "retainedProperNames": [],
+        "covered": 9066,
+        "cacheKey": "eb64f73f2ccadb3f3bc6043d7ab5e25c5c20231d5e9ed5c99609806a7574bf0f",
+        "missing": [],
+        "translated": 9063
+      }
+    },
+    {
+      "game": "leafgreen",
+      "language": "es",
+      "mode": "warm",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "leafgreen-es-gba-warm.log",
+      "seconds": 11.24,
+      "coverage": {
+        "mode": "warm",
+        "total": 9066,
+        "creditRows": 43,
+        "cacheKey": "eb64f73f2ccadb3f3bc6043d7ab5e25c5c20231d5e9ed5c99609806a7574bf0f",
+        "translated": 9063,
+        "uiKeys": 245,
+        "missing": [],
+        "inapplicable": [
+          "sPluralTxt",
+          "sText_IES",
+          "sText_S"
+        ],
+        "language": "es",
+        "nativeStringOverrides": 5,
+        "game": "leafgreen",
+        "authored": [],
+        "covered": 9066,
+        "retainedProperNames": []
+      }
+    },
+    {
+      "game": "leafgreen",
+      "language": "fr",
+      "mode": "cold",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "leafgreen-fr-gba-cold.log",
+      "seconds": 19.25,
+      "coverage": {
+        "missing": [],
+        "total": 9066,
+        "cacheKey": "85980eda008a622aed2abd186128f96d051b9355556aa47d0bd83c731f180de7",
+        "creditRows": 43,
+        "game": "leafgreen",
+        "nativeStringOverrides": 6,
+        "mode": "cold",
+        "inapplicable": [
+          "sPluralTxt",
+          "sText_IES",
+          "sText_S"
+        ],
+        "translated": 9063,
+        "language": "fr",
+        "uiKeys": 245,
+        "authored": [],
+        "retainedProperNames": [],
+        "covered": 9066
+      }
+    },
+    {
+      "game": "leafgreen",
+      "language": "fr",
+      "mode": "warm",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "leafgreen-fr-gba-warm.log",
+      "seconds": 11.87,
+      "coverage": {
+        "retainedProperNames": [],
+        "mode": "warm",
+        "creditRows": 43,
+        "game": "leafgreen",
+        "authored": [],
+        "covered": 9066,
+        "uiKeys": 245,
+        "nativeStringOverrides": 6,
+        "language": "fr",
+        "total": 9066,
+        "translated": 9063,
+        "missing": [],
+        "inapplicable": [
+          "sPluralTxt",
+          "sText_IES",
+          "sText_S"
+        ],
+        "cacheKey": "85980eda008a622aed2abd186128f96d051b9355556aa47d0bd83c731f180de7"
+      }
+    },
+    {
+      "game": "ruby",
+      "language": "de",
+      "mode": "cold",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "ruby-de-gba-cold.log",
+      "seconds": 21.08,
+      "coverage": {
+        "covered": 13457,
+        "cacheKey": "49f613b1a05300283e39edca5de99497bcbb299cd3c882a0aab100b534018a4e",
+        "translated": 13443,
+        "creditRows": 245,
+        "language": "de",
+        "total": 13457,
+        "inapplicable": [],
+        "missing": [],
+        "game": "ruby",
+        "uiKeys": 245,
+        "nativeStringOverrides": 3,
+        "mode": "cold",
+        "authored": [
+          "Text_Version"
+        ],
+        "retainedProperNames": [
+          "Text_ABA",
+          "Text_Fujihara",
+          "Text_Hertzog",
+          "Text_Howitt",
+          "Text_Lillygren",
+          "Text_Maurer",
+          "Text_McMahill",
+          "Text_NFotB",
+          "Text_Ogasawara",
+          "Text_Okada",
+          "Text_RNZFotB",
+          "Text_Ridgeway",
+          "Text_Tilden"
+        ]
+      }
+    },
+    {
+      "game": "ruby",
+      "language": "de",
+      "mode": "warm",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "ruby-de-gba-warm.log",
+      "seconds": 15.57,
+      "coverage": {
+        "retainedProperNames": [
+          "Text_ABA",
+          "Text_Fujihara",
+          "Text_Hertzog",
+          "Text_Howitt",
+          "Text_Lillygren",
+          "Text_Maurer",
+          "Text_McMahill",
+          "Text_NFotB",
+          "Text_Ogasawara",
+          "Text_Okada",
+          "Text_RNZFotB",
+          "Text_Ridgeway",
+          "Text_Tilden"
+        ],
+        "missing": [],
+        "total": 13457,
+        "cacheKey": "49f613b1a05300283e39edca5de99497bcbb299cd3c882a0aab100b534018a4e",
+        "creditRows": 245,
+        "nativeStringOverrides": 3,
+        "uiKeys": 245,
+        "authored": [
+          "Text_Version"
+        ],
+        "covered": 13457,
+        "language": "de",
+        "game": "ruby",
+        "mode": "warm",
+        "translated": 13443,
+        "inapplicable": []
+      }
+    },
+    {
+      "game": "sapphire",
+      "language": "de",
+      "mode": "cold",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "sapphire-de-gba-cold.log",
+      "seconds": 25.83,
+      "coverage": {
+        "language": "de",
+        "nativeStringOverrides": 3,
+        "creditRows": 245,
+        "game": "sapphire",
+        "total": 13457,
+        "translated": 13440,
+        "cacheKey": "162ed15f0a4352487ba28d3eb97d8bebe45601c5e7ecb386a98caa0508e83b01",
+        "uiKeys": 245,
+        "authored": [
+          "Category_EnglishVersionCoordinators",
+          "Category_NOAProductTesting",
+          "Category_Translator",
+          "Text_Version"
+        ],
+        "retainedProperNames": [
+          "Text_ABA",
+          "Text_Fujihara",
+          "Text_Hertzog",
+          "Text_Howitt",
+          "Text_Lillygren",
+          "Text_Maurer",
+          "Text_McMahill",
+          "Text_NFotB",
+          "Text_Ogasawara",
+          "Text_Okada",
+          "Text_RNZFotB",
+          "Text_Ridgeway",
+          "Text_Tilden"
+        ],
+        "covered": 13457,
+        "missing": [],
+        "inapplicable": [],
+        "mode": "cold"
+      }
+    },
+    {
+      "game": "sapphire",
+      "language": "de",
+      "mode": "warm",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "sapphire-de-gba-warm.log",
+      "seconds": 12.69,
+      "coverage": {
+        "game": "sapphire",
+        "nativeStringOverrides": 3,
+        "translated": 13440,
+        "authored": [
+          "Category_EnglishVersionCoordinators",
+          "Category_NOAProductTesting",
+          "Category_Translator",
+          "Text_Version"
+        ],
+        "covered": 13457,
+        "cacheKey": "162ed15f0a4352487ba28d3eb97d8bebe45601c5e7ecb386a98caa0508e83b01",
+        "missing": [],
+        "mode": "warm",
+        "creditRows": 245,
+        "inapplicable": [],
+        "uiKeys": 245,
+        "retainedProperNames": [
+          "Text_ABA",
+          "Text_Fujihara",
+          "Text_Hertzog",
+          "Text_Howitt",
+          "Text_Lillygren",
+          "Text_Maurer",
+          "Text_McMahill",
+          "Text_NFotB",
+          "Text_Ogasawara",
+          "Text_Okada",
+          "Text_RNZFotB",
+          "Text_Ridgeway",
+          "Text_Tilden"
+        ],
+        "language": "de",
+        "total": 13457
+      }
+    },
+    {
+      "game": "emerald",
+      "language": "de",
+      "mode": "cold",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "emerald-de-gba-cold.log",
+      "seconds": 26.44,
+      "coverage": {
+        "game": "emerald",
+        "translated": 15653,
+        "uiKeys": 245,
+        "nativeStringOverrides": 8,
+        "missing": [],
+        "creditRows": 275,
+        "cacheKey": "0f7de513d2a19963e73e1eec07d90a8d0e6c8dbd9addfbc570326accb700cfac",
+        "covered": 15655,
+        "language": "de",
+        "total": 15655,
+        "authored": [],
+        "retainedProperNames": [
+          "sCreditsText_NicolaPrattBarlow",
+          "sCreditsText_RoyalNewZealandFederationBlind"
+        ],
+        "inapplicable": [],
+        "mode": "cold"
+      }
+    },
+    {
+      "game": "emerald",
+      "language": "de",
+      "mode": "warm",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "emerald-de-gba-warm.log",
+      "seconds": 16.61,
+      "coverage": {
+        "cacheKey": "0f7de513d2a19963e73e1eec07d90a8d0e6c8dbd9addfbc570326accb700cfac",
+        "creditRows": 275,
+        "nativeStringOverrides": 8,
+        "game": "emerald",
+        "mode": "warm",
+        "uiKeys": 245,
+        "retainedProperNames": [
+          "sCreditsText_NicolaPrattBarlow",
+          "sCreditsText_RoyalNewZealandFederationBlind"
+        ],
+        "missing": [],
+        "inapplicable": [],
+        "language": "de",
+        "total": 15655,
+        "authored": [],
+        "covered": 15655,
+        "translated": 15653
+      }
+    },
+    {
+      "game": "emerald",
+      "language": "es",
+      "mode": "cold",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "emerald-es-gba-cold.log",
+      "seconds": 14.09,
+      "coverage": {
+        "covered": 15655,
+        "total": 15655,
+        "creditRows": 275,
+        "uiKeys": 245,
+        "authored": [],
+        "retainedProperNames": [
+          "sCreditsText_NicolaPrattBarlow",
+          "sCreditsText_RoyalNewZealandFederationBlind"
+        ],
+        "inapplicable": [],
+        "nativeStringOverrides": 8,
+        "mode": "cold",
+        "translated": 15653,
+        "missing": [],
+        "game": "emerald",
+        "cacheKey": "0ba646ea2b9a156f77bf93740333425bcb97cde2d5c5c12dc0f7f6f53047324a",
+        "language": "es"
+      }
+    },
+    {
+      "game": "emerald",
+      "language": "es",
+      "mode": "warm",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "emerald-es-gba-warm.log",
+      "seconds": 8.0,
+      "coverage": {
+        "covered": 15655,
+        "inapplicable": [],
+        "total": 15655,
+        "retainedProperNames": [
+          "sCreditsText_NicolaPrattBarlow",
+          "sCreditsText_RoyalNewZealandFederationBlind"
+        ],
+        "translated": 15653,
+        "language": "es",
+        "cacheKey": "0ba646ea2b9a156f77bf93740333425bcb97cde2d5c5c12dc0f7f6f53047324a",
+        "missing": [],
+        "uiKeys": 245,
+        "nativeStringOverrides": 8,
+        "mode": "warm",
+        "creditRows": 275,
+        "game": "emerald",
+        "authored": []
+      }
+    },
+    {
+      "game": "emerald",
+      "language": "fr",
+      "mode": "cold",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "emerald-fr-gba-cold.log",
+      "seconds": 11.31,
+      "coverage": {
+        "language": "fr",
+        "authored": [],
+        "covered": 15655,
+        "total": 15655,
+        "game": "emerald",
+        "mode": "cold",
+        "cacheKey": "0f430c59d831860123f72afc47d16d73bacd14d0bea09305601a81946b437a67",
+        "creditRows": 275,
+        "inapplicable": [],
+        "retainedProperNames": [
+          "sCreditsText_NicolaPrattBarlow",
+          "sCreditsText_RoyalNewZealandFederationBlind"
+        ],
+        "uiKeys": 245,
+        "nativeStringOverrides": 10,
+        "translated": 15653,
+        "missing": []
+      }
+    },
+    {
+      "game": "emerald",
+      "language": "fr",
+      "mode": "warm",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "emerald-fr-gba-warm.log",
+      "seconds": 7.99,
+      "coverage": {
+        "inapplicable": [],
+        "game": "emerald",
+        "retainedProperNames": [
+          "sCreditsText_NicolaPrattBarlow",
+          "sCreditsText_RoyalNewZealandFederationBlind"
+        ],
+        "mode": "warm",
+        "uiKeys": 245,
+        "nativeStringOverrides": 10,
+        "creditRows": 275,
+        "language": "fr",
+        "cacheKey": "0f430c59d831860123f72afc47d16d73bacd14d0bea09305601a81946b437a67",
+        "missing": [],
+        "translated": 15653,
+        "total": 15655,
+        "authored": [],
+        "covered": 15655
+      }
+    },
+    {
+      "game": "emerald",
+      "language": "it",
+      "mode": "cold",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "emerald-it-gba-cold.log",
+      "seconds": 16.05,
+      "coverage": {
+        "game": "emerald",
+        "uiKeys": 245,
+        "total": 15655,
+        "creditRows": 275,
+        "language": "it",
+        "nativeStringOverrides": 8,
+        "translated": 15653,
+        "covered": 15655,
+        "inapplicable": [],
+        "cacheKey": "2823a85668adf844d9e6e7b01719583afbcbf16e4a9afd7135573d4af33d9c71",
+        "authored": [],
+        "mode": "cold",
+        "missing": [],
+        "retainedProperNames": [
+          "sCreditsText_NicolaPrattBarlow",
+          "sCreditsText_RoyalNewZealandFederationBlind"
+        ]
+      }
+    },
+    {
+      "game": "emerald",
+      "language": "it",
+      "mode": "warm",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "emerald-it-gba-warm.log",
+      "seconds": 9.04,
+      "coverage": {
+        "total": 15655,
+        "inapplicable": [],
+        "translated": 15653,
+        "retainedProperNames": [
+          "sCreditsText_NicolaPrattBarlow",
+          "sCreditsText_RoyalNewZealandFederationBlind"
+        ],
+        "mode": "warm",
+        "uiKeys": 245,
+        "nativeStringOverrides": 8,
+        "cacheKey": "2823a85668adf844d9e6e7b01719583afbcbf16e4a9afd7135573d4af33d9c71",
+        "language": "it",
+        "missing": [],
+        "authored": [],
+        "covered": 15655,
+        "game": "emerald",
+        "creditRows": 275
+      }
+    }
+  ],
+  "gbaRestartChecks": [
+    {
+      "game": "firered",
+      "language": "de",
+      "mode": "english",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "firered-de-gba-english.log",
+      "seconds": 2.66
+    },
+    {
+      "game": "firered",
+      "language": "de",
+      "mode": "disabled",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "firered-de-gba-disabled.log",
+      "seconds": 1.53
+    },
+    {
+      "game": "leafgreen",
+      "language": "de",
+      "mode": "english",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "leafgreen-de-gba-english.log",
+      "seconds": 1.51
+    },
+    {
+      "game": "leafgreen",
+      "language": "de",
+      "mode": "disabled",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "leafgreen-de-gba-disabled.log",
+      "seconds": 1.15
+    },
+    {
+      "game": "ruby",
+      "language": "de",
+      "mode": "english",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "ruby-de-gba-english.log",
+      "seconds": 3.3
+    },
+    {
+      "game": "ruby",
+      "language": "de",
+      "mode": "disabled",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "ruby-de-gba-disabled.log",
+      "seconds": 1.78
+    },
+    {
+      "game": "sapphire",
+      "language": "de",
+      "mode": "english",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "sapphire-de-gba-english.log",
+      "seconds": 2.16
+    },
+    {
+      "game": "sapphire",
+      "language": "de",
+      "mode": "disabled",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "sapphire-de-gba-disabled.log",
+      "seconds": 1.78
+    },
+    {
+      "game": "emerald",
+      "language": "de",
+      "mode": "english",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "emerald-de-gba-english.log",
+      "seconds": 1.97
+    },
+    {
+      "game": "emerald",
+      "language": "de",
+      "mode": "disabled",
+      "passed": true,
+      "fingerprint": "20d09d1119108e2df7dca8d156ea7b6c1509947710e724693a9b3ce45e39bb8d",
+      "log": "emerald-de-gba-disabled.log",
+      "seconds": 1.69
+    }
+  ],
+  "gbaRegistryAccounting": {
+    "firered_de": {
+      "total": 9066,
+      "translated": 9063,
+      "covered": 9066,
+      "authored": [],
+      "retainedProperNames": [],
+      "inapplicable": [
+        "sPluralTxt",
+        "sText_IES",
+        "sText_S"
+      ],
+      "missing": [],
+      "creditRows": 43
+    },
+    "firered_es": {
+      "total": 9066,
+      "translated": 9063,
+      "covered": 9066,
+      "authored": [],
+      "retainedProperNames": [],
+      "inapplicable": [
+        "sPluralTxt",
+        "sText_IES",
+        "sText_S"
+      ],
+      "missing": [],
+      "creditRows": 43
+    },
+    "firered_it": {
+      "total": 9066,
+      "translated": 9063,
+      "covered": 9066,
+      "authored": [],
+      "retainedProperNames": [],
+      "inapplicable": [
+        "sPluralTxt",
+        "sText_IES",
+        "sText_S"
+      ],
+      "missing": [],
+      "creditRows": 43
+    },
+    "leafgreen_de": {
+      "total": 9066,
+      "translated": 9063,
+      "covered": 9066,
+      "authored": [],
+      "retainedProperNames": [],
+      "inapplicable": [
+        "sPluralTxt",
+        "sText_IES",
+        "sText_S"
+      ],
+      "missing": [],
+      "creditRows": 43
+    },
+    "leafgreen_es": {
+      "total": 9066,
+      "translated": 9063,
+      "covered": 9066,
+      "authored": [],
+      "retainedProperNames": [],
+      "inapplicable": [
+        "sPluralTxt",
+        "sText_IES",
+        "sText_S"
+      ],
+      "missing": [],
+      "creditRows": 43
+    },
+    "leafgreen_fr": {
+      "total": 9066,
+      "translated": 9063,
+      "covered": 9066,
+      "authored": [],
+      "retainedProperNames": [],
+      "inapplicable": [
+        "sPluralTxt",
+        "sText_IES",
+        "sText_S"
+      ],
+      "missing": [],
+      "creditRows": 43
+    },
+    "ruby_de": {
+      "total": 13457,
+      "translated": 13443,
+      "covered": 13457,
+      "authored": [
+        "Text_Version"
+      ],
+      "retainedProperNames": [
+        "Text_ABA",
+        "Text_Fujihara",
+        "Text_Hertzog",
+        "Text_Howitt",
+        "Text_Lillygren",
+        "Text_Maurer",
+        "Text_McMahill",
+        "Text_NFotB",
+        "Text_Ogasawara",
+        "Text_Okada",
+        "Text_RNZFotB",
+        "Text_Ridgeway",
+        "Text_Tilden"
+      ],
+      "inapplicable": [],
+      "missing": [],
+      "creditRows": 245
+    },
+    "sapphire_de": {
+      "total": 13457,
+      "translated": 13440,
+      "covered": 13457,
+      "authored": [
+        "Category_EnglishVersionCoordinators",
+        "Category_NOAProductTesting",
+        "Category_Translator",
+        "Text_Version"
+      ],
+      "retainedProperNames": [
+        "Text_ABA",
+        "Text_Fujihara",
+        "Text_Hertzog",
+        "Text_Howitt",
+        "Text_Lillygren",
+        "Text_Maurer",
+        "Text_McMahill",
+        "Text_NFotB",
+        "Text_Ogasawara",
+        "Text_Okada",
+        "Text_RNZFotB",
+        "Text_Ridgeway",
+        "Text_Tilden"
+      ],
+      "inapplicable": [],
+      "missing": [],
+      "creditRows": 245
+    },
+    "emerald_de": {
+      "total": 15655,
+      "translated": 15653,
+      "covered": 15655,
+      "authored": [],
+      "retainedProperNames": [
+        "sCreditsText_NicolaPrattBarlow",
+        "sCreditsText_RoyalNewZealandFederationBlind"
+      ],
+      "inapplicable": [],
+      "missing": [],
+      "creditRows": 275
+    },
+    "emerald_es": {
+      "total": 15655,
+      "translated": 15653,
+      "covered": 15655,
+      "authored": [],
+      "retainedProperNames": [
+        "sCreditsText_NicolaPrattBarlow",
+        "sCreditsText_RoyalNewZealandFederationBlind"
+      ],
+      "inapplicable": [],
+      "missing": [],
+      "creditRows": 275
+    },
+    "emerald_fr": {
+      "total": 15655,
+      "translated": 15653,
+      "covered": 15655,
+      "authored": [],
+      "retainedProperNames": [
+        "sCreditsText_NicolaPrattBarlow",
+        "sCreditsText_RoyalNewZealandFederationBlind"
+      ],
+      "inapplicable": [],
+      "missing": [],
+      "creditRows": 275
+    },
+    "emerald_it": {
+      "total": 15655,
+      "translated": 15653,
+      "covered": 15655,
+      "authored": [],
+      "retainedProperNames": [
+        "sCreditsText_NicolaPrattBarlow",
+        "sCreditsText_RoyalNewZealandFederationBlind"
+      ],
+      "inapplicable": [],
+      "missing": [],
+      "creditRows": 275
+    }
+  },
+  "historicalInheritance": {
+    "version": "1.4.3-europe-preview.3",
+    "commit": "8d22d8f",
+    "tested": "2026-10-17",
+    "runtimePayloadSha256": "0665ac7805c7d5daebb72c8a91a3fb9eab16ebfd77a7ffa438739131c92810e3",
+    "gbSourcesAndSharedStartupUnchanged": true,
+    "checks": [
+      "liveProfiles",
+      "gbMenuProfiles",
+      "gbCatalogProfiles",
+      "gbGameplayProfiles",
+      "gbLocalLinkProfiles",
+      "processRestartChecks",
+      "translationReview",
+      "graphicsRoundtrip"
+    ],
+    "note": "These Preview-3 results were not rerun for Preview 4. Fresh GBA results are listed separately."
+  },
+  "editorialFollowup": {
+    "method": "Focused second AI editorial pass plus automatic screening; no independent native-speaker certification",
+    "screenedCells": 5540,
+    "gbKeysPerLanguage": 1520,
+    "gbaKeysPerLanguage": 245,
+    "focus": [
+      "untranslated sentences",
+      "composed fragments and multiple format arguments",
+      "cross-generation event terminology",
+      "gender-neutral player-facing wording"
+    ],
+    "changedCells": [
+      {
+        "family": "gb",
+        "language": "es",
+        "key": "contribution is not a table"
+      },
+      {
+        "family": "gb",
+        "language": "fr",
+        "key": "Failed to boot %s:\n%s"
+      },
+      {
+        "family": "gb",
+        "language": "fr",
+        "key": "contribution is not a table"
+      },
+      {
+        "family": "gb",
+        "language": "it",
+        "key": "contribution is not a table"
+      },
+      {
+        "family": "gba",
+        "language": "es",
+        "key": "%s seems to be busy right now."
+      }
+    ],
+    "reviewedExceptions": [
+      {
+        "family": "gb",
+        "language": "es",
+        "key": "GENGAR VS NIDORINO",
+        "reason": "Gen1 movie fallback cast label; French Gen1 profiles are not supported in this preview"
+      },
+      {
+        "family": "gb",
+        "language": "es",
+        "key": "GAME FREAK inc.",
+        "reason": "Company identity"
+      },
+      {
+        "family": "gb",
+        "language": "fr",
+        "key": "GENGAR VS NIDORINO",
+        "reason": "Gen1 movie fallback cast label; French Gen1 profiles are not supported in this preview"
+      },
+      {
+        "family": "gb",
+        "language": "fr",
+        "key": "GAME FREAK inc.",
+        "reason": "Company identity"
+      },
+      {
+        "family": "gb",
+        "language": "it",
+        "key": "GENGAR VS NIDORINO",
+        "reason": "Gen1 movie fallback cast label; French Gen1 profiles are not supported in this preview"
+      },
+      {
+        "family": "gb",
+        "language": "it",
+        "key": "GAME FREAK inc.",
+        "reason": "Company identity"
+      },
+      {
+        "family": "gb",
+        "language": "it",
+        "key": "me, DJ LILY!",
+        "reason": "Italian pronoun and DJ identity"
+      }
+    ],
+    "freshGBCatalogRuns": 9,
+    "freshGBARuns": 34,
+    "unitChecks": 7,
+    "fullPlaythroughs": 0
+  }
+}

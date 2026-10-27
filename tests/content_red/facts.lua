@@ -66,10 +66,10 @@ return {
 
   -- the shipped example mod and what it is supposed to do
   exampleMod = {
-    path = "mods/example_mew_starter",
+    path = "tests/fixtures/content_red_api1",
     id = "example_mew_starter",
     species = "MEW",
-    frontSprite = "mods/example_mew_starter/assets/mew_front_inverted.png",
-    backSprite = "mods/example_mew_starter/assets/mew_back_inverted.png",
+    frontSprite = "mods/content_red_api1/assets/front_test.png",
+    backSprite = "mods/content_red_api1/assets/back_test.png",
   },
 }

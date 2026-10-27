@@ -1,0 +1,50 @@
+{
+  "passed": true,
+  "sourceStable": true,
+  "sourceSha256": "9a5382531c94c4ab4dde6c52fd90389f45e8730a4cba7df68e960c4f03969b59",
+  "commit": "6c250c956d47471292730be8d86f129df74ab1b9",
+  "results": [
+    {
+      "name": "tests/engine/native_follower_callback_owner.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.16674016699999994,
+      "logSha256": "c352b8c85a7293922e2c6e4d4a3b222eb383f36354a4eea1e9bd089ed06151b7"
+    },
+    {
+      "name": "tests/engine/follower_spawn.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 3.114523917,
+      "logSha256": "b3bd6974cb95a5d35e8204ba7bc7a918cdfd523ff769381aef351620e4e382ba"
+    },
+    {
+      "name": "tests/mod_examples_tests.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.8980932499999996,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "tests/engine/gate_hooks.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 1.1416753329999993,
+      "logSha256": "06de32809474688198620427862d9b9c7b25119a92d2ee9ff1f975c8420414a2"
+    },
+    {
+      "name": "api3",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 113.58922358299999,
+      "logSha256": "01aa4f6230d3de5eb33bc89202daac8668706368ce0c6bb6803ada556eaedb1d"
+    },
+    {
+      "name": "external-fixtures",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 8.07707225,
+      "logSha256": "c9de67c6b358ac28f98c6562c7219e078c4fbdef68ad122238936e949ad0dffe"
+    }
+  ]
+}
