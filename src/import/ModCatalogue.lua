@@ -118,12 +118,15 @@ function M.install(RI)
   RI._sbModToolbar=function(self,...) if self._catalogManage then return toolbar(self,...) end;return 0 end
   local selectTab=RI._selectTab
   RI._selectTab=function(self,tab,...)
+    self._catalogActions={};self._catalogViewport=nil;self._communityLinks={};self._communityWeekRect=nil
     if tab=='mods' and not require('src.cloud.RetroCloud').signedIn() then self._catalogManage=true
     elseif tab=='mods' and not self._catalogManage then tab='find' end
     return selectTab(self,tab,...)
   end
   local function draw(self,x,y,w,h,paged)
     if self._catalogManage and self.tab=='mods' then return legacy(self,x,y,w,h,paged) end
+    local cx,cy,cw,ch=love.graphics.getScissor()
+    self._catalogViewport={x=cx or x,y=cy or y,width=cw or w,height=ch or h}
     if not require('src.cloud.RetroCloud').signedIn() then
       local s,P,g=self._s,RI.palette(),love.graphics
       self._catalogActions={};self._communityLinks={};self._communityWeekRect=nil
@@ -334,9 +337,9 @@ function M.install(RI)
   local press=RI._sbMousepressed
   RI._sbMousepressed=function(self,x,y,...)
     if self.section=='mods' then
-      if self._sb and U.inside(self._sb.modsFind,x,y) then self._catalogManage=false end
-      if self._sb and U.inside(self._sb.modsInstalled,x,y) then self._catalogManage=true end
-      if not self._catalogManage then
+      if self._sb and U.inside(self._sb.modsFind,x,y) then self._catalogManage=false;self:_selectTab('find');self.pageScroll=0;return true end
+      if self._sb and U.inside(self._sb.modsInstalled,x,y) then self._catalogManage=true;self:_selectTab('mods');self.pageScroll=0;return true end
+      if not self._catalogManage and self._catalogViewport and U.inside(self._catalogViewport,x,y) then
         for _,r in ipairs(self._catalogActions or {}) do if U.inside(r,x,y) then
           if r.action=='account' then self:_openAccount('browse')
           elseif r.action=='developer' then self:_openDeveloper('developer')

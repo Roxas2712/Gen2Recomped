@@ -30,6 +30,24 @@ for _, version in ipairs({'gold','silver','crystal','prism','polishedcrystal'}) 
   T.eq(b:activeMon('enemy'), model.enemy, 'presentation follows current native slot')
   T.eq(b:activeMon('unknown'), nil, 'unknown side is not another active mon')
   T.eq(hp.enemy, b.enemy.shownHP, 'shown HP reads native drain')
+  T.eq(type(model.moveDef),'function',version .. ' exposes the native model definition reader')
+  if type(model.moveDef)=='function' then
+    local move=b:playerMoves()[1]
+    local def=b:moveDef(move)
+    local reader=model.moveDef
+    T.eq(model:moveDef(move.id),def,'model ID lookup is the actual native move catalog row')
+    T.eq(model:moveDef(move),def,'native instance lookup shares the same authority')
+    T.eq(model.moveDef,reader,'drawing does not allocate a new reader each access')
+    T.eq(model:moveDef('UNKNOWN_NATIVE_MOVE'),nil,'unknown move has no invented presentation record')
+    T.eq(model:moveDef(nil),nil,'missing move has no invented presentation record')
+    T.check(type(def.pp)=='number' and type(def.type)=='string','cards receive actual maximum PP and type')
+    local pp=move.pp
+    local replacement={name='LIVE CATALOG',pp=17,type='WATER'}
+    game.data.moves[move.id]=replacement
+    T.eq(model:moveDef(move.id),replacement,'catalog updates are live rather than cached at battle entry')
+    T.eq(move.pp,pp,'metadata reads cannot spend native PP')
+    game.data.moves[move.id]=def
+  end
   local initial = b.enemy.mon.hp
   b:performMove(b.player, b.enemy, {id='FIX_TACKLE',pp=10})
   T.check(b.enemy.mon.hp < initial, 'actual native move reduces HP')

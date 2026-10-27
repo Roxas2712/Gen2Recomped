@@ -117,6 +117,7 @@ function love.update(dt)
   return
  end
  if phase=='verify-report' then return end
+ if cfg.measureTraffic and Game then require('src.cloud.Presence').tick();require('src.cloud.Play').tick(Game) end
  for _=1,6 do
   frames=frames+1
   local top=Game.stack:top()
