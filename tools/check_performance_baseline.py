@@ -158,9 +158,10 @@ def main():
         instrument("src/core/Music.lua",[('require("src.audio.NitroAudio").update()',
             'BaselineSections.call("  audio: Nitro update", require("src.audio.NitroAudio").update)',1)])
         if any(SCENES[name].get("voxel") for name in planned):
-            for module,method in (("Structures","forMap"),("Gen3","prepare"),("TerrainAtlas","forMap")):
+            for module,method,export in (("Structures","forMap","Structures"),("Gen3","prepare","Gen3"),
+                                         ("TerrainAtlas","forMap","TerrainAtlas"),("VoxelDiskCache","load","Cache")):
                 instrument("mods/DRAMATIC_SHAPE/lib/"+module+".lua",[],
-                    ('return '+module,module+'.'+method+'=BaselineSections.wrapSetup("    voxel: '+module+'.'+method+'",'+module+'.'+method+')\nreturn '+module))
+                    ('return '+export,export+'.'+method+'=BaselineSections.wrapSetup("    voxel: '+module+'.'+method+'",'+export+'.'+method+')\nreturn '+export))
             changes=[]
             for fn,label,count in (("buildGrassMesh","grass",2),("buildFlowerMesh","flowers",2),("buildFigureMeshes","figures",1)):
                 changes.append(('pcall('+fn+', map)',
@@ -194,17 +195,27 @@ end
     token = str(time.time_ns())
     profiles = {}
     inputs = {}
+    results = []
+    progress = {"complete":False,"sourceCommit":head,"referenceMainCommit":reference,
+                "runtimeMatchesMain":diff.returncode==0,"hardware":hardware,"romSha1":inputs,
+                "originalEntrypointSha256":engine_hash,"hostEntrypointSha256":patched_hash,
+                "instrumentedFiles":instrumented,"testAdaptations":adaptations,"results":results}
+    def checkpoint():
+        temp=out/"progress.json.tmp"
+        temp.write_text(json.dumps(progress,indent=2)+"\n")
+        temp.replace(out/"progress.json")
+    checkpoint()
     for version, rom in cartridges.items():
         identity = "oasc-gen2recomp-qa-perf-baseline-" + token + "-" + version
         profiles[version] = identity
         qa_profile(Path.home() / "Library/Application Support/LOVE" / identity)
         inputs[version] = hashlib.sha1(rom.read_bytes()).hexdigest()
+        checkpoint()
         child = dict(env, POKEPORT_IDENTITY=identity, POKEPORT_VERSION=version,
                      POKEPORT_IMPORT_ROM=str(rom), POKEPORT_IMPORT_ONLY="1")
         with (out / (version + "-import.log")).open("w") as log:
             qa_run([str(binary), str(source)], cwd=source, env=child,
                    stdout=log, stderr=log, timeout=600, check=True)
-    results = []
     for name, variants in planned.items():
         scene = SCENES[name]
         for variant in variants:
@@ -240,6 +251,7 @@ end
                                 stdout=log, stderr=log, timeout=max(600, args.seconds + 360))
             data = json.loads(target.read_text()) if target.exists() else {"passed": False}
             results.append({"scene": name, "variant": variant, "exit": result.returncode, "report": data})
+            checkpoint()
             print(label, "PASS" if result.returncode == 0 and data["passed"] else "FAIL", flush=True)
     stable = qa_run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True,
                     text=True, check=True).stdout.strip() == head

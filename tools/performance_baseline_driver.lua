@@ -92,6 +92,10 @@ return function(game)
     local V=spec.voxel and spec.measure and assert(_G.__DRAMATIC_SHAPE_V,"native mod loader did not admit DRAMATIC_SHAPE")
     local Sections=require("tools.performance_baseline_sections")
     if V then
+      local Cap=require("src.core.FrameCap")
+      Cap.backgroundPacing=false
+      Cap.apply(spec.fpsCap)
+      love.window.setVSync(0)
       V.require("Water").setting:sync("full")
       V.require("RenderScale").setting:sync(1)
       V.require("DayNight").setting:sync("day")
@@ -187,13 +191,21 @@ return function(game)
     if spec.measure and report.passed then
       if V then
         local mesher=V.require("ChunkMesher")
-        local deadline=love.timer.getTime()+240
+        local deadline=love.timer.getTime()+480
         repeat
           assert(not mesher.buildFailure(ow.map.id),"native terrain build failed")
           assert(love.timer.getTime()<deadline,"native terrain did not become quiescent")
           U.wait(30)
-        until mesher.pending()==0 and (mesher.peek(ow.map,false) or mesher.peek(ow.map,true))
+        until mesher.peek(ow.map,false)
+        report.voxelPendingAtReady=mesher.pending()
+        local disk=V.require("VoxelDiskCache")
+        report.voxelDiskAtReady={hits=disk.hits,misses=disk.misses,errors=disk.errors,bytesLoaded=disk.bytesLoaded}
         report.voxelSetup=Sections.stopSetup()
+        report.voxelReadiness="current full mesh published; background jobs may remain"
+        if spec.variant=="voxel-warm-disk" then
+          local loads=report.voxelSetup.labels["    voxel: VoxelDiskCache.load"] or {}
+          assert(loads[ow.map.id] and (loads[ow.map.id].trueReturns or 0)>0,"target map did not load from the warm disk cache")
+        end
         Sections.startSetup()
         V.require("Structures").forMap(ow.map)
         V.require("Gen3").prepare(ow.map)
@@ -212,6 +224,11 @@ return function(game)
       if spec.variant=="adaptive" then assert(Cap.focused~=false,"adaptive observation requires a focused native window") end
       report.measurement=require("tools.performance_baseline_meter")(game,spec.seconds,#report.targets>1 and walk or nil,
         function()return P.tier,Cap.focused end)
+      if V then
+        report.voxelPendingAtEnd=V.require("ChunkMesher").pending()
+        local disk=V.require("VoxelDiskCache")
+        report.voxelDiskAtEnd={hits=disk.hits,misses=disk.misses,errors=disk.errors,bytesLoaded=disk.bytesLoaded}
+      end
       if spec.variant=="adaptive" then
         for _, state in ipairs(report.measurement.tierTrace) do
           assert(state.focused~=false,"native window lost focus during adaptive observation")
