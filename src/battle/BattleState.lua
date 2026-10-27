@@ -7679,7 +7679,7 @@ end
 function BattleState:lowHealthAlarmActive()
   local p = self.player
   if not p or self.safari or self.demo or self.result
-     or self.lowHealthAlarmDisabled then return false end
+     or self.lowHealthAlarmDisabled or self.partyItemHealing then return false end
   if self.showPlayerBack or (self.introSlide or 0) > 0 then return false end
   if p.fainted then return false end
   -- A siren that is ALREADY sounding follows the drawn bar, not the
@@ -10554,6 +10554,27 @@ function BattleState:nonMoveAction()
     if not native then action = self:enemyAction() end
     self:executeAction(self.enemy, self.player, action)
   end
+end
+
+-- Gen2's party item screen owns HealHP_SFX_GFX and its confirmation.
+-- These methods use the existing battlers and turn queue; the effect and
+-- inventory mutation have already happened exactly once in ItemEffects.
+function BattleState:beginPartyItemHeal()
+  self.partyItemHealing = true
+  self.lowHealthAlarmOn = false
+  require("src.core.Sound").stopLoop("Low_Health_Alarm")
+end
+
+function BattleState:finishPartyItemTurn(itemId, mon)
+  if mon and self.player and mon == self.player.mon then
+    self.player.shownHP = mon.hp
+    self.player.drainFloor = nil
+  end
+  self.partyItemHealing = nil
+  self:itemUsed({})
+  -- This producer commits the real item turn. Resume that queue explicitly
+  -- after the party owner closes, as the native Gen2 controller does.
+  self.phase = BattleQueuePhase.name()
 end
 
 -- called by BagMenu after an item is used in battle (consumes the turn)
@@ -13477,7 +13498,7 @@ function BattleState:drawTextAreaInner()
         -- the type record's display name (a mod type shows its name, and
         -- PSYCHIC_TYPE prints PSYCHIC like the original)
         Font.draw(def.type and TypeChart.displayName(def.type) or "", 16, 80)
-        local maxPP = def.pp + (sel.ppUps or 0) * math.floor(def.pp / 5)
+        local maxPP = require("src.pokemon.Pokemon").maxPP(def, sel)
         Font.draw(("%2d/%2d"):format(sel.pp, maxPP), 40, 88)
       end
     end

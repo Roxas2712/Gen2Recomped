@@ -17,6 +17,12 @@ def main():
     parser.add_argument('--test',action='store_true')
     args=parser.parse_args()
     qa=preflight.qa_manager()
+    def finish(code):
+        if code==0:
+            from qa_transient_storage import clean_cargo
+            reclaimed=clean_cargo(qa._storage,ROOT,min_age=0)
+            print('Cargo intermediates reclaimed:',reclaimed,flush=True)
+        return code
     for source in [ROOT,WORK]:qa.qa_source(source)
     qa.qa_cache(CACHE)
     qa._storage.check_space()
@@ -55,8 +61,8 @@ def main():
         print('Vertex handoff tests:',result.returncode,flush=True)
         if result.returncode==0 and '1 passed; 0 failed' not in (CACHE/'native-handoff-tests.log').read_text():
             print('Vertex handoff test was not discovered',file=sys.stderr);return 1
-        return result.returncode
-    return 0
+        return finish(result.returncode)
+    return finish(0)
 
 if __name__=='__main__':
     try:sys.exit(main())
