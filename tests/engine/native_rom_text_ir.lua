@@ -65,6 +65,8 @@ for _,code in ipairs{13,255}do
  T.eq(reader(bytes(0xF8,code,0xFF)):readText(0,3,nil,true),nil,'unknown button control stays rejected')
 end
 T.eq(reader(bytes(0xF9,24,0xFF)):readText(0,3,nil,true),nil,'unsupported extended bank cells stay rejected')
+local header,count=Catalog.bind(e,{}, {gString_Help=0,gString_NotText=0})
+T.eq(count,1);T.neq(header.named.gString_Help,nil);T.eq(header.named.gString_NotText,nil)
 local dataStages,assetStages=Extractor.DATA_STAGES,Extractor.ASSET_STAGES
 Extractor.DATA_STAGES={'initial','later'};Extractor.ASSET_STAGES={}
 local finish=reader(source);local emitted
@@ -91,6 +93,7 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  catalog.edition=edition
  T.eq(Text.plain('gText_Greeting'),(plain:gsub('{PLAYER}','NATIVE')))
  T.eq(Text.plain('gText_Greeting',{playerName='SOURCE'}),(plain:gsub('{PLAYER}','SOURCE')))
+ T.eq(Text._expand('{PLAYER}/{VAR1}/{RIVAL}',{stringVars={'BUFFER'}}),'NATIVE/BUFFER/RIVAL')
  data._portableScriptText={gText_Greeting={value='private VM prose'}}
  T.eq(Text.plain('gText_Greeting'),(plain:gsub('{PLAYER}','NATIVE')),'VM text does not replace native prose')
  data._romTextGeneration=3;data.romText={gText_Greeting='Native prose override'}
