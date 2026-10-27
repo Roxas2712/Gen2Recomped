@@ -188,6 +188,21 @@ for _,offset in ipairs({1,2})do
  else T.eq(draws,0,'non-overlapping native connection strip never rolls')end
  T.eq(w.map.id,def.id,'fishing query cannot load or switch the current map')
 end
+for _,covered in ipairs({false,true})do
+ local w,g,data,def,ts=fixture();w.player.cellX=5
+ local dest={id='FISH_DEST',tileset='FISH',width=3,height=3,blocks={10,11,12,13,14,15,16,17,18}}
+ data.maps[dest.id]=dest;def.connections.east={map=dest.id,offset=1}
+ for i=41,80 do ts.collision[i]=0x29 end
+ g.save.inventory.ITEM_058=1;g.save.registeredItem='ITEM_058'
+ local foreign={name='unrelated screen'};if covered then g.stack:push(foreign)end
+ local use=w.useRod;local calls=0;w.useRod=function(self,rod)calls=calls+1;return use(self,rod)end
+ BagMenu.useRegistered(g)
+ T.eq(calls,covered and 0 or 1,'registered rod uses native boundary water and respects overlays')
+ if covered then
+  T.eq(g.stack.states[1],foreign,'registered item cannot close another screen');T.eq(w.fishing,nil);T.eq(draws,0)
+ else T.eq(w.fishing.bobber.cellX,6);T.eq(w.fishing.wild.level,7)end
+ T.eq(g.save.inventory.ITEM_058,1)
+end
 do
  local w=fixture();local roll=w.rollFishing;local calls=0
  w.rollFishing=function(self,rod)
