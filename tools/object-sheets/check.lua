@@ -106,7 +106,7 @@ for _,name in ipairs({'Gen3EmeraldPresentation','Gen3FrlgPresentation','Gen3RsPr
   'Gen3RsBag','Gen3RsSummaryAssets','Gen3RsPartyAssets','Gen3RsMapData',
   'Gen3RsBirchAssets','Gen3RsStarterAssets','Gen3RsBattlePanelAssets',
   'Gen3RsWallyAssets','Gen3RsPokenavAssets','Gen3RsStorageAssets',
-  'Gen3RsPokedexAssets','Gen3RsShopAssets','Gen3NativeHealthboxAssets'})do
+  'Gen3RsPokedexAssets','Gen3RsShopAssets','Gen3NativeHealthboxAssets','Gen3StatGrowthAssets'})do
   local module=require('src.import.'..name)
   nativeMissing[#nativeMissing+1]={module,module.missing}
   module.missing=function()return{}end
