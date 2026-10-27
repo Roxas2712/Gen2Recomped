@@ -156,7 +156,8 @@ function M.new(session,options)
   self.paused=not self.paused;if not self.duel then self:command{action='pause',value=self.paused}end
   if self.paused then self.sound:stop()end
  end
- function self:keypressed(key)
+ function self:keypressed(key,_,isrepeat)
+  if isrepeat then return end
   local changed=false
   if key=='escape'then self:togglePause()
   elseif self.paused and key=='q'then self:stop()

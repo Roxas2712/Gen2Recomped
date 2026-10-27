@@ -66,5 +66,11 @@
     "A second focus-pausing display test was stopped after its automated pause UI interfered with manual play. Normal demo payload contains no such driver.",
     "Live Pinball friend duels still require the server contract; only synthetic client regressions were run here."
   ],
-  "roms_or_generated_game_libraries_in_app": false
+  "roms_or_generated_game_libraries_in_app": false,
+  "normal_controls": {
+    "passed": true,
+    "held_escape_repeats": 20,
+    "held_f6_repeats": 20,
+    "focus_change_does_not_auto_pause": true
+  }
 }
