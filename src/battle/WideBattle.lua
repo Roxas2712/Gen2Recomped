@@ -11,6 +11,7 @@
 -- with their status lower right, a full-width message window, a split
 -- prompt/command window, and a 2x2 move menu with an attached PP/type panel.
 
+local BattleQueuePhase = require("src.battle.BattleQueuePhase")
 local Font = require("src.render.Font")
 local HudTiles = require("src.render.HudTiles")
 local PaletteFX = require("src.render.PaletteFX")
@@ -359,7 +360,7 @@ local function drawMoveMenu(battle)
 end
 
 local function drawTextArea(battle)
-  if battle.phase == "messages" and (battle.current or battle.animPlaying) then
+  if BattleQueuePhase.active(battle) and (battle.current or battle.animPlaying) then
     drawMessageBox(battle)
   elseif battle.phase == "menu" then
     drawCommandMenu(battle)

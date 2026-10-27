@@ -1,0 +1,25 @@
+name: native Gen2 queue screen contract
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: gen2-queue-screen-contract-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install ROM-free runtime
+        run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: Native queue, screen and available menu owners
+        run: |
+          luajit tests/engine/gen2_battle_queue_view.lua
+          luajit tests/engine/gen2_battle_pack.lua
+          luajit tests/engine/gen2_battle_live_view.lua
+          luajit tests/engine/gen2_battle_submenu.lua
+          luajit tests/engine/gen2_summary_contract.lua
+          luajit tests/engine/frlg_battle_gender.lua
