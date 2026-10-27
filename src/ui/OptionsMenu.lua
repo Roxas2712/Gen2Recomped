@@ -967,12 +967,27 @@ function OptionsMenu:update(dt)
                                        #rows, cancelRow)
 end
 
-function OptionsMenu:draw()
+local function drawPanel(self)
   if self.view then
     return OptionRows.draw(self.game,self.view,self.index,self.scroll or 0)
   end
   OptionRows.draw(self.game, self.rows, self.index, self.scroll or 0,
                   "CANCEL", #self.rows + 1)
+end
+
+function OptionsMenu:draw()
+  return drawPanel(self)
+end
+
+-- Gen2 presentation providers wrap this public drawer with a window-sized
+-- menu. Without it they only see draw() under the cartridge-grid transform,
+-- so their text/layout is rasterized at GB resolution or clipped. Retain the
+-- native panel as the fallback and leave the other editions' canvas path alone.
+function OptionsMenu:drawsWidescreen() return GameVersion.isGen2() end
+function OptionsMenu:wantsFillScale() return GameVersion.isGen2() end
+function OptionsMenu:drawWidescreen(width, height)
+  return require("src.ui.Gen2Chrome").withPanel(width, height, 1, 1, 1,
+    function() drawPanel(self) end)
 end
 
 -- see the note above buildRows: the Gen 3 OPTION screen appends these
