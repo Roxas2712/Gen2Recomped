@@ -34,7 +34,13 @@ for _,edition in ipairs({'firered','leafgreen','ruby','sapphire','emerald'})do
    T.eq(c.target.mon.hp,before-expected,'public effect delegation/override owns its fixed amount')
    T.eq(calculations,custom and 0 or 1,'authored fixed amounts retain their original calculation ownership')
    T.eq(f.e.calls,mode=='fallback'and 0 or 1,'complete registry dispatch retains the authored handler')
-   if custom then T.eq(#rng,1,'complete authored amount has no hidden native Psywave draw')end
+   if custom then
+    -- The authored amount owns calculation, while the selected R/S script
+    -- still reaches its zero-effect chance opcode after the HP command.
+    local expectedRng={{1,100}}
+    if edition=='ruby'or edition=='sapphire'then expectedRng[#expectedRng+1]={0,99}end
+    T.same(rng,expectedRng,'authored fixed amount preserves accuracy and the native zero-effect opcode without a hidden Psywave draw')
+   end
    if mode~='custom-amount'then T.eq(imported[('MOVE_%03d'):format(number)].fixedDamage,nil,'native dispatch never rewrites imported move rows')end
    f.data.move_effects=saved;f.close()
   end

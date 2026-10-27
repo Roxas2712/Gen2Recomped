@@ -151,6 +151,7 @@ function S.apply(ctx, spec, chance)
   return false, {}
 end
 function S.run(ctx, record)
+  require('src.battle.Gen3ZeroChance').finish(ctx)
   local spec = effects[tonumber(ctx.move.gen3Effect)]
   if not spec then
     return false

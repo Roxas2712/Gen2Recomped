@@ -59,8 +59,11 @@ for _,edition in ipairs({'firered','leafgreen','ruby','sapphire','emerald'})do
   T.eq(events[1].crit,false,'complete replacement has no invented critical')
   T.eq(draws[1][1],1,'actual action still runs accuracy')
   local rs=edition=='ruby'or edition=='sapphire'
-  T.eq(#draws,rs and 2 or 1,'complete hook never causes a hidden critical/calculation draw')
-  if rs then T.same(draws[2],{0,15},'R/S still reaches its later adjustment command')end
+  T.eq(#draws,rs and 3 or 1,'complete hook skips hidden calculation while retaining the selected native commands')
+  if rs then
+   T.same(draws[2],{0,15},'R/S still reaches its later adjustment command')
+   T.same(draws[3],{0,99},'the native zero-effect chance opcode follows HP damage even for a complete calculation override')
+  end
   T.eq(b._gbaDamageCalculation,nil,'complete hook retires the native calculation owner')
   f.close()
  end

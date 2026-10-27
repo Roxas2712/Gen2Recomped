@@ -58,8 +58,10 @@ controls. A separate linked battle executes public stat edits on both peer
 roles and compares actual per-turn state components. Shared workers run the
 same consumer through each engine's actual damage hooks and faint producer.
 Their raw calculation and RNG observations remain separate from the callback
-contract: this change does not complete native chance opcodes, Explosion
-faint ordering, other battle commands or whole-mod gameplay acceptance.
+contract: this change alone does not complete native chance opcodes, other
+battle commands or whole-mod gameplay acceptance. The subsequent
+[native faint-phase owner](native-gba-faint-phases.md) qualifies Explosion
+ordering and selected zero-effect chance commands separately.
 
 Run the shared comparison with `tools/battler_records_contract.py`, supplying
 `--reference-root`, `--lua` and a new `--output` directory. A local maintained
@@ -68,4 +70,6 @@ The standard matrix has 24 isolated workers and 216 paired cases: Red, Gold
 and all five GBA editions, including actual right-hand GBA doubles. A false
 `native_math_equal` or `gba_full_raw_rng_equal` remains visible independently
 of callback success. The retained Red/Gold calculation differences and the
-classified R/S trailing chance opcode still require native-owner work.
+nonzero/dynamic R/S chance payloads still require native-owner work. The
+calculation/adjustment comparison now requires full raw RNG equality for its
+fixture families; its former trailing-draw exception has been removed.

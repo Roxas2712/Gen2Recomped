@@ -23,7 +23,7 @@ Damage EffectRegistry EnemyActionContext EnemyMoveChoice Experience FieldResidua
 Gen2AnimPlayer Gen2BattleView Gen2Wild Gen3AI Gen3AIAttackingMoves Gen3AIItemKnowledge
 Gen3AIMoveKnowledge Gen3AIOrder Gen3AIPartyStatus Gen3AIQueries Gen3Accuracy Gen3Arena Gen3BallAnim
 Gen3BatonPass Gen3Battle Gen3BattleWeather Gen3BeatUp Gen3Builtins Gen3Catching Gen3Critical
-Gen3CrashDamage Gen3DamageAdjustment Gen3DamageStats Gen3Explosion Gen3FixedDamage Gen3Disable Gen3Encore Gen3FollowMe Gen3HelpingHand Gen3LockOn Gen3MoveAnim
+Gen3CrashDamage Gen3DamageAdjustment Gen3DamageStats Gen3Explosion Gen3Faint Gen3ZeroChance Gen3FixedDamage Gen3Disable Gen3Encore Gen3FollowMe Gen3HelpingHand Gen3LockOn Gen3MoveAnim
 Gen3MoveEffects Gen3MultiHit Gen3HitHistory Gen3OHKO Gen3OrderCore Gen3Palace Gen3Rage Gen3Secondary Gen3SleepTalk
 Gen3TripleKick Gen4AnimMath Gen4BallAnim Gen4Battle Gen4Catching Gen4EffectProjection
 Gen4MoveAnimExtras Gen4MoveAnimFuncsA Gen4MoveAnimFuncsB Gen4MoveAnimFuncsC Gen4MoveAnimFuncsD
@@ -33,7 +33,7 @@ Gen5MoveEffects Gen5MoveRules Gen5Transform HeldItemRead HeldItems HoldItems Men
 MoveEffects MoveNavigation POS PlayerPartyScope RulesetDefaults Status StatusHUDVisibility
 StatusRegistry Targeting TrainerAI TurnOrder TypeChart UIVisibility Weather WideBattle
 _actionTargetOrder _aiHistory _backdropLive _backdropPolled _battle _dsThrowQuads _frlgCallbackLives
-_gbaDamageCalculation _gbaActionFrame _gbaMoveFrame _gbaResidualPriority _gen3TrainerItems _gen3BatonParty _gen3BatonPending _gen3BatonPoll
+_gbaLogicalFaint _gbaDamageCalculation _gbaActionFrame _gbaMoveFrame _gbaResidualPriority _gen3TrainerItems _gen3BatonParty _gen3BatonPending _gen3BatonPoll
 _gen3BatonRequest _gen3BatonSwitching _gen3HelpingHand _gen3OamCompositedFrame
 _gen3OamGlobalTieResidual _gen3OamObjectRanks _gen3OamResidual _gen3SurfaceKey _gen3SurfaceW
 _gen4SurfaceKey _gen4SurfaceW _gen5Text _mementoTiming _modFieldResidualTurn _nativeOrderReady
@@ -299,6 +299,7 @@ local EXCLUDED = names(
   "linkBattle safari gen4Safari ghost scopeReveal demo pokedudeDemo bugContest palace arena gen3Frontier battleTower dead result"
 )
 local function decision(battle)
+  assert(not battle._gbaFaintRelease and not battle._gbaFaintAnnouncement, 'native faint announcement is active')
   assert(getmetatable(battle) == require("src.battle.BattleState"), "not a native battle")
   assert(PHASES[battle.phase], "battle is not at a player decision")
   for key in pairs(EXCLUDED) do
@@ -568,6 +569,7 @@ function B.validate(game, snapshot, save, actors)
         assert(type(who.mon.hp) == "number" and who.mon.hp >= 0, "invalid native HP")
         if require("src.core.GameVersion").isGen3() then
           assert(require("src.battle.Gen3HitHistory").valid(who), "invalid native GBA hit history")
+          assert(require('src.battle.Gen3Faint').valid(who), 'invalid native GBA faint state')
         end
       end
     end

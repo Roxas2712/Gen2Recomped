@@ -70,9 +70,8 @@ report = dict(status='running', inputs=hashes, source=git(ROOT, 'rev-parse', 'HE
               scope='Native calculation/adjustment commands, Explosion, confusion and Jump Kick. '
                     'Actual actions in five GBA editions, public calculation and damage-event '
                     'boundaries, right doubles/absent flank and delegated amount-only hooks. '
-                    'Full raw RNG streams are retained. The only admitted raw difference is one '
-                    'missing trailing R/S chance-opcode draw on its selected script family; '
-                    'every preceding draw and every public hook/event boundary must match. '
+                    'Full raw RNG streams, calculations and every public boundary must match. '
+                    'No missing R/S trailing chance draw is admitted. '
                     'This component result does not establish complete battle RNG, full ROM '
                     'import or unchanged-mod/gameplay acceptance.')
 report_path = args.output / 'report.json'
@@ -134,24 +133,10 @@ for edition in args.edition or EDITIONS:
                 if not equal({k:v for k,v in left.items()if k!='rng'},
                              {k:v for k,v in right.items()if k!='rng'}):
                     core_differences.append((left['number'],left['profile'],left['high']))
-        # A reached R/S chance opcode is independently documented in Gen1's
-        # effect_chance_rs.lua. No other missing/reordered RNG call is admitted.
-        chance_effects={0,44,101,41,130,87,88,40,119,189,45}
-        effect_by_number={33:0,24:44,206:101,82:41,49:130,69:87,149:88,162:40,283:189,210:119,26:45}
-        command_rng_equal = complete
-        unclassified=[]
-        if command_rng_equal:
-            for left,right in zip(pair[0]['rows'],pair[1]['rows']):
-                if equal(left['rng'],right['rng']): continue
-                reference_rng,host_rng=left['rng'],right['rng']
-                known=(edition in ('ruby','sapphire')
-                       and effect_by_number.get(left['number']) in chance_effects
-                       and len(reference_rng)==len(host_rng)+1
-                       and equal(reference_rng[:-1],host_rng)
-                       and reference_rng[-1]['lo']==0 and reference_rng[-1]['hi']==99
-                       and reference_rng[-1]['value']==((0 if left['number']==162 else 99) if left['profile'].startswith('band sticky') else (99 if left['high'] != (policy=='rng-swap') else 0)))
-                if not known: unclassified.append((left['number'],left['profile'],left['high']))
-        command_rng_equal = command_rng_equal and not unclassified
+        # Native zero-effect chance opcodes are implemented. No missing,
+        # shifted or reordered draw is accepted, including the old R/S tail.
+        unclassified = list(raw_differences)
+        command_rng_equal = complete and not raw_differences
         report['pairs'].append(dict(label='-'.join((edition,mode,policy)),equal=same,
                                     command_rng_equal=command_rng_equal,unclassified_rng_differences=unclassified,
                                     core_differences=core_differences,

@@ -181,6 +181,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     if record and record.onProtect and record.onProtect(ctx) then return end
     battle:sayNext(Strings("%s\nprotected itself!", displayName(target)))
     if ctx.gbaExplosionPrepared and record.onMiss then record.onMiss(ctx, "protected") end
+    if gba then require('src.battle.Gen3ZeroChance').finish(ctx, 'protected') end
     return
   end
 
@@ -204,6 +205,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     -- missed, its effect still needs to be activated", core.asm:3223),
     -- so the user faints against a mid-Fly/Dig target too (#528)
     if record and record.onMiss then record.onMiss(ctx, "invulnerable") end
+    if gba then require('src.battle.Gen3ZeroChance').finish(ctx, 'invulnerable') end
     return
   end
 
@@ -242,6 +244,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
       battle:sayNext(Strings("%s's\nattack missed!", displayName(user)))
       -- Jump Kick crash, Explode self-destruct
       if record and record.onMiss then record.onMiss(ctx, "accuracy") end
+      if gba then require('src.battle.Gen3ZeroChance').finish(ctx, 'accuracy') end
       user.trappingTurns = nil
       return
     end
@@ -250,9 +253,11 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   if gba and record and record.gbaAfterAccuracy then record.gbaAfterAccuracy(ctx) end
   if gba then hits = hitCount(ctx, record) end
   if gba then require("src.battle.Gen3HitHistory").prepare(battle, move, ordinaryMulti, tripleKick) end
-  if gba and user.mon.hp <= 0 and not (record and record.explode) then
+  if gba and not (record and record.explode)
+      and (require('src.battle.Gen3Faint').isFainted(user) or require('src.battle.Gen3Faint').isFainted(target)) then
     ctx.gbaNoEffect = true
     if battle._gbaMoveFrame then battle._gbaMoveFrame.noEffect = true end
+    require('src.battle.Gen3ZeroChance').finish(ctx, 'fainted')
     return
   end
 
@@ -329,6 +334,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
       battle:sayNext(Strings("It doesn't affect\n%s!", displayName(target)))
     end
     if record and record.onMiss then record.onMiss(ctx, "immune") end
+    if gba then require('src.battle.Gen3ZeroChance').finish(ctx, 'immune') end
     return
   end
   if info.missed then
@@ -368,7 +374,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   local totalDealt = 0
   local landed, brokeSub = 0, false
   for h = 1, hits do
-    if target.mon.hp <= 0 then break end
+    if target.mon.hp <= 0 and not ctx.gbaExplosionPrepared then break end
     if nativeMulti and (user.mon.hp <= 0 or h > 1 and user.mon.status == "SLP"
         and not require("src.battle.Gen3MultiHit").sleepTalk(battle)) then break end
     -- Unlike ordinary multi-hit moves, each reached native kick checks
@@ -611,6 +617,11 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   if gba then
     local frame = battle._gbaMoveFrame
     if frame then frame.noEffect = frame.noEffect or ctx.gbaNoEffect end
+    if ctx.gbaExplosionPrepared then
+      local Faint = require('src.battle.Gen3Faint')
+      if Faint.isFainted(target) then battle:onFaint(target) end
+      Faint.body(battle, frame)
+    end
     require("src.battle.GbaItemSchedule").moveEnd(battle)
   end
   if not gba and totalDealt > 0 and battle.shellBellDrain then

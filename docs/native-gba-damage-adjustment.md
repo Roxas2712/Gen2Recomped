@@ -48,12 +48,13 @@ a hidden calculation or RNG calls. Native amounts use `max(0,floor(tonumber
 or 0))`. Adjustment works on its own metadata copy. Shared classic records and
 imported move rows are not rewritten; earlier-generation owners remain intact.
 
-Native battle revision is **24**. The independent fixture digest is
-`2882b526b6881e0a`; revision23 used `44c5b775413306c1`. Mixed native battle
+Native battle revision is **25**. The independent fixture digest is
+`35f797dbee5a94af`; revision24 used `2882b526b6881e0a`. Mixed native battle
 revisions cannot enter lockstep. The legacy digest remains
 `e33d251961f2a41d` and native party codec remains1. Temporary calculation,
 Explosion and proc owners retire before a menu checkpoint; they are not saved
-as active controllers or persistent battler fields.
+as active controllers. The logical faint marker is separate persistent state;
+see [native faint phases](native-gba-faint-phases.md).
 
 ## Qualification and remaining work
 
@@ -68,12 +69,10 @@ paired cases. These are fixture actions, not complete ROM-import acceptance.
 The comparison includes HP, Substitute, PP, calculation values and RNG
 boundaries, and actual damage events. Critical/effectiveness spellings are
 projected into common numeric units; identity of every returned metadata field
-is not established. Raw RNG streams remain in the logs and report. The only
-admitted raw difference is one additional trailing R/S `0..99` chance-opcode
-draw on an explicitly selected script family. Every earlier draw and every
-observed callback boundary must still match; an unclassified difference fails.
-`passed` describes this calculation/adjustment component.
-`full_rng_equal=false` explicitly leaves complete RNG parity unqualified.
+is not established. Raw RNG streams remain in the logs and report. Every draw
+and every observed boundary must match, including the selected R/S zero-effect
+chance command. Missing trailing draws are no longer admitted. `passed` and
+`full_rng_equal` describe this fixture component, rather than every move family.
 
 Engine regressions also exercise captured public effect delegation, complete
 overrides, metadata ownership, genuine Metronome-called Explosion, native menu
@@ -81,8 +80,8 @@ rounds, public cold checkpoint/continuation and actual host/guest link peers.
 The authored one-entry Metronome pool exercises the caller's target/PP owner;
 it is not a qualification of native Metronome selection.
 
-Selected R/S chance commands and broader per-hit held-item scheduling still
-need their own native owners. Counter/Mirror Coat memory/routing, delayed
+Nonzero/dynamic R/S chance descriptors and broader per-hit held-item scheduling
+still need further native qualification. Counter/Mirror Coat memory/routing, delayed
 damage, Weather Ball/Hidden Power, default AI policy, remaining result schemas
 and original-mod/gameplay acceptance remain separate work. Recognizing an
 adjustment-site effect ID does not qualify that effect's entire implementation.
@@ -90,9 +89,9 @@ This change does not enable global GBA readiness or claim universal mod or
 whole-game compatibility.
 
 The qualified reference is `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`.
-Separate public callback observations still show missing canonical battler IDs
-and early user-faint notification during a multi-target Explosion in this
-engine. Those identity/faint contracts need their own owner and regressions;
-matching the damage events here does not qualify them. Native calculation
+Public battler records and Explosion faint phases have separate owners and
+regressions in [API3 battler records](api3-battler-records.md) and
+[native faint phases](native-gba-faint-phases.md). Matching damage events alone
+does not qualify every public battle boundary. Native calculation
 failure metadata is interpreted only by the relevant GBA hit body, preserving
 older-generation hook ownership and Explosion's special branch.

@@ -1,6 +1,15 @@
 -- Shared native called-move targeting and provenance. A caller may lend its
 -- selected PP slot to the first child body; ordinary calls lend no PP.
 local C = {}
+function C.allOtherBattlers(b, user)
+  local targets = {}
+  local order = b.linkRole == 'guest' and {1,0,3,2} or {0,1,2,3}
+  for _, id in ipairs(order) do
+    local target = b:battlerAt(id)
+    if target and target ~= user then targets[#targets+1] = target end
+  end
+  return targets
+end
 function C.call(ctx, pick, ppSlot)
   local b, user = ctx.battle, ctx.user
   local move = ctx.data.moves[pick]
@@ -11,14 +20,7 @@ function C.call(ctx, pick, ppSlot)
   if b:isDouble() and tonumber(move.target) == 32 then
     -- The native all-other-battlers script uses controller slot order,
     -- independent of speed and the generic foes-then-ally convenience list.
-    targets = {}
-    local order = b.linkRole == "guest" and { 1, 0, 3, 2 } or { 0, 1, 2, 3 }
-    for _, id in ipairs(order) do
-      local target = b:battlerAt(id)
-      if target and target ~= user and target.mon.hp > 0 then
-        targets[#targets + 1] = target
-      end
-    end
+    targets = C.allOtherBattlers(b, user)
   elseif b:isDouble() then
     targets = require("src.battle.Gen3Encore").targets(b, user, move)
   else
@@ -33,10 +35,12 @@ function C.call(ctx, pick, ppSlot)
       target,
       i > 1,
       i > 1,
-      i == 1 and ppSlot or nil
+      i == 1 and ppSlot or nil,
+      ppSlot
     ) or chained
     if b._gbaMoveFrame and b._gbaMoveFrame.gbaStopTargets then break end
   end
+  require('src.battle.Gen3Faint').flush(b, b._gbaMoveFrame)
   -- A nested native caller owns the resulting history; an ordinary child
   -- records this caller, including the existing switch/resume behavior.
   if not chained then
