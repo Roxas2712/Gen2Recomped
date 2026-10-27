@@ -71,6 +71,33 @@ local function bags(battle)
   return battle._gen3TrainerItems
 end
 
+-- Checkpoint graphs preserve the observed bag, not a new read of the class.
+-- Validate its native shape before a restore can replace live battle state.
+function M.validState(battle, state, owned)
+  local function container(value)
+    return type(value) == "table" and (not owned or owned[value] == true)
+  end
+  if not container(state) then return false end
+  local history = state.history
+  if history == nil then return true end
+  if not container(history) or not container(history.slots) then return false end
+  local count = history.count
+  if type(count) ~= "number" or count % 1 ~= 0 or count < 0 or count > 4 then return false end
+  for index in pairs(history.slots) do
+    if type(index) ~= "number" or index % 1 ~= 0 or index < 1 or index > count then return false end
+  end
+  local previous = 0
+  for index = 1, count do
+    local slot = history.slots[index]
+    if not container(slot) or type(slot.spent) ~= "boolean" then return false end
+    local original = slot.original
+    if type(original) ~= "number" or original % 1 ~= 0 or original <= previous or original > 4 then return false end
+    if (type(slot.item) ~= "string" and type(slot.item) ~= "number") or not itemNumber(battle, slot.item) then return false end
+    previous = original
+  end
+  return true
+end
+
 function M.history(battle, context)
   local state = bags(battle)
   local h = state.history

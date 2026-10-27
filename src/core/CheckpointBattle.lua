@@ -33,7 +33,7 @@ Gen5MoveEffects Gen5MoveRules Gen5Transform HeldItemRead HeldItems HoldItems Men
 MoveEffects MoveNavigation POS PlayerPartyScope RulesetDefaults Status StatusHUDVisibility
 StatusRegistry Targeting TrainerAI TurnOrder TypeChart UIVisibility Weather WideBattle
 _actionTargetOrder _aiHistory _backdropLive _backdropPolled _battle _dsThrowQuads _frlgCallbackLives
-_gbaActionFrame _gbaMoveFrame _gbaResidualPriority _gen3BatonParty _gen3BatonPending _gen3BatonPoll
+_gbaActionFrame _gbaMoveFrame _gbaResidualPriority _gen3TrainerItems _gen3BatonParty _gen3BatonPending _gen3BatonPoll
 _gen3BatonRequest _gen3BatonSwitching _gen3HelpingHand _gen3OamCompositedFrame
 _gen3OamGlobalTieResidual _gen3OamObjectRanks _gen3OamResidual _gen3SurfaceKey _gen3SurfaceW
 _gen4SurfaceKey _gen4SurfaceW _gen5Text _mementoTiming _modFieldResidualTurn _nativeOrderReady
@@ -292,7 +292,7 @@ local function decode(game, graph, battle)
       end
     end
   end
-  return state
+  return state, tables
 end
 local PHASES = { menu = true, moveSelect = true, targetSelect = true }
 local EXCLUDED = names(
@@ -481,11 +481,19 @@ function B.validate(game, snapshot, save, actors)
       "invalid battle payload"
     )
     local view = { data = game.data, save = save }
-    local s = decode(view, snapshot.graph)
+    local s, nodes = decode(view, snapshot.graph)
     nativeRelations(save,s)
     nativeActions(s.turnActions)
     for key in pairs(s) do
       assert(FIELDS[key], "unknown native battle field")
+    end
+    if s._gen3TrainerItems ~= nil then
+      local owned = {}
+      for index, node in ipairs(snapshot.graph.nodes) do
+        if node.kind == "data" then owned[nodes[index]] = true end
+      end
+      assert(require("src.battle.Gen3TrainerItems").validState(view, s._gen3TrainerItems, owned),
+        "invalid native GBA trainer stock")
     end
     assert(PHASES[s.phase] and (s.kind == "wild" or s.kind == "trainer"), "invalid battle decision")
     assert(s.player and s.enemy and s.player.mon and s.enemy.mon, "missing native battlers")
