@@ -80,6 +80,7 @@ for _,version in ipairs({'gold','silver','crystal','prism','polishedcrystal','re
       -- Older shared-engine checkpoints keep accepting their stored spelling.
       b.phase,b.queue,b.current='moveSelect',{},nil
       press('down')
+      T.eq(b.phase,'moves','legacy Gen2 decision resumes in public phase before rendering')
       T.eq(b.moveIndex,2,'legacy moveSelect still navigates in Gen2')
       press('b')
       T.eq(b.phase,'menu','legacy selector still cancels')

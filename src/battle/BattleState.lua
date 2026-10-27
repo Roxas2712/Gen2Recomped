@@ -4295,6 +4295,10 @@ function BattleState:touchpressed(_, px, py)
   return true
 end
 function BattleState:update(dt)
+  -- Resume earlier shared-engine Gen2 decisions in the public screen phase.
+  if GameVersion.isGen2() and self.phase == "moveSelect" then
+    self.phase = MoveSelectionPhase.name()
+  end
   self:tickFx()
   -- one sample a second into the fight, while it is still on screen
   self._stadiumReportTicks = (self._stadiumReportTicks or 0) + 1
