@@ -190,12 +190,10 @@ end
 function closeEditor()
   local version = editorVersion
   editorMode = false
-  if EditorApp and EditorApp.unload then EditorApp.unload() end
+  require("src.core.SessionLifecycle").endEditorSession({
+    app = EditorApp, version = version,
+  })
   EditorApp = nil
-  if version then
-    require("src.import.CacheFs").unmountVersion(version)
-    require("src.core.Data"):unloadGenerated()
-  end
   editorVersion = nil
   restoreWindow()
   Importer = editorHost
