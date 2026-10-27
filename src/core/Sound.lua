@@ -696,7 +696,15 @@ end
 
 -- Actual native SFX source status, excluding cries and independent loops.
 function Sound.sfxBusy()
-  return Sound.anyPlaying('sfx')
+  for key,src in pairs(cache) do
+    local name=tostring(key)
+    if src and name:sub(1,4)~='cry:' and name:sub(1,8)~='pikacry:'
+        and name:sub(1,8)~='weather:' then
+      local ok,playing=pcall(src.isPlaying,src)
+      if ok and playing then return true end
+    end
+  end
+  return false
 end
 
 -- Looping sources (the low-health alarm): started/stopped by game

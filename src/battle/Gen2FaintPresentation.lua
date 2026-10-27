@@ -82,7 +82,7 @@ function Faint.install(Screen)
   end
   function Screen:faintSound(side)
     if side == 'enemy' then self:playSfx('Sfx_Kinesis')
-    elseif side == 'player' then self:playCry(self:activeMon('player'))
+    elseif side == 'player' then self:playCry(battler(self,'player').mon)
     else error('invalid native Gen2 faint side') end
   end
 end
