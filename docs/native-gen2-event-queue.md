@@ -36,3 +36,10 @@ ROM-free tests use real SDK decorations, native queue input, the actual Gen2
 VM, HP/status presentation and native sound service with a device-boundary
 audio stub. They do not establish complete client, graphical or package
 acceptance.
+
+`BattleState:advanceQueue()` is the actual dequeue/admission boundary after
+native typing, sound, HP and animation gates. A decorator can inspect
+`queue[1]` before that call without seeing a future row on each update frame.
+Gen2 empty-queue completion settles the real menu/move/finish phase before
+returning; link-specific completion keeps its existing owner. Skipping a held
+text pause re-enters the same observable admission boundary.

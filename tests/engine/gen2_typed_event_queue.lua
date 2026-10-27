@@ -27,6 +27,17 @@ local function fixture(version)
         mod.exports.rows[#mod.exports.rows+1]=event
         return push(screen,event)
       end
+      mod.exports.admissions={}
+      local advance=Screen.advanceQueue
+      if advance then
+        Screen.advanceQueue=function(screen,...)
+          local entry={row=screen.queue[1],before=screen.phase}
+          mod.exports.admissions[#mod.exports.admissions+1]=entry
+          local result=advance(screen,...)
+          entry.after=screen.phase
+          return result
+        end
+      end
       mod.exports.sounds={}
       mod.events:on('sound.played',function(event)
         mod.exports.sounds[#mod.exports.sounds+1]=event
@@ -67,6 +78,7 @@ local function fixture(version)
     b.phase,b.afterQueue,b.nextInsert='resolving','menu',nil
     b:clearQueueMessage()
     b.animPlaying,b.pendingAfterAnim,b.anim=false,nil,nil
+    probe.admissions={}
   end
   return b,game,run,probe,step,untilTrue,clear
 end
@@ -93,12 +105,30 @@ for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   T.raises(function()b:push({kind='heal',side='enemy',hp=0/0})end,'HP','NaN target rejected')
   T.check(wait(function()return b.msgPrompt and(b.msgPromptWait or 0)<=0 end),'native first page types and prompts')
   local current=b.current
+  T.eq(#probe.admissions,1,'observer runs only at actual queue admission')
+  T.eq(probe.admissions[1] and probe.admissions[1].row,current.gen2SourceEvent,
+    'admission observer sees the actual source row')
   for _=1,70 do step()end
+  T.eq(#probe.admissions,1,'typing and prompt cannot expose a future queue row')
   T.eq(b.current,current,'normal message never times out')
   T.eq(b.message,'First','public message follows native row')
   step('a')
   T.check(wait(function()return b.message=='Second' end),'actual native A releases only first row')
+  T.eq(#probe.admissions,2,'next row is observed after the real prompt releases')
   clear()
+  b.afterQueue='moveSelect'
+  step()
+  T.eq(b.phase,'moves','empty Gen2 queue reaches its native move decision')
+  T.eq(probe.admissions[1] and probe.admissions[1].after,'moves',
+    'queue observer sees the settled move decision on return')
+  clear()
+  local finish=b.finish;local finishes=0
+  b.finish=function(self)finishes=finishes+1;self.phase='finished'end
+  b.afterQueue='finish';step()
+  T.eq(finishes,1,'native queue completion finishes exactly once')
+  T.eq(probe.admissions[1] and probe.admissions[1].after,'finished',
+    'queue observer sees native finish on return')
+  b.finish=finish;clear()
 
   b:act(function()b:sayNext('Inserted one');b:sayNext('Inserted two')end)
   b:say('Existing tail')
@@ -114,11 +144,15 @@ for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   T.check(b.current and b.current.gen2SourceEvent==move,'typed row retains source event provenance')
   T.check(b.animPlaying,'actual native animation VM starts at admission')
   local frames=b.animPlayer.frames
+  T.eq(#probe.admissions,1,'move has one native admission')
   step()
+  T.eq(#probe.admissions,1,'active move typer cannot advance queue observer')
   T.eq(b.animPlayer.frames,frames,'native typer owns time before VM stepping')
   T.check(wait(function()return b.phase=='menu' end),'move line and VM complete without injected A/B')
   T.check(b.animPlayer.frames>frames,'real native VM clock eventually advances')
   T.eq(b.messageTimer,0,'auto line has no independent message hold')
+  T.eq(probe.admissions[#probe.admissions] and probe.admissions[#probe.admissions].after,'menu',
+    'empty native queue returns the camera to the settled menu phase')
   clear()
 
   b:push({kind='message',text='Timed',textPause=true})
@@ -136,6 +170,9 @@ for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   step()
   T.eq(b.waitFrames,nil,'held button skips text pause')
   T.eq(b.message,'Held skip','held skip admits next row through same queue')
+  T.eq(#probe.admissions,2,'held pause skip exposes both actual admissions')
+  T.eq(probe.admissions[2] and probe.admissions[2].row.text,'Held skip',
+    'recursive native admission observes the row after a skipped pause')
   game.input.held.a=nil;clear()
 
   local enemy=b.enemy
