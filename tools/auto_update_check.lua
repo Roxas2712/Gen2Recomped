@@ -294,10 +294,8 @@ do
          "ota_protocol.h defines no OTA_REPO_SLUG, so the Switch OTA "
          .. "launcher is spelling the repository out per URL again")
       ok(slug == Check.REPO,
-         "the Switch OTA launcher asks %q and src/update/Check.lua asks %q. "
-         .. "One of them is pointing at a repository that does not exist, and "
-         .. "a 404 reaches that launcher as \"up to date or offline\" -- it "
-         .. "shows nothing and the console silently stops updating",
+         "the Switch OTA launcher asks %q and src/update/Check.lua asks %q; "
+         .. "both must use the configured fork release channel",
          tostring(slug), tostring(Check.REPO))
       -- Both URLs must come from it, or the next edit re-splits them.
       -- Read as a window after the macro name rather than with a pattern that
