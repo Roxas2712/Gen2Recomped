@@ -325,8 +325,8 @@ function W.draw(self)
   local function button(label,bx,by,bw,id)
     local r=self:_chipButton(bx,by,label,{w=bw,h=38*s,kind='accent'});r.id=id;f.rects[#f.rects+1]=r;return r
   end
-  text(f.mode=='giftAdmin' and 'RETRORECOMPED · PRIZE STUDIO' or 'RETRORECOMPED · MY PROFILE',x+24*s,y+20*s,width-150*s,true)
-  button('CLOSE',x+width-108*s,y+18*s,84*s,'close').pinned=true
+  text(f.mode=='giftAdmin' and 'RETRORECOMPED · PRIZE STUDIO' or 'RETRORECOMPED · MY PROFILE',x+24*s,y+20*s,width-180*s,true)
+  button('CLOSE',x+width-140*s,y+18*s,116*s,'close').pinned=true
   local social=require('src.cloud.Presence').read() or f.social or {}
   local tabs=Auth.signedIn() and not f.document
   if tabs then
@@ -438,7 +438,7 @@ function W.draw(self)
     row('REFRESH FRIENDS','friends');row('MY ACCOUNT','account')
     local social=require('src.cloud.Presence').read() or f.social or {}
     local fresh=os.time()-(social._receivedAt or 0)<=120
-    paragraph('FRIENDS · '..#(social.friends or {}),true)
+    paragraph(L('FRIENDS')..' · '..#(social.friends or {}),true)
     for _,peer in ipairs(social.friends or {}) do
       paragraph(Role.label(peer.friend_tag or peer.nickname,peer)..(not fresh and ' · STATUS UNAVAILABLE' or peer.online and (peer.status=='away' and ' · AWAY' or ' · ONLINE') or ' · OFFLINE'))
       local pref={};for _,v in ipairs(prefs.friends or {}) do if tostring(v.account_id)==tostring(peer.account_id) then pref=v;break end end
@@ -542,7 +542,7 @@ function W.draw(self)
     row('PLAYERS','players');row('INBOX','inbox');row('ROLES & PERMISSIONS','roleGuide');row('EDIT NICKNAME & AVATAR','profileEdit');row('COPY MY FRIEND TAG','copyFriendTag')
     local fresh=os.time()-(social._receivedAt or 0)<=120;local online=0
     for _,peer in ipairs(social.friends or {}) do if fresh and peer.online then online=online+1 end end
-    paragraph('FRIENDS · '..online..' ONLINE / '..#(social.friends or {})..' TOTAL',true)
+    paragraph(L('FRIENDS')..' · '..online..' '..L('ONLINE')..' / '..#(social.friends or {})..' '..L('TOTAL'),true)
     if #(social.incoming or {})>0 then row(#social.incoming..' NEW FRIEND REQUESTS','friends') end
     for i,peer in ipairs(social.friends or {}) do if i<=5 then
       Avatar.draw(peer.avatar_preset,peer.avatar_color,x+24*s,top,42*s)
@@ -578,7 +578,8 @@ function W.draw(self)
     end
     row('BACK TO MY PROFILE','account')
   elseif f.mode=='accountSettings' then
-    paragraph('ACCOUNT PROFILE · '..tostring(Auth.accountId and Auth.accountId() or 'Updating identity')..' · Saves, Bank and mod choices are kept separately for each account.')
+    paragraph(L('ACCOUNT PROFILE')..' · '..tostring(Auth.accountId and Auth.accountId() or L('Updating identity')))
+    paragraph('Saves, Bank and mod choices are kept separately for each account.')
     paragraph('The same account connects your mods, developer projects, custom cartridge artwork and optional cloud storage.')
     row('CONTINUE ON ANOTHER DEVICE · HOW IT WORKS','transferGuide')
     row('SYNC MY SAVES & CUSTOM CARTRIDGES','sync')
