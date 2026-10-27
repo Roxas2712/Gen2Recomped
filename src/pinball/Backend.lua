@@ -11,7 +11,8 @@ function B.root()
  local paths={'tools/pinball_rs.py','tools/qa_storage.py','tools/qa_legacy_storage.py','tools/qa_love_storage.py',
   'tools/qa_preserved.py','tools/qa_release_storage.py','tools/qa_build_storage.py',
   'tools/pinball-rs-native/CMakeLists.txt','tools/pinball-rs-native/bridge.cpp',
-  'tools/pinball-rs-native/presentation.cpp','tools/pinball-rs-native/presentation.h'}
+  'tools/pinball-rs-native/presentation.cpp','tools/pinball-rs-native/presentation.h',
+  'tools/pinball-rs-native/runtime-fixes.patch'}
  for _,path in ipairs(paths)do
   local bytes=fs.read(path);if not bytes then return end
   local target='pinball-backend/'..path;fs.createDirectory(target:match('^(.*)/'))

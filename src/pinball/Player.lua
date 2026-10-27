@@ -116,7 +116,13 @@ function M.new(session,options)
   end
   if self.ready and not self.paused and not self.closing and not self.sound:isPlaying()
    and AUDIO_BUFFERS-self.sound:getFreeBufferCount()>=AUDIO_PREROLL then
-   if self.audioStarted then self.audioRestarts=(self.audioRestarts or 0)+1 end
+   if self.audioStarted then
+    self.audioRestarts=(self.audioRestarts or 0)+1
+    if options.diagnostics then
+     self.audioRestartHistory=self.audioRestartHistory or {}
+     if #self.audioRestartHistory<16 then self.audioRestartHistory[#self.audioRestartHistory+1]={frame=self.frame,phase=self.phase,main=self.stats[1]and self.stats[1].main,sub=self.stats[1]and self.stats[1].sub}end
+    end
+   end
    self.sound:play();self.audioStarted=true
   end
  end
@@ -153,7 +159,7 @@ function M.new(session,options)
    if self.paused then
     g.setColor(.02,.03,.05,.94);g.rectangle('fill',w*.15,h*.2,w*.7,h*.6,15,15)
     g.setFont(self.font);g.setColor(.44,.83,.89);g.printf('RECOMPILED ASCENDANT · PINBALL',w*.18,h*.24,w*.64,'center')
-    g.setColor(1,1,1);g.printf('Esc / Controller Back: Weiter\nF5: Schnellstand speichern · F8: laden\nF6: Volltisch (Beta) / Original\nF9: Bildfilter · F10: Pixelmaßstab\nF11: Vollbild · Q: Zur Bibliothek\n\nSpieler 1: Pfeile · X/Z · Enter\nSpieler 2: WASD · F/G · Tab\nController: D-Pad · A/B · Start\nMaus: links/rechts Flipper · Mitte Abschuss',w*.2,h*.32,w*.6,'center')
+    g.setColor(1,1,1);g.printf('Esc / Controller Back: Weiter\nF5: Schnellstand speichern · F8: laden\nF6: Volltisch (Beta) / Original\nF9: Bildfilter · F10: Pixelmaßstab\nF11: Vollbild · Q: Zur Bibliothek\n\nSpieler 1: Pfeile · X/Z · Enter · Q/E: L/R\nBackspace: Select · Spieler 2: WASD / F/G / Tab\nController: Schultern = Flipper · Trigger = L/R\nLinken Stick drücken = Select · Start = Spielpause\nMaus: links/rechts Flipper · Mitte Abschuss',w*.2,h*.32,w*.6,'center')
    end
   end
   g.pop()

@@ -28,6 +28,20 @@ def digest(path,algorithm='sha1'):
         for b in iter(lambda:f.read(1024*1024),b''):h.update(b)
     return h.hexdigest()
 
+def bridge_fingerprint():
+    return hashlib.sha256(b''.join(p.read_bytes() for p in sorted((ROOT/'tools/pinball-rs-native').glob('*'))
+        if p.suffix in {'.cpp','.h','.patch'})).hexdigest()[:16]
+
+def apply_runtime_fixes(source,qa):
+    """Apply only the reviewed fix to the pinned runtime, preserving other files."""
+    patch=ROOT/'tools/pinball-rs-native/runtime-fixes.patch'
+    command=['git','-C',str(source),'apply']
+    check=qa.qa_run(command+['--check',str(patch)],capture_output=True,text=True)
+    if check.returncode==0:
+        qa.qa_run(command+[str(patch)],capture_output=True,text=True,check=True)
+    elif qa.qa_run(command+['--reverse','--check',str(patch)],capture_output=True,text=True).returncode:
+        raise RuntimeError('The reviewed Pinball runtime fix conflicts with local changes; existing sources were preserved.')
+
 def verify(path,expected,size):
     path=path.expanduser().resolve(strict=True)
     if path.stat().st_size!=size or digest(path)!=expected:
@@ -80,7 +94,7 @@ def main():
         args.rom=Path(usa);args.eu_rom=Path(europe) if europe else None
         verify(args.rom,USA,8*1024*1024)
         if args.eu_rom:verify(args.eu_rom,EU,16*1024*1024)
-        code_hash=hashlib.sha256(b''.join(path.read_bytes()for path in sorted((ROOT/'tools/pinball-rs-native').glob('*'))if path.suffix in {'.cpp','.h'})).hexdigest()[:16]
+        code_hash=bridge_fingerprint()
         if (previous.get('ready') and '-bridge-'+code_hash+'-bios-' in previous.get('backend','')
                 and Path(previous.get('bridge','')).is_file()
                 and (not args.eu_rom or Path(previous.get('variants',{}).get('eu',{}).get('bridge','')).is_file())):
@@ -118,6 +132,7 @@ def main():
         run('runtime-submodules',['git','-C',source,'submodule','update','--init','--recursive'])
     revision=subprocess.check_output(['git','-C',str(source),'rev-parse','HEAD'],text=True).strip()
     if revision!=RUNTIME:raise RuntimeError('Runtime revision differs from the reviewed pin; keep existing sources intact.')
+    apply_runtime_fixes(source,q)
     bios=args.bios.expanduser().resolve() if args.bios else work/'emibios/gba_bios.bin'
     if not bios.exists():
         # Download only the free replacement BIOS, never a Nintendo BIOS.
@@ -160,7 +175,7 @@ def main():
     data={'schema':1,'ready':True,'rom':str(rom),'rom_sha1':USA,'bios':str(bios),
       'bios_sha256':digest(bios,'sha256'),'bridge':str(installed),'runtime_revision':RUNTIME,
       'player':str(player),'eu_rom':str(eu) if eu else None,
-      'backend':'gbarecomp-'+RUNTIME+'-bridge-'+hashlib.sha256(b''.join(p.read_bytes()for p in sorted((ROOT/'tools/pinball-rs-native').glob('*'))if p.suffix in {'.cpp','.h'})).hexdigest()[:16]+'-bios-'+digest(bios,'sha256')[:16],'content':'USA-'+USA,
+      'backend':'gbarecomp-'+RUNTIME+'-bridge-'+bridge_fingerprint()+'-bios-'+digest(bios,'sha256')[:16],'content':'USA-'+USA,
       'native_with_interpreter_fallback':True,'variants':variants}
     atomic_json(config,data)
     print(json.dumps(data,ensure_ascii=False))

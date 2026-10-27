@@ -115,17 +115,31 @@ def run_child(args):
         assert lib.ascendant_pinball_state(m,str(old_path).encode(),1),lib.ascendant_pinball_error()
         assert lib.ascendant_pinball_checkpoint(m)==checkpoint,'Legacy state changed RAM'
         for _ in range(6):assert lib.ascendant_pinball_step(m,0)
-        lit=[]
-        for _ in range(120):
+        lit=[];recovery=30;fallback_frames=0
+        for _ in range(1200):
             assert lib.ascendant_pinball_step(m,0)
             ptr=lib.ascendant_pinball_picture(m,c.byref(width),c.byref(height))
-            assert width.value==256
+            read=lambda address,size=1:lib.ascendant_pinball_read(m,address,size)
+            main=0x0200B0C0
+            eligible=(read(main+2)in(2,3)and read(main+3)==1 and read(main+4)<=1
+                and not(read(0x04000000,2)&0x87)and not read(main+15)
+                and not read(main+0x28,2)and not read(main+0x2c,2))
+            if not eligible:recovery=30
+            if width.value==240:
+                assert not eligible or recovery>0,'Full table failed to recover after the native overlay'
+                if eligible:recovery-=1
+                fallback_frames+=1
+                continue
+            assert width.value==256 and eligible
             data=c.string_at(ptr,width.value*height.value*4)[-16*256*4:]
             rgb=[data[i:i+3]for i in range(0,len(data),4)]
             count=sum(p!=b'\0\0\0'for p in rgb)
             assert 0<count<len(rgb)*.4,'HUD blanked or copied board pixels'
             lit.append(count)
+            if len(lit)==120:break
+        assert len(lit)==120,'No 120 expanded HUD frames available after the native overlay'
         report['hud_nonblank_frames']=len(lit)
+        report['native_overlay_fallback_frames']=fallback_frames
         report['hud_foreground_pixels_min']=min(lit);report['hud_foreground_pixels_max']=max(lit)
         report['legacy_state_loaded']=True
         args.output.write_text(json.dumps(report))
@@ -137,6 +151,7 @@ def main():
     parser.add_argument('--frames',type=int,default=4200)
     parser.add_argument('--library-root',type=Path)
     parser.add_argument('--label',default='cached-reference')
+    parser.add_argument('--cases',choices=('all','ruby','sapphire'),default='all')
     parser.add_argument('--child',action='store_true',help=argparse.SUPPRESS)
     parser.add_argument('--locale',choices=('en','de'),default='en',help=argparse.SUPPRESS)
     parser.add_argument('--field',type=int,default=0,help=argparse.SUPPRESS)
@@ -159,6 +174,7 @@ def main():
     qa.qa_profile(profile);profile.mkdir(parents=True,exist_ok=True)
     aggregate={'passed':True,'cases':[]}
     for locale,field in [('en',0),('de',1)]:
+        if args.cases=='ruby'and field!=0 or args.cases=='sapphire'and field!=1:continue
         runs={}
         for mode in ('reference','cached'):
             name=f'{locale}-{field}-{mode}';output=cache/(name+'.json')

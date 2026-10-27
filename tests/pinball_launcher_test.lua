@@ -18,7 +18,8 @@ end}
 package.loaded['src.import.LauncherLibrary']={paint={text=noop}}
 package.loaded['src.import.LauncherHardware']={appearance=noop,cartridge=noop}
 package.loaded['src.import.LauncherSequence']={new=function()return{}end}
-package.loaded['src.import.LauncherBackdrop']={setPaused=noop}
+local backdropStops=0
+package.loaded['src.import.LauncherBackdrop']={setPaused=noop,stop=function()backdropStops=backdropStops+1 end}
 local Play={setExternalContext=noop,clearExternalContext=noop};package.loaded['src.cloud.Play']=Play
 local RI={_ui={inside=function()return false end},new=function()return{}end,palette=function()return{link={},warning={}}end}
 for _,key in ipairs{'textinput','keypressed','keyreleased','mousepressed','gamepadpressed','draw','update','_sbGames','_sbOpenGame','_sbDrawContent','_sbOwns','_sbMousepressed','_sbBack','_sbGo','_sbBackdropWant','play'}do RI[key]=noop end
@@ -51,6 +52,7 @@ end
 click('ONLINE / LAN · DIREKT HOSTEN')
 check(connections==0 and ui._pinConnectJob,'button queues connection instead of doing account I/O in the click handler')
 ui:update(.016);check(connections==1 and started==1 and ui._pinPlayer.net==lastNet,'completed transport launches the actual player path')
+check(backdropStops==1,'native launch must stop the launcher soundtrack')
 ui._pinPlayer=nil;click('ONLINE / LAN · VERBINDEN');ui:_sbBack()
 check(cancelled==1 and not ui._pinConnectJob,'leaving library cancels pending connection')
 ui:update(.016);check(connections==1 and started==1,'cancelled connection cannot launch later')

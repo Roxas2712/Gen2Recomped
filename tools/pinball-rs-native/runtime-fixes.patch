@@ -1,0 +1,20 @@
+diff --git a/src/runtime/runtime_arm_default_aborts.cpp b/src/runtime/runtime_arm_default_aborts.cpp
+index 275663f..7cbdda9 100644
+--- a/src/runtime/runtime_arm_default_aborts.cpp
++++ b/src/runtime/runtime_arm_default_aborts.cpp
+@@ -817,6 +817,15 @@ extern "C" int runtime_bridge_interpret(uint32_t entry_pc, bool entry_thumb,
+     const std::uint32_t entry_floor = runtime_call_stack_floor();
+     std::uint32_t unwound_depth = UINT32_MAX;
+     for (;;) {
++        // HALT suspends instructions, including inside an interpreted subtree.
++        // Running the IntrWait polling loop while halted consumed guest cycles
++        // and could leave HALT latched after its SWI returned to the game.
++        // The outer dispatcher already handles this for native instructions.
++        if (bus->io().halted()) {
++            gbarecomp::store_interp_into_arm_cpu(cpu, g_cpu);
++            do { runtime_tick(64); } while (bus->io().halted());
++            gbarecomp::load_arm_cpu_into_interp(g_cpu, cpu);
++        }
+         // Sync interp -> g_cpu (pre-execution state) so the fingerprint ring,
+         // the BIOS-read gate, and any IRQ/SWI excursion all see exactly what
+         // the generated per-instruction prologue would have set.

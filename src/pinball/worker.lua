@@ -115,7 +115,10 @@ local ok,why=pcall(function()
      score=valid and read(game+0x44,4)+100000000*read(game+0x48,4)or 0,
      lives=valid and read(game+0x30)or 0,frame=tonumber(lib.ascendant_pinball_frame(m))}
     local stats=message.stats[i]
-    if diagnostics then stats.overlay={flags=read(0x0200B0CF),shop=read(0x0200B0E8,2),cutscene=read(0x0200B0EC,2)}end
+    if diagnostics then
+     stats.overlay={flags=read(0x0200B0CF),shop=read(0x0200B0E8,2),cutscene=read(0x0200B0EC,2)}
+     if stats.main==10 then stats.fieldSelection=read(0x02002840,2);stats.fieldSelectionStep=read(0x02002842,2)end
+    end
     if job.duel then
      if phase=='preparing' and stats.main==2 and stats.sub==1 then prepared[i]=true end
      best[i]=math.max(best[i]or 0,stats.score);stats.score=best[i];stats.elapsed=elapsed[i]or 0

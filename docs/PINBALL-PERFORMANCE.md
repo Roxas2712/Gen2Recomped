@@ -132,3 +132,33 @@ unique images/s and reported zero audio restarts. Display p99 was 33.27 ms,
 maximum 33.67 ms; native steps peaked at 20.70 ms. The strict 25 ms display-p99
 criterion remains unsatisfied. This report does not claim universal smoothness,
 controller/network qualification or a complete playthrough.
+
+## HALT correction: game time rather than window refresh
+
+All earlier image-FPS measurements above predate this correction. They describe
+presented frames; they did not prove that the game's own logic advanced once per
+VBlank. The same caution applies to counting audio-source restarts alone.
+
+The interpreter fallback in the pinned runtime continued executing instructions
+inside a BIOS `IntrWait` subtree while the CPU's HALT latch was set. The wait
+could return with HALT still set; the outer dispatcher then stalled the game
+until another interrupt. A prepared Ruby state advanced only 74 game steps in
+120 VBlank steps. The fix suspends interpreted instructions while halted, pumps
+the existing device/IRQ clock, then reloads the CPU state before continuing.
+No game RAM, physics speed or PCM rate is patched to mask the problem.
+
+The same state now advances 120/120 game steps with both native RAM templates
+and the RAM interpreter. Fresh USA/Ruby and Europe/German/Sapphire each advance
+240/240 game steps; each produces exactly 4.01824951171875 seconds of PCM for
+those 240 VBlanks, with no sound-mixer lock spanning the measured boundary.
+
+A separate mGBA reference run, using the same private USA ROM and replacement
+BIOS, reaches title/field-selection stages at the same frame indices after the
+intro. A short-time spectral comparison of the captured 7–15 second audio
+segment changes from 0.4269 before the fix to 0.9486 after it, at zero lag.
+This is an observational similarity metric, not byte-identical audio or a
+listening-test certificate. The reference tool is not a shipped runtime.
+
+See [functional coverage](PINBALL-FEATURE-PARITY.md) and the scoped evidence in
+[the HALT follow-up](qa/pinball-halt-followup.json). Native original menus, SRAM
+reopening and image/RAM replay are checked separately from displayed pacing.

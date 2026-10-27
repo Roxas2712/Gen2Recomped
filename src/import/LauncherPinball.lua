@@ -80,6 +80,7 @@ function M.install(RI)
  local function start(self,seats,net,host)
   local session=M.session(self._pinLocale);if not session or self._pinPlayer then return false,'Pinball ist nicht bereit.'end
   if self._xyStopPreview then self:_xyStopPreview()end
+  require('src.import.LauncherBackdrop').stop()
   self._pinPendingNet=net
   local function begin()
    self._pinPendingNet=nil
