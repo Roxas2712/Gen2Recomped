@@ -105,6 +105,17 @@ for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   T.raises(function()b:push({kind='heal',side='enemy',hp=0/0})end,'HP','NaN target rejected')
   T.check(wait(function()return b.msgPrompt and(b.msgPromptWait or 0)<=0 end),'native first page types and prompts')
   local current=b.current
+  local Font=require('src.render.Font')
+  local drawCodes=Font.drawCodes;local rowsDrawn=0
+  Font.drawCodes=function(codes,...)
+    for _,row in ipairs(b.shown)do if codes==row then rowsDrawn=rowsDrawn+1;break end end
+    return drawCodes(codes,...)
+  end
+  local chars=b.charIndex
+  require('src.battle.WideBattle').draw(b)
+  Font.drawCodes=drawCodes
+  T.check(rowsDrawn>0,'wide renderer draws the actual current Gen2 queue text')
+  T.eq(b.charIndex,chars,'wide rendering cannot advance the native typer')
   T.eq(#probe.admissions,1,'observer runs only at actual queue admission')
   T.eq(probe.admissions[1] and probe.admissions[1].row,current.gen2SourceEvent,
     'admission observer sees the actual source row')
@@ -119,6 +130,15 @@ for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   b.afterQueue='moveSelect'
   step()
   T.eq(b.phase,'moves','empty Gen2 queue reaches its native move decision')
+  local draw=Font.draw;local named=false
+  local name=b.data.moves[b.player.curMoves[1].id].name
+  Font.draw=function(text,...)
+    if text==name then named=true end
+    return draw(text,...)
+  end
+  require('src.battle.WideBattle').draw(b)
+  Font.draw=draw
+  T.check(named,'wide renderer draws the native move decision in its actual Gen2 phase')
   T.eq(probe.admissions[1] and probe.admissions[1].after,'moves',
     'queue observer sees the settled move decision on return')
   clear()
