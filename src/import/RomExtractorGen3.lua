@@ -59418,6 +59418,7 @@ function RomExtractorGen3:run()
   -- a successful, permanently blank Emerald fallback cache.
   require('src.import.Gen3RsPresentation').extract(self)
   require('src.import.Gen3EmeraldPresentation').extract(self)
+  require('src.import.Gen3StatGrowthAssets').extract(self)
   if self.progress then
     self.progress(STAGE_COUNT, STAGE_COUNT, "Ready", 1, 1)
   end
