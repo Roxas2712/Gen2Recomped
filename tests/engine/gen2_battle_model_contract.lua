@@ -157,10 +157,13 @@ for _,version in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
     if type(model.endBattle)=='function'then model:endBattle('run')end
     T.eq(probe.ended,1,'repeated model completion cannot re-emit ended event')
   end
+  require('src.mods.Loader').teardown()
   run.release()
   T.eq(Model.battleStat,nativeStat,'loader retirement restores model stat method')
   T.eq(Model.speciesDef,nativeDef,'loader retirement restores model species method')
   T.eq(Model.endBattle,nativeEnd,'loader retirement restores model end method')
+  T.eq(Read.stats(b.player),b.player.curStats,'undecorated read returns original stat table')
+  T.eq(Read.types(b.enemy),b.enemy.curTypes,'undecorated read returns original type list')
 end
 for _,version in ipairs({'red','firered','emerald'})do
   local b,game,run,probe=fixture(version)
@@ -168,6 +171,7 @@ for _,version in ipairs({'red','firered','emerald'})do
   probe.scale=9;probe.types={'GHOST'}
   T.eq(Read.stats(b.player),b.player.curStats,'other generation retains exact raw stat table')
   T.eq(Read.types(b.enemy),b.enemy.curTypes,'other generation retains exact raw type list')
+  require('src.mods.Loader').teardown()
   run.release()
 end
 Version.set(savedVersion)
