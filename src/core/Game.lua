@@ -1006,6 +1006,8 @@ end
 
 local function paintResolvedFrame(self, drawFrom, worldBelow, worldDrawn, native, classicOffset, classicOffsetY, surfW, surfH)
   Renderer:beginFrame(worldBelow)
+  local presentation=package.loaded['src.render.NativePresentation']
+  if presentation then presentation._nativeBegin(self,Renderer:uiSize())end
   -- SINGLE-SCREEN DS PLAY: an opaque DS screen at the bottom of what is
   -- drawn (a menu, the bag, the box -- no world pass under it) is drawn with
   -- everything over it at the window's scale, letters smoothed, rather than
@@ -1055,7 +1057,7 @@ local function paintResolvedFrame(self, drawFrom, worldBelow, worldDrawn, native
   local paintStates=drawStates
   local uiPass=require('src.core.GameVersion').isGen3()
     and package.loaded['src.ui.game3.ui_pass']
-  if uiPass and uiPass._wrapped()then
+  if uiPass and (uiPass._wrapped()or presentation and presentation._active())then
     paintStates=function()return uiPass._nativeStates(self,self.stack,drawFrom,drawStates)end
   end
   local baseState = self.stack.states[drawFrom]

@@ -958,6 +958,8 @@ function Renderer:endFrame(zones, worldZones)
       secondScreen = require("src.render.SecondScreen"),
     }
     if Runtime.call("render.compose", function() return false end, self, ctx) == true then
+      local presentation=package.loaded['src.render.NativePresentation']
+      if presentation then presentation._nativeFlush(ww,wh)end
       self.worldActive = false
       self.uprightActive = false
       self.uiOverride = nil
@@ -1404,6 +1406,8 @@ function Renderer:endFrame(zones, worldZones)
   -- over the finished composite rather than under the UI blit.  On hardware
   -- it is the tilemap being overwritten -- there is nothing it does not cover.
   local battleSource = nil
+  local presentation=package.loaded['src.render.NativePresentation']
+  if presentation then presentation._nativeFlush(ww,wh)end
   if battleNeedsSource and present then
     -- Snapshot the untouched finished frame into a second screen-sized canvas.
     -- `present` is the current render target here, so sampling it directly in
