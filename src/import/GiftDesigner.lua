@@ -1,3 +1,4 @@
+local function L(value) return require('src.translation.Service').launcherLookup(value) end
 -- Shared native prize editor for Account staff tools and tournament setup.
 local D={}
 local S=require('src.core.SaveSerializer')
@@ -77,10 +78,10 @@ function D.describe(r)
 end
 function D.draw(f,editions,ui)
  local text,row,field=ui.text,ui.row,ui.field
- text('PRIZE STUDIO · '..table.concat(editions,', '):upper(),true)
+ text(L('PRIZE STUDIO · ')..table.concat(editions,', '):upper(),true)
  text(D.describe(f.giftPreset and {preset=f.giftPreset} or {kind=f.giftKind,dex=f.giftDex,level=f.giftLevel,egg=f.giftEgg,shiny=f.giftShiny,item=f.giftItem,quantity=f.giftQuantity}),true)
  for _,tab in ipairs({'Generate','General','Trainer','Stats','Moves','Encounter','Presets'}) do if ui.tab then ui.tab(tab,'giftTab:'..tab,f.giftTab==tab) end end
- if not ui.tab then row('SECTION · '..f.giftTab..' · NEXT','giftTab:'..({Generate='General',General='Trainer',Trainer='Stats',Stats='Moves',Moves='Encounter',Encounter='Presets',Presets='Generate'})[f.giftTab]) end
+ if not ui.tab then row(L('SECTION · ')..f.giftTab..L(' · NEXT'),'giftTab:'..({Generate='General',General='Trainer',Trainer='Stats',Stats='Moves',Moves='Encounter',Encounter='Presets',Presets='Generate'})[f.giftTab]) end
  if f.giftTab=='Presets' then
   field('Search historical distributions and island unlocks','giftSearch')
   text('Recreations from historical templates. These are not new official distributions. Unreleased Azure Flute is excluded.')
@@ -99,7 +100,7 @@ function D.draw(f,editions,ui)
   text('Fixed historical identity. Switch to Custom for your own Pokémon. Native event tickets include their event unlock flags.')
   row('CUSTOM POKÉMON','giftCustom')
  elseif f.giftTab=='Generate' then
-  text('QUICK GENERATOR · GEN '..tostring(f.giftGeneration or 2),true)
+  text(L('QUICK GENERATOR · GEN ')..tostring(f.giftGeneration or 2),true)
   if ui.choices and f.giftSelected then
    local choices={};for gen=1,5 do choices[#choices+1]={'Gen '..gen,'giftGen:'..gen,gen==f.giftGeneration} end;ui.choices(choices)
   elseif f.edition then f.giftGeneration=V.generation(f.edition);text('Uses the tournament edition. Change Edition above to generate another generation.') end
@@ -114,12 +115,12 @@ function D.draw(f,editions,ui)
   if f.giftKind=='item' then field('Item identifier · e.g. RARECANDY, LEFTOVERS','giftItem');field('Quantity · 1–99','giftQuantity');text('Use Presets for event tickets; ordinary items do not unlock events.')
   elseif f.giftKind=='pokemon' then
    field('National species number','giftDex');field('Level · eggs use the edition’s hatch level','giftLevel')
-   row((f.giftEgg and '[x]' or '[ ]')..' Egg · Gen 2+','giftEgg');row((f.giftShiny and '[x]' or '[ ]')..' Shiny · Gen 2+','giftShiny')
+   row((f.giftEgg and '[x]' or '[ ]')..L(' Egg · Gen 2+'),'giftEgg');row((f.giftShiny and '[x]' or '[ ]')..L(' Shiny · Gen 2+'),'giftShiny')
   end
  elseif f.giftKind~='pokemon' then text('Choose Pokémon to edit identity and stats, or select an event preset.')
  elseif f.giftTab=='Trainer' then
   field('OT · maximum 7 characters; blank uses RetroRecomp','giftOT');field('Trainer ID · 0–65535','giftTID');field('Secret ID · Gen 3+','giftSID');field('Nickname · maximum 10 characters','giftNickname')
-  row((f.giftOTFemale and '[x]' or '[ ]')..' Female OT · Gen 3+','giftOTFemale')
+  row((f.giftOTFemale and '[x]' or '[ ]')..L(' Female OT · Gen 3+'),'giftOTFemale')
  elseif f.giftTab=='Stats' then
   text('Leave blank for deterministic native values. Order: HP, Attack, Defense, Speed, Sp. Atk, Sp. Def.')
   field('IVs · six values 0–31 · Gen 3+','giftIVs');field('EVs · six values 0–255; total ≤510 · Gen 3+','giftEVs')
@@ -131,7 +132,7 @@ function D.draw(f,editions,ui)
  elseif f.giftTab=='Encounter' then
   field('Ball · POKEBALL / GREATBALL / ULTRABALL / MASTERBALL','giftBall');field('Friendship · 0–255 · Gen 2+','giftFriendship')
   field('Met level · 0–100 · Gen 3+','giftMetLevel');field('Met location ID · edition-specific · Gen 3+','giftMetLocation');field('Language ID · 1–7 · Gen 3+','giftLanguage')
-  row((f.giftFateful and '[x]' or '[ ]')..' Fateful encounter · Gen 3+','giftFateful')
+  row((f.giftFateful and '[x]' or '[ ]')..L(' Fateful encounter · Gen 3+'),'giftFateful')
  end
  text('Admin-created gifts retain their provenance. Structural validation does not certify tournament legality.')
 end

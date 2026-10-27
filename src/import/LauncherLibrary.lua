@@ -17,6 +17,7 @@ local EDITIONS = {
   platinum = {{175,181,211}, 'PLATINUM'}, heartgold = {{235,189,94}, 'HEART GOLD'},
   soulsilver = {{173,195,220}, 'SOUL SILVER'}, black = {{159,165,186}, 'BLACK'},
   white = {{223,221,211}, 'WHITE'},
+  x = {{93,181,255}, 'X'}, y = {{245,107,139}, 'Y'},
 }
 local CARD_ACCENTS = {
   platinum={{213,222,237},{234,108,100}},
@@ -213,6 +214,7 @@ function Library.install(RI)
     end
     if not compact and h > 470*s then
       local n,total=0,0
+      for _,v in ipairs(require('src.import.LauncherPokemonXY').versions()) do total=total+1;if self.ready[v] then n=n+1 end end
       for _,v in ipairs(Versions.ORDER) do total=total+1; if self.ready[v] then n=n+1 end end
       local by=y+h-52*s
       col(P.link); g.circle('fill',x+25*s,by+8*s,3*s)
@@ -284,7 +286,7 @@ function Library.install(RI)
   function RI:_sbGameTile(version,x,y,w,h)
     if h < 190 * self._s then return originalTile(self,version,x,y,w,h) end
     local s,P,g=self._s,palette(),love.graphics
-    local info=Versions.info(version)
+    local info=Versions.info(version) or require("src.import.LauncherPokemonXY").info(version)
     local locked=not info or (info.importable==false and not (U.unlockedByEnv and U.unlockedByEnv(version)))
     local ready=not locked and self.ready[version]
     local accent=Library.edition(version)
@@ -303,7 +305,7 @@ function Library.install(RI)
     local short=Sidebar.consoleOf(version):upper()
     label(self,short,x+16*s,y+stageH+10*s,accent)
     text(self,self.stateFont,Sidebar.nameOf(version),x+16*s,y+stageH+29*s,w-32*s)
-    local status=locked and 'COMING SOON' or ready and 'READY TO PLAY' or 'ROM REQUIRED'
+    local status=locked and 'COMING SOON' or ready and 'READY TO PLAY' or (info and info.external and 'RECOMPILING' or 'ROM REQUIRED')
     if info and info.experimental and not locked then status=ready and 'BETA / READY' or 'BETA / ROM REQUIRED' end
     col(ready and P.green or P.warning);g.circle('fill',x+19*s,y+h-17*s,2.5*s)
     text(self,self.warningFont,Strings(status),x+27*s,y+h-23*s,w-42*s,ready and P.green or P.warning)
@@ -391,6 +393,7 @@ function Library.install(RI)
       local cw=(w-gap*(cols-1))/cols
       local systems={{id=false,short='ALL GAMES'}}
       for _,c in ipairs(Sidebar.CONSOLES) do systems[#systems+1]=c end
+      if require('src.import.LauncherPokemonXY').available() then systems[#systems+1]={id='3ds',short='3DS'} end
       for i,c in ipairs(systems) do
         local cx=x+((i-1)%cols)*(cw+gap)
         local cy=y+math.floor((i-1)/cols)*(70*s+gap)
@@ -403,6 +406,7 @@ function Library.install(RI)
           require('src.import.LauncherHardware').symbol(self,c.id,cx+cw-35*s,cy+35*s,iconH)
         end
         local n,total=0,0
+        for _,v in ipairs(require('src.import.LauncherPokemonXY').versions(c.id or nil)) do total=total+1;if self.ready[v] then n=n+1 end end
         for _,v in ipairs(Sidebar.gamesFor(c.id or nil)) do total=total+1;if self.ready[v] then n=n+1 end end
         text(self,self.warningFont,Strings('%d / %d ready',n,total),cx+14*s,cy+40*s,cw-(c.id and 70 or 28)*s,P.warning)
         self._sb.consoles[#self._sb.consoles+1]=r
@@ -435,8 +439,10 @@ function Library.install(RI)
       -- Stable groups: favourites, imported games, then the rest of the registry.
       list={}
       local opts=self:_settings()
+      local entries=Sidebar.gamesFor(self.libraryConsole or nil)
+      for _,v in ipairs(require('src.import.LauncherPokemonXY').versions(self.libraryConsole or nil)) do entries[#entries+1]=v end
       for group=1,3 do
-        for _,v in ipairs(Sidebar.gamesFor(self.libraryConsole or nil)) do
+        for _,v in ipairs(entries) do
           local fav=Sidebar.isFavorite(opts,v)
           local rank=fav and 1 or self.ready[v] and 2 or 3
           local show=self.libraryFilter=='ready' and self.ready[v]
@@ -445,7 +451,10 @@ function Library.install(RI)
           if rank==group and show then list[#list+1]=v end
         end
       end
-    else list=Sidebar.gamesFor(self.browseConsole,self.browseSeries) end
+    else
+      list=Sidebar.gamesFor(self.browseConsole,self.browseSeries)
+      for _,v in ipairs(require('src.import.LauncherPokemonXY').versions(self.browseConsole,self.browseSeries)) do list[#list+1]=v end
+    end
     if #list==0 then
       text(self,self.stateFont,Strings('No cartridges in this view.'),x,y,w,P.detail)
       return y-top+64*s

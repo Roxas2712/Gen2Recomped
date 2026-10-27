@@ -25,3 +25,18 @@ check(A.devices() and sent.opts.headers.Authorization=='Bearer my-device-token',
 local before=sent;check(not A.revoke('../other') and sent==before,'invalid device identifiers never become request paths')
 code=401;response={message='Reconnect'};check(not A.devices() and expired,'expired sessions return to native sign-in')
 print('Native account: '..n..' checks passed')
+
+local T=require('src.translation.Service');T.setLauncher({launcherLanguage='de'})
+code=422;response={errors={email={'The email field must be a valid email address.'}}}
+_,why=A.login('private@example.test','not-sent-to-a-translator')
+check(why=='E-Mail-Adresse: Gib eine gültige E-Mail-Adresse ein.','known field rules are localized without changing validation')
+code=422;response={errors={password={'The password field must be at least 12 characters.'}}}
+_,why=A.login('private@example.test','short')
+check(why=='Passwort: Gib mindestens 12 Zeichen ein.','validation numbers survive localization')
+code=503;response={message='The independent legality checker is not available yet.'}
+_,why=A.request('POST','/bank/entries/'..string.rep('a',64)..'/verification',nil,true)
+check(T.launcherLookup(why):find('Prüfdienst',1,true),'known disabled service is distinguishable from an outage')
+code=503;response={message='private filesystem path and exception'}
+_,why=A.policy();check(not why:find('private',1,true),'other private server exceptions stay hidden')
+T.setLauncher({launcherLanguage='en'})
+print('Native account localized errors: '..n..' checks passed')

@@ -162,3 +162,15 @@ local controls=Workspace.filterRows(settingsRows,'controls')
 check(#controls==2 and controls[2].scope=='touch','controls category does not mix game and launcher preferences')
 check(Workspace.filterRows(settingsRows,'all')==settingsRows,'all settings remains an unfiltered escape hatch')
 print('Launcher sequence: '..checks..' checks passed')
+
+-- External editions use the same animation without entering the Lua ROM boot.
+local externalBoots=0
+ui=RI.new({launcherAnimations=false});ui._launcherSequence=Sequence.new('play','x')
+ui._launcherSequence.onComplete=function()externalBoots=externalBoots+1 end
+ui:update(Sequence.PLAY_DURATION);ui:update(1)
+check(externalBoots==1 and ui.boots==0,'external cartridge callback runs once without native Lua boot')
+local hw=require('src.import.LauncherHardware')
+check(hw.kind('x')=='3ds' and hw.kind('y')=='3ds','both Kalos editions use the 3DS hardware family')
+check(hw.cartModel('x').family=='ctr','3DS cartridges use the tabbed CTR mould')
+check(require('src.core.GameVersion').VERSIONS.x==nil,'3DS backend does not claim a Lua-engine GameVersion')
+print('External 3DS animation: 4 checks passed')

@@ -1,0 +1,168 @@
+{
+  "platform": "macOS arm64",
+  "upstream_revisions": {
+    "3dsrecomp": "cec1270db38411f9c02d3f356fc3ed6c3f007424",
+    "zakuro": "e174910de5e7285581b153cbce05543efb135cd5",
+    "3ds_decrypt": "bbe6514f0a575512b8e3d26455b78da32249d5b6"
+  },
+  "tool_builds": {
+    "3dsrecomp": "passed",
+    "zakuro_fs": "passed",
+    "zakuro": "passed"
+  },
+  "compiler_tests": {
+    "passed": 3
+  },
+  "fork_tests": {
+    "python_passed": 28,
+    "launcher_checks": 65,
+    "external_launch_checks": 4,
+    "presentation_checks": 8,
+    "language_checks": 10,
+    "controller_layout_checks": 13,
+    "keyboard_checks": 8,
+    "rust_tests": 10,
+    "readback_pool_tests": 3,
+    "vertex_handoff_bit_equality_tests": 1
+  },
+  "original_file_load": {
+    "recompiler_exit": 1,
+    "zakuro_fs_exit": 1,
+    "zakuro_exit": 1
+  },
+  "decryption": {
+    "tool_revision": "bbe6514f0a575512b8e3d26455b78da32249d5b6",
+    "original_sha256": "504cd16e78ee56909681a7449a45fc27d2ce5f8d9a33710977fbf6a99bfb3185",
+    "original_unchanged": true,
+    "decrypted": {
+      "format": "NCCH",
+      "bytes": 1801052160,
+      "cia": null,
+      "outer_content_encrypted": false,
+      "title_id": "0004000000055D00",
+      "executable_offset": 0,
+      "product_code": "CTR-P-EKJA",
+      "ncch_no_crypto": true,
+      "ncch_crypto_method": 0,
+      "plaintext_hashes": {
+        "extended_header": true,
+        "exefs_superblock": true,
+        "romfs_superblock": true
+      },
+      "blockers": [],
+      "status": "headers_verified_boot_untested",
+      "sha256": "d0792220ab7c1ba1047ab7251bccc11b1dfa846fbac4edb1fe4fa899fe8ccb6c"
+    }
+  },
+  "decrypted_analysis": {
+    "exit": 0,
+    "functions": 70205,
+    "modules": 133,
+    "decoded_instructions": 2696772,
+    "classified_as_code_percent": 95.7
+  },
+  "game_library": {
+    "x": "built",
+    "y": "built"
+  },
+  "interactive_gameplay": "Y 3x: 47.93 minutes across five instrumented window runs including dialogue/idle; own character/name, starter, house/Vaniville/Route 1/Acquacorde; first trainer battle completed plus two own-state replays and overworld returns; full campaign unqualified",
+  "stereo_modes_found_in_source": [
+    "anaglyph",
+    "side_by_side",
+    "interlaced"
+  ],
+  "stereo_tested": false,
+  "mac_vulkan": {
+    "capability_probe": [
+      {
+        "portability_enabled": false,
+        "create_status": -9,
+        "devices": []
+      },
+      {
+        "portability_enabled": true,
+        "create_status": 0,
+        "devices": [
+          {
+            "name": "Apple M3",
+            "vulkan_api": "1.3.357",
+            "push_descriptors": true,
+            "portability_subset": true,
+            "depth_clamp": true,
+            "depth_formats": {
+              "D24S8": false,
+              "D32S8": true
+            }
+          }
+        ]
+      }
+    ],
+    "moltenvk_version": "1.4.2",
+    "vulkan_loader_version": "1.4.363.0",
+    "patch": "tools/patches/zakuro-macos-portability.patch",
+    "runtime_verification": "passed native GPU boot on Apple M3"
+  },
+  "presentation": {
+    "same_window": true,
+    "intro_seconds": 13.1,
+    "omega_continuation": false,
+    "performance_comparison": "passed isolated native 3x comparison; see performance-native.json",
+    "language_restart": "Y 3x: 219 native checks passed, exact 8 prompt stages, two fresh-start selection cycles and reset"
+  },
+  "visible_mod": {
+    "y_3x_off_on_off": "passed; original images byte-identical after disabling",
+    "marker": "ASCENDANT TESTMOD: AN",
+    "x_installed": true,
+    "y_installed": true,
+    "enabled_by_default": false,
+    "x_gpu_ab_tested": false,
+    "game_save_files_unchanged": 4
+  },
+  "gameplay_qualification": {
+    "edition": "y",
+    "resolution": 3,
+    "stereo": "off",
+    "window_test_minutes": 47.932445,
+    "includes_dialogue_and_idle": true,
+    "first_trainer_battle_runs": 3,
+    "unique_trainer_battles": 1,
+    "final_warm_replays_emu_hz": [
+      59.807,
+      59.677
+    ],
+    "warm_replays_observed_native_max_ms": [
+      27.799,
+      19.947
+    ],
+    "final_first_battle_exit_pause_ms": 94.196,
+    "final_area_traversal_pause_ms": 61.167,
+    "earlier_focused_native_transition_ms": [
+      311.588,
+      569.232,
+      145.728
+    ],
+    "earlier_background_stall_max_ms": 2721.264,
+    "blanket_smoothness_pass": false,
+    "scope": "early game only; standard HID, isolated own QA profile; physical controller and X campaign untested"
+  },
+  "hardware_coordination": "three chats serialized using shared hardware.lock; final GPU child exited and QA host cleaned",
+  "transition_optimization": {
+    "source_patches": [
+      "tools/patches/zakuro-readback-reuse.patch",
+      "tools/patches/zakuro-macos-shader-handoff.patch"
+    ],
+    "report": "transition-optimized.json",
+    "order": "A-B-B-A",
+    "new_round_trips": 6,
+    "control_round_trips": 6,
+    "settings": "Y 3x, stereo off",
+    "weighted_observed_native_mean_ms": {
+      "baseline": 4.070401628222524,
+      "candidate": 3.783869508481949
+    },
+    "old_half_second_stalls_reproduced": false,
+    "causal_elimination_of_old_stalls_proven": false,
+    "four_user_savedata_hashes_unchanged": true,
+    "all_children_and_ephemeral_host_cleaned": true
+  }
+}

@@ -12027,4 +12027,6 @@ require("src.import.TournamentWorkspace").install(RomImporter)
 require("src.import.FirstRun").install(RomImporter)
 require("src.import.NativeLanguageSetup").install(RomImporter)
 
+require("src.import.LauncherPokemonXY").install(RomImporter)
+
 return RomImporter

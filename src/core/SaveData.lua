@@ -558,6 +558,8 @@ function SaveData.defaultOptions()
     -- launcher shipped with".
     launcherLogoCards = true,
     launcherCartDesigns = {},
+    launcherOriginalCartridges = false,
+    launcherOriginalCartridgesConsent = 0,
     cartridgeCloudSync = false,
     gameCacheUpload = false,
     gameCacheDownload = true,

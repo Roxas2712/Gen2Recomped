@@ -56,6 +56,7 @@ function Designer.install(RI)
     self._cartDraft=nil
     self.section='tools';self.settingsOpen=false;self.toolFlow={tool=batchTool,label=batchTool.label}
     self._cartBatch=self._cartBatch or {};self.pageScroll=0
+    local options=SaveData.loadOptions();self._cartBatch.consent=self._cartBatch.consent or options.launcherOriginalCartridgesConsent==require('src.import.CartridgeBatch').CONSENT
   end
 
   function RI:_cartStyle(version)
@@ -132,7 +133,7 @@ function Designer.install(RI)
   local update=RI.update
   RI.update=function(self,dt,...)
     local D=require('src.import.CartridgeDownload');D.reap()
-    require('src.import.CartridgeBatch').tick(self)
+    local batch=require('src.import.CartridgeBatch');batch.tick(self);batch.auto(self)
     local pending=self._cartDownload
     if pending then
       if self._cartDraft~=pending.draft then cancelDownload(self)
@@ -186,19 +187,20 @@ function Designer.install(RI)
   RI._sbTools=function(self,x,y,w,h)
     if self.toolFlow and self.toolFlow.tool.id=='cartBatch' and self._cartBatch then
       local f=self._cartBatch;local s,p,g=self._s,RI.palette(),love.graphics
-      local yy=y;self._cartBatchControls={}
+      local yy=y;self._cartBatchControls={};local function L(value)return require('src.translation.Service').launcherLookup(value)end
       local function paragraph(value)
-        g.setFont(self.hintFont);U.col(p.detail);g.printf(value,x,yy,w,'left')
+        value=L(value);g.setFont(self.hintFont);U.col(p.detail);g.printf(value,x,yy,w,'left')
         local _,lines=self.hintFont:getWrap(value,w);yy=yy+#lines*self.hintFont:getHeight()+18*s
       end
       local function button(id,label)
         local r=self:_chipButton(x,yy,label,{w=w,h=44*s,kind='accent'});r.id=id;self._cartBatchControls[#self._cartBatchControls+1]=r;yy=yy+56*s
       end
       paint.label(self,'ALL ORIGINAL CARTRIDGES',x,yy,p.link);yy=yy+38*s
-      paragraph('Download and apply all 16 supported retail cartridge photographs at once (about 20 MB). Original PNG quality, served by ModCompass. Existing artwork and custom designs are skipped; ROM hacks keep their own designs. No ROM or login is required.')
+      paragraph('Load the original cartridge photographs in one batch. Original PNG quality, served by ModCompass. Existing artwork and custom designs are preserved. A confirmed member account is required. No ROM is downloaded.')
+      button('automatic',SaveData.loadOptions().launcherOriginalCartridges and '[x] AUTOMATICALLY LOAD MISSING ORIGINALS' or '[ ] AUTOMATICALLY LOAD MISSING ORIGINALS')
       paragraph('Sources: Bulbagarden Archives · TheMalevolentOne / UnethicalVoxel. Cartridge artwork belongs to its respective rights holders, including Nintendo, Game Freak and Creatures. The source claims fair use; downloading grants no reuse licence. Review your permitted use. Images remain on this device.')
       if f.running then
-        paragraph(('%d / %d applied · now loading %s'):format(f.done or 0,f.total or 0,tostring(f.current or 'next cartridge')))
+        paragraph(require('src.translation.Service').launcherFormat('%d / %d applied · now loading %s',f.done or 0,f.total or 0,f.current and require('src.translation.Service').editionName(f.current)or L('next cartridge')))
         local progress=((f.total or 0)-#(f.queue or {})-(f.job and 1 or 0))/math.max(1,f.total or 1)
         U.col(p.link,.25);g.rectangle('fill',x,yy,w,8*s,4*s,4*s);U.col(p.link);g.rectangle('fill',x,yy,w*progress,8*s,4*s,4*s);yy=yy+26*s
         button('cancel','STOP BATCH · KEEP COMPLETED IMAGES')
@@ -342,6 +344,10 @@ function Designer.install(RI)
       for _,r in ipairs(self._cartBatchControls or {}) do if U.inside(r,x,y) then
         local f=self._cartBatch
         if r.id=='consent' then f.consent=not f.consent
+        elseif r.id=='automatic' then
+          local batch=require('src.import.CartridgeBatch');local enabled=SaveData.loadOptions().launcherOriginalCartridges~=true
+          if enabled and not f.consent then f.notice='Confirm the artwork source and rights notice first.'
+          else local ok,why=batch.setAutomatic(self,enabled);if not ok then f.notice=why end end
         elseif r.id=='start' then require('src.import.CartridgeBatch').start(self,f.consent)
         elseif r.id=='cancel' then require('src.import.CartridgeBatch').cancel(self)
         elseif r.id=='library' then self:_sbGo('games') end

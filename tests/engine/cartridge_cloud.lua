@@ -15,6 +15,7 @@ local f=assert(io.open('assets/launcher/cobblemon/delibird.png','rb'));local png
 local readOnly={kind=store.kind,profileScope=store.profileScope,read=store.read,write=function()error('A design restore must never publish')end}
 check(C.sync(readOnly,'download')=='absent' and next(remote)==nil,'restoring an account with no cloud design never uploads local defaults')
 files['launcher/cart_art/my_label.png']=png
+options.launcherOriginalCartridges=true;options.launcherOriginalCartridgesConsent=1
 options.launcherCartDesigns.red={name='MY RED',shell={80,15,20},art='launcher/cart_art/my_label.png'}
 check(C.sync(store)=='uploaded','explicit account sync uploads the design and its actual image')
 local doc=assert(C.decode(remote[C.PATH]));local image=doc.designs.red.image
@@ -22,6 +23,7 @@ check(doc.designs.red.style.art==nil and image and image.bytes==#png,'the portab
 check(C.sync(store)=='current','unchanged artwork does not produce another profile revision')
 files={};options={launcherLogoCards=false,launcherCartDesigns={}}
 check(C.sync(readOnly,'download')=='restored','a second device restores its account collection without publishing')
+check(options.launcherOriginalCartridges and options.launcherOriginalCartridgesConsent==1,'account restore retains the explicit future-artwork preference')
 local restored=options.launcherCartDesigns.red
 check(restored.name=='MY RED' and restored.shell[1]==80 and files[restored.art]==png and options.launcherLogoCards,
   'custom name, shell, logo preference and identical PNG pixels survive the round trip')

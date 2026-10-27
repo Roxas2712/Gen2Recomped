@@ -45,6 +45,32 @@ function Service.launcherLookup(source)
  if type(text)=='string' then return (text:gsub('→','>'):gsub('←','<'):gsub('↔','<->'):gsub('↓','v'):gsub('↑','^')) end
  return text
 end
+-- Translate the template before inserting names, IDs or other private values.
+function Service.launcherFormat(source,...)
+ local function signature(value)
+  local out={}
+  for marker in value:gmatch('%%[-+ #0]*%d*%.?%d*([cdeEfgGiouXxsq%%])')do
+   if marker~='%'then out[#out+1]=marker end
+  end
+  return table.concat(out)
+ end
+ local translated=Service.launcherLookup(source)
+ if signature(translated)~=signature(source)then translated=source end
+ local ok,value=pcall(string.format,translated,...)
+ if ok then return value end
+ return string.format(source,...)
+end
+function Service.launcherState(value)
+ local source=tostring(value):upper();if Service.launcherTarget=='en'or not Service.launcherTarget then return source end
+ local key='STATE · '..source;local text=Service.launcherLookup(key);return text==key and source or text
+end
+function Service.editionName(version)
+ local info=require('src.core.GameVersion').info(version)
+ return Service.launcherLookup(info and info.label or tostring(version))
+end
+function Service.launcherCount(count,singular,plural)
+ return Service.launcherFormat(count==1 and singular or plural,count)
+end
 function Service.setLauncher(options)
  Service.launcherActive=true
  local target=options.launcherLanguage or "en"

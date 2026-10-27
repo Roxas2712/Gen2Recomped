@@ -18,7 +18,7 @@ function Sources.get(version)
   local encoded=file:gsub('[^%w_.%-]',function(c) return ('%%%02X'):format(c:byte()) end)
   local asset=hosted[version]
   return {page='https://archives.bulbagarden.net/wiki/File:'..encoded,
-    image=asset and ('https://pokexpert.de/launcher/cartridges/v1/'..asset.file) or ('https://archives.bulbagarden.net/media/upload/'..directories[version]..'/'..encoded),
+    image=asset and ('https://pokexpert.de/api/cloud/v1/cartridges/'..version) or ('https://archives.bulbagarden.net/media/upload/'..directories[version]..'/'..encoded),
     originalImage='https://archives.bulbagarden.net/media/upload/'..directories[version]..'/'..encoded,
     sha256=asset and asset.sha256,bytes=asset and asset.bytes,width=asset and asset.width,height=asset and asset.height,
     credit=asset and asset.credit,delivery=asset and 'ModCompass · pokexpert.de' or 'Bulbagarden Archives',

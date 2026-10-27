@@ -1,0 +1,288 @@
+{
+  "run": "play-y-1793088241",
+  "phases": {
+    "startup": {
+      "seconds": 11.941361000000002,
+      "focused_seconds": 11.941361000000002,
+      "emulated_frames": 677,
+      "redraw": {
+        "samples": 661,
+        "mean_ms": 16.581142208774583,
+        "p95_ms": 17.884,
+        "p99_ms": 18.507,
+        "max_ms": 32.972
+      },
+      "native": {
+        "samples": 489,
+        "mean_ms": 4.065601226993865,
+        "p95_ms": 10.278,
+        "p99_ms": 11.595,
+        "max_ms": 190.034
+      },
+      "focused_redraw": {
+        "samples": 661,
+        "mean_ms": 16.581142208774583,
+        "p95_ms": 17.884,
+        "p99_ms": 18.507,
+        "max_ms": 32.972
+      },
+      "focused_native": {
+        "samples": 489,
+        "mean_ms": 4.065601226993865,
+        "p95_ms": 10.278,
+        "p99_ms": 11.595,
+        "max_ms": 190.034
+      },
+      "emulated_hz_including_waits": 56.69370518151155
+    },
+    "battle-1-completion": {
+      "seconds": 38.83200600000011,
+      "focused_seconds": 38.83200600000011,
+      "emulated_frames": 2324,
+      "redraw": {
+        "samples": 2301,
+        "mean_ms": 16.665348978704912,
+        "p95_ms": 17.838,
+        "p99_ms": 18.578,
+        "max_ms": 41.54
+      },
+      "native": {
+        "samples": 1945,
+        "mean_ms": 3.649354241645244,
+        "p95_ms": 8.479,
+        "p99_ms": 9.919,
+        "max_ms": 12.339
+      },
+      "focused_redraw": {
+        "samples": 2301,
+        "mean_ms": 16.665348978704912,
+        "p95_ms": 17.838,
+        "p99_ms": 18.578,
+        "max_ms": 41.54
+      },
+      "focused_native": {
+        "samples": 1945,
+        "mean_ms": 3.649354241645244,
+        "p95_ms": 8.479,
+        "p99_ms": 9.919,
+        "max_ms": 12.339
+      },
+      "emulated_hz_including_waits": 59.84753916653168
+    },
+    "battle-1-move-choice": {
+      "seconds": 37.100560000000044,
+      "focused_seconds": 37.100560000000044,
+      "emulated_frames": 2220,
+      "redraw": {
+        "samples": 2196,
+        "mean_ms": 16.667141165755922,
+        "p95_ms": 18.138,
+        "p99_ms": 19.206,
+        "max_ms": 20.186
+      },
+      "native": {
+        "samples": 1707,
+        "mean_ms": 3.7112870533099005,
+        "p95_ms": 10.404,
+        "p99_ms": 10.883,
+        "max_ms": 13.895
+      },
+      "focused_redraw": {
+        "samples": 2196,
+        "mean_ms": 16.667141165755922,
+        "p95_ms": 18.138,
+        "p99_ms": 19.206,
+        "max_ms": 20.186
+      },
+      "focused_native": {
+        "samples": 1707,
+        "mean_ms": 3.7112870533099005,
+        "p95_ms": 10.404,
+        "p99_ms": 10.883,
+        "max_ms": 13.895
+      },
+      "emulated_hz_including_waits": 59.83737172700351
+    },
+    "battle-1-finish": {
+      "seconds": 65.03222000000002,
+      "focused_seconds": 65.03222000000002,
+      "emulated_frames": 3881,
+      "redraw": {
+        "samples": 3872,
+        "mean_ms": 16.666443440082645,
+        "p95_ms": 17.994,
+        "p99_ms": 18.989,
+        "max_ms": 20.11
+      },
+      "native": {
+        "samples": 3077,
+        "mean_ms": 3.7919951251218715,
+        "p95_ms": 9.598,
+        "p99_ms": 10.692,
+        "max_ms": 94.196
+      },
+      "focused_redraw": {
+        "samples": 3872,
+        "mean_ms": 16.666443440082645,
+        "p95_ms": 17.994,
+        "p99_ms": 18.989,
+        "max_ms": 20.11
+      },
+      "focused_native": {
+        "samples": 3077,
+        "mean_ms": 3.7919951251218715,
+        "p95_ms": 9.598,
+        "p99_ms": 10.692,
+        "max_ms": 94.196
+      },
+      "emulated_hz_including_waits": 59.67811032746535
+    },
+    "battle-2-warm-replay": {
+      "seconds": 150.2663870000003,
+      "focused_seconds": 150.2663870000003,
+      "emulated_frames": 8987,
+      "redraw": {
+        "samples": 8838,
+        "mean_ms": 16.66666112242589,
+        "p95_ms": 17.83,
+        "p99_ms": 18.77,
+        "max_ms": 20.37
+      },
+      "native": {
+        "samples": 7213,
+        "mean_ms": 3.6607935671703866,
+        "p95_ms": 9.569,
+        "p99_ms": 10.892,
+        "max_ms": 27.799
+      },
+      "focused_redraw": {
+        "samples": 8838,
+        "mean_ms": 16.66666112242589,
+        "p95_ms": 17.83,
+        "p99_ms": 18.77,
+        "max_ms": 20.37
+      },
+      "focused_native": {
+        "samples": 7213,
+        "mean_ms": 3.6607935671703866,
+        "p95_ms": 9.569,
+        "p99_ms": 10.892,
+        "max_ms": 27.799
+      },
+      "emulated_hz_including_waits": 59.807121069597436
+    },
+    "battle-3-warm-replay": {
+      "seconds": 139.26618799999997,
+      "focused_seconds": 139.26618799999997,
+      "emulated_frames": 8311,
+      "redraw": {
+        "samples": 8209,
+        "mean_ms": 16.666502862711656,
+        "p95_ms": 17.736,
+        "p99_ms": 19.031,
+        "max_ms": 20.196
+      },
+      "native": {
+        "samples": 6729,
+        "mean_ms": 3.6655828503492343,
+        "p95_ms": 9.523,
+        "p99_ms": 10.866,
+        "max_ms": 19.947
+      },
+      "focused_redraw": {
+        "samples": 8209,
+        "mean_ms": 16.666502862711656,
+        "p95_ms": 17.736,
+        "p99_ms": 19.031,
+        "max_ms": 20.196
+      },
+      "focused_native": {
+        "samples": 6729,
+        "mean_ms": 3.6655828503492343,
+        "p95_ms": 9.523,
+        "p99_ms": 10.866,
+        "max_ms": 19.947
+      },
+      "emulated_hz_including_waits": 59.6770840026152
+    },
+    "post-battle-area-return": {
+      "seconds": 34.933628000000006,
+      "focused_seconds": 34.933628000000006,
+      "emulated_frames": 2080,
+      "redraw": {
+        "samples": 1987,
+        "mean_ms": 16.6668152994464,
+        "p95_ms": 17.927,
+        "p99_ms": 19.315,
+        "max_ms": 19.979
+      },
+      "native": {
+        "samples": 1580,
+        "mean_ms": 4.032534810126582,
+        "p95_ms": 9.761,
+        "p99_ms": 10.436,
+        "max_ms": 61.167
+      },
+      "focused_redraw": {
+        "samples": 1987,
+        "mean_ms": 16.6668152994464,
+        "p95_ms": 17.927,
+        "p99_ms": 19.315,
+        "max_ms": 19.979
+      },
+      "focused_native": {
+        "samples": 1580,
+        "mean_ms": 4.032534810126582,
+        "p95_ms": 9.761,
+        "p99_ms": 10.436,
+        "max_ms": 61.167
+      },
+      "emulated_hz_including_waits": 59.541482493601855
+    }
+  },
+  "slow_completed_native_frames": [
+    {
+      "seconds": 0.5398,
+      "phase": "startup",
+      "frame": 1,
+      "worker_ms": 190.034,
+      "focused_at_completion": true,
+      "qa_instrumentation": false,
+      "native_status": {
+        "interpreted": 49571795,
+        "hardware": true,
+        "sample_frame": 1,
+        "readback_ms": 1.569083,
+        "frames": 141343,
+        "top_blank": false,
+        "emulation_ms": 185.674083,
+        "resolution": 3,
+        "emulation_cpu_ms": 36.57862500000002,
+        "recompiled": 92988731048
+      }
+    },
+    {
+      "seconds": 125.8064,
+      "phase": "battle-1-finish",
+      "frame": 7483,
+      "worker_ms": 94.196,
+      "focused_at_completion": true,
+      "qa_instrumentation": false
+    },
+    {
+      "seconds": 459.7551,
+      "phase": "post-battle-area-return",
+      "frame": 27427,
+      "worker_ms": 61.167,
+      "focused_at_completion": true,
+      "qa_instrumentation": false
+    }
+  ],
+  "caveats": [
+    "Redraw cadence is not game FPS or proof of forward progress.",
+    "Native samples are observed completed frames, not every native frame.",
+    "Focus is sampled at completion; a whole stall may span focus changes.",
+    "PNG/state QA intervals are excluded from distributions, retained in events.",
+    "Waits/loading remain in wall-clock emulation rate; no blanket smoothness verdict."
+  ]
+}

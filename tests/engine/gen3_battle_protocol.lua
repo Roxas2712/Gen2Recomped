@@ -7,15 +7,23 @@ local data, before = T.fixtures.fresh(), V.get()
 -- Legacy hash retained; native hash independently audits revision 19 -> 20 only.
 local LEGACY = "e33d251961f2a41d"
 local NATIVE = "43fe7ea27b438e0e"
-for _, version in ipairs({ "red", "firered", "gold", "emerald", "diamond", "firered", "black" }) do
+-- Independently extend the audited GBA fixture digest by the two explicit
+-- native command/party suffixes. The record surface remains identical;
+-- [native_gba_commands]20/[native_gba_party]1 becomes nds-4-1 or nds-5-1.
+local NDS = { [4] = "d37127fdeb67b571", [5] = "5959e75709cb1fcb" }
+for _, version in ipairs({ "red", "firered", "gold", "emerald", "platinum", "firered", "black", "gold" }) do
   V.set(version)
   local gba = V.isGen3()
+  local generation = V.generation()
+  local nds = generation == 4 or generation == 5
+  local native = gba or nds
   T.eq(
     F.compute(data, {}),
-    gba and NATIVE or LEGACY,
+    gba and NATIVE or nds and NDS[generation] or LEGACY,
     "runtime command revision participates in cached fingerprints"
   )
-  T.eq(F.nativeBattleRevision(), gba and 20 or nil, "only GBA advertises the new command revision")
+  T.eq(F.nativeBattleRevision(), gba and 20 or nds and ("nds-" .. generation .. "-1") or nil,
+    "each edition advertises its native command revision")
   local game = { data = data, save = { player = { name = "RULES" } } }
   local current = H.hello(game, "battle")
   local legacy = Copy(current)
@@ -23,15 +31,26 @@ for _, version in ipairs({ "red", "firered", "gold", "emerald", "diamond", "fire
   T.eq(H.checkCompat(current, Copy(current)), "full", "identical native rules admit lockstep")
   T.eq(
     H.checkCompat(current, legacy),
-    gba and "subset" or "full",
-    "old wire digest cannot admit changed GBA battles"
+    native and "subset" or "full",
+    "old wire digest cannot admit changed native battles"
   )
-  T.eq(H.checkCompat(legacy, current), gba and "subset" or "full", "the wire mismatch is symmetric")
+  T.eq(H.checkCompat(legacy, current), native and "subset" or "full", "the wire mismatch is symmetric")
   T.eq(
     H.checkCompat(current, {}),
-    gba and "refused" or "vanilla_peer",
+    native and "refused" or "vanilla_peer",
     "legacy unversioned peers remain safe"
   )
+  if nds then
+    T.eq(current.nativePartyRevision, "nds-" .. generation .. "-1",
+      "native DS party codec revision is part of admission")
+    local previous = Copy(current)
+    previous.nativeBattleRevision = "nds-" .. generation .. "-0"
+    T.eq(H.checkCompat(current, previous), "subset", "older DS command revision cannot enter lockstep")
+    T.eq(H.checkCompat(previous, current), "subset", "DS command mismatch is symmetric")
+    local other = Copy(current)
+    other.nativePartyRevision = "nds-" .. generation .. "-0"
+    T.eq(H.checkCompat(current, other), "refused", "older DS party codec cannot admit battle or trade")
+  end
   if gba then
     local previous = Copy(current)
     previous.nativeBattleRevision, previous.fingerprint = 19, "22e453523676534e"
