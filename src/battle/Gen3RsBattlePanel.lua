@@ -16,7 +16,7 @@ function M.new(battle)
   local self=setmetatable({context=context,spec=M.available(battle)},M)
   self.font=context.load('src.ui.game3.frlg_font')
   self.chrome=context.load('src.ui.game3.chrome')
-  self.cursor=context.load('src.ui.game3.rs.menu_cursor')
+  self.cursor=require('src.ui.Gen3RsMenuCursor').forGame(battle.game)
   self.menuColors={fg=color(0x2529),shadow=color(0x675a),bg={0,0,0,0}}
   self.messageColors={fg=color(self.spec.palette[2]),shadow=color(self.spec.palette[9]),bg={0,0,0,0}}
   self.images={};for k,path in pairs(self.spec.images)do self.images[k]=require('src.render.Assets').image(path)end
