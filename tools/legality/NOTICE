@@ -1,0 +1,8 @@
+PKHeX.Core 26.10.18 — Copyright © kwsch and contributors.
+https://github.com/kwsch/PKHeX — GPL-3.0-or-later.
+This separate executable uses PKHeX.Core through its published NuGet package.
+The integration source in this directory is GPL-3.0-or-later; other project
+files retain their own existing licences. No PKHeX code is copied into the
+launcher or native engine. Keep the package's license and dependency notices
+with deployed copies. A possible-encounter verdict does not attest that a
+particular player actually caught that Pokémon.

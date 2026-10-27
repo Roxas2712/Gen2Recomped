@@ -153,6 +153,7 @@ local function volStr(b)
 end
 
 local function toxicSignature(mon)
+  if require('src.core.GameVersion').generation()>=4 then return require('src.link.NdsParty').signature(mon)end
   if not require("src.core.GameVersion").isGen3() then return "" end
   return ":toxic=" .. tostring(mon.status == "PSN" and mon.toxic == true)
     .. require("src.link.Gen3Party").signature(mon)
@@ -561,12 +562,25 @@ function LinkBattle.new(game, net, opts)
       return mv
     end
     self.replayTurn = function(s, host, guest)
-      assert(role == "host" and s.phase == "menu" and not s.result, "Replay is not ready for another turn")
+      assert(opts.replay and s.phase == "menu" and not s.result, "Replay is not ready for another turn")
       s:clearTurnFlinches()
-      local mine = { type = host.type, kind = host.kind, slot = host.slot, index = host.index }
-      mine.action = action(s, host, s.player, myParty)
-      action(s, guest, s.enemy, theirParty)
-      resolveLockstep(s, mine, guest)
+      local own,peer=role=='host' and host or guest,role=='host' and guest or host
+      local mine = { type = own.type, kind = own.kind, slot = own.slot, index = own.index }
+      mine.action = action(s, own, s.player, myParty)
+      action(s, peer, s.enemy, theirParty)
+      resolveLockstep(s, mine, peer)
+    end
+    self.resumeLive=function(s,mine,theirs)
+      assert(opts.replay and(s.phase=='menu'or s._gen3BatonPending)and not s.result,'Reconstruction has not reached a live decision')
+      assert(not s._gen3BatonPending or not mine and not theirs,'Pending replacement has conflicting future actions')
+      if mine then
+        s.pendingMyAction={type=mine.type,kind=mine.kind,slot=mine.slot,index=mine.index,action=action(s,mine,s.player,myParty)}
+        s.phase='waitRemote'
+      end
+      if theirs then action(s,theirs,s.enemy,theirParty);s.remoteAction=theirs end
+      opts.replay=nil
+      require('src.link.Gen3BatonChoice').resume(s)
+      tryResolve(s)
     end
   end
 

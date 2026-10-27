@@ -52,4 +52,93 @@ local custom={id='own',label='OWN',step=function()end};local native={id='textSpe
 local grouped=Groups.build({native,custom},function()end)
 T.eq(grouped[2],custom,'unknown authored rows remain accessible at root')
 T.eq(grouped[#grouped].cancel,true,'BACK remains reachable')
+
+-- Real presentation consumers wrap the public constructor, attaching draw
+-- functions and ownership to each returned instance. A grouped child must
+-- reach that same seam, with its original native rows and no second root hook.
+local Runtime=require('src.mods.Runtime')
+local ScreenUI=require('src.render.ScreenSpaceUI')
+require('src.render.Font').load(T.fixtures.fresh())
+for _,edition in ipairs({'gold','silver','crystal','red','emerald'})do
+ Version.set(edition);local g=session();local menu=Menu.new(g);g.stack:push(menu)
+ local gen2=Version.isGen2()
+ T.eq(menu:drawsWidescreen(),gen2,edition..' window drawer is edition scoped')
+ T.eq(menu:wantsFillScale(),gen2,edition..' fill contract is edition scoped')
+ T.eq(ScreenUI.select(g.stack,{states={menu}},1),gen2 and menu or nil,edition..' actual compositor selects native window owner')
+ if gen2 then
+  local draws=0;local nativeDraw=love.graphics.draw
+  love.graphics.draw=function(...)draws=draws+1;return nativeDraw(...)end
+  menu:drawWidescreen(800,720)
+  love.graphics.draw=nativeDraw
+  T.check(draws>0,edition..' unskinned window fallback renders actual native glyphs')
+ end
+end
+local nativeNew,nativeCall=Menu.new,Runtime.call
+local nativeWide=Menu.drawWidescreen
+Menu.drawWidescreen=function(self,w,h)
+ self.windowReceipt={w,h}
+ return nativeWide(self,w,h)
+end
+local constructed,rootHooks=0,0
+Runtime.call=function(name,...)
+ if name=='ui.options.rows'then rootHooks=rootHooks+1 end
+ return nativeCall(name,...)
+end
+Menu.new=function(game,opts)
+ local page=nativeNew(game,opts)
+ constructed=constructed+1
+ page.constructorOwner=constructed
+ page.isOpaque=false
+ local wide=page.drawWidescreen
+ page.drawWidescreen=function(self,w,h)
+  if w then return wide(self,w,h) end
+  return self.constructorOwner
+ end
+ return page
+end
+for _,edition in ipairs({'gold','silver','crystal'})do
+ Version.set(edition);local g=session();local completions=0
+ local first=constructed;local hooks=rootHooks
+ local parent=Menu.new(g,{onDone=function()completions=completions+1 end})
+ g.stack:push(parent)
+ T.eq(rootHooks,hooks+1,edition..' root hook runs once')
+ local count=0
+ for _,row in ipairs(parent:visible())do
+  if row.group then
+   local nativeRows={};for i,member in ipairs(parent.rows)do nativeRows[i]=member end
+   local child=row.activate(g);count=count+1
+   T.eq(g.stack:top(),child,edition..' group admits returned native page')
+   T.eq(child.constructorOwner,first+1+count,edition..' child reaches actual public constructor wrapper')
+   T.eq(child:drawWidescreen(),child.constructorOwner,edition..' child retains per-instance presentation')
+   T.eq(ScreenUI.select(g.stack,{states=g.stack.states},1),child,edition..' decorated child owns actual window compositor')
+   ScreenUI.draw(child,{}, {width=800,height=720},nil,false)
+   T.same(child.windowReceipt,{800,720},edition..' native window dimensions reach wrapped public drawer')
+   T.eq(child.isOpaque,false,edition..' wrapped overlay ownership survives admission')
+   T.eq(getmetatable(child),Menu,edition..' native option controller still owns input')
+   T.eq(child.options,g.save.options,edition..' child retains exact native options table')
+   T.eq(child:visible()[#child:visible()].cancel,true,edition..' actual BACK remains last')
+   T.same(parent.rows,nativeRows,edition..' child cannot append BACK into root hook rows')
+   T.eq(rootHooks,hooks+1,edition..' child never replays root row hook')
+   press(g,'b');T.eq(g.stack:top(),parent,edition..' wrapped child BACK restores exact parent')
+   T.eq(completions,0,edition..' child BACK never finishes root')
+  end
+ end
+ T.eq(count,6,edition..' every native group reaches constructor contract')
+ press(g,'b');T.eq(completions,1,edition..' root completion still runs once')
+ local explicitRows={{id='own',label='OWN',step=function(game)game.ownSteps=(game.ownSteps or 0)+1;return true end},
+  {id='cancel',label='BACK',cancel=true}}
+ local calls=rootHooks;local cancelled=0
+ local explicit=Menu.new(g,{rows=explicitRows,onCancel=function()cancelled=cancelled+1 end})
+ g.stack:push(explicit)
+ T.eq(explicit.rows,explicitRows,edition..' explicit page retains caller-owned row identity')
+ T.eq(explicit:visible(),explicitRows,edition..' explicit page stays ungrouped')
+ T.eq(rootHooks,calls,edition..' explicit page does not build/hook a second root')
+ press(g,'right');T.eq(g.ownSteps,1,edition..' explicit page executes supplied native handler')
+ press(g,'b');T.eq(cancelled,1,edition..' explicit page keeps caller cancellation')
+ local empty=Menu.new(g,{rows={}});g.stack:push(empty)
+ press(g,'down');T.eq(empty.index,1,edition..' empty explicit page ignores navigation safely')
+ press(g,'b');T.eq(g.stack:top(),nil,edition..' empty explicit page remains cancellable')
+end
+Menu.new,Runtime.call=nativeNew,nativeCall
+Menu.drawWidescreen=nativeWide
 Version.set(before);T.finish('native Gen2 grouped options, handler identity and persistence')

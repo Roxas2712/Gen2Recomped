@@ -1355,10 +1355,10 @@ local function boxOrigins(mon, cw)
     -- the game of origin: EMERALD is what a Pokemon caught in this port was
     -- caught in, and the number is the one the import reads back out of the
     -- same field (unpackOrigins) rather than a new claim
-    metGame = mon.gen3MetGame or Gen3Save.defaultMetGame
+    metGame = mon.gen3MetGame or mon.metGame or Gen3Save.defaultMetGame
               or Gen3Save.MET_GAME_EMERALD,
     ball = (cw and mon.ball and cw.itemsIndex[mon.ball]) or nil,
-    otFemale = mon.gen3OtFemale,
+    otFemale = mon.gen3OtFemale == nil and mon.otGender == 1 or mon.gen3OtFemale,
   })
   out.ivWord = Gen3Save.packIVs({
     hp = (mon.ivs or {}).hp, attack = (mon.ivs or {}).attack,
@@ -1367,7 +1367,7 @@ local function boxOrigins(mon, cw)
     isEgg = mon.isEgg, altAbility = mon.altAbility,
   })
   -- a built record's ribbons + fateful mark (src/pokewalker/WalkerEvents.lua)
-  if tonumber(mon.gen3Ribbons) then out.ribbons = math.floor(tonumber(mon.gen3Ribbons)) % 4294967296 end
+  if tonumber(mon.gen3Ribbons or mon.ribbons) then out.ribbons = math.floor(tonumber(mon.gen3Ribbons or mon.ribbons)) % 4294967296 end
   return out
 end
 
@@ -1404,7 +1404,7 @@ function Gen3Save.buildBoxMon(mon, cw, owner)
   local secretId = math.floor(tonumber(mon.secretId)
                               or tonumber(owner.secretId) or 0) % 65536
   local otId = secretId * 65536 + publicId
-  if personality <= 0 then
+  if personality <= 0 and not owner.strictIdentity then
     -- DERIVED, NOT ROLLED.  A random one would make every export of the same
     -- save a different Pokemon -- different nature, different ability,
     -- different gender -- and two exports of one save have to match.  The
@@ -1448,13 +1448,13 @@ function Gen3Save.buildBoxMon(mon, cw, owner)
 
   local changes = boxChanges(mon, cw)
   for k, v in pairs(boxOrigins(mon, cw)) do changes[k] = v end
-  if changes.origins == nil or mon.gen3MetGame == nil then
+  if changes.origins == nil or (mon.gen3MetGame or mon.metGame) == nil then
     changes.origins = Gen3Save.packOrigins({
       metLevel = mon.metLevel or mon.level,
-      metGame = mon.gen3MetGame or defaults.metGame
+      metGame = mon.gen3MetGame or mon.metGame or defaults.metGame
                 or Gen3Save.defaultMetGame or Gen3Save.MET_GAME_EMERALD,
       ball = (cw and mon.ball and cw.itemsIndex[mon.ball]) or nil,
-      otFemale = mon.gen3OtFemale,
+      otFemale = mon.gen3OtFemale == nil and mon.otGender == 1 or mon.gen3OtFemale,
     })
   end
   return Gen3Save.patchBoxMon(record, 0, changes)
@@ -2207,12 +2207,15 @@ local function engineMon(mon, cw, isParty)
   -- sends a Pokemon out in, so a save that drops it sends everything out in
   -- a POKe BALL.
   local origins = Gen3Save.unpackOrigins(mon.origins)
-  if mon.metLocation and mon.metLocation ~= 0 then
-    out.metLocation = mon.metLocation
-  end
-  if origins.metLevel and origins.metLevel > 0 then
-    out.metLevel = origins.metLevel
-  end
+  out.metLocation = mon.metLocation or 0
+  out.metLevel = origins.metLevel or 0
+  out.gen3MetGame = origins.metGame or 0
+  out.metGame = out.gen3MetGame
+  out.gen3OtFemale = origins.otFemale == true
+  out.otGender = out.gen3OtFemale and 1 or 0
+  out.abilitySlot = ivs.altAbility and 2 or 1
+  out.gen3Ribbons = mon.ribbons or 0
+  out.ribbons = out.gen3Ribbons
   -- ball 0 is "no ball recorded", which is what an egg and a starting
   -- Pokemon both carry; anything else names one of the twelve
   if origins.ball and origins.ball > 0 then
@@ -2239,7 +2242,7 @@ local function engineMon(mon, cw, isParty)
   local nick = decodeText(mon.nicknameBytes)
   if nick and nick ~= "" then out.nickname = nick end
   local ot = decodeText(mon.otNameBytes)
-  if ot and ot ~= "" then out.gen3OtName = ot end
+  if ot and ot ~= "" then out.gen3OtName = ot;out.ot = ot end
   if mon.language and mon.language ~= 0 then out.gen3Language = mon.language end
   if mon.markings and mon.markings ~= 0 then out.gen3Markings = mon.markings end
   if mon.pokerus and mon.pokerus ~= 0 then out.gen3Pokerus = mon.pokerus end

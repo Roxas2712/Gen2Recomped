@@ -79,7 +79,7 @@ local function prepare()
  end
  local cup,match=cfg.cup,cfg.match
  cup.account_id=Auth.accountId()
- assert(require('src.link.CloudArena').queue(cup,match,'slot1'))
+ assert(require('src.link.CloudArena').queue(cup,match,'slot1',cfg.role=='left-target'))
  phase='preflight';require('src.link.CloudArena').consume(Game)
 end
 function love.update(dt)
@@ -106,6 +106,7 @@ function love.update(dt)
   return
  end
  if phase=='reporting' then
+  if cfg.scenario=='handoff'and cfg.role=='left'then return finish(true,'The fresh device took ownership; the original adventure was restored.')end
   require('src.link.ArenaResults').pump()
   if not proof then return finish(false,notice and notice.text or 'No native completion report') end
   if proof.status~='complete' and cfg.scenario~='abort' then return finish(false,notice and notice.text or 'Battle aborted') end
@@ -126,7 +127,9 @@ function love.update(dt)
    end
    if not screenshot and (top.turnCount or 0)>=1 then screenshot=true;love.graphics.captureScreenshot('native-link-'..cfg.edition..'-'..cfg.role..'.png') end
   end
-  Game.input:keyreleased('return');Game.input:keypressed('return')
+  local transfer=cfg.scenario=='handoff'and cfg.role=='left'and top and top.kind=='link'and(top.turnCount or 0)>=2 and top.phase=='menu'
+  if transfer and not handoffReady then handoffReady=true;write(cfg.handoffReady,{ready=true})end
+  Game.input:keyreleased('return');if not transfer then Game.input:keypressed('return')end
   local ok,why=pcall(Game.step,Game,1/60)
   if not ok then return finish(false,why) end
   if phase=='reporting' then break end

@@ -24,11 +24,39 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
       local report=require('src.storage.LuaData').inspect(entry.mon)
       local fields={};for _,field in ipairs(report.fields) do fields[#fields+1]=field.name..' ('..field.kind..')' end
       rows[#rows+1]='LUA · '..report.nodes..' data nodes · '..table.concat(fields,', ')
-      local top=y+42*s
-      for _,row in ipairs(rows) do
-        row=L(row);local _,lines=font:getWrap(row,w);g.setFont(font);col(37,68,79);g.printf(row,x,top,w,'left');top=top+#lines*font:getHeight()+12*s
+      local check=f.bankCheck and f.bankCheck.bank_digest==entry.id and f.bankCheck
+      if check then
+       local labels={legal='LEGAL ENCOUNTER · Independent native analysis passed',custom_verified='RETRORECOMP REWARD · Receipt and original genetics verified',illegal='STANDARD RULES · Native legality checks failed',unverifiable='UNVERIFIABLE · Origin data is incomplete or unsupported',pending='QUEUED · Waiting for the private checker',running='CHECKING · Independent native analysis',unchecked='NOT CHECKED',invalid_origin='INVALID ORIGIN · Receipt or original genetics do not match'}
+       rows[#rows+1]=labels[check.state]or tostring(check.state)
+       if not check.current then rows[#rows+1]='Checker release changed. Request a fresh check.'end
+       local report=check.report
+       if report and report.provenance then
+        rows[#rows+1]='ORIGIN RECEIPT · '..tostring(report.provenance.receipt)
+        rows[#rows+1]=report.provenance.notice
+       end
+       for _,row in ipairs(report and report.checks or{})do
+        if not row.valid then rows[#rows+1]=row.group..' · '..row.code:gsub('(%l)(%u)','%1 %2')end
+       end
+       for i,row in ipairs(report and report.moves or{})do if not row.valid then rows[#rows+1]='Move '..i..' is not obtainable with this encounter and game history.'end end
       end
-      button('COPY POKÉMON ID',x,top,w,'copyPokemonId')
+      local gap=12*s;local half=(w-gap)/2
+      button('COPY POKÉMON ID',x,y+40*s,half,'copyPokemonId')
+      button(f.bankCheckJob and'CHECKING…'or'CHECK LEGALITY & ORIGIN',x+half+gap,y+40*s,half,'verifyBank')
+      local pages={{}};local used=0;local capacity=math.max(50*s,h-165*s)
+      for _,row in ipairs(rows)do
+       row=L(row);local _,lines=font:getWrap(row,w);local height=#lines*font:getHeight()+12*s
+       if used>0 and used+height>capacity then pages[#pages+1]={};used=0 end
+       pages[#pages][#pages[#pages]+1]={label=row,height=height};used=used+height
+      end
+      f.detailsPage=math.min(f.detailsPage or 0,#pages-1)
+      local top=y+100*s
+      for _,row in ipairs(pages[f.detailsPage+1])do
+       g.setFont(font);col(37,68,79);g.printf(row.label,x,top,w,'left');top=top+row.height
+      end
+      button('‹',x,bottom-42*s,42*s,'detailsPage',{delta=-1,max=#pages-1})
+      text(tostring(f.detailsPage+1)..' / '..#pages,x+48*s,bottom-32*s,50*s)
+      button('›',x+100*s,bottom-42*s,42*s,'detailsPage',{delta=1,max=#pages-1})
+      if check then button('REFRESH VERIFICATION',x+155*s,bottom-42*s,math.max(60*s,w-155*s),'refreshBankCheck')end
     end
   elseif f.mode=='interop' then
     require('src.import.BankInterchangeWorkspace').draw(self,f,x,y,w,h,s,button,text,col)
@@ -127,7 +155,14 @@ end
 function P.press(self,W,r)
   local f=self._bankOverlay
   if require('src.import.BankInterchangeWorkspace').press(self,r) then return true end
-  if r.action=='mode' then W.mode(self,r.mode)
+  if r.action=='verifyBank'or r.action=='refreshBankCheck'then
+   if not f.bankCheckJob then
+    local entry=f.inspected and f.inspected.entry;local refresh=r.action=='refreshBankCheck'
+    f.bankCheckJob=require('src.cloud.Task').new(function()return require('src.cloud.BankVerification').request(entry,refresh)end)
+    f.notice=f.bankCheckJob and'Requesting independent Bank verification…'or'Background networking is unavailable.'
+   end
+  elseif r.action=='detailsPage'then f.detailsPage=math.max(0,math.min(r.max,(f.detailsPage or 0)+r.delta))
+  elseif r.action=='mode' then W.mode(self,r.mode)
   elseif r.action=='modePage' or r.action=='tradePage' or r.action=='tradePickPage' then
     local key=r.action=='modePage' and 'modePage' or r.action=='tradePage' and 'tradePage' or 'tradeChoosePage'
     f[key]=math.max(0,math.min(r.max or math.huge,(f[key] or 0)+r.delta))
@@ -160,6 +195,12 @@ function P.press(self,W,r)
   elseif r.action=='tradeCancel' then W.trade(self,'cancel',r.exchange)
   else return false end
   return true
+end
+function P.tick(f)
+ if f.bankCheckJob then
+  local result=f.bankCheckJob:poll()
+  if result then f.bankCheckJob=nil;f.bankCheck=result.kind=='done'and result.first or nil;f.notice=f.bankCheck and'Bank verification report updated.'or tostring(result.error or result.second or'Bank verification failed.')end
+ end
 end
 function P.animation(self,f,x,y,w,h,s)
   if not f.animation then return end

@@ -90,6 +90,10 @@ for name in ([[
 ]]):gmatch("%S+") do world[name] = true end
 
 function Capabilities.supports(surface, name, version)
+  if surface == 'suspend' then
+    if name == 'portable-v1' then return true end
+    return false, 'unknown suspend capability'
+  end
   if surface ~= "content" and surface ~= "world"
       and surface ~= "hooks" and surface ~= "events" then
     return false, "unsupported capability surface: " .. tostring(surface)

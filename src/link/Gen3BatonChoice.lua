@@ -7,7 +7,7 @@ local function key(turn, serial, actor)
   return turn .. "/" .. serial .. "/" .. actor
 end
 function M.attach(battle, opts)
-  local state = { choices = {}, role = opts.role, spectator = opts.spectator, invalid = opts.invalid }
+  local state = { choices = {}, role = opts.role, spectator = opts.spectator, invalid = opts.invalid, send = opts.send }
   battle._gen3BatonLink = state
   battle._gen3BatonParty = function(_, user)
     return user.isPlayer and opts.mine or opts.theirs
@@ -28,7 +28,7 @@ function M.attach(battle, opts)
     end
     state.serial = state.serial + 1
     pending.turn, pending.serial, pending.actor = turn, state.serial, actor(pending.user)
-    local remote = opts.spectator or not pending.user.isPlayer
+    local remote = state.spectator or not pending.user.isPlayer
     if remote then
       local packet = state.choices[key(turn, pending.serial, pending.actor)]
       if packet then
@@ -46,6 +46,18 @@ function M.attach(battle, opts)
       end
     end
     return remote
+  end
+end
+function M.resume(battle)
+  local state=battle._gen3BatonLink
+  if not state then return end
+  state.spectator=false
+  local pending=battle._gen3BatonPending
+  if pending and not pending.choice and pending.user.isPlayer then
+    pending.onSelect=function(index)
+      state.send({type='baton_pass',turn=pending.turn,serial=pending.serial,actor=pending.actor,index=index})
+    end
+    battle:uiNext(function()return require('src.battle.Gen3BatonPass').picker(battle,pending)end)
   end
 end
 function M.receive(battle, packet, sender)

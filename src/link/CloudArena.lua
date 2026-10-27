@@ -5,16 +5,16 @@ local Auth=require('src.cloud.RetroCloud')
 local Task=require('src.cloud.Task')
 local API=require('src.cloud.Tournaments')
 local function clone(v) local S=require('src.core.SaveSerializer');return S.decode(S.encode(v)) end
-function Arena.queue(cup,match,slot)
+function Arena.queue(cup,match,slot,resume)
  local account=Auth.accountId()
  if not Auth.signedIn() or type(cup)~='table' or tostring(cup.account_id)~=account then return nil,'Sign in again before starting a battle.' end
  if cup.battle_gate~='native_rules' then return nil,'This edition does not yet have a qualified native link-battle module.' end
  if cup.state~='running' or match.state~='ready' or (match.left~=account and match.right~=account) then return nil,'This pairing is not ready for your account.' end
  local save,why=require('src.core.SaveData').peekSlot(cup.edition,slot)
  if not save then return nil,why or 'Choose an existing save.' end
- if type(save.party)~='table' or #save.party~=cup.team_size then return nil,'This cup needs exactly '..tostring(cup.team_size)..' party members. Prepare your team in the selected save.' end
+ if not resume and(type(save.party)~='table' or #save.party~=cup.team_size)then return nil,'This cup needs exactly '..tostring(cup.team_size)..' party members. Prepare your team in the selected save.' end
  for _,mon in ipairs(save.party) do if mon.isEgg or mon.egg or (tonumber(mon.eggSteps) or 0)>0 then return nil,'Eggs cannot enter a battle team.' end end
- pending={cup=clone(cup),match=clone(match),save=clone(save),account=account}
+ pending={cup=clone(cup),match=clone(match),save=clone(save),account=account,resume=resume==true}
  return true
 end
 function Arena.cancelPending() pending=nil end
@@ -34,13 +34,14 @@ function Arena.consume(game)
  local elapsed,nextPoll=0,0
  local handshakeAt,peerVerified
  local function report(payload)
+  if state.net.transferred then return end
   if reported or not battle or not own then return end
   local ok,why=require('src.link.ArenaResults').keep(cup.id,match.id,payload)
   if ok then reported=true;reportedStatus=payload.status else reportError='Result could not be saved: '..tostring(why) end
  end
  local function clean(message)
   if cleaned then return end;cleaned=true
-  if battle and own and not reported then report({battle=battle.id,ticket=own.ticket,status='aborted',turns=0,digest=require('src.link.ArenaProof').digest({battle=battle.id,status='aborted'})}) end
+  if battle and own and not reported and not request.resume and not state.net.transferred then report({battle=battle.id,ticket=own.ticket,status='aborted',turns=0,digest=require('src.link.ArenaProof').digest({battle=battle.id,status='aborted'})}) end
   if state.arenaTask then state.arenaTask:cancel();state.arenaTask=nil end
   state.net:close();game.linkSession=nil;game.linkNet=nil;game.retroArena=nil
   game.save=originalSave;game.writeSave=write;game.returnToLauncher=back
@@ -64,7 +65,7 @@ function Arena.consume(game)
   if b.state~='preparing' and b.state~='ready' then return state:exitWith('This battle is '..tostring(b.state)..'. Reopen the pairing.') end
   if b.state=='ready' then
    if not own or not peer or own.fingerprint~=peer.fingerprint or own.fingerprint~=Handshake.hello(game,'battle').fingerprint then return state:exitWith('The native battle data changed after preflight.') end
-   if not require('src.link.ArenaProof').same(require('src.link.Protocol').packParty(game.save.party),own.party) then return state:exitWith('The selected team changed after preflight.') end
+   if not request.resume and not require('src.link.ArenaProof').same(require('src.link.Protocol').packParty(game.save.party),own.party) then return state:exitWith('The selected team changed after preflight.') end
    state.arenaContext={seed=b.seed,level=cup.level,peerParty=peer.party,onFinished=function(result)
     local winner=result.result=='win' and account or result.result=='lose' and peer.account or nil
     local payload={battle=b.id,ticket=own.ticket,status=winner and 'complete' or result.result=='draw' and 'draw' or 'aborted',winner=winner and tonumber(winner),turns=result.turns,digest=result.digest}
@@ -105,17 +106,51 @@ function Arena.consume(game)
    if result then
     local purpose=self.arenaPurpose;self.arenaTask=nil
     if result.kind~='done' or not result.first then return self:exitWith(result.error or result.second or 'The battle service is unavailable.') end
-    if purpose=='room' then self.roomPublished=true
+    if purpose=='handoff' then
+     local snapshot=result.first;self.resumeSnapshot=snapshot
+     local net=require('src.link.CloudNet').new(cup.id,match.id,battle.id,own.ticket)
+     net.sequence=snapshot.sent;net.accepted=snapshot.sent;net.received=snapshot.received
+     self.net=net
+     local base={};for i,v in ipairs(game.stack.states)do base[i]=v end
+     self.rebuild=coroutine.create(function()
+      local b,activate=require('src.link.ArenaResume').rebuild(game,snapshot,account,net,self.arenaContext.onFinished,function()
+       local frames=game.stack.states;game.stack.states=base;coroutine.yield();game.stack.states=frames
+      end)
+      game.stack.states=base;self.battle=b;self.activateResume=activate
+     end)
+    elseif purpose=='activateHandoff' then
+     local completed=self.activateResume();self.activateResume=nil;self.stage='battleRunning';self.isHost=match.left==account
+     started=true;peerVerified=true;request.resume=nil
+     if completed then return self:exitWith()end
+     game.stack:push(self.battle)
+    elseif purpose=='room' then self.roomPublished=true
     elseif purpose=='roomLookup' then
      for _,m in ipairs(result.first.matches or {}) do if m.id==match.id then match=m end end
     else accept(result.first) end
     if cleaned then return end
    end
   end
+  if self.rebuild then
+   local ok,why=coroutine.resume(self.rebuild)
+   if not ok then self.rebuild=nil;return self:exitWith('Battle reconstruction failed: '..tostring(why))end
+   if coroutine.status(self.rebuild)=='dead'then
+    self.rebuild=nil
+    local snap=self.resumeSnapshot
+    startJob('activateHandoff',function()return API.request('POST',cup.id,'battle-handoff-active',{battle=battle.id,handoff=snap.handoff},match.id)end)
+   end
+   return
+  end
   if not started then
    if game.input:wasPressed('b') then return self:exitWith('Battle cancelled before entry.') end
    if elapsed>180 then return self:exitWith('Your rival did not enter in time. Retry from the lobby.') end
    if self.arenaContext and not self.arenaTask then
+    if request.resume then
+     if self.resumeSnapshot then return end
+     local digest=require('src.link.ArenaProof').digest({account=account,time=love.timer.getTime(),instance=tostring(self),wall=os.time()})
+     local id=digest:sub(1,8)..'-'..digest:sub(9,12)..'-4'..digest:sub(14,16)..'-a'..digest:sub(18,20)..'-'..digest:sub(21,32)
+     startJob('handoff',function()return API.request('POST',cup.id,'battle-handoff',{battle=battle.id,handoff=id,fingerprint=Handshake.hello(game,'battle').fingerprint},match.id)end)
+     return
+    end
     local ok
     if battle.transport=='https-v1' then
      self.net:close();self.net=require('src.link.CloudNet').new(cup.id,match.id,battle.id,own.ticket)
@@ -138,6 +173,7 @@ function Arena.consume(game)
  end
  game.stack:push(state)
  startJob('preflight',function()
+  if request.resume then return API.request('GET',cup.id,'battle',nil,match.id)end
   local data,party=require('src.link.ArenaTeam').prepare(game,cup,request.save)
   if not data then return nil,party end
   game.save.party=party
