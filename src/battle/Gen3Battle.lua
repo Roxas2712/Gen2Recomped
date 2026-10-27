@@ -2992,7 +2992,7 @@ local function ballSheet(battle, key)
   return (ok and img) or nil
 end
 
-function Gen3Battle.drawBall(battle)
+local function drawNativeBall(battle)
   local record, anim = Gen3Battle.ballRecord(battle)
   if not anim then return end
   local g = love.graphics
@@ -3098,6 +3098,12 @@ function Gen3Battle.drawBall(battle)
     end
   end
   g.setColor(1, 1, 1, 1)
+end
+
+function Gen3Battle.drawBall(battle)
+  local source=package.loaded['src.core.game3.battle.ball_open']
+  if source then return source._nativeDraw(battle,drawNativeBall) end
+  return drawNativeBall(battle)
 end
 
 function Gen3Battle.draw(battle)
