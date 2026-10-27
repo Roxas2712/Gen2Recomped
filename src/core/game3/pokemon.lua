@@ -35,6 +35,40 @@ local function species(value)
   return key and c.data.pokemon[key],key,c
 end
 function P.ready()return context()~=nil end
+local PictureIds=require('src.pokemon.Gen3PictureIdentity')
+local function numbered(value)return type(value)=='string'and(tonumber(value)or value)or value end
+function P.unownLetter(personality)return PictureIds.letter(personality)end
+function P.picSpecies(value,personality)
+ value=numbered(value)
+ local row,key,c=species(value)
+ if not row then
+  if c and Version.isGen3()then
+   local base,form=PictureIds.base(value)
+   if form~=nil and c.ids:native('pokemon',base)then return value end
+  end
+  return nil,'imported native species unavailable'
+ end
+ local id=c.ids:read('pokemon',key)
+ if not Version.isGen3()then return id end
+ local picture,why=PictureIds.slot(id,personality)
+ if picture~=id and picture~=nil and c.ids:native('pokemon',picture)then
+  return nil,'native picture slot conflicts with a logical species record'
+ end
+ return picture,why
+end
+function P.picBaseSpecies(value)
+ value=numbered(value)
+ local row,key,c=species(value)
+ if row then
+  local id=c.ids:read('pokemon',key)
+  return id,Version.isGen3()and id==PictureIds.UNOWN and 0 or nil
+ end
+ if c and Version.isGen3()then
+  local base,form=PictureIds.base(value)
+  if form~=nil and c.ids:native('pokemon',base)then return base,form end
+ end
+ return nil,'imported native picture identity unavailable'
+end
 function P.speciesOf(mon)
   if type(mon)~='table'then return nil end
   local _,key,c=species(mon.species)
@@ -174,7 +208,19 @@ function P.knowsMove(mon,number)
   for slot=1,P.moveSlotCount(mon)do if P.moveIdAt(mon,slot)==number then return true end end;return false
 end
 local function picture(side,value,form,shiny,personality)
-  local row,key,c=species(value);if not row then return nil,'imported native species unavailable'end
+  value=numbered(value)
+  local row,key,c=species(value)
+  if c and Version.isGen3()then
+    if not row then
+      local base,variant=PictureIds.base(value)
+      if variant and variant>0 and c.ids:native('pokemon',base)then return nil,'native Unown picture variants are not imported' end
+    elseif c.ids:read('pokemon',key)==PictureIds.UNOWN and personality~=nil then
+      local letter,why=PictureIds.letter(personality)
+      if letter==nil then return nil,why end
+      if letter>0 then return nil,'native Unown picture variants are not imported' end
+    end
+  end
+  if not row then return nil,'imported native species unavailable'end
   if form~=nil and form~=0 then return nil,'native alternate-form picture binding unavailable'end
   local mon={species=key,personality=personality,isShiny=shiny==true}
   local path=Sprites.path(c.data,key,side,{mon=mon,kind='battle'})
