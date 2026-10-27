@@ -44,7 +44,7 @@ function Arena.consume(game)
   if state.arenaTask then state.arenaTask:cancel();state.arenaTask=nil end
   state.net:close();game.linkSession=nil;game.linkNet=nil;game.retroArena=nil
   game.save=originalSave;game.writeSave=write;game.returnToLauncher=back
-  local resultMessage=reportedStatus=='complete' and 'Battle finished. Your result is saved; league points and rewards follow when both reports agree.'
+  local resultMessage=reportedStatus=='complete' and 'Battle finished. Your result is saved. The server verifies the recorded battle before awarding league points and rewards.'
    or reportedStatus=='draw' and 'Battle ended without a winner. No league points or item rewards. Your adventure save was restored.'
    or 'Battle cancelled. No winner was reported. Your adventure save was restored.'
   notice={account=account,id=cup.id,text=reportError or message or resultMessage}

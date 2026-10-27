@@ -403,7 +403,7 @@ function LinkBattle.new(game, net, opts)
 
   if require("src.core.GameVersion").isGen3() then
     require("src.link.Gen3BatonChoice").attach(self, {
-      role=role, mine=myParty, theirs=theirParty, send=send,
+      role=role, mine=myParty, theirs=theirParty, send=send, spectator=opts.replay == true,
       invalid=function() endAsDraw(self, Strings("Link choice mismatch!")) end,
     })
   end
@@ -517,6 +517,57 @@ function LinkBattle.new(game, net, opts)
     s.pendingMyAction = msg
     s.phase = "waitRemote"
     tryResolve(s)
+  end
+
+  -- The trusted replay host feeds recorded choices through this very same
+  -- turn resolver. It never accepts client-computed damage, HP or RNG state.
+  if opts.replay then
+    local function integer(v, lo, hi)
+      return type(v) == "number" and v % 1 == 0 and v >= lo and v <= hi
+    end
+    local function action(s, packet, battler, party)
+      assert(type(packet) == "table" and packet.type == "action", "Missing recorded action")
+      for key in pairs(packet) do
+        assert(key == "type" or key == "kind" or key == "slot" or key == "index", "Unknown action field")
+      end
+      local forced = s:menuLockedAction(battler)
+      if packet.kind == "run" then
+        assert(not forced, "Cannot run during a forced action")
+        return nil
+      elseif packet.kind == "switch" then
+        assert(not forced and integer(packet.index, 1, #party), "Invalid switch")
+        assert(party[packet.index] ~= battler.mon and party[packet.index].hp > 0, "Unavailable switch")
+        -- Switch restrictions are edition-specific; this uses the engine's
+        -- ordinary link policy (no bag, automatic faint replacements).
+        return nil
+      end
+      forced = forced or s:fightLockedAction(battler)
+      if packet.kind == "locked" then
+        assert(forced, "No forced action is available")
+        return forced
+      elseif packet.kind == "struggle" then
+        assert(not forced and not s:playerHasPP(battler), "Struggle is unavailable")
+        return { id = "STRUGGLE", pp = 1, struggle = true }
+      end
+      assert(packet.kind == "move" and integer(packet.slot, 1, #battler.curMoves), "Invalid move slot")
+      local mv = battler.curMoves[packet.slot]
+      assert(not forced or forced == mv or forced.move == mv, "A different action is forced")
+      if not forced then
+        assert((mv.pp or 0) > 0 and not require("src.battle.Gen3Disable").blocked(battler, mv, packet.slot), "Move is unavailable")
+        local def = s.data.moves[mv.id]
+        assert(not s:tauntBlocks(battler, def) and not s:tormentBlocks(battler, def), "Move is blocked")
+        assert(not require("src.battle.Gen3MoveSelection").manualReason(s, battler, mv, packet.slot), "Native move selection refused")
+      end
+      return mv
+    end
+    self.replayTurn = function(s, host, guest)
+      assert(role == "host" and s.phase == "menu" and not s.result, "Replay is not ready for another turn")
+      s:clearTurnFlinches()
+      local mine = { type = host.type, kind = host.kind, slot = host.slot, index = host.index }
+      mine.action = action(s, host, s.player, myParty)
+      action(s, guest, s.enemy, theirParty)
+      resolveLockstep(s, mine, guest)
+    end
   end
 
   self.resolveTurn = function(s, action)
@@ -647,6 +698,7 @@ function LinkBattle.new(game, net, opts)
   self._gen3BatonPoll = poll
   self.update = function(s, dt)
     poll(s)
+    if opts.replay and s.phase == "menu" then s:tickFx(); return end
     -- Both early returns below skip baseUpdate, which is where the
     -- presentational clock normally advances -- so tick it here, in the same
     -- order baseUpdate would (fx, then the queue).  Without this an

@@ -401,5 +401,198 @@
         "scope": "Independent macOS client profiles and private local HTTPS; no physical or cross-OS proof; peer-attested results, no independent server replay"
       }
     }
+  },
+  "independentArenaQualification": {
+    "date": "2026-10-27",
+    "passed": true,
+    "scope": "Two independent macOS native clients, private local HTTPS and independent native replay; the same recorded fights reproduced under Linux x86_64 in a private Synology Docker worker. No physical Android/iOS proof.",
+    "editions": [
+      "blue",
+      "crystal",
+      "emerald",
+      "firered",
+      "gold",
+      "leafgreen",
+      "red",
+      "ruby",
+      "sapphire",
+      "silver",
+      "yellow"
+    ],
+    "cases": [
+      {
+        "edition": "blue",
+        "scenario": "complete",
+        "state": "complete",
+        "verification": "server_native_replay",
+        "turns": 13,
+        "digest": "f891496c7142b21b02c8a18f87c4c914d1defee311a0bc4a6b998050bd5e790c",
+        "adventureRestored": true
+      },
+      {
+        "edition": "blue",
+        "scenario": "recovery",
+        "state": "complete",
+        "verification": "server_native_replay",
+        "turns": 11,
+        "digest": "9fdbefed6d055b1dc40a9abb7a061915c57aa7e1e2e7b99ef36b91a423e40f8b",
+        "adventureRestored": true
+      },
+      {
+        "edition": "blue",
+        "scenario": "abort",
+        "state": "cancelled",
+        "verification": "peer_attested",
+        "turns": 0,
+        "digest": "8aa016337a601d32b703381c8c632a6c41c65076eb6e4468af55819681ee8bd7",
+        "adventureRestored": true
+      },
+      {
+        "edition": "gold",
+        "scenario": "complete",
+        "state": "complete",
+        "verification": "server_native_replay",
+        "turns": 5,
+        "digest": "d4dbe658b7b2848d77bf518843df2af68a943de166a6663cd06123ac4499e32e",
+        "adventureRestored": true
+      },
+      {
+        "edition": "gold",
+        "scenario": "recovery",
+        "state": "complete",
+        "verification": "server_native_replay",
+        "turns": 6,
+        "digest": "028a84ccfeb91b581d579dafdf56fa6b2182597655de2f0199b055af7969c319",
+        "adventureRestored": true
+      },
+      {
+        "edition": "gold",
+        "scenario": "abort",
+        "state": "cancelled",
+        "verification": "peer_attested",
+        "turns": 0,
+        "digest": "5f96a8048738c367e4131e3a58d1faf79e51072ec5e15ad2ceff9e8358650b63",
+        "adventureRestored": true
+      },
+      {
+        "edition": "emerald",
+        "scenario": "complete",
+        "state": "complete",
+        "verification": "server_native_replay",
+        "turns": 9,
+        "digest": "ebe30b9dce24ccd48846120a089c2ef03e450b275db0022d7b79b0d3d1c4d64b",
+        "adventureRestored": true
+      },
+      {
+        "edition": "emerald",
+        "scenario": "recovery",
+        "state": "complete",
+        "verification": "server_native_replay",
+        "turns": 6,
+        "digest": "2141e12d685ad381f3990c9c8b0bec7d14e2a757ea0fb6a7d46c124eea79605c",
+        "adventureRestored": true
+      },
+      {
+        "edition": "emerald",
+        "scenario": "abort",
+        "state": "cancelled",
+        "verification": "peer_attested",
+        "turns": 0,
+        "digest": "3834ccd056e7feaec935ed552cf444956762f407bf734e577c9e9f0ba07379d9",
+        "adventureRestored": true
+      },
+      {
+        "edition": "red",
+        "scenario": "complete",
+        "state": "complete",
+        "verification": "server_native_replay",
+        "turns": 14,
+        "digest": "e13f2347f2eb385a5da92578c4d0dd694f144d9f2bb2b1e99ef207a02f81987f",
+        "adventureRestored": true
+      },
+      {
+        "edition": "yellow",
+        "scenario": "complete",
+        "state": "complete",
+        "verification": "server_native_replay",
+        "turns": 5,
+        "digest": "7f277a0ec6f301fcab379a455a5a98ed482def35bedcf9c2f8e828c0869f8f32",
+        "adventureRestored": true
+      },
+      {
+        "edition": "silver",
+        "scenario": "complete",
+        "state": "complete",
+        "verification": "server_native_replay",
+        "turns": 6,
+        "digest": "35ebea04acc1af56779563e3b54b62133f9d06edcc379b45b11049eaff5fb6fa",
+        "adventureRestored": true
+      },
+      {
+        "edition": "crystal",
+        "scenario": "complete",
+        "state": "complete",
+        "verification": "server_native_replay",
+        "turns": 6,
+        "digest": "c092d4a12feadae669a31fc51bc5c02db96ee336e67d4371c3ca56a8e3c1e409",
+        "adventureRestored": true
+      },
+      {
+        "edition": "ruby",
+        "scenario": "complete",
+        "state": "complete",
+        "verification": "server_native_replay",
+        "turns": 5,
+        "digest": "c961839a5b47e0a2cfd38bb6c5389083fbadc0fd2d9887f387f1c3b9123f0db5",
+        "adventureRestored": true
+      },
+      {
+        "edition": "sapphire",
+        "scenario": "complete",
+        "state": "complete",
+        "verification": "server_native_replay",
+        "turns": 4,
+        "digest": "6adf92ea5cce3054ad935edc1041946297d85aede23e01120ffdce0ce69fc63b",
+        "adventureRestored": true
+      },
+      {
+        "edition": "firered",
+        "scenario": "complete",
+        "state": "complete",
+        "verification": "server_native_replay",
+        "turns": 6,
+        "digest": "3dfcf0d79f61ea959122c0c0fd3f84a06cd3b80e4c28a4e5852dd88284f83d04",
+        "adventureRestored": true
+      },
+      {
+        "edition": "leafgreen",
+        "scenario": "complete",
+        "state": "complete",
+        "verification": "server_native_replay",
+        "turns": 6,
+        "digest": "04c02b11ba4467d86ff754f19b746f897b168f42230c021ec590a700078a5496",
+        "adventureRestored": true
+      }
+    ],
+    "workerRelease": "4ed3d29a50ee4466ad29915a940aecf7bc95e5ce3bf2fd95bde9e9a8d2c1126c",
+    "linuxNativeReplays": 11,
+    "bankChecks": [
+      "Account-owned immutable entry",
+      "Literal-only bounded decoding",
+      "Genetics, training, moves, PP enhancements, held item and OT binding",
+      "Full native party reconstruction before replay"
+    ],
+    "rewardGate": "Independent native proof required before new league points, coins and tournament completion; disagreement, abort or cancelled tournament grants nothing.",
+    "limitations": [
+      "Official encounter and historical-event legality are not fully verified.",
+      "Portable adventure suspend still excludes loaded mods and live online sessions.",
+      "Gen 4\u20135 native online modules remain unavailable."
+    ],
+    "sourceSha256": {
+      "src/link/LinkBattle.lua": "b42626f74c5012198f02d8549e021d6d89f5bf2fb219567d6ff92e6060574e1b",
+      "src/link/ArenaReplay.lua": "85d7b44d9bf7733d7f3532a7e5b89ab0dbec3b7eb324dadd5d4ff39bc66e4abd",
+      "tools/arena_verifier_host.lua": "74c438173d09c4f197027bdf309edce26781316786c84c87c9bd5e74654deccf",
+      "tools/arena_verifier_worker.py": "d3331bfbb8cc28c15e7eee7d5f4aa7eaf5ff8be6e34f31a52932f4804f3f0969"
+    }
   }
 }

@@ -99,7 +99,7 @@ function love.update(dt)
      if cfg.role=='left' and cfg.scenario=='recovery' and (not faultInjected or blockedRetries<1) then return finish(false,'The network fault did not run') end
      return finish(true,cfg.scenario=='recovery' and 'Native battle recovered from a lost committed response and both reports completed.' or 'Native battle and both authenticated reports completed.')
     end
-    if state~='ready' then return finish(false,'Battle service state: '..tostring(state)) end
+    if state~='ready' and state~='verifying' then return finish(false,'Battle service state: '..tostring(state)) end
     phase='reporting';sent=false;nextVerifyAt=love.timer.getTime()+1
    else local ok,why=pcall(prepare);if not ok then return finish(false,why) end end
   end
