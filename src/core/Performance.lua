@@ -142,14 +142,105 @@ end
 Performance.applyEnvironment()
 
 -- Option-row order (auto first, then most to least capable).
-Performance.TIERS = { "auto", "high", "balanced", "low" }
+Performance.TIERS = { "auto", "high", "balanced", "low", "adaptive" }
 
 Performance.LABELS = {
   auto = "AUTO",
+  adaptive = "PREFER FPS",
   high = "HIGH",
   balanced = "BALANCED",
   low = "LOW",
 }
+
+-- A1 -- PREFER FPS: THE TIER FOLLOWS THE FRAME, NOT THE GUESS.
+--
+-- AUTO reads the hardware once and picks a tier; it cannot know that this
+-- map, this mod set or this battery state is heavier than the last.  PREFER
+-- FPS starts where AUTO would and then watches the frames themselves: a
+-- frame longer than one and a half budgets is a missed one, and when more
+-- than a tenth of them miss over two consecutive three-second windows the
+-- tier steps down (HIGH -> BALANCED -> LOW); when fewer than two in a hundred
+-- miss for thirty seconds it steps back up, never above the tier AUTO chose.
+-- Ten seconds of quiet follow every change so a map load's burst of misses
+-- cannot ratchet the tier to the floor, and the clamps that a tier change
+-- applies (Game:applyOptions) run exactly as they do when the row is turned
+-- by hand -- the stored TILT / GBC FX / ZOOM / MAX FPS choices are untouched
+-- and come back with the tier.
+Performance.ADAPTIVE = {
+  missFactor = 1.5,        -- a frame this many budgets long is a miss
+  window = 3.0,            -- seconds per decision window
+  downRatio = 0.10,        -- misses / frames to step down (two windows running)
+  upRatio = 0.02,          -- misses / frames to allow stepping up
+  upAfter = 30.0,          -- seconds of comfort before stepping up
+  cooldown = 10.0,         -- seconds after a change before judging again
+}
+local ORDER = { high = 1, balanced = 2, low = 3 }
+local BY_RANK = { "high", "balanced", "low" }
+local adaptive = { tier = nil, ceiling = nil, frames = 0, misses = 0,
+                   windowStart = 0, badWindows = 0, comfort = 0, quietUntil = 0 }
+
+-- the tier PREFER FPS is on right now; AUTO's answer until the first judgement
+function Performance.adaptiveTier()
+  if not adaptive.tier then
+    adaptive.ceiling = Performance.detect()
+    adaptive.tier = adaptive.ceiling
+  end
+  return adaptive.tier
+end
+
+-- Called once per presented frame with that frame's dt and the frame budget
+-- in seconds.  Returns the new tier when the judgement changed it, else nil.
+-- Only PREFER FPS judges; every other option value leaves this inert.
+function Performance.observeFrame(dt, budget, now, optionValue)
+  if optionValue ~= "adaptive" then return nil end
+  if not (dt and budget and now) or budget <= 0 then return nil end
+  local A = Performance.ADAPTIVE
+  local tier = Performance.adaptiveTier()
+  if adaptive.windowStart == 0 then adaptive.windowStart = now end
+  adaptive.frames = adaptive.frames + 1
+  if dt > budget * A.missFactor then adaptive.misses = adaptive.misses + 1 end
+  if now - adaptive.windowStart < A.window then return nil end
+  local ratio = adaptive.frames > 0 and (adaptive.misses / adaptive.frames) or 0
+  adaptive.frames, adaptive.misses, adaptive.windowStart = 0, 0, now
+  if now < adaptive.quietUntil then
+    adaptive.badWindows, adaptive.comfort = 0, 0
+    return nil
+  end
+  local changed = nil
+  if ratio > A.downRatio then
+    adaptive.badWindows = adaptive.badWindows + 1
+    adaptive.comfort = 0
+    if adaptive.badWindows >= 2 and ORDER[tier] < #BY_RANK then
+      changed = BY_RANK[ORDER[tier] + 1]
+    end
+  elseif ratio < A.upRatio then
+    adaptive.badWindows = 0
+    adaptive.comfort = adaptive.comfort + A.window
+    if adaptive.comfort >= A.upAfter and ORDER[tier] > ORDER[adaptive.ceiling] then
+      changed = BY_RANK[ORDER[tier] - 1]
+    end
+  else
+    adaptive.badWindows, adaptive.comfort = 0, 0
+  end
+  if changed then
+    adaptive.tier = changed
+    adaptive.badWindows, adaptive.comfort = 0, 0
+    adaptive.quietUntil = now + A.cooldown
+    Performance.tier = changed
+    return changed
+  end
+  return nil
+end
+
+-- the controller's state, for the OPTIONS row and the tests
+function Performance.adaptiveState()
+  return adaptive
+end
+
+function Performance.resetAdaptive()
+  adaptive = { tier = nil, ceiling = nil, frames = 0, misses = 0,
+               windowStart = 0, badWindows = 0, comfort = 0, quietUntil = 0 }
+end
 
 -- What each concrete tier permits.  `auto` is resolved to one of these
 -- before caps are read, so it has no row here.  fpsMax = false means no
@@ -254,6 +345,7 @@ function Performance.resolve(value)
   if value == "high" or value == "balanced" or value == "low" then
     return value
   end
+  if value == "adaptive" then return Performance.adaptiveTier() end
   return Performance.detect()
 end
 
@@ -279,7 +371,11 @@ end
 -- Resolve the tier for these options, record it live, and return its caps.
 -- Called from Game:applyOptions, which clamps the live presentation modules
 -- against the returned caps.
+local adaptiveSelected = false
 function Performance.applyOptions(opts)
+  local selected = opts and opts.performance == "adaptive" or false
+  if selected ~= adaptiveSelected then Performance.resetAdaptive() end
+  adaptiveSelected = selected
   local tier = Performance.resolve(opts and opts.performance)
   Performance.tier = tier
   return Performance.CAPS[tier]

@@ -1,0 +1,27 @@
+1.2
+
+POKéMON GOLD BR v1.2------
+
+A tradução deste jogo ficou muito boa, melhor que as minhas expectativas. Não teve
+uso de abreviações nos diálogos, e em quase todos menus, só houve necessidade onde
+as limitações físicas do jogo impediam, como alguns menus a princípio "não-esticáveis".
+Muitos textos foram expandidos conforme necessitavam para haver um melhor entendimento do jogo que será essencial para o prosseguimento do mesmo.
+
+
+NEWS-----------
+
+-v1.2-Bugs Consertados:
+
+ bug ao usar o REDEMOINHO;
+ bug na hora de pescar.
+
+-v1.1-Consertado alguns erros relatados no forum da Tradu-Roms
+
+BUGS?----------
+
+Caso vocês achem outros bugs, eu quero que me informem pelo(s) e-mail(s):
+lllopes2@zipmail.com.br ou
+r__lopes@hotmail.com
+
+Copyright® 2000-06
+All rights reserved by Nintendo and R_lopes Company--Tradu-roms

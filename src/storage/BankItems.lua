@@ -133,7 +133,7 @@ function M.acceptArena(receipt)
  disk().createDirectory('bank')
  local ok,problem=Safety.atomicWrite(disk(),M.FILE,bytes,{decode=M.decode});return ok and key or nil,problem
 end
-function M.sync(store)
+function M.sync(store,pullOnly)
   local before=disk().read(M.FILE);local localState,why=M.load();if not localState then return nil,why end
   local remote=store.read(M.FILE)
   local other
@@ -145,7 +145,8 @@ function M.sync(store)
     if not current or item.revision>current.revision then localState.items[key]=item
     elseif item.revision==current.revision and S.encode(item)~=S.encode(current) then return nil,'Item assignment conflict between devices. Both copies are preserved.' end
   end
-  local bytes=S.encode(localState);local ok,err=store.write(M.FILE,bytes);if not ok then return nil,err end
+  local bytes=S.encode(localState)
+  if not pullOnly then local ok,err=store.write(M.FILE,bytes);if not ok then return nil,err end end
   if disk().read(M.FILE)~=before then return nil,'Item Bank changed during sync. Please retry.' end
   disk().createDirectory('bank');return Safety.atomicWrite(disk(),M.FILE,bytes,{decode=M.decode})
 end

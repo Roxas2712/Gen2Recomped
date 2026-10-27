@@ -1,0 +1,263 @@
+{
+  "format": "native-ptbr-bps-v1",
+  "recipes": [
+    {
+      "game": "red",
+      "path": "assets/language-patches/pt-BR/red-ea9bcae617fd.bps",
+      "patchSha256": "141271bb05fc71e2fbe47a343891cb26a000540d8f54a96425a4704b4bce550f",
+      "patchSize": 286245,
+      "baseSha1": "ea9bcae617fdf159b045185467ae58b2e4a48b9a",
+      "baseMd5": "3d45c1ee9abd5738df46d2bdda8b57dc",
+      "baseSize": 1048576,
+      "baseImportId": "red_en",
+      "targetSha1": "a2a0e2a3d6ef4d5771aa33682d31eaefd03c32ba",
+      "targetMd5": "b002d19d15337b3132637364258605ee",
+      "targetSize": 1048576,
+      "sourceId": "red_ptbr",
+      "provenance": {
+        "project": "https://github.com/hydhyro/pokeazul-ptbr",
+        "author": "Hydhyro",
+        "upstreamPatchSha256": null,
+        "upstreamCommit": "98cec899e9add15d32dd7879f70ac4c9c42d9963",
+        "adaptation": "BPS delta rebased on the native supported US cartridge; gameplay remains the native US game."
+      }
+    },
+    {
+      "game": "blue",
+      "path": "assets/language-patches/pt-BR/blue-d7037c83e1ae.bps",
+      "patchSha256": "ef79ca78218397f858913470f7214488300ffa7c392623fdd2187f4cd418f415",
+      "patchSize": 286218,
+      "baseSha1": "d7037c83e1ae5b39bde3c30787637ba1d4c48ce2",
+      "baseMd5": "50927e843568814f7ed45ec4f944bd8b",
+      "baseSize": 1048576,
+      "baseImportId": "blue_en",
+      "targetSha1": "ec9e33447d9bdbf95c2d57f487e25a57854a1adf",
+      "targetMd5": "64bdddd54bfe775b910ec89a58740031",
+      "targetSize": 1048576,
+      "sourceId": "blue_ptbr",
+      "provenance": {
+        "project": "https://github.com/hydhyro/pokeazul-ptbr",
+        "author": "Hydhyro",
+        "upstreamPatchSha256": null,
+        "upstreamCommit": "98cec899e9add15d32dd7879f70ac4c9c42d9963",
+        "adaptation": "BPS delta rebased on the native supported US cartridge; gameplay remains the native US game."
+      }
+    },
+    {
+      "game": "yellow",
+      "path": "assets/language-patches/pt-BR/yellow-cc7d03262ebf.bps",
+      "patchSha256": "905014d6e2ceeba95152d864d2cbf23685fb9950f0e027635163b032f18f4b52",
+      "patchSize": 331043,
+      "baseSha1": "cc7d03262ebfaf2f06772c1a480c7d9d5f4a38e1",
+      "baseMd5": "d9290db87b1f0a23b89f99ee4469e34b",
+      "baseSize": 1048576,
+      "baseImportId": "yellow_en",
+      "targetSha1": "2b94c64b1944fb6866fd0c28149f86c11bc86253",
+      "targetMd5": "186578eb92a67f04940a94fd43dd4836",
+      "targetSize": 1048576,
+      "sourceId": "yellow_ptbr",
+      "provenance": {
+        "project": "https://github.com/hydhyro/pokeamarelo-ptbr",
+        "author": "Hydhyro",
+        "upstreamPatchSha256": null,
+        "upstreamCommit": "fbb76167ed98a014380280668e518893104c3a81",
+        "adaptation": "BPS delta rebased on the native supported US cartridge; gameplay remains the native US game."
+      }
+    },
+    {
+      "game": "gold",
+      "path": "assets/language-patches/pt-BR/gold-d8b8a3600a46.bps",
+      "patchSha256": "052c438a1758507aae9b0943c38f7743af4291e9a0b684572291ce21498515e3",
+      "patchSize": 275852,
+      "baseSha1": "d8b8a3600a465308c9953dfa04f0081c05bdcb94",
+      "baseMd5": "a6924ce1f9ad2228e1c6580779b23878",
+      "baseSize": 2097152,
+      "baseImportId": "gold_en",
+      "targetSha1": "652c0208a5c54313e2d3efb336346e59a17cbab6",
+      "targetMd5": "a663443555efaf74dfbbf264f12b25bc",
+      "targetSize": 2097152,
+      "sourceId": "gold_ptbr",
+      "provenance": {
+        "project": "https://www.zophar.net/translations/gameboy/brazilian-portuguese/pok-mon-gold-version.html",
+        "author": "R_Lopes / Night_Shadown / Fserve",
+        "upstreamPatchSha256": "c903b0fb2e9f9751af5b648fee0d05dbf86a3a5c2ad40297febe2e24ea6ffa9e",
+        "upstreamCommit": null,
+        "adaptation": "BPS delta rebased on the native supported US cartridge; gameplay remains the native US game."
+      }
+    },
+    {
+      "game": "silver",
+      "path": "assets/language-patches/pt-BR/silver-49b163f7e577.bps",
+      "patchSha256": "04b5a0743a5ef710eefc938f6c8d6cac1eb409693ffd4286d5af115345396a29",
+      "patchSize": 304837,
+      "baseSha1": "49b163f7e57702bc939d642a18f591de55d92dae",
+      "baseMd5": "2ac166169354e84d0e2d7cf4cb40b312",
+      "baseSize": 2097152,
+      "baseImportId": "silver_en",
+      "targetSha1": "9d9536f14a1874d27ea9167fdf00b80439204a6d",
+      "targetMd5": "7454208311f121e492e6634d13612f25",
+      "targetSize": 2097152,
+      "sourceId": "silver_ptbr",
+      "provenance": {
+        "project": "https://traducoesroms.github.io/traducoes/game-boy-color/pokemon-silver-version_r_lopes-night_shadown-fserve/",
+        "author": "R_Lopes / Night_Shadown / Fserve",
+        "upstreamPatchSha256": "c7cdc8e08fe1f090866850c450a4c05a2de6e808decfad3d8c097a0cbbba76fa",
+        "upstreamCommit": null,
+        "adaptation": "BPS delta rebased on the native supported US cartridge; gameplay remains the native US game."
+      }
+    },
+    {
+      "game": "crystal",
+      "path": "assets/language-patches/pt-BR/crystal-f4cd194bdee0.bps",
+      "patchSha256": "ec626d8f44f170fae7b2deb1b992df11657d2c981b86e49fb7afe81daa40c1d9",
+      "patchSize": 397392,
+      "baseSha1": "f4cd194bdee0d04ca4eac29e09b8e4e9d818c133",
+      "baseMd5": "9f2922b235a5eeb78d65594e82ef5dde",
+      "baseSize": 2097152,
+      "baseImportId": "crystal_en",
+      "targetSha1": "e41c519d7ca680facf546fa34b7b00f3149f428f",
+      "targetMd5": "56c2dcb22ace6a4de161e1a6699ddefd",
+      "targetSize": 2097152,
+      "sourceId": "crystal_ptbr",
+      "provenance": {
+        "project": "https://www.zophar.net/translations/gameboy/brazilian-portuguese/pok-mon-crystal-version.html",
+        "author": "R_Lopes / Night_Shadown / Fserve",
+        "upstreamPatchSha256": null,
+        "upstreamCommit": null,
+        "adaptation": "BPS delta rebased on the native supported US cartridge; gameplay remains the native US game.",
+        "acquisitionPatchSha256": "e59c5856533288a79776027129f2831c8f85ad9401fbb232e66bcca6e22c1821"
+      }
+    },
+    {
+      "game": "crystal",
+      "path": "assets/language-patches/pt-BR/crystal-f2f52230b536.bps",
+      "patchSha256": "cf1bb2010ffc471061a9f532c73822d1663bb0f7aa2d6512b384ad5d70c94c3a",
+      "patchSize": 397138,
+      "baseSha1": "f2f52230b536214ef7c9924f483392993e226cfb",
+      "baseMd5": "301899b8087289a6436b0a241fbbb474",
+      "baseSize": 2097152,
+      "baseImportId": "crystal_en_rev1",
+      "targetSha1": "e41c519d7ca680facf546fa34b7b00f3149f428f",
+      "targetMd5": "56c2dcb22ace6a4de161e1a6699ddefd",
+      "targetSize": 2097152,
+      "sourceId": "crystal_ptbr",
+      "provenance": {
+        "project": "https://www.zophar.net/translations/gameboy/brazilian-portuguese/pok-mon-crystal-version.html",
+        "author": "R_Lopes / Night_Shadown / Fserve",
+        "upstreamPatchSha256": null,
+        "upstreamCommit": null,
+        "adaptation": "BPS delta rebased on the native supported US cartridge; gameplay remains the native US game.",
+        "acquisitionPatchSha256": "e59c5856533288a79776027129f2831c8f85ad9401fbb232e66bcca6e22c1821"
+      }
+    },
+    {
+      "game": "ruby",
+      "path": "assets/language-patches/pt-BR/ruby-f28b6ffc9784.bps",
+      "patchSha256": "f5d4b9099d79c561bc04ba33e9fd3aac5fd2f551a71e6402abaf6e9d12016874",
+      "patchSize": 520329,
+      "baseSha1": "f28b6ffc97847e94a6c21a63cacf633ee5c8df1e",
+      "baseMd5": "53d1a2027ab49df34a689faa1fb14726",
+      "baseSize": 16777216,
+      "baseImportId": "ruby_en",
+      "targetSha1": "90f1464f77c57b4eef45ee07df140d402162eee3",
+      "targetMd5": "7088f5789736f6fcedc687b385033003",
+      "targetSize": 16777216,
+      "sourceId": "ruby_ptbr",
+      "provenance": {
+        "project": "https://www.brgames.org/traducao/483/pokemon-ruby",
+        "author": "OJ Abreu",
+        "upstreamPatchSha256": "3da642ce74953bba70fe66b43618cd505bb2fb785caef03b8ebb635068834bcb",
+        "upstreamCommit": null,
+        "adaptation": "BPS delta rebased on the native supported US cartridge; gameplay remains the native US game.",
+        "acquisitionUrl": "https://github.com/RetroAchievements/RAPatches/blob/main/GBA/Translation/Portuguese/790-PokemonRuby-Portuguese.zip",
+        "acquisitionPatchSha256": "f6016be49b67f63fc7528cb17dddc7dbc4274f0c13c7f0e3dd0bedf4906c4d35"
+      }
+    },
+    {
+      "game": "sapphire",
+      "path": "assets/language-patches/pt-BR/sapphire-3ccbbd45f855.bps",
+      "patchSha256": "3376397d6affaee6ad48c5555630e75884896f0074e597a1092823a0f62795eb",
+      "patchSize": 1112324,
+      "baseSha1": "3ccbbd45f8553c36463f13b938e833f652b793e4",
+      "baseMd5": "f34e91399c719812e66e2c828a2e93d7",
+      "baseSize": 16777216,
+      "baseImportId": "sapphire_en",
+      "targetSha1": "90f1464f77c57b4eef45ee07df140d402162eee3",
+      "targetMd5": "7088f5789736f6fcedc687b385033003",
+      "targetSize": 16777216,
+      "sourceId": "ruby_ptbr",
+      "provenance": {
+        "project": "https://www.brgames.org/traducao/483/pokemon-ruby",
+        "author": "OJ Abreu",
+        "upstreamPatchSha256": null,
+        "upstreamCommit": null,
+        "adaptation": "BPS delta rebased on the native supported US cartridge; gameplay remains the native US game.",
+        "acquisitionUrl": "https://github.com/RetroAchievements/RAPatches/blob/main/GBA/Translation/Portuguese/790-PokemonRuby-Portuguese.zip",
+        "acquisitionPatchSha256": "f6016be49b67f63fc7528cb17dddc7dbc4274f0c13c7f0e3dd0bedf4906c4d35"
+      }
+    },
+    {
+      "game": "firered",
+      "path": "assets/language-patches/pt-BR/firered-41cb23d8dccc.bps",
+      "patchSha256": "12bc7d2e1c4e5206b3b5d6347069769c4cf6c355e516cb6f6d6f021245a8675c",
+      "patchSize": 1830099,
+      "baseSha1": "41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc",
+      "baseMd5": "e26ee0d44e809351c8ce2d73c7400cdd",
+      "baseSize": 16777216,
+      "baseImportId": "firered_en",
+      "targetSha1": "51ab6d001412cdc3d6da16fb824ab8084123b1dd",
+      "targetMd5": "dfc02ad742baa5d557dcb0213b0b50dc",
+      "targetSize": 16777216,
+      "sourceId": "firered_ptbr",
+      "provenance": {
+        "project": "https://www.romhacking.net.br/index.php?topic=3337.0",
+        "author": "Breno",
+        "upstreamPatchSha256": "3a81fbe7049252e1c0de1513aeae2d0967c11a0077bcc79ced7d5a1be331d089",
+        "upstreamCommit": null,
+        "adaptation": "BPS delta rebased on the native supported US cartridge; gameplay remains the native US game."
+      }
+    },
+    {
+      "game": "leafgreen",
+      "path": "assets/language-patches/pt-BR/leafgreen-574fa542ffeb.bps",
+      "patchSha256": "2346d685bd206af7e8a578ad5d57c1fc7ec97594d6172061a183f2751faa1f7a",
+      "patchSize": 1833826,
+      "baseSha1": "574fa542ffebb14be69902d1d36f1ec0a4afd71e",
+      "baseMd5": "612ca9473451fa42b51d1711031ed5f6",
+      "baseSize": 16777216,
+      "baseImportId": "leafgreen_en",
+      "targetSha1": "b32c63d5d1454d851cef16699f3ce757798553a2",
+      "targetMd5": "790d40d042401d1dea843fa7f52e2448",
+      "targetSize": 16777216,
+      "sourceId": "leafgreen_ptbr",
+      "provenance": {
+        "project": "https://www.romhacking.net.br/index.php?topic=3337.0",
+        "author": "Breno",
+        "upstreamPatchSha256": "6db06722e313a8490c7c7cd2312f1c02ab740dfef1bd980ceaf38a7b6e3ef940",
+        "upstreamCommit": null,
+        "adaptation": "BPS delta rebased on the native supported US cartridge; gameplay remains the native US game."
+      }
+    },
+    {
+      "game": "emerald",
+      "path": "assets/language-patches/pt-BR/emerald-f3ae088181bf.bps",
+      "patchSha256": "de46028a40717d32a38a5fa5b236ff0eaefe6a30795bd4cfaf9cfa58c14caf02",
+      "patchSize": 718951,
+      "baseSha1": "f3ae088181bf583e55daf962a92bb46f4f1d07b7",
+      "baseMd5": "605b89b67018abcea91e693a4dd25be3",
+      "baseSize": 16777216,
+      "baseImportId": "emerald_en",
+      "targetSha1": "18a2b0acdba046c71b8677bb58c9ee7d36f7a91f",
+      "targetMd5": "5f91214a7b563c858a94920796817d83",
+      "targetSize": 16777216,
+      "sourceId": "emerald_ptbr",
+      "provenance": {
+        "project": "https://github.com/RetroAchievements/RAPatches/blob/main/GBA/Translation/Portuguese/668-PokemonEmerald-Portuguese.zip",
+        "author": "Zambrakas",
+        "upstreamPatchSha256": "38051b3266bfb5d6edac96882ecce877d5054f256460b242c341d04802566414",
+        "upstreamCommit": null,
+        "adaptation": "BPS delta rebased on the native supported US cartridge; gameplay remains the native US game."
+      }
+    }
+  ]
+}

@@ -179,6 +179,7 @@ class Retention(unittest.TestCase):
         plist,package=install([self.root],home=self.home,load=False,python=sys.executable)
         cfg=plistlib.loads(plist.read_bytes());self.assertEqual(cfg['StartInterval'],900)
         self.assertTrue(str(package).startswith(str(self.home/'.local/lib/')))
+        self.assertEqual((package/'qa_love_storage.py').read_bytes(),(TOOLS/'qa_love_storage.py').read_bytes())
         active=self.home/'.local/lib/origami-qa-storage/active-tools'
         self.assertEqual(active.resolve(),package.resolve())
         completed=subprocess.run(cfg['ProgramArguments'],env=dict(os.environ,HOME=str(self.home)),capture_output=True,text=True)
