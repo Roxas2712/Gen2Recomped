@@ -21,6 +21,7 @@ import threading
 import tarfile
 import tempfile
 import qa_legacy_storage as legacy
+import qa_love_storage as love_storage
 from contextlib import contextmanager, nullcontext
 
 GIB = 1024 ** 3
@@ -381,7 +382,10 @@ class Storage:
             try:
                 profile = self._profile(candidate)
             except ValueError:
-                profile = None  # Player inputs are never registered for deletion.
+                # The LÖVE collector also owns a few older, exact identity
+                # patterns. Pin their outer scope without granting them the
+                # modern import collector's writable registration rights.
+                profile = love_storage.profile_scope(candidate, self.home)
             if profile is not None:
                 self._take("imports", profile, False)
         for root in set(self._registered_roots()):
@@ -642,8 +646,8 @@ class Storage:
         path, root = self._valid(entry)
         if entry["kind"] == "imports":
             for edition in QA_EDITIONS:
-                for relative in ("data/generated", "assets/generated"):
-                    yield from self._walk(path / edition / relative)
+                for target in self._generated_targets(path / edition):
+                    yield from self._walk(target)
             for target in self._mod_targets(path):yield from self._walk(target)
             return
         if entry['kind']=='ula':
@@ -666,6 +670,18 @@ class Storage:
             if PAYLOAD.fullmatch(file.name) and not any(
                     file.is_relative_to(installed) for installed in protected):
                 yield file, info
+
+    @staticmethod
+    def _generated_targets(cache):
+        # Legacy whole-directory removal must never claim mixed model/source,
+        # save or keep trees. Use the same boundary for budget accounting and
+        # deletion; the selective LÖVE collector can handle their cache leaves.
+        for relative in ("data/generated", "assets/generated"):
+            target = cache / relative
+            if (target.is_dir() and not target.is_symlink()
+                    and target.resolve() == target
+                    and not love_storage.protected(target)):
+                yield target
 
     @staticmethod
     def _mod_targets(profile):
@@ -767,9 +783,7 @@ class Storage:
             self._preserve_copies(path,self._mod_targets(path))
             for edition in QA_EDITIONS:
                 cache = path / edition
-                targets = [cache / part for part in ("data/generated", "assets/generated")]
-                safe = [p for p in targets if p.is_dir() and not p.is_symlink()
-                        and p.resolve() == p and not protected(p)]
+                safe = list(self._generated_targets(cache))
                 if safe:
                     (cache / "rom-cache.complete").unlink(missing_ok=True)
                     for target in safe:

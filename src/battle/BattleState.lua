@@ -6151,7 +6151,10 @@ local ABILITY_LABEL = {
   SAND_STREAM = "SAND STREAM", ROCK_HEAD = "ROCK HEAD",
 }
 
-local function abilityLabel(name)
+local function abilityLabel(name, data)
+  local abilities = data and data.constants and data.constants.abilities
+  local row = abilities and abilities[name]
+  if row and type(row.name) == "string" and row.name ~= "" then return row.name end
   return ABILITY_LABEL[name] or (tostring(name):gsub("_", " "))
 end
 
@@ -6242,7 +6245,7 @@ function BattleState:abilitySwitchInEffect(battler, act)
   if act.kind == "weather" then
     -- permanent: DROUGHT's sun does not run out the way SUNNY DAY's does
     Weather.start(self, act.weather, act.permanent)
-    self:sayNext(Strings("%s's\n%s!", who, abilityLabel(act.ability)))
+    self:sayNext(Strings("%s's\n%s!", who, abilityLabel(act.ability, self.data)))
     local started = Weather.STARTED_TEXT[act.weather]
     if started then self:sayNext(Strings(started)) end
     return
@@ -6258,7 +6261,7 @@ function BattleState:abilitySwitchInEffect(battler, act)
       if copied then
         battler.abilityOverride = copied
         self:sayNext(Strings("%s TRACED\n%s's\n%s!", who, displayName(foe),
-                             abilityLabel(copied)))
+                             abilityLabel(copied, self.data)))
         -- ...and the copied ability arrives too.  A TRACE onto an
         -- INTIMIDATE or a DROUGHT fires it, because on the cartridge the
         -- switch-in effect runs off the ability the Pokemon HAS.
@@ -6278,7 +6281,7 @@ function BattleState:abilitySwitchInEffect(battler, act)
     -- attack of every opposing Pokemon on the field, not just one.
     local foes = foesOf(self, battler)
     if #foes == 0 then return end
-    self:sayNext(Strings("%s's\n%s!", who, abilityLabel(act.ability)))
+    self:sayNext(Strings("%s's\n%s!", who, abilityLabel(act.ability, self.data)))
     -- through changeStage, so CLEAR BODY and HYPER CUTTER get their say and
     -- a substitute blocks it exactly as it blocks a GROWL
     for _, foe in ipairs(foes) do
@@ -6328,7 +6331,7 @@ function BattleState:abilityOnContact(user, target, move)
                                           source = act.ability })
     if #msgs == 0 then return end
     self:sayNext(Strings("%s's\n%s!", displayName(target),
-                         abilityLabel(act.ability)))
+                         abilityLabel(act.ability, self.data)))
     for _, m in ipairs(msgs) do self:sayNext(m) end
     return
   end
@@ -6345,7 +6348,7 @@ function BattleState:abilityOnContact(user, target, move)
                                           source = act.ability })
     if #msgs == 0 then return end
     self:sayNext(Strings("%s's\n%s!", displayName(target),
-                         abilityLabel(act.ability)))
+                         abilityLabel(act.ability, self.data)))
     for _, m in ipairs(msgs) do self:sayNext(m) end
     return
   end
@@ -6362,7 +6365,7 @@ function BattleState:abilityOnContact(user, target, move)
     if Abilities.refusesStatus(user, "INFATUATION") then return end
     user.infatuated = target
     self:sayNext(Strings("%s's\n%s!", displayName(target),
-                         abilityLabel(act.ability)))
+                         abilityLabel(act.ability, self.data)))
     self:sayNext(Strings("%s fell in love!", displayName(user)))
     return
   end
@@ -6372,7 +6375,7 @@ function BattleState:abilityOnContact(user, target, move)
     local hurt = math.max(1, math.floor(maxHpOf(user)
                                         * act.numerator / act.denominator))
     self:sayNext(Strings("%s's\n%s!", displayName(target),
-                         abilityLabel(act.ability)))
+                         abilityLabel(act.ability, self.data)))
     self:applyDamage(user, hurt)
     self:drainNext()
     if user.mon.hp <= 0 then self:onFaint(user) end
@@ -6390,7 +6393,7 @@ function BattleState:abilityColorChange(target, move, damage)
   if not act then return end
   target.curTypes = { act.type }
   self:sayNext(Strings("%s's\n%s!", displayName(target),
-                       abilityLabel(act.ability)))
+                       abilityLabel(act.ability, self.data)))
   self:sayNext(Strings("%s transformed\ninto the %s type!",
                        displayName(target), tostring(act.type)))
 end
@@ -6412,7 +6415,7 @@ function BattleState:abilityForecast(battler)
   end
   battler.curTypes = { want }
   self:sayNext(Strings("%s's\n%s!", displayName(battler),
-                       abilityLabel("FORECAST")))
+                       abilityLabel("FORECAST", self.data)))
   self:sayNext(Strings("%s transformed\ninto the %s type!",
                        displayName(battler), want))
   return true
@@ -6434,7 +6437,7 @@ function BattleState:abilityAbsorb(target, move)
   local act = Abilities.absorbs(target, move)
   if not act then return false end
   local who = displayName(target)
-  self:sayNext(Strings("%s's\n%s!", who, abilityLabel(act.ability)))
+  self:sayNext(Strings("%s's\n%s!", who, abilityLabel(act.ability, self.data)))
   if act.kind == "flashFire" then
     if target.flashFire then
       self:sayNext(Strings("But, it failed!"))
@@ -6463,7 +6466,7 @@ function BattleState:abilityEndOfTurn(battler)
   local rng = self.rng or love.math.random
   if act.kind == "heal" then
     if battler.mon.hp >= maxHpOf(battler) then return end
-    self:sayNext(Strings("%s's\n%s!", who, abilityLabel(act.ability)))
+    self:sayNext(Strings("%s's\n%s!", who, abilityLabel(act.ability, self.data)))
     self:abilityHeal(battler, act.numerator, act.denominator)
     self:sayNext(Strings("%s\nrestored health!", who))
     return
@@ -6474,7 +6477,7 @@ function BattleState:abilityEndOfTurn(battler)
     battler.mon.status = nil
     battler.toxicCounter = nil
     self:syncShownStatus()
-    self:sayNext(Strings("%s's\n%s!", who, abilityLabel(act.ability)))
+    self:sayNext(Strings("%s's\n%s!", who, abilityLabel(act.ability, self.data)))
     self:sayNext(Strings("%s's\nstatus returned to\nnormal!", who))
     return
   end
@@ -6483,7 +6486,7 @@ function BattleState:abilityEndOfTurn(battler)
     -- printing "Nothing happened!" every turn for the rest of the battle.
     -- Asked BEFORE the change, or the stage it reads is the new one.
     if ((battler.stages or {})[act.stat] or 0) >= 6 then return end
-    self:sayNext(Strings("%s's\n%s!", who, abilityLabel(act.ability)))
+    self:sayNext(Strings("%s's\n%s!", who, abilityLabel(act.ability, self.data)))
     for _, m in ipairs(MoveEffects.changeStage(self, battler, act.stat,
                                                act.delta, false)) do
       self:sayNext(m)
@@ -10333,7 +10336,7 @@ function BattleState:tryRun()
   elseif trapper then
     escaped = false
     self:say(Strings("%s's\n%s\nprevents escape!", displayName(self.enemy),
-                     abilityLabel(trapper)))
+                     abilityLabel(trapper, self.data)))
   else
     -- modified in-battle speeds (stat stages + paralysis), like the
     -- wBattleMonSpeed the original hands to TryRunningFromBattle

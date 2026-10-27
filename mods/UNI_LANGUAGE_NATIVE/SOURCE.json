@@ -2575,6 +2575,7 @@
   "adaptations": [
     "main.lua: capability-gated built-in entry; launcher owns first-run setup",
     "manifest.json: bundled version, all-game no-op dispatch and no independent update check",
-    "fonts/*: extended regional subsets from pinned Noto CJK; see fonts/BUILD.json"
+    "fonts/*: extended regional subsets from pinned Noto CJK; see fonts/BUILD.json",
+    "manifest.json: native.1 declares exact US GB/GBC bases and Crystal 1.1 for automatic offline PT-BR; original source hashes remain provenance, not adapted-file digests"
   ]
 }

@@ -1,0 +1,263 @@
+{
+  "feature": "Offline native PT-BR from supported US cartridges",
+  "date": "2026-10-27",
+  "featureCommit": "65dc8f4e",
+  "integrationCommit": "683488a9",
+  "passed": true,
+  "evidence": {
+    "allEditions": {
+      "passed": true,
+      "runs": [
+        {
+          "game": "red",
+          "passed": true,
+          "logSha256": "7ea0d9ae4e910871269e8cf16938e5c6b0a3c31bafba1cfaa83d0f7cbd4ef5cb"
+        },
+        {
+          "game": "blue",
+          "passed": true,
+          "logSha256": "706d77f58ed9e5d5b0dda179f91efab50d30f88cff0467915f36826221b4e77a"
+        },
+        {
+          "game": "yellow",
+          "passed": true,
+          "logSha256": "2e378b19af0a4045e1ccd8dc252fe30465d20e80e24a5b20703b35aafac8eb00"
+        },
+        {
+          "game": "gold",
+          "passed": true,
+          "logSha256": "0441ccce57d599fb0394871d1ee509a35b496e97e7ac88e1cf028950173d09a0"
+        },
+        {
+          "game": "silver",
+          "passed": true,
+          "logSha256": "f5be28e5fe0235fc03b3a68acc3fa7c56a505789fd50adee9feb9d0b6eeae64c"
+        },
+        {
+          "game": "crystal",
+          "passed": true,
+          "logSha256": "a63a093412df3b7237ec3cf3a5bbbf299485d32f00b3ba8b057ef33f47529288"
+        },
+        {
+          "game": "ruby",
+          "passed": true,
+          "logSha256": "51235eb8b222b3de778602d0812c08afc8c66b1e29eee7f426b4962841c3164d"
+        },
+        {
+          "game": "sapphire",
+          "passed": true,
+          "logSha256": "4baff688d52edd26fcf75ae434dde9c2b1b1f68d9eacfdadd24b59e183f40249"
+        },
+        {
+          "game": "firered",
+          "passed": true,
+          "logSha256": "95681bbdb946cde54d4894be9fae822a51bd5d4e88b49cd0372854413cde0a5d"
+        },
+        {
+          "game": "leafgreen",
+          "passed": true,
+          "logSha256": "5fe72a84471825660e45af1784907a37b5088a72d94d73bf5ea0d396b8b017fc"
+        },
+        {
+          "game": "emerald",
+          "passed": true,
+          "logSha256": "ed06d78b13888894587a833ddc6a99ab7f7dfe434bab8701f235323e576c80ba"
+        }
+      ],
+      "engineLuaSha256": "319d5dad4b66ad987e0e8585691f5ea731bb3efec13491a3a3d37801185de7fb",
+      "bundledPayloadSha256": "4bd2788b890ec3021929388fbd7031683c677e0d7e3335903f02743607429890",
+      "ptbrPatchBundleSha256": "a4523ba33eb690580b64324347830b572eb4073dcfd3f35f4a87648d004f2b59",
+      "scope": "US inputs only; no PT-BR ROM supplied. Exact target reconstruction, native profile load, mechanical-field identity, rendered title/world, EN/PT switching, failure rollback and live progress preservation; actual Portuguese nurses on GSC. No full-story or multiplayer certification."
+    },
+    "firstRun": {
+      "passed": true,
+      "runs": [
+        {
+          "game": "gold",
+          "passed": true,
+          "logSha256": "ac9ce42ad97ea9f8ae0454c51533867680ef74c3a15bbfae01b63c2b312e13f9"
+        },
+        {
+          "game": "emerald",
+          "passed": true,
+          "logSha256": "bcd0e6eedf77cbdb957e15e5c88910fc9779474094e5280415e06f8a6b62ef14"
+        }
+      ],
+      "engineLuaSha256": "319d5dad4b66ad987e0e8585691f5ea731bb3efec13491a3a3d37801185de7fb",
+      "bundledPayloadSha256": "4bd2788b890ec3021929388fbd7031683c677e0d7e3335903f02743607429890",
+      "ptbrPatchBundleSha256": "a4523ba33eb690580b64324347830b572eb4073dcfd3f35f4a87648d004f2b59",
+      "language": "pt-BR",
+      "scope": "Clean profile. Built-in payload, no language ZIP. First-run locale/font checks, actual US import, native game round trips and progress preservation. PT-BR: US-only offline generation through the actual asynchronous modal; no extra language ROM. German: exact source acquisition/rejection. Asian gameplay requires separate real-ROM qualification."
+    },
+    "crystalUs11": {
+      "passed": true,
+      "runs": [
+        {
+          "game": "crystal",
+          "passed": true,
+          "logSha256": "c0ee6ac67f84e3ba493049e26aa8603703cb6cb09c2281c2e97594852d839b2e"
+        }
+      ],
+      "engineLuaSha256": "319d5dad4b66ad987e0e8585691f5ea731bb3efec13491a3a3d37801185de7fb",
+      "bundledPayloadSha256": "4bd2788b890ec3021929388fbd7031683c677e0d7e3335903f02743607429890",
+      "ptbrPatchBundleSha256": "a4523ba33eb690580b64324347830b572eb4073dcfd3f35f4a87648d004f2b59",
+      "scope": "US inputs only; no PT-BR ROM supplied. Exact target reconstruction, native profile load, mechanical-field identity, rendered title/world, EN/PT switching, failure rollback and live progress preservation; actual Portuguese nurses on GSC. No full-story or multiplayer certification."
+    },
+    "patchVariants": {
+      "passed": true,
+      "runs": [
+        {
+          "game": "red",
+          "baseSha1": "ea9bcae617fdf159b045185467ae58b2e4a48b9a",
+          "targetSha1": "a2a0e2a3d6ef4d5771aa33682d31eaefd03c32ba",
+          "patchSha256": "141271bb05fc71e2fbe47a343891cb26a000540d8f54a96425a4704b4bce550f",
+          "passed": true
+        },
+        {
+          "game": "blue",
+          "baseSha1": "d7037c83e1ae5b39bde3c30787637ba1d4c48ce2",
+          "targetSha1": "ec9e33447d9bdbf95c2d57f487e25a57854a1adf",
+          "patchSha256": "ef79ca78218397f858913470f7214488300ffa7c392623fdd2187f4cd418f415",
+          "passed": true
+        },
+        {
+          "game": "yellow",
+          "baseSha1": "cc7d03262ebfaf2f06772c1a480c7d9d5f4a38e1",
+          "targetSha1": "2b94c64b1944fb6866fd0c28149f86c11bc86253",
+          "patchSha256": "905014d6e2ceeba95152d864d2cbf23685fb9950f0e027635163b032f18f4b52",
+          "passed": true
+        },
+        {
+          "game": "gold",
+          "baseSha1": "d8b8a3600a465308c9953dfa04f0081c05bdcb94",
+          "targetSha1": "652c0208a5c54313e2d3efb336346e59a17cbab6",
+          "patchSha256": "052c438a1758507aae9b0943c38f7743af4291e9a0b684572291ce21498515e3",
+          "passed": true
+        },
+        {
+          "game": "silver",
+          "baseSha1": "49b163f7e57702bc939d642a18f591de55d92dae",
+          "targetSha1": "9d9536f14a1874d27ea9167fdf00b80439204a6d",
+          "patchSha256": "04b5a0743a5ef710eefc938f6c8d6cac1eb409693ffd4286d5af115345396a29",
+          "passed": true
+        },
+        {
+          "game": "crystal",
+          "baseSha1": "f4cd194bdee0d04ca4eac29e09b8e4e9d818c133",
+          "targetSha1": "e41c519d7ca680facf546fa34b7b00f3149f428f",
+          "patchSha256": "ec626d8f44f170fae7b2deb1b992df11657d2c981b86e49fb7afe81daa40c1d9",
+          "passed": true
+        },
+        {
+          "game": "crystal",
+          "baseSha1": "f2f52230b536214ef7c9924f483392993e226cfb",
+          "targetSha1": "e41c519d7ca680facf546fa34b7b00f3149f428f",
+          "patchSha256": "cf1bb2010ffc471061a9f532c73822d1663bb0f7aa2d6512b384ad5d70c94c3a",
+          "passed": true
+        },
+        {
+          "game": "ruby",
+          "baseSha1": "f28b6ffc97847e94a6c21a63cacf633ee5c8df1e",
+          "targetSha1": "90f1464f77c57b4eef45ee07df140d402162eee3",
+          "patchSha256": "f5d4b9099d79c561bc04ba33e9fd3aac5fd2f551a71e6402abaf6e9d12016874",
+          "passed": true
+        },
+        {
+          "game": "sapphire",
+          "baseSha1": "3ccbbd45f8553c36463f13b938e833f652b793e4",
+          "targetSha1": "90f1464f77c57b4eef45ee07df140d402162eee3",
+          "patchSha256": "3376397d6affaee6ad48c5555630e75884896f0074e597a1092823a0f62795eb",
+          "passed": true
+        },
+        {
+          "game": "firered",
+          "baseSha1": "41cb23d8dccc8ebd7c649cd8fbb58eeace6e2fdc",
+          "targetSha1": "51ab6d001412cdc3d6da16fb824ab8084123b1dd",
+          "patchSha256": "12bc7d2e1c4e5206b3b5d6347069769c4cf6c355e516cb6f6d6f021245a8675c",
+          "passed": true
+        },
+        {
+          "game": "leafgreen",
+          "baseSha1": "574fa542ffebb14be69902d1d36f1ec0a4afd71e",
+          "targetSha1": "b32c63d5d1454d851cef16699f3ce757798553a2",
+          "patchSha256": "2346d685bd206af7e8a578ad5d57c1fc7ec97594d6172061a183f2751faa1f7a",
+          "passed": true
+        },
+        {
+          "game": "emerald",
+          "baseSha1": "f3ae088181bf583e55daf962a92bb46f4f1d07b7",
+          "targetSha1": "18a2b0acdba046c71b8677bb58c9ee7d36f7a91f",
+          "patchSha256": "de46028a40717d32a38a5fa5b236ff0eaefe6a30795bd4cfaf9cfa58c14caf02",
+          "passed": true
+        }
+      ],
+      "indexSha256": "8a7c604fd88831e9723b0b8f2d4759b73650263d67f19f926aeccc8f810301eb",
+      "decoderSha256": "191767cbdd0cd53e2e527fc00dc3b57695d1dd744e971a89758e495daeff0fb8"
+    },
+    "mergedForkSmoke": {
+      "passed": true,
+      "runs": [
+        {
+          "game": "gold",
+          "passed": true,
+          "logSha256": "53874a3adc1c425284f5109361d94f17cdae07b63d5f8051bc71d9495c709012"
+        },
+        {
+          "game": "emerald",
+          "passed": true,
+          "logSha256": "30613bb493af2cb657bba2c83e9e6ba31fe87d213b3ed00fa0214f7dcd94a50c"
+        }
+      ],
+      "engineLuaSha256": "d275eed7f5c3b11dd8b93d36c706a8a63338f86dc232df006b675e60a7790509",
+      "bundledPayloadSha256": "4bd2788b890ec3021929388fbd7031683c677e0d7e3335903f02743607429890",
+      "ptbrPatchBundleSha256": "a4523ba33eb690580b64324347830b572eb4073dcfd3f35f4a87648d004f2b59",
+      "scope": "US inputs only; no PT-BR ROM supplied. Exact target reconstruction, native profile load, mechanical-field identity, rendered title/world, EN/PT switching, failure rollback and live progress preservation; actual Portuguese nurses on GSC. No full-story or multiplayer certification."
+    },
+    "packagedApp": {
+      "passed": true,
+      "language": "pt-BR",
+      "scope": "Actual fused macOS app, built-in pack, copied owned Gold QA guest profile; no installed language ZIP. PT-BR reconstructs its language source again from the retained US input using the packaged delta. Native render, language round trips, failure rollback and progress preservation.",
+      "logSha256": "555dbb7b4c7e6551628086a266417ad19cbc6ff2e5a8f1d3ee2b877d66d89338",
+      "payloadSha256": "8a8cb258591fa4c29403bf8a2caf25171319175ab1a98cbeb825e65030e47c1f"
+    }
+  },
+  "unitChecks": {
+    "bps": 19,
+    "ptbrPreparation": 11,
+    "nativeLanguageSetup": 155,
+    "nativeRomLanguageProtocol": 2420,
+    "mergedNativeChoiceDefaults": 24,
+    "mergedGen3FollowerOwner": 13
+  },
+  "additionalChecks": {
+    "qaStorageSuite": {
+      "passed": false,
+      "tests": 83,
+      "failures": 2,
+      "errors": 1,
+      "changedByThisFeature": false,
+      "details": [
+        "qa_love_storage_test.LoveRetention.test_legacy_collector_cannot_remove_models_from_mixed_generated_tree: expected model retention failed",
+        "qa_love_storage_test.LoveRetention.test_source_pin_shared_profile_lock_and_alias_are_respected: expected retained file count differed",
+        "qa_storage_test.CacheLifecycle.test_actual_shell_launcher_preserves_child_leases: pre-existing Start.command fixture absent from checkout"
+      ],
+      "resolution": {
+        "passed": true,
+        "tests": 87,
+        "failures": 0,
+        "errors": 0,
+        "evidence": "storage-safety-fixes.json"
+      }
+    }
+  },
+  "limits": [
+    "No full-story or multiplayer certification.",
+    "Japanese/Korean gameplay is outside this PT-BR change.",
+    "FRLG base imports report pre-existing missing optional scene/summary-art outputs; native game tests pass."
+  ],
+  "build": {
+    "payloadSha256": "8a8cb258591fa4c29403bf8a2caf25171319175ab1a98cbeb825e65030e47c1f",
+    "archiveSha256": "f1913c46358fad487ee5bcd365323c2d01884adac25d341e089943653be644ec",
+    "platform": "macOS, LÖVE 12, ad-hoc signed; local artifact, not a published/notarized release"
+  }
+}

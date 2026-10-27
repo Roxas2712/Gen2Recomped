@@ -143,7 +143,7 @@ function W.action(self,id)
     if f.avatarBytes then payload.image_base64=love.data.encode('string','base64',f.avatarBytes);payload.avatar_rights=true end
     job(self,'profile',function() return A.profile(payload) end)
   elseif id=='resetAvatar' then job(self,'profile',function() return A.profile({reset_avatar=true}) end)
-  elseif id=='profileEdit' or id=='accountSettings' then f.mode=id;f.scroll=0;f.notice=nil
+  elseif id=='profileEdit' or id=='accountSettings' or id=='transferGuide' then f.mode=id;f.scroll=0;f.notice=nil
   elseif id=='copyFriendTag' and f.friendTag and love.system.setClipboardText then love.system.setClipboardText(f.friendTag);f.notice='Friend tag copied.'
   elseif id:match('^avatarPreset:') then f.avatarPreset=id:sub(14);f.avatarImage=nil;f.avatarBytes=nil;f.avatarRights=false;f.resetAvatar=true
   elseif id=='avatarColor' then
@@ -230,6 +230,8 @@ function W.action(self,id)
   elseif id=='account' then f.mode='account';f.scroll=0;job(self,'devices',devices)
   elseif id=='devices' then job(self,'devices',devices)
   elseif id=='sync' then W.close(self);self:_storageSync()
+  elseif id=='restoreGames' then W.close(self);self:_storageSync(nil,nil,nil,'restore')
+  elseif id=='uploadGames' then W.close(self);self:_storageSync(nil,nil,nil,'games-upload')
   elseif id=='linkStorage' then
     if not f.storageConsent then f.notice='Confirm that these local saves and Bank should belong to this account first.';return end
     local ok,why=require('src.storage.AccountStorage').bind()
@@ -323,8 +325,8 @@ function W.draw(self)
   local function button(label,bx,by,bw,id)
     local r=self:_chipButton(bx,by,label,{w=bw,h=38*s,kind='accent'});r.id=id;f.rects[#f.rects+1]=r;return r
   end
-  text(f.mode=='giftAdmin' and 'RETRORECOMPED · PRIZE STUDIO' or 'RETRORECOMPED · MY PROFILE',x+24*s,y+20*s,width-150*s,true)
-  button('CLOSE',x+width-108*s,y+18*s,84*s,'close').pinned=true
+  text(f.mode=='giftAdmin' and 'RETRORECOMPED · PRIZE STUDIO' or 'RETRORECOMPED · MY PROFILE',x+24*s,y+20*s,width-180*s,true)
+  button('CLOSE',x+width-140*s,y+18*s,116*s,'close').pinned=true
   local social=require('src.cloud.Presence').read() or f.social or {}
   local tabs=Auth.signedIn() and not f.document
   if tabs then
@@ -436,7 +438,7 @@ function W.draw(self)
     row('REFRESH FRIENDS','friends');row('MY ACCOUNT','account')
     local social=require('src.cloud.Presence').read() or f.social or {}
     local fresh=os.time()-(social._receivedAt or 0)<=120
-    paragraph('FRIENDS · '..#(social.friends or {}),true)
+    paragraph(L('FRIENDS')..' · '..#(social.friends or {}),true)
     for _,peer in ipairs(social.friends or {}) do
       paragraph(Role.label(peer.friend_tag or peer.nickname,peer)..(not fresh and ' · STATUS UNAVAILABLE' or peer.online and (peer.status=='away' and ' · AWAY' or ' · ONLINE') or ' · OFFLINE'))
       local pref={};for _,v in ipairs(prefs.friends or {}) do if tostring(v.account_id)==tostring(peer.account_id) then pref=v;break end end
@@ -452,12 +454,26 @@ function W.draw(self)
     for _,peer in ipairs(social.incoming or {}) do paragraph(Role.label(peer.nickname,peer));row('ACCEPT REQUEST','friendAccept:'..peer.account_id);row('DECLINE REQUEST','friendRemove:'..peer.account_id) end
     for _,peer in ipairs(social.outgoing or {}) do paragraph('WAITING · '..Role.label(peer.nickname,peer));row('CANCEL REQUEST','friendRemove:'..peer.account_id) end
     if social.permissions and social.permissions.view_online then row('STAFF · ONLINE PLAYERS & STATISTICS','online') end
+  elseif f.mode=='transferGuide' then
+    paragraph('CONTINUE ON ANOTHER DEVICE',true)
+    paragraph('1 · ON THIS DEVICE',true)
+    paragraph('Upload your own imported games once to your private account cache. This is optional and separate from saves. Other accounts cannot download them.')
+    row('UPLOAD MY IMPORTED GAMES NOW','uploadGames')
+    paragraph('In the game menu, choose Suspend & upload to cloud. Wait until the transfer finishes. Normal saves and exact battle suspends remain separate.')
+    paragraph('2 · ON YOUR OTHER DEVICE',true)
+    paragraph('Use the same app build, sign in to the same account and restore your cloud games and saves. Choose Continue to resume the saved battle.')
+    row('RESTORE MY CLOUD GAMES & SAVES','restoreGames')
+    paragraph('CURRENT SUPPORT',true)
+    paragraph('Exact resume supports native Gen 1–3 sessions. Loaded mods and live online battles are excluded. Newer local progress is preserved; incompatible suspends fall back to your normal save with a notice.')
+    paragraph('Simulated device switching has been tested on separate desktop profiles. Physical Android and iPhone switching still needs device testing.')
+    row('BACK TO MY PROFILE','account')
   elseif f.mode=='roleGuide' then
     paragraph('ROLES & PERMISSIONS',true)
     paragraph('PLAYER · Local play needs no account. Verified accounts can use friends, cloud storage and online features.')
     paragraph('ADMIN · Organizes cups and prizes, manages regular players, bans and restores accounts, and quarantines or restores cloud content. Cannot grant roles or moderate staff.')
     paragraph('SUPERUSER · Admin permissions plus granting or revoking native Admin and Superuser roles, and moderating other unprotected staff accounts.')
     paragraph('PROTECTED OPERATOR · Starscream89 cannot be banned, removed, demoted or have cloud content quarantined. Protection belongs to the account across devices.')
+    paragraph('The operator binding follows a fixed account ID even after a nickname change. Releasing it requires the private recovery key in the server console; ordinary role controls cannot remove it.')
     paragraph('Staff can see invisible online status. Reasons and current-password confirmation are required for moderation. Actions are audited; cloud removal is recoverable.')
     row('MY ACCOUNT','account')
   elseif f.mode=='players' then
@@ -526,7 +542,7 @@ function W.draw(self)
     row('PLAYERS','players');row('INBOX','inbox');row('ROLES & PERMISSIONS','roleGuide');row('EDIT NICKNAME & AVATAR','profileEdit');row('COPY MY FRIEND TAG','copyFriendTag')
     local fresh=os.time()-(social._receivedAt or 0)<=120;local online=0
     for _,peer in ipairs(social.friends or {}) do if fresh and peer.online then online=online+1 end end
-    paragraph('FRIENDS · '..online..' ONLINE / '..#(social.friends or {})..' TOTAL',true)
+    paragraph(L('FRIENDS')..' · '..online..' '..L('ONLINE')..' / '..#(social.friends or {})..' '..L('TOTAL'),true)
     if #(social.incoming or {})>0 then row(#social.incoming..' NEW FRIEND REQUESTS','friends') end
     for i,peer in ipairs(social.friends or {}) do if i<=5 then
       Avatar.draw(peer.avatar_preset,peer.avatar_color,x+24*s,top,42*s)
@@ -562,8 +578,10 @@ function W.draw(self)
     end
     row('BACK TO MY PROFILE','account')
   elseif f.mode=='accountSettings' then
-    paragraph('ACCOUNT PROFILE · '..tostring(Auth.accountId and Auth.accountId() or 'Updating identity')..' · Saves, Bank and mod choices are kept separately for each account.')
+    paragraph(L('ACCOUNT PROFILE')..' · '..tostring(Auth.accountId and Auth.accountId() or L('Updating identity')))
+    paragraph('Saves, Bank and mod choices are kept separately for each account.')
     paragraph('The same account connects your mods, developer projects, custom cartridge artwork and optional cloud storage.')
+    row('CONTINUE ON ANOTHER DEVICE · HOW IT WORKS','transferGuide')
     row('SYNC MY SAVES & CUSTOM CARTRIDGES','sync')
     local storage=require('src.storage.AccountStorage');local permitted,why=storage.check()
     if storage.enabled and not permitted then

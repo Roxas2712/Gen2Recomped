@@ -77,5 +77,22 @@ options.nativeLanguages={gold='de'};builtin(api)
 check(installedNative and api.exports.sessionBoot,'an explicit cartridge choice selects native ownership')
 installedNative=false;api.supports=function()return false end;builtin(api)
 check(not installedNative and api.exports.status=='unavailable','unprofiled games keep running without native wrappers')
+-- Automatic PT-BR uses only an English source; the asynchronous modal owns
+-- cancellation and publishes the choice only after verified preparation.
+local P=require('src.translation.PtbrPatch');local describe,prepare=P.describe,P.prepare
+local base=gba.baseEntry
+P.describe=function(version)return{recipe={baseSha1='us'},baseEntry=base,targetEntry={id='gold_ptbr'},baseReady=ready.emerald_en}end
+options={launcherLanguage='pb'};ready.gold_ptbr=nil;ui.played=nil
+W.open(ui,'gold');check(ui._nativeLanguage.state.automatic and ui._nativeLanguage.state.canPrepare and not ui._nativeLanguage.state.nextEntry,'PT-BR offers generation from retained US without asking for a Portuguese ROM')
+P.prepare=function(_,_,progress)progress(1,2,'apply');ready.gold_ptbr=true;return true end
+W.action(ui,'use');check(ui._nativeLanguage.job and not options.nativeLanguages,'start does not select unfinished language data')
+ui:update(.1);check(ui._nativeLanguage.progress and not options.nativeLanguages,'preparation yields through the modal update')
+ui:update(.1);check(not ui._nativeLanguage and options.nativeLanguages.gold=='pt-BR','completed preparation selects Portuguese')
+ready.gold_ptbr=nil;options={launcherLanguage='pb'};W.open(ui,'gold');W.action(ui,'use');ui:update(.1);W.action(ui,'later');ui:update(.1)
+check(options.nativeLanguages.gold=='en'and not ready.gold_ptbr,'cancelling a suspended preparation does not publish partial data')
+options={launcherLanguage='pb'};P.prepare=function()error('corrupt patch')end
+W.open(ui,'gold');W.action(ui,'use');ui:update(.1)
+check(ui._nativeLanguage and not ui._nativeLanguage.job and ui._nativeLanguage.notice and not options.nativeLanguages,'preparation failure retains the modal and previous selection')
+P.describe,P.prepare=describe,prepare
 Imports.have=realHave;Imports.install=realInstall
 print('Native language setup: '..count..' checks passed')

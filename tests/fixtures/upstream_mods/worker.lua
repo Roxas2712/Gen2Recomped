@@ -109,8 +109,6 @@ if loaded and id=='mystery_dungeon_follower' then
  local npc={optionalFollower=true,pikachuFollower=true,px=0,py=0,moving=true}
  local world={player={px=16,py=0,visible=true},npcs={npc}}
  if require('src.core.GameVersion').isGen3() then
-  -- A native object view admits actual NPC identity and its current map owner.
-  -- Keep the external mod bytes unchanged; construct the host it really uses.
   local def={};for key,value in pairs(data.maps.FIX_TOWN)do def[key]=value end
   def.id,def.group,def.number='MAP_G04_N03',4,3
   local object={index=1,sprite='SPRITE_RED',x=0,y=0,movement='STILL'}
@@ -122,12 +120,15 @@ if loaded and id=='mystery_dungeon_follower' then
  end
  local save={party={{species='PIKACHU',hp=10,dvs={attack=0,defense=0,speed=0,special=0}}}}
  Native.data,Native.save,Native.overworld,Native.stack,Native.mods=data,save,world,{states={world}},loader
+ if require('src.core.GameVersion').isGen3() then
+  local follower=require('src.compat.game3.Follower')
+  world.npcs[1]={optionalFollower=true}
+  assert(follower.current(world)==nil,'malformed follower identity must not crash')
+  world.npcs[1]=npc
+ end
  local function presentation()
   local source=package.loaded['src.compat.gen1.SourceActors']
-  if source and source.renderer then
-   local renderer,owned=source.renderer(npc)
-   if owned then return renderer end
-  end
+  if source and source.renderer then local renderer,owned=source.renderer(npc);if owned then return renderer end end
   return npc.sprite
  end
  local facade=package.loaded['src.core.Game3']
@@ -152,14 +153,16 @@ if loaded and id=='mystery_dungeon_follower' then
  local stepped=loader.hooks:call('input.step',function(_,dt)return dt end,Native,0.25)
  assert(stepped==0.25 and presentation()==renderer and renderer.pmdTicks==1,'unchanged follower did not advance its sprite')
  assert(#loader.errors==count,table.concat(loader.errors,'; '))
- if actorOwner then assert(facade._callbackOwner()==nil,'follower callback owner leaked into native code')end
  functional={spawned=true,stepped=true,anchorX=renderer.anchorX,anchorY=renderer.anchorY}
- if actorOwner then
+ if require('src.core.GameVersion').isGen3() then
+  local facade=require('src.core.Game3')
+  assert(facade._callbackOwner()==nil,'follower resource owner leaked')
+  local follower=require('src.compat.game3.Follower')
+  assert(follower.current({npcs={npc}})==nil,'foreign world resolved current native follower')
   loader:_rollback(id)
-  assert(not facade._usesCallbacks(id),'retired follower kept callback ownership')
-  local source=package.loaded['src.compat.gen1.SourceActors']
-  local _,owned=source.renderer(npc)
-  assert(not owned,'retired follower kept its owned renderer')
+  assert(not facade._usesCallbacks(id),'retired follower retained callback ownership')
+  local _,owned=require('src.compat.gen1.SourceActors').renderer(npc)
+  assert(not owned,'retired follower retained its renderer')
  end
  love.graphics.newImage=image
  Native.data,Native.save,Native.overworld,Native.stack,Native.mods=previous.data,previous.save,previous.overworld,previous.stack,previous.mods

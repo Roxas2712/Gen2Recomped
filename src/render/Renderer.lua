@@ -701,9 +701,14 @@ end
 -- or empty zone list is left alone: that already draws the whole canvas
 -- unshaded, which is what the rects were asking for.
 local function withTrueColor(zoneList, pass)
-  -- the rect list is POOLED, so how many are live comes back beside it and
-  -- `#rects` would count last frame's leftovers as well
-  local rects, count = PaletteFX.trueColorRects(pass)
+  -- Borrow private storage only while no public reader or override owns it.
+  local rects, count
+  if type(PaletteFX._trueColorRectsForEngine) == "function" then
+    rects, count = PaletteFX._trueColorRectsForEngine(pass)
+  else
+    rects = PaletteFX.trueColorRects(pass)
+    count = #rects
+  end
   if not (count > 0 and zoneList and zoneList[1]) then return zoneList end
   local merged = {}
   for i = 1, #zoneList do merged[i] = zoneList[i] end

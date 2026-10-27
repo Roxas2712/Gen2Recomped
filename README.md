@@ -42,8 +42,9 @@ language profiles and asks for the exact additional source ROM when needed.
 No separate language-mod download or Gen2 conversion is required. Japanese
 currently targets Crystal; Korean targets Gold/Silver. Chinese is available
 for setup/menu text, without a bundled Chinese game profile. Brazilian
-Portuguese menus need no additional ROM; the current PT-BR game profiles
-still require their listed fan-translation source. See the
+Portuguese game text is prepared offline from the supported US ROM using
+included translation patches, for all eleven editions. No extra PT-BR ROM
+or patch download is required. See the
 [native language guide](docs/native-rom-language-packs.md).
 
 > [!CAUTION]
@@ -397,9 +398,11 @@ and persist in `options.lua`.
 
 **OPTIONS → PERFORMANCE** scales the port's optional extras for weaker
 hardware: **HIGH** (everything on), **BALANCED** (no 3D tilt or GBC FX),
-**LOW** (also no survey zoom, FPS capped), or **AUTO** — the default, which
+**LOW** (also no survey zoom, FPS capped), **AUTO** — the default, which
 picks a tier from your device (ARM handhelds → LOW, phones → BALANCED,
-normal desktops → HIGH, unchanged). It only scales presentation; the
+normal desktops → HIGH, unchanged) — or **PREFER FPS**, which starts where
+AUTO would and steps the tier down or back up from the frame rate it
+actually measures. It only scales presentation; the
 fixed-step game logic is identical on every tier, and a lower tier hides
 your tilt/zoom/GBC-FX preferences without forgetting them. Details in
 [docs/new-features.md](docs/new-features.md#performance-tier-low-end-devices).
