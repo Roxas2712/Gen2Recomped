@@ -36,6 +36,7 @@
 -- the window edges fall.  Those are staging, and they are marked below.
 
 local Assets = require("src.render.Assets")
+local Selection = require("src.battle.Gen3SelectionPresentation")
 local Logger = require("src.core.Logger")
 local Theme = require("src.ui.Theme")
 local Font = require("src.render.Font")
@@ -1543,12 +1544,12 @@ local function drawHUDs(battle, slide)
   if not double and Gen3Battle.healthboxVisible(battle,1,slide,not not showStatus) then
     local x, y = healthboxAt(battle, "singlesOpponent",
                              hudImage(images.opponent), 8, 8)
-    drawStatusPanel(battle, battle.enemy, x, y, false)
+    drawStatusPanel(battle, battle.enemy, x, y+Selection.offset(battle,'hb',battle.enemy), false)
   end
   if not double and Gen3Battle.healthboxVisible(battle,0,slide,not not showStatus) then
     local x, y = healthboxAt(battle, "singlesPlayer",
                              hudImage(images.player), 112, 64)
-    drawStatusPanel(battle, battle.player, x, y, true)
+    drawStatusPanel(battle, battle.player, x, y+Selection.offset(battle,'hb',battle.player), true)
   end
   -- ...AND THE OTHER TWO PANELS.
   --
@@ -1626,7 +1627,7 @@ local function drawHUDs(battle, slide)
           -- ride the right edge; opponentLeft and opponentRight are the
           -- left-hand pair (44 and 32) and stay put.
           local edge = row.player and Gen3Battle.extra(battle) or 0
-          local px, py = pos.x - 32 + edge, pos.y - 16
+          local px, py = pos.x - 32 + edge, pos.y - 16+Selection.offset(battle,'hb',b)
           drawStatusPanel(battle, b, px, py, row.player)
           if b == aimed and math.floor((battle.frame or 0) / 8) % 2 == 0 then
             love.graphics.setColor(1, 1, 0.3, 1)
