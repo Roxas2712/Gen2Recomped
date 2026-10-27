@@ -47,6 +47,7 @@ local Gen4Battle = require("src.battle.Gen4Battle")
 local Gen2BattleView = require("src.battle.Gen2BattleView")
 local Gen2Read = require('src.battle.Gen2BattleRead')
 local Gen2Queue = require('src.battle.Gen2EventQueue')
+local Gen2Faint = require('src.battle.Gen2FaintPresentation')
 local GameVersion = require("src.core.GameVersion")
 local BattleCommands = require("src.battle.BattleCommands")
 local EnemyMoveChoice = require("src.battle.EnemyMoveChoice")
@@ -2764,6 +2765,7 @@ end
 -- Display-only waits and bar completion. Returning idle grants no command;
 -- only updateQueue may consume a battle row after this gate.
 function BattleState:updateQueuePresentation(textOnly)
+  if GameVersion.isGen2() and self.faintSlide then return true end
   if textOnly then return self:stepPresentationWait() end
   if self._gbaSubstituteTransition
       and require("src.battle.Gen3SubstitutePresentation").update(self) then return true end
@@ -7908,6 +7910,7 @@ function BattleState:updateGen4Ball()
 end
 
 function BattleState:updateFx()
+  if GameVersion.isGen2() then Gen2Faint.step(self) end
   self:updateGen4Ball()
   local fi = self.frlgIntro
   if fi then
@@ -9212,30 +9215,36 @@ function BattleState:onFaint(battler, fieldTerminal)
   -- the faint slide + cry ride the queue (after the move animation and
   -- the HP-bar drain, pokered's order); the slide finishes before the
   -- faint text via a queued hold
-  self:actNext(function()
-    battler.fainted = true
-    local Sound = require("src.core.Sound")
-    Sound.playCry(self.data, battler.mon.species)
-    Sound.play(self.data, "Faint_Fall")
-    self.fx = self.fx or {}
-    -- SlideDownFaintedMonPic: PIC_HEIGHT (7) slide steps, each closing with
-    -- DelayFrames 2 (core.asm:1186-1222).  The port held this one twice as
-    -- long as hardware.
-    self.fx.faint = { battler = battler, frames = Timing.FAINT_SLIDE }
-  end)
-  self.nextInsert = (self.nextInsert or 0) + 1
-  table.insert(self.queue, self.nextInsert, { wait = Timing.FAINT_SLIDE })
-  if not fieldTerminal and not battler.isPlayer and self.kind == "wild" then
-    -- FaintEnemyPokemon .wild_win (core.asm:792-795): beating a wild
-    -- mon calls EndLowHealthAlarm and starts MUSIC_DEFEATED_WILD_MON
-    -- as the slide lands, BEFORE EnemyMonFaintedText and the exp text;
-    -- trainer battles keep the battle theme until TrainerBattleVictory.
-    -- (Starting it even when the player mon dropped too matches the
-    -- acknowledged core.asm:797-798 bug.)
-    self:actNext(function() self:playVictoryMusic() end)
+  if GameVersion.isGen2() then
+    Gen2Queue.afterCurrent(self,{kind='faint',side=battler.isPlayer and 'player' or 'enemy',
+      mon=battler.mon,fieldTerminal=fieldTerminal or nil,
+      text=Strings("%s\nfainted!",displayName(battler))})
+  else
+    self:actNext(function()
+      battler.fainted = true
+      local Sound = require("src.core.Sound")
+      Sound.playCry(self.data, battler.mon.species)
+      Sound.play(self.data, "Faint_Fall")
+      self.fx = self.fx or {}
+      -- SlideDownFaintedMonPic: PIC_HEIGHT (7) slide steps, each closing with
+      -- DelayFrames 2 (core.asm:1186-1222).  The port held this one twice as
+      -- long as hardware.
+      self.fx.faint = { battler = battler, frames = Timing.FAINT_SLIDE }
+    end)
+    self.nextInsert = (self.nextInsert or 0) + 1
+    table.insert(self.queue, self.nextInsert, { wait = Timing.FAINT_SLIDE })
+    if not fieldTerminal and not battler.isPlayer and self.kind == "wild" then
+      -- FaintEnemyPokemon .wild_win (core.asm:792-795): beating a wild
+      -- mon calls EndLowHealthAlarm and starts MUSIC_DEFEATED_WILD_MON
+      -- as the slide lands, BEFORE EnemyMonFaintedText and the exp text;
+      -- trainer battles keep the battle theme until TrainerBattleVictory.
+      -- (Starting it even when the player mon dropped too matches the
+      -- acknowledged core.asm:797-798 bug.)
+      self:actNext(function() self:playVictoryMusic() end)
+    end
+    -- _EnemyMonFaintedText "Enemy X fainted!" / _PlayerMonFaintedText
+    self:sayNext(Strings("%s\nfainted!", displayName(battler)))
   end
-  -- _EnemyMonFaintedText "Enemy X fainted!" / _PlayerMonFaintedText
-  self:sayNext(Strings("%s\nfainted!", displayName(battler)))
   -- Gold announces both faints in a terminal field batch, while the player's
   -- loss alone owns resolution. Do not enqueue enemy EXP, victory or replacement.
   if fieldTerminal then return end
@@ -11742,6 +11751,7 @@ end
 
 -- is the faint slide currently playing for this battler?
 function BattleState:fxFaintActive(battler)
+  if GameVersion.isGen2() then return Gen2Faint.owns(self,battler) end
   local fx = self.fx
   return fx and fx.faint and fx.faint.battler == battler
          and fx.faint.frames > 0 or false
@@ -11756,6 +11766,10 @@ end
 -- the full 56px PIC_HEIGHT slide over the 14-frame budget (#671: the
 -- old (30 - frames) math teleported the sprite 32px down on frame one).
 function BattleState:fxFaintOffset(battler, scale)
+  if GameVersion.isGen2() then
+    return self:faintSink(battler.isPlayer and 'player' or 'enemy')
+      * (scale or (battler.isPlayer and 2 or 1))
+  end
   local fx = self.fx
   if self:fxFaintActive(battler) then
     scale = scale or (battler.isPlayer and 2 or 1)
@@ -13746,6 +13760,7 @@ Gen2BattleView.install(BattleState, {
   trueColor = function(image) local meta = imageMeta[image]; return meta and meta.trueColor or false end,
 })
 Gen2Queue.install(BattleState)
+Gen2Faint.install(BattleState)
 
 -- Source wrappers observe the real GBA owner. Unrequested modules and other
 -- generations keep the direct native path; there is no additional clock.
