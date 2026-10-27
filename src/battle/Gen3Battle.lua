@@ -1318,6 +1318,8 @@ local function drawSummaryRow(summary, side, party, age, extra, presentation)
   if not (bar and balls) then return false end
   local cell = summary.ballSide or 8
   local barW = summary.barWidth or bar:getWidth()
+  local barScale=barW/bar:getWidth()
+  assert(not summary.barHeight or bar:getHeight()*barScale==summary.barHeight,'invalid native party bar density')
   -- how far in the row has travelled: 0 is fully off its own edge, 1 home
   -- the foe's row lives on the left of the screen and enters from there; the
   -- player's lives on the right and enters from the right
@@ -1336,15 +1338,18 @@ local function drawSummaryRow(summary, side, party, age, extra, presentation)
   -- the strip, mirrored for the foe: drawn from its far corner with a
   -- negative x scale, which is what ST_OAM_HFLIP does to the four pieces
   if side.flip then
-    love.graphics.draw(bar, side.barX + barW + dx + offsetX, side.barY + offsetY, 0, -1, 1)
+    love.graphics.draw(bar, side.barX + barW + dx + offsetX, side.barY + offsetY, 0, -barScale, barScale)
   else
-    love.graphics.draw(bar, side.barX + edge + dx + offsetX, side.barY + offsetY)
+    if barScale==1 then love.graphics.draw(bar, side.barX + edge + dx + offsetX, side.barY + offsetY)
+    else love.graphics.draw(bar, side.barX + edge + dx + offsetX, side.barY + offsetY,0,barScale,barScale)end
   end
   -- ...and the icons, laid out from the middle of the screen outwards
   local slots = presentation and presentation.slots or Gen3Battle.summarySlots(summary, side, party)
   local count = summary.count or 6
   local icons = summary.icons or {}
   local bw, bh = balls:getDimensions()
+  assert(bh>0 and bw>=bh and bw%bh==0,'invalid native party icon density')
+  local ballScale=cell/bh
   for slot = 1, count do
     local column = icons[slots[slot] or "empty"]
     -- each icon waits for the bar to land and then for its own turn; with no
@@ -1353,13 +1358,13 @@ local function drawSummaryRow(summary, side, party, age, extra, presentation)
     local hidden=presentation and presentation.ballHidden
     local show=hidden and not hidden[slot]or not hidden and(age==nil or age>=due)
     if column and show then
-      local quad = love.graphics.newQuad(column * cell, 0, cell, cell,
+      local quad = love.graphics.newQuad(column * bh, 0, bh, bh,
                                          bw, bh)
       local ballDx=presentation and presentation.ballOx and(presentation.ballOx[slot]or 0)or dx
-      love.graphics.draw(balls, quad,
-                         side.ballX + edge
-                           + (slot - 1) * (summary.step or 10) + ballDx + offsetX,
-                         side.ballY + offsetY)
+      local x=side.ballX+edge+(slot-1)*(summary.step or 10)+ballDx+offsetX
+      local y=side.ballY+offsetY
+      if ballScale==1 then love.graphics.draw(balls,quad,x,y)
+      else love.graphics.draw(balls,quad,x,y,0,ballScale,ballScale)end
     end
   end
   return true
