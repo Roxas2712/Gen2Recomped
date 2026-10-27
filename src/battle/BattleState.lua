@@ -3811,6 +3811,7 @@ function BattleState:enter()
       self.enemySendingOut = false
       self:startGrowIn(self.enemy)
     end)
+    if GameVersion.isGen3()then self.queue[#self.queue]._sourceIntroKind='opponent_sendout'end
     self:shinyAnimAppend(self.enemy, true)
     queueEnemyCry()
   elseif self.kind == "link" then
@@ -3824,6 +3825,7 @@ function BattleState:enter()
       self.enemySendingOut = false
       self:startGrowIn(self.enemy)
     end)
+    if GameVersion.isGen3()then self.queue[#self.queue]._sourceIntroKind='opponent_sendout'end
     self:shinyAnimAppend(self.enemy, true)
     queueEnemyCry()
   end
@@ -3863,6 +3865,7 @@ function BattleState:enter()
     -- then the POOF plays and the mon appears with its cry
     -- (SendOutMon: message -> AnimateSendingOutMon -> PlayCry)
     table.insert(self.queue, { anim = "POOF_ANIM", attackerIsPlayer = false })
+    if GameVersion.isGen3()then self.queue[#self.queue]._sourceIntroKind='player_throw'end
     self:shinyAnimAppend(self.player, false)
     self:act(function()
       self.sendingOut = false
@@ -3889,6 +3892,8 @@ function BattleState:enter()
       self:abilitySwitchIn(self.player)
     end })
   end
+  local intro=GameVersion.isGen3()and package.loaded['src.core.game3.battle.intro_seq']
+  if intro then intro._nativeBind(self)end
   Runtime.emit("battle.started", {
     battle = self, kind = self:battleKind(),
     trainerId = self.trainer and self.trainer.id,
@@ -3900,6 +3905,8 @@ end
 -- any pop (finish, script teardown) must silence the alarm loop
 -- (end_of_battle.asm clears wLowHealthAlarm when a battle ends)
 function BattleState:exit()
+  local intro=package.loaded['src.core.game3.battle.intro_seq']
+  if intro then intro._nativeRelease(self)end
   -- Teachy TV temporarily replaces the player's party exactly like
   -- SavePlayerParty/LoadPlayerParty in teachy_tv.c.  finish() normally
   -- restores it before the pop, but exit is the safety net for a forced state
