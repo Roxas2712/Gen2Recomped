@@ -5,7 +5,7 @@ local Native=require('src.compat.gen1.NativeSession')
 local Version=require('src.core.GameVersion')
 local Copy=require('src.mods.Merge').deepCopy
 local M={}
-local function read(key)
+local function readNative(key)
  local game=Native.game();local data=game and game.data
  if not data or type(key)~='string'then return nil end
  local catalog=data.text_pointers and data.text_pointers.namedIR
@@ -27,6 +27,18 @@ local function read(key)
   return row.plain,row.ir,game
  end
  return value,nil,game
+end
+-- RS owns the PP/TYPE panel as one cartridge string. Keep that complete
+-- string (including IR controls), rather than inventing separate lettering.
+-- Explicit canonical edits/removals always take precedence over this lookup.
+local rsLabels={gText_MoveInterfacePP='BattleText_PP',gText_BattleSwitchWhich='BattleText_SwitchWhich'}
+local function read(key)
+ local value,nodes,game,removed=readNative(key)
+ local edition=Version.get()
+ if value==nil and not removed and (edition=='ruby'or edition=='sapphire')and rsLabels[key]then
+  return readNative(rsLabels[key])
+ end
+ return value,nodes,game,removed
 end
 local function translated(value,game)
  if type(value)~='string'then return nil end
