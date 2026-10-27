@@ -31,6 +31,8 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  end
  row.gen3Effect=nil;T.eq(Moves.get(33).effect,'NO_ADDITIONAL_EFFECT','older metadata stays explicit')
  T.eq(Moves.get(33).gen3Effect,nil);row.gen3Effect=0
+ row.flags={contact=false};row.hits=false;T.eq(Moves.get(33).flags.contact,false);T.eq(Moves.get(33).hits,false)
+ row.hits=function()error('metadata must never execute a hit producer')end;T.eq(Moves.get(33).hits,true)
  row.flags=51;row.hits=nil;T.eq(Moves.get(33).flags,51)
  T.eq(Moves.get(999999),nil);T.eq(Moves.get({}),nil)
  local replacement={};for k,v in pairs(row)do replacement[k]=v end
