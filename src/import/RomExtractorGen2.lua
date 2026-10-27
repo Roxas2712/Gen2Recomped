@@ -677,7 +677,8 @@ function GEN2_PAL.twoVramBanks(tileCount)
   return tileCount == GEN2_PAL.tilesPerVramBank * 2
 end
 
--- Metatile byte -> index into the flattened 0..191 sheet.
+-- Metatile byte -> extracted atlas index. New split-bank sheets retain the
+-- source $80 bank boundary; compact legacy/other formats keep their path.
 function GEN2_PAL.tileIndex(byte, tileCount, bankStride)
   if bankStride==128 then return require('src.import.Gen2VramLayout').tileIndex(byte) end
   if not GEN2_PAL.twoVramBanks(tileCount) then return byte end
@@ -16770,9 +16771,9 @@ function RomExtractorGen2:extractRuntimeScaffolds()
           -- Crystal's palette map is 224 nibbles -- one per metatile byte
           -- $00-$DF, each `vramBank << 3 | palette` -- not 96.  Reading only
           -- the first 96 stopped at the bank-0 half, so every second-bank tile
-          -- took a clamped, wrong palette.  Re-key it by the same flattened
-          -- 0..191 index GEN2_PAL.tileIndex produces and drop the bank bit, which
-          -- the block bytes now carry themselves.  Reading PAST the map would
+          -- took a clamped, wrong palette. Keep it aligned with the extracted
+          -- tile-address contract (logical or legacy compact), dropping the
+          -- bank bit from each palette nibble.  Reading PAST the map would
           -- run into the next tileset's, which is why the length is version-
           -- derived rather than fixed.
           local nibbles = {}
