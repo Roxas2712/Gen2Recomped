@@ -37,6 +37,7 @@ local function translated(value,game)
 end
 -- Registry edits have string semantics. Recover their explicit line/page/tag
 -- structure without inventing absent cartridge formatting operands.
+local lineKinds={['\n']='nl',['\v']='scroll',['\f']='para'}
 local function stringIR(value)
  local out,pending={},{}
  local function flush()
@@ -44,7 +45,7 @@ local function stringIR(value)
  end
  local at=1
  while at<=#value do
-  local c=value:sub(at,at);local kind=({['\n']='nl',['\v']='scroll',['\f']='para'})[c]
+  local c=value:sub(at,at);local kind=lineKinds[c]
   if kind then flush();out[#out+1]={t=kind};at=at+1
   elseif c=='{'then
    local token=value:match('^%b{}',at)
@@ -54,19 +55,61 @@ local function stringIR(value)
  end
  flush();out[#out+1]={t='eos'};return out
 end
-local function menuIR(game)
+local function currentMenu(game)
  local menu=game and game.data.constants and game.data.constants.gen3BattleMenu
  if not(menu and menu.rows and menu.rows[1]and menu.rows[2]and menu.columnX)then return end
+ for y=1,2 do for x=1,2 do if type(menu.rows[y][x])~='string'then return end end end
+ return menu
+end
+local function menuIR(game)
+ local menu=currentMenu(game);if not menu then return end
  local out={}
  for y=1,2 do
   for x=1,2 do
-   if type(menu.rows[y][x])~='string'then return end
    out[#out+1]={t='text',s=menu.rows[y][x]}
    if x==1 then out[#out+1]={t='ext',cmd=19,args={menu.columnX}}end
   end
   if y==1 then out[#out+1]={t='nl'}end
  end
  out[#out+1]={t='eos'};return out
+end
+local function adaptMenu(game,nodes)
+ local menu=currentMenu(game);if not menu then return Copy(nodes)end
+ local cells={{'',''},{'',''}};local row,col,gap=1,1
+ for _,node in ipairs(nodes)do
+  if node.t=='nl'then row=row+1;col=1
+  elseif node.t=='ext'and node.cmd==19 then
+   col=col+1
+   if gap and gap~=node.args[1]then return Copy(nodes)end
+   gap=node.args[1]
+  elseif node.t=='text'or node.t=='tag'then
+   if not(cells[row]and cells[row][col])then return Copy(nodes)end
+   cells[row][col]=cells[row][col]..(node.s or node.tag)
+  end
+ end
+ if row~=2 or col~=2 or not gap then return Copy(nodes)end
+ local changed=gap~=menu.columnX
+ for y=1,2 do for x=1,2 do
+  if cells[y][x]==''then return Copy(nodes)end
+  changed=changed or cells[y][x]~=menu.rows[y][x]
+ end end
+ if not changed then return Copy(nodes)end
+ -- Replace only cell lettering and column positions. Preserve cartridge
+ -- colour/font/pause controls around those cells in their original order.
+ local out,written={},false;row,col=1,1
+ for _,node in ipairs(nodes)do
+  if node.t=='text'or node.t=='tag'then
+   if not written then out[#out+1]={t='text',s=menu.rows[row][col]};written=true end
+  else
+   local value=Copy(node)
+   if node.t=='nl'then row=row+1;col=1;written=false
+   elseif node.t=='ext'and node.cmd==19 then
+    col=col+1;written=false;value.args[1]=menu.columnX
+   end
+   out[#out+1]=value
+  end
+ end
+ return out
 end
 function M.has(key)
  local text,_,_,removed=read(key)
@@ -77,8 +120,9 @@ function M.has(key)
 end
 function M.ir(key)
  local value,nodes,game,removed=read(key)
- if key=='gText_BattleMenu'and game and not removed and(nodes or value==nil)then
-  local menu=menuIR(game);if menu then return menu end
+ if key=='gText_BattleMenu'and game and not removed then
+  if nodes then return adaptMenu(game,nodes)end
+  if value==nil then local menu=menuIR(game);if menu then return menu end end
  end
  assert(type(value)=='string','native ROM text is unavailable: '..tostring(key))
  local current=translated(value,game)

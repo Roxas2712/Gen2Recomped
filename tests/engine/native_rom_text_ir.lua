@@ -103,6 +103,15 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  local menu=Text.ir('gText_BattleMenu');T.eq(menu[1].s,'First');T.eq(menu[2].args[1],88);T.eq(menu[4].t,'nl');T.eq(menu[7].s,'Fourth')
  menu[1].s='mutated';T.eq(Text.ir('gText_BattleMenu')[1].s,'First')
  data.constants.gen3BattleMenu.rows[1][1]='Localized';T.eq(Text.ir('gText_BattleMenu')[1].s,'Localized')
+ local styled={{t='ext',cmd=1,args={7}},{t='text',s='Localized'},
+  {t='ext',cmd=19,args={88}},{t='text',s='Second'},{t='nl'},
+  {t='text',s='Third'},{t='ext',cmd=19,args={88}},{t='text',s='Fourth'},{t='eos'}}
+ catalog.named.gText_BattleMenu='MENU_TEXT';catalog.records.MENU_TEXT={plain='Native menu',ir=styled}
+ local original=Text.ir('gText_BattleMenu');T.eq(original[1].cmd,1);T.eq(original[1].args[1],7)
+ data.constants.gen3BattleMenu.rows[1][1]='New label';data.constants.gen3BattleMenu.columnX=96
+ local edited=Text.ir('gText_BattleMenu');T.eq(edited[1].cmd,1);T.eq(edited[1].args[1],7)
+ T.eq(edited[2].s,'New label');T.eq(edited[3].args[1],96,'live native menu changes preserve unrelated cartridge controls')
+ edited[1].args[1]=0;T.eq(styled[1].args[1],7,'adapted menu controls remain detached')
  native.gText_BattleMenu='Custom menu';T.eq(Text.ir('gText_BattleMenu')[1].s,'Custom menu')
  T.eq(Text.key('gTypeNames',0),'gTypeNames[0]');native['gTypeNames[0]']='Native type'
  T.eq(Text.at('gTypeNames',0),'Native type');T.raises(function()Text.key('table',-.5)end,'invalid native text table index')

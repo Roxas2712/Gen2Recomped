@@ -453,7 +453,7 @@ function RomExtractorGen3:readText(off, maxBytes, spacers, structured)
     elseif ir and (b == 0xF8 or b == 0xF9) then
       if i + 2 > limit or self.rom.size and off + i + 2 > self.rom.size then return nil end
       local id = self.rom:u8(off + i + 1)
-      local tag, glyph = require('src.import.Gen3SummaryParts').controlGlyph(b, id)
+      local tag, glyph = require('src.import.Gen3TextGlyphs').read(b, id)
       if not tag then return nil end
       node({t='tag',tag=tag,control=b,code=id})
       out[#out+1]=glyph; i=i+2
@@ -31546,8 +31546,12 @@ function RomExtractorGen3:extractBattleMenu()
     local labels={gText_BattleMenu=menu.at,gText_WhatWillPkmnDo=promptAt}
     local extra=require('src.import.Gen3TextCatalog').bind(self,self._text or {},labels)
     local catalog=self._textPointers.namedIR
-    for key,id in pairs(extra.named)do catalog.named[key]=id end
-    for id,row in pairs(extra.records)do catalog.records[id]=row end
+    for key,id in pairs(extra.named)do
+      if not catalog.named[key] then
+        catalog.named[key]=id
+        catalog.records[id]=catalog.records[id]or extra.records[id]
+      end
+    end
     self:write('text_pointers',self._textPointers)
   end
   self:itemMenuActions(constants)

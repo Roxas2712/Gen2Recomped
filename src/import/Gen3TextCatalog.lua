@@ -1,9 +1,9 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Bind existing address metadata to verified cartridge bytes. The cache owns
 -- decoded text and layout operands; no private decoder or ROM is distributed.
-local M={REVISION=1}
+local M={SCHEMA=1,REVISION=2}
 function M.bind(extractor,text,addresses)
- local rows={schema=M.REVISION,named={},records={}}
+ local rows={schema=M.SCHEMA,named={},records={}}
  local count=0
  for label,off in pairs(addresses)do
   local isText=type(label)=='string'and(label:match('^[gs]Text_')or label:match('^gOtherText_')
@@ -35,9 +35,9 @@ function M.extract(extractor,text)
  end
  local ok,digest=pcall(require('src.import.RomVerification').sha1,extractor.rom.data)
  if not ok or digest~=info.sha1 then return nil,'named text cartridge fingerprint mismatch'end
- -- These GPL address facts already serve native language imports. Preserve
- -- their provenance; the runtime contains only independently decoded results.
- local addresses=require('src.translation.rompack.addresses.'..edition)
+ -- Reduced GPL address facts are native import inputs. They do not require
+ -- a language pack; their existing provenance stays with each profile.
+ local addresses=require('src.import.gba.text_labels.'..edition)
  local rows,count=M.bind(extractor,text,addresses)
  rows.edition=edition;rows.romSha1=digest
  return rows,count

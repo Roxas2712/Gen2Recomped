@@ -208,7 +208,10 @@ function S.romKey(rom)
 end
 -- Preserve keypad controls as tokens; decode lettering with the source's own
 -- charmap. These short source labels use CLEAR_TO to space the button hints.
-local icons = {
+function S.readWords(extractor, at)
+  local rom, map = extractor.rom, extractor:charmap()
+  local out = {}
+  local icons = {
     [0] = "A_BUTTON",
     [1] = "B_BUTTON",
     [6] = "DPAD_UP",
@@ -218,21 +221,7 @@ local icons = {
     [10] = "DPAD_UPDOWN",
     [11] = "DPAD_LEFTRIGHT",
     [12] = "DPAD_ANY",
-}
-local extraSymbols = { [5] = "Lv", [6] = "PP", [7] = "ID", [8] = "№" }
--- Shared native control glyphs for summary words and structured text imports.
-function S.controlGlyph(kind, id)
-  if kind == 0xF8 and icons[id] then
-    local token = "{" .. icons[id] .. "}"
-    return token, token
-  end
-  if kind == 0xF9 and extraSymbols[id] then
-    return extraSymbols[id], extraSymbols[id]
-  end
-end
-function S.readWords(extractor, at)
-  local rom, map = extractor.rom, extractor:charmap()
-  local out = {}
+  }
   local i = 0
   while i < 128 do
     local b = rom:u8(at + i)
@@ -245,7 +234,10 @@ function S.readWords(extractor, at)
       i = i + 2
     elseif b == 0xF9 then
       local symbol = rom:u8(at + i + 1)
-      out[#out + 1] = assert(extraSymbols[symbol], "Unknown summary extra symbol")
+      out[#out + 1] = assert(
+        ({ [5] = "Lv", [6] = "PP", [7] = "ID", [8] = "№" })[symbol],
+        "Unknown summary extra symbol"
+      )
       i = i + 2
     elseif b == 0x34 then
       out[#out + 1] = "Lv"

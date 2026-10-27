@@ -6,7 +6,9 @@ local Boundary=require('src.compat.gen1.ScriptBoundary')
 local Scope=require('src.render.GraphicsScope')
 local Ui={}
 -- Keep PP thresholds shared with the existing native summary renderer.
-Ui.ppColorIndex=require('src.ui.Gen3SummaryLayout').ppColor
+function Ui.ppColorIndex(current,maximum)
+ return require('src.ui.Gen3SummaryLayout').ppColor(current,maximum)
+end
 local function call(name,...)
   local facade=require('src.core.Game3');local who=facade._callbackOwner()
   local seams=package.loaded['src.mods.ModSeams']
