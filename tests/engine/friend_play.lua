@@ -28,6 +28,19 @@ P.tick(game);P.tick(game)
 check(starts==1 and payload.position.map=='MAP','an accepted invitation enters the current game via the native link adapter')
 clock=clock+1;P.tick(game);P.tick(game);check(starts==1,'repeated presence cannot enter the same link twice')
 check(P.read()==response,'own account presence is readable while fresh')
+local owner,other={},{}
+local external={edition='pinballrs',fingerprint='native-pinball',available=true}
+P.setExternalContext(owner,external)
+check(P.context(nil)==external,'launcher can publish native Pinball readiness')
+check(P.context(game).edition=='crystal','running RPG context takes precedence')
+P.clearExternalContext(other);check(P.context(nil)==external,'another workspace cannot clear the owner presence')
+response={account_id='1',friends={},invites={{id='pinball-session',mode='pinball',state='accepted'},{id='old-rpg',mode='battle',state='accepted'}}}
+P.refresh();P.tick(nil);P.tick(nil)
+check(starts==1,'native launcher never enters RPG links, even for cached RPG invitations')
+response.invites={{id='pinball-session',mode='pinball',state='accepted'}}
+P.refresh();P.tick(game);P.tick(game)
+check(starts==1,'Pinball invitations cannot enter the native RPG adapter')
+P.clearExternalContext(owner);check(not P.context(nil).available,'closing owner clears external readiness')
 clock=clock+16;check(not P.read(),'stale network positions expire instead of lingering as figures')
 P.tick(game);account='2';P.tick(game);check(cancelled==1 and not P.read(),'account switch cancels in-flight requests and drops old private positions')
 account=nil;P.tick(game);check(not P.read(),'guest play has no friend position data')

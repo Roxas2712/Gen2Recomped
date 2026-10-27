@@ -19,7 +19,7 @@ local function names(words)
 end
 local FIELDS = names([[
 g4fx g4PrevMove g4TrickRoomResort turnActions backWalkOff
-Abilities AllyAI AnimPlayer BattleCommands BattleState CatchTutorialDemo Catching CaughtMarker
+Abilities AllyAI AnimPlayer BattleCommands BattleQueuePhase BattleState CatchTutorialDemo Catching CaughtMarker
 Damage EffectRegistry EnemyActionContext EnemyMoveChoice Experience FieldResiduals GbaItemSchedule
 Gen2AnimPlayer Gen2BattleView Gen2Wild Gen3AI Gen3AIAttackingMoves Gen3AIItemKnowledge
 Gen3AIMoveKnowledge Gen3AIOrder Gen3AIPartyStatus Gen3AIQueries Gen3Accuracy Gen3Arena Gen3BallAnim
@@ -83,7 +83,7 @@ lowHealthAlarmOn low_health_alarm managers markMissed memento menuBattler menuIn
 menu_auxiliary mimicChoice mimicCtx mimicIndex mimicMoves mimicRestores missing mist mode modAiUses mon
 monAnim monBgSide monBgTimeline monBlend monHidden monPriority monRise monScale monSpriteManager
 monSprites monToSwitchInto monWindowRect move moveAnimRow moveEvent moveId moveIndex moveSwapIndex
-move_grid_navigation move_used msgPreWait msgPrompt msgPromptWait msgWaiting musicKind mustRecharge
+move_grid_navigation move_used message messageTimer msgPreWait msgPrompt msgPromptWait msgWaiting musicKind mustRecharge
 name nextInsert nightmare noCatch noExp noItems noRun oakDemo oakMsgFlags oamGlobalTieResidual
 oamRanks oamY objIndex objects objs onDone onSound onTransform oneWay open oppClass opponentName
 opts oppClassB orbit overlay p palCache palPark palace palaceLow participants particles partnerOf partyIndex

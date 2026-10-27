@@ -1,5 +1,6 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Operator-side reconstruction. No client damage, stats or RNG state is used.
+local BattleQueuePhase = require("src.battle.BattleQueuePhase")
 local Replay = {}
 local function integer(v, lo, hi)
   return type(v) == 'number' and v % 1 == 0 and v >= lo and v <= hi
@@ -45,7 +46,7 @@ function Replay.run(game, job)
   for _ = 1, 2000000 do
     if proof then break end
     local input = game.input
-    input.pressed = { a = battle.phase == 'messages' }
+    input.pressed = { a = BattleQueuePhase.active(battle) }
     if battle.phase == 'menu' and not battle.result then
       assert(hs.actions[nextTurn] and gs.actions[nextTurn], 'Transcript ended before the battle')
       battle:replayTurn(hs.actions[nextTurn], gs.actions[nextTurn])
