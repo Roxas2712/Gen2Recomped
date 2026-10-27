@@ -95,3 +95,26 @@ Saves in gemischten entpackten Ordnern vor Ort behalten. Keep-Marker, echte
 Git-Checkouts, Symlinks und aktive Eingaben schützen. Releasepakete und
 entpackte Releaseeingaben vor Nutzung mit `qa_source` sperren; fremde Leser
 blockieren die Bereinigung über denselben nichtblockierenden Dateilock.
+
+
+## Große Berichte, Rust-Ausgaben und Vorschaukopien begrenzen
+
+Große JSON-Testberichte mit `qa_report_storage.write_report` streamen: ab
+32 MiB direkt gzip, maximal 128 MiB komprimiert / 4 GiB Originaldaten. Vollständige
+Nachweise bleiben verlustfrei erhalten; der JSON-Index nennt Archiv, SHA-256 und
+Testergebnis. Höchstens eine vorherige komprimierte Generation behalten.
+CI-Artefakte müssen `enemy-action-report.json*` einschließen.
+
+Nach erfolgreichem 3DS-Bridge-Build samt angeforderten Tests nur bekannte Cargo-
+Zwischenprodukte bereinigen, wenn die fertige Bibliothek mit der installierten
+bytegleich ist. Rust-/C-Quellen, Modelle, Saves und fertige Bibliotheken erhalten.
+Der Hintergrundhelfer prüft zusätzlich alle 15 Minuten mindestens eine Stunde
+ruhende Ausgaben. Alte `native-qualified-preview-<Zahl>/candidate`-Kopien erst
+nach verifizierter Sicherung entfernen; neueste Generation und aktueller
+Metadatenzeiger bleiben geschützt. Laufende Jobs und Keep-Marker sperren weiter.
+
+Abgeleitete LÖVE-Meshcaches ausschließlich unter
+`modstorage/VOXEL_ASCENDANT/gen2_mesh_cache` mitpflegen. Eigene QA-Meshcaches nach
+dem letzten Leser direkt am Testende bereinigen; Hintergrundpflege bleibt bei
+2 GiB / 24 Stunden mit einer Stunde Ruhezeit. HD-/Sprite-/Wardrobe-Inhalte,
+Modelle, Quellordner, ROMs und Spielstände bleiben vor Ort erhalten.
