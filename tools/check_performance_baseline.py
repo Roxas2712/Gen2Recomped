@@ -41,6 +41,8 @@ def main():
     parser.add_argument("--seconds", type=float, default=60)
     parser.add_argument("--backend", choices=("metal", "opengl"), default="metal")
     parser.add_argument("--fps-cap", type=int, choices=(30,60,120,160), default=160)
+    parser.add_argument("--atlas-bridge", action="store_true", help="exercise the production Gen-3 source field/atlas presentation")
+    parser.add_argument("--perf", help="Native POKEPORT_PERF overrides, e.g. atlasWorker=0")
     parser.add_argument("--variant", action="append", choices=("default", "idle-off", "idle-on", "voxel-idle-off", "voxel-idle-on", "voxel-warm-disk", "adaptive"))
     for version in ("red", "gold", "emerald", "platinum"):
         parser.add_argument("--" + version, type=Path)
@@ -195,6 +197,8 @@ end
     env.update(POKEPORT_NO_MODS="1", POKEPORT_NO_BOOT_REPORT="1",
                POKEPORT_NO_DISCORD="1", POKEPORT_NOTIFY_ONLY_UPDATES="1",
                POKEPORT_GRAPHICS_BACKEND=args.backend)
+    if args.perf:
+        env["POKEPORT_PERF"] = args.perf
     token = str(time.time_ns())
     profiles = {}
     inputs = {}
@@ -268,6 +272,7 @@ end
               "hostSyntaxChecked": lua is not None,
               "hardware": hardware,
               "benchmarkControls": {"fpsCap": args.fps_cap, "seconds": args.seconds,
+                                    "performanceOverrides": args.perf, "atlasBridge": args.atlas_bridge,
                                     "nativePacing": args.measure, "vsync": 0 if args.measure else None,
                                     "backgroundCapDisabled": args.measure, "randomSeed": 12345},
               "romSha1": inputs, "results": results}
