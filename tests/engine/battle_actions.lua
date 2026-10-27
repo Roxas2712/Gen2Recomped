@@ -474,7 +474,7 @@ for _, version in ipairs(GameVersion.ORDER) do
   b.mimicCtx.target = target
   T.eq(send(api, 2, "mimic", { index = 1 }), true, label .. "native Mimic copy")
   T.eq(user.curMoves[1].id, target.curMoves[1].id, label .. "Mimic installs selected source")
-  T.eq(b.phase, "messages", label .. "Mimic resumes queue")
+  T.eq(b.phase, GameVersion.isGen2() and "resolving" or "messages", label .. "Mimic resumes queue")
   T.eq(#b.mimicRestores, 1, label .. "native restoration bookkeeping preserved")
 end
 

@@ -1,0 +1,36 @@
+name: native Gen2 queue screen contract
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: gen2-queue-screen-contract-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install ROM-free runtime
+        run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: Native screen, queue, input and current message ownership
+        run: |
+          luajit tests/engine/gen2_battle_queue_view.lua
+          luajit tests/engine/gen2_move_selection.lua
+          luajit tests/engine/gen2_battle_submenu.lua
+          luajit tests/engine/gen2_battle_pack.lua
+          luajit tests/engine/gen2_battle_scene.lua
+          luajit tests/engine/gen2_battle_window.lua
+          luajit tests/engine/battle_queue_lifecycle.lua
+      - name: Public snapshots, dispatch and deterministic continuation
+        run: |
+          luajit tests/engine/battle_snapshots.lua
+          luajit tests/engine/battle_actions.lua
+          luajit tests/engine/checkpoint_battle_continuation.lua
+      - name: Loopback battle, independent replay and native link completion
+        run: |
+          luajit tests/engine/arena_battle_proof.lua
+          luajit tests/engine/arena_replay.lua
+          luajit tests/engine/link_battle_ended.lua

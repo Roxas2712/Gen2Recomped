@@ -72,7 +72,7 @@ for _,version in ipairs({'gold','silver','crystal','prism','polishedcrystal','re
     T.eq(b.phase,expected,'actual FIGHT reopens same native selector')
     T.eq(b.moveIndex,2,'reopening preserves native cursor')
     press(grid and 'left' or 'up');press('a')
-    T.eq(b.phase,'messages','actual A queues the chosen native turn')
+    T.eq(b.phase,V.isGen2() and 'resolving' or 'messages','actual A queues the chosen native turn')
     for tick=1,24000 do
       if b.phase=='menu' or b.result or b.dead then break end
       press('a')
