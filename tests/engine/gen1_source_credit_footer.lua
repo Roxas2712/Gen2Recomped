@@ -11,6 +11,8 @@ local widthFn,heightFn,safeArea=g.getWidth,g.getHeight,love.window.getSafeArea
 local mesh,shader,image,newFont=g.newMesh,g.newShader,g.newImage,g.newFont
 local oldImage=love.image
 local function noop()end
+local ellipse,arc,polygon=g.ellipse,g.arc,g.polygon
+g.ellipse,g.arc,g.polygon=noop,noop,noop
 local stencil,stencilTest=g.stencil,g.setStencilTest
 g.stencil=function(fn)fn()end
 g.setStencilTest=noop
@@ -78,5 +80,6 @@ g.getWidth,g.getHeight,love.window.getSafeArea=widthFn,heightFn,safeArea
 g.newMesh,g.newShader,g.newImage,g.newFont=mesh,shader,image,newFont
 love.image=oldImage
 g.stencil,g.setStencilTest=stencil,stencilTest
+g.ellipse,g.arc,g.polygon=ellipse,arc,polygon
 run.release()
 T.finish('Gen1 source attribution through native launcher footer')
