@@ -19,7 +19,7 @@ def main():
     output = ROOT / '.local/qa' / ('retro-nds-link-' + str(time.time_ns()))
     qa_cache(output); output.mkdir(parents=True, mode=0o700)
     with (output / 'native.log').open('wb') as log:
-        result = qa_run([sys.executable, str(ROOT / 'tools/run_lua_check.py'), str(ROOT / 'tests/engine/nds_link_native.lua'), str(rom), a.edition], cwd=ROOT, stdout=log, stderr=log)
+        result = qa_run([sys.executable, str(ROOT / 'tools/run_lua_check.py'), str(ROOT / 'tests/drivers/nds_link_native.lua'), str(rom), a.edition], cwd=ROOT, stdout=log, stderr=log)
     assert result.returncode == 0, 'Native DS link qualification failed; inspect ' + str(output / 'native.log')
     print('NDS_LINK_PASS', a.edition, output, flush=True)
 
