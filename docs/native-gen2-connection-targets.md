@@ -27,8 +27,8 @@ materialization is substituted at the boundary; movement selection and
 interpolation remain native. It also checks omitted offsets, missing first
 strips, missing roots and existing Red/Emerald/FireRed/Platinum behavior.
 
-The dedicated connection-target CI includes this suite and the existing
-Gen1 connection checks available in this source. These ROM-free tests do not
+The dedicated connection-target CI includes the complete native/shared
+record matrix and the shared-generation crossing regressions in this suite. These ROM-free tests do not
 establish current client graphics, story completion or desktop release parity.
 Reference: Gen1Recomp `535a5ec0`, `src/world/gen2/World.lua`,
 `computeNeighbors`, `cellCollisionAcross` and `tryConnection`.

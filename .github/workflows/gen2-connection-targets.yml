@@ -17,5 +17,3 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y luajit
       - name: Native destinations, residency and real seam controller
         run: luajit tests/engine/gen2_connection_targets.lua
-      - name: Existing shared connection behavior
-        run: luajit tests/engine/gen1_connections.lua
