@@ -13,6 +13,13 @@ local function indexOf(party, mon)
 end
 
 function View.bind(screen)
+  require('src.battle.Gen2HpPresentation').bind(screen)
+  screen.shownStatus=setmetatable({}, {
+    __index=function(_,side)
+      local b=screen[side];return b and (b.shownStatus or false)
+    end,
+    __newindex=function()error('native Gen2 displayed status is queue-owned',2)end,
+  })
   -- Bind once; callers read the current native catalog without copying a
   -- move, caching a definition, or switching the controller's moveset.
   local readers = {
