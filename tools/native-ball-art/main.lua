@@ -14,7 +14,8 @@ function love.load()
   V.set(edition);require('src.import.CacheFs').prefix=edition..'/'
   local raw=read(assert(inputs[edition]));local info=V.info()
   assert(require('src.import.RomVerification').sha1(raw)==info.sha1,'exact native cartridge required')
-  local x=X.new(raw,info,J.decode(read(root..'/'..info.manifest)))
+  local manifest=J.decode(read(root..'/'..info.manifest))
+  local x=X.new(raw,info,manifest)
   local art
   function x:saveImage(image,path)
    if path=='battle/balls.png'then
@@ -37,6 +38,24 @@ function love.load()
   local r=assert(x._constants and x._constants.gen3BallAnim,'native ball tables unavailable: '..edition)
   assert(r.size==16 and r.frames==3 and r.count==12 and #r.balls==12)
   assert(r.images.balls=='assets/generated/battle/balls.png'and art,'native ball art was not composed')
+  if edition=='ruby'or edition=='sapphire'then
+   for name,proof in pairs(assert(manifest.rsBallAnimationEvidence).functions)do
+    local bytes=raw:sub(proof.address+1,proof.address+proof.size)
+    assert(love.data.encode('string','hex',love.data.hash('sha256',bytes))==proof.sha256,name..' differs from original native metadata')
+   end
+   local send=assert(r.timing.sendOut,'verified native RS send-out unavailable')
+   assert(send.frames==25 and send.from.x==24 and send.from.y==68 and send.arc==-30 and send.riseStep==-288)
+   assert(send.foeWait==16 and send.fadeFrames==14 and send.targetOffsetY==24 and send.foeOffsetY==24)
+   assert(r.sounds.caught==371 and r.sounds.click==nil,'RS sound identity was lost')
+   local Ball=require('src.battle.Gen3BallAnim');art.nativeSendOutFrames={}
+   for _,side in ipairs{'player','opponent'}do
+    local ball=Ball.new({constants={gen3BallAnim=r}},{sendOut=side,to={x=176,y=40}})
+    local frames=ball:estimate();assert(frames==(side=='player'and 39 or 30))
+    for i=1,frames do ball:update();assert(ball.frame==i)end
+    assert(ball:isDone()and ball.monScale==1 and not ball.monHidden)
+    art.nativeSendOutFrames[side]=frames
+   end
+  end
   art.sha1=info.sha1;result.editions[edition]=art
   print('NATIVE_BALL_ART_EDITION',edition,art.width,art.height,#art.visiblePixels,art.rgbaSha256)
  end

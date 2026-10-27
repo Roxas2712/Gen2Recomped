@@ -295,7 +295,30 @@
       "COLOURS": 4240596,
       "PARTICLES": 13740020,
       "PARTICLE_PALETTE": 13740232,
-      "PARTICLE_ANIM": 4240248
+      "PARTICLE_ANIM": 4240248,
+      "SEND": {
+        "AT_HAND_X": 288048,
+        "AT_HAND_Y": 288052,
+        "AT_FRAMES": 290936,
+        "AT_TARGET_DY": 290974,
+        "AT_ARC": 290978,
+        "AT_FOE_DY": 288118,
+        "AT_FOE_WAIT": 291426,
+        "AT_FADE": 289988,
+        "AT_RISE": 290568,
+        "MOV_R0": 8192,
+        "MOV_R2": 8704,
+        "ADD_R0": 12288,
+        "CMP_R0": 10240
+      },
+      "SOUNDS": {
+        "throw": 61,
+        "open": 15,
+        "absorb": 60,
+        "shake": 23,
+        "caught": 371
+      },
+      "SOURCE": "ROM:matching RS sBallSpriteSheets 020A92C, palettes 020A98C, shared open 0D030D0, colors 040B4D4, particles 0D1A7F4; verified RS Thumb send-out and release sites"
     }
   },
   "scenes": [],
@@ -2537,5 +2560,43 @@
     "sha256": "cf25f69a32000022fe10be1c2fc9efec780d830e8eb0d6fe205cb4feb0d1badb",
     "sourceSha256": "62453418a51baf12a356300d843e88adb5a3e94f92e29b8ca71a0b5bef40d922",
     "source": "https://github.com/pret/pokeruby/blob/5784633ce4ef7ade1a7f2d2d0c288e3d5e6cdd7f/src/metatile_behavior.c"
+  },
+  "rsBallAnimationEvidence": {
+    "functions": {
+      "SendOutMonAnimation": {
+        "address": 287844,
+        "size": 464,
+        "sha256": "122c629bd4a60f111f55cfd0556b7a76f7992d18ff4378e8b229fab852d72cec"
+      },
+      "SendOutPlayerMonAnimation_Step0": {
+        "address": 290932,
+        "size": 80,
+        "sha256": "c9ab989bff9c42a068b65c287c3f45e1bbb6af158cc7948168183dac2fc5bf1a"
+      },
+      "SendOutOpponentMonAnimation_Step0": {
+        "address": 291412,
+        "size": 92,
+        "sha256": "bd0c0caed0f2ff53ec5956aa73bdbd20986d4abc3e99559a42013f5767b13cf2"
+      },
+      "sub_8046C78": {
+        "address": 289912,
+        "size": 516,
+        "sha256": "7a480102838d2ce9fdde4af17131519b03ee01f2ca3efe9859ff3f1f62350816"
+      },
+      "sub_8046E9C": {
+        "address": 290460,
+        "size": 288,
+        "sha256": "06169cc4339b2312dbdaa8ebc5c9cda0103e0b023f5d92c00a20a494b4f5a4eb"
+      }
+    },
+    "sources": {
+      "src/pokeball.c": "6e4222b48fcb11b2717376e1ad54dbbcf36a85cd19c98ab5d9b683231e01cb4f",
+      "src/battle_anim_special.c": "83511f04198701379542c5d0769410320fecc456a010a727ec19f7cae6fea349",
+      "include/constants/songs.h": "a38d5707fa804f30d1e74a6e50998a92c0a5459a175c48868121180aee872fae"
+    },
+    "sheetsVerified": 12,
+    "particleFrames": 8,
+    "sharedOpenBytes": 128,
+    "sendOutSitesVerified": 9
   }
 }
