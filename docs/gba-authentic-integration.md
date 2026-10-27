@@ -131,3 +131,20 @@ The compositor itself is the pinned source; these fixtures do not claim an
 independent Gen1 pixel comparison or completion of Safari/optional double HP
 number modes. A fresh LeafGreen import composes all 20 terrains at the corrected
 edition address. The full ordinary stories remain open.
+
+
+The GBA level-up window now uses the pinned Gen1 compositor and the cartridge's
+six stat labels and edition-specific window geometry. Battle EXP stores a
+separate before/after snapshot for every reached level, including maximum HP.
+The first acknowledgment shows totals; the second resumes the original battle
+queue. Field Rare Candy uses the same renderer and its original continuation,
+including item consumption and move learning. Classic-generation stat windows
+retain their existing single acknowledgment.
+
+Focused contracts cover all five extraction layouts, two-level snapshot
+isolation, both native pages, classic behavior and stale-cache rejection.
+Prepared native fixtures award actual battle EXP and then use one Rare Candy
+through the bag and party menus. Their four captures per edition retain the
+final renderer and verify both pages, one consumed Candy, unchanged draw-time
+save/RNG and a successful return to the original caller. These prepared
+fixtures do not establish full story or ending acceptance.
