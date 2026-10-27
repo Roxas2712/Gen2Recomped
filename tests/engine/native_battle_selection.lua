@@ -11,7 +11,7 @@ T.eq(Ui.targetHidden(0),false);T.eq(Ui.bounceOffset('mon',0),0);T.eq(Ui.previewC
 for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  local f=require('tools.battle-source-runtime.fixture').new(edition);local game=f.game
  package.loaded['src.core.Game']=game
- local b=f.fresh('TACKLE').battle;b.enter=false;game.stack:push(b)
+ local b=f.fresh('TACKLE').battle;b.enter=false;b:syncSides();game.stack:push(b)
  b.phase='menu';b.queue={};b.current=nil;b.waitFrames=0
  -- Sparse imported integer values deliberately distinguish signed ASR from
  -- truncation and from an invented floating-point sine fallback.

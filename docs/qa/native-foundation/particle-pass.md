@@ -11,3 +11,5 @@ The new ROM-free fixture compares the actual native singles painter trace agains
 Earlier CPU probe `95cc3d63ee` reaches a real missing `Anim.drawParticles` call in the unchanged bridge. Actual battle probe `43b5eb8d59-firered` reaches the native command and stops earlier at missing `Ui.targetHidden`; its separately offered selection binding still needs actual graphics retesting. Tests and future graphics runs use isolated QA profiles and never player saves.
 
 Contributions by Roxas2712. Existing native code, art and applicable third-party rights retain their provenance. See NOTICE.md and LICENSE-ROXAS2712.md for Cedric / UNDERdecoded integration permission and credit requirements.
+
+Public baseline note: this older public branch does not contain the fork-only SuspendJournal owner. Its one-line OAM diagnostic classification and semantic-witness fixture remain in the fork offer; no private/native Journal body is copied into this public PR.

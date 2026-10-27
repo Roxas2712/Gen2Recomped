@@ -25,7 +25,7 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  end
  game.data.constants.gen3BattleAnimGfx=gfx
  game.data.moves.MOVE_033.anim={duration=40,events=events}
- local b=f.fresh('TACKLE').battle;b.enter=false;game.stack:push(b);b.phase='menu'
+ local b=f.fresh('TACKLE').battle;b.enter=false;b:syncSides();game.stack:push(b);b.phase='menu'
  local monImage=love.graphics.newCanvas(64,64)
  b.picImage=function()return monImage end
  b.player.sprite='qa-player';b.enemy.sprite='qa-enemy'
