@@ -854,7 +854,7 @@ local function pickTargetAndUse(game, battle, id, list, options)
       if require("src.core.GameVersion").isGen2() then
         -- RestorePPEffect uses ChooseMoveToDelete's real native four-slot
         -- window. Cancel drops only this move list and preserves the party.
-        Screens.push(game, "Gen2MoveDeleter", {
+        require("src.ui.Screens").push(game, "Gen2MoveDeleter", {
           mon = mon, moves = game.data.moves,
           onCancel = function() game.stack:pop() end,
           onChoose = function(slot)
