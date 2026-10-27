@@ -16,4 +16,30 @@ w.player.inputLocked=true;T.eq(w:acceptsMenuInput(),false,'input owner lock reta
 w.iceSlide='left';T.eq(w:acceptsMenuInput(),false,'ice slide blocks menu');w.iceSlide=nil
 w.battleActive=true;T.eq(w:acceptsMenuInput(),false,'battle blocks world menus');w.battleActive=nil
 T.eq(w:acceptsMenuInput(),true,'readiness recovers after owners release')
+local Version=require('src.core.GameVersion')
+local Stack=require('src.core.StateStack')
+local previous=Version.get()
+local slot,oldGame
+for i=1,100 do local name,value=debug.getupvalue(World.busy,i)
+ if name=='Game'then slot,oldGame=i,value;break end;if not name then break end
+end
+assert(slot)
+for _,edition in ipairs({'gold','silver','crystal'})do
+ Version.set(edition)
+ local s=setmetatable({}, {__index=Stack});s:init()
+ local g={stack=s};s:setWorldOwner(g)
+ local field=setmetatable({isOverworld=true,runner={isRunning=function()return running end},player={},scriptMoves={}}, {__index=World})
+ g.overworld=field;s:push(field);debug.setupvalue(World.busy,slot,g)
+ s:push({})
+ T.eq(field:busy(),true,edition..' menu still blocks native movement wrappers')
+ T.eq(field:acceptsMenuInput(),true,edition..' settled field can be observed beneath an overlay')
+ running=true;T.eq(field:acceptsMenuInput(),false,'scripts still block underlying field readiness');running=false
+ field.battleActive=true;T.eq(field:acceptsMenuInput(),false,'battles cannot become save/restart safe');field.battleActive=nil
+ field.transitioning=true;T.eq(field:acceptsMenuInput(),false,'warp transitions remain unsafe');field.transitioning=nil
+ field.player.moving=true;T.eq(field:acceptsMenuInput(),false,'underlying actor movement remains unsafe');field.player.moving=nil
+ field.player.inputLocked=true;T.eq(field:acceptsMenuInput(),false,'field input locks remain unsafe');field.player.inputLocked=nil
+ T.eq(field:busy(),true,'underlying readiness cannot release overlay movement ownership')
+ s:pop();T.eq(field:busy(),false,'native movement resumes only after the overlay closes')
+end
+debug.setupvalue(World.busy,slot,oldGame);Version.set(previous)
 T.finish('native Gen2 menu readiness')
