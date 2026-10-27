@@ -50,6 +50,8 @@ check(job.data.mode=='playing' and job.data.args[2]=='--play-after-import','bund
 check(job.data.python=='/My Demo.app/Contents/Resources/3ds-runtime/python/bin/python3.12','a packaged import uses its bundled Python with spaces intact')
 pending=require('src.link.Json').encode{progress='Preparing your game. The first import can take several minutes.'};ui:update(0)
 check(ui._xyJob==job and ui._xyNotice:find('Preparing',1,true),'progress updates do not prematurely release a running worker')
+pending=require('src.link.Json').encode{progress='Preparing your game. The first import can take several minutes.',edition='y',data={y={imported=true,ready=false}}};ui:update(0)
+check(ui._xyJob==job and ui._xyData.y.imported and not ui._xyData.y.ready,'verified imports become visible while the native compilation is still running')
 pending=require('src.link.Json').encode{progress='Compiling game · %d / %d',completed=32,total=487};ui:update(0)
 check(ui._xyJob==job and ui._xyNotice:find('32 / 487',1,true),'native compilation progress remains visible while the worker runs')
 pending=require('src.link.Json').encode{ok=false,error='Compiler stopped',data={y={imported=true,ready=false}}};ui:update(0)

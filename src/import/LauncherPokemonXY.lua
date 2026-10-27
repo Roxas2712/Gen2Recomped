@@ -275,6 +275,8 @@ function M.install(RI)
    if response then
     local result=decode(response)
     if result and result.progress then
+     if result.data then self._xyData=result.data end
+     if result.edition=='x' or result.edition=='y' then self._xyEdition=result.edition end
      self._xyNotice=result.completed and Strings(result.progress,result.completed,result.total) or Strings(result.progress)
     else
      self._xyJob=nil

@@ -35,7 +35,10 @@ local ok,errorText=pcall(function()
    local ok,row=pcall(Json.decode,line)
    if ok and type(row)=='table' then
     if row.native_session then prepared=row end
-    if row.imported_edition then edition=row.imported_edition end
+    if row.imported_edition then
+     edition=row.imported_edition
+     channel:push(Json.encode{progress='Preparing your game. The first import can take several minutes.',edition=edition,data=row.library})
+    end
     if row.progress then channel:push(Json.encode{progress=row.progress})end
     if row.backend_result~=nil then terminal=row.backend_result end
    end

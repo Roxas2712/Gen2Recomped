@@ -124,7 +124,7 @@ def main(argv=None):
                 raise ValueError('Choose your own decrypted 3DS game file.')
             # Read-only verification does not create a second multi-GB ROM.
             edition = library.import_rom(args.rom, None if args.detect_edition else args.edition)
-            print(json.dumps({'imported_edition': edition}, ensure_ascii=False))
+            print(json.dumps({'imported_edition': edition, 'library': library.status()}, ensure_ascii=False), flush=True)
             if not args.play_after_import:
                 return 0
             if RUNTIME is None:
