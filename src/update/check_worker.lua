@@ -38,12 +38,14 @@ local Json    = loadModule("src/link/Json.lua")
 local Version = loadModule("src/core/Version.lua")
 local Semver  = loadModule("src/update/Semver.lua")
 local Payload = loadModule("src/update/Payload.lua")
+local Repository = loadModule("src/update/Repository.lua")
 local HostShell = loadModule("src/core/HostShell.lua")
 -- Boot's and Check's top-level requires cannot resolve in this thread (no
 -- src.* searcher), which would leave them nil -- and a nil Boot leaves the
 -- minShell gate permanently permissive.  Seed the loaded table first.
 if Semver then package.loaded["src.update.Semver"] = Semver end
 if Payload then package.loaded["src.update.Payload"] = Payload end
+if Repository then package.loaded["src.update.Repository"] = Repository end
 local Check   = loadModule("src/update/Check.lua")
 local Boot    = loadModule("src/update/Boot.lua")
 
@@ -81,7 +83,7 @@ local saveDir   = love.filesystem.getSaveDirectory()
 -- page.  The fallback is only for a thread where Check would not load at all.
 local REPO = (Check and Check.REPO) or nil
 local API_URL = REPO
-  and ("https://api.github.com/repos/" .. REPO .. "/releases/latest")
+  and Check.apiUrl()
   or nil
 
 -- the release picked by the last "check"; kept between commands so "download"
@@ -317,7 +319,7 @@ local function doCheck()
     return
   end
 
-  local rel, perr = Check.parseRelease(body, Json)
+  local rel, perr = Check.parseReleaseFeed(body, Json, curlCapture)
   if not rel then
     post({ status = "error", error = perr or "bad release json" })
     return
@@ -329,6 +331,17 @@ local function doCheck()
   local currentEngine = (Version and Version.engine) or "0.0.0-dev"
   if currentEngine == "0.0.0-dev" then
     post({ status = "uptodate", latest = rel.version })
+    return
+  end
+
+  if rel.kind == "native-preview" then
+    local read, text = pcall(love.filesystem.read, "src/preview/release.json")
+    local currentPreview = read and Check.previewMetadata(text, Json)
+    local compared = Check.compareRelease(rel, currentEngine, currentPreview)
+    local newer = compared > 0 or compared == 0 and host.android and host.appOutdated
+    -- Previews have separate runtime packages and isolated profiles. Detect
+    -- them, but do not mount their payload over a different installed shell.
+    post({ status = newer and "needs_full" or "uptodate", latest = rel.displayVersion })
     return
   end
 
