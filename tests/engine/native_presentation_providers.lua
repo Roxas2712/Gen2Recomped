@@ -34,7 +34,7 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  G._withCallbackOwner('qa-mod',function()
   P.register('qa-provider',provider{
    enabled=function(view)enabled=enabled+1;T.eq(G.native(view),game);T.eq(G._callbackOwner(),'qa-mod');return true end,
-   begin=function(view)begins=begins+1;T.eq(G.native(view),game)end,
+   begin=function(view)begins=begins+1;T.eq(G.native(view),game);T.eq(P.begin(view),false,'begin callback cannot restart the frame')end,
    draw=function(kind,ctx)T.eq(kind,'frame');T.eq(ctx.x,4);g.setColor(.9,.8,.7,.6);g.push();return true end,
    notify=function(kind)T.eq(kind,'launched');notes=notes+1 end,
    widget=function(_,native)paints=paints+1;local v=tuple(native());T.same(v,{n=3,[2]=4});native();return false end})
@@ -115,6 +115,15 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   T.eq(P.flush(game,960,640),false);T.eq(calls,0,mutation..' retires queued work');restore()
  end
  P._service.release();g.setCanvas(saved);if target.release then target:release()end
+ -- Registry and per-frame queue growth are bounded without losing painters.
+ for i=1,64 do P.register('bounded-'..i,provider())end
+ T.raises(function()P.register('overflow',provider())end,'too many')
+ P._service.release()
+ P.register('bounded-queue',provider{defer=function()return true end,present=function()return false end})
+ P.begin(game,240,160);calls=0
+ for i=1,129 do P.layer('bounded',function()calls=calls+1 end)end
+ T.eq(P.health('bounded-queue').queued,128);T.eq(calls,1,'overflow paints inline')
+ P.flush(game,960,640);T.eq(calls,129);P._service.release()
  -- Drive the actual Game -> modal seam -> Renderer path. The world remains
  -- on its native surface; deferred UI reaches the current window composite.
  local callbackTarget;local deferCount=0
