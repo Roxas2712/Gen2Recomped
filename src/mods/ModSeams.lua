@@ -123,8 +123,8 @@ function ModSeams.open(owner)
       if name=='src.core.game3.field_move_show_mon'and type(result)=='table'and result._observeMod then
         result._observeMod(owner)
       end
-      -- An imported native follower keeps native callback arguments, but its
-      -- presentation resources still need the importing mod's owner context.
+      -- Follower imports expose owned actor presentation while their hook
+      -- arguments remain the native Game/world rather than Game3 facades.
       if name=='src.world.game3.Follower' or name=='src.compat.game3.Follower' then
         local facade=package.loaded['src.core.Game3'] or real('src.core.Game3')
         if facade and facade._observeActorMod then facade._observeActorMod(owner) end

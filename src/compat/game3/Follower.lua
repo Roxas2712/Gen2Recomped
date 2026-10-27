@@ -3,9 +3,17 @@ local Native=require('src.world.OptionalFollower')
 local F={setShouldSpawn=Native.setShouldSpawn}
 function F.current(world)
   local game=package.loaded['src.core.Game']
-  world=world or game and game.overworld
+  local gen3=require('src.core.GameVersion').isGen3()
+  if gen3 then
+    local owner,current=require('src.compat.gen1.NativeSession').resolve(game)
+    if not owner or world and current~=world then return nil end
+    world=current
+  else world=world or game and game.overworld end
   local npc=world and Native.current(world)or nil
-  if npc and require('src.core.GameVersion').isGen3()then return require('src.core.game3.objects').find(npc.def.index)end
+  if npc and gen3 then
+    if type(npc.def)~='table' then return nil end
+    return require('src.core.game3.objects').find(npc.def.index)
+  end
   return npc
 end
 function F.actor()
