@@ -63,6 +63,15 @@ end
 function View.install(Screen, images)
   Screen.activeMon = View.activeMon
 
+  -- Older/restored native Pokemon need not carry a stamped gender field.
+  -- Read the existing identity authority rather than changing the live mon
+  -- merely to paint a HUD. It also owns explicit overrides and PID editions.
+  function Screen:genderSymbol(mon)
+    local gender = require("src.pokemon.Pokemon").genderOf(self.data, mon)
+    if gender == "male" then return "\226\153\130" end
+    if gender == "female" then return "\226\153\128" end
+  end
+
   function Screen:pic(mon, back)
     if not mon then return nil end
     local b = owner(self, mon)
