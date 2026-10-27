@@ -44,7 +44,13 @@ function View.bind(screen)
   }
   screen.battle = setmetatable({}, {
     __index = function(_, key) local read = readers[key]; if read then return read() end end,
-    __newindex = function() error("native Gen2 battle view is read-only", 2) end,
+    __newindex = function(model, key, value)
+      if readers[key] then error("native Gen2 battle view is read-only", 2) end
+      -- Native combat fields stay owned by the engine. Presentation consumers
+      -- may attach and release their own transient owners, as on the native
+      -- Gen2 model; these extensions never write to a battler or save.
+      rawset(model, key, value)
+    end,
   })
   Hp.bind(screen)
 end
