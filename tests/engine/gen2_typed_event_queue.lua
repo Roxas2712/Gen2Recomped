@@ -106,14 +106,14 @@ for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   T.check(wait(function()return b.msgPrompt and(b.msgPromptWait or 0)<=0 end),'native first page types and prompts')
   local current=b.current
   local Font=require('src.render.Font')
-  local drawCodes=Font.drawCodes;local rowsDrawn=0
-  Font.drawCodes=function(codes,...)
-    for _,row in ipairs(b.shown)do if codes==row then rowsDrawn=rowsDrawn+1;break end end
-    return drawCodes(codes,...)
+  local drawCode=Font.drawCode;local rowsDrawn=0
+  Font.drawCode=function(code,x,y,...)
+    if x==8 and y==112 and b.shown[1] and code==b.shown[1][1] then rowsDrawn=rowsDrawn+1 end
+    return drawCode(code,x,y,...)
   end
   local chars=b.charIndex
   require('src.battle.WideBattle').draw(b)
-  Font.drawCodes=drawCodes
+  Font.drawCode=drawCode
   T.check(rowsDrawn>0,'wide renderer draws the actual current Gen2 queue text')
   T.eq(b.charIndex,chars,'wide rendering cannot advance the native typer')
   T.eq(#probe.admissions,1,'observer runs only at actual queue admission')
