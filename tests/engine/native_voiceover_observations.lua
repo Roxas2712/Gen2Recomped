@@ -64,9 +64,12 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   T.neq(b.current,nil);T.eq(b.gen3Voiceover,nil,'Hoenn narration does not enter a FR/LG controller')
  end
  -- Quick-item labels come from the same native availability and inventory owner.
+ -- A separate native admission keeps older caption wait/cursor state out of this menu test.
+ game.stack:pop();b=f.fresh('TACKLE').battle;b.enter=false;b:syncSides();game.stack:push(b)
+ b.rng=function()rolls=rolls+1;return 1 end
+ b.introSlide=0;b.waitFrames=0
  b.current=nil;b.queue={};b.gen3Voiceover=nil;b.pokedudeDemo=nil;b.phase='menu';b.afterQueue='menu'
  b.showPlayerBack=false;b.showEnemyTrainer=false;b.enemySendingOut=nil
- b:updateQueue() -- Let this older native queue retire its insertion cursor before readiness.
  for _,who in ipairs{b.player,b.enemy}do who.shownHP=who.mon.hp;who.shownStatus=who.mon.status end
  package.loaded['src.mods.FeatureOptions']={enabled=function(key)return key=='quickBall'end}
  game.data.items.POKE_BALL={index=4,name='NATIVE BALL',effect='BALL'}
