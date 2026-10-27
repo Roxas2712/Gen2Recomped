@@ -219,7 +219,7 @@ function C.install(loader, api, owner, generation)
               downstream = pack(pcall(nextFn, unpack(raw, 1, raw.n)))
             end
             if downstream[1] then
-              boundary.refresh()
+              boundary.refresh("next")
               publicResult = pack(unpack(downstream, 2, downstream.n))
               if results[name] then
                 publicResult[1] = boundary.view(publicResult[1], results[name])

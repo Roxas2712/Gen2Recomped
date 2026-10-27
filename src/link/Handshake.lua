@@ -150,6 +150,9 @@ end
 -- has picked, and compatibility is decided from the two hellos, not the mode
 function Handshake.hello(game, mode)
   local mods = Handshake.mods(game)
+  -- Capture the loaded mod set before a custom fingerprint hook receives
+  -- its mutable metadata array.
+  local callbackRevision = Fingerprint.modCallbackRevision(mods)
   return {
     type = "hello",
     protocol = Handshake.PROTOCOL,
@@ -160,6 +163,7 @@ function Handshake.hello(game, mode)
     fingerprint = Fingerprint.compute(game and game.data, mods),
     nativeBattleRevision = Fingerprint.nativeBattleRevision(),
     nativePartyRevision = Fingerprint.nativePartyRevision(),
+    modCallbackRevision = callbackRevision,
     linkModified = Handshake.linkModified(game),
     mods = mods,
   }
@@ -190,6 +194,9 @@ function Handshake.checkCompat(localHello, remoteHello)
   end
   if localHello.nativeBattleRevision ~= remoteHello.nativeBattleRevision then
     return "subset", "native_rules_mismatch"
+  end
+  if localHello.modCallbackRevision ~= remoteHello.modCallbackRevision then
+    return "subset", "mod_callback_rules_mismatch"
   end
   if remoteHello.fingerprint == localHello.fingerprint then
     return "full", nil
@@ -297,6 +304,14 @@ function Handshake.describe(localHello, remoteHello, verdict, mode)
     wrap(lines, "The battle rules")
     wrap(lines, "need matching")
     wrap(lines, "engine versions.")
+    if mode == "trade" then wrap(lines, "Trading is limited")
+      wrap(lines, "to shared POKéMON.") end
+    return lines
+  end
+  if localHello.modCallbackRevision ~= (remoteHello and remoteHello.modCallbackRevision) then
+    wrap(lines, "Mod callbacks need")
+    wrap(lines, "matching engine")
+    wrap(lines, "versions.")
     if mode == "trade" then wrap(lines, "Trading is limited")
       wrap(lines, "to shared POKéMON.") end
     return lines
