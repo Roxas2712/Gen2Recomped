@@ -6,6 +6,7 @@ local Scope=require('src.render.GraphicsScope')
 local P={apiVersion=1,features={nativeUiStack=true,windowLayers=true}}
 local entries,order={},{}
 local frame,revision,checks=nil,0,0
+local callbackDepth=0
 local unpack=table.unpack or unpack
 local function pack(...)return{n=select('#',...),...}end
 local function finite(v)return type(v)=='number'and v==v and math.abs(v)<math.huge end
@@ -27,7 +28,9 @@ local function close(f)
 end
 local function callback(e,fn,...)
  local G=require('src.core.Game3')
+ callbackDepth=callbackDepth+1
  local result=pack(Scope.call(G._withCallbackOwner,e.mod,fn,...))
+ callbackDepth=callbackDepth-1
  if not result[1]then e.error=tostring(result[2]);return false,result[2]end
  return unpack(result,1,result.n)
 end
@@ -92,7 +95,7 @@ function P.register(id,provider)
 end
 function P._active()return next(entries)~=nil end
 function P.begin(current,w,h)
- if frame and frame.flushing then return false,'presentation frame is flushing'end
+ if callbackDepth>0 or frame and frame.flushing then return false,'presentation callback cannot restart its frame'end
  close(frame);frame=nil
  local g=Session.game(current)
  if not g or not g.stack or type(g.stack.states)~='table'then return false end
