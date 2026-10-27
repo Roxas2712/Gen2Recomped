@@ -1503,6 +1503,12 @@ local function drawHUDs(battle, slide)
   local record = hudRecord(battle)
   local images = record and record.images or {}
   local double = battle.isDouble and battle:isDouble()
+  if showStatus and battle.gen3Safari and slide==0 then
+    local x,y=healthboxAt(battle,'singlesPlayer',hudImage(images.safari or images.player),112,64)
+    if battle.rsBattlePanel then
+      require('src.battle.Gen3RsHealthbox').drawSafari(battle,x,y,battle.rsBattlePanel.font)
+    else require('src.battle.Gen3NativeHealthbox').drawSafari(battle,x,y)end
+  end
   if showStatus and not double and battle.enemy and not battle.showEnemyTrainer
       and not battle.enemySendingOut and not battle:growInScale(battle.enemy)
       and slide == 0 and not battle.introBalls and not battle.enemy.fainted then
@@ -1998,6 +2004,23 @@ local function drawCommandMenu(battle)
   local row = math.floor((battle.menuIndex - 1) / 2)
   local s = Gen3Battle.strip(battle)
 
+  if battle.gen3Safari then
+    drawPanel(battle,'action')
+    local w=Gen3Battle.windows(battle)
+    shadowed(battle,'message',function(dx,dy)
+      local i=0
+      for line in require('src.battle.Gen3Safari').text(battle,'prompt'):gmatch('[^\n]+')do
+        Font.draw(line,w.prompt.textX+dx,w.prompt.row1+i*16+dy);i=i+1
+      end
+    end)
+    shadowed(battle,'menu',function(dx,dy)
+      for i,label in ipairs(battle.data.constants.gen3SafariNative.labels)do
+        Font.draw(label,w.action.textX+((i-1)%2)*56+dx,w.action.row1+math.floor((i-1)/2)*16+dy)
+      end
+    end)
+    drawArrow(battle,w.action.textX-8+col*56,w.action.row1+row*16)
+    return
+  end
   if battle.safari then
     if not drawPanel(battle, "action") then
       Font.drawBox(s.tx, s.ty, s.tw, s.th)
