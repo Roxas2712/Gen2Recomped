@@ -5447,6 +5447,7 @@ function BattleState:computeDamage(user, target, move, opts)
   if GameVersion.isGen3() then
     opts = opts or {}
     opts.battle = self
+    require("src.battle.Gen3DamageAdjustment").options(self, user, target, move, opts)
   end
   -- Damage's Gen II held-item path needs the imported item records alongside
   -- the ordinary formula options. Keep Gen I's no-mod fast path allocation-free.
@@ -5541,7 +5542,7 @@ function BattleState:computeDamage(user, target, move, opts)
     opts = opts or {}
     opts.bwBattle = self
   end
-  if Runtime.wantsHook("battle.damage") and not (opts and opts.gbaSetDamage) then
+  if Runtime.wantsHook("battle.damage") and not (opts and (opts.gbaSetDamage or opts.gbaSilentCalculation)) then
     local fallback
     local function calculate(c)
       local d, i = Damage.compute(c.ruleset, c.user, c.target, c.move, c.opts)
@@ -5550,12 +5551,18 @@ function BattleState:computeDamage(user, target, move, opts)
     end
     local context = { battle = self, ruleset = self.ruleset, user = user,
       target = target, move = move, opts = opts, rng = self.rng }
-    if not (opts and opts.gbaNativeFixed) then
+    if not (opts and (opts.gbaNativeFixed or opts.gbaRawCalculation)) then
       return Runtime.call("battle.damage", calculate, context)
     end
     local amount, info = Runtime.call("battle.damage", calculate, context)
-    if type(info) ~= "table" then info = fallback end
-    return amount, info
+    if type(info) ~= "table" then
+      -- A complete native hook may replace the calculation without calling
+      -- next. Match the native default flags/category, without inventing a
+      -- hidden calculation (and its critical/random draws) behind that hook.
+      info = fallback or { crit = false, typeMult = 10,
+        typeFlags = { super = false, notVery = false, immune = false } }
+    end
+    return math.max(0, math.floor(tonumber(amount) or 0)), info
   end
   return Damage.compute(self.ruleset, user, target, move, opts)
 end
@@ -6614,7 +6621,7 @@ end
 
 -- FOCUS BAND, asked the moment a hit would knock the holder out.  Returns
 -- true when the band held and the Pokemon is standing on one HP.
-function BattleState:focusBandHolds(battler, incoming)
+function BattleState:focusBandHolds(battler, incoming, rawProc)
   if not (battler and battler.mon) then return false end
   if GameVersion.isGen2() then
     return HeldItems.limitDirectDamage(self.data, battler, incoming, self.rng) < incoming
@@ -6625,12 +6632,14 @@ function BattleState:focusBandHolds(battler, incoming)
     return require("src.battle.Gen5HoldItems").focusBand(self, battler, incoming)
   end
   if GameVersion.isGen3() then
-    if battler.mon.hp <= 0 then return false end
+    if battler.mon.hp <= 0 and not rawProc then return false end
     local effect, chance = HoldItems.effectOf(battler, "endure")
     if effect ~= "FOCUS_BAND" then return false end
     if (self.rng or love.math.random)(0, 99) >= chance then return false end
     require("src.battle.Gen3AIItemKnowledge").record(self, battler, 39)
-    return incoming >= battler.mon.hp
+    -- R/S's command retains successful procs even before a lethal strike.
+    -- Existing callers still ask whether this individual hit was saved.
+    return rawProc or incoming >= battler.mon.hp
   end
   -- only a hit that would actually finish it, and only from full-ish health
   -- is NOT a condition: the cartridge lets a band save a Pokemon on 1 HP too
@@ -8262,7 +8271,7 @@ function BattleState:executeAction(user, target, action)
         -- only the first announces; the rest are the same move landing again
         self:performMove(user, one, action, i > 1,
                          spreadAnimation and animationPlayed, GameVersion.generation() == 3 and i > 1)
-        if self._gbaActionFrame and self._gbaActionFrame.ppBlocked then break end
+        if self._gbaActionFrame and (self._gbaActionFrame.ppBlocked or self._gbaActionFrame.gbaStopTargets) then break end
         -- FireRed's Cmd_attackanimation increments animTargetsHit only when an
         -- animation actually survives the no-effect/failure path.  If the
         -- first target cancels it, a later spread target is still allowed to
@@ -8406,16 +8415,28 @@ function BattleState:statusInterrupt(user, target, move)
     -- 40-power typeless hit against the mon's own defense -- with the
     -- OPPONENT's Reflect still applying (the screen check keeps
     -- reading the opponent's battle status)
-    local dmg = self:computeDamage(user, user,
+    local gba = GameVersion.isGen3()
+    local dmg, info = self:computeDamage(user, user,
                                    { id = "CONFUSED", power = 40, type = "NORMAL", accuracy = 100 },
                                    { rng = self.rng, forceCrit = false, typeless = true,
-                                     screens = GameVersion.isGen3() and user or target })
-    if GameVersion.isGen3() then
-      dmg = math.max(1, math.floor(dmg * self.rng(85, 100) / 100))
+                                     gbaRawCalculation = gba or nil, gbaSilentCalculation = gba or nil,
+                                     screens = gba and user or target })
+    local adjustment
+    if gba then
+      local native = require("src.battle.Gen3DamageAdjustment")
+      if native.rs() then
+        dmg, info = native.apply({ battle = self, user = user, target = user, move = move,
+          rng = self.rng, gbaNativeDamage = true }, dmg, info, "normal2")
+        adjustment = info.damageAdjustment
+      else
+        dmg = math.max(1, math.floor(dmg * self.rng(85, 100) / 100))
+      end
+      adjustment = adjustment or {}
+      adjustment.confusion = true
     end
     self:sayNext(self:romText("_HurtItselfText", "It hurt itself in\nits confusion!"))
     self:clearVolatiles(user, true)
-    self:applyDamage(user, dmg, false, GameVersion.isGen3() and { confusion = true } or nil)
+    self:applyDamage(user, dmg, false, adjustment)
     if user.mon.hp <= 0 then self:onFaint(user) end
     return true
   end
@@ -8907,6 +8928,7 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   local caller = self._gbaNextCaller
   self._gbaNextCaller = nil
   local frame = { parent = parent, user = user, target = target, move = self:moveDef(moveInst), moveId = moveInst.id,
+    spreadContinuation = spreadContinuation,
     calledBy = isCalled and caller and caller.parent == parent and caller.move or nil,
     calledPPSlot = isCalled and caller and caller.parent == parent and caller.ppSlot or nil }
   require("src.battle.Gen3HitHistory").begin(frame)

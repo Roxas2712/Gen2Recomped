@@ -25,6 +25,7 @@ function C.call(ctx, pick, ppSlot)
     targets = { tonumber(move.target) == 16 and user or b:defaultTargetFor(user) }
   end
   local chained = false
+  if b._gbaMoveFrame then b._gbaMoveFrame.gbaStopTargets = nil end
   for i, target in ipairs(targets) do
     chained = require("src.battle.Gen3ChoiceBand").call(
       ctx,
@@ -34,6 +35,7 @@ function C.call(ctx, pick, ppSlot)
       i > 1,
       i == 1 and ppSlot or nil
     ) or chained
+    if b._gbaMoveFrame and b._gbaMoveFrame.gbaStopTargets then break end
   end
   -- A nested native caller owns the resulting history; an ordinary child
   -- records this caller, including the existing switch/resume behavior.

@@ -3,7 +3,7 @@
 local F = {}
 local V = require("src.core.GameVersion")
 local cache = setmetatable({}, { __mode = "k" })
-local effects = { [41] = true, [87] = true, [88] = true, [130] = true }
+local effects = { [40] = true, [41] = true, [87] = true, [88] = true, [130] = true, [189] = true }
 local function rs()
   return V.get() == "ruby" or V.get() == "sapphire"
 end
@@ -32,7 +32,11 @@ function F.calculate(user, target, move, opts)
   end
   local effect = tonumber(move.gen3Effect)
   local amount
-  if effect == 41 then amount = 40
+  if effect == 40 then amount = math.max(1, math.floor(target.mon.hp / 2))
+  elseif effect == 189 then
+    amount = target.mon.hp - user.mon.hp
+    if amount <= 0 then return 0, { crit = false, typeMult = 10, failed = true, gbaNativeFixed = true } end
+  elseif effect == 41 then amount = 40
   elseif effect == 130 then amount = 20
   elseif effect == 87 then amount = tonumber(user.mon.level) or 1
   elseif effect == 88 then
@@ -48,7 +52,7 @@ end
 local function choose(ctx)
   local opts = { rng = ctx.rng, gbaNativeFixed = true, deferAdjustment = rs() or nil }
   if rs() and tonumber(ctx.move.gen3Effect) == 88 then
-    repeat opts.psywaveRoll = ctx.rng(0, 15) until opts.psywaveRoll <= 10
+    repeat opts.psywaveRoll = require("src.battle.Gen3DamageAdjustment").draw(ctx, 0, 15) until opts.psywaveRoll <= 10
   end
   local amount, info = ctx.battle:computeDamage(ctx.user, ctx.target, ctx.move, opts)
   info = type(info) == "table" and info or { crit = false, typeMult = 10 }
@@ -56,19 +60,30 @@ local function choose(ctx)
   -- target ability guards run after the public calculation has returned.
   local Abilities = require("src.battle.Abilities")
   local ability = Abilities.of(ctx.target)
-  if ability == "LEVITATE" and Abilities.normalizeType(ctx.move.type) == "GROUND"
-      or ability == "WONDER_GUARD" and not (info.gbaFixedSuper and not info.gbaFixedNotVery) then
+  if not rs() and (ability == "LEVITATE" and Abilities.normalizeType(ctx.move.type) == "GROUND"
+      or ability == "WONDER_GUARD" and not (info.gbaFixedSuper and not info.gbaFixedNotVery)) then
     info.typeMult, info.ability = 0, ability
   end
   info.gbaNativeFixed = true
   return math.max(0, math.floor(tonumber(amount) or 0)), info
 end
 function F.builtin(id, base)
-  if not V.isGen3() or id ~= "SPECIAL_DAMAGE_EFFECT" or not base then return base end
+  if not V.isGen3() or not base or (id ~= "SPECIAL_DAMAGE_EFFECT" and id ~= "SUPER_FANG_EFFECT" and id ~= "ENDEAVOR_EFFECT") then return base end
   if cache[base] then return cache[base] end
   local out = {}
   for key, value in pairs(base) do out[key] = value end
   out.gbaNativeFixed = true
+  if id == "ENDEAVOR_EFFECT" then
+    out.gbaGateBeforeProtect = true
+    out.gate = function(ctx)
+      if ctx.target.mon.hp <= ctx.user.mon.hp then
+        local frame = ctx.battle._gbaMoveFrame
+        if frame then frame.missed, frame.failed = true, true end
+        return false, require("src.core.Strings")("But, it failed!")
+      end
+      return true
+    end
+  end
   out.chooseDamage = function(ctx)
     if not V.isGen3() or ctx.move.fixedDamage ~= nil or not effects[tonumber(ctx.move.gen3Effect)] then
       return base.chooseDamage(ctx)

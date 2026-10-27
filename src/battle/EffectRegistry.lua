@@ -115,11 +115,13 @@ local function hitCount(ctx, record)
 end
 
 local function ordinaryDamage(battle, ctx, record)
-  return battle:computeDamage(ctx.user, ctx.target, ctx.move,
-    { rng = battle.rng, explode = (record and record.explode) or nil,
-      powerMultiplier = record and record.powerMultiplier and record.powerMultiplier(ctx) or nil,
-      highCrit = record and record.highCrit or nil,
-      power = record and record.gbaTripleKick and 10 * (ctx.gbaHit or 1) or nil })
+  return require("src.battle.Gen3DamageAdjustment").compute(ctx, function()
+    return battle:computeDamage(ctx.user, ctx.target, ctx.move,
+      { rng = battle.rng, explode = (record and record.explode) or nil,
+        powerMultiplier = record and record.powerMultiplier and record.powerMultiplier(ctx) or nil,
+        highCrit = record and record.highCrit or nil,
+        power = record and record.gbaTripleKick and 10 * (ctx.gbaHit or 1) or nil })
+  end)
 end
 
 -- The damaging pipeline, extracted from the performMove monolith: every
@@ -128,6 +130,7 @@ end
 -- older generations retain their pre-accuracy count and shared damage roll.
 function EffectRegistry.runDamaging(battle, ctx, record)
   local user, target = ctx.user, ctx.target
+  ctx.record = record
   local move, moveInst = ctx.move, ctx.moveInst
   local neverMiss = record and record.neverMiss
   local gba = require("src.core.GameVersion").isGen3()
@@ -152,6 +155,20 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   local nativeAccuracy = gba and (not neverMiss and not alwaysHits
     or move.gen3Effect == 17 or move.gen3Effect == 78 or move.gen3Effect == 152)
 
+  local explosion = require("src.battle.Gen3Explosion").prepare(ctx, record, function()
+    return ordinaryDamage(battle, ctx, record)
+  end)
+  if explosion == false then return end
+  if gba and record and record.gbaGateBeforeProtect and record.gate then
+    local ok, message = record.gate(ctx)
+    ctx.gbaGatePrepared = true
+    if not ok then
+      battle:cancelMoveAnim()
+      if message then battle:sayNext(message) end
+      return
+    end
+  end
+
   -- PROTECT and DETECT, before anything else happens.  Only a move the
   -- cartridge marks PROTECT-affected is stopped, which is the second use the
   -- extracted flags byte is put to; a move with no flags recorded (every Gen
@@ -163,6 +180,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     battle:cancelMoveAnim()
     if record and record.onProtect and record.onProtect(ctx) then return end
     battle:sayNext(Strings("%s\nprotected itself!", displayName(target)))
+    if ctx.gbaExplosionPrepared and record.onMiss then record.onMiss(ctx, "protected") end
     return
   end
 
@@ -190,7 +208,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   end
 
   -- OHKO speed gate, Dream Eater sleep gate
-  if record and record.gate then
+  if record and record.gate and not ctx.gbaExplosionPrepared and not ctx.gbaGatePrepared then
     local ok, failMsg = record.gate(ctx)
     if not ok then
       battle:cancelMoveAnim()
@@ -202,7 +220,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
 
   local hits = not gba and hitCount(ctx, record) or 1
 
-  if record and record.beforeAccuracy then record.beforeAccuracy(ctx) end
+  if record and record.beforeAccuracy and not ctx.gbaExplosionBeforeAccuracy then record.beforeAccuracy(ctx) end
   if gba then
     -- Weather Ball and authored native records may replace the move view.
     move = ctx.move
@@ -240,7 +258,10 @@ function EffectRegistry.runDamaging(battle, ctx, record)
 
   -- damage per hit
   local dmg, info
-  if move.id == "COUNTER" then
+  if ctx.gbaExplosionPrepared then
+    dmg, info = ctx.gbaExplosionDamage, ctx.gbaExplosionInfo
+    require("src.battle.Gen3Explosion").guard(ctx, info)
+  elseif move.id == "COUNTER" then
     -- HandleCounterMove: 2x the last damage dealt in battle, only if
     -- the opponent's last move was counterable with >0 power (and not
     -- Counter itself); wDamage is shared, so any last damage counts.
@@ -277,6 +298,15 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     dmg, info = ordinaryDamage(battle, ctx, record)
   end
 
+  if gba and not ctx.gbaExplosionPrepared and info.failed then
+    battle:cancelMoveAnim()
+    if gba and battle._gbaMoveFrame then battle._gbaMoveFrame.missed, battle._gbaMoveFrame.failed = true, true end
+    battle:sayNext(Strings("But, it failed!"))
+    return
+  end
+  if gba and not ctx.gbaExplosionPrepared and not (record and record.perHitDamage) then
+    dmg, info = require("src.battle.Gen3DamageAdjustment").apply(ctx, dmg, info)
+  end
   if battle.arenaOutcome then
     battle.arenaOutcome.typeMult = info.typeMult
     -- an ability that made it do nothing speaks against the user's skill
@@ -360,9 +390,11 @@ function EffectRegistry.runDamaging(battle, ctx, record)
       local nextDamage, nextInfo = record.perHitDamage(ctx, h, dmg, info)
       if nextDamage == nil then break end
       dmg, info = nextDamage, nextInfo or info
+      if gba then dmg, info = require("src.battle.Gen3DamageAdjustment").apply(ctx, dmg, info) end
     elseif nativeMulti and h > 1
         and not (record and record.chooseDamage) then
       dmg, info = ordinaryDamage(battle, ctx, record)
+      dmg, info = require("src.battle.Gen3DamageAdjustment").apply(ctx, dmg, info)
       if info.typeMult == 0 or info.missed then
         ctx.gbaNoEffect = true
         if info.typeMult == 0 then
