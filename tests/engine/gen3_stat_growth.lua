@@ -48,6 +48,15 @@ for _,version in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
   screen:update();T.neq(game.stack:top(),screen);T.eq(callbacks,1,'close resumes the queue once')
   f.close()
 end
+-- Classic generations retain their original single acknowledgment and surface.
+for _,version in ipairs({'red','gold'})do
+  require('src.core.GameVersion').set(version)
+  local calls=0;local game={data={constants={}},input={wasPressed=function(_,key)return key=='a'end},
+    stack={push=function()end,pop=function()calls=calls+1 end}}
+  local callbacks=0;local screen=Battle.StatBox.new(game,{stats={}},function()callbacks=callbacks+1 end)
+  T.eq(screen.native,nil);T.eq(screen.uiSize,nil)
+  screen:update();T.eq(calls,1);T.eq(callbacks,1)
+end
 Font.draw,Window.stdFrame,Scope.call=oldDraw,oldWindow,oldScope
 love.filesystem.load=oldFsLoad
 T.finish('Native GBA six-stat growth pages and per-level immutable stat snapshots')

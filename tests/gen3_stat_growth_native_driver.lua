@@ -62,7 +62,10 @@ return function(game)
   local bag=require('src.ui.Gen3BagMenu').new(game)
   game.stack:push(bag);U.wait(30);assert(bag:selected().id=='RARE_CANDY')
   press('a',30)
-  if game.stack:top()==bag then press('a',30)end
+  for _=1,4 do
+    if game.stack:top().screenId=='Gen3PartyMenu'then break end
+    press('a',30)
+  end
   assert(game.stack:top().screenId=='Gen3PartyMenu','Candy must ask for an ordinary party target')
   press('a',30)
   local candy
