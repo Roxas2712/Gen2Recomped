@@ -24,6 +24,8 @@ jobs:
         run: luajit tests/engine/gen2_movement_permissions.lua
       - name: Exercise native special movement handoffs
         run: luajit tests/engine/gen2_movement_handoffs.lua
+      - name: Exercise native connected-map targets and crossings
+        run: luajit tests/engine/gen2_connection_targets.lua
       - name: Compare all Crystal collision pairs with the pinned Gen1 engine
         run: |
           mkdir -p /tmp/gen2-permissions-contract
