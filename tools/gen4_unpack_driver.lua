@@ -76,10 +76,41 @@ return function(game)
     end
   end
   assert(chunks>0 and shapes>0 and comparisons>0,'empty Twinleaf comparison')
+  -- A live mod shape can use getters and edit its later bytes in shade().
+  -- Compare the read/callback sequence against the pinned implementation too.
+  local function liveRecord()
+    local trace={}
+    local function word(n)n=n%65536;return string.char(n%256,math.floor(n/256))end
+    local vertex=word(0)..word(0)..word(0)..word(0)..word(0)..string.char(255,255,255,0,127,0)
+    local backing={vertices=vertex:rep(3),vertexCount=3,triangleCount=1,
+      indices=word(0)..word(1)..word(2)}
+    local shape=setmetatable({}, {__index=function(_,key)
+      trace[#trace+1]=key;return backing[key]
+    end})
+    local calls=0
+    return {shapes={shape},fog={1,0,0},shade=function()
+      calls=calls+1;trace[#trace+1]='shade'
+      if calls==1 then
+        backing.vertices=backing.vertices:sub(1,16)..word(4096)..backing.vertices:sub(19)
+        backing.noFog=true
+      end
+      return .5,.5,.5
+    end},trace
+  end
+  P.gen4ByteVertices,P.gen4GpuLight=false,false
+  local oldRecord,oldTrace=liveRecord()
+  local newRecord,newTrace=liveRecord()
+  local oldModel,oldUploads=construct(Ref,oldRecord)
+  local newModel,newUploads=construct(M,newRecord)
+  assert(equal(oldTrace,newTrace),'live shape read/callback order changed')
+  assert(equal(oldUploads,newUploads),'live callback changed upload bytes')
+  for _,model in ipairs{oldModel,newModel}do
+    for _,shape in ipairs(model.shapes)do shape.mesh:release()end
+  end
   local report={passed=true,chunks=chunks,shapes=shapes,uploadComparisons=comparisons,
     bytesCompared=totalBytes,uploadSha256=digests,byteDifference=0,
     sourceMap=ow.map.id,sourceHeader=411,playerProfilesUsed=false,
-    renderer=love.graphics.getRendererInfo()}
+    renderer=love.graphics.getRendererInfo(),liveCallbackReadOrderEqual=true}
   local f=assert(io.open(assert(os.getenv('GEN4_UNPACK_OUT')),'w'))
   f:write(require('src.link.Json').encode(report));f:close()
   print('GEN4_UNPACK_PASS '..comparisons..' native uploads, zero byte differences')
