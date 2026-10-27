@@ -9995,6 +9995,19 @@ function BattleState:openItems()
     return
   end
   self:ui(function()
+    if GameVersion.isGen2() then
+      -- Gen2's native PACK owns pockets, battle eligibility and cursor state.
+      -- It must not route through a generic list skin or a live field world.
+      local pack
+      pack = self:buildScreen("Gen2PackMenu", {
+        battle = true,
+        world = {},
+        onChoose = function(id)
+          require("src.ui.BagMenu").useItem(self.game, self, id, pack)
+        end,
+      })
+      return pack
+    end
     return self:buildScreen(Gen4Battle.bagScreenId(self) or "BagMenu", { battle = self })
   end)
 end
