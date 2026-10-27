@@ -5530,7 +5530,7 @@ function OverworldState:scriptRunning()
   return (self.runner and self.runner:isRunning()) and true or false
 end
 
-function OverworldState:busy()
+function OverworldState:busy(ignoreOverlay)
   local field=package.loaded["src.core.game3.field"]
   if GameVersion.isGen3()and field and field._locked(Game,self)then return true end
   -- Gen2's world lives below overlays. A movement wrapper runs after the
@@ -5540,7 +5540,7 @@ function OverworldState:busy()
     if self.battleActive then return true end
     local stack = Game and Game.stack
     local top = stack and stack.top and stack:top()
-    if top and top ~= self then return true end
+    if ignoreOverlay ~= true and top and top ~= self then return true end
   end
   return (self:scriptRunning() or (self.scriptMoves and #self.scriptMoves > 0)
     or self.engaging or self.emote or self.teleportOut or self.whirlSpin
@@ -5550,7 +5550,10 @@ function OverworldState:busy()
 end
 
 function OverworldState:acceptsMenuInput()
-  return not self.battleActive and not self:busy()
+  -- This public query observes the settled field, including from an overlay
+  -- that needs to save/restart safely. Native movement still calls busy()
+  -- without the observation flag and remains blocked by the overlay owner.
+  return not self.battleActive and not self:busy(true)
     and not (self.player and self.player.moving) and not self.iceSlide
 end
 

@@ -90,13 +90,13 @@ end
 function StateStack:setWorldOwner(owner)
   self:clearWorld()
   self.worldOwner = owner
-  if owner then owner.world = nil end
+  if owner then owner.world, owner.phase = nil, "boot" end
 end
 
 function StateStack:clearWorld()
   local world = self.worldState
   self.worldState = nil
-  if self.worldOwner then self.worldOwner.world = nil end
+  if self.worldOwner then self.worldOwner.world, self.worldOwner.phase = nil, "boot" end
   if world and type(world.exit) == "function" then world:exit() end
 end
 
@@ -129,8 +129,12 @@ function StateStack:push(state, ...)
   local flows=package.loaded["src.compat.gen1.UiFlow"];if flows then flows.inherit(self,state)end
   if self.worldOwner and state.isOverworld then
     if self.worldState and self.worldState ~= state then self:clearWorld() end
-    self.worldState, self.worldOwner.world = state, state
+    local owner = self.worldOwner
+    self.worldState, owner.world, owner.phase = state, state, "boot"
     if type(state.enter) == "function" then state:enter(...) end
+    -- Source clients distinguish a ready world beneath menus from title or
+    -- intro ownership. Publish readiness only after native entry succeeds.
+    if self.worldOwner == owner and self.worldState == state then owner.phase = "play" end
     return
   end
   table.insert(self.states, state)
@@ -215,7 +219,7 @@ end
 function StateStack:restore(state)
   if type(state) ~= "table" then return false end
   if self.worldOwner and state.isOverworld then
-    self.worldState, self.worldOwner.world = state, state
+    self.worldState, self.worldOwner.world, self.worldOwner.phase = state, state, "play"
     return true
   end
   table.insert(self.states, state)
