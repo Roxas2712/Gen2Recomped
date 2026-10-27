@@ -257,14 +257,14 @@ function W.tick(self)
   local purpose=f.purpose;f.job=nil
   if r.kind~='done' or not r.first then f.notice=tostring(r.second or r.error or 'Account unavailable.');return end
   local doc=r.first
-  if purpose=='roles' then f.notice='Permissions saved · '..tostring(doc.permissions and doc.permissions.role)..'. The protected operator keeps their role.'
+  if purpose=='roles' then f.notice=L('Permissions saved · ')..tostring(doc.permissions and doc.permissions.role)..'. The protected operator keeps their role.'
   elseif purpose=='gifts' then f.gifts=doc;f.notice=nil
   elseif purpose=='giftDelivered' then f.mode='gifts';f.notice='Prize delivered to a new save copy. Select that copy to continue playing.'
-  elseif purpose=='giftReceived' then f.giftDelivery=doc.kind and doc.receipt or nil;if doc.kind then f.mode='giftDelivery';f.scroll=0 end;f.notice=(doc.alreadyRedeemed and 'Already claimed · ' or (doc.kind and 'Gift in your account inbox · ' or 'Gift in your Bank · '))..tostring(doc.title)..'. The same gift can be restored on your other devices.'
+  elseif purpose=='giftReceived' then f.giftDelivery=doc.kind and doc.receipt or nil;if doc.kind then f.mode='giftDelivery';f.scroll=0 end;f.notice=(doc.alreadyRedeemed and L('Already claimed · ') or (doc.kind and L('Gift in your account inbox · ') or L('Gift in your Bank · ')))..tostring(doc.title)..L('. The same gift can be restored on your other devices.')
   elseif purpose=='giftCreated' then f.createdGift=doc;f.notice='Gift code created. Copy it now; the plaintext code is not kept in the campaign list.'
   elseif purpose=='giftActive' then job(self,'gifts',A.gifts)
   elseif purpose=='profile' then profile(self,doc);f.notice='Profile saved for all your devices. Custom avatars stay private until their public review is complete.'
-  elseif purpose=='findFriend' then f.foundFriend=doc;f.notice='Player found: '..tostring(doc.friend_tag)..'. Send a friend request to connect.'
+  elseif purpose=='findFriend' then f.foundFriend=doc;f.notice=L('Player found: ')..tostring(doc.friend_tag)..'. Send a friend request to connect.'
   elseif purpose=='playPreferences' then f.social=f.social or {};f.social.playPreferences=doc.preferences;require('src.cloud.Play').refresh(true);f.notice='Friend privacy saved for all your devices.'
   elseif purpose=='presence' then require('src.cloud.AccountBadge').acceptPresence(doc);f.notice='Online visibility saved for all your devices.'
   elseif purpose=='players' then f.players=doc;f.notice=nil
@@ -330,7 +330,7 @@ function W.draw(self)
   local social=require('src.cloud.Presence').read() or f.social or {}
   local tabs=Auth.signedIn() and not f.document
   if tabs then
-    for i,tab in ipairs({{'account','PROFILE'},{'friends','FRIENDS'..(#(social.incoming or {})>0 and ' · '..#social.incoming..' NEW' or '')},{'accountSettings','CLOUD & DEVICES'}}) do
+    for i,tab in ipairs({{'account','PROFILE'},{'friends',L('FRIENDS')..(#(social.incoming or {})>0 and ' · '..#social.incoming..' NEW' or '')},{'accountSettings','CLOUD & DEVICES'}}) do
       local tw=(width-48*s)/3;button(tab[2],x+24*s+(i-1)*tw,y+68*s,tw-6*s,tab[1]).pinned=true
     end
   end
@@ -364,12 +364,12 @@ function W.draw(self)
     row('I WANT CLOUD SAVES · SIGN IN / REGISTER','cloud')
     paragraph('Bank, trading and new online mod installation require a confirmed account. Local play, manual mod imports and updates to installed mods do not. Browsing and installing new online mods require sign-in.')
   elseif f.document then
-    local d=f.policy[f.document];if d then paragraph(d.title,true);paragraph(d.text);paragraph('Version '..f.policy.version);row('OPERATOR CONTACT >','operator') end
+    local d=f.policy[f.document];if d then paragraph(d.title,true);paragraph(d.text);paragraph(L('Version ')..f.policy.version);row('OPERATOR CONTACT >','operator') end
     row('BACK','back')
   elseif f.mode=='roles' then
     paragraph('PROFILE PERMISSIONS · SUPERUSER',true)
     paragraph('These permissions apply to RetroRecomped. The original operator is protected from demotion. ModCompass staff permissions keep their separate management.')
-    field('Player’s complete friend tag','roleTarget');row('ROLE · '..tostring(f.roleChoice):upper()..' · CHANGE','roleChoice')
+    field('Player’s complete friend tag','roleTarget');row(L('ROLE · ')..tostring(f.roleChoice):upper()..L(' · CHANGE'),'roleChoice')
     field('Reason · at least 15 characters','roleReason');field('Confirm your account password','rolePassword',true)
     row('SAVE PERMISSIONS','saveRole');row('MY ACCOUNT','account')
   elseif f.mode=='giftDelivery' then
@@ -383,7 +383,7 @@ function W.draw(self)
     paragraph('Pokémon, items and edition-specific event unlocks. Gen 1 has no eggs or shiny setting. A code is claimed once per account across all your devices. Pokémon stay in your Bank; items and event unlocks stay in your account inbox. Local saves stay intact.')
     if f.mode=='giftAdmin' then
       if f.createdGift then
-        paragraph('NEW CODE · '..f.createdGift.code,true);paragraph('Keep or share this code now. It is shown only in this creation result.')
+        paragraph(L('NEW CODE · ')..f.createdGift.code,true);paragraph('Keep or share this code now. It is shown only in this creation result.')
         row('COPY GIFT CODE','copyGiftCode');row('BACK TO MY GIFTS','gifts')
       else
         field('Gift title','giftTitle')
@@ -405,7 +405,7 @@ function W.draw(self)
         row('CREATE GIFT CODE','createGift');row('CANCEL','gifts')
       end
     else
-      field('Gift code','giftCode');row('EDITION · '..tostring(f.giftEdition or 'crystal'):upper()..' · CHANGE','giftEdition')
+      field('Gift code','giftCode');row(L('EDITION · ')..require('src.translation.Service').editionName(f.giftEdition or 'crystal')..L(' · CHANGE'),'giftEdition')
       row('REDEEM TO MY BANK','redeemGift');row('REFRESH MY GIFTS','gifts');row('MY ACCOUNT','account')
       for i,receipt in ipairs((f.gifts or {}).receipts or {}) do
         paragraph(receipt.title..' · '..require('src.import.GiftDesigner').describe(receipt.reward or receipt))
@@ -414,7 +414,7 @@ function W.draw(self)
       if f.gifts and f.gifts.manage then
         row('STAFF · CREATE A GIFT CODE','newGift')
         for i,campaign in ipairs(f.gifts.campaigns or {}) do
-          paragraph(campaign.title..' · '..campaign.redeemed..' claimed · '..table.concat(campaign.editions,', '))
+          paragraph(campaign.title..' · '..campaign.redeemed..L(' claimed · ')..table.concat(campaign.editions,', '))
           row(campaign.active and 'DISABLE THIS CODE' or 'ENABLE THIS CODE','giftActive:'..i)
         end
       end
@@ -427,32 +427,32 @@ function W.draw(self)
   elseif f.mode=='friends' then
     paragraph('FRIENDS & REQUESTS',true)
     local prefs=(f.social or {}).playPreferences or {}
-    row('FRIEND CHAT · '..(prefs.chat_enabled==false and'OFF'or'ON'),'allPlayChat')
-    row('INCOMING GAME INVITATIONS · '..(prefs.requests_enabled==false and 'OFF' or 'ON'),'allPlayRequests')
-    row('MUTUAL MAP VISIBILITY · '..(prefs.visibility_enabled==false and 'OFF' or 'ON'),'allPlayVisibility')
+    row(L('FRIEND CHAT · ')..(prefs.chat_enabled==false and'OFF'or'ON'),'allPlayChat')
+    row(L('INCOMING GAME INVITATIONS · ')..(prefs.requests_enabled==false and 'OFF' or 'ON'),'allPlayRequests')
+    row(L('MUTUAL MAP VISIBILITY · ')..(prefs.visibility_enabled==false and 'OFF' or 'ON'),'allPlayVisibility')
     paragraph('Up to five accepted friends can appear as transient figures. They never change your adventure. Meetings need mutual confirmation.')
     paragraph('One friend list for your account, shared by all your devices. Search the complete friend tag, such as Trainer#4821. A Recompiler ID also works for requests. Only accepted friends see your online status.')
     field('Friend tag or Recompiler ID','friendQuery');row('SEARCH FRIEND TAG','findFriend')
-    if f.foundFriend then paragraph('FOUND · '..f.foundFriend.friend_tag) end
+    if f.foundFriend then paragraph(L('FOUND · ')..f.foundFriend.friend_tag) end
     row('SEND FRIEND REQUEST','addFriend')
     row('REFRESH FRIENDS','friends');row('MY ACCOUNT','account')
     local social=require('src.cloud.Presence').read() or f.social or {}
     local fresh=os.time()-(social._receivedAt or 0)<=120
     paragraph(L('FRIENDS')..' · '..#(social.friends or {}),true)
     for _,peer in ipairs(social.friends or {}) do
-      paragraph(Role.label(peer.friend_tag or peer.nickname,peer)..(not fresh and ' · STATUS UNAVAILABLE' or peer.online and (peer.status=='away' and ' · AWAY' or ' · ONLINE') or ' · OFFLINE'))
+      paragraph(Role.label(peer.friend_tag or peer.nickname,peer)..(not fresh and L(' · STATUS UNAVAILABLE') or peer.online and (peer.status=='away' and L(' · AWAY') or L(' · ONLINE')) or L(' · OFFLINE')))
       local pref={};for _,v in ipairs(prefs.friends or {}) do if tostring(v.account_id)==tostring(peer.account_id) then pref=v;break end end
-      row('INVITATIONS FROM THIS FRIEND · '..(pref.requests_enabled==false and 'OFF' or 'ON'),'playPref:requests:'..peer.account_id)
-      row('MAP VISIBILITY WITH THIS FRIEND · '..(pref.visible==false and 'OFF' or 'ON'),'playPref:visible:'..peer.account_id)
+      row(L('INVITATIONS FROM THIS FRIEND · ')..(pref.requests_enabled==false and 'OFF' or 'ON'),'playPref:requests:'..peer.account_id)
+      row(L('MAP VISIBILITY WITH THIS FRIEND · ')..(pref.visible==false and 'OFF' or 'ON'),'playPref:visible:'..peer.account_id)
       for _,device in ipairs(peer.playing or {})do local edition,zone=require('src.ui.FriendActivity').label(package.loaded['src.core.Game'],device);paragraph(edition..' · '..zone)end
-      row('CHAT WITH THIS FRIEND · '..(pref.chat_enabled==false and'OFF'or'ON'),'playPref:chat:'..peer.account_id)
+      row(L('CHAT WITH THIS FRIEND · ')..(pref.chat_enabled==false and'OFF'or'ON'),'playPref:chat:'..peer.account_id)
       row('CHAT','chat:'..peer.account_id)
       row('REMOVE FRIEND','friendRemove:'..peer.account_id)
     end
     if #(social.friends or {})==0 then paragraph('Your accepted friends appear here. Requests need the other player’s confirmation.') end
-    paragraph('FRIEND REQUESTS · '..#(social.incoming or {}),true)
+    paragraph(L('FRIEND REQUESTS · ')..#(social.incoming or {}),true)
     for _,peer in ipairs(social.incoming or {}) do paragraph(Role.label(peer.nickname,peer));row('ACCEPT REQUEST','friendAccept:'..peer.account_id);row('DECLINE REQUEST','friendRemove:'..peer.account_id) end
-    for _,peer in ipairs(social.outgoing or {}) do paragraph('WAITING · '..Role.label(peer.nickname,peer));row('CANCEL REQUEST','friendRemove:'..peer.account_id) end
+    for _,peer in ipairs(social.outgoing or {}) do paragraph(L('WAITING · ')..Role.label(peer.nickname,peer));row('CANCEL REQUEST','friendRemove:'..peer.account_id) end
     if social.permissions and social.permissions.view_online then row('STAFF · ONLINE PLAYERS & STATISTICS','online') end
   elseif f.mode=='transferGuide' then
     paragraph('CONTINUE ON ANOTHER DEVICE',true)
@@ -464,7 +464,7 @@ function W.draw(self)
     paragraph('Use the same app build, sign in to the same account and restore your cloud games and saves. Choose Continue to resume the saved battle.')
     row('RESTORE MY CLOUD GAMES & SAVES','restoreGames')
     paragraph('CURRENT SUPPORT',true)
-    paragraph('Exact resume supports native Gen 1–3 sessions. Loaded mods and live online battles are excluded. Newer local progress is preserved; incompatible suspends fall back to your normal save with a notice.')
+    paragraph('Exact adventure resume supports native Gen 1–3 with identical engine, imported data and mods. Each loaded mod needs a portable suspend adapter. Running Arena battles use the separate device-takeover action in their lobby. Newer local progress is preserved.')
     paragraph('Simulated device switching has been tested on separate desktop profiles. Physical Android and iPhone switching still needs device testing.')
     row('BACK TO MY PROFILE','account')
   elseif f.mode=='roleGuide' then
@@ -481,9 +481,9 @@ function W.draw(self)
     paragraph('Browse registered players. Requests become friendships only after the other player accepts. Private contact details stay private.')
     field('Search nickname','playersQuery');row('SEARCH PLAYERS','playersSearch')
     row(f.playersOnline and 'SHOW ALL PLAYERS' or 'SHOW ONLINE ONLY','playersOnline')
-    local doc=f.players or {};paragraph(tostring(doc.online_count or '...')..' online · '..tostring(doc.registered_count or '...')..' registered')
+    local doc=f.players or {};paragraph(tostring(doc.online_count or '...')..L(' online · ')..tostring(doc.registered_count or '...')..L(' registered'))
     for i,peer in ipairs(doc.players or {})do
-      paragraph(Role.label(peer.friend_tag,peer)..(peer.suspended and ' · BANNED' or peer.online and (peer.status=='away' and ' · AWAY' or ' · ONLINE') or ' · OFFLINE'),true)
+      paragraph(Role.label(peer.friend_tag,peer)..(peer.suspended and L(' · BANNED') or peer.online and (peer.status=='away' and L(' · AWAY') or L(' · ONLINE')) or L(' · OFFLINE')),true)
       if peer.invisible then paragraph('INVISIBLE · STAFF VIEW')end
       if peer.protected then paragraph('PROTECTED OPERATOR')end
       if peer.relationship=='none' then row('SEND FRIEND REQUEST','playerFriend:'..i)
@@ -498,7 +498,7 @@ function W.draw(self)
   elseif f.mode=='playerManage' then
     local peer=f.player or {};paragraph(tostring(peer.friend_tag or 'Loading player…'),true)
     paragraph(peer.suspended and 'BANNED' or 'ACCOUNT ACTIVE')
-    paragraph('Cloud objects: '..tostring(peer.cloud_objects or 0)..' · Removed from access: '..tostring(peer.held_objects or 0))
+    paragraph(L('Cloud objects: ')..tostring(peer.cloud_objects or 0)..L(' · Removed from access: ')..tostring(peer.held_objects or 0))
     if peer.manageable then
       row(peer.suspended and 'UNBAN PLAYER' or 'BAN PLAYER','moderate:'..(peer.suspended and 'unban' or 'ban'))
       row(peer.profile_hidden and 'RESTORE PUBLIC PROFILE' or 'HIDE PUBLIC PROFILE','moderate:'..(peer.profile_hidden and 'restore_profile' or 'hide_profile'))
@@ -518,12 +518,12 @@ function W.draw(self)
     paragraph('INBOX · FRIEND REQUESTS',true)
     for _,peer in ipairs(doc.incoming or {})do paragraph(Role.label(peer.friend_tag or peer.nickname,peer),true);row('ACCEPT REQUEST','friendAccept:'..peer.account_id);row('DECLINE REQUEST','friendRemove:'..peer.account_id)end
     if #(doc.incoming or {})==0 then paragraph('No pending friend requests.')end
-    for _,peer in ipairs(doc.outgoing or {})do paragraph('WAITING · '..tostring(peer.friend_tag or peer.nickname));row('CANCEL REQUEST','friendRemove:'..peer.account_id)end
+    for _,peer in ipairs(doc.outgoing or {})do paragraph(L('WAITING · ')..tostring(peer.friend_tag or peer.nickname));row('CANCEL REQUEST','friendRemove:'..peer.account_id)end
     row('FIND PLAYERS','players');row('FRIENDS','friends')
   elseif f.mode=='online' then
     paragraph('ONLINE PLAYERS · STAFF',true)
     local online=f.online or {}
-    paragraph(tostring(online.online_count or 0)..' online · '..tostring(online.registered_count or 0)..' registered · '..tostring(online.verified_count or 0)..' email confirmed')
+    paragraph(tostring(online.online_count or 0)..L(' online · ')..tostring(online.registered_count or 0)..L(' registered · ')..tostring(online.verified_count or 0)..L(' email confirmed'))
     paragraph('Players are counted once across all their devices. Status expires two minutes after the last response.')
     row('REFRESH ONLINE LIST','online')
     for _,peer in ipairs(online.online or {}) do paragraph(Role.label(peer.nickname,peer)..' · '..peer.account_id) end
@@ -543,7 +543,7 @@ function W.draw(self)
     local fresh=os.time()-(social._receivedAt or 0)<=120;local online=0
     for _,peer in ipairs(social.friends or {}) do if fresh and peer.online then online=online+1 end end
     paragraph(L('FRIENDS')..' · '..online..' '..L('ONLINE')..' / '..#(social.friends or {})..' '..L('TOTAL'),true)
-    if #(social.incoming or {})>0 then row(#social.incoming..' NEW FRIEND REQUESTS','friends') end
+    if #(social.incoming or {})>0 then row(require('src.translation.Service').launcherCount(#social.incoming,'%d NEW FRIEND REQUEST','%d NEW FRIEND REQUESTS'),'friends') end
     for i,peer in ipairs(social.friends or {}) do if i<=5 then
       Avatar.draw(peer.avatar_preset,peer.avatar_color,x+24*s,top,42*s)
       text(Role.label(peer.friend_tag or peer.nickname,peer),x+80*s,top,width-120*s)
@@ -555,8 +555,8 @@ function W.draw(self)
     row('MY GIFTS','gifts')
   elseif f.mode=='profileEdit' then
     paragraph(tostring(f.nickname or Auth.nickname and Auth.nickname() or Auth.account()),true)
-    paragraph('Connected as '..tostring(Auth.account()))
-    if f.friendTag then paragraph('MY FRIEND TAG · '..f.friendTag,true) end
+    paragraph(L('Connected as ')..tostring(Auth.account()))
+    if f.friendTag then paragraph(L('MY FRIEND TAG · ')..f.friendTag,true) end
     if f.avatarImage then
       local iw,ih=f.avatarImage:getDimensions();local size=100*s
       g.setScissor(x+width/2-size/2,math.max(v.y,top),size,math.max(0,math.min(top+size,v.y+v.height)-math.max(v.y,top)))
@@ -569,7 +569,7 @@ function W.draw(self)
     if f.profile then
       field('Nickname · shared with ModCompass','profileName')
       for _,preset in ipairs(require('src.ui.ProfileAvatar').presets) do row((f.avatarPreset==preset and '● ' or '')..preset:upper(),'avatarPreset:'..preset) end
-      row('AVATAR COLOR · '..tostring(f.avatarColor):upper()..' · CHANGE','avatarColor')
+      row(L('AVATAR COLOR · ')..tostring(f.avatarColor):upper()..L(' · CHANGE'),'avatarColor')
       row('CHOOSE MY PROFILE IMAGE','chooseAvatar')
       if f.avatarBytes then check('I have the rights to use this image for my account and allow its storage in ModCompass.','avatarRights') end
       row('SAVE MY GLOBAL PROFILE','saveProfile')
@@ -597,7 +597,7 @@ function W.draw(self)
     if f.permissions and f.permissions.manage_roles then row('SUPERUSER · PROFILE PERMISSIONS','roles') end
     row('BROWSE MODS','browse');row('MOD DEVELOPER · MY REPOSITORIES','developer');row('REFRESH CONNECTED DEVICES','devices')
     paragraph('You stay signed in on this device until you sign out, change your password or disconnect it from your account. Offline periods keep your login.')
-    for i,d in ipairs(f.devices or {}) do paragraph(tostring(d.label)..(d.current and ' · THIS DEVICE' or ''));paragraph(d.expires_at and ('Expires '..tostring(d.expires_at)) or 'Signed in until disconnected');row('DISCONNECT DEVICE','revoke:'..i) end
+    for i,d in ipairs(f.devices or {}) do paragraph(tostring(d.label)..(d.current and L(' · THIS DEVICE') or ''));paragraph(d.expires_at and (L('Expires ')..tostring(d.expires_at)) or 'Signed in until disconnected');row('DISCONNECT DEVICE','revoke:'..i) end
     row('SIGN OUT ON THIS DEVICE','signout')
     row('USE ANOTHER ACCOUNT / LOCAL PROFILE','switchAccount')
   else
@@ -615,7 +615,7 @@ function W.draw(self)
       check('I develop mods','developer')
       if f.developer then
         paragraph('Add your public GitHub repositories. Each project gets its own control proof and catalogue review. You can add more later.')
-        for i=1,#f.repositories do field('Repository '..i,'repo'..i) end
+        for i=1,#f.repositories do field(L('Repository ')..i,'repo'..i) end
         row('+ ADD ANOTHER REPOSITORY','addRepo');row('READ DEVELOPER CONFIRMATION','read:developer');check('I confirm my rights to submit these projects','rights')
       end
       row('READ TERMS OF USE','read:terms');check('I accept the terms of use','terms')

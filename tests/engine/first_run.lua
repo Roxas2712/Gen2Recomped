@@ -3,7 +3,7 @@ love=require('tests.love_stub')
 local options={}
 local count=0;local function check(v,m)assert(v,m);count=count+1 end
 local fail,writes,translated= false,0,0
-package.loaded['src.core.SaveData']={saveOptions=function(o)writes=writes+1;if fail then return nil end;options=o;return o end}
+package.loaded['src.core.SaveData']={loadOptions=function()return options end,saveOptions=function(o)writes=writes+1;if fail then return nil end;options=o;return o end}
 local language='en'
 package.loaded['src.translation.Service']={setLauncher=function(o)language=o.launcherLanguage end,enqueueLauncher=function()translated=translated+1 end,launcherLookup=function(v)return v end}
 local W=require('src.import.FirstRun')
@@ -33,3 +33,18 @@ ui:touchpressed(1,20,20);ui:touchreleased(1,20,20);check(ui._setupOverlay.page==
 ui:touchpressed(1,20,20);ui:touchmoved(1,20,100);ui:touchreleased(1,20,100);check(ui._setupOverlay.page==2,'scroll gestures cannot activate the underlying button')
 ui:mousepressed(200,200,1);check(not ui.leaked,'clicks outside the guide never reach the library')
 print('First run: '..count..' checks passed')
+
+local B=require('src.import.CartridgeBatch');local start=B.start;local downloads=0
+B.start=function(_,confirmed)assert(confirmed);downloads=downloads+1 end
+W.open(ui);W.action(ui,'originals')
+check(ui._setupOverlay.originals and not options.launcherOriginalCartridges and downloads==0,'original-image preview does not consent or download before saving')
+W.action(ui,'downloadOriginals')
+check(options.launcherOriginalCartridges and options.launcherOriginalCartridgesConsent==B.CONSENT and downloads==1,'explicit download stores the future-image preference first')
+check(W.finish(ui)and options.launcherOriginalCartridges,'the artwork choice survives completing the guide')
+B.start=start
+local theme=require('src.import.LauncherTheme');local draw=theme.drawLogo;local branded=0
+ui.logo={getDimensions=function()return 500,160 end}
+theme.drawLogo=function(image)check(image==ui.logo,'setup uses the actual brand image');branded=branded+1 end
+W.logo(ui,0,0,240,180);check(branded==1,'setup logo uses the shared accent-aware drawing path')
+theme.drawLogo=draw
+print('Setup artwork: '..count..' checks passed')

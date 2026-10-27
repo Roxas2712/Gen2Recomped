@@ -18,13 +18,27 @@ local function start(url,version,preview)
   end)
   return ok and job or nil,ok and nil or tostring(job)
 end
+function D.member()
+ local auth=require('src.cloud.RetroCloud');local id=auth.accountId()
+ return auth.signedIn()and type(id)=='string'and id:match('^[1-9][0-9]*$')~=nil
+end
 function D.start(version,confirmed)
+  if not D.member()then return nil,'Sign in with a confirmed account to download original cartridge images.'end
   if confirmed~=true then return nil,'Confirm the artwork source and rights notice first.' end
   local source=require('src.import.CartridgeSources').get(version)
   if not source then return nil,'No original cartridge reference is available for this edition.' end
-  local job,why=start(source.image,version,false)
-  if job then job.source=source end
-  return job,why
+  local auth=require('src.cloud.RetroCloud');local owner=auth.accountId()
+  local task,why=require('src.cloud.Task').new(function()
+   local token,problem=auth.accessToken();if not token then return nil,problem end
+   local code,bytes=require('src.cloud.Http').request('GET',auth.API..'/cartridges/'..version,
+    {headers={Accept='image/png',Authorization='Bearer '..token},sensitive=true})
+   if code==401 then auth.expire(token)end
+   if not D.member()or auth.accountId()~=owner then return nil,'Sign in with a confirmed account to download original cartridge images.'end
+   if code~=200 then return nil,'The member image download is unavailable. Please try again.'end
+   local valid,problem=D.verify(bytes,source);if not valid then return nil,problem end
+   return bytes
+  end)
+  return task and setmetatable({task=task,owner=owner},D)or nil,why
 end
 function D.verify(bytes,source)
   if type(bytes)~='string' or #bytes==0 or #bytes>8*1024*1024 then return nil,'Invalid artwork download.' end
@@ -41,10 +55,16 @@ function D.preview(url)
 end
 function D:cancel()
   if self.cancelled or self.finished then return end
-  self.cancelled=true;retired[#retired+1]=self
+  self.cancelled=true;if self.task then self.task:cancel()else retired[#retired+1]=self end
 end
 function D:poll()
   D.reap();if self.cancelled then return {kind='cancelled'} end
+  if self.task then
+   if not D.member()or require('src.cloud.RetroCloud').accountId()~=self.owner then self:cancel();return {kind='error',error='The account changed. The image download stopped.'}end
+   local result=self.task:poll();if not result then return end
+   if result.kind=='done'and type(result.first)=='string'then return {kind='done',bytes=result.first}end
+   return {kind='error',error=result.error or result.second or 'The artwork download stopped.'}
+  end
   if self.finished then return self.finished end
   local result=self.channel:pop()
   if not result and not self.thread:isRunning() then result=self.channel:pop() or {kind='error',error=self.thread:getError() or 'The artwork download stopped.'} end

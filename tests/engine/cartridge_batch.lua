@@ -9,7 +9,8 @@ package.loaded['src.import.CartridgeBatch']=nil;B=require('src.import.CartridgeB
 local owner=nil;package.loaded['src.storage.AccountStorage']={scope=function() return owner end}
 love.filesystem.getInfo=function(p) return files[p] and {type='file'} end
 love.filesystem.write=function(p,b) files[p]=b;return true end
-package.loaded['src.import.CartridgeDownload']={start=function(v,confirmed)
+local member=true
+package.loaded['src.import.CartridgeDownload']={member=function()return member end,start=function(v,confirmed)
  assert(confirmed);requests=requests+1
  return {poll=function() return {kind='done',bytes=v} end,cancel=function()cancelled=cancelled+1 end}
 end}
@@ -30,3 +31,26 @@ check(cancelled==1 and not ui._cartBatch.running,'cancelling stops the active do
 B.start(ui,true);B.tick(ui);owner='17';B.tick(ui)
 check(cancelled==2 and not ui._cartBatch.running and not options.launcherCartDesigns.silver,'changing account cancels rather than writing into the new profile')
 print('Cartridge batch: '..n..' checks passed')
+
+member=false;ui.launcher=true;ui._cartBatch={}
+local before=requests;B.start(ui,true);check(not ui._cartBatch.running and requests==before,'a guest cannot start even a confirmed artwork batch')
+check(B.setAutomatic(ui,true),'automatic preference can be saved before registration')
+B.auto(ui);check(not ui._cartBatch.running and requests==before,'saved automatic downloads wait for a member login')
+member=true;B.auto(ui);check(ui._cartBatch.running,'a confirmed member can resume the saved automatic choice')
+for i=1,8 do B.tick(ui)end
+local once=requests;B.auto(ui);check(requests==once,'completed automation does not loop every frame')
+options.launcherCartDesigns.silver=nil;ui._cartAutoChecked=nil;B.auto(ui);B.tick(ui);B.cancel(ui);B.auto(ui)
+check(not ui._cartBatch.running,'stop keeps automatic downloads paused for this launcher session')
+check(B.setAutomatic(ui,false)and not options.launcherOriginalCartridges,'opt-out persists without deleting existing images')
+print('Member artwork automation: '..n..' checks passed')
+local versions=require('src.core.GameVersion');local originalOrder=versions.ORDER;local originalSource=Source.get
+versions.ORDER={};for _,v in ipairs(originalOrder)do versions.ORDER[#versions.ORDER+1]=v end
+versions.ORDER[#versions.ORDER+1]='futureedition'
+Source.get=function(v)if v=='futureedition'then return {sha256=string.rep('f',64),bytes=1234}end;return originalSource(v)end
+package.loaded['src.import.CartridgeBatch']=nil;local nextBuild=require('src.import.CartridgeBatch')
+check(nextBuild.ORDER[#nextBuild.ORDER]=='futureedition','a new supported edition is discovered from the edition/source catalogue')
+ui._cartBatch=nil;ui._cartAutoChecked=nil;ui._cartAutoPaused=nil;nextBuild.setAutomatic(ui,true);nextBuild.auto(ui)
+for i=1,12 do nextBuild.tick(ui)end
+check(options.launcherCartDesigns.futureedition and options.launcherCartDesigns.futureedition.originalSha256==string.rep('f',64),'the remembered member opt-in automatically loads an added edition')
+versions.ORDER=originalOrder;Source.get=originalSource
+print('Future cartridge catalogue: '..n..' checks passed')
