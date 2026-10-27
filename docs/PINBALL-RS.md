@@ -79,7 +79,7 @@ save files. Build/content/ROM identity, table, duration, seed policy and startin
 checkpoint must match. A disconnect cancels the round without awarding a winner.
 This is a friendly score challenge, not a server-authoritative ranked mode.
 
-Two transports are provided:
+Two independent transports are provided:
 
 - Direct ENet UDP, port 7777. LAN works by host address; Internet hosting needs
   an accessible/forwarded UDP port.
@@ -88,6 +88,56 @@ Two transports are provided:
   its binding/hosting for remote access. The launcher defaults to localhost,
   and does not silently contact the old public link relay. No relay has been
   deployed by this change.
+
+The launcher also includes Pinball actions in the existing ModCompass friends
+and inbox workspace: invite, accept/decline/cancel and automatic joint native
+preparation. It uses a dedicated Pinball mode and the existing authenticated
+CloudNet transport. **This client has been tested against a synthetic service,
+not qualified against the production ModCompass backend.** Server support is
+required before friend invitations can work live. See the precise
+[server contract and handoff](PINBALL-MODCOMPASS.md). The public fork's `main`
+contains the client, not the complete ModCompass server application.
+
+## Display pacing correction
+
+The first displayed test reproduced only 41.2 distinct native images per second
+despite a 60-Hz window and a fast native worker. Clearing the frame mailbox
+before native execution caused consumers to miss completed pictures. The worker
+now atomically publishes completed frames into a FIFO capped at three; the
+player starts consuming after two frames. Guest simulation still advances every
+frame at the original 59.7275 Hz. There is no fast-forward or altered physics.
+This adds approximately one frame of initial video buffering; queue length and
+latency remain bounded. Input commands are sent only when buttons change,
+audio is started only when stopped, and display settings are written only when
+changed rather than on every flipper press.
+
+Actual 40-second LÖVE 12 Metal launcher samples after that correction:
+
+| View | Distinct game images/s | Display p99 | Worst display interval |
+| --- | ---: | ---: | ---: |
+| Solo original, first / repeated | 59.8 / 59.8 | 18.2 / 18.4 ms | 20.1 / 42.4 ms |
+| Solo full table | 59.7 | 17.7 ms | 42.8 ms |
+| Two players, full table | 58.1 | 18.4 ms | 43.1 ms |
+
+The full-table runs and the repeated solo run each still had one interval over 25 ms. These measurements
+show the large solo delivery defect is fixed; they do not establish that every
+stutter is gone. Two-player full-table native cost reached 18.4 ms p95, above a
+single GBA frame budget. Both optional presentations remain available.
+Aggregate evidence: [display samples](qa/pinball-display-pacing.json).
+
+To repeat the real application test with your own prepared installation:
+
+```sh
+python3 tools/qualify_pinball_frames.py --love /path/to/love --label solo
+python3 tools/qualify_pinball_frames.py --love /path/to/love --label two --seats 2 --full-table
+```
+
+Run GPU timing samples separately and keep the window focused. The harness uses
+isolated profiles/player files and managed ephemeral hosts; it never writes the
+production solo saves. It measures distinct native frames, not merely window
+refreshes, and fails below 95% of native cadence, p99 above 25 ms, a maximum
+interval above 75 ms, or focus loss. These thresholds are a regression check,
+not a guarantee of imperceptible stutters.
 
 ## Qualification and outstanding work
 
@@ -104,7 +154,7 @@ including full-room rejection and disconnects.
 
 The real LÖVE worker also completed two-guest, 1800-frame score rounds over
 localhost ENet: USA/Ruby (50500–0) and EU/German/Sapphire (500–0; final rerun
-2400–0). Matching
+2400–0; after the FIFO correction 4000–0). Matching
 starting fingerprints and the resulting win/loss were checked. Controller
 seat retention and focus suppression were checked with simulated controllers;
 two physical controllers and two separate Internet-connected devices remain
