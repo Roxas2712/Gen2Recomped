@@ -1,5 +1,6 @@
 -- Detached Gen 1-5 snapshots and revision-bound native command admission.
 -- Snapshot building stays data-only; submit validates before native dispatch.
+local MoveSelectionPhase = require("src.battle.MoveSelectionPhase")
 local Ids = require("src.mods.UnifiedIds")
 local Intents = require("src.mods.BattleIntents")
 local Commands = require("src.battle.BattleCommands")
@@ -223,7 +224,7 @@ local function prompt(b, covered, actor)
     end
     return "menu"
   end
-  if b.phase == "moveSelect" then
+  if MoveSelectionPhase.active(b) then
     return "moves"
   end
   if b.phase == "targetSelect" then

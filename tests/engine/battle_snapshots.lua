@@ -277,6 +277,7 @@ for _, version in ipairs(GameVersion.ORDER) do
     { "intro", "locked" },
     { "messages", "locked" },
     { "moveSelect", "moves" },
+    { "moves", GameVersion.isGen2() and "moves" or "locked" },
     { "targetSelect", "target" },
     { "mimicSelect", "mimic" },
     { "finished", "locked" },
