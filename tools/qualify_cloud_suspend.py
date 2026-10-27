@@ -42,6 +42,7 @@ def main():
     parser.add_argument('--trainer', action='store_true', help='Exercise a real imported trainer instead of the wild battle')
     parser.add_argument('--idle-ticks', type=int, default=0, help='Age the native battle before saving; 108000 ticks = 30 simulated minutes')
     parser.add_argument('--during-animation', action='store_true')
+    parser.add_argument('--private-game-cache', action='store_true', help='Transfer the real imported game through the private API; target starts without game data')
     parser.add_argument('--timeout', type=int, default=180)
     args = parser.parse_args()
     caches = {}
@@ -65,10 +66,10 @@ def main():
     output.mkdir(parents=True)
     output.chmod(0o700)
     source = output / 'source'
-    qa_copy(source)
+    qa_copy(source, ephemeral=True)
     source.mkdir()
     shutil.copytree(ROOT / 'src', source / 'src')
-    for name in ('assets', 'data', 'tests'):
+    for name in ('assets', 'data', 'tests', 'tools'):
         (source / name).symlink_to(ROOT / name, target_is_directory=True)
     (source / 'main.lua').write_bytes(driver.read_bytes())
     (source / 'conf.lua').write_text("""function love.conf(t)
@@ -139,7 +140,7 @@ if(!$u->hasVerifiedEmail())throw new RuntimeException('QA account must have a co
             for role in ('source', 'target'):
                 identity = 'oasc-suspend-qa-' + run_id + '-' + edition + '-' + role
                 qa_profile(profiles / identity)
-                config = dict(edition=edition, role=role, animation=args.during_animation, idleTicks=args.idle_ticks, trainer=args.trainer, move=args.move, email=email, password=password, cache=str(cache),
+                config = dict(edition=edition, role=role, privateGameCache=args.private_game_cache, animation=args.during_animation, idleTicks=args.idle_ticks, trainer=args.trainer, move=args.move, email=email, password=password, cache=str(cache),
                               api=url + '/api/cloud/v1', library=str(runtime / 'Contents/Frameworks/love.framework/Versions/A/love'),
                               result=str(output / (edition + '-' + role + '.json')),
                               expected=str(output / (edition + '-expected.lua')))
@@ -148,9 +149,9 @@ if(!$u->hasVerifiedEmail())throw new RuntimeException('QA account must have a co
                 config_path.chmod(0o600)
                 with (output / (edition + '-' + role + '.log')).open('ab') as case_log:
                     child = qa_popen([str(runtime / 'Contents/MacOS/love'), str(source)], cwd=ROOT,
-                                    env=os.environ | dict(POKEPORT_IDENTITY=identity, POKEPORT_DATA_DIR=str(cache / 'data/generated'),
+                                    env={k:v for k,v in (os.environ | dict(POKEPORT_IDENTITY=identity, POKEPORT_DATA_DIR=str(cache / 'data/generated'),
                                         POKEPORT_NO_DISCORD='1', POKEPORT_SKIP_LEGACY_MIGRATION='1', RETRO_SUSPEND_CONFIG=str(config_path),
-                                        SSL_CERT_FILE=str(cert), CURL_CA_BUNDLE=str(cert), NO_PROXY='localhost,127.0.0.1'),
+                                        SSL_CERT_FILE=str(cert), CURL_CA_BUNDLE=str(cert), NO_PROXY='localhost,127.0.0.1')).items() if k!='POKEPORT_DATA_DIR' or not args.private_game_cache},
                                     stdout=case_log, stderr=case_log)
                     children.append(child)
                     try:

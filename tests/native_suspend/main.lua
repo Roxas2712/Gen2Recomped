@@ -43,7 +43,8 @@ local function prepare()
   for id,record in pairs(Game.data.trainers or {})do
    for index,party in ipairs(record.parties or {})do
     local first=party[1]
-    if first and first.species=='MAGIKARP'and(first.level or 0)>highest then
+    local species=first and Game.data.pokemon[first.species]
+    if species and species.dex==129 and(first.level or 0)>highest then
      highest=first.level;trainer={id=id,index=index}
     end
    end
@@ -54,7 +55,8 @@ local function prepare()
  world.update=function(self,dt)
   if Game.input:wasPressed('a')and not Game.save.flags.CLOUD_SUSPEND_STARTED then
    Game.save.flags.CLOUD_SUSPEND_STARTED=true
-   self.runner:run({{'start_battle',trainer and'trainer'or'wild',trainer and trainer.id or'MAGIKARP',trainer and trainer.index or 35},{'set_flag','CLOUD_SUSPEND_RETURNED'}})
+   local wild=require('src.core.Gen2SpeciesNames').registryId(Game.data.pokemon,'MAGIKARP')
+   self.runner:run({{'start_battle',trainer and'trainer'or'wild',trainer and trainer.id or wild,trainer and trainer.index or 35},{'set_flag','CLOUD_SUSPEND_RETURNED'}})
   end
   return update(self,dt)
  end
@@ -81,7 +83,11 @@ function love.load()
  require('src.core.SaveData').otherLocations=function()return {}end
  require('src.storage.AccountStorage').enable()
  local ffi=require('ffi');pcall(ffi.cdef,'int PHYSFS_mount(const char*,const char*,int);');local lib=ffi.load(cfg.library)
- assert(lib.PHYSFS_mount(cfg.cache..'/data/generated','data/generated',0)~=0);assert(lib.PHYSFS_mount(cfg.cache..'/assets/generated','assets/generated',0)~=0)
+ if not cfg.privateGameCache then
+  assert(lib.PHYSFS_mount(cfg.cache..'/data/generated','data/generated',0)~=0);assert(lib.PHYSFS_mount(cfg.cache..'/assets/generated','assets/generated',0)~=0)
+ elseif cfg.role=='source' then
+  assert(lib.PHYSFS_mount(cfg.cache,'qa-import',0)~=0)
+ end
  require('src.core.GameVersion').set(cfg.edition)
  Auth=require('src.cloud.RetroCloud');Auth.API=cfg.api;Task=require('src.cloud.Task')
  task('login',function()return require('src.cloud.NativeAccount').login(cfg.email,cfg.password)end)
@@ -96,7 +102,29 @@ function love.update(dt)
  if job then
   local r=job:poll();if not r then return end;job=nil
   if r.kind~='done'or not r.first then return finish(false,r.second or r.error)end
-  if phase=='login'then prepare();return
+  if phase=='login'then
+   if cfg.privateGameCache then
+    task('private-game',function()
+     assert(require('src.storage.AccountStorage').bind())
+     local store=assert(Auth.open());local cache=require('src.storage.GameCache')
+     if cfg.role=='source'then
+      local prefix=require('src.core.GameVersion').cachePrefix(cfg.edition)
+      local function path(p)assert(p:sub(1,#prefix)==prefix);return 'qa-import/'..p:sub(#prefix+1)end
+      local fs={read=function(p)return love.filesystem.read(path(p))end,getInfo=function(p)return love.filesystem.getInfo(path(p))end,
+       getDirectoryItems=function(p)return love.filesystem.getDirectoryItems(path(p))end}
+      local id,why=cache.upload(store,cfg.edition,nil,fs);assert(id,why)
+      -- Use the same private restore path on both profiles for the game boot.
+      local restored,why=cache.restore(store,cfg.edition,id);assert(restored,why);return restored
+     end
+     assert(not love.filesystem.getInfo('data/generated/pokemon.lua'),'Target must start without imported game data')
+     local restored,why=cache.restore(store,cfg.edition);assert(restored,why);return restored
+    end);return
+   end
+   prepare();return
+  elseif phase=='private-game'then
+   local ok,why=require('src.import.CacheFs').mountVersion(cfg.edition);assert(ok,why)
+   assert(require('src.storage.GameCache').prefix(cfg.edition),'Boot must use the account-private restored import')
+   prepare();return
   elseif phase=='upload'then phase='nextturn'
   elseif phase=='download'then
    local saves=require('src.core.SaveData');local slots=saves.listSlots(cfg.edition);assert(#slots==1,'Cloud restored one normal save')
@@ -125,7 +153,11 @@ function love.update(dt)
      local cp,code,detail=require('src.core.Checkpoint').capture(Game)
      if not cp then local ok,why=pcall(require('src.core.CheckpointBattle').capture,Game,b,function(v)return assert(S.decode(S.encodeExact(v)))end);error(tostring(detail)..' / '..tostring(why))end
     end
-    idleTicks=idleTicks+1;step(false)
+    -- Advance actual logic and journal ticks without rendering every idle
+    -- decision. Thirty simulated minutes must not spend thirty real minutes
+    -- drawing an unchanged battle menu.
+    local count=math.min(240,(cfg.idleTicks or 0)-idleTicks)
+    for _=1,count do idleTicks=idleTicks+1;step(false)end
    elseif phase=='animation'and b.gen3AnimPlaying then
     animationTicks=animationTicks+1
     if animationTicks>=5 then suspend();return else step(true)end

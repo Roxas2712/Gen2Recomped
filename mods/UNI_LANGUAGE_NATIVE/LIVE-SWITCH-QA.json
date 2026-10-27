@@ -1,0 +1,1781 @@
+{
+  "engine": {
+    "repository": "https://github.com/bryanthaboi/gen1recomp",
+    "commit": "0831a9c4c5adba9e7ac66ce2ec77d728a3e584f8",
+    "trackedCheckoutClean": true
+  },
+  "version": "1.8.0",
+  "status": "passed-scoped-live-switch",
+  "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+  "isolatedProcessRuns": 21,
+  "restartProcessRuns": 6,
+  "totalFinalProcessRuns": 28,
+  "firstProfileProcessRuns": 1,
+  "firstProfile": {
+    "passed": true,
+    "exitCode": 0,
+    "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+    "helpersSha256": {
+      "initial_language_profile.lua": "71fe5209bc7136fb2ae355929ba8b088c10eb99287eebf15e386d8524920f649",
+      "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af"
+    },
+    "log": "initial-profile.log",
+    "logSha256": "f230b40db3dcdcfd6f75dfd9f3ce7961eeb9ce5124f35c10566a1821fc139c6b"
+  },
+  "freshProcessRecovery": [
+    {
+      "game": "red",
+      "mode": "write",
+      "passed": true,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "driverSha256": "33daa3e11dad34c1b6a95171b8bd077e484614f67e7f327ae724f789890741b3",
+      "log": "red-interrupted-write.log",
+      "logSha256": "08da922ee7e83c4dd559c7f87c0e5c9b622d661ad3c16ad108e708c3ea2b6c2f"
+    },
+    {
+      "game": "red",
+      "mode": "resume",
+      "passed": true,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "driverSha256": "33daa3e11dad34c1b6a95171b8bd077e484614f67e7f327ae724f789890741b3",
+      "log": "red-interrupted-resume.log",
+      "logSha256": "8c8869cc51f47a1c02db898898fd894138fb2d0c306498bbcd616843873742ab"
+    },
+    {
+      "game": "gold",
+      "mode": "write",
+      "passed": true,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "driverSha256": "33daa3e11dad34c1b6a95171b8bd077e484614f67e7f327ae724f789890741b3",
+      "log": "gold-interrupted-write.log",
+      "logSha256": "bb097aa9861dce82b4aeced8c83cb6e4af83680028533873baa34a209628d903"
+    },
+    {
+      "game": "gold",
+      "mode": "resume",
+      "passed": true,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "driverSha256": "33daa3e11dad34c1b6a95171b8bd077e484614f67e7f327ae724f789890741b3",
+      "log": "gold-interrupted-resume.log",
+      "logSha256": "f45391bd2711e52e06bd0de4d67128359544256536e4b79076dd88a0eeaa921f"
+    },
+    {
+      "game": "emerald",
+      "mode": "write",
+      "passed": true,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "driverSha256": "33daa3e11dad34c1b6a95171b8bd077e484614f67e7f327ae724f789890741b3",
+      "log": "emerald-interrupted-write.log",
+      "logSha256": "ac20a6f3b527116e324df64ae13e4f53895eb9d5b74dee72a4fa3174b60c3e6c"
+    },
+    {
+      "game": "emerald",
+      "mode": "resume",
+      "passed": true,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "driverSha256": "33daa3e11dad34c1b6a95171b8bd077e484614f67e7f327ae724f789890741b3",
+      "log": "emerald-interrupted-resume.log",
+      "logSha256": "0e144626e7a9149021cff4adadbb91941e4ed15eabdef92e8ad2082e4c4476d6"
+    }
+  ],
+  "localizedProfiles": 41,
+  "editionCount": 11,
+  "successfulNormalHandoffs": 103,
+  "realHealingInteractions": 62,
+  "menuLanguages": 10,
+  "checks": [
+    {
+      "game": "red",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 58.831,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "red-bare-all.log",
+      "logSha256": "91084a365fb362cc68dde2811d061e7d548844e9a193ad779ddefa69dd57a9f5",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "es",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "blue",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 82.895,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "blue-bare-all.log",
+      "logSha256": "084d4fb5e690923a2d1be88e7575545f169e3b996ee702736062f3242212c607",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "yellow",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 39.962,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "yellow-bare-all.log",
+      "logSha256": "7183d3bded015d5ef3ab3e63bd864c1167f225b9d9fae1fc918089c404a02455",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "es",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "gold",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 95.845,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "gold-bare-all.log",
+      "logSha256": "e7486dea6e8fda4eef73affd390eea1274b7f29544a216ff4066c6e026a734e6",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "es",
+        "fr",
+        "it",
+        "ko",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "silver",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 87.172,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "silver-bare-all.log",
+      "logSha256": "9ee8519e151fa12d0ffae3ec81d309f6b4f359dff70b76932ecc26c2b6cae830",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "es",
+        "fr",
+        "ko",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "crystal",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 68.604,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "crystal-bare-all.log",
+      "logSha256": "846887772bed76c395f261c3cc2ecc10175ca1b661f7b8c910ff1b1a3e05e09f",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "es",
+        "it",
+        "ja",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "firered",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 59.099,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "firered-bare-all.log",
+      "logSha256": "8b6081ef1a885786290a1c24b9b51ed36ed6bd9b493d5b61ce44d2d1d67b1a64",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b",
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "es",
+        "it",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "leafgreen",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 59.02,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "leafgreen-bare-all.log",
+      "logSha256": "53533dfbb6d8fefe742da77faa6dda82a0f1abe3ca1cfef64ff12ff0a70cb94e",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b",
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "es",
+        "fr",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "ruby",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 46.048,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "ruby-bare-all.log",
+      "logSha256": "57261b2aa92d5dad6751923e1db55361ebae1f014a984b98333764e0ced9c29c",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b",
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "sapphire",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 65.574,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "sapphire-bare-all.log",
+      "logSha256": "1d0d149c9a9d5d1a0b186d80a459e8a9e492c4db9d39fed4bf797f837042e395",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b",
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "emerald",
+      "mods": [],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": true,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 138.224,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "emerald-bare-all.log",
+      "logSha256": "f7d0a98fe125a9cb9c7dc7cbeb495e5a4e7c67ef29a48e4700b3e07a6eaaf5ab",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b",
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "es",
+        "fr",
+        "it",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "red",
+      "mods": [
+        "vasc",
+        "kasc"
+      ],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": false,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 438.115,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "red-vasc-kasc.log",
+      "logSha256": "3b5c82e2892c24f10f3f51631bac2e37c6eb89b75f3c6c0e7839e401bd9981b5",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0",
+        "kanto_ascendant": "6.7.16",
+        "VOXEL_ASCENDANT": "3.0.33"
+      },
+      "menuRoute": "Kanto Ascendant\t7"
+    },
+    {
+      "game": "gold",
+      "mods": [
+        "vasc",
+        "kasc"
+      ],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": false,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 66.534,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "gold-vasc-kasc.log",
+      "logSha256": "12262b23595157c2a05a635f1348b70e547555e817062924345e8f0602d5b9d6",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "ko",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0",
+        "kanto_ascendant": "6.7.16",
+        "VOXEL_ASCENDANT": "3.0.33"
+      },
+      "menuRoute": "fallback hub\t2"
+    },
+    {
+      "game": "red",
+      "mods": [
+        "vasc"
+      ],
+      "testOptions": {
+        "nurse": false,
+        "allProfiles": false,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 15.15,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "red-vasc.log",
+      "logSha256": "90257764192dd78f9ced63cab1db57ad8c505e10387e026118e412e8c4bbd4b7",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0",
+        "VOXEL_ASCENDANT": "3.0.33"
+      },
+      "menuRoute": "fallback hub\t3"
+    },
+    {
+      "game": "emerald",
+      "mods": [
+        "origami"
+      ],
+      "testOptions": {
+        "nurse": true,
+        "allProfiles": false,
+        "repeatPairs": 0,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 66.203,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "emerald-origami.log",
+      "logSha256": "af3d3baadeaca2e7025d410b3bc69b4ccae50b9d4d378863fcb471bff32795eb",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b",
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0",
+        "ORIGAMI_ASCENDANT": "1.1.0-rc.4"
+      },
+      "menuRoute": "Origami Ascendant"
+    },
+    {
+      "game": "red",
+      "mods": [],
+      "testOptions": {
+        "nurse": false,
+        "allProfiles": false,
+        "repeatPairs": 0,
+        "recovery": true,
+        "badUI": true,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 8.171,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "red-bare-recovery.log",
+      "logSha256": "3d738b679f9f49ccb024e99374d9dba1b2f2d73b7a95300f379933ca8070369f",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "gold",
+      "mods": [],
+      "testOptions": {
+        "nurse": false,
+        "allProfiles": false,
+        "repeatPairs": 0,
+        "recovery": true,
+        "badUI": true,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 103.483,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "gold-bare-recovery.log",
+      "logSha256": "f044854d2864d9b076b638fbe9cdae240495ebc40e38dd3c1b27365676fdde6e",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "ko",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "emerald",
+      "mods": [],
+      "testOptions": {
+        "nurse": false,
+        "allProfiles": false,
+        "repeatPairs": 0,
+        "recovery": true,
+        "badUI": true,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 30.507,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "emerald-bare-recovery.log",
+      "logSha256": "0296d488a6feb60cdd2dedaa2ef0bacc4978e299a97d5feeb51dcc0993422763",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b",
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "red",
+      "mods": [],
+      "testOptions": {
+        "nurse": false,
+        "allProfiles": false,
+        "repeatPairs": 3,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 13.84,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "red-bare-repeat3.log",
+      "logSha256": "c93f1daed3854a5efa14e9e17653b34f352c297200b34932b4af14b358fa66c2",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en",
+        "de",
+        "en",
+        "de",
+        "en",
+        "de",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "gold",
+      "mods": [],
+      "testOptions": {
+        "nurse": false,
+        "allProfiles": false,
+        "repeatPairs": 3,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 78.329,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "gold-bare-repeat3.log",
+      "logSha256": "f85994bf271fac8c4ddb752f0440dfbc6bd3c41f2ff2eed62cf4cb5683078761",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b"
+      },
+      "nonExecutedHelpersAtCaptureSha256": {
+        "gba_language_handoff.lua": "499fea5b46bb888930e3ce420de2414c06d211ef54b107872ea5a17bc8f165d9"
+      },
+      "languages": [
+        "de",
+        "ko",
+        "pt-BR",
+        "en",
+        "de",
+        "en",
+        "de",
+        "en",
+        "de",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    },
+    {
+      "game": "emerald",
+      "mods": [],
+      "testOptions": {
+        "nurse": false,
+        "allProfiles": false,
+        "repeatPairs": 3,
+        "recovery": false,
+        "badUI": false,
+        "scriptedSpeed": 4
+      },
+      "passed": true,
+      "exitCode": 0,
+      "seconds": 55.593,
+      "runtimePayloadSha256": "7cb0d2ca07b2860ff0601285fed41e4116480faa8de445ce7d397916be6fb950",
+      "log": "emerald-bare-repeat3.log",
+      "logSha256": "d92c189b4736e7e0776ced9e5e0f6b3128aae3a022831e4de2453cd6cb9b3e21",
+      "driverSha256": "5ff467797e117e7f4af5d832c0e09307222919a0ae4528577f26d2c2113f741e",
+      "helpersSha256": {
+        "live_switch_state.lua": "4271374a0317ddc4e115ae2b354603720502d3945ed6ddc424c425ff2dd2a9b6",
+        "live_switch_nurse.lua": "e171c5a12b583872dd802bef24cb641dda6258faf717185a5dba3182c39ce6af",
+        "live_switch_controls.lua": "3882fc8f94a44a4c57f512e440555bdad6e91a5acd8efaca9999c6dffb7a98dd",
+        "ptbr_nurse_live.lua": "86e339945b965716cf82040e4506c35d46413605d76ca2024d06612cc770a7c0",
+        "live_switch_recovery.lua": "b7c71ba589c10ee0cf706271d3b3aba3f17f388fbad54cd253824f89319f7d9b",
+        "gba_language_handoff.lua": "17a4116fbc5d60b5cec3647e7f683a14f12374d394e5e43a95bb614b4e9df197"
+      },
+      "languages": [
+        "de",
+        "pt-BR",
+        "en",
+        "de",
+        "en",
+        "de",
+        "en",
+        "de",
+        "en"
+      ],
+      "loadedModVersions": {
+        "german_rom_source": "1.8.0"
+      },
+      "menuRoute": "fallback hub\t1"
+    }
+  ],
+  "measurements": [
+    {
+      "game": "red",
+      "language": "de",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 0.631110125,
+      "luaKiB": 17448.452148438,
+      "textureBytes": 1804728
+    },
+    {
+      "game": "red",
+      "language": "pt-BR",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 0.65959545833334,
+      "luaKiB": 22143.430664062,
+      "textureBytes": 2108088
+    },
+    {
+      "game": "red",
+      "language": "es",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 0.68268216666667,
+      "luaKiB": 26893.775390625,
+      "textureBytes": 2107832
+    },
+    {
+      "game": "red",
+      "language": "en",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 0.47955920833333,
+      "luaKiB": 28266.046875,
+      "textureBytes": 2100152
+    },
+    {
+      "game": "blue",
+      "language": "de",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 0.61254391666667,
+      "luaKiB": 17471.717773438,
+      "textureBytes": 1804728
+    },
+    {
+      "game": "blue",
+      "language": "pt-BR",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 0.7609635,
+      "luaKiB": 22174.516601562,
+      "textureBytes": 2108088
+    },
+    {
+      "game": "blue",
+      "language": "en",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 0.49741083333334,
+      "luaKiB": 23507.647460938,
+      "textureBytes": 2100152
+    },
+    {
+      "game": "yellow",
+      "language": "de",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 0.620649,
+      "luaKiB": 17956.649414062,
+      "textureBytes": 1812920
+    },
+    {
+      "game": "yellow",
+      "language": "pt-BR",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 0.89838225,
+      "luaKiB": 22657.834960938,
+      "textureBytes": 1821368
+    },
+    {
+      "game": "yellow",
+      "language": "es",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 0.941262,
+      "luaKiB": 27582.7578125,
+      "textureBytes": 2116024
+    },
+    {
+      "game": "yellow",
+      "language": "en",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 0.58110795833333,
+      "luaKiB": 28965.716796875,
+      "textureBytes": 2403256
+    },
+    {
+      "game": "gold",
+      "language": "de",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 1.3840714166667,
+      "luaKiB": 44279.490234375,
+      "textureBytes": 3221512
+    },
+    {
+      "game": "gold",
+      "language": "pt-BR",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 1.94033575,
+      "luaKiB": 63183.78515625,
+      "textureBytes": 3180552
+    },
+    {
+      "game": "gold",
+      "language": "es",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 2.6622017083333,
+      "luaKiB": 82629.047851562,
+      "textureBytes": 3180552
+    },
+    {
+      "game": "gold",
+      "language": "fr",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 1.95199775,
+      "luaKiB": 101974.87695312,
+      "textureBytes": 3180552
+    },
+    {
+      "game": "gold",
+      "language": "it",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 2.1003755833333,
+      "luaKiB": 121270.77636719,
+      "textureBytes": 3180552
+    },
+    {
+      "game": "gold",
+      "language": "ko",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 2.2693000833333,
+      "luaKiB": 122724.66015625,
+      "textureBytes": 3180552
+    },
+    {
+      "game": "gold",
+      "language": "en",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 2.2297678333333,
+      "luaKiB": 116877.36230469,
+      "textureBytes": 3475464
+    },
+    {
+      "game": "silver",
+      "language": "de",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 1.0840385,
+      "luaKiB": 44405.66796875,
+      "textureBytes": 3221512
+    },
+    {
+      "game": "silver",
+      "language": "pt-BR",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 1.5024987083333,
+      "luaKiB": 63179.677734375,
+      "textureBytes": 3180552
+    },
+    {
+      "game": "silver",
+      "language": "es",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 1.3594883333333,
+      "luaKiB": 82702.608398438,
+      "textureBytes": 3180552
+    },
+    {
+      "game": "silver",
+      "language": "fr",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 3.0466675,
+      "luaKiB": 102054.3125,
+      "textureBytes": 3180552
+    },
+    {
+      "game": "silver",
+      "language": "ko",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 2.5096272083333,
+      "luaKiB": 122781.34960938,
+      "textureBytes": 3180552
+    },
+    {
+      "game": "silver",
+      "language": "en",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 1.9234649583333,
+      "luaKiB": 116918.04785156,
+      "textureBytes": 3475464
+    },
+    {
+      "game": "crystal",
+      "language": "de",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 1.0442700833333,
+      "luaKiB": 51047.25,
+      "textureBytes": 1904648
+    },
+    {
+      "game": "crystal",
+      "language": "pt-BR",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 1.265962875,
+      "luaKiB": 74868.615234375,
+      "textureBytes": 1863688
+    },
+    {
+      "game": "crystal",
+      "language": "es",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 2.0629274166667,
+      "luaKiB": 98953.147460938,
+      "textureBytes": 1863688
+    },
+    {
+      "game": "crystal",
+      "language": "it",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 2.14839575,
+      "luaKiB": 122114.66015625,
+      "textureBytes": 1863688
+    },
+    {
+      "game": "crystal",
+      "language": "ja",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 1.6300582083333,
+      "luaKiB": 147782.50976562,
+      "textureBytes": 1863688
+    },
+    {
+      "game": "crystal",
+      "language": "en",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 1.54731475,
+      "luaKiB": 141306.37597656,
+      "textureBytes": 2158600
+    },
+    {
+      "game": "firered",
+      "language": "de",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 5.0652304166667,
+      "luaKiB": 107202.34472656,
+      "textureBytes": 6445320
+    },
+    {
+      "game": "firered",
+      "language": "pt-BR",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 5.2559405416667,
+      "luaKiB": 156578.96875,
+      "textureBytes": 5392136
+    },
+    {
+      "game": "firered",
+      "language": "es",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 4.7762338333333,
+      "luaKiB": 206889.35839844,
+      "textureBytes": 7512584
+    },
+    {
+      "game": "firered",
+      "language": "it",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 5.0816999166667,
+      "luaKiB": 204621.02539062,
+      "textureBytes": 7510280
+    },
+    {
+      "game": "firered",
+      "language": "en",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 2.439894,
+      "luaKiB": 178047.04394531,
+      "textureBytes": 7510280
+    },
+    {
+      "game": "leafgreen",
+      "language": "de",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 3.773977625,
+      "luaKiB": 107562.86035156,
+      "textureBytes": 6445320
+    },
+    {
+      "game": "leafgreen",
+      "language": "pt-BR",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 4.238540875,
+      "luaKiB": 156827.66015625,
+      "textureBytes": 5392136
+    },
+    {
+      "game": "leafgreen",
+      "language": "es",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 10.225415583333,
+      "luaKiB": 207200.26855469,
+      "textureBytes": 7512584
+    },
+    {
+      "game": "leafgreen",
+      "language": "fr",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 5.1800360416667,
+      "luaKiB": 205286.64257812,
+      "textureBytes": 7510280
+    },
+    {
+      "game": "leafgreen",
+      "language": "en",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 2.649321875,
+      "luaKiB": 178575.34472656,
+      "textureBytes": 7807496
+    },
+    {
+      "game": "ruby",
+      "language": "de",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 4.5708618333333,
+      "luaKiB": 140335.24511719,
+      "textureBytes": 7355400
+    },
+    {
+      "game": "ruby",
+      "language": "pt-BR",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 12.988342333333,
+      "luaKiB": 193976.70507812,
+      "textureBytes": 4938248
+    },
+    {
+      "game": "ruby",
+      "language": "en",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 3.0972059166667,
+      "luaKiB": 223577.88671875,
+      "textureBytes": 6011144
+    },
+    {
+      "game": "sapphire",
+      "language": "de",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 8.5327627083333,
+      "luaKiB": 129087.08105469,
+      "textureBytes": 7355400
+    },
+    {
+      "game": "sapphire",
+      "language": "pt-BR",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 13.069108458333,
+      "luaKiB": 182484.94335938,
+      "textureBytes": 4938248
+    },
+    {
+      "game": "sapphire",
+      "language": "en",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 5.949442875,
+      "luaKiB": 212039.95703125,
+      "textureBytes": 6011144
+    },
+    {
+      "game": "emerald",
+      "language": "de",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 12.1342515,
+      "luaKiB": 160487.91601562,
+      "textureBytes": 8417032
+    },
+    {
+      "game": "emerald",
+      "language": "pt-BR",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 15.67725175,
+      "luaKiB": 230906.5703125,
+      "textureBytes": 8261384
+    },
+    {
+      "game": "emerald",
+      "language": "es",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 15.910639833333,
+      "luaKiB": 299084.125,
+      "textureBytes": 10382344
+    },
+    {
+      "game": "emerald",
+      "language": "fr",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 23.650728083333,
+      "luaKiB": 295419.52246094,
+      "textureBytes": 10382344
+    },
+    {
+      "game": "emerald",
+      "language": "it",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 26.149318708333,
+      "luaKiB": 295764.40429688,
+      "textureBytes": 10382344
+    },
+    {
+      "game": "emerald",
+      "language": "en",
+      "combination": "bare-all",
+      "secondsIncluding60SettlingFrames": 4.05299475,
+      "luaKiB": 270362.4140625,
+      "textureBytes": 10674952
+    },
+    {
+      "game": "red",
+      "language": "de",
+      "combination": "vasc-kasc",
+      "secondsIncluding60SettlingFrames": 55.949917083333,
+      "luaKiB": 1122987.09375,
+      "textureBytes": 99244784
+    },
+    {
+      "game": "red",
+      "language": "pt-BR",
+      "combination": "vasc-kasc",
+      "secondsIncluding60SettlingFrames": 91.780541541667,
+      "luaKiB": 1650547.0664062,
+      "textureBytes": 152272192
+    },
+    {
+      "game": "red",
+      "language": "en",
+      "combination": "vasc-kasc",
+      "secondsIncluding60SettlingFrames": 185.07834779167,
+      "luaKiB": 2175273.234375,
+      "textureBytes": 204987024
+    },
+    {
+      "game": "gold",
+      "language": "de",
+      "combination": "vasc-kasc",
+      "secondsIncluding60SettlingFrames": 3.4617460833333,
+      "luaKiB": 97081.571289062,
+      "textureBytes": 48324672
+    },
+    {
+      "game": "gold",
+      "language": "ko",
+      "combination": "vasc-kasc",
+      "secondsIncluding60SettlingFrames": 4.293978,
+      "luaKiB": 137051.09082031,
+      "textureBytes": 69888348
+    },
+    {
+      "game": "gold",
+      "language": "pt-BR",
+      "combination": "vasc-kasc",
+      "secondsIncluding60SettlingFrames": 3.9198189583333,
+      "luaKiB": 177073.87597656,
+      "textureBytes": 89378424
+    },
+    {
+      "game": "gold",
+      "language": "en",
+      "combination": "vasc-kasc",
+      "secondsIncluding60SettlingFrames": 4.1194422916667,
+      "luaKiB": 212781.06054688,
+      "textureBytes": 110766484
+    },
+    {
+      "game": "red",
+      "language": "de",
+      "combination": "vasc",
+      "secondsIncluding60SettlingFrames": 2.3867394166667,
+      "luaKiB": 72078.065429688,
+      "textureBytes": 106906508
+    },
+    {
+      "game": "red",
+      "language": "pt-BR",
+      "combination": "vasc",
+      "secondsIncluding60SettlingFrames": 2.528842375,
+      "luaKiB": 103329.19824219,
+      "textureBytes": 152032736
+    },
+    {
+      "game": "red",
+      "language": "en",
+      "combination": "vasc",
+      "secondsIncluding60SettlingFrames": 2.248495875,
+      "luaKiB": 130127.61914062,
+      "textureBytes": 197141300
+    },
+    {
+      "game": "emerald",
+      "language": "de",
+      "combination": "origami",
+      "secondsIncluding60SettlingFrames": 15.319301333333,
+      "luaKiB": 270421.2109375,
+      "textureBytes": 32127352
+    },
+    {
+      "game": "emerald",
+      "language": "pt-BR",
+      "combination": "origami",
+      "secondsIncluding60SettlingFrames": 15.6801155,
+      "luaKiB": 387334.05273438,
+      "textureBytes": 25908344
+    },
+    {
+      "game": "emerald",
+      "language": "en",
+      "combination": "origami",
+      "secondsIncluding60SettlingFrames": 8.290967125,
+      "luaKiB": 461889.0703125,
+      "textureBytes": 28733816
+    },
+    {
+      "game": "red",
+      "language": "de",
+      "combination": "bare-recovery",
+      "secondsIncluding60SettlingFrames": 0.49280045833333,
+      "luaKiB": 16858.932617188,
+      "textureBytes": 1804728
+    },
+    {
+      "game": "red",
+      "language": "pt-BR",
+      "combination": "bare-recovery",
+      "secondsIncluding60SettlingFrames": 0.51913541666667,
+      "luaKiB": 22009.337890625,
+      "textureBytes": 1812664
+    },
+    {
+      "game": "red",
+      "language": "en",
+      "combination": "bare-recovery",
+      "secondsIncluding60SettlingFrames": 0.399856,
+      "luaKiB": 23403.1015625,
+      "textureBytes": 1804728
+    },
+    {
+      "game": "gold",
+      "language": "de",
+      "combination": "bare-recovery",
+      "secondsIncluding60SettlingFrames": 1.043234875,
+      "luaKiB": 44310.439453125,
+      "textureBytes": 3221512
+    },
+    {
+      "game": "gold",
+      "language": "ko",
+      "combination": "bare-recovery",
+      "secondsIncluding60SettlingFrames": 1.0873247916667,
+      "luaKiB": 66127.00390625,
+      "textureBytes": 3180552
+    },
+    {
+      "game": "gold",
+      "language": "pt-BR",
+      "combination": "bare-recovery",
+      "secondsIncluding60SettlingFrames": 1.1445281666667,
+      "luaKiB": 83965.821289062,
+      "textureBytes": 3221512
+    },
+    {
+      "game": "gold",
+      "language": "en",
+      "combination": "bare-recovery",
+      "secondsIncluding60SettlingFrames": 1.0540819583333,
+      "luaKiB": 97336.299804688,
+      "textureBytes": 3180552
+    },
+    {
+      "game": "emerald",
+      "language": "de",
+      "combination": "bare-recovery",
+      "secondsIncluding60SettlingFrames": 5.8319024166667,
+      "luaKiB": 174707.47070312,
+      "textureBytes": 8417032
+    },
+    {
+      "game": "emerald",
+      "language": "pt-BR",
+      "combination": "bare-recovery",
+      "secondsIncluding60SettlingFrames": 7.2627482083333,
+      "luaKiB": 262621.34179688,
+      "textureBytes": 10474248
+    },
+    {
+      "game": "emerald",
+      "language": "en",
+      "combination": "bare-recovery",
+      "secondsIncluding60SettlingFrames": 4.02817575,
+      "luaKiB": 304705.06835938,
+      "textureBytes": 12587784
+    },
+    {
+      "game": "red",
+      "language": "de",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 0.49606270833333,
+      "luaKiB": 17377.334960938,
+      "textureBytes": 1804728
+    },
+    {
+      "game": "red",
+      "language": "pt-BR",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 0.53721045833333,
+      "luaKiB": 21990.994140625,
+      "textureBytes": 1812664
+    },
+    {
+      "game": "red",
+      "language": "en",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 0.43286104166667,
+      "luaKiB": 23385.63671875,
+      "textureBytes": 1804728
+    },
+    {
+      "game": "red",
+      "language": "de",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 0.53528104166667,
+      "luaKiB": 25893.772460938,
+      "textureBytes": 1804728
+    },
+    {
+      "game": "red",
+      "language": "en",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 0.46548383333333,
+      "luaKiB": 26775.041992188,
+      "textureBytes": 1804728
+    },
+    {
+      "game": "red",
+      "language": "de",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 0.5500925,
+      "luaKiB": 25925.741210938,
+      "textureBytes": 1804728
+    },
+    {
+      "game": "red",
+      "language": "en",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 0.57402345833333,
+      "luaKiB": 26756.397460938,
+      "textureBytes": 1804728
+    },
+    {
+      "game": "red",
+      "language": "de",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 0.67891966666667,
+      "luaKiB": 25934.057617188,
+      "textureBytes": 1804728
+    },
+    {
+      "game": "red",
+      "language": "en",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 0.40696416666667,
+      "luaKiB": 26765.338867188,
+      "textureBytes": 1804728
+    },
+    {
+      "game": "gold",
+      "language": "de",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 1.0351295416667,
+      "luaKiB": 44289.732421875,
+      "textureBytes": 3221512
+    },
+    {
+      "game": "gold",
+      "language": "ko",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 1.0269852083333,
+      "luaKiB": 66137.25,
+      "textureBytes": 3180552
+    },
+    {
+      "game": "gold",
+      "language": "pt-BR",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 1.0240869583333,
+      "luaKiB": 83951.942382812,
+      "textureBytes": 3221512
+    },
+    {
+      "game": "gold",
+      "language": "en",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 0.95748841666667,
+      "luaKiB": 97336.081054688,
+      "textureBytes": 3180552
+    },
+    {
+      "game": "gold",
+      "language": "de",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 1.1774855416667,
+      "luaKiB": 112984.33691406,
+      "textureBytes": 3221512
+    },
+    {
+      "game": "gold",
+      "language": "en",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 1.1823449583333,
+      "luaKiB": 112897.46191406,
+      "textureBytes": 3180552
+    },
+    {
+      "game": "gold",
+      "language": "de",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 1.418887375,
+      "luaKiB": 112992.04003906,
+      "textureBytes": 3221512
+    },
+    {
+      "game": "gold",
+      "language": "en",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 1.1922810416667,
+      "luaKiB": 112929.27441406,
+      "textureBytes": 3180552
+    },
+    {
+      "game": "gold",
+      "language": "de",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 1.2193704166667,
+      "luaKiB": 113004.00878906,
+      "textureBytes": 3221512
+    },
+    {
+      "game": "gold",
+      "language": "en",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 1.1036530833333,
+      "luaKiB": 112913.23535156,
+      "textureBytes": 3180552
+    },
+    {
+      "game": "emerald",
+      "language": "de",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 5.9577879166667,
+      "luaKiB": 174609.06835938,
+      "textureBytes": 8417032
+    },
+    {
+      "game": "emerald",
+      "language": "pt-BR",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 6.97618475,
+      "luaKiB": 262549.79101562,
+      "textureBytes": 10474248
+    },
+    {
+      "game": "emerald",
+      "language": "en",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 3.7213435,
+      "luaKiB": 304660.54101562,
+      "textureBytes": 12587784
+    },
+    {
+      "game": "emerald",
+      "language": "de",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 6.8027063333333,
+      "luaKiB": 294331.984375,
+      "textureBytes": 12587784
+    },
+    {
+      "game": "emerald",
+      "language": "en",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 3.6283317083333,
+      "luaKiB": 297157.41015625,
+      "textureBytes": 12587784
+    },
+    {
+      "game": "emerald",
+      "language": "de",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 6.6103166666667,
+      "luaKiB": 295545.44726562,
+      "textureBytes": 12587784
+    },
+    {
+      "game": "emerald",
+      "language": "en",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 3.4918950833333,
+      "luaKiB": 298162.16601562,
+      "textureBytes": 12587784
+    },
+    {
+      "game": "emerald",
+      "language": "de",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 6.77079725,
+      "luaKiB": 296843.8046875,
+      "textureBytes": 12587784
+    },
+    {
+      "game": "emerald",
+      "language": "en",
+      "combination": "bare-repeat3",
+      "secondsIncluding60SettlingFrames": 3.4674531666667,
+      "luaKiB": 299607.17578125,
+      "textureBytes": 12587784
+    }
+  ],
+  "timingScope": "Request to restoration plus 60 fixed simulation steps; scripted QA runs four logic steps per presentation frame with native fixed-step driver observations. Wall time on a shared macOS machine is not an isolated loading benchmark. First compilation and cached handoffs differ.",
+  "compatibility": {
+    "KantoAscendant": "6.7.16",
+    "VoxelAscendant": "3.0.33",
+    "testedCombinations": [
+      "Red + KASC + VASC",
+      "Gold + KASC + VASC",
+      "Red + VASC fallback hub",
+      "Emerald + installed Origami Ascendant Gen3"
+    ]
+  },
+  "coverage": [
+    "All 41 localized profiles reached via same-process handoff and real nurse interaction, with English return in all eleven editions",
+    "Bare Gen3 handoffs also verify the four Ruby/Sapphire or five other native naming templates, 78 ability names, trainer-class labels and the native manifest consumer against the real compiled profile",
+    "Exact party/inventory/progression and custom modData comparisons in exercised states",
+    "Ten menu-language choices, Japanese/Korean/Chinese rendering captures, disabled choices, native ROM importer size/MD5/SHA-1 checks",
+    "Blocked transition during actual nurse dialogue and unsafe capture state",
+    "Fault injection: missing source after queue, successful rollback, persisted recovery restore, corrupt recovery rejection and explicit deletion in Gen1/2/3",
+    "Three repeated German/English pairs per generation with Lua/GPU memory samples"
+  ],
+  "limitations": [
+    "Prepared offline saves, not full-story playthroughs",
+    "No Windows/Linux/mobile native file-picker QA",
+    "No two-device or online handoffs; online rooms are blocked",
+    "Only listed Ascendant versions/combinations tested; Red uses the KASC collector, Gold uses the fallback hub with both mods loaded because no KASC menu collector is exposed in that Gen2 session",
+    "No independent native-speaker certification",
+    "Custom GBA nickname glyph rendering across different profile fonts is not certified",
+    "Memory observations include renderer caches and are not process-RSS leak certification"
+  ]
+}

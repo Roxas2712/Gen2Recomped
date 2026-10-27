@@ -579,7 +579,7 @@ function Sidebar.install(RI)
       local lx, ly = x + (w - lw * sc) / 2, y + stripH + 10 * s
       g.setBlendMode("add")
       g.setColor(1, 0.85, 0.2, 0.12 + 0.1 * (0.5 + 0.5 * math.sin(pulse * 1.6)))
-      g.draw(logo, x + (w - lw * sc * 1.04) / 2, ly - lh * sc * 0.02, 0, sc * 1.04, sc * 1.04)
+      require('src.import.LauncherTheme').drawLogo(logo, x + (w - lw * sc * 1.04) / 2, ly - lh * sc * 0.02, 0, sc * 1.04, sc * 1.04)
       g.setBlendMode("alpha")
       if self.shineShader then
         local shineW = 0.16
@@ -588,7 +588,7 @@ function Sidebar.install(RI)
         g.setShader(self.shineShader)
       end
       g.setColor(1, 1, 1, 1)
-      g.draw(logo, lx, ly, 0, sc, sc)
+      require('src.import.LauncherTheme').drawLogo(logo, lx, ly, 0, sc, sc)
       g.setShader()
     end
     return barH
@@ -625,7 +625,7 @@ function Sidebar.install(RI)
         self.tiltRipsButton = { x = lx, y = top, width = lw * sc, height = lh * sc + 4 * s + codeH, pinned = true }
         local hot = self:_hover(self.tiltRipsButton)
         g.setColor(1, 1, 1, hot and 1 or 0.9)
-        g.draw(logo, lx, top, 0, sc, sc)
+        require('src.import.LauncherTheme').drawLogo(logo, lx, top, 0, sc, sc)
         g.setFont(self.warningFont); col(P.ink)
         g.printf(Strings("Use code") .. "\nGEN2RECOMP", x, top + lh * sc + 4 * s, w, "center")
       end
@@ -1933,7 +1933,7 @@ function Sidebar.install(RI)
       g.print(Strings("From ") .. tostring(meta.source), textX, ty + nLines * self.hintFont:getHeight() + 6 * s)
     end
     local designY=ty+nLines*self.hintFont:getHeight()+(meta and meta.source and (self.hintFont:getHeight()+8*s) or 0)
-    local artLabel=require('src.import.CartridgeSources').get(version) and 'ORIGINAL CARTRIDGE IMAGE ↓' or 'CARTRIDGE ART & DESIGN'
+    local artLabel=require('src.import.CartridgeSources').get(version) and 'ORIGINAL CARTRIDGE IMAGE' or 'CARTRIDGE ART & DESIGN'
     local designWidth=math.min(textW,self.hintFont:getWidth(Strings(artLabel))+24*s)
     self._sb.designCart=self:_chipButton(textX,designY,artLabel,{w=designWidth,h=32*s,kind='accent'})
     self._sb.designCart.version=version

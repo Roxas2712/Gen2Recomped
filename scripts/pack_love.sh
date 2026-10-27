@@ -9,8 +9,9 @@
 # Usage:
 #   scripts/pack_love.sh --output PATH [--listing PATH] [--version X.Y.Z]
 #                        [--dry-run] [--engine-only]
-# --engine-only explicitly excludes bundled mods for isolated native previews;
-# normal builds retain the complete bundled-mod contract.
+# --engine-only excludes optional bundled mods for isolated native previews;
+# the integrated Uni-Language profiles remain part of the native engine.
+# Normal builds retain the complete bundled-mod contract.
 #
 #   --output   where to write the .love (required)
 #   --listing  write the archive's file listing here, one path per line, in
@@ -127,7 +128,11 @@ MANIFEST_GLOB="tools/rom_manifest*.json"
 
 say "staging payload from $ROOT"
 for entry in "${CONTENT[@]}"; do
-  if [ "$ENGINE_ONLY" -eq 1 ] && [ "$entry" = mods ]; then continue; fi
+  if [ "$ENGINE_ONLY" -eq 1 ] && [ "$entry" = mods ]; then
+    mkdir -p "$STAGE/mods"
+    cp -R "$ROOT/mods/UNI_LANGUAGE_NATIVE" "$STAGE/mods/UNI_LANGUAGE_NATIVE"
+    continue
+  fi
   if [ -e "$ROOT/$entry" ]; then
     # Nested entries (tools/save-editor) keep their prefix: the require path
     # the game builds is the archive path, so a flattened copy is invisible.

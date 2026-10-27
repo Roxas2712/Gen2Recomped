@@ -670,6 +670,7 @@ function love.update(dt)
   -- is the code that just died.
   if bootReport then return end
   require('src.cloud.Presence').tick()
+  require('src.cloud.AccountBadge').tick()
   if not autopilot and not driverCo and not editorMode and not TouchEditor then
     local blocked=require('src.cloud.Play').tick(Importer and nil or Game)
     if blocked and Game then
@@ -767,6 +768,7 @@ function love.draw()
 end
 
 function love.keypressed(key, scancode, isrepeat)
+  require('src.cloud.AccountBadge').activity()
   if bootReport then return dismissBootReport() end
   if editorMode then return EditorApp.keypressed(key) end
   if TouchEditor then return TouchEditor.keypressed(key) end
@@ -795,6 +797,7 @@ end
 -- already solves this with a virtual cursor (RomImporter:_activatePadCursor);
 -- the editor now has the same one, and these forwards are what feed it.
 function love.gamepadpressed(joystick, button)
+  require('src.cloud.AccountBadge').activity()
   -- and the dismissal that matters on the Switch.
   if bootReport then return dismissBootReport() end
   if TouchEditor then return end
@@ -821,6 +824,7 @@ function love.gamepadreleased(joystick, button)
 end
 
 function love.gamepadaxis(joystick, axis, value)
+  if math.abs(value)>0.25 then require('src.cloud.AccountBadge').activity() end
   if TouchEditor then return end
   if editorMode then
     if EditorApp.gamepadaxis then return EditorApp.gamepadaxis(axis, value) end
@@ -918,6 +922,7 @@ function love.visible(v)
 end
 
 function love.touchpressed(id, x, y, dx, dy, pressure)
+  require('src.cloud.AccountBadge').activity()
   -- The dismissal that matters on a phone: there is no keyboard behind this.
   if bootReport then return dismissBootReport() end
   -- Android supplies both the pointer coordinates and pinch contacts here;
@@ -1075,6 +1080,7 @@ end
 -- its touch synthesis, without also reporting that synthesis as a second
 -- source touch event. Editors/importers and physical touch keep their owners.
 function love.mousepressed(x, y, button, istouch)
+  require('src.cloud.AccountBadge').activity()
   local facade=package.loaded['src.core.Game3']
   if Game and not(bootReport or editorMode or Importer or TouchEditor or istouch)
       and facade and facade._pointer then
@@ -1091,6 +1097,7 @@ function love.mousereleased(x, y, button, istouch)
   return nativeMouseReleased(x,y,button,istouch)
 end
 function love.mousemoved(x, y, dx, dy, istouch)
+  if math.abs(dx)+math.abs(dy)>2 then require('src.cloud.AccountBadge').activity() end
   local facade=package.loaded['src.core.Game3']
   if Game and not(bootReport or editorMode or Importer or TouchEditor or istouch or Game.lookWarping)
       and facade and facade._pointer then
@@ -1100,6 +1107,7 @@ function love.mousemoved(x, y, dx, dy, istouch)
 end
 
 function love.textinput(text)
+  require('src.cloud.AccountBadge').activity()
   if RetroOverlay.game then require('src.ui.FriendsMenu').text(RetroOverlay,text);return end
   if TouchEditor then return end
   if Importer then return Importer:textinput(text) end

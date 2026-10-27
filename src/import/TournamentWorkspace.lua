@@ -1,3 +1,4 @@
+local function L(value) return require('src.translation.Service').launcherLookup(value) end
 local W={}
 local Auth=require('src.cloud.RetroCloud')
 local API=require('src.cloud.Tournaments')
@@ -45,7 +46,7 @@ function W.action(self,id)
  if id:match('^field:') then focus(f,id:sub(7));return end
  focus(f,nil)
  if f.form and require('src.import.GiftDesigner').action(f.form,id) then self.pageScroll=0;return end
- if id=='back' then f.cup=nil;f.form=nil;f.choose=nil;f.confirm=nil;f.leagueOpen=nil;self.pageScroll=0;refresh(self)
+ if id=='back' then f.cup=nil;f.form=nil;f.choose=nil;f.confirm=nil;f.leagueOpen=nil;f.accessForm=nil;self.pageScroll=0;refresh(self)
  elseif id=='shop' then self.pageScroll=0;job(self,'shop',function() return require('src.cloud.ArenaShop').request('GET') end)
  elseif id=='shopBack' then f.shop=nil;f.shopConfirm=nil;self.pageScroll=0;refresh(self)
  elseif id=='shopEdition' then
@@ -68,7 +69,7 @@ function W.action(self,id)
   f.page=math.max(1,f.page+(id=='nextPage' and 1 or -1));local page=f.page
   job(self,'index',function() local doc,why=require('src.cloud.NativeAccount').request('GET','/tournaments?page='..page,nil,true);return doc,why end)
  elseif id:match('^open:') then
-  local key=id:sub(6);self.pageScroll=0;f.choose=nil;f.confirm=nil
+  local key=id:sub(6);self.pageScroll=0;f.choose=nil;f.confirm=nil;f.accessForm=nil
   job(self,'cup',function() return API.request('GET',key) end)
  elseif id=='rankings' then f.leagueOpen=true;self.pageScroll=0
  elseif id=='joinLeague' or id=='leaveLeague' then local active=id=='joinLeague';job(self,'league',function() return League.request('POST','league/registration',{active=active}) end)
@@ -108,9 +109,16 @@ function W.action(self,id)
  elseif id=='join' or id=='ready' or id=='notready' then
   local key=f.cup.id;job(self,'cup',function() return API.request('POST',key,'entry',{ready=id~='notready'}) end)
  elseif id=='leave' then local key=f.cup.id;job(self,'cup',function() return API.request('DELETE',key,'entry') end)
+ elseif id=='cupAccess' then f.accessForm=true;f.accessReason='';f.accessTag='';self.pageScroll=0
+ elseif id=='accessBack' then f.accessForm=nil;self.pageScroll=0
+ elseif id=='accessMode' or id:match('^access:') then
+  if #(f.accessReason or '')<15 then f.notice='Enter a reason of at least 15 characters.';return end
+  local payload={reason=f.accessReason};local key=f.cup.id
+  if id=='accessMode' then payload.invite_only=not f.cup.invite_only else payload.action=id:sub(8);payload.friend_tag=f.accessTag end
+  job(self,'cup',function()return API.request('POST',key,'access',payload)end)
  elseif id=='start' then f.confirm={kind='start'}
  elseif id=='cancel' then f.confirm={kind='cancel',reason=''}
- elseif id=='dismiss' then f.confirm=nil;f.choose=nil;f.form=nil
+ elseif id=='dismiss' then f.accessForm=nil;f.confirm=nil;f.choose=nil;f.form=nil
  elseif id:match('^fight:') then
   local index=tonumber(id:match(':(%d+)$'));local m=f.cup.matches[index]
   if m and m.state=='ready' then f.choose=index;self.pageScroll=0 end
@@ -166,10 +174,10 @@ function W.tick(self)
    else f.cup=doc;f.confirm=nil;f.choose=nil;if purpose=='saved' then f.form=nil end;f.notice='Results require both players or an organizer decision.' end
    f.nextRefresh=os.time()+20
   end
- elseif not f.shop and not f.form and not f.confirm and not f.choose and f.index and f.index.arena and f.index.arena.queue and f.index.arena.queue.state=='searching' and os.time()>=(f.nextQueue or 0) then
+ elseif not f.shop and not f.form and not f.confirm and not f.choose and not f.accessForm and f.index and f.index.arena and f.index.arena.queue and f.index.arena.queue.state=='searching' and os.time()>=(f.nextQueue or 0) then
   local q=f.index.arena.queue;f.nextQueue=os.time()+20
   job(self,'arena',function() if q.league then return League.request('POST','auto',{format=q.format,editions=q.editions}) end;return API.arena('POST',{format=q.format,edition=q.edition}) end)
- elseif not f.shop and not f.form and not f.confirm and not f.choose and (not f.index and not f.cup or os.time()>=(f.nextRefresh or 0)) then refresh(self) end
+ elseif not f.shop and not f.form and not f.confirm and not f.choose and not f.accessForm and (not f.index and not f.cup or os.time()>=(f.nextRefresh or 0)) then refresh(self) end
  local n=require('src.link.CloudArena').takeNotice()
  if n and n.account==f.account then f.notice=n.text;f.nextRefresh=os.time()+30;local key=n.id;job(self,'cup',function() return API.request('GET',key) end);f.returnNotice=n.text end
  if f.returnNotice and not f.job then f.notice=f.returnNotice;f.returnNotice=nil end
@@ -180,7 +188,7 @@ function W.draw(self,x,y,w,h)
  local paint=require('src.import.LauncherLibrary').paint
  local top=y;f.rects={}
  local function text(value,big,color,inset)
-  value=tostring(value or '');local font=big and self.stateFont or self.hintFont
+  value=L(tostring(value or ''));local font=big and self.stateFont or self.hintFont
   local pad=(inset or 0);local _,lines=font:getWrap(value,w-28*s-pad);g.setFont(font);U.col(color or P.detail);g.printf(value,x+14*s+pad,y,w-28*s-pad,'left');y=y+math.max(1,#lines)*font:getHeight()+12*s
  end
  local function button(label,id,bw,bx,by)
@@ -216,6 +224,17 @@ function W.draw(self,x,y,w,h)
   y=y+Art.hero(self,x,y,w,c.title,'GEN '..c.generation..' · '..c.edition:upper()..' · '..c.team_size..' Pokémon')
   text('GEN '..c.generation..' · '..c.edition:upper()..' · '..c.state:upper()..' · '..c.entries..' / '..c.capacity..' players',false,P.link)
   button('ALL TOURNAMENTS','back');button('REFRESH LOBBY','refresh')
+  text(c.invite_only and 'INVITATION ONLY · Organizer approval required' or 'OPEN REGISTRATION · Eligible players may join')
+  if f.accessForm and c.manage then
+   text('STAFF · PARTICIPATION CONTROLS',true,P.link)
+   text('Changes are audited. Added players must confirm readiness themselves. Access is locked when the bracket starts.')
+   field('Reason · at least 15 characters','accessReason',f.accessReason or '')
+   button(c.invite_only and 'ALLOW OPEN REGISTRATION' or 'REQUIRE ORGANIZER INVITATION','accessMode')
+   field('Complete friend tag · Trainer#1234','accessTag',f.accessTag or '')
+   button('ADD / INVITE PLAYER','access:add');button('REMOVE PLAYER FROM LOBBY','access:remove');button('BLOCK FROM THIS CUP','access:block');button('REMOVE CUP BLOCK / INVITATION','access:unblock')
+   for _,a in ipairs(c.access or {})do text(a.friend_tag..(a.blocked and ' · BLOCKED' or ' · INVITED'))end
+   button('BACK TO LOBBY','accessBack');text(f.notice);return y-top
+  end
   text(c.team_size..' per team · Level '..c.level..' · Single elimination · Community results')
   if c.starts_at then text('Scheduled: '..c.starts_at..' UTC') end
   if c.rules~='' then text(c.rules) end
@@ -244,6 +263,7 @@ function W.draw(self,x,y,w,h)
    if not mine then button('JOIN TOURNAMENT · ACCEPT THESE RULES','join')
    else button(mine.ready and 'READY · CONFIRM AGAIN' or 'I AM READY','ready');button('NOT READY','notready');button('LEAVE TOURNAMENT','leave') end
    if c.manage then
+    if not c.matchmaking then button('STAFF · PARTICIPATION CONTROLS','cupAccess')end
     button('START BRACKET · ALL PLAYERS MUST BE READY','start')
     if c.entries==0 then button('EDIT RULES & PRIZES','edit') end
     button('CANCEL TOURNAMENT','cancel')
@@ -251,7 +271,7 @@ function W.draw(self,x,y,w,h)
   elseif c.state=='running' and (c.manage or c.matchmaking and mine) then button(c.matchmaking and 'CANCEL THIS PAIRING · NO POINTS' or 'CANCEL TOURNAMENT','cancel') end
   y=y+Art.bracket(self,x,y,w,c,names)
   text('LOBBY',true,P.ink)
-  for _,p in ipairs(c.players or {}) do text((p.online and '[ON] ONLINE  ' or '[OFF] OFFLINE  ')..(p.ready and 'READY · ' or 'WAITING · ')..p.nickname,false,p.ready and P.link or P.detail) end
+  for _,p in ipairs(c.players or {}) do text((p.online and '[ON] ONLINE  ' or '[OFF] OFFLINE  ')..(p.ready and 'READY · ' or 'WAITING · ')..require('src.ui.PlayerRole').label(p.nickname,p),false,p.ready and P.link or P.detail) end
   local round
   for i,m in ipairs(c.matches or {}) do
    if round~=m.round then round=m.round;y=y+14*s;text('ROUND '..round,true,P.link) end
@@ -376,7 +396,7 @@ function W.draw(self,x,y,w,h)
 end
 local function append(f,value)
  if not f.focus then return end
- local d=f.confirm or f.form;if not d then return end
+ local d=f.confirm or f.form or (f.accessForm and f);if not d then return end
  local limit=f.focus=='rules' and 3000 or f.focus=='reason' and 1000 or 160
  d[f.focus]=((d[f.focus] or '')..value:gsub('[%c]','')):sub(1,limit)
 end
@@ -406,12 +426,12 @@ function W.install(RI)
  local key=RI.keypressed;RI.keypressed=function(self,k,...)
   local f=self._tournaments
   if self.section=='tournaments' and f and f.focus then
-   if k=='backspace' then local d=f.confirm or f.form;d[f.focus]=(d[f.focus] or ''):gsub('[%z\1-\127\194-\244][\128-\191]*$','')
+   if k=='backspace' then local d=f.confirm or f.form or (f.accessForm and f);if not d then return end;d[f.focus]=(d[f.focus] or ''):gsub('[%z\1-\127\194-\244][\128-\191]*$','')
    elseif k=='escape' or k=='return' then focus(f,nil)
    elseif k=='v' and love.keyboard.isDown('lctrl','rctrl','lgui','rgui') then append(f,love.system.getClipboardText() or '') end
    return
   end
-  if self.section=='tournaments' and f and k=='escape' then W.action(self,(f.confirm or f.choose or f.form) and 'dismiss' or 'back');return end
+  if self.section=='tournaments' and f and k=='escape' then W.action(self,(f.confirm or f.choose or f.form or f.accessForm) and 'dismiss' or 'back');return end
   return key(self,k,...)
  end
 end

@@ -55,12 +55,18 @@ end
 local contentCache=setmetatable({},{__mode='k'})
 function J.content(game)
  if J.contentId then return J.contentId end
- local version=game.save.version;local old=contentCache[game.data]
- if old and old.version==version then return old.value end
+ local version=game.save.version
+ local cache=require('src.import.CacheFs')
+ -- Prefix shims redirect reads, but directory enumeration is deliberately
+ -- unchanged. Enumerate the actual selected import and hash logical paths so
+ -- a local import and its private cloud copy have the same identity.
+ local prefix=cache.activePrefixShim and cache.activePrefixShim() or ''
+ local old=contentCache[game.data]
+ if old and old.version==version and old.prefix==prefix then return old.value end
  local files={}
  local function visit(path)
-  for _,name in ipairs(love.filesystem.getDirectoryItems(path)or{})do
-   local file=path..'/'..name;local info=love.filesystem.getInfo(file)
+  for _,name in ipairs(love.filesystem.getDirectoryItems(prefix..path)or{})do
+   local file=path..'/'..name;local info=love.filesystem.getInfo(prefix..file)
    if info and info.type=='directory'then visit(file)
    elseif name:match('%.lua$')then files[#files+1]=file end
   end
@@ -68,8 +74,8 @@ function J.content(game)
  visit('data/generated');table.sort(files)
  assert(#files>0,'Imported suspend data is unavailable')
  local out={require('src.link.Handshake').hello(game,'battle').fingerprint}
- for _,file in ipairs(files)do out[#out+1]=file..'\0'..hash(assert(love.filesystem.read(file)))end
- local value=hash(table.concat(out,'\n'));contentCache[game.data]={version=version,value=value};return value
+ for _,file in ipairs(files)do out[#out+1]=file..'\0'..hash(assert(love.filesystem.read(prefix..file)))end
+ local value=hash(table.concat(out,'\n'));contentCache[game.data]={version=version,prefix=prefix,value=value};return value
 end
 
 local function input(game)

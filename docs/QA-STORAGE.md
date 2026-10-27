@@ -85,7 +85,24 @@ Prüfung ohne ROM oder echte Benutzerdaten:
 ```sh
 python3 tests/qa_storage_test.py
 python3 tests/qa_extended_storage_test.py
+python3 -m unittest discover -s tests -p 'qa*storage*test.py'
 ```
+
+Auch ältere, exakt erkannte LÖVE-Testidentities werden durch `qa_source`
+gegen die selektive LÖVE-Bereinigung gesperrt. Das erlaubt ausschließlich
+Lesesperren; daraus entsteht keine Freigabe als Ziel der älteren
+Importbereinigung. Diese entfernt einen erzeugten Daten-/Grafikordner nur,
+wenn er keine Modell-, Quellcode-, Save- oder `.qa-keep`-Teilbäume enthält.
+Geschützte Ordner zählen auch nicht zum löschbaren Importbudget. Unveränderte
+Caches behalten ihre Vollständigkeitsmarkierung; entfernte Cacheteile machen
+ihre Edition ungültig, damit sie beim nächsten Start neu erzeugt wird.
+
+Der Prozess-Sperrtest verwendet den echten Fork-Einstieg `scripts/run.sh` mit
+einem isolierten Ersatz für LÖVE. Er prüft geerbte Dateideskriptoren, die
+Testidentity und die unveränderte Weitergabe von Argumenten einschließlich
+Leerzeichen. Eine `Start.command` aus einem anderen Projekt wird nicht benötigt.
+Die [gesamte Speicher-QA](qa/storage-safety-fixes.json) läuft ohne echte ROMs
+oder Spielerprofile.
 
 ## Vollständige Kopienpflege und regelmäßige Kontrolle
 
@@ -130,7 +147,7 @@ und laufende LÖVE-Identities schützen ältere Leser zusätzlich. Bei fehlender
 Prozessinspektion bleiben die Kopien erhalten. Laufende ältere Starter übernehmen
 die neuen Prozess- und Platzwächter beim nächsten Start.
 
-Der Agent verwendet eine unabhängig installierte, versionierte Kopie der vier
+Der Agent verwendet eine unabhängig installierte, versionierte Kopie der fünf
 kleinen Python-Helfer unter `~/.local/lib/origami-qa-storage/`, ohne Netzwerkzugriff.
 Er hängt nicht vom temporären Implementierungs-Worktree ab. Die kleine lokal
 erstellte App `~/Applications/Origami QA Cleanup.app` trägt die gezielte
@@ -166,3 +183,41 @@ Zusätzliche Regressionen:
 ```sh
 python3 tests/qa_legacy_storage_test.py
 ```
+
+
+## Gezielte Freigabe direkt am Testende
+Reine CPU-/GPU-/Story-/Vergleichstests registrieren Hosts und Referenzkopien mit
+`qa_copy(path, ephemeral=True)`. Nach Testende, auch bei Fehlern, werden deren
+Code-/Modellbytes dauerhaft gesichert und die Kopien gezielt entfernt. Andere
+Leser, lebende Kindprozesse, `.qa-keep`, ROMs und Spielstände bleiben geschützt.
+Logs und Nachweise bleiben außerhalb der Kopie. Pakete für spätere Build-/
+Veröffentlichungsschritte verwenden weiter `qa_copy(path)` und `qa_source` für
+aktive Eingaben. Keine Teststarter mit eigener 8-GiB-Reserve ergänzen: 20 GiB
+beibehalten. Details: `docs/QA-STORAGE.md`.
+
+Der gezielte Abschlusslauf liest nur die eigenen registrierten Kopien und
+wartet nicht auf einen fremden globalen Budgetscan. Datei-/Laufsperren und das
+Archiv-Lock bleiben maßgeblich. Bei unterbrochenen Prozessen oder noch lebenden
+Kindern bleibt die Markierung erhalten; der nächste Lauf beziehungsweise der
+Hintergrundhelfer nimmt die sichere Entfernung nach Freigabe vor.
+
+Zum Fortsetzen eines bereits bereinigten Tests `qa_restore_copy(host)` verwenden:
+Es stellt den exakt gesicherten Host bei Bedarf wieder her, erhält vorhandene
+Spielstände und verweigert das Überschreiben neuerer Dateien. Anschließend
+bleibt der Host als gemeinsam lesbare Eingabe gesperrt und wird nach dem letzten
+Leser wieder bereinigt. Veröffentlichungs-/Buildpakete bleiben davon getrennt.
+
+## Installierte Regeln bei Projektwechseln beibehalten
+
+Der Installer aktualisiert den atomaren Verweis
+`~/.local/lib/origami-qa-storage/active-tools` auf das geprüfte Helferpaket.
+Die vorhandenen externen Teststarter stellen diesen Pfad vor die Projektwerkzeuge
+und initialisieren `Storage` ausdrücklich mit ihrer ursprünglichen Projektwurzel.
+Damit bleiben Freigabe am Testende, Wiederherstellung und 20-GiB-Reserve bei einem
+Wechsel des Spielzweigs erhalten. Ein Starter ohne vorhandenes installiertes Paket
+kann weiter die Projektwerkzeuge verwenden.
+
+Die Hintergrundbereinigung läuft unabhängig davon alle 15 Minuten. Lebende
+Kindprozesse und andere Leser halten ihre Sperren; deshalb erfolgt deren
+Bereinigung erst nach dem letzten Nutzer. Das intakte lokale Quellarchiv hält
+einmalige Code- und Modellstände auch nach Entfernung der Testkopien vor.

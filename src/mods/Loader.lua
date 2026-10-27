@@ -1272,6 +1272,7 @@ function Loader:_api(mod)
   function api:supports(surface, name)
     return Capabilities.supports(surface, name, hostId)
   end
+  engineRequire('src.mods.Localization').install(loader, mod, api, engineCall)
   -- mod.world / mod.game / mod.storage all materialize on first touch, for
   -- the same reason: a headless load must not drag the world stack in.
   -- Battle capability queries can also be installed before Game exists.
