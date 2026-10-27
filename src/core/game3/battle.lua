@@ -16,16 +16,18 @@ local function sameTarget(a,b,depth)
   if type(a)~='table'or type(b)~='table'or(depth or 0)>=4 then return false end
   -- LOVE canvases are userdata; preserve identity for table-based test or
   -- external wrappers too. Only the MRT binding description is structural.
-  if a.typeOf or b.typeOf then return false end
+  if a.typeOf or b.typeOf or a.getDimensions or b.getDimensions or a.getWidth or b.getWidth then return false end
   for k,v in pairs(a)do if not sameTarget(v,b[k],(depth or 0)+1)then return false end end
   for k in pairs(b)do if a[k]==nil then return false end end
   return true
 end
 local function target(value,depth)
   if depth==nil then value=love.graphics.getCanvas();depth=0 end
-  if type(value)~='table'or value.typeOf or depth>=4 then return value end
+  if type(value)~='table'or value.typeOf or value.getDimensions or value.getWidth or depth>=4 then return value end
   local out={};for k,v in pairs(value)do out[k]=target(v,depth+1)end;return out
 end
+M._renderTarget=target
+M._sameRenderTarget=sameTarget
 local function call(name,...)
   local facade=require('src.core.Game3');local owner=facade._callbackOwner()
   local seams=package.loaded['src.mods.ModSeams']

@@ -60,12 +60,42 @@ function C.manifest()
   text=copy(text and text.text or{}),native=true}
 end
 local modes={none='message',menu='action',moves='moves'}
+local painted
+local function serial()local r=package.loaded['src.render.Renderer'];return r and r.frameSerial end
 function C.drawPanel(mode)
  assert(modes[mode],'invalid battle panel mode')
- if Boundary.active('battle.panel')then return Boundary.invoke('battle.panel')end
- local screen=Battle._screen();if not screen then return false,'no native battle'end
- return Native.drawPanel(screen,modes[mode])
+ local screen=Battle._screen();if not screen then painted=nil;return false,'no native battle'end
+ local drawn,included
+ if Boundary.active('battle.panel')then drawn=Boundary.invoke('battle.panel');included=drawn==true
+ else drawn,included=require('src.battle.Gen3BattleFrames').panel(screen,modes[mode])end
+ if drawn then
+  painted={refs=setmetatable({screen},{__mode='v'}),view=Battle.getState(),mode=mode,
+   target=Battle._renderTarget(),token=Scope.token(),serial=serial(),frame=screen.frame,included=included}
+ else painted=nil end
+ return drawn
 end
+function C.drawMenuFrames(mode)
+ assert(modes[mode],'invalid battle panel mode')
+ local screen=Battle._screen();if not screen then painted=nil;return false,'no native battle'end
+ local receipt=painted;painted=nil
+ local same=receipt and receipt.refs[1]==screen and receipt.view==Battle.getState()
+  and receipt.mode==mode and receipt.frame==screen.frame and Battle._sameRenderTarget(receipt.target,Battle._renderTarget())
+ if same then
+  if receipt.serial~=nil then same=receipt.serial==serial()
+  else same=receipt.token~=nil and receipt.token==Scope.token()end
+ end
+ local included=same and receipt.included or false
+ local ok,drawn,count=Scope.call(function()return require('src.battle.Gen3BattleFrames').draw(screen,modes[mode],included)end)
+ if not ok then error(drawn,0)end
+ return drawn,count
+end
+C._service={release=function()painted=nil end,releaseOwner=function()painted=nil end,
+ poll=function()
+  if not painted then return end
+  local screen=painted.refs[1]
+  if not screen or screen~=Battle._screen()or painted.view~=Battle.getState()or painted.frame~=screen.frame then painted=nil end
+ end}
+require('src.core.game3.asset_stream').register(C._service)
 local basePanel=C.drawPanel
 function C._panel(screen,which,body)
  if C.drawPanel==basePanel then return body()end
