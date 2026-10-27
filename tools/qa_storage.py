@@ -628,9 +628,9 @@ class Storage:
                 try:
                     info = file.lstat()
                 except FileNotFoundError:
-                    # Active importers can replace generated cache files between
-                    # the directory scan and stat. The next budget poll sees
-                    # their replacements; other I/O errors remain visible.
+                    # Active importers and journal writers can remove or replace
+                    # a generated file between directory scan and stat. The
+                    # next budget poll sees replacements; other errors remain visible.
                     continue
                 if stat.S_ISREG(info.st_mode):
                     yield file, info

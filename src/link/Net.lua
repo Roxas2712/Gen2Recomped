@@ -163,6 +163,17 @@ end
 -- isn't one of the four generic ones below lands in the normal inbox for
 -- the caller (LinkState, or Tournament.lua) to interpret.
 function Net:connectTCP(addr)
+  local Auth = require("src.cloud.RetroCloud")
+  if not Auth.signedIn() then
+    self.error = Strings("Sign in to connect with friends.")
+    return false
+  end
+  local account = Auth.accountId()
+  local profile, why = require("src.cloud.NativeAccount").request("GET", "/community/counts", nil, true)
+  if not profile or not Auth.signedIn() or account ~= Auth.accountId() or tostring(profile.account_id) ~= account then
+    self.error = why or Strings("The active account changed.")
+    return false
+  end
   if not socket then
     self.error = "online play needs luasocket (bundled with LOVE)"
     return false
