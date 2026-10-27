@@ -53,7 +53,10 @@ and re-entry behavior.
 
 An ordinary Sapphire playthrough completed the repaired Rusturf HM04 scene,
 returned to Petalburg, defeated Norman and saved the fifth badge and TM42
-normally on the public integration source. This is one checkpoint, not a
+normally on the public integration source. It then obtained HM03, taught Surf
+through the native bag/party/summary flow, healed normally and tested mounting,
+water movement and dismounting. The complete saved state survived the original
+CONTINUE menu unchanged. These are checkpoints, not a
 full-game acceptance. Complete ordinary stories, endings,
 postgame systems and the remaining per-edition presentation gaps are still
 open for all five editions. No overall completion percentage is asserted.
@@ -66,7 +69,8 @@ profile. `tools/run_edition_native.py` and `tools/run_lua_contracts.py` use the
 repository's guarded storage workflow. Cache reuse is allowed only when its
 extraction input hashes match the tested source.
 
-The public integration's 682 engine suites passed, as did the mod-SDK,
+The public main integration's 684 engine suites passed on Linux, as did all
+four mod-SDK suites, the
 five-edition entry/cursor matrix and FR/LG dialogue-frame checks. The latter
 compare 2,944 pixels per edition with its own cartridge. The final renderer
 guard also passed native RS shop transactions and camera/save immutability.
@@ -81,3 +85,10 @@ observations, and does not patch the read-only reference.
 The standard `scripts/pack_love.sh` and `scripts/build.sh` include `compat/`;
 normal source builds therefore contain these bridges without requiring a
 private application payload.
+
+Ordinary story QA may resume a witnessed normal-menu save after its isolated
+window exits cleanly before the driver's final command. It requires an unchanged
+frozen source, exit code zero, no importer failure or timeout, no unrecorded
+inputs and no progress after the saved receipt. The original unfinished run
+remains unfinished; the new run must independently verify the full saved state
+through CONTINUE. Crashed, timed-out and unproven runs remain ineligible.

@@ -75,6 +75,18 @@ def verify_mac_archive(path,icon_hash=None):
    icon=infos[0].removesuffix('Info.plist')+'Resources/GameIcon.icns'
    if z.getinfo(icon).file_size>8*1024*1024 or hashlib.sha256(z.read(icon)).hexdigest()!=icon_hash:
     raise ValueError('macOS application icon digest mismatch')
+def extract_preview_source(ref,source):
+ paths=['main.lua','conf.lua','src','assets','data','tools','scripts/pack_love.sh','scripts/switch/verify_payload.sh','scripts/macos-entitlements.plist','icons/icon.icns']
+ builtin=bool(subprocess.check_output(['git','ls-tree','--name-only',ref,'mods/UNI_LANGUAGE_NATIVE'],cwd=ROOT,text=True).strip())
+ if builtin:paths.append('mods/UNI_LANGUAGE_NATIVE')
+ root_files=subprocess.check_output(['git','ls-tree','--name-only',ref],cwd=ROOT,text=True).splitlines()
+ if 'compat' in root_files:paths.append('compat')
+ licenses=[name for name in root_files if name.lower()in ('license','license.md','license-roxas2712.md','notice.md')]
+ if not licenses:raise ValueError('source revision has no license')
+ paths.extend(licenses)
+ archive=subprocess.check_output(['git','archive',ref,*paths],cwd=ROOT)
+ with tarfile.open(fileobj=io.BytesIO(archive))as t:t.extractall(source,filter='data')
+
 def main():
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--platform',choices=RUNTIMES,required=True);p.add_argument('--runtime',type=Path,required=True);p.add_argument('--source-ref',required=True);p.add_argument('--release-id',required=True);p.add_argument('--engine-version',required=True,help='Real engine release X.Y.Z, stamped identically to regular releases');p.add_argument('--out',type=Path,required=True);p.add_argument('--qualified-runtime',type=Path,help='Optional component.json with passing native engine/host gates for every platform architecture');p.add_argument('--macos-signing-identity');p.add_argument('--macos-notary-profile');p.add_argument('--macos-signing-keychain',type=Path);a=p.parse_args()
  if not re.fullmatch(r'[0-9]{8}\.[0-9]+',a.release_id):p.error('release-id must be YYYYMMDD.N')
@@ -90,15 +102,7 @@ def main():
  out=a.out.resolve();out.mkdir(parents=True,exist_ok=False);identity='Gen2Recomp-NativePreview-'+a.release_id.replace('.','-')
  with tempfile.TemporaryDirectory(prefix='native-preview-')as temp:
   work=Path(temp);source=work/'source';source.mkdir()
-  paths=['main.lua','conf.lua','src','assets','data','tools','scripts/pack_love.sh','scripts/switch/verify_payload.sh','scripts/macos-entitlements.plist','icons/icon.icns']
-  builtin=bool(subprocess.check_output(['git','ls-tree','--name-only',ref,'mods/UNI_LANGUAGE_NATIVE'],cwd=ROOT,text=True).strip())
-  if builtin:paths.append('mods/UNI_LANGUAGE_NATIVE')
-  root_files=subprocess.check_output(['git','ls-tree','--name-only',ref],cwd=ROOT,text=True).splitlines()
-  licenses=[name for name in root_files if name.lower()in ('license','license.md','license-roxas2712.md','notice.md')]
-  if not licenses:raise ValueError('source revision has no license')
-  paths.extend(licenses)
-  archive=subprocess.check_output(['git','archive',ref,*paths],cwd=ROOT)
-  with tarfile.open(fileobj=io.BytesIO(archive))as t:t.extractall(source,filter='data')
+  extract_preview_source(ref,source)
   preview=source/'src/preview';preview.mkdir();(source/'main.lua').rename(preview/'main.lua');(source/'conf.lua').rename(preview/'conf.lua')
   (source/'conf.lua').write_text('local P=require("src.core.NativePreview");P.activate('+json.dumps(identity)+')\nassert(love.filesystem.load("src/preview/conf.lua"))()\nlocal configure=love.conf\nfunction love.conf(t)configure(t);t.identity=P.identity;t.window.title="Gen2Recomped Native Preview" end\n')
   (source/'main.lua').write_text('local P=require("src.core.NativePreview")\nP.checkRuntime()\nP.prepare()\nassert(love.filesystem.load("src/preview/main.lua"))()\n')

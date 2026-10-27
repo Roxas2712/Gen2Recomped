@@ -66,7 +66,13 @@ def submit(commands,emit=True):
     deadline=time.monotonic()+a.wait
     while True:
         state=json.loads((run/'story-state.json').read_text())
-        if state['seq']>=len(queue)or time.monotonic()>=deadline:break
+        report=json.loads((run/'result.json').read_text())
+        # The driver publishes its snapshot just before appending the matching
+        # input receipt. Wait for both: otherwise the previous command's
+        # outcome can be returned alongside the next command's field state.
+        recorded=report['commands'][-1]['seq']if report['commands']else 0
+        if state['seq']>=len(queue)and(recorded>=len(queue)or report['status']=='pass'):break
+        if time.monotonic()>=deadline:break
         if 'driver error:'in (run/'native.log').read_text(errors='replace'):raise SystemExit('Driver failed; inspect native.log')
         time.sleep(.1)
     if a.checkpoint:
