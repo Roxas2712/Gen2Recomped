@@ -43,6 +43,7 @@ function Schedule.moveEnd(battle, completedFrame)
   end
   require("src.battle.Gen3PostHitItems").run(battle, frame)
   require("src.battle.Gen3MirrorMove").history(battle, frame)
+  require("src.battle.Gen3HitHistory").moveEnd(battle, frame)
 end
 
 function Schedule.afterAction(battle)

@@ -70,3 +70,57 @@ Remaining qualification includes autonomous native switching before item use,
 full Loader entry/owner rollback and link routing, missing-flank checkpoints,
 item presentation and original-mod gameplay. These tests do not establish
 complete GBA mod compatibility or physical-device acceptance.
+
+## Native received-hit history
+
+`Gen3HitHistory` produces the native numeric fields `expLastHitById`,
+`expLastLandedMove` and `expLastHitByType` on the actual recipient. They have
+separate owners: direct HP damage updates the attacker before
+`battle.damage_dealt`; successful move-end bookkeeping records the resulting
+move number and effective type after move-end items. Substitute hits update
+landed history without replacing the HP attacker. Endure's zero HP loss is
+still a direct hit. Misses, immunities and generic authored `ctx.damage` HP
+loss preserve prior history. Global `lastAttacker`, `g4HitBy` and Mirror Move
+history continue to serve their different existing purposes.
+
+Weather Ball's replacement move view now reaches native accuracy, events,
+post-hit effects and received-hit history without editing the imported row.
+R/S multi-hit scripts record history between strikes and write `0xFFFF` on a
+failed reached multi-hit script; FR/LG/E retain successful earlier Triple Kick
+history after a later miss. Ordinary replacement and Baton Pass construct new
+recipients without transferring received-hit history.
+
+Public cold checkpoints retain numeric zero and validate the three unsigned
+fields before replacing the save/controller. GBA link command revision **22**
+adds role-normalized received-hit history to the fatal active-state component;
+previous GBA command revisions cannot enter lockstep. Other-generation
+fingerprints and the native party codec are unchanged.
+
+Run the producer contract with a clean read-only Gen1 checkout:
+
+```
+python3 tools/gen3_hit_history_contract.py --reference-root /path/to/Gen1Recomp \
+  --lua /path/to/luajit --qa-tools-root /path/to/current/tools --output /path/to/new/report
+```
+
+Move number and effective type are captured as scalar command state, so a
+callback editing the dataset for the next action cannot rewrite an earlier
+hit. Authored type-copy modifiers can change the effective type without
+rewriting the imported numeric tag.
+
+The contract retains raw HP, Substitute and RNG traces separately from its
+history/event comparison. Those raw traces are diagnostic evidence, **not a
+passing damage/RNG parity claim**. R/S variance and effect-chance command
+ordering, Weather Ball's native damage-multiplier placement, zero-power
+normal-script RNG, and Hidden Power's native IV/type producer remain separate
+work. Default switch-before-item AI and complete original-mod gameplay are
+also still unqualified; this change does not enable the GBA readiness flag.
+
+Qualification for this history slice: all **540 paired cases** (27 action
+profiles × four slot layouts × five editions) agree across 40 isolated workers;
+**12 focused suites / 57,637 checks** pass, including real cold continuations,
+preflight rejection, linked roles and existing registered trainer brains.
+Inputs and logs were independently rehashed. The raw-trace diagnostic still
+finds **260 differing case traces**: these are retained in the report and are
+not converted into a claim of complete battle parity. R/S per-hit held-item
+phase scheduling and disobedience producers also need separate qualification.

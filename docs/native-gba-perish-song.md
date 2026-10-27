@@ -22,7 +22,8 @@ menu has its actual reserves. The existing synchronous replacement sweep
 and `battle.turn_ended` timing are retained.
 
 Native GBA battle revision **21** distinguishes these rules from revision 20.
-The fixture fingerprint is `7aae08076971bcc3`; older-generation digests retain
+The revision-21 fixture fingerprint was `7aae08076971bcc3` (historical;
+received-hit history advances the current revision to 22); older-generation digests retain
 `e33d251961f2a41d`. Peers with older native rules cannot negotiate a full
 lockstep battle. The party codec is unchanged. This supersedes the revision
 20 runtime guard documented for the earlier native BGM component.

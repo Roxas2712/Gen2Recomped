@@ -8892,6 +8892,7 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   local frame = { parent = parent, user = user, target = target, move = self:moveDef(moveInst), moveId = moveInst.id,
     calledBy = isCalled and caller and caller.parent == parent and caller.move or nil,
     calledPPSlot = isCalled and caller and caller.parent == parent and caller.ppSlot or nil }
+  require("src.battle.Gen3HitHistory").begin(frame)
   if isCalled and caller and caller.parent == parent then caller.frame = frame end
   if parent then parent.called = true end
   self._gbaMoveFrame = frame

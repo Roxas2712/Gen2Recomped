@@ -134,6 +134,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   local ordinaryMulti = gba and require("src.battle.Gen3MultiHit").ordinary(move)
   local tripleKick = gba and record and record.gbaTripleKick
   local nativeMulti = ordinaryMulti or tripleKick
+  if tripleKick then require("src.battle.Gen3HitHistory").prepare(battle, move, false, true) end
   if gba and type(target.substituteHP) == "number" and target.substituteHP <= 0 then
     target.substituteHP = nil
   end
@@ -202,11 +203,17 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   local hits = not gba and hitCount(ctx, record) or 1
 
   if record and record.beforeAccuracy then record.beforeAccuracy(ctx) end
+  if gba then
+    -- Weather Ball and authored native records may replace the move view.
+    move = ctx.move
+    require("src.battle.Gen3HitHistory").prepare(battle, move, false, tripleKick)
+  end
 
   if nativeAccuracy or not neverMiss and not alwaysHits then
     local hit, reason = battle:accuracyRoll(move, user, target, accuracyRaw)
     if not hit then
       if reason == "absorbed" then
+        if gba and battle._gbaMoveFrame then battle._gbaMoveFrame.rsMultiHit = nil end
         battle:cancelMoveAnim()
         if record and record.onMiss then record.onMiss(ctx, "absorbed") end
         return
@@ -224,6 +231,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
 
   if gba and record and record.gbaAfterAccuracy then record.gbaAfterAccuracy(ctx) end
   if gba then hits = hitCount(ctx, record) end
+  if gba then require("src.battle.Gen3HitHistory").prepare(battle, move, ordinaryMulti, tripleKick) end
   if gba and user.mon.hp <= 0 and not (record and record.explode) then
     ctx.gbaNoEffect = true
     if battle._gbaMoveFrame then battle._gbaMoveFrame.noEffect = true end
@@ -337,8 +345,15 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     -- accuracy again before its critical/damage opcodes. A later miss ends
     -- the script quietly; already landed kicks still reach move-end (Rage).
     if tripleKick and h > 1 and (nativeAccuracy or not neverMiss and not alwaysHits) then
+      local frame = battle._gbaMoveFrame
+      local previousMiss = frame and frame.missed
       local hit = battle:accuracyRoll(move, user, target, accuracyRaw)
-      if not hit then break end
+      if not hit then
+        -- FR/LG/E keep the successful attack's animation/result flags when
+        -- a later kick misses. R/S's script instead records its failure.
+        if frame and not frame.rsMultiHit then frame.missed = previousMiss end
+        break
+      end
     end
     ctx.gbaHit = h
     if record and record.perHitDamage then
@@ -406,6 +421,9 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     -- on someone
     local substituteBefore = target.substituteHP
     local dealt, endured = battle:applyDamage(target, hitDamage, true, info.damageAdjustment)
+    if gba and (move.power ~= 0 or record and record.chooseDamage) then
+      require("src.battle.Gen3HitHistory").hit(battle, user, target, move, hadSub)
+    end
     if (info.gbaSetDamage or info.gbaBeatUp) and substituteBefore then dealt = math.min(dealt, substituteBefore) end
     if gba then require("src.battle.Gen3PostHitItems").damage(battle, hitDamage, dealt, hadSub) end
     totalDealt = totalDealt + dealt
@@ -470,6 +488,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
     if battle.firstBattle then
       require("src.battle.Gen3Critical").noteHit(battle, user, target, dealt, hadSub)
     end
+    if gba then require("src.battle.Gen3HitHistory").afterHit(battle) end
     if hadSub and not target.substituteHP and not info.gbaBeatUp then
       -- Older AttackSubstitute ends the move; GBA continues against real HP.
       brokeSub = true
@@ -559,7 +578,7 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   local gba = require("src.core.GameVersion").isGen3()
   if gba then
     local frame = battle._gbaMoveFrame
-    if frame then frame.noEffect = ctx.gbaNoEffect end
+    if frame then frame.noEffect = frame.noEffect or ctx.gbaNoEffect end
     require("src.battle.GbaItemSchedule").moveEnd(battle)
   end
   if not gba and totalDealt > 0 and battle.shellBellDrain then

@@ -24,7 +24,7 @@ Gen2AnimPlayer Gen2BattleView Gen2Wild Gen3AI Gen3AIAttackingMoves Gen3AIItemKno
 Gen3AIMoveKnowledge Gen3AIOrder Gen3AIPartyStatus Gen3AIQueries Gen3Accuracy Gen3Arena Gen3BallAnim
 Gen3BatonPass Gen3Battle Gen3BattleWeather Gen3BeatUp Gen3Builtins Gen3Catching Gen3Critical
 Gen3DamageStats Gen3Disable Gen3Encore Gen3FollowMe Gen3HelpingHand Gen3LockOn Gen3MoveAnim
-Gen3MoveEffects Gen3MultiHit Gen3OHKO Gen3OrderCore Gen3Palace Gen3Rage Gen3Secondary Gen3SleepTalk
+Gen3MoveEffects Gen3MultiHit Gen3HitHistory Gen3OHKO Gen3OrderCore Gen3Palace Gen3Rage Gen3Secondary Gen3SleepTalk
 Gen3TripleKick Gen4AnimMath Gen4BallAnim Gen4Battle Gen4Catching Gen4EffectProjection
 Gen4MoveAnimExtras Gen4MoveAnimFuncsA Gen4MoveAnimFuncsB Gen4MoveAnimFuncsC Gen4MoveAnimFuncsD
 Gen4MoveAnimPlayer Gen4PalParkBattle Gen4ParticleSystem Gen4Safari Gen5BallAnim Gen5BallArt
@@ -64,7 +64,7 @@ emitterSeq emitterWaits emitterX emitterY emitters encoreMove encoreTurns endBat
 enduring enemy enemyAIMods enemyHidden enemyIndex enemyIndexB enemyIndexRight enemyParty enemyPartyB
 enemySendingOut enemySide enemy_action enemy_switch_or_item enigmaBerries enigmaBerry escapeFactor
 event eventCursor eventOamY events expFilling expFraction expHold expPaidPerSlot expShown exp_award
-exp_gained f fades fainted fan field fieldHidden fieldWeatherFromMap field_residual finished
+exp_gained expLastLandedMove expLastHitByType expLastHitById f fades fainted fan field fieldHidden fieldWeatherFromMap field_residual finished
 firstBattle firstBattleKind flashFire flinched flipped flourish focusEnergy foeSummaryParty foesOf
 forecastAll foresighted forfeitable forfeited frame frames frlgIntro from fromX fromY fx g2MomAward
 gaugesHidden gen3AnimPlaying gen3AnimShake gen3Ball gen3BallPlaying gen3Frontier gen3ItemsUsed
@@ -566,6 +566,9 @@ function B.validate(game, snapshot, save, actors)
           assert(type(value) == "number" and value >= -6 and value <= 6, "invalid native stage")
         end
         assert(type(who.mon.hp) == "number" and who.mon.hp >= 0, "invalid native HP")
+        if require("src.core.GameVersion").isGen3() then
+          assert(require("src.battle.Gen3HitHistory").valid(who), "invalid native GBA hit history")
+        end
       end
     end
     local found = false
