@@ -60,7 +60,7 @@ local function fixture(version)
   local game={data=data,save=save,input=input,stack=stack}
   local b=Screen.newWild(game,'FIXMON_C',23)
   stack.states={b}
-  b.phase,b.afterQueue,b.queue,b.current,b.introSlide='resolving','menu',{},nil,0
+  b.phase,b.afterQueue,b.queue,b.current,b.introSlide=Screen.advanceQueue and 'resolving' or 'messages','menu',{},nil,0
   b.sendingOut,b.showPlayerBack=false,false
   local probe=assert(run.loader.exports.event_queue_probe);probe.rows={}
   local function step(key)
@@ -75,7 +75,7 @@ local function fixture(version)
   local function clear()
     b.queue,b.current,b.waitFrames,b.waitingSound={},nil,nil,nil
     b.draining=nil;require('src.battle.Gen2HpPresentation').retire(b)
-    b.phase,b.afterQueue,b.nextInsert='resolving','menu',nil
+    b.phase,b.afterQueue,b.nextInsert=Screen.advanceQueue and 'resolving' or 'messages','menu',nil
     b:clearQueueMessage()
     b.animPlaying,b.pendingAfterAnim,b.anim=false,nil,nil
     probe.admissions={}
