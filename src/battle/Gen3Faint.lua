@@ -68,6 +68,7 @@ function F.react(battle, target)
   if target.destinyBond and battle:sideOf(user) ~= battle:sideOf(target) and not F.isFainted(user) then
     battle:sayNext(Strings('%s took\n%s with it!', name(target), name(user)))
     user.mon.hp = 0
+    require('src.battle.Gen3FaintFriendship').capture(battle,user)
     F.mark(user)
     battle:drainNext(user, 0)
     battle:onFaint(user)

@@ -8119,6 +8119,7 @@ function BattleState:executeAction(user, target, action)
     local special = action.special
     if GameVersion.isGen3() and (action.id and not special or special == 'recharge'
         or special == 'bound' or special == 'trapping' or special == 'bide') then
+      require('src.battle.Gen3FaintFriendship').script(self,user,target)
       require('src.battle.Gen3Faint').begin(user)
     end
     -- BLACK AND WHITE: held in the sky, the Choice lock, the thaw flag, a
@@ -8434,6 +8435,7 @@ function BattleState:statusInterrupt(user, target, move)
     -- OPPONENT's Reflect still applying (the screen check keeps
     -- reading the opponent's battle status)
     local gba = GameVersion.isGen3()
+    if gba then require('src.battle.Gen3FaintFriendship').script(self,user,user) end
     local dmg, info = self:computeDamage(user, user,
                                    { id = "CONFUSED", power = 40, type = "NORMAL", accuracy = 100 },
                                    { rng = self.rng, forceCrit = false, typeless = true,
@@ -8955,6 +8957,7 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   if isCalled and caller and caller.parent == parent then caller.frame = frame end
   if parent then parent.called = true end
   self._gbaMoveFrame = frame
+  require('src.battle.Gen3FaintFriendship').script(self,user,target)
   if self._gbaActionFrame then self._gbaActionFrame.moved = true end
   local ok, err = pcall(function()
     performMove(self, user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
@@ -9085,6 +9088,7 @@ function BattleState:applyDamage(target, dmg, fromMove, adjustment)
     end
   end
   target.mon.hp = target.mon.hp - dealt
+  if gba then require('src.battle.Gen3FaintFriendship').capture(self,target) end
   if gba and target.mon.hp <= 0 then require('src.battle.Gen3Faint').mark(target) end
   if dealt > 0 then self:drainNext(target, target.mon.hp) end -- animate the bar down
   if endured then
@@ -9135,7 +9139,6 @@ function BattleState:onFaint(battler, fieldTerminal)
   if gba and (not battler or not battler.mon or not Faint.isFainted(battler) or Faint.deferred(self, battler)) then return end
   if battler.faintQueued then return end
   battler.faintQueued = true
-  if gba then Faint.announce(battler) end
   if not gba then
     -- GRUDGE: the move that did it loses every PP it had.  Asked before
     -- DESTINY BOND, because a Pokemon carrying both spends both.
@@ -9174,11 +9177,15 @@ function BattleState:onFaint(battler, fieldTerminal)
   if gba then
     local previous = self._gbaFaintAnnouncement
     self._gbaFaintAnnouncement = battler
-    local ok, err = pcall(Runtime.emit, 'battle.fainted', { battle = self, battler = battler })
+    local ok, err = pcall(function()
+      require('src.battle.Gen3FaintFriendship').apply(self,battler)
+      Faint.announce(battler)
+      Runtime.emit('battle.fainted', { battle = self, battler = battler })
+    end)
     self._gbaFaintAnnouncement = previous
     if not ok then error(err, 0) end
   else Runtime.emit("battle.fainted", { battle = self, battler = battler }) end
-  if battler.isPlayer then
+  if battler.isPlayer and not gba then
     -- HandlePlayerMonFainted (core.asm:1070-1085): the companion loses
     -- happiness on its own faint; an enemy 30+ levels above it makes
     -- that the CARELESSTRAINER hit instead

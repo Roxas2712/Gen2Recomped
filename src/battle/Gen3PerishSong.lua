@@ -27,6 +27,7 @@ function P.run(ctx)
  return messages,true
 end
 function P.tick(battle,order)
+ require('src.battle.Gen3FaintFriendship').step(battle,nil,'perish_song')
  order=order or require('src.battle.GbaItemSchedule').residualOrder(battle)
  for _,previous in ipairs(order)do
   local actor=battle:battlerAt(previous.position)
@@ -38,7 +39,9 @@ function P.tick(battle,order)
     -- Perish is residual loss, so a previous attacking move cannot make
     -- Destiny Bond or Grudge act as the source of this faint.
     actor.destinyBond,actor.grudge=nil,nil
-    actor.mon.hp=0;battle:drainNext(actor,0);battle:onFaint(actor)
+    actor.mon.hp=0
+    require('src.battle.Gen3FaintFriendship').capture(battle,actor)
+    battle:drainNext(actor,0);battle:onFaint(actor)
    else actor.perishTurns=n-1 end
   end
  end

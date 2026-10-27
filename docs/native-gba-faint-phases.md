@@ -55,10 +55,10 @@ replacement for nonzero or dynamically replaced secondary-effect descriptors.
 Explosion has no such opcode. The existing calculation contract now requires
 every raw RNG call to match; its former R/S trailing-draw exception is removed.
 
-Native battle revision is **25**, with independently calculated fixture digest
+This component introduced native battle revision **25**, with independently calculated fixture digest
 `35f797dbee5a94af`. Revision24 was `2882b526b6881e0a`. Older generations keep
 `e33d251961f2a41d`; native party codec1 and callback-record ABI1 remain distinct.
-Mixed GBA command revisions cannot enter lockstep.
+Mixed GBA command revisions cannot enter lockstep. The subsequent [native faint friendship owner](native-gba-faint-friendship.md) advances the current revision to26.
 
 Logical faint, Grudge and Destiny Bond participate in the fatal active-state
 link hash. Checkpoints preserve the optional logical marker and reject a
@@ -92,7 +92,8 @@ python3 tools/gen3_faint_phases_contract.py \
 ```
 
 The read-only reference is `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`.
-Friendship/result-policy faint bookkeeping, broader contact/per-hit scheduling,
+Faint friendship is covered by the [subsequent native owner](native-gba-faint-friendship.md).
+Result-policy faint bookkeeping, broader contact/per-hit scheduling,
 nonzero/dynamic R/S chance payloads, other native move families and complete
 unchanged-mod/gameplay acceptance remain separate work. No global battle or
 presentation readiness capability is enabled by this component.
