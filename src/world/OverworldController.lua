@@ -18736,7 +18736,7 @@ local function drawWorldBody(self, cadenceConsumed)
     self.map.renderer:drawBorderFill(cam.x, bgY, vw, vh)
     self.map.renderer:draw(cam.x, bgY, vw, vh)
     for _, nb in ipairs(self.neighbors) do
-      nb.map.renderer:drawMapOnly(cam.x - nb.ox, bgY - nb.oy, vw, vh)
+      LiveMaps.nativeMap(nb, Game.data).renderer:drawMapOnly(cam.x - nb.ox, bgY - nb.oy, vw, vh)
     end
     -- the Mirage Tower on BG0, under the sprites (src/world/Gen3MirageTower)
     if self.g3MirageTower then
@@ -18933,7 +18933,7 @@ local function drawWorldBody(self, cadenceConsumed)
       self.map.renderer:drawBorderFill(cam.x, bgY, vw, vh)
       self.map.renderer:draw(cam.x, bgY, vw, vh)
       for _, nb in ipairs(self.neighbors) do
-        nb.map.renderer:drawMapOnly(cam.x - nb.ox, bgY - nb.oy, vw, vh)
+        LiveMaps.nativeMap(nb, Game.data).renderer:drawMapOnly(cam.x - nb.ox, bgY - nb.oy, vw, vh)
       end
       closeTiles()
     end
@@ -19341,10 +19341,11 @@ local function drawWorldBody(self, cadenceConsumed)
     self.map.renderer:drawAbove(cam.x, bgY, vw, vh)
     aim(self, self.map.renderer, nil, nil, feetX, feetZ)
     for _, nb in ipairs(self.neighbors) do
-      if nb.map.renderer.drawAbove then
-        aim(self, nb.map.renderer, nb.ox, nb.oy, feetX, feetZ)
-        nb.map.renderer:drawAbove(cam.x - nb.ox, bgY - nb.oy, vw, vh)
-        aim(self, nb.map.renderer, nil, nil, feetX, feetZ)
+      local renderer = LiveMaps.nativeMap(nb, Game.data).renderer
+      if renderer.drawAbove then
+        aim(self, renderer, nb.ox, nb.oy, feetX, feetZ)
+        renderer:drawAbove(cam.x - nb.ox, bgY - nb.oy, vw, vh)
+        aim(self, renderer, nil, nil, feetX, feetZ)
       end
     end
     closeTiles()

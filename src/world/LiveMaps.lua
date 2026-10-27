@@ -1,6 +1,18 @@
 -- Detached residency snapshots. Offsets are world pixels, as in Gen1Recomp.
 local Runtime = require("src.mods.Runtime")
+local MapLoader = require("src.world.MapLoader")
 local M = {}
+-- Source renderers may attach a presentation-only Map to a neighbor record.
+-- Native drawing still belongs to the loader's resident map and renderer.
+function M.nativeMap(neighbor, data)
+  if not neighbor then return nil end
+  local id = neighbor.id
+  local map = id and MapLoader.cached(id)
+  if not map and data and data.maps and data.maps[id] then
+    map = MapLoader.load(data, id)
+  end
+  return map or neighbor.map
+end
 function M.snapshot(world)
   local out = {}
   if not (world and world.map) then
