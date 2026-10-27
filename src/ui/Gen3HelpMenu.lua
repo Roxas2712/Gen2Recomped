@@ -86,7 +86,7 @@ function H:exit()
 end
 function H:update(dt)
  if not self:valid()then return self:close()end
- if self.stack:active()~=self then return end
+ if (self.stack.active and self.stack:active()or self.stack:top())~=self then return end
  local input=self.game.input
  if input:wasPressed('l')or input:wasPressed('r')then return self:close()end
  if self.level=='answer'then
@@ -94,6 +94,7 @@ function H:update(dt)
   local lines=math.max(0,math.ceil(self:layout(self.article.answer,208).height/15)-6)
   if input:wasPressed('down')then self.articleScroll=math.min(lines,self.articleScroll+1)
   elseif input:wasPressed('up')then self.articleScroll=math.max(0,self.articleScroll-1)end
+ elseif input:wasPressed('b')then return self:back()
  else self.menu:update(dt)end
 end
 function H:art()
