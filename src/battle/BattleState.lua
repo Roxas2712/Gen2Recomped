@@ -3666,6 +3666,7 @@ function BattleState:syncSides()
   for _, battler in activeBattlers(self) do
     require("src.battle.HeldItemRead").bind(battler, self)
   end
+  if GameVersion.isGen3() then require("src.battle.Gen3Mist").sync(self) end
 end
 
 -- IS THIS SIDE STILL ARRIVING?
@@ -6291,6 +6292,7 @@ end
 -- The visible half of a switch-in ability, split out so TRACE can run the
 -- effect of whatever it just copied.
 function BattleState:abilitySwitchInEffect(battler, act)
+  if GameVersion.isGen3() then require("src.battle.Gen3Mist").sync(self) end
   local who = displayName(battler)
   if act.kind == "weather" then
     -- permanent: DROUGHT's sun does not run out the way SUNNY DAY's does
@@ -8823,6 +8825,7 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   if not GameVersion.isGen3() then
     return performMove(self, user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
   end
+  require("src.battle.Gen3Mist").sync(self)
   if not isCalled then
     local chosen = self:moveDef(moveInst)
     local changed

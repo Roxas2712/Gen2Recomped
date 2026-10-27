@@ -40,10 +40,7 @@ function M.apply(battle, actor, item)
   raise("speed", e[2] % 16)
   raise("accuracy", math.floor(e[3] / 16))
   raise("spatk", e[3] % 16)
-  local side = battle.sides and battle.sides[actor.isPlayer and 1 or 2]
-  if bit(e[4], 128) and side and (tonumber(side.gen3MistTurns) or 0) == 0 then
-    side.gen3MistTurns = 5
-  end
+  if bit(e[4], 128) then require("src.battle.Gen3Mist").apply(battle, actor) end
   local mon = actor.mon
   local status = names[mon.status] or mon.status
   local cure = bit(e[4], 32) and status == "SLP"

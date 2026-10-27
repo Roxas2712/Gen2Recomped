@@ -528,6 +528,9 @@ function B.validate(game, snapshot, save, actors)
       )
     end
     assert(s.field and s.sides and s.field.sides == s.sides, "battle field relationships differ")
+    if require('src.core.GameVersion').isGen3() then
+      assert(require('src.battle.Gen3Mist').validState(s), 'invalid native Mist duration')
+    end
     local active=pictureActors(s)
     for position=1,4 do
       local who=active[position]

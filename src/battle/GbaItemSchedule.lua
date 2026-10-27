@@ -97,6 +97,8 @@ end
 
 function Schedule.residuals(battle)
   local order = Schedule.residualOrder(battle)
+  -- Side conditions expire before Wish, weather and battler residuals.
+  require("src.battle.Gen3Mist").tick(battle)
   -- Wish is a field phase, before weather; Ingrain belongs to each holder.
   for _, b in ipairs(battle:isDouble() and order or Schedule.battlers(battle)) do
     battle:gen3WishTick(b)
