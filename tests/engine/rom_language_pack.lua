@@ -100,6 +100,24 @@ T.eq(battle.strings['%s\nused %s!'],'%s setzt\n%s ein!','RS battle labels bind t
 local original=battle.strings['%s\nused %s!']
 Battle.apply(battle,{named={BattleText_Used1='{B_20} {B_13} {B_19}'}},Plain)
 T.eq(battle.strings['%s\nused %s!'],original,'mismatched battle argument roles cannot replace the native message')
+local GB=require('src.translation.rompack.gb');local gb={text={hello='Hello'},strings={}}
+GB.apply(gb,{dialogue={hello='Olá!{DONE}{PROMPT}'}})
+T.eq(gb.text.hello,'Olá!','language-cartridge ending metadata never becomes visible text on the US host')
+local GBA=require('src.translation.rompack.gba')
+local chat={groups={{kind='text',count=1,words={{text='HELLO',id=42,enabled=true}}}}}
+local gd={text={},constants={gen3EasyChat=chat},type_chart={types={}}}
+local catalogs={pairs={HELLO='OLÁ'},dialogue={},strings={},named={}}
+local own=function(path)
+ if path=='@host/gba_catalogs.lua'then return{easyChat=function(data)
+  T.eq(data.constants.gen3EasyChat.groups[1].words[1].text,'HELLO','generic aliases leave Easy Chat source labels intact until stable-ID resolution')
+  data.constants.gen3EasyChat.groups[1].words[1].text='OLÁ';return 1
+ end}end
+ if path=='@host/gba_world.lua'then return{apply=function()return 0 end}end
+ return require('src.translation.rompack.'..assert(path:match('^@host/(.+)%.lua$')))
+end
+GBA.apply(gd,catalogs,own,{language='pt-BR',profile={game='emerald'}})
+T.eq(chat.groups[1].words[1].id,42,'Easy Chat retains saved word IDs')
+T.eq(chat.groups[1].words[1].enabled,true,'Easy Chat retains word availability')
 -- PT-BR FireRed/LeafGreen expanded the category to 20 bytes and moved both
 -- description pointers. All 386 entries must retain both original pages.
 local Dex=require('src.translation.rompack.gba_dex')

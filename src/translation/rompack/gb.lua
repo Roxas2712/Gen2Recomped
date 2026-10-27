@@ -3,7 +3,9 @@
 -- Translate display leaves only. Host identifiers remain stable: this fork
 -- names a species SPECIES_001 and a script text TEXT_Sxx_xxxx.
 local A={}
-local function clean(s)return (s:gsub('\\u000[bB]','\v'):gsub('\\u000[cC]','\f'))end
+-- End-of-prose opcodes from a language cartridge are not textbox glyphs.
+-- The US host still owns script flow, including waits and closing the box.
+local function clean(s)return (s:gsub('\\u000[bB]','\v'):gsub('\\u000[cC]','\f'):gsub('{DONE}',''):gsub('{PROMPT}',''))end
 function A.description(s)
  if type(s)~='string'then return s end
  return (clean(s):gsub('<NEXT>','\n'):gsub('<LINE>','\n'):gsub('<PARA>','\f'))

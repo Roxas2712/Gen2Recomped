@@ -83,14 +83,14 @@ function D.rows(dex)
   end
   table.sort(rows,function(a,b) return a.id<b.id end);return rows,owned
 end
-function D.sync(store)
+function D.sync(store,pullOnly)
   local before=disk().read(D.FILE);local dex,why=D.load();if not dex then return nil,why end
   local bytes=store.read(D.FILE);local remote
   if bytes then remote=D.decode(bytes) else remote={schema=1,species={}} end
   if not remote then return nil,'Remote Pokédex is unreadable. Both copies are preserved.' end
   if disk().read(D.FILE)~=before then return nil,'Pokédex changed during sync. Please retry.' end
   local merged=S.encode(D.merge(dex,remote));if not D.decode(merged) then return nil,'Merged Pokédex exceeds storage limits.' end
-  local ok,err=store.write(D.FILE,merged);if not ok then return nil,err end
+  if not pullOnly then local ok,err=store.write(D.FILE,merged);if not ok then return nil,err end end
   if disk().read(D.FILE)~=before then return nil,'Pokédex changed during sync. Please retry.' end
   disk().createDirectory('bank');return Safety.atomicWrite(disk(),D.FILE,merged,{decode=D.decode})
 end

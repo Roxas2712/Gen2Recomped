@@ -52,8 +52,17 @@ function N.describe(version,language,manifest)
  state.sourceReady=state.sourceEntry and imports.have(manifest,state.sourceEntry) or false
  state.baseEntry=r.generation==3 and specs[version..'_en'] or nil
  state.baseReady=r.generation~=3 or state.baseEntry and imports.have(manifest,state.baseEntry) or false
+ if language=='pt-BR' then
+  local automatic=require('src.translation.PtbrPatch').describe(version,manifest)
+  if automatic then
+   state.automatic=true;state.patchRecipe=automatic.recipe
+   state.baseEntry=automatic.baseEntry;state.baseReady=automatic.baseReady
+   state.canPrepare=state.baseReady and not state.sourceReady
+  end
+ end
  state.ready=state.sourceReady and state.baseReady or false
  state.nextEntry=not state.sourceReady and state.sourceEntry or not state.baseReady and state.baseEntry or nil
+ if state.automatic then state.nextEntry=not state.baseReady and state.baseEntry or nil end
  return state
 end
 function N.select(version,language)
@@ -67,11 +76,16 @@ function N.select(version,language)
 end
 function N.keepBase(version,bytes,sha1)
  local r=N.requirement(version)
- if not r or r.generation~=3 then return true end
- if sha1~=r.base.sha1 then return nil,'The English base revision does not match the language profiles.' end
+ if not r then return true end
  local m=N.manifest();if not m then return nil,'Built-in language profiles are unavailable.' end
  local Imports=require('src.mods.ModImports')
- for _,entry in ipairs(Imports.of(m)) do if entry.id==version..'_en' then return Imports.install(m,entry,bytes) end end
+ local id=version..'_en'
+ if sha1~=r.base.sha1 then
+  local found=false
+  for _,recipe in ipairs(require('src.translation.PtbrPatch').recipes()) do if recipe.game==version and recipe.baseSha1==sha1 then id=recipe.baseImportId;found=true;break end end
+  if not found then return nil,'The English base revision does not match the language profiles.' end
+ end
+ for _,entry in ipairs(Imports.of(m)) do if entry.id==id then return Imports.install(m,entry,bytes) end end
  return nil,'English base declaration is missing.'
 end
 return N

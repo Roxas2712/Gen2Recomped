@@ -14,7 +14,7 @@ function W.refresh(self)
  f.choices={}
  for _,id in ipairs(N.ORDER) do
   local state=N.describe(f.version,id,f.state.manifest)
-  f.choices[#f.choices+1]={id=id,supported=state.supported,ready=state.ready}
+  f.choices[#f.choices+1]={id=id,supported=state.supported,ready=state.ready,automatic=state.automatic,canPrepare=state.canPrepare}
  end
 end
 local function close(self,id)
@@ -29,8 +29,17 @@ local function close(self,id)
 end
 function W.action(self,id)
  local f=self._nativeLanguage;if not f then return end
+ if f.job and id~='english' and id~='later' then return end
  if id:match('^language:') then f.language=id:sub(10);f.notice=nil;W.refresh(self)
  elseif id=='english' or id=='later' then return close(self,'en')
+ elseif id=='use' and f.state.canPrepare then
+  local version,manifest=f.version,f.state.manifest
+  f.notice=L('Preparing Portuguese from your US ROM…')
+  f.job=coroutine.create(function()
+   return require('src.translation.PtbrPatch').prepare(version,manifest,function(done,total,phase)
+    f.progress={done=done,total=total,phase=phase};coroutine.yield()
+   end)
+  end)
  elseif id=='use' and f.state.ready then return close(self,f.language)
  elseif id=='import' and f.state.nextEntry then
   self._languageImportEntry=f.state.nextEntry;self._languageImportManifest=f.state.manifest
@@ -72,12 +81,12 @@ function W.draw(self)
   U.col(selected and P.link or P.detail,disabled and .5 or 1);g.setFont(font);g.printf(text,xx+10*s,yy+8*s,bw-20*s,'center')
   return bh
  end
- para('Your US game can use text and graphics from your own matching language ROM. No separate conversion or mod download is needed.')
+ para('Choose a game language below. The requirements for this edition are shown after selection.')
  local cw=(tw-10*s)/2
  for i=1,#f.choices,2 do
   local rowHeight=0
   for column=0,1 do local row=f.choices[i+column];if row then
-   local mark=row.supported and (row.ready and L('Ready') or L('ROM needed')) or L('Unavailable for this edition')
+   local mark=row.supported and (row.ready and L('Ready') or row.automatic and L(row.canPrepare and 'From US ROM' or 'US ROM needed') or L('ROM needed')) or L('Unavailable for this edition')
    rowHeight=math.max(rowHeight,button('language:'..row.id,N.NAMES[row.id]..' · '..mark,tx+column*(cw+10*s),top,cw))
   end end
   top=top+rowHeight+8*s
@@ -87,7 +96,11 @@ function W.draw(self)
  if not state.supported then
   para('This edition has no matching cartridge profile for this language. Japanese is available for Crystal; Korean for Gold and Silver. You can keep playing in English.',P.warning)
  elseif f.language~='en' then
-  if state.source then
+  if state.automatic then
+   para('Portuguese is created automatically from your US ROM using the included translation patch. No extra PT-BR ROM or patch download is needed.',P.ink)
+   local provenance=state.patchRecipe.provenance
+   if provenance and provenance.author then para(L('Translation')..': '..provenance.author)end
+  elseif state.source then
    para(L('Required language ROM')..': '..state.source.name..' · '..state.source.version,P.ink)
    para('SHA-1: '..state.source.sha1)
    para(L('Size')..': '..tostring(state.source.size)..' bytes')
@@ -98,15 +111,16 @@ function W.draw(self)
    para(locale[state.profile.noticeKey] or locales.en[state.profile.noticeKey])
   end
   if state.baseEntry then
-   para(L('English base ROM')..': '..state.requirement.base.name..' · '..state.requirement.base.version)
-   para('SHA-1: '..state.requirement.base.sha1)
+   para(L('English base ROM')..': '..state.baseEntry.name)
+   para('SHA-1: '..(state.automatic and state.patchRecipe.baseSha1 or state.requirement.base.sha1))
    para(state.baseReady and 'Your English base ROM is already retained locally.' or 'Import the matching English base once. Future imports retain it automatically.')
   end
   para('Only the exact listed revision is accepted. Supply your own ROM files; none are included or downloaded. Your game progress stays unchanged.')
   local entry=state.nextEntry
   if entry then
    local bh=button('import',L('IMPORT REQUIRED ROM')..' · '..entry.name,tx,top,tw);top=top+bh+16*s
-  elseif state.ready then para('All requirements are ready. You can now use this language.',P.link) end
+  elseif state.ready then para('All requirements are ready. You can now use this language.',P.link)
+  elseif state.canPrepare then para('Your US ROM is ready. Confirm to create Portuguese automatically.',P.link) end
  end
  if f.notice then para(f.notice,P.warning) end
  f.maxScroll=math.max(0,top+f.scroll-v.y-v.height)
@@ -122,7 +136,7 @@ function W.draw(self)
  local bw=(tw-20*s)/3;local foot=y+h-66*s
  button('english','PLAY IN ENGLISH',tx,foot,bw,true)
  button('later','SET UP LATER',tx+bw+10*s,foot,bw,true)
- button('use','USE THIS LANGUAGE',tx+2*(bw+10*s),foot,bw,true,not state.ready)
+ button('use',f.job and 'Preparing Portuguese…' or 'USE THIS LANGUAGE',tx+2*(bw+10*s),foot,bw,true,f.job or not(state.ready or state.canPrepare))
  g.pop()
 end
 function W.install(RI)
@@ -144,6 +158,18 @@ function W.install(RI)
  end
  local update=RI.update;RI.update=function(self,dt,...)
   if self._nativeLanguage then
+   local f=self._nativeLanguage
+   if f.job then
+    local ok,why=coroutine.resume(f.job)
+    if not ok then
+     f.job=nil;f.progress=nil
+     require('src.core.Logger').warn('PT-BR preparation failed: %s',tostring(why))
+     f.notice=L('Portuguese preparation failed. Your current language is unchanged. Check the US ROM and try again.')
+     W.refresh(self)
+    elseif coroutine.status(f.job)=='dead' then
+     f.job=nil;f.progress=nil;W.refresh(self);return close(self,f.language)
+    end
+   end
    self.pulse=(self.pulse or 0)+dt
    if self.pickPending then self:_pollPickedFiles(dt) end
    return

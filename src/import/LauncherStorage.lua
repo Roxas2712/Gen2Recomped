@@ -27,7 +27,7 @@ function Storage.install(RI)
       end
       local games,cacheWarning
       if target.kind=='retro' then
-        local cacheOptions={gameCacheDownload=options.gameCacheDownload,gameCacheUpload=not restoreOnly and options.gameCacheUpload}
+        local cacheOptions={gameCacheDownload=restoreOnly or options.gameCacheDownload,gameCacheUpload=not restoreOnly and options.gameCacheUpload}
         games,err=GameCache.sync(target,cacheOptions,ready,function(note) self.settingsNotice=note end,mode=='games-upload')
         if not games then
           if mode=='games-upload' or mode=='games' then return nil,err end
@@ -39,7 +39,7 @@ function Storage.install(RI)
       if type(target)=='string' then target=Cloud.folderStore(target) end
       if version then
         local result,problem=Cloud.syncOne(target,version,slot)
-        return result and ('Cloud sync: '..result) or nil,problem
+        return result and {message='Cloud sync: '..result,sync=result,cacheWarning=cacheWarning} or nil,problem
       end
       local result,problem
       if restoreOnly then
@@ -49,14 +49,14 @@ function Storage.install(RI)
       local message='Cloud sync: '..Cloud.describe(result)
       if games then message=message..' · Private games: '..games.uploaded..' uploaded / '..games.downloaded..' restored.' end
       if cacheWarning then message=message..' · Private game transfer paused: '..tostring(cacheWarning) end
-      if target.kind=='retro' and options.cartridgeCloudSync and not restoreOnly then
-        local carts,cartWhy=require('src.storage.CartridgeCloud').sync(target)
+      if target.kind=='retro' and (options.cartridgeCloudSync or restoreOnly) then
+        local carts,cartWhy=require('src.storage.CartridgeCloud').sync(target,restoreOnly and 'download' or nil)
         if not carts then return nil,cartWhy end
         message=message..' · Custom cartridges: '..carts..'.'
       end
       local ok,Bank=pcall(require,'src.storage.PokemonBank')
-      if ok and not restoreOnly and require('src.cloud.RetroCloud').signedIn() then
-        local synced,bankWhy=Bank.sync(target)
+      if ok and require('src.cloud.RetroCloud').signedIn() then
+        local synced,bankWhy=Bank.sync(target,restoreOnly)
         if not synced then return nil,bankWhy end
         message=message..' · Bank '..tostring(synced)..' entries.'
       end
@@ -70,7 +70,7 @@ function Storage.install(RI)
         if not profile then return nil,profileWhy end
         message=message..' · Mod profile: '..profile.kind..'.'
       end
-      return {message=message,profile=profile,games=games,sync=result}
+      return {message=message,profile=profile,games=games,sync=result,cacheWarning=cacheWarning}
     end)
     self._storageTask=task;self._storageVersions=list
     Sync.set(task and 'uploading' or 'error',version,slot,why)
@@ -158,7 +158,7 @@ function Storage.install(RI)
         if result then
           self._storageTask=nil;self._settingsRowCache=nil;self._settingsCache=nil;self._cartStyleCache=nil
           local payload=result.kind=='done' and result.first
-          Sync.result(type(payload)=='table' and (payload.sync or payload) or payload,result.error or result.second)
+          Sync.result(payload,result.error or result.second)
           self.settingsNotice=type(payload)=='table' and payload.message or payload or ('Cloud sync paused: '..tostring(result.error or result.second))
           if type(payload)=='table' and payload.profile and (payload.profile.kind=='apply' or payload.profile.kind=='conflict') then
             self._modProfilePlan=payload.profile

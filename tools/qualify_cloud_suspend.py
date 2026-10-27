@@ -66,10 +66,10 @@ def main():
     output.mkdir(parents=True)
     output.chmod(0o700)
     source = output / 'source'
-    qa_copy(source)
+    qa_copy(source, ephemeral=True)
     source.mkdir()
     shutil.copytree(ROOT / 'src', source / 'src')
-    for name in ('assets', 'data', 'tests'):
+    for name in ('assets', 'data', 'tests', 'tools'):
         (source / name).symlink_to(ROOT / name, target_is_directory=True)
     (source / 'main.lua').write_bytes(driver.read_bytes())
     (source / 'conf.lua').write_text("""function love.conf(t)

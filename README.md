@@ -42,8 +42,9 @@ language profiles and asks for the exact additional source ROM when needed.
 No separate language-mod download or Gen2 conversion is required. Japanese
 currently targets Crystal; Korean targets Gold/Silver. Chinese is available
 for setup/menu text, without a bundled Chinese game profile. Brazilian
-Portuguese menus need no additional ROM; the current PT-BR game profiles
-still require their listed fan-translation source. See the
+Portuguese game text is prepared offline from the supported US ROM using
+included translation patches, for all eleven editions. No extra PT-BR ROM
+or patch download is required. See the
 [native language guide](docs/native-rom-language-packs.md).
 
 > [!CAUTION]

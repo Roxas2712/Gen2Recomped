@@ -18,11 +18,17 @@ controller and tap-versus-scroll touch navigation stay inside the guide.
 The selected locale also becomes the default native-cartridge language offer.
 `NativeLanguageSetup` waits for a completed US import (or first Play), shows
 edition-specific availability and exact source prerequisites, and uses the
-normal native file picker. GBA imports retain their exact English base
+normal native file picker. US imports retain their exact English base
 automatically. No separate Uni-Language ZIP is required; its profiles ship
 under `mods/UNI_LANGUAGE_NATIVE/`. Settings > Game language > Game language
 (ROM) reopens the choice. See [native ROM language packs](native-rom-language-packs.md)
 for per-language coverage, preview limits and validation.
+
+For Brazilian Portuguese, all eleven editions offer offline preparation
+from that US base using the included BPS patch. The modal never requests a
+separate PT-BR ROM. Preparation runs across launcher updates, validates both
+input and result, and publishes only a complete private language image.
+English/Later can cancel an unfinished job; failure keeps the current choice.
 
 Reviewed German essentials in `translation/LauncherCatalog.lua` work offline
 and override machine-generated translations. Additional interface text and

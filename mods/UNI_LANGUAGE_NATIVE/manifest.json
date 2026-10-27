@@ -1,7 +1,7 @@
 {
   "id": "german_rom_source",
   "name": "Uni-Language · Built-in",
-  "version": "1.9.0-native.1",
+  "version": "1.9.1-native.1",
   "api": 2,
   "entry": "main.lua",
   "profile": "content",
@@ -390,6 +390,69 @@
       "file": "leafgreen_en.gba",
       "size": 16777216,
       "md5": "612ca9473451fa42b51d1711031ed5f6"
+    },
+    {
+      "id": "red_en",
+      "name": "Red English USA 1.0",
+      "description": "US source for automatic Portuguese preparation. SHA-1 ea9bcae617fdf159b045185467ae58b2e4a48b9a",
+      "file": "red_en.gbc",
+      "md5": "3d45c1ee9abd5738df46d2bdda8b57dc",
+      "size": 1048576,
+      "required": false
+    },
+    {
+      "id": "blue_en",
+      "name": "Blue English USA 1.0",
+      "description": "US source for automatic Portuguese preparation. SHA-1 d7037c83e1ae5b39bde3c30787637ba1d4c48ce2",
+      "file": "blue_en.gbc",
+      "md5": "50927e843568814f7ed45ec4f944bd8b",
+      "size": 1048576,
+      "required": false
+    },
+    {
+      "id": "yellow_en",
+      "name": "Yellow English USA 1.0",
+      "description": "US source for automatic Portuguese preparation. SHA-1 cc7d03262ebfaf2f06772c1a480c7d9d5f4a38e1",
+      "file": "yellow_en.gbc",
+      "md5": "d9290db87b1f0a23b89f99ee4469e34b",
+      "size": 1048576,
+      "required": false
+    },
+    {
+      "id": "gold_en",
+      "name": "Gold English USA 1.0",
+      "description": "US source for automatic Portuguese preparation. SHA-1 d8b8a3600a465308c9953dfa04f0081c05bdcb94",
+      "file": "gold_en.gbc",
+      "md5": "a6924ce1f9ad2228e1c6580779b23878",
+      "size": 2097152,
+      "required": false
+    },
+    {
+      "id": "silver_en",
+      "name": "Silver English USA 1.0",
+      "description": "US source for automatic Portuguese preparation. SHA-1 49b163f7e57702bc939d642a18f591de55d92dae",
+      "file": "silver_en.gbc",
+      "md5": "2ac166169354e84d0e2d7cf4cb40b312",
+      "size": 2097152,
+      "required": false
+    },
+    {
+      "id": "crystal_en",
+      "name": "Crystal English USA 1.0",
+      "description": "US source for automatic Portuguese preparation. SHA-1 f4cd194bdee0d04ca4eac29e09b8e4e9d818c133",
+      "file": "crystal_en.gbc",
+      "md5": "9f2922b235a5eeb78d65594e82ef5dde",
+      "size": 2097152,
+      "required": false
+    },
+    {
+      "id": "crystal_en_rev1",
+      "name": "Crystal English USA 1.1",
+      "description": "US source for automatic Portuguese preparation. SHA-1 f2f52230b536214ef7c9924f483392993e226cfb",
+      "file": "crystal_en_rev1.gbc",
+      "md5": "301899b8087289a6436b0a241fbbb474",
+      "size": 2097152,
+      "required": false
     }
   ],
   "generations": [

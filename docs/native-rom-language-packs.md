@@ -13,7 +13,7 @@ That choice becomes the default offer for cartridge language, separately
 from machine translation. A completed US import offers its corresponding
 language profile, lists the precise revision, SHA-1 and file size, and opens
 the standard native import picker for that one prerequisite. Wrong inputs
-leave the previous language unchanged. A GBA US import automatically retains
+leave the previous language unchanged. A supported US import automatically retains
 its validated English source in the private import store, avoiding a second
 base-ROM selection. Older imports can supply this base once from the same
 dialog. Import batches finish before any language offer opens.
@@ -34,10 +34,23 @@ Crystal, Korean Gold/Silver. Chinese has menu support but no bundled game
 profile. The Japanese/Korean game profiles retain their preview notices.
 German profiles cover all eleven supported original editions; European and
 Brazilian Portuguese availability follows the exact bundled catalog.
-PT-BR menu text is available without an extra ROM. The present PT-BR game
-profiles still read their listed fan-translated source ROM; authored
-supplements do not replace that input. This integration does not yet apply
-third-party translation patches automatically to the English base.
+PT-BR works offline from the supported US ROM for all eleven editions. The
+language offer shows **From US ROM** and prepares the translation when the
+user confirms. No Portuguese ROM, manual patcher or download is required.
+Older imports can add their US base once in the same dialog. The engine
+verifies the included BPS delta, exact US identity and resulting language
+image before atomically retaining it in the private import store. The
+original US file and compiled English game cache stay unchanged. Preparation
+yields to the launcher; cancelling continues in English, and failures retain
+the current selection. Subsequent starts reuse the verified private input.
+
+Crystal supports US 1.0 and 1.1. FireRed/LeafGreen use their supported US 1.0
+inputs directly; their original translation's 1.1 requirement is handled
+inside the bundled delta. Sapphire uses its own US input to reconstruct the
+existing shared Ruby/PT-BR language source, while gameplay remains Sapphire.
+Exact accepted hashes, translation authors and source provenance are in
+`assets/language-patches/pt-BR/index.json`; reconstruction instructions and
+retained upstream notices are in that directory's README.
 
 Additional acceptance tests:
 
@@ -45,6 +58,13 @@ Additional acceptance tests:
 luajit tests/engine/native_language_setup.lua
 python3 tools/check_builtin_language_setup.py --love /path/to/love \
   --out .local/qa/builtin-language-setup
+python3 tools/check_builtin_language_setup.py --love /path/to/love \
+  --language pt-BR --out .local/qa/builtin-language-ptbr
+python3 tools/check_ptbr_auto.py --love /path/to/love \
+  --out .local/qa/ptbr-auto
+python3 tools/check_ptbr_patches.py --luajit /path/to/luajit \
+  --rom-dir /private/us-cartridges --extra-base /private/crystal11.gbc \
+  --out .local/qa/ptbr-patch-roundtrips
 ```
 
 This runner starts with clean guest profiles, renders all four CJK setup
@@ -52,6 +72,15 @@ choices without downloading fonts, imports actual US Gold/Emerald and the
 matching German sources, then boots the built-in pack and exercises native
 language round trips, failure rollback and live progress preservation.
 It does not qualify Japanese/Korean gameplay without their actual ROM inputs.
+The PT-BR setup variant supplies US inputs only and exercises the actual
+asynchronous preparation dialog before the game tests. The eleven-edition
+runner checks target hashes, unchanged mechanical fields, rendered title and
+world, EN/PT round trips, rollback and progress preservation; GSC also talks
+to a real Portuguese nurse. These checks do not certify every story branch
+or multiplayer exchange.
+The retained [US-only PT-BR qualification](qa/ptbr-us-auto.json) records the
+eleven-edition, first-run, alternate-revision and packaged-app evidence,
+plus separate failures from the general QA-storage regression suite.
 
 The fork exposes `mod.localization` and the capability
 `mod:supports("localization", "rom-language-v1")`. Capability discovery is lazy:

@@ -43,7 +43,8 @@ local function prepare()
   for id,record in pairs(Game.data.trainers or {})do
    for index,party in ipairs(record.parties or {})do
     local first=party[1]
-    if first and first.species=='MAGIKARP'and(first.level or 0)>highest then
+    local species=first and Game.data.pokemon[first.species]
+    if species and species.dex==129 and(first.level or 0)>highest then
      highest=first.level;trainer={id=id,index=index}
     end
    end
@@ -54,7 +55,8 @@ local function prepare()
  world.update=function(self,dt)
   if Game.input:wasPressed('a')and not Game.save.flags.CLOUD_SUSPEND_STARTED then
    Game.save.flags.CLOUD_SUSPEND_STARTED=true
-   self.runner:run({{'start_battle',trainer and'trainer'or'wild',trainer and trainer.id or'MAGIKARP',trainer and trainer.index or 35},{'set_flag','CLOUD_SUSPEND_RETURNED'}})
+   local wild=require('src.core.Gen2SpeciesNames').registryId(Game.data.pokemon,'MAGIKARP')
+   self.runner:run({{'start_battle',trainer and'trainer'or'wild',trainer and trainer.id or wild,trainer and trainer.index or 35},{'set_flag','CLOUD_SUSPEND_RETURNED'}})
   end
   return update(self,dt)
  end
@@ -151,7 +153,11 @@ function love.update(dt)
      local cp,code,detail=require('src.core.Checkpoint').capture(Game)
      if not cp then local ok,why=pcall(require('src.core.CheckpointBattle').capture,Game,b,function(v)return assert(S.decode(S.encodeExact(v)))end);error(tostring(detail)..' / '..tostring(why))end
     end
-    idleTicks=idleTicks+1;step(false)
+    -- Advance actual logic and journal ticks without rendering every idle
+    -- decision. Thirty simulated minutes must not spend thirty real minutes
+    -- drawing an unchanged battle menu.
+    local count=math.min(240,(cfg.idleTicks or 0)-idleTicks)
+    for _=1,count do idleTicks=idleTicks+1;step(false)end
    elseif phase=='animation'and b.gen3AnimPlaying then
     animationTicks=animationTicks+1
     if animationTicks>=5 then suspend();return else step(true)end
