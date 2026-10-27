@@ -16,6 +16,8 @@ love.audio={newSource=function(path)
   function s:isPlaying()return self.playing end
   function s:setVolume()end
   function s:setPitch()end
+  function s:setLooping(value)self.looping=value end
+  function s:isLooping()return self.looping or false end
   function s:getDuration()return 1 end
   made[#made+1]=s
   return s
@@ -24,7 +26,7 @@ local function fixture(edition)
   Version.set(edition)
   local data=T.fixtures.fresh();data.constants.gen=Version.generation()
   data.audio={sfx={Sfx_Kinesis='kinesis.ogg',Sfx_Faint='faint.ogg',busy='busy.ogg'},
-    cries={FIXMON_A='player.ogg'}}
+    cries={FIXMON_A='player.ogg'},songs={wind={file='weather.ogg'}}}
   local run=T.sdk.loadMods({'mods/faint_probe'},{data=data,fs=T.sdk.memfs({
     ['mods/faint_probe/manifest.json']=[[{"id":"faint_probe","name":"Faint probe","version":"1.0.0","api":2,"entry":"main.lua"}]],
     ['mods/faint_probe/main.lua']=[[
@@ -154,6 +156,16 @@ T.eq(probe.events[1]and probe.events[1].kind,'faint','normal native KO emits a t
 T.eq(probe.events[1]and probe.events[1].mon,b.enemy.mon,'native event retains actual Pokemon identity')
 step();T.check(b.faintSlide~=nil,'actual native KO enters the same presentation owner')
 T.eq(b.enemy.mon.hp,0,'native KO is not replaced by a presentation damage loop')
+Sound.invalidate();require('src.mods.Loader').teardown();run.release()
+
+b,run,probe,step=fixture('crystal')
+if Sound.playWeatherEffect then
+  local ambient=Sound.playWeatherEffect(b.data,'wind',true)
+  T.check(ambient and ambient:isPlaying() and ambient:isLooping(),'actual weather owner starts its ambient voice')
+  T.eq(Sound.sfxBusy(),false,'independent weather voice does not occupy the battle SFX gate')
+  b:push({kind='faint',side='enemy',mon=b.enemy.mon,text='Ambient faint'});step()
+  T.eq(b.faintSlide.wait,nil,'weather ambience cannot add a 180-frame KO delay')
+end
 Sound.invalidate();require('src.mods.Loader').teardown();run.release()
 
 b,run,probe,step=fixture('crystal')
