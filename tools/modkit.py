@@ -945,41 +945,12 @@ class CacheIndex:
                         pass
 
 
-def declares_native_imports(manifest):
-    """Cache access in privileged importer code is not redistributed data."""
-    permissions = manifest.get("permissions")
-    if not isinstance(permissions, list) or "engine_internals" not in permissions:
-        return False
-    for field in ("required_imports", "optional_imports"):
-        entries = manifest.get(field)
-        if not isinstance(entries, list):
-            continue
-        for entry in entries:
-            if not isinstance(entry, dict):
-                continue
-            hashes = entry.get("md5")
-            if isinstance(hashes, str):
-                hashes = [hashes]
-            file = entry.get("file")
-            safe_file = (isinstance(file, str) and bool(file)
-                         and not any(ord(c) < 32 or c in "\\:" for c in file)
-                         and all(part not in ("", ".", "..") for part in file.split("/")))
-            if (safe_file
-                    and type(entry.get("size")) is int and entry["size"] > 0
-                    and isinstance(hashes, list) and hashes
-                    and all(isinstance(h, str) and re.fullmatch(r"[0-9a-fA-F]{32}", h)
-                            for h in hashes)):
-                return True
-    return False
-
-
 def lint_dir(repo, mod_dir, manifest):
     """MK3xx: the no-ROM-content gate (22-distribution-and-packaging.md)."""
     findings = []
     manifest = manifest or {}
     transforms_rel = manifest.get("assets_transforms")
     has_transforms = bool(transforms_rel)
-    native_importer = declares_native_imports(manifest)
     cache = CacheIndex(repo)
     try:
         from PIL import Image
@@ -1004,15 +975,8 @@ def lint_dir(repo, mod_dir, manifest):
             if ext == ".lua":
                 body = strip_lua(body)
             if "assets/generated/" in body or "data/generated/" in body:
-                # A privileged importer declaring checksummed inputs reads
-                # or rebuilds the player's cache. Keep that source access
-                # visible as a warning; all shipped-data checks below still
-                # apply. Ordinary mods and JSON asset definitions stay errors.
-                importer_source = native_importer and ext == ".lua"
                 findings.append(Finding(
-                    "MK301", "warn" if importer_source else "error",
-                    "native importer source with checksum-declared inputs accesses the player's cache"
-                    if importer_source else
+                    "MK301", "error",
                     "references the ROM-derived cache; ship your own asset "
                     "under assets/ or derive it via assets_transforms", rel))
         # MK303: ROM images and ROM-hack patch formats never ship
@@ -1036,8 +1000,7 @@ def lint_dir(repo, mod_dir, manifest):
                 continue
         # MK302: byte-identity and perceptual near-duplicates vs the cache
         if ext in ASSET_EXTS:
-            with open(path, "rb") as handle:
-                body = handle.read()
+            body = open(path, "rb").read()
             digest = hashlib.sha256(body).hexdigest()
             twin = cache.sha.get(digest)
             if twin:
