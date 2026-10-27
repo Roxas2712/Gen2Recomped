@@ -7,6 +7,9 @@ local unpack=table.unpack or unpack
 local function pack(...)return{n=select('#',...),...}end
 function M.active(screen)return phases[screen]~=nil end
 function M.delta(screen)return phases[screen]and phases[screen].delta end
+function M.called(screen,key)
+ local phase=phases[screen];return phase~=nil and phase.steps[key]~=nil
+end
 function M.once(screen,key,body,...)
   local phase=phases[screen]
   if not phase then return body(screen,...)end

@@ -12930,6 +12930,8 @@ end
 -- Source wrappers observe the real GBA owner. Unrequested modules and other
 -- generations keep the direct native path; there is no additional clock.
 do
+  local unpack_=table.unpack or unpack
+  local function pack(...)return{n=select('#',...),...}end
   local update, draw, field, exit, enter = BattleState.update, BattleState.draw,
     BattleState.drawBattleField, BattleState.exit, BattleState.enter
   local Clock = require('src.battle.PresentationClock')
@@ -12963,7 +12965,9 @@ do
     local anim = source and package.loaded['src.core.game3.battle.anim']
     if anim then
       return Clock.run(self, dt, function()
-        return source._nativeUpdate(self, dt, update)
+        local result=pack(source._nativeUpdate(self, dt, update))
+        anim._nativeAfterUpdate(self)
+        return unpack_(result,1,result.n)
       end)
     end
     if source then return source._nativeUpdate(self, dt, update) end
