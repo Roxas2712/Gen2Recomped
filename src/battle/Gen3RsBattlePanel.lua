@@ -26,10 +26,10 @@ function M:release()
   if self.context.canvas then self.context.canvas:release();self.context.canvas=nil end
 end
 function M.handles(battle)
-  return not battle.safari and require('src.battle.Gen3Battle').width(battle)==240
+  return (not battle.safari or battle.gen3Safari)and require('src.battle.Gen3Battle').width(battle)==240
 end
 function M:draw(battle)
-  -- Preserve the host's optional wide layout and its special Safari UI.
+  -- Preserve the host's optional wide layout.
   if not M.handles(battle)then return false end
   local mode=battle.phase=='menu'and'action'or(battle.phase=='moveSelect'or battle.phase=='mimicSelect')and'moves'or'message'
   local g=love.graphics;local F=self.font
@@ -39,6 +39,13 @@ function M:draw(battle)
     opts=opts or {};opts.colors=colors or self.menuColors;F.draw(tostring(value or ''),x,y,opts)
   end
   if mode=='action'then
+    if battle.gen3Safari then
+      local G=require('src.battle.Gen3Safari')
+      local i=0;for line in G.text(battle,'prompt'):gmatch('[^\n]+')do text(line,16,120+i*16,self.messageColors);i=i+1 end
+      local c=(battle.menuIndex or 1)-1;self.cursor.draw(144+46*(c%2),120+16*math.floor(c/2),42)
+      for n,label in ipairs(battle.data.constants.gen3SafariNative.labels)do text(label,144+46*((n-1)%2),120+16*math.floor((n-1)/2))end
+      return true
+    end
     local chooser=(battle.menuBattler and battle:menuBattler())or battle.player
     local menu=battle.data.constants.gen3BattleMenu or {};local prompt=menu.prompt
     if battle.rsWally then

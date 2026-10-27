@@ -35,7 +35,7 @@ local function row(font,text,x,y,width,colors,fill)
 end
 function M.draw(battle,battler,x,y,player,font,paint)
   local s=M.available(battle)
-  if not s or battle.safari then return false end
+  if not s or battle.safari and player then return false end
   local compact=battle.isDouble and battle:isDouble()
   local bid=battler.position or(player and 0 or 1)
   local status=battler.shownStatus and battle:statusLabel({status=battler.shownStatus})
@@ -90,6 +90,20 @@ function M.draw(battle,battler,x,y,player,font,paint)
     for i=0,7 do tile(s.elementsExp,12+math.max(0,math.min(8,exp-i*8)),x+32+i*8,y+32)end
   end
   g.setColor(1,1,1,1)
+  return true
+end
+function M.drawSafari(battle,x,y,font)
+  local s=M.available(battle)
+  local hud=battle.data.constants.gen3BattleHud
+  if not s or not battle.gen3Safari or not(hud and hud.images and hud.images.safari)then return false end
+  local g=love.graphics;g.setColor(1,1,1,1);g.draw(Assets.image(hud.images.safari),x,y)
+  local colors={fg=color(s.palette[2]),shadow=color(s.palette[4]),bg=color(s.palette[3])}
+  local G=require('src.battle.Gen3Safari')
+  for tile=0,6 do g.draw(Assets.image(s.blank),x+24+tile*8,y)end
+  row(font,G.text(battle,'balls'),x+24,y+8,56,colors,true)
+  local digits=tostring(math.max(0,battle.safari.balls))
+  local text=G.text(battle,'left')..string.char(0xfc,0x11,math.max(0,10-font.measure(digits,OPTS)))..digits
+  row(font,text,x+48,y+24,40,colors,true)
   return true
 end
 return M

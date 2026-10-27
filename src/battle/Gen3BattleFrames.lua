@@ -7,7 +7,7 @@ local M={}
 local function rs(b)
  local v=Version.get();local owner=b.rsBattlePanel
  if (v=='ruby'or v=='sapphire')and owner and owner.chrome and owner.images
-  and not b.safari and Native.width(b)==240 then return owner end
+  and (not b.safari or b.gen3Safari)and Native.width(b)==240 then return owner end
 end
 function M.rects(b,which)
  local s,w=Native.strip(b),Native.windows(b)

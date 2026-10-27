@@ -16,6 +16,7 @@ local cache = {}
 local recoveries = {}
 -- downstream caches that must empty when the search path changes
 local invalidators = {}
+local releasers = {}
 
 -- The loader bridge: overrideOrder() yields mods highest-priority-first
 -- and derivedPath(rel) yields an existing save/mod-derived/<id>/<rel>.
@@ -208,8 +209,20 @@ function Assets.imageDataShared(path)
   return data
 end
 
-function Assets.register(invalidate)
-  invalidators[#invalidators + 1] = invalidate
+-- Gen1Recomp's hook contract distinguishes a soft cache refresh from retiring
+-- a session. Keep function registrations compatible with existing renderers.
+function Assets.register(hooks)
+  if type(hooks) == "function" then
+    invalidators[#invalidators + 1] = hooks
+    return
+  end
+  if type(hooks) ~= "table" then return end
+  if type(hooks.invalidate) == "function" then
+    invalidators[#invalidators + 1] = hooks.invalidate
+  end
+  if type(hooks.release) == "function" then
+    releasers[#releasers + 1] = hooks.release
+  end
 end
 
 -- hot reload's single entry point (20-developer-tooling): drop the central
@@ -231,6 +244,25 @@ function Assets.invalidate()
 end
 
 Assets.flush = Assets.invalidate
+
+-- Session retirement, following Gen1Recomp's releaseSession API. A refresh
+-- leaves live renderers' images usable; only a retired session releases owned
+-- resources. Native missing-sheet aliases may share the same blank image.
+function Assets.releaseSession()
+  local released = {}
+  local function release(resource)
+    if resource and not released[resource] then
+      released[resource] = true
+      pcall(function() if resource.release then resource:release() end end)
+    end
+  end
+  for _, resource in pairs(cache) do release(resource) end
+  for _, resource in pairs(dataCache) do release(resource) end
+  release(blankImage)
+  cache, recoveries, dataCache, dataOrigins, resolved = {}, {}, {}, {}, {}
+  blankImage = nil
+  for _, fn in ipairs(releasers) do pcall(fn) end
+end
 
 -- Loader:load hands over the live mod set once the merge is done.  Load
 -- order is priority ascending, so the search walks it backwards: the mod

@@ -284,6 +284,15 @@
   },
   "pokedexEntrySize": 36,
   "stageOverrides": {
+    "BALLS": {
+      "BONUS": 2076048,
+      "JUMP": 177840,
+      "STATUS_HALF": [
+        "PSN",
+        "BRN",
+        "PAR"
+      ]
+    },
     "ITEM_EFFECTS": {
       "TABLE": 2084324,
       "FIRST": 13,

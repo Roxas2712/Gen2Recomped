@@ -59533,6 +59533,7 @@ function RomExtractorGen3:run()
   require('src.import.Gen3RsPresentation').extract(self)
   require('src.import.Gen3EmeraldPresentation').extract(self)
   require('src.import.Gen3StatGrowthAssets').extract(self)
+  require('src.import.Gen3SafariAssets').extract(self)
   -- Keep the final native pool, including strings added by late UI stages.
   if self._textPointers and self._textPointers.namedIR then
     for id, row in pairs(self._textPointers.namedIR.records) do
