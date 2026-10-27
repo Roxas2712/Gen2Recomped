@@ -140,7 +140,7 @@ if(!$u->hasVerifiedEmail())throw new RuntimeException('QA account must have a co
             for role in ('source', 'target'):
                 identity = 'oasc-suspend-qa-' + run_id + '-' + edition + '-' + role
                 qa_profile(profiles / identity)
-                config = dict(edition=edition, role=role, privateGameCache=args.private_game_cache, animation=args.during_animation, idleTicks=args.idle_ticks, trainer=args.trainer, move=args.move, email=email, password=password, cache=str(cache),
+                config = dict(timeout=args.timeout, edition=edition, role=role, privateGameCache=args.private_game_cache, animation=args.during_animation, idleTicks=args.idle_ticks, trainer=args.trainer, move=args.move, email=email, password=password, cache=str(cache),
                               api=url + '/api/cloud/v1', library=str(runtime / 'Contents/Frameworks/love.framework/Versions/A/love'),
                               result=str(output / (edition + '-' + role + '.json')),
                               expected=str(output / (edition + '-expected.lua')))

@@ -58,7 +58,7 @@ local function prepare()
  assert(require('src.storage.AccountStorage').bind())
  phase='native-load';Game=require('src.core.Game');Game.loadWithoutMods=true;Game:load();Game.stack:init()
  local S=require('src.core.SaveData');local opts=Game.save.options
- opts.textSpeed='fast';opts.musicVolume=0;opts.soundVolume=0;opts.masterVolume=0
+ opts.vsync='off';opts.textSpeed='fast';opts.musicVolume=0;opts.soundVolume=0;opts.masterVolume=0
  Game:applyOptions(opts)
  Game.save.party={}
  for _,species in ipairs({'PIKACHU','PIDGEY','RATTATA'}) do
