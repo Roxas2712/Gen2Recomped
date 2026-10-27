@@ -121,6 +121,11 @@ function Compat.install()
       and g and g.newShader and g.getShader and g.getCanvas) then return false end
   installed = true
   local newShader, validateShader = g.newShader, g.validateShader
+  -- Engine-owned derivative programs already use the admitted source's clip
+  -- convention. Re-analyzing their modified forwarding entry would adapt it
+  -- twice. Keep the exact preceding constructor, without injecting a macro
+  -- which could change the producer's preprocessor branches.
+  Compat.compileNative = newShader
   local setShader, setCanvas, pop = g.setShader, g.setCanvas, g.pop
 
   local function sync(shader)

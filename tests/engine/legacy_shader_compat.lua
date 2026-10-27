@@ -90,4 +90,8 @@ for _,defines in ipairs({{POKEPORT_NATIVE_CLIP_SPACE=1},{POKEPORT_NATIVE_CLIP_SP
  local last=validations[#validations];T.eq(last[2],pixel);T.eq(last[3],vertex);T.eq(last[4],nativeOptions,'validator retains native compile options')
 end
 love=savedLove
+local beforeNative=#sends;local derived=C.compileNative(vertex,options)
+T.eq(derived.a,vertex,'derived native source bypasses repeated clip adaptation')
+T.eq(derived.b,options,'native compiler seam preserves options')
+T.eq(#sends,beforeNative,'native compiler seam has no legacy uniform ownership')
 T.finish('legacy shader compatibility')
