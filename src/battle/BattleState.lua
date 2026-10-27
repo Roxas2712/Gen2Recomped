@@ -3169,11 +3169,15 @@ function BattleState:updateQueue()
     return true
   end
   if not self.current then
-    -- Gen1 screen decorators may intentionally return no value. Admission
-    -- is observed through native queue/current state, never a new return ABI.
+    -- Gen2 screen decorators may intentionally return no value. Its native
+    -- admission state owns progress. Other generations keep the existing
+    -- queue result, including a last GBA row skipped without a waiting tick.
     local hadEvent=self.queue[1]~=nil
-    self:advanceQueue()
-    if not self.current then return hadEvent end
+    local busy=self:advanceQueue()
+    if not self.current then
+      if GameVersion.isGen2() then return hadEvent end
+      return busy
+    end
   end
   local input = self.game.input
   -- a \v CONT wait holds the box until A/B, then scrolls the next line in
