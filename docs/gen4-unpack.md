@@ -31,3 +31,11 @@ classification and live callback edits. For all native Twinleaf shapes,
 against a pinned pre-extraction Git renderer. It compares upload bytes and
 public model metadata in both table/packed and CPU/GPU lighting modes.
 This extraction starts no workers and claims no speedup.
+
+Qualification at `85f5bb67`: 146/146 focused/native/compatibility/matrix
+stages passed, including the native rendering host. LÖVE 12/Metal and
+LÖVE 11.5/OpenGL each compared 10,208 uploads from 172 unique chunks and
+2,519 shapes in the native Twinleaf matrix: 105,936,384 vertex bytes per
+runtime, zero differences. Live callback/getter sequences also matched the
+pinned `2fdfe77f` renderer. These checks measure byte/behavior equality;
+no runtime speedup is claimed. Raw reports are in `docs/qa/gen4-unpack-*`.
