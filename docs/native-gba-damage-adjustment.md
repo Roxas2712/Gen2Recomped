@@ -48,8 +48,8 @@ a hidden calculation or RNG calls. Native amounts use `max(0,floor(tonumber
 or 0))`. Adjustment works on its own metadata copy. Shared classic records and
 imported move rows are not rewritten; earlier-generation owners remain intact.
 
-Native battle revision is **25**. The independent fixture digest is
-`35f797dbee5a94af`; revision24 used `2882b526b6881e0a`. Mixed native battle
+Native battle revision is **26** after the [faint friendship owner](native-gba-faint-friendship.md). The independent fixture digest is
+`adb591544e735888`; revision24 used `2882b526b6881e0a`. Mixed native battle
 revisions cannot enter lockstep. The legacy digest remains
 `e33d251961f2a41d` and native party codec remains1. Temporary calculation,
 Explosion and proc owners retire before a menu checkpoint; they are not saved

@@ -29,6 +29,9 @@ for _,edition in ipairs({'ruby','emerald'})do
   -- native logical marker. Native HP-command production is qualified in
   -- gen3_faint_phases; this test isolates serialization and preflight.
   require('src.battle.Gen3Faint').mark(actor)
+  local Friendship=require('src.battle.Gen3FaintFriendship')
+  Friendship.step(b,actor,'status_chip')
+  local hp=actor.mon.hp;actor.mon.hp=0;Friendship.capture(b,actor);actor.mon.hp=hp
   T.eq(actor._gbaLogicalFaint,true,'prepared marker uses the actual native owner')
   local cp,why=f.checkpoints:capture(game)
   if not cp then
@@ -38,6 +41,28 @@ for _,edition in ipairs({'ruby','emerald'})do
   T.check(cp~=nil,'prepared faint state capture '..tostring(why));assert(cp,why)
   local graph=cp.runtime.battle.graph;local player=field(graph,graph.root,'player').value
   T.eq(field(graph,player,'_gbaLogicalFaint').value.scalar,true,'native logical state is serialized')
+  local function rejected(bad,label)
+    local save,top=game.save,f.stack:top();local ok,reason=f.checkpoints:restore(game,bad)
+    T.eq(ok,false,label);T.eq(reason,'invalid_battle_state','invalid friendship context rejects before publication')
+    T.eq(game.save,save,'invalid friendship context preserves the save');T.eq(f.stack:top(),top,'invalid friendship context preserves the active stack')
+  end
+  for _,invalid in ipairs({0,1,'true'})do
+    local bad=copy(cp);local g=bad.runtime.battle.graph;local p=field(g,g.root,'player').value
+    local entries=g.nodes[p.node].entries;entries[#entries+1]={key='_gbaFriendshipFainted',value={scalar=invalid}}
+    rejected(bad,'invalid friendship command marker rejects')
+  end
+  for key,value in pairs({attacker=4,phase='unknown'})do
+    local bad=copy(cp);local g=bad.runtime.battle.graph
+    field(g,field(g,g.root,'_gbaFaintRoles').value,key).value={scalar=value}
+    rejected(bad,'invalid native role context rejects')
+  end
+  if edition=='ruby'then
+    for _,invalid in ipairs({-1,256,1.5,'30'})do
+      local bad=copy(cp);local g=bad.runtime.battle.graph;local p=field(g,g.root,'player').value
+      field(g,field(g,p,'_gbaFaintContext').value,'otherLevel').value={scalar=invalid}
+      rejected(bad,'invalid captured residual level rejects')
+    end
+  end
   for _,invalid in ipairs({0,1,0.5,'true'})do
     local bad=copy(cp);local g=bad.runtime.battle.graph
     field(g,field(g,g.root,'player').value,'_gbaLogicalFaint').value={scalar=invalid}
@@ -48,6 +73,10 @@ for _,edition in ipairs({'ruby','emerald'})do
   end
   local ok,reason=f.checkpoints:restore(game,copy(cp));T.eq(ok,true,'native faint state restores '..tostring(reason));assert(ok,reason)
   local resumed=f.stack:top();T.eq(resumed.player._gbaLogicalFaint,true,'cold graph retains native logical death')
+  T.eq(resumed._gbaFaintRoles.phase,'status_chip','cold graph retains the native residual role owner')
+  if edition=='ruby'then
+    T.eq(resumed.player._gbaFaintContext.otherLevel,actor.mon.level,'cold graph retains native captured faint levels')
+  else T.eq(resumed.player._gbaFaintContext,nil,'Emerald does not invent the R/S residual level snapshot')end
   resumed.player.mon.hp=10
   local move=resumed.player.curMoves[1];local before=move.pp
   resumed:executeAction(resumed.player,resumed.enemy,move)

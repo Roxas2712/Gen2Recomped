@@ -65,6 +65,11 @@ for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
     round(f,games,battles)
     T.eq(battles[1].localHashes[1],battles[2].localHashes[1],'canonical linked HP/status hashes agree')
     T.same(battles[1].localParts[1],battles[2].localParts[1],'all actual linked state components agree')
+    T.eq(actors[1].VICTIM.mon.happiness,actors[2].VICTIM.mon.happiness,'both linked copies retain the same native victim friendship')
+    T.eq(actors[1].ATTACKER.mon.happiness,actors[2].ATTACKER.mon.happiness,'both linked copies retain the same native reaction-user friendship')
+    local rs=edition=='ruby'or edition=='sapphire'
+    T.eq(actors[1].VICTIM.mon.happiness,rs and 70 or 69,'equal-level faint follows edition rules on both peers')
+    for _,game in ipairs(games)do T.eq(game.save.party[1].happiness,70,'linked battle copies do not mutate the saved world party')end
     for i=1,2 do
       T.eq(actors[i].VICTIM.mon.hp,0,'real native reaction user is knocked out')
       T.eq(actors[i].VICTIM.mon.status,nil,'native KO removes poison')
@@ -77,16 +82,20 @@ for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'})do
   -- Deliberately diverge exactly one native semantic bit after both moves.
   -- HP, PP, stats and the legacy value hash remain equal. The real transport
   -- must catch the differing future behavior in its fatal active component.
-  for _,key in ipairs({'_gbaLogicalFaint','grudge','destinyBond'})do
+  for _,key in ipairs({'_gbaLogicalFaint','grudge','destinyBond','_gbaFriendshipFainted','friendshipAlias'})do
     local f=Fixture.boot(edition,3,'unified')
     local games,battles=peers(f)
     local original=battles[1].endOfTurn
     battles[1].endOfTurn=function(self,...)
-      original(self,...);self.player[key]=true
+      original(self,...)
+      if key=='friendshipAlias'then self.player.mon.friendship=1 else self.player[key]=true end
     end
     round(f,games,battles)
     T.eq(battles[1].localHashes[1],battles[2].localHashes[1],'negative control preserves the old HP/status value hash')
-    T.eq(battles[1].localParts[1].bench,battles[2].localParts[1].bench,'negative control preserves the complete party state')
+    if key=='friendshipAlias'then
+      T.eq(battles[1].player.mon.happiness,battles[2].enemy.mon.happiness,'friendship negative control preserves the happiness alias')
+      T.neq(battles[1].localParts[1].bench,battles[2].localParts[1].bench,'native party hash includes authoritative friendship')
+    else T.eq(battles[1].localParts[1].bench,battles[2].localParts[1].bench,'negative control preserves the complete party state')end
     T.neq(battles[1].localParts[1].actives,battles[2].localParts[1].actives,'actual link hashes include '..key)
     for _=1,8 do for i,game in ipairs(games)do f.loaded.loader.game=game;Input.pressed={};game.stack:update(1/60)end end
     T.eq(battles[1].result,'draw','host refuses divergent native faint rules')

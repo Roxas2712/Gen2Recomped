@@ -43,6 +43,7 @@ function E.prepare(ctx, record, calculate)
   -- Every target body executes setHP(0), even after a mod has written HP or
   -- a genuine native heal has cleared the prior logical faint marker.
   ctx.user.mon.hp = 0
+  require('src.battle.Gen3FaintFriendship').capture(battle,ctx.user)
   require('src.battle.Gen3Faint').mark(ctx.user)
   if record.beforeAccuracy then record.beforeAccuracy(ctx); ctx.gbaExplosionBeforeAccuracy = true end
   local amount, info = calculate()

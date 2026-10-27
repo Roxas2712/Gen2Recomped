@@ -22,7 +22,7 @@ local Fingerprint = {}
 -- even when both peers load byte-identical data. Keep older game digests.
 local function nativeBattleRevision()
   if require('src.core.GameVersion').generation()>=4 then return 'nds-'..require('src.core.GameVersion').generation()..'-1'end
-  return require("src.core.GameVersion").isGen3() and 25 or nil
+  return require("src.core.GameVersion").isGen3() and 26 or nil
 end
 Fingerprint.nativeBattleRevision = nativeBattleRevision
 function Fingerprint.nativePartyRevision()
