@@ -135,3 +135,8 @@ binaries, driver/JIT/AOT permissions, touch integration and thermal limits are
 not qualified by this Mac run. No minimum phone/Switch specification is claimed.
 ROMs, decrypted data, generated game C/libraries, private assets and saves stay
 outside Git. Third-party licence notices remain with their source/runtime.
+
+ROM-free regression checks run with `python3 tools/run_pokemon_xy_contract.py`
+(LuaJIT and Lua 5.4 required). Pass `--bridge /absolute/path/to/the/reviewed/bridge`
+to also check native layout and synthetic controller HID; this does not launch a
+game. CI runs the portable checks without private ROMs or native dependencies.

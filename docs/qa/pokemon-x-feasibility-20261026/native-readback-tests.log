@@ -10,4 +10,3 @@ test raster::hardware::readback_pool_tests::recycles_only_retired_exclusive_allo
 test raster::hardware::readback_pool_tests::resized_snapshots_have_no_stale_tail ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 173 filtered out; finished in 0.00s
-

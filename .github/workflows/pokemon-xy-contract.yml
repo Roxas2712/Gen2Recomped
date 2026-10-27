@@ -1,0 +1,29 @@
+name: Pokemon X/Y launcher and mods
+on:
+  pull_request:
+    paths:
+      - main.lua
+      - src/import/**
+      - tools/pokemon*py
+      - tools/ascendant-intro/**
+      - tools/run_pokemon_xy_contract.py
+      - tests/pokemon*test.py
+      - tests/engine/pokemon_xy*.lua
+      - tests/engine/launcher_sequence.lua
+      - .github/workflows/pokemon-xy-contract.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pokemon-xy-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  headless:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install ROM-free test runtimes
+        run: sudo apt-get update && sudo apt-get install -y luajit lua5.4
+      - name: Check imports, mods, language and presentation without game data
+        run: python3 tools/run_pokemon_xy_contract.py

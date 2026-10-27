@@ -17,4 +17,3 @@ test blank_tests::unknown_and_incomplete_images_stay_visible ... ok
 test blank_tests::full_frame_digest_detects_one_changed_pixel ... ok
 
 test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
-
