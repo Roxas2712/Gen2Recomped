@@ -24,19 +24,43 @@ local function readNative(key)
  value=text[id]
  if row then
   if value~=row.nativePlain then return value,nil,game,value==nil end
-  return row.plain,row.ir,game
+  return row.plain,row.ir,game,nil,true
  end
  return value,nil,game
 end
--- RS owns the PP/TYPE panel as one cartridge string. Keep that complete
--- string (including IR controls), rather than inventing separate lettering.
--- Explicit canonical edits/removals always take precedence over this lookup.
-local rsLabels={gText_MoveInterfacePP='BattleText_PP',gText_BattleSwitchWhich='BattleText_SwitchWhich'}
+-- Semantic RS names refer to the cartridge's own records. PP and TYPE share
+-- a record but are separate labels to callers; keep leading IR controls on
+-- both lines. The ordinary command uses the active-mon prompt, whereas the
+-- separate Safari prompt really names the player. Never rewrite placeholder
+-- bytes globally to compensate for selecting the wrong record.
+local rsLabels={gText_MoveInterfacePP={'BattleText_PP',1},gText_MoveInterfaceType={'BattleText_PP',2},
+ gText_BattleSwitchWhich={'BattleText_SwitchWhich'},gText_WhatWillPkmnDo={'BattleText_OtherMenu'},
+ gText_WhatWillWallyDo={'BattleText_WallyMenu'},gText_SafariZoneMenu={'BattleText_MenuOptionsSafari'},
+ gText_SafariBalls={'BattleText_SafariBalls'}}
+local function line(value,nodes,wanted)
+ if type(value)~='string'then return value,nodes end
+ local at=1
+ for _=2,wanted do local p=value:find('\n',at,true);if not p then return end;at=p+1 end
+ local p=value:find('\n',at,true);value=value:sub(at,p and p-1 or #value)
+ if not nodes then return value end
+ local out,header,row,leading={},{},1,true
+ for _,node in ipairs(nodes)do
+  if leading and node.t=='ext'then header[#header+1]=node else leading=false end
+  if node.t=='nl'then
+   row=row+1
+   if row==wanted then for _,control in ipairs(header)do out[#out+1]=control end end
+  elseif row==wanted and node.t~='eos'then out[#out+1]=node end
+ end
+ out[#out+1]={t='eos'};return value,out
+end
 local function read(key)
- local value,nodes,game,removed=readNative(key)
+ local value,nodes,game,removed,nativeRecord=readNative(key)
  local edition=Version.get()
- if value==nil and not removed and (edition=='ruby'or edition=='sapphire')and rsLabels[key]then
-  return readNative(rsLabels[key])
+ local alias=rsLabels[key]
+ if not removed and (value==nil or nativeRecord)and (edition=='ruby'or edition=='sapphire')and alias then
+  local v,ir,owner,gone=readNative(alias[1])
+  if alias[2]then v,ir=line(v,ir,alias[2])end
+  return v,ir,owner,gone
  end
  return value,nodes,game,removed
 end
