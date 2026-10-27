@@ -16,7 +16,7 @@ local trace={}
 love.graphics.draw=function(...)trace[#trace+1]={...}end
 T.eq(Chrome.drawPartyBar(),false,'no invented battle or party owner')
 local function record()
- return{bar='qa-native-party-bar',balls='qa-native-party-balls',count=6,barWidth=128,ballSide=8,step=10,
+ return{bar='qa-native-party-bar',balls='qa-native-party-balls',count=6,barWidth=128,barHeight=8,ballSide=8,step=10,
   icons={empty=0,alive=1,status=2,fainted=3},
   player={barX=136,barY=96,ballX=160,ballY=88,packFrom=1,packStep=1},
   opponent={barX=-24,barY=40,ballX=30,ballY=33,packFrom=6,packStep=-1,flip=true}}
@@ -50,6 +50,13 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  T.eq(#trace,2);T.same({trace[1][2],trace[1][3]},{143,103})
  T.same({trace[2][3],trace[2][4]},{182,95},'native icon geometry plus per-icon offset')
  T.same({love.graphics.getColor()},{.2,.3,.4,.5})
+ local nativeBar,nativeBalls=bar,balls
+ bar=love.graphics.newCanvas(256,16);balls=love.graphics.newCanvas(96,24);trace={}
+ T.eq(Chrome.drawPartyBar(136,96,row.balls,0,false,{ballHidden={}}),true)
+ T.same({trace[1][4],trace[1][5],trace[1][6]},{0,.5,.5},'bar texel density preserves its logical size')
+ T.same({trace[2][5],trace[2][6],trace[2][7]},{0,1/3,1/3},'icons may have a different texel density')
+ T.eq(trace[2][2].w,24,'icon quad uses physical texels')
+ bar,nativeBar=nativeBar,bar;balls,nativeBalls=nativeBalls,balls
  T.eq(b.frame,80);T.eq(#b.queue,queue);T.eq(rolls,0,'painting never consumes battle RNG')
  local base=Chrome.drawPartyBar;local wrappers=0
  Chrome.drawPartyBar=function(...)wrappers=wrappers+1;base(...);return base(...)end
