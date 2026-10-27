@@ -161,6 +161,23 @@ T.eq(nextId-before,2,'LOW admits at most two prepared atlases for one worker')
 T.eq(handles[3],nil,'bounded LOW admission leaves excess work on the coroutine path')
 for _,handle in ipairs(handles)do Build.cancel(handle)end
 P.tier='high'
+local fixture=Fixture.new('emerald');local submitNow=Pool.submit;local immediate=0
+Pool.submit=function(_,_,payload,done)
+  nextId=nextId+1;done(Core.run(payload));return nextId
+end
+local instant=Build.prepare(fixture.pair,fixture.layout,function()immediate=immediate+1 end,function()error('unexpected error')end)
+T.eq(immediate,1,'an immediate provider reply is delivered exactly once')
+T.eq(instant,nil,'completed provider reply cannot leave a pending handle')
+Pool.submit=submitNow
+local moduleName='src.compat.gen1.AtlasPixels'
+local buildName='src.compat.gen1.AtlasBuild'
+local savedPixels,savedBuild=package.loaded[moduleName],package.loaded[buildName]
+package.loaded[moduleName]={new=savedPixels.new}
+package.loaded[buildName]=nil
+local customBuild=require(buildName)
+T.eq(customBuild.available(),false,'a replacement source module needs no private worker guard')
+T.eq(customBuild.prepare(fixture.pair,fixture.layout,function()end,function()end),nil,'replacement source module retains native admission')
+package.loaded[moduleName],package.loaded[buildName]=savedPixels,savedBuild
 P.buildWorkers=true;P.atlasWorker=false
 f=fresh();before=nextId;Native.prefetch(f.pair)
 T.eq(nextId,before,'atlas worker switch independently preserves fallback')

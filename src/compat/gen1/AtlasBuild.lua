@@ -11,8 +11,9 @@ local totals={submitted=0,published=0,cancelled=0,failed=0}
 if not Pool.handlerFor(KIND)then Pool.register(KIND,MODULE)end
 local function clock()return love and love.timer and love.timer.getTime and love.timer.getTime()or os.clock()end
 function M.available()
+  local guard=type(Pixels)=='table'and getmetatable(Pixels)==nil and rawget(Pixels,'_workerCompatible')
   return getmetatable(P)==nil and P.atlasWorker and Pool.available()
-    and Pool.handlerFor(KIND)==MODULE and Pixels._workerCompatible()
+    and Pool.handlerFor(KIND)==MODULE and type(guard)=='function'and guard()
 end
 local function snapshot(pair,layout)
   local tables,seen,visiting={}, {}, {}
@@ -67,6 +68,7 @@ function M.prepare(pair,layout,done,failed)
     if not pending[job]then return end
     pending[job]=nil;totals.failed=totals.failed+1;failed()
   end
+  pending[job]=true
   local accepted,id=pcall(Pool.submit,KIND,'atlas',payload,function(result)
     if not pending[job]then return end
     if M.expired(job)then failure();return end
@@ -74,9 +76,9 @@ function M.prepare(pair,layout,done,failed)
     local ok=pcall(done,result)
     if not ok then totals.failed=totals.failed+1;failed()end
   end,failure)
-  if not accepted or not id then return nil end
-  job.id=id;pending[job]=true;totals.submitted=totals.submitted+1
-  return job
+  if not accepted or not id then pending[job]=nil;return nil end
+  job.id=id;totals.submitted=totals.submitted+1
+  return pending[job]and job or nil
 end
 function M.published(model)
   models[model]=true;totals.published=totals.published+1

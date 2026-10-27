@@ -28,10 +28,52 @@ uses it cannot establish a worker speedup. `check_performance_baseline.py
 host, enters the production replacement boundary with the native game/map/
 actors/clock and records actual adapter draws and worker cache provenance.
 No alternate simulation or shipping callback is installed. OFF and ON use
-the same source and bridge scene. Performance acceptance is pending.
+the same source and bridge scene. The measured source is `a474e83b`, including main `9d8eec4c`. The
+performance gate is **not met**; the PR remains a draft. No runtime merge
+is qualified by these measurements.
 
 `luajit tools/atlas_worker_check.lua` checks all five GBA editions, exact RGBA
 and index streams, live animations and palette edits, reference ownership,
 late replies, source changes, cancellation, failure and the independent
 switches. The actual graphics-free worker host additionally transports the
 production core through LÖVE threads and compares its bytes on LOW.
+
+## Seam control, 27 October 2026
+
+Each fresh Emerald import uses the production source-field adapter in its
+owned QA host on M2 / 16 GiB / LÖVE 12 Metal, 1024×768 logical / 2048×1536
+framebuffer, fixed HIGH, cap 160, VSync off and background cap disabled.
+Both source-stable cases run for at least 60 seconds. Actual native movement
+covers 33 cells Route 101 → Oldale and 20 cells Oldale → Route 103.
+
+| Worker | Average frame, ms | Route 101 → Oldale maximum, ms | Oldale → Route 103 maximum, ms |
+| --- | ---: | ---: | ---: |
+| Off | 8.488980 | 191.980625 | 147.404000 |
+| On | 8.532692 | 195.724500 | 151.738125 |
+
+The OFF cache changes from one to two native atlases. ON submits two jobs:
+the initially required atlas cancels and builds synchronously; one prefetched
+atlas publishes during measurement. The final cache holds one native and one
+worker atlas. Both cases actually draw through the bridge (7249 / 7214 total
+observed calls), so the comparison does exercise the intended producer.
+
+No gain is demonstrated. The OFF trace is unfocused throughout; ON starts
+focused, becomes unfocused at 42.53 seconds and focused again at 58.54 seconds.
+HIGH and the cap policy remain fixed, but the differing focus states preclude
+a causal performance conclusion. These instrumented native-host observations
+are not interactive FPS acceptance. No other QA from this task ran during the
+measurements. The complete pair is retained; no winner is selected or rollout
+policy changed from it. Mobile/context-loss hardware and energy are not measured.
+
+The first complete qualification at `050bdd24` passes 173 stages, including
+all native suites, the switch matrix, API3/fixtures, real LÖVE 11.5 transport
+and Metal rendering. The actual LOW worker compares 327,680 RGBA bytes over
+all five GBA editions with zero difference and no graphics module in its VM
+(987 dynamic checks). The coroutine-ownership revision passes eight focused
+integration stages, including 845 assertions. Subsequent private admission
+guards cover replacement source modules and immediate custom-provider replies;
+they do not change the pixel factory or decoded output and have their own
+focused checks. The timing source predates those guards.
+
+[Raw qualification and measurements](qa/gen3-atlas-worker-2026-10-27/qualification.json)
+are retained alongside `coroutine-ownership.json`, `seam-off.json` and `seam-on.json`.
