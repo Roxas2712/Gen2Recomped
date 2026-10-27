@@ -45,9 +45,53 @@ function C.messageOrigin()
  if C.layout()~='emerald'then return 10,122,224 end
  return C.textOrigin(C.WIN.MSG)
 end
+local function colorRecord(fg,shadow)
+ -- Numeric aliases retain the earlier foreground/shadow tuple contract.
+ -- Return detached values: presentation callers cannot edit imported data.
+ local a={fg[1],fg[2],fg[3],fg[4]or 1}
+ local b={shadow[1],shadow[2],shadow[3],shadow[4]or 1}
+ return{a[1],a[2],a[3],a[4],fg=a,shadow=b,bg={0,0,0,0}},b
+end
+local function colorIndex(value)
+ assert(type(value)=='number'and value%1==0 and value>=0 and value<16,'invalid native textbox colour index')
+ return value
+end
+local function packedColor(value)
+ local r,g,b=require('src.render.Gen3IndexedPalette').rgb(value)
+ local function channel(n)return(n*8+math.floor(n/4))/255 end
+ return{channel(r),channel(g),channel(b),1}
+end
 function C.textboxColors(fg,shadow)
- local s=owner();local a,b;if s then a,b=Native.textColors(s,'message')end
- return a or fg,b or shadow
+ local explicit=fg~=nil or shadow~=nil
+ fg,shadow=colorIndex(fg==nil and 1 or fg),colorIndex(shadow==nil and 8 or shadow)
+ local s=owner();local version=Version.get()
+ local gba=version=='firered'or version=='leafgreen'or version=='emerald'or version=='ruby'or version=='sapphire'
+ local constants=gba and s and s.data and s.data.constants or{}
+ if not explicit and s and gba then
+  local a,b=Native.textColors(s,'message')
+  if a and b then return colorRecord(a,b)end
+ end
+ local rs=version=='ruby'or version=='sapphire'
+ local record
+ if rs then record=constants.gen3RsBattlePanel else record=constants.gen3BattleTextbox end
+ if rs and not(type(record)=='table'and record.format==1 and record.version==version)then record=nil end
+ local palette=type(record)=='table'and record.palette
+ if type(palette)=='table'and #palette==16 then
+  local valid=true
+  for i=1,16 do local v=palette[i];if type(v)~='number'or v%1~=0 or v<0 or v>65535 then valid=false;break end end
+  if valid then return colorRecord(packedColor(palette[fg+1]),packedColor(palette[shadow+1]))end
+ end
+ -- Older native imports retain named role colours. They are authoritative
+ -- only for that role's exact indices (or the legacy no-argument query).
+ local role=not rs and type(record)=='table'and record.text and record.text.message
+ local indices=role and role.indices
+ if s and gba and type(indices)=='table'and indices.fg==fg and indices.shadow==shadow then
+  local a,b=Native.textColors(s,'message')
+  if a and b then return colorRecord(a,b)end
+ end
+ local white=require('src.ui.game3.frlg_font').COLOR.WHITE
+ local colors,second=colorRecord(white.fg,white.shadow)
+ return colors,second,'native textbox palette unavailable'
 end
 function C.manifest()
  local s=owner();if not s then return nil,'no native GBA owner'end

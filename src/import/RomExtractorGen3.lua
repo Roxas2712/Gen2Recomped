@@ -54520,7 +54520,12 @@ function RomExtractorGen3:extractBattleTextbox()
   end
 
   local constants = self._constants or {}
+  -- Preserve the cartridge's first bank for indexed presentation text.
+  -- RGB role triples alone cannot answer arbitrary foreground/shadow pairs.
+  local textboxPalette = {}
+  for i = 0, 15 do textboxPalette[i + 1] = palRaw[i * 2 + 1] + palRaw[i * 2 + 2] * 256 end
   constants.gen3BattleTextbox = {
+    palette = textboxPalette,
     images = images,
     frameImages = frameImages,
     y = T.SCREEN_Y,
