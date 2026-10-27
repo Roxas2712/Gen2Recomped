@@ -10864,7 +10864,7 @@ function BattleState:finish()
   require("src.core.Music").restoreMap(self.data)
   if GameVersion.isGen2() then self._gen2Complete = true end
   self.game.stack:pop()
-  if GameVersion.isGen2() then self.battle:endBattle(self.result or 'run')
+  if GameVersion.isGen2() then self.battle:endBattle(self.result or 'run', {nativeNotification=true})
   else Runtime.emit("battle.ended", { battle = self, result = self.result or "run" }) end
   -- Coming back from the battle screen is a fade, not a cut: EnterMap sees
   -- BIT_BATTLE_OVER_OR_BLACKOUT set and runs MapEntryAfterBattle

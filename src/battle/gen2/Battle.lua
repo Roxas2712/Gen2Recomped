@@ -57,7 +57,7 @@ function Model:endBattle(outcome, details)
   -- Preserve link/spectator and extension-owned native string outcomes.
   assert(type(outcome) == 'string' and outcome ~= '', 'invalid native Gen2 battle outcome')
   if ended[self] then return false end
-  screen.result = outcome
+  if not (details and details.nativeNotification) then screen.result = outcome end
   screen:restoreMimicked(screen.player)
   screen:restoreMimicked(screen.enemy)
   ended[self] = true
