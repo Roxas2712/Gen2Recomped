@@ -20,6 +20,12 @@ for _,edition in ipairs({'red','gold','firered','ruby','emerald','platinum','bla
  local received=nb:poll()[1]
  T.eq(received.modCallbackRevision,1,'real hello producer and JSON transport retain the callback ABI')
  T.eq(H.checkCompat(current,received),'full','transported modern hello admits matching peers')
+ local plain=H.hello({data=data,save=game.save},'battle')
+ local plainVerdict,plainReason=H.checkCompat(current,plain)
+ T.eq(plainVerdict,'subset','different mod sets remain incompatible')
+ T.eq(plainReason,'fingerprint_mismatch','missing mods retain their existing named mismatch reason')
+ T.check(table.concat(H.describe(current,plain,'subset','battle'),' '):find('PORTABLE',1,true)~=nil,
+  'missing mod notice names the actual missing mod')
  -- The prior wire surface was exactly the vanilla prefix plus id@version.
  local old=Copy(current);old.modCallbackRevision=nil
  old.fingerprint=F.digest(F.surface(data,{})..F.modKey(mods))

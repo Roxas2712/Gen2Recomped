@@ -195,7 +195,8 @@ function Handshake.checkCompat(localHello, remoteHello)
   if localHello.nativeBattleRevision ~= remoteHello.nativeBattleRevision then
     return "subset", "native_rules_mismatch"
   end
-  if localHello.modCallbackRevision ~= remoteHello.modCallbackRevision then
+  if localHello.modCallbackRevision ~= remoteHello.modCallbackRevision
+      and localHello.fingerprint == remoteHello.fingerprint then
     return "subset", "mod_callback_rules_mismatch"
   end
   if remoteHello.fingerprint == localHello.fingerprint then
@@ -308,7 +309,9 @@ function Handshake.describe(localHello, remoteHello, verdict, mode)
       wrap(lines, "to shared POKéMON.") end
     return lines
   end
-  if localHello.modCallbackRevision ~= (remoteHello and remoteHello.modCallbackRevision) then
+  local diff = Handshake.modDiff(localHello, remoteHello)
+  if localHello.modCallbackRevision ~= (remoteHello and remoteHello.modCallbackRevision)
+      and #diff.onlyMine == 0 and #diff.onlyTheirs == 0 and #diff.differing == 0 then
     wrap(lines, "Mod callbacks need")
     wrap(lines, "matching engine")
     wrap(lines, "versions.")
@@ -317,7 +320,6 @@ function Handshake.describe(localHello, remoteHello, verdict, mode)
     return lines
   end
   wrap(lines, "Your games differ.")
-  local diff = Handshake.modDiff(localHello, remoteHello)
   listMods(lines, peer .. " has:", diff.onlyTheirs)
   listMods(lines, "You have:", diff.onlyMine)
   for i, row in ipairs(diff.differing) do
