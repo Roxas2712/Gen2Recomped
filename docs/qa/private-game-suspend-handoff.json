@@ -594,5 +594,46 @@
       "tools/arena_verifier_host.lua": "74c438173d09c4f197027bdf309edce26781316786c84c87c9bd5e74654deccf",
       "tools/arena_verifier_worker.py": "d3331bfbb8cc28c15e7eee7d5f4aa7eaf5ff8be6e34f31a52932f4804f3f0969"
     }
+  },
+  "postIndependentMainSuspend": {
+    "date": "2026-10-27",
+    "passed": true,
+    "coreBaseCommit": "85a9e77ba44af8f58a1293997be2012d19f1b732",
+    "scope": "Two independent fresh macOS processes/profiles, real imported data and native battle, private local HTTPS API; no physical or cross-OS proof",
+    "results": [
+      {
+        "reason": "Uploaded a damaged native battle during a move animation; recorded deterministic turn 2",
+        "capture": {
+          "kind": "trainer",
+          "idleTicks": 108000,
+          "anchor": "battle",
+          "tailSteps": 75,
+          "bytes": 381077
+        },
+        "ok": true,
+        "phase": "nextturn",
+        "ticks": 109023,
+        "edition": "emerald",
+        "role": "source"
+      },
+      {
+        "role": "target",
+        "reason": "Login, cloud download, exact Continue, matching next turn and original story continuation passed",
+        "ok": true,
+        "phase": "return",
+        "ticks": 230,
+        "edition": "emerald"
+      }
+    ],
+    "qaTiming": "Wall-clock deadline; native test render vsync off. 108000 actual logic ticks (30 simulated minutes), then a move-animation suspend. A new target profile starts without imported data.",
+    "sourceSha256": {
+      "src/core/Checkpoint.lua": "d87f6d627205ab31efce71a96d367e06d481ea7cbe3a55349c40f24e019be7bf",
+      "src/core/CheckpointBattle.lua": "c7d47e1cd22ea270565932725ae353fd9903f3fc8d519f248c92910085d66237",
+      "src/core/Game.lua": "710bcf150d55c1f69f63ea3c8692991d7a87b04a489164e04f860ee0de121d50",
+      "src/core/SuspendJournal.lua": "c5b4a2c4451dd01f8714a1af7f07ca3c47d775143819e18e9599e8be58207e96",
+      "src/import/CloudSync.lua": "9a15a0008dc6467287ff5c22fdae204af5438ee5131b1cd6e303a73ebdc29909",
+      "src/storage/GameCache.lua": "3eecf9f8f2919ff32f7430ac1b520e278aee26b56daf57279e066bc7d9df9122",
+      "src/storage/SuspendStore.lua": "3dc64bdf727608dc13319f68cb8703f632449d5fd892e6b8a27532f4cc3f39a9"
+    }
   }
 }
