@@ -1546,6 +1546,7 @@ return {
   ["gText_HealPowder_50"] = 4292816,
   ["gText_HelixFossil"] = 4291926,
   ["gText_Hello"] = 4306192,
+  ["gString_Help"] = 0x41CB49,
   ["gText_HelpSystemControls_A_Next"] = 4317093,
   ["gText_HelpSystemControls_AorBtoCancel"] = 4317118,
   ["gText_HelpSystemControls_PickOkCancel"] = 4317129,
