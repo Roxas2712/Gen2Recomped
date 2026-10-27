@@ -47,22 +47,13 @@ function M.validState(battle)
  return true
 end
 function M.builtin(id,base)
- if not V.isGen3()or not base or(id~='MIST_EFFECT'and id~='HAZE_EFFECT')then return base end
+ if not V.isGen3()or not base or id~='MIST_EFFECT'then return base end
  if builtins[base]then return builtins[base]end
  local out={};for key,value in pairs(base)do out[key]=value end
- if id=='MIST_EFFECT'then
-  out.run=function(ctx)
-   if not M.apply(ctx.battle,ctx.user)then return{Strings('But, it failed!')},false end
-   local name=ctx.user.isPlayer and ctx.user.name or('Enemy '..ctx.user.name)
-   return{Strings("%s's\nshrouded in mist!",name)},true
-  end
- else
-  out.run=function(ctx)
-   local messages,success=base.run(ctx)
-   -- Legacy Haze clears actor flags; native side screens survive Haze.
-   M.sync(ctx.battle)
-   return messages,success
-  end
+ out.run=function(ctx)
+  if not M.apply(ctx.battle,ctx.user)then return{Strings('But, it failed!')},false end
+  local name=ctx.user.isPlayer and ctx.user.name or('Enemy '..ctx.user.name)
+  return{Strings("%s's\nshrouded in mist!",name)},true
  end
  builtins[base]=out;builtins[out]=out;return out
 end

@@ -1,4 +1,4 @@
-"""Compare native GBA Mist effects against a clean, read-only Gen1 checkout."""
+"""Compare native GBA Mist or Haze against a clean, read-only Gen1 checkout."""
 import argparse
 import hashlib
 import json
@@ -14,16 +14,19 @@ parser.add_argument('--reference-root', type=Path, required=True)
 parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--lua', type=Path, default=shutil.which('luajit'))
 parser.add_argument('--qa-tools-root', type=Path, default=ROOT / 'tools')
+parser.add_argument('--effect', choices=('mist','haze'), default='mist')
 parser.add_argument('--edition', action='append', choices=('firered','leafgreen','ruby','sapphire','emerald'))
-parser.add_argument('--mode', action='append', choices=('single','double-left','double-right'))
+parser.add_argument('--mode', action='append', choices=('single','double-left','double-right','double-right-empty-left','double-left-empty-right'))
 args = parser.parse_args()
 ref = args.reference_root.resolve()
 if not args.lua or not args.lua.is_file():
     parser.error('--lua must select an existing LuaJIT executable')
 if args.output.exists():
     parser.error('--output must be a new directory')
-worker = ROOT / 'tests/gen3_mist/worker.lua'
-inputs = [Path(__file__).resolve(), worker, ROOT / 'tests/gen3_mist/cases.lua',
+if args.effect=='mist' and any('empty' in mode for mode in args.mode or ()):
+    parser.error('empty-flank modes are qualified by the Haze contract only')
+worker = ROOT / ('tests/gen3_' + args.effect + '/worker.lua')
+inputs = [Path(__file__).resolve(), worker, worker.with_name('cases.lua'),
           ROOT / 'tests/charge_required/fixture.lua', *[ROOT / p for p in (
               'src/battle/Gen3Mist.lua', 'src/battle/Gen3Builtins.lua',
               'src/battle/BattleState.lua', 'src/battle/Gen3Secondary.lua',
@@ -33,7 +36,10 @@ inputs = [Path(__file__).resolve(), worker, ROOT / 'tests/gen3_mist/cases.lua',
               'src/core/game3/battle/effects/screens.lua',
               'src/core/game3/battle/effects/secondary.lua',
               'src/core/game3/battle/residual_handlers.lua',
-              'src/core/game3/battle/engine.lua', 'src/core/game3/battle/abilities.lua')]]
+              'src/core/game3/battle/engine.lua', 'src/core/game3/battle/abilities.lua',
+              'src/core/game3/battle/effects/setup.lua')]]
+if (ROOT / 'src/battle/Gen3Haze.lua').is_file():
+    inputs.append(ROOT / 'src/battle/Gen3Haze.lua')
 run = subprocess.run
 if os.name != 'nt' and not os.getenv('GITHUB_ACTIONS'):
     sys.path.insert(0, str(args.qa_tools_root.resolve()))
@@ -56,9 +62,11 @@ sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
 hashes = {str(path): sha(path) for path in inputs}
 report = dict(status='running', inputs=hashes, source=git(ROOT, 'rev-parse', 'HEAD'),
               reference_source=git(ref, 'rev-parse', 'HEAD'), runs=[], pairs=[],
+              effect=args.effect,
               scope='Native move resolution, registered trainer item controller/execution, '
                     'switching, Intimidate and residual scheduling. Compare Mist duration '
-                    'and stat protection; no complete damage, Haze, UI or whole-mod claim.')
+                    'and stat protection, or native Haze stages and retained state. '
+                    'No complete damage, UI or whole-mod claim.')
 report_path = args.output / 'report.json'
 
 
@@ -79,8 +87,12 @@ def equal(left, right):
 save()
 env = dict(os.environ, POKEPORT_ISOLATED_TESTING='1', POKEPORT_SKIP_LEGACY_MIGRATION='1')
 prefix = ['nice', '-n', '19'] if os.name != 'nt' else []
+modes=('single','double-left','double-right')
+if args.effect=='haze':
+    modes+=('double-right-empty-left','double-left-empty-right')
+marker='GBA_' + args.effect.upper() + '_CONTRACT '
 for edition in args.edition or ('firered','leafgreen','ruby','sapphire','emerald'):
-    for mode in args.mode or ('single','double-left','double-right'):
+    for mode in args.mode or modes:
         pair = []
         for backend, cwd in (('gen1', ref), ('gen2', ROOT)):
             label = edition + '-' + mode + '-' + backend
@@ -94,8 +106,8 @@ for edition in args.edition or ('firered','leafgreen','ruby','sapphire','emerald
                 except subprocess.TimeoutExpired:
                     code = 124
             output = log.read_text(errors='replace')
-            markers = [line.removeprefix('GBA_MIST_CONTRACT ') for line in output.splitlines()
-                       if line.startswith('GBA_MIST_CONTRACT ')]
+            markers = [line.removeprefix(marker) for line in output.splitlines()
+                       if line.startswith(marker)]
             row = dict(label=label, exit=code, log_sha256=sha(log),
                        rows=json.loads(markers[0]) if len(markers) == 1 else None)
             report['runs'].append(row)
@@ -103,7 +115,8 @@ for edition in args.edition or ('firered','leafgreen','ruby','sapphire','emerald
             save()
             print(label, code, flush=True)
             if code:
-                print(output[-3000:], flush=True)
+                diagnostic='\n'.join(line for line in output.splitlines() if not line.startswith(marker))
+                print(diagnostic[-3000:], flush=True)
         report['pairs'].append(dict(label=edition + '-' + mode,
                                     equal=pair[0]['rows'] is not None and equal(pair[0]['rows'], pair[1]['rows'])))
         save()
