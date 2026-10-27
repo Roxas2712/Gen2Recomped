@@ -1292,6 +1292,8 @@ end
 
 function OverworldState:setMap(mapId, x, y, facing, opts)
   mapId = MapIdentity.runtimeId(Game and Game.data, mapId)
+  local fishing = package.loaded['src.world.Gen2Fishing']
+  if fishing then fishing.cancel(self) end
   if GameVersion.isGen2() then self.turningDirection, self.iceSlide = nil, nil end
   -- BLACK / WHITE'S ARRIVAL GUARD: the warp you land on stays disarmed until
   -- you step off it (see checkGen4EntranceWarp's gen5 branch)
@@ -4210,6 +4212,7 @@ function OverworldState:update(dt)
   end
   -- fishing pose tail: the rod is already gone, the pose holds for the
   -- frames the original spends unwinding the item menu (#384)
+  if GameVersion.isGen2() then self:updateFishing() end
   if self.fishPose then
     self.fishPose = self.fishPose - 1
     if self.fishPose <= 0 then
@@ -6936,29 +6939,51 @@ local function gen2FishingRoll(data, rod, mapDef, tod, save)
                    entry and "IS" or "is NOT",
                    rows and tostring(#rows) or "none")
     end
-    return nil, true
+    return nil, true, entry, group
   end
   -- `call Random / cp [hl] / jr nc, .no_bite`: the roll must come in UNDER
   -- the group's chance byte.
-  if love.math.random(0, 255) >= (entry.chance or 0) then return nil, true end
+  if love.math.random(0, 255) >= (entry.chance or 0) then return nil, true, entry, group end
   local roll = love.math.random(0, 255)
   for _, row in ipairs(rows) do
     if roll <= row.chance then
       if row.timeGroup then
         local pair = field.timeFishGroups and field.timeFishGroups[row.timeGroup]
         local slot = pair and ((tod == "NITE" or tod == "NIGHT") and pair.nite or pair.day)
-        if not slot then return nil, true end
-        return { species = slot.species, level = slot.level }, true
+        if not slot then return nil, true, entry, group end
+        return { species = slot.species, level = slot.level }, true, entry, group
       end
-      return { species = row.species, level = row.level }, true
+      return { species = row.species, level = row.level }, true, entry, group
     end
   end
-  return nil, true
+  return nil, true, entry, group
 end
 
 -- Exposed for the headless drivers: the roll with no UI attached.
 OverworldState.rollFishingForTest = function(data, rod, mapDef, tod, save)
   return (gen2FishingRoll(data, rod, mapDef, tod, save))
+end
+
+-- Native Gen2 public lifecycle. The ordinary bag and registered-item path
+-- both enter useRod, so presentation wrappers observe the actual decision.
+function OverworldState.isRod(id, items)
+  return require('src.world.Gen2Fishing').isRod(id, items)
+end
+function OverworldState:rollFishing(rod)
+  return require('src.world.Gen2Fishing').roll(self, Game, rod, gen2FishingRoll)
+end
+function OverworldState:useRod(rod)
+  return require('src.world.Gen2Fishing').use(self, Game, rod)
+end
+function OverworldState:beginFishing(outcome, wild)
+  return require('src.world.Gen2Fishing').begin(self, Game, outcome, wild)
+end
+function OverworldState:updateFishing()
+  local fishing = package.loaded['src.world.Gen2Fishing']
+  if fishing then return fishing.tick(self, Game) end
+end
+function OverworldState:tryFishing(rod)
+  return require('src.world.Gen2Fishing').try(self, Game, rod)
 end
 
 -- field.fishing: `always` hooks that catch every time (the Old Rod),
@@ -6986,6 +7011,7 @@ end
 -- Goldeen/Poliwag L10; Super Rod uses the map's extracted fishing group
 -- (no group means "Not even a nibble!").
 function OverworldState:goFishing(rod)
+  if GameVersion.isGen2() then return self:useRod(rod) end
   -- SINNOH FISHES FROM ITS OWN TABLES -- see src/world/Gen4Fishing.lua. The
   -- pool below is the Gen 1/2 rod configuration and has nothing for Platinum.
   local gen4Rod = (self.map.def and self.map.def.generation) == 4
