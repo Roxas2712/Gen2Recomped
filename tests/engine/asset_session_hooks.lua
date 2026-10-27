@@ -87,7 +87,23 @@ if type(releaseSession) == 'function' then
   releaseSession()
   T.eq(retainedBlank.releases, 1, 'hard retirement still releases the retained fallback')
 end
-require('src.mods.Loader').teardown()
+-- Execute the actual native launcher-return closure. Only the launcher UI
+-- opening is replaced; SDK teardown and asset resource owners stay real.
+local file = assert(io.open('main.lua', 'rb'))
+local source = file:read('*a'); file:close()
+local nativeReturn = assert(source:gsub('\r\n', '\n'):match('\nlocal function returnToLauncher%(%).-\nend\n'))
+local opens = 0
+local env = setmetatable({Game={}, openLauncher=function() opens = opens + 1 end}, {__index=_G})
+local chunk = assert(loadstring(nativeReturn .. '\nreturn returnToLauncher', '@native-launcher-asset-boundary'))
+setfenv(chunk, env)
+local returnToLauncher = chunk()
+local liveImage = Assets.image('launcher.png')
+releases = state.releases
+returnToLauncher()
+T.eq(liveImage.releases, 1, 'actual launcher return releases its native central image')
+T.eq(state.releases, releases + 1, 'actual launcher return closes downstream asset consumers')
+T.eq(Assets.loader, nil, 'native loader detaches after launcher asset release')
+T.eq(opens, 1, 'retired session opens launcher once')
 run.release()
 love.graphics.newImage, love.image = oldImage, oldPixels
 T.finish('asset hook tables and session resource lifetime through real SDK')
