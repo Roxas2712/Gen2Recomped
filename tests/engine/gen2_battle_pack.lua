@@ -114,6 +114,7 @@ for _,version in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
       T.eq(b.player.mon.hp,targetHP,'presentation never rewrites real HP')
       T.check(wait(function()return game.stack:top()==b end),'native acknowledgment releases only the party owner')
       T.eq(b.player.shownHP,targetHP,'battle resumes with the HP already displayed by the native party result')
+      T.eq(b.phase,'resolving','actual native acknowledgment resumes the committed turn queue')
       T.eq(b.enemy.curMoves[1].pp,enemyPP,'enemy action starts after actual acknowledgment, not during its callback')
       T.eq(b.partyItemHealing,nil,'result acknowledgment releases low-health alarm suppression')
     end
