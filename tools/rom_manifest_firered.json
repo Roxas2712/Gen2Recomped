@@ -881,6 +881,10 @@
  },
  "symbolSource": "structural discovery against the cartridge itself (tools/gen3_discover.py); a retail GBA ROM ships no symbol table, so every address here is found by shape and verified against a fact the table must satisfy",
  "symbols": {
+  "gMenuMessageWindow_Gfx": 4321736,
+  "gSignpostWindow_Gfx": 4655884,
+  "gStdTextWindow_Gfx": 4659788,
+  "gTextWindowPalettes": 4660716,
   "CalculateChecksum": 893352,
   "GetSubstruct": 260434,
   "SetWarpDestination": 349068,

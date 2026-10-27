@@ -34,16 +34,28 @@ local Runtime = require("src.mods.Runtime")
 local Screens = require("src.ui.Screens")
 local Strings = require("src.core.Strings")
 local Theme = require("src.ui.Theme")
+local GameVersion = require("src.core.GameVersion")
 
 local Gen3StartMenu = {}
 Gen3StartMenu.__index = Gen3StartMenu
 
+-- The cartridge keeps this cursor in EWRAM, including across B/START
+-- closure. Keep it outside the save and discard it on save/data/edition
+-- replacement, so another cartridge or a new/continued game starts clean.
+local cursors = setmetatable({}, { __mode = "k" })
+local function sameCursorContext(game, cursor)
+  return cursor and cursor.save == game.save and cursor.data == game.data
+      and cursor.version == GameVersion.get()
+end
+local function rememberedCursor(game)
+  if not GameVersion.isGen3() then return nil end
+  local cursor = cursors[game]
+  if sameCursorContext(game, cursor) then return cursor.index end
+  cursors[game] = nil
+end
+
 local GBA_W, GBA_H = 240, 160
 
--- RECONSTRUCTED, not derived: the window sits in the top-left corner, and
--- rows are two tiles apart like every other list on this cartridge.
-local BOX_TX, BOX_TY = 0, 0
-local BOX_TW = 9
 local ROW_STEP = 2                    -- tiles between rows
 local TEXT_INSET_X = 8
 local CURSOR_X = 2
@@ -159,7 +171,10 @@ function Gen3StartMenu.new(game, opts)
   opts = opts or {}
   local self = setmetatable({}, Gen3StartMenu)
   self.game = game
-  self.index = math.max(1, math.floor(tonumber(opts.index) or 1))
+  if GameVersion.isGen3() then
+    self.cursorContext = { save = game.save, data = game.data, version = GameVersion.get() }
+  end
+  self.index = math.max(1, math.floor(tonumber(opts.index) or rememberedCursor(game) or 1))
   self.blink = 0
 
   local options = game.save and game.save.options
@@ -199,7 +214,34 @@ function Gen3StartMenu.new(game, opts)
   self:buildRows(game, labels, playerName)
   self.index = math.min(self.index, math.max(1, #self.rows))
   self:refreshHelpRow()
+  local RsStart=require('src.ui.Gen3RsStartMenu')
+  if RsStart.available(game)then self.rsStartNative=RsStart.new(self)end
   return self
+end
+
+-- Host LINK/MODS/QUIT and mod actions may exceed the cartridge's eight rows.
+-- Keep their stable indices and callbacks, but only paint the visible page.
+function Gen3StartMenu:visibleRange(tpl)
+  local n=#self.rows
+  if n==0 then return 1,0 end
+  tpl=tpl or self:contentTemplate()
+  local frlg=isFireRed(self.game)
+  local pitch=frlg and 15 or 16
+  local inset=self.rsStartNative and 8 or(frlg and 0 or 9)
+  local glyph=self.rsStartNative and 16 or Font.glyphHeight()
+  local visible=math.min(8,n,math.max(1,math.floor((tpl.height*8-inset-glyph)/pitch)+1))
+  local scroll=math.max(0,math.min(self.scroll or 0,math.max(0,n-visible)))
+  if self.index<=scroll then scroll=self.index-1 end
+  if self.index>scroll+visible then scroll=self.index-visible end
+  return scroll+1,math.min(n,scroll+visible)
+end
+
+function Gen3StartMenu:exit()
+  if sameCursorContext(self.game, self.cursorContext) then
+    self.cursorContext.index = self.index
+    cursors[self.game] = self.cursorContext
+  end
+  if self.rsStartNative then self.rsStartNative:exit();self.rsStartNative=nil end
 end
 
 function Gen3StartMenu:refreshHelpRow()
@@ -381,11 +423,12 @@ function Gen3StartMenu:buildRows(game, labels, playerName)
 end
 
 function Gen3StartMenu:reopen()
-  -- FireRed stores this cursor in sStartMenuCursorPos and feeds it back into
-  -- Menu_InitCursor after returning from POKéMON/BAG/OPTION/etc.  Recreating
+  -- Every GBA edition retains sStartMenuCursorPos when returning from
+  -- POKéMON/BAG/OPTION/etc. Recreating
   -- this state with the default index made every submenu return jump to
   -- POKéDEX instead.
-  if isFireRed(self.game) then
+  if sameCursorContext(self.game, self.cursorContext)
+      or (not self.cursorContext and isFireRed(self.game)) then
     Screens.push(self.game, "Gen3StartMenu", { index = self.index })
   else
     Screens.push(self.game, "Gen3StartMenu")
@@ -563,6 +606,10 @@ end
 
 function Gen3StartMenu:startSave()
   local game = self.game
+  local Native=require('src.ui.Gen3RsSaveMenu')
+  if Native.available(game)then
+    return game.stack:push(Native.new(game,self))
+  end
   local TextBox = require("src.render.TextBox")
   local name = (game.save and game.save.player and game.save.player.name)
                or Strings("PLAYER")
@@ -625,6 +672,7 @@ function Gen3StartMenu:update(dt)
     self:markCurrentHelpSeen()
     self:close()
   end
+  local first=self:visibleRange();self.scroll=first-1
 end
 
 function Gen3StartMenu:drawSavePanel(inset)
@@ -643,11 +691,13 @@ end
 -- One detached content rectangle feeds the native skin and source wrappers.
 -- Existing row keys still dispatch native actions; source IDs are observations.
 function Gen3StartMenu:nativeContentTemplate()
-  local left,top,width,height=BOX_TX+1,BOX_TY+1,BOX_TW-2,#self.rows*ROW_STEP
+  if self.rsStartNative then return self.rsStartNative:template()end
+  local visible=math.min(8,#self.rows)
+  local left,top,width,height=22,1,7,visible*ROW_STEP+2
+  for _,row in ipairs(self.rows)do width=math.max(width,math.ceil((Font.width(row.label)+8)/8))end
+  width=math.min(28,width);left=29-width
   if isFireRed(self.game)then
-    left,top,width,height=22,1,7,math.ceil(#self.rows*15/8)+1
-    for _,row in ipairs(self.rows)do width=math.max(width,math.ceil((Font.width(row.label)+10)/8))end
-    left=math.min(left,29-width)
+    height=math.ceil(visible*15/8)+1
   end
   return {left=left,top=top,width=width,height=height,
     tilemapLeft=left,tilemapTop=top,w=width,h=height}
@@ -703,8 +753,10 @@ function Gen3StartMenu:drawFireRed(record)
   local left,top,width,height=tpl.left,tpl.top,tpl.width,tpl.height
   Font.drawBox(left-1,top-1,width+2,height+2)
   g.setColor(0, 0, 0, 1)
-  for i, r in ipairs(self.rows) do
-    local y = top*8 + (i - 1) * 15
+  local first,last=self:visibleRange()
+  for i=first,last do
+    local r=self.rows[i]
+    local y = top*8 + (i - first) * 15
     Font.draw(r.label, left * 8 + self.CURSOR_WIDTH, y)
     if i == self.index then Font.drawCode(Theme.cursor, left * 8, y) end
   end
@@ -712,16 +764,20 @@ function Gen3StartMenu:drawFireRed(record)
 end
 
 function Gen3StartMenu:draw()
+  if self.rsSaveModal then return end
   local inset = textInsetY()
   if self.savePanel then return self:drawSavePanel(inset) end
+  if self.rsStartNative then return self.rsStartNative:draw()end
   local record = (self.game.data.constants or {}).gen3StartMenu
   if record and record.layout == "frlg" then return self:drawFireRed(record) end
   local tpl=self:contentTemplate()
   Font.drawBox(tpl.left-1,tpl.top-1,tpl.width+2,tpl.height+2)
   love.graphics.setColor(0, 0, 0, 1)
-  for i, row in ipairs(self.rows) do
-    local y = (tpl.top + (i - 1) * ROW_STEP) * 8 + inset
-    Font.draw(row.label, (tpl.left-1) * 8 + TEXT_INSET_X, y)
+  local first,last=self:visibleRange()
+  for i=first,last do
+    local row=self.rows[i]
+    local y = (tpl.top + (i - first) * ROW_STEP) * 8 + 9
+    Font.draw(row.label, tpl.left * 8 + TEXT_INSET_X, y)
     if i == self.index then
       -- Theme.cursor, not a literal arrow: this cartridge has NO arrow in
       -- its font (Emerald draws the menu cursor as a sprite), so the
@@ -733,7 +789,7 @@ function Gen3StartMenu:draw()
       --
       -- It also does not BLINK.  The Gen 2 list cursor blinks; Emerald's
       -- sits still and the selected row is the only thing that moves.
-      Font.drawCode(Theme.cursor, (tpl.left-1) * 8 + CURSOR_X, y)
+      Font.drawCode(Theme.cursor, tpl.left * 8, y)
     end
   end
   love.graphics.setColor(1, 1, 1, 1)

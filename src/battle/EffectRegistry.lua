@@ -81,7 +81,7 @@ function EffectRegistry.makeCtx(battle, user, target, move, moveInst, isCalled)
       who.toxicCounter = nil
     end,
     changeStage = function(who, stat, delta, fromEnemy)
-      return MoveEffects.changeStage(battle, who, stat, delta, fromEnemy)
+      return MoveEffects.changeStage(battle, who, stat, delta, fromEnemy, user)
     end,
     computeDamage = function(opts)
       return battle:computeDamage(user, target, move, opts)

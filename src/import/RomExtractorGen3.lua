@@ -413,7 +413,7 @@ end
 -- the two together: "PROTEIN1,000".  A caller that is reading a menu row
 -- passes { [0x13] = "  " } and gets the gap back; everything else is
 -- unaffected, because an unlisted command is dropped exactly as before.
-function RomExtractorGen3:readText(off, maxBytes, spacers)
+function RomExtractorGen3:readText(off, maxBytes, spacers, opts)
   local map = self:charmap()
   local out = {}
   local i = 0
@@ -441,6 +441,11 @@ function RomExtractorGen3:readText(off, maxBytes, spacers)
     elseif b == TEXT_EXTENDED then
       local cmd = self.rom:u8(off + i + 1)
       local operands = EXTENDED_OPERANDS[cmd]
+      -- RS NAME_END separates a town/city stem from its visible suffix.
+      -- pret/pokeruby/charmap.txt: NAME_END = FC 00 (no operands).
+      -- Keep unknown commands rejected in other dialects and scan probes.
+      if cmd == 0 and opts and opts.rsNameEnd
+        and (self.version == 'ruby' or self.version == 'sapphire') then operands = 0 end
       if not operands then return nil end     -- an unknown command means this
       if cmd == 0x0C then                     -- was never a string
         -- ESCAPE: the operand is a literal byte, control code or not
@@ -7275,9 +7280,11 @@ function RomExtractorGen3:extractFont()
   local uiTextStyles = nil
   if (self.manifest or {}).frlgItemMenu ~= nil then
     local ok, err = pcall(function()
-      local MSG_GFX = self:symbol("gMenuMessageWindow_Gfx") or 0x41F1C8
-      local SIGN_GFX = self:symbol("gSignpostWindow_Gfx") or 0x470B0C
-      local PAL = self:symbol("gTextWindowPalettes") or 0x471DEC
+      -- Sibling ROMs relocate these independently. FireRed's palette address
+      -- lies inside graphics in LeafGreen and bakes green, corrupt windows.
+      local MSG_GFX = assert(self:need("gMenuMessageWindow_Gfx", "FRLG text windows"))
+      local SIGN_GFX = assert(self:need("gSignpostWindow_Gfx", "FRLG text windows"))
+      local PAL = assert(self:need("gTextWindowPalettes", "FRLG text windows"))
 
       local function bakeFrame(gfx, paletteId, count, name)
         local colors = RomGba.palette(self.rom:bytes(PAL + paletteId * 32, 32))
@@ -7322,7 +7329,7 @@ function RomExtractorGen3:extractFont()
       -- the bag DEPOSIT ITEM tab and the Item-PC transient message/question
       -- windows.  It is NOT the configurable user frame and therefore must not
       -- follow the player's Options -> Frame Type setting.
-      local STD_GFX = self:symbol("gStdTextWindow_Gfx") or 0x471A4C
+      local STD_GFX = assert(self:need("gStdTextWindow_Gfx", "FRLG text windows"))
       -- LoadStdWindowGfx pairs these tiles with GetTextWindowPalette(3).
       -- Item-PC and bag calls merely choose the destination palette bank.
       local STD_PAL = PAL + 3 * 32
@@ -11306,8 +11313,8 @@ end
 --     on Route 114 carries a flag under 32 -- the per-map scratch flags that
 --     reset when you leave -- because a smashed rock is meant to come back.
 --     The two Rusturf rocks carry flags in the SAVED range, so they stay
---     smashed, and they are the only smashable rocks in Hoenn that do.  That
---     picks the map out with nothing else to go on.
+--     smashed. Their map is the only one with exactly two such rocks;
+--     another puzzle's single rock at flag 32 must not invalidate the pair.
 --   * AND THAT MAP'S OWN FRAME TABLE names the var and the values: two rows,
 --     one var, gated on exactly two numbers.  pret's function writes exactly
 --     two numbers into exactly one var on exactly this map, so if the table
@@ -11331,7 +11338,10 @@ function RomExtractorGen3:rusturfTunnel()
       local flag = obj.smashable and tonumber(obj.flag)
       if flag and flag >= TEMP_TOP then saved[#saved + 1] = flag end
     end
-    if #saved > 0 then
+    -- Some other Hoenn puzzles have a single rock at the scratch/saved
+    -- flag boundary. They cannot be the two-rock tunnel mechanism and must
+    -- not make its otherwise unambiguous frame-table match disappear.
+    if #saved == 2 then
       if found then return nil end        -- two such maps is not a reading
       table.sort(saved)
       found = { map = mapId, rocks = saved }
@@ -11355,7 +11365,25 @@ function RomExtractorGen3:rusturfTunnel()
   end
   if not (var and #states == 2) then return nil end
   table.sort(states)
-  found.var, found.states = var, states
+  -- The scene's shared exit removes the couple, writes its final state,
+  -- sets the opened-tunnel flag and returns. Read that flag too: the other
+  -- rock can remain after the scene and must not award the HM a second time.
+  local openedFlag, openedState
+  for _, rows in pairs(pool.scripts or {}) do
+    local n = #rows
+    local state, flag, done = rows[n - 2], rows[n - 1], rows[n]
+    if state and state[1] == "setvar" and tonumber(state[2]) == var
+        and flag and flag[1] == "setflag" and tonumber(flag[2])
+        and done and done[1] == "return" then
+      local value = tonumber(state[3])
+      if value and value ~= states[1] and value ~= states[2] then
+        if openedFlag and (openedFlag ~= tonumber(flag[2]) or openedState ~= value) then return nil end
+        openedFlag, openedState = tonumber(flag[2]), value
+      end
+    end
+  end
+  if not openedFlag then return nil end
+  found.var, found.states, found.openedFlag, found.openedState = var, states, openedFlag, openedState
   return found
 end
 
@@ -12599,9 +12627,14 @@ function RomExtractorGen3:extractTrainerClasses()
   local base = self:need("gTrainerClassNames", "trainer classes")
   if not base then return end
   local names = {}
-  for i = 0, 66 do names[i] = self:readString(base + i * 13, 13) end
+  local count = require('src.battle.Gen3TrainerPresentation').classCount(self.manifest and self.manifest.version)
+  for i = 0, count - 1 do names[i] = self:readString(base + i * 13, 13) end
   local constants = self._constants or {}
   constants.trainerClasses = names
+  if (self.manifest or {}).frlgItemMenu then
+    constants.gen3TrainerPresentation = {format=1,version=self.manifest.version,classCount=count,
+      source='ROM:gTrainerClassNames; native FRLG table has 107 entries'}
+  end
   self:write("constants", constants)
   -- and give every trainer the readable class it was only carrying a number
   -- for.  The battle screen wants "LEADER" and the palette wants the number,
@@ -12641,7 +12674,7 @@ function RomExtractorGen3:extractTrainerClasses()
   end
   Logger.info("Gen3 trainer classes: %d (0 = %s); %d trainers named, %d left "
                 .. "with a number the table does not cover",
-              67, tostring(names[0]), named, missed)
+              count, tostring(names[0]), named, missed)
 end
 
 
@@ -13492,6 +13525,8 @@ function RomExtractorGen3:extractMaps()
       local floor = rom:u8(h + 26)
       def.floorNum = floor >= 128 and floor - 256 or floor
       def.battleScene = rom:u8(h + 27)
+    elseif self.version=='ruby' or self.version=='sapphire' then
+      require('src.import.Gen3RsMapData').header(self,h,def)
     end
 
     local entry = { objects = {}, signs = {}, coords = {}, callbacks = {},
@@ -16196,6 +16231,10 @@ function RomExtractorGen3:extractFlash()
       source = ("ROM:sFlashLevelToRadius %07X (%d radii), gMaxFlashLevel %07X")
                :format(FF.radii, maxLevel + 1, FF.max),
     }
+    if self.version == "ruby" or self.version == "sapphire" then
+      constants.gen3Flash.rsVersion = self.version
+      constants.gen3Flash.rsFormat = 1
+    end
     self._constants = constants
     self:write("constants", constants)
     Logger.info("Gen3 flash (manifest): %d levels, radius %d..%d",
@@ -17561,6 +17600,12 @@ RomExtractorGen3.CABLE_CAR = {
 function RomExtractorGen3:extractCableCar()
   self:beginStage("Gen3 cable car")
   local C = RomExtractorGen3.CABLE_CAR
+  local destination=C.DEST_FN
+  if self.version=='ruby'or self.version=='sapphire'then
+    destination=require('compat.gen1-rs.Loader').new(self.version)('src.import.gba.syms')
+      .of(self.version).funcOff('CableCarWarp')
+    assert(destination,'Missing native RS cable-car destination routine')
+  end
   local rom = self.rom
   local maps = self._maps
   if type(maps) ~= "table" then
@@ -17569,7 +17614,7 @@ function RomExtractorGen3:extractCableCar()
   end
   local ends, group, x, y = {}, nil, nil, nil
   for _, arm in ipairs(C.ARMS) do
-    local at = C.DEST_FN + arm.at
+    local at = destination + arm.at
     local head = rom:u16(at)
     local neg = rom:u16(at + C.AT_NEG)
     local yWord = rom:u16(at + C.AT_Y)
@@ -17626,7 +17671,7 @@ function RomExtractorGen3:extractCableCar()
     warp = C.WARP_ID,
     specials = { destination = C.SET_DEST, ride = C.RIDE },
     source = ("ROM:%07X, two SetWarpDestination arms into group %d at %d,%d")
-             :format(C.DEST_FN, group, x, y),
+             :format(destination, group, x, y),
   }
   local constants = self._constants or {}
   constants.gen3CableCar = record
@@ -21331,6 +21376,9 @@ local MAP_SECTION_MIN = 200
 
 function RomExtractorGen3:extractMapSections()
   self:beginStage("Gen3 map sections")
+  if self.version=='ruby' or self.version=='sapphire' then
+    return require('src.import.Gen3RsMapData').metadata(self)
+  end
   local rom = self.rom
   local constants = self._constants or {}
 
@@ -23329,7 +23377,9 @@ function RomExtractorGen3:fieldMoveObjects(pool)
       rocks = { Gen3ScriptVM.flagName(rusturf.rocks[1]),
                 Gen3ScriptVM.flagName(rusturf.rocks[2]) },
       states = rusturf.states,
-      source = ("ROM:the only smashable rocks in Hoenn with a saved hide flag "
+      openedFlag = Gen3ScriptVM.flagName(rusturf.openedFlag),
+      openedState = rusturf.openedState,
+      source = ("ROM:the unique Hoenn pair of smashable rocks with saved hide flags "
                 .. "(%d, %d) stand on %s, whose frame table gates var %04X on "
                 .. "%d and %d"):format(rusturf.rocks[1], rusturf.rocks[2],
                                        rusturf.map, rusturf.var,
@@ -24852,6 +24902,15 @@ function RomExtractorGen3:iceBehaviours(tilesetPairs, pads, holes)
     slide, thin, cracked = { 0x20 }, 0x26, {}
     addedSlide, addedCracked = {}, {}
   end
+  local rsTerrain
+  if self.version=='ruby'or self.version=='sapphire'then
+    rsTerrain=require('src.import.Gen3RsTerrain').extract(self.version,self.rom)
+    assert(require('src.import.Gen3RsTerrain').valid(rsTerrain,self.version))
+    local native=rsTerrain.values
+    slide,thin,cracked={native.ice,native.trickFloor},native.thinIce,
+      {native.crackedFloor,native.crackedFloorHole}
+    addedSlide,addedCracked={},{}
+  end
 
   -- WHERE YOU LAND WHEN THE FLOOR GIVES WAY.
   --
@@ -25076,12 +25135,13 @@ function RomExtractorGen3:iceBehaviours(tilesetPairs, pads, holes)
 
   constants.gen3Ice = {
     slide = slide, thin = thin, cracked = cracked,
-    thinMap = thin and stat[thin].bestMap or nil,
+    thinMap = thin and stat[thin]and stat[thin].bestMap or nil,
     fallThrough = fallThrough,
     holeBelow = holeBelow,
     fallTrigger = fallTrigger,
     swap = iceSwap,
     byName = adopted,
+    nativeRsTerrain = rsTerrain,
   }
   self._constants = constants
   -- ...and the ash, which is the same kind of finding one stage along
@@ -25096,8 +25156,9 @@ function RomExtractorGen3:iceBehaviours(tilesetPairs, pads, holes)
   local function show(list)
     local parts = {}
     for _, b in ipairs(list) do
+      local row=stat[b]or {cells=0,bestMap='<not initially placed>'}
       parts[#parts + 1] = ("$%02X(%d cells on %s)")
-                          :format(b, stat[b].cells, stat[b].bestMap)
+                          :format(b, row.cells, row.bestMap)
     end
     return #parts > 0 and table.concat(parts, " ") or "none"
   end
@@ -25319,7 +25380,17 @@ RomExtractorGen3.BIKE_RULES = {
 
 -- The sound the standing bunny hop plays, or nil if that instruction has
 -- moved.  One halfword, checked before it is believed.
+function RomExtractorGen3:rsBikeContext()
+  if self.version ~= 'ruby' and self.version ~= 'sapphire' then return nil end
+  if not self._rsBikeContext then
+    self._rsBikeContext = require('src.import.Gen3RsBike').new(self.version,self.rom)
+  end
+  return self._rsBikeContext
+end
+
 function RomExtractorGen3:acroHopSound()
+  local rs = self:rsBikeContext()
+  if rs then return require('src.import.Gen3RsBike').hopSound(rs,self) end
   local P = RomExtractorGen3.BIKE_RULES
   local rom = self.rom
   local op = rom:u16(P.HOP_SE_AT)
@@ -25340,6 +25411,10 @@ end
 -- guessing the rest.
 function RomExtractorGen3:bikeSpeedFrames()
   local P = RomExtractorGen3.BIKE_RULES
+  local rs = self:rsBikeContext()
+  if rs then
+    P = setmetatable(require('src.import.Gen3RsBike').parameters(rs),{__index=P})
+  end
   local rom = self.rom
   local times = {}
   for i = 0, P.STEP_COUNT - 1 do
@@ -25357,7 +25432,7 @@ function RomExtractorGen3:bikeSpeedFrames()
     return nil, ("the slowest step is %d frames and walking is %d")
                 :format(times[1], P.WALK_FRAMES)
   end
-  local actions = self:symbol("gMovementActionFuncs") or P.ACTION_FUNCS
+  local actions = rs and P.ACTION_FUNCS or self:symbol("gMovementActionFuncs") or P.ACTION_FUNCS
   local frames = {}
   for speed, at in ipairs(P.WALK_ACTIONS) do
     -- entry 0 of each table repeats DOWN; entry 1 IS down
@@ -25412,6 +25487,8 @@ end
 
 -- The forced-movement handler for a behaviour, through the two tables.
 function RomExtractorGen3:forcedMovementHandler(predicate)
+  local rs = self:rsBikeContext()
+  if rs then return require('src.import.Gen3RsBike').forcedHandler(rs,predicate) end
   local P = RomExtractorGen3.BIKE_RULES
   local rom = self.rom
   local word = predicate + 1 + 0x08000000
@@ -25705,8 +25782,16 @@ function RomExtractorGen3:bikeBehaviours(tilesetPairs)
           :format(rules.handler, rules.direction, rules.minSpeed,
                   rules.ladderAt, table.concat(rules.ladder, ","), hop,
                   frames and table.concat(frames, ",") or "-",
-                  RomExtractorGen3.BIKE_RULES.STEP_TIMES),
+                  self:rsBikeContext() and require('src.import.Gen3RsBike').parameters(self:rsBikeContext()).STEP_TIMES
+                    or RomExtractorGen3.BIKE_RULES.STEP_TIMES),
       }
+      if self:rsBikeContext() then
+        constants.gen3Bike.rules.nativeRsBike = {format=1,version=self.version,
+          stepTimesOffset=require('src.import.Gen3RsBike').parameters(self:rsBikeContext()).STEP_TIMES,
+          counterRule=require('src.import.Gen3RsBike').counterRule(self:rsBikeContext())}
+        assert(require('src.import.Gen3RsBike').valid(constants.gen3Bike,self.version),
+          'Incomplete native RS bike rules')
+      end
       Logger.info("Gen3 bike rules: %s",
                   constants.gen3Bike.rules.source)
     end
@@ -29820,7 +29905,14 @@ function RomExtractorGen3:extractFanfares()
 
   -- ---- THE PROOF: play them and count ------------------------------------
   local M4A = require("src.core.M4ASynth")
-  local data = { audio = audio }
+  -- Data.load normally supplies the worker's cartridge prefix. During an
+  -- import it has not run yet: reading the unprefixed music image silently
+  -- measured another cartridge (or failed every pcall on a clean profile).
+  -- Keep this transient lookup context out of the serialized audio data.
+  local proofAudio = {}
+  for key, value in pairs(audio) do proofAudio[key] = value end
+  proofAudio.programPrefix = require("src.import.CacheFs").prefix
+  local data = { audio = proofAudio }
   local agreed, measured = 0, {}
   for i, row in ipairs(found.rows) do
     local def = playable[row.song]
@@ -30031,6 +30123,9 @@ local GEN3_SONG_ROLES = {
 
 function RomExtractorGen3:extractSongNames()
   self:beginStage("Gen3 song names")
+  -- RS identities are matched to this edition's own song headers by the
+  -- native presentation stage; Emerald's longer name list is not its table.
+  if self.version=='ruby' or self.version=='sapphire' then return end
   local songs = self._songs
   local audio = self._audio or {}
   if type(songs) ~= "table" then
@@ -41372,6 +41467,16 @@ local MON_ICON_PALETTE_COUNT = 6
 
 function RomExtractorGen3:iconTableBase(declared, indices, count)
   local rom = self.rom
+  local rs = self.manifest.rsMonIcons
+  if (self.version == 'ruby' or self.version == 'sapphire') and rs then
+    assert(rs.entries == count + 1 + MON_ICON_EXTRA_ENTRIES and rs.palettes == MON_ICON_PALETTE_COUNT,
+      'Native RS icon table dimensions')
+    assert(indices == declared + rs.entries * 4,'Native RS icon table boundary')
+    for i=0,rs.entries-1 do
+      assert(rom:pointer(declared+i*4) and rom:u8(indices+i)<rs.palettes,'Native RS icon record '..i)
+    end
+    return declared, true
+  end
   local expected = count + 1 + MON_ICON_EXTRA_ENTRIES   -- species 0..count
   -- walk back to the first word of the run this address sits in
   local lo = declared
@@ -45565,7 +45670,7 @@ end
 -- read for mon and trainer pics, just not fixed to their 64x64/2048-byte
 -- size, so the frame count is however many whole frames the decompressed
 -- sheet holds rather than an assumed one.
-function RomExtractorGen3:frlgIntroSpriteSheet(def, label)
+function RomExtractorGen3:frlgIntroSpriteSheet(def, label, nativeColors)
   local rom = self.rom
   local okG, tiles = RomExtractorGen3.lz77ok(rom, def.GFX)
   local palRaw = rom:bytes(def.PAL, def.PALSIZE or 0x20)
@@ -45578,6 +45683,10 @@ function RomExtractorGen3:frlgIntroSpriteSheet(def, label)
   local colors = {}
   for i = 0, math.floor(#palRaw / 2) - 1 do
     local r, g, b = RomGba.bgr555(palRaw[i * 2 + 1] + palRaw[i * 2 + 2] * 256)
+    if nativeColors then
+      local function rounded(v) return math.floor(math.floor(v * 31 / 255 + .5) * 255 / 31 + .5) end
+      r, g, b = rounded(r), rounded(g), rounded(b)
+    end
     colors[i + 1] = { r, g, b }
   end
   local w, h = def.COLS * 8, def.ROWS * 8
@@ -45610,13 +45719,49 @@ RomExtractorGen3.FRLG_TITLE = {
   COPYRIGHT = { PAL = 0xEAE094, TILES = 0xEAE0B4, MAP = 0xEAE374 },
   BORDER = { PAL = 0xEAE094, TILES = 0x3BF58C, MAP = 0x3BF5A8 },
   FLAMES = { GFX = 0x3BF79C, PAL = 0x3BF77C, COLS = 2, ROWS = 2 },
+  SLASH = { GFX = 0x3BF64C, PAL = 0x3BF77C, COLS = 8, ROWS = 8 },
   FLAME_X = 0x3BFBD4, -- sFlameXPositions, 15 u8
   EFFECT = "flames", CRY = "CHARIZARD", STREAK = false, STREAK_Y = false,
 }
 
+-- Exact main-menu strings and menu_indicators.c art (FireRed USA 1.0).
+RomExtractorGen3.FRLG_MAIN_MENU = {
+  TEXT = { continue = 0x415A77, newGame = 0x415A6E, player = 0x41B6D5,
+    time = 0x41B6DC, pokedex = 0x41B6E3, badges = 0x41B6EC },
+  ARROWS = { GFX = 0x463328, PAL = 0x463308, COLS = 2, ROWS = 2 },
+  BOUNCE = 0x46325C,
+}
+
+function RomExtractorGen3:extractFireRedMainMenu()
+  local spec = RomExtractorGen3.FRLG_MAIN_MENU
+  local text = {}
+  for key, at in pairs(spec.TEXT) do text[key] = self:readText(at, 40) end
+  local strip = self:frlgIntroSpriteSheet(spec.ARROWS, 'main-menu arrows', true)
+  local images = {}
+  if strip then
+    -- The fourth frame is tile 4's upward arrow flipped vertically.
+    local down = ImageWriter.blank(16, 16)
+    for y = 0, 15 do for x = 0, 15 do down:setPixel(x, y, strip:getPixel(16 + x, 15 - y)) end end
+    self:saveImage(down, 'ui/frlg_main_menu_down.png')
+    images.downArrow = 'assets/generated/ui/frlg_main_menu_down.png'
+  end
+  local at = spec.BOUNCE + 3 * 4
+  local byte = self.rom:u8(at)
+  local frequency = self.rom:u16(at + 2)
+  if frequency >= 32768 then frequency = frequency - 65536 end
+  local constants = self._constants or {}
+  constants.gen3FRLGMainMenu = { format = 1, version = self.manifest.version, text = text, images = images,
+    bounce = { animNum = byte % 16, bounceDir = math.floor(byte / 16),
+      multiplier = self.rom:u8(at + 1), frequency = frequency },
+    source = 'ROM:gText_Continue/NewGame/Player/Time/Pokedex/Badges and menu_indicators.c',
+  }
+  self._constants = constants
+  self:write('constants', constants)
+end
+
 -- A 30x20 screen from a 32-column tilemap, honouring flips.  `blink` swaps
 -- colours 1-5 for colour 6 (Task_TitleScreen_BlinkPressStart).
-function RomExtractorGen3:frlgTitleLayer(def, blink)
+function RomExtractorGen3:frlgTitleLayer(def, blink, split, opaque0)
   local rom = self.rom
   local okT, tiles = RomExtractorGen3.lz77ok(rom, def.TILES)
   local okM, map = RomExtractorGen3.lz77ok(rom, def.MAP)
@@ -45625,6 +45770,9 @@ function RomExtractorGen3:frlgTitleLayer(def, blink)
   local colors = {}
   for i = 0, math.floor(#raw / 2) - 1 do
     local r, g, b = RomGba.bgr555(raw[i * 2 + 1] + raw[i * 2 + 2] * 256)
+    -- Match the reference PNG baker's rounded RGB555 expansion for titles.
+    local function rounded(v) return math.floor(math.floor(v * 31 / 255 + .5) * 255 / 31 + .5) end
+    r, g, b = rounded(r), rounded(g), rounded(b)
     colors[i] = { r, g, b }
   end
   if blink then for i = 1, 5 do colors[i] = colors[6] end end
@@ -45651,7 +45799,10 @@ function RomExtractorGen3:frlgTitleLayer(def, blink)
               local byte = tiles[base + sy * 4 + math.floor(sx / 2) + 1]
               idx = (sx % 2 == 0) and byte % 16 or math.floor(byte / 16)
             end
-            local col = idx and idx ~= 0 and colors[idx]
+            local visible = idx and (idx ~= 0 or opaque0)
+            if split == 'copyright' then visible = idx and idx >= 6 end
+            if split == 'press' then visible = idx and idx >= 1 and idx <= 5 end
+            local col = visible and colors[idx]
             if col then
               image:setPixel(cx * 8 + px, cy * 8 + py,
                              col[1] / 255, col[2] / 255, col[3] / 255, 1)
@@ -45669,8 +45820,8 @@ function RomExtractorGen3:extractFireRedTitle()
   if (self.manifest or {}).frlgItemMenu == nil then return end
   local T = RomExtractorGen3.FRLG_TITLE
   local images, backdrop = {}, nil
-  local function layer(key, def, blink)
-    local ok, img, c0 = pcall(self.frlgTitleLayer, self, def, blink)
+  local function layer(key, def, blink, split, opaque0)
+    local ok, img, c0 = pcall(self.frlgTitleLayer, self, def, blink, split, opaque0)
     if ok and img then
       self:saveImage(img, "title_frlg/" .. key .. ".png")
       images[key] = "assets/generated/title_frlg/" .. key .. ".png"
@@ -45683,11 +45834,30 @@ function RomExtractorGen3:extractFireRedTitle()
   layer("copyright", T.COPYRIGHT)
   layer("copyrightBlink", T.COPYRIGHT, true)
   backdrop = layer("border", T.BORDER)
-  local okF, strip, frames = pcall(self.frlgIntroSpriteSheet, self, T.FLAMES, "flames")
+  layer('copyrightOnly', T.COPYRIGHT, false, 'copyright')
+  layer('pressStart', T.COPYRIGHT, false, 'press')
+  layer('borderNative', T.BORDER, false, nil, true)
+  local okF, strip, frames = pcall(self.frlgIntroSpriteSheet, self, T.FLAMES, "flames", true)
   if okF and strip then
     self:saveImage(strip, "title_frlg/flames.png")
     images.flames = { path = "assets/generated/title_frlg/flames.png", frames = frames,
                       size = 16 }
+    -- The original OAM controller indexes vertical 16px frames by tile id.
+    local vertical = ImageWriter.blank(16, 16 * frames)
+    for f = 0, frames - 1 do
+      for y = 0, 15 do for x = 0, 15 do
+        vertical:setPixel(x, f * 16 + y, strip:getPixel(f * 16 + x, y))
+      end end
+    end
+    self:saveImage(vertical, 'title_frlg/flamesNative.png')
+    images.flamesNative = 'assets/generated/title_frlg/flamesNative.png'
+  end
+  if T.SLASH then
+    local slash = self:frlgIntroSpriteSheet(T.SLASH, 'slash', true)
+    if slash then
+      self:saveImage(slash, 'title_frlg/slash.png')
+      images.slash = 'assets/generated/title_frlg/slash.png'
+    end
   end
   local flameX = {}
   if T.FLAME_X then
@@ -45697,7 +45867,7 @@ function RomExtractorGen3:extractFireRedTitle()
   end
   local streakY = {}
   if T.STREAK then
-    local img, frames = self:frlgIntroSpriteSheet(T.STREAK, "streak")
+    local img, frames = self:frlgIntroSpriteSheet(T.STREAK, "streak", true)
     if img then
       self:saveImage(img, "title_frlg/streak.png")
       images.streak = { path = "assets/generated/title_frlg/streak.png", frames = frames }
@@ -45709,12 +45879,14 @@ function RomExtractorGen3:extractFireRedTitle()
     images = images, flameX = flameX, effect = T.EFFECT, cry = T.CRY, streakY = streakY,
     backdrop = backdrop and { backdrop[1], backdrop[2], backdrop[3] } or nil,
     source = "ROM:gGraphics_TitleScreen_* and title_screen.c sBorderBg/sFlames",
+    nativeController = 'frlg-native-title-v1',
   }
   self._constants = constants
   self:write("constants", constants)
   local n = 0
   for _ in pairs(images) do n = n + 1 end
   Logger.info("Gen3 FireRed title: %d images, flame x run %s", n, table.concat(flameX, ","))
+  self:extractFireRedMainMenu()
 end
 
 -- ---------------------------------------------------------------------------
@@ -54965,9 +55137,9 @@ RomExtractorGen3.BALL_ANIM = {
             blocked = 5 },
 }
 
-function RomExtractorGen3:extractBallAnims()
+function RomExtractorGen3:extractBallAnims(config, source)
   self:beginStage("Gen3 ball animation")
-  local B = RomExtractorGen3.BALL_ANIM
+  local B = config or RomExtractorGen3.BALL_ANIM
   local rom = self.rom
 
   -- ---- the twelve sheets, and the shared open frame -----------------------
@@ -55130,7 +55302,7 @@ function RomExtractorGen3:extractBallAnims()
     sounds = B.SOUNDS,
     cases = B.CASES,
     particleFrames = B.PARTICLE_FRAMES,
-    source = ("ROM:gBallSpriteSheets %07X, palettes %07X, open frame %07X, "
+    source = source or ("ROM:gBallSpriteSheets %07X, palettes %07X, open frame %07X, "
               .. "sBallColors %07X, particles %07X; the send-out off "
               .. "SpriteCB_PlayerMonSendOut_1 %07X and "
               .. "SpriteCB_ReleaseMonFromBall %07X")
@@ -59238,6 +59410,10 @@ function RomExtractorGen3:run()
       Logger.warn("gen3 %s failed: %s", stage, tostring(err))
     end
   end
+  -- Required for RS: a failed native boot stage must never be recorded as
+  -- a successful, permanently blank Emerald fallback cache.
+  require('src.import.Gen3RsPresentation').extract(self)
+  require('src.import.Gen3EmeraldPresentation').extract(self)
   if self.progress then
     self.progress(STAGE_COUNT, STAGE_COUNT, "Ready", 1, 1)
   end

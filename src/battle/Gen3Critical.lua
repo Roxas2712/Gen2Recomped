@@ -37,13 +37,13 @@ function C.roll(battle, draw, ruleset, attacker, moveId, rng, highCrit, data)
   if not battle or not Version.isGen3() then
     return draw(ruleset, attacker, moveId, rng, highCrit, data)
   end
-  -- Oak and Emerald's first/tutorial kinds return before consuming RNG.
+  -- Oak's opening guard and Hoenn's first/tutorial flags precede the RNG draw.
   if battle.firstBattle and not inflicted(battle) then
     return false
   end
   local kinds = battle.kinds or {}
   if
-    Version.get() == "emerald"
+    not Version.isFRLG()
     and (battle.firstBattleKind or kinds.firstBattle or battle.wallyTutorial or kinds.tutorial == "wally")
   then
     return false
