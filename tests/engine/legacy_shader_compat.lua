@@ -29,6 +29,18 @@ for _,marker in ipairs({'POKEPORT_NATIVE_CLIP_SPACE','POKEPORT_LEGACY_CLIP_SPACE
 end
 local poison=setmetatable({},{__index=function()error('option metatable must not execute')end})
 T.eq(select(2,C.source(vertex,poison)),true,'compatibility inspection does not execute option metatable')
+local converted = [[
+vec4 canvasProject(mat4 matrix,vec4 vertex){return vec4(vertex.xy,0.,1.);}
+vec4 position(mat4 matrix,vec4 vertex){vec4 clip=canvasProject(matrix,vertex);clip.y=-clip.y;return clip;}
+]]
+local preserved, adapted = C.source(converted)
+T.eq(preserved,converted,'producer canvas conversion is preserved byte for byte');T.eq(adapted,false)
+for _,source in ipairs({converted:gsub('clip%.y=%-clip%.y;', ''),
+ converted:gsub('return clip;', 'clip.x+=1.;return clip;'),
+ converted:gsub('canvasProject%(matrix,vertex%)', 'canvasProject(vertex,matrix)'),
+ '// '..converted:gsub('\n',' ')..'\n'..vertex}) do
+ T.eq(select(2,C.source(source)),true,'partial, different or commented conversion retains legacy adaptation')
+end
 local savedLove=love
 local shader,canvas,stack=nil,nil,{}
 local creations,validations,sends={},{},{}
@@ -78,4 +90,8 @@ for _,defines in ipairs({{POKEPORT_NATIVE_CLIP_SPACE=1},{POKEPORT_NATIVE_CLIP_SP
  local last=validations[#validations];T.eq(last[2],pixel);T.eq(last[3],vertex);T.eq(last[4],nativeOptions,'validator retains native compile options')
 end
 love=savedLove
+local beforeNative=#sends;local derived=C.compileNative(vertex,options)
+T.eq(derived.a,vertex,'derived native source bypasses repeated clip adaptation')
+T.eq(derived.b,options,'native compiler seam preserves options')
+T.eq(#sends,beforeNative,'native compiler seam has no legacy uniform ownership')
 T.finish('legacy shader compatibility')

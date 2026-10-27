@@ -45,6 +45,9 @@
 local Performance = {}
 -- Gen 1/2 index textures remain opt-in until the full scene/voxel gate passes.
 Performance.paletteIndexRendering = false
+-- Bounded Metal shader branch specialization. Original programs retain their
+-- API and own every unsupported path; other backends remain unchanged.
+Performance.shaderBranchSpecialization = true
 
 -- P2 is independently reversible. Tier rows can reduce the idle budget or
 -- tune the collector without changing the persisted presentation options.

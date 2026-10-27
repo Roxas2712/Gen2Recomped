@@ -6,11 +6,6 @@ local directions = {north=true,south=true,east=true,west=true,dive=true,emerge=t
 local function uint(n, max)
   return type(n) == "number" and n >= 0 and n <= max and n % 1 == 0
 end
-local function same(a, b)
-  if not a or #a ~= #b then return false end
-  for i = 1, #a do if a[i] ~= b[i] then return false end end
-  return true
-end
 local world=require('src.compat.gen1.NativeSession').world
 local function kind(mapType)
   local numbers = {NONE=0,TOWN=1,CITY=2,ROUTE=3,UNDERGROUND=4,UNDERWATER=5,OCEAN_ROUTE=6,UNKNOWN=7,INDOOR=8,SECRET_BASE=9}
@@ -104,6 +99,45 @@ function Views.new(getGame, getEdition)
       return nil, "original connection order unavailable"
     end
     local decodedBlocks = def._blockArraySource == def.blocks and def._blockArray
+    local cached = cache[nativeId]
+    local prior = cached and published[cached].stamp
+    -- The stamp is private. Validate every source field on a hit without
+    -- allocating another 34-element snapshot for each terrain read.
+    if prior and
+        prior[1] == (token(owner))
+        and prior[2] == (token(maps))
+        and prior[3] == (edition)
+        and prior[4] == (token(def))
+        and prior[5] == (token(live))
+        and prior[6] == (live and live.gridRevision or 0)
+        and prior[7] == (token(def.blocks))
+        and prior[8] == (token(def.collisionCells))
+        and prior[9] == (token(def.elevationCells))
+        and prior[10] == (token(def.sourceConnections))
+        and prior[11] == (token(def.warps))
+        and prior[12] == (w)
+        and prior[13] == (h)
+        and prior[14] == (token(decodedBlocks))
+        and prior[15] == (token(a))
+        and prior[16] == (token(b))
+        and prior[17] == (a.attributes or false)
+        and prior[18] == (b.attributes or false)
+        and prior[19] == (a.sourceAttributes or false)
+        and prior[20] == (b.sourceAttributes or false)
+        and prior[21] == (a.sourceAttributeBytes or false)
+        and prior[22] == (b.sourceAttributeBytes or false)
+        and prior[23] == (a.sourceBehaviorMask or false)
+        and prior[24] == (b.sourceBehaviorMask or false)
+        and prior[25] == (rawFlags and rawFlags.raw or false)
+        and prior[26] == (border)
+        and prior[27] == (bw)
+        and prior[28] == (bh)
+        and prior[29] == (token(geometry))
+        and prior[30] == (geometry.metatilesInPrimary)
+        and prior[31] == (geometry.tilesInPrimary)
+        and prior[32] == (geometry.palettesInPrimary)
+        and prior[33] == (geometry.metatileLayers)
+        and prior[34] == (def.mapType or 0) then return cached end
     local stamp = {token(owner),token(maps),edition,token(def), token(live), live and live.gridRevision or 0,
       token(def.blocks), token(def.collisionCells), token(def.elevationCells), token(def.sourceConnections), token(def.warps), w, h,
       token(decodedBlocks),
@@ -112,8 +146,6 @@ function Views.new(getGame, getEdition)
       a.sourceBehaviorMask or false, b.sourceBehaviorMask or false,
       rawFlags and rawFlags.raw or false, border, bw, bh, token(geometry), geometry.metatilesInPrimary,
       geometry.tilesInPrimary,geometry.palettesInPrimary,geometry.metatileLayers,def.mapType or 0}
-    local cached = cache[nativeId]
-    if cached and same(published[cached].stamp, stamp) then return cached end
     local terrain = Tiles.new({primary = a, secondary = b}, geometry)
     local flags = {}
     if not frlg then

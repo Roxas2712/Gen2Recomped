@@ -15,8 +15,9 @@ end
 local function observe(screen)
  local g=Native.game();if not(g and g.stack)then retire();return end
  local class=package.loaded['src.ui.Gen3PartyMenu']
+ if not class then retire();return end
  if not screen then for i=#g.stack.states,1,-1 do if getmetatable(g.stack.states[i])==class then screen=g.stack.states[i];break end end end
- if not screen or screen.game~=g then retire();return end
+ if not screen or getmetatable(screen)~=class or screen.game~=g then retire();return end
  if not current or current.screen~=screen or current.save~=g.save or current.data~=g.data then
   retire()
   local c={screen=screen,game=g,save=g.save,data=g.data,loader=g.mods,edition=require('src.core.GameVersion').get(),extras={},party={}}
@@ -90,7 +91,7 @@ local service={release=retire,poll=function()if current and not current:valid()t
 require('src.core.game3.asset_stream').register(service)
 M._service=service
 setmetatable(M,{__index=function(_,key)
- local c=observe();if not c then return key=='open'and false or nil end
+ local c=observe();if not c then if key=='open'then return false end;return nil end
  local s=c.screen
  if key=='open'then return not s.closed end
  if key=='mode'then return s.submenu and'action'or'party'end
