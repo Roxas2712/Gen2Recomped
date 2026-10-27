@@ -2561,7 +2561,7 @@ local function castProxy(store, i, body, cx, cy)
   pr.targetX = body.targetX and (body.targetX + cx)
   pr.targetY = body.targetY and (body.targetY + cy)
   pr.big = Collision.isBig(body) or nil
-  pr.passable = body.passable or body.hidden or nil
+  pr.passable = body.passable or Collision.entityAbsent(body) or nil
   return pr
 end
 
@@ -7686,7 +7686,7 @@ function OverworldState:npcAtCell(cx, cy)
     -- (Black / White's invisible blockers -- sprite 185, no script -- are in
     -- the way but never answer: Clay's lift panels share their cells with
     -- the lifts' rail blockers, and the press is the panel's)
-    if not (npc.hidden and not npc.buried) and not (npc.def and npc.def.gen5Blocker) then
+    if not Collision.entityAbsent(npc) and not (npc.def and npc.def.gen5Blocker) then
       local big = npc.big or (npc.sprite and npc.sprite.big)
         or (npc.def and (npc.def.sprite == "SPRITE_BIG_SNORLAX"
                         or npc.def.sprite == "SPRITE_BIG_LAPRAS"

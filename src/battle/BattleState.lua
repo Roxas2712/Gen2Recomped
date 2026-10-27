@@ -972,19 +972,27 @@ end
 local StatBox = {}
 StatBox.__index = StatBox
 
-function StatBox.new(game, mon, onDone)
-  return setmetatable({ game = game, mon = mon, onDone = onDone }, StatBox)
+function StatBox.new(game, mon, onDone, change)
+  local screen=setmetatable({game=game,mon=mon,onDone=onDone},StatBox)
+  if GameVersion.isGen3()then screen.native=require('src.battle.Gen3StatGrowth').new(game,mon,change)end
+  if screen.native then
+    screen.uiSize=function()return 240,160 end
+    screen.wantsFillScale=function()return true end
+  end
+  return screen
 end
 
 function StatBox:update()
   local input = self.game.input
-  if input:wasPressed("a") or input:wasPressed("b") then
+  if input:wasPressed("a") or input:wasPressed("b")or(self.native and input:wasPressed("start"))then
+    if self.native and not require('src.battle.Gen3StatGrowth').advance(self.native)then return end
     self.game.stack:pop()
     if self.onDone then self.onDone() end
   end
 end
 
 function StatBox:draw()
+  if self.native then return require('src.battle.Gen3StatGrowth').draw(self.native)end
   local s = self.mon.stats
   if s.spatk and s.spdef then
     -- Gen 2's box carries five rows, so it needs a wider frame than the
@@ -9509,7 +9517,7 @@ function BattleState:awardExp(fallen)
     -- from here and creeps to the new length
     local expBefore = self.player and mon == self.player.mon
       and HudTiles.expBarPixels(self.data, mon) or nil
-    local levels, gained = Experience.apply(self.data, mon, foe.def,
+    local levels, gained, growth = Experience.apply(self.data, mon, foe.def,
                                             foe.mon.level, self.kind == "trainer",
                                             split, mon.traded)
     -- Track level-ups for EvolveAfterBattle (OverworldState:afterBattle ->
@@ -9560,7 +9568,7 @@ function BattleState:awardExp(fallen)
       self:sayNext(Strings("%s grew\nto level %d!", name, lv))
       self:uiNext(function()
         require("src.core.Sound").play(game.data, "Level_Up")
-        return StatBox.new(game, mon)
+        return StatBox.new(game,mon,nil,growth and growth[lv])
       end)
       -- After PrintStatsBox, experience.asm reloads the active battler's
       -- wBattleMon and runs DrawHUDsAndHPBars, so its HP bar reflects the

@@ -20,12 +20,29 @@ for _,version in ipairs({'ruby','sapphire','firered','leafgreen','emerald'})do
   T.check(not actor.hidden and not actor.buried,'ordinary re-pose clears the burial reason and visibility')
   actor:setMovementType(data,76)
   T.check(actor.hidden and actor.gen3Hidden and not actor.buried,'invisible Kecleon retains its distinct reason')
+  T.eq(C.occupied({actor},3,3,f.player),actor,'invisible Kecleon remains a physical obstacle')
+  f.ow.npcs={actor}
+  local World=require('src.world.OverworldController')
+  T.eq(World.npcAtCell(f.ow,3,3),actor,'invisible Kecleon still answers the Devon Scope interaction')
   actor:setMovementType(data,63)
   T.check(actor.hidden and actor.buried and not actor.gen3Hidden,'invisible-to-buried transition stays hidden')
   actor:setMovementType(data,76)
   T.check(actor.hidden and actor.gen3Hidden and not actor.buried,'buried-to-invisible transition stays hidden')
   actor:setMovementType(data,8)
   T.check(not actor.hidden and not actor.buried and not actor.gen3Hidden,'ordinary type clears movement-derived visibility')
+  f.ow.npcByIndex=World.npcByIndex
+  require('src.script.Gen3Commands')
+  local commands=require('src.script.Commands')
+  local ctx={overworld=f.ow,save=f.game.save,mapId=f.home}
+  commands.g3_object_invisible(ctx,2)
+  T.check(actor.hidden and actor.gen3Invisible,'hideobjectat marks an active invisible object')
+  T.eq(C.occupied({actor},3,3,f.player),actor,'script invisibility preserves collision')
+  T.eq(World.npcAtCell(f.ow,3,3),actor,'script invisibility preserves interaction')
+  commands.g3_object_visible(ctx,2)
+  T.check(not actor.hidden and not actor.gen3Invisible,'showobjectat clears only script invisibility')
+  actor.hidden=true
+  T.eq(C.occupied({actor},3,3,f.player),nil,'removed ordinary figures remain passable')
+  T.eq(World.npcAtCell(f.ow,3,3),nil,'removed ordinary figures cannot answer')
   row.movementType=63
   local rebuilt=f:make(f.home,row)
   T.check(rebuilt.hidden and rebuilt.buried,'reconstruction honors a stored buried movement override')

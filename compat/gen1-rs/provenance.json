@@ -179,7 +179,8 @@
     "src/core/game3/constants/emerald/songs.lua": "5fb535fd59a0e946984dc1af7c35dc1736ba88bc6c098cb69ec784b8c481b39b",
     "src/core/game3/constants/emerald/species.lua": "a7f709c63ffdc834960333e326aa786e304b18fef77403bb56549a813452d2e2",
     "src/ui/game3/rs/main_menu.lua": "2d10e0f97fd8ea9093db229d5e8d37b588158ad528884fafcb6334a049c34d2b",
-    "src/core/game3/battle/healthbox.lua": "0aa674fbfe87065289d8a915b847969349012bdebd86873e433ae314d3e129bb"
+    "src/core/game3/battle/healthbox.lua": "0aa674fbfe87065289d8a915b847969349012bdebd86873e433ae314d3e129bb",
+    "src/ui/game3/stat_growth.lua": "2d02d2d649c7e88070f311b8f5d0d298023a523f44996e4d40727f21d4a2bbdb"
   },
   "scope": "Exact read-only RS boot, Birch/naming/font, bag, summary, party, map and Wally controller reference; independent host adapters; no launcher, ROMs, saves or generated assets; native RS PokeNav controllers, extraction and markings reference; native RS PC storage reference controllers, chrome, extraction, release and policy; native RS cable-car art extraction, tile layers, ride controller and actor IDs; exact Emerald boot/title, intro scenery and extractors with edition-specific symbols, song/species enums and intro animation names; exact healthbox reference for native rendering comparison"
 }
