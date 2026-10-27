@@ -118,9 +118,12 @@ def main():
         pacing = '  if os.getenv("POKEPORT_DRIVER") then return false end'
         assert code.count(pacing) == 1
         code = code.replace(pacing, '  if os.getenv("POKEPORT_DRIVER") and os.getenv("PERF_NATIVE_PACING") ~= "1" then return false end')
-        update = '      Game:update(1 / 60)\n    end\n    return\n  end\n  -- Only'
-        assert code.count(update) == 1
-        code = code.replace(update, '      PlatformHooks.update(Game, dt)\n    end\n    return\n  end\n  -- Only')
+        begin = code.index('  if driverCo then\n')
+        end = code.index('  if not Game then return end', begin)
+        block = code[begin:end]
+        update = '      Game:update(1 / 60)'
+        assert block.count(update) == 1
+        code = code[:begin] + block.replace(update, '      PlatformHooks.update(Game, dt)') + code[end:]
         engine.write_text(code)
         adaptations = ["Enable existing native pacing in the owned driver host",
                        "Use the interactive PlatformHooks.update and real dt after each driver observation"]
