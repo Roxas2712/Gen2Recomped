@@ -21,7 +21,7 @@ jobs:
           git -c gc.auto=0 fetch --no-tags --depth=1 origin 2727365b0c38495717c688708d521cf8150cfec4
           baseline="$RUNNER_TEMP/gen2-party-result-baseline"
           mkdir -p "$baseline"
-          git archive 2727365b0c38495717c688708d521cf8150cfec4 src tests data tools examples | tar -x -C "$baseline"
+          git archive 2727365b0c38495717c688708d521cf8150cfec4 src tests data tools | tar -x -C "$baseline"
           cp src/render/NativeScreenOverlay.lua "$baseline/src/render/NativeScreenOverlay.lua"
           cp src/ui/Gen2PartyItemResult.lua "$baseline/src/ui/Gen2PartyItemResult.lua"
           cp src/ui/Gen2MoveDeleter.lua src/ui/Gen2ForgetMoveList.lua "$baseline/src/ui/"
