@@ -44,7 +44,7 @@ local function fixture(edition)
   })})
   require('src.render.Font').load(data)
   local save=Save.newGame();save.options.textSpeed=1
-  save.party={Pokemon.new(data,'FIXMON_A',30)}
+  save.party={Pokemon.new(data,'FIXMON_A',30),Pokemon.new(data,'FIXMON_B',20)}
   local input={pressed={}}
   function input:wasPressed(key)return self.pressed[key]or false end
   function input:isDown()return false end
@@ -103,6 +103,17 @@ for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
     T.eq(b.player.curMoves[1].pp,pp,'presentation never spends another PP')
     T.eq(mon.exp,exp,'presentation never awards EXP')
     T.eq(#probe.events,1,'one source event owns slide and text')
+    if side=='player' then
+      for _=1,240 do if b.phase=='menu'then break end;step('a')end
+      T.eq(b.phase,'menu','normal input releases faint text through native decision owner')
+      local nextMon=b.game.save.party[2]
+      b:resolveSwitch(nextMon)
+      for _=1,240 do if b.player.mon==nextMon then break end;step('a')end
+      T.eq(b.player.mon,nextMon,'actual native switch command installs the replacement')
+      T.eq(b.picHidden.player,nil,'old faint mask cannot hide the actual replacement')
+      T.eq(b._gen2FaintHidden.player,nil,'native replacement retires its old mask ownership')
+      T.eq(b.player.fainted or false,false,'replacement retains its own native presentation state')
+    end
     Sound.invalidate();require('src.mods.Loader').teardown();run.release()
   end
 end
@@ -136,6 +147,13 @@ T.eq(probe.events[1]and probe.events[1].kind,'faint','normal native KO emits a t
 T.eq(probe.events[1]and probe.events[1].mon,b.enemy.mon,'native event retains actual Pokemon identity')
 step();T.check(b.faintSlide~=nil,'actual native KO enters the same presentation owner')
 T.eq(b.enemy.mon.hp,0,'native KO is not replaced by a presentation damage loop')
+Sound.invalidate();require('src.mods.Loader').teardown();run.release()
+
+b,run,probe,step=fixture('crystal')
+T.raises(function()b:push({kind='faint',side='sideways'})end,'side','invalid faint side is refused')
+b:push({kind='faint',side='enemy',mon={species='FIXMON_C'}})
+T.raises(step,'stale native Gen2 faint','an event cannot hide a different active Pokemon')
+T.eq(b.faintSlide,nil,'stale target cannot publish a partial slide')
 Sound.invalidate();require('src.mods.Loader').teardown();run.release()
 love.audio=audio;Version.set(previous)
 T.finish('native Gen2 faint event, picture clock, audio and producer')
