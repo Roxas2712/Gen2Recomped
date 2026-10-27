@@ -118,9 +118,39 @@ T.eq(Performance.cycle("auto", 1), "high", "cycle auto -> high")
 T.eq(Performance.cycle("high", 1), "balanced", "cycle high -> balanced")
 T.eq(Performance.cycle("balanced", 1), "low", "cycle balanced -> low")
 T.eq(Performance.cycle("low", 1), "adaptive", "cycle low -> adaptive (PREFER FPS)")
-T.eq(Performance.cycle("adaptive", 1), "auto", "cycle adaptive wraps to auto")
-T.eq(Performance.cycle("auto", -1), "adaptive", "cycle back auto -> adaptive")
+T.eq(Performance.cycle("adaptive", 1), "battery", "cycle adaptive -> battery (PREFER BATTERY)")
+T.eq(Performance.cycle("battery", 1), "auto", "cycle battery wraps to auto")
+T.eq(Performance.cycle("auto", -1), "battery", "cycle back auto -> battery")
 T.eq(Performance.cycle("high", -1), "auto", "cycle back high -> auto")
+
+-- ------------------------------------------------------ A2: PREFER BATTERY
+do
+  T.eq(Performance.resolve("battery"), "low", "PREFER BATTERY resolves to LOW for every tier reader")
+  T.eq(Performance.label("battery"), "PREFER BATTERY", "label battery")
+  T.eq(Performance.normalize("battery"), "battery", "normalize keeps battery")
+  local caps = Performance.applyOptions({ performance = "battery" })
+  T.eq(Performance.tier, "low", "applyOptions(battery) records LOW live")
+  T.eq(Performance.saver, true, "applyOptions(battery) raises Performance.saver")
+  T.eq(caps.fpsMax, 30, "battery caps: 30 fps ceiling")
+  T.eq(caps.tilt, false, "battery caps inherit LOW: no tilt")
+  T.eq(caps.survey, false, "battery caps inherit LOW: no survey zoom")
+  T.eq(caps.pacingSpin, false, "battery caps: no pacer spin")
+  T.eq(Performance.caps("battery").fpsMax,30,"caps(battery) agrees with applyOptions")
+  Performance.CAPS.low._qualificationValue=17
+  T.eq(Performance.caps("battery")._qualificationValue,17,"warm overlay sees live LOW cap changes")
+  Performance.CAPS.low._qualificationValue=nil
+  T.eq(Performance.caps("battery")._qualificationValue,nil,"warm overlay forgets removed LOW caps")
+  local fps=Performance.BATTERY.fpsMax
+  Performance.BATTERY.fpsMax=25
+  T.eq(Performance.caps("battery").fpsMax,25,"warm overlay sees battery cap changes")
+  Performance.BATTERY.fpsMax=fps
+  T.eq(Performance.extraCap("fpsMax"), Performance.lowTierBudget and 30 or nil, "extraCap reads the battery overlay")
+  T.eq(Performance.extraCap("gen3PaletteCycle"), Performance.lowTierBudget and "quarter" or nil, "extraCap: quarter palette tick")
+  T.eq(Performance.CAPS.low.fpsMax, 60, "the LOW table itself is untouched by the overlay")
+  Performance.applyOptions({ performance = "low" })
+  T.eq(Performance.saver, false, "leaving battery clears Performance.saver")
+  T.eq(Performance.extraCap("fpsMax"), Performance.lowTierBudget and 60 or nil, "extraCap is LOW's own again")
+end
 
 -- ---------------------------------------------------------- A1: PREFER FPS
 do
