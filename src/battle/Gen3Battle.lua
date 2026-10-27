@@ -3168,6 +3168,17 @@ function Gen3Battle.draw(battle)
   -- across the field, and a screen shake moves the field
   shaken(function() Gen3Battle.drawBall(battle) end)
   battle:drawAnimLayer()
+  local voice=require('src.battle.Gen3VoiceoverPresentation')
+  local dim=voice.dim(battle)
+  if dim>0 then
+    g.setColor(0,0,0,dim);g.rectangle('fill',0,0,Gen3Battle.width(battle),Gen3Battle.HEIGHT)
+    g.setColor(1,1,1,1)
+    if voice.lit(battle)and Gen3Battle.healthboxVisible(battle,0,slide)then
+      local record=hudRecord(battle);local image=hudImage(record and record.images and record.images.player)
+      local x,y=healthboxAt(battle,'singlesPlayer',image,112,64)
+      drawStatusPanel(battle,battle.player,x,y+Selection.offset(battle,'hb',battle.player),true)
+    end
+  end
   shaken(function() battle:drawTextArea() end)
 
   -- the window opening out of the middle: 1 row a side for 32 frames, then 4
