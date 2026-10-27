@@ -156,11 +156,17 @@ end
 
 -- pixel-level reads (tile-shift variants, the spinner strip blit) resolve
 -- the same way but stay uncached: the caller keeps the derived product.
--- Same rule as Assets.image: a missing path degrades instead of raising.
+-- Native generated sheets keep their missing-sheet fallback. Other pixel
+-- inputs retain the Gen1 API's decode failure: callers use pcall to choose an
+-- optional atlas/native renderer. Returning unrelated placeholder pixels can
+-- make that caller publish invalid dimensions, masks and frame bounds.
 function Assets.imageData(path)
   local resolved = Assets.resolve(path)
   local ok, data = pcall(love.image.newImageData, imageSource(resolved))
   if ok then return data end
+  if type(path)~='string' or path:sub(1,#GENERATED)~=GENERATED then
+    error(data,2)
+  end
   local Logger = require("src.core.Logger")
   Logger.warn("assets: missing image data '%s' (using placeholder)", tostring(resolved))
   local fellBack, placeholder = pcall(love.image.newImageData, Assets.resolve(MISSING_IMAGE))
