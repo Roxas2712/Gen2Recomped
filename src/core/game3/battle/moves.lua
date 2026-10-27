@@ -3,7 +3,10 @@ local Native=require('src.compat.gen1.NativeSession')
 local Ids=require('src.compat.gen1.BattleIds')
 local M={}
 local function detached(value,seen)
- if type(value)~='table'then return type(value)~='function'and type(value)~='userdata'and value or nil end
+ if type(value)~='table'then
+  if type(value)=='function'or type(value)=='userdata'or type(value)=='thread'then return nil end
+  return value
+ end
  seen=seen or{};if seen[value]then return seen[value]end
  local out={};seen[value]=out
  for k,v in pairs(value)do if type(k)=='string'or type(k)=='number'then out[k]=detached(v,seen)end end
@@ -31,7 +34,7 @@ function M.get(number)
   power=row.power,accuracy=row.accuracy,pp=row.pp,priority=row.priority,target=row.target,
   category=row.category or row.class,effect=effect~=nil and effect or row.effect,
   gen3Effect=effect,nativeEffect=row.effect,effectChance=row.effectChance,
-  secondaryChance=row.secondaryChance,flags=detached(row.flags),hits=detached(row.hits),
+  secondaryChance=row.secondaryChance,flags=detached(row.flags),hits=type(row.hits)=='function'and true or detached(row.hits),
   highCrit=row.highCrit,makesContact=row.makesContact,protectAffected=row.protectAffected,
   magicCoatAffected=row.magicCoatAffected,snatchAffected=row.snatchAffected,
   mirrorMoveAffected=row.mirrorMoveAffected,kingsRockAffected=row.kingsRockAffected}
