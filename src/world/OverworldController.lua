@@ -5108,7 +5108,7 @@ function OverworldState:scriptRunning()
   return (self.runner and self.runner:isRunning()) and true or false
 end
 
-function OverworldState:busy()
+function OverworldState:busy(ignoreOverlay)
   -- Gen2's world lives below overlays. A movement wrapper runs after the
   -- native body, including a START/A press that just opened a screen: it
   -- must not move behind that new owner on the same tick.
@@ -5116,7 +5116,7 @@ function OverworldState:busy()
     if self.battleActive then return true end
     local stack = Game and Game.stack
     local top = stack and stack.top and stack:top()
-    if top and top ~= self then return true end
+    if ignoreOverlay ~= true and top and top ~= self then return true end
   end
   return (self:scriptRunning() or (self.scriptMoves and #self.scriptMoves > 0)
     or self.engaging or self.emote or self.teleportOut or self.whirlSpin
@@ -5126,7 +5126,8 @@ function OverworldState:busy()
 end
 
 function OverworldState:acceptsMenuInput()
-  return not self.battleActive and not self:busy()
+  -- Observe the settled field beneath UI without releasing movement ownership.
+  return not self.battleActive and not self:busy(true)
     and not (self.player and self.player.moving) and not self.iceSlide
 end
 
