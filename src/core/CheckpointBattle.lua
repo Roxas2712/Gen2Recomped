@@ -79,7 +79,7 @@ isPlayer itemDef items itemsByKey keepSprites keptSprites key kind kinds lastAtt
 lastConsumedItem lastDamage lastFoeLevel lastMove layer layout leechSeeded letterboxWhite leveledUp
 lightScreen lineIndex lines link linkRole live liveChildren lockedBall loops lowHealthAlarmDisabled
 lowHealthAlarmOn low_health_alarm managers markMissed memento menuBattler menuIndex menuLockedAction
-menu_auxiliary mimicChoice mimicCtx mimicIndex mimicMoves mimicRestores missing mist mode mon
+menu_auxiliary mimicChoice mimicCtx mimicIndex mimicMoves mimicRestores missing mist mode modAiUses mon
 monAnim monBgSide monBgTimeline monBlend monHidden monPriority monRise monScale monSpriteManager
 monSprites monToSwitchInto monWindowRect move moveAnimRow moveEvent moveId moveIndex moveSwapIndex
 move_grid_navigation move_used msgPreWait msgPrompt msgPromptWait msgWaiting musicKind mustRecharge
@@ -469,6 +469,7 @@ function B.capture(game, battle, clone)
   state.participants=partySet(game.save,battle.participants)
   state.leveledUp=partySet(game.save,battle.leveledUp)
   state.picFx=pictureRows(battle)
+  state.modAiUses=require('src.battle.Gen3TrainerClass').rows(battle)
   local ruleset
   for key, v in pairs(rulesets(game)) do
     if v == battle.ruleset then
@@ -498,13 +499,19 @@ function B.validate(game, snapshot, save, actors)
     for key in pairs(s) do
       assert(FIELDS[key], "unknown native battle field")
     end
-    if s._gen3TrainerItems ~= nil then
-      local owned = {}
+    local owned
+    if s._gen3TrainerItems~=nil or s.modAiUses~=nil then
+      owned={}
       for index, node in ipairs(snapshot.graph.nodes) do
         if node.kind == "data" then owned[nodes[index]] = true end
       end
+    end
+    if s._gen3TrainerItems~=nil then
       assert(require("src.battle.Gen3TrainerItems").validState(view, s._gen3TrainerItems, owned),
         "invalid native GBA trainer stock")
+    end
+    if s.modAiUses~=nil then
+      assert(require('src.battle.Gen3TrainerClass').validRows(s,s.modAiUses,owned),'invalid native trainer class budget')
     end
     assert(PHASES[s.phase] and (s.kind == "wild" or s.kind == "trainer"), "invalid battle decision")
     assert(s.player and s.enemy and s.player.mon and s.enemy.mon, "missing native battlers")
@@ -620,6 +627,7 @@ function B.apply(game, snapshot, clone)
   local battle = require("src.battle.BattleState")._checkpointNew(game)
   local state = decode(game, snapshot.graph, battle)
   nativeRelations(game.save,state)
+  state.modAiUses=require('src.battle.Gen3TrainerClass').native(state.modAiUses)
   state.turnActions = nativeActions(state.turnActions)
   for key in pairs(FIELDS) do
     if rawget(battle, key) ~= nil then

@@ -3,6 +3,7 @@
 local Decision=require("src.battle.Gen3TrainerDecision")
 local Items=require("src.battle.Gen3TrainerItems")
 local C={}
+local Strings=require("src.core.Strings")
 local function position(battle,actor)
   return actor==battle.enemy and 1 or actor and actor.position
 end
@@ -11,8 +12,10 @@ local function firstMove(actor)
     if move.pp==nil or (tonumber(move.pp)or 0)>0 then return move end
   end
 end
-function C.plan(battle,actor)
-  local chosen=Decision.call(battle,actor)
+function C.fallback(actor)
+  return firstMove(actor)or{id="STRUGGLE",pp=1,struggle=true}
+end
+function C.action(battle,actor,chosen)
   if not chosen then return nil end
   local id=position(battle,actor)
   if battle:isDouble() then
@@ -33,14 +36,17 @@ function C.plan(battle,actor)
     gen3TrainerPayload=payload,item=Decision.itemKey(battle,chosen.item)or chosen.item,
     aiItemType=chosen.aiItemType,aiItemFlags=chosen.aiItemFlags}
 end
+function C.plan(battle,actor)
+  return C.action(battle,actor,Decision.call(battle,actor))
+end
 
 local cureLabels={
- [0]={"STRINGID_PKMNSITEMSNAPPEDOUT","%s snapped out\nof confusion!"},
- {"STRINGID_PKMNSITEMCUREDPARALYSIS","%s was cured\nof paralysis!"},
- {"STRINGID_PKMNSITEMDEFROSTEDIT","%s thawed out!"},
- {"STRINGID_PKMNSITEMHEALEDBURN","%s's burn\nwas healed!"},
- {"STRINGID_PKMNSITEMCUREDPOISON","%s was cured\nof poison!"},
- {"STRINGID_PKMNSITEMWOKEIT","%s woke up!"},
+ [0]={"STRINGID_PKMNSITEMSNAPPEDOUT",Strings.source("%s snapped out\nof confusion!")},
+ {"STRINGID_PKMNSITEMCUREDPARALYSIS",Strings.source("%s was cured\nof paralysis!")},
+ {"STRINGID_PKMNSITEMDEFROSTEDIT",Strings.source("%s thawed out!")},
+ {"STRINGID_PKMNSITEMHEALEDBURN",Strings.source("%s's burn\nwas healed!")},
+ {"STRINGID_PKMNSITEMCUREDPOISON",Strings.source("%s was cured\nof poison!")},
+ {"STRINGID_PKMNSITEMWOKEIT",Strings.source("%s woke up!")},
 }
 local function text(battle,label,fallback,...)
   battle:sayNext(battle:romText(label,fallback,...))
@@ -53,11 +59,11 @@ function C.execute(battle,queuedActor,action)
   if payload.kind=="switch" then
     battle.monToSwitchInto=battle.monToSwitchInto or {}
     battle.monToSwitchInto[id]=nil
-    local slot,entry=Decision.slot(battle,actor,payload.slot)
-    if not slot then return false end
-    return battle:switchTrainerInto(id,entry.index)~=nil
+    local entry=Decision.entry(battle,payload.slot)
+    if not entry then return false end
+    return battle:switchTrainerInto(id,entry.index,entry.party)~=nil
   elseif payload.kind=="run" or payload.kind=="flee"then
-    text(battle,"_WildFledText","Wild %s\nfled!",actor.name)
+    text(battle,"_WildFledText",Strings.source("Wild %s\nfled!"),actor.name)
     battle.result,battle.afterQueue="run","finish"
     return true
   elseif payload.kind~="item" or not payload.item then return false end
@@ -68,13 +74,13 @@ function C.execute(battle,queuedActor,action)
   local trainer=id==3 and battle.trainerB or battle.trainer
   local trainerName=trainer and trainer.name or battle:trainerLabel_()
   local itemName=battle.data.items[item]and battle.data.items[item].name or tostring(payload.item)
-  local who=actor.isPlayer and actor.name or "Enemy "..actor.name
+  local who=actor.isPlayer and actor.name or Strings("Enemy %s",actor.name)
   local Sound=require("src.core.Sound")
   if not Sound.playNamedEffect(battle.data,"SE_USE_ITEM")then Sound.play(battle.data,"Heal_HP")end
-  text(battle,"STRINGID_TRAINER1USEDITEM","%s\nused %s!",trainerName,itemName)
+  text(battle,"STRINGID_TRAINER1USEDITEM",Strings.source("%s\nused %s!"),trainerName,itemName)
   require("src.battle.Gen3TrainerItemEffects").apply(battle,actor,item)
   if kind==Items.TYPE.FULL_RESTORE or kind==Items.TYPE.HEAL_HP then
-    text(battle,"STRINGID_PKMNSITEMRESTOREDHEALTH","%s's item\nrestored health!",who)
+    text(battle,"STRINGID_PKMNSITEMRESTOREDHEALTH",Strings.source("%s's item\nrestored health!"),who)
     battle:drainNext(actor)
   elseif kind==Items.TYPE.CURE_CONDITION then
     local chooser=0
@@ -87,16 +93,16 @@ function C.execute(battle,queuedActor,action)
     if message then text(battle,message[1],message[2],who)end
   elseif kind==Items.TYPE.X_STAT then
     if math.floor(flags/128)%2==1 then
-      text(battle,"STRINGID_PKMNUSEDXTOGETPUMPED","%s used an item\nto get pumped!",who)
+      text(battle,"STRINGID_PKMNUSEDXTOGETPUMPED",Strings.source("%s used an item\nto get pumped!"),who)
     else
       local stat,bits=1,flags
       while bits>0 and bits%2==0 do bits=math.floor(bits/2);stat=stat+1 end
-      local names={"ATTACK","DEFENSE","SPEED","SP. ATK","SP. DEF","ACCURACY"}
-      text(battle,"STRINGID_USINGITEMSTATOFPKMNROSE","Using %s, the %s\nof %s rose!",itemName,names[stat]or "STAT",who)
+      local names={Strings.source("ATTACK"),Strings.source("DEFENSE"),Strings.source("SPEED"),Strings.source("SP. ATK"),Strings.source("SP. DEF"),Strings.source("ACCURACY")}
+      text(battle,"STRINGID_USINGITEMSTATOFPKMNROSE",Strings.source("Using %s, the %s\nof %s rose!"),itemName,Strings(names[stat]or Strings.source("STAT")),who)
     end
   elseif kind==Items.TYPE.GUARD_SPECS then
-    if battle:isDouble()then text(battle,"STRINGID_PKMNGETTINGPUMPED","%s is getting\npumped!",who)
-    else text(battle,"STRINGID_PKMNSHROUDEDINMIST","%s became\nshrouded in MIST!",who)end
+    if battle:isDouble()then text(battle,"STRINGID_PKMNGETTINGPUMPED",Strings.source("%s is getting\npumped!"),who)
+    else text(battle,"STRINGID_PKMNSHROUDEDINMIST",Strings.source("%s became\nshrouded in MIST!"),who)end
   end
   battle:syncShownStatus()
   return true

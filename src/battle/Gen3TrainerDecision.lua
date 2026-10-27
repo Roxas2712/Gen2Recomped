@@ -44,6 +44,11 @@ local function partyEntries(battle)
   end
   return entries
 end
+-- A queued native action already passed selection. Execution reads the
+-- exact global slot again; it does not coerce it or re-admit a new request.
+function M.entry(battle,requested)
+  return partyEntries(battle)[requested]
+end
 function M.slot(battle, actor, requested)
   local slot=math.floor(tonumber(requested) or 0)
   if slot<1 or slot>6 then return nil end
@@ -72,6 +77,7 @@ local function view(battle, actor, selected)
   else return nil end
   return result
 end
+M.view=view
 
 function M.call(battle, actor, vanilla)
   if not Items.context(battle,actor) then return nil end

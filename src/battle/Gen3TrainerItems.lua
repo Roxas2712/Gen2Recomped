@@ -26,6 +26,15 @@ function M.context(battle, actor)
   if not (trainer and type(party) == "table") then return nil end
   local index
   for i, mon in ipairs(party) do if mon == actor.mon then index = i; break end end
+  -- A native class/original queued switch may put a member of the combined
+  -- opposing party in either position. Its controller still owns its bench
+  -- for fresh requests; bag use and later class decisions follow the actual
+  -- current occupant rather than rejecting it for crossing that split.
+  if not index then
+    for i,mon in ipairs(battle.foeSummaryParty and battle:foeSummaryParty()or{})do
+      if mon==actor.mon then index=i;break end
+    end
+  end
   if not index then return nil end
   return { owner = second and "B" or "A", position = position, actor = actor,
     trainer = trainer, party = party, index = index }

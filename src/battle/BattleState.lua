@@ -5681,7 +5681,7 @@ local function gen2EnemyClassAction(battle)
   end
 end
 
-function BattleState:vanillaEnemyAction(battler)
+local function chooseEnemyAction(self,battler)
   battler = battler or self.enemy
   if not battler then return nil end
   local locked = self:lockedAction(battler)
@@ -5690,6 +5690,20 @@ function BattleState:vanillaEnemyAction(battler)
     and locked == require("src.battle.Gen3Encore").menu(battler)
   if locked and not encoreOnly then return locked end
   if self.palace then return require("src.battle.Gen3Palace").choose(self, battler) end
+  if GameVersion.isGen3() then
+    -- Preserve the host's explicit full-action trainer callback. Registered
+    -- GBA class brains below instead choose move slots through the native AI.
+    if self.kind=='trainer'and self.trainer and self.trainer.brain then
+      return self.trainer.brain(self,battler)
+    end
+    if self.kind=='trainer'and self.trainer and not(self.pokedudeDemo or self.pokedude or self.demo or self.oldManTutorial)then
+      local Controller=require('src.battle.Gen3TrainerController')
+      local class=require('src.battle.Gen3TrainerClass').action(self,battler)
+      local action=class and Controller.action(self,battler,class)or Controller.plan(self,battler)
+      if action then return action end
+    end
+    return TrainerAI.chooseMove(battler,self.rng,self)
+  end
   -- an ai_classes brain (or one on the trainer record) supersedes the
   -- class action and move scoring entirely
   if self.kind == "trainer" and self.trainer then
@@ -5699,15 +5713,26 @@ function BattleState:vanillaEnemyAction(battler)
   end
   -- The GBA hook keeps one opposing bag while selecting for the actual
   -- controller position. The older class path retains its left-slot policy.
-  if GameVersion.isGen3() and self.kind=="trainer" and self.trainer
-      and Runtime.wantsHook("battle.enemy_switch_or_item") then
-    local action=require("src.battle.Gen3TrainerController").plan(self,battler)
-    if action then return action end
-  elseif battler == self.enemy then
+  if battler == self.enemy then
     local classAct = gen2EnemyClassAction(self)
     if classAct then return classAct end
   end
   return TrainerAI.chooseMove(battler, self.rng, self)
+end
+
+-- The native opponent controller recovers from failed class/move brains by
+-- choosing the first PP-bearing slot. Explicit host trainer.brain callbacks
+-- retain their full-action/error contract. Keep the observed bag/use state;
+-- retrying the native selection would spend stock or call a mod twice.
+function BattleState:vanillaEnemyAction(battler)
+  battler=battler or self.enemy
+  if not battler then return nil end
+  if not GameVersion.isGen3() or(self.kind=='trainer'and self.trainer and self.trainer.brain)then
+    return chooseEnemyAction(self,battler)
+  end
+  local ok,action=pcall(chooseEnemyAction,self,battler)
+  if ok and action then return action end
+  return require("src.battle.Gen3TrainerController").fallback(battler)
 end
 
 local function orderMove(action, data)
@@ -6153,20 +6178,33 @@ end
 
 -- Trainer commands address a position and its own bench, including the
 -- right-hand trainer's separate party. The left aliases stay in place.
-function BattleState:switchTrainerInto(pos,index)
+-- GBA queued commands instead supply their already selected global-party
+-- entry. Class/original actions can cross that ownership split, just as the
+-- native executor can; fresh public requests are admitted by Decision.slot.
+function BattleState:switchTrainerInto(pos,index,nativeParty)
   if pos~=1 and pos~=3 then return nil end
-  local party=self:benchFor(false,pos)
+  if nativeParty and(not GameVersion.isGen3()
+      or(nativeParty~=self.enemyParty and nativeParty~=self.enemyPartyB))then return nil end
+  local party=nativeParty or self:benchFor(false,pos)
   local mon=party[index]
   local previous=self:battlerAt(pos)
-  if not previous or not mon or (mon.hp or 0)<=0 or Party.isEgg(mon)then return nil end
-  for _,other in ipairs({1,3})do
-    local current=self:battlerAt(other)
-    if current and current.mon==mon then return nil end
+  if not previous or not mon then return nil end
+  if not nativeParty then
+    if (mon.hp or 0)<=0 or Party.isEgg(mon)then return nil end
+    for _,other in ipairs({1,3})do
+      local current=self:battlerAt(other)
+      if current and current.mon==mon then return nil end
+    end
   end
   self:restoreMimicked(previous)
   local incoming=makeBattler(self.data,mon,false,nil,self)
-  if pos==1 then self.enemyIndex=index
-  elseif self.enemyPartyB then self.enemyIndexB=index
+  if nativeParty then
+    incoming.partyIndex=party==self.enemyPartyB and #self.enemyParty+index or index
+  end
+  if pos==1 then self.enemyIndex=party==self.enemyParty and index or nil
+  elseif self.enemyPartyB then
+    self.enemyIndexB=party==self.enemyPartyB and index or nil
+    self.enemyIndexRight=party==self.enemyParty and index or nil
   else self.enemyIndexRight=index end
   self:placeBattler(pos,incoming)
   for _,foe in ipairs(foesOf(self,incoming))do clearTrapping(foe)end
