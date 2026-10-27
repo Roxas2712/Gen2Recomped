@@ -9,7 +9,7 @@ function W.template(left,top,width,height,opts)
   w=width,h=height,paletteNum=opts and opts.paletteNum or 15}
 end
 function W.stdFrame(tpl)
- return require('src.render.Font').drawBox((tpl.left or tpl.tilemapLeft)-1,(tpl.top or tpl.tilemapTop)-1,
+ return require('src.render.Font').drawStandardBox((tpl.left or tpl.tilemapLeft)-1,(tpl.top or tpl.tilemapTop)-1,
   (tpl.width or tpl.w)+2,(tpl.height or tpl.h)+2)
 end
 return W
