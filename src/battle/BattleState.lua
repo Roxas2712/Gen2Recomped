@@ -3786,6 +3786,7 @@ end
 function BattleState:activeBattlers() return activeBattlers(self) end
 
 function BattleState:syncSides()
+  if GameVersion.isGen2() then Gen2Faint.reconcile(self) end
   if GameVersion.isGen3() then
     local lock = require("src.battle.Gen3LockOn")
     lock.replacing(self, 0, self.sides[1].battlers[1], self.player)

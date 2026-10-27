@@ -43,11 +43,24 @@ function Faint.step(screen)
     slide.battler.fainted = true
     screen.picHidden = screen.picHidden or {}
     screen.picHidden[slide.side] = true
+    screen._gen2FaintHidden = screen._gen2FaintHidden or {}
+    screen._gen2FaintHidden[slide.side] = {battler=slide.battler,mon=slide.mon}
     if slide.side == 'enemy' then
       screen:playSfx('Sfx_Faint')
-      screen.showEnemyHud = false
-    else screen.showPlayerHud = false end
+    end
+    -- The shared native HUD reads battler.fainted. Do not introduce a second
+    -- show-HUD latch that could remain false when its replacement arrives.
     screen.faintSlide = nil
+  end
+end
+
+function Faint.reconcile(screen)
+  for side, hidden in pairs(screen._gen2FaintHidden or {}) do
+    local b = screen[side]
+    if b ~= hidden.battler or not b or b.mon ~= hidden.mon then
+      if screen.picHidden then screen.picHidden[side] = nil end
+      screen._gen2FaintHidden[side] = nil
+    end
   end
 end
 

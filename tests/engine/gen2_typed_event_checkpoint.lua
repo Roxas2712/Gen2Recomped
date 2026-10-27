@@ -45,19 +45,26 @@ for _,edition in ipairs({'gold','silver','crystal'})do
       for _=1,5 do restored:update(1/60)end
       T.eq(restored.faintSlide and restored.faintSlide.frames,4,'actual native faint is in flight')
       local faintCheckpoint,code=f.checkpoints:capture(game)
-      T.check(faintCheckpoint~=nil,'active faint owner captures: '..tostring(code))
-      if faintCheckpoint then
-        local done,reason=f.checkpoints:restore(game,faintCheckpoint)
-        T.check(done,'active faint owner restores: '..tostring(reason))
+      T.eq(faintCheckpoint,nil,'native decision-only checkpoint refuses a live faint animation')
+      T.eq(code,'unsupported_battle','live faint keeps the existing refusal protocol')
+      for _=1,10 do restored:update(1/60)end
+      T.eq(restored.faintSlide,nil,'native faint completes at its original owner')
+      T.check(restored.current and restored.current.gen2SourceEvent.kind=='faint',
+        'same source event starts text after the refused mid-animation checkpoint')
+      local wasPressed=game.input.wasPressed
+      game.input.wasPressed=function(_,key)return key=='a'end
+      for _=1,240 do if restored.phase=='menu'then break end;restored:update(1/60)end
+      game.input.wasPressed=wasPressed
+      T.eq(restored.phase,'menu','normal native input reaches a qualified decision again')
+      local ended,reason=f.checkpoints:capture(game)
+      T.check(ended~=nil,'decision checkpoint captures completed faint ownership: '..tostring(reason))
+      if ended then
+        local done,why=f.checkpoints:restore(game,ended)
+        T.check(done,'decision checkpoint restores completed faint ownership: '..tostring(why))
         if done then
           local resumed=game.stack:top()
-          T.eq(resumed.faintSlide.frames,4,'restore retains the actual slide clock')
-          T.eq(resumed.faintSlide.battler,resumed.enemy,'restore rebinds the native battler identity')
-          T.eq(resumed.faintSlide.mon,resumed.enemy.mon,'restore rebinds Pokemon identity')
-          for _=1,10 do resumed:update(1/60)end
-          T.eq(resumed.faintSlide,nil,'resumed native faint completes once')
-          T.check(resumed.current and resumed.current.gen2SourceEvent.kind=='faint',
-            'resumed source event starts text after its own slide')
+          T.eq(resumed._gen2FaintHidden.enemy.battler,resumed.enemy,'hidden marker rebinds actual native battler')
+          T.eq(resumed._gen2FaintHidden.enemy.mon,resumed.enemy.mon,'hidden marker rebinds Pokemon identity')
         end
       end
     end
