@@ -105,6 +105,7 @@ function M.new(api)
     order=order+1
     local job={key=canonical,stamp=key,priority=priority or 5,order=order}
     job.co=coroutine.create(function()
+      job._advanced=true
       local core=job._core
       local model
       if core then model=Pixels.fromCore(core,pair,layout)
@@ -120,9 +121,11 @@ function M.new(api)
       return ts
     end)
     jobs[canonical]=job
+    local nativeCo=job.co
     job._worker=Build.prepare(pair,layout,function(core)
-      if jobs[canonical]~=job or job._advanced then return end
+      if jobs[canonical]~=job then return end
       job._worker=nil
+      if job._advanced or job.co~=nativeCo then return end
       local resolved,_,fresh=resolve(canonical)
       if not resolved or jobs[canonical]~=job or not same(fresh,key)then
         releaseJob(job);if jobs[canonical]==job then jobs[canonical]=nil end;return

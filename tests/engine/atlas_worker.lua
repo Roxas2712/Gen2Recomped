@@ -84,6 +84,28 @@ T.eq(read(ts.image),expected:rgba(false),'actual native upload receives worker p
 T.eq(read(ts.overImage),expected:rgba(true),'actual native over upload receives worker pixels')
 T.eq(Build._cacheInfo(Native._pairs).worker,1,'published worker provenance')
 T.eq(next(Native._stream.pending),nil,'central callback completes native publication')
+f=fresh();Native.prefetch(f.pair,1);id=nextId
+local publicJob=assert(Native._stream.pending[f.pair])
+T.check(coroutine.resume(publicJob.co),'a mod can advance the public pending coroutine')
+finish(id);Pool.poll(4)
+T.eq(Native._stream.pending[f.pair],publicJob,'completion preserves the already advanced native coroutine')
+T.eq(publicJob._worker,nil,'discarded reply cannot keep the coroutine waiting')
+T.check(Native.get(f.pair).image~=nil,'an externally advanced coroutine completes normally')
+T.eq(Build._cacheInfo(Native._pairs).worker,0,'native coroutine progress is not mislabeled as a worker publication')
+f=fresh();Native.prefetch(f.pair,1);id=nextId
+publicJob=Native._stream.pending[f.pair]
+local originalCo=publicJob.co;local resumed=0
+publicJob.co=coroutine.create(function()
+  while coroutine.status(originalCo)~='dead'do
+    local ok,value=coroutine.resume(originalCo);assert(ok,value);resumed=resumed+1
+    if coroutine.status(originalCo)=='dead'then return value end
+    coroutine.yield(value)
+  end
+end)
+finish(id);Pool.poll(4)
+T.eq(resumed,0,'worker callback leaves a replacement coroutine under its existing owner')
+T.check(Native.get(f.pair).image~=nil and resumed>0,'replacement coroutine remains the native completion path')
+T.eq(Build._cacheInfo(Native._pairs).worker,0,'replacement coroutine result retains native provenance')
 f=fresh();Native.prefetch(f.pair,1);id=nextId;local late=queue[id]
 local before=polls;ts=Native.get(f.pair)
 T.check(ts and ts.image,'required get keeps synchronous completion')
