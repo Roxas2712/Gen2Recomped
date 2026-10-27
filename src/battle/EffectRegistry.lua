@@ -100,7 +100,7 @@ end
 -- stage keeps the original's exact check order and rng consumption
 -- (invulnerability -> gate -> hit count -> pre-accuracy -> accuracy ->
 -- damage choice -> hits -> messages -> after-damage -> secondary run).
-function EffectRegistry.runDamaging(battle, ctx, record)
+local function runDamaging(battle, ctx, record)
   local user, target = ctx.user, ctx.target
   local move, moveInst = ctx.move, ctx.moveInst
   local neverMiss = record and record.neverMiss
@@ -447,4 +447,17 @@ function EffectRegistry.runDamaging(battle, ctx, record)
   end
 end
 
+-- Optional native observation only; the existing callbacks and damaging
+-- pipeline keep their order, input context, return values and RNG owner.
+function EffectRegistry.callEffect(ctx,phase,fn,...)
+  local source=package.loaded['src.core.game3.battle.effect_ctx']
+  if source and require('src.core.GameVersion').isGen3()then return source._native(ctx,phase,fn,...)end
+  return fn(ctx,...)
+end
+local function damageContext(ctx,battle,record)return runDamaging(battle,ctx,record)end
+function EffectRegistry.runDamaging(battle,ctx,record)
+  local source=package.loaded['src.core.game3.battle.effect_ctx']
+  if source and require('src.core.GameVersion').isGen3()then return source._native(ctx,'damage',damageContext,battle,record)end
+  return runDamaging(battle,ctx,record)
+end
 return EffectRegistry

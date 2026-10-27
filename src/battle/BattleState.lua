@@ -8315,7 +8315,7 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
 
   -- fully custom resolution (Bide, Roar/Teleport, Mimic)
   if record and record.perform then
-    record.perform(ctx)
+    EffectRegistry.callEffect(ctx,'perform',record.perform)
     return
   end
 
@@ -8334,7 +8334,7 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
       self:sayNext(self:romText("_AttackMissedText", "%s's\nattack missed!", displayName(user)))
       return
     end
-    local msgs = record.run(ctx)
+    local msgs = EffectRegistry.callEffect(ctx,'primary',record.run)
     -- SLEEP TALK names a move rather than doing something itself: the record
     -- picks one of the user's OTHER moves and this is where it is used.  The
     -- call is `isCalled`, so it costs no PP and cannot recurse into another
