@@ -92,8 +92,10 @@ local remote={}
 local store={list=function(dir) local list={};for p in pairs(remote) do local name=p:match('^'..dir..'/([^/]+)$');if name then list[#list+1]=name end end;return list end,
  read=function(p) return remote[p] end,write=function(p,b) remote[p]=b;return true end}
 local bankCount=#B.list()
+local readOnly={list=store.list,read=store.read,write=function()error('A restore must not upload any account data')end}
+check(B.sync(readOnly,true)==0 and #B.list()==bankCount and next(remote)==nil,'download-only Bank restore preserves local entries without publishing monsters, items, dex or Legacy data')
 check(bankCount==2 and B.sync(store)==bankCount and remote[path]==files[path],'sync uploads both original and item-equipped immutable Bank entries')
-files={};check(B.sync(store)==bankCount and #B.list()==bankCount,'another device can import every full Bank entry')
+files={};check(B.sync(readOnly,true)==bankCount and #B.list()==bankCount,'another device can restore every full Bank entry and its metadata without cloud writes')
 local prior=files[path];remote[path]='return {schema=1}'
 check(not B.sync(store) and files[path]==prior,'an invalid cloud copy cannot overwrite a local entry')
 local native=S.decode(S.encode(mon))

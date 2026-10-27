@@ -1,6 +1,21 @@
 -- Reviewed launcher essentials; no network or translation model required.
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 return { de={
+ ["CONTINUE ON ANOTHER DEVICE"]="AUF EINEM ANDEREN GERÄT FORTSETZEN",
+ ["CONTINUE ON ANOTHER DEVICE · HOW IT WORKS"]="AUF EINEM ANDEREN GERÄT FORTSETZEN · SO GEHT'S",
+ ["1 · ON THIS DEVICE"]="1 · AUF DIESEM GERÄT",
+ ["2 · ON YOUR OTHER DEVICE"]="2 · AUF DEINEM ANDEREN GERÄT",
+ ["CURRENT SUPPORT"]="AKTUELL UNTERSTÜTZT",
+ ["Upload your own imported games once to your private account cache. This is optional and separate from saves. Other accounts cannot download them."]="Lade deine selbst importierten Spiele einmal in deinen privaten Kontospeicher. Das ist freiwillig und vom Spielstandspeicher getrennt. Andere Konten haben darauf keinen Zugriff.",
+ ["In the game menu, choose Suspend & upload to cloud. Wait until the transfer finishes. Normal saves and exact battle suspends remain separate."]="Wähle im Spielmenü „Speicherpunkt sichern & hochladen“. Warte, bis die Übertragung abgeschlossen ist. Normale Spielstände und exakte Kampf-Speicherpunkte bleiben getrennt.",
+ ["Use the same app build, sign in to the same account and restore your cloud games and saves. Choose Continue to resume the saved battle."]="Verwende denselben App-Build, melde dich mit demselben Konto an und stelle deine Cloud-Spiele und Spielstände wieder her. Mit „Fortsetzen“ kehrst du in den gespeicherten Kampf zurück.",
+ ["Exact resume supports native Gen 1–3 sessions. Loaded mods and live online battles are excluded. Newer local progress is preserved; incompatible suspends fall back to your normal save with a notice."]="Exaktes Fortsetzen unterstützt native Sitzungen in Gen 1–3. Geladene Mods und laufende Onlinekämpfe sind ausgenommen. Neuerer lokaler Fortschritt bleibt erhalten. Bei unpassenden Speicherpunkten wird dein normaler Spielstand mit einem Hinweis geladen.",
+ ["Simulated device switching has been tested on separate desktop profiles. Physical Android and iPhone switching still needs device testing."]="Der simulierte Gerätewechsel wurde mit getrennten Desktop-Profilen geprüft. Der Wechsel mit echten Android-Geräten und iPhones muss noch geprüft werden.",
+ ["The operator binding follows a fixed account ID even after a nickname change. Releasing it requires the private recovery key in the server console; ordinary role controls cannot remove it."]="Die Betreiberbindung gehört zur festen Konto-ID und bleibt auch nach einem Namenswechsel bestehen. Zum Aufheben ist der private Entsperrschlüssel in der Serverkonsole nötig. Die normale Rechteverwaltung kann sie nicht entfernen.",
+ ["Download my cloud saves and private imported games on this device"]="Meine Cloud-Spielstände und privat importierten Spiele auf dieses Gerät laden",
+ ["Private game downloads avoid importing again. Uploading imported game data is a separate opt-in under Cloud settings. Automatic save sync also includes Bank and cartridge designs."]="Private Spielkopien ersparen den erneuten Import. Den Upload importierter Spieldaten aktivierst du separat in den Cloud-Einstellungen. Die automatische Spielstandsynchronisierung umfasst auch Bank und Moduldesigns.",
+ ["Import this game with the current engine before uploading it."]="Importiere dieses Spiel mit der aktuellen Engine erneut, bevor du es hochlädst.",
+ ["This private game needs a different engine/import revision."]="Diese private Spielkopie benötigt eine andere Engine- oder Importversion.",
  ["PLAYERS ONLINE"]="Spieler online",
  ["FRIENDS ONLINE"]="Freunde online",
  ["INBOX"]="Inbox",

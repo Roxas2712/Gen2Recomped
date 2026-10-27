@@ -19,6 +19,10 @@ function M.result(result,problem,version,slot)
     local both=tostring(problem):lower()
     return M.set((both:find('both copies',1,true) or both:find('both devices',1,true)) and 'conflict' or 'error',version,slot,problem)
   end
+  if type(result)=='table' and result.cacheWarning then
+    return M.set('error',version,slot,'Private game transfer paused: '..tostring(result.cacheWarning))
+  end
+  if type(result)=='table' and result.sync then return M.result(result.sync,problem,version,slot) end
   if result=='kept both' or type(result)=='table' and (result['kept both'] or 0)>0 then
     return M.set('conflict',version,slot,'Both versions were preserved. Choose the save you want to continue.')
   end

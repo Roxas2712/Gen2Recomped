@@ -114,6 +114,7 @@ mobile/ios/bundle_id.local
 /tests/*
 !/tests/test_fetch_love_runtime.py
 !/tests/native_suspend/
+!/tests/native_arena/
 !/tests/parity_frlg_ship.lua
 !/tests/parity_frlg_warp_allowlist.lua
 !/tests/parity_gen3_type_categories.lua
