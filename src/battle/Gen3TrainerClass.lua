@@ -46,15 +46,25 @@ function M.action(battle,actor)
  if action then battle.modAiUses[actor.mon]=left-1 end
  return action
 end
-local types={NORMAL=0,FIGHTING=1,FLYING=2,POISON=3,GROUND=4,ROCK=5,BUG=6,GHOST=7,STEEL=8,MYSTERY=9,FIRE=10,WATER=11,GRASS=12,ELECTRIC=13,PSYCHIC=14,PSYCHIC_TYPE=14,ICE=15,DRAGON=16,DARK=17}
+local typeNames={[0]='NORMAL','FIGHTING','FLYING','POISON','GROUND','ROCK','BUG','GHOST',
+ 'STEEL','MYSTERY','FIRE','WATER','GRASS','ELECTRIC','PSYCHIC','ICE','DRAGON','DARK'}
+local types={}
+for number,name in pairs(typeNames)do types[name]=number end
+types.FIGHT,types.ELECTR,types.PSYCHC=1,13,14
+types.CURSE_TYPE,types.PSYCHIC_TYPE=9,14
 local function moveView(battle,move)
  local d=battle.data.moves[move.id];if not d then return nil end
  local number=tonumber(d.index or d.numId)
  local id=type(move.id)=='string'and not move.id:match('^MOVE_%d+$')and move.id
   or tostring(d.name or number):upper():gsub('[^%w]+','_'):gsub('^_+',''):gsub('_+$','')
- local kind=tonumber(d.gen3Type)or types[d.type]
- local category=(d.power or 0)==0 and'status'or(kind and kind<=8 and'physical'or'special')
- return{id=id,index=number,num=number,name=d.name,type=d.type,gen3Type=kind,
+ -- Importers retain cartridge type IDs (including abbreviated or localized
+ -- names). Public GBA views use the numeric type's canonical name instead.
+ local record=battle.data.constants and battle.data.constants.types
+ record=record and record[d.type]
+ local kind=tonumber(d.gen3Type)or tonumber(d.type)
+  or(type(record)=='table'and tonumber(record.index))or types[d.type]
+ local category=(d.power or 0)==0 and'status'or(typeNames[kind]and kind<=8 and'physical'or'special')
+ return{id=id,index=number,num=number,name=d.name,type=typeNames[kind]or kind or d.type,gen3Type=kind,
   power=d.power,accuracy=d.accuracy,pp=d.pp,priority=d.priority or 0,category=d.category or category,
   effect=tonumber(d.gen3Effect)or 0,target=d.target or 0,secondaryChance=d.secondaryChance or 0}
 end

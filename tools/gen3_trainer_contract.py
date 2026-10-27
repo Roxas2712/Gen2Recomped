@@ -19,6 +19,7 @@ parser.add_argument('--lua', type=Path, default=shutil.which('luajit'))
 parser.add_argument('--qa-tools-root', type=Path, default=ROOT / 'tools')
 parser.add_argument('--edition', action='append', choices=EDITIONS)
 parser.add_argument('--mode', action='append', choices=MODES)
+parser.add_argument('--family', action='append', choices=('gates','switch','types'))
 args = parser.parse_args()
 ref = args.reference_root.resolve()
 if not args.lua or not args.lua.is_file():
@@ -51,10 +52,22 @@ if git(ref, 'status', '--porcelain'):
 args.output.mkdir(parents=True)
 sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
 hashes = {str(p): sha(p) for p in sorted(inputs)}
+def source_patch():
+    return run(['git', '-C', str(ROOT), 'diff', '--binary', 'HEAD'], text=True,
+               stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True).stdout
+
+
+source_diff = source_patch()
+(args.output / 'source.patch').write_text(source_diff)
 report = dict(status='running', inputs=hashes, source=git(ROOT, 'rev-parse', 'HEAD'),
+              source_patch_sha256=sha(args.output / 'source.patch'),
+              families=list(dict.fromkeys(args.family or ('gates','switch','types'))),
+              editions=args.edition or EDITIONS, modes=args.mode or MODES,
               reference_source=git(ref, 'rev-parse', 'HEAD'), runs=[], pairs=[],
               scope='Actual API3 unified native enemy controllers. Class/brain priority, error recovery, '
                     'per-mon use budgets, native slot execution and subsequent decisions. '
+                    'Types cases compare all native types from controlled move bytes through the real '
+                    'Gen2 importer, raw-name encodings, masks and registered brain decisions. '
                     'Switch slots and PP-slot ownership are canonical projections of each engine action; '
                     'party nicknames are explicitly identical before observations. '
                     'This does not qualify default autonomous switch heuristics, full Loader rollback, '
@@ -63,7 +76,9 @@ report_path = args.output / 'report.json'
 
 
 def save():
-    report_path.write_text(json.dumps(report, indent=2) + '\n')
+    temporary=report_path.with_suffix('.tmp')
+    temporary.write_text(json.dumps(report, indent=2) + '\n')
+    temporary.replace(report_path)
 
 
 def equal(a, b):
@@ -84,7 +99,10 @@ for edition in args.edition or EDITIONS:
         for family, filename, marker in (
             ('gates', 'worker.lua', 'GBA_TRAINER_GATES '),
             ('switch', 'switch_worker.lua', 'GBA_TRAINER_SWITCH '),
+            ('types', '../gen3_trainer_types/worker.lua', 'GBA_TRAINER_TYPES '),
         ):
+            if args.family and family not in args.family:
+                continue
             pair = []
             worker = ROOT / 'tests/gen3_trainer_gates' / filename
             for backend, cwd in (('gen1', ref), ('gen2', ROOT)):
@@ -113,9 +131,10 @@ for edition in args.edition or EDITIONS:
         print(edition, mode, 'complete', flush=True)
 report.update(status='terminal', inputs_unchanged=all(sha(Path(p)) == h for p, h in hashes.items()),
               source_unchanged=git(ROOT, 'rev-parse', 'HEAD') == report['source'],
+              source_diff_unchanged=source_patch() == source_diff,
               reference_clean=not git(ref, 'status', '--porcelain'),
               reference_unchanged=git(ref, 'rev-parse', 'HEAD') == report['reference_source'])
-report['passed'] = (report['inputs_unchanged'] and report['source_unchanged']
+report['passed'] = (report['inputs_unchanged'] and report['source_unchanged'] and report['source_diff_unchanged']
                     and report['reference_clean'] and report['reference_unchanged']
                     and all(v['exit'] == 0 and v['rows'] for v in report['runs'])
                     and all(v['equal'] for v in report['pairs']))
