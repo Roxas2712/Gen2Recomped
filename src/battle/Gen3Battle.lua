@@ -1525,7 +1525,7 @@ function Gen3Battle.healthboxVisible(battle,id,slide,showStatus)
     if not b.mon or b.fainted then return false end
     if id%2==0 then return not battle.showPlayerBack end
   elseif id==0 then
-    return not battle.safari and not battle.demo and not battle.showPlayerBack
+    return not battle.safari and (not battle.demo or not not (battle.rsWally and not battle.rsWally.hideHud)) and not battle.showPlayerBack
   elseif b.fainted then return false end
   return not battle.showEnemyTrainer and not battle.enemySendingOut
     and not battle:growInScale(b) and not battle.introBalls

@@ -5,6 +5,7 @@ local Battle=require('src.core.game3.battle')
 local Boundary=require('src.compat.gen1.ScriptBoundary')
 local Scope=require('src.render.GraphicsScope')
 local Ui={}
+function Ui.drawMenuFrames(mode)return require('src.ui.game3.battle_chrome').drawMenuFrames(mode)end
 function Ui.ballQuad(ball,frame)
  return require('src.core.game3.battle.ui_ball_art').quad(ball,frame)
 end
