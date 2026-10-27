@@ -70,6 +70,13 @@ T.check(supported,'native typed faint admission exists: '..tostring(why))
 require('src.mods.Loader').teardown();run.release()
 if not supported then love.audio=audio;Version.set(previous);T.finish('native Gen2 faint event');return end
 
+b,run,probe,step=fixture('crystal')
+b.fx={faint={battler=b.enemy,frames=14}}
+T.check(b:fxFaintActive(b.enemy),'existing native FX extension remains active outside a typed faint')
+b:tickFx()
+T.eq(b:fxFaintOffset(b.enemy,1),4,'existing native FX keeps its own draw offset')
+Sound.invalidate();require('src.mods.Loader').teardown();run.release()
+
 for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   for _,side in ipairs({'player','enemy'})do
     b,run,probe,step=fixture(edition)

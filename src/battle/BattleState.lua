@@ -11752,7 +11752,7 @@ end
 
 -- is the faint slide currently playing for this battler?
 function BattleState:fxFaintActive(battler)
-  if GameVersion.isGen2() then return Gen2Faint.owns(self,battler) end
+  if GameVersion.isGen2() and self.faintSlide then return Gen2Faint.owns(self,battler) end
   local fx = self.fx
   return fx and fx.faint and fx.faint.battler == battler
          and fx.faint.frames > 0 or false
@@ -11767,7 +11767,7 @@ end
 -- the full 56px PIC_HEIGHT slide over the 14-frame budget (#671: the
 -- old (30 - frames) math teleported the sprite 32px down on frame one).
 function BattleState:fxFaintOffset(battler, scale)
-  if GameVersion.isGen2() then
+  if GameVersion.isGen2() and Gen2Faint.owns(self,battler) then
     return self:faintSink(battler.isPlayer and 'player' or 'enemy')
       * (scale or (battler.isPlayer and 2 or 1))
   end
