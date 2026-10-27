@@ -12,6 +12,13 @@ cleanup continues; previously its `false` return also bypassed that cleanup.
 Callbacks should tolerate repeated shutdown requests, like the native services.
 This does not alias Gen1-specific mounted-game or editor reset implementations.
 
+`endMountedSession(version)` uses the native loader teardown, unmounts that
+cartridge and evicts generated data. `endEditorSession({app=app, version=version})`
+also unloads the editor and discovers its flat/path-style modules for eviction.
+The native Close callback uses this owner, including when editor unload fails.
+Process workers remain alive. No separate game controller or synchronous GPU
+resource-release guarantee is introduced.
+
 The focused ROM-free suites exercise real loader registration/retirement,
 failure isolation, actual native quit callback routing, editor acceptance/veto
 and existing audio/update worker shutdown. They do not establish whole-client,
