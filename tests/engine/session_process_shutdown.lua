@@ -12,10 +12,13 @@ for _, name in ipairs(services) do
   package.loaded[name] = nil
 end
 
-local Lifecycle = require("src.core.SessionLifecycle")
+local cold = require("src.core.SessionLifecycle")
 for _, name in ipairs(services) do
   T.eq(package.loaded[name], nil, "requiring lifecycle does not load " .. name)
 end
+-- The first import may happen inside a ModSeams window, as in a portable
+-- worker's entry. Retiring that window must keep the fresh engine module.
+package.loaded["src.core.SessionLifecycle"] = nil
 
 local run = T.sdk.loadMods({ "mods/worker_probe" }, {
   data = T.fixtures.fresh(),
@@ -37,6 +40,8 @@ local run = T.sdk.loadMods({ "mods/worker_probe" }, {
   }),
 })
 T.eq(#run.errors, 0, "a mod can register its worker shutdown during entry")
+local Lifecycle = assert(package.loaded["src.core.SessionLifecycle"])
+T.check(Lifecycle ~= cold, "the mod performed the first import of its engine owner")
 local state = assert(run.loader.exports.worker_probe).state
 T.eq(state.joined, 0, "registration does not join a running worker")
 require("src.mods.Loader").teardown()
