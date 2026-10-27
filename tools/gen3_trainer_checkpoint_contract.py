@@ -15,6 +15,9 @@ parser.add_argument('--lua', type=Path, default=shutil.which('luajit'))
 parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--qa-tools-root', type=Path, default=ROOT / 'tools')
 parser.add_argument('--baseline-commit', help='Optional full SHA for the old checkpoint serializer negative control')
+parser.add_argument('--mode', action='append', choices=('single','double','two-trainer','two-trainer-legacy'))
+parser.add_argument('--edition', action='append', choices=('firered','leafgreen','ruby','sapphire','emerald'))
+parser.add_argument('--policy', action='append', choices=('1-native','2-native','2-unified','3-unified'))
 args = parser.parse_args()
 if not args.lua or not args.lua.is_file():
     parser.error('--lua must select an existing LuaJIT executable')
@@ -48,8 +51,8 @@ report = dict(status='running', inputs=hashes, pairs=[])
 (args.output / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
 
 
-def command(phase, edition, api, format_, *, packet=None, baseline=None, label=''):
-    argv = [*prefix, str(args.lua.resolve()), str(worker), phase, edition, str(api), format_]
+def command(phase, edition, api, format_, mode, *, packet=None, baseline=None, label=''):
+    argv = [*prefix, str(args.lua.resolve()), str(worker), phase, edition, str(api), format_, mode]
     if baseline:
         argv.append(str(baseline))
     if packet is None:
@@ -68,14 +71,15 @@ def command(phase, edition, api, format_, *, packet=None, baseline=None, label='
     return result.returncode, result.stdout, sha(log)
 
 
-def pair(edition, api, format_, *, baseline=None):
-    label = edition + '-' + str(api) + '-' + format_ + ('-baseline' if baseline else '')
+def pair(edition, api, format_, mode, *, baseline=None):
+    label = edition + '-' + str(api) + '-' + format_ + '-' + mode + ('-baseline' if baseline else '')
     code, output, producer_hash = command('produce-baseline' if baseline else 'produce',
-                                         edition, api, format_, baseline=baseline, label=label)
+                                         edition, api, format_, mode, baseline=baseline, label=label)
     packets = [line.removeprefix('GBA_CHECKPOINT_PACKET ') for line in output.splitlines()
                if line.startswith('GBA_CHECKPOINT_PACKET ')]
-    assert code == 0 and len(packets) == 1, output[-2000:]
-    code, output, consumer_hash = command('consume', edition, api, format_, packet=packets[0], label=label)
+    diagnostic='\n'.join(line for line in output.splitlines() if not line.startswith('GBA_CHECKPOINT_PACKET '))[-2000:]
+    assert code == 0 and len(packets) == 1, diagnostic
+    code, output, consumer_hash = command('consume', edition, api, format_, mode, packet=packets[0], label=label)
     markers = [json.loads(line.removeprefix('GBA_CHECKPOINT_RESULT ')) for line in output.splitlines()
                if line.startswith('GBA_CHECKPOINT_RESULT ')]
     assert len(markers) == 1, output[-2000:]
@@ -92,9 +96,11 @@ def pair(edition, api, format_, *, baseline=None):
         print(output[-2000:], flush=True)
 
 
-for edition in ('firered', 'leafgreen', 'ruby', 'sapphire', 'emerald'):
-    for api, format_ in ((1, 'native'), (2, 'native'), (2, 'unified'), (3, 'unified')):
-        pair(edition, api, format_)
+for edition in args.edition or ('firered', 'leafgreen', 'ruby', 'sapphire', 'emerald'):
+    for policy in args.policy or ('1-native','2-native','2-unified','3-unified'):
+        api, format_ = policy.split('-',1)
+        for mode in args.mode or ('single','double','two-trainer','two-trainer-legacy'):
+            pair(edition, int(api), format_, mode)
 if args.baseline_commit:
     result = run(['git', '-C', str(ROOT), 'show', args.baseline_commit + ':src/core/CheckpointBattle.lua'],
                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
@@ -102,7 +108,7 @@ if args.baseline_commit:
     baseline.write_bytes(result.stdout)
     report['baseline_commit'] = args.baseline_commit
     report['baseline_serializer_sha256'] = sha(baseline)
-    pair('emerald', 3, 'unified', baseline=baseline)
+    pair('emerald', 3, 'unified', 'single', baseline=baseline)
 report.update(status='terminal', inputs_unchanged=all(sha(ROOT / path) == digest for path, digest in hashes.items()))
 report['passed'] = report['inputs_unchanged'] and all(row['passed'] for row in report['pairs'])
 (args.output / 'report.json').write_text(json.dumps(report, indent=2) + '\n')

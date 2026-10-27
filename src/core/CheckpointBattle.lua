@@ -85,7 +85,7 @@ monSprites monToSwitchInto monWindowRect move moveAnimRow moveEvent moveId moveI
 move_grid_navigation move_used msgPreWait msgPrompt msgPromptWait msgWaiting musicKind mustRecharge
 name nextInsert nightmare noCatch noExp noItems noRun oakDemo oakMsgFlags oamGlobalTieResidual
 oamRanks oamY objIndex objects objs onDone onSound onTransform oneWay open oppClass opponentName
-opts orbit overlay p palCache palPark palace palaceLow participants particles partnerOf partyIndex
+opts oppClassB orbit overlay p palCache palPark palace palaceLow participants particles partnerOf partyIndex
 payDay pc pendingActions pendingHit pendingLayout pendingMove pendingReplacements performMove
 perishTurns phase phaseFrame phases physicalDamageTaken picAnim picFx picHidden picImage picOff
 picOffset platformsHidden player playerParty playerPartyIndices playing pokedude pokedudeDemo
@@ -109,7 +109,7 @@ waitKind waitReload waitingSound waitingSoundT waitingUI wallyTutorial warned wa
 weather what whiteout wideRegion wildFoesStanding wishHeal wishTurns wobbles wordAt work x xAccuracy
 y yield z
 ]])
-local ART = names("bgCanvas waveCanvas waveQuad colorFxReady scrollPx _gen3OamCompositedFrame _gen3OamObjectRanks _gen3OamResidual")
+local ART = names("bgCanvas waveCanvas waveQuad colorFxReady scrollPx trainerPicB _gen3OamCompositedFrame _gen3OamObjectRanks _gen3OamResidual")
 local BATTLER_SKIP = names("def badgeBoosts statuses items natures sprite picAnim monAnim _caughtIcon")
 local DATA = names("rulesets pokemon moves statuses items constants type_chart trainers move_effects")
 local function keys(t,path)
@@ -412,11 +412,19 @@ local function nativePartySet(save,record)
   end
   return set
 end
+local function pictureActors(state)
+  local sides=state.sides or{}
+  local player=sides[1]and sides[1].battlers or{}
+  local enemy=sides[2]and sides[2].battlers or{}
+  return {state.player or player[1],state.enemy or enemy[1],
+    player[2]or state.player2,enemy[2]or state.enemy2}
+end
 local function pictureRows(battle)
   if not battle.picFx then return nil end
   local rows={}
-  for _,key in ipairs({'player','enemy','player2','enemy2'})do
-    local actor=battle[key]
+  local actors=pictureActors(battle)
+  for index=1,4 do
+    local actor=actors[index]
     if actor and battle.picFx[actor]then rows[#rows+1]={actor=actor,effect=battle.picFx[actor]}end
   end
   return {schema=1,rows=rows}
@@ -425,9 +433,12 @@ local function nativePictures(state,record)
   if not record or record.schema==nil then return record end
   assert(record.schema==1 and type(record.rows)=='table','invalid battle picture relationships')
   local out={}
+  local allowed={}
+  local actors=pictureActors(state)
+  for index=1,4 do if actors[index]then allowed[actors[index]]=true end end
   for _,row in ipairs(record.rows)do
     local actor=row.actor
-    assert(actor and(actor==state.player or actor==state.enemy or actor==state.player2 or actor==state.enemy2)
+    assert(actor and allowed[actor]
       and type(row.effect)=='table'and not out[actor],'invalid battle picture owner')
     out[actor]=row.effect
   end
@@ -497,6 +508,10 @@ function B.validate(game, snapshot, save, actors)
     end
     assert(PHASES[s.phase] and (s.kind == "wild" or s.kind == "trainer"), "invalid battle decision")
     assert(s.player and s.enemy and s.player.mon and s.enemy.mon, "missing native battlers")
+    if s.trainerB~=nil or s.oppClassB~=nil then
+      assert(require('src.battle.BattleState')._checkpointSecondTrainerClass(game.data,s),
+        'second trainer content is unavailable')
+    end
     for key in pairs(EXCLUDED) do
       assert(not s[key], "special battle state is not reconstructible")
     end
@@ -513,7 +528,9 @@ function B.validate(game, snapshot, save, actors)
       )
     end
     assert(s.field and s.sides and s.field.sides == s.sides, "battle field relationships differ")
-    for _, who in ipairs({ s.player, s.enemy, s.player2, s.enemy2 }) do
+    local active=pictureActors(s)
+    for position=1,4 do
+      local who=active[position]
       if who then
         assert(
           type(who.isPlayer) == "boolean" and type(who.mon) == "table" and game.data.pokemon[who.mon.species],

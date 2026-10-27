@@ -1369,12 +1369,26 @@ end
 -- Private factories restore native resources without entry hooks or intro effects.
 BattleState._checkpointNew = newBattle
 function BattleState._checkpointOwnsRng(battle) return checkpointRng[battle] == battle.rng end
+function BattleState._checkpointSecondTrainerClass(data,state)
+  if type(state.trainerB)~='table'then return nil end
+  if state.oppClassB~=nil then
+    local key=state.oppClassB
+    return (type(key)=='string'or type(key)=='number')and data.trainers[key]and key or nil
+  end
+  -- Earlier checkpoints retained the content anchor without its class key.
+  for key,record in pairs(data.trainers)do if record==state.trainerB then return key end end
+end
 function BattleState:_checkpointArt()
   if self.oppClass then
     local def = assert(self.data.trainers[self.oppClass])
     self.trainer = setmetatable({name=self._checkpointTrainerName or def.name},{__index=def})
     self.trainerPic = getImage(BattleState.trainerPicPath(self.data,self.trainer,self.oppClass,self.partyIndex),
       BattleState.trainerPalette(self.data,self.trainer),self.trainer.trueColor)
+  end
+  if self.trainerB then
+    local class=assert(BattleState._checkpointSecondTrainerClass(self.data,self),'second trainer content is unavailable')
+    self.trainerPicB=getImage(BattleState.trainerPicPath(self.data,self.trainerB,class,1),
+      BattleState.trainerPalette(self.data,self.trainerB),self.trainerB.trueColor)
   end
   self._checkpointTrainerName=nil
   self.isOpaque=self:bgMode()~="world"
@@ -1950,6 +1964,7 @@ function BattleState:addOpponentTrainer(oppClass)
   end
   local partyDef = def.parties and def.parties[1]
   if not partyDef then return false end
+  self.oppClassB=oppClass
   self.double = true
   if not BattleState.DOUBLES_READY then
     -- recorded, so the pairing is visible to anything that asks, but the
