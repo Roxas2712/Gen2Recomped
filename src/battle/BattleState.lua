@@ -3432,7 +3432,10 @@ end
 function BattleState:placeBattler(pos, battler)
   local side, flank = slotOf(pos)
   self.sides[side].battlers[flank] = battler
-  if battler then battler.position = pos end
+  if battler then
+    battler.position = pos
+    Gen2Read.bind(battler, self)
+  end
   if flank == 1 then
     if side == 1 then self.player = battler else self.enemy = battler end
   end
@@ -3551,6 +3554,9 @@ function BattleState:syncSides()
     local orr = self.sides[2].battlers[2]
     if pr then pr.position = BattleState.POS.PLAYER_RIGHT end
     if orr then orr.position = BattleState.POS.OPPONENT_RIGHT end
+  end
+  for _, battler in activeBattlers(self) do
+    Gen2Read.bind(battler, self)
   end
 end
 
