@@ -1318,6 +1318,10 @@ local function markerFor(version)
     revision = "gen1-trade-art-v1:"
   end
   if GameVersion.generation(version)==3 then revision=revision..'gba-field-move-art-v1:'end
+  if GameVersion.generation(version)==3 then
+    local help=require('src.import.Gen3HelpFacts')
+    if help.supports(version)then revision=revision..'gba-help-v'..help.REVISION..':'end
+  end
   return CACHE_FORMAT .. revision .. GameVersion.info(version).sha1
 end
 
