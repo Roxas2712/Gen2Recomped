@@ -14,8 +14,10 @@ def main():
     ap.add_argument('--games',nargs='+',choices=GAMES,default=GAMES)
     ap.add_argument('--rom-dir',type=Path,default=Path.home()/'Downloads')
     ap.add_argument('--base-rom',type=Path,help='Exact base override for a single-edition/revision check')
+    ap.add_argument('--cache-profile-template',default='ula-native-qa-{game}',help='Owned English-cache seed identity; must contain {game}')
     a=ap.parse_args();love=a.love.resolve();out=a.out.resolve();roms=a.rom_dir.resolve()
-    oldProfiles={g:Path.home()/'Library/Application Support/LOVE'/('ula-native-qa-'+g)for g in a.games}
+    assert a.cache_profile_template.startswith('ula-native-qa-')and'{game}'in a.cache_profile_template and'/'not in a.cache_profile_template and'\\'not in a.cache_profile_template,'Only owned QA profile names can seed English caches'
+    oldProfiles={g:Path.home()/'Library/Application Support/LOVE'/a.cache_profile_template.format(game=g)for g in a.games}
     for p in (ROOT,love,roms,*oldProfiles.values()):qa_source(p)
     if a.base_rom:
         assert len(a.games)==1,'A base override requires exactly one edition';qa_source(a.base_rom.resolve())

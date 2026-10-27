@@ -62,6 +62,9 @@ python3 tools/check_builtin_language_setup.py --love /path/to/love \
   --language pt-BR --out .local/qa/builtin-language-ptbr
 python3 tools/check_ptbr_auto.py --love /path/to/love \
   --out .local/qa/ptbr-auto
+python3 tools/check_ptbr_patches.py --luajit /path/to/luajit \
+  --rom-dir /private/us-cartridges --extra-base /private/crystal11.gbc \
+  --out .local/qa/ptbr-patch-roundtrips
 ```
 
 This runner starts with clean guest profiles, renders all four CJK setup
@@ -75,6 +78,9 @@ runner checks target hashes, unchanged mechanical fields, rendered title and
 world, EN/PT round trips, rollback and progress preservation; GSC also talks
 to a real Portuguese nurse. These checks do not certify every story branch
 or multiplayer exchange.
+The retained [US-only PT-BR qualification](qa/ptbr-us-auto.json) records the
+eleven-edition, first-run, alternate-revision and packaged-app evidence,
+plus separate failures from the general QA-storage regression suite.
 
 The fork exposes `mod.localization` and the capability
 `mod:supports("localization", "rom-language-v1")`. Capability discovery is lazy:
