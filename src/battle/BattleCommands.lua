@@ -1,9 +1,16 @@
 -- Native command dispatch shared by BattleState input and mod.battle intents.
 -- Keep gameplay mutations here, after the mod facade's admission checks.
+local MoveSelectionPhase = require("src.battle.MoveSelectionPhase")
 local Strings = require("src.core.Strings")
 local Targeting = require("src.battle.Targeting")
 local Commands, Methods = {}, {}
 Commands.methods = Methods
+
+-- Read the current native chooser, including temporary/changed movesets.
+function Methods.playerMoves(self)
+  local who = self:menuBattler()
+  return who and who.curMoves or {}
+end
 
 function Methods.chooseMenu(self, choice)
   -- BattleMenu_Pack `.contest` (core.asm:4990): `ld a, PARK_BALL /
@@ -38,7 +45,7 @@ function Methods.chooseMenu(self, choice)
       self:chooseAction({ id = "STRUGGLE", pp = 1, struggle = true })
       return true
     end
-    self.phase = "moveSelect"
+    self.phase = MoveSelectionPhase.name()
     self.moveIndex = math.min(self.moveIndex, #who.curMoves)
     self.moveSwapIndex = nil
   elseif choice == "run" then
@@ -192,11 +199,11 @@ local function backToFirst(self)
   end
 end
 function Methods.cancelMove(self)
-  if self.phase == "moveSelect" then
+  if MoveSelectionPhase.active(self) then
     self.moveSwapIndex, self.phase = nil, "menu"
   elseif self.phase == "targetSelect" then
     self.pendingMove, self.targetChoices = nil, nil
-    self.phase = "moveSelect"
+    self.phase = MoveSelectionPhase.name()
   elseif self.phase == "menu" and backToFirst(self) then
     self.pendingActions[0] = nil
     if self.chosenTargets then
@@ -291,7 +298,7 @@ function Commands.reason(b, intent)
       return "battle menu is not ready"
     end
   elseif intent.kind == "move" then
-    if b.phase ~= "moveSelect" then
+    if not MoveSelectionPhase.active(b) then
       return "move menu is not active"
     end
     if b.moveSwapIndex then
@@ -340,7 +347,7 @@ function Commands.reason(b, intent)
     end
     return "target is no longer eligible"
   elseif intent.kind == "back" then
-    if b.phase == "moveSelect" or b.phase == "targetSelect" or (b.phase == "menu" and backToFirst(b)) then
+    if MoveSelectionPhase.active(b) or b.phase == "targetSelect" or (b.phase == "menu" and backToFirst(b)) then
       return
     end
     return "nothing to cancel"
