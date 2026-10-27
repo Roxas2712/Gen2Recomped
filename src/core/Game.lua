@@ -1011,8 +1011,8 @@ local function paintResolvedFrame(self, drawFrom, worldBelow, worldDrawn, native
   -- everything over it at the window's scale, letters smoothed, rather than
   -- blown up afterwards (src/render/SuperSample.lua). The battle does the
   -- same for itself when it is drawn over the world.
-  local function drawStates()
-    for i = drawFrom, #self.stack.states do
+  local function drawStates(first, last)
+    for i = first or drawFrom, last or #self.stack.states do
       local state = self.stack.states[i]
       local wideState = state and state.isWideBattleLayout
         and state:isWideBattleLayout()
@@ -1052,13 +1052,19 @@ local function paintResolvedFrame(self, drawFrom, worldBelow, worldDrawn, native
       end
     end
   end
+  local paintStates=drawStates
+  local uiPass=require('src.core.GameVersion').isGen3()
+    and package.loaded['src.ui.game3.ui_pass']
+  if uiPass and uiPass._wrapped()then
+    paintStates=function()return uiPass._nativeStates(self,self.stack,drawFrom,drawStates)end
+  end
   local baseState = self.stack.states[drawFrom]
   local SuperSample = require("src.render.SuperSample")
   if not worldDrawn and baseState and require("src.core.GameVersion").isNds()
      and SuperSample.singleScreen(self) and not SuperSample.active then
-    SuperSample.draw(self, self.stack:top(), drawStates)
+    SuperSample.draw(self, self.stack:top(), paintStates)
   else
-    drawStates()
+    paintStates()
   end
   -- SGB colorization: the topmost state that knows its palette owns the
   -- screen (overlays like text boxes inherit from what's beneath them);
