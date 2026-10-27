@@ -37,13 +37,13 @@ for _,edition in ipairs({'red','gold','silver','crystal','emerald'})do
   end
   local root=Menu.new(g);g.stack:push(root)
   local page=selectOdds(g,root)
-  T.eq(page:row().value(g),'ALWAYS','actual row starts on stored ALWAYS')
+  T.eq(page.rows[page.index].value(g),'ALWAYS','actual row starts on stored ALWAYS')
   press(g,'right')
-  T.eq(page:row().value(g),'DEFAULT','normal input selects cartridge default')
+  T.eq(page.rows[page.index].value(g),'DEFAULT','normal input selects cartridge default')
   T.eq(Pokemon.shinyOddsOf(g.save),nil,'default disables extra shiny roll immediately')
   local loaded={options=Save.optionsFor(edition,fs)}
   T.eq(Pokemon.shinyOddsOf(loaded),nil,'default remains disabled after loading options file')
-  T.eq(page:row().value({save=loaded}),'DEFAULT','fresh menu cannot resurrect ALWAYS')
+  T.eq(page.rows[page.index].value({save=loaded}),'DEFAULT','fresh menu cannot resurrect ALWAYS')
   if overridden then
    local persisted=Save.loadOptions(fs)
    T.eq(persisted.shinyOdds,4096,'generation reset preserves shared extra-roll setting')
