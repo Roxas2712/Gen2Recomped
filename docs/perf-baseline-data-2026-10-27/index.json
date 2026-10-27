@@ -1,0 +1,9 @@
+{
+  "measuredRuntimeCommit": "b15e74c11b0c3c2703f61ff66070a97aec312230",
+  "acceptedCases": 12,
+  "minimumSeconds": 60,
+  "files": {
+    "native.json": "4260b917cf26febaa0f262a61456b2de42a0e85b1deb4c91ca75079151465866",
+    "voxel.json": "6a6ec87b6f5283ff366a508533b3d81db5bcaab746e33b15cf74c909edabb98f"
+  }
+}
