@@ -58,6 +58,13 @@ function View.bind(screen)
     end,
   }), screen)
   Hp.bind(screen)
+  screen.shownStatus=setmetatable({}, {
+    __index=function(_,side)
+      local b=battler(screen,side)
+      return b and b.shownStatus or false
+    end,
+    __newindex=function()error('native Gen2 shown status is owned by its event queue',2)end,
+  })
 end
 
 function View.activeMon(screen, side)
