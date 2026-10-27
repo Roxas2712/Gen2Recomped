@@ -13,6 +13,7 @@ local Performance = require('src.core.Performance')
 
 -- resolved path -> love Image
 local cache = {}
+local recoveries = {}
 -- downstream caches that must empty when the search path changes
 local invalidators = {}
 
@@ -22,6 +23,9 @@ local invalidators = {}
 Assets.loader = nil
 
 local GENERATED = "assets/generated/"
+local function canRecover(path)
+  return type(path)=='string' and path:sub(1,#GENERATED)==GENERATED
+end
 
 -- Session-owned language files. The provider owns its tables; switching or
 -- retiring a loader drops their visibility without patching LOVE's constructors.
@@ -125,31 +129,32 @@ local function blank()
   return blankImage
 end
 
--- A missing asset must degrade to visibly-wrong art, never to a thrown error.
--- love.graphics.newImage raises on a path PhysFS cannot open, and this is the
--- single choke point every renderer loads sheets through -- an unguarded raise
--- here propagates out of SpriteRenderer.new -> NPC.new -> the map build and
--- takes the whole map load down.
-local function loadImage(resolved)
+-- Native generated sheets recover without aborting a map load. Optional
+-- images retain the Gen1 failure contract so pcall can select a real fallback.
+local function loadImage(resolved, recover)
   local ok, image = pcall(function()
     local bytes=languageFile(resolved)
     if bytes then return love.graphics.newImage(love.image.newImageData(love.data.newByteData(bytes))) end
     return love.graphics.newImage(resolved)
   end)
-  if ok then return image end
+  if ok then return image, false end
+  if not recover then error(image,3) end
   local Logger = require("src.core.Logger")
   Logger.warn("assets: missing image '%s' (using placeholder)", tostring(resolved))
   local fellBack, placeholder = pcall(love.graphics.newImage, Assets.resolve(MISSING_IMAGE))
-  if fellBack then return placeholder end
-  return blank()
+  if fellBack then return placeholder, true end
+  return blank(), true
 end
 
 function Assets.image(path)
   local resolved = Assets.resolve(path)
   local image = cache[resolved]
-  if not image then
-    image = loadImage(resolved)
+  local recover=canRecover(path)
+  if not image or (not recover and recoveries[resolved]) then
+    local recovered
+    image,recovered=loadImage(resolved,recover)
     cache[resolved] = image
+    recoveries[resolved]=recovered or nil
   end
   return image
 end
@@ -164,7 +169,7 @@ function Assets.imageData(path)
   local resolved = Assets.resolve(path)
   local ok, data = pcall(love.image.newImageData, imageSource(resolved))
   if ok then return data end
-  if type(path)~='string' or path:sub(1,#GENERATED)~=GENERATED then
+  if not canRecover(path) then
     error(data,2)
   end
   local Logger = require("src.core.Logger")
@@ -185,16 +190,21 @@ end
 -- caller must not paste into, mapPixel over or otherwise change what it
 -- gets back; it may copy from it.  Cleared with the image cache.
 local dataCache = {}
+local dataOrigins = {}
 function Assets.imageDataShared(path)
   if Performance.assetSharedDecode == false then
-    if next(dataCache) then dataCache = {} end
+    if next(dataCache) then dataCache,dataOrigins = {},{} end
     return Assets.imageData(path)
   end
   local resolved = Assets.resolve(path)
   local data = dataCache[resolved]
-  if data then return data end
+  -- A native recovery entry cannot masquerade as an optional decode.
+  -- A successful generated entry may be decoded once more on this uncommon
+  -- alias boundary; the public mutable reader remains the actual owner.
+  if data and (canRecover(path) or not dataOrigins[resolved]) then return data end
   data = Assets.imageData(path)
   dataCache[resolved] = data
+  dataOrigins[resolved] = canRecover(path)
   return data
 end
 
@@ -212,7 +222,9 @@ function Assets.invalidate()
   local dropped = 0
   for _ in pairs(cache) do dropped = dropped + 1 end
   cache = {}
+  recoveries = {}
   dataCache = {}
+  dataOrigins = {}
   resolved = {}
   for _, fn in ipairs(invalidators) do pcall(fn) end
   return dropped
