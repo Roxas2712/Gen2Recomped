@@ -10439,6 +10439,22 @@ function BattleState:openItems()
     return
   end
   self:ui(function()
+    if GameVersion.isGen2() then
+      -- Gen2's native PACK has its own pockets, eligibility and cursor store.
+      -- Do not route it through the generic ListMenu bag: presentation clients
+      -- distinguish those surfaces, and the field world must stay unreachable.
+      local pack
+      pack = self:buildScreen("Gen2PackMenu", {
+        battle = true,
+        world = {},
+        onChoose = function(id)
+          -- Keep the existing native target/effect/turn path. The PACK owns
+          -- browsing and closing, rather than another copy of item effects.
+          require("src.ui.BagMenu").useItem(self.game, self, id, pack)
+        end,
+      })
+      return pack
+    end
     return self:buildScreen(Gen4Battle.bagScreenId(self) or "BagMenu", { battle = self })
   end)
 end
