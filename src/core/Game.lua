@@ -13,6 +13,7 @@ local FrameProfile = require("src.core.FrameProfile")
 local TouchControls = require("src.core.TouchControls")
 local ModLoader = require("src.mods.Loader")
 local ModRuntime = require("src.mods.Runtime")
+local NativeScreenOverlay = require("src.render.NativeScreenOverlay")
 local Screens = require("src.ui.Screens")
 
 local Game = {}
@@ -1120,10 +1121,10 @@ function Game:_draw()
         if ox ~= 0 or oy ~= 0 then
           love.graphics.push()
           love.graphics.translate(ox, oy)
-          state:draw()
+          NativeScreenOverlay.screen(state)
           love.graphics.pop()
         else
-          state:draw()
+          NativeScreenOverlay.screen(state)
         end
       end
     end

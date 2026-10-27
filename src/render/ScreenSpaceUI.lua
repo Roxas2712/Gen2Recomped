@@ -2,6 +2,7 @@
 -- https://github.com/Roxas2712/Gen2Recomped/blob/7867399c753186778bd4b8816ba37573357e4b40/LICENSE-ROXAS2712.md
 -- Optional window-resolution UI. Simulation/input remain native; only an
 -- explicitly advertised drawer leaves the cartridge-sized UI canvas.
+local NativeScreenOverlay = require('src.render.NativeScreenOverlay')
 local M = {}
 local function visible(stack, state)
   return not stack.renderVisible or stack:renderVisible(state)
@@ -59,7 +60,7 @@ function M.drawNativeStack(stack, scene, first, world, renderer, viewport, opaqu
               G.translate((renderer.WIDTH-w)/2,(renderer.HEIGHT-h)/2)
             end
           end
-          local drawn,why=pcall(state.draw,state)
+          local drawn,why=pcall(NativeScreenOverlay.screen,state,viewport.width,viewport.height)
           G.pop()
           if not drawn then error(why,0) end
         end
@@ -73,7 +74,7 @@ function M.draw(owner, renderer, viewport, zones, overlay)
   local G = love.graphics
   G.push('all')
   G.origin();G.setShader();G.setScissor();G.setColor(1,1,1,1);G.setBlendMode('alpha')
-  local ok, err = pcall(owner.drawWidescreen, owner, viewport.width, viewport.height)
+  local ok, err = pcall(NativeScreenOverlay.window, owner, viewport.width, viewport.height)
   G.pop()
   if not ok then error(err,0) end
   -- The classic canvas contains only states above this owner. Reapply it
