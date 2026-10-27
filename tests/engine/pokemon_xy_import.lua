@@ -53,6 +53,6 @@ check(ui._xyJob==job and ui._xyNotice:find('Preparing',1,true),'progress updates
 pending=require('src.link.Json').encode{progress='Compiling game · %d / %d',completed=32,total=487};ui:update(0)
 check(ui._xyJob==job and ui._xyNotice:find('32 / 487',1,true),'native compilation progress remains visible while the worker runs')
 pending=require('src.link.Json').encode{ok=false,error='Compiler stopped',data={y={imported=true,ready=false}}};ui:update(0)
-check(not ui._xyJob and ui._xyData.y.imported and not ui._xyData.y.ready,'a failed native build preserves the valid import without claiming readiness')
+check(not ui._xyJob and ui._xyData.y.imported and not ui._xyData.y.ready and ui._xyNoticeIsError,'a failed native build preserves the valid import and reports the error without claiming readiness')
 Backend.runtime=runtime
 print('3DS fresh import: '..checks..' checks passed')

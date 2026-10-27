@@ -129,6 +129,7 @@ function love.draw()
     if mode=='3ds' and xyFile then
       local row=ui._xyData and ui._xyData[ui._xyEdition]
       assert(xyImportStarted and row and row.imported and not row.ready,'Real worker must import the fixture without false native readiness: '..tostring(ui._xyNotice))
+      if os.getenv('LIBRARY_PREVIEW_XY_EXPECT_FAILURE')=='1' then assert(ui._xyNoticeIsError,'The native worker must explicitly report a failed compile')end
       print('3DS_WORKER_IMPORT_PASS')
     end
     captured = true

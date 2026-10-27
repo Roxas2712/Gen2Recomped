@@ -89,6 +89,7 @@ def main(argv=None):
     parser.add_argument("--root", type=Path, help="Host-selected writable backend workspace")
     parser.add_argument("--runtime-root", type=Path, help="Bundled native 3DS runtime")
     parser.add_argument("--play-after-import", action='store_true', help="Prepare and enter the normal device gate after importing")
+    parser.add_argument("--worker-protocol", action='store_true', help=argparse.SUPPRESS)
     parser.add_argument("--detect-edition", action="store_true", help="Detect X/Y for a dropped game file")
     parser.add_argument("--set", action="append", default=[])
     parser.add_argument("--mod-source", type=Path)
@@ -303,4 +304,7 @@ def execute(args, rom, qa):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    exit_code = main()
+    if '--worker-protocol' in sys.argv:
+        print(json.dumps({'backend_result':exit_code}), flush=True)
+    sys.exit(exit_code)

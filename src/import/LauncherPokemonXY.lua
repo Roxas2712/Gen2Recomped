@@ -53,6 +53,7 @@ function M.install(RI)
   local python=os.getenv('POKEMON_XY_PYTHON') or (runtime and runtime..'/python/bin/python3.12') or (f and '/opt/homebrew/bin/python3' or 'python3');if f then f:close() end
   local channel=love.thread.getChannel('pokemon.xy.result');channel:clear()
   self._xyJob=love.thread.newThread('src/import/pokemon_xy_worker.lua')
+  self._xyNoticeIsError=false
   self._xyNotice=Strings(action=='import' and 'Checking your 3DS game file …' or action=='build' and 'Preparing the native 3DS game …' or action=='prepare' and 'Preparing the game …' or 'Applying …')
   local qa=os.getenv('OA_QA_IDENTITY')
   self._xyJob:start(Json.encode{root=root,python=python,runtime_root=runtime,edition=self._xyEdition or 'x',action=action,args=args or {},mode=mode,
@@ -80,15 +81,26 @@ function M.install(RI)
  end
  local function newIntro(self,onComplete)
   local root=sourceRoot()
-  if not root or not read(root..'/tools/ascendant-intro/IntroScene.lua') then
+  local complete=root~=nil
+  if root then
+   local paths={'/tools/ascendant-intro/IntroScene.lua','/tools/ascendant-intro/Anton-Regular.ttf','/tools/ascendant-intro/VoxelBall.lua'}
+   for _,name in ipairs{'ascendant-start','pikachu-atlas','eevee-atlas','mew-atlas','lugia-flight-atlas'}do
+    paths[#paths+1]='/.local/pokemon-x/intro-assets/'..name..'.png'
+   end
+   for _,path in ipairs(paths)do local f=io.open(root..path,'rb');if f then f:close()else complete=false;break end end
+  end
+  if not complete then
    -- Public imports do not require the private Ascendant intro asset pack.
    if onComplete then onComplete()end;return
   end
-  if self._xyIntro then self._xyIntro.scene:release() end
-  local ctor=assert(love.filesystem.load('tools/ascendant-intro/IntroScene.lua'))()
-  local scene=ctor.new(function(path)
-   return assert(read(root..(path:sub(1,7)=='assets/' and '/.local/pokemon-x/intro-assets/'..path:sub(8) or '/tools/ascendant-intro/'..path)))
+  if self._xyIntro then self._xyIntro.scene:release();self._xyIntro=nil end
+  local ok,scene=pcall(function()
+   local ctor=assert(love.filesystem.load('tools/ascendant-intro/IntroScene.lua'))()
+   return ctor.new(function(path)
+    return assert(read(root..(path:sub(1,7)=='assets/' and '/.local/pokemon-x/intro-assets/'..path:sub(8) or '/tools/ascendant-intro/'..path)))
+   end)
   end)
+  if not ok then if onComplete then onComplete()end;return end
   local fixed=os.getenv('OA_QA_IDENTITY') and tonumber(os.getenv('POKEMON_XY_QA_INTRO_AT'))
   self._xyIntro={scene=scene,elapsed=fixed or 0,fixed=fixed,onComplete=onComplete}
   self._launcherSequence=nil
@@ -267,12 +279,14 @@ function M.install(RI)
     else
      self._xyJob=nil
      if result and result.ok then
+     self._xyNoticeIsError=false
      self._xyData=result.data
      if result.edition then self._xyEdition=result.edition end
      local row=result.data and result.data[self._xyEdition] or {}
      self._xyNotice=Strings(row.ready and 'Ready to play.' or row.imported and 'Game file imported. Prepare the native backend before playing.' or 'Choose your own 3DS game file to begin.')
      if result.session then receiveSession(self,result.session,result.mode)end
      else
+      self._xyNoticeIsError=true
       if result and result.data then self._xyData=result.data end
       self._xyNotice=(result and result.error or 'Unknown backend error'):sub(-700)
      end
@@ -320,7 +334,7 @@ function M.install(RI)
   g.printf(Strings('Choose your own decrypted X/Y dump. The file stays on this device. Native backend preparation and a device test are required before playing.'),x,y,w,'left');y=y+72*s
   if self._xyNotice then
    local _,lines=self.hintFont:getWrap(self._xyNotice,w)
-   U.col(p.warning);g.printf(self._xyNotice,x,y,w,'left');y=y+#lines*self.hintFont:getHeight()+18*s
+   U.col(self._xyNoticeIsError and p.red or p.warning);g.printf(self._xyNotice,x,y,w,'left');y=y+#lines*self.hintFont:getHeight()+18*s
   end
   local previewH=math.min(210*s,w*.5)
   paint.surface(x,y,w,previewH,12*s,p.link,false)

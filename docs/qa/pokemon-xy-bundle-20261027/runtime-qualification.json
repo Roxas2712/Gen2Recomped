@@ -16,7 +16,14 @@
   "launcher_suites": 85,
   "launcher_syntax_checks": 98,
   "client_import_checks": 17,
-  "client_presentation_checks": 8,
+  "client_presentation_checks": 9,
   "client_controller_layout_checks": 13,
-  "original_game_input_available": false
+  "original_game_input_available": false,
+  "client_launch_sequence_checks": 65,
+  "client_external_animation_checks": 4,
+  "client_language_checks": 10,
+  "bundled_zig_compiler_tests": 56,
+  "real_love_worker_invalid_ncch_rejected": true,
+  "real_love_worker_preserves_import_after_build_failure": true,
+  "real_love_worker_reports_explicit_build_error": true
 }

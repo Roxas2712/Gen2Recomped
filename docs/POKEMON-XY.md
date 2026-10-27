@@ -57,6 +57,15 @@ instance/device, and verifies the sidecar remains byte-identical. This is
 runtime/toolchain qualification. A genuine X/Y import and played session are
 separate acceptance tests requiring the tester's own decrypted dump.
 
+The 2026-10-27 macOS bundle passed relocation, bundled C compilation, native
+bridge loading and Vulkan device enumeration on Apple M2. The real LÖVE import
+worker also rejected an intentionally non-executable synthetic NCCH file while
+preserving its imported metadata and showing an explicit build error. Worker
+completion uses a terminal protocol record because LuaJIT's process-close
+status alone is insufficient on this host; a missing record fails closed.
+This package has not yet imported and played a genuine X/Y dump. See
+`docs/qa/pokemon-xy-bundle-20261027/runtime-qualification.json` for the test scope.
+
 Open `Start-Recompiled-Ascendant.command` for the shared library, or
 `Start-Pokemon-X.command` / `Start-Pokemon-Y.command` for a direct edition
 start. The private runtime and game libraries live in `.local/pokemon-x/`.
