@@ -22,7 +22,8 @@ for _,size in ipairs({{960,720},{480,360},{1280,960}})do
   width,height=size[1],size[2]
   for _,tab in ipairs({'red','gold','crystal','emerald'})do
     ui.tab=tab;printed={}
-    T.check(pcall(ui.draw,ui),'actual native launcher still draws with wrapped attribution')
+    local ok,why=pcall(ui.draw,ui)
+    T.check(ok,'actual native launcher still draws with wrapped attribution: '..tostring(why))
     local line=printed[#printed]
     T.check(line~=nil,'native launcher renders the original project credit')
     if line then
