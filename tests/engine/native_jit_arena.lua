@@ -33,5 +33,15 @@ do
  runtime.flush=nil
  T.eq(module().configure(runtime,options),false,'incomplete control cannot partially change options')
 end
+do
+ local saved=os.getenv
+ for _,value in ipairs{'0','maxtrace=2000,hotloop=100'}do
+  os.getenv=function(key)if key=='POKEPORT_JIT_OPT'then return value end return saved(key)end
+  local runtime,options,calls=fake('OSX','arm64',true)
+  T.eq(module().configure(runtime,options),false,'explicit JIT policy wins during early configuration')
+  T.eq(#calls,0,'explicit policy receives neither implicit options nor flush')
+ end
+ os.getenv=saved
+end
 T.eq(package.loaded['src.core.Game'],nil,'early JIT policy cannot bootstrap a game')
 T.finish('native bounded Apple-silicon JIT arena')

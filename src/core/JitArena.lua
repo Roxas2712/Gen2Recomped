@@ -17,6 +17,10 @@ function M.configure(runtime, optimizer)
   local ok, enabled = pcall(runtime.status)
   if not ok or not enabled then return false, 'JIT disabled' end
   if applied then return true end
+  local requested = os.getenv and os.getenv('POKEPORT_JIT_OPT')
+  if requested and requested ~= '' and requested ~= '1' then
+    return false, 'explicit JIT policy retained'
+  end
   if optimizer == nil then
     ok, optimizer = pcall(require, 'jit.opt')
     if not ok then return false, tostring(optimizer) end
