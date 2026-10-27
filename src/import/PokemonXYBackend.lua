@@ -1,13 +1,22 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- A fresh library must not depend on an already imported private game.
 local B={}
-local files={'pokemon_x_backend.py','pokemon_x_preflight.py','pokemon_xy_library.py',
+local files={'pokemon_x_backend.py','pokemon_x_preflight.py','pokemon_xy_library.py','pokemon_xy_runtime.py',
  'qa_storage.py','qa_legacy_storage.py','qa_love_storage.py','qa_preserved.py',
  'qa_release_storage.py','qa_build_storage.py'}
 local cached
 local function exists(path)
  local file=io.open(path,'rb');if file then file:close();return true end
  return false
+end
+function B.runtime()
+ local explicit=os.getenv('POKEMON_XY_RUNTIME_ROOT')
+ local source=love.filesystem.getSource and love.filesystem.getSource()
+ local base=love.filesystem.getSourceBaseDirectory and love.filesystem.getSourceBaseDirectory()
+ local parent=source and source:match('^(.*)/[^/]+$')
+ for _,path in ipairs{explicit or false,parent and (parent..'/3ds-runtime') or false,base and (base..'/3ds-runtime') or false}do
+  if path and exists(path..'/runtime.json') then return path end
+ end
 end
 function B.root()
  if cached then return cached end

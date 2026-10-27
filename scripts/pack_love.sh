@@ -121,6 +121,7 @@ CONTENT=(
   tools/pokemon_x_backend.py
   tools/pokemon_x_preflight.py
   tools/pokemon_xy_library.py
+  tools/pokemon_xy_runtime.py
   tools/qa_storage.py
   tools/qa_legacy_storage.py
   tools/qa_love_storage.py

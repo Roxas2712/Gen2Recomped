@@ -5,26 +5,45 @@ local job=Json.decode(...)
 local channel=love.thread.getChannel('pokemon.xy.result')
 local Shell=require('src.core.HostShell')
 local function command(action,extras)
- local args={job.python,job.root..'/tools/pokemon_x_backend.py',action,'--edition',job.edition,'--root',job.root}
+ local args={job.python,'-B','-E','-s',job.root..'/tools/pokemon_x_backend.py',action,'--edition',job.edition,'--root',job.root}
+ if job.runtime_root then args[#args+1]='--runtime-root';args[#args+1]=job.runtime_root end
  for _,a in ipairs(extras or {}) do args[#args+1]=a end
- if action=='prepare' and job.qa_profile then args[#args+1]='--qa-profile';args[#args+1]=job.qa_profile end
+ if job.qa_profile and (action=='prepare' or action=='import' or action=='build') then args[#args+1]='--qa-profile';args[#args+1]=job.qa_profile end
  for i,a in ipairs(args) do args[i]=Shell.quote(a) end
  return table.concat(args,' ')..' 2>&1'
+end
+local function state()
+ local status=assert(Shell.popen(command('status'),'r'))
+ local text=status:read('*a');status:close()
+ local data=Json.decode(text)
+ assert(type(data)=='table','Invalid library response')
+ return data
 end
 local ok,errorText=pcall(function()
  local pipe=assert(Shell.popen(command(job.action,job.args),'r'),'Backend could not start')
  local tail='';local prepared;local edition
  for line in pipe:lines() do
   tail=(tail..line..'\n'):sub(-5000)
-  if job.action=='prepare' and line:sub(1,1)=='{' then local ok,row=pcall(Json.decode,line);if ok and type(row)=='table' and row.native_session then prepared=row end end
-  if job.action=='import' and line:sub(1,1)=='{' then local ok,row=pcall(Json.decode,line);if ok and type(row)=='table' then edition=row.imported_edition end end
+  if line:sub(1,1)=='{' then
+   local ok,row=pcall(Json.decode,line)
+   if ok and type(row)=='table' then
+    if row.native_session then prepared=row end
+    if row.imported_edition then edition=row.imported_edition end
+    if row.progress then channel:push(Json.encode{progress=row.progress})end
+   end
+  end
+  local done,total=line:match('^compiled (%d+) of (%d+)$')
+  if done and tonumber(total)<=20000 and tonumber(done)<=tonumber(total) then
+   channel:push(Json.encode{progress='Compiling game · %d / %d',completed=tonumber(done),total=tonumber(total)})
+  end
  end
  local success,why,code=pipe:close()
- if not success then error(tail~='' and tail or ('Backend exit '..tostring(code or why))) end
- local status=assert(Shell.popen(command('status'),'r'))
- local text=status:read('*a');status:close()
- local data=Json.decode(text)
- assert(type(data)=='table','Invalid library response')
+ if not success then
+  local ok,data=pcall(state)
+  channel:push(Json.encode{ok=false,error=tail~='' and tail or ('Backend exit '..tostring(code or why)),data=ok and data or nil})
+  return
+ end
+ local data=state()
  channel:push(Json.encode{ok=true,data=data,session=prepared and prepared.native_session,mode=job.mode,edition=edition})
 end)
 if not ok then channel:push(Json.encode{ok=false,error=tostring(errorText)}) end

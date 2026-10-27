@@ -1,0 +1,22 @@
+{
+  "python": "3.12.15",
+  "c_toolchain": true,
+  "bridge_abi": true,
+  "vulkan_device": "Apple M2",
+  "physical_gpu": true,
+  "native_game_played": false,
+  "passed": true,
+  "relocated": true,
+  "system_developer_tools_used": false,
+  "runtime_id": "30d779cc7a4efe82c9128188c40d966b891d031964f46551f4d39e3feffbf690",
+  "scope": "Relocated macOS Apple Silicon runtime and synthetic compiler/ABI checks. No native X/Y game played in this qualification.",
+  "rust_compiler_tests": 56,
+  "rust_bridge_tests": 10,
+  "python_tests": 39,
+  "launcher_suites": 85,
+  "launcher_syntax_checks": 98,
+  "client_import_checks": 17,
+  "client_presentation_checks": 8,
+  "client_controller_layout_checks": 13,
+  "original_game_input_available": false
+}

@@ -15,10 +15,14 @@ import sys
 import pokemon_xy_library as library
 
 import pokemon_x_preflight as preflight
+import pokemon_xy_runtime as runtime_bundle
 
 ROOT = preflight.ROOT
 WORK = ROOT / ".local/pokemon-x"
 CACHE = ROOT / ".local/qa/pokemon-x-feasibility"
+RUNTIME = None
+RUNTIME_ID = None
+RUNTIME_RELEASE = None
 
 
 def runtime_path():
@@ -27,6 +31,8 @@ def runtime_path():
 
 
 def backend_environment():
+    if RUNTIME is not None:
+        return runtime_bundle.environment(RUNTIME, WORK)
     env = dict(os.environ)
     # Cranelift's info log dumps whole generated shader IRs.
     env.setdefault("RUST_LOG", "info,cranelift_jit=warn")
@@ -74,12 +80,15 @@ def commands(action, rom, fingerprint, recompiler, runtime, title=preflight.POKE
 
 
 def main(argv=None):
-    global ROOT, WORK, CACHE
+    global ROOT, WORK, CACHE, RUNTIME, RUNTIME_ID, RUNTIME_RELEASE
+    RUNTIME = RUNTIME_ID = RUNTIME_RELEASE = library.RUNTIME_ID = None
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["import", "analyze", "build", "smoke", "play", "prepare", "status", "configure", "toggle-mods", "install-mod", "reset-language"])
     parser.add_argument("rom", type=Path, nargs="?")
     parser.add_argument("--edition", choices=["x", "y"], default="x")
     parser.add_argument("--root", type=Path, help="Host-selected writable backend workspace")
+    parser.add_argument("--runtime-root", type=Path, help="Bundled native 3DS runtime")
+    parser.add_argument("--play-after-import", action='store_true', help="Prepare and enter the normal device gate after importing")
     parser.add_argument("--detect-edition", action="store_true", help="Detect X/Y for a dropped game file")
     parser.add_argument("--set", action="append", default=[])
     parser.add_argument("--mod-source", type=Path)
@@ -99,6 +108,15 @@ def main(argv=None):
             args.recompiler = WORK / 'bin/3dsrecomp'
         if '--runtime' not in (argv if argv is not None else sys.argv[1:]):
             args.runtime = runtime_path()
+    if args.runtime_root:
+        try:
+            RUNTIME, metadata = runtime_bundle.load(args.runtime_root)
+            RUNTIME_RELEASE = metadata['id']
+            RUNTIME_ID = library.RUNTIME_ID = metadata.get('compilation_id',metadata['id'])
+            args.recompiler = RUNTIME/runtime_bundle.FILES['compiler']
+        except (OSError, ValueError, KeyError) as error:
+            print(str(error), file=sys.stderr)
+            return 3
     if args.action == 'import':
         try:
             if args.rom is None:
@@ -106,7 +124,12 @@ def main(argv=None):
             # Read-only verification does not create a second multi-GB ROM.
             edition = library.import_rom(args.rom, None if args.detect_edition else args.edition)
             print(json.dumps({'imported_edition': edition}, ensure_ascii=False))
-            return 0
+            if not args.play_after_import:
+                return 0
+            if RUNTIME is None:
+                raise ValueError('The native 3DS runtime is required to play after importing.')
+            args.edition = edition
+            args.action = 'build'
         except (OSError, ValueError) as error:
             print(str(error), file=sys.stderr)
             return 2
@@ -116,7 +139,7 @@ def main(argv=None):
     if args.action == 'build' and not args.recompiler.is_file():
         print('The game file is imported, but the native 3DS compiler is not installed on this device.', file=sys.stderr)
         return 3
-    qa = preflight.qa_manager(collect=args.action not in ("configure", "toggle-mods", "install-mod", "reset-language", "prepare"))
+    qa = preflight.qa_manager(collect=args.action not in ("configure", "toggle-mods", "install-mod", "reset-language", "prepare"), bundled=RUNTIME is not None)
     entry = library.manifest().get(args.edition, {})
     rom = (args.rom or Path(entry.get("rom", WORK / "decrypted/pokemon-x-usa.cxi"))).resolve()
     for source in [ROOT, WORK, rom, args.recompiler, args.runtime]:
@@ -135,7 +158,11 @@ def main(argv=None):
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
                 raise ValueError("Ein 3DS-Spiel oder ein anderer Bibliotheksvorgang läuft bereits.")
-            return execute(args, rom, qa)
+            result = execute(args, rom, qa)
+            if result == 0 and args.play_after_import:
+                args.action = 'prepare'
+                return execute(args, rom, qa)
+            return result
     except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as error:
         print(str(error), file=sys.stderr)
         return 2
@@ -168,11 +195,14 @@ def execute(args, rom, qa):
         edition = preflight.TITLES[title]
         if edition != args.edition:
             raise ValueError("Dump und ausgewählte Edition stimmen nicht überein.")
+        build_key = runtime_bundle.fingerprint(result['sha256'], RUNTIME_ID)
         if args.action == "prepare":
-            binary = WORK / "recompiled" / result["sha256"] / library_name(title)
-            bridge = WORK / "bin/libascendant_3ds_bridge.dylib"
+            binary = WORK / "recompiled" / build_key / library_name(title)
+            bridge = RUNTIME/runtime_bundle.FILES['bridge'] if RUNTIME else WORK / "bin/libascendant_3ds_bridge.dylib"
             if not binary.is_file() or not bridge.is_file():
                 raise ValueError("Eingebettetes 3DS-Backend wird noch vorbereitet.")
+            if RUNTIME and not runtime_bundle.completed(binary, result['sha256'], RUNTIME_ID):
+                raise ValueError('The native game library is incomplete or incompatible. Prepare this import again.')
             settings = library.settings(edition)
             data = args.qa_profile.resolve() if args.qa_profile else WORK / "player"
             if args.qa_profile:
@@ -187,6 +217,9 @@ def execute(args, rom, qa):
                            resolution=settings["resolution"], language=language.get(settings["language"],1),
                            depth_3d=settings["depth_3d"], stereo=settings["stereo"], texture_packs=settings["texture_packs"],
                            settings=settings, edition=edition, root=str(ROOT), report_dir=str(report_dir))
+            if RUNTIME:
+                session.update(vulkan_loader=str(RUNTIME/runtime_bundle.FILES['loader']),
+                               driver_manifest=str(RUNTIME/runtime_bundle.FILES['icd']))
             import hashlib
             with bridge.open("rb") as stream:
                 bridge_hash=hashlib.file_digest(stream,"sha256").hexdigest()
@@ -196,17 +229,25 @@ def execute(args, rom, qa):
                 if mod_file.is_file():
                     info=mod_file.stat()
                     mod_signature.update(str((str(mod_file.relative_to(mod_folder)),info.st_size,info.st_mtime_ns)).encode())
-            session["profile_key"]=json.dumps([platform.machine(),bridge_hash,result["sha256"],settings["resolution"],settings["stereo"],settings["texture_packs"],mod_signature.hexdigest(),not library.disabled_dir(edition).exists()])
+            session["profile_key"]=json.dumps([platform.machine(),bridge_hash,RUNTIME_RELEASE,result["sha256"],settings["resolution"],settings["stereo"],settings["texture_packs"],mod_signature.hexdigest(),not library.disabled_dir(edition).exists()])
             print(json.dumps({"native_session":session,"library":library.status()}, ensure_ascii=False))
             return 0
-        plan = commands(args.action, rom, result["sha256"], args.recompiler.resolve(), args.runtime.resolve(), title)
+        plan = commands(args.action, rom, build_key, args.recompiler.resolve(), args.runtime.resolve(), title)
+        binary = WORK/'recompiled'/build_key/library_name(title)
+        cached = bool(RUNTIME and runtime_bundle.completed(binary, result['sha256'], RUNTIME_ID))
+        if args.play_after_import and cached:
+            plan = []
         if args.qa_profile and args.action == "play":
             qa.qa_source(args.qa_profile)
             qa.qa_profile(args.qa_profile)
             command = plan[-1]
             command[command.index("--data") + 1] = str(args.qa_profile.resolve())
         from qa_build_storage import prepare as prepare_build, clean_linked_objects
-        if args.action != 'analyze':prepare_build(qa._storage, WORK, result['sha256'])
+        if args.action != 'analyze':prepare_build(qa._storage, WORK, build_key)
+        if RUNTIME:
+            qa._storage.limit_output(WORK/'compiler-cache',512*1024**2)
+        if RUNTIME and plan:
+            print(json.dumps({'progress':'Preparing your game. The first import can take several minutes.'}), flush=True)
         for command in plan:
             if not Path(command[0]).is_file() or not os.access(command[0], os.X_OK):
                 print("Backend-Werkzeug fehlt: " + command[0], file=sys.stderr)
@@ -217,7 +258,7 @@ def execute(args, rom, qa):
         # Actual private build/player data is an input to later runs, not
         # disposable QA data. The smoke profile alone lives under QA control.
         if args.action != "analyze":
-            (WORK / "recompiled" / result["sha256"]).mkdir(parents=True, exist_ok=True)
+            (WORK / "recompiled" / build_key).mkdir(parents=True, exist_ok=True)
         for command in plan:
             env = backend_environment()
             config_dir = (CACHE / "settings" / edition) if args.action == "smoke" or args.qa_profile else (WORK / "settings" / edition)
@@ -246,7 +287,13 @@ def execute(args, rom, qa):
                 return process.returncode
             clean_linked_objects(WORK)
         if args.action in ("build", "smoke", "play"):
-            library.register(edition, rom, result["sha256"], WORK / "recompiled" / result["sha256"] / library_name(title))
+            if not binary.is_file() or binary.stat().st_size == 0:
+                raise ValueError('The native 3DS build did not produce a game library.')
+            if RUNTIME and not cached:
+                runtime_bundle.finish(binary, result['sha256'], RUNTIME_ID)
+            library.register(edition, rom, result["sha256"], binary)
+            if args.play_after_import:
+                print(json.dumps({'progress':'Native game prepared. Testing this device …'}), flush=True)
         if args.action == "smoke":
             print("Headless-Lauf beendet; Grafik, Eingaben und Story sind dadurch noch nicht abgenommen.")
         return 0

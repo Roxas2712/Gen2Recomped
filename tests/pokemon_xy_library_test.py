@@ -107,6 +107,40 @@ class LibraryTests(unittest.TestCase):
 if __name__=='__main__':unittest.main()
 
 class LaunchSequenceTests(unittest.TestCase):
+ def test_bundled_import_prepares_a_session_and_reuses_only_a_complete_build(self):
+  import contextlib,io,json,hashlib,struct
+  from types import SimpleNamespace
+  from unittest.mock import Mock
+  import pokemon_x_backend as backend
+  with tempfile.TemporaryDirectory(dir=os.environ.get('POKEMON_X_TEST_TMP')) as folder:
+   base=Path(folder);work=base/'profile/.local/pokemon-x';runtime=base/'My Demo.app/3ds-runtime'
+   for name in backend.runtime_bundle.FILES.values():
+    p=runtime/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(b'synthetic component');p.chmod(0o700)
+   rom=base/'own x.cxi';rom.write_bytes(ncch());rom_hash=hashlib.sha256(rom.read_bytes()).hexdigest()
+   metadata={'id':'b'*64,'compilation_id':'c'*64};calls=[];qa=Mock()
+   def run(command,**kwargs):
+    calls.append(command)
+    binary=Path(command[-1])/backend.library_name(preflight.POKEMON_X_USA)
+    binary.parent.mkdir(parents=True,exist_ok=True)
+    binary.write_bytes(struct.pack('<IiiI',0xfeedfacf,0x100000c,0,6)+b'\0'*16+b'synthetic game library')
+    return SimpleNamespace(returncode=0)
+   qa.qa_run.side_effect=run
+   storage=SimpleNamespace(prepare=Mock(),clean_linked_objects=Mock())
+   variables={key:getattr(backend,key) for key in ['ROOT','WORK','CACHE','RUNTIME','RUNTIME_ID','RUNTIME_RELEASE']}
+   with patch.multiple(backend,**variables),patch.object(preflight,'ROOT',preflight.ROOT),patch.object(backend.library,'ROOT',backend.library.ROOT),patch.object(backend.library,'WORK',backend.library.WORK),patch.object(backend.library,'RUNTIME_ID',None),patch.object(backend.preflight,'qa_manager',return_value=qa),patch.object(backend.runtime_bundle,'load',return_value=(runtime,metadata)),patch.dict(sys.modules,{'qa_build_storage':storage}):
+    argv=['import',str(rom),'--edition','x','--root',str(base/'profile'),'--runtime-root',str(runtime),'--play-after-import']
+    for attempt in range(2):
+     text=io.StringIO()
+     with contextlib.redirect_stdout(text):self.assertEqual(backend.main(argv),0)
+     messages=[json.loads(line) for line in text.getvalue().splitlines() if line.startswith('{')]
+     session=next(row['native_session'] for row in messages if 'native_session' in row)
+     self.assertEqual(session['bridge'],str(runtime/'lib/libascendant_3ds_bridge.dylib'))
+     self.assertIn(metadata['id'],session['profile_key'])
+     self.assertEqual(session['driver_manifest'],str(runtime/'vulkan/MoltenVK_icd.json'))
+    self.assertEqual(len(calls),1,'complete imports reuse the compiled game')
+    binary=Path(session['library']);binary.write_bytes(binary.read_bytes()+b'changed after completion')
+    with contextlib.redirect_stdout(io.StringIO()):self.assertEqual(backend.main(argv),0)
+    self.assertEqual(len(calls),2,'changed library bytes force preparation again')
  def test_library_build_finishes_before_intro_then_game(self):
   from types import SimpleNamespace
   from unittest.mock import Mock
@@ -115,7 +149,13 @@ class LaunchSequenceTests(unittest.TestCase):
    work=Path(folder)
    compiler=work/'compiler';runtime=work/'runtime';intro=work/'Recompiled Ascendant.app/Contents/MacOS/love'
    for path in [compiler,runtime,intro]:path.parent.mkdir(parents=True,exist_ok=True);path.write_text('test fixture');path.chmod(0o700)
-   qa=Mock();qa.qa_run.return_value=SimpleNamespace(returncode=0)
+   qa=Mock()
+   def run(command,**kwargs):
+    if Path(command[0])==compiler:
+     binary=work/'recompiled'/('a'*64)/backend.library_name(preflight.POKEMON_X_USA)
+     binary.parent.mkdir(parents=True,exist_ok=True);binary.write_bytes(b'synthetic native build output')
+    return SimpleNamespace(returncode=0)
+   qa.qa_run.side_effect=run
    result={'status':'headers_verified_boot_untested','title_id':preflight.POKEMON_X_USA,'sha256':'a'*64}
    storage=SimpleNamespace(prepare=Mock(),clean_linked_objects=Mock())
    with patch.object(backend,'WORK',work),patch.object(backend.preflight,'qa_manager',return_value=qa),patch.object(backend.preflight,'inspect',return_value=result),patch.object(backend.library,'register'),patch.dict(sys.modules,{'qa_build_storage':storage}):

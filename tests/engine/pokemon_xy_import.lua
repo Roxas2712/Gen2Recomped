@@ -16,7 +16,8 @@ check(Backend.root()=='/fresh-profile/save/pokemon-xy-backend','packaged helper 
 check(writes['pokemon-xy-backend/tools/pokemon_x_backend.py']~=nil,'packaged backend script is extracted')
 check(writes['pokemon-xy-backend/tools/qa_preserved.py']~=nil,'helper dependencies travel with the payload')
 local jobs={}
-love.thread={getChannel=function()return {clear=function()end,pop=function()end}end,newThread=function(path)
+local pending
+love.thread={getChannel=function()return {clear=function()end,pop=function()local row=pending;pending=nil;return row end}end,newThread=function(path)
  local job={path=path,start=function(self,data)self.data=require('src.link.Json').decode(data)end,getError=function()end}
  jobs[#jobs+1]=job;return job
 end}
@@ -42,4 +43,16 @@ ui=RI.new();ui:filedropped({getFilename=function()return '/own/X.3DS'end})
 check(jobs[#jobs].data.args[2]=='--detect-edition','a global 3DS drop detects its edition')
 ui=RI.new();ui:filedropped({getFilename=function()return '/own/red.gb'end})
 check(fallback==1,'existing RPG file-drop routing remains intact')
+local runtime=Backend.runtime;Backend.runtime=function()return '/My Demo.app/Contents/Resources/3ds-runtime'end
+ui=RI.new();ui._xyEdition='y';ui:_xyImport('/my own/y.cxi')
+local job=jobs[#jobs]
+check(job.data.mode=='playing' and job.data.args[2]=='--play-after-import','bundled imports automatically prepare and enter the normal play gate')
+check(job.data.python=='/My Demo.app/Contents/Resources/3ds-runtime/python/bin/python3.12','a packaged import uses its bundled Python with spaces intact')
+pending=require('src.link.Json').encode{progress='Preparing your game. The first import can take several minutes.'};ui:update(0)
+check(ui._xyJob==job and ui._xyNotice:find('Preparing',1,true),'progress updates do not prematurely release a running worker')
+pending=require('src.link.Json').encode{progress='Compiling game · %d / %d',completed=32,total=487};ui:update(0)
+check(ui._xyJob==job and ui._xyNotice:find('32 / 487',1,true),'native compilation progress remains visible while the worker runs')
+pending=require('src.link.Json').encode{ok=false,error='Compiler stopped',data={y={imported=true,ready=false}}};ui:update(0)
+check(not ui._xyJob and ui._xyData.y.imported and not ui._xyData.y.ready,'a failed native build preserves the valid import without claiming readiness')
+Backend.runtime=runtime
 print('3DS fresh import: '..checks..' checks passed')

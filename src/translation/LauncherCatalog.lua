@@ -2,6 +2,10 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 local catalog={ de={
  ["IMPORT GAME"]="SPIEL IMPORTIEREN",
+ ["Native 3DS support included"]="Native 3DS-Unterstützung enthalten",
+ ["Preparing your game. The first import can take several minutes."]="Dein Spiel wird vorbereitet. Der erste Import kann mehrere Minuten dauern.",
+ ["Native game prepared. Testing this device …"]="Natives Spiel vorbereitet. Dieses Gerät wird geprüft …",
+ ["Compiling game · %d / %d"]="Spiel wird kompiliert · %d / %d",
  ["Ready to play."]="Bereit zum Spielen.",
  ["Choose your own 3DS game file to begin."]="Wähle deine eigene 3DS-Spieldatei, um zu beginnen.",
  ["Resolution"]="Auflösung",

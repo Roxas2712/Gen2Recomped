@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "sources": {
+    "zakuro": {
+      "revision": "e174910de5e7285581b153cbce05543efb135cd5",
+      "patches": {
+        "zakuro-macos-portability.patch": "5d22d430692584ed3e45410316a764f5babe4a007fa0897e23dba26efa954e17",
+        "zakuro-ascendant-presentation.patch": "9952b497149762124388e5bee5d054f619f97131c97b2d35e575d5a849fba05b",
+        "zakuro-readback-reuse.patch": "bd81255cd854c3a3d9bd7e2c29fa91994428ac3b6faaee4a37adf2b3e680dae6",
+        "zakuro-macos-shader-handoff.patch": "24c328143fedd08c16a11d6334584a400087710c2f8185da600d3ca90130e0c6",
+        "zakuro-bundled-loader.patch": "55425882f7710873013f0410cc4fb5458179a4150b04ee71ae8c7c3aa1f811a5"
+      },
+      "patched_files": {
+        "crates/zakuro-gpu/src/backend/mod.rs": "fb5c0c9c9287166b0d7cc3e222df018093c2107a744eb98c92a0798d1639f61a",
+        "crates/zakuro-gpu/src/backend/vulkan.rs": "856d07489f7e1f6cfda9b4e89194c1eb7f37e3c9ded47dbea92265bdea7dacad",
+        "crates/zakuro-gpu/src/lib.rs": "b77d790f5472884c5d333e6fdfd3bcfb1c68791b0c22c2213ea2eb9426f7b91b",
+        "crates/zakuro-gpu/src/portability.rs": "ee8ea2741bd85b7642a584b0aee89bf326ce87bc0d9cb9d1af1e4e0ae7174ded",
+        "crates/zakuro-gpu/src/raster.rs": "0c1fa4e8f1f17ce66cfb96be966277fb3f3bdca67f727dd96c363549f49008e1",
+        "crates/zakuro-gpu/src/raster/hardware.rs": "8a4ef8b1feb2abb157c3fd1fe0818f69b7ccf295032dea156f87403559ffeed1",
+        "crates/zakuro-gpu/src/shader/mod.rs": "9f772f42ad729b6fbbae331cb3286948347413c1c46def49e95976a1b043db4e",
+        "crates/zakuro/src/lib.rs": "b7d1b4225de841534eed4e27e4ef5c0941cbb5267f6c37adf14530b680d83cea",
+        "crates/zakuro/src/menus.rs": "26415e77ac366c9779c0a9e4ed32609408ef1f0806975986b6e09ebf7c45309f",
+        "crates/zakuro/src/settings.rs": "587311bad96ffefc5c8738f6f8badc2ee35172d4e8de5f5862c02c5aaf71ce9d"
+      }
+    },
+    "3dsrecomp": {
+      "revision": "cec1270db38411f9c02d3f356fc3ed6c3f007424",
+      "patches": {
+        "3dsrecomp-build-jobs.patch": "2c1b86971fde2dea0222bc634d01c6db6d167db66690506850e94e80e659f59a"
+      },
+      "patched_files": {
+        "src/compile.rs": "43bc9ff35ef30f0bb1e9f6994aafe27f2240a143a9de068681d9c5fd2a534493"
+      }
+    }
+  }
+}

@@ -18,6 +18,7 @@ from contextlib import contextmanager
 ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT / '.local/pokemon-x'
 EDITIONS = {'x': '0004000000055D00', 'y': '0004000000055E00'}
+RUNTIME_ID = None
 DEFAULTS = dict(resolution=3, layout='stacked', filter='smooth', stereo='off',
                 depth_3d=50, swap_eyes=False, texture_packs=True,
                 frame_interpolation=False, show_fps=False, language='german',
@@ -175,7 +176,7 @@ def status():
     for edition,title in EDITIONS.items():
         row=data.setdefault(edition,{})
         library=Path(row.get('library',''))
-        row['ready']=bool(row.get('built')) and library.is_file() and Path(row.get('rom','')).is_file()
+        row['ready']=bool(row.get('built')) and library.is_file() and Path(row.get('rom','')).is_file() and (RUNTIME_ID is None or row.get('runtime_id') == RUNTIME_ID)
         row['imported']=bool(row.get('sha256')) and Path(row.get('rom','')).is_file()
         row['settings']=settings(edition)
         row['remembered_language']=language_preference(edition)
@@ -237,5 +238,6 @@ def register(edition, rom, sha256, binary):
     with manifest_lock():
         data=manifest()
         data[edition]=dict(title_id=EDITIONS[edition],rom=str(rom),sha256=sha256,library=str(binary),built=True)
+        if RUNTIME_ID is not None:data[edition]['runtime_id']=RUNTIME_ID
         path=WORK/'library.json';pending=path.with_suffix('.pending')
         pending.write_text(json.dumps(data,indent=2)+'\n');pending.replace(path)

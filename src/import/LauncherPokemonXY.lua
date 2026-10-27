@@ -48,19 +48,33 @@ function M.install(RI)
  local function start(self,action,args,mode)
   if self._xyJob then return end
   local root,why=sourceRoot();if not root then self._xyNotice=Strings(why);return end
+  local runtime=require('src.import.PokemonXYBackend').runtime()
   local f=io.open('/opt/homebrew/bin/python3','rb')
-  local python=os.getenv('POKEMON_XY_PYTHON') or (f and '/opt/homebrew/bin/python3' or 'python3');if f then f:close() end
+  local python=os.getenv('POKEMON_XY_PYTHON') or (runtime and runtime..'/python/bin/python3.12') or (f and '/opt/homebrew/bin/python3' or 'python3');if f then f:close() end
   local channel=love.thread.getChannel('pokemon.xy.result');channel:clear()
   self._xyJob=love.thread.newThread('src/import/pokemon_xy_worker.lua')
   self._xyNotice=Strings(action=='import' and 'Checking your 3DS game file …' or action=='build' and 'Preparing the native 3DS game …' or action=='prepare' and 'Preparing the game …' or 'Applying …')
   local qa=os.getenv('OA_QA_IDENTITY')
-  self._xyJob:start(Json.encode{root=root,python=python,edition=self._xyEdition or 'x',action=action,args=args or {},mode=mode,
+  self._xyJob:start(Json.encode{root=root,python=python,runtime_root=runtime,edition=self._xyEdition or 'x',action=action,args=args or {},mode=mode,
    qa_profile=qa and (root..'/.local/qa/pokemon-xy-native-ui/player-'..(self._xyEdition or 'x')) or nil})
  end
  local function load(self)
   local root=sourceRoot();if not root then return end
   if not self._xyData then
-   self._xyData=decode(read(root..'/.local/pokemon-x/library-ui.json')) or decode(read(root..'/.local/pokemon-x/library.json'))
+    self._xyData=decode(read(root..'/.local/pokemon-x/library.json')) or decode(read(root..'/.local/pokemon-x/library-ui.json'))
+   if self._xyData then
+    local runtime=require('src.import.PokemonXYBackend').runtime()
+    local meta=runtime and decode(read(runtime..'/runtime.json'))
+    local bridge=runtime and runtime..'/lib/libascendant_3ds_bridge.dylib' or root..'/.local/pokemon-x/bin/libascendant_3ds_bridge.dylib'
+    local function exists(path)local f=type(path)=='string' and io.open(path,'rb');if f then f:close();return true end;return false end
+    for _,version in ipairs{'x','y'}do
+     local row=self._xyData[version]
+     if row then
+      row.imported=type(row.sha256)=='string' and exists(row.rom) or false
+      row.ready=row.built==true and row.imported and exists(row.library) and exists(bridge) and (not meta or (meta.compilation_id or meta.id)==row.runtime_id)
+     end
+    end
+   end
   end
   return self._xyData
  end
@@ -176,13 +190,16 @@ function M.install(RI)
   if self._xyJob or self._xyPlayer or self._xyCheck or self._xyPreview or self._launcherSequence or self._xyIntro then return end
   local root=sourceRoot();local row=load(self) and self._xyData[self._xyEdition]
   if not root or not row or not row.ready then return end
-  local file=io.open(root..'/.local/pokemon-x/bin/libascendant_3ds_bridge.dylib','rb');if not file then return end;file:close()
+  local runtime=require('src.import.PokemonXYBackend').runtime()
+  local bridge=runtime and runtime..'/lib/libascendant_3ds_bridge.dylib' or root..'/.local/pokemon-x/bin/libascendant_3ds_bridge.dylib'
+  local file=io.open(bridge,'rb');if not file then return end;file:close()
   local settings={};for k,v in pairs(row.settings or {})do settings[k]=v end
   settings.layout='top_only';settings.stereo='off'
   local data=root..'/.local/pokemon-x/previews/'..self._xyEdition
-  local session={rom=row.rom,library=row.library,bridge=root..'/.local/pokemon-x/bin/libascendant_3ds_bridge.dylib',
+  local session={rom=row.rom,library=row.library,bridge=bridge,
    data=data,session_lock=data..'/session.lock',resolution=1,language=3,depth_3d=0,stereo='off',texture_packs=false,
    settings=settings,edition=self._xyEdition,root=root}
+  if runtime then session.vulkan_loader=runtime..'/vulkan/libvulkan.1.dylib';session.driver_manifest=runtime..'/vulkan/MoltenVK_icd.json' end
   local ok,preview=pcall(require('src.import.PokemonXYNative').new,session,'preview')
   if ok then self._xyPreview=preview else self._xyNotice=tostring(preview) end
  end
@@ -245,14 +262,21 @@ function M.install(RI)
    local response=love.thread.getChannel('pokemon.xy.result'):pop()
    if response then
     local result=decode(response)
-    self._xyJob=nil
-    if result and result.ok then
+    if result and result.progress then
+     self._xyNotice=result.completed and Strings(result.progress,result.completed,result.total) or Strings(result.progress)
+    else
+     self._xyJob=nil
+     if result and result.ok then
      self._xyData=result.data
      if result.edition then self._xyEdition=result.edition end
      local row=result.data and result.data[self._xyEdition] or {}
      self._xyNotice=Strings(row.ready and 'Ready to play.' or row.imported and 'Game file imported. Prepare the native backend before playing.' or 'Choose your own 3DS game file to begin.')
      if result.session then receiveSession(self,result.session,result.mode)end
-    else self._xyNotice=(result and result.error or 'Unbekannter Backend-Fehler'):sub(-700) end
+     else
+      if result and result.data then self._xyData=result.data end
+      self._xyNotice=(result and result.error or 'Unknown backend error'):sub(-700)
+     end
+    end
    elseif self._xyJob:getError() then self._xyNotice=self._xyJob:getError();self._xyJob=nil end
   end
   return update(self,dt,...)
@@ -262,7 +286,9 @@ function M.install(RI)
   if self._xyJob or self._xyPlayer or self._xyCheck then return end
   stopPreview(self);self._xyPreviewFailed=nil;self._xyOpen=true;self.section='games';self.pageScroll=0
   local args={path};if detect then args[#args+1]='--detect-edition' end
-  start(self,'import',args)
+  local runtime=require('src.import.PokemonXYBackend').runtime()
+  if runtime then args[#args+1]='--play-after-import' end
+  start(self,'import',args,runtime and 'playing' or nil)
  end
  local function button(self,x,y,w,label,action)
   local r=self:_chipButton(x,y,Strings(label),{w=w,h=34*self._s,kind='accent'})
@@ -280,6 +306,9 @@ function M.install(RI)
   local data=load(self) or {};local row=data[self._xyEdition] or {};local settings=row.settings or {}
   local ready=row.ready
   text(self.stateFont,Strings(ready and 'BETA / READY' or row.imported and 'BETA / PREPARATION REQUIRED' or 'BETA / ROM REQUIRED'),y,ready and p.green or p.warning);y=y+36*s
+  if require('src.import.PokemonXYBackend').runtime() then
+   text(self.hintFont,'Native 3DS support included',y,p.green);y=y+28*s
+  end
   if not self._xyJob and not self._xyCheck then
    button(self,x,y,math.min(240*s,w),Strings('IMPORT GAME'),function()
     local path=U.chooseFileByExt({'3ds','cci','cxi','cia'},'3DS game (.3ds, .cci, .cxi, .cia)')
@@ -305,7 +334,10 @@ function M.install(RI)
   elseif self._xyJob then text(self.hintFont,'Preparing the game …',y,p.warning)
   else
    if ready then button(self,x,y,math.min(180*s,(w-12*s)/2),'PLAY',function()self:_xyStart()end) end
-   if row.imported and not ready then button(self,x,y,math.min(180*s,(w-12*s)/2),Strings('PREPARE GAME'),function()start(self,'build')end)end
+   if row.imported and not ready then button(self,x,y,math.min(180*s,(w-12*s)/2),Strings('PREPARE GAME'),function()
+    local runtime=require('src.import.PokemonXYBackend').runtime()
+    start(self,'build',runtime and {'--play-after-import'} or nil,runtime and 'playing' or nil)
+   end)end
    button(self,x+math.min(180*s,(w-12*s)/2)+12*s,y,math.min(165*s,(w-12*s)/2),'REFRESH STATUS',function()start(self,'status')end)
   end
   y=y+44*s

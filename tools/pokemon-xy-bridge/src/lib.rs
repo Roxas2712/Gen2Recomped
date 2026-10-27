@@ -27,6 +27,8 @@ unsafe fn string(ptr:*const libc::c_char)->Result<String,String>{
 struct Request {
  rom:PathBuf,library:PathBuf,data:PathBuf,session_lock:PathBuf,
  resolution:u32,language:u8,depth_3d:u32,stereo:String,texture_packs:bool,
+ #[serde(default)] vulkan_loader:Option<PathBuf>,
+ #[serde(default)] driver_manifest:Option<PathBuf>,
 }
 pub struct Bridge {
  system:System,_lease:File,
@@ -41,6 +43,15 @@ pub unsafe extern "C" fn ascendant_3ds_open(json:*const libc::c_char)->*mut Brid
  guard(std::ptr::null_mut(),||{
   LOG.call_once(||{let _=env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info,cranelift_jit=warn")).try_init();});
   let request:Request=serde_json::from_str(&string(json)?).map_err(|e|e.to_string())?;
+  if let Some(path)=&request.vulkan_loader {
+   if !path.is_file(){return Err("Bundled Vulkan loader is missing".into());}
+   std::env::set_var("RETRO_3DS_VULKAN_LIBRARY",path);
+  }
+  if let Some(path)=&request.driver_manifest {
+   if !path.is_file(){return Err("Bundled graphics driver is missing".into());}
+   std::env::set_var("VK_DRIVER_FILES",path);
+   std::env::set_var("VK_ICD_FILENAMES",path);
+  }
   if !(1..=8).contains(&request.resolution){return Err("Resolution out of range".into());}
   std::fs::create_dir_all(&request.data).map_err(|e|e.to_string())?;
   if let Some(parent)=request.session_lock.parent(){std::fs::create_dir_all(parent).map_err(|e|e.to_string())?;}
