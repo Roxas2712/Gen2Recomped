@@ -94,7 +94,7 @@ Sidebar.metaText = metaText
 local function nameOf(v)
   if v=="x" or v=="y" then return "Pokémon "..v:upper() end
   local info = GameVersion.info(v)
-  return info and (info.displayName or info.launcherName) or tostring(v)
+  return info and Strings(info.displayName or info.launcherName) or tostring(v)
 end
 Sidebar.nameOf = nameOf
 

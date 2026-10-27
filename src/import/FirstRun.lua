@@ -160,6 +160,7 @@ function W.draw(self)
     for _,v in ipairs(choices) do if v[1]=='default' or theme.ACCENTS[v[1]] then button('accent:'..v[1],v[2]) end end
   else
     if f.page==3 then
+      para('Original cartridge images are an optional benefit for registered members with confirmed email.')
       para('Original cartridge images are served by ModCompass (about 20 MB for the current collection). Artwork belongs to Nintendo, Game Freak, Creatures and the respective rights holders. The source claims fair use; no reuse licence is granted. This downloads pictures, not games.')
       button('originalSources','REVIEW IMAGE SOURCES')
       button('originals',f.originals and '[x] ORIGINAL IMAGES NOW & FOR NEW GAMES' or '[ ] ORIGINAL IMAGES NOW & FOR NEW GAMES')

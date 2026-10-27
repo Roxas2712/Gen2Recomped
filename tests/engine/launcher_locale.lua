@@ -49,3 +49,14 @@ check(rendered:find('STANDARDREGELN',1,true)and rendered:find('Selbstauskünfte'
 T.setLauncher({launcherLanguage='en'})
 check(T.launcherFormat('GAME · %s','SIGN IN#1234')=='GAME · SIGN IN#1234','English remains the unmodified default')
 print('Community locale: '..n..' checks passed')
+
+T.setLauncher({launcherLanguage='de'})
+local sidebar=require('src.import.LauncherSidebar')
+check(sidebar.nameOf('red')=='Pokémon Rot','library edition titles use the selected launcher language')
+check(sidebar.metaText({badges=8,timeText='24:00',dexCount=45})=='8 Orden - 24:00 - 45 gefangen','actual library save summary is localized')
+for _,category in ipairs(require('src.import.LauncherWorkspace').CATEGORIES)do
+ check(T.launcherLookup(category.note)~=category.note,'workspace category help has reviewed German: '..category.id)
+end
+T.setLauncher({launcherLanguage='en'})
+check(sidebar.nameOf('red')=='Pokemon Red','English library title remains unchanged')
+print('Library locale: '..n..' checks passed')

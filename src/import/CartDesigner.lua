@@ -200,7 +200,7 @@ function Designer.install(RI)
       button('automatic',SaveData.loadOptions().launcherOriginalCartridges and '[x] AUTOMATICALLY LOAD MISSING ORIGINALS' or '[ ] AUTOMATICALLY LOAD MISSING ORIGINALS')
       paragraph('Sources: Bulbagarden Archives · TheMalevolentOne / UnethicalVoxel. Cartridge artwork belongs to its respective rights holders, including Nintendo, Game Freak and Creatures. The source claims fair use; downloading grants no reuse licence. Review your permitted use. Images remain on this device.')
       if f.running then
-        paragraph(('%d / %d applied · now loading %s'):format(f.done or 0,f.total or 0,tostring(f.current or 'next cartridge')))
+        paragraph(require('src.translation.Service').launcherFormat('%d / %d applied · now loading %s',f.done or 0,f.total or 0,f.current and require('src.translation.Service').editionName(f.current)or L('next cartridge')))
         local progress=((f.total or 0)-#(f.queue or {})-(f.job and 1 or 0))/math.max(1,f.total or 1)
         U.col(p.link,.25);g.rectangle('fill',x,yy,w,8*s,4*s,4*s);U.col(p.link);g.rectangle('fill',x,yy,w*progress,8*s,4*s,4*s);yy=yy+26*s
         button('cancel','STOP BATCH · KEEP COMPLETED IMAGES')
