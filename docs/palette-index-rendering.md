@@ -443,8 +443,8 @@ All `mapPixel` and qualified `newImage` references in engine Lua and DRAMATIC_SH
 | [src/render/Gen3Scene.lua:264](../src/render/Gen3Scene.lua#L264) | newImage | Separate Gen 3/4/5 or device path; excluded by X5 |
 | [src/render/Gen3Scene.lua:383](../src/render/Gen3Scene.lua#L383) | newImage | Separate Gen 3/4/5 or device path; excluded by X5 |
 | [src/render/Gen4BattleTransition.lua:780](../src/render/Gen4BattleTransition.lua#L780) | newImage | Separate Gen 3/4/5 or device path; excluded by X5 |
-| [src/render/Gen4Model.lua:1094](../src/render/Gen4Model.lua#L1094) | mapPixel | Separate Gen 3/4/5 or device path; excluded by X5 |
-| [src/render/Gen4Model.lua:1101](../src/render/Gen4Model.lua#L1101) | newImage | Separate Gen 3/4/5 or device path; excluded by X5 |
+| [src/render/Gen4Model.lua:805](../src/render/Gen4Model.lua#L805) | mapPixel | Separate Gen 3/4/5 or device path; excluded by X5 |
+| [src/render/Gen4Model.lua:812](../src/render/Gen4Model.lua#L812) | newImage | Separate Gen 3/4/5 or device path; excluded by X5 |
 | [src/render/HudTiles.lua:211](../src/render/HudTiles.lua#L211) | newImage | Native HUD/OBJ tile raster upload |
 | [src/render/PaletteIndex.lua:101](../src/render/PaletteIndex.lua#L101) | newImage | Cached screen/effect artwork PNG load; no world palette bake |
 | [src/render/ShaderGraph.lua:349](../src/render/ShaderGraph.lua#L349) | newImage | Cached screen/effect artwork PNG load; no world palette bake |
