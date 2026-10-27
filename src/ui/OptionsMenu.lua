@@ -768,6 +768,15 @@ end
 
 function OptionsMenu.new(game, opts)
   opts = opts or {}
+  -- Explicit pages use the same public constructor as the root. Presentation
+  -- consumers wrap this entry to attach their per-instance draw/ownership
+  -- contract; creating a raw table in a group callback bypasses that contract.
+  if opts.rows then
+    assert(type(opts.rows) == "table", "option page rows must be a table")
+    return setmetatable({game=game, rows=opts.rows, view=opts.rows,
+      options=game.save and game.save.options or {}, index=1, scroll=0, sub=true,
+      onCancel=opts.onCancel, onDone=opts.onDone}, OptionsMenu)
+  end
   local rows = buildRows(game)
   local hooked = Runtime.call("ui.options.rows", sameRows, game, rows)
   if type(hooked) == "table" then
@@ -781,10 +790,10 @@ function OptionsMenu.new(game, opts)
   if GameVersion.isGen2() then
     self.options = game.save.options
     self.view = require("src.ui.Gen2OptionGroups").build(rows, function(members)
-      local page = setmetatable({game=game, rows=members, options=self.options,
-        index=1, scroll=0, sub=true, view={}}, OptionsMenu)
-      for i,row in ipairs(members) do page.view[i]=row end
-      page.view[#page.view+1]={id="cancel",label=Strings("BACK"),cancel=true}
+      local pageRows = {}
+      for i,row in ipairs(members) do pageRows[i]=row end
+      pageRows[#pageRows+1]={id="cancel",label=Strings("BACK"),cancel=true}
+      local page = OptionsMenu.new(game, {rows=pageRows})
       game.stack:push(page)
       return page
     end)
@@ -846,6 +855,7 @@ function OptionsMenu:updateGrouped()
   local input=self.game.input
   if input:wasPressed("b") or input:wasPressed("start") then self:leave_();return end
   local rows=self:visible()
+  if #rows==0 then return end
   if input:wasPressed("up") then self.index=(self.index-2)%#rows+1
   elseif input:wasPressed("down") then self.index=self.index%#rows+1
   else
