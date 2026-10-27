@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "sourceCommit": "1086151ce34098159dea8910ca02956b2fd4f3ff",
+  "sourceStable": true,
+  "wallSeconds": 2090.361223459,
+  "exit": 0,
+  "logSha256": "d1fe2b77e72966c33edd9677c8371eaff95cd1f6194a4a63a2f13717755f5642",
+  "verdict": [
+    "engine: 597/597 suites passed",
+    "ALL TESTS PASSED"
+  ]
+}
