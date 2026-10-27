@@ -61,7 +61,7 @@ Sidebar.SERIES = {
 
 function Sidebar.consoleOf(version)
   if version=="x" or version=="y" then return "3ds" end
-  local info = GameVersion.info(version)
+  local info = GameVersion.info(version) or require("src.import.LauncherExternalGames").info(version)
   local gen = info and tonumber(info.generation) or 1
   if gen >= 4 then return "nds" end
   if gen == 3 then return "gba" end
@@ -93,7 +93,7 @@ Sidebar.metaText = metaText
 
 local function nameOf(v)
   if v=="x" or v=="y" then return "Pokémon "..v:upper() end
-  local info = GameVersion.info(v)
+  local info = GameVersion.info(v) or require("src.import.LauncherExternalGames").info(v)
   return info and Strings(info.displayName or info.launcherName) or tostring(v)
 end
 Sidebar.nameOf = nameOf
@@ -761,7 +761,7 @@ function Sidebar.install(RI)
   -- a game tile: name, console, status, favourite star; returns its rect
   function RI:_sbGameTile(version, x, y, w, h)
     local s, P, g = self._s, PAL(), love.graphics
-    local info = GameVersion.info(version)
+    local info = GameVersion.info(version) or require("src.import.LauncherExternalGames").info(version)
     local locked = info == nil or (info.importable == false and not (U.unlockedByEnv and U.unlockedByEnv(version)))
     local ready = (not locked) and self.ready[version]
     local r = { x = x, y = y, width = w, height = h, version = version }
@@ -987,8 +987,11 @@ function Sidebar.install(RI)
   }
 
   function RI:_sbToolUsable(tool, version)
-    local info = GameVersion.info(version)
+    local info = GameVersion.info(version) or require("src.import.LauncherExternalGames").info(version)
     if not info then return false, "unknown game" end
+    if version == 'pinballrs' and not tool.noGame then
+      return false, 'Use the Pinball player menu for this cartridge.'
+    end
     if tool.needsReady or tool.id == "translate" or tool.id == "saveExport" then
       if not self.ready[version] then return false, Strings("import this game first") end
     end
@@ -1788,7 +1791,7 @@ function Sidebar.install(RI)
                        video = "Custom video" }
     -- only games that are imported and can actually run their menu
     for _, v in ipairs(GameVersion.ORDER) do
-      local info = GameVersion.info(v)
+      local info = GameVersion.info(v) or require("src.import.LauncherExternalGames").info(v)
       if self.ready[v] == true and info and info.importable ~= false and not Backdrop.failedFor(v) then
         bgValues[#bgValues + 1] = v; bgLabels[v] = nameOf(v)
       end
