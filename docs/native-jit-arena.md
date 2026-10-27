@@ -12,12 +12,15 @@ machine-code limit and 8,192 traces before native configuration loads game or
 mod code. It retires a small bootstrap area once. Repeated configuration does
 not flush a running session. Other architectures/OSes and disabled or missing
 JIT controls retain their normal policy. Unsupported options leave boot usable.
-Game rules, fixed-step clocks and rendering quality settings are unchanged.
+Explicit OFF/custom `POKEPORT_JIT_OPT` policies retain priority. The later
+`JitTuning` defaults preserve the early area size, total budget and trace slots
+while applying their additional recorder limits. Worker defaults remain
+independent. Game rules, fixed-step clocks and rendering quality are unchanged.
 
 ## Validation
 
-- 26 focused runtime-policy checks: platform/disabled guards, bounded options,
-  startup order, idempotence and unsupported-option recovery.
+- 30 focused runtime-policy checks: platform/disabled guards, bounded options,
+  startup order, idempotence, explicit policy and unsupported-option recovery.
 - 10,851 map-identity, 211 owned-map-view, 486 collision, 121 compositor,
   125 shader and 151 orientation checks pass with the native change.
 - Actual unchanged private Origami 1.0.9 (`ae59c77c`) on fork main
@@ -53,3 +56,14 @@ here), not included in the ordinary walking FPS above.
 Contributions by Roxas2712 — https://github.com/Roxas2712.
 See [the contribution terms](../LICENSE-ROXAS2712.md) for Cedric / UNDERdecoded's
 specific incorporation permission and required credit. Existing notices remain.
+
+Current-main integration `1e6b6e60` is qualified by frozen source `0c7d750d51`
+(committed as `019a256b`): 30 arena / 15 existing tuning / 11 ownership checks,
+plus the map, compositor and follower checks recorded in the runtime receipt.
+Actual native run `b989c681f7` completes all three views without allocation
+failures. Third/first walking is 19.20 / 20.52 ms; p95 29.49 / 28.41 ms.
+A same-source on-demand final-canvas diagnostic `fe82e88788` merely moves
+about 11–12 ms of target-acquisition wait into the native draw callback, with
+no third/first FPS improvement. Its scene pixels match in those two views
+excluding the changing FPS HUD; open-view movement differs. The diagnostic
+canvas change is not adopted. GPU/Metal drawable attribution remains open.
