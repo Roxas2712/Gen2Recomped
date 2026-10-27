@@ -2,7 +2,9 @@
 local M={};local Json=require('src.link.Json')
 local function read(path)local f=io.open(path,'rb');if not f then return end;local b=f:read('*a');f:close();return b end
 local function exists(path)if type(path)~='string'then return false end;local f=io.open(path,'rb');if not f then return false end;f:close();return true end
-local function sourceRoot()return os.getenv('ASCENDANT_PINBALL_ROOT')or(love and love.filesystem.getSource())end
+local function sourceRoot()
+ return os.getenv('ASCENDANT_PINBALL_ROOT')or(love and love.filesystem and love.filesystem.getSource and love.filesystem.getSource())
+end
 local LANGUAGES={{id='en',name='English · USA'},{id='fr',name='Français · EU',index=1},{id='de',name='Deutsch · EU',index=2},{id='it',name='Italiano · EU',index=3},{id='es',name='Español · EU',index=4}}
 function M.session(locale)
  local root=sourceRoot();if not root then return end
