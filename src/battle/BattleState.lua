@@ -970,7 +970,9 @@ local StatBox = {}
 StatBox.__index = StatBox
 
 function StatBox.new(game, mon, onDone)
-  return setmetatable({ game = game, mon = mon, onDone = onDone }, StatBox)
+  local state=setmetatable({ game = game, mon = mon, onDone = onDone }, StatBox)
+  if GameVersion.isGen3()then require('src.compat.gen1.NativeModalObservation').capture(state,game)end
+  return state
 end
 
 function StatBox:update()

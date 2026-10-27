@@ -187,6 +187,7 @@ function Gen3BagMenu.new(game, opts)
   opts = opts or {}
   local self = setmetatable({}, Gen3BagMenu)
   self.game = game
+  require('src.compat.gen1.NativeModalObservation').capture(self,game)
   self.onCancel = opts.onCancel
   -- opened mid-battle: the pick USES the item there and then, against the
   -- fight, rather than opening the field item flow (see choose())

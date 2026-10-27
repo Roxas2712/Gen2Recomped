@@ -133,6 +133,7 @@ function Gen3PartyMenu.new(game, opts)
   opts = opts or {}
   local self = setmetatable({}, Gen3PartyMenu)
   self.game = game
+  require('src.compat.gen1.NativeModalObservation').capture(self,game)
   self.onCancel = opts.onCancel
   -- the battle's three shapes (see the note at the top of this file)
   self.onSwitch = opts.onSwitch
