@@ -14,7 +14,7 @@ local function noop()end
 local stencil,stencilTest=g.stencil,g.setStencilTest
 g.stencil=function(fn)fn()end
 g.setStencilTest=noop
-g.newMesh=function()return {release=noop}end
+g.newMesh=function()return {release=noop,setVertices=noop}end
 g.newShader=function()return {send=noop,release=noop}end
 love.image={newImageData=function(w,h)return {w=w,h=h,setPixel=noop}end}
 g.newImage=function(source)
