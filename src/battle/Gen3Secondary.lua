@@ -128,7 +128,8 @@ function S.apply(ctx, spec, chance)
       local blocked = delta < 0
         and (
           ability == "SHIELD_DUST"
-          or chance < 100 and (active(target.mist) or ability == "CLEAR_BODY" or ability == "WHITE_SMOKE")
+          or chance < 100 and (require("src.battle.Gen3Mist").active(battle,target)
+            or active(target.mist) or ability == "CLEAR_BODY" or ability == "WHITE_SMOKE")
           or chance < 100
             and (ability == "KEEN_EYE" and stat == "accuracy" or ability == "HYPER_CUTTER" and stat == "attack")
         )
@@ -150,6 +151,7 @@ function S.apply(ctx, spec, chance)
   return false, {}
 end
 function S.run(ctx, record)
+  require('src.battle.Gen3ZeroChance').finish(ctx)
   local spec = effects[tonumber(ctx.move.gen3Effect)]
   if not spec then
     return false

@@ -24,8 +24,8 @@ Damage EffectRegistry EnemyActionContext EnemyMoveChoice Experience FieldResidua
 Gen2AnimPlayer Gen2BattleView Gen2Wild Gen3AI Gen3AIAttackingMoves Gen3AIItemKnowledge
 Gen3AIMoveKnowledge Gen3AIOrder Gen3AIPartyStatus Gen3AIQueries Gen3Accuracy Gen3Arena Gen3BallAnim
 Gen3BatonPass Gen3Battle Gen3BattleWeather Gen3BeatUp Gen3Builtins Gen3Catching Gen3Critical
-Gen3DamageStats Gen3Disable Gen3Encore Gen3FollowMe Gen3HelpingHand Gen3LockOn Gen3MoveAnim
-Gen3MoveEffects Gen3MultiHit Gen3OHKO Gen3OrderCore Gen3Palace Gen3Rage Gen3Secondary Gen3SleepTalk
+Gen3CrashDamage Gen3DamageAdjustment Gen3DamageStats Gen3Explosion Gen3Faint Gen3ZeroChance Gen3FixedDamage Gen3Disable Gen3Encore Gen3FollowMe Gen3HelpingHand Gen3LockOn Gen3MoveAnim
+Gen3MoveEffects Gen3MultiHit Gen3HitHistory Gen3OHKO Gen3OrderCore Gen3Palace Gen3Rage Gen3Secondary Gen3SleepTalk
 Gen3TripleKick Gen4AnimMath Gen4BallAnim Gen4Battle Gen4Catching Gen4EffectProjection
 Gen4MoveAnimExtras Gen4MoveAnimFuncsA Gen4MoveAnimFuncsB Gen4MoveAnimFuncsC Gen4MoveAnimFuncsD
 Gen4MoveAnimPlayer Gen4PalParkBattle Gen4ParticleSystem Gen4Safari Gen5BallAnim Gen5BallArt
@@ -34,7 +34,7 @@ Gen5MoveEffects Gen5MoveRules Gen5Transform HeldItemRead HeldItems HoldItems Men
 MoveEffects MoveNavigation POS PlayerPartyScope RulesetDefaults Status StatusHUDVisibility
 StatusRegistry Targeting TrainerAI TurnOrder TypeChart UIVisibility Weather WideBattle
 _actionTargetOrder _aiHistory _backdropLive _backdropPolled _battle _dsThrowQuads _frlgCallbackLives
-_gbaActionFrame _gbaMoveFrame _gbaResidualPriority _gen3BatonParty _gen3BatonPending _gen3BatonPoll
+_gbaLogicalFaint _gbaDamageCalculation _gbaActionFrame _gbaMoveFrame _gbaResidualPriority _gen3TrainerItems _gen3BatonParty _gen3BatonPending _gen3BatonPoll
 _gen3BatonRequest _gen3BatonSwitching _gen3HelpingHand _gen3OamCompositedFrame
 _gen3OamGlobalTieResidual _gen3OamObjectRanks _gen3OamResidual _gen3SurfaceKey _gen3SurfaceW
 _gen4SurfaceKey _gen4SurfaceW _gen5Text _mementoTiming _modFieldResidualTurn _nativeOrderReady
@@ -65,7 +65,7 @@ emitterSeq emitterWaits emitterX emitterY emitters encoreMove encoreTurns endBat
 enduring enemy enemyAIMods enemyHidden enemyIndex enemyIndexB enemyIndexRight enemyParty enemyPartyB
 enemySendingOut enemySide enemy_action enemy_switch_or_item enigmaBerries enigmaBerry escapeFactor
 event eventCursor eventOamY events expFilling expFraction expHold expPaidPerSlot expShown exp_award
-exp_gained f fades fainted fan field fieldHidden fieldWeatherFromMap field_residual finished
+exp_gained expLastLandedMove expLastHitByType expLastHitById f fades fainted fan field fieldHidden fieldWeatherFromMap field_residual finished
 firstBattle firstBattleKind flashFire flinched flipped flourish focusEnergy foeSummaryParty foesOf
 forecastAll foresighted forfeitable forfeited frame frames frlgIntro from fromX fromY fx g2MomAward
 gaugesHidden gen3AnimPlaying gen3AnimShake gen3Ball gen3BallPlaying gen3Frontier gen3ItemsUsed
@@ -80,13 +80,13 @@ isPlayer itemDef items itemsByKey keepSprites keptSprites key kind kinds lastAtt
 lastConsumedItem lastDamage lastFoeLevel lastMove layer layout leechSeeded letterboxWhite leveledUp
 lightScreen lineIndex lines link linkRole live liveChildren lockedBall loops lowHealthAlarmDisabled
 lowHealthAlarmOn low_health_alarm managers markMissed memento menuBattler menuIndex menuLockedAction
-menu_auxiliary mimicChoice mimicCtx mimicIndex mimicMoves mimicRestores missing mist mode mon
+menu_auxiliary mimicChoice mimicCtx mimicIndex mimicMoves mimicRestores missing mist mode modAiUses mon
 monAnim monBgSide monBgTimeline monBlend monHidden monPriority monRise monScale monSpriteManager
 monSprites monToSwitchInto monWindowRect move moveAnimRow moveEvent moveId moveIndex moveSwapIndex
 move_grid_navigation move_used msgPreWait msgPrompt msgPromptWait msgWaiting musicKind mustRecharge
 name nextInsert nightmare noCatch noExp noItems noRun oakDemo oakMsgFlags oamGlobalTieResidual
 oamRanks oamY objIndex objects objs onDone onSound onTransform oneWay open oppClass opponentName
-opts orbit overlay p palCache palPark palace palaceLow participants particles partnerOf partyIndex
+opts oppClassB orbit overlay p palCache palPark palace palaceLow participants particles partnerOf partyIndex
 payDay pc pendingActions pendingHit pendingLayout pendingMove pendingReplacements performMove
 perishTurns phase phaseFrame phases physicalDamageTaken picAnim picFx picHidden picImage picOff
 picOffset platformsHidden player playerParty playerPartyIndices playing pokedude pokedudeDemo
@@ -110,7 +110,7 @@ waitKind waitReload waitingSound waitingSoundT waitingUI wallyTutorial warned wa
 weather what whiteout wideRegion wildFoesStanding wishHeal wishTurns wobbles wordAt work x xAccuracy
 y yield z
 ]])
-local ART = names("bgCanvas waveCanvas waveQuad colorFxReady scrollPx _gen3OamCompositedFrame _gen3OamObjectRanks _gen3OamResidual")
+local ART = names("bgCanvas waveCanvas waveQuad colorFxReady scrollPx trainerPicB _gen3OamCompositedFrame _gen3OamObjectRanks _gen3OamResidual")
 local BATTLER_SKIP = names("def badgeBoosts statuses items natures sprite picAnim monAnim _caughtIcon")
 local DATA = names("rulesets pokemon moves statuses items constants type_chart trainers move_effects")
 local function keys(t,path)
@@ -293,13 +293,14 @@ local function decode(game, graph, battle)
       end
     end
   end
-  return state
+  return state, tables
 end
 local PHASES = { menu = true, moveSelect = true, targetSelect = true }
 local EXCLUDED = names(
   "linkBattle safari gen4Safari ghost scopeReveal demo pokedudeDemo bugContest palace arena gen3Frontier battleTower dead result"
 )
 local function decision(battle)
+  assert(not battle._gbaFaintRelease and not battle._gbaFaintAnnouncement, 'native faint announcement is active')
   assert(getmetatable(battle) == require("src.battle.BattleState"), "not a native battle")
   assert(PHASES[battle.phase] or MoveSelectionPhase.active(battle), "battle is not at a player decision")
   for key in pairs(EXCLUDED) do
@@ -413,11 +414,19 @@ local function nativePartySet(save,record)
   end
   return set
 end
+local function pictureActors(state)
+  local sides=state.sides or{}
+  local player=sides[1]and sides[1].battlers or{}
+  local enemy=sides[2]and sides[2].battlers or{}
+  return {state.player or player[1],state.enemy or enemy[1],
+    player[2]or state.player2,enemy[2]or state.enemy2}
+end
 local function pictureRows(battle)
   if not battle.picFx then return nil end
   local rows={}
-  for _,key in ipairs({'player','enemy','player2','enemy2'})do
-    local actor=battle[key]
+  local actors=pictureActors(battle)
+  for index=1,4 do
+    local actor=actors[index]
     if actor and battle.picFx[actor]then rows[#rows+1]={actor=actor,effect=battle.picFx[actor]}end
   end
   return {schema=1,rows=rows}
@@ -426,9 +435,12 @@ local function nativePictures(state,record)
   if not record or record.schema==nil then return record end
   assert(record.schema==1 and type(record.rows)=='table','invalid battle picture relationships')
   local out={}
+  local allowed={}
+  local actors=pictureActors(state)
+  for index=1,4 do if actors[index]then allowed[actors[index]]=true end end
   for _,row in ipairs(record.rows)do
     local actor=row.actor
-    assert(actor and(actor==state.player or actor==state.enemy or actor==state.player2 or actor==state.enemy2)
+    assert(actor and allowed[actor]
       and type(row.effect)=='table'and not out[actor],'invalid battle picture owner')
     out[actor]=row.effect
   end
@@ -459,6 +471,7 @@ function B.capture(game, battle, clone)
   state.participants=partySet(game.save,battle.participants)
   state.leveledUp=partySet(game.save,battle.leveledUp)
   state.picFx=pictureRows(battle)
+  state.modAiUses=require('src.battle.Gen3TrainerClass').rows(battle)
   local ruleset
   for key, v in pairs(rulesets(game)) do
     if v == battle.ruleset then
@@ -482,15 +495,33 @@ function B.validate(game, snapshot, save, actors)
       "invalid battle payload"
     )
     local view = { data = game.data, save = save }
-    local s = decode(view, snapshot.graph)
+    local s, nodes = decode(view, snapshot.graph)
     nativeRelations(save,s)
     nativeActions(s.turnActions)
     for key in pairs(s) do
       assert(FIELDS[key], "unknown native battle field")
     end
+    local owned
+    if s._gen3TrainerItems~=nil or s.modAiUses~=nil then
+      owned={}
+      for index, node in ipairs(snapshot.graph.nodes) do
+        if node.kind == "data" then owned[nodes[index]] = true end
+      end
+    end
+    if s._gen3TrainerItems~=nil then
+      assert(require("src.battle.Gen3TrainerItems").validState(view, s._gen3TrainerItems, owned),
+        "invalid native GBA trainer stock")
+    end
+    if s.modAiUses~=nil then
+      assert(require('src.battle.Gen3TrainerClass').validRows(s,s.modAiUses,owned),'invalid native trainer class budget')
+    end
     assert((PHASES[s.phase] or MoveSelectionPhase.active(s))
       and (s.kind == "wild" or s.kind == "trainer"), "invalid battle decision")
     assert(s.player and s.enemy and s.player.mon and s.enemy.mon, "missing native battlers")
+    if s.trainerB~=nil or s.oppClassB~=nil then
+      assert(require('src.battle.BattleState')._checkpointSecondTrainerClass(game.data,s),
+        'second trainer content is unavailable')
+    end
     for key in pairs(EXCLUDED) do
       assert(not s[key], "special battle state is not reconstructible")
     end
@@ -507,7 +538,12 @@ function B.validate(game, snapshot, save, actors)
       )
     end
     assert(s.field and s.sides and s.field.sides == s.sides, "battle field relationships differ")
-    for _, who in ipairs({ s.player, s.enemy, s.player2, s.enemy2 }) do
+    if require('src.core.GameVersion').isGen3() then
+      assert(require('src.battle.Gen3Mist').validState(s), 'invalid native Mist duration')
+    end
+    local active=pictureActors(s)
+    for position=1,4 do
+      local who=active[position]
       if who then
         assert(
           type(who.isPlayer) == "boolean" and type(who.mon) == "table" and game.data.pokemon[who.mon.species],
@@ -533,6 +569,10 @@ function B.validate(game, snapshot, save, actors)
           assert(type(value) == "number" and value >= -6 and value <= 6, "invalid native stage")
         end
         assert(type(who.mon.hp) == "number" and who.mon.hp >= 0, "invalid native HP")
+        if require("src.core.GameVersion").isGen3() then
+          assert(require("src.battle.Gen3HitHistory").valid(who), "invalid native GBA hit history")
+          assert(require('src.battle.Gen3Faint').valid(who), 'invalid native GBA faint state')
+        end
       end
     end
     local found = false
@@ -594,6 +634,7 @@ function B.apply(game, snapshot, clone)
   local battle = require("src.battle.BattleState")._checkpointNew(game)
   local state = decode(game, snapshot.graph, battle)
   nativeRelations(game.save,state)
+  state.modAiUses=require('src.battle.Gen3TrainerClass').native(state.modAiUses)
   state.turnActions = nativeActions(state.turnActions)
   for key in pairs(FIELDS) do
     if rawget(battle, key) ~= nil then

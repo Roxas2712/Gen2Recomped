@@ -43,6 +43,7 @@ function Schedule.moveEnd(battle, completedFrame)
   end
   require("src.battle.Gen3PostHitItems").run(battle, frame)
   require("src.battle.Gen3MirrorMove").history(battle, frame)
+  require("src.battle.Gen3HitHistory").moveEnd(battle, frame)
 end
 
 function Schedule.afterAction(battle)
@@ -97,6 +98,8 @@ end
 
 function Schedule.residuals(battle)
   local order = Schedule.residualOrder(battle)
+  -- Side conditions expire before Wish, weather and battler residuals.
+  require("src.battle.Gen3Mist").tick(battle)
   -- Wish is a field phase, before weather; Ingrain belongs to each holder.
   for _, b in ipairs(battle:isDouble() and order or Schedule.battlers(battle)) do
     battle:gen3WishTick(b)
@@ -132,7 +135,7 @@ function Schedule.residuals(battle)
   end
   -- The native fainted-action/item sweep precedes delayed attacks and Perish.
   Schedule.afterAction(battle)
-  battle:gen3DelayedCountersTick()
+  battle:gen3DelayedCountersTick(order)
 end
 
 return Schedule

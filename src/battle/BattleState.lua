@@ -1375,12 +1375,26 @@ end
 -- Private factories restore native resources without entry hooks or intro effects.
 BattleState._checkpointNew = newBattle
 function BattleState._checkpointOwnsRng(battle) return checkpointRng[battle] == battle.rng end
+function BattleState._checkpointSecondTrainerClass(data,state)
+  if type(state.trainerB)~='table'then return nil end
+  if state.oppClassB~=nil then
+    local key=state.oppClassB
+    return (type(key)=='string'or type(key)=='number')and data.trainers[key]and key or nil
+  end
+  -- Earlier checkpoints retained the content anchor without its class key.
+  for key,record in pairs(data.trainers)do if record==state.trainerB then return key end end
+end
 function BattleState:_checkpointArt()
   if self.oppClass then
     local def = assert(self.data.trainers[self.oppClass])
     self.trainer = setmetatable({name=self._checkpointTrainerName or def.name},{__index=def})
     self.trainerPic = getImage(BattleState.trainerPicPath(self.data,self.trainer,self.oppClass,self.partyIndex),
       BattleState.trainerPalette(self.data,self.trainer),self.trainer.trueColor)
+  end
+  if self.trainerB then
+    local class=assert(BattleState._checkpointSecondTrainerClass(self.data,self),'second trainer content is unavailable')
+    self.trainerPicB=getImage(BattleState.trainerPicPath(self.data,self.trainerB,class,1),
+      BattleState.trainerPalette(self.data,self.trainerB),self.trainerB.trueColor)
   end
   self._checkpointTrainerName=nil
   self.isOpaque=self:bgMode()~="world"
@@ -1961,6 +1975,7 @@ function BattleState:addOpponentTrainer(oppClass)
   end
   local partyDef = def.parties and def.parties[1]
   if not partyDef then return false end
+  self.oppClassB=oppClass
   self.double = true
   if not BattleState.DOUBLES_READY then
     -- recorded, so the pairing is visible to anything that asks, but the
@@ -3709,6 +3724,7 @@ function BattleState:syncSides()
   for _, battler in activeBattlers(self) do
     require("src.battle.HeldItemRead").bind(battler, self)
   end
+  if GameVersion.isGen3() then require("src.battle.Gen3Mist").sync(self) end
 end
 
 -- IS THIS SIDE STILL ARRIVING?
@@ -4040,6 +4056,11 @@ function BattleState:enter()
       self:abilitySwitchIn(self.enemy)
       self:abilitySwitchIn(self.player)
     end })
+  end
+  -- GBA captures its opposing bag during Ai.battleStart, before observers.
+  -- Later trainer-class edits configure future fights, not this one's stock.
+  if GameVersion.isGen3() and self.kind == "trainer" then
+    require("src.battle.Gen3TrainerItems").history(self)
   end
   Runtime.emit("battle.started", {
     battle = self, kind = self:battleKind(),
@@ -5490,6 +5511,7 @@ function BattleState:computeDamage(user, target, move, opts)
   if GameVersion.isGen3() then
     opts = opts or {}
     opts.battle = self
+    require("src.battle.Gen3DamageAdjustment").options(self, user, target, move, opts)
   end
   -- Damage's Gen II held-item path needs the imported item records alongside
   -- the ordinary formula options. Keep Gen I's no-mod fast path allocation-free.
@@ -5584,11 +5606,27 @@ function BattleState:computeDamage(user, target, move, opts)
     opts = opts or {}
     opts.bwBattle = self
   end
-  if Runtime.wantsHook("battle.damage") and not (opts and opts.gbaSetDamage) then
-    return Runtime.call("battle.damage", function(c)
-      return Damage.compute(c.ruleset, c.user, c.target, c.move, c.opts)
-    end, { battle = self, ruleset = self.ruleset, user = user,
-           target = target, move = move, opts = opts, rng = self.rng })
+  if Runtime.wantsHook("battle.damage") and not (opts and (opts.gbaSetDamage or opts.gbaSilentCalculation)) then
+    local fallback
+    local function calculate(c)
+      local d, i = Damage.compute(c.ruleset, c.user, c.target, c.move, c.opts)
+      fallback = i
+      return d, i
+    end
+    local context = { battle = self, ruleset = self.ruleset, user = user,
+      target = target, move = move, opts = opts, rng = self.rng }
+    if not (opts and (opts.gbaNativeFixed or opts.gbaRawCalculation)) then
+      return Runtime.call("battle.damage", calculate, context)
+    end
+    local amount, info = Runtime.call("battle.damage", calculate, context)
+    if type(info) ~= "table" then
+      -- A complete native hook may replace the calculation without calling
+      -- next. Match the native default flags/category, without inventing a
+      -- hidden calculation (and its critical/random draws) behind that hook.
+      info = fallback or { crit = false, typeMult = 10,
+        typeFlags = { super = false, notVery = false, immune = false } }
+    end
+    return math.max(0, math.floor(tonumber(amount) or 0)), info
   end
   return Damage.compute(self.ruleset, user, target, move, opts)
 end
@@ -5724,7 +5762,7 @@ local function gen2EnemyClassAction(battle)
   end
 end
 
-function BattleState:vanillaEnemyAction(battler)
+local function chooseEnemyAction(self,battler)
   battler = battler or self.enemy
   if not battler then return nil end
   local locked = self:lockedAction(battler)
@@ -5733,6 +5771,20 @@ function BattleState:vanillaEnemyAction(battler)
     and locked == require("src.battle.Gen3Encore").menu(battler)
   if locked and not encoreOnly then return locked end
   if self.palace then return require("src.battle.Gen3Palace").choose(self, battler) end
+  if GameVersion.isGen3() then
+    -- Preserve the host's explicit full-action trainer callback. Registered
+    -- GBA class brains below instead choose move slots through the native AI.
+    if self.kind=='trainer'and self.trainer and self.trainer.brain then
+      return self.trainer.brain(self,battler)
+    end
+    if self.kind=='trainer'and self.trainer and not(self.pokedudeDemo or self.pokedude or self.demo or self.oldManTutorial)then
+      local Controller=require('src.battle.Gen3TrainerController')
+      local class=require('src.battle.Gen3TrainerClass').action(self,battler)
+      local action=class and Controller.action(self,battler,class)or Controller.plan(self,battler)
+      if action then return action end
+    end
+    return TrainerAI.chooseMove(battler,self.rng,self)
+  end
   -- an ai_classes brain (or one on the trainer record) supersedes the
   -- class action and move scoring entirely
   if self.kind == "trainer" and self.trainer then
@@ -5740,16 +5792,28 @@ function BattleState:vanillaEnemyAction(battler)
     local brain = self.trainer.brain or (class and class.brain)
     if brain then return brain(self, battler) end
   end
-  -- CLASS AI MAY SPEND THE TURN ON AN ITEM OR A SWITCH -- but a trainer has
-  -- one bag and one bench, not one per slot, so it is asked once, for the
-  -- slot the whole of TrainerAI already reads (`battle.enemy`).  Letting the
-  -- right-hand slot ask too would have a trainer drink two SUPER POTIONs on
-  -- the same Pokemon in the same turn.
+  -- The GBA hook keeps one opposing bag while selecting for the actual
+  -- controller position. The older class path retains its left-slot policy.
   if battler == self.enemy then
     local classAct = gen2EnemyClassAction(self)
     if classAct then return classAct end
   end
   return TrainerAI.chooseMove(battler, self.rng, self)
+end
+
+-- The native opponent controller recovers from failed class/move brains by
+-- choosing the first PP-bearing slot. Explicit host trainer.brain callbacks
+-- retain their full-action/error contract. Keep the observed bag/use state;
+-- retrying the native selection would spend stock or call a mod twice.
+function BattleState:vanillaEnemyAction(battler)
+  battler=battler or self.enemy
+  if not battler then return nil end
+  if not GameVersion.isGen3() or(self.kind=='trainer'and self.trainer and self.trainer.brain)then
+    return chooseEnemyAction(self,battler)
+  end
+  local ok,action=pcall(chooseEnemyAction,self,battler)
+  if ok and action then return action end
+  return require("src.battle.Gen3TrainerController").fallback(battler)
 end
 
 local function orderMove(action, data)
@@ -6193,6 +6257,51 @@ function BattleState:switchPlayerInto(pos, newMon)
   return incoming
 end
 
+-- Trainer commands address a position and its own bench, including the
+-- right-hand trainer's separate party. The left aliases stay in place.
+-- GBA queued commands instead supply their already selected global-party
+-- entry. Class/original actions can cross that ownership split, just as the
+-- native executor can; fresh public requests are admitted by Decision.slot.
+function BattleState:switchTrainerInto(pos,index,nativeParty)
+  if pos~=1 and pos~=3 then return nil end
+  if nativeParty and(not GameVersion.isGen3()
+      or(nativeParty~=self.enemyParty and nativeParty~=self.enemyPartyB))then return nil end
+  local party=nativeParty or self:benchFor(false,pos)
+  local mon=party[index]
+  local previous=self:battlerAt(pos)
+  if not previous or not mon then return nil end
+  if not nativeParty then
+    if (mon.hp or 0)<=0 or Party.isEgg(mon)then return nil end
+    for _,other in ipairs({1,3})do
+      local current=self:battlerAt(other)
+      if current and current.mon==mon then return nil end
+    end
+  end
+  self:restoreMimicked(previous)
+  local incoming=makeBattler(self.data,mon,false,nil,self)
+  if nativeParty then
+    incoming.partyIndex=party==self.enemyPartyB and #self.enemyParty+index or index
+  end
+  if pos==1 then self.enemyIndex=party==self.enemyParty and index or nil
+  elseif self.enemyPartyB then
+    self.enemyIndexB=party==self.enemyPartyB and index or nil
+    self.enemyIndexRight=party==self.enemyParty and index or nil
+  else self.enemyIndexRight=index end
+  self:placeBattler(pos,incoming)
+  for _,foe in ipairs(foesOf(self,incoming))do clearTrapping(foe)end
+  self:syncSides()
+  Runtime.emit("battle.battler_switched",{battle=self,side=self.sides[2],battler=incoming,previous=previous})
+  self:abilitySwitchOut(previous)
+  markSeen(self.game,mon.species,mon)
+  local trainer=pos==3 and self.trainerB or self.trainer
+  local label=trainer and trainer.name or self:trainerLabel_()
+  self:sayNext(Strings("%s with-\ndrew %s!",label,previous.name))
+  self:sayNext(Strings("%s sent\nout %s!",label,incoming.name))
+  HeldItems.onEntry(self,incoming)
+  self:actNext(function()self:abilitySwitchIn(incoming)end)
+  return incoming
+end
+
 -- ---------------------------------------------------------------------
 -- ABILITIES IN THE TURN LOOP
 -- ---------------------------------------------------------------------
@@ -6236,6 +6345,7 @@ function BattleState:abilityHeal(battler, numerator, denominator)
   local amount = math.max(1, math.floor(max * numerator / denominator))
   local before = battler.mon.hp
   battler.mon.hp = math.min(max, before + amount)
+  if GameVersion.isGen3() then require('src.battle.Gen3Faint').healed(battler) end
   local gained = battler.mon.hp - before
   if gained > 0 then self:drainNext(battler, battler.mon.hp) end
   return gained
@@ -6305,6 +6415,7 @@ end
 -- The visible half of a switch-in ability, split out so TRACE can run the
 -- effect of whatever it just copied.
 function BattleState:abilitySwitchInEffect(battler, act)
+  if GameVersion.isGen3() then require("src.battle.Gen3Mist").sync(self) end
   local who = displayName(battler)
   if act.kind == "weather" then
     -- permanent: DROUGHT's sun does not run out the way SUNNY DAY's does
@@ -6578,7 +6689,7 @@ end
 
 -- FOCUS BAND, asked the moment a hit would knock the holder out.  Returns
 -- true when the band held and the Pokemon is standing on one HP.
-function BattleState:focusBandHolds(battler, incoming)
+function BattleState:focusBandHolds(battler, incoming, rawProc)
   if not (battler and battler.mon) then return false end
   if GameVersion.isGen2() then
     return HeldItems.limitDirectDamage(self.data, battler, incoming, self.rng) < incoming
@@ -6589,12 +6700,14 @@ function BattleState:focusBandHolds(battler, incoming)
     return require("src.battle.Gen5HoldItems").focusBand(self, battler, incoming)
   end
   if GameVersion.isGen3() then
-    if battler.mon.hp <= 0 then return false end
+    if battler.mon.hp <= 0 and not rawProc then return false end
     local effect, chance = HoldItems.effectOf(battler, "endure")
     if effect ~= "FOCUS_BAND" then return false end
     if (self.rng or love.math.random)(0, 99) >= chance then return false end
     require("src.battle.Gen3AIItemKnowledge").record(self, battler, 39)
-    return incoming >= battler.mon.hp
+    -- R/S's command retains successful procs even before a lethal strike.
+    -- Existing callers still ask whether this individual hit was saved.
+    return rawProc or incoming >= battler.mon.hp
   end
   -- only a hit that would actually finish it, and only from full-ish health
   -- is NOT a condition: the cartridge lets a band save a Pokemon on 1 HP too
@@ -6660,6 +6773,7 @@ function BattleState:holdItemTrigger(battler, when)
   elseif act.kind == "heal" then
     local max = (battler.mon.stats and battler.mon.stats.hp) or battler.mon.hp
     battler.mon.hp = math.min(max, battler.mon.hp + act.amount)
+    if GameVersion.isGen3() then require('src.battle.Gen3Faint').healed(battler) end
     self:drainNext(battler, battler.mon.hp)
     if act.effect == "LEFTOVERS" then
       require("src.battle.Gen3AIItemKnowledge").record(self, battler, 43)
@@ -6858,6 +6972,17 @@ function BattleState:endOfTurn()
   -- nothing at all in a single battle, where the faint path fills the slot
   -- itself and there is nothing pending.
   self:fillEmptySlots()
+  if GameVersion.isGen3()and self:isDouble()then
+    -- Residual faints remove their occupants through queued faint/EXP work.
+    -- Keep existing turn-event timing, then fill those newly empty places
+    -- after the queued removals, before the next native decision.
+    for _,actor in activeBattlers(self)do
+      if actor.mon and actor.mon.hp<=0 and actor.faintQueued then
+        self:actNext(function()self:fillEmptySlots()end)
+        break
+      end
+    end
+  end
   -- BATTLE PALACE: the first time a Pokemon is at half HP or below (and
   -- awake), its nature shows (VARIOUS_PALACE_FLAVOR_TEXT)
   if self.palace then
@@ -6887,6 +7012,7 @@ function BattleState:gen3WishTick(b)
       local max = maxHpOf(b)
       if b.mon.hp < max then
         b.mon.hp = math.min(max, b.mon.hp + heal)
+        if GameVersion.isGen3() then require('src.battle.Gen3Faint').healed(b) end
         self:drainNext(b, b.mon.hp)
         self:sayNext(Strings("%s's wish\ncame true!", displayName(b)))
       end
@@ -6900,6 +7026,7 @@ function BattleState:gen3IngrainTick(b)
   if b.ingrained and b.mon.hp < maxHpOf(b) then
     b.mon.hp = math.min(maxHpOf(b),
                         b.mon.hp + math.max(1, math.floor(maxHpOf(b) / 16)))
+    if GameVersion.isGen3() then require('src.battle.Gen3Faint').healed(b) end
     self:drainNext(b, b.mon.hp)
     self:sayNext(Strings("%s absorbed\nnutrients with its\nroots!",
                          displayName(b)))
@@ -6968,7 +7095,7 @@ function BattleState:gen3BattlerCountersTick(b, scheduled)
   end
 end
 
-function BattleState:gen3DelayedCountersTick()
+function BattleState:gen3DelayedCountersTick(order)
   -- FUTURE SIGHT and DOOM DESIRE, whose damage was rolled two turns ago and
   -- lands on whoever is standing there now.
   for index, side in ipairs(self.sides or {}) do
@@ -6988,6 +7115,7 @@ function BattleState:gen3DelayedCountersTick()
       end
     end
   end
+  if GameVersion.isGen3()then return require('src.battle.Gen3PerishSong').tick(self,order)end
   -- PERISH SONG last, and both sides together: the counter reaching zero
   -- faints the Pokemon whatever its HP is.
   for _, b in activeBattlers(self) do
@@ -8013,13 +8141,16 @@ function BattleState:executeAction(user, target, action)
   -- faint cases are already covered by the HP guard below (#441)
   if self.result then return end
   if not (user and user.mon) then return end
+  if GameVersion.isGen3() and action and action.gen3TrainerAction then
+    return require("src.battle.Gen3TrainerController").execute(self,user,action)
+  end
   if GameVersion.isGen3() then
     if user.position ~= nil and self:battlerAt(user.position) ~= user then return end
     if target and target.position ~= nil and self:battlerAt(target.position) ~= target then
       target = self:battlerAt(target.position) or self:defaultTargetFor(user)
     end
   end
-  if user.mon.hp <= 0 then return end
+  if user.mon.hp <= 0 or GameVersion.isGen3() and require('src.battle.Gen3Faint').isFainted(user) then return end
   if not action then return end
   if action.special=='modEnemyTurn'then return end
   -- PLATINUM / HGSS: dragged out or switched out earlier this turn (Roar,
@@ -8067,6 +8198,11 @@ function BattleState:executeAction(user, target, action)
   end
 
   local function run()
+    local special = action.special
+    if GameVersion.isGen3() and (action.id and not special or special == 'recharge'
+        or special == 'bound' or special == 'trapping' or special == 'bide') then
+      require('src.battle.Gen3Faint').begin(user)
+    end
     -- BLACK AND WHITE: held in the sky, the Choice lock, the thaw flag, a
     -- sealed / grounded move (src/battle/Gen5MoveRules.lua)
     if self.bw then
@@ -8206,10 +8342,12 @@ function BattleState:executeAction(user, target, action)
     -- it has always been.
     local list = { target }
     local spreadAnimation = false
+    local presentTargets = false
     if self:isDouble() then
       local def = self:moveDef(action)
       if def then
         local targetKind = tonumber(def.target)
+        presentTargets = GameVersion.isGen3() and targetKind == Targeting.FOES_AND_ALLY
         spreadAnimation = targetKind == Targeting.BOTH
                           or targetKind == Targeting.FOES_AND_ALLY
         local chosen = explicitTarget and target or (self.chosenTargets or {})[user.position] or target
@@ -8222,11 +8360,11 @@ function BattleState:executeAction(user, target, action)
     end
     local animationPlayed = false
     for i, one in ipairs(list) do
-      if one and one.mon and (one.mon.hp or 0) > 0 then
+      if one and one.mon and ((one.mon.hp or 0) > 0 or presentTargets) then
         -- only the first announces; the rest are the same move landing again
         self:performMove(user, one, action, i > 1,
                          spreadAnimation and animationPlayed, GameVersion.generation() == 3 and i > 1)
-        if self._gbaActionFrame and self._gbaActionFrame.ppBlocked then break end
+        if self._gbaActionFrame and (self._gbaActionFrame.ppBlocked or self._gbaActionFrame.gbaStopTargets) then break end
         -- FireRed's Cmd_attackanimation increments animTargetsHit only when an
         -- animation actually survives the no-effect/failure path.  If the
         -- first target cancels it, a later spread target is still allowed to
@@ -8238,9 +8376,16 @@ function BattleState:executeAction(user, target, action)
   local parent = self._gbaActionFrame
   local frame = GameVersion.isGen3() and {} or nil
   if frame then self._gbaActionFrame = frame end
-  run()
+  local ok, err = true, nil
+  if frame then
+    ok, err = pcall(function()
+      run()
+      require('src.battle.Gen3Faint').flush(self, frame)
+    end)
+  else run() end
   if frame then
     self._gbaActionFrame = parent
+    if not ok then error(err, 0) end
     local Schedule = require("src.battle.GbaItemSchedule")
     if action.id and not frame.moved then Schedule.moveEnd(self) end
     -- Switch-in abilities are queued; their completion performs the sweep.
@@ -8370,16 +8515,28 @@ function BattleState:statusInterrupt(user, target, move)
     -- 40-power typeless hit against the mon's own defense -- with the
     -- OPPONENT's Reflect still applying (the screen check keeps
     -- reading the opponent's battle status)
-    local dmg = self:computeDamage(user, user,
+    local gba = GameVersion.isGen3()
+    local dmg, info = self:computeDamage(user, user,
                                    { id = "CONFUSED", power = 40, type = "NORMAL", accuracy = 100 },
                                    { rng = self.rng, forceCrit = false, typeless = true,
-                                     screens = GameVersion.isGen3() and user or target })
-    if GameVersion.isGen3() then
-      dmg = math.max(1, math.floor(dmg * self.rng(85, 100) / 100))
+                                     gbaRawCalculation = gba or nil, gbaSilentCalculation = gba or nil,
+                                     screens = gba and user or target })
+    local adjustment
+    if gba then
+      local native = require("src.battle.Gen3DamageAdjustment")
+      if native.rs() then
+        dmg, info = native.apply({ battle = self, user = user, target = user, move = move,
+          rng = self.rng, gbaNativeDamage = true }, dmg, info, "normal2")
+        adjustment = info.damageAdjustment
+      else
+        dmg = math.max(1, math.floor(dmg * self.rng(85, 100) / 100))
+      end
+      adjustment = adjustment or {}
+      adjustment.confusion = true
     end
     self:sayNext(self:romText("_HurtItselfText", "It hurt itself in\nits confusion!"))
     self:clearVolatiles(user, true)
-    self:applyDamage(user, dmg, false, GameVersion.isGen3() and { confusion = true } or nil)
+    self:applyDamage(user, dmg, false, adjustment)
     if user.mon.hp <= 0 then self:onFaint(user) end
     return true
   end
@@ -8826,6 +8983,13 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
     self:drainNext() -- REST/RECOVER/SOFTBOILED move the user's bar
     return
   end
+  if GameVersion.isGen3() and move.power == 0 and move.fixedDamage == nil
+      and record and record.gbaNativeFixed then
+    -- The native dispatcher selects its status body before accuracy or
+    -- damage calculation when an imported fixed-damage row has zero power.
+    self:sayNext(self:romText("STRINGID_BUTNOTHINGHAPPENED", "But nothing happened!"))
+    return
+  end
   if move.power == 0 and not (record and record.kind == "full") then
     MoveEffects.warnUnknown(move.effect)
     self:cancelMoveAnim()
@@ -8849,6 +9013,8 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   if not GameVersion.isGen3() then
     return performMove(self, user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
   end
+  if not isCalled then require('src.battle.Gen3Faint').begin(user) end
+  require("src.battle.Gen3Mist").sync(self)
   if not isCalled then
     local chosen = self:moveDef(moveInst)
     local changed
@@ -8863,20 +9029,29 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   local caller = self._gbaNextCaller
   self._gbaNextCaller = nil
   local frame = { parent = parent, user = user, target = target, move = self:moveDef(moveInst), moveId = moveInst.id,
+    spreadContinuation = spreadContinuation,
     calledBy = isCalled and caller and caller.parent == parent and caller.move or nil,
+    calledReactionSlot = isCalled and caller and caller.parent == parent and caller.reactionSlot or nil,
     calledPPSlot = isCalled and caller and caller.parent == parent and caller.ppSlot or nil }
+  require("src.battle.Gen3HitHistory").begin(frame)
   if isCalled and caller and caller.parent == parent then caller.frame = frame end
   if parent then parent.called = true end
   self._gbaMoveFrame = frame
   if self._gbaActionFrame then self._gbaActionFrame.moved = true end
-  performMove(self, user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
-  require("src.battle.Gen3SubstitutePresentation").finish(self, frame)
-  if not frame.finished and not frame.nativeCalled and not frame.suspended then Schedule.moveEnd(self) end
-  if frame.called and not frame.nativeCalled and not frame.suspended and frame.move
-      and tonumber(frame.move.gen3Effect) ~= 127 and frame.move.effect ~= "BATON_PASS_EFFECT" then
-    frame.user.lastMove = frame.moveId
-  end
+  local ok, err = pcall(function()
+    performMove(self, user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
+    local Faint = require('src.battle.Gen3Faint')
+    Faint.body(self, frame)
+    Faint.flush(self, frame)
+    require("src.battle.Gen3SubstitutePresentation").finish(self, frame)
+    if not frame.finished and not frame.nativeCalled and not frame.suspended then Schedule.moveEnd(self) end
+    if frame.called and not frame.nativeCalled and not frame.suspended and frame.move
+        and tonumber(frame.move.gen3Effect) ~= 127 and frame.move.effect ~= "BATON_PASS_EFFECT" then
+      frame.user.lastMove = frame.moveId
+    end
+  end)
   self._gbaMoveFrame = parent
+  if not ok then error(err, 0) end
   if not isCalled and not parent and not self._gbaActionFrame and not frame.suspended then Schedule.afterAction(self) end
 end
 
@@ -8924,6 +9099,9 @@ function BattleState:continueBide(user, target)
 end
 
 function BattleState:selfDestruct(user)
+  -- The native Explosion prefix already executed setHP. Repeating the
+  -- legacy callback here would erase authored HP and genuine native heals.
+  if GameVersion.isGen3() and require('src.battle.Gen3Faint').pending(self, user) then return end
   user.mon.hp = 0
   self:onFaint(user)
 end
@@ -8989,6 +9167,7 @@ function BattleState:applyDamage(target, dmg, fromMove, adjustment)
     end
   end
   target.mon.hp = target.mon.hp - dealt
+  if gba and target.mon.hp <= 0 then require('src.battle.Gen3Faint').mark(target) end
   if dealt > 0 then self:drainNext(target, target.mon.hp) end -- animate the bar down
   if endured then
     self:sayNext(Strings("%s endured\nthe hit!", displayName(target)))
@@ -9033,42 +9212,54 @@ function BattleState:killerOf(battler)
 end
 
 function BattleState:onFaint(battler, fieldTerminal)
+  local gba = GameVersion.isGen3()
+  local Faint = gba and require('src.battle.Gen3Faint')
+  if gba and (not battler or not battler.mon or not Faint.isFainted(battler) or Faint.deferred(self, battler)) then return end
   if battler.faintQueued then return end
   battler.faintQueued = true
-  -- GRUDGE: the move that did it loses every PP it had.  Asked before
-  -- DESTINY BOND, because a Pokemon carrying both spends both.
-  if battler.grudge then
-    battler.grudge = nil
-    local killer = self:killerOf(battler)
-    local lastId = killer and killer.lastMove
-    if lastId then
-      for _, m in ipairs(killer.curMoves or killer.mon.moves or {}) do
-        if m.id == lastId then
-          m.pp = 0
-          self:sayNext(Strings("%s's %s\nlost all its PP!",
-                               displayName(killer), lastId))
-          break
+  if gba then Faint.announce(battler) end
+  if not gba then
+    -- GRUDGE: the move that did it loses every PP it had.  Asked before
+    -- DESTINY BOND, because a Pokemon carrying both spends both.
+    if battler.grudge then
+      battler.grudge = nil
+      local killer = self:killerOf(battler)
+      local lastId = killer and killer.lastMove
+      if lastId then
+        for _, m in ipairs(killer.curMoves or killer.mon.moves or {}) do
+          if m.id == lastId then
+            m.pp = 0
+            self:sayNext(Strings("%s's %s\nlost all its PP!",
+                                 displayName(killer), lastId))
+            break
+          end
         end
       end
     end
-  end
-  -- DESTINY BOND: whoever knocked it out goes with it.  Asked here, once,
-  -- before the faint is queued for anything else.
-  if battler.destinyBond then
-    battler.destinyBond = nil
-    local killer = self:killerOf(battler)
-    if killer and killer.mon and killer.mon.hp > 0 then
-      self:sayNext(Strings("%s took\n%s with it!", displayName(battler),
-                           displayName(killer)))
-      killer.mon.hp = 0
-      self:drainNext(killer, 0)
-      self:onFaint(killer)
+    -- DESTINY BOND: whoever knocked it out goes with it.  Asked here, once,
+    -- before the faint is queued for anything else.
+    if battler.destinyBond then
+      battler.destinyBond = nil
+      local killer = self:killerOf(battler)
+      if killer and killer.mon and killer.mon.hp > 0 then
+        self:sayNext(Strings("%s took\n%s with it!", displayName(battler),
+                             displayName(killer)))
+        killer.mon.hp = 0
+        self:drainNext(killer, 0)
+        self:onFaint(killer)
+      end
     end
-  end
+  end -- legacy reactive order; GBA reactions follow the target announcement
   if battler.isPlayer and self.participants then
     self.participants[battler.mon] = nil
   end
-  Runtime.emit("battle.fainted", { battle = self, battler = battler })
+  if gba then
+    local previous = self._gbaFaintAnnouncement
+    self._gbaFaintAnnouncement = battler
+    local ok, err = pcall(Runtime.emit, 'battle.fainted', { battle = self, battler = battler })
+    self._gbaFaintAnnouncement = previous
+    if not ok then error(err, 0) end
+  else Runtime.emit("battle.fainted", { battle = self, battler = battler }) end
   if battler.isPlayer then
     -- HandlePlayerMonFainted (core.asm:1070-1085): the companion loses
     -- happiness on its own faint; an enemy 30+ levels above it makes
@@ -9108,6 +9299,7 @@ function BattleState:onFaint(battler, fieldTerminal)
   end
   -- _EnemyMonFaintedText "Enemy X fainted!" / _PlayerMonFaintedText
   self:sayNext(Strings("%s\nfainted!", displayName(battler)))
+  if gba then Faint.react(self, battler) end
   -- Gold announces both faints in a terminal field batch, while the player's
   -- loss alone owns resolution. Do not enqueue enemy EXP, victory or replacement.
   if fieldTerminal then return end

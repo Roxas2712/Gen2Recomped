@@ -4,14 +4,14 @@ local V, F, H =
   require("src.core.GameVersion"), require("src.link.Fingerprint"), require("src.link.Handshake")
 local Copy = require("src.mods.Merge").deepCopy
 local data, before = T.fixtures.fresh(), V.get()
--- Legacy hash retained; native hash independently audits revision 19 -> 20 only.
+-- Independent Python integer FNV probe verifies the revision 24 -> 25 stream.
 local LEGACY = "e33d251961f2a41d"
-local NATIVE = "43fe7ea27b438e0e"
+local NATIVE = "35f797dbee5a94af"
 -- Independently extend the audited GBA fixture digest by the two explicit
 -- native command/party suffixes. The record surface remains identical;
 -- [native_gba_commands]20/[native_gba_party]1 becomes nds-4-1 or nds-5-1.
 local NDS = { [4] = "d37127fdeb67b571", [5] = "5959e75709cb1fcb" }
-for _, version in ipairs({ "red", "firered", "gold", "emerald", "platinum", "firered", "black", "gold" }) do
+for _, version in ipairs({ "red", "firered", "gold", "emerald", "platinum", "diamond", "firered", "black", "gold" }) do
   V.set(version)
   local gba = V.isGen3()
   local generation = V.generation()
@@ -22,7 +22,7 @@ for _, version in ipairs({ "red", "firered", "gold", "emerald", "platinum", "fir
     gba and NATIVE or nds and NDS[generation] or LEGACY,
     "runtime command revision participates in cached fingerprints"
   )
-  T.eq(F.nativeBattleRevision(), gba and 20 or nds and ("nds-" .. generation .. "-1") or nil,
+  T.eq(F.nativeBattleRevision(), gba and 25 or nds and ("nds-" .. generation .. "-1") or nil,
     "each edition advertises its native command revision")
   local game = { data = data, save = { player = { name = "RULES" } } }
   local current = H.hello(game, "battle")
@@ -53,10 +53,10 @@ for _, version in ipairs({ "red", "firered", "gold", "emerald", "platinum", "fir
   end
   if gba then
     local previous = Copy(current)
-    previous.nativeBattleRevision, previous.fingerprint = 19, "22e453523676534e"
-    T.eq(H.checkCompat(current, previous), "subset", "previous native music rules cannot admit lockstep")
+    previous.nativeBattleRevision, previous.fingerprint = 24, "2882b526b6881e0a"
+    T.eq(H.checkCompat(current, previous), "subset", "previous native adjustment rules cannot admit lockstep")
     T.eq(H.checkCompat(previous, current), "subset", "native command revision mismatch is symmetric")
-    T.eq(current.nativePartyRevision, 1, "music commands retain the native party codec")
+    T.eq(current.nativePartyRevision, 1, "Faint/chance rules retain the native party codec")
     for _, host in ipairs({ false, true }) do
       for _, peer in ipairs({ legacy, previous }) do
         local state = setmetatable(

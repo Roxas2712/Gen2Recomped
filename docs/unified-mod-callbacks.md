@@ -79,6 +79,11 @@ Battler metadata is read-only. Change its live Pokémon via `battler.mon`.
 Shared native records share one public view within a call, so `user.mon` and
 `target.mon` remain the same object when they reference the same Pokémon.
 
+API 3 additionally exposes direct battler Pokémon fields and retains callback
+snapshots across `next()`. Its precise alias, mutation and link rules are in
+[API 3 battler records](api3-battler-records.md). The API-2 behavior described
+on this page stays unchanged.
+
 ## Adapted hooks
 
 | Hook | Adapted boundary |

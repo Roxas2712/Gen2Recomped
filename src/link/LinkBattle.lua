@@ -169,6 +169,8 @@ local function activeStr(b, role)
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3Rage").signature(b) or "")
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3ChoiceBand").signature(b) or "")
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3MirrorMove").signature(b) or "")
+    .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3HitHistory").signature(b, role) or "")
+    .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3Faint").signature(b) or "")
 end
 
 local function benchStr(party)
