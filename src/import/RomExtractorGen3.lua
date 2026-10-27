@@ -36487,7 +36487,7 @@ function RomExtractorGen3:animScriptRead(entry, branchCtx, visualLife)
               args[i] = v
             end
             local task = { fn = fn - 0x08000000, args = args, at = t, site = p,
-                           priority = rom:u8(p + 5) }
+                           priority = rom:u8(p + 5), order = #tasks + 1 }
             tasks[#tasks + 1] = task
             visualStarted("task", task, t)
           end

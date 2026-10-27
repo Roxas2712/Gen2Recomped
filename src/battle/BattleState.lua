@@ -4066,6 +4066,8 @@ end
 -- any pop (finish, script teardown) must silence the alarm loop
 -- (end_of_battle.asm clears wLowHealthAlarm when a battle ends)
 function BattleState:exit()
+  local tasks=package.loaded['src.core.game3.battle.anim_tasks']
+  if tasks then tasks._nativeExit(self)end
   local capture=package.loaded['src.core.game3.battle.catch_seq']
   if capture then capture._nativeRelease(self)end
   local sequence=package.loaded['src.core.game3.battle.switch_seq']

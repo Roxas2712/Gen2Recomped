@@ -15,6 +15,8 @@ function M.fromTask(kind,task)
  if at==nil then at=0 end
  if type(task)~='table'or not integer(task.fn,1,0x1ffffff)
   or not integer(task.priority,0,255)or not integer(at,0,0x7fffffff)
+  or task.site~=nil and not integer(task.site,0,0x1ffffff)
+  or task.order~=nil and not integer(task.order,1,0x7fffffff)
   or type(task.args)~='table'or #task.args>8 then
   return nil,'native visual task operands unavailable'
  end
@@ -27,6 +29,6 @@ function M.fromTask(kind,task)
   if not integer(key,1,#args)then return nil,'invalid native visual task operand index'end
  end
  return{schema=M.SCHEMA,kind=kind,name=name,priority=task.priority,args=args,
-  at=at,nativeFunction=task.fn-task.fn%2}
+  at=at,nativeFunction=task.fn-task.fn%2,scriptOffset=task.site,order=task.order}
 end
 return M

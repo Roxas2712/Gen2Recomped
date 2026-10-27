@@ -32,15 +32,24 @@ local function context(screen,player,fresh)
  local function id(key)
   return function()
    if not valid(c)then return nil,'native animation handle retired'end
-   touch(c);return c.refs[2][key]or(key=='attackerPosition'and 0 or 1)
+   touch(c);local native=c.refs[2];local position=native[key]
+   if position~=nil then return position end
+   local attacker=native.attackerIsPlayer and 0 or 1
+   return key=='attackerPosition'and attacker or 1-attacker
   end
  end
  local attacker,target=id('attackerPosition'),id('targetPosition')
+ local function side(get)return function()
+  local position=get();return position~=nil and(position%2==0 and'player'or'enemy')or nil
+ end end
+ local attackerSide,targetSide=side(attacker),side(target)
  c.view=setmetatable({},{__index=function(_,key)
   if not valid(c)then return nil end
   touch(c);local native=c.refs[2]
   if key=='attackerId'then return attacker end
   if key=='targetId'then return target end
+  if key=='attackerSide'then return attackerSide end
+  if key=='targetSide'then return targetSide end
   if key=='frame'then return native.frame end
   if key=='_animBgId'or key=='_bgFade'then
    local layer=native:backgroundLayer()
@@ -88,6 +97,18 @@ local function dispatch(name,player,body,...)
  phases[name]=old
  if not result[1]then error(result[2],0)end
  return unpack(result,2,result.n)
+end
+function M._nativeView(player)
+ local screen=Battle._screen()
+ if not screen or screen.gen3Anim~=player then return nil end
+ -- A task can be born inside the native launch body after it increments
+ -- the serial. Keep that same admitted handle for the enclosing callback.
+ local phase=phases.launch;local c=phase and phase.context
+ if c and not c.retired and c.refs[1]==screen and c.refs[2]==player
+  and c.battle==Battle.getState()then
+  c.serial=player.presentationSerial;return c.view
+ end
+ return context(screen,player).view
 end
 function M._nativeLaunch(player,body,...)return dispatch('launch',player,body,...)end
 function M._nativeUpdate(player,body,...)return dispatch('update',player,body,...)end
