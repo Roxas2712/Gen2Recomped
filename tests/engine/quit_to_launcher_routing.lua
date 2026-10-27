@@ -40,6 +40,7 @@ local function count(name)
     counts[name] = (counts[name] or 0) + 1
   end
 end
+require("src.render.Assets").register{release=count("assetRelease")}
 set("walkerTick", count("walker"))
 upvalue(launcher, "openLauncher", count("launcher"), true)
 local Trace = require("src.core.BootTrace")
@@ -72,6 +73,7 @@ end
 local bare = fresh(true)
 T.eq(quit(), nil, "no-mod window close retains process exit")
 T.eq(counts.launcher or 0, 0, "no-mod close does not open launcher")
+T.eq(counts.assetRelease, 1, "accepted process exit releases the mounted asset session")
 shutdowns(1, "native exit")
 bare.close()
 for _, mode in ipairs({ "forward", "exit" }) do
@@ -89,6 +91,7 @@ f.exports.mode("launcher")
 T.eq(quit(), true, "mod launcher decision cancels LÖVE process exit")
 T.eq(f.exports.calls(), 1, "launcher path dispatches exactly once")
 T.eq(counts.launcher, 1, "actual native launcher-return function runs")
+T.eq(counts.assetRelease, 1, "actual launcher return releases assets without ending process workers")
 T.eq(Runtime.wantsHook("core.quit_to_launcher"), false, "native launcher return tears down mod buses")
 T.check(Runtime.hooks ~= f.result.loader.hooks, "native teardown replaces the old hook bus")
 T.eq(next(Runtime.hooks.chains), nil, "launcher starts with an empty live hook bus")
@@ -106,6 +109,7 @@ for _, veto in ipairs({ true, false }) do
   T.eq(quit(), veto and true or nil, "editor veto controls whether quit proceeds")
   T.eq(counts.editor, 1, "editor decision runs once")
   T.eq(f.exports.calls(), veto and 0 or 1, "accepted editor quit reaches hook; veto bypasses it")
+  T.eq(counts.assetRelease or 0, veto and 0 or 1, "editor veto retains assets until an accepted boundary")
   shutdowns(veto and 0 or 1, "editor exit")
   f.close()
 end
