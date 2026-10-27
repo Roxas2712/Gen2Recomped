@@ -1154,6 +1154,7 @@ local DATA_DERIVED = {
 function OverworldState:enter(mapId, x, y, facing, opts)
   Game = require("src.core.Game")
   Game.overworld = self
+  self.encounters = require("src.core.Gen2EncounterViews").forData(Game.data)
   -- THE SAVED CAMERA TILT, taken up before the first map is built.
   --
   -- `Gen4Camera` holds the choice in the module rather than reading the save,
@@ -2421,6 +2422,10 @@ function OverworldState:liveMaps()
 end
 
 function OverworldState:rebuildNeighbors()
+  -- Source renderers inspect the same live map/tileset registries as the
+  -- native loader. Missing fields made an already resident connected world
+  -- appear empty to those readers. Rebind on every rebuild after data edits.
+  self.maps, self.tilesets = Game.data.maps, Game.data.tilesets
   local mapId = self.map.id
   self.neighbors = {}
   local hops = FieldDefaults.world(Game.data, "neighborHops") or NEIGHBOR_HOPS
@@ -2436,7 +2441,7 @@ function OverworldState:rebuildNeighbors()
                                                      hops, reachW, reachH)) do
     keep[n.id] = true
     local m = MapLoader.load(Game.data, n.id)
-    table.insert(self.neighbors, { map = m, ox = n.ox, oy = n.oy, cx = n.ox / 16, cy = n.oy / 16 })
+    table.insert(self.neighbors, { id = m.id, map = m, ox = n.ox, oy = n.oy, cx = n.ox / 16, cy = n.oy / 16 })
   end
   -- bound resident memory: drop maps behind us that are neither current nor
   -- a drawn neighbor, releasing their window batch / border image / atlas

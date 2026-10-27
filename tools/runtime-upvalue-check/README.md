@@ -75,6 +75,15 @@ game profile. macOS adjusts the copied framework's install name and ad-hoc
 signs and verifies that copied app. This is a host ABI gate, not a GPU or
 gameplay test, nor proof that a universal app has been packaged correctly.
 
+For a pull-request run, the qualified `engineSource` is the checked-out
+synthetic merge commit (`github.sha`). The workflow run's `head_sha` identifies
+the pull-request branch and can describe different engine bytes. Package the
+source named by the reports, after verifying every `engineTree` entry against
+that Git commit. All component architectures must cover the exact packaged
+`main.lua`, `conf.lua`, `src`, `assets` and `data` trees. A green workflow or a
+matching branch name alone is insufficient; do not replace or relax this
+component/source binding when the branch or `main` has advanced.
+
 For an already qualified local macOS library:
 
 ```sh

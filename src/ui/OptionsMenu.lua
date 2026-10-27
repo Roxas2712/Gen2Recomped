@@ -170,8 +170,8 @@ local function buildRows(game)
       end },
     { id = "textSpeed", label = Strings("TEXT SPEED"),
       value = function(g) return Strings(SPEEDS[speedIndex(g)][2]) end,
-      step = function(g)
-        local i = speedIndex(g) % #SPEEDS + 1
+      step = function(g, dir)
+        local i = (speedIndex(g) - 1 + (dir or 1)) % #SPEEDS + 1
         g.save.options.textSpeed = SPEEDS[i][1]
         return true
       end },
@@ -315,7 +315,10 @@ local function buildRows(game)
         -- DEFAULT is index 0 and the list is 1..#SHINY_ODDS, so the wrap is
         -- over #SHINY_ODDS + 1 values and lands back on DEFAULT past the end
         local i = (shinyOddsIndex(g) + (dir or 1)) % (#SHINY_ODDS + 1)
-        o.shinyOdds = i == 0 and nil or SHINY_ODDS[i]
+        -- Keep DEFAULT explicit in options.lua. Removing this key from the
+        -- live table leaves the previous stored rate in GenOptions.fold,
+        -- so reloading could turn the extra shiny roll back on.
+        o.shinyOdds = i == 0 and 0 or SHINY_ODDS[i]
         return true
       end },
     { id = "musicVol", label = Strings("MUSIC VOL"),
@@ -825,11 +828,92 @@ function OptionsMenu.new(game, opts)
     Logger.error("ui.options.rows returned %s; keeping the vanilla rows",
                  type(hooked))
   end
-  return setmetatable({ game = game, rows = rows, index = 1, scroll = 0,
-                        onCancel = opts.onCancel }, OptionsMenu)
+  local self = setmetatable({ game = game, rows = rows, index = 1, scroll = 0,
+                        onCancel = opts.onCancel, onDone = opts.onDone }, OptionsMenu)
+  if GameVersion.isGen2() then
+    self.options = game.save.options
+    self.view = require("src.ui.Gen2OptionGroups").build(rows, function(members)
+      local page = setmetatable({game=game, rows=members, options=self.options,
+        index=1, scroll=0, sub=true, view={}}, OptionsMenu)
+      for i,row in ipairs(members) do page.view[i]=row end
+      page.view[#page.view+1]={id="cancel",label=Strings("BACK"),cancel=true}
+      game.stack:push(page)
+      return page
+    end)
+  end
+  return self
+end
+
+function OptionsMenu:visible() return self.view or self.rows end
+function OptionsMenu:row() return self:visible()[self.index] end
+function OptionsMenu:ensureVisible()
+  local count = #self:visible()
+  self.scroll = math.max(0, math.min(OptionRows.clampScroll(self.index,
+    self.scroll or 0, count), math.max(0,count-OptionRows.VISIBLE)))
+end
+function OptionsMenu:focusRow(id)
+  for i,row in ipairs(self:visible()) do
+    if row.id==id then self.index=i;self:ensureVisible();return self end
+  end
+  for i,row in ipairs(self:visible()) do
+    if row.group then
+      local found=false
+      for _,group in ipairs(require("src.ui.Gen2OptionGroups").groups) do
+        if group.id==row.id then
+          for _,member in ipairs(group.members) do if member==id then found=true end end
+        end
+      end
+      if found then
+        -- A hook can remove a member; do not open its group in that case.
+        for _,member in ipairs(self.rows) do
+          if member.id==id then
+            self.index=i;self:ensureVisible()
+            local page=row.activate(self.game)
+            return page and page:focusRow(id)
+          end
+        end
+      end
+    end
+  end
+end
+function OptionsMenu:cycle(row, delta)
+  if not row or row.group or row.cancel then return end
+  local changed
+  if row.step then changed=row.step(self.game,delta)
+  elseif row.cycle then row.cycle(self.options,delta,self.game);changed=true
+  elseif row.values and row.key then
+    local at=1
+    for i,value in ipairs(row.values) do if value==self.options[row.key] then at=i;break end end
+    if #row.values>0 then self.options[row.key]=row.values[(at-1+delta)%#row.values+1];changed=true end
+  end
+  if changed and self.game.writeOptions then self.game:writeOptions() end
+end
+function OptionsMenu:leave_()
+  if self.game.stack:top()~=self then return end
+  self.game.stack:pop()
+  if self.onDone then self.onDone(self.options) end
+  if self.onCancel then self.onCancel() end
+end
+function OptionsMenu:updateGrouped()
+  local input=self.game.input
+  if input:wasPressed("b") or input:wasPressed("start") then self:leave_();return end
+  local rows=self:visible()
+  if input:wasPressed("up") then self.index=(self.index-2)%#rows+1
+  elseif input:wasPressed("down") then self.index=self.index%#rows+1
+  else
+    local row=self:row()
+    if input:wasPressed("a") and row then
+      if row.cancel then self:leave_()
+      elseif row.activate then row.activate(self.game)
+      else self:cycle(row,1) end
+    elseif input:wasPressed("left") then self:cycle(row,-1)
+    elseif input:wasPressed("right") then self:cycle(row,1) end
+  end
+  self:ensureVisible()
 end
 
 function OptionsMenu:update(dt)
+  if self.view then return self:updateGrouped() end
   local input = self.game.input
   local rows = self.rows
   -- CANCEL sits below the hook-built rows so a mod cannot orphan the exit
@@ -874,6 +958,9 @@ function OptionsMenu:update(dt)
 end
 
 function OptionsMenu:draw()
+  if self.view then
+    return OptionRows.draw(self.game,self.view,self.index,self.scroll or 0)
+  end
   OptionRows.draw(self.game, self.rows, self.index, self.scroll or 0,
                   "CANCEL", #self.rows + 1)
 end

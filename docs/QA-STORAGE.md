@@ -221,3 +221,79 @@ Die Hintergrundbereinigung läuft unabhängig davon alle 15 Minuten. Lebende
 Kindprozesse und andere Leser halten ihre Sperren; deshalb erfolgt deren
 Bereinigung erst nach dem letzten Nutzer. Das intakte lokale Quellarchiv hält
 einmalige Code- und Modellstände auch nach Entfernung der Testkopien vor.
+
+## Erzeugte Daten weiterer LÖVE-Testprofile
+
+Der Hintergrundhelfer prüft zusätzlich exakt benannte `portemon-private-<16 Hex>`-
+und `gen2-palette-gpu-…`-Profile sowie die bekannten QA-Identities. Eingeschlossen
+sind die bekannten `isolated-home/Library/Application Support`-Hosts. Spielerprofile
+wie `portemon` und `Gen2Recomp` werden nicht erfasst.
+
+Ausschließlich `<edition>/data/generated` und `assets/generated` sind betroffen;
+HeartGold und SoulSilver sind enthalten. Alte Bestände werden nach 24 Stunden
+oder über einem gemeinsamen 2-GiB-Budget bereinigt, mit mindestens einer Stunde
+Schonzeit. Höchstens 48 Profile beziehungsweise etwa 100.000 Dateien werden je
+Durchgang gesichert, um Dateideskriptoren und Arbeitsspeicher zu begrenzen.
+
+Modelle einschließlich `generated/models`, Quellordner, Git, ROMs, Save-Dateien
+und `.qa-keep`-Unterbäume bleiben an ihrem Ort. Jede zu entfernende reguläre
+Cache-Datei wird vorher bytegenau im bestehenden lokalen Git-Archiv gesichert;
+die Quittung liegt unter `~/.cache/origami-qa-storage/love-receipts/`. Der Pfad im
+Snapshot entspricht dem ursprünglichen Pfad relativ zum Benutzerverzeichnis.
+Aktive Prozesse, gemeinsame Eingabesperren und Import-Aliase verhindern die
+Bereinigung. Ein später neu gestarteter Leser oder veränderte Dateien verhindern
+die Löschung auch nach der Sicherung. Die alte Importbereinigung darf gemischte
+Modell-/Save-Bäume nicht pauschal entfernen.
+
+Regressionen: `python3 -m unittest discover -s tests -p 'qa*storage*test.py'`.
+
+
+## Produzenten begrenzen statt Zwischenarchive anhäufen
+
+Archivierte Referenzen mit `qa_extract_archive(git_dir, revision, destination)`
+über eine Pipe entpacken; kein `baseline.tar` pro Lauf schreiben. Alte bekannte
+QA-Zwischenarchive werden mit ihren einzelnen Quell-/Modellbytes im dauerhaften
+Archiv dedupliziert, mit Wiederherstellungsnachweis, bevor sie entfernt werden.
+
+`qa_cache` begrenzt einen Ausgabeordner während des eigenen Kindes auf 4 GiB.
+`qa_limit_output(path, bytes)` ergänzt weitere reine Schreibbudgets; diese
+Funktion erteilt keine Löschberechtigung. Die echte Benutzerumgebung erzwingt
+mindestens 20 GiB frei, auch wenn ein alter Starter 8 GiB anfordert. Ein Budget-
+verstoß stoppt nur den neu gestarteten eigenen Prozessbaum mit sichtbarem Fehler.
+Kontrolle vor Start und während `qa_run`/`qa_popen`, maximal zwei Sekunden zwischen
+Budgetmessungen; keine harte Dateisystemquote, ein Schreibstoß kann überschießen.
+
+X/Y-Backend: vor dem Build `qa_build_storage.prepare(storage, work, sha256)`
+unter `session.lock`, maximal 2 GiB je ROM-Fingerprint / 4 GiB zusammen. Nach
+erfolgreichem Link und zusätzlich alle 15 Minuten nur bekannte `codeNNN.o`-/
+`entries.o`-Zwischenprodukte mit vorhandener C-Quelle entfernen. Laufende Builds,
+`.qa-keep`, C-/Headerquellen, Modelle, ROMs, fertige Bibliotheken und Spielstände
+bleiben erhalten. Ein neuer Fingerprint über dem Budget wird abgelehnt, statt
+ungeprüft alte Quellen oder fertige Bibliotheken zu entfernen. Direkte Aufrufe
+an den Helfern vorbei haben keine laufende Budgetkontrolle.
+
+QA-Profile und einzeln registrierte Testkopien erhalten ebenfalls laufende
+Budgets: 2 GiB je QA-Profil, 4 GiB je Testkopie. Auch ein kurzer erfolgreicher
+`qa_run` wird nach dem Kindende auf Überschreitung geprüft. Die laufende Kontrolle
+ist zeitgesteuert; das Einlesen sehr großer Verzeichnisbäume verlängert das
+Prüfintervall. Sie ersetzt keine harte Dateisystemquote.
+
+
+## Alte Releaseausgaben automatisch pflegen
+
+`qa_release_storage.py` pflegt bekannte `dist/Origami-Ascendant-*`-Pakete sowie
+`.local/release-unpacked/Origami-Ascendant-*`, `.local/ios-release/game.love`,
+`game-final.love` und `native-executable`. Pro Paketfamilie bleiben der neueste
+Stand und die höchste explizite Gen2-Version erhalten; macOS, iOS, API3-Mod,
+Gen2-Engine und Gen2-Mod sind getrennte Familien. Unbekannte Pakete und
+Laufzeit-Eingaben bleiben erhalten. Nur mindestens 24 Stunden unveränderte
+ältere Ausgaben bereinigen, alle 15 Minuten über den bestehenden Helfer.
+
+Vor Entfernen ältere ZIP-/LÖVE-Mitglieder direkt und dedupliziert im Quellarchiv
+sichern, entpackte Dateien ebenso; Wiederherstellungsnachweise liegen in
+`~/.cache/origami-qa-storage/release-receipts/`. Quellen und Modelle bleiben
+bytegenau im Archiv erhalten. Ganze Pakete mit ROMs/Saves nicht entfernen;
+Saves in gemischten entpackten Ordnern vor Ort behalten. Keep-Marker, echte
+Git-Checkouts, Symlinks und aktive Eingaben schützen. Releasepakete und
+entpackte Releaseeingaben vor Nutzung mit `qa_source` sperren; fremde Leser
+blockieren die Bereinigung über denselben nichtblockierenden Dateilock.

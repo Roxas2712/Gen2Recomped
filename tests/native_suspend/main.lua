@@ -1,6 +1,8 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Real native battle, private HTTPS cloud, two fresh account-bound profiles.
+io.stdout:setvbuf("no")
 local cfg,Game,Task,Auth,job,phase,done,expected,anchorError
+local progressAt=0;local startedAt=0
 local S;local J;local initialPP;local frames=0;local ticks=0;local animationTicks=0;local idleTicks=0;local captureInfo
 local function write(file,value)local f=assert(io.open(file,'wb'));f:write(require('src.link.Json').encode(value));f:close()end
 local function summary()
@@ -61,7 +63,7 @@ local function prepare()
   return update(self,dt)
  end
  if cfg.role=='source'then
-  Game.save.options.textSpeed='fast';Game.save.options.audioMuted=true;Game:applyOptions(Game.save.options)
+  Game.save.options.vsync='off';Game.save.options.textSpeed='fast';Game.save.options.audioMuted=true;Game:applyOptions(Game.save.options)
   Game.save.party={require('src.pokemon.Pokemon').new(Game.data,require('src.core.GameVersion').generation()==1 and'ONIX'or'SHUCKLE',35)}
   local mon=Game.save.party[1];mon.moves={{id=cfg.move or'SWIFT',pp=initialPP,maxPP=initialPP}}
   local p=Game.save.player;world:_checkpointRebuild({map=p.map,x=p.x,y=p.y,facing=p.facing})
@@ -77,6 +79,7 @@ local function prepare()
  end
 end
 function love.load()
+ startedAt=love.timer.getTime()
  local f=assert(io.open(os.getenv('RETRO_SUSPEND_CONFIG'),'rb'));cfg=require('src.link.Json').decode(f:read('*a'));f:close()
  love.audio.setVolume(0);love.math.setRandomSeed(cfg.role=='source'and 2712 or 999)
  require('src.core.SaveIdentity').migrateLegacy=function()return 0 end
@@ -97,8 +100,12 @@ local function step(button)
  Game:step(1/60);ticks=ticks+1
 end
 function love.update(dt)
+ if cfg and love.timer.getTime()-progressAt>5 then
+  progressAt=love.timer.getTime();local top=Game and Game.stack and Game.stack:top()
+  print('SUSPEND_PROGRESS '..tostring(cfg.role)..' phase='..tostring(phase)..' ticks='..ticks..' idle='..idleTicks..' native='..tostring(top and top.phase)..' turn='..tostring(top and top.turnCount)..' anim='..tostring(top and top.gen3AnimPlaying))
+ end
  if done then return end;frames=frames+1
- if frames>15000+(cfg.idleTicks or 0)then return finish(false,'Timed out '..tostring(phase)..' '..tostring(anchorError))end
+ if love.timer.getTime()-startedAt>(cfg.timeout or 180)-5 then return finish(false,'Timed out '..tostring(phase)..' '..tostring(anchorError))end
  if job then
   local r=job:poll();if not r then return end;job=nil
   if r.kind~='done'or not r.first then return finish(false,r.second or r.error)end
