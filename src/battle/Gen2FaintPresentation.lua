@@ -1,6 +1,7 @@
 -- Native GSC faint presentation, adapted from Gen1Recomp's
--- src/ui/gen2/BattleState.lua. Existing provenance remains under NOTICE.md.
--- Native-controller integration: Roxas2712 (LICENSE-ROXAS2712.md).
+-- src/ui/gen2/BattleState.lua. Existing Gen1Recomp/upstream copyrights and
+-- applicable licences remain effective. Native integration: Roxas2712; terms:
+-- https://github.com/Roxas2712/Gen2Recomped/blob/main/LICENSE-ROXAS2712.md
 -- The existing FX tick owns this slide. No HP, PP, EXP or turn resolution.
 local Sound = require('src.core.Sound')
 local Faint = {}
