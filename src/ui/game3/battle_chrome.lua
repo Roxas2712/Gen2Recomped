@@ -116,6 +116,41 @@ function C.manifest()
   windows={normal=templates},
   text=copy(text and text.text or{}),textboxPal=copy(textboxPal),windowTextPal=copy(windowPal),ppTextPal=copy(ppPal),native=true}
 end
+local function partyPhase(player)return'battle.partySummary.'..(player and'player'or'enemy')end
+function C.drawPartyBar(x,y,balls,ox,opponent,opts)
+ assert(opponent==nil or type(opponent)=='boolean','invalid party summary side')
+ for _,value in pairs{x=x,y=y,ox=ox}do
+  assert(type(value)=='number'and value==value and math.abs(value)<math.huge,'invalid party summary position')
+ end
+ assert(balls==nil or type(balls)=='table','invalid party summary slots')
+ assert(opts==nil or type(opts)=='table','invalid party summary options')
+ local player=not opponent;local phase=partyPhase(player)
+ if Boundary.active(phase)then return Boundary.invoke(phase)end
+ local screen=Battle._screen();if not screen then return false,'no native battle'end
+ opts=opts or{}
+ local ok,drawn=Scope.call(function()
+  return Native.paintPartySummary(screen,player,{x=x,y=y,ox=ox,slots=balls,
+   alpha=opts.alpha,ballHidden=opts.ballHidden,ballOx=opts.ballOx,extended=opts.extended})
+ end)
+ if not ok then error(drawn,0)end
+ return drawn
+end
+local basePartyBar=C.drawPartyBar
+function C._nativePartySummary(screen,player,body)
+ if C.drawPartyBar==basePartyBar then return body()end
+ local phase=partyPhase(player)
+ if Boundary.active(phase)then return Boundary.invoke(phase)end
+ local stage=require('src.core.game3.battle.stage').current(Call.owner(C,'drawPartyBar'))
+ local bar=stage and stage.partyBar[player and'player'or'enemy']
+ if not bar or not bar.visible then return body()end
+ local ok,result=Scope.call(function()
+  return Boundary.dispatch(phase,body,function()
+   return Call.call(C,'drawPartyBar',bar.x,bar.y,bar.balls,bar.ox,not player,bar)
+  end)
+ end)
+ if not ok then error(result,0)end
+ return result
+end
 local modes={none='message',menu='action',moves='moves'}
 local painted
 local function serial()local r=package.loaded['src.render.Renderer'];return r and r.frameSerial end
