@@ -49,7 +49,7 @@ local STAT_LABEL = {
 -- stat stages
 -- ---------------------------------------------------------------------
 
-local function changeStage(battle, who, stat, delta, fromEnemy)
+local function changeStage(battle, who, stat, delta, fromEnemy, source)
   if fromEnemy and (who.substituteHP or who.mist) then
     if who.mist then
       return { Strings("%s is\nprotected by MIST!", displayName(who)) }
@@ -58,12 +58,11 @@ local function changeStage(battle, who, stat, delta, fromEnemy)
   end
   -- CLEAR BODY, WHITE SMOKE, HYPER CUTTER and KEEN EYE refuse a drop an
   -- OPPONENT causes, and print "won't go lower!" instead of dropping.
-  -- `delta < 0` is the whole test rather than `fromEnemy`, because a side
-  -- effect that pierces MIST passes fromEnemy = false and is still the foe's
-  -- doing; every negative-delta call in this engine targets the opponent,
-  -- and the self-lowering moves that would need the distinction (Overheat,
-  -- Superpower) are later generations' than the one this file serves.
+  -- A secondary effect can pierce MIST and still belong to the opponent.
+  -- Native GBA self-costs carry their actual source so White Smoke/Clear
+  -- Body do not prevent Overheat, Superpower or Curse lowering the user.
   if delta < 0
+     and not (GameVersion.isGen3() and source == who)
      and require("src.battle.Abilities").refusesStatDrop(who, stat) then
     return { Strings("%s's\n%s\nwon't go lower!", displayName(who),
                      Strings(STAT_LABEL[stat] or tostring(stat))) }
@@ -531,22 +530,29 @@ local function hitsFrom(dist, ctx)
   return dist[r + 1]
 end
 
--- drain_hp.asm halves the RAW wDamage IN PLACE (minimum 1) and heals
--- that amount, so Counter would see the halved value
-local function drainHalf(text)
+-- Classic drain_hp.asm halves raw wDamage in place. GBA instead reads
+-- hpDealt, capped by the defender's remaining HP (or Substitute HP); its
+-- counter memory must retain the hit rather than the amount being healed.
+local function drainHalf(text, dreamEater)
   return function(ctx)
-    local heal = math.max(1, math.floor(ctx.rawDamage / 2))
-    ctx.battle.lastDamage = heal
+    local gba = GameVersion.isGen3()
+    local basis = gba and ctx.totalDealt or ctx.rawDamage
+    local heal = math.max(1, math.floor(basis / 2))
+    if not gba then ctx.battle.lastDamage = heal end
     local mon = ctx.user.mon
     -- LIQUID OOZE TURNS IT AROUND.  The amount is the same; it comes OUT of
     -- the attacker instead of going in, and the cartridge prints the drain
     -- line all the same before it does.  TENTACRUEL is the one that matters:
     -- a GIGA DRAIN into one is a self-inflicted wound.
-    if require("src.battle.Abilities").reversesDrain(ctx.target) then
+    -- GBA's Dream Eater script bypasses Liquid Ooze; ordinary draining
+    -- moves still reverse the same capped amount into attacker HP loss.
+    if not (gba and dreamEater)
+       and require("src.battle.Abilities").reversesDrain(ctx.target) then
       ctx.say(Strings(text, displayName(ctx.target)))
       ctx.say(Strings("%s\nsucked up the liquid ooze!",
                       displayName(ctx.user)))
-      ctx.battle:applyDamage(ctx.user, heal)
+      if gba then ctx.damage(ctx.user, heal)
+      else ctx.battle:applyDamage(ctx.user, heal) end
       return
     end
     mon.hp = math.min(mon.stats.hp, mon.hp + heal)
@@ -659,7 +665,7 @@ MoveEffects.full = {
       if ctx.target.mon.status ~= "SLP" then return false, "But, it failed!" end
       return true
     end,
-    afterDamage = drainHalf(Strings.source("%s's\ndream was eaten!")),
+    afterDamage = drainHalf(Strings.source("%s's\ndream was eaten!"), true),
   },
 
   -- charge moves: first turn just charges; Fly AND Dig go
@@ -1238,7 +1244,7 @@ MoveEffects.primary.CURSE_EFFECT = function(battle, user, target)
   local msgs = {}
   for _, step in ipairs({ { "speed", -1 }, { "attack", 1 },
                           { "defense", 1 } }) do
-    for _, line in ipairs(changeStage(battle, user, step[1], step[2], false)
+    for _, line in ipairs(changeStage(battle, user, step[1], step[2], false, user)
                           or {}) do
       msgs[#msgs + 1] = line
     end

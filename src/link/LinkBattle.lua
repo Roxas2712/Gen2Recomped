@@ -168,6 +168,7 @@ local function activeStr(b, role)
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3Encore").signature(b) or "")
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3Disable").signature(b) or "")
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3Rage").signature(b) or "")
+    .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3PartialTrap").signature(b,role) or "")
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3ChoiceBand").signature(b) or "")
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3MirrorMove").signature(b) or "")
 end

@@ -229,6 +229,8 @@ end
 
 function Gen3ShopMenu.new(game, opts)
   opts = opts or {}
+  local RS=require('src.ui.Gen3RsShop')
+  if RS.available(game,opts)and opts.mode~='sell'then return RS.new(game,opts)end
   local self = setmetatable({}, Gen3ShopMenu)
   self.game = game
   self.mode = (opts.mode == "sell") and "sell" or "buy"
@@ -312,6 +314,8 @@ end
 -- you with?" -- and only QUIT (or B) hands the script back.
 function Gen3ShopMenu.counter(game, opts)
   opts = opts or {}
+  local RS=require('src.ui.Gen3RsShop')
+  if RS.available(game,opts)then local screen=RS.new(game,opts);game.stack:push(screen);return screen end
   local Menu = require("src.ui.Menu")
   local stock = opts.stock or {}
   local onQuit = opts.onQuit

@@ -12,13 +12,8 @@ local QuarantineReport = {}
 QuarantineReport.__index = QuarantineReport
 QuarantineReport.isOpaque = true
 
-local VISIBLE = 13   -- report rows on screen at once
-local WIDTH = 18     -- text columns inside the border
-
 local function clip(text)
-  text = tostring(text)
-  if #text > WIDTH then return text:sub(1, WIDTH) end
-  return text
+  return tostring(text)
 end
 
 local function section(lines, header, rows)
@@ -76,15 +71,7 @@ local function buildLines(report, meta)
   local notice = SaveData.modsDiffNotice(report.modsDiff, meta)
   if notice then
     if #lines > 0 then lines[#lines + 1] = "" end
-    -- wrap the one-line notice to the box width
-    for word in notice:gmatch("%S+") do
-      local last = lines[#lines]
-      if last and last ~= "" and #last + #word + 1 <= WIDTH then
-        lines[#lines] = last .. " " .. word
-      else
-        lines[#lines + 1] = word
-      end
-    end
+    lines[#lines + 1] = notice
   end
   return lines
 end
@@ -97,11 +84,47 @@ function QuarantineReport.new(game, report)
   }, QuarantineReport)
   self.lines = buildLines(self.report,
     game and game.save and game.save.meta)
+  self:layout()
   return self
 end
 
+function QuarantineReport:uiSize()
+  if require("src.core.GameVersion").isGen3() then return 240, 160 end
+  return 160, 144
+end
+
+-- This host report shares the current cartridge font. GBA glyphs are taller
+-- and proportional; neither eight-pixel rows nor byte-count clipping fits.
+function QuarantineReport:layout()
+  local w, h = self:uiSize()
+  local glyph = Font.glyphHeight()
+  local step = math.max(8, glyph + (glyph > 8 and 2 or 0))
+  local first = 8 + glyph + 4
+  local footer = h - 6 - glyph
+  local visible = math.max(1, math.floor((footer - 4 - first - glyph) / step) + 1)
+  local width = w - 24
+  local wrapped = {}
+  for _, text in ipairs(self.lines) do
+    if text == "" then wrapped[#wrapped + 1] = "" end
+    while text ~= "" do
+      local spans = Font.split(text)
+      local count = math.max(1, Font.spansFitting(spans, width))
+      local last = spans[math.min(count, #spans)].to
+      if count < #spans then
+        local wordEnd = text:sub(1, last):match("^.*()%s")
+        if wordEnd and wordEnd > 1 then last = wordEnd - 1 end
+      end
+      wrapped[#wrapped + 1] = text:sub(1, last)
+      text = text:sub(last + 1):gsub("^%s+", "")
+    end
+  end
+  self.lines = wrapped
+  self.metrics = {width=w, height=h, glyph=glyph, step=step,
+    first=first, footer=footer, visible=visible, textWidth=width}
+end
+
 function QuarantineReport:maxOffset()
-  return math.max(0, #self.lines - VISIBLE)
+  return math.max(0, #self.lines - self.metrics.visible)
 end
 
 function QuarantineReport:update()
@@ -119,19 +142,20 @@ function QuarantineReport:update()
 end
 
 function QuarantineReport:draw()
+  local m = self.metrics
   love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.rectangle("fill", 0, 0, 160, 144)
-  Font.drawBox(0, 0, 20, 18)
+  love.graphics.rectangle("fill", 0, 0, m.width, m.height)
+  Font.drawBox(0, 0, m.width / 8, m.height / 8)
   love.graphics.setColor(0, 0, 0, 1)
   Font.draw(Strings("LOAD REPORT"), 8, 8)
-  for row = 1, VISIBLE do
+  for row = 1, m.visible do
     local line = self.lines[self.offset + row]
-    if line then Font.draw(line, 8, 12 + row * 8) end
+    if line then Font.draw(line, 8, m.first + (row - 1) * m.step) end
   end
   if self.offset < self:maxOffset() then
-    Font.drawCode(require("src.ui.Theme").moreArrow, 144, 124)
+    Font.drawCode(require("src.ui.Theme").moreArrow, m.width - 16, m.footer)
   end
-  Font.draw(Strings("A:CONTINUE"), 8, 130)
+  Font.draw(Strings("A:CONTINUE"), 8, m.footer)
   love.graphics.setColor(1, 1, 1, 1)
 end
 

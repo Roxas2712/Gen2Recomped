@@ -96,7 +96,7 @@ local function textOf(payload)
   return type(payload) == "table" and table.concat(payload, "\f") or nil
 end
 
-local function evaluate(game, id, slot, moveIndex)
+local function evaluate(game, id, slot, moveIndex, selection)
   local stable = game.mods and game.mods._unifiedIdBase and game.mods._unifiedIdBase.items
   local kind, data, save = F.kind(game.data, id, stable), game.data, game.save
   local def, key, ow = data.items[id], keyFor(data, id, stable), game.overworld
@@ -179,7 +179,7 @@ local function evaluate(game, id, slot, moveIndex)
     end
     table.insert(p.target.moves, { id = move, pp = moveDef.pp })
     if def.machine.kind ~= "HM" then
-      Bag.remove(save, id, 1)
+      Bag.remove(save, id, 1, data, selection)
       p.consumed = true
     end
     require("src.pokemon.Gen2Friendship").change(p.target, "LEARNMOVE")
@@ -231,7 +231,7 @@ local function evaluate(game, id, slot, moveIndex)
     if not (ow and ow.map and ow.map.def.allowEscaping == true and point) then
       return false, kind, refusal(game), p
     end
-    Bag.remove(save, id, 1)
+    Bag.remove(save, id, 1, data, selection)
     p.consumed, p.closeBag, p.result = true, true, "kept"
     p.action = function()
       ow:beginTeleportOut(nil, { escape = true })
@@ -259,7 +259,7 @@ local function evaluate(game, id, slot, moveIndex)
   local result, payload, extra = Effects.use(data, save, id, p.target, nil, moveIndex, ow)
   p.result, p.payload, p.extra = result, payload, extra
   if result == "consumed" then
-    Bag.remove(save, id, 1)
+    Bag.remove(save, id, 1, data, selection)
     p.consumed = true
   end
   local ok = result ~= "failed"
@@ -281,10 +281,11 @@ local function evaluate(game, id, slot, moveIndex)
   return ok, kind, textOf(payload), p
 end
 
-function F.call(game, id, slot, moveIndex)
+function F.call(game, id, slot, moveIndex, selection)
   local prepared, nativeOk, nativeKind, nativeText
   local function native(_, _, item, targetSlot)
-    nativeOk, nativeKind, nativeText, prepared = evaluate(game, item, targetSlot, moveIndex)
+    nativeOk, nativeKind, nativeText, prepared = evaluate(game, item, targetSlot, moveIndex,
+      selection and selection.id==item and selection or nil)
     return nativeOk, nativeKind, nativeText
   end
   -- Like the source producer, Game/slot/bag are engine handles; only the

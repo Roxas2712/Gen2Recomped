@@ -139,6 +139,8 @@ function Gen3Pokedex.listing(game, national)
 end
 
 function Gen3Pokedex.new(game, opts)
+  local RS = require('src.ui.Gen3RsPokedex')
+  if RS.available(game) then return RS.new(game, opts) end
   local FRLG = require("src.ui.Gen3PokedexFRLG")
   if FRLG.record(game) then return FRLG.new(game, opts) end
   local self = setmetatable({ game = game, opts = opts or {} }, Gen3Pokedex)
