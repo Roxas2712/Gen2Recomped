@@ -7,6 +7,27 @@ of the older games' Lua engine. Existing native Lua games keep their owners.
 
 ## Start
 
+Fresh profiles show **3DS · X / Y (Beta)** before an import exists. Open an
+edition and choose **Import game** (`.3ds`, `.cci`, `.cxi`, `.cia`), or drop a
+3DS file onto the library to detect its edition. Import streams the complete
+hash and verifies the decrypted executable/content headers. A wrong edition,
+damaged dump or encrypted content cannot replace an existing entry. Currently
+the supported title IDs are the USA X/Y base games listed in the preflight.
+The original local file is referenced in place; keep it available at that path.
+Import does not upload it, copy a multi-GB ROM, or mark an unbuilt game playable.
+
+**Prepare game** uses the locally installed native compiler. A missing compiler
+leaves the valid import available with **Preparation required**. The public
+payload includes its Python import helpers, extracted into the writable
+`pokemon-xy-backend` folder under the app profile; it does not bundle private
+game libraries, ROMs or the experimental native 3DS toolchain. Python must be
+installed (`POKEMON_XY_PYTHON` can select it); existing backend settings and
+native preparation require Python 3.11+. `POKEMON_XY_ROOT` can still select an
+existing development backend even before its first `library.json` exists.
+An imported entry becomes ready only when the matching native build exists;
+the device qualification remains required before actual play. Cross-platform
+3DS binaries and a one-click toolchain installation remain separate work.
+
 Open `Start-Recompiled-Ascendant.command` for the shared library, or
 `Start-Pokemon-X.command` / `Start-Pokemon-Y.command` for a direct edition
 start. The private runtime and game libraries live in `.local/pokemon-x/`.

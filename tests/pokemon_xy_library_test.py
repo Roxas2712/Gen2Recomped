@@ -18,6 +18,44 @@ class LibraryTests(unittest.TestCase):
  def test_y_decrypted_with_stale_crypto_flag_is_accepted_by_hashes(self):
   p=self.work/'y.3ds';p.write_bytes(ncch(title=0x0004000000055E00,no_crypto=False))
   self.assertEqual(preflight.inspect(p)['status'],'headers_verified_boot_untested')
+ def test_fresh_import_validates_and_registers_without_copy_or_false_readiness(self):
+  p=self.work/'own y.cxi';p.write_bytes(ncch(title=0x0004000000055E00));before=p.read_bytes()
+  self.assertEqual(lib.import_rom(p),'y')
+  row=lib.status()['y'];self.assertTrue(row['imported']);self.assertFalse(row['ready'])
+  self.assertEqual(row['rom'],str(p));self.assertEqual(p.read_bytes(),before)
+  self.assertFalse((self.work/'recompiled').exists());self.assertNotIn('x',lib.manifest())
+ def test_backend_cli_accepts_the_workers_argument_order_and_reports_detected_edition(self):
+  import contextlib,io
+  import pokemon_x_backend as backend
+  p=self.work/'own y.cxi';p.write_bytes(ncch(title=0x0004000000055E00))
+  output=io.StringIO()
+  with contextlib.redirect_stdout(output):
+   self.assertEqual(backend.main(['import','--edition','x',str(p),'--detect-edition']),0)
+  self.assertIn('"imported_edition": "y"',output.getvalue())
+ def test_host_workspace_keeps_import_metadata_out_of_the_helper_source_checkout(self):
+  import contextlib,io
+  import pokemon_x_backend as backend
+  p=self.work/'own.cxi';p.write_bytes(ncch());workspace=self.work/'app-profile'
+  with patch.object(backend,'ROOT',backend.ROOT),patch.object(backend,'WORK',backend.WORK),patch.object(backend,'CACHE',backend.CACHE),patch.object(preflight,'ROOT',preflight.ROOT),patch.object(lib,'ROOT',lib.ROOT),patch.object(lib,'WORK',lib.WORK),contextlib.redirect_stdout(io.StringIO()):
+   self.assertEqual(backend.main(['import',str(p),'--root',str(workspace)]),0)
+  self.assertTrue((workspace/'.local/pokemon-x/library.json').is_file())
+  self.assertFalse((self.work/'library.json').exists());self.assertTrue(p.exists())
+ def test_wrong_edition_corruption_and_truncation_preserve_previous_import(self):
+  p=self.work/'x.cxi';p.write_bytes(ncch());lib.import_rom(p,'x');manifest=(self.work/'library.json').read_bytes()
+  wrong=self.work/'wrong.cxi';wrong.write_bytes(ncch(title=0x0004000000055E00))
+  broken=self.work/'broken.cxi';broken.write_bytes(ncch()[:-10])
+  corrupt=self.work/'corrupt.cxi';data=bytearray(ncch());data[0x600]^=255;corrupt.write_bytes(data)
+  for path in [wrong,broken,corrupt]:
+   with self.assertRaises(ValueError):lib.import_rom(path,'x')
+   self.assertEqual((self.work/'library.json').read_bytes(),manifest)
+ def test_same_file_reimport_preserves_build_and_changed_file_invalidates_it(self):
+  p=self.work/'x.cxi';p.write_bytes(ncch());lib.import_rom(p,'x');row=lib.manifest()['x']
+  binary=self.work/'native.dylib';binary.write_bytes(b'fixture')
+  lib.register('x',p,row['sha256'],binary);lib.import_rom(p,'x')
+  self.assertTrue(lib.status()['x']['ready'])
+  # A different complete dump needs its own native build.
+  p.write_bytes(p.read_bytes()+b'different cartridge padding');lib.import_rom(p,'x')
+  self.assertFalse(lib.status()['x']['ready']);self.assertTrue(binary.exists())
  def test_configuration_retains_upstream_tables_and_other_edition(self):
   x=lib.setting_path('x');x.parent.mkdir(parents=True);x.write_text('resolution = 2\nunknown = 17\n[keys]\na = "KeyX"\n')
   lib.configure('x',{'resolution':4,'layout':'overlay','stereo':'anaglyph'})

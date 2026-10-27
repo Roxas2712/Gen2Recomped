@@ -74,20 +74,48 @@ def commands(action, rom, fingerprint, recompiler, runtime, title=preflight.POKE
 
 
 def main(argv=None):
+    global ROOT, WORK, CACHE
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["analyze", "build", "smoke", "play", "prepare", "status", "configure", "toggle-mods", "install-mod", "reset-language"])
+    parser.add_argument("action", choices=["import", "analyze", "build", "smoke", "play", "prepare", "status", "configure", "toggle-mods", "install-mod", "reset-language"])
     parser.add_argument("rom", type=Path, nargs="?")
     parser.add_argument("--edition", choices=["x", "y"], default="x")
+    parser.add_argument("--root", type=Path, help="Host-selected writable backend workspace")
+    parser.add_argument("--detect-edition", action="store_true", help="Detect X/Y for a dropped game file")
     parser.add_argument("--set", action="append", default=[])
     parser.add_argument("--mod-source", type=Path)
     parser.add_argument("--skip-intro", action="store_true")
     parser.add_argument("--qa-profile", type=Path, help="Explicit isolated profile for interactive QA")
     parser.add_argument("--recompiler", type=Path, default=WORK / "bin/3dsrecomp")
     parser.add_argument("--runtime", type=Path, default=runtime_path())
-    args = parser.parse_args(argv)
+    args = parser.parse_intermixed_args(argv)
+    if args.root is not None:
+        ROOT = args.root.resolve()
+        WORK = ROOT / '.local/pokemon-x'
+        CACHE = ROOT / '.local/qa/pokemon-x-feasibility'
+        library.ROOT, library.WORK = ROOT, WORK
+        preflight.ROOT = ROOT
+        # Defaults were created before the host workspace was selected.
+        if '--recompiler' not in (argv if argv is not None else sys.argv[1:]):
+            args.recompiler = WORK / 'bin/3dsrecomp'
+        if '--runtime' not in (argv if argv is not None else sys.argv[1:]):
+            args.runtime = runtime_path()
+    if args.action == 'import':
+        try:
+            if args.rom is None:
+                raise ValueError('Choose your own decrypted 3DS game file.')
+            # Read-only verification does not create a second multi-GB ROM.
+            edition = library.import_rom(args.rom, None if args.detect_edition else args.edition)
+            print(json.dumps({'imported_edition': edition}, ensure_ascii=False))
+            return 0
+        except (OSError, ValueError) as error:
+            print(str(error), file=sys.stderr)
+            return 2
     if args.action == "status":
         print(json.dumps(library.status(), ensure_ascii=False))
         return 0
+    if args.action == 'build' and not args.recompiler.is_file():
+        print('The game file is imported, but the native 3DS compiler is not installed on this device.', file=sys.stderr)
+        return 3
     qa = preflight.qa_manager(collect=args.action not in ("configure", "toggle-mods", "install-mod", "reset-language", "prepare"))
     entry = library.manifest().get(args.edition, {})
     rom = (args.rom or Path(entry.get("rom", WORK / "decrypted/pokemon-x-usa.cxi"))).resolve()

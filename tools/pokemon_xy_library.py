@@ -8,8 +8,12 @@ from pathlib import Path
 import re
 import shutil
 import tempfile
-import tomllib
+try:
+    import tomllib
+except ImportError:
+    tomllib = None
 import zipfile
+from contextlib import contextmanager
 
 ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT / '.local/pokemon-x'
@@ -36,6 +40,8 @@ def setting_path(edition):
 
 def settings(edition):
     path = setting_path(edition)
+    if path.is_file() and tomllib is None:
+        raise ValueError('Python 3.11 or newer is required for existing 3DS backend settings.')
     data = tomllib.loads(path.read_text()) if path.is_file() else {}
     return {k: data.get(k, v) for k,v in DEFAULTS.items()}
 
@@ -170,6 +176,7 @@ def status():
         row=data.setdefault(edition,{})
         library=Path(row.get('library',''))
         row['ready']=bool(row.get('built')) and library.is_file() and Path(row.get('rom','')).is_file()
+        row['imported']=bool(row.get('sha256')) and Path(row.get('rom','')).is_file()
         row['settings']=settings(edition)
         row['remembered_language']=language_preference(edition)
         active,disabled=mod_dir(edition),disabled_dir(edition)
@@ -180,10 +187,54 @@ def status():
     return data
 
 
-def register(edition, rom, sha256, binary):
-    import fcntl
+@contextmanager
+def manifest_lock():
+    WORK.mkdir(parents=True, exist_ok=True)
     with (WORK/'library.lock').open('a') as lock:
-        fcntl.flock(lock,fcntl.LOCK_EX)
+        if os.name == 'nt':
+            import msvcrt
+            lock.seek(0);lock.write(' ');lock.flush();lock.seek(0)
+            msvcrt.locking(lock.fileno(), msvcrt.LK_LOCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            if os.name == 'nt':
+                lock.seek(0);msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
+
+
+def import_rom(rom, edition=None):
+    """Validate a local file, then register its reference without a ROM copy.
+
+    An invalid import cannot replace an existing playable entry. Importing
+    alone never claims that a native library was built or a game was played.
+    """
+    from pokemon_x_preflight import inspect, TITLES
+    rom = Path(rom).resolve(strict=True)
+    if not rom.is_file():
+        raise ValueError('Choose a 3DS game file.')
+    result = inspect(rom, verify_contents=True)
+    if result['status'] != 'headers_verified_boot_untested':
+        raise ValueError('A fully decrypted, intact X/Y dump is required: ' + ', '.join(result['blockers']))
+    detected = TITLES[result['title_id']]
+    if edition is not None and edition != detected:
+        raise ValueError('The dump does not match the selected edition.')
+    with manifest_lock():
+        data = manifest()
+        previous = data.get(detected, {})
+        row = dict(previous) if previous.get('sha256') == result['sha256'] else {}
+        row.update(title_id=result['title_id'], rom=str(rom), sha256=result['sha256'], imported=True)
+        row.setdefault('built', False)
+        data[detected] = row
+        path = WORK/'library.json';pending = path.with_suffix('.pending')
+        pending.write_text(json.dumps(data, indent=2)+'\n');pending.replace(path)
+    return detected
+
+
+def register(edition, rom, sha256, binary):
+    with manifest_lock():
         data=manifest()
         data[edition]=dict(title_id=EDITIONS[edition],rom=str(rom),sha256=sha256,library=str(binary),built=True)
         path=WORK/'library.json';pending=path.with_suffix('.pending')

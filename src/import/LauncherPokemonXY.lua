@@ -2,6 +2,7 @@
 -- These entries never enter GameVersion.set or the native Lua import cache.
 local M={}
 local Json=require('src.link.Json')
+local Strings=require('src.core.Strings')
 local function read(path)
  local f=io.open(path,'rb');if not f then return end
  local s=f:read('*a');f:close();return s
@@ -10,49 +11,48 @@ local function decode(s)
  local ok,v=pcall(Json.decode,s or '');return ok and type(v)=='table' and v or nil
 end
 local function sourceRoot()
- local r=os.getenv('POKEMON_XY_ROOT') or (love and love.filesystem and love.filesystem.getSource and love.filesystem.getSource())
- if r and read(r..'/.local/pokemon-x/library.json') then return r end
+ return require('src.import.PokemonXYBackend').root()
 end
-function M.available() return sourceRoot()~=nil end
+function M.available() return true end
 function M.info(version)
  if version=='x' or version=='y' then
-  return {generation=6,displayName='Pokémon '..version:upper(),importable=true,external=true}
+  return {generation=6,displayName='Pokémon '..version:upper(),importable=true,external=true,experimental=true}
  end
 end
 function M.versions(console,series)
- if M.available() and (not console or console=='3ds') and (not series or series=='pokemon') then return {'x','y'} end
+ if (not console or console=='3ds') and (not series or series=='pokemon') then return {'x','y'} end
  return {}
 end
 local CHOICES={
- {'resolution','Auflösung',{1,2,3,4,5,6,8},function(v)return v..'×' end},
- {'layout','Bildschirme',{'stacked','side_by_side','large_top','overlay','top_only','bottom_only'}},
- {'display_mode','Fensternutzung',{'fit','crop','stretch'}},
- {'overlay_position','Touch-Position',{'right','left','free'}},
- {'overlay_size','Overlay-Größe',{20,25,32,40,50,60},function(v)return v..' %' end},
- {'hide_empty_touch','Leeres Touch-Bild ausblenden',{true,false}},
- {'filter','Bildfilter',{'smooth','sharp','pixels'}},
+ {'resolution','Resolution',{1,2,3,4,5,6,8},function(v)return v..'×' end},
+ {'layout','Screens',{'stacked','side_by_side','large_top','overlay','top_only','bottom_only'}},
+ {'display_mode','Window usage',{'fit','crop','stretch'}},
+ {'overlay_position','Touch position',{'right','left','free'}},
+ {'overlay_size','Overlay size',{20,25,32,40,50,60},function(v)return v..' %' end},
+ {'hide_empty_touch','Hide empty touch screen',{true,false}},
+ {'filter','Image filter',{'smooth','sharp','pixels'}},
  {'stereo','Stereo-3D',{'off','anaglyph','side_by_side','half_side_by_side','interlaced'}},
- {'depth_3d','3D-Tiefe',{0,10,25,50,75,100},function(v)return v..' %' end},
- {'swap_eyes','Augen tauschen',{false,true}},
- {'texture_packs','Texturpakete',{true,false}},
- {'show_fps','FPS anzeigen',{false,true}},
+ {'depth_3d','3D depth',{0,10,25,50,75,100},function(v)return v..' %' end},
+ {'swap_eyes','Swap eyes',{false,true}},
+ {'texture_packs','Texture packs',{true,false}},
+ {'show_fps','Show FPS',{false,true}},
 }
-local LABELS={stacked='Zwei Screens · ohne Spalt',side_by_side='Nebeneinander',large_top='Groß + klein',
- fit='Originalverhältnis',crop='Randlos · Zuschnitt',stretch='Fenster füllen · Strecken',
- right='Rechts neben Hauptbild',left='Links neben Hauptbild',free='Frei verschiebbar',
- overlay='Einzelbild + Touch-Overlay',top_only='Nur Hauptbild',bottom_only='Nur Touch-Menü',
- smooth='Weich',sharp='Scharf',pixels='Pixel',off='Aus',anaglyph='Rot/Cyan',half_side_by_side='SBS · halbe Breite',interlaced='Zeilenraster'}
-local function value(v) if type(v)=='boolean' then return v and 'An' or 'Aus' end return LABELS[v] or tostring(v) end
+local LABELS={stacked='Gapless dual screens',side_by_side='Side by side',large_top='Large main + small touch',
+ fit='Original proportions',crop='Fill · crop',stretch='Fill · stretch',
+ right='Right of main screen',left='Left of main screen',free='Freely movable',
+ overlay='Main screen + touch overlay',top_only='Main screen only',bottom_only='Touch screen only',
+ smooth='Smooth',sharp='Sharp',pixels='Pixels',off='Off',anaglyph='Red/Cyan',half_side_by_side='SBS · half width',interlaced='Interlaced'}
+local function value(v) if type(v)=='boolean' then return Strings(v and 'On' or 'Off')end return Strings(LABELS[v] or tostring(v))end
 function M.install(RI)
  local U=RI._ui
  local function start(self,action,args,mode)
   if self._xyJob then return end
-  local root=sourceRoot();if not root then return end
+  local root,why=sourceRoot();if not root then self._xyNotice=Strings(why);return end
   local f=io.open('/opt/homebrew/bin/python3','rb')
-  local python=f and '/opt/homebrew/bin/python3' or 'python3';if f then f:close() end
+  local python=os.getenv('POKEMON_XY_PYTHON') or (f and '/opt/homebrew/bin/python3' or 'python3');if f then f:close() end
   local channel=love.thread.getChannel('pokemon.xy.result');channel:clear()
   self._xyJob=love.thread.newThread('src/import/pokemon_xy_worker.lua')
-  self._xyNotice=action=='prepare' and 'Spiel wird für das gemeinsame Fenster vorbereitet …' or 'Wird angewendet …'
+  self._xyNotice=Strings(action=='import' and 'Checking your 3DS game file …' or action=='build' and 'Preparing the native 3DS game …' or action=='prepare' and 'Preparing the game …' or 'Applying …')
   local qa=os.getenv('OA_QA_IDENTITY')
   self._xyJob:start(Json.encode{root=root,python=python,edition=self._xyEdition or 'x',action=action,args=args or {},mode=mode,
    qa_profile=qa and (root..'/.local/qa/pokemon-xy-native-ui/player-'..(self._xyEdition or 'x')) or nil})
@@ -65,7 +65,11 @@ function M.install(RI)
   return self._xyData
  end
  local function newIntro(self,onComplete)
-  local root=sourceRoot();if not root then return end
+  local root=sourceRoot()
+  if not root or not read(root..'/tools/ascendant-intro/IntroScene.lua') then
+   -- Public imports do not require the private Ascendant intro asset pack.
+   if onComplete then onComplete()end;return
+  end
   if self._xyIntro then self._xyIntro.scene:release() end
   local ctor=assert(love.filesystem.load('tools/ascendant-intro/IntroScene.lua'))()
   local scene=ctor.new(function(path)
@@ -192,7 +196,7 @@ function M.install(RI)
    if self._xyPlayer.closed and not self._xyPlayer.thread:isRunning() then
     local player=self._xyPlayer
     self._xyNotice=player.error or 'Zurück in der Bibliothek.';player:dispose();self._xyPlayer=nil
-    if player.session.data==sourceRoot()..'/.local/pokemon-x/player' then
+   if player.session.data==(sourceRoot() or '')..'/.local/pokemon-x/player' then
      local args={}
      for _,key in ipairs{'layout','stereo','depth_3d','swap_eyes','display_mode','overlay_position','overlay_size','overlay_x','overlay_y','hide_empty_touch'}do if player.settings[key]~=nil then args[#args+1]='--set';args[#args+1]=key..'='..Json.encode(player.settings[key])end end
      start(self,'configure',args)
@@ -241,29 +245,53 @@ function M.install(RI)
    if response then
     local result=decode(response)
     self._xyJob=nil
-    if result and result.ok then self._xyData=result.data;self._xyNotice='Bereit.';if result.session then receiveSession(self,result.session,result.mode)end
+    if result and result.ok then
+     self._xyData=result.data
+     if result.edition then self._xyEdition=result.edition end
+     local row=result.data and result.data[self._xyEdition] or {}
+     self._xyNotice=Strings(row.imported and not row.ready and 'Game file imported. Prepare the native backend before playing.' or 'Ready.')
+     if result.session then receiveSession(self,result.session,result.mode)end
     else self._xyNotice=(result and result.error or 'Unbekannter Backend-Fehler'):sub(-700) end
    elseif self._xyJob:getError() then self._xyNotice=self._xyJob:getError();self._xyJob=nil end
   end
   return update(self,dt,...)
  end
  local function buttons(self)self._xyButtons={}end
+ function RI:_xyImport(path,detect)
+  if self._xyJob or self._xyPlayer or self._xyCheck then return end
+  stopPreview(self);self._xyPreviewFailed=nil;self._xyOpen=true;self.section='games';self.pageScroll=0
+  local args={path};if detect then args[#args+1]='--detect-edition' end
+  start(self,'import',args)
+ end
  local function button(self,x,y,w,label,action)
-  local r=self:_chipButton(x,y,label,{w=w,h=34*self._s,kind='accent'})
+  local r=self:_chipButton(x,y,Strings(label),{w=w,h=34*self._s,kind='accent'})
   r.action=action;self._xyButtons[#self._xyButtons+1]=r
  end
  local function panel(self,x,y,w,h)
   local s,g,p=self._s,love.graphics,RI.palette();local top=y
   local paint=require('src.import.LauncherLibrary').paint
-  local text=function(font,t,yy,color)paint.text(self,font,t,x,yy,w,color)end
+  local text=function(font,t,yy,color)paint.text(self,font,Strings(t),x,yy,w,color)end
   buttons(self)
-  button(self,x,y,165*s,'ZUR BIBLIOTHEK',function()stopPreview(self);self._xyOpen=false;self.pageScroll=0 end)
+  button(self,x,y,165*s,'BACK TO LIBRARY',function()stopPreview(self);self._xyOpen=false;self.pageScroll=0 end)
   y=y+51*s
   text(self.gameNameFont,'Pokémon '..self._xyEdition:upper(),y);y=y+45*s
   text(self.hintFont,'Recompiled Ascendant · by Roxas2712',y,p.link);y=y+30*s
   local data=load(self) or {};local row=data[self._xyEdition] or {};local settings=row.settings or {}
   local ready=row.ready
-  text(self.stateFont,ready and 'Bereit für Kalos.' or 'Recompile wird vorbereitet.',y,ready and p.green or p.warning);y=y+36*s
+  text(self.stateFont,Strings(ready and 'BETA / READY' or row.imported and 'BETA / PREPARATION REQUIRED' or 'BETA / ROM REQUIRED'),y,ready and p.green or p.warning);y=y+36*s
+  if not self._xyJob and not self._xyCheck then
+   button(self,x,y,math.min(240*s,w),Strings('IMPORT GAME'),function()
+    local path=U.chooseFileByExt({'3ds','cci','cxi','cia'},'3DS game (.3ds, .cci, .cxi, .cia)')
+    if path then self:_xyImport(path)end
+   end)
+  end
+  y=y+44*s
+  g.setFont(self.hintFont);U.col(p.detail)
+  g.printf(Strings('Choose your own decrypted X/Y dump. The file stays on this device. Native backend preparation and a device test are required before playing.'),x,y,w,'left');y=y+72*s
+  if self._xyNotice then
+   local _,lines=self.hintFont:getWrap(self._xyNotice,w)
+   U.col(p.warning);g.printf(self._xyNotice,x,y,w,'left');y=y+#lines*self.hintFont:getHeight()+18*s
+  end
   local previewH=math.min(210*s,w*.5)
   paint.surface(x,y,w,previewH,12*s,p.link,false)
   if self._xyPreview then
@@ -272,22 +300,23 @@ function M.install(RI)
   require('src.import.LauncherHardware').cartridge(self,self._xyEdition,x+w*.23,y+previewH*.5,w*.38,previewH*.82)
   y=y+previewH+20*s
   if self._xyCheck then
-   text(self.hintFont,'GERÄTETEST · '..tostring(self._xyCheck.frame or 0)..' / 480 Frames',y,p.warning)
-  elseif self._xyJob then text(self.hintFont,'Wird vorbereitet …',y,p.warning)
+   text(self.hintFont,Strings('DEVICE TEST · %d / 480 frames',self._xyCheck.frame or 0),y,p.warning)
+  elseif self._xyJob then text(self.hintFont,'Preparing the game …',y,p.warning)
   else
-   if ready then button(self,x,y,math.min(180*s,(w-12*s)/2),'SPIELEN',function()self:_xyStart()end) end
-   button(self,x+math.min(180*s,(w-12*s)/2)+12*s,y,math.min(165*s,(w-12*s)/2),'Status erneuern',function()start(self,'status')end)
+   if ready then button(self,x,y,math.min(180*s,(w-12*s)/2),'PLAY',function()self:_xyStart()end) end
+   if row.imported and not ready then button(self,x,y,math.min(180*s,(w-12*s)/2),Strings('PREPARE GAME'),function()start(self,'build')end)end
+   button(self,x+math.min(180*s,(w-12*s)/2)+12*s,y,math.min(165*s,(w-12*s)/2),'REFRESH STATUS',function()start(self,'status')end)
   end
   y=y+44*s
-  button(self,x,y,math.min(220*s,w),'GERÄT TESTEN',function()self:_xyStart('benchmark')end)
+  if ready then button(self,x,y,math.min(220*s,w),'TEST DEVICE',function()self:_xyStart('benchmark')end)end
   y=y+52*s
-  text(self.labelFont,'GRAFIK & FREIE SCREEN-WAHL',y,p.link);y=y+31*s
+  text(self.labelFont,'GRAPHICS & SCREEN LAYOUT',y,p.link);y=y+31*s
   for _,entry in ipairs(CHOICES) do
    local key,title,choices,fmt=entry[1],entry[2],entry[3],entry[4]
    local current=settings[key]
    local bw=math.min(290*s,w*.59)
    paint.surface(x,y,w,42*s,6*s,p.link,false)
-   paint.text(self,self.hintFont,title,x+12*s,y+12*s,w-bw-20*s)
+   paint.text(self,self.hintFont,Strings(title),x+12*s,y+12*s,w-bw-20*s)
    local label=fmt and current~=nil and fmt(current) or value(current==nil and choices[1] or current)
    button(self,x+w-bw-4*s,y+4*s,bw,label..'  ›',function()
     if self._xyJob then return end
@@ -296,30 +325,29 @@ function M.install(RI)
    end)
    y=y+49*s
   end
-  text(self.hintFont,'F6: Overlay an/aus · F7: Zwei Screens an/aus',y,p.detail);y=y+23*s
-  text(self.hintFont,'F9: Layout wechseln · F10: Hauptbild/Touch · F11: Vollbild',y,p.detail);y=y+23*s
-  text(self.hintFont,'Esc: Spielmenü, Controller, Cheats und weitere Einstellungen',y,p.detail);y=y+30*s
+  text(self.hintFont,'F6: Toggle overlay · F7: Toggle dual screens',y,p.detail);y=y+23*s
+  text(self.hintFont,'F9: Cycle layout · F10: Main/Touch · F11: Fullscreen',y,p.detail);y=y+23*s
+  text(self.hintFont,'Esc: Game menu, controller, cheats and more settings',y,p.detail);y=y+30*s
   g.setFont(self.hintFont);U.col(p.detail)
-  g.printf('Stereo-3D: Rot/Cyan benötigt eine passende Brille. SBS/Zeilenraster benötigen eine passende Anzeige. Die klassische Ansicht bleibt frei wählbar.',x,y,w,'left');y=y+60*s
-  button(self,x,y,math.min(w,310*s),'Sprachauswahl zurücksetzen',function()start(self,'reset-language')end)
+  g.printf(Strings('Red/Cyan stereo requires matching glasses. SBS/interlaced stereo requires a compatible display. Standard screen layouts remain available.'),x,y,w,'left');y=y+60*s
+  button(self,x,y,math.min(w,310*s),'RESET LANGUAGE CHOICE',function()start(self,'reset-language')end)
   y=y+48*s
-  text(self.labelFont,'MODS & TEXTUREN',y,p.link);y=y+29*s
-  text(self.hintFont,tostring(row.mod_files or 0)..' Mod-Dateien · '..(row.mods_enabled==false and 'pausiert' or 'aktiv'),y,p.detail);y=y+29*s
+  text(self.labelFont,'MODS & TEXTURES',y,p.link);y=y+29*s
+  text(self.hintFont,Strings('%d mod files · %s',row.mod_files or 0,Strings(row.mods_enabled==false and 'paused' or 'active')),y,p.detail);y=y+29*s
   local bw=math.min(185*s,(w-20*s)/3)
-  button(self,x,y,bw,'Mod-Ordner',function()
+  button(self,x,y,bw,'MOD FOLDER',function()
    local path=row.mods_path
    if path then love.system.openURL('file://'..path:gsub('([^%w%-%._~/])',function(c)return string.format('%%%02X',c:byte())end)) end
   end)
-  button(self,x+bw+10*s,y,bw,'Ordner importieren',function()
+  button(self,x+bw+10*s,y,bw,'IMPORT FOLDER',function()
    if self._xyJob then return end
    local folder=U.chooseFolder('X/Y-Mod auswählen: Ordner mit romfs oder textures')
    if folder then start(self,'install-mod',{'--mod-source',folder}) end
   end)
-  button(self,x+2*(bw+10*s),y,bw,row.mods_enabled==false and 'Mods aktivieren' or 'Mods pausieren',function()start(self,'toggle-mods')end)
+  button(self,x+2*(bw+10*s),y,bw,row.mods_enabled==false and 'ENABLE MODS' or 'PAUSE MODS',function()start(self,'toggle-mods')end)
   y=y+52*s
   g.setFont(self.hintFont);U.col(p.detail)
-  g.printf('RomFS-Mods und Citra-/Azahar-Texturpakete bleiben pro Edition getrennt. Importierte Dateien ersetzen keine bereits installierten Mod-Dateien. Code-Patches können einen neuen Recompile benötigen.',x,y,w,'left');y=y+72*s
-  if self._xyNotice then g.setFont(self.hintFont);U.col(p.warning);g.printf(self._xyNotice,x,y,w,'left');y=y+110*s end
+  g.printf(Strings('RomFS mods and Citra/Azahar texture packs stay separate per edition. Imports preserve existing mod files. Code patches may require a new native build.'),x,y,w,'left');y=y+72*s
   return y-top
  end
  local content=RI._sbDrawContent
@@ -339,10 +367,22 @@ function M.install(RI)
  end
  local openGame=RI._sbOpenGame
  RI._sbOpenGame=function(self,version,...)
-  if M.info(version) and M.available() then
+  if M.info(version) then
    stopPreview(self);self._xyPreviewFailed=nil;self._xyEdition=version;self._xyOpen=true;self.section='games';self.pageScroll=0;start(self,'status');return
   end
   return openGame(self,version,...)
+ end
+ local dropped=RI.filedropped
+ RI.filedropped=function(self,file,...)
+  local path=file:getFilename() or ''
+  local ext=path:lower():match('%.([%w]+)$')
+  if ext=='3ds' or ext=='cci' or ext=='cxi' or ext=='cia' then
+   if path:sub(1,1)=='/' or path:match('^%a:[/\\]') then
+    self._xyEdition=self._xyEdition or 'x';self:_xyImport(path,not self._xyOpen)
+   else self._xyNotice=Strings('Choose the 3DS file with Import game so its full path is available.')end
+   return
+  end
+  if dropped then return dropped(self,file,...)end
  end
  local mouse=RI._sbMousepressed
  RI._sbMousepressed=function(self,x,y,...)
