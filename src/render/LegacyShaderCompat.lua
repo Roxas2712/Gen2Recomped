@@ -85,6 +85,21 @@ vec4 position(mat4 matrix, vec4 vertex) {
 #endif
 ]]
 
+-- Some producers already adapt their independent projection to current
+-- canvas coordinates. Recognize only the complete forwarding wrapper, not
+-- a sign in arbitrary projection arithmetic or a comment. Applying another
+-- legacy transform to this wrapper reflects its world a second time.
+local function nativeCanvasWrapper(code)
+  for matrix, vertex, body in code:gmatch("vec4%s+position%s*%(%s*mat4%s+([%w_]+)%s*,%s*vec4%s+([%w_]+)%s*%)%s*(%b{})") do
+    local compact = body:gsub("%s+", "")
+    local clip, helper, m, v, rest = compact:match("^%{vec4([%w_]+)=([%w_]+)%(([%w_]+),([%w_]+)%)%;(.*)%}$")
+    if clip and m == matrix and v == vertex and helper ~= "position"
+        and rest == clip .. ".y=-" .. clip .. ".y;return" .. clip .. ";"
+        and code:find("vec4%s+" .. helper .. "%s*%(") then return true end
+  end
+  return false
+end
+
 -- Modern low-level entry points and explicitly current-coordinate shaders
 -- remain untouched. The high-level 2D matrix path cancels both reflections.
 function Compat.source(source, options)
@@ -93,7 +108,8 @@ function Compat.source(source, options)
   if code:find("#%s*define%s+POKEPORT_NATIVE_CLIP_SPACE%f[^%w_]")
       or code:find("#%s*define%s+POKEPORT_LEGACY_CLIP_SPACE_ADAPTED%f[^%w_]")
       or code:find("void%s+vertexmain%s*%(")
-      or not code:find("vec4%s+position%s*%(") then
+      or not code:find("vec4%s+position%s*%(")
+      or nativeCanvasWrapper(code) then
     return source, false
   end
   return prefix .. source .. suffix, true
@@ -105,6 +121,11 @@ function Compat.install()
       and g and g.newShader and g.getShader and g.getCanvas) then return false end
   installed = true
   local newShader, validateShader = g.newShader, g.validateShader
+  -- Engine-owned derivative programs already use the admitted source's clip
+  -- convention. Re-analyzing their modified forwarding entry would adapt it
+  -- twice. Keep the exact preceding constructor, without injecting a macro
+  -- which could change the producer's preprocessor branches.
+  Compat.compileNative = newShader
   local setShader, setCanvas, pop = g.setShader, g.setCanvas, g.pop
 
   local function sync(shader)

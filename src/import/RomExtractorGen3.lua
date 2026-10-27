@@ -25866,14 +25866,7 @@ end
 -- by nothing, and reads as "the feature is missing" rather than "the join is
 -- wrong".
 -- ---------------------------------------------------------------------------
-local GEN3_WEATHER_NAMES = {
-  [0] = "NONE", [1] = "SUNNY_CLOUDS", [2] = "SUNNY", [3] = "RAIN",
-  [4] = "SNOW", [5] = "RAIN_THUNDERSTORM", [6] = "FOG_HORIZONTAL",
-  [7] = "VOLCANIC_ASH", [8] = "SANDSTORM", [9] = "FOG_DIAGONAL",
-  [10] = "UNDERWATER", [11] = "SHADE", [12] = "DROUGHT", [13] = "DOWNPOUR",
-  [14] = "UNDERWATER_BUBBLES", [15] = "ABNORMAL",
-  [20] = "ROUTE119_CYCLE", [21] = "ROUTE123_CYCLE",
-}
+local GEN3_WEATHER_NAMES = require("src.core.Gen3WeatherIds").names
 
 -- ...and which of them a BATTLE begun in it starts under.  Only four of the
 -- sixteen are weather in the battle sense (SetSav1Weather feeds

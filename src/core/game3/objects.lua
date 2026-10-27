@@ -26,7 +26,12 @@ end
 function Objects.forDraw()
   local out={}; local list,c=runtime:pool(); if not list then return out end
   for _,v in ipairs(list) do
-    if v.visible and not(v.hidden or v.invisible) and (v.moving or v.scriptBusy or c.map:inBounds(v.cellX,v.cellY)) then out[#out+1]=v end
+    -- The source follower has its own actor/presentation contract. Keep its
+    -- native NPC available to current/find and the native update lists, but
+    -- do not emit it again as ordinary map artwork (or as a player fallback).
+    local actor=runtime:actor(v)
+    if actor and actor.optionalFollower~=true and v.visible and not(v.hidden or v.invisible)
+        and (v.moving or v.scriptBusy or c.map:inBounds(v.cellX,v.cellY)) then out[#out+1]=v end
   end
   return out
 end

@@ -30,6 +30,34 @@ local function install(maps, source, family, def)
   return true
 end
 
+-- A public edge and the map loaded through it must carry the same identity.
+-- Merely aliasing the registry leaves source spellings in dependency graphs,
+-- which then cannot join an already resident map by its published id.
+-- Resolve only proven shared records; authored variants and unknown targets
+-- stay distinct, and numeric cartridge group/map metadata stays untouched.
+local function publishConnections(data)
+  local seen = {}
+  for _, def in pairs(data.maps) do
+    if type(def) == "table" and not seen[def] then
+      seen[def] = true
+      for _, first in pairs(def.connections or {}) do
+        if type(first) == "table" then
+          local rows = type(first.list) == "table" and first.list or { first }
+          for _, row in ipairs(rows) do
+            if type(row) == "table" then
+              for _, key in ipairs({ "map", "mapId" }) do
+                if type(row[key]) == "string" then
+                  row[key] = Identity.runtimeId(data, row[key])
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+end
+
 function Names.publish(data, declared)
   if not Version.isGen2() or type(data and data.maps) ~= "table" then return false end
   local maps, previous = data.maps, data._gen2MapNames
@@ -47,6 +75,7 @@ function Names.publish(data, declared)
       -- remain distinct rather than choosing one by hash iteration order.
       if not missing and not conflict then install(maps, source, family, changed or family.value) end
     end
+    publishConnections(data)
     return true
   end
   local families, sources = {}, {}
@@ -76,6 +105,7 @@ function Names.publish(data, declared)
     end
   end
   data._gen2MapNames = { maps=maps, families=families }
+  publishConnections(data)
   return true
 end
 
@@ -108,6 +138,7 @@ function Names.write(target, registry)
     for _, name in ipairs(family) do target[name] = value end
     target[id] = value
   end
+  if Version.isGen2() then publishConnections({ maps=target }) end
 end
 
 return Names

@@ -24,6 +24,13 @@ function C.run(T,readImage)
     while Native._stream.pending[f.pair]do Stream.update();steps=steps+1;assert(steps<100,'atlas warming did not finish')end
     T.check(steps>1,'CPU and GPU preparation yield between resource stages')
     local ts=assert(Native.get(f.pair));T.eq(Native.get(f.pair),ts)
+    local animation=require('src.core.game3.tileset_anim')
+    local clock=renderer.animFrame()
+    T.eq(animation._pairs[f.pair].native,true,'animation census observes the actual resident native atlas')
+    T.eq(animation._pairs[f.pair].rse,edition~='firered'and edition~='leafgreen')
+    T.eq(renderer.animFrame(),clock,'reading animation ownership never advances the native clock')
+    local observed=animation._pairs;observed[f.pair].rse='mutated'
+    T.eq(animation._pairs[f.pair].rse,edition~='firered'and edition~='leafgreen','source observation is detached')
     T.eq(ts.imageData:getWidth(),256);T.eq(ts.imageData:getHeight(),32)
     local expected=Pixels.new(f.picture.pair,f.picture.layout);expected:update(renderer.animFrame())
     T.eq(ts.imageData:getString(),expected:rgba(false));T.eq(ts.overImageData:getString(),expected:rgba(true))
@@ -106,6 +113,7 @@ function C.run(T,readImage)
     local image=ts.image;local data=ts.imageData
     local generation=Native._gen
     require('src.mods.Loader').teardown()
+    T.eq(animation._pairs[f.pair],nil,'retired native resources disappear from animation observations')
     T.eq(Native.resident(),0);T.eq(dead(image),true);T.eq(dead(data),true)
     T.eq(Native.flush,original,'real loader unwind restores source resource wrappers')
     T.eq(Native._cache,nil);T.check(Native._gen>generation)

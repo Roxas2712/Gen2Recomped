@@ -48,6 +48,12 @@ if major >= 12 then
     -- Raw entry points own their vertex colour/UV varyings too.
     pixel='vec4 effect(vec4 c,Image t,vec2 uv,vec2 sc){return sc.y<32.?vec4(1,0,0,1):vec4(0,1,0,1);}'}
 end
+if major >= 12 then
+  sources[#sources+1] = {name='self-adapted-canvas', code=[[
+    vec4 ownCanvasPosition(mat4 m, vec4 p){return vec4(p.x/32.-1.,p.y/32.-1.,0.,1.);}
+    vec4 position(mat4 m,vec4 p){vec4 clip=ownCanvasPosition(m,p);clip.y=-clip.y;return clip;}
+  ]]}
+end
 local function render(mesh, canvas, shader, attachment)
   g.push('all'); g.setShader(shader); g.setCanvas(attachment or canvas)
   g.origin(); g.clear(0,0,0,1); g.setColor(1,1,1,1); g.setMeshCullMode('none')

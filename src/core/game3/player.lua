@@ -114,10 +114,26 @@ function Player.drawFlip()
 end
 function Player.startFieldMove(duration,kind)return require("src.compat.gen1.PlayerPose").start(duration,kind)end
 function Player.release()runtime:release()end
+-- Title/intro presentation can inspect the pending native spawn before a
+-- world actor exists. Read its saved cells; all writes and motion still need
+-- an admitted player. No fabricated avatar or independent boot position.
+local function pendingPosition(key)
+  local g=Session.game();local saved=g and g.save and g.save.player
+  local def=saved and g.data and g.data.maps and g.data.maps[saved.map]
+  if not def or not finite(saved.x)or not finite(saved.y)
+    or saved.x%1~=0 or saved.y%1~=0 or saved.x<0 or saved.y<0
+    or(type(def.width)=='number'and saved.x>=def.width)
+    or(type(def.height)=='number'and saved.y>=def.height)then return nil end
+  if key=='px'then return saved.x*16 end
+  if key=='py'then return saved.y*16 end
+  if key=='cellX'then return saved.x end
+  if key=='cellY'then return saved.y end
+  if key=='facing'then return saved.facing end
+end
 setmetatable(Player,{
   __index=function(_,key)
     local g,w,p=owner();if key=="running"then return g~=nil and p.running==true end
-    if not g then return nil end
+    if not g then return pendingPosition(key)end
     if direct[key]then return p[direct[key]]end
     if key=='stepFrames'then return p.stepFramesCur or p.stepFrames end
     if key=='biking'then return g.save and g.save.onBike==true end

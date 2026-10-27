@@ -72,9 +72,11 @@ local writes = 0
 game.input = { wasPressed = function(_, key) return key == "right" end }
 game.writeOptions = function() writes = writes + 1 end
 local menu = Options.new(game)
-for i, entry in ipairs(menu.rows) do
-  if entry.id == "gbcColorCorrection" then menu.index = i end
-end
+local Stack = require("src.core.StateStack")
+game.stack = setmetatable({}, { __index = Stack })
+game.stack:init()
+game.stack:push(menu)
+menu = assert(menu:focusRow("gbcColorCorrection"), "GBC profile is reachable through its native category")
 menu:update(1 / 60)
 T.eq(C.mode, "accurate", "mapped menu input changes the live profile")
 T.eq(writes, 1, "mapped menu input persists through the normal options writer")

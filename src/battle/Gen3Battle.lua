@@ -219,45 +219,15 @@ end
 local stripCache = {}
 local stripQuads = {}
 local bandQuads = setmetatable({}, { __mode = "k" })
-local moveBgIndexShaderCache = nil
-
-local function moveBgIndexShader()
-  if moveBgIndexShaderCache ~= nil then return moveBgIndexShaderCache or nil end
-  if not (love.graphics and love.graphics.newShader) then
-    moveBgIndexShaderCache = false
-    return nil
-  end
-  local uniforms, choices = {}, {}
-  for i = 0, 15 do uniforms[#uniforms + 1] = ("extern vec3 c%d;"):format(i) end
-  for i = 0, 15 do
-    choices[#choices + 1] = ((i == 0) and "if" or "else if")
-      .. (" (idx < %.1f) rgb = c%d;"):format(i + 0.5, i)
-  end
-  local src = table.concat(uniforms, "\n") .. [[
-    vec4 effect(vec4 colour, Image tex, vec2 uv, vec2 screen) {
-      vec4 px = Texel(tex, uv);
-      number idx = floor(px.r * 15.0 + 0.5);
-      vec3 rgb = c0;
-  ]] .. table.concat(choices, "\n") .. [[
-      return vec4(rgb, px.a) * colour;
-    }
-  ]]
-  local ok, shader = pcall(love.graphics.newShader, src)
-  moveBgIndexShaderCache = ok and shader or false
-  return ok and shader or nil
-end
+local moveBgPalette = require('src.render.Gen3IndexedPalette').new()
 
 local function drawIndexedMoveBg(g, battle, layer)
   if not (layer and layer.indexed and layer.indexImage and layer.palette) then
     return false
   end
   local okImage, image = pcall(Assets.image, layer.indexImage)
-  local shader = moveBgIndexShader()
+  local shader = moveBgPalette:sendNormalized(layer.palette)
   if not (okImage and image and shader) then return false end
-  for i = 0, 15 do
-    local c = layer.palette[i + 1] or { 0, 0, 0 }
-    shader:send("c" .. i, { c[1] or 0, c[2] or 0, c[3] or 0 })
-  end
   local oldShader = g.getShader and g.getShader() or nil
   local sx, sy, sw, sh
   if g.getScissor then sx, sy, sw, sh = g.getScissor() end

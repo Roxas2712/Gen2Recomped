@@ -1154,6 +1154,7 @@ local DATA_DERIVED = {
 function OverworldState:enter(mapId, x, y, facing, opts)
   Game = require("src.core.Game")
   Game.overworld = self
+  self.encounters = require("src.core.Gen2EncounterViews").forData(Game.data)
   -- THE SAVED CAMERA TILT, taken up before the first map is built.
   --
   -- `Gen4Camera` holds the choice in the module rather than reading the save,
@@ -2421,6 +2422,10 @@ function OverworldState:liveMaps()
 end
 
 function OverworldState:rebuildNeighbors()
+  -- Source renderers inspect the same live map/tileset registries as the
+  -- native loader. Missing fields made an already resident connected world
+  -- appear empty to those readers. Rebind on every rebuild after data edits.
+  self.maps, self.tilesets = Game.data.maps, Game.data.tilesets
   local mapId = self.map.id
   self.neighbors = {}
   local hops = FieldDefaults.world(Game.data, "neighborHops") or NEIGHBOR_HOPS
@@ -2436,7 +2441,7 @@ function OverworldState:rebuildNeighbors()
                                                      hops, reachW, reachH)) do
     keep[n.id] = true
     local m = MapLoader.load(Game.data, n.id)
-    table.insert(self.neighbors, { map = m, ox = n.ox, oy = n.oy, cx = n.ox / 16, cy = n.oy / 16 })
+    table.insert(self.neighbors, { id = m.id, map = m, ox = n.ox, oy = n.oy, cx = n.ox / 16, cy = n.oy / 16 })
   end
   -- bound resident memory: drop maps behind us that are neither current nor
   -- a drawn neighbor, releasing their window batch / border image / atlas
@@ -3762,6 +3767,7 @@ function OverworldState:update(dt)
   -- already feeds into draw().
   -- the weather's own clock; see drawFieldWeather
   self.weatherFrame = (self.weatherFrame or 0) + 1
+  if GameVersion.isGen3() then require('src.world.Gen3WeatherAudio').update(Game,self) end
   -- ...and the cracked floor's, which runs on the clock rather than on the
   -- steps because that is what makes a step's length decide the fall
   self:tickCrackedFloor()
@@ -5524,7 +5530,7 @@ function OverworldState:scriptRunning()
   return (self.runner and self.runner:isRunning()) and true or false
 end
 
-function OverworldState:busy()
+function OverworldState:busy(ignoreOverlay)
   local field=package.loaded["src.core.game3.field"]
   if GameVersion.isGen3()and field and field._locked(Game,self)then return true end
   -- Gen2's world lives below overlays. A movement wrapper runs after the
@@ -5534,7 +5540,7 @@ function OverworldState:busy()
     if self.battleActive then return true end
     local stack = Game and Game.stack
     local top = stack and stack.top and stack:top()
-    if top and top ~= self then return true end
+    if ignoreOverlay ~= true and top and top ~= self then return true end
   end
   return (self:scriptRunning() or (self.scriptMoves and #self.scriptMoves > 0)
     or self.engaging or self.emote or self.teleportOut or self.whirlSpin
@@ -5544,7 +5550,10 @@ function OverworldState:busy()
 end
 
 function OverworldState:acceptsMenuInput()
-  return not self.battleActive and not self:busy()
+  -- This public query observes the settled field, including from an overlay
+  -- that needs to save/restart safely. Native movement still calls busy()
+  -- without the observation flag and remains blocked by the overlay owner.
+  return not self.battleActive and not self:busy(true)
     and not (self.player and self.player.moving) and not self.iceSlide
 end
 
@@ -9361,6 +9370,7 @@ function OverworldState:weatherName(value)
     return require("src.import.Gen4Weather").nameFor(value)
   end
   local names = (Game.data.constants or {}).gen3WeatherNames
+    or require("src.core.Gen3WeatherIds").names
   local n = tonumber(value)
   return (names and n and names[n]) or nil
 end
@@ -15972,6 +15982,7 @@ function OverworldState:startWarpTo(mapId, x, y, facing, onDone, opts)
   self.doorWarp = nil
   local arriveWarp = self.arriveWarp
   self.arriveWarp = nil
+  self.warpArrivalKind = arriveWarp
   local fromId = self.map.id
   local fromSection = self.map.def and self.map.def.regionMapSection
   local transition = Transition.new(Game, function()
@@ -16129,6 +16140,7 @@ function OverworldState:startWarpTo(mapId, x, y, facing, onDone, opts)
     end
   end, function()
     self.transitioning = false
+    self.warpArrivalKind = nil
     -- THE ARRIVAL IS WHAT GIVES THE CONTROLS BACK.
     --
     -- Reported from play: "Fix the lavaridge gym its bugged When you go
@@ -18731,7 +18743,7 @@ local function drawWorldBody(self, cadenceConsumed)
     self.map.renderer:drawBorderFill(cam.x, bgY, vw, vh)
     self.map.renderer:draw(cam.x, bgY, vw, vh)
     for _, nb in ipairs(self.neighbors) do
-      nb.map.renderer:drawMapOnly(cam.x - nb.ox, bgY - nb.oy, vw, vh)
+      MapLoader.forNeighbor(nb, Game.data).renderer:drawMapOnly(cam.x - nb.ox, bgY - nb.oy, vw, vh)
     end
     -- the Mirage Tower on BG0, under the sprites (src/world/Gen3MirageTower)
     if self.g3MirageTower then
@@ -18928,7 +18940,7 @@ local function drawWorldBody(self, cadenceConsumed)
       self.map.renderer:drawBorderFill(cam.x, bgY, vw, vh)
       self.map.renderer:draw(cam.x, bgY, vw, vh)
       for _, nb in ipairs(self.neighbors) do
-        nb.map.renderer:drawMapOnly(cam.x - nb.ox, bgY - nb.oy, vw, vh)
+        MapLoader.forNeighbor(nb, Game.data).renderer:drawMapOnly(cam.x - nb.ox, bgY - nb.oy, vw, vh)
       end
       closeTiles()
     end
@@ -19336,10 +19348,11 @@ local function drawWorldBody(self, cadenceConsumed)
     self.map.renderer:drawAbove(cam.x, bgY, vw, vh)
     aim(self, self.map.renderer, nil, nil, feetX, feetZ)
     for _, nb in ipairs(self.neighbors) do
-      if nb.map.renderer.drawAbove then
-        aim(self, nb.map.renderer, nb.ox, nb.oy, feetX, feetZ)
-        nb.map.renderer:drawAbove(cam.x - nb.ox, bgY - nb.oy, vw, vh)
-        aim(self, nb.map.renderer, nil, nil, feetX, feetZ)
+      local renderer = MapLoader.forNeighbor(nb, Game.data).renderer
+      if renderer.drawAbove then
+        aim(self, renderer, nb.ox, nb.oy, feetX, feetZ)
+        renderer:drawAbove(cam.x - nb.ox, bgY - nb.oy, vw, vh)
+        aim(self, renderer, nil, nil, feetX, feetZ)
       end
     end
     closeTiles()
@@ -19645,48 +19658,14 @@ end
 -- is the same beat the Game Boy path uses to swap the machine's shades, so the
 -- two generations blink together off one clock.
 function OverworldState:drawGen3Heal(ha, cam)
-  if not GameVersion.isGen3() then return false end
-  local record = (Game.data.constants or {}).gen3HealMachine
-  if not (record and record.monitor and record.glow) then return false end
-  self.gen3HealArt = self.gen3HealArt or {}
-  local art = self.gen3HealArt
-  local function picture(path)
-    if art[path] == nil then
-      local ok, img = pcall(require("src.render.Assets").image, path)
-      art[path] = (ok and img) or false
-    end
-    return art[path] or nil
-  end
-  local ox = math.floor(ha.px - cam.x)
-  local oy = math.floor(ha.py - cam.y)
+  local sprites = require("src.world.Gen3HealingPresentation").snapshot(Game, self, ha)
+  if not sprites then return false end
   love.graphics.setColor(1, 1, 1, 1)
-  local frames = record.monitor.images or {}
-  local frame = frames[(ha.visible == false) and 2 or 1] or frames[1]
-  local monitor = frame and picture(frame)
-  if monitor then
-    love.graphics.draw(monitor, ox + record.monitor.x, oy + record.monitor.y)
+  for _, sprite in ipairs(sprites) do
+    love.graphics.draw(sprite.image, math.floor(ha.px - cam.x) + sprite.x - ha.px,
+                       math.floor(ha.py - cam.y) + sprite.y - ha.py)
   end
-  -- Reported from play: the healing machine's layout looks wrong -- what was
-  -- actually wrong is that a lit ball was invisible rather than misplaced.
-  -- The console art the map tileset already draws bakes in its own row of
-  -- (unlit-looking) LED dots, and this glow sprite is the ROM's own tiny
-  -- 4x4 dot meant to sit exactly over one -- at native size, one more red
-  -- pixel-cluster on top of art that is already mostly red LEDs, it could
-  -- not be told apart from the backdrop it was drawn on. 2x scale and a
-  -- bright gold tint (a lit Poke Ball, not a red LED) makes each one land.
-  local glow = record.glow.image and picture(record.glow.image)
-  if glow then
-    -- NATIVE SIZE AND COLOURS.  An enlarged, gold-tinted ball read better in
-    -- the voxel view but dwarfed the machine in the plain game; the sprite and
-    -- sPokeballCoordOffsets are the cartridge's own and are drawn as such.
-    for i = 1, math.min(ha.lit or 0, #(record.glow.offsets or {})) do
-      local at = record.glow.offsets[i]
-      love.graphics.draw(glow, ox + record.glow.x + at[1],
-                         oy + record.glow.y + at[2])
-    end
-    love.graphics.setColor(1, 1, 1, 1)
-  end
-  return (monitor or glow) ~= nil
+  return #sprites > 0
 end
 
 -- screen-space overlays: drawn to the UI canvas at normal scale

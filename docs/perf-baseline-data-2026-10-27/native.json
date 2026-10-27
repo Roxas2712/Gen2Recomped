@@ -1,0 +1,3432 @@
+{
+  "scope": "Eight completed native timing cases; larger run interrupted during voxel preparation",
+  "passed": true,
+  "sourceCommit": "b882767be2bff2ffa87e2e3cc8fc0ff43ab2ad67",
+  "referenceMainCommit": "b15e74c11b0c3c2703f61ff66070a97aec312230",
+  "runtimeMatchesMain": true,
+  "sourceProvenance": "Source commit recorded by launch; each host was created by git archive. Completed native cases preceded the voxel-preparation interruption.",
+  "completeWholeRun": false,
+  "playerProfilesUsed": false,
+  "romSha1": {
+    "red": "ea9bcae617fdf159b045185467ae58b2e4a48b9a",
+    "gold": "d8b8a3600a465308c9953dfa04f0081c05bdcb94",
+    "emerald": "f3ae088181bf583e55daf962a92bb46f4f1d07b7",
+    "platinum": "0862ec35b24de5c7e2dcb88c9eea0873110d755c"
+  },
+  "results": [
+    {
+      "case": "red-pallet-default",
+      "report": {
+        "switches": {
+          "idleStream": true,
+          "gen4ChunkPrebuild": true
+        },
+        "variant": "default",
+        "gpu": {
+          "api": "2.1",
+          "renderer": "Metal",
+          "vendor": "",
+          "device": "Apple M2"
+        },
+        "pacing": {
+          "vsync": 0,
+          "fpsCap": 160,
+          "backgroundPacing": false
+        },
+        "setup": {
+          "worldOnTop": true,
+          "worldActive": true,
+          "scriptRunning": false,
+          "connections": {
+            "north": {
+              "map": "ROUTE_1",
+              "offset": 0
+            },
+            "south": {
+              "map": "ROUTE_21",
+              "offset": 0
+            }
+          },
+          "width": 20,
+          "player": {
+            "x": 8,
+            "y": 10
+          },
+          "height": 18,
+          "walkable": true,
+          "map": "PALLET_TOWN",
+          "requested": {
+            "x": 8,
+            "y": 10
+          }
+        },
+        "measurement": {
+          "bakes": [],
+          "seconds": 60.01170004166668,
+          "limitations": [
+            "inclusive sections cannot be summed",
+            "instrumented driver host; no screenshot readback during measurement",
+            "process CPU time includes active worker threads; no GPU utilization or energy measurement"
+          ],
+          "processCpuSeconds": 29.376126999999997,
+          "frame": {
+            "maxMs": 29.9123750000021,
+            "avgMs": 8.361669226928617
+          },
+          "tierTrace": [
+            {
+              "tier": "high",
+              "focused": true,
+              "seconds": 0
+            }
+          ],
+          "sections": {
+            "  update: tilt": {
+              "avgMsPerFrame": 0.005403656355926914,
+              "maxMsPerFrame": 0.11229166666737456,
+              "observedFrames": 7177
+            },
+            "  pipelines: update": {
+              "avgMsPerFrame": 0.00695666713115962,
+              "maxMsPerFrame": 0.14979166666773125,
+              "observedFrames": 7177
+            },
+            "  update: graphics stack drain": {
+              "avgMsPerFrame": 0.0026185616088590133,
+              "maxMsPerFrame": 0.10916666667526442,
+              "observedFrames": 7177
+            },
+            "  update: gc step": {
+              "avgMsPerFrame": 0.002883598067809928,
+              "maxMsPerFrame": 0.29666666667083064,
+              "observedFrames": 7177
+            },
+            "  step: whole": {
+              "avgMsPerFrame": 0.7546896161347938,
+              "maxMsPerFrame": 23.130874999999662,
+              "observedFrames": 3454
+            },
+            "  world: tiles": {
+              "avgMsPerFrame": 0.17536718568572932,
+              "maxMsPerFrame": 1.0180416666685232,
+              "observedFrames": 7177
+            },
+            "    step: mod input.step": {
+              "avgMsPerFrame": 0.00275705958851878,
+              "maxMsPerFrame": 0.12349999999905492,
+              "observedFrames": 3454
+            },
+            "  frame pacing: gc budget": {
+              "avgMsPerFrame": 0.1897789059959829,
+              "maxMsPerFrame": 1.149166666664314,
+              "observedFrames": 2808
+            },
+            "  tiles: syncGen3Palettes": {
+              "avgMsPerFrame": 0.01891502949238953,
+              "maxMsPerFrame": 0.28220833333847395,
+              "observedFrames": 7177
+            },
+            "  world: entities": {
+              "avgMsPerFrame": 0.4079821188054899,
+              "maxMsPerFrame": 1.5386666666543647,
+              "observedFrames": 7177
+            },
+            "  logic: stack:update": {
+              "avgMsPerFrame": 0.7374349774743728,
+              "maxMsPerFrame": 22.929541666677267,
+              "observedFrames": 3454
+            },
+            "frame pacing: sleep": {
+              "avgMsPerFrame": 1.1683393246946734,
+              "maxMsPerFrame": 5.418083333339041,
+              "observedFrames": 7177
+            },
+            "  renderer: zone blit": {
+              "avgMsPerFrame": 0.1392849031629162,
+              "maxMsPerFrame": 0.7522916666573565,
+              "observedFrames": 7177
+            },
+            "update: whole frame": {
+              "avgMsPerFrame": 1.0037295062932396,
+              "maxMsPerFrame": 23.530666666658817,
+              "observedFrames": 7177
+            },
+            "    tiles: ensureWindow": {
+              "avgMsPerFrame": 0.04720526798570614,
+              "maxMsPerFrame": 0.4349166666486326,
+              "observedFrames": 7177
+            },
+            "  world: FX": {
+              "avgMsPerFrame": 0.020718011239535393,
+              "maxMsPerFrame": 0.22679166666961237,
+              "observedFrames": 7177
+            },
+            "  update: discord": {
+              "avgMsPerFrame": 0.006792845199977455,
+              "maxMsPerFrame": 0.1914166666665551,
+              "observedFrames": 7177
+            },
+            "present (GPU wait / vsync)": {
+              "avgMsPerFrame": 0.2553919639125232,
+              "maxMsPerFrame": 1.2848750000005182,
+              "observedFrames": 7177
+            },
+            "  update: fixed steps": {
+              "avgMsPerFrame": 0.7623854442431466,
+              "maxMsPerFrame": 23.240666666659138,
+              "observedFrames": 7177
+            },
+            "draw: whole frame": {
+              "avgMsPerFrame": 1.3165631357112417,
+              "maxMsPerFrame": 3.8757083333393894,
+              "observedFrames": 7177
+            },
+            "  update: music": {
+              "avgMsPerFrame": 0.023426112349602415,
+              "maxMsPerFrame": 0.5538333333348078,
+              "observedFrames": 7177
+            }
+          },
+          "present": {
+            "maxMs": 1.1512083333338197,
+            "avgMs": 0.22818213273873164
+          },
+          "processCpuPercent": 48.95066625275384,
+          "frames": 7177,
+          "timing": "present-completion intervals and FrameProfile wall-time sections; GPU submission only, no completion fence"
+        },
+        "boot": {
+          "startX": 3,
+          "startY": 6,
+          "rivalName": "BLUE",
+          "startFacing": "down",
+          "startMoney": 3000,
+          "version": "red",
+          "startMap": "REDS_HOUSE_2F",
+          "playerName": "RED"
+        },
+        "pixels": [
+          2048,
+          1536
+        ],
+        "viewport": [
+          1024,
+          768
+        ],
+        "preparedState": {
+          "kind": "owned post-starter QA save",
+          "partyLevel": 10,
+          "repelSteps": 10000
+        },
+        "inventoryOnly": false,
+        "performanceBaseline": true,
+        "dataKeys": [
+          "_bootKeys",
+          "_pristineKeys",
+          "ai_classes",
+          "applyMapEditorOverlay",
+          "applyVersionedFieldData",
+          "audio",
+          "balls",
+          "battle_anims",
+          "commands",
+          "constants",
+          "encounters",
+          "ensure",
+          "evolution_methods",
+          "field",
+          "font",
+          "growth_rates",
+          "icons",
+          "isGen3Cache",
+          "isGen4Cache",
+          "items",
+          "load",
+          "maps",
+          "move_effects",
+          "moves",
+          "palettes",
+          "pokemon",
+          "publishGen2MapMetadata",
+          "publishGen2Palettes",
+          "publishGen2TilesetNames",
+          "reloadGenerated",
+          "resolveText",
+          "rulesets",
+          "seedCinnabarGymTrainerHeaders",
+          "seedDefaults",
+          "seedFightingDojoKarateMaster",
+          "sprites",
+          "statuses",
+          "text",
+          "textEntry",
+          "text_pointers",
+          "tilesets",
+          "tokens",
+          "trainerHeader",
+          "trainer_headers",
+          "trainers",
+          "transitions",
+          "type_chart",
+          "unloadGenerated"
+        ],
+        "runtime": [
+          12,
+          0,
+          0
+        ],
+        "passed": true,
+        "scene": "red-pallet",
+        "targets": [
+          {
+            "matches": [
+              {
+                "fields": {
+                  "id": "PALLET_TOWN",
+                  "label": "PalletTown",
+                  "width": 10,
+                  "height": 9
+                },
+                "key": "PALLET_TOWN",
+                "keys": [
+                  "blocks",
+                  "borderBlock",
+                  "connections",
+                  "height",
+                  "id",
+                  "index",
+                  "label",
+                  "objects",
+                  "signs",
+                  "source",
+                  "tileset",
+                  "warps",
+                  "width"
+                ],
+                "runtimeId": "PALLET_TOWN"
+              }
+            ],
+            "normalized": "pallettown",
+            "canonical": "PALLET_TOWN",
+            "name": "PALLET_TOWN"
+          }
+        ],
+        "edition": "red"
+      },
+      "reportSha256": "92be8890b0521777dd6126956bbae40b002b88576ceb1373a3ee82bb214df023",
+      "logSha256": "f52005b0d6cbda182a97dfe8076fb0692e5f9224f27b5e82ac322ab15a4c89b9"
+    },
+    {
+      "case": "red-route1-default",
+      "report": {
+        "passed": true,
+        "edition": "red",
+        "pacing": {
+          "fpsCap": 160,
+          "backgroundPacing": false,
+          "vsync": 0
+        },
+        "preparedState": {
+          "kind": "owned post-starter QA save",
+          "repelSteps": 10000,
+          "partyLevel": 10
+        },
+        "measurement": {
+          "seconds": 60.01037887500001,
+          "present": {
+            "maxMs": 1.2223333333327702,
+            "avgMs": 0.2781360377576783
+          },
+          "processCpuSeconds": 23.940852999999997,
+          "processCpuPercent": 39.89452066261428,
+          "sections": {
+            "  logic: stack:update": {
+              "observedFrames": 3596,
+              "avgMsPerFrame": 0.2521332175121617,
+              "maxMsPerFrame": 13.068624999998946
+            },
+            "    tiles: ensureWindow": {
+              "observedFrames": 7195,
+              "avgMsPerFrame": 0.056132215659098296,
+              "maxMsPerFrame": 0.6865000000146892
+            },
+            "  frame pacing: gc budget": {
+              "observedFrames": 2651,
+              "avgMsPerFrame": 0.1765599258744835,
+              "maxMsPerFrame": 0.751499999999794
+            },
+            "  tiles: syncGen3Palettes": {
+              "observedFrames": 7195,
+              "avgMsPerFrame": 0.02247791290256504,
+              "maxMsPerFrame": 0.508958333327314
+            },
+            "present (GPU wait / vsync)": {
+              "observedFrames": 7195,
+              "avgMsPerFrame": 0.2902205987954143,
+              "maxMsPerFrame": 1.3059583333330238
+            },
+            "  update: fixed steps": {
+              "observedFrames": 7195,
+              "avgMsPerFrame": 0.27357198285850715,
+              "maxMsPerFrame": 13.131166666665806
+            },
+            "  update: music": {
+              "observedFrames": 7195,
+              "avgMsPerFrame": 0.017896270558226055,
+              "maxMsPerFrame": 0.2539999999982001
+            },
+            "  update: tilt": {
+              "observedFrames": 7195,
+              "avgMsPerFrame": 0.0019464269168792037,
+              "maxMsPerFrame": 0.15708333333463997
+            },
+            "  pipelines: update": {
+              "observedFrames": 7195,
+              "avgMsPerFrame": 0.004524380356660735,
+              "maxMsPerFrame": 0.1327500000005699
+            },
+            "draw: whole frame": {
+              "observedFrames": 7195,
+              "avgMsPerFrame": 0.8488864257586505,
+              "maxMsPerFrame": 2.644625000000289
+            },
+            "frame pacing: sleep": {
+              "observedFrames": 7195,
+              "avgMsPerFrame": 1.1702488012508674,
+              "maxMsPerFrame": 5.549125000001709
+            },
+            "  update: gc step": {
+              "observedFrames": 7195,
+              "avgMsPerFrame": 0.0016975330091289675,
+              "maxMsPerFrame": 0.11299999999891952
+            },
+            "  renderer: zone blit": {
+              "observedFrames": 7195,
+              "avgMsPerFrame": 0.07476635394960711,
+              "maxMsPerFrame": 0.36320833333469693
+            },
+            "  step: whole": {
+              "observedFrames": 3596,
+              "avgMsPerFrame": 0.26550890085705986,
+              "maxMsPerFrame": 13.103000000000975
+            },
+            "  update: discord": {
+              "observedFrames": 7195,
+              "avgMsPerFrame": 0.003291411860025229,
+              "maxMsPerFrame": 0.18370833333136716
+            },
+            "    step: mod input.step": {
+              "observedFrames": 3596,
+              "avgMsPerFrame": 0.004639697706705518,
+              "maxMsPerFrame": 0.1626666666680876
+            },
+            "  world: tiles": {
+              "observedFrames": 7195,
+              "avgMsPerFrame": 0.1488678364604385,
+              "maxMsPerFrame": 0.9780000000008116
+            },
+            "  update: graphics stack drain": {
+              "observedFrames": 7195,
+              "avgMsPerFrame": 0.002880993745633123,
+              "maxMsPerFrame": 0.11195833332067195
+            },
+            "  world: entities": {
+              "observedFrames": 7195,
+              "avgMsPerFrame": 0.21765714037515735,
+              "maxMsPerFrame": 0.7595833333269297
+            },
+            "  world: FX": {
+              "observedFrames": 7195,
+              "avgMsPerFrame": 0.013315583738725845,
+              "maxMsPerFrame": 0.23041666667467098
+            },
+            "update: whole frame": {
+              "observedFrames": 7195,
+              "avgMsPerFrame": 0.48027039031741825,
+              "maxMsPerFrame": 13.355916666661471
+            }
+          },
+          "limitations": [
+            "inclusive sections cannot be summed",
+            "instrumented driver host; no screenshot readback during measurement",
+            "process CPU time includes active worker threads; no GPU utilization or energy measurement"
+          ],
+          "bakes": [],
+          "frame": {
+            "maxMs": 52.46241666666407,
+            "avgMs": 8.34056690410007
+          },
+          "frames": 7195,
+          "tierTrace": [
+            {
+              "focused": true,
+              "seconds": 0,
+              "tier": "high"
+            }
+          ],
+          "timing": "present-completion intervals and FrameProfile wall-time sections; GPU submission only, no completion fence"
+        },
+        "viewport": [
+          1024,
+          768
+        ],
+        "inventoryOnly": false,
+        "setup": {
+          "requested": {
+            "x": 10,
+            "y": 25
+          },
+          "worldOnTop": true,
+          "worldActive": true,
+          "connections": {
+            "north": {
+              "offset": -5,
+              "map": "VIRIDIAN_CITY"
+            },
+            "south": {
+              "offset": 0,
+              "map": "PALLET_TOWN"
+            }
+          },
+          "width": 20,
+          "height": 36,
+          "scriptRunning": false,
+          "map": "ROUTE_1",
+          "walkable": true,
+          "player": {
+            "x": 10,
+            "y": 25
+          }
+        },
+        "dataKeys": [
+          "_bootKeys",
+          "_pristineKeys",
+          "ai_classes",
+          "applyMapEditorOverlay",
+          "applyVersionedFieldData",
+          "audio",
+          "balls",
+          "battle_anims",
+          "commands",
+          "constants",
+          "encounters",
+          "ensure",
+          "evolution_methods",
+          "field",
+          "font",
+          "growth_rates",
+          "icons",
+          "isGen3Cache",
+          "isGen4Cache",
+          "items",
+          "load",
+          "maps",
+          "move_effects",
+          "moves",
+          "palettes",
+          "pokemon",
+          "publishGen2MapMetadata",
+          "publishGen2Palettes",
+          "publishGen2TilesetNames",
+          "reloadGenerated",
+          "resolveText",
+          "rulesets",
+          "seedCinnabarGymTrainerHeaders",
+          "seedDefaults",
+          "seedFightingDojoKarateMaster",
+          "sprites",
+          "statuses",
+          "text",
+          "textEntry",
+          "text_pointers",
+          "tilesets",
+          "tokens",
+          "trainerHeader",
+          "trainer_headers",
+          "trainers",
+          "transitions",
+          "type_chart",
+          "unloadGenerated"
+        ],
+        "pixels": [
+          2048,
+          1536
+        ],
+        "switches": {
+          "gen4ChunkPrebuild": true,
+          "idleStream": true
+        },
+        "variant": "default",
+        "runtime": [
+          12,
+          0,
+          0
+        ],
+        "targets": [
+          {
+            "matches": [
+              {
+                "fields": {
+                  "height": 18,
+                  "id": "ROUTE_1",
+                  "width": 10,
+                  "label": "Route1"
+                },
+                "runtimeId": "ROUTE_1",
+                "keys": [
+                  "blocks",
+                  "borderBlock",
+                  "connections",
+                  "height",
+                  "id",
+                  "index",
+                  "label",
+                  "objects",
+                  "signs",
+                  "source",
+                  "tileset",
+                  "warps",
+                  "width"
+                ],
+                "key": "ROUTE_1"
+              }
+            ],
+            "canonical": "ROUTE_1",
+            "name": "ROUTE_1",
+            "normalized": "route1"
+          }
+        ],
+        "performanceBaseline": true,
+        "scene": "red-route1",
+        "boot": {
+          "rivalName": "BLUE",
+          "startX": 3,
+          "startY": 6,
+          "startMap": "REDS_HOUSE_2F",
+          "startMoney": 3000,
+          "playerName": "RED",
+          "version": "red",
+          "startFacing": "down"
+        },
+        "gpu": {
+          "renderer": "Metal",
+          "device": "Apple M2",
+          "vendor": "",
+          "api": "2.1"
+        }
+      },
+      "reportSha256": "69999d777aecd44d06a4345f9309cf1c01cb12f61cd99dd6db921bc5e93bc3c2",
+      "logSha256": "875c06f3ba4e06d639a6f8598fb1614926d2f16b9031d67c2474a2c558ce461c"
+    },
+    {
+      "case": "gold-goldenrod-day-default",
+      "report": {
+        "passed": true,
+        "boot": {
+          "playerName": "GOLD",
+          "startY": 3,
+          "startX": 3,
+          "rivalName": "???",
+          "version": "gold",
+          "startFacing": "down",
+          "startMap": "PLAYERS_HOUSE2_F",
+          "startMoney": 3000
+        },
+        "clock": {
+          "hour": 12,
+          "minute": 0
+        },
+        "setup": {
+          "height": 36,
+          "walkable": true,
+          "scriptRunning": false,
+          "connections": {
+            "south": {
+              "map": "ROUTE34",
+              "offset": 5
+            },
+            "north": {
+              "map": "ROUTE35",
+              "offset": 5
+            }
+          },
+          "width": 40,
+          "player": {
+            "y": 25,
+            "x": 20
+          },
+          "worldActive": true,
+          "requested": {
+            "y": 25,
+            "x": 20
+          },
+          "map": "GOLDENROD_CITY",
+          "worldOnTop": false
+        },
+        "variant": "default",
+        "pacing": {
+          "vsync": 0,
+          "fpsCap": 160,
+          "backgroundPacing": false
+        },
+        "preparedState": {
+          "repelSteps": 10000,
+          "partyLevel": 10,
+          "kind": "owned post-starter QA save"
+        },
+        "pixels": [
+          2048,
+          1536
+        ],
+        "gpu": {
+          "renderer": "Metal",
+          "api": "2.1",
+          "vendor": "",
+          "device": "Apple M2"
+        },
+        "viewport": [
+          1024,
+          768
+        ],
+        "inventoryOnly": false,
+        "runtime": [
+          12,
+          0,
+          0
+        ],
+        "dataKeys": [
+          "_bootKeys",
+          "_gen2MapNames",
+          "_gen2TilesetNameAliases",
+          "_pristineKeys",
+          "ai_classes",
+          "applyMapEditorOverlay",
+          "applyVersionedFieldData",
+          "audio",
+          "balls",
+          "battle_anims",
+          "commands",
+          "constants",
+          "encounters",
+          "ensure",
+          "evolution_methods",
+          "field",
+          "font",
+          "gen2Palettes",
+          "growth_rates",
+          "icons",
+          "isGen3Cache",
+          "isGen4Cache",
+          "items",
+          "load",
+          "map_scripts",
+          "maps",
+          "move_effects",
+          "moves",
+          "palettes",
+          "pokemon",
+          "publishGen2MapMetadata",
+          "publishGen2Palettes",
+          "publishGen2TilesetNames",
+          "reloadGenerated",
+          "resolveText",
+          "rulesets",
+          "seedCinnabarGymTrainerHeaders",
+          "seedDefaults",
+          "seedFightingDojoKarateMaster",
+          "sprites",
+          "statuses",
+          "text",
+          "textEntry",
+          "text_pointers",
+          "tilesets",
+          "tokens",
+          "trainerHeader",
+          "trainer_headers",
+          "trainers",
+          "transitions",
+          "type_chart",
+          "unloadGenerated",
+          "unown_dex",
+          "unown_puzzle"
+        ],
+        "measurement": {
+          "processCpuSeconds": 30.841656,
+          "frame": {
+            "avgMs": 8.38197967877095,
+            "maxMs": 48.07862500000226
+          },
+          "sections": {
+            "present (GPU wait / vsync)": {
+              "avgMsPerFrame": 0.29511861033521236,
+              "maxMsPerFrame": 1.2154166666658028,
+              "observedFrames": 7160
+            },
+            "  logic: stack:update": {
+              "avgMsPerFrame": 0.908831023044672,
+              "maxMsPerFrame": 29.098375000002008,
+              "observedFrames": 3597
+            },
+            "  renderer: zone blit": {
+              "avgMsPerFrame": 0.025957891061479825,
+              "maxMsPerFrame": 0.2743750000000489,
+              "observedFrames": 7160
+            },
+            "  tiles: syncGen3Palettes": {
+              "avgMsPerFrame": 0.018720152467286283,
+              "maxMsPerFrame": 0.6619166666679277,
+              "observedFrames": 7160
+            },
+            "frame pacing: sleep": {
+              "avgMsPerFrame": 0.7818966596835047,
+              "maxMsPerFrame": 5.156916666663847,
+              "observedFrames": 7160
+            },
+            "  update: fixed steps": {
+              "avgMsPerFrame": 0.933070612197371,
+              "maxMsPerFrame": 29.14416666666675,
+              "observedFrames": 7160
+            },
+            "  update: tilt": {
+              "avgMsPerFrame": 0.004205004655510322,
+              "maxMsPerFrame": 0.20462499999851502,
+              "observedFrames": 7160
+            },
+            "  update: music": {
+              "avgMsPerFrame": 0.023763209962783954,
+              "maxMsPerFrame": 1.5274583333333425,
+              "observedFrames": 7160
+            },
+            "  update: discord": {
+              "avgMsPerFrame": 0.005357326582939648,
+              "maxMsPerFrame": 0.21874999999482725,
+              "observedFrames": 7160
+            },
+            "draw: whole frame": {
+              "avgMsPerFrame": 1.3561052025139426,
+              "maxMsPerFrame": 5.775291666665794,
+              "observedFrames": 7160
+            },
+            "  update: gc step": {
+              "avgMsPerFrame": 0.0025265537709380074,
+              "maxMsPerFrame": 0.11195833332777738,
+              "observedFrames": 7160
+            },
+            "  pipelines: update": {
+              "avgMsPerFrame": 0.005450832169432448,
+              "maxMsPerFrame": 0.14991666666475112,
+              "observedFrames": 7160
+            },
+            "  world: entities": {
+              "avgMsPerFrame": 0.5467920216480135,
+              "maxMsPerFrame": 2.4979166666678765,
+              "observedFrames": 7160
+            },
+            "  world: FX": {
+              "avgMsPerFrame": 0.020512494180665197,
+              "maxMsPerFrame": 0.23966666666908054,
+              "observedFrames": 7160
+            },
+            "  frame pacing: gc budget": {
+              "avgMsPerFrame": 0.15940074487899747,
+              "maxMsPerFrame": 1.7666666666684705,
+              "observedFrames": 2295
+            },
+            "  world: tiles": {
+              "avgMsPerFrame": 0.14594622323094225,
+              "maxMsPerFrame": 1.299083333332618,
+              "observedFrames": 7160
+            },
+            "  update: graphics stack drain": {
+              "avgMsPerFrame": 0.0023454608938422686,
+              "maxMsPerFrame": 0.13308333333306166,
+              "observedFrames": 7160
+            },
+            "    step: mod input.step": {
+              "avgMsPerFrame": 0.0025426326816047244,
+              "maxMsPerFrame": 0.146500000003158,
+              "observedFrames": 3597
+            },
+            "  step: whole": {
+              "avgMsPerFrame": 0.9246985742551795,
+              "maxMsPerFrame": 29.138500000000178,
+              "observedFrames": 3597
+            },
+            "    tiles: ensureWindow": {
+              "avgMsPerFrame": 0.04249452979510989,
+              "maxMsPerFrame": 1.197541666666524,
+              "observedFrames": 7160
+            },
+            "update: whole frame": {
+              "avgMsPerFrame": 1.176201000930992,
+              "maxMsPerFrame": 29.4798750000016,
+              "observedFrames": 7160
+            }
+          },
+          "present": {
+            "avgMs": 0.275351449022247,
+            "maxMs": 1.1972500000005937
+          },
+          "bakes": [],
+          "limitations": [
+            "inclusive sections cannot be summed",
+            "instrumented driver host; no screenshot readback during measurement",
+            "process CPU time includes active worker threads; no GPU utilization or energy measurement"
+          ],
+          "processCpuPercent": 51.389934357132816,
+          "tierTrace": [
+            {
+              "tier": "high",
+              "focused": true,
+              "seconds": 0
+            }
+          ],
+          "timing": "present-completion intervals and FrameProfile wall-time sections; GPU submission only, no completion fence",
+          "frames": 7160,
+          "seconds": 60.0149745
+        },
+        "switches": {
+          "idleStream": true,
+          "gen4ChunkPrebuild": true
+        },
+        "edition": "gold",
+        "scene": "gold-goldenrod-day",
+        "performanceBaseline": true,
+        "targets": [
+          {
+            "name": "GOLDENROD_CITY",
+            "canonical": "GOLDENROD_CITY",
+            "matches": [
+              {
+                "key": "MAP_G0B_N02",
+                "runtimeId": "GOLDENROD_CITY",
+                "keys": [
+                  "blocks",
+                  "borderBlock",
+                  "connections",
+                  "environment",
+                  "environmentId",
+                  "fishGroup",
+                  "generation",
+                  "group",
+                  "height",
+                  "id",
+                  "index",
+                  "label",
+                  "landmark",
+                  "mapPalette",
+                  "mapPaletteBits",
+                  "number",
+                  "objects",
+                  "outdoor",
+                  "phoneService",
+                  "signs",
+                  "source",
+                  "sourceId",
+                  "sourceTileset",
+                  "tileset",
+                  "warps",
+                  "width"
+                ],
+                "fields": {
+                  "generation": 2,
+                  "height": 18,
+                  "environment": "TOWN",
+                  "width": 20,
+                  "id": "GOLDENROD_CITY",
+                  "label": "GoldenrodCity",
+                  "sourceId": "GOLDENROD_CITY"
+                }
+              }
+            ],
+            "normalized": "goldenrodcity"
+          }
+        ]
+      },
+      "reportSha256": "1fc934d3024d7f7b7d5275e3ed6940722fec174d6cecb95de98e3b31b7a53289",
+      "logSha256": "0d536c0eb85f3627ffcbe9755b838907cfecbb2769209019c79f45f7947be85e"
+    },
+    {
+      "case": "gold-goldenrod-night-default",
+      "report": {
+        "performanceBaseline": true,
+        "dataKeys": [
+          "_bootKeys",
+          "_gen2MapNames",
+          "_gen2TilesetNameAliases",
+          "_pristineKeys",
+          "ai_classes",
+          "applyMapEditorOverlay",
+          "applyVersionedFieldData",
+          "audio",
+          "balls",
+          "battle_anims",
+          "commands",
+          "constants",
+          "encounters",
+          "ensure",
+          "evolution_methods",
+          "field",
+          "font",
+          "gen2Palettes",
+          "growth_rates",
+          "icons",
+          "isGen3Cache",
+          "isGen4Cache",
+          "items",
+          "load",
+          "map_scripts",
+          "maps",
+          "move_effects",
+          "moves",
+          "palettes",
+          "pokemon",
+          "publishGen2MapMetadata",
+          "publishGen2Palettes",
+          "publishGen2TilesetNames",
+          "reloadGenerated",
+          "resolveText",
+          "rulesets",
+          "seedCinnabarGymTrainerHeaders",
+          "seedDefaults",
+          "seedFightingDojoKarateMaster",
+          "sprites",
+          "statuses",
+          "text",
+          "textEntry",
+          "text_pointers",
+          "tilesets",
+          "tokens",
+          "trainerHeader",
+          "trainer_headers",
+          "trainers",
+          "transitions",
+          "type_chart",
+          "unloadGenerated",
+          "unown_dex",
+          "unown_puzzle"
+        ],
+        "targets": [
+          {
+            "matches": [
+              {
+                "runtimeId": "GOLDENROD_CITY",
+                "keys": [
+                  "blocks",
+                  "borderBlock",
+                  "connections",
+                  "environment",
+                  "environmentId",
+                  "fishGroup",
+                  "generation",
+                  "group",
+                  "height",
+                  "id",
+                  "index",
+                  "label",
+                  "landmark",
+                  "mapPalette",
+                  "mapPaletteBits",
+                  "number",
+                  "objects",
+                  "outdoor",
+                  "phoneService",
+                  "signs",
+                  "source",
+                  "sourceId",
+                  "sourceTileset",
+                  "tileset",
+                  "warps",
+                  "width"
+                ],
+                "key": "MAP_G0B_N02",
+                "fields": {
+                  "sourceId": "GOLDENROD_CITY",
+                  "id": "GOLDENROD_CITY",
+                  "label": "GoldenrodCity",
+                  "width": 20,
+                  "generation": 2,
+                  "height": 18,
+                  "environment": "TOWN"
+                }
+              }
+            ],
+            "canonical": "GOLDENROD_CITY",
+            "name": "GOLDENROD_CITY",
+            "normalized": "goldenrodcity"
+          }
+        ],
+        "setup": {
+          "worldActive": true,
+          "player": {
+            "y": 25,
+            "x": 20
+          },
+          "map": "GOLDENROD_CITY",
+          "worldOnTop": false,
+          "walkable": true,
+          "requested": {
+            "y": 25,
+            "x": 20
+          },
+          "scriptRunning": false,
+          "width": 40,
+          "height": 36,
+          "connections": {
+            "north": {
+              "offset": 5,
+              "map": "ROUTE35"
+            },
+            "south": {
+              "offset": 5,
+              "map": "ROUTE34"
+            }
+          }
+        },
+        "pixels": [
+          2048,
+          1536
+        ],
+        "viewport": [
+          1024,
+          768
+        ],
+        "boot": {
+          "startMap": "PLAYERS_HOUSE2_F",
+          "startMoney": 3000,
+          "startX": 3,
+          "startY": 3,
+          "rivalName": "???",
+          "startFacing": "down",
+          "version": "gold",
+          "playerName": "GOLD"
+        },
+        "clock": {
+          "minute": 0,
+          "hour": 22
+        },
+        "edition": "gold",
+        "pacing": {
+          "backgroundPacing": false,
+          "fpsCap": 160,
+          "vsync": 0
+        },
+        "scene": "gold-goldenrod-night",
+        "passed": true,
+        "measurement": {
+          "processCpuPercent": 58.68733978776255,
+          "sections": {
+            "    tiles: ensureWindow": {
+              "maxMsPerFrame": 0.7920833333372457,
+              "observedFrames": 7150,
+              "avgMsPerFrame": 0.043831620046725236
+            },
+            "    step: mod input.step": {
+              "maxMsPerFrame": 0.2237499999893089,
+              "observedFrames": 3476,
+              "avgMsPerFrame": 0.002438875291385346
+            },
+            "  tiles: syncGen3Palettes": {
+              "maxMsPerFrame": 0.7542500000070618,
+              "observedFrames": 7150,
+              "avgMsPerFrame": 0.017450506992876324
+            },
+            "  logic: stack:update": {
+              "maxMsPerFrame": 32.64449999999819,
+              "observedFrames": 3476,
+              "avgMsPerFrame": 1.252724265734273
+            },
+            "  renderer: zone blit": {
+              "maxMsPerFrame": 0.23279166668288553,
+              "observedFrames": 7150,
+              "avgMsPerFrame": 0.022099335664362715
+            },
+            "  step: whole": {
+              "maxMsPerFrame": 32.70708333333339,
+              "observedFrames": 3476,
+              "avgMsPerFrame": 1.2673935606060895
+            },
+            "update: whole frame": {
+              "maxMsPerFrame": 33.11291666666705,
+              "observedFrames": 7150,
+              "avgMsPerFrame": 1.5037899009324351
+            },
+            "  world: tiles": {
+              "maxMsPerFrame": 1.0377083333423798,
+              "observedFrames": 7150,
+              "avgMsPerFrame": 0.16374087995337872
+            },
+            "  world: FX": {
+              "maxMsPerFrame": 0.2270833333337663,
+              "observedFrames": 7150,
+              "avgMsPerFrame": 0.01672991841495374
+            },
+            "  update: fixed steps": {
+              "maxMsPerFrame": 32.71320833333391,
+              "observedFrames": 7150,
+              "avgMsPerFrame": 1.2741408100233227
+            },
+            "  world: entities": {
+              "maxMsPerFrame": 3.6493333333336153,
+              "observedFrames": 7150,
+              "avgMsPerFrame": 0.8787524417250281
+            },
+            "  update: music": {
+              "maxMsPerFrame": 1.9215416666664709,
+              "observedFrames": 7150,
+              "avgMsPerFrame": 0.021988607226153038
+            },
+            "draw: whole frame": {
+              "maxMsPerFrame": 5.710500000001062,
+              "observedFrames": 7150,
+              "avgMsPerFrame": 1.7803409848484688
+            },
+            "  update: tilt": {
+              "maxMsPerFrame": 0.6418333333328974,
+              "observedFrames": 7150,
+              "avgMsPerFrame": 0.005020536130446169
+            },
+            "  pipelines: update": {
+              "maxMsPerFrame": 0.22020833333336043,
+              "observedFrames": 7150,
+              "avgMsPerFrame": 0.006159603729556839
+            },
+            "  update: discord": {
+              "maxMsPerFrame": 0.15987499999425836,
+              "observedFrames": 7150,
+              "avgMsPerFrame": 0.005473292540783676
+            },
+            "present (GPU wait / vsync)": {
+              "maxMsPerFrame": 1.5324999999997146,
+              "observedFrames": 7150,
+              "avgMsPerFrame": 0.2587612529137717
+            },
+            "  update: gc step": {
+              "maxMsPerFrame": 0.6420833333322662,
+              "observedFrames": 7150,
+              "avgMsPerFrame": 0.0028590326340042303
+            },
+            "frame pacing: sleep": {
+              "maxMsPerFrame": 5.346249999995223,
+              "observedFrames": 7150,
+              "avgMsPerFrame": 0.8548156002330952
+            },
+            "  frame pacing: gc budget": {
+              "maxMsPerFrame": 2.13975000000044,
+              "observedFrames": 2412,
+              "avgMsPerFrame": 0.16628847319343423
+            },
+            "  update: graphics stack drain": {
+              "maxMsPerFrame": 0.21987499999909232,
+              "observedFrames": 7150,
+              "avgMsPerFrame": 0.002212092074587821
+            }
+          },
+          "limitations": [
+            "inclusive sections cannot be summed",
+            "instrumented driver host; no screenshot readback during measurement",
+            "process CPU time includes active worker threads; no GPU utilization or energy measurement"
+          ],
+          "bakes": [],
+          "frames": 7150,
+          "seconds": 60.01102133333333,
+          "tierTrace": [
+            {
+              "focused": true,
+              "seconds": 0,
+              "tier": "high"
+            }
+          ],
+          "frame": {
+            "avgMs": 8.393149836829837,
+            "maxMs": 36.94533333333183
+          },
+          "timing": "present-completion intervals and FrameProfile wall-time sections; GPU submission only, no completion fence",
+          "present": {
+            "avgMs": 0.23801942307704502,
+            "maxMs": 1.5247499999997416
+          },
+          "processCpuSeconds": 35.218872000000005
+        },
+        "switches": {
+          "gen4ChunkPrebuild": true,
+          "idleStream": true
+        },
+        "gpu": {
+          "renderer": "Metal",
+          "api": "2.1",
+          "vendor": "",
+          "device": "Apple M2"
+        },
+        "preparedState": {
+          "partyLevel": 10,
+          "repelSteps": 10000,
+          "kind": "owned post-starter QA save"
+        },
+        "variant": "default",
+        "runtime": [
+          12,
+          0,
+          0
+        ],
+        "inventoryOnly": false
+      },
+      "reportSha256": "19368ccd05f7a8c2862d03bc534f4dfa5beea19662bcd288c547a13c96ff4483",
+      "logSha256": "25f0514a8ecbdf2b734d4eda434f780f5f2e6041e7617e57f7e71bc91f27e5f5"
+    },
+    {
+      "case": "emerald-route101-103-idle-off",
+      "report": {
+        "boot": {
+          "startFacing": "down",
+          "startY": 2,
+          "startMap": "MAP_G25_N40",
+          "startMoney": 3000,
+          "playerName": "BRENDAN",
+          "version": "emerald",
+          "startX": 2,
+          "rivalName": "MAY"
+        },
+        "gpu": {
+          "api": "2.1",
+          "renderer": "Metal",
+          "device": "Apple M2",
+          "vendor": ""
+        },
+        "inventoryOnly": false,
+        "performanceBaseline": true,
+        "dataKeys": [
+          "_bootKeys",
+          "_gen3MapNames",
+          "_pristineKeys",
+          "ai_classes",
+          "applyMapEditorOverlay",
+          "applyVersionedFieldData",
+          "audio",
+          "balls",
+          "commands",
+          "constants",
+          "encounters",
+          "ensure",
+          "evolution_methods",
+          "field",
+          "font",
+          "gen3_frontier_speech",
+          "gen3_object_sheets",
+          "gen3_trade_art",
+          "growth_rates",
+          "icons",
+          "isGen3Cache",
+          "isGen4Cache",
+          "items",
+          "load",
+          "map_layouts",
+          "map_scripts",
+          "map_tilesets",
+          "maps",
+          "move_effects",
+          "moves",
+          "pokemon",
+          "publishGen2MapMetadata",
+          "publishGen2Palettes",
+          "publishGen2TilesetNames",
+          "reloadGenerated",
+          "resolveText",
+          "rulesets",
+          "save_layout",
+          "scenes",
+          "seedCinnabarGymTrainerHeaders",
+          "seedDefaults",
+          "seedFightingDojoKarateMaster",
+          "songs",
+          "sprites",
+          "statuses",
+          "text",
+          "textEntry",
+          "text_pointers",
+          "tilesets",
+          "tokens",
+          "trainerHeader",
+          "trainers",
+          "transitions",
+          "type_chart",
+          "unloadGenerated"
+        ],
+        "edition": "emerald",
+        "passed": true,
+        "variant": "idle-off",
+        "measurement": {
+          "present": {
+            "avgMs": 0.24777044049864388,
+            "maxMs": 1.2070000000008463
+          },
+          "limitations": [
+            "inclusive sections cannot be summed",
+            "instrumented driver host; no screenshot readback during measurement",
+            "process CPU time includes active worker threads; no GPU utilization or energy measurement"
+          ],
+          "bakes": [],
+          "processCpuPercent": 85.25320210039287,
+          "walks": [
+            {
+              "target": "MAP_G00_N10",
+              "maxFrameMs": 243.58995833333097,
+              "pathCells": 33,
+              "crossed": true,
+              "fromSeconds": 8.857012874999999,
+              "toSeconds": 9.106755374999999,
+              "windowFrames": 2,
+              "landing": {
+                "x": 11,
+                "y": 20
+              },
+              "actual": "MAP_G00_N10",
+              "steps": 33,
+              "source": "MAP_G00_N16"
+            },
+            {
+              "target": "MAP_G00_N18",
+              "maxFrameMs": 183.25774999999567,
+              "pathCells": 20,
+              "crossed": true,
+              "fromSeconds": 14.780466750000002,
+              "toSeconds": 14.966432625,
+              "windowFrames": 2,
+              "landing": {
+                "x": 10,
+                "y": 22
+              },
+              "actual": "MAP_G00_N18",
+              "steps": 20,
+              "source": "MAP_G00_N10"
+            }
+          ],
+          "timing": "present-completion intervals and FrameProfile wall-time sections; GPU submission only, no completion fence",
+          "frames": 6364,
+          "frame": {
+            "avgMs": 9.42811944793631,
+            "maxMs": 243.58995833333097
+          },
+          "sections": {
+            "  update: fixed steps": {
+              "maxMsPerFrame": 235.62170833332985,
+              "observedFrames": 6364,
+              "avgMsPerFrame": 3.6693357099831867
+            },
+            "update: whole frame": {
+              "maxMsPerFrame": 235.96383333333472,
+              "observedFrames": 6364,
+              "avgMsPerFrame": 3.8919069571024316
+            },
+            "  update: music": {
+              "maxMsPerFrame": 0.4202916666677936,
+              "observedFrames": 6364,
+              "avgMsPerFrame": 0.019632843599408603
+            },
+            "  update: tilt": {
+              "maxMsPerFrame": 0.20241666666720448,
+              "observedFrames": 6364,
+              "avgMsPerFrame": 0.003911723496776031
+            },
+            "  pipelines: update": {
+              "maxMsPerFrame": 0.14741666666395759,
+              "observedFrames": 6364,
+              "avgMsPerFrame": 0.004755466949469466
+            },
+            "  update: discord": {
+              "maxMsPerFrame": 0.13575000000187742,
+              "observedFrames": 6364,
+              "avgMsPerFrame": 0.005003005185563448
+            },
+            "present (GPU wait / vsync)": {
+              "maxMsPerFrame": 1.2977083333360895,
+              "observedFrames": 6364,
+              "avgMsPerFrame": 0.27725589906765463
+            },
+            "  step: whole": {
+              "maxMsPerFrame": 235.6173749999968,
+              "observedFrames": 3503,
+              "avgMsPerFrame": 3.663591517389468
+            },
+            "  frame pacing: gc budget": {
+              "maxMsPerFrame": 3.677875000001052,
+              "observedFrames": 878,
+              "avgMsPerFrame": 0.06378416352394796
+            },
+            "  tiles: syncGen3Palettes": {
+              "maxMsPerFrame": 3.7120000000285813,
+              "observedFrames": 6364,
+              "avgMsPerFrame": 0.30052990126739715
+            },
+            "  world: FX": {
+              "maxMsPerFrame": 0.35999999999702936,
+              "observedFrames": 6364,
+              "avgMsPerFrame": 0.027613483396198107
+            },
+            "  world: entities": {
+              "maxMsPerFrame": 4.606125000002237,
+              "observedFrames": 6364,
+              "avgMsPerFrame": 1.1894575869474855
+            },
+            "  logic: stack:update": {
+              "maxMsPerFrame": 235.6004166666672,
+              "observedFrames": 3503,
+              "avgMsPerFrame": 3.6478676801801777
+            },
+            "  world: tiles": {
+              "maxMsPerFrame": 5.351125000004231,
+              "observedFrames": 6364,
+              "avgMsPerFrame": 0.5636663196628072
+            },
+            "draw: whole frame": {
+              "maxMsPerFrame": 10.545374999999524,
+              "observedFrames": 6364,
+              "avgMsPerFrame": 2.7091678582652157
+            },
+            "  renderer: zone blit": {
+              "maxMsPerFrame": 0.17958333333467635,
+              "observedFrames": 6364,
+              "avgMsPerFrame": 0.019428739786274365
+            },
+            "    tiles: ensureWindow": {
+              "maxMsPerFrame": 3.6825416666630417,
+              "observedFrames": 6364,
+              "avgMsPerFrame": 0.22418122773913696
+            },
+            "frame pacing: sleep": {
+              "maxMsPerFrame": 4.55995833333489,
+              "observedFrames": 6364,
+              "avgMsPerFrame": 0.2651292884454087
+            },
+            "  update: graphics stack drain": {
+              "maxMsPerFrame": 0.07266666666083665,
+              "observedFrames": 6364,
+              "avgMsPerFrame": 0.0020066716426303593
+            },
+            "    step: mod input.step": {
+              "maxMsPerFrame": 0.2105416666680071,
+              "observedFrames": 3503,
+              "avgMsPerFrame": 0.0019130918709396323
+            },
+            "  update: gc step": {
+              "maxMsPerFrame": 0.06791666666572382,
+              "observedFrames": 6364,
+              "avgMsPerFrame": 0.002448296406886251
+            }
+          },
+          "seconds": 60.00055216666667,
+          "tierTrace": [
+            {
+              "focused": true,
+              "seconds": 0,
+              "tier": "high"
+            }
+          ],
+          "processCpuSeconds": 51.15239199999999
+        },
+        "viewport": [
+          1024,
+          768
+        ],
+        "switches": {
+          "gen4ChunkPrebuild": false,
+          "idleStream": false
+        },
+        "pacing": {
+          "fpsCap": 160,
+          "backgroundPacing": false,
+          "vsync": 0
+        },
+        "scene": "emerald-route101-103",
+        "runtime": [
+          12,
+          0,
+          0
+        ],
+        "preparedState": {
+          "repelSteps": 10000,
+          "partyLevel": 10,
+          "kind": "owned post-starter QA save",
+          "gen3Flags": [
+            82,
+            130,
+            132,
+            301,
+            700,
+            720,
+            723,
+            750,
+            979,
+            2144
+          ]
+        },
+        "targets": [
+          {
+            "normalized": "emroute101",
+            "name": "ROUTE101",
+            "canonical": "EM_ROUTE101",
+            "matches": [
+              {
+                "keys": [
+                  "allowCycling",
+                  "allowEscaping",
+                  "allowRunning",
+                  "battleScene",
+                  "blockPx",
+                  "blocks",
+                  "border",
+                  "borderBlock",
+                  "cave",
+                  "collisionCells",
+                  "connections",
+                  "coordEvents",
+                  "elevationCells",
+                  "flags",
+                  "group",
+                  "height",
+                  "id",
+                  "layoutId",
+                  "mapScripts",
+                  "mapType",
+                  "music",
+                  "number",
+                  "objects",
+                  "outdoor",
+                  "regionMapSection",
+                  "requiresFlash",
+                  "showMapName",
+                  "signs",
+                  "source",
+                  "sourceBorder",
+                  "sourceBorderHeight",
+                  "sourceBorderWidth",
+                  "sourceConnections",
+                  "tileset",
+                  "weather",
+                  "width"
+                ],
+                "fields": {
+                  "mapType": "ROUTE",
+                  "id": "MAP_G00_N16",
+                  "width": 20,
+                  "height": 20
+                },
+                "key": "EM_ROUTE101",
+                "runtimeId": "MAP_G00_N16"
+              }
+            ]
+          },
+          {
+            "normalized": "emoldaletown",
+            "name": "OLDALE_TOWN",
+            "canonical": "EM_OLDALE_TOWN",
+            "matches": [
+              {
+                "keys": [
+                  "allowCycling",
+                  "allowEscaping",
+                  "allowRunning",
+                  "battleScene",
+                  "blockPx",
+                  "blocks",
+                  "border",
+                  "borderBlock",
+                  "cave",
+                  "collisionCells",
+                  "connections",
+                  "coordEvents",
+                  "elevationCells",
+                  "flags",
+                  "group",
+                  "height",
+                  "id",
+                  "layoutId",
+                  "mapScripts",
+                  "mapType",
+                  "music",
+                  "number",
+                  "objects",
+                  "outdoor",
+                  "regionMapSection",
+                  "requiresFlash",
+                  "showMapName",
+                  "signs",
+                  "source",
+                  "sourceBorder",
+                  "sourceBorderHeight",
+                  "sourceBorderWidth",
+                  "sourceConnections",
+                  "tileset",
+                  "warps",
+                  "weather",
+                  "width"
+                ],
+                "fields": {
+                  "mapType": "TOWN",
+                  "id": "MAP_G00_N10",
+                  "width": 20,
+                  "height": 20
+                },
+                "key": "MAP_G00_N10",
+                "runtimeId": "MAP_G00_N10"
+              }
+            ]
+          },
+          {
+            "normalized": "emroute103",
+            "name": "ROUTE103",
+            "canonical": "EM_ROUTE103",
+            "matches": [
+              {
+                "keys": [
+                  "allowCycling",
+                  "allowEscaping",
+                  "allowRunning",
+                  "battleScene",
+                  "blockPx",
+                  "blocks",
+                  "border",
+                  "borderBlock",
+                  "cave",
+                  "collisionCells",
+                  "connections",
+                  "elevationCells",
+                  "flags",
+                  "group",
+                  "height",
+                  "id",
+                  "layoutId",
+                  "mapScripts",
+                  "mapType",
+                  "music",
+                  "number",
+                  "objects",
+                  "outdoor",
+                  "regionMapSection",
+                  "requiresFlash",
+                  "showMapName",
+                  "signs",
+                  "source",
+                  "sourceBorder",
+                  "sourceBorderHeight",
+                  "sourceBorderWidth",
+                  "sourceConnections",
+                  "tileset",
+                  "warps",
+                  "weather",
+                  "width"
+                ],
+                "fields": {
+                  "mapType": "ROUTE",
+                  "id": "MAP_G00_N18",
+                  "width": 80,
+                  "height": 22
+                },
+                "key": "EM_ROUTE103",
+                "runtimeId": "MAP_G00_N18"
+              }
+            ]
+          }
+        ],
+        "pixels": [
+          2048,
+          1536
+        ],
+        "setup": {
+          "connections": {
+            "south": {
+              "map": "MAP_G00_N09",
+              "offset": 0
+            },
+            "north": {
+              "map": "MAP_G00_N10",
+              "offset": 0
+            }
+          },
+          "worldActive": true,
+          "player": {
+            "x": 10,
+            "y": 18
+          },
+          "walkable": true,
+          "map": "MAP_G00_N16",
+          "worldOnTop": true,
+          "scriptRunning": false,
+          "height": 20,
+          "width": 20,
+          "requested": {
+            "x": 10,
+            "y": 18
+          }
+        }
+      },
+      "reportSha256": "77eed53b1218944054e2d108544e16027b6fa1c760aed6d740e758db2a384968",
+      "logSha256": "a9db84395a2c65b6ca5f540e625314046917777caa2f5f8ca1b358dcb9236f49"
+    },
+    {
+      "case": "emerald-route101-103-idle-on",
+      "report": {
+        "gpu": {
+          "vendor": "",
+          "api": "2.1",
+          "device": "Apple M2",
+          "renderer": "Metal"
+        },
+        "targets": [
+          {
+            "name": "ROUTE101",
+            "normalized": "emroute101",
+            "matches": [
+              {
+                "keys": [
+                  "allowCycling",
+                  "allowEscaping",
+                  "allowRunning",
+                  "battleScene",
+                  "blockPx",
+                  "blocks",
+                  "border",
+                  "borderBlock",
+                  "cave",
+                  "collisionCells",
+                  "connections",
+                  "coordEvents",
+                  "elevationCells",
+                  "flags",
+                  "group",
+                  "height",
+                  "id",
+                  "layoutId",
+                  "mapScripts",
+                  "mapType",
+                  "music",
+                  "number",
+                  "objects",
+                  "outdoor",
+                  "regionMapSection",
+                  "requiresFlash",
+                  "showMapName",
+                  "signs",
+                  "source",
+                  "sourceBorder",
+                  "sourceBorderHeight",
+                  "sourceBorderWidth",
+                  "sourceConnections",
+                  "tileset",
+                  "weather",
+                  "width"
+                ],
+                "key": "EM_ROUTE101",
+                "fields": {
+                  "width": 20,
+                  "height": 20,
+                  "mapType": "ROUTE",
+                  "id": "MAP_G00_N16"
+                },
+                "runtimeId": "MAP_G00_N16"
+              }
+            ],
+            "canonical": "EM_ROUTE101"
+          },
+          {
+            "name": "OLDALE_TOWN",
+            "normalized": "emoldaletown",
+            "matches": [
+              {
+                "keys": [
+                  "allowCycling",
+                  "allowEscaping",
+                  "allowRunning",
+                  "battleScene",
+                  "blockPx",
+                  "blocks",
+                  "border",
+                  "borderBlock",
+                  "cave",
+                  "collisionCells",
+                  "connections",
+                  "coordEvents",
+                  "elevationCells",
+                  "flags",
+                  "group",
+                  "height",
+                  "id",
+                  "layoutId",
+                  "mapScripts",
+                  "mapType",
+                  "music",
+                  "number",
+                  "objects",
+                  "outdoor",
+                  "regionMapSection",
+                  "requiresFlash",
+                  "showMapName",
+                  "signs",
+                  "source",
+                  "sourceBorder",
+                  "sourceBorderHeight",
+                  "sourceBorderWidth",
+                  "sourceConnections",
+                  "tileset",
+                  "warps",
+                  "weather",
+                  "width"
+                ],
+                "key": "EM_OLDALE_TOWN",
+                "fields": {
+                  "width": 20,
+                  "height": 20,
+                  "mapType": "TOWN",
+                  "id": "MAP_G00_N10"
+                },
+                "runtimeId": "MAP_G00_N10"
+              }
+            ],
+            "canonical": "EM_OLDALE_TOWN"
+          },
+          {
+            "name": "ROUTE103",
+            "normalized": "emroute103",
+            "matches": [
+              {
+                "keys": [
+                  "allowCycling",
+                  "allowEscaping",
+                  "allowRunning",
+                  "battleScene",
+                  "blockPx",
+                  "blocks",
+                  "border",
+                  "borderBlock",
+                  "cave",
+                  "collisionCells",
+                  "connections",
+                  "elevationCells",
+                  "flags",
+                  "group",
+                  "height",
+                  "id",
+                  "layoutId",
+                  "mapScripts",
+                  "mapType",
+                  "music",
+                  "number",
+                  "objects",
+                  "outdoor",
+                  "regionMapSection",
+                  "requiresFlash",
+                  "showMapName",
+                  "signs",
+                  "source",
+                  "sourceBorder",
+                  "sourceBorderHeight",
+                  "sourceBorderWidth",
+                  "sourceConnections",
+                  "tileset",
+                  "warps",
+                  "weather",
+                  "width"
+                ],
+                "key": "EM_ROUTE103",
+                "fields": {
+                  "width": 80,
+                  "height": 22,
+                  "mapType": "ROUTE",
+                  "id": "MAP_G00_N18"
+                },
+                "runtimeId": "MAP_G00_N18"
+              }
+            ],
+            "canonical": "EM_ROUTE103"
+          }
+        ],
+        "passed": true,
+        "pacing": {
+          "fpsCap": 160,
+          "backgroundPacing": false,
+          "vsync": 0
+        },
+        "boot": {
+          "startFacing": "down",
+          "startMap": "MAP_G25_N40",
+          "playerName": "BRENDAN",
+          "startX": 2,
+          "startY": 2,
+          "startMoney": 3000,
+          "version": "emerald",
+          "rivalName": "MAY"
+        },
+        "preparedState": {
+          "partyLevel": 10,
+          "repelSteps": 10000,
+          "gen3Flags": [
+            82,
+            130,
+            132,
+            301,
+            700,
+            720,
+            723,
+            750,
+            979,
+            2144
+          ],
+          "kind": "owned post-starter QA save"
+        },
+        "setup": {
+          "worldActive": true,
+          "connections": {
+            "south": {
+              "offset": 0,
+              "map": "MAP_G00_N09"
+            },
+            "north": {
+              "offset": 0,
+              "map": "MAP_G00_N10"
+            }
+          },
+          "width": 20,
+          "height": 20,
+          "map": "MAP_G00_N16",
+          "scriptRunning": false,
+          "player": {
+            "x": 10,
+            "y": 18
+          },
+          "requested": {
+            "x": 10,
+            "y": 18
+          },
+          "worldOnTop": true,
+          "walkable": true
+        },
+        "pixels": [
+          2048,
+          1536
+        ],
+        "measurement": {
+          "processCpuPercent": 48.167386521799045,
+          "tierTrace": [
+            {
+              "seconds": 0,
+              "focused": true,
+              "tier": "high"
+            }
+          ],
+          "limitations": [
+            "inclusive sections cannot be summed",
+            "instrumented driver host; no screenshot readback during measurement",
+            "process CPU time includes active worker threads; no GPU utilization or energy measurement"
+          ],
+          "seconds": 60.00707758333334,
+          "bakes": [],
+          "present": {
+            "avgMs": 0.2654840054899282,
+            "maxMs": 1.1993749999987813
+          },
+          "timing": "present-completion intervals and FrameProfile wall-time sections; GPU submission only, no completion fence",
+          "walks": [
+            {
+              "windowFrames": 2,
+              "maxFrameMs": 192.74050000000108,
+              "pathCells": 33,
+              "crossed": true,
+              "fromSeconds": 8.864261166666667,
+              "toSeconds": 9.068133166666668,
+              "target": "MAP_G00_N10",
+              "actual": "MAP_G00_N10",
+              "steps": 33,
+              "landing": {
+                "x": 11,
+                "y": 20
+              },
+              "source": "MAP_G00_N16"
+            },
+            {
+              "windowFrames": 2,
+              "maxFrameMs": 212.16150000000056,
+              "pathCells": 20,
+              "crossed": true,
+              "fromSeconds": 14.716591291666667,
+              "toSeconds": 14.938828958333335,
+              "target": "MAP_G00_N18",
+              "actual": "MAP_G00_N18",
+              "steps": 20,
+              "landing": {
+                "x": 10,
+                "y": 22
+              },
+              "source": "MAP_G00_N10"
+            }
+          ],
+          "frame": {
+            "avgMs": 8.446942227383635,
+            "maxMs": 212.16150000000056
+          },
+          "frames": 7104,
+          "sections": {
+            "  pipelines: update": {
+              "maxMsPerFrame": 0.13437500000179625,
+              "observedFrames": 7104,
+              "avgMsPerFrame": 0.003421740099458018
+            },
+            "  update: discord": {
+              "maxMsPerFrame": 0.16595833332999632,
+              "observedFrames": 7104,
+              "avgMsPerFrame": 0.004166760510520817
+            },
+            "  update: gc step": {
+              "maxMsPerFrame": 0.09237500000125465,
+              "observedFrames": 7104,
+              "avgMsPerFrame": 0.0019919704860851244
+            },
+            "frame pacing: sleep": {
+              "maxMsPerFrame": 5.478625000002069,
+              "observedFrames": 7104,
+              "avgMsPerFrame": 1.2084546499624906
+            },
+            "  step: whole": {
+              "maxMsPerFrame": 204.22024999999877,
+              "observedFrames": 3557,
+              "avgMsPerFrame": 0.6472382519237787
+            },
+            "  world: tiles": {
+              "maxMsPerFrame": 5.986666666661478,
+              "observedFrames": 7104,
+              "avgMsPerFrame": 0.27415856090458257
+            },
+            "    tiles: ensureWindow": {
+              "maxMsPerFrame": 5.696708333331912,
+              "observedFrames": 7104,
+              "avgMsPerFrame": 0.13995223348381675
+            },
+            "  world: entities": {
+              "maxMsPerFrame": 1.725583333335834,
+              "observedFrames": 7104,
+              "avgMsPerFrame": 0.31689162795623727
+            },
+            "  world: FX": {
+              "maxMsPerFrame": 0.23041666666667737,
+              "observedFrames": 7104,
+              "avgMsPerFrame": 0.022532440643828262
+            },
+            "update: whole frame": {
+              "maxMsPerFrame": 204.419708333333,
+              "observedFrames": 7104,
+              "avgMsPerFrame": 0.8622734199042128
+            },
+            "  frame pacing: gc budget": {
+              "maxMsPerFrame": 3.884208333339245,
+              "observedFrames": 2745,
+              "avgMsPerFrame": 0.19922538358670025
+            },
+            "    step: mod input.step": {
+              "maxMsPerFrame": 0.4067499999997892,
+              "observedFrames": 3557,
+              "avgMsPerFrame": 0.0032900771866130945
+            },
+            "  tiles: syncGen3Palettes": {
+              "maxMsPerFrame": 5.630916666678587,
+              "observedFrames": 7104,
+              "avgMsPerFrame": 0.10912712908260837
+            },
+            "  renderer: zone blit": {
+              "maxMsPerFrame": 0.17737499999803674,
+              "observedFrames": 7104,
+              "avgMsPerFrame": 0.023509777355379027
+            },
+            "  logic: stack:update": {
+              "maxMsPerFrame": 204.19762499999905,
+              "observedFrames": 3557,
+              "avgMsPerFrame": 0.6345045631569679
+            },
+            "  update: fixed steps": {
+              "maxMsPerFrame": 204.22587500000233,
+              "observedFrames": 7104,
+              "avgMsPerFrame": 0.6555783244180585
+            },
+            "present (GPU wait / vsync)": {
+              "maxMsPerFrame": 1.2937499999985391,
+              "observedFrames": 7104,
+              "avgMsPerFrame": 0.2802247442755223
+            },
+            "draw: whole frame": {
+              "maxMsPerFrame": 7.326916666663408,
+              "observedFrames": 7104,
+              "avgMsPerFrame": 1.1117413898274426
+            },
+            "  update: music": {
+              "maxMsPerFrame": 0.45141666666648206,
+              "observedFrames": 7104,
+              "avgMsPerFrame": 0.01611885909352007
+            },
+            "  update: graphics stack drain": {
+              "maxMsPerFrame": 0.08079166667585014,
+              "observedFrames": 7104,
+              "avgMsPerFrame": 0.002475178303301959
+            },
+            "  update: tilt": {
+              "maxMsPerFrame": 0.0772916666633705,
+              "observedFrames": 7104,
+              "avgMsPerFrame": 0.002342817426847704
+            }
+          },
+          "processCpuSeconds": 28.903841
+        },
+        "switches": {
+          "idleStream": true,
+          "gen4ChunkPrebuild": true
+        },
+        "runtime": [
+          12,
+          0,
+          0
+        ],
+        "inventoryOnly": false,
+        "performanceBaseline": true,
+        "variant": "idle-on",
+        "dataKeys": [
+          "_bootKeys",
+          "_gen3MapNames",
+          "_pristineKeys",
+          "ai_classes",
+          "applyMapEditorOverlay",
+          "applyVersionedFieldData",
+          "audio",
+          "balls",
+          "commands",
+          "constants",
+          "encounters",
+          "ensure",
+          "evolution_methods",
+          "field",
+          "font",
+          "gen3_frontier_speech",
+          "gen3_object_sheets",
+          "gen3_trade_art",
+          "growth_rates",
+          "icons",
+          "isGen3Cache",
+          "isGen4Cache",
+          "items",
+          "load",
+          "map_layouts",
+          "map_scripts",
+          "map_tilesets",
+          "maps",
+          "move_effects",
+          "moves",
+          "pokemon",
+          "publishGen2MapMetadata",
+          "publishGen2Palettes",
+          "publishGen2TilesetNames",
+          "reloadGenerated",
+          "resolveText",
+          "rulesets",
+          "save_layout",
+          "scenes",
+          "seedCinnabarGymTrainerHeaders",
+          "seedDefaults",
+          "seedFightingDojoKarateMaster",
+          "songs",
+          "sprites",
+          "statuses",
+          "text",
+          "textEntry",
+          "text_pointers",
+          "tilesets",
+          "tokens",
+          "trainerHeader",
+          "trainers",
+          "transitions",
+          "type_chart",
+          "unloadGenerated"
+        ],
+        "scene": "emerald-route101-103",
+        "viewport": [
+          1024,
+          768
+        ],
+        "edition": "emerald"
+      },
+      "reportSha256": "06d869cc21f7bb4f39b4b332a5659130bfbef7e6b706f61d36572e565caf9291",
+      "logSha256": "e5f68002db2ab90142e6cc1cd5ed5d999c1d8f708345209bd0b0db8ab6676ab1"
+    },
+    {
+      "case": "platinum-twinleaf-201-idle-off",
+      "report": {
+        "pixels": [
+          2048,
+          1536
+        ],
+        "scene": "platinum-twinleaf-201",
+        "viewport": [
+          1024,
+          768
+        ],
+        "edition": "platinum",
+        "inventoryOnly": false,
+        "performanceBaseline": true,
+        "dataKeys": [
+          "_bootKeys",
+          "_pristineKeys",
+          "ai_classes",
+          "applyMapEditorOverlay",
+          "applyVersionedFieldData",
+          "audio",
+          "balls",
+          "commands",
+          "constants",
+          "encounters",
+          "ensure",
+          "evolution_methods",
+          "field",
+          "font",
+          "gen4_area_popup",
+          "gen4_arealight",
+          "gen4_bag_art",
+          "gen4_battle_anims",
+          "gen4_battle_art",
+          "gen4_battle_music",
+          "gen4_battle_tower",
+          "gen4_berry_flavors",
+          "gen4_box_art",
+          "gen4_box_ink",
+          "gen4_cellactors",
+          "gen4_contest",
+          "gen4_contest_art",
+          "gen4_dex",
+          "gen4_distortion_world",
+          "gen4_dressup",
+          "gen4_egg_hatch_art",
+          "gen4_egg_hatch_ink",
+          "gen4_egg_moves",
+          "gen4_emotes",
+          "gen4_encounter_effects",
+          "gen4_ending",
+          "gen4_ending_art",
+          "gen4_evolution_art",
+          "gen4_evolution_ink",
+          "gen4_feebas",
+          "gen4_frontier_art",
+          "gen4_frontier_scripts",
+          "gen4_game_corner",
+          "gen4_graphics",
+          "gen4_gym_fx",
+          "gen4_intro",
+          "gen4_journal_art",
+          "gen4_library_tv",
+          "gen4_mail_gra",
+          "gen4_main_menu_art",
+          "gen4_main_menu_ink",
+          "gen4_map_matrices",
+          "gen4_map_permissions",
+          "gen4_mapprops",
+          "gen4_menu_art",
+          "gen4_menus",
+          "gen4_mining_art",
+          "gen4_models",
+          "gen4_move_anims",
+          "gen4_move_buttons",
+          "gen4_move_tutor",
+          "gen4_naming",
+          "gen4_naming_art",
+          "gen4_naming_ink",
+          "gen4_options_art",
+          "gen4_overworld",
+          "gen4_pal_park",
+          "gen4_particles",
+          "gen4_party_art",
+          "gen4_party_ink",
+          "gen4_poffin_art",
+          "gen4_poke_motion",
+          "gen4_poketch_art",
+          "gen4_poketch_ink",
+          "gen4_pt_field_fx",
+          "gen4_scratch_off",
+          "gen4_scratch_off_art",
+          "gen4_seals",
+          "gen4_shop_art",
+          "gen4_spear_pillar",
+          "gen4_special_encounters",
+          "gen4_species_sprites",
+          "gen4_start_menu_art",
+          "gen4_start_menu_ink",
+          "gen4_summary_art",
+          "gen4_summary_ink",
+          "gen4_terrain",
+          "gen4_town_map",
+          "gen4_town_map_art",
+          "gen4_town_map_ink",
+          "gen4_trade_art",
+          "gen4_trainer_card_art",
+          "gen4_trainer_messages",
+          "gen4_trainer_music",
+          "gen4_trainer_prize",
+          "gen4_trainer_sprites",
+          "gen4_weather_sys",
+          "growth_rates",
+          "icons",
+          "isGen3Cache",
+          "isGen4Cache",
+          "items",
+          "load",
+          "map_layouts",
+          "map_scripts",
+          "map_tilesets",
+          "maps",
+          "move_effects",
+          "moves",
+          "pokemon",
+          "publishGen2MapMetadata",
+          "publishGen2Palettes",
+          "publishGen2TilesetNames",
+          "reloadGenerated",
+          "resolveText",
+          "rulesets",
+          "seedCinnabarGymTrainerHeaders",
+          "seedDefaults",
+          "seedFightingDojoKarateMaster",
+          "sprites",
+          "statuses",
+          "text",
+          "textEntry",
+          "text_pointers",
+          "tilesets",
+          "tokens",
+          "trainerHeader",
+          "trainers",
+          "transitions",
+          "type_chart",
+          "unloadGenerated"
+        ],
+        "targets": [
+          {
+            "matches": [
+              {
+                "key": "T01",
+                "runtimeId": "T01",
+                "fields": {
+                  "generation": 4,
+                  "label": "Twinleaf Town",
+                  "id": "T01",
+                  "height": 32,
+                  "header": 411,
+                  "width": 32,
+                  "mapType": 1
+                },
+                "keys": [
+                  "allowBike",
+                  "allowEscapeRope",
+                  "allowFly",
+                  "allowRunning",
+                  "battleBackground",
+                  "behaviorCells",
+                  "blockPx",
+                  "blocks",
+                  "borderBlock",
+                  "cameraType",
+                  "connections",
+                  "coordEvents",
+                  "dayMusic",
+                  "encounters",
+                  "events",
+                  "generation",
+                  "header",
+                  "height",
+                  "id",
+                  "label",
+                  "layout",
+                  "mapType",
+                  "messages",
+                  "nightMusic",
+                  "objects",
+                  "originX",
+                  "originY",
+                  "regionSolid",
+                  "signs",
+                  "tileset",
+                  "warps",
+                  "weather",
+                  "width"
+                ]
+              },
+              {
+                "key": "T_01",
+                "runtimeId": "T_01",
+                "fields": {
+                  "generation": 4,
+                  "label": "Twinleaf Town",
+                  "header": 411,
+                  "height": 32,
+                  "width": 32,
+                  "id": "T_01",
+                  "sourceId": "T01",
+                  "mapType": 1
+                },
+                "keys": [
+                  "allowBike",
+                  "allowEscapeRope",
+                  "allowFly",
+                  "allowRunning",
+                  "battleBackground",
+                  "behaviorCells",
+                  "blockPx",
+                  "blocks",
+                  "borderBlock",
+                  "cameraType",
+                  "connections",
+                  "coordEvents",
+                  "dayMusic",
+                  "encounters",
+                  "events",
+                  "generation",
+                  "header",
+                  "height",
+                  "id",
+                  "label",
+                  "layout",
+                  "mapType",
+                  "messages",
+                  "nightMusic",
+                  "objects",
+                  "originX",
+                  "originY",
+                  "regionSolid",
+                  "signs",
+                  "sourceId",
+                  "tileset",
+                  "warps",
+                  "weather",
+                  "width"
+                ]
+              }
+            ],
+            "header": 411
+          },
+          {
+            "matches": [
+              {
+                "key": "R201",
+                "runtimeId": "R201",
+                "fields": {
+                  "generation": 4,
+                  "label": "Route 201",
+                  "id": "R201",
+                  "height": 32,
+                  "header": 342,
+                  "width": 64,
+                  "mapType": 2
+                },
+                "keys": [
+                  "allowBike",
+                  "allowEscapeRope",
+                  "allowFly",
+                  "allowRunning",
+                  "battleBackground",
+                  "behaviorCells",
+                  "blockPx",
+                  "blocks",
+                  "borderBlock",
+                  "cameraType",
+                  "connections",
+                  "coordEvents",
+                  "dayMusic",
+                  "encounters",
+                  "events",
+                  "generation",
+                  "header",
+                  "height",
+                  "id",
+                  "label",
+                  "layout",
+                  "mapType",
+                  "messages",
+                  "nightMusic",
+                  "objects",
+                  "originX",
+                  "originY",
+                  "regionSolid",
+                  "signs",
+                  "tileset",
+                  "warps",
+                  "weather",
+                  "width"
+                ]
+              },
+              {
+                "key": "R_201",
+                "runtimeId": "R_201",
+                "fields": {
+                  "generation": 4,
+                  "label": "Route 201",
+                  "header": 342,
+                  "height": 32,
+                  "width": 64,
+                  "id": "R_201",
+                  "sourceId": "R201",
+                  "mapType": 2
+                },
+                "keys": [
+                  "allowBike",
+                  "allowEscapeRope",
+                  "allowFly",
+                  "allowRunning",
+                  "battleBackground",
+                  "behaviorCells",
+                  "blockPx",
+                  "blocks",
+                  "borderBlock",
+                  "cameraType",
+                  "connections",
+                  "coordEvents",
+                  "dayMusic",
+                  "encounters",
+                  "events",
+                  "generation",
+                  "header",
+                  "height",
+                  "id",
+                  "label",
+                  "layout",
+                  "mapType",
+                  "messages",
+                  "nightMusic",
+                  "objects",
+                  "originX",
+                  "originY",
+                  "regionSolid",
+                  "signs",
+                  "sourceId",
+                  "tileset",
+                  "warps",
+                  "weather",
+                  "width"
+                ]
+              }
+            ],
+            "header": 342
+          }
+        ],
+        "gpu": {
+          "renderer": "Metal",
+          "api": "2.1",
+          "vendor": "",
+          "device": "Apple M2"
+        },
+        "variant": "idle-off",
+        "passed": true,
+        "switches": {
+          "idleStream": false,
+          "gen4ChunkPrebuild": false
+        },
+        "pacing": {
+          "backgroundPacing": false,
+          "fpsCap": 160,
+          "vsync": 0
+        },
+        "setup": {
+          "requested": {
+            "x": 15,
+            "y": 10
+          },
+          "player": {
+            "x": 15,
+            "y": 10
+          },
+          "width": 32,
+          "height": 32,
+          "worldOnTop": true,
+          "worldActive": true,
+          "scriptRunning": false,
+          "walkable": true,
+          "map": "T01",
+          "connections": {
+            "north": {
+              "map": "R201",
+              "offset": 0
+            }
+          }
+        },
+        "boot": {
+          "playerName": "RED",
+          "startMoney": 3000,
+          "startMap": "T01R0202",
+          "rivalName": "BLUE",
+          "startX": 4,
+          "startY": 6,
+          "version": "platinum",
+          "startFacing": "up"
+        },
+        "preparedState": {
+          "repelSteps": 10000,
+          "gen4Flags": [
+            234
+          ],
+          "kind": "owned post-starter QA save",
+          "gen4Vars": {
+            "16416": 97,
+            "16548": 5,
+            "16384": 0,
+            "16518": 2,
+            "16442": 10
+          },
+          "partyLevel": 10
+        },
+        "runtime": [
+          12,
+          0,
+          0
+        ],
+        "measurement": {
+          "limitations": [
+            "inclusive sections cannot be summed",
+            "instrumented driver host; no screenshot readback during measurement",
+            "process CPU time includes active worker threads; no GPU utilization or energy measurement"
+          ],
+          "timing": "present-completion intervals and FrameProfile wall-time sections; GPU submission only, no completion fence",
+          "seconds": 60.001357750000004,
+          "frame": {
+            "maxMs": 94.06412499999917,
+            "avgMs": 8.548419682290925
+          },
+          "present": {
+            "maxMs": 1.974000000004139,
+            "avgMs": 0.32394263784009564
+          },
+          "walks": [
+            {
+              "fromSeconds": 2.6537902083333336,
+              "toSeconds": 2.7592725,
+              "target": "R201",
+              "crossed": true,
+              "maxFrameMs": 94.06412499999917,
+              "source": "T01",
+              "steps": 10,
+              "landing": {
+                "x": 15,
+                "y": 32
+              },
+              "pathCells": 10,
+              "actual": "R201",
+              "windowFrames": 2
+            }
+          ],
+          "frames": 7019,
+          "sections": {
+            "  frame pacing: gc budget": {
+              "observedFrames": 1765,
+              "avgMsPerFrame": 0.11944167022844514,
+              "maxMsPerFrame": 1.5812499999938723
+            },
+            "  world: tiles": {
+              "observedFrames": 7019,
+              "avgMsPerFrame": 1.1475985717338084,
+              "maxMsPerFrame": 68.9196666666696
+            },
+            "present (GPU wait / vsync)": {
+              "observedFrames": 7019,
+              "avgMsPerFrame": 0.34666543192286564,
+              "maxMsPerFrame": 1.9875416666685908
+            },
+            "  tiles: syncGen3Palettes": {
+              "observedFrames": 7019,
+              "avgMsPerFrame": 0.004473666714200938,
+              "maxMsPerFrame": 0.1934166666650583
+            },
+            "  pipelines: update": {
+              "observedFrames": 7019,
+              "avgMsPerFrame": 0.00644542788624694,
+              "maxMsPerFrame": 0.9225833333346145
+            },
+            "draw: whole frame": {
+              "observedFrames": 7019,
+              "avgMsPerFrame": 3.3288038953792607,
+              "maxMsPerFrame": 85.53170833333468
+            },
+            "  update: gc step": {
+              "observedFrames": 7019,
+              "avgMsPerFrame": 0.002725869069644942,
+              "maxMsPerFrame": 0.10495833333123983
+            },
+            "  renderer: zone blit": {
+              "observedFrames": 7019,
+              "avgMsPerFrame": 0.022634242769642644,
+              "maxMsPerFrame": 0.16704166666769993
+            },
+            "  step: whole": {
+              "observedFrames": 3555,
+              "avgMsPerFrame": 0.9921118333571313,
+              "maxMsPerFrame": 14.600166666667747
+            },
+            "frame pacing: sleep": {
+              "observedFrames": 7019,
+              "avgMsPerFrame": 0.5047511635085631,
+              "maxMsPerFrame": 4.698291666670684
+            },
+            "  audio: Nitro update": {
+              "observedFrames": 3593,
+              "avgMsPerFrame": 0.01620840456858085,
+              "maxMsPerFrame": 1.6444166666715887
+            },
+            "  gen4: live pass": {
+              "observedFrames": 7019,
+              "avgMsPerFrame": 1.0020632568741779,
+              "maxMsPerFrame": 68.46112500000068
+            },
+            "  update: fixed steps": {
+              "observedFrames": 7019,
+              "avgMsPerFrame": 0.9988982523626418,
+              "maxMsPerFrame": 14.604291666666214
+            },
+            "  logic: stack:update": {
+              "observedFrames": 3555,
+              "avgMsPerFrame": 0.9766085209194503,
+              "maxMsPerFrame": 14.583541666665312
+            },
+            "  world: entities": {
+              "observedFrames": 7019,
+              "avgMsPerFrame": 1.3461740513843798,
+              "maxMsPerFrame": 13.985208333332722
+            },
+            "  update: music": {
+              "observedFrames": 7019,
+              "avgMsPerFrame": 0.032586746687619135,
+              "maxMsPerFrame": 1.7092916666641145
+            },
+            "    step: mod input.step": {
+              "observedFrames": 3555,
+              "avgMsPerFrame": 0.002150146032188509,
+              "maxMsPerFrame": 0.1871250000000657
+            },
+            "  world: FX": {
+              "observedFrames": 7019,
+              "avgMsPerFrame": 0.01939593721801156,
+              "maxMsPerFrame": 0.19095833333437895
+            },
+            "  update: tilt": {
+              "observedFrames": 7019,
+              "avgMsPerFrame": 0.004328839578292992,
+              "maxMsPerFrame": 0.13170833333475684
+            },
+            "update: whole frame": {
+              "observedFrames": 7019,
+              "avgMsPerFrame": 1.2927381274635505,
+              "maxMsPerFrame": 22.03062500000108
+            },
+            "  update: graphics stack drain": {
+              "observedFrames": 7019,
+              "avgMsPerFrame": 0.0019136154247913599,
+              "maxMsPerFrame": 0.1118333333351984
+            },
+            "  update: discord": {
+              "observedFrames": 7019,
+              "avgMsPerFrame": 0.005626543429794396,
+              "maxMsPerFrame": 0.15779166667329036
+            }
+          },
+          "bakes": [],
+          "tierTrace": [
+            {
+              "tier": "high",
+              "focused": true,
+              "seconds": 0
+            }
+          ],
+          "processCpuSeconds": 44.139731,
+          "processCpuPercent": 73.5645536287885
+        }
+      },
+      "reportSha256": "35d23508d431c9ae4e3d84b926f560689d169369c9f1457727be5c0a7a35465f",
+      "logSha256": "00a31955d37ce710bdcb3e7f2847192f54acd83284e672311a672ba7d99b56ed"
+    },
+    {
+      "case": "platinum-twinleaf-201-idle-on",
+      "report": {
+        "inventoryOnly": false,
+        "performanceBaseline": true,
+        "runtime": [
+          12,
+          0,
+          0
+        ],
+        "boot": {
+          "startY": 6,
+          "startFacing": "up",
+          "startX": 4,
+          "version": "platinum",
+          "startMap": "T01R0202",
+          "startMoney": 3000,
+          "playerName": "RED",
+          "rivalName": "BLUE"
+        },
+        "edition": "platinum",
+        "variant": "idle-on",
+        "pixels": [
+          2048,
+          1536
+        ],
+        "viewport": [
+          1024,
+          768
+        ],
+        "measurement": {
+          "seconds": 60.01270716666667,
+          "present": {
+            "maxMs": 3.741166666669571,
+            "avgMs": 0.3158165610786116
+          },
+          "tierTrace": [
+            {
+              "seconds": 0,
+              "focused": true,
+              "tier": "high"
+            }
+          ],
+          "processCpuSeconds": 24.752843,
+          "processCpuPercent": 41.2460030027585,
+          "limitations": [
+            "inclusive sections cannot be summed",
+            "instrumented driver host; no screenshot readback during measurement",
+            "process CPU time includes active worker threads; no GPU utilization or energy measurement"
+          ],
+          "bakes": [],
+          "frames": 7182,
+          "frame": {
+            "maxMs": 110.45066666666692,
+            "avgMs": 8.355988188062751
+          },
+          "walks": [
+            {
+              "fromSeconds": 2.670470833333334,
+              "steps": 10,
+              "actual": "R201",
+              "landing": {
+                "x": 15,
+                "y": 32
+              },
+              "toSeconds": 2.7885413333333355,
+              "maxFrameMs": 110.45066666666692,
+              "source": "T01",
+              "crossed": true,
+              "pathCells": 10,
+              "target": "R201",
+              "windowFrames": 2
+            }
+          ],
+          "timing": "present-completion intervals and FrameProfile wall-time sections; GPU submission only, no completion fence",
+          "sections": {
+            "  update: music": {
+              "observedFrames": 7182,
+              "avgMsPerFrame": 0.01627108860105479,
+              "maxMsPerFrame": 2.0773333333323762
+            },
+            "  update: tilt": {
+              "observedFrames": 7182,
+              "avgMsPerFrame": 0.001855257356364183,
+              "maxMsPerFrame": 0.08645833333531527
+            },
+            "  pipelines: update": {
+              "observedFrames": 7182,
+              "avgMsPerFrame": 0.002337394412036001,
+              "maxMsPerFrame": 0.1327083333322321
+            },
+            "  update: discord": {
+              "observedFrames": 7182,
+              "avgMsPerFrame": 0.0025199166898739523,
+              "maxMsPerFrame": 0.11808333333362953
+            },
+            "  update: gc step": {
+              "observedFrames": 7182,
+              "avgMsPerFrame": 0.0012754049476111653,
+              "maxMsPerFrame": 0.06179166665987168
+            },
+            "  step: whole": {
+              "observedFrames": 3523,
+              "avgMsPerFrame": 0.19726774691351986,
+              "maxMsPerFrame": 11.562958333333206
+            },
+            "    step: mod input.step": {
+              "observedFrames": 3523,
+              "avgMsPerFrame": 0.003531397939273007,
+              "maxMsPerFrame": 0.2165833333336309
+            },
+            "  frame pacing: gc budget": {
+              "observedFrames": 2844,
+              "avgMsPerFrame": 0.19274466838391038,
+              "maxMsPerFrame": 2.018708333334729
+            },
+            "  audio: Nitro update": {
+              "observedFrames": 3593,
+              "avgMsPerFrame": 0.00892812470994866,
+              "maxMsPerFrame": 1.982624999996574
+            },
+            "  world: FX": {
+              "observedFrames": 7182,
+              "avgMsPerFrame": 0.00849976213686091,
+              "maxMsPerFrame": 0.17545833333443284
+            },
+            "  logic: stack:update": {
+              "observedFrames": 3523,
+              "avgMsPerFrame": 0.18696983778892418,
+              "maxMsPerFrame": 11.535250000000552
+            },
+            "  tiles: syncGen3Palettes": {
+              "observedFrames": 7182,
+              "avgMsPerFrame": 0.002778375336519973,
+              "maxMsPerFrame": 0.08416666666377637
+            },
+            "  world: entities": {
+              "observedFrames": 7182,
+              "avgMsPerFrame": 0.49803055671576635,
+              "maxMsPerFrame": 13.830375000001283
+            },
+            "  update: fixed steps": {
+              "observedFrames": 7182,
+              "avgMsPerFrame": 0.2047240961199291,
+              "maxMsPerFrame": 11.572666666667786
+            },
+            "update: whole frame": {
+              "observedFrames": 7182,
+              "avgMsPerFrame": 0.36766325536061956,
+              "maxMsPerFrame": 14.463749999999997
+            },
+            "  gen4: live pass": {
+              "observedFrames": 7182,
+              "avgMsPerFrame": 0.379208896082823,
+              "maxMsPerFrame": 86.8806666666675
+            },
+            "  update: graphics stack drain": {
+              "observedFrames": 7182,
+              "avgMsPerFrame": 0.0009451406294232868,
+              "maxMsPerFrame": 0.11079166667116169
+            },
+            "  renderer: zone blit": {
+              "observedFrames": 7182,
+              "avgMsPerFrame": 0.02087189037418949,
+              "maxMsPerFrame": 0.18099999999421357
+            },
+            "  world: tiles": {
+              "observedFrames": 7182,
+              "avgMsPerFrame": 0.4583279379003024,
+              "maxMsPerFrame": 87.3070416666657
+            },
+            "draw: whole frame": {
+              "observedFrames": 7182,
+              "avgMsPerFrame": 1.3037075037130315,
+              "maxMsPerFrame": 102.7118749999989
+            },
+            "frame pacing: sleep": {
+              "observedFrames": 7182,
+              "avgMsPerFrame": 1.3213607456140466,
+              "maxMsPerFrame": 5.664000000003
+            },
+            "present (GPU wait / vsync)": {
+              "observedFrames": 7182,
+              "avgMsPerFrame": 0.3242678455397139,
+              "maxMsPerFrame": 3.7661250000002866
+            }
+          }
+        },
+        "preparedState": {
+          "gen4Vars": {
+            "16416": 97,
+            "16548": 5,
+            "16384": 0,
+            "16518": 2,
+            "16442": 10
+          },
+          "gen4Flags": [
+            234
+          ],
+          "repelSteps": 10000,
+          "partyLevel": 10,
+          "kind": "owned post-starter QA save"
+        },
+        "gpu": {
+          "vendor": "",
+          "api": "2.1",
+          "device": "Apple M2",
+          "renderer": "Metal"
+        },
+        "switches": {
+          "gen4ChunkPrebuild": true,
+          "idleStream": true
+        },
+        "passed": true,
+        "targets": [
+          {
+            "header": 411,
+            "matches": [
+              {
+                "runtimeId": "T01",
+                "key": "T01",
+                "keys": [
+                  "allowBike",
+                  "allowEscapeRope",
+                  "allowFly",
+                  "allowRunning",
+                  "battleBackground",
+                  "behaviorCells",
+                  "blockPx",
+                  "blocks",
+                  "borderBlock",
+                  "cameraType",
+                  "connections",
+                  "coordEvents",
+                  "dayMusic",
+                  "encounters",
+                  "events",
+                  "generation",
+                  "header",
+                  "height",
+                  "id",
+                  "label",
+                  "layout",
+                  "mapType",
+                  "messages",
+                  "nightMusic",
+                  "objects",
+                  "originX",
+                  "originY",
+                  "regionSolid",
+                  "signs",
+                  "tileset",
+                  "warps",
+                  "weather",
+                  "width"
+                ],
+                "fields": {
+                  "mapType": 1,
+                  "id": "T01",
+                  "height": 32,
+                  "width": 32,
+                  "generation": 4,
+                  "header": 411,
+                  "label": "Twinleaf Town"
+                }
+              },
+              {
+                "runtimeId": "T_01",
+                "key": "T_01",
+                "keys": [
+                  "allowBike",
+                  "allowEscapeRope",
+                  "allowFly",
+                  "allowRunning",
+                  "battleBackground",
+                  "behaviorCells",
+                  "blockPx",
+                  "blocks",
+                  "borderBlock",
+                  "cameraType",
+                  "connections",
+                  "coordEvents",
+                  "dayMusic",
+                  "encounters",
+                  "events",
+                  "generation",
+                  "header",
+                  "height",
+                  "id",
+                  "label",
+                  "layout",
+                  "mapType",
+                  "messages",
+                  "nightMusic",
+                  "objects",
+                  "originX",
+                  "originY",
+                  "regionSolid",
+                  "signs",
+                  "sourceId",
+                  "tileset",
+                  "warps",
+                  "weather",
+                  "width"
+                ],
+                "fields": {
+                  "mapType": 1,
+                  "sourceId": "T01",
+                  "id": "T_01",
+                  "height": 32,
+                  "width": 32,
+                  "generation": 4,
+                  "header": 411,
+                  "label": "Twinleaf Town"
+                }
+              }
+            ]
+          },
+          {
+            "header": 342,
+            "matches": [
+              {
+                "runtimeId": "R201",
+                "key": "R201",
+                "keys": [
+                  "allowBike",
+                  "allowEscapeRope",
+                  "allowFly",
+                  "allowRunning",
+                  "battleBackground",
+                  "behaviorCells",
+                  "blockPx",
+                  "blocks",
+                  "borderBlock",
+                  "cameraType",
+                  "connections",
+                  "coordEvents",
+                  "dayMusic",
+                  "encounters",
+                  "events",
+                  "generation",
+                  "header",
+                  "height",
+                  "id",
+                  "label",
+                  "layout",
+                  "mapType",
+                  "messages",
+                  "nightMusic",
+                  "objects",
+                  "originX",
+                  "originY",
+                  "regionSolid",
+                  "signs",
+                  "tileset",
+                  "warps",
+                  "weather",
+                  "width"
+                ],
+                "fields": {
+                  "mapType": 2,
+                  "id": "R201",
+                  "height": 32,
+                  "width": 64,
+                  "generation": 4,
+                  "header": 342,
+                  "label": "Route 201"
+                }
+              },
+              {
+                "runtimeId": "R_201",
+                "key": "R_201",
+                "keys": [
+                  "allowBike",
+                  "allowEscapeRope",
+                  "allowFly",
+                  "allowRunning",
+                  "battleBackground",
+                  "behaviorCells",
+                  "blockPx",
+                  "blocks",
+                  "borderBlock",
+                  "cameraType",
+                  "connections",
+                  "coordEvents",
+                  "dayMusic",
+                  "encounters",
+                  "events",
+                  "generation",
+                  "header",
+                  "height",
+                  "id",
+                  "label",
+                  "layout",
+                  "mapType",
+                  "messages",
+                  "nightMusic",
+                  "objects",
+                  "originX",
+                  "originY",
+                  "regionSolid",
+                  "signs",
+                  "sourceId",
+                  "tileset",
+                  "warps",
+                  "weather",
+                  "width"
+                ],
+                "fields": {
+                  "mapType": 2,
+                  "sourceId": "R201",
+                  "id": "R_201",
+                  "height": 32,
+                  "width": 64,
+                  "generation": 4,
+                  "header": 342,
+                  "label": "Route 201"
+                }
+              }
+            ]
+          }
+        ],
+        "scene": "platinum-twinleaf-201",
+        "dataKeys": [
+          "_bootKeys",
+          "_pristineKeys",
+          "ai_classes",
+          "applyMapEditorOverlay",
+          "applyVersionedFieldData",
+          "audio",
+          "balls",
+          "commands",
+          "constants",
+          "encounters",
+          "ensure",
+          "evolution_methods",
+          "field",
+          "font",
+          "gen4_area_popup",
+          "gen4_arealight",
+          "gen4_bag_art",
+          "gen4_battle_anims",
+          "gen4_battle_art",
+          "gen4_battle_music",
+          "gen4_battle_tower",
+          "gen4_berry_flavors",
+          "gen4_box_art",
+          "gen4_box_ink",
+          "gen4_cellactors",
+          "gen4_contest",
+          "gen4_contest_art",
+          "gen4_dex",
+          "gen4_distortion_world",
+          "gen4_dressup",
+          "gen4_egg_hatch_art",
+          "gen4_egg_hatch_ink",
+          "gen4_egg_moves",
+          "gen4_emotes",
+          "gen4_encounter_effects",
+          "gen4_ending",
+          "gen4_ending_art",
+          "gen4_evolution_art",
+          "gen4_evolution_ink",
+          "gen4_feebas",
+          "gen4_frontier_art",
+          "gen4_frontier_scripts",
+          "gen4_game_corner",
+          "gen4_graphics",
+          "gen4_gym_fx",
+          "gen4_intro",
+          "gen4_journal_art",
+          "gen4_library_tv",
+          "gen4_mail_gra",
+          "gen4_main_menu_art",
+          "gen4_main_menu_ink",
+          "gen4_map_matrices",
+          "gen4_map_permissions",
+          "gen4_mapprops",
+          "gen4_menu_art",
+          "gen4_menus",
+          "gen4_mining_art",
+          "gen4_models",
+          "gen4_move_anims",
+          "gen4_move_buttons",
+          "gen4_move_tutor",
+          "gen4_naming",
+          "gen4_naming_art",
+          "gen4_naming_ink",
+          "gen4_options_art",
+          "gen4_overworld",
+          "gen4_pal_park",
+          "gen4_particles",
+          "gen4_party_art",
+          "gen4_party_ink",
+          "gen4_poffin_art",
+          "gen4_poke_motion",
+          "gen4_poketch_art",
+          "gen4_poketch_ink",
+          "gen4_pt_field_fx",
+          "gen4_scratch_off",
+          "gen4_scratch_off_art",
+          "gen4_seals",
+          "gen4_shop_art",
+          "gen4_spear_pillar",
+          "gen4_special_encounters",
+          "gen4_species_sprites",
+          "gen4_start_menu_art",
+          "gen4_start_menu_ink",
+          "gen4_summary_art",
+          "gen4_summary_ink",
+          "gen4_terrain",
+          "gen4_town_map",
+          "gen4_town_map_art",
+          "gen4_town_map_ink",
+          "gen4_trade_art",
+          "gen4_trainer_card_art",
+          "gen4_trainer_messages",
+          "gen4_trainer_music",
+          "gen4_trainer_prize",
+          "gen4_trainer_sprites",
+          "gen4_weather_sys",
+          "growth_rates",
+          "icons",
+          "isGen3Cache",
+          "isGen4Cache",
+          "items",
+          "load",
+          "map_layouts",
+          "map_scripts",
+          "map_tilesets",
+          "maps",
+          "move_effects",
+          "moves",
+          "pokemon",
+          "publishGen2MapMetadata",
+          "publishGen2Palettes",
+          "publishGen2TilesetNames",
+          "reloadGenerated",
+          "resolveText",
+          "rulesets",
+          "seedCinnabarGymTrainerHeaders",
+          "seedDefaults",
+          "seedFightingDojoKarateMaster",
+          "sprites",
+          "statuses",
+          "text",
+          "textEntry",
+          "text_pointers",
+          "tilesets",
+          "tokens",
+          "trainerHeader",
+          "trainers",
+          "transitions",
+          "type_chart",
+          "unloadGenerated"
+        ],
+        "setup": {
+          "walkable": true,
+          "width": 32,
+          "height": 32,
+          "requested": {
+            "x": 15,
+            "y": 10
+          },
+          "player": {
+            "x": 15,
+            "y": 10
+          },
+          "connections": {
+            "north": {
+              "offset": 0,
+              "map": "R201"
+            }
+          },
+          "map": "T01",
+          "scriptRunning": false,
+          "worldActive": true,
+          "worldOnTop": true
+        },
+        "pacing": {
+          "vsync": 0,
+          "backgroundPacing": false,
+          "fpsCap": 160
+        }
+      },
+      "reportSha256": "3ff8d353d56533cad282ecf2902fe186bd64a18c2dba13aebcd429963e33496b",
+      "logSha256": "e2e6143cef543e4253bfa6494b8164c713c0921ff329fa55e26eccf57c051ef9"
+    }
+  ]
+}
