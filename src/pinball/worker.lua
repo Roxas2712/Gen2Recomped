@@ -53,7 +53,6 @@ local ok,why=pcall(function()
   else
    local begin=love.timer.getTime();n=n+1
    local message={images={},stats={},frame=n}
-   release(channels.frames:pop())
    for i,m in ipairs(handles)do
     local function read(address,bytes)return tonumber(lib.ascendant_pinball_read(m,address,bytes or 1))end
     local buttons=input[i] or 0
@@ -113,7 +112,15 @@ local ok,why=pcall(function()
     local all=true;for i=1,#handles do if not done[i]then all=false end end
     if all then phase='finished'end
    end
-   message.phase=phase;message.seconds=love.timer.getTime()-begin;channels.frames:push(message)
+   message.phase=phase;message.seconds=love.timer.getTime()-begin
+   -- A small completed-frame FIFO absorbs variable native execution time.
+   -- Clearing the mailbox before step() lost visible frames; publishing only
+   -- the newest frame still magnified start/completion jitter. Bound latency
+   -- to three frames while retaining every guest frame and original physics.
+   channels.frames:performAtomic(function(channel)
+    while channel:getCount()>=3 do release(channel:pop())end
+    channel:push(message)
+   end)
    -- Never skip guest frames or accelerate physics to hide a slow machine.
    nextFrame=math.max(nextFrame+280896/16777216,love.timer.getTime()-.05)
   end

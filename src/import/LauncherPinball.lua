@@ -47,16 +47,45 @@ function M.install(RI)
   self._pinIntro={scene=scene,elapsed=0,begin=begin}
  end
  local function start(self,seats,net,host)
-  local session=M.session(self._pinLocale);if not session or self._pinPlayer then return end
+  local session=M.session(self._pinLocale);if not session or self._pinPlayer then return false,'Pinball ist nicht bereit.'end
   if self._xyStopPreview then self:_xyStopPreview()end
+  self._pinPendingNet=net
   local function begin()
+   self._pinPendingNet=nil
+   if net and net.closed then self._pinNotice='Das Freundesduell wurde abgebrochen.';return end
    local ok,p=pcall(require('src.pinball.Player').new,session,{seats=seats or 1,duel=(seats or 1)==2 or net~=nil,field=self._pinField or 0,net=net,host=host})
-   if ok then self._pinPlayer=p else if net then net:close()end;self._pinNotice=tostring(p)end
+   if ok then self._pinPlayer=p else
+    if net then
+     net:close()
+     if self._pinFriends and self._pinFriends.net==net then self._pinFriends:finished()end
+    end
+    self._pinNotice=tostring(p)
+   end
   end
-  if self:_settings().launcherAnimations==false then begin();return end
+  if self:_settings().launcherAnimations==false then begin();return self._pinPlayer~=nil,self._pinNotice end
   local state=require('src.import.LauncherSequence').new('play','pinballrs')
   state.cartAppearance=require('src.import.LauncherHardware').appearance(self,'pinballrs')
   state.onComplete=function()intro(self,session,begin)end;self._launcherSequence=state
+  return true
+ end
+ local function friends(self,session)
+  if self._pinFriends then self._pinFriends:close()end
+  if not session then self._pinFriends=nil;return end
+  self._pinFriends=require('src.pinball.Friends').new(session,{field=self._pinField or 0,
+   start=function(net,host,rules)
+    if self._pinPlayer or self._pinIntro or self._launcherSequence then return false,'Pinball ist beschäftigt.'end
+    require('src.import.AccountWorkspace').close(self)
+    self._pinField=rules.field;self:_sbOpenGame('pinballrs')
+    return start(self,1,net,host)
+   end,
+   stop=function(why)
+    if self._pinPendingNet then
+     self._pinPendingNet=nil;self._launcherSequence=nil
+     if self._pinIntro then self._pinIntro.scene:release();self._pinIntro=nil end
+     require('src.import.LauncherBackdrop').setPaused(false)
+    end
+    if self._pinPlayer then self._pinPlayer:stop()end;self._pinNotice=why
+   end})
  end
  local function online(self,host,relay)
   local Net=require('src.link.Net');local net=Net.new();local ok
@@ -65,7 +94,9 @@ function M.install(RI)
    if host then ok=net:hostOnline(address)else ok=net:joinOnline(address,self._pinCode or '')end
   elseif host then ok=net:host(7777)else ok=net:join(self._pinAddress or '127.0.0.1:7777')end
   if not ok then self._pinNotice=net.error;net:close();return end
-  self._pinNotice=net.address;start(self,1,net,host)
+  self._pinNotice=net.address
+  local launched,why=start(self,1,net,host)
+  if not launched then net:close();self._pinNotice=why end
  end
  local textinput=RI.textinput
  RI.textinput=function(self,text,...)
@@ -76,6 +107,7 @@ function M.install(RI)
  end
  local keypressed=RI.keypressed
  RI.keypressed=function(self,key,...)
+  if self._accountOverlay then return keypressed(self,key,...)end
   if self._pinEdit then
    if key=='backspace'then local v=self[self._pinEdit]or '';self[self._pinEdit]=v:sub(1,-2)
    elseif key=='return'or key=='escape'then self._pinEdit=nil;love.keyboard.setTextInput(false)end
@@ -97,6 +129,7 @@ function M.install(RI)
   local self=new(...)
   self._pinLocale=love.filesystem.read('pinball-locale.txt')or 'en'
   if not M.session(self._pinLocale)then self._pinLocale='en'end
+  friends(self,M.session(self._pinLocale))
   if os.getenv('ASCENDANT_PINBALL_START')then
    if self._xyIntro then self._xyIntro.scene:release();self._xyIntro=nil end
    self._pinAutoStart=true;self._launcherSequence=nil
@@ -107,6 +140,15 @@ function M.install(RI)
  RI.draw=function(self,...)if self._pinIntro then self._pinIntro.scene:draw(self._pinIntro.elapsed,love.graphics.getDimensions());self._pinIntro.presented=true;return end;if self._pinPlayer then self._pinPlayer:draw(love.graphics.getDimensions());return end;return draw(self,...)end
  local update=RI.update
  RI.update=function(self,dt,...)
+  if self._pinFriends then
+   local available=not(self._pinPlayer or self._pinIntro or self._launcherSequence or self._xyPlayer or self._xyCheck or self.workState=='working' or self._storageTask)
+   local overlay=self._accountOverlay
+   local lobby=self._pinOpen or overlay and(overlay.mode=='friends'or overlay.mode=='inbox')
+   local Play=require('src.cloud.Play')
+   if lobby then Play.setExternalContext(self,self._pinFriends:context(available))else Play.clearExternalContext(self)end
+   self._pinFriends:tick(available and lobby)
+   if overlay and self._pinFriends.notice then overlay.notice=self._pinFriends.notice end
+  end
   if self._pinIntro then
    local current=self._pinIntro;require('src.import.LauncherBackdrop').setPaused(true)
    if current.presented and love.window.isVisible()and love.window.hasFocus()then
@@ -119,7 +161,10 @@ function M.install(RI)
   if self._pinAutoStart then self._pinAutoStart=nil;self:_sbOpenGame('pinballrs');start(self,tonumber(os.getenv('ASCENDANT_PINBALL_SEATS'))or 1)end
   if self._pinPlayer then
    local p=self._pinPlayer;p:update(dt)
-   if p.closed and not p.thread:isRunning()then self._pinNotice=p.error;p:dispose();self._pinPlayer=nil end
+   if p.closed and not p.thread:isRunning()then
+    self._pinNotice=p.error;p:dispose();self._pinPlayer=nil
+    if self._pinFriends then self._pinFriends:finished()end
+   end
    return
   end
   return update(self,dt,...)
@@ -127,6 +172,7 @@ function M.install(RI)
  for _,method in ipairs{'keypressed','keyreleased','mousepressed','gamepadpressed'}do
   local original=RI[method]
   RI[method]=function(self,...)
+   if self._accountOverlay then return original(self,...)end
    if self._pinIntro then if self._pinIntro.elapsed>.35 and method~='keyreleased'then finishIntro(self)end;return end
    if self._pinPlayer then return self._pinPlayer[method](self._pinPlayer,...)end
    if self._pinOpen and method=='gamepadpressed'then
@@ -145,7 +191,7 @@ function M.install(RI)
   self._pinOpen=false;self._pinButtons={}
   if version=='pinballrs'then
    self._xyOpen=false;self._pinOpen=true;self.section='games';self.gamesView='game';self.pageScroll=0
-   self._pinPreviousTab=self.tab;self.tab=version;self.browseConsole='gba';self.browseSeries='pokemon';self._pinIndex=1;return
+   self._pinPreviousTab=self._pinPreviousTab or self.tab;self.tab=version;self.browseConsole='gba';self.browseSeries='pokemon';self._pinIndex=1;return
   end
   return open(self,version,...)
  end
@@ -197,13 +243,25 @@ function M.install(RI)
    local at=1;for i,lang in ipairs(LANGUAGES)do if lang.id==self._pinLocale then at=i end end
    for n=1,#LANGUAGES do
     local candidate=LANGUAGES[(at+n-1)%#LANGUAGES+1]
-    if M.session(candidate.id)then self._pinLocale=candidate.id;love.filesystem.write('pinball-locale.txt',candidate.id);break end
+    local session=M.session(candidate.id)
+    if session then self._pinLocale=candidate.id;love.filesystem.write('pinball-locale.txt',candidate.id);friends(self,session);break end
    end
   end)
-  button((self._pinField or 0)==0 and 'DUELL-TISCH: RUBY' or 'DUELL-TISCH: SAPPHIRE',function()self._pinField=1-(self._pinField or 0)end)
+  button((self._pinField or 0)==0 and 'DUELL-TISCH: RUBY' or 'DUELL-TISCH: SAPPHIRE',function()self._pinField=1-(self._pinField or 0);if self._pinFriends then self._pinFriends.options.field=self._pinField end end)
   button('SPIELEN',function()start(self,1)end)
   button('LOKAL · 2 SPIELER',function()start(self,2)end)
+  button('MODCOMPASS · MIT FREUNDEN',function()
+   local Account=require('src.import.AccountWorkspace');Account.open(self)
+   if require('src.cloud.RetroCloud').signedIn()then Account.action(self,'friends')end
+  end)
+  text('Freundesduelle benötigen ModCompass mit Pinball-Unterstützung.')
   text('Punkteduell: 5 Minuten oder bis Spielende · identischer frischer Start')
+  if self._pinFriends then
+   for _,entry in ipairs(self._pinFriends:rows())do
+    if entry.id=='noop'then text(entry.label)else button(entry.label,function()self._pinFriends:action(entry.id)end)end
+   end
+   if self._pinFriends.notice then text(self._pinFriends.notice,self.hintFont,RI.palette().warning)end
+  end
   local function edit(label,key,default)
    if self[key]==nil then self[key]=default end
    button(label..': '..self[key]..(self._pinEdit==key and ' |'or ''),function()self._pinEdit=key;love.keyboard.setTextInput(true)end)
@@ -234,5 +292,11 @@ function M.install(RI)
  RI._sbGo=function(self,...)self._pinOpen=false;self._pinButtons={};return go(self,...)end
  local backdrop=RI._sbBackdropWant
  RI._sbBackdropWant=function(self,...)if self._pinOpen or self._pinPlayer then return nil end;return backdrop(self,...)end
+ local play=RI.play
+ RI.play=function(self,...)
+  require('src.cloud.Play').clearExternalContext(self)
+  if self._pinFriends then self._pinFriends:close()end
+  return play(self,...)
+ end
 end
 return M

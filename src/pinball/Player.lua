@@ -59,7 +59,8 @@ function M.new(session,options)
    event=self.events:pop()
   end
   local err=self.thread:getError();if err then self.error=err;self.closed=true end
-  local msg=self.frames:pop()
+  local msg
+  if self.videoStarted or self.frames:getCount()>=2 then self.videoStarted=true;msg=self.frames:pop()end
   if msg then
    for i,data in ipairs(msg.images)do
     local image=self.images[i]
@@ -90,13 +91,15 @@ function M.new(session,options)
   end
   if self.countdown and not self.duelCancelled then
    self.countdown=self.countdown-dt
-   if self.countdown<=0 then self.countdown=nil;self:command{action='start'};self.notice=''end
+   if self.countdown<=0 then self.countdown=nil;self.videoStarted=false;self:command{action='start'};self.notice=''end
   end
   if self.ready and not self.closing then
    local input={}
    for i=1,self.seats do input[i]=self.input:buttons(i,function(k)return love.keyboard.isDown(k)end,
     not self.paused and function(b)return love.mouse.isDown(b)end or nil,love.window.hasFocus() and not self.paused)end
-   self:command{action='input',buttons=input}
+   if not self.lastInput or input[1]~=self.lastInput[1]or input[2]~=self.lastInput[2]then
+    self.lastInput=input;self:command{action='input',buttons=input}
+   end
   end
   while self.sound:getFreeBufferCount()>0 do
    local data=self.audio:pop();if not data then break end
@@ -107,7 +110,7 @@ function M.new(session,options)
    local ok=pcall(self.sound.queue,self.sound,data);data:release()
    if not ok then break end
   end
-  if self.ready and not self.paused and not self.closing then self.sound:play()end
+  if self.ready and not self.paused and not self.closing and not self.sound:isPlaying()then self.sound:play()end
  end
  function self:draw(w,h,preview)
   local g=love.graphics;g.push('all');g.clear(.025,.035,.05);g.setFont(self.font)
@@ -152,17 +155,19 @@ function M.new(session,options)
   if self.paused then self.sound:stop()end
  end
  function self:keypressed(key)
+  local changed=false
   if key=='escape'then self:togglePause()
   elseif self.paused and key=='q'then self:stop()
-  elseif key=='f6'then self.settings.full_table=not self.settings.full_table;self:command{action='view',full_table=self.settings.full_table};self.notice=self.settings.full_table and 'Volltisch · Beta: Standardfelder; Menüs bleiben in Originalansicht.'or 'Originalansicht'
+  elseif key=='f6'then changed=true;self.settings.full_table=not self.settings.full_table;self:command{action='view',full_table=self.settings.full_table};self.notice=self.settings.full_table and 'Volltisch · Beta: Standardfelder; Menüs bleiben in Originalansicht.'or 'Originalansicht'
   elseif key=='f5'or key=='f8'then self:command{action='state',load=key=='f8'}
   elseif key=='f9'then
+   changed=true
    local at=1;for i,v in ipairs(FILTERS)do if v==self.settings.filter then at=i end end
    self.settings.filter=FILTERS[at%#FILTERS+1];self.notice='Bildfilter: '..self.settings.filter
    for _,img in pairs(self.images)do img:setFilter(self.settings.filter=='smooth'and 'linear'or 'nearest')end
-  elseif key=='f10'then self.settings.integer=not self.settings.integer
+  elseif key=='f10'then changed=true;self.settings.integer=not self.settings.integer
   elseif key=='f11'then love.window.setFullscreen(not love.window.getFullscreen(),'desktop')end
-  love.filesystem.write('pinball-display.json',Json.encode(self.settings))
+  if changed then love.filesystem.write('pinball-display.json',Json.encode(self.settings))end
  end
  function self:keyreleased()end
  function self:mousepressed()end
