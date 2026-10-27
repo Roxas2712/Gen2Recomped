@@ -15,6 +15,25 @@ jobs:
       - uses: actions/checkout@v7
       - name: Install ROM-free runtime
         run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: Previous native source exposes the item-result regressions
+        shell: bash
+        run: |
+          git -c gc.auto=0 fetch --no-tags --depth=1 origin 2727365b0c38495717c688708d521cf8150cfec4
+          baseline="$RUNNER_TEMP/gen2-party-result-baseline"
+          mkdir -p "$baseline"
+          git archive 2727365b0c38495717c688708d521cf8150cfec4 src tests data tools examples | tar -x -C "$baseline"
+          cp src/render/NativeScreenOverlay.lua "$baseline/src/render/NativeScreenOverlay.lua"
+          cp src/ui/Gen2PartyItemResult.lua "$baseline/src/ui/Gen2PartyItemResult.lua"
+          cp tests/engine/gen2_battle_pack.lua tests/engine/gen2_party_item_result.lua "$baseline/tests/engine/"
+          for suite in gen2_party_item_result gen2_battle_pack; do
+            if (cd "$baseline" && luajit "tests/engine/$suite.lua") > "$RUNNER_TEMP/$suite-baseline.log" 2>&1; then
+              cat "$RUNNER_TEMP/$suite-baseline.log"
+              echo "Previous source unexpectedly passed $suite"
+              exit 1
+            fi
+            cat "$RUNNER_TEMP/$suite-baseline.log"
+            grep -q '^FAIL' "$RUNNER_TEMP/$suite-baseline.log"
+          done
       - name: Native queue, screen and available menu owners
         run: |
           luajit tests/engine/gen2_battle_queue_view.lua
