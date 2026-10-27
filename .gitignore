@@ -203,3 +203,7 @@ mobile/ios/bundle_id.local
 
 !/tests/pokemon_xy_library_test.py
 !/tests/pokemon_xy/
+
+!/tests/run_pinball_duel_tests.lua
+!/tests/pinball_relay_test.py
+!/tests/pinball_worker_smoke.lua

@@ -162,6 +162,7 @@ function M.install(RI)
  local function stopPreview(self)
   if self._xyPreview then self._xyPreview:stop();self._xyRetiring=self._xyRetiring or {};self._xyRetiring[#self._xyRetiring+1]=self._xyPreview;self._xyPreview=nil end
  end
+ RI._xyStopPreview=stopPreview
  local function saveReport(self,session,result)
   local root=sourceRoot();if not root then return end
   local dir=session.report_dir or root..'/.local/pokemon-x/device-tests'
