@@ -76,10 +76,18 @@ function love.draw()
  end
  for n,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   V.set(edition);local palette={};for i=1,16 do palette[i]=(i*1733+n*523)%32768 end
-  local record={images={},format=1,version=edition,palette=palette}
+  local windowPalette,ppPalette={},{}
+  for i=1,16 do windowPalette[i]=(palette[i]+173)%32768;ppPalette[i]=(palette[i]+743)%32768 end
+  local record={images={},format=1,version=edition,palette=palette,windowPalette=windowPalette,ppPalette=ppPalette}
   local game={data={constants={},font={pages={main={image='qa-font',base=128,preTinted=true}},charmap={{code=128,seq='A'}}}}}
   game.data.constants[(edition=='ruby'or edition=='sapphire')and'gen3RsBattlePanel'or'gen3BattleTextbox']=record
+  if edition=='ruby'or edition=='sapphire'then
+   game.data.constants.gen3RsBag={format=1,version=edition,palette=windowPalette};ppPalette=windowPalette
+  end
   package.loaded['src.core.Game']=game;Font.load(game.data)
+  local manifest=Chrome.manifest()
+  check(#manifest.windowTextPal==16,'native window palette exposed')
+  check(#manifest.ppTextPal==16,'native PP palette exposed')
   for _,dpi in ipairs{1,2}do
    local canvas=g.newCanvas(16,16,{dpiscale=dpi,format='rgba8',msaa=0})
    for fg=0,15 do
@@ -92,6 +100,17 @@ function love.draw()
     end
     pixels:release();frames=frames+1
    end
+   for _,name in ipairs{'windowTextPal','ppTextPal'}do for fg=0,15 do
+    local shadow=15-fg;local words=manifest[name]
+    setup(canvas);Text.draw('A',0,0,{colors={fg=rgb(words[fg+1]),shadow=rgb(words[shadow+1])}})
+    local pixels=read(canvas);local native=name=='windowTextPal'and windowPalette or ppPalette
+    for _,sample in ipairs{{2,rgb(native[fg+1])},{6,rgb(native[shadow+1])}}do
+     local r,gg,b,a=pixels:getPixel(sample[1]*dpi,2*dpi)
+     for i,value in ipairs{r,gg,b}do check(math.abs(value-sample[2][i])<=1.1/255,'manifest font palette pixel')end
+     check(a>.99,'manifest font palette alpha')
+    end
+    pixels:release();frames=frames+1
+   end end
    canvas:release()
   end
  end

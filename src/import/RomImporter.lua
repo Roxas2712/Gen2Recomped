@@ -1351,7 +1351,7 @@ local function markerFor(version)
   end
   if GameVersion.generation(version)==3 then revision=revision..'gba-field-move-art-v1:'end
   if version=='firered'or version=='leafgreen'or version=='emerald'then
-    revision=revision..'gba-textbox-palette-v1:'
+    revision=revision..'gba-textbox-palette-v2:'
   end
   if GameVersion.generation(version)==2 then
     revision=revision..'gen2-vram-layout-v'..require('src.import.Gen2VramLayout').REVISION..':'
