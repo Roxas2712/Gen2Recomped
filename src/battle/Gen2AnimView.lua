@@ -84,7 +84,7 @@ end
 -- to this same draw owner. Restarting the VM retires the old observation.
 function View.runner(player)
   local selected, frozen
-  local function state()
+  local function objects()
     local structs = {}
     for _, obj in ipairs(selected or player.objects) do
       local fn = obj.fn and ('BATTLE_ANIM_FUNC_'..obj.fn:gsub('(%l)(%u)','%1_%2'):upper())
@@ -92,16 +92,29 @@ function View.runner(player)
       if obj.fn == 'PokeBallBlocked' then fn = 'BATTLE_ANIM_FUNC_POKEBALL_BLOCKED' end
       structs[#structs+1] = {index=obj.index,func=fn,jt=obj.state}
     end
-    return {animId=player.moveId,frames=player.frames or 0,var=player.vars and player.vars.var or 0,
+    return {structs=structs}
+  end
+  local function state()
+    return {animId=player.presentationId or player.moveId,frames=player.frames or 0,var=player.vars and player.vars.var or 0,
       stopped=player:isDone(),keepSprites=player.keepSprites,
-      objects={structs=structs}, oam=player:oam(selected)}
+      objects=objects(), oam=player:oam(selected)}
   end
   local runner = {}
   function runner:oam() return frozen and frozen.oam or player:oam(selected) end
   function runner.selectObjects(objects) selected=objects end
-  function runner.retire() frozen=state(); player=nil end
+  function runner.retire() if not frozen then frozen=state(); player=nil end end
   return setmetatable(runner, {
-    __index=function(_,key) return (frozen or state())[key] end,
+    -- Scalar observations are hot in render/camera callbacks. Do not project
+    -- OAM and allocate all object records just to read a name or frame count.
+    __index=function(_,key)
+      if frozen then return frozen[key] end
+      if key=='animId'then return player.presentationId or player.moveId end
+      if key=='frames'then return player.frames or 0 end
+      if key=='var'then return player.vars and player.vars.var or 0 end
+      if key=='stopped'then return player:isDone()end
+      if key=='keepSprites'then return player.keepSprites end
+      if key=='objects'then return objects()end
+    end,
     __newindex=function() error('native Gen2 animation observation is read-only',2) end,
   })
 end

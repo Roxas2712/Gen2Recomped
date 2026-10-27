@@ -274,6 +274,16 @@ function Gen2AnimPlayer:start(moveId, attackerIsPlayer, opts)
   self.loops = {}
   self.bgSides = {}
   self.script = self:scriptFor(moveId)
+  -- Keep the queue's original ID for ball parameters/side handling, while
+  -- observers identify the actual GSC program (as Gen1Recomp's runner does).
+  -- A mod-defined alias is canonical only if it resolves to that same script.
+  self.presentationId = moveId
+  local alias = GEN1_BALL_ANIMS[moveId]
+  local canonical = alias == "throwPokeBall" and "ANIM_THROW_POKE_BALL"
+    or alias == "sendOutMon" and "ANIM_SEND_OUT_MON"
+  if self.script and canonical and self:scriptFor(canonical) == self.script then
+    self.presentationId = canonical
+  end
   if not self.script then
     if GEN1_BALL_ANIMS[moveId] == nil then
       self:warnOnce("anim:" .. tostring(moveId),
